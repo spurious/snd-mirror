@@ -704,14 +704,14 @@ XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn)
 
 XEN snd_no_active_selection_error(const char *caller)
 {
-  XEN_ERROR(NO_ACTIVE_SELECTION,
+  XEN_ERROR(XEN_ERROR_TYPE("no-active-selection"),
 	    XEN_LIST_1(C_TO_XEN_STRING(caller)));
   return(XEN_FALSE);
 }
 
 XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc)
 {
-  XEN_ERROR(BAD_ARITY,
+  XEN_ERROR(XEN_ERROR_TYPE("bad-arity"),
             XEN_LIST_3(C_TO_XEN_STRING(caller),
                        errstr,
 		       proc));

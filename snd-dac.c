@@ -2528,7 +2528,7 @@ void clear_players(void)
 
 static XEN snd_no_such_player_error(const char *caller, XEN index)
 {
-  XEN_ERROR(NO_SUCH_PLAYER,
+  XEN_ERROR(XEN_ERROR_TYPE("no-such-player"),
 	    XEN_LIST_2(C_TO_XEN_STRING(caller),
 		       index));
   return(XEN_FALSE);

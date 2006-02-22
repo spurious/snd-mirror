@@ -11572,7 +11572,8 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
       return(eval_ptree_to_xen(pt));
     }
   if (pt) free_ptree(pt);
-  XEN_ERROR(CANNOT_PARSE, code);
+  XEN_ERROR(XEN_ERROR_TYPE("cannot-parse"),
+	    code);
   return(XEN_FALSE);
 }
 

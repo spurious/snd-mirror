@@ -14,8 +14,6 @@
 #define LOTSA_PIXELS 10000
 #define POINT_BUFFER_SIZE 4096
 
-#define CLOSED_CTRLS_HEIGHT 20
-/* was 0, but that makes show-controls always return #t -- need some reasonable way to tell that a pane is closed */
 #define BACKGROUND_QUIT false
 #define BACKGROUND_CONTINUE true
 #define BACKGROUND_REMOVE(func) g_source_remove(func)

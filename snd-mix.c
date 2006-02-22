@@ -3783,7 +3783,7 @@ Float r_mix_speed(int n) {mix_state *cs; cs = cs_from_id(n); if (cs) return(cs->
 
 static XEN snd_no_such_mix_error(const char *caller, XEN n)
 {
-  XEN_ERROR(NO_SUCH_MIX,
+  XEN_ERROR(XEN_ERROR_TYPE("no-such-mix"),
 	XEN_LIST_2(C_TO_XEN_STRING(caller),
 		   n));
   return(XEN_FALSE);
@@ -6941,7 +6941,7 @@ static XEN g_make_track(XEN ids)
   for (lst = XEN_COPY_ARG(ids); XEN_NOT_NULL_P(lst); lst = XEN_CDR(lst))
     if ((!(XEN_INTEGER_P(XEN_CAR(lst)))) ||
 	(!(mix_ok(XEN_TO_C_INT(XEN_CAR(lst))))))
-      XEN_ERROR(NO_SUCH_MIX,
+      XEN_ERROR(XEN_ERROR_TYPE("no-such-mix"),
 		XEN_LIST_3(C_TO_XEN_STRING(S_make_track),
 			   XEN_CAR(lst),
 			   ids));

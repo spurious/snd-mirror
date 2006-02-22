@@ -44,32 +44,11 @@
   #define FAMConnection void*
 #endif
 
-#define NO_SUCH_MIX          XEN_ERROR_TYPE("no-such-mix")
 #define NO_SUCH_TRACK        XEN_ERROR_TYPE("no-such-track")
-#define NO_SUCH_REGION       XEN_ERROR_TYPE("no-such-region")
 #define NO_SUCH_ENVELOPE     XEN_ERROR_TYPE("no-such-envelope")
 #define NO_SUCH_SAMPLE       XEN_ERROR_TYPE("no-such-sample")
 #define NO_SUCH_EDIT         XEN_ERROR_TYPE("no-such-edit")
 #define CANNOT_SAVE          XEN_ERROR_TYPE("cannot-save")
-#define CANNOT_PRINT         XEN_ERROR_TYPE("cannot-print")
-#define NO_SUCH_AXIS_INFO    XEN_ERROR_TYPE("no-such-axis")
-#define NO_SUCH_WIDGET       XEN_ERROR_TYPE("no-such-widget")
-#define NO_SUCH_AXIS_CONTEXT XEN_ERROR_TYPE("no-such-graphics-context")
-#define NO_SUCH_PLAYER       XEN_ERROR_TYPE("no-such-player")
-#define NO_SUCH_DIRECTION    XEN_ERROR_TYPE("no-such-direction")
-#define NO_SUCH_KEY          XEN_ERROR_TYPE("no-such-key")
-#define NO_SUCH_PLUGIN       XEN_ERROR_TYPE("no-such-plugin")
-#define PLUGIN_ERROR         XEN_ERROR_TYPE("plugin-error")
-#define NO_SUCH_MARK         XEN_ERROR_TYPE("no-such-mark")
-#define NO_SUCH_MENU         XEN_ERROR_TYPE("no-such-menu")
-#define CANNOT_PARSE         XEN_ERROR_TYPE("cannot-parse")
-#define NO_ACTIVE_SELECTION  XEN_ERROR_TYPE("no-active-selection")
-#define BAD_ARITY            XEN_ERROR_TYPE("bad-arity")
-#define NO_SUCH_COLOR        XEN_ERROR_TYPE("no-such-color")
-#define NO_SUCH_SOUND        XEN_ERROR_TYPE("no-such-sound")
-#define SND_GSL_ERROR        XEN_ERROR_TYPE("gsl-error")
-#define NO_SUCH_COLORMAP     XEN_ERROR_TYPE("no-such-colormap")
-#define CANT_OPEN_FILE       XEN_ERROR_TYPE("cant-open-file")
 #define CANT_UPDATE_FILE     XEN_ERROR_TYPE("cant-update-file")
 
 #ifndef Float
@@ -860,6 +839,10 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_SAVE_AS_DIALOG, F
 #define cursor_style(ss) ss->Cursor_Style
 #define in_set_cursor_style(a) ss->Cursor_Style = a
 #define DEFAULT_CURSOR_STYLE CURSOR_CROSS
+
+#define tracking_cursor_style(ss) ss->Tracking_Cursor_Style
+#define in_set_tracking_cursor_style(a) ss->Tracking_Cursor_Style = a
+#define DEFAULT_TRACKING_CURSOR_STYLE CURSOR_CROSS
 
 #define cursor_size(ss) ss->Cursor_Size
 #define in_set_cursor_size(a) ss->Cursor_Size = a

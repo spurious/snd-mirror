@@ -79,7 +79,7 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   tmp_color.green = (unsigned short)(65535 * gf);
   tmp_color.blue = (unsigned short)(65535 * bf);
   if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
-    XEN_ERROR(NO_SUCH_COLOR,
+    XEN_ERROR(XEN_ERROR_TYPE("no-such-color"),
 	      XEN_LIST_2(C_TO_XEN_STRING(S_make_color),
 			 XEN_LIST_3(r, g, b)));
   return(XEN_WRAP_PIXEL(tmp_color.pixel));

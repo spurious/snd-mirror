@@ -4,6 +4,10 @@
 
 /* 
  * TODO: tracking-cursor-style (prefs too)
+ *         cursor proc 3rd arg could include whether tracking (or change it to be just that)
+ *         start|stop-playing-hook are the only check points (extsnd.html, snd-dac.c 983, 639)
+ *         draw.scm smart-line-cursor uses ax arg -- assume time-graph?
+ *         will need test (gxprefs, here)
  *
  * TODO: overlay of rms env
  *       fill in two-sided with colormap choice based on rms of underlying pixels (same for line graph?) -- would want peak-env style support
@@ -12,6 +16,7 @@
  *          also affects cursor display, perhaps verbose cursor info display, peak-env graphing,
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  * SOMEDAY: Edit:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
+ * TODO: audio mixer settings dialog (needed especially in alsa!)
  *
  * PERHAPS: if marks, show ticks on x axis or some way to move to each easily (clickable box)
  */
@@ -5162,7 +5167,7 @@ static XEN g_cursor_style(XEN snd_n, XEN chn_n)
   #define H_cursor_style "(" S_cursor_style " (snd #f) (chn #f)): current cursor style in snd's channel chn. \
 Possible values are " S_cursor_cross " (default), " S_cursor_line " (a vertical line), or a procedure of three arguments, the \
 sound index, channel number, and graph (always " S_time_graph ").  The procedure \
-should draw the cursor at the current cursor position using the " S_cursor_context " whenever it is called."
+should draw the cursor at the current cursor position using the " S_cursor_context "."
 
   if (XEN_BOUND_P(snd_n))
     return(channel_get(snd_n, chn_n, CP_CURSOR_STYLE, S_cursor_style));
@@ -6573,7 +6578,7 @@ to the info dialog if filename is omitted"
     }
 
   if (!fd)
-    XEN_ERROR(CANT_OPEN_FILE,
+    XEN_ERROR(XEN_ERROR_TYPE("cant-open-file"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_peaks),
 			 C_TO_XEN_STRING(name),
 			 C_TO_XEN_STRING(snd_io_strerror())));

@@ -7741,7 +7741,7 @@ snd can be a filename, or a sound index number."
     {
       if (direction == -1)
 	fd = init_sample_read_any(beg, cp, READ_BACKWARD, edpos);
-      else XEN_ERROR(NO_SUCH_DIRECTION,
+      else XEN_ERROR(XEN_ERROR_TYPE("no-such-direction"),
 		     XEN_LIST_2(C_TO_XEN_STRING(S_make_sample_reader),
 				dir1));
     }
@@ -7769,7 +7769,7 @@ return a reader ready to access region's channel chn data starting at start-samp
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, XEN_ARG_4, S_make_region_sample_reader, "an integer");
   reg_n = XEN_TO_C_INT_OR_ELSE(reg, 0);
   if (!(region_ok(reg_n))) 
-    XEN_ERROR(NO_SUCH_REGION,
+    XEN_ERROR(XEN_ERROR_TYPE("no-such-region"),
 	      XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sample_reader),
                          reg));
   chn_n = XEN_TO_C_INT_OR_ELSE(chn, 0);
@@ -7783,7 +7783,7 @@ return a reader ready to access region's channel chn data starting at start-samp
     {
       if (direction == -1)
 	fd = init_region_read(beg, reg_n, chn_n, READ_BACKWARD);
-      else XEN_ERROR(NO_SUCH_DIRECTION,
+      else XEN_ERROR(XEN_ERROR_TYPE("no-such-direction"),
 		     XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sample_reader),
 				dir1));
     }

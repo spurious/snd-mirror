@@ -37123,7 +37123,7 @@ EDITS: 1
 		(list x-zoom-slider 'x-zoom-slider ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		(list y-zoom-slider 'y-zoom-slider ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		(list fft-window-alpha 'fft-window-alpha ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
-		(list fft-window-beta 'fft-window-beta ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
+		(list fft-window-beta 'fft-window-beta ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .02)) feql #t #t)
 		(list spectro-cutoff 'spectro-cutoff ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
 		(list spectro-start 'spectro-start ind-1 ind-2 0.1 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
 		(list spectro-x-angle 'spectro-x-angle ind-1 ind-2 10.0 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)

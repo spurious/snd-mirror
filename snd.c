@@ -200,6 +200,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Grid_Density = DEFAULT_GRID_DENSITY;
   ss->Cursor_Size = DEFAULT_CURSOR_SIZE;
   ss->Cursor_Style = DEFAULT_CURSOR_STYLE;
+  ss->Tracking_Cursor_Style = DEFAULT_TRACKING_CURSOR_STYLE;
   ss->cursor_proc = XEN_UNDEFINED;
   ss->cursor_proc_loc = NOT_A_GC_LOC;
   ss->Vu_Size = DEFAULT_VU_SIZE;
@@ -304,7 +305,7 @@ void snd_set_global_defaults(bool need_cleanup)
 
 static void snd_gsl_error(const char *reason, const char *file, int line, int gsl_errno)
 {
-  XEN_ERROR(SND_GSL_ERROR,
+  XEN_ERROR(XEN_ERROR_TYPE("gsl-error"),
 	    XEN_LIST_3(C_TO_XEN_STRING("GSL"),
 		       C_TO_XEN_STRING("~A, ~A in ~A line ~A, gsl err: ~A"),
 		       XEN_LIST_5(C_TO_XEN_STRING(gsl_strerror(gsl_errno)),

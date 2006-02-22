@@ -423,6 +423,7 @@ void save_options(FILE *fd)
   if (color_map_size(ss) != DEFAULT_COLOR_MAP_SIZE) pss_sd(fd, S_colormap_size, color_map_size(ss));
   if (wavelet_type(ss) != DEFAULT_WAVELET_TYPE) pss_sd(fd, S_wavelet_type, wavelet_type(ss));
   if (cursor_style(ss) != DEFAULT_CURSOR_STYLE) pss_ss(fd, S_cursor_style, cursor_style_name(cursor_style(ss)));
+  if (tracking_cursor_style(ss) != DEFAULT_TRACKING_CURSOR_STYLE) pss_ss(fd, S_tracking_cursor_style, cursor_style_name(tracking_cursor_style(ss)));
   if (cursor_size(ss) != DEFAULT_CURSOR_SIZE) pss_sd(fd, S_cursor_size, cursor_size(ss));
   if (dot_size(ss) != DEFAULT_DOT_SIZE) pss_sd(fd, S_dot_size, dot_size(ss));
   if (dac_size(ss) != DEFAULT_DAC_SIZE) pss_sd(fd, S_dac_size, dac_size(ss));
@@ -886,6 +887,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (CURSOR(cp) != 0) pcp_sod(fd, S_cursor, CURSOR(cp), chan);
       if (cp->cursor_size != DEFAULT_CURSOR_SIZE) pcp_sd(fd, S_cursor_size, cp->cursor_size, chan);
       if (cp->cursor_style != DEFAULT_CURSOR_STYLE) pcp_ss(fd, S_cursor_style, cursor_style_name(cp->cursor_style), chan);
+      if (cp->tracking_cursor_style != DEFAULT_TRACKING_CURSOR_STYLE) pcp_ss(fd, S_tracking_cursor_style, cursor_style_name(cp->tracking_cursor_style), chan);
       if (cp->show_marks != show_marks(ss)) pcp_ss(fd, S_show_marks, b2s(cp->show_marks), chan);
       if (cp->show_y_zero != show_y_zero(ss)) pcp_ss(fd, S_show_y_zero, b2s(cp->show_y_zero), chan);
       if (cp->show_grid != show_grid(ss)) pcp_ss(fd, S_show_grid, b2s((bool)(cp->show_grid)), chan);

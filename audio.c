@@ -16,8 +16,6 @@
  *    audio describers
  */
 
-/* TODO: no sound output in MacIntel? */
-
 /*
  * void mus_audio_describe(void) describes the audio hardware state.
  * char *mus_audio_report(void) returns the same information as a string.
@@ -6826,7 +6824,6 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
  */
 
 /* TODO: make bigger buffers work right -- is it possible to set the audio device buffer size? */
-/* TODO: no output, overflowed input on MacIntel */
 
 #ifdef MUS_MAC_OSX
 #define AUDIO_OK 1

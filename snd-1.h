@@ -220,7 +220,7 @@ typedef struct chan_info {
   bool cursor_visible, fft_cursor_visible;     /* for XOR decisions */
   off_t *cursors;          /* sample number (follows edit history) */
   int cursor_size;
-  cursor_style_t cursor_style;
+  cursor_style_t cursor_style, tracking_cursor_style;
   int cx, cy, fft_cx;      /* graph-relative cursor loc (for XOR) */
   int edit_ctr;            /* channel's edit history */
   int edit_size;           /* current edit list size */
@@ -449,7 +449,7 @@ typedef struct snd_state {
   enved_target_t Enved_Target;
   bool Clipping, Show_Indices, Just_Sounds;
   int Cursor_Size;
-  cursor_style_t Cursor_Style;
+  cursor_style_t Cursor_Style, Tracking_Cursor_Style;
   bool Filter_Control_In_Db, Filter_Control_In_Hz, Show_Sonogram_Cursor;
   int Speed_Control_Tones;
   speed_style_t Speed_Control_Style;

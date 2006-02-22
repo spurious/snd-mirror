@@ -1180,7 +1180,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 
 static XEN snd_no_such_region_error(const char *caller, XEN n)
 {
-  XEN_ERROR(NO_SUCH_REGION,
+  XEN_ERROR(XEN_ERROR_TYPE("no-such-region"),
 	    XEN_LIST_2(C_TO_XEN_STRING(caller),
 		       n));
   return(XEN_FALSE);

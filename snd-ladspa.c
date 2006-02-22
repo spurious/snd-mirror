@@ -455,7 +455,7 @@ a user interface edit the parameter in a useful way."
   FREE(pcFilename);
 
   if (!psDescriptor) {
-    XEN_ERROR(NO_SUCH_PLUGIN,
+    XEN_ERROR(XEN_ERROR_TYPE("no-such-plugin"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_analyse_ladspa),
 			 C_TO_XEN_STRING("plugin file: ~A, plugin label: ~A"),
                          XEN_LIST_2(ladspa_plugin_filename,
@@ -593,7 +593,7 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
   FREE(pcFilename);
 
   if (!psDescriptor)
-    XEN_ERROR(NO_SUCH_PLUGIN,
+    XEN_ERROR(XEN_ERROR_TYPE("no-such-plugin"),
 	      XEN_LIST_2(C_TO_XEN_STRING(S_apply_ladspa),
 			 ladspa_plugin_configuration));
 
@@ -601,7 +601,7 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
   inchans = lInputCount;
   outchans = lOutputCount;
   if (outchans == 0)
-    XEN_ERROR(PLUGIN_ERROR,
+    XEN_ERROR(XEN_ERROR_TYPE("plugin-error"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
 			 ladspa_plugin_configuration,
 			 C_TO_XEN_STRING(_("Snd plugins must have at least 1 output"))));
@@ -611,7 +611,7 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
       msg = mus_format(_("Ladspa %s required inputs (%d) != sample-readers (%d)"), pcLabel, inchans, readers);
       errmsg = C_TO_XEN_STRING(msg);
       FREE(msg);
-      XEN_ERROR(PLUGIN_ERROR,
+      XEN_ERROR(XEN_ERROR_TYPE("plugin-error"),
 		XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
 			   ladspa_plugin_configuration,
 			   errmsg));
@@ -664,7 +664,7 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
   lSampleRate = (unsigned long)(sp->hdr->srate);
   psHandle = (LADSPA_Handle *)psDescriptor->instantiate(psDescriptor, lSampleRate);
   if (!psHandle)
-    XEN_ERROR(PLUGIN_ERROR,
+    XEN_ERROR(XEN_ERROR_TYPE("plugin-error"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
 			 ladspa_plugin_configuration,
 			 C_TO_XEN_STRING("plugin did not instantiate")));

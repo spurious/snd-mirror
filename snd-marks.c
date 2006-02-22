@@ -1807,7 +1807,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 
 static XEN snd_no_such_mark_error(const char *caller, XEN id)
 {
-  XEN_ERROR(NO_SUCH_MARK,
+  XEN_ERROR(XEN_ERROR_TYPE("no-such-mark"),
 	    XEN_LIST_2(C_TO_XEN_STRING(caller),
 		       id));
   return(XEN_FALSE);

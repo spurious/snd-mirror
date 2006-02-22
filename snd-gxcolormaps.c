@@ -12,6 +12,8 @@ typedef struct {
 static cmap **cmaps = NULL;
 static int cmaps_size = 0;
 
+#define NO_SUCH_COLORMAP     XEN_ERROR_TYPE("no-such-colormap")
+
 bool is_colormap(int n)
 {
   return((n >= 0) &&

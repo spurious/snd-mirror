@@ -2120,7 +2120,7 @@ static XEN check_for_key_error(int k, int s, const char *caller)
 {
   if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
       (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
-    XEN_ERROR(NO_SUCH_KEY,
+    XEN_ERROR(XEN_ERROR_TYPE("no-such-key"),
 	      XEN_LIST_3(C_TO_XEN_STRING(caller),
 			 C_TO_XEN_STRING("key: ~A, state: ~A"),
 			 XEN_LIST_2(C_TO_XEN_INT(k),

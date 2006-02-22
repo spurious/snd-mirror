@@ -4,12 +4,13 @@
 
 #define AXIS_CONTEXT_ID_OK(Id) ((Id >= CHAN_GC) && (Id <= CHAN_TMPGC))
 #define AXIS_INFO_ID_OK(Id)    (Id <= (int)LISP_AXIS_INFO)
+#define NO_SUCH_WIDGET         XEN_ERROR_TYPE("no-such-widget")
 
 static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 {
   if ((cp) && (AXIS_CONTEXT_ID_OK(ax_id)))
     return(set_context(cp, (chan_gc_t)ax_id));
-  XEN_ERROR(NO_SUCH_AXIS_CONTEXT,
+  XEN_ERROR(XEN_ERROR_TYPE("no-such-graphics-context"),
 	    XEN_LIST_3(C_TO_XEN_STRING(caller),
 		       C_TO_XEN_STRING("axis: ~A, sound index: ~A (~A), chan: ~A"),
 		       XEN_LIST_4(C_TO_XEN_INT(ax_id),
@@ -33,7 +34,7 @@ axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
       case TRANSFORM_AXIS_INFO: if (cp->fft) return(cp->fft->axis);            break;
       case LISP_AXIS_INFO:      if (cp->lisp_info) return(lisp_info_axis(cp)); break;
       }
-  XEN_ERROR(NO_SUCH_AXIS_INFO,
+  XEN_ERROR(XEN_ERROR_TYPE("no-such-axis"),
 	    XEN_LIST_3(C_TO_XEN_STRING(caller),
 		       ((!(cp->squelch_update)) || (!(AXIS_INFO_ID_OK(ap_id)))) ?
 		       C_TO_XEN_STRING("axis: ~A of sound ~A (~A), chan: ~A (axis should be " S_time_graph ", " S_lisp_graph ", or " S_transform_graph ")") :

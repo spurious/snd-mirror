@@ -2009,7 +2009,7 @@ bool call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 XEN snd_no_such_sound_error(const char *caller, XEN n)
 {
-  XEN_ERROR(NO_SUCH_SOUND,
+  XEN_ERROR(XEN_ERROR_TYPE("no-such-sound"),
 	    XEN_LIST_2(C_TO_XEN_STRING(caller),
 		       n));
   return(XEN_FALSE);
@@ -3271,7 +3271,7 @@ static void open_sound_error_handler(const char *msg, void *data)
 {
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
-  XEN_ERROR(CANT_OPEN_FILE,                         /* not quite right -- we can open it, but it's not a sound */
+  XEN_ERROR(XEN_ERROR_TYPE("not-a-sound-file"),
 	    XEN_LIST_2(C_TO_XEN_STRING((char *)data),
 		       C_TO_XEN_STRING(msg)));
 }

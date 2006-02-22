@@ -1568,6 +1568,7 @@ static void copy_chan_info(chan_info *ncp, chan_info *ocp)
 {
   ncp->cursor_on = ocp->cursor_on;
   ncp->cursor_style = ocp->cursor_style;
+  ncp->tracking_cursor_style = ocp->tracking_cursor_style;
   ncp->cursor_size = ocp->cursor_size;
   ncp->spectro_x_scale = ocp->spectro_x_scale;
   ncp->spectro_y_scale = ocp->spectro_y_scale;

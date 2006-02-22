@@ -12,9 +12,6 @@ void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height)
 
 void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height)
 {
-#if DEBUGGING
-  if ((!ax) || (!(ax->wn))) {fprintf(stderr, "ax trouble"); abort();}
-#endif
   XFillRectangle(ax->dp, ax->wn, erase_GC(cp), x0, y0, width, height);
 }
 
@@ -28,12 +25,13 @@ void gtk_style_draw_string(axis_context *ax, int x0, int y0, const char *str, in
 {
   /* for callers of Scheme-level draw-string, the Motif and Gtk versions should agree on where "y0" is */
   XGCValues gv;
-  XFontStruct *fs;
+  static XFontStruct *fs = NULL;
   XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCFont, &gv);
   /* now gv.font is the default font */
+  if (fs) XFree(fs);
   fs = XQueryFont(MAIN_DISPLAY(ss), gv.font);
   XDrawString(ax->dp, ax->wn, ax->gc, x0, y0 + fs->ascent, str, len);
-  /* don't XFreeFont fs here! and XFreeFontInfo with null 1st arg appears to be a no-op */
+  /* XFreeFont here is trouble, but handling it as above seems ok -- Font.c in xlib does allocate new space */
 }
 
 void fill_polygon(axis_context *ax, int points, ...)
