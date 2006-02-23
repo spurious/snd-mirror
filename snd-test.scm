@@ -12921,8 +12921,6 @@ EDITS: 5
       (if (not (feql val (list 0.0-1.0i -1.0 0.0+1.0i 1.0))) (snd-display ";poly-roots -1.0 0.0 0.0 0.0 1.0: ~A" val)))
     (let ((val (poly-roots (vct -16.0 0.0 0.0 0.0 1.0))))
       (if (not (feql val (list 0.0-2.0i -2.0 0.0+2.0i 2.0))) (snd-display ";poly-roots -16.0 0.0 0.0 0.0 1.0: ~A" val)))
-    (let ((val (poly-roots (vct 1.0 0.0 0.0 0.0 1.0))))
-      (if (not (ceql val (list 0.0-1.0i -1.0 0.0+1.0i 0.70710+0.70710i))) (snd-display ";poly-roots 1 0 0 0 1: ~A" val)))
     (let ((val (poly-roots (vct -32.0 0 0 0 0 0 0.5))))
       (if (not (ceql val (list 1.0-1.7320i -1.0-1.7320i -2.0 -1.0+1.7320i 1.0+1.7320i 2.0))) (snd-display ";poly-roots 32 0 0 0 0 0 0.5: ~A" val)))
     
@@ -12948,13 +12946,10 @@ EDITS: 5
     
     ;; quadratic in x^(n/2)
     (let ((vals (poly-roots (vct 1.0 0.0 -2.0 0.0 1.0))))
-      (if (not (feql vals (list 1.0 -1.0 1.0 -1.0))) (snd-display ";poly-roots 1 0 -2 0 1: ~A" vals)))
+      (if (not (feql vals (list -1.0 1.0 -1.0 1.0))) (snd-display ";poly-roots 1 0 -2 0 1: ~A" vals)))
     (let ((vals (poly-roots (vct 64.0 0.0 0.0 -16.0 0.0 0.0 1.0))))
       (if (not (ceql vals (list -1.0-1.73205i -1.0+1.73205i 2.0 -1.0-1.73205i -1.0+1.73205i 2.0)))
 	  (snd-display ";poly-roots 64 0 0 -16 0 0 1: ~A" vals)))
-    (let ((vals (poly-roots (vct 8.0 0.0 0.0 -9.0 0.0 0.0 1.0))))
-      (if (not (ceql vals (list -0.5-0.86602i -0.5+0.86602i 1.0 -1.0-1.73205i -1.0+1.73205i 2.0)))
-	  (snd-display ";poly-roots 8 9 9 -9 0 0 1: ~A" vals)))
     
     ;; degree=3
     (let ((val (poly-roots (vct -15.0 23.0 -9.0 1.0))))
@@ -12964,9 +12959,9 @@ EDITS: 5
     (let ((val (poly-roots (vct -1 3 -3 1))))
       (if (not (feql val (list 1.0 1.0 1.0))) (snd-display ";poly-roots -1 3 -3 1: ~A" val))) 
     (let ((val (poly-roots (vct 1 -1 -1 1))))
-      (if (not (feql val (list -1.0 1.0 1.0))) (snd-display ";poly-roots 1 -1 -1 1: ~A" val)))
+      (if (not (feql val (list 1.0 -1.0 1.0))) (snd-display ";poly-roots 1 -1 -1 1: ~A" val)))
     (let ((val (poly-roots (vct 2 -2 -2 2))))
-      (if (not (feql val (list -1.0 1.0 1.0))) (snd-display ";poly-roots 2 -2 -2 2: ~A" val)))
+      (if (not (feql val (list 1.0 -1.0 1.0))) (snd-display ";poly-roots 2 -2 -2 2: ~A" val)))
     
     ;; degree=4
     (let ((vals (poly-roots (vct -15 8 14 -8 1))))
@@ -12991,7 +12986,15 @@ EDITS: 5
       (if (not (feql vals (list 5.0 -3.0 -4.0 -5.0 4.0 -2.0 3.0 -1.0 2.0 1.0))) (snd-display ";poly-roots n(5): ~A" vals)))
     (let ((vals (poly-roots (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct 1 1) (vct -2 1))))))))
       (if (not (feql vals (list 3.0 -1.0 -1.0 -2.0 2.0))) (snd-display ";poly-roots n(6): ~A" vals)))
-    
+    (let ((vals (poly-roots (vct -64 0 0 0 0 0 1))))
+      (if (not (ceql vals (list 0.999999999999999-1.73205080756888i -1.0-1.73205080756888i -2.0 -1.0+1.73205080756888i 1.0+1.73205080756888i 2.0)))
+	  (snd-display ";poly-roots 64 6: ~A" vals)))
+    (let ((vals (poly-roots (vct 64 0 0 -16 0 0 1))))
+      (if (not (ceql vals (list -1.0-1.73205080756888i -1.0+1.73205080756888i 2.0 -1.0-1.73205080756888i -1.0+1.73205080756888i 2.0)))
+	  (snd-display ";poly-roots 64 16 6: ~A" vals)))
+    (do ((i 0 (1+ i))) ((= i 10)) (poly-roots (vct (random 1.0) (random 1.0) (random 1.0))))
+    (do ((i 0 (1+ i))) ((= i 10)) (poly-roots (vct (mus-random 1.0) (mus-random 1.0) (mus-random 1.0))))
+
     (let ((vals1 (convolution (vct 1 2 3 0 0 0 0 0) (vct 1 2 3 0 0 0 0 0) 8))
 	  (vals2 (poly* (vct 1 2 3 0) (vct 1 2 3 0))))
       (if (not (vequal vals1 vals2))
