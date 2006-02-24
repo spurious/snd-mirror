@@ -8,6 +8,12 @@
    SOMEDAY: gtk side of icon box (are there others?)
    TODO: ruby extensions.rb side of set_global_sync
    TODO: various additional key bindings? 
+             align to mark or center on (complete) section etc
+             view full file, go to max amp, go to zero crossing (back)
+             zoom (by pixel?), go to sound (i.e. skip silence or hiss)
+             exit, mix|insert at cursor, delete selection, save edits, select all, revert edits
+             
+   TODO: with-tracking-cursor overrides pfc examples etc
 
    abandoned:
        preset packages: dlp, ksm
@@ -2155,14 +2161,6 @@ static void bind_play_from_cursor(prefs_info *prf)
     }
   XEN_EVAL_C_STRING(expr);
   FREE(expr);
-
-  /* PERHAPS: key bindings for align to mark or center on (complete) section etc
-   *          view full file, go to max amp, go to zero crossing (back)
-   *          zoom (by pixel?), go to sound (i.e. skip silence or hiss)
-   *          exit, mix|insert at cursor, delete selection, save edits, select all, revert edits
-   *          
-   * TODO: with-tracking-cursor overrides pfc examples etc
-   */
 }
 
 /* ---------------- cursor-size ---------------- */
