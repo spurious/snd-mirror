@@ -35,6 +35,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->ptree_ctr = -1;
   cp->edit_size = 0;
   cp->tracks = NULL;
+  cp->tracking = false;
   cp->cursor_on = false;
   cp->cursor_visible = false;
   cp->fft_cursor_visible = false;

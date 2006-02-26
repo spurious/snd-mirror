@@ -1294,7 +1294,9 @@ static int fill_dac_buffers(int write_ok)
 		  dp->cp->just_zero = true;
 		  loc = current_location(dp->chn_fd);
 		  loc -= (int)(cursor_location_offset(ss) * dp->cur_srate); /* should work in either direction */
+		  dp->cp->tracking = true;
 		  cursor_moveto_without_verbosity(dp->cp, loc);
+		  dp->cp->tracking = false;
 		  dp->cp->just_zero = old_just_zero;
 		}
 	      /* add a buffer's worth from the current source into dp->audio_chan */

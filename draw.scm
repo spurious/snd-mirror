@@ -331,12 +331,12 @@ the y-zoom-slider controls the graph amp"
   (add-hook! mouse-click-hook click-current-window-location)
   (add-hook! update-hook update-current-window-location))
 
-(define (smart-line-cursor snd chn ax1)
+(define (smart-line-cursor snd chn tracking)
   "smart-line-cursor is a cursor-style function that tries not to overwrite the thumbnail graph in the upper right corner"
   (let* ((point (cursor-position))
          (x (car point))
          (y (cadr point))
-	 (ax (axis-info snd chn ax1))
+	 (ax (axis-info snd chn time-graph))
 	 (y0 (list-ref ax 11))
 	 (y1 (list-ref ax 13))
 	 (x0 (list-ref ax 10))

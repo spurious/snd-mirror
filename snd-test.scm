@@ -68,11 +68,6 @@
       (system "rm /var/tmp/*.snd")))
 (system "rm core*")
 
-(define (local-random num) ; for x86-64 bugfix
-  (if (exact? num)
-      (inexact->exact (abs (mus-random (exact->inexact num))))
-      (abs (mus-random num))))
-
 (define (snd-display . args)
   (let ((str (if (null? (cdr args))
 		 (car args)
@@ -381,7 +376,7 @@
 (snd-display ";~%~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
 (define (log-mem tst) 
-  (if (> tests 1) (begin (snd-display ";test ~D " (1+ tst)) (gc)(gc)))
+  (if (> tests 1) (begin (snd-display ";test ~D:~D " test-number (1+ tst)) (gc)(gc)))
   (if (= (modulo tst 10) 0) (if (defined? 'mem-report) (mem-report))))
 
 (defmacro without-errors (func)
@@ -718,6 +713,9 @@
       (set! (cursor-style) (cursor-style))
       (if (not (equal? (cursor-style)  cursor-cross )) 
 	  (snd-display ";cursor-style set def: ~A" (cursor-style)))
+      (set! (tracking-cursor-style) (tracking-cursor-style))
+      (if (not (equal? (tracking-cursor-style)  cursor-cross )) 
+	  (snd-display ";tracking-cursor-style set def: ~A" (tracking-cursor-style)))
       (set! (enved-base) (enved-base))
       (if (fneq (enved-base)  1.0 )
 	  (snd-display ";enved-base set def: ~A" (enved-base)))
@@ -1086,6 +1084,7 @@
 	'with-tracking-cursor (with-tracking-cursor) #f
 	'cursor-size (cursor-size) 15
 	'cursor-style (cursor-style) cursor-cross
+	'tracking-cursor-style (tracking-cursor-style) cursor-cross
 	'dac-combines-channels (dac-combines-channels) #t
 	'dac-size (dac-size) 256 
 	'minibuffer-history-length (minibuffer-history-length) 8
@@ -1682,6 +1681,7 @@
 	  (list 'with-tracking-cursor with-tracking-cursor #f #t)
 	  (list 'cursor-size cursor-size 15 30)
 	  (list 'cursor-style cursor-style cursor-cross cursor-line)
+	  (list 'tracking-cursor-style tracking-cursor-style cursor-cross cursor-line)
 	  (list 'dac-combines-channels dac-combines-channels #t #f)
 	  (list 'dac-size dac-size 256 512)
 	  (list 'minibuffer-history-length minibuffer-history-length 8 16)
@@ -1848,6 +1848,8 @@
 	  (list 'zero-pad zero-pad 0 '(-1 -123))
 	  (list 'cursor-style cursor-style cursor-cross '(-1))
 	  (list 'cursor-style cursor-style cursor-line '(2 123))
+	  (list 'tracking-cursor-style tracking-cursor-style cursor-cross '(-1))
+	  (list 'tracking-cursor-style tracking-cursor-style cursor-line '(2 123))
 	  (list 'transform-graph-type transform-graph-type 0 '(-1 123))
 	  (list 'fft-window fft-window 6 '(-1 123))
 	  (list 'enved-filter-order enved-filter-order 40 '(-1 0))
@@ -27319,6 +27321,7 @@ EDITS: 5
 	    (test-channel cursor 'cursor)
 	    (test-channel cursor-size 'cursor-size)
 	    (test-channel cursor-style 'cursor-style)
+	    (test-channel tracking-cursor-style 'tracking-cursor-style)
 	    (test-channel left-sample 'left-sample)
 	    (test-channel right-sample 'right-sample)
 	    (test-channel squelch-update 'squelch-update)
@@ -27473,6 +27476,7 @@ EDITS: 5
 		(list 'with-tracking-cursor with-tracking-cursor #f #f #t)
 		(list 'cursor-size cursor-size #f 15 25)
 		(list 'cursor-style cursor-style #f cursor-cross cursor-line)
+		(list 'tracking-cursor-style tracking-cursor-style #f cursor-cross cursor-line)
 		(list 'clipping clipping #f #f #t)
 		(list 'default-output-chans default-output-chans #f 1 8)
 					;(list 'default-output-data-format default-output-data-format #f 1 12)
@@ -27612,7 +27616,7 @@ EDITS: 5
 		    transform-normalization show-mix-waveforms graph-style dot-size show-axes show-y-zero show-grid show-marks grid-density
 		    spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 		    spectro-hop spectro-cutoff spectro-start graphs-horizontal x-axis-style beats-per-minute beats-per-measure
-		    cursor-size cursor-style show-sonogram-cursor
+		    cursor-size cursor-style tracking-cursor-style show-sonogram-cursor
 		    ))
 (define func-names (list 'time-graph-type 'wavo-hop 'wavo-trace 'max-transform-peaks 'show-transform-peaks 'zero-pad 'transform-graph-type 'fft-window
 			 'with-verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB
@@ -27620,7 +27624,7 @@ EDITS: 5
 			 'transform-normalization 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 'show-y-zero 'show-grid 'show-marks 'grid-density
 			 'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
 			 'spectro-hop 'spectro-cutoff 'spectro-start 'graphs-horizontal 'x-axis-style 'beats-per-minute 'beats-per-measure
-			 'cursor-size 'cursor-style 'show-sonogram-cursor
+			 'cursor-size 'cursor-style 'tracking-cursor-style 'show-sonogram-cursor
 			 ))
 (define new-values (list graph-as-wavogram 12 512 3 #t 32 graph-as-sonogram cauchy-window
 			 #t #t #t -120.0
@@ -27628,7 +27632,7 @@ EDITS: 5
 			 0 #t graph-lollipops 8 show-no-axes #t #t #f 1.0
 			 32.0 .5 32.0 .5 32.0 .5
 			 14 .3 .1 #f x-axis-in-samples 120.0 3
-			 15 cursor-cross #t
+			 15 cursor-cross cursor-cross #t
 			 ))
 
 (define (test-history-channel func name new-value snd1 snd2 snd3)
@@ -56715,7 +56719,7 @@ EDITS: 1
 		     amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 		     reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
 		     auto-update-interval count-matches current-font cursor cursor-color with-tracking-cursor cursor-size
-		     cursor-style dac-combines-channels dac-size clipping data-color data-format data-location data-size
+		     cursor-style tracking-cursor-style dac-combines-channels dac-size clipping data-color data-format data-location data-size
 		     default-output-chans default-output-data-format default-output-srate default-output-header-type define-envelope
 		     delete-mark delete-marks forget-region delete-sample delete-samples
 		     delete-selection dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
@@ -56877,7 +56881,7 @@ EDITS: 1
 			 amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 			 reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
 			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
-			 with-tracking-cursor cursor-size cursor-style dac-combines-channels dac-size clipping data-color
+			 with-tracking-cursor cursor-size cursor-style tracking-cursor-style dac-combines-channels dac-size clipping data-color
 			 default-output-chans default-output-data-format default-output-srate default-output-header-type dot-size
 			 enved-envelope enved-base enved-clip? enved-in-dB enved-style enved-power
 			 enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
@@ -57379,7 +57383,7 @@ EDITS: 1
 				(snd-display ";~D: chn (no snd) procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
 			(list channel-widgets count-matches cursor channel-properties
-			      with-tracking-cursor cursor-position cursor-size cursor-style delete-sample display-edits dot-size
+			      with-tracking-cursor cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size
 			      draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency
 			      fft-log-magnitude transform-size transform-graph-type fft-window transform-graph? find-channel
 			      graph graph-style lisp-graph? insert-region insert-sound
@@ -57406,7 +57410,7 @@ EDITS: 1
 				(snd-display ";~D: chn (no chn) procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
 			(list channel-widgets count-matches cursor channel-properties
-			      cursor-position cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines
+			      cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size draw-dots draw-lines
 			      edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude
 			      transform-size transform-graph-type fft-window transform-graph? find-channel
 			      graph graph-style lisp-graph? insert-region insert-sound left-sample
@@ -57433,7 +57437,7 @@ EDITS: 1
 				(snd-display ";~D: chn procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
 			(list channel-widgets cursor with-tracking-cursor channel-properties
-			      cursor-position cursor-size cursor-style delete-sample display-edits dot-size edit-fragment
+			      cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size edit-fragment
 			      edit-position edit-tree edits env-sound fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude
 			      transform-size transform-graph-type fft-window transform-graph? filter-sound
 			      graph-data graph-style lisp-graph? insert-region left-sample
@@ -57490,7 +57494,7 @@ EDITS: 1
 			    (if (not (eq? tag 'no-such-channel))
 				(snd-display ";~D: chn procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list channel-widgets cursor cursor-position cursor-size cursor-style display-edits
+			(list channel-widgets cursor cursor-position cursor-size cursor-style tracking-cursor-style display-edits
 			      dot-size edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude
 			      transform-size transform-graph-type fft-window transform-graph? graph-style lisp-graph? left-sample
 			      time-graph-style lisp-graph-style transform-graph-style

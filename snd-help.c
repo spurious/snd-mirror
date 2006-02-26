@@ -479,26 +479,24 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+27-Feb:  tracking-cursor-style.\n\
 21-Feb:  bind-key now takes a character or string 1st arg (as well as an integer); if a string, it's treated\n\
            as the X/Gtk key name (e.g. \"Home\" or \"plus\").  It also has a 6th optional arg, a preferences\n\
            dialog name (so that the dialog can reflect current key bindings by functionality).\n\
          with-tracking-cursor and with-verbose-cursor as synonyms for cursor-follows-play and verbose-cursor.\n\
 17-Feb:  mus-file-data-clipped -> mus-clipping, added mus-file-clipping for local settings\n\
-         data-clipped -> clipping\n\
-         mus-prescaler (global) alongside previous mus-file-prescaler\n\
+           data-clipped -> clipping\n\
+           mus-prescaler (global) alongside previous mus-file-prescaler\n\
          added pausing -- returns #t if DAC is paused, can be set to #t or #f to start/stop pausing\n\
            similarly playing -- #t if DAC is running (may be paused), settable to start/stop playing\n\
            removed dac-is-running (it's in snd7.scm)\n\
 9-Feb:   Bill Sack's pd-stochastic.scm and snd-stochastic.pd.\n\
 2-Feb:   mus_audio_sun_outputs -> mus_sun_set_outputs, added mus_netbsd_set_outputs.\n\
-         mus_audio_set_oss_buffers -> mus_oss_set_buffers.\n\
-         changed ALSA environment variable names to use MUS, not SNDLIB.\n\
-         changed ALSA default device to \"default\" from \"hw:0\"\n\
+           mus_audio_set_oss_buffers -> mus_oss_set_buffers.\n\
+           changed ALSA environment variable names to use MUS, not SNDLIB.\n\
+           changed ALSA default device to \"default\" from \"hw:0\"\n\
 30-Jan:  new-sound-dialog.\n\
 15-Jan:  snd 7.18.\n\
-5-Jan:   sound-file? for easier file-filter definition.\n\
-2-Jan:   removed the various sorting indices (sort-by-name|size|date|entry), and changed \n\
-           the way the user-defined sorter works.  Also removed just-sounds-hook.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

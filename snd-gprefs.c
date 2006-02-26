@@ -2026,6 +2026,19 @@ static void cursor_style_choice(prefs_info *prf)
     in_set_cursor_style(cursor_styles_i[get_user_int_data(G_OBJECT(prf->radio_button))]);
 }
 
+/* ---------------- tracking-cursor-style ---------------- */
+
+static void reflect_tracking_cursor_style(prefs_info *prf)
+{
+  set_toggle_button(prf->radio_buttons[(tracking_cursor_style(ss) == CURSOR_CROSS) ? 0 : 1], true, false, (void *)prf);
+}
+
+static void tracking_cursor_style_choice(prefs_info *prf)
+{
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->radio_button)))
+    in_set_tracking_cursor_style(cursor_styles_i[get_user_int_data(G_OBJECT(prf->radio_button))]);
+}
+
 /* ---------------- cursor-color ---------------- */
 
 static color_t saved_cursor_color;
@@ -4829,6 +4842,13 @@ widget_t start_preferences_dialog(void)
 				   dpy_box, 
 				   cursor_style_choice);
     remember_pref(prf, reflect_cursor_style, NULL);
+
+    current_sep = make_inter_variable_separator(dpy_box);
+    prf = prefs_row_with_radio_box("tracking cursor shape", S_tracking_cursor_style,
+				   cursor_styles, 2, tracking_cursor_style(ss),
+				   dpy_box, 
+				   tracking_cursor_style_choice);
+    remember_pref(prf, reflect_tracking_cursor_style, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box);
     saved_cursor_color = ss->sgx->cursor_color;

@@ -435,7 +435,7 @@ If 'check' is #f, the hooks are removed."
 			     wavelet-type min-dB transform-size transform-graph-type time-graph-type fft-window
 			     transform-type transform-normalization time-graph-style show-mix-waveforms dot-size
 			     x-axis-style show-axes graphs-horizontal lisp-graph-style transform-graph-style
-			     grid-density ;tracking-cursor-style
+			     grid-density tracking-cursor-style
 			     )))
 
     (define (print-readably fd field depth first)

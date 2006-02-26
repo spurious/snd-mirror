@@ -4393,6 +4393,7 @@ static int alsa_mus_audio_initialize(void)
 	    return(MUS_ERROR);
 	}
     }
+
   if (!alsa_set_capture_parameters())
     {
       alsa_capture_device_name = "plughw:0";
@@ -4699,7 +4700,17 @@ static int recover_from_xrun(int id)
 static int alsa_mus_audio_write(int id, char *buf, int bytes)
 {
   snd_pcm_sframes_t status;
-  int frames = snd_pcm_bytes_to_frames(handles[id], bytes);
+  ssize_t frames;
+  frames = snd_pcm_bytes_to_frames(handles[id], bytes);
+#if DEBUGGING
+  if ((frames <= 0) || (frames > bytes))
+    {
+      /* pcm->frame_bits not correct? */
+      mus_print("audio write %d frames (%d bytes)?", bytes, frames);
+      abort();
+      return(MUS_ERROR);
+    }
+#endif
   status = snd_pcm_writei(handles[id], buf, frames);
   if ((status == -EAGAIN) || 
       ((status >= 0) && (status < frames)))
@@ -4725,8 +4736,16 @@ static int alsa_mus_audio_write(int id, char *buf, int bytes)
 static int alsa_mus_audio_read(int id, char *buf, int bytes)
 {
   snd_pcm_sframes_t status;
-  int frames = snd_pcm_bytes_to_frames(handles[id], bytes);
-  
+  ssize_t frames;
+  frames = snd_pcm_bytes_to_frames(handles[id], bytes);
+#if DEBUGGING
+  if ((frames <= 0) || (frames > bytes))
+    {
+      mus_print("audio read %d frames (%d bytes)?", frames, bytes);
+      abort();
+      return(MUS_ERROR);
+    }
+#endif
   status = snd_pcm_readi(handles[id], buf, frames);
   if ((status == -EAGAIN) || 
       ((status >= 0) && (status < frames)))

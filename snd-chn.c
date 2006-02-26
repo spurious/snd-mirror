@@ -3,12 +3,6 @@
 #include "clm-strings.h"
 
 /* 
- * TODO: tracking-cursor-style (prefs too)
- *         cursor proc 3rd arg could include whether tracking (or change it to be just that)
- *         start|stop-playing-hook are the only check points (extsnd.html, snd-dac.c 983, 639)
- *         draw.scm smart-line-cursor uses ax arg -- assume time-graph?
- *         will need test (gxprefs, here)
- *
  * TODO: overlay of rms env
  *       fill in two-sided with colormap choice based on rms of underlying pixels (same for line graph?) -- would want peak-env style support
  * TODO: bark scale as axis or color as above: Fletcher-Munson post-process fft data -- is there a hook that would allow this?
@@ -393,6 +387,17 @@ static void set_cursor_style(cursor_style_t val)
 {
   in_set_cursor_style(val);
   for_each_chan_1(chans_cursor_style, (void *)(&val));
+}
+
+static void chans_tracking_cursor_style(chan_info *cp, void *ptr) 
+{
+  cp->tracking_cursor_style = (*((cursor_style_t *)ptr));
+}
+
+static void set_tracking_cursor_style(cursor_style_t val)
+{
+  in_set_tracking_cursor_style(val);
+  for_each_chan_1(chans_tracking_cursor_style, (void *)(&val));
 }
 
 chan_info *virtual_selected_channel(chan_info *cp)
@@ -3267,12 +3272,16 @@ void display_channel_data(chan_info *cp)
 
 static void draw_cursor(chan_info *cp)
 {
+  cursor_style_t cur;
   axis_info *ap;
   axis_context *ax;
   if (!(cp->graph_time_p)) return;
   ap = cp->axis;
   ax = cursor_context(cp);
-  switch (cp->cursor_style)
+  if ((cp->tracking) && (with_tracking_cursor(ss) != DONT_TRACK))
+    cur = cp->tracking_cursor_style;
+  else cur = cp->cursor_style;
+  switch (cur)
     {
     case CURSOR_CROSS:
       draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
@@ -3285,7 +3294,9 @@ static void draw_cursor(chan_info *cp)
       XEN_CALL_3((XEN_PROCEDURE_P(cp->cursor_proc)) ? (cp->cursor_proc) : (ss->cursor_proc),
 		 C_TO_XEN_INT(cp->sound->index),
 		 C_TO_XEN_INT(cp->chan),
-		 C_TO_XEN_INT((int)TIME_AXIS_INFO),
+		 /* this was time-graph, which was useless. It's now #t if we're in tracking-cursor mode */
+		 /*   this will be called only it with_tracking_cursor is #f -> we want to draw it ourselves */
+		 C_TO_XEN_BOOLEAN(cp->tracking),
 		 S_cursor_style " procedure");
       break;
     }
@@ -4401,7 +4412,7 @@ typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GR
 	      CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
 	      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP,
 	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR, CP_SHOW_GRID, CP_SHOW_SONOGRAM_CURSOR, CP_GRID_DENSITY, CP_MAXAMP_POSITION,
-	      CP_EDPOS_MAXAMP_POSITION, CP_BEATS_PER_MEASURE, CP_FFT_WINDOW_ALPHA
+	      CP_EDPOS_MAXAMP_POSITION, CP_BEATS_PER_MEASURE, CP_FFT_WINDOW_ALPHA, CP_TRACKING_CURSOR_STYLE
 } cp_field_t;
 
 static XEN cp_edpos;
@@ -4462,6 +4473,9 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	      if (XEN_PROCEDURE_P(cp->cursor_proc))
 		return(cp->cursor_proc);
 	      return(ss->cursor_proc);
+	      break;
+	    case CP_TRACKING_CURSOR_STYLE:
+	      return(C_TO_XEN_INT((int)(cp->tracking_cursor_style)));
 	      break;
 	    case CP_EDIT_HOOK:
 	      if (!(XEN_HOOK_P(cp->edit_hook)))
@@ -4758,6 +4772,10 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
       cp->just_zero = (cp->cursor_style == CURSOR_LINE); /* no point in displaying y value in this case */
       update_graph(cp); 
       return(C_TO_XEN_INT((int)(cp->cursor_style)));
+      break;
+    case CP_TRACKING_CURSOR_STYLE:
+      cp->tracking_cursor_style = (cursor_style_t)XEN_TO_C_INT(on);
+      return(C_TO_XEN_INT((int)(cp->tracking_cursor_style)));
       break;
     case CP_SHOW_Y_ZERO:
       cp->show_y_zero = XEN_TO_C_BOOLEAN(on); 
@@ -5179,7 +5197,7 @@ should draw the cursor at the current cursor position using the " S_cursor_conte
 static XEN g_set_cursor_style(XEN on, XEN snd_n, XEN chn_n) 
 {
   cursor_style_t val = CURSOR_PROC;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(on) || XEN_PROCEDURE_P(on), on, XEN_ARG_1, S_setB S_cursor_style, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(on) || XEN_PROCEDURE_P(on), on, XEN_ARG_1, S_setB S_cursor_style, "an integer or a function");
   if (XEN_INTEGER_P(on))
     {
       val = (cursor_style_t)XEN_TO_C_INT(on);
@@ -5216,6 +5234,31 @@ static XEN g_set_cursor_style(XEN on, XEN snd_n, XEN chn_n)
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_style_reversed, g_set_cursor_style)
+
+static XEN g_tracking_cursor_style(XEN snd_n, XEN chn_n) 
+{
+  #define H_tracking_cursor_style "(" S_tracking_cursor_style " (snd #f) (chn #f)): current tracking cursor style in snd's channel chn. \
+Possible values are " S_cursor_cross " (default), and " S_cursor_line "."
+
+  if (XEN_BOUND_P(snd_n))
+    return(channel_get(snd_n, chn_n, CP_TRACKING_CURSOR_STYLE, S_tracking_cursor_style));
+  return(C_TO_XEN_INT((int)(tracking_cursor_style(ss))));
+}
+
+static XEN g_set_tracking_cursor_style(XEN on, XEN snd_n, XEN chn_n) 
+{
+  cursor_style_t val = CURSOR_CROSS;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_tracking_cursor_style, "an integer");
+  val = (cursor_style_t)XEN_TO_C_INT(on);
+  if (val > CURSOR_LINE)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_tracking_cursor_style, 1, on, "~A, but must be " S_cursor_cross " or " S_cursor_line);
+  if (XEN_BOUND_P(snd_n))
+    return(channel_set(snd_n, chn_n, on, CP_TRACKING_CURSOR_STYLE, S_setB S_tracking_cursor_style));
+  else set_tracking_cursor_style(val);
+  return(on);
+}
+
+WITH_REVERSED_CHANNEL_ARGS(g_set_tracking_cursor_style_reversed, g_set_tracking_cursor_style)
 
 static XEN g_cursor_size(XEN snd_n, XEN chn_n) 
 {
@@ -7094,6 +7137,8 @@ XEN_ARGIFY_3(g_cursor_w, g_cursor)
 XEN_ARGIFY_4(g_set_cursor_w, g_set_cursor)
 XEN_ARGIFY_2(g_cursor_style_w, g_cursor_style)
 XEN_ARGIFY_3(g_set_cursor_style_w, g_set_cursor_style)
+XEN_ARGIFY_2(g_tracking_cursor_style_w, g_tracking_cursor_style)
+XEN_ARGIFY_3(g_set_tracking_cursor_style_w, g_set_tracking_cursor_style)
 XEN_ARGIFY_2(g_cursor_size_w, g_cursor_size)
 XEN_ARGIFY_3(g_set_cursor_size_w, g_set_cursor_size)
 XEN_ARGIFY_2(g_left_sample_w, g_left_sample)
@@ -7237,6 +7282,8 @@ XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
 #define g_set_cursor_w g_set_cursor
 #define g_cursor_style_w g_cursor_style
 #define g_set_cursor_style_w g_set_cursor_style
+#define g_tracking_cursor_style_w g_tracking_cursor_style
+#define g_set_tracking_cursor_style_w g_set_tracking_cursor_style
 #define g_cursor_size_w g_cursor_size
 #define g_set_cursor_size_w g_set_cursor_size
 #define g_left_sample_w g_left_sample
@@ -7420,6 +7467,9 @@ void g_init_chn(void)
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_cursor_style, g_cursor_style_w, H_cursor_style,
 					    S_setB S_cursor_style, g_set_cursor_style_w, g_set_cursor_style_reversed, 0, 2, 1, 2);
+  
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_tracking_cursor_style, g_tracking_cursor_style_w, H_tracking_cursor_style,
+					    S_setB S_tracking_cursor_style, g_set_tracking_cursor_style_w, g_set_tracking_cursor_style_reversed, 0, 2, 1, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_cursor_size, g_cursor_size_w, H_cursor_size,
 					    S_setB S_cursor_size, g_set_cursor_size_w, g_set_cursor_size_reversed, 0, 2, 1, 2);

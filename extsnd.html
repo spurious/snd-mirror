@@ -4636,33 +4636,12 @@ cursor size (pixels); defaults to 15. <code>(set! (cursor-size) 30)</code> makes
 <tr><td></td><td>
 cursor style (<i>cursor-cross</i> or <i>cursor-line</i>)
 The normal shape is a "+" sign; the cursor-line is a vertical line.
-The following hooks set the cursor-style to cursor-line while playing if
-with-tracking-cursor is #t:
-</td></tr>
-
-<tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define set-sound-cursor
-  (lambda (snd shape)
-    (do ((j 0 (1+ j)))
-        ((= j (<a class=quiet href="#channels">channels</a> snd)) #f)
-      (set! (<em class=red>cursor-style</em> snd j) shape))))
-
-(add-hook! <a class=quiet href="#startplayinghook">start-playing-hook</a> 
-  (lambda (snd) 
-    (if (<a class=quiet href="#withtrackingcursor">with-tracking-cursor</a> snd) 
-        (set-sound-cursor snd <em class=red>cursor-line</em>))))
-
-(add-hook! <a class=quiet href="#stopplayinghook">stop-playing-hook</a> 
-  (lambda (snd) 
-    (set-sound-cursor snd <em class=red>cursor-cross</em>)))
-</pre></td></tr></table>
-</td></tr>
-<tr><td></td><td>
-The <i>cursor-style</i> can also be a procedure of three arguments, the
-sound index, channel number, and graph (always time-graph).  The procedure
+cursor-style can also be a procedure of three arguments, the
+sound index, channel number, and a boolean that is true if the cursor is currently
+tracking playback (a "tracking-cursor").
+The procedure
 should draw the cursor at the current cursor position using the
-<a href="#cursorcontext">cursor-context</a> whenever it is called.  
+<a href="#cursorcontext">cursor-context</a>.
 One example is <i>smart-line-cursor</i> in draw.scm.
 Here is a simpler one that
 replaces the normal "+" cursor with an "x":
