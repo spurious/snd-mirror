@@ -1,49 +1,49 @@
-Snd 7.18
+Snd 7.19
 
-snd_pd_external.c, help-snd-fm.pd, and pd-fm.scm and other changes for Pd, thanks to Kjetil.
+Bill Sack's pd-stochastic.scm and snd-stochastic.pd.
 
-Many more improvements thanks to Mike.
+more pd-related improvements, thanks to Kjetil.
 
-default sample type is now float. This should only affect the "peak-env" files which will
-  need to be rebuilt (just delete the current peak files, and they'll be rebuilt as needed
-  automatically).
+more ruby and emacs related improvements thanks to Mike.
 
-analog-filter.scm: Butterworth, Chebyshev, inverse-Chebyshev, Bessel(-Thompson), Elliptic filters.
-  (These functions are based on code of Anders Johansson)
+in clm, numerous sbcl-related bugfixes thanks to Fernando.
 
-new fft windows: samaraki and ultraspherical (related to the dolph-chebyshev window)
-  ultraspherical window has an additional parameter (side lobe shape) named
-  fft-window-alpha here (to parallel fft-window-beta).
+new-sound-dialog.
 
-new sound effects:
-  sinc-train (clm.html)
-  reverse-by-blocks and reverse-within-blocks (examp.scm)
-  pulse-voice (examp.scm)
+removed ancient SGI-specific useScheme resource
 
-moved make-iir-low|high-pass-1 to snd7.scm (from dsp.scm)
+removed XmMultiList from xm module
 
-removed the various sorting indices (sort-by-name|size|date|entry), and changed 
-  the way the user-defined sorter works. (snd7.scm defines the old names).
-  Also removed (unimplemented, but documented) file-sorters list, and the
-  now useless just-sounds-hook.  added sound-file? for easier file-filter definition.
+alsa: changed environment variable names to use MUS_* rather than SNDLIB_*
+      changed default alsa device to "default", but it then looks for "plughw:0" 
+            and "hw:0" if things seem weird. 
+      added mus-alsa-playback-device, mus-alsa-capture-device, mus-alsa-device,
+            mus-alsa-buffers, mus-alsa-buffer-size, mus-alsa-squelch-warning.
 
-in both Motif and Gtk, the file selection dialogs have been changed -- there are
-  fewer visible widgets, but popup menus are scattered around to handle uncommon 
-  chores (sorting, filtering, etc).  libgamin is connected to the file list as 
-  elsewhere.  Right-click in the file list brings up a menu of sorting/filtering 
-  choices; in the directory list it brings up a menu that splits out the parent 
-  directories (single-click in the directory list moves to that directory);
-  in the file and filter entry widgets it brings up a list of previous choices.  
-  If you type in the file entry widget, the file list tries to move to the apparent choice.
-  The "preview area" is as before -- a description of the selected sound file,
-  with "play" and "just-sounds" buttons. 
+changed mus-audio-sun-outputs to mus-sun-set-outputs, and
+        mus-audio-set-oss-buffers to mus-oss-set-buffers
+added mus-netbsd-set-outputs
 
-In the xm module, XmNpopupEnabled is now an enum (it was boolean -- I was following
-  the incorrect info in the Motif docs -- use XmPOPUP_AUTOMATIC rather than #t).
+mus-file-data-clipped -> mus-clipping, added mus-file-clipping for local settings
+  data-clipped -> clipping
+  mus-prescaler (global) alongside previous mus-file-prescaler
 
-the happy buttons have hunkered down for the winter.
+added pausing -- returns #t if DAC is paused, can be set to #t or #f to start/stop pausing
+  similarly playing -- #t if DAC is running (may be paused), settable to start/stop playing
+  removed dac-is-running (it's in snd7.scm)
+  (eventually I'd like to get rid of the jargon "DAC", but that involves 5 more names)
 
-checked: gtk 2.8.8|9|10, sbcl 0.9.7|8, clisp 2.36|7 (cmn), motif 2.3.0, ruby 1.8.4, 
-         Mesa 6.4.1 (openGL), gamin 0.1.7 (fam)
+with-tracking-cursor and with-verbose-cursor as synonyms for cursor-follows-play and verbose-cursor
+  tracking-cursor-style
 
-with much help from: Kjetil, Mike, Russell Aspinwall
+bind-key now takes a character or string 1st arg (as well as an integer); if a string, it's treated
+  as the X/Gtk key name (e.g. "Home" or "plus").  It also has a 6th optional arg, a preferences
+  dialog name (so that the dialog can reflect current key bindings by functionality).
+
+
+checked: clisp 2.38 (cmn), fftw 3.1, gtk 1.8.11|12|13, sbcl 0.9.9, MacIntel, guile 1.8.0
+
+with much help from: Kjetil, Mike, Russell Aspinwall, Eric Marzolf, Fernando,
+   Bill Sack, Sebastian Tennant
+
+

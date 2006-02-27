@@ -696,9 +696,6 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 				     (<struct-rt_bus-*> in_bus das_inbus)
 				     (<struct-rt_bus-*> out_bus das_outbus)
 				     
-				     (set! num_outs (MIN num_outs num_ins))
-				     (set! num_ins num_outs)
-				     
 				     ;; pd-inlets -> "*in-bus*"
 				     (for-each 0 nframes
 					       (lambda (n)
@@ -709,6 +706,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 							     (set! in_bus->data[lokke].last_written_to
 								   base_time)
 							     lokke++))))
+
 				     ;; "*out-bus*" -> pd-outlets
 				     (set! lokke 0)
 				     (for-each 0 nframes

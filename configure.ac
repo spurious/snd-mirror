@@ -1382,8 +1382,7 @@ if test $GUILE_CONFIG_works = yes; then
       fi
     fi
     if test "$with_snd_as_pd_external" = yes ; then
-#      GUILE_LIBS=["`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string-append (cdr (assoc (quote libdir) %guile-build-info)) "/libguile.a -lltdl -lgmp -lcrypt"))'`"]
-       GUILE_LIBS=["`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string-append (cdr (assoc (quote libdir) %guile-build-info)) "/libguile.a " (cdr (assoc (quote LIBS) %guile-build-info))))'`"]
+      GUILE_LIBS=["`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string-append (cdr (assoc (quote libdir) %guile-build-info)) "/libguile.a " (cdr (assoc (quote LIBS) %guile-build-info))))'`"]
     fi
 
     AC_SUBST(GUILE_LIBS)

@@ -7,13 +7,28 @@
 /* SOMEDAY: completions and sscanf->string_to_* for better checks (xmnmessage?)
    SOMEDAY: gtk side of icon box (are there others?)
    TODO: ruby extensions.rb side of set_global_sync
-   TODO: various additional key bindings? 
-             align to mark or center on (complete) section etc
-             view full file, go to max amp, go to zero crossing (back)
-             zoom (by pixel?), go to sound (i.e. skip silence or hiss)
-             exit, mix|insert at cursor, delete selection, save edits, select all, revert edits
-             
-   TODO: with-tracking-cursor overrides pfc examples etc
+   TODO: various additional key bindings:
+
+             [view the current selection, display the whole sound]
+             [zoom in|out one pixel, move window left|right one pixel]
+	     [mix selection(?) at cursor, insert selection(?) at cursor, delete selection, save edits, select the whole sound, undo all edits]
+	     [play selection?]
+             [go to max amp, go to next zero crossing, skip silence]
+
+     (bind-key "Left" 0 (lambda () (move-one-pixel #f)) #f "move one pixel back" "move-back-one-pixel")
+     (bind-key "Right" 0 (lambda () (move-one-pixel #t)) #f "move one pixel forward" "move-forward-one-pixel")
+     (bind-key "Up" 0 (lambda () (zoom-one-pixel #f)) #f "zoom out one pixel" "zoom-out-one-pixel")
+     (bind-key "Down" 0 (lambda () (zoom-one-pixel #t)) #f "zoom in one pixel" "zoom-in-one-pixel")
+     (bind-key key cm (lambda () (delete-selection)) cx "delete selection" "delete-selection")
+     (bind-key key cm (lambda () (mix-selection (cursor))) cx "mix selection" "mix-selection")
+     (bind-key key cm (lambda () (insert-selection (cursor))) cx "insert selection" "insert-selection")
+     (bind-key key cm (lambda () (set! (x-bounds) (list 0.0 (/ (frames) (srate))))) #f "show full sound" "show-all")
+     (bind-key key cm (lambda () (set! (x-bounds) (list (/ (selection-position) (srate))
+                                                        (/ (+ (selection-position) (selection-frames)) (srate))))) #f "show selection" "show-selection")
+     (bind-key key cm (lambda () (select-all)) cx "select all" "select-all")
+     (bind-key key cm (lambda () (revert-sound)) cx "undo all edits" "revert-sound")
+     (bind-key key cm (lambda () (save-sound)) cx "save all edits" "save-sound")
+
 
    abandoned:
        preset packages: dlp, ksm

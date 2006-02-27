@@ -262,7 +262,7 @@ static void *read_eval_print_loop(void *arg){
     fgets(repl_some,499,stdin);
     len=strlen(repl_some);
     if(len>497)
-      fprintf(stderr,"WARNING, repl buffer probably too small. Please report to k.s.matheussen@notam02.no\n");
+      fprintf(stderr,"WARNING, repl buffer probably too small (%d>497). Please report to k.s.matheussen@notam02.no\n",len);
     while(jack_ringbuffer_write_space(rb_repl)<len){
       usleep(50000);
     }
@@ -813,8 +813,6 @@ static t_int *snd_pd_perform(t_int *w){
   t_snd_pd *x=(t_snd_pd*)w[1];
   int ch,lokke;
   int length=(int)w[2];
-  //t_float *ins[x->num_ins];
-  //t_float *outs[x->num_outs];
   t_float **ins;
   t_float **outs;
   static double last_time=0.0;
@@ -917,8 +915,8 @@ static void snd0_load(struct dispatch *d){
   scm_gc_protect_object(d->x->scm_inbus);
   scm_gc_protect_object(d->x->scm_outbus);
 
-  d->x->inbus=SCM_SMOB_DATA(d->x->scm_inbus);
-  d->x->outbus=SCM_SMOB_DATA(d->x->scm_outbus);
+  d->x->inbus=(void*)SCM_SMOB_DATA(d->x->scm_inbus);
+  d->x->outbus=(void*)SCM_SMOB_DATA(d->x->scm_outbus);
 
   ret=true;
   post("\"%s\" loaded by snd.",d->data.filename);
@@ -978,6 +976,7 @@ static void *pd0_new(t_symbol *s, t_int argc, t_atom* argv){
   if(argc>2)
     x->num_outs=atom_getfloatarg(2,argc,argv);
   x->outlets=calloc(sizeof(t_outlet*),x->num_outs);
+
 
   for(lokke=0;lokke<x->num_outs;lokke++){
     x->outlets[lokke] = outlet_new(&x->x_obj, gensym("anything"));
@@ -1076,6 +1075,11 @@ static void finish(int sig){
   pd0_at_exit();
   exit(0);
 }
+static void sigusr2callback(int sig){
+  fprintf(stderr,"%s/%d: pd just got the SIGUSR2 signal. This might that a sched_fifo thread is sleeping or something.\n", __FILE__,__LINE__);
+  fprintf(stderr,"(don't bother reporting this, unless you hear clicks at the same time, its not an error.)\n");
+}
+
 
 /*****************************************************************************************************
  *****************************************************************************************************
@@ -1117,6 +1121,7 @@ void snd_setup(void){ // (pd0_setup)
 
   atexit(pd0_at_exit);
   signal(SIGINT,finish);
+  signal(SIGUSR2,sigusr2callback);
   post(version);
 }
 

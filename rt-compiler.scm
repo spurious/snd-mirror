@@ -1270,49 +1270,52 @@ and run simple lisp[4] functions.
      (expand term))))
   
 (define (rt-macroexpand term)
-  (call-with-current-continuation
-   (lambda (return)
-
-     (define (check-failed . args)
-       (newline)
-       (apply c-display (cons "rt-compiler.scm/rt-macroexpand:" args))
-       (return #f))
-     
-     (define (expand term)
-       ;;(c-display "term" term)
-       (cond ((null? term) term)
-	     ((not (list? term)) term)
-	     ((and (eq? 'set! (car term))
-		   (list? (cadr term)))
-	      (expand `(,(symbol-append 'setter!- (car (cadr term))) ,@(cdr (cadr term)) ,@(cddr term))))
-	     ((list? (car term))
-	      (map expand term))
-	     ((eq? 'lambda (car term))
-	      `(lambda ,(cadr term)
-		 ,@(map expand (cddr term))))
-	     ((or (eq? 'rt-let/let* (car term))
-		  (eq? 'let* (car term))
-		  (eq? 'letrec (car term))
-		  (eq? 'letrec* (car term)))
-	      `(,(car term) ,(map (lambda (a)
-				    `(,(car a) ,@(map expand (cdr a))))
-				  (cadr term))
-		,@(map expand (cddr term))))
-	     (else
-	      (if (not (symbol? (car term)))
-		  (check-failed "Illegal function call:" term ".")
-		  (begin
-		    (let* ((args (cdr term))
-			   (a (cons (symbol-append rt-macro-prefix (car term)) args))
-			   (b (macroexpand-1 a )))
-		      (if (not b)
-			  (return #f)
-			  (if (not (equal? a b))
-			      (expand b)
-			      (cons (car term)
-				    (map expand args))))))))))
-
-     (expand term))))
+  (let ((res (call-with-current-continuation
+	      (lambda (return)
+		
+		(define (check-failed . args)
+		  (newline)
+		  (apply c-display (cons "rt-compiler.scm/rt-macroexpand:" args))
+		  (return #f))
+		
+		(define (expand term)
+		  ;;(c-display "term" term)
+		  (cond ((null? term) term)
+			((not (list? term)) term)
+			((and (eq? 'set! (car term))
+			      (list? (cadr term)))
+			 (expand `(,(symbol-append 'setter!- (car (cadr term))) ,@(cdr (cadr term)) ,@(cddr term))))
+			((list? (car term))
+			 (map expand term))
+			((eq? 'lambda (car term))
+			 `(lambda ,(cadr term)
+			    ,@(map expand (cddr term))))
+			((or (eq? 'rt-let/let* (car term))
+			     (eq? 'let* (car term))
+			     (eq? 'letrec (car term))
+			     (eq? 'letrec* (car term)))
+			 `(,(car term) ,(map (lambda (a)
+					       `(,(car a) ,@(map expand (cdr a))))
+					     (cadr term))
+			   ,@(map expand (cddr term))))
+			(else
+			 (if (not (symbol? (car term)))
+			     (check-failed "Illegal function call:" term ".")
+			     (begin
+			       (let* ((args (cdr term))
+				      (a (cons (symbol-append rt-macro-prefix (car term)) args))
+				      (b (macroexpand-1 a )))
+				 (if (not b)
+				     (return #f)
+				     (if (not (equal? a b))
+					 (expand b)
+					 (cons (car term)
+					       (map expand args))))))))))
+		
+		(expand term)))))
+    (if (not res)
+	(throw 'compilation-error))
+    res))
 
 
 
@@ -3170,11 +3173,11 @@ and run simple lisp[4] functions.
 (begin
   
   (rt-ec-function <nonstatic-void> rt_error (lambda (,rt-globalvardecl (<char-*> msg))
-				 (fprintf stderr (string "RT RUNTIME ERROR: %s. (Removing instrument)\\n") msg)
-				 (set! rt_globals->remove_me 1)
-				 ,(if (rt-is-safety?)
-				      '(longjmp rt_globals->engine->error_jmp 5)
-				      "/* */")))
+					      (fprintf stderr (string "RT RUNTIME ERROR: %s. (Removing instrument)\\n") msg)
+					      (set! rt_globals->remove_me 1)
+					      ,(if (rt-is-safety?)
+						   '(longjmp rt_globals->engine->error_jmp 5)
+						   "/* */")))
   (<rt-func> 'rt_error '<void> '(<char-*>) #:needs-rt-globals #t)
   (define-rt-macro (rt-error . rest)
     `(rt_error ,@rest))
@@ -3349,17 +3352,46 @@ and run simple lisp[4] functions.
 
 ;; < > <= >= =
 (for-each (lambda (op)
-	    (let ((rt-op (symbol-append 'rt- op)))
+	    (let ((rt-op (symbol-append 'rt- op))
+		  (rt-op2 (symbol-append 'rt-2 op))
+		  (rt-op3 (symbol-append 'rt-3 op)))
 	      (<rt-func> rt-op '<int> '(<float> <float>))
 	      (primitive-eval `(define-c-macro ,(cons rt-op 'rest)
 				 `(,',op ,@rest)))
-	      (primitive-eval `(define-rt-macro (,op expand/a expand/b)
+	      (primitive-eval `(define-rt-macro (,rt-op2 expand/a expand/b)
 				 (if (and (number? a)
 					  (number? b))
 				     (if (,op a b)
 					 1
 					 0)
-				     `(,',rt-op ,a ,b))))))
+				     `(,',rt-op ,a ,b))))
+	      (primitive-eval `(define-rt-macro (,rt-op3 . rest)
+				 (let ((newvars '())
+				       (usevars '())
+				       (body #f))
+				   (for-each (lambda (var)
+					       (if (rt-immediate? var)
+						   (set! usevars (cons var usevars))
+						   (let ((newvarname (rt-gensym)))
+						     (set! newvars (cons (list newvarname var) newvars))
+						     (set! usevars (cons newvarname usevars)))))
+					     rest)
+				   (set! body `(and ,@(map (lambda (first second)
+							     `(,',rt-op2 ,first ,second))
+							   (reverse (cdr usevars))
+							   (cdr (reverse usevars)))))
+				   (if (not (null? newvars))
+				       `(let ,(reverse newvars)
+					  ,body)
+				       body))))
+				      
+	      (primitive-eval `(define-rt-macro (,op . rest)
+				 (if (<= (length rest) 1)
+				     1
+				     (if (= (length rest) 2)
+					 `(,',rt-op2 ,@rest)
+					 `(,',rt-op3 ,@rest)))))))
+								 
 	  '(< > <= >= =))
 
 (define-c-macro (rt-= a b)
@@ -3613,7 +3645,7 @@ and run simple lisp[4] functions.
 		       ,var
 		       ,(expand (cdr rest)))
 		  (let ((varname (rt-gensym)))
-		    `(let* ((,varname ,var))
+		    `(let ((,varname ,var))
 		       (if ,varname
 			   ,varname
 			   ,(expand (cdr rest))))))))))
@@ -4095,13 +4127,37 @@ and run simple lisp[4] functions.
 (define-rt-macro (caadddr p)
   `(car (car (cdr (cdr (cdr ,p))))))
 
+#!
+(define-rt (rt_length das-list n)
+  (if (null? das-list)
+      n
+      (rt_length das-list (1+ n))))
+!#
+(define-rt (rt_length das-list n)
+  (declare (<int> n))
+  (while (not (null? das-list))
+	 (set! n (1+ n))
+	 (set! das-list (cdr das-list)))
+  n)
+
+(define-rt-macro (length das-list)
+  `(rt_length ,das-list 0))
+
+(define-rt (rt_list_ref das-list n)
+  (while (> n 0)
+	 (set! das-list (cdr das-list))
+	 (set! n (1- n)))
+  (car das-list))
+  
 ;; For large n's, this one is a cache-killer, I guess.
 (define-rt-macro (list-ref das-list n)
   (define (help n)
     (if (= 0 n)
 	das-list
 	`(cdr ,(help (1- n)))))
-  `(car ,(help n)))
+  (if (number? n)
+      `(car ,(help n))
+      `(rt_list_ref ,das-list ,n)))
 
 
 ;; rt-insert-types is not designed correctly, therefore the declares of the lists and the ,funcname stuff. Shouldn't have been necesarry.
@@ -4474,6 +4530,13 @@ and run simple lisp[4] functions.
 ;; move-locsig
 (rt-renamefunc move-locsig mus_move_locsig <void> (<mus_locsig-*> <float> <float>))
 
+;; locsig-set!
+(rt-renamefunc locsig-set! mus_locsig_set <float> (<mus_locsig-*> <int> <float>))
+
+;; locsig-reverb-set!
+(rt-renamefunc locsig-reverb-set! mus_locsig_reverb_set <float> (<mus_locsig-*> <int> <float>))
+
+
 
 ;, Locsig, or at least an attempt. I think its okey, but theres no reverb.
 (define-rt-macro (locsig loc val)
@@ -4565,7 +4628,8 @@ and run simple lisp[4] functions.
 	 ,(if (null? rest)
 	      `(set! ,ret (rt-mus-granulate/mus_granulate ,das-gen
 							  (lambda (arg2 direction2)
-							    (declare (<int> direction2))
+							    (declare (<int> direction2)
+								     (<void-*> arg2))
 							    (the <float> (,input-function direction2)))))
 	      `(set! ,ret (rt-mus-granulate/mus_granulate_with_editor ,das-gen
 								      (lambda (direction2)
@@ -4576,7 +4640,7 @@ and run simple lisp[4] functions.
 	 (set! (mus-environ ,das-gen) ,oldenv)
 	 ,ret)))
 	 
-  (<rt-func> 'rt-mus-granulate/mus_granulate '<float> '(<mus_granulate-*> (<float> (<int>))))
+  (<rt-func> 'rt-mus-granulate/mus_granulate '<float> '(<mus_granulate-*> (<float> (<void-*> <int>))))
   (define-c-macro (rt-mus-granulate/mus_granulate gen input-function)
     (<-> "mus_granulate(" (eval-c-parse gen) ",(void*)" (eval-c-parse input-function) ")"))
   (<rt-func> 'rt-mus-granulate/mus_granulate_with_editor '<float> '(<mus_granulate-*> (<float> (<int>)) (<int> (<mus_any-*>))))
@@ -6486,6 +6550,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
        (rt-print "*RT: Expanding macros")
        (set! term (rt-macroexpand term))
+
        (if (not term)
 	   (return #f))
 
@@ -6708,6 +6773,12 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 		  
 		  ,bus-struct
 
+		  "#ifdef __GNUC__"
+		  "#define RT_NORETURN __attribute__ ((noreturn))"
+		  "#else"
+		  "#define RT_NORETURN"
+		  "#endif"
+
 		  (define-struct <RT_Globals>
 		    ;; Global/Guile variables
 		    ,@(apply append publicargs)
@@ -6738,6 +6809,10 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 		    <struct-RT_Engine*> engine)
 
 		  
+		  ,(if (rt-is-safety?)
+		       "void rt_error (struct RT_Globals *rt_globals, char *msg) RT_NORETURN"
+		       "/* */")
+
 		  
 		  ;; Setters and getters for the RT_Globals struct
            	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
