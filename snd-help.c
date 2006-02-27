@@ -479,7 +479,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-27-Feb:  tracking-cursor-style.\n\
+27-Feb:  snd 7.19.\n\
+         tracking-cursor-style.\n\
 21-Feb:  bind-key now takes a character or string 1st arg (as well as an integer); if a string, it's treated\n\
            as the X/Gtk key name (e.g. \"Home\" or \"plus\").  It also has a 6th optional arg, a preferences\n\
            dialog name (so that the dialog can reflect current key bindings by functionality).\n\

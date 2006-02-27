@@ -314,7 +314,7 @@ echo ' CFLAGS="-Wall" --with-static-xm --without-xpm --without-xp '
 ./configure --quiet CFLAGS="-Wall" --with-static-xm --without-xpm --without-xp
 make
 ./snd --version
-./snd -l snd-test
+./snd -l snd-test 8
 
 echo ' '
 echo ' '
@@ -324,7 +324,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall" --with-snd-as-widget '
-./configure --quiet CFLAGS="-Wall" --with-snd-as-widget
+./configure --quiet CFLAGS="-Wall" --with-snd-as-widget --without-fam --without-gsl --disable-nls
 make
 make xm
 gcc -c saw.c -I. -g -O2 -I/usr/local/include -I/usr/X11R6/include -o saw.o

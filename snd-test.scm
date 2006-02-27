@@ -12296,7 +12296,7 @@ EDITS: 5
 (if (not (provided? 'snd-moog.scm)) (load "moog.scm"))
 (if (not (provided? 'snd-mixer.scm)) (load "mixer.scm"))
 (if (not (provided? 'snd-poly.scm)) (load "poly.scm"))
-(if (not (provided? 'snd-analog-filter.scm)) (load "analog-filter.scm"))
+(if (not (provided? 'snd-analog-filter.scm)) (if (defined? 'gsl-roots) (load "analog-filter.scm")))
 
 (define (analog-filter-tests)
 
@@ -15525,7 +15525,7 @@ EDITS: 5
 		(snd-display ";bs rough spectrum: ~A" sp)))
 	  (undo))
 
-	(analog-filter-tests)
+	(if (defined? 'gsl-roots) (analog-filter-tests))
 	
 	(let ((v (spectrum->coeffs 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))
 	      (v1 (make-fir-coeffs 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0))))

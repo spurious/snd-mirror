@@ -6842,7 +6842,9 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
  *   and to a much lesser extent, coreaudio.pdf and the HAL/Daisy examples.
  */
 
-/* TODO: make bigger buffers work right -- is it possible to set the audio device buffer size? */
+/* TODO: make bigger buffers work right -- is it possible to set the audio device buffer size?
+ * TODO: check recording in OSX
+ */
 
 #ifdef MUS_MAC_OSX
 #define AUDIO_OK 1
