@@ -18877,6 +18877,8 @@ EDITS: 5
 	(set! (mus-length gen) 3000) (if (not (= (mus-length gen) 3000)) (snd-display ";granulate set-length: ~A?" (mus-length gen)))
 	(set! (mus-increment gen) 3.0)
 	(if (> (abs (- (mus-increment gen) 3.0)) .01) (snd-display ";granulate set-increment: ~F?" (mus-increment gen)))
+	(set! (mus-location gen) 1)
+	(if (not (= (mus-location gen) 1)) (snd-display ";mus-location grn: ~A" (mus-location gen)))
 	(set! (mus-frequency gen) .1)
 	(if (fneq (mus-frequency gen) .1) (snd-display ";set granulate freq: ~A" (mus-frequency gen)))
 	(let ((tag (catch #t (lambda () (granulate gen (lambda (a b) a))) (lambda args (car args)))))

@@ -55,9 +55,13 @@
 
 (use-modules (ice-9 threads))
 
+
+
+(define ladspa-use-threads (c-before1.8?))
+
 (if (or (not (provided? 'threads))
 	(not (defined? 'call-with-new-thread)))
-    (snd-warning "ladspa.scm needs support for threads in Guile."))
+    (set! ladspa-use-threads #f))
 
 ;; Increase this number if you can't preview sound because of large latency in the system.
 ;; Note, this is not the latency, just the maximum buffer size. The only bad consequence about
@@ -838,7 +842,12 @@
 
 (define ladspa-not-initialized #t)
 
-(call-with-new-thread
+(define (call-with-new-thread-without-threads func func2)
+  (func))
+
+((if ladspa-use-threads
+     call-with-new-thread
+     call-with-new-thread-without-threads)
  (lambda ()
 
    (if (and (provided? 'snd-lrdf)
@@ -932,7 +941,6 @@
    (c-display "Thread-error2: " ai)))
 
 
-
 (define (ladspa-finish-it)
   (if ladspa-not-initialized
       (let ((n 300))
@@ -942,10 +950,10 @@
 	(in 2 ladspa-finish-it))
       (c-display "Finished initializing ladspa.")))
 
-(in 200
-    (lambda ()
-      (c-display "SND might be a bit unresponsive for a moment, initializing ladspa in the background...")
-      (ladspa-finish-it)))
-
+(if ladspa-use-threads
+    (in 200
+	(lambda ()
+	  (c-display "SND might be a bit unresponsive for a moment, initializing ladspa in the background...")
+	  (ladspa-finish-it))))
 
 

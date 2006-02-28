@@ -728,7 +728,7 @@ static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
 static char *pfc_key = NULL;
 static bool pfc_c = false, pfc_m = false, pfc_x = false;
 
-static bool find_pfc_binding(int key, int state, bool cx, char *prefs_data, XEN func)
+static bool find_pfc_binding(int key, int state, bool cx, char *prefs_data, XEN func) /* func can be XEN_FALSE if built-in */
 {
   if ((prefs_data) && (*prefs_data) && (strcmp(prefs_data, "play-from-cursor") == 0))
     {

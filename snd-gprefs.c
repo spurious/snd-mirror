@@ -1896,7 +1896,7 @@ static void reflect_play_from_cursor(prefs_info *prf)
   pfc_c = false;
   pfc_m = false;
   pfc_x = false;
-  map_over_key_bindings(find_pfc_binding);
+  map_over_all_key_bindings(find_pfc_binding);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), pfc_c);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle2), pfc_m);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle3), pfc_x);
@@ -4817,7 +4817,7 @@ widget_t start_preferences_dialog(void)
     pfc_c = false;
     pfc_m = false;
     pfc_x = false;
-    map_over_key_bindings(find_pfc_binding);
+    map_over_all_key_bindings(find_pfc_binding);
     prf = prefs_row_with_text_and_three_toggles("key for 'play all chans from cursor'", S_play, 
 						"key:", 8, "ctrl:", "meta:",  "C-x:",
 						pfc_key, pfc_c, pfc_m, pfc_x,

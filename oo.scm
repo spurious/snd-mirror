@@ -114,6 +114,12 @@
       (and (string=? "1" (major-version))
 	   (>= (string->number (minor-version)) 7))))
 
+
+(define (c-before1.8?)
+  (and (= 1 (string->number (major-version)))
+       (< (string->number (minor-version)) 8)))
+
+
 (define (c-butlast l)
   (if (null? l)
       l

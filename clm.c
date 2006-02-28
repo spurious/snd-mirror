@@ -6725,15 +6725,16 @@ typedef struct {
   int input_hop;
   int ctr;
   int output_hop;
-  Float *out_data;    /* output buffer */
+  Float *out_data;     /* output buffer */
   int out_data_len;
-  Float *in_data;     /* input buffer */
+  Float *in_data;      /* input buffer */
   int in_data_len;
   void *closure;
   int (*edit)(void *closure);
-  Float *grain;       /* grain data */
+  Float *grain;        /* grain data */
   int grain_len;
   bool first_samp;
+  unsigned long randx; /* gen-local random number seed */
 } grn_info;
 
 bool mus_granulate_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_GRANULATE));}
@@ -6793,6 +6794,8 @@ static off_t grn_set_ramp(mus_any *ptr, off_t val)
 }
 static Float *granulate_data(mus_any *ptr) {return(((grn_info *)ptr)->grain);}
 int mus_granulate_grain_max_length(mus_any *ptr) {return(((grn_info *)ptr)->in_data_len);}
+static off_t grn_location(mus_any *ptr) {return((off_t)(((grn_info *)ptr)->randx));}
+static off_t grn_set_location(mus_any *ptr, off_t val) {((grn_info *)ptr)->randx = (unsigned long)val; return(val);}
 
 static Float run_granulate(mus_any *ptr, Float unused1, Float unused2) {return(mus_granulate(ptr, NULL));}
 
@@ -6807,6 +6810,13 @@ static void grn_reset(mus_any *ptr)
   gen->first_samp = true;
 }
 
+static int grn_irandom(grn_info *spd, int amp)
+{
+  /* gen-local next_random */
+  spd->randx = spd->randx * 1103515245 + 12345;
+  return((int)(amp * INVERSE_MAX_RAND2 * ((Float)((unsigned int)(spd->randx >> 16) & 32767))));
+}
+
 static mus_any_class GRANULATE_CLASS = {
   MUS_GRANULATE,
   S_granulate,
@@ -6814,12 +6824,12 @@ static mus_any_class GRANULATE_CLASS = {
   &describe_granulate,
   &granulate_equalp,
   &granulate_data, 0,
-  &grn_length,  /* segment-length */
+  &grn_length,    /* segment-length */
   &grn_set_length,
   &grn_frequency, /* spd-out */
   &grn_set_frequency,
   0, 0,
-  &grn_scaler, /* segment-scaler */
+  &grn_scaler,    /* segment-scaler */
   &grn_set_scaler,
   &grn_increment,
   &grn_set_increment,
@@ -6830,8 +6840,9 @@ static mus_any_class GRANULATE_CLASS = {
   0, 0, 0, 0, 0, 0, 
   &grn_hop, &grn_set_hop, 
   &grn_ramp, &grn_set_ramp,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
+  0, 0, 0, 0, 
+  &grn_location, &grn_set_location, /* local randx */
+  0, 0, 0, 0, 0,
   &wrap_max_vcts,
   &grn_reset,
   &grn_set_closure
@@ -6872,7 +6883,7 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
   spd->output_hop = (int)(hop * sampling_rate);
   spd->input_hop = (int)((Float)(spd->output_hop) / expansion);
   spd->s20 = 2 * (int)(jitter * sampling_rate * hop); /* was *.05 here and *.02 below */
-   /* added "2 *" 21-Mar-05 and replaced irandom with mus_irandom below */
+   /* added "2 *" 21-Mar-05 and replaced irandom with (grn)mus_irandom below */
   spd->s50 = (int)(jitter * sampling_rate * hop * 0.4);
   spd->out_data_len = outlen;
   spd->out_data = (Float *)clm_calloc(spd->out_data_len, sizeof(Float), "granulate out data");
@@ -6883,6 +6894,8 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
   spd->edit = edit;
   spd->grain = (Float *)clm_calloc(spd->in_data_len, sizeof(Float), "granulate grain");
   spd->first_samp = true;
+  spd->randx = mus_rand_seed(); /* caller can override this via the mus_location method */
+  next_random();
   return((mus_any *)spd);
 }
 
@@ -6968,7 +6981,7 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
       {
 	int lim, steady_end, curstart, j;
 	lim = spd->grain_len;
-	curstart = mus_irandom(spd->s20); /* start location in input buffer */
+	curstart = grn_irandom(spd, spd->s20); /* start location in input buffer */
 	if ((curstart + spd->grain_len) > spd->in_data_len)
 	  lim = (spd->in_data_len - curstart);
 	if (lim > spd->grain_len)
@@ -7025,8 +7038,10 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
       
       /* set location of next grain calculation */
       spd->ctr = 0;
-      spd->cur_out = spd->output_hop + mus_irandom(2 * spd->s50) - (spd->s50 >> 1); /* this form suggested by Marc Lehmann */
-                                               /* "2 *" added 21-Mar-05 and irandom replaced with mus_irandom */
+      spd->cur_out = spd->output_hop + grn_irandom(spd, 2 * spd->s50) - (spd->s50 >> 1); 
+      /* this form suggested by Marc Lehmann */
+      /* "2 *" added 21-Mar-05 and irandom replaced with mus_irandom, grn_irandom 28-Feb-06 */
+      /* use of gen-local random sequence suggested by Kjetil Matheussen (to keep multi-channel grns in sync) */
       if (spd->cur_out < 0) spd->cur_out = 0;
 
       if (spd->first_samp)

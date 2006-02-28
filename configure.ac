@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 7.19, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
+AC_INIT(snd, 7.20, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
 
 INVOKED_PROG="$[0]"
 INVOKED_ARGS="$[@]"
@@ -17,7 +17,7 @@ audio_system="unknown"
 MAKE_TARGET="snd"
 
 PACKAGE=snd
-VERSION=7.19
+VERSION=7.20
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -247,7 +247,6 @@ AC_TYPE_PID_T
 AC_STRUCT_TM
 AC_C_BIGENDIAN( [AC_DEFINE(MUS_LITTLE_ENDIAN, 0)
 		 AC_DEFINE(WORDS_BIGENDIAN)
-#		 AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_BSHORT)
     		 case "$host" in
       		  *-apple-*)
         		AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_BFLOAT)
@@ -267,8 +266,6 @@ AC_C_BIGENDIAN( [AC_DEFINE(MUS_LITTLE_ENDIAN, 0)
  		 fi
  		],
 		[AC_DEFINE(MUS_LITTLE_ENDIAN, 1)
-#    	         AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_LSHORT)
-# TODO: update sndlib configure for macintel
     		 case "$host" in
       		  *-apple-*)
         		AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_LFLOAT)

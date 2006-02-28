@@ -20,14 +20,16 @@
      (bind-key "Up" 0 (lambda () (zoom-one-pixel #f)) #f "zoom out one pixel" "zoom-out-one-pixel")
      (bind-key "Down" 0 (lambda () (zoom-one-pixel #t)) #f "zoom in one pixel" "zoom-in-one-pixel")
      (bind-key key cm (lambda () (delete-selection)) cx "delete selection" "delete-selection")
-     (bind-key key cm (lambda () (mix-selection (cursor))) cx "mix selection" "mix-selection")
-     (bind-key key cm (lambda () (insert-selection (cursor))) cx "insert selection" "insert-selection")
+     (bind-key key cm (lambda () (mix-selection (cursor))) cx "mix selection" "mix-selection") ; c-x q
+     (bind-key key cm (lambda () (insert-selection (cursor))) cx "insert selection" "insert-selection") ; c-x i (add these to snd-kbd table)
+     (bind-key key cm (lambda () (play-selection)) cx "play selection" "play-selection") ; c-x p
      (bind-key key cm (lambda () (set! (x-bounds) (list 0.0 (/ (frames) (srate))))) #f "show full sound" "show-all")
      (bind-key key cm (lambda () (set! (x-bounds) (list (/ (selection-position) (srate))
                                                         (/ (+ (selection-position) (selection-frames)) (srate))))) #f "show selection" "show-selection")
+							; c-x l?
      (bind-key key cm (lambda () (select-all)) cx "select all" "select-all")
      (bind-key key cm (lambda () (revert-sound)) cx "undo all edits" "revert-sound")
-     (bind-key key cm (lambda () (save-sound)) cx "save all edits" "save-sound")
+     (bind-key key cm (lambda () (save-sound)) cx "save all edits" "save-sound") ; c-x c-s
 
 
    abandoned:

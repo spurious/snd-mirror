@@ -373,7 +373,6 @@ char *version_info(void)
   #ifdef MUS_CAIRO_VERSION
 	  ", Cairo ", MUS_CAIRO_VERSION,
   #endif
-	  /* would be nice, I suppose, to give the other infinite dependencies here (fontconfig...) */
 #endif
 	  xm_version(), /* omitted if --version/--help because the init procs haven't run at that point */
 #if WITH_GTK_AND_X11

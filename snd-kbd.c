@@ -238,18 +238,6 @@ int in_user_keymap(int key, int state, bool cx_extended)
   return(-1);
 }
 
-void map_over_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo, XEN xf))
-{
-  int i;
-  for (i = 0; i < keymap_top; i++)
-    if (XEN_BOUND_P(user_keymap[i].func))
-      {
-	bool val;
-	val = (*func)(user_keymap[i].key, user_keymap[i].state, user_keymap[i].cx_extended, user_keymap[i].prefs_info, user_keymap[i].func);
-	if (val) return;
-      }
-}
-
 #define NUM_BUILT_IN_KEY_BINDINGS 76
 static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
   {snd_K_Down,    0, 0, XEN_FALSE, false, "zoom out",                                                    NULL, -1},
@@ -276,14 +264,14 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
   {snd_K_n,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor ahead one 'line'",               NULL, -1},
   {snd_K_o,          snd_ControlMask, 0, XEN_FALSE, false, "insert one zero sample at cursor",           NULL, -1},
   {snd_K_p,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor back one 'line'",                NULL, -1},
-  {snd_K_q,          snd_ControlMask, 0, XEN_FALSE, false, "play current channel starting at cursor",    NULL, -1},
+  {snd_K_q,          snd_ControlMask, 0, XEN_FALSE, false, "play current channel starting at cursor",    "play-channel-from-cursor", -1},
   {snd_K_r,          snd_ControlMask, 0, XEN_FALSE, false, "search backwards",                           NULL, -1},
   {snd_K_s,          snd_ControlMask, 0, XEN_FALSE, false, "search forwards",                            NULL, -1},
   {snd_K_t,          snd_ControlMask, 0, XEN_FALSE, false, "stop playing",                               NULL, -1},
   {snd_K_u,          snd_ControlMask, 0, XEN_FALSE, false, "start arg count definition.",                NULL, -1},
   {snd_K_v,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor to mid-window",                  NULL, -1},
-  {snd_K_w,          snd_ControlMask, 0, XEN_FALSE, false, "delete selection",                           NULL, -1},
-  {snd_K_y,          snd_ControlMask, 0, XEN_FALSE, false, "insert selection.",                          NULL, -1},
+  {snd_K_w,          snd_ControlMask, 0, XEN_FALSE, false, "delete selection",                           "delete-selection", -1},
+  {snd_K_y,          snd_ControlMask, 0, XEN_FALSE, false, "insert selection.",                          "insert-selection", -1},
   {snd_K_z,          snd_ControlMask, 0, XEN_FALSE, false, "set sample at cursor to 0.0",                NULL, -1},
   {snd_K_underscore, snd_ControlMask, 0, XEN_FALSE, false, "undo",                                       NULL, -1},
   {snd_K_space,      snd_ControlMask, 0, XEN_FALSE, false, "start selection definition",                 NULL, -1},
@@ -297,13 +285,13 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
   {snd_K_d,          0, 0, XEN_FALSE, true, "set temp dir name",                                         NULL, -1},
   {snd_K_e,          0, 0, XEN_FALSE, true, "execute keyboard macro",                                    NULL, -1},
   {snd_K_f,          0, 0, XEN_FALSE, true, "position window so cursor is on right margin",              NULL, -1},
-  {snd_K_i,          0, 0, XEN_FALSE, true, "insert region",                                             NULL, -1},
+  {snd_K_i,          0, 0, XEN_FALSE, true, "insert region",                                             "insert-selection", -1},
   {snd_K_j,          0, 0, XEN_FALSE, true, "goto named mark",                                           NULL, -1},
   {snd_K_k,          0, 0, XEN_FALSE, true, "close file",                                                NULL, -1},
   {snd_K_l,          0, 0, XEN_FALSE, true, "position selection in mid-view",                            NULL, -1},
   {snd_K_o,          0, 0, XEN_FALSE, true, "move to next or previous graph",                            NULL, -1},
-  {snd_K_p,          0, 0, XEN_FALSE, true, "play selection or region n",                                NULL, -1},
-  {snd_K_q,          0, 0, XEN_FALSE, true, "mix in selection",                                          NULL, -1},
+  {snd_K_p,          0, 0, XEN_FALSE, true, "play selection or region n",                                "play-selection", -1},
+  {snd_K_q,          0, 0, XEN_FALSE, true, "mix in selection",                                          "mix-selection", -1},
   {snd_K_r,          0, 0, XEN_FALSE, true, "redo",                                                      NULL, -1},
   {snd_K_u,          0, 0, XEN_FALSE, true, "undo",                                                      NULL, -1},
   {snd_K_v,          0, 0, XEN_FALSE, true, "position window over selection",                            NULL, -1},
@@ -325,13 +313,46 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
   {snd_K_o, snd_ControlMask, 0, XEN_FALSE, true, "show control panel",                                   NULL, -1},
   {snd_K_p, snd_ControlMask, 0, XEN_FALSE, true, "set window size (preceded by 1 arg)",                  NULL, -1},
   {snd_K_q, snd_ControlMask, 0, XEN_FALSE, true, "mix in file",                                          NULL, -1},
-  {snd_K_r, snd_ControlMask, 0, XEN_FALSE, true, "redo",                                                 NULL, -1},
+  {snd_K_r, snd_ControlMask, 0, XEN_FALSE, true, "redo",                                                 "save-sound", -1},
   {snd_K_s, snd_ControlMask, 0, XEN_FALSE, true, "save file",                                            NULL, -1},
   {snd_K_u, snd_ControlMask, 0, XEN_FALSE, true, "undo",                                                 NULL, -1},
   {snd_K_v, snd_ControlMask, 0, XEN_FALSE, true, "set window size as percentage of total",               NULL, -1},
   {snd_K_w, snd_ControlMask, 0, XEN_FALSE, true, "save current channel in file",                         NULL, -1},
   {snd_K_z, snd_ControlMask, 0, XEN_FALSE, true, "smooth using cosine",                                  NULL, -1},
 };
+
+void map_over_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo, XEN xf))
+{
+  int i;
+  for (i = 0; i < keymap_top; i++)
+    if ((XEN_BOUND_P(user_keymap[i].func)) &&
+	((*func)(user_keymap[i].key, 
+		 user_keymap[i].state, 
+		 user_keymap[i].cx_extended, 
+		 user_keymap[i].prefs_info, 
+		 user_keymap[i].func)))
+      return;
+}
+
+void map_over_all_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo, XEN xf))
+{
+  int i;
+  for (i = 0; i < keymap_top; i++)
+    if ((XEN_BOUND_P(user_keymap[i].func)) &&
+	((*func)(user_keymap[i].key, 
+		 user_keymap[i].state, 
+		 user_keymap[i].cx_extended, 
+		 user_keymap[i].prefs_info, 
+		 user_keymap[i].func)))
+	return;
+  for (i = 0; i < NUM_BUILT_IN_KEY_BINDINGS; i++)
+    if ((*func)(built_in_key_bindings[i].key, 
+		built_in_key_bindings[i].state, 
+		built_in_key_bindings[i].cx_extended, 
+		built_in_key_bindings[i].prefs_info,
+		built_in_key_bindings[i].func)) /* func is always XEN_FALSE for a built-in key */
+      return;
+}
 
 char *key_binding_description(int key, int state, bool cx_extended)
 {

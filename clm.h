@@ -2,10 +2,12 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 20
-#define MUS_DATE "20-Dec-05"
+#define MUS_REVISION 21
+#define MUS_DATE "1-Mar-06"
 
 /*
+ * 1-Mar-06:   granulate now has a local random number seed (settable via the mus-location method).
+ * --------
  * 20-Dec:     samaraki and ultraspherical windows.
  *               this required a non-backwards-compatible additional argument in mus_make_fft_window_with_window.
  * 1-Nov:      mus_filter_set_x|ycoeffs, mus_filter_set_order (needed by Snd).
