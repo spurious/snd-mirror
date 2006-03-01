@@ -2504,7 +2504,7 @@ class Snd_main_menu < Menu
                        lambda do |w, c, i| update_label(@children) end)
       else
         cascade = Rgtk_menu_item_new_with_label(@label)
-        Rgtk_menu_shell_append(RGTK_MENU_SHELL(parent), cascade)
+        Rgtk_menu_shell_append(RGTK_MENU_SHELL(Rgtk_menu_item_get_submenu(RGTK_MENU_ITEM(parent))), cascade)
         Rgtk_widget_show(cascade)
         @menu = Rgtk_menu_new()
         Rgtk_menu_item_set_submenu(RGTK_MENU_ITEM(cascade), @menu)
@@ -2579,7 +2579,7 @@ class Main_menu < Menu
       RXtVaSetValues(parent, [RXmNmenuHelpWidget, wid]) if name =~ /help/
     else
       wid = Rgtk_menu_item_new_with_label(@label)
-      Rgtk_menu_shell_append(RGTK_MENU_SHELL(parent), wid)
+      Rgtk_menu_shell_append(RGTK_MENU_SHELL(Rgtk_menu_item_get_submenu(GTK_MENU_ITEM(parent))), wid)
       Rgtk_widget_show(wid) 
       @menu = Rgtk_menu_new()
       Rgtk_menu_item_set_submenu(RGTK_MENU_ITEM(wid), @menu)
