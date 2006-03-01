@@ -42,6 +42,9 @@ typedef struct prefs_info {
 
 
 static void prefs_set_dialog_title(const char *filename);
+static void reflect_key(prefs_info *prf, const char *key_name);
+static void save_key_binding(prefs_info *prf, FILE *fd, char *(*binder)(char *key, bool c, bool m, bool x));
+static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m, bool x));
 #include "snd-prefs.c"
 
 
@@ -1838,6 +1841,55 @@ static void zoom_color_func(prefs_info *prf, float r, float g, float b)
   set_zoom_color(rgb_to_color(r, g, b));
 }
 
+/* ---------------- keys ---------------- */
+
+static void reflect_key(prefs_info *prf, const char *key_name)
+{
+  key_info *ki;
+  ki = find_prefs_key_binding(key_name);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), ki->c);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle2), ki->m);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle3), ki->x);
+  sg_entry_set_text(GTK_ENTRY(prf->text), ki->key);
+  FREE(ki);
+}
+
+static void save_key_binding(prefs_info *prf, FILE *fd, char *(*binder)(char *key, bool c, bool m, bool x))
+{
+  /* pick up possible binding even if no <cr> */
+  char *key, *expr;
+  key = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((key) && (*key))
+    {
+      expr = (*binder)(key, 
+		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)),
+		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle2)),
+		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle3)));
+      fprintf(fd, expr);
+      FREE(expr);
+    }
+}
+
+static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m, bool x))
+{
+  char *key, *expr;
+  bool ctrl, meta, cx;
+  key = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  ctrl = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle));
+  meta = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle2));
+  cx = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle3));
+  if ((key) && (*key))
+    expr = (*binder)(key, ctrl, meta, cx);
+  else expr = mus_format("(unbind-key %s %d %s)",
+			 possibly_quote(key), 
+			 ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+			 (cx) ? "#t" : "#f");
+  XEN_EVAL_C_STRING(expr);
+  FREE(expr);
+}
+
+
+
 /* ---------------- verbose-cursor ---------------- */
 
 static void reflect_verbose_cursor(prefs_info *prf) 
@@ -1882,59 +1934,6 @@ static void cursor_location_text(prefs_info *prf)
 	  set_cursor_location_offset(loc);
 	}
     }
-}
-
-
-/* ---------------- play from cursor ---------------- */
-
-static void reflect_play_from_cursor(prefs_info *prf)
-{
-  /* find "play-from-cursor" in the prefs_info of the key bindings table,
-   *   if any, get associated key/c/m/cx settings and reflect in dialog
-   */
-  pfc_key = NULL;
-  pfc_c = false;
-  pfc_m = false;
-  pfc_x = false;
-  map_over_all_key_bindings(find_pfc_binding);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), pfc_c);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle2), pfc_m);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle3), pfc_x);
-  sg_entry_set_text(GTK_ENTRY(prf->text), pfc_key);
-}
-
-static void save_pfc_binding(prefs_info *prf, FILE *fd)
-{
-  /* pick up possible binding even if no <cr> */
-  char *key, *expr;
-  key = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((key) && (*key))
-    {
-      expr = make_pfc_binding(key, 
-			      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)),
-			      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle2)),
-			      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle3)));
-      fprintf(fd, expr);
-      FREE(expr);
-    }
-}
-
-static void bind_play_from_cursor(prefs_info *prf)
-{
-  char *key, *expr;
-  bool ctrl, meta, cx;
-  key = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  ctrl = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle));
-  meta = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle2));
-  cx = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle3));
-  if ((key) && (*key))
-    expr = make_pfc_binding(key, ctrl, meta, cx);
-  else expr = mus_format("(unbind-key %s %d %s)",
-			 possibly_quote(key), 
-			 ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-			 (cx) ? "#t" : "#f");
-  XEN_EVAL_C_STRING(expr);
-  FREE(expr);
 }
 
 
@@ -4491,7 +4490,7 @@ widget_t start_preferences_dialog(void)
   /* ---------------- overall behavior ---------------- */
 
   {
-    GtkWidget *dpy_box, *dpy_label, *file_label, *cursor_label;
+    GtkWidget *dpy_box, *dpy_label, *file_label, *cursor_label, *key_label;
     char *str1, *str2;
 
     /* ---------------- overall behavior ----------------*/
@@ -4785,8 +4784,50 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box);
 
 
+    /* ---------------- additional key bindings ---------------- */
+
+    {
+      key_info *ki;
+
+      key_label = make_inner_label("  additional key bindings", dpy_box);
+
+      ki = find_prefs_key_binding("play-from-cursor");
+      prf = prefs_row_with_text_and_three_toggles("play all chans from cursor", S_play, 
+						  "key:", 8, "ctrl:", "meta:",  "C-x:",
+						  ki->key, ki->c, ki->m, ki->x,						
+						  dpy_box,
+						  bind_play_from_cursor);
+      remember_pref(prf, reflect_play_from_cursor, save_pfc_binding);
+      prf->help_func = play_from_cursor_help;
+      FREE(ki);
+
+      current_sep = make_inter_variable_separator(dpy_box);
+      ki = find_prefs_key_binding("show-all");
+      prf = prefs_row_with_text_and_three_toggles("show entire sound", S_x_bounds, 
+						  "key:", 8, "ctrl:", "meta:",  "C-x:",
+						  ki->key, ki->c, ki->m, ki->x,
+						  dpy_box,
+						  bind_show_all);
+      remember_pref(prf, reflect_show_all, save_show_all_binding);
+      prf->help_func = show_all_help;
+      FREE(ki);
+
+      current_sep = make_inter_variable_separator(dpy_box);
+      ki = find_prefs_key_binding("select-all");
+      prf = prefs_row_with_text_and_three_toggles("select entire sound", S_select_all, 
+						  "key:", 8, "ctrl:", "meta:",  "C-x:",
+						  ki->key, ki->c, ki->m, ki->x,
+						  dpy_box,
+						  bind_select_all);
+      remember_pref(prf, reflect_select_all, save_select_all_binding);
+      prf->help_func = select_all_help;
+      FREE(ki);
+
+    }
+
     /* ---------------- cursor options ---------------- */
 
+    current_sep = make_inter_variable_separator(dpy_box);
     cursor_label = make_inner_label("  cursor options", dpy_box);
 
     prf = prefs_row_with_toggle("report cursor location as it moves", S_with_verbose_cursor,
@@ -4811,20 +4852,6 @@ widget_t start_preferences_dialog(void)
       FREE(str);
       FREE(str1);
     }
-
-    current_sep = make_inter_variable_separator(dpy_box);
-    pfc_key = NULL;
-    pfc_c = false;
-    pfc_m = false;
-    pfc_x = false;
-    map_over_all_key_bindings(find_pfc_binding);
-    prf = prefs_row_with_text_and_three_toggles("key for 'play all chans from cursor'", S_play, 
-						"key:", 8, "ctrl:", "meta:",  "C-x:",
-						pfc_key, pfc_c, pfc_m, pfc_x,
-						dpy_box,
-						bind_play_from_cursor);
-    remember_pref(prf, reflect_play_from_cursor, save_pfc_binding);
-    prf->help_func = play_from_cursor_help;
 
     current_sep = make_inter_variable_separator(dpy_box);
     str = mus_format("%d", cursor_size(ss));

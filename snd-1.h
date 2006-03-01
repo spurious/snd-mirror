@@ -512,6 +512,12 @@ typedef struct {
   int dir;
 } src_state;
 
+typedef struct {
+  char *key;
+  int state;
+  bool c, m, x;
+} key_info;
+
 
 
 /* -------- snd-io.c -------- */
@@ -1599,7 +1605,7 @@ int in_user_keymap(int key, int state, bool cx_extended);
 char *key_binding_description(int key, int state, bool cx_extended);
 char *make_key_name(char *buf, int buf_size, int key, int state, bool extended);
 void map_over_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo, XEN xf));
-void map_over_all_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo, XEN xf));
+key_info *find_prefs_key_binding(const char *prefs_name);
 void keyboard_command (chan_info *cp, int keysym, int state);
 void control_g(snd_info *sp);
 void g_init_kbd(void);

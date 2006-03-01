@@ -505,6 +505,22 @@ not take effect until you type return in the text widget.",
 	   WITH_WORD_WRAP);
 }
 
+static void show_all_help(prefs_info *prf)
+{
+  snd_help("show entire sound",
+	   "This option binds a key to show all of the current sound in the current time domain window, \
+equivalent to moving the 'zoom' slider all the way to the right.",
+	   WITH_WORD_WRAP);
+}
+
+static void select_all_help(prefs_info *prf)
+{
+  snd_help("select entire sound",
+	   "This option binds a key to select all of the current sound.  The 'Select all' Edit menu item \
+only selects all of the current channel, and there's no built-in key to handle either case.",
+	   WITH_WORD_WRAP);
+}
+
 
 
 /* ---------------- save functions ---------------- */
@@ -704,6 +720,9 @@ static void save_show_listener_1(prefs_info *prf, FILE *fd)
 #endif
 }
 
+
+/* -------- key: play all chans from cursor -------- */
+
 static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
 {
 #if HAVE_SCHEME
@@ -721,31 +740,109 @@ static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
   return(NULL);
 }
 
+static void reflect_play_from_cursor(prefs_info *prf)
+{
+  reflect_key(prf, "play-from-cursor");
+}
+
+static void save_pfc_binding(prefs_info *prf, FILE *fd)
+{
+  save_key_binding(prf, fd, make_pfc_binding);
+}
+
+static void bind_play_from_cursor(prefs_info *prf)
+{
+  key_bind(prf, make_pfc_binding);
+}
+
+/* -------- key: show all of sound -------- */
+
+static char *make_show_all_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(bind-key %s %d (lambda () \
+                                       (let ((old-sync (sync))) \
+                                         (set! (sync) (1+ (max-sync))) \
+                                         (set! (x-bounds) (list 0.0 (/ (frames) (srate)))) \
+                                         (set! (sync) old-sync))) %s \"show entire sound\" \"show-all\")\n",
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  return(mus_format("bind_key(%s, %d, lambda do\n\
+                                        old_sync = sync()\n\
+                                        sync(1 + sync_max())\n\
+                                        set_x_bounds([0.0, frames() / srate()])\n\
+                                        set_sync(old_sync)\n\
+                                        end, %s, \"show entire sound\", \"show-all\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "true" : "false"));
+#endif
+  return(NULL);
+}
+
+static void reflect_show_all(prefs_info *prf)
+{
+  reflect_key(prf, "show-all");
+}
+
+static void save_show_all_binding(prefs_info *prf, FILE *fd)
+{
+  save_key_binding(prf, fd, make_show_all_binding);
+}
+
+static void bind_show_all(prefs_info *prf)
+{
+  key_bind(prf, make_show_all_binding);
+}
+
+/* -------- key: select all of sound -------- */
+
+static char *make_select_all_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(bind-key %s %d (lambda () \
+                                       (let ((old-sync (sync))) \
+                                         (set! (sync) (1+ (max-sync))) \
+                                         (select-all) \
+                                         (set! (sync) old-sync))) %s \"select entire sound\" \"select-all\")\n",
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  return(mus_format("bind_key(%s, %d, lambda do\n\
+                                        old_sync = sync()\n\
+                                        sync(1 + sync_max())\n\
+                                        select_all()\n\
+                                        set_sync(old_sync)\n\
+                                        end, %s, \"select entire sound\", \"select-all\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "true" : "false"));
+#endif
+  return(NULL);
+}
+
+static void reflect_select_all(prefs_info *prf)
+{
+  reflect_key(prf, "select-all");
+}
+
+static void save_select_all_binding(prefs_info *prf, FILE *fd)
+{
+  save_key_binding(prf, fd, make_select_all_binding);
+}
+
+static void bind_select_all(prefs_info *prf)
+{
+  key_bind(prf, make_select_all_binding);
+}
 
 
 /* ---------------- find functions ---------------- */
-
-static char *pfc_key = NULL;
-static bool pfc_c = false, pfc_m = false, pfc_x = false;
-
-static bool find_pfc_binding(int key, int state, bool cx, char *prefs_data, XEN func) /* func can be XEN_FALSE if built-in */
-{
-  if ((prefs_data) && (*prefs_data) && (strcmp(prefs_data, "play-from-cursor") == 0))
-    {
-#if USE_MOTIF
-      pfc_key = XKeysymToString(key); /* no free! */
-#else
-  #if USE_GTK
-      pfc_key = gdk_keyval_name(key);
-  #endif
-#endif
-      pfc_c = state & snd_ControlMask;
-      pfc_m = state & snd_MetaMask;
-      pfc_x = cx;
-      return(true);
-    }
-  return(false);
-}
 
 static char *find_sources(void) /* returns full filename if found else null */
 {

@@ -334,24 +334,44 @@ void map_over_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo
       return;
 }
 
-void map_over_all_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo, XEN xf))
+static key_info *make_key_info(key_entry k)
+{
+  key_info *ki;
+  ki = (key_info *)CALLOC(1, sizeof(key_info));
+#if USE_MOTIF
+  ki->key = XKeysymToString(k.key); /* no free! */
+#else
+  #if USE_GTK
+  ki->key = gdk_keyval_name(k.key);
+  #endif
+#endif
+  ki->c = k.state & snd_ControlMask;
+  ki->m = k.state & snd_MetaMask;
+  ki->x = k.cx_extended;
+  return(ki);
+}
+
+key_info *find_prefs_key_binding(const char *prefs_name)
 {
   int i;
+  key_info *ki;
   for (i = 0; i < keymap_top; i++)
     if ((XEN_BOUND_P(user_keymap[i].func)) &&
-	((*func)(user_keymap[i].key, 
-		 user_keymap[i].state, 
-		 user_keymap[i].cx_extended, 
-		 user_keymap[i].prefs_info, 
-		 user_keymap[i].func)))
-	return;
+	(user_keymap[i].prefs_info) &&
+	(strcmp(user_keymap[i].prefs_info, prefs_name) == 0))
+      return(make_key_info(user_keymap[i]));
+
   for (i = 0; i < NUM_BUILT_IN_KEY_BINDINGS; i++)
-    if ((*func)(built_in_key_bindings[i].key, 
-		built_in_key_bindings[i].state, 
-		built_in_key_bindings[i].cx_extended, 
-		built_in_key_bindings[i].prefs_info,
-		built_in_key_bindings[i].func)) /* func is always XEN_FALSE for a built-in key */
-      return;
+    if ((built_in_key_bindings[i].prefs_info) &&
+	(strcmp(built_in_key_bindings[i].prefs_info, prefs_name) == 0))
+      return(make_key_info(built_in_key_bindings[i]));
+
+  ki = (key_info *)CALLOC(1, sizeof(key_info));
+  ki->key = NULL;
+  ki->c = false;
+  ki->m = false;
+  ki->x = false;
+  return(ki);
 }
 
 char *key_binding_description(int key, int state, bool cx_extended)

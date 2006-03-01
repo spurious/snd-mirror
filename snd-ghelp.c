@@ -216,6 +216,9 @@ static void help_browse_callback(const char *name, int row, void *data)
     }
 }
 
+/* TODO: if user want to select/copy a portion of the help text, this callback thwarts him
+ */
+
 static gboolean text_release_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   /* this needs to be bool return false -- otherwise, apparently, the mouse-drag->selection never gets turned off! */
