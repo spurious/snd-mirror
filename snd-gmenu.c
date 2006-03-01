@@ -200,12 +200,6 @@ static void menu_drag_watcher(GtkWidget *w, const char *str, int x, int y, drag_
 
 GtkWidget *add_menu(void)
 {
-#ifndef SND_AS_WIDGET
-  GtkAccelGroup *accel_group;
-  accel_group = gtk_accel_group_new();
-  gtk_window_add_accel_group(GTK_WINDOW(MAIN_SHELL(ss)), accel_group);
-#endif
-
   ss->sgx->mw = (GtkWidget **)calloc(NUM_MENU_WIDGETS, sizeof(GtkWidget *));
 
   main_menu = gtk_menu_bar_new();
@@ -923,26 +917,6 @@ GtkWidget *add_menu(void)
   gtk_widget_show(help_debug_menu);
   SG_SIGNAL_CONNECT(help_debug_menu, "activate", help_debug_callback, NULL);
 
-#ifndef SND_AS_WIDGET
-  gtk_menu_set_accel_group(GTK_MENU(file_cascade_menu), accel_group);
-  gtk_widget_add_accelerator(file_open_menu, "activate", accel_group, GDK_O, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
-  gtk_widget_add_accelerator(file_close_menu, "activate", accel_group, GDK_C, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
-  gtk_widget_add_accelerator(file_save_menu, "activate", accel_group, GDK_S, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
-  gtk_widget_add_accelerator(file_save_as_menu, "activate", accel_group, GDK_A, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
-  gtk_widget_add_accelerator(file_revert_menu, "activate", accel_group, GDK_R, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
-  gtk_widget_add_accelerator(file_mix_menu, "activate", accel_group, GDK_M, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
-  gtk_widget_add_accelerator(file_insert_menu, "activate", accel_group, GDK_I, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
-  gtk_widget_add_accelerator(file_update_menu, "activate", accel_group, GDK_U, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
-  gtk_widget_add_accelerator(file_view_menu, "activate", accel_group, GDK_V, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
-  /* M-p and M-n are for the line history handlers */
-  /* gtk_widget_add_accelerator(file_new_menu, "activate", accel_group, GDK_N, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE); */
-  /* gtk_widget_add_accelerator(file_print_menu, "activate", accel_group, GDK_P, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE); */
-#if HAVE_EXTENSION_LANGUAGE
-  gtk_widget_add_accelerator(edit_find_menu, "activate", accel_group, GDK_F, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
-#endif
-  gtk_widget_add_accelerator(options_transform_menu, "activate", accel_group, GDK_T, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
-#endif
-
   SG_SIGNAL_CONNECT(file_menu, "activate", file_menu_update_1, NULL);
   SG_SIGNAL_CONNECT(edit_menu, "activate", edit_menu_update_1, NULL);
   SG_SIGNAL_CONNECT(view_menu, "activate", view_menu_update_1, NULL);
@@ -1259,7 +1233,7 @@ int g_add_to_main_menu(char *label, int slot)
   mc = gtk_menu_new();
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(m), mc);
   new_menu++;
-  added_menus[new_menu] = mc;
+  added_menus[new_menu] = m; /* was mc -- 1-Mar-06 */
   return(new_menu);
 }
 
@@ -1281,7 +1255,7 @@ GtkWidget *g_add_to_menu(int which_menu, const char *label, int callb, int posit
     case POPUP_MENU:   menw = popup_menu; break;
     default: 
       if (which_menu < MAX_MAIN_MENUS)
-	menw = added_menus[which_menu]; 
+	menw = gtk_menu_item_get_submenu(GTK_MENU_ITEM(added_menus[which_menu])); 
       else return(NULL);
       break;
     }

@@ -43,6 +43,7 @@
 (define with-big-file #t)
 
 ;;; SOMEDAY: why does freeBSD get memory corruption occasionally? (need valgrind ideally)
+;;; SOMEDAY tearoff in ladspa.scm, double-click as help search request in snd-ghelp (xhelp?), test new key bindings in prefs, get new ladspa kits
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (define full-test (< snd-test 0))
@@ -19416,6 +19417,42 @@ EDITS: 5
 				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
 	      (snd-display ";granf 6 data 820: ~A" (channel->vct 820 30)))
 	  (undo))
+
+	(let ((max-list (lambda ()
+			  (let ((pts '()) 
+				(samp 0)
+				(lasty 0.0))
+			    (scan-channel (lambda (y) 
+					    (if (and (not (>= lasty 0.1))
+						     (>= y .1))
+						(set! pts (cons samp pts)))
+					    (set! lasty y)
+					    (set! samp (1+ samp))
+					    #f)) 
+			    (reverse pts)))))
+	  (let ((gen (make-granulate :jitter 0.0 :hop .01 :length .001 :ramp .5 :scaler 1.0 :expansion 0.5)))
+	    (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	    (let ((vals (max-list)))
+	      (if (not (equal? vals (list 11 231 451 671 891)))
+		  (snd-display ";grn jitter 0 max: ~A" vals)))
+	    (undo))
+
+	  (let ((oldvals #f))
+	    (let ((gen (make-granulate :jitter 0.3 :hop .01 :length .001 :ramp .5 :scaler 1.0 :expansion 0.5)))
+	      (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	      ;; (11 232 490 736 982) or whatever
+	      (let ((vals (max-list)))
+		(if (equal? vals (list 11 231 451 671 891))
+		    (snd-display ";grn jitter 0.3 max: ~A" vals))
+		(set! oldvals vals))
+	      (undo))
+
+	    (let ((gen (make-granulate :jitter 0.3 :hop .01 :length .001 :ramp .5 :scaler 1.0 :expansion 0.5)))
+	      (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	      (let ((vals (max-list)))
+		(if (equal? vals oldvals)
+		    (snd-display ";grn jitter 0.3 max: ~A ~A" vals oldvals)))
+	      (undo))))
 
 	(let ((fname (file-name ind)))
 	  (close-sound ind)

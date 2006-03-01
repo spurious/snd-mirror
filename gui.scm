@@ -1288,7 +1288,8 @@
     (if use-gtk
 	(let ((menuitem (gtk_menu_item_new_with_label menu-label))
 	      (submenu (gtk_menu_new)))
-	  (gtk_menu_shell_append (GTK_MENU_SHELL dasmenu) menuitem)
+	  ;; (gtk_menu_shell_append (GTK_MENU_SHELL dasmenu) menuitem)
+	  (gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (GTK_MENU_ITEM dasmenu))) menuitem)
 	  (gtk_widget_show menuitem)
 	  (gtk_menu_item_set_submenu (GTK_MENU_ITEM menuitem) submenu)
 	  (if callback

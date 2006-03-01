@@ -517,7 +517,7 @@ static void select_all_help(prefs_info *prf)
 {
   snd_help("select entire sound",
 	   "This option binds a key to select all of the current sound.  The 'Select all' Edit menu item \
-only selects all of the current channel, and there's no built-in key to handle either case.",
+follows the 'sync' buttons when deciding which channels to select.",
 	   WITH_WORD_WRAP);
 }
 

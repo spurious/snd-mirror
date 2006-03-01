@@ -19,6 +19,7 @@
 ;;; notebook-with-top-tabs
 ;;; make-font-selector-dialog
 ;;; make-color-selector-dialog
+;;; add-main-menu-mnemonics
 
 (use-modules (ice-9 format))
 (provide 'snd-snd-gtk.scm)
@@ -1327,3 +1328,15 @@ Reverb-feedback sets the scaler on the feedback.
 		     (lambda () 
 		       (gtk_widget_show color-selector-dialog)))
 	)))
+
+
+(define (add-main-menu-mnemonics)
+  ;; thanks to Maxim Krikun
+  (gtk_label_set_text_with_mnemonic (GTK_LABEL (gtk_bin_get_child (GTK_BIN (main-menu 0)))) "_File") 
+  (gtk_label_set_text_with_mnemonic (GTK_LABEL (gtk_bin_get_child (GTK_BIN (main-menu 1)))) "_Edit") 
+  (gtk_label_set_text_with_mnemonic (GTK_LABEL (gtk_bin_get_child (GTK_BIN (main-menu 2)))) "_View") 
+  (gtk_label_set_text_with_mnemonic (GTK_LABEL (gtk_bin_get_child (GTK_BIN (main-menu 3)))) "_Options") 
+  (gtk_label_set_text_with_mnemonic (GTK_LABEL (gtk_bin_get_child (GTK_BIN (main-menu 4)))) "_Help"))
+
+
+
