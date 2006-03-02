@@ -19452,6 +19452,22 @@ EDITS: 5
 	      (let ((vals (max-list)))
 		(if (equal? vals oldvals)
 		    (snd-display ";grn jitter 0.3 max: ~A ~A" vals oldvals)))
+	      (undo)))
+
+	  (let ((oldvals #f)
+		(seed 0))
+	    (let ((gen (make-granulate :jitter 1.0 :hop .01 :length .001 :ramp .5 :scaler 1.0 :expansion 0.5)))
+	      (set! seed (mus-location gen))
+	      (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	      (set! oldvals (max-list))
+	      (undo))
+	    
+	    (let ((gen (make-granulate :jitter 1.0 :hop .01 :length .001 :ramp .5 :scaler 1.0 :expansion 0.5)))
+	      (set! (mus-location gen) seed)
+	      (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	      (let ((vals (max-list)))
+		(if (not (equal? vals oldvals))
+		    (snd-display ";grn jitter 1.0 max with seed: ~A ~A" vals oldvals)))
 	      (undo))))
 
 	(let ((fname (file-name ind)))

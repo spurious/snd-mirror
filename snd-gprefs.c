@@ -4823,6 +4823,39 @@ widget_t start_preferences_dialog(void)
       prf->help_func = select_all_help;
       FREE(ki);
 
+      current_sep = make_inter_variable_separator(dpy_box);
+      ki = find_prefs_key_binding("revert-sound");
+      prf = prefs_row_with_text_and_three_toggles("undo all edits (revert)", S_revert_sound, 
+						  "key:", 8, "ctrl:", "meta:",  "C-x:",
+						  ki->key, ki->c, ki->m, ki->x,
+						  dpy_box,
+						  bind_revert);
+      remember_pref(prf, reflect_revert, save_revert_binding);
+      prf->help_func = revert_help;
+      FREE(ki);
+
+      current_sep = make_inter_variable_separator(dpy_box);
+      ki = find_prefs_key_binding("exit");
+      prf = prefs_row_with_text_and_three_toggles("exit from Snd", S_exit, 
+						  "key:", 8, "ctrl:", "meta:",  "C-x:",
+						  ki->key, ki->c, ki->m, ki->x,
+						  dpy_box,
+						  bind_exit);
+      remember_pref(prf, reflect_exit, save_exit_binding);
+      prf->help_func = exit_help;
+      FREE(ki);
+
+      current_sep = make_inter_variable_separator(dpy_box);
+      ki = find_prefs_key_binding("goto-maxamp");
+      prf = prefs_row_with_text_and_three_toggles("move cursor to channel's maximum sample", S_maxamp_position, 
+						  "key:", 8, "ctrl:", "meta:",  "C-x:",
+						  ki->key, ki->c, ki->m, ki->x,
+						  dpy_box,
+						  bind_goto_maxamp);
+      remember_pref(prf, reflect_goto_maxamp, save_goto_maxamp_binding);
+      prf->help_func = goto_maxamp_help;
+      FREE(ki);
+
     }
 
     /* ---------------- cursor options ---------------- */

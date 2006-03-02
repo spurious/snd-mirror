@@ -478,6 +478,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+3-Mar:   show-selection (extensions.scm).\n\
 27-Feb:  snd 7.19.\n\
          tracking-cursor-style.\n\
 21-Feb:  bind-key now takes a character or string 1st arg (as well as an integer); if a string, it's treated\n\

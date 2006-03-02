@@ -126,7 +126,7 @@ static char *help_completer(char *text, void *data)
   /* might want to look at help topics too */
 } 
 
-static bool new_help(const char *pattern)
+static bool new_help(const char *pattern, bool complain)
 {
   char *url = NULL;
   char **xrefs;
@@ -149,7 +149,7 @@ static bool new_help(const char *pattern)
       url_to_html_viewer(url);
       return(true);
     }
-  if (!(snd_topic_help(pattern)))
+  if ((!(snd_topic_help(pattern))) && (complain))
     {
       xrefs = help_name_to_xrefs(pattern);
       if (xrefs)
@@ -201,7 +201,7 @@ static void help_next_callback(Widget w, XtPointer context, XtPointer info)
     {
       help_needed = false;
       help_history_pos++;
-      new_help(help_history[help_history_pos - 1]);
+      new_help(help_history[help_history_pos - 1], true);
       help_needed = true;
     }
 }
@@ -213,7 +213,7 @@ static void help_previous_callback(Widget w, XtPointer context, XtPointer info)
     {
       help_needed = false;
       help_history_pos--;
-      new_help(help_history[help_history_pos - 1]);
+      new_help(help_history[help_history_pos - 1], true);
       help_needed = true;
     }
 }
@@ -239,7 +239,7 @@ static void help_browse_callback(Widget w, XtPointer context, XtPointer info)
 	  red_text = (char *)XmStringUnparse(cbs->item, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
 	  if (red_text) 
 	    {
-	      new_help(red_text);
+	      new_help(red_text, true);
 	      XtFree(red_text);
 	    }
 	}
@@ -290,7 +290,16 @@ static void text_release_callback(Widget w, XtPointer context, XEvent *event, Bo
   help_str = XmTextGetSelection(w);
   if (help_str)
     {
-      new_help(help_str);
+      int i, len;
+      bool one_word = true;
+      len = snd_strlen(help_str);
+      for (i = 0; i < len; i++)
+	if (isspace(help_str[i]))
+	  {
+	    one_word = false;
+	    break;
+	  }
+      if (one_word) new_help(help_str, false);
       XtFree(help_str);
     }
 }
@@ -299,7 +308,7 @@ static void help_search_callback(Widget w, XtPointer context, XtPointer info)
 {
   char *pattern = NULL;
   pattern = XmTextFieldGetString(w);
-  if (new_help(pattern))
+  if (new_help(pattern, true))
     XmTextFieldSetString(w, "");
   if (pattern) XtFree(pattern);
 }

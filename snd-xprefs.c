@@ -11,21 +11,16 @@
 
              [view the current selection]
              [zoom in|out one pixel, move window left|right one pixel]
-	     [select the whole sound, undo all edits]
-             [go to max amp, go to next zero crossing, skip silence]
+             [go to next zero crossing, skip silence]
 
 	     ;; need test here
      (bind-key "Left" 0 (lambda () (move-one-pixel #f)) #f "move one pixel back" "move-back-one-pixel")
      (bind-key "Right" 0 (lambda () (move-one-pixel #t)) #f "move one pixel forward" "move-forward-one-pixel")
      (bind-key "Up" 0 (lambda () (zoom-one-pixel #f)) #f "zoom out one pixel" "zoom-out-one-pixel")
      (bind-key "Down" 0 (lambda () (zoom-one-pixel #t)) #f "zoom in one pixel" "zoom-in-one-pixel")
-     (bind-key key cm (lambda () (set! (x-bounds) (list (/ (selection-position) (srate))
-                                                        (/ (+ (selection-position) (selection-frames)) (srate))))) #f "show selection" "show-selection")
-     ;; c-x l shows/centers, but does not change window size (also remember multi-chan cases here!)
-     (bind-key key cm (lambda () (revert-sound)) cx "undo all edits" "revert-sound")
-     ;; what about revert-channel?
 
-     split these out into a separate box of "additional key bindings" under "cursor options" (including pfc)
+     (bind-key key cm (lambda () (show-selection)) #f "show selection" "show-selection")
+     ;; need ruby side of show-selection, also this binding needs to load extensions
 
 
    abandoned:
@@ -5409,6 +5404,39 @@ widget_t start_preferences_dialog(void)
 						  bind_select_all);
       remember_pref(prf, reflect_select_all, save_select_all_binding);
       prf->help_func = select_all_help;
+      FREE(ki);
+
+      current_sep = make_inter_variable_separator(dpy_box, prf->label);
+      ki = find_prefs_key_binding("revert-sound");
+      prf = prefs_row_with_text_and_three_toggles("undo all edits (revert)", S_revert_sound, 
+						  "key:", 8, "ctrl:", "meta:",  "C-x:",
+						  ki->key, ki->c, ki->m, ki->x,
+						  dpy_box, current_sep,
+						  bind_revert);
+      remember_pref(prf, reflect_revert, save_revert_binding);
+      prf->help_func = revert_help;
+      FREE(ki);
+
+      current_sep = make_inter_variable_separator(dpy_box, prf->label);
+      ki = find_prefs_key_binding("exit");
+      prf = prefs_row_with_text_and_three_toggles("exit from Snd", S_exit, 
+						  "key:", 8, "ctrl:", "meta:",  "C-x:",
+						  ki->key, ki->c, ki->m, ki->x,
+						  dpy_box, current_sep,
+						  bind_exit);
+      remember_pref(prf, reflect_exit, save_exit_binding);
+      prf->help_func = exit_help;
+      FREE(ki);
+
+      current_sep = make_inter_variable_separator(dpy_box, prf->label);
+      ki = find_prefs_key_binding("goto-maxamp");
+      prf = prefs_row_with_text_and_three_toggles("move cursor to channel's maximum sample", S_maxamp_position, 
+						  "key:", 8, "ctrl:", "meta:",  "C-x:",
+						  ki->key, ki->c, ki->m, ki->x,
+						  dpy_box, current_sep,
+						  bind_goto_maxamp);
+      remember_pref(prf, reflect_goto_maxamp, save_goto_maxamp_binding);
+      prf->help_func = goto_maxamp_help;
       FREE(ki);
 
     }

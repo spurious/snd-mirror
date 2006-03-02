@@ -26,8 +26,17 @@
 <br>
 <center>
 <table border=1><tr><td>
-<table bgcolor="aliceblue" border=0 cellspacing=8><tr><td><small>related documentation:</small></td><td><small><a href="snd.html">snd.html</a></small></td>
-<td><small><a href="extsnd.html">extsnd.html</a></small></td><td><small><a href="grfsnd.html">grfsnd.html</a></small></td><td><small><a href="clm.html">clm.html</a></small></td><td><small><a href="sndlib.html">sndlib.html</a></small></td><td><small><a href="fm.html">fm.html</a></small></td><td><small><a href="libxm.html">libxm.html</a></small></td><td><small><a href="index.html">index.html</a></small></td></tr></table>
+<table bgcolor="aliceblue" border=0 cellspacing=8><tr>
+<td><small>related documentation:</small></td>
+<td><small><a href="snd.html">snd.html</a></small></td>
+<td><small><a href="extsnd.html">extsnd.html</a></small></td>
+<td><small><a href="grfsnd.html">grfsnd.html</a></small></td>
+<td><small><a href="clm.html">clm.html</a></small></td>
+<td><small><a href="sndlib.html">sndlib.html</a></small></td>
+<td><small><a href="fm.html">fm.html</a></small></td>
+<td><small><a href="libxm.html">libxm.html</a></small></td>
+<td><small><a href="index.html">index.html</a></small></td>
+</tr></table>
 </td></tr></table>
 </center>
 <br>
@@ -1877,6 +1886,7 @@ convenient if they were in one file.
   <em class=emdef>stereo-&gt;mono</em> orig-snd chan1-name chan2-name
 
   <a class=def name="focusfollowsmouse">focus-follows-mouse</a>
+  <a class=def name="showselection">show-selection</a>
 </pre>
 
 <p><b>focus-follows-mouse</b> sets up various hook functions to activate whatever widget is underneath the mouse cursor.
@@ -2028,6 +2038,10 @@ is the same, but the source sounds are files, not necessarily already open in Sn
 <b>stereo-&gt;mono</b> takes a stereo sound and produces two new mono sounds.
 (The corresponding <b>stereo-&gt;mono-files</b> can be based on the existing
 <a href="extsnd.html#extractchannel">extract-channel</a> function).
+</p>
+<p>
+<b>show-selection</b> finds the bounds of the current selection (in all channels), and 
+sets the time domain view to show it.
 </p>
 <p>
 <b>any-env-channel</b> takes an envelope and a function to produce the connection between successive

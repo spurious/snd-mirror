@@ -1,5 +1,6 @@
 Snd change log
 
+  3-Mar:     show-selection (extensions.scm).
   27-Feb:    Snd 7.19.
 	     tracking-cursor-style.
   21-Feb:    bind-key now takes a character or string 1st arg (as well as an integer); if a string, it's treated

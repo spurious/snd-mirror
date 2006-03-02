@@ -521,6 +521,27 @@ follows the 'sync' buttons when deciding which channels to select.",
 	   WITH_WORD_WRAP);
 }
 
+static void revert_help(prefs_info *prf)
+{
+  snd_help("undo all edits (revert)",
+	   "This option binds a key to undo any edits in the current sound, equivalent to the File:Revert menu item.",
+	   WITH_WORD_WRAP);
+}
+
+static void exit_help(prefs_info *prf)
+{
+  snd_help("exit from Snd",
+	   "This option binds a key to exit from Snd, equivalent to the File:Exit menu item.",
+	   WITH_WORD_WRAP);
+}
+
+static void goto_maxamp_help(prefs_info *prf)
+{
+  snd_help("go to maxamp",
+	   "This option binds a key to move the view (and cursor) to the position of the current channel's maximum sample.",
+	   WITH_WORD_WRAP);
+}
+
 
 
 /* ---------------- save functions ---------------- */
@@ -840,6 +861,109 @@ static void bind_select_all(prefs_info *prf)
 {
   key_bind(prf, make_select_all_binding);
 }
+
+/* -------- key: undo all edits -------- */
+
+static char *make_revert_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(bind-key %s %d (lambda () (revert-sound)) %s \"undo all edits\" \"revert-sound\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  return(mus_format("bind_key(%s, %d, lambda do\n  revert_sound())\n  end, %s, \"undo all edits\", \"revert-sound\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "true" : "false"));
+#endif
+  return(NULL);
+}
+
+static void reflect_revert(prefs_info *prf)
+{
+  reflect_key(prf, "revert-sound");
+}
+
+static void save_revert_binding(prefs_info *prf, FILE *fd)
+{
+  save_key_binding(prf, fd, make_revert_binding);
+}
+
+static void bind_revert(prefs_info *prf)
+{
+  key_bind(prf, make_revert_binding);
+}
+
+/* -------- key: exit -------- */
+
+static char *make_exit_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(bind-key %s %d (lambda () (exit)) %s \"exit\" \"exit\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  return(mus_format("bind_key(%s, %d, lambda do\n  exit())\n  end, %s, \"exit\", \"exit\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "true" : "false"));
+#endif
+  return(NULL);
+}
+
+static void reflect_exit(prefs_info *prf)
+{
+  reflect_key(prf, "exit");
+}
+
+static void save_exit_binding(prefs_info *prf, FILE *fd)
+{
+  save_key_binding(prf, fd, make_exit_binding);
+}
+
+static void bind_exit(prefs_info *prf)
+{
+  key_bind(prf, make_exit_binding);
+}
+
+/* -------- key: goto maxamp -------- */
+
+static char *make_goto_maxamp_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(bind-key %s %d (lambda () (set! (cursor) (maxamp-position)) %s \"goto maxamp\" \"goto-maxamp\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  return(mus_format("bind_key(%s, %d, lambda do\n  set_cursor(maxamp_position())\n  end, %s, \"goto maxamp\", \"goto-maxamp\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "true" : "false"));
+#endif
+  return(NULL);
+}
+
+static void reflect_goto_maxamp(prefs_info *prf)
+{
+  reflect_key(prf, "goto-maxamp");
+}
+
+static void save_goto_maxamp_binding(prefs_info *prf, FILE *fd)
+{
+  save_key_binding(prf, fd, make_goto_maxamp_binding);
+}
+
+static void bind_goto_maxamp(prefs_info *prf)
+{
+  key_bind(prf, make_goto_maxamp_binding);
+}
+
 
 
 /* ---------------- find functions ---------------- */

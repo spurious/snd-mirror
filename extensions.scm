@@ -1056,3 +1056,31 @@ If 'check' is #f, the hooks are removed."
   (if (and (not (= choice 0))
 	   (not (member global-sync-func (hook->list after-open-hook))))
       (add-hook! after-open-hook global-sync-func)))
+
+
+;;; -------- show-selection
+
+(define (show-selection)
+  (if (selection?)
+      (let ((beg #f)
+	    (end #f))
+	(for-each
+	 (lambda (snd)
+	   (do ((i 0 (1+ i)))
+	       ((= i (chans snd)))
+	     (if (selection-member? snd i)
+		 (let ((pos (/ (selection-position snd i) (srate snd)))
+		       (len (/ (selection-frames snd i) (srate snd))))
+		   (if (or (not beg)
+			   (< pos beg))
+		       (set! beg pos))
+		   (if (or (not end)
+			   (> (+ pos len) end))
+		       (set! end (+ pos len)))))))
+	 (sounds))
+	(for-each
+	 (lambda (snd)
+	   (do ((i 0 (1+ i)))
+	       ((= i (chans snd)))
+	     (set! (x-bounds snd i) (list beg end))))
+	 (sounds)))))

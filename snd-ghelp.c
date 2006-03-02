@@ -76,7 +76,7 @@ static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer 
   return(false);
 }
 
-static bool new_help(const char *pattern)
+static bool new_help(const char *pattern, bool complain)
 {
   char *url;
   char **xrefs;
@@ -99,7 +99,7 @@ static bool new_help(const char *pattern)
       url_to_html_viewer(url);
       return(true);
     }
-  if (!(snd_topic_help(pattern)))
+  if ((!(snd_topic_help(pattern))) && (complain))
     {
       xrefs = help_name_to_xrefs(pattern);
       if (xrefs)
@@ -151,7 +151,7 @@ static void help_next_callback(GtkWidget *w, gpointer context)
     {
       help_needed = false;
       help_history_pos++;
-      new_help(help_history[help_history_pos - 1]);
+      new_help(help_history[help_history_pos - 1], true);
       help_needed = true;
     }
 }
@@ -163,7 +163,7 @@ static void help_previous_callback(GtkWidget *w, gpointer context)
     {
       help_needed = false;
       help_history_pos--;
-      new_help(help_history[help_history_pos - 1]);
+      new_help(help_history[help_history_pos - 1], true);
       help_needed = true;
     }
 }
@@ -211,13 +211,10 @@ static void help_browse_callback(const char *name, int row, void *data)
       else
 	{
 	  if (name)
-	    new_help(name);
+	    new_help(name, true);
 	}
     }
 }
-
-/* TODO: if user want to select/copy a portion of the help text, this callback thwarts him
- */
 
 static gboolean text_release_callback(GtkTreeSelection *selection, gpointer *gp)
 {
@@ -228,9 +225,19 @@ static gboolean text_release_callback(GtkTreeSelection *selection, gpointer *gp)
     {
       char *txt;
       txt = gtk_text_buffer_get_text(HELP_BUFFER, &start, &end, true);
+      /* only change help text display if it's one word in the selection, and we can find new help */
       if (txt)
 	{
-	  new_help(txt);
+	  int i, len;
+	  bool one_word = true;
+	  len = snd_strlen(txt);
+	  for (i = 0; i < len; i++)
+	    if (isspace(txt[i]))
+	      {
+		one_word = false;
+		break;
+	      }
+	  if (one_word) new_help(txt, false);
 	  g_free(txt);
 	}
     }
@@ -241,7 +248,7 @@ static void search_activated(GtkWidget *w, gpointer context)
 { 
   char *str = NULL;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w)); /* no free, I think */
-  if (new_help(str))
+  if (new_help(str, true))
     gtk_entry_set_text(GTK_ENTRY(w), "");
 }
 

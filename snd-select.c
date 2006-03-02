@@ -1,6 +1,9 @@
 #include "snd.h"
 #include "clm2xen.h"
 
+/* PERHAPS: selection? could take optional snd/chn args making selection-member? unnecessary
+ *          also (set! (selection?) #f) would cancel it, but (set! .. #t) ? select all?
+ */
 
 /* -------- watcher lists -------- */
 
