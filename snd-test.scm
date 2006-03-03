@@ -54,6 +54,7 @@
 (define original-save-dir (or (save-dir) "/zap/snd"))
 (define original-temp-dir (or (temp-dir) "/zap/tmp"))
 
+(unbind-key #\c 4 #t)
 ;;; clear out old junk!
 (if (file-exists? original-save-dir) 
     (system (format #f "rm ~A/snd_*" original-save-dir)))
@@ -47707,7 +47708,13 @@ EDITS: 1
 							)
 						      (if (XmIsScale w)
 							  (move-scale w 50))))))))
-		    
+
+		    (unbind-key #\1 4 #t)		    
+		    (unbind-key #\1 0 #t)		    
+		    (unbind-key #\1 12 #t)		    
+		    (unbind-key #\1 4 #f)		    
+		    (unbind-key #\1 0 #f)		    
+		    (unbind-key #\1 12 #f)		    
 		    (XtCallCallbacks save-button XmNactivateCallback #f)
 		    (if (not (file-exists? "/home/bil/.snd_prefs_guile"))
 			(snd-display ";prefs not saved?"))

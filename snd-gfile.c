@@ -12,7 +12,8 @@
    View:Files
 */
 
-/* TODO: mkdir button callbacks, hide in insert/mix cases */
+/* TODO: why does <backspace> clear the goddamn entry? */
+/* TODO: sometimes mkdir (and open) are not resensitized? */
 
 /* ---------------- file selector replacement ---------------- */
 
@@ -945,6 +946,33 @@ static bool file_is_directory(fsb *fs)
   return((!filename) || (directory_p(filename)));
 }
 
+static bool file_is_nonexistent_directory(fsb *fs)
+{
+  char *filename = NULL;
+  filename = copy_string(fsb_file_text(fs));
+  if (filename)
+    {
+      int i, len;
+      len = strlen(filename);
+      if ((!mus_file_probe(filename)) && 
+	  (filename[len - 1] == '/'))
+	{
+	  /* check that there's some hope of making this directory */
+	  for (i = len - 2; i > 0; i--)
+	    if (filename[i] == '/')
+	      {
+		bool result;
+		filename[i] = '\0';
+		result = directory_p(filename);
+		FREE(filename);
+		return(result);
+	      }
+	}
+    }
+  FREE(filename);
+  return(false);
+}
+
 #define NEW_INFO() snd_gtk_entry_label_new(NULL, ss->sgx->highlight_color)
 #define CHANGE_INFO(Widget, Message) gtk_entry_set_text(GTK_ENTRY(Widget), Message)
 #define SET_INFO_SIZE(Widget, Size) gtk_entry_set_width_chars(GTK_ENTRY(Widget), Size)
@@ -1163,6 +1191,7 @@ static gboolean reflect_text_in_open_button(GtkWidget *w, GdkEventKey *event, gp
   fs = fd->fs;
 
   set_sensitive(fs->ok_button, (!(file_is_directory(fs))));
+  if (fs->mkdir_button) set_sensitive(fs->mkdir_button, file_is_nonexistent_directory(fs));
 
   /* try to find the current partial filename in the files list, and move to it if found */
   /* try to move file list to show possible matches,
@@ -1205,6 +1234,7 @@ static gboolean reflect_text_in_open_button(GtkWidget *w, GdkEventKey *event, gp
 static file_dialog_info *make_file_dialog(int read_only, const char *title, const char *file_title, const char *ok_title,
 					  snd_dialog_t which_dialog, 
 					  GtkSignalFunc file_ok_proc,
+					  GtkSignalFunc file_mkdir_proc,
 					  GtkSignalFunc file_delete_proc,
 					  GtkSignalFunc file_dismiss_proc,
 					  GtkSignalFunc file_help_proc,
@@ -1225,7 +1255,12 @@ static file_dialog_info *make_file_dialog(int read_only, const char *title, cons
   SG_SIGNAL_CONNECT(fs->file_text, "key_press_event", filer_key_press, NULL);
   SG_SIGNAL_CONNECT(fs->ok_button, "clicked", file_ok_proc, (gpointer)fd);
   SG_SIGNAL_CONNECT(fs->cancel_button, "clicked", file_dismiss_proc, (gpointer)fd);
-  if (file_delete_proc) SG_SIGNAL_CONNECT(fs->dialog, "delete_event", file_delete_proc, (gpointer)fd);
+  if (file_delete_proc) 
+    SG_SIGNAL_CONNECT(fs->dialog, "delete_event", file_delete_proc, (gpointer)fd);
+
+  if (file_mkdir_proc)
+    SG_SIGNAL_CONNECT(fs->mkdir_button, "clicked", file_mkdir_proc, (gpointer)fd);
+  else gtk_widget_hide(fs->mkdir_button);
 
   fs->file_select_data = (void *)fd;
   fs->file_select_callback = dialog_select_callback;
@@ -1257,6 +1292,7 @@ static file_dialog_info *make_file_dialog(int read_only, const char *title, cons
   SG_SIGNAL_CONNECT(fs->file_text, "activate", file_ok_proc, (gpointer)fd);
 
   set_sensitive(fs->ok_button, (!(file_is_directory(fs))));
+  set_sensitive(fs->mkdir_button, false);
   SG_SIGNAL_CONNECT(fs->file_text, "key_release_event", reflect_text_in_open_button, (gpointer)fd);
 
   set_dialog_widget(which_dialog, fs->dialog);
@@ -1424,6 +1460,34 @@ static gint file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer cont
   return(true);
 }
 
+static void file_open_dialog_mkdir(GtkWidget *w, gpointer context)
+{
+  file_dialog_info *fd = (file_dialog_info *)context;
+  fsb *fs;
+  char *filename = NULL;
+  fs = fd->fs;
+
+  filename = fsb_file_text(fs);
+  if (mkdir(filename, 0777) < 0)
+    {
+      /* could not make the directory */
+      char *str;
+      str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
+      file_open_error(str, (void *)fd);
+      clear_error_if_open_changes(fs, (void *)fd);
+      FREE(str);
+    }
+  else
+    {
+      /* set FSB to new dir and force update */
+      if (fs->directory_name) FREE(fs->directory_name);
+      fs->directory_name = copy_string(filename);
+      fsb_filter_set_text_with_directory(fs, "*");
+      fsb_update_lists(fs);
+      set_sensitive(w, false);
+    }
+}
+
 widget_t make_open_file_dialog(bool read_only, bool managed)
 {
   if (!odat)
@@ -1432,7 +1496,8 @@ widget_t make_open_file_dialog(bool read_only, bool managed)
 			    (char *)((read_only) ? _("view:") : _("open:")),
 			    NULL,
 			    FILE_OPEN_DIALOG,
-			    (GtkSignalFunc)file_open_dialog_ok,				     
+			    (GtkSignalFunc)file_open_dialog_ok,	
+			    (GtkSignalFunc)file_open_dialog_mkdir,
 			    (GtkSignalFunc)file_open_dialog_delete,
 			    (GtkSignalFunc)file_open_dialog_dismiss,
 			    (GtkSignalFunc)file_open_dialog_help,
@@ -1527,6 +1592,7 @@ widget_t make_mix_file_dialog(bool managed)
   if (mdat == NULL)
     mdat = make_file_dialog(true, _("Mix"), _("mix:"), _("Mix"), FILE_MIX_DIALOG,
 			    (GtkSignalFunc)file_mix_ok_callback,
+			    NULL, /* no mkdir */
 			    (GtkSignalFunc)file_mix_delete_callback,
 			    (GtkSignalFunc)file_mix_cancel_callback,
 			    (GtkSignalFunc)file_mix_help_callback,
@@ -1621,6 +1687,7 @@ widget_t make_insert_file_dialog(bool managed)
   if (idat == NULL)
     idat = make_file_dialog(true, _("Insert"), _("insert:"), _("Insert"), FILE_INSERT_DIALOG,
 			    (GtkSignalFunc)file_insert_ok_callback,
+			    NULL, /* no mkdir */
 			    (GtkSignalFunc)file_insert_delete_callback,
 			    (GtkSignalFunc)file_insert_cancel_callback,
 			    (GtkSignalFunc)file_insert_help_callback,
@@ -2647,6 +2714,33 @@ static gint save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer cont
   return(true);
 }
 
+static void save_as_mkdir_callback(GtkWidget *w, gpointer context)
+{
+  save_as_dialog_info *sd = (save_as_dialog_info *)context;
+  char *filename = NULL, *str;
+  fsb *fs;
+  fs = sd->fs;
+  filename = fsb_file_text(fs);
+  if (mkdir(filename, 0777) < 0)
+    {
+      /* could not make the directory */
+      str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
+      post_file_dialog_error((const char *)str, (void *)(sd->panel_data));
+      clear_error_if_filename_changes(fs, (void *)sd);
+      FREE(str);
+    }
+  else
+    {
+      if (fs->directory_name) FREE(fs->directory_name);
+      fs->directory_name = copy_string(filename);
+      fsb_filter_set_text_with_directory(fs, "*");
+      fsb_update_lists(fs);
+      set_sensitive(w, false);
+      str = _("save as:");
+      gtk_label_set_text(GTK_LABEL(sd->fs->file_label), str);
+    }
+}
+
 static void save_as_file_exists_check(GtkWidget *w, gpointer context)
 {
   /* a "changed" callback for the text field */
@@ -2694,6 +2788,7 @@ static gboolean reflect_text_in_save_button(GtkWidget *w, GdkEventKey *event, gp
 {
   fsb *fs = (fsb *)data;
   set_sensitive(fs->ok_button, (!(file_is_directory(fs))));
+  if (fs->mkdir_button) set_sensitive(fs->mkdir_button, file_is_nonexistent_directory(fs));
   return(false);
 }
 
@@ -2719,6 +2814,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 
       if (sd->type != REGION_SAVE_AS)
 	SG_SIGNAL_CONNECT(fs->extract_button, "clicked", save_as_extract_callback, (void *)sd);
+      SG_SIGNAL_CONNECT(fs->mkdir_button, "clicked", save_as_mkdir_callback, (void *)sd);
 
       SG_SIGNAL_CONNECT(fs->help_button, "clicked", save_as_help_callback, (gpointer)sd);
       SG_SIGNAL_CONNECT(fs->file_text, "key_press_event", filer_key_press, NULL);
