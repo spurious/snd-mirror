@@ -4824,6 +4824,17 @@ widget_t start_preferences_dialog(void)
       FREE(ki);
 
       current_sep = make_inter_variable_separator(dpy_box);
+      ki = find_prefs_key_binding("show-selection");
+      prf = prefs_row_with_text_and_three_toggles("show current selection", "show-selection", 
+						  "key:", 8, "ctrl:", "meta:",  "C-x:",
+						  ki->key, ki->c, ki->m, ki->x,
+						  dpy_box,
+						  bind_show_selection);
+      remember_pref(prf, reflect_show_selection, save_show_selection_binding);
+      prf->help_func = show_selection_help;
+      FREE(ki);
+
+      current_sep = make_inter_variable_separator(dpy_box);
       ki = find_prefs_key_binding("revert-sound");
       prf = prefs_row_with_text_and_three_toggles("undo all edits (revert)", S_revert_sound, 
 						  "key:", 8, "ctrl:", "meta:",  "C-x:",

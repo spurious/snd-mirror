@@ -542,6 +542,13 @@ static void goto_maxamp_help(prefs_info *prf)
 	   WITH_WORD_WRAP);
 }
 
+static void show_selection_help(prefs_info *prf)
+{
+  snd_help("show selection",
+	   "This option binds a key to cause the current selection to fill the time domain graph.",
+	   WITH_WORD_WRAP);
+}
+
 
 
 /* ---------------- save functions ---------------- */
@@ -867,7 +874,7 @@ static void bind_select_all(prefs_info *prf)
 static char *make_revert_binding(char *key, bool ctrl, bool meta, bool cx)
 {
 #if HAVE_SCHEME
-  return(mus_format("(bind-key %s %d (lambda () (revert-sound)) %s \"undo all edits\" \"revert-sound\")\n", 
+  return(mus_format("(bind-key %s %d revert-sound %s \"undo all edits\" \"revert-sound\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -901,7 +908,7 @@ static void bind_revert(prefs_info *prf)
 static char *make_exit_binding(char *key, bool ctrl, bool meta, bool cx)
 {
 #if HAVE_SCHEME
-  return(mus_format("(bind-key %s %d (lambda () (exit)) %s \"exit\" \"exit\")\n", 
+  return(mus_format("(bind-key %s %d exit %s \"exit\" \"exit\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -962,6 +969,40 @@ static void save_goto_maxamp_binding(prefs_info *prf, FILE *fd)
 static void bind_goto_maxamp(prefs_info *prf)
 {
   key_bind(prf, make_goto_maxamp_binding);
+}
+
+/* -------- key: show selection -------- */
+
+static char *make_show_selection_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n\(bind-key %s %d show-selection %s \"show selection\" \"show-selection\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  return(mus_format("require \"extensions\"\nbind_key(%s, %d, lambda do\n  show_selection())\n  end, %s, \"show selection\", \"show-selection\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "true" : "false"));
+#endif
+  return(NULL);
+}
+
+static void reflect_show_selection(prefs_info *prf)
+{
+  reflect_key(prf, "show-selection");
+}
+
+static void save_show_selection_binding(prefs_info *prf, FILE *fd)
+{
+  save_key_binding(prf, fd, make_show_selection_binding);
+}
+
+static void bind_show_selection(prefs_info *prf)
+{
+  key_bind(prf, make_show_selection_binding);
 }
 
 

@@ -8,6 +8,7 @@ static int printout_end;
 
 /* TODO: the double "(" bug is still with us, but how to make it happen repeatably?
  * TODO: cursor reposition via mouse -> cursor not displayed (but second click shows it? -- is this a gtk feature?)
+ * TODO: after select, yank, copy at end, where in hell is the cursor??
  */
 
 static bool listener_awaiting_completion = false;

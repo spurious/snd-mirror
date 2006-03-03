@@ -12,13 +12,15 @@
    View:Files
 */
 
+/* TODO: mkdir button callbacks, hide in insert/mix cases */
+
 /* ---------------- file selector replacement ---------------- */
 
 typedef struct fsb {
 
   /* base dialog */
   GtkWidget *dialog, *filter_text, *filter_label, *just_sounds_button;
-  GtkWidget *file_label, *file_text, *ok_button, *filter_button, *cancel_button, *help_button, *extract_button;
+  GtkWidget *file_label, *file_text, *ok_button, *mkdir_button, *cancel_button, *help_button, *extract_button;
   GtkWidget *panes, *dirs_menu, *sorters_menu;
   GtkWidget *files_mbar, *files_mitem, *files_menu, *filters_mbar, *filters_mitem, *filters_menu;
 
@@ -319,8 +321,8 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
   fs->cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_widget_set_name(fs->cancel_button, "quit_button");
 
-  fs->filter_button = sg_button_new_from_stock_with_label(_("Filter"), GTK_STOCK_REFRESH);
-  gtk_widget_set_name(fs->filter_button, "reset_button");
+  fs->mkdir_button = sg_button_new_from_stock_with_label(_("Mkdir"), GTK_STOCK_REFRESH);
+  gtk_widget_set_name(fs->mkdir_button, "reset_button");
 
   if (with_extract)
     {
@@ -339,14 +341,14 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(fs->dialog)->action_area), fs->ok_button, true, true, 10);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(fs->dialog)->action_area), fs->cancel_button, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(fs->dialog)->action_area), fs->filter_button, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(fs->dialog)->action_area), fs->mkdir_button, true, true, 10);
   if (with_extract) gtk_box_pack_start(GTK_BOX(GTK_DIALOG(fs->dialog)->action_area), fs->extract_button, true, true, 10);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(fs->dialog)->action_area), fs->help_button, true, true, 10);
 
   gtk_widget_show(fs->ok_button);
   gtk_widget_show(fs->cancel_button);
   gtk_widget_show(fs->help_button);
-  gtk_widget_show(fs->filter_button);
+  gtk_widget_show(fs->mkdir_button);
   if (with_extract) gtk_widget_show(fs->extract_button);
 
 

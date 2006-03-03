@@ -9,7 +9,6 @@
    TODO: ruby extensions.rb side of set_global_sync
    TODO: various additional key bindings:
 
-             [view the current selection]
              [zoom in|out one pixel, move window left|right one pixel]
              [go to next zero crossing, skip silence]
 
@@ -19,8 +18,9 @@
      (bind-key "Up" 0 (lambda () (zoom-one-pixel #f)) #f "zoom out one pixel" "zoom-out-one-pixel")
      (bind-key "Down" 0 (lambda () (zoom-one-pixel #t)) #f "zoom in one pixel" "zoom-in-one-pixel")
 
-     (bind-key key cm (lambda () (show-selection)) #f "show selection" "show-selection")
-     ;; need ruby side of show-selection, also this binding needs to load extensions
+     ;; need ruby side of show-selection
+
+     ;; should the exit key work in the listener as well? -- how to handle C-x cmds in xttranslation tables?
 
 
    abandoned:
@@ -799,7 +799,7 @@ static prefs_info *prefs_row_with_text_and_three_toggles(const char *label, cons
   prf->toggle2 = make_row_toggle(prf, toggle2_value, lab2, box, top_widget);
   sep3 = make_row_inner_separator(4, prf->toggle2, box, top_widget);
   lab4 = make_row_inner_label(prf, toggle3_label, sep3, box, top_widget);
-  prf->toggle3 = make_row_toggle(prf, toggle2_value, lab4, box, top_widget);
+  prf->toggle3 = make_row_toggle(prf, toggle3_value, lab4, box, top_widget);
   help = make_row_help(prf, varname, box, top_widget, prf->toggle3);
   
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
@@ -5404,6 +5404,17 @@ widget_t start_preferences_dialog(void)
 						  bind_select_all);
       remember_pref(prf, reflect_select_all, save_select_all_binding);
       prf->help_func = select_all_help;
+      FREE(ki);
+
+      current_sep = make_inter_variable_separator(dpy_box, prf->label);
+      ki = find_prefs_key_binding("show-selection");
+      prf = prefs_row_with_text_and_three_toggles("show current selection", "show-selection", 
+						  "key:", 8, "ctrl:", "meta:",  "C-x:",
+						  ki->key, ki->c, ki->m, ki->x,
+						  dpy_box, current_sep,
+						  bind_show_selection);
+      remember_pref(prf, reflect_show_selection, save_show_selection_binding);
+      prf->help_func = show_selection_help;
       FREE(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);

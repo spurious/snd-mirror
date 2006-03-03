@@ -18,7 +18,6 @@
  *          -> src is interrupted apparently and file open completes
  *       or similarly, stops at "ok", starts src, clicks ok?
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
- * PERHAPS: in Save-as dialogs, a "New Directory" button would be useful -- but where to put this? (mac-like drop-down?)
  */
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
@@ -49,11 +48,6 @@ static void color_file_selection_box(Widget w)
   XtVaSetValues(FSB_BOX(w, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color,   NULL);
   XtVaSetValues(FSB_BOX(w, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
   XtVaSetValues(FSB_BOX(w, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color,   NULL);
-  
-  XtVaSetValues(FSB_BOX(w, XmDIALOG_APPLY_BUTTON),  XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-  XtVaSetValues(FSB_BOX(w, XmDIALOG_APPLY_BUTTON),  XmNbackground, ss->sgx->doit_button_color,   NULL);
-  /* "Filter" (Apply) button strikes me as useless, but it needs to exist or <cr> in the filter text widget activates "Open" */
-  /*    I guess it keeps the dialog as a whole from being too narrow... */
   
   wtmp = FSB_BOX(w, XmDIALOG_TEXT);
   if (wtmp)
@@ -220,6 +214,7 @@ static void file_filter_text_activate_callback(Widget w, XtPointer context, XtPo
     {
       remember_filename(filter, fd->file_filter_names);
       XtFree(filter);
+      force_directory_reread_and_let_filename_change(fd->dialog);
     }
 }
 
@@ -227,13 +222,11 @@ static void file_filter_item_activate_callback(Widget w, XtPointer context, XtPo
 {
   file_popup_info *fd = (file_popup_info *)context;
   Widget text;
-  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
   char *filtername;
   filtername = get_label(w);
   text = FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT);
   XmTextFieldSetString(text, filtername);
-  goto_window(text);
-  XtCallActionProc(text, "activate", cb->event, NULL, 0);
+  force_directory_reread(fd->dialog);
   if (filtername) XtFree(filtername);
 }
 
@@ -290,18 +283,21 @@ static void file_filter_popup_callback(Widget w, XtPointer context, XtPointer in
 
 /* dir list popup */
 
+static void update_dir_list(Widget dialog, char *filter)
+{
+  Widget text;
+  text = FSB_BOX(dialog, XmDIALOG_FILTER_TEXT);
+  XmTextFieldSetString(text, filter);
+  force_directory_reread(dialog);
+}
+
 static void file_dir_item_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
   file_popup_info *fd = (file_popup_info *)context;
-  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
   char *name, *filter;
-  Widget text;
   name = get_label(w);
   filter = mus_format("%s/*", name);
-  text = FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT);
-  XmTextFieldSetString(text, filter);
-  goto_window(text);
-  XtCallActionProc(text, "activate", cb->event, NULL, 0);
+  update_dir_list(fd->dialog, filter);
   if (name) XtFree(name);
   FREE(filter);
 }
@@ -856,7 +852,7 @@ static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_
 
 typedef struct file_dialog_info {
   bool file_dialog_read_only;
-  Widget dialog;
+  Widget dialog, mkdirB;
   Widget info_frame, info1, info2;     /* labels giving info on selected file, or an error message */
   file_pattern_info *fp;
   dialog_play_info *dp;
@@ -1058,14 +1054,41 @@ static void unfocus_filename_text_callback(Widget w, XtPointer context, XtPointe
 
 static bool file_is_directory(Widget dialog)
 {
-  Widget txt;
   char *filename = NULL;
-  bool is_dir;
-  txt = FSB_BOX(dialog, XmDIALOG_TEXT);
-  filename = XmTextGetString(txt);
-  is_dir = ((!filename) || (directory_p(filename)));
-  if (filename) XtFree(filename);
+  bool is_dir = false;
+  filename = XmTextGetString(FSB_BOX(dialog, XmDIALOG_TEXT));
+  if (filename)
+    {
+      is_dir = directory_p(filename);
+      XtFree(filename);
+    }
   return(is_dir);
+}
+
+static bool file_is_nonexistent_directory(Widget dialog)
+{
+  char *filename = NULL;
+  bool is_nonexistent_dir = false;
+  filename = XmTextGetString(FSB_BOX(dialog, XmDIALOG_TEXT));
+  if (filename)
+    {
+      int i, len;
+      len = strlen(filename);
+      if ((!mus_file_probe(filename)) && 
+	  (filename[len - 1] == '/'))
+	{
+	  /* check that there's some hope of making this directory */
+	  for (i = len - 2; i > 0; i--)
+	    if (filename[i] == '/')
+	      {
+		filename[i] = '\0';
+		is_nonexistent_dir = directory_p(filename);
+		break;
+	      }
+	}
+      XtFree(filename);
+    }
+  return(is_nonexistent_dir);
 }
 
 static void reflect_text_in_open_button(Widget w, XtPointer context, XtPointer info)
@@ -1073,6 +1096,7 @@ static void reflect_text_in_open_button(Widget w, XtPointer context, XtPointer i
   file_dialog_info *fd = (file_dialog_info *)context;
   /* w here is the text widget, not the button */
   XtSetSensitive(FSB_BOX(fd->dialog, XmDIALOG_OK_BUTTON), (!(file_is_directory(fd->dialog))));
+  if (fd->mkdirB) XtSetSensitive(fd->mkdirB, file_is_nonexistent_directory(fd->dialog));
 }
 
 static file_dialog_info *make_file_dialog(bool read_only, char *title, char *select_title, 
@@ -1128,6 +1152,7 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
 
   XtUnmanageChild(FSB_BOX(fd->dialog, XmDIALOG_DIR_LIST_LABEL)); /* these are obvious */
   XtUnmanageChild(FSB_BOX(fd->dialog, XmDIALOG_LIST_LABEL));
+  XtUnmanageChild(FSB_BOX(fd->dialog, XmDIALOG_APPLY_BUTTON));   /* "Filter" button is useless */
 
   XmStringFree(s1);
   XmStringFree(s2);
@@ -1305,6 +1330,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
   XmFileSelectionBoxCallbackStruct *cbs = (XmFileSelectionBoxCallbackStruct *)info;
   char *filename = NULL;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
+  if (XmGetFocusWidget(fd->dialog) == FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT)) return;
 
   filename = (char *)XmStringUnparse(cbs->value, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((!filename) || (!(*filename)))
@@ -1354,6 +1380,32 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+static void file_mkdir_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_dialog_info *fd = (file_dialog_info *)context;
+  char *filename = NULL;
+  filename = XmTextGetString(FSB_BOX(fd->dialog, XmDIALOG_TEXT));
+  if (mkdir(filename, 0777) < 0)
+    {
+      /* could not make the directory */
+      char *str;
+      str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
+      file_open_error(str, (void *)fd);
+      clear_error_if_open_changes(fd->dialog, (void *)fd);
+      FREE(str);
+    }
+  else
+    {
+      /* set FSB to new dir and force update */
+      char *filter;
+      filter = mus_format("%s*", filename); /* already has the "/" at the end */
+      update_dir_list(fd->dialog, filter);
+      FREE(filter);
+      XtSetSensitive(w, false);
+    }
+  XtFree(filename);
+}
+
 static file_dialog_info *odat = NULL;
 
 widget_t make_open_file_dialog(bool read_only, bool managed)
@@ -1374,6 +1426,18 @@ widget_t make_open_file_dialog(bool read_only, bool managed)
       XmString cancel_label;
       odat = make_file_dialog(read_only, title, select_title, file_open_ok_callback, open_file_help_callback);
       set_dialog_widget(FILE_OPEN_DIALOG, odat->dialog);
+
+      /* add "Mkdir" button */
+      {
+	int n;
+	Arg args[12];
+	n = 0;
+	XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
+	XtSetArg(args[n], XmNarmColor,   ss->sgx->pushed_button_color); n++;
+	odat->mkdirB = XtCreateManagedWidget(_("Mkdir"), xmPushButtonGadgetClass, odat->dialog, args, n);
+	XtAddCallback(odat->mkdirB, XmNactivateCallback, file_mkdir_callback, (XtPointer)odat);
+	XtSetSensitive(odat->mkdirB, false);
+      }
 
       cancel_label = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(odat->dialog, XmNcancelLabelString, cancel_label, NULL);
@@ -2440,7 +2504,7 @@ static void unreflect_file_data_panel_change(file_data *fd, void *data, void (*c
 
 typedef struct {
   file_data *panel_data;
-  Widget dialog, filename_widget, extractB;
+  Widget dialog, filename_widget, extractB, mkdirB;
   char *filename;
   save_dialog_t type;
   file_pattern_info *fp;
@@ -2867,7 +2931,7 @@ static void save_as_file_exists_check(Widget w, XtPointer context, XtPointer inf
       else
 	{
 	  if (!(directory_exists(filename)))
-	    s1 = XmStringCreate(_("save as (no such directory?):"), XmFONTLIST_DEFAULT_TAG);
+	    s1 = XmStringCreate(_("save as (no such directory?):"), XmFONTLIST_DEFAULT_TAG); /* TODO: offer to create directory */
 	  else s1 = XmStringCreate(_("save as:"), XmFONTLIST_DEFAULT_TAG);
 	}
     }
@@ -2878,11 +2942,38 @@ static void save_as_file_exists_check(Widget w, XtPointer context, XtPointer inf
   if (filename) XtFree(filename);
 }
 
+static void save_as_mkdir_callback(Widget w, XtPointer context, XtPointer info)
+{
+  save_as_dialog_info *sd = (save_as_dialog_info *)context;
+  char *filename = NULL;
+  filename = XmTextGetString(FSB_BOX(sd->dialog, XmDIALOG_TEXT));
+  if (mkdir(filename, 0777) < 0)
+    {
+      /* could not make the directory */
+      char *str;
+      str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
+      post_file_dialog_error((const char *)str, (void *)(sd->panel_data));
+      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data)); 
+      FREE(str);
+    }
+  else
+    {
+      /* set FSB to new dir and force update */
+      char *filter;
+      filter = mus_format("%s*", filename); /* already has the "/" at the end */
+      update_dir_list(sd->dialog, filter);
+      FREE(filter);
+      XtSetSensitive(w, false);
+    }
+  XtFree(filename);
+}
+
 static void reflect_text_in_save_button(Widget w, XtPointer context, XtPointer info)
 {
   save_as_dialog_info *sd = (save_as_dialog_info *)context;
   /* w here is text widget, not button */
   XtSetSensitive(FSB_BOX(sd->dialog, XmDIALOG_OK_BUTTON), (!(file_is_directory(sd->dialog))));
+  if (sd->mkdirB) XtSetSensitive(sd->mkdirB, file_is_nonexistent_directory(sd->dialog));
 }
 
 static void reflect_text_in_extract_button(Widget w, XtPointer context, XtPointer info)
@@ -2891,6 +2982,13 @@ static void reflect_text_in_extract_button(Widget w, XtPointer context, XtPointe
   /* w here is text widget, not button */
   XtSetSensitive(sd->extractB, (!(file_is_directory(sd->dialog))));
 }
+
+static void save_as_filter_text_activate_callback(Widget w, XtPointer context, XtPointer info)
+{
+  save_as_dialog_info *sd = (save_as_dialog_info *)context;
+  force_directory_reread_and_let_filename_change(sd->dialog);
+}
+
 
 static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int header_type, int format_type)
 {
@@ -2953,6 +3051,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 
       XtUnmanageChild(FSB_BOX(sd->dialog, XmDIALOG_DIR_LIST_LABEL));
       XtUnmanageChild(FSB_BOX(sd->dialog, XmDIALOG_LIST_LABEL));
+      XtUnmanageChild(FSB_BOX(sd->dialog, XmDIALOG_APPLY_BUTTON));
 
       XmStringFree(s1);
       XmStringFree(xmstr1);
@@ -3006,6 +3105,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtAddCallback(FSB_BOX(sd->dialog, XmDIALOG_LIST),
 		    XmNbrowseSelectionCallback, save_as_dialog_select_callback, (XtPointer)(sd->dp));
       XtAddCallback(sd->filename_widget, XmNvalueChangedCallback, save_as_file_exists_check, (XtPointer)(sd->dialog));
+      XtAddCallback(FSB_BOX(sd->dialog, XmDIALOG_FILTER_TEXT), XmNactivateCallback, save_as_filter_text_activate_callback, (void *)sd);
 
       {
 	Widget wtmp;
@@ -3018,6 +3118,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       /* this must come after the file data panel so that Motif puts it in the button box, not the main work area */
       if (sd->type != REGION_SAVE_AS)
 	{
+	  /* add "Extract" button */
 	  n = 0;
 	  XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
 	  XtSetArg(args[n], XmNarmColor,   ss->sgx->pushed_button_color); n++;
@@ -3028,6 +3129,14 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 	  XtSetSensitive(extractB, (!(file_is_directory(sd->dialog))));
 	  XtAddCallback(FSB_BOX(sd->dialog, XmDIALOG_TEXT), XmNvalueChangedCallback, reflect_text_in_extract_button, (void *)sd);
 	}
+	 
+      /* add "Mkdir" button */
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
+      XtSetArg(args[n], XmNarmColor,   ss->sgx->pushed_button_color); n++;
+      sd->mkdirB = XtCreateManagedWidget(_("Mkdir"), xmPushButtonGadgetClass, sd->dialog, args, n);
+      XtAddCallback(sd->mkdirB, XmNactivateCallback, save_as_mkdir_callback, (XtPointer)sd);
+      XtSetSensitive(sd->mkdirB, false);
 
       XtSetSensitive(FSB_BOX(sd->dialog, XmDIALOG_OK_BUTTON), (!(file_is_directory(sd->dialog))));
       XtAddCallback(FSB_BOX(sd->dialog, XmDIALOG_TEXT), XmNvalueChangedCallback, reflect_text_in_save_button, (void *)sd);

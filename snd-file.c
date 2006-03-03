@@ -148,8 +148,6 @@ void map_over_sounds(bool (*func)(snd_info *, void *), void *userptr)
     }
 }
 
-
-
 /* -------- popup filename lists -------- */
 
 void forget_filename(const char *filename, char **names)

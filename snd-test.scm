@@ -43,7 +43,7 @@
 (define with-big-file #t)
 
 ;;; SOMEDAY: why does freeBSD get memory corruption occasionally? (need valgrind ideally)
-;;; SOMEDAY tearoff in ladspa.scm, double-click as help search request in snd-ghelp (xhelp?), test new key bindings in prefs, get new ladspa kits
+;;; SOMEDAY tearoff in ladspa.scm, test new key bindings in prefs, get new ladspa kits
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (define full-test (< snd-test 0))
