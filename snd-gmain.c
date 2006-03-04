@@ -856,6 +856,49 @@ style \"label_button\" = \"default_button\"\n\
   ythickness = 0\n\
 }\n\
 widget \"*.label_button\" style \"label_button\"\n\
+binding \"gtk-emacs-text-entry\"\n\
+{\n\
+  bind \"<ctrl>b\" { \"move-cursor\" (logical-positions, -1, 0) }\n\
+  bind \"<shift><ctrl>b\" { \"move-cursor\" (logical-positions, -1, 1) }\n\
+  bind \"<ctrl>f\" { \"move-cursor\" (logical-positions, 1, 0) }\n\
+  bind \"<shift><ctrl>f\" { \"move-cursor\" (logical-positions, 1, 1) }\n\
+  bind \"<alt>b\" { \"move-cursor\" (words, -1, 0) }\n\
+  bind \"<shift><alt>b\" { \"move-cursor\" (words, -1, 1) }\n\
+  bind \"<alt>f\" { \"move-cursor\" (words, 1, 0) }\n\
+  bind \"<shift><alt>f\" { \"move-cursor\" (words, 1, 1) }\n\
+  bind \"<ctrl>a\" { \"move-cursor\" (paragraph-ends, -1, 0) }\n\
+  bind \"<shift><ctrl>a\" { \"move-cursor\" (paragraph-ends, -1, 1) }\n\
+  bind \"<ctrl>e\" { \"move-cursor\" (paragraph-ends, 1, 0) }\n\
+  bind \"<shift><ctrl>e\" { \"move-cursor\" (paragraph-ends, 1, 1) }\n\
+  bind \"<ctrl>w\" { \"cut-clipboard\" () }\n\
+  bind \"<ctrl>y\" { \"paste-clipboard\" () }\n\
+  bind \"<ctrl>d\" { \"delete-from-cursor\" (chars, 1) }\n\
+  bind \"<alt>d\" { \"delete-from-cursor\" (word-ends, 1) }\n\
+  bind \"<ctrl>k\" { \"delete-from-cursor\" (paragraph-ends, 1) }\n\
+  bind \"<alt>backslash\" { \"delete-from-cursor\" (whitespace, 1) }\n\
+  bind \"<alt>space\" { \"delete-from-cursor\" (whitespace, 1)\n\
+                      \"insert-at-cursor\" (\" \") }\n\
+  bind \"<alt>KP_Space\" { \"delete-from-cursor\" (whitespace, 1)\n\
+                         \"insert-at-cursor\" (\" \")  }\n\
+  bind \"<ctrl>u\" {\n\
+     \"move-cursor\" (paragraph-ends, -1, 0)\n\
+     \"delete-from-cursor\" (paragraph-ends, 1)\n\
+  }\n\
+  bind \"<ctrl>h\" { \"delete-from-cursor\" (chars, -1) }\n\
+  bind \"<ctrl>w\" { \"delete-from-cursor\" (word-ends, -1) }\n\
+}\n\
+binding \"gtk-emacs-text-view\"\n\
+{\n\
+  bind \"<ctrl>p\" { \"move-cursor\" (display-lines, -1, 0) }\n\
+  bind \"<shift><ctrl>p\" { \"move-cursor\" (display-lines, -1, 1) }\n\
+  bind \"<ctrl>n\" { \"move-cursor\" (display-lines, 1, 0) }\n\
+  bind \"<shift><ctrl>n\" { \"move-cursor\" (display-lines, 1, 1) }\n\
+  bind \"<ctrl>space\" { \"set-anchor\" () }\n\
+  bind \"<ctrl>KP_Space\" { \"set-anchor\" () }\n\
+}\n\
+class \"GtkEntry\" binding \"gtk-emacs-text-entry\"\n\
+class \"GtkTextView\" binding \"gtk-emacs-text-entry\"\n\
+class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n\
 ");
       }
 #endif

@@ -7,8 +7,6 @@ static int printout_end;
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
 
 /* TODO: the double "(" bug is still with us, but how to make it happen repeatably?
- * TODO: cursor reposition via mouse -> cursor not displayed (but second click shows it? -- is this a gtk feature?)
- * TODO: after select, yank, copy at end, where in hell is the cursor??
  */
 
 static bool listener_awaiting_completion = false;
@@ -250,6 +248,21 @@ static void clear_back_to_prompt(GtkWidget *w)
   beg = sg_cursor_position(w);
   if (end <= beg) return;
   sg_text_delete(w, beg, end);
+}
+
+static void ctrl_k(GtkWidget *w)
+{
+  GtkTextIter beg, end;
+  GtkTextBuffer *buf;
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+  gtk_text_buffer_get_iter_at_mark(buf, &beg, gtk_text_buffer_get_mark(buf, "insert"));
+  end = beg;
+  gtk_text_iter_forward_to_end(&end);
+  if (!gtk_text_iter_equal(&beg, &end))
+    {
+      gtk_text_buffer_select_range(buf, &beg, &end);
+      gtk_text_buffer_cut_clipboard(buf, gtk_widget_get_clipboard(w, GDK_SELECTION_CLIPBOARD), true);
+    }
 }
 
 static void sg_text_replace(GtkWidget *w, int beg, int end, char *text)
@@ -589,8 +602,15 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 							  backup_listener_to_previous_command();
 							}
 						      else
-							return(false);
-						    }}}}}}}}}}}}}
+							{
+							  if ((event->keyval == snd_K_k) && (event->state & snd_ControlMask))
+							    {
+							      /* select to line end, copy to clipboard, delete */
+							      ctrl_k(listener_text);
+							    }
+							  else
+							    return(false);
+							}}}}}}}}}}}}}}
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
   return(false);
 }
@@ -610,12 +630,30 @@ static XEN mouse_leave_listener_hook;
 static XEN mouse_enter_text_hook;
 static XEN mouse_leave_text_hook;
 
+static bool cursor_blinks(GtkWidget *w)
+{
+  GtkSettings *settings;
+  gboolean blink = false;
+  settings = gtk_widget_get_settings(w);
+  g_object_get(settings, "gtk-cursor-blink", &blink, NULL);
+  return((bool)blink);
+}
+
+static bool cursor_set_blinks(GtkWidget *w, bool blinks)
+{
+  GtkSettings *settings;
+  settings = gtk_widget_get_settings(w);
+  g_object_set(settings, "gtk-cursor-blink", (gboolean)blinks, NULL);
+  return(blinks);
+}
+
 static gboolean listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
   if (XEN_HOOKED(mouse_enter_listener_hook))
     run_hook(mouse_enter_listener_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)),
 	     S_mouse_enter_listener_hook);
+  cursor_set_blinks(w, true);
   return(false);
 }
 
@@ -625,7 +663,7 @@ static gboolean listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gp
     run_hook(mouse_leave_listener_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)),
 	     S_mouse_leave_listener_hook);
-  gtk_window_set_focus(GTK_WINDOW(gtk_widget_get_toplevel(w)), NULL);
+  cursor_set_blinks(w, false);
   return(false);
 }
 
@@ -636,6 +674,7 @@ static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
     run_hook(mouse_enter_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
 	     S_mouse_enter_text_hook);
+  cursor_set_blinks(w, true);
   return(false);
 }
 
@@ -646,12 +685,7 @@ static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
     run_hook(mouse_leave_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
 	     S_mouse_leave_text_hook);
-  gtk_window_set_focus(GTK_WINDOW(gtk_widget_get_toplevel(w)), NULL);
-  /* apparently this widget hangs onto "focus" when the mouse leaves it,
-   *  but that means the cursor keeps blinking, and that causes a noticeable
-   *  amount of useless traffic to the X server, which we want to minimize
-   *  during playing.
-   */
+  cursor_set_blinks(w, false);
   return(false);
 }
 
@@ -664,8 +698,11 @@ void connect_mouse_to_text(GtkWidget *text)
 GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_background)
 {
   GtkWidget *text;
+  GtkSettings *settings;
   text = gtk_entry_new();
   gtk_editable_set_editable(GTK_EDITABLE(text), true);
+  settings = gtk_widget_get_settings(text);
+  g_object_set(settings, "gtk-entry-select-on-focus", false, NULL);
   gtk_box_pack_start(GTK_BOX(container), text, true, true, 2);
   gtk_widget_show(text);
   if (with_white_background == WITH_WHITE_BACKGROUND) 
@@ -694,7 +731,7 @@ static void make_command_widget(int height)
 
       {
 	/* sigh... activate Emacs key bindings to some extent */
-	/*   these appear to be set in gtk+-2.1.1/gtk/gtkrc.key.emacs */
+	/*   more are handled by the gtkrc mechanism (taken from gtk/gtrc.key.emacs) */
 	GtkBindingSet *set;
 	set = gtk_binding_set_by_class(GTK_TEXT_VIEW_GET_CLASS(GTK_TEXT_VIEW(listener_text)));
 
@@ -783,12 +820,8 @@ static void make_command_widget(int height)
 				     G_TYPE_ENUM, GTK_DELETE_WORD_ENDS,
 				     G_TYPE_INT, 1);
 
-	/* C-k delete to end of line */
+	/* C-k delete to end of line -- see explicit handling above */
 	gtk_binding_entry_remove(set, GDK_k, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, GDK_k, GDK_CONTROL_MASK,
-				     "delete_from_cursor", 2,
-				     G_TYPE_ENUM, GTK_DELETE_PARAGRAPH_ENDS,
-				     G_TYPE_INT, 1);
 
 	/* M-delete delete to start of line */
 	gtk_binding_entry_remove(set, GDK_Delete, GDK_MOD1_MASK);

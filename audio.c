@@ -1292,6 +1292,8 @@ static void describe_audio_state_1(void)
 
 /* ------------------------------- OSS ----------------------------------------- */
 
+/* TODO: check out emi 26, if it's supported */
+
 #if (HAVE_OSS || HAVE_ALSA || HAVE_JACK)
 /* actually it's not impossible that someday we'll have ALSA but not OSS... */
 #define AUDIO_OK
@@ -6843,7 +6845,6 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
  */
 
 /* TODO: make bigger buffers work right -- is it possible to set the audio device buffer size?
- * TODO: check recording in OSX
  */
 
 #ifdef MUS_MAC_OSX

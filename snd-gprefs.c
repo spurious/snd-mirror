@@ -512,6 +512,7 @@ static prefs_info *prefs_row_with_two_toggles(const char *label, const char *var
 static GtkWidget *make_row_text(prefs_info *prf, const char *text_value, int cols, GtkWidget *box)
 {
   GtkWidget *w;
+  GtkSettings *settings;
   ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
 
   w = gtk_entry_new();
@@ -521,6 +522,8 @@ static GtkWidget *make_row_text(prefs_info *prf, const char *text_value, int col
   if (cols > 0)
     gtk_entry_set_width_chars(GTK_ENTRY(w), cols);
   gtk_editable_set_editable(GTK_EDITABLE(w), true);
+  settings = gtk_widget_get_settings(w);
+  g_object_set(settings, "gtk-entry-select-on-focus", false, NULL);
   gtk_box_pack_start(GTK_BOX(box), w, false, false, 0);
   gtk_widget_show(w);
 

@@ -12,7 +12,6 @@
    View:Files
 */
 
-/* TODO: why does <backspace> clear the goddamn entry? */
 /* TODO: sometimes mkdir (and open) are not resensitized? */
 
 /* ---------------- file selector replacement ---------------- */
