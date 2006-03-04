@@ -13,8 +13,13 @@ AC_PROG_CC
 AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER!
 AC_PROG_INSTALL
 
-audio_system="unknown"
 MAKE_TARGET="snd"
+
+AUDIO_SYSTEM="None"
+RANDOM_FEATURES=""
+OPTIONAL_LIBRARIES=""
+LOCAL_LANGUAGE="None"
+GRAPHICS_TOOLKIT="None"
 
 PACKAGE=snd
 VERSION=7.20
@@ -142,9 +147,9 @@ else
   AC_DEFINE(Float,float)
 fi
 
-
 if test "$with_hobbit" = yes ; then
   AC_DEFINE(WITH_HOBBIT)
+  RANDOM_FEATURES="$RANDOM_FEATURES hobbit"
 fi
 
 if test "$with_builtin_gtkrc" != no; then
@@ -324,6 +329,7 @@ AC_ARG_ENABLE(threads,
       AC_DEFINE(WITH_THREADS)
       CFLAGS="$CFLAGS -D_REENTRANT"
       LIBS="$LIBS -lpthread"
+      RANDOM_FEATURES="$RANDOM_FEATURES threads"
     else
       AC_MSG_WARN([can't enable threads -- can't find pthread.h])
     fi
@@ -350,6 +356,7 @@ if test "$with_fftw" != no; then
       FFTW_LIBS="`$PKG_CONFIG fftw3 --libs`"
       FFTW_CFLAGS="`$PKG_CONFIG fftw3 --cflags`"
       AC_DEFINE(HAVE_FFTW3)
+      OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw"
       AC_MSG_RESULT(yes)
     else
       AC_MSG_RESULT(no)
@@ -358,6 +365,7 @@ if test "$with_fftw" != no; then
         FFTW_LIBS="`$PKG_CONFIG fftw --libs`"
         FFTW_CFLAGS="`$PKG_CONFIG fftw --cflags`"
         AC_DEFINE(HAVE_FFTW)
+        OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw"
         AC_MSG_RESULT(yes)
       else
         AC_MSG_RESULT(no)
@@ -371,6 +379,7 @@ if test "$with_fftw" != no; then
 		                [fftw_plan plan; fftw_execute(plan)])],
 		[AC_MSG_RESULT(yes)
 		 AC_DEFINE(HAVE_FFTW3)
+                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw"
 		 FFTW_LIBS="-lfftw3"],
 		[AC_MSG_RESULT(no)
                  LIBS=$SAVELIBS
@@ -380,6 +389,7 @@ if test "$with_fftw" != no; then
                                 [rfftw_one(NULL, NULL, NULL)])],
 		  		[AC_MSG_RESULT(yes)
 		   		 AC_DEFINE(HAVE_FFTW)
+                                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw"
 		   		 FFTW_LIBS="-lrfftw -lfftw"],
 		  		[AC_MSG_RESULT(no)])
 		])
@@ -447,6 +457,7 @@ else
 
   gsl_version="`$GSL_CONFIG --version`"
   AC_MSG_RESULT($gsl_version)
+  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gsl"
 
   if test "`$GSL_CONFIG --version`" = "0.6" || test "`$GSL_CONFIG --version`" = "0.7" || test "`$GSL_CONFIG --version`" = "0.5"; then
     AC_MSG_WARN([Snd needs GSL 0.8 or later])
@@ -471,7 +482,9 @@ AC_SUBST(GSL_CFLAGS)
 if test "$with_ladspa" != no ; then
   # we also need dlfcn.h and dirent.h here, but presumably this is on Linux
   AC_CHECK_HEADER(ladspa.h, 
-		  [AC_DEFINE(HAVE_LADSPA)],
+		  [AC_DEFINE(HAVE_LADSPA)
+                   RANDOM_FEATURES="$RANDOM_FEATURES ladspa"
+                  ],
 		  if test "$with_ladspa" = yes ; then
 		   AC_MSG_WARN([can't find ladspa.h!])
 		  fi)
@@ -588,6 +601,7 @@ else
     if test "$with_editres" = yes ; then
 	AC_CHECK_LIB(Xmu, _XEditResCheckMessages, 
 			[AC_DEFINE(WITH_EDITRES)
+	                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES editres"
 			 X_PRE_LIBS="$X_PRE_LIBS -lXmu"
    		         TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu"
 			])
@@ -816,6 +830,7 @@ else
 			        ])],
 	      [
 	       AC_DEFINE(HAVE_XM_XP)
+               OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES Xp"
 	       AC_MSG_RESULT(yes)
  	      ],
 	      [AC_MSG_RESULT(no)])
@@ -840,6 +855,7 @@ else
   if test "$with_motif" = yes ; then
     AC_DEFINE(USE_MOTIF)  # for Snd
     AC_DEFINE(HAVE_MOTIF) # for xm
+    GRAPHICS_TOOLKIT="Motif"
   fi
 
 
@@ -870,6 +886,7 @@ else
       	AC_SUBST(GTK_LIBS)
       	AC_SUBST(GTK_CFLAGS)
       	AC_DEFINE(USE_GTK)
+        GRAPHICS_TOOLKIT="Gtk"
         ac_snd_have_gui=yes
 
 	GTK_LD_LIBS="$GTK_LIBS"
@@ -886,9 +903,11 @@ else
 	AC_CHECK_LIB(m, gdk_draw_pixbuf, [AC_DEFINE(HAVE_GDK_DRAW_PIXBUF)], ,$GTK_LIBS)
 	# gtk 2.1
 	AC_CHECK_LIB(m, gtk_tree_view_column_cell_get_position, [AC_DEFINE(HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION)], ,$GTK_LIBS)
+        AC_CHECK_LIB(m, gtk_widget_get_clipboard, [AC_DEFINE(HAVE_GTK_WIDGET_GET_CLIPBOARD)], ,$GTK_LIBS)
 	# gtk 2.2
 	AC_CHECK_LIB(m, gtk_file_chooser_dialog_new, [AC_DEFINE(HAVE_GTK_FILE_CHOOSER_DIALOG_NEW)], ,$GTK_LIBS)
 	# gtk 2.3
+        AC_CHECK_LIB(m, gtk_text_buffer_select_range, [AC_DEFINE(HAVE_GTK_TEXT_BUFFER_SELECT_RANGE)], ,$GTK_LIBS)
 	AC_CHECK_LIB(m, gtk_file_chooser_set_filename,
 	[
     	  OLD_CFLAGS="$CFLAGS"
@@ -1032,6 +1051,7 @@ fi
 
 if test "$have_gl" = yes ; then
   AC_DEFINE(HAVE_GL)
+  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES openGL"
   if test "$with_just_gl" = yes ; then
     AC_DEFINE(JUST_GL)
   else
@@ -1076,6 +1096,7 @@ if test "$ac_snd_have_gui" != no ; then
          AC_DEFINE(HAVE_FAM_H)
          AC_DEFINE(HAVE_FAM)
          AC_DEFINE(HAVE_FAM_NO_EXISTS)
+         OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gamin"
        else
 	AC_MSG_WARN([need gamin version 0.1.0 or later])
        fi
@@ -1124,6 +1145,7 @@ if test "$ac_snd_have_gui" != no ; then
 	   AC_DEFINE(HAVE_FAM_H)
            AC_DEFINE(HAVE_FAM)
            FAM_LIB="-lfam"
+           OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fam"
           ],
           [
 	   AC_MSG_RESULT(no)
@@ -1148,7 +1170,6 @@ AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
 		RUBY="$ruby_prefix/bin/ruby",
 		ruby_prefix="")
 
-LOCAL_LANGUAGE="None"
 AC_ARG_WITH(ruby,
 	[  --with-ruby	  	  try to use Ruby as the extension language],
   	if test "$with_ruby" = yes ; then
@@ -1426,14 +1447,14 @@ if test "$with_esd" = yes ; then
         if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
 	  AC_MSG_WARN([esd takes precedence over alsa -- the two are not compatible])
         fi
-        audio_system=ESD
+        AUDIO_SYSTEM=ESD
       ],
       [AC_MSG_WARN(can't find the ESD header files)])],
     [AC_MSG_WARN(can't find the ESD library)])
 fi
 
-if test "$audio_system" != unknown ; then
-  AC_MSG_RESULT(Using the $audio_system audio system)
+if test "$AUDIO_SYSTEM" != None ; then
+  AC_MSG_RESULT(Using the $AUDIO_SYSTEM audio system)
 else
 
 case "$host" in
@@ -1445,12 +1466,12 @@ case "$host" in
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
 
-        audio_system=OSS
+        AUDIO_SYSTEM=OSS
 
 	if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
           if test "$ac_cv_header_alsa_asoundlib_h" = yes ; then
             AC_CHECK_LIB(asound, main,
-               audio_system=ALSA,
+               AUDIO_SYSTEM=ALSA,
                [AC_MSG_WARN(can't find the ALSA library)])
           else
             AC_MSG_WARN(can't find the ALSA header files)
@@ -1473,7 +1494,7 @@ case "$host" in
 	       AC_MSG_WARN(can't find the samplerate library. JACK will not be used.)])
             if test $with_jack = yes ; then
 	       if test "$with_alsa" != yes ; then
-                 audio_system=JACK
+                 AUDIO_SYSTEM=JACK
                fi
 	       if test x$PKG_CONFIG != xno ; then
                    jack_version="`$PKG_CONFIG jack --modversion`"
@@ -1484,7 +1505,7 @@ case "$host" in
             fi
         fi
 
-	case $audio_system in
+	case $AUDIO_SYSTEM in
 	    ALSA)
                 # if alsa version < 0.9 complain and use OSS
 		alsa_ok=yes
@@ -1541,7 +1562,7 @@ case "$host" in
 		      AC_DEFINE(HAVE_JACK)
 		    fi
  		else
-         	    audio_system=OSS
+         	    AUDIO_SYSTEM=OSS
  		    AC_DEFINE(HAVE_OSS)
  		fi
  		;;
@@ -1558,19 +1579,19 @@ case "$host" in
     *-*-sunos4*) 
         AC_DEFINE(MUS_SUN)
 	LIBS="$LIBS -lm"
-	audio_system=Sun
+	AUDIO_SYSTEM=Sun
         ;;
     *-*-solaris*) 
 	AC_DEFINE(MUS_SUN)
 	LIBS="$LIBS -lm -ldl"
 # odd... this causes an error in the sndlib configure (can't find libdl) but is needed here?
-	audio_system=Sun
+	AUDIO_SYSTEM=Sun
 	LDSO_FLAGS="-G"
 # if __SUNPRO_C we could add -xO3
         ;;
     *-*-hpux*) 
         AC_DEFINE(MUS_HPUX)
-	audio_system=Hpux
+	AUDIO_SYSTEM=Hpux
 	LDSO_FLAGS="+z -Ae +DA1.1"
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
@@ -1578,7 +1599,7 @@ case "$host" in
         ;;
     *-sgi*) 
         AC_DEFINE(MUS_SGI)
-	audio_system=SGI
+	AUDIO_SYSTEM=SGI
 	AUDIO_LIB="-laudio"
 	AC_SUBST(AUDIO_LIB)
         if test $GUILE_CONFIG_works = no; then
@@ -1598,7 +1619,7 @@ case "$host" in
     *-*-bsdi*) 
 	AC_DEFINE(HAVE_OSS)
 	LIBS="$LIBS -lm"
-	audio_system=OSS
+	AUDIO_SYSTEM=OSS
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
@@ -1606,7 +1627,7 @@ case "$host" in
     *-*-freebsd*)
 	AC_DEFINE(HAVE_OSS)
 	LIBS="$LIBS -lm"
-	audio_system=OSS
+	AUDIO_SYSTEM=OSS
 	if test "$GCC" = yes ; then
 	  SO_LD="gcc"
 	  SO_FLAGS="-fPIC $SO_FLAGS"
@@ -1615,14 +1636,14 @@ case "$host" in
 	;;
     *-*-openbsd*) 
         AC_DEFINE(MUS_OPENBSD)
-	audio_system=OpenBSD
+	AUDIO_SYSTEM=OpenBSD
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
         ;;
     *-*-netbsd*) 
         AC_DEFINE(MUS_NETBSD)
-	audio_system=NetBSD
+	AUDIO_SYSTEM=NetBSD
 	if test "$GCC" = yes ; then
 	  SO_LD="gcc"
 	  SO_FLAGS="-fPIC $SO_FLAGS"
@@ -1631,11 +1652,11 @@ case "$host" in
         ;;
     *-*-cygwin*)
 	AC_DEFINE(MUS_WINDOZE)
-	audio_system=Windoze
+	AUDIO_SYSTEM=Windoze
 	;;
     *-apple-*)
 	AC_DEFINE(MUS_MAC_OSX)
-	audio_system=MacOSX
+	AUDIO_SYSTEM=MacOSX
 	AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
 	AC_SUBST(AUDIO_LIB)
 	AC_MSG_CHECKING([for kAudioDevicePropertyDeviceManufacturer])
@@ -1661,7 +1682,7 @@ case "$host" in
 	;;
 esac
 AC_MSG_CHECKING([for audio system])
-AC_MSG_RESULT($audio_system)
+AC_MSG_RESULT($AUDIO_SYSTEM)
 fi
 
 AC_SUBST(JACK_LIBS)
@@ -1786,6 +1807,7 @@ AC_ARG_ENABLE(snd-debug,
   [  --enable-snd-debug      include internal Snd debugging functions],
   if test "$enable_snd_debug" = yes ; then
     AC_DEFINE(DEBUGGING)
+    RANDOM_FEATURES="$RANDOM_FEATURES debugging"
     VL_PROG_CC_WARNINGS()
   fi)
 
@@ -1851,8 +1873,8 @@ if test "$with_shared_sndlib" = yes; then
     AC_CHECK_LIB(sndlib, c_vct_copy,
       [
 	SNDLIB_AUDIO_CHOICE=`$SNDLIB_CONFIG --audio`
-        if test "$SNDLIB_AUDIO_CHOICE" != "$audio_system" ; then
-	  AC_MSG_WARN([libsndlib.so audio choice is $SNDLIB_AUDIO_CHOICE, but the current choice is $audio_system])
+        if test "$SNDLIB_AUDIO_CHOICE" != "$AUDIO_SYSTEM" ; then
+	  AC_MSG_WARN([libsndlib.so audio choice is $SNDLIB_AUDIO_CHOICE, but the current choice is $AUDIO_SYSTEM])
         fi
 	SNDLIB_BITS=`$SNDLIB_CONFIG --bits`
 	if test "$SNDLIB_BITS" = "$LOCAL_SNDLIB_BITS" ; then
@@ -1860,6 +1882,7 @@ if test "$with_shared_sndlib" = yes; then
           if test "$SNDLIB_LANGUAGE" = $LOCAL_LANGUAGE ; then
 	    SNDLIB_FILES="NO_FILES"
             SNDLIB_LIB="-L$SNDLIB_PREFIX/lib -lsndlib"
+            OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES sndlib"
             AC_DEFINE(WITH_SHARED_SNDLIB)
 	    SNDLIB_WITH_MODULES=`$SNDLIB_CONFIG --modules`
             if test "$SNDLIB_WITH_MODULES" = "yes" ; then
@@ -1893,6 +1916,7 @@ AC_SUBST(SNDLIB_LIB)
 
 if test "$enable_nls" != no ; then
   AM_GNU_GETTEXT([external])
+  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gettext"
 
   AC_CHECK_HEADER(nl_types.h,
     [AC_MSG_CHECKING([whether nl_types.h defines MALLOC])
@@ -1984,3 +2008,19 @@ AC_SUBST(CFLAGS)
 AC_SUBST(MAKE_TARGET)
 AC_OUTPUT
 
+# borrowed from gnucash
+
+AC_MSG_RESULT([
+  Options selected
+  -------------------------
+  Snd version .......... : $VERSION
+  CFLAGS ............... : $CFLAGS
+  LDFLAGS .............. :$LDFLAGS
+  prefix.................: ${prefix}
+  extension language.....: $LOCAL_LANGUAGE
+  audio system...........: $AUDIO_SYSTEM
+  graphics toolkit.......: $GRAPHICS_TOOLKIT
+  optional libraries.....:$OPTIONAL_LIBRARIES
+  random features........:$RANDOM_FEATURES
+  environs...............: $host $CC
+])

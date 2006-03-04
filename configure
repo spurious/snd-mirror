@@ -2882,8 +2882,13 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL}'
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 
-audio_system="unknown"
 MAKE_TARGET="snd"
+
+AUDIO_SYSTEM="None"
+RANDOM_FEATURES=""
+OPTIONAL_LIBRARIES=""
+LOCAL_LANGUAGE="None"
+GRAPHICS_TOOLKIT="None"
 
 PACKAGE=snd
 VERSION=7.20
@@ -3199,12 +3204,12 @@ _ACEOF
 
 fi
 
-
 if test "$with_hobbit" = yes ; then
   cat >>confdefs.h <<\_ACEOF
 #define WITH_HOBBIT 1
 _ACEOF
 
+  RANDOM_FEATURES="$RANDOM_FEATURES hobbit"
 fi
 
 if test "$with_builtin_gtkrc" != no; then
@@ -5985,7 +5990,6 @@ _ACEOF
 #define WORDS_BIGENDIAN 1
 _ACEOF
 
-#		 AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_BSHORT)
     		 case "$host" in
       		  *-apple-*)
         		cat >>confdefs.h <<\_ACEOF
@@ -6024,8 +6028,6 @@ _ACEOF
 #define MUS_LITTLE_ENDIAN 1
 _ACEOF
 
-#    	         AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_LSHORT)
-# TODO: update sndlib configure for macintel
     		 case "$host" in
       		  *-apple-*)
         		cat >>confdefs.h <<\_ACEOF
@@ -9703,6 +9705,7 @@ _ACEOF
 
       CFLAGS="$CFLAGS -D_REENTRANT"
       LIBS="$LIBS -lpthread"
+      RANDOM_FEATURES="$RANDOM_FEATURES threads"
     else
       { echo "$as_me:$LINENO: WARNING: can't enable threads -- can't find pthread.h" >&5
 echo "$as_me: WARNING: can't enable threads -- can't find pthread.h" >&2;}
@@ -10002,6 +10005,7 @@ echo $ECHO_N "checking for fftw3... $ECHO_C" >&6
 #define HAVE_FFTW3 1
 _ACEOF
 
+      OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw"
       echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
     else
@@ -10016,6 +10020,7 @@ echo $ECHO_N "checking for fftw2... $ECHO_C" >&6
 #define HAVE_FFTW 1
 _ACEOF
 
+        OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw"
         echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
       else
@@ -10071,6 +10076,7 @@ echo "${ECHO_T}yes" >&6
 #define HAVE_FFTW3 1
 _ACEOF
 
+                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw"
 		 FFTW_LIBS="-lfftw3"
 else
   echo "$as_me: failed program was:" >&5
@@ -10125,6 +10131,7 @@ echo "${ECHO_T}yes" >&6
 #define HAVE_FFTW 1
 _ACEOF
 
+                                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw"
 		   		 FFTW_LIBS="-lrfftw -lfftw"
 else
   echo "$as_me: failed program was:" >&5
@@ -10313,6 +10320,7 @@ fi
   gsl_version="`$GSL_CONFIG --version`"
   echo "$as_me:$LINENO: result: $gsl_version" >&5
 echo "${ECHO_T}$gsl_version" >&6
+  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gsl"
 
   if test "`$GSL_CONFIG --version`" = "0.6" || test "`$GSL_CONFIG --version`" = "0.7" || test "`$GSL_CONFIG --version`" = "0.5"; then
     { echo "$as_me:$LINENO: WARNING: Snd needs GSL 0.8 or later" >&5
@@ -10484,6 +10492,8 @@ if test $ac_cv_header_ladspa_h = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_LADSPA 1
 _ACEOF
+
+                   RANDOM_FEATURES="$RANDOM_FEATURES ladspa"
 
 else
   if test "$with_ladspa" = yes ; then
@@ -12300,6 +12310,7 @@ if test $ac_cv_lib_Xmu__XEditResCheckMessages = yes; then
 #define WITH_EDITRES 1
 _ACEOF
 
+	                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES editres"
 			 X_PRE_LIBS="$X_PRE_LIBS -lXmu"
    		         TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu"
 
@@ -13446,6 +13457,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
 #define HAVE_XM_XP 1
 _ACEOF
 
+               OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES Xp"
 	       echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
 
@@ -13488,6 +13500,7 @@ _ACEOF
 #define HAVE_MOTIF 1
 _ACEOF
  # for xm
+    GRAPHICS_TOOLKIT="Motif"
   fi
 
 
@@ -13621,6 +13634,7 @@ echo "$as_me: WARNING: trouble with gtk -- will try to make Snd without any GUI"
 #define USE_GTK 1
 _ACEOF
 
+        GRAPHICS_TOOLKIT="Gtk"
         ac_snd_have_gui=yes
 
 	GTK_LD_LIBS="$GTK_LIBS"
@@ -13783,6 +13797,77 @@ _ACEOF
 
 fi
 
+        echo "$as_me:$LINENO: checking for gtk_widget_get_clipboard in -lm" >&5
+echo $ECHO_N "checking for gtk_widget_get_clipboard in -lm... $ECHO_C" >&6
+if test "${ac_cv_lib_m_gtk_widget_get_clipboard+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lm $GTK_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char gtk_widget_get_clipboard ();
+int
+main ()
+{
+gtk_widget_get_clipboard ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_m_gtk_widget_get_clipboard=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_m_gtk_widget_get_clipboard=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_m_gtk_widget_get_clipboard" >&5
+echo "${ECHO_T}$ac_cv_lib_m_gtk_widget_get_clipboard" >&6
+if test $ac_cv_lib_m_gtk_widget_get_clipboard = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_GTK_WIDGET_GET_CLIPBOARD 1
+_ACEOF
+
+fi
+
 	# gtk 2.2
 	echo "$as_me:$LINENO: checking for gtk_file_chooser_dialog_new in -lm" >&5
 echo $ECHO_N "checking for gtk_file_chooser_dialog_new in -lm... $ECHO_C" >&6
@@ -13856,6 +13941,77 @@ _ACEOF
 fi
 
 	# gtk 2.3
+        echo "$as_me:$LINENO: checking for gtk_text_buffer_select_range in -lm" >&5
+echo $ECHO_N "checking for gtk_text_buffer_select_range in -lm... $ECHO_C" >&6
+if test "${ac_cv_lib_m_gtk_text_buffer_select_range+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lm $GTK_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char gtk_text_buffer_select_range ();
+int
+main ()
+{
+gtk_text_buffer_select_range ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_m_gtk_text_buffer_select_range=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_m_gtk_text_buffer_select_range=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_m_gtk_text_buffer_select_range" >&5
+echo "${ECHO_T}$ac_cv_lib_m_gtk_text_buffer_select_range" >&6
+if test $ac_cv_lib_m_gtk_text_buffer_select_range = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_GTK_TEXT_BUFFER_SELECT_RANGE 1
+_ACEOF
+
+fi
+
 	echo "$as_me:$LINENO: checking for gtk_file_chooser_set_filename in -lm" >&5
 echo $ECHO_N "checking for gtk_file_chooser_set_filename in -lm... $ECHO_C" >&6
 if test "${ac_cv_lib_m_gtk_file_chooser_set_filename+set}" = set; then
@@ -15081,6 +15237,7 @@ if test "$have_gl" = yes ; then
 #define HAVE_GL 1
 _ACEOF
 
+  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES openGL"
   if test "$with_just_gl" = yes ; then
     cat >>confdefs.h <<\_ACEOF
 #define JUST_GL 1
@@ -15185,6 +15342,7 @@ _ACEOF
 #define HAVE_FAM_NO_EXISTS 1
 _ACEOF
 
+         OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gamin"
        else
 	{ echo "$as_me:$LINENO: WARNING: need gamin version 0.1.0 or later" >&5
 echo "$as_me: WARNING: need gamin version 0.1.0 or later" >&2;}
@@ -15473,6 +15631,7 @@ _ACEOF
 _ACEOF
 
            FAM_LIB="-lfam"
+           OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fam"
 
 else
   echo "$as_me: program exited with status $ac_status" >&5
@@ -15517,7 +15676,6 @@ else
   ruby_prefix=""
 fi;
 
-LOCAL_LANGUAGE="None"
 
 # Check whether --with-ruby or --without-ruby was given.
 if test "${with_ruby+set}" = set; then
@@ -18293,7 +18451,7 @@ _ACEOF
 	  { echo "$as_me:$LINENO: WARNING: esd takes precedence over alsa -- the two are not compatible" >&5
 echo "$as_me: WARNING: esd takes precedence over alsa -- the two are not compatible" >&2;}
         fi
-        audio_system=ESD
+        AUDIO_SYSTEM=ESD
 
 else
   { echo "$as_me:$LINENO: WARNING: can't find the ESD header files" >&5
@@ -18308,9 +18466,9 @@ fi
 
 fi
 
-if test "$audio_system" != unknown ; then
-  echo "$as_me:$LINENO: result: Using the $audio_system audio system" >&5
-echo "${ECHO_T}Using the $audio_system audio system" >&6
+if test "$AUDIO_SYSTEM" != None ; then
+  echo "$as_me:$LINENO: result: Using the $AUDIO_SYSTEM audio system" >&5
+echo "${ECHO_T}Using the $AUDIO_SYSTEM audio system" >&6
 else
 
 case "$host" in
@@ -18325,7 +18483,7 @@ _ACEOF
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
 
-        audio_system=OSS
+        AUDIO_SYSTEM=OSS
 
 	if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
           if test "$ac_cv_header_alsa_asoundlib_h" = yes ; then
@@ -18388,7 +18546,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_asound_main" >&5
 echo "${ECHO_T}$ac_cv_lib_asound_main" >&6
 if test $ac_cv_lib_asound_main = yes; then
-  audio_system=ALSA
+  AUDIO_SYSTEM=ALSA
 else
   { echo "$as_me:$LINENO: WARNING: can't find the ALSA library" >&5
 echo "$as_me: WARNING: can't find the ALSA library" >&2;}
@@ -18827,7 +18985,7 @@ fi
 
             if test $with_jack = yes ; then
 	       if test "$with_alsa" != yes ; then
-                 audio_system=JACK
+                 AUDIO_SYSTEM=JACK
                fi
 	       if test x$PKG_CONFIG != xno ; then
                    jack_version="`$PKG_CONFIG jack --modversion`"
@@ -18841,7 +18999,7 @@ _ACEOF
             fi
         fi
 
-	case $audio_system in
+	case $AUDIO_SYSTEM in
 	    ALSA)
                 # if alsa version < 0.9 complain and use OSS
 		alsa_ok=yes
@@ -19037,7 +19195,7 @@ _ACEOF
 
 		    fi
  		else
-         	    audio_system=OSS
+         	    AUDIO_SYSTEM=OSS
  		    cat >>confdefs.h <<\_ACEOF
 #define HAVE_OSS 1
 _ACEOF
@@ -19069,7 +19227,7 @@ _ACEOF
 _ACEOF
 
 	LIBS="$LIBS -lm"
-	audio_system=Sun
+	AUDIO_SYSTEM=Sun
         ;;
     *-*-solaris*)
 	cat >>confdefs.h <<\_ACEOF
@@ -19078,7 +19236,7 @@ _ACEOF
 
 	LIBS="$LIBS -lm -ldl"
 # odd... this causes an error in the sndlib configure (can't find libdl) but is needed here?
-	audio_system=Sun
+	AUDIO_SYSTEM=Sun
 	LDSO_FLAGS="-G"
 # if __SUNPRO_C we could add -xO3
         ;;
@@ -19087,7 +19245,7 @@ _ACEOF
 #define MUS_HPUX 1
 _ACEOF
 
-	audio_system=Hpux
+	AUDIO_SYSTEM=Hpux
 	LDSO_FLAGS="+z -Ae +DA1.1"
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
@@ -19098,7 +19256,7 @@ _ACEOF
 #define MUS_SGI 1
 _ACEOF
 
-	audio_system=SGI
+	AUDIO_SYSTEM=SGI
 	AUDIO_LIB="-laudio"
 
         if test $GUILE_CONFIG_works = no; then
@@ -19124,7 +19282,7 @@ _ACEOF
 _ACEOF
 
 	LIBS="$LIBS -lm"
-	audio_system=OSS
+	AUDIO_SYSTEM=OSS
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
@@ -19135,7 +19293,7 @@ _ACEOF
 _ACEOF
 
 	LIBS="$LIBS -lm"
-	audio_system=OSS
+	AUDIO_SYSTEM=OSS
 	if test "$GCC" = yes ; then
 	  SO_LD="gcc"
 	  SO_FLAGS="-fPIC $SO_FLAGS"
@@ -19147,7 +19305,7 @@ _ACEOF
 #define MUS_OPENBSD 1
 _ACEOF
 
-	audio_system=OpenBSD
+	AUDIO_SYSTEM=OpenBSD
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
@@ -19157,7 +19315,7 @@ _ACEOF
 #define MUS_NETBSD 1
 _ACEOF
 
-	audio_system=NetBSD
+	AUDIO_SYSTEM=NetBSD
 	if test "$GCC" = yes ; then
 	  SO_LD="gcc"
 	  SO_FLAGS="-fPIC $SO_FLAGS"
@@ -19169,14 +19327,14 @@ _ACEOF
 #define MUS_WINDOZE 1
 _ACEOF
 
-	audio_system=Windoze
+	AUDIO_SYSTEM=Windoze
 	;;
     *-apple-*)
 	cat >>confdefs.h <<\_ACEOF
 #define MUS_MAC_OSX 1
 _ACEOF
 
-	audio_system=MacOSX
+	AUDIO_SYSTEM=MacOSX
 	AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
 
 	echo "$as_me:$LINENO: checking for kAudioDevicePropertyDeviceManufacturer" >&5
@@ -19295,8 +19453,8 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 esac
 echo "$as_me:$LINENO: checking for audio system" >&5
 echo $ECHO_N "checking for audio system... $ECHO_C" >&6
-echo "$as_me:$LINENO: result: $audio_system" >&5
-echo "${ECHO_T}$audio_system" >&6
+echo "$as_me:$LINENO: result: $AUDIO_SYSTEM" >&5
+echo "${ECHO_T}$AUDIO_SYSTEM" >&6
 fi
 
 
@@ -19871,6 +20029,7 @@ if test "${enable_snd_debug+set}" = set; then
 #define DEBUGGING 1
 _ACEOF
 
+    RANDOM_FEATURES="$RANDOM_FEATURES debugging"
 
   ansi=
   if test -z "$ansi"; then
@@ -20197,9 +20356,9 @@ echo "${ECHO_T}$ac_cv_lib_sndlib_c_vct_copy" >&6
 if test $ac_cv_lib_sndlib_c_vct_copy = yes; then
 
 	SNDLIB_AUDIO_CHOICE=`$SNDLIB_CONFIG --audio`
-        if test "$SNDLIB_AUDIO_CHOICE" != "$audio_system" ; then
-	  { echo "$as_me:$LINENO: WARNING: libsndlib.so audio choice is $SNDLIB_AUDIO_CHOICE, but the current choice is $audio_system" >&5
-echo "$as_me: WARNING: libsndlib.so audio choice is $SNDLIB_AUDIO_CHOICE, but the current choice is $audio_system" >&2;}
+        if test "$SNDLIB_AUDIO_CHOICE" != "$AUDIO_SYSTEM" ; then
+	  { echo "$as_me:$LINENO: WARNING: libsndlib.so audio choice is $SNDLIB_AUDIO_CHOICE, but the current choice is $AUDIO_SYSTEM" >&5
+echo "$as_me: WARNING: libsndlib.so audio choice is $SNDLIB_AUDIO_CHOICE, but the current choice is $AUDIO_SYSTEM" >&2;}
         fi
 	SNDLIB_BITS=`$SNDLIB_CONFIG --bits`
 	if test "$SNDLIB_BITS" = "$LOCAL_SNDLIB_BITS" ; then
@@ -20207,6 +20366,7 @@ echo "$as_me: WARNING: libsndlib.so audio choice is $SNDLIB_AUDIO_CHOICE, but th
           if test "$SNDLIB_LANGUAGE" = $LOCAL_LANGUAGE ; then
 	    SNDLIB_FILES="NO_FILES"
             SNDLIB_LIB="-L$SNDLIB_PREFIX/lib -lsndlib"
+            OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES sndlib"
             cat >>confdefs.h <<\_ACEOF
 #define WITH_SHARED_SNDLIB 1
 _ACEOF
@@ -22045,6 +22205,7 @@ _ACEOF
 
 
 
+  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gettext"
 
   if test "${ac_cv_header_nl_types_h+set}" = set; then
   echo "$as_me:$LINENO: checking for nl_types.h" >&5
@@ -23770,3 +23931,33 @@ if test "$no_create" != yes; then
 fi
 
 
+# borrowed from gnucash
+
+echo "$as_me:$LINENO: result:
+  Options selected
+  -------------------------
+  Snd version .......... : $VERSION
+  CFLAGS ............... : $CFLAGS
+  LDFLAGS .............. :$LDFLAGS
+  prefix.................: ${prefix}
+  extension language.....: $LOCAL_LANGUAGE
+  audio system...........: $AUDIO_SYSTEM
+  graphics toolkit.......: $GRAPHICS_TOOLKIT
+  optional libraries.....:$OPTIONAL_LIBRARIES
+  random features........:$RANDOM_FEATURES
+  environs...............: $host $CC
+" >&5
+echo "${ECHO_T}
+  Options selected
+  -------------------------
+  Snd version .......... : $VERSION
+  CFLAGS ............... : $CFLAGS
+  LDFLAGS .............. :$LDFLAGS
+  prefix.................: ${prefix}
+  extension language.....: $LOCAL_LANGUAGE
+  audio system...........: $AUDIO_SYSTEM
+  graphics toolkit.......: $GRAPHICS_TOOLKIT
+  optional libraries.....:$OPTIONAL_LIBRARIES
+  random features........:$RANDOM_FEATURES
+  environs...............: $host $CC
+" >&6

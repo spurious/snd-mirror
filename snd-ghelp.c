@@ -1,6 +1,7 @@
 #include "snd.h"
 
 /* TODO: back button ignores just previous case? -- needs url because motif-xmstring pattern search isn't usable
+ * SOMEDAY: move to gtkhtml
  */
 
 /* ---------------- HELP MONOLOG ---------------- */

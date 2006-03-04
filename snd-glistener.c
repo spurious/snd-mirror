@@ -252,6 +252,7 @@ static void clear_back_to_prompt(GtkWidget *w)
 
 static void ctrl_k(GtkWidget *w)
 {
+#if HAVE_GTK_TEXT_BUFFER_SELECT_RANGE && HAVE_GTK_WIDGET_GET_CLIPBOARD
   GtkTextIter beg, end;
   GtkTextBuffer *buf;
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
@@ -263,6 +264,7 @@ static void ctrl_k(GtkWidget *w)
       gtk_text_buffer_select_range(buf, &beg, &end);
       gtk_text_buffer_cut_clipboard(buf, gtk_widget_get_clipboard(w, GDK_SELECTION_CLIPBOARD), true);
     }
+#endif
 }
 
 static void sg_text_replace(GtkWidget *w, int beg, int end, char *text)

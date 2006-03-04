@@ -2931,7 +2931,7 @@ static void save_as_file_exists_check(Widget w, XtPointer context, XtPointer inf
       else
 	{
 	  if (!(directory_exists(filename)))
-	    s1 = XmStringCreate(_("save as (no such directory?):"), XmFONTLIST_DEFAULT_TAG); /* TODO: offer to create directory */
+	    s1 = XmStringCreate(_("save as (no such directory?):"), XmFONTLIST_DEFAULT_TAG);
 	  else s1 = XmStringCreate(_("save as:"), XmFONTLIST_DEFAULT_TAG);
 	}
     }
