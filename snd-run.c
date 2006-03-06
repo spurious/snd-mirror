@@ -10952,6 +10952,12 @@ static XEN eval_ptree_to_xen(ptree *pt)
 {
   XEN result = XEN_FALSE;
   eval_ptree(pt);
+  /* there is a minor memory leak here: if ptree eval calls mus_error, a throw occurs without
+   *   any free_ptree on the current tree.  But to catch this one case, while not screwing up
+   *   other cases (explicit throw, etc) is way too complicated -- basically I'd need a local
+   *   mus_error and a dynamic_wind -- the former isn't enough by itself because it doesn't
+   *   fully unwind the stack, and the latter because the only leak case is through mus_error.
+   */
   switch (pt->result->type)
     {
     case R_FLOAT:   result = C_TO_XEN_DOUBLE(pt->dbls[pt->result->addr]);       break;

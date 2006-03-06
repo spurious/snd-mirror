@@ -848,16 +848,16 @@ void set_bold_peak_numbers_font(chan_info *cp) {cp->cgx->ax->current_font = BOLD
 
 color_t get_foreground_color(axis_context *ax)
 {
-  GdkGCValues gv;
+  static GdkGCValues gv;
   gdk_gc_get_values(ax->gc, &gv);
-  return(gdk_color_copy(&(gv.foreground)));
+  return(&(gv.foreground));
 }
 
 color_t get_background_color(axis_context *ax)
 {
-  GdkGCValues gv;
+  static GdkGCValues gv;
   gdk_gc_get_values(ax->gc, &gv);
-  return(gdk_color_copy(&(gv.background)));
+  return(&(gv.background));
 }
 
 void set_foreground_color(axis_context *ax, GdkColor *color)

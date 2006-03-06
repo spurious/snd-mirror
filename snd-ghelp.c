@@ -1,10 +1,14 @@
 #include "snd.h"
 
 /* TODO: back button ignores just previous case? -- needs url because motif-xmstring pattern search isn't usable
- * SOMEDAY: move to gtkhtml
  */
 
 /* ---------------- HELP MONOLOG ---------------- */
+
+/* I tried gtkhtml (and XmHTML in 1999), and in both cases decided not to use them.  Both work fine,
+ *   but is it that much of a difference to have an html widget in a dialog as opposed to mozilla
+ *   running remotely?  And it would require fixing up all the help texts.  
+ */
 
 static GtkWidget *help_dialog = NULL;
 
@@ -42,7 +46,7 @@ int help_text_width(const char *txt, int start, int end)
   int len;
   buf = (char *)CALLOC(end - start + 2, sizeof(char));
   strncpy(buf, txt, end - start);
-  len = sg_text_width(buf, ss->sgx->listener_fnt);
+  len = sg_text_width(buf, LISTENER_FONT(ss));
   FREE(buf);
   if (len > 0) return(len);
 #endif

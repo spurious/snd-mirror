@@ -620,7 +620,7 @@ void g_init_menu(void);
 
 int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason, int list_loc), void *context);
 /* bool remove_ss_watcher(int loc); */
-bool call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason);
+void call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason);
 void save_options(FILE *fd);
 char *save_options_in_prefs(void);
 void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth);
@@ -984,8 +984,8 @@ void set_log_freq_start(Float base);
 /* -------- snd-select.c -------- */
 
 int add_selection_watcher(void (*watcher)(selection_watcher_reason_t reason, void *data), void *context);
-bool remove_selection_watcher(int loc);
-bool call_selection_watchers(selection_watcher_reason_t reason);
+void remove_selection_watcher(int loc);
+void call_selection_watchers(selection_watcher_reason_t reason);
 bool selection_is_active(void);
 bool selection_is_active_in_channel(chan_info *cp);
 bool selection_is_visible_in_channel(chan_info *cp);
@@ -1284,8 +1284,8 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
   void snd_rationalize(Float a, int *num, int *den);
 #endif
 int add_sp_watcher(snd_info *sp, sp_watcher_t type, void (*watcher)(struct snd_info *sp, sp_watcher_reason_t reason, int list_loc), void *context);
-bool remove_sp_watcher(snd_info *sp, int loc);
-bool call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reason);
+void remove_sp_watcher(snd_info *sp, int loc);
+void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reason);
 
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);

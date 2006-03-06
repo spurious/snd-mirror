@@ -141,7 +141,7 @@ int header_type_from_position(int pos);
 int data_format_from_position(int header, int pos);
 char **set_header_positions_from_type(file_data *fdat, int header_type, int data_format);
 bool encoded_header_p(int header_type);
-int snd_encode(int type, const char *input_filename, const char *output_filename);
+void snd_encode(int type, const char *input_filename, const char *output_filename);
 snd_info *file_is_open_elsewhere_and_has_unsaved_edits(snd_info *sp, const char *fullname);
 bool plausible_sound_file_p(const char *name);
 snd_info *finish_opening_sound(snd_info *sp, bool selected);

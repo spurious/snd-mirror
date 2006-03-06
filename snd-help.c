@@ -1553,7 +1553,7 @@ but you can use Gimp or some such program to get a screenshot, and print that.",
 		      NULL);
 }
 
-static char *view_files_xrefs[6] = {
+static char *view_files_xrefs[5] = {
   "place sound in view files list: {" S_add_file_to_view_files_list "}",
   "place all sounds from a directory in view files list: {" S_add_directory_to_view_files_list "}",
   "specialize view files selection: {" S_view_files_select_hook "}",

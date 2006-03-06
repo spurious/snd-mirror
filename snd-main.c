@@ -117,24 +117,17 @@ bool remove_ss_watcher(int loc)
 }
 #endif
 
-bool call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason)
+void call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason)
 {
-  bool got_one = false;
   if (ss->watchers)
     {
       int i;
       for (i = 0; i < ss->watchers_size; i++)
-	{
-	  if ((ss->watchers[i]) &&
-	      ((type == SS_ANY_WATCHER) ||
-	       (ss->watchers[i]->type == type)))
-	    {
-	      (*(ss->watchers[i]->watcher))(reason, i);
-	      got_one = true;
-	    }
-	}
+	if ((ss->watchers[i]) &&
+	    ((type == SS_ANY_WATCHER) ||
+	     (ss->watchers[i]->type == type)))
+	  (*(ss->watchers[i]->watcher))(reason, i);
     }
-  return(got_one);
 }
 
 

@@ -1143,7 +1143,7 @@ def test00
             [:dac_combines_channels, true],
             [:dac_size, 256],
             [:minibuffer_history_length, 8],
-            [:data_clipped, false],
+            [:clipping, false],
             [:default_output_chans, 1],
             [:default_output_data_format, Mus_bshort],
             [:default_output_srate, 22050],
@@ -1185,7 +1185,7 @@ def test00
             [:max_transform_peaks, 100],
             [:max_regions, 16],
             [:min_dB, -60.0],
-            [:mus_file_data_clipped, false],
+            [:mus_clipping, false],
             [:log_freq_start, 32.0],
             [:selection_creates_region, true],
             [:transform_normalization, Normalize_by_channel],
@@ -1350,13 +1350,13 @@ def test01
       [:auto_update_interval, 60.0],
       [:cursor_update_interval, 0.05],
       [:cursor_location_offset, 0],
-      [:cursor_follows_play, false],
+      [:with_tracking_cursor, false],
       [:cursor_size, 15], 
       [:cursor_style, Cursor_cross],
       [:dac_combines_channels, true],
       [:dac_size, 256],
       [:minibuffer_history_length, 8],
-      [:data_clipped, false],
+      [:clipping, false],
       [:default_output_chans, 1],
       [:default_output_data_format, Mus_bshort],
       [:default_output_srate, 22050],
@@ -1878,13 +1878,13 @@ def test03
       [:auto_update_interval, 60.0, 120.0],
       [:cursor_update_interval, 0.05, 0.1],
       [:cursor_location_offset, 0, 32768],
-      [:cursor_follows_play, false, true],
+      [:with_tracking_cursor, false, true],
       [:cursor_size, 15, 30],
       [:cursor_style, Cursor_cross, Cursor_line],
       [:dac_combines_channels, true, false],
       [:dac_size, 256, 512],
       [:minibuffer_history_length, 8, 16],
-      [:data_clipped, false, true],
+      [:clipping, false, true],
       [:default_output_chans, 1, 2],
       [:default_output_data_format, 1, 1],
       [:default_output_srate, 22050, 44100],
@@ -3051,10 +3051,10 @@ def test094
   end
   mus_sound_close_input(fd)
   #
-  # check data_clipped choices
+  # check clipping choices
   #
   ind = view_sound("oboe.snd")
-  set_data_clipped(false)
+  set_clipping(false)
   map_channel(lambda do |y| y * 10.0 end, 0, frames(ind), ind, 0)
   save_sound_as("test.snd", ind, Mus_next, Mus_bfloat)
   undo_edit(1, ind, 0)
@@ -3064,7 +3064,7 @@ def test094
   end
   close_sound(ind1)
   delete_file("test.snd")
-  set_data_clipped(true)
+  set_clipping(true)
   map_channel(lambda do |y| y * 10.0 end, 0, frames(ind), ind, 0)
   save_sound_as("test.snd", ind, Mus_next, Mus_bfloat)
   undo_edit(1, ind, 0)
@@ -3074,7 +3074,7 @@ def test094
   end
   close_sound(ind1)
   delete_file("test.snd")
-  set_data_clipped(false)
+  set_clipping(false)
   mx = maxamp(ind)
   map_channel(lambda do |y| y + (1.001 - mx) end, 0, frames, ind, 0)
   save_sound_as("test.snd", ind, Mus_next, Mus_bshort)
@@ -3084,7 +3084,7 @@ def test094
   end
   close_sound(ind1)
   delete_file("test.snd")
-  set_data_clipped(true)
+  set_clipping(true)
   save_sound_as("test.snd", ind, Mus_next, Mus_bshort)
   ind1 = open_sound("test.snd")
   if array?(res = scan_channel(lambda do |y| y < 0.0 end))
@@ -3092,7 +3092,7 @@ def test094
   end
   close_sound(ind1)
   delete_file("test.snd")
-  set_data_clipped(false)
+  set_clipping(false)
   close_sound(ind)
   # 
   delete_file(fmv)
@@ -4239,7 +4239,7 @@ end
 
 # basic edit tree cases
 def test005
-  snd_display("dac is running?") if dac_is_running
+  snd_display("dac is running?") if playing
   ind = new_sound("test.snd")
   str = format("
 EDITS: 0
@@ -9022,10 +9022,10 @@ def test255
   map_channel(lambda do |y| 0.5 end)
   env_sound([0, 0, 1, 1, 2, 0])
   fp(1.0, 0.3, 20)
-  old_cursor = cursor_follows_play
-  set_cursor_follows_play(true)
+  old_cursor = with_tracking_cursor
+  set_with_tracking_cursor(true)
   play_and_wait
-  set_cursor_follows_play(old_cursor)
+  set_with_tracking_cursor(old_cursor)
   close_sound(ind)
   #
   ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1)
@@ -25873,10 +25873,10 @@ def test14
       [:auto_update_interval, false, 60.0, 120.0],
       [:cursor_update_interval, false, 0.05, 0.1],
       [:cursor_location_offset, false, 0, 1024],
-      [:cursor_follows_play, false, false, true],
+      [:with_tracking_cursor, false, false, true],
       [:cursor_size, false, 15, 25],
       [:cursor_style, false, Cursor_cross, Cursor_line],
-      [:data_clipped, false, false, true],
+      [:clipping, false, false, true],
       [:default_output_chans, false, 1, 8],
       [:default_output_srate, false, 22050, 44100],
       [:dot_size, false, 1, 10],
@@ -27502,7 +27502,7 @@ end
 def test15
   if $test15
     $before_test_hook.call(15)
-    set_data_clipped(false)
+    set_clipping(false)
     set_transform_type(Fourier_transform)
     test0015
     test0115
@@ -33993,7 +33993,7 @@ def test0021
   [[:filter_control_in_dB, true, :eql?, :eql?],
    [:filter_control_in_hz, true, :eql?, :eql?],
    [:show_controls, true, :eql?, :eql?],
-   [:cursor_follows_play, true, :eql?, :eql?],
+   [:with_tracking_cursor, true, :eql?, :eql?],
    [:speed_control_tones, 14, :==, :eql?],
    [:speed_control_style, Speed_control_as_semitone, :==, :eql?],
    [:filter_control_order, 14, :==, :eql?],
@@ -37253,12 +37253,12 @@ def test0124
     snd_display("activate Revert menu: %s?", res)
     revert_sound(ind)
   end
-  RXtCallCallbacks(menu_option("Redo    C-x C-r"), RXmNactivateCallback, snd_global_state)
+  RXtCallCallbacks(menu_option("Redo"), RXmNactivateCallback, snd_global_state)
   if (res = edit_position(ind, 1)) != 1
     snd_display("activate Redo menu: %s (%s)?", res, menu_option("Redo    C-x C-r"))
     revert_sound(ind)
   end
-  RXtCallCallbacks(menu_option("Undo    C-x C-u"), RXmNactivateCallback, snd_global_state)
+  RXtCallCallbacks(menu_option("Undo"), RXmNactivateCallback, snd_global_state)
   if (res = edit_position(ind, 1)) != 0
     snd_display("activate Undo menu: %s?", res)
     revert_sound(ind)
@@ -37331,9 +37331,9 @@ def test0124
       snd_display("zoom_focus_style %s: %s?", name, zoom_focus_style)
     end
   end
-  RXtCallCallbacks(menu_option("Close  C-x k"), RXmNactivateCallback, snd_global_state)
+  RXtCallCallbacks(menu_option("Close"), RXmNactivateCallback, snd_global_state)
   if res = find_sound("fmv1.snd")
-    snd_display("activate menu %s -> snd: %s", menu_option("Close  C-x k"), res)
+    snd_display("activate menu %s -> snd: %s", menu_option("Close"), res)
     close_sound(ind2)
   end
   ind2 = open_sound("4.aiff")
@@ -38639,10 +38639,10 @@ def test0324
   select_all
   if selection? then snd_display("select_all zero selected?") end
   [menu_option("Delete Selection"),
-    menu_option("Insert Selection C-x i"),
-    menu_option("Play Selection   C-x p"),
-    menu_option("Mix Selection    C-x q"),
-    menu_option("Save Selection   C-x w")].each do |m|
+    menu_option("Insert Selection"),
+    menu_option("Play Selection"),
+    menu_option("Mix Selection"),
+    menu_option("Save Selection")].each do |m|
     if RXtIsSensitive(m) then snd_display("select_all zero: %s?", RXtName(m)) end
   end
   close_sound(ind)
@@ -38753,8 +38753,8 @@ Procs = [:add_mark, :add_sound_file_extension, :sound_file?, :add_to_main_menu, 
   :speed_control_bounds, :expand_control_bounds, :contrast_control_bounds, :sound_file_extensions,
   :reverb_control_length_bounds, :reverb_control_scale_bounds, :cursor_update_interval,
   :cursor_location_offset, :auto_update_interval, :count_matches, :current_font, :cursor,
-  :cursor_color, :cursor_follows_play, :cursor_size, :cursor_style, :dac_combines_channels,
-  :dac_size, :data_clipped, :data_color, :data_format, :data_location, :data_size,
+  :cursor_color, :with_tracking_cursor, :cursor_size, :cursor_style, :dac_combines_channels,
+  :dac_size, :clipping, :data_color, :data_format, :data_location, :data_size,
   :default_output_chans, :default_output_data_format, :default_output_srate,
   :default_output_header_type, :insert_file_dialog,
   :define_envelope, :delete_mark, :delete_marks, :forget_region, :delete_sample,
@@ -38839,7 +38839,7 @@ Procs = [:add_mark, :add_sound_file_extension, :sound_file?, :add_to_main_menu, 
   :mus_sound_header_type, :mus_sound_data_format, :mus_sound_length, :mus_sound_type_specifier,
   :mus_header_type_name, :mus_data_format_name, :mus_sound_comment, :mus_sound_write_date,
   :mus_bytes_per_sample, :mus_sound_loop_info, :mus_audio_report, :mus_sun_set_outputs,
-  :mus_sound_maxamp, :mus_sound_maxamp_exists?, :mus_file_prescaler, :mus_file_data_clipped,
+  :mus_sound_maxamp, :mus_sound_maxamp_exists?, :mus_file_prescaler, :mus_clipping,
   :average, :average?, :make_average, :mus_expand_filename, :make_sound_data, :sound_data_ref,
   :sound_data_set!, :sound_data?, :sound_data_length, :sound_data_maxamp, :sound_data_chans,
   :sound_data2vct, :vct2sound_data, :all_pass, :all_pass?, :amplitude_modulate, :array2file,
@@ -38897,7 +38897,7 @@ Procs = [:add_mark, :add_sound_file_extension, :sound_file?, :add_to_main_menu, 
   :reset_button_color, :doit_button_color, :doit_again_button_color, :track, :tracks,
   :track?, :make_track, :track_amp, :track_position, :track_frames, :track_speed,
   :track_tempo, :track_amp_env, :track_track, :delete_track, :delete_mix, :track_color,
-  :free_track, :track_speed_style, :delay_tick, :dac_is_running, :draw_axes, :copy_mix, :copy_track,
+  :free_track, :track_speed_style, :delay_tick, :playing, :draw_axes, :copy_mix, :copy_track,
   :copy_sample_reader, :html_dir, :html_program, :lock_track, :make_fir_coeffs,
   :make_identity_mixer, :mus_interp_type, :mus_make_error, :mus_run, :phase_vocoder,
   :player_home, :redo_edit, :undo_edit, :widget_position, :widget_size,
@@ -38911,8 +38911,8 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
   :contrast_control_amp, :amp_control_bounds, :speed_control_bounds, :expand_control_bounds,
   :contrast_control_bounds, :reverb_control_length_bounds, :reverb_control_scale_bounds,
   :cursor_update_interval, :cursor_location_offset, :contrast_control?, :auto_update_interval,
-  :current_font, :cursor, :cursor_color, :channel_properties, :cursor_follows_play, :cursor_size,
-  :cursor_style, :dac_combines_channels, :dac_size, :data_clipped, :data_color,
+  :current_font, :cursor, :cursor_color, :channel_properties, :with_tracking_cursor, :cursor_size,
+  :cursor_style, :dac_combines_channels, :dac_size, :clipping, :data_color,
   :default_output_chans, :default_output_data_format, :default_output_srate,
   :default_output_header_type,
   :dot_size, :enved_envelope, :enved_base, :enved_clip?, :enved_in_dB, :enved_style, :enved_power,
@@ -38969,7 +38969,7 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
   :track_color, :html_dir, :html_program, :mus_interp_type, :widget_position, :widget_size,
   ((defined? window_property) ? :window_property : :widget_size),
   :mixer_ref, :frame_ref, :locsig_ref, :locsig_reverb_ref, :mus_file_prescaler,
-  :mus_file_data_clipped, :mus_header_raw_defaults,
+  :mus_clipping, :mus_header_raw_defaults,
   :view_files_amp, :view_files_speed, :view_files_files, :view_files_selected_files,
   :view_files_speed_style, :view_files_amp_env]
 
@@ -39275,7 +39275,7 @@ def test0128
     end
   end
   mus_sound_forget("/bad/baddy")
-  [:channel_widgets, :count_matches, :cursor, :channel_properties, :cursor_follows_play,
+  [:channel_widgets, :count_matches, :cursor, :channel_properties, :with_tracking_cursor,
     :cursor_position, :cursor_size, :cursor_style, :delete_sample, :display_edits, :dot_size,
     :draw_dots, :draw_lines, :edit_fragment, :edit_position, :edit_tree, :edits,
     :fft_window_alpha,
@@ -39326,7 +39326,7 @@ def test0128
       snd_display("%d: chn (no chn) procs %s: %s", i, n, tag)
     end
   end
-  [:channel_widgets, :cursor, :cursor_follows_play, :channel_properties, :cursor_position,
+  [:channel_widgets, :cursor, :with_tracking_cursor, :channel_properties, :cursor_position,
     :cursor_size, :cursor_style, :delete_sample, :display_edits, :dot_size, :edit_fragment,
     :edit_position, :edit_tree, :edits, :env_sound, :fft_window_beta,
     :fft_window_alpha, :fft_log_frequency,
@@ -39477,7 +39477,7 @@ def test0128
     :ask_before_overwrite, :auto_resize, :auto_update, :axis_label_font,
     :axis_numbers_font, :basic_color, :bind_key, :channel_style, :color_cutoff,
     :color_dialog, :color_inverted, :color_scale, :cursor_color,
-    :dac_combines_channels, :dac_size, :data_clipped, :data_color,
+    :dac_combines_channels, :dac_size, :clipping, :data_color,
     :default_output_chans, :default_output_data_format, :default_output_srate,
     :default_output_header_type, :enved_envelope, :enved_base, :enved_clip?,
     :enved_in_dB, :enved_dialog, :enved_style, :enved_power, :enved_target,

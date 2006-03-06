@@ -3710,9 +3710,9 @@ the current sample, the vct returned by 'init-func', and the current read direct
       if (caller) {FREE(caller); caller = NULL;}
       return(proc_and_list);
     }
+  if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
   if (XEN_REQUIRED_ARGS_OK(proc, 1))
     pt = form_to_ptree_1_f(proc_and_list);
-  if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
   if (pt)
     {
       if (ptrees_present)

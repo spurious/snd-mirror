@@ -266,15 +266,15 @@ Widget add_menu(void)
   XtSetArg(high_args[high_n], XmNuserData, 0); high_n++;
   file_cascade_menu = XtCreateManagedWidget(_("File"), xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
 
-  file_open_menu = XtCreateManagedWidget(_("Open   C-x C-f"), xmPushButtonWidgetClass, file_menu, main_args, main_n);
+  file_open_menu = XtCreateManagedWidget(_("Open"), xmPushButtonWidgetClass, file_menu, main_args, main_n);
   XtAddCallback(file_open_menu, XmNactivateCallback, file_open_callback, NULL);
   XtVaSetValues(file_open_menu, XmNmnemonic, 'O', NULL);
 
-  file_close_menu = XtCreateManagedWidget(_("Close  C-x k"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
+  file_close_menu = XtCreateManagedWidget(_("Close"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
   XtAddCallback(file_close_menu, XmNactivateCallback, file_close_callback, NULL);
   XtVaSetValues(file_close_menu, XmNmnemonic, 'C', NULL);
   
-  file_save_menu = XtCreateManagedWidget(_("Save   C-x C-s"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
+  file_save_menu = XtCreateManagedWidget(_("Save"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
   XtAddCallback(file_save_menu, XmNactivateCallback, file_save_callback, NULL);
   XtVaSetValues(file_save_menu, XmNmnemonic, 'S', NULL);
   
@@ -286,11 +286,11 @@ Widget add_menu(void)
   XtAddCallback(file_revert_menu, XmNactivateCallback, file_revert_callback, NULL);
   XtVaSetValues(file_revert_menu, XmNmnemonic, 'R', NULL);
   
-  file_mix_menu = XtCreateManagedWidget(_("Mix    C-x C-q"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
+  file_mix_menu = XtCreateManagedWidget(_("Mix"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
   XtAddCallback(file_mix_menu, XmNactivateCallback, file_mix_callback_1, NULL);
   XtVaSetValues(file_mix_menu, XmNmnemonic, 'M', NULL);
 
-  file_insert_menu = XtCreateManagedWidget(_("Insert C-x C-i"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
+  file_insert_menu = XtCreateManagedWidget(_("Insert"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
   XtAddCallback(file_insert_menu, XmNactivateCallback, file_insert_callback_1, NULL);
   XtVaSetValues(file_insert_menu, XmNmnemonic, 'I', NULL);
 
@@ -333,16 +333,16 @@ Widget add_menu(void)
   XtSetArg(high_args[high_n], XmNuserData, 1); high_n++;
   edit_cascade_menu = XtCreateManagedWidget(_("Edit"), xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
   
-  edit_undo_menu = XtCreateManagedWidget(_("Undo    C-x C-u"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  edit_undo_menu = XtCreateManagedWidget(_("Undo"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_undo_menu, XmNactivateCallback, edit_undo_callback, NULL);
   XtVaSetValues(edit_undo_menu, XmNmnemonic, 'U', NULL);
 
-  edit_redo_menu = XtCreateManagedWidget(_("Redo    C-x C-r"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  edit_redo_menu = XtCreateManagedWidget(_("Redo"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_redo_menu, XmNactivateCallback, edit_redo_callback, NULL);
   XtVaSetValues(edit_redo_menu, XmNmnemonic, 'R', NULL);
 
 #if HAVE_EXTENSION_LANGUAGE
-  edit_find_menu = XtCreateManagedWidget(_("Find    C-s"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  edit_find_menu = XtCreateManagedWidget(_("Find"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_find_menu, XmNactivateCallback, edit_find_callback_1, NULL);
   XtVaSetValues(edit_find_menu, XmNmnemonic, 'F', NULL);
 #endif
@@ -353,19 +353,19 @@ Widget add_menu(void)
   XtAddCallback(edit_cut_menu, XmNactivateCallback, edit_cut_callback, NULL);
   XtVaSetValues(edit_cut_menu, XmNmnemonic, 'C', NULL);
 
-  edit_paste_menu = XtCreateManagedWidget(_("Insert Selection C-x i"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  edit_paste_menu = XtCreateManagedWidget(_("Insert Selection"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_paste_menu, XmNactivateCallback, edit_paste_callback, NULL);
   XtVaSetValues(edit_paste_menu, XmNmnemonic, 'P', NULL);
 
-  edit_mix_menu = XtCreateManagedWidget(_("Mix Selection    C-x q"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  edit_mix_menu = XtCreateManagedWidget(_("Mix Selection"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_mix_menu, XmNactivateCallback, edit_mix_callback, NULL);
   XtVaSetValues(edit_mix_menu, XmNmnemonic, 'M', NULL);
 
-  edit_play_menu = XtCreateManagedWidget(_("Play Selection   C-x p"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  edit_play_menu = XtCreateManagedWidget(_("Play Selection"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_play_menu, XmNactivateCallback, edit_play_callback, NULL);
   XtVaSetValues(edit_play_menu, XmNmnemonic, 'P', NULL);
 
-  edit_save_as_menu = XtCreateManagedWidget(_("Save Selection   C-x w"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  edit_save_as_menu = XtCreateManagedWidget(_("Save Selection"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_save_as_menu, XmNactivateCallback, edit_save_as_callback, NULL);
   XtVaSetValues(edit_save_as_menu, XmNmnemonic, 'S', NULL);
 

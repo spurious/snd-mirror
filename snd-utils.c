@@ -1098,7 +1098,7 @@ void *mem_realloc(void *ptr, int size, const char *func, const char *file, int l
 
 static char *mem_stats(int ub)
 {
-  int i, ptrs = 0, sum = 0, snds = 0, chns = 0;
+  int i, k, ptrs = 0, sum = 0, snds = 0, chns = 0, trees = 0;
   snd_info *sp;
   char *result, *ksum = NULL, *kptrs = NULL, *kpers = NULL;
   for (i = 0; i < mem_size; i++)
@@ -1115,13 +1115,28 @@ static char *mem_stats(int ub)
 	{
 	  snds++;
 	  chns += sp->allocated_chans;
+	  for (k = 0; k < sp->allocated_chans; k++)
+	    {
+	      chan_info *cp;
+	      cp = sp->chans[k];
+	      if ((cp) && (cp->ptrees))
+		{
+		  int j;
+		  trees++;
+		  fprintf(stderr, "chan(%d %d): %d [", k, sp->nchans, cp->ptree_size);
+		  for (j = 0; j < cp->ptree_size; j++)
+		    if (cp->ptrees[j])
+		      fprintf(stderr, "%p ", cp->ptrees[j]);
+		  fprintf(stderr, "\n");
+		}
+	    }
 	}
     }
-  mus_snprintf(result, PRINT_BUFFER_SIZE, "snd mem: %s (%s ptrs), %d sounds, %d chans (%s)\n",
-	  ksum = kmg(sum),
-	  kptrs = kmg(ptrs),
-	  snds, chns,
-	  (chns > 0) ? (kpers = kmg(ub / chns)) : "");
+  mus_snprintf(result, PRINT_BUFFER_SIZE, "snd mem: %s (%s ptrs), %d sounds, %d chans (%s, %d)\n",
+	       ksum = kmg(sum),
+	       kptrs = kmg(ptrs),
+	       snds, chns,
+	       (chns > 0) ? (kpers = kmg(ub / chns)) : "", trees);
   if (ksum) free(ksum);
   if (kptrs) free(kptrs);
   if (kpers) free(kpers);
@@ -1199,6 +1214,18 @@ void mem_report(void)
 		if ((locations[j] == ptr) && (pointers[j]))
 		  fprintf(Fp, "[%s] ", (char *)(pointers[j]));
 	      fprintf(Fp, "\n");
+	    }
+	  else
+	    {
+	      if (strcmp("make_ptree", functions[ptr]) == 0)
+		{
+		  if (have_stacks)
+		    fprintf(Fp, "                          ");
+		  for (j = 0; j < mem_size; j++)
+		    if ((locations[j] == ptr) && (pointers[j]))
+		      fprintf(Fp, "[%p] ", pointers[j]);
+		  fprintf(Fp, "\n");
+		}
 	    }
 	}
     }

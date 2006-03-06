@@ -1,8 +1,6 @@
 #include "snd.h"
 #include "snd-menu.h"
 
-/* PERHAPS: key binding updates here too */
-
 static bool find_any_edits(chan_info *cp, void *ignore)
 {
   return(cp->edit_ctr > 0);

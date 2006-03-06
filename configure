@@ -3892,7 +3892,8 @@ done
 
 
 
-for ac_header in libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h pthread.h
+
+for ac_header in libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h pthread.h lrdf.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then

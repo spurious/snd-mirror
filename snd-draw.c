@@ -240,18 +240,17 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   return(pts);
 }
 
-
-static XEN g_foreground_color(XEN snd, XEN chn, XEN ax)
+static XEN g_foreground_color(XEN snd, XEN chn, XEN xax)
 {
   #define H_foreground_color "(" S_foreground_color " (snd #f) (chn #f) (ax #f)): current drawing color"
   chan_info *cp;
+  axis_context *ax;
   ASSERT_CHANNEL(S_foreground_color, snd, chn, 1);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_3, S_foreground_color, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(xax), xax, XEN_ARG_3, S_foreground_color, "an integer");
   cp = get_cp(snd, chn, S_foreground_color);
   if (!cp) return(XEN_FALSE);
-  return(XEN_WRAP_PIXEL(get_foreground_color(get_ax(cp, 
-						    XEN_TO_C_INT_OR_ELSE(ax, CHAN_GC),
-						    S_foreground_color))));
+  ax = get_ax(cp, XEN_TO_C_INT_OR_ELSE(xax, CHAN_GC), S_foreground_color);
+  return(XEN_WRAP_PIXEL(get_foreground_color(ax)));
 }
 
 static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)

@@ -11887,10 +11887,14 @@ EDITS: 5
 		   (let ((col (foreground-color)))
 		     (if (not (feql (color->list col) (color->list blue)))
 			 (snd-display ";set foreground-color: ~A ~A" (color->list col) (color->list blue))))
+		   (set! (foreground-color ind) red)
+		   (let ((col (foreground-color ind)))
+		     (if (not (feql (color->list col) (color->list red)))
+			 (snd-display ";set foreground-color with ind (red): ~A ~A" (color->list col) (color->list red))))
 		   (set! (foreground-color ind) black)
 		   (let ((col (foreground-color ind)))
 		     (if (not (feql (color->list col) (color->list black)))
-			 (snd-display ";set foreground-color with ind: ~A ~A" (color->list col) (color->list black)))))
+			 (snd-display ";set foreground-color with ind (black): ~A ~A" (color->list col) (color->list black)))))
 		 (set! (selected-graph-color) (make-color-with-catch 0.96 0.96 0.86))
 		 (set! (data-color) black)
 		 (set! (selected-data-color) blue)
@@ -25806,7 +25810,6 @@ EDITS: 5
 	(set! (search-procedure ind) #f)
 	(close-sound ind)
 	)
-      
       (if (not (hook-empty? open-raw-sound-hook)) (reset-hook! open-raw-sound-hook))
       (add-hook! open-raw-sound-hook (lambda (file choices) (list 1 22050 mus-bshort)))
       (let* ((ind (open-sound "../sf1/addf8.nh")))
@@ -25901,7 +25904,6 @@ EDITS: 5
 			   (data-location ind) (data-size ind) (/ (frames ind) 2)))
 	  (close-sound ind)
 	  (reset-hook! open-raw-sound-hook)))
-      
       (reset-hook! during-open-hook)
       (let* ((ind (open-sound "oboe.snd"))
 	     (mx0 (maxamp ind)))
@@ -26166,7 +26168,6 @@ EDITS: 5
 	    (if (player? pl) (snd-display ";free-player: ~A" pl)))
 	    
 	  )
-	
 	(let ((e0 #f)
 	      (e1 #f)
 	      (u0 #f)
@@ -26283,7 +26284,6 @@ EDITS: 5
 	
 	;; after-transform-hooks require some way to force the fft to run to completion
 	;; property-changed hook is similar (seems to happen whenever it's good and ready)
-	
 	(add-hook! close-hook
 		   (lambda (snd)
 		     (if (not (= snd ind))
@@ -26532,7 +26532,7 @@ EDITS: 5
 	     (if (and (defined? 'edit-hook-checked) (edit-hook-checked ind 0)) (snd-display ";~A: edit-hook-checked not cleared"))
 	     (if (not (equal? (mixes ind 0) '())) (snd-display ";~A: mixes: ~A" name (mixes ind 0)))))
 	 all-tests)
-	
+
 	(set! edit-hook-ctr 0)
 	(set! after-edit-hook-ctr 0)
 	(reset-hook! (edit-hook ind 0))
@@ -28826,12 +28826,12 @@ EDITS: 5
 	      (if (and (provided? 'xm) (provided? 'snd-debug))
 		  (begin
 		    (set! (cursor ind 0) 3000)
-		    (XtCallCallbacks (menu-option "Insert Selection C-x i") XmNactivateCallback (snd-global-state))))
+		    (XtCallCallbacks (menu-option "Insert Selection") XmNactivateCallback (snd-global-state))))
 	      (mix-selection 3000 ind)
 	      (if (and (provided? 'xm) (provided? 'snd-debug))
 		  (begin
-		    (XtCallCallbacks (menu-option "Mix Selection    C-x q") XmNactivateCallback (snd-global-state))
-		    (XtCallCallbacks (menu-option "Play Selection   C-x p") XmNactivateCallback (snd-global-state))))
+		    (XtCallCallbacks (menu-option "Mix Selection") XmNactivateCallback (snd-global-state))
+		    (XtCallCallbacks (menu-option "Play Selection") XmNactivateCallback (snd-global-state))))
 	      (delete-selection)
 	      (revert-sound ind))))
 	(close-sound ind))
@@ -45547,7 +45547,7 @@ EDITS: 1
 		  (take-keyboard-focus name-button)
 		  (key-event name-button (char->integer #\x) 4) (force-event)
 		  (key-event name-button (char->integer #\a) 4) (force-event)
-		  (widget-string minibuffer "'(0 .5 1 .5)")
+		  (widget-string minibuffer "'(0 .5 1 .512)")
 		  (key-event minibuffer snd-return-key 0) (force-event)
 		  (if (not (equal? (edits) '(1 0)))
 		      (snd-display ";C-x C-a (edits) -> ~A?" (edits)))
@@ -45782,10 +45782,10 @@ EDITS: 1
 		  (begin
 		    (snd-display ";activate Revert menu: ~A" (edit-position ind 1))
 		    (revert-sound ind)))
-	      (XtCallCallbacks (menu-option "Redo    C-x C-r") XmNactivateCallback (snd-global-state))
+	      (XtCallCallbacks (menu-option "Redo") XmNactivateCallback (snd-global-state))
 	      (if (not (= (edit-position ind 1) 1))
 		  (snd-display ";activate Redo menu: ~A (~A)" (edit-position ind 1) (menu-option "Redo    C-x C-r")))
-	      (XtCallCallbacks (menu-option "Undo    C-x C-u") XmNactivateCallback (snd-global-state))
+	      (XtCallCallbacks (menu-option "Undo") XmNactivateCallback (snd-global-state))
 	      (if (not (= (edit-position ind 1) 0))
 		  (snd-display ";activate Undo menu: ~A" (edit-position ind 1)))
 	      (copy-file "oboe.snd" "fmv1.snd")
@@ -45838,10 +45838,10 @@ EDITS: 1
 			 (if (not (= (zoom-focus-style) style)) (snd-display ";zoom-focus style ~A: ~A" name (zoom-focus-style))))
 		       (list "window left edge" "window right edge" "window midpoint" "cursor or selection")
 		       (list zoom-focus-left zoom-focus-right zoom-focus-middle zoom-focus-active))
-		      (XtCallCallbacks (menu-option "Close  C-x k") XmNactivateCallback (snd-global-state))
+		      (XtCallCallbacks (menu-option "Close") XmNactivateCallback (snd-global-state))
 		      (if (find-sound "fmv1.snd") 
 			  (begin
-			    (snd-display ";activate menu ~A -> ~A" (menu-option "Close  C-x k") (find-sound "fmv1.snd"))
+			    (snd-display ";activate menu ~A -> ~A" (menu-option "Close") (find-sound "fmv1.snd"))
 			    (close-sound ind2))))))
 	      (let ((ind2 (open-sound "4.aiff")))
 		(set! (channel-style ind2) channels-combined)
@@ -47844,10 +47844,10 @@ EDITS: 1
 		       (if (XtIsSensitive m)
 			   (snd-display ";select-all zero: ~A?" (XtName m))))
 		     (list (menu-option "Delete Selection")
-			   (menu-option "Insert Selection C-x i")
-			   (menu-option "Play Selection   C-x p")
-			   (menu-option "Mix Selection    C-x q")
-			   (menu-option "Save Selection   C-x w")))
+			   (menu-option "Insert Selection")
+			   (menu-option "Play Selection")
+			   (menu-option "Mix Selection")
+			   (menu-option "Save Selection")))
 		    (close-sound ind))
 		  
 		  (for-each

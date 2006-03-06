@@ -2369,7 +2369,7 @@ bool encoded_header_p(int header_type)
 	 (header_type == MUS_MIDI));
 }
 
-int snd_encode(int type, const char *input_filename, const char *output_filename)
+void snd_encode(int type, const char *input_filename, const char *output_filename)
 {
   /* write lshort wav tmpfile, encode, remove tmpfile */
   char *command = NULL;
@@ -2395,7 +2395,6 @@ int snd_encode(int type, const char *input_filename, const char *output_filename
       break;
 #endif
     default: 
-      return(-1);
       break;
     }
   if (command)
@@ -2403,11 +2402,11 @@ int snd_encode(int type, const char *input_filename, const char *output_filename
       system(command);
       FREE(command);
     }
-  return(0);
 }
 
 int snd_decode(int type, const char *input_filename, const char *output_filename)
 {
+  int err = 0;
   char *command = NULL;
   if (mus_file_probe(output_filename))
     snd_remove(output_filename, IGNORE_CACHE);
@@ -2445,7 +2444,7 @@ int snd_decode(int type, const char *input_filename, const char *output_filename
       break;
 #endif
     default: 
-      return(-1);
+      err = -1;
       break;
     }
   if (command)
@@ -2453,7 +2452,7 @@ int snd_decode(int type, const char *input_filename, const char *output_filename
       system(command);
       FREE(command);
     }
-  return(0);
+  return(err);
 }
 
 typedef struct {

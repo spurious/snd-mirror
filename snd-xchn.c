@@ -1162,9 +1162,9 @@ static void set_graph_font(chan_info *cp, XFontStruct *bf)
   XSetFont(XtDisplay(cx->chan_widgets[W_graph]), copy_GC(cp), bf->fid);
 }
 
-void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, PEAK_NUMBERS_FONT(ss));}
-void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, TINY_NUMBERS_FONT(ss));}
-void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, BOLD_PEAK_NUMBERS_FONT(ss));}
+void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, PEAKS_FONT(ss));}
+void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, TINY_FONT(ss));}
+void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, BOLD_PEAKS_FONT(ss));}
 
 color_t get_foreground_color(axis_context *ax)
 {

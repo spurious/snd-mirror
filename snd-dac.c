@@ -1186,13 +1186,7 @@ static int choose_dac_op (dac_info *dp, snd_info *sp)
 static int cursor_time;
 /* can't move cursor on each dac buffer -- causes clicks */
 
-/* SOMEDAY: fix these names:
-
-   [with-]ask-before-overwrite
-   [with-]auto-resize
-   dac-combines-channels [play-all-channels?]
-   finish verbose-cursor -> with-verbose-cursor?
-   dac-hook dac-size dac-combines-channels stop-dac-hook
+/* SOMEDAY: fix these names: dac-combines-channels [play-all-channels?], dac-hook dac-size dac-combines-channels stop-dac-hook
  */
 
 static bool dac_pausing = false;

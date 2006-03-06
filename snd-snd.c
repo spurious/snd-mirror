@@ -1971,7 +1971,7 @@ int add_sp_watcher(snd_info *sp, sp_watcher_t type, void (*watcher)(struct snd_i
   return(loc);
 }
 
-bool remove_sp_watcher(snd_info *sp, int loc)
+void remove_sp_watcher(snd_info *sp, int loc)
 {
   if ((sp) && 
       (sp->watchers) &&
@@ -1981,29 +1981,20 @@ bool remove_sp_watcher(snd_info *sp, int loc)
     {
       FREE(sp->watchers[loc]);
       sp->watchers[loc] = NULL;
-      return(true);
     }
-  return(false);
 }
 
-bool call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reason)
+void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reason)
 {
-  bool got_one = false;
   if (sp->watchers)
     {
       int i;
       for (i = 0; i < sp->watchers_size; i++)
-	{
-	  if ((sp->watchers[i]) &&
-	      ((type == SP_ANY_WATCHER) ||
-	       (sp->watchers[i]->type == type)))
-	    {
-	      (*(sp->watchers[i]->watcher))(sp, reason, i);
-	      got_one = true;
-	    }
-	}
+	if ((sp->watchers[i]) &&
+	    ((type == SP_ANY_WATCHER) ||
+	     (sp->watchers[i]->type == type)))
+	  (*(sp->watchers[i]->watcher))(sp, reason, i);
     }
-  return(got_one);
 }
 
 

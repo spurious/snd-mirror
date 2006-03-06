@@ -6,9 +6,6 @@ static slist *completion_list = NULL;
 static int printout_end;
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
 
-/* TODO: the double "(" bug is still with us, but how to make it happen repeatably?
- */
-
 static bool listener_awaiting_completion = false;
 
 static void list_completions_callback(const char *name, int row, void *data)
@@ -250,9 +247,9 @@ static void clear_back_to_prompt(GtkWidget *w)
   sg_text_delete(w, beg, end);
 }
 
+#if HAVE_GTK_TEXT_BUFFER_SELECT_RANGE && HAVE_GTK_WIDGET_GET_CLIPBOARD
 static void ctrl_k(GtkWidget *w)
 {
-#if HAVE_GTK_TEXT_BUFFER_SELECT_RANGE && HAVE_GTK_WIDGET_GET_CLIPBOARD
   GtkTextIter beg, end;
   GtkTextBuffer *buf;
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
@@ -264,8 +261,8 @@ static void ctrl_k(GtkWidget *w)
       gtk_text_buffer_select_range(buf, &beg, &end);
       gtk_text_buffer_cut_clipboard(buf, gtk_widget_get_clipboard(w, GDK_SELECTION_CLIPBOARD), true);
     }
-#endif
 }
+#endif
 
 static void sg_text_replace(GtkWidget *w, int beg, int end, char *text)
 {
@@ -605,12 +602,14 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 							}
 						      else
 							{
+#if HAVE_GTK_TEXT_BUFFER_SELECT_RANGE && HAVE_GTK_WIDGET_GET_CLIPBOARD
 							  if ((event->keyval == snd_K_k) && (event->state & snd_ControlMask))
 							    {
 							      /* select to line end, copy to clipboard, delete */
 							      ctrl_k(listener_text);
 							    }
 							  else
+#endif
 							    return(false);
 							}}}}}}}}}}}}}}
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
@@ -632,6 +631,7 @@ static XEN mouse_leave_listener_hook;
 static XEN mouse_enter_text_hook;
 static XEN mouse_leave_text_hook;
 
+#if 0
 static bool cursor_blinks(GtkWidget *w)
 {
   GtkSettings *settings;
@@ -640,6 +640,7 @@ static bool cursor_blinks(GtkWidget *w)
   g_object_get(settings, "gtk-cursor-blink", &blink, NULL);
   return((bool)blink);
 }
+#endif
 
 static bool cursor_set_blinks(GtkWidget *w, bool blinks)
 {
@@ -824,6 +825,12 @@ static void make_command_widget(int height)
 
 	/* C-k delete to end of line -- see explicit handling above */
 	gtk_binding_entry_remove(set, GDK_k, GDK_CONTROL_MASK);
+#if (!(HAVE_GTK_TEXT_BUFFER_SELECT_RANGE && HAVE_GTK_WIDGET_GET_CLIPBOARD))
+	gtk_binding_entry_add_signal(set, GDK_k, GDK_CONTROL_MASK,
+				     "delete_from_cursor", 2,
+				     G_TYPE_ENUM, GTK_DELETE_PARAGRAPH_ENDS,
+				     G_TYPE_INT, 1);
+#endif
 
 	/* M-delete delete to start of line */
 	gtk_binding_entry_remove(set, GDK_Delete, GDK_MOD1_MASK);

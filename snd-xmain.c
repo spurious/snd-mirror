@@ -813,7 +813,9 @@ void snd_doit(int argc, char **argv)
   ss->batch_mode = batch;
   if (batch) XtSetMappedWhenManaged(shell, 0);
   set_html_dir(copy_string(snd_rs.html_dir));
+#ifndef S_SPLINT_S
   set_auto_resize(snd_rs.auto_resize);
+#endif
   ss->zoom_slider_width = snd_rs.zoom_slider_width;
   ss->position_slider_width = snd_rs.position_slider_width;
   ss->channel_sash_indent = snd_rs.channel_sash_indent;

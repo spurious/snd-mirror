@@ -181,11 +181,12 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD, WITH_UNLABELLED_COMMENT
 #define SOUND_PANE_BOX(a) (a->sgx)->soundpanebox
 #define MAIN_APP(a) (a->sgx)->mainapp
 #define MAIN_DISPLAY(a) (a->sgx)->mdpy
-#define PEAK_NUMBERS_FONT(a) (a->sgx)->peaks_fontstruct
-#define BOLD_PEAK_NUMBERS_FONT(a) (a->sgx)->bold_peaks_fontstruct
+#define PEAKS_FONT(a) (a->sgx)->peaks_fontstruct
+#define BOLD_PEAKS_FONT(a) (a->sgx)->bold_peaks_fontstruct
 #define AXIS_NUMBERS_FONT(a) (a->sgx)->axis_numbers_fontstruct
 #define AXIS_LABEL_FONT(a) (a->sgx)->axis_label_fontstruct
-#define TINY_NUMBERS_FONT(a) (a->sgx)->tiny_fontstruct
+#define TINY_FONT(a) (a->sgx)->tiny_fontstruct
+#define LISTENER_FONT(a) (a->sgx)->listener_fontstruct
 #define color_t Pixel
 /* this was unsigned long = Pixel (/usr/X11R6/include/X11/Intrinsic.h) */
 

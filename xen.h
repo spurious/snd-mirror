@@ -1376,33 +1376,4 @@ void xen_repl(int argc, char **argv);
 void xen_initialize(void);
 void xen_gc_mark(XEN val);
 
-#ifndef XEN_DISABLE_DEPRECATED
-  #define C_TO_SMALL_XEN_INT(a) C_TO_XEN_INT(a)
-  #define XEN_TO_SMALL_C_INT(a) XEN_TO_C_INT(a)
-  #define XEN_TO_C_BOOLEAN_OR_TRUE(a) (!(XEN_FALSE_P(a)))
-  #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) XEN_TO_C_INT_OR_ELSE(a, b)
-  #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) XEN_TO_C_DOUBLE(a)
-  #define XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg)  ((XEN_BOOLEAN_P(Arg))     || (XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
-  #define XEN_NUMBER_OR_BOOLEAN_P(Arg)           ((XEN_BOOLEAN_P(Arg))     || (XEN_NUMBER_P(Arg)))
-  #define XEN_ULONG_IF_BOUND_P(Arg)              ((XEN_NOT_BOUND_P(Arg))   || (XEN_ULONG_P(Arg)))
-
-  #if HAVE_GUILE
-    #if HAVE_SCM_IS_SIMPLE_VECTOR
-      #define XEN_VECTOR_ELEMENTS(a)          SCM_I_VECTOR_WELTS(a)
-    #else
-      #ifdef SCM_WRITABLE_VELTS
-        #define XEN_VECTOR_ELEMENTS(a)        SCM_WRITABLE_VELTS(a)
-      #else
-        #define XEN_VECTOR_ELEMENTS(a)        SCM_VELTS(a)
-      #endif
-    #endif
-  #else
-    #if HAVE_RUBY
-      #define XEN_VECTOR_ELEMENTS(a)          RARRAY(a)->ptr
-    #else
-      #define XEN_VECTOR_ELEMENTS(a)          ((XEN *)a)
-    #endif
-  #endif
-#endif
-
 #endif

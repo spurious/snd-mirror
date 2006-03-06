@@ -116,7 +116,7 @@ static char *possibly_quote(char *key)
   if ((key_buf[0] == '\"') && (key_buf[j - 1] != '\"'))
     key_buf[j++] = '\"';
   key_buf[j++] = '\0';
-#if DEBUGGING
+#if 0
   fprintf(stderr,"return key %s\n", key_buf);
 #endif
   return(key_buf);
@@ -942,7 +942,7 @@ static void bind_exit(prefs_info *prf)
 static char *make_goto_maxamp_binding(char *key, bool ctrl, bool meta, bool cx)
 {
 #if HAVE_SCHEME
-  return(mus_format("(bind-key %s %d (lambda () (set! (cursor) (maxamp-position)) %s \"goto maxamp\" \"goto-maxamp\")\n", 
+  return(mus_format("(bind-key %s %d (lambda () (set! (cursor) (maxamp-position))) %s \"goto maxamp\" \"goto-maxamp\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));

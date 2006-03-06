@@ -211,7 +211,8 @@ static bool prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
     {
       XEN res;
       res = run_or_hook(cp->edit_hook, XEN_EMPTY_LIST, S_edit_hook);
-      if (XEN_TRUE_P(res)) return(false);
+      if (XEN_TRUE_P(res)) 
+	return(false);
     }
   sp = cp->sound;
   stop_amp_env(cp);
@@ -6413,7 +6414,16 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
       free_ptree(tree);
       tree = NULL;
     }
-  if (!(prepare_edit_list(cp, len, pos, S_ptree_channel))) return;
+  if (!(prepare_edit_list(cp, len, pos, S_ptree_channel)))
+    {
+      /* perhaps edit-hook blocked the edit */
+      if (tree) 
+	{
+	  free_ptree(tree);
+	  tree = NULL;
+	}
+      return;
+    }
   old_ed = cp->edits[pos];
   ptree_loc = add_ptree(cp);
   cp->ptrees[ptree_loc] = tree;

@@ -43,6 +43,8 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     7-Mar:     if g_set_error, return the error message, not the GError pointer
+ *     --------
  *     9-Jul:     Collapse 2.3.* into 2.3.6, 2.5.* into 2.5.6.
  *     13-Jun:    folded xg-ruby.c into xg.c.
  *     21-Feb:    changed libxm to libxg, xm-version to xg-version.
@@ -287,6 +289,17 @@ static void define_xm_obj(void)
 #define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)
 #define C_TO_XEN_String(Arg) ((Arg != NULL) ? C_TO_XEN_STRING((char *)Arg) : XEN_FALSE)
 #define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))
+static XEN C_TO_XEN_GError_(GError *err)
+{
+  if (err)
+    {
+      XEN msg;
+      msg = C_TO_XEN_STRING(err->message);
+      g_error_free(err);
+      return(msg);
+    }
+  return(XEN_FALSE);
+}
 
 
 /* ---------------------------------------- types ---------------------------------------- */
@@ -484,7 +497,7 @@ XM_TYPE_PTR(GtkWindow_, GtkWindow*)
 #define XEN_TO_C_GdkWindowHints(Arg) (GdkWindowHints)(XEN_TO_C_INT(Arg))
 #define XEN_GdkWindowHints_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE(GdkColorspace, GdkColorspace)
-XM_TYPE_PTR_2(GError_, GError*)
+XM_TYPE_PTR_1(GError_, GError*)
 XM_TYPE_1(GdkPixbufDestroyNotify, GdkPixbufDestroyNotify)
 XM_TYPE_PTR(char__, char**)
 XM_TYPE_PTR_1(guint8_, guint8*)
@@ -39850,7 +39863,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("26-Dec-05"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Mar-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

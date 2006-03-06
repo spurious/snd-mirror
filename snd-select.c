@@ -3,6 +3,7 @@
 
 /* PERHAPS: selection? could take optional snd/chn args making selection-member? unnecessary
  *          also (set! (selection?) #f) would cancel it, but (set! .. #t) ? select all?
+ *          and set member #t -- what does that do?
  */
 
 /* -------- watcher lists -------- */
@@ -49,7 +50,7 @@ int add_selection_watcher(void (*watcher)(selection_watcher_reason_t reason, voi
   return(loc);
 }
 
-bool remove_selection_watcher(int loc)
+void remove_selection_watcher(int loc)
 {
   if ((selection_watchers) &&
       (loc < selection_watchers_size) &&
@@ -58,27 +59,18 @@ bool remove_selection_watcher(int loc)
     {
       FREE(selection_watchers[loc]);
       selection_watchers[loc] = NULL;
-      return(true);
     }
-  return(false);
 }
 
-bool call_selection_watchers(selection_watcher_reason_t reason)
+void call_selection_watchers(selection_watcher_reason_t reason)
 {
-  bool got_one = false;
   if (selection_watchers)
     {
       int i;
       for (i = 0; i < selection_watchers_size; i++)
-	{
-	  if (selection_watchers[i])
-	    {
-	      (*(selection_watchers[i]->watcher))(reason, selection_watchers[i]->context);
-	      got_one = true;
-	    }
-	}
+	if (selection_watchers[i])
+	  (*(selection_watchers[i]->watcher))(reason, selection_watchers[i]->context);
     }
-  return(got_one);
 }
 
 
