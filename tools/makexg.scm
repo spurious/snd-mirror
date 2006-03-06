@@ -132,7 +132,7 @@
 	"gchar***" "gfloat*" "gint8*" "gsize" "gssize" "guint16*" "guint8*" "gunichar*" "GtkFileChooserButton*"
 	"GtkCellView*" "GValue*" "GtkAboutDialog*" "PangoAttrFilterFunc" "PangoScript*" "GtkMenuToolButton*"
 	"GtkClipboardImageReceivedFunc" "PangoMatrix*" "GdkTrapezoid*" "GdkPangoRenderer*" "PangoRenderPart"
-	"GLogFunc"
+	"GLogFunc" "GError*"
 
 	"GConnectFlags" "GSignalFlags" "GSignalMatchType" "GdkAxisUse" "GdkFillRule" "GdkGCValuesMask"
 	"GdkPropMode" "GdkRgbDither" "GdkWMFunction" "GdkWindowEdge" "GdkWindowHints" "GtkAccelFlags" "GtkArrowType"
@@ -1440,6 +1440,8 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     7-Mar:     if g_set_error, return the error message, not the GError pointer~%")
+(hey " *     --------~%")
 (hey " *     9-Jul:     Collapse 2.3.* into 2.3.6, 2.5.* into 2.5.6.~%")
 (hey " *     13-Jun:    folded xg-ruby.c into xg.c.~%")
 (hey " *     21-Feb:    changed libxm to libxg, xm-version to xg-version.~%")
@@ -1629,6 +1631,18 @@
 (hey "#define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)~%")
 (hey "#define C_TO_XEN_String(Arg) ((Arg != NULL) ? C_TO_XEN_STRING((char *)Arg) : XEN_FALSE)~%")
 (hey "#define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))~%")
+
+(hey "static XEN C_TO_XEN_GError_(GError *err)~%")
+(hey "{~%")
+(hey "  if (err)~%")
+(hey "    {~%")
+(hey "      XEN msg;~%")
+(hey "      msg = C_TO_XEN_STRING(err->message);~%")
+(hey "      g_error_free(err);~%")
+(hey "      return(msg);~%")
+(hey "    }~%")
+(hey "  return(XEN_FALSE);~%")
+(hey "}~%")
 
 
 (hey "~%~%/* ---------------------------------------- types ---------------------------------------- */~%~%")

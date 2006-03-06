@@ -36,11 +36,7 @@ static int scan_tab(XEN tab, char *text, int len, int matches)
   n = XEN_VECTOR_LENGTH(tab);
   for (i = 0; i < n; ++i)
     {
-#ifndef XEN_DISABLE_DEPRECATED
-      ls = XEN_VECTOR_ELEMENTS(tab)[i];
-#else
       ls = SCM_VELTS(tab)[i];
-#endif
 #endif
 #endif
       while (XEN_NOT_NULL_P(ls))
