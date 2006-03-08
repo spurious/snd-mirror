@@ -334,8 +334,6 @@ void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, const c
 void draw_rotated_axis_label(chan_info *cp, GdkGC *gc, const char *text, gint x0, gint y0);
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows);
 
-slist *slist_new_with_table_data(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
-				 int t1, int t2, int t3, int t4);
 slist *slist_new_with_title_and_table_data(const char *title,
 					   GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
 					   int t1, int t2, int t3, int t4);

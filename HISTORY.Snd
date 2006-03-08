@@ -1,5 +1,6 @@
 Snd change log
 
+  8-Mar:     kmenu.scm thanks to Maxim Krikun.
   3-Mar:     show-selection (extensions.scm).
   27-Feb:    Snd 7.19.
 	     tracking-cursor-style.

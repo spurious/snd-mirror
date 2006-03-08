@@ -478,6 +478,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+8-Mar:   kmenu.scm thanks to Maxim Krikun.\n\
 3-Mar:   show-selection (extensions.scm).\n\
 27-Feb:  snd 7.19.\n\
          tracking-cursor-style.\n\
@@ -497,7 +498,6 @@ void about_snd_help(void)
            changed ALSA environment variable names to use MUS, not SNDLIB.\n\
            changed ALSA default device to \"default\" from \"hw:0\"\n\
 30-Jan:  new-sound-dialog.\n\
-15-Jan:  snd 7.18.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

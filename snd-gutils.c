@@ -846,11 +846,6 @@ slist *slist_new_with_title_and_table_data(const char *title,
   return(lst);
 }
 
-slist *slist_new_with_table_data(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned, int t1, int t2, int t3, int t4)
-{
-  return(slist_new_with_title_and_table_data(NULL, parent, initial_items, num_items, paned, t1, t2, t3, t4));
-}
-
 slist *slist_new(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned)
 {
   return(slist_new_with_title_and_table_data(NULL, parent, initial_items, num_items, paned, 0, 0, 0, 0));

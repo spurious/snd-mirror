@@ -1309,8 +1309,38 @@ static int sndlib_strlen(const char *str)
   return(0);
 }
 
+/* TODO: fix PATH_MAX/NAME_MAX/getcwd to work in Posix */
 #ifndef PATH_MAX
   #define PATH_MAX 1024
+
+/* see libit-0.7/lib/pathmax.h (and also xgetcwd.c):
+# if !defined(PATH_MAX) && defined(_PC_PATH_MAX)
+#  define PATH_MAX (pathconf ("/", _PC_PATH_MAX) < 1 ? 1024 : pathconf ("/", _PC_PATH_MAX))
+# endif
+same in xmms-1.2.10/intl/dcigettext.c [pathconf in configure.ac]
+*/
+/* pathconf(<name>, _PC_PATH_MAX or _PC_NAME_PAX)
+   linux/limits.h:
+  #define NAME_MAX         255
+  #define PATH_MAX        4096
+    bits/posix1_lim.h has _POSIX_PATH_MAX=256!|_POSIX_NAME_MAX=14!
+ */
+
+  /* getconf NAME_MAX / -> 256 */
+  /* getconf PATH_MAX / -> 4096 */
+  /* getconf PATH_MAX getcwd -> 4096 */
+/* 
+  if value=$(getconf PATH_MAX /usr); then
+                  if [ "$value" = "undefined" ]; then
+                      echo PATH_MAX in /usr is infinite.
+                  else
+                      echo PATH_MAX in /usr is $value.
+                  fi
+              else
+                  echo Error in getconf.
+              fi
+*/
+
 #endif
 
 char *mus_expand_filename(const char *filename)

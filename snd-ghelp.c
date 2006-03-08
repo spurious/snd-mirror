@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: back button ignores just previous case? -- needs url because motif-xmstring pattern search isn't usable
- */
-
 /* ---------------- HELP MONOLOG ---------------- */
 
 /* I tried gtkhtml (and XmHTML in 1999), and in both cases decided not to use them.  Both work fine,
@@ -68,7 +65,6 @@ static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer 
 	  (abs(curwid - old_help_text_width) > 50))
 	{
 	  char *cur_help_str = NULL, *new_help_str = NULL;
-	  fprintf(stderr,"diff: %d\n", (curwid - old_help_text_width));
 	  cur_help_str = sg_get_text(help_text, 0, -1);
 	  new_help_str = word_wrap(original_help_text, curwid);
 	  gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text)), "", 0);
@@ -334,8 +330,8 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, with_word_wrap_t w
       if (new_help) FREE(new_help);
     }
   else add_help_text(help_text, helpstr);
-  slist_clear(related_items);
   if (help_needed) add_pattern_to_help_history(subject);
+  slist_clear(related_items); /* this can clobber "subject"! */
   gtk_widget_set_sensitive(help_next_button, (help_history_pos < help_history_size) && (help_history[help_history_pos]));
   gtk_widget_set_sensitive(help_previous_button, (help_history_pos > 1));
   return(help_dialog);
