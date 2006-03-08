@@ -12,8 +12,6 @@
    View:Files
 */
 
-/* TODO: sometimes mkdir (and open) are not resensitized? */
-
 /* ---------------- file selector replacement ---------------- */
 
 typedef struct fsb {
@@ -291,14 +289,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
 
   /* -------- current working directory -------- */
-  pwd = (char *)CALLOC(PATH_MAX, sizeof(char));
-#if HAVE_GETCWD
-  getcwd(pwd, PATH_MAX);
-#else
-#if HAVE_GETWD
-  getwd(pwd);
-#endif
-#endif
+  pwd = mus_getcwd();
   cur_dir = (char *)CALLOC(strlen(pwd) + 2, sizeof(char));
   strcpy(cur_dir, pwd);
   FREE(pwd);

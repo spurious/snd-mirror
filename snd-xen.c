@@ -3873,15 +3873,11 @@ that name is presented in the New File dialog."
     {
       /* this code stolen from ruby.c */
       extern VALUE rb_load_path;
-      char *str;
-      #ifndef FILENAME_MAX
-        char buf[1024];
-      #else
-        char buf[FILENAME_MAX]; /* bits/stdio_lim.h or iso/stdio_iso.h -- looks like trouble! */
-      #endif
+      char *str, *buf;
       int i, j = 0, len;
       str = RUBY_SEARCH_PATH;
       len = snd_strlen(str);
+      buf = (char *)CALLOC(len + 1, sizeof(char));
       for (i = 0; i < len; i++)
 	if (str[i] == ':')
 	  {
@@ -3898,6 +3894,7 @@ that name is presented in the New File dialog."
 	  buf[j] = 0;
 	  rb_ary_push(rb_load_path, rb_str_new2(buf));
 	}
+      FREE(buf);
     }
   #endif
 #endif

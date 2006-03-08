@@ -301,7 +301,7 @@ AC_CHECK_SIZEOF(int)
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
 AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs statfs clock getline)
-AC_CHECK_FUNCS(vsnprintf snprintf memmove strdup lstat fileno strcasecmp)
+AC_CHECK_FUNCS(vsnprintf snprintf memmove strdup lstat fileno strcasecmp pathconf)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 AC_LIB_PROG_LD

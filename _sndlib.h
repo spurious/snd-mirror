@@ -452,6 +452,7 @@ int mus_file_read_buffer(int charbuf_data_format, int beg, int chans, int nints,
 int mus_file_write_file(int tfd, int beg, int end, int chans, mus_sample_t **bufs);
 int mus_file_write_buffer(int charbuf_data_format, int beg, int end, int chans, mus_sample_t **bufs, char *charbuf, bool clipped);
 char *mus_expand_filename(const char *name);
+char *mus_getcwd(void);
 
 bool mus_clipping(void);
 bool mus_set_clipping(bool new_value);
