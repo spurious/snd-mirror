@@ -1103,7 +1103,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	  sp->need_update = true;
 	  if (auto_update(ss))
 	    snd_update(sp);
-	  else snd_file_bomb_icon(sp, true);
+	  else start_bomb(sp);
 	}
 #if HAVE_ACCESS
       else
@@ -1117,7 +1117,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	      display_minibuffer_error(sp, msg);
 	      FREE(msg);
 	      sp->file_unreadable = true;
-	      snd_file_bomb_icon(sp, true);
+	      start_bomb(sp);
 	    }
 	  else
 	    {
@@ -1125,7 +1125,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	      clear_minibuffer_error(sp);
 	      err = access(sp->filename, W_OK);
 	      sp->file_read_only = (err < 0);
-	      snd_file_lock_icon(sp, sp->user_read_only || sp->file_read_only);
+	      if (sp->user_read_only || sp->file_read_only) show_lock(sp); else hide_lock(sp);
 	    }
 	}
 #endif
@@ -1138,7 +1138,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	  /* user deleted file while editing it? */
 	  report_in_minibuffer(sp, _("%s no longer exists!"), sp->short_filename);
 	  sp->file_unreadable = true;
-	  snd_file_bomb_icon(sp, true);
+	  start_bomb(sp);
 	  return;
 	}
       /* else I don't know why I got this fam code, but fall through to the update case */
@@ -1148,7 +1148,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
       sp->need_update = true;
       if (auto_update(ss))
 	snd_update(sp);
-      else snd_file_bomb_icon(sp, true);
+      else start_bomb(sp);
       break;
 
     default:

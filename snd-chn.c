@@ -289,6 +289,21 @@ void set_chan_fft_in_progress(chan_info *cp, Cessator fp)
   cp->cgx->fft_in_progress = fp;
 }
 
+void stop_fft_in_progress(chan_info *cp)
+{
+  if ((cp) && (cp->cgx))
+    {
+      chan_context *cx;
+      cx = cp->cgx;
+      if (cx->fft_in_progress) 
+	{
+	  BACKGROUND_REMOVE(cx->fft_in_progress);
+	  finish_progress_report(cp->sound, NOT_FROM_ENVED);
+	  cx->fft_in_progress = 0;
+	}
+    }
+}
+
 void stop_amp_env(chan_info *cp)
 {
   chan_context *cgx;
@@ -640,7 +655,6 @@ void start_amp_env(chan_info *cp)
       if (cgx->amp_env_in_progress) stop_amp_env(cp);
       start_env_state(cp);
       cgx->amp_env_in_progress = BACKGROUND_ADD(get_amp_env, (Indicium)cp);
-      reflect_amp_env_in_progress(cp->sound);
     }
 }
 

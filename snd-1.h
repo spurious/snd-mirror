@@ -1165,6 +1165,7 @@ void separate_sound(snd_info *sp);
 void superimpose_sound(snd_info *sp);
 void set_sound_channel_style(snd_info *sp, channel_style_t val);
 void set_chan_fft_in_progress(chan_info *cp, Cessator fp);
+void stop_fft_in_progress(chan_info *cp);
 void goto_graph(chan_info *cp);
 void start_amp_env(chan_info *cp);
 void stop_amp_env(chan_info *cp);

@@ -117,7 +117,7 @@ void make_scrolled_env_list(void)
   FREE(strs);
 }
 
-void alert_enved_amp_env(snd_info *sp)
+void enved_reflect_amp_env_completion(snd_info *sp)
 {
   if ((enved_dialog) && (active_channel) && (enved_wave_p(ss)))
     if (active_channel->sound == sp) 

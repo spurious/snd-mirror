@@ -55,9 +55,13 @@ void sound_not_current(snd_info *sp, void *ignore)
   if (needs_update != sp->need_update)
     {
       sp->need_update = needs_update;
-      if ((needs_update) && (auto_update(ss)))
-	snd_update(sp);
-      else snd_file_bomb_icon(sp, needs_update);
+      if (needs_update)
+	{
+	  if (auto_update(ss))
+	    snd_update(sp); /* will stop bomb via need_update flag */
+	  else start_bomb(sp);
+	}
+      else stop_bomb(sp);
     }
 }
 #endif

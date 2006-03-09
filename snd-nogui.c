@@ -148,7 +148,6 @@ color_t get_foreground_color(axis_context *ax) {return(0);}
 color_t get_background_color(axis_context *ax) {return(0);}
 void set_foreground_color(axis_context *ax, int color) {}
 void change_channel_style(snd_info *sp, channel_style_t new_style) {}
-void reflect_amp_env_in_progress(snd_info *sp) {}
 void cleanup_cw(chan_info *cp) {}
 void clear_deleted_snd_info(struct dialog_play_info *dp) {}
 bool fixup_cp_cgx_ax_wn(chan_info *cp) {return(false);}
@@ -167,11 +166,13 @@ void filter_env_changed(snd_info *sp, env *e) {}
 void set_play_button(snd_info *sp, bool val) {}
 void play_button_pause(bool pausing) {}
 void syncb(snd_info *sp, int on) {sp->sync = on; if (on > ss->sound_sync_max) ss->sound_sync_max = on;}
-void snd_file_lock_icon(snd_info *sp, bool on) {}
-void snd_file_bomb_icon(snd_info *sp, bool on) {}
-void x_bomb(snd_info *sp, bool on) {}
+void show_lock(snd_info *sp) {}
+void hide_lock(snd_info *sp) {}
+void show_bomb(snd_info *sp) {}
+void hide_bomb(snd_info *sp) {}
+void start_bomb(snd_info *sp) {}
+void stop_bomb(snd_info *sp) {}
 void set_sound_pane_file_label(snd_info *sp, char *str) {}
-void reflect_amp_env_completion(snd_info *sp) {}
 void reflect_sound_selection(snd_info *sp) {}
 void sound_show_controls(snd_info *sp) {}
 void sound_hide_controls(snd_info *sp) {}
@@ -202,6 +203,7 @@ void set_enved_undo_sensitive(bool val) {}
 void set_enved_save_sensitive(bool val) {}
 void set_enved_show_sensitive(bool val) {}
 void make_scrolled_env_list (void) {}
+void enved_reflect_amp_env_completion(snd_info *sp) {}
 void new_active_channel_alert(void) {}
 void env_redisplay(void) {}
 void env_redisplay_with_print(void) {}

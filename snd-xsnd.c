@@ -21,17 +21,14 @@ enum {W_pane,
       W_revlen, W_revlen_label, W_revlen_number, W_reverb_button,
       W_filter_label, W_filter_order, W_filter_env, W_filter, W_filter_button, W_filter_dB, W_filter_hz, W_filter_frame,
       W_filter_order_down, W_filter_order_up,
-      W_name, W_name_icon, W_info_label, W_info,
-      W_info_sep,
+      W_name, W_name_icon, W_stop_icon, W_info_label, W_info,
       W_play, W_sync, W_unite,
       W_error_info_box, W_error_info_frame, W_error_info_label,
       NUM_SND_WIDGETS
 };
 
 Widget unite_button(snd_info *sp) {return(sp->sgx->snd_widgets[W_unite]);}
-Widget filter_graph(snd_info *sp) {return(sp->sgx->snd_widgets[W_filter_env]);}
 Widget w_snd_pane(snd_info *sp)   {return(sp->sgx->snd_widgets[W_pane]);}
-Widget w_snd_name(snd_info *sp)   {return(sp->sgx->snd_widgets[W_name]);}
 
 #define ERROR_INFO(Sp)           Sp->sgx->snd_widgets[W_error_info_label]
 #define ERROR_INFO_FRAME(Sp)     Sp->sgx->snd_widgets[W_error_info_frame]
@@ -43,8 +40,8 @@ Widget w_snd_name(snd_info *sp)   {return(sp->sgx->snd_widgets[W_name]);}
 
 #define NAME_BOX(Sp)             Sp->sgx->snd_widgets[W_name_form]
 #define NAME_ICON(Sp)            Sp->sgx->snd_widgets[W_name_icon]
+#define STOP_ICON(Sp)            Sp->sgx->snd_widgets[W_stop_icon]
 #define NAME_LABEL(Sp)           Sp->sgx->snd_widgets[W_name]
-#define MINIBUFFER_SEPARATOR(Sp) Sp->sgx->snd_widgets[W_info_sep]
 #define MINIBUFFER_LABEL(Sp)     Sp->sgx->snd_widgets[W_info_label]
 #define MINIBUFFER_TEXT(Sp)      Sp->sgx->snd_widgets[W_info]
 #define SYNC_BUTTON(Sp)          Sp->sgx->snd_widgets[W_sync]
@@ -205,6 +202,15 @@ void make_minibuffer_label(snd_info *sp , char *str)
 static void name_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   sp_name_click((snd_info *)context);
+}
+
+static void stop_sign_click_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  snd_info *sp = (snd_info *)context;
+  if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = true; 
+  stop_playing_all_sounds(PLAY_C_G);
+  if (sp->applying) stop_applying(sp);
+  for_each_sound_chan(sp, stop_fft_in_progress);
 }
 
 
@@ -1347,96 +1353,117 @@ static unsigned char speed_l_bits1[] = {
 static Pixmap mini_lock = 0;
 static Pixmap blank_pixmap = 0;
 static bool mini_lock_allocated = false;
-static Pixmap mini_bombs[NUM_BOMBS];
-static Pixmap mini_glasses[NUM_GLASSES];
+static Pixmap bombs[NUM_BOMBS];
+static Pixmap hourglasses[NUM_HOURGLASSES];
+static Pixmap stop_sign = 0;
 
-void snd_file_lock_icon(snd_info *sp, bool on)
+void show_lock(snd_info *sp)
 {
-  if (mini_lock) 
+  if ((sp->sgx) && (mini_lock))
     {
-      snd_context *sx;
-      sx = sp->sgx;
-      if (on)
-	sx->file_pix = mini_lock;
-      else sx->file_pix = blank_pixmap;
-      XtVaSetValues(NAME_ICON(sp), XmNlabelPixmap, sx->file_pix, NULL);
+      sp->sgx->file_pix = mini_lock;
+      XtVaSetValues(NAME_ICON(sp), XmNlabelPixmap, mini_lock, NULL);
+    }
+}
+
+void hide_lock(snd_info *sp)
+{
+  if ((sp->sgx) && (mini_lock))
+    {
+      sp->sgx->file_pix = blank_pixmap;
+      XtVaSetValues(NAME_ICON(sp), XmNlabelPixmap, blank_pixmap, NULL);
     }
   /* these Pixmaps can be null if the colormap is screwed up */
 }
 
+static void show_stop_sign(snd_info *sp)
+{
+  if ((sp->sgx) && (stop_sign))
+    XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, stop_sign, NULL);
+}
+
+static void hide_stop_sign(snd_info *sp)
+{
+  if ((sp->sgx) && (blank_pixmap))
+    XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, blank_pixmap, NULL);
+}
+
+void show_bomb(snd_info *sp)
+{
+  if (sp->bomb_ctr >= NUM_BOMBS) 
+    sp->bomb_ctr = 0;
+  if ((sp->sgx) && (bombs[sp->bomb_ctr]))
+    {
+      sp->sgx->file_pix = bombs[sp->bomb_ctr];
+      XtVaSetValues(NAME_ICON(sp), XmNlabelPixmap, sp->sgx->file_pix, NULL);
+    }
+  sp->bomb_ctr++; 
+}
+
+void hide_bomb(snd_info *sp)
+{
+  if (sp->sgx)
+    {
+      sp->sgx->file_pix = blank_pixmap;
+      XtVaSetValues(NAME_ICON(sp), XmNlabelPixmap, blank_pixmap, NULL);
+    }
+  sp->bomb_ctr = 0;
+}
+
 #define BOMB_TIME 200
 
-static void show_bomb_icon(snd_info *sp, bool on)
-{
-  if (sp->bomb_ctr >= NUM_BOMBS) sp->bomb_ctr = 0;
-  if (mini_bombs[sp->bomb_ctr]) 
-    {
-      snd_context *sx;
-      sx = sp->sgx;
-      if (sx)
-	{
-	  if (on)
-	    sx->file_pix = mini_bombs[sp->bomb_ctr];
-	  else sx->file_pix = blank_pixmap;
-	  XtVaSetValues(NAME_ICON(sp), XmNlabelPixmap, sx->file_pix, NULL);
-	}
-    }
-}
-
-void x_bomb(snd_info *sp, bool on)
-{
-  show_bomb_icon(sp, on);
-  if (on) 
-    sp->bomb_ctr++; 
-  else sp->bomb_ctr = 0;
-}
-
-static void bomb_check(XtPointer context, XtIntervalId *id)
+static void tick_bomb(XtPointer context, XtIntervalId *id)
 {
   snd_info *sp = (snd_info *)context;
   if ((sp->need_update) || (sp->file_unreadable))
     {
-      show_bomb_icon(sp, sp->bomb_ctr++);
+      show_bomb(sp);
       XtAppAddTimeOut(MAIN_APP(ss),
 		      (unsigned long)BOMB_TIME,
-		      (XtTimerCallbackProc)bomb_check,
+		      (XtTimerCallbackProc)tick_bomb,
 		      context);
     }
-  else sp->bomb_in_progress = false;
+  else 
+    {
+      hide_bomb(sp);
+      sp->bomb_in_progress = false;
+    }
 }
 
-void snd_file_bomb_icon(snd_info *sp, bool on)
+void start_bomb(snd_info *sp)
 {
-  if ((on) && (!(sp->bomb_in_progress)))
+  sp->bomb_ctr = 0;
+  if (!(sp->bomb_in_progress))
     {
       sp->bomb_in_progress = true;
-      sp->bomb_ctr = 0;
       XtAppAddTimeOut(MAIN_APP(ss),
 		      (unsigned long)BOMB_TIME,
-		      (XtTimerCallbackProc)bomb_check,
+		      (XtTimerCallbackProc)tick_bomb,
 		      (void *)sp);
     }
 }
 
-static void snd_file_glasses_icon(snd_info *sp, bool on, int glass)
+void stop_bomb(snd_info *sp)
 {
-  Widget w;
-  snd_context *sx;
-  sx = sp->sgx;
-  if (!sx) return;
-  w = NAME_ICON(sp);
-  if (on)
+  hide_bomb(sp);
+  sp->bomb_in_progress = false;
+}
+
+static void show_hourglass(snd_info *sp, int glass)
+{
+  if ((sp->sgx) && (hourglasses[glass]))
     {
-      if (mini_glasses[glass])
-	{
-	  XtVaSetValues(w, XmNlabelPixmap, mini_glasses[glass], NULL);
-	  XmUpdateDisplay(w);
-	}
+      XtVaSetValues(NAME_ICON(sp), XmNlabelPixmap, hourglasses[glass], NULL);
+      XmUpdateDisplay(NAME_ICON(sp));
     }
-  else
+}
+
+static void hide_hourglass(snd_info *sp)
+{
+  if (sp->sgx)
     {
-      XtVaSetValues(w, XmNlabelPixmap, sx->file_pix, NULL);
-      XmUpdateDisplay(w);
+      XtVaSetValues(NAME_ICON(sp), XmNlabelPixmap, sp->sgx->file_pix, NULL);
+      XmUpdateDisplay(NAME_ICON(sp));
     }
 }
 
@@ -1451,7 +1478,7 @@ static char *bits_to_string(char **icon)
 
 static void allocate_icons(Widget w)
 { 
-  Pixmap shape1, shape2, shape3; 
+  Pixmap shape1, shape2, shape3, shape4; 
   XpmAttributes attributes; 
   XpmColorSymbol symbols[1];
   int scr, pixerr = XpmSuccess;
@@ -1473,31 +1500,31 @@ static void allocate_icons(Widget w)
     snd_error("lock pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_lock_bits()));
   else
     {
-#if 0
-      Pixmap bgpx = 0;
-      XtVaGetValues(w, XmNbackgroundPixmap, &bgpx, NULL);
-      if (bgpx) blank_pixmap = bgpx;
-      /* this appears to work, but is not compatible with the pixmap changes when basic-color is set. */
-#endif
       pixerr = XpmCreatePixmapFromData(dp, wn, blank_bits(), &blank_pixmap, &shape1, &attributes);
       if (pixerr != XpmSuccess) 
 	snd_error("blank pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(blank_bits()));
       else
 	{
-	  int k;
-	  for (k = 0; k < NUM_BOMBS; k++)
+	  pixerr = XpmCreatePixmapFromData(dp, wn, stop_sign_bits(), &stop_sign, &shape4, &attributes);
+	  if (pixerr != XpmSuccess) 
+	    snd_error("stop sign pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(stop_sign_bits()));
+	  else
 	    {
-	      pixerr = XpmCreatePixmapFromData(dp, wn, mini_bomb_bits(k), &(mini_bombs[k]), &shape2, &attributes);
-	      if (pixerr != XpmSuccess) 
+	      int k;
+	      for (k = 0; k < NUM_BOMBS; k++)
 		{
-		  snd_error("bomb pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_bomb_bits(k)));
-		  break;
-		}
-	      pixerr = XpmCreatePixmapFromData(dp, wn, mini_glass_bits(k), &(mini_glasses[k]), &shape3, &attributes);
-	      if (pixerr != XpmSuccess) 
-		{
-		  snd_error("glass pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_glass_bits(k))); 
-		  break;
+		  pixerr = XpmCreatePixmapFromData(dp, wn, mini_bomb_bits(k), &(bombs[k]), &shape2, &attributes);
+		  if (pixerr != XpmSuccess) 
+		    {
+		      snd_error("bomb pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_bomb_bits(k)));
+		      break;
+		    }
+		  pixerr = XpmCreatePixmapFromData(dp, wn, mini_glass_bits(k), &(hourglasses[k]), &shape3, &attributes);
+		  if (pixerr != XpmSuccess) 
+		    {
+		      snd_error("glass pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_glass_bits(k))); 
+		      break;
+		    }
 		}
 	    }
 	}
@@ -1542,22 +1569,22 @@ void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color)
   if (!mini_lock_allocated) allocate_icons(MAIN_SHELL(ss));
   change_pixmap_background(MAIN_SHELL(ss), mini_lock, old_color, new_color, 16, 14);
   change_pixmap_background(MAIN_SHELL(ss), blank_pixmap, old_color, new_color, 16, 14);
+  /* change_pixmap_background(MAIN_SHELL(ss), stop_sign, old_color, new_color, 17, 17); */
+  /* memory corruption here! */
   for (i = 0; i < NUM_BOMBS; i++)
-    change_pixmap_background(MAIN_SHELL(ss), mini_bombs[i], old_color, new_color, 16, 14);
-  for (i = 0; i < NUM_GLASSES; i++)
-    change_pixmap_background(MAIN_SHELL(ss), mini_glasses[i], old_color, new_color, 16, 14);
+    change_pixmap_background(MAIN_SHELL(ss), bombs[i], old_color, new_color, 16, 14);
+  for (i = 0; i < NUM_HOURGLASSES; i++)
+    change_pixmap_background(MAIN_SHELL(ss), hourglasses[i], old_color, new_color, 16, 14);
 }
 
 #else
 void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color) {}
-void snd_file_lock_icon(snd_info *sp, bool on) {}
-void snd_file_bomb_icon(snd_info *sp, bool on) 
-{
-  if (on)
-    report_in_minibuffer(sp, _("%s has changed since we last read it!"), sp->short_filename);
-}
-/* static void snd_file_glasses_icon(snd_info *sp, bool on, int glass) {} */
-void x_bomb(snd_info *sp, bool on) {}
+void show_lock(snd_info *sp) {}
+void hide_lock(snd_info *sp) {}
+void start_bomb(snd_info *sp) {report_in_minibuffer(sp, _("%s has changed since we last read it!"), sp->short_filename);}
+void stop_bomb(snd_info *sp) {}
+void show_bomb(snd_info *sp) {}
+void hide_bomb(snd_info *sp) {}
 #endif
 
 static Pixmap spd_r, spd_l;
@@ -1757,27 +1784,35 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 #endif
       NAME_ICON(sp) = XtCreateManagedWidget("", xmLabelWidgetClass, NAME_BOX(sp), args, n);
 
+
       n = 0;      
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNbottomWidget, NAME_LABEL(sp)); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, NAME_ICON(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-      XtSetArg(args[n], XmNwidth, 20); n++; /* was 40 */
-      XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_IN); n++;
-      MINIBUFFER_SEPARATOR(sp) = XtCreateManagedWidget ("snd-info-sep", xmSeparatorWidgetClass, NAME_BOX(sp), args, n);
+#if HAVE_XPM
+      if (blank_pixmap)
+	{
+	  XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
+	  XtSetArg(args[n], XmNlabelPixmap, blank_pixmap); n++;
+	}
+#endif
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+      XtSetArg(args[n], XmNfillOnArm, false); n++;
+      STOP_ICON(sp) = XtCreateManagedWidget("", xmPushButtonWidgetClass, NAME_BOX(sp), args, n);
+      XtAddCallback(STOP_ICON(sp), XmNactivateCallback, stop_sign_click_callback, (XtPointer)sp);
 
       n = 0;
       s1 = XmStringCreate("     ", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNbottomWidget, MINIBUFFER_SEPARATOR(sp)); n++;
+      XtSetArg(args[n], XmNbottomWidget, STOP_ICON(sp)); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, MINIBUFFER_SEPARATOR(sp)); n++;
+      XtSetArg(args[n], XmNleftWidget, STOP_ICON(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       MINIBUFFER_LABEL(sp) = XtCreateManagedWidget ("snd-info-label", xmLabelWidgetClass, NAME_BOX(sp), args, n);
@@ -2572,7 +2607,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
   attach_minibuffer(sp);
   add_sound_data(filename, sp, WITH_GRAPH);
   if (cant_write(sp->filename)) sp->file_read_only = true;
-  snd_file_lock_icon(sp, sp->file_read_only || sp->user_read_only);
+  if (sp->file_read_only || sp->user_read_only) show_lock(sp); else hide_lock(sp);
   if (old_name)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
   map_over_children(SOUND_PANE(ss), color_sashes, NULL);
@@ -2787,33 +2822,6 @@ void color_filter_waveform(Pixel color)
     }
 }
 
-void reflect_amp_env_completion(snd_info *sp)
-{
-  int i;
-  /* a channel completed an amp env, check to see if all are complete */
-  for (i = 0; i < sp->nchans; i++)
-    {
-      chan_info *cp;
-      env_info *ep;
-      cp = sp->chans[i];
-      if (!(cp->amp_envs)) return;
-      ep = cp->amp_envs[cp->edit_ctr];
-      if (!ep) return;
-      if (!(ep->completed)) return;
-    }
-  if (sp->sgx)
-    {
-      XtVaSetValues(MINIBUFFER_SEPARATOR(sp), XmNseparatorType, XmSHADOW_ETCHED_IN, NULL);
-      alert_enved_amp_env(sp);
-    }
-}
-
-void reflect_amp_env_in_progress(snd_info *sp)
-{
-  if (sp->sgx)
-    XtVaSetValues(MINIBUFFER_SEPARATOR(sp), XmNseparatorType, XmNO_LINE, NULL);
-}
-
 void equalize_all_panes(void)
 {
   /* normalize: get size, #chans, #snds, set pane minima, force remanage(?), unlock */
@@ -2947,7 +2955,7 @@ int control_panel_height(snd_info *sp)
 
 /* -------- PROGRESS REPORT -------- */
 /*
- * if no xpm, send a string, else post an hourglass
+ * if no xpm, send a string, else post an hourglass (and a stop sign?)
  */
 
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved)
@@ -2957,16 +2965,16 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   char glass_num[8];
   char expr_str[8];
   if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
-  which = (int)(pct * NUM_GLASSES);
+  which = (int)(pct * NUM_HOURGLASSES);
   mus_snprintf(expr_str, 8, "%.2f", pct);
-  if (which >= NUM_GLASSES) which = NUM_GLASSES - 1;
+  if (which >= NUM_HOURGLASSES) which = NUM_HOURGLASSES - 1;
   if (which < 0) which = 0;
   if (from_enved == FROM_ENVED)
-    display_enved_progress(expr_str, mini_glasses[which]);
+    display_enved_progress(expr_str, hourglasses[which]);
   else 
     {
       string_to_minibuffer(sp, expr_str);
-      snd_file_glasses_icon(sp, true, which);
+      show_hourglass(sp, which);
     }
   if (chans > 1) 
     {
@@ -2997,7 +3005,11 @@ void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
 #if HAVE_XPM
   if (from_enved == FROM_ENVED)
     display_enved_progress(NULL, blank_pixmap);
-  else snd_file_glasses_icon(sp, false, 0);
+  else 
+    {
+      hide_hourglass(sp);
+      hide_stop_sign(sp);
+    }
   clear_minibuffer_prompt(sp);
   if (!(ss->stopped_explicitly)) clear_minibuffer(sp);
 #else
@@ -3011,8 +3023,11 @@ void start_progress_report(snd_info *sp, enved_progress_t from_enved)
 {
   if (sp->inuse != SOUND_NORMAL) return;
 #if HAVE_XPM
-  if (from_enved == NOT_FROM_ENVED) 
-    snd_file_glasses_icon(sp, true, 0);
+  if (from_enved == NOT_FROM_ENVED)
+    {
+      show_hourglass(sp, 0);
+      show_stop_sign(sp);
+    }
 #else
   if (from_enved == FROM_ENVED)
     display_enved_progress("", 0);

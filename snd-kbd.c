@@ -1038,20 +1038,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
   else clear_minibuffer(sp);
 }
 
-static void stop_fft_in_progress(chan_info *cp)
-{
-  if ((cp) && (cp->cgx))
-    {
-      chan_context *cx;
-      cx = cp->cgx;
-      if (cx->fft_in_progress) 
-	{
-	  BACKGROUND_REMOVE(cx->fft_in_progress);
-	  finish_progress_report(cp->sound, NOT_FROM_ENVED);
-	  cx->fft_in_progress = 0;
-	}
-    }
-}
 
 
 /* ---------------- other kbd built-in commands ---------------- */

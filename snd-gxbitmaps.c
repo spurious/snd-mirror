@@ -280,6 +280,36 @@ char **mini_glass_bits(int n)
     }
 }
 
+/* from HView */
+static char *stop_sign_xpm[] = {
+"17 17 5 1",
+" 	c None s None",
+".	c red",
+"X	c white",
+"+      c ivory2",
+"-      c ivory2",
+"+++-XXXXXXXXX-+++", 
+"++-X.........X-++", 
+"+-X...........X-+", 
+"-X.............X-", 
+"X...............X", 
+"X...............X", 
+"X.XX.XXX.XX..XX.X", 
+"X.X...X.X..X.X.XX", 
+"X..X..X.X..X.XX.X", 
+"X.XX..X..XX..X..X", 
+"X...............X", 
+"X...............X", 
+"X...............X", 
+"-X.............X-", 
+"+-X...........X-+", 
+"++-X.........X-++", 
+"+++-XXXXXXXXX-+++"};
+
+char **stop_sign_bits(void) {return(stop_sign_xpm);}
+
+
+
 /* -------------------------------- PROGRAM ICON -------------------------------- */
 
 static char *snd_icon_xpm[] = {
@@ -1032,8 +1062,8 @@ static char *yellow_pan_xpm[] = {
 "--------------"};
 
 char **yellow_pan_bits(void) {return(yellow_pan_xpm);}
-
 #endif
+
 
 
 static char bg_line[32];
@@ -1052,7 +1082,7 @@ void make_icons_transparent(char *color)
       tmp = mini_bomb_bits(i);
       tmp[1] = bg_line;
     }
-  for (i = 0; i < NUM_GLASSES; i++)
+  for (i = 0; i < NUM_HOURGLASSES; i++)
     {
       tmp = mini_glass_bits(i);
       tmp[1] = bg_line;

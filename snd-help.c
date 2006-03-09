@@ -478,6 +478,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+10-Mar:  added a stop sign to interrupt long computations (equivalent to C-g).\n\
 8-Mar:   kmenu.scm thanks to Maxim Krikun.\n\
 3-Mar:   show-selection (extensions.scm).\n\
 27-Feb:  snd 7.19.\n\
@@ -497,7 +498,6 @@ void about_snd_help(void)
            mus_audio_set_oss_buffers -> mus_oss_set_buffers.\n\
            changed ALSA environment variable names to use MUS, not SNDLIB.\n\
            changed ALSA default device to \"default\" from \"hw:0\"\n\
-30-Jan:  new-sound-dialog.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -2256,12 +2256,7 @@ static char *html_directory(void)
 {
   int i;
   if (mus_file_probe("snd.html"))
-    {
-      char *path;
-      path = (char *)CALLOC(512, sizeof(char));
-      getcwd(path, 512);
-      return(path);
-    }
+    return(mus_getcwd());
   if (html_dir(ss))
     {
       bool happy;

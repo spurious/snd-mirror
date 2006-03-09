@@ -5,7 +5,7 @@
  */
 
 enum {W_pane, W_pane_box, W_control_panel,
-      W_name_form, W_name, W_name_event, W_name_pix, W_info_label, W_info, W_info_sep,
+      W_name_form, W_name, W_name_event, W_name_pix, W_stop_pix, W_info_label, W_info,
       W_play, W_sync, W_unite,
       W_amp_form, W_amp_event, W_amp, W_amp_label, W_amp_number, W_amp_sep,
       W_speed_form, W_speed, W_speed_event, W_speed_label, W_speed_label_event, W_speed_number, W_speed_pix,
@@ -25,7 +25,6 @@ enum {W_amp_adj, W_speed_adj, W_contrast_adj, W_expand_adj, W_revscl_adj,
 };
 
 GtkWidget *unite_button(snd_info *sp)   {return(sp->sgx->snd_widgets[W_unite]);}
-GtkWidget *filter_graph(snd_info *sp)   {return(sp->sgx->snd_widgets[W_filter_env]);}
 
 GtkWidget *w_snd_pane(snd_info *sp)     {return(sp->sgx->snd_widgets[W_pane]);}
 GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->sgx->snd_widgets[W_pane_box]);}
@@ -39,10 +38,10 @@ GtkWidget *w_snd_name(snd_info *sp)     {return(sp->sgx->snd_widgets[W_name]);}
 #define NAME_EVENT_BOX(Sp)       Sp->sgx->snd_widgets[W_name_event]
 #define NAME_SEPARATOR(Sp)       Sp->sgx->snd_widgets[W_amp_sep]
 
-#define MINIBUFFER_SEPARATOR(Sp) Sp->sgx->snd_widgets[W_info_sep]
 #define MINIBUFFER_LABEL(Sp)     Sp->sgx->snd_widgets[W_info_label]
 #define MINIBUFFER_TEXT(Sp)      Sp->sgx->snd_widgets[W_info]
 #define NAME_PIX(Sp)             Sp->sgx->snd_widgets[W_name_pix]
+#define STOP_PIX(Sp)             Sp->sgx->snd_widgets[W_stop_pix]
 #define SYNC_BUTTON(Sp)          Sp->sgx->snd_widgets[W_sync]
 #define PLAY_BUTTON(Sp)          Sp->sgx->snd_widgets[W_play]
 #define UNITE_BUTTON(Sp)         Sp->sgx->snd_widgets[W_unite]
@@ -144,79 +143,108 @@ void display_minibuffer_error(snd_info *sp, const char *str)
 
 /* -------- PIXMAPS -------- */
 
-static GdkPixmap *mini_lock, *speed_r, *speed_l, *blank;
+static GdkPixmap *mini_lock = NULL, *speed_r = NULL, *speed_l = NULL, *blank = NULL, *stop_sign = NULL;
 static bool mini_lock_allocated = false;
-static GdkPixmap *mini_bombs[NUM_BOMBS];
-static GdkPixmap *mini_glasses[NUM_GLASSES];
+static GdkPixmap *bombs[NUM_BOMBS];
+static GdkPixmap *hourglasses[NUM_HOURGLASSES];
 
-void snd_file_lock_icon(snd_info *sp, bool on)
+void show_lock(snd_info *sp)
 {
-  if (mini_lock) 
+  if (mini_lock)
     {
-      snd_context *sx;
-      sx = sp->sgx;
-      if (on)
-	sx->file_pix = mini_lock;
-      else sx->file_pix = blank; 
-      gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sx->file_pix, 0, 0, 0, 4, 18, 16);
+      sp->sgx->file_pix = mini_lock;
+      gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, mini_lock, 0, 0, 0, 4, 18, 16);
     }
 }
 
+void hide_lock(snd_info *sp)
+{
+  if (mini_lock)
+    {
+      sp->sgx->file_pix = blank;
+      gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, blank, 0, 0, 0, 4, 18, 16);
+    }
+}
+
+static void show_stop_sign(snd_info *sp)
+{
+  if ((sp->sgx) && (stop_sign))
+    gdk_draw_drawable(GDK_DRAWABLE(STOP_PIX(sp)->window), ss->sgx->basic_gc, stop_sign, 0, 0, 0, 4, 18, 16);
+}
+
+static void hide_stop_sign(snd_info *sp)
+{
+  if ((sp->sgx) && (blank))
+    gdk_draw_drawable(GDK_DRAWABLE(STOP_PIX(sp)->window), ss->sgx->basic_gc, blank, 0, 0, 0, 4, 18, 16);
+}
+
+void show_bomb(snd_info *sp)
+{
+  if (sp->bomb_ctr >= NUM_BOMBS) 
+    sp->bomb_ctr = 0;
+  if (sp->sgx)
+    {
+      sp->sgx->file_pix = bombs[sp->bomb_ctr];
+      gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
+    }
+  sp->bomb_ctr++; 
+}
+
+void hide_bomb(snd_info *sp)
+{
+  if (sp->sgx)
+    {
+      sp->sgx->file_pix = blank;
+      gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
+    }
+  sp->bomb_ctr = 0;
+}
 
 #define BOMB_TIME 200
 
-static void show_bomb_icon(snd_info *sp, bool on)
-{
-  if (sp->bomb_ctr >= NUM_BOMBS) sp->bomb_ctr = 0;
-  if (mini_bombs[sp->bomb_ctr]) 
-    {
-      snd_context *sx;
-      sx = sp->sgx;
-      if (on)
-	sx->file_pix = mini_bombs[sp->bomb_ctr];
-      else sx->file_pix = blank;
-      gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sx->file_pix, 0, 0, 0, 4, 18, 16);
-    }
-}
-
-void x_bomb(snd_info *sp, bool on)
-{
-  show_bomb_icon(sp, on);
-  if (on) sp->bomb_ctr++; else sp->bomb_ctr = 0;
-}
-
-static gint bomb_check(gpointer data)
+static gint tick_bomb(gpointer data)
 {
   snd_info *sp = (snd_info *)data;
   if (sp->need_update || sp->file_unreadable)
     {
-      show_bomb_icon(sp, sp->bomb_ctr);
-      sp->bomb_ctr++;
-      g_timeout_add_full(0, (guint32)BOMB_TIME, bomb_check, data, NULL);
+      show_bomb(sp);
+      g_timeout_add_full(0, (guint32)BOMB_TIME, tick_bomb, data, NULL);
     }
-  else sp->bomb_in_progress = false;
+  else 
+    {
+      hide_bomb(sp);
+      sp->bomb_in_progress = false;
+    }
   return(0);
 }
 
-void snd_file_bomb_icon(snd_info *sp, bool on)
+void start_bomb(snd_info *sp)
 {
-  if ((on) && (!(sp->bomb_in_progress)))
+  sp->bomb_ctr = 0;
+  if (!(sp->bomb_in_progress))
     {
       sp->bomb_in_progress = true;
-      sp->bomb_ctr = 0;
-      g_timeout_add_full(0, (guint32)BOMB_TIME, bomb_check, (gpointer)sp, NULL);
+      g_timeout_add_full(0, (guint32)BOMB_TIME, tick_bomb, (gpointer)sp, NULL);
     }
 }
 
-static void snd_file_glasses_icon(snd_info *sp, bool on, int glass)
+void stop_bomb(snd_info *sp)
 {
-  if (!(sp->sgx)) return;
-  if (on)
-    {
-      if (mini_glasses[glass]) 
-	gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, mini_glasses[glass], 0, 0, 0, 4, 18, 16);
-    }
-  else gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
+  hide_bomb(sp);
+  sp->bomb_in_progress = false;
+}
+
+
+static void show_hourglass(snd_info *sp, int glass)
+{
+  if (sp->sgx)
+    gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, hourglasses[glass], 0, 0, 0, 4, 18, 16);
+}
+
+static void hide_hourglass(snd_info *sp)
+{
+  if (sp->sgx)
+    gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
 }
 
 static void make_pixmaps(void)
@@ -227,13 +255,14 @@ static void make_pixmaps(void)
       int k;
       wn = MAIN_WINDOW(ss);
       mini_lock = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_lock_bits());
+      stop_sign = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, stop_sign_bits());
       blank = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, blank_bits());
       speed_r = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, speed_r_bits());
       speed_l = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, speed_l_bits());
       for (k = 0; k < NUM_BOMBS; k++) 
-	mini_bombs[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_bomb_bits(k));
-      for (k = 0; k < NUM_GLASSES; k++) 
-	mini_glasses[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_glass_bits(k));
+	bombs[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_bomb_bits(k));
+      for (k = 0; k < NUM_HOURGLASSES; k++) 
+	hourglasses[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_glass_bits(k));
       mini_lock_allocated = true;
     }
 }
@@ -1261,36 +1290,6 @@ static int cant_write(char *name)
 #endif
 }
 
-void reflect_amp_env_completion(snd_info *sp)
-{
-  int i;
-  GtkWidget *info_sep;
-  /* a channel completed an amp env, check to see if all are complete */
-  for (i = 0; i < sp->nchans; i++)
-    {
-      chan_info *cp;
-      env_info *ep;
-      cp = sp->chans[i];
-      if (!(cp->amp_envs)) return;
-      ep = cp->amp_envs[cp->edit_ctr];
-      if (!ep) return;
-      if (!(ep->completed)) return;
-    }
-  info_sep = MINIBUFFER_SEPARATOR(sp);
-  if (info_sep) gtk_widget_show(info_sep);
-  alert_enved_amp_env(sp);
-}
-
-void reflect_amp_env_in_progress(snd_info *sp)
-{
-  if ((sp) && (sp->sgx))
-    {
-      GtkWidget *info_sep;
-      info_sep = MINIBUFFER_SEPARATOR(sp);
-      if (info_sep) gtk_widget_hide(info_sep);
-    }
-}
-
 static gint close_sound_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
@@ -1298,6 +1297,18 @@ static gint close_sound_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
   gtk_widget_hide(sp->sgx->dialog); 
   return(true);
 } 
+
+static gboolean stop_sign_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
+{
+  snd_info *sp = (snd_info *)data;
+  if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = true; 
+  stop_playing_all_sounds(PLAY_C_G);
+  if (sp->applying) stop_applying(sp);
+  for_each_sound_chan(sp, stop_fft_in_progress);
+  return(false);
+}
+
+
 
 
 /* -------- SOUND PANE -------- */
@@ -1434,10 +1445,13 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       gtk_widget_show(NAME_PIX(sp));
       SG_SIGNAL_CONNECT(NAME_PIX(sp), "expose_event", name_pix_expose, sp);
 
-      MINIBUFFER_SEPARATOR(sp) = gtk_vseparator_new();
-      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), MINIBUFFER_SEPARATOR(sp), false, false, 4);
-      gtk_widget_show(MINIBUFFER_SEPARATOR(sp));
-      
+      STOP_PIX(sp) = gtk_drawing_area_new();
+      gtk_widget_set_events(STOP_PIX(sp), GDK_BUTTON_PRESS_MASK);
+      gtk_widget_set_size_request(STOP_PIX(sp), 18, 16);
+      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), STOP_PIX(sp), false, false, 0);
+      gtk_widget_show(STOP_PIX(sp));
+      SG_SIGNAL_CONNECT(STOP_PIX(sp), "button_press_event", stop_sign_press, sp);
+
       MINIBUFFER_LABEL(sp) = gtk_label_new(NULL);
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), MINIBUFFER_LABEL(sp), false, false, 0);
       gtk_widget_show(MINIBUFFER_LABEL(sp));
@@ -1769,7 +1783,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
     gtk_widget_hide(UNITE_BUTTON(sp));
   add_sound_data(filename, sp, WITH_GRAPH);
   if (cant_write(sp->filename)) sp->file_read_only = true;
-  snd_file_lock_icon(sp, sp->user_read_only || sp->file_read_only);
+  if (sp->user_read_only || sp->file_read_only) show_lock(sp); else hide_lock(sp);
   if (old_name)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
   after_open(sp->index);
@@ -1879,12 +1893,12 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
 {
   int which;
   if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
-  which = (int)(pct * NUM_GLASSES);
-  if (which >= NUM_GLASSES) which = NUM_GLASSES - 1;
+  which = (int)(pct * NUM_HOURGLASSES);
+  if (which >= NUM_HOURGLASSES) which = NUM_HOURGLASSES - 1;
   if (which < 0) which = 0;
   if (from_enved == FROM_ENVED)
-    display_enved_progress(NULL, mini_glasses[which]);
-  else snd_file_glasses_icon(sp, true, which);
+    display_enved_progress(NULL, hourglasses[which]);
+  else show_hourglass(sp, which);
   check_for_event();
 }
 
@@ -1893,7 +1907,11 @@ void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
   if (sp->inuse != SOUND_NORMAL) return;
   if (from_enved == FROM_ENVED)
     display_enved_progress(NULL, NULL);
-  else snd_file_glasses_icon(sp, false, 0);
+  else
+    {
+      hide_hourglass(sp);
+      hide_stop_sign(sp);
+    }
   if (!(ss->stopped_explicitly)) clear_minibuffer(sp);
 }
 
@@ -1901,7 +1919,10 @@ void start_progress_report(snd_info *sp, enved_progress_t from_enved)
 {
   if (sp->inuse != SOUND_NORMAL) return;
   if (from_enved == NOT_FROM_ENVED) 
-    snd_file_glasses_icon(sp, true, 0);
+    {
+      show_hourglass(sp, 0);
+      show_stop_sign(sp);
+    }
 }
 
 void reflect_sound_selection(snd_info *sp)

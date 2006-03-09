@@ -436,6 +436,7 @@ int main(int argc, char **argv)
   k = 0;
   in_comment = 0;
   in_white = 0;
+  in_define = 0;
   for (i = 0; i < files_ctr; i++)
     {
       k = 0;
@@ -444,6 +445,8 @@ int main(int argc, char **argv)
 	fprintf(stderr, "can't find %s\n", files[i]);
       else
 	{
+	  int curly_ctr = 0,cancel_define = 0;
+	  in_define = 0;
 	  do 
 	    {
 	      chars = read(fd, input, MAX_CHARS);
@@ -463,12 +466,42 @@ int main(int argc, char **argv)
 			{
 			  if ((input[j] == '/') && (input[j + 1] == '*'))
 			    in_comment = 1;
+			  else
+			    {
+			      if ((input[j] == '#') && (input[j + 1] == 'd'))
+				{
+				  /*
+				  int m;
+				  fprintf(stderr,"def...");
+				  for (m = j; (m < j + 16) && (m < chars); m++) fprintf(stderr,"%c", input[m]);
+				  */
+				  in_define = 1;
+				}
+			      else
+				{
+				  if ((in_define == 1) && (input[j] == '\n') && (j > 0) && (input[j - 1] != '\\'))
+				    {
+				      /*
+				      fprintf(stderr,"!\n");
+				      */
+				      cancel_define = 1;
+				    }
+				}
+			      if ((in_define == 0) && 
+				  (j < (chars - 1)) && 
+				  ((input[j - 1] != '\'') || (input[j + 1] != '\'')))
+				{
+				  if (input[j] == '{') curly_ctr++;
+				  else if (input[j] == '}') curly_ctr--;
+				}
+			    }
 			  if (k > 0)
 			    {
 			      if (k < ID_SIZE)
 				curname[k] = 0;
-			      else fprintf(stderr, "3: curname overflow: %s[%d]: %s\n", headers[i], j, curname);
-			      if (k < ID_SIZE)
+			      else fprintf(stderr, "3: curname overflow: %s[%d]: %s\n", files[i], j, curname);
+			      if ((k < ID_SIZE) && 
+				  ((curly_ctr > 0) || (in_define == 1)))
 				{
 				  int loc;
 				  loc = add_count(curname, i);
@@ -494,6 +527,11 @@ int main(int argc, char **argv)
 				    }
 				}
 			      k = 0;
+			    }
+			  if (cancel_define == 1)
+			    {
+			      cancel_define = 0;
+			      in_define = 0;
 			    }
 			}
 		    }

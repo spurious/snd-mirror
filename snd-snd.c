@@ -321,7 +321,7 @@ Cessate get_amp_env(Indicium ptr)
       if (tick_amp_env(cp, es))
 	{
 	  free_env_state(cp);
-	  reflect_amp_env_completion(cp->sound);
+	  enved_reflect_amp_env_completion(cp->sound);
 	  if (cp->waiting_to_make_graph) 
 	    {
 	      cp->waiting_to_make_graph = false;
@@ -380,8 +380,8 @@ bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool s
     {
       /* caller wants data, but a read is in progress -- finish it as quickly as possible */
       while (!(tick_amp_env(cp, cgx->amp_env_state)));
+      enved_reflect_amp_env_completion(cp->sound);
       free_env_state(cp);
-      reflect_amp_env_completion(cp->sound);
       if (cp->waiting_to_make_graph) 
 	{
 	  cp->waiting_to_make_graph = false;
@@ -2095,7 +2095,9 @@ static XEN g_bomb(XEN snd, XEN on)
   sp = get_sp(snd, NO_PLAYERS); /* could also be a variable display handler here */
   if ((sp == NULL) || (sp->sgx == NULL))
     return(snd_no_such_sound_error(S_bomb, snd));
-  x_bomb(sp, XEN_TO_C_BOOLEAN(on));
+  if (XEN_FALSE_P(on))
+    hide_bomb(sp);
+  else show_bomb(sp);
   return(on);
 }
 
@@ -2292,7 +2294,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
       if (!(IS_PLAYER(sp)))
 	{
 	  sp->user_read_only = XEN_TO_C_BOOLEAN(val); 
-	  snd_file_lock_icon(sp, sp->user_read_only || sp->file_read_only);
+	  if (sp->user_read_only || sp->file_read_only) show_lock(sp); else hide_lock(sp);
 	  call_sp_watchers(sp, SP_READ_ONLY_WATCHER, SP_READ_ONLY_CHANGED);
 	}
       break;
