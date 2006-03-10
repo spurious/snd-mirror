@@ -1309,39 +1309,37 @@ static int sndlib_strlen(const char *str)
   return(0);
 }
 
-/* TODO: fix PATH_MAX/NAME_MAX/getcwd to work in Posix */
-#ifndef PATH_MAX
-  #define PATH_MAX 1024
-
-/* see libit-0.7/lib/pathmax.h (and also xgetcwd.c):
-# if !defined(PATH_MAX) && defined(_PC_PATH_MAX)
-#  define PATH_MAX (pathconf ("/", _PC_PATH_MAX) < 1 ? 1024 : pathconf ("/", _PC_PATH_MAX))
-# endif
-same in xmms-1.2.10/intl/dcigettext.c [pathconf in configure.ac]
-*/
-/* pathconf(<name>, _PC_PATH_MAX or _PC_NAME_PAX)
-   linux/limits.h:
-  #define NAME_MAX         255
-  #define PATH_MAX        4096
-    bits/posix1_lim.h has _POSIX_PATH_MAX=256!|_POSIX_NAME_MAX=14!
- */
-
-  /* getconf NAME_MAX / -> 256 */
-  /* getconf PATH_MAX / -> 4096 */
-  /* getconf PATH_MAX getcwd -> 4096 */
-/* 
-  if value=$(getconf PATH_MAX /usr); then
-                  if [ "$value" = "undefined" ]; then
-                      echo PATH_MAX in /usr is infinite.
-                  else
-                      echo PATH_MAX in /usr is $value.
-                  fi
-              else
-                  echo Error in getconf.
-              fi
-*/
-
+char *mus_getcwd(void)
+{
+  int i, path_max = 0;
+  char *pwd = NULL, *res = NULL;
+#if HAVE_PATHCONF
+  path_max = pathconf("/", _PC_PATH_MAX);
 #endif
+  if (path_max < 1024)
+    {
+#if defined(PATH_MAX)
+      path_max = PATH_MAX;
+#endif
+      if (path_max < 1024) 
+	path_max = 1024;
+    }
+#if HAVE_GETCWD
+  for (i = path_max;; i *= 2)
+    {
+      if (pwd) FREE(pwd);
+      pwd = (char *)CALLOC(i, sizeof(char));
+      res = getcwd(pwd, i);
+      if (res) break;    /* NULL is returned if failure, but what about success? should I check errno=ERANGE? */
+    }
+#else
+#if HAVE_GETWD
+  pwd = (char *)CALLOC(path_max, sizeof(char));
+  getwd(pwd);
+#endif
+#endif
+  return(pwd);
+}
 
 char *mus_expand_filename(const char *filename)
 {
@@ -1380,29 +1378,12 @@ char *mus_expand_filename(const char *filename)
 	}
       else
 	{
-	  char *pwd = NULL;
-#if HAVE_GETCWD
-	  char *res = NULL;
-	  for (i = 64;; i *= 2)
-	    {
-	      if (pwd) FREE(pwd);
-	      pwd = (char *)CALLOC(i, sizeof(char));
-	      res = getcwd(pwd, i);
-	      if (res) break;
-	    }
-#else
-#if HAVE_GETWD
-	  pwd = (char *)CALLOC(PATH_MAX, sizeof(char));
-	  getwd(pwd);
-#endif
-#endif
+	  char *pwd;
+	  pwd = mus_getcwd();
 	  file_name_buf = (char *)CALLOC(len + sndlib_strlen(pwd) + 8, sizeof(char));
-	  if (pwd) 
-	    {
-	      strcpy(file_name_buf, pwd);
-	      FREE(pwd);
-	      strcat(file_name_buf, "/");
-	    }
+	  strcpy(file_name_buf, pwd);
+	  FREE(pwd);
+	  strcat(file_name_buf, "/");
 	  if (tok[0])
 	    strcat(file_name_buf, tok);
 	}
