@@ -66,7 +66,7 @@ typedef enum {NOT_A_SCANF_WIDGET, SRATE_WIDGET, CHANS_WIDGET, DATA_LOCATION_WIDG
 
 typedef struct {
   int data_color, selected_data_color, mix_color, basic_color, grid_color, selected_grid_color;
-  int white, black, red, yellow, green, light_blue, lighter_blue;
+  int white, black, red, yellow, green, light_blue;
   int fltenv_basic_gc, fltenv_data_gc;
   int basic_gc, selected_basic_gc, combined_basic_gc;        
   int cursor_gc, selected_cursor_gc;      

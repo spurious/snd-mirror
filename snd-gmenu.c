@@ -88,8 +88,8 @@ static void view_controls_callback(GtkWidget *w, gpointer info)
 {
   in_set_show_controls(ss, !in_show_controls(ss));
   if (in_show_controls(ss))
-    show_controls();
-  else hide_controls(); 
+    show_all_controls();
+  else hide_all_controls(); 
 
 }
 

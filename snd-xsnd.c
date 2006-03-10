@@ -1549,6 +1549,7 @@ static void change_pixmap_background(Widget w, Pixmap orig, Pixel old_color, Pix
   depth_bytes = (depth >> 3);
   data = (char *)calloc((width + 1) * (height + 1) * depth_bytes, sizeof(char)); /* not CALLOC since X will free this */
   /* there's overflow in X here, apparently -- the +1's fix it according to valgrind */
+  /*   perhaps this is supposed to be rounded up to byte boundaries? */
   before = XCreateImage(dp, vis, depth, XYPixmap, 0, data, width, height, 8, 0);
   XGetSubImage(dp, orig, 0, 0, width, height, AllPlanes, XYPixmap, before, 0, 0);
   v.background = new_color;
@@ -2923,7 +2924,7 @@ bool control_panel_is_open(snd_info *sp)
   return((bool)(XtIsManaged(CONTROLS(sp))));
 }
 
-void show_controls(void)
+void show_all_controls(void)
 {
   int i;
   for (i = 0; i < ss->max_sounds; i++)
@@ -2935,7 +2936,7 @@ void show_controls(void)
     }
 }
 
-void hide_controls(void)
+void hide_all_controls(void)
 {
   int i;
   for (i = 0; i < ss->max_sounds; i++)

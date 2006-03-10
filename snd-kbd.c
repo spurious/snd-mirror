@@ -2125,7 +2125,7 @@ char *make_key_name(char *buf, int buf_size, int key, int state, bool extended)
   return(buf);
 }
 
-static int key_name_to_key(XEN key)
+static int key_name_to_key(XEN key, const char *caller)
 {
   if (XEN_INTEGER_P(key))
     return(XEN_TO_C_INT(key)); /* includes 0xffc0 style keys */
@@ -2137,7 +2137,14 @@ static int key_name_to_key(XEN key)
   #if USE_GTK
   return((int)gdk_keyval_from_name(XEN_TO_C_STRING(key)));
   #else
-  snd_error("can't translate a key name to a key in this version of Snd.");
+  {
+    static bool already_warned = false;
+    if (!already_warned)
+      {
+	snd_error("%s: can't translate a key name to a key in this version of Snd.", caller);
+	already_warned = true;
+      }
+  }
   #endif
 #endif
   return(0);
@@ -2162,7 +2169,7 @@ static XEN g_key_binding(XEN key, XEN state, XEN cx_extended)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key) || XEN_CHAR_P(key) || XEN_STRING_P(key), key, XEN_ARG_1, S_key_binding, "an integer, character, or string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(state), state, XEN_ARG_2, S_key_binding, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_3, S_key_binding, "a boolean");
-  k = key_name_to_key(key);
+  k = key_name_to_key(key, S_key_binding);
   s = XEN_TO_C_INT_OR_ELSE(state, 0) & 0xfffe; /* no shift bit */
   check_for_key_error(k, s, S_key_binding);
   i = in_user_keymap(k, s, XEN_TRUE_P(cx_extended));
@@ -2181,7 +2188,7 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_4, caller, "a boolean");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_5, caller, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(prefs_info), prefs_info, XEN_ARG_6, caller, "a string");
-  k = key_name_to_key(key);
+  k = key_name_to_key(key, caller);
   s = XEN_TO_C_INT(state) & 0xfffe; /* get rid of shift bit */
   check_for_key_error(k, s, caller);
   e = (XEN_TRUE_P(cx_extended));
@@ -2238,7 +2245,7 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
   ASSERT_CHANNEL(S_key, snd, chn, 3);
   cp = get_cp(snd, chn, S_key);
   if (!cp) return(XEN_FALSE);
-  k = key_name_to_key(kbd);
+  k = key_name_to_key(kbd, S_key);
   s = XEN_TO_C_INT(buckybits);
   check_for_key_error(k, s, S_key);
   keyboard_command(cp, k, s);

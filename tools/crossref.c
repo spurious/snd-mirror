@@ -1,4 +1,4 @@
-/* gcc -o crossref crossref.c -g3 */
+/* gcc -o crossref crossref.c -O2 */
 
 #include <ctype.h>
 #include <stddef.h>
@@ -13,6 +13,7 @@
 
 char **names;
 char **hnames;
+char **nnames;
 char **files;
 char **headers;
 int **counts;
@@ -24,7 +25,7 @@ int *procs;
 
 int names_size = 0, names_ctr = 0;
 int files_size = 0, files_ctr = 0;
-int headers_size = 0, headers_ctr = 0;
+int headers_size = 0, headers_ctr = 0, nname_ctr = 0;
 int snd_xen_c = -1;
 int snd_noxen_c = -1;
 int snd_nogui_c = -1;
@@ -61,12 +62,24 @@ int add_name(char *name, char *hdr)
 			     (strncmp(name, "xen", 3) == 0)))
 
     return(-1);
+  if ((strcmp(hdr, "snd-nogui0.h") == 0) ||
+      (strcmp(hdr, "snd-nogui1.h") == 0))
+    nnames[nname_ctr++] = name;
   for (i = 0; i < names_ctr; i++) 
     if (strcmp(names[i], name) == 0) return(-1);
   hnames[names_ctr] = hdr;
   names[names_ctr++] = name;
   if (names_ctr == names_size) fprintf(stderr,"oops names");
   return(names_ctr - 1);
+}
+
+int in_nogui_h(char *name)
+{
+  int i;
+  for (i = 0; i < nname_ctr; i++)
+    if (strcmp(name, nnames[i]) == 0)
+      return(1);
+  return(0);
 }
 
 void add_file(char *name)
@@ -179,6 +192,7 @@ int main(int argc, char **argv)
   names_size = NAME_SIZE;
   names = (char **)calloc(names_size, sizeof(char *));
   hnames = (char **)calloc(names_size, sizeof(char *));
+  nnames = (char **)calloc(names_size, sizeof(char *));
   voids = (int *)calloc(names_size, sizeof(int));
   files_size = 256;
   files = (char **)calloc(files_size, sizeof(char *));
@@ -590,7 +604,7 @@ int main(int argc, char **argv)
       qsort((void *)qs, names_ctr, sizeof(qdata *), greater_compare);
       for (i = 0; i < names_ctr; i++)
 	{
-	  bool menu_case = false, file_case = false, rec_case = false;
+	  bool menu_case = false, file_case = false, rec_case = false, nonogui_case = false;
 	  int menu_count = 0, file_count = 0, rec_count = 0;
 	  int nfiles;
 	  nfiles = 0;
@@ -622,6 +636,25 @@ int main(int argc, char **argv)
 	      menu_count  = 0;
 	      file_count = 0;
 	      rec_count = 0;
+
+	      nonogui_case = in_nogui_h(qs[i]->name);
+	      if ((nonogui_case) && (counts[qs[i]->i]))
+		{
+		  /* fprintf(stderr, "%s...", qs[i]->name); */
+		  for (j = 0; j < files_ctr; j++)
+		    if ((counts[qs[i]->i][j] > 0) &&
+			((strcmp(files[j], "snd-xen.c") == 0) ||
+			 ((strcmp(files[j], "snd-nogui.c") != 0) &&
+			  (strncmp(files[j], "snd-x", 5) != 0) &&
+			  (strncmp(files[j], "snd-g", 5) != 0))))
+		      {
+			/* fprintf(stderr,"in %s\n", files[j]); */
+			nonogui_case = false;
+			break;
+		      }
+		  /* if (nonogui_case) fprintf(stderr, "!\n"); */
+		}
+
 	      for (j = 0; j < files_ctr; j++)
 		{
 		  if ((counts[qs[i]->i]) && (counts[qs[i]->i][j] > 0))
@@ -667,6 +700,7 @@ int main(int argc, char **argv)
 	      if ((menu_case) && (menu_count > 0)) fprintf(FD, "\n->SND-MENU.H\n");
 	      if ((file_case) && (file_count > 0)) fprintf(FD, "\n->SND-FILE.H\n");
 	      if ((rec_case) && (rec_count > 0)) fprintf(FD, "\n->SND-REC.H\n");
+	      if (nonogui_case) fprintf(FD, "\nnot needed in snd-nogui?\n");
 	      {
 		int m;
 		if ((nfiles > 0) && (lines[qs[i]->i]))

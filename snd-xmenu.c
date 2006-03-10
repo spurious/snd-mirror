@@ -97,8 +97,8 @@ static void view_controls_callback(Widget w, XtPointer info, XtPointer context)
 {
   in_set_show_controls(ss, !in_show_controls(ss));
   if (in_show_controls(ss))
-    show_controls();
-  else hide_controls(); 
+    show_all_controls();
+  else hide_all_controls(); 
 }
 static void view_region_callback_1(Widget w, XtPointer info, XtPointer context) {view_region_callback(w, info, context);}
 static void view_orientation_callback_1(Widget w, XtPointer info, XtPointer context) {view_orientation_callback(w, info, context);}

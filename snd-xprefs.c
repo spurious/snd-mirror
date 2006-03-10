@@ -6,7 +6,6 @@
 
 /* SOMEDAY: completions and sscanf->string_to_* for better checks (xmnmessage?)
    SOMEDAY: gtk side of icon box (are there others?)
-   TODO: ruby extensions.rb side of set_global_sync
    TODO: various additional key bindings:
 
              [zoom in|out one pixel, move window left|right one pixel]

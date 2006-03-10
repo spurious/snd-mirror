@@ -1854,7 +1854,7 @@ bool control_panel_is_open(snd_info *sp)
 }
 
 
-void show_controls(void)
+void show_all_controls(void)
 {
   int i;
   showing_controls = true;
@@ -1867,7 +1867,7 @@ void show_controls(void)
     }
 }
 
-void hide_controls(void)
+void hide_all_controls(void)
 {
   int i;
   showing_controls = false;

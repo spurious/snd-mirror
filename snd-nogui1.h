@@ -1,8 +1,6 @@
 #ifndef SND_NOGUI1_H
 #define SND_NOGUI1_H
 
-#define SOUND_ENV_EDITOR(Sp) NULL
-
 /* -------- snd-xhelp.c -------- */
 
 int snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap);
@@ -10,7 +8,6 @@ int snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap
 int help_text_width(const char *txt, int start, int end);
 void snd_help_append(const char *text);
 void snd_help_back_to_top(void);
-bool help_dialog_is_active(void);
 
 
 /* -------- snd-xdraw.c -------- */
@@ -40,7 +37,6 @@ widget_t start_orientation_dialog(bool managed);
 void set_color_scale(Float val);
 void set_color_inverted(bool val);
 void set_color_cutoff(Float val);
-void set_color_map(int val);
 void set_spectro_hop(int val);
 void set_spectro_x_angle(Float val);
 void set_spectro_y_angle(Float val);
@@ -95,10 +91,6 @@ void snd_doit(int argc, char **argv);
 void auto_update_restart(void);
 void save_colors(FILE *Fp);
 
-#ifdef SND_AS_WIDGET
-  void snd_as_widget(int argc, char **argv, int app, int parent, int *caller_args, int caller_argn);
-#endif
-
 
 /* -------- snd-xfft.c -------- */
 
@@ -133,7 +125,6 @@ void allocate_region_rows(int n);
 void reflect_regions_in_region_browser(void);
 void reflect_no_regions_in_region_browser(void);
 void reflect_region_graph_style(void);
-int region_dialog_region(void);
 
 
 /* -------- snd-xutils.c -------- */

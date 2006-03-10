@@ -8,7 +8,6 @@ void clear_minibuffer_error(snd_info *sp) {}
 void reflect_amp_control_bounds_change_in_recorder(void) {}
 void recorder_error(const char *msg) {}
 void snd_help_back_to_top(void) {}
-bool help_dialog_is_active(void) {return(false);}
 color_t get_in_between_color(color_t fg, color_t bg) {return(0);}
 void set_find_dialog_label(const char *str) {}
 void save_find_dialog_state(FILE *fd) {}
@@ -50,7 +49,6 @@ widget_t start_orientation_dialog(bool managed) {return(0);}
 void set_color_scale(Float val) {}
 void set_color_inverted(bool val) {}
 void set_color_cutoff(Float val) {}
-void set_color_map(int val) {}
 void set_spectro_hop(int val) {}
 void set_spectro_x_angle(Float val) {}
 void set_spectro_y_angle(Float val) {}
@@ -98,7 +96,6 @@ void reflect_play_region_stop(int n) {}
 bool region_dialog_is_active(void) {return(false);}
 void allocate_region_rows(int n) {}
 void reflect_region_graph_style(void) {}
-int region_dialog_region(void) {return(-1);}
 void snd_completion_help(int matches, char **buffer) {}
 bool set_tiny_font(const char *font) {if (ss->Tiny_Font) FREE(ss->Tiny_Font); ss->Tiny_Font = copy_string(font); return(false);}
 bool set_listener_font(const char *font) {if (ss->Listener_Font) FREE(ss->Listener_Font); ss->Listener_Font = copy_string(font); return(false);}
