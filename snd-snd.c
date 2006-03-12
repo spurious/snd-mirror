@@ -2164,7 +2164,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, const char *caller)
 	} 
       break;
     case SP_WITH_TRACKING_CURSOR: return(C_TO_XEN_BOOLEAN(sp->with_tracking_cursor));    break;
-    case SP_SHOW_CONTROLS:       if (!(IS_PLAYER(sp))) return(C_TO_XEN_BOOLEAN(control_panel_is_open(sp))); break;
+    case SP_SHOW_CONTROLS:       if (!(IS_PLAYER(sp))) return(C_TO_XEN_BOOLEAN(showing_controls(sp))); break;
     case SP_SPEED_TONES:         return(C_TO_XEN_INT(sp->speed_control_tones));        break;
     case SP_SPEED_STYLE:         return(C_TO_XEN_INT((int)(sp->speed_control_style))); break;
     case SP_COMMENT:             return(C_TO_XEN_STRING(sp->hdr->comment));            break;
@@ -2328,8 +2328,8 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
       if (!(IS_PLAYER(sp))) 
 	{
 	  if (XEN_TO_C_BOOLEAN(val))
-	    sound_show_controls(sp); 
-	  else sound_hide_controls(sp); 
+	    show_controls(sp); 
+	  else hide_controls(sp); 
 	}
       break;
     case SP_SPEED_TONES:

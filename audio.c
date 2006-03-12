@@ -89,16 +89,6 @@
   #include <string.h>
 #endif
 
-#if (!HAVE_STRERROR)
-char *strerror(int errnum)
-{
-  char *strerrbuf;
-  strerrbuf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(strerrbuf, LABEL_BUFFER_SIZE, "io err %d", errnum);
-  return(strerrbuf);
-}
-#endif
-
 #if HAVE_SAM_9407
   #include <sys/sam9407.h>
 #endif
@@ -111,6 +101,16 @@ char *strerror(int errnum)
 
 #include "_sndlib.h"
 #include "sndlib-strings.h"
+
+#if (!HAVE_STRERROR)
+char *strerror(int errnum)
+{
+  char *strerrbuf;
+  strerrbuf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(strerrbuf, LABEL_BUFFER_SIZE, "io err %d", errnum);
+  return(strerrbuf);
+}
+#endif
 
 #define MUS_STANDARD_ERROR(Error_Type, Error_Message) \
   mus_print("%s\n  [%s[%d] %s]", Error_Message, __FILE__, __LINE__, c__FUNCTION__)

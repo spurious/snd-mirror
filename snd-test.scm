@@ -25462,7 +25462,14 @@ EDITS: 5
 	 (set! (transform-graph-type fd 0) dpy-type)
 	 (set! (transform-type fd 0) fft-type)
 	 (update-transform-graph fd 0)
-	 (transform->vct fd 0))
+	 (let ((vals (transform->vct fd 0)))
+	   (if (not vals) 
+	       (snd-display ";transform ~A ~A -> ~A" dpy-type fft-type vals)
+	       (begin
+		 (if (fneq (transform-sample 0 0 fd 0) (vct-ref vals 0))
+		     (snd-display ";transform-sample ~A ~A -> ~A ~A" dpy-type fft-type (vct-ref vals 0) (transform-sample 0 0 fd 0)))
+		 (if (not (>= (vct-length vals) 256))
+		     (snd-display ";transform-> vct size: ~A" (vct-length vals)))))))
        (list graph-once graph-as-sonogram graph-as-spectrogram
 	     graph-once graph-as-sonogram graph-as-spectrogram)
        (list fourier-transform fourier-transform fourier-transform 
@@ -29006,8 +29013,10 @@ EDITS: 5
 	(set! (selection-frames) 300)
 	(update-transform-graph)
 	(let* ((data (transform->vct))
-	       (peak (vct-peak data)))
+	       (peak (vct-peak data))
+	       (val (transform-sample 0)))
 	  (if (< peak 40.0) (snd-display ";transform selection peak: ~A" peak))
+	  (if (fneq val (vct-ref data 0)) (snd-display ";transform-sample: ~A, data: ~A" val (vct-ref data 0)))
 	  (if (> (* .5 peak) (vct-ref data 51)) (snd-display ";transform selection at 51: ~A, peak: ~A" (vct-ref data 51) peak)))
 	(for-each
 	 (lambda (pad)

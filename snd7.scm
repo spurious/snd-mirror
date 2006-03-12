@@ -391,19 +391,10 @@
 
 ;;; this was actually referring to the default (global) value, not file-specific
 (if (not (defined? 'mus-file-data-clipped)) 
-    (define mus-file-data-clipped
-      (make-procedure-with-setter
-       (lambda ()
-	 (mus-clipping))
-       (lambda (val)
-	 (set! (mus-clipping) val)))))
+    (define mus-file-data-clipped mus-clipping))
 
 (if (not (defined? 'data-clipped))
-    (define data-clipped
-      (make-procedure-with-setter
-       (lambda ()
-	 (clipping))
-       (lambda (val)
-	 (set! (clipping) val)))))
+    (define data-clipped clipping))
 
 (define (dac-is-running) (playing))
+

@@ -6,20 +6,8 @@
 
 /* SOMEDAY: completions and sscanf->string_to_* for better checks (xmnmessage?)
    SOMEDAY: gtk side of icon box (are there others?)
-   TODO: various additional key bindings:
-
-             [zoom in|out one pixel, move window left|right one pixel]
-             [go to next zero crossing, skip silence]
-
-	     ;; need test here
-     (bind-key "Left" 0 (lambda () (move-one-pixel #f)) #f "move one pixel back" "move-back-one-pixel")
-     (bind-key "Right" 0 (lambda () (move-one-pixel #t)) #f "move one pixel forward" "move-forward-one-pixel")
-     (bind-key "Up" 0 (lambda () (zoom-one-pixel #f)) #f "zoom out one pixel" "zoom-out-one-pixel")
-     (bind-key "Down" 0 (lambda () (zoom-one-pixel #t)) #f "zoom in one pixel" "zoom-in-one-pixel")
-
-     ;; need ruby side of show-selection
-
-     ;; should the exit key work in the listener as well? -- how to handle C-x cmds in xttranslation tables?
+   TODO: need ruby side of show-selection
+     should the exit key work in the listener as well? -- how to handle C-x cmds in xttranslation tables?
 
 
    abandoned:

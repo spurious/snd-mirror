@@ -171,9 +171,9 @@ void start_bomb(snd_info *sp) {}
 void stop_bomb(snd_info *sp) {}
 void set_sound_pane_file_label(snd_info *sp, char *str) {}
 void reflect_sound_selection(snd_info *sp) {}
-void sound_show_controls(snd_info *sp) {}
-void sound_hide_controls(snd_info *sp) {}
-bool control_panel_is_open(snd_info *sp) {return(false);}
+void show_controls(snd_info *sp) {}
+void hide_controls(snd_info *sp) {}
+bool showing_controls(snd_info *sp) {return(false);}
 void start_progress_report(snd_info *sp, enved_progress_t from_enved) {}
 void finish_progress_report(snd_info *sp, enved_progress_t from_enved) {}
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved) {}

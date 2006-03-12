@@ -45,6 +45,9 @@ localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
 SUBDIRS = po
 
+.SUFFIXES:
+.SUFFIXES: .c .o
+
 .c.o:
 	$(CC) -c $(DEFS) $(GTK_CFLAGS) $(CAIRO_CFLAGS) $(CFLAGS) $(GUILE_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(GL_FLAGS) $(JACK_FLAGS) $(FFTW_CFLAGS) $<
 

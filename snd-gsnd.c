@@ -28,7 +28,6 @@ GtkWidget *unite_button(snd_info *sp)   {return(sp->sgx->snd_widgets[W_unite]);}
 
 GtkWidget *w_snd_pane(snd_info *sp)     {return(sp->sgx->snd_widgets[W_pane]);}
 GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->sgx->snd_widgets[W_pane_box]);}
-GtkWidget *w_snd_name(snd_info *sp)     {return(sp->sgx->snd_widgets[W_name]);}
 
 #define SND_PANE(Sp)             Sp->sgx->snd_widgets[W_pane]
 #define PANE_BOX(Sp)             Sp->sgx->snd_widgets[W_pane_box]
@@ -1313,7 +1312,7 @@ static gboolean stop_sign_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 
 /* -------- SOUND PANE -------- */
 
-static bool showing_controls = false;
+static bool currently_showing_controls = false;
 
 snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 {
@@ -1769,7 +1768,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       else reset_controls(sp); /* segfault here in notebook case! */
     }
   gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), true);
-  if (showing_controls) sound_show_controls(sp); else sound_hide_controls(sp);
+  if (currently_showing_controls) show_controls(sp); else hide_controls(sp);
 
   if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
     {
@@ -1835,19 +1834,19 @@ void snd_info_cleanup(snd_info *sp)
 
 /* ---------------- normalize sounds ---------------- */
 
-void sound_show_controls(snd_info *sp)
+void show_controls(snd_info *sp)
 {
   gtk_widget_show_all(CONTROL_PANEL(sp));
   /* control panel is pane 2 of SND_PANE(sp); PANE_BOX is pane 1 */
   /* gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), (gint)(widget_height(SOUND_PANE(ss)) * .75)); (glistener) */
 }
 
-void sound_hide_controls(snd_info *sp)
+void hide_controls(snd_info *sp)
 {
   gtk_widget_hide_all(CONTROL_PANEL(sp));
 }
 
-bool control_panel_is_open(snd_info *sp)
+bool showing_controls(snd_info *sp)
 {
   return((GTK_WIDGET_MAPPED(CONTROL_PANEL(sp))) && 
 	 (GTK_WIDGET_VISIBLE(CONTROL_PANEL(sp))));
@@ -1857,26 +1856,26 @@ bool control_panel_is_open(snd_info *sp)
 void show_all_controls(void)
 {
   int i;
-  showing_controls = true;
+  currently_showing_controls = true;
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
-	sound_show_controls(sp);
+	show_controls(sp);
     }
 }
 
 void hide_all_controls(void)
 {
   int i;
-  showing_controls = false;
+  currently_showing_controls = false;
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
-	sound_hide_controls(sp);
+	hide_controls(sp);
     }
 }
 

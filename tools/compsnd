@@ -634,3 +634,9 @@ make allclean
 ./configure --quiet --with-snd-as-pd-external --with-no-gui CFLAGS="-I/home/bil/test/include" LDFLAGS="-L/home/bil/test/lib" GUILE_CONFIG_path=/home/bil/test/bin
 make
 make allclean
+
+setenv PKG_CONFIG_PATH /home/bil/test/old-gtk/lib/pkgconfig
+./configure --with-gtk CFLAGS="-Wall -I/home/bil/test/old-gtk"
+make
+
+setenv PKG_CONFIG_PATH /usr/local/lib/pkgconfig

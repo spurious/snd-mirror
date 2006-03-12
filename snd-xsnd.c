@@ -2598,7 +2598,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
     }
   if (!(in_show_controls(ss)))
     XtUnmanageChild(CONTROLS(sp));
-  else sound_show_controls(sp);
+  else show_controls(sp);
 
   if (sp->nchans == 1) 
     {
@@ -2895,7 +2895,7 @@ void equalize_all_panes(void)
     }
 }
 
-void sound_show_controls(snd_info *sp)
+void show_controls(snd_info *sp)
 {
   Dimension hgt;
   XtVaGetValues(FILTER_LABEL(sp),
@@ -2914,12 +2914,12 @@ void sound_show_controls(snd_info *sp)
 		NULL);
 }
 
-void sound_hide_controls(snd_info *sp)
+void hide_controls(snd_info *sp)
 {
   XtUnmanageChild(CONTROLS(sp));
 }
 
-bool control_panel_is_open(snd_info *sp)
+bool showing_controls(snd_info *sp)
 {
   return((bool)(XtIsManaged(CONTROLS(sp))));
 }
@@ -2932,7 +2932,7 @@ void show_all_controls(void)
       snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
-	sound_show_controls(sp);
+	show_controls(sp);
     }
 }
 
@@ -2944,7 +2944,7 @@ void hide_all_controls(void)
       snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
-	sound_hide_controls(sp);
+	hide_controls(sp);
     }
 }
 

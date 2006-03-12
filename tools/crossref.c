@@ -54,6 +54,7 @@ int add_name(char *name, char *hdr)
   if ((isdigit(name[0])) || (strlen(name) == 1)) return(-1);
   if ((strlen(name) > 2) && ((strncmp(name, "SCM", 3) == 0) ||
 			     (strncmp(name, "scm", 3) == 0) ||
+			     (strncmp(name, "clm_", 4) == 0) ||
 			     (strncmp(name, "rb_", 3) == 0) ||
 			     (strncmp(name, "gh_", 3) == 0) ||
 			     (strncmp(name, "GDK", 3) == 0) ||
