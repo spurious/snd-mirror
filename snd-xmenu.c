@@ -106,6 +106,7 @@ static void view_color_callback_1(Widget w, XtPointer info, XtPointer context) {
 static void view_files_callback(Widget w, XtPointer info, XtPointer context) {start_view_files_dialog(true, false);}
 
 static void view_x_axis_seconds_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SECONDS);}
+static void view_x_axis_clock_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_AS_CLOCK);}
 static void view_x_axis_beats_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_BEATS);}
 static void view_x_axis_measures_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_MEASURES);}
 static void view_x_axis_samples_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SAMPLES);}
@@ -493,6 +494,9 @@ Widget add_menu(void)
 
   view_x_axis_samples_menu = XtCreateManagedWidget(_("samples"), xmPushButtonWidgetClass, view_x_axis_menu, main_args, main_n);
   XtAddCallback(view_x_axis_samples_menu, XmNactivateCallback, view_x_axis_samples_callback, NULL);  
+
+  view_x_axis_clock_menu = XtCreateManagedWidget(_("clock"), xmPushButtonWidgetClass, view_x_axis_menu, main_args, main_n);
+  XtAddCallback(view_x_axis_clock_menu, XmNactivateCallback, view_x_axis_clock_callback, NULL);  
 
   view_x_axis_percentage_menu = XtCreateManagedWidget(_("percentage"), xmPushButtonWidgetClass, view_x_axis_menu, main_args, main_n);
   XtAddCallback(view_x_axis_percentage_menu, XmNactivateCallback, view_x_axis_percentage_callback, NULL);  

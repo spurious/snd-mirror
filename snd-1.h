@@ -1227,6 +1227,7 @@ void set_show_y_zero(bool val);
 
 axis_info *free_axis_info(axis_info *ap);
 axis_context *free_axis_context(axis_context *ax);
+char *x_axis_location_to_string(chan_info *cp, double loc);
 Locus grf_x(double val, axis_info *ap);
 Locus grf_y(Float val, axis_info *ap);
 void init_axis_scales(axis_info *ap);
@@ -1377,7 +1378,7 @@ char *file_to_string(const char *filename);
 #endif
 disk_space_t disk_space_p(off_t bytes, const char *filename);
 const char *short_data_format_name(int sndlib_format, const char *filename);
-char *prettyf(Float num, int tens);
+char *prettyf(double num, int tens);
 char *shorter_tempnam(const char *dir, const char *prefix);
 char *snd_tempnam(void);
 void snd_exit(int val);

@@ -3,6 +3,7 @@
 (use-modules (ice-9 format) (ice-9 optargs))
 (provide 'snd-oscope.scm)
 
+;;; TODO: sonogram -> slices, not one at a time
 
 (define audio-srate 44100) ; graph's sampling rate
 (define max-cycle 8192)    ; maximum size in samples of the displayed buffer

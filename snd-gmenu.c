@@ -105,6 +105,7 @@ static void view_color_callback_1(GtkWidget *w, gpointer info) {view_color_callb
 static void view_files_callback(GtkWidget *w, gpointer info) {start_view_files_dialog(true, false);}
 
 static void view_x_axis_seconds_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_SECONDS);}
+static void view_x_axis_clock_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_AS_CLOCK);}
 static void view_x_axis_beats_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_BEATS);}
 static void view_x_axis_measures_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_MEASURES);}
 static void view_x_axis_samples_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_SAMPLES);}
@@ -636,6 +637,12 @@ GtkWidget *add_menu(void)
   gtk_menu_shell_append(GTK_MENU_SHELL(view_x_axis_cascade_menu), view_x_axis_samples_menu);
   gtk_widget_show(view_x_axis_samples_menu);
   SG_SIGNAL_CONNECT(view_x_axis_samples_menu, "activate", view_x_axis_samples_callback, NULL);
+
+  view_x_axis_clock_menu = gtk_menu_item_new_with_label(_("clock"));
+  ml[v_x_axis_clock_menu] = _("clock");
+  gtk_menu_shell_append(GTK_MENU_SHELL(view_x_axis_cascade_menu), view_x_axis_clock_menu);
+  gtk_widget_show(view_x_axis_clock_menu);
+  SG_SIGNAL_CONNECT(view_x_axis_clock_menu, "activate", view_x_axis_clock_callback, NULL);
 
   view_x_axis_percentage_menu = gtk_menu_item_new_with_label(_("percentage"));
   ml[v_x_axis_percentage_menu] = _("percentage");

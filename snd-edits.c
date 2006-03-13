@@ -7384,23 +7384,20 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   cp = get_cp(snd, chn, S_display_edits);
   if (!cp) return(XEN_FALSE);
   if (XEN_BOOLEAN_P(with_source)) include_source = XEN_TO_C_BOOLEAN(with_source);
-  if (XEN_INTEGER_P(edpos)) pos = XEN_TO_C_INT(edpos);
+  if (XEN_INTEGER_P(edpos)) 
+    {
+      pos = XEN_TO_C_INT(edpos);
+      if ((pos >= cp->edit_size) || (!(cp->edits[pos])))
+	XEN_ERROR(NO_SUCH_EDIT,
+		  XEN_LIST_2(C_TO_XEN_STRING(S_display_edits),
+			     edpos));
+    }
   name = snd_tempnam();
   tmp = FOPEN(name, "w");
-  if (tmp) 
+  if (tmp)
     {
-      if (pos >= 0)
-	{
-	  if ((pos < cp->edit_size) && (cp->edits[pos]))
-	    display_ed_list(cp, tmp, pos, cp->edits[pos], include_source);
-	  else 
-	    {
-	      snd_fclose(tmp, name);
-	      XEN_ERROR(NO_SUCH_EDIT,
-			XEN_LIST_2(C_TO_XEN_STRING(S_display_edits),
-				   edpos));
-	    }
-	}
+      if (pos != AT_CURRENT_EDIT_POSITION)
+	display_ed_list(cp, tmp, pos, cp->edits[pos], include_source);
       else display_edits(cp, tmp, include_source);
       snd_fclose(tmp, name);
     }

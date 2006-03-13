@@ -3546,7 +3546,7 @@ void show_cursor_info(chan_info *cp)
   expr_str = (char *)CALLOC(len, sizeof(char));
   if (sp->nchans == 1)
     mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("cursor at %s (sample " PRId64 ") = %s"),
-		 s1 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
+		 s1 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp)),
 		 samp,
 		 s2 = prettyf(y, digits));
   else
@@ -3554,7 +3554,7 @@ void show_cursor_info(chan_info *cp)
       if (sp->sync == 0)
 	mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("chan %d, cursor at %s (sample " PRId64 ") = %s"),
 		     cp->chan + 1,
-		     s1 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
+		     s1 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp)),
 		     samp,
 		     s2 = prettyf(y, digits));
       else
@@ -3562,7 +3562,7 @@ void show_cursor_info(chan_info *cp)
 	  /* in this case, assume we show all on chan 0 and ignore the call otherwise (see above) */
 	  /* "cursor at..." then list of values */
 	  mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("cursor at %s (sample " PRId64 "): %s"),
-		       s1 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
+		       s1 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp)),
 		       samp,
 		       s2 = prettyf(y, digits));
 	  for (i = 1; i < sp->nchans; i++)
@@ -6384,7 +6384,8 @@ static XEN g_x_axis_style(XEN snd, XEN chn)
 {
   #define H_x_axis_style "(" S_x_axis_style " (snd #f) (chn #f)) \
 The x axis labelling of the time domain waveform can be in seconds (" S_x_axis_in_seconds "), in samples (" S_x_axis_in_samples "), expressed as a \
-percentage of the overall duration (" S_x_axis_as_percentage "), as a beat number (" S_x_axis_in_beats ", or as a measure number (" S_x_axis_in_measures ")."
+percentage of the overall duration (" S_x_axis_as_percentage "), as a beat number (" S_x_axis_in_beats ", as a measure \
+number (" S_x_axis_in_measures ", or clock-style (dd:hh:mm:ss) (" S_x_axis_as_clock ")."
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_X_AXIS_STYLE, S_x_axis_style));
@@ -6430,7 +6431,7 @@ static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)
   val = (x_axis_style_t)XEN_TO_C_INT(style);
   if (val > X_AXIS_IN_MEASURES)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, 
-	"~A, but must be " S_x_axis_in_seconds ", " S_x_axis_in_samples ", " S_x_axis_as_percentage ", " S_x_axis_in_beats ", or " S_x_axis_in_measures ".");
+	"~A, but must be " S_x_axis_in_seconds ", " S_x_axis_in_samples ", " S_x_axis_as_percentage ", " S_x_axis_in_beats ", " S_x_axis_in_measures ", or " S_x_axis_as_clock ".");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, style, CP_X_AXIS_STYLE, S_setB S_x_axis_style));
   set_x_axis_style(val);
@@ -7636,12 +7637,14 @@ void g_init_chn(void)
   #define H_x_axis_in_beats      "The value for " S_x_axis_style " that displays the x axis using beats (also " S_beats_per_minute ")"
   #define H_x_axis_in_measures   "The value for " S_x_axis_style " that displays the x axis using measure numbers"
   #define H_x_axis_as_percentage "The value for " S_x_axis_style " that displays the x axis using percentages"
+  #define H_x_axis_as_clock      "The value for " S_x_axis_style " that displays the x axis using clock-like DD:HH:MM:SS syntax"
 
   XEN_DEFINE_CONSTANT(S_x_axis_in_seconds,     X_AXIS_IN_SECONDS,    H_x_axis_in_seconds);
   XEN_DEFINE_CONSTANT(S_x_axis_in_samples,     X_AXIS_IN_SAMPLES,    H_x_axis_in_samples);
   XEN_DEFINE_CONSTANT(S_x_axis_in_beats,       X_AXIS_IN_BEATS,      H_x_axis_in_beats);
   XEN_DEFINE_CONSTANT(S_x_axis_in_measures,    X_AXIS_IN_MEASURES,   H_x_axis_in_measures);
   XEN_DEFINE_CONSTANT(S_x_axis_as_percentage,  X_AXIS_AS_PERCENTAGE, H_x_axis_as_percentage);
+  XEN_DEFINE_CONSTANT(S_x_axis_as_clock,       X_AXIS_AS_CLOCK,      H_x_axis_as_clock);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_axis_style, g_x_axis_style_w, H_x_axis_style,
 					    S_setB S_x_axis_style, g_set_x_axis_style_w, g_set_x_axis_style_reversed,

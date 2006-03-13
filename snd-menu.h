@@ -31,7 +31,7 @@ enum {m_menu,
           v_color_menu, v_orientation_menu, 
           v_files_menu, v_mix_dialog_menu, v_track_dialog_menu,
           v_x_axis_menu, v_x_axis_cascade_menu,
-            v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu, v_x_axis_measures_menu,
+            v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu, v_x_axis_measures_menu, v_x_axis_clock_menu,
           v_axes_menu, v_axes_cascade_menu,
             v_no_axes_menu, v_all_axes_menu, v_just_x_axis_menu, v_all_axes_unlabelled_menu, v_just_x_axis_unlabelled_menu,
       v_sep2_menu,
@@ -140,6 +140,7 @@ enum {m_menu,
 #define view_x_axis_menu (ss->sgx->mw[v_x_axis_menu])
 #define view_x_axis_cascade_menu (ss->sgx->mw[v_x_axis_cascade_menu])
 #define view_x_axis_seconds_menu (ss->sgx->mw[v_x_axis_seconds_menu])
+#define view_x_axis_clock_menu (ss->sgx->mw[v_x_axis_clock_menu])
 #define view_x_axis_samples_menu (ss->sgx->mw[v_x_axis_samples_menu])
 #define view_x_axis_percentage_menu (ss->sgx->mw[v_x_axis_percentage_menu])
 #define view_x_axis_beats_menu (ss->sgx->mw[v_x_axis_beats_menu])

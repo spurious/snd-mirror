@@ -369,93 +369,23 @@ static char local_decimal_point(void)
   return('.');
 }
 
-static char prtbuf[256];
+char *prettyf(double num, int tens)
+{ 
+  /* try to prettify float display -- if tens <= 0, return int */
+  static char prtbuf[256];
 
-char *prettyf(Float num, int tens)
-{ /* try to prettify float display -- if tens < 0, return int */
-  int fullf, len, i, lim;
-  Float rounder;
-  char *newval, *sp, *sn, *zp;
-  zp = NULL;
-  if (tens > 9) tens = 9;
-  if (num < 0.0) rounder = -.49; else rounder = .49;
-  if (tens < 0)
+  if (tens <= 0)
+    sprintf(prtbuf, "%d", (int)snd_round(num));
+  else 
     {
-      fullf = (int)(num + rounder);
-      sprintf(prtbuf, "%d", fullf);
-      return(copy_string(prtbuf));
+      int i, len;
+      sprintf(prtbuf, "%.*f", tens, num); /* %f assumes double arg */
+      /* look for trailing 0's beyond the ddd.0 case */
+      len = strlen(prtbuf);
+      for (i = len - 1; (i > 0) && (prtbuf[i] == '0') && (prtbuf[i - 1] != '.'); i--)
+	prtbuf[i] = '\0';
     }
-  fullf = (int)num;
-  if ((num - fullf) == 0.0) 
-    {
-      if (num < 100.0)
-	sprintf(prtbuf, "%d%c0", fullf, decimal_pt);
-      else sprintf(prtbuf, "%d", fullf);
-      return(copy_string(prtbuf));
-    }
-  if (num > 1000)
-    {
-      sprintf(prtbuf, "%d%c%d", fullf, decimal_pt, (int)((num - fullf) * pow(10.0, tens)));
-      return(copy_string(prtbuf));
-    }
-  fullf = (int)(num * pow(10.0, tens + 1) + rounder);
-  if (fullf == 0) 
-    {
-      /* will be freed later, so can't return a constant */
-      newval = (char *)MALLOC(2 * sizeof(char));
-      newval[0] = '0';
-      newval[1] = '\0';
-      return(newval);
-    }
-  sprintf(prtbuf, "%d", fullf);
-  len = strlen(prtbuf);
-  newval = (char *)CALLOC(len + tens + 10, sizeof(char));
-  sn = newval;
-  sp = prtbuf;
-  if ((*sp) == '-') 
-    {
-      (*sn) = (*sp); 
-      sn++; 
-      sp++; 
-      len--;
-    }
-  if (len >= (tens + 1))
-    {
-      for (i = 0; i < len - tens - 1; i++) 
-	{
-	  (*sn) = (*sp); 
-	  sn++; 
-	  sp++;
-	}
-      (*sn) = decimal_pt; 
-      sn++;
-    }
-  else
-    {
-      (*sn) = '0';
-      sn++;
-      (*sn) = decimal_pt;
-      sn++;
-      lim = abs(len - tens - 1);
-      for (i = 0; i < lim; i++) 
-	{
-	  (*sn) = '0';
-	  sn++;
-	}
-    }
-  if (tens > 5) tens = 5;
-  for (i = 0; i <= tens; i++) 
-    {
-      if (!(*sp)) break;
-      (*sn) = (*sp); 
-      if ((!zp) || ((*sn) != '0')) zp = sn;
-      sn++; 
-      sp++;
-    }
-  if (zp) sn = zp; else (*sn) = '0';
-  sn++;
-  (*sn) = '\0';
-  return(newval);
+  return(copy_string(prtbuf));
 }
 
 static char *get_tmpdir(void)

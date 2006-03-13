@@ -915,7 +915,7 @@ static char *display_maxamps(const char *filename, int chans)
   mus_sound_maxamps(filename, chans, vals, times);
   for (i = 0; i < chans; i++)
     {
-      ampstr = snd_strcat(ampstr, prettyf(MUS_SAMPLE_TO_FLOAT(vals[i]), 3), &len);
+      ampstr = snd_strcat(ampstr, prettyf(MUS_SAMPLE_TO_DOUBLE(vals[i]), 3), &len);
       ampstr = snd_strcat(ampstr, " ", &len);
     }
   FREE(vals);

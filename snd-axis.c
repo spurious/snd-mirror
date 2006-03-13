@@ -127,10 +127,10 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double
   return(td);
 }
 
-static bool first_beat(chan_info *cp, Float val)
+static bool first_beat(chan_info *cp, double val)
 {
   int measure, beat;
-  Float beat_frac;
+  double beat_frac;
   beat = (int)val;
   beat_frac = val - beat;
   measure = (int)(beat / cp->beats_per_measure);
@@ -139,17 +139,17 @@ static bool first_beat(chan_info *cp, Float val)
 	 (beat_frac < .001));
 }
 
-static char *measure_number(chan_info *cp, Float val)
+static char *measure_number(int bpm, double val)
 {
   /* split out the measure number, change to beat count (1-based), add fraction, if any */
   /* "val" is in terms of beats */
   char *buf;
   int measure, beat;
-  Float beat_frac;
+  double beat_frac;
   beat = (int)val;
   beat_frac = val - beat;
-  measure = (int)(beat / cp->beats_per_measure);
-  beat = beat - measure * cp->beats_per_measure;
+  measure = (int)(beat / bpm);
+  beat = beat - measure * bpm;
   buf = (char *)CALLOC(64, sizeof(char));
   if (beat_frac > .001)
     {
@@ -164,6 +164,71 @@ static char *measure_number(chan_info *cp, Float val)
     }
   else snprintf(buf, 64, "%d(%d)", 1 + measure, 1 + beat);
   return(buf);
+}
+
+static char *location_to_string(double loc, int style, int bpm, int tens)
+{
+  if (tens == 0) tens = 1; /* in x axis we want the ".0" */
+  switch (style)
+    {
+    case X_AXIS_AS_CLOCK:
+      /* DD:HH:MM:SS.ddd */
+      {
+	int day, hour, minute, second;
+	double frac_second;
+	char *buf;
+	second = (int)loc;
+	frac_second = loc - second;
+	minute = (int)floor(second / 60);
+	hour = (int)floor(minute / 60);
+	day = (int)floor(hour / 24);
+	second %= 60;
+	minute %= 60;
+	hour %= 24;
+	buf = (char *)CALLOC(64, sizeof(char));
+	if (day > 0)
+	  sprintf(buf, "%02d:%02d:%02d:%02d.%0*d", day, hour, minute, second, tens, (int)(frac_second * pow(10.0, tens)));
+	else
+	  {
+	    if (hour > 0)
+	      sprintf(buf, "%02d:%02d:%02d.%0*d", hour, minute, second, tens, (int)(frac_second * pow(10.0, tens)));
+	    else
+	      {
+		if (minute > 0)
+		  sprintf(buf, "%02d:%02d.%0*d", minute, second, tens, (int)(frac_second * pow(10.0, tens)));
+		else
+		  {
+		    if (second > 0)
+		      sprintf(buf, "%d.%0*d", second, tens, (int)(frac_second * pow(10.0, tens)));
+		    else sprintf(buf, "0.%0*d", tens, (int)(frac_second * pow(10.0, tens)));
+		  }
+	      }
+	  }
+	return(buf);
+      }
+      break;
+    case X_AXIS_IN_MEASURES:
+      return(measure_number(bpm, loc));
+      break;
+    }
+  return(prettyf(loc, tens));
+}
+
+char *x_axis_location_to_string(chan_info *cp, double loc)
+{
+  if (cp)
+    {
+      axis_info *ap;
+      ap = cp->axis; /* time graph */
+      if (ap)
+	{
+	  tick_descriptor *tdx;
+	  tdx = ap->x_ticks;
+	  if (tdx)
+	    return(location_to_string(loc, cp->x_axis_style, cp->beats_per_measure, tdx->tens));
+	}
+    }
+  return(prettyf(loc, 2));
 }
 
 axis_info *free_axis_info(axis_info *ap)
@@ -222,6 +287,7 @@ static Locus tick_grf_x(double val, axis_info *ap, x_axis_style_t style, int sra
   int res = 0;
   switch (style)
     {
+    case X_AXIS_AS_CLOCK:
     case X_AXIS_IN_SECONDS: 
       res = (int)(ap->x_base + val * ap->x_scale); 
       break;
@@ -633,6 +699,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       num_ticks = (ap->x_axis_x1 - curx) / x_tick_spacing;
       switch (x_style)
 	{
+	case X_AXIS_AS_CLOCK:
 	case X_AXIS_IN_SECONDS: 
 	  tdx = describe_ticks(ap->x_ticks, ap->x0, ap->x1, num_ticks, grid_scale); 
 	  break;
@@ -672,18 +739,14 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      FREE(tdx->min_label); 
 	      tdx->min_label = NULL;
 	    }
-	  if ((ap->cp) && (x_style == X_AXIS_IN_MEASURES))
-	    tdx->min_label = measure_number(ap->cp, tdx->mlo);
-	  else tdx->min_label = prettyf(tdx->mlo, tdx->tens);
+	  tdx->min_label = location_to_string(tdx->mlo, x_style, (ap->cp) ? (ap->cp->beats_per_measure) : 1, tdx->tens);
 	  tdx->min_label_width = number_width(tdx->min_label);
 	  if (tdx->max_label) 
 	    {
 	      FREE(tdx->max_label); 
 	      tdx->max_label = NULL;
 	    }
-	  if ((ap->cp) && (x_style == X_AXIS_IN_MEASURES))
-	    tdx->max_label = measure_number(ap->cp, tdx->mhi);
-	  else tdx->max_label = prettyf(tdx->mhi, tdx->tens);
+	  tdx->max_label = location_to_string(tdx->mhi, x_style, (ap->cp) ? (ap->cp->beats_per_measure) : 1, tdx->tens);
 	  tdx->max_label_width = number_width(tdx->max_label);
 	  tick_label_width = tdx->min_label_width;
 	  if (tick_label_width < tdx->max_label_width) 
@@ -1376,7 +1439,7 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
                         (strcmp("GdkGC_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #endif
 
-#define AXIS_STYLE_OK(Id) (((Id) >= X_AXIS_IN_SECONDS) && ((Id) <= X_AXIS_IN_MEASURES))
+#define AXIS_STYLE_OK(Id) (((Id) >= X_AXIS_IN_SECONDS) && ((Id) <= X_AXIS_AS_CLOCK))
 #define SHOW_AXES_OK(Id) (((Id) >= SHOW_NO_AXES) && ((Id) <= SHOW_X_AXIS_UNLABELLED))
 
 static XEN g_draw_axes(XEN args)

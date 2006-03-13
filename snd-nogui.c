@@ -418,6 +418,12 @@ void snd_doit(int argc, char **argv)
                (define " S_mark_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_pushed_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_reset_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_quit_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_doit_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_doit_again_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_help_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_foreground_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_sash_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_selected_data_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_selected_graph_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
@@ -426,6 +432,8 @@ void snd_doit(int argc, char **argv)
                (define " S_x_axis_label " (make-procedure-with-setter (lambda args \"\") (lambda args \"\")))\
                (define " S_y_axis_label " (make-procedure-with-setter (lambda args \"\") (lambda args \"\")))\
                (define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_widget_size " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_widget_position " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define (" S_axis_info " . args) #f)\
                (define (" S_channel_widgets " . args) #f)\
                (define (" S_color_p " . args) #f)\
@@ -443,8 +451,31 @@ void snd_doit(int argc, char **argv)
                (define (" S_send_mozilla " . args) #f)\
                (define (" S_sound_widgets " . args) #f)\
                (define (" S_view_regions_dialog " . args) #f)\
+               (define (" S_find_dialog " . args) #f)\
                (define (" S_widget_text " . args) \"\")\
-               (define (" S_goto_listener_end ") #f)");
+               (define (" S_goto_listener_end ") #f)\
+               (define (" S_y_to_position " . args) #f)\
+               (define (" S_x_to_position " . args) #f)\
+               (define (" S_window_property " . args) #f)\
+               (define (" S_snd_gcs " . args) #f)\
+               (define (" S_show_widget " . args) #f)\
+               (define (" S_position_to_y " . args) #f)\
+               (define (" S_position_to_x " . args) #f)\
+               (define (" S_listener_selection " . args) #f)\
+               (define (" S_hide_widget " . args) #f)\
+               (define (" S_focus_widget " . args) #f)\
+               (define (" S_fill_rectangle " . args) #f)\
+               (define (" S_fill_polygon " . args) #f)\
+               (define (" S_draw_string " . args) #f)\
+               (define (" S_draw_lines " . args) #f)\
+               (define (" S_draw_line " . args) #f)\
+               (define (" S_draw_dots " . args) #f)\
+               (define (" S_draw_dot " . args) #f)\
+               (define (" S_draw_axes " . args) #f)\
+               (define (" S_delete_colormap " . args) #f)\
+               (define (" S_colormap_ref " . args) #f)\
+               (define (" S_colormap_name " . args) #f)\
+               (define (" S_add_colormap " . args) #f)");
 #endif
 #if HAVE_RUBY
   XEN_EVAL_C_STRING("def axis_info (s c a) false end");
@@ -460,6 +491,7 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("def reset_listener_cursor () false end");
   XEN_EVAL_C_STRING("def sound_widgets (s) false end");
   XEN_EVAL_C_STRING("def view_regions_dialog () false end");
+  XEN_EVAL_C_STRING("def find_dialog () false end");
   XEN_EVAL_C_STRING("def x_axis_label () false end");
   XEN_EVAL_C_STRING("def y_axis_label () false end");
 
@@ -495,6 +527,18 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("def set_position_color (a) false end");
   XEN_EVAL_C_STRING("def pushed_button_color () false end");
   XEN_EVAL_C_STRING("def set_pushed_button_color (a) false end");
+  XEN_EVAL_C_STRING("def reset_button_color () false end");
+  XEN_EVAL_C_STRING("def set_reset_button_color (a) false end");
+  XEN_EVAL_C_STRING("def help_button_color () false end");
+  XEN_EVAL_C_STRING("def set_help_button_color (a) false end");
+  XEN_EVAL_C_STRING("def doit_button_color () false end");
+  XEN_EVAL_C_STRING("def set_doit_button_color (a) false end");
+  XEN_EVAL_C_STRING("def doit_again_button_color () false end");
+  XEN_EVAL_C_STRING("def set_doit_again_button_color (a) false end");
+  XEN_EVAL_C_STRING("def quit_button_color () false end");
+  XEN_EVAL_C_STRING("def set_quit_button_color (a) false end");
+  XEN_EVAL_C_STRING("def foreground_color () false end");
+  XEN_EVAL_C_STRING("def set_foreground_color (a) false end");
   XEN_EVAL_C_STRING("def sash_color () false end");
   XEN_EVAL_C_STRING("def set_sash_color (a) false end");
   XEN_EVAL_C_STRING("def selected_data_color () false end");
@@ -507,10 +551,37 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("def set_text_focus_color (a) false end");
   XEN_EVAL_C_STRING("def zoom_color () false end");
   XEN_EVAL_C_STRING("def set_zoom_color (a) false end");
+  XEN_EVAL_C_STRING("def widget_size () false end");
+  XEN_EVAL_C_STRING("def set_widget_size (a) false end");
+  XEN_EVAL_C_STRING("def widget_position () false end");
+  XEN_EVAL_C_STRING("def set_widget_position (a) false end");
   XEN_EVAL_C_STRING("def colormap? (a) false end");
   XEN_EVAL_C_STRING("def in (a b) false end");
   XEN_EVAL_C_STRING("def send_mozilla (a) false end");
   XEN_EVAL_C_STRING("def widget_text (a) false end");
+
+  XEN_EVAL_C_STRING("def y2position (a) false end");
+  XEN_EVAL_C_STRING("def x2position (a) false end");
+  XEN_EVAL_C_STRING("def position2y (a) false end");
+  XEN_EVAL_C_STRING("def position2x (a) false end");
+  XEN_EVAL_C_STRING("def window_property (a) false end");
+  XEN_EVAL_C_STRING("def snd_gcs (a) false end");
+  XEN_EVAL_C_STRING("def show_widget (a) false end");
+  XEN_EVAL_C_STRING("def listener_selection (a) false end");
+  XEN_EVAL_C_STRING("def hide_widget (a) false end");
+  XEN_EVAL_C_STRING("def focus_widget (a) false end");
+  XEN_EVAL_C_STRING("def fill_rectangle (a) false end");
+  XEN_EVAL_C_STRING("def fill_polygon (a) false end");
+  XEN_EVAL_C_STRING("def draw_string (a) false end");
+  XEN_EVAL_C_STRING("def draw_lines (a) false end");
+  XEN_EVAL_C_STRING("def draw_line (a) false end");
+  XEN_EVAL_C_STRING("def draw_dots (a) false end");
+  XEN_EVAL_C_STRING("def draw_dot (a) false end");
+  XEN_EVAL_C_STRING("def draw_axes (a) false end");
+  XEN_EVAL_C_STRING("def delete_colormap (a) false end");
+  XEN_EVAL_C_STRING("def colormap_ref (a) false end");
+  XEN_EVAL_C_STRING("def colormap_name (a) false end");
+  XEN_EVAL_C_STRING("def add_colormap (a) false end");
 
   XEN_EVAL_C_STRING("def make_graph_data (a b c) false end");
   XEN_EVAL_C_STRING("def graph_data (a b c) false end");

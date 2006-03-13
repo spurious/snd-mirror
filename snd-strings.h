@@ -711,6 +711,7 @@
 #define S_with_tracking_cursor          "with-tracking-cursor"
 #define S_with_verbose_cursor           "with-verbose-cursor"
 #define S_write_peak_env_info_file      "write-peak-env-info-file"
+#define S_x_axis_as_clock               "x-axis-as-clock"
 #define S_x_axis_as_percentage          "x-axis-as-percentage"
 #define S_x_axis_in_beats               "x-axis-in-beats"
 #define S_x_axis_in_measures            "x-axis-in-measures"

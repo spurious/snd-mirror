@@ -502,7 +502,7 @@ void cursor_search(chan_info *cp, int count)
 		{
 		  char *s1, *s2, *msg;
 		  s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2);
-		  s2 = prettyf((double)samp / (double)SND_SRATE(sp), 2);
+		  s2 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp));
 		  msg = mus_format("%s at %s (" OFF_TD ")", s1, s2, samp);
 		  display_minibuffer_error(sp, msg);
 		  FREE(s1);

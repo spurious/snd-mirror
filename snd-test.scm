@@ -4,32 +4,32 @@
 ;;;  test 1: defaults                           [1030]
 ;;;  test 2: headers                            [1233]
 ;;;  test 3: variables                          [1537]
-;;;  test 4: sndlib                             [1937]
-;;;  test 5: simple overall checks              [4067]
-;;;  test 6: vcts                               [11484]
-;;;  test 7: colors                             [11794]
-;;;  test 8: clm                                [12296]
-;;;  test 9: mix                                [20625]
-;;;  test 10: marks                             [23755]
-;;;  test 11: dialogs                           [24458]
-;;;  test 12: extensions                        [24844]
-;;;  test 13: menus, edit lists, hooks, etc     [25272]
-;;;  test 14: all together now                  [26699]
-;;;  test 15: chan-local vars                   [27769]
-;;;  test 16: regularized funcs                 [29046]
-;;;  test 17: dialogs and graphics              [33413]
-;;;  test 18: enved                             [33501]
-;;;  test 19: save and restore                  [33521]
-;;;  test 20: transforms                        [35117]
-;;;  test 21: new stuff                         [36793]
-;;;  test 22: run                               [37681]
-;;;  test 23: with-sound                        [43197]
-;;;  test 24: user-interface                    [44285]
-;;;  test 25: X/Xt/Xm                           [47881]
-;;;  test 26: Gtk                               [52465]
-;;;  test 27: GL                                [56537]
-;;;  test 28: errors                            [56647]
-;;;  test all done                              [58786]
+;;;  test 4: sndlib                             [2191]
+;;;  test 5: simple overall checks              [4322]
+;;;  test 6: vcts                               [11739]
+;;;  test 7: colors                             [12049]
+;;;  test 8: clm                                [12555]
+;;;  test 9: mix                                [20884]
+;;;  test 10: marks                             [24014]
+;;;  test 11: dialogs                           [24717]
+;;;  test 12: extensions                        [25103]
+;;;  test 13: menus, edit lists, hooks, etc     [25531]
+;;;  test 14: all together now                  [26961]
+;;;  test 15: chan-local vars                   [28031]
+;;;  test 16: regularized funcs                 [29310]
+;;;  test 17: dialogs and graphics              [33677]
+;;;  test 18: enved                             [33765]
+;;;  test 19: save and restore                  [33785]
+;;;  test 20: transforms                        [35381]
+;;;  test 21: new stuff                         [37057]
+;;;  test 22: run                               [37945]
+;;;  test 23: with-sound                        [43461]
+;;;  test 24: user-interface                    [44549]
+;;;  test 25: X/Xt/Xm                           [48145]
+;;;  test 26: Gtk                               [52729]
+;;;  test 27: GL                                [56801]
+;;;  test 28: errors                            [56911]
+;;;  test all done                              [59051]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -539,6 +539,7 @@
 	'x-axis-in-beats x-axis-in-beats 3
 	'x-axis-in-measures x-axis-in-measures 4
 	'x-axis-in-seconds x-axis-in-seconds 0 
+	'x-axis-as-clock x-axis-as-clock 5
 	'x-axis-as-percentage x-axis-as-percentage 2
 	'enved-add-point enved-add-point 0
 	'enved-delete-point enved-delete-point 1
@@ -1931,6 +1932,260 @@
 	    (snd-stdin-test "(set! (enved-filter")
 	    (snd-stdin-test "-order) 10)")
 	    (if (not (= (enved-filter-order) 10)) (snd-display ";set enved-filter-order 12 via 2 stdin: ~A" (enved-filter-order)))))
+
+      (let ((undef '())
+	    (names (list '*snd-opened-sound* 'abort 'add-clm-field 'add-clm-type 'add-colormap 
+			 'add-directory-to-view-files-list 'add-file-filter 'add-file-sorter 'add-file-to-view-files-list 'add-mark
+			 'add-player 'add-sound-file-extension 'add-to-main-menu 'add-to-menu
+			 'add-transform 'after-apply-hook 'after-edit-hook 'after-graph-hook
+			 'after-open-hook 'after-save-as-hook 'after-save-state-hook 'after-transform-hook 'all-pass
+			 'all-pass? 'amp-control 'amp-control-bounds 'amplitude-modulate 'analyse-ladspa
+			 'apply-controls 'apply-ladspa 'array->file 'array-interp 'as-one-edit
+			 'ask-before-overwrite 'asymmetric-fm 'asymmetric-fm? 'audio-input-device 'audio-output-device
+			 'auto-resize 'auto-update 'auto-update-interval 'autocorrelate 'autocorrelation
+			 'average 'average? 'axis-info 'axis-label-font 'axis-numbers-font
+			 'bad-header-hook 'bartlett-window 'basic-color 'beats-per-measure 'beats-per-minute
+			 'before-close-hook 'before-exit-hook 'before-save-as-hook 'before-save-state-hook 'before-transform-hook
+			 'bind-key 'blackman2-window 'blackman3-window 'blackman4-window 'bold-peaks-font
+			 'bomb 'c-g! 'c-g? 'cauchy-window
+			 'cepstrum 'change-samples-with-origin 'channel->vct 'channel-amp-envs 'channel-data
+			 'channel-properties 'channel-style 'channel-widgets 'channels 'channels-combined
+			 'channels-separate 'channels-superimposed 'chans 'clear-array 'clear-listener
+			 'clear-minibuffer 'clear-sincs 'clipping 'clm-channel 'clm-print
+			 'clm-table-size 'close-hook 'close-sound 'close-sound-file 'color->list
+			 'color-cutoff 'color-dialog 'color-hook 'color-inverted 'color-scale
+			 'color? 'colormap 'colormap-name 'colormap-ref 'colormap-size
+			 'colormap? 'comb 'comb? 'comment 'connes-window
+			 'continue-frame->file 'continue-sample->file 'contrast-control 'contrast-control-amp 'contrast-control-bounds
+			 'contrast-control? 'contrast-enhancement 'controls->channel 'convolution 'convolve
+			 'convolve-files 'convolve-selection-with 'convolve-with 'convolve? 'copy-context
+			 'copy-mix 'copy-sample-reader 'copy-track 'count-matches 'current-edit-position
+			 'current-font 'cursor 'cursor-color 'cursor-context 'cursor-cross
+			 'cursor-in-middle 'cursor-in-view 'cursor-line 'cursor-location-offset 'cursor-on-left
+			 'cursor-on-right 'cursor-position 'cursor-size 'cursor-style 'cursor-update-interval
+			 'dac-combines-channels 'dac-hook 'dac-size 'data-color 'data-format
+			 'data-location 'data-size 'db->linear 'default-output-chans 'default-output-data-format
+			 'default-output-header-type 'default-output-srate 'define-envelope 'degrees->radians 'delay
+			 'delay-tick 'delay? 'delete-colormap 'delete-file-filter 'delete-file-sorter
+			 'delete-mark 'delete-marks 'delete-mix 'delete-sample 'delete-samples
+			 'delete-selection 'delete-track 'delete-transform 'dialog-widgets 'disk-kspace
+			 'display-edits 'doit-again-button-color 'doit-button-color 'dolph-chebyshev-window 'dont-normalize
+			 'dot-product 'dot-size 'draw-axes 'draw-dot 'draw-dots
+			 'draw-line 'draw-lines 'draw-mark-hook 'draw-string 'drop-hook
+			 'during-open-hook 'edit-fragment 'edit-header-dialog 'edit-hook 'edit-list->function
+			 'edit-position 'edit-tree 'edits 'edot-product 'env
+			 'env-channel 'env-channel-with-base 'env-interp 'env-selection 'env-sound
+			 'env? 'enved-add-point 'enved-amplitude 'enved-base 'enved-clip?
+			 'enved-delete-point 'enved-dialog 'enved-envelope 'enved-filter 'enved-filter-order
+			 'enved-hook 'enved-in-dB 'enved-move-point 'enved-power 'enved-spectrum
+			 'enved-srate 'enved-style 'enved-target 'enved-wave? 'enved-waveform-color
+			 'envelope-exponential 'envelope-linear 'eps-bottom-margin 'eps-file
+			 'eps-left-margin 'eps-size 'equalize-panes 'exit 'exit-hook
+			 'expand-control 'expand-control-bounds 'expand-control-hop 'expand-control-jitter 'expand-control-length
+			 'expand-control-ramp 'expand-control? 'exponential-window 'fft 'fft-log-frequency
+			 'fft-log-magnitude 'fft-window 'fft-window-alpha 'fft-window-beta 'file->array
+			 'file->frame 'file->frame? 'file->sample 'file->sample? 'file->string
+			 'file-name 'file-write-date 'fill-polygon 'fill-rectangle 'filter
+			 'filter-channel 'filter-control-coeffs 'filter-control-envelope 'filter-control-in-dB 'filter-control-in-hz
+			 'filter-control-order 'filter-control-waveform-color 'filter-control? 'filter-selection 'filter-sound
+			 'filter? 'find-channel 'find-dialog 'find-mark 'find-sound
+			 'finish-progress-report 'fir-filter 'fir-filter? 'focus-widget 'foreground-color
+			 'forget-region 'formant 'formant-bank 'formant? 'fourier-transform
+			 'frame* 'frame+ 'frame->file 'frame->file?
+			 'frame->frame 'frame->list 'frame->sample 'frame-ref 'frame-set!
+			 'frame? 'frames 'free-player
+			 'free-sample-reader 'free-track 'gaussian-window 'gc-off 'gc-on
+			 'glSpectrogram 'goto-listener-end 'granulate 'granulate?
+			 'graph 'graph->ps 'graph-as-sonogram 'graph-as-spectrogram 'graph-as-wavogram
+			 'graph-color 'graph-cursor 'graph-data 'graph-dots 'graph-dots-and-lines
+			 'graph-filled 'graph-hook 'graph-lines 'graph-lollipops 'graph-once
+			 'graph-style 'graphs-horizontal 'grid-density 'haar-transform 'hamming-window
+			 'hann-poisson-window 'hann-window 'header-type 'help-button-color 'help-dialog
+			 'help-hook 'hide-widget 'highlight-color 'html-dir 'html-program
+			 'hz->radians 'iir-filter 'iir-filter? 'in 'in-any
+			 'ina 'inb 'info-dialog 'init-ladspa 'initial-graph-hook
+			 'insert-file-dialog 'insert-region 'insert-sample 'insert-samples 'insert-samples-with-origin
+			 'insert-selection 'insert-silence 'insert-sound 'just-sounds 'kaiser-window
+			 'key 'key-binding 'key-press-hook 'keyboard-no-action 'ladspa-activate
+			 'ladspa-cleanup 'ladspa-connect-port 'ladspa-deactivate 'ladspa-descriptor 'ladspa-dir
+			 'ladspa-instantiate 'ladspa-run 'ladspa-run-adding 'ladspa-set-run-adding-gain 'left-sample
+			 'linear->db 'lisp-graph 'lisp-graph-hook 'lisp-graph-style 'lisp-graph?
+			 'list->vct 'list-ladspa 'listener-click-hook 'listener-color 'listener-font
+			 'listener-prompt 'listener-selection 'listener-text-color 'lock-track 'locsig
+			 'locsig-ref 'locsig-reverb-ref 'locsig-reverb-set! 'locsig-set! 'locsig-type
+			 'locsig? 'log-freq-start 'main-menu 'main-widgets 'make-all-pass
+			 'make-asymmetric-fm 'make-average 'make-bezier 'make-color 'make-comb
+			 'make-convolve 'make-delay 'make-env 'make-fft-window 'make-file->frame
+			 'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant
+			 'make-frame 'make-frame->file 'make-granulate 'make-graph-data 'make-iir-filter
+			 'make-locsig 'make-mix-sample-reader 'make-mixer 'make-notch 'make-one-pole
+			 'make-one-zero 'make-oscil 'make-phase-vocoder 'make-player 'make-polyshape
+			 'make-ppolar 'make-pulse-train 'make-rand 'make-rand-interp 'make-readin
+			 'make-region 'make-region-sample-reader 'make-sample->file 'make-sample-reader 'make-sawtooth-wave
+			 'make-scalar-mixer 'make-sine-summation 'make-snd->sample 'make-sound-data 'make-square-wave
+			 'make-src 'make-ssb-am 'make-sum-of-cosines 'make-sum-of-sines 'make-table-lookup
+			 'make-track 'make-track-sample-reader 'make-triangle-wave 'make-two-pole 'make-two-zero
+			 'make-variable-graph 'make-vct 'make-wave-train 'make-waveshape 'make-zpolar
+			 'map-chan 'map-channel 'mark-click-hook 'mark-color 'mark-context
+			 'mark-drag-hook 'mark-drag-triangle-hook 'mark-home 'mark-hook 'mark-name
+			 'mark-sample 'mark-sync 'mark-sync-max 'mark-tag-height 'mark-tag-width
+			 'mark? 'marks 'max-regions 'max-transform-peaks 'maxamp
+			 'maxamp-position 'menu-widgets 'min-dB 'minibuffer-history-length 'mix
+			 'mix-amp 'mix-amp-env 'mix-chans 'mix-click-hook 'mix-color
+			 'mix-dialog-mix 'mix-drag-hook 'mix-file-dialog 'mix-frames 'mix-home
+			 'mix-inverted? 'mix-locked? 'mix-position 'mix-region 'mix-release-hook
+			 'mix-sample-reader? 'mix-selection 'mix-speed 'mix-speed-style 'mix-tag-height
+			 'mix-tag-position 'mix-tag-width 'mix-tag-xy 'mix-tag-y 'mix-track
+			 'mix-vct 'mix-waveform-height 'mix? 'mixer*
+			 'mixer+ 'mixer-ref 'mixer-set! 'mixer?
+			 'mixes 'mouse-click-hook 'mouse-drag-hook 'mouse-enter-graph-hook
+			 'mouse-enter-label-hook 'mouse-enter-listener-hook 'mouse-enter-text-hook 'mouse-leave-graph-hook 'mouse-leave-label-hook
+			 'mouse-leave-listener-hook 'mouse-leave-text-hook 'mouse-press-hook 'move-locsig 'multiply-arrays
+			 'mus-aifc 'mus-aiff 'mus-alaw 'mus-alsa-buffer-size 'mus-alsa-buffers
+			 'mus-alsa-capture-device 'mus-alsa-device 'mus-alsa-playback-device 'mus-alsa-squelch-warning 'mus-apply
+			 'mus-array-print-length 'mus-audio-adat-in 'mus-audio-adat-out 'mus-audio-aes-in 'mus-audio-aes-out
+			 'mus-audio-amp 'mus-audio-aux-input 'mus-audio-aux-output 'mus-audio-bass 'mus-audio-cd
+			 'mus-audio-channel 'mus-audio-close 'mus-audio-dac-filter 'mus-audio-dac-out 'mus-audio-default
+			 'mus-audio-describe 'mus-audio-digital-in 'mus-audio-digital-out 'mus-audio-direction 'mus-audio-duplex-default
+			 'mus-audio-format 'mus-audio-igain 'mus-audio-imix 'mus-audio-line 'mus-audio-line-in
+			 'mus-audio-line-out 'mus-audio-line1 'mus-audio-line2 'mus-audio-line3 'mus-audio-microphone
+			 'mus-audio-mixer 'mus-audio-mixer-read 'mus-audio-mixer-write 'mus-audio-ogain 'mus-audio-open-input
+			 'mus-audio-open-output 'mus-audio-pcm 'mus-audio-pcm2 'mus-audio-port 'mus-audio-read
+			 'mus-audio-reclev 'mus-audio-reinitialize 'mus-audio-report 'mus-audio-samples-per-channel 'mus-audio-spdif-in
+			 'mus-audio-spdif-out 'mus-audio-speakers 'mus-audio-srate 'mus-audio-synth 'mus-audio-systems
+			 'mus-audio-treble 'mus-audio-write 'mus-b24int 'mus-bdouble 'mus-bdouble-unscaled
+			 'mus-bfloat 'mus-bfloat-unscaled 'mus-bicsf 'mus-bint 'mus-bintn
+			 'mus-bshort 'mus-byte 'mus-bytes-per-sample 'mus-channel 'mus-channels
+			 'mus-chebyshev-first-kind 'mus-chebyshev-second-kind 'mus-clipping 'mus-close 'mus-cosines
+			 'mus-data 'mus-data-format->string 'mus-data-format-name 'mus-describe 'mus-error-hook
+			 'mus-error-type->string 'mus-expand-filename 'mus-feedback 'mus-feedforward 'mus-fft
+			 'mus-file-buffer-size 'mus-file-clipping 'mus-file-name 'mus-file-prescaler 'mus-formant-radius
+			 'mus-frequency 'mus-generator? 'mus-header-raw-defaults 'mus-header-type->string 'mus-header-type-name
+			 'mus-hop 'mus-increment 'mus-input? 'mus-interp-all-pass 'mus-interp-bezier
+			 'mus-interp-hermite 'mus-interp-lagrange 'mus-interp-linear 'mus-interp-none 'mus-interp-sinusoidal
+			 'mus-interp-type 'mus-interpolate 'mus-ircam 'mus-l24int 'mus-ldouble
+			 'mus-ldouble-unscaled 'mus-length 'mus-lfloat 'mus-lfloat-unscaled 'mus-lint
+			 'mus-lintn 'mus-location 'mus-lshort 'mus-make-error 'mus-midi-close
+			 'mus-midi-describe 'mus-midi-device-name 'mus-midi-open-read 'mus-midi-open-write 'mus-midi-read
+			 'mus-midi-write 'mus-mix 'mus-mulaw 'mus-name 'mus-netbsd-set-outputs
+			 'mus-next 'mus-nist 'mus-offset 'mus-order 'mus-oss-set-buffers
+			 'mus-out-format 'mus-output? 'mus-phase 'mus-prescaler 'mus-ramp
+			 'mus-rand-seed 'mus-random 'mus-raw 'mus-reset 'mus-riff
+			 'mus-run 'mus-scaler 'mus-set-formant-radius-and-frequency 'mus-sound-chans 'mus-sound-close-input
+			 'mus-sound-close-output 'mus-sound-comment 'mus-sound-data-format 'mus-sound-data-location 'mus-sound-datum-size
+			 'mus-sound-duration 'mus-sound-forget 'mus-sound-frames 'mus-sound-header-type 'mus-sound-length
+			 'mus-sound-loop-info 'mus-sound-maxamp 'mus-sound-maxamp-exists? 'mus-sound-open-input 'mus-sound-open-output
+			 'mus-sound-prune 'mus-sound-read 'mus-sound-reopen-output 'mus-sound-report-cache 'mus-sound-samples
+			 'mus-sound-seek-frame 'mus-sound-srate 'mus-sound-type-specifier 'mus-sound-write 'mus-sound-write-date
+			 'mus-soundfont 'mus-srate 'mus-sun-set-outputs 'mus-svx 'mus-ubshort
+			 'mus-ubyte 'mus-ulshort 'mus-unknown 'mus-unsupported 'mus-voc
+			 'mus-width 'mus-xcoeff 'mus-xcoeffs 'mus-ycoeff 'mus-ycoeffs
+			 'name-click-hook 'new-sound 'new-sound-dialog 'new-sound-hook 'new-widget-hook
+			 'next-sample 'normalize-by-channel 'normalize-by-sound 'normalize-channel 'normalize-globally
+			 'notch 'notch? 'one-pole 'one-pole? 'one-zero
+			 'one-zero? 'open-file-dialog 'open-hook 'open-raw-sound 'open-raw-sound-hook
+			 'open-sound 'open-sound-file 'optimization 'optimization-hook 'orientation-dialog
+			 'orientation-hook 'oscil 'oscil? 'out-any 'outa
+			 'outb 'outc 'outd 'output-comment-hook 'output-name-hook
+			 'override-samples-with-origin 'pad-channel 'partials->polynomial 'partials->wave 'partials->waveshape
+			 'parzen-window 'pausing 'peak-env-info 'peaks 'peaks-font
+			 'phase-partials->wave 'phase-vocoder 'phase-vocoder-amp-increments 'phase-vocoder-amps 'phase-vocoder-freqs
+			 'phase-vocoder-outctr 'phase-vocoder-phase-increments 'phase-vocoder-phases 'phase-vocoder? 'play
+			 'play-and-wait 'play-channel 'play-hook 'play-mix 'play-region
+			 'play-selection 'play-track 'player-home 'player? 'players
+			 'playing 'poisson-window 'polar->rectangular 'polynomial 'polyshape
+			 'polyshape? 'position->x 'position->y 'position-color 'preferences-dialog
+			 'previous-sample 'print-dialog 'print-hook 'print-length 'progress-report
+			 'prompt-in-minibuffer 'ptree-channel 'pulse-train
+			 'pulse-train? 'pushed-button-color 'quit-button-color 'radians->degrees 'radians->hz
+			 'ramp-channel 'rand 'rand-interp 'rand-interp? 'rand?
+			 'read-hook 'read-mix-sample 'read-only 'read-peak-env-info-file 'read-region-sample
+			 'read-sample 'read-track-sample 'readin 'readin? 'recorder-autoload
+			 'recorder-buffer-size 'recorder-dialog 'recorder-file 'recorder-file-hook 'recorder-gain
+			 'recorder-in-amp 'recorder-in-chans 'recorder-in-data-format 'recorder-in-device 'recorder-max-duration
+			 'recorder-out-amp 'recorder-out-chans 'recorder-out-data-format 'recorder-out-header-type 'recorder-srate
+			 'recorder-trigger 'rectangular->polar 'rectangular-window 'redo 'redo-edit
+			 'region->vct 'region-chans 'region-frames 'region-graph-style 'region-maxamp
+			 'region-maxamp-position 'region-position 'region-sample 'region-sample-reader? 'region-srate
+			 'region? 'regions 'remove-from-menu 'report-in-minibuffer 'reset-button-color
+			 'reset-controls 'reset-listener-cursor 'restore-controls 'restore-marks 'restore-region
+			 'reverb-control-decay 'reverb-control-feedback 'reverb-control-length 'reverb-control-length-bounds 'reverb-control-lowpass
+			 'reverb-control-scale 'reverb-control-scale-bounds 'reverb-control? 'reverse-channel 'reverse-selection
+			 'reverse-sound 'revert-sound 'riemann-window 'right-sample 'ring-modulate
+			 'run 'run-safety 'samaraki-window 'sample 'sample->file
+			 'sample->file? 'sample->frame 'sample-reader-at-end? 'sample-reader-home 'sample-reader-position
+			 'sample-reader? 'samples 'samples->seconds 'samples->sound-data 'sash-color
+			 'save-controls 'save-dir 'save-edit-history 'save-envelopes 'save-hook
+			 'save-listener 'save-macros 'save-marks 'save-region 'save-region-dialog
+			 'save-selection 'save-selection-dialog 'save-sound 'save-sound-as 'save-sound-dialog
+			 'save-state 'save-state-file 'save-state-hook 'sawtooth-wave 'sawtooth-wave?
+			 'scale-by 'scale-channel 'scale-selection-by 'scale-selection-to 'scale-to
+			 'scan-chan 'scan-channel 'script-arg 'script-args 'search-procedure
+			 'seconds->samples 'select-all 'select-channel 'select-channel-hook 'select-sound
+			 'select-sound-hook 'selected-channel 'selected-data-color 'selected-graph-color 'selected-sound
+			 'selection-changed-hook 'selection-chans 'selection-color 'selection-context 'selection-creates-region
+			 'selection-frames 'selection-maxamp 'selection-maxamp-position 'selection-member? 'selection-position
+			 'selection-srate 'selection? 'send-mozilla
+			 'short-file-name 'show-all-axes 'show-all-axes-unlabelled
+			 'show-axes 'show-backtrace 'show-controls 'show-grid 'show-indices
+			 'show-listener 'show-marks 'show-mix-waveforms 'show-no-axes 'show-selection-transform
+			 'show-sonogram-cursor 'show-transform-peaks 'show-widget 'show-x-axis 'show-x-axis-unlabelled
+			 'show-y-zero 'sinc-width 'sine-bank 'sine-summation 'sine-summation?
+			 'smooth-channel 'smooth-selection 'smooth-sound 'snd->sample 'snd->sample?
+			 'snd-error 'snd-error-hook 'snd-gcs 'snd-help
+			 'snd-print 'snd-simulate-keystroke 'snd-spectrum 'snd-tempnam 'snd-url
+			 'snd-urls 'snd-version 'snd-warning 'snd-warning-hook 'sound-data->sound-data
+			 'sound-data->vct 'sound-data-chans 'sound-data-length 'sound-data-maxamp 'sound-data-ref
+			 'sound-data-set! 'sound-data? 'sound-file-extensions 'sound-file? 'sound-files-in-directory
+			 'sound-loop-info 'sound-properties 'sound-widgets 'sound? 'soundfont-info
+			 'sounds 'spectro-cutoff 'spectro-hop 'spectro-start 'spectro-x-angle
+			 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
+			 'spectrum 'speed-control 'speed-control-as-float 'speed-control-as-ratio 'speed-control-as-semitone
+			 'speed-control-bounds 'speed-control-style 'speed-control-tones 'square-wave 'square-wave?
+			 'squelch-update 'srate 'src 'src-channel 'src-selection
+			 'src-sound 'src? 'ssb-am 'ssb-am? 'start-hook
+			 'start-playing 'start-playing-hook 'start-playing-selection-hook 'start-progress-report 'stop-dac-hook
+			 'stop-player 'stop-playing 'stop-playing-hook 'stop-playing-selection-hook 'sum-of-cosines
+			 'sum-of-cosines? 'sum-of-sines 'sum-of-sines? 'swap-channels 'sync
+			 'sync-max 'syncd-marks 'table-lookup 'table-lookup? 'tap
+			 'temp-dir 'tempo-control-bounds 'text-focus-color 'time-graph 'time-graph-style
+			 'time-graph-type 'time-graph? 'tiny-font 'track 'track-amp
+			 'track-amp-env 'track-chans 'track-color 'track-dialog-track 'track-frames
+			 'track-position 'track-sample-reader? 'track-speed 'track-speed-style 'track-tempo
+			 'track-track 'track? 'tracking-cursor-style 'tracks 'transform->vct
+			 'transform-dialog 'transform-frames 'transform-graph 'transform-graph-style 'transform-graph-type
+			 'transform-graph? 'transform-normalization 'transform-sample 'transform-size 'transform-type
+			 'transform? 'trap-segfault 'triangle-wave 'triangle-wave? 'tukey-window
+			 'two-pole 'two-pole? 'two-zero 'two-zero? 'ultraspherical-window
+			 'unbind-key  'undo 'undo-hook 'update-hook 'update-lisp-graph
+			 'update-sound 'update-time-graph 'update-transform-graph 'variable-graph? 'vct
+			 'vct* 'vct+ 'vct->channel 'vct->list 'vct->sound-data
+			 'vct->sound-file 'vct->string 'vct->vector 'vct-add! 'vct-copy
+			 'vct-fill! 'vct-length 'vct-map 'vct-map! 'vct-move!
+			 'vct-multiply! 'vct-offset! 'vct-peak 'vct-ref 'vct-reverse!
+			 'vct-scale! 'vct-set! 'vct-subseq 'vct-subtract! 'vct?
+			 'vector->vct 'view-files-amp 'view-files-amp-env
+			 'view-files-dialog 'view-files-files 'view-files-select-hook 'view-files-selected-files 'view-files-sort
+			 'view-files-speed 'view-files-speed-style 'view-mixes-dialog 'view-regions-dialog 'view-sound
+			 'view-tracks-dialog 'vu-font 'vu-font-size 'vu-size 'walsh-transform
+			 'wave-train 'wave-train? 'wavelet-transform 'wavelet-type 'waveshape
+			 'waveshape? 'wavo-hop 'wavo-trace 'welch-window 'widget-position
+			 'widget-size 'widget-text 'window-height 'window-property 'window-property-changed-hook
+			 'window-width 'window-x 'window-y 'with-background-processes 'with-gl
+			 'with-mix-tags 'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor 'write-peak-env-info-file
+			 'x->position 'x-axis-as-clock 'x-axis-as-percentage 'x-axis-in-beats 'x-axis-in-measures
+			 'x-axis-in-samples 'x-axis-in-seconds 'x-axis-label 'x-axis-style 'x-bounds
+			 'x-position-slider 'x-zoom-slider 'xramp-channel 'y->position 'y-axis-label
+			 'y-bounds 'y-position-slider 'y-zoom-slider 'zero-pad 'zoom-color
+			 'zoom-focus-active 'zoom-focus-left 'zoom-focus-middle 'zoom-focus-right 'zoom-focus-style)))
+	(for-each
+	 (lambda (n)
+	   (if (not (defined? n))
+	       (set! undef (cons n undef))))
+	 names)
+	(if (not (null? undef))
+	    (snd-display ";undefined: ~A" undef)))
+      
       (run-hook after-test-hook 3)
       ))
 
@@ -3394,8 +3649,8 @@
 			    (if (or (not (number? mxd)) (not (= mxd mx))) (snd-display ";bigger find-mix ~A ~A" mxd mx))))
 			(set! (cursor ind) (* 44123 51234))
 			(if (not (= (cursor ind) (* 44123 51234))) (snd-display ";bigger cursor 123: ~A" (cursor ind)))
-			(close-sound ind))
-		      ))))
+			(close-sound ind)))
+		    (snd-warning "can't find bigger.snd"))))
 
 	  (let ((ind (new-sound "tmp.snd" mus-riff mus-l24int 22050 1 :size 100000)))
 	    (let ((x -0.5) 
@@ -45838,8 +46093,8 @@ EDITS: 1
 		       (lambda (name style)
 			 (XtCallCallbacks (menu-option name) XmNactivateCallback (snd-global-state))
 			 (if (not (= (x-axis-style) style)) (snd-display ";x-axis style ~A: ~A" name (x-axis-style))))
-		       (list "samples" "percentage" "beats" "seconds" "measures")
-		       (list x-axis-in-samples x-axis-as-percentage x-axis-in-beats x-axis-in-seconds x-axis-in-measures))
+		       (list "samples" "percentage" "beats" "seconds" "measures" "clock")
+		       (list x-axis-in-samples x-axis-as-percentage x-axis-in-beats x-axis-in-seconds x-axis-in-measures x-axis-as-clock))
 		      (set! (cursor) 50)
 		      (for-each
 		       (lambda (name style)
@@ -58123,6 +58378,7 @@ EDITS: 1
 	      (check-error-tag 'wrong-type-arg (lambda () (scale-by (make-mixer 2 .1 .1 .2 .2))))
 	      (check-error-tag 'wrong-type-arg (lambda () (src-sound 3.0 1.0 #t)))
 	      (check-error-tag 'wrong-type-arg (lambda () (src-sound 3.0 1.0 ind #t)))
+	      (check-error-tag 'no-such-edit (lambda () (display-edits ind 0 123)))
 	      (close-sound ind))
 	    (check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
 	    (check-error-tag 'cannot-save (lambda () (save-state "/bad/baddy")))
@@ -58812,7 +59068,7 @@ EDITS: 1
 (save-listener "test.output")
 (set! (listener-prompt) original-prompt)
 
-(display (format #f ";all done!~%~A" original-prompt))
+(display (format #f "~%;all done!~%~A" original-prompt))
 
 (if (number? (vector-ref timings total-tests)) 
     (vector-set! timings total-tests (hundred (- (real-time) (vector-ref timings total-tests)))))
