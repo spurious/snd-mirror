@@ -166,49 +166,55 @@ static char *measure_number(int bpm, double val)
   return(buf);
 }
 
+static char *clock_number(double loc, int tens)
+{
+  /* DD:HH:MM:SS.ddd */
+  int day, hour, minute, second;
+  double frac_second;
+  char *buf;
+  second = (int)loc;
+  frac_second = loc - second;
+  minute = (int)floor(second / 60);
+  hour = (int)floor(minute / 60);
+  day = (int)floor(hour / 24);
+  second %= 60;
+  minute %= 60;
+  hour %= 24;
+  buf = (char *)CALLOC(64, sizeof(char));
+  if (day > 0)
+    sprintf(buf, "%02d:%02d:%02d:%02d.%0*d", day, hour, minute, second, tens, (int)(frac_second * pow(10.0, tens)));
+  else
+    {
+      if (hour > 0)
+	sprintf(buf, "%02d:%02d:%02d.%0*d", hour, minute, second, tens, (int)(frac_second * pow(10.0, tens)));
+      else
+	{
+	  if (minute > 0)
+	    sprintf(buf, "%02d:%02d.%0*d", minute, second, tens, (int)(frac_second * pow(10.0, tens)));
+	  else
+	    {
+	      if (second > 0)
+		sprintf(buf, "%d.%0*d", second, tens, (int)(frac_second * pow(10.0, tens)));
+	      else sprintf(buf, "0.%0*d", tens, (int)(frac_second * pow(10.0, tens)));
+	    }
+	}
+    }
+  return(buf);
+}
+
 static char *location_to_string(double loc, int style, int bpm, int tens)
 {
   if (tens == 0) tens = 1; /* in x axis we want the ".0" */
   switch (style)
     {
     case X_AXIS_AS_CLOCK:
-      /* DD:HH:MM:SS.ddd */
-      {
-	int day, hour, minute, second;
-	double frac_second;
-	char *buf;
-	second = (int)loc;
-	frac_second = loc - second;
-	minute = (int)floor(second / 60);
-	hour = (int)floor(minute / 60);
-	day = (int)floor(hour / 24);
-	second %= 60;
-	minute %= 60;
-	hour %= 24;
-	buf = (char *)CALLOC(64, sizeof(char));
-	if (day > 0)
-	  sprintf(buf, "%02d:%02d:%02d:%02d.%0*d", day, hour, minute, second, tens, (int)(frac_second * pow(10.0, tens)));
-	else
-	  {
-	    if (hour > 0)
-	      sprintf(buf, "%02d:%02d:%02d.%0*d", hour, minute, second, tens, (int)(frac_second * pow(10.0, tens)));
-	    else
-	      {
-		if (minute > 0)
-		  sprintf(buf, "%02d:%02d.%0*d", minute, second, tens, (int)(frac_second * pow(10.0, tens)));
-		else
-		  {
-		    if (second > 0)
-		      sprintf(buf, "%d.%0*d", second, tens, (int)(frac_second * pow(10.0, tens)));
-		    else sprintf(buf, "0.%0*d", tens, (int)(frac_second * pow(10.0, tens)));
-		  }
-	      }
-	  }
-	return(buf);
-      }
+      return(clock_number(loc, tens));
       break;
     case X_AXIS_IN_MEASURES:
       return(measure_number(bpm, loc));
+      break;
+    default:
+      return(prettyf(loc, tens));
       break;
     }
   return(prettyf(loc, tens));

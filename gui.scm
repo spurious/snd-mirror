@@ -238,6 +238,7 @@
 (define (c-set-sound-cursor snd shape)
   (do ((j 0 (1+ j)))
       ((= j (channels snd)) #f)
+    (set! (tracking-cursor-style snd j) shape)
     (set! (cursor-style snd j) shape)))
 
 
@@ -440,6 +441,7 @@
 		     (c-g_signal_connect w "motion_notify_event"
 				       (lambda (w e i)
 					 (set! ismoved #t)
+					 ;;(c-display snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.button (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))
 					 (let ((args (if (.is_hint (GDK_EVENT_MOTION e))
 							 (let ((s (cdr (gdk_window_get_pointer (.window e)))))
 							   (list snd (car s) (cadr s) (.button (GDK_EVENT_BUTTON e)) (caddr s)))

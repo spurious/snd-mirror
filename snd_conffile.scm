@@ -26,6 +26,17 @@
 (provide 'snd-snd_conffile.scm)
 
 
+(set! (show-backtrace) #t)
+(debug-enable 'debug)
+(if #t
+    (begin
+      (read-enable 'positions)
+      (debug-enable 'debug)
+      (debug-enable 'backtrace)
+      (debug-set! frames 8)
+      (debug-set! depth 50)))
+
+
 
 ;;##############################################################
 ;; c-define is used instead of define when theres a variable the
@@ -358,7 +369,7 @@
 ;; Like (set-cursor-pos pos), but legalize pos and
 ;; calls c-show-times as well. Also works when playing.
 (define (c-set-cursor-pos2 pos)
-  (let ((isplaying (dac-is-running))
+  (let ((isplaying (playing))
 	(legalpos (min (frames) (max 0 pos))))
     (if isplaying
 	(-> (c-p) set-cursor legalpos)
@@ -571,8 +582,8 @@
 
 
   (def-method (isplaying)
-    (dac-is-running))
-    ;;(or isplaying (dac-is-running)))
+    (playing))
+    ;;(or isplaying (playing)))
 
   (def-method (set-cursor pos)
     (set! (cursor-follows-play) #f)
@@ -658,7 +669,14 @@ Doesnt work any more.
 		(if (c-selection?)
 		    (-> (c-p) play-selection)
 		    (-> (c-p) play #f)))))
-
+#!
+(-> (c-p) stop)
+(-> (c-p) play #f)
+(-> (c-p) isplaying)
+(in 50
+    (lambda ()
+      (asdfasdf)))
+!#
 
 ;; Makes the P key a pause button. If playing, stops playing, but doesn't reset the cursor pos.
 ;; If not playing, starts playing from cursor.
@@ -1655,7 +1673,7 @@ Does not work.
 	       (c-put snd 'dac-slider
 		      (<slider> control-panel "dac-size" 1 (dac-size) 8192
 				(lambda (val)
-				  (let ((isplaying (dac-is-running)))
+				  (let ((isplaying (playing)))
 				    (if isplaying
 					(-> (c-p snd) pause))
 				    (set! (dac-size) (c-integer val))
@@ -1668,6 +1686,12 @@ Does not work.
 					      (waitfunc))))))
 				1)))))
 
+#!
+(set! (verbose-cursor) #t)
+(set! (with-tracking-cursor) #f)
+(cursor-update-interval)
+(set! (tracking-cursor-style 0 0) 1)
+!#
 
 (add-hook! close-hook
 	   (lambda (snd)
@@ -1848,8 +1872,8 @@ Does not work.
     (c-load-from-path new-effects))
 
 
-(if (provided? 'snd-ladspa)
-    (c-load-from-path ladspa))
+;(if (provided? 'snd-ladspa)
+;    (c-load-from-path ladspa))
 
 
 ;; Stores the peak information for sounds in the ~/peaks/ directory. Seems to work correctly. I have tried
