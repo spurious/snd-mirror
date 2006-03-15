@@ -32369,7 +32369,7 @@ EDITS: 3
 					   ))))
 			 (set! (optimization) old-opt)
 			 (set! (squelch-update ind) #f)
-			 (snd-display ";bigger: ~{~6,2F~}" times)
+			 (snd-display ";big:  ~{~6,2F~}" times)
 			 ))
 		     (lambda args (set! (squelch-update) #f)))
 	      (close-sound ind)))
@@ -57119,7 +57119,8 @@ EDITS: 1
 					;new-sound 
 		     read-mix-sample read-track-sample next-sample
 		     transform-normalization equalize-panes open-raw-sound open-sound orientation-dialog previous-sample
-		     peak-env-info peaks play play-and-wait play-mix play-region play-selection play-track player? players
+		     peak-env-info peaks ;play play-and-wait play-mix play-region play-selection play-track 
+		     player? players
 		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort 
 		     view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
 		     print-length progress-report prompt-in-minibuffer pushed-button-color read-only

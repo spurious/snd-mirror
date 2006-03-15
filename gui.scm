@@ -1285,13 +1285,20 @@
 ;; Menues
 ;;##############################################################
 
+#!
+(define m 
+!#
+
 (define* (menu-sub-add menu menu-label #:optional callback)
-  (let ((dasmenu (if (integer? menu) (main-menu menu) menu)))
+  (define (submenu menu-item)
+    (gtk_menu_item_get_submenu (GTK_MENU_ITEM menu-item)))
+
+  (let ((dasmenu (submenu (if (integer? menu) (main-menu menu) menu))))
     (if use-gtk
 	(let ((menuitem (gtk_menu_item_new_with_label menu-label))
 	      (submenu (gtk_menu_new)))
-	  ;; (gtk_menu_shell_append (GTK_MENU_SHELL dasmenu) menuitem)
-	  (gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (GTK_MENU_ITEM dasmenu))) menuitem)
+	  (gtk_menu_shell_append (GTK_MENU_SHELL dasmenu) menuitem)
+	  ;;(gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (GTK_MENU_ITEM dasmenu))) menuitem)
 	  (gtk_widget_show menuitem)
 	  (gtk_menu_item_set_submenu (GTK_MENU_ITEM menuitem) submenu)
 	  (if callback
@@ -1302,7 +1309,8 @@
 				 (callback))
 			       #f #f)
 	       #f))
-	  submenu)
+	  menuitem)
+;;	  submenu)
 	(let* ((submenu (XmCreatePulldownMenu dasmenu menu-label
 					      (list XmNbackground (basic-color))))
 	       (menuitem (XtCreateManagedWidget menu-label
@@ -1315,14 +1323,16 @@
 
 
 
- (define* (menu-add top-menu menu-label callback #:optional position)
+(define* (menu-add top-menu menu-label callback #:optional position)
+  (define (submenu menu-item)
+    (gtk_menu_item_get_submenu (GTK_MENU_ITEM menu-item)))
   (if (integer? top-menu)
       (if position
 	  (add-to-menu top-menu menu-label callback position)
 	  (add-to-menu top-menu menu-label callback))
       (if use-gtk
 	  (let ((child (gtk_menu_item_new_with_label menu-label)))
-	    (gtk_menu_shell_append (GTK_MENU_SHELL top-menu) child)
+	    (gtk_menu_shell_append (GTK_MENU_SHELL (submenu top-menu)) child)
 	    (gtk_widget_show child)
 	    ;(set-procedure-property! das 'arity '(2 0 #f))
 	    ;;(set-procedure-properties! das '((arity 2 0 #f)))
@@ -1355,6 +1365,26 @@
 
 
 #!
+(define (submenu_func menu-item)
+  (gtk_menu_item_get_submenu (GTK_MENU_ITEM menu-item)))
+
+;; step-by-step how to make menues and submenues with gtk: (not exactly trivial...)
+(define m (add-to-main-menu "testing"))
+(begin (main-menu m))
+(define s (menu-sub-add m "aiai"))
+(define menuitem (gtk_menu_item_new_with_label "menuitem"))
+(begin menuitem)
+(define submenu (gtk_menu_new))
+(gtk_menu_shell_append (GTK_MENU_SHELL (submenu_func (main-menu m))) menuitem)
+(gtk_widget_show menuitem)
+(gtk_menu_item_set_submenu (GTK_MENU_ITEM menuitem) submenu)
+(begin submenu)
+
+(define menuitem2 (gtk_menu_item_new_with_label "menuitem2"))
+(gtk_menu_shell_append (GTK_MENU_SHELL (submenu_func menuitem)) menuitem2)
+(gtk_widget_show menuitem2)
+
+
 ;; Menu-test
 (let ((test-menu (add-to-main-menu "testing")))
   (define (adding menu n)

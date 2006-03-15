@@ -1872,8 +1872,8 @@ Does not work.
     (c-load-from-path new-effects))
 
 
-;(if (provided? 'snd-ladspa)
-;    (c-load-from-path ladspa))
+(if (provided? 'snd-ladspa)
+    (c-load-from-path ladspa))
 
 
 ;; Stores the peak information for sounds in the ~/peaks/ directory. Seems to work correctly. I have tried

@@ -52,6 +52,9 @@ typedef struct {
   axis_context *ax;
   int selected;
   int fft_in_progress;
+  int fft_pix;
+  unsigned int fft_pix_width, fft_pix_height;
+  int fft_pix_x0, fft_pix_y0;
 } chan_context;
 
 typedef struct {

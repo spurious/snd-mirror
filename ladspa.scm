@@ -935,7 +935,8 @@
 
 
    (install-ladspa-menues)
-   (set! ladspa-not-initialized #f))
+   (set! ladspa-not-initialized #f)
+   (load-from-path "kmenu.scm"))
  
  (lambda ai
    (c-display "Thread-error2: " ai)))

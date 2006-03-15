@@ -1938,23 +1938,41 @@ static void make_sonogram(chan_info *cp)
       Locus *hidata;
       axis_context *ax;
       Float minlx = 0.0, curlx = 0.0, lscale = 1.0;
-      snd_info *sp;
-      sp = cp->sound;
+
+      fp = cp->fft;
+      fap = fp->axis;
+      fwidth = fap->x_axis_x1 - fap->x_axis_x0;
+      fheight = fap->y_axis_y0 - fap->y_axis_y1;
+      /* these are the corners */
+      bins = (int)(si->target_bins * cp->spectro_cutoff);
+      /* TODO: if all 4 unchanged, and cp->fft_changed == FFT_UNCHANGED, and fftpix exists (bins from si->target_bins), just copy it */
+      if (cp->cgx->fft_pix) /* None = 0L in X */
+	{
+	  if ((cp->fft_changed == FFT_UNCHANGED) &&
+	      (cp->cgx->fft_pix_width == fwidth) &&
+	      (cp->cgx->fft_pix_height == fheight) &&
+	      (cp->cgx->fft_pix_x0 == fap->x_axis_x0) &&
+	      (cp->cgx->fft_pix_y0 == fap->y_axis_y0))
+	    {
+	      /* copy pix into drawing area and return */
+	    }
+	  else
+	    {
+	      /* clear vars, release pix */ /* need this at close time as well, and double check at init */
+	    }
+	}
+
       if (sono_js_size != color_map_size(ss))
 	{
 	  if (sono_js) FREE(sono_js);
 	  sono_js_size = color_map_size(ss);
 	  sono_js = (int *)CALLOC(sono_js_size, sizeof(int));
 	}
-      bins = (int)(si->target_bins * cp->spectro_cutoff);
       if (cp->printing) ps_allocate_grf_points();
       allocate_sono_rects(si->total_bins);
       allocate_color_map(color_map(ss));
+
       scl = si->scale; 
-      fp = cp->fft;
-      fap = fp->axis;
-      fwidth = fap->x_axis_x1 - fap->x_axis_x0;
-      fheight = fap->y_axis_y0 - fap->y_axis_y1;
       frectw = (Float)fwidth / (Float)(si->target_slices);
       frecth = (Float)fheight / (Float)bins;
       xscl = (Float)(fap->x1 - fap->x0) / (Float)(si->target_slices);
@@ -1962,6 +1980,7 @@ static void make_sonogram(chan_info *cp)
       recth = (Latus)(ceil(frecth));
       if (rectw == 0) rectw = 1;
       if (recth == 0) recth = 1;
+
       hfdata = (Float *)MALLOC((bins + 1) * sizeof(Float));
       hidata = (Locus *)MALLOC((bins + 1) * sizeof(Locus));
       if (cp->transform_type == FOURIER)
@@ -2034,11 +2053,14 @@ static void make_sonogram(chan_info *cp)
 	      if ((ss->stopped_explicitly) || (!(cp->active))) /* user closed file while trying to print */
 		{
 		  ss->stopped_explicitly = false;
-		  string_to_minibuffer(sp, _("stopped"));
+		  string_to_minibuffer(cp->sound, _("stopped"));
 		  break;
 		}
 	    }
 	}
+
+      /* if bins>n copy fft dpy area, set vars */
+
       if (cp->printing) ps_reset_color();
       FREE(hfdata);
       FREE(hidata);
@@ -6429,7 +6451,7 @@ static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)
   x_axis_style_t val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_x_axis_style, "an integer"); 
   val = (x_axis_style_t)XEN_TO_C_INT(style);
-  if (val > X_AXIS_IN_MEASURES)
+  if (val > X_AXIS_AS_CLOCK)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, 
 	"~A, but must be " S_x_axis_in_seconds ", " S_x_axis_in_samples ", " S_x_axis_as_percentage ", " S_x_axis_in_beats ", " S_x_axis_in_measures ", or " S_x_axis_as_clock ".");
   if (XEN_BOUND_P(snd))

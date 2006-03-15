@@ -2,8 +2,6 @@
 # valgrind --error-limit=no -v --gen-suppressions=yes --suppressions=/home/bil/cl/snd.supp snd
 # valgrind --error-limit=no -v --gen-suppressions=yes --suppressions=/home/bil/cl/snd.supp --leak-check=yes --show-reachable=no --num-callers=6 snd
 # valgrind --error-limit=no -v --gen-suppressions=no --suppressions=/home/bil/cl/snd.supp --leak-check=yes --leak-resolution=high --show-reachable=no --num-callers=12 snd
-# valgrind --error-limit=no -v --gen-suppressions=no --suppressions=/home/bil/cl/snd.supp --leak-check=yes --show-reachable=no snd -l snd-test
-
 #
 # first section copied (unnecessarily) from default: /usr/local/lib/valgrind/default.supp
 
@@ -1769,25 +1767,3 @@
    obj:/usr/X11R6/lib/libXm.so.3.0.1
    obj:/usr/X11R6/lib/libXt.so.6.0
 }
-
-{
-   scmx1
-   Memcheck:Cond
-   fun:scm_i_mark_weak_vectors*
-}
-
-{
-   scmx2
-   Memcheck:Cond
-   fun:scm_i_remove_weaks_*
-}
-
-{
-   scmx3
-   Memcheck:Cond
-   fun:scm_i_mark_weak_vectors*
-}
-
-
-
-
