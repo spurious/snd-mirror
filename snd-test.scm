@@ -38,7 +38,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #f) ; huge arg testing
 
 ;;; SOMEDAY: why does freeBSD get memory corruption occasionally? (need valgrind ideally)
@@ -2712,6 +2712,22 @@
 		   (expt 2 -23) (expt 2 -23) (expt 2 -23) (expt 2 -23) (expt 2 -23) ; assuming sndlib bits=24 here (if int)
 		   (expt 2 -15) (expt 2 -15) (expt 2 -7) (expt 2 -23) (expt 2 -23)
 		   (expt 2 -23))))
+
+	    (for-each
+	     (lambda (type)
+	       (let ((ind (find-sound 
+			   (with-sound (:data-format type)
+			     (fm-violin 0 .1 440 .1)
+			     (fm-violin 10 .1 440 .1)
+			     (fm-violin 100 .1 440 .1)
+			     (fm-violin 1000 .1 440 .1)))))
+		 (let ((mx (maxamp ind)))
+		   (if (ffneq mx .1) ; mus-byte -> 0.093
+		       (snd-display ";max: ~A, format: ~A" mx (mus-data-format->string type))))))
+	     (list mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
+		   mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
+		   mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
+		   mus-ldouble))
 	  
 	  (let* ((ob (view-sound "oboe.snd"))
 		 (samp (sample 1000 ob))
@@ -8939,8 +8955,12 @@ EDITS: 5
 	  (if (ffneq (amp-control ind) 1.0) (snd-display ";amp-control (1.0): ~A?" (amp-control ind)))
 	  (if (ffneq (amp-control ind 0) .25) (snd-display ";amp-control 0 after set (.25): ~A?" (amp-control ind 0)))
 	  (set! (transform-graph-type ind 0) graph-as-sonogram)
-	  (if (not (= (transform-frames ind 0) 0)) 
-	      (snd-display ";transform-frames: ~A" (transform-frames ind 0)))
+	  (update-transform-graph ind 0)
+	  (let ((val (transform-frames ind 0)))
+	    (if (or (not (list? val))
+		    (fneq (car val) 1.0)
+		    (not (= (caddr val) 256)))
+		(snd-display ";transform-frames: ~A" val)))
 	  (if (transform-sample 0 0 ind 0) (snd-display ";transform-sample (empty): ~A" (transform-sample 0 0 ind 0)))
 	  (if (transform->vct ind 0) (snd-display ";transform->vct (empty): ~A" (transform->vct ind 0)))
 	  (close-sound ind)

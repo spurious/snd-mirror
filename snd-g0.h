@@ -89,6 +89,7 @@ typedef struct {
   GdkPixmap *fft_pix;
   unsigned int fft_pix_width, fft_pix_height;
   int fft_pix_x0, fft_pix_y0;
+  bool fft_pix_ready;
 } chan_context;
 
 typedef struct {

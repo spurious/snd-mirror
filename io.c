@@ -1089,7 +1089,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
     {
       charbuf = inbuf;
       siz = mus_bytes_per_sample(tfd);
-      data_format = tfd;
+      data_format = tfd; /* in this case, tfd is the data format (see mus_file_write_buffer below) -- this should be changed! */
       clipping = clipped;
     }
   lim = (end - beg + 1);

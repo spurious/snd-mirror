@@ -1208,12 +1208,25 @@ GC erase_GC(chan_info *cp)
   return(sx->erase_gc);
 }
 
+void free_fft_pix(chan_info *cp)
+{
+  if ((cp->cgx->fft_pix != None) &&
+      (channel_graph(cp)))
+    {
+      XFreePixmap(XtDisplay(channel_graph(cp)),
+		  cp->cgx->fft_pix);
+      cp->cgx->fft_pix = None;
+    }
+  cp->cgx->fft_pix_ready = false;
+}
+
 void cleanup_cw(chan_info *cp)
 {
   if ((cp) && (cp->cgx))
     {
       chan_context *cx;
       Widget *cw;
+      free_fft_pix(cp);
       cx = cp->cgx;
       cx->selected = false;
       cw = cx->chan_widgets;

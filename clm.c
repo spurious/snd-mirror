@@ -5746,9 +5746,7 @@ static void flush_buffers(rdout *gen)
 	{
 	  mus_file_write(fd, 0, gen->out_end, gen->chans, gen->obufs);
 	  mus_sound_close_output(fd, 
-				 (gen->out_end + 1) * 
-				 gen->chans * 
-				 mus_bytes_per_sample(mus_sound_data_format(gen->file_name)));	  
+				 (gen->out_end + 1) * gen->chans * mus_bytes_per_sample(mus_sound_data_format(gen->file_name)));	  
 	}
     }
   else
@@ -5769,6 +5767,26 @@ static void flush_buffers(rdout *gen)
 	num = clm_file_buffer_size - 1;
       mus_file_read(fd, 0, num, gen->chans, addbufs);
       mus_sound_close_input(fd);
+
+      /* TODO: if data format is alaw or mulaw, and we're jumping beyond the current buffer end,
+       *       so that the next note assumes silence across that boundary, we need to explicitly
+       *       write the nominal zeros, since they aren't 0's in those formats.  Otherwise, we
+       *       get a block of -.98's.
+       *
+       * is num < 0 in that case?
+       * mulaw 0: 255, alaw 0: 213
+       * but ubyte|ubshort|ulshort are also broken!
+       *  ubyte 0: 128, ub|ulshort 0: 32768
+       *
+       * in these cases, go to end, write nominal zero until new beg
+       #define MULAW_ZERO 255
+       #define ALAW_ZERO 213
+       #define UBYTE_ZERO 128
+       #define USHORT_ZERO 32768
+       *
+       * we're trying to write to gen->data_start -- where is current file end? gen->out_end?
+       */
+
       fd = mus_sound_reopen_output(gen->file_name, gen->chans, hdrfrm, hdrtyp, hdrend);
       last = gen->out_end - gen->data_start;
       for (j = 0; j < gen->chans; j++)

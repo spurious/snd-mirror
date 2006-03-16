@@ -181,6 +181,7 @@ void set_tiny_numbers_font(chan_info *cp);
 color_t get_foreground_color(axis_context *ax);
 color_t get_background_color(axis_context *ax);
 void set_foreground_color(axis_context *ax, int color);
+void free_fft_pix(chan_info *cp);
 void cleanup_cw(chan_info *cp);
 bool fixup_cp_cgx_ax_wn(chan_info *cp);
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b);

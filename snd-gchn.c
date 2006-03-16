@@ -885,12 +885,17 @@ GdkGC *erase_GC(chan_info *cp)
   return(sx->erase_gc);
 }
 
+void free_fft_pix(chan_info *cp)
+{
+}
+
 void cleanup_cw(chan_info *cp)
 {
   if ((cp) && (cp->cgx))
     {
       chan_context *cx;
       GtkWidget **cw;
+      free_fft_pix(cp);
       if (EDIT_HISTORY_LIST(cp)) 
 	{
 	  slist_clear(EDIT_HISTORY_LIST(cp));
