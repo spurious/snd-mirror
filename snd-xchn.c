@@ -1220,6 +1220,42 @@ void free_fft_pix(chan_info *cp)
   cp->cgx->fft_pix_ready = false;
 }
 
+bool restore_fft_pix(chan_info *cp, axis_context *ax)
+{
+  XCopyArea(ax->dp,
+	    cp->cgx->fft_pix, 
+	    ax->wn,
+	    copy_GC(cp),
+	    0, 0,                          /* source x y */
+	    cp->cgx->fft_pix_width, cp->cgx->fft_pix_height,
+	    cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0);
+  return(true);
+}
+
+void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1)
+{
+  if (cp->cgx->fft_pix == None)
+    {
+      /* make new pixmap */
+      cp->cgx->fft_pix_width = fwidth;
+      cp->cgx->fft_pix_height = fheight;
+      cp->cgx->fft_pix_x0 = x0;
+      cp->cgx->fft_pix_y0 = y1;
+      cp->cgx->fft_pix = XCreatePixmap(XtDisplay(channel_graph(cp)),
+				       RootWindowOfScreen(XtScreen(channel_graph(cp))),
+				       fwidth, fheight,
+				       DefaultDepthOfScreen(XtScreen(channel_graph(cp))));
+    }
+  XCopyArea(ax->dp,
+	    ax->wn,
+	    cp->cgx->fft_pix, 
+	    copy_GC(cp),
+	    cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0,
+	    cp->cgx->fft_pix_width, cp->cgx->fft_pix_height,
+	    0, 0);
+  cp->cgx->fft_pix_ready = true;
+}
+
 void cleanup_cw(chan_info *cp)
 {
   if ((cp) && (cp->cgx))

@@ -2713,22 +2713,6 @@
 		   (expt 2 -15) (expt 2 -15) (expt 2 -7) (expt 2 -23) (expt 2 -23)
 		   (expt 2 -23))))
 
-	    (for-each
-	     (lambda (type)
-	       (let ((ind (find-sound 
-			   (with-sound (:data-format type)
-			     (fm-violin 0 .1 440 .1)
-			     (fm-violin 10 .1 440 .1)
-			     (fm-violin 100 .1 440 .1)
-			     (fm-violin 1000 .1 440 .1)))))
-		 (let ((mx (maxamp ind)))
-		   (if (ffneq mx .1) ; mus-byte -> 0.093
-		       (snd-display ";max: ~A, format: ~A" mx (mus-data-format->string type))))))
-	     (list mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
-		   mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
-		   mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
-		   mus-ldouble))
-	  
 	  (let* ((ob (view-sound "oboe.snd"))
 		 (samp (sample 1000 ob))
 		 (old-comment (mus-sound-comment "oboe.snd"))
@@ -43657,6 +43641,23 @@ EDITS: 1
       (set! (mus-srate) 22050)
       (set! (default-output-srate) 22050)
       
+      ;; check clm output for bad zero case
+      (for-each
+       (lambda (type)
+	 (let ((ind (find-sound 
+		     (with-sound (:data-format type)
+		       (fm-violin 0 .1 440 .1)
+		       (fm-violin 10 .1 440 .1)
+		       (fm-violin 100 .1 440 .1)
+		       (fm-violin 1000 .1 440 .1)))))
+	   (let ((mx (maxamp ind)))
+	     (if (ffneq mx .1) ; mus-byte -> 0.093
+		 (snd-display ";max: ~A, format: ~A" mx (mus-data-format->string type))))))
+       (list mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
+	     mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
+	     mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
+	     mus-ldouble))
+	  
       (let ((old-opt (optimization)))
 	(do ((opt 0 (1+ opt)))
 	    ((> opt max-optimization))

@@ -1922,6 +1922,7 @@ static int skew_color(Float x) {return(0);}
 
 #define FFT_PIX_COPY_SIZE 1
 /* TODO: set this to 8192 or larger eventually */
+/* TODO: can ax be used directly in gtk? */
 
 static void make_sonogram(chan_info *cp)
 { 
@@ -1934,7 +1935,6 @@ static void make_sonogram(chan_info *cp)
     {
       int i, slice, fwidth, fheight, j, bins;
       Latus rectw, recth;
-      fft_info *fp;
       axis_info *fap;
       Float xf, xfincr, yf, yfincr, frectw, frecth, xscl, scl = 1.0;
       Float *hfdata;
@@ -1943,40 +1943,27 @@ static void make_sonogram(chan_info *cp)
       Float minlx = 0.0, curlx = 0.0, lscale = 1.0;
 
       ax = copy_context(cp);
-      fp = cp->fft;
-      fap = fp->axis;
-      fwidth = fap->x_axis_x1 - fap->x_axis_x0;
+      fap = cp->fft->axis;
+      fwidth = fap->x_axis_x1 - fap->x_axis_x0;        /* these are the corners */
       fheight = fap->y_axis_y0 - fap->y_axis_y1;
-      /* these are the corners */
       bins = (int)(si->target_bins * cp->spectro_cutoff);
 
 #if USE_MOTIF || USE_GTK
-      /* TODO: split fft_pix, also move out back = ok recopy but hg/ss are still posted */
-      if (cp->cgx->fft_pix)
+      /* TODO: move out back = ok recopy but hg/ss are still posted */
+      if (cp->cgx->fft_pix)                            /* Motif None = 0 */
 	{
 	  if ((cp->fft_changed == FFT_UNCHANGED) &&
 	      (cp->cgx->fft_pix_ready) &&
-	      (cp->cgx->fft_pix_width == fwidth) &&
-	      (cp->cgx->fft_pix_height == fheight) &&
+	      ((int)(cp->cgx->fft_pix_width) == fwidth) &&
+	      ((int)(cp->cgx->fft_pix_height) == fheight) &&
 	      (cp->cgx->fft_pix_x0 == fap->x_axis_x0) &&
 	      (cp->cgx->fft_pix_y0 == fap->y_axis_y1)) /* X is upside down */
 	    {
-	      /* copy pix into drawing area and return */
-#if USE_MOTIF
-	      XCopyArea(ax->dp,
-			cp->cgx->fft_pix, 
-			ax->wn,
-			copy_GC(cp),
-			0, 0, /* source = pixmap I hope */
-			cp->cgx->fft_pix_width, cp->cgx->fft_pix_height,
-			cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0);
-	      return;
-#else
-#endif
+	      if (restore_fft_pix(cp, ax))             /* copy pix into drawing area and return */
+		return;
 	    }
 	  else
 	    {
-	      /* clear vars, release pix */ /* need this at close time (and any cancellation) as well, and double check at init */
 	      free_fft_pix(cp);
 	    }
 	  cp->cgx->fft_pix_ready = false;
@@ -2079,41 +2066,20 @@ static void make_sonogram(chan_info *cp)
 	    }
 	}
 
+#if USE_MOTIF || USE_GTK
       /* if bins>n copy fft dpy area, set vars */
       if (si->active_slices > FFT_PIX_COPY_SIZE)
 	{
-#if USE_MOTIF
 	  /* if size was wrong, we've already released pix above */
-	  if (cp->cgx->fft_pix == None)
-	    {
-	      /* make new pixmap */
-	      cp->cgx->fft_pix_width = fwidth;
-	      cp->cgx->fft_pix_height = fheight;
-	      cp->cgx->fft_pix_x0 = fap->x_axis_x0;
-	      cp->cgx->fft_pix_y0 = fap->y_axis_y1;
-	      cp->cgx->fft_pix = XCreatePixmap(XtDisplay(channel_graph(cp)),
-					       RootWindowOfScreen(XtScreen(channel_graph(cp))),
-					       fwidth, fheight,
-					       DefaultDepthOfScreen(XtScreen(channel_graph(cp))));
-	    }
-	  XCopyArea(ax->dp,
-		    ax->wn,
-		    cp->cgx->fft_pix, 
-		    copy_GC(cp),
-		    cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0,
-		    cp->cgx->fft_pix_width, cp->cgx->fft_pix_height,
-		    0, 0);
-	  cp->cgx->fft_pix_ready = true;
-#endif
-
+	  save_fft_pix(cp, ax, fwidth, fheight, fap->x_axis_x0, fap->y_axis_y1);
 	}
       else
 	{
-	  /* if fft_pix, release it and set to None */
 	  if (cp->cgx->fft_pix)
 	    free_fft_pix(cp);
 	  cp->cgx->fft_pix_ready = false;
 	}
+#endif
 
       if (cp->printing) ps_reset_color();
       FREE(hfdata);
