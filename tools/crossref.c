@@ -349,7 +349,7 @@ int main(int argc, char **argv)
 	      /* fprintf(stderr,"%s %d ", headers[i], chars); */
 	      for (j = 0; j < chars; j++)
 		{
-		  if ((in_comment == 0) && /* (in_define == 0) && */ (in_curly == 0))
+		  if ((in_comment == 0) && (in_curly == 0))
 		    {
 		      if ((isalpha(input[j])) || (isdigit(input[j])) || (input[j] == '_'))
 			{
@@ -420,23 +420,18 @@ int main(int argc, char **argv)
 			    }
 			}
 		    }
-		  else
+		  else /* in comment or curly */
 		    {
 		      if ((input[j] == '*') && (input[j + 1] == '/'))
 			in_comment = 0;
 		      else 
 			{
-			  if (input[j] == '\n')
-			    in_define = 0;
+			  if (input[j] == '}')
+			    in_curly = 2;
 			  else
 			    {
-			      if (input[j] == '}')
-				in_curly = 2;
-			      else
-				{
-				  if (input[j] == ';')
-				    in_curly = 0;
-				}
+			      if (input[j] == ';')
+				in_curly = 0;
 			    }
 			}
 		    }

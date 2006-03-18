@@ -305,7 +305,7 @@ int mus_header_mark_position(int id) {int i; for (i = 0; i < markers; i++) {if (
 int mus_header_base_detune(void) {return(base_detune);}
 int mus_header_base_note(void) {return(base_note);}
 
-int mus_bytes_per_sample (int format)
+int mus_bytes_per_sample(int format)
 {
   switch (format)
     {

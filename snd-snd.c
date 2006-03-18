@@ -2930,7 +2930,7 @@ As a global (if the 'snd' arg is omitted), it is the default setting for each so
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_channel_style, "an integer or boolean"); 
   new_style = (channel_style_t)XEN_TO_C_INT(style);
-  if (new_style > CHANNELS_SUPERIMPOSED)
+  if (new_style >= NUM_CHANNEL_STYLES)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_channel_style, 1, style, "~A, but must be " S_channels_separate ", " S_channels_combined ", or " S_channels_superimposed);
   if (XEN_NOT_BOUND_P(snd))
     {

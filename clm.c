@@ -5724,6 +5724,8 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
   0
 };
 
+static int *data_format_zero = NULL;
+
 static void flush_buffers(rdout *gen)
 {
   int fd;
@@ -5767,27 +5769,46 @@ static void flush_buffers(rdout *gen)
 	num = clm_file_buffer_size - 1;
       mus_file_read(fd, 0, num, gen->chans, addbufs);
       mus_sound_close_input(fd);
-
-      /* TODO: if data format is alaw or mulaw, and we're jumping beyond the current buffer end,
-       *       so that the next note assumes silence across that boundary, we need to explicitly
-       *       write the nominal zeros, since they aren't 0's in those formats.  Otherwise, we
-       *       get a block of -.98's.
-       *
-       * is num < 0 in that case?
-       * mulaw 0: 255, alaw 0: 213
-       * but ubyte|ubshort|ulshort are also broken!
-       *  ubyte 0: 128, ub|ulshort 0: 32768
-       *
-       * in these cases, go to end, write nominal zero until new beg
-       #define MULAW_ZERO 255
-       #define ALAW_ZERO 213
-       #define UBYTE_ZERO 128
-       #define USHORT_ZERO 32768
-       *
-       * we're trying to write to gen->data_start -- where is current file end? gen->out_end?
-       */
-
       fd = mus_sound_reopen_output(gen->file_name, gen->chans, hdrfrm, hdrtyp, hdrend);
+
+      if ((size < gen->data_start) &&
+	  (data_format_zero[hdrfrm] != 0))
+	{
+	  /* we're about to create a gap in the output file.  mus_file_seek_frame calls lseek which (man lseek):
+	   *
+           *    "The lseek function allows the file offset to be set beyond the  end  of
+           *    the existing end-of-file of the file (but this does not change the size
+           *    of the file).  If data is later written at this point, subsequent reads
+           *    of  the  data  in the gap return bytes of zeros (until data is actually
+           *    written into the gap)."
+	   *
+           * but 0 bytes in a file are not interpreted as sound samples of 0 in several data formats.
+	   *  for example, mus-mulaw 0 => -.98, whereas sound sample 0 is a byte of 255.
+	   *  see the table at the end of this file (data_format_zero) for the other cases.
+	   *
+	   * So, we need to write explicit data-format 0 values in those cases where machine 0's
+	   *  won't be data format 0.  data_format_zero[format] != 0 signals we have such a
+	   *  case, and returns the nominal zero value.  For unsigned shorts, we also need to
+	   *  take endianess into account.
+	   *
+	   * Since addbufs is empty here, and is of type mus_sample_t, I'll take the slightly
+	   *  slower but simpler path of calling mus_file_write to handle all the translations.
+	   */
+
+	  off_t filler, current_samps;
+	  filler = gen->data_start - size; /* this is in terms of frames */
+	  mus_file_seek_frame(fd, size);
+	  while (filler > 0)
+	    {
+	      if (filler > clm_file_buffer_size)
+		current_samps = clm_file_buffer_size;
+	      else current_samps = filler;
+	      mus_file_write(fd, 0, current_samps - 1, gen->chans, addbufs);
+	      filler -= current_samps;
+	    }
+	}
+
+      /* fill/write output buffers with current data added to saved data (if any) */
       last = gen->out_end - gen->data_start;
       for (j = 0; j < gen->chans; j++)
 	for (i = 0; i <= last; i++)
@@ -8585,10 +8606,13 @@ Float mus_apply(mus_any *gen, ...)
 }
 
 
-
-
 void init_mus_module(void)
 {
+  #define MULAW_ZERO 255
+  #define ALAW_ZERO 213
+  #define UBYTE_ZERO 128
+  #define USHORT_ZERO 32768
+
   mus_class_tag = MUS_INITIAL_GEN_TAG;
   sampling_rate = MUS_DEFAULT_SAMPLING_RATE;
   w_rate = (TWO_PI / MUS_DEFAULT_SAMPLING_RATE);
@@ -8600,5 +8624,12 @@ void init_mus_module(void)
   sum_of_sines_50 = .743;
   sum_of_sines_100 = .733;
   sincs = 0;
+
+  data_format_zero = (int *)CALLOC(MUS_NUM_DATA_FORMATS, sizeof(int));
+  data_format_zero[MUS_MULAW] = MULAW_ZERO;
+  data_format_zero[MUS_ALAW] = ALAW_ZERO;
+  data_format_zero[MUS_UBYTE] = UBYTE_ZERO;
+  data_format_zero[MUS_UBSHORT] = USHORT_ZERO;
+  data_format_zero[MUS_ULSHORT] = USHORT_ZERO;
 }
 

@@ -1445,8 +1445,8 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
                         (strcmp("GdkGC_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #endif
 
-#define AXIS_STYLE_OK(Id) (((Id) >= X_AXIS_IN_SECONDS) && ((Id) <= X_AXIS_AS_CLOCK))
-#define SHOW_AXES_OK(Id) (((Id) >= SHOW_NO_AXES) && ((Id) <= SHOW_X_AXIS_UNLABELLED))
+#define AXIS_STYLE_OK(Id) (((Id) >= 0) && ((Id) < NUM_X_AXIS_STYLES))
+#define SHOW_AXES_OK(Id) (((Id) >= 0) && ((Id) < NUM_SHOW_AXES))
 
 static XEN g_draw_axes(XEN args)
 {

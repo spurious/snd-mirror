@@ -1920,10 +1920,6 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 static int skew_color(Float x) {return(0);}
 #endif
 
-#define FFT_PIX_COPY_SIZE 1
-/* TODO: set this to 8192 or larger eventually */
-/* TODO: can ax be used directly in gtk? */
-
 static void make_sonogram(chan_info *cp)
 { 
   sono_info *si;
@@ -2067,18 +2063,8 @@ static void make_sonogram(chan_info *cp)
 	}
 
 #if USE_MOTIF || USE_GTK
-      /* if bins>n copy fft dpy area, set vars */
-      if (si->active_slices > FFT_PIX_COPY_SIZE)
-	{
-	  /* if size was wrong, we've already released pix above */
-	  save_fft_pix(cp, ax, fwidth, fheight, fap->x_axis_x0, fap->y_axis_y1);
-	}
-      else
-	{
-	  if (cp->cgx->fft_pix)
-	    free_fft_pix(cp);
-	  cp->cgx->fft_pix_ready = false;
-	}
+      /* if size was wrong, we've already released pix above */
+      save_fft_pix(cp, ax, fwidth, fheight, fap->x_axis_x0, fap->y_axis_y1);
 #endif
 
       if (cp->printing) ps_reset_color();
@@ -6471,7 +6457,7 @@ static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)
   x_axis_style_t val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_x_axis_style, "an integer"); 
   val = (x_axis_style_t)XEN_TO_C_INT(style);
-  if (val > X_AXIS_AS_CLOCK)
+  if (val >= NUM_X_AXIS_STYLES)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, 
 	"~A, but must be " S_x_axis_in_seconds ", " S_x_axis_in_samples ", " S_x_axis_as_percentage ", " S_x_axis_in_beats ", " S_x_axis_in_measures ", or " S_x_axis_as_clock ".");
   if (XEN_BOUND_P(snd))
@@ -6547,7 +6533,7 @@ static XEN g_set_show_axes(XEN on, XEN snd, XEN chn)
   show_axes_t val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_show_axes, "an integer");
   val = (show_axes_t)XEN_TO_C_INT(on);
-  if (val > SHOW_X_AXIS_UNLABELLED)
+  if (val >= NUM_SHOW_AXES)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A, but must be " S_show_all_axes ", " S_show_x_axis ", " S_show_no_axes ", \
 " S_show_all_axes_unlabelled ", or " S_show_x_axis_unlabelled ".");
   if (XEN_BOUND_P(snd))

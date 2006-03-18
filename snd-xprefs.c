@@ -9,6 +9,7 @@
    TODO: need ruby side of show-selection
      should the exit key work in the listener as well? -- how to handle C-x cmds in xttranslation tables?
 
+   TODO: rest of NUM_* fixups and use in set! cases 
 
    abandoned:
        preset packages: dlp, ksm
@@ -2713,7 +2714,6 @@ static void reflect_raw_data_format(prefs_info *prf)
 }
 
 static char **raw_data_format_choices = NULL;
-#define NUM_RAW_DATA_FORMATS MUS_LAST_DATA_FORMAT
 
 static void raw_data_format_from_text(prefs_info *prf)
 {
@@ -2724,7 +2724,7 @@ static void raw_data_format_from_text(prefs_info *prf)
     {
       int i, srate = 0, chans = 0, format = 0;
       mus_header_raw_defaults(&srate, &chans, &format);
-      for (i = 0; i < NUM_RAW_DATA_FORMATS; i++)
+      for (i = 0; i < MUS_NUM_DATA_FORMATS - 1; i++)
 	if (STRCMP(raw_data_format_choices[i], str) == 0)
 	  {
 	    mus_header_set_raw_defaults(srate, chans, i + 1); /* skipping MUS_UNKNOWN = 0 */
@@ -2740,7 +2740,7 @@ static void raw_data_format_from_menu(prefs_info *prf, char *value)
 {
   int i, srate = 0, chans = 0, format = 0;
   mus_header_raw_defaults(&srate, &chans, &format);
-  for (i = 0; i < NUM_RAW_DATA_FORMATS; i++)
+  for (i = 0; i < MUS_NUM_DATA_FORMATS - 1; i++)
     if (STRCMP(raw_data_format_choices[i], value) == 0)
       {
 	mus_header_set_raw_defaults(srate, chans, i + 1);
@@ -2892,8 +2892,8 @@ static void reflect_reopen_menu(prefs_info *prf)
 
 /* ---------------- graph-style ---------------- */
 
-static const char *graph_styles[5] = {"line", "dot", "filled", "dot+line", "lollipop"};
-static graph_style_t graph_styles_i[5] = {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS};
+static const char *graph_styles[NUM_GRAPH_STYLES] = {"line", "dot", "filled", "dot+line", "lollipop"};
+static graph_style_t graph_styles_i[NUM_GRAPH_STYLES] = {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS};
 
 static void reflect_graph_style(prefs_info *prf)
 {
@@ -3024,8 +3024,8 @@ static void initial_bounds_text(prefs_info *prf)
 
 /* ---------------- channel-style ---------------- */
 
-static const char *channel_styles[3] = {"separate", "combined", "superimposed"};
-static channel_style_t channel_styles_i[3] = {CHANNELS_SEPARATE, CHANNELS_COMBINED, CHANNELS_SUPERIMPOSED};
+static const char *channel_styles[NUM_CHANNEL_STYLES] = {"separate", "combined", "superimposed"};
+static channel_style_t channel_styles_i[NUM_CHANNEL_STYLES] = {CHANNELS_SEPARATE, CHANNELS_COMBINED, CHANNELS_SUPERIMPOSED};
 
 static void reflect_channel_style(prefs_info *prf)
 {
@@ -3112,7 +3112,7 @@ static void grid_density_text_callback(prefs_info *prf)
 
 /* ---------------- show-axes ---------------- */
 
-static const char *show_axes_choices[5] = {"none", "X and Y", "just X", "X and Y unlabelled", "just X unlabelled"};
+static const char *show_axes_choices[NUM_SHOW_AXES] = {"none", "X and Y", "just X", "X and Y unlabelled", "just X unlabelled"};
 
 static void reflect_show_axes(prefs_info *prf)
 {
@@ -3122,7 +3122,7 @@ static void reflect_show_axes(prefs_info *prf)
 static void show_axes_from_menu(prefs_info *prf, char *value)
 {
   int i;
-  for (i = 0; i < 5; i++)
+  for (i = 0; i < NUM_SHOW_AXES; i++)
     if (strcmp(value, show_axes_choices[i]) == 0)
       {
 	in_set_show_axes((show_axes_t)i);
@@ -3145,7 +3145,7 @@ static void show_axes_from_text(prefs_info *prf)
       if (snd_strlen(trimmed_str) > 0)
 	{
 	  int curpos = -1;
-	  for (i = 0; i < 5; i++)
+	  for (i = 0; i < NUM_SHOW_AXES; i++)
 	    if (STRCMP(trimmed_str, show_axes_choices[i]) == 0)
 	      {
 		curpos = i;
@@ -3163,7 +3163,7 @@ static void show_axes_from_text(prefs_info *prf)
 
 /* ---------------- x-axis-style ---------------- */
 
-static const char *x_axis_styles[5] = {"seconds", "samples", "% of total", "beats", "measures"};
+static const char *x_axis_styles[NUM_X_AXIS_STYLES] = {"seconds", "samples", "% of total", "beats", "measures", "clock"};
 
 static void reflect_x_axis_style(prefs_info *prf)
 {
@@ -3173,7 +3173,7 @@ static void reflect_x_axis_style(prefs_info *prf)
 static void x_axis_style_from_menu(prefs_info *prf, char *value)
 {
   int i;
-  for (i = 0; i < 5; i++)
+  for (i = 0; i < NUM_X_AXIS_STYLES; i++)
     if (strcmp(value, x_axis_styles[i]) == 0)
       {
 	in_set_x_axis_style((x_axis_style_t)i);
@@ -3196,7 +3196,7 @@ static void x_axis_style_from_text(prefs_info *prf)
       if (snd_strlen(trimmed_str) > 0)
 	{
 	  int curpos = -1;
-	  for (i = 0; i < 5; i++)
+	  for (i = 0; i < NUM_X_AXIS_STYLES; i++)
 	    if (STRCMP(trimmed_str, x_axis_styles[i]) == 0)
 	      {
 		curpos = i;
@@ -3589,15 +3589,13 @@ static void transform_graph_type_choice(prefs_info *prf)
 
 /* ---------------- transform-type ---------------- */
 
-#define NUM_TRANSFORM_TYPES 6
-
-static const char *transform_types[NUM_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Haar"};
+static const char *transform_types[NUM_BUILTIN_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Haar"};
 
 static list_completer_info *transform_type_completer_info = NULL;
 
 static void reflect_transform_type(prefs_info *prf)
 {
-  XmTextFieldSetString(prf->text, (char *)transform_types[mus_iclamp(0, transform_type(ss), NUM_TRANSFORM_TYPES - 1)]); 
+  XmTextFieldSetString(prf->text, (char *)transform_types[mus_iclamp(0, transform_type(ss), NUM_BUILTIN_TRANSFORM_TYPES - 1)]); 
 }
 
 static char *transform_type_completer(char *text, void *data)
@@ -3607,8 +3605,8 @@ static char *transform_type_completer(char *text, void *data)
       transform_type_completer_info = (list_completer_info *)CALLOC(1, sizeof(list_completer_info));
       transform_type_completer_info->exact_match = false;
       transform_type_completer_info->values = (char **)transform_types;
-      transform_type_completer_info->num_values = NUM_TRANSFORM_TYPES;
-      transform_type_completer_info->values_size = NUM_TRANSFORM_TYPES;
+      transform_type_completer_info->num_values = NUM_BUILTIN_TRANSFORM_TYPES;
+      transform_type_completer_info->values_size = NUM_BUILTIN_TRANSFORM_TYPES;
     }
   return(list_completer(text, (void *)transform_type_completer_info));
 }
@@ -3616,7 +3614,7 @@ static char *transform_type_completer(char *text, void *data)
 static void transform_type_from_menu(prefs_info *prf, char *value)
 {
   int i;
-  for (i = 0; i < NUM_TRANSFORM_TYPES; i++)
+  for (i = 0; i < NUM_BUILTIN_TRANSFORM_TYPES; i++)
     if (strcmp(value, transform_types[i]) == 0)
       {
 	in_set_transform_type(i);
@@ -3639,7 +3637,7 @@ static void transform_type_from_text(prefs_info *prf)
       if (snd_strlen(trimmed_str) > 0)
 	{
 	  int curpos = -1;
-	  for (i = 0; i < NUM_TRANSFORM_TYPES; i++)
+	  for (i = 0; i < NUM_BUILTIN_TRANSFORM_TYPES; i++)
 	    if (STRCMP(trimmed_str, transform_types[i]) == 0)
 	      {
 		curpos = i;
@@ -5262,8 +5260,8 @@ widget_t start_preferences_dialog(void)
       mus_header_raw_defaults(&srate, &chans, &format);
       str = mus_format("%d", chans);
       str1 = mus_format("%d", srate);
-      raw_data_format_choices = (char **)CALLOC(NUM_RAW_DATA_FORMATS, sizeof(char *));
-      for (i = 1; i <= NUM_RAW_DATA_FORMATS; i++)
+      raw_data_format_choices = (char **)CALLOC(MUS_NUM_DATA_FORMATS - 1, sizeof(char *));
+      for (i = 1; i < MUS_NUM_DATA_FORMATS; i++)
 	raw_data_format_choices[i - 1] = raw_data_format_to_string(i); /* skip MUS_UNKNOWN */
       prf = prefs_row_with_text("default raw sound attributes: chans", S_mus_header_raw_defaults, str,
 				dpy_box, current_sep,
@@ -5276,7 +5274,7 @@ widget_t start_preferences_dialog(void)
       remember_pref(prf, reflect_raw_srate, NULL);
 
       prf = prefs_row_with_list("data format", S_mus_header_raw_defaults, raw_data_format_choices[format - 1],
-				(const char **)raw_data_format_choices, NUM_RAW_DATA_FORMATS,
+				(const char **)raw_data_format_choices, MUS_NUM_DATA_FORMATS - 1,
 				dpy_box, prf->label,
 				raw_data_format_from_text,
 				NULL, NULL,
@@ -5545,7 +5543,7 @@ widget_t start_preferences_dialog(void)
     grf_label = make_top_level_label("graph options", grf_box);
 
     prf = prefs_row_with_radio_box("how to connect the dots", S_graph_style,
-				   graph_styles, 5, graph_style(ss),
+				   graph_styles, NUM_GRAPH_STYLES, graph_style(ss),
 				   grf_box, grf_label,
 				   graph_style_choice);
     remember_pref(prf, reflect_graph_style, NULL);
@@ -5573,7 +5571,7 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_radio_box("how to layout multichannel graphs", S_channel_style,
-				   channel_styles, 3, channel_style(ss),
+				   channel_styles, NUM_CHANNEL_STYLES, channel_style(ss),
 				   grf_box, current_sep,
 				   channel_style_choice);
     remember_pref(prf, reflect_channel_style, NULL);
@@ -5608,7 +5606,7 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_list("what axes to display", S_show_axes, show_axes_choices[(int)show_axes(ss)],
-			      show_axes_choices, 5,
+			      show_axes_choices, NUM_SHOW_AXES,
 			      grf_box, current_sep,
 			      show_axes_from_text,
 			      NULL, NULL,
@@ -5617,7 +5615,7 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_list("time division", S_x_axis_style, x_axis_styles[(int)x_axis_style(ss)],
-			      x_axis_styles, 5,
+			      x_axis_styles, NUM_X_AXIS_STYLES,
 			      grf_box, current_sep,
 			      x_axis_style_from_text,
 			      NULL, NULL,
@@ -5740,7 +5738,7 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_list("transform", S_transform_type, transform_types[transform_type(ss)],
-			      transform_types, NUM_TRANSFORM_TYPES,
+			      transform_types, NUM_BUILTIN_TRANSFORM_TYPES,
 			      fft_box, current_sep,
 			      transform_type_from_text,
 			      transform_type_completer, NULL,

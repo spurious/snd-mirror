@@ -490,8 +490,6 @@ static Float beta_maxes[MUS_NUM_WINDOWS] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1
 Float fft_beta_max(mus_fft_window_t win) {return(beta_maxes[(int)win]);}
 
 
-#define NUM_BUILTIN_TRANSFORM_TYPES 6
-
 static char *transform_type_names[NUM_BUILTIN_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Haar"};
 
 static char *transform_type_program_names[NUM_BUILTIN_TRANSFORM_TYPES] = {
@@ -1276,11 +1274,9 @@ static void one_fft(fft_state *fs)
 
 void single_fft(chan_info *cp, bool update_display, bool force_recalc)
 {
-  fft_state *fs;
   if (cp->transform_size < 2) return;
-  fs = make_fft_state(cp, force_recalc);
-  cp->fft_data = fs;
-  one_fft(fs);
+  cp->fft_data = make_fft_state(cp, force_recalc);
+  one_fft(cp->fft_data);
   if (update_display) display_channel_fft_data(cp);
 }
 

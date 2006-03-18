@@ -899,7 +899,7 @@ void free_fft_pix(chan_info *cp)
 bool restore_fft_pix(chan_info *cp, axis_context *ax)
 {
 #if HAVE_GDK_DRAW_PIXBUF
-  gdk_draw_pixbuf(cp->cgx->ax->wn, /* fixed up for united chans(?) */
+  gdk_draw_pixbuf(ax->wn,
 		  copy_GC(cp),
 		  cp->cgx->fft_pix,
 		  0, 0,
@@ -920,8 +920,8 @@ void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int 
   cp->cgx->fft_pix_x0 = x0;
   cp->cgx->fft_pix_y0 = y1;
   cp->cgx->fft_pix = gdk_pixbuf_get_from_drawable(cp->cgx->fft_pix,
-						  cp->cgx->ax->wn,
-						  gtk_widget_get_colormap(cp->cgx->ax->w),
+						  ax->wn,
+						  gtk_widget_get_colormap(ax->w),
 						  cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0,
 						  0, 0,
 						  cp->cgx->fft_pix_width, cp->cgx->fft_pix_height);
