@@ -180,6 +180,7 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
   switch (graph_style)
     {
     case GRAPH_LINES:
+    default:
       gdk_draw_lines(ax->wn, ax->gc, points, j);
       gdk_draw_lines(ax->wn, ax->gc, points1, j);
       break;
@@ -224,11 +225,19 @@ void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float
   int i, gy0;
   switch (graph_style)
     {
-    case GRAPH_LINES: draw_lines(ax, points, j); break;
-    case GRAPH_DOTS: draw_points(ax, points, j, dot_size); break;
-    case GRAPH_FILLED: fill_polygons(ax, points, j, ap, grf_y(y0, ap)); break;
+    case GRAPH_LINES:
+    default:
+      draw_lines(ax, points, j); 
+      break;
+    case GRAPH_DOTS: 
+      draw_points(ax, points, j, dot_size); 
+      break;
+    case GRAPH_FILLED: 
+      fill_polygons(ax, points, j, ap, grf_y(y0, ap)); 
+      break;
     case GRAPH_DOTS_AND_LINES: 
-      if (dot_size > 1) draw_points(ax, points, j, dot_size); 
+      if (dot_size > 1) 
+	draw_points(ax, points, j, dot_size); 
       draw_lines(ax, points, j); 
       break;
     case GRAPH_LOLLIPOPS:

@@ -182,6 +182,7 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
   switch (graph_style)
     {
     case GRAPH_LINES:
+    default:
       XDrawLines(ax->dp, ax->wn, ax->gc, points, j, CoordModeOrigin);
       XDrawLines(ax->dp, ax->wn, ax->gc, points1, j, CoordModeOrigin);
       break;
@@ -232,6 +233,7 @@ void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float
   switch (graph_style)
     {
     case GRAPH_LINES: 
+    default:
       draw_lines(ax, points, j); 
       break;
     case GRAPH_DOTS: 

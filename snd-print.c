@@ -204,6 +204,7 @@ void ps_draw_grf_points(axis_info *ap, int j, Float y0, graph_style_t graph_styl
   switch (graph_style)
     {
     case GRAPH_LINES:
+    default:
       ps_draw_lines(ap, j, xpts, ypts);
       break;
     case GRAPH_DOTS:
@@ -244,6 +245,7 @@ void ps_draw_both_grf_points(axis_info *ap, int j, graph_style_t graph_style, in
   switch (graph_style)
     {
     case GRAPH_LINES:
+    default:
       ps_draw_lines(ap, j, xpts, ypts);
       ps_draw_lines(ap, j, xpts, ypts1);
       break;

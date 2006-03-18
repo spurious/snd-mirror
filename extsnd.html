@@ -180,6 +180,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#fmvdoc">fmv.scm</a></td>                <td>the fm-violin tied to real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#freeverbdoc">freverb.scm, freeverb.rb</a></td><td>a reverb</td></tr>
 <tr><td><a href="sndscm.html#granidoc">grani.scm</a>                 </td><td>CLM's grani (Fernando Lopez-Lezcano) translated to Scheme by MIke Scholz</td></tr>
+<tr><td><a href="sndscm.html#heartdoc">heart.scm</a></td>            <td>use Snd with non-sound (arbitrary range) data</td></tr>
 <tr><td><a href="sndscm.html#hooksdoc">hooks.scm, hooks.rb</a></td>  <td>functions related to hooks</td></tr>
 <tr><td><a href="sndscm.html#indexdoc">index.scm, index.rb</a></td>  <td>snd-help locators</td></tr>
 <tr><td><a href="sndscm.html#dotemacs">inf-snd.el, DotEmacs</a></td> <td>Emacs subjob support (Michael Scholz, Fernando Lopez-Lezcano)</td></tr>
@@ -10789,7 +10790,16 @@ code is loaded,
 </pre>
 <p>
 Now when an error occurs, you can call (<a class=quiet href="sndscm.html#exsnddebug">snd-debug</a>) 
-and fall into the debugger.  The debugger in Snd is just the normal
+and fall into the debugger.  
+To get backtraces,
+</p>
+<pre>
+  (read-enable 'positions)
+  (debug-enable 'debug 'backtrace)
+  (set! (show-backtrace) #t)
+</pre>
+<p>
+The debugger in Snd is just the normal
 listener, but you also have some stacks and continuations lying
 around.  These can be examined via <b>bt</b> (backtrace) and
 <b>lv</b> (local variables).
