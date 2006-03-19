@@ -3271,7 +3271,6 @@ def test104
     "no ramp method",
     "no run method",
     "no increment method",
-    "no inspect method",
     "no offset method",
     "no xcoeff method",
     "no ycoeff method",

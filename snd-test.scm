@@ -42,7 +42,6 @@
 (define all-args #f) ; huge arg testing
 
 ;;; SOMEDAY: why does freeBSD get memory corruption occasionally? (need valgrind ideally)
-;;; SOMEDAY tearoff in ladspa.scm, test new key bindings in prefs, get new ladspa kits
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (define full-test (< snd-test 0))
@@ -3538,13 +3537,13 @@
 			    "can't close file" "arg out of range"
 			    "midi open error" "midi read error" "midi write error" "midi close error" "midi init error" "midi misc error"
 			    "no channels method" "no hop method" "no width method" "no file-name method" "no ramp method" "no run method"
-			    "no increment method" "no inspect method" "no offset method"
+			    "no increment method" "no offset method"
 			    "no xcoeff method" "no ycoeff method" "no xcoeffs method" "no ycoeffs method" "can't translate"
 			    )))
 	    (call-with-current-continuation
 	     (lambda (quit)
 	       (do ((i 0 (1+ i)))
-		   ((= i 67))
+		   ((= i 66))
 		 (if (not (string-=? (list-ref errs i) (mus-error-type->string i)))
 		     (begin
 		       (snd-display ";mus-error-type->string ~D: ~A ~A" i (list-ref errs i) (mus-error-type->string i))
@@ -27389,7 +27388,8 @@ EDITS: 5
 		(if (not (eq? (car var) 'no-such-envelope))
 		    (snd-display ";write-peak-env-info-file null env: ~A" var)))
 	      (let ((var (catch #t (lambda () (read-peak-env-info-file ind 0 "hi")) (lambda args args))))
-		(if (and (not (eq? (car var) 'no-such-file))
+		(if (and (not (eq? (car var) 'bad-header))
+			 (not (eq? (car var) 'no-such-file))
 			 (not (eq? (car var) 'mus-error)))
 		    (snd-display ";read-peak-env-info-file null file: ~A" var)))
 	      (if (not (= (frames ind) 0)) (snd-display ";frames z.snd ~A" (frames ind)))

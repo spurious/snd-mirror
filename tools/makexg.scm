@@ -775,6 +775,7 @@
 				    (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ))))))))))))
 	(if (and (not (string=? type "lambda"))
 		 (not (string=? type "lambda_data"))
+		 (not (string=? type "GError*"))
 		 (not (find-callback 
 		       (lambda (func)
 			 (string=? type (symbol->string (car func))))))

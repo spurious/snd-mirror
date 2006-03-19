@@ -176,6 +176,8 @@ void reflect_regions_in_region_browser(void);
 void reflect_no_regions_in_region_browser(void);
 void reflect_region_graph_style(void);
 int region_dialog_region(void);
+char *regrow_get_label(void *ur);
+int regrow_get_pos(void *ur);
 void g_init_gxregion(void);
 
 
@@ -401,8 +403,8 @@ widget_t make_sound_save_as_dialog(bool managed);
 widget_t make_selection_save_as_dialog(bool managed);
 widget_t make_region_save_as_dialog(bool managed);
 widget_t make_new_file_dialog(bool managed);
-void mouse_enter_label(Widget w, XtPointer context, XEvent *event, Boolean *flag);
-void mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolean *flag);
+void mouse_enter_label(void *r, int type);
+void mouse_leave_label(void *r, int type);
 Widget edit_header(snd_info *sp);
 void save_edit_header_dialog_state(FILE *fd);
 void cleanup_edit_header_watcher(void);

@@ -1944,9 +1944,14 @@ static void make_sonogram(chan_info *cp)
       fap = cp->fft->axis;
       fwidth = fap->x_axis_x1 - fap->x_axis_x0;        /* these are the corners */
       fheight = fap->y_axis_y0 - fap->y_axis_y1;
+      if ((fwidth == 0) || (fheight == 0)) return;
+
       bins = (int)(si->target_bins * cp->spectro_cutoff);
+      if (bins == 0) return;
 
       /* TODO: move out back = ok recopy but hg/ss are still posted */
+      /* TODO: if saved case was partially obscured, restoration here gets the previous display (colors/sizes etc)! */
+
       if (cp->cgx->fft_pix)                            /* Motif None = 0 */
 	{
 	  if ((cp->fft_changed == FFT_UNCHANGED) &&
@@ -2078,9 +2083,12 @@ static void rotate_matrix(Float xangle, Float yangle, Float zangle, Float xscl, 
   Float sinx, siny, sinz, cosx, cosy, cosz, deg;
   Float x, y, z;
   deg = 2.0 * M_PI / 360.0;
-  sinx = sin(x = (xangle * deg));
-  siny = sin(y = (yangle * deg));
-  sinz = sin(z = (zangle * deg));
+  x = xangle * deg;
+  y = yangle * deg;
+  z = zangle * deg;
+  sinx = sin(x);
+  siny = sin(y);
+  sinz = sin(z);
   cosx = cos(x);
   cosy = cos(y);
   cosz = cos(z);

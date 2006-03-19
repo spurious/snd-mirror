@@ -2,6 +2,8 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
+/* TODO: get rid of mus_misc_error */
+
 /* collect syncd chans */
 typedef struct {
   sync_info *si;

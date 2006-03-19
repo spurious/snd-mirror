@@ -8,7 +8,6 @@ typedef struct {
   widget_t nm;
   widget_t pl;
   int pos;
-  file_viewer_t parent;
   void *vdat;
 } vf_row;
 

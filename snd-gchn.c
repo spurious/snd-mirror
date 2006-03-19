@@ -889,10 +889,8 @@ void free_fft_pix(chan_info *cp)
 {
   if ((cp->cgx->fft_pix) &&
       (channel_graph(cp)))
-    {
-      g_object_unref(cp->cgx->fft_pix);
-      cp->cgx->fft_pix = NULL;
-    }
+    g_object_unref(cp->cgx->fft_pix);
+  cp->cgx->fft_pix = NULL;
   cp->cgx->fft_pix_ready = false;
 }
 
@@ -914,6 +912,7 @@ bool restore_fft_pix(chan_info *cp, axis_context *ax)
 
 void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1)
 {
+  if ((fwidth == 0) || (fheight == 0)) return;
 #if HAVE_GDK_DRAW_PIXBUF
   cp->cgx->fft_pix_width = fwidth;
   cp->cgx->fft_pix_height = fheight;

@@ -1212,11 +1212,9 @@ void free_fft_pix(chan_info *cp)
 {
   if ((cp->cgx->fft_pix != None) &&
       (channel_graph(cp)))
-    {
-      XFreePixmap(XtDisplay(channel_graph(cp)),
-		  cp->cgx->fft_pix);
-      cp->cgx->fft_pix = None;
-    }
+    XFreePixmap(XtDisplay(channel_graph(cp)),
+		cp->cgx->fft_pix);
+  cp->cgx->fft_pix = None;
   cp->cgx->fft_pix_ready = false;
 }
 
@@ -1234,6 +1232,7 @@ bool restore_fft_pix(chan_info *cp, axis_context *ax)
 
 void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1)
 {
+  if ((fwidth == 0) || (fheight == 0)) return;
   if (cp->cgx->fft_pix == None)
     {
       /* make new pixmap */
@@ -1241,7 +1240,7 @@ void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int 
       cp->cgx->fft_pix_height = fheight;
       cp->cgx->fft_pix_x0 = x0;
       cp->cgx->fft_pix_y0 = y1;
-      cp->cgx->fft_pix = XCreatePixmap(XtDisplay(channel_graph(cp)),
+      cp->cgx->fft_pix = XCreatePixmap(ax->dp,
 				       RootWindowOfScreen(XtScreen(channel_graph(cp))),
 				       fwidth, fheight,
 				       DefaultDepthOfScreen(XtScreen(channel_graph(cp))));

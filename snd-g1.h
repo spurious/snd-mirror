@@ -167,6 +167,8 @@ void reflect_regions_in_region_browser(void);
 void reflect_no_regions_in_region_browser(void);
 void reflect_region_graph_style(void);
 int region_dialog_region(void);
+char *regrow_get_label(void *ur);
+int regrow_get_pos(void *ur);
 void g_init_gxregion(void);
 
 

@@ -130,7 +130,8 @@ Usually just "", but can be "-lsnd" or something if needed.
 (use-modules (ice-9 optargs)
 	     (srfi srfi-1)
 	     (srfi srfi-13)
-	     (ice-9 rdelim))
+	     (ice-9 rdelim)
+	     (ice-9 pretty-print))
 
 
 (provide 'snd-eval-c.scm)
@@ -143,6 +144,7 @@ Usually just "", but can be "-lsnd" or something if needed.
 ;;;;;;;;;;;;;;;;;;;; Public variables ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define *eval-c-do-cache* #t)
 (define eval-c-verbose #t)
 (define eval-c-very-verbose #f)
 (define eval-c-cleanup #f)
@@ -345,9 +347,14 @@ Usually just "", but can be "-lsnd" or something if needed.
 	    (if (and firsthit
 		     (or (null? (cdr firsthit))
 			 (not (equal? #\> (cadr firsthit)))))
-		(let ((ret (apply <-> (map (lambda (c) (if (equal? #\- c)
-							   "_minus_"
-							   (string c)))
+		(let ((ret (apply <-> (map (lambda (c) (cond ((equal? #\- c)
+							      "_minus_")
+							     ((equal? #\> c)
+							      "_greaterthan_")
+							     ((equal? #\< c)
+							      "_lessthan_")
+							     (else
+							      (string c))))
 					   varlist))))
 		  (if (symbol? das-var)
 		      (string->symbol ret)
@@ -1577,6 +1584,96 @@ int fgetc (FILE
 !#
 
 
+
+;;;;;;;;;;;;;;;;;; Cache
+
+(define eval-c-generation 2) ;;Cached code with different generation can not be used, and file is automatically deleted.
+
+(define eval-c-cache-dir (<-> (getenv "HOME") "/snd-eval-c-cache"))
+
+(system (<-> "mkdir " eval-c-cache-dir " >/dev/null 2>/dev/null"))
+(define eval-c-cache '())
+
+(define eval-c-cached-code #f)
+
+;; Load cached code.
+(let* ((dir (opendir eval-c-cache-dir))
+       (entry (readdir dir)))
+  (while (not (eof-object? entry))
+	 (if (and (not (string=? "." entry))
+		  (not (string=? ".." entry))
+		  (>= (string-length entry) 6)
+		  (string=? (string-take entry 6) "cache.")
+		  (not (string=? (string-take-right entry 3) ".so")))
+	     (let ((filename (<-> eval-c-cache-dir "/" entry))
+		   (itsokey #t))
+	       ;;(c-display "cache-eval" filename)
+	       (catch #t
+		      (lambda ()
+			(load filename)
+			(list (car eval-c-cached-code)
+			      (cadr eval-c-cached-code)
+			      (caddr eval-c-cached-code)
+			      (cadddr eval-c-cached-code)))
+		      (lambda x
+			(set! itsokey #f)
+			(c-display x)
+			(c-display "Suspicious cached file detected:" filename "(you should probably delete this one)")))
+	       (if itsokey
+		   (if (not (= (car eval-c-cached-code) eval-c-generation))
+		       (begin
+			 (c-display "Deleting obsolete cached code " (cadr eval-c-cached-code) "and" filename ".")
+			 (system (<-> "rm -f " (cadr eval-c-cached-code) " " filename)))
+		       (set! eval-c-cache (cons (cdr eval-c-cached-code)
+						eval-c-cache))))))
+	 (set! entry (readdir dir)))
+  (closedir dir))
+;(load (<-> eval-c-cache-dir "/cache.qtSKPT"))
+;(begin eval-c-cached-code)
+
+	   
+(define (eval-c-check-cached compile-options terms)
+  (let ((ret (call-with-current-continuation
+	      (lambda (return)
+		(for-each (lambda (cache)
+			    (if (and (string=? compile-options (cadr cache))
+				     (equal? terms (caddr cache)))
+				(return cache)))
+			  eval-c-cache)
+		(return #f)))))
+    (if ret
+	(catch #t
+	       (lambda ()
+		 (c-display "Linking" (car ret))
+		 (dynamic-call "das_init" (dynamic-link (car ret))))
+	       (lambda x
+		 (c-display x)
+		 (set! ret #f))))
+    ret))
+
+(define (eval-c-cache-it compile-options terms object-file)
+  (if object-file
+      (let* ((mainfile (mkstemp! (<-> eval-c-cache-dir "/cache.XXXXXX")))
+	     (newobjectfile (<-> (port-filename mainfile) ".so")))
+	(set! eval-c-cache (cons `(,newobjectfile ,compile-options ,terms)
+				 eval-c-cache))
+	(system (<-> "mv " object-file " " newobjectfile))
+	(pretty-print `(set! eval-c-cached-code '(,eval-c-generation ,newobjectfile ,compile-options ,terms)) mainfile)    
+	(close mainfile))))
+
+#!
+(eval-c-cache-it "aiai" '(gakk gakk))
+(pretty-print '(define (foo) (lambda (x))))
+(define t (mkstemp! "/tmp/aiXXXXXX"))
+(cadr (begin t))
+(port-filename t)
+
+!#
+
+
+;;;;;;;;;;;;;;;;;; Compiling and stuff
+
+
 (define eval-c-filestobedeleted '())
 
 (add-hook! exit-hook (lambda args
@@ -1624,12 +1721,15 @@ int fgetc (FILE
 	  (throw 'compilation-failed)))
 
     (dynamic-call "das_init" (dynamic-link libfile))
-    (system (<-> "rm " libfile))
+    (if (not *eval-c-do-cache*)
+	(system (<-> "rm " libfile)))
 
     (if eval-c-cleanup
 	(system (<-> "rm " sourcefile))
 	(if eval-c-lazy-cleanup
-	    (set! eval-c-filestobedeleted (cons sourcefile eval-c-filestobedeleted))))))
+	    (set! eval-c-filestobedeleted (cons sourcefile eval-c-filestobedeleted))))
+    libfile))
+
 
 
 #!
@@ -1706,21 +1806,33 @@ int fgetc (FILE
 	   (reverse eval-c-run-nows))
     "}"))
 
-#!
-(define a 2)
-(inexact->exact (floor a))
-!#
+
+
 
 (define (eval-c-non-macro compile-options . terms)
   (apply eval-c-eval
 	 (append (list #:compile-options compile-options)
 		 (eval-c-parse-file terms))))
 	       
-			   
+#!
+(define (eval-c-non-macro compile-options cache-key . terms)
+  (if cache-key
+      (if (not (eval-c-check-cached compile-options cache-key))
+	  (eval-c-cache-it compile-options cache-key
+			   (apply eval-c-eval
+				  (append (list #:compile-options compile-options)
+					  (eval-c-parse-file terms)))))
+      (apply eval-c-eval
+	     (append (list #:compile-options compile-options)
+		     (eval-c-parse-file terms)))))
+	       
+!#
 
 (define-macro (eval-c compile-options . terms)
-  `(eval-c-eval #:compile-options ,compile-options
-		,@(eval-c-parse-file terms)))
+  `(if (not (eval-c-check-cached ,compile-options ',terms))
+       (eval-c-cache-it ,compile-options ',terms
+			(eval-c-eval #:compile-options ,compile-options
+				     ,@(eval-c-parse-file terms)))))
 
 
 ;(define-macro (define-c ret-type def . body)

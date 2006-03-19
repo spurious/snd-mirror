@@ -4517,38 +4517,60 @@ void save_post_it_dialog_state(FILE *fd)
 static XEN mouse_enter_label_hook;
 static XEN mouse_leave_label_hook;
 
-static void mouse_leave_label_or_enter(vf_row *r, XEN hook, const char *caller)
+static char *vf_row_get_label(void *ur)
+{
+  vf_row *r = (vf_row *)ur;
+  return(((view_files_info *)(r->vdat))->full_names[r->pos]);
+}
+
+static int vf_row_get_pos(void *ur)
+{
+  vf_row *r = (vf_row *)ur;
+  return(r->pos);
+}
+
+static void mouse_enter_or_leave_label(void *r, int type, XEN hook, const char *caller)
 {
   if ((r) &&
       (XEN_HOOKED(hook)))
     {
       char *label = NULL;
       bool need_free = false;
-      if (r->parent == FILE_VIEWER)
-	label = ((view_files_info *)(r->vdat))->full_names[r->pos];
+      if (type == FILE_VIEWER)
+	label = vf_row_get_label(r);
       else
 	{
-	  label = get_label(r->nm);
+	  label = regrow_get_label(r);
 	  if (label) need_free = true;
 	}
       if (label)
 	run_hook(hook,
-		 XEN_LIST_3(C_TO_XEN_INT(r->parent),
-			    C_TO_XEN_INT(r->pos),
+		 XEN_LIST_3(C_TO_XEN_INT(type),
+			    C_TO_XEN_INT((type == FILE_VIEWER) ? (vf_row_get_pos(r)) : (regrow_get_pos(r))),
 			    C_TO_XEN_STRING(label)),
 		 caller);
       if (need_free) XtFree(label);
     }
 }
 
-void mouse_enter_label(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+void mouse_leave_label(void *r, int type)
 {
-  mouse_leave_label_or_enter((vf_row *)context, mouse_enter_label_hook, S_mouse_enter_label_hook);
+  mouse_enter_or_leave_label(r, type, mouse_leave_label_hook, S_mouse_leave_label_hook);
 }
 
-void mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+void mouse_enter_label(void *r, int type)
 {
-  mouse_leave_label_or_enter((vf_row *)context, mouse_leave_label_hook, S_mouse_leave_label_hook);
+  mouse_enter_or_leave_label(r, type, mouse_enter_label_hook, S_mouse_enter_label_hook);
+}
+
+static void vf_mouse_enter_label(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  mouse_enter_label(context, FILE_VIEWER);
+}
+
+static void vf_mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  mouse_leave_label(context, FILE_VIEWER);
 }
 
 static vf_row *make_vf_row(view_files_info *vdat, 
@@ -4564,7 +4586,6 @@ static vf_row *make_vf_row(view_files_info *vdat,
   s1 = XmStringCreate("", XmFONTLIST_DEFAULT_TAG);
   r = (vf_row *)CALLOC(1, sizeof(vf_row));
   r->vdat = (void *)vdat;
-  r->parent = FILE_VIEWER;
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -4606,8 +4627,8 @@ static vf_row *make_vf_row(view_files_info *vdat,
   r->nm = XtCreateManagedWidget("nm", xmPushButtonWidgetClass, r->rw, args, n);
   XmStringFree(s1);
 
-  XtAddEventHandler(r->nm, EnterWindowMask, false, mouse_enter_label, (XtPointer)r);
-  XtAddEventHandler(r->nm, LeaveWindowMask, false, mouse_leave_label, (XtPointer)r);
+  XtAddEventHandler(r->nm, EnterWindowMask, false, vf_mouse_enter_label, (XtPointer)r);
+  XtAddEventHandler(r->nm, LeaveWindowMask, false, vf_mouse_leave_label, (XtPointer)r);
 
   FREE(n1);
   FREE(n3);
@@ -5212,6 +5233,7 @@ static void speed_label_click_callback(Widget w, XtPointer context, XtPointer in
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   switch (vdat->speed_style)
     {
+    default:
     case SPEED_CONTROL_AS_FLOAT:    vdat->speed_style = SPEED_CONTROL_AS_RATIO;    break;
     case SPEED_CONTROL_AS_RATIO:    vdat->speed_style = SPEED_CONTROL_AS_SEMITONE; break;
     case SPEED_CONTROL_AS_SEMITONE: vdat->speed_style = SPEED_CONTROL_AS_FLOAT;    break;

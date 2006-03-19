@@ -3988,33 +3988,56 @@ void save_post_it_dialog_state(FILE *fd)
 static XEN mouse_enter_label_hook;
 static XEN mouse_leave_label_hook;
 
-static gboolean mouse_leave_label_or_enter(vf_row *r, XEN hook, const char *caller)
+static char *vf_row_get_label(void *ur)
+{
+  vf_row *r = (vf_row *)ur;
+  return(((view_files_info *)(r->vdat))->full_names[r->pos]);
+}
+
+static int vf_row_get_pos(void *ur)
+{
+  vf_row *r = (vf_row *)ur;
+  return(r->pos);
+}
+
+static void mouse_enter_or_leave_label(void *r, int type, XEN hook, const char *caller)
 {
   if ((r) &&
       (XEN_HOOKED(hook)))
     {
       char *label = NULL;
-      if (r->parent == FILE_VIEWER)
-	label = ((view_files_info *)(r->vdat))->full_names[r->pos];
-      else label = (char *)gtk_label_get_text(GTK_LABEL(GTK_BIN(r->nm)->child));
+      if (type == FILE_VIEWER)
+	label = vf_row_get_label(r);
+      else label = regrow_get_label(r);
       if (label)
 	run_hook(hook,
-		 XEN_LIST_3(C_TO_XEN_INT(r->parent),
-			    C_TO_XEN_INT(r->pos),
+		 XEN_LIST_3(C_TO_XEN_INT(type),
+			    C_TO_XEN_INT((type == FILE_VIEWER) ? (vf_row_get_pos(r)) : (regrow_get_pos(r))),
 			    C_TO_XEN_STRING(label)),
 		 caller);
     }
+}
+
+void mouse_leave_label(void *r, int type)
+{
+  mouse_enter_or_leave_label(r, type, mouse_leave_label_hook, S_mouse_leave_label_hook);
+}
+
+void mouse_enter_label(void *r, int type)
+{
+  mouse_enter_or_leave_label(r, type, mouse_enter_label_hook, S_mouse_enter_label_hook);
+}
+
+static gboolean vf_mouse_enter_label(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
+{
+  mouse_enter_label((void *)gp, FILE_VIEWER);
   return(false);
 }
 
-gboolean label_enter_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
+static gboolean vf_mouse_leave_label(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
 {
-  return(mouse_leave_label_or_enter((vf_row *)gp, mouse_enter_label_hook, S_mouse_enter_label_hook));
-}
-
-gboolean label_leave_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
-{
-  return(mouse_leave_label_or_enter((vf_row *)gp, mouse_leave_label_hook, S_mouse_leave_label_hook));
+  mouse_leave_label((void *)gp, FILE_VIEWER);
+  return(false);
 }
 
 static int vf_last_select_state = 0;
@@ -4030,7 +4053,6 @@ static vf_row *make_vf_row(view_files_info *vdat, GtkSignalFunc play_callback, G
   vf_row *r;
   r = (vf_row *)CALLOC(1, sizeof(vf_row));
   r->vdat = (void *)vdat;
-  r->parent = FILE_VIEWER;
 
   r->rw = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(vdat->file_list), r->rw, false, false, 0);
@@ -4048,8 +4070,8 @@ static vf_row *make_vf_row(view_files_info *vdat, GtkSignalFunc play_callback, G
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, true, true, 2);
 
   SG_SIGNAL_CONNECT(r->nm, "clicked", name_callback, r);
-  SG_SIGNAL_CONNECT(r->nm, "enter_notify_event", label_enter_callback, r);
-  SG_SIGNAL_CONNECT(r->nm, "leave_notify_event", label_leave_callback, r);
+  SG_SIGNAL_CONNECT(r->nm, "enter_notify_event", vf_mouse_enter_label, r);
+  SG_SIGNAL_CONNECT(r->nm, "leave_notify_event", vf_mouse_leave_label, r);
   SG_SIGNAL_CONNECT(r->nm, "button_press_event", select_event_callback, (gpointer)vdat);
 
   set_user_data(G_OBJECT(r->nm), (gpointer)r);
@@ -4581,6 +4603,7 @@ static gboolean vf_speed_label_click_callback(GtkWidget *w, GdkEventButton *ev, 
 
   switch (vdat->speed_style)
     {
+    default:
     case SPEED_CONTROL_AS_FLOAT:    vdat->speed_style = SPEED_CONTROL_AS_RATIO;    break;
     case SPEED_CONTROL_AS_RATIO:    vdat->speed_style = SPEED_CONTROL_AS_SEMITONE; break;
     case SPEED_CONTROL_AS_SEMITONE: vdat->speed_style = SPEED_CONTROL_AS_FLOAT;    break;

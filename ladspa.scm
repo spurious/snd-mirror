@@ -53,15 +53,6 @@
 (provide 'snd-ladspa.scm)
 
 
-(use-modules (ice-9 threads))
-
-
-
-(define ladspa-use-threads (c-before1.8?))
-
-(if (or (not (provided? 'threads))
-	(not (defined? 'call-with-new-thread)))
-    (set! ladspa-use-threads #f))
 
 ;; Increase this number if you can't preview sound because of large latency in the system.
 ;; Note, this is not the latency, just the maximum buffer size. The only bad consequence about
@@ -554,7 +545,7 @@
 		     (set! ladspa-effect-num (+ 1 ladspa-effect-num)))))))
   
     
-  (define* (make-ladspadialog descriptor libraryname effectname #:optional menu)
+  (define (make-ladspadialog descriptor libraryname effectname)
     (define ladspa #f)
     (define dialog #f)
     (define toggles #f)
@@ -780,21 +771,25 @@
       
       
       (set! ladspa (<ladspa> libraryname effectname))
-      
-      (if ladspa
-	  (ladspa-add-effect-menuitem name ShowDialog menu)
-	  #t)))
+      (if (not ladspa)
+	  (begin
+	    (c-display "Could not load plugin" libraryname effectname)
+	    #f)
+	  (ShowDialog))))
+  
+  (define* (make-ladspadialog-menuitem  descriptor libraryname effectname #:optional menu)
+    (ladspa-add-effect-menuitem (.Name descriptor) (lambda ()
+						     ;;ShowDialog
+						     (make-ladspadialog descriptor libraryname effectname))
+				menu))
 
   ;; Following function made while looking at the source for jack-rack written by Bob Ham.
 
   (define (menu-descend-base menu uri base)
-    ;;(c-display "in")
     (let ((uris (lrdf_get_subclasses uri)))
       (if uris
 	  (let ((n 0))
 	    (while (< n (lrdf_uris_count uris))
-		   ;;(c-display n)
-		   (yield)
 		   (let* ((item (lrdf_uris_get_item uris n))
 			  (label (lrdf_get_label item))
 			  (newmenu (menu-sub-add menu label)))
@@ -805,28 +800,24 @@
       (if uris
 	  (let ((n 0))
 	    (while (< n (lrdf_uris_count uris))
-		   ;;(c-display n)
-		   (yield)
 		   (let* ((item (lrdf_uris_get_item uris n))
 			  (das-ladspa (get-ladspa-with-id (lrdf_get_uid item))))
 		     (if das-ladspa
-			 (apply make-ladspadialog (append das-ladspa (list menu)))))
+			 (apply make-ladspadialog-menuitem (append das-ladspa (list menu)))))
 		   (set! n (1+ n)))
 	    (lrdf_free_uris uris))))
-    ;;(c-display "out")
     )
 
   (define (menu-descend menu uri base)
-    ;;(c-display "menu/uri/base" menu uri base)
     (menu-descend-base menu uri base))
-
 
   (if (provided? 'snd-lrdf)
       (menu-descend ladspa-effects-menu (string-append (LADSPA-BASE) "Plugin") ""))
+
   (for-each (lambda (x)
-	      (yield)
-	      (apply make-ladspadialog x))
-	    (get-ladspa-list)))
+	      (apply make-ladspadialog-menuitem x))
+	    (get-ladspa-list))
+  )
 
 
 
@@ -842,119 +833,89 @@
 
 (define ladspa-not-initialized #t)
 
-(define (call-with-new-thread-without-threads func func2)
-  (func))
-
-((if ladspa-use-threads
-     call-with-new-thread
-     call-with-new-thread-without-threads)
- (lambda ()
-
-   (if (and (provided? 'snd-lrdf)
-	    (not lrdf-is-inited))
-       (begin
-	 (eval-c "-llrdf"
-		 
-		 "#include <lrdf.h>"
-		 
-		 (proto->public
-		  "void lrdf_init();"
-		  "void lrdf_cleanup();"
-		  ;;"int lrdf_read_files(const char *uri[]);"
-		  "int lrdf_read_file(const char *uri);"
-		  ;;"void lrdf_add_triple(const char *source, const char *subject, const char* predicate, const char *object, enum lrdf_objtype literal);"
-		  "char* lrdf_add_preset(const char *source, const char *label, unsigned long id,                      lrdf_defaults *vals);"
-		  "void lrdf_remove_matches(lrdf_statement *pattern);"
-		  "void lrdf_remove_uri_matches(const char *uri);"
-		  "void lrdf_rebuild_caches();"
-		  "int lrdf_export_by_source(const char *src, const char *file);"
-		  "lrdf_uris *lrdf_match_multi(lrdf_statement *patterns);"
-		  "lrdf_statement *lrdf_matches(lrdf_statement *pattern);"
-		  "lrdf_statement *lrdf_one_match(lrdf_statement *pattern);"
-		  "int lrdf_exists_match(lrdf_statement *pattern);"
-		  "lrdf_uris *lrdf_get_all_superclasses(const char *uri);"
-		  "lrdf_uris *lrdf_get_subclasses(const char *uri);"
-		  "lrdf_uris *lrdf_get_all_subclasses(const char *uri);"
-		  "lrdf_uris *lrdf_get_instances(const char *uri);"
-		  "lrdf_uris *lrdf_get_all_instances(const char *uri);"
-		  "lrdf_statement *lrdf_all_statements();"
-		  "void lrdf_free_uris(lrdf_uris *u);"
-		  "void lrdf_free_statements(lrdf_statement *s);"
-		  "char *lrdf_get_setting_metadata(const char *uri, const char *element);"
-		  "char *lrdf_get_default_uri(unsigned long id);"
-		  "lrdf_uris *lrdf_get_setting_uris(unsigned long id);"
-		  "unsigned long lrdf_get_uid(const char *uri);"
-		  "lrdf_defaults *lrdf_get_setting_values(const char *uri);"
-		  "lrdf_defaults *lrdf_get_scale_values(unsigned long id, unsigned long port);"
-		  "void lrdf_free_setting_values(lrdf_defaults *def);"
-		  "char *lrdf_get_label(const char *uri);")
-		 
-		 (public
-		  (<int> lrdf_defaults_count (lambda ((<lrdf_defaults*> defs))
-					       (return defs->count)))
-		  
-		  (<int> lrdf_defaults_pid (lambda ((<lrdf_defaults*> defs)
+(if (and (provided? 'snd-lrdf)
+	 (not lrdf-is-inited))
+    (begin
+      (eval-c "-llrdf"
+	      
+	      "#include <lrdf.h>"
+	      
+	      (proto->public
+	       "void lrdf_init();"
+	       "void lrdf_cleanup();"
+	       ;;"int lrdf_read_files(const char *uri[]);"
+	       "int lrdf_read_file(const char *uri);"
+	       ;;"void lrdf_add_triple(const char *source, const char *subject, const char* predicate, const char *object, enum lrdf_objtype literal);"
+	       "char* lrdf_add_preset(const char *source, const char *label, unsigned long id,                      lrdf_defaults *vals);"
+	       "void lrdf_remove_matches(lrdf_statement *pattern);"
+	       "void lrdf_remove_uri_matches(const char *uri);"
+	       "void lrdf_rebuild_caches();"
+	       "int lrdf_export_by_source(const char *src, const char *file);"
+	       "lrdf_uris *lrdf_match_multi(lrdf_statement *patterns);"
+	       "lrdf_statement *lrdf_matches(lrdf_statement *pattern);"
+	       "lrdf_statement *lrdf_one_match(lrdf_statement *pattern);"
+	       "int lrdf_exists_match(lrdf_statement *pattern);"
+	       "lrdf_uris *lrdf_get_all_superclasses(const char *uri);"
+	       "lrdf_uris *lrdf_get_subclasses(const char *uri);"
+	       "lrdf_uris *lrdf_get_all_subclasses(const char *uri);"
+	       "lrdf_uris *lrdf_get_instances(const char *uri);"
+	       "lrdf_uris *lrdf_get_all_instances(const char *uri);"
+	       "lrdf_statement *lrdf_all_statements();"
+	       "void lrdf_free_uris(lrdf_uris *u);"
+	       "void lrdf_free_statements(lrdf_statement *s);"
+	       "char *lrdf_get_setting_metadata(const char *uri, const char *element);"
+	       "char *lrdf_get_default_uri(unsigned long id);"
+	       "lrdf_uris *lrdf_get_setting_uris(unsigned long id);"
+	       "unsigned long lrdf_get_uid(const char *uri);"
+	       "lrdf_defaults *lrdf_get_setting_values(const char *uri);"
+	       "lrdf_defaults *lrdf_get_scale_values(unsigned long id, unsigned long port);"
+	       "void lrdf_free_setting_values(lrdf_defaults *def);"
+	       "char *lrdf_get_label(const char *uri);")
+	      
+	      (public
+	       (<int> lrdf_defaults_count (lambda ((<lrdf_defaults*> defs))
+					    (return defs->count)))
+	       
+	       (<int> lrdf_defaults_pid (lambda ((<lrdf_defaults*> defs)
+						 (<int> n))
+					  (return defs->items[n].pid)))
+	       
+	       (<float> lrdf_defaults_value (lambda ((<lrdf_defaults*> defs)
+						     (<int> n))
+					      (return defs->items[n].value)))
+	       
+	       (<int> lrdf_uris_count (lambda ((<lrdf_uris*> uris))
+					(return uris->count)))
+	       
+	       (<char*> lrdf_uris_get_item (lambda ((<lrdf_uris*> uris)
 						    (<int> n))
-					     (return defs->items[n].pid)))
-		  
-		  (<float> lrdf_defaults_value (lambda ((<lrdf_defaults*> defs)
-							(<int> n))
-						 (return defs->items[n].value)))
-		  
-		  (<int> lrdf_uris_count (lambda ((<lrdf_uris*> uris))
-					   (return uris->count)))
-		  
-		  (<char*> lrdf_uris_get_item (lambda ((<lrdf_uris*> uris)
-						       (<int> n))
-						(return uris->items[n])))
-		  
-		  (<char*> LADSPA-BASE (lambda ()
-					 (return LADSPA_BASE)))))
-	 
-	 (lrdf_init)
-	 (for-each (lambda (path)
-		     (catch #t
-			    (lambda ()
-			      (let* ((dir (opendir path))
-				     (entry (readdir dir)))
-				(while (not (eof-object? entry))
-				       (yield)
-				       (if (and (not (string=? "." entry))
-						(not (string=? ".." entry)))
-					   (lrdf_read_file (string-append "file://" path "/" entry)))
-				       (set! entry (readdir dir)))
-				(closedir dir)))
-			    (lambda (key . args)
-			      #f)))
-		   (string-split	(if (getenv "LADSPA_RDF_PATH")
-					    (getenv "LADSPA_RDF_PATH")
-					    "/usr/local/share/ladspa/rdf:/usr/share/ladspa/rdf")
-					#\:))
-	 
-	 (set! lrdf-is-inited #t)))
+					     (return uris->items[n])))
+	       
+	       (<char*> LADSPA-BASE (lambda ()
+				      (return LADSPA_BASE)))))
+      
+      (lrdf_init)
+
+      (for-each (lambda (path)
+		  (catch #t
+			 (lambda ()
+			   (let* ((dir (opendir path))
+				  (entry (readdir dir)))
+			     (while (not (eof-object? entry))
+				    (if (and (not (string=? "." entry))
+					     (not (string=? ".." entry)))
+					(lrdf_read_file (string-append "file://" path "/" entry)))
+				    (set! entry (readdir dir)))
+			     (closedir dir)))
+			 (lambda (key . args)
+			   #f)))
+		(string-split	(if (getenv "LADSPA_RDF_PATH")
+				    (getenv "LADSPA_RDF_PATH")
+				    "/usr/local/share/ladspa/rdf:/usr/share/ladspa/rdf")
+				#\:))
+      (set! lrdf-is-inited #t)))
 
 
-   (install-ladspa-menues)
-   (set! ladspa-not-initialized #f)
-   (load-from-path "kmenu.scm"))
- 
- (lambda ai
-   (c-display "Thread-error2: " ai)))
-
-
-(define (ladspa-finish-it)
-  (if ladspa-not-initialized
-      (let ((n 300))
-	(while (> n 0)
-	       (yield)
-	       (set! n (1- n)))
-	(in 2 ladspa-finish-it))
-      (c-display "Finished initializing ladspa.")))
-
-(if ladspa-use-threads
-    (in 200
-	(lambda ()
-	  (c-display "SND might be a bit unresponsive for a moment, initializing ladspa in the background...")
-	  (ladspa-finish-it))))
-
+(install-ladspa-menues)
+(set! ladspa-not-initialized #f)
 

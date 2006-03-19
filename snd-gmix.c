@@ -1018,6 +1018,7 @@ static gboolean track_speed_label_click_callback(GtkWidget *w, GdkEventButton *e
   if (!(track_p(track_dialog_id))) return(false);
   switch (track_speed_style(track_dialog_id))
     {
+    default:
     case SPEED_CONTROL_AS_FLOAT:    set_track_speed_style(track_dialog_id, SPEED_CONTROL_AS_RATIO, true);    break;
     case SPEED_CONTROL_AS_RATIO:    set_track_speed_style(track_dialog_id, SPEED_CONTROL_AS_SEMITONE, true); break;
     case SPEED_CONTROL_AS_SEMITONE: set_track_speed_style(track_dialog_id, SPEED_CONTROL_AS_FLOAT, true);    break;

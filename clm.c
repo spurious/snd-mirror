@@ -7426,7 +7426,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
     case MUS_ULTRASPHERICAL_WINDOW:
     case MUS_SAMARAKI_WINDOW:
     case MUS_DOLPH_CHEBYSHEV_WINDOW:
-      /* "Design of Ultraspherical Window Functions with Prescribed Spectral Characteristics", Bergen and Antoniou, EURASIP JASP 2004" */
+      /* "Design of Ultraspherical Window Functions with Prescribed Spectral Characteristics", Bergen and Antoniou, EURASIP JASP 2004 */
       if (type == MUS_ULTRASPHERICAL_WINDOW)
 	{
 	  if (mu == 0.0)

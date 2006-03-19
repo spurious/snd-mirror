@@ -2297,15 +2297,17 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 	return(snd_no_such_file_error(caller, samp_n));
 
       if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(play_name))))
-	mus_misc_error(caller, "can't read header", 
-		       XEN_LIST_2(samp_n, 
-				  C_TO_XEN_STRING(mus_header_type_name(mus_header_type()))));
+	XEN_ERROR(BAD_HEADER,
+		  XEN_LIST_3(C_TO_XEN_STRING(caller),
+			     samp_n, 
+			     C_TO_XEN_STRING(mus_header_type_name(mus_header_type()))));
 
       if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(play_name))))
-	mus_misc_error(caller, "can't read data", 
-		       XEN_LIST_2(samp_n, 
-				  C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(play_name),
-										  mus_sound_header_type(play_name)))));
+	XEN_ERROR(XEN_ERROR_TYPE("bad-format"),
+		  XEN_LIST_3(C_TO_XEN_STRING(caller),
+			     samp_n, 
+			     C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(play_name),
+									     mus_sound_header_type(play_name)))));
       sp = make_sound_readable(play_name, false);
       sp->short_filename = filename_without_directory(play_name);
       sp->filename = NULL;

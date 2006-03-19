@@ -8,7 +8,6 @@
 typedef struct {
   Widget rw, nm, pl;
   int pos;
-  file_viewer_t parent;
 } regrow;
 
 static Widget region_dialog = NULL, region_list, region_grf;
@@ -308,6 +307,28 @@ static void region_edit_callback(Widget w, XtPointer context, XtPointer info)
     region_edit(current_region);
 }
 
+char *regrow_get_label(void *ur)
+{
+  regrow *r = (regrow *)ur;
+  return(get_label(r->nm));
+}
+
+int regrow_get_pos(void *ur)
+{
+  regrow *r = (regrow *)ur;
+  return(r->pos);
+}
+
+static void regrow_mouse_enter_label(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  mouse_enter_label(context, REGION_VIEWER);
+}
+
+static void regrow_mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  mouse_leave_label(context, REGION_VIEWER);
+}
+
 static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callback, XtCallbackProc name_callback)
 {
   int n;
@@ -359,8 +380,8 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   r->nm = XtCreateManagedWidget("nm", xmPushButtonWidgetClass, r->rw, args, n);
   XmStringFree(s1);
 
-  XtAddEventHandler(r->nm, EnterWindowMask, false, mouse_enter_label, (XtPointer)r);
-  XtAddEventHandler(r->nm, LeaveWindowMask, false, mouse_leave_label, (XtPointer)r);
+  XtAddEventHandler(r->nm, EnterWindowMask, false, regrow_mouse_enter_label, (XtPointer)r);
+  XtAddEventHandler(r->nm, LeaveWindowMask, false, regrow_mouse_leave_label, (XtPointer)r);
 
   FREE(n1);
   FREE(n3);
@@ -484,7 +505,6 @@ static void make_region_dialog(void)
       r = make_regrow(region_ww, last_row, region_play_callback, region_focus_callback);
       region_rows[i] = r;
       r->pos = i;
-      r->parent = REGION_VIEWER;
       last_row = r->rw;
     }
 
@@ -662,7 +682,6 @@ static regrow *region_row(int n)
 			  region_play_callback, region_focus_callback);
 	  region_rows[n] = r;
 	  r->pos = n;
-	  r->parent = REGION_VIEWER;
 	}
       return(region_rows[n]);
     }

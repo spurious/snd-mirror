@@ -5,7 +5,6 @@
 typedef struct {
   GtkWidget *rw, *nm, *pl;
   int pos;
-  file_viewer_t parent;
 } regrow;
 
 static GtkWidget *region_dialog = NULL, *region_list, *region_grf;
@@ -325,6 +324,30 @@ static gboolean region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gp
   return(false);
 }
 
+char *regrow_get_label(void *ur)
+{
+  regrow *r = (regrow *)ur;
+  return((char *)gtk_label_get_text(GTK_LABEL(GTK_BIN(r->nm)->child)));
+}
+
+int regrow_get_pos(void *ur)
+{
+  regrow *r = (regrow *)ur;
+  return(r->pos);
+}
+
+static gboolean regrow_mouse_enter_label(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
+{
+  mouse_enter_label((void *)gp, REGION_VIEWER);
+  return(false);
+}
+
+static gboolean regrow_mouse_leave_label(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
+{
+  mouse_leave_label((void *)gp, REGION_VIEWER);
+  return(false);
+}
+
 static regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc name_callback)
 {
   regrow *r;
@@ -346,8 +369,8 @@ static regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignal
   sg_left_justify_button(r->nm);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, true, true, 2);
   SG_SIGNAL_CONNECT(r->nm, "clicked", name_callback, r);
-  SG_SIGNAL_CONNECT(r->nm, "enter_notify_event", label_enter_callback, r);
-  SG_SIGNAL_CONNECT(r->nm, "leave_notify_event", label_leave_callback, r);
+  SG_SIGNAL_CONNECT(r->nm, "enter_notify_event", regrow_mouse_enter_label, r);
+  SG_SIGNAL_CONNECT(r->nm, "leave_notify_event", regrow_mouse_leave_label, r);
   set_user_data(G_OBJECT(r->nm), (gpointer)r);
   gtk_widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
   gtk_widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
@@ -459,7 +482,6 @@ static void make_region_dialog(void)
       r = make_regrow(region_list, (void (*)())region_play_callback, (void (*)())region_focus_callback);
       region_rows[i] = r;
       r->pos = i;
-      r->parent = REGION_VIEWER;
     }
 
   update_region_browser(false);
@@ -589,7 +611,6 @@ static regrow *region_row(int n)
 	  r = make_regrow(region_list, (void (*)())region_play_callback, (void (*)())region_focus_callback);
 	  region_rows[n] = r;
 	  r->pos = n;
-	  r->parent = REGION_VIEWER;
 	}
       return(region_rows[n]);
     }
