@@ -275,6 +275,8 @@ void set_sound_channel_style(snd_info *sp, channel_style_t val)
     case CHANNELS_SEPARATE:     separate_sound(sp);    break; /* snd-xchn.c -> change_channel_style */
     case CHANNELS_COMBINED:     combine_sound(sp);     break;
     case CHANNELS_SUPERIMPOSED: superimpose_sound(sp); break;
+    default:
+      break;
     }
 }
 
@@ -1944,7 +1946,6 @@ static void make_sonogram(chan_info *cp)
       fheight = fap->y_axis_y0 - fap->y_axis_y1;
       bins = (int)(si->target_bins * cp->spectro_cutoff);
 
-#if USE_MOTIF || USE_GTK
       /* TODO: move out back = ok recopy but hg/ss are still posted */
       if (cp->cgx->fft_pix)                            /* Motif None = 0 */
 	{
@@ -1964,7 +1965,6 @@ static void make_sonogram(chan_info *cp)
 	    }
 	  cp->cgx->fft_pix_ready = false;
 	}
-#endif
 
       if (sono_js_size != color_map_size(ss))
 	{
@@ -2062,10 +2062,8 @@ static void make_sonogram(chan_info *cp)
 	    }
 	}
 
-#if USE_MOTIF || USE_GTK
       /* if size was wrong, we've already released pix above */
       save_fft_pix(cp, ax, fwidth, fheight, fap->x_axis_x0, fap->y_axis_y1);
-#endif
 
       if (cp->printing) ps_reset_color();
       FREE(hfdata);
@@ -2442,6 +2440,7 @@ static bool make_spectrogram(chan_info *cp)
 		    cp->spectro_x_scale, cp->spectro_y_scale, zscl,
 		    matrix);
       ax = copy_context(cp);
+      /* TODO: saved pix for spectrogram (needs angles/scalers saved as well as bounds) */
       if (color_map(ss) == 0)
 	{
 	  ss->stopped_explicitly = false;
@@ -6235,7 +6234,7 @@ static XEN g_set_transform_normalization(XEN val, XEN snd, XEN chn)
   fft_normalize_t norm;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_transform_normalization, "an integer");
   norm = (fft_normalize_t)XEN_TO_C_INT(val);
-  if (norm > NORMALIZE_GLOBALLY)
+  if (norm >= NUM_TRANSFORM_NORMALIZATIONS)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_normalization, 1, val, 
 			   "~A, but must be " S_dont_normalize ", " S_normalize_by_channel ", " S_normalize_by_sound ", or " S_normalize_globally);
   if (XEN_BOUND_P(snd))

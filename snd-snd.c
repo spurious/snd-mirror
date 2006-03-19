@@ -2909,6 +2909,8 @@ static void update_sound(snd_info *sp, void *ptr)
 	case CHANNELS_SEPARATE:     separate_sound(sp);    break;
 	case CHANNELS_COMBINED:     combine_sound(sp);     break;
 	case CHANNELS_SUPERIMPOSED: superimpose_sound(sp); break;
+	default:
+	  break;
 	}
     }
 }
@@ -3625,7 +3627,7 @@ static XEN g_set_speed_control_style(XEN speed, XEN snd)
   speed_style_t spd;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(speed), speed, XEN_ARG_1, S_setB S_speed_control_style, "an integer"); 
   spd = (speed_style_t)XEN_TO_C_INT(speed);
-  if (spd > SPEED_CONTROL_AS_SEMITONE)
+  if (spd >= NUM_SPEED_CONTROL_STYLES)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_style, 
 			   1, speed, 
 			   "~A, but must be " S_speed_control_as_float ", " S_speed_control_as_ratio ", or " S_speed_control_as_semitone);
@@ -4423,7 +4425,35 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
   cp->amp_envs[0] = get_peak_env_info(fullname, &err);
   if (fullname) FREE(fullname);
   if (cp->amp_envs[0] == NULL)
-    mus_misc_error(S_read_peak_env_info_file, peak_env_error[(int)err], name);
+    {
+      XEN error_type;
+      switch (err)
+	{
+	case PEAK_ENV_BAD_HEADER:
+	  error_type = BAD_HEADER;
+	  break;
+	case PEAK_ENV_BAD_FORMAT:
+	  error_type = XEN_ERROR_TYPE("bad-format");
+	  break;
+	case PEAK_ENV_BAD_SIZE:
+	  error_type = XEN_ERROR_TYPE("bad-size");
+	  break;
+	case PEAK_ENV_NO_FILE:
+	  error_type = NO_SUCH_FILE;
+	  break;
+	case PEAK_ENV_NO_DATA:
+	  error_type = NO_DATA;
+	  break;
+	default:
+	  fprintf(stderr, "internal Snd bug!");
+	  error_type = MUS_MISC_ERROR;
+	  break;
+	}
+      XEN_ERROR(error_type, 
+		XEN_LIST_3(C_TO_XEN_STRING(S_read_peak_env_info_file),
+			   C_TO_XEN_STRING(peak_env_error[(int)err]),
+			   name));
+    }
   /* assume cp->amp_envs already exists (needs change to snd-chn) */
   return(name);
 }

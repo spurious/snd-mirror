@@ -182,6 +182,8 @@ color_t get_foreground_color(axis_context *ax);
 color_t get_background_color(axis_context *ax);
 void set_foreground_color(axis_context *ax, int color);
 void free_fft_pix(chan_info *cp);
+bool restore_fft_pix(chan_info *cp, axis_context *ax);
+void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1);
 void cleanup_cw(chan_info *cp);
 bool fixup_cp_cgx_ax_wn(chan_info *cp);
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b);

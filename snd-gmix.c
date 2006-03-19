@@ -67,6 +67,7 @@ static gboolean speed_label_click_callback(GtkWidget *w, GdkEventButton *ev, gpo
   if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
   switch (mix_speed_style(mix_dialog_id))
     {
+    default:
     case SPEED_CONTROL_AS_FLOAT:    set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_RATIO, true);    break;
     case SPEED_CONTROL_AS_RATIO:    set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_SEMITONE, true); break;
     case SPEED_CONTROL_AS_SEMITONE: set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_FLOAT, true);    break;
@@ -124,7 +125,7 @@ static Float scroll_to_amp(Float val)
   else return((val * (1.0 - amp_control_min(ss)) / (0.5 * 0.9)) + amp_control_min(ss));
 }
 
-static bool amp_pressed = false, amp_dragged = false;;
+static bool amp_pressed = false, amp_dragged = false;
 
 static void reflect_mix_amp(Float val, int chan)
 {

@@ -49,7 +49,13 @@
 			  (file-write-date (file-name snd))))
 		  (begin
 		    (set! (saved-info snd) (list (file-name snd) (data-format snd) (chans snd)))
-		    (read-peak-env-info-file snd chn peak-file)))))
+		    (catch 'bad-format
+			   (lambda ()
+			     (read-peak-env-info-file snd chn peak-file))
+			   (lambda args
+			     (display (format #f ";~A is in the wrong data format; will delete it..." peak-file))
+			     ;; other errors are signs of trouble somewhere (no data, unreadable file, etc)
+			     (delete-file peak-file)))))))
 	#f))
 
 

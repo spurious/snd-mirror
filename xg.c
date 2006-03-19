@@ -497,7 +497,6 @@ XM_TYPE_PTR(GtkWindow_, GtkWindow*)
 #define XEN_TO_C_GdkWindowHints(Arg) (GdkWindowHints)(XEN_TO_C_INT(Arg))
 #define XEN_GdkWindowHints_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE(GdkColorspace, GdkColorspace)
-XM_TYPE_PTR_1(GError_, GError*)
 XM_TYPE_1(GdkPixbufDestroyNotify, GdkPixbufDestroyNotify)
 XM_TYPE_PTR(char__, char**)
 XM_TYPE_PTR_1(guint8_, guint8*)
@@ -39863,7 +39862,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Mar-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("19-Mar-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

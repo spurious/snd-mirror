@@ -146,6 +146,8 @@ color_t get_background_color(axis_context *ax) {return(0);}
 void set_foreground_color(axis_context *ax, int color) {}
 void change_channel_style(snd_info *sp, channel_style_t new_style) {}
 void free_fft_pix(chan_info *cp) {}
+bool restore_fft_pix(chan_info *cp, axis_context *ax) {return(false);}
+void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1) {}
 void cleanup_cw(chan_info *cp) {}
 void clear_deleted_snd_info(struct dialog_play_info *dp) {}
 bool fixup_cp_cgx_ax_wn(chan_info *cp) {return(false);}

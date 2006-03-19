@@ -2005,8 +2005,9 @@ static void cursor_size_from_text(prefs_info *prf)
 
 /* ---------------- cursor-style ---------------- */
 
-static const char *cursor_styles[2] = {"cross", "line"};
-static cursor_style_t cursor_styles_i[2] = {CURSOR_CROSS, CURSOR_LINE};
+#define NUM_CURSOR_STYLES 2
+static const char *cursor_styles[NUM_CURSOR_STYLES] = {"cross", "line"};
+static cursor_style_t cursor_styles_i[NUM_CURSOR_STYLES] = {CURSOR_CROSS, CURSOR_LINE};
 
 static void reflect_cursor_style(prefs_info *prf)
 {
@@ -2270,11 +2271,13 @@ static void html_program_text(prefs_info *prf)
 
 /* ---------------- default-output-chans etc ---------------- */
 
-static const char *output_chan_choices[4] = {"1", "2", "4", "8"};
-static int output_chans[4] = {1, 2, 4, 8};
+#define NUM_OUTPUT_CHAN_CHOICES 4
+static const char *output_chan_choices[NUM_OUTPUT_CHAN_CHOICES] = {"1", "2", "4", "8"};
+static int output_chans[NUM_OUTPUT_CHAN_CHOICES] = {1, 2, 4, 8};
 
-static const char *output_srate_choices[4] = {"8000", "22050", "44100", "48000"};
-static int output_srates[4] = {8000, 22050, 44100, 48000};
+#define NUM_OUTPUT_SRATE_CHOICES 4
+static const char *output_srate_choices[NUM_OUTPUT_SRATE_CHOICES] = {"8000", "22050", "44100", "48000"};
+static int output_srates[NUM_OUTPUT_SRATE_CHOICES] = {8000, 22050, 44100, 48000};
 
 static void reflect_output_chans(prefs_info *prf)
 {
@@ -2322,11 +2325,13 @@ static void output_srate_choice(prefs_info *prf)
     }
 }
 
-static const char *output_type_choices[5] = {"aifc", "wave", "next/sun", "nist", "aiff"};
-static int output_types[5] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_NIST, MUS_AIFF};
+#define NUM_OUTPUT_TYPE_CHOICES 5
+static const char *output_type_choices[NUM_OUTPUT_TYPE_CHOICES] = {"aifc", "wave", "next/sun", "nist", "aiff"};
+static int output_types[NUM_OUTPUT_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_NIST, MUS_AIFF};
 
-static const char *output_format_choices[4] = {"short", "int", "float", "double"};
-static int output_formats[4] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
+#define NUM_OUTPUT_FORMAT_CHOICES 4
+static const char *output_format_choices[NUM_OUTPUT_FORMAT_CHOICES] = {"short", "int", "float", "double"};
+static int output_formats[NUM_OUTPUT_FORMAT_CHOICES] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
 
 static void reflect_output_type(prefs_info *prf)
 {
@@ -3254,7 +3259,8 @@ static void fft_size_from_text(prefs_info *prf)
 
 /* ---------------- transform-graph-type ---------------- */
 
-static const char *transform_graph_types[3] = {"normal", "sonogram", "spectrogram"};
+#define NUM_TRANSFORM_GRAPH_TYPES 3
+static const char *transform_graph_types[NUM_TRANSFORM_GRAPH_TYPES] = {"normal", "sonogram", "spectrogram"};
 
 static void reflect_transform_graph_type(prefs_info *prf)
 {
@@ -3542,7 +3548,7 @@ static void log_frequency_toggle(prefs_info *prf)
 
 /* ---------------- transform-normalization ---------------- */
 
-static const char *transform_normalizations[4] = {"none", "by channel", "by sound", "global"};
+static const char *transform_normalizations[NUM_TRANSFORM_NORMALIZATIONS] = {"none", "by channel", "by sound", "global"};
 
 static void reflect_transform_normalization(prefs_info *prf)
 {
@@ -3793,10 +3799,9 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
 
 /* ---------------- speed control ---------------- */
 
-#define NUM_SPEED_CONTROL_CHOICES 3
 #define MIN_SPEED_CONTROL_SEMITONES 1
 
-static const char *speed_control_styles[NUM_SPEED_CONTROL_CHOICES] = {"float", "ratio", "semitones:"};
+static const char *speed_control_styles[NUM_SPEED_CONTROL_STYLES] = {"float", "ratio", "semitones:"};
 
 static void show_speed_control_semitones(prefs_info *prf)
 {
@@ -4259,8 +4264,11 @@ static void recorder_buffer_size_text(prefs_info *prf)
 
 /* ---------------- recorder-out-chans etc ---------------- */
 
-static const char *recorder_out_chans_choices[4] = {"1", "2", "4", "8"};
-static const char *recorder_srate_choices[5] = {"8000", "22050", "44100", "48000", "96000"};
+#define NUM_RECORDER_OUT_CHANS_CHOICES 4
+static const char *recorder_out_chans_choices[NUM_RECORDER_OUT_CHANS_CHOICES] = {"1", "2", "4", "8"};
+
+#define NUM_RECORDER_SRATE_CHOICES 5
+static const char *recorder_srate_choices[NUM_RECORDER_SRATE_CHOICES] = {"8000", "22050", "44100", "48000", "96000"};
 
 static void reflect_recorder_out_chans(prefs_info *prf)
 {
@@ -4309,11 +4317,13 @@ static void recorder_srate_choice(prefs_info *prf)
     }
 }
 
-static const char *recorder_out_type_choices[5] = {"aifc", "wave", "next/sun", "nist", "aiff"};
-static int recorder_types[5] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_NIST, MUS_AIFF};
+#define NUM_RECORDER_OUT_TYPE_CHOICES 5
+static const char *recorder_out_type_choices[NUM_RECORDER_OUT_TYPE_CHOICES] = {"aifc", "wave", "next/sun", "nist", "aiff"};
+static int recorder_types[NUM_RECORDER_OUT_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_NIST, MUS_AIFF};
 
-static const char *recorder_out_format_choices[4] = {"short", "int", "float", "double"};
-static int recorder_formats[4] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
+#define NUM_RECORDER_OUT_FORMAT_CHOICES 4
+static const char *recorder_out_format_choices[NUM_RECORDER_OUT_FORMAT_CHOICES] = {"short", "int", "float", "double"};
+static int recorder_formats[NUM_RECORDER_OUT_FORMAT_CHOICES] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
 
 static void reflect_recorder_out_type(prefs_info *prf)
 {
@@ -4662,28 +4672,28 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box);
 
     prf = prefs_row_with_radio_box("default new sound attributes: chans", S_default_output_chans,
-				   output_chan_choices, 4, -1,
+				   output_chan_choices, NUM_OUTPUT_CHAN_CHOICES, -1,
 				   dpy_box,
 				   output_chans_choice);
     reflect_output_chans(prf);
     remember_pref(prf, reflect_output_chans, NULL);
 
     prf = prefs_row_with_radio_box("srate", S_default_output_srate,
-				   output_srate_choices, 4, -1,
+				   output_srate_choices, NUM_OUTPUT_SRATE_CHOICES, -1,
 				   dpy_box,
 				   output_srate_choice);
     reflect_output_srate(prf);
     remember_pref(prf, reflect_output_srate, NULL);
 
     prf = prefs_row_with_radio_box("header type", S_default_output_header_type,
-				   output_type_choices, 5, -1,
+				   output_type_choices, NUM_OUTPUT_TYPE_CHOICES, -1,
 				   dpy_box,
 				   output_type_choice);
     output_header_type_prf = prf;
     remember_pref(prf, reflect_output_type, NULL);
 
     prf = prefs_row_with_radio_box("data format", S_default_output_data_format,
-				   output_format_choices, 4, -1,
+				   output_format_choices, NUM_OUTPUT_FORMAT_CHOICES, -1,
 				   dpy_box,
 				   output_format_choice);
     output_data_format_prf = prf;
@@ -4909,14 +4919,14 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_radio_box("shape", S_cursor_style,
-				   cursor_styles, 2, cursor_style(ss),
+				   cursor_styles, NUM_CURSOR_STYLES, cursor_style(ss),
 				   dpy_box, 
 				   cursor_style_choice);
     remember_pref(prf, reflect_cursor_style, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_radio_box("tracking cursor shape", S_tracking_cursor_style,
-				   cursor_styles, 2, tracking_cursor_style(ss),
+				   cursor_styles, NUM_CURSOR_STYLES, tracking_cursor_style(ss),
 				   dpy_box, 
 				   tracking_cursor_style_choice);
     remember_pref(prf, reflect_tracking_cursor_style, NULL);
@@ -5161,7 +5171,7 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(fft_box);
     prf = prefs_row_with_radio_box("transform graph choice", S_transform_graph_type,
-				   transform_graph_types, 3, transform_graph_type(ss),
+				   transform_graph_types, NUM_TRANSFORM_GRAPH_TYPES, transform_graph_type(ss),
 				   fft_box,
 				   transform_graph_type_choice);
     remember_pref(prf, reflect_transform_graph_type, NULL);
@@ -5244,7 +5254,7 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(fft_box);
     prf = prefs_row_with_radio_box("normalization", S_transform_normalization,
-				   transform_normalizations, 4, transform_normalization(ss),
+				   transform_normalizations, NUM_TRANSFORM_NORMALIZATIONS, transform_normalization(ss),
 				   fft_box,
 				   transform_normalization_choice);
     remember_pref(prf, reflect_transform_normalization, NULL);
@@ -5332,7 +5342,7 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(clm_box);
     str = mus_format("%d", speed_control_tones(ss));
     prf = prefs_row_with_radio_box_and_number("speed control choice", S_speed_control_style,
-					      speed_control_styles, 3, (int)speed_control_style(ss),
+					      speed_control_styles, NUM_SPEED_CONTROL_STYLES, (int)speed_control_style(ss),
 					      speed_control_tones(ss), str, 6,
 					      clm_box,
 					      speed_control_choice, speed_control_up, speed_control_down, speed_control_text);
@@ -5509,28 +5519,28 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(aud_box);
 
     prf = prefs_row_with_radio_box("default recorder output sound attributes: chans", S_recorder_out_chans,
-				   recorder_out_chans_choices, 4, -1,
+				   recorder_out_chans_choices, NUM_RECORDER_OUT_CHANS_CHOICES, -1,
 				   aud_box,
 				   recorder_out_chans_choice);
     reflect_recorder_out_chans(prf);
     remember_pref(prf, reflect_recorder_out_chans, NULL);
 
     prf = prefs_row_with_radio_box("srate", S_recorder_srate,
-				   recorder_srate_choices, 5, -1,
+				   recorder_srate_choices, NUM_RECORDER_SRATE_CHOICES, -1,
 				   aud_box,
 				   recorder_srate_choice);
     reflect_recorder_srate(prf);
     remember_pref(prf, reflect_recorder_srate, NULL);
 
     prf = prefs_row_with_radio_box("header type", S_recorder_out_header_type,
-				   recorder_out_type_choices, 5, -1,
+				   recorder_out_type_choices, NUM_RECORDER_OUT_TYPE_CHOICES, -1,
 				   aud_box,
 				   recorder_out_type_choice);
     recorder_out_header_type_prf = prf;
     remember_pref(prf, reflect_recorder_out_type, NULL);
 
     prf = prefs_row_with_radio_box("data format", S_recorder_out_data_format,
-				   recorder_out_format_choices, 4, -1,
+				   recorder_out_format_choices, NUM_RECORDER_OUT_FORMAT_CHOICES, -1,
 				   aud_box,
 				   recorder_out_format_choice);
     recorder_out_data_format_prf = prf;

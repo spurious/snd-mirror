@@ -53,6 +53,7 @@ static void speed_label_click_callback(Widget w, XtPointer context, XtPointer in
   if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   switch (mix_speed_style(mix_dialog_id))
     {
+    default:
     case SPEED_CONTROL_AS_FLOAT:    set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_RATIO, true);    break;
     case SPEED_CONTROL_AS_RATIO:    set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_SEMITONE, true); break;
     case SPEED_CONTROL_AS_SEMITONE: set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_FLOAT, true);    break;
@@ -1167,6 +1168,7 @@ static void track_speed_label_click_callback(Widget w, XtPointer context, XtPoin
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   switch (track_speed_style(track_dialog_id))
     {
+    default:
     case SPEED_CONTROL_AS_FLOAT:    set_track_speed_style(track_dialog_id, SPEED_CONTROL_AS_RATIO, true);    break;
     case SPEED_CONTROL_AS_RATIO:    set_track_speed_style(track_dialog_id, SPEED_CONTROL_AS_SEMITONE, true); break;
     case SPEED_CONTROL_AS_SEMITONE: set_track_speed_style(track_dialog_id, SPEED_CONTROL_AS_FLOAT, true);    break;

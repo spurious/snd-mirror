@@ -681,6 +681,7 @@ static gboolean speed_label_click_callback(GtkWidget *w, GdkEventButton *ev, gpo
   snd_info *sp = (snd_info *)data;
   switch (sp->speed_control_style)
     {
+    default:
     case SPEED_CONTROL_AS_FLOAT:    sp->speed_control_style = SPEED_CONTROL_AS_RATIO;    break;
     case SPEED_CONTROL_AS_RATIO:    sp->speed_control_style = SPEED_CONTROL_AS_SEMITONE; break;
     case SPEED_CONTROL_AS_SEMITONE: sp->speed_control_style = SPEED_CONTROL_AS_FLOAT;    break;
