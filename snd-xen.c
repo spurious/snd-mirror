@@ -1951,7 +1951,11 @@ reading edit version edpos"
 	  loc = snd_protect(newsd);
 	  sd = (sound_data *)XEN_OBJECT_REF(newsd);
 	  if ((sd->data == NULL) || (sd->data[chn] == NULL))
-	    mus_misc_error(S_samples_to_sound_data, "sound_data memory allocation trouble", newsd);
+	    {
+	      XEN_ERROR(XEN_ERROR_TYPE("memory-error"),
+			XEN_LIST_2(C_TO_XEN_STRING(S_samples_to_sound_data), 
+				   C_TO_XEN_STRING("can't allocate memory for sound_data!")));
+	    }
 	}
       if (chn < sd->chans)
 	{

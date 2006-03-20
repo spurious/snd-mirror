@@ -14692,7 +14692,7 @@ def test098
                  make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 1])),
                  make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 0.5])))
   #
-  if (res = Snd.catch do partials2wave([0.5, 0.3, 0.2]) end).first != :bad_type
+  if (res = Snd.catch do partials2wave([0.5, 0.3, 0.2]) end).first != :arg_error
     snd_display("odd length arg to partials2wave: %s", res.inspect)
   end
   #
@@ -14791,7 +14791,7 @@ def test098
                  make_waveshape(440.0, :partials, [1, 1]),
                  make_waveshape(4400.0, :partials, [1, 1, 2, 0.5]))
   #
-  if (res = Snd.catch do partials2waveshape([0.5, 0.3, 0.2]) end).first != :bad_type
+  if (res = Snd.catch do partials2waveshape([0.5, 0.3, 0.2]) end).first != :arg_error
     snd_display("odd length arg to partials2waveshape: %s", res.inspect)
   end
   # 
@@ -25485,7 +25485,7 @@ def test14
     if fneq(res = mus_sound_duration("z.snd"), 0.0)
       snd_display("mus_sound_duration z.snd: %s?", res)
     end
-    Snd.catch(:mus_error) do convolve_with("z.snd", 1.0) end
+    Snd.catch(:IO_error) do convolve_with("z.snd", 1.0) end
     if (res = edit_position(ind, 0)).nonzero?
       snd_display("convolve_with z: %s?", res)
     end
@@ -39559,7 +39559,7 @@ def test0228
   check_error_tag(:mus_error) do mus_mix("test.snd", $sf_dir + "bad_length.aifc") end
   check_error_tag(:bad_header) do mus_mix($sf_dir + "bad_chans.aifc", "oboe.snd") end
   check_error_tag(:no_such_sound) do set_sound_loop_info(123, [0, 0, 1, 1]) end
-  check_error_tag(:mus_error) do
+  check_error_tag(:IO_error) do
     new_sound("fmv.snd", Mus_nist, Mus_bfloat, 22050, 2, "this is a comment")
   end
   check_error_tag(:no_such_player) do player_home(123) end
@@ -39661,7 +39661,7 @@ def test0228
   check_error_tag(:out_of_range) do
     set_filter_control_envelope([0.0, 1.0, 0.1, 1.1, 1.0, 0.0], ind)
   end
-  check_error_tag(:mus_error) do filter_sound([0, 0, 0.1, 0.1, 0.05, 0.1, 1, 1], 32) end
+  check_error_tag(:env_error) do filter_sound([0, 0, 0.1, 0.1, 0.05, 0.1, 1, 1], 32) end
   check_error_tag(:out_of_range) do apply_controls(ind, 123) end
   check_error_tag(:out_of_range) do set_speed_control_bounds([0.0, 2.0]) end
   check_error_tag(:out_of_range) do set_expand_control_bounds([0.0, 2.0]) end
@@ -39669,9 +39669,9 @@ def test0228
   check_error_tag(:out_of_range) do set_expand_control_bounds([2.0, 0.0]) end
   check_error_tag(:out_of_range) do vct2sound_file(123, $vct_3, 4) end  
   check_error_tag(:out_of_range) do vct2sound_file(123, $vct_3, -4) end  
-  check_error_tag(:mus_error) do vct2sound_file(123, $vct_3, 2) end
+  check_error_tag(:IO_error) do vct2sound_file(123, $vct_3, 2) end
   check_error_tag(:bad_header) do insert_sound($sf_dir + "bad_chans.snd") end
-  check_error_tag(:mus_error) do convolve_with($sf_dir + "bad_chans.snd") end
+  check_error_tag(:IO_error) do convolve_with($sf_dir + "bad_chans.snd") end
   check_error_tag(:cannot_save) do save_sound_as("hiho.snd", ind, -12) end
   check_error_tag(:cannot_save) do save_sound_as("hiho.snd", ind, Mus_next, -12) end
   check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, Mus_nist, Mus_bdouble) end
@@ -39702,7 +39702,7 @@ def test0228
   check_error_tag(:out_of_range) do snd_spectrum(Vct.new(8), 0, -123) end
   check_error_tag(:out_of_range) do snd_spectrum(Vct.new(8), 0, 0) end
   check_error_tag(:no_such_file) do play("/baddy/hiho") end
-  check_error_tag(:mus_error) do play($sf_dir + "nist-shortpack.wav") end
+  check_error_tag(:bad_format) do play($sf_dir + "nist-shortpack.wav") end
   check_error_tag(:no_such_sound) do play(0, 123) end
   check_error_tag(:no_such_channel) do play(0, ind, 123) end
   check_error_tag(:no_such_channel) do make_player(ind, 123) end
@@ -39833,7 +39833,7 @@ def test0228
   check_error_tag(:no_such_menu) do add_to_menu(1234, "hi", lambda do | | false end) end
   check_error_tag(:bad_arity) do add_to_main_menu("hi", lambda do |a, b| false end) end
   check_error_tag(:bad_arity) do add_to_menu(1, "hi", lambda do |a, b| false end) end
-  check_error_tag(:mus_error) do open_sound_file("/bad/baddy.snd") end
+  check_error_tag(:IO_error) do open_sound_file("/bad/baddy.snd") end
   check_error_tag(:out_of_range) do close_sound_file(0, 0) end
   check_error_tag(:out_of_range) do set_transform_type(-1) end
   check_error_tag(:out_of_range) do set_transform_type(123) end

@@ -164,7 +164,7 @@ static Float **make_xen_colormap(int size, XEN lambda)
 	  add_colormap_func_error_msg = NULL;
 	}
       else str = XEN_FALSE;
-      XEN_ERROR(MUS_MISC_ERROR,
+      XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
 		XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
 			   C_TO_XEN_STRING("function error:"),
 			   str));
@@ -176,13 +176,13 @@ static Float **make_xen_colormap(int size, XEN lambda)
       /* user-defined colormap func returns a list of 3 vcts (r g b) */
       gc_loc = snd_protect(xrgb);
       if (!(vct_p(XEN_LIST_REF(xrgb, 0)))) 
-	XEN_ERROR(MUS_MISC_ERROR,
+	XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
 		  XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
 			     C_TO_XEN_STRING("function did not return a list of vcts!"),
 			     xrgb));
       xr = TO_VCT(XEN_LIST_REF(xrgb, 0));
       if (xr->length < size)
-	XEN_ERROR(MUS_MISC_ERROR,
+	XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
 		  XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
 			     C_TO_XEN_STRING("function did not return a list of vcts of the correct size"),
 			     xrgb));
@@ -197,7 +197,7 @@ static Float **make_xen_colormap(int size, XEN lambda)
 	}
       snd_unprotect_at(gc_loc);
     }
-  else XEN_ERROR(MUS_MISC_ERROR,
+  else XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
 		 XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
 			    C_TO_XEN_STRING("colormap func must return a list of 3 vcts"),
 			    lambda));

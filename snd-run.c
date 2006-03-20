@@ -11638,7 +11638,12 @@ in multi-channel situations where you want the optimization that vct-map! provid
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ARG_1, S_vct_map, "a thunk");
   len = XEN_LIST_LENGTH(arglist);
   if (len == 0)
-    mus_misc_error(S_vct_map, "no vcts passed to " S_vct_map, arglist);
+    {
+      XEN_ERROR(XEN_ERROR_TYPE("arg-error"),
+		XEN_LIST_3(C_TO_XEN_STRING(S_vct_map),
+			   C_TO_XEN_STRING("no vct args!"),
+			   arglist));
+    }
   vs = (vct **)CALLOC(len, sizeof(vct *));
   for (i = 0; i < len; i++, arglist = XEN_CDR(arglist))
     {

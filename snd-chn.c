@@ -1951,6 +1951,7 @@ static void make_sonogram(chan_info *cp)
 
       /* TODO: move out back = ok recopy but hg/ss are still posted */
       /* TODO: if saved case was partially obscured, restoration here gets the previous display (colors/sizes etc)! */
+      /*   so check somehow before save that full graph is displayed */
 
       if (cp->cgx->fft_pix)                            /* Motif None = 0 */
 	{
@@ -7106,7 +7107,7 @@ to a standard Snd channel graph placed in the widget 'container'."
   sp = make_simple_channel_display(rate, initial_length, WITH_FW_BUTTONS, graph_style(ss), 
 				   (widget_t)(XEN_UNWRAP_WIDGET(container)), WITH_EVENTS);
   if (sp == NULL) /* can only happen if "container" is not a form widget (or perhaps no container XtWindow) */
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(XEN_ERROR_TYPE("arg-error"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_variable_graph),
 			 C_TO_XEN_STRING("container must be a Form widget with a legitimate window"),
 			 container));

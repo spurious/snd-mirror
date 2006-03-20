@@ -2608,7 +2608,7 @@ channel number in the sound that contains the channel being played."
 	for (i = 0; i < dac_max_sounds; i++)
 	  if ((play_list[i]) && 
 	      (sp == (play_list[i]->sp)))
-	    XEN_ERROR(MUS_MISC_ERROR,
+	    XEN_ERROR(XEN_ERROR_TYPE("arg-error"),
 		      XEN_LIST_3(C_TO_XEN_STRING(S_add_player),
 				 C_TO_XEN_STRING("player is already in the play list"),
 				 snd_chn));

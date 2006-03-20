@@ -64,6 +64,22 @@ static XEN clm_mus_error(int type, char *msg)
   return(XEN_FALSE);
 }
 
+#define CLM_ERROR XEN_ERROR_TYPE("mus-error")
+
+static void clm_error(const char *caller, char *msg, XEN val)
+{
+  if (msg)
+    XEN_ERROR(CLM_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(caller),
+			 C_TO_XEN_STRING(msg),
+			 val));
+  else
+    XEN_ERROR(CLM_ERROR,
+	      XEN_LIST_2(C_TO_XEN_STRING(caller),
+			 val));
+}
+
+
 
 /* ---------------- optional-key ---------------- */
 
@@ -87,10 +103,10 @@ int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, i
       if (!(XEN_KEYWORD_P(args[arg_ctr])))
 	{
 	  if (keying) 
-	    mus_misc_error(caller, "unmatched value within keyword section?", args[arg_ctr]);
+	    clm_error(caller, "unmatched value within keyword section?", args[arg_ctr]);
 	  /* type checking on the actual values has to be the caller's problem */
 	  if (arg_ctr >= nkeys)
-	    mus_misc_error(caller, "extra trailing args?", args[arg_ctr]);
+	    clm_error(caller, "extra trailing args?", args[arg_ctr]);
 	  keys[arg_ctr] = args[arg_ctr];
 	  orig[arg_ctr] = arg_ctr + 1;
 	  arg_ctr++;
@@ -103,11 +119,11 @@ int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, i
 	  int i;
 	  if ((arg_ctr == (nargs - 1)) ||
 	      (!(XEN_BOUND_P(args[arg_ctr + 1]))))
-	    mus_misc_error(caller, "keyword without value?", args[arg_ctr]);
+	    clm_error(caller, "keyword without value?", args[arg_ctr]);
 	  keying = true;
 	  key = args[arg_ctr];
 	  if (XEN_KEYWORD_P(args[arg_ctr + 1])) 
-	    mus_misc_error(caller, "two keywords in a row?", key);
+	    clm_error(caller, "two keywords in a row?", key);
 	  key_found = false;
 	  for (i = key_start; i < nkeys; i++)
 	    {
@@ -123,7 +139,7 @@ int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, i
 	  if (!key_found)
 	    {
 	      /* either there's a redundant keyword pair or a keyword that 'caller' doesn't recognize */
-	      mus_misc_error(caller, "redundant or invalid key found", key);
+	      clm_error(caller, "redundant or invalid key found", key);
 	      /* normally (all local cases) the error returns */
 	      arg_ctr += 2;
 	    }
@@ -1271,7 +1287,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   interp_type_key = argn;      keys[argn++] = kw_type;
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(CLM_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(caller), 
 			 C_TO_XEN_STRING("too many args!"),
 			 arglist));
@@ -1780,7 +1796,7 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
   keys[4] = kw_size;
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(CLM_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(caller), 
 			 C_TO_XEN_STRING("too many args!"),
 			 arglist));
@@ -1804,10 +1820,10 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
 	  XEN_ASSERT_TYPE(XEN_LIST_P(keys[2]), keys[2], orig_arg[2], caller, "an envelope");
 	  len = XEN_LIST_LENGTH(keys[2]);
 	  if ((len < 4) || (len & 1))
-	    mus_misc_error(caller, "bad distribution envelope", keys[2]);
+	    clm_error(caller, "bad distribution envelope", keys[2]);
 	  /* envelope and distribution are incompatible */
 	  if (!(XEN_KEYWORD_P(keys[3])))
-	    mus_misc_error(caller, ":envelope and :distribution in same call?", keys[3]);
+	    clm_error(caller, ":envelope and :distribution in same call?", keys[3]);
 	  distribution = inverse_integrate(keys[2], distribution_size);
 	}
       else
@@ -2019,7 +2035,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
 			 C_TO_XEN_STRING("partials list empty?"),
 			 partials));
   if ((len % 3) != 0)
-    XEN_ERROR(BAD_TYPE,
+    XEN_ERROR(XEN_ERROR_TYPE("arg-error"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_phase_partials_to_wave), 
 			 C_TO_XEN_STRING("partials list should have 3 entries for each harmonic (number amp phase)"),
 			 partials));
@@ -2069,7 +2085,7 @@ is the same in effect as " S_make_oscil "."
   keys[4] = kw_type;
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(CLM_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_table_lookup), 
 			 C_TO_XEN_STRING("too many args!"),
 			 arglist));
@@ -2630,7 +2646,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
       if (size <= 0) 
 	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, cararg, "chans ~A <= 0?");
       if (len > (size + 1)) 
-	mus_misc_error(S_make_frame, "extra trailing args?", arglist);
+	clm_error(S_make_frame, "extra trailing args?", arglist);
       if (size > MUS_MAX_CHANS) 
 	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, C_TO_XEN_INT(size), "size ~A too big");
     }
@@ -2962,7 +2978,7 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
   XEN cararg;
   int size = 0, len = 0;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(arglist, len), arglist, XEN_ARG_1, S_make_mixer, "a list");
-  if (len == 0) mus_misc_error(S_make_mixer, "need at least 1 arg", arglist);
+  if (len == 0) clm_error(S_make_mixer, "need at least 1 arg", arglist);
   cararg = XEN_CAR(arglist);
   if (!(XEN_NUMBER_P(cararg)))
     XEN_WRONG_TYPE_ARG_ERROR(S_make_mixer, 1, cararg, "an integer = number of chans");
@@ -2970,7 +2986,7 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
   if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans ~A <= 0?");
   if (size > MUS_MAX_CHANS) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans ~A too big");
   if (len > (size * size + 1)) 
-    mus_misc_error(S_make_mixer, "extra trailing args?", arglist);
+    clm_error(S_make_mixer, "extra trailing args?", arglist);
   ge = (mus_any *)mus_make_empty_mixer(size);
   if (ge)
     {
@@ -3033,7 +3049,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   keys[4] = kw_type;
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(CLM_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_wave_train), 
 			 C_TO_XEN_STRING("too many args!"),
 			 arglist));
@@ -3330,7 +3346,7 @@ is the same in effect as " S_make_oscil
   keys[4] = kw_kind;
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(CLM_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_polyshape), 
 			 C_TO_XEN_STRING("too many args!"),
 			 arglist));
@@ -3423,7 +3439,7 @@ return a new sine summation synthesis generator."
   keys[4] = kw_ratio;
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(CLM_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_sine_summation), 
 			 C_TO_XEN_STRING("too many args!"),
 			 arglist));
@@ -3465,7 +3481,7 @@ static XEN g_make_fir_coeffs(XEN order, XEN envl)
   v = TO_VCT(envl);
   size = XEN_TO_C_INT(order);
   if (size != v->length)
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(CLM_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_fir_coeffs), 
 			 C_TO_XEN_STRING("order (~A) != vct length (~A)"),
 			 XEN_LIST_2(order, envl)));
@@ -3564,8 +3580,8 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
       if ((choice != G_FILTER) && (!(XEN_KEYWORD_P(keys[3]))))
         {
 	  if (choice == G_IIR_FILTER)
-	    mus_misc_error(caller, "redundant arg passed to " S_make_iir_filter "?", keys[3]);
-	  else mus_misc_error(caller, "redundant arg passed to " S_make_fir_filter "?", keys[3]);
+	    clm_error(caller, "redundant arg passed to " S_make_iir_filter "?", keys[3]);
+	  else clm_error(caller, "redundant arg passed to " S_make_fir_filter "?", keys[3]);
         }
     }
   if (choice == G_FILTER)
@@ -3593,7 +3609,7 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
     {
       if ((x) && (order > x->length))
 	{
-	  XEN_ERROR(MUS_MISC_ERROR,
+	  XEN_ERROR(CLM_ERROR,
 		    XEN_LIST_3(C_TO_XEN_STRING(caller),
 			       C_TO_XEN_STRING("xcoeffs must match order"),
 			       XEN_LIST_4(C_TO_XEN_STRING("order:"), keys[0], 
@@ -3602,7 +3618,7 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
       else
 	{
 	  if ((y) && (order > y->length))
-	    XEN_ERROR(MUS_MISC_ERROR,
+	    XEN_ERROR(CLM_ERROR,
 		      XEN_LIST_3(C_TO_XEN_STRING(caller),
 				 C_TO_XEN_STRING("ycoeffs must match order"),
 				 XEN_LIST_4(C_TO_XEN_STRING("order:"), keys[0], 
@@ -3610,7 +3626,7 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
 	  else
 	    {
 	      if ((x) && (y) && (x->length != y->length))
-		XEN_ERROR(MUS_MISC_ERROR,
+		XEN_ERROR(CLM_ERROR,
 			  XEN_LIST_3(C_TO_XEN_STRING(caller),
 				     C_TO_XEN_STRING("coeffs must be same length"),
 				     XEN_LIST_4(C_TO_XEN_STRING("x len:"), C_TO_XEN_INT(x->length),
@@ -3701,7 +3717,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   keys[7] = kw_dur;
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(CLM_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
 			 C_TO_XEN_STRING("too many args!"),
 			 arglist));
@@ -3764,7 +3780,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	{
 	  if (brkpts) FREE(brkpts);
 	  if (odata) FREE(odata);
-	  XEN_ERROR(MUS_MISC_ERROR,
+	  XEN_ERROR(CLM_ERROR,
 		    XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
 			       C_TO_XEN_STRING("end (~A) and dur (~A) specified, but dur != end-start+1"),
 			       XEN_LIST_2(keys[5], keys[7])));
@@ -4155,7 +4171,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
   buffer_size = mus_file_buffer_size();
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(CLM_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_readin), 
 			 C_TO_XEN_STRING("too many args!"),
 			 arglist));
@@ -4337,7 +4353,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   keys[6] = kw_type;
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(CLM_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_locsig), 
 			 C_TO_XEN_STRING("too many args!"),
 			 arglist));
@@ -4633,7 +4649,7 @@ The edit function, if any, should return the length in samples of the grain, or 
   keys[8] = kw_edit;
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(CLM_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_granulate), 
 			 C_TO_XEN_STRING("too many args!"),
 			 arglist));
@@ -4742,7 +4758,7 @@ return a new convolution generator which convolves its input with the impulse re
   keys[2] = kw_fft_size;
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(CLM_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_convolve), 
 			 C_TO_XEN_STRING("too many args!"),
 			 arglist));
@@ -4937,7 +4953,7 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
   keys[7] = kw_synthesize;
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(CLM_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_phase_vocoder), 
 			 C_TO_XEN_STRING("too many args!"),
 			 arglist));
@@ -5101,7 +5117,6 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
   mus_any *outf = NULL, *inf = NULL;
   mus_any *mx1 = NULL;
   mus_any ***envs1 = NULL;
-  char *outfile = NULL, *infile = NULL;
   int i;
   off_t ostart = 0, istart = 0, osamps = 0;
   int in_chans = 0, out_chans = 0, in_size = 0, out_size;  /* mus_mix in clm.c assumes the envs array is large enough */
@@ -5118,78 +5133,85 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
   if (XEN_BOUND_P(ost)) ostart = XEN_TO_C_OFF_T_OR_ELSE(ost, 0);
   if (XEN_BOUND_P(ist)) istart = XEN_TO_C_OFF_T_OR_ELSE(ist, 0);
   if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) mx1 = (mus_any *)XEN_TO_MUS_ANY(mx);
-  if (XEN_STRING_P(out)) outfile = strdup(XEN_TO_C_STRING(out)); else outf = XEN_TO_MUS_ANY(out);
-  if (XEN_STRING_P(in)) infile = strdup(XEN_TO_C_STRING(in)); else inf = XEN_TO_MUS_ANY(in);
+  if (XEN_STRING_P(out)) 
+    {
+      char *tmp_outf = NULL;
+      tmp_outf = XEN_TO_C_STRING(out);
+      if (!mus_file_probe(tmp_outf)) 
+	XEN_ERROR(NO_SUCH_FILE,
+		  XEN_LIST_2(C_TO_XEN_STRING(S_mus_mix),
+			     out));
+      else out_chans = mus_sound_chans(tmp_outf);
+    }
+  else 
+    {
+      outf = XEN_TO_MUS_ANY(out);
+      out_chans = mus_channels(outf);
+    }
+
+  if (out_chans <= 0)
+    XEN_ERROR(BAD_HEADER,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+			 out,
+			 C_TO_XEN_STRING("output chans <= 0")));
+
+  if (XEN_STRING_P(in)) 
+    {
+      char *tmp_inf = NULL;
+      tmp_inf = XEN_TO_C_STRING(in); 
+      if (!mus_file_probe(tmp_inf)) 
+	XEN_ERROR(NO_SUCH_FILE,
+		  XEN_LIST_2(C_TO_XEN_STRING(S_mus_mix),
+			     in));
+      else in_chans = mus_sound_chans(tmp_inf);
+    }
+  else 
+    {
+      inf = XEN_TO_MUS_ANY(in);
+      in_chans = mus_channels(inf);
+    }
+
+  if (in_chans <= 0)
+    XEN_ERROR(BAD_HEADER,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+			 in,
+			 C_TO_XEN_STRING("input chans <= 0")));
+
 
   if (XEN_BOUND_P(olen)) 
     osamps = XEN_TO_C_OFF_T_OR_ELSE(olen, 0); 
   else 
     {
-      if (infile) 
-	osamps = mus_sound_frames(infile);
+      if (XEN_STRING_P(in))
+	osamps = mus_sound_frames(XEN_TO_C_STRING(in));
       else osamps = mus_length(inf);
       if (osamps < 0)
-	{
-	  if (infile) free(infile);
-	  if (outfile) free(outfile);
-	  XEN_ERROR(BAD_HEADER,
-		    XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			       in,
-			       C_TO_XEN_STRING("input frames < 0")));
-	}
+	XEN_ERROR(BAD_HEADER,
+		  XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+			     in,
+			     C_TO_XEN_STRING("input frames < 0")));
     }
   if (osamps == 0) return(XEN_FALSE);
-  if (infile)
-    in_chans = mus_sound_chans(infile);
-  else in_chans = mus_channels(inf);
-  if (in_chans <= 0)
-    {
-	  if (infile) free(infile);
-	  if (outfile) free(outfile);
-	  XEN_ERROR(BAD_HEADER,
-		    XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			       in,
-			       C_TO_XEN_STRING("input chans <= 0")));
-    }
-  if (outfile)
-    out_chans = mus_sound_chans(outfile);
-  else out_chans = mus_channels(outf);
-  if (out_chans <= 0)
-    {	  
-      if (infile) free(infile);
-      if (outfile) free(outfile);
-      XEN_ERROR(BAD_HEADER,
-		XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			   out,
-			   C_TO_XEN_STRING("output chans <= 0")));
-    }
+
   if ((XEN_BOUND_P(envs)) && (!(XEN_FALSE_P(envs))))
     {
       int in_len = 0, out_len, j;
       /* pack into a C-style array of arrays of env pointers */
       in_len = XEN_VECTOR_LENGTH(envs);
       if (in_len == 0)
-	{
-	  if (infile) free(infile);
-	  if (outfile) free(outfile);
-	  XEN_ERROR(BAD_TYPE,
-		    XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			       envs,
-			       C_TO_XEN_STRING("env vector can't be empty")));
-	}
+	XEN_ERROR(BAD_TYPE,
+		  XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+			     envs,
+			     C_TO_XEN_STRING("env vector can't be empty")));
       for (i = 0; i < in_len; i++)
 	{
 	  XEN datum;
 	  datum = XEN_VECTOR_REF(envs, i);
 	  if (!(XEN_VECTOR_P(datum)))
-	    {
-	      if (infile) free(infile);
-	      if (outfile) free(outfile);
-	      XEN_ERROR(BAD_TYPE,
-			XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-				   datum,
-				   C_TO_XEN_STRING("each element of env vector must be a vector (of envelopes)")));
-	    }
+	    XEN_ERROR(BAD_TYPE,
+		      XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+				 datum,
+				 C_TO_XEN_STRING("each element of env vector must be a vector (of envelopes)")));
 	}
       out_len = XEN_VECTOR_LENGTH(XEN_VECTOR_REF(envs, 0));
       if (in_len < in_chans) in_size = in_chans; else in_size = in_len;
@@ -5210,8 +5232,6 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 		    {
 		      for (i = 0; i < in_size; i++) if (envs1[i]) FREE(envs1[i]);
 		      FREE(envs1);
-		      if (infile) free(infile);
-		      if (outfile) free(outfile);
 		      XEN_ERROR(BAD_TYPE,
 				XEN_LIST_5(C_TO_XEN_STRING(S_mus_mix),
 					   datum1,
@@ -5223,27 +5243,33 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 	    }
 	}
     }
-  if ((infile) && (outfile))
-    mus_mix(outfile, infile, ostart, osamps, istart, mx1, envs1);
-  else
-    {
-      if (infile)
-	inf = mus_make_file_to_frame(infile);
-      if (outfile)
-	outf = mus_continue_sample_to_file(outfile);
-      mus_mix_with_reader_and_writer(outf, inf, ostart, osamps, istart, mx1, envs1);
-      if (infile)
-	mus_free((mus_any *)inf);
-      if (outfile)
-	mus_free((mus_any *)outf);
-    }
-  if (envs1) 
-    {
-      for (i = 0; i < in_size; i++) if (envs1[i]) FREE(envs1[i]);
-      FREE(envs1);
-    }
-  if (infile) free(infile);
-  if (outfile) free(outfile);
+  {
+    char *outfile = NULL, *infile = NULL;
+    if (XEN_STRING_P(out)) outfile = strdup(XEN_TO_C_STRING(out));
+    if (XEN_STRING_P(in)) infile = strdup(XEN_TO_C_STRING(in));
+
+    if ((infile) && (outfile))
+      mus_mix(outfile, infile, ostart, osamps, istart, mx1, envs1);
+    else
+      {
+	if (infile)
+	  inf = mus_make_file_to_frame(infile);
+	if (outfile)
+	  outf = mus_continue_sample_to_file(outfile);
+	mus_mix_with_reader_and_writer(outf, inf, ostart, osamps, istart, mx1, envs1);
+	if (infile)
+	  mus_free((mus_any *)inf);
+	if (outfile)
+	  mus_free((mus_any *)outf);
+      }
+    if (envs1) 
+      {
+	for (i = 0; i < in_size; i++) if (envs1[i]) FREE(envs1[i]);
+	FREE(envs1);
+      }
+    if (infile) free(infile);
+    if (outfile) free(outfile);
+  }
   return(xen_return_first(XEN_TRUE, envs, in, out));
 }
 

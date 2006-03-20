@@ -918,7 +918,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       free_sync_info(si_out);
       ASSERT_IO_ERROR(io_err, "insert_selection in g_insert_selection");
       if (SERIOUS_IO_ERROR(io_err))
-	XEN_ERROR(MUS_MISC_ERROR,
+	XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 		  XEN_LIST_2(C_TO_XEN_STRING(S_insert_selection),
 			     C_TO_XEN_STRING(io_error_name(io_err))));
       return(XEN_FALSE);
@@ -947,7 +947,7 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
       res = C_TO_XEN_INT(mix_selection(cp, si_out, obeg, &io_err));
       free_sync_info(si_out);
       if (SERIOUS_IO_ERROR(io_err))
-	XEN_ERROR(MUS_MISC_ERROR,
+	XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 		  XEN_LIST_2(C_TO_XEN_STRING(S_mix_selection),
 			     C_TO_XEN_STRING(io_error_name(io_err))));
       return(res);
@@ -1174,7 +1174,7 @@ save the current selection in file using the indicated file attributes.  If chan
       chn = mus_optkey_to_int(keys[5], S_save_selection, orig_arg[5], SAVE_ALL_CHANS);
     }
   if (file == NULL) 
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_selection),
 			 C_TO_XEN_STRING("no output file?")));
   if (!(mus_header_writable(type, -2)))

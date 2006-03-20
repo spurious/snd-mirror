@@ -1607,7 +1607,7 @@ env *get_env(XEN e, const char *origin) /* list in e */
 	mus_snprintf(buf, 1024, "%s: env at breakpoint %d: x axis value %f > %f", origin, i / 2, new_env->data[i - 2], new_env->data[i]);
 	msg = C_TO_XEN_STRING(buf);
 	free_env(new_env);
-	XEN_ERROR(MUS_MISC_ERROR,
+	XEN_ERROR(XEN_ERROR_TYPE("env-error"),
 		  XEN_LIST_3(C_TO_XEN_STRING(S_filter_channel),
 			     msg,
 			     e));

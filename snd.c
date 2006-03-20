@@ -39,9 +39,9 @@ void mus_error_to_snd(int type, char *msg)
       if (ss->catch_exists)
 	{
 	  if (msg == NULL)
-	    XEN_ERROR(MUS_MISC_ERROR,
+	    XEN_ERROR(XEN_ERROR_TYPE("mus-error"),
 		      XEN_LIST_1(C_TO_XEN_STRING((char *)mus_error_type_to_string(type))));
-	  else XEN_ERROR(MUS_MISC_ERROR,
+	  else XEN_ERROR(XEN_ERROR_TYPE("mus-error"),
 			 XEN_LIST_1(C_TO_XEN_STRING(msg)));
 	}
       else

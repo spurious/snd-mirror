@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [456]
-;;;  test 1: defaults                           [1030]
-;;;  test 2: headers                            [1233]
-;;;  test 3: variables                          [1537]
-;;;  test 4: sndlib                             [2191]
-;;;  test 5: simple overall checks              [4322]
-;;;  test 6: vcts                               [11739]
-;;;  test 7: colors                             [12049]
-;;;  test 8: clm                                [12555]
-;;;  test 9: mix                                [20884]
-;;;  test 10: marks                             [24014]
-;;;  test 11: dialogs                           [24717]
-;;;  test 12: extensions                        [25103]
-;;;  test 13: menus, edit lists, hooks, etc     [25531]
-;;;  test 14: all together now                  [26961]
-;;;  test 15: chan-local vars                   [28031]
-;;;  test 16: regularized funcs                 [29310]
-;;;  test 17: dialogs and graphics              [33677]
-;;;  test 18: enved                             [33765]
-;;;  test 19: save and restore                  [33785]
-;;;  test 20: transforms                        [35381]
-;;;  test 21: new stuff                         [37057]
-;;;  test 22: run                               [37945]
-;;;  test 23: with-sound                        [43461]
-;;;  test 24: user-interface                    [44549]
-;;;  test 25: X/Xt/Xm                           [48145]
-;;;  test 26: Gtk                               [52729]
-;;;  test 27: GL                                [56801]
-;;;  test 28: errors                            [56911]
-;;;  test all done                              [59051]
+;;;  test 0: constants                          [452]
+;;;  test 1: defaults                           [1027]
+;;;  test 2: headers                            [1230]
+;;;  test 3: variables                          [1534]
+;;;  test 4: sndlib                             [2188]
+;;;  test 5: simple overall checks              [4319]
+;;;  test 6: vcts                               [11740]
+;;;  test 7: colors                             [12050]
+;;;  test 8: clm                                [12556]
+;;;  test 9: mix                                [20885]
+;;;  test 10: marks                             [24015]
+;;;  test 11: dialogs                           [24718]
+;;;  test 12: extensions                        [25104]
+;;;  test 13: menus, edit lists, hooks, etc     [25532]
+;;;  test 14: all together now                  [26962]
+;;;  test 15: chan-local vars                   [28033]
+;;;  test 16: regularized funcs                 [29312]
+;;;  test 17: dialogs and graphics              [33726]
+;;;  test 18: enved                             [33814]
+;;;  test 19: save and restore                  [33834]
+;;;  test 20: transforms                        [35430]
+;;;  test 21: new stuff                         [37106]
+;;;  test 22: run                               [37994]
+;;;  test 23: with-sound                        [43510]
+;;;  test 24: user-interface                    [44615]
+;;;  test 25: X/Xt/Xm                           [48211]
+;;;  test 26: Gtk                               [52795]
+;;;  test 27: GL                                [56867]
+;;;  test 28: errors                            [56977]
+;;;  test all done                              [59118]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -17346,9 +17346,9 @@ EDITS: 5
 	(set! (mus-data gen) (phase-partials->wave (list 1 1 0 2 1 (* pi .5)) #f #t)))
 
       (let ((tag (catch #t (lambda () (phase-partials->wave (list 1 .3 2 .2))) (lambda args (car args)))))
-	(if (not (eq? tag 'bad-type)) (snd-display ";bad length arg to phase-partials->wave: ~A" tag)))
+	(if (not (eq? tag 'arg-error)) (snd-display ";bad length arg to phase-partials->wave: ~A" tag)))
       (let ((tag (catch #t (lambda () (phase-partials->wave (list "hiho" .3 2 .2))) (lambda args (car args)))))
-	(if (not (eq? tag 'bad-type)) (snd-display ";bad harmonic arg to phase-partials->wave: ~A" tag)))
+	(if (not (eq? tag 'arg-error)) (snd-display ";bad harmonic arg to phase-partials->wave: ~A" tag)))
       (let ((tag (catch #t (lambda () (phase-partials->wave (list))) (lambda args (car args)))))
 	(if (not (eq? tag 'no-data)) (snd-display ";nil list to phase-partials->wave: ~A" tag)))
 
@@ -17492,7 +17492,7 @@ EDITS: 5
       (let ((tag (catch #t (lambda () (partials->waveshape (list .5 .3 .2))) (lambda args (car args)))))
 	(if (not (eq? tag 'bad-type)) (snd-display ";odd length arg to partials->waveshape: ~A" tag)))
       (let ((tag (catch #t (lambda () (phase-partials->wave (list 1 .3 2 .2))) (lambda args (car args)))))
-	(if (not (eq? tag 'bad-type)) (snd-display ";bad length arg to phase-partials->wave: ~A" tag)))
+	(if (not (eq? tag 'arg-error)) (snd-display ";bad length arg to phase-partials->wave: ~A" tag)))
 
       (let ((d11 (partials->waveshape '(1 1) 16)))
 	(if (not (vequal d11 (vct -1.000 -0.867 -0.733 -0.600 -0.467 -0.333 -0.200 -0.067 0.067 0.200 0.333 0.467 0.600 0.733 0.867 1.000)))
@@ -27414,7 +27414,7 @@ EDITS: 5
 	      (filter-sound (make-one-zero :a0 2.0 :a1 0.0))
 	      (if (not (= (edit-position ind 0) 0)) (snd-display ";filter z: ~A" (edit-position ind 0)))
 	      (if (not (= (mus-sound-duration "z.snd") 0.0)) (snd-display ";duration z.snd: ~A" (mus-sound-duration "z.snd")))
-	      (catch 'mus-error
+	      (catch 'IO-error
 		     (lambda () (convolve-with "z.snd" 1.0))
 		     (lambda args args))
 	      (if (not (= (edit-position ind 0) 0)) (snd-display ";convolve z: ~A" (edit-position ind 0)))
@@ -57080,8 +57080,10 @@ EDITS: 1
   (let ((tag
 	 (catch #t 
 		thunk
-		(lambda args (car args)))))
-    (if (not (eq? tag expected-tag))
+		(lambda args args))))
+    (if (or (and (not (list? tag))
+		 (not (pair? tag)))
+	    (not (eq? (car tag) expected-tag)))
 	(snd-display ";check-error-tag ~A from ~A: ~A" 
 		     expected-tag (procedure-source thunk) tag))))
 
@@ -57661,7 +57663,8 @@ EDITS: 1
 						    (lambda ()
 						      (n arg))
 						    (lambda args (car args)))))
-					(if (not (eq? tag 'wrong-type-arg))
+					(if (and (not (eq? tag 'wrong-type-arg))
+						 (not (eq? tag 'arg-error)))
 					    (snd-display ";clm ~A: tag: ~A arg: ~A [~A]" n tag arg ctr))
 					(set! ctr (1+ ctr))))
 				    (list all-pass asymmetric-fm clear-array comb convolve db->linear average
@@ -58184,7 +58187,7 @@ EDITS: 1
 	    (check-error-tag 'mus-error (lambda () (mus-mix "test.snd" (string-append sf-dir "bad_length.aifc"))))
 	    (check-error-tag 'bad-header (lambda () (mus-mix (string-append sf-dir "bad_chans.aifc") "oboe.snd")))
 	    (check-error-tag 'no-such-sound (lambda () (set! (sound-loop-info 123) '(0 0 1 1))))
-	    (check-error-tag 'mus-error (lambda () (new-sound "fmv.snd" mus-nist mus-bfloat 22050 2 "this is a comment")))
+	    (check-error-tag 'bad-header (lambda () (new-sound "fmv.snd" mus-nist mus-bfloat 22050 2 "this is a comment")))
 	    (check-error-tag 'no-such-player (lambda () (player-home 123)))
 	    (check-error-tag 'no-such-file (lambda () (set! (temp-dir) "/hiho")))
 	    (check-error-tag 'no-such-file (lambda () (set! (save-dir) "/hiho")))
@@ -58226,10 +58229,10 @@ EDITS: 1
 		  ))
 	    (check-error-tag 'no-such-menu (lambda () (main-menu -1)))
 	    (check-error-tag 'no-such-menu (lambda () (main-menu 111)))
-	    (check-error-tag 'mus-error (lambda () (vct-map (lambda () 1.0))))
+	    (check-error-tag 'arg-error (lambda () (vct-map (lambda () 1.0))))
 	    (check-error-tag 'out-of-range (lambda () (new-sound "hiho" 123)))
 	    (check-error-tag 'out-of-range (lambda () (new-sound "hiho" mus-nist 123)))
-	    (check-error-tag 'mus-error (lambda () (new-sound "hiho" mus-nist mus-bfloat)))
+	    (check-error-tag 'bad-header (lambda () (new-sound "hiho" mus-nist mus-bfloat)))
 	    (check-error-tag 'out-of-range (lambda () (make-sound-data 0 1)))
 	    (check-error-tag 'out-of-range (lambda () (make-sound-data -2 1)))
 	    (check-error-tag 'out-of-range (lambda () (make-sound-data 1 -1)))
@@ -58251,7 +58254,7 @@ EDITS: 1
 	    (check-error-tag 'wrong-type-arg (lambda () (set! (tempo-control-bounds) (list 0.0))))
 	    (check-error-tag 'wrong-type-arg (lambda () (set! (tempo-control-bounds) (list 0.0 "hiho"))))
 	    (check-error-tag 'wrong-type-arg (lambda () (make-variable-graph #f)))
-	    (check-error-tag 'mus-error (lambda () (make-variable-graph (list-ref (main-widgets) 1))))
+	    (check-error-tag 'arg-error (lambda () (make-variable-graph (list-ref (main-widgets) 1))))
 	    (check-error-tag 'cannot-print (lambda () (graph->ps)))
 	    (let ((ind (open-sound "oboe.snd"))) 
 	      (set! (selection-creates-region) #t)
@@ -58284,7 +58287,7 @@ EDITS: 1
 	      (check-error-tag 'out-of-range (lambda () (start-playing 1 0)))
 	      (check-error-tag 'out-of-range (lambda () (set! (filter-control-envelope ind) (list 0.0 1.0 0.1 -0.1 1.0 0.0))))
 	      (check-error-tag 'out-of-range (lambda () (set! (filter-control-envelope ind) (list 0.0 1.0 0.1 1.1 1.0 0.0))))
-	      (check-error-tag 'mus-error (lambda () (filter-sound '(0 0 .1 .1 .05 .1 1 1) 32)))
+	      (check-error-tag 'env-error (lambda () (filter-sound '(0 0 .1 .1 .05 .1 1 1) 32)))
 	      (check-error-tag 'out-of-range (lambda () (apply-controls ind 123)))
 	      (check-error-tag 'out-of-range (lambda () (set! (speed-control-bounds) (list 0.0 2.0))))
 	      (check-error-tag 'out-of-range (lambda () (set! (expand-control-bounds) (list 0.0 2.0))))
@@ -58292,9 +58295,9 @@ EDITS: 1
 	      (check-error-tag 'out-of-range (lambda () (set! (expand-control-bounds) (list 2.0 0.0))))
 	      (check-error-tag 'out-of-range (lambda () (vct->sound-file 123 vct-3 4)))
 	      (check-error-tag 'out-of-range (lambda () (vct->sound-file 123 vct-3 -4)))
-	      (check-error-tag 'mus-error (lambda () (vct->sound-file 123 vct-3 2)))
+	      (check-error-tag 'IO-error (lambda () (vct->sound-file 123 vct-3 2)))
 	      (check-error-tag 'bad-header (lambda () (insert-sound (string-append sf-dir "bad_chans.snd"))))
-	      (check-error-tag 'mus-error (lambda () (convolve-with (string-append sf-dir "bad_chans.snd"))))
+	      (check-error-tag 'IO-error (lambda () (convolve-with (string-append sf-dir "bad_chans.snd"))))
 	      (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind -12)))
 	      (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind mus-next -12)))
 	      (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind mus-nist mus-bdouble)))
@@ -58326,7 +58329,7 @@ EDITS: 1
 	      (check-error-tag 'out-of-range (lambda () (snd-spectrum (make-vct 8) 0 -123)))
 	      (check-error-tag 'out-of-range (lambda () (snd-spectrum (make-vct 8) 0 0)))
 	      (check-error-tag 'no-such-file (lambda () (play "/baddy/hiho")))
-	      (check-error-tag 'mus-error (lambda () (play (string-append sf-dir "nist-shortpack.wav"))))
+	      (check-error-tag 'bad-format (lambda () (play (string-append sf-dir "nist-shortpack.wav"))))
 	      (check-error-tag 'no-such-channel (lambda () (play 0 ind 123)))
 	      (check-error-tag 'no-such-channel (lambda () (make-player ind 123)))
 	      (check-error-tag 'no-such-file (lambda () (mix "/baddy/hiho")))
@@ -58452,7 +58455,7 @@ EDITS: 1
 	    (check-error-tag 'no-such-menu (lambda () (add-to-menu 1234 "hi" (lambda () #f))))
 	    (check-error-tag 'bad-arity (lambda () (add-to-main-menu "hi" (lambda (a b) #f))))
 	    (check-error-tag 'bad-arity (lambda () (add-to-menu 1 "hi" (lambda (a b) #f))))
-	    (check-error-tag 'mus-error (lambda () (open-sound-file "/bad/baddy.snd")))
+	    (check-error-tag 'IO-error (lambda () (open-sound-file "/bad/baddy.snd")))
 	    (check-error-tag 'out-of-range (lambda () (close-sound-file 0 0)))
 	    (check-error-tag 'out-of-range (lambda () (set! (transform-type) -1)))
 	    (check-error-tag 'out-of-range (lambda () (set! (transform-type) 123)))

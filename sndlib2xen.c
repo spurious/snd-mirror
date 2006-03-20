@@ -37,19 +37,6 @@
   #endif
 #endif
 
-void mus_misc_error(const char *caller, char *msg, XEN val)
-{
-  if (msg)
-    XEN_ERROR(MUS_MISC_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(caller),
-			 C_TO_XEN_STRING(msg),
-			 val));
-  else
-    XEN_ERROR(MUS_MISC_ERROR,
-	      XEN_LIST_2(C_TO_XEN_STRING(caller),
-			 val));
-}
-
 static char* tmpstr = NULL; /* easier to handle this way than with dynamic winds and so on */
 static char *local_mus_expand_filename(char *name)
 {

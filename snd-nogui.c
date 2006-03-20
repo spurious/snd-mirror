@@ -340,22 +340,6 @@ RETSIGTYPE top_level_catch(int ignore)
 }
 #endif
 
-#if DEBUGGING && HAVE_GUILE
-#define NO_GUI_DEFINITIONS 66
-static const char *no_gui_definitions[NO_GUI_DEFINITIONS] = {
-  S_color_hook, S_drop_hook, S_listener_click_hook, S_mouse_enter_graph_hook, S_mouse_enter_label_hook, S_mouse_enter_listener_hook,
-  S_mouse_enter_text_hook, S_mouse_leave_graph_hook, S_mouse_leave_label_hook, S_mouse_leave_listener_hook, S_mouse_leave_text_hook,
-  S_new_widget_hook, S_orientation_hook, S_recorder_file_hook, S_window_property_changed_hook, S_copy_context, S_cursor_context,
-  S_lisp_graph, S_mark_context, S_selection_context, S_time_graph, S_transform_graph, S_basic_color, S_colormap, S_colormap_size,
-  S_cursor_color, S_data_color, S_enved_envelope, S_enved_filter, S_enved_waveform_color, S_filter_control_waveform_color, S_graph_color,
-  S_graph_cursor, S_highlight_color, S_listener_color, S_listener_text_color, S_mark_color, S_position_color,
-  S_pushed_button_color, S_sash_color, S_selected_data_color, S_selected_graph_color, S_selection_color, S_text_focus_color,
-  S_x_axis_label, S_y_axis_label, S_zoom_color, S_axis_info, S_channel_widgets, S_color_p, S_color_to_list, S_colormap_p,
-  S_current_font, S_dialog_widgets, S_graph_data, S_in, S_main_widgets, S_make_color, S_make_graph_data, S_menu_widgets,
-  S_reset_listener_cursor, S_send_mozilla, S_sound_widgets, S_view_regions_dialog, S_widget_text, S_goto_listener_end
-};
-#endif
-
 #define FALLBACK_FONT "9x15"
 
 void snd_doit(int argc, char **argv)
@@ -367,15 +351,6 @@ void snd_doit(int argc, char **argv)
 
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(set! scm-repl-prompt \"snd> \")");
-
-#if DEBUGGING
-  {
-    int i;
-    for (i = 0; i < NO_GUI_DEFINITIONS; i++)
-      if (XEN_DEFINED_P(no_gui_definitions[i]))
-	fprintf(stderr, "%s is already defined\n", no_gui_definitions[i]);
-  }
-#endif
 
   XEN_EVAL_C_STRING("\
                (define " S_color_hook " (make-hook 0))\

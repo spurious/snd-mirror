@@ -402,7 +402,7 @@ static void make_region_readable(region *r)
 	}
       else
 	{
-	  XEN_ERROR(MUS_MISC_ERROR,
+	  XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 		    XEN_LIST_3(C_TO_XEN_STRING(_("can't read region file!!")),
 			       C_TO_XEN_STRING(r->filename),
 			       C_TO_XEN_STRING(snd_open_strerror())));
@@ -1516,7 +1516,7 @@ using data format (default depends on machine byte order), header type (" S_mus_
       com = mus_optkey_to_string(keys[3], S_save_region, orig_arg[3], NULL);
     }
   if (file == NULL) 
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_region),
 			 C_TO_XEN_STRING("no output file?")));
   name = mus_expand_filename(file);

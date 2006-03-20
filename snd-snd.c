@@ -3351,7 +3351,7 @@ open file assuming the data matches the attributes indicated unless the file act
       if (!(XEN_KEYWORD_P(keys[3]))) set_fallback_format(ofr);
     }
   if (file == NULL) 
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_open_raw_sound),
 			 C_TO_XEN_STRING("no output file?")));
   {
@@ -3453,7 +3453,7 @@ Omitted arguments take their value from the sound being saved.\n\
       outcom = mus_optkey_to_string(keys[7], S_save_sound_as, orig_arg[7], NULL);
     }
   if ((file == NULL) || (directory_p(file)))
-    XEN_ERROR(MUS_MISC_ERROR,
+    XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_sound_as),
 			 C_TO_XEN_STRING("no output file?")));
   ASSERT_SOUND(S_save_sound_as, index, 2);
@@ -3580,8 +3580,10 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   if (!(MUS_DATA_FORMAT_OK(df)))
     XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[2], keys[2], "~A: invalid data format");
   if (!(mus_header_writable(ht, df)))
-    mus_misc_error(S_new_sound, _("can't write this combination of data format and header type"), 
-		   XEN_LIST_2(keys[1], keys[2]));
+    XEN_ERROR(BAD_HEADER,
+	      XEN_LIST_4(C_TO_XEN_STRING(S_new_sound),
+			 C_TO_XEN_STRING("can't write this combination of data format and header type"),
+			 keys[1], keys[2]));
   if (sr <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[3], keys[3], "srate ~A <= 0?");
   if (ch <= 0)
@@ -3597,7 +3599,10 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   if (err == -1)
     {
       if (str) {FREE(str); str = NULL;}
-      mus_misc_error(S_new_sound, snd_io_strerror(), keys[0]);
+      XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
+		XEN_LIST_3(C_TO_XEN_STRING(S_new_sound), 
+			   C_TO_XEN_STRING(snd_io_strerror()), 
+			   keys[0]));
     }
   chan = snd_reopen_write(str);
   lseek(chan, mus_header_data_location(), SEEK_SET);
@@ -4446,7 +4451,7 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
 	  break;
 	default:
 	  fprintf(stderr, "internal Snd bug!");
-	  error_type = MUS_MISC_ERROR;
+	  error_type = XEN_ERROR_TYPE("Snd-internal-error");
 	  break;
 	}
       XEN_ERROR(error_type, 
@@ -4883,7 +4888,7 @@ create a new sound file 'file' (writing float data), return the file descriptor 
       if (mus_file_probe(filename)) snd_remove(filename, REMOVE_FROM_CACHE);
       FREE(filename);
       filename = NULL;
-      XEN_ERROR(MUS_MISC_ERROR,
+      XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 		XEN_LIST_2(C_TO_XEN_STRING(S_open_sound_file),
 			   errmsg));
     }
@@ -4960,7 +4965,11 @@ static XEN g_vct_to_sound_file(XEN g_fd, XEN obj, XEN g_nums)
     XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_file, 3, g_nums, "len ~A < 0 or > vct length");
   err = lseek(fd, 0L, SEEK_END);
   if (err == -1)
-    mus_misc_error(S_vct_to_sound_file, "IO error", C_TO_XEN_STRING(snd_io_strerror()));
+    {
+      XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
+		XEN_LIST_2(C_TO_XEN_STRING(S_vct_to_sound_file),
+			   C_TO_XEN_STRING(snd_io_strerror())));
+    }
   if (sizeof(Float) == 4) /* Float can be either float or double */
     nums = write(fd, (char *)(v->data), nums * 4);
   else

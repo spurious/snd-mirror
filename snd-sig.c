@@ -2,8 +2,6 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* TODO: get rid of mus_misc_error */
-
 /* collect syncd chans */
 typedef struct {
   sync_info *si;
@@ -796,7 +794,8 @@ static int off_t_compare(const void *a, const void *b)
 }
 
 static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, Float ratio, mus_any *egen, 
-				    enved_progress_t from_enved, const char *origin, bool over_selection, int curchan, int chans)
+				    enved_progress_t from_enved, const char *origin, bool over_selection, int curchan, int chans,
+				    bool *clm_err)
 {
   snd_info *sp = NULL;
   bool reporting = false;
@@ -815,7 +814,11 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   sp = cp->sound;
   if (!(editable_p(cp))) return(NULL); /* edit hook result perhaps */
   sr = make_src(ratio, sf, ratio);
-  if (sr == NULL) return(mus_format("invalid src ratio: %f\n", ratio));
+  if (sr == NULL) 
+    {
+      (*clm_err) = true;
+      return(mus_format("invalid src ratio: %f\n", ratio));
+    }
   full_chan = ((beg == 0) && (dur == CURRENT_SAMPLES(cp)));
   reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
   if (reporting) start_progress_report(sp, from_enved);
@@ -1092,6 +1095,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 	  off_t dur;
 	  mus_any *egen = NULL;
 	  char *errmsg = NULL;
+	  bool clm_err = false;
 	  cp = si->cps[i];
 	  if (scdur == 0) 
 	    dur = to_c_edit_samples(cp, edpos, origin, arg_pos); 
@@ -1108,7 +1112,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 	      else egen = gen;
 	      if (egen) ratio = 0.0;            /* added 14-Mar-01 otherwise the envelope is an offset? */
 	    }
-	  errmsg = src_channel_with_error(cp, sfs[i], si->begs[i], dur, ratio, egen, from_enved, origin, over_selection, i, si->chans);
+	  errmsg = src_channel_with_error(cp, sfs[i], si->begs[i], dur, ratio, egen, from_enved, origin, over_selection, i, si->chans, &clm_err);
 	  if (egen)
 	    {
 	      if (e) 
@@ -1225,8 +1229,6 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   snd_fd *sf;
   if ((beg < 0) || ((dur + overlap) <= 0)) return(NULL);
   sp = cp->sound;
-  if (!(MUS_RUN_P(gen))) /* currently can't happen */
-    return(mus_format(_("%s can't handle %s generators"), S_clm_channel, mus_name(gen)));
   if (!(editable_p(cp))) return(NULL);
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL)
@@ -1984,7 +1986,7 @@ static char *filter_channel(chan_info *cp, int order, env *e, off_t beg, off_t d
 
 static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_progress_t from_enved, 
 				   const char *caller, const char *origin, bool over_selection, Float *ur_a, 
-				   mus_any *gen, XEN edpos, int arg_pos, bool truncate)
+				   mus_any *gen, XEN edpos, int arg_pos, bool truncate, bool *clm_error)
 {
   /* if string returned, needs to be freed */
   /* interpret e as frequency response and apply as filter to all sync'd chans */
@@ -2000,9 +2002,12 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
   if ((!e) && (!ur_a) && (!gen)) 
     return(NULL);
   if ((gen) && (!(MUS_RUN_P(gen))))
-    return(mus_format(_("%s: can't handle %s generators"),
-		      caller,
-		      mus_name(gen)));
+    {
+      (*clm_error) = true;
+      return(mus_format(_("%s: can't handle %s generators"),
+			caller,
+			mus_name(gen)));
+    }
   sp = ncp->sound;
   sc = get_sync_state_1(sp, ncp, 0, over_selection, 
 			READ_FORWARD, (over_selection) ? (order - 1) : 0, 
@@ -2164,7 +2169,8 @@ void apply_filter(chan_info *ncp, int order, env *e, enved_progress_t from_enved
 		  XEN edpos, int arg_pos, bool truncate)
 {
   char *error;
-  error = apply_filter_or_error(ncp, order, e, from_enved, caller, origin, over_selection, ur_a, gen, edpos, arg_pos, truncate);
+  bool err_type; /* ignored in this context */
+  error = apply_filter_or_error(ncp, order, e, from_enved, caller, origin, over_selection, ur_a, gen, edpos, arg_pos, truncate, &err_type);
   if (error)
     {
       snd_error_without_format(error);
@@ -4126,7 +4132,9 @@ static XEN g_reverse_channel(XEN s_beg, XEN s_dur, XEN snd_n, XEN chn_n, XEN edp
       XEN str;
       str = C_TO_XEN_STRING(errmsg);
       FREE(errmsg);
-      mus_misc_error(S_reverse_channel, NULL, str);
+      XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
+		XEN_LIST_2(C_TO_XEN_STRING(S_reverse_channel),
+			   str));
     }
   return(s_beg);
 }
@@ -4408,7 +4416,9 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
       XEN str;
       str = C_TO_XEN_STRING(errmsg);
       FREE(errmsg);
-      mus_misc_error(S_clm_channel, NULL, str);
+      XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
+		XEN_LIST_2(C_TO_XEN_STRING(S_clm_channel),
+			   str));
     }
   return(gen);
 }
@@ -4861,7 +4871,9 @@ static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, co
 	  XEN errstr;
 	  errstr = C_TO_XEN_STRING(error);
 	  FREE(error);
-	  mus_misc_error(caller, NULL, errstr);
+	  XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
+		    XEN_LIST_2(C_TO_XEN_STRING(caller),
+			       errstr));
 	}
     }
   else return(snd_no_such_file_error(caller, file));
@@ -4927,6 +4939,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   snd_fd *sf;
   off_t beg, dur;
   int pos;
+  bool clm_err = false;
   mus_any *egen = NULL;
   bool need_free = false;
   Float ratio = 0.0; /* not 1.0 here! -- the zero is significant */
@@ -4963,7 +4976,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
       check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), S_src_channel);
     }
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
-  errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, NOT_FROM_ENVED, S_src_channel, OVER_SOUND, 1, 1);
+  errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, NOT_FROM_ENVED, S_src_channel, OVER_SOUND, 1, 1, &clm_err);
   sf = free_snd_fd(sf);
   if (need_free) mus_free(egen);
   if (errmsg)
@@ -4971,7 +4984,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
       XEN err;
       err = C_TO_XEN_STRING(errmsg);
       FREE(errmsg);
-      XEN_ERROR(MUS_MISC_ERROR,
+      XEN_ERROR(XEN_ERROR_TYPE((clm_err) ? "mus-error" : "IO-error"),
 		XEN_LIST_2(C_TO_XEN_STRING(S_src_channel),
 			   err));
     }
@@ -5083,10 +5096,15 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
     caller = XEN_TO_C_STRING(origin);
   errstr = filter_channel(cp, order_1, e_1, beg_1, dur_1, edpos_1, caller, truncate_1, coeffs);
   if (e_1) free_env(e_1);
-  if (errstr) /* this will only happen if the temp file is unwritable */
-    XEN_ERROR(MUS_MISC_ERROR,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_filter_channel),
-			 C_TO_XEN_STRING(errstr)));
+  if (errstr)
+    {
+      XEN str;
+      str = C_TO_XEN_STRING(errstr);
+      FREE(errstr);
+      XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
+		XEN_LIST_2(C_TO_XEN_STRING(S_filter_channel),
+			   str));
+    }
   return(e);
 }
 
@@ -5099,13 +5117,16 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
   if (mus_xen_p(e))
     {
       char *error;
-      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, caller, origin, over_selection, NULL, XEN_TO_MUS_ANY(e), edpos, 5, truncate);
+      bool clm_err = false;
+      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, caller, origin, over_selection, NULL, XEN_TO_MUS_ANY(e), edpos, 5, truncate, &clm_err);
       if (error)
 	{
 	  XEN errstr;
 	  errstr = C_TO_XEN_STRING(error);
 	  FREE(error);
-	  mus_misc_error(caller, NULL, errstr);
+	  XEN_ERROR(XEN_ERROR_TYPE((clm_err) ? "mus-error" : "IO-error"),
+		    XEN_LIST_2(C_TO_XEN_STRING(caller),
+			       errstr));
 	}
     }
   else

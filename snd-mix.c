@@ -4377,7 +4377,7 @@ track-id is the track value for each newly created mix."
       if (id == MIX_FILE_NO_FILE) 
 	{
 	  if (name) FREE(name);
-	  XEN_ERROR(MUS_MISC_ERROR,
+	  XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 		    XEN_LIST_3(C_TO_XEN_STRING(S_mix),
 			       file,
 			       C_TO_XEN_STRING(snd_io_strerror())));
@@ -4429,7 +4429,7 @@ track-id is the track value for each newly created mix."
 	      if (ss->local_errno != 0)
 		{
 		  if (name) FREE(name);
-		  XEN_ERROR(MUS_MISC_ERROR,
+		  XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 			    XEN_LIST_3(C_TO_XEN_STRING(S_mix),
 				       file,
 				       C_TO_XEN_STRING(snd_io_strerror())));
