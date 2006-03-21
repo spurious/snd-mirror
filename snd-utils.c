@@ -1145,18 +1145,6 @@ void mem_report(void)
 		  fprintf(Fp, "[%s] ", (char *)(pointers[j]));
 	      fprintf(Fp, "\n");
 	    }
-	  else
-	    {
-	      if (strcmp("make_ptree", functions[ptr]) == 0)
-		{
-		  if (have_stacks)
-		    fprintf(Fp, "                          ");
-		  for (j = 0; j < mem_size; j++)
-		    if ((locations[j] == ptr) && (pointers[j]))
-		      fprintf(Fp, "[%p] ", pointers[j]);
-		  fprintf(Fp, "\n");
-		}
-	    }
 	}
     }
   {

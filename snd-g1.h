@@ -496,8 +496,6 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 widget_t make_sound_save_as_dialog(bool managed);
 widget_t make_selection_save_as_dialog(bool managed);
 widget_t make_region_save_as_dialog(bool managed);
-gboolean label_enter_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp);
-gboolean label_leave_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp);
 widget_t make_new_file_dialog(bool managed);
 widget_t make_mix_file_dialog(bool managed);
 widget_t make_insert_file_dialog(bool managed);

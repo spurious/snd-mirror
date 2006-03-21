@@ -3051,6 +3051,7 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
   if (temp_file)
     {
       j = 0;
+      ss->stopped_explicitly = false;
       for (k = 0; k < dur; k++)
 	{
 	  idata[j++] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, read_sample_to_float(sf)));
@@ -3059,6 +3060,8 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
 	      j = 0;
 	      if (err == -1) break;
+	      check_for_event();
+	      if (ss->stopped_explicitly) break;
 	    }
 	}
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);

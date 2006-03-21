@@ -494,11 +494,6 @@ void about_snd_help(void)
          added pausing -- returns #t if DAC is paused, can be set to #t or #f to start/stop pausing\n\
            similarly playing -- #t if DAC is running (may be paused), settable to start/stop playing\n\
            removed dac-is-running (it's in snd7.scm)\n\
-9-Feb:   Bill Sack's pd-stochastic.scm and snd-stochastic.pd.\n\
-2-Feb:   mus_audio_sun_outputs -> mus_sun_set_outputs, added mus_netbsd_set_outputs.\n\
-           mus_audio_set_oss_buffers -> mus_oss_set_buffers.\n\
-           changed ALSA environment variable names to use MUS, not SNDLIB.\n\
-           changed ALSA default device to \"default\" from \"hw:0\"\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1684,6 +1679,31 @@ static void random_numbers_help(void)
 		      snd_xref_urls("Random Numbers"));
 }
 
+
+static char *Wavogram_xrefs[] = {
+  "wavogram picture",
+  "{wavo-hop}",
+  "{wavo-trace}",
+  "time-graph-type: {graph-as-wavogram}",
+  NULL};
+
+static char *Wavogram_urls[] = {
+  "snd.html#wavogram",
+  "extsnd.html#wavohop",
+  "extsnd.html#wavotrace",
+  "extsnd#timegraphtype",
+  NULL};
+
+static void wavogram_help(void)
+{
+  snd_help_with_xrefs("Wavogram",
+"The 'wavogram' is a 3-D view of the time-domain data.  If you set each trace length correctly, \
+you can often get periods to line up vertically, making a pretty picture.",
+		      WITH_WORD_WRAP,
+		      Wavogram_xrefs,
+		      Wavogram_urls);
+}
+
 static void colors_help(void)
 {
   snd_help_with_xrefs("Colors",
@@ -1745,14 +1765,14 @@ static void window_size_help(void)
 
 #include "snd-xref.c"
 
-#define NUM_TOPICS 36
+#define NUM_TOPICS 37
 static char *topic_names[NUM_TOPICS] = {
   "Hook", "Vct", "Sample reader", "Mark", "Mix", "Region", "Edit list", "Transform", "Error",
   "Color", "Font", "Graphic", "Widget", "Emacs",
   "CLM", "Instrument", "CM", "CMN", "Libxm", "Sndlib", 
   "Motif", "Gtk", "Script", "Ruby", "LADSPA", "OpenGL", "Gdb", "Control panel",
   "X resources", "Invocation flags", "Initialization file", "Customization",
-  "Noise Reduction", "Window Size", "Color", "Random Number"
+  "Noise Reduction", "Window Size", "Color", "Random Number", "Wavogram"
 };
 
 static char *topic_urls[NUM_TOPICS] = {
@@ -1765,7 +1785,8 @@ static char *topic_urls[NUM_TOPICS] = {
   "grfsnd.html#sndwithgtk", "grfsnd.html#sndwithnogui", "grfsnd.html#sndandruby", "grfsnd.html#sndandladspa", 
   "grfsnd.html#sndandgl", "grfsnd.html#sndandgdb", "extsnd.html#customcontrols",
   "grfsnd.html#sndresources", "grfsnd.html#sndswitches", "grfsnd.html#sndinitfile", "extsnd.html#extsndcontents",
-  "extsnd.html#noisystory", "extsnd.html#movingwindows", "extsnd.html#colors", "sndscm.html#allrandomnumbers"
+  "extsnd.html#noisystory", "extsnd.html#movingwindows", "extsnd.html#colors", "sndscm.html#allrandomnumbers",
+  "snd.html#wavogram"
 };
 
 static int min_strlen(const char *a, const char *b)
@@ -1786,12 +1807,12 @@ static char *topic_url(const char *topic)
   return(NULL);
 }
 
-#define NUM_XREFS 35
+#define NUM_XREFS 36
 static char *xrefs[NUM_XREFS] = {
   "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Delete", "Envelope", "Filter",
   "Search", "Insert", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
   "Src", "Find", "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Track", "Copy",
-  "Noise Reduction", "Window Size", "Color", "Control", "Random Numbers"
+  "Noise Reduction", "Window Size", "Color", "Control", "Random Numbers", "Wavogram"
 };
 
 static char **xref_tables[NUM_XREFS] = {
@@ -1800,7 +1821,8 @@ static char **xref_tables[NUM_XREFS] = {
   Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
   Resampling_xrefs, Searching_xrefs, Undo_and_Redo_xrefs, Undo_and_Redo_xrefs, 
   sync_xrefs, control_xrefs, record_xrefs, header_and_data_xrefs, key_xrefs, Tracks_xrefs, Copying_xrefs,
-  Noise_Reduction_xrefs, Window_size_and_position_xrefs, Colors_xrefs, control_xrefs, Random_Numbers_xrefs
+  Noise_Reduction_xrefs, Window_size_and_position_xrefs, Colors_xrefs, control_xrefs, Random_Numbers_xrefs,
+  Wavogram_xrefs
 };
 
 static char **xref_url_tables[NUM_XREFS] = {
@@ -1810,6 +1832,7 @@ static char **xref_url_tables[NUM_XREFS] = {
   Resampling_urls, Searching_urls, Undo_and_Redo_urls, Undo_and_Redo_urls, 
   NULL, NULL, NULL, NULL, NULL, Tracks_urls, Copying_urls, 
   Noise_Reduction_urls, Window_size_and_position_urls, Colors_urls, NULL, Random_Numbers_urls,
+  Wavogram_urls
 };
 
 typedef void (*help_func)(void);
@@ -1820,7 +1843,8 @@ static help_func help_funcs[NUM_XREFS] = {
   &play_help, &reverse_help, &save_help, &smooth_help, &resample_help, &fft_help, &reverb_help,
   &resample_help, &find_help, &undo_help, &undo_help,
   &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help, &track_help, &copy_help,
-  &noise_reduction_help, &window_size_help, &colors_help, &controls_help, &random_numbers_help
+  &noise_reduction_help, &window_size_help, &colors_help, &controls_help, &random_numbers_help,
+  &wavogram_help
 };
 
 static char **snd_xrefs(const char *topic)

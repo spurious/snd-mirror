@@ -1924,6 +1924,7 @@ static int skew_color(Float x) {return(0);}
 
 static void make_sonogram(chan_info *cp)
 { 
+  #define SAVE_FFT_SIZE 4096
   sono_info *si;
   static int *sono_js = NULL;
   static int sono_js_size = 0;
@@ -1951,7 +1952,6 @@ static void make_sonogram(chan_info *cp)
 
       /* TODO: move out back = ok recopy but hg/ss are still posted */
       /* TODO: if saved case was partially obscured, restoration here gets the previous display (colors/sizes etc)! */
-      /*   so check somehow before save that full graph is displayed */
 
       if (cp->cgx->fft_pix)                            /* Motif None = 0 */
 	{
@@ -2069,7 +2069,8 @@ static void make_sonogram(chan_info *cp)
 	}
 
       /* if size was wrong, we've already released pix above */
-      save_fft_pix(cp, ax, fwidth, fheight, fap->x_axis_x0, fap->y_axis_y1);
+      if (bins >= SAVE_FFT_SIZE) /* transform size of twice that (8192) */
+	save_fft_pix(cp, ax, fwidth, fheight, fap->x_axis_x0, fap->y_axis_y1);
 
       if (cp->printing) ps_reset_color();
       FREE(hfdata);

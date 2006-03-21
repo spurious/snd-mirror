@@ -263,8 +263,10 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
       return(-1);
     }
   end = CURRENT_SAMPLES(cp);
+  ss->stopped_explicitly = false;
   if (sp->search_tree)
     {
+
       for (i = start; i < end; i++, tick++)
 	{
 	  if (evaluate_ptree_1f2b(sp->search_tree, read_sample_to_float(sf)))
@@ -277,6 +279,8 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 	      if (tick > (MANY_PASSES * TREE_REPORT_TICKS))
 		{
 		  char *msg;
+		  check_for_event();
+		  if (ss->stopped_explicitly) break;
 		  tick = 0;
 		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
 		  display_minibuffer_error(sp, msg);
@@ -288,7 +292,6 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
     }
   else
     {
-      ss->stopped_explicitly = false;
       for (i = start, passes = 0; i < end; i++, passes++)
 	{
 	  res = XEN_CALL_1(sp->search_proc, 
@@ -353,6 +356,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
       search_in_progress = false;
       return(-1);
     }
+  ss->stopped_explicitly = false;
   if (sp->search_tree)
     {
       for (i = start; i >= 0; i--, tick++)
@@ -367,6 +371,8 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 	      if (tick > (MANY_PASSES * TREE_REPORT_TICKS))
 		{
 		  char *msg;
+		  check_for_event();
+		  if (ss->stopped_explicitly) break;
 		  tick = 0;
 		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
 		  display_minibuffer_error(sp, msg);
@@ -378,7 +384,6 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
     }
   else
     {
-      ss->stopped_explicitly = false;
       for (i = start, passes = 0; i >= 0; i--, passes++)
 	{
 	  /* sp search proc as ptree */

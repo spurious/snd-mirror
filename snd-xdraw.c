@@ -527,16 +527,16 @@ void initialize_colormap(void)
   grays = (Pixel *)CALLOC(grays_size, sizeof(Pixel));
 }
 
-void draw_sono_rectangles(axis_context *ax, int color, int jmax)
-{
-  XSetForeground(ax->dp, colormap_GC, grays[color]);
-  XFillRectangles(ax->dp, ax->wn, colormap_GC, sono_data[color], jmax); 
-}
-
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1)
 {
   XSetForeground(ax->dp, colormap_GC, grays[color]);
   XDrawLine(ax->dp, ax->wn, colormap_GC, x0, y0, x1, y1);
+}
+
+void draw_sono_rectangles(axis_context *ax, int color, int jmax)
+{
+  XSetForeground(ax->dp, colormap_GC, grays[color]);
+  XFillRectangles(ax->dp, ax->wn, colormap_GC, sono_data[color], jmax); 
 }
 
 void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height)
