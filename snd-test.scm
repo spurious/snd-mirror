@@ -37,7 +37,7 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
-(define tests 10)
+(define tests 50)
 (define keep-going #f)
 (define all-args #f) ; huge arg testing
 
@@ -19734,7 +19734,12 @@ EDITS: 5
 
 	(let ((fname (file-name ind)))
 	  (close-sound ind)
-	  (delete-file fname)))
+	  (delete-file fname)
+	  (if (view-files-dialog #f)
+	      (begin
+		(set! (view-files-files (view-files-dialog #f)) '())
+		(if (not (null? (view-files-files (view-files-dialog #f))))
+		    (snd-display ";set vf files list null: ~A" (view-files-files (view-files-dialog #f))))))))
 
       ;; granulate with jitter=0, small hop (comb filter effect)
       (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 :size 10000)))

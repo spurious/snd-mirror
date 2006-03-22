@@ -503,6 +503,11 @@ if test "$with_motif" = no && test "$with_gtk" = no ; then
   with_no_gui=yes
 fi
 
+if test "$with_motif" = yes && test "$with_gtk" = yes ; then
+  with_gtk=no
+  AC_MSG_WARN([You asked for both Motif and Gtk -- Motif will be used])
+fi
+
 if test "$no_x" = yes || test "$with_no_gui" = yes || test "$with_snd_as_pd_external"; then
 
   AC_DEFINE(USE_NO_GUI)
@@ -1164,6 +1169,11 @@ AC_SUBST(FAM_LIB)
 
 ac_snd_have_extension_language=no
 
+if test "$with_ruby" = yes && test "$with_guile" = yes ; then
+  with_ruby=no
+  AC_MSG_WARN([You asked for both Ruby and Guile -- Guile will be used])
+fi
+
 RUBY="ruby"
 AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
             	ruby_prefix="$withval"
@@ -1456,6 +1466,11 @@ fi
 if test "$AUDIO_SYSTEM" != None ; then
   AC_MSG_RESULT(Using the $AUDIO_SYSTEM audio system)
 else
+
+if test "$with_alsa" = yes && test "$with_oss" = yes ; then
+  with_alsa=no
+  AC_MSG_WARN([You asked for both ALSA and OSS -- OSS will be used])
+fi
 
 case "$host" in
     *-*-linux*) 

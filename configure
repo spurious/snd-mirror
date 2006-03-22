@@ -11907,6 +11907,12 @@ if test "$with_motif" = no && test "$with_gtk" = no ; then
   with_no_gui=yes
 fi
 
+if test "$with_motif" = yes && test "$with_gtk" = yes ; then
+  with_gtk=no
+  { echo "$as_me:$LINENO: WARNING: You asked for both Motif and Gtk -- Motif will be used" >&5
+echo "$as_me: WARNING: You asked for both Motif and Gtk -- Motif will be used" >&2;}
+fi
+
 if test "$no_x" = yes || test "$with_no_gui" = yes || test "$with_snd_as_pd_external"; then
 
   cat >>confdefs.h <<\_ACEOF
@@ -15667,6 +15673,12 @@ fi
 
 ac_snd_have_extension_language=no
 
+if test "$with_ruby" = yes && test "$with_guile" = yes ; then
+  with_ruby=no
+  { echo "$as_me:$LINENO: WARNING: You asked for both Ruby and Guile -- Guile will be used" >&5
+echo "$as_me: WARNING: You asked for both Ruby and Guile -- Guile will be used" >&2;}
+fi
+
 RUBY="ruby"
 
 # Check whether --with-ruby-prefix or --without-ruby-prefix was given.
@@ -18472,6 +18484,12 @@ if test "$AUDIO_SYSTEM" != None ; then
   echo "$as_me:$LINENO: result: Using the $AUDIO_SYSTEM audio system" >&5
 echo "${ECHO_T}Using the $AUDIO_SYSTEM audio system" >&6
 else
+
+if test "$with_alsa" = yes && test "$with_oss" = yes ; then
+  with_alsa=no
+  { echo "$as_me:$LINENO: WARNING: You asked for both ALSA and OSS -- OSS will be used" >&5
+echo "$as_me: WARNING: You asked for both ALSA and OSS -- OSS will be used" >&2;}
+fi
 
 case "$host" in
     *-*-linux*)

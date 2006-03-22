@@ -2930,9 +2930,12 @@ static char **view_files_set_files(widget_t dialog, char **files, int len)
       int i;
       view_files_clear_selected_files(vdat);
       view_files_clear_list(vdat);
-      for (i = 0; i < len; i++)
-	if (files[i])
-	  view_files_add_file_or_directory(vdat, (const char *)(files[i]));
+      if (len > 0)
+	{
+	  for (i = 0; i < len; i++)
+	    if (files[i])
+	      view_files_add_file_or_directory(vdat, (const char *)(files[i]));
+	}
       view_files_display_list(vdat);
     }
   return(files);
@@ -4325,7 +4328,7 @@ static XEN g_view_files_files(XEN dialog)
 
 static XEN g_view_files_set_files(XEN dialog, XEN files)
 {
-  int i, len;
+  int i, len = 0;
   char **cfiles = NULL;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_1, S_setB S_view_files_files, "a view-files dialog widget");   
   XEN_ASSERT_TYPE(XEN_LIST_P(files), files, XEN_ARG_2, S_setB S_view_files_files, "a list of files or directories");
@@ -4341,9 +4344,9 @@ static XEN g_view_files_set_files(XEN dialog, XEN files)
       cfiles = (char **)CALLOC(len, sizeof(char *));
       for (i = 0; i < len; i++)
 	cfiles[i] = XEN_TO_C_STRING(XEN_LIST_REF(files, i));
-      view_files_set_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), cfiles, len);
-      FREE(cfiles);
     }
+  view_files_set_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), cfiles, len);
+  if (cfiles) FREE(cfiles);
   return(files);
 }
 
