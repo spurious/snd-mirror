@@ -395,9 +395,7 @@ file_data *make_file_data_panel(Widget parent, const char *name, Arg *args, int 
 				dialog_samples_t with_samples, dialog_error_t with_error, 
 				dialog_header_type_t with_header_type, dialog_comment_t with_comment,
 				header_choice_t header_choice);
-#if (!HAVE_FAM)
-  void alert_new_file(void);
-#endif
+void alert_new_file(void);
 widget_t make_open_file_dialog(bool read_only, bool managed);
 widget_t make_sound_save_as_dialog(bool managed);
 widget_t make_selection_save_as_dialog(bool managed);

@@ -1254,9 +1254,18 @@ static pane_t *make_pane(recorder_info *rp, GtkWidget *paned_window, int device,
   p->meters = (vu_t **)CALLOC(vu_meters, sizeof(vu_t *));
   p->meters_size = vu_meters;
   p->active = (bool *)CALLOC(vu_meters, sizeof(bool));
+#if DEBUGGING
+  set_printable(0);
+#endif
   p->active_size = vu_meters;
   p->active_sliders = (bool **)CALLOC(p->in_chans, sizeof(bool *));
-  for (i = 0; i < p->in_chans; i++) p->active_sliders[i] = (bool *)CALLOC(p->out_chans, sizeof(bool));
+  for (i = 0; i < p->in_chans; i++) 
+    {
+      p->active_sliders[i] = (bool *)CALLOC(p->out_chans, sizeof(bool));
+#if DEBUGGING
+      set_printable(0);
+#endif
+    }
 
   /* paned_window is a vbox = stack of panes, each pane is hbox = meters, sliders | gains */
   p->pane = gtk_hbox_new(false, 0);

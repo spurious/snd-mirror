@@ -1671,9 +1671,9 @@ void set_open_file_play_button(bool val)
     XmToggleButtonSetState(idat->dp->play_button, (Boolean)val, false);
 }
 
-#if (!HAVE_FAM)
 void alert_new_file(void) 
 {
+  if (ss->fam_ok) return;
   /* ideally this would include the save-as dialogs */
   if (odat)
     {
@@ -1703,7 +1703,6 @@ void alert_new_file(void)
 	}
     }
 }
-#endif
 
 void reflect_just_sounds(void)
 {

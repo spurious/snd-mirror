@@ -1220,7 +1220,6 @@ static XEN open_file_body(void *context)
 static void after_open_file(void *context)
 {
   open_file_context *sc = (open_file_context *)context;
-  if (sc->filename) FREE(sc->filename);
   FREE(sc);
 }
 #endif
@@ -1274,7 +1273,8 @@ snd_info *snd_open_file(const char *filename, bool read_only)
 {
   file_info *hdr;
   snd_info *sp;
-  char *mcf = NULL;
+  static char *mcf = NULL;
+  if (mcf) FREE(mcf);
   mcf = mus_expand_filename(filename);
   if (XEN_HOOKED(open_hook))
     {
@@ -1286,7 +1286,7 @@ snd_info *snd_open_file(const char *filename, bool read_only)
 			S_open_hook);
       if (XEN_TRUE_P(res))
 	{
-	  if (mcf) FREE(mcf);
+	  if (mcf) {FREE(mcf); mcf = NULL;}
 	  return(NULL);
 	}
       else
@@ -1301,7 +1301,7 @@ snd_info *snd_open_file(const char *filename, bool read_only)
   hdr = make_file_info(mcf, read_only, FILE_SELECTED);
   if (!hdr) 
     {
-      if (mcf) FREE(mcf);
+      if (mcf) {FREE(mcf); mcf = NULL;}
       return(NULL);
     }
 
@@ -1318,12 +1318,11 @@ snd_info *snd_open_file(const char *filename, bool read_only)
 			      (void *)ofc,
 			      (void *)ofc);
     sp = open_file_sp; /* has to be global since we free sc during the unwind */
-    mcf = NULL; /* freed above in unwind */
   }
 #else
   sp = add_sound_window(mcf, read_only, hdr);
-  if (mcf) FREE(mcf);
 #endif
+  if (mcf) {FREE(mcf); mcf = NULL;}
   return(finish_opening_sound(sp, FILE_SELECTED));
 }
 
@@ -1509,7 +1508,13 @@ void *make_axes_data(snd_info *sp)
   sa->fields = 8;
   sa->axis_data = (double *)CALLOC(sa->fields * sa->chans, sizeof(double));
   sa->fftp = (bool *)CALLOC(sa->chans, sizeof(bool));
+#if DEBUGGING
+  set_printable(0);
+#endif
   sa->wavep = (bool *)CALLOC(sa->chans, sizeof(bool));
+#if DEBUGGING
+  set_printable(0);
+#endif
   for (i = 0; i < sa->chans; i++)
     {
       chan_info *cp;
@@ -1781,9 +1786,10 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
 
   /* no mus_sound_forget here because we may be simply re-interpreting the existing data (set! (data-format) ...) etc */
   /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
-#if (!HAVE_FAM)
-  alert_new_file();
-#endif
+
+  if (!(ss->fam_ok))
+    alert_new_file();
+
   ss->reloading_updated_file = (old_index + 1);
   ss->open_requestor = FROM_UPDATE;
   nsp = snd_open_file(filename, read_only);
@@ -2524,12 +2530,13 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
       snd_error(_("%s is write-protected"), sp->filename);
       return(false);
     }
-#if HAVE_ACCESS && (!HAVE_FAM)
-  if (access(sp->filename, W_OK) < 0)
-    {
-      snd_error(_("%s is write-protected"), sp->filename);
-      return(false);
-    }
+#if HAVE_ACCESS
+  if (!(ss->fam_ok))
+    if (access(sp->filename, W_OK) < 0)
+      {
+	snd_error(_("%s is write-protected"), sp->filename);
+	return(false);
+      }
 #endif
   hdr = sp->hdr;
 

@@ -27,6 +27,9 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 	  lseek(chan, mus_header_data_location(), SEEK_SET);
 	  size = chans * mus_samples_to_bytes(data_format, samples);
 	  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
+#if DEBUGGING
+	  set_printable(0);
+#endif
 	  write(chan, buf, size);
 	  snd_close(chan, newname);
 	  FREE(buf);
@@ -1524,8 +1527,9 @@ static void clear_strings(snd_info *sp, mini_history_t which)
 
 void clear_mini_strings(snd_info *sp) {clear_strings(sp, MINIBUFFER);}
 void clear_filter_strings(snd_info *sp) {clear_strings(sp, FILTER_TEXT);}
-/* void clear_listener_strings(void) {clear_strings(NULL, LISTENER_TEXT);} */
-
+#if DEBUGGING
+void clear_listener_strings(void) {clear_strings(NULL, LISTENER_TEXT);}
+#endif
 
 /* ---------------- control panel apply ---------------- */
 
@@ -3593,7 +3597,6 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   if (file)
     str = mus_expand_filename(file);
   else str = snd_tempnam();
-
   mus_sound_forget(str);
   err = snd_write_header(str, ht, sr, ch, len * ch, df, com, snd_strlen(com), NULL);
   if (err == -1)
@@ -3608,12 +3611,14 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   lseek(chan, mus_header_data_location(), SEEK_SET);
   size = ch * mus_samples_to_bytes(df, len);
   buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
+#if DEBUGGING
+  set_printable(0);
+#endif
   write(chan, buf, size);
   snd_close(chan, str);
   FREE(buf);
   ss->open_requestor = FROM_NEW_SOUND;
   sp = sound_is_silence(snd_open_file(str, FILE_READ_WRITE));
-
   if (str) FREE(str);
   if (sp) return(C_TO_XEN_INT(sp->index));
   return(XEN_FALSE);

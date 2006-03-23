@@ -1655,8 +1655,16 @@ static void make_dac_buffers(void)
 	  FREE(audio_bytes);
 	}
       audio_bytes = (unsigned char **)CALLOC(snd_dacp->devices, sizeof(unsigned char *));
+#if DEBUGGING
+      set_printable(0);
+#endif
       for (i = 0; i < snd_dacp->devices; i++) 
-	audio_bytes[i] = (unsigned char *)CALLOC(bytes, sizeof(unsigned char));
+	{
+	  audio_bytes[i] = (unsigned char *)CALLOC(bytes, sizeof(unsigned char));
+#if DEBUGGING
+	  set_printable(0);
+#endif
+	}
       audio_bytes_size = bytes;
       audio_bytes_devices = snd_dacp->devices;
     }

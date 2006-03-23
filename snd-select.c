@@ -805,9 +805,8 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	    }
 	  snd_close(ofd, ofile);
 	  si = free_sync_info(si);
-#if (!HAVE_FAM)
-	  alert_new_file();
-#endif
+	  if (!(ss->fam_ok))
+	    alert_new_file();
 	  return(IO_NO_ERROR);
 	}
     }
@@ -880,9 +879,8 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   FREE(ends);
   if (mus_file_close(ofd) != 0)
     return(IO_CANT_CLOSE_FILE);
-#if (!HAVE_FAM)
-  alert_new_file();
-#endif
+  if (!(ss->fam_ok))
+    alert_new_file();
   return(io_err);
 }
 

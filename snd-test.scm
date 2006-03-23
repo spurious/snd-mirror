@@ -37,7 +37,7 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
-(define tests 50)
+(define tests 1)
 (define keep-going #f)
 (define all-args #f) ; huge arg testing
 
@@ -48,6 +48,18 @@
 (define total-tests 28)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
 (define test-number -1)
+
+(define (snd-display . args)
+  (let ((str (if (null? (cdr args))
+		 (car args)
+		 (apply format #f args))))
+    (newline) 
+    (display str)
+    (if (not (provided? 'snd-nogui))
+	(begin
+	  (snd-print #\newline)
+	  (snd-print str)))))
+
 
 (define with-big-file #t)
 (define big-file-name "/home/bil/zap/sounds/bigger.snd")
@@ -75,18 +87,6 @@
       (system "rm /var/tmp/snd_*")
       (system "rm /var/tmp/*.snd")))
 (system "rm core*")
-
-(define (snd-display . args)
-  (let ((str (if (null? (cdr args))
-		 (car args)
-		 (apply format #f args))))
-    (newline) 
-    (display str)
-    (if (not (provided? 'snd-nogui))
-	(begin
-	  (snd-print #\newline)
-	  (snd-print str)))))
-
 
 (define home-dir "/home/bil")
 (define sf-dir "/sf1")
@@ -30212,8 +30212,7 @@ EDITS: 5
 		     ;;(lambda (n) (map-channel (lambda (y2) y2) 0 #f n 0 2)) ; actually will work
 		     (lambda (n) (pad-channel 100 100 n 0 2))
 		     (lambda (n) (delete-sample 100 n 0 2))
-		     (lambda (n) (set! (sample 100 n 0 2) .52)) ; memleak here, so don't run this over and over
-					; (set-sample origin is created, then change_samples notices it can't edit ahead, losing origin)
+		     (lambda (n) (set! (sample 100 n 0 2) .52))
 		     )
 	       (list "scale" "env" "ptree" 
 		     ;;"map" 
@@ -45436,10 +45435,10 @@ EDITS: 1
 		      (snd-display ";M-x (set! mxa 3) -> ~A" mxa))
 		  
 		  (key-event cwid (char->integer #\x) 8) (force-event)
-		  (widget-string minibuffer "(mus-sound-frames \"pistol")
+		  (widget-string minibuffer "(mus-sound-frames \"fyow")
 		  (key-event minibuffer snd-tab-key 0) (force-event)
 		  (let ((str (widget-text minibuffer)))
-		    (if (not (string=? str "(mus-sound-frames \"pistol.snd"))
+		    (if (not (string=? str "(mus-sound-frames \"fyow.snd"))
 			(snd-display ";M-x with filename completion: ~A" str)))
 		  
 		  (reset-listener-cursor)
@@ -45528,7 +45527,7 @@ EDITS: 1
 		    (if (not (= aval 208)) (snd-display ";listener paren check: ~A" aval))
 		    
 					;(key-event lst (char->integer #\g) 12) (force-event)
-		    (widget-string lst "(define frs (mus-sound-frames \"pistol." #f)
+		    (widget-string lst "(define frs (mus-sound-frames \"fyow." #f)
 		    (key-event lst snd-tab-key 0) (force-event)
 		    (widget-string lst "\"))" #f)
 		    (key-event lst snd-return-key 0) (force-event)
@@ -59103,7 +59102,6 @@ EDITS: 1
 
 ;;; ---------------- test all done
 
-;(set! (max-regions) 2)
 (let ((regs (regions)))
   (for-each
    (lambda (n)
@@ -59111,15 +59109,24 @@ EDITS: 1
    regs))
 (set! (view-files-sort) 0)
 
-(if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
-(gc)(gc)
 (clear-sincs)
 (stop-playing)
+(set! (mus-audio-playback-amp) 1.0)
+(mus-oss-set-buffers 4 12)
+
 (reset-almost-all-hooks)
 (for-each free-track (tracks))
 
+(close-output-port optimizer-log)
+(if (and full-test
+	 (= tests 1)
+	 (file-exists? "oldopt.log"))
+    (system "diff -w optimizer.log oldopt.log"))
+
 (save-listener "test.output")
 (set! (listener-prompt) original-prompt)
+(clear-listener)
+(show-listener)
 
 (display (format #f "~%;all done!~%~A" original-prompt))
 
@@ -59129,8 +59136,9 @@ EDITS: 1
 (set! (print-length) 64)
 (display (format "~%;times: ~A~%;total: ~A~%~%" timings (inexact->exact (round (- (real-time) overall-start-time)))))
 
-(show-listener)
+;;; -------- cleanup temp files
 
+(if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (if (file-exists? original-save-dir)
     (begin
       (display (format #f "ls ~A/snd_* | wc~%" original-save-dir))
@@ -59161,29 +59169,8 @@ EDITS: 1
       (system "ls /var/tmp/file*.snd | wc")
       (system "rm -f /var/tmp/file*.snd")))
 
-
-(mus-sound-prune)
-(mus-oss-set-buffers 4 12)
-
-(close-output-port optimizer-log)
-;(mus-sound-report-cache "sound-cache")
-
-(gc)(gc)
-(if (defined? 'mem-report) 
-    (mem-report))
-(if all-args 
-    (system "cp memlog memlog.full"))
-
-(if (and full-test
-	 (= tests 1)
-	 (file-exists? "oldopt.log"))
-    (system "diff -w optimizer.log oldopt.log"))
-
 (if (file-exists? (string-append home-dir "/.snd_prefs_guile"))
     (delete-file (string-append home-dir "/.snd_prefs_guile")))
-
-(snd-print #\#)
-(snd-print #\t)
 
 (for-each
  (lambda (f)
@@ -59245,8 +59232,7 @@ EDITS: 1
   (string-append sf-dir "nist-shortpack.wav.snd")
   (string-append sf-dir "memlog")
   (string-append sf-dir "bad_data_format.snd.snd")
-
-))
+  ))
 
 (if (file-exists? "../peaks/_home_bil_cl_storm.snd-peaks-0")
     (begin
@@ -59257,5 +59243,20 @@ EDITS: 1
       (system (string-append "rm ../peaks/_home_bil_cl_hiho*"))
       (system (string-append "rm ../peaks/_home_bil_cl_new*"))))
 
-(set! (mus-audio-playback-amp) 1.0)
+(mus-sound-prune)
+(let ((vfs (list-ref (dialog-widgets) 8))) ; view-files (possible list)
+  (if vfs
+      (if (symbol? (car vfs))
+	  (set! (view-files-files vfs) '())
+	  (for-each
+	   (lambda (d)
+	     (set! (view-files-files d) '()))
+	   vfs))))
+(gc)(gc)
+
+(if (defined? 'mem-report) 
+    (mem-report))
+(if all-args 
+    (system "cp memlog memlog.full"))
+
 (if with-exit (exit))

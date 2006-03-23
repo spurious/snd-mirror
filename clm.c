@@ -110,6 +110,9 @@ static void *clm_calloc(int num, int size, const char* what)
 {
   register void *mem;
   mem = CALLOC(num, size);
+#if DEBUGGING
+  set_printable(0);
+#endif
   if (mem == 0)
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate %s", what);
   return(mem);

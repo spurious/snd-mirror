@@ -1065,9 +1065,9 @@ static file_dialog_info *odat = NULL; /* open file */
 static file_dialog_info *mdat = NULL; /* mix file */
 static file_dialog_info *idat = NULL; /* insert file */
 
-#if (!HAVE_FAM)
 void alert_new_file(void) 
 {
+  if (ss->fam_ok) return;
   if (odat)
     {
       odat->fs->reread_directory = true;
@@ -1096,7 +1096,6 @@ void alert_new_file(void)
 	}
     }
 }
-#endif
 
 void reflect_just_sounds(void)
 {

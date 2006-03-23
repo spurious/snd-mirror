@@ -4462,9 +4462,8 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   if (sl_err == MUS_NO_ERROR)
     {
       io_err = close_temp_file(ofile, ofd, hdr->type, len * chans * datumb);
-#if (!HAVE_FAM)
-      alert_new_file();
-#endif
+      if (!(ss->fam_ok))
+	alert_new_file();
     }
   else 
     {
@@ -7079,10 +7078,9 @@ io_error_t save_edits_and_update_display(snd_info *sp)
       FREE(ofile); 
       ofile = NULL;
     }
-#if (!HAVE_FAM)
-  if (auto_update(ss)) 
-    for_each_sound(sound_not_current, NULL);
-#endif
+  if (!(ss->fam_ok))
+    if (auto_update(ss)) 
+      for_each_sound(sound_not_current, NULL);
   return(IO_NO_ERROR);
 }
 
@@ -8335,6 +8333,10 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   cp = get_cp(snd_n, chn_n, S_setB S_sample);
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_setB S_sample, 5);
+  if (pos > cp->edit_ctr)
+    XEN_ERROR(NO_SUCH_EDIT,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_setB S_sample),
+			 edpos));
   if (XEN_BOUND_P(samp_n))
     beg = beg_to_sample(samp_n, S_setB S_sample);
   else beg = CURSOR(cp);

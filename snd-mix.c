@@ -6851,6 +6851,9 @@ int make_track(int *mixes, int len)
 		      old_tracks_size = 4;
 		      old_tracks = (int *)CALLOC(old_tracks_size, sizeof(int));
 		      old_tracks_got_env = (bool *)CALLOC(old_tracks_size, sizeof(bool));
+#if DEBUGGING
+		      set_printable(0);
+#endif
 		      old_tracks_beg = (off_t *)CALLOC(old_tracks_size, sizeof(off_t));
 		      old_tracks_len = (off_t *)CALLOC(old_tracks_size, sizeof(off_t));
 		    }

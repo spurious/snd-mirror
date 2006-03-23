@@ -29,11 +29,14 @@ bool snd_exit_cleanly(bool force_exit)
 	     S_exit_hook);
 
 #if HAVE_FAM
-  cleanup_edit_header_watcher();
-  cleanup_new_file_watcher();
-  if (ss->fam_connection)
-    FAMClose(ss->fam_connection);
-  ss->fam_connection = NULL;
+  if (ss->fam_ok)
+    {
+      cleanup_edit_header_watcher();
+      cleanup_new_file_watcher();
+      if (ss->fam_connection)
+	FAMClose(ss->fam_connection);
+      ss->fam_connection = NULL;
+    }
 #endif
   cleanup_dac();
   for_each_normal_chan(remove_temp_files);
@@ -41,16 +44,17 @@ bool snd_exit_cleanly(bool force_exit)
   cleanup_recording();
   forget_temps();
 #if DEBUGGING
+  clear_listener_strings();
   mem_report();
 #endif
   return(true);
 }
 
-#if (!HAVE_FAM)
 void sound_not_current(snd_info *sp, void *ignore)
 {
   /* check for change in update status */
   bool needs_update;
+  if (ss->fam_ok) return;
   needs_update = (file_write_date(sp->filename) != sp->write_date);
   if (needs_update != sp->need_update)
     {
@@ -64,7 +68,6 @@ void sound_not_current(snd_info *sp, void *ignore)
       else stop_bomb(sp);
     }
 }
-#endif
 
 
 /* -------- ss watcher lists -------- */

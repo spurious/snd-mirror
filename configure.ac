@@ -223,7 +223,7 @@ LIBS=""
 
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h stdbool.h)
-AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h pthread.h lrdf.h)
+AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h pthread.h lrdf.h fam.h)
 
 AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
 				        #include <sys/param.h>
@@ -1098,7 +1098,6 @@ if test "$ac_snd_have_gui" != no ; then
        if $PKG_CONFIG --atleast-version 0.1.0 gamin; then
          AC_DEFINE_UNQUOTED(MUS_GAMIN_VERSION,"${gamin_version}")
          FAM_LIB="`$PKG_CONFIG gamin --libs`"
-         AC_DEFINE(HAVE_FAM_H)
          AC_DEFINE(HAVE_FAM)
          AC_DEFINE(HAVE_FAM_NO_EXISTS)
          OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gamin"
@@ -1106,56 +1105,15 @@ if test "$ac_snd_have_gui" != no ; then
 	AC_MSG_WARN([need gamin version 0.1.0 or later])
        fi
     else
+# TODO: check fam configure cases
       AC_MSG_RESULT(no)
-      AC_CHECK_HEADER(fam.h,
-        [AC_CHECK_LIB(fam, FAMOpen, 
-          # fam may exist and be loadable, but be unusable due to system daemon restrictions, 
-          #   so we need to build and run a test program
-	  [
-	    SAVELIBS=$LIBS
-  	    LIBS="$LIBS -lfam"
-	    AC_MSG_CHECKING([whether fam daemon is operational])
-            AC_RUN_IFELSE(
-              [AC_LANG_PROGRAM(
-                [
-                 #include <fam.h>
-                 #include <stdio.h>
-                 #include <stdlib.h>
-                ],
-                [ 
-                  int rc, fd;
-                  FAMConnection fc;
-                  FAMRequest *rp;
-            
-                  char *filename, *pwd;
-                  filename = calloc(512, sizeof(char));
-                  pwd = calloc(512, sizeof(char));
-                  getcwd(pwd, 512);
-                  strcpy(filename, pwd);
-                  strcat(filename, "/snd.c");
-            
-                  if ((FAMOpen(&fc)) < 0) exit(1);
-                  rp = (FAMRequest *)calloc(1, sizeof(FAMRequest));
-                  if (!rp) exit(1);
-                  rc = FAMMonitorFile(&fc, filename, rp, (void *)rp);
-                  if (rc < 0) exit(1);
-                  rc = FAMCancelMonitor(&fc, rp);
-                  if (rc < 0) exit(1);
-                  rc = FAMClose(&fc);
-                  if (rc < 0) exit(1);
-                  exit(0);
-                ])],
-          [
-	   AC_MSG_RESULT(yes)
-	   AC_DEFINE(HAVE_FAM_H)
-           AC_DEFINE(HAVE_FAM)
-           FAM_LIB="-lfam"
-           OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fam"
-          ],
-          [
-	   AC_MSG_RESULT(no)
-	  ]
-	  )])])
+      AC_MSG_CHECKING(for Fam)
+      AC_CHECK_LIB(fam, FAMOpen, 
+       [
+         AC_DEFINE(HAVE_FAM)
+         FAM_LIB="-lfam"
+         OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fam"
+       ])
     fi
   fi
 fi

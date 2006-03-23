@@ -482,9 +482,7 @@ void g_init_gxrec(void);
 /* -------- snd-gfile.c -------- */
 
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan);
-#if (!HAVE_FAM)
-  void alert_new_file(void);
-#endif
+void alert_new_file(void);
 widget_t make_open_file_dialog(bool read_only, bool managed);
 file_data *make_file_data_panel(GtkWidget *parent, const char *name, 
 				dialog_channels_t with_chan, 

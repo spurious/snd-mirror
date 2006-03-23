@@ -111,22 +111,26 @@ Float in_dB(Float min_dB, Float lin_dB, Float py)
   return((py <= lin_dB) ? min_dB : (20.0 * log10(py)));
 }
 
-char *copy_string(const char *str)
-{
 #if DEBUGGING
+char *copy_string_1(const char *str, const char *func, const char *file, int line)
+{
   char *newstr = NULL;
   if (str)
     {
-      newstr = (char *)MALLOC((strlen(str) + 1) * sizeof(char));
+      newstr = (char *)mem_malloc((strlen(str) + 1) * sizeof(char), func, file, line);
+      set_printable(PRINT_CHAR);
       strcpy(newstr, str);
     }
   return(newstr);
+}
 #else
+char *copy_string(const char *str)
+{
   if (str)
     return(strdup(str));
   return(NULL);
-#endif
 }
+#endif
 
 int snd_strlen(const char *str)
 {
@@ -465,6 +469,7 @@ char *fam_event_name(int code)
 static void fam_check(void)
 {
   FAMEvent fe; 
+  if (!(ss->fam_ok)) return;
   while (FAMPending(ss->fam_connection) > 0)
     {
       if (FAMNextEvent(ss->fam_connection, &fe) < 0) 
@@ -505,7 +510,6 @@ static void fam_check(void)
 
 
 #if USE_MOTIF
-/* TODO: make fam a runtime choice, not build time (if it's available at all) */
 static void fam_reader(XtPointer context, int *fd, XtInputId *id)
 {
   fam_check();
@@ -542,11 +546,13 @@ static FAMRequest *fam_monitor(void)
 	    {
 	      fam_already_warned = true;
 	      snd_error("can't start file alteration monitor: %d\n", FAMErrno);
+	      ss->fam_ok = false;
 	      return(NULL);
 	    }
 	  else
 	    {
 	      int fd;
+	      ss->fam_ok = true;
 	      fd = FAMCONNECTION_GETFD(ss->fam_connection);
 #if USE_MOTIF
 	      ss->sgx->fam_port = XtAppAddInput(MAIN_APP(ss),
@@ -731,18 +737,10 @@ static int mem_size = 0, mem_top = -1;
 static int *sizes = NULL, *locations = NULL;
 static void **pointers = NULL, **true_pointers = NULL;
 static char **functions = NULL, **files = NULL;
+static int *printable = NULL;
 static int *lines = NULL;
 static int mem_location = -1;
 static int mem_locations = 0;
-static char **stacks = NULL;
-
-static char *encloser = NULL;
-void set_encloser(char *name) 
-{
-  if (name) encloser = name;
-  else encloser = NULL;
-}
-
 static int *lines_hit = NULL;
 
 static int find_mem_location(const char *func, const char *file, int line)
@@ -763,21 +761,22 @@ static int find_mem_location(const char *func, const char *file, int line)
 	{
 	  functions = (char **)calloc(2048, sizeof(char *));
 	  files = (char **)calloc(2048, sizeof(char *));
+	  printable = (int *)calloc(2048, sizeof(int));
 	  lines = (int *)calloc(2048, sizeof(int));
-
 	  lines_hit = (int *)calloc(65536, sizeof(int));
-
 	  mem_locations = 2048;
 	}
       else
 	{
 	  functions = (char **)realloc(functions, (mem_locations + 1024) * sizeof(char *));
 	  files = (char **)realloc(files, (mem_locations + 1024) * sizeof(char *));
+	  printable = (int *)realloc(printable, (mem_locations + 1024) * sizeof(int));
 	  lines = (int *)realloc(lines, (mem_location + 1024) * sizeof(int));
 	  for (i = 0; i < 1024; i++) 
 	    {
 	      functions[i + mem_locations] = NULL;
 	      files[i + mem_locations] = NULL;
+	      printable[i + mem_locations] = 0;
 	      lines[i + mem_locations] = 0;
 	    }
 	  mem_locations += 1024;
@@ -806,7 +805,10 @@ static void describe_pointer(void *p)
     if (pointers[i] == p)
       {
 	loc = locations[i];
-	fprintf(stderr, "%s[%d]:%s, len:%d", files[loc], lines[loc], functions[loc], sizes[loc]);
+	fprintf(stderr, "%s[%d]:%s, len:%d%s%s", 
+		files[loc], lines[loc], functions[loc], sizes[loc],
+		(printable[loc] == PRINT_CHAR) ? ", " : "",
+		(printable[loc] == PRINT_CHAR) ? ((char *)p) : "");
 	return;
       }
   fprintf(stderr, "pointer lost??");
@@ -858,7 +860,13 @@ static void *ptr_history[PTR_HISTORY_SIZE];
 static int ptr_history_loc[PTR_HISTORY_SIZE];
 static int ptr_history_ptr = 0;
 static int last_forgotten = -1;
+static int last_loc = -1;
 #define FREED_POINTER 0x99999999
+
+void set_printable(int val)
+{
+  printable[last_loc] = val;
+}
 
 static void *forget_pointer(void *ptr, const char *func, const char *file, int line, bool refill)
 {
@@ -877,7 +885,6 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
 	check_padding(ptr, rtp, sizes[last_remembered], refill);
 	pointers[last_remembered] = 0;
 	true_pointers[last_remembered] = 0;
-	stacks[last_remembered] = NULL;
 	last_forgotten = last_remembered;
 	return(rtp);
       }
@@ -888,7 +895,6 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
 	check_padding(ptr, rtp, sizes[i], refill);
 	pointers[i] = 0;
 	true_pointers[i] = 0;
-	stacks[i] = NULL;
 	last_forgotten = i;
 	while ((mem_top >= 0) && (pointers[mem_top] == 0)) mem_top--;
 	if (mem_top < last_forgotten) last_forgotten = mem_top + 1;
@@ -911,7 +917,6 @@ static void remember_pointer(void *ptr, void *true_ptr, size_t len, const char *
 	  true_pointers = (void **)calloc(mem_size, sizeof(void *));
 	  sizes = (int *)calloc(mem_size, sizeof(int));
 	  locations = (int *)calloc(mem_size, sizeof(int));
-	  stacks = (char **)calloc(mem_size, sizeof(char *));
 	  loc = 0;
 	  goto GOT_ONE;
 	}
@@ -927,14 +932,12 @@ static void remember_pointer(void *ptr, void *true_ptr, size_t len, const char *
       true_pointers = (void **)realloc(true_pointers, mem_size * sizeof(void *));
       sizes = (int *)realloc(sizes, mem_size * sizeof(int));
       locations = (int *)realloc(locations, mem_size * sizeof(int));
-      stacks = (char **)realloc(stacks, mem_size * sizeof(char *));
       for (i = loc; i < mem_size; i++)
 	{
 	  pointers[i] = 0;
 	  true_pointers[i] = 0;
 	  sizes[i] = 0;
 	  locations[i] = 0;
-	  stacks[i] = NULL;
 	}
     }
   else
@@ -948,11 +951,11 @@ static void remember_pointer(void *ptr, void *true_ptr, size_t len, const char *
   set_padding(ptr, true_ptr, (int)len);
   sizes[loc] = (int)len;
   locations[loc] = find_mem_location(func, file, line);
-  if (encloser) stacks[loc] = encloser;
   ptr_history[ptr_history_ptr] = ptr;
   ptr_history_loc[ptr_history_ptr++] = loc;
   if (ptr_history_ptr >= PTR_HISTORY_SIZE) ptr_history_ptr = 0;
   if (mem_top < loc) mem_top = loc;
+  last_loc = locations[loc];
 }
 
 #define MAX_MALLOC (1 << 28)
@@ -977,6 +980,7 @@ void *mem_calloc(int len, int size, const char *func, const char *file, int line
   ptr = (char *)(true_ptr + MEM_PAD_SIZE);
   if (ptr == NULL) {fprintf(stderr,"calloc->null"); abort();}
   remember_pointer((void *)ptr, (void *)true_ptr, len * size, func, file, line);
+  if (size == 1) set_printable(PRINT_CHAR);
   return((void *)ptr);
 }
 
@@ -1079,7 +1083,6 @@ void io_fds_in_use(int *open, int *closed, int *top);
 void mem_report(void)
 {
   int loc, i, j, sum, ptr = 0;
-  bool have_stacks = false;
   int *sums, *ptrs;
   FILE *Fp;
   if (ss->search_tree)
@@ -1087,12 +1090,6 @@ void mem_report(void)
       free_ptree(ss->search_tree);
       ss->search_tree = NULL;
     }
-  for (i = 0; i < mem_size; i++)
-    if (stacks[i])
-      {
-	have_stacks = true;
-	break;
-      }
   sums = (int *)calloc(mem_location + 1, sizeof(int));
   ptrs = (int *)calloc(mem_location + 1, sizeof(int));
   for (loc = 0; loc <= mem_location; loc++)
@@ -1131,18 +1128,22 @@ void mem_report(void)
 	{
 	  fprintf(Fp, "%s[%d]:%s:  %d (%d)\n", files[ptr], lines[ptr], functions[ptr], sums[ptr], ptrs[ptr]);
 	  sums[ptr] = 0;
-	  if (have_stacks)
-	    for (j = 0; j < mem_size; j++)
-	      if ((stacks[j]) && (locations[j] == ptr) && (pointers[j]))
-		fprintf(Fp, "    %s    %p\n", stacks[j], pointers[j]);
-	  if ((strcmp("mus_format", functions[ptr]) == 0) ||
-	      (strcmp("copy_string", functions[ptr]) == 0))
+	  if (printable[ptr] > 0)
 	    {
-	      if (have_stacks)
-		fprintf(Fp, "                          ");
+	      fprintf(Fp, "        ");
 	      for (j = 0; j < mem_size; j++)
 		if ((locations[j] == ptr) && (pointers[j]))
-		  fprintf(Fp, "[%s] ", (char *)(pointers[j]));
+		  {
+		    switch (printable[ptr])
+		      {
+		      case PRINT_CHAR:
+			fprintf(Fp, "[%s] ", (char *)(pointers[j]));
+			break;
+		      case PRINT_VCT:
+			fprintf(Fp, "[%d] ", (pointers[j]) ? ((vct *)(pointers[j]))->length : 0);
+			break;
+		      }
+		  }
 	      fprintf(Fp, "\n");
 	    }
 	}
