@@ -15914,11 +15914,11 @@ static XEN gxm_XtVaCreatePopupShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XtVaCreatePopupShell", "List");
   args = XEN_TO_C_Args(arg4);
   arglen = XEN_LIST_LENGTH(arg4) / 2;
-  w = XtVaCreatePopupShell(XEN_TO_C_STRING(arg1), 
-			   XEN_TO_C_WidgetClass(arg2), 
-			   XEN_TO_C_Widget(arg3),
-			   args,
-			   arglen);
+  w = XtCreatePopupShell(XEN_TO_C_STRING(arg1), 
+			 XEN_TO_C_WidgetClass(arg2), 
+			 XEN_TO_C_Widget(arg3),
+			 args,
+			 arglen);
   if (args)
     {
       fixup_args(w, args, arglen);

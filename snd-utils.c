@@ -798,20 +798,25 @@ static int find_mem_location(const char *func, const char *file, int line)
   return(mem_location);
 }
 
-static void describe_pointer(void *p)
+static void fdescribe_pointer(FILE *fp, void *p)
 {
   int i, loc;
   for (i = mem_top; i >= 0; i--)
     if (pointers[i] == p)
       {
 	loc = locations[i];
-	fprintf(stderr, "%s[%d]:%s, len:%d%s%s", 
-		files[loc], lines[loc], functions[loc], sizes[loc],
+	fprintf(fp, "%s[%d]:%s, len:%d%s%s", 
+		files[loc], lines[loc], functions[loc], sizes[i],
 		(printable[loc] == PRINT_CHAR) ? ", " : "",
 		(printable[loc] == PRINT_CHAR) ? ((char *)p) : "");
 	return;
       }
-  fprintf(stderr, "pointer lost??");
+  fprintf(fp, "lost??");
+}
+
+static void describe_pointer(void *p)
+{
+  fdescribe_pointer(stderr, p);
 }
 
 static char pad[MEM_PAD_SIZE] = {'W','I','L','L','I','A','M',' ','G','A','R','D','N','E','R',' ','S','C','H','O','T','T','S','T','A','E','D','T',' ','D','M','A'};
@@ -1140,7 +1145,13 @@ void mem_report(void)
 			fprintf(Fp, "[%s] ", (char *)(pointers[j]));
 			break;
 		      case PRINT_VCT:
-			fprintf(Fp, "[%d] ", (pointers[j]) ? ((vct *)(pointers[j]))->length : 0);
+			fprintf(Fp, "[%d", ((vct *)(pointers[j]))->length);
+			if (((vct *)(pointers[j]))->data)
+			  {
+			    fprintf(Fp, " ");
+			    fdescribe_pointer(Fp, (void *)(((vct *)(pointers[j]))->data));
+			  }
+			fprintf(Fp, "] ");
 			break;
 		      }
 		  }

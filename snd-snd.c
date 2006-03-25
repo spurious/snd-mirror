@@ -4640,11 +4640,7 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
     {
       cp = sp->chans[chn];
       if ((cp->amp_envs) && (cp->amp_envs[0]))
-	{
-	  /* read amp_env data into pts (presumably smaller) */
-	  peak = g_env_info_to_vcts(cp->amp_envs[0], len);
-	  return(peak);
-	}
+	return(g_env_info_to_vcts(cp->amp_envs[0], len));
     }
   if (XEN_PROCEDURE_P(peak_func))
     {
@@ -4661,7 +4657,6 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	      ep = get_peak_env_info(peakname, &err);
 	      if (ep)
 		{
-		  /* read amp_env data into pts (presumably smaller) */
 		  peak = g_env_info_to_vcts(ep, len);
 		  ep = free_env_info(ep);
 		  if (peakname) FREE(peakname);
