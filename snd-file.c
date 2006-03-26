@@ -1929,86 +1929,94 @@ bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool se
 }
 
 
-
 /* -------- file dialog header/data choices -------- */
 
-#define NUM_NEXT_FORMATS 8
-#define NUM_IRCAM_FORMATS 5
-#define NUM_WAVE_FORMATS 8
-#define NUM_AIFC_FORMATS 13
-#define NUM_AIFF_FORMATS 4
-#define NUM_NIST_FORMATS 7
-#define NUM_RAW_FORMATS 18
-#define NUM_OGG_FORMATS 1
-#define NUM_FLAC_FORMATS 1
-#define NUM_SPEEX_FORMATS 1
-#define NUM_MPEG_FORMATS 1
-#define NUM_MIDI_FORMATS 1
+enum {H_NEXT, H_AIFC, H_RIFF, H_RAW, H_AIFF, H_IRCAM, H_NIST, H_OGG, H_FLAC, H_SPEEX, H_MPEG, H_MIDI, H_SIZE};
 
-#define NEXT_POSITION 0
-#define AIFC_POSITION 1
-#define RIFF_POSITION 2
-#define RAW_POSITION 3
-#define AIFF_POSITION 4
-#define IRCAM_POSITION 5
-#define NIST_POSITION 6
-static int OGG_POSITION = -1, FLAC_POSITION = -1, SPEEX_POSITION = -1, MPEG_POSITION = -1, MIDI_POSITION = -1;
+static int h_num_formats[H_SIZE] = {8 /* next */, 13 /* aifc */,  8 /* riff */, 18 /* raw */,
+				    4 /* aiff */, 5  /* ircam */, 7 /* nist */, 1  /* ogg */,
+				    1 /* flac */, 1  /* speex */, 1 /* mpeg */, 1  /* midi */};
+#define H_DFS_MAX 18
 
-static char **next_data_formats, **ircam_data_formats, **wave_data_formats, **aifc_data_formats, **aiff_data_formats, **nist_data_formats, **raw_data_formats;
+static int h_dfs[H_SIZE][H_DFS_MAX] = { /* next */  {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW, MUS_B24INT, MUS_BDOUBLE},
+					/* aifc */  {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BINT, MUS_ALAW, MUS_B24INT,
+						     MUS_BFLOAT, MUS_BDOUBLE, MUS_UBYTE, MUS_LSHORT, MUS_LINT, MUS_L24INT, MUS_UBSHORT},
+					/* riff */  {MUS_MULAW, MUS_ALAW, MUS_UBYTE, MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_L24INT},
+					/* raw  */  {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW,
+						     MUS_UBYTE, MUS_B24INT, MUS_BDOUBLE, MUS_LSHORT, MUS_LINT,
+						     MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT, MUS_L24INT, MUS_BINTN, MUS_LINTN},
+					/* aiff */  {MUS_BSHORT, MUS_BINT, MUS_BYTE, MUS_B24INT},
+					/* ircam */ {MUS_BSHORT, MUS_MULAW, MUS_BFLOAT, MUS_BINT, MUS_ALAW},
+					/* nist */  {MUS_BSHORT, MUS_LSHORT, MUS_BINT, MUS_LINT, MUS_BYTE, MUS_B24INT, MUS_L24INT},
+					/* ogg */   {MUS_LSHORT},
+					/* flac */  {MUS_LSHORT},
+					/* speex */ {MUS_LSHORT},
+					/* mpeg */  {MUS_LSHORT},
+					/* midi */  {MUS_LSHORT}};
+static char *h_df_names[H_SIZE][H_DFS_MAX];
 
-static int next_dfs[NUM_NEXT_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW, MUS_B24INT, MUS_BDOUBLE};
-static int ircam_dfs[NUM_IRCAM_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BFLOAT, MUS_BINT, MUS_ALAW};
-static int wave_dfs[NUM_WAVE_FORMATS] = {MUS_MULAW, MUS_ALAW, MUS_UBYTE, MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_L24INT};
-static int aifc_dfs[NUM_AIFC_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BINT, MUS_ALAW, MUS_B24INT,
-					 MUS_BFLOAT, MUS_BDOUBLE, MUS_UBYTE, MUS_LSHORT, MUS_LINT, MUS_L24INT, MUS_UBSHORT};
-static int aiff_dfs[NUM_AIFF_FORMATS] = {MUS_BSHORT, MUS_BINT, MUS_BYTE, MUS_B24INT};
-static int nist_dfs[NUM_NIST_FORMATS] = {MUS_BSHORT, MUS_LSHORT, MUS_BINT, MUS_LINT, MUS_BYTE, MUS_B24INT, MUS_L24INT};
-static int raw_dfs[NUM_RAW_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW,
-				       MUS_UBYTE, MUS_B24INT, MUS_BDOUBLE, MUS_LSHORT, MUS_LINT,
-				       MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT, MUS_L24INT, MUS_BINTN, MUS_LINTN};
-static int ogg_dfs[NUM_OGG_FORMATS] = {MUS_LSHORT};
-static int flac_dfs[NUM_FLAC_FORMATS] = {MUS_LSHORT};
-static int speex_dfs[NUM_SPEEX_FORMATS] = {MUS_LSHORT};
-static int mpeg_dfs[NUM_MPEG_FORMATS] = {MUS_LSHORT};
-static int midi_dfs[NUM_MIDI_FORMATS] = {MUS_LSHORT};
-static char **ogg_data_formats = NULL, **flac_data_formats = NULL, **speex_data_formats = NULL, **mpeg_data_formats = NULL, **midi_data_formats = NULL;
+static char *h_names[H_SIZE] = {"next ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist ", "ogg ", "flac ", "speex", "mpeg ", "midi "};
+static int h_pos_to_type[H_SIZE] = {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RAW, MUS_AIFF, MUS_IRCAM, MUS_NIST, -1, -1, -1, -1, -1};
+static int h_type_to_pos[MUS_NUM_HEADER_TYPES];
+static int h_type_to_h[MUS_NUM_HEADER_TYPES];
+static int h_default_format[H_SIZE] = {MUS_BSHORT, MUS_BSHORT, MUS_LSHORT, MUS_BSHORT, MUS_BSHORT, MUS_BSHORT, 
+				       MUS_BSHORT, MUS_LSHORT, MUS_LSHORT, MUS_LSHORT, MUS_LSHORT, MUS_LSHORT};
+static int h_default_format_to_pos[H_SIZE] = {0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0};
 
 void initialize_format_lists(void)
 {
-  int i;
-  next_data_formats = (char **)calloc(NUM_NEXT_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_NEXT_FORMATS; i++) next_data_formats[i] = (char *)mus_data_format_to_string(next_dfs[i]);
-  ircam_data_formats = (char **)calloc(NUM_IRCAM_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_IRCAM_FORMATS; i++) ircam_data_formats[i] = (char *)mus_data_format_to_string(ircam_dfs[i]);
-  wave_data_formats = (char **)calloc(NUM_WAVE_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_WAVE_FORMATS; i++) wave_data_formats[i] = (char *)mus_data_format_to_string(wave_dfs[i]);
-  aiff_data_formats = (char **)calloc(NUM_AIFF_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_AIFF_FORMATS; i++) aiff_data_formats[i] = (char *)mus_data_format_to_string(aiff_dfs[i]);
-  aifc_data_formats = (char **)calloc(NUM_AIFC_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_AIFC_FORMATS; i++) aifc_data_formats[i] = (char *)mus_data_format_to_string(aifc_dfs[i]);
-  nist_data_formats = (char **)calloc(NUM_NIST_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_NIST_FORMATS; i++) nist_data_formats[i] = (char *)mus_data_format_to_string(nist_dfs[i]);
-  raw_data_formats = (char **)calloc(NUM_RAW_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_RAW_FORMATS; i++) raw_data_formats[i] = (char *)mus_data_format_to_string(raw_dfs[i]);
+  int i, h;
+
+  for (h = 0; h < H_SIZE; h++)
+    for (i = 0; i < h_num_formats[h]; i++)
+      h_df_names[h][i] = (char *)mus_data_format_to_string(h_dfs[h][i]);
+  
+  for (i = 0; i < MUS_NUM_HEADER_TYPES; i++)
+    {
+      h_type_to_pos[i] = -1;
+      h_type_to_h[i] = -1;
+    }
+  h_type_to_pos[MUS_NEXT] = 0;
+  h_type_to_pos[MUS_AIFC] = 1;
+  h_type_to_pos[MUS_RIFF] = 2;
+  h_type_to_pos[MUS_RAW] = 3;
+  h_type_to_pos[MUS_AIFF] = 4;
+  h_type_to_pos[MUS_IRCAM] = 5;
+  h_type_to_pos[MUS_NIST] = 6;
+
+  h_type_to_h[MUS_NEXT] = H_NEXT;
+  h_type_to_h[MUS_AIFC] = H_AIFC;
+  h_type_to_h[MUS_RIFF] = H_RIFF;
+  h_type_to_h[MUS_RAW] = H_RAW;
+  h_type_to_h[MUS_AIFF] = H_AIFF;
+  h_type_to_h[MUS_IRCAM] = H_IRCAM;
+  h_type_to_h[MUS_NIST] = H_NIST;
+  h_type_to_h[MUS_OGG] = H_OGG;
+  h_type_to_h[MUS_FLAC] = H_FLAC;
+  h_type_to_h[MUS_SPEEX] = H_SPEEX;
+  h_type_to_h[MUS_MIDI] = H_MIDI;
+  h_type_to_h[MUS_MPEG] = H_MPEG;
+  
+  i = 7;
 #if HAVE_OGG
-  ogg_data_formats = (char **)calloc(NUM_OGG_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_OGG_FORMATS; i++) ogg_data_formats[i] = (char *)mus_data_format_to_string(ogg_dfs[i]);
+  h_type_to_pos[MUS_OGG] = i;
+  h_pos_to_type[i++] = MUS_OGG;
 #endif
 #if HAVE_FLAC
-  flac_data_formats = (char **)calloc(NUM_FLAC_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_FLAC_FORMATS; i++) flac_data_formats[i] = (char *)mus_data_format_to_string(flac_dfs[i]);
+  h_type_to_pos[MUS_FLAC] = i;
+  h_pos_to_type[i++] = MUS_FLAC;
 #endif
 #if HAVE_SPEEX
-  speex_data_formats = (char **)calloc(NUM_SPEEX_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_SPEEX_FORMATS; i++) speex_data_formats[i] = (char *)mus_data_format_to_string(speex_dfs[i]);
+  h_type_to_pos[MUS_SPEEX] = i;
+  h_pos_to_type[i++] = MUS_SPEEX;
 #endif
 #if HAVE_MPEG
-  mpeg_data_formats = (char **)calloc(NUM_MPEG_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_MPEG_FORMATS; i++) mpeg_data_formats[i] = (char *)mus_data_format_to_string(mpeg_dfs[i]);
+  h_type_to_pos[MUS_MPEG] = i;
+  h_pos_to_type[i++] = MUS_MPEG;
 #endif
-#if HAVE_TIMIDITY
-  midi_data_formats = (char **)calloc(NUM_MIDI_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_MIDI_FORMATS; i++) midi_data_formats[i] = (char *)mus_data_format_to_string(midi_dfs[i]);
+#if HAVE_MIDI
+  h_type_to_pos[MUS_MIDI] = i;
+  h_pos_to_type[i++] = MUS_MIDI;
 #endif
 }
 
@@ -2016,14 +2024,13 @@ void initialize_format_lists(void)
 #define NUM_POSSIBLE_HEADERS 12
 static char **writable_headers = NULL;
 static char **readable_headers = NULL;
-static char *builtin_headers[NUM_BUILTIN_HEADERS] = {"sun  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
 static int num_writable_headers = NUM_BUILTIN_HEADERS;
 static int num_readable_headers = NUM_BUILTIN_HEADERS;
 
 char **short_builtin_headers(int *len)
 {
   (*len) = NUM_BUILTIN_HEADERS;
-  return(builtin_headers);
+  return(h_names);
 }
 
 char **short_writable_headers(int *len)
@@ -2034,29 +2041,26 @@ char **short_writable_headers(int *len)
     {
       writable_headers = (char **)calloc(NUM_POSSIBLE_HEADERS, sizeof(char *));
       for (i = 0; i < NUM_BUILTIN_HEADERS; i++)
-	writable_headers[i] = builtin_headers[i];
+	writable_headers[i] = h_names[i];
 #if HAVE_OGG
       /* write temp as RIFF 16-bit lshort, then
 	 oggenc tempfile.wav -o outoggfile.ogg
 	 -q 6 sets to higher quality -- add as arg somehow?
 	 so format here is just the ogg output format: nothing settable
       */
-      OGG_POSITION = i;
-      writable_headers[i++] = "ogg";
+      writable_headers[i++] = h_names[H_OGG];
 #endif
 #if HAVE_FLAC
       /* flac tempfile.wav -o output.flac
 	 no choices
        */
-      FLAC_POSITION = i;
-      writable_headers[i++] = "flac";
+      writable_headers[i++] = h_names[H_FLAC];
 #endif
 #if HAVE_SPEEX
       /* speexenc tempfile.wav output.spx
 	 no choices
       */
-      SPEEX_POSITION = i;
-      writable_headers[i++] = "speex";
+      writable_headers[i++] = h_names[H_SPEEX];
 #endif
       num_writable_headers = i;
     }
@@ -2071,7 +2075,7 @@ char **short_readable_headers(int *len)
     {
       readable_headers = (char **)calloc(NUM_POSSIBLE_HEADERS, sizeof(char *));
       for (i = 0; i < NUM_BUILTIN_HEADERS; i++)
-	readable_headers[i] = builtin_headers[i];
+	readable_headers[i] = h_names[i];
 #if HAVE_OGG
       /* oggdec to tempfile:
 	 oggdec infile.ogg -b 16 -o translatedfile.wav
@@ -2079,23 +2083,20 @@ char **short_readable_headers(int *len)
 	 
 	 so formats (for output temp) here are not relevant -- no one will want 1 byte
       */
-      OGG_POSITION = i;
-      readable_headers[i++] = "ogg";
+      readable_headers[i++] = h_names[H_OGG];
 #endif
 #if HAVE_FLAC
       /* flac -d infile.flac -o output.wav
        *  the -d -> decode 
        *  no choices
        */
-      FLAC_POSITION = i;
-      readable_headers[i++] = "flac";
+      readable_headers[i++] = h_names[H_FLAC];
 #endif
 #if HAVE_SPEEX
       /* speexdec infile.spx tempfile.wav
 	 no other choices
        */
-      SPEEX_POSITION = i;
-      readable_headers[i++] = "speex";
+      readable_headers[i++] = h_names[H_SPEEX];
 #endif
 #if HAVE_MPEG
       /* mpg321 -q -w output.wav input.mpg
@@ -2103,16 +2104,14 @@ char **short_readable_headers(int *len)
 	   no choices
 	   mpg123 is probably the same
        */
-      MPEG_POSITION = i;
-      readable_headers[i++] = "mpeg";
+      readable_headers[i++] = h_names[H_MPEG];
 #endif
 #if HAVE_TIMIDITY
       /* timidity input.mid -Ou -o output.snd
 	 midi->next/sun
 	 there are other choices...
       */
-      MIDI_POSITION = i;
-      readable_headers[i++] = "midi";
+      readable_headers[i++] = h_names[H_MIDI];
 #endif
       num_readable_headers = i;
     }
@@ -2122,260 +2121,50 @@ char **short_readable_headers(int *len)
 
 int header_type_from_position(int position)
 {
-  switch (position)
-    {
-    case NEXT_POSITION:  return(MUS_NEXT);  break;
-    case AIFC_POSITION:  return(MUS_AIFC);  break;
-    case RIFF_POSITION:  return(MUS_RIFF);  break;
-    case IRCAM_POSITION: return(MUS_IRCAM); break;
-    case RAW_POSITION:   return(MUS_RAW);   break;
-    case AIFF_POSITION:  return(MUS_AIFF);  break;
-    case NIST_POSITION:  return(MUS_NIST);  break;
-    }
-  if (position == OGG_POSITION) return(MUS_OGG);
-  if (position == FLAC_POSITION) return(MUS_FLAC);
-  if (position == SPEEX_POSITION) return(MUS_SPEEX);
-  if (position == MPEG_POSITION) return(MUS_MPEG);
-  if (position == MIDI_POSITION) return(MUS_MIDI);
-  return(MUS_RAW);
+  return(h_pos_to_type[position]);
 }
 
 int data_format_from_position(int header, int position)
 {
-  switch (header)
-    {
-    case MUS_NEXT:  return(next_dfs[position]);  break;
-    case MUS_AIFC:  return(aifc_dfs[position]);  break;
-    case MUS_RIFF:  return(wave_dfs[position]);  break;
-    case MUS_IRCAM: return(ircam_dfs[position]); break;
-    case MUS_RAW:   return(raw_dfs[position]);   break;
-    case MUS_AIFF:  return(aiff_dfs[position]);  break;
-    case MUS_NIST:  return(nist_dfs[position]);  break;
-    }
-  if (header == MUS_OGG) return(OGG_POSITION);
-  if (header == MUS_FLAC) return(FLAC_POSITION);
-  if (header == MUS_SPEEX) return(SPEEX_POSITION);
-  if (header == MUS_MPEG) return(MPEG_POSITION);
-  if (header == MUS_MIDI) return(MIDI_POSITION);
-  return(position);
+  return(h_dfs[h_type_to_pos[header]][position]);
+}
+
+static int h_to_format_pos(int h, int frm)
+{
+  int i;
+  for (i = 0; i < h_num_formats[h]; i++)
+    if (h_dfs[h][i] == frm)
+      return(i);
+  return(h_default_format_to_pos[h]);
 }
 
 char **set_header_and_data_positions(file_data *fdat, int type, int format)
 {
-  char **fl = NULL;
-  int i;
-  switch (type)
-    {
-    case MUS_AIFC: 
-      fdat->formats = NUM_AIFC_FORMATS; 
-      fl = aifc_data_formats; 
-      fdat->header_pos = AIFC_POSITION; 
-      fdat->format_pos = 0;
-      for (i = 0; i < NUM_AIFC_FORMATS; i++) if (format == aifc_dfs[i]) {fdat->format_pos = i; break;}
-      break;
-    case MUS_RIFF: 
-      fdat->formats = NUM_WAVE_FORMATS; 
-      fl = wave_data_formats; 
-      fdat->header_pos = RIFF_POSITION;
-      fdat->format_pos = 3;
-      for (i = 0; i < NUM_WAVE_FORMATS; i++) if (format == wave_dfs[i]) {fdat->format_pos = i; break;}
-      break;
-    case MUS_IRCAM: 
-      fdat->formats =NUM_IRCAM_FORMATS; 
-      fl = ircam_data_formats; 
-      fdat->header_pos = IRCAM_POSITION; 
-      fdat->format_pos = 0;
-      for (i = 0; i < NUM_IRCAM_FORMATS; i++) if (format == ircam_dfs[i]) {fdat->format_pos = i; break;}
-      break;
-    case MUS_NEXT:
-      fdat->formats = NUM_NEXT_FORMATS; 
-      fl = next_data_formats; 
-      fdat->header_pos = NEXT_POSITION; 
-      fdat->format_pos = 0;
-      for (i = 0; i < NUM_NEXT_FORMATS; i++) if (format == next_dfs[i]) {fdat->format_pos = i; break;}
-      break;
-    case MUS_NIST:
-      fdat->formats = NUM_NIST_FORMATS; 
-      fl = nist_data_formats; 
-      fdat->header_pos = NIST_POSITION; 
-      fdat->format_pos = 0;
-      for (i = 0; i < NUM_NIST_FORMATS; i++) if (format == nist_dfs[i]) {fdat->format_pos = i; break;}
-      break;
-    case MUS_RAW:
-      fdat->formats = NUM_RAW_FORMATS; 
-      fl = raw_data_formats; 
-      fdat->header_pos = RAW_POSITION; 
-      fdat->format_pos = 0;
-      break;
-    case MUS_AIFF: 
-      fdat->formats = NUM_AIFF_FORMATS; 
-      fl = aiff_data_formats; 
-      fdat->header_pos = AIFF_POSITION; 
-      fdat->format_pos = 0;
-      for (i = 0; i < NUM_AIFF_FORMATS; i++) if (format == aiff_dfs[i]) {fdat->format_pos = i; break;}
-      break;
-    case MUS_OGG:
-      fdat->formats = NUM_OGG_FORMATS;
-      fl = ogg_data_formats; 
-      fdat->header_pos = OGG_POSITION; 
-      fdat->format_pos = 0;
-      for (i = 0; i < NUM_OGG_FORMATS; i++) if (format == ogg_dfs[i]) {fdat->format_pos = i; break;}
-      break;
-    case MUS_FLAC:
-      fdat->formats = NUM_FLAC_FORMATS;
-      fl = flac_data_formats; 
-      fdat->header_pos = FLAC_POSITION; 
-      fdat->format_pos = 0;
-      for (i = 0; i < NUM_FLAC_FORMATS; i++) if (format == flac_dfs[i]) {fdat->format_pos = i; break;}
-      break;
-    case MUS_SPEEX:
-      fdat->formats = NUM_SPEEX_FORMATS;
-      fl = speex_data_formats; 
-      fdat->header_pos = SPEEX_POSITION; 
-      fdat->format_pos = 0;
-      for (i = 0; i < NUM_SPEEX_FORMATS; i++) if (format == speex_dfs[i]) {fdat->format_pos = i; break;}
-      break;
-    case MUS_MPEG:
-      fdat->formats = NUM_MPEG_FORMATS;
-      fl = mpeg_data_formats; 
-      fdat->header_pos = MPEG_POSITION; 
-      fdat->format_pos = 0;
-      for (i = 0; i < NUM_MPEG_FORMATS; i++) if (format == mpeg_dfs[i]) {fdat->format_pos = i; break;}
-      break;
-    case MUS_MIDI:
-      fdat->formats = NUM_MIDI_FORMATS;
-      fl = midi_data_formats; 
-      fdat->header_pos = MIDI_POSITION; 
-      fdat->format_pos = 0;
-      for (i = 0; i < NUM_MIDI_FORMATS; i++) if (format == midi_dfs[i]) {fdat->format_pos = i; break;}
-      break;
-    }
-  return(fl);
+  int h;
+  h = h_type_to_h[type];
+  fdat->formats = h_num_formats[h];
+  fdat->header_pos = h_type_to_pos[type];
+  fdat->format_pos = h_to_format_pos(h, format);
+  return(h_df_names[h]);
 }
 
 void set_header_type_and_format_from_position(file_data *fdat, int pos)
 {
+  int h;
+  h = h_type_to_h[h_pos_to_type[pos]];
   fdat->header_pos = pos;
-  switch (pos)
-    {
-    case NEXT_POSITION:  fdat->current_type = MUS_NEXT;  fdat->current_format = MUS_BSHORT; break;
-    case NIST_POSITION:  fdat->current_type = MUS_NIST;  fdat->current_format = MUS_BSHORT; break;
-    case AIFC_POSITION:  fdat->current_type = MUS_AIFC;  fdat->current_format = MUS_BSHORT; break;
-    case RIFF_POSITION:  fdat->current_type = MUS_RIFF;  fdat->current_format = MUS_LSHORT; break;
-    case IRCAM_POSITION: fdat->current_type = MUS_IRCAM; fdat->current_format = MUS_BSHORT; break;
-    case RAW_POSITION:   fdat->current_type = MUS_RAW;   fdat->current_format = MUS_BSHORT; break;
-    case AIFF_POSITION:  fdat->current_type = MUS_AIFF;  fdat->current_format = MUS_BSHORT; break;
-    }
-  if (pos == OGG_POSITION) 
-    {
-      fdat->current_type = MUS_OGG;  fdat->current_format = MUS_LSHORT;
-    }
-  if (pos == FLAC_POSITION)
-    {
-      fdat->current_type = MUS_FLAC;  fdat->current_format = MUS_LSHORT;
-    }
-  if (pos == SPEEX_POSITION)
-    {
-      fdat->current_type = MUS_SPEEX;  fdat->current_format = MUS_LSHORT;
-    }
-  if (pos == MPEG_POSITION)
-    {
-      fdat->current_type = MUS_MPEG;  fdat->current_format = MUS_LSHORT;
-    }
-  if (pos == MIDI_POSITION)
-    {
-      fdat->current_type = MUS_MIDI;  fdat->current_format = MUS_LSHORT;
-    }
+  fdat->current_type = h_pos_to_type[pos];
+  fdat->current_format = h_default_format[h];
 }
 
 char **set_header_positions_from_type(file_data *fdat, int header_type, int data_format)
 {
-  char **formats = NULL;
-  int *dfs = NULL;
-  int i;
-  switch (header_type)
-    {
-    case MUS_NEXT: 
-      fdat->formats = NUM_NEXT_FORMATS; 
-      formats = next_data_formats; 
-      dfs = next_dfs; 
-      fdat->header_pos = NEXT_POSITION; 
-      break;
-    case MUS_NIST: 
-      fdat->formats = NUM_NIST_FORMATS; 
-      formats = nist_data_formats; 
-      dfs = nist_dfs; 
-      fdat->header_pos = NIST_POSITION; 
-      break;
-    case MUS_AIFC: 
-      fdat->formats = NUM_AIFC_FORMATS; 
-      formats = aifc_data_formats; 
-      fdat->header_pos = AIFC_POSITION; 
-      dfs = aifc_dfs; 
-      break;
-    case MUS_RIFF: 
-      fdat->formats = NUM_WAVE_FORMATS; 
-      formats = wave_data_formats; 
-      fdat->header_pos = RIFF_POSITION; 
-      dfs = wave_dfs; 
-      break;
-    case MUS_IRCAM: 
-      fdat->formats = NUM_IRCAM_FORMATS; 
-      formats = ircam_data_formats; 
-      fdat->header_pos = IRCAM_POSITION; 
-      dfs = ircam_dfs; 
-      break;
-    case MUS_RAW: 
-      fdat->formats = NUM_RAW_FORMATS; 
-      formats = raw_data_formats; 
-      fdat->header_pos = RAW_POSITION; 
-      dfs = raw_dfs; 
-      break;
-    case MUS_AIFF: 
-      fdat->formats = NUM_AIFF_FORMATS; 
-      formats = aiff_data_formats; 
-      fdat->header_pos = AIFF_POSITION; 
-      dfs = aiff_dfs; 
-      break;
-    case MUS_OGG:
-      fdat->formats = NUM_OGG_FORMATS; 
-      formats = ogg_data_formats; 
-      fdat->header_pos = OGG_POSITION; 
-      dfs = ogg_dfs; 
-      break;
-    case MUS_FLAC:
-      fdat->formats = NUM_FLAC_FORMATS; 
-      formats = flac_data_formats; 
-      fdat->header_pos = FLAC_POSITION; 
-      dfs = flac_dfs; 
-      break;
-    case MUS_SPEEX:
-      fdat->formats = NUM_SPEEX_FORMATS; 
-      formats = speex_data_formats; 
-      fdat->header_pos = SPEEX_POSITION; 
-      dfs = speex_dfs; 
-      break;
-    case MUS_MPEG:
-      fdat->formats = NUM_MPEG_FORMATS; 
-      formats = mpeg_data_formats; 
-      fdat->header_pos = MPEG_POSITION; 
-      dfs = mpeg_dfs; 
-      break;
-    case MUS_MIDI:
-      fdat->formats = NUM_MIDI_FORMATS; 
-      formats = midi_data_formats; 
-      fdat->header_pos = MIDI_POSITION; 
-      dfs = midi_dfs; 
-      break;
-    }
-  fdat->format_pos = 0;
-  for (i = 0; i < fdat->formats; i++) 
-    if (data_format == dfs[i]) 
-      {
-	fdat->format_pos = i; 
-	break;
-      }
-  return(formats);
+  int h;
+  h = h_type_to_h[header_type];
+  fdat->formats = h_num_formats[h];
+  fdat->header_pos = h_type_to_pos[header_type];
+  fdat->format_pos = h_to_format_pos(h, data_format);
+  return(h_df_names[h]);
 }
 
 bool encoded_header_p(int header_type)

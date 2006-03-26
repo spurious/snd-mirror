@@ -168,6 +168,9 @@
     #define PROC_FALSE "#f"
   #endif
   #define NOT_A_GC_LOC -1
+  #if DEBUGGING
+    void set_printable(int val);
+  #endif
 #endif
 
 #ifndef CALLOC

@@ -3,6 +3,12 @@
 
 ;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c, xg-ruby.c, xg-x11.h
 
+
+;;; TODO: gtk_file_chooser_dialog_new with 0 gets xg.c: 
+;;;    In function 'gxg_gtk_file_chooser_dialog_new':
+;;;    xg.c:20294: warning: not enough variable arguments to fit a sentinel
+
+
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
 (use-modules (ice-9 optargs))

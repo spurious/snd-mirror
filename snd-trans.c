@@ -1471,21 +1471,11 @@ int snd_translate(const char *oldname, const char *newname, int type)
     case MUS_MATLAB:
       /* assume all vectors are channels */
       break;
-#if HAVE_OGG
     case MUS_OGG:
-#endif
-#if HAVE_SPEEX
     case MUS_SPEEX:
-#endif
-#if HAVE_FLAC
     case MUS_FLAC:
-#endif
-#if HAVE_TIMIDITY
     case MUS_MIDI:
-#endif
-#if HAVE_MPEG
     case MUS_MPEG:
-#endif
     default:
       if (snd_decode(type, oldname, newname) == 0)
 	err = MUS_NO_ERROR;

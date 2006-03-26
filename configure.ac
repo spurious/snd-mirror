@@ -211,6 +211,8 @@ AC_ARG_WITH(snd-as-pd-external,
 
 	fi])
 
+# TODO: some error checking: GUILE_CONFIG_path messed up, -with-* but no headers
+
 
 #--------------------------------------------------------------------------------
 # standard libraries, header files, functions, OSS special cases
