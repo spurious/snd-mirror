@@ -89,6 +89,19 @@
 (define ladspa-effects-menu (add-to-main-menu "Ladspa"))
 
 
+(define num-running-ladspas 0)
+(define (ladspa-add-num-instance!)
+  (if (and (defined? 'c-use-rt-player?)
+	   (c-use-rt-player?)
+	   (-> (c-p) isplaying))
+      (begin
+	(-> (c-p) pause)
+	(set! num-running-ladspas (1+ num-running-ladspas))
+	(-> (c-p) continue))
+      (set! num-running-ladspas (1+ num-running-ladspas))))
+(define (ladspa-remove-num-instance!)
+  (set! num-running-ladspas (max 0 (1- num-running-ladspas))))
+
 (def-class (<ladspa> libname plugname)
 
   (def-var descriptor (ladspa-descriptor libname plugname))
@@ -412,6 +425,7 @@
 	(if (not (open (minimum-num-handles num_channels min_num_audios)))
 	    #f
 	    (begin
+	      (ladspa-add-num-instance!)
 	      (add-hook! dac-hook apply-soundobject)
 	      #t)))
       (if (= 0 min_num_audios)
@@ -423,11 +437,13 @@
 	      (if (not handles)
 		  (init-dac-hook-stuff)
 		  (begin
+		    (ladspa-add-num-instance!)
 		    (add-hook! dac-hook apply-soundobject)
 		    #t))))))
 
 
   (def-method (remove-dac-hook!)
+    (ladspa-remove-num-instance!)
     (remove-hook! dac-hook apply-soundobject)
     (if (not (string=? "vst" libname))    
 	(this->close)))

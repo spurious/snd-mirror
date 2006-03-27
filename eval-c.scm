@@ -1614,17 +1614,22 @@ int fgetc (FILE
 			(list (car eval-c-cached-code)
 			      (cadr eval-c-cached-code)
 			      (caddr eval-c-cached-code)
-			      (cadddr eval-c-cached-code)))
+			      (cadddr eval-c-cached-code)
+			      (cadr (cdddr eval-c-cached-code))
+			      (caddr (cdddr eval-c-cached-code))
+			      ))
 		      (lambda x
 			(set! itsokey #f)
 			(c-display x)
 			(c-display "Suspicious cached file detected:" filename "(you should probably delete this one)")))
 	       (if itsokey
-		   (if (not (= (car eval-c-cached-code) eval-c-generation))
+		   (if (or (not (string=? (cadr eval-c-cached-code) (snd-version)))
+			   (not (string=? (caddr eval-c-cached-code) (version)))
+			   (not (= (car eval-c-cached-code) eval-c-generation)))
 		       (begin
-			 (c-display "Deleting obsolete cached code " (cadr eval-c-cached-code) "and" filename ".")
-			 (system (<-> "rm -f " (cadr eval-c-cached-code) " " filename)))
-		       (set! eval-c-cache (cons (cdr eval-c-cached-code)
+			 (c-display "Deleting obsolete cached code " (cadddr eval-c-cached-code) "and" filename ".")
+			 (system (<-> "rm -f " (cadddr eval-c-cached-code) " " filename)))
+		       (set! eval-c-cache (cons (cdddr eval-c-cached-code)
 						eval-c-cache))))))
 	 (set! entry (readdir dir)))
   (closedir dir))
@@ -1658,7 +1663,7 @@ int fgetc (FILE
 	(set! eval-c-cache (cons `(,newobjectfile ,compile-options ,terms)
 				 eval-c-cache))
 	(system (<-> "mv " object-file " " newobjectfile))
-	(pretty-print `(set! eval-c-cached-code '(,eval-c-generation ,newobjectfile ,compile-options ,terms)) mainfile)    
+	(pretty-print `(set! eval-c-cached-code '(,eval-c-generation ,(snd-version) ,(version) ,newobjectfile ,compile-options ,terms)) mainfile)    
 	(close mainfile))))
 
 #!
@@ -1808,13 +1813,13 @@ int fgetc (FILE
 
 
 
-
+#!
 (define (eval-c-non-macro compile-options . terms)
   (apply eval-c-eval
 	 (append (list #:compile-options compile-options)
 		 (eval-c-parse-file terms))))
-	       
-#!
+!#
+
 (define (eval-c-non-macro compile-options cache-key . terms)
   (if cache-key
       (if (not (eval-c-check-cached compile-options cache-key))
@@ -1826,7 +1831,6 @@ int fgetc (FILE
 	     (append (list #:compile-options compile-options)
 		     (eval-c-parse-file terms)))))
 	       
-!#
 
 (define-macro (eval-c compile-options . terms)
   `(if (not (eval-c-check-cached ,compile-options ',terms))

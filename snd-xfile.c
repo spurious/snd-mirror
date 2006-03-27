@@ -18,6 +18,9 @@
  *          -> src is interrupted apparently and file open completes
  *       or similarly, stops at "ok", starts src, clicks ok?
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
+ *
+ * TODO: in save-as cases, if use chooses a data format, then a type, try to maintain the format
+ * TODO: if format/type change in data panel, make sure selected choice is visible
  */
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
@@ -1790,7 +1793,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
       res = XmListGetSelectedPos(fdat->header_list, &ns, &n);
       if (res)
 	{
-	  (*type) = header_type_from_position(ns[0] - 1);
+	  (*type) = position_to_type(ns[0] - 1);
 	  fdat->current_type = (*type);
 	  free(ns); 
 	  ns = NULL;
@@ -1802,7 +1805,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
       res = XmListGetSelectedPos(fdat->format_list, &ns, &n);
       if (res)
 	{
-	  (*format) = data_format_from_position(fdat->current_type, ns[0] - 1);
+	  (*format) = position_to_format(fdat->current_type, ns[0] - 1);
 	  fdat->current_format = (*format);
 	  free(ns); 
 	  ns = NULL;
@@ -1840,7 +1843,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat,
     fdat->current_type = type;
   else fdat->current_type = MUS_RAW;
   fdat->current_format = format;
-  fl = set_header_and_data_positions(fdat, fdat->current_type, fdat->current_format);
+  fl = type_and_format_to_position(fdat, fdat->current_type, fdat->current_format);
   if (fl == NULL) return;
   
   if ((type != IGNORE_HEADER_TYPE) &&
@@ -2003,9 +2006,9 @@ static void file_data_type_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   XtVaGetValues(w, XmNuserData, &fd, NULL);
   pos = cbs->item_position - 1;
-  if (header_type_from_position(pos) != fd->current_type)
+  if (position_to_type(pos) != fd->current_type)
     {
-      set_header_type_and_format_from_position(fd, pos);
+      position_to_type_and_format(fd, pos);
       set_file_dialog_sound_attributes(fd,
 				       fd->current_type,
 				       fd->current_format,
@@ -2020,7 +2023,7 @@ static void file_data_format_callback(Widget w, XtPointer context, XtPointer inf
   file_data *fd;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   XtVaGetValues(w, XmNuserData, &fd, NULL);
-  fd->current_format = data_format_from_position(fd->current_type, cbs->item_position - 1);
+  fd->current_format = position_to_format(fd->current_type, cbs->item_position - 1);
 }
 
 
@@ -2108,7 +2111,7 @@ file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, i
   fdat = (file_data *)CALLOC(1, sizeof(file_data));
   fdat->current_type = header_type;
   fdat->current_format = data_format;
-  formats = set_header_positions_from_type(fdat, header_type, data_format);
+  formats = type_and_format_to_position(fdat, header_type, data_format);
   nformats = fdat->formats;
 
   /* pick up all args from caller */

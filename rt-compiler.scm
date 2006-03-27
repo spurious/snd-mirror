@@ -227,13 +227,16 @@ and run simple lisp[4] functions.
   (if rt-very-verbose
       (apply c-display rest)))
 
-
-(define rt-gensym
-  (let ((num 0))
-    (lambda ()
-      (set! num (1+ num))
-      (string->symbol (<-> "rt_gen" (number->string num))))))
-
+(define rt-gensym-num 0)
+(define (rt-gensym-reset)
+  (set! rt-gensym-num 0))
+(define (rt-gensym)
+    (set! rt-gensym-num (1+ rt-gensym-num))
+    (string->symbol (<-> "rt_gen" (number->string rt-gensym-num))))
+(define rt-gensym-num2 0)
+(define (rt-gensym2)
+  (set! rt-gensym-num2 (1+ rt-gensym-num2))
+  (string->symbol (<-> "rt_genb" (number->string rt-gensym-num2))))
 
 ;; An immediate is something that is not a function-call.
 
@@ -1192,14 +1195,14 @@ and run simple lisp[4] functions.
 				 values-letlist
 				 letlist)
 			 `(rt-begin ,@(map (lambda (l)
-						       `(rt-set*! ,(car l) ,(cadr l)))
-						     (remove (lambda (l)
-							       (or (and (list? (cadr l))
-									(or (eq? 'lambda (car (cadr l)))
-									    (eq? 'rt-lambda-decl (car (cadr l)))))
-								   (rt-symbol-starts-with? '_rt_breakcontsig (car l))))
-							     lets))
-					      ,@term))))))
+					     `(rt-set*! ,(car l) ,(cadr l)))
+					   (remove (lambda (l)
+						     (or (and (list? (cadr l))
+							      (or (eq? 'lambda (car (cadr l)))
+								  (eq? 'rt-lambda-decl (car (cadr l)))))
+							 (rt-symbol-starts-with? '_rt_breakcontsig (car l))))
+						   lets))
+				    ,@term))))))
 	  (else
 	   (let ((new-letlist '())
 		 (new-term '()))
@@ -1372,21 +1375,20 @@ and run simple lisp[4] functions.
        
      (define* (get-new-name name #:optional is-guile-var)
        
-       (define* (legalize-name name)
-	 (let ((charlist (string->list (symbol->string name))))
-	   (if (char-numeric? (car charlist))
-	       'renamed_var
-	       (call-with-current-continuation
-		(lambda (return)
-		  (for-each (lambda (char)
-			      (if (and (not (char-alphabetic? char))
-				       (not (char=? char #\_))
-				       (not (char-numeric? char)))
-				  (return 'renamed_var)))
-			    charlist)
-		  name)))))
-
-       (let ((newname (get-unique-name (legalize-name name))))
+       (define* (legalize-c-name scheme-name)
+	 (let ((charlist (string->list (symbol->string scheme-name))))
+	   (string->symbol
+	    (list->string (map (lambda (char)
+				 (if (and (not (char-alphabetic? char))
+					  (not (char=? char #\_))
+					  (not (char-numeric? char)))
+				     #\_
+				     char))
+			       (if (char-numeric? (car charlist))
+				   (cons #\_ charlist)
+				   charlist))))))
+						 
+       (let ((newname (get-unique-name (legalize-c-name name))))
 	 (if is-guile-var
 	     (set! renamed-guile-vars (cons (list name newname) renamed-guile-vars)))
 	 (if is-guile-var
@@ -4020,7 +4022,7 @@ and run simple lisp[4] functions.
       (rt-automate-immediate vec pos
 			     `(begin
 				(if (not (vector? ,vec))
-				    (rt-error "Operation vector-ref failed because first argument is not a vector."))
+				    (rt-error "ai" "Operation vector-ref failed because first argument is not a vector."))
 				(if (>= ,pos (vector-length ,vec))
 				    (rt-error "Operation vector-ref failed because the length of the vector is to small"))
 				(rt-vector-ref/vector-ref ,vec (rt-castint/castint ,pos))))
@@ -4041,13 +4043,13 @@ and run simple lisp[4] functions.
 	    `(let ((,das-vec ,vec)
 		   (,das-pos ,pos))
 	       (if (not (vector? ,das-vec))
-		   (rt-error "Operation vector-ref failed because first argument is not a vector."))
+		   (rt-error ,(<-> "Operation vector-ref failed because first argument is not a vector. " (format #f "vector name: ~A pos: ~A" vec pos))))
 	       (if (>= ,das-pos (vector-length ,das-vec))
 		   (rt-error "Operation vector-ref failed because the length of the vector is to small"))
 	       (rt-vector-ref/vector-ref ,das-vec (rt-castint/castint ,das-pos))))
 	  `(begin
 	     (if (not (vector? ,vec))
-		 (rt-error "Operation vector-ref failed because first argument is not a vector."))
+		 (rt-error ,(<-> "Operation vector-ref failed because first argument is not a vector. " (format #f "vector name: ~A pos: ~A" vec pos))))
 	     (if (>= ,pos (vector-length ,vec))
 		 (rt-error "Operation vector-ref failed because the length of the vector is to small"))
 	     (rt-vector-ref/vector-ref ,vec (rt-castint/castint ,pos))))
@@ -4056,6 +4058,7 @@ and run simple lisp[4] functions.
 (define-c-macro (rt-vector-ref/vector-ref vec pos)
   `(SCM_VECTOR_REF ,vec ,pos))
 (<rt-func> 'rt-vector-ref/vector-ref '<SCM> '(<SCM> <int>))
+
 
 
 
@@ -4585,10 +4588,11 @@ and run simple lisp[4] functions.
       `(let* ((,ret 0.0)
 	      (,das-gen ,gen)
 	      (,oldenv (mus-environ ,das-gen)))
+	 ;;(declare (<mus_any-*> ,das-gen))
 	 (set! (mus-environ ,das-gen) (rt-get-environ))
 	 (set! ,ret (rt-mus-src/mus_src ,das-gen ,sr-change (lambda (dir)
 							      (declare (<int> dir))
-							 (the <float> (,input-function dir)))))
+							      (the <float> (,input-function dir)))))
 	 (set! (mus-environ ,das-gen) ,oldenv)
 	 ,ret)))
   (<rt-func> 'rt-mus-src/mus_src '<float> '(<mus_src-*> <float> (<float> (<int>))))
@@ -5423,6 +5427,74 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 !#
 
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;; Wait. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (wait w 50)  waits 50 samples
+
+(define (make-wait)
+  (vct 0 0 0))
+
+(define-rt-macro (wait w len thunk)
+  `(begin
+     (if (not (vct-ref ,w 2))
+	 (begin
+	   (vct-set! ,w 0 ,len)
+	   (vct-set! ,w 1 ,len)
+	   (vct-set! ,w 2 1))
+	 (if (> (vct-ref ,w 0) 1)
+	     (vct-set! ,w 0 (1- (vct-ref ,w 0)))
+	     (if (< (vct-ref ,w 2) 2)
+		 (begin
+		   (vct-set! ,w 2 2)
+		   (,thunk)))))))
+
+#!
+
+	  
+(define ai
+  (let ((w (make-wait))
+	(w2 (make-wait)))
+    (<rt-play> (lambda ()
+		 (wait w (mus-srate)
+		       (lambda ()
+			 (printf "1\\n")))
+		 (wait w2 (* 2 (mus-srate))
+		       (lambda ()
+			 (printf "2\\n")
+			 (remove-me)))))))
+
+;; Or with dynamic control rate (chuck inspired):
+(<rt-play> (lambda ()
+	     (dynamic-control-rate
+	      (wait (mus-srate))
+	      (print "1\\n"))
+	      (wait (mus-srate))
+	      (print "2\\n")))
+
+=>
+(let ((w (make-wait)))
+  (<rt-play> (lambda ()
+	       (wait2 w (mus-srate)))))
+
+
+
+
+		 
+(rte-silence!)
+(rte-info)
+
+!#
+
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;; LADSPA. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -6047,10 +6119,11 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
   (let ((ret (make-vct (+ 1 rt-rb-unread size))))
     ret))
 
-(define (ringbuffer-get rb func)
+(define* (ringbuffer-get rb func #:optional (interval 2))
   (letrec ((ai (lambda ()
-		  (if (= 0 (vct-ref rb rt-rb-isrunning))
-		      (set! rt-running-ringbuffers (remove (lambda (x) (eq? x rb)) rt-running-ringbuffers))
+		 (if (= 0 (vct-ref rb rt-rb-isrunning))
+		     (begin
+		       (set! rt-running-ringbuffers (remove (lambda (x) (eq? x rb)) rt-running-ringbuffers)))
 		      (begin
 			(while (> (c-integer (vct-ref rb rt-rb-unread)) 0)
 			       (let ((read-pos (c-integer (vct-ref rb rt-rb-read))))
@@ -6059,33 +6132,37 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 							     0
 							     (1+ read-pos))))
 			       (vct-set! rb rt-rb-unread (1- (vct-ref rb rt-rb-unread))))
-			(in 2 ai))))))
+			(in interval ai))))))
     (vct-set! rb rt-rb-isrunning 1)
     (set! rt-running-ringbuffers (cons rb rt-running-ringbuffers))
     (ai)))
 
 (define (ringbuffer-stop rb)
   (vct-set! rb rt-rb-isrunning 0))
+(define-rt (ringbuffer-stop rb)
+  (vct-set! rb ,rt-rb-isrunning 0))
 (define (ringbuffer-stop-all)
   (for-each ringbuffer-stop rt-running-ringbuffers))
 
 (define-rt (put-ringbuffer rb val)
-  (if (= 0 (vct-ref rb rt-rb-isrunning))
+  (if (= 0 (vct-ref rb ,rt-rb-isrunning))
       #t
-      (if (>= (vct-ref rb rt-rb-unread) (- (vct-length rb) 6))
+      (if (>= (vct-ref rb ,rt-rb-unread) (- (vct-length rb) 6))
 	  (begin
 	    (printf "Ringbuffer full\\n")
 	    #f)
-	  (let ((write-pos (vct-ref rb rt-rb-write)))
+	  (let ((write-pos (vct-ref rb ,rt-rb-write)))
 	    (declare (<int> write-pos))
 	    (vct-set! rb (+ write-pos 4) val)
-	    (vct-set! rb rt-rb-write (if (>= write-pos (- (vct-length rb) 6))
-					 0
-					 (1+ write-pos)))
-	    (vct-set! rb rt-rb-unread (1+ (vct-ref rb rt-rb-unread)))
+	    (vct-set! rb ,rt-rb-write (if (>= write-pos (- (vct-length rb) 6))
+					  0
+					  (1+ write-pos)))
+	    (vct-set! rb ,rt-rb-unread (1+ (vct-ref rb ,rt-rb-unread)))
 	    #t))))
 	
-  
+
+
+
 #!
 (define rb (make-ringbuffer 2000))
 (<rt-play> 0 10
@@ -6096,6 +6173,12 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 		  (c-display "got:" val)))
 	      
 (ringbuffer-stop rb)
+(rte-silence!)
+
+(length rt-running-ringbuffers)
+(set! rt-running-ringbuffers '())
+(ringbuffer-stop-all)
+
 !#
 
 
@@ -6355,11 +6438,11 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 (define-rt-macro (rt-vct-legal-pos das-vct pos2 funcname body)
   (if (rt-is-safety?)
       `(begin (if (< ,pos2 0)
-		  (rt-error ,(<-> "Illegal second argument for " funcname " pos: pos<0.")))
+		  (rt-error ,(format #f "Illegal second argument for ~A pos: pos<0. (Body: ~A)" funcname body)))
 	      (if (>= ,pos2 (vct-length ,das-vct))
-		  (rt-error ,(<-> "Illegal second argument for " funcname "vct-legal-pos: pos>=length.")))
+		  (rt-error ,(format #f "Illegal second argument for ~A vct-legal-pos: pos>=length. (Body: ~A)" funcname body)))
 	      ,body)
-      ,body))
+      body))
 
 
 (define-rt-macro (vct-set! das-vct expand/pos val)
@@ -6679,15 +6762,15 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	       (term (caddr (cdddr rt-4-result)))
 	       (mainfuncargs (cadr term))
 	       
-	       (funcname (rt-gensym))
-	       (das-funcname (rt-gensym))
-	       (rt-innerfuncname (rt-gensym))
-	       (rt-funcname (rt-gensym))
+	       (funcname (rt-gensym2))
+	       (das-funcname (rt-gensym2))
+	       (rt-innerfuncname (rt-gensym2))
+	       (rt-funcname (rt-gensym2))
 
-	       (make-globals-func (rt-gensym))
-	       (free-globals-func (rt-gensym))
+	       (make-globals-func (rt-gensym2))
+	       (free-globals-func (rt-gensym2))
 
-	       (funcarg (rt-gensym))
+	       (funcarg (rt-gensym2))
 	       (publicargs (append (map (lambda (extvar)
 					  (rt-print2 "extvar1" extvar)
 					  `(<SCM> ,(symbol-append '_rt_scm_ (car extvar))))
@@ -6702,16 +6785,16 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 	       ;; The names of the first getternames must be the same as the first setternames
 	       (getternames (map (lambda (extvar)
-				   (list (rt-gensym) extvar))
+				   (list (rt-gensym2) extvar))
 				 (append extnumbers-writing extnumbers))) ;;extpointers
 	       (setternames (map (lambda (extvar)
-				   (list (rt-gensym) extvar))
+				   (list (rt-gensym2) extvar))
 				 (remove (lambda (vardecl)
 					   (eq? '<struct-rt_bus-*> (-> (cadr vardecl) c-type)))
 					 (append extnumbers-writing extnumbers extpointers))))
 	       
 	       (busnames (map (lambda (extvar)
-				(list (-> (cadr extvar) c-type) (car extvar) (symbol-append (car extvar) '_mirror) (cadddr extvar) (rt-gensym)))
+				(list (-> (cadr extvar) c-type) (car extvar) (symbol-append (car extvar) '_mirror) (cadddr extvar) (rt-gensym2)))
 			      (remove (lambda (vardecl)
 					(not (eq? '<struct-rt_bus-*> (-> (cadr vardecl) c-type))))
 				      extpointers)))
@@ -7090,6 +7173,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 (define* (rt-2 term #:key (engine *rt-engine*))
   (let ((rt-3-result (rt-3 term))
+	(orgterm term)
 	(orgargs (cadr term)))
     (if (not rt-3-result)
 	(throw 'compilation-failed)
@@ -7269,6 +7353,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 				       ret)))))))
 	  
 	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -ffast-math ") ;; "-ffast-math") ;; " -Werror "
+						#f
 						"#include <config.h>"
 						"#include <math.h>"
 						"#include <clm.h>"
@@ -7327,6 +7412,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 ;; rt-1 + compiled code cache handling.
 (define rt-cached-funcs (make-hash-table 997))
 (define* (rt-1 term #:key (engine *rt-engine*))
+  (rt-gensym-reset)
   (let* ((key (list term
 		    (rt-safety)               ;; Everything that can change the compiled output must be in the key.
 		    (-> engine samplerate))) ;; If saving to disk, the result of (version) and (snd-version) must be added as well. (and probably some more)
@@ -7372,8 +7458,8 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
   (let ((start #f)
 	(dur #f)
 	(func (last rest))
-	(instrument (rt-gensym))
-	(start2 (rt-gensym)))
+	(instrument (rt-gensym2))
+	(start2 (rt-gensym2)))
     (cond ((= 3 (length rest))
 	   `(let ((,instrument ,eval-type))
 	      (-> ,instrument ,play-type ,(car rest) ,(cadr rest))
@@ -7400,7 +7486,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
   (let ((rt-funcs '()))
     
     (define (add-rt-func code)
-      (let ((name (rt-gensym)))
+      (let ((name (rt-gensym2)))
 	(set! rt-funcs (cons (list name code)
 			     rt-funcs))
 	name))

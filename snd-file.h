@@ -131,14 +131,13 @@ int vf_mix(view_files_info *vdat);
 bool vf_insert(view_files_info *vdat);
 
 
-char **set_header_and_data_positions(file_data *fdat, int type, int format);
+char **type_and_format_to_position(file_data *fdat, int type, int format);
+void position_to_type_and_format(file_data *fdat, int pos);
+int position_to_format(int header, int pos);
+int position_to_type(int pos);
 char **short_writable_headers(int *len);
 char **short_readable_headers(int *len);
 char **short_builtin_headers(int *len);
-void set_header_type_and_format_from_position(file_data *fdat, int pos);
-int header_type_from_position(int pos);
-int data_format_from_position(int header, int pos);
-char **set_header_positions_from_type(file_data *fdat, int header_type, int data_format);
 bool encoded_header_p(int header_type);
 void snd_encode(int type, const char *input_filename, const char *output_filename);
 snd_info *file_is_open_elsewhere_and_has_unsaved_edits(snd_info *sp, const char *fullname);

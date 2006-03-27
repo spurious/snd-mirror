@@ -1762,7 +1762,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
       res = fdat->header_pos;
       if (res != NO_SELECTION)
 	{
-	  (*type) = header_type_from_position(res);
+	  (*type) = position_to_type(res);
 	  fdat->current_type = (*type);
 	}
     }
@@ -1771,7 +1771,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
       res = fdat->format_pos;
       if (res != NO_SELECTION)
 	{
-	  (*format) = data_format_from_position(fdat->current_type, res);
+	  (*format) = position_to_format(fdat->current_type, res);
 	  fdat->current_format = (*format);
 	}
     }
@@ -1803,7 +1803,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat, int type, int form
     fdat->current_type = type;
   else fdat->current_type = MUS_RAW;
   fdat->current_format = format;
-  fl = set_header_and_data_positions(fdat, fdat->current_type, fdat->current_format);
+  fl = type_and_format_to_position(fdat, fdat->current_type, fdat->current_format);
   if (fl == NULL) return;
 
   if ((type != IGNORE_HEADER_TYPE) &&
@@ -2016,7 +2016,7 @@ static void update_header_type_list(const char *name, int row, void *data)
   fd->header_pos = row;
   if (fd->current_type != fd->header_pos)
     {
-      set_header_type_and_format_from_position(fd, fd->header_pos);
+      position_to_type_and_format(fd, fd->header_pos);
       set_file_dialog_sound_attributes(fd,
 				       fd->current_type,
 				       fd->current_format,
@@ -2030,10 +2030,10 @@ static void update_data_format_list(const char *name, int row, void *data)
   int nformats = 0;
   char **formats = NULL;
   file_data *fd = (file_data *)data;
-  formats = set_header_positions_from_type(fd, fd->current_type, fd->current_format);
+  formats = type_and_format_to_position(fd, fd->current_type, fd->current_format);
   nformats = fd->formats;
   fd->format_pos = row;
-  fd->current_format = data_format_from_position(fd->header_pos, row);
+  fd->current_format = position_to_format(fd->header_pos, row);
 }
 
 static void c1_callback(GtkWidget *w, gpointer context) 
@@ -2135,7 +2135,7 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   fdat = (file_data *)CALLOC(1, sizeof(file_data));
   fdat->current_type = header_type;
   fdat->current_format = data_format;
-  formats = set_header_positions_from_type(fdat, header_type, data_format);
+  formats = type_and_format_to_position(fdat, header_type, data_format);
   nformats = fdat->formats;
 
   fdat->header_short_names = headers;

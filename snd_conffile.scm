@@ -20,7 +20,7 @@
 
 
 
-
+(use-modules (ice-9 debug))
 (use-modules (ice-9 rdelim))
 
 (provide 'snd-snd_conffile.scm)
@@ -48,6 +48,25 @@
       `(define ,name ,val)))
 
 
+
+;;##############################################################
+;; Let everything that is printed to the listener go to stdout
+;; as well. (Error printing from hooks and timed callbacks)
+;;##############################################################
+
+(add-hook! print-hook
+  (lambda (msg)
+    (display msg)
+    (newline)
+    #f))
+  
+
+(add-hook! snd-error-hook
+  (lambda (msg) 
+    (display "snd-error!")(newline)
+    (display msg)
+    (newline)
+    #f))
 
 ;;##############################################################
 ;; Various settings.
@@ -366,10 +385,24 @@
 			 (set! (cursor (c-selected-sound) ch) (c-integer pos)))))
 
 
+(define* (c-use-rt-player? #:optional (snd (c-selected-sound)))
+  (and (defined? '*rt-use-rt-player*)
+       *rt-use-rt-player*
+       (not (expand-control? snd))
+       (not (filter-control? snd))
+       (not (contrast-control? snd))
+       (not (reverb-control? snd))))
+
+
+(define (c-playing)
+  (or (playing)
+      (and (c-use-rt-player?)
+	   (rt-snd-is-playing?))))
+
 ;; Like (set-cursor-pos pos), but legalize pos and
 ;; calls c-show-times as well. Also works when playing.
 (define (c-set-cursor-pos2 pos)
-  (let ((isplaying (playing))
+  (let ((isplaying (c-playing))
 	(legalpos (min (frames) (max 0 pos))))
     (if isplaying
 	(-> (c-p) set-cursor legalpos)
@@ -501,6 +534,7 @@
 (play (- (frames) 1000) #f #f #f 1000 #f #f)
 !#
 
+
 ;;##############################################################
 ;; Playing
 ;;##############################################################
@@ -512,23 +546,36 @@
   (define playtype 'song)
 
   (define (get-selection-start)
-    (if (selection-member? snd)
-	(if (< (speed-control snd) 0)
-	    (+ (selection-position snd) (selection-frames snd))
-	    (selection-position snd))
-	(if (< (speed-control snd) 0)	 	
-	    (1- (frames snd))	 	
-	    0)))
+    (if (c-use-rt-player?)
+	(if (selection-member? snd)
+	    (selection-position snd)
+	    0)
+	(if (selection-member? snd)
+	    (if (< (speed-control snd) 0)
+		(+ (selection-position snd) (selection-frames snd))
+		(selection-position snd))
+	    (if (< (speed-control snd) 0)	 	
+		(1- (frames snd))	 	
+		0))))
 
   (define (get-selection-end)
-    (if (selection-member? snd)
-	(if (< (speed-control snd) 0)
-	    (selection-position snd)
-	    (+ (selection-position snd) (selection-frames snd)))
-	(if (< (speed-control snd) 0)	 	
-	    0	 	
-	    (1- (frames snd)))))
+    (if (c-use-rt-player?)
+	(if (selection-member? snd)
+	    (+ (selection-position snd) (selection-frames snd))
+	    (frames snd))
+	(if (selection-member? snd)
+	    (if (< (speed-control snd) 0)
+		(selection-position snd)
+		(+ (selection-position snd) (selection-frames snd)))
+	    (if (< (speed-control snd) 0)	 	
+		0	 	
+		(1- (frames snd))))))
 
+  (define (my-stop-playing)
+    (if (c-use-rt-player?)
+	(rt-snd-stop-playing))
+    (stop-playing))
+    
   (def-method (play pos)
     (define (das-play)
       (play 0 #f #f #f #f #f das-callback))
@@ -539,14 +586,17 @@
     (set! isplaying #t)
     (set! startplaypos (if pos pos (cursor snd)))
     (set! playtype 'song)
-    (play startplaypos #f #f #f #f #f das-callback))
+    
+    (if (c-use-rt-player?)
+	(rt-snd-play snd 0 #f startplaypos)
+	(play startplaypos #f #f #f #f #f das-callback)))
 
   ;; Stops if allready playing
   (def-method (play2 pos)
     (if isplaying
 	(begin
 	  (set! (cursor-follows-play) #f)
-	  (stop-playing)
+	  (my-stop-playing)
 	  (set! (cursor-follows-play) #t)))
     (this->play pos))
 
@@ -560,18 +610,22 @@
     (set! isplaying #t)
     (set! startplaypos pos)
     (set! playtype 'selection)
-    (play pos #f #f #f (get-selection-end) #f das-callback))
-
+    (if (c-use-rt-player?)
+	(rt-snd-play snd (get-selection-start) (get-selection-end) (if (>= (speed-control snd) 0)
+								       pos
+								       (1- (get-selection-end))))
+	(play pos #f #f #f (get-selection-end) #f das-callback)))
+  
   (def-method (stop #:optional pos)
     (set! (cursor-follows-play) #f)
-    (stop-playing)
+    (my-stop-playing)
     (set! (cursor) (if pos pos startplaypos))
     (set! (cursor-follows-play) #t))
 
   (def-method (pause)
     (set! (cursor-follows-play) #f)
     (let ((pos (cursor snd)))
-      (stop-playing)
+      (my-stop-playing)
       (set! (cursor snd) pos)
       (set! (cursor-follows-play) #t)))
 
@@ -582,25 +636,27 @@
 
 
   (def-method (isplaying)
-    (playing))
-    ;;(or isplaying (playing)))
+    (c-playing))
 
   (def-method (set-cursor pos)
     (set! (cursor-follows-play) #f)
-    (stop-playing)
+    (my-stop-playing)
     (this->continue pos)
     (set! (cursor-follows-play) #t))
 
   (def-method (dosomepause thunk)
-    (this->pause)
-    (thunk)
-    (this->continue))
+    (if (this->isplaying)
+	(begin
+	  (this->pause)
+	  (thunk)
+	  (this->continue))
+	(thunk)))	  
  
   (def-method (selection-is-changed)	 	
     (if (this->isplaying)	 	
 	(begin	 	
 	  (set! (cursor-follows-play) #f)	 	
-	  (stop-playing)	 	
+	  (my-stop-playing)	 	
 	  (this->continue (get-selection-start))	 	
 	  (set! (cursor-follows-play) #t))))	 	
  
@@ -1425,6 +1481,7 @@ Does not work.
 (checkbutton-remove (c-get-nameform-button (c-selected-sound) "sync"))
 !#
 
+(define *loop-on-off-hook* (<hook>))
 
 
 (let ((not-now #f))
@@ -1442,6 +1499,7 @@ Does not work.
 				      (begin
 					(set! not-now #t)
 					(set! *c-islooping* on)
+					(-> *loop-on-off-hook* run on)
 					(for-each (lambda (s)
 						    (if (not (= s snd)) (c-for-each-nameform-button s "loop"
 												    (lambda (b) 
@@ -1616,6 +1674,9 @@ Does not work.
 	     (focus-widget widget)))
 
 
+(define *c-control-hook* (<hook>))
+(define *c-controls-on-off-hook* (<hook>))
+
 ;; All checkbuttons in the control-panel.
 (add-hook! after-open-hook
 	   (lambda (snd)
@@ -1638,12 +1699,20 @@ Does not work.
 									 (apply-controls))
 								     (focus-widget (c-editor-widget snd))
 								     #t)))
-					     (if (GTK_IS_CHECK_BUTTON w)
+					     (if (GTK_IS_CHECK_BUTTON w)						 
 						 (c-g_signal_connect w "button_release_event"
 								     (lambda (w e i)
 								       (-> (c-p snd) dosomepause (lambda ()
 												   (gtk_button_released (GTK_BUTTON w))
+												   (-> *c-controls-on-off-hook* run)
 												   (focus-widget (c-editor-widget snd))))))))
+
+					 (if (and (GTK_IS_SCROLLBAR w)
+						  (GTK_IS_RANGE w))
+					     (let ((adj (gtk_range_get_adjustment (GTK_RANGE w))))
+					       (c-g_signal_connect adj "value_changed"
+								   (lambda (w d)
+								     (-> *c-control-hook* run)))))
 					 
 					 (if (GTK_IS_CONTAINER w)
 					     (fixit w)))))))
@@ -1673,7 +1742,7 @@ Does not work.
 	       (c-put snd 'dac-slider
 		      (<slider> control-panel "dac-size" 1 (dac-size) 8192
 				(lambda (val)
-				  (let ((isplaying (playing)))
+				  (let ((isplaying (c-playing)))
 				    (if isplaying
 					(-> (c-p snd) pause))
 				    (set! (dac-size) (c-integer val))
@@ -1886,7 +1955,6 @@ Does not work.
 ;;(add-hook! after-save-hook save-peak-env-info)
 ;;(add-hook! after-save-as-hook save-peak-env-info)
 
-
 (if use-gtk
     (c-load-from-path snd-gtk)
     (c-load-from-path snd-motif))
@@ -2085,10 +2153,22 @@ Does not work.
 		     (dotheretry))))))
   
 
-  
+
+
+;;##############################################################
+;; Load rt-player. Takes some time.
+;;##############################################################
+
+(load-from-path "rt-player.scm")
+
+
+
+
 
 (set! *c-is-starting-up* #f)
 
 
+(newline)
+(c-display "#:snd_conffile.scm loaded. RT-Player is currently configured to run only when not using the expand, contrast or filter control.")
 
 

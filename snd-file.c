@@ -2119,12 +2119,12 @@ char **short_readable_headers(int *len)
   return(readable_headers);
 }
 
-int header_type_from_position(int position)
+int position_to_type(int position)
 {
   return(h_pos_to_type[position]);
 }
 
-int data_format_from_position(int header, int position)
+int position_to_format(int header, int position)
 {
   return(h_dfs[h_type_to_pos[header]][position]);
 }
@@ -2138,7 +2138,7 @@ static int h_to_format_pos(int h, int frm)
   return(h_default_format_to_pos[h]);
 }
 
-char **set_header_and_data_positions(file_data *fdat, int type, int format)
+char **type_and_format_to_position(file_data *fdat, int type, int format)
 {
   int h;
   h = h_type_to_h[type];
@@ -2148,23 +2148,13 @@ char **set_header_and_data_positions(file_data *fdat, int type, int format)
   return(h_df_names[h]);
 }
 
-void set_header_type_and_format_from_position(file_data *fdat, int pos)
+void position_to_type_and_format(file_data *fdat, int pos)
 {
   int h;
   h = h_type_to_h[h_pos_to_type[pos]];
   fdat->header_pos = pos;
   fdat->current_type = h_pos_to_type[pos];
   fdat->current_format = h_default_format[h];
-}
-
-char **set_header_positions_from_type(file_data *fdat, int header_type, int data_format)
-{
-  int h;
-  h = h_type_to_h[header_type];
-  fdat->formats = h_num_formats[h];
-  fdat->header_pos = h_type_to_pos[header_type];
-  fdat->format_pos = h_to_format_pos(h, data_format);
-  return(h_df_names[h]);
 }
 
 bool encoded_header_p(int header_type)

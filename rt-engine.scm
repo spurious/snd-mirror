@@ -843,6 +843,8 @@ procfuncs=sorted
 
   <int> max_cpu_usage
   <int> num_max_cpu_interrupts
+  <struct-RT_Procfunc-*> skip_this_procfunc_next_cycle   ;; If going past max_cpu_usage after the last instance have run, skip this procfunc on the next cycle.
+  <int> accumulated_cpu_usage  ;; Remember cpu usage from last cycle and add it to the next, etc. To avoid hanging if one procfunc use more than 200% cpu.
   ;;<int> temp
   
   )
@@ -1187,26 +1189,42 @@ procfuncs=sorted
 
 					    ;; Make some noise
 					    (if is_running
-						(let* ((procfunc <struct-RT_Procfunc-*> engine->procfuncs))
-						  (while (!= NULL procfunc)
-							 (let* ((callback <Callback> procfunc->func)
-								(next <struct-RT_Procfunc-*> procfunc->next))
-							   (set! engine->time time)
-							   
-							   ;; Run a <realtime> instance function.
-							   (if (== 1 (callback procfunc->arg
-									       (- time base_time)
-									       (- next_stop base_time)))
-							       (rt_remove_procfunc_do engine procfunc))
+						(if (> engine->accumulated_cpu_usage max_cycle_usage)
+						    (begin
+						      (set! engine->accumulated_cpu_usage (- engine->accumulated_cpu_usage max_cycle_usage))
+						      (if (< engine->accumulated_cpu_usage 0)
+							  (set! engine->accumulated_cpu_usage 0))
+						      engine->num_max_cpu_interrupts++)
+						    (let* ((procfunc <struct-RT_Procfunc-*> engine->procfuncs))
+						      (while (!= NULL procfunc)
+							     (let* ((callback <Callback> procfunc->func)
+								    (next <struct-RT_Procfunc-*> procfunc->next))
+							       (set! engine->time time)
+							       
+							       ;; Run a <realtime> instance function.
+							       (if (!= engine->skip_this_procfunc_next_cycle procfunc)
+								   (if (== 1 (callback procfunc->arg
+										       (- time base_time)
+										       (- next_stop base_time)))
+								       (rt_remove_procfunc_do engine procfunc)))
+							       
+							       (if (== NULL next)
+								   (set! engine->skip_this_procfunc_next_cycle NULL))
+							       
+							       ;; Check if too many cpu-cycles are used.
+							       (if (&& client (> (jack_frames_since_cycle_start client)
+										 max_cycle_usage))
+								   (begin
+								     (set! engine->accumulated_cpu_usage (+ engine->accumulated_cpu_usage
+													    (- (jack_frames_since_cycle_start client)
+													       max_cycle_usage)))
+								     (if (== NULL next)
+									 (set! engine->skip_this_procfunc_next_cycle procfunc))
+								     engine->num_max_cpu_interrupts++
+								     break))
 
-							   ;; Check if too many cpu-cycles are used.
-							   (if (&& client (> (jack_frames_since_cycle_start client) max_cycle_usage))
-							       (begin
-								 engine->num_max_cpu_interrupts++
-								 break))
-
-							   (set! procfunc next)))))
-							 
+							       (set! procfunc next))))))
+					    
 					    (set! time next_stop)
 					    (rt_run_queued_events engine time))))
 			       
