@@ -1669,7 +1669,7 @@ AC_SUBST(SO_LD)
 
 
 #--------------------------------------------------------------------------------
-# OGG, Flac, Speex, Mpeg, Midi, maybe SDIF (ACE?) someday
+# OGG, Flac, Speex, Mpeg, Midi, Shorten
 # --------------------------------------------------------------------------------
 
 AC_PATH_PROG(PATH_OGGDEC, oggdec, no) # OGG read
@@ -1726,6 +1726,36 @@ if test "$PATH_TIMIDITY" != "no" ; then
   AC_DEFINE(HAVE_TIMIDITY)
   AC_DEFINE_UNQUOTED(PATH_TIMIDITY, "${PATH_TIMIDITY}")
 fi
+
+
+AC_PATH_PROG(PATH_SHORTEN, shorten, no)
+
+if test "$PATH_SHORTEN" != "no" ; then
+  AC_DEFINE(HAVE_SHORTEN)
+  AC_DEFINE_UNQUOTED(PATH_SHORTEN, "${PATH_SHORTEN}")
+fi
+
+
+AC_PATH_PROG(PATH_TTA, ttaenc, no)
+
+if test "$PATH_TTA" != "no" ; then
+  AC_DEFINE(HAVE_TTA)
+  AC_DEFINE_UNQUOTED(PATH_TTA, "${PATH_TTA}")
+fi
+
+
+AC_PATH_PROG(PATH_WAVPACK, wavpack, no)
+AC_PATH_PROG(PATH_WVUNPACK, wvunpack, no)
+
+if test "$PATH_WAVPACK" != "no" ; then
+  if test "$PATH_WVUNPACK" != "no" ; then
+    AC_DEFINE(HAVE_WAVPACK)
+    AC_DEFINE_UNQUOTED(PATH_WAVPACK, "${PATH_WAVPACK}")
+    AC_DEFINE_UNQUOTED(PATH_WVUNPACK, "${PATH_WVUNPACK}")
+  fi
+fi
+  
+
 
 
 

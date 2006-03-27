@@ -573,6 +573,15 @@ void init_sound_file_extensions(void)
 #if HAVE_MPEG
   add_sound_file_extension("mpeg");
 #endif
+#if HAVE_SHORTEN
+  add_sound_file_extension("shn");
+#endif
+#if HAVE_TTA
+  add_sound_file_extension("tta");
+#endif
+#if HAVE_WAVPACK
+  add_sound_file_extension("wv");
+#endif
   default_sound_file_extensions = sound_file_extensions_end;
 }
 
@@ -598,10 +607,7 @@ bool sound_file_p(const char *name)
   len = strlen(name);
   for (i = 0; i < len; i++)
     if (name[i] == '.')
-      {
-	dot_loc = i;
-	break;
-      }
+      dot_loc = i;
   /* dot_loc is last dot in the name */
   if ((dot_loc > 0) &&
       (dot_loc < len - 1))
@@ -610,7 +616,7 @@ bool sound_file_p(const char *name)
       ext = (const char *)(name + dot_loc + 1);
       for (i = 0; i < sound_file_extensions_end; i++)
 	if (strcmp(ext, sound_file_extensions[i]) == 0)
-	return(true);
+	  return(true);
     }
   return(false);
 }
@@ -1931,11 +1937,14 @@ bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool se
 
 /* -------- file dialog header/data choices -------- */
 
-enum {H_NEXT, H_AIFC, H_RIFF, H_RAW, H_AIFF, H_IRCAM, H_NIST, H_OGG, H_FLAC, H_SPEEX, H_MPEG, H_MIDI, H_SIZE};
+enum {H_NEXT, H_AIFC, H_RIFF, H_RAW, H_AIFF, H_IRCAM, H_NIST,  /* the "built-in" choices for output */
+      H_OGG, H_FLAC, H_SPEEX, H_TTA, H_WAVPACK,                /* readable/writable via external programs */
+      H_MPEG, H_MIDI, H_SHORTEN,                               /* readable via external programs */
+      H_SIZE};
 
-static int h_num_formats[H_SIZE] = {8 /* next */, 13 /* aifc */,  8 /* riff */, 18 /* raw */,
-				    4 /* aiff */, 5  /* ircam */, 7 /* nist */, 1  /* ogg */,
-				    1 /* flac */, 1  /* speex */, 1 /* mpeg */, 1  /* midi */};
+static int h_num_formats[H_SIZE] = {8 /* next */, 13 /* aifc */,  8 /* riff */, 18 /* raw */, 4 /* aiff */, 5  /* ircam */, 7 /* nist */, 
+				    1 /* ogg */,  1  /* flac */,  1 /* speex */, 1 /* tta */, 1 /*wavpack */,
+				    1 /* mpeg */, 1  /* midi */,  1 /* shorten */};
 #define H_DFS_MAX 18
 
 static int h_dfs[H_SIZE][H_DFS_MAX] = { /* next */  {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW, MUS_B24INT, MUS_BDOUBLE},
@@ -1951,17 +1960,22 @@ static int h_dfs[H_SIZE][H_DFS_MAX] = { /* next */  {MUS_BSHORT, MUS_MULAW, MUS_
 					/* ogg */   {MUS_LSHORT},
 					/* flac */  {MUS_LSHORT},
 					/* speex */ {MUS_LSHORT},
-					/* mpeg */  {MUS_LSHORT},
-					/* midi */  {MUS_LSHORT}};
+					/* tta */   {MUS_LSHORT},
+					/* wavpack */ {MUS_LSHORT},
+					/* readonly */  {-1}, {-1}, {-1}
+};
 static char *h_df_names[H_SIZE][H_DFS_MAX];
 
-static char *h_names[H_SIZE] = {"next ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist ", "ogg ", "flac ", "speex", "mpeg ", "midi "};
-static int h_pos_to_type[H_SIZE] = {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RAW, MUS_AIFF, MUS_IRCAM, MUS_NIST, -1, -1, -1, -1, -1};
+static char *h_names[H_SIZE] = {"next ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist ", 
+				"ogg ", "flac ", "speex", "tta", "wavpack",
+				"mpeg ", "midi ", "shorten"};
+static int h_pos_to_type[H_SIZE] = {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RAW, MUS_AIFF, MUS_IRCAM, MUS_NIST, -1, -1, -1, -1, -1, -1, -1, -1};
 static int h_type_to_pos[MUS_NUM_HEADER_TYPES];
 static int h_type_to_h[MUS_NUM_HEADER_TYPES];
-static int h_default_format[H_SIZE] = {MUS_BSHORT, MUS_BSHORT, MUS_LSHORT, MUS_BSHORT, MUS_BSHORT, MUS_BSHORT, 
-				       MUS_BSHORT, MUS_LSHORT, MUS_LSHORT, MUS_LSHORT, MUS_LSHORT, MUS_LSHORT};
-static int h_default_format_to_pos[H_SIZE] = {0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0};
+static int h_default_format[H_SIZE] = {MUS_BSHORT, MUS_BSHORT, MUS_LSHORT, MUS_BSHORT, MUS_BSHORT, MUS_BSHORT, MUS_BSHORT, 
+				       MUS_LSHORT, MUS_LSHORT, MUS_LSHORT, MUS_LSHORT, MUS_LSHORT,
+				       MUS_LSHORT, MUS_LSHORT, MUS_LSHORT};
+static int h_default_format_to_pos[H_SIZE] = {0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 void initialize_format_lists(void)
 {
@@ -1996,8 +2010,12 @@ void initialize_format_lists(void)
   h_type_to_h[MUS_SPEEX] = H_SPEEX;
   h_type_to_h[MUS_MIDI] = H_MIDI;
   h_type_to_h[MUS_MPEG] = H_MPEG;
+  h_type_to_h[MUS_SHORTEN] = H_SHORTEN;
+  h_type_to_h[MUS_TTA] = H_TTA;
+  h_type_to_h[MUS_WAVPACK] = H_WAVPACK;
   
   i = 7;
+  /* readable/writable */
 #if HAVE_OGG
   h_type_to_pos[MUS_OGG] = i;
   h_pos_to_type[i++] = MUS_OGG;
@@ -2010,6 +2028,16 @@ void initialize_format_lists(void)
   h_type_to_pos[MUS_SPEEX] = i;
   h_pos_to_type[i++] = MUS_SPEEX;
 #endif
+#if HAVE_TTA
+  h_type_to_pos[MUS_TTA] = i;
+  h_pos_to_type[i++] = MUS_TTA;
+#endif
+#if HAVE_WAVPACK
+  h_type_to_pos[MUS_WAVPACK] = i;
+  h_pos_to_type[i++] = MUS_WAVPACK;
+#endif
+
+  /* readable */
 #if HAVE_MPEG
   h_type_to_pos[MUS_MPEG] = i;
   h_pos_to_type[i++] = MUS_MPEG;
@@ -2018,10 +2046,14 @@ void initialize_format_lists(void)
   h_type_to_pos[MUS_MIDI] = i;
   h_pos_to_type[i++] = MUS_MIDI;
 #endif
+#if HAVE_SHORTEN
+  h_type_to_pos[MUS_SHORTEN] = i;
+  h_pos_to_type[i++] = MUS_SHORTEN;
+#endif
 }
 
 #define NUM_BUILTIN_HEADERS 7
-#define NUM_POSSIBLE_HEADERS 12
+#define NUM_POSSIBLE_HEADERS 15
 static char **writable_headers = NULL;
 static char **readable_headers = NULL;
 static int num_writable_headers = NUM_BUILTIN_HEADERS;
@@ -2051,16 +2083,20 @@ char **short_writable_headers(int *len)
       writable_headers[i++] = h_names[H_OGG];
 #endif
 #if HAVE_FLAC
-      /* flac tempfile.wav -o output.flac
-	 no choices
-       */
+      /* flac tempfile.wav -o output.flac */
       writable_headers[i++] = h_names[H_FLAC];
 #endif
 #if HAVE_SPEEX
-      /* speexenc tempfile.wav output.spx
-	 no choices
-      */
+      /* speexenc tempfile.wav output.spx */
       writable_headers[i++] = h_names[H_SPEEX];
+#endif
+#if HAVE_TTA
+      /* ttaenc -e in out */
+      writable_headers[i++] = h_names[H_TTA];
+#endif
+#if HAVE_WAVPACK
+      /* wavpack in -o out */
+      writable_headers[i++] = h_names[H_WAVPACK];
 #endif
       num_writable_headers = i;
     }
@@ -2113,6 +2149,15 @@ char **short_readable_headers(int *len)
       */
       readable_headers[i++] = h_names[H_MIDI];
 #endif
+#if HAVE_SHORTEN
+      readable_headers[i++] = h_names[H_SHORTEN];
+#endif
+#if HAVE_TTA
+      readable_headers[i++] = h_names[H_TTA];
+#endif
+#if HAVE_WAVPACK
+      readable_headers[i++] = h_names[H_WAVPACK];
+#endif
       num_readable_headers = i;
     }
   (*len) = num_readable_headers;
@@ -2164,7 +2209,11 @@ bool encoded_header_p(int header_type)
 	 (header_type == MUS_FLAC) ||
 	 (header_type == MUS_SPEEX) ||
 	 (header_type == MUS_MPEG) ||
-	 (header_type == MUS_MIDI));
+	 (header_type == MUS_MIDI) ||
+	 (header_type == MUS_SHORTEN) ||
+	 (header_type == MUS_TTA) ||
+	 (header_type == MUS_WAVPACK)
+	 );
 }
 
 void snd_encode(int type, const char *input_filename, const char *output_filename)
@@ -2190,6 +2239,16 @@ void snd_encode(int type, const char *input_filename, const char *output_filenam
 #if HAVE_SPEEX
     case MUS_SPEEX:
       command = mus_format("%s %s %s", PATH_SPEEXENC, input_filename, output_filename);
+      break;
+#endif
+#if HAVE_TTA
+    case MUS_TTA:
+      command = mus_format("%s -e %s -o %s", PATH_TTA, input_filename, output_filename);
+      break;
+#endif
+#if HAVE_WAVPACK
+    case MUS_WAVPACK:
+      command = mus_format("%s %s -o %s", PATH_WAVPACK, input_filename, output_filename);
       break;
 #endif
     default: 
@@ -2239,6 +2298,21 @@ int snd_decode(int type, const char *input_filename, const char *output_filename
 #if HAVE_TIMIDITY
     case MUS_MIDI:
       command = mus_format("%s %s -Ou -o %s", PATH_TIMIDITY, input_filename, output_filename);
+      break;
+#endif
+#if HAVE_SHORTEN
+    case MUS_SHORTEN:
+      command = mus_format("%s -x %s %s", PATH_SHORTEN, input_filename, output_filename);
+      break;
+#endif
+#if HAVE_TTA
+    case MUS_TTA:
+      command = mus_format("%s -d %s -o %s", PATH_TTA, input_filename, output_filename);
+      break;
+#endif
+#if HAVE_WAVPACK
+    case MUS_WAVPACK:
+      command = mus_format("%s %s -o %s", PATH_WVUNPACK, input_filename, output_filename);
       break;
 #endif
     default: 

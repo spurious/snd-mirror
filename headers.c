@@ -266,6 +266,9 @@ static const unsigned char I_NVF_[4] = {'N','V','F',' '};  /* Nomad II Creative 
 static const unsigned char I_VFMT[4] = {'V','F','M','T'};  /* Nomad II Creative NVF */
 static const unsigned char I_OggS[4] = {'O','g','g','S'};  /* Ogg-related files, apparently -- ogg123 has "vorbis" instead of "Speex" */
 static const unsigned char I_fLaC[4] = {'f','L','a','C'};  /* FLAC */
+static const unsigned char I_ajkg[4] = {'a','j','k','g'};  /* shorten */
+static const unsigned char I_TTA1[4] = {'T','T','A','1'};  /* ttaenc */
+static const unsigned char I_wvpk[4] = {'w','v','p','k'};  /* wavpack */
 /* it appears that Rezound .rez files start with "DavyBlox" */
 /* similarly rx2 files start with "CAT "? */
 
@@ -455,6 +458,9 @@ const char *mus_header_type_name(int type)
     case MUS_FLAC:             return("Flac");                    break;
     case MUS_SPEEX:            return("Speex");                   break;
     case MUS_MPEG:             return("mpeg");                    break;
+    case MUS_SHORTEN:          return("shorten");                 break;
+    case MUS_TTA:              return("tta");                     break;
+    case MUS_WAVPACK:          return("wavpack");                 break;
     default:                   return("unsupported");             break;
     }
 }
@@ -5029,6 +5035,21 @@ static int mus_header_read_1(const char *filename, int chan)
       header_type = MUS_NVF;
       return(read_nvf_header(filename, chan));
     }
+  if (match_four_chars((unsigned char *)hdrbuf, I_ajkg))
+    {
+      header_type = MUS_SHORTEN;
+      return(MUS_NO_ERROR);
+    }
+  if (match_four_chars((unsigned char *)hdrbuf, I_TTA1))
+    {
+      header_type = MUS_TTA;
+      return(MUS_NO_ERROR);
+    }
+  if (match_four_chars((unsigned char *)hdrbuf, I_wvpk))
+    {
+      header_type = MUS_WAVPACK;
+      return(MUS_NO_ERROR);
+    }
 
   header_type = MUS_RAW;
   return(read_no_header(filename, chan));
@@ -5731,6 +5752,7 @@ bool mus_header_no_header(const char *filename)
 	  (match_four_chars((unsigned char *)hdrbuf, I_SMP1)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_Maui)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_SDIF)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_ajkg)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_NVF_)));
   return(!ok);
 }

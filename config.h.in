@@ -256,6 +256,13 @@
 #undef PATH_TIMIDITY
 #undef HAVE_MPG321
 #undef PATH_MPG321
+#undef HAVE_SHORTEN
+#undef PATH_SHORTEN
+#undef HAVE_TTA
+#undef PATH_TTA
+#undef HAVE_WAVPACK
+#undef PATH_WAVPACK
+#undef PATH_WVUNPACK
 
 #ifndef USE_SND
   #define USE_SND 1

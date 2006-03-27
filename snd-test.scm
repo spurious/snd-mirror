@@ -48257,7 +48257,8 @@ EDITS: 1
 (define (XM_DRAG_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
 (define (XM_PARSE_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
 
-(if (or full-test (= snd-test 25) (and keep-going (<= snd-test 25)))
+(if (and (or full-test (= snd-test 25) (and keep-going (<= snd-test 25)))
+	 (or (not (defined 'host-name)) (not (string=? (host-name) "fatty2"))))
     (begin
       (run-hook before-test-hook 25)
       (if (and (provided? 'snd-motif) 

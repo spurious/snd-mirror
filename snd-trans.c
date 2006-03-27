@@ -1458,7 +1458,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
       break;
     case MUS_NEXT:
       switch (mus_sound_original_format(oldname))
-{
+	{
 	case NeXT_G721: err = read_g72x_adpcm(oldname, newname, hdr, 0); break;
 	case NeXT_G723: err = read_g72x_adpcm(oldname, newname, hdr, 1); break;
 	case NeXT_G723_5: err = read_g72x_adpcm(oldname, newname, hdr, 2); break;
@@ -1471,11 +1471,8 @@ int snd_translate(const char *oldname, const char *newname, int type)
     case MUS_MATLAB:
       /* assume all vectors are channels */
       break;
-    case MUS_OGG:
-    case MUS_SPEEX:
-    case MUS_FLAC:
-    case MUS_MIDI:
-    case MUS_MPEG:
+    case MUS_OGG: case MUS_SPEEX: case MUS_FLAC: case MUS_MIDI: case MUS_MPEG:
+    case MUS_SHORTEN: case MUS_TTA: case MUS_WAVPACK:
     default:
       if (snd_decode(type, oldname, newname) == 0)
 	err = MUS_NO_ERROR;

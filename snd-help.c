@@ -478,6 +478,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+28-Mar:  shorten, tta, wavpack support.\n\
 14-Mar:  x-axis-as-clock for more informative x-axis tick labels in very large files.\n\
 10-Mar:  added a stop sign to interrupt long computations (equivalent to C-g).\n\
 8-Mar:   kmenu.scm thanks to Maxim Krikun.\n\
