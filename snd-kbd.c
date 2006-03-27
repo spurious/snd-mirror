@@ -136,6 +136,18 @@ static void save_macro_1(named_macro *nm, FILE *fd)
     }
   fprintf(fd, ")\n");
 #endif
+#if HAVE_FORTH
+  fprintf(fd, ": %s\n", nm->name);
+  for (i = 0; i < nm->macro_size; i++)
+    {
+      mc = nm->cmds[i];
+      if (mc->keysym != 0)
+	fprintf(fd, 
+		"  [char] %c %d %s drop\n", 
+		(char)(mc->keysym), mc->state, S_key);
+    }
+  fprintf(fd, ";\n");
+#endif
 }
 
 void save_macro_state (FILE *fd)
@@ -1326,6 +1338,7 @@ void control_g(snd_info *sp)
   if (selection_is_active()) deactivate_selection();
   defining_macro = false;
   clear_stdin();
+  redirect_everything_to(NULL, NULL);
   if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = true; 
   /* this tries to break out of long filter/src computations (and perhaps others) */
   /*   but, as in other such cases, it leaves this flag set so all subsequent uses of it need to clear it first */

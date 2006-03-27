@@ -1110,6 +1110,31 @@ void save_mark_list(FILE *fd, chan_info *cp)
 	fprintf(fd, "])\n");
       }
 #endif
+#if HAVE_FORTH
+      fprintf(fd, "      %d sfile %d '( ", true_marks_size, cp->chan);
+      for (i = 0; i < true_marks_size; i++)
+	{
+	  fprintf(fd, "\n        '( %d %d '( ", cp->mark_size[i], cp->mark_ctr[i]);
+	  mps = cp->marks[i];
+	  if (mps)
+	    {
+	      marks = cp->mark_ctr[i];
+	      for (j = 0; j <= marks; j++)
+		{
+		  m = mps[j];
+		  if (m)
+		    {
+		      if (m->name)
+			fprintf(fd, "'( $\" %s\" " OFF_TD " %d %d ) ", m->name, m->samp, mark_id(m), mark_sync(m));
+		      else fprintf(fd, "'( #f " OFF_TD " %d %d ) ", m->samp, mark_id(m), mark_sync(m));
+		    }
+		  else fprintf(fd, "'( #f #f #f #f ) ");
+		}
+	    }
+	  fprintf(fd, ") ) ");
+	}
+      fprintf(fd, ") %s drop\n", S_restore_marks);
+#endif
     }
 }
 

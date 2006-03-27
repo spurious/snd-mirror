@@ -395,7 +395,11 @@ static int mix_selection(chan_info *cp, sync_info *si_out, off_t beg, io_error_t
   io_err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
   if (io_err == IO_NO_ERROR)
     {
+#if HAVE_FORTH
+      origin = mus_format(OFF_TD " snd chn %s", beg, S_mix_selection);
+#else
       origin = mus_format("%s" PROC_OPEN OFF_TD, TO_PROC_NAME(S_mix_selection), beg);
+#endif
       id = mix_file(beg, selection_len(), si_out->chans, si_out->cps, tempfile, 
 		    (si_out->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
 		    origin, with_mix_tags(ss), 0);
@@ -458,7 +462,11 @@ static io_error_t insert_selection(chan_info *cp, sync_info *si_out, off_t beg)
 	      cp_out = si_out->cps[i]; /* currently syncd chan that we might paste to */
 	      cp_in = si_in->cps[i];   /* selection chan to paste in (no wrap-around here) */
 	      len = cp_selection_len(cp_in, NULL);
+#if HAVE_FORTH
+	      origin = mus_format(OFF_TD " %s", beg, S_insert_selection);
+#else
 	      origin = mus_format("%s" PROC_OPEN OFF_TD, TO_PROC_NAME(S_insert_selection), beg);
+#endif
 	      if (file_insert_samples(beg, len,
 				      tempfile, cp_out, i,
 				      (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,

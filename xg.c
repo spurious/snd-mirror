@@ -133,6 +133,14 @@ static void *xm_obj_free(XEN obj)
   return(NULL);
 }
 #endif
+#if HAVE_FORTH
+static void xm_obj_free(XEN obj)
+{
+  void *val;
+  val = (void *)XEN_OBJECT_REF(obj);
+  FREE(val);
+}
+#endif
 static XEN make_xm_obj(void *ptr)
 {
   XEN_MAKE_AND_RETURN_OBJECT(xm_obj_tag, ptr, 0, xm_obj_free);
@@ -142,6 +150,9 @@ static void define_xm_obj(void)
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
 #if HAVE_GUILE
   scm_set_smob_free(xm_obj_tag, xm_obj_free);
+#endif
+#if HAVE_FORTH
+  fth_set_object_free(xm_obj_tag, xm_obj_free);
 #endif
 }  
 
@@ -156,6 +167,11 @@ static void define_xm_obj(void)
   #define XG_PRE "R"
   #define XG_POST ""
   #define XG_FIELD_PRE "R"
+#endif
+#if HAVE_FORTH
+  #define XG_PRE "F"
+  #define XG_POST ""
+  #define XG_FIELD_PRE "F"
 #endif
 
 #define WRAP_FOR_XEN(Name, Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), C_TO_XEN_ULONG((unsigned long)Value))
@@ -25803,6 +25819,10 @@ static XEN gxg_make_target_entry(XEN lst)
   #if HAVE_SCHEME
     #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \
       XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, #Name " field accessor", "set! " XG_FIELD_PRE #Name XG_POST, SetValue, A1, A2, A3, A4)
+  #endif
+  #if HAVE_FORTH
+    #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \
+      XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, #Name " field accessor", "set-" XG_FIELD_PRE #Name XG_POST, SetValue, A1, A2, A3, A4)
   #endif
 
 /* conversions */

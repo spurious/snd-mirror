@@ -1158,6 +1158,272 @@ bool xen_rb_arity_ok(int rargs, int args);
 
 
 
+/* ------------------------------ FORTH ------------------------------ */
+
+#if HAVE_FORTH
+
+#include <fth.h>
+
+#if USE_SND
+# undef gettext_noop
+# undef _
+# undef N_
+#endif
+
+#define XEN_OK                          true
+
+#define XEN                             FTH
+#define XEN_FILE_EXTENSION              FTH_FILE_EXTENSION
+#define XEN_COMMENT_STRING              "\\"
+
+#define XEN_FALSE                       FTH_FALSE
+#define XEN_TRUE                        FTH_TRUE
+#define XEN_EMPTY_LIST                  FTH_NIL
+#define XEN_UNDEFINED                   FTH_UNDEF
+#define XEN_DOCUMENTATION_SYMBOL        FTH_DOCUMENTATION_SYMBOL
+
+#define XEN_DEFINED_P(name)             fth_defined_p((char *)name)
+#define XEN_YES_WE_HAVE(feature)        fth_add_feature(feature)
+
+/* === Boolean, Bound, Equal === */
+#define XEN_BOOLEAN_P(Arg)              FTH_BOOLEAN_P(Arg)
+#define XEN_TRUE_P(a)                   FTH_TRUE_P(a)
+#define XEN_FALSE_P(a)                  FTH_FALSE_P(a)
+#define C_TO_XEN_BOOLEAN(a)             BOOL_TO_FTH(a)
+#define XEN_TO_C_BOOLEAN(a)             FTH_TO_BOOL(a)
+
+#define XEN_BOUND_P(Arg)                FTH_BOUND_P(Arg)
+#define XEN_NOT_BOUND_P(Arg)            FTH_NOT_BOUND_P(Arg)
+
+#define XEN_EQ_P(a, b)                  ((a) == (b))
+#define XEN_EQV_P(a, b)                 XEN_EQ_P(a, b)
+#define XEN_EQUAL_P(a, b)               fth_object_equal_p(a, b)
+
+/* === Number === */
+#define XEN_ZERO                        FTH_ZERO
+#define XEN_NUMBER_P(Arg)               FTH_NUMBER_P(Arg)
+#define XEN_EXACT_P(Arg)                FTH_EXACT_P(Arg)
+
+#define XEN_INTEGER_P(Arg)              FTH_INTEGER_P(Arg)
+#define C_TO_XEN_INT(a)                 fth_make_int(a)
+#define XEN_TO_C_INT(a)                 fth_int_ref(a)
+#define XEN_TO_C_INT_OR_ELSE(a, b)      fth_int_ref_or_else(a, b)
+
+#define XEN_ULONG_P(Arg)                FTH_UNSIGNED_P(Arg)
+#define C_TO_XEN_ULONG(a)               fth_make_unsigned((unsigned long)(a))
+#define XEN_TO_C_ULONG(a)               fth_unsigned_ref(a)
+
+#define XEN_OFF_T_P(Arg)                FTH_LONG_LONG_P(Arg)
+#define C_TO_XEN_LONG_LONG(a)           fth_make_long_long(a)
+#define XEN_TO_C_LONG_LONG(a)           fth_long_long_ref(a)
+
+#define XEN_DOUBLE_P(Arg)               FTH_FLOAT_P(Arg)
+#define C_TO_XEN_DOUBLE(a)              fth_make_float(a)
+#define XEN_TO_C_DOUBLE(a)              fth_float_ref(a)
+#define XEN_TO_C_DOUBLE_OR_ELSE(a, b)   fth_float_ref_or_else(a, b)
+
+#if HAVE_SCM_MAKE_COMPLEX || HAVE_SCM_C_MAKE_RECTANGULAR
+# define XEN_COMPLEX_P(Arg)             FTH_COMPLEX_P(Arg)
+# define C_TO_XEN_COMPLEX(a)            fth_make_complex(a)
+# define XEN_TO_C_COMPLEX(a)            fth_complex_ref(a)
+#else
+# define XEN_COMPLEX_P(Arg)             false
+# define C_TO_XEN_COMPLEX(a)            XEN_ZERO
+# define XEN_TO_C_COMPLEX(a)            0.0
+#endif
+
+#if HAVE_SCM_MAKE_RATIO
+# define HAVE_RATIOS                    true
+# define XEN_RATIO_P(Arg)               FTH_RATIO_P(Arg)
+# define XEN_MAKE_RATIO(Num, Den)       fth_make_ratio(Num, Den)
+# define XEN_NUMERATOR(Arg)             fth_numerator(Arg)
+# define XEN_DENOMINATOR(Arg)           fth_denominator(Arg)
+# define XEN_RATIONALIZE(Arg1, Arg2)    fth_rationalize(Arg1, Arg2)
+#endif
+
+/* === String, Symbol, Keyword, Eval === */
+#define XEN_CHAR_P(Arg)                 FTH_CHAR_P(Arg)
+#define C_TO_XEN_CHAR(Arg)              CHAR_TO_FTH(Arg)
+#define XEN_TO_C_CHAR(Arg)              FTH_TO_CHAR(Arg)
+
+#define XEN_STRING_P(Arg)               FTH_STRING_P(Arg)
+#define C_TO_XEN_STRING(str)            fth_make_string(str)
+#define C_TO_XEN_STRINGN(str, len)      fth_make_string_len(str, len)
+#define XEN_TO_C_STRING(Str)            fth_string_ref(Str)
+
+#define XEN_TO_STRING(Obj)              fth_object_to_string(Obj)
+
+#define XEN_SYMBOL_P(Arg)               FTH_SYMBOL_P(Arg)
+#define C_STRING_TO_XEN_SYMBOL(a)       fth_symbol(a)
+#define XEN_SYMBOL_TO_C_STRING(Sym)     fth_symbol_ref(Sym)
+
+#define XEN_KEYWORD_P(Obj)              FTH_KEYWORD_P(Obj)
+#define XEN_MAKE_KEYWORD(arg)           fth_keyword(arg)
+#define XEN_KEYWORD_EQ_P(K1, K2)        XEN_EQ_P(K1, K2)
+
+#define XEN_EVAL_C_STRING(arg)          fth_eval(arg, c__FUNCTION__, __FILE__, __LINE__)
+#define XEN_EVAL_FORM(Form)             XEN_EVAL_C_STRING(XEN_TO_C_STRING(Form))
+#define C_STRING_TO_XEN_FORM(str)       XEN_EVAL_C_STRING(str)
+#define XEN_LOAD_FILE(a)                fth_load_file(a)
+
+/* === Vector (Array) === */
+#define XEN_MAKE_VECTOR(Num, Fill)      fth_make_array_with_init(Num, Fill)
+#define XEN_VECTOR_P(Arg)               FTH_ARRAY_P(Arg)
+#define XEN_VECTOR_LENGTH(Arg)          fth_array_length(Arg)
+#define XEN_VECTOR_TO_LIST(Vect)        fth_array_to_list(Vect)
+#define XEN_VECTOR_REF(Vect, Num)       fth_array_ref(Vect, Num)
+#define XEN_VECTOR_SET(Vect, Num, Val)  fth_array_set(Vect, Num, Val)
+
+/* === List === */
+#define XEN_NULL_P(a)                   FTH_NIL_P(a)
+#define XEN_LIST_P(Arg)                 FTH_LIST_P(Arg)
+#define XEN_CONS_P(Arg)                 FTH_CONS_P(Arg)
+#define XEN_PAIR_P(Arg)                 FTH_PAIR_P(Arg)
+#define XEN_CONS(Arg1, Arg2)            fth_cons(Arg1, Arg2)
+#define XEN_CONS_2(Arg1, Arg2, Arg3)    fth_cons_2(Arg1, Arg2, Arg3)
+#define XEN_LIST_REF(Lst, Num)          fth_list_ref(Lst, Num)
+#define XEN_LIST_SET(Lst, Num, Val)     fth_list_set(Lst, Num, Val)
+#define XEN_LIST_REVERSE(Lst)           fth_list_reverse(Lst)
+#define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = fth_list_length(Arg)) >= 0)
+#define XEN_LIST_LENGTH(Arg)            fth_list_length(Arg)
+#define XEN_LIST_1(a)                   FTH_LIST_1(a)
+#define XEN_LIST_2(a, b)                FTH_LIST_2(a, b)
+#define XEN_LIST_3(a, b, c)             FTH_LIST_3(a, b, c)
+#define XEN_LIST_4(a, b, c, d)          FTH_LIST_4(a, b, c, d)
+#define XEN_LIST_5(a, b, c, d, e)       FTH_LIST_5(a, b, c, d, e)
+#define XEN_LIST_6(a, b, c, d, e, f)    FTH_LIST_6(a, b, c, d, e, f)
+#define XEN_LIST_7(a, b, c, d, e, f, g) FTH_LIST_7(a, b, c, d, e, f, g)
+#define XEN_LIST_8(a, b, c, d, e, f, g, h)    FTH_LIST_8(a, b, c, d, e, f, g, h)
+#define XEN_LIST_9(a, b, c, d, e, f, g, h, i) FTH_LIST_9(a, b, c, d, e, f, g, h, i)
+#define XEN_CAR(a)                      fth_car(a)
+#define XEN_CADR(a)                     FTH_CADR(a)
+#define XEN_CADDR(a)                    FTH_CADDR(a)
+#define XEN_CADDDR(a)                   FTH_CADDDR(a)
+#define XEN_CDR(a)                      fth_cdr(a)
+#define XEN_CDDR(a)                     FTH_CDDR(a)
+#define XEN_COPY_ARG(Lst)               fth_list_copy(Lst)
+#define XEN_APPEND(a, b)                fth_list_append(XEN_LIST_2(a, b))
+#define XEN_ASSOC(Item, Lst)            fth_list_assoc_ref(Lst, Item)
+#define XEN_MEMBER(Item, Lst)           fth_list_member_p(Lst, Item)
+
+/* === Hook, Procedure === */
+#define XEN_HOOK_P(Arg)                 FTH_HOOK_P(Arg)
+#define XEN_HOOKED(a)                   (!fth_hook_empty_p(a))
+#define XEN_DEFINE_HOOK(name, arity, help) fth_make_hook(name, arity, help)
+#define XEN_DEFINE_SIMPLE_HOOK(arity)   fth_make_simple_hook(arity)
+#define XEN_CLEAR_HOOK(Arg)             fth_hook_clear(Arg)
+#define XEN_HOOK_PROCEDURES(Obj)        fth_hook_procedure_list(Obj)
+
+#define XEN_PROCEDURE_P(Arg)            FTH_PROC_P(Arg)
+#define XEN_PROCEDURE_NAME(Func)        C_TO_XEN_STRING(fth_proc_name(Func))
+#define XEN_PROCEDURE_HELP(Name)        fth_documentation_ref(Name)
+#define XEN_PROCEDURE_SOURCE_HELP(Name) XEN_PROCEDURE_HELP(Name)
+#define XEN_PROCEDURE_SOURCE(Func)      fth_proc_source_ref(Func)
+#define XEN_ARITY(Func)                 INT_TO_FIX(XEN_REQUIRED_ARGS(Func))
+#define XEN_REQUIRED_ARGS(Func)         fth_proc_arity(Func)
+#define XEN_REQUIRED_ARGS_OK(Func, args) (XEN_REQUIRED_ARGS(Func) == (args))
+
+#define XEN_CALL_0(Func, Caller)                    fth_proc_call(Func, Caller, 0)
+#define XEN_CALL_1(Func, Arg1, Caller)              fth_proc_call(Func, Caller, 1, Arg1)
+#define XEN_CALL_2(Func, Arg1, Arg2, Caller)        fth_proc_call(Func, Caller, 2, Arg1, Arg2)
+#define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller)  fth_proc_call(Func, Caller, 3, Arg1, Arg2, Arg3)
+#define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller) \
+  fth_proc_call(Func, Caller, 4, Arg1, Arg2, Arg3, Arg4)
+#define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) \
+  fth_proc_call(Func, Caller, 5, Arg1, Arg2, Arg3, Arg4, Arg5)
+#define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) \
+  fth_proc_call(Func, Caller, 6, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
+#define XEN_APPLY(Func, Args, Caller)               fth_proc_apply(Func, Args, Caller)
+#define XEN_APPLY_ARG_LIST_END                      XEN_EMPTY_LIST
+#define XEN_CALL_0_NO_CATCH(Func)                   XEN_CALL_0(Func, NULL)
+#define XEN_CALL_1_NO_CATCH(Func, Arg1)             XEN_CALL_1(Func, Arg1, NULL)
+#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)       XEN_CALL_2(Func, Arg1, Arg2, NULL)
+#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3) XEN_CALL_3(Func, Arg1, Arg2, Arg3, NULL)
+#define XEN_APPLY_NO_CATCH(Func, Args)              XEN_APPLY(Func, Args, NULL)
+
+/* === Define === */
+#define XEN_DEFINE(name, Value)                fth_define(name, Value)
+#define XEN_DEFINE_CONSTANT(name, Value, help) fth_define_constant(name, Value, help)
+#define XEN_DEFINE_VARIABLE(name, Var, Value)  (Var = fth_define_variable(name, Value, NULL))
+#define XEN_VARIABLE_SET(name, Value)          fth_variable_set((char *)(name), Value)
+#define XEN_VARIABLE_REF(name)                 fth_variable_ref((char *)(name))
+#define XEN_NAME_AS_C_STRING_TO_VARIABLE(name) fth_word_ref((char *)(name))
+#define XEN_NAME_AS_C_STRING_TO_VALUE(name)    XEN_VARIABLE_REF(name)
+
+#ifdef __cplusplus
+# define XEN_PROCEDURE_CAST (XEN (*)())
+#else
+# define XEN_PROCEDURE_CAST
+#endif
+
+#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+  do { \
+    fth_current_file = __FILE__; \
+    fth_current_line = __LINE__; \
+    fth_define_procedure(Name, XEN_PROCEDURE_CAST Func, ReqArg, OptArg, RstArg, Doc); \
+  } while (0)
+
+#define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  do { \
+    XEN_DEFINE_PROCEDURE(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
+    XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
+  } while (0)
+
+#define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
+
+/* === Object === */
+#define XEN_OBJECT_TYPE                 FTH
+#define XEN_MARK_OBJECT_TYPE            void
+
+#define XEN_MAKE_OBJECT(Var, Tag, Val, Mark, Free)       ((Var) = fth_make_instance(Tag, Val))
+#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Mark, Free) return(fth_make_instance(Tag, Val))
+
+#define XEN_OBJECT_TYPE_P(Obj, Tag)     fth_object_is_instance_of(Obj, Tag)
+#define XEN_OBJECT_REF(Obj)             fth_instance_ref_gen(Obj)
+#define XEN_MAKE_OBJECT_TYPE(Typ, Siz)  fth_make_object_type(Typ)
+#define XEN_OBJECT_HELP(Name)           fth_documentation_ref(Name)
+
+#define XEN_WRAPPED_C_POINTER_P(a)      XEN_ULONG_P(a)
+#define XEN_WRAP_C_POINTER(a)           C_TO_XEN_ULONG((unsigned long)(a))
+#define XEN_UNWRAP_C_POINTER(a)         XEN_TO_C_ULONG(a)
+#define XEN_PROTECT_FROM_GC(Obj)        fth_gc_protect(Obj)
+#define XEN_UNPROTECT_FROM_GC(Obj)      fth_gc_unprotect(Obj)
+
+#define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) \
+  static XEN Wrapped_Print(XEN obj) \
+  { \
+    char * str = Original_Print((Type *)XEN_OBJECT_REF(obj)); \
+    XEN val = C_TO_XEN_STRING(str); \
+    FREE(str); \
+    return val; \
+  }
+
+#define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
+  static void Wrapped_Free(XEN obj) \
+  { \
+    Original_Free((Type *)XEN_OBJECT_REF(obj)); \
+  } 
+
+/* === Error === */
+#define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
+  FTH_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
+#define XEN_ERROR_TYPE(Typ)             fth_exception(Typ)
+
+#define XEN_ERROR(Type, Info)           fth_throw_list(Type, Info)
+#define XEN_THROW(Type, Info)           XEN_ERROR(Type, Info)
+
+#define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr) \
+  FTH_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr)
+#define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
+  FTH_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr)
+
+typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
+
+#endif /* end HAVE_FORTH */
+
+
+
 /* ------------------------------ NO EXTENSION LANGUAGE ------------------------------ */
 
 #ifndef XEN_OK

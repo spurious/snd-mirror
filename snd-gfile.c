@@ -2952,6 +2952,9 @@ void save_file_dialog_state(FILE *fd)
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_open_file_dialog));
 #endif
+#if HAVE_FORTH
+      fprintf(fd, "#t %s drop\n", S_open_file_dialog);
+#endif
     }
   if ((mdat) && (GTK_WIDGET_VISIBLE(mdat->fs->dialog)))
     {
@@ -2960,6 +2963,9 @@ void save_file_dialog_state(FILE *fd)
 #endif
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_mix_file_dialog));
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "#t %s drop\n", S_mix_file_dialog);
 #endif
     }
   if ((idat) && (GTK_WIDGET_VISIBLE(idat->fs->dialog)))
@@ -2970,6 +2976,9 @@ void save_file_dialog_state(FILE *fd)
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_insert_file_dialog));
 #endif
+#if HAVE_FORTH
+      fprintf(fd, "#t %s drop\n", S_insert_file_dialog);
+#endif
     }
   if ((save_sound_as) && (GTK_WIDGET_VISIBLE(save_sound_as->fs->dialog)))
     {
@@ -2978,6 +2987,9 @@ void save_file_dialog_state(FILE *fd)
 #endif
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_sound_dialog));
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "#t %s drop\n", S_save_sound_dialog);
 #endif
     }
   if ((save_selection_as) && (GTK_WIDGET_VISIBLE(save_selection_as->fs->dialog)))
@@ -2988,6 +3000,9 @@ void save_file_dialog_state(FILE *fd)
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_selection_dialog));
 #endif
+#if HAVE_FORTH
+      fprintf(fd, "#t %s drop\n", S_save_selection_dialog);
+#endif
     }
   if ((save_region_as) && (GTK_WIDGET_VISIBLE(save_region_as->fs->dialog)))
     {
@@ -2996,6 +3011,9 @@ void save_file_dialog_state(FILE *fd)
 #endif
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_region_dialog));
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "#t %s drop\n", S_save_region_dialog);
 #endif
     }
 }
@@ -3906,6 +3924,9 @@ void save_edit_header_dialog_state(FILE *fd)
 #if HAVE_RUBY
 	    fprintf(fd, "%s(%s(\"%s\"))\n", TO_PROC_NAME(S_edit_header_dialog), TO_PROC_NAME(S_find_sound), ep->sp->short_filename);
 #endif
+#if HAVE_FORTH
+	    fprintf(fd, "$\" %s\" %s %s drop\n", ep->sp->short_filename, S_find_sound, S_edit_header_dialog);
+#endif
 	  }
       }
 }
@@ -3976,6 +3997,9 @@ void save_post_it_dialog_state(FILE *fd)
 #endif
 #if HAVE_RUBY
       fprintf(fd, "%s(\"%s\", \"%s\")\n", TO_PROC_NAME(S_info_dialog), subject, text);
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "$\" %s\" $\" %s\" %s drop\n", subject, text, S_info_dialog);
 #endif
       if (text) g_free(text);
     }
@@ -5240,6 +5264,19 @@ See also nb.scm."
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
 The 'type' is 1 for view-files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'."
+#endif
+#if HAVE_FORTH
+  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
+The 'type' is 1 for view-files, and 2 for regions. The 'position' \
+is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
+to popup file info as follows: \n\
+" S_mouse_enter_label_hook " lambda: { type position name }\n\
+  type 2 <> if\n\
+    name name finfo info-dialog\n\
+  else\n\
+    #f\n\
+  then\n\
+; 3 make-proc add-hook!"
 #endif
 
   #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label): called when the mouse leaves a file viewer or region label"

@@ -145,10 +145,46 @@ static int completions(char *text)
 
 #endif
 
+#if HAVE_FORTH
+
+static int completions(char *text)
+{
+  XEN tab = fth_find_in_wordlist(text);
+  int i, len, matches = XEN_VECTOR_LENGTH(tab);
+  for (i = 0; i < matches; i++)
+    {
+      char *sym = XEN_TO_C_STRING(XEN_VECTOR_REF(tab, i));
+      add_possible_completion(sym);
+      if (current_match == NULL)
+	current_match = copy_string(sym);
+      else 
+	{
+	  int j, curlen;
+	  curlen = snd_strlen(current_match);
+	  for (j = 0; j < curlen; j++)
+	    if (current_match[j] != sym[j])
+	      {
+		current_match[j] = '\0';
+		break;
+	      }
+	}
+    }
+  return(matches);
+}
+
+#endif
+
 #if (!HAVE_EXTENSION_LANGUAGE)
 static int completions(char *text) {return(0);}
 #endif
 
+#if HAVE_FORTH
+bool separator_char_p(char c)
+{
+  /* only space is separator */
+  return(!(isgraph((int)c)));
+}
+#else
 bool separator_char_p(char c)
 {
   return((!(isalpha((int)c))) &&
@@ -173,6 +209,7 @@ bool separator_char_p(char c)
 #endif
 	 (c != '$'));
 }
+#endif
 
 char *command_completer(char *original_text, void *data)
 {

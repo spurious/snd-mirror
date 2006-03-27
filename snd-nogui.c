@@ -585,6 +585,104 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("Time_graph = 0");
   XEN_EVAL_C_STRING("Transform_graph = 1");
 #endif
+#if HAVE_FORTH
+  XEN_EVAL_C_STRING("\
+0 #f create-hook " S_color_hook "\n\
+1 #f create-hook " S_drop_hook "\n\
+1 #f create-hook " S_listener_click_hook "\n\
+2 #f create-hook " S_mouse_enter_graph_hook "\n\
+3 #f create-hook " S_mouse_enter_label_hook "\n\
+1 #f create-hook " S_mouse_enter_listener_hook "\n\
+1 #f create-hook " S_mouse_enter_text_hook "\n\
+2 #f create-hook " S_mouse_leave_graph_hook "\n\
+3 #f create-hook " S_mouse_leave_label_hook "\n\
+1 #f create-hook " S_mouse_leave_listener_hook "\n\
+1 #f create-hook " S_mouse_leave_text_hook "\n\
+1 #f create-hook " S_new_widget_hook "\n\
+0 #f create-hook " S_orientation_hook "\n\
+1 #f create-hook " S_recorder_file_hook "\n\
+1 #f create-hook " S_window_property_changed_hook "\n");
+
+  XEN_EVAL_C_STRING("\
+0 constant " S_copy_context "\n\
+3 constant " S_cursor_context "\n\
+2 constant " S_lisp_graph "\n\
+4 constant " S_mark_context "\n\
+2 constant " S_selection_context "\n\
+0 constant " S_time_graph "\n\
+1 constant " S_transform_graph "\n");
+
+  XEN_EVAL_C_STRING("\
+: " S_basic_color " #f ;\n\
+: set-" S_basic_color " { a } #f ;\n\
+: " S_colormap " #f ;\n\
+: set-" S_colormap " { a } #f ;\n\
+: " S_colormap_size " #f ;\n\
+: set-" S_colormap_size " { a } #f ;\n\
+: " S_cursor_color " #f ;\n\
+: set-" S_cursor_color " { a } #f ;\n\
+: " S_data_color " #f ;\n\
+: set-" S_data_color " { a } #f ;\n\
+: " S_enved_envelope " #f ;\n\
+: set-" S_enved_envelope " { a } #f ;\n\
+: " S_enved_filter " #f ;\n\
+: set-" S_enved_filter " { a } #f ;\n\
+: " S_enved_waveform_color " #f ;\n\
+: set-" S_enved_waveform_color " { a } #f ;\n\
+: " S_filter_control_waveform_color " #f ;\n\
+: set-" S_filter_control_waveform_color " { a } #f ;\n\
+: " S_graph_color " #f ;\n\
+: set-" S_graph_color " { a } #f ;\n\
+: " S_graph_cursor " #f ;\n\
+: set-" S_graph_cursor " { a } #f ;\n\
+: " S_highlight_color " #f ;\n\
+: set-" S_highlight_color " { a } #f ;\n\
+: " S_listener_color " #f ;\n\
+: set-" S_listener_color " { a } #f ;\n\
+: " S_listener_text_color " #f ;\n\
+: set-" S_listener_text_color " { a } #f ;\n\
+: " S_mark_color " #f ;\n\
+: set-" S_mark_color " { a } #f ;\n\
+: " S_position_color " #f ;\n\
+: set-" S_position_color " { a } #f ;\n\
+: " S_pushed_button_color " #f ;\n\
+: set-" S_pushed_button_color " { a } #f ;\n\
+: " S_sash_color " #f ;\n\
+: set-" S_sash_color " { a } #f ;\n\
+: " S_selected_data_color " #f ;\n\
+: set-" S_selected_data_color " { a } #f ;\n\
+: " S_selected_graph_color " #f ;\n\
+: set-" S_selected_graph_color " { a } #f ;\n\
+: " S_selection_color " #f ;\n\
+: set-" S_selection_color " { a } #f ;\n\
+: " S_text_focus_color " #f ;\n\
+: set-" S_text_focus_color " { a } #f ;\n\
+: " S_x_axis_label " #f ;\n\
+: set-" S_x_axis_label " { a } #f ;\n\
+: " S_y_axis_label " #f ;\n\
+: set-" S_y_axis_label " { a } #f ;\n\
+: " S_zoom_color " #f ;\n\
+: set-" S_zoom_color " { a } #f ;\n\
+: " S_axis_info " { s c a } #f ;\n\
+: " S_channel_widgets " { s c } #f ;\n\
+: " S_color_p " { a } #f ;\n\
+: " S_color_to_list " { a } #f ;\n\
+: " S_colormap_p " { a } #f ;\n\
+: " S_current_font " #f ;\n\
+: " S_dialog_widgets " #f ;\n\
+: " S_graph_data " { a b c } #f ;\n\
+: " S_in " { a b } #f ;\n\
+: " S_main_widgets " { s } #f ;\n\
+: " S_make_color " { r g b } #f ;\n\
+: " S_make_graph_data " { a b c } #f ;\n\
+: " S_menu_widgets " { s } #f ;\n\
+: " S_reset_listener_cursor " #f ;\n\
+: " S_send_mozilla " { a } #f ;\n\
+: " S_sound_widgets " { s } #f ;\n\
+: " S_view_regions_dialog " #f ;\n\
+: " S_widget_text " { a } #f ;\n\
+: " S_goto_listener_end " #f ;\n");
+#endif
 
   set_peaks_font(FALLBACK_FONT);
   set_tiny_font(FALLBACK_FONT);

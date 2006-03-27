@@ -7,11 +7,11 @@ even run on others if the GUI support is omitted.
 
 To build Snd, get the sources from
 
-  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz
 
-  gzip -d snd-7.tar.gz
-  tar xf snd-7.tar
-  cd snd-7
+  gzip -d snd-8.tar.gz
+  tar xf snd-8.tar
+  cd snd-8
   ./configure
   make
   make install
@@ -74,8 +74,10 @@ The configure program has several Snd-related arguments:
    --with-guile              use Guile, not Ruby (the default); the path to guile-config
                                can be set via GUILE_CONFIG_path (see examples below).
 
+   --with-forth              use Forth (FTH) has the extension language.
+
 			     To build Snd without any extension language, use
-			     --without-ruby --without-guile
+			     --without-ruby --without-guile --without-forth
 
      --with-hobbit           include hobbit-style function arity checking
 
@@ -125,7 +127,7 @@ Version info:
 
 ----------------------------------------------------------------
 
-The customization/extension languages are either Guile or Ruby.
+The customization/extension languages are either Guile, Ruby, or Forth.
 
 Much of Snd's functionality is loaded as needed from the Scheme or Ruby
 files found in the tarball (*.scm and *.rb).  You can run Snd without 
@@ -272,7 +274,7 @@ CCRMA:
   http://ccrma-mail.stanford.edu/mailman/listinfo/planetccrma
 
 Snd:
-  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz
   http://ccrma.stanford.edu/software/snd/
   http://sourceforge.net/projects/snd/
   http://www.notam02.no/arkiv/doc/snd-rt/
@@ -294,6 +296,9 @@ Guile/Scheme:
   http://www.swiss.ai.mit.edu/~jaffer/SLIB.html
   http://mitpress.mit.edu/sicp/full-text/book/book.html
   http://cvs.zeit.de/guile-hobbit-latest.tar.gz (Hobbit for Guile 1.6.4)
+
+Forth:
+  http://sourceforge.net/projects/fth
 
 Motif:
   http://www.motifzone.net

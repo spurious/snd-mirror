@@ -254,9 +254,14 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
   if (sc == NULL) return(NULL);
   si = sc->si;
 
+#if HAVE_FORTH
+  origin = mus_format("$\" %s\" %.3f %s", 
+		      filename, amp,  (cp == NULL) ? S_convolve_selection_with : S_convolve_with);
+#else
   origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP "%.3f", 
 	       TO_PROC_NAME((cp == NULL) ? S_convolve_selection_with : S_convolve_with), 
 	       filename, amp);
+#endif
   if (!(ss->stopped_explicitly))
     {
       /* SOMEDAY: convolve could probably be threaded */
@@ -582,13 +587,21 @@ bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool over
 	    {
 	      beg = selection_beg(ncp);
 	      frames = selection_end(ncp) - beg + 1;
+#if HAVE_FORTH
+	      origin = mus_format("%.3f" PROC_SEP OFF_TD PROC_SEP OFF_TD " %s", norm, beg, frames, S_normalize_channel);
+#else
 	      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_normalize_channel), norm, beg, frames);
+#endif
 	    }
 	  else
 	    {
 	      beg = 0;
 	      frames = CURRENT_SAMPLES(ncp);
+#if HAVE_FORTH
+	      origin = mus_format("%.3f 0 " PROC_FALSE " %s", norm, S_normalize_channel);
+#else
 	      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "0" PROC_SEP PROC_FALSE, TO_PROC_NAME(S_normalize_channel), norm);
+#endif
 	    }
 	  scale_channel_with_origin(ncp, scalers[i], beg, frames, ncp->edit_ctr, NOT_IN_AS_ONE_EDIT, origin);
 	  if (origin) FREE(origin);
@@ -989,9 +1002,15 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
       /* egen null -> use ratio, else env, if dur=samples #f */
       if (egen == NULL)
 	{
+#if HAVE_FORTH
+	  if (dur == CURRENT_SAMPLES(cp))
+	    new_origin = mus_format("%.4f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE " %s", ratio, beg, S_src_channel);
+	  else new_origin = mus_format("%.4f" PROC_SEP OFF_TD PROC_SEP OFF_TD " %s", ratio, beg, dur, S_src_channel);
+#else
 	  if (dur == CURRENT_SAMPLES(cp))
 	    new_origin = mus_format("%s" PROC_OPEN "%.4f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, TO_PROC_NAME(S_src_channel), ratio, beg);
 	  else new_origin = mus_format("%s" PROC_OPEN "%.4f" PROC_SEP OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_src_channel), ratio, beg, dur);
+#endif
 	}
       else
 	{
@@ -1001,6 +1020,15 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	  base = mus_increment(egen);
 	  newe = make_envelope_with_offset_and_scaler(mus_data(egen), mus_env_breakpoints(egen) * 2, mus_offset(egen), mus_scaler(egen));
 	  envstr = env_to_string(newe);
+#if HAVE_FORTH
+	  if (base == 1.0)
+	    {
+	      if (dur == CURRENT_SAMPLES(cp))
+		new_origin = mus_format("%s" PROC_SEP OFF_TD PROC_SEP PROC_FALSE " %s", envstr, beg, S_src_channel);
+	      else new_origin = mus_format("%s" PROC_SEP OFF_TD PROC_SEP OFF_TD " %s", envstr, beg, dur, S_src_channel);
+	    }
+	  else new_origin = mus_format("%s :base %.4f :end " OFF_TD " %s " OFF_TD PROC_SEP OFF_TD " %s", envstr, base, dur, S_make_env, beg, dur, S_src_channel);
+#else
 	  if (base == 1.0)
 	    {
 	      if (dur == CURRENT_SAMPLES(cp))
@@ -1009,6 +1037,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	    }
 	  else new_origin = mus_format("%s" PROC_OPEN BPAREN "%s" PROC_OPEN "%s" PROC_SEP ":base" PROC_SEP "%.4f" PROC_SEP ":end" PROC_SEP OFF_TD ")" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
 				       TO_PROC_NAME(S_make_env), TO_PROC_NAME(S_src_channel), envstr, base, dur, beg, dur);
+#endif
 	  if (envstr) FREE(envstr);
 	  free_env(newe);
 	}
@@ -1692,11 +1721,17 @@ static void *pfilter_direct_run(void *context)
 	  v->length = order;
 	  v->data = arg->precalculated_coeffs;
 	  vstr = vct_to_readable_string(v);
+#if HAVE_FORTH
+	  if (arg->dur == (order + CURRENT_SAMPLES(cp)))
+	    arg->new_origin = mus_format("%s %d " OFF_TD PROC_SEP PROC_FALSE " %s", vstr, order, beg, S_filter_channel);
+	  else arg->new_origin = mus_format("%s %d " OFF_TD PROC_SEP OFF_TD " %s", vstr, order, beg, arg->dur, S_filter_channel);
+#else
 	  if (arg->dur == (order + CURRENT_SAMPLES(cp)))
 	    arg->new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
 				    TO_PROC_NAME(S_filter_channel), vstr, order, beg);
 	  else arg->new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
 				       TO_PROC_NAME(S_filter_channel), vstr, order, beg, arg->dur);
+#endif
 	  if (vstr) FREE(vstr);
 	  FREE(v); /* not c_free_vct because we don't own the data array */
 	}
@@ -1705,11 +1740,17 @@ static void *pfilter_direct_run(void *context)
 	  /* new_origin = filter-channel + envelope */
 	  char *envstr;
 	  envstr = env_to_string(arg->e);
+#if HAVE_FORTH
+	  if (arg->dur == (order + CURRENT_SAMPLES(cp)))
+	    arg->new_origin = mus_format("%s %d " OFF_TD PROC_SEP PROC_FALSE " %s", envstr, order, beg, S_filter_channel);
+	  else arg->new_origin = mus_format("%s %d " OFF_TD PROC_SEP OFF_TD " %s", envstr, order, beg, arg->dur, S_filter_channel);
+#else
 	  if (arg->dur == (order + CURRENT_SAMPLES(cp)))
 	    arg->new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
 				    TO_PROC_NAME(S_filter_channel), envstr, order, beg);
 	  else arg->new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
 				       TO_PROC_NAME(S_filter_channel), envstr, order, beg, arg->dur);
+#endif
 	  if (envstr) FREE(envstr);
 	}
     }
@@ -1920,11 +1961,17 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
 	  v->length = order;
 	  v->data = precalculated_coeffs;
 	  vstr = vct_to_readable_string(v);
+#if HAVE_FORTH
+	  if (dur == (order + CURRENT_SAMPLES(cp)))
+	    new_origin = mus_format("%s %d " OFF_TD PROC_SEP PROC_FALSE " %s", vstr, order, beg, S_filter_channel);
+	  else new_origin = mus_format("%s %d " OFF_TD PROC_SEP OFF_TD " %s", vstr, order, beg, dur, S_filter_channel);
+#else
 	  if (dur == (order + CURRENT_SAMPLES(cp)))
 	    new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
 				    TO_PROC_NAME(S_filter_channel), vstr, order, beg);
 	  else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
 				       TO_PROC_NAME(S_filter_channel), vstr, order, beg, dur);
+#endif
 	  if (vstr) FREE(vstr);
 	  FREE(v); /* not c_free_vct because we don't own the data array */
 	}
@@ -1933,11 +1980,17 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
 	  /* new_origin = filter-channel + envelope */
 	  char *envstr;
 	  envstr = env_to_string(e);
+#if HAVE_FORTH
+	  if (dur == (order + CURRENT_SAMPLES(cp)))
+	    new_origin = mus_format("%s %d " OFF_TD PROC_SEP PROC_FALSE " %s", envstr, order, beg, S_filter_channel);
+	  else new_origin = mus_format("%s %d " OFF_TD PROC_SEP OFF_TD " %s", envstr, order, beg, dur, S_filter_channel);
+#else
 	  if (dur == (order + CURRENT_SAMPLES(cp)))
 	    new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
 				    TO_PROC_NAME(S_filter_channel), envstr, order, beg);
 	  else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
 				       TO_PROC_NAME(S_filter_channel), envstr, order, beg, dur);
+#endif
 	  if (envstr) FREE(envstr);
 	}
     }
@@ -2247,9 +2300,15 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   idata = data[0];
+#if HAVE_FORTH
+  if (dur == cp->samples[edpos])
+    origin = mus_format(OFF_TD PROC_SEP PROC_FALSE " %s", beg, S_reverse_channel);
+  else origin = mus_format(OFF_TD PROC_SEP OFF_TD " %s", beg, dur, S_reverse_channel);
+#else
   if (dur == cp->samples[edpos])
     origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP PROC_FALSE, TO_PROC_NAME(S_reverse_channel), beg);
   else origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_reverse_channel), beg, dur);
+#endif
   if (temp_file)
     {
       j = 0;
@@ -2359,17 +2418,29 @@ static char *edit_list_envelope(mus_any *egen, off_t beg, off_t env_dur, off_t c
   if (((env_dur == chan_dur) || (env_dur == (chan_dur - 1))) &&
       (called_dur == chan_dur))
     {
+#if HAVE_FORTH
+      if (base == 1.0)
+	new_origin = mus_format("%s " OFF_TD PROC_SEP PROC_FALSE " %s", envstr, beg, S_env_channel);
+      else new_origin = mus_format("%s %.4f " OFF_TD PROC_SEP PROC_FALSE " %s", 
+				   envstr, base, beg, S_env_channel_with_base);
+#else
       if (base == 1.0)
 	new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
 				TO_PROC_NAME(S_env_channel), envstr, beg);
       else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%.4f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
 				   TO_PROC_NAME(S_env_channel_with_base), envstr, base, beg);
+#endif
     }
   else 
     {
       /* env dur was apparently not chan dur, or called dur was not full sound? */
+#if HAVE_FORTH
+      new_origin = mus_format("%s :base %.4f :end " OFF_TD " %s " OFF_TD PROC_SEP OFF_TD " %s",
+			      envstr, base, env_dur, S_make_env, beg, called_dur, S_env_channel);
+#else
       new_origin = mus_format("%s" PROC_OPEN BPAREN "%s" PROC_OPEN "%s" PROC_SEP ":base" PROC_SEP "%.4f" PROC_SEP ":end" PROC_SEP OFF_TD ")" PROC_SEP OFF_TD PROC_SEP OFF_TD,
 			      TO_PROC_NAME(S_env_channel), TO_PROC_NAME(S_make_env), envstr, base, env_dur, beg, called_dur);
+#endif
     }
   if (envstr) FREE(envstr);
   free_env(newe);
@@ -2980,7 +3051,11 @@ static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos)
   data = (mus_sample_t *)CALLOC(dur, sizeof(mus_sample_t));
   for (k = 0; k < dur; k++, angle += incr) 
     data[k] = MUS_FLOAT_TO_SAMPLE(off + scale * cos(angle));
+#if HAVE_FORTH
+  origin = mus_format(OFF_TD PROC_SEP OFF_TD " %s", beg, dur, S_smooth_channel);
+#else
   origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_smooth_channel), beg, dur);
+#endif
   change_samples(beg, dur, data, cp, LOCK_MIXES, origin, cp->edit_ctr);
   if (origin) FREE(origin);
   update_graph(cp);
@@ -3651,14 +3726,14 @@ the current sample, the vct returned by 'init-func', and the current read direct
   char *caller = NULL;
   off_t beg = 0, dur = 0;
   int pos;
-#if (!HAVE_RUBY)
+#if (!HAVE_RUBY && !HAVE_FORTH)
   bool ptrees_present = false;
   struct ptree *pt = NULL;
 #endif
   XEN proc = XEN_FALSE;
   /* (ptree-channel (lambda (y) (* y 2))) -> ((lambda (y) (* y 2)) #<procedure #f ((y) (* y 2))>) as "proc_and_list" */
   /*   the cadr proc gives access to the environment, run walks the car */
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
   proc = proc_and_list;
 #endif
 #if HAVE_SCHEME
@@ -3692,7 +3767,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
 			 s_beg));
   dur = dur_to_samples(s_dur, beg, cp, pos, 3, S_ptree_channel);
   if (dur <= 0) return(XEN_FALSE);
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
   if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
   g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
   if (caller) {FREE(caller); caller = NULL;}
@@ -5156,9 +5231,16 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 	  if ((!origin) && (v->length < 16))
 	    {
 	      estr = vct_to_readable_string(v);
+#if HAVE_FORTH
+	      new_origin = mus_format("%s %d%s %s", 
+				      estr, len, 
+				      (over_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE,
+				      caller);
+#else
 	      new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d%s", 
 				      TO_PROC_NAME(caller), estr, len, 
 				      (over_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
+#endif
 	    }
 	  else new_origin = copy_string(origin);
 	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, caller, new_origin, over_selection, v->data, NULL, edpos, 5, truncate);
@@ -5174,8 +5256,15 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 	  if (!origin)
 	    {
 	      estr = env_to_string(ne);
+#if HAVE_FORTH
+	      new_origin = mus_format("%s %d%s %s", 
+				      estr, len,
+				      (over_selection) ? "" : " 0 " PROC_FALSE,
+				      caller);
+#else
 	      new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d%s", 
 				      TO_PROC_NAME(caller), estr, len, (over_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
+#endif
 	    }
 	  else new_origin = copy_string(origin);
 	  if (len == 0) len = ne->pts * 4;

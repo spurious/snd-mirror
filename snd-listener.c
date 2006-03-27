@@ -344,7 +344,7 @@ void command_return(widget_t w, int last_prompt)
   int i, j, prompt_length = 1;
   XEN form = XEN_UNDEFINED;
   GUI_TEXT_POSITION_TYPE end_of_text = 0, start_of_text = 0, last_position = 0, current_position = 0;
-#if (!HAVE_RUBY)
+#if (!HAVE_RUBY && !HAVE_FORTH)
   int parens;
 #endif
   full_str = GUI_TEXT(w);
@@ -382,7 +382,7 @@ void command_return(widget_t w, int last_prompt)
    *   tries to ignore comments).
    */
   str = NULL;
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
   {
     int k, len, start, full_len;
     for (i = current_position - 1; i >= 0; i--)
@@ -679,7 +679,7 @@ If it returns #t, Snd assumes you've dealt the text yourself, and does not try t
     (reset-hook! " S_read_hook ") \n\
     res))"
 #endif
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
   #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns true, Snd assumes you've dealt the text yourself, and does not try to evaluate it."
 #endif

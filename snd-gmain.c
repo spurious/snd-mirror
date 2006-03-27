@@ -300,6 +300,14 @@ static void save_a_color(FILE *Fp, const char *def_name, GdkColor *current_color
       if ((current_color->red != default_color.red) ||
 	  (current_color->green != default_color.green) ||
 	  (current_color->blue != default_color.blue))
+#if HAVE_FORTH
+	fprintf(Fp, "%.3f %.3f %.3f %s set-%s drop\n", 
+		(float)current_color->red / 65535.0,
+		(float)current_color->green / 65535.0,
+		(float)current_color->blue / 65535.0,
+		S_make_color,
+		ext_name); 
+#else
 #if HAVE_SCHEME
 	fprintf(Fp, "(set! (%s) (%s %.3f %.3f %.3f))\n", 
 #endif
@@ -311,6 +319,7 @@ static void save_a_color(FILE *Fp, const char *def_name, GdkColor *current_color
 		(float)current_color->red / 65535.0,
 		(float)current_color->green / 65535.0,
 		(float)current_color->blue / 65535.0);
+#endif
     }
 #endif
 }

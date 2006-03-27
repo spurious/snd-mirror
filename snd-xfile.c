@@ -3283,6 +3283,9 @@ void save_file_dialog_state(FILE *fd)
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_open_file_dialog));
 #endif
+#if HAVE_FORTH
+      fprintf(fd, "#t %s drop\n", S_open_file_dialog);
+#endif
     }
   if ((mdat) && (XtIsManaged(mdat->dialog)))
     {
@@ -3291,6 +3294,9 @@ void save_file_dialog_state(FILE *fd)
 #endif
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_mix_file_dialog));
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "#t %s drop\n", S_mix_file_dialog);
 #endif
     }
   if ((idat) && (XtIsManaged(idat->dialog)))
@@ -3301,6 +3307,9 @@ void save_file_dialog_state(FILE *fd)
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_insert_file_dialog));
 #endif
+#if HAVE_FORTH
+      fprintf(fd, "#t %s drop\n", S_insert_file_dialog);
+#endif
     }
   if ((save_sound_as) && (XtIsManaged(save_sound_as->dialog)))
     {
@@ -3309,6 +3318,9 @@ void save_file_dialog_state(FILE *fd)
 #endif
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_sound_dialog));
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "#t %s drop\n", S_save_sound_dialog);
 #endif
     }
   if ((save_selection_as) && (XtIsManaged(save_selection_as->dialog)))
@@ -3319,6 +3331,9 @@ void save_file_dialog_state(FILE *fd)
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_selection_dialog));
 #endif
+#if HAVE_FORTH
+      fprintf(fd, "#t %s drop\n", S_save_selection_dialog);
+#endif
     }
   if ((save_region_as) && (XtIsManaged(save_region_as->dialog)))
     {
@@ -3327,6 +3342,9 @@ void save_file_dialog_state(FILE *fd)
 #endif
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_region_dialog));
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "#t %s drop\n", S_save_region_dialog);
 #endif
     }
 }
@@ -4070,6 +4088,9 @@ void save_edit_header_dialog_state(FILE *fd)
 #if HAVE_RUBY
 	    fprintf(fd, "%s(%s(\"%s\"))\n", TO_PROC_NAME(S_edit_header_dialog), TO_PROC_NAME(S_find_sound), ep->sp->short_filename);
 #endif
+#if HAVE_FORTH
+	    fprintf(fd, "$\" %s\" %s %s drop\n", ep->sp->short_filename, S_find_sound, S_edit_header_dialog);
+#endif
 	    break;
 	  }
     }
@@ -4507,6 +4528,9 @@ void save_post_it_dialog_state(FILE *fd)
 #endif
 #if HAVE_RUBY
       fprintf(fd, "%s(\"%s\", \"%s\")\n", TO_PROC_NAME(S_info_dialog), subject, text);
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "$\" %s\" \"%s\" %s drop\n", subject, text, S_info_dialog);
 #endif
       if (subject) XtFree(subject);
       if (text) XtFree(text);

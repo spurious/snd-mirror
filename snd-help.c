@@ -192,6 +192,15 @@ static char *xm_version(void)
     #endif
   #endif
 #endif
+#if HAVE_FORTH
+  #if USE_MOTIF
+      xm_val = XEN_VARIABLE_REF("xm-version");
+  #else
+    #if USE_GTK
+      xm_val = XEN_VARIABLE_REF("xg-version");
+    #endif
+  #endif
+#endif
   if (XEN_STRING_P(xm_val))
     {
       char *version = NULL;
@@ -225,6 +234,10 @@ static char *gl_version(void)
 #if HAVE_RUBY
   if (rb_const_defined(rb_cObject, rb_intern("Gl_Version")))
     gl_val = XEN_EVAL_C_STRING("Gl_Version");
+#endif
+#if HAVE_FORTH
+  if (fth_provided_p("gl"))
+    gl_val = XEN_VARIABLE_REF("gl-version");
 #endif
   if (XEN_STRING_P(gl_val))
     {
@@ -465,13 +478,19 @@ char *version_info(void)
 void about_snd_help(void)
 {
   char *info = NULL, *features = NULL;
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_FORTH
   char *files = NULL;
+#endif
+#if HAVE_GUILE
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400);
   files = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*snd-loaded-files*")), 400);
 #endif
 #if HAVE_RUBY
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("$\".join(' ')")), 400);
+#endif
+#if HAVE_FORTH
+  features = word_wrap(XEN_AS_STRING(XEN_VARIABLE_REF("*features*")), 400);
+  files = word_wrap(XEN_AS_STRING(XEN_VARIABLE_REF("*loaded-files*")), 400);
 #endif
   info = version_info();
   main_snd_help("Snd is a sound editor.",
@@ -503,14 +522,19 @@ void about_snd_help(void)
   #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",
   #else
+    #if HAVE_FORTH    
+	    "\n    *features*:\n", features, "\n\n",
+            "\n    *loaded-files*:\n", files, "\n\n",
+    #else
 	    "\n",
+    #endif
   #endif
 #endif
 	    "Please send bug reports or suggestions to bil@ccrma.stanford.edu.",
 NULL);
   if (info) FREE(info);
   if (features) FREE(features);
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_FORTH
   if (files) FREE(files);
 #endif
 }
@@ -1945,6 +1969,12 @@ static char *snd_finder(const char *name, bool got_help)
   extern VALUE rb_load_path;
   dirs = rb_load_path;
 #endif
+#if HAVE_FORTH
+  #define NUM_DEFINES 3
+  #define TRAILER ""
+  char *defines[NUM_DEFINES] = {": ", "instrument: ", "event: "};
+  dirs = XEN_VARIABLE_REF("*load-path*");
+#endif
 
   is_defined = XEN_DEFINED_P(name);
   url = snd_url(name);
@@ -2094,7 +2124,7 @@ static bool strings_might_match(const char *a, const char *b, int len)
 #if HAVE_RUBY
       if (a[i] == '_') return(true);
 #endif
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
       if (a[i] == '-') return(true);
 #endif
     }
@@ -2490,6 +2520,21 @@ and its value is returned."
     else text = C_TO_XEN_STRING(xen_scheme_procedure_to_ruby(S_snd_help));
   str = XEN_AS_STRING(XEN_OBJECT_HELP(text));
 #endif
+#if HAVE_FORTH
+  if (XEN_STRING_P(text))	/* "play" snd-help */
+    subject = XEN_TO_C_STRING(text);
+  else if (XEN_NOT_BOUND_P(text)) /* snd-help play */
+    {
+      subject = fth_parse_word();
+      text = C_TO_XEN_STRING(subject);
+    }
+  if (!subject)
+    {
+      subject = S_snd_help;
+      text = C_TO_XEN_STRING(S_snd_help);
+    }
+  str = XEN_AS_STRING(XEN_OBJECT_HELP(text));
+#endif
 
   if ((str == NULL) || 
       (snd_strlen(str) == 0) ||
@@ -2686,6 +2731,13 @@ If more than one hook function, each function gets the previous function's outpu
 #if HAVE_RUBY
   #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \
 If more than one hook function, each function gets the previous function's output as its input."
+#endif
+#if HAVE_FORTH
+  #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \
+If more than one hook function, each function gets the previous function's output as its input.\n\
+" S_output_comment_hook " lambda: { str }\n\
+  \"%s: written %s\" str date format\n\
+; 1 make-proc add-hook!"
 #endif
 
   output_comment_hook = XEN_DEFINE_HOOK(S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */

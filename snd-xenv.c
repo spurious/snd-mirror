@@ -165,10 +165,17 @@ static void apply_enved(void)
 	  switch (enved_target(ss))
 	    {
 	    case ENVED_AMPLITUDE:
+#if HAVE_FORTH
+	      origin = mus_format("%s%s %s drop", 
+				  estr = env_to_string(active_env),
+				  (apply_to_selection) ? "" : " 0 " PROC_FALSE,
+				  (apply_to_selection) ? S_env_selection : S_env_channel);
+#else
 	      origin = mus_format("%s" PROC_OPEN "%s%s", 
 				  TO_PROC_NAME((apply_to_selection) ? S_env_selection : S_env_channel),
 				  estr = env_to_string(active_env),
 				  (apply_to_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
+#endif
 	      apply_env(active_channel, active_env, 0,
 			CURRENT_SAMPLES(active_channel), 
 			apply_to_selection, FROM_ENVED, 
@@ -179,11 +186,19 @@ static void apply_enved(void)
 	      if (origin) FREE(origin);
 	      break;
 	    case ENVED_SPECTRUM: 
+#if HAVE_FORTH
+	      origin = mus_format("%s %d%s %s drop",
+				  estr = env_to_string(active_env), 
+				  enved_filter_order(ss),
+				  (apply_to_selection) ? "" : " 0 " PROC_FALSE,
+				  (apply_to_selection) ? S_filter_selection : S_filter_channel);
+#else
 	      origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d%s",
 				  TO_PROC_NAME((apply_to_selection) ? S_filter_selection : S_filter_channel),
 				  estr = env_to_string(active_env), 
 				  enved_filter_order(ss),
 				  (apply_to_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
+#endif
 	      apply_filter(active_channel,
 			   (FIR_p) ? enved_filter_order(ss) : 0,
 			   active_env, FROM_ENVED, 
@@ -258,6 +273,9 @@ static void enved_reset(void)
   if (active_env) active_env = free_env(active_env);
 #if HAVE_SCHEME
   active_env = string_to_env("'(0 0 1 0)");
+#endif
+#if HAVE_FORTH
+  active_env = string_to_env("'( 0 0 1 0 )");
 #endif
 #if HAVE_RUBY
   active_env = string_to_env("[0, 0, 1, 0]");

@@ -125,6 +125,7 @@
 #undef HAVE_GUILE
 #undef HAVE_SCHEME
 #undef HAVE_RUBY
+#undef HAVE_FORTH
 #undef HAVE_EXTENSION_LANGUAGE
 
 #undef HAVE_FAM

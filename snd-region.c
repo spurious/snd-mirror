@@ -589,7 +589,11 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk, io
 	}
       else 
 	{
+#if HAVE_FORTH
+	  origin = mus_format(OFF_TD " %d %s drop", beg, n, S_mix_region);
+#else
 	  origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_mix_region), beg, n);
+#endif
 	  id = mix_file(beg, r->frames, si->chans, si->cps, newname, DELETE_ME, origin, with_mix_tags(ss), trk);
 	  FREE(origin);
 	}
@@ -613,7 +617,11 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk, io
 	    if (r->chans > 1) 
 	      remember_temp(tempfile, r->chans);
 	}
+#if HAVE_FORTH
+      origin = mus_format(OFF_TD " %d %s drop", beg, n, S_insert_region);
+#else
       origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_insert_region), beg, n);
+#endif
       for (i = 0; ((i < r->chans) && (i < si->chans)); i++)
 	{
 	  chan_info *ncp;
@@ -984,6 +992,15 @@ void save_regions(FILE *fd)
 		      newname,
 		      (int)mus_sound_write_date(newname),
 		      mus_sound_length(newname));
+#endif
+#if HAVE_FORTH
+	  fprintf(fd, "%d %d " OFF_TD " %d %.4f $\" %s\" $\" %s\" $\" %s\"",
+	          i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
+ 	  fprintf(fd, " $\" %s\" '( %d " OFF_TD " ) %s drop\n",
+ 		  newname,
+ 		  (int)mus_sound_write_date(newname),
+ 		  mus_sound_length(newname),
+		  S_restore_region);
 #endif
 	    }
 	  FREE(newname);

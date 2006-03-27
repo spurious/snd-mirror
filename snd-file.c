@@ -597,6 +597,9 @@ void save_added_sound_file_extensions(FILE *fd)
 #if HAVE_RUBY
 	fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_sound_file_extension), sound_file_extensions[i]);
 #endif
+#if HAVE_FORTH
+	fprintf(fd, "$\" %s\" %s drop\n", sound_file_extensions[i], S_add_sound_file_extension);
+#endif
       }
 }
 
@@ -1235,7 +1238,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
   if (sp)
     {
       int files;
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
       XEN_VARIABLE_SET(S_snd_opened_sound, C_TO_XEN_INT(sp->index));
 #endif
 #if HAVE_SCHEME
@@ -3859,6 +3862,37 @@ void save_view_files_dialogs(FILE *fd)
 	fprintf(fd, "  set_view_files_sort(vf, %d)\n", vdat->sorter);	    
 	fprintf(fd, "\n");
 #endif
+#if HAVE_FORTH
+	fprintf(fd, "#t #t view-files-dialog value vf\n");
+	if (vdat->full_names)
+	  {
+	    fprintf(fd, "  vf '(");
+	    for (k = 0; k <= vdat->end; k++)
+	      fprintf(fd, " $\" %s\"", vdat->full_names[k]);
+	    fprintf(fd, " ) set-view-files-files drop\n");
+	    if (vdat->currently_selected_files > 0)
+	      {
+		fprintf(fd, "  vf '(");
+		for (k = 0; k <= vdat->currently_selected_files; k++)
+		  fprintf(fd, " $\" %s\"", vdat->full_names[vdat->selected_files[k]]);
+		fprintf(fd, " ) set-view-files-selected-files drop\n");
+	      }
+	  }
+	if (!(snd_feq(vdat->amp, 1.0)))
+	  {
+	    fprintf(fd, "  vf %.3f set-view-files-amp drop\n", vdat->amp);
+	  }
+	if (!(snd_feq(vdat->speed, 1.0)))
+	  {
+	    fprintf(fd, "  vf %.3f set-view-files-speed drop\n", vdat->speed);
+	  }
+	if (!(default_env_p(vdat->amp_env)))
+	  {
+	    fprintf(fd, "  vf %s set-view-files-amp-env drop\n", env_to_string(vdat->amp_env));
+	  }
+	/* assume file-sorters are set up already */
+	fprintf(fd, "  vf %s set-view-files-sort drop\n\n", vdat->sorter);
+#endif
       }
 #endif
 }
@@ -4597,7 +4631,7 @@ static XEN g_expand_vector(XEN vector, int new_size)
       XEN_VECTOR_SET(new_vect, i, XEN_VECTOR_REF(vector, i));
       XEN_VECTOR_SET(vector, i, XEN_FALSE);
     }
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
   XEN_UNPROTECT_FROM_GC(vector);
 #endif
   return(new_vect);

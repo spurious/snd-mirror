@@ -167,6 +167,10 @@
     #define S_setB "set! "
     #define PROC_FALSE "#f"
   #endif
+  #if HAVE_FORTH
+    #define S_setB "set-"
+    #define PROC_FALSE "#f"
+  #endif
   #define NOT_A_GC_LOC -1
   #if DEBUGGING
     void set_printable(int val);
@@ -220,6 +224,11 @@
   #define XM_POSTFIX ""
   #define XM_FIELD_PREFIX "R"
 #endif
+#if HAVE_FORTH
+  #define XM_PREFIX "F"
+  #define XM_POSTFIX ""
+  #define XM_FIELD_PREFIX "F"
+#endif
 
 #define XM_FIELD_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
   XEN_ASSERT_TYPE(Assertion, Arg, Position, XM_FIELD_PREFIX Caller XM_POSTFIX, Correct_Type)
@@ -228,7 +237,7 @@
   #define XM_SET_FIELD_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
     XEN_ASSERT_TYPE(Assertion, Arg, Position, XM_FIELD_PREFIX S_setB Caller XM_POSTFIX, Correct_Type)
 #endif
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
   #define XM_SET_FIELD_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
     XEN_ASSERT_TYPE(Assertion, Arg, Position, S_setB XM_FIELD_PREFIX Caller XM_POSTFIX, Correct_Type)
 #endif
@@ -363,6 +372,14 @@ static void *xm_obj_free(XEN obj)
   return(NULL);
 }
 #endif
+#if HAVE_FORTH
+static void xm_obj_free(XEN obj)
+{
+  void *val;
+  val = (void *)XEN_OBJECT_REF(obj);
+  FREE(val);
+}
+#endif
 
 static XEN make_xm_obj(void *ptr)
 {
@@ -374,6 +391,9 @@ static void define_xm_obj(void)
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
 #if HAVE_GUILE
   scm_set_smob_free(xm_obj_tag, xm_obj_free);
+#endif
+#if HAVE_FORTH
+  fth_set_object_free(xm_obj_tag, xm_obj_free);
 #endif
 }  
 
@@ -30166,6 +30186,33 @@ static bool xm_already_inited = false;
                             RXmDeactivateProtocol(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p); end");
       XEN_EVAL_C_STRING("def RXmSetWMProtocolHooks(s, p, preh, prec, posth, postc) \
                             RXmSetProtocolHooks(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p, preh, prec, posth, postc); end");
+#endif
+#if HAVE_FORTH
+      XEN_EVAL_C_STRING("\
+: wm-protocols-intern-atom ( wid -- atom )\n\
+  FXtDisplay $\" WM_PROTOCOLS\" #f FXInternAtom\n\
+;\n\
+: FXmAddWMProtocols ( s p n -- x ) { s p n }\n\
+  s dup wm-protocols-intern-atom p n FXmAddProtocols\n\
+;\n\
+: FXmRemoveWMProtocols ( s p n -- x ) { s p n }\n\
+  s dup wm-protocols-intern-atom p n FXmRemoveProtocols\n\
+;\n\
+: FXmAddWMProtocolCallback ( s p c cl -- x ) { s p c cl }\n\
+  s dup wm-protocols-intern-atom p c cl FXmAddProtocolCallback\n\
+;\n\
+: FXmRemoveWMProtocolCallback  ( s p c cl -- x ) { s p c cl }\n\
+  s dup wm-protocols-intern-atom p c cl FXmRemoveProtocolCallback\n\
+;\n\
+: FXmActivateWMProtocol ( s p -- x ) { s p }\n\
+  s dup wm-protocols-intern-atom p FXmActivateProtocol\n\
+;\n\
+: FXmDeactivateWMProtocol ( s p -- x ) { s p }\n\
+  s dup wm-protocols-intern-atom p FXmDeactivateProtocol\n\
+;\n\
+: FXmSetWMProtocolHooks ( s p preh prec posth postc -- x ) { s p preh prec posth postc }\n\
+  s dup wm-protocols-intern-atom p preh prec posth postc FXmSetProtocolHooks\n\
+;\n");
 #endif
       XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
 #endif

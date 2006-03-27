@@ -2316,6 +2316,9 @@ static void load_path_text(prefs_info *prf)
 	FREE(buf);
       }
 #endif
+#if HAVE_FORTH
+      fth_add_load_path(str);
+#endif
     }
   if (str) XtFree(str);
 }
@@ -4199,6 +4202,15 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
 	fprintf(fd, "$clm_file_buffer_size = %d\n", include_clm_file_buffer_size);
       if (include_clm_table_size != 512)
 	fprintf(fd, "$clm_table_size = %d\n", include_clm_table_size);
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "require clm\n");
+      if (include_clm_file_name)
+	fprintf(fd, "$\" %s\" to *clm-file-name*\n", include_clm_file_name);
+      if (include_clm_file_buffer_size != 65536)
+	fprintf(fd, "%d to *clm-file-buffer-size*\n", include_clm_file_buffer_size);
+      if (include_clm_table_size != 512)
+	fprintf(fd, "%d to *clm-table-size*\n", include_clm_table_size);
 #endif
     }
 }

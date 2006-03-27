@@ -6,6 +6,9 @@
 #if HAVE_RUBY
   #define LANG_NAME "ruby"
 #endif
+#if HAVE_FORTH
+  #define LANG_NAME "forth"
+#endif
 #ifndef LANG_NAME
   #define LANG_NAME "source"
 #endif
@@ -68,6 +71,9 @@ static void save_prefs(const char *filename, char *load_path_name)
 #endif
 #if HAVE_RUBY
 	  fprintf(fd, "$:.push(\"%s\")\n", load_path_name);
+#endif
+#if HAVE_FORTH
+	  fprintf(fd, "$\" %s\" add-load-path\n", load_path_name);
 #endif
 	}
       for (i = 0; i < prefs_top; i++)
@@ -255,7 +261,7 @@ static int header_to_data(int ht, int frm)
 
 static char *clm_file_name(void)
 {
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
   if (XEN_DEFINED_P("*clm-file-name*"))
     return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-name*")));
 #endif
@@ -276,11 +282,15 @@ static void set_clm_file_name(const char *str)
   if (XEN_DEFINED_P("clm-file-name"))
     XEN_VARIABLE_SET("clm-file-name", C_TO_XEN_STRING(str));
 #endif
+#if HAVE_FORTH
+  if (XEN_DEFINED_P("*clm-file-name*"))
+    XEN_VARIABLE_SET("*clm-file-name*", C_TO_XEN_STRING(str));
+#endif
 }
 
 static int clm_table_size(void)
 {
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
   if (XEN_DEFINED_P("*clm-table-size*"))
     return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-table-size*")));
 #endif
@@ -293,7 +303,7 @@ static int clm_table_size(void)
 
 static int clm_file_buffer_size(void)
 {
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
   if (XEN_DEFINED_P("*clm-file-buffer-size*"))
     return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-buffer-size*")));
 #endif
@@ -563,6 +573,10 @@ static void save_unsaved_edits_1(prefs_info *prf, FILE *fd)
   fprintf(fd, "require \"extensions\"\n");
   fprintf(fd, "check_for_unsaved_edits(true)\n");
 #endif
+#if HAVE_FORTH
+  fprintf(fd, "require extensions\n");
+  fprintf(fd, "#t check-for-unsaved-edits\n");
+#endif
 }
 
 static void save_current_window_display_1(prefs_info *prf, FILE *fd)
@@ -574,6 +588,10 @@ static void save_current_window_display_1(prefs_info *prf, FILE *fd)
 #if HAVE_RUBY
   fprintf(fd, "require \"draw\"\n");
   fprintf(fd, "make_current_window_display\n");
+#endif
+#if HAVE_FORTH
+  fprintf(fd, "require draw\n");
+  fprintf(fd, "make-current-window-display\n");
 #endif
 }
 
@@ -587,6 +605,10 @@ static void save_focus_follows_mouse_1(prefs_info *prf, FILE *fd)
   fprintf(fd, "require \"extensions\"\n");
   fprintf(fd, "focus_follows_mouse\n");
 #endif
+#if HAVE_FORTH
+  fprintf(fd, "require extensions\n");
+  fprintf(fd, "focus-follows-mouse\n");
+#endif
 }
 
 static void save_sync_choice_1(prefs_info *prf, FILE *fd, int choice)
@@ -598,6 +620,10 @@ static void save_sync_choice_1(prefs_info *prf, FILE *fd, int choice)
 #if HAVE_RUBY
   fprintf(fd, "require \"extensions\"\n");
   fprintf(fd, "set_global_sync(%d)\n", choice);
+#endif
+#if HAVE_FORTH
+  fprintf(fd, "require extensions\n");
+  fprintf(fd, "%d set-global-sync\n", choice);
 #endif
 }
 
@@ -613,6 +639,10 @@ static void save_remember_sound_state_choice_1(prefs_info *prf, FILE *fd, int ch
     fprintf(fd, "remember_all_sound_properties\n");
   else fprintf(fd, "remember_sound_state\n");
 #endif
+#if HAVE_FORTH
+  fprintf(fd, "require extensions\n");
+  fprintf(fd, "%d remember-sound-state\n", choice);
+#endif
 }
 
 static void save_peak_envs_1(prefs_info *prf, FILE *fd, char *pdir)
@@ -627,6 +657,11 @@ static void save_peak_envs_1(prefs_info *prf, FILE *fd, char *pdir)
   if (pdir)
     fprintf(fd, "$save_peak_env_info_directory = \"%s\"\n", pdir);
 #endif
+#if HAVE_FORTH
+  fprintf(fd, "require peak-env\n");
+  if (pdir)
+    fprintf(fd, "$\" %s\" to save-peak-env-info-directory\n", pdir);
+#endif
 }
 
 static void save_view_files_directory_1(prefs_info *prf, FILE *fd, char *vdir)
@@ -636,6 +671,9 @@ static void save_view_files_directory_1(prefs_info *prf, FILE *fd, char *vdir)
 #endif
 #if HAVE_RUBY
   fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_directory_to_view_files_list), vdir);
+#endif
+#if HAVE_FORTH
+  fprintf(fd, "$\" %s\" %s drop\n", vdir, S_add_directory_to_view_files_list);
 #endif
 }
 
@@ -647,6 +685,9 @@ static void save_context_sensitive_popup_1(prefs_info *prf, FILE *fd)
 #if HAVE_RUBY
   fprintf(fd, "require \"popup\"\n");
 #endif
+#if HAVE_FORTY
+  fprintf(fd, "require popup\n");
+#endif
 }
 
 static void save_effects_menu_1(prefs_info *prf, FILE *fd)
@@ -656,6 +697,9 @@ static void save_effects_menu_1(prefs_info *prf, FILE *fd)
 #endif
 #if HAVE_RUBY
   fprintf(fd, "require \"effects\"\n");
+#endif
+#if HAVE_FORTH
+  fprintf(fd, "require effects\n");
 #endif
 }
 
@@ -668,6 +712,10 @@ static void save_reopen_menu_1(prefs_info *prf, FILE *fd)
 #if HAVE_RUBY
   fprintf(fd, "require \"extensions\"\n");
   fprintf(fd, "with_reopen_menu\n");
+#endif
+#if HAVE_FORTH
+  fprintf(fd, "require extensions\n");
+  fprintf(fd, "with-reopen-menu\n");
 #endif
 }
 
@@ -707,6 +755,13 @@ static void save_initial_bounds(prefs_info *prf, FILE *fd)
   	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
  	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
 #endif
+#if HAVE_FORTH
+      fprintf(fd, "require extensions\n");
+      fprintf(fd, "%.2f %.2f %s prefs-activate-initial-bounds\n",
+  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
+  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
+ 	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
+#endif
       /* code repeated to make emacs' paren matcher happy */
     }
 }
@@ -721,6 +776,10 @@ static void save_smpte_1(prefs_info *prf, FILE *fd)
   fprintf(fd, "require \"snd-xm\"\n");
   fprintf(fd, "show_smpte_label(true)\n");
 #endif
+#if HAVE_FORTH
+  fprintf(fd, "require snd-xm\n");
+  fprintf(fd, "#t show-smpte-label\n");
+#endif
 }
 
 #if USE_MOTIF
@@ -734,6 +793,10 @@ static void save_mark_pane_1(prefs_info *prf, FILE *fd)
   fprintf(fd, "require \"snd-xm\"\n");
   fprintf(fd, "add_mark_pane\n");
 #endif
+#if HAVE_FORTH
+  fprintf(fd, "require snd-xm\n");
+  fprintf(fd, "add-mark-pane\n");
+#endif
 }
 #endif
 
@@ -745,6 +808,9 @@ static void save_show_listener_1(prefs_info *prf, FILE *fd)
 #endif
 #if HAVE_RUBY
   fprintf(fd, "show_listener\n");
+#endif
+#if HAVE_FORTH
+  fprintf(fd, "show-listener drop\n");
 #endif
 }
 
@@ -1024,6 +1090,10 @@ static char *find_sources(void) /* returns full filename if found else null */
   file = C_TO_XEN_STRING(rb_find_file(BASE_FILE));
 #endif
 #endif
+#if HAVE_FORTH
+  #define BASE_FILE "extensions.fs"
+  file = fth_find_file(C_TO_XEN_STRING(BASE_FILE));
+#endif
 #ifndef BASE_FILE
   #define BASE_FILE "extensions.scm"
 #endif
@@ -1031,7 +1101,7 @@ static char *find_sources(void) /* returns full filename if found else null */
     {
       char *str;
       int len, exts_len;
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_FORTH
       str = copy_string(XEN_TO_C_STRING(file));
 #endif
 #if HAVE_RUBY

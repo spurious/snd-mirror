@@ -59,6 +59,10 @@
   #define XL_PRE "R"
   #define XL_POST ""
 #endif
+#if HAVE_FORTH
+  #define XL_PRE "F"
+  #define XL_POST ""
+#endif
 
 #define WRAP_FOR_XEN(Name, Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), C_TO_XEN_ULONG((unsigned long)Value))
 #define WRAP_P(Name, Value) (XEN_LIST_P(Value) && \

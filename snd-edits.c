@@ -4345,6 +4345,13 @@ char *edit_to_string(chan_info *cp, int edit)
   ed_list *ed;
   ed = cp->edits[edit];
   /* only for edit list in snd-xchn.c */
+#if HAVE_FORTH
+  mus_snprintf(edbuf, PRINT_BUFFER_SIZE, 
+	       "%s : " OFF_TD " " OFF_TD " %s", 
+	       ed->origin, 
+	       ed->beg, ed->len,
+	       edit_names[ed->edit_type]);
+#else
   mus_snprintf(edbuf, PRINT_BUFFER_SIZE, 
 #if HAVE_RUBY
 	       "%s : %s(" OFF_TD ", " OFF_TD ")", 
@@ -4355,6 +4362,7 @@ char *edit_to_string(chan_info *cp, int edit)
 	       ed->origin, 
 	       edit_names[ed->edit_type], 
 	       ed->beg, ed->len);
+#endif
   return(edbuf);
 }
 
@@ -4519,7 +4527,11 @@ static void fprintf_with_possible_embedded_string(FILE *fd, const char *str)
 {
   int i, len;
   len = snd_strlen(str);
+#if HAVE_FORTH
+  fputs("$\" ", fd);
+#else
   fputc('"', fd);
+#endif
   for (i = 0; i < len; i++)
     {
       if (str[i] == '"')
@@ -4558,6 +4570,28 @@ static char *edit_list_data_to_temp_file(chan_info *cp, ed_list *ed, file_delete
   if (delete_me == DELETE_ME) remember_temp(ofile, 1); /* deletion upon exit (forget_temps) if a temp (edit-list->function, but not save-state) */
   return(ofile);
 }
+  
+#if HAVE_FORTH
+/*
+ * ret_name: last word in origin (function name)
+ *     func: rest-origin (must be freed)
+ */
+static char *split_origin(char *origin, char **ret_name)
+{
+  if (origin && *origin)
+    {
+      char *func = (char *)CALLOC(strlen(origin), sizeof(char));
+      if ((*ret_name = strrchr(origin, ' ')))
+	{
+	  (*ret_name)++;
+	  strncpy(func, origin, strlen(origin) - strlen(*ret_name) - 1);
+	}
+      else *ret_name = origin;
+      return(func);
+    }
+  return NULL;
+}
+#endif
 
 void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 {
@@ -4565,6 +4599,9 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
   /*   the entire current list is written, then the edit_ctr is fixed up to reflect its current state */
   int i, edits;
   ed_list *ed;
+#if HAVE_FORTH
+  char *forth_func = NULL;
+#endif
   edits = cp->edit_ctr;
   while ((edits < (cp->edit_size - 1)) && 
 	 (cp->edits[edits + 1])) 
@@ -4619,17 +4656,112 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		      (int)mus_sound_write_date(nfile),
 		      mus_sound_length(nfile));
 #endif
+#if HAVE_FORTH
+	      fprintf(fd, "      $\" %s\" " OFF_TD " sfile %d ", nfile, len, cp->chan);
+	      if (ed->origin) 
+		fprintf_with_possible_embedded_string(fd, ed->origin);
+	      else fprintf(fd, "\"\"");
+ 	      fprintf(fd, " '( %d " OFF_TD " ) %s drop\n",
+ 		      (int)mus_sound_write_date(nfile),
+ 		      mus_sound_length(nfile),
+		      S_override_samples_with_origin);
+#endif
 	      FREE(nfile);
 	    }
 	  else
 	    {
 	      char *nfile = NULL;
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
 	      fprintf(fd, "      ");
 #endif
 #if HAVE_SCHEME
 	      fprintf(fd, "      (");
 #endif
+#if HAVE_FORTH
+	      switch (ed->edit_type)
+		{
+		case INSERTION_EDIT: 
+		  /* samp data snd chn */
+		  forth_func = S_insert_samples_with_origin;
+		  fprintf(fd, OFF_TD " " OFF_TD " ",
+			  ed->beg,
+			  ed->len);
+		  if (ed->origin)
+		    fprintf_with_possible_embedded_string(fd, ed->origin);
+		  else fprintf(fd, "$\" %s\"", S_insert_samples);
+		  nfile = edit_list_data_to_temp_file(cp, ed, DONT_DELETE_ME, with_save_state_hook);
+		  fprintf(fd, " $\" %s\" sfile %d", nfile, cp->chan);
+		  break;
+		case DELETION_EDIT:
+		  /* samp samps snd chn */
+		  forth_func = S_delete_samples;
+		  fprintf(fd, OFF_TD " " OFF_TD " sfile %d",
+			  ed->beg,
+			  ed->len,
+			  cp->chan);
+		  break;
+		case CHANGE_EDIT:
+		  forth_func = S_change_samples_with_origin;
+		  fprintf(fd, OFF_TD " " OFF_TD " ",
+			  ed->beg,
+			  ed->len);
+		  if (ed->origin)
+		    fprintf_with_possible_embedded_string(fd, ed->origin);
+		  else fprintf(fd, "\"\"");
+		  nfile = edit_list_data_to_temp_file(cp, ed, DONT_DELETE_ME, with_save_state_hook);
+		  fprintf(fd, " $\" %s\" sfile %d", nfile, cp->chan);
+		  break;
+		case EXTEND_EDIT:
+		  /* not currently savable (this is a dummy edit fragment for zero-mix-drag position change) */
+		  break;
+		case ZERO_EDIT:
+		  forth_func = S_pad_channel;
+		  fprintf(fd, OFF_TD " " OFF_TD " sfile %d",
+			  ed->beg,
+			  ed->len,
+			  cp->chan);
+		  break;
+		case SCALED_EDIT:
+		case RAMP_EDIT:
+		  {
+		    char *func;
+		    if ((func = split_origin(ed->origin, &forth_func)))
+		      {
+			fprintf(fd, "%s sfile %d", func, cp->chan);
+			FREE(func);
+		      }
+		    else fprintf(fd, "sfile %d", cp->chan);
+		  }
+		  break;
+		case PTREE_EDIT:
+		  forth_func = S_ptree_channel;
+		  if ((ed->origin) && (strcmp(ed->origin, S_ptree_channel) != 0))
+		    {
+		      char *func;
+		      if ((func = split_origin(ed->origin, &forth_func)))
+			{
+			  fprintf(fd, "%s sfile %d", func, cp->chan);
+			  FREE(func);
+			}
+		      else fprintf(fd, "sfile %d", cp->chan);
+		    }
+		  else
+		    {
+		      fprintf(fd, "%s " OFF_TD " " OFF_TD " sfile %d",
+			      XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
+			      ed->beg,
+			      ed->len,
+			      cp->chan);
+		    }
+		  break;
+		default:
+		  snd_error("unknown edit branch: %s: %d %d",
+			    ed->origin, 
+			    ed->edit_type,
+			    ed->sound_location);
+		  break;
+		}
+#else
 	      switch (ed->edit_type)
 		{
 		case INSERTION_EDIT: 
@@ -4704,13 +4836,14 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 			    ed->sound_location);
 		  break;
 		}
+#endif
 	      if ((ed->edpos != AT_CURRENT_EDIT_POSITION) &&
 		  (ed->edpos != (i - 1)))
 		fprintf(fd, PROC_SEP " %d", ed->edpos);
 #if HAVE_RUBY
 	      else fprintf(fd, ", false");
 #endif
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
 	      else fprintf(fd, " #f");
 #endif
 #if HAVE_SCHEME
@@ -4735,9 +4868,18 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
   			  (int)mus_sound_write_date(nfile),
   			  mus_sound_length(nfile));
 #endif
+#if HAVE_FORTH
+		  fprintf(fd, " '( %d " OFF_TD " )",
+			  (int)mus_sound_write_date(nfile),
+			  mus_sound_length(nfile));
+#endif
 		  FREE(nfile);
 		}
+#if HAVE_FORTH
+	      fprintf(fd, " %s drop\n", forth_func);
+#else
 	      fprintf(fd, ")\n"); /* works for both Ruby and Scheme */
+#endif
 	    }
 	}
     }
@@ -4749,6 +4891,11 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 #endif
 #if HAVE_SCHEME
     fprintf(fd, "      (undo %d sfile %d)\n",
+	    edits - cp->edit_ctr,
+	    cp->chan);
+#endif
+#if HAVE_FORTH
+    fprintf(fd, "      %d sfile %d undo drop\n",
 	    edits - cp->edit_ctr,
 	    cp->chan);
 #endif
@@ -4990,6 +5137,116 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
   if (close_mix_let)
     function = mus_format("%s }", function);
   else function = mus_format("%s }", function);
+  FREE(old_function);
+  return(function);
+#endif
+
+#if HAVE_FORTH
+  char *function = NULL, *old_function = NULL;
+  bool close_mix_let = false, first = true;
+  int i, edits;
+  ed_list *ed;
+  edits = cp->edit_ctr;
+  while ((edits < (cp->edit_size - 1)) && 
+	 (cp->edits[edits + 1])) 
+    edits++;
+  if ((end_pos > 0) && (end_pos < edits)) edits = end_pos;
+  if (start_pos > edits)
+    return(copy_string("lambda: { snd chn } #f ; 2 make-proc"));
+  if (cp->have_mixes)
+    {
+      char *mix_list;
+      mix_list = edit_list_mix_and_track_init(cp);
+      if (mix_list)
+	{
+	  close_mix_let = true;
+	  function = mus_format("lambda: { snd chn } %s", mix_list);
+	  FREE(mix_list);
+	}
+      else function = copy_string("lambda: { snd chn }");
+    }
+  else function = copy_string("lambda: { snd chn }");
+  for (i = start_pos; i <= edits; i++)
+    {
+      ed = cp->edits[i];
+      if ((ed->origin) && strstr(ed->origin, "make-track"))
+	continue;
+      if (ed)
+	{
+	  old_function = function;
+	  /* most of these depend on the caller to supply a usable re-call string (origin). */
+	  /*   In insert/change/ptree/xen cases, there's basically no choice */
+	  if (ed->backed_up)
+	    {
+	      char *name, *func;
+	      func = split_origin(ed->origin, &name);
+	      if ((name) && (strncmp(name, "set-", 4) == 0))
+		function = mus_format("%s %s drop", function, ed->origin);
+	      else if ((ed->origin) && strstr(ed->origin, "mix-selection"))
+		function = mus_format("%s %s", function, ed->origin);
+	      else
+		{
+		  if (func)
+		    function = mus_format("%s %s snd chn %s drop", function, func, name);
+		  else function = mus_format("%s snd chn %s drop", function, name);
+		}
+	      if (func) FREE(func);
+	    }
+	  else
+	    {
+	      switch (ed->edit_type)
+		{
+		case CHANGE_EDIT:
+		  {
+		    char *name, *func;
+		    func = split_origin(ed->origin, &name);
+		    if ((name) && (strncmp(name, "set-", 4) == 0))
+		      function = mus_format("%s %s drop", function, ed->origin);
+		    else if ((ed->origin) && strstr(ed->origin, "mix-selection"))
+		      function = mus_format("%s %s", function, ed->origin);
+		    else
+		      {
+			if (func)
+			  function = mus_format("%s %s snd chn %s drop", function, func, name);
+			else function = mus_format("%s snd chn %s drop", function, name);
+		      }
+		    if (func) FREE(func);
+		  }
+		  break;
+		case DELETION_EDIT:
+		  /* what about delete-mix? */
+		  function = mus_format("%s " OFF_TD " " OFF_TD " snd chn %s drop", 
+					function, ed->beg, ed->len, S_delete_samples);
+		  break;
+		case INSERTION_EDIT: 
+		case SCALED_EDIT: 
+		case RAMP_EDIT:
+		  {
+		    char *name, *func;
+		    if ((func = split_origin(ed->origin, &name)))
+		      {
+			function = mus_format("%s %s snd chn %s drop", function, func, name);
+			FREE(func);
+		      }
+		    else function = mus_format("%s snd chn %s drop", function, name);
+		  }
+		  break;
+		case EXTEND_EDIT:
+		  /* mix drag case */
+		  break;
+		case ZERO_EDIT:
+		  /* origin here is useless (see extend_with_zeros cases) */
+		  function = mus_format("%s " OFF_TD " " OFF_TD " snd chn %s drop", 
+					function, ed->beg, ed->len, S_pad_channel);
+		  break;
+		}
+	    }
+	  if (old_function) {FREE(old_function); old_function = NULL;}
+	}
+      first = false;
+    }
+  old_function = function;
+  function = mus_format("%s ; 2 make-proc", function);
   FREE(old_function);
   return(function);
 #endif
@@ -5591,8 +5848,13 @@ bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg, file_de
 	  for (i = first_chan, j = 0; (j < nc) && (i < sp->nchans); i++, j++)
 	    {
 	      ncp = sp->chans[i];
+#if HAVE_FORTH
+	      origin = mus_format("$\" %s\" " OFF_TD " %d %s drop", 
+				  filename, chan_beg, j, S_insert_sound);
+#else
 	      origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", 
 				  TO_PROC_NAME(S_insert_sound), filename, chan_beg, j);
+#endif
 	      ok = file_insert_samples(chan_beg, len, filename, ncp, j, auto_delete, origin, ncp->edit_ctr);
 	      if (ok)
 		update_graph(ncp);
@@ -5681,7 +5943,11 @@ static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_
   new_state->size = new_i;
   new_state->beg = beg;
   new_state->len = num;
+#if HAVE_FORTH
+  new_state->origin = mus_format(OFF_TD " " OFF_TD " %s drop", beg, num, S_delete_samples);
+#else
   new_state->origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_delete_samples), beg, num);
+#endif
   new_state->edit_type = DELETION_EDIT;
   new_state->sound_location = 0;
   return(new_state);
@@ -6147,13 +6413,24 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
   else
     {
       if (num == len)
+#if HAVE_FORTH
+	new_ed->origin = mus_format("%.3f " OFF_TD PROC_SEP PROC_FALSE " %s", scl, beg, S_scale_channel);
+#else
 	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, TO_PROC_NAME(S_scale_channel), scl, beg);
+#endif
       else
 	{
+#if HAVE_FORTH
+	  if (len == num)
+	    new_ed->origin = mus_format("%.3f " OFF_TD PROC_SEP PROC_FALSE " %s", scl, beg, S_scale_channel);
+	  else
+	    new_ed->origin = mus_format("%.3f " OFF_TD PROC_SEP OFF_TD " %s", scl, beg, num, S_scale_channel);
+#else
 	  if (len == num)
 	      new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, TO_PROC_NAME(S_scale_channel), scl, beg);
 	  else
 	    new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_scale_channel), scl, beg, num);
+#endif
 	}
     }
   new_ed->edpos = pos;
@@ -6312,21 +6589,37 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   new_ed->sound_location = 0;
   if (!is_x)
     {
+#if HAVE_FORTH
+      if (num == len)
+	new_ed->origin = mus_format("%.3f %.3f " OFF_TD PROC_SEP PROC_FALSE " %s", rmp0, rmp1, beg, origin);
+      else
+	new_ed->origin = mus_format("%.3f %.3f " OFF_TD PROC_SEP OFF_TD " %s", rmp0, rmp1, beg, num, origin);
+#else
       if (num == len)
 	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, TO_PROC_NAME(origin), rmp0, rmp1, beg);
       else
 	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(origin), rmp0, rmp1, beg, num);
+#endif
     }
   else
     {
       Float *data;
       data = mus_data(e);
+#if HAVE_FORTH
+      if (num == len)
+	new_ed->origin = mus_format("%.3f %.3f %.3f " OFF_TD PROC_SEP PROC_FALSE " %s",
+				    data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg, origin);
+      else
+	new_ed->origin = mus_format("%.3f %.3f %.3f " OFF_TD PROC_SEP OFF_TD " %s",
+				    data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg, num, origin);
+#else
       if (num == len)
 	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP "%.3f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
 				    TO_PROC_NAME(origin), data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg);
       else
 	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP "%.3f" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
 				    TO_PROC_NAME(origin), data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg, num);
+#endif
     }
   new_ed->edpos = pos;
   new_ed->selection_beg = old_ed->selection_beg;
@@ -8187,6 +8480,18 @@ scale samples in the given sound/channel between beg and beg + num to norm."
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_normalize_channel, 6);
   samps = dur_to_samples(num, samp, cp, pos, 3, S_normalize_channel);
+#if HAVE_FORTH
+  if ((samp == 0) && (samps == CURRENT_SAMPLES(cp)))
+    {
+      cur_max = channel_maxamp(cp, pos);
+      origin = mus_format("%.3f 0 " PROC_FALSE " %s", norm, S_normalize_channel);
+    }
+  else 
+    {
+      cur_max = channel_local_maxamp(cp, samp, samps, pos, NULL);
+      origin = mus_format("%.3f " OFF_TD PROC_SEP OFF_TD " %s", norm, samp, samps, S_normalize_channel);
+    }
+#else
   if ((samp == 0) && (samps == CURRENT_SAMPLES(cp)))
     {
       cur_max = channel_maxamp(cp, pos);
@@ -8197,6 +8502,7 @@ scale samples in the given sound/channel between beg and beg + num to norm."
       cur_max = channel_local_maxamp(cp, samp, samps, pos, NULL);
       origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_normalize_channel), norm, samp, samps);
     }
+#endif
   if (cur_max != 0.0)
     scale_channel_with_origin(cp, norm / cur_max, samp, samps, pos, NOT_IN_AS_ONE_EDIT, origin);
   if (origin) FREE(origin);
@@ -8342,7 +8648,11 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   else beg = CURSOR(cp);
   fval = XEN_TO_C_DOUBLE(val);
   ival[0] = MUS_FLOAT_TO_SAMPLE(fval);
+#if HAVE_FORTH
+  origin = mus_format(OFF_TD " %.4f %s drop", beg, fval, "set-sample");
+#else
   origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP "%.4f", TO_PROC_NAME("set-sample"), beg, fval);
+#endif
   if (change_samples(beg, 1, ival, cp, LOCK_MIXES, origin, pos))
     update_graph(cp);
   FREE(origin);
@@ -8677,7 +8987,11 @@ inserts all of oboe.snd starting at sample 1000."
       fchn = XEN_TO_C_INT(file_chn);
       if (fchn < nc)
 	{
+#if HAVE_FORTH
+	  origin = mus_format("$\" %s\" " OFF_TD " %d %s drop", filename, beg, fchn, S_insert_sound);
+#else
 	  origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_insert_sound), filename, beg, fchn);
+#endif
 	  if (file_insert_samples(beg, len, filename, cp, fchn, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin,
 				  to_c_edit_position(cp, edpos, S_insert_sound, 6)))
 	    update_graph(cp);
@@ -8693,7 +9007,11 @@ inserts all of oboe.snd starting at sample 1000."
       if (sp->nchans < nc) nc = sp->nchans;
       for (i = 0; i < nc; i++)
 	{
+#if HAVE_FORTH
+	  origin = mus_format("$\" %s\" " OFF_TD " %d %s drop", filename, beg, i, S_insert_sound);
+#else
 	  origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_insert_sound), filename, beg, i);
+#endif
 	  if (file_insert_samples(beg, len, filename, sp->chans[i], i, (delete_file) ? DELETE_ME: DONT_DELETE_ME, origin,
 				  /* this edit_position cannot be optimized out -- each channel may have
 				   *   a different edit history, but edpos might be -1 throughout etc.
@@ -8769,7 +9087,11 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   pos = to_c_edit_position(cp, edpos, S_insert_sample, 5);
   fval = XEN_TO_C_DOUBLE(val);
   ival[0] = MUS_FLOAT_TO_SAMPLE(fval);
+#if HAVE_FORTH
+  origin = mus_format(OFF_TD " %.4f %s drop", beg, fval, S_insert_sample);
+#else
   origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP "%.4f", TO_PROC_NAME(S_insert_sample), beg, fval);
+#endif
   if (insert_samples(beg, 1, ival, cp, origin, pos))
     update_graph(cp); 
   FREE(origin);
@@ -8810,7 +9132,11 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
 	  return(snd_no_such_file_error(S_insert_samples, vect));
 	}
       if (mus_sound_frames(filename) <= 0) return(C_TO_XEN_INT(0));
+#if HAVE_FORTH
+      if (!origin) origin = mus_format(OFF_TD PROC_SEP OFF_TD " $\" %s\" %s drop", beg, len, filename, S_insert_samples);
+#else
       if (!origin) origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP "\"%s\"", TO_PROC_NAME(S_insert_samples), beg, len, filename);
+#endif
       file_insert_samples(beg, len, filename, cp, 0, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin, pos);
       if (filename) FREE(filename);
     }
@@ -9077,6 +9403,9 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 #if HAVE_RUBY
   rb_set_property(rb_obj_id(func), C_STRING_TO_XEN_SYMBOL("proc_source"), C_TO_XEN_STRING(funcstr));
 #endif
+#if HAVE_FORTH
+  fth_proc_source_set(func, C_TO_XEN_STRING(funcstr));
+#endif
   FREE(funcstr);
   return(func);
 }
@@ -9179,6 +9508,11 @@ void g_init_edits(void)
 #if HAVE_RUBY
   rb_define_method(sf_tag, "to_s", XEN_PROCEDURE_CAST print_sf, 0);
   rb_define_method(sf_tag, "call", XEN_PROCEDURE_CAST g_read_sample, 0);
+#endif
+#if HAVE_FORTH
+  fth_set_object_inspect(sf_tag, print_sf);
+  fth_set_object_free(sf_tag, free_sf);
+  fth_set_object_apply(sf_tag, XEN_PROCEDURE_CAST g_read_sample, 0, 0, 0);
 #endif
 
   XEN_DEFINE_CONSTANT(S_current_edit_position,         AT_CURRENT_EDIT_POSITION,         "represents the current edit history list position (-1)");

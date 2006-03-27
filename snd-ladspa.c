@@ -868,6 +868,9 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
 #if HAVE_RUBY
   #define FIELD_PREFIX "R"
 #endif
+#if HAVE_FORTH
+  #define FIELD_PREFIX "F"
+#endif
 
 #define DEFINE_INTEGER(Name) XEN_DEFINE(#Name, C_TO_XEN_INT(Name))
 #define DEFINE_READER(Name, Value, Doc) XEN_DEFINE_PROCEDURE(FIELD_PREFIX #Name, Value, 1, 0, 0, Doc)

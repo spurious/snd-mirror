@@ -339,6 +339,28 @@ static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan)
   {fprintf(fd, "%sset_%s([%f, %f], sfile, %d)\n", white_space, TO_PROC_NAME(name), val1, val2, chan);}
 #endif
 
+#if HAVE_FORTH
+static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%s set-%s drop\n", val, name);}
+static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "$\" %s\" set-%s drop\n", val, name);}
+static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%d set-%s drop\n", val, name);}
+static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "%.4f set-%s drop\n", val, name);}
+static void pss_sl(FILE *fd, const char *name, Float val1, Float val2) 
+{fprintf(fd, "%s'( %f %f ) set-%s drop\n", white_space, val1, val2, name);}
+
+static void psp_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%s%s sfile set-%s drop\n", white_space, val, name);}
+static void psp_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%s%d sfile set-%s drop\n", white_space, val, name);}
+static void psp_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "%s%.4f sfile set-%s drop\n", white_space, val, name);}
+static void psp_sl(FILE *fd, const char *name, Float val1, Float val2) 
+  {fprintf(fd, "%s'( %f %f ) sfile set-%s drop\n", white_space, val1, val2, name);}
+
+static void pcp_ss(FILE *fd, const char *name, const char *val, int chan) {fprintf(fd, "%s%s sfile %d set-%s drop\n", white_space, val, chan, name);}
+static void pcp_sd(FILE *fd, const char *name, int val, int chan)   {fprintf(fd, "%s%d sfile %d set-%s drop\n", white_space, val, chan, name);}
+static void pcp_sod(FILE *fd, const char *name, off_t val, int chan)   {fprintf(fd, "%s" OFF_TD " sfile %d set-%s drop\n", white_space, val, chan, name);}
+static void pcp_sf(FILE *fd, const char *name, Float val, int chan) {fprintf(fd, "%s%.4f sfile %d set-%s drop\n", white_space, val, chan, name);}
+static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan) 
+  {fprintf(fd, "%s'( %f %f ) sfile %d set-%s drop\n", white_space, val1, val2, chan, name);}
+#endif
+
 #if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
 static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "(set! (%s) %s)\n", name, val);}
 static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "(set! (%s) \"%s\")\n", name, val);}
@@ -584,6 +606,12 @@ void save_options(FILE *fd)
 		chans,
 		mus_data_format_to_string(format));
 #endif
+#if HAVE_FORTH
+	fprintf(fd, "'( %d %d %s ) set-mus-header-raw-defaults drop\n",
+		srate,
+		chans,
+		mus_data_format_to_string(format));
+#endif
       }
   }
   
@@ -719,6 +747,55 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
 }
 #endif
 
+#if HAVE_FORTH
+static void save_property_list(FILE *fd, XEN property_list, int chan)
+{
+  XEN ignore_list;
+  ignore_list = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL("save-state-ignore"), property_list);
+  if (!(XEN_LIST_P(ignore_list)))
+    {
+      if (chan == -1)
+	fprintf(fd, "%s%s sfile set-%s drop\n",
+		white_space,
+		fth_to_c_dump(property_list),
+		S_sound_properties);
+      else fprintf(fd, "%s%s sfile %d set-%s drop\n",
+		   white_space,
+		   fth_to_c_dump(property_list),
+		   chan,
+		   S_channel_properties);
+    }
+  else
+    {
+      XEN new_properties = XEN_EMPTY_LIST;
+      int i, property_len, gc_loc;
+      gc_loc = snd_protect(new_properties);
+      property_len = XEN_LIST_LENGTH(property_list);
+      for (i = 0; i < property_len; i++)
+	{
+	  XEN property;
+	  property = XEN_LIST_REF(property_list, i);
+	  if (XEN_FALSE_P(XEN_MEMBER(XEN_CAR(property), ignore_list)))
+	    new_properties = XEN_CONS(property, new_properties);
+	}
+      if (!(XEN_NULL_P(new_properties)))
+	{
+	  if (chan == -1)
+	    fprintf(fd, "%s%s sfile set-%s drop\n",
+		    white_space,
+		    fth_to_c_dump(new_properties),
+		    S_sound_properties);
+	  else fprintf(fd, "%s%s sfile %d set-%s drop\n",
+		       white_space,
+		       fth_to_c_dump(new_properties),
+		       chan,
+		       S_channel_properties);
+	}
+      snd_unprotect_at(gc_loc);
+    }
+}
+#endif
+
 #if (!HAVE_EXTENSION_LANGUAGE)
 static void save_property_list(FILE *fd, XEN property_list, int chan) {}
 #endif
@@ -773,6 +850,14 @@ void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth)
 	  (sp->user_read_only) ? S_view_sound : S_open_sound,
 	  sp->filename);
 #endif
+#if HAVE_FORTH
+  fprintf(fd, "$\" %s\" %d %s to sfile\nsfile false? [if] $\" %s\" %s to sfile [then]\n",
+	  sp->short_filename,
+	  (with_nth) ? find_sound_nth(sp) : 0,
+	  S_find_sound,
+	  sp->filename,
+	  (sp->user_read_only ? S_view_sound : S_open_sound));
+#endif
 }
 
 void close_save_sound_block(FILE *fd)
@@ -783,6 +868,9 @@ void close_save_sound_block(FILE *fd)
 #if HAVE_SCHEME
   if (!b_ok) fprintf(fd, "      #f\n"); /* avoid empty begin if no field was output */
   fprintf(fd, "      )))\n");
+#endif
+#if HAVE_FORTH
+  fprintf(fd, "\n");
 #endif
 }
 
@@ -833,7 +921,11 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (sp->speed_control == SPEED_CONTROL_AS_RATIO)
 	{
 	  /* this is only Guile, so we don't need to handle the Ruby syntax */
+#if HAVE_FORTH
+	  fprintf(fd, "%s%d/%d set-%s drop\n", white_space, sp->speed_control_numerator, sp->speed_control_denominator, S_speed_control);
+#else
 	  fprintf(fd, "%s(set! (%s sfile) %d/%d)\n", white_space, S_speed_control, sp->speed_control_numerator, sp->speed_control_denominator);
+#endif
 	}
       else
 #endif
@@ -952,6 +1044,10 @@ static void save_sound_state (snd_info *sp, void *ptr)
 	  fprintf(fd, "%ssaved_snd_selected_sound = sfile\n", white_space);
 	  fprintf(fd, "%ssaved_snd_selected_channel = %d\n", white_space, cp->chan);
 #endif
+#if HAVE_FORTH
+	  fprintf(fd, "%ssfile to saved_snd_selected_sound\n", white_space);
+	  fprintf(fd, "%s%d to saved_snd_selected_channel\n", white_space, cp->chan);
+#endif
 	}
     }
   close_save_sound_block(fd);
@@ -1011,6 +1107,11 @@ void save_state(const char *save_state_name)
 	  fprintf(save_fd, "\nsaved_snd_selected_sound = -1\n");
 	  fprintf(save_fd, "saved_snd_selected_channel = -1\n");
 #endif
+#if HAVE_FORTH
+	  fprintf(save_fd, "\n#f value saved_snd_selected_sound\n");
+	  fprintf(save_fd, "#f value saved_snd_selected_channel\n");
+	  fprintf(save_fd, "#f value sfile\n");
+#endif
 	}
       for_each_sound(save_sound_state, (void *)save_fd);      /* current sound state -- will traverse chans */
       if (ss->selected_sound != NO_SELECTION)
@@ -1026,6 +1127,12 @@ void save_state(const char *save_state_name)
 	  fprintf(save_fd, "  select_sound(saved_snd_selected_sound)\n");
 	  fprintf(save_fd, "  select_channel(saved_snd_selected_channel)\n");
 	  fprintf(save_fd, "end\n");
+#endif
+#if HAVE_FORTH
+	  fprintf(save_fd, "saved_snd_selected_sound false? not [if]\n");
+	  fprintf(save_fd, "  saved_snd_selected_sound   %s drop\n", S_select_sound);
+	  fprintf(save_fd, "  saved_snd_selected_channel %s drop\n", S_select_channel);
+	  fprintf(save_fd, "[then]\n\n");
 #endif
 	}
     }
@@ -1088,6 +1195,9 @@ char *save_options_in_prefs(void)
 #endif
 #if HAVE_RUBY
   #define SND_PREFS "~/.snd_prefs_ruby"
+#endif
+#if HAVE_FORTH
+  #define SND_PREFS "~/.snd_prefs_forth"
 #endif
   fullname = mus_expand_filename(SND_PREFS);
   fd = FOPEN(fullname, "w");
@@ -1205,7 +1315,8 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		       ((strcmp(file_extension(argname), "scm") == 0) ||
 			(strcmp(file_extension(argname), "cl") == 0) ||
 			(strcmp(file_extension(argname), "lisp") == 0) ||
-			(strcmp(file_extension(argname), "rb") == 0))))
+			(strcmp(file_extension(argname), "rb") == 0) ||
+ 			(strcmp(file_extension(argname), "fth") == 0)))) /* HAVE_FORTH */
 		    {
 		      if ((strcmp("-l", argname) == 0) || 
 			  (strcmp("-load", argname) == 0) ||
@@ -1276,6 +1387,9 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 				      char buf[256];
 				      sprintf(buf, "(set! %%load-path (cons \"%s\" %%load-path))", auto_open_file_names[auto_open_ctr]);
 				      XEN_EVAL_C_STRING(buf);
+#endif
+#if HAVE_FORTH
+				      fth_add_load_path(auto_open_file_names[auto_open_ctr]);
 #endif
 				    }
 				}
@@ -1358,7 +1472,11 @@ void g_init_main(void)
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(define %exit exit)");
 #endif
+#if HAVE_FORTH			/* exit is an existing word */
+  XEN_DEFINE_PROCEDURE("snd-" S_exit,  g_exit_w,         0, 1, 0, H_exit);
+#else
   XEN_DEFINE_PROCEDURE(S_exit,         g_exit_w,         0, 1, 0, H_exit);
+#endif
 
   #define H_start_hook S_start_hook " (filename): called upon start-up. If it returns #t, snd exits immediately."
   start_hook = XEN_DEFINE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */

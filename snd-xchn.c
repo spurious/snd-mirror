@@ -1448,6 +1448,15 @@ enters the drawing area (graph pane) of the given channel.\n\
   #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): called when the mouse \
 leaves the drawing area (graph pane) of the given channel."
 #endif
+#if HAVE_FORTH
+  #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
+enters the drawing area (graph pane) of the given channel.\n\
+" S_mouse_enter_graph_hook " lambda: { snd chn }\n\
+  snd chn " S_channel_widgets " car " S_focus_widget "\n\
+; 2 make-proc add-hook!"
+  #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): is called when the mouse \
+leaves the drawing area (graph pane) of the given channel."
+#endif
 
   mouse_enter_graph_hook = XEN_DEFINE_HOOK(S_mouse_enter_graph_hook, 2, H_mouse_enter_graph_hook);    /* args = snd chn */
   mouse_leave_graph_hook = XEN_DEFINE_HOOK(S_mouse_leave_graph_hook, 2, H_mouse_leave_graph_hook);    /* args = snd chn */

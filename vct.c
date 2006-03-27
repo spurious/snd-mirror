@@ -154,7 +154,7 @@ char *vct_to_readable_string(vct *v)
 #if HAVE_SCHEME
   sprintf(buf, "(vct");
 #endif
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
   sprintf(buf, "vct(");
 #endif
   for (i = 0; i < len; i++)
@@ -164,6 +164,9 @@ char *vct_to_readable_string(vct *v)
 #endif
 #if HAVE_RUBY
       mus_snprintf(flt, 16, "%.3f%s", v->data[i], i + 1 < len ? ", " : "");
+#endif
+#if HAVE_FORTH
+      mus_snprintf(flt, 16, "%.3f%s", v->data[i], i + 1 < len ? " " : "");
 #endif
       strcat(buf, flt);
     }
@@ -198,7 +201,7 @@ XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, vct_to_string)
 
 static XEN equalp_vct(XEN obj1, XEN obj2)
 {
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
   if ((!(VCT_P(obj1))) || (!(VCT_P(obj2)))) return(XEN_FALSE);
 #endif
   return(xen_return_first(C_TO_XEN_BOOLEAN(vct_equalp((vct *)XEN_OBJECT_REF(obj1), (vct *)XEN_OBJECT_REF(obj2))), obj1, obj2));
@@ -920,6 +923,40 @@ static XEN rb_set_vct_last(XEN obj, XEN val)
 }
 #endif
 
+#if HAVE_FORTH
+static void ficl_values_to_vct(ficlVm *vm)
+{
+#define h_values_to_vct "( len-floats len -- vct )  \
+Returns a new vct of length LEN with len items found on stack.\n\
+0.5 0.3 0.1  3  >vct  .g => #<vct[len=3]: 0.500 0.300 0.100>"
+  long size;
+  FICL_STACK_CHECK(vm->dataStack, 1, 0);
+  size = ficlStackPopInteger(vm->dataStack);
+  if (size > 0)
+    {
+      Float *data = (Float *)calloc(size, sizeof(Float));
+      if (data)
+	{
+	  long i;
+	  FICL_STACK_CHECK(vm->dataStack, size, 1);
+	  for (i = size - 1; i >= 0; i--)
+	    data[i] = ficlStackPop2Float(vm->dataStack);
+	  ficlStackPushUnsigned(vm->dataStack, make_vct(size, data));
+	}
+      else fth_throw(FTH_SYSTEM_ERROR, "cannot create Vct");
+    }
+  else ficlStackPushUnsigned(vm->dataStack, fth_false());
+}
+
+static void ficl_begin_vct(ficlVm *vm)
+{
+#define h_begin_vct "( -- )  \
+Creates a vct with contents between `vct(' and closing paren `)'.\n\
+vct( 0.5 0.3 0.1 ) .g => #<vct[len=3]: 0.500 0.300 0.100>"
+  fth_begin_values_to_obj(vm, ">vct", FTH_FALSE);
+}
+#endif
+
 #if WITH_MODULES
 static void vct_init_1(void *ignore)
 #else
@@ -934,6 +971,21 @@ void vct_init(void)
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(vct_tag, XEN_PROCEDURE_CAST vct_ref, 1, 0, 0);
 #endif
+#endif
+#if HAVE_FORTH
+  fth_set_object_inspect(vct_tag,   print_vct);
+  fth_set_object_dump(vct_tag,      g_vct_to_readable_string);
+  fth_set_object_to_array(vct_tag,  vct_to_vector);
+  fth_set_object_copy(vct_tag,      copy_vct);
+  fth_set_object_value_ref(vct_tag, vct_ref);
+  fth_set_object_value_set(vct_tag, vct_set);
+  fth_set_object_equal(vct_tag,     equalp_vct);
+  fth_set_object_length(vct_tag,    vct_length);
+  fth_set_object_free(vct_tag,      free_vct);
+  fth_set_object_apply(vct_tag, XEN_PROCEDURE_CAST vct_ref, 1, 0, 0);
+  FTH_PRIM(FTH_FICL_DICT(), ">vct",   ficl_values_to_vct, h_values_to_vct);
+  FTH_PRIM(FTH_FICL_DICT(), "vct(",   ficl_begin_vct,     h_begin_vct);
+  fth_catch_eval("start-prefixes : vct( vct( ; end-prefixes", c__FUNCTION__);
 #endif
 #if HAVE_RUBY
   rb_include_module(vct_tag, rb_mComparable);
@@ -1005,7 +1057,7 @@ void vct_init(void)
   XEN_DEFINE_PROCEDURE(S_vct_mapB,      vct_mapB_w,      2, 0, 0, H_vct_mapB);
 #endif
 
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref, vct_ref_w, H_vct_ref, "set-" S_vct_ref, vct_set_w,  2, 0, 3, 0);
 #else
   XEN_DEFINE_PROCEDURE(S_vct_ref,       vct_ref_w,       2, 0, 0, H_vct_ref);

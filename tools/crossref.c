@@ -403,7 +403,8 @@ int main(int argc, char **argv)
 				in_define = 1;
 			      else
 				{
-				  if (input[j] == '{')
+				  if ((input[j] == '{') && 
+				      ((j < 6) || (strncmp((input + (j - 5)), "enum", 4) != 0)))
 				    in_curly = 1;
 				  else
 				    {

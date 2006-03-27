@@ -127,6 +127,9 @@ static void initialize_load_path(void)
 	  XEN_EVAL_C_STRING(buf);
 	  FREE(buf);
 #endif
+#if HAVE_FORTH
+	  fth_add_load_path(dirnames[i]);
+#endif
 	  FREE(dirnames[i]);
 	}
       FREE(dirnames);
@@ -361,6 +364,9 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 #if HAVE_RUBY
   ruby_init();
 #endif
+#if HAVE_FORTH
+  xen_initialize();
+#endif
 
   for (i = 1; i < argc; i++)
     {
@@ -415,7 +421,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->xen_error_data = NULL;
   ss->xen_error_handler = NULL;
 
-#if USE_NO_GUI || HAVE_RUBY
+#if USE_NO_GUI || HAVE_RUBY || HAVE_FORTH
   ss->catch_exists = 1; /* scm_shell */
 #else
   ss->catch_exists = 0;

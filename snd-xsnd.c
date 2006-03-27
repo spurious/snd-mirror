@@ -354,6 +354,7 @@ static void speed_label_click_callback(Widget w, XtPointer context, XtPointer in
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   switch (sp->speed_control_style)
     {
+    default:
     case SPEED_CONTROL_AS_FLOAT:    sp->speed_control_style = SPEED_CONTROL_AS_RATIO;    break;
     case SPEED_CONTROL_AS_RATIO:    sp->speed_control_style = SPEED_CONTROL_AS_SEMITONE; break;
     case SPEED_CONTROL_AS_SEMITONE: sp->speed_control_style = SPEED_CONTROL_AS_FLOAT;    break;

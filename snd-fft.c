@@ -2060,6 +2060,18 @@ of a moving mark:\n\
   #define H_before_transform_hook S_before_transform_hook " (snd chn): called just before a transform is calculated.  If it returns \
 an integer, it is used as the starting point of the transform."
 #endif
+#if HAVE_FORTH
+  #define H_before_transform_hook S_before_transform_hook " (snd chn): called just before a transform is calculated.  If it returns \
+an integer, it is used as the starting point of the transform.  The following \
+somewhat brute-force code shows a way to have the transform reflect the position \
+of a moving mark:\n\
+#f value transform-position\n\
+" S_before_transform_hook " lambda: { snd chn } transform-position ; 2 make-proc add-hook!\n\
+" S_mark_drag_hook " lambda: { id }\n\
+  id " S_mark_sample " to transform-position\n\
+  " S_update_transform_graph "\n\
+; 1 make-proc add-hook!"
+#endif
 
   before_transform_hook = XEN_DEFINE_HOOK(S_before_transform_hook, 2, H_before_transform_hook);  /* args = snd chn */
 

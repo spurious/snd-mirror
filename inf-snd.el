@@ -688,7 +688,7 @@ Argument STRING is the Snd command and optional arguments."
 
 Snd is a sound editor created by Bill Schottstaedt
 \(bil@ccrma.Stanford.EDU).  You can find it on
-ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz.
+ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz.
 
 You can type in Ruby commands in inferior Snd process buffer which
 will be sent via `comint-send-string' to the inferior Snd process.
@@ -738,7 +738,7 @@ The following key bindings are defined:
 
 Snd is a sound editor created by Bill Schottstaedt
 \(bil@ccrma.Stanford.EDU).  You can find it on
-ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz.
+ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz.
 
 You can type in Forth commands in inferior Snd process buffer which
 will be sent via `comint-send-string' to the inferior Snd process.
@@ -786,7 +786,7 @@ The following key bindings are defined:
 
 Snd is a sound editor created by Bill Schottstaedt
 \(bil@ccrma.Stanford.EDU).  You can find it on
-ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz.
+ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz.
 
 You can type in Guile commands in inferior Snd process buffer which
 will be sent via `comint-send-string' to the inferior Snd process.

@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 7.20, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
+AC_INIT(snd, 8.0, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz)
 
 INVOKED_PROG="$[0]"
 INVOKED_ARGS="$[@]"
@@ -22,7 +22,7 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=snd
-VERSION=7.20
+VERSION=8.0
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -54,6 +54,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-motif-prefix   set location of Motif
 #   --with-static-gsl     try to statically load GSL
 #   --with-guile          try to use Guile as the extension language (default=yes)
+#   --with-forth          try to use Forth as the extension language
 #   --with-ruby           try to use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
 #   --with-hobbit         include hobbit-style function arity checking
@@ -326,6 +327,7 @@ AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 # check for pthreads 
 AC_ARG_ENABLE(threads,
   [  --enable-threads      include pthread support],
+  [
   if test "$enable_threads" = yes ; then
     if test "$ac_cv_header_pthread_h" = yes ; then
       AC_DEFINE(WITH_THREADS)
@@ -334,7 +336,7 @@ AC_ARG_ENABLE(threads,
       RANDOM_FEATURES="$RANDOM_FEATURES threads"
     else
       AC_MSG_WARN([can't enable threads -- can't find pthread.h])
-    fi
+    fi]
   fi)
 
 # look for special functions in libm
@@ -1208,10 +1210,33 @@ AC_ARG_WITH(ruby,
 
 
 #--------------------------------------------------------------------------------
+# Forth
+#--------------------------------------------------------------------------------
+
+AC_ARG_WITH(forth,
+	[  --with-forth	  	  try to use Forth as the extension language],
+  	if test "$with_forth" = yes ; then
+	   FTH_CHECK_LIB([AC_DEFINE(HAVE_FORTH)
+ 	                  AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
+			  if test "$FTH_HAVE_COMPLEX" = yes ; then
+     	      		     AC_DEFINE(HAVE_COMPLEX_TRIG)
+     	      		     AC_DEFINE(HAVE_SCM_MAKE_COMPLEX)
+     	      		     AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)
+			  fi
+			  if test "$FTH_HAVE_RATIO" = yes ; then
+     	      		     AC_DEFINE(HAVE_SCM_MAKE_RATIO)
+			  fi
+               		  AC_SUBST(GUILE_CFLAGS, $FTH_CFLAGS)
+               		  AC_SUBST(GUILE_LIBS,   $FTH_LIBS)
+ 	      		  LOCAL_LANGUAGE="Forth"
+ 	      		  ac_snd_have_extension_language=yes])
+	fi)
+
+#--------------------------------------------------------------------------------
 # Guile
 #--------------------------------------------------------------------------------
 
-if test "$with_ruby" != yes ; then
+if test "$with_ruby" != yes && test "$with_forth" != yes ; then
 
 GUILE_LIBS=""
 GUILE_CFLAGS=""
@@ -1772,7 +1797,7 @@ if test "$ac_cv_func_statvfs" = yes ; then
                        [struct statvfs buf; statvfs("test.snd", &buf)])], 
       AC_DEFINE(USE_STATVFS)
       statvfs_ok=1)
-    if test $statvfs_ok = 1; then
+    if test $statvfs_ok = 1 ; then
       AC_MSG_RESULT(yes)
     else
       AC_MSG_RESULT(no)
@@ -1798,7 +1823,7 @@ if test $statvfs_ok = 0 ; then
 			  ])],
           AC_DEFINE(USE_STATFS)
           statfs_ok=1)
-        if test $statfs_ok = 1; then
+        if test $statfs_ok = 1 ; then
           AC_MSG_RESULT(yes)
         else
           AC_MSG_RESULT(no)

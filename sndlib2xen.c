@@ -10,7 +10,7 @@
   #if HAVE_RUBY
     #define PROC_FALSE "false"
   #endif
-  #if HAVE_SCHEME
+  #if HAVE_SCHEME || HAVE_FORTH
     #define PROC_FALSE "#f"
   #endif
 #endif
@@ -34,6 +34,9 @@
   #endif
   #if HAVE_SCHEME
     #define S_setB "set! "
+  #endif
+  #if HAVE_FORTH
+    #define S_setB "set-"
   #endif
 #endif
 
@@ -594,7 +597,7 @@ bool sound_data_equalp(sound_data *v1, sound_data *v2)
 
 static XEN equalp_sound_data(XEN obj1, XEN obj2)
 {
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
   if ((!(SOUND_DATA_P(obj1))) || (!(SOUND_DATA_P(obj2)))) return(XEN_FALSE);
 #endif
   return(xen_return_first(C_TO_XEN_BOOLEAN(sound_data_equalp((sound_data *)XEN_OBJECT_REF(obj1), (sound_data *)XEN_OBJECT_REF(obj2))), obj1, obj2));
@@ -714,7 +717,7 @@ static XEN g_mus_sound_data_maxamp(XEN obj)
 }
 
 
-#if HAVE_APPLICABLE_SMOB
+#if HAVE_APPLICABLE_SMOB || HAVE_FORTH
 static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
 {
   return(g_sound_data_ref(obj, chan, i));
@@ -1651,6 +1654,26 @@ XEN_NARGIFY_1(g_mus_alsa_set_squelch_warning_w, g_mus_alsa_set_squelch_warning)
 #endif
 #endif
 
+#if HAVE_FORTH
+#define S_sound_data_to_vector          "sound-data->vector"
+static XEN g_sound_data_to_vector(XEN sdata)
+{
+#define H_sound_data_to_vector "(" S_sound_data_to_vector " sd):  \
+returns a vector of length sd->chans containing all channels of sound-data sd as vct."
+  long chn;
+  sound_data *sd;
+  FTH vec;
+
+  XEN_ASSERT_TYPE(SOUND_DATA_P(sdata), sdata, XEN_ONLY_ARG, S_sound_data_to_vector, "a sound-data object");
+  sd = (sound_data *)XEN_OBJECT_REF(sdata);
+  vec = XEN_MAKE_VECTOR(sd->chans, FTH_NIL);
+
+  for (chn = 0; chn < sd->chans; chn++)
+    XEN_VECTOR_SET(vec, chn, g_sound_data_to_vct(sdata, C_TO_XEN_INT(chn), XEN_UNDEFINED));
+  return vec;
+}
+#endif
+
 #if HAVE_RUBY
 static XEN sound_data_each(XEN obj)
 {
@@ -1754,6 +1777,14 @@ void mus_sndlib_xen_initialize(void)
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(sound_data_tag, XEN_PROCEDURE_CAST sound_data_apply, 2, 0, 0);
 #endif
+#endif
+#if HAVE_FORTH
+  fth_set_object_inspect(sound_data_tag, print_sound_data);
+  fth_set_object_equal(sound_data_tag, equalp_sound_data);
+  fth_set_object_to_array(sound_data_tag, g_sound_data_to_vector);
+  fth_set_object_length(sound_data_tag, g_sound_data_length);
+  fth_set_object_free(sound_data_tag, free_sound_data);
+  fth_set_object_apply(sound_data_tag, XEN_PROCEDURE_CAST sound_data_apply, 2, 0, 0);
 #endif
 #if HAVE_RUBY
   Init_Hook();
@@ -1964,6 +1995,10 @@ void mus_sndlib_xen_initialize(void)
 
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("mus-header-original-format-name", g_mus_header_original_format_name, 2, 0, 0, "internal testing function");
+#endif
+
+#if HAVE_FORTH
+  XEN_DEFINE_PROCEDURE(S_sound_data_to_vector, g_sound_data_to_vector, 1, 0, 0, H_sound_data_to_vector);
 #endif
 
   #define H_new_sound_hook S_new_sound_hook "(filename): called when a new sound file is being created"

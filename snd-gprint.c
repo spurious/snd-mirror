@@ -234,5 +234,8 @@ void save_print_dialog_state(FILE *fd)
 #if HAVE_RUBY
       fprintf(fd, "%s(true, %s)\n", TO_PROC_NAME(S_print_dialog), ((bool)(GTK_TOGGLE_BUTTON(print_eps_or_lpr)->active)) ? "true" : "false");
 #endif
+#if HAVE_FORTH
+      fprintf(fd, "#t %s %s drop\n", ((bool)(GTK_TOGGLE_BUTTON(print_eps_or_lpr)->active)) ? "#t" : "#f", S_print_dialog);
+#endif
     }
 }

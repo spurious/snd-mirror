@@ -1179,6 +1179,122 @@ void Init_Hook(void)
 
 #endif
 
+/* ------------------------------ FORTH ------------------------------ */
+
+#if HAVE_FORTH
+
+char *xen_version(void)
+{
+  return fth_format("Xen: " XEN_VERSION ", Fth: %s", FTH_VERSION);
+}
+
+void xen_gc_mark(XEN val)
+{
+  fth_gc_mark(val);
+}
+
+/*
+ * A simple interpreter:
+ *
+ *  #include <xen.h>
+ *  
+ *  int main(int argc, char **argv)
+ *  {
+ *    xen_repl(argc, argv);
+ *    return 0;
+ *  }
+ *
+ * linking requires xen.o and -lfth -lm
+ */
+
+void xen_repl(int argc, char **argv)
+{
+  fth_repl(argc, argv);
+}
+
+static ficlWord *snd_print_xt;
+static ficlWord *snd_exit_xt;
+static bool fth_listener_p;
+extern bool fth_printing_p;
+extern bool fth_new_eval;
+
+static void fth_snd_print(ficlVm *vm, char *msg)
+{
+  if (fth_listener_p)
+    {
+      if (!snd_print_xt)
+	snd_print_xt = ficlSystemLookup(FTH_FICL_VM()->callback.system, "snd-print");
+      push_cstring(vm, msg);
+      ficlVmExecuteXT(vm, snd_print_xt);
+      ficlStackDrop(vm->dataStack, 1);
+    }
+  else
+    {
+      fputs(msg, stdout);
+      fflush(stdout);
+    }
+}
+
+static void fth_snd_exit(int n)
+{
+  ficlVm *vm = FTH_FICL_VM();
+
+  if (!snd_exit_xt)
+    snd_exit_xt = ficlSystemLookup(vm->callback.system, "snd-exit");
+  ficlStackPushInteger(vm->dataStack, n);
+  ficlVmExecuteXT(vm, snd_exit_xt);
+  ficlStackDrop(vm->dataStack, 1);
+}
+
+/* called in inf-snd.el (inf-snd-comint-snd-send) */
+static void fth_emacs_eval(FTH line_in)
+{
+#define h_emacs_eval "( line -- )"
+  int status;
+  const char *old_file = fth_current_file;
+  long old_line = fth_current_line;
+  
+  if (!FTH_STRING_P(line_in)) return;
+  fth_current_file = "emacs-eval";
+  fth_current_line = 1;
+  fth_listener_p = false;
+  fth_new_eval = false;
+
+  if ((status = fth_catch_eval(fth_string_ref(line_in), RUNNING_WORD())) == FTH_BYE)
+    fth_exit(EXIT_SUCCESS);
+  else
+    {
+      ficlVm *vm = FTH_FICL_VM();
+      long i, len = FTH_STACK_DEPTH(vm);
+	
+      for (i = len - 1; i >= 0; i--)
+	{
+	  ficlStackRoll(vm->dataStack, i);
+	  fth_printf(fth_to_c_string(fth_pop_ficl_cell(vm)));
+	  if (i > 0) fth_printf(" ");
+	}
+    }
+
+  if (fth_printing_p) fth_printf(" ");
+  fth_printf("ok\n");
+  fth_current_file = old_file;
+  fth_current_line = old_line;
+  fth_printing_p = false;
+  fth_listener_p = true;
+}
+
+void xen_initialize(void)
+{
+  fth_printing_p = false;
+  fth_listener_p = true;
+  fth_print_hook = fth_snd_print;
+  fth_exit_hook  = fth_snd_exit;
+  fth_init();
+  fth_define_void_procedure("emacs-eval", fth_emacs_eval, 1, 0, 0, h_emacs_eval);
+}
+
+#endif 	/* HAVE_FORTH */
+
 
 /* ------------------------------ NONE OF THE ABOVE ------------------------------ */
 

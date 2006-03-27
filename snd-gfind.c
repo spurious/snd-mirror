@@ -228,6 +228,16 @@ void save_find_dialog_state(FILE *fd)
 	  else fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_find_dialog));
 	}
 #endif
+#if HAVE_FORTH
+      if (text)
+	fprintf(fd, "#t $\" %s\" %s drop\n", text, S_find_dialog);
+      else
+	{
+	  if (ss->search_expr)
+	    fprintf(fd, "#t $\" %s\" %s drop\n", ss->search_expr, S_find_dialog);
+	  else fprintf(fd, "#t %s drop\n", S_find_dialog);
+	}
+#endif
       if (text) g_free(text);
     }
 }

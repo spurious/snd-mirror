@@ -40,6 +40,11 @@ void dump_protection(FILE *Fp)
 #if HAVE_RUBY
 	      fprintf(Fp,"  %s:%d %d %s", snd_protect_callers[i], i, (int)gcdat, XEN_AS_STRING(gcdat));
 #endif
+#if HAVE_FORTH
+	      fprintf(Fp,"  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdat));
+	      if (XEN_HOOK_P(gcdat))
+		fprintf(Fp, " -> %s", XEN_AS_STRING(XEN_HOOK_PROCEDURES(gcdat)));
+#endif
 	      fprintf(Fp, "\n");
 	    }
 	}
@@ -122,7 +127,7 @@ int snd_protect(XEN obj)
       XEN_VECTOR_SET(gc_protection, old_size, obj);
       /* it would be ideal to unprotect the old table, but it's a permanent object in Guile terms */
       /*   in Ruby, I think we can unprotect it */
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
       XEN_UNPROTECT_FROM_GC(tmp);
 #endif
 #if DEBUGGING
@@ -248,7 +253,7 @@ static XEN snd_format_if_needed(XEN args)
 			}
 		      else
 			{
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_FORTH
 			  if (XEN_PROCEDURE_P(cur_arg))
 			    {
 			      /* don't need the source, just the name here, I think */
@@ -552,7 +557,7 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 }
 #endif
 
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
   return((*body)(body_data));
@@ -574,7 +579,7 @@ bool procedure_arity_ok(XEN proc, int args)
 {
   XEN arity;
   int rargs;
-#if (!HAVE_RUBY)
+#if (!HAVE_RUBY && !HAVE_FORTH)
   int oargs, restargs, loc;
 #endif
   arity = XEN_ARITY(proc);
@@ -596,6 +601,11 @@ bool procedure_arity_ok(XEN proc, int args)
   if (rargs > args) return(false);
   if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
 #endif
+#if HAVE_FORTH
+  rargs = XEN_TO_C_INT(arity);
+  if (rargs != args)
+    return(false);
+#endif
   return(true);
 }
 
@@ -605,7 +615,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
   /* 0 args is special => "thunk" meaning in this case that optional args are not ok (applies to as-one-edit and two menu callbacks) */
   XEN arity;
   int rargs;
-#if (!HAVE_RUBY)
+#if (!HAVE_RUBY && !HAVE_FORTH)
   int oargs, restargs, loc;
 #endif
   if (!(XEN_PROCEDURE_P(proc)))
@@ -649,6 +659,12 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 	  ((rargs != 0) || (oargs != 0) || (restargs != 0)))
 	return(mus_format(_("%s function (%s arg %d) should take no args, not %d"), 
 			  arg_name, caller, argn, rargs + oargs + restargs));
+#endif
+#if HAVE_FORTH
+      rargs = XEN_TO_C_INT(arity);
+      if (rargs != args)
+	return(mus_format(_("%s function (%s arg %d) should take %d args, not %d"),
+			  arg_name, caller, argn, args, rargs));
 #endif
     }
   return(NULL);
@@ -867,6 +883,9 @@ char *g_print_1(XEN obj) /* free return val */
     return(copy_string("nil")); /* Ruby returns the null string in this case??? */
   return(copy_string(XEN_AS_STRING(obj)));
 #endif
+#if HAVE_FORTH
+  return(copy_string(XEN_AS_STRING(obj)));
+#endif
 #if (!HAVE_EXTENSION_LANGUAGE)
   return(NULL);
 #endif
@@ -883,7 +902,7 @@ static char *gl_print(XEN result)
   ilen = print_length(ss); 
   newbuf = (char *)CALLOC(128, sizeof(char));
   savelen = 128;
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
   sprintf(newbuf, "#("); 
 #endif
 #if HAVE_RUBY
@@ -905,7 +924,7 @@ static char *gl_print(XEN result)
 	  FREE(str);
 	}
     }
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
   newbuf = snd_strcat(newbuf, " ...)", &savelen);
 #endif
 #if HAVE_RUBY
@@ -945,7 +964,7 @@ void snd_report_result(XEN result, const char *buf)
 
 void snd_report_listener_result(XEN form)
 {
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
   snd_report_result(form, "\n");
 #endif
 #if HAVE_SCHEME
@@ -1052,13 +1071,13 @@ static bool snd_load_init_file_1(const char *filename)
 #if HAVE_SCHEME
       expr = mus_format("(load %s)", fullname);
 #endif
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
       expr = mus_format("load(%s)", fullname);
 #endif
       result = snd_catch_any(eval_file_wrapper, (void *)fullname, expr);
       FREE(expr);
 
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
       if (!(XEN_TRUE_P(result)))
 	{
 	  int loc;
@@ -1105,6 +1124,11 @@ void snd_load_init_file(bool no_global, bool no_init)
   #define SND_PREFS "~/.snd_prefs_ruby"
   #define SND_INIT "~/.snd_ruby"
 #endif
+#if HAVE_FORTH
+  #define SND_EXT_CONF "/etc/snd_forth.conf"
+  #define SND_PREFS "~/.snd_prefs_forth"
+  #define SND_INIT "~/.snd_forth"
+#endif
   #define SND_CONF "/etc/snd.conf"
   redirect_snd_print_to(string_to_stdout, NULL);
   redirect_errors_to(string_to_stderr_and_listener, NULL);
@@ -1136,7 +1160,7 @@ void snd_load_file(char *filename)
   char *str = NULL, *str1 = NULL, *str2 = NULL;
   XEN result = XEN_TRUE;
   str = mus_expand_filename(filename);
-#if (!HAVE_RUBY)
+#if (!HAVE_RUBY && !HAVE_FORTH)
   str2 = mus_format("(load \"%s\")", filename);
 #endif
   if (!mus_file_probe(str))
@@ -1149,7 +1173,7 @@ void snd_load_file(char *filename)
 	  str = NULL;
 	  FREE(str1);
 	  str1 = NULL;
-#if (!HAVE_RUBY)
+#if (!HAVE_RUBY && !HAVE_FORTH)
 	  FREE(str2);
 	  str2 = NULL;
 #endif
@@ -1162,7 +1186,7 @@ void snd_load_file(char *filename)
   else result = snd_catch_any(eval_file_wrapper, (void *)str, str2);
   if (str) FREE(str);
   if (str2) FREE(str2);
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
   if (!(XEN_TRUE_P(result)))
     {
       int loc;
@@ -2793,18 +2817,24 @@ static XEN g_snd_stdin_test(XEN str)
 
 static XEN g_gc_off(void) 
 {
-  #define H_gc_off "(" S_gc_off ") turns off garbage collection (Ruby only)"
+  #define H_gc_off "(" S_gc_off ") turns off garbage collection (Ruby and Forth only)"
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
   rb_gc_disable();
+#endif
+#if HAVE_FORTH
+  fth_gc_off();
 #endif
   return(XEN_FALSE);
 }
 
 static XEN g_gc_on(void) 
 {
-  #define H_gc_on "(" S_gc_on ") turns on garbage collection (Ruby only)"
+  #define H_gc_on "(" S_gc_on ") turns on garbage collection (Ruby and Forth only)"
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
   rb_gc_enable();
+#endif
+#if HAVE_FORTH
+  fth_gc_on();
 #endif
   return(XEN_FALSE);
 }
@@ -2973,7 +3003,7 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
   return(data);
 }
 
-#if HAVE_COMPLEX_TRIG && HAVE_GUILE
+#if HAVE_COMPLEX_TRIG
 #include <gsl/gsl_poly.h>
 #include <complex.h>
 
@@ -3189,7 +3219,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 XEN_NARGIFY_1(g_gsl_ellipk_w, g_gsl_ellipk)
 XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
 XEN_NARGIFY_4(g_gsl_dht_w, g_gsl_dht)
-#if HAVE_COMPLEX_TRIG && HAVE_GUILE
+#if HAVE_COMPLEX_TRIG
 XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
 #endif
 #endif
@@ -3372,7 +3402,7 @@ XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
 #define g_gsl_ellipk_w g_gsl_ellipk
 #define g_gsl_ellipj_w g_gsl_ellipj
 #define g_gsl_dht_w g_gsl_dht
-#if HAVE_COMPLEX_TRIG && HAVE_GUILE
+#if HAVE_COMPLEX_TRIG
 #define g_gsl_roots_w g_gsl_roots
 #endif
 #endif
@@ -3418,6 +3448,9 @@ void g_initialize_gh(void)
 #endif
 
   Init_sndlib();
+#if HAVE_FORTH
+  fth_add_loaded_files("sndlib.so");
+#endif
 
 #if WITH_MIDI && HAVE_EXTENSION_LANGUAGE
   mus_midi_init();
@@ -3680,7 +3713,7 @@ void g_initialize_gh(void)
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("gsl-gegenbauer",  g_gsl_gegenbauer,  3, 0, 0, "internal test func");
 #endif
-#if HAVE_COMPLEX_TRIG && HAVE_GUILE
+#if HAVE_COMPLEX_TRIG
   XEN_DEFINE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
 #endif
 #endif
@@ -3708,7 +3741,6 @@ but before data has been read. \n\
       set_mus_file_prescaler(fd, 500.0)\n\
     end\n\
   end"
-
   #define H_after_open_hook S_after_open_hook " (snd): called just before the new file's window is displayed. \
 This provides a way to set various sound-specific defaults. \n\
   $after_open_hook.add-hook!(\"set-channels-combined\") do |snd| \n\
@@ -3716,6 +3748,26 @@ This provides a way to set various sound-specific defaults. \n\
       set_channel_style(snd, Channels_combined)\n\
     end\n\
   end"
+#endif
+#if HAVE_FORTH
+  #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \
+but before data has been read. \n\
+" S_during_open_hook " lambda: { fd name reason }\n\
+  name " S_mus_sound_header_type " " S_mus_raw " = if\n\
+    500.0 fd set-" S_mus_file_prescaler "\n\
+  else\n\
+    #f\n\
+  then\n\
+; 3 make-proc add-hook!"
+  #define H_after_open_hook S_after_open_hook " (snd): called just before the new file's window is displayed. \
+This provides a way to set various sound-specific defaults. \n\
+" S_after_open_hook " lambda: { snd }\n\
+  snd " S_channels " 1 > if\n\
+    " S_channels_combined " snd set-" S_channel_style "\n\
+  else\n\
+    #f\n\
+  then\n\
+; 1 make-proc add-hook!"
 #endif
 
   during_open_hook = XEN_DEFINE_HOOK(S_during_open_hook, 3,    H_during_open_hook);    /* args = fd filename reason */
@@ -3740,6 +3792,13 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
     $stdout.print msg\n\
   false\n\
   end"
+#endif
+#if HAVE_FORTH
+  #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
+If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
+" S_print_hook " lambda: { msg }\n\
+  \"%s\n[%s]\n%s\" msg date " S_listener_prompt " format " S_snd_print "\n\
+; 1 make-proc add-hook!"
 #endif
 
   print_hook = XEN_DEFINE_HOOK(S_print_hook, 1, H_print_hook);          /* arg = text */
@@ -3845,12 +3904,23 @@ that name is presented in the New File dialog."
                        snd_print format(str, *args)\n\
                        end");
 #endif
+#if HAVE_FORTH
+  XEN_EVAL_C_STRING(": clm-print ( fmt lst -- ) string-format snd-print drop ;");
+  XEN_EVAL_C_STRING("' redo alias redo-edit");        /* consistency with Ruby */
+  XEN_EVAL_C_STRING("' undo alias undo-edit");
+#endif
 
 #if HAVE_STATIC_XM
   #if USE_MOTIF
     Init_libxm();
+#if HAVE_FORTH
+    fth_add_loaded_files("libxm.so");
+#endif
   #else
     Init_libxg();
+#if HAVE_FORTH
+    fth_add_loaded_files("libxg.so");
+#endif
   #endif
 #endif
 
@@ -3869,6 +3939,9 @@ that name is presented in the New File dialog."
 #endif
 #if HAVE_GUILE
   XEN_YES_WE_HAVE("snd-guile");
+#endif
+#if HAVE_FORTH
+  XEN_YES_WE_HAVE("snd-forth");
 #endif
 #if HAVE_RUBY
   XEN_YES_WE_HAVE("snd-ruby");

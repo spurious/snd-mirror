@@ -202,7 +202,7 @@ static bool local_arity_ok(XEN proc, int args) /* from snd-xen.c minus (inconven
 {
   XEN arity;
   int rargs;
-#if (!HAVE_RUBY)
+#if (!HAVE_RUBY && !HAVE_FORTH)
   int oargs, restargs;
 #endif
   arity = XEN_ARITY(proc);
@@ -221,6 +221,10 @@ static bool local_arity_ok(XEN proc, int args) /* from snd-xen.c minus (inconven
   restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
   if (rargs > args) return(false);
   if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
+#endif
+#if HAVE_FORTH
+  rargs = XEN_TO_C_INT(arity);
+  return (rargs == args);
 #endif
   return(true);
 }
@@ -504,6 +508,7 @@ static XEN g_edot_product(XEN val1, XEN val2)
   XEN_ASSERT_TYPE(XEN_COMPLEX_P(val1), val1, XEN_ARG_1, S_edot_product, "complex");
   XEN_ASSERT_TYPE((VCT_P(val2)) || (XEN_VECTOR_P(val2)), val2, XEN_ARG_2, S_edot_product, "a vct");
   freq = XEN_TO_C_COMPLEX(val1);
+
   if (VCT_P(val2))
     {
       v = TO_VCT(val2);
@@ -848,7 +853,7 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
   /* rb_gc_mark passes us the actual value, not the XEN wrapper! */
   ms = (mus_xen *)obj;
 #endif
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
   ms = XEN_TO_MUS_XEN(obj);
 #endif
   if (ms->vcts) 
@@ -861,14 +866,16 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
 #if HAVE_RUBY
   return(NULL);
 #endif
+#if !HAVE_FORTH
   return(XEN_FALSE);
+#endif
 }
 
 static void mus_xen_free(mus_xen *ms)
 {
   if (!(ms->dont_free_gen)) mus_free(ms->gen);
   ms->gen = NULL;
-  if (ms->vcts) FREE(ms->vcts); 
+  if (ms->vcts) FREE(ms->vcts);
   ms->vcts = NULL;
   FREE(ms);
 }
@@ -885,24 +892,34 @@ static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
 }
 #endif
 
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
 static XEN mus_xen_to_s(XEN obj)
 {
   return(C_TO_XEN_STRING(mus_describe(XEN_TO_MUS_ANY(obj))));
 }
 #endif
 
+#if HAVE_FORTH
+static XEN print_mus_xen(XEN obj)
+{
+  return(C_TO_XEN_STRING(fth_format("#<%s>", mus_describe(XEN_TO_MUS_ANY(obj)))));
+}
+#endif
+
 static XEN equalp_mus_xen(XEN obj1, XEN obj2) 
 {
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_FORTH
   if ((!(MUS_XEN_P(obj1))) || (!(MUS_XEN_P(obj2)))) return(XEN_FALSE);
 #endif
   return(C_TO_XEN_BOOLEAN(mus_equalp(XEN_TO_MUS_ANY(obj1), XEN_TO_MUS_ANY(obj2))));
 }
 
-#if HAVE_RUBY || HAVE_APPLICABLE_SMOB
+#if HAVE_RUBY || HAVE_APPLICABLE_SMOB || HAVE_FORTH
 static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 {
+#if HAVE_FORTH
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_apply, "a generator");
+#endif
   return(C_TO_XEN_DOUBLE(mus_run(XEN_TO_MUS_ANY(gen),
 				 (XEN_NUMBER_P(arg1)) ? XEN_TO_C_DOUBLE(arg1) : 0.0,
 				 (XEN_NUMBER_P(arg2)) ? XEN_TO_C_DOUBLE(arg2) : 0.0)));
@@ -1232,6 +1249,9 @@ static XEN g_mus_apply(XEN arglist)
   arglist_len = XEN_LIST_LENGTH(arglist);
   if ((arglist_len > 3) || (arglist_len == 0)) 
     return(C_TO_XEN_DOUBLE(0.0));
+#if HAVE_FORTH
+  XEN_ASSERT_TYPE(MUS_XEN_P(XEN_CAR(arglist)), XEN_CAR(arglist), XEN_ARG_1, S_mus_apply, "a generator");
+#endif
   gen = XEN_TO_MUS_ANY(XEN_CAR(arglist));
   if (arglist_len == 1) 
     return(C_TO_XEN_DOUBLE(mus_apply(gen)));
@@ -5898,6 +5918,14 @@ void mus_xen_init(void)
   scm_set_smob_apply(mus_xen_tag, XEN_PROCEDURE_CAST mus_xen_apply, 0, 2, 0);
 #endif
 #endif
+#if HAVE_FORTH
+  fth_set_object_inspect(mus_xen_tag, print_mus_xen);
+  fth_set_object_to_string(mus_xen_tag, mus_xen_to_s);
+  fth_set_object_equal(mus_xen_tag, equalp_mus_xen);
+  fth_set_object_mark(mus_xen_tag, mark_mus_xen);
+  fth_set_object_free(mus_xen_tag, free_mus_xen);
+  fth_set_object_apply(mus_xen_tag, XEN_PROCEDURE_CAST mus_xen_apply, 0, 2, 0);
+#endif
 #if HAVE_RUBY
   rb_define_method(mus_xen_tag, "to_s", XEN_PROCEDURE_CAST mus_xen_to_s, 0);
   rb_define_method(mus_xen_tag, "eql?", XEN_PROCEDURE_CAST equalp_mus_xen, 1);
@@ -6167,7 +6195,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_frame_p,        g_frame_p_w,        1, 0, 0, H_frame_p);
   XEN_DEFINE_PROCEDURE(S_frame_add,      g_frame_add_w,      2, 1, 0, H_frame_add);
   XEN_DEFINE_PROCEDURE(S_frame_multiply, g_frame_multiply_w, 2, 1, 0, H_frame_multiply);
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_frame_ref, g_frame_ref_w, H_frame_ref, S_setB S_frame_ref, g_set_frame_ref_w,  2, 0, 3, 0);
 #endif
 #if HAVE_RUBY
@@ -6181,7 +6209,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mixer_multiply,    g_mixer_multiply_w,    2, 1, 0, H_mixer_multiply);
   XEN_DEFINE_PROCEDURE(S_mixer_add,         g_mixer_add_w,         2, 1, 0, H_mixer_add);
   XEN_DEFINE_PROCEDURE(S_make_scalar_mixer, g_make_scalar_mixer_w, 2, 0, 0, H_make_scalar_mixer);
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref, g_mixer_ref_w, H_mixer_ref, S_setB S_mixer_ref, g_set_mixer_ref_w,  3, 0, 4, 0);
 #endif
 #if HAVE_RUBY
@@ -6255,14 +6283,14 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_make_locsig,       g_make_locsig_w,  0, 0, 1, H_make_locsig);
   XEN_DEFINE_PROCEDURE(S_move_locsig,       g_move_locsig_w,  3, 0, 0, H_move_locsig);
   XEN_DEFINE_PROCEDURE(S_mus_channels,      g_mus_channels_w, 1, 0, 0, H_mus_channels);
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_ref, g_locsig_ref_w, H_locsig_ref, S_setB S_locsig_ref, g_locsig_set_w,  2, 0, 3, 0);
 #endif
 #if HAVE_RUBY
   XEN_DEFINE_PROCEDURE(S_locsig_ref,        g_locsig_ref_w,   2, 0, 0, H_locsig_ref);
 #endif
   XEN_DEFINE_PROCEDURE(S_locsig_set,        g_locsig_set_w,   3, 0, 0, H_locsig_set);
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_reverb_ref, g_locsig_reverb_ref_w, H_locsig_reverb_ref, 
 				   S_locsig_reverb_set, g_locsig_reverb_set_w,  2, 0, 3, 0);
 #endif

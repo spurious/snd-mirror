@@ -328,5 +328,8 @@ void save_print_dialog_state(FILE *fd)
 #if HAVE_RUBY
       fprintf(fd, "%s(true, %s)\n", TO_PROC_NAME(S_print_dialog), ((bool)(XmToggleButtonGetState(print_eps_or_lpr))) ? "true" : "false");
 #endif
+#if HAVE_FORTH
+      fprintf(fd, "#t %s %s drop\n", ((bool)(XmToggleButtonGetState(print_eps_or_lpr))) ? "#t" : "#f", S_print_dialog);
+#endif
     }
 }

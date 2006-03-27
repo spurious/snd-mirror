@@ -218,6 +218,22 @@ enum {SORT_A_TO_Z, SORT_Z_TO_A, SORT_NEW_TO_OLD, SORT_OLD_TO_NEW, SORT_SMALL_TO_
   #define PROC_TRUE "true"
   #define PROC_QUOTE ""
 #endif
+#if HAVE_FORTH
+  #define TO_PROC_NAME(Str) Str
+  #define TO_VAR_NAME(Str) Str
+  #define PROC_OPEN " "
+  #define PROC_CLOSE " "
+  #define PROC_SEP " "
+  #define VECTOR_OPEN " #( "
+  #define VECTOR_CLOSE " ) "
+  #define LIST_OPEN " '( "
+  #define LIST_CLOSE " ) "
+  #define BPAREN ""
+  #define EPAREN " drop"
+  #define PROC_FALSE "#f"
+  #define PROC_TRUE  "#t"
+  #define PROC_QUOTE ""
+#endif
 #if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
   #define TO_PROC_NAME(Str) Str
   #define TO_VAR_NAME(Str) Str

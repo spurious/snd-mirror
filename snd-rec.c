@@ -491,6 +491,31 @@ void save_recorder_state(FILE *fd)
   if (fneq(rp->trigger, DEFAULT_RECORDER_TRIGGER)) fprintf(fd, "set_%s %.4f\n", TO_PROC_NAME(S_recorder_trigger), rp->trigger);
   if (fneq(rp->max_duration, DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd, "set_%s %.4f\n", TO_PROC_NAME(S_recorder_max_duration), rp->max_duration);
 #endif
+#if HAVE_FORTH
+  if (rp->autoload != DEFAULT_RECORDER_AUTOLOAD) fprintf(fd, "%s set-%s drop\n", b2s(rp->autoload), S_recorder_autoload);
+  if (rp->buffer_size != DEFAULT_RECORDER_BUFFER_SIZE) fprintf(fd, "%d set-%s drop\n", rp->buffer_size, S_recorder_buffer_size);
+  if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd, "%d set-%s drop\n", rp->out_chans, S_recorder_out_chans);
+  if (rp->in_chans != DEFAULT_RECORDER_IN_CHANS) fprintf(fd, "%d set-%s drop\n", rp->in_chans, S_recorder_in_chans);
+  if ((rp->output_data_format != DEFAULT_RECORDER_OUT_DATA_FORMAT) &&
+      (MUS_DATA_FORMAT_OK(rp->output_data_format)))
+    fprintf(fd, "%s set-%s drop\n",
+	    mus_data_format_to_string(rp->output_data_format),
+	    S_recorder_out_data_format);
+  if (MUS_HEADER_TYPE_OK(rp->output_header_type))
+    fprintf(fd, "%s set-%s drop\n", 
+	    mus_header_type_to_string(rp->output_header_type),
+	    S_recorder_out_header_type);
+  if ((rp->in_format != DEFAULT_RECORDER_IN_DATA_FORMAT) &&
+      (MUS_DATA_FORMAT_OK(rp->in_format)))
+    fprintf(fd, "%s set-%s drop\n", 
+	    mus_data_format_to_string(rp->in_format),
+	    S_recorder_in_data_format);
+  if (in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "%d set-%s drop\n", in_device, S_recorder_in_device);
+  if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "%d set-%s drop\n", rp->srate, S_recorder_srate);
+  if (rp->output_file != NULL) fprintf(fd, "$\" %s\" set-%s drop\n", rp->output_file, S_recorder_file);
+  if (fneq(rp->trigger, DEFAULT_RECORDER_TRIGGER)) fprintf(fd, "%.4f set-%s drop\n", rp->trigger, S_recorder_trigger);
+  if (fneq(rp->max_duration, DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd, "%.4f set-%s drop\n", rp->max_duration, S_recorder_max_duration);
+#endif
 }
 
 static char numbuf[LABEL_BUFFER_SIZE];

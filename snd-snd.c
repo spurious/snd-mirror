@@ -1712,6 +1712,15 @@ static bool apply_controls(apply_state *ap)
 		  FREE(envstr);
 		}
 	      else filterstr = copy_string(PROC_FALSE);
+#if HAVE_FORTH
+	      if (orig_apply_dur == 0)
+	      ap->origin = mus_format(" '( %s %s %s %s %s %s ) " OFF_TD PROC_SEP PROC_FALSE " %s", 
+				      ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr, 
+				      apply_beg, S_controls_to_channel);
+	      else ap->origin = mus_format(" '( %s %s %s %s %s %s ) " OFF_TD PROC_SEP OFF_TD " %s",
+					   ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr,
+					   apply_beg, apply_dur, S_controls_to_channel);
+#else
 	      if (orig_apply_dur == 0)
 	      ap->origin = mus_format("%s" PROC_OPEN LIST_OPEN "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" LIST_CLOSE PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
 				      TO_PROC_NAME(S_controls_to_channel),
@@ -1721,6 +1730,7 @@ static bool apply_controls(apply_state *ap)
 					   TO_PROC_NAME(S_controls_to_channel),
 					   ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr,
 					   apply_beg, apply_dur);
+#endif
 	      FREE(ampstr);
 	      FREE(speedstr);
 	      FREE(contraststr);
@@ -4173,6 +4183,15 @@ where each inner list entry can also be #f."
       ss->apply_choice = APPLY_TO_CHANNEL;
       sp->applying = true;
       ap = (apply_state *)make_apply_state(sp);
+#if HAVE_FORTH
+      if (!(XEN_NUMBER_P(dur)))
+	ap->origin = mus_format("%s " OFF_TD PROC_SEP PROC_FALSE " %s", 
+				XEN_AS_STRING(settings), 
+				apply_beg, S_controls_to_channel);
+      else ap->origin = mus_format("%s " PROC_SEP OFF_TD PROC_SEP OFF_TD " %s", 
+				   XEN_AS_STRING(settings), 
+				   apply_beg, apply_dur, S_controls_to_channel);
+#else
       if (!(XEN_NUMBER_P(dur)))
 	ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
 				TO_PROC_NAME(S_controls_to_channel), 
@@ -4184,6 +4203,7 @@ where each inner list entry can also be #f."
 				   PROC_QUOTE,
 				   XEN_AS_STRING(settings), 
 				   apply_beg, apply_dur);
+#endif
 #if HAVE_GUILE_DYNAMIC_WIND
       saved_settings->sp = sp;
       saved_settings->old_selected_channel = old_selected_channel;

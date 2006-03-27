@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS FFTW_CFLAGS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GUILE_LIBS GUILE_CFLAGS XM_LIBS LD_XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_FLAGS SO_LD PATH_OGGDEC PATH_OGGENC PATH_MPG123 PATH_MPG321 PATH_SPEEXDEC PATH_SPEEXENC PATH_FLAC PATH_TIMIDITY PATH_SHORTEN PATH_TTA PATH_WAVPACK PATH_WVUNPACK MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS USE_NLS MSGFMT GMSGFMT XGETTEXT MSGMERGE INTL_MACOSX_LIBS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS FFTW_CFLAGS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GUILE_LIBS GUILE_CFLAGS FTH_VERSION FTH_CFLAGS FTH_LIBS FTH_HAVE_COMPLEX FTH_HAVE_RATIO FTH XM_LIBS LD_XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_FLAGS SO_LD PATH_OGGDEC PATH_OGGENC PATH_MPG123 PATH_MPG321 PATH_SPEEXDEC PATH_SPEEXENC PATH_FLAC PATH_TIMIDITY PATH_SHORTEN PATH_TTA PATH_WAVPACK PATH_WVUNPACK MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS USE_NLS MSGFMT GMSGFMT XGETTEXT MSGMERGE INTL_MACOSX_LIBS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -903,6 +903,7 @@ Optional Packages:
   --with-x                use the X Window System
   --with-ruby-prefix=PFX  where Ruby is installed
   --with-ruby	  	  try to use Ruby as the extension language
+  --with-forth	  	  try to use Forth as the extension language
   --with-shared-sndlib	  try to load libsndlib.so
   --with-libiconv-prefix[=DIR]  search for libiconv in DIR/include and DIR/lib
   --without-libiconv-prefix     don't search for libiconv in includedir and libdir
@@ -2938,6 +2939,7 @@ _ACEOF
 #   --with-motif-prefix   set location of Motif
 #   --with-static-gsl     try to statically load GSL
 #   --with-guile          try to use Guile as the extension language (default=yes)
+#   --with-forth          try to use Forth as the extension language
 #   --with-ruby           try to use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
 #   --with-hobbit         include hobbit-style function arity checking
@@ -9702,6 +9704,7 @@ fi
 # Check whether --enable-threads or --disable-threads was given.
 if test "${enable_threads+set}" = set; then
   enableval="$enable_threads"
+
   if test "$enable_threads" = yes ; then
     if test "$ac_cv_header_pthread_h" = yes ; then
       cat >>confdefs.h <<\_ACEOF
@@ -15861,10 +15864,259 @@ fi;
 
 
 #--------------------------------------------------------------------------------
+# Forth
+#--------------------------------------------------------------------------------
+
+
+# Check whether --with-forth or --without-forth was given.
+if test "${with_forth+set}" = set; then
+  withval="$with_forth"
+  if test "$with_forth" = yes ; then
+
+  # Extract the first word of "fth", so it can be a program name with args.
+set dummy fth; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_FTH+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $FTH in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_FTH="$FTH" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_FTH="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_FTH" && ac_cv_path_FTH="no"
+  ;;
+esac
+fi
+FTH=$ac_cv_path_FTH
+
+if test -n "$FTH"; then
+  echo "$as_me:$LINENO: result: $FTH" >&5
+echo "${ECHO_T}$FTH" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  FTH_VERSION=""
+  FTH_CFLAGS=""
+  FTH_LIBS=""
+  FTH_HAVE_COMPLEX=no
+  FTH_HAVE_RATIO=no
+  echo "$as_me:$LINENO: checking for Forth" >&5
+echo $ECHO_N "checking for Forth... $ECHO_C" >&6
+  if test "${FTH}" != no ; then
+    FTH_VERSION=`${FTH} --no-init-file --eval .version`
+    FTH_CFLAGS=`${FTH} --no-init-file --eval .cflags`
+    FTH_LIBS=`${FTH} --no-init-file --eval .libs`
+    echo "$as_me:$LINENO: result: FTH version ${FTH_VERSION}" >&5
+echo "${ECHO_T}FTH version ${FTH_VERSION}" >&6
+
+      echo "$as_me:$LINENO: checking whether FTH supports complex numbers" >&5
+echo $ECHO_N "checking whether FTH supports complex numbers... $ECHO_C" >&6
+if test "${ac_cv_lib_fth_fth_make_complex+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  fth_check_lib_save_LIBS=$LIBS
+		  LIBS="-lfth ${FTH_LIBS} $LIBS"
+		  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char fth_make_complex ();
+int
+main ()
+{
+fth_make_complex ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_fth_fth_make_complex=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_fth_fth_make_complex=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+		  LIBS=$fth_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_fth_fth_make_complex" >&5
+echo "${ECHO_T}$ac_cv_lib_fth_fth_make_complex" >&6
+  if test $ac_cv_lib_fth_fth_make_complex = yes; then
+  FTH_HAVE_COMPLEX=yes
+fi
+
+
+      echo "$as_me:$LINENO: checking whether FTH supports rational numbers" >&5
+echo $ECHO_N "checking whether FTH supports rational numbers... $ECHO_C" >&6
+if test "${ac_cv_lib_fth_fth_ratio_floor+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  fth_check_lib_save_LIBS=$LIBS
+		  LIBS="-lfth ${FTH_LIBS} $LIBS"
+		  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char fth_ratio_floor ();
+int
+main ()
+{
+fth_ratio_floor ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_fth_fth_ratio_floor=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_fth_fth_ratio_floor=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+		  LIBS=$fth_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_fth_fth_ratio_floor" >&5
+echo "${ECHO_T}$ac_cv_lib_fth_fth_ratio_floor" >&6
+  if test $ac_cv_lib_fth_fth_ratio_floor = yes; then
+  FTH_HAVE_RATIO=yes
+fi
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_FORTH 1
+_ACEOF
+
+ 	                  cat >>confdefs.h <<\_ACEOF
+#define HAVE_EXTENSION_LANGUAGE 1
+_ACEOF
+
+			  if test "$FTH_HAVE_COMPLEX" = yes ; then
+     	      		     cat >>confdefs.h <<\_ACEOF
+#define HAVE_COMPLEX_TRIG 1
+_ACEOF
+
+     	      		     cat >>confdefs.h <<\_ACEOF
+#define HAVE_SCM_MAKE_COMPLEX 1
+_ACEOF
+
+     	      		     cat >>confdefs.h <<\_ACEOF
+#define HAVE_SCM_C_MAKE_RECTANGULAR 1
+_ACEOF
+
+			  fi
+			  if test "$FTH_HAVE_RATIO" = yes ; then
+     	      		     cat >>confdefs.h <<\_ACEOF
+#define HAVE_SCM_MAKE_RATIO 1
+_ACEOF
+
+			  fi
+               		  GUILE_CFLAGS=$FTH_CFLAGS
+
+               		  GUILE_LIBS=$FTH_LIBS
+
+ 	      		  LOCAL_LANGUAGE="Forth"
+ 	      		  ac_snd_have_extension_language=yes
+  else
+    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+
+  fi
+
+
+
+
+
+
+	fi
+fi;
+
+#--------------------------------------------------------------------------------
 # Guile
 #--------------------------------------------------------------------------------
 
-if test "$with_ruby" != yes ; then
+if test "$with_ruby" != yes && test "$with_forth" != yes ; then
 
 GUILE_LIBS=""
 GUILE_CFLAGS=""
@@ -19939,7 +20191,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-    if test $statvfs_ok = 1; then
+    if test $statvfs_ok = 1 ; then
       echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
     else
@@ -20011,7 +20263,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-        if test $statfs_ok = 1; then
+        if test $statfs_ok = 1 ; then
           echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
         else
@@ -23178,6 +23430,12 @@ s,@GL_FLAGS@,$GL_FLAGS,;t t
 s,@FAM_LIB@,$FAM_LIB,;t t
 s,@GUILE_LIBS@,$GUILE_LIBS,;t t
 s,@GUILE_CFLAGS@,$GUILE_CFLAGS,;t t
+s,@FTH_VERSION@,$FTH_VERSION,;t t
+s,@FTH_CFLAGS@,$FTH_CFLAGS,;t t
+s,@FTH_LIBS@,$FTH_LIBS,;t t
+s,@FTH_HAVE_COMPLEX@,$FTH_HAVE_COMPLEX,;t t
+s,@FTH_HAVE_RATIO@,$FTH_HAVE_RATIO,;t t
+s,@FTH@,$FTH,;t t
 s,@XM_LIBS@,$XM_LIBS,;t t
 s,@LD_XM_LIBS@,$LD_XM_LIBS,;t t
 s,@AUDIO_LIB@,$AUDIO_LIB,;t t

@@ -482,6 +482,12 @@ char *edit_list_mix_and_track_init(chan_info *cp)
 				(old_list) ? "; " : "",  /* strcat of previous + possible space */
 				i, i);                   /* i is md->id = mix id from user's point of view */
 #endif
+#if HAVE_FORTH
+	  mix_list = mus_format("%s%s%d { -mix-%d }", 
+				(old_list) ? old_list : "", 
+				(old_list) ? " " : "",   /* strcat of previous + possible space */
+				i, i);                   /* i is md->id = mix id from user's point of view */
+#endif
 	  if (old_list) FREE(old_list);
 	}
     }
@@ -1173,6 +1179,9 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
 #if HAVE_RUBY
       new_origin = mus_format("_mix_%d = %s", next_mix, origin);
 #endif
+#if HAVE_FORTH
+      new_origin = mus_format("%s to -mix-%d", origin, next_mix);
+#endif
     }
   else new_origin = copy_string(origin);
   file_mix_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, new_origin, cp->edit_ctr, with_tag); /* editable checked already */
@@ -1235,8 +1244,13 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, 
 	  cp = cps[i];
 	  edpos = cp->edit_ctr + 1;
 	  if (!origin)
+#if HAVE_FORTH
+	    new_origin = mus_format("$\" %s\" " OFF_TD " %d %s", 
+				    mixinfile, beg, i, S_mix);
+#else
 	    new_origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", 
 				    TO_PROC_NAME(S_mix), mixinfile, beg, i);
+#endif
 	  else new_origin = copy_string(origin);
 	  md = file_mix_samples(beg, num, mixinfile, cp, i, temp, new_origin, with_tag, track_id, false);
 	  if (md)
@@ -1254,8 +1268,13 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, 
   else 
     {
       if (!origin)
+#if HAVE_FORTH
+	new_origin = mus_format("$\" %s\" " OFF_TD " 0 %s", 
+				mixinfile, beg, S_mix);
+#else
 	new_origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "0", 
 				TO_PROC_NAME(S_mix), mixinfile, beg);
+#endif
       else new_origin = copy_string(origin);
       md = file_mix_samples(beg, num, mixinfile, cps[0], 0, temp, new_origin, with_tag, track_id, true);
       if (md) id = md->id;
@@ -2501,8 +2520,13 @@ void finish_moving_mix_tag(int mix_tag, int x)
       if (!(XEN_TRUE_P(res)))
 	{
 	  char *origin;
+#if HAVE_FORTH
+	  origin = mus_format(" -mix-%d " OFF_TD " set-%s",
+			      md->id, cs->beg, S_mix_position);
+#else
 	  origin = mus_format(PROC_SET_MIX OFF_TD PROC_CLOSE, 
 			      TO_PROC_NAME(S_mix_position), md->id, cs->beg);
+#endif
 	  remix_file(md, origin, false); /* may be no-op */
 	  FREE(origin);
 	  if (md->orig_edit_ctr < (md->cp->edit_ctr - 1))
@@ -3268,8 +3292,13 @@ static int set_mix_amp(int mix_id, int chan, Float val, bool from_gui, bool remi
 		    return(mix_id);
 		  cs->scalers[chan] = val;
 		  reflect_mix_or_track_change(mix_id, ANY_TRACK_ID, false);
+#if HAVE_FORTH
+		  origin = mus_format(" -mix-%d %d %.4f set-%s",
+				      md->id, chan, val, S_mix_amp);
+#else
 		  origin = mus_format(PROC_SET_MIX_CHANNEL "%.4f" PROC_CLOSE, 
 				      TO_PROC_NAME(S_mix_amp), md->id, chan, val);
+#endif
 		  remix_file(md, origin, true);
 		  FREE(origin);
 		}
@@ -3279,8 +3308,13 @@ static int set_mix_amp(int mix_id, int chan, Float val, bool from_gui, bool remi
 		  cs->scalers[chan] = val;
 		  if (remix)
 		    {
+#if HAVE_FORTH
+		      origin = mus_format(" -mix-%d %d %.4f set-%s",
+					  md->id, chan, val, S_mix_amp);
+#else
 		      origin = mus_format(PROC_SET_MIX_CHANNEL "%.4f" PROC_CLOSE, 
 					  TO_PROC_NAME(S_mix_amp), md->id, chan, val);
+#endif
 		      remix_file(md, origin, false);
 		      FREE(origin);
 		    }
@@ -3376,8 +3410,13 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
 	      (cs->speed == new_speed) && /* drag sets speed, so we can't optimize that case without some difficulties */
 	      (md->cp->sound->sync == 0))
 	    return(mix_id);
+#if HAVE_FORTH
+	  origin = mus_format(" -mix-%d %.4f set-%s",
+			      md->id, val, S_mix_speed);
+#else
 	  origin = mus_format(PROC_SET_MIX "%.4f" PROC_CLOSE, 
 			      TO_PROC_NAME(S_mix_speed), md->id, val);
+#endif
 	  if ((found_track_amp_env(cs->track)) && /* amp-env needs bounds check; if bounds are changed by mix speed change, re-calc entire track */
 	      (track_members(cs->track) > 1))
 	    {
@@ -3520,8 +3559,13 @@ static void set_mix_position_1(mix_info *md, void *val)
   set_mix_position_t *ptr = (set_mix_position_t *)val;
   if (md->id == ptr->id) 
     md->active_mix_state->beg = ptr->pos;
+#if HAVE_FORTH
+  origin = mus_format(" -mix-%d " OFF_TD " set-%s",
+		      md->id, ptr->pos, S_mix_position);
+#else
   origin = mus_format(PROC_SET_MIX OFF_TD PROC_CLOSE, 
 		      TO_PROC_NAME(S_mix_position), md->id, ptr->pos);
+#endif
   remix_file(md, origin, false);
   FREE(origin);
 }
@@ -3568,8 +3612,13 @@ int set_mix_position(int mix_id, off_t val)
 	      else
 		{
 		  /* no fanciness needed */
+#if HAVE_FORTH
+		  origin = mus_format(" -mix-%d " OFF_TD " set-%s",
+				      md->id, val, S_mix_position);
+#else
 		  origin = mus_format(PROC_SET_MIX OFF_TD PROC_CLOSE, 
 				      TO_PROC_NAME(S_mix_position), md->id, val);
+#endif
 		  cs->beg = val; 
 		  remix_file(md, origin, true);
 		  FREE(origin);
@@ -3577,8 +3626,13 @@ int set_mix_position(int mix_id, off_t val)
 	    }
 	  else
 	    {
+#if HAVE_FORTH
+	      origin = mus_format(" -mix-%d " OFF_TD " set-%s",
+				  md->id, val, S_mix_position);
+#else
 	      origin = mus_format(PROC_SET_MIX OFF_TD PROC_CLOSE, 
 				  TO_PROC_NAME(S_mix_position), md->id, val);
+#endif
 	      cs->beg = val; 
 	      remix_file(md, origin, true); 
 	      FREE(origin);
@@ -3716,8 +3770,13 @@ static int set_mix_amp_env_1(int n, int chan, env *val, bool remix)
 		  else env_str = copy_string("big env...");
 		}
 	      else env_str = env_to_string(NULL);
+#if HAVE_FORTH
+	      origin = mus_format(" -mix-%d %d %s set-%s",
+				  md->id, chan, env_str, S_mix_amp_env);
+#else
 	      origin = mus_format(PROC_SET_MIX_CHANNEL "%s" PROC_CLOSE, 
 				  TO_PROC_NAME(S_mix_amp_env), md->id, chan, env_str); /* mix chan here, not snd chn */
+#endif
 	      remix_file(md, origin, true);
 	      FREE(origin);
 	      if (env_str) FREE(env_str);
@@ -4043,8 +4102,13 @@ static void set_mix_locked(mix_info *md, bool on, bool redisplay)
   mix_state *cs;
   cs = md->active_mix_state;
   cs->locked = on;
+#if HAVE_FORTH
+  origin = mus_format(" -mix-%d %s set-%s",
+		      md->id, (on) ? PROC_TRUE : PROC_FALSE, S_mix_locked_p);
+#else
   origin = mus_format(PROC_SET_MIX "%s" PROC_CLOSE, 
 		      TO_PROC_NAME(S_mix_locked_p), md->id, (on) ? PROC_TRUE : PROC_FALSE);
+#endif
   remix_file(md, origin, redisplay);
   FREE(origin);
 }
@@ -4067,8 +4131,13 @@ static void set_mix_inverted(mix_info *md, bool on, bool redisplay)
   mix_state *cs;
   cs = md->active_mix_state;
   cs->inverted = on;
+#if HAVE_FORTH
+  origin = mus_format(" -mix-%d %s set-%s",
+		      md->id, (on) ? PROC_TRUE : PROC_FALSE, S_mix_inverted_p);
+#else
   origin = mus_format(PROC_SET_MIX "%s" PROC_CLOSE, 
 		      TO_PROC_NAME(S_mix_inverted_p), md->id, (on) ? PROC_TRUE : PROC_FALSE);
+#endif
   remix_file(md, origin, redisplay);
   FREE(origin);
 }
@@ -4409,8 +4478,13 @@ track-id is the track value for each newly created mix."
       if (chans > 0)
 	{
 	  char *origin;
+#if HAVE_FORTH
+	  origin = mus_format("$\" %s\" " OFF_TD " %d %s", 
+			      name, beg, file_channel, S_mix);
+#else
 	  origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", 
 			      TO_PROC_NAME(S_mix), name, beg, file_channel);
+#endif
 	  md = file_mix_samples(beg,
 				mus_sound_frames(name), 
 				name,
@@ -4891,6 +4965,11 @@ void g_init_mix(void)
 #if HAVE_RUBY
   rb_define_method(mf_tag, "to_s", XEN_PROCEDURE_CAST print_mf, 0);
   rb_define_method(mf_tag, "call", XEN_PROCEDURE_CAST g_read_mix_sample, 0);
+#endif
+#if HAVE_FORTH
+  fth_set_object_inspect(mf_tag, print_mf);
+  fth_set_object_free(mf_tag, free_mf);
+  fth_set_object_apply(mf_tag, XEN_PROCEDURE_CAST g_read_mix_sample, 0, 0, 0);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_make_mix_sample_reader, g_make_mix_sample_reader_w, 1, 1, 0, H_make_mix_sample_reader);
@@ -5678,8 +5757,13 @@ void set_track_position(int id, off_t pos)
       track_position_t *val;
       val = (track_position_t *)CALLOC(1, sizeof(track_position_t));
       val->change = pos - curpos;
+#if HAVE_FORTH
+      val->caller = mus_format("%d " OFF_TD " set-%s",
+			       id, pos, S_track_position);
+#else
       val->caller = mus_format(PROC_SET_TRACK OFF_TD PROC_CLOSE, 
 			       TO_PROC_NAME(S_track_position), id, pos);
+#endif
       if ((found_track_amp_env(id)) &&
 	  (track_members(id) > 1))
 	{
@@ -5743,8 +5827,13 @@ static void set_track_channel_position(int id, int chan, off_t pos)
       track_position_t *tc;
       tc = (track_position_t *)CALLOC(1, sizeof(track_position_t));
       tc->change = pos - curpos;
+#if HAVE_FORTH
+      tc->caller = mus_format("%d %d " OFF_TD " set-%s",
+			      chan, id, pos, S_track_position);
+#else
       tc->caller = mus_format(PROC_SET_TRACK_CHANNEL OFF_TD PROC_CLOSE, 
 			      TO_PROC_NAME(S_track_position), chan, id, pos);
+#endif
       if ((track_chans(id) > 1) && 
 	  (found_track_amp_env(id)))  /* if amp-env and bounds change, need preset bounds during remix */
 	{
@@ -5815,8 +5904,13 @@ static void set_mix_track(mix_info *md, int trk, bool redisplay)
 	  check_new = true;
 	}
       md->active_mix_state->track = trk;
+#if HAVE_FORTH
+      origin = mus_format(" -mix-%d %d set-%s",
+			  md->id, trk, S_mix_track);
+#else
       origin = mus_format(PROC_SET_MIX "%d" PROC_CLOSE, 
 			  TO_PROC_NAME(S_mix_track), md->id, trk);
+#endif
       if ((track_p(trk)) && (active_track_color_set(trk)))
 	color_one_mix_from_id(md->id, active_track_color(trk));
       if ((check_old) && 
@@ -5857,8 +5951,13 @@ bool set_track_track(int id, int trk)
 	      while (tid < trk) tid = make_track(NULL, 0);
 	    }
 	}
+#if HAVE_FORTH
+      origin = mus_format("%d %d set-%s",
+			  id, trk, S_track_track);
+#else
       origin = mus_format(PROC_SET_TRACK "%d" PROC_CLOSE, 
 			  TO_PROC_NAME(S_track_track), id, trk);
+#endif
       set_active_track_track(id, trk);
       remix_track(id, set_track_track_1, (void *)origin);
       FREE(origin);
@@ -5877,8 +5976,13 @@ static void set_track_amp(int id, Float amp)
   if ((track_p(id)) && (active_track_amp(id) != amp))
     {
       char *origin;
+#if HAVE_FORTH
+      origin = mus_format("%d %.4f set-%s",
+			  id, amp, S_track_amp);
+#else
       origin = mus_format(PROC_SET_TRACK "%.4f" PROC_CLOSE, 
 			  TO_PROC_NAME(S_track_amp), id, amp);
+#endif
       set_active_track_amp(id, amp);
       remix_track(id, set_track_amp_1, (void *)origin);
       FREE(origin);
@@ -5913,8 +6017,13 @@ static void set_track_speed(int id, Float speed)
   if ((track_p(id)) && (active_track_speed(id) != speed))
     {
       char *origin;
+#if HAVE_FORTH
+      origin = mus_format("%d %.4f set-%s",
+			  id, speed, S_track_speed);
+#else
       origin = mus_format(PROC_SET_TRACK "%.4f" PROC_CLOSE, 
 			  TO_PROC_NAME(S_track_speed), id, speed);
+#endif
       if ((found_track_amp_env(id)) &&
 	  (track_members(id) > 1))
 	{
@@ -5963,8 +6072,13 @@ static void set_track_amp_env(int id, env *e)
 	  else env_str = copy_string("big env...");
 	}
       else env_str = env_to_string(NULL);
+#if HAVE_FORTH
+      origin = mus_format("%d %s set-%s",
+			  id, env_str, S_track_amp_env);
+#else
       origin = mus_format(PROC_SET_TRACK "%s" PROC_CLOSE, 
 			  TO_PROC_NAME(S_track_amp_env), id, env_str);
+#endif
       set_active_track_amp_env(id, e);
       remix_track(id, set_track_amp_env_1, (void *)origin);
       FREE(origin);
@@ -6013,8 +6127,13 @@ static void set_track_tempo(int id, Float tempo)
 	{
 	  char *origin;
 	  track_tempo_t tt;
+#if HAVE_FORTH
+	  origin = mus_format("%d %.4f set-%s",
+			      id, tempo, S_track_tempo);
+#else
 	  origin = mus_format(PROC_SET_TRACK "%.4f" PROC_CLOSE, 
 			      TO_PROC_NAME(S_track_tempo), id, tempo);
+#endif
 	  if (found_track_amp_env(id))
 	    {
 	      off_t beg, dur;
@@ -6243,8 +6362,13 @@ static track_graph_t *track_save_graph(mix_info *orig_md, int track_id)
       tg->edpos = (int *)CALLOC(trk->cps_ctr, sizeof(int));
       for (i = 0; i < trk->cps_ctr; i++)
 	tg->edpos[i] = trk->cps[i]->edit_ctr + 1;
+#if HAVE_FORTH
+      origin = mus_format("%d " OFF_TD " set-%s",
+			  track_id, track_orig, S_track_position);
+#else
       origin = mus_format(PROC_SET_TRACK OFF_TD PROC_CLOSE, 
 			  TO_PROC_NAME(S_track_position), track_id, track_orig);
+#endif
       for (i = 0; i < trk->lst_ctr; i++)
 	{
 	  int k;
@@ -6327,8 +6451,13 @@ static void finish_dragging_track(int track_id, track_graph_t *data)
       cs = md->active_mix_state;
       cs->beg = cs->orig + change;
     }
+#if HAVE_FORTH
+  origin = mus_format("%d " OFF_TD " set-%s",
+		      track_id, cs->beg, S_track_position);
+#else
   origin = mus_format(PROC_SET_TRACK OFF_TD PROC_CLOSE, 
 		      TO_PROC_NAME(S_track_position), track_id, cs->beg);
+#endif
   for (i = 0; i < trk->lst_ctr; i++)
     {
       int k;
@@ -6501,18 +6630,33 @@ static void track_finish_drag(int track_id, Float amp, track_drag_t field)
     {
     case DRAG_AMP:   
       set_active_track_amp(track_id, amp); 
+#if HAVE_FORTH
+      origin = mus_format("%d %.4f set-%s",
+			  track_id, amp, S_track_amp);
+#else
       origin = mus_format(PROC_SET_TRACK "%.4f" PROC_CLOSE, 
 			  TO_PROC_NAME(S_track_amp), track_id, amp);
+#endif
       break;
     case DRAG_SPEED: 
       set_active_track_speed(track_id, amp); 
+#if HAVE_FORTH
+      origin = mus_format("%d %.4f set-%s",
+			  track_id, amp, S_track_speed);
+#else
       origin = mus_format(PROC_SET_TRACK "%.4f" PROC_CLOSE, 
 			  TO_PROC_NAME(S_track_speed), track_id, amp);
+#endif
       break;
     case DRAG_TEMPO: 
       set_active_track_tempo(track_id, amp); 
+#if HAVE_FORTH
+      origin = mus_format("%d %.4f set-%s",
+			  track_id, amp, S_track_tempo);
+#else
       origin = mus_format(PROC_SET_TRACK "%.4f" PROC_CLOSE, 
 			  TO_PROC_NAME(S_track_tempo), track_id, amp);
+#endif
       break;
     }
   for (i = 0; i < trk->lst_ctr; i++)
@@ -7341,8 +7485,13 @@ static int copy_mix(int id, off_t beg)
       int edpos, i;
       chan_info *cp;
       cp = md->cp;
+#if HAVE_FORTH
+      origin = mus_format("%d " OFF_TD " %s",
+			  id, beg, S_copy_mix);
+#else
       origin = mus_format("%s" PROC_OPEN "%d" PROC_SEP OFF_TD PROC_CLOSE, 
 			  TO_PROC_NAME(S_copy_mix), id, beg);
+#endif
       new_md = file_mix_samples(beg, md->in_samps, md->in_filename, cp, md->orig_chan,
 				((md->temporary == DELETE_ME) || (md->temporary == MULTICHANNEL_DELETION)) ? MULTICHANNEL_DELETION : DONT_DELETE_ME,
 				origin, true, 0, false);
@@ -8203,6 +8352,11 @@ void g_init_track(void)
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(tf_tag, XEN_PROCEDURE_CAST g_read_track_sample, 0, 0, 0);
 #endif
+#endif
+#if HAVE_FORTH
+  fth_set_object_inspect(tf_tag, print_tf);
+  fth_set_object_free(tf_tag, free_tf);
+  fth_set_object_apply(tf_tag, XEN_PROCEDURE_CAST g_read_track_sample, 0, 0, 0);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_make_track_sample_reader, g_make_track_sample_reader_w, 1, 2, 0, H_make_track_sample_reader);
