@@ -1109,6 +1109,16 @@ procfuncs=sorted
 						  (rt_deletemin_event engine)
 						  (set! event (rt_findmin_event engine)))))))
 
+	(<unsigned-int> rt_get_num_cycles (lambda ((<jack_client_t-*> client))
+					    (<unsigned-int> ret)
+					    (if (== NULL client)
+						(return 0))
+					    (set! ret (jack_frames_since_cycle_start client))
+					    (if (> ret 64000)
+						(return 0)
+						(return ret))))
+						
+
 	(functions->public
 
 	 (<void> rt_callback (lambda ((<struct-RT_Engine-*> engine)
@@ -1190,11 +1200,13 @@ procfuncs=sorted
 					    ;; Make some noise
 					    (if is_running
 						(if (> engine->accumulated_cpu_usage max_cycle_usage)
-						    (begin
-						      (set! engine->accumulated_cpu_usage (- engine->accumulated_cpu_usage max_cycle_usage))
-						      (if (< engine->accumulated_cpu_usage 0)
-							  (set! engine->accumulated_cpu_usage 0))
-						      engine->num_max_cpu_interrupts++)
+						    (if (== NULL engine->procfuncs)
+							(set! engine->accumulated_cpu_usage 0)
+							(begin
+							  (set! engine->accumulated_cpu_usage
+								(- engine->accumulated_cpu_usage (MIN engine->accumulated_cpu_usage
+												      max_cycle_usage)))
+							  engine->num_max_cpu_interrupts++))
 						    (let* ((procfunc <struct-RT_Procfunc-*> engine->procfuncs))
 						      (while (!= NULL procfunc)
 							     (let* ((callback <Callback> procfunc->func)
@@ -1212,8 +1224,8 @@ procfuncs=sorted
 								   (set! engine->skip_this_procfunc_next_cycle NULL))
 							       
 							       ;; Check if too many cpu-cycles are used.
-							       (if (&& client (> (jack_frames_since_cycle_start client)
-										 max_cycle_usage))
+							       (if (> (rt_get_num_cycles client)
+								      max_cycle_usage)
 								   (begin
 								     (set! engine->accumulated_cpu_usage (+ engine->accumulated_cpu_usage
 													    (- (jack_frames_since_cycle_start client)

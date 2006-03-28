@@ -115,7 +115,7 @@ snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_FILES) $(M
 external: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)  snd_pd_external.o
 	$(CC) -shared -o snd.pd_linux $(LDFLAGS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES)  $(GX_FILES) $(SNDLIB_LIB) $(GUILE_LIBS) $(JACK_LIBS) $(AUDIO_LIB) $(FFTW_LIBS) $(GSL_LIBS) $(FAM_LIB) $(LIBS) snd_pd_external.o
 	strip --strip-unneeded snd.pd_linux
-	ln -sf snd-7/snd.pd_linux ..
+	ln -sf snd-8/snd.pd_linux ..
 
 $(SNDLIB_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS)
 $(MIDI_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS)

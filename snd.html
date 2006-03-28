@@ -55,7 +55,7 @@ named Dpysnd. It can accommodate any number of sounds each
 with any number of channels, and
 can be customized and extended
 using either <a href="http://www.gnu.org/software/guile/guile.html">Guile</a>,
-<a href="http://www.ruby-lang.org">Ruby</a>, or Forth.
+<a href="http://www.ruby-lang.org">Ruby</a>, or <a href="http://www.sourceforge.net/projects/fth">Forth</a>.
 Snd is free; the code is available via anonymous ftp as 
 <a href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz">snd-8.tar.gz</a>.
 Snd has a <a href="http://ccrma.stanford.edu/software/snd/">home page</a>
@@ -186,6 +186,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
     <li><a href="grfsnd.html#sndwithgtk">Snd and Gtk</a>	
     <li><a href="grfsnd.html#sndwithnogui">Snd with no GUI and as script engine</a>
     <li><a href="grfsnd.html#sndandruby">Snd with Ruby</a>
+    <li><a href="grfsnd.html#sndandforth">Snd with Forth</a>
     <li><a href="grfsnd.html#sndandladspa">Snd and LADSPA plugins</a>
     <li><a href="grfsnd.html#sndandalsa">Snd and ALSA</a>
     <li><a href="grfsnd.html#sndandx">Driving Snd remotely</a>
@@ -193,7 +194,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
     <li><a href="grfsnd.html#sndandgdb">Snd and gdb</a>
     </ul>
   <li><a href="index.html">Index</a>
-  <li><a href="sndscm.html#introduction">Scheme and Ruby Functions included with Snd</a>
+  <li><a href="sndscm.html#introduction">Scheme, Ruby, and Forth Functions included with Snd</a>
   </ul>
 <li><a href="#index">Topical Index</a>
 </ul>
@@ -393,7 +394,7 @@ various dialogs scattered around the menus will present
 no surprises.  The GL spectrograph is somewhat unusual,
 and I like the paned window approach to multichannel sounds ("<i>de gustibus...</i>").
 But it is primarily the embedded extension language
-(Guile or Ruby) that 
+(Guile, Ruby, or Forth) that 
 makes Snd different from other editors.
 Everything in Snd from the low-level data readers to the
 high-level editing operations is tied into the extension
@@ -403,8 +404,8 @@ canned effects, Snd gives
 you full programming power over sounds, and you can 
 extend it to include whatever you want.  But if you
 are in a big hurry, or not yet confident in your ability as a programmer, many such
-operations have been included in the various scm (Guile/Scheme) and
-rb (Ruby) files in the Snd tarball.  Dave Phillips
+operations have been included in the various scm (Guile/Scheme),
+rb (Ruby), and fth (Forth) files in the Snd tarball.  Dave Phillips
 wrote a set of files that implement dozens of the effects and
 editing operations built into other editors.  Just load the
 files that look interesting, and start clicking widgets.
@@ -425,7 +426,7 @@ through the current sound data.
 <p>The rest of this document describes the user interface; extsnd.html
 presents the programming interface; grfsnd.html describes Snd's connection
 to various other programs and X; sndscm.html has brief descriptions of
-most of the Scheme/Ruby code included in the Snd tarball; fm.html
+most of the Scheme/Ruby/Forth code included in the Snd tarball; fm.html
 is an introduction to FM; clm.html is the basic generator documentation,
 but it is aimed more at the Common Lisp version of that code than at Snd;
 sndlib.html describes the underlying sound IO library; libxm.html
@@ -433,7 +434,7 @@ describes the user-interface extension library.
 </p>
 
 <p>
-Some of Snd's Scheme or Ruby files depend
+Some of Snd's Scheme, Ruby, and Forth files depend
 on other such files.  If you run Snd in some directory other than its
 build directory, you need to tell it where those files are. In Scheme,
 the list of directories to search is called %load-path.  So, for example, if 

@@ -92,7 +92,7 @@
 
 <p>Snd is a highly customizable, extensible program.
 The syntax used throughout this documentation is Scheme (a form of lisp) as implemented by the Gnu Guile library.
-You can also use Ruby, but need to make various minor <a href="grfsnd.html#sndandruby">changes</a>.
+You can also use Ruby or Forth, but need to make various minor <a href="grfsnd.html#sndandruby">changes</a>.
 I've tried to bring out to lisp nearly every portion
 of Snd, both the signal-processing functions, and
 much of the user interface.  You can, for example,
@@ -1852,7 +1852,7 @@ desensitize the "selection" button when there is no selection.
 <code><a class=def name="snderrorhook">snd-error-hook</a> (error-message)</code></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon <a href="#snderror">snd-error</a>, and if the listener is closed, any Scheme or Ruby error.
+called upon <a href="#snderror">snd-error</a>, and if the listener is closed, any Scheme, Ruby, or Forth error.
 If it returns #t, Snd flushes the error (it assumes you've 
 reported it via the hook).
 </td></tr>
@@ -3251,7 +3251,7 @@ the list of ids reflects the mark list at that time in the edit history.  See de
 
 <!-- save-marks -->
 <tr><td colspan=2><code><a class=def name="savemarks">save-marks</a> (<i>snd filename</i>)</code></td></tr>
-<tr><td></td><td>save <i>snd</i>'s marks, writing a Scheme or Ruby source file named either <i>filename</i> or
+<tr><td></td><td>save <i>snd</i>'s marks, writing a Scheme, Ruby, or Forth source file named either <i>filename</i> or
 &lt;snd's file-name&gt;.marks;  return the file name or #f if no marks.
 </td></tr>
 
@@ -4104,7 +4104,7 @@ this is the same as <i>src-sound</i> but applied to selection.
 <!-- INDEX selectionstuff:Selections -->
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
-show the current selection: <a href="extsnd.html#showselection">show-selection</a><br>
+show the current selection: <a href="sndscm.html#showselection">show-selection</a><br>
 color of selected portion: <a href="#selectioncolor">selection-color</a><br>
 set whether creating a selection creates a region: <a href="#selectioncreatesregion">selection-creates-region</a><br>
 fft graph refers to the selection: <a href="#showselectiontransform">show-selection-transform</a><br>
@@ -6362,7 +6362,7 @@ currently doesn't know how to save the enclosing environment along with the init
 will not save the "outer" declaration in the saved state file. 
 This is a general problem with save-state; there's no obvious way in Guile to
 save the current closure as text.
-You can fix the saved state file by hand (it is just Scheme or Ruby code, of course),
+You can fix the saved state file by hand (it is just Scheme, Ruby, or Forth code, of course),
 but that's not a very elegant solution.
 <br><br>
 The real limitation in using ptree-channel, however, is that the read direction
@@ -8901,7 +8901,7 @@ edit sequences can be compared.
 directly, than to run Snd and invoke the <a href="snd.html#savedstate">"Save session"</a> menu option.
 To save a particular sound's or channel's edit list(s), use the
 function <a href="#saveedithistory">save-edit-history</a>.
-These lists are simply Scheme or Ruby programs, just like anything else
+These lists are simply Scheme, Ruby, or Forth programs, just like anything else
 discussed in this document.  You could even write them from
 scratch.  Say we want to make a stereo file that consists
 of four mono files mixed at various points; we know where they
@@ -9127,7 +9127,7 @@ More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fou
 
 <p>The built-in dialogs, accessible from the main menu, provide the standard, but sometimes clumsy
 ways to open and save sounds, edit envelopes and headers, and set various global variables.
-In addition, many other dialogs are implemented in various Scheme/Ruby files.  
+In addition, many other dialogs are implemented in various Scheme/Ruby/Forth files.  
 The following
 functions refer to the built-in dialogs.  They were aimed originally at semi-internal needs like
 saving the current Snd state, but might be useful elsewhere.
@@ -10343,7 +10343,7 @@ save <a href="snd.html#kbdmacros">keyboard macros</a> in <i>filename</i>.
 <tr><td colspan=2>
 <code><a class=def name="savestate">save-state</a> (<i>filename</i>)</code></td></tr>
 <tr><td></td><td>
-save current state of Snd in <i>filename</i>.  The saved-state file is a Scheme or Ruby program that when loaded
+save current state of Snd in <i>filename</i>.  The saved-state file is a Scheme/Ruby/Forth program that when loaded
 into Snd, recreates the state of Snd (as far as possible) at the point of the save.  There are a variety of
 limitations to this process; the worst is that save-state does not try to save hook values or global variable values --
 see also <a href="#ptreechannel">ptree-channel</a> in this regard.
@@ -11076,7 +11076,7 @@ Unfortunately, each toolkit has its own way of handling widgets.  I originally s
 a Snd-specific layer of calls that would work in any supported toolkit, but then changed direction
 and decided to implement the libxm connection.  This left the earlier graphics functions dangling;
 they are still useful, but they probably should not be built-in.  I'm currently planning to move
-them to Scheme/Ruby.  But, for now, here are some of them:
+them to Scheme/Ruby/Forth.  But, for now, here are some of them:
 </p>
 <table cellspacing=0>
 <tr><td><code><em class=emdef>widget-position</em> (widget)</code></td>

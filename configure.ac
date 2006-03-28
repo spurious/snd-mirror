@@ -1236,7 +1236,7 @@ AC_ARG_WITH(forth,
 # Guile
 #--------------------------------------------------------------------------------
 
-if test "$with_ruby" != yes && test "$with_forth" != yes ; then
+if test "$with_guile" != no && test "$with_ruby" != yes && test "$with_forth" != yes ; then
 
 GUILE_LIBS=""
 GUILE_CFLAGS=""

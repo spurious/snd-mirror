@@ -69,6 +69,7 @@
   <li><a href="#sndwithgtk">Snd and Gtk</a>
   <li><a href="#sndwithnogui">Snd with no GUI and as script engine</a>
   <li><a href="#sndandruby">Snd with Ruby</a>
+  <li><a href="#sndandforth">Snd with Forth</a>
   <li><a href="#sndandladspa">Snd and LADSPA plugins</a>
   <li><a href="#sndandalsa">Snd and ALSA</a>
   <li><a href="#sndandx">Driving Snd remotely</a>
@@ -82,6 +83,7 @@
 <br>
 
 <!-- INDEX sndandruby:Ruby -->
+<!-- INDEX sndandforth:Forth -->
 <!-- INDEX sndwithcm:Common Music -->
 
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="startup">Snd Startup</a></h2></td></tr></table>
@@ -103,9 +105,9 @@ the usual Xt/X-related flags like -xrm).</p>
 <tr><td><code>-noinit</code></td>                 <td>don't read ~/.snd</td></tr>
 <tr><td><code>-nostdin</code></td>                <td>don't watch for possible input from stdin</td></tr>
 <tr><td><code>-p -preload &lt;dir&gt;</code></td> <td>add sound files in directory &lt;dir&gt; to the View:Files list (snd -p .)</td></tr>
-<tr><td><code>-l -load &lt;file&gt;</code></td>   <td>load Scheme or Ruby code in &lt;file&gt; (snd -l test.scm)</td></tr>
+<tr><td><code>-l -load &lt;file&gt;</code></td>   <td>load Scheme, Ruby, or Forth code in &lt;file&gt; (snd -l test.scm)</td></tr>
 <tr><td><code>-e -eval expr</code></td>           <td>evaluate expr</td></tr>
-<tr><td><code>-b -batch &lt;file&gt;</code></td>  <td>load Scheme or Ruby code in &lt;file&gt; as a batch (no GUI) job</td></tr>
+<tr><td><code>-b -batch &lt;file&gt;</code></td>  <td>load Scheme, Ruby, or Forth code in &lt;file&gt; as a batch (no GUI) job</td></tr>
 <tr><td><code>-I &lt;dir&gt;</code></td>          <td>add &lt;dir&gt; to the load search list</td></tr>
 <tr><td><code>-init &lt;file&gt;</code></td>      <td>use &lt;file&gt; as the init file, rather than ~/.snd</td></tr>
 </table>
@@ -256,20 +258,20 @@ GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized
 </p>
 <p>With the advent of the preferences dialog, and other complications, this initialization sequence
 has changed slightly.  The old files ~/.snd and /etc/snd.conf are still loaded, but now there
-are additional initialization possibilities: ~/.snd_prefs_guile|ruby, /etc/snd_guile|ruby.conf,
-~/.snd_guile|ruby (the notation "guile|ruby" means either "guile" or "ruby", so the file names
-spelled out completely are "/etc/snd_guile.conf" and "/etc/snd_ruby.conf"; which one is loaded
+are additional initialization possibilities: ~/.snd_prefs_guile|ruby|forth, /etc/snd_guile|ruby|forth.conf,
+~/.snd_guile|ruby|forth (the notation "guile|ruby|forth" means either "guile" or "ruby" or "forth", so the file names
+spelled out completely are "/etc/snd_guile.conf", "/etc/snd_ruby.conf", etc; which one is loaded
 obviously depends on which language you chose during configuration).  Currently, the save-options (preferences dialog) process writes to
-.snd_prefs_* which is loaded first, if it exists; then Snd looks for .snd_* (guile or ruby);
+.snd_prefs_* which is loaded first, if it exists; then Snd looks for .snd_* (guile, ruby, or forth);
 then .snd.  If you're always using just one version of Snd, it's simplest to stick with
 .snd.  The actual load sequence is:
 </p>
 <pre>
-/etc/snd_guile|ruby.conf    (these two canceled by -noglob)
+/etc/snd_guile|ruby|forth.conf    (these two canceled by -noglob)
 /etc/snd.conf               
-~/.snd_prefs_guile|ruby     (the rest canceled by -noinit)
-~/.snd_guile|ruby
-~/.snd                      (changed by initFile resource, -init arg, SND_INIT_FILE_ENVRIONMENT_NAME, etc)
+~/.snd_prefs_guile|ruby|forth     (the rest canceled by -noinit)
+~/.snd_guile|ruby|forth
+~/.snd                            (changed by initFile resource, -init arg, SND_INIT_FILE_ENVRIONMENT_NAME, etc)
 </pre>
 
 <p>
@@ -484,7 +486,7 @@ latter are (configure --help):
 <tr><td></td><td>--with-static-xm</td><td>include the xm module at build time; this is easier than trying to dynamically load xm.so</td></tr>
 <tr><td></td><td>--with-static-xg</td><td>include the xg module at build time; this is easier than trying to dynamically load xg.so</td></tr>
 <tr><td></td><td>--with-gl</td><td>include OpenGL support (spectrogram, etc)</td></tr>
-<tr><td></td><td>--with-just-gl</td><td>include OpenGL support, but omit the GL/Guile/Ruby bindings</td></tr>
+<tr><td></td><td>--with-just-gl</td><td>include OpenGL support, but omit the GL/Guile/Ruby/Forth bindings</td></tr>
 <tr><td></td><td>--with-editres</td><td>include editres in xm (default: no)</td></tr>
 <tr><td></td><td>--with-xpm</td><td>use xpm, default: yes</td></tr>
 <tr><td></td><td>--with-xp</td><td>use xp, default: no; this is the Xprint library which is not tied into Snd at all</td></tr>
@@ -493,6 +495,7 @@ latter are (configure --help):
 
 <tr><td colspan=2>Language choices</td><td></td></tr>
 <tr><td></td><td>--with-guile</td><td>use Guile (default: yes), GUILE_CONFIG_path sets Guile location; version 1.3.4 or later</td></tr>
+<tr><td></td><td>--with-forth</td><td>try to use Forth as the extension language</td></tr>
 <tr><td></td><td>--with-ruby</td><td>try to use Ruby as the extension language; version 1.6.4 or later</td></tr>
 <tr><td></td><td>--with-ruby-prefix=PFX</td><td>where Ruby is installed</td></tr>
 <tr><td></td><td>--with-hobbit</td><td>include hobbit-style function arity checking (hobbit is a Scheme compiler), default: no</td></tr>
@@ -562,7 +565,7 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 </p>
 <table>
 <tr><td width=100>clm</td><td>clm module (always included -- once upon a time it was optional)</td></tr>
-<tr><td>gl</td><td>OpenGL callable from Scheme/Ruby (--with-gl switch)</td></tr>
+<tr><td>gl</td><td>OpenGL callable from Scheme/Ruby/Forth (--with-gl switch)</td></tr>
 <tr><td>snd-ladspa</td><td>LADSPA loaded (--with-ladspa, but also the default in Linux if ladspa.h can be found)</td></tr>
 <tr><td>sndlib</td><td>sndlib module (always included)</td></tr>
 <tr><td><A NAME="sndmotiffeature">snd-motif</a></td><td>Motif used as GUI toolkit (--with-motif, usually the default if Motif can be found)</td></tr>
@@ -570,10 +573,11 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 <tr><td>snd-nogui</td><td>No GUI built-in (--with-no-gui, or neither Motif nor Gtk+ found)</td></tr>
 <tr><td>snd-guile</td><td>Guile as extension language (--with-guile, usually the default if guile can be found)</td></tr>
 <tr><td>snd-ruby</td><td>Ruby as extension language (--with-ruby)</td></tr>
+<tr><td>snd-forth</td><td>Forth as extension language (--with-forth)</td></tr>
 <tr><td>snd-debug</td><td>internal debugging hooks included (--enable-snd-debug)</td></tr>
 <tr><td>snd</td><td>It's Snd, ferchrissake... (always included)</td></tr>
 <tr><td>xg</td><td>Gtk module (xg.c) included (--with-static-xg, or loaded dynamically)</td></tr>
-<tr><td>Xp</td><td>Xprint library included and available from Scheme/Ruby (--with-xp, the default if it exists)</td></tr>
+<tr><td>Xp</td><td>Xprint library included and available from Scheme/Ruby/Forth (--with-xp, the default if it exists)</td></tr>
 <tr><td>xm</td><td>Motif module (xm.c) included (--with-static-xm, or loaded dynamically)</td></tr>
 <tr><td>alsa</td><td>ALSA is in use, rather than OSS (--with-alsa)</td></tr>
 <tr><td>gsl</td><td>GSL is loaded (--with-gsl)</td></tr>
@@ -1370,7 +1374,7 @@ included with Snd.  'make xm' should create
 a shared library named xm.so; you can load this at any time into Snd:
 </p>
 <pre>
-&gt; <em class=typing>(define hxm (dlopen "/home/bil/snd-7/xm.so"))</em>
+&gt; <em class=typing>(define hxm (dlopen "/home/bil/snd-8/xm.so"))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt; <em class=typing>(dlinit hxm "Init_libxm")</em>
 <em class=listener>#t</em>
@@ -1617,7 +1621,7 @@ if you have an executable file with:
 </p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-#!/home/bil/test/snd-7/snd -l
+#!/home/bil/test/snd-8/snd -l
 !#
 (define a-test 32)
 (display "hiho")
@@ -1627,12 +1631,12 @@ if you have an executable file with:
 <p>it can be executed just like any such script.
 </p>
 <pre>
-/home/bil/test/snd-7/ script
+/home/bil/test/snd-8/ script
 hiho
 :a-test
 32
 :(<a class=quiet href="extsnd.html#exit">exit</a>)
-/home/bil/test/snd-7/ 
+/home/bil/test/snd-8/ 
 </pre>
 <p>The difference between this use of Snd, and using guile itself
 for scripts is that Snd uses the -l switch where guile would use -s.
@@ -1643,7 +1647,7 @@ writes the result as "test.snd":
 </p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-#!/home/bil/test/snd-7/snd -l
+#!/home/bil/test/snd-8/snd -l
 !#
 (<a class=quiet href="extsnd.html#opensound">open-sound</a> "oboe.snd")
 (<a class=quiet href="extsnd.html#scaleby">scale-by</a> 2.0)
@@ -1661,7 +1665,7 @@ as it scans the startup arguments (see snd-test.scm).
 </p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-#!/home/bil/test/snd-7/snd -l
+#!/home/bil/test/snd-8/snd -l
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2) ;i.e. ("-l" "script")
   (display "usage: script file-name...")
@@ -1899,6 +1903,15 @@ For Ruby as an Emacs subjob, see inf-snd.el.
 </p>
 <br>
 
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandforth">Snd with Forth</a></h3></td></tr></table>
+
+<p>Snd can be built to use Forth as its extension language.  Forth is available at:
+</p>
+<pre>
+http://sourceforge.net/projects/fth
+</pre>
+<br>
+
 <!-- INDEX sndandladspa:Plugins -->
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandladspa">Snd and LADSPA Plugins</a></h3></td></tr></table>
 
@@ -2118,7 +2131,7 @@ provide any number of input channels, handle data format conversions, and so on.
 want to use the "hw:0" device instead (this is the first hardware device; "hw:1" is the second, and so on),
 but in that case, ALSA provides only whatever sampling rates the hardware provides. 
 To change the device, or the internal buffering amounts, you can either set up environment
-variables, or use the parallel Scheme/Ruby variables mus-alsa-*. The environment
+variables, or use the parallel Scheme/Ruby/Forth variables mus-alsa-*. The environment
 variables are:
 </p>
 <table>
@@ -2177,7 +2190,7 @@ of ALSA is beyond my ken.
 
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandx">Driving Snd remotely</a></h3></td></tr></table>
 
-<p>It is possible to send Snd arbitrary Scheme or Ruby code from any other program;
+<p>It is possible to send Snd arbitrary Scheme, Ruby, or Forth code from any other program;
 see the program sndctrl.c.  Snd has two X window properties:
 "SND_VERSION" and "SND_COMMAND"; the former is the Snd version (a date),
 and the latter is the communication path for other programs.  Any time

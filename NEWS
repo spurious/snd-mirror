@@ -1,49 +1,51 @@
-Snd 7.19
+Snd 8.0
 
-Bill Sack's pd-stochastic.scm and snd-stochastic.pd.
-
-more pd-related improvements, thanks to Kjetil.
-
-more ruby and emacs related improvements thanks to Mike.
-
-in clm, numerous sbcl-related bugfixes thanks to Fernando.
-
-new-sound-dialog.
-
-removed ancient SGI-specific useScheme resource
-
-removed XmMultiList from xm module
-
-alsa: changed environment variable names to use MUS_* rather than SNDLIB_*
-      changed default alsa device to "default", but it then looks for "plughw:0" 
-            and "hw:0" if things seem weird. 
-      added mus-alsa-playback-device, mus-alsa-capture-device, mus-alsa-device,
-            mus-alsa-buffers, mus-alsa-buffer-size, mus-alsa-squelch-warning.
-
-changed mus-audio-sun-outputs to mus-sun-set-outputs, and
-        mus-audio-set-oss-buffers to mus-oss-set-buffers
-added mus-netbsd-set-outputs
-
-mus-file-data-clipped -> mus-clipping, added mus-file-clipping for local settings
-  data-clipped -> clipping
-  mus-prescaler (global) alongside previous mus-file-prescaler
-
-added pausing -- returns #t if DAC is paused, can be set to #t or #f to start/stop pausing
-  similarly playing -- #t if DAC is running (may be paused), settable to start/stop playing
-  removed dac-is-running (it's in snd7.scm)
-  (eventually I'd like to get rid of the jargon "DAC", but that involves 5 more names)
-
-with-tracking-cursor and with-verbose-cursor as synonyms for cursor-follows-play and verbose-cursor
-  tracking-cursor-style
-
-bind-key now takes a character or string 1st arg (as well as an integer); if a string, it's treated
-  as the X/Gtk key name (e.g. "Home" or "plus").  It also has a 6th optional arg, a preferences
-  dialog name (so that the dialog can reflect current key bindings by functionality).
+The reason for the new major version: Mike Scholz has provided a complete
+  implementation of Forth as an extension language!  It's based on
+  http://sourceforge.net/projects/fth.  Use --with-forth with the
+  configuration script.
+  
+  This is in snd-8.tar.gz at the ccrma ftp site -- I'll update all the
+  other versions as soon as possible.
 
 
-checked: clisp 2.38 (cmn), fftw 3.1, gtk 1.8.11|12|13, sbcl 0.9.9, MacIntel, guile 1.8.0
+Other changes since version 7.19:
 
-with much help from: Kjetil, Mike, Russell Aspinwall, Eric Marzolf, Fernando,
-   Bill Sack, Sebastian Tennant
+many improvements (ladspa.scm etc) thanks to Kjetil.
+
+kmenu.scm and add-main-menu-mnemonics in snd-gtk.scm thanks to Maxim Krikun.
+
+in clm bandedwg.ins thanks to Juan Reyes.
+
+granulate now has a local random number seed (settable via the mus-location method)
+  also peak-env.scm is smarter about data formats (both thanks to Kjetil).
+
+main-menu changed in gtk so that added top level menus return the same widget type as
+  the built-in ones -- to get the old menu-shell, wrap the main-menu calls with:
+  (gtk_menu_item_get_submenu (GTK_MENU_ITEM (main-menu ...)))
+
+show-selection (extensions.scm)
+
+replaced useless "Filter" button in file dialogs with "Mkdir"
+
+added a stop sign to interrupt long computations (equivalent to C-g)
+
+x-axis-as-clock for more informative x-axis tick labels in very large files
+
+heart.scm (use Snd with non-sound data)
+
+added support for more sound file decoders (along the lines of the current mpeg reader): 
+  shorten (propietary, read-only), tta (GPL, via ttaenc), wavpack (propietary)
+
+in cmn, removed nxtcmn.c, sgicmn.c, xcmnw.c, cmn-mcl-utils.lisp, cmn-mcl.lisp,
+          cmn-excl.lisp, cmn-scroll.lisp.  Removed all FFI, quickdraw, and Braille stuff.
+          cmn is now a pure Lisp program that outputs only postscript files.
+
+checked: gtk 2.8.14|15|16, sbcl 0.9.10, Fedora Core 5 (gcc 4.1), netBSD 3.0
+
+with much help from: Mike, Kjetil, Fernando, Maxim Krikun, Juan Reyes, Steve Kuhlmann,
+  Tim Blechmann
+
+
 
 

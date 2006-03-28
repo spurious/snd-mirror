@@ -388,6 +388,7 @@
 (define* (c-use-rt-player? #:optional (snd (c-selected-sound)))
   (and (defined? '*rt-use-rt-player*)
        *rt-use-rt-player*
+       (<= num-running-ladspas 0)
        (not (expand-control? snd))
        (not (filter-control? snd))
        (not (contrast-control? snd))
@@ -584,7 +585,7 @@
 	  (das-play)
 	  (set! isplaying #f)))
     (set! isplaying #t)
-    (set! startplaypos (if pos pos (cursor snd)))
+    (set! startplaypos (if pos (c-integer pos) (cursor snd)))
     (set! playtype 'song)
     
     (if (c-use-rt-player?)
@@ -608,7 +609,7 @@
 	  (das-play)
 	  (set! isplaying #f)))
     (set! isplaying #t)
-    (set! startplaypos pos)
+    (set! startplaypos (c-integer pos))
     (set! playtype 'selection)
     (if (c-use-rt-player?)
 	(rt-snd-play snd (get-selection-start) (get-selection-end) (if (>= (speed-control snd) 0)
@@ -619,7 +620,7 @@
   (def-method (stop #:optional pos)
     (set! (cursor-follows-play) #f)
     (my-stop-playing)
-    (set! (cursor) (if pos pos startplaypos))
+    (set! (cursor) (if pos (c-integer pos) startplaypos))
     (set! (cursor-follows-play) #t))
 
   (def-method (pause)
@@ -2082,6 +2083,10 @@ Does not work.
 	     #f))
 
 
+;; Load GTK mnemonics code from Maxim Krikun.
+(load-from-path "kmenu.scm")
+
+ 
 ;; Load files from previous session.
   
 (if *c-restore-previous-session*
@@ -2169,6 +2174,6 @@ Does not work.
 
 
 (newline)
-(c-display "#:snd_conffile.scm loaded. RT-Player is currently configured to run only when not using the expand, contrast or filter control.")
+(c-display "#:snd_conffile.scm loaded. The RT-Player is currently configured only to run when not using LADSPA or the Expand, Contrast, Reverb or Filter control.")
 
 

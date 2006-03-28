@@ -1,7 +1,7 @@
 <html>
-<!-- documentation for some of the Scheme and Ruby code included with Snd -->
+<!-- documentation for some of the Scheme/Ruby/Forth code included with Snd -->
 <head>
-<title>Scheme and Ruby Functions included with Snd</title>
+<title>Scheme, Ruby, and Forth Functions included with Snd</title>
 <style type="text/css">
 <!-- 
 	EM.red {color:red; font-style:normal}
@@ -22,7 +22,7 @@
 </style>
 </head>
 <body bgcolor=white>
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h1>Scheme and Ruby Functions included with Snd</h1></td></tr></table>
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h1>Scheme, Ruby, and Forth Functions included with Snd</h1></td></tr></table>
 <br>
 <center>
 <table border=1><tr><td>
@@ -117,7 +117,7 @@
 
 <br>
 
-<p>This file contains notes on the Scheme and Ruby files included with Snd.
+<p>This file contains notes on the Scheme, Ruby, and Forth files included with Snd.
 To use any of these files, (load &lt;file&gt;); for example <code>(load "v.scm")</code>.  To start Snd with
 the file already loaded, <code>snd -l v.scm</code>, or put the load statement in ~/.snd.
 </p>
@@ -2160,7 +2160,7 @@ The Ruby version is in clm-ins.rb.
 
 <A NAME="heartdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>heart.scm</h2></td></tr></table>
 
-<p>Snd can be used with non-sound data, and <a href="clm.html#withsound">with-sound</a> makes it easy to
+<p>Snd can be used with non-sound data, and <a href="#wsdoc">with-sound</a> makes it easy to
 write such data to a sound file.  An example is heart.scm.  In this code, we search a file for blood pressure
 readings (they are scattered around with a bunch of other stuff), then write those numbers to a stereo
 sound file (the sphygmometer readings are between 70 and 150), then open that file in Snd with all the sound-related
@@ -4892,7 +4892,7 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
   return((mus_any *)gen);
 }
 
-/* that is the end of the C side; the rest ties this generator into Guile/Ruby via the Xen package */
+/* that is the end of the C side; the rest ties this generator into Guile/Ruby/Forth via the Xen package */
 /*   in Snd's case, it's actually not needed because the generator is only called from C */
 
 static XEN g_fcomb(XEN obj, XEN input)

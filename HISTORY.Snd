@@ -1,6 +1,8 @@
 Snd change log
 
-  28-Mar:    shorten, tta, wavpack support.
+  28-Mar:    Snd 8.0.
+             Forth as extension language, thanks to Mike Scholz.
+	     shorten, tta, wavpack support.
   20-Mar:    heart.scm (use Snd with non-sound data).
   14-Mar:    x-axis-as-clock for more informative x-axis tick labels in very large files.
   10-Mar:    added a stop sign to interrupt long computations (equivalent to C-g).
@@ -24,7 +26,7 @@ Snd change log
              changed ALSA environment variable names to use MUS, not SNDLIB.
              changed ALSA default device to "default" from "hw:0"
   30-Jan:    new-sound-dialog.
-  15-Jan:    snd 7.18.
+  15-Jan:    Snd 7.18.
   5-Jan:     sound-file? for easier file-filter definition.
   2-Jan:     removed the sorting indices (sort-by-name|size|date|entry), and changed the way the user-defined sorter works.
              Also removed file-filters, file-sorters, and just-sounds-hook.
@@ -38,7 +40,7 @@ Snd change log
 	     fft-window-alpha (ultraspherical xmu parameter).
   5-Dec:     snd_pd_external.c and other changes for Pd, thanks to Kjetil.
              sinc-train (clm.html), reverse-by-blocks and reverse-within-blocks (examp.scm), pulse-voice (examp.scm).
-  28-Nov:    snd 7.17.
+  28-Nov:    Snd 7.17.
   21-Nov:    if --with-float-samples and --with-doubles, the internal sample data type is double.
   18-Nov:    moved snd-apropos to snd7.scm.
   15-Nov:    sync-max.
@@ -46,7 +48,7 @@ Snd change log
              SND_PATH environment variable (optional load path directory list).
   3-Nov:     ws.scm definstrument macro changed to support :notehook arg in with-sound and *definstrument-hook* for CM.
   27-Oct:    effects-utils.scm to make various added menus independent.
-  12-Oct.    snd 7.16.
+  12-Oct.    Snd 7.16.
   3-Oct:     snd-g|xprefs.c, preferences-dialog function.
   26-Sep:    save-region-dialog, more buttons.
   15-Sep:    --enable-threads configure switch, and first use thereof (FIR filtering).
@@ -54,7 +56,7 @@ Snd change log
   31-Aug:    mix|track-speed-style.
              changed recorder-in|out-format -> recorder-in|out-data-format,
                      recorder-out-type -> recorder-out-header-type
-  28-Aug:    snd 7.15.
+  28-Aug:    Snd 7.15.
   18-Aug:    _sndlib.h and sndlib.h.in.
   15-Aug:    in View:Files, click of file name no longer opens that file.
              view-files-select-hook return type no longer matters, and args are: dialog file-name.
@@ -73,7 +75,7 @@ Snd change log
              File:Save as can write OGG, Speex, and Flac files.
   21-Jul:    clear-minibuffer, new as-error arg to report-in-minibuffer.
   15-Jul:    removed yes-or-no? with associated dialog (and snd-g|xerror.c).
-  14-Jul:    snd 7.14.
+  14-Jul:    Snd 7.14.
   5-Jul:     default-output-type -> default-output-header-type,
              default-output-format -> default-output-data-format.
   1-Jul:     --with-fam configuration switch.
@@ -84,7 +86,7 @@ Snd change log
   20-Jun:    'Extract' option to Save as dialogs (to extract a channel).
   13-Jun:    folded gl-ruby.c into gl.c, xm-ruby.c into xm.c, xg-ruby.c into xg.c.
   6-June:    removed save-options (use save-state).
-  1-June:    snd 7.13.
+  1-June:    Snd 7.13.
 	     show-axes View:Axes menu.
   26-May:    beats-per-measure and x-axis-style x-axis-in-measures.
   25-May:    create-audit-dialog in snd-motif.scm.
@@ -94,7 +96,7 @@ Snd change log
   2-May:     region-|selection-|maxamp-position.
              windowed-maxamp generator (dsp.scm)
 	     harmonicizer (dsp.scm)
-  26-Apr:    snd 7.12.
+  26-Apr:    Snd 7.12.
   25-Apr:    y-axis-label.
   20-Apr:    draw.rb, poly.rb, musglyphs.rb thanks to Mike Scholz.
              zip.scm (zipper) changed (takes env args now, not thunks, uses def-clm-struct, etc).
@@ -112,7 +114,7 @@ Snd change log
                solve simultaneous linear equations, etc) as applied to mixers/frames.
              invert-filter in dsp.scm.
   23-Mar:    changed interpretation of frame->frame args.
-  18-Mar:    snd 7.11.
+  18-Mar:    Snd 7.11.
   17-Mar:    gc-on|off are no-ops now in Guile.
              pvoc.rb thanks to Mike Scholz.
   10-Mar:    dsp.rb thanks to Mike Scholz.
@@ -125,7 +127,7 @@ Snd change log
                added --with-static-xg configure option
   21-Feb:    removed snd_test.rb, replaced by snd-test.rb thanks to Mike Scholz!
 	     oo.scm and rt-compiler.scm thanks to Kjetil Matheussen!
-  11-Feb:    snd 7.10.
+  11-Feb:    Snd 7.10.
   8-Feb:     grani.scm and grani in clm-ins.rb thanks to Mike Scholz.
              CLM sndwarp (B Battey) translated to Scheme: sndwarp.scm.
   31-Jan:    removed support for Motif 1 and Lesstif.
@@ -141,7 +143,7 @@ Snd change log
   14-Jan:    moved makesnd.* into makefile.in.
   10-Jan:    colormap?
              moved sndsine.c to documentation
-  5-Jan:     snd 7.9.
+  5-Jan:     Snd 7.9.
   3-Jan:     removed next-to-last (xen fallback) arg to ptree-channel, and associated xen-channel stuff.
 
 2005 ----------------------------------------------------------------
@@ -150,7 +152,7 @@ Snd change log
   7-Dec:     after-save-as-hook, replacing emacs-style-save-as.
   3-Dec:     mark-tag-width|height.
   29-Nov:    quick.html
-  17-Nov:    snd 7.8.
+  17-Nov:    Snd 7.8.
   16-Nov:    moved the 'Apply' button and friends from the Controls pane to a popup menu.
   5-Nov:     recorder-in-chans.
   1-Nov:     edit history pane popup menu (popup.scm).
@@ -162,7 +164,7 @@ Snd change log
              moved scale-sound-by and scale-sound-to to snd7.scm.
 	     sndins and gfm directories (Mike Scholz sndlib/clm code)
              controls->channel
-  5-Oct:     snd 7.7.
+  5-Oct:     Snd 7.7.
   4-Oct:     moved vct->samples and samples->vct to snd7.scm.
              edit-list->function
              changed transform-samples->vct to transform->vct, region-samples->vct to region->vct,
@@ -179,7 +181,7 @@ Snd change log
              removed float vector as possible arg to formant-bank (use vct) (see snd7.scm).
 	     removed oscil-bank, mus-bank (snd7.scm)
   2-Sep:     vct|channel|spectral-polynomial in dsp.scm.
-  23-Aug:    snd 7.6.
+  23-Aug:    Snd 7.6.
   16-Aug:    removed built-in Hadamard transform
              out-chan argument to add-player so that channel data can be sent to any audio channel
 		(also play, play-and-wait, play-channel)
@@ -192,7 +194,7 @@ Snd change log
              clm23.scm
   14-Jul:    new file: NEWS
   30-Jun:    snd-hobbit.scm thanks to Kjetil
-             snd 7.5.
+             Snd 7.5.
   23-Jun:    new configure variables GUILE_CONFIG_name and GUILE_name (for OSX/fink)
 	     cursor-location-offset.
   18-Jun:    ssb-fm in dsp.scm.
@@ -206,7 +208,7 @@ Snd change log
   25-May:    removed stop-playing-region-hook, stop-playing-channel-hook, before-apply-hook
              added stop-function arg to play, play-and-wait, play-selection, play-region, add-player
   21-May:    --with-doc-dir configuration switch.
-  17-May:    snd 7.4.
+  17-May:    Snd 7.4.
   6-May:     mono->stereo, mono-files->stereo, stereo->mono (extensions.scm).
              channel-variance etc in dsp.scm, taken from J Smith "Mathematics of the DFT"
   5-May:     reverse-channels, scramble-channels, rotate-channel, scramble-channel (extsnd.html, examp.scm)
@@ -215,7 +217,7 @@ Snd change log
   13-Apr:    removed forward|backward-graph|mix|mark -- see snd7.scm for Scheme versions.
   12-Apr:    dither-channel.
              goertzel in dsp.scm (faster version of find-sine).
-  5-Apr:     snd 7.3.
+  5-Apr:     Snd 7.3.
   24-Mar:    dialog function consistency changes: added find-dialog, print-dialog
                changed region-dialog to view-regions-dialog, edit-save-as-dialog -> save-selection-dialog
                file-dialog -> view-files-dialog, mix-dialog -> view-mixes-dialog, track-dialog -> view-tracks-dialog
@@ -234,7 +236,7 @@ Snd change log
              C-_ deletes text in listener to previous command.
   23-Feb:    speed-control-tones, speed-control-style, reverb-control-decay now handled like other control settings
              removed Options:Speed Style menu
-  20-Feb:    snd 7.2.
+  20-Feb:    Snd 7.2.
   19-Feb:    filter-channel (regularized filter-sound)
   18-Feb:    an enormous number of improvements to the Ruby code and inf-snd.el thanks to Michael Scholz.
                also new: snd-motif.rb.
@@ -250,7 +252,7 @@ Snd change log
                also filter-env-in-hz to filter-control-in-hz as a sound-local variable
   13-Jan:    Motif version of draw-string now adds in the font height to y0 (to mimic Gtk version).
   12-Jan:    removed enved-selected-env, changed enved-active-env to enved-envelope.
-  9-Jan:     snd 7.1.
+  9-Jan:     Snd 7.1.
   8-Jan:     extensions.rb thanks to Michael Scholz.
   5-Jan:     envelopes can now have the property 'envelope-base.
              added dur arg to make-env for duration in samples.
@@ -270,7 +272,7 @@ Snd change log
   25-Nov:    copy-sample-reader, read-region-sample, region-sample-reader?.
              removed free-mix|track-sample-reader (use free-sample-reader).
              sample-reader-position|home|at-end? are generic.
-  24-Nov:    snd 7.0.
+  24-Nov:    Snd 7.0.
   20-Nov:    track-tempo.
   17-Nov:    mix-dialog-mix, track-dialog-track, mix-inverted?
   10-Nov:    removed next-mix-sample, next-track-sample.
