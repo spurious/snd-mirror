@@ -178,6 +178,33 @@ echo ' '
 echo ' '
 ./snd --version
 
+
+./configure --with-forth
+make
+./snd --version
+make allclean
+
+./configure --with-forth --enable-snd-debug --with-static-xm --with-gl CFLAGS="-Wall"
+make
+./snd --version
+make allclean
+
+./configure --with-forth --with-gtk --with-static-xg --with-gl CFLAGS="-Wall"
+make
+./snd --version
+make allclean
+
+./configure --with-forth --with-no-gui CFLAGS="-Wall"
+make
+./snd --version
+make allclean
+
+./configure --with-forth CC=g++ CFLAGS="-Wall"
+make
+./snd --version
+make allclean
+
+
 echo ' '
 echo ' -------------------------------- static gsl -------------------------------- '
 make allclean
@@ -646,3 +673,4 @@ setenv PKG_CONFIG_PATH /home/bil/test/old-gtk/lib/pkgconfig
 make
 
 setenv PKG_CONFIG_PATH /usr/local/lib/pkgconfig
+

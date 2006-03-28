@@ -3,14 +3,22 @@
 ;;; index -- read clm.html (or whatever) and make a column-ized index
 ;;; html-check -- look for dangling hrefs
 
-#-allegro-v7.0 (require :loop)
-
 ;;; (index '("clm.html") "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") nil nil t)
 
 ;;; (index '("cmn.html") "test.html" 4 nil nil nil t)
 
 ;;; (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html") "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t)
 ;;;   use (make-index)
+
+#+cmu (declaim (optimize (extensions:inhibit-warnings 3))) 
+#+cmu (setf extensions::*gc-verbose* nil)
+#+cmu (setf *compile-print* nil)
+#+cmu (setf *compile-verbose* nil)
+
+#+sbcl (setf *compile-print* nil)
+#+sbcl (setf *compile-verbose* nil)
+#+sbcl (declaim (sb-ext:muffle-conditions sb-ext:compiler-note))
+
 
 ;;; -------------------------------- index --------------------------------
 
@@ -35,34 +43,42 @@
       (- (length str) 3)
     (length str)))
 
+(defun my-subseq (str start &optional end)
+  (let ((len (length str)))
+    (if (>= start len)
+	""
+      (if end
+	  (subseq str start (min end len))
+	(subseq str start)))))
+
 (defun string-lessp-but-no-star (a b)	;I want the *clm* asterisks ignored in the alphabetization
   (and (not (= (length b) 0))
        (or (= (length a) 0)
 	   (string= a b)
 	   (if (char= (char a 0) #\*) 
-	       (string-lessp-but-no-star (subseq a 1) b)
+	       (string-lessp-but-no-star (my-subseq a 1) b)
 	     (if (char= (char b 0) #\*)
-		 (string-lessp-but-no-star a (subseq b 1))
+		 (string-lessp-but-no-star a (my-subseq b 1))
 	       (if (char= (char a 0) (char b 0))
-		   (string-lessp-but-no-star (subseq a 1) (subseq b 1))
+		   (string-lessp-but-no-star (my-subseq a 1) (my-subseq b 1))
 		 (char< (char a 0) (char b 0))))))))
 
 (defun clean-and-downcase-first-char (str caps topic file)
 
   (let ((def-pos (search " class=def" str)))
     (when def-pos
-      (setf str (concatenate 'string (subseq str 0 def-pos) (subseq str (+ def-pos 10))))))
+      (setf str (concatenate 'string (my-subseq str 0 def-pos) (my-subseq str (+ def-pos 10))))))
     
-  (let* ((line (concatenate 'string "<a href=\"" (or file "") "#" (subseq str 9)))
+  (let* ((line (concatenate 'string "<a href=\"" (or file "") "#" (my-subseq str 9)))
 	 (ipos (search "<em" line)))
     (when ipos
       (let ((ispos (search "</em>" line)))
-	(setf line (concatenate 'string (subseq line 0 ipos) (subseq line (+ ipos 14) ispos) (subseq line (+ ispos 5))))
+	(setf line (concatenate 'string (my-subseq line 0 ipos) (my-subseq line (+ ipos 14) ispos) (my-subseq line (+ ispos 5))))
 	(if (not line) (warn "<em...> but no </em> for ~A" str))))
     (let ((hpos (or (search "<h2>" line) (search "<h1>" line) (search "<h3>" line) (search "<h4>" line))))
       (when hpos
 	(let ((hspos (or (search "</h2>" line) (search "</h1>" line) (search "</h3>" line) (search "</h4>" line))))
-	  (setf line (concatenate 'string (subseq line 0 hpos) (subseq line (+ hpos 4) hspos) (subseq line (+ hspos 5))))
+	  (setf line (concatenate 'string (my-subseq line 0 hpos) (my-subseq line (+ hpos 4) hspos) (my-subseq line (+ hspos 5))))
 	  (if (not line) (warn "<hn> but no </hn> for ~A" str)))))
 
     (flet ((search-caps (ln)
@@ -76,15 +92,15 @@
 	  (setf (elt line (1+ bpos)) (char-downcase (elt line (1+ bpos)))))))
     (let ((bpos (search ">" line))
 	  (epos (or (search "</a>" line) (search "</A>" line))))
-      (make-ind :name line :topic topic :file file :sortby (string-downcase (subseq line (1+ bpos) epos))))))
+      (make-ind :name line :topic topic :file file :sortby (string-downcase (my-subseq line (1+ bpos) epos))))))
 
 (defun create-general (str file)
   (let* ((mid (search ":" str)))
-    (make-ind :name (concatenate 'string "<a href=\"" (or file "") "#" (subseq str 0 mid) "\"><b>" (subseq str (1+ mid)) "</b></a>")
+    (make-ind :name (concatenate 'string "<a href=\"" (or file "") "#" (my-subseq str 0 mid) "\"><b>" (my-subseq str (1+ mid)) "</b></a>")
 	      :topic nil
 	      :file file
 	      :general t
-	      :sortby (string-downcase (subseq str (1+ mid))))))
+	      :sortby (string-downcase (my-subseq str (1+ mid))))))
 
 (defvar scm-variable-names
   (list "after-graph-hook" "lisp-graph-hook" "before-transform-hook" "mix-release-hook" "stop-playing-channel-hook" "save-hook" "mus-error-hook"
@@ -181,7 +197,7 @@
 			      (incf i)
 			      (incf j))))))
 		    (if (/= j strlen)
-			(subseq rb-name 0 j)
+			(my-subseq rb-name 0 j)
 		      rb-name)))))))))))
 
 (defun clean-up-xref (xref file)
@@ -208,10 +224,10 @@
 	       (href-end (and href-start
 			      (< href-start leof)
 			      (search ">" xref :start2 (1+ href-start))))
-	       (href (and href-start href-end (subseq xref (+ href-start href-len) href-end))))
+	       (href (and href-start href-end (my-subseq xref (+ href-start href-len) href-end))))
 	  (if href
 	      (if (char= (char href 1) #\#)
-		  (setf url-str (concatenate 'string url-str (string #\") file (subseq href 1) (format nil ",~%  ")))
+		  (setf url-str (concatenate 'string url-str (string #\") file (my-subseq href 1) (format nil ",~%  ")))
 		(setf url-str (concatenate 'string url-str href (format nil ",~%  "))))
 	    (setf url-str (concatenate 'string url-str (format nil "NULL,~%  "))))
 	  (setf loc (1+ leof))
@@ -237,9 +253,9 @@
 		      (incf j)
 		      (setf in-name nil)))
 		(setf in-bracket t)
-		(if (or (and (< (+ i 7) len) (string= "<a href" (subseq xref i (+ i 7))))
-			(and (< (+ i 17) len) (string= "<a class=def href" (subseq xref i (+ i 17))))
-			(and (< (+ i 19) len) (string= "<a class=quiet href" (subseq xref i (+ i 19)))))
+		(if (or (and (< (+ i 7) len) (string= "<a href" (my-subseq xref i (+ i 7))))
+			(and (< (+ i 17) len) (string= "<a class=def href" (my-subseq xref i (+ i 17))))
+			(and (< (+ i 19) len) (string= "<a class=quiet href" (my-subseq xref i (+ i 19)))))
 		    (progn
 		      (if need-start
 			  (progn
@@ -258,7 +274,7 @@
 		      (setf (char outstr j) #\{)
 		      (incf j))))
 	    (if (char= c #\&)
-		(if (and (< (+ i 4) len) (string= (subseq xref i (+ i 4)) "&gt;"))
+		(if (and (< (+ i 4) len) (string= (my-subseq xref i (+ i 4)) "&gt;"))
 		    (progn
 		      (setf (char outstr j) #\>)
 		      (incf j)
@@ -292,7 +308,7 @@
 		    (incf j))))))))
       (incf i))
     (list 
-     (subseq outstr 0 j)
+     (my-subseq outstr 0 j)
      url-str)))
 
 (defun make-array-name (str)
@@ -338,7 +354,7 @@
 		      (let ((epos (search " -->" dline)))
 			(if (not epos) 
 			    (warn "<!-- TOPIC but no --> for ~A" dline)
-			  (setf topic (subseq dline (+ tpos 11) epos))))
+			  (setf topic (my-subseq dline (+ tpos 11) epos))))
 		    (if compos
 			(let ((epos (search " -->" dline)))
 			  (if (not epos) 
@@ -347,23 +363,23 @@
 				      (and with-scm
 					   (not (string= "clm.html" file))))
 			      (setf current-general g)
-			      (setf (aref generals g) (subseq dline (+ compos 11) epos))
+			      (setf (aref generals g) (my-subseq dline (+ compos 11) epos))
 			      (setf (aref gfiles g) file)
 			      (setf (aref xrefs g) "")
 			      (incf g))))
 		      (if xpos
 			  (setf xrefing t)
 			(loop while pos do
-			  (setf dline (subseq dline pos))
+			  (setf dline (my-subseq dline pos))
 			  (let ((epos (or (search "</a>" dline) (search "</A>" dline))))
 			    (if (not epos) 
 				(warn "<a> but no </a> for ~A" dline)
 			      (progn
-				(setf (aref names n) (subseq dline 0 (+ epos 4)))
+				(setf (aref names n) (my-subseq dline 0 (+ epos 4)))
 				(setf (aref files n) file)
 				(setf (aref topics n) topic)
 				(incf n)
-				(setf dline (subseq dline (+ epos 4)))
+				(setf dline (my-subseq dline (+ epos 4)))
 				(setf pos-simple (or (search "<a name=" dline :test #'string=)
 						     (and with-clm-locals (search "<a Name=" dline :test #'string=))))
 				(setf pos-def (or (search "<a class=def name=" dline :test #'string=)
@@ -401,9 +417,9 @@
 
       (loop for i from 1 below n do
 	(if (string= (ind-sortby (aref tnames i)) (ind-sortby (aref tnames (1- i))))
-	    (let ((clm-case (if (string= (subseq (ind-name (aref tnames i)) 9 12) "clm")
+	    (let ((clm-case (if (string= (my-subseq (ind-name (aref tnames i)) 9 12) "clm")
 				i
-			      (if (string= (subseq (ind-name (aref tnames (1- i))) 9 12) "clm")
+			      (if (string= (my-subseq (ind-name (aref tnames (1- i))) 9 12) "clm")
 				  (1- i)
 				nil))))
 	      (format t "duplicates: ~A (~A ~A)~%"
@@ -414,7 +430,7 @@
 		  (let ((curname (ind-name (aref tnames clm-case))))
 		    (setf (ind-name (aref tnames clm-case))
 			  (concatenate 'string
-				       (subseq curname 0 (- (length curname) 4))
+				       (my-subseq curname 0 (- (length curname) 4))
 				       " (clm)</a>")))))))
 		    
       (with-open-file (ofil output :direction :output :if-exists :supersede :if-does-not-exist :create)
@@ -476,13 +492,13 @@
 		    (help-urls '()))
 		(format sfil "/* Snd help index (generated by index.cl) */~%")
 		(dotimes (i n)
-		  (let* ((line (subseq (ind-name (aref tnames i)) 8))
+		  (let* ((line (my-subseq (ind-name (aref tnames i)) 8))
 			 (dpos (search ">" line))
-			 (url (subseq line 1 (1- dpos)))
+			 (url (my-subseq line 1 (1- dpos)))
 			 (epos (search "<" line))
-			 (ind (subseq line (1+ dpos) epos))
+			 (ind (my-subseq line (1+ dpos) epos))
 			 (gpos (search "&gt;" ind)))
-		    (if gpos (setf ind (concatenate 'string (subseq ind 0 gpos) ">" (subseq ind (+ gpos 4)))))
+		    (if gpos (setf ind (concatenate 'string (my-subseq ind 0 gpos) ">" (my-subseq ind (+ gpos 4)))))
 		    (when (and ind
 			       (stringp ind)
 			       (> (length ind) 0))
@@ -517,12 +533,12 @@
 			(format sfil "~%static char *~A_xrefs[] = {~%  ~A,~%  NULL};~%"
 				(let* ((str (aref generals i))
 				       (mid (search ":" str)))
-				  (make-array-name (subseq str (1+ mid))))
+				  (make-array-name (my-subseq str (1+ mid))))
 				(car vals))
 			(format sfil "~%static char *~A_urls[] = {~%  ~ANULL};~%"
 				(let* ((str (aref generals i))
 				       (mid (search ":" str)))
-				  (make-array-name (subseq str (1+ mid))))
+				  (make-array-name (my-subseq str (1+ mid))))
 				(cadr vals))
 			      ))
 		  )))
@@ -589,10 +605,10 @@
 				  (if (not in-comment) (warn "~A[~D]: ~A has unmatched >?" file linectr line))))
 			    (setf openctr 0))
 			(if (char= c #\&)
-			    (if (and (not (string-equal "&gt;" (subseq line i (+ i 4))))
-				     (not (string-equal "&lt;" (subseq line i (+ i 4))))
-				     (not (string-equal "&amp;" (subseq line i (+ i 5))))
-				     (not (string-equal "&micro;" (subseq line i (+ i 7)))))
+			    (if (and (not (string-equal "&gt;" (my-subseq line i (+ i 4))))
+				     (not (string-equal "&lt;" (my-subseq line i (+ i 4))))
+				     (not (string-equal "&amp;" (my-subseq line i (+ i 5))))
+				     (not (string-equal "&micro;" (my-subseq line i (+ i 7)))))
 				(warn "~A[~D]: unknown escape sequence: ~A" file linectr line))
 			  (if (char= c #\() (incf p-parens)
 			    (if (char= c #\)) (decf p-parens)
@@ -624,7 +640,7 @@
 				(if start
 				    (progn
 				      (if closing
-					  (let ((closer (subseq line (+ start 2) i)))
+					  (let ((closer (my-subseq line (+ start 2) i)))
 					    (if (string-equal closer "script")
 						(setf scripting nil)
 					      (if (not scripting)
@@ -676,7 +692,7 @@
 						      (setf commands (remove closer commands :test #'string-equal))))))
 					    (setf closing nil))
 					(if (not scripting)
-					    (let ((opener (subseq line (+ start 1) i)))
+					    (let ((opener (my-subseq line (+ start 1) i)))
 					      (if (string-equal opener "script")
 						  (setf scripting t)
 						(if (not (member opener (list "br" "spacer" "li" "img" "hr" "area") :test #'string-equal))
@@ -711,19 +727,19 @@
 		       (pos-len (if pos-simple 9 19))
 		       )
 		  (loop while pos do
-		    (setf dline (subseq dline (+ pos pos-len)))
+		    (setf dline (my-subseq dline (+ pos pos-len)))
 		    (let ((epos (or (search "</a>" dline) (search "</A>" dline))))
 					;actually should look for close double quote
 		      (if (not epos) 
 			  (warn "<a name but no </a> for ~A in ~A[~D]" dline file linectr)
 			(progn
 			  (setf epos (search ">" dline))
-			  (setf (aref names name) (concatenate 'string file "#" (subseq dline 0 (- epos 1))))
+			  (setf (aref names name) (concatenate 'string file "#" (my-subseq dline 0 (- epos 1))))
 			  (loop for i from 0 below name do
 			    (if (string= (aref names i) (aref names name))
 				(format t "ambiguous name: ~A (~A[~D])~%" (aref names i) file linectr)))
 			  (incf name)
-			  (setf dline (subseq dline epos))
+			  (setf dline (my-subseq dline epos))
 			  (setf pos-simple (search "<a name=" dline :test #'string-equal))
 			  (setf pos-def (search "<a class=def name=" dline :test #'string-equal))
 			  (setf pos (or pos-simple pos-def))
@@ -739,21 +755,21 @@
 		       (pos (or pos-norm pos-quiet pos-def))
 		       (pos-len (if pos-norm 9 (if pos-def 19 21))))
 		  (loop while pos do
-		    (setf dline (subseq dline (+ pos pos-len)))
+		    (setf dline (my-subseq dline (+ pos pos-len)))
 		    (let ((epos (or (search "</a>" dline) (search "</A>" dline))))
 		      (if (not epos) 
 			  (warn "<a href but no </a> for ~A in ~A[~D]" dline file linectr)
 			(progn
 			  (setf epos (search "\"" dline :start2 1))
 			  (if (char= (elt dline 0) #\#)
-			      (setf (aref hrefs href) (concatenate 'string file (subseq dline 0 epos)))
+			      (setf (aref hrefs href) (concatenate 'string file (my-subseq dline 0 epos)))
 			    (progn
-			      (setf (aref hrefs href) (subseq dline 0 epos))
+			      (setf (aref hrefs href) (my-subseq dline 0 epos))
 			      (let ((pos (search "#" (aref hrefs href))))
 				(if (and (not pos)
-					 (not (probe-file (aref hrefs href)))
-					 (not (string-equal (subseq (aref hrefs href) 0 4) "ftp:"))
-					 (not (string-equal (subseq (aref hrefs href) 0 5) "http:")))
+					 (not (string-equal (my-subseq (aref hrefs href) 0 4) "ftp:"))
+					 (not (string-equal (my-subseq (aref hrefs href) 0 5) "http:"))
+					 (not (probe-file (aref hrefs href))))
 				    (format t "reference to missing file ~S in ~A[~D]~%"
 					    (aref hrefs href)
 					    file linectr)))
@@ -761,7 +777,7 @@
 			  (setf (aref lines href) linectr)
 			  (setf (aref refs href) file)
 			  (incf href)
-			  (setf dline (subseq dline epos))
+			  (setf dline (my-subseq dline epos))
 			  (setf pos-norm (or (search "<a href=" dline)
 					     (search "<A HREF=" dline)))
 			  (setf pos-quiet (search "<a class=quiet href=" dline))

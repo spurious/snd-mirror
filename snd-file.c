@@ -3891,7 +3891,7 @@ void save_view_files_dialogs(FILE *fd)
 	    fprintf(fd, "  vf %s set-view-files-amp-env drop\n", env_to_string(vdat->amp_env));
 	  }
 	/* assume file-sorters are set up already */
-	fprintf(fd, "  vf %s set-view-files-sort drop\n\n", vdat->sorter);
+	fprintf(fd, "  vf %d set-view-files-sort drop\n\n", vdat->sorter);
 #endif
       }
 #endif

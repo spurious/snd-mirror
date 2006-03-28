@@ -150,7 +150,7 @@ static int completions(char *text)
 static int completions(char *text)
 {
   XEN tab = fth_find_in_wordlist(text);
-  int i, len, matches = XEN_VECTOR_LENGTH(tab);
+  int i, matches = XEN_VECTOR_LENGTH(tab);
   for (i = 0; i < matches; i++)
     {
       char *sym = XEN_TO_C_STRING(XEN_VECTOR_REF(tab, i));

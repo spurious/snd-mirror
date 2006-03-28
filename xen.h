@@ -7,15 +7,18 @@
  *
  * Guile:     covers 1.3.4 to present (1.7.2) given the configuration macros in the Snd or Libxm config.h.in.
  * Ruby:      covers 1.6 to present (1.9)
+ * Forth:     covers all
  * None:      covers all known versions of None
  */
 
-#define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 40
-#define XEN_VERSION "1.40"
+#define XEN_MAJOR_VERSION 2
+#define XEN_MINOR_VERSION 0
+#define XEN_VERSION "2.0"
 
 /* HISTORY:
  *
+ *  28-Mar-06: Forth support thanks to Mike Scholz.
+ *  --------
  *  7-Nov-05:  xen_rb_defined_p (Mike Scholz).
  *  24-Oct-05: XEN_LOAD_FILE_WITH_PATH.
  *  16-Sep-05: removed some debugging extras that caused confusion on 64-bit machines.

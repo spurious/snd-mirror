@@ -3003,7 +3003,7 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
   return(data);
 }
 
-#if HAVE_COMPLEX_TRIG
+#if HAVE_COMPLEX_TRIG && (!HAVE_RUBY)
 #include <gsl/gsl_poly.h>
 #include <complex.h>
 
@@ -3219,7 +3219,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 XEN_NARGIFY_1(g_gsl_ellipk_w, g_gsl_ellipk)
 XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
 XEN_NARGIFY_4(g_gsl_dht_w, g_gsl_dht)
-#if HAVE_COMPLEX_TRIG
+#if HAVE_COMPLEX_TRIG && (!HAVE_RUBY)
 XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
 #endif
 #endif
@@ -3402,7 +3402,7 @@ XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
 #define g_gsl_ellipk_w g_gsl_ellipk
 #define g_gsl_ellipj_w g_gsl_ellipj
 #define g_gsl_dht_w g_gsl_dht
-#if HAVE_COMPLEX_TRIG
+#if HAVE_COMPLEX_TRIG && (!HAVE_RUBY)
 #define g_gsl_roots_w g_gsl_roots
 #endif
 #endif
@@ -3713,7 +3713,7 @@ void g_initialize_gh(void)
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("gsl-gegenbauer",  g_gsl_gegenbauer,  3, 0, 0, "internal test func");
 #endif
-#if HAVE_COMPLEX_TRIG
+#if HAVE_COMPLEX_TRIG && (!HAVE_RUBY)
   XEN_DEFINE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
 #endif
 #endif
