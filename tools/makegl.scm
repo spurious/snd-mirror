@@ -34,6 +34,25 @@
 (define g5-funcs '())
 (define g5-ints '())
 
+(define in-glu #f)
+
+(define (check-glu name)
+  (if in-glu
+      (if (not (string=? "glu" (substring name 0 3)))
+	  (begin
+	    (set! in-glu #f)
+	    (hey "#endif~%")))
+      (if (string=? "glu" (substring name 0 3))
+	  (begin
+	    (set! in-glu #t)
+	    (hey "#if HAVE_GLU_H~%")))))
+
+(define (uncheck-glu)
+  (if in-glu
+      (begin
+	(hey "#endif~%")
+	(set! in-glu #f))))
+
 (define (cadr-str data)
   (let ((sp1 -1)
 	(len (string-length data)))
@@ -446,6 +465,8 @@
 (hey " * 'gl is added to *features*~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     30-Mar-06: check for glu.h, omit GLU_* if necessary.  Add Forth support.~%")
+(hey " *     --------~%")
 (hey " *     13-Jun-05: merged gl-ruby.c into gl.c.~%")
 (hey " *     --------~%")
 (hey " *     10-Mar:    Gl_Version.~%")
@@ -466,7 +487,9 @@
 (hey "  #include <gtk/gtkgl.h>~%")
 (hey "#endif~%")
 (hey "#include <GL/gl.h>~%")
-(hey "#include <GL/glu.h>~%")
+(hey "#if HAVE_GLU_H~%")
+(hey "  #include <GL/glu.h>~%")
+(hey "#endif~%")
 (hey "#if USE_MOTIF~%")
 (hey "  #include <GL/glx.h>~%")
 (hey "#endif~%")
@@ -496,6 +519,10 @@
 (hey "#if HAVE_RUBY~%")
 (hey "/* for Ruby, XG PRE needs to be uppercase */~%")
 (hey "  #define XL_PRE \"R\"~%")
+(hey "  #define XL_POST \"\"~%")
+(hey "#endif~%")
+(hey "#if HAVE_FORTH~%")
+(hey "  #define XL_PRE \"F\"~%")
 (hey "  #define XL_POST \"\"~%")
 (hey "#endif~%")
 (hey "~%")
@@ -624,7 +651,9 @@
 	       (heyc " "))
 	     (set! line-len arg-start))))
 
+     (check-glu name)
      (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
+
      (if (and (> (length data) 4)
 	      (eq? (list-ref data 4) 'if))
 	 (hey "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref data 5)))))
@@ -788,17 +817,21 @@
 (hey "#endif~%~%")
 
 (for-each handle-func (reverse funcs))
+(uncheck-glu)
+
 
 ;;; ---------------- argify linkages
 
 (hey "#ifdef XEN_ARGIFY_1~%")
 (define (argify-func func)
   (let* ((cargs (length (caddr func)))
+	 (name (car func))
 	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 (args (- cargs refargs))
 	 (if-fnc (and (> (length func) 4)
 		      (eq? (list-ref func 4) 'if))))
-    (if (member (car func) glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
+    (check-glu name)
+    (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
     (if if-fnc
 	(hey "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref func 5)))))
     (hey "XEN_~A(gxg_~A_w, gxg_~A)~%" 
@@ -823,16 +856,21 @@
 (hey "#endif~%~%")
 
 (for-each argify-func (reverse funcs))
+(uncheck-glu)
 
 (hey "~%#else~%~%")
 
 (define (unargify-func func)
   (let* ((cargs (length (caddr func)))
+	 (name (car func))
 	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 (args (- cargs refargs))
 	 (if-fnc (and (> (length func) 4)
 		      (eq? (list-ref func 4) 'if))))
-    (if (member (car func) glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
+
+    (check-glu name)
+    (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
+
     (if if-fnc
 	(hey "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref func 5)))))
     (hey "#define gxg_~A_w gxg_~A~%" 
@@ -853,6 +891,7 @@
 (hey "#endif~%~%")
 
 (for-each unargify-func (reverse funcs))
+(uncheck-glu)
 
 (hey "#endif~%")
 
@@ -864,9 +903,12 @@
 
 (define (defun func)
   (let* ((cargs (length (caddr func)))
+	 (name (car func))
 	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 (args (- cargs refargs)))
-    (if (member (car func) glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
+    (check-glu name)
+    (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
+
     (hey "  GL_DEFINE_PROCEDURE(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
 		     (car func) (car func) 
 		     (if (>= cargs 10) 0 args)
@@ -888,6 +930,7 @@
 (hey "#endif~%")
 
 (for-each defun (reverse funcs))
+(uncheck-glu)
 
 (hey "}~%~%")
 
@@ -920,8 +963,25 @@
 
 (for-each 
  (lambda (val) 
+
+     (if in-glu
+	 (if (not (string=? "GLU" (substring val 0 3)))
+	     (BEGIN
+	       (set! in-glu #f)
+	       (hey "#endif~%")))
+	 (if (string=? "GLU" (substring val 0 3))
+	     (begin
+	       (set! in-glu #t)
+	       (hey "#if HAVE_GLU_H~%"))))
+
    (hey "  DEFINE_INTEGER(~A);~%" val)) 
  (reverse ints))
+
+(if in-glu
+    (begin
+      (hey "#endif~%")
+      (set! in-glu #f)))
+
 
 (hey "}~%~%")
 

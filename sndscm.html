@@ -2228,40 +2228,45 @@ These variables may need to be customized to fit your system:
 <pre>
 inf-snd-ruby-program-name   "snd-ruby"    Snd-Ruby program name
 inf-snd-guile-program-name  "snd-guile"   Snd-Guile program name
+inf-snd-forth-program-name  "snd-forth"   Snd-Forth program name
 inf-snd-working-directory   "~/"          where Ruby or Guile scripts reside
 inf-snd-index-path          "~/"          path to snd-xref.c
 inf-snd-prompt-char         ">"           listener prompt
 snd-ruby-mode-hook          nil           to customize snd-ruby-mode
 snd-guile-mode-hook         nil           to customize snd-guile-mode
+snd-forth-mode-hook         nil           to customize inf-snd-forth-mode
 </pre>
 <p>
 You can start inf-snd-ruby-mode either with the prefix-key
 (C-u M-x run-snd-ruby) -- you will be asked for program name and
 optional arguments -- or directly via (M-x run-snd-ruby).  In the latter
 case, the variable inf-snd-ruby-program-name needs to be set correctly.
-inf-snd-guile-mode is handled in the same way.
+inf-snd-guile-mode and inf-snd-forth-mode are handled in the same way.
 Here's an example for your ~/.emacs file:
 </p>
 
 <pre>
 (autoload 'run-snd-ruby     "inf-snd" "Start inferior Snd-Ruby process" t)
 (autoload 'run-snd-guile    "inf-snd" "Start inferior Snd-Guile process" t)
+(autoload 'run-snd-forth    "inf-snd" "Start inferior Snd-Forth process" t)
 (autoload 'snd-ruby-mode    "inf-snd" "Load snd-ruby-mode." t)
 (autoload 'snd-guile-mode   "inf-snd" "Load snd-guile-mode." t)
+(autoload 'snd-forth-mode   "inf-snd" "Load snd-forth-mode." t)
 
 (setq inf-snd-ruby-program-name "snd-ruby -notebook")
 (setq inf-snd-guile-program-name "snd-guile -separate")
+(setq inf-snd-forth-program-name "snd-forth")
 (setq inf-snd-working-directory "~/Snd/")
 (setq inf-snd-index-path "~/Snd/snd/")
 </pre>
 
 <p>
 See inf-snd.el for more info and examples of specializing these modes.
-You can change the mode while editing a Snd-Ruby or Snd-Guile source file with
-M-x snd-ruby-mode or M-x snd-guile-mode.  To have Emacs determine
+You can change the mode while editing a Snd-Ruby, Snd-Guile, or Snd-Forth source file with
+M-x snd-ruby-mode, M-x snd-guile-mode, or M-x snd-forth-mode.  To have Emacs determine
 automatically which mode to set, you can use special
 file-extensions.  I use file-extension `.rbs' for Snd-Ruby source
-files and `.cms' for Snd-Guile.
+files, `.cms' for Snd-Guile, and `.fth' for Snd-Forth.
 </p>
 
 <pre>
@@ -2284,10 +2289,10 @@ Key bindings for inf-* and snd-*-modes
 C-h m         describe-mode     describe current major mode
 </pre>
 <p>
-Key bindings of inf-snd-ruby-mode and inf-snd-guile-mode:
+Key bindings of inf-snd-ruby|guile|forth-mode:
 </p>
 <pre>
-C-c C-s   	 inf-snd-run-snd   (Snd-Ruby or Snd-Guile from a dead Snd process buffer)
+C-c C-s   	 inf-snd-run-snd   (Snd-Ruby|Guile|Forth from a dead Snd process buffer)
 M-C-l		 inf-snd-load      load script in current working directory
 C-c C-f   	 inf-snd-file      open view-files-dialog of Snd
 M-C-p		 inf-snd-play      play current sound file
@@ -2298,7 +2303,7 @@ C-c C-q   	 inf-snd-quit      send exit to Snd process
 C-c C-k   	 inf-snd-kill      kill Snd process and buffer
 </pre>
 <p>
-Key bindings of snd-ruby-mode and snd-guile-mode editing source
+Key bindings of snd-ruby|guile|forth-mode editing source
 files:
 </p>
 <pre>

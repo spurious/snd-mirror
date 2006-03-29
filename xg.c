@@ -43,6 +43,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     29-Mar:    Forth support.
  *     7-Mar:     if g_set_error, return the error message, not the GError pointer
  *     --------
  *     9-Jul:     Collapse 2.3.* into 2.3.6, 2.5.* into 2.5.6.
@@ -25820,11 +25821,11 @@ static XEN gxg_make_target_entry(XEN lst)
     #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \
       XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, #Name " field accessor", "set! " XG_FIELD_PRE #Name XG_POST, SetValue, A1, A2, A3, A4)
   #endif
+
   #if HAVE_FORTH
     #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \
       XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, #Name " field accessor", "set-" XG_FIELD_PRE #Name XG_POST, SetValue, A1, A2, A3, A4)
   #endif
-
 /* conversions */
 static XEN c_array_to_xen_list(XEN val_1, XEN clen)
 {
@@ -39882,7 +39883,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("19-Mar-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("29-Mar-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

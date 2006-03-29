@@ -59245,14 +59245,15 @@ EDITS: 1
       (system (string-append "rm ../peaks/_home_bil_cl_new*"))))
 
 (mus-sound-prune)
-(let ((vfs (list-ref (dialog-widgets) 8))) ; view-files (possible list)
-  (if vfs
-      (if (symbol? (car vfs))
-	  (set! (view-files-files vfs) '())
-	  (for-each
-	   (lambda (d)
-	     (set! (view-files-files d) '()))
-	   vfs))))
+(if (dialog-widgets)
+    (let ((vfs (list-ref (dialog-widgets) 8))) ; view-files (possible list)
+      (if vfs
+	  (if (symbol? (car vfs))
+	      (set! (view-files-files vfs) '())
+	      (for-each
+	       (lambda (d)
+		 (set! (view-files-files d) '()))
+	       vfs)))))
 (gc)(gc)
 
 (if (defined? 'mem-report) 

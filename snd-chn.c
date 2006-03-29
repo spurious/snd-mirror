@@ -2136,12 +2136,14 @@ static GLdouble unproject2x(int x, int y)
   GLint viewport[4];
   GLdouble mv[16], proj[16];
   GLint realy;
-  GLdouble wx, wy, wz;
+  GLdouble wx = 0.0, wy, wz;
   glGetIntegerv(GL_VIEWPORT, viewport);
   glGetDoublev(GL_MODELVIEW_MATRIX, mv);
   glGetDoublev(GL_PROJECTION_MATRIX, proj);
   realy = viewport[3] - (GLint)y - 1;
+#if HAVE_GLU_H
   gluUnProject((GLdouble)x, (GLdouble)realy, 0.0, mv, proj, viewport, &wx, &wy, &wz);
+#endif
   return(wx);
 }
 static GLdouble unproject2y(int x, int y)
@@ -2150,12 +2152,14 @@ static GLdouble unproject2y(int x, int y)
   GLint viewport[4];
   GLdouble mv[16], proj[16];
   GLint realy;
-  GLdouble wx, wy, wz;
+  GLdouble wx, wy = 0.0, wz;
   glGetIntegerv(GL_VIEWPORT, viewport);
   glGetDoublev(GL_MODELVIEW_MATRIX, mv);
   glGetDoublev(GL_PROJECTION_MATRIX, proj);
   realy = viewport[3] - (GLint)y - 1;
+#if HAVE_GLU_H
   gluUnProject((GLdouble)x, (GLdouble)realy, 0.0, mv, proj, viewport, &wx, &wy, &wz);
+#endif
   return(wy);
 }
 #else
@@ -2410,7 +2414,7 @@ static bool make_spectrogram(chan_info *cp)
 	  GL_SWAP_BUFFERS(cp);
 	  gdk_gl_drawable_wait_gl(gtk_widget_get_gl_drawable(channel_graph(cp)));
 #endif
-#if DEBUGGING
+#if DEBUGGING && HAVE_GLU_H
 	  {
 	    GLenum errcode;
 	    errcode = glGetError();

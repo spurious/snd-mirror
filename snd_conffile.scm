@@ -524,9 +524,10 @@
 			      (set! (speed-control) (* -1 dasspeed)))
 			  (-> play play2 samp))
 			 (else
+			  (c-show-times samp #t)
 			  (if (-> play isplaying)
 			      (-> play stop samp)
-			      (set! (cursor snd) samp)))))) 
+			      (set! (cursor snd) samp))))))
 	     #f))
 	
 

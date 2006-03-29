@@ -212,8 +212,6 @@ AC_ARG_WITH(snd-as-pd-external,
 
 	fi])
 
-# TODO: some error checking: GUILE_CONFIG_path messed up, -with-* but no headers
-
 
 #--------------------------------------------------------------------------------
 # standard libraries, header files, functions, OSS special cases
@@ -1030,10 +1028,15 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
            ],
          [AC_MSG_WARN(can't find GL headers)])])
 
-    # motif uses built-in support, but gtk uses gtkglext, so we need to check for the latter
+    # in FC5 glu.h and libGLU are missing by default -- do they come from Mesa?
     if test "$have_gl" = yes ; then
-      GL_LIBS="-lGLU -lGL"
+      AC_CHECK_HEADER(GL/glu.h, 
+	  [AC_DEFINE(HAVE_GLU_H)
+           GL_LIBS="$GL_LIBS -lGLU"
+          ])
+      GL_LIBS="$GL_LIBS -lGL"
       if test "$with_gtk" = yes ; then
+        # motif uses built-in support, but gtk uses gtkglext, so we need to check for the latter
         if test x$PKG_CONFIG != xno && $PKG_CONFIG gtkglext-1.0 --exists ; then
           GL_LIBS="$GL_LIBS `$PKG_CONFIG gtkglext-1.0 --libs`"
           GL_FLAGS="$GL_FLAGS `$PKG_CONFIG gtkglext-1.0 --cflags`"
@@ -1109,7 +1112,6 @@ if test "$ac_snd_have_gui" != no ; then
 	AC_MSG_WARN([need gamin version 0.1.0 or later])
        fi
     else
-# TODO: check fam configure cases
       AC_MSG_RESULT(no)
       AC_MSG_CHECKING(for Fam)
       AC_CHECK_LIB(fam, FAMOpen, 
@@ -1135,6 +1137,18 @@ if test "$with_ruby" = yes && test "$with_guile" = yes ; then
   with_ruby=no
   AC_MSG_WARN([You asked for both Ruby and Guile -- Guile will be used])
 fi
+
+if test "$with_forth" = yes && test "$with_guile" = yes ; then
+  with_forth=no
+  AC_MSG_WARN([You asked for both Forth and Guile -- Guile will be used])
+fi
+
+if test "$with_ruby" = yes && test "$with_forth" = yes ; then
+  with_forth=no
+  AC_MSG_WARN([You asked for both Ruby and Forth -- Ruby will be used])
+fi
+
+
 
 RUBY="ruby"
 AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
@@ -1267,8 +1281,12 @@ else
     if ! test -x "${GUILE_CONFIG_path}${GUILE_CONFIG_name}" ; then
       # try adding the "/" to the path    
       GUILE_CONFIG_path="${GUILE_CONFIG_path}/"
+      if ! test -x "${GUILE_CONFIG_path}${GUILE_CONFIG_name}" ; then
+        AC_MSG_WARN([Guile config path is $GUILE_CONFIG_path, but I can't find guile-config!])
+      fi
     fi
   fi
+
   if (${GUILE_CONFIG_path}${GUILE_CONFIG_name} link > /dev/null) 2>&1; then
     GUILE_CONFIG_works=yes
     guile_version="`${GUILE_CONFIG_path}${GUILE_name} -c '(display (version))'`"

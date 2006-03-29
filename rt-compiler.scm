@@ -3511,7 +3511,9 @@ and run simple lisp[4] functions.
       (if (rt-immediate? a b)
 	  `(if (>= ,b 0)
 	       (rt-ash/<< ,a ,b)
-	       (rt-ash/>> ,a (- ,b)))	
+	       (rt-ash/>> ,a ,(if (number? b)
+				  (- b)
+				  `(- ,b))))
 	  (let ((arg1 (rt-gensym))
 		(arg2 (rt-gensym)))
 	    `(let* ((,arg1 ,a)
@@ -6555,6 +6557,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 ;;;;;;;;;;;;;;; <realtime>/rt-compile/rt/rt-run/rt-funcall/etc.;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; There are certain limitations in the optional/keyword handling in guile.
 
 (def-class (<realtime> func
 		       arg
@@ -6571,31 +6574,62 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	(rt_remove_procfunc)
 	procfunc-data))
   
-  (def-method (play-abs #:optional (start (-> engine get-time)) duration)
-    (if (and duration (<= duration 0))
-	(c-display "Error. <realtime> -> play, duration<=0 (play-now " start duration ")")
-	(begin
-	  ;;(c-display "play, now/start/end" (-> engine get-time) start end)
-	  (rt_protect_var procfunc) ;; Unprotection happens in the rt_non_check_non_rt function.
-	  (-> engine add-event
-	      (-> engine get-frame-time start)
-	      (rt_insert_procfunc)
-	      procfunc-data)
-	  (if duration
-	      (this->stop-abs (+ start duration))))))
+  (define (play-abs-do start duration position)
+    (cond ((and duration (<= duration 0))
+	   (c-display "Error. <realtime> -> play, duration<=0 (play-now " start duration ")"))
+	  ((and (not (eq? position 'first)) (not (eq? position 'last)))
+	   (c-display "Error. <realtime> -> play, position must be first or last, not" position))
+	  (else
+	   ;;(c-display "play, now/start/end" (-> engine get-time) start end)
+	   (rt_protect_var procfunc) ;; Unprotection happens in the rt_non_check_non_rt function.
+	   (-> engine add-event
+	       (-> engine get-frame-time start)
+	       (if (eq? position 'first)
+		   (rt_insert_procfunc)
+		   (rt_append_procfunc))
+	       procfunc-data)
+	   (if duration
+	       (this->stop-abs (+ start duration))))))
+
+  (def-method (play-abs . rest) ;;#:optional (start (-> engine get-time)) duration key-ignore (position 'first))
+    (let* ((args (take-while (lambda (x) (not (keyword? x)))
+			     rest))
+	   (keyargs (find-tail keyword? rest))
+	   (arglength (length args)))
+      (play-abs-do (if (>= arglength 1)
+		       (car args)
+		       (-> engine get-time))
+		   (if (>= arglength 2)
+		       (cadr args)
+		       #f)
+		   (if (not keyargs)
+		       'first
+		       (cadr keyargs)))))
 
   (def-method (stop #:optional (end 0))
     (this->stop-abs (+ (-> engine get-time) end)))
 		 
-  (def-method (play #:optional (start 0) duration)
+  (define (play-do start duration keyargs)
     (if (and duration (<= duration 0))
 	(c-display "Error. <realtime> -> play, duration<=0 (play-now " start duration ")")
 	(let ((start-time (-> engine get-time)))
-	  (this->play-abs (+ start-time start)
-			  (if duration
-			      duration
-			      #f))))))
-
+	  (apply this->play-abs (append (list (+ start-time start)
+					      (if duration
+						  duration
+						  #f))
+					 keyargs)))))
+  (def-method (play . rest)
+    (let* ((args (take-while (lambda (x) (not (keyword? x)))
+			    rest))
+	   (keyargs (let ((ret (find-tail keyword? rest))) (if (not ret) '() ret)))
+	   (arglength (length args)))
+      (play-do (if (>= arglength 1)
+		   (car args)
+		   0)
+	       (if (>= arglength 2)
+		   (cadr args)
+		   #f)
+	       keyargs))))
 
 
 
@@ -7459,18 +7493,21 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	(dur #f)
 	(func (last rest))
 	(instrument (rt-gensym2))
-	(start2 (rt-gensym2)))
-    (cond ((= 3 (length rest))
+	(start2 (rt-gensym2))
+	(keyargs (find-tail keyword? (reverse! (cdr (reverse rest)))))
+	(args (take-while (lambda (x) (not (keyword? x)))
+			  rest)))
+    (cond ((= 2 (length args))
 	   `(let ((,instrument ,eval-type))
-	      (-> ,instrument ,play-type ,(car rest) ,(cadr rest))
+	      (-> ,instrument ,play-type ,(car rest) ,(cadr rest) ,@keyargs)
 	      ,instrument))
-	  ((= 2 (length rest))
+	  ((= 1 (length args))
 	   `(let ((,instrument ,eval-type))
-	      (-> ,instrument ,play-type ,(car rest))
+	      (-> ,instrument ,play-type ,(car rest) ,@keyargs)
 	      ,instrument))
-	  ((= 1 (length rest))
+	  ((= 0 (length args))
 	   `(let ((,instrument ,eval-type))
-	      (-> ,instrument ,play-type)
+	      (-> ,instrument ,play-type ,@keyargs)
 	      ,instrument)))))
 
 

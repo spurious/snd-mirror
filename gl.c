@@ -7,6 +7,8 @@
  * 'gl is added to *features*
  *
  * HISTORY:
+ *     30-Mar-06: check for glu.h, omit GLU_* if necessary.  Add Forth support.
+ *     --------
  *     13-Jun-05: merged gl-ruby.c into gl.c.
  *     --------
  *     10-Mar:    Gl_Version.
@@ -27,7 +29,9 @@
   #include <gtk/gtkgl.h>
 #endif
 #include <GL/gl.h>
-#include <GL/glu.h>
+#if HAVE_GLU_H
+  #include <GL/glu.h>
+#endif
 #if USE_MOTIF
   #include <GL/glx.h>
 #endif
@@ -3618,6 +3622,7 @@ GLsizei height, GLenum format, GLenum type, GLvoid* row, GLvoid* column)"
   return(XEN_FALSE);
 }
 
+#if HAVE_GLU_H
 #ifdef GLU_VERSION_1_2
 static XEN gxg_gluBeginPolygon(XEN tess)
 {
@@ -3907,6 +3912,7 @@ GLdouble* proj, GLint* view, GLdouble* objX, GLdouble* objY, GLdouble* objZ)"
                                      XEN_TO_C_GLdouble_(objZ))));
 }
 
+#endif
 #ifdef XEN_ARGIFY_1
 #if USE_MOTIF
 XEN_NARGIFY_3(gxg_glXChooseVisual_w, gxg_glXChooseVisual)
@@ -4252,6 +4258,7 @@ XEN_NARGIFY_3(gxg_glConvolutionParameteri_w, gxg_glConvolutionParameteri)
 XEN_NARGIFY_5(gxg_glCopyConvolutionFilter1D_w, gxg_glCopyConvolutionFilter1D)
 XEN_NARGIFY_6(gxg_glCopyConvolutionFilter2D_w, gxg_glCopyConvolutionFilter2D)
 XEN_NARGIFY_8(gxg_glSeparableFilter2D_w, gxg_glSeparableFilter2D)
+#if HAVE_GLU_H
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_1(gxg_gluBeginPolygon_w, gxg_gluBeginPolygon)
 #endif
@@ -4302,6 +4309,7 @@ XEN_NARGIFY_3(gxg_gluTessProperty_w, gxg_gluTessProperty)
 XEN_NARGIFY_3(gxg_gluTessVertex_w, gxg_gluTessVertex)
 #endif
 XEN_NARGIFY_9(gxg_gluUnProject_w, gxg_gluUnProject)
+#endif
 
 #else
 
@@ -4649,6 +4657,7 @@ XEN_NARGIFY_9(gxg_gluUnProject_w, gxg_gluUnProject)
 #define gxg_glCopyConvolutionFilter1D_w gxg_glCopyConvolutionFilter1D
 #define gxg_glCopyConvolutionFilter2D_w gxg_glCopyConvolutionFilter2D
 #define gxg_glSeparableFilter2D_w gxg_glSeparableFilter2D
+#if HAVE_GLU_H
 #ifdef GLU_VERSION_1_2
 #define gxg_gluBeginPolygon_w gxg_gluBeginPolygon
 #endif
@@ -4699,6 +4708,7 @@ XEN_NARGIFY_9(gxg_gluUnProject_w, gxg_gluUnProject)
 #define gxg_gluTessVertex_w gxg_gluTessVertex
 #endif
 #define gxg_gluUnProject_w gxg_gluUnProject
+#endif
 #endif
 static void define_functions(void)
 {
@@ -5046,6 +5056,7 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(glCopyConvolutionFilter1D, gxg_glCopyConvolutionFilter1D_w, 5, 0, 0, H_glCopyConvolutionFilter1D);
   GL_DEFINE_PROCEDURE(glCopyConvolutionFilter2D, gxg_glCopyConvolutionFilter2D_w, 6, 0, 0, H_glCopyConvolutionFilter2D);
   GL_DEFINE_PROCEDURE(glSeparableFilter2D, gxg_glSeparableFilter2D_w, 8, 0, 0, H_glSeparableFilter2D);
+#if HAVE_GLU_H
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluBeginPolygon, gxg_gluBeginPolygon_w, 1, 0, 0, H_gluBeginPolygon);
 #endif
@@ -5096,6 +5107,7 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(gluTessVertex, gxg_gluTessVertex_w, 3, 0, 0, H_gluTessVertex);
 #endif
   GL_DEFINE_PROCEDURE(gluUnProject, gxg_gluUnProject_w, 9, 0, 0, H_gluUnProject);
+#endif
 }
 
 /* ---------------------------------------- constants ---------------------------------------- */
@@ -5880,6 +5892,7 @@ static void define_integers(void)
   DEFINE_INTEGER(GL_ALL_ATTRIB_BITS);
   DEFINE_INTEGER(GL_CLIENT_PIXEL_STORE_BIT);
   DEFINE_INTEGER(GL_CLIENT_VERTEX_ARRAY_BIT);
+#if HAVE_GLU_H
   DEFINE_INTEGER(GLU_FALSE);
   DEFINE_INTEGER(GLU_TRUE);
   DEFINE_INTEGER(GLU_VERSION);
@@ -5941,6 +5954,7 @@ static void define_integers(void)
   DEFINE_INTEGER(GLU_TESS_WINDING_POSITIVE);
   DEFINE_INTEGER(GLU_TESS_WINDING_NEGATIVE);
   DEFINE_INTEGER(GLU_TESS_WINDING_ABS_GEQ_TWO);
+#endif
 }
 
 /* -------------------------------- initialization -------------------------------- */
@@ -5955,7 +5969,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       XEN_YES_WE_HAVE("gl");
-      XEN_DEFINE("gl-version", C_TO_XEN_STRING("11-Jul-05"));
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("29-Mar-06"));
       gl_already_inited = true;
     }
 }

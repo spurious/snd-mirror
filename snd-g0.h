@@ -8,7 +8,6 @@
 #if HAVE_GL
 #include <gtk/gtkgl.h>
 #include <GL/gl.h>
-#include <GL/glu.h>
 #endif
 
 #define LOTSA_PIXELS 10000

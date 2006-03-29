@@ -962,38 +962,63 @@ procfuncs=sorted
 						       (set! toremove->next->prev toremove->prev))))
 					     (return 1))
 					   (return 0))))
-
-	 (functions->public
-
-	  (<void> rt_insert_procfunc (lambda ((<struct-RT_Engine-*> engine)
-					     (<struct-RT_Event-*> event))
-				      (let* ((toinsert <struct-RT_Procfunc-*> event->arg))
-
-					;;(fprintf stderr (string "inserting: %u, visitors:%d\\n") event toinsert->visitors)
+	
+	(<void> rt_insert_procfunc_do (lambda ((<struct-RT_Engine-*> engine)
+					       (<struct-RT_Procfunc-*> toinsert)
+					       (<int> wheretoinsert)) ;; 0=first, 1=last
 					
+					;;(fprintf stderr (string "inserting: %u, visitors:%d\\n") event toinsert->visitors)
+					  
 					toinsert->visitors++
 					
 					(if (== 1 toinsert->visitors)
 					    (begin
 					      engine->num_procfuncs++
 
-					      (set! toinsert->prev NULL)
-					      (if (!= NULL engine->procfuncs)
-						  (set! engine->procfuncs->prev toinsert))
-					      (set! toinsert->next engine->procfuncs)
-					      (set! engine->procfuncs toinsert))
+					      (cond ((== NULL engine->procfuncs)
+						     (set! toinsert->prev NULL)
+						     (set! toinsert->next NULL)
+						     (set! engine->procfuncs toinsert))
+						    ((== 0 wheretoinsert)
+						     (begin
+						       (set! toinsert->prev NULL)
+						       (set! engine->procfuncs->prev toinsert)
+						       (set! toinsert->next engine->procfuncs)
+						       (set! engine->procfuncs toinsert)))
+						    (else
+						     (let* ((procfuncs <struct-RT_Procfunc-*> engine->procfuncs))
+						       (while (!= NULL procfuncs->next)
+							      (set! procfuncs procfuncs->next))
+						       (set! procfuncs->next toinsert)
+						       (set! toinsert->prev procfuncs)
+						       (set! toinsert->next NULL)))))
+						    
+					    
+					    ;; A procfunc is always protected before being sent here, but since it was already playing, it needs to be unprotected
+					    ;; because protection/unprotection are nested functions.
+					    (rt_unprotect_procfunc engine toinsert))))
 
-					    ;; A procfunc is always protected when sent here, but since it was already playing, it needs to be unprotected
-					    ;; because protection/unprotection is nested functions.
-					    (rt_unprotect_procfunc engine toinsert)))))
 
-
+	(functions->public
+	 
+	 (<void> rt_insert_procfunc (lambda ((<struct-RT_Engine-*> engine)
+					     (<struct-RT_Event-*> event))
+				      ;;(printf (string "Putting before\\n"))
+				      (let* ((toinsert <struct-RT_Procfunc-*> event->arg))
+					;;(fprintf stderr (string "inserting: %u, visitors:%d\\n") event toinsert->visitors)
+					(rt_insert_procfunc_do engine toinsert 1))))
+	 (<void> rt_append_procfunc (lambda ((<struct-RT_Engine-*> engine)
+					     (<struct-RT_Event-*> event))
+				      ;;(printf (string "Putting after\\n"))
+				      (let* ((toinsert <struct-RT_Procfunc-*> event->arg))
+					;;(fprintf stderr (string "inserting: %u, visitors:%d\\n") event toinsert->visitors)
+					(rt_insert_procfunc_do engine toinsert 1))))
 	  
 	 (<void> rt_remove_procfunc (lambda ((<struct-RT_Engine-*> engine)
 					     (<struct-RT_Event-*> event))
 				      (let* ((toremove <struct-RT_Procfunc-*> event->arg))
 					(rt_remove_procfunc_do engine toremove))))
-
+	 
 	 (<void> rt_remove_all_procfuncs (lambda ((<struct-RT_Engine-*> engine)
 						  (<struct-RT_Event-*> event))
 					   (let* ((procfunc <struct-RT_Procfunc-*> engine->procfuncs)
@@ -1244,7 +1269,7 @@ procfuncs=sorted
 			       
 			       ;; Put events-to-be-freed into freing-ringbuffer.
 			       (while (and (!= engine->events_non_rt NULL)
-					   ;;                                                  Be lazy. No rush to fill up the ringbuffer here.
+					   ;;                                                           Be lazy. No rush to fill up the ringbuffer here.
 					   (>= (jack_ringbuffer_write_space engine->ringbuffer_from_rt) (/ ,rt-from-ringbuffer-size 2)))
 				      (let* ((next <struct-RT_Event-*> engine->events_non_rt->next))
 					(rt_send_data_back engine RT_DATABACK_EVENT

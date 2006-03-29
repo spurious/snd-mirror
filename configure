@@ -3316,8 +3316,6 @@ _ACEOF
 	fi
 fi;
 
-# TODO: some error checking: GUILE_CONFIG_path messed up, -with-* but no headers
-
 
 #--------------------------------------------------------------------------------
 # standard libraries, header files, functions, OSS special cases
@@ -15146,10 +15144,158 @@ fi
 
 
 
-    # motif uses built-in support, but gtk uses gtkglext, so we need to check for the latter
+    # in FC5 glu.h and libGLU are missing by default -- do they come from Mesa?
     if test "$have_gl" = yes ; then
-      GL_LIBS="-lGLU -lGL"
+      if test "${ac_cv_header_GL_glu_h+set}" = set; then
+  echo "$as_me:$LINENO: checking for GL/glu.h" >&5
+echo $ECHO_N "checking for GL/glu.h... $ECHO_C" >&6
+if test "${ac_cv_header_GL_glu_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_GL_glu_h" >&5
+echo "${ECHO_T}$ac_cv_header_GL_glu_h" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking GL/glu.h usability" >&5
+echo $ECHO_N "checking GL/glu.h usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <GL/glu.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking GL/glu.h presence" >&5
+echo $ECHO_N "checking GL/glu.h presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <GL/glu.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: GL/glu.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: GL/glu.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: GL/glu.h: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: GL/glu.h: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: GL/glu.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: GL/glu.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: GL/glu.h:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: GL/glu.h:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: GL/glu.h: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: GL/glu.h: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: GL/glu.h:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: GL/glu.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: GL/glu.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: GL/glu.h: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: GL/glu.h: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: GL/glu.h: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------- ##
+## Report this to bil@ccrma.stanford.edu ##
+## ------------------------------------- ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for GL/glu.h" >&5
+echo $ECHO_N "checking for GL/glu.h... $ECHO_C" >&6
+if test "${ac_cv_header_GL_glu_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_GL_glu_h=$ac_header_preproc
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_GL_glu_h" >&5
+echo "${ECHO_T}$ac_cv_header_GL_glu_h" >&6
+
+fi
+if test $ac_cv_header_GL_glu_h = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_GLU_H 1
+_ACEOF
+
+           GL_LIBS="$GL_LIBS -lGLU"
+
+fi
+
+
+      GL_LIBS="$GL_LIBS -lGL"
       if test "$with_gtk" = yes ; then
+        # motif uses built-in support, but gtk uses gtkglext, so we need to check for the latter
         if test x$PKG_CONFIG != xno && $PKG_CONFIG gtkglext-1.0 --exists ; then
           GL_LIBS="$GL_LIBS `$PKG_CONFIG gtkglext-1.0 --libs`"
           GL_FLAGS="$GL_FLAGS `$PKG_CONFIG gtkglext-1.0 --cflags`"
@@ -15358,7 +15504,6 @@ _ACEOF
 echo "$as_me: WARNING: need gamin version 0.1.0 or later" >&2;}
        fi
     else
-# TODO: check fam configure cases
       echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
       echo "$as_me:$LINENO: checking for Fam" >&5
@@ -15456,6 +15601,20 @@ if test "$with_ruby" = yes && test "$with_guile" = yes ; then
   { echo "$as_me:$LINENO: WARNING: You asked for both Ruby and Guile -- Guile will be used" >&5
 echo "$as_me: WARNING: You asked for both Ruby and Guile -- Guile will be used" >&2;}
 fi
+
+if test "$with_forth" = yes && test "$with_guile" = yes ; then
+  with_forth=no
+  { echo "$as_me:$LINENO: WARNING: You asked for both Forth and Guile -- Guile will be used" >&5
+echo "$as_me: WARNING: You asked for both Forth and Guile -- Guile will be used" >&2;}
+fi
+
+if test "$with_ruby" = yes && test "$with_forth" = yes ; then
+  with_forth=no
+  { echo "$as_me:$LINENO: WARNING: You asked for both Ruby and Forth -- Ruby will be used" >&5
+echo "$as_me: WARNING: You asked for both Ruby and Forth -- Ruby will be used" >&2;}
+fi
+
+
 
 RUBY="ruby"
 
@@ -16175,8 +16334,13 @@ echo $ECHO_N "checking for Guile... $ECHO_C" >&6
     if ! test -x "${GUILE_CONFIG_path}${GUILE_CONFIG_name}" ; then
       # try adding the "/" to the path
       GUILE_CONFIG_path="${GUILE_CONFIG_path}/"
+      if ! test -x "${GUILE_CONFIG_path}${GUILE_CONFIG_name}" ; then
+        { echo "$as_me:$LINENO: WARNING: Guile config path is $GUILE_CONFIG_path, but I can't find guile-config!" >&5
+echo "$as_me: WARNING: Guile config path is $GUILE_CONFIG_path, but I can't find guile-config!" >&2;}
+      fi
     fi
   fi
+
   if (${GUILE_CONFIG_path}${GUILE_CONFIG_name} link > /dev/null) 2>&1; then
     GUILE_CONFIG_works=yes
     guile_version="`${GUILE_CONFIG_path}${GUILE_name} -c '(display (version))'`"
