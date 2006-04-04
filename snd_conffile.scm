@@ -1835,30 +1835,44 @@ Does not work.
 
       
       ;;(set! (widget-size (car (sound-widgets (car current-buffer)))) (list 1000 1000) )
-      
+      (define position 0)
+      ;;(define num 0)
       (define (c-open-buffer filename)
-	"(c-open-buffer filename) adds a menu item that will select filename (use with open-hook)"
 	(if (c-isloaded? filename)
 	    (begin
 	      (c-switch-to-buf filename)
 	      #t)
-	    (let ((was-starting-up? *c-is-starting-up*))
+	    (letrec ((was-starting-up? *c-is-starting-up*)
+		     (is-in-menu? (member filename c-sounds-in-menu))
+		     (add-buffer-menu (lambda (position addstar?)
+					(let ((gen-filename filename ));; (let ((ret (string-append (number->string num) " " filename))) (set! num (1+ num)) ret)))
+					  (add-to-menu buffer-menu 
+						       gen-filename
+						       (lambda ()
+							 (if was-starting-up?
+							     (begin
+							       ;;(c-display "here")
+							       (c-remove-sounds-in-menu filename)
+							       (remove-from-menu buffer-menu gen-filename)
+							       (open-sound filename))
+							     (begin
+							       ;;(c-display "not here")
+							       (remove-from-menu buffer-menu gen-filename)
+							       (add-buffer-menu position #t)
+							       (c-switch-to-buf filename))))
+						       position)))))
 	      (if *c-is-starting-up*
 		  (set! c-sounds-in-menu (cons filename c-sounds-in-menu)))
-	      (add-to-menu buffer-menu 
-			   filename
-			   (lambda ()
-			     (if was-starting-up?
-				 (begin
-				   (c-remove-sounds-in-menu filename)
-				   (remove-from-menu buffer-menu filename)
-				   (open-sound filename))
-				 (c-switch-to-buf filename))))
+	      (add-buffer-menu position #f)
+	      ;;(c-display "position" position)
+	      (if (not was-starting-up?)
+		  (set! position (1+ position)))
 	      *c-is-starting-up*)))
 
       (define (c-close-buffer snd)
 	"(close-buffer snd) removes the menu item associated with snd (use with close-hook)"
 	(let ((filename (file-name snd)))
+	  ;;(remove-from-menu buffer-menu (string-append "* " filename))
 	  (remove-from-menu buffer-menu filename)
 	  (remove-from-menu buffer-menu filename)
 	  (c-remove-sounds-in-menu filename))
@@ -2087,9 +2101,28 @@ Does not work.
 ;; Load GTK mnemonics code from Maxim Krikun.
 (load-from-path "kmenu.scm")
 
- 
+
+
+;;##############################################################
+;; Load rt-player. Takes some time.
+;;##############################################################
+
+(eval-c (string-append "-I" snd-header-files-path)
+	"#include <_sndlib.h>"
+	(proto->public "int mus_audio_api(void)")
+	(variables->public
+	 (<int> JACK_API ALSA_API OSS_API)))
+
+(if (= (mus_audio_api) (JACK_API))
+    (load-from-path "rt-player.scm"))
+
+
+
+
+;;##############################################################
 ;; Load files from previous session.
-  
+ ;;##############################################################
+ 
 (if *c-restore-previous-session*
     (let ((filename #f))
       (system (string-append "touch " (c-open-sounds-filename) " >/dev/null 2>/dev/null"))
@@ -2114,6 +2147,9 @@ Does not work.
 	  (lambda ()
 	    (set! (window-width) 800)
 	    (set! (window-height) 600)))))
+
+
+
 
 
 
@@ -2161,20 +2197,15 @@ Does not work.
 
 
 
-;;##############################################################
-;; Load rt-player. Takes some time.
-;;##############################################################
-
-(load-from-path "rt-player.scm")
-
-
-
 
 
 (set! *c-is-starting-up* #f)
 
 
 (newline)
-(c-display "#:snd_conffile.scm loaded. The RT-Player is currently configured only to run when not using LADSPA or the Expand, Contrast, Reverb or Filter control.")
+(c-display "#:snd_conffile.scm loaded."
+	   (if (not (provided? 'snd-rt-player.scm))
+	       "SND is currently not using jack, so the RT-Player is not initialized."
+	       "The RT-Player is currently configured only to run when not using LADSPA or the Expand, Contrast, Reverb or Filter control."))
 
 

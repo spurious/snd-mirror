@@ -48,7 +48,7 @@ CLM exists in several forms:
 the original Common Lisp implementation (clm-3.tar.gz), 
 a C version (sndlib.tar.gz), 
 a Scheme version (sndlib.tar.gz with Guile), Ruby (sndlib again but using Ruby),
-and Forth (sndlib/gfm).  The Scheme and Ruby versions are also built into
+and Forth (sndlib/gfm).  The Scheme, Ruby, and Forth versions are also built into
 the Snd editor (snd-8.tar.gz).
 There are a variety of unavoidable differences between these
 versions, but in general, the differences are obvious and consistent: Lisp "-" becomes
@@ -232,8 +232,7 @@ Finally, the line:</p>
 <p>opens an output sound file, calls simp, closes the file, and
 plays the result.  
 In Common Lisp, we need to put the instrument definition in a separate file
-and compile and load it; we can't just paste it into the listener (as in Scheme
-or Ruby).
+and compile and load it; we can't just paste it into the listener (as in Scheme, Ruby, or Forth).
 </p>
 
 <p>We can simplify simp by using <b>oscil</b> for the sinusoid and
@@ -786,7 +785,7 @@ interpolation returns the table value.  Table-lookup scales its
 frequency change argument (<i>fm-input</i>) to fit whatever its table size is
 (that is, it assumes the caller is thinking in terms of a table size of two pi,
 and fixes it up).  In CL, the wave table should be an array of double-floats (the function
-make-double-array can be used to create it). In Ruby/Scheme it is a vct.
+make-double-array can be used to create it). In Ruby/Scheme/Forth it is a vct.
 <i>type</i> sets the type of interpolation used: mus-interp-none,
 mus-interp-linear, mus-interp-lagrange, mus-interp-bezier, or mus-interp-hermite.
 </p>
@@ -2434,7 +2433,7 @@ set these fields, use these functions (they are described in conjunction with th
 <p>Many of these are settable:
 <code>(setf (mus-frequency osc1) 440.0)</code>
 sets osc1's current frequency to (<a class=quiet href="#hz-&gt;radians">hz-&gt;radians</a> 440.0). 
-In Scheme and Ruby, <a class=def name="musgeneratorp">mus-generator?</a> returns #t if its argument is
+In Scheme, Ruby and Forth, <a class=def name="musgeneratorp">mus-generator?</a> returns #t if its argument is
 a CLM generator.
 </p>
 

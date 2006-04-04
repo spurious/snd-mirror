@@ -9,32 +9,6 @@
 /* PERHAPS: in linux make --with-alsa the default
  */
 
-#if USE_MOTIF
-  #include <X11/IntrinsicP.h>
-  #if HAVE_XPM
-    #include <X11/xpm.h>
-  #endif
-#endif
-
-#if HAVE_GNU_LIBC_VERSION_H
-  #include <gnu/libc-version.h>
-#endif
-#if (HAVE_GSL_GSL_VERSION_H) && (!(defined(GSL_VERSION)))
-  #include <gsl/gsl_version.h>
-#endif
-
-#if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DIRENT_H
-  #include <ladspa.h>
-#endif
-
-#if HAVE_FFTW3
-  #include <fftw3.h>
-#else
-  #if HAVE_FFTW
-    #include <fftw.h>
-  #endif
-#endif
-
 static char **snd_xrefs(const char *topic);
 static char **snd_xref_urls(const char *topic);
 
@@ -128,11 +102,12 @@ static char* vstrcat(char *arg1, ...)
   return(buf);
 }
 
-static char *main_snd_xrefs[12] = {
+static char *main_snd_xrefs[13] = {
   "{CLM}: sound synthesis",
   "{CM}: algorithmic composition",
   "{CMN}: music notation",
   "{Ruby}: extension language",
+  "{Forth}: extension language",
   "{Emacs}: Snd as Emacs subjob",
   "{Libxm}: graphics module",
   "{Sndlib}: underlying sound support library",
@@ -143,11 +118,12 @@ static char *main_snd_xrefs[12] = {
   NULL
 };
 
-static char *main_snd_xref_urls[12] = {
+static char *main_snd_xref_urls[13] = {
   "grfsnd.html#sndwithclm",
   "grfsnd.html#sndwithcm",
   "sndscm.html#musglyphs",
   "grfsnd.html#sndandruby",
+  "grfsnd.html#sndandforth",
   "grfsnd.html#emacssnd",
   "libxm.html#xm",
   "sndlib.html#introduction",
@@ -168,6 +144,32 @@ static void main_snd_help(const char *subject, ...)
   va_end(ap);
   snd_help_back_to_top();
 }  
+
+#if USE_MOTIF
+  #include <X11/IntrinsicP.h>
+  #if HAVE_XPM
+    #include <X11/xpm.h>
+  #endif
+#endif
+
+#if HAVE_GNU_LIBC_VERSION_H
+  #include <gnu/libc-version.h>
+#endif
+#if (HAVE_GSL_GSL_VERSION_H) && (!(defined(GSL_VERSION)))
+  #include <gsl/gsl_version.h>
+#endif
+
+#if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DIRENT_H
+  #include <ladspa.h>
+#endif
+
+#if HAVE_FFTW3
+  #include <fftw3.h>
+#else
+  #if HAVE_FFTW
+    #include <fftw.h>
+  #endif
+#endif
 
 static char *xm_version(void)
 {
@@ -497,23 +499,13 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-28-Mar:  shorten, tta, wavpack support.\n\
+28-Mar:  Snd 8.0.\n\
+         Forth as extension language, thanks to Mike Scholz.\n\
+         shorten, tta, wavpack support.\n\
 14-Mar:  x-axis-as-clock for more informative x-axis tick labels in very large files.\n\
 10-Mar:  added a stop sign to interrupt long computations (equivalent to C-g).\n\
 8-Mar:   kmenu.scm thanks to Maxim Krikun.\n\
 3-Mar:   show-selection (extensions.scm).\n\
-27-Feb:  snd 7.19.\n\
-         tracking-cursor-style.\n\
-21-Feb:  bind-key now takes a character or string 1st arg (as well as an integer); if a string, it's treated\n\
-           as the X/Gtk key name (e.g. \"Home\" or \"plus\").  It also has a 6th optional arg, a preferences\n\
-           dialog name (so that the dialog can reflect current key bindings by functionality).\n\
-         with-tracking-cursor and with-verbose-cursor as synonyms for cursor-follows-play and verbose-cursor.\n\
-17-Feb:  mus-file-data-clipped -> mus-clipping, added mus-file-clipping for local settings\n\
-           data-clipped -> clipping\n\
-           mus-prescaler (global) alongside previous mus-file-prescaler\n\
-         added pausing -- returns #t if DAC is paused, can be set to #t or #f to start/stop pausing\n\
-           similarly playing -- #t if DAC is running (may be paused), settable to start/stop playing\n\
-           removed dac-is-running (it's in snd7.scm)\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -572,7 +564,7 @@ to the next such sample, if any. Successive C-s's or C-r's repeat the search.\
 \n\n\
 Normally, the search applies only to the current channel. To search all current files at once, use the Edit:Find dialog.",
 #else
-"Searches in Snd depend completely on either Guile or Ruby.  Since neither is loaded,\
+"Searches in Snd depend completely on the extension language.  Since none is loaded,\
 the searching mechanisms are disabled.",
 #endif
 		      WITH_WORD_WRAP,
@@ -632,7 +624,7 @@ Marks and mixes can also be sync'd together.",
 
 static char *debug_xrefs[8] = {
   "C debugging: {gdb}",
-  "Scheme/Ruby debugging: {snd-debug}",
+  "Scheme/Ruby/Forth debugging: {snd-debug}",
   "CLM Instrument debugging: {variable-display}",
   "Notelist debugging: {ws-backtrace}",
   "Break and trace points: {snd-break}",
@@ -662,7 +654,7 @@ about it!  If possible, run Snd in gdb and send me the stack trace: \n\n\
   where\n\
 \n\
 See README.Snd for more about C-level troubles.  For CLM-based instruments, \
-variable-display in snd-motif.scm might help.  For debugging your own Scheme/Ruby \
+variable-display in snd-motif.scm might help.  For debugging your own Scheme/Ruby/Forth \
 code (or Snd's for that matter), see the \"Errors and Debugging\" section of \
 extsnd.html, or snd-debug.  For notelist debugging, see ws-backtrace.",
 		      WITH_WORD_WRAP,
@@ -999,7 +991,7 @@ dealt with from the lisp listener panel. I've tried to bring out to lisp nearly 
 both the signal-processing functions, and much of the user interface. You can, for example, add your own menu choices, \
 editing operations, or graphing alternatives. These extensions can be loaded at any time.",
 #else
-"Snd depends heavily on either Guile or Ruby to provide much of its functionality.  Since neither \
+"Snd depends heavily on the extension language to provide much of its functionality.  Since none \
 is loaded, there's not much customization you can do.  Check out the X resource stuff in Snd.ad or \
 the gtk resource stuff in Snd.gtkrc.",
 #endif
@@ -1790,14 +1782,15 @@ static void window_size_help(void)
 
 #include "snd-xref.c"
 
-#define NUM_TOPICS 37
+#define NUM_TOPICS 38
 static char *topic_names[NUM_TOPICS] = {
   "Hook", "Vct", "Sample reader", "Mark", "Mix", "Region", "Edit list", "Transform", "Error",
   "Color", "Font", "Graphic", "Widget", "Emacs",
   "CLM", "Instrument", "CM", "CMN", "Libxm", "Sndlib", 
   "Motif", "Gtk", "Script", "Ruby", "LADSPA", "OpenGL", "Gdb", "Control panel",
   "X resources", "Invocation flags", "Initialization file", "Customization",
-  "Noise Reduction", "Window Size", "Color", "Random Number", "Wavogram"
+  "Noise Reduction", "Window Size", "Color", "Random Number", "Wavogram",
+  "Forth"
 };
 
 static char *topic_urls[NUM_TOPICS] = {
@@ -1811,7 +1804,7 @@ static char *topic_urls[NUM_TOPICS] = {
   "grfsnd.html#sndandgl", "grfsnd.html#sndandgdb", "extsnd.html#customcontrols",
   "grfsnd.html#sndresources", "grfsnd.html#sndswitches", "grfsnd.html#sndinitfile", "extsnd.html#extsndcontents",
   "extsnd.html#noisystory", "extsnd.html#movingwindows", "extsnd.html#colors", "sndscm.html#allrandomnumbers",
-  "snd.html#wavogram"
+  "snd.html#wavogram", "grfsnd.html#sndandforth"
 };
 
 static int min_strlen(const char *a, const char *b)

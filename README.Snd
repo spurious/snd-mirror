@@ -117,8 +117,9 @@ Version info:
   if Gtk, then Gtk+ 2.0.0 or later
   if Motif, then Motif 2.n but not Lesstif
   in Linux, if ALSA, then ALSA 0.9beta8 or later (or any version of OSS)
-  if Guile, Guile 1.3.4 or later but Snd's Scheme files need 1.5.0 or later
-  if Ruby, Ruby 1.6.4 or later
+  if Guile, Guile 1.3.4 or later but most *.scm files need 1.5.0 or later
+  if Ruby, Ruby 1.6.4 or later, but some *.rb files need 1.8.0 or later
+  if Forth, any version
   if GSL, version 0.8 or later
   if gtkglext, version 1.0 or later
   if gamin, version 0.1.0 or later

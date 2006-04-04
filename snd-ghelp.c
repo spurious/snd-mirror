@@ -290,7 +290,7 @@ static void create_help_monolog(void)
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->vbox), frame, true, true, 10); 
   gtk_widget_show(frame);
 
-  help_text = make_scrolled_text(frame, false, NULL);
+  help_text = make_scrolled_text(frame, false, NULL, false); /* last arg ignored */
   gtk_widget_add_events(help_text, GDK_BUTTON_RELEASE);
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(help_text), 10);
   SG_SIGNAL_CONNECT(help_text, "button_release_event", text_release_callback, NULL);

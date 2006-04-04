@@ -1144,15 +1144,6 @@ void mem_report(void)
 		      case PRINT_CHAR:
 			fprintf(Fp, "[%s] ", (char *)(pointers[j]));
 			break;
-		      case PRINT_VCT:
-			fprintf(Fp, "[%d", ((vct *)(pointers[j]))->length);
-			if (((vct *)(pointers[j]))->data)
-			  {
-			    fprintf(Fp, " ");
-			    fdescribe_pointer(Fp, (void *)(((vct *)(pointers[j]))->data));
-			  }
-			fprintf(Fp, "] ");
-			break;
 		      }
 		  }
 	      fprintf(Fp, "\n");

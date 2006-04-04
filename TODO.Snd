@@ -20,9 +20,6 @@ dlocsig from CLM to Scheme + a path envelope editor dialog
 
 A CD building script.
 
-portaudio support (rather than audio.c, at least for OSX)
-    (Is this project dead?)
-
 "waterfall" spectrum display in oscope.scm.
 
 A robust noise reduction technique.
@@ -32,9 +29,7 @@ A Qt version of Snd?  An OSX-native version?  (These
     Qt requires C++, I think, and Cocoa may require Objective-C -- 
     major drawbacks).
 
-ocaml as the extension language.
-
-Forth as the extension language (not currently supported by Forth, I think).
+ocaml as an extension language.
 
 Perry Cook's whistle and PCRev translated to CLM/Snd.
 

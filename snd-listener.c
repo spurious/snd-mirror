@@ -606,10 +606,12 @@ static XEN g_clear_listener(void)
   return(XEN_FALSE);
 }
 
-static XEN g_show_listener(void) 
+static XEN g_show_listener(XEN val) 
 {
-  #define H_show_listener "(" S_show_listener "): opens the lisp listener pane"
-  handle_listener(true); 
+  #define H_show_listener "(" S_show_listener " (open #t)): if 'open' opens the lisp listener; returns whether the listener is visible."
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_show_listener, "a boolean");
+  if ((XEN_NOT_BOUND_P(val)) || (!(XEN_FALSE_P(val)))) /* explicit #f arg turns off listener creation/display */
+    handle_listener(true); 
   return(C_TO_XEN_BOOLEAN(listener_is_visible()));
 }
 
@@ -644,7 +646,7 @@ static XEN g_set_listener_prompt(XEN val)
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_save_listener_w, g_save_listener)
 XEN_NARGIFY_0(g_clear_listener_w, g_clear_listener);
-XEN_NARGIFY_0(g_show_listener_w, g_show_listener)
+XEN_ARGIFY_1(g_show_listener_w, g_show_listener)
 XEN_NARGIFY_1(g_set_show_listener_w, g_set_show_listener)
 XEN_NARGIFY_0(g_listener_prompt_w, g_listener_prompt)
 XEN_NARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
@@ -663,7 +665,7 @@ void g_init_listener(void)
   XEN_DEFINE_PROCEDURE(S_clear_listener, g_clear_listener_w, 0, 0, 0, H_clear_listener);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_listener, g_show_listener_w, H_show_listener,
-				   S_setB S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
+				   S_setB S_show_listener, g_set_show_listener_w,  0, 1, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
 				   S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);

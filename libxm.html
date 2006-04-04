@@ -22,19 +22,19 @@
 
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h1>xm</h1></td></tr></table>
 <br>
-<p>libxm provides Guile/Ruby bindings for Xlib, Xt, Xp, Xpm, and Xm (Motif);
+<p>libxm provides Guile/Ruby/Forth bindings for Xlib, Xt, Xp, Xpm, and Xm (Motif);
 or alternatively (under the name libxg) Gtk, gdk, gdk-pixbuf, pango, and some of glib;
 and much of OpenGL.
 You can build it with just X, and so on -- see README.libxm for details.
 There are several example files in the libxm package -- anything with
-the extension "scm" or "rb".  libxm can be used directly with Guile or Ruby,
+the extension "scm" or "rb".  libxm can be used directly with Guile, Ruby or Forth,
 providing a graphical user-interface for scripts.
 </p>
 <p>
 All libxm names are exactly the same as the C name except that
 a "." is prepended (in Guile) to struct field accessors -- this prefix (and the postfix) can be set via the macros
 XM_PREFIX, XM_FIELD_PREFIX and XM_POSTFIX to whatever you like --
-"x:" or "&lt;" and "&gt;", etc.  In Ruby, I'm prepending "R".
+"x:" or "&lt;" and "&gt;", etc.  In Ruby, I'm prepending "R"; in Forth "F".
 I chose not to try to make these names fit into the
 "Scheme culture" (i.e. adding random dashes and uncapitalizing everything)
 because it is already too hard to keep track of the thousands of names
@@ -110,7 +110,7 @@ passes back a list:
              XEN_CONS(XEN_WRAP_WIDGET(MAIN_PANE(ss)),...))));
 </pre>
 <p>The XEN entities are from the xen package that provides
-a wrapper for Guile-specific (or Ruby-specific) functions
+a wrapper for extension-language-specific functions
 and macros. 
 </p>
 <pre>

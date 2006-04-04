@@ -15285,7 +15285,7 @@ echo "${ECHO_T}$ac_cv_header_GL_glu_h" >&6
 fi
 if test $ac_cv_header_GL_glu_h = yes; then
   cat >>confdefs.h <<\_ACEOF
-#define HAVE_GLU_H 1
+#define HAVE_GLU 1
 _ACEOF
 
            GL_LIBS="$GL_LIBS -lGLU"

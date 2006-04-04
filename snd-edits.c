@@ -5070,7 +5070,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
  					 function,
  					 (first) ? "" : ";",
  					 ed->origin,
- 					 (ed->origin[strlen(ed->origin) - 1] == '(') ? "" : ", ");
+ 					 (ed->origin[snd_strlen(ed->origin) - 1] == '(') ? "" : ", ");
   	    }
 	  else
 	    {
@@ -5106,7 +5106,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
  					     function,
  					     (first) ? "" : ";",
  					     ed->origin,
- 					     (ed->origin[strlen(ed->origin) - 1] == '(') ? "" : ", ");
+ 					     (ed->origin[snd_strlen(ed->origin) - 1] == '(') ? "" : ", ");
 		  break;
 		case DELETION_EDIT:
 		  /* what about delete-mix? */
@@ -9245,7 +9245,7 @@ static char *snd_to_sample_describe(mus_any *ptr)
 	    temp = sf_to_string(spl->sfs[i]);
 	    if (temp)
 	      {
-		len += strlen(temp);
+		len += snd_strlen(temp);
 		FREE(temp);
 	      }
 	  }

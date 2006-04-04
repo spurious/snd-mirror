@@ -2001,7 +2001,7 @@ widget_t snd_record_file(void)
       gtk_widget_show(file_info_pane);
 
       make_file_info_pane(rp, file_info_pane, rp->ordered_devices_size);
-      messages = make_scrolled_text(NULL, false, rec_panes);
+      messages = make_scrolled_text(NULL, false, rec_panes, false);
       set_dialog_widget(RECORDER_DIALOG, recorder);
       initialize_recorder(rp);
     }

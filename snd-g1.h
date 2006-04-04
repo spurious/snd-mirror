@@ -326,7 +326,7 @@ char *sg_get_text(GtkWidget *w, int start, int end);
 void sg_set_cursor(GtkWidget *w, int position);
 void sg_text_insert(GtkWidget *w, const char *text);
 int sg_cursor_position(GtkWidget *w);
-GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *paner);
+GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *paner, bool resize);
 void sg_text_delete(GtkWidget *w, int start, int end);
 void sg_make_resizable(GtkWidget *w);
 Cessator add_work_proc(GtkFunction func, gpointer data);

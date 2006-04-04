@@ -1,5 +1,6 @@
 Snd change log
 
+  31-Mar:    rt-player.scm (Kjetil).
   28-Mar:    Snd 8.0.
              Forth as extension language, thanks to Mike Scholz.
 	     shorten, tta, wavpack support.

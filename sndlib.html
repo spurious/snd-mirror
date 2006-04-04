@@ -67,9 +67,9 @@ types, and most of the features of the audio hardware. </p>
 <li>audio.c (read and write sound hardware ports)
 <li>sound.c (provide slightly higher level access to the preceding files)
 <li>sndlib.h (header for the preceding files)
-<li>sndlib2xen.c and sndlib-strings.h (tie preceding into Guile or Ruby)
+<li>sndlib2xen.c and sndlib-strings.h (tie preceding into Guile, Ruby, or Forth)
 <li>clm.c and clm.h (Music V implementation)
-<li>clm2xen.c, vct.c and vct.h (tie clm.c into Guile or Ruby)
+<li>clm2xen.c, vct.c and vct.h (tie clm.c into Guile, Ruby, or Forth)
 <li>xen.h, xen.c, xen.html (the embedded language support)
 <li>midi.c (primitive MIDI support)
 </ul>
@@ -401,7 +401,7 @@ went wrong.
 
 <p>clm.c and friends implement all the generators found in CLM, a common lisp
 music V implementation, and clm2xen.c ties these into the languages supported by the
-xen package (currently Guile and Ruby).  The
+xen package (currently Guile, Ruby, and Forth).  The
 primary clm documentation (which describes both the Scheme and Common Lisp implementations)
 is clm.html found in clm-3.tar.gz alongside sndlib at ccrma-ftp.
 The simplest way to try these out is to load them into Snd; see extsnd.html,
@@ -1053,7 +1053,7 @@ to and from arrays:</p>
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="sndlibguile">Sndlib and Guile</a></h2></td></tr></table>
 
 <p>Much of sndlib is accessible at run time in any program that has one of
-the languages supported by the xen package (Guile, Ruby);
+the languages supported by the xen package (Guile, Ruby, Forth);
 the modules sndlib2xen and clm2xen tie most of the library into that language
 making it possible to call the library functions from its interpreter.  The documentation
 is scattered around, unfortunately: the clm side is in clm.html and extsnd.html with many

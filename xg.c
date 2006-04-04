@@ -20308,7 +20308,7 @@ GtkFileChooserAction action, etc buttons)"
     p_arg2 = XEN_TO_C_GtkFileChooserAction(action);
     switch (etc_len)
       {
-        case 0: result = gtk_file_chooser_dialog_new(p_arg0, p_arg1, p_arg2, NULL); break;
+        case 0: result = gtk_file_chooser_dialog_new(p_arg0, p_arg1, p_arg2, NULL, NULL); break;
         case 2: result = gtk_file_chooser_dialog_new(p_arg0, p_arg1, p_arg2, XLS(buttons, 0), XLI(buttons, 1), NULL); break;
         case 4: result = gtk_file_chooser_dialog_new(p_arg0, p_arg1, p_arg2, XLS(buttons, 0), XLI(buttons, 1), XLS(buttons, 2), XLI(buttons, 3), NULL); break;
         case 6: result = gtk_file_chooser_dialog_new(p_arg0, p_arg1, p_arg2, XLS(buttons, 0), XLI(buttons, 1), XLS(buttons, 2), XLI(buttons, 3), XLS(buttons, 4), XLI(buttons, 5), NULL); break;
@@ -39883,7 +39883,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("29-Mar-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("30-Mar-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

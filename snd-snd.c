@@ -4491,7 +4491,7 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
 static XEN g_env_info_to_vcts(env_info *ep, int len)
 {
   /* changed 5-Jan-03 to return vcts (Guile vector printer is stupid) */
-  /* in snd-test this causes unfreed memory because the sound-icon-box saves all the data for each icon */
+  /* in snd-test this causes unfreed memory because the sound-icon-box saves all the data for each icon (vcts unfreed) */
   XEN res;
   int i, j, lim;
   vct *vmax, *vmin;

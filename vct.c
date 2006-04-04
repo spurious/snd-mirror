@@ -211,9 +211,6 @@ vct *c_make_vct(int len)
 {
   vct *new_vct;
   new_vct = (vct *)MALLOC(sizeof(vct));
-#if DEBUGGING
-  set_printable(PRINT_VCT);
-#endif
   new_vct->length = len;
   new_vct->data = (Float *)CALLOC(len, sizeof(Float));
   new_vct->dont_free = false;
@@ -244,9 +241,6 @@ XEN make_vct(int len, Float *data)
   vct *new_vct;
   if (len <= 0) return(XEN_FALSE);
   new_vct = (vct *)MALLOC(sizeof(vct));
-#if DEBUGGING
-  set_printable(PRINT_VCT);
-#endif
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = false;
@@ -257,9 +251,6 @@ XEN make_vct_wrapper(int len, Float *data)
 {
   vct *new_vct;
   new_vct = (vct *)MALLOC(sizeof(vct));
-#if DEBUGGING
-  set_printable(PRINT_VCT);
-#endif
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = true;

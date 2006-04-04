@@ -54,21 +54,7 @@ and run simple lisp[4] functions.
 
 (c-load-from-path eval-c)
 
-
-(if (not (defined? 'snd-header-files-path))
-    (let ((path #f))
-      (for-each (lambda (l-path)
-		  (if (not path)
-		      (if (access? (string-append l-path "/clm.h") R_OK)
-			  (set! path l-path))))
-		%load-path)
-      (if path
-	  (define-toplevel 'snd-header-files-path path)
-	  (begin
-	    (c-display "Error! Header files for SND not found. Try setting snd-header-files-path.")
-	    (catch 'header-files-path-not-found)))))
-      
-
+    
 
 
 
@@ -1391,7 +1377,7 @@ and run simple lisp[4] functions.
        (let ((newname (get-unique-name (legalize-c-name name))))
 	 (if is-guile-var
 	     (set! renamed-guile-vars (cons (list name newname) renamed-guile-vars)))
-	 (if is-guile-var
+	 (if (and rt-verbose is-guile-var)
 	     (c-display "Variable" name "renamed as" newname))
 	 (hashq-set! all-renamed-variables newname #t)
 	 newname))

@@ -1031,7 +1031,7 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
     # in FC5 glu.h and libGLU are missing by default -- do they come from Mesa?
     if test "$have_gl" = yes ; then
       AC_CHECK_HEADER(GL/glu.h, 
-	  [AC_DEFINE(HAVE_GLU_H)
+	  [AC_DEFINE(HAVE_GLU)
            GL_LIBS="$GL_LIBS -lGLU"
           ])
       GL_LIBS="$GL_LIBS -lGL"
@@ -1712,7 +1712,7 @@ AC_SUBST(SO_LD)
 
 
 #--------------------------------------------------------------------------------
-# OGG, Flac, Speex, Mpeg, Midi, Shorten
+# OGG, Flac, Speex, Mpeg, Midi, Shorten, TTA, Wavpack
 # --------------------------------------------------------------------------------
 
 AC_PATH_PROG(PATH_OGGDEC, oggdec, no) # OGG read

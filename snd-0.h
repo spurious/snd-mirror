@@ -224,8 +224,6 @@ enum {SORT_A_TO_Z, SORT_Z_TO_A, SORT_NEW_TO_OLD, SORT_OLD_TO_NEW, SORT_SMALL_TO_
   #define PROC_OPEN " "
   #define PROC_CLOSE " "
   #define PROC_SEP " "
-  #define VECTOR_OPEN " #( "
-  #define VECTOR_CLOSE " ) "
   #define LIST_OPEN " '( "
   #define LIST_CLOSE " ) "
   #define BPAREN ""
@@ -309,7 +307,6 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #if DEBUGGING
 #define PRINT_NOT 0
 #define PRINT_CHAR 1
-#define PRINT_VCT 2
 #endif
 
 #define DEFAULT_AMP_CONTROL 1.0

@@ -41,8 +41,6 @@
 (define keep-going #f)
 (define all-args #f) ; huge arg testing
 
-;;; SOMEDAY: why does freeBSD get memory corruption occasionally? (need valgrind ideally)
-
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (define full-test (< snd-test 0))
 (define total-tests 28)
@@ -9611,6 +9609,13 @@ EDITS: 5
 	    (undo)
 	    (filter-sound '(0 0 .29 0 .3 1 .31 0 1 0) 1024)  
 	    (if (> (maxamp) .02) (snd-display ";filter-sound maxamp 3: ~A" (maxamp)))
+
+	    (set! (show-sonogram-cursor) #t) 
+	    (set! (cursor-follows-play) #t) 
+	    (set! (transform-graph-type) graph-as-sonogram) 
+	    (play-and-wait)
+	    (set! (transform-graph?) #t) 
+
 	    (close-sound ind))
 	  (close-sound ind1))
 	

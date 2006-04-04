@@ -1424,7 +1424,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       /* controls etc */
 
       CONTROL_PANEL(sp) = gtk_vbox_new(false, 0);
-      gtk_paned_add2(GTK_PANED(SND_PANE(sp)), CONTROL_PANEL(sp));
+      gtk_paned_pack2(GTK_PANED(SND_PANE(sp)), CONTROL_PANEL(sp), false, true); /* add2 but resize=false */
   
 
       /* -------- NAME FIELDS -------- */

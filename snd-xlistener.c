@@ -250,7 +250,7 @@ static void Kill_line(Widget w, XEvent *ev, char **str, Cardinal *num)
   if (!found) loc = XmTextGetLastPosition(w);
   if (loc > curpos)
     {
-      if (listener_selection) XtFree(listener_selection);
+      if (listener_selection) {XtFree(listener_selection); listener_selection = NULL;}
       XmTextSetSelection(w, curpos, loc, CurrentTime);
       listener_selection = XmTextGetSelection(w); /* xm manual p329 sez storage is allocated here */
       XmTextCut(w, CurrentTime);
@@ -344,7 +344,7 @@ static void B1_release(Widget w, XEvent *event, char **str, Cardinal *num)
   if (down_pos != pos)
     {
       XmTextSetHighlight(w, down_pos, pos, XmHIGHLIGHT_SELECTED);
-      if (listener_selection) XtFree(listener_selection);
+      if (listener_selection) {XtFree(listener_selection); listener_selection = NULL;}
       XmTextSetSelection(w, down_pos, pos, CurrentTime);
       listener_selection = XmTextGetSelection(w);
     }
@@ -1007,10 +1007,10 @@ static Widget lisp_window = NULL;
 
 void listener_append(const char *msg)
 {
-  if (listener_text)
+  if ((listener_print_p(msg)) && /* we need this first -- runs print-hook */
+      (listener_text))
     {
-      if (listener_print_p(msg))
-	XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), (char *)msg);
+      XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), (char *)msg);
       printout_end = XmTextGetLastPosition(listener_text) - 1;
     }
 }
@@ -1019,16 +1019,14 @@ static Widget listener_pane = NULL;
 
 void listener_append_and_prompt(const char *msg)
 {
-  if (listener_text)
+  if ((listener_print_p(msg)) &&
+      (listener_text))
     {
       XmTextPosition cmd_eot;
-      if (listener_print_p(msg))
-	{
-	  if (msg)
-	    XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), (char *)msg);
-	  cmd_eot = XmTextGetLastPosition(listener_text);
-	  XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr());
-	}
+      if (msg)
+	XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), (char *)msg);
+      cmd_eot = XmTextGetLastPosition(listener_text);
+      XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr());
       cmd_eot = XmTextGetLastPosition(listener_text);
       printout_end = cmd_eot - 1;
       XmTextShowPosition(listener_text, cmd_eot - 1);

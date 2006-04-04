@@ -108,22 +108,6 @@ int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason
   return(loc);
 }
 
-#if 0
-bool remove_ss_watcher(int loc)
-{
-  if ((ss->watchers) &&
-      (loc < ss->watchers_size) &&
-      (loc >= 0) &&
-      (ss->watchers[loc]))
-    {
-      FREE(ss->watchers[loc]);
-      ss->watchers[loc] = NULL;
-      return(true);
-    }
-  return(false);
-}
-#endif
-
 void call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason)
 {
   if (ss->watchers)
@@ -322,19 +306,32 @@ static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "se
 static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "set_%s(\"%s\")\n", TO_PROC_NAME(name), val);}
 static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "set_%s(%d)\n", TO_PROC_NAME(name), val);}
 static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "set_%s(%.4f)\n", TO_PROC_NAME(name), val);}
+
 static void pss_sl(FILE *fd, const char *name, Float val1, Float val2) 
   {fprintf(fd, "set_%s([%f, %f])\n", TO_PROC_NAME(name), val1, val2);}
 
 static void psp_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(name), val);}
 static void psp_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%sset_%s(%d, sfile)\n", white_space, TO_PROC_NAME(name), val);}
 static void psp_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "%sset_%s(%.4f, sfile)\n", white_space, TO_PROC_NAME(name), val);}
+
 static void psp_sl(FILE *fd, const char *name, Float val1, Float val2) 
   {fprintf(fd, "%sset_%s([%f, %f], sfile)\n", white_space, TO_PROC_NAME(name), val1, val2);}
 
-static void pcp_ss(FILE *fd, const char *name, const char *val, int chan) {fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
-static void pcp_sd(FILE *fd, const char *name, int val, int chan)   {fprintf(fd, "%sset_%s(%d, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
-static void pcp_sod(FILE *fd, const char *name, off_t val, int chan)   {fprintf(fd, "%sset_%s(" OFF_TD ", sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
-static void pcp_sf(FILE *fd, const char *name, Float val, int chan) {fprintf(fd, "%sset_%s(%.4f, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+static void pcp_ss(FILE *fd, const char *name, const char *val, int chan) 
+  {fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+
+static void pcp_sss(FILE *fd, const char *name, const char *val, int chan, const char *grf) 
+  {fprintf(fd, "%sset_%s(\"%s\", sfile, %d, %s)\n", white_space, TO_PROC_NAME(name), val, chan, TO_VAR_NAME(grf));}
+
+static void pcp_sd(FILE *fd, const char *name, int val, int chan)   
+  {fprintf(fd, "%sset_%s(%d, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+
+static void pcp_sod(FILE *fd, const char *name, off_t val, int chan)   
+  {fprintf(fd, "%sset_%s(" OFF_TD ", sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+
+static void pcp_sf(FILE *fd, const char *name, Float val, int chan) 
+  {fprintf(fd, "%sset_%s(%.4f, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+
 static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan) 
   {fprintf(fd, "%sset_%s([%f, %f], sfile, %d)\n", white_space, TO_PROC_NAME(name), val1, val2, chan);}
 #endif
@@ -350,13 +347,25 @@ static void pss_sl(FILE *fd, const char *name, Float val1, Float val2)
 static void psp_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%s%s sfile set-%s drop\n", white_space, val, name);}
 static void psp_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%s%d sfile set-%s drop\n", white_space, val, name);}
 static void psp_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "%s%.4f sfile set-%s drop\n", white_space, val, name);}
+
 static void psp_sl(FILE *fd, const char *name, Float val1, Float val2) 
   {fprintf(fd, "%s'( %f %f ) sfile set-%s drop\n", white_space, val1, val2, name);}
 
-static void pcp_ss(FILE *fd, const char *name, const char *val, int chan) {fprintf(fd, "%s%s sfile %d set-%s drop\n", white_space, val, chan, name);}
-static void pcp_sd(FILE *fd, const char *name, int val, int chan)   {fprintf(fd, "%s%d sfile %d set-%s drop\n", white_space, val, chan, name);}
-static void pcp_sod(FILE *fd, const char *name, off_t val, int chan)   {fprintf(fd, "%s" OFF_TD " sfile %d set-%s drop\n", white_space, val, chan, name);}
-static void pcp_sf(FILE *fd, const char *name, Float val, int chan) {fprintf(fd, "%s%.4f sfile %d set-%s drop\n", white_space, val, chan, name);}
+static void pcp_ss(FILE *fd, const char *name, const char *val, int chan) 
+  {fprintf(fd, "%s%s sfile %d set-%s drop\n", white_space, val, chan, name);}
+
+static void pcp_sss(FILE *fd, const char *name, const char *val, int chan, const char *grf) 
+  {fprintf(fd, "%s\"%s\" sfile %d %s set-%s drop\n", white_space, val, chan, grf, name);}
+
+static void pcp_sd(FILE *fd, const char *name, int val, int chan)   
+  {fprintf(fd, "%s%d sfile %d set-%s drop\n", white_space, val, chan, name);}
+
+static void pcp_sod(FILE *fd, const char *name, off_t val, int chan)   
+  {fprintf(fd, "%s" OFF_TD " sfile %d set-%s drop\n", white_space, val, chan, name);}
+
+static void pcp_sf(FILE *fd, const char *name, Float val, int chan) 
+  {fprintf(fd, "%s%.4f sfile %d set-%s drop\n", white_space, val, chan, name);}
+
 static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan) 
   {fprintf(fd, "%s'( %f %f ) sfile %d set-%s drop\n", white_space, val1, val2, chan, name);}
 #endif
@@ -370,21 +379,31 @@ static void pss_sl(FILE *fd, const char *name, Float val1, Float val2) {fprintf(
 
 static void psp_ss(FILE *fd, const char *name, const char *val) 
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile) %s)\n", white_space, name, val);}
+
 static void psp_sd(FILE *fd, const char *name, int val)   
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile) %d)\n", white_space, name, val);}
+
 static void psp_sf(FILE *fd, const char *name, Float val) 
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile) %.4f)\n", white_space, name, val);}
+
 static void psp_sl(FILE *fd, const char *name, Float val1, Float val2) 
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile) (list %f %f))\n", white_space, name, val1, val2);}
 
 static void pcp_ss(FILE *fd, const char *name, const char *val, int chan) 
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) %s)\n", white_space, name, chan, val);}
+
+static void pcp_sss(FILE *fd, const char *name, const char *val, int chan, const char *grf) 
+  {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d %s) \"%s\")\n", white_space, name, chan, grf, val);}
+
 static void pcp_sd(FILE *fd, const char *name, int val, int chan)   
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) %d)\n", white_space, name, chan, val);}
+
 static void pcp_sod(FILE *fd, const char *name, off_t val, int chan)   
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) " OFF_TD ")\n", white_space, name, chan, val);}
+
 static void pcp_sf(FILE *fd, const char *name, Float val, int chan) 
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) %.4f)\n", white_space, name, chan, val);}
+
 static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan) 
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) (list %f %f))\n", white_space, name, chan, val1, val2);}
 #endif
@@ -497,8 +516,10 @@ void save_options(FILE *fd)
     pss_sq(fd, S_axis_numbers_font, axis_numbers_font(ss));
   if (listener_font(ss))
     pss_sq(fd, S_listener_font, listener_font(ss));
-
-  /* graph_cursor is a Cursor in X [ss->sgx->graph_cursor], GdkCursor in gtk */
+#if USE_MOTIF || USE_GTK
+  if (in_graph_cursor(ss) != DEFAULT_GRAPH_CURSOR)
+    pss_sd(fd, S_graph_cursor, in_graph_cursor(ss));
+#endif
 
   save_added_sound_file_extensions(fd);
 
@@ -888,7 +909,6 @@ static bool default_envelope_p(env *e)
 static void save_sound_state (snd_info *sp, void *ptr) 
 {
   /* called only after the global settings have been established, so here we can't use the DEFAULT_* macros that are ambiguous */
-  /* x|y-axis-label? */
   int chan;
   FILE *fd;
   chan_info *cp;
@@ -1032,6 +1052,23 @@ static void save_sound_state (snd_info *sp, void *ptr)
 	{
 	  save_property_list(fd, XEN_VECTOR_REF(cp->properties, 0), chan);
 	}
+
+      /* TODO: test save x|y-axis-label */
+      /* ap->default_xlabel if not null, user explicitly set it */
+      /* ylabel can only be a user choice -- never set by Snd */
+      if (cp->axis)
+	{
+	  if (cp->axis->default_xlabel) pcp_sss(fd, S_x_axis_label, cp->axis->default_xlabel, chan, "time-graph");
+	  if (cp->axis->ylabel)         pcp_sss(fd, S_y_axis_label, cp->axis->ylabel,         chan, "time-graph");
+	}
+      if ((cp->fft) &&
+	  (cp->fft->axis))
+	{
+	  if (cp->fft->axis->default_xlabel) pcp_sss(fd, S_x_axis_label, cp->fft->axis->default_xlabel, chan, "transform-graph");
+	  if (cp->fft->axis->ylabel)         pcp_sss(fd, S_y_axis_label, cp->fft->axis->ylabel,         chan, "transform-graph");
+	}
+      /* lisp_info is hidden in snd-chn.c */
+
       edit_history_to_file(fd, cp, true);
       check_selection(fd, cp);
       if (selected_channel() == cp)
@@ -1416,10 +1453,17 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 static void save_state_error_handler(const char *msg, void *data)
 {
   char *filename = (char *)data;
+  XEN fname;
+  if (filename)
+    {
+      fname = C_TO_XEN_STRING(filename);
+      FREE(filename); /* this is "name" below */
+    }
+  else fname = C_TO_XEN_STRING(save_state_file(ss));
   redirect_snd_error_to(NULL, NULL);
   XEN_ERROR(CANNOT_SAVE,
 	    XEN_LIST_2(C_TO_XEN_STRING(S_save_state),
-		       C_TO_XEN_STRING((filename) ? filename : save_state_file(ss))));
+		       fname));
 }
 
 static XEN g_save_state(XEN filename) 

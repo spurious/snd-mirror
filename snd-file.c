@@ -1975,9 +1975,6 @@ static char *h_names[H_SIZE] = {"next ", "aifc ", "wave ", "raw  ", "aiff ", "ir
 static int h_pos_to_type[H_SIZE] = {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RAW, MUS_AIFF, MUS_IRCAM, MUS_NIST, -1, -1, -1, -1, -1, -1, -1, -1};
 static int h_type_to_pos[MUS_NUM_HEADER_TYPES];
 static int h_type_to_h[MUS_NUM_HEADER_TYPES];
-static int h_default_format[H_SIZE] = {MUS_BSHORT, MUS_BSHORT, MUS_LSHORT, MUS_BSHORT, MUS_BSHORT, MUS_BSHORT, MUS_BSHORT, 
-				       MUS_LSHORT, MUS_LSHORT, MUS_LSHORT, MUS_LSHORT, MUS_LSHORT,
-				       MUS_LSHORT, MUS_LSHORT, MUS_LSHORT};
 static int h_default_format_to_pos[H_SIZE] = {0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 void initialize_format_lists(void)
@@ -2202,7 +2199,8 @@ void position_to_type_and_format(file_data *fdat, int pos)
   h = h_type_to_h[h_pos_to_type[pos]];
   fdat->header_pos = pos;
   fdat->current_type = h_pos_to_type[pos];
-  fdat->current_format = h_default_format[h];
+  fdat->format_pos = h_to_format_pos(h, fdat->current_format);
+  fdat->current_format = h_dfs[h][fdat->format_pos];
 }
 
 bool encoded_header_p(int header_type)
@@ -4279,6 +4277,7 @@ by the just-sounds file filters)"
 static XEN g_set_sound_file_extensions(XEN lst)
 {
   int i, len;
+  /* TODO: huge memleak here -- free existing! */
   sound_file_extensions_end = 0;
   default_sound_file_extensions = 0;
   len = XEN_LIST_LENGTH(lst);

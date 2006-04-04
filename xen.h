@@ -389,7 +389,7 @@
   #if HAVE_SCM_STR2SYMBOL
     #define C_STRING_TO_XEN_SYMBOL(a) scm_str2symbol(a)
   #else
-    #define C_STRING_TO_XEN_SYMBOL(a) gh_symbol2scm(a)
+#define C_STRING_TO_XEN_SYMBOL(a)     gh_symbol2scm((char *)(a))
   #endif
 #endif
 

@@ -136,7 +136,7 @@
 
 #undef HAVE_GL
 #undef JUST_GL
-#undef HAVE_GLU_H
+#undef HAVE_GLU
 
 #undef DEFAULT_TEMP_DIR
 #undef DEFAULT_SAVE_DIR

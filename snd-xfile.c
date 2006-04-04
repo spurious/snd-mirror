@@ -18,9 +18,6 @@
  *          -> src is interrupted apparently and file open completes
  *       or similarly, stops at "ok", starts src, clicks ok?
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
- *
- * TODO: in save-as cases, if use chooses a data format, then a type, try to maintain the format
- * TODO: if format/type change in data panel, make sure selected choice is visible
  */
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
@@ -1848,7 +1845,10 @@ static void set_file_dialog_sound_attributes(file_data *fdat,
   
   if ((type != IGNORE_HEADER_TYPE) &&
       (fdat->header_list))
-    XmListSelectPos(fdat->header_list, fdat->header_pos + 1, false);
+    {
+      XmListSelectPos(fdat->header_list, fdat->header_pos + 1, false);
+      ensure_list_row_visible(fdat->header_list, fdat->header_pos + 1);
+    }
 
   strs = (XmString *)MALLOC(fdat->formats * sizeof(XmString)); 
   for (i = 0; i < fdat->formats; i++) 
@@ -1862,6 +1862,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat,
     XmStringFree(strs[i]);
   FREE(strs); 
   XmListSelectPos(fdat->format_list, fdat->format_pos + 1, false);
+  ensure_list_row_visible(fdat->format_list, fdat->format_pos + 1);
 
   if ((srate != IGNORE_SRATE) && 
       (fdat->srate_text))

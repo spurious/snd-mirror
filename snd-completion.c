@@ -5,6 +5,9 @@
  *          could add a completion func property to each function, completer would
  *          call it (if exists) with current string etc -- this could be brought
  *          up bit-by-bit.
+ *          if srate arg, check srate completions, etc
+ *          how to join this from extlang code?
+ *          (new-sound <TAB> -> new-sound :srate 44100 ...?)
  */
 
 static char *current_match = NULL;
@@ -216,6 +219,7 @@ char *command_completer(char *original_text, void *data)
   int i, len, beg, matches = 0;
   char *text;
   /* first back up to some delimiter to get the current command */
+
   current_match = NULL;
   set_completion_matches(0);
   if ((original_text) && (*original_text))
@@ -226,7 +230,15 @@ char *command_completer(char *original_text, void *data)
 	  break;
       beg = i + 1;
       if (beg == len) 
-	return(copy_string(original_text));
+	{
+	  /* returning original = no-op response to <tab> which seems useless;
+	   *   so, if it's a function that we recognize and that function has its own completer, call it?
+	   *   result null -> return original (current behavior), else append result as selection to current;
+	   *   this way, I think it's easy to clear the suggested completion (cursor at end, so backspace deletes all).
+	   * or scan back through full text (assuming listener or history available) and find match?
+	   */
+	  return(copy_string(original_text));
+	}
       if (beg > 0) 
 	text = (char *)(original_text + beg);
       else text = original_text;

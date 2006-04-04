@@ -109,7 +109,8 @@ void save_listener_text(FILE *fp)
 void append_listener_text(int end, const char *msg)
 {
   /* "end" arg needed in Motif */
-  if ((listener_print_p(msg)) && (listener_text))
+  if ((listener_print_p(msg)) && 
+      (listener_text))
     {
       int chars;
       chars = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
@@ -179,23 +180,23 @@ void snd_completion_help(int matches, char **pbuffer)
 
 void listener_append(const char *msg)
 {
+  append_listener_text(0, msg); /* do this in any case to make sure print-hook gets to run (listener_print_p in append_listener_text) */
   if (listener_text)
     {
       if (ss->sgx->graph_is_active)
 	ss->sgx->graph_is_active = false;
-      append_listener_text(0, msg);
       printout_end = gtk_text_buffer_get_char_count(LISTENER_BUFFER) - 1;
     }
 }
 
 void listener_append_and_prompt(const char *msg)
 {
+  if (msg)
+    append_listener_text(0, msg);
+  append_listener_text(0, listener_prompt_with_cr());
   if (listener_text)
     {
       int cmd_eot;
-      if (msg)
-	append_listener_text(0, msg);
-      append_listener_text(0, listener_prompt_with_cr());
       cmd_eot = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
       printout_end = cmd_eot - 1;
     }
@@ -717,7 +718,6 @@ GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_backgro
   return(text);
 }
 
-
 static void make_command_widget(int height)
 {
   if (!listener_text)
@@ -727,9 +727,9 @@ static void make_command_widget(int height)
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
       gtk_widget_show(frame);
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
-	gtk_paned_add2(GTK_PANED(SOUND_PANE(ss)), frame);
+	gtk_paned_pack2(GTK_PANED(SOUND_PANE(ss)), frame, false, true); /* add2 but resize=false */
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
-      listener_text = make_scrolled_text(frame, true, NULL);
+      listener_text = make_scrolled_text(frame, true, NULL, false); /* last arg ignored here */
       gtk_widget_set_name(listener_text, "listener_text");
 
       {
@@ -884,12 +884,16 @@ void handle_listener(bool open)
 {
   if (open)
     {
+      int hgt;
       if (!listener_text)
 	make_command_widget(100);
-      else
+      hgt = widget_height(SOUND_PANE(ss));
+      if (hgt > 100) /* we can get here before the sound window has opened, but with one pending.
+		      *   the position is in terms of current size, which is useless in this case.
+		      */
 	{
 	  if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
-	    gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), (gint)(widget_height(SOUND_PANE(ss)) * .75));
+	    gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), (gint)(hgt * .75));
 	}
     }
   else

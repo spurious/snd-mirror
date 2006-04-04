@@ -269,8 +269,6 @@ static const unsigned char I_fLaC[4] = {'f','L','a','C'};  /* FLAC */
 static const unsigned char I_ajkg[4] = {'a','j','k','g'};  /* shorten */
 static const unsigned char I_TTA1[4] = {'T','T','A','1'};  /* ttaenc */
 static const unsigned char I_wvpk[4] = {'w','v','p','k'};  /* wavpack */
-/* it appears that Rezound .rez files start with "DavyBlox" */
-/* similarly rx2 files start with "CAT "? */
 
 #define I_IRCAM_VAX  0x0001a364
 #define I_IRCAM_SUN  0x0002a364

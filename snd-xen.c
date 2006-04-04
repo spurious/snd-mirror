@@ -432,8 +432,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	    call_xen_error_handler(name_buf);
 	  else
 	    {
-	      if (listener_exists())
-		listener_append_and_prompt(name_buf);
+	      listener_append_and_prompt(name_buf);
 	      if (!(listener_is_visible()))
 		snd_error_without_redirection_or_hook(name_buf);
 	      /* we're in xen_error from the redirection point of view and we already checked snd-error-hook */
@@ -879,8 +878,6 @@ char *g_print_1(XEN obj) /* free return val */
 #endif
 #endif
 #if HAVE_RUBY
-  if (XEN_NULL_P(obj))
-    return(copy_string("nil")); /* Ruby returns the null string in this case??? */
   return(copy_string(XEN_AS_STRING(obj)));
 #endif
 #if HAVE_FORTH
@@ -953,11 +950,8 @@ void snd_report_result(XEN result, const char *buf)
     }
   else
     {
-      if (listener_exists())
-	{
-	  if (buf) listener_append(buf);
-	  listener_append_and_prompt(str);
-	}
+      if (buf) listener_append(buf);
+      listener_append_and_prompt(str);
     }
   if (str) FREE(str);
 }
@@ -1041,7 +1035,7 @@ void snd_eval_stdin_str(char *buf)
 static void string_to_stderr_and_listener(const char *msg, void *ignore)
 {
   fprintf(stderr, "%s\n", msg);
-  if (listener_exists())
+  if (listener_exists()) /* the idea here is to save startup errors until we can post them */
     {
       listener_append((char *)msg);
       listener_append("\n");
@@ -1226,12 +1220,12 @@ static XEN g_snd_print(XEN msg)
 }
 
 static XEN print_hook;
-static int print_depth = 0;
 
 bool listener_print_p(const char *msg)
 {
+  static int print_depth = 0;
   XEN res = XEN_FALSE;
-  if ((msg) && (print_depth == 0) && (strlen(msg) > 0) && (XEN_HOOKED(print_hook)))
+  if ((msg) && (print_depth == 0) && (snd_strlen(msg) > 0) && (XEN_HOOKED(print_hook)))
     {
       print_depth++;
       res = run_or_hook(print_hook, 
@@ -2177,9 +2171,9 @@ static XEN g_cursor_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->cursor_color));
 }
 
+#if USE_MOTIF
 static void highlight_recolor_everything(widget_t w, void *ptr)
 {
-#if USE_MOTIF
   Pixel curcol;
   if (XtIsWidget(w))
     {
@@ -2187,11 +2181,11 @@ static void highlight_recolor_everything(widget_t w, void *ptr)
       if (curcol == (Pixel)ptr)
 	XmChangeColor(w, ss->sgx->highlight_color);
     }
-#endif
   /* to handle the gtk side correctly here, we'd need a list of widgets to modify --
    *    currently basic-color hits every background, so the whole thing is messed up.
    */
 }
+#endif
 
 void set_highlight_color(color_t color)
 {

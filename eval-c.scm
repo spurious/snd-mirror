@@ -155,6 +155,21 @@ Usually just "", but can be "-lsnd" or something if needed.
     (primitive-eval '(define *eval-c-compiler* "gcc")))
 
 
+(if (not (defined? 'snd-header-files-path))
+    (let ((path #f))
+      (for-each (lambda (l-path)
+		  (if (not path)
+		      (if (access? (string-append l-path "/clm.h") R_OK)
+			  (set! path l-path))))
+		%load-path)
+      (if path
+	  (define-toplevel 'snd-header-files-path path)
+	  (begin
+	    (c-display "Error! Header files for SND not found. Try setting snd-header-files-path.")
+	    (catch 'header-files-path-not-found)))))
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;; Various functions ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -717,6 +732,7 @@ Usually just "", but can be "-lsnd" or something if needed.
 
 (define (eval-c-parse-line term)
   (if (and (string? term)
+	   (not (string=? "" term))
 	   (eq? #\# (string-ref term 0)))
       (<-> term (string #\newline))
       (<-> (eval-c-parse term) ";" (string #\newline))))

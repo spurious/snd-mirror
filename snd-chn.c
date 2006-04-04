@@ -2130,6 +2130,10 @@ void reset_spectro(void)
   set_spectro_z_scale((with_gl(ss)) ? DEFAULT_SPECTRO_Z_SCALE : 0.1);
 }
 
+#if HAVE_GLU
+  #include <GL/glu.h>
+#endif
+
 static GLdouble unproject2x(int x, int y)
 {
   /* taken from GL doc p152 */
@@ -2141,7 +2145,7 @@ static GLdouble unproject2x(int x, int y)
   glGetDoublev(GL_MODELVIEW_MATRIX, mv);
   glGetDoublev(GL_PROJECTION_MATRIX, proj);
   realy = viewport[3] - (GLint)y - 1;
-#if HAVE_GLU_H
+#if HAVE_GLU
   gluUnProject((GLdouble)x, (GLdouble)realy, 0.0, mv, proj, viewport, &wx, &wy, &wz);
 #endif
   return(wx);
@@ -2157,7 +2161,7 @@ static GLdouble unproject2y(int x, int y)
   glGetDoublev(GL_MODELVIEW_MATRIX, mv);
   glGetDoublev(GL_PROJECTION_MATRIX, proj);
   realy = viewport[3] - (GLint)y - 1;
-#if HAVE_GLU_H
+#if HAVE_GLU
   gluUnProject((GLdouble)x, (GLdouble)realy, 0.0, mv, proj, viewport, &wx, &wy, &wz);
 #endif
   return(wy);
@@ -2414,7 +2418,7 @@ static bool make_spectrogram(chan_info *cp)
 	  GL_SWAP_BUFFERS(cp);
 	  gdk_gl_drawable_wait_gl(gtk_widget_get_gl_drawable(channel_graph(cp)));
 #endif
-#if DEBUGGING && HAVE_GLU_H
+#if DEBUGGING && HAVE_GLU
 	  {
 	    GLenum errcode;
 	    errcode = glGetError();
@@ -3378,9 +3382,7 @@ static void draw_sonogram_cursor_1(chan_info *cp)
   axis_context *fax;
   fap = cp->fft->axis;
   fax = cursor_context(cp);
-  /* fprintf(stderr,"draw (%d) at %d\n", cp->fft_cursor_visible, cp->fft_cx); */
-  if (fap)
-    draw_line(fax, cp->fft_cx, fap->y_axis_y0, cp->fft_cx, fap->y_axis_y1);
+  if ((fap) && (fax)) draw_line(fax, cp->fft_cx, fap->y_axis_y0, cp->fft_cx, fap->y_axis_y1);
 }
 
 static void draw_sonogram_cursor(chan_info *cp)
@@ -3388,6 +3390,7 @@ static void draw_sonogram_cursor(chan_info *cp)
   if ((cp->graph_transform_p) &&
       (cp->show_sonogram_cursor) &&
       (cp->fft) &&
+      (cp->fft->axis) &&
       (cp->transform_graph_type == GRAPH_AS_SONOGRAM))
     {
       if (cp->fft_cursor_visible) draw_sonogram_cursor_1(cp);
@@ -3402,7 +3405,7 @@ kbd_cursor_t cursor_decision(chan_info *cp)
   off_t len;
   len = CURRENT_SAMPLES(cp);
   if (CURSOR(cp) >= len) CURSOR(cp) = len - 1; /* zero based, but in 0-length files, len = 0 */
-  if (CURSOR(cp) < 0) CURSOR(cp) = 0;        /* perhaps the cursor should be forced off in empty files? */
+  if (CURSOR(cp) < 0) CURSOR(cp) = 0;          /* perhaps the cursor should be forced off in empty files? */
   if (CURSOR(cp) < cp->axis->losamp)
     {
       if (CURSOR(cp) == 0) return(CURSOR_ON_LEFT);
@@ -6442,6 +6445,7 @@ static void chans_x_axis_style(chan_info *cp, void *ptr)
   if (ap)
     {
       if (ap->xlabel) FREE(ap->xlabel);
+      /* if user set x-axis-label (snd-axis.c) ap->default_xlabel is not null, so use it rather than normal choices */
       if (ap->default_xlabel)
 	ap->xlabel = copy_string(ap->default_xlabel);
       else

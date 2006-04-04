@@ -20,7 +20,7 @@
 (let* ((hpsum 0) ; for average readings
        (lpsum 0)
        (ind (find-sound
-	     (with-sound (:channels 2 :data-format mus-lfloat) ; float output to be sure it can handle the full range
+	     (with-sound (:channels 4 :data-format mus-lfloat) ; float output to be sure it can handle the full range
 	      (let ((samp 0))	    
 		(call-with-input-file 
 		    (list-ref (script-args) 1) ; invocation arg = text file of data ("snd heart.scm data.txt")
@@ -40,6 +40,8 @@
 				    (set! lpsum (+ lpsum lp))
 				    (out-any samp hp 0 *output*) ; output the readings
 				    (out-any samp lp 1 *output*)
+				    (out-any samp 120 2 *output*)
+				    (out-any samp 80 3 *output*)
 				    (set! samp (1+ samp)))))
 			    (loop (read-line file 'concat))))))))))))
 
@@ -47,6 +49,8 @@
   (set! (channel-style ind) channels-superimposed)
   (set! (y-bounds ind 0) (list 50 150))
   (set! (y-bounds ind 1) (list 50 150))
+  (set! (y-bounds ind 2) (list 50 150))
+  (set! (y-bounds ind 3) (list 50 150))
   (set! (x-axis-style) x-axis-in-samples)
 
   ;; print the average readings over the full sequence

@@ -173,7 +173,6 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 /* keep this list in sync with mus_error_names in sound.c and snd-test.scm|rb */
 
 #define MUS_LOOP_INFO_SIZE 8
-#define MUS_COMPATIBLE_FORMAT MUS_AUDIO_COMPATIBLE_FORMAT
 
 #ifdef __cplusplus
 extern "C" {

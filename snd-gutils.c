@@ -105,7 +105,7 @@ int sg_text_width(const char *txt, PangoFontDescription *font)
   PangoLayout *layout = NULL;
   PangoContext *ctx;
   if (txt == NULL) return(0);
-  if (strlen(txt) == 0) return(0);
+  if (snd_strlen(txt) == 0) return(0);
   if (!(g_utf8_validate(txt, -1, NULL)))
     {
 #if DEBUGGING
@@ -563,7 +563,7 @@ int sg_cursor_position(GtkWidget *w)
   return(gtk_text_iter_get_offset(&pos));
 }
 
-GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *paner)
+GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *paner, bool resize)
 {
   /* returns new text widget */
   GtkWidget *sw, *new_text;
@@ -583,7 +583,7 @@ GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *paner
   if (parent)
     gtk_container_add(GTK_CONTAINER(parent), sw);
   if (paner)
-    gtk_paned_add2(GTK_PANED(paner), sw);
+    gtk_paned_pack2(GTK_PANED(paner), sw, resize, true);
   gtk_widget_show(sw);
   return(new_text);
 }

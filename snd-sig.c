@@ -5093,6 +5093,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	  e = get_env(ratio_or_env, caller);
 	  if (XEN_NUMBER_P(ebase))
 	    e->base = XEN_TO_C_DOUBLE_OR_ELSE(ebase, 1.0);
+	  /* TODO: memleak here if error */
 	  e_ratio = check_src_envelope(e->pts, e->data, caller);
 	  src_env_or_num(cp, e, e_ratio, false, NOT_FROM_ENVED, caller, over_selection, NULL, edpos, 5);
 	  if (e) free_env(e);

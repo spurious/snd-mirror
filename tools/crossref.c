@@ -324,10 +324,8 @@ int main(int argc, char **argv)
   add_file("gl.c");
   add_file("xg.c");
 
-  /*
   add_file("cmus.c");
   add_file("sc.c");
-  */
   add_file("ffi.lisp");
   add_file("sndlib2clm.lisp");
 
@@ -458,6 +456,11 @@ int main(int argc, char **argv)
 	{
 	  int curly_ctr = 0,cancel_define = 0;
 	  in_define = 0;
+
+	  if ((strcmp(files[i], "sndlib2clm.lisp") == 0) ||
+	      (strcmp(files[i], "ffi.lisp") == 0))
+	    curly_ctr = 1;
+
 	  do 
 	    {
 	      chars = read(fd, input, MAX_CHARS);

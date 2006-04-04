@@ -3,12 +3,6 @@
 
 ;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c, xg-ruby.c, xg-x11.h
 
-
-;;; TODO: gtk_file_chooser_dialog_new with 0 gets xg.c: 
-;;;    In function 'gxg_gtk_file_chooser_dialog_new':
-;;;    xg.c:20294: warning: not enough variable arguments to fit a sentinel
-
-
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
 (use-modules (ice-9 optargs))
@@ -2178,7 +2172,10 @@
 		     (if (or with-null with-minus-one (< j (1- i)))
 			 (hey ", "))))
 		 (if with-null
-		     (hey "NULL); break;~%")
+		     (if (and (= i 0)
+			      (string=? name "gtk_file_chooser_dialog_new"))
+			 (hey "NULL, NULL); break;~%") ; extra NULL needed I guess for the valist pass-through -- gcc 4.1 grumbles about it
+			 (hey "NULL); break;~%"))
 		     (if with-minus-one
 			  (hey "-1); break;~%")
 			  (hey "); break;~%"))))

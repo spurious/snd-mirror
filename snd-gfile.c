@@ -1808,7 +1808,10 @@ static void set_file_dialog_sound_attributes(file_data *fdat, int type, int form
 
   if ((type != IGNORE_HEADER_TYPE) &&
       (fdat->header_list))
-    slist_select(fdat->header_list, fdat->header_pos);
+    {
+      slist_select(fdat->header_list, fdat->header_pos);
+      slist_moveto(fdat->header_list, fdat->header_pos);
+    }
 
   slist_clear(fdat->format_list);
   for (i = 0; i < fdat->formats; i++) 
@@ -1817,6 +1820,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat, int type, int form
       slist_append(fdat->format_list, str);
     }
   slist_select(fdat->format_list, fdat->format_pos);
+  slist_moveto(fdat->format_list, fdat->format_pos);
 
   if ((srate != IGNORE_SRATE) && 
       (fdat->srate_text))
@@ -2013,10 +2017,9 @@ static void update_header_type_list(const char *name, int row, void *data)
 {
   /* needed to reflect type selection in format list */
   file_data *fd = (file_data *)data;
-  fd->header_pos = row;
-  if (fd->current_type != fd->header_pos)
+  if (position_to_type(row) != fd->current_type)
     {
-      position_to_type_and_format(fd, fd->header_pos);
+      position_to_type_and_format(fd, row);
       set_file_dialog_sound_attributes(fd,
 				       fd->current_type,
 				       fd->current_format,
@@ -2027,13 +2030,8 @@ static void update_header_type_list(const char *name, int row, void *data)
 
 static void update_data_format_list(const char *name, int row, void *data)
 {
-  int nformats = 0;
-  char **formats = NULL;
   file_data *fd = (file_data *)data;
-  formats = type_and_format_to_position(fd, fd->current_type, fd->current_format);
-  nformats = fd->formats;
-  fd->format_pos = row;
-  fd->current_format = position_to_format(fd->header_pos, row);
+  fd->current_format = position_to_format(fd->current_type, row);
 }
 
 static void c1_callback(GtkWidget *w, gpointer context) 
@@ -2285,7 +2283,7 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       else gtk_box_pack_start(GTK_BOX(parent), frame, true, true, 4);  
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
       gtk_widget_show(frame);
-      fdat->comment_text = make_scrolled_text(frame, true, NULL);
+      fdat->comment_text = make_scrolled_text(frame, true, NULL, false);
       connect_mouse_to_text(fdat->comment_text);
     }
 
@@ -3968,7 +3966,7 @@ static void create_post_it_monolog(void)
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_post_it, NULL);
   gtk_widget_show(ok_button);
 
-  post_it_text = make_scrolled_text(GTK_DIALOG(post_it_dialog)->vbox, false, NULL);
+  post_it_text = make_scrolled_text(GTK_DIALOG(post_it_dialog)->vbox, false, NULL, true);
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(post_it_text), 10);
   gtk_widget_show(post_it_dialog);
   set_dialog_widget(POST_IT_DIALOG, post_it_dialog);

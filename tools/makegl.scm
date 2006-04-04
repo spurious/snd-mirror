@@ -45,7 +45,7 @@
       (if (string=? "glu" (substring name 0 3))
 	  (begin
 	    (set! in-glu #t)
-	    (hey "#if HAVE_GLU_H~%")))))
+	    (hey "#if HAVE_GLU~%")))))
 
 (define (uncheck-glu)
   (if in-glu
@@ -487,7 +487,7 @@
 (hey "  #include <gtk/gtkgl.h>~%")
 (hey "#endif~%")
 (hey "#include <GL/gl.h>~%")
-(hey "#if HAVE_GLU_H~%")
+(hey "#if HAVE_GLU~%")
 (hey "  #include <GL/glu.h>~%")
 (hey "#endif~%")
 (hey "#if USE_MOTIF~%")
@@ -972,7 +972,7 @@
 	 (if (string=? "GLU" (substring val 0 3))
 	     (begin
 	       (set! in-glu #t)
-	       (hey "#if HAVE_GLU_H~%"))))
+	       (hey "#if HAVE_GLU~%"))))
 
    (hey "  DEFINE_INTEGER(~A);~%" val)) 
  (reverse ints))

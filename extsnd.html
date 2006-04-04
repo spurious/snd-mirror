@@ -93,37 +93,158 @@
 <p>Snd is a highly customizable, extensible program.
 The syntax used throughout this documentation is Scheme (a form of lisp) as implemented by the Gnu Guile library.
 You can also use Ruby or Forth, but need to make various minor <a href="grfsnd.html#sndandruby">changes</a>.
-I've tried to bring out to lisp nearly every portion
-of Snd, both the signal-processing functions, and
+I've tried to bring out to the extension language nearly every portion
+of Snd, both the signal-processing functions and
 much of the user interface.  You can, for example,
 add your own menu choices, editing operations, 
 or graphing alternatives.
 Nearly everything in Snd can be set in an initialization
-file, loaded at any time from a file of scheme code or a <a href="snd.html#savedstate">saved state</a> file,
-specified via inter-process communication or from stdin
+file, loaded at any time from a text file of program code, or specified in a <a href="snd.html#savedstate">saved state</a> file.
+It can also be set 
+via inter-process communication or from stdin
 from any other program (CLM and Emacs in particular),
-imbedded in a keyboard macro, or accessed in the
+imbedded in a keyboard macro, or typed in the
 listener.  The easiest way to get acquainted
 with this aspect of Snd is to open the listener
 (via the View:Open listener menu option), and type
 experiments in its window.  Its prompt is "&gt;". So,
 say we've opened the listener (my typing is 
-in <em class=typing>this font</em> and Snd's responses
-are in <em class=listener>this font</em>; the Guile case
-is on the left, the Ruby case is on the right with a blue background):
+in <em class=typing>this color</em> and Snd's responses
+are in <em class=listener>this color</em>):
 </p>
 
-<table border=0><tr><td>
-<pre>
+<table border=0 cellspacing=10>
+<tr><th>Guile</th><th></th><th>Ruby</th><th></th><th>Forth</th></tr>
+
+<tr>
+<td><pre>
 &gt;<em class=typing>(+ 1 2)</em>
 <em class=listener>3</em>
-</pre>
-</td><td width=100></td><td bgcolor=aliceblue>
-<pre>
+</pre></td><td width=50></td>
+
+<td><pre>
 &gt;<em class=typing>1+2</em>
 <em class=listener>3</em>
-</pre>
-</td></tr></table>
+</pre></td><td width=50></td>
+
+<td><pre>
+&gt;<em class=typing>1 2 +</em>
+<em class=listener>3</em>
+</pre></td>
+</tr>
+<!-- ------------ -->
+
+<tr>
+<td><pre>
+&gt;<em class=typing>(open-sound "oboe.snd")</em>
+<em class=listener>0</em>
+</pre></td><td></td>
+
+<td><pre>
+&gt;<em class=typing>open_sound("oboe.snd")</em>
+<em class=listener>0</em>
+</pre></td><td></td>
+
+<td><pre>
+&gt;<em class=typing>"oboe.snd" open-sound</em>
+<em class=listener>0</em>
+</pre></td>
+</tr>
+<!-- ------------ -->
+
+<tr>
+<td><pre>
+&gt;<em class=typing>(auto-resize)</em>
+<em class=listener>#t</em>
+</pre></td><td></td>
+
+<td><pre>
+&gt;<em class=typing>auto_resize</em>
+<em class=listener>true</em>
+</pre></td><td></td>
+
+<td><pre>
+&gt;<em class=typing>auto-resize</em>
+<em class=listener>#t</em>
+</pre></td>
+</tr>
+<!-- ------------ -->
+
+<tr>
+<td><pre>
+&gt;<em class=typing>(set! (auto-resize) #f)</em>
+<em class=listener>#f</em>
+</pre></td><td></td>
+
+<td><pre>
+&gt;<em class=typing>set_auto_resize false</em>
+<em class=listener>false</em>
+</pre></td><td></td>
+
+<td><pre>
+&gt;<em class=typing>#f set-auto-resize</em>
+<em class=listener>#f</em>
+</pre></td>
+</tr>
+<!-- ------------ -->
+
+<tr>
+<td><pre>
+&gt;<em class=typing>(set! (x-bounds) '(0.0 1.0))</em>
+<em class=listener>(0.0 1.0)</em>
+</pre></td><td></td>
+
+<td><pre>
+&gt;<em class=typing>set_x_bounds([0.0, 1.0])</em>
+<em class=listener>0.01.0</em>
+</pre></td><td></td>
+
+<td><pre>
+&gt;<em class=typing>'( 0.0 1.0 ) set-x-bounds</em>
+<em class=listener>'( 0.0 1.0 )</em>
+</pre></td>
+</tr>
+<!-- ------------ -->
+
+<tr>
+<td><pre>
+&gt;<em class=typing>(load "bird.scm")</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+</pre></td><td></td>
+
+<td><pre>
+&gt;<em class=typing>load "bird.rb"</em>
+<em class=listener>true</em>
+</pre></td><td></td>
+
+<td><pre>
+&gt;<em class=typing>"bird.fs" file-eval</em>
+<em class=listener>0</em>
+</pre></td>
+</tr>
+<!-- ------------ -->
+
+<!--
+
+perhaps inline func case (map or something)?
+
+(set! (basic-color) (make-color 1 0 0))
+(Pixel 16711680)
+
+set_basic_color make_color(1, 0, 0)
+[:Pixel, 16711680]
+
+1 0 0 make-color set-basic-color
+#<XmRaw: Pixel 0x9d3b430>
+-->
+
+</table>
+
+<p>Another quick way to check out the extension language is to go to the
+Preferences dialog (in the Options menu), choose some items, then
+save them.  The saved file (~/snd_prefs_guile for example) is a text file, a program in the current
+extension language, that initializes Snd to use whatever items you chose.
+</p>
 
 <p><small>If the listener is active, and some sound
 is selected, any characters typed while in the sound
@@ -261,31 +382,8 @@ For example,
 partly determined by the window manager, but is also
 up to Snd); many people find this distracting -- they would rather that the
 overall window stick to one size.  The Snd variable associated
-with this is "auto-resize"; it can be accessed as follows (we're typing
-to the listener here, as described above):</p>
-
-<table border=0><tr><td>
-<pre>
-&gt;<em class=typing>(auto-resize)</em>
-<em class=listener>#t</em>
-&gt;<em class=typing>(set! (auto-resize) #f)</em>
-<em class=listener>#f</em>
-</pre>
-</td><td width=100></td><td bgcolor=aliceblue>
-<pre>
-&gt;<em class=typing>auto_resize</em>
-<em class=listener>true</em>
-&gt;<em class=typing>set_auto_resize false</em>
-<em class=listener>false</em>
-</pre>
-</td></tr></table>
-
-
-<p>As this illustrates, 
-variables in Snd are accessed as though each were a function, and set using set!.  auto-resize's current
-value is accessed via <code>(auto-resize)</code>, and set to a
-new value via <code>(set! (auto-resize) #f)</code>. #t is Scheme for true
-(often 1 in C, t in Lisp, true in Ruby), #f is false (0 in C, nil in Lisp, false in Ruby).
+with this is "auto-resize"; it can be accessed as <code>(auto-resize)</code> (see Ruby and Forth examples above),
+and set via <code>(set! (auto-resize) #f)</code>.
 The statement <code>(set! (auto-resize) #f)</code> can be placed in your ~/.snd initialization file
 to make it the default setting for your version of Snd, or placed
 in a separate file of Scheme code and loaded at any time via the load
@@ -326,7 +424,7 @@ function. </p>
 <!-- auto-resize -->
 <tr><td colspan=2><code><a class=def name="autoresize">auto-resize</a></code></td>
 <td><code>#t</code></td></tr>
-<tr><td></td><td colspan=2>should Snd window resize upon open/close (see <a href="grfsnd.html#xautoresize">AutoResize</a> and <a href="#autoexpl">blathering</a> above).
+<tr><td></td><td colspan=2>should Snd window resize upon open/close (see <a href="grfsnd.html#xautoresize">AutoResize</a>).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -343,7 +441,7 @@ function. </p>
 <tr><td></td><td colspan=2>Time (seconds) between background checks for changed file on 
 disk (see <a href="#autoupdate">auto-update</a>). If 0.0, the auto-update background process 
 is turned off.
-if libfam is loaded (the default if it is available), auto-update-interval is ignored.
+If the file alternation monitor is running (libfam or libgamin), auto-update-interval is ignored.
 </td></tr>
 <tr><td colspan=3></td></tr>
 

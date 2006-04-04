@@ -29,7 +29,7 @@
   #include <gtk/gtkgl.h>
 #endif
 #include <GL/gl.h>
-#if HAVE_GLU_H
+#if HAVE_GLU
   #include <GL/glu.h>
 #endif
 #if USE_MOTIF
@@ -3622,7 +3622,7 @@ GLsizei height, GLenum format, GLenum type, GLvoid* row, GLvoid* column)"
   return(XEN_FALSE);
 }
 
-#if HAVE_GLU_H
+#if HAVE_GLU
 #ifdef GLU_VERSION_1_2
 static XEN gxg_gluBeginPolygon(XEN tess)
 {
@@ -4258,7 +4258,7 @@ XEN_NARGIFY_3(gxg_glConvolutionParameteri_w, gxg_glConvolutionParameteri)
 XEN_NARGIFY_5(gxg_glCopyConvolutionFilter1D_w, gxg_glCopyConvolutionFilter1D)
 XEN_NARGIFY_6(gxg_glCopyConvolutionFilter2D_w, gxg_glCopyConvolutionFilter2D)
 XEN_NARGIFY_8(gxg_glSeparableFilter2D_w, gxg_glSeparableFilter2D)
-#if HAVE_GLU_H
+#if HAVE_GLU
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_1(gxg_gluBeginPolygon_w, gxg_gluBeginPolygon)
 #endif
@@ -4657,7 +4657,7 @@ XEN_NARGIFY_9(gxg_gluUnProject_w, gxg_gluUnProject)
 #define gxg_glCopyConvolutionFilter1D_w gxg_glCopyConvolutionFilter1D
 #define gxg_glCopyConvolutionFilter2D_w gxg_glCopyConvolutionFilter2D
 #define gxg_glSeparableFilter2D_w gxg_glSeparableFilter2D
-#if HAVE_GLU_H
+#if HAVE_GLU
 #ifdef GLU_VERSION_1_2
 #define gxg_gluBeginPolygon_w gxg_gluBeginPolygon
 #endif
@@ -5056,7 +5056,7 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(glCopyConvolutionFilter1D, gxg_glCopyConvolutionFilter1D_w, 5, 0, 0, H_glCopyConvolutionFilter1D);
   GL_DEFINE_PROCEDURE(glCopyConvolutionFilter2D, gxg_glCopyConvolutionFilter2D_w, 6, 0, 0, H_glCopyConvolutionFilter2D);
   GL_DEFINE_PROCEDURE(glSeparableFilter2D, gxg_glSeparableFilter2D_w, 8, 0, 0, H_glSeparableFilter2D);
-#if HAVE_GLU_H
+#if HAVE_GLU
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluBeginPolygon, gxg_gluBeginPolygon_w, 1, 0, 0, H_gluBeginPolygon);
 #endif
@@ -5892,7 +5892,7 @@ static void define_integers(void)
   DEFINE_INTEGER(GL_ALL_ATTRIB_BITS);
   DEFINE_INTEGER(GL_CLIENT_PIXEL_STORE_BIT);
   DEFINE_INTEGER(GL_CLIENT_VERTEX_ARRAY_BIT);
-#if HAVE_GLU_H
+#if HAVE_GLU
   DEFINE_INTEGER(GLU_FALSE);
   DEFINE_INTEGER(GLU_TRUE);
   DEFINE_INTEGER(GLU_VERSION);
