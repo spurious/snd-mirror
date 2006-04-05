@@ -2,6 +2,8 @@
 # valgrind --error-limit=no -v --gen-suppressions=yes --suppressions=/home/bil/cl/snd.supp snd
 # valgrind --error-limit=no -v --gen-suppressions=yes --suppressions=/home/bil/cl/snd.supp --leak-check=yes --show-reachable=no --num-callers=6 snd
 # valgrind --error-limit=no -v --gen-suppressions=no --suppressions=/home/bil/cl/snd.supp --leak-check=yes --leak-resolution=high --show-reachable=no --num-callers=12 snd
+# valgrind --error-limit=no -v --gen-suppressions=no --suppressions=/home/bil/cl/snd.supp --leak-check=yes --show-reachable=no snd -l snd-test
+
 #
 # first section copied (unnecessarily) from default: /usr/local/lib/valgrind/default.supp
 
@@ -1767,3 +1769,200 @@
    obj:/usr/X11R6/lib/libXm.so.3.0.1
    obj:/usr/X11R6/lib/libXt.so.6.0
 }
+
+{
+   scmx1
+   Memcheck:Cond
+   fun:scm_i_mark_weak_vectors
+   fun:*
+}
+
+{
+   scmx2
+   Memcheck:Cond
+   fun:scm_i_remove_weaks_*
+}
+
+{
+   scmx3
+   Memcheck:Cond
+   fun:scm_i_mark_weak_vectors
+   fun:*
+}
+
+{
+   scmx4
+   Memcheck:Cond
+   fun:scm_i_scan_weak_hashtables
+   fun:*
+}
+
+{
+   scmx5
+   Memcheck:Value4
+   fun:scm_i_mark_weak_vector
+   fun:*
+}
+
+{
+   scmx6
+   Memcheck:Value4
+   fun:scm_i_mark_weak_vectors_non_weaks
+   fun:*
+}
+
+{
+   scmx7
+   Memcheck:Cond
+   fun:scm_i_mark_weak_vectors_non_weaks
+   fun:*
+}
+
+{
+   scmx8
+   Memcheck:Cond
+   fun:scm_i_mark_weak_vectors_non_weaks
+   fun:*
+}
+
+{
+   scmx9
+   Memcheck:Value4
+   fun:scm_i_remove_weaks_from_weak_vectors
+   fun:*
+}
+
+{
+   scmx10
+   Memcheck:Cond
+   fun:scm_i_remove_weaks_from_weak_vectors
+   fun:*
+}
+
+{
+   xmn1
+   Memcheck:Cond
+   fun:XmRenderTableCopy
+   fun:*
+}
+
+{
+   scmx11
+   Memcheck:Value4
+   fun:winder_mark
+   fun:scm_gc_mark_dependencies
+   fun:*
+}
+
+{
+   xn1
+   Memcheck:Param
+   write(buf)
+   fun:__write_nocancel
+   fun:_X11TransWrite
+   fun:*
+}
+
+{
+   xn2
+   Memcheck:Cond
+   fun:_XmXftDrawCreate
+   fun:*
+}
+
+{
+   xmn2
+   Memcheck:Cond
+   fun:XmRenderTableFree
+   fun:*
+}
+
+{
+   xn3
+   Memcheck:Param
+   writev(vector[...])
+   fun:writev
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_X11TransWritev
+   fun:*
+}
+
+{
+   xmn3
+   Memcheck:Cond
+   fun:XmRenderTableAddRenditions
+   fun:*
+}
+
+{
+   r1
+   Memcheck:Cond
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:*
+}
+
+{
+   r2
+   Memcheck:Cond
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:/usr/lib/libruby.so.1.8.4
+   fun:rb_newobj
+   obj:/usr/lib/libruby.so.1.8.4
+   fun:rb_hash_new
+   fun:*
+}
+
+{
+   r3
+   Memcheck:Value4
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:*
+}
+
+{
+   r4
+   Memcheck:Value4
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:/usr/lib/libruby.so.1.8.4
+   fun:rb_gc_mark_locations
+   obj:/usr/lib/libruby.so.1.8.4
+   fun:rb_newobj
+   fun:*
+}
+
+{
+   r5
+   Memcheck:Value4
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:/usr/lib/libruby.so.1.8.4
+   fun:rb_newobj
+   fun:*
+}
+
+{
+   g1
+   Memcheck:Cond
+   fun:XInitImage
+   obj:*
+}
+
+{
+   xmn4
+   Memcheck:Cond
+   fun:MakePositionVisible
+   fun:_XmTextShowPosition
+   fun:*
+}
+
+{
+   lad1
+   Memcheck:Free
+   fun:__builtin_vec_delete
+   fun:__static_initialization_and_destruction_0
+   fun:*
+}
+

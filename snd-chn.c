@@ -2136,6 +2136,7 @@ void reset_spectro(void)
 
 static GLdouble unproject2x(int x, int y)
 {
+#if HAVE_GLU
   /* taken from GL doc p152 */
   GLint viewport[4];
   GLdouble mv[16], proj[16];
@@ -2145,13 +2146,15 @@ static GLdouble unproject2x(int x, int y)
   glGetDoublev(GL_MODELVIEW_MATRIX, mv);
   glGetDoublev(GL_PROJECTION_MATRIX, proj);
   realy = viewport[3] - (GLint)y - 1;
-#if HAVE_GLU
   gluUnProject((GLdouble)x, (GLdouble)realy, 0.0, mv, proj, viewport, &wx, &wy, &wz);
-#endif
   return(wx);
+#else
+  return(0.0);
+#endif
 }
 static GLdouble unproject2y(int x, int y)
 {
+#if HAVE_GLU
   /* taken from GL doc p152 */
   GLint viewport[4];
   GLdouble mv[16], proj[16];
@@ -2161,10 +2164,11 @@ static GLdouble unproject2y(int x, int y)
   glGetDoublev(GL_MODELVIEW_MATRIX, mv);
   glGetDoublev(GL_PROJECTION_MATRIX, proj);
   realy = viewport[3] - (GLint)y - 1;
-#if HAVE_GLU
   gluUnProject((GLdouble)x, (GLdouble)realy, 0.0, mv, proj, viewport, &wx, &wy, &wz);
-#endif
   return(wy);
+#else
+  return(0.0);
+#endif
 }
 #else
 void reset_spectro(void)

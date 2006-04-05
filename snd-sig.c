@@ -4980,27 +4980,41 @@ convolve the selection with file; amp is the resultant peak amp"
   return(g_convolve_with_1(file, new_amp, NULL, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_convolve_selection_with));
 }
 
-static Float check_src_envelope(int pts, Float *data, const char *caller)
+enum {SRC_ENV_NO_ERROR, SRC_ENV_HIT_ZERO, SRC_ENV_THROUGH_ZERO};
+
+static Float check_src_envelope(int pts, Float *data, int *error)
 {
   /* can't go through zero here, and if negative need to return 1.0 */
   int i;
   Float res = 0.0;
+  (*error) = SRC_ENV_NO_ERROR;
   for (i = 0; i < (2 * pts); i += 2)
     if (data[i + 1] == 0.0)
-      XEN_OUT_OF_RANGE_ERROR(caller, 1, mus_array_to_list(data, 0, pts * 2), "~A: envelope hits 0.0");
+      {
+	(*error) = SRC_ENV_HIT_ZERO;
+	return(res);
+      }
     else
       {
 	if (data[i + 1] < 0.0)
 	  {
 	    if (res <= 0.0)
 	      res = -1.0;
-	    else XEN_OUT_OF_RANGE_ERROR(caller, 1, mus_array_to_list(data, 0, pts * 2), "~A: envelope passes through 0.0");
+	    else
+	      {
+		(*error) = SRC_ENV_THROUGH_ZERO;
+		return(res);
+	      }
 	  }
 	else
 	  {
 	    if (res >= 0)
 	      res = 1.0;
-	    else XEN_OUT_OF_RANGE_ERROR(caller, 1, mus_array_to_list(data, 0, pts * 2), "~A: envelope passes through 0.0");
+	    else
+	      {
+		(*error) = SRC_ENV_THROUGH_ZERO;
+		return(res);
+	      }
 	  }
       }
   return(res);
@@ -5043,6 +5057,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
     }
   else 
     {
+      int error = SRC_ENV_NO_ERROR;
       if (egen == NULL)
 	{
 	  env *e;
@@ -5051,7 +5066,16 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 	  need_free = true;
 	  free_env(e);
 	}
-      check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), S_src_channel);
+      check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), &error);
+      if (error != SRC_ENV_NO_ERROR)
+	{
+	  XEN data;
+	  data = mus_array_to_list(mus_data(egen), 0, mus_env_breakpoints(egen) * 2);
+	  if (need_free) {mus_free(egen); need_free = false;}
+	  if (error == SRC_ENV_HIT_ZERO)
+	    XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "~A: envelope hits 0.0");
+	  else XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "~A: envelope passes through 0.0");
+	}
     }
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, NOT_FROM_ENVED, S_src_channel, OVER_SOUND, 1, 1, &clm_err);
@@ -5081,11 +5105,13 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 		   over_selection, NULL, edpos, 5);
   else 
     {
+      int error = SRC_ENV_NO_ERROR;
       if (XEN_LIST_P(ratio_or_env))
 	{
 	  env *e = NULL;
 	  XEN ebase;
 	  Float e_ratio = 1.0;
+
 	  if ((!(XEN_NUMBER_P(base))) && (XEN_NUMBER_P(envelope_base(ratio_or_env))))
 	    ebase = envelope_base(ratio_or_env);
 	  else ebase = base;
@@ -5093,10 +5119,22 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	  e = get_env(ratio_or_env, caller);
 	  if (XEN_NUMBER_P(ebase))
 	    e->base = XEN_TO_C_DOUBLE_OR_ELSE(ebase, 1.0);
-	  /* TODO: memleak here if error */
-	  e_ratio = check_src_envelope(e->pts, e->data, caller);
-	  src_env_or_num(cp, e, e_ratio, false, NOT_FROM_ENVED, caller, over_selection, NULL, edpos, 5);
-	  if (e) free_env(e);
+
+	  e_ratio = check_src_envelope(e->pts, e->data, &error);
+	  if (error != SRC_ENV_NO_ERROR)
+	    {
+	      XEN data;
+	      data = mus_array_to_list(e->data, 0, e->pts * 2);
+	      if (e) {free_env(e); e = NULL;}
+	      if (error == SRC_ENV_HIT_ZERO)
+		XEN_OUT_OF_RANGE_ERROR(caller, 1, data, "~A: envelope hits 0.0");
+	      else XEN_OUT_OF_RANGE_ERROR(caller, 1, data, "~A: envelope passes through 0.0");
+	    }
+	  else
+	    {
+	      src_env_or_num(cp, e, e_ratio, false, NOT_FROM_ENVED, caller, over_selection, NULL, edpos, 5);
+	      if (e) free_env(e);
+	    }
 	}
       else
 	{
@@ -5104,11 +5142,21 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	  XEN_ASSERT_TYPE(mus_xen_p(ratio_or_env), ratio_or_env, XEN_ARG_1, caller, "a number, list, or env generator");
 	  egen = XEN_TO_MUS_ANY(ratio_or_env);
 	  XEN_ASSERT_TYPE(mus_env_p(egen), ratio_or_env, XEN_ARG_1, caller, "a number, list, or env generator");
-	  check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), caller);
-	  src_env_or_num(cp, NULL, 
-			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
-			 false, NOT_FROM_ENVED, caller, 
-			 over_selection, egen, edpos, 5);
+
+	  check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), &error);
+	  if (error != SRC_ENV_NO_ERROR)
+	    {
+	      XEN data;
+	      data = mus_array_to_list(mus_data(egen), 0, mus_env_breakpoints(egen) * 2);
+	      if (error == SRC_ENV_HIT_ZERO)
+		XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "~A: envelope hits 0.0");
+	      else XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "~A: envelope passes through 0.0");
+	    }
+	  else
+	    src_env_or_num(cp, NULL, 
+			   (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
+			   false, NOT_FROM_ENVED, caller, 
+			   over_selection, egen, edpos, 5);
 	}
     }
   return(xen_return_first(ratio_or_env, base));

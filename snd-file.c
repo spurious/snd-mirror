@@ -4277,7 +4277,12 @@ by the just-sounds file filters)"
 static XEN g_set_sound_file_extensions(XEN lst)
 {
   int i, len;
-  /* TODO: huge memleak here -- free existing! */
+  for (i = 0; i < sound_file_extensions_end; i++)
+    if (sound_file_extensions[i])
+      {
+	FREE(sound_file_extensions[i]);
+	sound_file_extensions[i] = NULL;
+      }
   sound_file_extensions_end = 0;
   default_sound_file_extensions = 0;
   len = XEN_LIST_LENGTH(lst);
