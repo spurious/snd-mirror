@@ -5,7 +5,7 @@
 
 /* macros for extension language support 
  *
- * Guile:     covers 1.3.4 to present (1.7.2) given the configuration macros in the Snd or Libxm config.h.in.
+ * Guile:     covers 1.3.4 to present (1.8.0) given the configuration macros in the Snd or Libxm config.h.in.
  * Ruby:      covers 1.6 to present (1.9)
  * Forth:     covers all
  * None:      covers all known versions of None
