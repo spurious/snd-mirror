@@ -19677,7 +19677,7 @@ fi
 
 
 #--------------------------------------------------------------------------------
-# OGG, Flac, Speex, Mpeg, Midi, Shorten
+# OGG, Flac, Speex, Mpeg, Midi, Shorten, TTA, Wavpack
 # --------------------------------------------------------------------------------
 
 # Extract the first word of "oggdec", so it can be a program name with args.
@@ -20293,6 +20293,7 @@ _ACEOF
 
   fi
 fi
+
 
 
 

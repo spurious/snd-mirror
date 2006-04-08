@@ -1966,3 +1966,116 @@
    fun:*
 }
 
+{
+   xmn5
+   Memcheck:Cond
+   fun:MakePositionVisible
+   fun:*
+}
+
+{
+   xmn6
+   Memcheck:Cond
+   fun:_XmRenderTableRemoveRenditions
+   fun:*
+}
+
+{
+   xmn7
+   Memcheck:Addr1
+   fun:_read_asn1_length
+   fun:XmStringNCopy
+   fun:*
+}
+
+{
+   xmn8
+   Memcheck:Addr1
+   fun:XmCvtByteStreamToXmString
+   fun:XmStringNCopy
+   fun:*
+}
+
+{
+   xmn9
+   Memcheck:Addr1
+   fun:strncmp
+   fun:_XmStringIndexCacheTag
+   fun:*
+}
+
+{
+   xmn10
+   Memcheck:Addr1
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:gxm_XSubImage
+   fun:*
+}
+
+{
+   xmn11
+   Memcheck:Addr1
+   obj:/usr/lib/libXm.so.4.0.0
+   fun:XmStringNCopy
+   fun:XmStringNConcat
+   fun:*
+}
+
+{
+   xmn12
+   Memcheck:Cond
+   obj:/usr/lib/libXm.so.4.0.0
+   obj:/usr/lib/libXm.so.4.0.0
+   obj:/usr/lib/libXm.so.4.0.0
+   fun:_XtMakeGeometryRequest
+   fun:*
+}
+
+{
+   xmn13
+   Memcheck:Cond
+   fun:_XtMakeGeometryRequest
+   fun:*
+}
+
+{
+   gl1
+   Memcheck:Cond
+   fun:smooth_8R8G8B_z_triangle
+   fun:_swrast_validate_triangle
+   fun:_swrast_Triangle
+   fun:*
+}
+
+{
+   gl2
+   Memcheck:Cond
+   fun:smooth_8R8G8B_z_triangle
+   fun:_swrast_Triangle
+   fun:*
+}
+
+{
+   gl3
+   Memcheck:Cond
+   fun:_swrast_depth_test_span
+   fun:_swrast_write_rgba_span
+   fun:*
+}
+
+{
+   s1
+   Memcheck:Value4
+   fun:continuation_mark
+   fun:scm_gc_mark
+   fun:*
+}
+
+{
+   xmn14
+   Memcheck:Cond
+   obj:/usr/lib/libXm.so.4.0.0
+   fun:_XmTextShowPosition
+   fun:*
+}

@@ -499,13 +499,13 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+31-Mar:  rt-player.scm (Kjetil).\n\
 28-Mar:  Snd 8.0.\n\
          Forth as extension language, thanks to Mike Scholz.\n\
          shorten, tta, wavpack support.\n\
 14-Mar:  x-axis-as-clock for more informative x-axis tick labels in very large files.\n\
 10-Mar:  added a stop sign to interrupt long computations (equivalent to C-g).\n\
 8-Mar:   kmenu.scm thanks to Maxim Krikun.\n\
-3-Mar:   show-selection (extensions.scm).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

@@ -1826,8 +1826,8 @@ Other arguments are handled as in <a href="#delay">delay</a>.
 </table>
 <br>
 <pre>
- comb:  y(n) = x(n-size-1) + scaler * y(n-size)
- notch: y(n) = x(n-1) * scaler  + x(n-size-1)
+ comb:  y(n) = x(n - size) + scaler * y(n - size)
+ notch: y(n) = x(n) * scaler  + x(n - size)
 </pre>
 <br clear=left>
 
@@ -1884,7 +1884,7 @@ average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 </table>
 <br>
 <pre>
- y(n) = feedforward * x(n-1) + x(n-size-1) + feedback * y(n-size)
+ y(n) = feedforward * x(n) + x(n - size) + feedback * y(n - size)
 </pre><br clear=left>
 
 <p>all-pass filters are used extensively in reverberation; see jcrev.ins or nrev.ins for examples.
@@ -2131,11 +2131,15 @@ to change the speed at which things happen in a recorded sound without
 changing the pitches.  It works by slicing the input file into short
 pieces, then overlapping these slices to lengthen (or shorten) the
 result; this process is sometimes known as granular synthesis, and is
-similar to the freeze function.  The duration of each slice is
+similar to the freeze function.  
+
+<p>The duration of each slice is
 <i>length</i> -- the longer the slice, the more like reverb the effect.  The
 portion of the length (on a scale from 0 to 1.0) spent on each
 ramp (up or down) is <i>ramp</i>.  This can control the smoothness of
-the result of the overlaps.  
+the result of the overlaps. 
+</p>
+<p> 
 <i>jitter</i> sets
 the accuracy with which we hop.  If you set it to 0, you can get very strong
 comb filter effects, or tremolo.
@@ -2143,7 +2147,10 @@ The more-or-less average time between
 successive segments is <i>hop</i>.  
 If <i>jitter</i> is 0.0, and <i>hop</i> is very small (say .01),
 you're asking for trouble (a big comb filter).
-The overall amplitude scaler on each segment is
+If you're granulating more than one channel at a time, and want the channels to remain
+in-sync, make each granulator use the same initial random number seed (via <b>mus-location</b>).
+</p>
+<p>The overall amplitude scaler on each segment is
 <i>scaler</i> -- this is used to try to to avoid overflows as we add
 all these zillions of segments together.  <i>expansion</i>
 determines the input hop in relation to the output hop; an

@@ -543,6 +543,14 @@ this can be confusing if fft normalization is on (the default)"
       (system (format #f "flac ~A" (file-name snd)))))
 
 
+;;; -------- play AC3 via a52dec
+
+(define (play-ac3 name)
+  ;; ideally we'd implement C-g to interrupt this, but you can type C-c to the shell once it has started
+  ;;   to turn an AC3 file into something Snd can edit, /usr/local/bin/a52dec test.ac3 -o wav > test.wav
+  (system (format #f "a52dec ~A" name)))
+
+
 ;;; -------- read ASCII files
 ;;;
 ;;; these are used by Octave (WaveLab) -- each line has one integer, apparently a signed short.
