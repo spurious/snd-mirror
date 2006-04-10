@@ -2342,7 +2342,8 @@ Reverb-feedback sets the scaler on the feedback.
   (let ((tool-proc #f)
 	(quit-proc #f)
 	(timeout 500)   ; millisecs after mouse enters widget to tip display 
-	(quittime 3000)) ; millisecs to show tip (if pointer not already moved out of widget)
+	(quittime 3000) ; millisecs to show tip (if pointer not already moved out of widget)
+	(last-time 0))  ; try to squelch "fluttering"
 
     (define (stop-tooltip)
       (if tool-proc
@@ -2388,8 +2389,15 @@ Reverb-feedback sets the scaler on the feedback.
 						 (XtUnmanageChild tooltip-shell)
 						 (set! quit-proc #f)))))))))
     
-    (XtAddEventHandler widget EnterWindowMask #f (lambda (w c ev flag) (start-tooltip ev)))
-    (XtAddEventHandler widget LeaveWindowMask #f (lambda (w c ev flag) (stop-tooltip)))))
+    (XtAddEventHandler widget EnterWindowMask #f 
+      (lambda (w c ev flag)
+	(if (> (- (cadr (.time ev)) last-time) 50)
+	    (start-tooltip ev))
+	(set! last-time (cadr (.time ev)))))
+    (XtAddEventHandler widget LeaveWindowMask #f 
+      (lambda (w c ev flag) 
+	(set! last-time (cadr (.time ev)))
+        (stop-tooltip)))))
 
 (define (menu-option name)
   "(menu-option name) finds the widget associated with a given menu item name"
