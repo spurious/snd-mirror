@@ -21,7 +21,6 @@ snd-gchn.c
 snd-gdraw.c
 snd-gdrop.c
 snd-genv.c
-snd-gerror.c
 snd-gfft.c
 snd-gfile.c
 snd-gfind.c
@@ -63,7 +62,6 @@ snd-xdraw.c
 snd-xdrop.c
 snd-xen.c
 snd-xenv.c
-snd-xerror.c
 snd-xfft.c
 snd-xfile.c
 snd-xfind.c
