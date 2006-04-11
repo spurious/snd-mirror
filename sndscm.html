@@ -4487,6 +4487,17 @@ split with-sound into two pieces, primarily for Common Music's benefit.
   (fm-violin 0 1 440 .1))
 </pre>
 <p>ws.scm also has a lightly tested translation of CLM's <a href="clm.html#optional-key">def-optkey-fun</a>.
+A variant of with-sound is <b><a name="clmload">clm-load</a></b>.  Its first argument is a filename, assumed to
+be a text file containing the body of with-sound, followed by the usual with-sound arguments, if any.
+For example, if we have a file named clm-load-test.clm with these contents:
+</p>
+<pre>
+  (fm-violin 0 1 440 .1)
+  (fm-violin 1 1 660 .1)
+</pre>
+<p>
+then <code>(clm-load "clm-load-test.clm")</code> is the same as <code>(with-sound () (fm-violin 0 1 440 .1) (fm-violin 1 1 660 .1))</code>.
+Similarly for, <code>(clm-load "clm-load-test.clm" :srate 44100 :channels 2)</code> and so on.
 </p>
 
 <!-- INDEX wsdebug:Debugging (notelists) -->

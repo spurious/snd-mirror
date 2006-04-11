@@ -3736,8 +3736,7 @@ done
 
 
 
-
-for ac_header in fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h stdbool.h
+for ac_header in fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then

@@ -1,5 +1,6 @@
 Snd change log
 
+  12-Apr:    clm-load (ws.scm) for cm.
   31-Mar:    rt-player.scm (Kjetil).
   28-Mar:    Snd 8.0.
              Forth as extension language, thanks to Mike Scholz.

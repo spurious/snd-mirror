@@ -155,9 +155,6 @@ static void main_snd_help(const char *subject, ...)
 #if HAVE_GNU_LIBC_VERSION_H
   #include <gnu/libc-version.h>
 #endif
-#if (HAVE_GSL_GSL_VERSION_H) && (!(defined(GSL_VERSION)))
-  #include <gsl/gsl_version.h>
-#endif
 
 #if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DIRENT_H
   #include <ladspa.h>
@@ -499,6 +496,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+12-Apr:  clm-load (ws.scm) for cm.\n\
 31-Mar:  rt-player.scm (Kjetil).\n\
 28-Mar:  Snd 8.0.\n\
          Forth as extension language, thanks to Mike Scholz.\n\

@@ -408,6 +408,10 @@ returning you to the true top-level."
        (set! *clm-file-name* old-file-name)
        val)))
 
+(defmacro clm-load (file . args)
+  `(with-sound-helper (lambda () (load ,file)) ,@args))
+
+
 
 ;;; -------- def-clm-struct --------
 
