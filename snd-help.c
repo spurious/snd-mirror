@@ -379,9 +379,6 @@ char *version_info(void)
   #ifdef MUS_PANGO_VERSION
 	  ", Pango ", MUS_PANGO_VERSION,
   #endif
-  #ifdef MUS_ATK_VERSION
-	  ", Atk ", MUS_ATK_VERSION,
-  #endif
   #ifdef MUS_CAIRO_VERSION
 	  ", Cairo ", MUS_CAIRO_VERSION,
   #endif

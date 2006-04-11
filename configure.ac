@@ -901,8 +901,6 @@ else
           GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
           pango_version="`$PKG_CONFIG pango --modversion`"
           AC_DEFINE_UNQUOTED(MUS_PANGO_VERSION,"${pango_version}")
-	  atk_version="`$PKG_CONFIG atk --modversion`"
-          AC_DEFINE_UNQUOTED(MUS_ATK_VERSION,"${atk_version}")
         fi
 
       	AC_SUBST(GTK_LD_LIBS)

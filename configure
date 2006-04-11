@@ -13656,11 +13656,6 @@ _ACEOF
 #define MUS_PANGO_VERSION "${pango_version}"
 _ACEOF
 
-	  atk_version="`$PKG_CONFIG atk --modversion`"
-          cat >>confdefs.h <<_ACEOF
-#define MUS_ATK_VERSION "${atk_version}"
-_ACEOF
-
         fi
 
 

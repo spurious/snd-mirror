@@ -1053,7 +1053,6 @@ static void save_sound_state (snd_info *sp, void *ptr)
 	  save_property_list(fd, XEN_VECTOR_REF(cp->properties, 0), chan);
 	}
 
-      /* TODO: test save x|y-axis-label */
       /* ap->default_xlabel if not null, user explicitly set it */
       /* ylabel can only be a user choice -- never set by Snd */
       if (cp->axis)
