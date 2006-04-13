@@ -2266,21 +2266,17 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   if (with_comment != WITHOUT_COMMENT_FIELD)
     {
       GtkWidget *frame, *comment_label;
-      if (with_comment == WITH_COMMENT_FIELD) /* i.e. not WITH_UNLABELLED_COMMENT_FIELD */
-	{
-	  combox = gtk_hbox_new(false, 0);
-	  gtk_box_pack_start(GTK_BOX(parent), combox, true, true, 4);
-	  gtk_widget_show(combox);
 
-	  comment_label = snd_gtk_highlight_label_new(_("comment:"));
-	  gtk_box_pack_start(GTK_BOX(combox), comment_label, false, false, 0);
-	  gtk_widget_show(comment_label);
-	}
+      combox = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(parent), combox, true, true, 4);
+      gtk_widget_show(combox);
+
+      comment_label = snd_gtk_highlight_label_new(_("comment:"));
+      gtk_box_pack_start(GTK_BOX(combox), comment_label, false, false, 0);
+      gtk_widget_show(comment_label);
 
       frame = gtk_frame_new(NULL);
-      if (with_comment == WITH_COMMENT_FIELD) /* i.e. not WITH_UNLABELLED_COMMENT_FIELD */
-	gtk_box_pack_start(GTK_BOX(combox), frame, true, true, 4);  
-      else gtk_box_pack_start(GTK_BOX(parent), frame, true, true, 4);  
+      gtk_box_pack_start(GTK_BOX(combox), frame, true, true, 4);  
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
       gtk_widget_show(frame);
       fdat->comment_text = make_scrolled_text(frame, true, NULL, false);

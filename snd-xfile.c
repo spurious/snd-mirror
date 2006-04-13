@@ -2420,32 +2420,20 @@ file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, i
 
   if (with_comment != WITHOUT_COMMENT_FIELD)
     {
-      if (with_comment == WITH_COMMENT_FIELD) /* i.e. not WITH_UNLABELLED_COMMENT_FIELD */
-	{
-	  n = 0;
-	  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-	  XtSetArg(args[n], XmNtopWidget, sep4); n++;
-	  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-	  comment_label = XtCreateManagedWidget(_("comment:"), xmLabelWidgetClass, parent, args, n);
-	}
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, sep4); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      comment_label = XtCreateManagedWidget(_("comment:"), xmLabelWidgetClass, parent, args, n);
 
       n = 0;
-      if (with_comment == WITH_COMMENT_FIELD)
-	{
-	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-	  XtSetArg(args[n], XmNtopWidget, comment_label); n++;
-	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-	  XtSetArg(args[n], XmNleftWidget, comment_label); n++;
-	}
-      else
-	{
-	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-	  XtSetArg(args[n], XmNtopWidget, sep4); n++;
-	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-	}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, comment_label); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, comment_label); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrows, 2); n++;

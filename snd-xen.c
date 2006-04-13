@@ -1236,6 +1236,33 @@ bool listener_print_p(const char *msg)
  return(XEN_FALSE_P(res));
 }
 
+void check_features_list(char *features)
+{
+  /* check for list of features, report any missing, exit (for compsnd) */
+  /*  this can't be in snd.c because we haven't fully initialized the extension language and so on at that point */
+
+#if HAVE_SCHEME
+  XEN_EVAL_C_STRING(mus_format("(for-each \
+                                  (lambda (f)	\
+                                    (if (not (provided? f)) \
+                                        (display (format #f \"~%%no ~A!~%%~%%\" f)))) \
+                                    (list %s))", features));
+#endif
+#if HAVE_RUBY
+  /* provided? is defined in examp.rb */
+  XEN_EVAL_C_STRING(mus_format("[%s].each do |f|\n\
+                                  unless $LOADED_FEATURES.map do |ff| File.basename(ff) end.member?(f.to_s.tr(\"_\", \"-\"))\n\
+                                    $stderr.printf(\"~\\nno %%s!\\n\\n\", f.id2name)\n\
+                                  end\n\
+                                end\n", features));
+#endif
+#if HAVE_FORTH
+  /* TODO: forth side of features check */
+#endif
+  snd_exit(0);
+}
+
+
 
 /* -------- global variables -------- */
 

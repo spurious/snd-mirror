@@ -594,6 +594,10 @@ void snd_doit(int argc, char **argv)
 		  else
 		    if (strcmp(argv[i], "-init") == 0)
 		      set_init_filename(argv[++i]);
+                    else
+		      if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
+			check_features_list(argv[i + 1]);
+
   ss->batch_mode = batch;
   set_auto_resize(AUTO_RESIZE_DEFAULT);
   ss->zoom_slider_width = ZOOM_SLIDER_WIDTH;

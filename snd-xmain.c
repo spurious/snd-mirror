@@ -818,6 +818,9 @@ void snd_doit(int argc, char **argv)
 		  else
 		    if (strcmp(argv[i], "-init") == 0)
 		      set_init_filename(argv[++i]);
+                    else
+		      if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
+			check_features_list(argv[i + 1]);
 
   ss->batch_mode = batch;
   if (batch) XtSetMappedWhenManaged(shell, 0);

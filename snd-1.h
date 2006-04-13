@@ -953,6 +953,7 @@ void during_open(int fd, const char *file, open_reason_t reason);
 void after_open(int index);
 char *output_name(const char *current_name);
 bool listener_print_p(const char *msg);
+void check_features_list(char *features);
 #if (!USE_NO_GUI)
   Float check_color_range(const char *caller, XEN val);
 #endif

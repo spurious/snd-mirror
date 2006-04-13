@@ -706,6 +706,9 @@ void snd_doit(int argc, char **argv)
 	  else
 	    if ((strcmp(argv[i], "-b") == 0) || (strcmp(argv[i], "-batch") == 0))
 	      ss->batch_mode = true;
+	    else
+	      if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
+		check_features_list(argv[i + 1]);
     }
   snd_load_init_file(noglob, noinit);
 #if HAVE_SIGNAL

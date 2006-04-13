@@ -1197,7 +1197,7 @@ an improvement!
 <p>
 You can load Rick Taube's CM into Snd as Scheme code:
 </p>
-<pre>snd -l /home/bil/test/cm-2.4.2/src/cm.scm
+<pre>snd -l /home/bil/test/cm-2.8.0/src/cm.scm
 </pre>
 <p>and all of CM is at your disposal! See also <a href="#sndwithcm">Snd and Common Music</a>.
 </p>
@@ -1274,7 +1274,7 @@ Test 23 in snd-test.scm has a with-sound that includes most of these instruments
 
 <br><br>
 
-<!-- TODO: update the CM docs to reflect definstrument-hook -->
+<!-- TODO: update the CM docs to reflect new version -->
 <!-- see test/cm-2.8.0/etc/examples/fm.ins -->
 
 
@@ -1595,7 +1595,7 @@ a GtkWidget, so we have to cast a GtkAdjustment back to its original type.
 
 <p>If Snd is built without a graphical user interface (by specifying
 --with-no-gui to configure),
-it runs Guile's "repl" (read-eval-print loop), or Ruby's equivalent, with input from stdin.  All
+it runs the extension language's read-eval-print loop, with input from stdin.  All
 the non-interface related functions are available, so you can do things
 like:
 </p>
@@ -1611,15 +1611,9 @@ like:
 <em class=listener>#t</em>
 <em class=listener>snd&gt;</em><em class=typing> (exit)</em>
 </pre>
-<p>Guile's repl has its own error handlers, different from the
-normal Snd handlers; name completion, if it exists at all,
-won't complete Snd names; there are undoubtedly other
-differences that I haven't noticed.  
-</p>
 <p>
-Since this version of
-Snd is the same as the guile program with Snd loaded, you
-can treat it as a scripting engine.  For example,
+Since there's no graphics toolkit event loop to get in your way, you 
+can treat this version of Snd as a scripting engine.  For example,
 if you have an executable file with:
 </p>
 

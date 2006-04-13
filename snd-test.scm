@@ -304,8 +304,8 @@
 ;(define rs (lambda (n) (< (my-random 1.0) n)))
 (define rs (lambda (n) #t))
 
-(define have-log-0 (or (string=? (version) "1.7.0") (string=? (version) "1.7.1") (string=? (version) "1.7.2")))
-(define (log0) (if have-log-0 (log 0) 0.0))
+(define have-log-0 (or (string=? (version) "1.7.0") (string=? (version) "1.7.1") (string=? (version) "1.7.2") (string=? (version) "1.8.0")))
+(define (log0) (if have-log-0 (log 0) 0.0)) ; trying to generate -inf.0 
 
 (if (not (defined? 'nan)) (define (nan) 0.0))
 

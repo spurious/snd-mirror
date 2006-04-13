@@ -12,7 +12,7 @@
 ;;; setf -> set!
 ;;; remove declare (or change order of args and remove ":")
 ;;;   however in granulate run-time edit-func, the "(declare (g clm))" is necessary
-;;; double not needed (a true CL stupidity)
+;;; double not needed
 ;;; array of gen -> vector (and setf aref to vector-set! in this case)
 ;;; nil -> #f, t -> #t
 ;;; outa needs *output*

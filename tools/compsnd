@@ -30,6 +30,7 @@ make xm
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'snd-guile 'snd-motif 'sndlib"
 echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
 ./snd tmp.scm
 rm tmp.scm
@@ -67,15 +68,19 @@ make sndrecord
 # GUILE_CONFIG_path=/home/bil/test/bin 
 echo ' -------------------------------- basic configure test/bin -------------------------------- '
 make allclean
+echo ' '
+echo ' '
 echo ' CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin -Wdeclaration-after-statement -Wmissing-field-initializers'
 ./configure --quiet CFLAGS="-Wall -Wextra" GUILE_CONFIG_path=/home/bil/test/bin
 make
 make xm
-snd --version
+./snd --version
+./snd -noinit --features "'clm 'sndlib 'snd 'snd-guile 'snd-motif"
 echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
 ./snd tmp.scm
 rm tmp.scm
 make allclean
+
 # echo ' CC=g++ CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin '
 # ./configure --quiet CC=g++ CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin
 # /usr/include/gmp.h:2073: declaration of C function `std::ostream& 
@@ -86,124 +91,185 @@ make allclean
 # make xm
 # snd --version
 # make allclean
+
+echo ' '
+echo ' '
+echo ' --quiet --enable-snd-debug CC=g++ CFLAGS="-Wall"'
 ./configure --quiet --enable-snd-debug CC=g++ CFLAGS="-Wall"
 make
 make xm
-snd --version
+./snd --version
+./snd -noinit --features "'clm 'snd-debug"
 
 echo ' -------------------------------- with-no-gui -------------------------------- '
 make allclean
 rm -f snd
 rm -f config.cache
+echo ' '
+echo ' '
 echo ' CFLAGS="-Wall" --with-no-gui '
 ./configure --quiet CFLAGS="-Wall" --with-no-gui
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'snd-nogui"
 
 echo ' -------------------------------- with-no-gui/ladspa -------------------------------- '
 make allclean
 rm -f snd
 rm -f config.cache
+echo ' '
+echo ' '
 echo ' CFLAGS="-Wall" --with-no-gui --without-ladspa '
 ./configure --quiet CFLAGS="-Wall" --with-no-gui --without-ladspa
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'snd-nogui"
 
 echo ' -------------------------------- gtk -------------------------------- '
 make allclean
 rm -f snd
 rm -f config.cache
+echo ' '
+echo ' '
 echo ' CFLAGS="-Wall -Wextra" --with-gtk '
 ./configure --quiet CFLAGS="-Wall" --with-gtk
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'snd-gtk"
 make xg
 echo '(let ((hxm (dlopen (string-append (getcwd) "/xg.so")))) (dlinit hxm "Init_libxg") (display GTK_ARROW_UP) (exit))' > tmp.scm
 ./snd tmp.scm
 rm tmp.scm
 rm xg.o
+
+echo ' '
+echo ' '
 echo ' CC=g++ CFLAGS="-Wall" --with-gtk --disable-deprecated '
 ./configure --quiet CC=g++ CFLAGS="-Wall" --with-gtk --disable-deprecated
 make xg
 make allclean
+
+echo ' '
+echo ' '
 echo ' CC=g++ --with-gtk CFLAGS="-Wall" '
 ./configure --quiet CC=g++ --with-gtk CFLAGS="-Wall"
 make
-snd --version
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk"
 make allclean
+
+echo ' '
+echo ' '
 echo ' CC=g++ --with-gtk CFLAGS="-Wall -DHAVE_GFCDN=0" '
 ./configure --quiet CC=g++ --with-gtk CFLAGS="-Wall -DHAVE_GFCDN=0"
 make
-snd --version
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk 'snd-guile"
 make xg
+make allclean
+
+echo ' '
+echo ' '
+echo ' CC=g++ --with-gtk --without-builtin-gtkrc CFLAGS="-Wall" '
+./configure --quiet --with-gtk --without-builtin-gtkrc CFLAGS="-Wall"
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk"
 
 echo ' -------------------------------- no-guile -------------------------------- '
 make allclean
 rm -f snd
 rm -f config.cache
+echo ' '
+echo ' '
 echo ' --without-guile --without-ruby '
 ./configure --quiet --without-guile --without-ruby
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features ":clm :snd-ruby"
 make allclean
+
 echo ' --without-guile --without-ruby --with-gtk '
 ./configure --quiet --without-guile --without-ruby --with-gtk
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features ":clm :snd-ruby"
 rm -f sndinfo
 make sndinfo
 ./sndinfo test.snd
 make allclean
+
 echo ' --without-guile --without-ruby --with-gtk --with-gl '
 ./configure --quiet --without-guile --without-ruby --with-gtk --with-gl
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'snd-gtk 'gl"
 make allclean
+
 echo ' --without-guile --without-ruby --with-just-gl '
 ./configure --quiet --without-guile --without-ruby --with-just-gl
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm"
 
-
+echo ' '
+echo ' '
+echo ' --with-forth'
 ./configure --with-forth
 make
 ./snd --version
+./snd -noinit --features "'clm 'snd-forth 'snd-motif"
 make allclean
 
-./configure --with-forth --enable-snd-debug --with-static-xm --with-gl CFLAGS="-Wall"
+echo ' '
+echo ' '
+echo ' --quiet --with-forth --enable-snd-debug --with-static-xm --with-editres --with-gl CFLAGS="-Wall"'
+./configure --quiet --with-forth --enable-snd-debug --with-static-xm --with-editres --with-gl CFLAGS="-Wall" --with-midi
 make
 ./snd --version
+./snd -noinit --features "'clm 'snd-forth 'xm 'gl"
 make allclean
 
-./configure --with-forth --with-gtk --with-static-xg --with-gl CFLAGS="-Wall"
+echo ' '
+echo ' '
+echo ' --quiet --with-forth --with-gtk --with-static-xg --with-gl CFLAGS="-Wall"'
+./configure --quiet --with-forth --with-gtk --with-static-xg --with-gl CFLAGS="-Wall"
 make
 ./snd --version
+./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
 make allclean
 
-./configure --with-forth --with-no-gui CFLAGS="-Wall"
+echo ' '
+echo ' '
+echo ' --quiet --with-forth --with-no-gui CFLAGS="-Wall"'
+./configure --quiet --with-forth --with-no-gui CFLAGS="-Wall"
 make
 ./snd --version
+./snd -noinit --features "'clm 'snd-forth 'snd-nogui"
 make allclean
 
-./configure --with-forth CC=g++ CFLAGS="-Wall"
+echo ' '
+echo ' '
+echo ' --quiet --with-forth CC=g++ --disable-deprecated CFLAGS="-Wall"'
+./configure --quiet --with-forth CC=g++ --disable-deprecated CFLAGS="-Wall"
 make
 ./snd --version
+./snd -noinit --features "'clm 'snd-forth"
 make allclean
-
 
 echo ' '
 echo ' -------------------------------- static gsl -------------------------------- '
@@ -211,11 +277,12 @@ make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall" --with-static-gsl --with-alsa --with-midi '
-./configure --quiet CFLAGS="-Wall" --with-static-gsl --with-alsa
+./configure --quiet CFLAGS="-Wall" --with-static-gsl --with-alsa --with-midi
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'gsl 'alsa"
 
 echo ' '
 echo ' -------------------------------- configure --with-doubles test -------------------------------- '
@@ -231,6 +298,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'snd-guile"
 
 echo ' '
 echo ' -------------------------------- configure --with-doubles test int samples -------------------------------- '
@@ -246,6 +314,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'snd-guile"
 
 echo ' '
 echo ' '
@@ -262,6 +331,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'gl"
 make clmclean
 
 echo ' '
@@ -274,11 +344,12 @@ rm -f makefile
 rm -f config.h
 rm -f sndinfo
 echo ' CFLAGS="-Wall"  --without-float-samples --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw --with-midi '
-./configure --quiet CFLAGS="-Wall"  --without-float-samples --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw
+./configure --quiet CFLAGS="-Wall"  --without-float-samples --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw --with-midi
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'snd-motif"
 
 echo ' '
 echo ' '
@@ -295,6 +366,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm"
 
 echo ' '
 echo ' '
@@ -311,6 +383,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm"
 
 echo ' -------------------------------- configure --with-gtk test -------------------------------- '
 make allclean
@@ -322,31 +395,38 @@ make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'snd-gtk"
 make allclean
 rm -f snd
 rm -f config.cache
+
 echo ' CFLAGS="-Wall"  --with-gtk '
 ./configure --quiet CFLAGS="-Wall"  --with-gtk
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'snd-gtk"
 make allclean
 rm -f snd
 rm -f config.cache
+
 echo ' CFLAGS="-Wall"  --with-gtk --with-static-xm '
 ./configure --quiet CFLAGS="-Wall"  --with-gtk --with-static-xm
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'snd-gtk 'xg"
 make allclean
 echo ' CFLAGS="-Wall -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED" --with-gtk --with-static-xm --with-x11 '
 ./configure --quiet --disable-deprecated CFLAGS="-Wall" --with-gtk --with-static-xm --with-x11
 make
 echo ' '
 echo ' '
-snd --version
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk 'xg"
+
 echo ' -------------------------------- motif test -------------------------------- '
 make allclean
 rm -f snd
@@ -359,20 +439,27 @@ make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'gsl 'snd-debug 'snd-motif"
 make allclean
+
 echo ' CFLAGS="-Wall" --with-static-xm '
-./configure --quiet CFLAGS="-Wall" --with-static-xm
+./configure --quiet CFLAGS="-Wall" --with-static-xm --with-editres --disable-deprecated
 make
 rm xm.o
+echo ' '
+echo ' '
 echo ' CC=g++ --with-static-xm '
 ./configure --quiet CC=g++ --with-static-xm
 make xm
 
 make allclean
+echo ' '
+echo ' '
 echo ' CFLAGS="-Wall" --with-static-xm --without-xpm --without-xp '
 ./configure --quiet CFLAGS="-Wall" --with-static-xm --without-xpm --without-xp
 make
-snd --version
+./snd --version
+./snd -noinit --features "'clm 'snd-motif 'xm"
 
 echo ' '
 echo ' '
@@ -385,17 +472,21 @@ echo ' CFLAGS="-Wall" --with-snd-as-widget '
 make
 echo ' '
 echo ' '
-snd --version
+./snd --version
+./snd -noinit --features "'clm"
+
 echo ' -------------------------------- gtk test -------------------------------- '
 make allclean
 rm -f snd
 rm -f config.cache
+
 echo ' CFLAGS="-Wall" --enable-snd-debug --with-gtk --with-gsl --with-gl '
 ./configure --quiet CFLAGS="-Wall -DXEN_DEBUGGING" --enable-snd-debug --with-gtk --with-gsl --with-gl
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features "'clm 'snd-gtk 'gsl 'gl 'snd-debug 'snd-guile"
 
 echo ' '
 echo ' '
@@ -403,6 +494,7 @@ echo ' -------------------------------- ruby test (Motif) ----------------------
 make allclean
 rm -f snd
 rm -f config.cache
+
 echo ' CFLAGS="-Wall" --with-ruby '
 ./configure --quiet CFLAGS="-Wall" --with-ruby
 make
@@ -412,11 +504,14 @@ make xm
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features ":clm, :snd_ruby, :snd_motif"
 make allclean
+
 echo ' CC=g++ CFLAGS="-Wall" --with-ruby '
 ./configure --quiet CC=g++ CFLAGS="-Wall" --with-ruby --with-midi
 make
-snd --version
+./snd --version
+./snd -noinit --features ":clm, :snd_ruby"
 make allclean
 echo ' CFLAGS="-Wall" --with-ruby --with-static-xm --with-gl --enable-snd-debug --with-alsa '
 ./configure --quiet CFLAGS="-Wall -DXEN_DEBUGGING" --with-ruby --with-static-xm --with-gl --enable-snd-debug --with-alsa
@@ -424,6 +519,8 @@ make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features ":clm, :alsa, :snd_ruby, :xm, :gl, :snd_debug"
+
 echo ' -------------------------------- ruby test (Gtk) -------------------------------- '
 make allclean
 rm -f snd
@@ -434,27 +531,35 @@ make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features ":clm, :snd_gtk, :snd_ruby"
 make allclean
+
 echo ' CC=g++ --with-ruby --with-gtk --with-alsa '
 ./configure --quiet CC=g++ --with-ruby --with-gtk --with-alsa
 make
 echo ' '
 echo ' '
-snd --version
+./snd --version
+./snd -noinit --features ":clm, :alsa, :snd_gtk, :snd_ruby"
 make allclean
+
 echo ' CFLAGS="-Wall" --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl --without-xpm --without-xp '
 ./configure --quiet CFLAGS="-Wall -DXEN_DEBUGGING" --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl --without-xpm --without-xp
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features ":clm, :snd_ruby, :xg, :snd_gtk, :snd_debug"
 make allclean
+
 echo ' CFLAGS="-Wall -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED" --with-ruby --with-static-xm --with-gtk --with-x11 --with-gl '
 ./configure --quiet --disable-deprecated CFLAGS="-Wall" --with-ruby --with-static-xm --with-gtk --with-x11 --with-gl
 make
 echo ' '
 echo ' '
-snd --version
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
+
 echo ' -------------------------------- ruby test (no gui) -------------------------------- '
 make allclean
 rm -f snd
@@ -465,20 +570,25 @@ make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features ":clm, :snd_nogui, :snd_ruby"
 make allclean
+
 echo ' CFLAGS="-Wall" --with-ruby --with-no-gui --enable-snd-debug '
 ./configure --quiet CFLAGS="-Wall -DXEN_DEBUGGING" --with-ruby --with-no-gui --enable-snd-debug
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features ":clm, :snd_nogui, :snd_debug, :snd_ruby"
 make allclean
+
 echo ' CC=g++ CFLAGS="-Wall" --with-ruby --with-no-gui --enable-snd-debug '
 ./configure --quiet CC=g++ CFLAGS="-Wall -DXEN_DEBUGGING" --with-ruby --with-no-gui --enable-snd-debug
 make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit --features ":clm, :snd_nogui, :snd_ruby, :snd_debug"
 make allclean
 
 echo ' -------------------------------- g++ test -------------------------------- '
@@ -487,7 +597,8 @@ rm -f config.cache
 echo ' CC=g++ CFLAGS="-Wall" '
 ./configure --quiet CC=g++ CFLAGS="-Wall"
 make
-snd --version
+./snd --version
+./snd -noinit --features "'clm 'snd-guile 'snd-motif 'snd-ladspa 'sndlib"
 make sndinfo
 make audinfo
 make sndplay
@@ -497,30 +608,41 @@ make sndrecord
 make allclean
 echo ' '
 echo ' '
+
 echo ' CC=g++ --with-gtk '
 ./configure --quiet CC=g++ --with-gtk
 make
-snd --version
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk"
 make allclean
 echo ' '
 echo ' '
+
 echo ' CC=g++ --with-no-gui '
 ./configure --quiet CC=g++ --with-no-gui
 make
 ./snd --version
+./snd -noinit --features "'clm 'snd-nogui 'snd-guile"
 make allclean
+
 echo ' CC=g++ --without-guile --without-ruby '
 ./configure --quiet CC=g++ --without-guile --without-ruby
 make
 ./snd --version
+./snd -noinit --features "'clm 'snd-motif"
 make allclean
+echo ' '
+echo ' '
+
 echo ' CC=g++ --with-static-xm --with-hobbit --without-gsl --with-alsa '
 ./configure --quiet CC=g++ --with-static-xm --without-gsl --with-alsa
 make
 ./snd --version
+./snd -noinit --features "'clm 'alsa 'xm"
 make allclean
 echo ' '
 echo ' '
+
 echo ' -------------------------------- sndlib test -------------------------------- '
 make allclean
 rm -f snd
@@ -538,9 +660,11 @@ sndinfo test.snd
 echo ' '
 echo ' '
 make allclean
+echo ' --quiet --with-shared-sndlib'
 ./configure --quiet --with-shared-sndlib
 make
 ./snd --version
+./snd -noinit --features "'clm"
 
 echo ' '
 echo ' '
@@ -552,7 +676,8 @@ echo ' CFLAGS="-Wall" --with-no-gui '
 make
 echo ' '
 echo ' '
-snd --version
+./snd --version
+./snd -noinit --features "'clm 'snd-nogui 'snd-guile"
 
 echo ' -------------------------------- configure --disable-nls in various forms -------------------------------- '
 make allclean
@@ -564,113 +689,191 @@ echo ' CFLAGS="-Wall" --disable-nls '
 ./configure --quiet CFLAGS="-Wall" --disable-nls
 make
 ./snd --version
+./snd -noinit --features "'clm 'snd-guile"
 make allclean
 echo ' '
 echo ' '
+
 echo ' CC=g++ --with-gtk --disable-nls  '
 ./configure --quiet CC=g++ --with-gtk --disable-nls
 make
 ./snd --version
+./snd -noinit --features "'clm 'snd-gtk"
 make allclean
 echo ' '
 echo ' '
+
 echo ' CC=g++ --with-no-gui --disable-nls '
 ./configure --quiet CC=g++ --with-no-gui --disable-nls
 make
 ./snd --version
+./snd -noinit --features "'clm 'snd-nogui 'snd-guile"
 make allclean
 echo ' '
 echo ' '
+
 echo ' CC=g++ --without-guile --without-ruby --disable-nls '
 ./configure --quiet CC=g++ --without-guile --without-ruby --disable-nls
 make
 ./snd --version
+./snd -noinit --features "'clm"
 make allclean
 echo ' '
 echo ' '
+
 echo ' CC=g++ --with-static-xm --disable-nls '
 ./configure --quiet CC=g++ --with-static-xm --disable-nls
 make
 ./snd --version
+./snd -noinit --features "'clm 'xm"
 ./snd -e "(begin (display (+ 1 2 3)) (exit))"
 make allclean
 echo ' '
 echo ' '
+
 echo ' CFLAGS="-Wall" --with-ruby --disable-nls '
 ./configure --quiet CFLAGS="-Wall" --with-ruby --disable-nls
 make
 ./snd --version
+./snd -noinit --features ":clm, :snd_ruby"
 make allclean
 cp makefile.gettext makefile.in
 
+echo ' '
+echo ' '
 echo ' --with-static-xm CFLAGS="-DXM_DISABLE_DEPRECATED -Wall" '
 ./configure --quiet --with-static-xm CFLAGS="-DXM_DISABLE_DEPRECATED -Wall"
 make
-snd --version
+./snd --version
+./snd -noinit --features "'clm 'xm"
 make allclean
+echo ' '
+echo ' '
+
 echo ' --with-static-xm --with-ruby CFLAGS="-DXM_DISABLE_DEPRECATED -Wall" '
 ./configure --quiet --with-static-xm --with-ruby CFLAGS="-DXM_DISABLE_DEPRECATED -Wall"
 make
 ./snd --version
+./snd -noinit --features ":clm, :xm, :snd_ruby"
 make allclean
 
+echo ' '
+echo ' '
+echo ' --with-no-gui --without-guile --without-ruby --quiet'
 ./configure --with-no-gui --without-guile --without-ruby --quiet
 make
 ./snd --version
+./snd -noinit --features "'clm 'snd-nogui"
 make allclean
+echo ' '
+echo ' '
+
+echo ' --without-guile --without-ruby --with-static-xm --with-gl --quiet'
 ./configure --without-guile --without-ruby --with-static-xm --with-gl --quiet
 make
 ./snd --version
+./snd -noinit --features "'clm 'xm"
 make allclean
+echo ' '
+echo ' '
+
+echo ' --without-guile --without-ruby --with-gtk --with-static-xg --with-gl --quiet'
 ./configure --without-guile --without-ruby --with-gtk --with-static-xg --with-gl --quiet
 make
 ./snd --version
+./snd -noinit --features "'clm 'xg"
 make allclean
+echo ' '
+echo ' '
+
+echo ' --without-fam --quiet'
 ./configure --without-fam --quiet
 make
+./snd --version
+./snd -noinit --features "'clm 'snd-guile 'snd-motif 'sndlib"
 make allclean
 make allclean
+echo ' '
+echo ' '
+
+echo ' --without-fam --with-gtk --quiet'
 ./configure --without-fam --with-gtk --quiet
 make
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk"
 make allclean
 
+echo ' '
+echo ' '
+echo ' --enable-threads --quiet'
 ./configure --enable-threads --quiet
 make
 ./snd --version
+./snd -noinit --features "'clm 'snd-guile 'snd-motif"
 make allclean
 
+echo ' '
+echo ' '
+echo ' --enable-threads --quiet CC=g++'
 ./configure --enable-threads --quiet CC=g++
 make
 ./snd --version
+./snd -noinit --features "'clm 'snd-guile"
 make allclean
 
+echo ' '
+echo ' '
+echo ' --enable-threads --with-gtk --with-ruby --quiet'
 ./configure --enable-threads --with-gtk --with-ruby --quiet
 make
 ./snd --version
+./snd -noinit --features ":clm, :snd-gtk, :snd_ruby"
 make allclean
 
-./configure --with-ruby --with-ruby-prefix=/home/bil/test/tmp-ruby
+echo ' '
+echo ' '
+echo ' --quiet --with-ruby --with-ruby-prefix=/home/bil/test/tmp-ruby'
+./configure --quiet --with-ruby --with-ruby-prefix=/home/bil/test/tmp-ruby
 make
 ./snd --version
+./snd -noinit --features ":clm, :snd_ruby"
 make allclean
 
+echo ' '
+echo ' '
+echo ' --with-jack CFLAGS="-I/home/bil/test/include" LDFLAGS="-L/home/bil/test/lib" GUILE_CONFIG_path=/home/bil/test/bin'
 ./configure --with-jack CFLAGS="-I/home/bil/test/include" LDFLAGS="-L/home/bil/test/lib" GUILE_CONFIG_path=/home/bil/test/bin
 make
 ./snd --version
+./snd -noinit --features "'clm 'snd-guile"
 make allclean
 
-./configure --with-gtk --with-static-xg --with-jack CFLAGS="-I/home/bil/test/include" LDFLAGS="-L/home/bil/test/lib" GUILE_CONFIG_path=/home/bil/test/bin
+echo ' '
+echo ' '
+echo ' --quiet --with-gtk --with-static-xg --with-jack CFLAGS="-I/home/bil/test/include" LDFLAGS="-L/home/bil/test/lib" GUILE_CONFIG_path=/home/bil/test/bin'
+./configure --quiet --with-gtk --with-static-xg --with-jack CFLAGS="-I/home/bil/test/include" LDFLAGS="-L/home/bil/test/lib" GUILE_CONFIG_path=/home/bil/test/bin
 make
 ./snd --version
+./snd -noinit --features "'clm 'xg 'snd-gtk 'snd-guile"
 make allclean
 
+echo ' '
+echo ' '
+echo ' --quiet --with-snd-as-pd-external --with-no-gui CFLAGS="-I/home/bil/test/include" LDFLAGS="-L/home/bil/test/lib" GUILE_CONFIG_path=/home/bil/test/bin'
 ./configure --quiet --with-snd-as-pd-external --with-no-gui CFLAGS="-I/home/bil/test/include" LDFLAGS="-L/home/bil/test/lib" GUILE_CONFIG_path=/home/bil/test/bin
 make
+./snd --version
+./snd -noinit --features "'clm 'snd-nogui 'snd-pd-external 'snd-guile"
 make allclean
 
 setenv PKG_CONFIG_PATH /home/bil/test/old-gtk/lib/pkgconfig
+echo ' '
+echo ' '
+echo ' --quiet --with-gtk CFLAGS="-Wall -I/home/bil/test/old-gtk"'
 ./configure --quiet --with-gtk CFLAGS="-Wall -I/home/bil/test/old-gtk"
 make
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk"
 
 setenv PKG_CONFIG_PATH /usr/local/lib/pkgconfig
 
