@@ -1183,7 +1183,7 @@ static void read_snd_opened_sound_file(snd_info *sp)
   newname = snd_opened_sound_file_name(sp);
   if (file_write_date(newname) >= sp->write_date)
     {
-#if HAVE_SCHEME
+#if HAVE_GUILE
       /* this file shouldn't be left in the load list -- it will confuse the save-state process 
        *   (*snd-opened-sound* is defined here but not at the saved state file reload point)
        * *snd-loaded-files* is the variable name (snd-xen.c), so we save and restore its value if possible 
@@ -1238,10 +1238,10 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
   if (sp)
     {
       int files;
-#if HAVE_RUBY || HAVE_FORTH
+#if HAVE_RUBY || HAVE_FORTH || HAVE_GAUCHE
       XEN_VARIABLE_SET(S_snd_opened_sound, C_TO_XEN_INT(sp->index));
 #endif
-#if HAVE_SCHEME
+#if HAVE_GUILE
       XEN_VARIABLE_SET(snd_opened_sound, C_TO_XEN_INT(sp->index));
       XEN_VARIABLE_SET(snd_memo_sound, C_TO_XEN_INT(sp->index)); /* backwards compatibility */
 #endif

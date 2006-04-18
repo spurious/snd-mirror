@@ -8,15 +8,18 @@
  * Guile:     covers 1.3.4 to present (1.8.0) given the configuration macros in the Snd or Libxm config.h.in.
  * Ruby:      covers 1.6 to present (1.9)
  * Forth:     covers all
+ * Gauche:    covers 0.8.7 (work in progress)
  * None:      covers all known versions of None
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 0
-#define XEN_VERSION "2.0"
+#define XEN_MINOR_VERSION 2
+#define XEN_VERSION "2.2"
 
 /* HISTORY:
  *
+ *  17-Apr-06: removed XEN_MAKE_OBJECT.
+ *  15-Apr-06: Gauche support (in progress).
  *  28-Mar-06: Forth support thanks to Mike Scholz.
  *  --------
  *  7-Nov-05:  xen_rb_defined_p (Mike Scholz).
@@ -463,7 +466,6 @@
 #endif
 #define XEN_OBJECT_REF(a) SCM_SMOB_DATA(a)
 /* remember to check the smob type agreement before calling XEN_OBJECT_REF! */
-#define XEN_MAKE_OBJECT(Var, Tag, Val, ig1, ig2)  SCM_NEWSMOB(Var, Tag, Val)
 
 #if HAVE_SCM_REMEMBER_UPTO_HERE
   #if HAVE_SCM_T_CATCH_BODY
@@ -516,20 +518,28 @@
   #define XEN_PROCEDURE_CAST
 #endif
 
-#if XEN_DEBUGGING && HAVE_SCM_C_DEFINE_GSUBR
-  #define XEN_NEW_PROCEDURE(Name, Func, Req, Opt, Rst) xen_guile_dbg_new_procedure(Name, XEN_PROCEDURE_CAST Func, Req, Opt, Rst)
-#else
 #if HAVE_SCM_C_DEFINE_GSUBR
   #define XEN_NEW_PROCEDURE(Name, Func, Req, Opt, Rst) scm_c_define_gsubr(Name, Req, Opt, Rst, XEN_PROCEDURE_CAST Func)
 #else
   #define XEN_NEW_PROCEDURE(Name, Func, Req, Opt, Rst) gh_new_procedure(Name, XEN_PROCEDURE_CAST Func, Req, Opt, Rst)
 #endif
-#endif
 
-#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  if ((char *)(Doc) != (char *)(NULL))					\
-    scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc)); \
-  else XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg)
+#if XEN_DEBUGGING && HAVE_SCM_C_DEFINE_GSUBR
+
+  #define XEN_NEW_PROCEDURE_WITH_CHECK(Name, Func, Req, Opt, Rst) xen_guile_dbg_new_procedure(Name, XEN_PROCEDURE_CAST Func, Req, Opt, Rst)
+  #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+    if ((char *)(Doc) != (char *)(NULL))					\
+      scm_set_procedure_property_x(XEN_NEW_PROCEDURE_WITH_CHECK(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc)); \
+    else XEN_NEW_PROCEDURE_WITH_CHECK(Name, Func, ReqArg, OptArg, RstArg)
+
+#else
+
+  #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+    if ((char *)(Doc) != (char *)(NULL))					\
+      scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc)); \
+    else XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg)
+
+#endif
 
 /* Set_Name is ignored here, but is needed in Ruby */
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
@@ -884,7 +894,6 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_MARK_OBJECT_TYPE            void *
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Mark, Free) return(Data_Wrap_Struct(Tag, Mark, Free, Val))
 #define XEN_OBJECT_REF(a)               DATA_PTR(a)
-#define XEN_MAKE_OBJECT(Var, Tag, Val, Mark, Free) Var = Data_Wrap_Struct(Tag, Mark, Free, Val)
 #define XEN_OBJECT_TYPE                 VALUE
 #define XEN_OBJECT_TYPE_P(OBJ, TAG)     (XEN_BOUND_P(OBJ) && (rb_obj_is_instance_of(OBJ, TAG)))
 #define XEN_MAKE_OBJECT_TYPE(Typ, Siz)  rb_define_class(xen_scheme_constant_to_ruby(Typ), rb_cObject)
@@ -1379,7 +1388,6 @@ bool xen_rb_arity_ok(int rargs, int args);
 #define XEN_OBJECT_TYPE                 FTH
 #define XEN_MARK_OBJECT_TYPE            void
 
-#define XEN_MAKE_OBJECT(Var, Tag, Val, Mark, Free)       ((Var) = fth_make_instance(Tag, Val))
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Mark, Free) return(fth_make_instance(Tag, Val))
 
 #define XEN_OBJECT_TYPE_P(Obj, Tag)     fth_object_is_instance_of(Obj, Tag)
@@ -1424,6 +1432,390 @@ bool xen_rb_arity_ok(int rargs, int args);
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #endif /* end HAVE_FORTH */
+
+
+/* ------------------------------ GAUCHE ------------------------------ */
+
+#if HAVE_GAUCHE
+
+/* gauche.h requires its config.h thereby clobbering some of our macros.  I'll try to protect the ones I notice */
+#define LOCAL_SIZEOF_OFF_T SIZEOF_OFF_T
+#undef SIZEOF_OFF_T
+#include <gauche.h>
+#undef SIZEOF_OFF_T
+#define SIZEOF_OFF_T LOCAL_SIZEOF_OFF_T
+
+#define XEN_OK 1
+
+#define XEN_FILE_EXTENSION           "scm"
+#define XEN_COMMENT_STRING           ";"
+#define XEN_EMPTY_LIST               SCM_NIL
+
+#define XEN                          ScmObj
+#define XEN_TRUE                     SCM_TRUE
+#define XEN_FALSE                    SCM_FALSE
+#define XEN_TRUE_P(a)                SCM_TRUEP(a)
+#define XEN_FALSE_P(a)               SCM_FALSEP(a)
+
+#define XEN_UNDEFINED                SCM_UNDEFINED
+/* XEN_UNDEFINED_P is used in the sense of "is this identifier (a string) defined" */
+/*   as a function argument, XEN_UNDEFINED is a marker that the given argument was not supplied */
+#define XEN_DEFINED_P(Name)          (SCM_UNDEFINEDP(SCM_INTERN(Name)) || SCM_UNBOUNDP(SCM_INTERN(Name)))
+
+/* in Gauche, undefined != unbound (SCM_UNDEFINED, SCM_UNBOUND), but the distinction is blurred in other cases */
+/* XEN_NOT_BOUND_P is applied to XEN objects, not strings */
+#define XEN_BOUND_P(Arg)             (!(SCM_UNDEFINEDP(Arg)))
+#define XEN_NOT_BOUND_P(Arg)         SCM_UNDEFINEDP(Arg)
+
+#define XEN_EQ_P(a, b)               SCM_EQ(a, b)
+#define XEN_EQV_P(A, B)              ((bool)Scm_EqvP(A, B))
+#define XEN_EQUAL_P(A, B)            ((bool)Scm_EqualP(A, B))
+#define XEN_NULL_P(a)                SCM_NULLP(a)
+
+#define XEN_BOOLEAN_P(Arg)           SCM_BOOLP(Arg)
+#define C_TO_XEN_BOOLEAN(a)          SCM_MAKE_BOOL(a)
+#define XEN_TO_C_BOOLEAN(a)          SCM_BOOL_VALUE(a)
+
+#define XEN_CAR(a)                   SCM_CAR(a)
+#define XEN_CADR(a)                  SCM_CADR(a)
+#define XEN_CADDR(a)                 SCM_CAR(SCM_CDDR(a))
+#define XEN_CADDDR(a)                SCM_CAR(SCM_CDR(SCM_CDDR(a)))
+#define XEN_CDR(a)                   SCM_CDR(a)
+#define XEN_CDDR(a)                  SCM_CDDR(a)
+
+#define XEN_CONS_P(Arg)              SCM_PAIRP(Arg)
+#define XEN_PAIR_P(Arg)              SCM_PAIRP(Arg)
+#define XEN_CONS(Arg1, Arg2)         Scm_Cons(Arg1, Arg2)
+#define XEN_CONS_2(Arg1, Arg2, Arg3) Scm_Cons(Arg1, Scm_Cons(Arg2, Arg3))
+
+#define XEN_LIST_P(Arg)              SCM_LISTP(Arg)
+#define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = ((int)Scm_Length(Arg))) >= 0)
+#define XEN_LIST_LENGTH(Arg)         Scm_Length(Arg)
+#define XEN_LIST_REF(Lst, Num)       Scm_ListRef(Lst, Num, XEN_FALSE)
+#define XEN_LIST_SET(Lst, Loc, Val)  xen_gauche_list_set_x(Lst, Loc, Val)
+#define XEN_LIST_REVERSE(Lst)        Scm_Reverse(Lst)
+#define XEN_LIST_1(a)                SCM_LIST1(a)
+#define XEN_LIST_2(a, b)             SCM_LIST2(a, b)
+#define XEN_LIST_3(a, b, c)          SCM_LIST3(a, b, c)
+#define XEN_LIST_4(a, b, c, d)       SCM_LIST4(a, b, c, d)
+#define XEN_LIST_5(a, b, c, d, e)    SCM_LIST5(a, b, c, d, e)
+#define XEN_LIST_6(a, b, c, d, e, f)          Scm_List(a, b, c, d, e, f)
+#define XEN_LIST_7(a, b, c, d, e, f, g)       Scm_List(a, b, c, d, e, f, g)
+#define XEN_LIST_8(a, b, c, d, e, f, g, h)    Scm_List(a, b, c, d, e, f, g, h)
+#define XEN_LIST_9(a, b, c, d, e, f, g, h, i) Scm_List(a, b, c, d, e, f, g, h, i)
+#define XEN_APPEND(a, b)             Scm_Append2(a, b)
+#define XEN_COPY_ARG(Lst)            Lst
+
+#define XEN_VECTOR_P(Arg)            SCM_VECTORP(Arg)
+#define XEN_VECTOR_LENGTH(Arg)       SCM_VECTOR_SIZE(Arg)
+#define XEN_VECTOR_REF(Vect, Num)    Scm_VectorRef(SCM_VECTOR(Vect), Num, XEN_FALSE)
+#define XEN_VECTOR_SET(Vect, Num, Val) Scm_VectorSet(SCM_VECTOR(Vect), Num, Val)
+#define XEN_VECTOR_TO_LIST(Vect)     Scm_VectorToList(SCM_VECTOR(Vect), 0, XEN_VECTOR_LENGTH(Vect) - 1)
+#define XEN_MAKE_VECTOR(Num, Fill)   Scm_MakeVector(Num, Fill)
+
+#define XEN_NUMBER_P(Arg)            SCM_NUMBERP(Arg)
+#define XEN_ZERO                     SCM_MAKE_INT(0)
+#define XEN_INTEGER_P(Arg)           SCM_INTEGERP(Arg)
+#define XEN_TO_C_INT(a)              SCM_INT_VALUE(a)
+#define XEN_TO_C_INT_OR_ELSE(a, b)   ((XEN_INTEGER_P(a)) ? XEN_TO_C_INT(a) : b)
+#define C_TO_XEN_INT(a)              SCM_MAKE_INT(a)
+#define XEN_DOUBLE_P(Arg)            SCM_REALP(Arg)
+#define XEN_TO_C_DOUBLE(a)           xen_to_c_double(a)
+#define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ((XEN_NUMBER_P(a)) ? XEN_TO_C_DOUBLE(a) : b)
+#define C_TO_XEN_DOUBLE(a)           Scm_MakeFlonum(a)
+#define XEN_TO_C_ULONG(a)            Scm_BignumToUI(SCM_BIGNUM(a), SCM_CLAMP_NONE, NULL)
+#define C_TO_XEN_ULONG(a)            (SCM_OBJ(Scm_MakeBignumFromUI((unsigned long)a)))
+#define XEN_ULONG_P(Arg)             SCM_BIGNUMP(Arg)
+#define XEN_EXACT_P(Arg)             SCM_EXACTP(Arg)
+#define C_TO_XEN_LONG_LONG(a)        (SCM_OBJ(Scm_MakeBignumFromSI(a)))
+#define XEN_TO_C_LONG_LONG(a)        ((off_t)(Scm_BignumToSI64(SCM_BIGNUM(a), SCM_CLAMP_NONE, NULL)))
+#define XEN_OFF_T_P(Arg)             (SCM_INTEGERP(Arg) || SCM_BIGNUMP(Arg))
+#define XEN_COMPLEX_P(Arg)           SCM_COMPLEXP(Arg)
+#define XEN_TO_C_COMPLEX(a)          (SCM_COMPLEX_REAL(a) + SCM_COMPLEX_IMAG(a) * _Complex_I)
+#define C_TO_XEN_COMPLEX(a)          Scm_MakeComplex(creal(a), cimag(a))
+
+#define XEN_CHAR_P(Arg)              SCM_CHARP(Arg)
+#define XEN_TO_C_CHAR(Arg)           SCM_CHAR_VALUE(Arg)
+#define C_TO_XEN_CHAR(c)             SCM_MAKE_CHAR(c)
+
+#define XEN_KEYWORD_P(Obj)           SCM_KEYWORDP(Obj)
+#define XEN_MAKE_KEYWORD(Arg)        SCM_MAKE_KEYWORD(Arg)
+#define XEN_KEYWORD_EQ_P(k1, k2)     XEN_EQ_P(k1, k2)
+
+#define XEN_STRING_P(Arg)            SCM_STRINGP(Arg)
+#define XEN_TO_C_STRING(Str)         Scm_GetString(SCM_STRING(Str))
+#define C_TO_XEN_STRING(a)           SCM_MAKE_STR_COPYING(a)
+#define C_TO_XEN_STRINGN(Str, Len)   C_TO_XEN_STRING(Str) /* trouble here */
+#define C_STRING_TO_XEN_FORM(Str)    Scm_ReadFromCString(Str)
+#define XEN_EVAL_FORM(Form)          Scm_Eval(Form, SCM_OBJ(Scm_UserModule()))
+#define XEN_EVAL_C_STRING(Arg)       Scm_EvalCString(Arg, SCM_OBJ(Scm_UserModule()))
+#define XEN_SYMBOL_P(Arg)            SCM_SYMBOLP(Arg)
+#define XEN_SYMBOL_TO_C_STRING(a)    XEN_TO_C_STRING(SCM_SYMBOL_NAME(a))
+#define XEN_TO_STRING(Obj)           xen_gauche_object_to_string(Obj)
+
+/* TODO: isn't there an uninterpreted pointer handler? */
+#define XEN_WRAP_C_POINTER(a)        ((XEN)(C_TO_XEN_ULONG((unsigned long)a)))
+#define XEN_UNWRAP_C_POINTER(a)      XEN_TO_C_ULONG(a)
+#define XEN_WRAPPED_C_POINTER_P(a)   XEN_NUMBER_P(a)
+
+#define XEN_DEFINE_CONSTANT(Name, Value, Help) Scm_DefineConst(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(Name)), C_TO_XEN_INT(Value))
+#define XEN_DEFINE_VARIABLE(Name, Var, Value)  Var = SCM_DEFINE(Scm_UserModule(), Name, Value)
+#define XEN_VARIABLE_REF(Var)             Scm_SymbolValue(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(Var)))
+#define XEN_VARIABLE_SET(Var, Val)        xen_gauche_variable_set(Var, Val)
+
+/* TODO: errors */
+#define XEN_ERROR_TYPE(Typ)                 C_STRING_TO_XEN_SYMBOL(Typ)
+#define XEN_ERROR(Type, Info)               Scm_Error("oops")
+#define XEN_THROW(Tag, Arg)                 Scm_Error("oops")
+
+#define C_STRING_TO_XEN_SYMBOL(a)           SCM_INTERN(a)
+#define XEN_NAME_AS_C_STRING_TO_VALUE(a)    Scm_SymbolValue(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(a)))
+#define XEN_NAME_AS_C_STRING_TO_VARIABLE(a) Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(a)), false)
+#define XEN_SYMBOL_TO_VARIABLE(a)           Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(a), false)
+
+#define XEN_SET_DOCUMENTATION(Func, Help)   /* PROCEDURE_INFO(Func) = C_TO_XEN_STRING(Help) */
+#define XEN_DOCUMENTATION_SYMBOL            SCM_SYMBOL(SCM_INTERN("documentation"))
+/* TODO: help */
+#define XEN_OBJECT_HELP(Name)               C_TO_XEN_STRING("no help")
+
+/* TODO: structs */
+#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Ignore1, Ignore2) return(xen_gauche_make_object(Tag, (void *)Val))
+/* tag here is int -- needs ScmClass* for underlying call */
+#define XEN_OBJECT_REF(a)                                      xen_gauche_object_ref(a)
+#define XEN_OBJECT_TYPE                                        int
+/* the "Tag" type in other calls */
+#define XEN_MAKE_OBJECT_TYPE(Type, Size)	               xen_gauche_new_type(Type)
+/* Type here is a string like "Vct" */
+#define XEN_MARK_OBJECT_TYPE                                   ScmObj
+/* used only in clm2xen for mark_mus_xen */
+#define XEN_OBJECT_TYPE_P(OBJ, TAG)                            xen_gauche_type_p(OBJ, TAG)
+
+XEN xen_gauche_make_object(int type, void *val);
+void *xen_gauche_object_ref(XEN obj);
+XEN_OBJECT_TYPE xen_gauche_new_type(const char *name);
+bool xen_gauche_type_p(XEN obj, int type);
+
+/* TODO: there's also a compareproc */
+/* TODO: SCM_CLASS_APPLICABLE? -- can we use the foreignpointer with this? */
+/* flags in makeclass should include both SCM_FOREIGN_POINTER_KEEP_IDENTITY and SCM_FOREIGN_POINTER_MAP_NULL */
+
+#define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) \
+  static void Wrapped_Print(XEN obj, ScmPort *port, ScmWriteContext *pstate) \
+  { \
+    char *str; \
+    str = Original_Print((Type *)XEN_OBJECT_REF(obj)); \
+    SCM_PUTS(str, port); \
+    FREE(str); \
+  }
+
+#define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
+  static void Wrapped_Free(XEN obj) \
+  { \
+  }
+
+#define XEN_YES_WE_HAVE(Feature)      xen_gauche_provide(Feature)
+#define XEN_PROTECT_FROM_GC(Obj)      xen_gauche_permanent_object(Obj)
+#define XEN_LOAD_FILE(File)           xen_gauche_load_file(File)
+#define XEN_LOAD_FILE_WITH_PATH(File) Scm_VMLoad(SCM_STRING(C_TO_XEN_STRING(File)), XEN_FALSE, XEN_FALSE, 0)
+
+#define XEN_DEFINE(Name, Value)       SCM_DEFINE(Scm_UserModule(), Name, Value)
+
+
+/* in Gauche, hooks are just unchecked lists of procedures */
+#define XEN_HOOK_P(Arg)                    XEN_LIST_P(Arg)
+#define XEN_DEFINE_HOOK(Name, Arity, Help) XEN_DEFINE(Name, XEN_EMPTY_LIST)
+#define XEN_DEFINE_SIMPLE_HOOK(Arity)      XEN_EMPTY_LIST
+#define XEN_HOOKED(a)                      XEN_NOT_NULL_P(a)
+/* these need the variable name I think */
+/*
+#define XEN_CLEAR_HOOK(Arg)                XEN_VARIABLE_SET(Arg, XEN_EMPTY_LIST)
+#define XEN_HOOK_PROCEDURES(a)             XEN_VARIABLE_REF(a)
+*/
+#define XEN_CLEAR_HOOK(Arg)                /* a = null eventually */
+#define XEN_HOOK_PROCEDURES(a)             a
+
+
+#define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
+   do {if (!(Assertion)) Scm_Error("%s: wrong type argument (arg %d): %S, wanted %s", Caller, Position, Arg, Correct_Type);} while (0)
+
+#define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
+   Scm_Error("%s: wrong type argument (arg %d): %S, wanted %s", Caller, ArgN, Arg, Descr)
+
+#define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr) \
+  XEN_ERROR(XEN_ERROR_TYPE("out-of-range"), \
+            XEN_LIST_3(C_TO_XEN_STRING(Caller), \
+                       C_TO_XEN_STRING(Descr), \
+                       XEN_LIST_1(Arg)))
+
+
+#define XEN_PROCEDURE_P(Arg)              SCM_PROCEDUREP(Arg)
+#define XEN_PROCEDURE_HELP(Name)          SCM_PROCEDURE_INFO(Name)
+#define XEN_PROCEDURE_SOURCE_HELP(Name)   XEN_FALSE
+#define XEN_PROCEDURE_SOURCE(Func)        XEN_FALSE
+#define XEN_ARITY(Func)                   XEN_CONS(C_TO_XEN_INT(SCM_PROCEDURE_REQUIRED(Func)), C_TO_XEN_INT(SCM_PROCEDURE_OPTIONAL(Func)))
+#define XEN_REQUIRED_ARGS(Func)           SCM_PROCEDURE_REQUIRED(Func)
+#define XEN_REQUIRED_ARGS_OK(Func, Args)  (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func))) == Args)
+
+#define XEN_PROCEDURE_CAST (XEN (*)())
+#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+  xen_gauche_define_procedure(Name, XEN_PROCEDURE_CAST Func, ReqArg, OptArg, RstArg, Doc)
+#define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  xen_gauche_define_procedure_with_setter(Get_Name, Get_Func, Get_Help, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
+#define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  xen_gauche_define_procedure_with_reversed_setter(Get_Name, Get_Func, Get_Help, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
+
+#define XEN_CALL_0(Func, Caller)                   Scm_Apply(Func, XEN_EMPTY_LIST)
+#define XEN_CALL_1(Func, Arg1, Caller)             Scm_Apply(Func, XEN_LIST_1(Arg1))
+#define XEN_CALL_2(Func, Arg1, Arg2, Caller)       Scm_Apply(Func, XEN_LIST_2(Arg1, Arg2))
+#define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller) Scm_Apply(Func, XEN_LIST_3(Arg1, Arg2, Arg3))
+#define XEN_APPLY(Func, Args, Caller)              Scm_Apply(Func, Args)
+#define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller) Scm_Apply(Func, XEN_LIST_4(Arg1, Arg2, Arg3, Arg4))
+#define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) Scm_Apply(Func, XEN_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5))
+#define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) Scm_Apply(Func, XEN_LIST_6(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6))
+#define XEN_APPLY_NO_CATCH(Func, Args)              Scm_Apply(Func, Args)
+#define XEN_CALL_0_NO_CATCH(Func)                   Scm_Apply(Func, XEN_EMPTY_LIST)
+#define XEN_CALL_1_NO_CATCH(Func, Arg1)             Scm_Apply(Func, XEN_LIST_1(Arg1))
+#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)       Scm_Apply(Func, XEN_LIST_2(Arg1, Arg2))
+#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3) Scm_Apply(Func, XEN_LIST_3(Arg1, Arg2, Arg3))
+
+#define XEN_PUTS(Str, Port)      Scm_Puts((ScmString)Str, Port)
+#define XEN_DISPLAY(Val, Port)   xen_gauche_display(Val, Port)
+#define XEN_FLUSH_PORT(Port)     Scm_Flush(Port)
+#define XEN_CLOSE_PORT(Port)     Scm_ClosePort(Port)
+#define XEN_PORT_TO_STRING(Port) Scm_GetOutputString(SCM_PORT(Port))
+
+/* Scm_ShowStackTrace */
+/* error creation: error.c for allocation, also Scm_MakeError
+SCM_DEFINE_BASE_CLASS(Scm_ErrorClass, ScmError,
+                      message_print, NULL, NULL, 
+                      message_allocate, error_cpl+1);
+SCM_DEFINE_BASE_CLASS(Scm_SystemErrorClass, ScmSystemError,
+                      message_print, NULL, NULL,
+                      syserror_allocate, error_cpl);
+*/
+
+typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
+
+/* TODO: check SCM_ENTER_SUBR */
+
+#define XEN_ARGIFY_1(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+  { \
+    XEN args[1];\
+    SCM_ENTER_SUBR(#InName); \
+    xen_gauche_load_args(args, argc, 1, argv);	\
+    return(InName(args[0])); \
+  }
+
+#define XEN_ARGIFY_2(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+  { \
+    XEN args[2];\
+    xen_gauche_load_args(args, argc, 2, argv);	\
+    return(InName(args[0], args[1])); \
+  }
+
+#define XEN_ARGIFY_3(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+  { \
+    XEN args[3];\
+    xen_gauche_load_args(args, argc, 3, argv);    \
+    return(InName(args[0], args[1], args[2]));	    \
+  }
+
+#define XEN_ARGIFY_4(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+  { \
+    XEN args[4];\
+    xen_gauche_load_args(args, argc, 4, argv);	\
+    return(InName(args[0], args[1], args[2], args[3]));	\
+  }
+
+#define XEN_ARGIFY_5(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+  { \
+    XEN args[5];\
+    xen_gauche_load_args(args, argc, 5, argv);			\
+    return(InName(args[0], args[1], args[2], args[3], args[4]));	\
+  }
+
+#define XEN_ARGIFY_6(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+  { \
+    XEN args[6];\
+    xen_gauche_load_args(args, argc, 6, argv);			\
+    return(InName(args[0], args[1], args[2], args[3], args[4], args[5]));	\
+  }
+
+#define XEN_ARGIFY_7(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+  { \
+    XEN args[7];\
+    xen_gauche_load_args(args, argc, 7, argv);			\
+    return(InName(args[0], args[1], args[2], args[3], args[4], args[5], args[6])); \
+  }
+
+#define XEN_ARGIFY_8(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+  { \
+    XEN args[8];\
+    xen_gauche_load_args(args, argc, 8, argv);			\
+    return(InName(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7])); \
+  }
+
+#define XEN_ARGIFY_9(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+  { \
+    XEN args[9];\
+    xen_gauche_load_args(args, argc, 9, argv);			\
+    return(InName(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8])); \
+  }
+
+#define XEN_ARGIFY_10(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+  { \
+    XEN args[10];\
+    xen_gauche_load_args(args, argc, 10, argv);			\
+    return(InName(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])); \
+  }
+
+#define XEN_NARGIFY_0(OutName, InName) static XEN OutName(XEN *argv, int argc, void *self) {return(InName());}
+#define XEN_NARGIFY_1(OutName, InName) static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0]));}
+#define XEN_NARGIFY_2(OutName, InName) static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1]));}
+#define XEN_NARGIFY_3(OutName, InName) static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1], argv[2]));}
+#define XEN_NARGIFY_4(OutName, InName) static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1], argv[2], argv[3]));}
+#define XEN_NARGIFY_5(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4]));}
+#define XEN_NARGIFY_6(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]));}
+#define XEN_NARGIFY_7(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6]));}
+#define XEN_NARGIFY_8(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7]));}
+#define XEN_NARGIFY_9(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8]));}
+
+#define XEN_VARGIFY(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0]));}
+
+void xen_gauche_define_procedure(char *Name, XEN (*Func)(), int ReqArg, int OptArg, int RstArg, char *Doc);
+void xen_gauche_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
+  int get_req, int get_opt, int set_req, int set_opt);
+void xen_gauche_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(),
+  int get_req, int get_opt, int set_req, int set_opt);
+
+void xen_gauche_list_set_x(XEN Lst, int Loc, XEN Val);
+XEN xen_gauche_load_file(char *file);
+XEN xen_gauche_object_to_string(XEN obj);
+void xen_gauche_permanent_object(XEN obj);
+double xen_to_c_double(XEN a);
+void xen_gauche_load_args(XEN *args, int incoming_args, int args_size, XEN *arg_list);
+XEN xen_gauche_eval_c_string(char *arg);
+void xen_gauche_provide(const char *feature);
+const char *xen_gauche_features(void);
+void xen_gauche_variable_set(const char *var, XEN value);
+
+#endif
 
 
 
@@ -1536,7 +1928,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_VARIABLE_SET(a, b)
 #define XEN_VARIABLE_REF(a) 0
 #define XEN_MARK_OBJECT_TYPE         XEN
-#define XEN_MAKE_OBJECT(a, b, c, ig1, ig2)
 #define XEN_MAKE_OBJECT_TYPE(Typ, Siz) 0
 #define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) 
 #define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free)
@@ -1602,7 +1993,11 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   #define XEN_INTEGER_OR_BOOLEAN_P(Arg)          ((XEN_BOOLEAN_P(Arg))   || (XEN_INTEGER_P(Arg)))
 #endif
 
+#if GUILE
 #define XEN_ONLY_ARG 0
+#else
+#define XEN_ONLY_ARG 1
+#endif
 #define XEN_ARG_1    1
 #define XEN_ARG_2    2
 #define XEN_ARG_3    3

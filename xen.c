@@ -37,6 +37,12 @@ off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 
 off_t xen_to_c_off_t(XEN obj)
 {
+#if HAVE_GAUCHE
+  if (SCM_INTEGERP(obj))
+    return((off_t)(XEN_TO_C_INT(obj)));
+  return(XEN_TO_C_LONG_LONG(obj));
+#else
+
 #if HAVE_GUILE
   if (XEN_EXACT_P(obj))
 #endif
@@ -47,6 +53,7 @@ off_t xen_to_c_off_t(XEN obj)
 #endif
 #if HAVE_GUILE
     return((off_t)XEN_TO_C_DOUBLE(obj)); /* inexact integer squeezed through somewhere */
+#endif
 #endif
 }
 
@@ -1294,6 +1301,227 @@ void xen_initialize(void)
 }
 
 #endif 	/* HAVE_FORTH */
+
+
+/* ------------------------------ GAUCHE ------------------------------ */
+
+#if HAVE_GAUCHE
+
+char *xen_version(void)
+{
+  char *buf;
+  buf = (char *)calloc(64, sizeof(char));
+#if HAVE_SNPRINTF
+  snprintf(buf, 64, "Xen: %s, Gauche: %s", XEN_VERSION, GAUCHE_VERSION);
+#else
+  sprintf(buf, "Xen: %s, Gauche: %s", XEN_VERSION, GAUCHE_VERSION);
+#endif
+  return(buf);
+}
+
+int xen_to_c_int_or_else(XEN obj, int fallback)
+{
+  if (XEN_NUMBER_P(obj)) /* NEED CHECKS */
+    return(XEN_TO_C_INT(obj));
+  return(fallback);
+}
+
+double xen_to_c_double(XEN a) 
+{
+  double num = 0.0;
+  if (SCM_REALP(a))
+    return(Scm_GetDouble(a));
+  if (SCM_INTP(a))
+    return((double)Scm_GetInteger(a));
+  if (SCM_BIGNUMP(a))
+    return((double)Scm_GetInteger64(a));
+  return(num);
+}
+
+void xen_repl(int argc, char **argv)
+{
+  Scm_Repl(SCM_FALSE, SCM_FALSE, SCM_FALSE, SCM_FALSE);
+}
+
+void xen_initialize(void)
+{
+  Scm_Init(GAUCHE_SIGNATURE); /* signature is apparently a version mismatch check? (core.c) */
+  {
+    SCM_UNWIND_PROTECT {
+      Scm_Load("gauche-init.scm", 0);
+    }
+    SCM_WHEN_ERROR {
+      fprintf(stderr, "Error in initialization file.\n");
+    }
+    SCM_END_PROTECT;
+  }
+}
+
+void xen_gc_mark(XEN val)
+{
+}
+
+void xen_gauche_load_args(XEN *args, int incoming_args, int args_size, XEN *arg_list)
+{
+  int i, len;
+  XEN list;
+  for (i = 0; i < incoming_args - 1; i++) args[i] = arg_list[i];
+  if (incoming_args <= args_size)
+    {
+      int j;
+      list = arg_list[incoming_args - 1];
+      len = XEN_LIST_LENGTH(list);
+      for (i = incoming_args - 1, j = 0; (j < len) && (i < args_size); i++, j++) args[i] = XEN_LIST_REF(list, j);
+      for (i = incoming_args - 1 + len; i < args_size; i++) args[i] = XEN_UNDEFINED;
+    }
+}
+
+void xen_gauche_define_procedure(char *Name, XEN (*Func)(), int ReqArg, int OptArg, int RstArg, char *Doc)
+{
+  XEN proc;
+  proc = Scm_MakeSubr(Func, NULL, ReqArg, OptArg, SCM_MAKE_STR_COPYING(Name));
+  SCM_DEFINE(Scm_UserModule(), Name, proc);
+/* TODO: g++:
+xen.c:1382: error: invalid conversion from 'ScmHeaderRec* (*)()' to 'ScmHeaderRec* (*)(ScmHeaderRec**, int, void*)'
+xen.c:1382: error:   initializing argument 1 of 'ScmHeaderRec* Scm_MakeSubr(ScmHeaderRec* (*)(ScmHeaderRec**, int, void*), void*, int, int, ScmHeaderRec*)'
+*/
+}
+
+void xen_gauche_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), 
+					     int get_req, int get_opt, int set_req, int set_opt)
+{
+  XEN proc, set_proc;
+  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_name));
+  SCM_DEFINE(Scm_UserModule(), get_name, proc);
+  set_proc = Scm_MakeSubr(set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING(get_name));
+  Scm_SetterSet((ScmProcedure *)proc, (ScmProcedure *)set_proc, false);
+}
+
+void xen_gauche_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
+						      int get_req, int get_opt, int set_req, int set_opt)
+{
+  XEN proc, set_proc;
+  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_name));
+  SCM_DEFINE(Scm_UserModule(), get_name, proc);
+  set_proc = Scm_MakeSubr(reversed_set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING(get_name));
+  Scm_SetterSet((ScmProcedure *)proc, (ScmProcedure *)set_proc, false);
+}
+
+void xen_gauche_list_set_x(XEN Lst, int Loc, XEN Val)
+{
+  /* modelled on Scm_ListRef in src/list.c */
+  int k;
+  if (Loc < 0) return;
+  for (k = 0; k < Loc; k++)
+    {
+      if (!SCM_PAIRP(Lst)) return;
+      Lst = SCM_CDR(Lst);
+    }
+  if (!SCM_PAIRP(Lst)) return;
+  SCM_SET_CAR(Lst, Val);
+}
+
+XEN xen_gauche_load_file(char *file)
+{
+  Scm_Load(file, 0); /* returns an int, but we want (XEN) error indication */
+  /* flags is or of SCM_LOAD_QUIET_NOFILE SCM_LOAD_IGNORE_CODING */
+  return(XEN_FALSE);
+}
+
+XEN xen_gauche_object_to_string(XEN obj)
+{
+  /* return XEN string description of obj */
+  ScmObj ostr;
+  ostr = Scm_MakeOutputStringPort(true);
+  Scm_Write(obj, SCM_OBJ(ostr), true);
+  return(Scm_GetOutputString(SCM_PORT(ostr)));
+}
+
+void xen_gauche_permanent_object(XEN obj)
+{
+}
+
+XEN xen_gauche_eval_c_string(char *arg)
+{
+#if 0
+  char *expr;
+  int len;
+  XEN result;
+  len = strlen(arg) + 128;
+  expr = (char *)calloc(len, sizeof(char));
+  snprintf(expr, len, "(with-error-handler (lambda (e) (display e)) (lambda () %s))", arg);
+  result = Scm_EvalCString(expr, SCM_OBJ(Scm_UserModule()));
+  free(expr);
+  return(result);
+#else
+  /* TODO: protect eval from errors somehow -- needs to be "at top level" */
+  return(Scm_EvalCString(arg, SCM_OBJ(Scm_UserModule())));
+#endif
+}
+
+void xen_gauche_variable_set(const char *var, XEN value)
+{
+  char *expr, *valstr;
+  int len;
+  valstr = XEN_TO_C_STRING(xen_gauche_object_to_string(value));
+  len = strlen(var) + 128 + strlen(valstr);
+  expr = (char *)calloc(len, sizeof(char));
+  snprintf(expr, len, "(with-error-handler (lambda (e) (display e)) (lambda () (set! %s %s)))", var, valstr);
+  Scm_EvalCString(expr, SCM_OBJ(Scm_UserModule()));
+  free(expr);
+}
+
+XEN xen_gauche_make_object(int type, void *val)
+{
+  return(XEN_FALSE);
+}
+
+void *xen_gauche_object_ref(XEN obj)
+{
+  return(NULL);
+}
+
+XEN_OBJECT_TYPE xen_gauche_new_type(const char *name)
+{
+  return(0);
+}
+
+bool xen_gauche_type_p(XEN obj, int type)
+{
+  return(false);
+}
+
+static char *features = NULL;
+static int features_size = 0;
+void xen_gauche_provide(const char *feature)
+{
+  /* there is no *features* list in Gauche!! ldinfo.provided is hidden in src/load.c, *cond-features* looks like some unrelated kludge */
+  Scm_Provide(C_TO_XEN_STRING(feature)); /* for Gauche's "provided?" function? */
+  if (features)
+    {
+      if ((int)(strlen(features) + 2 + strlen(feature)) >= features_size)
+	{
+	  features_size *= 2;
+	  features = (char *)realloc(features, features_size);
+	}
+      strcat(features, " ");
+      strcat(features, feature);
+    }
+  else
+    {
+      features_size = 512;
+      features = (char *)calloc(features_size, sizeof(char));
+      snprintf(features, features_size, "%s", feature);
+    }
+}
+
+const char *xen_gauche_features(void)
+{
+  return(features);
+}
+
+#endif
+
 
 
 /* ------------------------------ NONE OF THE ABOVE ------------------------------ */

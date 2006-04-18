@@ -130,6 +130,9 @@ static void initialize_load_path(void)
 #if HAVE_FORTH
 	  fth_add_load_path(dirnames[i]);
 #endif
+#if HAVE_GAUCHE
+	  Scm_AddLoadPath(dirnames[i], false);
+#endif
 	  FREE(dirnames[i]);
 	}
       FREE(dirnames);
@@ -367,6 +370,10 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 #if HAVE_FORTH
   xen_initialize();
 #endif
+#if HAVE_GAUCHE
+    GC_INIT();
+    Scm_Init(GAUCHE_SIGNATURE);
+#endif
 
   for (i = 1; i < argc; i++)
     {
@@ -424,7 +431,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->xen_error_handler = NULL;
 
 #if USE_NO_GUI || HAVE_RUBY || HAVE_FORTH
-  ss->catch_exists = 1; /* scm_shell */
+  ss->catch_exists = 1; /* scm_shell for USE_NO_GUI case */
 #else
   ss->catch_exists = 0;
 #endif

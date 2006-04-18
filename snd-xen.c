@@ -5,6 +5,7 @@
 /* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile versions,
  *   delay is protected in clm2xen.c as %delay, frame? as %frame?
  *   In Ruby, rand is protected as kernel_rand.
+ *   In Forth, Snd' exit is named snd-exit.
  */
 
 
@@ -32,7 +33,11 @@ void dump_protection(FILE *Fp)
 	  gcdat = XEN_VECTOR_REF(gc_protection, i);
 	  if (!(XEN_EQ_P(gcdat, DEFAULT_GC_VALUE)))
 	    {
-#if HAVE_SCHEME
+#if HAVE_GAUCHE
+	      /* TODO: gauche debug protection print */
+	      fprintf(Fp,"  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdat));
+#endif
+#if HAVE_GUILE
 	      fprintf(Fp,"  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdat));
 	      if (XEN_HOOK_P(gcdat))
 		fprintf(Fp, " -> %s", XEN_AS_STRING(scm_hook_to_list(gcdat)));
@@ -556,6 +561,19 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 }
 #endif
 
+#if HAVE_GAUCHE
+XEN snd_catch_scm_error(XEN e)
+{
+  fprintf(stderr,"got: %s\n", XEN_AS_STRING(e));
+  return(XEN_FALSE);
+}
+XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
+{
+  /* result = Scm_VMWithErrorHandler(SCM_OBJ(snd_catch_scm_error), catcher); */
+  return((*body)(body_data));
+}
+#endif
+
 #if HAVE_RUBY || HAVE_FORTH
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
@@ -863,6 +881,9 @@ XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
 
 char *g_print_1(XEN obj) /* free return val */
 {
+#if HAVE_GAUCHE
+  return(copy_string(XEN_AS_STRING(obj))); 
+#endif
 #if HAVE_GUILE
 #if HAVE_SCM_OBJECT_TO_STRING
   return(copy_string(XEN_AS_STRING(obj))); 
@@ -958,10 +979,10 @@ void snd_report_result(XEN result, const char *buf)
 
 void snd_report_listener_result(XEN form)
 {
-#if HAVE_RUBY || HAVE_FORTH
+#if HAVE_RUBY || HAVE_FORTH || HAVE_GAUCHE
   snd_report_result(form, "\n");
 #endif
-#if HAVE_SCHEME
+#if HAVE_GUILE
   snd_report_result(snd_catch_any(eval_form_wrapper, (void *)form, NULL), "\n");
 #endif
 }
@@ -1113,6 +1134,11 @@ void snd_load_init_file(bool no_global, bool no_init)
   #define SND_PREFS "~/.snd_prefs_guile"
   #define SND_INIT "~/.snd_guile"
 #endif
+#if HAVE_GAUCHE
+  #define SND_EXT_CONF "/etc/snd_gauche.conf"
+  #define SND_PREFS "~/.snd_prefs_gauche"
+  #define SND_INIT "~/.snd_gauche"
+#endif
 #if HAVE_RUBY
   #define SND_EXT_CONF "/etc/snd_ruby.conf"
   #define SND_PREFS "~/.snd_prefs_ruby"
@@ -1241,12 +1267,12 @@ void check_features_list(char *features)
   /* check for list of features, report any missing, exit (for compsnd) */
   /*  this can't be in snd.c because we haven't fully initialized the extension language and so on at that point */
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
   XEN_EVAL_C_STRING(mus_format("(for-each \
                                   (lambda (f)	\
                                     (if (not (provided? f)) \
                                         (display (format #f \"~%%no ~A!~%%~%%\" f)))) \
-                                    (list %s))", features));
+                                  (list %s))", features));
 #endif
 #if HAVE_RUBY
   /* provided? is defined in examp.rb */
@@ -1256,8 +1282,15 @@ void check_features_list(char *features)
                                   end\n\
                                 end\n", features));
 #endif
+#if HAVE_GAUCHE
+  XEN_EVAL_C_STRING(mus_format("(for-each \
+                                  (lambda (f)	\
+                                    (if (not (provided? f)) \
+                                        (display (string-append (string #\newline) \"no \" (symbol->string f) \"!\" (string #\newline))))) \
+                                  (list %s))", features));
+#endif
 #if HAVE_FORTH
-  /* TODO: forth side of features check */
+  /* TODO: forth and gauche side of features check */
 #endif
   snd_exit(0);
 }
@@ -3447,6 +3480,10 @@ XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
 void g_init_xmix(void);
 #endif
 
+#if HAVE_GAUCHE
+#define XEN_EVAL_C_STRING_UNCHECKED(Expr) Scm_EvalCString(Expr, SCM_OBJ(Scm_UserModule()))
+#endif
+
 void g_initialize_gh(void)
 {
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe, g_mus_audio_describe_w, 0, 0, 0, H_mus_audio_describe);
@@ -3920,11 +3957,77 @@ that name is presented in the New File dialog."
   /* load-from-path can still be fooled, but the user will have to work at it. */
   /* If you load Guile's debug.scm by mistake (set! %load-verbosely #t) to see Snd's names get clobbered! */
 #endif
+
+#if HAVE_GAUCHE
+  XEN_EVAL_C_STRING_UNCHECKED("(define redo-edit redo)");        /* consistency with Ruby */
+  XEN_EVAL_C_STRING_UNCHECKED("(define undo-edit undo)");
+  XEN_EVAL_C_STRING_UNCHECKED("(define *snd-loaded-files* '())");
+  XEN_EVAL_C_STRING_UNCHECKED("(define *snd-remember-paths* #t)");
+  XEN_EVAL_C_STRING_UNCHECKED("(define hook? list?)");
+  XEN_EVAL_C_STRING_UNCHECKED("(define hook-empty? null?)");
+
+  XEN_EVAL_C_STRING_UNCHECKED("(define-syntax defmacro\n  (syntax-rules ()\n    ((_ name params . body) (define-macro (name . params) . body))))");
+
+  /* XEN_EVAL_C_STRING_UNCHECKED("(use srfi-1)"); */ /* TODO: in C? */
+
+#if 0
+  /* from cm gauche.scm also lib/stk.scm */
+
+  /* see gauche/lib/slib.scm for *features* definition */
+(define system sys-system)
+(define tmpnam sys-tmpnam)
+(define getenv sys-getenv)
+(define force-output flush)
+(define gentemp gensym)
+(define getcwd sys-getcwd)
+(define chdir  sys-chdir)
+(define rename-file sys-rename)
+
+
+
+
+(use srfi-1)     ; list library
+(use srfi-13)     ; extra string support
+(use srfi-27)    ; random bits
+(use file.util)  ; current-directory, home-directory
+
+(define quit exit)  
+
+(define (delete-file f)  (sys-unlink f))
+
+(define (shell . args)
+  (sys-system (car args)))
+
+(define (list-set! lis pos val)
+  (set-car! (list-tail lis pos) val)
+  val)
+
+(define *random-state* default-random-source)
+
+(define (random n . args)
+  (if (exact? n)
+    (random-integer n)
+    (if (inexact? n)
+      (if (= n 1.0)
+          (random-real)
+          (* (random-real) n))
+      (errorf "random bounds not integer or real: ~s." n))))
+
+
+  /* TODO: defmacro? */
+  /* TODO: add defined?
+   */
+  /* TODO:  need add-hook! reset-hook! remove-hook! -- these should be macros */
+#endif
+
+#endif
+
 #if HAVE_RUBY
   XEN_EVAL_C_STRING("def clm_print(str, *args)\n\
                        snd_print format(str, *args)\n\
                        end");
 #endif
+
 #if HAVE_FORTH
   XEN_EVAL_C_STRING(": clm-print ( fmt lst -- ) string-format snd-print drop ;");
   XEN_EVAL_C_STRING("' redo alias redo-edit");        /* consistency with Ruby */
@@ -3960,6 +4063,9 @@ that name is presented in the New File dialog."
 #endif
 #if HAVE_GUILE
   XEN_YES_WE_HAVE("snd-guile");
+#endif
+#if HAVE_GAUCHE
+  XEN_YES_WE_HAVE("snd-gauche");
 #endif
 #if HAVE_FORTH
   XEN_YES_WE_HAVE("snd-forth");

@@ -170,7 +170,7 @@ static void prefs_help(prefs_info *prf)
 	    {
 	      XEN obj;
 	      obj = XEN_OBJECT_HELP(sym);
-#if HAVE_SCHEME
+#if HAVE_GUILE
 	      if (XEN_FALSE_P(obj))
 		{
 		  XEN lookup;
@@ -274,7 +274,7 @@ static char *clm_file_name(void)
 
 static void set_clm_file_name(const char *str)
 {
-#if HAVE_SCHEME
+#if HAVE_GUILE
   if (XEN_DEFINED_P("*clm-file-name*"))
     XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("*clm-file-name*"), C_TO_XEN_STRING(str));
 #endif
@@ -1082,6 +1082,10 @@ static char *find_sources(void) /* returns full filename if found else null */
   #define BASE_FILE "extensions.scm"
   file = scm_sys_search_load_path(C_TO_XEN_STRING(BASE_FILE));
 #endif
+#if HAVE_GAUCHE 
+  #define BASE_FILE "extensions.scm"
+  file = C_TO_XEN_STRING("extensions.scm"); /* TODO: how to search load path? */
+#endif
 #if HAVE_RUBY
   #define BASE_FILE "extensions.rb"
 #if RB_FIND_FILE_TAKES_VALUE
@@ -1104,7 +1108,7 @@ static char *find_sources(void) /* returns full filename if found else null */
 #if HAVE_GUILE || HAVE_FORTH
       str = copy_string(XEN_TO_C_STRING(file));
 #endif
-#if HAVE_RUBY
+#if HAVE_RUBY || HAVE_GAUCHE
       str = mus_expand_filename(XEN_TO_C_STRING(file));
 #endif
       len = snd_strlen(str);

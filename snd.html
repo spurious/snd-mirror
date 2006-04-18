@@ -55,7 +55,8 @@ named Dpysnd. It can accommodate any number of sounds each
 with any number of channels, and
 can be customized and extended
 using either <a href="http://www.gnu.org/software/guile/guile.html">Guile</a>,
-<a href="http://www.ruby-lang.org">Ruby</a>, or <a href="http://www.sourceforge.net/projects/fth">Forth</a>.
+<a href="http://www.ruby-lang.org">Ruby</a>, <a href="http://www.sourceforge.net/projects/fth">Forth</a>,
+or <a href="http://www.shiro.dreamhost.com/scheme/gauche/index.html">Gauche</a>.
 Snd is free; the code is available via anonymous ftp as 
 <a href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz">snd-8.tar.gz</a>.
 Snd has a <a href="http://ccrma.stanford.edu/software/snd/">home page</a>
@@ -394,7 +395,7 @@ various dialogs scattered around the menus will present
 no surprises.  The GL spectrograph is somewhat unusual,
 and I like the paned window approach to multichannel sounds ("<i>de gustibus...</i>").
 But it is primarily the embedded extension language
-(Guile, Ruby, or Forth) that 
+(Guile, Ruby, Forth, or Gauche) that 
 makes Snd different from other editors.
 Everything in Snd from the low-level data readers to the
 high-level editing operations is tied into the extension
@@ -404,7 +405,7 @@ canned effects, Snd gives
 you full programming power over sounds, and you can 
 extend it to include whatever you want.  But if you
 are in a big hurry, or not yet confident in your ability as a programmer, many such
-operations have been included in the various scm (Guile/Scheme),
+operations have been included in the various scm (Guile/Gauche = Scheme),
 rb (Ruby), and fth (Forth) files in the Snd tarball.  Dave Phillips
 wrote a set of files that implement dozens of the effects and
 editing operations built into other editors.  Just load the

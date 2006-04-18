@@ -25724,7 +25724,7 @@ EDITS: 5
 	 (update-transform-graph fd 0)
 	 (let ((vals (transform->vct fd 0)))
 	   (if (not vals) 
-	       (snd-display ";transform ~A ~A -> ~A" dpy-type fft-type vals)
+	       (snd-display ";transform graph-type: ~A type: ~A -> data: ~A" dpy-type fft-type vals)
 	       (begin
 		 (if (fneq (transform-sample 0 0 fd 0) (vct-ref vals 0))
 		     (snd-display ";transform-sample ~A ~A -> ~A ~A" dpy-type fft-type (vct-ref vals 0) (transform-sample 0 0 fd 0)))
@@ -34163,7 +34163,7 @@ EDITS: 1
 	(if (not (string=? (eps-file) "hiho.eps")) (snd-display ";save eps-file: ~A" (eps-file)))
 	(if (not (string=? (x-axis-label ind 0 time-graph) "time-x"))
 	    (snd-display ";save x-axis-label: ~A" (x-axis-label ind 0 time-graph)))
-	(if (not (string=? (y-axis-label ind 0 time-graph) "time-y"))
+	(if (not (string=? (y-axis-label ind 0 time-graph) "amp-y"))
 	    (snd-display ";save y-axis-label: ~A" (y-axis-label ind 0 time-graph)))
 	(if (not (feql (amp-control-bounds ind) (list 0 2.5))) 
 	    (snd-display ";save amp-control-bounds: ~A" (amp-control-bounds ind)))

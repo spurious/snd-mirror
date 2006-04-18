@@ -177,7 +177,7 @@ static int completions(char *text)
 
 #endif
 
-#if (!HAVE_EXTENSION_LANGUAGE)
+#if (!HAVE_EXTENSION_LANGUAGE) || HAVE_GAUCHE
 static int completions(char *text) {return(0);}
 #endif
 

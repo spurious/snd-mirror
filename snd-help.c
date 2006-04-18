@@ -168,10 +168,16 @@ static void main_snd_help(const char *subject, ...)
   #endif
 #endif
 
+#if USE_MOTIF
+  #define XM_VERSION_NAME "xm-version"
+#else
+  #define XM_VERSION_NAME "xg-version"
+#endif
+
 static char *xm_version(void)
 {
   XEN xm_val = XEN_FALSE;
-#if HAVE_SCHEME
+#if HAVE_GUILE
   #if USE_MOTIF
     xm_val = XEN_EVAL_C_STRING("(and (defined? 'xm-version) xm-version)");
   #else
@@ -179,6 +185,9 @@ static char *xm_version(void)
       xm_val = XEN_EVAL_C_STRING("(and (defined? 'xg-version) xg-version)");
     #endif
   #endif
+#endif
+#if HAVE_GAUCHE
+      xm_val = XEN_VARIABLE_REF(XM_VERSION_NAME);
 #endif
 #if HAVE_RUBY
   #if USE_MOTIF
@@ -192,13 +201,7 @@ static char *xm_version(void)
   #endif
 #endif
 #if HAVE_FORTH
-  #if USE_MOTIF
-      xm_val = XEN_VARIABLE_REF("xm-version");
-  #else
-    #if USE_GTK
-      xm_val = XEN_VARIABLE_REF("xg-version");
-    #endif
-  #endif
+      xm_val = XEN_VARIABLE_REF(XM_VERSION_NAME);
 #endif
   if (XEN_STRING_P(xm_val))
     {
@@ -227,7 +230,7 @@ static char *gl_version(void)
 #if (!JUST_GL)
   Init_libgl(); /* define the version string, if ./snd --version */
 #endif
-#if HAVE_SCHEME
+#if HAVE_GUILE
   gl_val = XEN_EVAL_C_STRING("(and (provided? 'gl) gl-version)"); /* this refers to gl.c, not the GL library */
 #endif
 #if HAVE_RUBY
@@ -236,6 +239,10 @@ static char *gl_version(void)
 #endif
 #if HAVE_FORTH
   if (fth_provided_p("gl"))
+    gl_val = XEN_VARIABLE_REF("gl-version");
+#endif
+#if HAVE_GAUCHE
+  if (Scm_ProvidedP(C_TO_XEN_STRING("gl")))
     gl_val = XEN_VARIABLE_REF("gl-version");
 #endif
   if (XEN_STRING_P(gl_val))
@@ -477,6 +484,9 @@ void about_snd_help(void)
 #if HAVE_GUILE || HAVE_FORTH
   char *files = NULL;
 #endif
+#if HAVE_GAUCHE
+  features = word_wrap(xen_gauche_features(), 400);
+#endif
 #if HAVE_GUILE
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400);
   files = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*snd-loaded-files*")), 400);
@@ -493,6 +503,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+15-Apr:  first portion of Gauche support.\n\
 12-Apr:  clm-load (ws.scm) for cm.\n\
 31-Mar:  rt-player.scm (Kjetil).\n\
 28-Mar:  Snd 8.0.\n\
@@ -505,17 +516,19 @@ void about_snd_help(void)
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
             "\n    loaded files: ", files, "\n\n",
-#else
-  #if HAVE_RUBY	    
+#endif
+#if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",
-  #else
-    #if HAVE_FORTH    
+#endif
+#if HAVE_FORTH    
 	    "\n    *features*:\n", features, "\n\n",
             "\n    *loaded-files*:\n", files, "\n\n",
-    #else
+#endif
+#if HAVE_GAUCHE
+  	    "\n    *features*: ", features, "\n\n",
+#endif
+#if (!HAVE_EXTENSION_LANGUAGE)
 	    "\n",
-    #endif
-  #endif
 #endif
 	    "Please send bug reports or suggestions to bil@ccrma.stanford.edu.",
 NULL);

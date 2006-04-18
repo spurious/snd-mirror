@@ -562,6 +562,9 @@ static MIDIClientRef us = NULL;
 static MIDIPortRef inp = NULL, outp = NULL;
 static int reader = 0, writer = 0;
 static unsigned char *buffer = NULL;
+#if DEBUGGING
+  void set_printable(int val);
+#endif
 
 static void init_midi(void)
 {

@@ -882,13 +882,19 @@ static void mus_xen_free(mus_xen *ms)
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(mus_xen, free_mus_xen, mus_xen_free)
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
 static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
 {
   XEN_PUTS("#<", port);
   XEN_PUTS(mus_describe(XEN_TO_MUS_ANY(obj)), port);
   XEN_PUTS(">", port);
   return(1);
+}
+#endif
+#if HAVE_GAUCHE
+static int print_mus_xen(XEN obj, XEN port, void *pstate)
+{
+  fprintf(stderr,"puts");
 }
 #endif
 
@@ -6188,7 +6194,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_wave_train_p,    g_wave_train_p_w,    1, 0, 0, H_wave_train_p);
 
   XEN_DEFINE_PROCEDURE(S_make_frame,     g_make_frame_w,     0, 0, 1, H_make_frame);
-#if HAVE_SCHEME
+#if HAVE_GUILE
   XEN_EVAL_C_STRING("(define %frame? frame?)"); /* protect the original meaning */
   /* frame? is defined in guile stacks.c scm_frame_p, but doesn't appear to be used in ice-9 */
 #endif
@@ -6251,7 +6257,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_sine_summation_p,    g_sine_summation_p_w,    1, 0, 0, H_sine_summation_p);
 
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
   XEN_EVAL_C_STRING("(if (defined? 'filter) (define %filter filter))"); /* defined in 1.7 */
 #endif
   XEN_DEFINE_PROCEDURE(S_make_filter,     g_make_filter_w,     0, 6, 0, H_make_filter);

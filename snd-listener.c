@@ -555,7 +555,12 @@ void command_return(widget_t w, int last_prompt)
       if ((snd_strlen(str) > 1) || (str[0] != '\n'))
 	form = string_to_form(str);
 #else
+#if HAVE_GAUCHE
+      if ((snd_strlen(str) > 1) || (str[0] != '\n'))
+	form = xen_gauche_eval_c_string(str);
+#else
       form = XEN_EVAL_C_STRING(str);
+#endif
 #endif
       FREE(str);
       str = NULL;

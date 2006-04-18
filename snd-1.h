@@ -12,19 +12,37 @@
     if (!((XEN_INTEGER_P(Chn)) || (XEN_FALSE_P(Chn)) || (XEN_NOT_BOUND_P(Chn)))) \
       XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset + 1, Chn, "an integer (0-based channel number) or " PROC_FALSE);
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
 #define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name) \
 static XEN name_reversed(XEN arg1, XEN arg2, XEN arg3) \
-{ \
-  if (XEN_NOT_BOUND_P(arg2)) \
-    return(name(arg1, XEN_UNDEFINED, XEN_UNDEFINED)); \
-  else { \
-    if (XEN_NOT_BOUND_P(arg3)) \
-      return(name(arg2, arg1, XEN_UNDEFINED)); \
-    else return(name(arg3, arg1, arg2)); \
+  {						       \
+    if (XEN_NOT_BOUND_P(arg2))			       \
+      return(name(arg1, XEN_UNDEFINED, XEN_UNDEFINED)); \
+    else {						\
+      if (XEN_NOT_BOUND_P(arg3))			\
+	return(name(arg2, arg1, XEN_UNDEFINED));	\
+      else return(name(arg3, arg1, arg2));		\
 }}
 #else
+
+#if HAVE_GAUCHE
+#define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name) \
+static XEN name_reversed(XEN *argv, int argc, void *self) \
+{							  \
+  XEN args[3];						  \
+  xen_gauche_load_args(args, argc, 3, argv);		  \
+  if (XEN_NOT_BOUND_P(args[1]))				   \
+    return(name(args[0], XEN_UNDEFINED, XEN_UNDEFINED));   \
+  else {						   \
+    if (XEN_NOT_BOUND_P(args[2]))			   \
+      return(name(args[1], args[0], XEN_UNDEFINED));	   \
+    else return(name(args[2], args[0], args[1]));	   \
+  }							   \
+}
+
+#else
 #define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name)
+#endif
 #endif
 
 #define ASSERT_SAMPLE_TYPE(Origin, Beg, Offset) \

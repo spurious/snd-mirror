@@ -271,6 +271,55 @@ make
 ./snd -noinit --features "'clm 'snd-forth"
 make allclean
 
+
+
+echo ' '
+echo ' '
+echo ' --with-gauche'
+./configure --with-gauche
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gauche 'snd-motif"
+make allclean
+
+echo ' '
+echo ' '
+echo ' --quiet --with-gauche --enable-snd-debug --with-static-xm --with-editres --with-gl CFLAGS="-Wall"'
+./configure --quiet --with-gauche --enable-snd-debug --with-static-xm --with-editres --with-gl CFLAGS="-Wall" --with-midi
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gauche 'xm 'gl"
+make allclean
+
+echo ' '
+echo ' '
+echo ' --quiet --with-gauche --with-gtk --with-static-xg --with-gl CFLAGS="-Wall"'
+./configure --quiet --with-gauche --with-gtk --with-static-xg --with-gl CFLAGS="-Wall"
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
+make allclean
+
+echo ' '
+echo ' '
+echo ' --quiet --with-gauche --with-no-gui CFLAGS="-Wall"'
+./configure --quiet --with-gauche --with-no-gui CFLAGS="-Wall"
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gauche 'snd-nogui"
+make allclean
+
+echo ' '
+echo ' '
+echo ' --quiet --with-gauche CC=g++ --disable-deprecated CFLAGS="-Wall"'
+./configure --quiet --with-gauche CC=g++ --disable-deprecated CFLAGS="-Wall"
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gauche"
+make allclean
+
+
+
 echo ' '
 echo ' -------------------------------- static gsl -------------------------------- '
 make allclean

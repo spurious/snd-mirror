@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS FFTW_CFLAGS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GUILE_LIBS GUILE_CFLAGS FTH_VERSION FTH_CFLAGS FTH_LIBS FTH_HAVE_COMPLEX FTH_HAVE_RATIO FTH XM_LIBS LD_XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_FLAGS SO_LD PATH_OGGDEC PATH_OGGENC PATH_MPG123 PATH_MPG321 PATH_SPEEXDEC PATH_SPEEXENC PATH_FLAC PATH_TIMIDITY PATH_SHORTEN PATH_TTA PATH_WAVPACK PATH_WVUNPACK MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS USE_NLS MSGFMT GMSGFMT XGETTEXT MSGMERGE INTL_MACOSX_LIBS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS FFTW_CFLAGS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GAUCHE_CONFIG GUILE_LIBS GUILE_CFLAGS FTH_VERSION FTH_CFLAGS FTH_LIBS FTH_HAVE_COMPLEX FTH_HAVE_RATIO FTH XM_LIBS LD_XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_FLAGS SO_LD PATH_OGGDEC PATH_OGGENC PATH_MPG123 PATH_MPG321 PATH_SPEEXDEC PATH_SPEEXENC PATH_FLAC PATH_TIMIDITY PATH_SHORTEN PATH_TTA PATH_WAVPACK PATH_WVUNPACK MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS USE_NLS MSGFMT GMSGFMT XGETTEXT MSGMERGE INTL_MACOSX_LIBS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -873,6 +873,7 @@ Optional Packages:
   --with-static-xm	  include the xm module
   --with-static-xg	  include the xg module
   --with-guile	  	  use Guile
+  --with-gauche           use Gauche
   --with-gl		  include OpenGL support
   --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings
   --with-motif	  	  use libXm to build Snd
@@ -2942,6 +2943,7 @@ _ACEOF
 #   --with-forth          try to use Forth as the extension language
 #   --with-ruby           try to use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
+#   --with-gauche         try to use Gauche as the extension language
 #   --with-hobbit         include hobbit-style function arity checking
 #   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
@@ -3033,6 +3035,12 @@ fi;
 # Check whether --with-guile or --without-guile was given.
 if test "${with_guile+set}" = set; then
   withval="$with_guile"
+
+fi;
+
+# Check whether --with-gauche or --without-gauche was given.
+if test "${with_gauche+set}" = set; then
+  withval="$with_gauche"
 
 fi;
 
@@ -15584,31 +15592,159 @@ fi
 
 
 
+ac_snd_have_extension_language=no
+
+#--------------------------------------------------------------------------------
+# Gauche
+#--------------------------------------------------------------------------------
+
+if test "$with_gauche" = yes ; then
+  # Extract the first word of "gauche-config", so it can be a program name with args.
+set dummy gauche-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_GAUCHE_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $GAUCHE_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_GAUCHE_CONFIG="$GAUCHE_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_GAUCHE_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_GAUCHE_CONFIG" && ac_cv_path_GAUCHE_CONFIG="no"
+  ;;
+esac
+fi
+GAUCHE_CONFIG=$ac_cv_path_GAUCHE_CONFIG
+
+if test -n "$GAUCHE_CONFIG"; then
+  echo "$as_me:$LINENO: result: $GAUCHE_CONFIG" >&5
+echo "${ECHO_T}$GAUCHE_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  echo "$as_me:$LINENO: checking for Gauche" >&5
+echo $ECHO_N "checking for Gauche... $ECHO_C" >&6
+  if test "$GAUCHE_CONFIG" = "no" ; then
+    { echo "$as_me:$LINENO: WARNING: can't find Gauche!" >&5
+echo "$as_me: WARNING: can't find Gauche!" >&2;}
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_EXTENSION_LANGUAGE 0
+_ACEOF
+
+  else
+    # check for version >= 0.8.7
+    gauche_version="`$GAUCHE_CONFIG -V`"
+    echo "$as_me:$LINENO: result: $gauche_version" >&5
+echo "${ECHO_T}$gauche_version" >&6
+
+    OLD_CFLAGS="CFLAGS"
+    # gauche-config inserts idiotic single-quotes in the -I and -L results thereby rendering them useless,
+    #   so the following sed command tries to remove them.  You apparently can't quote a single-quote
+    #   in this context, so I use \x27 = ASCII for single quote.
+    GUILE_CFLAGS=`$GAUCHE_CONFIG -I | sed 's/\x27//g'`
+    CFLAGS="$CFLAGS $GUILE_CFLAGS"
+
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <gauche.h>
+int
+main ()
+{
+#if (GAUCHE_MAJOR_VERSION == 0)
+                         #if (GAUCHE_MINOR_VERSION < 8)
+			    #error too old
+			 #else
+			   #if (GAUCHE_MINOR_VERSION == 8) && (GAUCHE_MICRO_VERSION < 7)
+			     #error too old
+                           #endif
+			 #endif
+		       #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+                 cat >>confdefs.h <<\_ACEOF
+#define HAVE_GAUCHE 1
+_ACEOF
+
+                 cat >>confdefs.h <<\_ACEOF
+#define HAVE_SCHEME 1
+_ACEOF
+
+                 ac_snd_have_extension_language=yes
+                 cat >>confdefs.h <<\_ACEOF
+#define HAVE_EXTENSION_LANGUAGE 1
+_ACEOF
+
+                 GUILE_LIBS=`$GAUCHE_CONFIG -L  | sed 's/\x27//g'`
+                 GUILE_LIBS="$GUILE_LIBS -lgauche"
+                 LOCAL_LANGUAGE="Gauche"
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+             	 { echo "$as_me:$LINENO: WARNING: We need Gauche 0.8.7 or later" >&5
+echo "$as_me: WARNING: We need Gauche 0.8.7 or later" >&2;}
+                 with_gauche=no
+                 CFLAGS="$OLD_CFLAGS"
+                 GUILE_CFLAGS=""
+
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+  fi
+fi
+
+
 #--------------------------------------------------------------------------------
 # Ruby
 #--------------------------------------------------------------------------------
-
-ac_snd_have_extension_language=no
-
-if test "$with_ruby" = yes && test "$with_guile" = yes ; then
-  with_ruby=no
-  { echo "$as_me:$LINENO: WARNING: You asked for both Ruby and Guile -- Guile will be used" >&5
-echo "$as_me: WARNING: You asked for both Ruby and Guile -- Guile will be used" >&2;}
-fi
-
-if test "$with_forth" = yes && test "$with_guile" = yes ; then
-  with_forth=no
-  { echo "$as_me:$LINENO: WARNING: You asked for both Forth and Guile -- Guile will be used" >&5
-echo "$as_me: WARNING: You asked for both Forth and Guile -- Guile will be used" >&2;}
-fi
-
-if test "$with_ruby" = yes && test "$with_forth" = yes ; then
-  with_forth=no
-  { echo "$as_me:$LINENO: WARNING: You asked for both Ruby and Forth -- Ruby will be used" >&5
-echo "$as_me: WARNING: You asked for both Ruby and Forth -- Ruby will be used" >&2;}
-fi
-
-
 
 RUBY="ruby"
 
@@ -15620,6 +15756,12 @@ if test "${with_ruby_prefix+set}" = set; then
 else
   ruby_prefix=""
 fi;
+
+if test "$with_ruby" = yes && test "$ac_snd_have_extension_language" = yes ; then
+  with_ruby=no
+  { echo "$as_me:$LINENO: WARNING: You asked for both Ruby and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used" >&5
+echo "$as_me: WARNING: You asked for both Ruby and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used" >&2;}
+fi
 
 
 # Check whether --with-ruby or --without-ruby was given.
@@ -16020,6 +16162,12 @@ fi;
 # Forth
 #--------------------------------------------------------------------------------
 
+if test "$with_forth" = yes && test "$ac_snd_have_extension_language" = yes ; then
+  with_forth=no
+  { echo "$as_me:$LINENO: WARNING: You asked for both Forth and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used" >&5
+echo "$as_me: WARNING: You asked for both Forth and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used" >&2;}
+fi
+
 
 # Check whether --with-forth or --without-forth was given.
 if test "${with_forth+set}" = set; then
@@ -16269,7 +16417,13 @@ fi;
 # Guile
 #--------------------------------------------------------------------------------
 
-if test "$with_guile" != no && test "$with_ruby" != yes && test "$with_forth" != yes ; then
+if test "$with_guile" = yes && test "$ac_snd_have_extension_language" = yes ; then
+  with_guile=no
+  { echo "$as_me:$LINENO: WARNING: You asked for both Guile and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used" >&5
+echo "$as_me: WARNING: You asked for both Guile and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used" >&2;}
+fi
+
+if test "$with_guile" != no && test "$with_ruby" != yes && test "$with_forth" != yes && test "$with_gauche" != yes ; then
 
 GUILE_LIBS=""
 GUILE_CFLAGS=""
@@ -23587,6 +23741,7 @@ s,@GL_LIBS@,$GL_LIBS,;t t
 s,@GL_FILES@,$GL_FILES,;t t
 s,@GL_FLAGS@,$GL_FLAGS,;t t
 s,@FAM_LIB@,$FAM_LIB,;t t
+s,@GAUCHE_CONFIG@,$GAUCHE_CONFIG,;t t
 s,@GUILE_LIBS@,$GUILE_LIBS,;t t
 s,@GUILE_CFLAGS@,$GUILE_CFLAGS,;t t
 s,@FTH_VERSION@,$FTH_VERSION,;t t

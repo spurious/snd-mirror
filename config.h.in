@@ -122,6 +122,7 @@
 #undef MUS_GSL_VERSION
 
 #undef HAVE_GUILE
+#undef HAVE_GAUCHE
 #undef HAVE_SCHEME
 #undef HAVE_RUBY
 #undef HAVE_FORTH

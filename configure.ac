@@ -57,6 +57,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-forth          try to use Forth as the extension language
 #   --with-ruby           try to use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
+#   --with-gauche         try to use Gauche as the extension language
 #   --with-hobbit         include hobbit-style function arity checking
 #   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
@@ -95,6 +96,7 @@ AC_ARG_WITH(static-gsl,  [  --with-static-gsl	  use libgsl.a to build Snd (for o
 AC_ARG_WITH(static-xm,   [  --with-static-xm	  include the xm module])
 AC_ARG_WITH(static-xg,   [  --with-static-xg	  include the xg module])
 AC_ARG_WITH(guile,       [  --with-guile	  	  use Guile])
+AC_ARG_WITH(gauche,      [  --with-gauche           use Gauche])
 AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support])
 AC_ARG_WITH(just-gl,     [  --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings])
 AC_ARG_WITH(motif,	 [  --with-motif	  	  use libXm to build Snd])
@@ -1125,34 +1127,75 @@ AC_SUBST(FAM_LIB)
 
 
 
+ac_snd_have_extension_language=no
+
+#--------------------------------------------------------------------------------
+# Gauche
+#--------------------------------------------------------------------------------
+
+if test "$with_gauche" = yes ; then
+  AC_PATH_PROG(GAUCHE_CONFIG, gauche-config, no)
+  AC_MSG_CHECKING([for Gauche])
+  if test "$GAUCHE_CONFIG" = "no" ; then
+    AC_MSG_WARN([can't find Gauche!])
+    AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
+  else
+    # check for version >= 0.8.7
+    gauche_version="`$GAUCHE_CONFIG -V`"
+    AC_MSG_RESULT($gauche_version)
+
+    OLD_CFLAGS="CFLAGS"
+    # gauche-config inserts idiotic single-quotes in the -I and -L results thereby rendering them useless,
+    #   so the following sed command tries to remove them.  You apparently can't quote a single-quote
+    #   in this context, so I use \x27 = ASCII for single quote.
+    GUILE_CFLAGS=`$GAUCHE_CONFIG -I | sed 's/\x27//g'`
+    CFLAGS="$CFLAGS $GUILE_CFLAGS"
+
+    AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM([#include <gauche.h>],
+                      [#if (GAUCHE_MAJOR_VERSION == 0)
+                         #if (GAUCHE_MINOR_VERSION < 8)
+			    #error too old
+			 #else
+			   #if (GAUCHE_MINOR_VERSION == 8) && (GAUCHE_MICRO_VERSION < 7)
+			     #error too old
+                           #endif
+			 #endif
+		       #endif                                  
+                  ])], 
+                [
+                 AC_DEFINE(HAVE_GAUCHE)
+                 AC_DEFINE(HAVE_SCHEME)
+                 ac_snd_have_extension_language=yes
+                 AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
+                 GUILE_LIBS=`$GAUCHE_CONFIG -L  | sed 's/\x27//g'`
+                 GUILE_LIBS="$GUILE_LIBS -lgauche"
+                 LOCAL_LANGUAGE="Gauche"
+                ],
+		[
+             	 AC_MSG_WARN([We need Gauche 0.8.7 or later])
+                 with_gauche=no
+                 CFLAGS="$OLD_CFLAGS"
+                 GUILE_CFLAGS=""
+		])
+  fi
+fi
+
+
 #--------------------------------------------------------------------------------
 # Ruby
 #--------------------------------------------------------------------------------
-
-ac_snd_have_extension_language=no
-
-if test "$with_ruby" = yes && test "$with_guile" = yes ; then
-  with_ruby=no
-  AC_MSG_WARN([You asked for both Ruby and Guile -- Guile will be used])
-fi
-
-if test "$with_forth" = yes && test "$with_guile" = yes ; then
-  with_forth=no
-  AC_MSG_WARN([You asked for both Forth and Guile -- Guile will be used])
-fi
-
-if test "$with_ruby" = yes && test "$with_forth" = yes ; then
-  with_forth=no
-  AC_MSG_WARN([You asked for both Ruby and Forth -- Ruby will be used])
-fi
-
-
 
 RUBY="ruby"
 AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
             	ruby_prefix="$withval"
 		RUBY="$ruby_prefix/bin/ruby",
 		ruby_prefix="")
+
+if test "$with_ruby" = yes && test "$ac_snd_have_extension_language" = yes ; then
+  with_ruby=no
+  AC_MSG_WARN([You asked for both Ruby and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
+fi
 
 AC_ARG_WITH(ruby,
 	[  --with-ruby	  	  try to use Ruby as the extension language],
@@ -1225,6 +1268,11 @@ AC_ARG_WITH(ruby,
 # Forth
 #--------------------------------------------------------------------------------
 
+if test "$with_forth" = yes && test "$ac_snd_have_extension_language" = yes ; then
+  with_forth=no
+  AC_MSG_WARN([You asked for both Forth and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
+fi
+
 AC_ARG_WITH(forth,
 	[  --with-forth	  	  try to use Forth as the extension language],
   	if test "$with_forth" = yes ; then
@@ -1248,7 +1296,12 @@ AC_ARG_WITH(forth,
 # Guile
 #--------------------------------------------------------------------------------
 
-if test "$with_guile" != no && test "$with_ruby" != yes && test "$with_forth" != yes ; then
+if test "$with_guile" = yes && test "$ac_snd_have_extension_language" = yes ; then
+  with_guile=no
+  AC_MSG_WARN([You asked for both Guile and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
+fi
+
+if test "$with_guile" != no && test "$with_ruby" != yes && test "$with_forth" != yes && test "$with_gauche" != yes ; then
 
 GUILE_LIBS=""
 GUILE_CFLAGS=""

@@ -15,7 +15,7 @@ XEN envelope_base_sym;
   #define XEN_VARIABLE_PROPERTY(Obj, Prop)          fth_object_property_ref(Obj, Prop)
   #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) fth_object_property_set(Obj, Prop, Val)
 #endif
-#if (!HAVE_EXTENSION_LANGUAGE)
+#if (!HAVE_EXTENSION_LANGUAGE) || HAVE_GAUCHE
   #define XEN_VARIABLE_PROPERTY(Obj, Prop)          0
   #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val)
 #endif
@@ -1590,7 +1590,7 @@ void add_or_edit_symbol(char *name, env *val)
   snd_catch_any(eval_str_wrapper, buf, buf);
   FREE(buf);
 #endif
-#if HAVE_SCHEME
+#if HAVE_GUILE
   XEN e;
   if (!val) return;
   if (XEN_DEFINED_P(name))
@@ -1883,7 +1883,7 @@ void g_init_env(void)
   XEN_DEFINE_PROCEDURE(S_enved_dialog,    g_enved_dialog_w,    0, 0, 0, H_enved_dialog);
   XEN_DEFINE_PROCEDURE(S_save_envelopes,  g_save_envelopes_w,  0, 1, 0, H_save_envelopes);
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
   XEN_DEFINE_PROCEDURE(S_define_envelope "-1", g_define_envelope_w, 2, 1, 0, H_define_envelope);
   XEN_EVAL_C_STRING("(defmacro defvar (a b) `(define-envelope-1 (symbol->string ',a) ,b))");
 

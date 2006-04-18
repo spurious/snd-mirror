@@ -684,7 +684,7 @@ void global_control_panel_state(void)
   FREE(buf);
 }
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
 static void save_property_list(FILE *fd, XEN property_list, int chan)
 {
   XEN ignore_list;
@@ -817,7 +817,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
 }
 #endif
 
-#if (!HAVE_EXTENSION_LANGUAGE)
+#if (!HAVE_EXTENSION_LANGUAGE) || HAVE_GAUCHE
 static void save_property_list(FILE *fd, XEN property_list, int chan) {}
 #endif
 
@@ -940,7 +940,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
 #if HAVE_RATIOS
       if (sp->speed_control == SPEED_CONTROL_AS_RATIO)
 	{
-	  /* this is only Guile, so we don't need to handle the Ruby syntax */
+	  /* no ratios in Ruby */
 #if HAVE_FORTH
 	  fprintf(fd, "%s%d/%d set-%s drop\n", white_space, sp->speed_control_numerator, sp->speed_control_denominator, S_speed_control);
 #else
@@ -1121,7 +1121,7 @@ void save_state(const char *save_state_name)
       return;
     }
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
   /* try to make sure all previously loaded files are now loaded */
   save_loaded_files_list(save_fd, save_state_name);
 #endif
@@ -1190,10 +1190,33 @@ void save_state(const char *save_state_name)
   save_file_dialog_state(save_fd);
   save_view_files_dialogs(save_fd);
   
-  /* TODO: mix/track (and dialogs?) */
-  /* MIX_DIALOG [view-mixes-dialog], TRACK_DIALOG [view-tracks-dialog]
-     (change-samples-with-origin 965 4412 "set! -mix-0 (mix \"/home/bil/cl/1a.snd\" 965 0)" "3.snd" sfile 0 #f (list 1117710308 17780))
-  */
+  /* saving mix/track state is problematic.  For example, if we make a selection, mix it,
+   *   then make another selection and mix it, we get an edit list:
+   *   
+   *   (change-samples-with-origin 266 451 "set! -mix-0 (mix-selection 266)" "/home/bil/zap/snd/snd_3309_9.snd" sfile 0 #f (list 1145009982 1848))
+   *   (change-samples-with-origin 1655 480 "set! -mix-1 (mix-selection 1655)" "/home/bil/zap/snd/snd_3309_10.snd" sfile 0 #f (list 1145009982 1964))
+   *   (set! (selection-member? sfile 0) #t)
+   *   (set! (selection-position sfile 0) 816)
+   *   (set! (selection-frames sfile 0) 480)
+   *
+   *  which won't even work for the current selection case!  If we mix some piece of a sound
+   *    being edited in another window, we'd need to keep all edits in sync during the restore!
+   *  But each mix has a temp file of its data, so perhaps an internal function to fake a mix
+   *    using it?
+   *
+   *  :(edit-list->function)
+   *    #<procedure #f ((snd chn) 
+   *       (let ((-mix-0 0) (-mix-1 1)) 
+   *         (set! -mix-0 (mix-selection 266)) 
+   *         ;; selection can change here!
+   *         (set! -mix-1 (mix-selection 1655))))>
+   *
+   *  which is also wrong!  This has to use the shadowing temp files.
+   *    so edit-list->function fails if selections involved (mix-selection) [or is this what is expected?]
+   *
+   *  To keep the mix/track dialogs in sync with the newly restored mixes would require keeping the
+   *     old mix/track numbers and mapping to the new ones.
+   */
   
   pss_ss(save_fd, S_show_listener, b2s(listener_is_visible()));
   
@@ -1228,6 +1251,9 @@ char *save_options_in_prefs(void)
   char *fullname;
 #if HAVE_GUILE
   #define SND_PREFS "~/.snd_prefs_guile"
+#endif
+#if HAVE_GAUCHE
+  #define SND_PREFS "~/.snd_prefs_gauche"
 #endif
 #if HAVE_RUBY
   #define SND_PREFS "~/.snd_prefs_ruby"

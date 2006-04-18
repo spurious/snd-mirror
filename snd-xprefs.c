@@ -2997,7 +2997,7 @@ static void initial_bounds_toggle(prefs_info *prf)
 {
   bool use_full_duration = false;
   use_full_duration = (XmToggleButtonGetState(prf->toggle) == XmSET);
-#if HAVE_SCHEME
+#if HAVE_GUILE
   if (!(XEN_DEFINED_P("prefs-initial-beg")))
     XEN_LOAD_FILE_WITH_PATH("extensions.scm");
   XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-show-full-duration"), C_TO_XEN_BOOLEAN(use_full_duration));
@@ -3016,7 +3016,7 @@ static void initial_bounds_text(prefs_info *prf)
   str = XmTextFieldGetString(prf->text);
   sscanf(str, "%f : %f", &beg, &dur);
   fprintf(stderr, "beg: %f, dur: %f\n", beg, dur);
-#if HAVE_SCHEME
+#if HAVE_GUILE
   if (!(XEN_DEFINED_P("prefs-initial-beg")))
     XEN_LOAD_FILE_WITH_PATH("extensions.scm");
   XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-beg"), C_TO_XEN_DOUBLE(beg));

@@ -74,7 +74,9 @@ The configure program has several Snd-related arguments:
    --with-guile              use Guile, not Ruby (the default); the path to guile-config
                                can be set via GUILE_CONFIG_path (see examples below).
 
-   --with-forth              use Forth (FTH) has the extension language.
+   --with-forth              use Forth (FTH) as the extension language.
+
+   --with-gauche             use Gauche (Scheme) as the extension language (work in progress).
 
 			     To build Snd without any extension language, use --without-guile
 
@@ -123,6 +125,7 @@ Version info:
   if GSL, version 0.8 or later
   if gtkglext, version 1.0 or later
   if gamin, version 0.1.0 or later
+  if Gauche, version 0.8.7
 
 
 ----------------------------------------------------------------
@@ -223,7 +226,7 @@ Plus many other contributions from
 
 In terms of number of lines, the languages used in Snd/Sndlib are:
 C, Scheme, Ruby, Forth, m4, Common Lisp, Emacs Lisp, javascript,
-expect, and postscript (altogether more than 500,000 lines).
+expect, and postscript (altogether more than 550,000 lines).
 
 
 To get the German version at run-time, (setlocale LC_ALL "de_DE").
@@ -302,6 +305,9 @@ Forth:
 
 Motif:
   http://www.motifzone.net
+
+Gauche:
+  http://www.shiro.dreamhost.com/scheme/gauche/index.html
 
 Gtk+:
   http://www.gtk.org
