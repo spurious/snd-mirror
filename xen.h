@@ -2,6 +2,7 @@
 #define XEN_H
 
 /* SOMEDAY: we're using flags (config.h) like HAVE_COMPLEX_TRIG and defining HAVE_RATIOS -- bad names */
+/* SOMEDAY: the notion of "variable" here is confused -- in some cases it's the name, others the object */
 
 /* macros for extension language support 
  *
@@ -1573,38 +1574,32 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a) Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(a)), false)
 #define XEN_SYMBOL_TO_VARIABLE(a)           Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(a), false)
 
-#define XEN_SET_DOCUMENTATION(Func, Help)   /* PROCEDURE_INFO(Func) = C_TO_XEN_STRING(Help) */
+#define XEN_SET_DOCUMENTATION(Func, Help)   SCM_PROCEDURE_INFO(Func) = C_TO_XEN_STRING(Help)
 #define XEN_DOCUMENTATION_SYMBOL            SCM_SYMBOL(SCM_INTERN("documentation"))
-/* TODO: help */
-#define XEN_OBJECT_HELP(Name)               C_TO_XEN_STRING("no help")
+/* TODO: help for proc gets proc obj not symbol */
+#define XEN_OBJECT_HELP(Name)               SCM_PROCEDURE_INFO(Name)
 
-/* TODO: structs */
+
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Ignore1, Ignore2) return(xen_gauche_make_object(Tag, (void *)Val))
 /* tag here is int -- needs ScmClass* for underlying call */
-#define XEN_OBJECT_REF(a)                                      xen_gauche_object_ref(a)
-#define XEN_OBJECT_TYPE                                        int
+#define XEN_OBJECT_REF(a)                   xen_gauche_object_ref(a)
+#define XEN_OBJECT_TYPE                     int
 /* the "Tag" type in other calls */
-#define XEN_MAKE_OBJECT_TYPE(Type, Size)	               xen_gauche_new_type(Type)
+#define XEN_MAKE_OBJECT_TYPE(Type, Size, Print, Cleanup) xen_gauche_new_type(Type, Print, Cleanup)
 /* Type here is a string like "Vct" */
-#define XEN_MARK_OBJECT_TYPE                                   ScmObj
+#define XEN_MARK_OBJECT_TYPE                ScmObj
 /* used only in clm2xen for mark_mus_xen */
-#define XEN_OBJECT_TYPE_P(OBJ, TAG)                            xen_gauche_type_p(OBJ, TAG)
-
-XEN xen_gauche_make_object(int type, void *val);
-void *xen_gauche_object_ref(XEN obj);
-XEN_OBJECT_TYPE xen_gauche_new_type(const char *name);
-bool xen_gauche_type_p(XEN obj, int type);
+#define XEN_OBJECT_TYPE_P(OBJ, TAG)         xen_gauche_type_p(OBJ, TAG)
 
 /* TODO: there's also a compareproc */
 /* TODO: SCM_CLASS_APPLICABLE? -- can we use the foreignpointer with this? */
-/* flags in makeclass should include both SCM_FOREIGN_POINTER_KEEP_IDENTITY and SCM_FOREIGN_POINTER_MAP_NULL */
 
 #define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) \
   static void Wrapped_Print(XEN obj, ScmPort *port, ScmWriteContext *pstate) \
   { \
     char *str; \
     str = Original_Print((Type *)XEN_OBJECT_REF(obj)); \
-    SCM_PUTS(str, port); \
+    XEN_PUTS(str, port); \
     FREE(str); \
   }
 
@@ -1621,18 +1616,13 @@ bool xen_gauche_type_p(XEN obj, int type);
 #define XEN_DEFINE(Name, Value)       SCM_DEFINE(Scm_UserModule(), Name, Value)
 
 
-/* in Gauche, hooks are just unchecked lists of procedures */
-#define XEN_HOOK_P(Arg)                    XEN_LIST_P(Arg)
+/* TODO: in Gauche, hooks are just unchecked lists of procedures */
+#define XEN_HOOK_P(Arg)                    XEN_LIST_P(SCM_GLOC_GET(SCM_GLOC(Arg)))
 #define XEN_DEFINE_HOOK(Name, Arity, Help) XEN_DEFINE(Name, XEN_EMPTY_LIST)
 #define XEN_DEFINE_SIMPLE_HOOK(Arity)      XEN_EMPTY_LIST
-#define XEN_HOOKED(a)                      XEN_NOT_NULL_P(a)
-/* these need the variable name I think */
-/*
-#define XEN_CLEAR_HOOK(Arg)                XEN_VARIABLE_SET(Arg, XEN_EMPTY_LIST)
-#define XEN_HOOK_PROCEDURES(a)             XEN_VARIABLE_REF(a)
-*/
-#define XEN_CLEAR_HOOK(Arg)                /* a = null eventually */
-#define XEN_HOOK_PROCEDURES(a)             a
+#define XEN_HOOKED(Arg)                    XEN_NOT_NULL_P(SCM_GLOC_GET(SCM_GLOC(Arg)))
+#define XEN_CLEAR_HOOK(Arg)                SCM_GLOC_SET(SCM_GLOC(Arg), XEN_EMPTY_LIST)
+#define XEN_HOOK_PROCEDURES(Arg)           SCM_OBJ(SCM_GLOC_GET(SCM_GLOC(Arg)))
 
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
@@ -1664,6 +1654,7 @@ bool xen_gauche_type_p(XEN obj, int type);
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   xen_gauche_define_procedure_with_reversed_setter(Get_Name, Get_Func, Get_Help, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
 
+/* TODO: error catch here? */
 #define XEN_CALL_0(Func, Caller)                   Scm_Apply(Func, XEN_EMPTY_LIST)
 #define XEN_CALL_1(Func, Arg1, Caller)             Scm_Apply(Func, XEN_LIST_1(Arg1))
 #define XEN_CALL_2(Func, Arg1, Arg2, Caller)       Scm_Apply(Func, XEN_LIST_2(Arg1, Arg2))
@@ -1678,7 +1669,8 @@ bool xen_gauche_type_p(XEN obj, int type);
 #define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)       Scm_Apply(Func, XEN_LIST_2(Arg1, Arg2))
 #define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3) Scm_Apply(Func, XEN_LIST_3(Arg1, Arg2, Arg3))
 
-#define XEN_PUTS(Str, Port)      Scm_Puts((ScmString)Str, Port)
+/* puts arg=string, display arg=obj */
+#define XEN_PUTS(Str, Port)      Scm_Puts(SCM_STRING(C_TO_XEN_STRING(Str)), Port)
 #define XEN_DISPLAY(Val, Port)   xen_gauche_display(Val, Port)
 #define XEN_FLUSH_PORT(Port)     Scm_Flush(Port)
 #define XEN_CLOSE_PORT(Port)     Scm_ClosePort(Port)
@@ -1814,6 +1806,10 @@ XEN xen_gauche_eval_c_string(char *arg);
 void xen_gauche_provide(const char *feature);
 const char *xen_gauche_features(void);
 void xen_gauche_variable_set(const char *var, XEN value);
+XEN xen_gauche_make_object(XEN_OBJECT_TYPE type, void *val);
+void *xen_gauche_object_ref(XEN obj);
+XEN_OBJECT_TYPE xen_gauche_new_type(const char *name, ScmClassPrintProc print, ScmForeignCleanupProc cleanup);
+bool xen_gauche_type_p(XEN obj, XEN_OBJECT_TYPE type);
 
 #endif
 

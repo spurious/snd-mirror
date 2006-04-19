@@ -514,7 +514,7 @@ void about_snd_help(void)
 8-Mar:   kmenu.scm thanks to Maxim Krikun.\n\
 ",
 #if HAVE_GUILE
-	    "\n    *features*: \n'", features, "\n\n",
+	    "\n    *features*:\n    '", features, "\n\n",
             "\n    loaded files: ", files, "\n\n",
 #endif
 #if HAVE_RUBY	    
@@ -525,7 +525,7 @@ void about_snd_help(void)
             "\n    *loaded-files*:\n", files, "\n\n",
 #endif
 #if HAVE_GAUCHE
-  	    "\n    *features*: ", features, "\n\n",
+  	    "\n    *features*:\n    '", features, "\n\n",
 #endif
 #if (!HAVE_EXTENSION_LANGUAGE)
 	    "\n",

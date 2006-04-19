@@ -35,7 +35,24 @@
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
 
-(use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
+(if (provided? 'snd-guile)
+    (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen)))
+
+(if (provided? "snd-gauche")
+    (begin
+      (use srfi-1)     ; list library
+      (use srfi-4)     ; u8vector
+      (use srfi-13)     ; extra string support
+      (use srfi-27)    ; random bits
+      (use file.util)  ; current-directory, home-directory
+      ;(use srfi-29)    ; format
+      ;(define %format format) ; Gauche's format omits the #f 2nd arg
+      ;(define (format . args) (apply %format (cdr args)))
+      ;Gauche's format is too stupid to contemplate
+      ; I'll have to try to get Guile's format to work
+      ; but for now...
+      (define (format . args) (snd-print args))
+      ))
 
 (define tests 1)
 (define keep-going #f)
@@ -61,7 +78,8 @@
 
 (define with-big-file #t)
 (define big-file-name "/home/bil/zap/sounds/bigger.snd")
-(if (not (string=? (version) "1.8.0"))
+(if (or (not (provided? 'snd-guile))
+	(not (string=? (version) "1.8.0")))
     (begin
       (set! with-big-file (file-exists? big-file-name))
       (if (not with-big-file) (snd-display ";no big file"))))
@@ -72,19 +90,21 @@
 
 (unbind-key #\c 4 #t)
 ;;; clear out old junk!
-(if (file-exists? original-save-dir) 
-    (system (format #f "rm ~A/snd_*" original-save-dir)))
-(if (file-exists? original-temp-dir) 
-    (system (format #f "rm ~A/snd_*" original-temp-dir)))
-(if (file-exists? "/tmp")
-    (begin ; -noinit possibly
-      (system "rm /tmp/snd_*")
-      (system "rm /tmp/*.snd")))
-(if (file-exists? "/var/tmp")
-    (begin ; -noinit possibly
-      (system "rm /var/tmp/snd_*")
-      (system "rm /var/tmp/*.snd")))
-(system "rm core*")
+(if (provided? 'snd-guile)
+    (begin
+      (if (file-exists? original-save-dir) 
+	  (system (format #f "rm ~A/snd_*" original-save-dir)))
+      (if (file-exists? original-temp-dir) 
+	  (system (format #f "rm ~A/snd_*" original-temp-dir)))
+      (if (file-exists? "/tmp")
+	  (begin ; -noinit possibly
+	    (system "rm /tmp/snd_*")
+	    (system "rm /tmp/*.snd")))
+      (if (file-exists? "/var/tmp")
+	  (begin ; -noinit possibly
+	    (system "rm /var/tmp/snd_*")
+	    (system "rm /var/tmp/*.snd")))
+      (system "rm core*")))
 
 (define home-dir "/home/bil")
 (define sf-dir "/sf1")
@@ -153,9 +173,9 @@
 (set! (mus-audio-playback-amp) playback-amp)
 
 (define sample-reader-tests 300)
-(debug-set! stack 0)
-(debug-enable 'debug 'backtrace)
-(read-enable 'positions)
+(if (provided? 'snd-guile) (debug-set! stack 0))
+(if (provided? 'snd-guile) (debug-enable 'debug 'backtrace))
+(if (provided? 'snd-guile) (read-enable 'positions))
 (define (irandom n) (if (= n 0) 0 (inexact->exact (random n))))
 (add-hook! bad-header-hook (lambda (n) #t))
 

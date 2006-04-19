@@ -388,7 +388,12 @@ static XEN make_xm_obj(void *ptr)
 
 static void define_xm_obj(void)
 {
+#if (!HAVE_GAUCHE)
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
+#else
+  /* TODO: gauche print/free and in xg.c */
+  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *), NULL, NULL);
+#endif
 #if HAVE_GUILE
   scm_set_smob_free(xm_obj_tag, xm_obj_free);
 #endif

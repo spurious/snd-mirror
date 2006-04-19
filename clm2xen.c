@@ -882,6 +882,8 @@ static void mus_xen_free(mus_xen *ms)
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(mus_xen, free_mus_xen, mus_xen_free)
 
+/* SOMEDAY: why don't these print functions use the macro in xen.h? */
+
 #if HAVE_GUILE
 static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
 {
@@ -892,9 +894,11 @@ static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
 }
 #endif
 #if HAVE_GAUCHE
-static int print_mus_xen(XEN obj, XEN port, void *pstate)
+static void print_mus_xen(XEN obj, ScmPort *port, ScmWriteContext *pstate)
 {
-  fprintf(stderr,"puts");
+  XEN_PUTS("#<", port);
+  XEN_PUTS(mus_describe(XEN_TO_MUS_ANY(obj)), port);
+  XEN_PUTS(">", port);
 }
 #endif
 
@@ -5913,8 +5917,12 @@ void mus_xen_init(void)
 #endif
 {
   init_mus_module();
-
+#if (!HAVE_GAUCHE)
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));
+#else
+  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen), print_mus_xen, free_mus_xen);
+#endif
+
 #if HAVE_GUILE
   scm_set_smob_mark(mus_xen_tag, mark_mus_xen);
   scm_set_smob_print(mus_xen_tag, print_mus_xen);

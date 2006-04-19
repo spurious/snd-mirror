@@ -4953,7 +4953,11 @@ XEN_NARGIFY_1(g_delete_mix_w, g_delete_mix)
 
 void g_init_mix(void)
 {
+#if (!HAVE_GAUCHE)
   mf_tag = XEN_MAKE_OBJECT_TYPE("MixSampleReader", sizeof(mix_fd));
+#else
+  mf_tag = XEN_MAKE_OBJECT_TYPE("MixSampleReader", sizeof(mix_fd), print_mf, free_mf);
+#endif
 
 #if HAVE_GUILE
   scm_set_smob_print(mf_tag, print_mf);
@@ -4962,10 +4966,12 @@ void g_init_mix(void)
   scm_set_smob_apply(mf_tag, XEN_PROCEDURE_CAST g_read_mix_sample, 0, 0, 0);
 #endif
 #endif
+
 #if HAVE_RUBY
   rb_define_method(mf_tag, "to_s", XEN_PROCEDURE_CAST print_mf, 0);
   rb_define_method(mf_tag, "call", XEN_PROCEDURE_CAST g_read_mix_sample, 0);
 #endif
+
 #if HAVE_FORTH
   fth_set_object_inspect(mf_tag, print_mf);
   fth_set_object_free(mf_tag, free_mf);
@@ -8341,11 +8347,17 @@ XEN_NARGIFY_1(g_set_tempo_control_bounds_w, g_set_tempo_control_bounds)
 
 void g_init_track(void)
 {
+#if (!HAVE_GAUCHE)
   tf_tag = XEN_MAKE_OBJECT_TYPE("TrackSampleReader", sizeof(track_fd));
+#else
+  tf_tag = XEN_MAKE_OBJECT_TYPE("TrackSampleReader", sizeof(track_fd), print_tf, free_tf);
+#endif
+
 #if HAVE_RUBY
   rb_define_method(tf_tag, "to_s", XEN_PROCEDURE_CAST print_tf, 0);
   rb_define_method(tf_tag, "call", XEN_PROCEDURE_CAST g_read_track_sample, 0);
 #endif
+
 #if HAVE_GUILE
   scm_set_smob_print(tf_tag, print_tf);
   scm_set_smob_free(tf_tag, free_tf);
@@ -8353,6 +8365,7 @@ void g_init_track(void)
   scm_set_smob_apply(tf_tag, XEN_PROCEDURE_CAST g_read_track_sample, 0, 0, 0);
 #endif
 #endif
+
 #if HAVE_FORTH
   fth_set_object_inspect(tf_tag, print_tf);
   fth_set_object_free(tf_tag, free_tf);

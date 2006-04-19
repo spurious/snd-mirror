@@ -9496,7 +9496,11 @@ XEN_ARGIFY_4(g_edit_list_to_function_w, g_edit_list_to_function)
 
 void g_init_edits(void)
 {
+#if (!HAVE_GAUCHE)
   sf_tag = XEN_MAKE_OBJECT_TYPE("SampleReader", sizeof(snd_fd));
+#else
+  sf_tag = XEN_MAKE_OBJECT_TYPE("SampleReader", sizeof(snd_fd), print_sf, free_sf);
+#endif
 
 #if HAVE_GUILE
   scm_set_smob_print(sf_tag, print_sf);

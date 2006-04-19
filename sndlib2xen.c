@@ -1769,7 +1769,11 @@ void mus_sndlib_xen_initialize(void)
 {
   mus_sound_initialize();
 
+#if (!HAVE_GAUCHE)
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("SoundData", sizeof(sound_data));
+#else
+  sound_data_tag = XEN_MAKE_OBJECT_TYPE("SoundData", sizeof(sound_data), print_sound_data, free_sound_data);
+#endif
 #if HAVE_GUILE
   scm_set_smob_print(sound_data_tag, print_sound_data);
   scm_set_smob_free(sound_data_tag, free_sound_data);

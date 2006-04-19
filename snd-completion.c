@@ -12,6 +12,27 @@
 
 static char *current_match = NULL;
 
+#if HAVE_GAUCHE
+
+#if 0
+name -> symbol -> 
+ScmHashEntry *e;
+ScmModule *m = scm_UserModule();
+e = Scm_HashTableGet(m->table, SCM_OBJ(symbol));
+
+to see all symbols in a module
+    ScmHashIter iter;
+    ScmHashEntry *e;
+
+        Scm_HashIterInit(module->table, &iter);
+        while ((e = Scm_HashIterNext(&iter)) != NULL) {
+            ScmGloc *g = SCM_GLOC(e->value);
+                    SCM_OBJ(g->name)
+		    }
+#endif
+
+#endif
+
 #if HAVE_GUILE
 #if defined(SCM_MODULE_OBARRAY)
 static int xen_return_first_int(int a, ...)

@@ -1278,6 +1278,8 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
   return(sp);
 }
 
+/* (add-hook! open-hook (lambda (f) (display f) #f)) */
+
 snd_info *snd_open_file(const char *filename, bool read_only)
 {
   file_info *hdr;

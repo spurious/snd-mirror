@@ -562,15 +562,74 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 #endif
 
 #if HAVE_GAUCHE
+
+#if 0
+SCM_EXTERN void Scm_ShowStackTrace(ScmPort *out, ScmObj stacklite,
+                                   int maxdepth, int skip, int offset,
+                                   int format);
+
+				   SCM_EXTERN void Scm_ReportError(ScmObj e); /* calls stack trace */
+
+
+static ScmObj repl_error_handle(ScmObj *args, int nargs, void *data)
+{
+    SCM_ASSERT(nargs == 1);
+    Scm_ReportError(args[0]);
+    return SCM_TRUE;
+}
+
+ScmObj Scm_VMRepl(ScmObj reader, ScmObj evaluator,
+                  ScmObj printer, ScmObj prompter)
+{
+    ScmObj ehandler, reploop;
+    ScmObj *packet = SCM_NEW_ARRAY(ScmObj, 4);
+    packet[0] = reader;
+    packet[1] = evaluator;
+    packet[2] = printer;
+    packet[3] = prompter;
+    ehandler = Scm_MakeSubr(repl_error_handle, packet, 1, 0, SCM_FALSE);
+    reploop = Scm_MakeSubr(repl_main, packet, 0, 0, SCM_FALSE);
+    Scm_VMPushCC(repl_loop_cc, (void**)packet, 4);
+    return Scm_VMWithErrorHandler(ehandler, reploop);
+}
+
+#endif
+/*
+ * Show stack trace.
+ *   stacklite - return value of Scm_GetStackLite
+ *   maxdepth - maximum # of stacks to be shown.
+ *              0 to use the default.  -1 for unlimited.
+
+ *   skip     - ignore this number of frames.  Useful to call this from
+ *              a Scheme error handling routine, in order to skip the
+ *              frames of the handler itself.
+ *   offset   - add this to the frame number.  Useful to show a middle part
+ *              of frames only, by combining the skip parameter.
+ *   format   - SCM_STACK_TRACE_FORMAT_* enum value.  EXPERIMENTAL.
+ */
+
 XEN snd_catch_scm_error(XEN e)
 {
-  fprintf(stderr,"got: %s\n", XEN_AS_STRING(e));
+  fprintf(stderr,"got error: %s\n", XEN_AS_STRING(e));
   return(XEN_FALSE);
 }
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
+#if 0
   /* result = Scm_VMWithErrorHandler(SCM_OBJ(snd_catch_scm_error), catcher); */
   return((*body)(body_data));
+#endif
+  XEN result = XEN_FALSE;
+
+  SCM_UNWIND_PROTECT {
+    result = (*body)(body_data);
+  }
+  SCM_WHEN_ERROR {
+    fprintf(stderr, "eval Error!");
+  }
+  SCM_END_PROTECT;
+
+  return(result);
 }
 #endif
 
@@ -3092,6 +3151,18 @@ static XEN g_gsl_roots(XEN poly)
 #endif
 #endif
 
+#if HAVE_GAUCHE
+static XEN g_defined_p(XEN sym)
+{
+  return(C_TO_XEN_BOOLEAN(Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(sym), false) != NULL));
+}
+static XEN g_random(XEN val)
+{
+  if (XEN_INTEGER_P(val))
+    return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(val))));
+  return(C_TO_XEN_DOUBLE(mus_frandom(XEN_TO_C_DOUBLE(val))));
+}
+#endif
 
 
 #ifdef XEN_ARGIFY_1
@@ -3275,6 +3346,10 @@ XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
 XEN_NARGIFY_4(g_gsl_dht_w, g_gsl_dht)
 #if HAVE_COMPLEX_TRIG && (!HAVE_RUBY)
 XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
+#endif
+#if HAVE_GAUCHE
+XEN_NARGIFY_1(g_defined_p_w, g_defined_p)
+XEN_NARGIFY_1(g_random_w, g_random)
 #endif
 #endif
 
@@ -3480,12 +3555,12 @@ XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
 void g_init_xmix(void);
 #endif
 
-#if HAVE_GAUCHE
-#define XEN_EVAL_C_STRING_UNCHECKED(Expr) Scm_EvalCString(Expr, SCM_OBJ(Scm_UserModule()))
-#endif
-
 void g_initialize_gh(void)
 {
+#if HAVE_GAUCHE
+  XEN_EVAL_C_STRING("(define *features* (list 'defmacro 'record))"); /* has to be first so *features* exists */
+#endif
+
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe, g_mus_audio_describe_w, 0, 0, 0, H_mus_audio_describe);
 
   XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function");
@@ -3775,6 +3850,10 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
 #endif
 #endif
+#if HAVE_GAUCHE
+  XEN_DEFINE_PROCEDURE("defined?",  g_defined_p_w,  1, 0, 0, "(defined? arg) -> #t if arg is defined");
+  XEN_DEFINE_PROCEDURE("random",    g_random_w,  1, 0, 0, "(random arg) -> random number between 0 and arg ");
+#endif
 
 #if HAVE_SCHEME
   #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \
@@ -3959,66 +4038,31 @@ that name is presented in the New File dialog."
 #endif
 
 #if HAVE_GAUCHE
-  XEN_EVAL_C_STRING_UNCHECKED("(define redo-edit redo)");        /* consistency with Ruby */
-  XEN_EVAL_C_STRING_UNCHECKED("(define undo-edit undo)");
-  XEN_EVAL_C_STRING_UNCHECKED("(define *snd-loaded-files* '())");
-  XEN_EVAL_C_STRING_UNCHECKED("(define *snd-remember-paths* #t)");
-  XEN_EVAL_C_STRING_UNCHECKED("(define hook? list?)");
-  XEN_EVAL_C_STRING_UNCHECKED("(define hook-empty? null?)");
+  XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
+  XEN_EVAL_C_STRING("(define undo-edit undo)");
+  XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
+  XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
 
-  XEN_EVAL_C_STRING_UNCHECKED("(define-syntax defmacro\n  (syntax-rules ()\n    ((_ name params . body) (define-macro (name . params) . body))))");
+  XEN_EVAL_C_STRING("(define system sys-system)");
+  XEN_EVAL_C_STRING("(define getenv sys-getenv)");
+  XEN_EVAL_C_STRING("(define getcwd sys-getcwd)");
+  XEN_EVAL_C_STRING("(define rename-file sys-rename)");
+  XEN_EVAL_C_STRING("(define (delete-file f)  (sys-unlink f))");
+  XEN_EVAL_C_STRING("(define version gauche-version)");
 
-  /* XEN_EVAL_C_STRING_UNCHECKED("(use srfi-1)"); */ /* TODO: in C? */
+  XEN_EVAL_C_STRING("(define (list-set! lis pos val) (set-car! (list-tail lis pos) val) val)");
+  XEN_EVAL_C_STRING("(define-syntax defmacro\n  (syntax-rules ()\n    ((_ name params . body) (define-macro (name . params) . body))))");
+  XEN_EVAL_C_STRING("(define (make-procedure-with-setter get set) (let ((proc (lambda x (apply get x)))) (set! (setter proc) set) proc))");
 
-#if 0
-  /* from cm gauche.scm also lib/stk.scm */
+  XEN_EVAL_C_STRING("(define hook? list?)");
+  XEN_EVAL_C_STRING("(define hook-empty? null?)");
+  XEN_EVAL_C_STRING("(defmacro add-hook! (a b) `(set! ,a (cons ,b ,a)))");
+  XEN_EVAL_C_STRING("(defmacro reset-hook! (a) `(set! ,a (list)))");
 
-  /* see gauche/lib/slib.scm for *features* definition */
-(define system sys-system)
-(define tmpnam sys-tmpnam)
-(define getenv sys-getenv)
-(define force-output flush)
-(define gentemp gensym)
-(define getcwd sys-getcwd)
-(define chdir  sys-chdir)
-(define rename-file sys-rename)
+  XEN_EVAL_C_STRING("(define (filter-list pred lis) (let loop ((lis lis) (r '())) (cond ((null-list? lis) (reverse! r)) ((pred (car lis)) (loop (cdr lis) (cons (car lis) r))) (else (loop (cdr lis) r)))))");
+  XEN_EVAL_C_STRING("(defmacro remove-hook! (a b) `(set! ,a (filter-list (lambda (p) (eq? p ,b)) ,a)))");
 
-
-
-
-(use srfi-1)     ; list library
-(use srfi-13)     ; extra string support
-(use srfi-27)    ; random bits
-(use file.util)  ; current-directory, home-directory
-
-(define quit exit)  
-
-(define (delete-file f)  (sys-unlink f))
-
-(define (shell . args)
-  (sys-system (car args)))
-
-(define (list-set! lis pos val)
-  (set-car! (list-tail lis pos) val)
-  val)
-
-(define *random-state* default-random-source)
-
-(define (random n . args)
-  (if (exact? n)
-    (random-integer n)
-    (if (inexact? n)
-      (if (= n 1.0)
-          (random-real)
-          (* (random-real) n))
-      (errorf "random bounds not integer or real: ~s." n))))
-
-
-  /* TODO: defmacro? */
-  /* TODO: add defined?
-   */
-  /* TODO:  need add-hook! reset-hook! remove-hook! -- these should be macros */
-#endif
+  /* Scm_Require(C_TO_XEN_STRING("file/util")); */
 
 #endif
 

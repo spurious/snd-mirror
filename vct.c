@@ -123,6 +123,7 @@ char *vct_to_string(vct *v)
   int len;
   char *buf;
   char flt[16];
+
   if (v == NULL) return(NULL);
   len = vct_print_length;
   if (len > v->length) len = v->length;
@@ -954,7 +955,13 @@ static void vct_init_1(void *ignore)
 void vct_init(void)
 #endif
 {
+
+#if (!HAVE_GAUCHE)
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));
+#else
+  vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct), print_vct, free_vct);
+#endif
+
 #if HAVE_GUILE
   scm_set_smob_print(vct_tag, print_vct);
   scm_set_smob_free(vct_tag, free_vct);
@@ -963,6 +970,7 @@ void vct_init(void)
   scm_set_smob_apply(vct_tag, XEN_PROCEDURE_CAST vct_ref, 1, 0, 0);
 #endif
 #endif
+
 #if HAVE_FORTH
   fth_set_object_inspect(vct_tag,   print_vct);
   fth_set_object_dump(vct_tag,      g_vct_to_readable_string);
@@ -978,6 +986,7 @@ void vct_init(void)
   FTH_PRIM(FTH_FICL_DICT(), "vct(",   ficl_begin_vct,     h_begin_vct);
   fth_catch_eval("start-prefixes : vct( vct( ; end-prefixes", c__FUNCTION__);
 #endif
+
 #if HAVE_RUBY
   rb_include_module(vct_tag, rb_mComparable);
   rb_include_module(vct_tag, rb_mEnumerable);
@@ -1018,7 +1027,6 @@ void vct_init(void)
   rb_define_method(vct_tag, "first=",    XEN_PROCEDURE_CAST rb_set_vct_first, 1);
   rb_define_method(vct_tag, "last",      XEN_PROCEDURE_CAST rb_vct_last, 0);
   rb_define_method(vct_tag, "last=",     XEN_PROCEDURE_CAST rb_set_vct_last, 1);
-
 #endif
 
   XEN_DEFINE_PROCEDURE(S_make_vct,      g_make_vct_w,    1, 1, 0, H_make_vct);
@@ -1040,6 +1048,7 @@ void vct_init(void)
   XEN_DEFINE_PROCEDURE(S_vct_subseq,    vct_subseq_w,    2, 2, 0, H_vct_subseq);
   XEN_DEFINE_PROCEDURE(S_vct,           g_vct_w,         0, 0, 1, H_vct);
   XEN_DEFINE_PROCEDURE(S_vct_reverse,   vct_reverse_w,   1, 1, 0, H_vct_reverse);
+
 #if WITH_RUN && USE_SND
   XEN_DEFINE_PROCEDURE("vct-map-1",     vct_mapB_w,      2, 0, 0, H_vct_mapB);
   XEN_EVAL_C_STRING("(defmacro vct-map! (v form) `(vct-map-1 ,v (list ',form ,form)))");
@@ -1053,6 +1062,7 @@ void vct_init(void)
 #else
   XEN_DEFINE_PROCEDURE(S_vct_ref,       vct_ref_w,       2, 0, 0, H_vct_ref);
 #endif
+
   XEN_DEFINE_PROCEDURE(S_vct_to_string, g_vct_to_readable_string_w, 1, 0, 0, H_vct_to_string);
   XEN_DEFINE_PROCEDURE(S_vct_setB,      vct_set_w,       3, 0, 0, H_vct_setB);
   XEN_DEFINE_PROCEDURE(S_vct_times,     vct_times_w,     2, 0, 0, H_vct_times);

@@ -1379,21 +1379,21 @@ void xen_gauche_load_args(XEN *args, int incoming_args, int args_size, XEN *arg_
 void xen_gauche_define_procedure(char *Name, XEN (*Func)(), int ReqArg, int OptArg, int RstArg, char *Doc)
 {
   XEN proc;
-  proc = Scm_MakeSubr(Func, NULL, ReqArg, OptArg, SCM_MAKE_STR_COPYING(Name));
+  proc = Scm_MakeSubr(Func, NULL, ReqArg, OptArg, SCM_MAKE_STR_COPYING((Doc) ? Doc : Name));
   SCM_DEFINE(Scm_UserModule(), Name, proc);
-/* TODO: g++:
-xen.c:1382: error: invalid conversion from 'ScmHeaderRec* (*)()' to 'ScmHeaderRec* (*)(ScmHeaderRec**, int, void*)'
-xen.c:1382: error:   initializing argument 1 of 'ScmHeaderRec* Scm_MakeSubr(ScmHeaderRec* (*)(ScmHeaderRec**, int, void*), void*, int, int, ScmHeaderRec*)'
-*/
+  /* TODO: g++:
+     xen.c:1382: error: invalid conversion from 'ScmHeaderRec* (*)()' to 'ScmHeaderRec* (*)(ScmHeaderRec**, int, void*)'
+     xen.c:1382: error:   initializing argument 1 of 'ScmHeaderRec* Scm_MakeSubr(ScmHeaderRec* (*)(ScmHeaderRec**, int, void*), void*, int, int, ScmHeaderRec*)'
+  */
 }
 
 void xen_gauche_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), 
 					     int get_req, int get_opt, int set_req, int set_opt)
 {
   XEN proc, set_proc;
-  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_name));
+  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_help));
   SCM_DEFINE(Scm_UserModule(), get_name, proc);
-  set_proc = Scm_MakeSubr(set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING(get_name));
+  set_proc = Scm_MakeSubr(set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING((get_help) ? get_help : get_name));
   Scm_SetterSet((ScmProcedure *)proc, (ScmProcedure *)set_proc, false);
 }
 
@@ -1401,9 +1401,9 @@ void xen_gauche_define_procedure_with_reversed_setter(char *get_name, XEN (*get_
 						      int get_req, int get_opt, int set_req, int set_opt)
 {
   XEN proc, set_proc;
-  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_name));
+  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_help));
   SCM_DEFINE(Scm_UserModule(), get_name, proc);
-  set_proc = Scm_MakeSubr(reversed_set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING(get_name));
+  set_proc = Scm_MakeSubr(reversed_set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING((get_help) ? get_help : get_name));
   Scm_SetterSet((ScmProcedure *)proc, (ScmProcedure *)set_proc, false);
 }
 
@@ -1443,20 +1443,17 @@ void xen_gauche_permanent_object(XEN obj)
 
 XEN xen_gauche_eval_c_string(char *arg)
 {
-#if 0
-  char *expr;
-  int len;
-  XEN result;
-  len = strlen(arg) + 128;
-  expr = (char *)calloc(len, sizeof(char));
-  snprintf(expr, len, "(with-error-handler (lambda (e) (display e)) (lambda () %s))", arg);
-  result = Scm_EvalCString(expr, SCM_OBJ(Scm_UserModule()));
-  free(expr);
+  XEN result = XEN_FALSE;
+
+  SCM_UNWIND_PROTECT {
+    result = Scm_EvalCString(arg, SCM_OBJ(Scm_UserModule()));
+  }
+  SCM_WHEN_ERROR {
+    fprintf(stderr, "Error!");
+  }
+  SCM_END_PROTECT;
+
   return(result);
-#else
-  /* TODO: protect eval from errors somehow -- needs to be "at top level" */
-  return(Scm_EvalCString(arg, SCM_OBJ(Scm_UserModule())));
-#endif
 }
 
 void xen_gauche_variable_set(const char *var, XEN value)
@@ -1471,53 +1468,83 @@ void xen_gauche_variable_set(const char *var, XEN value)
   free(expr);
 }
 
-XEN xen_gauche_make_object(int type, void *val)
+typedef struct {
+  XEN_OBJECT_TYPE type;
+  void *data;
+} smob;
+
+static XEN_OBJECT_TYPE smob_type = 0;
+static ScmClass **smob_classes = NULL;
+static int smob_classes_size = 0;
+
+XEN xen_gauche_make_object(XEN_OBJECT_TYPE type, void *val)
 {
-  return(XEN_FALSE);
+  smob *s;
+  s = (smob *)calloc(1, sizeof(smob));
+  s->type = type;
+  s->data = val;
+  return(Scm_MakeForeignPointer(smob_classes[type], (void *)s));
 }
 
 void *xen_gauche_object_ref(XEN obj)
 {
+  smob *s;
+  s = (smob *)(((ScmForeignPointer *)obj)->ptr);
+  if (s) 
+    return(s->data);
   return(NULL);
 }
 
-XEN_OBJECT_TYPE xen_gauche_new_type(const char *name)
+XEN_OBJECT_TYPE xen_gauche_new_type(const char *name, ScmClassPrintProc print, ScmForeignCleanupProc cleanup)
 {
-  return(0);
+  XEN_OBJECT_TYPE current_type;
+  current_type = smob_type;
+  smob_type++;
+  if (current_type >= smob_classes_size)
+    {
+      if (smob_classes_size == 0)
+	{
+	  smob_classes_size = 8;
+	  smob_classes = (ScmClass **)calloc(smob_classes_size, sizeof(ScmClass *));
+	}
+      else
+	{
+	  smob_classes_size += 8;
+	  smob_classes = (ScmClass **)realloc(smob_classes, smob_classes_size * sizeof(ScmClass *));
+	}
+    }
+  smob_classes[current_type] = Scm_MakeForeignPointerClass(Scm_UserModule(),
+							   name,
+							   print,
+							   cleanup,
+							   SCM_FOREIGN_POINTER_KEEP_IDENTITY || SCM_FOREIGN_POINTER_MAP_NULL);
+  return(current_type);
 }
 
-bool xen_gauche_type_p(XEN obj, int type)
+bool xen_gauche_type_p(XEN obj, XEN_OBJECT_TYPE type)
 {
-  return(false);
+  smob *s;
+  s = SCM_FOREIGN_POINTER_REF(smob *, obj);
+  return((s) &&
+	 (s->type == type));
 }
 
-static char *features = NULL;
-static int features_size = 0;
 void xen_gauche_provide(const char *feature)
 {
-  /* there is no *features* list in Gauche!! ldinfo.provided is hidden in src/load.c, *cond-features* looks like some unrelated kludge */
+  /* there is no *features* list built-in Gauche!! I've defined one in snd-xen.c */
+  char *expr;
+  int len;
   Scm_Provide(C_TO_XEN_STRING(feature)); /* for Gauche's "provided?" function? */
-  if (features)
-    {
-      if ((int)(strlen(features) + 2 + strlen(feature)) >= features_size)
-	{
-	  features_size *= 2;
-	  features = (char *)realloc(features, features_size);
-	}
-      strcat(features, " ");
-      strcat(features, feature);
-    }
-  else
-    {
-      features_size = 512;
-      features = (char *)calloc(features_size, sizeof(char));
-      snprintf(features, features_size, "%s", feature);
-    }
+  len = strlen(feature) + 64;
+  expr = (char *)calloc(len, sizeof(char));
+  snprintf(expr, len, "(set! *features* (cons '%s *features*))", feature);
+  XEN_EVAL_C_STRING(expr);
+  free(expr);
 }
 
 const char *xen_gauche_features(void)
 {
-  return(features);
+  return(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")));
 }
 
 #endif
