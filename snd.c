@@ -367,20 +367,9 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 #if HAVE_RUBY
   ruby_init();
 #endif
-#if HAVE_FORTH
+
+#if HAVE_FORTH || HAVE_GAUCHE
   xen_initialize();
-#endif
-#if HAVE_GAUCHE
-    GC_INIT();
-    Scm_Init(GAUCHE_SIGNATURE);
-    SCM_UNWIND_PROTECT {
-      Scm_Load("/usr/local/share/gauche/0.8.7/lib/gauche-init.scm", 0);
-      /* TODO: save gauche-config --syslibdir in configure prepend here */
-    }
-    SCM_WHEN_ERROR {
-      fprintf(stderr, "Error in Gauche's initialization file.\n");
-    }
-    SCM_END_PROTECT;
 #endif
 
   for (i = 1; i < argc; i++)

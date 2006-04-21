@@ -1343,18 +1343,10 @@ void xen_repl(int argc, char **argv)
   Scm_Repl(SCM_FALSE, SCM_FALSE, SCM_FALSE, SCM_FALSE);
 }
 
-void xen_initialize(void)
+static XEN g_defined_p(XEN sym)
 {
-  Scm_Init(GAUCHE_SIGNATURE); /* signature is apparently a version mismatch check? (core.c) */
-  {
-    SCM_UNWIND_PROTECT {
-      Scm_Load("gauche-init.scm", 0);
-    }
-    SCM_WHEN_ERROR {
-      fprintf(stderr, "Error in initialization file.\n");
-    }
-    SCM_END_PROTECT;
-  }
+  /* "defined?" is absolutely needed from the start */
+  return(C_TO_XEN_BOOLEAN(Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(sym), false) != NULL));
 }
 
 void xen_gc_mark(XEN val)
@@ -1376,15 +1368,14 @@ void xen_gauche_load_args(XEN *args, int incoming_args, int args_size, XEN *arg_
     }
 }
 
+#ifndef __cplusplus
 void xen_gauche_define_procedure(char *Name, XEN (*Func)(), int ReqArg, int OptArg, int RstArg, char *Doc)
 {
   XEN proc;
+  if (RstArg > 0)
+    OptArg = 24; /* vargify but I think 24 args will handle most cases */
   proc = Scm_MakeSubr(Func, NULL, ReqArg, OptArg, SCM_MAKE_STR_COPYING((Doc) ? Doc : Name));
   SCM_DEFINE(Scm_UserModule(), Name, proc);
-  /* TODO: g++:
-     xen.c:1382: error: invalid conversion from 'ScmHeaderRec* (*)()' to 'ScmHeaderRec* (*)(ScmHeaderRec**, int, void*)'
-     xen.c:1382: error:   initializing argument 1 of 'ScmHeaderRec* Scm_MakeSubr(ScmHeaderRec* (*)(ScmHeaderRec**, int, void*), void*, int, int, ScmHeaderRec*)'
-  */
 }
 
 void xen_gauche_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), 
@@ -1406,6 +1397,45 @@ void xen_gauche_define_procedure_with_reversed_setter(char *get_name, XEN (*get_
   set_proc = Scm_MakeSubr(reversed_set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING((get_help) ? get_help : get_name));
   Scm_SetterSet((ScmProcedure *)proc, (ScmProcedure *)set_proc, false);
 }
+#else
+void xen_gauche_define_procedure(char *Name, 
+				 ScmHeaderRec* (*Func)(ScmHeaderRec**, int, void*), 
+				 int ReqArg, int OptArg, int RstArg, char *Doc)
+{
+  XEN proc;
+  if (RstArg > 0)
+    OptArg = 24; /* vargify but I think 24 args will handle most cases */
+  proc = Scm_MakeSubr(Func, NULL, ReqArg, OptArg, SCM_MAKE_STR_COPYING((Doc) ? Doc : Name));
+  SCM_DEFINE(Scm_UserModule(), Name, proc);
+}
+
+void xen_gauche_define_procedure_with_reversed_setter(char *get_name, 
+						      ScmHeaderRec* (*get_func)(ScmHeaderRec**, int, void*), 
+						      char *get_help, 
+						      ScmHeaderRec* (*set_func)(ScmHeaderRec**, int, void*), 
+						      ScmHeaderRec* (*reversed_set_func)(ScmHeaderRec**, int, void*), 
+						      int get_req, int get_opt, int set_req, int set_opt)
+{
+  XEN proc, set_proc;
+  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_help));
+  SCM_DEFINE(Scm_UserModule(), get_name, proc);
+  set_proc = Scm_MakeSubr(reversed_set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING((get_help) ? get_help : get_name));
+  Scm_SetterSet((ScmProcedure *)proc, (ScmProcedure *)set_proc, false);
+}
+
+void xen_gauche_define_procedure_with_setter(char *get_name, 
+					     ScmHeaderRec* (*get_func)(ScmHeaderRec**, int, void*), 
+					     char *get_help, 
+					     ScmHeaderRec* (*set_func)(ScmHeaderRec**, int, void*),
+					     int get_req, int get_opt, int set_req, int set_opt)
+{
+  XEN proc, set_proc;
+  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_help));
+  SCM_DEFINE(Scm_UserModule(), get_name, proc);
+  set_proc = Scm_MakeSubr(set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING((get_help) ? get_help : get_name));
+  Scm_SetterSet((ScmProcedure *)proc, (ScmProcedure *)set_proc, false);
+}
+#endif
 
 void xen_gauche_list_set_x(XEN Lst, int Loc, XEN Val)
 {
@@ -1517,7 +1547,7 @@ XEN_OBJECT_TYPE xen_gauche_new_type(const char *name, ScmClassPrintProc print, S
 							   name,
 							   print,
 							   cleanup,
-							   SCM_FOREIGN_POINTER_KEEP_IDENTITY || SCM_FOREIGN_POINTER_MAP_NULL);
+							   SCM_FOREIGN_POINTER_KEEP_IDENTITY | SCM_FOREIGN_POINTER_MAP_NULL);
   return(current_type);
 }
 
@@ -1532,9 +1562,10 @@ bool xen_gauche_type_p(XEN obj, XEN_OBJECT_TYPE type)
 void xen_gauche_provide(const char *feature)
 {
   /* there is no *features* list built-in Gauche!! I've defined one in snd-xen.c */
+  /*   also Gauche's provide and provided? take strings! so I'll have to encapsulate them */
   char *expr;
   int len;
-  Scm_Provide(C_TO_XEN_STRING(feature)); /* for Gauche's "provided?" function? */
+  Scm_Provide(C_TO_XEN_STRING(feature));
   len = strlen(feature) + 64;
   expr = (char *)calloc(len, sizeof(char));
   snprintf(expr, len, "(set! *features* (cons '%s *features*))", feature);
@@ -1546,6 +1577,46 @@ const char *xen_gauche_features(void)
 {
   return(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")));
 }
+
+static XEN g_xen_gauche_provide(XEN feature)
+{
+  if (XEN_SYMBOL_P(feature))
+    xen_gauche_provide(XEN_SYMBOL_TO_C_STRING(feature));
+  else xen_gauche_provide(XEN_TO_C_STRING(feature));
+  return(feature);
+}
+
+static XEN g_xen_gauche_provided_p(XEN feature)
+{
+  if (XEN_SYMBOL_P(feature))
+    return(C_TO_XEN_BOOLEAN(Scm_ProvidedP(SCM_OBJ(SCM_SYMBOL_NAME(feature)))));
+  return(C_TO_XEN_BOOLEAN(Scm_ProvidedP(feature)));
+}
+
+XEN_NARGIFY_1(g_defined_p_w, g_defined_p)
+XEN_NARGIFY_1(g_xen_gauche_provided_p_w, g_xen_gauche_provided_p)
+XEN_NARGIFY_1(g_xen_gauche_provide_w, g_xen_gauche_provide)
+
+void xen_initialize(void)
+{
+  Scm_Init(GAUCHE_SIGNATURE); /* signature is apparently a version mismatch check? (core.c) */
+  {
+    SCM_UNWIND_PROTECT {
+      Scm_Load("gauche-init.scm", 0);
+    }
+    SCM_WHEN_ERROR {
+      fprintf(stderr, "Error in Gauche initialization file.\n");
+    }
+    SCM_END_PROTECT;
+  }
+
+  /* Gauche doesn't have a *features* list!! */
+  XEN_EVAL_C_STRING("(define *features* (list 'defmacro 'record))"); /* has to be first so *features* exists */
+  XEN_DEFINE_PROCEDURE("defined?", g_defined_p_w, 1, 0, 0, "(defined? arg) -> #t if arg is defined");
+  XEN_DEFINE_PROCEDURE("provided?", g_xen_gauche_provided_p_w, 1, 0, 0, "(provided? arg) -> #t if arg is on the *features* list");
+  XEN_DEFINE_PROCEDURE("provide", g_xen_gauche_provide_w, 1, 0, 0, "(provide arg) -> add arg to *features* list");
+}
+
 
 #endif
 

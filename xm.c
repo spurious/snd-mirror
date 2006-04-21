@@ -5,10 +5,11 @@
 
 #include <config.h>
 
-#define XM_DATE "30-Jan-06"
+#define XM_DATE "21-Apr-06"
 
 /* HISTORY: 
  *
+ *   21-Apr:    Gauche additions.
  *   30-Jan:    removed XmMultiList.
  *   1-Jan-06:  XmNpopupEnabled resource type changed from boolean to int (enum) (Motif docs bug).
  *   --------

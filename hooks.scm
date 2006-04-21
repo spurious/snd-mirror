@@ -1,6 +1,6 @@
 ;;; hook-related functions
 
-(use-modules (ice-9 format))
+(if (provided? 'snd-guile) (use-modules (ice-9 format)))
 (provide 'snd-hooks.scm)
 
 ;;; -------- snd-hooks
@@ -43,7 +43,7 @@
 ;;;   we kludge around it using the procedure name as a string (but anonymous
 ;;;   lambdas have #f for a name).
 
-(define (remove-local-hook! hook func)
+(define+ (remove-local-hook! hook func)
   "(remove-local-hook! hook func) removes func from hook even if func is defined locally"
   (define (procedure-name-or-false f)
     ;; anonymous lambda procedure name is #f
@@ -76,7 +76,7 @@
 
 ;;; -------- local hook
 
-(define (with-local-hook hook local-hook-procs thunk)
+(define+ (with-local-hook hook local-hook-procs thunk)
   "(with-local-hook hook local-hook-procs thunk) evaluates thunk with hook set to local-hook-procs (a list), then restores hook to its previous state"
   (define (list->hook hook lst)
     (define (list->hook-1 hook l)

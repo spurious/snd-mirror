@@ -1459,9 +1459,9 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_FALSE_P(a)               SCM_FALSEP(a)
 
 #define XEN_UNDEFINED                SCM_UNDEFINED
-/* XEN_UNDEFINED_P is used in the sense of "is this identifier (a string) defined" */
+/* XEN_DEFINED_P is used in the sense of "is this identifier (a string) defined" */
 /*   as a function argument, XEN_UNDEFINED is a marker that the given argument was not supplied */
-#define XEN_DEFINED_P(Name)          (SCM_UNDEFINEDP(SCM_INTERN(Name)) || SCM_UNBOUNDP(SCM_INTERN(Name)))
+#define XEN_DEFINED_P(Name)          (!(SCM_UNDEFINEDP(SCM_INTERN(Name)) || SCM_UNBOUNDP(SCM_INTERN(Name))))
 
 /* in Gauche, undefined != unbound (SCM_UNDEFINED, SCM_UNBOUND), but the distinction is blurred in other cases */
 /* XEN_NOT_BOUND_P is applied to XEN objects, not strings */
@@ -1546,7 +1546,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_STRING_P(Arg)            SCM_STRINGP(Arg)
 #define XEN_TO_C_STRING(Str)         Scm_GetString(SCM_STRING(Str))
 #define C_TO_XEN_STRING(a)           SCM_MAKE_STR_COPYING(a)
-#define C_TO_XEN_STRINGN(Str, Len)   C_TO_XEN_STRING(Str) /* trouble here */
+#define C_TO_XEN_STRINGN(Str, Len)   Scm_MakeString(Str, Len, Len, SCM_MAKSTR_COPYING)
 #define C_STRING_TO_XEN_FORM(Str)    Scm_ReadFromCString(Str)
 #define XEN_EVAL_FORM(Form)          Scm_Eval(Form, SCM_OBJ(Scm_UserModule()))
 #define XEN_EVAL_C_STRING(Arg)       Scm_EvalCString(Arg, SCM_OBJ(Scm_UserModule()))
@@ -1646,6 +1646,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_REQUIRED_ARGS(Func)           SCM_PROCEDURE_REQUIRED(Func)
 #define XEN_REQUIRED_ARGS_OK(Func, Args)  (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func))) == Args)
 
+#ifndef __cplusplus
 #define XEN_PROCEDURE_CAST (XEN (*)())
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   xen_gauche_define_procedure(Name, XEN_PROCEDURE_CAST Func, ReqArg, OptArg, RstArg, Doc)
@@ -1653,6 +1654,31 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   xen_gauche_define_procedure_with_setter(Get_Name, Get_Func, Get_Help, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   xen_gauche_define_procedure_with_reversed_setter(Get_Name, Get_Func, Get_Help, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
+
+void xen_gauche_define_procedure(char *Name, XEN (*Func)(), int ReqArg, int OptArg, int RstArg, char *Doc);
+void xen_gauche_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
+  int get_req, int get_opt, int set_req, int set_opt);
+void xen_gauche_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(),
+  int get_req, int get_opt, int set_req, int set_opt);
+
+#else
+
+#define XEN_PROCEDURE_CAST (ScmHeaderRec* (*)(ScmHeaderRec**, int, void*))
+#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+  xen_gauche_define_procedure(Name, XEN_PROCEDURE_CAST Func, ReqArg, OptArg, RstArg, Doc)
+#define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  xen_gauche_define_procedure_with_setter(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Help, XEN_PROCEDURE_CAST Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
+#define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  xen_gauche_define_procedure_with_reversed_setter(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Help, XEN_PROCEDURE_CAST Set_Func, XEN_PROCEDURE_CAST Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
+
+void xen_gauche_define_procedure(char *Name, ScmHeaderRec* (*Func)(ScmHeaderRec**, int, void*), int ReqArg, int OptArg, int RstArg, char *Doc);
+void xen_gauche_define_procedure_with_reversed_setter(char *get_name, ScmHeaderRec* (*get_func)(ScmHeaderRec**, int, void*), char *get_help, 
+  ScmHeaderRec* (*set_func)(ScmHeaderRec**, int, void*), ScmHeaderRec* (*reversed_set_func)(ScmHeaderRec**, int, void*), 
+  int get_req, int get_opt, int set_req, int set_opt);
+void xen_gauche_define_procedure_with_setter(char *get_name, ScmHeaderRec* (*get_func)(ScmHeaderRec**, int, void*), char *get_help, 
+  ScmHeaderRec* (*set_func)(ScmHeaderRec**, int, void*),
+  int get_req, int get_opt, int set_req, int set_opt);
+#endif
 
 /* TODO: error catch here? */
 #define XEN_CALL_0(Func, Caller)                   Scm_Apply(Func, XEN_EMPTY_LIST)
@@ -1688,8 +1714,6 @@ SCM_DEFINE_BASE_CLASS(Scm_SystemErrorClass, ScmSystemError,
 
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
-/* TODO: check SCM_ENTER_SUBR */
-
 #define XEN_ARGIFY_1(OutName, InName) \
   static XEN OutName(XEN *argv, int argc, void *self) \
   { \
@@ -1703,6 +1727,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   static XEN OutName(XEN *argv, int argc, void *self) \
   { \
     XEN args[2];\
+    SCM_ENTER_SUBR(#InName); \
     xen_gauche_load_args(args, argc, 2, argv);	\
     return(InName(args[0], args[1])); \
   }
@@ -1711,6 +1736,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   static XEN OutName(XEN *argv, int argc, void *self) \
   { \
     XEN args[3];\
+    SCM_ENTER_SUBR(#InName); \
     xen_gauche_load_args(args, argc, 3, argv);    \
     return(InName(args[0], args[1], args[2]));	    \
   }
@@ -1719,6 +1745,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   static XEN OutName(XEN *argv, int argc, void *self) \
   { \
     XEN args[4];\
+    SCM_ENTER_SUBR(#InName); \
     xen_gauche_load_args(args, argc, 4, argv);	\
     return(InName(args[0], args[1], args[2], args[3]));	\
   }
@@ -1727,6 +1754,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   static XEN OutName(XEN *argv, int argc, void *self) \
   { \
     XEN args[5];\
+    SCM_ENTER_SUBR(#InName); \
     xen_gauche_load_args(args, argc, 5, argv);			\
     return(InName(args[0], args[1], args[2], args[3], args[4]));	\
   }
@@ -1735,6 +1763,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   static XEN OutName(XEN *argv, int argc, void *self) \
   { \
     XEN args[6];\
+    SCM_ENTER_SUBR(#InName); \
     xen_gauche_load_args(args, argc, 6, argv);			\
     return(InName(args[0], args[1], args[2], args[3], args[4], args[5]));	\
   }
@@ -1743,6 +1772,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   static XEN OutName(XEN *argv, int argc, void *self) \
   { \
     XEN args[7];\
+    SCM_ENTER_SUBR(#InName); \
     xen_gauche_load_args(args, argc, 7, argv);			\
     return(InName(args[0], args[1], args[2], args[3], args[4], args[5], args[6])); \
   }
@@ -1751,6 +1781,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   static XEN OutName(XEN *argv, int argc, void *self) \
   { \
     XEN args[8];\
+    SCM_ENTER_SUBR(#InName); \
     xen_gauche_load_args(args, argc, 8, argv);			\
     return(InName(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7])); \
   }
@@ -1759,6 +1790,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   static XEN OutName(XEN *argv, int argc, void *self) \
   { \
     XEN args[9];\
+    SCM_ENTER_SUBR(#InName); \
     xen_gauche_load_args(args, argc, 9, argv);			\
     return(InName(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8])); \
   }
@@ -1767,34 +1799,57 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   static XEN OutName(XEN *argv, int argc, void *self) \
   { \
     XEN args[10];\
+    SCM_ENTER_SUBR(#InName); \
     xen_gauche_load_args(args, argc, 10, argv);			\
     return(InName(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])); \
   }
 
-#define XEN_NARGIFY_0(OutName, InName) static XEN OutName(XEN *argv, int argc, void *self) {return(InName());}
-#define XEN_NARGIFY_1(OutName, InName) static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0]));}
-#define XEN_NARGIFY_2(OutName, InName) static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1]));}
-#define XEN_NARGIFY_3(OutName, InName) static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1], argv[2]));}
-#define XEN_NARGIFY_4(OutName, InName) static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1], argv[2], argv[3]));}
+#define XEN_NARGIFY_0(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+    {SCM_ENTER_SUBR(#InName); return(InName());}
+
+#define XEN_NARGIFY_1(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+    {SCM_ENTER_SUBR(#InName); return(InName(argv[0]));}
+
+#define XEN_NARGIFY_2(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+    {SCM_ENTER_SUBR(#InName); return(InName(argv[0], argv[1]));}
+
+#define XEN_NARGIFY_3(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+    {SCM_ENTER_SUBR(#InName); return(InName(argv[0], argv[1], argv[2]));}
+
+#define XEN_NARGIFY_4(OutName, InName) \
+  static XEN OutName(XEN *argv, int argc, void *self) \
+    {SCM_ENTER_SUBR(#InName); return(InName(argv[0], argv[1], argv[2], argv[3]));}
+
 #define XEN_NARGIFY_5(OutName, InName) \
-  static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4]));}
+  static XEN OutName(XEN *argv, int argc, void *self) \
+    {SCM_ENTER_SUBR(#InName); return(InName(argv[0], argv[1], argv[2], argv[3], argv[4]));}
+
 #define XEN_NARGIFY_6(OutName, InName) \
-  static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]));}
+  static XEN OutName(XEN *argv, int argc, void *self) \
+    {SCM_ENTER_SUBR(#InName); return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]));}
+
 #define XEN_NARGIFY_7(OutName, InName) \
-  static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6]));}
+  static XEN OutName(XEN *argv, int argc, void *self) \
+    {SCM_ENTER_SUBR(#InName); return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6]));}
+
 #define XEN_NARGIFY_8(OutName, InName) \
-  static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7]));}
+  static XEN OutName(XEN *argv, int argc, void *self) \
+    {SCM_ENTER_SUBR(#InName); return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7]));}
+
 #define XEN_NARGIFY_9(OutName, InName) \
-  static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8]));}
+  static XEN OutName(XEN *argv, int argc, void *self) \
+    {SCM_ENTER_SUBR(#InName); return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8]));}
 
 #define XEN_VARGIFY(OutName, InName) \
-  static XEN OutName(XEN *argv, int argc, void *self) {return(InName(argv[0]));}
-
-void xen_gauche_define_procedure(char *Name, XEN (*Func)(), int ReqArg, int OptArg, int RstArg, char *Doc);
-void xen_gauche_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
-  int get_req, int get_opt, int set_req, int set_opt);
-void xen_gauche_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(),
-  int get_req, int get_opt, int set_req, int set_opt);
+  static XEN OutName(XEN *argv, int argc, void *self) \
+  { \
+    SCM_ENTER_SUBR(#InName); \
+    return(InName(argv[0])); \
+  }
 
 void xen_gauche_list_set_x(XEN Lst, int Loc, XEN Val);
 XEN xen_gauche_load_file(char *file);

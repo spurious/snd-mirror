@@ -43,6 +43,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     21-Apr:    Gauche support.
  *     29-Mar:    Forth support.
  *     7-Mar:     if g_set_error, return the error message, not the GError pointer
  *     --------
@@ -148,7 +149,11 @@ static XEN make_xm_obj(void *ptr)
 }
 static void define_xm_obj(void)
 {
+#if (!HAVE_GAUCHE)
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
+#else
+  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *), NULL, NULL);
+#endif
 #if HAVE_GUILE
   scm_set_smob_free(xm_obj_tag, xm_obj_free);
 #endif
@@ -39883,7 +39888,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("30-Mar-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Apr-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

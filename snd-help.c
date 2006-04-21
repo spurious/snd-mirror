@@ -186,7 +186,7 @@ static char *xm_version(void)
     #endif
   #endif
 #endif
-#if HAVE_GAUCHE
+#if HAVE_GAUCHE || HAVE_FORTH
       xm_val = XEN_VARIABLE_REF(XM_VERSION_NAME);
 #endif
 #if HAVE_RUBY
@@ -199,9 +199,6 @@ static char *xm_version(void)
         xm_val = XEN_EVAL_C_STRING("Xg_Version");
     #endif
   #endif
-#endif
-#if HAVE_FORTH
-      xm_val = XEN_VARIABLE_REF(XM_VERSION_NAME);
 #endif
   if (XEN_STRING_P(xm_val))
     {
@@ -503,6 +500,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+21-Apr:  many .fs files thanks to Mike Scholz.\n\
 15-Apr:  first portion of Gauche support.\n\
 12-Apr:  clm-load (ws.scm) for cm.\n\
 31-Mar:  rt-player.scm (Kjetil).\n\
@@ -510,8 +508,6 @@ void about_snd_help(void)
          Forth as extension language, thanks to Mike Scholz.\n\
          shorten, tta, wavpack support.\n\
 14-Mar:  x-axis-as-clock for more informative x-axis tick labels in very large files.\n\
-10-Mar:  added a stop sign to interrupt long computations (equivalent to C-g).\n\
-8-Mar:   kmenu.scm thanks to Maxim Krikun.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
@@ -1957,11 +1953,17 @@ static char *snd_finder(const char *name, bool got_help)
   int a_def = 0, dir_len = 0, i;
   XEN dirs = XEN_EMPTY_LIST;
 
-#if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
+#if HAVE_GUILE || (!HAVE_EXTENSION_LANGUAGE)
   #define NUM_DEFINES 5
   #define TRAILER " "
   char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(defmacro ", "(defmacro* "};
   dirs = XEN_EVAL_C_STRING("%load-path");
+#endif
+#if HAVE_GAUCHE || (!HAVE_EXTENSION_LANGUAGE)
+  #define NUM_DEFINES 5
+  #define TRAILER " "
+  char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(defmacro ", "(defmacro* "};
+  dirs = Scm_GetLoadPath();
 #endif
 #if HAVE_RUBY
   #define NUM_DEFINES 1
@@ -2421,94 +2423,96 @@ and the location of the associated C code will be displayed, if it can be found.
 If " S_help_hook " is not empty, it is invoked with the subject and the snd-help result \
 and its value is returned."
 
-  XEN help_text = XEN_FALSE; 
-  char *str = NULL, *new_str, *subject = NULL;
+  char *str = NULL, *subject = NULL;
   int min_diff = 1000;
-  bool need_free = false;
 
 #if HAVE_GUILE
-  int topic_min = 0;
-  bool already_looped = false;
-  XEN value = XEN_FALSE, sym = XEN_FALSE;
-  if (XEN_EQ_P(text, XEN_UNDEFINED))                              /* if no arg, describe snd-help */
-    {
-      help_text = C_TO_XEN_STRING(H_snd_help);
-      subject = S_snd_help;
-    }
-  else
-    {
-      if (XEN_SYMBOL_P(text)) 
-	{
-	  help_text = XEN_OBJECT_HELP(text);
-	  sym = text;
-	  subject = XEN_SYMBOL_TO_C_STRING(text);
-	}
-      else 
-	{
-	  if (XEN_STRING_P(text))
-	    {
-	      subject = XEN_TO_C_STRING(text);
-	      sym = C_STRING_TO_XEN_SYMBOL(subject);
-	      help_text = XEN_OBJECT_HELP(sym);
-	    }
-	  else
-	    {
-	      value = text;
-	      help_text = XEN_OBJECT_HELP(text);
-	    }
-	}
-      topic_min = snd_int_log2(snd_strlen(subject));
-
-    HELP_LOOP:
-      if (XEN_FALSE_P(help_text))
-	{
+  {
+    XEN help_text = XEN_FALSE; 
+    int topic_min = 0;
+    bool already_looped = false;
+    XEN value = XEN_FALSE, sym = XEN_FALSE;
+    if (XEN_EQ_P(text, XEN_UNDEFINED))                              /* if no arg, describe snd-help */
+      {
+	help_text = C_TO_XEN_STRING(H_snd_help);
+	subject = S_snd_help;
+      }
+    else
+      {
+	if (XEN_SYMBOL_P(text)) 
+	  {
+	    help_text = XEN_OBJECT_HELP(text);
+	    sym = text;
+	    subject = XEN_SYMBOL_TO_C_STRING(text);
+	  }
+	else 
+	  {
+	    if (XEN_STRING_P(text))
+	      {
+		subject = XEN_TO_C_STRING(text);
+		sym = C_STRING_TO_XEN_SYMBOL(subject);
+		help_text = XEN_OBJECT_HELP(sym);
+	      }
+	    else
+	      {
+		value = text;
+		help_text = XEN_OBJECT_HELP(text);
+	      }
+	  }
+	topic_min = snd_int_log2(snd_strlen(subject));
+	
+      HELP_LOOP:
+	if (XEN_FALSE_P(help_text))
+	  {
 #if HAVE_SCM_C_DEFINE
-	  XEN lookup;
-	  if ((XEN_FALSE_P(value)) && (XEN_SYMBOL_P(sym)))
-	    {
-	      lookup = XEN_SYMBOL_TO_VARIABLE(sym);
-	      if (!(XEN_FALSE_P(lookup)))
-		value = XEN_VARIABLE_REF(lookup);
-	    }
+	    XEN lookup;
+	    if ((XEN_FALSE_P(value)) && (XEN_SYMBOL_P(sym)))
+	      {
+		lookup = XEN_SYMBOL_TO_VARIABLE(sym);
+		if (!(XEN_FALSE_P(lookup)))
+		  value = XEN_VARIABLE_REF(lookup);
+	      }
 #endif
-	  help_text = XEN_OBJECT_HELP(value);         /* (object-property ...) */
-	  if ((XEN_FALSE_P(help_text)) &&
-	      (XEN_PROCEDURE_P(value)))
-	    {
-	      help_text = XEN_PROCEDURE_HELP(value);  /* (procedure-property ...) */
-	      if (XEN_FALSE_P(help_text))
-		help_text = XEN_PROCEDURE_SOURCE_HELP(value);      /* (procedure-documentation ...) -- this is the first line of source if string */
-	    }
-	  if ((XEN_FALSE_P(help_text)) && (!already_looped) && (help_names))
-	    {
-	      /* we're getting desperate! */
-	      int i, min_loc = 0, this_diff;
-	      already_looped = true;
-	      for (i = 0; i < HELP_NAMES_SIZE; i++)
-		{
-		  this_diff = levenstein(subject, help_names[i]);
-		  if (this_diff < min_diff)
-		    {
-		      min_diff = this_diff;
-		      min_loc = i;
-		    }
-		}
-	      if (min_diff < topic_min)
-		{
-		  subject = help_names[min_loc];
-		  sym = C_STRING_TO_XEN_SYMBOL(subject);
-		  help_text = XEN_OBJECT_HELP(sym);
-		  goto HELP_LOOP;
-		}
-	    }
-	}
-    }
-  /* help strings are always processed through the word-wrapper to fit whichever widget they are posted to */
-  /*   this means all the H_doc strings in Snd need to omit line-feeds except where necessary (i.e. code) */
+	    help_text = XEN_OBJECT_HELP(value);         /* (object-property ...) */
+	    if ((XEN_FALSE_P(help_text)) &&
+		(XEN_PROCEDURE_P(value)))
+	      {
+		help_text = XEN_PROCEDURE_HELP(value);  /* (procedure-property ...) */
+		if (XEN_FALSE_P(help_text))
+		  help_text = XEN_PROCEDURE_SOURCE_HELP(value);      /* (procedure-documentation ...) -- this is the first line of source if string */
+	      }
+	    if ((XEN_FALSE_P(help_text)) && (!already_looped) && (help_names))
+	      {
+		/* we're getting desperate! */
+		int i, min_loc = 0, this_diff;
+		already_looped = true;
+		for (i = 0; i < HELP_NAMES_SIZE; i++)
+		  {
+		    this_diff = levenstein(subject, help_names[i]);
+		    if (this_diff < min_diff)
+		      {
+			min_diff = this_diff;
+			min_loc = i;
+		      }
+		  }
+		if (min_diff < topic_min)
+		  {
+		    subject = help_names[min_loc];
+		    sym = C_STRING_TO_XEN_SYMBOL(subject);
+		    help_text = XEN_OBJECT_HELP(sym);
+		    goto HELP_LOOP;
+		  }
+	      }
+	  }
+      }
+    /* help strings are always processed through the word-wrapper to fit whichever widget they are posted to */
+    /*   this means all the H_doc strings in Snd need to omit line-feeds except where necessary (i.e. code) */
+    
+    if (XEN_STRING_P(help_text))
+      str = XEN_TO_C_STRING(help_text);
+  }
+#endif
 
-  if (XEN_STRING_P(help_text))
-    str = XEN_TO_C_STRING(help_text);
-#endif
 #if HAVE_RUBY
   if (XEN_STRING_P(text))
     subject = XEN_TO_C_STRING(text);
@@ -2521,6 +2525,7 @@ and its value is returned."
     else text = C_TO_XEN_STRING(xen_scheme_procedure_to_ruby(S_snd_help));
   str = XEN_AS_STRING(XEN_OBJECT_HELP(text));
 #endif
+
 #if HAVE_FORTH
   if (XEN_STRING_P(text))	/* "play" snd-help */
     subject = XEN_TO_C_STRING(text);
@@ -2537,49 +2542,88 @@ and its value is returned."
   str = XEN_AS_STRING(XEN_OBJECT_HELP(text));
 #endif
 
-  if ((str == NULL) || 
-      (snd_strlen(str) == 0) ||
-      (strcmp(str, PROC_FALSE) == 0)) /* Ruby returns "false" here */
-    {
-      if (!subject) return(XEN_FALSE);
-      str = snd_finder(subject, false);
-      need_free = true;
-    }
-  else 
-    {
-      if ((min_diff < 1000) && (min_diff > 0))
-	{
-	  char *more_str;
-	  more_str = snd_finder(subject, true);
-	  if (more_str)
-	    {
-	      str = mus_format("%s\nOther possibilities:\n%s", str, more_str);
-	      need_free = true;
-	      FREE(more_str);
-	    }
-	}
-    }
+#if HAVE_GAUCHE
+  {
+    XEN sym, value;
+    if (XEN_STRING_P(text))
+      {
+	subject = XEN_TO_C_STRING(text);
+	sym = C_STRING_TO_XEN_SYMBOL(subject);
+      }
+    else
+      {
+	if (XEN_SYMBOL_P(text))
+	  {
+	    subject = XEN_SYMBOL_TO_C_STRING(text);
+	    sym = text;
+	  }
+	else 
+	  {
+	    subject = S_snd_help;
+	    str = H_snd_help;
+	  }
+      }
+    if (!str)
+      {
+	if (Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(sym), false) != NULL)
+	  {
+	    value = Scm_SymbolValue(Scm_UserModule(), SCM_SYMBOL(sym));
+	    if (XEN_PROCEDURE_P(value))
+	      str = XEN_TO_C_STRING(XEN_PROCEDURE_HELP(value));
+	  }
+      }
+  }
+#endif
 
-  if (str)
-    {
-      if (subject)
-	new_str = run_string_hook(help_hook, S_help_hook, str, subject);
-      else new_str = copy_string(str);
-      if (need_free)
-	{
-	  FREE(str);
-	  str = NULL;
-	}
-      if (widget_wid > 0)
-	{
-	  str = word_wrap(new_str, widget_wid);
-	  if (new_str) FREE(new_str);
-	}
-      else str = new_str;
-      help_text = C_TO_XEN_STRING(str);
-      if (str) FREE(str);
-    }
-  return(xen_return_first(help_text, text));
+  {
+    bool need_free = false;
+    XEN help_text = XEN_FALSE; 
+
+    if ((str == NULL) || 
+	(snd_strlen(str) == 0) ||
+	(strcmp(str, PROC_FALSE) == 0)) /* Ruby returns "false" here */
+      {
+	if (!subject) return(XEN_FALSE);
+	str = snd_finder(subject, false);
+	need_free = true;
+      }
+    else 
+      {
+	if ((min_diff < 1000) && (min_diff > 0))
+	  {
+	    char *more_str;
+	    more_str = snd_finder(subject, true);
+	    if (more_str)
+	      {
+		str = mus_format("%s\nOther possibilities:\n%s", str, more_str);
+		need_free = true;
+		FREE(more_str);
+	      }
+	  }
+      }
+
+    if (str)
+      {
+	char *new_str = NULL;
+	if (subject)
+	  new_str = run_string_hook(help_hook, S_help_hook, str, subject);
+	else new_str = copy_string(str);
+	if (need_free)
+	  {
+	    FREE(str);
+	    str = NULL;
+	  }
+	if (widget_wid > 0)
+	  {
+	    str = word_wrap(new_str, widget_wid);
+	    if (new_str) FREE(new_str);
+	  }
+	else str = new_str;
+	help_text = C_TO_XEN_STRING(str);
+	if (str) FREE(str);
+      }
+    return(xen_return_first(help_text, text));
+  }
 }
 
 static XEN g_listener_help(XEN arg, XEN formatted)

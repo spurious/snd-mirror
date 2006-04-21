@@ -12,25 +12,47 @@
 
 static char *current_match = NULL;
 
+/* TAB completion requires knowing what is currently defined, which requires scrounging
+ *   around in the symbol tables (an "obarray" in Guile, hash table in Gauche, vector in Ruby)
+ */
+
 #if HAVE_GAUCHE
-
-#if 0
-name -> symbol -> 
-ScmHashEntry *e;
-ScmModule *m = scm_UserModule();
-e = Scm_HashTableGet(m->table, SCM_OBJ(symbol));
-
-to see all symbols in a module
-    ScmHashIter iter;
-    ScmHashEntry *e;
-
-        Scm_HashIterInit(module->table, &iter);
-        while ((e = Scm_HashIterNext(&iter)) != NULL) {
-            ScmGloc *g = SCM_GLOC(e->value);
-                    SCM_OBJ(g->name)
-		    }
-#endif
-
+static int completions(char *text)
+{
+  ScmHashTable *tab;
+  int len, matches = 0;
+  ScmHashEntry *e;
+  ScmHashIter iter;
+  ScmModule *m = Scm_UserModule();
+  tab = m->table;
+  Scm_HashIterInit(tab, &iter);
+  len = strlen(text);
+  while ((e = Scm_HashIterNext(&iter)) != NULL)
+    {
+      char *sym;
+      /* fprintf(stderr,"e: %p, value: %s %s\n", e, XEN_AS_STRING(e->value), XEN_AS_STRING(SCM_GLOC(e->value)->name)); */
+      sym = XEN_SYMBOL_TO_C_STRING(SCM_GLOC(e->value)->name);
+      if (strncmp(text, sym, len) == 0)
+	{
+	  matches++;
+	  add_possible_completion(sym);
+	  if (current_match == NULL)
+	    current_match = copy_string(sym);
+	  else 
+	    {
+	      int j, curlen;
+	      curlen = snd_strlen(current_match);
+	      for (j = 0; j < curlen; j++)
+		if (current_match[j] != sym[j])
+		  {
+		    current_match[j] = '\0';
+		    break;
+		  }
+	    }
+	}
+    }
+  return(matches);
+}
 #endif
 
 #if HAVE_GUILE
@@ -122,7 +144,6 @@ static int completions(char *text) {return(0);}
 /* end Guile && SCM_MODULE_OBARRAY */
 
 #if HAVE_RUBY
-
 static XEN snd_rb_methods(void)
 {
   /* returns all the functions we defined */
@@ -166,11 +187,9 @@ static int completions(char *text)
     }
   return(matches);
 }
-
 #endif
 
 #if HAVE_FORTH
-
 static int completions(char *text)
 {
   XEN tab = fth_find_in_wordlist(text);
@@ -195,10 +214,9 @@ static int completions(char *text)
     }
   return(matches);
 }
-
 #endif
 
-#if (!HAVE_EXTENSION_LANGUAGE) || HAVE_GAUCHE
+#if (!HAVE_EXTENSION_LANGUAGE)
 static int completions(char *text) {return(0);}
 #endif
 

@@ -2,10 +2,13 @@
 #include "clm2xen.h"
 #include "sndlib-strings.h"
 
-/* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile versions,
- *   delay is protected in clm2xen.c as %delay, frame? as %frame?
+/* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile/Gauche versions,
+ *   In Scheme, delay is protected in clm2xen.c as %delay
+ *   In Guile, frame? as %frame?
  *   In Ruby, rand is protected as kernel_rand.
- *   In Forth, Snd' exit is named snd-exit.
+ *   In Forth, Snd's exit is named snd-exit.
+ *   In Gauche, random is implemented via mus-i|frandom (clm.c).
+ *   In Scheme, filter is defined in srfi-1 so we need protection against that
  */
 
 
@@ -1344,12 +1347,12 @@ void check_features_list(char *features)
 #if HAVE_GAUCHE
   XEN_EVAL_C_STRING(mus_format("(for-each \
                                   (lambda (f)	\
-                                    (if (not (provided? f)) \
-                                        (display (string-append (string #\newline) \"no \" (symbol->string f) \"!\" (string #\newline))))) \
+                                    (if (not (provided? (symbol->string f))) \
+                                        (display (string-append (string #\\newline) \"no \" (symbol->string f) \"!\" (string #\\newline))))) \
                                   (list %s))", features));
 #endif
 #if HAVE_FORTH
-  /* TODO: forth and gauche side of features check */
+  /* TODO: forth side of features check */
 #endif
   snd_exit(0);
 }
@@ -3152,16 +3155,17 @@ static XEN g_gsl_roots(XEN poly)
 #endif
 
 #if HAVE_GAUCHE
-static XEN g_defined_p(XEN sym)
-{
-  return(C_TO_XEN_BOOLEAN(Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(sym), false) != NULL));
-}
 static XEN g_random(XEN val)
 {
   if (XEN_INTEGER_P(val))
     return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(val))));
   return(C_TO_XEN_DOUBLE(mus_frandom(XEN_TO_C_DOUBLE(val))));
 }
+#if HAVE_SYS_TIME_H
+  #include <sys/time.h>
+#endif
+
+static XEN g_get_internal_real_time(void) {return(C_TO_XEN_INT((int)clock()));}
 #endif
 
 
@@ -3348,8 +3352,8 @@ XEN_NARGIFY_4(g_gsl_dht_w, g_gsl_dht)
 XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
 #endif
 #if HAVE_GAUCHE
-XEN_NARGIFY_1(g_defined_p_w, g_defined_p)
 XEN_NARGIFY_1(g_random_w, g_random)
+XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #endif
 #endif
 
@@ -3551,16 +3555,12 @@ XEN_NARGIFY_1(g_random_w, g_random)
 #endif
 
 
-#if DEBUGGING && HAVE_GUILE
+#if DEBUGGING && HAVE_SCHEME
 void g_init_xmix(void);
 #endif
 
 void g_initialize_gh(void)
 {
-#if HAVE_GAUCHE
-  XEN_EVAL_C_STRING("(define *features* (list 'defmacro 'record))"); /* has to be first so *features* exists */
-#endif
-
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe, g_mus_audio_describe_w, 0, 0, 0, H_mus_audio_describe);
 
   XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function");
@@ -3851,8 +3851,9 @@ void g_initialize_gh(void)
 #endif
 #endif
 #if HAVE_GAUCHE
-  XEN_DEFINE_PROCEDURE("defined?",  g_defined_p_w,  1, 0, 0, "(defined? arg) -> #t if arg is defined");
-  XEN_DEFINE_PROCEDURE("random",    g_random_w,  1, 0, 0, "(random arg) -> random number between 0 and arg ");
+  XEN_DEFINE_PROCEDURE("random",    g_random_w, 1, 0, 0, "(random arg) -> random number between 0 and arg ");
+  XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
+  XEN_DEFINE_CONSTANT("internal-time-units-per-second", CLOCKS_PER_SEC, "clock speed");
 #endif
 
 #if HAVE_SCHEME
@@ -3989,7 +3990,7 @@ that name is presented in the New File dialog."
   g_init_gxfind();
 #endif
   g_init_run();
-#if DEBUGGING && HAVE_GUILE && USE_MOTIF
+#if DEBUGGING && HAVE_SCHEME  && USE_MOTIF
   g_init_xmix();
 #endif
 
@@ -4010,6 +4011,7 @@ that name is presented in the New File dialog."
   XEN_EVAL_C_STRING("(defmacro declare args #f)");     /* for optimizer */
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
+  XEN_EVAL_C_STRING("(define define+ define)");        /* Gauche can't handle documentation strings */
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
@@ -4043,24 +4045,46 @@ that name is presented in the New File dialog."
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
   XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
 
+  XEN_EVAL_C_STRING("(define load-from-path load)");
   XEN_EVAL_C_STRING("(define system sys-system)");
   XEN_EVAL_C_STRING("(define getenv sys-getenv)");
   XEN_EVAL_C_STRING("(define getcwd sys-getcwd)");
   XEN_EVAL_C_STRING("(define rename-file sys-rename)");
-  XEN_EVAL_C_STRING("(define (delete-file f)  (sys-unlink f))");
+  XEN_EVAL_C_STRING("(define (delete-file f) (sys-unlink f))");
   XEN_EVAL_C_STRING("(define version gauche-version)");
+  XEN_EVAL_C_STRING("(define localtime sys-localtime)");
+  XEN_EVAL_C_STRING("(define current-time sys-gettimeofday)");
+  XEN_EVAL_C_STRING("(define strftime sys-strftime)");
 
-  XEN_EVAL_C_STRING("(define (list-set! lis pos val) (set-car! (list-tail lis pos) val) val)");
-  XEN_EVAL_C_STRING("(define-syntax defmacro\n  (syntax-rules ()\n    ((_ name params . body) (define-macro (name . params) . body))))");
-  XEN_EVAL_C_STRING("(define (make-procedure-with-setter get set) (let ((proc (lambda x (apply get x)))) (set! (setter proc) set) proc))");
+  XEN_EVAL_C_STRING("(define (list-set! lis pos val)\
+                       (set-car! (list-tail lis pos) val)\
+                       val)");
+  XEN_EVAL_C_STRING("(define-syntax defmacro\
+                       (syntax-rules ()\
+                         ((_ name params . body) (define-macro (name . params) . body))))");
+  XEN_EVAL_C_STRING("(define (make-procedure-with-setter get set)\
+                       (let ((proc (lambda x (apply get x))))\
+                         (set! (setter proc) set)\
+                         proc))");
 
   XEN_EVAL_C_STRING("(define hook? list?)");
   XEN_EVAL_C_STRING("(define hook-empty? null?)");
+  XEN_EVAL_C_STRING("(define (make-hook . args) (list))");
   XEN_EVAL_C_STRING("(defmacro add-hook! (a b) `(set! ,a (cons ,b ,a)))");
   XEN_EVAL_C_STRING("(defmacro reset-hook! (a) `(set! ,a (list)))");
 
-  XEN_EVAL_C_STRING("(define (filter-list pred lis) (let loop ((lis lis) (r '())) (cond ((null-list? lis) (reverse! r)) ((pred (car lis)) (loop (cdr lis) (cons (car lis) r))) (else (loop (cdr lis) r)))))");
-  XEN_EVAL_C_STRING("(defmacro remove-hook! (a b) `(set! ,a (filter-list (lambda (p) (eq? p ,b)) ,a)))");
+  XEN_EVAL_C_STRING("(define (filter-list pred lis)\
+                       (let loop ((lis lis)\
+                                  (r '()))\
+                         (cond ((null-list? lis) (reverse! r))\
+                               ((pred (car lis)) (loop (cdr lis) (cons (car lis) r)))\
+                               (else (loop (cdr lis) r)))))");
+  XEN_EVAL_C_STRING("(defmacro remove-hook! (a b)\
+                       `(set! ,a (filter-list (lambda (p) (eq? p ,b)) ,a)))");
+
+  XEN_EVAL_C_STRING("(defmacro define+ (args . body) `(define ,args ,@(cdr body)))"); /* strip out documentation string if embedded defines */
+
+  Scm_AddLoadPath(".", false);
 
   /* Scm_Require(C_TO_XEN_STRING("file/util")); */
 

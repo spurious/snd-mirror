@@ -882,8 +882,6 @@ static void mus_xen_free(mus_xen *ms)
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(mus_xen, free_mus_xen, mus_xen_free)
 
-/* SOMEDAY: why don't these print functions use the macro in xen.h? */
-
 #if HAVE_GUILE
 static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
 {
@@ -893,6 +891,7 @@ static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
   return(1);
 }
 #endif
+
 #if HAVE_GAUCHE
 static void print_mus_xen(XEN obj, ScmPort *port, ScmWriteContext *pstate)
 {
@@ -6116,6 +6115,9 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_all_pass, g_make_all_pass_w, 0, 0, 1, H_make_all_pass);
   XEN_DEFINE_PROCEDURE(S_make_average,  g_make_average_w,  0, 0, 1, H_make_average);
   XEN_DEFINE_PROCEDURE(S_delay,         g_delay_w,         1, 2, 0, H_delay); 
+#if HAVE_SCHEME
+  XEN_DEFINE_PROCEDURE("clm:" S_delay,  g_delay_w,         1, 2, 0, H_delay);
+#endif
   XEN_DEFINE_PROCEDURE(S_delay_tick,    g_delay_tick_w,    1, 1, 0, H_delay_tick); 
   XEN_DEFINE_PROCEDURE(S_tap,           g_tap_w,           1, 1, 0, H_tap);
   XEN_DEFINE_PROCEDURE(S_notch,         g_notch_w,         1, 2, 0, H_notch);
@@ -6265,12 +6267,12 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_sine_summation_p,    g_sine_summation_p_w,    1, 0, 0, H_sine_summation_p);
 
 
-#if HAVE_GUILE
-  XEN_EVAL_C_STRING("(if (defined? 'filter) (define %filter filter))"); /* defined in 1.7 */
+#if HAVE_SCHEME
+  XEN_EVAL_C_STRING("(if (defined? 'filter) (define %filter filter))"); /* defined in Guile 1.7 and Gauche in srfi-1 */
 #endif
   XEN_DEFINE_PROCEDURE(S_make_filter,     g_make_filter_w,     0, 6, 0, H_make_filter);
   XEN_DEFINE_PROCEDURE(S_filter,          g_filter_w,          2, 0, 0, H_filter);
-#if HAVE_GUILE
+#if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("clm:" S_filter,   g_filter_w,          2, 0, 0, H_filter); /* gad... */
 #endif
   XEN_DEFINE_PROCEDURE(S_filter_p,        g_filter_p_w,        1, 0, 0, H_filter_p);

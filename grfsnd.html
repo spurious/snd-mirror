@@ -258,20 +258,20 @@ GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized
 </p>
 <p>With the advent of the preferences dialog, and other complications, this initialization sequence
 has changed slightly.  The old files ~/.snd and /etc/snd.conf are still loaded, but now there
-are additional initialization possibilities: ~/.snd_prefs_guile|ruby|forth, /etc/snd_guile|ruby|forth.conf,
-~/.snd_guile|ruby|forth (the notation "guile|ruby|forth" means either "guile" or "ruby" or "forth", so the file names
+are additional initialization possibilities: ~/.snd_prefs_guile|ruby|forth|gauche, /etc/snd_guile|ruby|forth|gauche.conf,
+~/.snd_guile|ruby|forth|gauche (the notation "guile|ruby|forth" means either "guile" or "ruby" or "forth", so the file names
 spelled out completely are "/etc/snd_guile.conf", "/etc/snd_ruby.conf", etc; which one is loaded
 obviously depends on which language you chose during configuration).  Currently, the save-options (preferences dialog) process writes to
-.snd_prefs_* which is loaded first, if it exists; then Snd looks for .snd_* (guile, ruby, or forth);
+.snd_prefs_* which is loaded first, if it exists; then Snd looks for .snd_* (guile, ruby, forth, or gauche);
 then .snd.  If you're always using just one version of Snd, it's simplest to stick with
 .snd.  The actual load sequence is:
 </p>
 <pre>
-/etc/snd_guile|ruby|forth.conf    (these two canceled by -noglob)
+/etc/snd_guile|ruby|forth|gauche.conf    (these two canceled by -noglob)
 /etc/snd.conf               
-~/.snd_prefs_guile|ruby|forth     (the rest canceled by -noinit)
-~/.snd_guile|ruby|forth
-~/.snd                            (changed by initFile resource, -init arg, SND_INIT_FILE_ENVRIONMENT_NAME, etc)
+~/.snd_prefs_guile|ruby|forth|gauche     (the rest canceled by -noinit)
+~/.snd_guile|ruby|forth|gauche
+~/.snd                                   (changed by initFile resource, -init arg, SND_INIT_FILE_ENVRIONMENT_NAME, etc)
 </pre>
 
 <p>
@@ -442,7 +442,7 @@ style "default"
 <tr><td>zoomcolor</td>           <td>color of zoom sliders</td>                 <td><code><a href="extsnd.html#zoomcolor">zoom-color</a></code></td></tr>
 </table>
 <p>
-Each of these colors can be set in Guile using the second name given above ("basic-color").
+Each of these colors can be set in Guile/Gauche using the second name given above ("basic-color").
 Colors are defined by <a href="extsnd.html#makecolor">make-color</a> with the three red/green/blue values,
 each a float between 0.0 and 1.0. <code>(set! (<a class=quiet href="extsnd.html#basiccolor">basic-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1.0 0.0 0.0))</code> sets
 the overall background color of Snd to red.  <a href="sndscm.html#rgbdoc">rgb.scm</a> defines all the standard X11 color names
@@ -486,7 +486,7 @@ latter are (configure --help):
 <tr><td></td><td>--with-static-xm</td><td>include the xm module at build time; this is easier than trying to dynamically load xm.so</td></tr>
 <tr><td></td><td>--with-static-xg</td><td>include the xg module at build time; this is easier than trying to dynamically load xg.so</td></tr>
 <tr><td></td><td>--with-gl</td><td>include OpenGL support (spectrogram, etc)</td></tr>
-<tr><td></td><td>--with-just-gl</td><td>include OpenGL support, but omit the GL/Guile/Ruby/Forth bindings</td></tr>
+<tr><td></td><td>--with-just-gl</td><td>include OpenGL support, but omit the GL/Guile/Gauche/Ruby/Forth bindings</td></tr>
 <tr><td></td><td>--with-editres</td><td>include editres in xm (default: no)</td></tr>
 <tr><td></td><td>--with-xpm</td><td>use xpm, default: yes</td></tr>
 <tr><td></td><td>--with-xp</td><td>use xp, default: no; this is the Xprint library which is not tied into Snd at all</td></tr>
@@ -497,6 +497,7 @@ latter are (configure --help):
 <tr><td></td><td>--with-guile</td><td>use Guile (default: yes), GUILE_CONFIG_path sets Guile location; version 1.3.4 or later</td></tr>
 <tr><td></td><td>--with-forth</td><td>try to use Forth as the extension language</td></tr>
 <tr><td></td><td>--with-ruby</td><td>try to use Ruby as the extension language; version 1.6.4 or later</td></tr>
+<tr><td></td><td>--with-gauche</td><td>try to use Gauche as the extension language; version 0.8.7 or later</td></tr>
 <tr><td></td><td>--with-ruby-prefix=PFX</td><td>where Ruby is installed</td></tr>
 <tr><td></td><td>--with-hobbit</td><td>include hobbit-style function arity checking (hobbit is a Scheme compiler), default: no</td></tr>
 <tr><td colspan=2><hr></td><td></td></tr>
@@ -561,7 +562,7 @@ Here at CCRMA, we normally use:
 There are many more examples in tools/compsnd.
 Don't use the --enable-snd-debug switch unless you know what you are asking for!
 Depending on how Snd is configured, any of the following symbols may be "provided"
-(on the *features* list in Guile):
+(on the *features* list in Guile/Gauche):
 </p>
 <table>
 <tr><td width=100>clm</td><td>clm module (always included -- once upon a time it was optional)</td></tr>
@@ -574,6 +575,7 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 <tr><td>snd-guile</td><td>Guile as extension language (--with-guile, usually the default if guile can be found)</td></tr>
 <tr><td>snd-ruby</td><td>Ruby as extension language (--with-ruby)</td></tr>
 <tr><td>snd-forth</td><td>Forth as extension language (--with-forth)</td></tr>
+<tr><td>snd-gauche</td><td>Gauche as extension language (--with-gauche)</td></tr>
 <tr><td>snd-debug</td><td>internal debugging hooks included (--enable-snd-debug)</td></tr>
 <tr><td>snd</td><td>It's Snd, ferchrissake... (always included)</td></tr>
 <tr><td>xg</td><td>Gtk module (xg.c) included (--with-static-xg, or loaded dynamically)</td></tr>
@@ -843,7 +845,7 @@ load <i>len</i> samples of <i>filename</i> into <i>vct</i> starting at frame <i>
 <tr><td><a href="clm.html#file-&gt;sample?">file-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is file-&gt;sample generator</td></tr>
 <tr><td><a href="clm.html#filter">filter</a></td><td>(gen input)</td><td>filter</td></tr>
 <tr><td></td><td colspan=2><br>
-Some versions of Guile define an unrelated function named <b>filter</b>.
+Some versions of Guile and Gauche define an unrelated function named <b>filter</b> (from srfi-1 I think).
 It is renamed <b>%filter</b>, if it is noticed in time.  In case clm's filter is still overwritten,
 you can use the synonym <b>clm:filter</b>.
 </td></tr>
@@ -1777,7 +1779,7 @@ into a bunch of mono files:
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandruby">Snd with Ruby</a></h3></td></tr></table>
 
 <p>Ruby is an extension language described as an "object-oriented Perl".
-It provides a different syntax from that of Guile/Scheme; all the *.scm
+It provides a different syntax from that of Scheme; all the *.scm
 files have corresponding *.rb files (written by Mike Scholz), so there's
 no penalty for using Ruby rather than Scheme.  The only drawback is that
 all the documentation assumes Scheme.  The differences however, are not
@@ -1790,7 +1792,7 @@ by "set_" plus the base name (e.g. set_window_width), with arguments
 reordered in some cases to place the optional values after the new value.  That is,
 <code>(set! (<a class=quiet href="extsnd.html#sync">sync</a> snd) 1)</code> becomes <code>set_sync(1, snd)</code>.
 Hooks in Ruby (which have little or nothing to do with Ruby's "hookable variables")
-are just procedures or nil, not lists of procedures as in Guile.
+are just procedures or nil, not lists of procedures as in Scheme.
 Here's a Ruby version of the init file given
 above:
 </p>
@@ -1827,7 +1829,7 @@ file name,
 0</em>
 </pre>
 <p>(The trailing "0" is the result of open_sound).
-The Guile hook list support procedures aren't included in Ruby --
+The Scheme hook list support procedures aren't included in Ruby --
 simply set the variable to the procedure you want, or false to clear it.
 </p>
 <p>Vcts and sound-data objects mixin "Comparable" and "Enumerable", and respond to various array-like methods:
@@ -1881,7 +1883,7 @@ def display_energy(snd, chn)
 </pre></td></tr></table>
 
 <p>
-In Ruby you make a symbol by prepending ":", so Guile's
+In Ruby you make a symbol by prepending ":", so Scheme's
 </p>
 <pre>
 (list 'KeySym (char-&gt;integer #\F))

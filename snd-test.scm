@@ -38,20 +38,17 @@
 (if (provided? 'snd-guile)
     (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen)))
 
-(if (provided? "snd-gauche")
+(if (provided? 'snd-gauche)
     (begin
-      (use srfi-1)     ; list library
-      (use srfi-4)     ; u8vector
-      (use srfi-13)     ; extra string support
-      (use srfi-27)    ; random bits
-      (use file.util)  ; current-directory, home-directory
+      ;(use srfi-1)     ; list library -- has filter
+      ;(use srfi-4)     ; u8vector
+      ;(use srfi-13)     ; extra string support
+      ;(use srfi-27)    ; random bits
+      (use file.util)   ; copy-file
       ;(use srfi-29)    ; format
-      ;(define %format format) ; Gauche's format omits the #f 2nd arg
-      ;(define (format . args) (apply %format (cdr args)))
-      ;Gauche's format is too stupid to contemplate
-      ; I'll have to try to get Guile's format to work
-      ; but for now...
-      (define (format . args) (snd-print args))
+      ;Gauche's format is too stupid to contemplate -- hack up Guile's version
+      (load "gauche-format.scm")
+      (load "gauche-optargs.scm")
       ))
 
 (define tests 1)
@@ -314,12 +311,15 @@
 		  dialog))))
        (dialog-widgets))))
 
-(define ran-state (seed->random-state (current-time)))
-(define my-random
-  (lambda (n)
-    (if (= n 0) 
-	0 ;sigh...
-	(random n ran-state))))
+(if (provided? 'snd-guile) 
+    (begin
+      (define ran-state (seed->random-state (current-time)))
+      (define my-random
+	(lambda (n)
+	  (if (= n 0) 
+	      0 ;sigh...
+	      (random n ran-state)))))
+    (define my-random random))
 
 ;(define rs (lambda (n) (< (my-random 1.0) n)))
 (define rs (lambda (n) #t))
@@ -335,7 +335,7 @@
 	 (lambda () (make-color c1 c2 c3))
 	 (lambda args safe-color)))
 
-(define* (safe-display-edits #:optional (snd #f) (chn #f) (edpos #f) (with-source #t))
+(define* (safe-display-edits :optional (snd #f) (chn #f) (edpos #f) (with-source #t))
   (catch #t
 	 (lambda () (display-edits snd chn edpos with-source))
 	 (lambda args (snd-display ";display-edits error: ~A" args))))
@@ -4421,13 +4421,13 @@
 (if (and with-gui (not (provided? 'snd-edit-menu.scm))) (load "edit-menu.scm"))
 (define g-init-val 0)
 
-(define* (make-bandpass-2 flo1 fhi1 flo2 fhi2 #:optional (len 30))
+(define* (make-bandpass-2 flo1 fhi1 flo2 fhi2 :optional (len 30))
   (let* ((f1 (make-bandpass flo1 fhi1 len))
 	 (f2 (make-bandpass flo2 fhi2 len)))
     (vct-add! (mus-xcoeffs f1) (mus-xcoeffs f2))
     f1))
 
-(define* (cosine-channel-via-ptree #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (cosine-channel-via-ptree :optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   ;; vct: angle increment
   (ptree-channel
    (lambda (y data forward)
@@ -4445,7 +4445,7 @@
        (vct (+ (* -0.5 pi) (* frag-beg incr))
 	    incr)))))
 
-(define* (cosine-channel #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (cosine-channel :optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   (let ((old-opt (optimization)))
     (set! (optimization) 0)
     (map-channel
@@ -9548,17 +9548,17 @@ EDITS: 5
 	  (test-edpos maxamp 'maxamp (lambda () (scale-by 2.0 ind1 0)) ind1)
 	  (test-edpos frames 'frames (lambda () (src-sound 2.0 1.0 ind1 0)) ind1)
 	  (test-edpos 
-	   (lambda* (#:optional (snd 0) (chn 0) (edpos current-edit-position)) (count-matches (lambda (n1) (> n1 .1)) 0 snd chn edpos)) 
+	   (lambda* (:optional (snd 0) (chn 0) (edpos current-edit-position)) (count-matches (lambda (n1) (> n1 .1)) 0 snd chn edpos)) 
 	   'count-matches
 	   (lambda () (scale-by 2.0 ind1 0)) 
 	   ind1)
 	  (test-edpos 
-	   (lambda* (#:optional (snd 0) (chn 0) (edpos current-edit-position)) (cadr (find-channel (lambda (n2) (> n2 .1)) 0 snd chn edpos)))
+	   (lambda* (:optional (snd 0) (chn 0) (edpos current-edit-position)) (cadr (find-channel (lambda (n2) (> n2 .1)) 0 snd chn edpos)))
 	   'find
 	   (lambda () (delete-samples 0 100 ind1 0))
 	   ind1)
 	  (test-edpos 
-	   (lambda* (#:optional (snd 0) (chn 0) (edpos current-edit-position)) 
+	   (lambda* (:optional (snd 0) (chn 0) (edpos current-edit-position)) 
 		    (let ((samp 0)) 
 		      (scan-chan (lambda (n3) 
 				   (if (> n3 .1) 
@@ -10102,7 +10102,7 @@ EDITS: 5
 	  (insert-silence 0 10 index 0)
 	  (insert-silence 0 10 index 1)
 	  
-	  (test-channel-func (lambda* (beg dur index chan #:optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
 				      (clm-channel (make-env :envelope '(0 0 1 1) :end (1- dur)) beg dur index chan edpos))
 			     (lambda (dur)
 			       (let ((e (make-env :envelope '(0 0 1 1) :end (1- dur)))
@@ -10113,7 +10113,7 @@ EDITS: 5
 				 v))
 			     0.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan #:optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
 				      (clm-channel (make-oscil :frequency 0.0 :initial-phase (/ pi 2)) beg dur index chan edpos))
 			     (lambda (dur)
 			       (let ((v (make-vct dur)))
@@ -10121,7 +10121,7 @@ EDITS: 5
 				 v))
 			     0.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan #:optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
 				      (scale-channel 0.5 beg dur index chan edpos))
 			     (lambda (dur)
 			       (let ((v (make-vct dur)))
@@ -10129,7 +10129,7 @@ EDITS: 5
 				 v))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan #:optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
 				      (env-channel (make-env :envelope '(0 0 1 1) :end (1- dur)) beg dur index chan edpos))
 			     (lambda (dur)
 			       (let ((e (make-env :envelope '(0 0 1 1) :end (1- dur)))
@@ -10140,7 +10140,7 @@ EDITS: 5
 				 v))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan #:optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
 				      (env-channel '(0 0 1 1) beg dur index chan edpos))
 			     (lambda (dur)
 			       (let ((e (make-env :envelope '(0 0 1 1) :end (1- dur)))
@@ -10151,7 +10151,7 @@ EDITS: 5
 				 v))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan #:optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
 				      (let ((v (make-vct dur)))
 					(vct-fill! v -1.0)
 					(vct->channel v beg dur index chan)))
@@ -10161,14 +10161,14 @@ EDITS: 5
 				 v))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan #:optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
 				      (delete-samples beg dur index chan edpos)
 				      (pad-channel beg dur index chan edpos))
 			     (lambda (dur)
 			       (make-vct dur))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan #:optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
 				      (let ((v (make-vct dur)))
 					(vct-fill! v -1.0)
 					(delete-samples beg dur index chan edpos)
@@ -10179,7 +10179,7 @@ EDITS: 5
 				 v))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan #:optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
 				      (let ((v (make-vct dur)))
 					(vct-fill! v -1.0)
 					(set! (samples beg dur index chan #f "test-channel" 0 edpos) v)))
@@ -10189,7 +10189,7 @@ EDITS: 5
 				 v))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan #:optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
 				      (env-channel (make-env :envelope '(0 0 1 1) :end (1- dur)) beg dur index chan edpos)
 				      (reverse-channel beg dur index chan))
 			     (lambda (dur)
@@ -10201,7 +10201,7 @@ EDITS: 5
 				 v))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan #:optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
 				      (env-channel (make-env :envelope '(0 0 1 1) :end (1- dur)) beg dur index chan edpos)
 				      (set! (sample (+ beg dur) index chan) 1.0)
 				      (smooth-channel beg dur index chan)
@@ -10543,7 +10543,7 @@ EDITS: 5
 		    (if val 
 			(list val (1- (sample-reader-position reader)))
 			(scan-again)))))
-	    (define* (my-scan-chan #:optional proc)
+	    (define* (my-scan-chan :optional proc)
 	      (if proc 
 		  (begin
 		    (set! last-proc proc)
@@ -11488,7 +11488,7 @@ EDITS: 5
 	      (if (not (eq? tag 'bad-arity))
 		  (snd-display ";as-one-edit arg? ~A" tag)))
 	    (let ((tag (catch #t
-			      (lambda () (as-one-edit (lambda* (#:optional oops) #f)))
+			      (lambda () (as-one-edit (lambda* (:optional oops) #f)))
 			      (lambda args (car args)))))
 	      (if (not (eq? tag 'bad-arity))
 		  (snd-display ";as-one-edit arg? ~A" tag)))
@@ -13426,7 +13426,7 @@ EDITS: 5
 ;;; a version treating the entire violin as a generator is in fmv.scm.
 
 (define fm-violin 
-  (lambda* (startime dur frequency amplitude #:key
+  (lambda* (startime dur frequency amplitude :key
 		     (fm-index 1.0)
 		     (amp-env '(0 0  25 1  75 1  100 0))
 		     (periodic-vibrato-rate 5.0) 
@@ -13453,7 +13453,7 @@ EDITS: 5
 		     (base 1.0)
 		     (reverb-amount 0.01)
 		     (degree #f) (distance 1.0) (degrees #f)
-		     #:allow-other-keys)
+		     :allow-other-keys)
 	   (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
 		  (len (inexact->exact (floor (* dur (mus-srate)))))
 		  (end (+ beg len))
@@ -13560,14 +13560,14 @@ EDITS: 5
 
 (def-clm-struct sa1 (freq 0.0 :type float) (coscar #f :type clm) (sincar #f :type clm) (dly #f :type clm) (hlb #f :type clm))
 
-(define* (make-ssb-am-1 freq #:optional (order 40))
+(define* (make-ssb-am-1 freq :optional (order 40))
   (make-sa1 :freq (abs freq)
 	    :coscar (make-oscil freq (* .5 pi))
 	    :sincar (make-oscil freq)
 	    :dly (make-delay order)
 	    :hlb (make-hilbert-transform order)))
 
-(define* (ssb-am-1 gen y #:optional (fm-1 0.0))
+(define* (ssb-am-1 gen y :optional (fm-1 0.0))
   (let* ((fm fm-1)
 	 (ccos (oscil (sa1-coscar gen) fm))
 	 (csin (oscil (sa1-sincar gen) fm))
@@ -13594,7 +13594,7 @@ EDITS: 5
 	(vct-set! spect i sum)))
     (vct-scale! spect (/ 1.0 mx))))
 
-(define* (print-and-check gen name desc #:optional (desc1 ""))
+(define* (print-and-check gen name desc :optional (desc1 ""))
   (if (not (string=? (mus-name gen) name))
       (snd-display ";mus-name ~A: ~A?" name (mus-name gen)))
   (if (and (not (string=? (mus-describe gen) desc))
@@ -20226,7 +20226,7 @@ EDITS: 5
 			      (if (or (= i 0) (= i 2))
 				  name
 				  (make-file->frame name)))))
-	(define* (mus-mix-1 outf inf #:optional outloc frames inloc mixer envs)
+	(define* (mus-mix-1 outf inf :optional outloc frames inloc mixer envs)
 	  (if envs
 	      (mus-mix outf inf outloc frames inloc mixer envs)
 	      (if mixer
@@ -25618,7 +25618,7 @@ EDITS: 5
     (append (list name maker copy) data))))
 
 (if (provided? 'snd-ladspa)
-(define* (ladspa-it library label #:rest plugin-parameters)
+(define* (ladspa-it library label :rest plugin-parameters)
   ;; (ladspa-it "delay" "delay_5s" .3 .5)
   (init-ladspa)
   (let* ((descriptor (ladspa-descriptor library label))
@@ -26969,7 +26969,7 @@ EDITS: 5
 
 (define sfile 0)
 
-(define* (clone-sound-as new-name #:optional snd)
+(define* (clone-sound-as new-name :optional snd)
   ;; copies any edit-sounds to save-dir!
   (let* ((tmpf (snd-tempnam))
 	 (scm (string-append (substring tmpf 0 (- (string-length tmpf) 3)) "scm"))
@@ -33865,13 +33865,13 @@ EDITS: 1
 	  (< (abs (- a b)) .001))
       (eq? a b)))
 
-(define* (insert-vct v #:optional beg dur snd chn)
+(define* (insert-vct v :optional beg dur snd chn)
   (insert-samples (or beg 0) dur v snd chn #f #f (format #f "insert-vct ~A ~A ~A" (vct->string v) beg dur)))
 
-(define* (clm-channel-test #:optional snd chn)
+(define* (clm-channel-test :optional snd chn)
   (clm-channel (make-two-zero 1 -1) 0 #f snd chn #f #f "clm-channel-test"))
 
-(define* (make-v-mix #:optional snd chn)
+(define* (make-v-mix :optional snd chn)
   (mix-vct (vct .1 .2 .3) 100 snd chn #t "make-v-mix snd chn"))
 
 (if (or full-test (= snd-test 19) (and keep-going (<= snd-test 19)))
@@ -34670,27 +34670,27 @@ EDITS: 1
 	    (if (not (procedure? func)) 
 		(snd-display ";edit-list->function 7b: ~A" func))
 	    (if (not (string=? (object->string (procedure-source func)) 
-			       "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0)) #:base 1.0 #:end 1999) 1000 2000 snd chn))"))
+			       "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0)) :base 1.0 :end 1999) 1000 2000 snd chn))"))
 		(snd-display ";edit-list->function 7b: ~A" (object->string (procedure-source func)))))
 	  (revert-sound ind)
 	  
-	  (env-channel (make-env '(0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0) #:base 32.0 #:end 1999) 1000 2000)
+	  (env-channel (make-env '(0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0) :base 32.0 :end 1999) 1000 2000)
 	  (let ((func (edit-list->function))
 		(mxenv0 (maxamp)))
 	    (if (not (procedure? func)) 
 		(snd-display ";edit-list->function 7c: ~A" func))
 	    (if (not (string=? (object->string (procedure-source func)) 
-			       "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0)) #:base 32.0 #:end 1999) 1000 2000 snd chn))"))
+			       "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0)) :base 32.0 :end 1999) 1000 2000 snd chn))"))
 		(snd-display ";edit-list->function 7c: ~A" (object->string (procedure-source func))))
 	    (revert-sound ind)
 	    
-	    (env-channel (make-env '(0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0) #:end 1999 #:offset 2.0 #:scaler 3.0) 1000 2000)
+	    (env-channel (make-env '(0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0) :end 1999 :offset 2.0 :scaler 3.0) 1000 2000)
 	    (let ((func (edit-list->function))
 		  (mxenv1 (maxamp)))
 	      (if (not (procedure? func)) 
 		  (snd-display ";edit-list->function 7d: ~A" func))
 	      (if (not (string=? (object->string (procedure-source func)) 
-				 "(lambda (snd chn) (env-channel (make-env (quote (0.0 2.0 1.0 2.9 2.0 4.4 3.0 2.0)) #:base 1.0 #:end 1999) 1000 2000 snd chn))"))
+				 "(lambda (snd chn) (env-channel (make-env (quote (0.0 2.0 1.0 2.9 2.0 4.4 3.0 2.0)) :base 1.0 :end 1999) 1000 2000 snd chn))"))
 		  (snd-display ";edit-list->function 7d: ~A" (object->string (procedure-source func))))
 	      (revert-sound ind)
 	      (func ind 0)
@@ -34894,7 +34894,7 @@ EDITS: 1
 	    (if (not (procedure? func)) 
 		(snd-display ";edit-list->function 14: ~A" func))
 	    (if (not (string=? (object->string (procedure-source func)) 
-			       "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 1.0 2.0 0.0)) #:base 1.0 #:end 10000) 1000 10001 snd chn))"))
+			       "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 1.0 2.0 0.0)) :base 1.0 :end 10000) 1000 10001 snd chn))"))
 		(snd-display ";edit-list->function 14: ~A" (object->string (procedure-source func))))
 	    (revert-sound ind)
 	    (func ind 0)
@@ -34942,7 +34942,7 @@ EDITS: 1
 	    (if (not (procedure? func)) 
 		(snd-display ";edit-list->function 15: ~A" func))
 	    (if (not (string=? (object->string (procedure-source func)) 
-			       "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 1.0 2.0 0.0)) #:base 1.0 #:end 500) 1000 1000 snd chn))"))
+			       "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 1.0 2.0 0.0)) :base 1.0 :end 500) 1000 1000 snd chn))"))
 		(snd-display ";edit-list->function 15: ~A" (object->string (procedure-source func))))
 	    (revert-sound ind)
 	    (func ind 0)
@@ -37120,7 +37120,7 @@ EDITS: 1
 
 ;;; ---------------- test 21: new stuff ----------------
 
-(define* (add-comment sample comment #:optional snd1 chn1)
+(define* (add-comment sample comment :optional snd1 chn1)
   (let* ((snd (or snd1 (selected-sound)))
 	 (chn (or chn1 (selected-channel)))
 	 (old-comments (or (channel-property 'comments snd chn) '())))
@@ -38019,7 +38019,7 @@ EDITS: 1
      (- (real-time) start)))
 
 (define fm-violin-opt
-  (lambda* (startime dur frequency amplitude #:key
+  (lambda* (startime dur frequency amplitude :key
 		     (fm-index 1.0)
 		     (amp-env '(0 0  25 1  75 1  100 0))
 		     (periodic-vibrato-rate 5.0) 
@@ -38047,7 +38047,7 @@ EDITS: 1
 		     (distance 1.0)
 		     (reverb-amount 0.01)
 		     (base 1.0)
-		     #:allow-other-keys)
+		     :allow-other-keys)
 	   (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
 		  (len (inexact->exact (floor (* dur (mus-srate)))))
 		  (end (+ beg len))
@@ -40154,7 +40154,7 @@ EDITS: 1
 	    (stst '(format #f "~,3E" pi) "3.142E+0")
 	    (stst '(format #f "hi~16Tho") "hi              ho")
 	    (stst '(format #f "~{~D ~}" '(1 2 3)) "1 2 3 ")
-	    (stst '(format #f "~A ~A" 'hi :hi) "hi #:hi")
+	    (stst '(format #f "~A ~A" 'hi :hi) "hi :hi")
 	    (stst '(clm-print "hiho: ~D" 43) "hiho: 43")
 	    
 	    (btst '(sample-reader? "hi") #f)
@@ -42568,7 +42568,7 @@ EDITS: 1
 	(set! (optimization) old-opt))
       
       (let ((val (run-eval '(format #f "~A" :hio)))) 
-	(if (not (string=? val "#:hio")) 
+	(if (not (string=? val ":hio")) 
 	    (snd-display ";run format :hio: ~A" val)))
       (let ((val (run-eval '(format #f "~A" 'hiho))))
 	(if (not (string=? val "hiho"))
@@ -43029,7 +43029,7 @@ EDITS: 1
       (let ((val (run (lambda () (eq? unique-symbol 'hiho)))))
 	(if (not val) (snd-display ";run eq? symbol 'hiho?")))
       (let ((val (run-eval '(format #f "~A" unique-keyword))))
-	(if (not (string=? val "#:hiho")) (snd-display ";run format keyword: ~A" val)))
+	(if (not (string=? val ":hiho")) (snd-display ";run format keyword: ~A" val)))
       (let ((val (run-eval '(symbol? unique-keyword))))
 	(if val (snd-display ";run symbol? of keyword")))
       (let ((val (run-eval '(keyword? unique-keyword))))
@@ -43080,7 +43080,7 @@ EDITS: 1
 	(if (not (equal? val 'ho)) (snd-display ";run local return symbol: ~A" val)))
       
       (let ((val (run (lambda () (let* ((a 1) (b (if (odd? a) :hi :ho))) (format #f "b: ~A" b))))))
-	(if (not (equal? val "b: #:hi")) (snd-display ";run b1 ~A:" val)))
+	(if (not (equal? val "b: :hi")) (snd-display ";run b1 ~A:" val)))
       (let ((val (run (lambda () (let* ((a 1) (b (if (odd? a) :hi :ho))) (equal? b :hi))))))
 	(if (not (equal? val #t)) (snd-display ";run b2 ~A:" val)))
       (let ((val (run (lambda () (let* ((a 1) (b :hi)) (equal? b :hi))))))
@@ -43540,14 +43540,14 @@ EDITS: 1
 (set! (optimization) max-optimization)
 (dismiss-all-dialogs)
 
-(define* (make-sinc-train #:optional (frequency 440.0) (width #f))
+(define* (make-sinc-train :optional (frequency 440.0) (width #f))
   (let ((range (or width (* pi (- (* 2 (inexact->exact (floor (/ (mus-srate) (* 2.2 frequency))))) 1)))))
     ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
     (list (- (* range 0.5))
 	  range
 	  (/ (* range frequency) (mus-srate)))))
 	
-(define* (sinc-train gen #:optional (fm 0.0))
+(define* (sinc-train gen :optional (fm 0.0))
   (let* ((ang (car gen))
 	 (range (cadr gen))
 	 (top (* 0.5 range))
@@ -44658,7 +44658,7 @@ EDITS: 1
 	    (string-set! new-str i #\_)
 	    (string-set! new-str i c))))))
 
-(define* (widget-string widget text #:optional (cleared #t))
+(define* (widget-string widget text :optional (cleared #t))
   (define (shifted? ch)
     (if (or (and (char>=? ch #\A) (char<=? ch #\Z))
 	    (char=? ch #\!) (char=? ch #\@) (char=? ch #\#) (char=? ch #\$) (char=? ch #\%) 
@@ -57007,7 +57007,7 @@ EDITS: 1
 (define (extract-channel filename snd chn)
   (save-sound-as filename snd #f #f #f chn))
 
-(define* (extract-channels #:rest chans)
+(define* (extract-channels :rest chans)
   ;; extract a list of channels from the current sound and save as test.snd: (extract-channels 0 2)
   (let ((snd (or (selected-sound) (car (sounds)))))
     (if (sound? snd)
@@ -57020,7 +57020,7 @@ EDITS: 1
 	   chans)
 	  (save-selection "test.snd")))))
 
-(define* (notch-out-rumble-and-hiss #:optional (snd #f) (chn #f))
+(define* (notch-out-rumble-and-hiss :optional (snd #f) (chn #f))
   "(notch-out-rumble-and-hiss s c) applies a bandpass filter with cutoffs at 40 Hz and 3500 Hz"
   (let* ((cur-srate (exact->inexact (srate snd))))
     (filter-sound
@@ -57036,7 +57036,7 @@ EDITS: 1
      (inexact->exact (expt 2 (ceiling (/ (log (/ cur-srate 10.0)) (log 2.0)))))
      snd chn)))
 
-(define* (reverse-channels #:optional snd)
+(define* (reverse-channels :optional snd)
   (let* ((ind (or snd (selected-sound) (car (sounds))))
 	 (chns (chans ind)))
     (let ((swaps (inexact->exact (floor (/ chns 2)))))
@@ -57047,7 +57047,7 @@ EDITS: 1
 	     ((= i swaps))
 	   (swap-channels ind i ind j)))))))
 
-(define* (rotate-channel #:optional (samps 1) snd chn)
+(define* (rotate-channel :optional (samps 1) snd chn)
   (let* ((ind (or snd (selected-sound) (car (sounds))))
 	 (chan (or chn (selected-channel) 0)))
     (let ((reg (make-region 0 (1- samps) ind chan)))

@@ -1,8 +1,9 @@
 ;;; with-sound and friends
 
-(use-modules (ice-9 optargs) (ice-9 format))
+(if (provided? 'snd-guile) (use-modules (ice-9 optargs) (ice-9 format)))
 (provide 'snd-ws.scm)
-(if (not (provided? 'snd-debug.scm)) (load-from-path "debug.scm"))
+(if (and (provided? 'snd-gauche) (not (provided? 'gauche-optargs.scm))) (load-from-path "gauche-optargs.scm"))
+(if (and (provided? 'snd-guile) (not (provided? 'snd-debug.scm))) (load-from-path "debug.scm"))
 
 ;;; changed default variable names 3-Apr-03 for Common Music's benefit
 ;;;   *clm-channels* is the default number of with-sound output chans in
@@ -63,7 +64,7 @@
   (snd-print (format #f "~%~A" (listener-prompt)))
   (goto-listener-end))
 
-(define* (ws-go #:optional val)
+(define* (ws-go :optional val)
   "(ws-go (val #f)) tries to continue from the point at which with-sound was interrupted. 'val' is 
 the value returned by the interrupt (ws-interrupt? normally)"
   (let ((current-continuation *ws-continue*))
@@ -101,15 +102,15 @@ returning you to the true top-level."
   (if (not (null? *ws-continues*))
       (ws-stop!)))
 
-(define* (ws-backtrace #:optional all) 
+(define* (ws-backtrace :optional all) 
   "(ws-backtrace (all #f)) shows the stack backtrace at the point where with-sound was interrupted."
   (snd-backtrace *ws-stack* all))
 
-(define* (ws-locals #:optional (index 0)) 
+(define* (ws-locals :optional (index 0)) 
   "(ws-locals (index 0)) shows the local variables at the index-th frame."
   (local-variables *ws-stack* index))
 
-(define* (ws-local obj #:optional (index 0)) 
+(define* (ws-local obj :optional (index 0)) 
   "(ws-local obj (index 0)) shows the value of obj in the context where with-sound was interrupted."
   (local-variable *ws-stack* obj index))
 
@@ -124,7 +125,7 @@ returning you to the true top-level."
 	       (if (frame-procedure? fr) ; perhaps better here would be (procedure-property 'definstrument) or some such test
 		   (let ((source (frame-source fr)))
 		     (if (memoized? source)
-			 (ok ((if (defined? 'unmemoize) unmemoize unmemoize-expr source)))
+			 (ok ((if (defined? 'unmemoize) unmemoize unmemoize-expr) source))
 			 (ok source)))))))))
       #f))
   
@@ -146,7 +147,7 @@ returning you to the true top-level."
 ;;; ws-interrupt? checks for C-g within with-sound, setting up continuation etc
 ;;; this goes anywhere in the instrument (and any number of times), 
 ;;;    but not in the run macro body (run doesn't (yet?) handle code this complex)
-(defmacro* ws-interrupt? (#:optional (message "with-sound"))
+(defmacro* ws-interrupt? (:optional (message "with-sound"))
   ;; using defmacro, not define, so that we can more easily find the instrument (as a procedure)
   ;;   for ws-locals above -- some sort of procedure property is probably better
   `(if (c-g?) 
@@ -221,7 +222,7 @@ returning you to the true top-level."
 ;;; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
 
 (define* (with-sound-helper thunk 
-			    #:key (srate *clm-srate*) 
+			    :key (srate *clm-srate*) 
 			          (output *clm-file-name*) 
 				  (channels *clm-channels*)
 				  (header-type *clm-header-type*)
@@ -415,7 +416,7 @@ returning you to the true top-level."
 
 ;;; -------- def-clm-struct --------
 
-(defmacro* def-clm-struct (name #:rest fields)
+(defmacro* def-clm-struct (name :rest fields)
   ;; (def-clm-struct fd loc (chan 1))
   ;; (def-clm-struct hiho i x (s "hiho") (ii 3 :type int) (xx 0.0 :type float))
   ;; we need the :type indication if Snd's run macro is to have any hope of handling these structs as function args
@@ -438,7 +439,7 @@ returning you to the true top-level."
 	   (and (list? obj)
 		(eq? (car obj) ',(string->symbol sname)))))
        (define* (,(string->symbol (string-append "make-" sname)) 
-		 #:key ,@(map (lambda (n)
+		 :key ,@(map (lambda (n)
 				(if (and (list? n)
 					 (> (length n) 2))
 				    (list (car n) (cadr n))
@@ -495,7 +496,7 @@ returning you to the true top-level."
 ;;; -------- Common Music --------
 
 (define* (init-with-sound
-	  #:key (srate *clm-srate*) 
+	  :key (srate *clm-srate*) 
 	  (output *clm-file-name*) 
 	  (channels *clm-channels*)
 	  (header-type *clm-header-type*)
@@ -786,15 +787,15 @@ returning you to the true top-level."
 	      (key-name (string->symbol (string-append (symbol->string func-name) "-1"))))
 	  (if (= (length func-args) 1)
 	      `(begin
-		 (define* (,key-name #:key ,@func-args) ,@body)
-		 (define* (,func-name #:rest passed-args)
+		 (define* (,key-name :key ,@func-args) ,@body)
+		 (define* (,func-name :rest passed-args)
 		   (if (or (null? passed-args)
 			   (keyword? (car passed-args)))
 		       (apply ,key-name passed-args)
 		       (apply ,key-name ,(car args) passed-args))))
 	      `(begin
-		 (define* (,key-name #:key ,@func-args) ,@body)
-		 (define* (,func-name #:rest passed-args)
+		 (define* (,key-name :key ,@func-args) ,@body)
+		 (define* (,func-name :rest passed-args)
 		   (if (or (null? passed-args)
 			   (keyword? (car passed-args)))
 		       (apply ,key-name passed-args)

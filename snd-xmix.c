@@ -2291,7 +2291,7 @@ int track_dialog_track(void) {return(track_dialog_id);}
 void track_dialog_set_track(int id) {track_dialog_id = id; update_track_dialog(track_dialog_id);}
 
 
-#if DEBUGGING && HAVE_GUILE
+#if DEBUGGING && HAVE_SCHEME
 static XEN g_internal_xmix_tests(void)
 {
   if (w_env)
