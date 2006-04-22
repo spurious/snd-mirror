@@ -129,7 +129,7 @@
 ;;; SNDWARP
 
 (define* (sndwarp begtime dur file 
-		 #:key (amp sndwarp-amp)
+		 :key (amp sndwarp-amp)
 		       (amp-env sndwarp-amp-env)
 		       (stretch sndwarp-stretch)
 		       (srate sndwarp-srate)

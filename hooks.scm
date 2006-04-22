@@ -1,6 +1,6 @@
 ;;; hook-related functions
 
-(if (provided? 'snd-guile) (use-modules (ice-9 format)))
+(use-modules (ice-9 format))
 (provide 'snd-hooks.scm)
 
 ;;; -------- snd-hooks

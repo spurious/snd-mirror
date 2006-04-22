@@ -1,4 +1,4 @@
-;; these are CLM test instruments
+;;; these are CLM test instruments
 
 (provide 'snd-clm23.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
@@ -19,7 +19,7 @@
 ;;; incf, decf 
 ;;; length sometimes vector-length, vct-length etc
 ;;; make-filter in scm requires coeffs arrays
-;;; &optional -> #:optional, &key too (using define*)
+;;; &optional -> :optional, &key too (using define*)
 ;;; two-pi -> (* 2 pi) and need pi definition
 ;;; make-empty-frame is make-frame essentially
 ;;; open-input and close-input -> make-readin or use name directly (in make-readin)
@@ -33,7 +33,7 @@
 ;;; no length arg to sine-bank
 ;;; #'(lambda ...) to just (lambda...)
 
-(define* (make-double-array len #:key initial-contents initial-element)
+(define* (make-double-array len :key initial-contents initial-element)
   (let ((v (make-vct len (or initial-element 0.0))))
     (if initial-contents
 	(let ((clen (min len (length initial-contents))))
@@ -435,7 +435,7 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* (env e) (oscil os)) 0 *output*))))))
 
-(define* (simple-fof beg dur frq amp vib f0 a0 f1 a1 f2 a2 #:optional ve ae)
+(define* (simple-fof beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional ve ae)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
          (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
          (ampf (make-env :envelope (or ae (list 0 0 25 1 75 1 100 0)) :scaler amp :duration dur))
@@ -1349,7 +1349,7 @@
 ;(with-sound () (sample-pvoc5 0 1 .1 256 "oboe.snd" 440.0))
 
 
-#!
+#|
 (with-sound (:statistics #t)
 	    (simple-ssb 0 .2 440 .1)
 	    (simple-sos .25 .2 .1)
@@ -1436,7 +1436,7 @@
 	    (sample-arrfile 6.75 .2 440 .15)
 	    (sample-pvoc5 7 .2 .1 256 "oboe.snd" 440.0)
 	    )
-!#
+|#
 
 (define* (pvoc-a beg dur amp size file)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
@@ -1457,12 +1457,12 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (phase-vocoder sr (lambda (dir) (readin rd)))) 0 *output*))))))
 
-#!
+#|
 (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-b 0 2.3 -1 256 "oboe.snd")))
        (mx (mus-sound-maxamp outfile)))
   (if (fneq (cadr mx) 0.0)
       (snd-display ";pvoc a-b: ~A" mx)))
-!#
+|#
 
 (define* (pvoc-c beg dur amp size file)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
@@ -1493,12 +1493,12 @@
 		))
 	   0 *output*))))))
 
-#!
+#|
 (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-c 0 2.3 -1 256 "oboe.snd")))
        (mx (mus-sound-maxamp outfile)))
   (if (fneq (cadr mx) 0.0)
       (snd-display ";pvoc a-c: ~A" mx)))
-!#
+|#
 
 
 (define* (pvoc-d beg dur amp size file)
@@ -1548,12 +1548,12 @@
 		))
 	   0 *output*))))))
 
-#!
+#|
 (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-d 0 2.3 -1 256 "oboe.snd")))
        (mx (mus-sound-maxamp outfile)))
   (if (fneq (cadr mx) 0.0)
       (snd-display ";pvoc a-d: ~A" mx)))
-!#
+|#
 
 (define* (pvoc-e beg dur amp size file)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
@@ -1634,12 +1634,12 @@
 		))
 	   0 *output*))))))
 
-#!
+#|
 (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-e 0 2.3 -1 256 "oboe.snd")))
        (mx (mus-sound-maxamp outfile)))
   (if (fneq (cadr mx) 0.0)
       (snd-display ";pvoc a-e: ~A" mx)))
-!#
+|#
 
 (define (or1)
   (let ((e1 (make-env '(0 0 1 1) :end 10))

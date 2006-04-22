@@ -1,6 +1,6 @@
 ;;; with-sound and friends
 
-(if (provided? 'snd-guile) (use-modules (ice-9 optargs) (ice-9 format)))
+(use-modules (ice-9 optargs) (ice-9 format))
 (provide 'snd-ws.scm)
 (if (and (provided? 'snd-gauche) (not (provided? 'gauche-optargs.scm))) (load-from-path "gauche-optargs.scm"))
 (if (and (provided? 'snd-guile) (not (provided? 'snd-debug.scm))) (load-from-path "debug.scm"))
@@ -147,16 +147,14 @@ returning you to the true top-level."
 ;;; ws-interrupt? checks for C-g within with-sound, setting up continuation etc
 ;;; this goes anywhere in the instrument (and any number of times), 
 ;;;    but not in the run macro body (run doesn't (yet?) handle code this complex)
-(defmacro* ws-interrupt? (:optional (message "with-sound"))
+(defmacro ws-interrupt? ()
   ;; using defmacro, not define, so that we can more easily find the instrument (as a procedure)
   ;;   for ws-locals above -- some sort of procedure property is probably better
   `(if (c-g?) 
        (let ((stack (make-stack #t)))
 	 (call-with-current-continuation
 	  (lambda (continue)
-	    (if ,message
-		(throw 'with-sound-interrupt continue stack ,message)
-		(throw 'with-sound-interrupt continue stack)))))
+	    (throw 'with-sound-interrupt continue stack))))
        #f)) ; there is a possible return value from the continuation, so I guess this will make it easier to use?
 
 
@@ -416,7 +414,7 @@ returning you to the true top-level."
 
 ;;; -------- def-clm-struct --------
 
-(defmacro* def-clm-struct (name :rest fields)
+(defmacro def-clm-struct (name . fields)
   ;; (def-clm-struct fd loc (chan 1))
   ;; (def-clm-struct hiho i x (s "hiho") (ii 3 :type int) (xx 0.0 :type float))
   ;; we need the :type indication if Snd's run macro is to have any hope of handling these structs as function args
@@ -433,6 +431,7 @@ returning you to the true top-level."
 				 (list-ref n 3)
 				 #f))
 			   fields)))
+    (display (format #f "fields: ~A" fields))
     `(begin
        (define ,(string->symbol (string-append sname "?"))
 	 (lambda (obj)
@@ -584,24 +583,7 @@ returning you to the true top-level."
       (throw 'wrong-type-arg
 	     (list "finish-with-sound" wsd))))
 
-#!
-;;; these are for compatibility with CLM/CM
-;;;(defstruct wsdat revfun revdat revdecay outtype play stats wait scaled-to format file channels scaled-by)
-(define (wsdat-revfun w) (list-ref w 2))
-(define (wsdat-revdat w) #f)
-(define (wsdat-revdecay w) #f)
-(define (wsdat-outtype w) #f)
-(define (wsdat-play w) (list-ref w 9))
-(define (wsdat-stats w) (list-ref w 5))
-(define (wsdat-wait w) #f)
-(define (wsdat-scaled-to w) (list-ref w 7))
-(define (wsdat-format w) #f)
-(define (wsdat-file w) (list-ref w 1))
-(define (wsdat-channels w) #f)
-(define (wsdat-scaled-by w) (list-ref w 8))
-(define (wsdat-reverb-data w) (list-ref w 10))
-!#
-(define wsdat-play
+(define wsdat-play ; for cm
   (make-procedure-with-setter
    (lambda (w)
      (list-ref w 9))
@@ -630,7 +612,7 @@ returning you to the true top-level."
 
 
 ;;; -------- with-marked-sound --------
-#!
+#|
 ;;; the following code places a mark at the start of each note in the with-sound body
 ;;;    with arbitrary info in the :ws mark-property, displayed in the help dialog
 ;;;    when the mark is clicked.  The corresponding code in the instrument is:
@@ -664,7 +646,7 @@ returning you to the true top-level."
 	  (let ((mk (add-mark (car m) snd)))         ; put a mark at each note begin sample
 	    (set! (mark-property :ws mk) (cadr m)))) ; and set its :ws property to the other info
 	*ws-prog*))))
-!#
+|#
 
 
 ;;; -------- with-mix --------

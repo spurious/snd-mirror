@@ -4501,15 +4501,11 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   return(gen);
 }
 
-static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN edpos, const char *caller, bool over_selection)
+static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN ebase, chan_info *cp, XEN edpos, const char *caller, bool over_selection)
 {
   if (XEN_LIST_P(edata))
     {
       env *e;
-      XEN ebase;
-      if ((!(XEN_NUMBER_P(base))) && (XEN_NUMBER_P(envelope_base(edata))))
-	ebase = envelope_base(edata);
-      else ebase = base;
       e = get_env(edata, caller);
       if (e)
 	{
@@ -5093,7 +5089,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   return(ratio_or_env);
 }
 
-static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, bool over_selection)
+static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, bool over_selection)
 {
   chan_info *cp;
   ASSERT_CHANNEL(caller, snd_n, chn_n, 3);
@@ -5109,12 +5105,8 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
       if (XEN_LIST_P(ratio_or_env))
 	{
 	  env *e = NULL;
-	  XEN ebase;
 	  Float e_ratio = 1.0;
 
-	  if ((!(XEN_NUMBER_P(base))) && (XEN_NUMBER_P(envelope_base(ratio_or_env))))
-	    ebase = envelope_base(ratio_or_env);
-	  else ebase = base;
 	  /* env 'e' is a temp here, so we can clobber its base, etc */
 	  e = get_env(ratio_or_env, caller);
 	  if (XEN_NUMBER_P(ebase))
@@ -5159,7 +5151,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 			   over_selection, egen, edpos, 5);
 	}
     }
-  return(xen_return_first(ratio_or_env, base));
+  return(xen_return_first(ratio_or_env, ebase));
 }
 
 static XEN g_src_sound(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos)
@@ -5462,19 +5454,19 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_map_channel "-1",        g_map_channel_w,   1, 6, 0, H_map_channel);
   XEN_DEFINE_PROCEDURE(S_ptree_channel "-1",      g_ptree_channel_w, 1, 8, 0, H_ptree_channel);
 
-  XEN_EVAL_C_STRING("(defmacro* scan-channel (form #:rest args) `(apply scan-channel-1 (list (list ',form ,form) ,@args)))");
+  XEN_EVAL_C_STRING("(defmacro scan-channel (form . args) `(apply scan-channel-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_scan_channel, H_scan_channel);
-  XEN_EVAL_C_STRING("(defmacro* scan-chan (form #:rest args) `(apply scan-chan-1 (list (list ',form ,form) ,@args)))");
+  XEN_EVAL_C_STRING("(defmacro scan-chan (form . args) `(apply scan-chan-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_scan_chan, H_scan_chan);
-  XEN_EVAL_C_STRING("(defmacro* find-channel (form #:rest args) `(apply find-channel-1 (list (list ',form ,form) ,@args)))");
+  XEN_EVAL_C_STRING("(defmacro find-channel (form . args) `(apply find-channel-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_find_channel, H_find_channel);
-  XEN_EVAL_C_STRING("(defmacro* count-matches (form #:rest args) `(apply count-matches-1 (list (list ',form ,form) ,@args)))");
+  XEN_EVAL_C_STRING("(defmacro count-matches (form . args) `(apply count-matches-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_count_matches, H_count_matches);
-  XEN_EVAL_C_STRING("(defmacro* map-channel (form #:rest args) `(apply map-channel-1 (list (list ',form ,form) ,@args)))");
+  XEN_EVAL_C_STRING("(defmacro map-channel (form . args) `(apply map-channel-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_map_channel, H_map_channel);
-  XEN_EVAL_C_STRING("(defmacro* map-chan (form #:rest args) `(apply map-chan-1 (list (list ',form ,form) ,@args)))");
+  XEN_EVAL_C_STRING("(defmacro map-chan (form . args) `(apply map-chan-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_map_chan, H_map_chan);
-  XEN_EVAL_C_STRING("(defmacro* ptree-channel (form #:rest args) `(apply ptree-channel-1 (list (list ',form ,form) ,@args)))");
+  XEN_EVAL_C_STRING("(defmacro ptree-channel (form . args) `(apply ptree-channel-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_ptree_channel, H_ptree_channel);
 #else
   XEN_DEFINE_PROCEDURE(S_scan_channel,            g_scan_channel_w,            1, 5, 0, H_scan_channel);

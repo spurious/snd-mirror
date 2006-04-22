@@ -47,7 +47,7 @@ or through some user interface (provided by Snd, for example).
 CLM exists in several forms: 
 the original Common Lisp implementation (clm-3.tar.gz), 
 a C version (sndlib.tar.gz), 
-a Scheme version (sndlib.tar.gz with Guile), Ruby (sndlib again but using Ruby),
+a Scheme version (sndlib.tar.gz with Guile or Gauche), Ruby (sndlib again but using Ruby),
 and Forth (sndlib/gfm).  The Scheme, Ruby, and Forth versions are also built into
 the Snd editor (snd-8.tar.gz).
 There are a variety of unavoidable differences between these
@@ -94,7 +94,7 @@ ccrma-ftp.stanford.edu; the Snd editor is <a href="ftp://ccrma-ftp.stanford.edu/
 <li><small><a href="#functions">Useful functions</a></small>
 <li><small><a href="#def-clm-struct">def-clm-struct</a></small>
 <li><small><a href="#definstrument">Definstrument</a></small>
-<li><small><a href="#guileetc">CLM in Guile, Ruby, C, Forth</a></small>
+<li><small><a href="#guileetc">CLM in Scheme, Ruby, C, Forth</a></small>
 </ul>
 <li><a href="#note-lists">Note Lists</a>
 <ul>
@@ -3705,10 +3705,10 @@ good reason not to write an instrument such as:</p>
 </td></tr></table>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="guileetc">CLM in Guile, Ruby, C, Forth</a></h3></td></tr></table>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="guileetc">CLM in Scheme, Ruby, C, Forth</a></h3></td></tr></table>
 
 <p>Although this document is aimed at Common Lisp, CLM instruments can also be written
-in Scheme (via Guile), Ruby, C, or Forth.  Most the standard CLM instruments are in the Snd tarball (clm-ins.scm primarily).
+in Scheme (via Guile or Gauche), Ruby, C, or Forth.  Most the standard CLM instruments are in the Snd tarball (clm-ins.scm primarily).
 To provide a quick overview, the CL bird instrument is</p>
 
 <table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>

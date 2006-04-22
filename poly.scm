@@ -418,7 +418,7 @@
      roots)
     roots))
 
-#!
+#|
 (do ((i 0 (1+ i))) ((= i 10)) 
   (poly-as-vector-roots (vector (make-rectangular (mus-random 1.0) (mus-random 1.0)) 
 				(make-rectangular (mus-random 1.0) (mus-random 1.0)))))
@@ -470,9 +470,6 @@
 ;;; numerical trouble: 
 (poly-roots (vct 1000 .01 0 1))
 
-!#
-
-#!
 	 ;; failed to find a root within poly-roots-epsilon -- get the best available
 	 (let ((s1 backup-s1)
 	       (s2 backup-s2))
@@ -483,4 +480,4 @@
 		 (simplify-complex (+ (* -0.5 (+ s1 s2)) 
 				      (/ a2 -3.0) 
 				      (* (- s1 s2) -0.5 (sqrt -3.0))))))))))
-!#
+|#

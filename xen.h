@@ -1524,12 +1524,12 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_TO_C_DOUBLE(a)           xen_to_c_double(a)
 #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ((XEN_NUMBER_P(a)) ? XEN_TO_C_DOUBLE(a) : b)
 #define C_TO_XEN_DOUBLE(a)           Scm_MakeFlonum(a)
-#define XEN_TO_C_ULONG(a)            Scm_BignumToUI(SCM_BIGNUM(a), SCM_CLAMP_NONE, NULL)
-#define C_TO_XEN_ULONG(a)            (SCM_OBJ(Scm_MakeBignumFromUI((unsigned long)a)))
-#define XEN_ULONG_P(Arg)             SCM_BIGNUMP(Arg)
+#define XEN_TO_C_ULONG(a)            Scm_GetIntegerU(a)
+#define C_TO_XEN_ULONG(a)            Scm_MakeIntegerU((unsigned long)a)
+#define XEN_ULONG_P(Arg)             SCM_INTEGERP(Arg)
 #define XEN_EXACT_P(Arg)             SCM_EXACTP(Arg)
 #define C_TO_XEN_LONG_LONG(a)        (SCM_OBJ(Scm_MakeBignumFromSI(a)))
-#define XEN_TO_C_LONG_LONG(a)        ((off_t)(Scm_BignumToSI64(SCM_BIGNUM(a), SCM_CLAMP_NONE, NULL)))
+#define XEN_TO_C_LONG_LONG(a)        (SCM_BIGNUMP(a) ? ((off_t)(Scm_BignumToSI64(SCM_BIGNUM(a), SCM_CLAMP_NONE, NULL))) : ((off_t)XEN_TO_C_INT(a)))
 #define XEN_OFF_T_P(Arg)             (SCM_INTEGERP(Arg) || SCM_BIGNUMP(Arg))
 #define XEN_COMPLEX_P(Arg)           SCM_COMPLEXP(Arg)
 #define XEN_TO_C_COMPLEX(a)          (SCM_COMPLEX_REAL(a) + SCM_COMPLEX_IMAG(a) * _Complex_I)
@@ -1545,7 +1545,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #define XEN_STRING_P(Arg)            SCM_STRINGP(Arg)
 #define XEN_TO_C_STRING(Str)         Scm_GetString(SCM_STRING(Str))
-#define C_TO_XEN_STRING(a)           SCM_MAKE_STR_COPYING(a)
+#define C_TO_XEN_STRING(a)           (a) ? SCM_MAKE_STR_COPYING(a) : XEN_FALSE
 #define C_TO_XEN_STRINGN(Str, Len)   Scm_MakeString(Str, Len, Len, SCM_MAKSTR_COPYING)
 #define C_STRING_TO_XEN_FORM(Str)    Scm_ReadFromCString(Str)
 #define XEN_EVAL_FORM(Form)          Scm_Eval(Form, SCM_OBJ(Scm_UserModule()))
@@ -1566,8 +1566,10 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 /* TODO: errors */
 #define XEN_ERROR_TYPE(Typ)                 C_STRING_TO_XEN_SYMBOL(Typ)
-#define XEN_ERROR(Type, Info)               Scm_Error("oops")
-#define XEN_THROW(Tag, Arg)                 Scm_Error("oops")
+#define XEN_ERROR(Type, Info)               Scm_Error(XEN_AS_STRING(Info))
+/* calls VMThrowException */
+#define XEN_THROW(Tag, Arg)                 Scm_RaiseCondition(Tag, Arg)
+/* might need symbol_value of tag */
 
 #define C_STRING_TO_XEN_SYMBOL(a)           SCM_INTERN(a)
 #define XEN_NAME_AS_C_STRING_TO_VALUE(a)    Scm_SymbolValue(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(a)))
@@ -1576,7 +1578,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #define XEN_SET_DOCUMENTATION(Func, Help)   SCM_PROCEDURE_INFO(Func) = C_TO_XEN_STRING(Help)
 #define XEN_DOCUMENTATION_SYMBOL            SCM_SYMBOL(SCM_INTERN("documentation"))
-/* TODO: help for proc gets proc obj not symbol */
+/* TODO: proc info is probably supposed to be an association list */
 #define XEN_OBJECT_HELP(Name)               SCM_PROCEDURE_INFO(Name)
 
 
@@ -1617,9 +1619,9 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 
 /* TODO: in Gauche, hooks are just unchecked lists of procedures */
-#define XEN_HOOK_P(Arg)                    XEN_LIST_P(SCM_GLOC_GET(SCM_GLOC(Arg)))
+#define XEN_HOOK_P(Arg)                    (!XEN_FALSE_P(Arg) && XEN_LIST_P(SCM_GLOC_GET(SCM_GLOC(Arg))))
 #define XEN_DEFINE_HOOK(Name, Arity, Help) XEN_DEFINE(Name, XEN_EMPTY_LIST)
-#define XEN_DEFINE_SIMPLE_HOOK(Arity)      XEN_EMPTY_LIST
+#define XEN_DEFINE_SIMPLE_HOOK(Arity)      XEN_DEFINE("simple-hook", XEN_EMPTY_LIST)
 #define XEN_HOOKED(Arg)                    XEN_NOT_NULL_P(SCM_GLOC_GET(SCM_GLOC(Arg)))
 #define XEN_CLEAR_HOOK(Arg)                SCM_GLOC_SET(SCM_GLOC(Arg), XEN_EMPTY_LIST)
 #define XEN_HOOK_PROCEDURES(Arg)           SCM_OBJ(SCM_GLOC_GET(SCM_GLOC(Arg)))

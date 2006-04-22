@@ -199,7 +199,7 @@
       (display (format #f "~A is not a list" (XtName wid)))
       (XmListSelectPos wid (+ pos 1) #t)))
 
-(define* (click-button button #:optional value bits)
+(define* (click-button button :optional value bits)
   (if (Widget? button)
       (if (XtIsSensitive button)
 	  (if (or (XmIsPushButton button)
@@ -329,7 +329,7 @@
 (define (beep)
   (XBell (XtDisplay (cadr (main-widgets))) 100))
 
-#!
+#|
 (define wm-delete-event
   ;; this works on the main window, but I can't see how to get it to work on dialogs
   (let ((e (XEvent ClientMessage)))
@@ -346,4 +346,4 @@
 	  (if (= err 0)
 	      (display (format #f "[client-event error] " err)))
 	  (XFlush dpy))))))
-!#
+|#

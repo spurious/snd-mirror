@@ -58,7 +58,7 @@
 (define (In-t60 t60) (- 1.0 (expt 0.001 (/ 1.0 t60 (mus-srate)))))
 
 ;;; expseg (like musickit asymp)
-(define* (make-expseg #:key (currentValue 0.0) (targetValue 0.0))
+(define* (make-expseg :key (currentValue 0.0) (targetValue 0.0))
   (let ((cv currentValue)
 	(tv targetValue))
     (lambda (r)
@@ -154,7 +154,7 @@
     (apfloor len wT)))
 
 (definstrument (p start
-   #:key (duration 1.0)
+   :key (duration 1.0)
    (keyNum 60.0) ;;middleC=60: can use fractional part to detune
    (strike-velocity 0.5) ;;corresponding normalized velocities (range: 0.0--1.0)
    (pedal-down #f) ;;set to t for sustain pedal down...pedal-down-times not yet impl.
@@ -423,7 +423,7 @@
 
 
 
-#!
+#|
 
 (with-sound ()
   (do ((i 0 (1+ i))) ((= i 8))
@@ -521,4 +521,5 @@
      :singleStringDecayRateFactor 1/10
 					;scales attenuation rate (1/2 means twice as long duration)
      )))
-!#
+|#
+

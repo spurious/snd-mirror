@@ -37,12 +37,12 @@
                   (sliders '()))
               (set! fft-edit-dialog
                     (make-effect-dialog fft-edit-label
-                                        (lambda* (w context #:optional info)
+                                        (lambda* (w context :optional info)
                                           (cp-fft-edit))
-                                        (lambda* (w context #:optional info)
+                                        (lambda* (w context :optional info)
                                           (help-dialog "FFT notch filter"
                                                        "A simple example of FFT-based editing. It takes an FFT of the entire sound, removes all energy below the low frequency and above the high frequency, then computes the inverse FFT."))
-                                        (lambda* (w c #:optional i)
+                                        (lambda* (w c :optional i)
 						 (set! fft-edit-low-frequency initial-fft-edit-low-frequency)
 						 (set! fft-edit-high-frequency initial-fft-edit-high-frequency)
 						 (if (provided? 'snd-gtk)
@@ -57,11 +57,11 @@
               (set! sliders
                    (add-sliders fft-edit-dialog
                                  (list (list "low frequency" 20 initial-fft-edit-low-frequency 22050
-                                             (lambda* (w context #:optional info)
+                                             (lambda* (w context :optional info)
                                                (set! fft-edit-low-frequency (/ (.value (if (provided? 'snd-gtk) (GTK_ADJUSTMENT w) info)) 1)))
                                              1)
                                        (list "high frequency" 20 initial-fft-edit-high-frequency 22050
-                                             (lambda* (w context #:optional info)
+                                             (lambda* (w context :optional info)
                                                (set! fft-edit-high-frequency (/ (.value (if (provided? 'snd-gtk) (GTK_ADJUSTMENT w) info)) 1)))
                                              1))))))
         (activate-dialog fft-edit-dialog))
@@ -99,12 +99,12 @@
                   (sliders '()))
               (set! fft-squelch-dialog
                     (make-effect-dialog fft-squelch-label
-                                        (lambda* (w context #:optional info)
+                                        (lambda* (w context :optional info)
                                           (cp-fft-squelch))
-                                        (lambda* (w context #:optional info)
+                                        (lambda* (w context :optional info)
                                           (help-dialog "FFT squelch"
                                                 "Removes all energy below the squelch amount. This is sometimes useful for noise-reduction."))
-                                        (lambda* (w c #:optional i)
+                                        (lambda* (w c :optional i)
                                           (set! fft-squelch-amount initial-fft-squelch-amount)
 					  (if (provided? 'snd-gtk)
 					      (begin
@@ -114,7 +114,7 @@
               (set! sliders
                     (add-sliders fft-squelch-dialog
                                  (list (list "squelch amount" 0.0 initial-fft-squelch-amount 1.0
-					     (lambda* (w context #:optional info)
+					     (lambda* (w context :optional info)
 						      (set! fft-squelch-amount (/ (.value (if (provided? 'snd-gtk)
 											      (GTK_ADJUSTMENT w) 
 											      info))

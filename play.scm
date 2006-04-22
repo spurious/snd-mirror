@@ -1,6 +1,6 @@
 ;;; playing-related examples previously scattered around at random
 ;;;
-;;; play-sound #:optional func -- play current sound, calling (func data) on each buffer if func is passed
+;;; play-sound :optional func -- play current sound, calling (func data) on each buffer if func is passed
 ;;; play-often, play-until-c-g -- play sound n times or until c-g
 ;;; play-region-forever -- play region over and over until C-g typed
 ;;; loop-between-marks -- play while looping continuously between two movable marks
@@ -15,7 +15,7 @@
 (use-modules (ice-9 format) (ice-9 optargs))
 (provide 'snd-play.scm)
 
-(define* (open-play-output #:optional out-chans out-srate out-format out-bufsize)
+(define* (open-play-output :optional out-chans out-srate out-format out-bufsize)
   ;; returns (list audio-fd chans frames)
   (let* ((outchans (or out-chans 1))
 	 (cur-srate (or out-srate (and (not (null? (sounds))) (srate)) 22050))
@@ -55,8 +55,8 @@
     (list audio-fd outchans pframes)))
 
 
-(define* (play-sound #:optional func)
-  "(play-sound #:optional func) plays the currently selected sound, calling func on each data buffer, if func exists"
+(define* (play-sound :optional func)
+  "(play-sound :optional func) plays the currently selected sound, calling func on each data buffer, if func exists"
   (if (not (null? (sounds)))
       (let* ((filechans (chans))
 	     (audio-info (open-play-output filechans (srate) #f 256))
@@ -81,14 +81,14 @@
 	    (snd-print ";could not open dac")))
       (snd-print ";no sounds open")))
 
-#!
+#|
 (play-sound 
  (lambda (data)
    (let ((len (sound-data-length data)))
      (do ((i 0 (1+ i)))
 	 ((= i len))
        (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))
-!#
+|#
 
 
 ;;; -------- play sound n times -- (play-often 3) for example.
@@ -110,7 +110,7 @@
 
 ;;; -------- play sound until c-g
 
-(define (play-until-c-g)
+(define+ (play-until-c-g)
   "(play-until-c-g) plays the selected sound until you interrupt it via C-g"
   (define (play-once reason)
     (if (and (not (c-g?))
@@ -121,7 +121,7 @@
 
 ;;; -------- play region over and over until C-g typed
 
-(define (play-region-forever reg)
+(define+ (play-region-forever reg)
   "(play-region-forever reg) plays region 'reg' until you interrupt it via C-g"
   (define (play-region-again reason)
     (if (and (not (c-g?))  ; be extra careful (probably superfluous)
@@ -283,7 +283,7 @@ read, even if not playing.  'files' is a list of files to be played."
 		       (lambda args (begin (snd-print (format #f "error ~A" args)) (car args))))
 		(mus-audio-close out-port)))))))
 
-#!
+#|
 (vector-synthesis (let ((ctr 0) (file 0)) 
 		    (lambda (files bufsize)
 		      (if (> ctr 4)
@@ -295,14 +295,14 @@ read, even if not playing.  'files' is a list of files to be played."
 			  (set! ctr (1+ ctr)))
 		      file))
 		  (list "oboe.snd" "pistol.snd") #t)
-!#
+|#
 
 
 ;;; play-with-amps -- play channels with individually settable amps
 
 (define play-with-amps
   (lambda (sound . amps)
-    "(play-with-amps snd #:rest amps) plays snd with each channel scaled by the corresponding 
+    "(play-with-amps snd :rest amps) plays snd with each channel scaled by the corresponding 
 amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitude"
     (let ((chans (chans sound)))
       (do ((chan 0 (1+ chan)))

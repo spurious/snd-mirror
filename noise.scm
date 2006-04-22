@@ -7,9 +7,9 @@
 ;;; Comments not otherwise noted are taken from noise.ins!
 
 ;; Included functions:
-;; (attack-point duration attack decay #:optional (total-x 100.0))
+;; (attack-point duration attack decay :optional (total-x 100.0))
 ;; (fm-noise ...)
-;; (make-fm-noise len freq #:key ...)
+;; (make-fm-noise len freq :key ...)
 
 ;;; The "noise" instrument (useful for Oceanic Music):
 
@@ -20,7 +20,7 @@
 
 (define *locsig-type* mus-interp-sinusoidal)
 
-(define* (attack-point duration attack decay #:optional (total-x 100.0))
+(define* (attack-point duration attack decay :optional (total-x 100.0))
   (* total-x (/ (if (= 0.0 attack)
 		    (if (= 0.0 decay)
 			(/ duration 4)
@@ -31,7 +31,7 @@
 (definstrument (fm-noise startime dur freq0 amp ampfun ampat ampdc
 		   freq1 glissfun freqat freqdc rfreq0 rfreq1 rfreqfun rfreqat rfreqdc
 		   dev0 dev1 devfun devat devdc
-		   #:key (degree 0.0)
+		   :key (degree 0.0)
 		   (distance 1.0)
 		   (reverb-amount 0.005))
   
@@ -116,7 +116,7 @@
 ;;; And here is a generator-like instrument, see make-fm-violin in
 ;;; fmv.scm. [MS]
 
-(define* (make-fm-noise len freq #:key
+(define* (make-fm-noise len freq :key
 			(amp 0.25)
 			(ampfun '(0 0 25 1 75 1 100 0))
 			(ampat 0.1)

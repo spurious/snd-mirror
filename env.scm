@@ -1,6 +1,6 @@
 ;;; various envelope functions
 ;;;
-;;; envelope-interp (x env #:optional (base 1.0)) -> value of env at x (base controls connecting segment type)
+;;; envelope-interp (x env :optional (base 1.0)) -> value of env at x (base controls connecting segment type)
 ;;; window-envelope (beg end env) -> portion of env lying between x axis values beg and end
 ;;; map-envelopes (func env1 env2) maps func over the breakpoints in env1 and env2 returning a new envelope
 ;;;   multiply-envelopes (env1 env2) multiplies break-points of env1 and env2 returning a new envelope
@@ -8,11 +8,11 @@
 ;;; max-envelope (env) -> max y value in env, min-envelope
 ;;; integrate-envelope (env) -> area under env
 ;;; envelope-last-x (env) -> max x axis break point position
-;;; stretch-envelope env old-attack new-attack #:optional old-decay new-decay -> divseg-like envelope mangler
-;;; scale-envelope (env scaler #:optional offset) scales y axis values by 'scaler' and optionally adds 'offset'
+;;; stretch-envelope env old-attack new-attack :optional old-decay new-decay -> divseg-like envelope mangler
+;;; scale-envelope (env scaler :optional offset) scales y axis values by 'scaler' and optionally adds 'offset'
 ;;; reverse-envelope (env) reverses the breakpoints in 'env'
-;;; concatenate-envelopes (#:rest envs) concatenates its arguments into a new envelope
-;;; repeat-envelope env repeats #:optional (reflected #f) (normalized #f) repeats an envelope
+;;; concatenate-envelopes (:rest envs) concatenates its arguments into a new envelope
+;;; repeat-envelope env repeats :optional (reflected #f) (normalized #f) repeats an envelope
 ;;; power-env: generator for extended envelopes (each segment has its own base)
 ;;; envelope-exp: interpolate segments into envelope to give exponential curves
 
@@ -23,8 +23,8 @@
 ;;; -------- envelope-interp
 
 (define envelope-interp                      ;env is list of x y breakpoint pairs, interpolate at x returning y
-  (lambda args                          ;  (x env #:optional (base 1.0)
-    "(envelope-interp x env #:optional (base 1.0)) -> value of env at x; base controls connecting segment 
+  (lambda args                          ;  (x env :optional (base 1.0)
+    "(envelope-interp x env :optional (base 1.0)) -> value of env at x; base controls connecting segment 
 type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     (let ((x (car args))
 	  (env (cadr args))
@@ -137,7 +137,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 
 ;;; -------- max-envelope
 
-(define (max-envelope env)
+(define+ (max-envelope env)
   "(max-envelope env) -> max y value in env"
   (define (max-envelope-1 e mx)
     (if (null? e)
@@ -148,7 +148,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 
 ;;; -------- min-envelope
 
-(define (min-envelope env)
+(define+ (min-envelope env)
   "(min-envelope env) -> min y value in env"
   (define (min-envelope-1 e mx)
     (if (null? e)
@@ -159,7 +159,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 
 ;;; -------- integrate-envelope
 
-(define (integrate-envelope env)
+(define+ (integrate-envelope env)
   "(integrate-envelope env) -> area under env"
   (define (integrate-envelope-1 e sum)
     (if (or (null? e) (null? (cddr e)))
@@ -181,7 +181,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 
 (define (stretch-envelope . args)
 
-  "(stretch-envelope env old-attack new-attack #:optional old-decay new-decay) takes 'env' and 
+  "(stretch-envelope env old-attack new-attack :optional old-decay new-decay) takes 'env' and 
 returns a new envelope based on it but with the attack and optionally decay portions stretched 
 or squeezed; 'old-attack' is the original x axis attack end point, 'new-attack' is where that 
 section should end in the new envelope.  Similarly for 'old-decay' and 'new-decay'.  This mimics 
@@ -259,8 +259,8 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
     
 ;;; -------- scale-envelope
 
-(define* (scale-envelope e scl #:optional (offset 0))
-  "(scale-envelope env scaler #:optional (offset 0)) scales y axis values by 'scaler' and optionally adds 'offset'"
+(define* (scale-envelope e scl :optional (offset 0))
+  "(scale-envelope env scaler :optional (offset 0)) scales y axis values by 'scaler' and optionally adds 'offset'"
   (if (null? e)
       '()
       (append (list (car e) (+ offset (* scl (cadr e))))
@@ -269,7 +269,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 
 ;;; -------- reverse-envelope
 
-(define (reverse-envelope e)
+(define+ (reverse-envelope e)
   "(reverse-envelope env) reverses the breakpoints in 'env'"
   (define (reverse-env-1 e newe xd)
     (if (null? e)
@@ -288,8 +288,8 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 
 ;;; -------- concatenate-envelopes
 
-(define* (concatenate-envelopes #:rest envs)
-  "(concatenate-envelopes #:rest envs) concatenates its arguments into a new envelope"
+(define+ (concatenate-envelopes . envs)
+  "(concatenate-envelopes :rest envs) concatenates its arguments into a new envelope"
   (define (cat-1 e newe xoff x0)
     (if (null? e)
 	newe
@@ -314,8 +314,8 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
     (reverse ne)))
 
 
-(define* (repeat-envelope ur-env repeats #:optional (reflected #f) (normalized #f))
-    "(repeat-envelope env repeats #:optional (reflected #f) (normalized #f)) repeats 'env' 'repeats' 
+(define* (repeat-envelope ur-env repeats :optional (reflected #f) (normalized #f))
+    "(repeat-envelope env repeats :optional (reflected #f) (normalized #f)) repeats 'env' 'repeats' 
 times.  (repeat-envelope '(0 0 100 1) 2) -> (0 0 100 1 101 0 201 1). 
 If the final y value is different from the first y value, a quick ramp is 
 inserted between repeats. 'normalized' causes the new envelope's x axis 
@@ -377,7 +377,7 @@ repetition to be in reverse."
 	    (set! (penv-current-pass pe) (mus-length (vector-ref (penv-envs pe) (penv-current-env pe)))))))
     val))
 
-(define* (make-power-env envelope #:key (scaler 1.0) (offset 0.0) duration)
+(define* (make-power-env envelope :key (scaler 1.0) (offset 0.0) duration)
   (let* ((len (1- (inexact->exact (floor (/ (length envelope) 3)))))
 	 (pe (make-penv :envs (make-vector len)
 			:total-envs len
@@ -398,7 +398,7 @@ repetition to be in reverse."
     (set! (penv-current-pass pe) (mus-length (vector-ref (penv-envs pe) 0)))
     pe))
 
-(define* (power-env-channel pe #:optional (beg 0) dur snd chn edpos (edname "power-env-channel"))
+(define* (power-env-channel pe :optional (beg 0) dur snd chn edpos (edname "power-env-channel"))
   ;; split into successive calls on env-channel
   (let ((curbeg beg)) ; sample number
     (as-one-edit
@@ -414,7 +414,7 @@ repetition to be in reverse."
 
 ;;; here's a simpler version that takes the breakpoint list, rather than the power-env structure:
 
-(define* (powenv-channel envelope #:optional (beg 0) dur snd chn edpos)
+(define* (powenv-channel envelope :optional (beg 0) dur snd chn edpos)
   ;; envelope with a separate base for each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))
   (let* ((curbeg beg)
 	 (fulldur (or dur (frames snd chn edpos)))
@@ -452,7 +452,7 @@ repetition to be in reverse."
 ;;; power applies to whole envelope,
 ;;; xgrid is how fine a solution to sample our new envelope with.
 
-(define* (envelope-exp e #:optional (power 1.0) (xgrid 100))
+(define* (envelope-exp e :optional (power 1.0) (xgrid 100))
   (let* ((mn (min-envelope e))
 	 (largest-diff (exact->inexact (- (max-envelope e) mn)))
 	 (x-min (car e))
@@ -475,7 +475,7 @@ repetition to be in reverse."
 
 ;;; rms-envelope
 
-(define* (rms-envelope file #:key (beg 0.0) (dur #f) (rfreq 30.0) (db #f))
+(define* (rms-envelope file :key (beg 0.0) (dur #f) (rfreq 30.0) (db #f))
   ;; based on rmsenv.ins by Bret Battey
   (let* ((e '())
 	 (incr (/ 1.0 rfreq))

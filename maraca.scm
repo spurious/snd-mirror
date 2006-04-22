@@ -6,7 +6,7 @@
 
 (define two-pi (* 2 3.14159))
 
-(definstrument (maraca beg dur #:optional (amp .1) 
+(definstrument (maraca beg dur :optional (amp .1) 
 		 (sound-decay 0.95) 
 		 (system-decay 0.999) 
 		 (probability .0625)
@@ -64,7 +64,7 @@
 ;;; maraca: (vct->channel (maraca 0 5 .5))
 ;;; cabasa: (vct->channel (maraca 0 5 .5 0.95 0.997 0.5 3000.0 0.7))
 
-(definstrument (big-maraca beg dur #:optional (amp .1) 
+(definstrument (big-maraca beg dur :optional (amp .1) 
 		     (sound-decay 0.95) 
 		     (system-decay 0.999) 
 		     (probability .0625)

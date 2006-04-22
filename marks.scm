@@ -332,7 +332,7 @@
 ;;;
 ;;; write out each section of a file between marks as a separate file
 
-(define* (mark-explode #:optional (htype mus-next) (dformat mus-bfloat))
+(define* (mark-explode :optional (htype mus-next) (dformat mus-bfloat))
   "(mark-explode :optional header-type data-format) splits a sound into a bunch of sounds based on mark placements"
   (let ((start 0)
 	(file-ctr 0)
@@ -454,7 +454,7 @@
   #t)
 
 
-#!
+#|
 ;;; this code saves mark info in the sound file header, and reads it back in when the sound is later reopened
 
 (define (eval-header sndf)
@@ -497,4 +497,7 @@
 		   
 (add-hook! output-comment-hook (lambda (str) (marks->string (selected-sound))))
 (add-hook! after-open-hook (lambda (snd) (eval-header snd)))
-!#
+|#
+
+
+

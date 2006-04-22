@@ -2294,7 +2294,7 @@ static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd_n, XEN raw)
 then when the user eventually responds, invoke the function callback, if any, with the response.  If 'raw' is #t, the response is \
 returned as a string; otherwise it is evaluated first as Scheme code.  For example, the following fragment asks for \
 a yes-or-no response, then takes some action:\n\n\
-  (define* (yes-or-no question action-if-yes action-if-no #:optional snd)\n\
+  (define* (yes-or-no question action-if-yes action-if-no :optional snd)\n\
     (" S_prompt_in_minibuffer " question\n\
 			  (lambda (response)\n\
                             (" S_clear_minibuffer ")\n\

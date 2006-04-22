@@ -8,13 +8,13 @@
 (define pi 3.141592653589793)
 
 
-(define* (make-reed #:key (offset 0.6) (slope -0.8))
+(define* (make-reed :key (offset 0.6) (slope -0.8))
   (vct offset slope))
 
 (define (reedtable r sample)
   (min 1.0 (+ (vct-ref r 0) (* (vct-ref r 1) sample))))
 
-(define* (make-bowtable #:key (offset 0.0) (slope 1.0))
+(define* (make-bowtable :key (offset 0.0) (slope 1.0))
   (vct offset slope))
 
 (define (bowtable b sample)
@@ -23,10 +23,10 @@
 (define (jettable sample) 
   (max -1.0 (min 1.0 (* sample (- (* sample sample) 1.0)))))
 
-(define* (make-onezero #:key (gain 0.5) (zerocoeff 1.0))
+(define* (make-onezero :key (gain 0.5) (zerocoeff 1.0))
   (make-one-zero gain (* gain zerocoeff)))
 
-(define* (make-onep #:key (polecoeff 0.9))
+(define* (make-onep :key (polecoeff 0.9))
   (make-one-pole (- 1.0 polecoeff) (- polecoeff)))
 
 (define (set-pole p val) 

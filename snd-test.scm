@@ -35,17 +35,11 @@
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
 
-(if (provided? 'snd-guile)
-    (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen)))
+(use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (if (provided? 'snd-gauche)
     (begin
-      ;(use srfi-1)     ; list library -- has filter
-      ;(use srfi-4)     ; u8vector
-      ;(use srfi-13)     ; extra string support
-      ;(use srfi-27)    ; random bits
       (use file.util)   ; copy-file
-      ;(use srfi-29)    ; format
       ;Gauche's format is too stupid to contemplate -- hack up Guile's version
       (load "gauche-format.scm")
       (load "gauche-optargs.scm")
@@ -87,21 +81,19 @@
 
 (unbind-key #\c 4 #t)
 ;;; clear out old junk!
-(if (provided? 'snd-guile)
-    (begin
-      (if (file-exists? original-save-dir) 
-	  (system (format #f "rm ~A/snd_*" original-save-dir)))
-      (if (file-exists? original-temp-dir) 
-	  (system (format #f "rm ~A/snd_*" original-temp-dir)))
-      (if (file-exists? "/tmp")
-	  (begin ; -noinit possibly
-	    (system "rm /tmp/snd_*")
-	    (system "rm /tmp/*.snd")))
-      (if (file-exists? "/var/tmp")
-	  (begin ; -noinit possibly
-	    (system "rm /var/tmp/snd_*")
-	    (system "rm /var/tmp/*.snd")))
-      (system "rm core*")))
+(if (file-exists? original-save-dir) 
+    (system (format #f "rm ~A/snd_*" original-save-dir)))
+(if (file-exists? original-temp-dir) 
+    (system (format #f "rm ~A/snd_*" original-temp-dir)))
+(if (file-exists? "/tmp")
+    (begin ; -noinit possibly
+      (system "rm /tmp/snd_*")
+      (system "rm /tmp/*.snd")))
+(if (file-exists? "/var/tmp")
+    (begin ; -noinit possibly
+      (system "rm /var/tmp/snd_*")
+      (system "rm /var/tmp/*.snd")))
+(system "rm core*")
 
 (define home-dir "/home/bil")
 (define sf-dir "/sf1")
@@ -9639,9 +9631,11 @@ EDITS: 5
 	    (close-sound ind))
 	  (close-sound ind1))
 	
-	(with-output-to-file "sndtst" 
-	  (lambda ()
-	    (display (string-append "#!" home-dir "/cl/snd -b
+	(if (provided? 'snd-guile)
+	    (begin
+	      (with-output-to-file "sndtst" 
+		(lambda ()
+		  (display (string-append "#!" home-dir "/cl/snd -b
 !#
  (use-modules (ice-9 format))
  (if (= (length (script-args)) 2) ;i.e. (\"-l\" \"script\")
@@ -9720,7 +9714,8 @@ EDITS: 5
 	  (close-sound (find-sound "fmv.snd"))
 	  (delete-file "fmv.snd")
 	  (delete-file "sndtst"))
-	
+	)) ; end 'snd-guile
+
 	(let* ((ind (open-sound "oboe.snd"))
 	       (mx (maxamp ind 0))
 	       (e0 (channel-amp-envs ind 0)))
@@ -20911,9 +20906,9 @@ EDITS: 5
 ;;; ---------------- test 9: mix ----------------
 
 (define (track-end id) (+ (track-position id) (track-frames id) -1))
-(define-envelope xrmx '(0 0 1 1) 32.0)
-(define-envelope xrmx1 '(0 0 1 1) 0.03)
-(define-envelope xrmx2 '(0 0 1 1) 0.5)
+(define-envelope xrmx '(0 0 1 1))
+(define-envelope xrmx1 '(0 0 1 1))
+(define-envelope xrmx2 '(0 0 1 1))
 
 (if (and with-gui (or full-test (= snd-test 9) (and keep-going (<= snd-test 9))))
     (begin
@@ -24935,17 +24930,17 @@ EDITS: 5
       (define-envelope test-ramp '(0 1 1 0))
       (if (not (equal? test-ramp '(0 1 1 0))) (snd-display ";re-define-envelope test-ramp: ~A" test-ramp))
       
-      (define-envelope ramp32 '(0 0 1 1) 32.0)
-      (define-envelope ramp032 '(0 0 1 1) 0.032)
-      (define-envelope ramp12 '(0 0 1 1 2 0) 3.0)
-      (define-envelope ramp012 '(0 0 1 1 2 0) .3)
+      (define-envelope ramp32 '(0 0 1 1))
+      (define-envelope ramp032 '(0 0 1 1))
+      (define-envelope ramp12 '(0 0 1 1 2 0))
+      (define-envelope ramp012 '(0 0 1 1 2 0))
 
       (for-each
        (lambda (vals)
 	 (let* ((e (car vals))
 		(name (cadr vals))
 		(base (caddr vals))
-		(ebase (object-property e 'envelope-base)))
+		(ebase base))
 	   (if (fneq ebase base) (snd-display ";define-envelope ~A base: ~A ~A" name base ebase))))
        (list (list ramp32 "ramp32" 32.0)
 	     (list ramp032 "ramp032" .032)
@@ -24992,19 +24987,13 @@ EDITS: 5
 		  (if (not (feql me (list 0.0 0.0 0.1 0.004 0.2 0.016 0.3 0.039 0.4 0.075 0.5 0.127 0.6 0.204 0.7 0.313 0.8 0.468 0.9 0.688 1.0 1.0)))
 		      (snd-display ";multiply ramp32+ramp032: ~A" me)))
 		(let ((me (invert-env ramp32)))
-		  (if (or (not (feql me (list 0.0 1.0 1.0 0.0)))
-			  (not (number? (object-property me 'envelope-base)))
-			  (fneq (object-property me 'envelope-base) (/ 1.0 32.0)))
+		  (if (not (feql me (list 0.0 1.0 1.0 0.0)))
 		      (snd-display ";invert env (ramp32): ~A ~A" me (object-properties me))))
 		(let ((me (invert-env ramp012)))
-		  (if (or (not (feql me (list 0.0 1.0 1.0 0.0 2.0 1.0)))
-			  (not (number? (object-property me 'envelope-base)))
-			  (fneq (object-property me 'envelope-base) (/ 1.0 0.3)))
+		  (if (not (feql me (list 0.0 1.0 1.0 0.0 2.0 1.0)))
 		      (snd-display ";invert env (ramp012): ~A ~A" me (object-properties me))))
 		(let ((me (invert-env test-ramp)))
-		  (if (or (not (feql me (list 0.0 0.0 1.0 1.0)))
-			  (and (number? (object-property me 'envelope-base))
-			       (fneq (object-property me 'envelope-base) 1.0)))
+		  (if (not (feql me (list 0.0 0.0 1.0 1.0)))
 		      (snd-display ";invert env (test-ramp): ~A ~A" me (object-properties me))))
 		(let ((we (window-env ramp32 0 100 0 200 .1)))
 		  (if (not (feql we (list 0.0 0.0 0.200 0.0133 0.400 0.0322 0.600 0.0589 0.800 0.0967 1.0 0.150)))
@@ -57057,7 +57046,6 @@ EDITS: 1
 	 (insert-region (frames ind chan) reg)))
       (forget-region reg))))
 
-#!
 (define (randomize-list lst)
   (let* ((len (length lst))
 	 (vals (make-vector len #f))
@@ -57076,7 +57064,6 @@ EDITS: 1
 	((= i len))
       (set! nlst (cons (vector-ref vals i) nlst)))
     nlst))
-!#
 
 (gc)(gc)
 (if (defined? 'mem-report) (mem-report))

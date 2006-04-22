@@ -379,7 +379,7 @@
 			  (set! lx cx)
 			  (set! ly cy)))))))))))
   
-#!
+#|
 (define outer (add-main-pane "hiho" xmFormWidgetClass '()))
 
 (define editor (xe-create-enved "a name" outer 
@@ -388,5 +388,5 @@
 				   XmNbottomAttachment XmATTACH_FORM
 				   XmNrightAttachment  XmATTACH_FORM)
 			     '(0.0 1.0 0.0 1.0)))
-!#
+|#
 

@@ -14,7 +14,7 @@
 (if (not (provided? 'snd-jcrev.scm)) (load-from-path "jcrev.scm"))
 
 
-(definstrument (bow beg dur frq amplitude #:key
+(definstrument (bow beg dur frq amplitude :key
 		    (bufsize 2205)
 		    (fb 0.2) ;; bow force: between 0.0 and 1.0
 		    (vb 0.05)	;; bow velocity: between 0.0 and 0.8

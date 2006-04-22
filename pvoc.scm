@@ -4,8 +4,8 @@
 (provide 'snd-pvoc.scm)
 (if (not (provided? 'snd-snd7.scm)) (load-from-path "snd7.scm"))
 
-(define* (make-pvocoder fftsize overlap interp #:optional analyze edit synthesize)
-  "(make-pvocoder fftsize overlap interp #:optional analyze edit synthesize) makes a new (Scheme-based, not CLM) phase-vocoder generator"
+(define* (make-pvocoder fftsize overlap interp :optional analyze edit synthesize)
+  "(make-pvocoder fftsize overlap interp :optional analyze edit synthesize) makes a new (Scheme-based, not CLM) phase-vocoder generator"
 
   (let* ((N (or fftsize 512))
 	 (N2 (inexact->exact (floor (/ N 2))))
@@ -157,7 +157,7 @@
 ;;;	(map-channel (lambda (y) (pvocoder pv rd))))
 
 
-#!
+#|
 ;;; ---------------- same thing using phase-vocoder gen
 
 (define test-pv-1
@@ -226,13 +226,13 @@
 		     (phase-vocoder pv (lambda (dir) 
 					 (next-sample reader)))))
       (free-sample-reader reader))))
-!#
+|#
 
 
 ;;; -------- another version of the phase vocoder --------
 
 (define pvoc
-  (lambda* (#:key
+  (lambda* (:key
 	   (fftsize 512) (overlap 4) (time 1.0)
 	   (pitch 1.0) (gate 0.0) (hoffset 0.0)
 	   (snd 0) (chn 0))

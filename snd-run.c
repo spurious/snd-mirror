@@ -150,6 +150,10 @@ static int run_safety = RUN_UNSAFE;
 #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(Obj, Prop, Val)
 #define XEN_PROCEDURE_WITH_SETTER_P(Proc)   scm_procedure_with_setter_p(Proc)
 
+/* in Gauche Scm_VM() returns the current evaluator, vm->env is the current environment -- an array of ScmObjs */
+/*   might also be able to use Scm_FindBinding */
+
+
 #define FLT_PT  "d%d(%.4f)"
 #define PTR_PT  "i%d(%p)"
 #define STR_PT  "s%d(\"%s\")"
@@ -11748,7 +11752,7 @@ void g_init_run(void)
   XEN_SET_DOCUMENTATION(S_run, H_run);
   XEN_DEFINE_PROCEDURE("run-eval", g_run_eval, 1, 3, 0, "run macro testing...");
   XEN_DEFINE_PROCEDURE("vct-map-2", g_vct_map, 2, 0, 0, H_vct_map);
-  XEN_EVAL_C_STRING("(defmacro* " S_vct_map " (thunk #:rest args) `(vct-map-2 (list ',thunk ,thunk) (list ,@args)))");
+  XEN_EVAL_C_STRING("(defmacro " S_vct_map " (thunk . args) `(vct-map-2 (list ',thunk ,thunk) (list ,@args)))");
   XEN_SET_DOCUMENTATION(S_vct_map, H_vct_map);
   XEN_DEFINE_PROCEDURE(S_add_clm_field, g_add_clm_field, 2, 1, 0, H_add_clm_field);
   XEN_DEFINE_PROCEDURE(S_add_clm_type, g_add_clm_type, 1, 0, 0, H_add_clm_type);

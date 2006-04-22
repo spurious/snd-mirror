@@ -2851,19 +2851,31 @@ static XEN g_set_comment(XEN snd_n, XEN val)
   return(sound_set(snd_n, val, SP_COMMENT, S_setB S_comment));
 }
 
-#if HAVE_SCHEME
-#define WITH_REVERSED_BOOLEAN_ARGS(name_reversed, name) \
-static XEN name_reversed(XEN arg1, XEN arg2) \
-{ \
-  if (XEN_NOT_BOUND_P(arg1)) \
-    return(name(XEN_TRUE, XEN_UNDEFINED)); \
-  else \
-    if (XEN_NOT_BOUND_P(arg2)) \
-      return(name(arg1, XEN_UNDEFINED)); \
-    else return(name(arg2, arg1)); \
+#if HAVE_GUILE
+#define WITH_REVERSED_SOUND_ARGS(name_reversed, name) \
+static XEN name_reversed(XEN arg1, XEN arg2)		\
+{							\
+  if (XEN_NOT_BOUND_P(arg2))				\
+    return(name(arg1, XEN_UNDEFINED));			\
+  return(name(arg2, arg1));				\
 }
+
 #else
-#define WITH_REVERSED_BOOLEAN_ARGS(name_reversed, name)
+
+#if HAVE_GAUCHE
+#define WITH_REVERSED_SOUND_ARGS(name_reversed, name)	  \
+static XEN name_reversed(XEN *argv, int argc, void *self) \
+{							  \
+  XEN args[2];						  \
+  xen_gauche_load_args(args, argc, 2, argv);		  \
+  if (XEN_NOT_BOUND_P(args[1]))				   \
+    return(name(args[0], XEN_UNDEFINED));		   \
+  return(name(args[1], args[0]));			   \
+}
+
+#else
+#define WITH_REVERSED_SOUND_ARGS(name_reversed, name)
+#endif
 #endif
 
 static XEN g_sync(XEN snd_n) 
@@ -2879,7 +2891,7 @@ static XEN g_set_sync(XEN on, XEN snd_n)
   return(sound_set(snd_n, on, SP_SYNC, S_setB S_sync));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_sync_reversed, g_set_sync)
+WITH_REVERSED_SOUND_ARGS(g_set_sync_reversed, g_set_sync)
 
 static XEN g_sync_max(void) 
 {
@@ -2899,7 +2911,7 @@ static XEN g_set_sound_properties(XEN on, XEN snd_n)
   return(sound_set(snd_n, on, SP_PROPERTIES, S_setB S_sound_properties));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_sound_properties_reversed, g_set_sound_properties)
+WITH_REVERSED_SOUND_ARGS(g_set_sound_properties_reversed, g_set_sound_properties)
 
 
 static XEN g_channel_style(XEN snd) 
@@ -2961,7 +2973,7 @@ As a global (if the 'snd' arg is omitted), it is the default setting for each so
   return(C_TO_XEN_INT((int)(sp->channel_style)));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_channel_style_reversed, g_set_channel_style)
+WITH_REVERSED_SOUND_ARGS(g_set_channel_style_reversed, g_set_channel_style)
 
 static XEN g_read_only(XEN snd_n) 
 {
@@ -2975,7 +2987,7 @@ static XEN g_set_read_only(XEN on, XEN snd_n)
   return(sound_set(snd_n, on, SP_READ_ONLY, S_setB S_read_only));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_read_only_reversed, g_set_read_only)
+WITH_REVERSED_SOUND_ARGS(g_set_read_only_reversed, g_set_read_only)
 
 static XEN g_contrast_control_p(XEN snd_n) 
 {
@@ -2989,7 +3001,7 @@ static XEN g_set_contrast_control_p(XEN on, XEN snd_n)
   return(sound_set(snd_n, on, SP_CONTRASTING, S_setB S_contrast_control_p));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_contrast_control_p_reversed, g_set_contrast_control_p)
+WITH_REVERSED_SOUND_ARGS(g_set_contrast_control_p_reversed, g_set_contrast_control_p)
 
 static XEN g_expand_control_p(XEN snd_n) 
 {
@@ -3003,7 +3015,7 @@ static XEN g_set_expand_control_p(XEN on, XEN snd_n)
   return(sound_set(snd_n, on, SP_EXPANDING, S_setB S_expand_control_p));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_expand_control_p_reversed, g_set_expand_control_p)
+WITH_REVERSED_SOUND_ARGS(g_set_expand_control_p_reversed, g_set_expand_control_p)
 
 static XEN g_reverb_control_p(XEN snd_n) 
 {
@@ -3017,7 +3029,7 @@ static XEN g_set_reverb_control_p(XEN on, XEN snd_n)
   return(sound_set(snd_n, on, SP_REVERBING, S_setB S_reverb_control_p));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_reverb_control_p_reversed, g_set_reverb_control_p)
+WITH_REVERSED_SOUND_ARGS(g_set_reverb_control_p_reversed, g_set_reverb_control_p)
 
 static XEN g_filter_control_p(XEN snd_n) 
 {
@@ -3031,7 +3043,7 @@ static XEN g_set_filter_control_p(XEN on, XEN snd_n)
   return(sound_set(snd_n, on, SP_FILTERING, S_setB S_filter_control_p));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_p_reversed, g_set_filter_control_p)
+WITH_REVERSED_SOUND_ARGS(g_set_filter_control_p_reversed, g_set_filter_control_p)
 
 static XEN g_filter_control_in_dB(XEN snd_n) 
 {
@@ -3045,7 +3057,7 @@ static XEN g_set_filter_control_in_dB(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_FILTER_DBING, S_setB S_filter_control_in_dB));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_in_dB_reversed, g_set_filter_control_in_dB)
+WITH_REVERSED_SOUND_ARGS(g_set_filter_control_in_dB_reversed, g_set_filter_control_in_dB)
 
 static XEN g_filter_control_in_hz(XEN snd_n) 
 {
@@ -3059,7 +3071,7 @@ static XEN g_set_filter_control_in_hz(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_FILTER_HZING, S_setB S_filter_control_in_hz));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_in_hz_reversed, g_set_filter_control_in_hz)
+WITH_REVERSED_SOUND_ARGS(g_set_filter_control_in_hz_reversed, g_set_filter_control_in_hz)
 
 static XEN g_filter_control_coeffs(XEN snd_n) 
 {
@@ -3079,19 +3091,7 @@ static XEN g_set_filter_control_order(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_FILTER_ORDER, S_setB S_filter_control_order));
 }
 
-#if HAVE_SCHEME
-#define WITH_REVERSED_ARGS(name_reversed, name) \
-static XEN name_reversed(XEN arg1, XEN arg2) \
-{ \
-  if (XEN_NOT_BOUND_P(arg2)) \
-    return(name(arg1, XEN_UNDEFINED)); \
-  else return(name(arg2, arg1)); \
-}
-#else
-#define WITH_REVERSED_ARGS(name_reversed, name)
-#endif
-
-WITH_REVERSED_ARGS(g_set_filter_control_order_reversed, g_set_filter_control_order)
+WITH_REVERSED_SOUND_ARGS(g_set_filter_control_order_reversed, g_set_filter_control_order)
 
 static XEN g_with_tracking_cursor(XEN snd_n) 
 {
@@ -3105,7 +3105,7 @@ static XEN g_set_with_tracking_cursor(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_WITH_TRACKING_CURSOR, S_setB S_with_tracking_cursor));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_with_tracking_cursor_reversed, g_set_with_tracking_cursor)
+WITH_REVERSED_SOUND_ARGS(g_set_with_tracking_cursor_reversed, g_set_with_tracking_cursor)
 
 static XEN g_show_controls(XEN snd_n) 
 {
@@ -3119,7 +3119,7 @@ static XEN g_set_show_controls(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_SHOW_CONTROLS, S_setB S_show_controls));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_show_controls_reversed, g_set_show_controls)
+WITH_REVERSED_SOUND_ARGS(g_set_show_controls_reversed, g_set_show_controls)
 
 static XEN g_save_controls(XEN snd_n) 
 {
@@ -3654,7 +3654,7 @@ static XEN g_set_speed_control_style(XEN speed, XEN snd)
   return(sound_set_global(snd, speed, SP_SPEED_STYLE, S_setB S_speed_control_style));
 }
 
-WITH_REVERSED_ARGS(g_set_speed_control_style_reversed, g_set_speed_control_style)
+WITH_REVERSED_SOUND_ARGS(g_set_speed_control_style_reversed, g_set_speed_control_style)
 
 static XEN g_speed_control_tones(XEN snd)
 {
@@ -3668,7 +3668,7 @@ static XEN g_set_speed_control_tones(XEN val, XEN snd)
   return(sound_set_global(snd, val, SP_SPEED_TONES, S_setB S_speed_control_tones));
 }
 
-WITH_REVERSED_ARGS(g_set_speed_control_tones_reversed, g_set_speed_control_tones)
+WITH_REVERSED_SOUND_ARGS(g_set_speed_control_tones_reversed, g_set_speed_control_tones)
 
 static XEN g_amp_control(XEN snd_n, XEN chn_n) 
 {
@@ -3722,7 +3722,7 @@ static XEN g_set_amp_control_bounds(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_AMP_BOUNDS, S_setB S_amp_control_bounds));
 }
 
-WITH_REVERSED_ARGS(g_set_amp_control_bounds_reversed, g_set_amp_control_bounds)
+WITH_REVERSED_SOUND_ARGS(g_set_amp_control_bounds_reversed, g_set_amp_control_bounds)
 
 
 static XEN g_contrast_control(XEN snd_n) 
@@ -3737,7 +3737,7 @@ static XEN g_set_contrast_control(XEN on, XEN snd_n)
   return(sound_set(snd_n, on, SP_CONTRAST, S_setB S_contrast_control));
 }
 
-WITH_REVERSED_ARGS(g_set_contrast_control_reversed, g_set_contrast_control)
+WITH_REVERSED_SOUND_ARGS(g_set_contrast_control_reversed, g_set_contrast_control)
 
 static XEN g_contrast_control_bounds(XEN snd_n) 
 {
@@ -3757,7 +3757,7 @@ static XEN g_set_contrast_control_bounds(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_CONTRAST_BOUNDS, S_setB S_contrast_control_bounds));
 }
 
-WITH_REVERSED_ARGS(g_set_contrast_control_bounds_reversed, g_set_contrast_control_bounds)
+WITH_REVERSED_SOUND_ARGS(g_set_contrast_control_bounds_reversed, g_set_contrast_control_bounds)
 
 static XEN g_contrast_control_amp(XEN snd_n) 
 {
@@ -3773,7 +3773,7 @@ static XEN g_set_contrast_control_amp(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_CONTRAST_AMP, S_setB S_contrast_control_amp));
 }
 
-WITH_REVERSED_ARGS(g_set_contrast_control_amp_reversed, g_set_contrast_control_amp)
+WITH_REVERSED_SOUND_ARGS(g_set_contrast_control_amp_reversed, g_set_contrast_control_amp)
 
 static XEN g_expand_control(XEN snd_n) 
 {
@@ -3787,7 +3787,7 @@ static XEN g_set_expand_control(XEN on, XEN snd_n)
   return(sound_set(snd_n, on, SP_EXPAND, S_setB S_expand_control));
 }
 
-WITH_REVERSED_ARGS(g_set_expand_control_reversed, g_set_expand_control)
+WITH_REVERSED_SOUND_ARGS(g_set_expand_control_reversed, g_set_expand_control)
 
 static XEN g_expand_control_bounds(XEN snd_n) 
 {
@@ -3809,7 +3809,7 @@ static XEN g_set_expand_control_bounds(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_EXPAND_BOUNDS, S_setB S_expand_control_bounds));
 }
 
-WITH_REVERSED_ARGS(g_set_expand_control_bounds_reversed, g_set_expand_control_bounds)
+WITH_REVERSED_SOUND_ARGS(g_set_expand_control_bounds_reversed, g_set_expand_control_bounds)
 
 
 static XEN g_expand_control_length(XEN snd_n) 
@@ -3824,7 +3824,7 @@ static XEN g_set_expand_control_length(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_EXPAND_LENGTH, S_setB S_expand_control_length));
 }
 
-WITH_REVERSED_ARGS(g_set_expand_control_length_reversed, g_set_expand_control_length)
+WITH_REVERSED_SOUND_ARGS(g_set_expand_control_length_reversed, g_set_expand_control_length)
 
 static XEN g_expand_control_ramp(XEN snd_n) 
 {
@@ -3838,7 +3838,7 @@ static XEN g_set_expand_control_ramp(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_EXPAND_RAMP, S_setB S_expand_control_ramp));
 }
 
-WITH_REVERSED_ARGS(g_set_expand_control_ramp_reversed, g_set_expand_control_ramp)
+WITH_REVERSED_SOUND_ARGS(g_set_expand_control_ramp_reversed, g_set_expand_control_ramp)
 
 static XEN g_expand_control_hop(XEN snd_n) 
 {
@@ -3852,7 +3852,7 @@ static XEN g_set_expand_control_hop(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_EXPAND_HOP, S_setB S_expand_control_hop));
 }
 
-WITH_REVERSED_ARGS(g_set_expand_control_hop_reversed, g_set_expand_control_hop)
+WITH_REVERSED_SOUND_ARGS(g_set_expand_control_hop_reversed, g_set_expand_control_hop)
 
 static XEN g_expand_control_jitter(XEN snd_n) 
 {
@@ -3866,7 +3866,7 @@ static XEN g_set_expand_control_jitter(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_EXPAND_JITTER, S_setB S_expand_control_jitter));
 }
 
-WITH_REVERSED_ARGS(g_set_expand_control_jitter_reversed, g_set_expand_control_jitter)
+WITH_REVERSED_SOUND_ARGS(g_set_expand_control_jitter_reversed, g_set_expand_control_jitter)
 
 static XEN g_speed_control(XEN snd_n) 
 {
@@ -3880,7 +3880,7 @@ static XEN g_set_speed_control(XEN on, XEN snd_n)
   return(sound_set(snd_n, on, SP_SPEED, S_setB S_speed_control));
 }
 
-WITH_REVERSED_ARGS(g_set_speed_control_reversed, g_set_speed_control)
+WITH_REVERSED_SOUND_ARGS(g_set_speed_control_reversed, g_set_speed_control)
 
 static XEN g_speed_control_bounds(XEN snd_n) 
 {
@@ -3902,7 +3902,7 @@ static XEN g_set_speed_control_bounds(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_SPEED_BOUNDS, S_setB S_speed_control_bounds));
 }
 
-WITH_REVERSED_ARGS(g_set_speed_control_bounds_reversed, g_set_speed_control_bounds)
+WITH_REVERSED_SOUND_ARGS(g_set_speed_control_bounds_reversed, g_set_speed_control_bounds)
 
 
 static XEN g_reverb_control_length(XEN snd_n) 
@@ -3917,7 +3917,7 @@ static XEN g_set_reverb_control_length(XEN on, XEN snd_n)
   return(sound_set(snd_n, on, SP_REVERB_LENGTH, S_setB S_reverb_control_length));
 }
 
-WITH_REVERSED_ARGS(g_set_reverb_control_length_reversed, g_set_reverb_control_length)
+WITH_REVERSED_SOUND_ARGS(g_set_reverb_control_length_reversed, g_set_reverb_control_length)
 
 static XEN g_reverb_control_length_bounds(XEN snd_n) 
 {
@@ -3937,7 +3937,7 @@ static XEN g_set_reverb_control_length_bounds(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_REVERB_LENGTH_BOUNDS, S_setB S_reverb_control_length_bounds));
 }
 
-WITH_REVERSED_ARGS(g_set_reverb_control_length_bounds_reversed, g_set_reverb_control_length_bounds)
+WITH_REVERSED_SOUND_ARGS(g_set_reverb_control_length_bounds_reversed, g_set_reverb_control_length_bounds)
 
 
 static XEN g_reverb_control_feedback(XEN snd_n) 
@@ -3952,7 +3952,7 @@ static XEN g_set_reverb_control_feedback(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_REVERB_FEEDBACK, S_setB S_reverb_control_feedback));
 }
 
-WITH_REVERSED_ARGS(g_set_reverb_control_feedback_reversed, g_set_reverb_control_feedback)
+WITH_REVERSED_SOUND_ARGS(g_set_reverb_control_feedback_reversed, g_set_reverb_control_feedback)
 
 static XEN g_reverb_control_scale(XEN snd_n) 
 {
@@ -3966,7 +3966,7 @@ static XEN g_set_reverb_control_scale(XEN on, XEN snd_n)
   return(sound_set(snd_n, on, SP_REVERB_SCALE, S_setB S_reverb_control_scale));
 }
 
-WITH_REVERSED_ARGS(g_set_reverb_control_scale_reversed, g_set_reverb_control_scale)
+WITH_REVERSED_SOUND_ARGS(g_set_reverb_control_scale_reversed, g_set_reverb_control_scale)
 
 static XEN g_reverb_control_scale_bounds(XEN snd_n) 
 {
@@ -3986,7 +3986,7 @@ static XEN g_set_reverb_control_scale_bounds(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_REVERB_SCALE_BOUNDS, S_setB S_reverb_control_scale_bounds));
 }
 
-WITH_REVERSED_ARGS(g_set_reverb_control_scale_bounds_reversed, g_set_reverb_control_scale_bounds)
+WITH_REVERSED_SOUND_ARGS(g_set_reverb_control_scale_bounds_reversed, g_set_reverb_control_scale_bounds)
 
 
 static XEN g_reverb_control_lowpass(XEN snd_n) 
@@ -4001,7 +4001,7 @@ static XEN g_set_reverb_control_lowpass(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_REVERB_LOW_PASS, S_setB S_reverb_control_lowpass));
 }
 
-WITH_REVERSED_ARGS(g_set_reverb_control_lowpass_reversed, g_set_reverb_control_lowpass)
+WITH_REVERSED_SOUND_ARGS(g_set_reverb_control_lowpass_reversed, g_set_reverb_control_lowpass)
 
 static XEN g_reverb_control_decay(XEN snd)
 {
@@ -4015,7 +4015,7 @@ static XEN g_set_reverb_control_decay(XEN val, XEN snd)
   return(sound_set_global(snd, val, SP_REVERB_DECAY, S_setB S_reverb_control_decay));
 }
 
-WITH_REVERSED_ARGS(g_set_reverb_control_decay_reversed, g_set_reverb_control_decay)
+WITH_REVERSED_SOUND_ARGS(g_set_reverb_control_decay_reversed, g_set_reverb_control_decay)
 
 static XEN g_filter_control_envelope(XEN snd)
 {
@@ -4028,7 +4028,7 @@ static XEN g_set_filter_control_envelope(XEN val, XEN snd)
   return(sound_set(snd, val, SP_FILTER_ENVELOPE, S_setB S_filter_control_envelope));
 }
 
-WITH_REVERSED_ARGS(g_set_filter_control_envelope_reversed, g_set_filter_control_envelope)
+WITH_REVERSED_SOUND_ARGS(g_set_filter_control_envelope_reversed, g_set_filter_control_envelope)
 
 static void squelch_printout(const char *msg, void *ignore)
 {

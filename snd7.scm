@@ -67,10 +67,10 @@
 	(set! (selected-channel) (list-ref (cadr chanlist) newpos))
 	(list (selected-sound) (selected-channel))))))
 
-(define* (forward-graph #:optional (count 1))
+(define* (forward-graph :optional (count 1))
   (back-or-forth-graph count))
 
-(define* (backward-graph #:optional (count 1))
+(define* (backward-graph :optional (count 1))
   (back-or-forth-graph (- count)))
 
 
@@ -104,10 +104,10 @@
 	    #f))
       #f))
 		
-(define* (forward-mix #:optional (count 1) snd chn)
+(define* (forward-mix :optional (count 1) snd chn)
   (back-or-forth-mix count (or snd (selected-sound) (car (sounds))) (or chn (selected-channel) 0)))
 
-(define* (backward-mix #:optional (count 1) snd chn)
+(define* (backward-mix :optional (count 1) snd chn)
   (back-or-forth-mix (- count) (or snd (selected-sound) (car (sounds))) (or chn (selected-channel) 0)))
 
 
@@ -141,10 +141,10 @@
 	    #f))
       #f))
 		
-(define* (forward-mark #:optional (count 1) snd chn)
+(define* (forward-mark :optional (count 1) snd chn)
   (back-or-forth-mark count (or snd (selected-sound) (car (sounds))) (or chn (selected-channel) 0)))
 
-(define* (backward-mark #:optional (count 1) snd chn)
+(define* (backward-mark :optional (count 1) snd chn)
   (back-or-forth-mark (- count) (or snd (selected-sound) (car (sounds))) (or chn (selected-channel) 0)))
 
 (define mus-data-format-bytes-per-sample mus-bytes-per-sample)
@@ -215,7 +215,7 @@
 
 ;;; -------- sound-data->list
 
-(define (sound-data->list sd)
+(define+ (sound-data->list sd)
   "(sound-data->list sd chan) turns a sound-data object's data into a list of lists (one for each channel)"
 
   (define (sound-data-channel->list sd chan)
@@ -233,7 +233,7 @@
 (define (vct-convolve! r1 r2)
   (convolution r1 r2 (vct-length r1)))
 
-(define* (old-map-chan func #:optional start end edname snd chn edpos)
+(define* (old-map-chan func :optional start end edname snd chn edpos)
   (map-chan (lambda (y)
 	      (let ((val (func y)))
 		(if (vector? val)
@@ -243,7 +243,7 @@
 			val))))
 	    start end edname snd chn edpos))
 
-(define* (old-map-channel func #:optional beg dur snd chn edpos edname)
+(define* (old-map-channel func :optional beg dur snd chn edpos edname)
   (map-channel (lambda (y)
 		 (let ((val (func y)))
 		   (if (vector? val)
@@ -253,7 +253,7 @@
 			   val))))
 	       beg dur snd chn edpos edname))
 
-(define* (mus-bank gens amps1 #:optional in1 in2)
+(define* (mus-bank gens amps1 :optional in1 in2)
   (let ((len (vector-length gens))
 	(sum 0.0)
 	(amps (if (vector? amps1) (vector->vct amps1) amps1))
@@ -267,7 +267,7 @@
 				   (if inp2 (vct-ref inp2 i) 0.0))))))
     sum))
 
-(define* (oscil-bank amps1 gens #:optional in1 in2)
+(define* (oscil-bank amps1 gens :optional in1 in2)
   (let ((len (vector-length gens))
 	(sum 0.0)
 	(amps (if (vector? amps1) (vector->vct amps1) amps1))
@@ -281,13 +281,13 @@
 				 (if inp2 (vct-ref inp2 i) 0.0))))))
     sum))
 
-(define* (old-formant-bank amps gens #:optional (in1 0.0))
+(define* (old-formant-bank amps gens :optional (in1 0.0))
   (formant-bank (if (vector? amps) (vector->vct amps) amps) gens in1))
 
-(define* (vct->samples samp samps data #:optional snd chn) 
+(define* (vct->samples samp samps data :optional snd chn) 
   (vct->channel data samp samps snd chn))
 
-(define* (samples->vct samp samps #:optional snd chn v pos)
+(define* (samples->vct samp samps :optional snd chn v pos)
   (if (not v)
       (channel->vct samp samps snd chn pos)
       (vct-subseq (channel->vct samp samps snd chn pos) 0 samps v)))
@@ -296,14 +296,14 @@
 (define transform-samples-size transform-frames)
 (define region-samples->vct region->vct)
 
-(define* (scale-sound-by scl #:optional beg dur snd chn edpos)
+(define* (scale-sound-by scl :optional beg dur snd chn edpos)
   (if (integer? chn)
       (scale-channel scl beg dur snd chn edpos)
       (do ((i 0 (1+ i)))
 	  ((= i (chans snd)))
 	(scale-channel scl beg dur snd i))))
 
-(define* (scale-sound-to norm #:optional beg dur snd chn)
+(define* (scale-sound-to norm :optional beg dur snd chn)
   (if (integer? chn)
       (let ((mx (maxamp snd chn)))
 	(if (and (not (= mx 0.0))

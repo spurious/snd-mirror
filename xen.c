@@ -17,13 +17,13 @@ XEN xen_return_first(XEN a, ...)
   return(a);
 }
 
+/* ------------------------------ GUILE ------------------------------ */
+
+#if HAVE_GUILE
+
 off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 {
-#if HAVE_GUILE
   if ((XEN_NOT_FALSE_P(scm_integer_p(obj))) && XEN_EXACT_P(obj))
-#else
-  if (XEN_OFF_T_P(obj))
-#endif
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
     return(XEN_TO_C_LONG_LONG(obj));
 #else
@@ -37,24 +37,13 @@ off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 
 off_t xen_to_c_off_t(XEN obj)
 {
-#if HAVE_GAUCHE
-  if (SCM_INTEGERP(obj))
-    return((off_t)(XEN_TO_C_INT(obj)));
-  return(XEN_TO_C_LONG_LONG(obj));
-#else
-
-#if HAVE_GUILE
   if (XEN_EXACT_P(obj))
-#endif
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
     return(XEN_TO_C_LONG_LONG(obj));
 #else
     return(XEN_TO_C_INT(obj));
 #endif
-#if HAVE_GUILE
-    return((off_t)XEN_TO_C_DOUBLE(obj)); /* inexact integer squeezed through somewhere */
-#endif
-#endif
+  return((off_t)XEN_TO_C_DOUBLE(obj)); /* inexact integer squeezed through somewhere */
 }
 
 XEN c_to_xen_off_t(off_t val)
@@ -65,11 +54,6 @@ XEN c_to_xen_off_t(off_t val)
     return(C_TO_XEN_INT(val));
 #endif
 }
-
-
-/* ------------------------------ GUILE ------------------------------ */
-
-#if HAVE_GUILE
 
 char *xen_version(void)
 {
@@ -363,6 +347,38 @@ void xen_initialize(void)
 {
   ruby_init();
   Init_Hook();
+}
+
+off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
+{
+  if (XEN_OFF_T_P(obj))
+#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+    return(XEN_TO_C_LONG_LONG(obj));
+#else
+    return(XEN_TO_C_INT(obj));
+#endif
+  else
+    if (XEN_NUMBER_P(obj))
+      return((off_t)XEN_TO_C_DOUBLE(obj));
+  return(fallback);
+}
+
+off_t xen_to_c_off_t(XEN obj)
+{
+#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+  return(XEN_TO_C_LONG_LONG(obj));
+#else
+  return(XEN_TO_C_INT(obj));
+#endif
+}
+
+XEN c_to_xen_off_t(off_t val)
+{
+#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+    return(C_TO_XEN_LONG_LONG(val));
+#else
+    return(C_TO_XEN_INT(val));
+#endif
 }
 
 int xen_to_c_int_or_else(XEN obj, int fallback)
@@ -1290,6 +1306,38 @@ static void fth_emacs_eval(FTH line_in)
   fth_listener_p = true;
 }
 
+off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
+{
+  if (XEN_OFF_T_P(obj))
+#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+    return(XEN_TO_C_LONG_LONG(obj));
+#else
+    return(XEN_TO_C_INT(obj));
+#endif
+  else
+    if (XEN_NUMBER_P(obj))
+      return((off_t)XEN_TO_C_DOUBLE(obj));
+  return(fallback);
+}
+
+off_t xen_to_c_off_t(XEN obj)
+{
+#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+  return(XEN_TO_C_LONG_LONG(obj));
+#else
+  return(XEN_TO_C_INT(obj));
+#endif
+}
+
+XEN c_to_xen_off_t(off_t val)
+{
+#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+    return(C_TO_XEN_LONG_LONG(val));
+#else
+    return(C_TO_XEN_INT(val));
+#endif
+}
+
 void xen_initialize(void)
 {
   fth_printing_p = false;
@@ -1317,6 +1365,40 @@ char *xen_version(void)
   sprintf(buf, "Xen: %s, Gauche: %s", XEN_VERSION, GAUCHE_VERSION);
 #endif
   return(buf);
+}
+
+off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
+{
+  if (XEN_OFF_T_P(obj))
+#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+    return(XEN_TO_C_LONG_LONG(obj));
+#else
+    return(XEN_TO_C_INT(obj));
+#endif
+  else
+    if (XEN_NUMBER_P(obj))
+      return((off_t)XEN_TO_C_DOUBLE(obj));
+  return(fallback);
+}
+
+off_t xen_to_c_off_t(XEN obj)
+{
+  if (SCM_INTEGERP(obj))
+    return((off_t)(XEN_TO_C_INT(obj)));
+#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+  return(XEN_TO_C_LONG_LONG(obj));
+#else
+  return((off_t)(XEN_TO_C_INT(obj)));
+#endif
+}
+
+XEN c_to_xen_off_t(off_t val)
+{
+#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+    return(C_TO_XEN_LONG_LONG(val));
+#else
+    return(C_TO_XEN_INT(val));
+#endif
 }
 
 int xen_to_c_int_or_else(XEN obj, int fallback)
@@ -1642,11 +1724,6 @@ char *xen_version(void)
 #endif
 }
 
-int xen_to_c_int_or_else(XEN obj, int fallback)
-{
-  return(fallback);
-}
-
 void xen_repl(int argc, char **argv)
 {
 }
@@ -1657,6 +1734,26 @@ void xen_initialize(void)
 
 void xen_gc_mark(XEN val)
 {
+}
+
+int xen_to_c_int_or_else(XEN obj, int fallback)
+{
+  return(fallback);
+}
+
+off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
+{
+  return(0);
+}
+
+off_t xen_to_c_off_t(XEN obj)
+{
+  return(0);
+}
+
+XEN c_to_xen_off_t(off_t val)
+{
+  return(XEN_ZERO);
 }
 
 #endif

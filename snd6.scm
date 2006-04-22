@@ -29,8 +29,8 @@
   (vct->vector (region-samples->vct samp samps reg chn)))
 
 (define (convolve-arrays v0 v1)
-  (let ((vc0 (if (vector? v0 (vector->vct v0)) v0))
-	(vc1 (if (vector? v1 (vector->vct v1)) v1)))
+  (let ((vc0 (if (vector? v0) (vector->vct v0) v0))
+	(vc1 (if (vector? v1) (vector->vct v1) v1)))
     (vct-convolve! vc0 vc1)
     (if (vector? v0)
 	(vct->vector vc0)
@@ -52,7 +52,7 @@
     (mus-audio-mixer-write mus-audio-mixer mus-audio-ogain 0 vals)
     (mus-audio-mixer-write mus-audio-mixer mus-audio-pcm 2 vals)))
 
-(define* (append-to-minibuffer msg #:optional snd)
+(define* (append-to-minibuffer msg :optional snd)
   (if (and (sound? snd)
 	   (not (provided? 'snd-nogui)))
       (let* ((minibuffer (and (sound-widgets snd) 

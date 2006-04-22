@@ -6119,14 +6119,14 @@ static XEN g_transform_size(XEN snd, XEN chn)
   #define H_transform_size "(" S_transform_size " (snd #f) (chn #f)): current fft size (512)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_SIZE, S_transform_size));
-  return(C_TO_XEN_OFF_T(transform_size(ss)));
+  return(C_TO_XEN_INT(transform_size(ss)));
 }
 
 static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
 {
   int len;
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(val), val, XEN_ARG_1, S_setB S_transform_size, "an integer"); 
-  len = XEN_TO_C_OFF_T(val);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_transform_size, "an integer"); 
+  len = XEN_TO_C_INT(val);
   if (len <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_size, 1, val, "size ~A, but must be > 0");
   if (!(POWER_OF_2_P(len)))
@@ -6135,7 +6135,7 @@ static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_SIZE, S_setB S_transform_size));
   set_transform_size(len);
-  return(C_TO_XEN_OFF_T(transform_size(ss)));
+  return(C_TO_XEN_INT(transform_size(ss)));
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_transform_size_reversed, g_set_transform_size)

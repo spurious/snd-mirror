@@ -4,7 +4,7 @@
 
 ;;; this version of the fm-violin assumes it is running within with-sound (where *output* and *reverb* are defined)
 
-(definstrument (fm-violin startime dur frequency amplitude #:key
+(definstrument (fm-violin startime dur frequency amplitude :key
 	    (fm-index 1.0)
 	    (amp-env '(0 0  25 1  75 1  100 0))
 	    (periodic-vibrato-rate 5.0) 
@@ -32,9 +32,9 @@
 	    (distance 1.0)
 	    (reverb-amount 0.01)
 	    (base 1.0)
-	    #:allow-other-keys)
+	    :allow-other-keys)
 
-    "(fm-violin startime dur frequency amplitude #:key 
+    "(fm-violin startime dur frequency amplitude :key 
    (fm-index 1.0) (amp-env '(0 0  25 1  75 1  100 0)) 
    (periodic-vibrato-rate 5.0) (random-vibrato-rate 16.0) 
    (periodic-vibrato-amplitude 0.0025) (random-vibrato-amplitude 0.005) 

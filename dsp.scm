@@ -95,7 +95,7 @@
 
 ;;; -------- move sound down by n (a power of 2)
 
-(define* (down-oct n #:optional snd chn)
+(define* (down-oct n :optional snd chn)
   "(down-n n) moves a sound down by power of 2 n"
   ;; I think this is "stretch" in DSP jargon -- to interpolate in the time domain we're squeezing the frequency domain
   ;;  the power-of-2 limitation is based on the underlying fft function's insistence on power-of-2 data sizes
@@ -122,7 +122,7 @@
       (fft rl2 im2 -1)
       (vct->channel rl2 0 (* n len) snd chn #f (format #f "down-oct ~A" n)))))
 
-(define* (stretch-sound-via-dft factor #:optional snd chn)
+(define* (stretch-sound-via-dft factor :optional snd chn)
   ;; this is very slow! factor>1.0
   (let* ((n (frames snd chn))
 	 (n2 (inexact->exact (floor (/ n 2.0))))
@@ -260,7 +260,7 @@
 
 ;;; -------- "frequency division" -- an effect from sed_sed@my-dejanews.com
 
-(define* (freqdiv n1 #:optional snd chn)
+(define* (freqdiv n1 :optional snd chn)
   "(freqdiv n) repeats each nth sample n times (clobbering the intermediate samples): (freqdiv 8)"
   (let ((div 0)
 	(n n1) ; for run
@@ -280,7 +280,7 @@
 ;;; a more extreme effect is "saturation":
 ;;;   (map-channel (lambda (val) (if (< (abs val) .1) val (if (>= val 0.0) 0.25 -0.25))))
 
-(define* (adsat size #:optional beg dur snd chn)
+(define* (adsat size :optional beg dur snd chn)
   "(adsat size) is an 'adaptive saturation' sound effect"
   (let ((mn 0.0)
 	(mx 0.0)
@@ -311,7 +311,7 @@
 ;;;
 ;;; makes sound more spikey -- sometimes a nice effect
 
-(define* (spike #:optional snd chn)
+(define* (spike :optional snd chn)
   "(spike) multiplies successive samples together to make a sound more spikey"
   (map-channel (let ((x1 0.0) 
 		     (x2 0.0) 
@@ -333,7 +333,7 @@
 
 (define spot-freq
   (lambda args
-    "(spot-freq samp #:optional snd chn) tries to determine the current pitch: (spot-freq (left-sample))"
+    "(spot-freq samp :optional snd chn) tries to determine the current pitch: (spot-freq (left-sample))"
     (let* ((s0 (car args))
 	   (snd (if (> (length args) 1) (list-ref args 1) #f))
 	   (chn (if (> (length args) 2) (list-ref args 2) #f))
@@ -411,7 +411,7 @@
 ;;; -------- zero-phase, rotate-phase
 ;;; fft games (from the "phazor" package of Scott McNab)
 
-(define* (zero-phase #:optional snd chn)
+(define* (zero-phase :optional snd chn)
   "(zero-phase) calls fft, sets all phases to 0, and un-ffts"
   (let* ((len (frames snd chn))
 	 (pow2 (ceiling (/ (log len) (log 2))))
@@ -428,7 +428,7 @@
     (let ((pk (vct-peak rl)))
       (vct->channel (vct-scale! rl (/ old-pk pk)) 0 len snd chn #f "zero-phase"))))
 
-(define* (rotate-phase func #:optional snd chn)
+(define* (rotate-phase func :optional snd chn)
   "(rotate-phase func) calls fft, applies func to each phase, then un-ffts"
   (let* ((len (frames snd chn))
 	 (pow2 (ceiling (/ (log len) (log 2))))
@@ -462,7 +462,7 @@
 
 ;;; -------- asymmetric FM (bes-i0 case)
 
-(define* (make-asyfm #:key
+(define* (make-asyfm :key
 		     (frequency 440.0) (initial-phase 0.0)
 		     (ratio 1.0) (r 1.0)
 		     (index 1.0))
@@ -637,7 +637,7 @@
 
 ;;; -------- brighten-slightly
 
-(define* (brighten-slightly amount #:optional snd chn)
+(define* (brighten-slightly amount :optional snd chn)
   "(brighten-slightly amount) is a form of contrast-enhancement ('amount' between ca .1 and 1)"
   (let* ((mx (maxamp))
 	 (brt (/ (* 2 pi amount) mx)))
@@ -694,8 +694,8 @@
 
 ;;; -------- Hilbert transform
 
-(define* (make-hilbert-transform #:optional (len 30))
-  "(make-hilbert-transform #:optional (len 30) makes a Hilbert transform filter"
+(define* (make-hilbert-transform :optional (len 30))
+  "(make-hilbert-transform :optional (len 30) makes a Hilbert transform filter"
   (let* ((arrlen (1+ (* 2 len)))
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (1+ i)))
@@ -716,13 +716,13 @@
 (define (hilbert-transform f in)
   (fir-filter f in))
 
-#!
+#|
   (let ((h (make-hilbert-transform 15)))
     (map-channel (lambda (y)
 		   (hilbert-transform h y))))
 
 ;;; this comes from R Lyons:
-(define* (sound->amp-env #:optional snd chn)
+(define* (sound->amp-env :optional snd chn)
   (let ((hlb (make-hilbert-transform 40))
 	(d (make-delay 40)))
     (map-channel
@@ -732,7 +732,7 @@
 	 (sqrt (+ (* hy hy) (* dy dy)))))
      0 #f snd chn #f "sound->amp-env")))
 
-(define* (hilbert-transform-via-fft #:optional snd chn)
+(define* (hilbert-transform-via-fft :optional snd chn)
   ;; same as FIR version but use FFT and change phases by hand
   (let* ((size (frames snd chn))
 	 (len (inexact->exact (expt 2 (ceiling (/ (log size) (log 2.0))))))
@@ -757,12 +757,12 @@
     (mus-fft rl im len -1)
     (vct-scale! rl (/ 1.0 len))
     (vct->channel rl 0 len snd chn #f "hilbert-transform-via-fft")))
-!#
+|#
 
 ;;; -------- highpass filter 
 
-(define* (make-highpass fc #:optional (len 30))
-  "(make-highpass fc #:optional (len 30)) makes an FIR highpass filter"
+(define* (make-highpass fc :optional (len 30))
+  "(make-highpass fc :optional (len 30)) makes an FIR highpass filter"
   (let* ((arrlen (1+ (* 2 len)))
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (1+ i)))
@@ -779,17 +779,17 @@
 (define (highpass f in)
   (fir-filter f in))
 
-#!
+#|
   (let ((hp (make-highpass (* .1 pi))))
     (map-channel (lambda (y)
 		   (highpass hp y))))
-!#
+|#
 
 
 ;;; -------- lowpass filter
 
-(define* (make-lowpass fc #:optional (len 30))
-  "(make-lowpass fc #:optional (len 30)) makes an FIR lowpass filter"
+(define* (make-lowpass fc :optional (len 30))
+  "(make-lowpass fc :optional (len 30)) makes an FIR lowpass filter"
   (let* ((arrlen (1+ (* 2 len)))
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (1+ i)))
@@ -806,16 +806,16 @@
 (define (lowpass f in)
   (fir-filter f in))
 
-#!
+#|
   (let ((hp (make-lowpass (* .2 pi))))
     (map-channel (lambda (y)
 		   (lowpass hp y))))
-!#
+|#
 
 ;;; -------- bandpass filter
 
-(define* (make-bandpass flo fhi #:optional (len 30))
-  "(make-bandpass flo fhi #:optional (len 30)) makes an FIR bandpass filter"
+(define* (make-bandpass flo fhi :optional (len 30))
+  "(make-bandpass flo fhi :optional (len 30)) makes an FIR bandpass filter"
   (let* ((arrlen (1+ (* 2 len)))
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (1+ i)))
@@ -832,14 +832,14 @@
 (define (bandpass f in)
   (fir-filter f in))
 
-#!
+#|
   (let ((hp (make-bandpass (* .1 pi) (* .2 pi))))
     (map-channel (lambda (y)
 		   (bandpass hp y))))
 
 ;; for more bands, you can add the coeffs:
 
-(define* (make-bandpass-2 flo1 fhi1 flo2 fhi2 #:optional (len 30))
+(define* (make-bandpass-2 flo1 fhi1 flo2 fhi2 :optional (len 30))
   (let* ((f1 (make-bandpass flo1 fhi1 len))
 	 (f2 (make-bandpass flo2 fhi2 len)))
     (vct-add! (mus-xcoeffs f1) (mus-xcoeffs f2))
@@ -851,12 +851,12 @@
     (map-channel (lambda (y) (fir-filter f2 y)))
     ))
 
-!#
+|#
 
 ;;; -------- bandstop filter
 
-(define* (make-bandstop flo fhi #:optional (len 30))
-  "(make-bandstop flo fhi #:optional (len 30)) makes an FIR bandstop (notch) filter"
+(define* (make-bandstop flo fhi :optional (len 30))
+  "(make-bandstop flo fhi :optional (len 30)) makes an FIR bandstop (notch) filter"
   (let* ((arrlen (1+ (* 2 len)))
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (1+ i)))
@@ -873,16 +873,16 @@
 (define (bandstop f in)
   (fir-filter f in))
 
-#!
+#|
   (let ((hp (make-bandstop (* .1 pi) (* .3 pi))))
     (map-channel (lambda (y)
 		   (bandstop hp y))))
-!#
+|#
 
 ;;; -------- differentiator
 
-(define* (make-differentiator #:optional (len 30))
-  "(make-differentiator #:optional (len 30)) makes an FIR differentiator (highpass) filter"
+(define* (make-differentiator :optional (len 30))
+  "(make-differentiator :optional (len 30)) makes an FIR differentiator (highpass) filter"
   (let* ((arrlen (1+ (* 2 len)))
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (1+ i)))
@@ -897,11 +897,11 @@
 (define (differentiator f in)
   (fir-filter f in))
 
-#!
+#|
   (let ((hp (make-differentiator)))
     (map-channel (lambda (y)
 		   (differentiator hp y))))
-!#
+|#
 
 
 ;;; -------- IIR filters
@@ -991,7 +991,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	       (vct a0 a1 a2) 
 	       (vct 0.0 b1 b2)))
 
-(define* (make-iir-low-pass-2 fc #:optional din) ; din=(sqrt 2.0) for example (suggested range 0.2.. 10)
+(define* (make-iir-low-pass-2 fc :optional din) ; din=(sqrt 2.0) for example (suggested range 0.2.. 10)
   (let* ((theta (/ (* 2 pi fc) (mus-srate)))
 	 (d (or din (sqrt 2.0)))
 	 (beta (* 0.5 (/ (- 1.0 (* (/ d 2) (sin theta)))
@@ -1002,7 +1002,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		 (vct alpha (* 2.0 alpha) alpha)
 		 (vct 0.0 (* -2.0 gamma) (* 2.0 beta)))))
 
-(define* (make-iir-high-pass-2 fc #:optional din)
+(define* (make-iir-high-pass-2 fc :optional din)
   (let* ((theta (/ (* 2 pi fc) (mus-srate)))
 	 (d (or din (sqrt 2.0)))
 	 (beta (* 0.5 (/ (- 1.0 (* (/ d 2) (sin theta)))
@@ -1037,7 +1037,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		 (vct alpha (* -2.0 gamma) alpha)
 		 (vct 0.0 (* -2.0 gamma) (* 2.0 beta)))))
 
-(define* (make-eliminate-hum #:optional (hum-freq 60.0) (hum-harmonics 5) (bandwidth 10))
+(define* (make-eliminate-hum :optional (hum-freq 60.0) (hum-harmonics 5) (bandwidth 10))
   (let ((gen (make-vct hum-harmonics)))
     (do ((i 0 (1+ i)))
 	((= i hum-harmonics))
@@ -1218,7 +1218,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; -------- notch filters
 
-(define* (make-notch-frequency-response cur-srate freqs #:optional (notch-width 2))
+(define* (make-notch-frequency-response cur-srate freqs :optional (notch-width 2))
   (let ((freq-response (list 1.0 0.0)))
     (for-each
      (lambda (i)
@@ -1235,22 +1235,22 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (set! freq-response (cons 1.0 freq-response)) 
     (reverse freq-response)))
 
-(define* (notch-channel freqs #:optional (filter-order #f) beg dur (snd #f) (chn #f) edpos (truncate #t) (notch-width 2))
-  "(notch-channel freqs #:optional (filter-order #f) beg dur (snd #f) (chn #f) edpos (truncate #t) (notch-width 2)) -> notch filter removing freqs"
+(define* (notch-channel freqs :optional (filter-order #f) beg dur (snd #f) (chn #f) edpos (truncate #t) (notch-width 2))
+  "(notch-channel freqs :optional (filter-order #f) beg dur (snd #f) (chn #f) edpos (truncate #t) (notch-width 2)) -> notch filter removing freqs"
   (filter-channel (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
 		  (or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
 		  beg dur snd chn edpos truncate
 		  (format #f "notch-channel '~A ~A ~A ~A" freqs filter-order beg dur)))
 
-(define* (notch-sound freqs #:optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
-  "(notch-sound freqs #:optional (filter-order #f) (snd #f) (chn #f) (notch-width 2)) -> notch filter removing freqs"
+(define* (notch-sound freqs :optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
+  "(notch-sound freqs :optional (filter-order #f) (snd #f) (chn #f) (notch-width 2)) -> notch filter removing freqs"
   (filter-sound (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
 		(or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
 		snd chn #f
 		(format #f "notch-channel '~A ~A 0 #f" freqs filter-order)))
 
-(define* (notch-selection freqs #:optional (filter-order #f) (notch-width 2))
-  "(notch-selection freqs #:optional (filter-order #f) (notch-width 2)) -> notch filter removing freqs"
+(define* (notch-selection freqs :optional (filter-order #f) (notch-width 2))
+  "(notch-selection freqs :optional (filter-order #f) (notch-width 2)) -> notch filter removing freqs"
   (if (selection?)
       (filter-selection (make-notch-frequency-response (exact->inexact (selection-srate)) freqs notch-width)
 			(or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (selection-srate) notch-width)) (log 2.0)))))))))
@@ -1338,7 +1338,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; this is a faster version of find-sine using the "Goertzel algorithm" taken from R Lyons "Understanding DSP" p 529
 ;;; it returns the same result as find-sine above if you take (* 2 (/ (goertzel...) dur)) -- see snd-test.scm examples
-(define* (goertzel freq #:optional beg dur)
+(define* (goertzel freq :optional beg dur)
   (let* ((sr (srate))
 	 (y2 0.0)
 	 (y1 0.0)
@@ -1362,7 +1362,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;;
 ;;; arbitrary random number distributions via the "rejection method"
 
-(define* (any-random amount #:optional e)
+(define* (any-random amount :optional e)
   (if (= amount 0.0)
       0.0
       (if (not e)
@@ -1409,7 +1409,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
 
-(define* (inverse-integrate dist #:optional (data-size 512) (e-size 50))
+(define* (inverse-integrate dist :optional (data-size 512) (e-size 50))
   (let* ((e '())
 	 (sum (exact->inexact (cadr dist)))
 	 (first-sum sum)
@@ -1450,40 +1450,40 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;;
 ;;; these are from "Mathematics of the DFT", W3K Pubs
 
-(define* (channel-mean #:optional snd chn)
+(define* (channel-mean :optional snd chn)
   (let ((sum 0.0)
 	(N (frames snd chn)))
     (scan-channel (lambda (y) (set! sum (+ sum y)) #f) 0 N snd chn)
     (/ sum N)))
 
-(define* (channel-total-energy #:optional snd chn)
+(define* (channel-total-energy :optional snd chn)
   (let ((sum 0.0))
     (scan-channel (lambda (y) (set! sum (+ sum (* y y))) #f) 0 (frames snd chn) snd chn)
     sum))
 
-(define* (channel-average-power #:optional snd chn)
+(define* (channel-average-power :optional snd chn)
   (/ (channel-total-energy snd chn) (frames snd chn)))
 
-(define* (channel-rms #:optional snd chn)
+(define* (channel-rms :optional snd chn)
   (sqrt (channel-average-power snd chn)))
 
-(define* (channel-variance #:optional snd chn) ; "sample-variance" might be better
+(define* (channel-variance :optional snd chn) ; "sample-variance" might be better
   (let* ((N (frames snd chn))
 	 (mu (* (/ N (- N 1)) (channel-mean snd chn))) ; avoid bias sez JOS
 	 (P (channel-total-energy snd chn)))
     (- P (* mu mu))))
 
-(define* (channel-norm #:optional snd chn)
+(define* (channel-norm :optional snd chn)
   (sqrt (channel-total-energy snd chn)))
 
-(define* (channel-lp u-p #:optional snd chn)
+(define* (channel-lp u-p :optional snd chn)
   (let ((sum 0.0)
 	(p u-p) ; for the optimizer's benefit -- it can't find define* args
 	(N (frames snd chn)))
     (scan-channel (lambda (y) (set! sum (+ sum (expt (abs y) p))) #f) 0 N snd chn)
     (expt sum (/ 1.0 p))))
 
-(define* (channel-lp-inf #:optional snd chn)
+(define* (channel-lp-inf :optional snd chn)
   (let ((mx 0.0)
 	(N (frames snd chn)))
     (scan-channel (lambda (y) (set! mx (max mx (abs y))) #f) 0 N snd chn)
@@ -1554,7 +1554,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; -------- ssb-am friends
 
-(define* (shift-channel-pitch freq #:optional (order 40) (beg 0) dur snd chn edpos)
+(define* (shift-channel-pitch freq :optional (order 40) (beg 0) dur snd chn edpos)
   ;; higher order = better cancellation
   (let* ((gen (make-ssb-am freq order)))
     (map-channel (lambda (y) 
@@ -1564,7 +1564,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define (hz->2pi freq) (/ (* 2 pi freq) (srate))) ; hz->radians follows mus-srate unfortunately
 
-(define* (ssb-bank old-freq new-freq pairs-1 #:optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
+(define* (ssb-bank old-freq new-freq pairs-1 :optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
   (let* ((pairs pairs-1) ; for run's benefit
 	 (ssbs (make-vector pairs))
 	 (bands (make-vector pairs))
@@ -1595,7 +1595,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (scale-channel (/ mx nmx) beg dur snd chn))) ; not edpos here -- we're scaling the new stuff
      (format #f "ssb-bank ~A ~A ~A ~A ~A ~A ~A" old-freq new-freq pairs-1 order bw beg dur))))
 
-(define* (ssb-bank-env old-freq new-freq freq-env pairs-1 #:optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
+(define* (ssb-bank-env old-freq new-freq freq-env pairs-1 :optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
   ;; this version adds a frequency envelope
   ;; (ssb-bank-env 557 880 '(0 0 1 100.0) 7)
   (let* ((pairs pairs-1) ; for run's benefit
@@ -1636,7 +1636,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; TODO: auto-detect main freq so ssb-bank can work semi-automatically (bw/pairs choices also automated)
 ;;; TODO: if pitch follower, auto-remove gliss/vib (ssb-bank-env could be written to use oscil or triangle wave = add vib)
 
-#!
+#|
 (define* (repitch-sound old-freq new-freq)
   (ssb-bank old-freq new-freq 10))
 
@@ -1649,7 +1649,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;; echoes with each echo at a new pitch via ssb-am etc
 
-(define* (make-transposer old-freq new-freq pairs #:optional (order 40) (bw 50.0))
+(define* (make-transposer old-freq new-freq pairs :optional (order 40) (bw 50.0))
   (let* ((ssbs (make-vector pairs))
 	 (bands (make-vector pairs))
 	 (factor (/ (- new-freq old-freq) old-freq)))
@@ -1688,7 +1688,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   (let ((del (make-fdelay (inexact->exact (round (* secs (srate)))) pitch scaler)))
     (map-channel (lambda (y) (fdelay del y)))))
 
-!#
+|#
 
 
 ;;; this might be better named "quasi-ssb-fm" -- cancellations are not perfect
@@ -1728,7 +1728,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	    (oscil (list-ref gen 2) (* index (oscil (list-ref gen 3)))))))
 
 
-#!
+#|
 ;;; a "bump function" (Stein and Shakarchi)
 (define (bumpy)
   (let* ((x 0.0) 
@@ -1744,7 +1744,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 				  0.0)))
 		     (set! x (+ x xi))
 		     (* scl val))))))
-!#
+|#
 
 
 ;;; vct|channel|spectral-polynomial
@@ -1759,7 +1759,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
       (vct-offset! (vct-multiply! new-v v) (vct-ref coeffs i)))
     new-v))
 
-(define* (channel-polynomial coeffs #:optional snd chn)
+(define* (channel-polynomial coeffs :optional snd chn)
   (let ((len (frames snd chn)))
     (vct->channel 
      (vct-polynomial 
@@ -1772,7 +1772,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; convolution -> * in freq
 
-(define* (spectral-polynomial coeffs #:optional snd chn)
+(define* (spectral-polynomial coeffs :optional snd chn)
   (let* ((len (frames snd chn))
 	 (sound (channel->vct 0 len snd chn))
 	 (num-coeffs (vct-length coeffs))
@@ -1834,7 +1834,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;;
 ;;; FFTSIZE -- FFT window size. Must be a power of 2. 4096 is recommended.
 
-(define* (scentroid file #:key (beg 0.0) dur (db-floor -40.0) (rfreq 100.0) (fftsize 4096))
+(define* (scentroid file :key (beg 0.0) dur (db-floor -40.0) (rfreq 100.0) (fftsize 4096))
   (let* ((fsr (mus-sound-srate file))
 	 (incrsamps (inexact->exact (floor (/ fsr rfreq))))
 	 (start (inexact->exact (floor (* beg fsr))))
@@ -1944,7 +1944,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;;
 ;;; windowed-maxamp generator
 
-(define* (make-windowed-maxamp #:optional (size 128))
+(define* (make-windowed-maxamp :optional (size 128))
   "(make-windowed-maxamp (size 128) returns a windowed-maxamp generator.  The generator keeps \
 a running window of the last 'size' inputs, returning the maxamp in that window."
   (let ((gen (make-delay size)))
@@ -1968,7 +1968,7 @@ a running window of the last 'size' inputs, returning the maxamp in that window.
 ;;; harmonicizer (each harmonic is split into a set of harmonics via Chebyshev polynomials)
 ;;;   obviously very similar to ssb-bank above, but splits harmonics individually, rather than pitch-shifting them
 
-(define* (harmonicizer freq coeffs pairs-1 #:optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
+(define* (harmonicizer freq coeffs pairs-1 :optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
   "(harmonicizer freq coeffs pairs (order 40) (bw 50.0) (beg 0) dur snd chn edpos) splits out each harmonic \
 and replaces it with the spectrum given in coeffs"
   (let* ((pairs pairs-1) ; for run's benefit
@@ -2017,7 +2017,7 @@ and replaces it with the spectrum given in coeffs"
 ;;;
 ;;; linear sampling rate conversion
 
-(define* (linear-src-channel srinc #:optional snd chn)
+(define* (linear-src-channel srinc :optional snd chn)
   "(linear-src-channel sr (snd #f) (chn #f) performs sampling rate conversion using linear interpolation."
   (let* ((rd (make-sample-reader 0 snd chn))
 	 (last (rd))

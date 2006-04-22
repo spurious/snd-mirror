@@ -14,10 +14,10 @@
 ;(define region-length region-frames)
 ;(define selection-length selection-frames)
 
-(define* (forward-sample #:optional (count 1) snd chn)
+(define* (forward-sample :optional (count 1) snd chn)
   (set! (cursor snd chn) (+ (cursor snd chn) count)))
 
-(define* (backward-sample #:optional (count 1) snd chn)
+(define* (backward-sample :optional (count 1) snd chn)
   (set! (cursor snd chn) (max 0 (- (cursor snd chn) count))))
 
 (define (vct-do! v func) 

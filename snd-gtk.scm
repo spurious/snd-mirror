@@ -34,7 +34,7 @@
 (if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))
 
 (if (not (defined? 'g_signal_connect))
-    (define* (g_signal_connect obj name func #:optional data)
+    (define* (g_signal_connect obj name func :optional data)
       (g_signal_connect_closure_by_id (GPOINTER obj)
 				      (g_signal_lookup name (G_OBJECT_TYPE (GTK_OBJECT obj)))
 				      0
@@ -364,7 +364,7 @@
 
 ;;; -------- show-smpte-label
 ;;;
-;;; (show-smpte-label #:optional on-or-off)
+;;; (show-smpte-label :optional on-or-off)
 ;;;   turns on/off a label in the time-domain graph showing the current smpte frame of the leftmost sample
 
 (define smpte-frames-per-second 24.0)
@@ -688,7 +688,7 @@ Reverb-feedback sets the scaler on the feedback.
 	    (g_timeout_add 10000 show-label data) ; every 10 seconds recheck space
 	    0)))
 
-    (lambda* (#:optional snd-arg)
+    (lambda* (:optional snd-arg)
       "(show-disk-space) adds a label to the minibuffer area showing the current free space (for use with after-open-hook)"
       (let* ((snd (or snd-arg (selected-sound)))
 	     (previous-label (find-if (lambda (n) (= (car n) snd)) labelled-snds)))
@@ -775,7 +775,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 ;;; -------- select-file --------
 ;;;
-;;; (select-file func #:optional title dir filter help)
+;;; (select-file func :optional title dir filter help)
 ;;;   starts a File Selection Dialog, runs func if a file is selected
 ;;;
 ;;; (add-to-menu 0 "Insert File" 
@@ -1038,7 +1038,7 @@ Reverb-feedback sets the scaler on the feedback.
     (gtk_widget_show variables-dialog)
     variables-dialog))
 
-(define* (make-variable-display page-name variable-name #:optional (type 'text) (range (list 0.0 1.0)))
+(define* (make-variable-display page-name variable-name :optional (type 'text) (range (list 0.0 1.0)))
   ;; type = 'text, 'meter, 'graph, 'spectrum, 'scale
   (if (not variables-dialog) (make-variables-dialog))
   (let ((page-info (assoc page-name variables-pages)))

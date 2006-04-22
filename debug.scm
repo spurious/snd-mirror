@@ -1,5 +1,4 @@
-(if (provided? 'snd-guile) (use-modules (ice-9 debug) (ice-9 optargs) (ice-9 format)))
-
+(use-modules (ice-9 debug) (ice-9 optargs) (ice-9 format))
 (provide 'snd-debug.scm)
 
 ;;; -------- backtrace --------

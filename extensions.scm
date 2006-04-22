@@ -144,18 +144,18 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (define map-sound-files
   (lambda args
-    "(map-sound-files func #:optional dir) applies func to each sound file in dir"
+    "(map-sound-files func :optional dir) applies func to each sound file in dir"
     (map (car args) 
 	 (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))))
 
 (define for-each-sound-file
   (lambda args
-    "(for-each-sound-file func #:optional dir) applies func to each sound file in dir"
+    "(for-each-sound-file func :optional dir) applies func to each sound file in dir"
     (for-each 
      (car args) 
      (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))))
 
-#!
+#|
  (for-each-sound-file
   (lambda (n) 
     (catch #t
@@ -164,11 +164,11 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
  		  (snd-print (format #f "~%~A" n))))
            (lambda args #f)))
   "/home/bil/sf")
-!#
+|#
 
 (define match-sound-files
   (lambda args
-    "(match-sound-files func #:optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
+    "(match-sound-files func :optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
     (let* ((func (car args))
 	   (matches '()))
       (for-each
@@ -179,7 +179,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
       matches)))
   
 ;;; we can use Guile's regexp support here to search for all .snd and .wav files:
-#!
+#|
 (let ((reg (make-regexp "\\.(wav|snd)$")))
   (match-sound-files (lambda (file) (regexp-exec reg file))))
 
@@ -227,12 +227,12 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 (define (add-sound-file-extension-1 ext) 
   (set! sound-file-extensions (cons ext sound-file-extensions)))
 
-(define* (sound-files-in-directory-1 #:optional (dir "."))
+(define* (sound-files-in-directory-1 :optional (dir "."))
   (sort (grep
 	 (format #f "\\.(~{~A~^|~})$" sound-file-extensions)
 	 (directory->list dir))
 	string<?))
-!#
+|#
 
     
 ;;; -------- selection-members
@@ -256,8 +256,8 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 ;;; the regularized form of this would use dur not end
 
-(define* (make-selection #:optional beg end snd chn)
-  "(make-selection #:optional beg end snd chn) makes a selection like make-region but without creating a region.
+(define* (make-selection :optional beg end snd chn)
+  "(make-selection :optional beg end snd chn) makes a selection like make-region but without creating a region.
 make-selection follows snd's sync field, and applies to all snd's channels if chn is not specified. end defaults
 to end of channel, beg defaults to 0, snd defaults to the currently selected sound."
   (let ((current-sound (or snd (selected-sound) (car (sounds)))))
@@ -341,18 +341,18 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 
 ;;; -------- check-for-unsaved-edits
 ;;;
-;;; (check-for-unsaved-edits #:optional (on #t)): if 'on', add a function to before-close-hook and before-exit-hook
+;;; (check-for-unsaved-edits :optional (on #t)): if 'on', add a function to before-close-hook and before-exit-hook
 ;;;    that asks the user for confirmation before closing a sound if there are unsaved
 ;;;    edits on that sound.  if 'on' is #f, remove those hooks.
 
 (define checking-for-unsaved-edits #f) ; for prefs
 
-(define* (check-for-unsaved-edits #:optional (check #t))
-  "(check-for-unsaved-edits #:optional (check #t)) -> sets up hooks to check for and ask about unsaved edits when a sound is closed.
+(define* (check-for-unsaved-edits :optional (check #t))
+  "(check-for-unsaved-edits :optional (check #t)) -> sets up hooks to check for and ask about unsaved edits when a sound is closed.
 If 'check' is #f, the hooks are removed."
   (let () ; make new guile happy
 
-    (define* (yes-or-no? question action-if-yes action-if-no #:optional snd)
+    (define* (yes-or-no? question action-if-yes action-if-no :optional snd)
       (clear-minibuffer snd)
       (prompt-in-minibuffer question
 			    (lambda (response)
@@ -415,7 +415,7 @@ If 'check' is #f, the hooks are removed."
 (define remembering-sound-state 0) ; for prefs
 (define remember-sound-filename ".snd-remember-sound") ; should this be in the home directory?
 
-(define* (remember-sound-state #:optional (choice 3))
+(define* (remember-sound-state :optional (choice 3))
   "(remember-sound-state) remembers the state of a sound when it is closed, and if it is subsquently re-opened, restores that state"
 
   (let ((states '())
@@ -576,8 +576,8 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- mix-channel, insert-channel, c-channel
 
-(define* (mix-channel file-data #:optional beg dur snd chn edpos)
-  "(mix-channel file #:optional beg dur snd chn edpos) mixes in file. file can be the file name or a list (file-name [beg [channel]])"
+(define* (mix-channel file-data :optional beg dur snd chn edpos)
+  "(mix-channel file :optional beg dur snd chn edpos) mixes in file. file can be the file name or a list (file-name [beg [channel]])"
   ;; should this create and return a mix instead?
   (let* ((file-name (if (string? file-data) file-data (car file-data)))
 	 (file-beg (if (or (string? file-data) 
@@ -600,8 +600,8 @@ If 'check' is #f, the hooks are removed."
 			   (format #f "mix-channel ~S ~A ~A" file-data beg dur)
 			   (format #f "mix-channel '~A ~A ~A" file-data beg dur)))))))
 
-(define* (insert-channel file-data #:optional beg dur snd chn edpos)
-  "(insert-channel file #:optional beg dur snd chn edpos) inserts the file. file can be the file name or a list (file-name [beg [channel]])"
+(define* (insert-channel file-data :optional beg dur snd chn edpos)
+  "(insert-channel file :optional beg dur snd chn edpos) inserts the file. file can be the file name or a list (file-name [beg [channel]])"
   (let* ((file-name (if (string? file-data) file-data (car file-data)))
 	 (file-beg (if (or (string? file-data) 
 			   (< (length file-data) 2)) 
@@ -626,13 +626,13 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- redo-channel, undo-channel
 
-(define* (redo-channel #:optional (edits 1) snd chn)
+(define* (redo-channel :optional (edits 1) snd chn)
   "(redo-channel (edits 1) snd chn) is the regularized version of redo"
   (if (and snd (not (= (sync snd) 0)) chn)
       (set! (edit-position snd chn) (+ (edit-position snd chn) edits))
       (redo edits snd)))
 
-(define* (undo-channel #:optional (edits 1) snd chn)
+(define* (undo-channel :optional (edits 1) snd chn)
   "(undo-channel (edits 1) snd chn) is the regularized version of undo"
   (if (and snd (not (= (sync snd) 0)) chn)
       (set! (edit-position snd chn) (max 0 (- (edit-position snd chn) edits)))
@@ -641,7 +641,7 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- any-env-channel
 
-(define* (any-env-channel env func #:optional (beg 0) dur snd chn edpos origin)
+(define* (any-env-channel env func :optional (beg 0) dur snd chn edpos origin)
   ;; take breakpoints in env, connect with func, apply as envelope to channel
   ;; handled as a sequence of funcs and scales
   (if (not (null? env))
@@ -676,8 +676,8 @@ If 'check' is #f, the hooks are removed."
 
 (if (not (defined? 'pi)) (define pi 3.141592653589793))
 
-(define* (sine-ramp rmp0 rmp1 #:optional (beg 0) dur snd chn edpos)
-  "(sine-ramp rmp0 rmp1 #:optional (beg 0) dur snd chn edpos) produces a sinsusoidal connection from rmp0 to rmp1"
+(define* (sine-ramp rmp0 rmp1 :optional (beg 0) dur snd chn edpos)
+  "(sine-ramp rmp0 rmp1 :optional (beg 0) dur snd chn edpos) produces a sinsusoidal connection from rmp0 to rmp1"
   ;; vct: angle incr off scl
   (ptree-channel
    (lambda (y data forward)
@@ -699,8 +699,8 @@ If 'check' is #f, the hooks are removed."
 	    (- rmp1 rmp0))))
    (format #f "sine-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
 
-(define* (sine-env-channel env #:optional (beg 0) dur snd chn edpos)
-  "(sine-env-channel env #:optional (beg 0) dur snd chn edpos) connects env's dots with sinusoids"
+(define* (sine-env-channel env :optional (beg 0) dur snd chn edpos)
+  "(sine-env-channel env :optional (beg 0) dur snd chn edpos) connects env's dots with sinusoids"
   (any-env-channel env sine-ramp beg dur snd chn edpos (format #f "sine-env-channel '~A ~A ~A" env beg dur)))
 
 ;;; (sine-env-channel '(0 0 1 1 2 -.5 3 1))
@@ -710,7 +710,7 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- blackman4-ramp, blackman4-env-channel
 
-(define* (blackman4-ramp rmp0 rmp1 #:optional (beg 0) dur snd chn edpos)
+(define* (blackman4-ramp rmp0 rmp1 :optional (beg 0) dur snd chn edpos)
   ;; vct: angle incr off scl
   (ptree-channel
    (lambda (y data forward)
@@ -735,7 +735,7 @@ If 'check' is #f, the hooks are removed."
 	    (- rmp1 rmp0))))
    (format #f "blackman4-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
 
-(define* (blackman4-env-channel env #:optional (beg 0) dur snd chn edpos)
+(define* (blackman4-env-channel env :optional (beg 0) dur snd chn edpos)
   (any-env-channel env blackman4-ramp beg dur snd chn edpos (format #f "blackman4-env-channel '~A ~A ~A" env beg dur)))
 
 ;;; any curve can be used as the connecting line between envelope breakpoints in the
@@ -746,8 +746,8 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- ramp-squared, env-squared-channel
 
-(define* (ramp-squared rmp0 rmp1 #:optional (symmetric #t) (beg 0) dur snd chn edpos)
-  "(ramp-squared rmp0 rmp1 #:optional (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^2 curve"
+(define* (ramp-squared rmp0 rmp1 :optional (symmetric #t) (beg 0) dur snd chn edpos)
+  "(ramp-squared rmp0 rmp1 :optional (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^2 curve"
   ;; vct: start incr off scl
   (ptree-channel
    (lambda (y data forward)
@@ -768,8 +768,8 @@ If 'check' is #f, the hooks are removed."
 	   (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0)))))
    (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur)))
 
-(define* (env-squared-channel env #:optional (symmetric #t) (beg 0) dur snd chn edpos)
-  "(env-squared-channel env #:optional (symmetric #t) (beg 0) dur snd chn edpos) connects env's dots with x^2 curves"
+(define* (env-squared-channel env :optional (symmetric #t) (beg 0) dur snd chn edpos)
+  "(env-squared-channel env :optional (symmetric #t) (beg 0) dur snd chn edpos) connects env's dots with x^2 curves"
   (any-env-channel env 
 		   (lambda (r0 r1 b d s c e)
 		     (ramp-squared r0 r1 symmetric b d s c e))
@@ -780,8 +780,8 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- ramp-expt, env-expt-channel
 
-(define* (ramp-expt rmp0 rmp1 exponent #:optional (symmetric #t) (beg 0) dur snd chn edpos)
-  "(ramp-expt rmp0 rmp1 exponent #:optional (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^exponent curve"
+(define* (ramp-expt rmp0 rmp1 exponent :optional (symmetric #t) (beg 0) dur snd chn edpos)
+  "(ramp-expt rmp0 rmp1 exponent :optional (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^exponent curve"
   ;; vct: start incr off scl exponent
   ;; a^x = exp(x * log(a))
   (ptree-channel
@@ -803,8 +803,8 @@ If 'check' is #f, the hooks are removed."
 	   (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0) exponent))))
    (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur)))
 
-(define* (env-expt-channel env exponent #:optional (symmetric #t) (beg 0) dur snd chn edpos)
-  "(env-expt-channel env exponent #:optional (symmetric #t) (beg 0) dur snd chn edpos) connects env's dots with x^exponent curves"
+(define* (env-expt-channel env exponent :optional (symmetric #t) (beg 0) dur snd chn edpos)
+  "(env-expt-channel env exponent :optional (symmetric #t) (beg 0) dur snd chn edpos) connects env's dots with x^exponent curves"
   (if (= exponent 1.0)
       (env-channel env beg dur snd chn edpos)
       (any-env-channel env 
@@ -815,8 +815,8 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- offset-channel 
 
-(define* (offset-channel amount #:optional (beg 0) dur snd chn edpos)
-  "(offset-channel amount #:optional (beg 0) dur snd chn edpos) adds amount to each sample"
+(define* (offset-channel amount :optional (beg 0) dur snd chn edpos)
+  "(offset-channel amount :optional (beg 0) dur snd chn edpos) adds amount to each sample"
   (let ((dc amount))
     (ptree-channel (lambda (y) (+ y dc)) beg dur snd chn edpos #t #f
 		   (format #f "offset-channel ~A ~A ~A" amount beg dur))))
@@ -824,8 +824,8 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- dither-channel
 
-(define* (dither-channel #:optional (amount .00006) (beg 0) dur snd chn edpos)
-  "(dither-channel #:optional (amount .00006) (beg 0) dur snd chn edpos) adds amount dither to each sample"
+(define* (dither-channel :optional (amount .00006) (beg 0) dur snd chn edpos)
+  "(dither-channel :optional (amount .00006) (beg 0) dur snd chn edpos) adds amount dither to each sample"
   (let ((dither (* .5 amount)))
     (ptree-channel (lambda (y) (+ y (mus-random dither) (mus-random dither))) beg dur snd chn edpos #t #f
 		   (format #f "dither-channel ~,8F ~A ~A" amount beg dur))))
@@ -833,8 +833,8 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- contrast-channel
 
-(define* (contrast-channel index #:optional (beg 0) dur snd chn edpos)
-  "(contrast-channel index #:optional (beg 0) dur snd chn edpos) applies contrast enhancement to the sound"
+(define* (contrast-channel index :optional (beg 0) dur snd chn edpos)
+  "(contrast-channel index :optional (beg 0) dur snd chn edpos) applies contrast enhancement to the sound"
   (let ((ind index))
     (ptree-channel
      (lambda (y)
@@ -842,12 +842,12 @@ If 'check' is #f, the hooks are removed."
      beg dur snd chn edpos #f #f
      (format #f "contrast-channel ~A ~A ~A" index beg dur))))
 
-#!
+#|
 ;;; -------- delay-channel 
 ;;;
 ;;; this is ok going forward (I think), but not in reverse
 
-(define* (delay-channel amount #:optional (beg 0) dur snd chn edpos)
+(define* (delay-channel amount :optional (beg 0) dur snd chn edpos)
   (let ((dly amount)
 	(cur-edpos (if (or (not edpos)
 			   (= edpos current-edit-position))
@@ -874,11 +874,11 @@ If 'check' is #f, the hooks are removed."
 				 ((< i 0))
 			       (vct-set! data (+ i 2) (reader)))
 			     data)))))))
-!#
+|#
 
 ;;; -------- channels-equal
 
-(define* (channels=? snd1 chn1 snd2 chn2 #:optional (allowable-difference 0.0))
+(define* (channels=? snd1 chn1 snd2 chn2 :optional (allowable-difference 0.0))
   "(channels=? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff) modulo trailing 0's"
   (if (and (= snd1 snd2)
 	   (= chn1 chn2))
@@ -902,7 +902,7 @@ If 'check' is #f, the hooks are removed."
 				     (> (abs (- val y)) diff)))
 				 0 len s1 c1)))))))
 
-(define* (channels-equal? snd1 chn1 snd2 chn2 #:optional (allowable-difference 0.0))
+(define* (channels-equal? snd1 chn1 snd2 chn2 :optional (allowable-difference 0.0))
   "(channels-equal? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff)"
   (let ((len1 (frames snd1 chn1))
 	(len2 (frames snd2 chn2)))

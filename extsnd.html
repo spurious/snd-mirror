@@ -91,7 +91,7 @@
 <A NAME="lisplistener"></a>
 
 <p>Snd is a highly customizable, extensible program.
-The syntax used throughout this documentation is Scheme (a form of lisp) as implemented by the Gnu Guile library.
+The syntax used throughout this documentation is Scheme (a form of lisp) as implemented by Guile or Gauche.
 You can also use Ruby or Forth, but need to make various minor <a href="grfsnd.html#sndandruby">changes</a>.
 I've tried to bring out to the extension language nearly every portion
 of Snd, both the signal-processing functions and
@@ -114,7 +114,7 @@ are in <em class=listener>this color</em>):
 </p>
 
 <table border=0 cellspacing=10>
-<tr><th>Guile</th><th></th><th>Ruby</th><th></th><th>Forth</th></tr>
+<tr><th>Scheme</th><th></th><th>Ruby</th><th></th><th>Forth</th></tr>
 
 <tr>
 <td><pre>
@@ -831,7 +831,7 @@ callbacks is known as a hook.
 A hook provides
 a way to customize user-interface
 actions.  
-The hook itself is list of functions.  The Guile function add-hook! adds a function to a hook's
+The hook itself is list of functions.  The Scheme function add-hook! adds a function to a hook's
 list, remove-hook! removes a function, and reset-hook! clears out the list.
 For example, the hook that is checked when you click the sound's name in the minibuffer is
 name-click-hook.  We can cause that action to print "hi" in the listener by:</p>
@@ -2989,7 +2989,7 @@ and <i>read-track-sample</i>.
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
-copy file: in Guile: copy-file, in Ruby: File.copy or File.syscopy<br>
+copy file: in Scheme: copy-file, in Ruby: File.copy or File.syscopy<br>
 copy string: in Guile: string-copy<br>
 copy list: in Guile: list-copy or copy-tree<br>
 copy vct: <a href="#vctcopy">vct-copy</a>, <a href="#vct_to_vector">vct-&gt;vector</a><br>
@@ -4891,7 +4891,7 @@ delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 <br><br>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
-delete a file: use the Guile function delete-file or Ruby's File.delete<br>
+delete a file: use the Scheme function delete-file or Ruby's File.delete<br>
 delete a region: <a href="#forgetregion">forget-region</a><br>
 delete the currently selected samples: <a href="#deleteselection">delete-selection</a><br>
 delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
@@ -5199,7 +5199,7 @@ Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a><br>
 graphical equalizer filter bank: <a href="sndscm.html#clminsdoc">graphEq</a><br>
 nonlinear (Volterra) filter: <a href="sndscm.html#volterrafilter">volterra-filter</a><br>
 see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts">fft-based filtering</a><br>
-Guile built-in filter function: %filter.<br>
+Scheme srfi-1 filter function: %filter.<br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -5236,7 +5236,7 @@ find any difference between two chans: <a href="sndscm.html#channelsequal">chann
 see also <a href="#countmatches">count-matches</a> and <a href="#scanchannel">scan-channel</a><br>
 find a widget: find-child in snd-motif.scm<br>
 add C-s and C-r to the listener key bindings: add-find-to-listener in snd-motif.scm<br>
-Guile find: find-if<br>
+Scheme find: find-if<br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -10210,7 +10210,7 @@ To continue running an interrupted <b>do?</b>, <code>(do-go-on)</code>.
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define do-go-on-continuation #f)
 (define (do-go-on)
-  (if (continuation? do-go-on-continuation) ; a Snd function -- should be provided by Guile!
+  (if (continuation? do-go-on-continuation) ; a Snd function -- should be provided by Scheme!
       (do-go-on-continuation #f)
       ";sorry! can't continue"))
 
@@ -10283,7 +10283,7 @@ This function is specific to the Motif version of Snd.
 <tr><td colspan=2>
 <code><a class=def name="exit">exit</a> (<i>exit-value</i>)</code></td></tr>
 <tr><td></td><td>
-exit Snd.  Guile's exit function is renamed %exit.  In Forth, this function is "snd-exit".
+exit Snd.  Scheme's exit function is renamed %exit.  In Forth, this function is "snd-exit".
 </td></tr>
 
 <!-- goto-listener-end -->
@@ -10836,7 +10836,7 @@ In the case of 'no-active-selection, we set up our own handler for that as follo
 </pre>
 <p>Here we've caught 'no-active-selection (if it occurs within the
 first thunk's body), and return 0 if it occurs; otherwise we return
-<code>(+ 1 (<a class=quiet href="#selectionposition">selection-position</a>))</code>.  Scheme (Guile) has a number
+<code>(+ 1 (<a class=quiet href="#selectionposition">selection-position</a>))</code>.  Scheme has a number
 of errors such as 'out-of-range, 'wrong-type-arg, 'numerical-overflow,
 etc.  The Snd-specific errors are:</p>
 <pre>

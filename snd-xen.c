@@ -694,9 +694,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
   /* 0 args is special => "thunk" meaning in this case that optional args are not ok (applies to as-one-edit and two menu callbacks) */
   XEN arity;
   int rargs;
-#if (!HAVE_RUBY && !HAVE_FORTH)
-  int oargs, restargs, loc;
-#endif
+
   if (!(XEN_PROCEDURE_P(proc)))
     {
       if (XEN_NOT_FALSE_P(proc)) /* #f as explicit arg to clear */
@@ -707,6 +705,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
   else
     {
       arity = XEN_ARITY(proc);
+
 #if HAVE_RUBY
       rargs = XEN_TO_C_INT(arity);
       if (!xen_rb_arity_ok(rargs, args))
@@ -722,23 +721,48 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 			  arg_name, caller, argn, (rargs < 0) ? (-rargs) : rargs));
       */
 #endif
-#if HAVE_SCHEME
-      loc = snd_protect(arity);
-      rargs = XEN_TO_C_INT(XEN_CAR(arity));
-      oargs = XEN_TO_C_INT(XEN_CADR(arity));
-      restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
-      snd_unprotect_at(loc);
-      if (rargs > args)
-	return(mus_format(_("%s function (%s arg %d) should take %d argument%s, but instead requires %d"),
-			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
-      if ((restargs == 0) && ((rargs + oargs) < args))
-	return(mus_format(_("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d"),
-			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
-      if ((args == 0) &&
-	  ((rargs != 0) || (oargs != 0) || (restargs != 0)))
-	return(mus_format(_("%s function (%s arg %d) should take no args, not %d"), 
-			  arg_name, caller, argn, rargs + oargs + restargs));
+
+#if HAVE_GUILE
+      {
+	int oargs, restargs, loc;
+	loc = snd_protect(arity);
+	rargs = XEN_TO_C_INT(XEN_CAR(arity));
+	oargs = XEN_TO_C_INT(XEN_CADR(arity));
+	restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
+	snd_unprotect_at(loc);
+	if (rargs > args)
+	  return(mus_format(_("%s function (%s arg %d) should take %d argument%s, but instead requires %d"),
+			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
+	if ((restargs == 0) && ((rargs + oargs) < args))
+	  return(mus_format(_("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d"),
+			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
+	if ((args == 0) &&
+	    ((rargs != 0) || (oargs != 0) || (restargs != 0)))
+	  return(mus_format(_("%s function (%s arg %d) should take no args, not %d"), 
+			    arg_name, caller, argn, rargs + oargs + restargs));
+      }
 #endif
+
+#if HAVE_GAUCHE
+      {
+	int oargs, loc;
+	loc = snd_protect(arity);
+	rargs = XEN_TO_C_INT(XEN_CAR(arity));
+	oargs = XEN_TO_C_INT(XEN_CDR(arity));
+	snd_unprotect_at(loc);
+	if (rargs > args)
+	  return(mus_format(_("%s function (%s arg %d) should take %d argument%s, but instead requires %d"),
+			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
+	if ((rargs + oargs) < args)
+	  return(mus_format(_("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d"),
+			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
+	if ((args == 0) &&
+	    ((rargs != 0) || (oargs != 0)))
+	  return(mus_format(_("%s function (%s arg %d) should take no args, not %d"), 
+			    arg_name, caller, argn, rargs + oargs));
+      }
+#endif
+
 #if HAVE_FORTH
       rargs = XEN_TO_C_INT(arity);
       if (rargs != args)
@@ -2917,7 +2941,7 @@ static XEN g_snd_sound_pointer(XEN snd)
   return(XEN_FALSE);
 }
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 static XEN g_snd_stdin_test(XEN str)
 {
   /* autotest stdin stuff since I can't figure out how to write stdin directly */
@@ -3168,6 +3192,32 @@ static XEN g_random(XEN val)
 static XEN g_get_internal_real_time(void) {return(C_TO_XEN_INT((int)clock()));}
 #endif
 
+#if HAVE_GUILE
+/* libguile/read.c */
+static XEN g_skip_block_comment(XEN ch, XEN port)
+{
+  int bang_seen = 0;
+  while (true)
+    {
+      int c;
+      c = scm_getc (port);
+      if (c == EOF)
+	{
+	  snd_warning("unterminated `#| ... |#' comment");
+	  return(XEN_FALSE);
+	}
+      if (c == '|')
+	bang_seen = 1;
+      else 
+	{
+	  if ((c == '#') && (bang_seen))
+	    return(XEN_FALSE);
+	  else bang_seen = 0;
+	}
+    }
+  return(XEN_FALSE);
+}
+#endif
 
 #ifdef XEN_ARGIFY_1
 #if HAVE_SCHEME && HAVE_DLFCN_H
@@ -3564,9 +3614,11 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe, g_mus_audio_describe_w, 0, 0, 0, H_mus_audio_describe);
 
   XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function");
+
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
-#if HAVE_GUILE
+
+#if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("snd-stdin-test", g_snd_stdin_test, 1, 0, 0, "internal testing function");
 #endif
 #endif
@@ -3839,21 +3891,29 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE("lgamma", g_lgamma_w, 1, 0, 0, H_lgamma);
 #endif
   XEN_DEFINE_PROCEDURE("bes-i0", g_i0_w,     1, 0, 0, H_i0);
+
 #if HAVE_GSL
   XEN_DEFINE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
   XEN_DEFINE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
   XEN_DEFINE_PROCEDURE("gsl-dht",    g_gsl_dht_w,    4, 0, 0, H_gsl_dht);
+
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("gsl-gegenbauer",  g_gsl_gegenbauer,  3, 0, 0, "internal test func");
 #endif
+
 #if HAVE_COMPLEX_TRIG && (!HAVE_RUBY)
   XEN_DEFINE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
 #endif
+
 #endif
+
 #if HAVE_GAUCHE
   XEN_DEFINE_PROCEDURE("random",    g_random_w, 1, 0, 0, "(random arg) -> random number between 0 and arg ");
   XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
   XEN_DEFINE_CONSTANT("internal-time-units-per-second", CLOCKS_PER_SEC, "clock speed");
+  XEN_EVAL_C_STRING("(define-syntax defmacro\
+                       (syntax-rules ()\
+                         ((_ name params . body) (define-macro (name . params) . body))))");
 #endif
 
 #if HAVE_SCHEME
@@ -3871,6 +3931,7 @@ This provides a way to set various sound-specific defaults. \n\
       (if (> (" S_channels " snd) 1) \n\
           (set! (" S_channel_style " snd) " S_channels_combined "))))"
 #endif
+
 #if HAVE_RUBY
   #define H_during_open_hook "$" S_during_open_hook " lambda do |fd, name, reason| ...; called after file is opened, \
 but before data has been read. \n\
@@ -3887,6 +3948,7 @@ This provides a way to set various sound-specific defaults. \n\
     end\n\
   end"
 #endif
+
 #if HAVE_FORTH
   #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \
 but before data has been read. \n\
@@ -3923,6 +3985,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                            (localtime (current-time))) \n\
                 (" S_listener_prompt ")))))"
 #endif
+
 #if HAVE_RUBY
   #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
 If it returns some non-false result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
@@ -3931,6 +3994,7 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
   false\n\
   end"
 #endif
+
 #if HAVE_FORTH
   #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
 If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
@@ -3990,6 +4054,7 @@ that name is presented in the New File dialog."
   g_init_gxfind();
 #endif
   g_init_run();
+
 #if DEBUGGING && HAVE_SCHEME  && USE_MOTIF
   g_init_xmix();
 #endif
@@ -4000,11 +4065,19 @@ that name is presented in the New File dialog."
   XEN_DEFINE_PROCEDURE("dlerror", g_dlerror_w, 0, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlinit", g_dlinit_w, 2, 0 ,0, "");
 #endif
+
 #if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE && HAVE_DLFCN_H && HAVE_DIRENT_H
   g_ladspa_to_snd();
 #endif
 
 #if HAVE_GUILE
+  {
+    /* Gauche and CL use '#| |#' for block comments, so implement them in Guile */
+    XEN proc;
+    proc = XEN_NEW_PROCEDURE("%skip-comment%", g_skip_block_comment, 2, 0, 0);
+    scm_read_hash_extend(C_TO_XEN_CHAR('|'), proc);
+  }
+
   XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
   XEN_EVAL_C_STRING("(read-set! keywords 'prefix)");
   XEN_EVAL_C_STRING("(print-enable 'source)");
@@ -4053,25 +4126,32 @@ that name is presented in the New File dialog."
   XEN_EVAL_C_STRING("(define (delete-file f) (sys-unlink f))");
   XEN_EVAL_C_STRING("(define version gauche-version)");
   XEN_EVAL_C_STRING("(define localtime sys-localtime)");
-  XEN_EVAL_C_STRING("(define current-time sys-gettimeofday)");
+  XEN_EVAL_C_STRING("(define current-time sys-time)");
   XEN_EVAL_C_STRING("(define strftime sys-strftime)");
 
   XEN_EVAL_C_STRING("(define (list-set! lis pos val)\
                        (set-car! (list-tail lis pos) val)\
                        val)");
-  XEN_EVAL_C_STRING("(define-syntax defmacro\
-                       (syntax-rules ()\
-                         ((_ name params . body) (define-macro (name . params) . body))))");
+
   XEN_EVAL_C_STRING("(define (make-procedure-with-setter get set)\
                        (let ((proc (lambda x (apply get x))))\
                          (set! (setter proc) set)\
                          proc))");
+
+  XEN_EVAL_C_STRING("(defmacro catch (sym thunk handler) `(with-error-handler ,handler ,thunk))");
+  /* TODO: does handler need to return #t? how to find/check error type? */
+
+  XEN_EVAL_C_STRING("(define (symbol->keyword key) (make-keyword (symbol->string key)))");
+  XEN_EVAL_C_STRING("(define (1- val) (- val 1))");
+  XEN_EVAL_C_STRING("(define (1+ val) (+ val 1))");
+  XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)"); /* SOMEDAY search list for format (etc) and load */
 
   XEN_EVAL_C_STRING("(define hook? list?)");
   XEN_EVAL_C_STRING("(define hook-empty? null?)");
   XEN_EVAL_C_STRING("(define (make-hook . args) (list))");
   XEN_EVAL_C_STRING("(defmacro add-hook! (a b) `(set! ,a (cons ,b ,a)))");
   XEN_EVAL_C_STRING("(defmacro reset-hook! (a) `(set! ,a (list)))");
+  XEN_EVAL_C_STRING("(define (run-hook hook . args) (for-each (lambda (p) (apply p args)) hook))");
 
   XEN_EVAL_C_STRING("(define (filter-list pred lis)\
                        (let loop ((lis lis)\
@@ -4079,6 +4159,7 @@ that name is presented in the New File dialog."
                          (cond ((null-list? lis) (reverse! r))\
                                ((pred (car lis)) (loop (cdr lis) (cons (car lis) r)))\
                                (else (loop (cdr lis) r)))))");
+
   XEN_EVAL_C_STRING("(defmacro remove-hook! (a b)\
                        `(set! ,a (filter-list (lambda (p) (eq? p ,b)) ,a)))");
 

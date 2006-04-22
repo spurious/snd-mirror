@@ -500,7 +500,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-21-Apr:  many .fs files thanks to Mike Scholz.\n\
+21-Apr:  many .fs files thanks to Mike Scholz (removed obsolete gfm directory).\n\
 15-Apr:  first portion of Gauche support.\n\
 12-Apr:  clm-load (ws.scm) for cm.\n\
 31-Mar:  rt-player.scm (Kjetil).\n\

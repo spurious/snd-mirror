@@ -32,7 +32,7 @@
 	(else (tree-for-each func (car tree))
 	      (tree-for-each func (cdr tree)))))
 
-(define (tree-for-each-reversed func tree)
+(define+ (tree-for-each-reversed func tree)
   "(tree-for-each-reversed func tree) applies func to every leaf of 'tree' moving in reverse through all the lists"
   (define (flatten lst)
     ;; there's probably a more elegant way to do this
@@ -65,7 +65,7 @@
         (mixes)))))
 
 
-(define* (find-mix sample #:optional (snd #f) (chn #f))
+(define* (find-mix sample :optional (snd #f) (chn #f))
   "(find-mix sample snd chn) returns the id of the mix at the given sample, or #f"
   (let ((mix-list (mixes (or snd (selected-sound) (car (sounds))) (or chn (selected-channel snd) 0))))
     (call-with-current-continuation
@@ -80,7 +80,7 @@
 
 ;;; -------- pan-mix --------
 
-(define* (pan-mix name #:optional (beg 0) (envelope 1.0) snd (chn 0) (auto-delete #f))
+(define* (pan-mix name :optional (beg 0) (envelope 1.0) snd (chn 0) (auto-delete #f))
   "(pan-mix file (start 0) (envelope 1.0) snd (chn 0) (auto-delete #f)) mixes 'file' into the sound 'snd'
 starting at start (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1).
 So, (pan-mix \"oboe.snd\" .1 '(0 0 1 1)) goes from all chan 0 to all chan 1.  If
@@ -164,21 +164,21 @@ is no longer accessible."
 	      (set! (mix-locked? new-mix) #t)))
       new-mix)))
 
-(define* (pan-mix-selection #:optional (beg 0) (envelope 1.0) snd (chn 0))
+(define* (pan-mix-selection :optional (beg 0) (envelope 1.0) snd (chn 0))
   "(pan-mix-selection (start 0) (envelope 1.0) snd (chn 0)) mixes the current selection  into the sound 'snd'
 starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1)."
   (if (not (selection?))
       (throw 'no-active-selection (list "pan-mix-selection"))
       (pan-mix (save-selection (snd-tempnam)) beg envelope snd chn #t)))
 
-(define* (pan-mix-region reg #:optional (beg 0) (envelope 1.0) snd (chn 0))
+(define* (pan-mix-region reg :optional (beg 0) (envelope 1.0) snd (chn 0))
   "(pan-mix-region reg (start 0) (envelope 1.0) snd (chn 0)) mixes the given region into the sound 'snd' 
 starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1)."
   (if (not (region? reg))
       (throw 'no-such-region (list "pan-mix-region" reg))
       (pan-mix (save-region reg (snd-tempnam)) beg envelope snd chn #t)))
 
-(define* (pan-mix-vct v #:optional (beg 0) (envelope 1.0) snd (chn 0))
+(define* (pan-mix-vct v :optional (beg 0) (envelope 1.0) snd (chn 0))
   "(pan-mix-vct v (start 0) (envelope 1.0) snd (chn 0)) mixes the vct data into the sound 'snd' 
 starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1)."
   (let* ((temp-file (snd-tempnam))
@@ -224,7 +224,7 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
       (throw 'no-such-mix (list "mix-maxamp" id))))
 	  
 
-(define* (snap-mix-to-beat #:optional (at-tag-position #f))
+(define* (snap-mix-to-beat :optional (at-tag-position #f))
   "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  reset mix-release-hook to cancel"
   (add-hook! mix-release-hook
 	     (lambda (id samps-moved)
@@ -340,7 +340,7 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
       (throw 'no-such-track (list "reverse-track" trk))))
 
 
-(define* (track->vct trk #:optional (chan 0))
+(define* (track->vct trk :optional (chan 0))
   "(track->vct track (chan 0)) places track data in vct"
   (if (track? trk)
       (if (< chan (track-chans trk))
@@ -355,7 +355,7 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
 	  (throw 'no-such-channel (list "track->vct" chan)))
       (throw 'no-such-track (list "track->vct" trk))))
 
-(define* (save-track trk filename #:optional (chan #t))
+(define* (save-track trk filename :optional (chan #t))
   "(save-track track filename (chan #t)) saves track data (as floats) in file filename"
   (if (track? trk)
       (let ((chans (track-chans trk)))
