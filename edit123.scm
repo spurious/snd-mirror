@@ -487,10 +487,9 @@
 ; + zoom in 
 (bind-key (char->integer #\+) 0 (lambda () (set! (x-bounds) 
 	                                                           (list (/ (selection-position) (srate))
-                                                                              (/ (+ (selection-position) (selection-frames)) (srate))) 
+                                                                              (/ (+ (selection-position) (selection-frames)) (srate)))) 
 								                                                              (cursor-on-left)
                                                                          )
-			)
 )
 
 ; - zoom out

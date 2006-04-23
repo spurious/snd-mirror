@@ -4,7 +4,7 @@
 (provide 'snd-snd-gl.scm)
 
 ;;; ---------------- gl-info ----------------
-(define (gl-info)
+(define+ (gl-info)
   ;; taken loosely from glxvisuals.c
   "(gl-info) prints out GL-related info"
   (define (class-of n)

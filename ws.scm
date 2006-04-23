@@ -216,6 +216,9 @@ returning you to the true top-level."
            (list (*definstrument-hook* name targs))
            (list)))))
 
+(defmacro definstrument+ (args . body)
+  `(definstrument ,args ,@(cdr body)))
+
 
 ;;; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
 
@@ -414,6 +417,9 @@ returning you to the true top-level."
 
 ;;; -------- def-clm-struct --------
 
+(if (not (defined? 'add-clm-type)) (define (add-clm-type . args) #f)) ; these are in snd-run
+(if (not (defined? 'add-clm-field)) (define (add-clm-field . args) #f))
+
 (defmacro def-clm-struct (name . fields)
   ;; (def-clm-struct fd loc (chan 1))
   ;; (def-clm-struct hiho i x (s "hiho") (ii 3 :type int) (xx 0.0 :type float))
@@ -431,7 +437,6 @@ returning you to the true top-level."
 				 (list-ref n 3)
 				 #f))
 			   fields)))
-    (display (format #f "fields: ~A" fields))
     `(begin
        (define ,(string->symbol (string-append sname "?"))
 	 (lambda (obj)

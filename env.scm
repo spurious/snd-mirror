@@ -500,6 +500,6 @@ repetition to be in reverse."
 	(if db 
 	    (if (< rms-val .00001)
 		(set! e (cons -100.0 e))
-		(set! e (cons (* 20.0 (/ (log rms-val) (log 10.0))))))
+		(set! e (cons (* 20.0 (/ (log rms-val) (log 10.0))) e)))
 	    (set! e (cons rms-val e)))))))
 

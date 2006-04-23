@@ -46,10 +46,10 @@
 				 (tap (fcomb-delay ,comb)))
 		       (fcomb-feedback ,comb)))))
 
-(definstrument (freeverb #:optional
+(definstrument (freeverb :optional
 		   (startime 0)
 		   (dur (+ 1.0 (mus-sound-duration (mus-file-name *reverb*))))
-		   #:key
+		   :key
 		   (room-decay 0.5)
 		   (damping 0.5)
 		   (global 0.3)

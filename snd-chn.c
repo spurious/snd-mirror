@@ -13,6 +13,7 @@
  * TODO: audio mixer settings dialog (needed especially in alsa!)
  *
  * PERHAPS: if marks, show ticks on x axis or some way to move to each easily (clickable box)
+ * PERHAPS: x-axis-as-date (would need a way to set the start time)
  */
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
@@ -5207,7 +5208,7 @@ static XEN g_set_cursor(XEN on, XEN snd_n, XEN chn_n, XEN edpos)
   return(channel_set(snd_n, chn_n, on, CP_CURSOR, S_setB S_cursor));
 }
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
 static XEN g_set_cursor_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   if (XEN_NOT_BOUND_P(arg2))
@@ -5219,6 +5220,23 @@ static XEN g_set_cursor_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
       if (XEN_NOT_BOUND_P(arg4))
 	return(g_set_cursor(arg3, arg1, arg2, XEN_UNDEFINED));
       else return(g_set_cursor(arg4, arg1, arg2, arg3));
+    }}
+}
+#endif
+#if HAVE_GAUCHE
+static XEN g_set_cursor_reversed(XEN *argv, int argc, void *self)
+{
+  XEN args[4];
+  xen_gauche_load_args(args, argc, 4, argv);
+  if (XEN_NOT_BOUND_P(args[1]))
+    return(g_set_cursor(args[0], XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+  else {
+    if (XEN_NOT_BOUND_P(args[2]))
+      return(g_set_cursor(args[1], args[0], XEN_UNDEFINED, XEN_UNDEFINED));
+    else {
+      if (XEN_NOT_BOUND_P(args[3]))
+	return(g_set_cursor(args[2], args[0], args[1], XEN_UNDEFINED));
+      else return(g_set_cursor(args[3], args[0], args[1], args[2]));
     }}
 }
 #endif

@@ -13,7 +13,7 @@
   "(cancel-auto-save) turns off the auto-save mechanism"
   (set! auto-saving #f))
 
-(define (auto-save)
+(define+ (auto-save)
   "(auto-save) starts watching files, automatically saving backup copies as edits accumulate"
 
   (define (auto-save-temp-name snd)

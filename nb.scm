@@ -35,7 +35,7 @@
 	  (gdbm-delete! ptr file)
 	  (gdbm-close! ptr)))))
 
-(define (prune-db)
+(define+ (prune-db)
   "(prune-db) cleans up the nb (gdbm) data base by removing references to non-existent files"
   (define (collect-files ptr key files)
     (if key
@@ -60,7 +60,7 @@
 
 (define nb-mouse-response-time 0)
 
-(define (files-popup-info type position name)
+(define+ (files-popup-info type position name)
   "(files-popup-info type position name) is intended as a mouse-enter-label hook function. 
 It causes a description of the file to popup when the mouse crosses the filename"
 

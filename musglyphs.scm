@@ -157,7 +157,7 @@
 (define (music-font score) #f)
 (define g-mustext (lambda args #f))
 (define (output-type score) #f)
-(define old-declare declare)
+(if (defined? 'declare) (define old-declare declare) (define old-declare #f))
 (define (declare args) #f)
 (define sound-comment comment)
 (define comment

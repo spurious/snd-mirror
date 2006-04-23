@@ -1012,7 +1012,7 @@ in a hurry use: (clm-channel (make-comb .8 32)) instead"
 
 ;;; or change the comb length via an envelope:
 
-(define (zcomb scaler size pm)
+(define+ (zcomb scaler size pm)
   "(zcomb scaler size pm) returns a comb filter whose length varies according to an 
 envelope: (map-channel (zcomb .8 32 '(0 0 1 10)))"
   (define (max-envelope-1 e mx)
@@ -1454,7 +1454,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 
 ;;; -------- swap selection chans
 
-(define (swap-selection-channels)
+(define+ (swap-selection-channels)
   "(swap-selection-channels) swaps the currently selected data's channels"
   (define find-selection-sound 
     (lambda (not-this)
@@ -1825,7 +1825,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 		    (< (abs (- samp0 samp2)) (/ local-max 2)))
 	       (return (1- ctr)))))))))
 
-(define (remove-clicks)
+(define+ (remove-clicks)
   "(remove-clicks) tries to find and smooth-over clicks"
   ;; this is very conservative -- the click detection limits above could be set much tighter in many cases
   (define (remove-click loc)
@@ -1884,7 +1884,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	(set! last1 n)
 	rtn))))
 
-(define (find-pitch pitch)
+(define+ (find-pitch pitch)
   "(find-pitch pitch) finds the point in the current sound where 'pitch' (in Hz) predominates -- C-s (find-pitch 300) 
 In most cases, this will be slightly offset from the true beginning of the note"
   (define (interpolated-peak-offset la ca ra)

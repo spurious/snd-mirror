@@ -110,7 +110,7 @@
 		      (set! sign (- sign))))
 		  sum))))))
 
-(define* (mixer-poly mx #:rest coeffs)
+(define* (mixer-poly mx :rest coeffs)
   (let* ((n (length coeffs))
 	 (nmx (make-scalar-mixer (mus-length mx) (list-ref coeffs (1- n))))
 	 (x (mixer* mx 1.0)))

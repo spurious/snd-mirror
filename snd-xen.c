@@ -11,6 +11,22 @@
  *   In Scheme, filter is defined in srfi-1 so we need protection against that
  */
 
+/* TODO in Gauche:
+ *    procedure->info as alist usable in snd-run for reader
+ *    applicable smob
+ *    stacktrace and errors->listener
+ *    add-load-path for .snd_gauche
+ *    unwind-protects around scm_apply (snd-xen g_call)
+ *    snd-test/testsnd/compsnd/valgrind
+ *    optimizer
+ *    check prefs and save/restore
+ *    various smob free/print cases
+ *    protect from gc (how does this gc work?)
+ *    gnu-style macs to protect evaluation in xen.h
+ *    check enved base in src/amp cases
+ *    sndscm: .snd_forth and fs doc in general
+ *    why is this fatal: header read failed: /home/bil/sf1/Pnossnd.aif: no SSND (data) chunk
+ */
 
 /* -------- protect XEN vars from GC -------- */
 
@@ -2941,7 +2957,7 @@ static XEN g_snd_sound_pointer(XEN snd)
   return(XEN_FALSE);
 }
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
 static XEN g_snd_stdin_test(XEN str)
 {
   /* autotest stdin stuff since I can't figure out how to write stdin directly */
@@ -3604,7 +3620,6 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
  void Init_libgl(void);
 #endif
 
-
 #if DEBUGGING && HAVE_SCHEME
 void g_init_xmix(void);
 #endif
@@ -3618,7 +3633,7 @@ void g_initialize_gh(void)
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
   XEN_DEFINE_PROCEDURE("snd-stdin-test", g_snd_stdin_test, 1, 0, 0, "internal testing function");
 #endif
 #endif
@@ -4145,6 +4160,10 @@ that name is presented in the New File dialog."
   XEN_EVAL_C_STRING("(define (1- val) (- val 1))");
   XEN_EVAL_C_STRING("(define (1+ val) (+ val 1))");
   XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)"); /* SOMEDAY search list for format (etc) and load */
+  XEN_EVAL_C_STRING("(define (debug-enable . args) #f)");
+  XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
+  XEN_EVAL_C_STRING("(define (debug-set! . args) #f)");
+  XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
 
   XEN_EVAL_C_STRING("(define hook? list?)");
   XEN_EVAL_C_STRING("(define hook-empty? null?)");
@@ -4152,6 +4171,7 @@ that name is presented in the New File dialog."
   XEN_EVAL_C_STRING("(defmacro add-hook! (a b) `(set! ,a (cons ,b ,a)))");
   XEN_EVAL_C_STRING("(defmacro reset-hook! (a) `(set! ,a (list)))");
   XEN_EVAL_C_STRING("(define (run-hook hook . args) (for-each (lambda (p) (apply p args)) hook))");
+  XEN_EVAL_C_STRING("(define hook->list list-copy)");
 
   XEN_EVAL_C_STRING("(define (filter-list pred lis)\
                        (let loop ((lis lis)\

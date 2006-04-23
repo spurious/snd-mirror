@@ -115,7 +115,7 @@
 
 ;;; -------- crop (trims front and back)
 
-(define* (crop-one-channel #:optional snd chn)
+(define* (crop-one-channel :optional snd chn)
   (if (< (length (marks snd chn)) 2)
       (report-in-minibuffer "crop needs start and end marks" snd)
       (as-one-edit

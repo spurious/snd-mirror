@@ -1636,9 +1636,13 @@ XEN_OBJECT_TYPE xen_gauche_new_type(const char *name, ScmClassPrintProc print, S
 bool xen_gauche_type_p(XEN obj, XEN_OBJECT_TYPE type)
 {
   smob *s;
-  s = SCM_FOREIGN_POINTER_REF(smob *, obj);
-  return((s) &&
-	 (s->type == type));
+  if (SCM_FOREIGN_POINTER_P(obj))
+    {
+      s = SCM_FOREIGN_POINTER_REF(smob *, obj);
+      return((s) &&
+	     (s->type == type));
+    }
+  return(false);
 }
 
 void xen_gauche_provide(const char *feature)

@@ -49,7 +49,7 @@
 ;;     editing func with fallback 
 ;;     resynthesis func with fallback
 
-(define (pvocoder pv input)
+(define+ (pvocoder pv input)
   "(pvocoder pv input) is the phase-vocoder generator associated with make-pvocoder"
 
   ;; pvocoder list accessors

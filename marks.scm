@@ -248,7 +248,7 @@
 
 ;;; -------- eval-between-marks
 
-(define (eval-between-marks func)
+(define+ (eval-between-marks func)
   "(eval-between-marks func) evaluates func between the leftmost marks; func takes one arg, the original sample"
   (define (find-if pred l) ; this is from guile/ice-9/common-list.scm but returns l not car l
     (cond ((null? l) #f)

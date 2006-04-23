@@ -368,7 +368,7 @@
 (define chorus-amount 20.0)
 (define chorus-speed 10.0)
 
-(define (chorus)
+(define+ (chorus)
   "(chorus) tries to produce the chorus sound effect"
   (define (make-flanger)
     (let* ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))

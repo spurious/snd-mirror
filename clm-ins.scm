@@ -14,7 +14,7 @@
 ;;;  CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
 ;;;  translated from CLM's pluck.ins
 
-(definstrument (pluck start dur freq amp-1 :optional (weighting .5) (lossfact .9))
+(definstrument+ (pluck start dur freq amp-1 :optional (weighting .5) (lossfact .9))
   "(pluck start dur freq amp weighting lossfact) implements the Jaffe-Smith plucked string physical model. 
 'weighting' is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5=shortest decay. 
 Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. 
@@ -310,7 +310,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 ;;; -------- PQWVOX
 ;;; translation of CLM pqwvox.ins (itself translated from MUS10 of MLB's waveshaping voice instrument (using phase quadrature waveshaping))
 
-(definstrument (pqw-vox beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes)
+(definstrument+ (pqw-vox beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes)
   "(pqw-vox beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes) produces 
 vocal sounds using phase quadrature waveshaping"
 

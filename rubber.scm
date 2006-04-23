@@ -10,7 +10,7 @@
 (define extension 10.0)
 (define show-details #f)
 
-(define* (add-named-mark samp name #:optional snd chn)
+(define* (add-named-mark samp name :optional snd chn)
   (let ((m (add-mark samp snd chn)))
     (set! (mark-name m) name)
     m))
@@ -92,7 +92,7 @@
 	(set! x (+ x xinc)))))
       data)))
 
-(define* (rubber-sound stretch #:optional snd chn)
+(define* (rubber-sound stretch :optional snd chn)
   ;; prepare sound (get rid of low freqs, resample)
   
   (as-one-edit

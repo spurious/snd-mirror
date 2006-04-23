@@ -295,6 +295,7 @@ static Locus tick_grf_x(double val, axis_info *ap, x_axis_style_t style, int sra
     {
     case X_AXIS_AS_CLOCK:
     case X_AXIS_IN_SECONDS: 
+    default:
       res = (int)(ap->x_base + val * ap->x_scale); 
       break;
     case X_AXIS_IN_BEATS: 
@@ -707,6 +708,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	{
 	case X_AXIS_AS_CLOCK:
 	case X_AXIS_IN_SECONDS: 
+	default:
 	  tdx = describe_ticks(ap->x_ticks, ap->x0, ap->x1, num_ticks, grid_scale); 
 	  break;
 	case X_AXIS_IN_SAMPLES: 
@@ -1599,7 +1601,7 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
   return(label);
 }
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
 static XEN g_set_x_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   if (XEN_NOT_BOUND_P(arg2))
@@ -1613,6 +1615,26 @@ static XEN g_set_x_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 	  if (XEN_NOT_BOUND_P(arg4))
 	    return(g_set_x_axis_label(arg3, arg1, arg2, XEN_UNDEFINED));
 	  else return(g_set_x_axis_label(arg4, arg1, arg2, arg3));
+	}
+    }
+}
+#endif
+#if HAVE_GAUCHE
+static XEN g_set_x_axis_label_reversed(XEN *argv, int argc, void *self)
+{
+  XEN args[4];
+  xen_gauche_load_args(args, argc, 4, argv);
+  if (XEN_NOT_BOUND_P(args[1]))
+    return(g_set_x_axis_label(args[0], XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+  else
+    {
+      if (XEN_NOT_BOUND_P(args[2]))
+	return(g_set_x_axis_label(args[1], args[0], XEN_UNDEFINED, XEN_UNDEFINED));
+      else
+	{
+	  if (XEN_NOT_BOUND_P(args[3]))
+	    return(g_set_x_axis_label(args[2], args[0], args[1], XEN_UNDEFINED));
+	  else return(g_set_x_axis_label(args[3], args[0], args[1], args[2]));
 	}
     }
 }
@@ -1647,7 +1669,7 @@ static XEN g_set_y_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
   return(label);
 }
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
 static XEN g_set_y_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   if (XEN_NOT_BOUND_P(arg2))
@@ -1661,6 +1683,26 @@ static XEN g_set_y_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 	  if (XEN_NOT_BOUND_P(arg4))
 	    return(g_set_y_axis_label(arg3, arg1, arg2, XEN_UNDEFINED));
 	  else return(g_set_y_axis_label(arg4, arg1, arg2, arg3));
+	}
+    }
+}
+#endif
+#if HAVE_GAUCHE
+static XEN g_set_y_axis_label_reversed(XEN *argv, int argc, void *self)
+{
+  XEN args[4];
+  xen_gauche_load_args(args, argc, 4, argv);
+  if (XEN_NOT_BOUND_P(args[1]))
+    return(g_set_y_axis_label(args[0], XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+  else
+    {
+      if (XEN_NOT_BOUND_P(args[2]))
+	return(g_set_y_axis_label(args[1], args[0], XEN_UNDEFINED, XEN_UNDEFINED));
+      else
+	{
+	  if (XEN_NOT_BOUND_P(args[3]))
+	    return(g_set_y_axis_label(args[2], args[0], args[1], XEN_UNDEFINED));
+	  else return(g_set_y_axis_label(args[3], args[0], args[1], args[2]));
 	}
     }
 }

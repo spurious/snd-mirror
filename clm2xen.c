@@ -202,10 +202,8 @@ static bool local_arity_ok(XEN proc, int args) /* from snd-xen.c minus (inconven
 {
   XEN arity;
   int rargs;
-#if (!HAVE_RUBY && !HAVE_FORTH)
-  int oargs, restargs;
-#endif
   arity = XEN_ARITY(proc);
+
 #if HAVE_RUBY
   rargs = XEN_TO_C_INT(arity);
   return(xen_rb_arity_ok(rargs, args));
@@ -215,16 +213,31 @@ static bool local_arity_ok(XEN proc, int args) /* from snd-xen.c minus (inconven
     return(false);
   */
 #endif
-#if HAVE_SCHEME
-  rargs = XEN_TO_C_INT(XEN_CAR(arity));
-  oargs = XEN_TO_C_INT(XEN_CADR(arity));
-  restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
-  if (rargs > args) return(false);
-  if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
-#endif
+
 #if HAVE_FORTH
   rargs = XEN_TO_C_INT(arity);
   return (rargs == args);
+#endif
+
+#if HAVE_GUILE
+  {
+    int oargs, restargs;
+    rargs = XEN_TO_C_INT(XEN_CAR(arity));
+    oargs = XEN_TO_C_INT(XEN_CADR(arity));
+    restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
+    if (rargs > args) return(false);
+    if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
+  }
+#endif
+
+#if HAVE_GAUCHE
+  {
+    int oargs;
+    rargs = XEN_TO_C_INT(XEN_CAR(arity));
+    oargs = XEN_TO_C_INT(XEN_CDR(arity));
+    if (rargs > args) return(false);
+    if ((rargs + oargs) < args) return(false);
+  }
 #endif
   return(true);
 }

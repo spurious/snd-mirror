@@ -177,7 +177,7 @@
 ;;;
 ;;; some examples of using this envelope editor
 
-(define* (play-with-envs #:optional (sound #f))
+(define* (play-with-envs :optional (sound #f))
   "(play-with-envs snd) sets channel amps during playback from the associated enved envelopes"
   (let ((chans (chans sound)))
     (do ((chan 0 (1+ chan)))

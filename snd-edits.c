@@ -4266,7 +4266,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 		  code = ptree_code(cp->ptrees[FRAGMENT_PTREE_INDEX(ed, j)]);
 		  if (XEN_LIST_P(code))
 		    fprintf(outp, ", code: %s", XEN_AS_STRING(code));
-#if HAVE_SCHEME
+#if HAVE_GUILE
 		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j)];
 		  if (XEN_PROCEDURE_P(code))
 		    fprintf(outp, ", init: %s", XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code)));
@@ -4846,7 +4846,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 #if HAVE_SCHEME || HAVE_FORTH
 	      else fprintf(fd, " #f");
 #endif
-#if HAVE_SCHEME
+#if HAVE_GUILE
 	      if (ed->edit_type == PTREE_EDIT)
 		{
 		  XEN code;
@@ -7766,7 +7766,7 @@ the edit lists '((global-pos data-num local-pos local-end scaler rmp0 rmp1 type)
   return(res);
 }
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
 static XEN g_edit_fragment_type_name(XEN type)
 {
   int typ;
@@ -8659,7 +8659,7 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   return(val);
 }
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
 static XEN g_set_sample_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   if (XEN_NOT_BOUND_P(arg2))
@@ -8677,6 +8677,31 @@ static XEN g_set_sample_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 	      if (XEN_NOT_BOUND_P(arg5)) 
 		return(g_set_sample(arg1, arg4, arg2, arg3, XEN_UNDEFINED)); 
 	      else return(g_set_sample(arg1, arg5, arg2, arg3, arg4));
+	    }
+	}
+    }
+}
+#endif
+#if HAVE_GAUCHE
+static XEN g_set_sample_reversed(XEN *argv, int argc, void *self)
+{
+  XEN args[5];
+  xen_gauche_load_args(args, argc, 5, argv);
+  if (XEN_NOT_BOUND_P(args[1]))
+    return(g_set_sample(XEN_UNDEFINED, args[0], XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+  else
+    {
+      if (XEN_NOT_BOUND_P(args[2]))
+	return(g_set_sample(args[0], args[1], XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+      else 
+	{
+	  if (XEN_NOT_BOUND_P(args[3])) 
+	    return(g_set_sample(args[0], args[2], args[1], XEN_UNDEFINED, XEN_UNDEFINED)); 
+	  else 
+	    {
+	      if (XEN_NOT_BOUND_P(args[4])) 
+		return(g_set_sample(args[0], args[3], args[1], args[2], XEN_UNDEFINED)); 
+	      else return(g_set_sample(args[0], args[4], args[1], args[2], args[3]));
 	    }
 	}
     }
@@ -8870,7 +8895,7 @@ history position to read (defaults to current position)."
   return(samples_to_vct_1(samp_0, samps, snd_n, chn_n, edpos, S_samples));
 }
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
 static XEN g_set_samples_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9, XEN arg10)
 {
   /* (set! (samples start samps [snd chn trunc edname infilechan edpos delete]) vect) */
@@ -8913,6 +8938,53 @@ static XEN g_set_samples_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN ar
 	    }
 	}
     }
+}
+#endif
+#if HAVE_GAUCHE
+static XEN g_set_samples_reversed(XEN *argv, int argc, void *self)
+{
+  XEN args[10];
+  xen_gauche_load_args(args, argc, 10, argv);
+  if (XEN_NOT_BOUND_P(args[3]))
+    return(g_set_samples(args[0], args[1], args[2], 
+			 XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+  else
+    {
+      if (XEN_NOT_BOUND_P(args[4]))
+	return(g_set_samples(args[0], args[1], args[3], args[2], 
+			     XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+      else 
+	{
+	  if (XEN_NOT_BOUND_P(args[5])) 
+	    return(g_set_samples(args[0], args[1], args[4], args[2], args[3], 
+				 XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+	  else
+	    {
+	      if (XEN_NOT_BOUND_P(args[6])) 
+		return(g_set_samples(args[0], args[1], args[5], args[2], args[3], args[4], 
+				     XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+	      else
+		{
+		  if (XEN_NOT_BOUND_P(args[7])) 
+		    return(g_set_samples(args[0], args[1], args[6], args[2], args[3], args[4], args[5], 
+					 XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+		  else
+		    {
+		      if (XEN_NOT_BOUND_P(args[8])) 
+			return(g_set_samples(args[0], args[1], args[7], args[2], args[3], args[4], args[5], args[6],
+					     XEN_UNDEFINED, XEN_UNDEFINED));
+		      else 
+			{
+			  if (XEN_NOT_BOUND_P(args[9]))
+			    return(g_set_samples(args[0], args[1], args[8], args[2], args[3], args[4], args[5], args[6], args[7], XEN_UNDEFINED));
+			  else return(g_set_samples(args[0], args[1], args[9], args[2], args[3], args[4], args[5], args[6], args[7], args[8]));
+			}
+		    }
+		}
+	    }
+	}
+    }
+
 }
 #endif
 
@@ -9537,7 +9609,7 @@ void g_init_edits(void)
 
   XEN_DEFINE_PROCEDURE(S_save_edit_history,            g_save_edit_history_w,            1, 2, 0, H_save_edit_history);
   XEN_DEFINE_PROCEDURE(S_edit_fragment,                g_edit_fragment_w,                0, 3, 0, H_edit_fragment);
-#if HAVE_SCHEME
+#if HAVE_GUILE
   XEN_DEFINE_PROCEDURE("edit-fragment-type-name",      g_edit_fragment_type_name,        1, 0, 0, "internal testing function");
 #endif
   XEN_DEFINE_PROCEDURE(S_undo,                         g_undo_w,                         0, 3, 0, H_undo);
