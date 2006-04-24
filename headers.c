@@ -5638,6 +5638,7 @@ const char *mus_header_original_format_name(int format, int type)
 	}
       break;
     case MUS_AIFC:
+      aifc_format[4] = 0;
 #if MUS_LITTLE_ENDIAN
       sprintf(aifc_format, "%c%c%c%c", format & 0xff, (format >> 8) & 0xff, (format >> 16) & 0xff, (format >> 24) & 0xff);
 #else

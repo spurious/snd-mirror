@@ -4546,7 +4546,11 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 		  cp->edit_hook = XEN_DEFINE_SIMPLE_HOOK(0);
 		  cp->edit_hook_loc = snd_protect(cp->edit_hook);
 		}
+#if HAVE_GAUCHE
+	      return(XEN_HOOK_PROCEDURES(cp->edit_hook));
+#else
 	      return(cp->edit_hook);
+#endif
 	      break;
 	    case CP_AFTER_EDIT_HOOK:
 	      if (!(XEN_HOOK_P(cp->after_edit_hook)))
@@ -4554,7 +4558,11 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 		  cp->after_edit_hook = XEN_DEFINE_SIMPLE_HOOK(0);
 		  cp->after_edit_hook_loc = snd_protect(cp->after_edit_hook);
 		}
+#if HAVE_GAUCHE
+	      return(XEN_HOOK_PROCEDURES(cp->after_edit_hook));
+#else
 	      return(cp->after_edit_hook);
+#endif
 	      break;
 	    case CP_UNDO_HOOK:               
 	      if (!(XEN_HOOK_P(cp->undo_hook)))
@@ -4562,7 +4570,11 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 		  cp->undo_hook = XEN_DEFINE_SIMPLE_HOOK(0);
 		  cp->undo_hook_loc = snd_protect(cp->undo_hook);
 		}
+#if HAVE_GAUCHE
+	      return(XEN_HOOK_PROCEDURES(cp->undo_hook));
+#else
 	      return(cp->undo_hook);
+#endif
 	      break;
 	    case CP_SHOW_Y_ZERO:             return(C_TO_XEN_BOOLEAN(cp->show_y_zero));                        break;
 	    case CP_SHOW_GRID:               return(C_TO_XEN_BOOLEAN((bool)(cp->show_grid)));                  break;

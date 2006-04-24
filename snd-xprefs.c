@@ -134,15 +134,16 @@ static void handle_radio_button(prefs_info *prf, const char *value)
   int which = -1;
   w = find_radio_button(prf->toggle, value, &which);
   if (w)
-    XmToggleButtonSetState(w, true, false);
-  else fprintf(stderr, "can't find %s\n", value);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
     {
-      /* motif docs are incorrect -- the set above does not unset the currently set radio button */
-      XmToggleButtonSetState(prf->radio_button, false, false);
-      prf->radio_button = w;
+      XmToggleButtonSetState(w, true, false);
+      if ((prf->radio_button) &&
+	  (XmIsToggleButton(prf->radio_button)) &&
+	  (w != prf->radio_button))
+	{
+	  /* motif docs are incorrect -- the set above does not unset the currently set radio button */
+	  XmToggleButtonSetState(prf->radio_button, false, false);
+	  prf->radio_button = w;
+	}
     }
 }
 
@@ -1613,6 +1614,7 @@ static void preferences_reset_callback(Widget w, XtPointer context, XtPointer in
 {
   clear_prefs_dialog_error();
   snd_set_global_defaults(true); 
+  /* TODO: all the local variables also need to be reset to default values, and things like use_full_duration */
   reflect_prefs();
   prefs_unsaved = false;
   if (prefs_saved_filename) 
@@ -3015,7 +3017,6 @@ static void initial_bounds_text(prefs_info *prf)
   char *str;
   str = XmTextFieldGetString(prf->text);
   sscanf(str, "%f : %f", &beg, &dur);
-  fprintf(stderr, "beg: %f, dur: %f\n", beg, dur);
 #if HAVE_GUILE
   if (!(XEN_DEFINED_P("prefs-initial-beg")))
     XEN_LOAD_FILE_WITH_PATH("extensions.scm");

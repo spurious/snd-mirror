@@ -1959,7 +1959,7 @@ static char *snd_finder(const char *name, bool got_help)
   char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(defmacro ", "(defmacro* "};
   dirs = XEN_EVAL_C_STRING("%load-path");
 #endif
-#if HAVE_GAUCHE || (!HAVE_EXTENSION_LANGUAGE)
+#if HAVE_GAUCHE
   #define NUM_DEFINES 5
   #define TRAILER " "
   char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(defmacro ", "(defmacro* "};

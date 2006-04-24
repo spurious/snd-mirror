@@ -1461,8 +1461,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_UNDEFINED                SCM_UNDEFINED
 /* XEN_DEFINED_P is used in the sense of "is this identifier (a string) defined" */
 /*   as a function argument, XEN_UNDEFINED is a marker that the given argument was not supplied */
-#define XEN_DEFINED_P(Name)          (!(SCM_UNDEFINEDP(SCM_INTERN(Name)) || SCM_UNBOUNDP(SCM_INTERN(Name))))
-
+#define XEN_DEFINED_P(Name)          (Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(Name)), false) != NULL)
 /* in Gauche, undefined != unbound (SCM_UNDEFINED, SCM_UNBOUND), but the distinction is blurred in other cases */
 /* XEN_NOT_BOUND_P is applied to XEN objects, not strings */
 #define XEN_BOUND_P(Arg)             (!(SCM_UNDEFINEDP(Arg)))
@@ -1517,15 +1516,21 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_NUMBER_P(Arg)            SCM_NUMBERP(Arg)
 #define XEN_ZERO                     SCM_MAKE_INT(0)
 #define XEN_INTEGER_P(Arg)           SCM_INTEGERP(Arg)
-#define XEN_TO_C_INT(a)              SCM_INT_VALUE(a)
+
+/* Gauche "ints" are apparently 29-bit quantities -- might have to stick with ULONG everywhere */
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define XEN_TO_C_INT(a)               ({ XEN _xen_ga_9_ = a; (SCM_INTP(_xen_ga_9_) ? SCM_INT_VALUE(_xen_ga_9_) : Scm_GetIntegerU(_xen_ga_9_)); })
   #define XEN_TO_C_INT_OR_ELSE(a, b)    ({ XEN _xen_ga_1_ = a; ((XEN_INTEGER_P(_xen_ga_1_)) ? XEN_TO_C_INT(_xen_ga_1_) : b); })
   #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ({ XEN _xen_ga_2_ = a; ((XEN_NUMBER_P(_xen_ga_2_)) ? XEN_TO_C_DOUBLE(_xen_ga_2_) : b); })
+  #define C_TO_XEN_INT(a)               ({ int _xen_ga_8_ = a; \
+                                            (SCM_SMALL_INT_FITS(_xen_ga_8_)) ? \
+                                              SCM_MAKE_INT(_xen_ga_8_) : Scm_MakeIntegerU((unsigned long)_xen_ga_8_); })
 #else
-  #define XEN_TO_C_INT_OR_ELSE(a, b)   ((XEN_INTEGER_P(a)) ? XEN_TO_C_INT(a) : b)
+  #define XEN_TO_C_INT(a)               (SCM_INTP(a) ? SCM_INT_VALUE(a) : Scm_GetIntegerU(a))
+  #define XEN_TO_C_INT_OR_ELSE(a, b)    ((XEN_INTEGER_P(a)) ? XEN_TO_C_INT(a) : b)
   #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ((XEN_NUMBER_P(a)) ? XEN_TO_C_DOUBLE(a) : b)
+  #define C_TO_XEN_INT(a)               (SCM_SMALL_INT_FITS(a)) ? SCM_MAKE_INT(a) : Scm_MakeIntegerU((unsigned long)a)
 #endif
-#define C_TO_XEN_INT(a)              SCM_MAKE_INT(a)
 #define XEN_DOUBLE_P(Arg)            SCM_REALP(Arg)
 #define XEN_TO_C_DOUBLE(a)           xen_to_c_double(a)
 #define C_TO_XEN_DOUBLE(a)           Scm_MakeFlonum(a)
@@ -1533,7 +1538,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define C_TO_XEN_ULONG(a)            Scm_MakeIntegerU((unsigned long)a)
 #define XEN_ULONG_P(Arg)             SCM_INTEGERP(Arg)
 #define XEN_EXACT_P(Arg)             SCM_EXACTP(Arg)
-#define C_TO_XEN_LONG_LONG(a)        (SCM_OBJ(Scm_MakeBignumFromSI(a)))
+#define C_TO_XEN_LONG_LONG(a)        Scm_MakeBignumFromSI(a)
 #define XEN_COMPLEX_P(Arg)           SCM_COMPLEXP(Arg)
 
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
@@ -1628,7 +1633,8 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #define XEN_HOOK_P(Arg)                    (!XEN_FALSE_P(Arg) && XEN_LIST_P(SCM_GLOC_GET(SCM_GLOC(Arg))))
 #define XEN_DEFINE_HOOK(Name, Arity, Help) XEN_DEFINE(Name, XEN_EMPTY_LIST)
-#define XEN_DEFINE_SIMPLE_HOOK(Arity)      XEN_DEFINE("simple-hook", XEN_EMPTY_LIST)
+/* "simple hooks are for channel-local hooks (unnamed, accessed through the channel) */
+#define XEN_DEFINE_SIMPLE_HOOK(Arity)      Scm_Define(Scm_UserModule(), Scm_Gensym(SCM_STRING(C_TO_XEN_STRING("snd-hook"))), XEN_EMPTY_LIST)
 #define XEN_HOOKED(Arg)                    XEN_NOT_NULL_P(SCM_GLOC_GET(SCM_GLOC(Arg)))
 #define XEN_CLEAR_HOOK(Arg)                SCM_GLOC_SET(SCM_GLOC(Arg), XEN_EMPTY_LIST)
 #define XEN_HOOK_PROCEDURES(Arg)           SCM_OBJ(SCM_GLOC_GET(SCM_GLOC(Arg)))

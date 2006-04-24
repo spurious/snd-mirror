@@ -2751,7 +2751,6 @@ static void initial_bounds_text(prefs_info *prf)
   char *str;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
   sscanf(str, "%f : %f", &beg, &dur);
-  fprintf(stderr, "beg: %f, dur: %f\n", beg, dur);
 #if HAVE_GUILE
   if (!(XEN_DEFINED_P("prefs-initial-beg")))
     XEN_LOAD_FILE_WITH_PATH("extensions.scm");

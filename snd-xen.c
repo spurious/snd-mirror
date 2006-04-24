@@ -18,16 +18,27 @@
  *    unwind-protects around scm_apply (snd-xen g_call)
  *    snd-test/testsnd/compsnd/valgrind
  *    optimizer
- *    check prefs and save/restore
+ *    check prefs and save/restore: these are broken
+ *       even in Guile, 'Reset' doesn't set "full duration" or bounds to its default -- should it?
  *    various smob free/print cases
  *    protect from gc (how does this gc work?)
- *    check enved base in src/amp cases
+ *
  *    why is this fatal: header read failed: /home/bil/sf1/Pnossnd.aif: no SSND (data) chunk
- *    what was the draw-current-window bug?
+ *      probably need "conditions" and "guard"
+ *
+ *    simple-hook is broken (undo-hook in draw.scm):
+
+    (add-hook! (undo-hook 0 0) (lambda (s c) (snd-print "undo")))
+
+    *** ERROR: invalid application: (#f 0 0 (#<closure (make-current-window-display #f #f)> . #<gloc user##simple-hook>))
+
+      may have to use an smob for hooks throughout
+
  *    are off_t's ok -- why all the off_t related- errors in snd-test?
+ *      this appears to be a format problem
+ *
  *    why does gauche configure get wrong off_t size?
  *    how to search load path (snd-prefs)
- *    debug protection memlog print
  *    smob compare proc (eq?)
  *    should hook arity be checked?
  *
@@ -64,7 +75,6 @@ void dump_protection(FILE *Fp)
 	  if (!(XEN_EQ_P(gcdat, DEFAULT_GC_VALUE)))
 	    {
 #if HAVE_GAUCHE
-	      /* TODO: gauche debug protection print */
 	      fprintf(Fp,"  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdat));
 #endif
 #if HAVE_GUILE
@@ -4178,6 +4188,7 @@ that name is presented in the New File dialog."
 
   XEN_EVAL_C_STRING("(defmacro catch (sym thunk handler) `(with-error-handler ,handler ,thunk))");
   /* TODO: does handler need to return #t? how to find/check error type? */
+  /* this probably should use "guard" and error should be "condition" etc */
 
   XEN_EVAL_C_STRING("(define (symbol->keyword key) (make-keyword (symbol->string key)))");
   XEN_EVAL_C_STRING("(define (1- val) (- val 1))");

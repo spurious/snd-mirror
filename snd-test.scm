@@ -2291,7 +2291,7 @@
 	      (sys (mus-audio-systems)))
 	  (if (or (not (= (car mz) 0))
 		  (fneq (cadr mz) 0.0))
-	      (snd-display ";mus-sound-maxamp z.snd: ~A" mz))
+	      (snd-display ";mus-sound-maxamp z.snd: ~A (~A ~A)" mz (not (= (car mz) 0)) (fneq (cadr mz) 0.0)))
 	  (let ((formats (list mus-bshort mus-lshort mus-mulaw mus-alaw mus-byte mus-ubyte mus-bfloat mus-lfloat
 			       mus-bint mus-lint mus-bintn mus-lintn mus-b24int mus-l24int mus-bdouble mus-ldouble
 			       mus-ubshort mus-ulshort mus-bdouble-unscaled mus-ldouble-unscaled mus-bfloat-unscaled 
@@ -2348,7 +2348,7 @@
 	      (snd-display ";mus-audio-report: ~A" (mus-audio-report)))
 	  (if (and (not (= sys 1)) (not (= sys 2))) (snd-display ";mus-audio-systems: ~A?" sys))
 	  (if (not (= chns 1)) (snd-display ";oboe: mus-sound-chans ~D?" chns))
-	  (if (not (= dl 28)) (snd-display ";oboe: mus-sound-data-location ~D?" dl))
+	  (if (not (= dl 28)) (snd-display ";oboe: mus-sound-data-location ~D (~A)?" dl (= dl 28)))
 	  (if (not (= fr 50828)) (snd-display ";oboe: mus-sound-frames ~D?" fr))
 	  (if (not (= smps 50828)) (snd-display ";oboe: mus-sound-samples ~D?" smps))
 	  (if (not (= len (+ 28 (* 2 50828)))) (snd-display ";oboe: mus-sound-length ~D?" len))
