@@ -102,7 +102,7 @@ If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
 created (or updated) by configure.
 
-If you don't have Guile, Ruby, or Forth, Snd can still be built, but it's
+If you don't have Guile, Gauche, Ruby, or Forth, Snd can still be built, but it's
 severely limited in what it can do.  Snd can also be built without
 any graphics toolkit.  Without either the GUI or the extension
 language, however, there's nothing it can do.
@@ -130,12 +130,12 @@ Version info:
 
 ----------------------------------------------------------------
 
-The customization/extension languages are either Guile, Ruby, or Forth.
+The customization/extension languages are either Guile, Gauche, Ruby, or Forth.
 
 Much of Snd's functionality is loaded as needed from the Scheme, Ruby, or Forth
 files found in the tarball (*.scm, *.rb, and *.fth).  You can run Snd without 
 these files, but there's no reason to!  Just add the directory containing
-those files to the "load-path".  In Scheme, 
+those files to the "load-path".  In Guile,
 
   (set! %load-path (cons "/home/bil/cl" %load-path))
 

@@ -15,17 +15,28 @@
  *    procedure->info as alist usable in snd-run for reader
  *    applicable smob
  *    stacktrace and errors->listener
- *    add-load-path for .snd_gauche
  *    unwind-protects around scm_apply (snd-xen g_call)
  *    snd-test/testsnd/compsnd/valgrind
  *    optimizer
  *    check prefs and save/restore
  *    various smob free/print cases
  *    protect from gc (how does this gc work?)
- *    gnu-style macs to protect evaluation in xen.h
  *    check enved base in src/amp cases
- *    sndscm: .snd_forth and fs doc in general
  *    why is this fatal: header read failed: /home/bil/sf1/Pnossnd.aif: no SSND (data) chunk
+ *    what was the draw-current-window bug?
+ *    are off_t's ok -- why all the off_t related- errors in snd-test?
+ *    why does gauche configure get wrong off_t size?
+ *    how to search load path (snd-prefs)
+ *    debug protection memlog print
+ *    smob compare proc (eq?)
+ *    should hook arity be checked?
+ *
+ * TODO in Forth:
+ *    sndscm: .snd_forth and fs doc in general
+ *    features check (below)
+ *
+ * TODO in Ruby:
+ *    prefs for show-selection
  */
 
 /* -------- protect XEN vars from GC -------- */
@@ -674,33 +685,44 @@ bool procedure_arity_ok(XEN proc, int args)
 {
   XEN arity;
   int rargs;
-#if (!HAVE_RUBY && !HAVE_FORTH)
-  int oargs, restargs, loc;
-#endif
   arity = XEN_ARITY(proc);
+
 #if HAVE_RUBY
   rargs = XEN_TO_C_INT(arity);
   return(xen_rb_arity_ok(rargs, args));
-  /*
-  if ((rargs > args) ||
-      ((rargs < 0) && (-rargs > args)))
-      return(false);
-  */
 #endif
-#if HAVE_SCHEME
-  loc = snd_protect(arity);
-  rargs = XEN_TO_C_INT(XEN_CAR(arity));
-  oargs = XEN_TO_C_INT(XEN_CADR(arity));
-  restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
-  snd_unprotect_at(loc);
-  if (rargs > args) return(false);
-  if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
-#endif
+
 #if HAVE_FORTH
   rargs = XEN_TO_C_INT(arity);
   if (rargs != args)
     return(false);
 #endif
+
+#if HAVE_GUILE
+  {
+    int oargs, restargs, loc;
+    loc = snd_protect(arity);
+    rargs = XEN_TO_C_INT(XEN_CAR(arity));
+    oargs = XEN_TO_C_INT(XEN_CADR(arity));
+    restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
+    snd_unprotect_at(loc);
+    if (rargs > args) return(false);
+    if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
+  }
+#endif
+
+#if HAVE_GAUCHE
+  {
+    int oargs, loc;
+    loc = snd_protect(arity);
+    rargs = XEN_TO_C_INT(XEN_CAR(arity));
+    oargs = XEN_TO_C_INT(XEN_CDR(arity));
+    snd_unprotect_at(loc);
+    if (rargs > args) return(false);
+    if ((rargs + oargs) < args) return(false);
+  }
+#endif
+
   return(true);
 }
 
@@ -4093,9 +4115,10 @@ that name is presented in the New File dialog."
     scm_read_hash_extend(C_TO_XEN_CHAR('|'), proc);
   }
 
-  XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
   XEN_EVAL_C_STRING("(read-set! keywords 'prefix)");
   XEN_EVAL_C_STRING("(print-enable 'source)");
+
+  XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
   XEN_EVAL_C_STRING("(defmacro declare args #f)");     /* for optimizer */
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
@@ -4138,7 +4161,7 @@ that name is presented in the New File dialog."
   XEN_EVAL_C_STRING("(define getenv sys-getenv)");
   XEN_EVAL_C_STRING("(define getcwd sys-getcwd)");
   XEN_EVAL_C_STRING("(define rename-file sys-rename)");
-  XEN_EVAL_C_STRING("(define (delete-file f) (sys-unlink f))");
+  XEN_EVAL_C_STRING("(define delete-file sys-unlink)");
   XEN_EVAL_C_STRING("(define version gauche-version)");
   XEN_EVAL_C_STRING("(define localtime sys-localtime)");
   XEN_EVAL_C_STRING("(define current-time sys-time)");
@@ -4159,12 +4182,15 @@ that name is presented in the New File dialog."
   XEN_EVAL_C_STRING("(define (symbol->keyword key) (make-keyword (symbol->string key)))");
   XEN_EVAL_C_STRING("(define (1- val) (- val 1))");
   XEN_EVAL_C_STRING("(define (1+ val) (+ val 1))");
+  
+  /* these are for compatibility with Guile (rather than add hundreds of "if provided?" checks) */
   XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)"); /* SOMEDAY search list for format (etc) and load */
   XEN_EVAL_C_STRING("(define (debug-enable . args) #f)");
   XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
   XEN_EVAL_C_STRING("(define (debug-set! . args) #f)");
   XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
 
+  /* Gauche has hooks (in Scheme), but this is quicker */
   XEN_EVAL_C_STRING("(define hook? list?)");
   XEN_EVAL_C_STRING("(define hook-empty? null?)");
   XEN_EVAL_C_STRING("(define (make-hook . args) (list))");
@@ -4183,12 +4209,10 @@ that name is presented in the New File dialog."
   XEN_EVAL_C_STRING("(defmacro remove-hook! (a b)\
                        `(set! ,a (filter-list (lambda (p) (eq? p ,b)) ,a)))");
 
+  /* Gauche doesn't handle documentation strings correctly */
   XEN_EVAL_C_STRING("(defmacro define+ (args . body) `(define ,args ,@(cdr body)))"); /* strip out documentation string if embedded defines */
 
   Scm_AddLoadPath(".", false);
-
-  /* Scm_Require(C_TO_XEN_STRING("file/util")); */
-
 #endif
 
 #if HAVE_RUBY

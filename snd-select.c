@@ -1021,7 +1021,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
   return(pos);
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_selection_position_reversed, g_set_selection_position)
+WITH_THREE_SETTER_ARGS(g_set_selection_position_reversed, g_set_selection_position)
 
 static XEN g_selection_frames(XEN snd, XEN chn)
 {
@@ -1079,7 +1079,7 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
   return(samps);
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_selection_frames_reversed, g_set_selection_frames)
+WITH_THREE_SETTER_ARGS(g_set_selection_frames_reversed, g_set_selection_frames)
 
 static XEN g_selection_member(XEN snd, XEN chn)
 {
@@ -1117,7 +1117,7 @@ static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
   return(on);
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_selection_member_reversed, g_set_selection_member)
+WITH_THREE_SETTER_ARGS(g_set_selection_member_reversed, g_set_selection_member)
 
 static XEN g_select_all(XEN snd_n, XEN chn_n)
 {

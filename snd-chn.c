@@ -5128,7 +5128,7 @@ static XEN g_set_edit_position(XEN on, XEN snd_n, XEN chn_n)
   return(channel_set(snd_n, chn_n, on, CP_EDIT_CTR, S_setB S_edit_position));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_edit_position_reversed, g_set_edit_position)
+WITH_THREE_SETTER_ARGS(g_set_edit_position_reversed, g_set_edit_position)
 
 static XEN g_transform_graph_p(XEN snd_n, XEN chn_n) 
 {
@@ -5142,7 +5142,7 @@ static XEN g_set_transform_graph_p(XEN on, XEN snd_n, XEN chn_n)
   return(channel_set(snd_n, chn_n, on, CP_GRAPH_TRANSFORM_P, S_setB S_transform_graph_p));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_transform_graph_p_reversed, g_set_transform_graph_p)
+WITH_THREE_SETTER_ARGS(g_set_transform_graph_p_reversed, g_set_transform_graph_p)
 
 static XEN g_time_graph_p(XEN snd_n, XEN chn_n) 
 {
@@ -5156,7 +5156,7 @@ static XEN g_set_time_graph_p(XEN on, XEN snd_n, XEN chn_n)
   return(channel_set(snd_n, chn_n, on, CP_GRAPH_TIME_P, S_setB S_time_graph_p));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_time_graph_p_reversed, g_set_time_graph_p)
+WITH_THREE_SETTER_ARGS(g_set_time_graph_p_reversed, g_set_time_graph_p)
 
 static XEN g_lisp_graph_p(XEN snd_n, XEN chn_n) 
 {
@@ -5170,7 +5170,7 @@ static XEN g_set_lisp_graph_p(XEN on, XEN snd_n, XEN chn_n)
   return(channel_set(snd_n, chn_n, on, CP_GRAPH_LISP_P, S_setB S_lisp_graph_p));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_lisp_graph_p_reversed, g_set_lisp_graph_p)
+WITH_THREE_SETTER_ARGS(g_set_lisp_graph_p_reversed, g_set_lisp_graph_p)
 
 static XEN g_cursor(XEN snd_n, XEN chn_n, XEN edpos) 
 {
@@ -5208,38 +5208,7 @@ static XEN g_set_cursor(XEN on, XEN snd_n, XEN chn_n, XEN edpos)
   return(channel_set(snd_n, chn_n, on, CP_CURSOR, S_setB S_cursor));
 }
 
-#if HAVE_GUILE
-static XEN g_set_cursor_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  if (XEN_NOT_BOUND_P(arg2))
-    return(g_set_cursor(arg1, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  else {
-    if (XEN_NOT_BOUND_P(arg3))
-      return(g_set_cursor(arg2, arg1, XEN_UNDEFINED, XEN_UNDEFINED));
-    else {
-      if (XEN_NOT_BOUND_P(arg4))
-	return(g_set_cursor(arg3, arg1, arg2, XEN_UNDEFINED));
-      else return(g_set_cursor(arg4, arg1, arg2, arg3));
-    }}
-}
-#endif
-#if HAVE_GAUCHE
-static XEN g_set_cursor_reversed(XEN *argv, int argc, void *self)
-{
-  XEN args[4];
-  xen_gauche_load_args(args, argc, 4, argv);
-  if (XEN_NOT_BOUND_P(args[1]))
-    return(g_set_cursor(args[0], XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  else {
-    if (XEN_NOT_BOUND_P(args[2]))
-      return(g_set_cursor(args[1], args[0], XEN_UNDEFINED, XEN_UNDEFINED));
-    else {
-      if (XEN_NOT_BOUND_P(args[3]))
-	return(g_set_cursor(args[2], args[0], args[1], XEN_UNDEFINED));
-      else return(g_set_cursor(args[3], args[0], args[1], args[2]));
-    }}
-}
-#endif
+WITH_FOUR_SETTER_ARGS(g_set_cursor_reversed, g_set_cursor)
 
 static XEN g_cursor_style(XEN snd_n, XEN chn_n) 
 {
@@ -5294,7 +5263,7 @@ static XEN g_set_cursor_style(XEN on, XEN snd_n, XEN chn_n)
     }
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_style_reversed, g_set_cursor_style)
+WITH_THREE_SETTER_ARGS(g_set_cursor_style_reversed, g_set_cursor_style)
 
 static XEN g_tracking_cursor_style(XEN snd_n, XEN chn_n) 
 {
@@ -5319,7 +5288,7 @@ static XEN g_set_tracking_cursor_style(XEN on, XEN snd_n, XEN chn_n)
   return(on);
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_tracking_cursor_style_reversed, g_set_tracking_cursor_style)
+WITH_THREE_SETTER_ARGS(g_set_tracking_cursor_style_reversed, g_set_tracking_cursor_style)
 
 static XEN g_cursor_size(XEN snd_n, XEN chn_n) 
 {
@@ -5338,7 +5307,7 @@ static XEN g_set_cursor_size(XEN on, XEN snd_n, XEN chn_n)
   return(C_TO_XEN_INT(cursor_size(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_size_reversed, g_set_cursor_size)
+WITH_THREE_SETTER_ARGS(g_set_cursor_size_reversed, g_set_cursor_size)
 
 static XEN g_cursor_position(XEN snd, XEN chn)
 {
@@ -5370,7 +5339,7 @@ static XEN g_set_frames(XEN on, XEN snd_n, XEN chn_n)
   return(channel_set(snd_n, chn_n, on, CP_FRAMES, S_setB S_frames));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_frames_reversed, g_set_frames)
+WITH_THREE_SETTER_ARGS(g_set_frames_reversed, g_set_frames)
 
 static XEN g_maxamp(XEN snd_n, XEN chn_n, XEN edpos) 
 {
@@ -5396,7 +5365,7 @@ static XEN g_set_maxamp(XEN on, XEN snd_n, XEN chn_n)
   return(channel_set(snd_n, chn_n, on, CP_MAXAMP, S_setB S_maxamp));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_maxamp_reversed, g_set_maxamp)
+WITH_THREE_SETTER_ARGS(g_set_maxamp_reversed, g_set_maxamp)
 
 static XEN g_maxamp_position(XEN snd_n, XEN chn_n, XEN edpos) 
 {
@@ -5428,7 +5397,7 @@ static XEN g_set_squelch_update(XEN on, XEN snd_n, XEN chn_n)
   return(channel_set(snd_n, chn_n, on, CP_SQUELCH_UPDATE, S_setB S_squelch_update));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_squelch_update_reversed, g_set_squelch_update)
+WITH_THREE_SETTER_ARGS(g_set_squelch_update_reversed, g_set_squelch_update)
 
 static XEN g_ap_sx(XEN snd_n, XEN chn_n) 
 {
@@ -5442,7 +5411,7 @@ static XEN g_set_ap_sx(XEN on, XEN snd_n, XEN chn_n)
   return(channel_set(snd_n, chn_n, on, CP_AP_SX, S_setB S_x_position_slider));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_ap_sx_reversed, g_set_ap_sx)
+WITH_THREE_SETTER_ARGS(g_set_ap_sx_reversed, g_set_ap_sx)
 
 static XEN g_ap_sy(XEN snd_n, XEN chn_n) 
 {
@@ -5456,7 +5425,7 @@ static XEN g_set_ap_sy(XEN on, XEN snd_n, XEN chn_n)
   return(channel_set(snd_n, chn_n, on, CP_AP_SY, S_setB S_y_position_slider));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_ap_sy_reversed, g_set_ap_sy)
+WITH_THREE_SETTER_ARGS(g_set_ap_sy_reversed, g_set_ap_sy)
 
 static XEN g_ap_zx(XEN snd_n, XEN chn_n) 
 {
@@ -5470,7 +5439,7 @@ static XEN g_set_ap_zx(XEN on, XEN snd_n, XEN chn_n)
   return(channel_set(snd_n, chn_n, on, CP_AP_ZX, S_setB S_x_zoom_slider));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_ap_zx_reversed, g_set_ap_zx)
+WITH_THREE_SETTER_ARGS(g_set_ap_zx_reversed, g_set_ap_zx)
 
 
 static XEN g_ap_zy(XEN snd_n, XEN chn_n) 
@@ -5485,7 +5454,7 @@ static XEN g_set_ap_zy(XEN on, XEN snd_n, XEN chn_n)
   return(channel_set(snd_n, chn_n, on, CP_AP_ZY, S_setB S_y_zoom_slider));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_ap_zy_reversed, g_set_ap_zy)
+WITH_THREE_SETTER_ARGS(g_set_ap_zy_reversed, g_set_ap_zy)
 
 static XEN g_edit_hook(XEN snd_n, XEN chn_n) 
 {
@@ -5546,7 +5515,7 @@ static XEN g_set_show_y_zero(XEN on, XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN(show_y_zero(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_show_y_zero_reversed, g_set_show_y_zero)
+WITH_THREE_SETTER_ARGS(g_set_show_y_zero_reversed, g_set_show_y_zero)
 
 static XEN g_show_grid(XEN snd, XEN chn)
 {
@@ -5565,7 +5534,7 @@ static XEN g_set_show_grid(XEN on, XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN((bool)show_grid(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_show_grid_reversed, g_set_show_grid)
+WITH_THREE_SETTER_ARGS(g_set_show_grid_reversed, g_set_show_grid)
 
 static XEN g_grid_density(XEN snd, XEN chn)
 {
@@ -5584,7 +5553,7 @@ static XEN g_set_grid_density(XEN on, XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(grid_density(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_grid_density_reversed, g_set_grid_density)
+WITH_THREE_SETTER_ARGS(g_set_grid_density_reversed, g_set_grid_density)
 
 static XEN g_show_sonogram_cursor(XEN snd, XEN chn)
 {
@@ -5603,7 +5572,7 @@ static XEN g_set_show_sonogram_cursor(XEN on, XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN(show_sonogram_cursor(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_show_sonogram_cursor_reversed, g_set_show_sonogram_cursor)
+WITH_THREE_SETTER_ARGS(g_set_show_sonogram_cursor_reversed, g_set_show_sonogram_cursor)
 
 static XEN g_min_dB(XEN snd, XEN chn) 
 {
@@ -5659,7 +5628,7 @@ static XEN g_set_min_dB(XEN val, XEN snd, XEN chn)
     }
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_min_dB_reversed, g_set_min_dB)
+WITH_THREE_SETTER_ARGS(g_set_min_dB_reversed, g_set_min_dB)
 
 static XEN g_fft_window_beta(XEN snd, XEN chn) 
 {
@@ -5682,7 +5651,7 @@ static XEN g_set_fft_window_beta(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(fft_window_beta(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_fft_window_beta_reversed, g_set_fft_window_beta)
+WITH_THREE_SETTER_ARGS(g_set_fft_window_beta_reversed, g_set_fft_window_beta)
 
 static XEN g_fft_window_alpha(XEN snd, XEN chn) 
 {
@@ -5705,7 +5674,7 @@ static XEN g_set_fft_window_alpha(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(fft_window_alpha(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_fft_window_alpha_reversed, g_set_fft_window_alpha)
+WITH_THREE_SETTER_ARGS(g_set_fft_window_alpha_reversed, g_set_fft_window_alpha)
 
 static XEN g_spectro_cutoff(XEN snd, XEN chn) 
 {
@@ -5728,7 +5697,7 @@ static XEN g_set_spectro_cutoff(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(spectro_cutoff(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_spectro_cutoff_reversed, g_set_spectro_cutoff)
+WITH_THREE_SETTER_ARGS(g_set_spectro_cutoff_reversed, g_set_spectro_cutoff)
 
 static XEN g_spectro_start(XEN snd, XEN chn) 
 {
@@ -5751,7 +5720,7 @@ static XEN g_set_spectro_start(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(spectro_start(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_spectro_start_reversed, g_set_spectro_start)
+WITH_THREE_SETTER_ARGS(g_set_spectro_start_reversed, g_set_spectro_start)
 
 static XEN g_spectro_x_angle(XEN snd, XEN chn) 
 {
@@ -5770,7 +5739,7 @@ static XEN g_set_spectro_x_angle(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(spectro_x_angle(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_spectro_x_angle_reversed, g_set_spectro_x_angle)
+WITH_THREE_SETTER_ARGS(g_set_spectro_x_angle_reversed, g_set_spectro_x_angle)
 
 static XEN g_spectro_x_scale(XEN snd, XEN chn) 
 {
@@ -5789,7 +5758,7 @@ static XEN g_set_spectro_x_scale(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(spectro_x_scale(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_spectro_x_scale_reversed, g_set_spectro_x_scale)
+WITH_THREE_SETTER_ARGS(g_set_spectro_x_scale_reversed, g_set_spectro_x_scale)
 
 static XEN g_spectro_y_angle(XEN snd, XEN chn) 
 {
@@ -5808,7 +5777,7 @@ static XEN g_set_spectro_y_angle(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(spectro_y_angle(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_spectro_y_angle_reversed, g_set_spectro_y_angle)
+WITH_THREE_SETTER_ARGS(g_set_spectro_y_angle_reversed, g_set_spectro_y_angle)
 
 static XEN g_spectro_y_scale(XEN snd, XEN chn) 
 {
@@ -5827,7 +5796,7 @@ static XEN g_set_spectro_y_scale(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(spectro_y_scale(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_spectro_y_scale_reversed, g_set_spectro_y_scale)
+WITH_THREE_SETTER_ARGS(g_set_spectro_y_scale_reversed, g_set_spectro_y_scale)
 
 static XEN g_spectro_z_angle(XEN snd, XEN chn) 
 {
@@ -5846,7 +5815,7 @@ static XEN g_set_spectro_z_angle(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(spectro_z_angle(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_spectro_z_angle_reversed, g_set_spectro_z_angle)
+WITH_THREE_SETTER_ARGS(g_set_spectro_z_angle_reversed, g_set_spectro_z_angle)
 
 static XEN g_spectro_z_scale(XEN snd, XEN chn) 
 {
@@ -5865,7 +5834,7 @@ static XEN g_set_spectro_z_scale(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(spectro_z_scale(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_spectro_z_scale_reversed, g_set_spectro_z_scale)
+WITH_THREE_SETTER_ARGS(g_set_spectro_z_scale_reversed, g_set_spectro_z_scale)
 
 static XEN g_spectro_hop(XEN snd, XEN chn)
 {
@@ -5884,7 +5853,7 @@ static XEN g_set_spectro_hop(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_INT(spectro_hop(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_spectro_hop_reversed, g_set_spectro_hop)
+WITH_THREE_SETTER_ARGS(g_set_spectro_hop_reversed, g_set_spectro_hop)
 
 
 static XEN g_show_marks(XEN snd, XEN chn)
@@ -5916,7 +5885,7 @@ static XEN g_set_show_marks(XEN on, XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN(show_marks(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_show_marks_reversed, g_set_show_marks)
+WITH_THREE_SETTER_ARGS(g_set_show_marks_reversed, g_set_show_marks)
 
 static XEN g_show_transform_peaks(XEN snd, XEN chn)
 {
@@ -5935,7 +5904,7 @@ static XEN g_set_show_transform_peaks(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN(show_transform_peaks(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_show_transform_peaks_reversed, g_set_show_transform_peaks)
+WITH_THREE_SETTER_ARGS(g_set_show_transform_peaks_reversed, g_set_show_transform_peaks)
 
 static XEN g_zero_pad(XEN snd, XEN chn)
 {
@@ -5954,7 +5923,7 @@ static XEN g_set_zero_pad(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_INT(zero_pad(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_zero_pad_reversed, g_set_zero_pad)
+WITH_THREE_SETTER_ARGS(g_set_zero_pad_reversed, g_set_zero_pad)
 
 static XEN g_wavelet_type(XEN snd, XEN chn)
 {
@@ -5977,7 +5946,7 @@ static XEN g_set_wavelet_type(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_INT(wavelet_type(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_wavelet_type_reversed, g_set_wavelet_type)
+WITH_THREE_SETTER_ARGS(g_set_wavelet_type_reversed, g_set_wavelet_type)
 
 static XEN g_fft_log_frequency(XEN snd, XEN chn)
 {
@@ -5996,7 +5965,7 @@ static XEN g_set_fft_log_frequency(XEN on, XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN(fft_log_frequency(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_fft_log_frequency_reversed, g_set_fft_log_frequency)
+WITH_THREE_SETTER_ARGS(g_set_fft_log_frequency_reversed, g_set_fft_log_frequency)
 
 static XEN g_fft_log_magnitude(XEN snd, XEN chn)
 {
@@ -6015,7 +5984,7 @@ static XEN g_set_fft_log_magnitude(XEN on, XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN(fft_log_magnitude(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_fft_log_magnitude_reversed, g_set_fft_log_magnitude)
+WITH_THREE_SETTER_ARGS(g_set_fft_log_magnitude_reversed, g_set_fft_log_magnitude)
 
 static XEN g_show_mix_waveforms(XEN snd, XEN chn)
 {
@@ -6034,7 +6003,7 @@ static XEN g_set_show_mix_waveforms(XEN on, XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN(show_mix_waveforms(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_show_mix_waveforms_reversed, g_set_show_mix_waveforms)
+WITH_THREE_SETTER_ARGS(g_set_show_mix_waveforms_reversed, g_set_show_mix_waveforms)
 
 static XEN g_verbose_cursor(XEN snd, XEN chn)
 {
@@ -6067,7 +6036,7 @@ static XEN g_set_verbose_cursor(XEN on, XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN(verbose_cursor(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_verbose_cursor_reversed, g_set_verbose_cursor)
+WITH_THREE_SETTER_ARGS(g_set_verbose_cursor_reversed, g_set_verbose_cursor)
 
 
 static XEN g_time_graph_type(XEN snd, XEN chn)
@@ -6092,7 +6061,7 @@ static XEN g_set_time_graph_type(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_INT((int)time_graph_type(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_time_graph_type_reversed, g_set_time_graph_type)
+WITH_THREE_SETTER_ARGS(g_set_time_graph_type_reversed, g_set_time_graph_type)
 
 static XEN g_wavo_hop(XEN snd, XEN chn)
 {
@@ -6111,7 +6080,7 @@ static XEN g_set_wavo_hop(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_INT(wavo_hop(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_wavo_hop_reversed, g_set_wavo_hop)
+WITH_THREE_SETTER_ARGS(g_set_wavo_hop_reversed, g_set_wavo_hop)
 
 static XEN g_wavo_trace(XEN snd, XEN chn)
 {
@@ -6130,7 +6099,7 @@ static XEN g_set_wavo_trace(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_INT(wavo_trace(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_wavo_trace_reversed, g_set_wavo_trace)
+WITH_THREE_SETTER_ARGS(g_set_wavo_trace_reversed, g_set_wavo_trace)
 
 static XEN g_transform_size(XEN snd, XEN chn)
 {
@@ -6156,7 +6125,7 @@ static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_INT(transform_size(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_transform_size_reversed, g_set_transform_size)
+WITH_THREE_SETTER_ARGS(g_set_transform_size_reversed, g_set_transform_size)
 
 static XEN g_transform_graph_type(XEN snd, XEN chn)
 {
@@ -6180,7 +6149,7 @@ static XEN g_set_transform_graph_type(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_INT((int)transform_graph_type(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_transform_graph_type_reversed, g_set_transform_graph_type)
+WITH_THREE_SETTER_ARGS(g_set_transform_graph_type_reversed, g_set_transform_graph_type)
 
 static XEN g_fft_window(XEN snd, XEN chn)
 {
@@ -6210,7 +6179,7 @@ static XEN g_set_fft_window(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_INT((int)fft_window(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_fft_window_reversed, g_set_fft_window)
+WITH_THREE_SETTER_ARGS(g_set_fft_window_reversed, g_set_fft_window)
 
 static XEN g_transform_type(XEN snd, XEN chn)
 {
@@ -6236,7 +6205,7 @@ static XEN g_set_transform_type(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_INT(transform_type(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_transform_type_reversed, g_set_transform_type)
+WITH_THREE_SETTER_ARGS(g_set_transform_type_reversed, g_set_transform_type)
 
 static XEN g_transform_normalization(XEN snd, XEN chn)
 {
@@ -6263,7 +6232,7 @@ static XEN g_set_transform_normalization(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_INT((int)transform_normalization(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_transform_normalization_reversed, g_set_transform_normalization)
+WITH_THREE_SETTER_ARGS(g_set_transform_normalization_reversed, g_set_transform_normalization)
 
 static XEN g_max_transform_peaks(XEN snd, XEN chn)
 {
@@ -6291,7 +6260,7 @@ static XEN g_set_max_transform_peaks(XEN n, XEN snd, XEN chn)
     }
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_max_transform_peaks_reversed, g_set_max_transform_peaks)
+WITH_THREE_SETTER_ARGS(g_set_max_transform_peaks_reversed, g_set_max_transform_peaks)
 
 
 static XEN g_graph_style(XEN snd, XEN chn)
@@ -6340,7 +6309,7 @@ static XEN g_set_graph_style(XEN style, XEN snd, XEN chn)
   return(C_TO_XEN_INT((int)(graph_style(ss))));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_graph_style_reversed, g_set_graph_style)
+WITH_THREE_SETTER_ARGS(g_set_graph_style_reversed, g_set_graph_style)
 
 static XEN g_time_graph_style(XEN snd, XEN chn)
 {
@@ -6361,7 +6330,7 @@ static XEN g_set_time_graph_style(XEN style, XEN snd, XEN chn)
   return(channel_set(snd, chn, style, CP_TIME_GRAPH_STYLE, S_setB S_time_graph_style));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_time_graph_style_reversed, g_set_time_graph_style)
+WITH_THREE_SETTER_ARGS(g_set_time_graph_style_reversed, g_set_time_graph_style)
 
 static XEN g_lisp_graph_style(XEN snd, XEN chn)
 {
@@ -6382,7 +6351,7 @@ static XEN g_set_lisp_graph_style(XEN style, XEN snd, XEN chn)
   return(channel_set(snd, chn, style, CP_LISP_GRAPH_STYLE, S_setB S_lisp_graph_style));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_lisp_graph_style_reversed, g_set_lisp_graph_style)
+WITH_THREE_SETTER_ARGS(g_set_lisp_graph_style_reversed, g_set_lisp_graph_style)
 
 static XEN g_transform_graph_style(XEN snd, XEN chn)
 {
@@ -6403,7 +6372,7 @@ static XEN g_set_transform_graph_style(XEN style, XEN snd, XEN chn)
   return(channel_set(snd, chn, style, CP_TRANSFORM_GRAPH_STYLE, S_setB S_transform_graph_style));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_transform_graph_style_reversed, g_set_transform_graph_style)
+WITH_THREE_SETTER_ARGS(g_set_transform_graph_style_reversed, g_set_transform_graph_style)
 
 
 static XEN g_dot_size(XEN snd, XEN chn)
@@ -6425,7 +6394,7 @@ static XEN g_set_dot_size(XEN size, XEN snd, XEN chn)
   return(C_TO_XEN_INT(dot_size(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_dot_size_reversed, g_set_dot_size)
+WITH_THREE_SETTER_ARGS(g_set_dot_size_reversed, g_set_dot_size)
 
 static XEN g_x_axis_style(XEN snd, XEN chn)
 {
@@ -6487,7 +6456,7 @@ static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)
   return(C_TO_XEN_INT((int)x_axis_style(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_x_axis_style_reversed, g_set_x_axis_style)
+WITH_THREE_SETTER_ARGS(g_set_x_axis_style_reversed, g_set_x_axis_style)
 
 static XEN g_beats_per_minute(XEN snd, XEN chn)
 {
@@ -6512,7 +6481,7 @@ static XEN g_set_beats_per_minute(XEN beats, XEN snd, XEN chn)
     }
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_beats_per_minute_reversed, g_set_beats_per_minute)
+WITH_THREE_SETTER_ARGS(g_set_beats_per_minute_reversed, g_set_beats_per_minute)
 
 static XEN g_beats_per_measure(XEN snd, XEN chn)
 {
@@ -6535,7 +6504,7 @@ static XEN g_set_beats_per_measure(XEN beats, XEN snd, XEN chn)
   return(C_TO_XEN_INT(beats_per_measure(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_beats_per_measure_reversed, g_set_beats_per_measure)
+WITH_THREE_SETTER_ARGS(g_set_beats_per_measure_reversed, g_set_beats_per_measure)
 
 static XEN g_show_axes(XEN snd, XEN chn)
 {
@@ -6562,7 +6531,7 @@ static XEN g_set_show_axes(XEN on, XEN snd, XEN chn)
   return(C_TO_XEN_INT((int)show_axes(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_show_axes_reversed, g_set_show_axes)
+WITH_THREE_SETTER_ARGS(g_set_show_axes_reversed, g_set_show_axes)
 
 static XEN g_graphs_horizontal(XEN snd, XEN chn)
 {
@@ -6581,7 +6550,7 @@ static XEN g_set_graphs_horizontal(XEN val, XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN(graphs_horizontal(ss)));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_graphs_horizontal_reversed, g_set_graphs_horizontal)
+WITH_THREE_SETTER_ARGS(g_set_graphs_horizontal_reversed, g_set_graphs_horizontal)
 
 
 static void write_transform_peaks(FILE *fd, chan_info *ucp)
@@ -6714,7 +6683,7 @@ static XEN g_set_left_sample(XEN on, XEN snd_n, XEN chn_n)
   return(channel_set(snd_n, chn_n, on, CP_AP_LOSAMP, S_setB S_left_sample));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_left_sample_reversed, g_set_left_sample)
+WITH_THREE_SETTER_ARGS(g_set_left_sample_reversed, g_set_left_sample)
 
 static XEN g_right_sample(XEN snd_n, XEN chn_n) 
 {
@@ -6728,7 +6697,7 @@ static XEN g_set_right_sample(XEN on, XEN snd_n, XEN chn_n)
   return(channel_set(snd_n, chn_n, on, CP_AP_HISAMP, S_setB S_right_sample));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_right_sample_reversed, g_set_right_sample)
+WITH_THREE_SETTER_ARGS(g_set_right_sample_reversed, g_set_right_sample)
 
 static XEN g_channel_properties(XEN snd_n, XEN chn_n) 
 {
@@ -6745,7 +6714,7 @@ static XEN g_set_channel_properties(XEN on, XEN snd_n, XEN chn_n)
   return(channel_set(snd_n, chn_n, on, CP_PROPERTIES, S_setB S_channel_properties));
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_channel_properties_reversed, g_set_channel_properties)
+WITH_THREE_SETTER_ARGS(g_set_channel_properties_reversed, g_set_channel_properties)
 
 
 static XEN g_edits(XEN snd_n, XEN chn_n)
@@ -6809,7 +6778,7 @@ static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
   return(bounds);
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
+WITH_THREE_SETTER_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
 
 static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
 {
@@ -6870,7 +6839,7 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
   return(bounds);
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_y_bounds_reversed, g_set_y_bounds)
+WITH_THREE_SETTER_ARGS(g_set_y_bounds_reversed, g_set_y_bounds)
 
 static XEN g_y_bounds(XEN snd_n, XEN chn_n)
 {

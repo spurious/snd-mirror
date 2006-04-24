@@ -1629,7 +1629,7 @@ XEN_OBJECT_TYPE xen_gauche_new_type(const char *name, ScmClassPrintProc print, S
 							   name,
 							   print,
 							   cleanup,
-							   SCM_FOREIGN_POINTER_KEEP_IDENTITY | SCM_FOREIGN_POINTER_MAP_NULL);
+							   SCM_FOREIGN_POINTER_KEEP_IDENTITY | SCM_FOREIGN_POINTER_MAP_NULL | SCM_CLASS_APPLICABLE);
   return(current_type);
 }
 

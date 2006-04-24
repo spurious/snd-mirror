@@ -6,7 +6,7 @@
 
 /* macros for extension language support 
  *
- * Guile:     covers 1.3.4 to present (1.8.0) given the configuration macros in the Snd or Libxm config.h.in.
+ * Guile:     covers 1.3.4 to present (1.8.0)
  * Ruby:      covers 1.6 to present (1.9)
  * Forth:     covers all
  * Gauche:    covers 0.8.7 (work in progress)
@@ -1500,10 +1500,10 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_LIST_3(a, b, c)          SCM_LIST3(a, b, c)
 #define XEN_LIST_4(a, b, c, d)       SCM_LIST4(a, b, c, d)
 #define XEN_LIST_5(a, b, c, d, e)    SCM_LIST5(a, b, c, d, e)
-#define XEN_LIST_6(a, b, c, d, e, f)          Scm_List(a, b, c, d, e, f)
-#define XEN_LIST_7(a, b, c, d, e, f, g)       Scm_List(a, b, c, d, e, f, g)
-#define XEN_LIST_8(a, b, c, d, e, f, g, h)    Scm_List(a, b, c, d, e, f, g, h)
-#define XEN_LIST_9(a, b, c, d, e, f, g, h, i) Scm_List(a, b, c, d, e, f, g, h, i)
+#define XEN_LIST_6(a, b, c, d, e, f)          Scm_List(a, b, c, d, e, f, NULL)
+#define XEN_LIST_7(a, b, c, d, e, f, g)       Scm_List(a, b, c, d, e, f, g, NULL)
+#define XEN_LIST_8(a, b, c, d, e, f, g, h)    Scm_List(a, b, c, d, e, f, g, h, NULL)
+#define XEN_LIST_9(a, b, c, d, e, f, g, h, i) Scm_List(a, b, c, d, e, f, g, h, i, NULL)
 #define XEN_APPEND(a, b)             Scm_Append2(a, b)
 #define XEN_COPY_ARG(Lst)            Lst
 
@@ -1518,22 +1518,38 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_ZERO                     SCM_MAKE_INT(0)
 #define XEN_INTEGER_P(Arg)           SCM_INTEGERP(Arg)
 #define XEN_TO_C_INT(a)              SCM_INT_VALUE(a)
-#define XEN_TO_C_INT_OR_ELSE(a, b)   ((XEN_INTEGER_P(a)) ? XEN_TO_C_INT(a) : b)
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define XEN_TO_C_INT_OR_ELSE(a, b)    ({ XEN _xen_ga_1_ = a; ((XEN_INTEGER_P(_xen_ga_1_)) ? XEN_TO_C_INT(_xen_ga_1_) : b); })
+  #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ({ XEN _xen_ga_2_ = a; ((XEN_NUMBER_P(_xen_ga_2_)) ? XEN_TO_C_DOUBLE(_xen_ga_2_) : b); })
+#else
+  #define XEN_TO_C_INT_OR_ELSE(a, b)   ((XEN_INTEGER_P(a)) ? XEN_TO_C_INT(a) : b)
+  #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ((XEN_NUMBER_P(a)) ? XEN_TO_C_DOUBLE(a) : b)
+#endif
 #define C_TO_XEN_INT(a)              SCM_MAKE_INT(a)
 #define XEN_DOUBLE_P(Arg)            SCM_REALP(Arg)
 #define XEN_TO_C_DOUBLE(a)           xen_to_c_double(a)
-#define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ((XEN_NUMBER_P(a)) ? XEN_TO_C_DOUBLE(a) : b)
 #define C_TO_XEN_DOUBLE(a)           Scm_MakeFlonum(a)
 #define XEN_TO_C_ULONG(a)            Scm_GetIntegerU(a)
 #define C_TO_XEN_ULONG(a)            Scm_MakeIntegerU((unsigned long)a)
 #define XEN_ULONG_P(Arg)             SCM_INTEGERP(Arg)
 #define XEN_EXACT_P(Arg)             SCM_EXACTP(Arg)
 #define C_TO_XEN_LONG_LONG(a)        (SCM_OBJ(Scm_MakeBignumFromSI(a)))
-#define XEN_TO_C_LONG_LONG(a)        (SCM_BIGNUMP(a) ? ((off_t)(Scm_BignumToSI64(SCM_BIGNUM(a), SCM_CLAMP_NONE, NULL))) : ((off_t)XEN_TO_C_INT(a)))
-#define XEN_OFF_T_P(Arg)             (SCM_INTEGERP(Arg) || SCM_BIGNUMP(Arg))
 #define XEN_COMPLEX_P(Arg)           SCM_COMPLEXP(Arg)
-#define XEN_TO_C_COMPLEX(a)          (SCM_COMPLEX_REAL(a) + SCM_COMPLEX_IMAG(a) * _Complex_I)
-#define C_TO_XEN_COMPLEX(a)          Scm_MakeComplex(creal(a), cimag(a))
+
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define XEN_OFF_T_P(Arg)           ({ XEN _xen_ga_3_ = Arg; (SCM_INTEGERP(_xen_ga_3_) || SCM_BIGNUMP(_xen_ga_3_)); })
+  #define XEN_TO_C_LONG_LONG(a)      ({ XEN _xen_ga_4_ = a; \
+                                         (SCM_BIGNUMP(_xen_ga_4_) ? \
+                                            ((off_t)(Scm_BignumToSI64(SCM_BIGNUM(_xen_ga_4_), SCM_CLAMP_NONE, NULL))) : \
+                                            ((off_t)XEN_TO_C_INT(_xen_ga_4_))); })
+  #define XEN_TO_C_COMPLEX(a)        ({ XEN _xen_ga_5_ = a; (SCM_COMPLEX_REAL(_xen_ga_5_) + SCM_COMPLEX_IMAG(_xen_ga_5_) * _Complex_I); })
+  #define C_TO_XEN_COMPLEX(a)        ({ complex double _xen_ga_6_ = a; Scm_MakeComplex(creal(_xen_ga_6_), cimag(_xen_ga_6_)); })
+#else
+  #define XEN_OFF_T_P(Arg)           (SCM_INTEGERP(Arg) || SCM_BIGNUMP(Arg))
+  #define XEN_TO_C_LONG_LONG(a)      (SCM_BIGNUMP(a) ? ((off_t)(Scm_BignumToSI64(SCM_BIGNUM(a), SCM_CLAMP_NONE, NULL))) : ((off_t)XEN_TO_C_INT(a)))
+  #define XEN_TO_C_COMPLEX(a)        (SCM_COMPLEX_REAL(a) + SCM_COMPLEX_IMAG(a) * _Complex_I)
+  #define C_TO_XEN_COMPLEX(a)        Scm_MakeComplex(creal(a), cimag(a))
+#endif
 
 #define XEN_CHAR_P(Arg)              SCM_CHARP(Arg)
 #define XEN_TO_C_CHAR(Arg)           SCM_CHAR_VALUE(Arg)
@@ -1554,7 +1570,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_SYMBOL_TO_C_STRING(a)    XEN_TO_C_STRING(SCM_SYMBOL_NAME(a))
 #define XEN_TO_STRING(Obj)           xen_gauche_object_to_string(Obj)
 
-/* TODO: isn't there an uninterpreted pointer handler? */
 #define XEN_WRAP_C_POINTER(a)        ((XEN)(C_TO_XEN_ULONG((unsigned long)a)))
 #define XEN_UNWRAP_C_POINTER(a)      XEN_TO_C_ULONG(a)
 #define XEN_WRAPPED_C_POINTER_P(a)   XEN_NUMBER_P(a)
@@ -1564,7 +1579,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_VARIABLE_REF(Var)             Scm_SymbolValue(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(Var)))
 #define XEN_VARIABLE_SET(Var, Val)        xen_gauche_variable_set(Var, Val)
 
-/* TODO: errors */
 #define XEN_ERROR_TYPE(Typ)                 C_STRING_TO_XEN_SYMBOL(Typ)
 #define XEN_ERROR(Type, Info)               Scm_Error(XEN_AS_STRING(Info))
 /* calls VMThrowException */
@@ -1578,9 +1592,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #define XEN_SET_DOCUMENTATION(Func, Help)   SCM_PROCEDURE_INFO(Func) = C_TO_XEN_STRING(Help)
 #define XEN_DOCUMENTATION_SYMBOL            SCM_SYMBOL(SCM_INTERN("documentation"))
-/* TODO: proc info is probably supposed to be an association list */
 #define XEN_OBJECT_HELP(Name)               SCM_PROCEDURE_INFO(Name)
-
 
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Ignore1, Ignore2) return(xen_gauche_make_object(Tag, (void *)Val))
 /* tag here is int -- needs ScmClass* for underlying call */
@@ -1592,9 +1604,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_MARK_OBJECT_TYPE                ScmObj
 /* used only in clm2xen for mark_mus_xen */
 #define XEN_OBJECT_TYPE_P(OBJ, TAG)         xen_gauche_type_p(OBJ, TAG)
-
-/* TODO: there's also a compareproc */
-/* TODO: SCM_CLASS_APPLICABLE? -- can we use the foreignpointer with this? */
 
 #define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) \
   static void Wrapped_Print(XEN obj, ScmPort *port, ScmWriteContext *pstate) \
@@ -1617,15 +1626,12 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #define XEN_DEFINE(Name, Value)       SCM_DEFINE(Scm_UserModule(), Name, Value)
 
-
-/* TODO: in Gauche, hooks are just unchecked lists of procedures */
 #define XEN_HOOK_P(Arg)                    (!XEN_FALSE_P(Arg) && XEN_LIST_P(SCM_GLOC_GET(SCM_GLOC(Arg))))
 #define XEN_DEFINE_HOOK(Name, Arity, Help) XEN_DEFINE(Name, XEN_EMPTY_LIST)
 #define XEN_DEFINE_SIMPLE_HOOK(Arity)      XEN_DEFINE("simple-hook", XEN_EMPTY_LIST)
 #define XEN_HOOKED(Arg)                    XEN_NOT_NULL_P(SCM_GLOC_GET(SCM_GLOC(Arg)))
 #define XEN_CLEAR_HOOK(Arg)                SCM_GLOC_SET(SCM_GLOC(Arg), XEN_EMPTY_LIST)
 #define XEN_HOOK_PROCEDURES(Arg)           SCM_OBJ(SCM_GLOC_GET(SCM_GLOC(Arg)))
-
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
    do {if (!(Assertion)) Scm_Error("%s: wrong type argument (arg %d): %S, wanted %s", Caller, Position, Arg, Correct_Type);} while (0)
@@ -1638,7 +1644,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
             XEN_LIST_3(C_TO_XEN_STRING(Caller), \
                        C_TO_XEN_STRING(Descr), \
                        XEN_LIST_1(Arg)))
-
 
 #define XEN_PROCEDURE_P(Arg)              SCM_PROCEDUREP(Arg)
 #define XEN_PROCEDURE_HELP(Name)          SCM_PROCEDURE_INFO(Name)
@@ -1682,7 +1687,6 @@ void xen_gauche_define_procedure_with_setter(char *get_name, ScmHeaderRec* (*get
   int get_req, int get_opt, int set_req, int set_opt);
 #endif
 
-/* TODO: error catch here? */
 #define XEN_CALL_0(Func, Caller)                   Scm_Apply(Func, XEN_EMPTY_LIST)
 #define XEN_CALL_1(Func, Arg1, Caller)             Scm_Apply(Func, XEN_LIST_1(Arg1))
 #define XEN_CALL_2(Func, Arg1, Arg2, Caller)       Scm_Apply(Func, XEN_LIST_2(Arg1, Arg2))
@@ -1703,16 +1707,6 @@ void xen_gauche_define_procedure_with_setter(char *get_name, ScmHeaderRec* (*get
 #define XEN_FLUSH_PORT(Port)     Scm_Flush(Port)
 #define XEN_CLOSE_PORT(Port)     Scm_ClosePort(Port)
 #define XEN_PORT_TO_STRING(Port) Scm_GetOutputString(SCM_PORT(Port))
-
-/* Scm_ShowStackTrace */
-/* error creation: error.c for allocation, also Scm_MakeError
-SCM_DEFINE_BASE_CLASS(Scm_ErrorClass, ScmError,
-                      message_print, NULL, NULL, 
-                      message_allocate, error_cpl+1);
-SCM_DEFINE_BASE_CLASS(Scm_SystemErrorClass, ScmSystemError,
-                      message_print, NULL, NULL,
-                      syserror_allocate, error_cpl);
-*/
 
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 

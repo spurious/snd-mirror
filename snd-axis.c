@@ -1601,44 +1601,7 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
   return(label);
 }
 
-#if HAVE_GUILE
-static XEN g_set_x_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  if (XEN_NOT_BOUND_P(arg2))
-    return(g_set_x_axis_label(arg1, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  else
-    {
-      if (XEN_NOT_BOUND_P(arg3))
-	return(g_set_x_axis_label(arg2, arg1, XEN_UNDEFINED, XEN_UNDEFINED));
-      else
-	{
-	  if (XEN_NOT_BOUND_P(arg4))
-	    return(g_set_x_axis_label(arg3, arg1, arg2, XEN_UNDEFINED));
-	  else return(g_set_x_axis_label(arg4, arg1, arg2, arg3));
-	}
-    }
-}
-#endif
-#if HAVE_GAUCHE
-static XEN g_set_x_axis_label_reversed(XEN *argv, int argc, void *self)
-{
-  XEN args[4];
-  xen_gauche_load_args(args, argc, 4, argv);
-  if (XEN_NOT_BOUND_P(args[1]))
-    return(g_set_x_axis_label(args[0], XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  else
-    {
-      if (XEN_NOT_BOUND_P(args[2]))
-	return(g_set_x_axis_label(args[1], args[0], XEN_UNDEFINED, XEN_UNDEFINED));
-      else
-	{
-	  if (XEN_NOT_BOUND_P(args[3]))
-	    return(g_set_x_axis_label(args[2], args[0], args[1], XEN_UNDEFINED));
-	  else return(g_set_x_axis_label(args[3], args[0], args[1], args[2]));
-	}
-    }
-}
-#endif
+WITH_FOUR_SETTER_ARGS(g_set_x_axis_label_reversed, g_set_x_axis_label)
 
 /* TODO: how to implement rotate_text in OpenGL? */
 /*       Mesa/progs/xdemos/xuserotfont.c gets pixmap, then calls glBitmap: glBitmap(bitmapWidth, bitmapHeight, xOrig, yOrig, xStep, yStep, bm) */
@@ -1669,44 +1632,7 @@ static XEN g_set_y_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
   return(label);
 }
 
-#if HAVE_GUILE
-static XEN g_set_y_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  if (XEN_NOT_BOUND_P(arg2))
-    return(g_set_y_axis_label(arg1, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  else
-    {
-      if (XEN_NOT_BOUND_P(arg3))
-	return(g_set_y_axis_label(arg2, arg1, XEN_UNDEFINED, XEN_UNDEFINED));
-      else
-	{
-	  if (XEN_NOT_BOUND_P(arg4))
-	    return(g_set_y_axis_label(arg3, arg1, arg2, XEN_UNDEFINED));
-	  else return(g_set_y_axis_label(arg4, arg1, arg2, arg3));
-	}
-    }
-}
-#endif
-#if HAVE_GAUCHE
-static XEN g_set_y_axis_label_reversed(XEN *argv, int argc, void *self)
-{
-  XEN args[4];
-  xen_gauche_load_args(args, argc, 4, argv);
-  if (XEN_NOT_BOUND_P(args[1]))
-    return(g_set_y_axis_label(args[0], XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  else
-    {
-      if (XEN_NOT_BOUND_P(args[2]))
-	return(g_set_y_axis_label(args[1], args[0], XEN_UNDEFINED, XEN_UNDEFINED));
-      else
-	{
-	  if (XEN_NOT_BOUND_P(args[3]))
-	    return(g_set_y_axis_label(args[2], args[0], args[1], XEN_UNDEFINED));
-	  else return(g_set_y_axis_label(args[3], args[0], args[1], args[2]));
-	}
-    }
-}
-#endif
+WITH_FOUR_SETTER_ARGS(g_set_y_axis_label_reversed, g_set_y_axis_label)
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_4(g_grf_x_w, g_grf_x)

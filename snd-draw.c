@@ -268,44 +268,7 @@ static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
   return(color);
 }
 
-#if HAVE_GUILE
-static XEN g_set_foreground_color_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  if (XEN_NOT_BOUND_P(arg2))
-    return(g_set_foreground_color(arg1, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  else
-    {
-      if (XEN_NOT_BOUND_P(arg3))
-	return(g_set_foreground_color(arg2, arg1, XEN_UNDEFINED, XEN_UNDEFINED));
-      else
-	{
-	  if (XEN_NOT_BOUND_P(arg4))
-	    return(g_set_foreground_color(arg3, arg1, arg2, XEN_UNDEFINED));
-	  else return(g_set_foreground_color(arg4, arg1, arg2, arg3));
-	}
-    }
-}
-#endif
-#if HAVE_GAUCHE
-static XEN g_set_foreground_color_reversed(XEN *argv, int argc, void *self)
-{
-  XEN args[4];
-  xen_gauche_load_args(args, argc, 4, argv);
-  if (XEN_NOT_BOUND_P(args[1]))
-    return(g_set_foreground_color(args[0], XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  else
-    {
-      if (XEN_NOT_BOUND_P(args[2]))
-	return(g_set_foreground_color(args[1], args[0], XEN_UNDEFINED, XEN_UNDEFINED));
-      else
-	{
-	  if (XEN_NOT_BOUND_P(args[3]))
-	    return(g_set_foreground_color(args[2], args[0], args[1], XEN_UNDEFINED));
-	  else return(g_set_foreground_color(args[3], args[0], args[1], args[2]));
-	}
-    }
-}
-#endif
+WITH_FOUR_SETTER_ARGS(g_set_foreground_color_reversed, g_set_foreground_color)
 
 
 #if USE_MOTIF
@@ -377,44 +340,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 
 #endif
 
-#if HAVE_GUILE
-static XEN g_set_current_font_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  if (XEN_NOT_BOUND_P(arg2))
-    return(g_set_current_font(arg1, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  else
-    {
-      if (XEN_NOT_BOUND_P(arg3))
-	return(g_set_current_font(arg2, arg1, XEN_UNDEFINED, XEN_UNDEFINED));
-      else
-	{
-	  if (XEN_NOT_BOUND_P(arg4))
-	    return(g_set_current_font(arg3, arg1, arg2, XEN_UNDEFINED));
-	  else return(g_set_current_font(arg4, arg1, arg2, arg3));
-	}
-    }
-}
-#endif
-#if HAVE_GAUCHE
-static XEN g_set_current_font_reversed(XEN *argv, int argc, void *self)
-{
-  XEN args[4];
-  xen_gauche_load_args(args, argc, 4, argv);
-  if (XEN_NOT_BOUND_P(args[1]))
-    return(g_set_current_font(args[0], XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  else
-    {
-      if (XEN_NOT_BOUND_P(args[2]))
-	return(g_set_current_font(args[1], args[0], XEN_UNDEFINED, XEN_UNDEFINED));
-      else
-	{
-	  if (XEN_NOT_BOUND_P(args[3]))
-	    return(g_set_current_font(args[2], args[0], args[1], XEN_UNDEFINED));
-	  else return(g_set_current_font(args[3], args[0], args[1], args[2]));
-	}
-    }
-}
-#endif
+WITH_FOUR_SETTER_ARGS(g_set_current_font_reversed, g_set_current_font)
 
 
 static XEN g_make_graph_data(XEN snd, XEN chn, XEN edpos, XEN lo, XEN hi)
