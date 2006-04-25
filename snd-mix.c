@@ -4956,7 +4956,8 @@ void g_init_mix(void)
 #if (!HAVE_GAUCHE)
   mf_tag = XEN_MAKE_OBJECT_TYPE("MixSampleReader", sizeof(mix_fd));
 #else
-  mf_tag = XEN_MAKE_OBJECT_TYPE("MixSampleReader", sizeof(mix_fd), print_mf, free_mf);
+  mf_tag = XEN_MAKE_OBJECT_TYPE("<mix-sample-reader>", sizeof(mix_fd), print_mf, free_mf);
+  XEN_EVAL_C_STRING("(define-method object-apply ((rd <mix-sample-reader>)) (read-mix-sample rd))");
 #endif
 
 #if HAVE_GUILE
@@ -8350,7 +8351,8 @@ void g_init_track(void)
 #if (!HAVE_GAUCHE)
   tf_tag = XEN_MAKE_OBJECT_TYPE("TrackSampleReader", sizeof(track_fd));
 #else
-  tf_tag = XEN_MAKE_OBJECT_TYPE("TrackSampleReader", sizeof(track_fd), print_tf, free_tf);
+  tf_tag = XEN_MAKE_OBJECT_TYPE("<track-sample-reader>", sizeof(track_fd), print_tf, free_tf);
+  XEN_EVAL_C_STRING("(define-method object-apply ((rd <track-sample-reader>)) (read-track-sample rd))");
 #endif
 
 #if HAVE_RUBY

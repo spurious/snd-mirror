@@ -106,6 +106,9 @@ vct *get_vct(XEN arg)
 
 static void vct_free(vct *v)
 {
+#if HAVE_GAUCHE
+  fprintf(stderr,"free %p ", v);
+#endif
   if (v)
     {
       if ((!(v->dont_free)) && 
@@ -959,7 +962,9 @@ void vct_init(void)
 #if (!HAVE_GAUCHE)
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));
 #else
-  vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct), print_vct, free_vct);
+  vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", sizeof(vct), print_vct, free_vct);
+  XEN_EVAL_C_STRING("(define-method object-apply ((v <vct>) (i <integer>)) (vct-ref v i))");
+  XEN_EVAL_C_STRING("(define-method (setter object-apply) ((v <vct>) (i <integer>) (val <number>)) (vct-set! v i val))");
 #endif
 
 #if HAVE_GUILE

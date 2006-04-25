@@ -5932,7 +5932,10 @@ void mus_xen_init(void)
 #if (!HAVE_GAUCHE)
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));
 #else
-  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen), print_mus_xen, free_mus_xen);
+  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", sizeof(mus_xen), print_mus_xen, free_mus_xen);
+  XEN_EVAL_C_STRING("(define-method object-apply ((g <mus>)) (mus-apply g))");
+  XEN_EVAL_C_STRING("(define-method object-apply ((g <mus>) (val <number>)) (mus-apply g val))");
+  XEN_EVAL_C_STRING("(define-method object-apply ((g <mus>) (val1 <number>) (val2 <number>)) (mus-apply g val1 val2))");
 #endif
 
 #if HAVE_GUILE

@@ -1622,6 +1622,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
   static void Wrapped_Free(XEN obj) \
   { \
+    Original_Free((Type *)XEN_OBJECT_REF(obj)); \
   }
 
 #define XEN_YES_WE_HAVE(Feature)      xen_gauche_provide(Feature)

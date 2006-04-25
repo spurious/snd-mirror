@@ -13,8 +13,10 @@
 
 /* TODO in Gauche:
  *    procedure->info as alist usable in snd-run for reader
- *    (1)applicable smob
+ *
  *    stacktrace and errors->listener
+ *       (current-load-history)
+ *
  *    unwind-protects around scm_apply (snd-xen g_call)
  *    snd-test/testsnd/compsnd/valgrind
  *       valgrind: GC Warning: Out of Memory!  Returning NIL!
@@ -29,6 +31,7 @@
  *
  *    (2)why is this fatal: header read failed: /home/bil/sf1/Pnossnd.aif: no SSND (data) chunk
  *      probably need "conditions" and "guard"
+ *      errors from C do this
  *
  *    simple-hook is broken (undo-hook in draw.scm):
  *       (add-hook! (undo-hook 0 0) (lambda (s c) (snd-print "undo")))
@@ -40,7 +43,17 @@
  *
  *    why does gauche configure get wrong off_t size?
  *
- *    how to search load path (snd-prefs)
+ *    how to search load path (snd-prefs) *load-path*
+
+Variable: *load-path*
+    Keeps a list of directories that are searched by load and require.
+
+    If you want to add other directories to the search path, do not modify this variable directly; use add-load-path, described below, instead. 
+
+Special Form: add-load-path path &optional (afterp #f)
+    Adds a path path to the library load path list. If a true value is given to afterp, path is added after the existing paths; otherwise, path is added before the existing paths.
+
+
  *    smob compare proc (eq?)
  *    should hook arity be checked?
  *

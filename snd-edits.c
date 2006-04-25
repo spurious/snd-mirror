@@ -9571,7 +9571,8 @@ void g_init_edits(void)
 #if (!HAVE_GAUCHE)
   sf_tag = XEN_MAKE_OBJECT_TYPE("SampleReader", sizeof(snd_fd));
 #else
-  sf_tag = XEN_MAKE_OBJECT_TYPE("SampleReader", sizeof(snd_fd), print_sf, free_sf);
+  sf_tag = XEN_MAKE_OBJECT_TYPE("<sample-reader>", sizeof(snd_fd), print_sf, free_sf);
+  XEN_EVAL_C_STRING("(define-method object-apply ((rd <sample-reader>)) (read-sample rd))");
 #endif
 
 #if HAVE_GUILE
