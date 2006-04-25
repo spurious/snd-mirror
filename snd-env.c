@@ -1,6 +1,8 @@
 #include "snd.h"
 
-/* TODO: check enved base + op */
+/* SOMEDAY: removal of env-base means the view-envs display does not reflect any base/exp setting,
+ *   and the exp button is reset to linear upon change back 
+ */
 
 #define ENVED_DOT_SIZE 10
 

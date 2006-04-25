@@ -1759,7 +1759,9 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 
   if (fdat->header_list)
     {
-      res = fdat->header_pos;
+      res = fdat->header_list->selected_item;
+      if (res == SLIST_NO_ITEM_SELECTED)
+	res = fdat->header_pos;
       if (res != NO_SELECTION)
 	{
 	  (*type) = position_to_type(res);
@@ -1768,7 +1770,9 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
     }
   if (fdat->format_list)
     {
-      res = fdat->format_pos;
+      res = fdat->format_list->selected_item;
+      if (res == SLIST_NO_ITEM_SELECTED) /* can this happen? */
+	res = fdat->format_pos;
       if (res != NO_SELECTION)
 	{
 	  (*format) = position_to_format(fdat->current_type, res);

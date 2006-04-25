@@ -1145,10 +1145,13 @@ if test "$with_gauche" = yes ; then
     AC_MSG_RESULT($gauche_version)
 
     OLD_CFLAGS="CFLAGS"
-    # gauche-config inserts idiotic single-quotes in the -I and -L results thereby rendering them useless,
+    # gauche-config inserts single-quotes in the -I and -L results thereby rendering them useless,
     #   so the following sed command tries to remove them.  You apparently can't quote a single-quote
     #   in this context, so I use \x27 = ASCII for single quote.
-    GUILE_CFLAGS=`$GAUCHE_CONFIG -I | sed 's/\x27//g'`
+#   GUILE_CFLAGS=`$GAUCHE_CONFIG -I | sed 's/\x27//g'`
+    GUILE_CFLAGS=`$GAUCHE_CONFIG -I | tr -d "'"` 
+# apparently the sed line depends on the version of sed -- mine works (4.1.5) but others say it doesn't
+#   thanks to Kjetil for the replacement using "tr"
     CFLAGS="$CFLAGS $GUILE_CFLAGS"
 
     AC_COMPILE_IFELSE(

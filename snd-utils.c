@@ -447,6 +447,14 @@ void snd_exit(int val)
 #if HAVE_FAM
 #define DEBUGGING_FAM 0
 
+/* one confusing thing: if use deletes the file we're monitoring, apparently Linux doesn't
+ *   actually delete it, though a directory monitor reports the deletion; the file itself
+ *   hangs around, I guess because we have it open(?) -- can't decide how to deal with this.
+ *
+ * The main open is in snd_chn add_channel_data, and the file channel is held open unless
+ *   too_many_files forces us to close as many as possible.
+ */
+
 static bool fam_already_warned = false;
 
 char *fam_event_name(int code)

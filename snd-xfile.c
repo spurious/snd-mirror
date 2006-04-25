@@ -2597,6 +2597,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
   int type, format, srate, chans, output_type, chan = 0, extractable_chans = 0;
+  /* TODO: shouldn't these have default values? */
   bool file_exists = false;
   off_t location, samples;
   io_error_t io_err = IO_NO_ERROR;

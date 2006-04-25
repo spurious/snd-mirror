@@ -75,6 +75,7 @@ static void save_prefs(const char *filename, char *load_path_name)
 #if HAVE_FORTH
 	  fprintf(fd, "$\" %s\" add-load-path\n", load_path_name);
 #endif
+	  /* TODO: gauche add load path at scheme level (not Scm_AddLoadPath or whatever) */
 	}
       for (i = 0; i < prefs_top; i++)
 	{
