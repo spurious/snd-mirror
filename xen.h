@@ -1635,7 +1635,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_HOOK_P(Arg)                    (!XEN_FALSE_P(Arg) && XEN_LIST_P(SCM_GLOC_GET(SCM_GLOC(Arg))))
 #define XEN_DEFINE_HOOK(Name, Arity, Help) XEN_DEFINE(Name, XEN_EMPTY_LIST)
 /* "simple hooks are for channel-local hooks (unnamed, accessed through the channel) */
-#define XEN_DEFINE_SIMPLE_HOOK(Arity)      Scm_Define(Scm_UserModule(), Scm_Gensym(SCM_STRING(C_TO_XEN_STRING("snd-hook"))), XEN_EMPTY_LIST)
+#define XEN_DEFINE_SIMPLE_HOOK(Arity)      Scm_Define(Scm_UserModule(), SCM_SYMBOL(Scm_Gensym(SCM_STRING(C_TO_XEN_STRING("snd-hook")))), XEN_EMPTY_LIST)
 #define XEN_HOOKED(Arg)                    XEN_NOT_NULL_P(SCM_GLOC_GET(SCM_GLOC(Arg)))
 #define XEN_CLEAR_HOOK(Arg)                SCM_GLOC_SET(SCM_GLOC(Arg), XEN_EMPTY_LIST)
 #define XEN_HOOK_PROCEDURES(Arg)           SCM_OBJ(SCM_GLOC_GET(SCM_GLOC(Arg)))
@@ -1658,7 +1658,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_PROCEDURE_SOURCE(Func)        XEN_FALSE
 #define XEN_ARITY(Func)                   XEN_CONS(C_TO_XEN_INT(SCM_PROCEDURE_REQUIRED(Func)), C_TO_XEN_INT(SCM_PROCEDURE_OPTIONAL(Func)))
 #define XEN_REQUIRED_ARGS(Func)           SCM_PROCEDURE_REQUIRED(Func)
-#define XEN_REQUIRED_ARGS_OK(Func, Args)  (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func))) == Args)
+#define XEN_REQUIRED_ARGS_OK(Func, Args)  (SCM_PROCEDURE_REQUIRED(Func) == Args)
 
 #ifndef __cplusplus
 #define XEN_PROCEDURE_CAST (XEN (*)())

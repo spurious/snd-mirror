@@ -1395,7 +1395,9 @@ off_t xen_to_c_off_t(XEN obj)
 XEN c_to_xen_off_t(off_t val)
 {
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
-    return(C_TO_XEN_LONG_LONG(val));
+  if (SCM_SMALL_INT_FITS(val))
+    return(SCM_MAKE_INT((int)val));
+  return(C_TO_XEN_LONG_LONG(val));
 #else
     return(C_TO_XEN_INT(val));
 #endif
@@ -1629,7 +1631,7 @@ XEN_OBJECT_TYPE xen_gauche_new_type(const char *name, ScmClassPrintProc print, S
 							   name,
 							   print,
 							   cleanup,
-							   SCM_FOREIGN_POINTER_KEEP_IDENTITY | SCM_FOREIGN_POINTER_MAP_NULL | SCM_CLASS_APPLICABLE);
+							   SCM_FOREIGN_POINTER_KEEP_IDENTITY | SCM_FOREIGN_POINTER_MAP_NULL);
   return(current_type);
 }
 

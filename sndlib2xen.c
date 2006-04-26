@@ -1563,6 +1563,9 @@ XEN_NARGIFY_1(g_mus_alsa_set_squelch_warning_w, g_mus_alsa_set_squelch_warning)
 #if DEBUGGING && HAVE_SCHEME
   XEN_NARGIFY_2(g_mus_header_original_format_name_w, g_mus_header_original_format_name)
 #endif
+#if HAVE_GAUCHE
+XEN_NARGIFY_2(g_sound_data_equalp_w, equalp_sound_data)
+#endif
 #else
 #define g_sound_data_length_w g_sound_data_length
 #define g_sound_data_chans_w g_sound_data_chans
@@ -1781,7 +1784,10 @@ void mus_sndlib_xen_initialize(void)
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", sizeof(sound_data), print_sound_data, free_sound_data);
   XEN_EVAL_C_STRING("(define-method object-apply ((sd <sound-data>) (c <integer>) (i <integer>)) (sound-data-ref sd c i))");
   XEN_EVAL_C_STRING("(define-method (setter object-apply) ((sd <sound-data>) (c <integer>) (i <integer>) (val <number>)) (sound-data-set! sd c i val))");
+  XEN_EVAL_C_STRING("(define-method equal? ((sd1 <sound-data>) (sd2 <sound-data>)) (sound-data-equal? sd1 sd2))");
+  XEN_DEFINE_PROCEDURE("sound-data-equal?", g_sound_data_equalp_w, 2, 0, 0, "internal function for aound-data equal?");
 #endif
+
 #if HAVE_GUILE
   scm_set_smob_print(sound_data_tag, print_sound_data);
   scm_set_smob_free(sound_data_tag, free_sound_data);
@@ -1790,6 +1796,7 @@ void mus_sndlib_xen_initialize(void)
   scm_set_smob_apply(sound_data_tag, XEN_PROCEDURE_CAST sound_data_apply, 2, 0, 0);
 #endif
 #endif
+
 #if HAVE_FORTH
   fth_set_object_inspect(sound_data_tag, print_sound_data);
   fth_set_object_equal(sound_data_tag, equalp_sound_data);
@@ -1798,6 +1805,7 @@ void mus_sndlib_xen_initialize(void)
   fth_set_object_free(sound_data_tag, free_sound_data);
   fth_set_object_apply(sound_data_tag, XEN_PROCEDURE_CAST sound_data_apply, 2, 0, 0);
 #endif
+
 #if HAVE_RUBY
   Init_Hook();
   rb_include_module(sound_data_tag, rb_mComparable);

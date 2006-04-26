@@ -18,44 +18,36 @@
  *       (current-load-history)
  *
  *    unwind-protects around scm_apply (snd-xen g_call)
+ *
  *    snd-test/testsnd/compsnd/valgrind
+ *       snd-test hangs?
  *       valgrind: GC Warning: Out of Memory!  Returning NIL!
  *
- *    optimizer
+ *    optimizer -- needs either property list or use info as alist
  *
  *    check prefs and save/restore: these are broken
  *       even in Guile, 'Reset' doesn't set "full duration" or bounds to its default -- should it?
  *
- *    various smob free/print cases
- *    protect from gc (how does this gc work?)
+ *    test various smob free/print cases [these are activated]
  *
- *    (2)why is this fatal: header read failed: /home/bil/sf1/Pnossnd.aif: no SSND (data) chunk
- *      probably need "conditions" and "guard"
- *      errors from C do this
+ *    protect from gc (how does this gc work?)
  *
  *    simple-hook is broken (undo-hook in draw.scm):
  *       (add-hook! (undo-hook 0 0) (lambda (s c) (snd-print "undo")))
  *       has no effect (we're not accessing the actual variable in this case)
  *       may have to use an smob for hooks throughout
  *
- *    are off_t's ok -- why all the off_t related- errors in snd-test?
- *      this appears to be a format problem -- why does it print only if bignum returned from C?
- *
  *    why does gauche configure get wrong off_t size?
  *
  *    how to search load path (snd-prefs) *load-path*
-
-Variable: *load-path*
-    Keeps a list of directories that are searched by load and require.
-
-    If you want to add other directories to the search path, do not modify this variable directly; use add-load-path, described below, instead. 
-
-Special Form: add-load-path path &optional (afterp #f)
-    Adds a path path to the library load path list. If a true value is given to afterp, path is added after the existing paths; otherwise, path is added before the existing paths.
-
-
- *    smob compare proc (eq?)
- *    should hook arity be checked?
+ *      Variable: *load-path*: Keeps a list of directories that are searched by load and require.
+ *      If you want to add other directories to the search path, use add-load-path
+ *
+ *    should hook arity be checked? should this use Gauche's hooks?
+ *
+ *    if -1 in c->xen bignum turning into 2^32? (set-samples error)
+ *
+ *    header read failed error seems to halt snd-test
  *
  * TODO in Forth:
  *    sndscm: .snd_forth and fs doc in general
@@ -4215,6 +4207,8 @@ that name is presented in the New File dialog."
   XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
   XEN_EVAL_C_STRING("(define (debug-set! . args) #f)");
   XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
+  XEN_EVAL_C_STRING("(defmacro declare args #f)");     /* for optimizer */
+  XEN_EVAL_C_STRING("(define (procedure-source proc) #f)"); /* SOMEDAY: procedure-source in gauche? */
 
   /* Gauche has hooks (in Scheme), but this is quicker */
   XEN_EVAL_C_STRING("(define hook? list?)");

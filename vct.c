@@ -106,9 +106,6 @@ vct *get_vct(XEN arg)
 
 static void vct_free(vct *v)
 {
-#if HAVE_GAUCHE
-  fprintf(stderr,"free %p ", v);
-#endif
   if (v)
     {
       if ((!(v->dont_free)) && 
@@ -205,9 +202,7 @@ XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, vct_to_string)
 
 static XEN equalp_vct(XEN obj1, XEN obj2)
 {
-#if HAVE_RUBY || HAVE_FORTH
   if ((!(VCT_P(obj1))) || (!(VCT_P(obj2)))) return(XEN_FALSE);
-#endif
   return(xen_return_first(C_TO_XEN_BOOLEAN(vct_equalp((vct *)XEN_OBJECT_REF(obj1), (vct *)XEN_OBJECT_REF(obj2))), obj1, obj2));
 }
 
@@ -706,6 +701,9 @@ XEN_ARGIFY_2(vct_reverse_w, vct_reverse)
 XEN_NARGIFY_1(g_vct_to_readable_string_w, g_vct_to_readable_string)
 XEN_NARGIFY_2(vct_times_w, vct_times)
 XEN_NARGIFY_2(vct_plus_w, vct_plus)
+#if HAVE_GAUCHE
+XEN_NARGIFY_2(equalp_vct_w, equalp_vct)
+#endif
 #else
 #define g_make_vct_w g_make_vct
 #define copy_vct_w copy_vct
@@ -965,6 +963,14 @@ void vct_init(void)
   vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", sizeof(vct), print_vct, free_vct);
   XEN_EVAL_C_STRING("(define-method object-apply ((v <vct>) (i <integer>)) (vct-ref v i))");
   XEN_EVAL_C_STRING("(define-method (setter object-apply) ((v <vct>) (i <integer>) (val <number>)) (vct-set! v i val))");
+  XEN_EVAL_C_STRING("(define-method equal? ((v1 <vct>) (v2 <vct>)) (vct-equal? v1 v2))");
+  XEN_DEFINE_PROCEDURE("vct-equal?", equalp_vct_w, 2, 0, 0, "internal function for 'equal? method");
+
+  /* TODO: various methods (Ruby-style) for vcts
+   *   we could even add (* v1 v2) etc, and for readers (+ rd1 rd2) etc -- an infinite source of amusement
+   * (define-method + ((v1 <vct>) (v2 <vct>)) (vct-add! v1 v2))
+   */
+
 #endif
 
 #if HAVE_GUILE

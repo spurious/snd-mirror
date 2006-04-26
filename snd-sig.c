@@ -3733,13 +3733,16 @@ the current sample, the vct returned by 'init-func', and the current read direct
   XEN proc = XEN_FALSE;
   /* (ptree-channel (lambda (y) (* y 2))) -> ((lambda (y) (* y 2)) #<procedure #f ((y) (* y 2))>) as "proc_and_list" */
   /*   the cadr proc gives access to the environment, run walks the car */
-#if HAVE_RUBY || HAVE_FORTH
+#if HAVE_RUBY || HAVE_FORTH || HAVE_GAUCHE
   proc = proc_and_list;
 #endif
-#if HAVE_SCHEME
+#if HAVE_GUILE
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
 #endif
+
+  /* fprintf(stderr,"proc: %s, args: %d\n", XEN_AS_STRING(proc_and_list), XEN_REQUIRED_ARGS(proc_and_list)); */
+
   XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) && ((XEN_REQUIRED_ARGS_OK(proc, 1)) || (XEN_REQUIRED_ARGS_OK(proc, 3))),
 		  proc, XEN_ARG_1, S_ptree_channel, "a procedure of one or three args");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 10, S_ptree_channel, "a string");

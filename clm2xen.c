@@ -930,9 +930,7 @@ static XEN print_mus_xen(XEN obj)
 
 static XEN equalp_mus_xen(XEN obj1, XEN obj2) 
 {
-#if HAVE_RUBY || HAVE_FORTH
   if ((!(MUS_XEN_P(obj1))) || (!(MUS_XEN_P(obj2)))) return(XEN_FALSE);
-#endif
   return(C_TO_XEN_BOOLEAN(mus_equalp(XEN_TO_MUS_ANY(obj1), XEN_TO_MUS_ANY(obj2))));
 }
 
@@ -5663,6 +5661,9 @@ XEN_NARGIFY_4(g_ssb_bank_w, g_ssb_bank)
 XEN_NARGIFY_0(g_clm_table_size_w, g_clm_table_size)
 XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
 XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
+#if HAVE_GAUCHE
+XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
+#endif
 #else
 #define g_mus_srate_w g_mus_srate
 #define g_mus_set_srate_w g_mus_set_srate
@@ -5929,6 +5930,7 @@ void mus_xen_init(void)
 #endif
 {
   init_mus_module();
+
 #if (!HAVE_GAUCHE)
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));
 #else
@@ -5936,6 +5938,8 @@ void mus_xen_init(void)
   XEN_EVAL_C_STRING("(define-method object-apply ((g <mus>)) (mus-apply g))");
   XEN_EVAL_C_STRING("(define-method object-apply ((g <mus>) (val <number>)) (mus-apply g val))");
   XEN_EVAL_C_STRING("(define-method object-apply ((g <mus>) (val1 <number>) (val2 <number>)) (mus-apply g val1 val2))");
+  XEN_EVAL_C_STRING("(define-method equal? ((g1 <mus>) (g2 <mus>)) (mus-equal? g1 g2))");
+  XEN_DEFINE_PROCEDURE("mus-equal?", g_mus_equalp_w, 2, 0, 0, "internal function for generator equal?");
 #endif
 
 #if HAVE_GUILE
@@ -5947,6 +5951,7 @@ void mus_xen_init(void)
   scm_set_smob_apply(mus_xen_tag, XEN_PROCEDURE_CAST mus_xen_apply, 0, 2, 0);
 #endif
 #endif
+
 #if HAVE_FORTH
   fth_set_object_inspect(mus_xen_tag, print_mus_xen);
   fth_set_object_to_string(mus_xen_tag, mus_xen_to_s);
@@ -5955,6 +5960,7 @@ void mus_xen_init(void)
   fth_set_object_free(mus_xen_tag, free_mus_xen);
   fth_set_object_apply(mus_xen_tag, XEN_PROCEDURE_CAST mus_xen_apply, 0, 2, 0);
 #endif
+
 #if HAVE_RUBY
   rb_define_method(mus_xen_tag, "to_s", XEN_PROCEDURE_CAST mus_xen_to_s, 0);
   rb_define_method(mus_xen_tag, "eql?", XEN_PROCEDURE_CAST equalp_mus_xen, 1);
