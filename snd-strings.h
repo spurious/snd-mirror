@@ -177,7 +177,6 @@
 #define S_enved_target                  "enved-target"
 #define S_enved_wave_p                  "enved-wave?"
 #define S_enved_waveform_color          "enved-waveform-color"
-#define S_envelope_base                 "envelope-base"
 #define S_envelope_exponential          "envelope-exponential"
 #define S_envelope_linear               "envelope-linear"
 #define S_eps_bottom_margin             "eps-bottom-margin"

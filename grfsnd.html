@@ -247,6 +247,199 @@ $mouse_enter_listener_hook.add_hook!("focus") do |widget| focus_widget(widget) e
 $mouse_enter_text_hook.add_hook!("focus") do |widget| focus_widget(widget) end
 </pre></td></tr></table>
 
+<p>And Forth:
+</p>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+\ .snd_forth -- start up file for Snd/Forth -*- snd-forth -*-
+
+\ You can easily install the *.fs scripts with:
+\ 
+\   cd fth-0.8.x/examples/site-lib
+\   ./install.fth
+\
+\ If you have installed the *.fs files with install.fth, you don't
+\ need to add a path to *load-path*.  ${prefix}/share/fth/site-fth is
+\ already included.  Otherwise you can add a path with e.g.
+\
+\   "/home/mike/snd-8" add-load-path
+
+#f to *gc-verbose*
+#t to *fth-verbose*
+
+: verbose-loading ( fname -- f )
+  $" \\ loading \"%s\"\n" swap 1 &gt;list fth-print
+  #t
+;
+
+'snd-nogui provided? [unless] before-load-hook ' verbose-loading 1 make-proc add-hook! [then]
+
+require clm
+require clm-ins
+require env
+
+[undefined] clm-print [if] ' fth-print alias clm-print [then]
+
+#t to *clm-verbose*
+lambda: ( str -- ) ." \ &lt;" .string ." &gt;" cr ; to *clm-notehook*
+
+'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
+'snd-gtk   provided? 'xg provided? not && [if] dl-load libxg Init_libxg [then]
+require peak-env
+require examp
+require extensions
+require mix
+require marks
+require draw
+'snd-motif provided? [if]
+  require effects
+  require popup
+  edhist-save-hook lambda: ( prc -- )
+    $" #&lt;proc: %s&gt;\n" swap 1 &gt;list string-format .stdout
+  ; 1 make-proc add-hook!
+[then]
+
+exit-hook lambda: ( -- f )
+  save-state-file save-state drop
+  #t
+; 0 make-proc add-hook! 
+
+after-open-hook lambda: ( snd -- val )
+  { snd }
+  snd channels 0 ?do snd short-file-name snd i time-graph set-x-axis-label drop loop
+  #t snd set-cursor-follows-play drop
+  channels-combined snd set-channel-style
+; 1 make-proc add-hook!
+
+after-save-as-hook lambda: ( snd fname from-dialog -- f )
+  { snd fname from-dialog }
+  snd revert-sound drop
+  snd close-sound drop
+  fname open-sound drop
+  #f
+; 3 make-proc add-hook!
+
+start-playing-hook lambda: ( snd -- f )
+  { snd }
+  #f
+  snd sound? if snd cursor-follows-play if drop cursor-line snd #t set-cursor-style then then
+; 1 make-proc add-hook!
+
+stop-playing-hook lambda: ( snd -- f )
+  { snd }
+  #f
+  snd sound? if drop cursor-cross snd #t set-cursor-style then
+; 1 make-proc add-hook!
+
+window-property-changed-hook lambda: ( cmd -- )
+  ." \ remote command received: " ( cmd ) .string cr
+; 1 make-proc add-hook!
+
+before-save-state-hook lambda: ( fname -- f )
+  ( fname ) io-open-write dup $" \\ -*- snd-forth -*-\n" io-write io-close
+  #t
+; 1 make-proc add-hook!
+
+enved-hook lambda: ( en pt x y reason -- en'|#f )
+  { en pt x y reason }
+  reason enved-move-point = if
+    x en car f&gt; x en -2 list-ref f&lt; and if
+      en en pt 2* list-ref x #f #f stretch-envelope { new-en }
+      new-en pt 2* 1+ y list-set!
+      new-en
+    else
+      #f
+    then
+  else
+    #f
+  then
+; 5 make-proc add-hook!
+
+\ from ~/.snd_prefs_forth
+with-buffers-menu
+with-reopen-menu
+0.00 0.10 #t prefs-activate-initial-bounds
+focus-follows-mouse
+2 set-global-sync
+#f check-for-unsaved-edits
+3 remember-sound-state
+'xm provided? [if]
+  add-mark-pane
+  make-current-window-display
+  #t show-smpte-label
+[then]
+save-mark-properties
+defined? use-combo-box-for-fft-size [if]
+  #f to use-combo-box-for-fft-size
+[then]
+
+22050      	       set-default-output-srate drop
+2          	       set-default-output-chans drop
+mus-next   	       set-default-output-header-type drop
+mus-lfloat 	       set-default-output-data-format drop
+mus-interp-linear      set-locsig-type drop
+512                    set-dac-size drop
+mus-audio-default      set-audio-output-device drop
+22050                  set-recorder-srate drop
+2                      set-recorder-out-chans drop
+mus-next               set-recorder-out-header-type drop
+mus-lfloat             set-recorder-out-data-format drop
+mus-audio-dac-out      set-recorder-in-device drop
+2                      set-recorder-in-chans drop
+#t                     set-recorder-autoload drop
+#t                     set-show-indices drop
+0.0                    set-auto-update-interval drop
+#f                     set-trap-segfault drop
+$" rev"                add-sound-file-extension drop
+$" reverb"             add-sound-file-extension drop
+$" wave"               add-sound-file-extension drop
+$" snd&gt; "              set-listener-prompt drop
+speed-control-as-ratio set-speed-control-style drop
+
+'snd-nogui provided? [unless]
+  13  			    	      set-colormap drop
+  #f  			    	      set-show-listener drop
+  #f  			    	      set-show-controls drop
+  #f  			    	      set-just-sounds drop
+  1.0 			    	      set-enved-base drop
+  #t  			    	      set-enved-wave? drop
+  #t  			    	      set-show-y-zero drop
+  #t  			    	      set-verbose-cursor drop
+  0.96 0.96 0.86 make-color ( beige ) set-selected-graph-color drop
+  0.00 0.00 1.00 make-color ( blue )  set-selected-data-color drop
+  #f                                  set-with-gl drop
+  graph-once                          set-transform-graph-type drop
+  #t                                  set-show-transform-peaks drop
+  dolph-chebyshev-window              set-fft-window drop
+  fourier-transform                   set-transform-type drop
+  \ lisp-graph-hook ' display-db      2 make-proc add-hook!
+  \ lisp-graph-hook ' display-energy  2 make-proc add-hook!
+  mix-click-hook  ' mix-click-info  1 make-proc add-hook!
+  mark-click-hook ' mark-click-info 1 make-proc add-hook!
+  defined? show-disk-space [if]
+    after-open-hook ' show-disk-space 1 make-proc add-hook!
+  [then]
+  #t  			   	      set-show-listener drop
+  #f  			   	      set-show-controls drop
+  160 			   	      set-window-x drop
+  000 			   	      set-window-y drop
+  800 			   	      set-window-width drop
+  600 			   	      set-window-height drop
+[then]
+
+[ifundef] enved
+  $" enved"    '( 0.0 0.0 25.0 1.0 75.0 1.0 100.0 0.0 )           1.0  define-envelope drop
+  $" brass"    '( 0.0 0.0 20.0 1.0 40.0 0.6 90.0 0.5 100.0 0.0 )  1.0  define-envelope drop
+  $" bassoon"  '( 0.0 0.0 10.0 1.0 90.0 1.0 100.0 0.0 )           1.0  define-envelope drop
+  $" clarinet" '( 0.0 0.0 25.0 1.0 75.0 1.0 100.0 0.0 )          32.0  define-envelope drop
+  $" woodwind" '( 0.0 0.0 10.0 1.0 90.0 1.0 100.0 0.0 )           0.32 define-envelope drop
+[then]
+
+$" fth" textdomain drop
+
+\ .snd_forth ends here
+</pre></td></tr></table>
+
 <p>
 If you loaded Snd with GSL, and have set the GSL_IEEE_MODE environment variable,
 it will override Snd's default arithmetic mode settings.  GSL recommends the setting:
@@ -1282,9 +1475,6 @@ Test 23 in snd-test.scm has a with-sound that includes most of these instruments
 
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithcm">Snd and Common Music</a></h3></td></tr></table>
 
-<p>(This is obsolete -- the connection to CM is now much tighter...)
-</p>
-
 <p>You can load Common Music into Snd, but the connection to
 Snd's definstrument macro is not yet as tight as it is in the Common Lisp
 CLM:
@@ -1909,6 +2099,11 @@ For Ruby as an Emacs subjob, see inf-snd.el.
 <pre>
 http://sourceforge.net/projects/fth
 </pre>
+<p>An example initialization file (~/.snd_forth) is given in the <a href="#sndinitfile">initialization</a> section.
+Mike Scholz (creator of the Forth library we use) has provided a bunch of Forth files along the lines of the
+Scheme and Ruby files described above -- see *.fs.  Once I learn a bit more Forth, I'll expand this section.
+</p>
+
 <br>
 
 <!-- INDEX sndandladspa:Plugins -->

@@ -1369,6 +1369,10 @@ char *xen_version(void)
 
 off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 {
+  /*
+  fprintf(stderr, "obj: %s, off_t: %d, long: %lld, int: %d\n",
+	  XEN_AS_STRING(obj), XEN_OFF_T_P(obj), (off_t)XEN_TO_C_LONG_LONG(obj), XEN_TO_C_INT(obj));
+  */
   if (XEN_OFF_T_P(obj))
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
     return(XEN_TO_C_LONG_LONG(obj));
@@ -1394,6 +1398,7 @@ off_t xen_to_c_off_t(XEN obj)
 
 XEN c_to_xen_off_t(off_t val)
 {
+#if 1
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
   if (SCM_SMALL_INT_FITS(val))
     return(SCM_MAKE_INT((int)val));
@@ -1401,6 +1406,10 @@ XEN c_to_xen_off_t(off_t val)
 #else
     return(C_TO_XEN_INT(val));
 #endif
+#endif
+    /*
+    return(Scm_MakeInteger(val));
+    */
 }
 
 int xen_to_c_int_or_else(XEN obj, int fallback)

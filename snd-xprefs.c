@@ -2321,6 +2321,9 @@ static void load_path_text(prefs_info *prf)
 #if HAVE_FORTH
       fth_add_load_path(str);
 #endif
+#if HAVE_GAUCHE
+      Scm_AddLoadPath(str, false);
+#endif
     }
   if (str) XtFree(str);
 }

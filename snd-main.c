@@ -1453,6 +1453,9 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 #if HAVE_FORTH
 				      fth_add_load_path(auto_open_file_names[auto_open_ctr]);
 #endif
+#if HAVE_GAUCHE
+				      Scm_AddLoadPath(auto_open_file_names[auto_open_ctr], false);
+#endif
 				    }
 				}
 			      else

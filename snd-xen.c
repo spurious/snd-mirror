@@ -39,13 +39,8 @@
  *
  *    why does gauche configure get wrong off_t size?
  *
- *    how to search load path (snd-prefs) *load-path*
- *      Variable: *load-path*: Keeps a list of directories that are searched by load and require.
- *      If you want to add other directories to the search path, use add-load-path
- *
  *    should hook arity be checked? should this use Gauche's hooks?
- *
- *    if -1 in c->xen bignum turning into 2^32? (set-samples error)
+ *      need to define procedure-arity and save hook-arity somewhere
  *
  *    header read failed error seems to halt snd-test
  *
@@ -4172,6 +4167,7 @@ that name is presented in the New File dialog."
   XEN_EVAL_C_STRING("(define undo-edit undo)");
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
   XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
+  XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))"); /* assumes we've loaded format */
 
   XEN_EVAL_C_STRING("(define load-from-path load)");
   XEN_EVAL_C_STRING("(define system sys-system)");
@@ -4195,6 +4191,7 @@ that name is presented in the New File dialog."
 
   XEN_EVAL_C_STRING("(defmacro catch (sym thunk handler) `(with-error-handler ,handler ,thunk))");
   /* TODO: does handler need to return #t? how to find/check error type? */
+  /*    we need the handler to return some arbitrary value, and it should be able to examine (and return) the error type (a symbol) */
   /* this probably should use "guard" and error should be "condition" etc */
 
   XEN_EVAL_C_STRING("(define (symbol->keyword key) (make-keyword (symbol->string key)))");

@@ -1519,17 +1519,17 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 /* Gauche "ints" are apparently 29-bit quantities -- might have to stick with ULONG everywhere */
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define XEN_TO_C_INT(a)               ({ XEN _xen_ga_9_ = a; (SCM_INTP(_xen_ga_9_) ? SCM_INT_VALUE(_xen_ga_9_) : Scm_GetIntegerU(_xen_ga_9_)); })
+  #define XEN_TO_C_INT(a)               ({ XEN _xen_ga_9_ = a; (SCM_INTP(_xen_ga_9_) ? SCM_INT_VALUE(_xen_ga_9_) : Scm_GetInteger(_xen_ga_9_)); })
   #define XEN_TO_C_INT_OR_ELSE(a, b)    ({ XEN _xen_ga_1_ = a; ((XEN_INTEGER_P(_xen_ga_1_)) ? XEN_TO_C_INT(_xen_ga_1_) : b); })
   #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ({ XEN _xen_ga_2_ = a; ((XEN_NUMBER_P(_xen_ga_2_)) ? XEN_TO_C_DOUBLE(_xen_ga_2_) : b); })
   #define C_TO_XEN_INT(a)               ({ int _xen_ga_8_ = a; \
                                             (SCM_SMALL_INT_FITS(_xen_ga_8_)) ? \
-                                              SCM_MAKE_INT(_xen_ga_8_) : Scm_MakeIntegerU((unsigned long)_xen_ga_8_); })
+                                              SCM_MAKE_INT(_xen_ga_8_) : Scm_MakeInteger((long)_xen_ga_8_); })
 #else
-  #define XEN_TO_C_INT(a)               (SCM_INTP(a) ? SCM_INT_VALUE(a) : Scm_GetIntegerU(a))
+  #define XEN_TO_C_INT(a)               (SCM_INTP(a) ? SCM_INT_VALUE(a) : Scm_GetInteger(a))
   #define XEN_TO_C_INT_OR_ELSE(a, b)    ((XEN_INTEGER_P(a)) ? XEN_TO_C_INT(a) : b)
   #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ((XEN_NUMBER_P(a)) ? XEN_TO_C_DOUBLE(a) : b)
-  #define C_TO_XEN_INT(a)               (SCM_SMALL_INT_FITS(a)) ? SCM_MAKE_INT(a) : Scm_MakeIntegerU((unsigned long)a)
+  #define C_TO_XEN_INT(a)               (SCM_SMALL_INT_FITS(a)) ? SCM_MAKE_INT(a) : Scm_MakeInteger((long)a)
 #endif
 #define XEN_DOUBLE_P(Arg)            SCM_REALP(Arg)
 #define XEN_TO_C_DOUBLE(a)           xen_to_c_double(a)

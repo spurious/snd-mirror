@@ -608,7 +608,9 @@
 			    (if (and (not (string-equal "&gt;" (my-subseq line i (+ i 4))))
 				     (not (string-equal "&lt;" (my-subseq line i (+ i 4))))
 				     (not (string-equal "&amp;" (my-subseq line i (+ i 5))))
-				     (not (string-equal "&micro;" (my-subseq line i (+ i 7)))))
+				     (not (string-equal "&micro;" (my-subseq line i (+ i 7))))
+				     (not (string-equal "&&" (my-subseq line i (+ i 2))))
+				     (not (string-equal "& " (my-subseq line i (+ i 2))))) ; following char -- should skip this
 				(warn "~A[~D]: unknown escape sequence: ~A" file linectr line))
 			  (if (char= c #\() (incf p-parens)
 			    (if (char= c #\)) (decf p-parens)

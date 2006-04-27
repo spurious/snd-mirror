@@ -23387,14 +23387,14 @@ def test11
     define_envelope("ramp032", [0, 0, 1, 1],       0.032)
     define_envelope("ramp12",  [0, 0, 1, 1, 2, 0], 3.000)
     define_envelope("ramp012", [0, 0, 1, 1, 2, 0], 0.300)
-    [[$ramp32,  "ramp32",  32.000],
-      [$ramp032, "ramp032",  0.032],
-      [$ramp12,  "ramp12",   3.000],
-      [$ramp012, "ramp012",  0.300]].each do |e, name, base|
-      if fneq(ebase = property(e.object_id, :envelope_base), base)
-        snd_display("define_envelope %s base: %s %s?", name, base, ebase)
-      end
-    end
+#    [[$ramp32,  "ramp32",  32.000],
+#      [$ramp032, "ramp032",  0.032],
+#      [$ramp12,  "ramp12",   3.000],
+#      [$ramp012, "ramp012",  0.300]].each do |e, name, base|
+#     if fneq(ebase = property(e.object_id, :envelope_base), base)
+#       snd_display("define_envelope %s base: %s %s?", name, base, ebase)
+#      end
+#    end
     #
     ind = new_sound("fmv.snd", Mus_aifc, Mus_bshort, 22050, 1, "define-envelope tests", 10)
     map_channel($init_channel)

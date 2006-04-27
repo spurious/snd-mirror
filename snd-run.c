@@ -1220,9 +1220,6 @@ void free_ptree(struct ptree *pt)
 			      pt->clms[v->addr] = NULL;   
 			    }
 #endif
-#if DEBUGGING
-			  fprintf(stderr,"attempt to free locally created gen");
-#endif
 			  break;
 			case R_INT_VECTOR:   
 			case R_CLM_VECTOR:   
