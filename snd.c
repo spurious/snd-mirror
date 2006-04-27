@@ -427,7 +427,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->xen_error_data = NULL;
   ss->xen_error_handler = NULL;
 
-#if USE_NO_GUI || HAVE_RUBY || HAVE_FORTH
+#if USE_NO_GUI || HAVE_RUBY || HAVE_FORTH || HAVE_GAUCHE
   ss->catch_exists = 1; /* scm_shell for USE_NO_GUI case */
 #else
   ss->catch_exists = 0;

@@ -404,6 +404,7 @@
 
 (define (save-mark-properties)
   "(save-mark-properties) sets up an after-save-state-hook function to save any mark-properties"
+  (if (defined? 'open)
   (add-hook! after-save-state-hook 
     (lambda (filename)
       (let ((fd (open filename (logior O_RDWR O_APPEND))))
@@ -429,7 +430,7 @@
 	       chn-m))
 	    snd-m))
 	 (marks))
-	(close fd)))))
+	(close fd))))))
 
 
 (define (mark-click-info n)

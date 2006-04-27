@@ -101,7 +101,7 @@
   ;;  the power-of-2 limitation is based on the underlying fft function's insistence on power-of-2 data sizes
   ;;  see stretch-sound-via-dft below for a general version
   (let* ((len (frames snd chn))
-	 (pow2 (ceiling (/ (log len) (log 2))))
+	 (pow2 (inexact->exact (ceiling (/ (log len) (log 2)))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
 	 (rl1 (channel->vct 0 fftlen snd chn))
@@ -337,7 +337,7 @@
     (let* ((s0 (car args))
 	   (snd (if (> (length args) 1) (list-ref args 1) #f))
 	   (chn (if (> (length args) 2) (list-ref args 2) #f))
-	   (pow2 (ceiling (/ (log (/ (srate snd) 20.0)) (log 2))))
+	   (pow2 (inexact->exact (ceiling (/ (log (/ (srate snd) 20.0)) (log 2)))))
 	   (fftlen (inexact->exact (expt 2 pow2)))
 	   (data (autocorrelate (channel->vct s0 fftlen snd chn)))
 	   (cor-peak (vct-peak data)))
@@ -414,7 +414,7 @@
 (define* (zero-phase :optional snd chn)
   "(zero-phase) calls fft, sets all phases to 0, and un-ffts"
   (let* ((len (frames snd chn))
-	 (pow2 (ceiling (/ (log len) (log 2))))
+	 (pow2 (inexact->exact (ceiling (/ (log len) (log 2)))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
 	 (rl (channel->vct 0 fftlen snd chn))
@@ -431,7 +431,7 @@
 (define* (rotate-phase func :optional snd chn)
   "(rotate-phase func) calls fft, applies func to each phase, then un-ffts"
   (let* ((len (frames snd chn))
-	 (pow2 (ceiling (/ (log len) (log 2))))
+	 (pow2 (inexact->exact (ceiling (/ (log len) (log 2)))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
 	 (fftlen2 (inexact->exact (floor (/ fftlen 2))))
 	 (fftscale (/ 1.0 fftlen))
@@ -735,7 +735,7 @@
 (define* (hilbert-transform-via-fft :optional snd chn)
   ;; same as FIR version but use FFT and change phases by hand
   (let* ((size (frames snd chn))
-	 (len (inexact->exact (expt 2 (ceiling (/ (log size) (log 2.0))))))
+	 (len (expt 2 (inexact->exact (ceiling (/ (log size) (log 2.0))))))
 	 (rl (make-vct len))
 	 (im (make-vct len))
 	 (rd (make-sample-reader 0 snd chn)))
@@ -1238,14 +1238,14 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define* (notch-channel freqs :optional (filter-order #f) beg dur (snd #f) (chn #f) edpos (truncate #t) (notch-width 2))
   "(notch-channel freqs :optional (filter-order #f) beg dur (snd #f) (chn #f) edpos (truncate #t) (notch-width 2)) -> notch filter removing freqs"
   (filter-channel (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
-		  (or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
+		  (or filter-order (expt 2 (inexact->exact (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
 		  beg dur snd chn edpos truncate
 		  (format #f "notch-channel '~A ~A ~A ~A" freqs filter-order beg dur)))
 
 (define* (notch-sound freqs :optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
   "(notch-sound freqs :optional (filter-order #f) (snd #f) (chn #f) (notch-width 2)) -> notch filter removing freqs"
   (filter-sound (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
-		(or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
+		(or filter-order (expt 2 (inexact->exact (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
 		snd chn #f
 		(format #f "notch-channel '~A ~A 0 #f" freqs filter-order)))
 
@@ -1253,7 +1253,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   "(notch-selection freqs :optional (filter-order #f) (notch-width 2)) -> notch filter removing freqs"
   (if (selection?)
       (filter-selection (make-notch-frequency-response (exact->inexact (selection-srate)) freqs notch-width)
-			(or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (selection-srate) notch-width)) (log 2.0)))))))))
+			(or filter-order (expt 2 (inexact->exact (ceiling (/ (log (/ (selection-srate) notch-width)) (log 2.0)))))))))
 
 
 ;;; -------- fractional Fourier Transform, z transform
@@ -1778,7 +1778,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (num-coeffs (vct-length coeffs))
 	 (fft-len (if (< num-coeffs 2) 
 		      len 
-		      (inexact->exact (expt 2 (ceiling (/ (log (* (1- num-coeffs) len)) (log 2)))))))
+		      (expt 2 (inexact->exact (ceiling (/ (log (* (1- num-coeffs) len)) (log 2)))))))
 	 (rl1 (make-vct fft-len 0.0))
 	 (rl2 (make-vct fft-len 0.0))
 	 (new-sound (make-vct fft-len)))

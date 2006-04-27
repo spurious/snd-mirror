@@ -599,19 +599,20 @@ returning you to the true top-level."
 ;;; -------- with-sound save state --------
 
 (define (ws-save-state filename)
-  (let ((fd (open filename (logior O_RDWR O_APPEND))))
-    ;; open in Guile throws 'system-error (I think) if anything goes wrong
-    ;; fd is a Scheme port at this point (not an integer), so we can use format etc
-    ;; should the save-state file load this file if it hasn't been loaded? (what path?)
-    (format fd "~%~%;;; from ws.scm~%")
-    (format fd "(if (defined? '*clm-srate*)~%")
-    (format fd "    (begin~%")
-    (format fd "      (set! *clm-srate* ~A)~%" *clm-srate*)
-    (format fd "      (set! *clm-file-name* ~S)~%" *clm-file-name*)
-    (format fd "      (set! *clm-channels* ~A)~%" *clm-channels*)
-    (format fd "      (set! *clm-data-format* ~A)~%" (mus-data-format->string *clm-data-format*))
-    (format fd "      (set! *clm-header-type* ~A)))~%" (mus-header-type->string *clm-header-type*))
-    (close fd)))
+  (if (defined? 'open) ; TODO: need scheme replacement for open append (also in marks.scm)
+      (let ((fd (open filename (logior O_RDWR O_APPEND))))
+	;; open in Guile throws 'system-error (I think) if anything goes wrong
+	;; fd is a Scheme port at this point (not an integer), so we can use format etc
+	;; should the save-state file load this file if it hasn't been loaded? (what path?)
+	(format fd "~%~%;;; from ws.scm~%")
+	(format fd "(if (defined? '*clm-srate*)~%")
+	(format fd "    (begin~%")
+	(format fd "      (set! *clm-srate* ~A)~%" *clm-srate*)
+	(format fd "      (set! *clm-file-name* ~S)~%" *clm-file-name*)
+	(format fd "      (set! *clm-channels* ~A)~%" *clm-channels*)
+	(format fd "      (set! *clm-data-format* ~A)~%" (mus-data-format->string *clm-data-format*))
+	(format fd "      (set! *clm-header-type* ~A)))~%" (mus-header-type->string *clm-header-type*))
+	(close fd))))
 
 (add-hook! after-save-state-hook ws-save-state)
 

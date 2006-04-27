@@ -37,12 +37,10 @@
  *       has no effect (we're not accessing the actual variable in this case)
  *       may have to use an smob for hooks throughout
  *
- *    why does gauche configure get wrong off_t size?
- *
  *    should hook arity be checked? should this use Gauche's hooks?
  *      need to define procedure-arity and save hook-arity somewhere
  *
- *    header read failed error seems to halt snd-test
+ *    map-channel passed filter complains 
  *
  * TODO in Forth:
  *    sndscm: .snd_forth and fs doc in general
@@ -4195,6 +4193,7 @@ that name is presented in the New File dialog."
   /* this probably should use "guard" and error should be "condition" etc */
 
   XEN_EVAL_C_STRING("(define (symbol->keyword key) (make-keyword (symbol->string key)))");
+  XEN_EVAL_C_STRING("(define (keyword->symbol key) (string->symbol (keyword->string key)))");
   XEN_EVAL_C_STRING("(define (1- val) (- val 1))");
   XEN_EVAL_C_STRING("(define (1+ val) (+ val 1))");
   

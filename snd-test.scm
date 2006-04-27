@@ -43,10 +43,16 @@
       ;Gauche's format is too stupid to contemplate -- hack up Guile's version
       (if (not (provided? 'gauche-format.scm)) (load "gauche-format.scm"))
       (if (not (provided? 'gauche-optargs.scm)) (load "gauche-optargs.scm"))
+      (define (ftell fd) 0) ; TODO: ftell for gauche: can't use port-tell because it expects a port
+      (define (run thunk) (thunk))
+      (define (continuation? val) #f)
+      (define O_RDWR 2)
+      (define O_APPEND 1024)
+      (define O_RDONLY 0)
       ))
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #f) ; huge arg testing
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
@@ -67,7 +73,7 @@
 	  (snd-print str)))))
 
 
-(define with-big-file #t)
+(define with-big-file #f)
 (define big-file-name "/home/bil/zap/sounds/bigger.snd")
 (if (or (not (provided? 'snd-guile))
 	(not (string=? (version) "1.8.0")))
@@ -33742,11 +33748,12 @@ EDITS: 1
 		       (lambda ()
 			 (display (format #f ";this comment will be at the top of the saved state file.~%~%"))
 			 #t))))
-	(add-hook! after-save-state-hook
-		   (lambda (filename)
-		     (let ((fd (open filename (logior O_RDWR O_APPEND))))
-		       (format fd "~%~%(set! after-save-state-hook-var 1234)~%")
-		       (close fd))))
+	(if (defined? 'open)
+	    (add-hook! after-save-state-hook
+		       (lambda (filename)
+			 (let ((fd (open filename (logior O_RDWR O_APPEND))))
+			   (format fd "~%~%(set! after-save-state-hook-var 1234)~%")
+			   (close fd)))))
 	(if (file-exists? (save-state-file)) (delete-file (save-state-file)))
 	(save-state (save-state-file))
 	(close-sound nind)

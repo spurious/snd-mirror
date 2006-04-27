@@ -222,7 +222,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
       (let* ((ls (left-sample snd 0))
 	     (rs (right-sample snd 0))
 	     (ilen (+ 1 (- rs ls)))
-	     (pow2 (ceiling (/ (log ilen) (log 2))))
+	     (pow2 (inexact->exact (ceiling (/ (log ilen) (log 2)))))
 	     (fftlen (inexact->exact (expt 2 pow2)))
 	     (fftlen2 (/ fftlen 2))
 	     (fftscale (/ 1.0 fftlen))
@@ -298,9 +298,10 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	   (= (transform-graph-type snd chn) graph-once))
       (begin
 	(set! (transform-size snd chn)
-	      (expt 2 (ceiling 
-		       (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
-			  (log 2.0)))))
+	      (expt 2 (inexact->exact 
+		       (ceiling 
+			(/ (log (- (right-sample snd chn) (left-sample snd chn))) 
+			   (log 2.0))))))
 	(set! (spectro-cutoff snd chn) (y-zoom-slider snd chn))))
   #f)
 
@@ -315,9 +316,10 @@ this can be confusing if fft normalization is on (the default)"
 	   (= (transform-graph-type snd chn) graph-once))
       (begin
 	(set! (transform-size snd chn)
-	      (expt 2 (ceiling 
-		       (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
-			  (log 2.0)))))
+	      (expt 2 (inexact->exact 
+		       (ceiling 
+			(/ (log (- (right-sample snd chn) (left-sample snd chn))) 
+			   (log 2.0))))))
 	(set! (spectro-start snd chn) (x-position-slider snd chn))
 	(set! (spectro-cutoff snd chn) (y-zoom-slider snd chn))))
   #f)
@@ -765,7 +767,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 then inverse ffts."
   (let* ((sr (srate snd))
 	 (len (frames snd chn))
-	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
 	 (lo (inexact->exact (round (/ bottom (/ sr fsize)))))
@@ -793,7 +795,7 @@ then inverse ffts."
   "(fft-squelch squelch) ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts"
   (let* ((sr (srate snd))
 	 (len (frames snd chn))
-	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
 	 (fsize2 (/ fsize 2))
@@ -823,7 +825,7 @@ then inverse ffts."
   "(fft-cancel lo-freq hi-freq) ffts an entire sound, sets the bin(s) representing lo-freq to hi-freq to 0.0, then inverse ffts"
   (let* ((sr (srate snd))
 	 (len (frames snd chn))
-	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
 	 (fsize2 (/ fsize 2))
@@ -905,7 +907,7 @@ then inverse ffts."
   "(fft-env-data fft-env) applies fft-env as spectral env to current sound, returning vct of new data"
   (let* ((sr (srate snd))
 	 (len (frames snd chn))
-	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
 	 (fsize2 (/ fsize 2))
@@ -945,7 +947,7 @@ spectral envelopes) following interp (an env between 0 and 1)"
 (define* (fft-smoother cutoff start samps :optional snd chn)
   "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a 
 section: (vct->channel (fft-smoother .1 (cursor) 400 0 0) (cursor) 400)"
-  (let* ((fftpts (inexact->exact (expt 2 (ceiling (/ (log (1+ samps)) (log 2.0))))))
+  (let* ((fftpts (inexact->exact (expt 2 (inexact->exact (ceiling (/ (log (1+ samps)) (log 2.0)))))))
 	 (rl (channel->vct start samps snd chn rl))
 	 (im (make-vct fftpts))
 	 (top (inexact->exact (floor (* fftpts cutoff)))))

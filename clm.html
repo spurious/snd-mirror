@@ -48,7 +48,7 @@ CLM exists in several forms:
 the original Common Lisp implementation (clm-3.tar.gz), 
 a C version (sndlib.tar.gz), 
 a Scheme version (sndlib.tar.gz with Guile or Gauche), Ruby (sndlib again but using Ruby),
-and Forth (sndlib/gfm).  The Scheme, Ruby, and Forth versions are also built into
+and Forth (sndlib).  The Scheme, Ruby, and Forth versions are also built into
 the Snd editor (snd-8.tar.gz).
 There are a variety of unavoidable differences between these
 versions, but in general, the differences are obvious and consistent: Lisp "-" becomes
@@ -58,7 +58,7 @@ and mus_hz_to_radians becomes hz-&gt;radians in Lisp/Scheme.  For historical
 reasons, this document is based on the Common Lisp version, with a few
 examples from other versions scattered around.  If you'd like to compare
 a standard instrument in the various implementations, check out the
-fm-violin: v.ins (Common Lisp), v.scm (Scheme), v.rb (Ruby), gfm/clm-ins.fs (Forth),
+fm-violin: v.ins (Common Lisp), v.scm (Scheme), v.rb (Ruby), clm-ins.fs (Forth),
 and sndlib.html (C). 
 </p>
 
@@ -3253,7 +3253,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="anoi.ins">anoi.ins</a></td>
         <td><a href="clm-ins.scm">clm-ins.scm</a></td>
         <td><a href="clm-ins.rb">clm-ins.rb</a></td>
-        <td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+        <td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>autoc</td>
@@ -3271,7 +3271,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="bell.ins">bell.ins</a></td>
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>bigbird</td>
@@ -3279,7 +3279,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="bigbird.ins">bigbird.ins</a></td>
 	<td><a href="bird.scm">bird.scm</a></td>
 	<td><a href="bird.rb">bird.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs, bird.gfm</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs, bird.fs</a></td>
     </tr>
 
 <tr><td>canter</td>            
@@ -3287,7 +3287,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="canter.ins">canter.ins</a></td>
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>cellon</td>            
@@ -3295,7 +3295,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="cellon.ins">cellon.ins</a></td>    
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>cnvrev</td>            
@@ -3314,7 +3314,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="drone.ins">drone.ins</a></td>      
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>granulate-sound</td>   
@@ -3322,7 +3322,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="expsrc.ins">expsrc.ins</a></td>    
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>cross-fade</td>        
@@ -3342,7 +3342,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="flute.ins">flute.ins</a></td>      
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>fm examples</td>       
@@ -3357,7 +3357,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="freeverb/index.html">freeverb/freeverb.ins</a></td> 
 	<td><a href="freeverb.scm">freeverb.scm</a></td>
 	<td><a href="freeverb.rb">freeverb.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>fofins</td>
@@ -3372,7 +3372,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="fullmix.ins">fullmix.ins</a></td>  
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>grani</td>             
@@ -3386,7 +3386,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="grapheq.ins">grapheq.ins</a></td>  
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>fm-insect</td>         
@@ -3401,7 +3401,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="jcrev.ins">jcrev.ins</a></td>      
 	<td><a href="jcrev.scm">jcrev.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>fm-voice</td>          
@@ -3419,7 +3419,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="lbjPiano.ins">lbjPiano.ins</a></td> 
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>maraca</td>            
@@ -3441,7 +3441,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="mlbvoi.ins">mlbvoi.ins</a></td>
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>moog filters</td>      
@@ -3455,7 +3455,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="noise.ins">noise.ins</a></td>      
 	<td><a href="noise.scm">noise.scm</a></td>
 	<td><a href="noise.rb">noise.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>nrev</td>              
@@ -3463,7 +3463,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="nrev.ins">nrev.ins</a></td>        
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>one-cut</td>           
@@ -3483,7 +3483,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="pluck.ins">pluck.ins</a></td>      
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>pqw</td>               
@@ -3491,7 +3491,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="pqw.ins">pqw.ins</a></td>          
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>	
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>pqw-vox</td>           
@@ -3506,7 +3506,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="prc-toolkit95.lisp">prc-toolkit95.lisp</a></td>
 	<td><a href="prc95.scm">prc95.scm</a></td>
 	<td><a href="prc95.rb">prc95.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>various ins</td>       
@@ -3514,7 +3514,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="prc96.ins">prc96.ins</a></td>      
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>pvoc</td>              
@@ -3529,7 +3529,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="resflt.ins">resflt.ins</a></td>    
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>reson</td>             
@@ -3537,7 +3537,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="reson.ins">reson.ins</a></td>      
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>ring-modulate</td>     
@@ -3562,7 +3562,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="san.ins">san.ins</a></td>          
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>scanned</td>           
@@ -3607,7 +3607,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="trp.ins">trp.ins</a></td>          
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>various ins</td>       
@@ -3628,7 +3628,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="v.ins">v.ins</a></td>              
 	<td><a href="v.scm">v.scm</a></td>
 	<td><a href="v.rb">v.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>vowel</td>             
@@ -3641,7 +3641,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="vox.ins">vox.ins</a></td>          
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>zc, zn</td>            
@@ -3649,7 +3649,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
     <td><a href="zd.ins">zd.ins</a></td>            
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
-	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>
+	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
     </tr>
 
 <tr><td>zipper</td>            
