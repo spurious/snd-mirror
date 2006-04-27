@@ -3859,6 +3859,7 @@ and run simple lisp[4] functions.
 (define-rt-macro (printf string . rest)
   `(rt-printf/fprintf ,string ,@rest))
 (define-c-macro (rt-printf/fprintf string . rest)
+;;  `(listener_append ,string))
   `(fprintf stderr ,string ,@rest))
 			  
 
@@ -7477,10 +7478,10 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 (define-macro (rt-play-macro play-type eval-type rest)
   (let ((start #f)
 	(dur #f)
-	(func (last rest))
+	(func (last eval-type))
 	(instrument (rt-gensym2))
 	(start2 (rt-gensym2))
-	(keyargs (find-tail keyword? (reverse! (cdr (reverse rest)))))
+	(keyargs (let ((ret (find-tail keyword? rest))) (if (not ret) '() ret)))
 	(args (take-while (lambda (x) (not (keyword? x)))
 			  rest)))
     (cond ((= 2 (length args))
@@ -7494,13 +7495,15 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	  ((= 0 (length args))
 	   `(let ((,instrument ,eval-type))
 	      (-> ,instrument ,play-type ,@keyargs)
-	      ,instrument)))))
+	      ,instrument))
+	  (else
+	   (throw 'wrong-number-of-arguments-to-<rt-play>)))))
 
 
-(define-macro (<rt-play-abs> . rest)
-  `(rt-play-macro play-abs (<rt> ,(last rest)) ,rest))
 (define-macro (<rt-play> . rest)
-  `(rt-play-macro play (<rt> ,(last rest)) ,rest))
+  `(rt-play-macro play (<rt> ,(last rest)) ,(butlast rest 1)))
+(define-macro (<rt-play-abs> . rest)
+  `(rt-play-macro play-abs (<rt> ,(last rest)) ,(butlast rest 1)))
 
 
 (define-macro (definstrument def . body)
@@ -7528,11 +7531,11 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	    
 	    ((eq? '<rt-play> (car term))
 	     (let ((func (add-rt-func (last term))))
-	       `(rt-play-macro play ((caddr ,func)) ,(cdr term))))
+	       `(rt-play-macro play ((caddr ,func)) ,(cdr (butlast term 1)))))
 	    
 	    ((eq? '<rt-play-abs> (car term))
 	     (let ((func (add-rt-func (last term))))
-	       `(rt-play-macro play-abs ((caddr ,func)) ,(cdr term))))
+	       `(rt-play-macro play-abs ((caddr ,func)) ,(cdr (butlast term 1)))))
 	    
 	    (else
 	     (map find-rt term))))
@@ -7547,16 +7550,22 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
       (if keymember
 	  (set-cdr! keymember (append (list '(out-bus *out-bus*) '(in-bus *in-bus*)) (cdr keymember)))
 	  (set! def (append def (list #:key '(out-bus *out-bus*) '(in-bus *in-bus*))))))
-    ;;(c-display "def:" def)
 
     (let ((newbody (find-rt body)))
       (if (not (null? rt-funcs))
-	  `(define ,(car def)
-	     (let ,(map (lambda (def)
-			  `(,(car def) (rt-compile ,(cadr def))))
-			rt-funcs)
-	       (lambda* ,(cdr def)
-			,@newbody)))
+	  (if (string? (car body))
+	      `(define ,(car def)
+		 (let ,(map (lambda (def)
+			      `(,(car def) (rt-compile ,(cadr def))))
+			    rt-funcs)
+		   (lambda* ,(cdr def)
+			    ,@(cdr newbody))))
+	      `(define ,(car def)
+		 (let ,(map (lambda (def)
+			      `(,(car def) (rt-compile ,(cadr def))))
+			    rt-funcs)
+		   (lambda* ,(cdr def)
+			    ,@newbody))))
 	  `(define* ,def
 	     ,@body)))))
 		

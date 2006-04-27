@@ -28,8 +28,6 @@
  *    check prefs and save/restore: these are broken
  *       even in Guile, 'Reset' doesn't set "full duration" or bounds to its default -- should it?
  *
- *    test various smob free/print cases [these are activated]
- *
  *    protect from gc (how does this gc work?)
  *
  *    simple-hook is broken (undo-hook in draw.scm):
@@ -43,7 +41,7 @@
  *    map-channel passed filter complains 
  *
  * TODO in Forth:
- *    sndscm: .snd_forth and fs doc in general
+ *    sndscm: forth doc (only have .snd_forth right now)
  *    features check (below)
  *
  * TODO in Ruby:

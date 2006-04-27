@@ -49,6 +49,7 @@
       (define O_RDWR 2)
       (define O_APPEND 1024)
       (define O_RDONLY 0)
+      (define tmpnam sys-tmpnam)
       ))
 
 (define tests 1)
@@ -26000,11 +26001,11 @@ EDITS: 5
 	  (close-sound ind)
 	  (add-hook! open-raw-sound-hook
 		     (lambda (file choice)
-		       ;; append to list
+		       ;; append to list originally (#t as 3rd arg -- TODO 3rd arg to add-hook! in gauche)
 		       (if (not (equal? choice (list 2 44100 mus-mulaw)))
 			   (snd-display ";open-raw-sound-hook 2: ~A" choice))
-		       (list 1 22050 mus-lint))
-		     #t)
+		       (list 1 22050 mus-lint)))
+	      
 	  (set! ind (open-sound "test.snd"))
 	  (if (or (not (= (header-type ind) mus-raw))
 		  (not (= (data-format ind) mus-lint))
@@ -26230,7 +26231,7 @@ EDITS: 5
 		       (if (not (sound-data? n))
 			   (snd-display ";dac-hook data: ~A?" n))
 		       (if (and (< (sound-data-length n) 128)
-				(not (= sound-data-length n) 64)) ; mac case
+				(not (= (sound-data-length n) 64))) ; mac case
 			   (snd-display ";dac-hook data length: ~A?" (sound-data-length n)))
 		       (set! ph1 #t)))
 	  
