@@ -11756,6 +11756,9 @@ void g_init_run(void)
   XEN_DEFINE_PROCEDURE("show-ptree", g_show_ptree, 1, 0, 0, "internal debugging stuff");
 #else
   XEN_DEFINE_PROCEDURE(S_vct_map, g_vct_map_w, 2, 0, 0, H_vct_map);
+#if HAVE_SCHEME
+  XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(,thunk))");
+#endif
 #endif
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization, S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);

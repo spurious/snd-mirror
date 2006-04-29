@@ -3359,13 +3359,21 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   bool temp_file = false;
   XEN res = XEN_FALSE;
   XEN proc = XEN_FALSE;
+
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
   else proc = proc_and_list;
+  /* in Gauche this is something like #<closure (%internal-eval #f)> or #<subr abs>
+   *   but if a generator is passed (as "applicable smob") it's #<fir-filter: order: 3, xs: [0.500 1.000 0.500]>
+   *   which is not considered a procedure
+   *     (map-channel (make-fir-filter 3 :xcoeffs (vct .5 1.0 .5)))
+   */
+
   if (XEN_STRING_P(org)) 
     caller = XEN_TO_C_STRING(org);
   else caller = fallback_caller;
-  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, caller, "a procedure");
+
+  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) || (mus_xen_p(proc)), proc, XEN_ARG_1, caller, "a procedure");
   ASSERT_SAMPLE_TYPE(caller, s_beg, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(caller, s_end, XEN_ARG_3);
   ASSERT_SAMPLE_TYPE(caller, s_dur, XEN_ARG_3);
@@ -3392,8 +3400,11 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   if (num > 0)
     {
       snd_fd *sf = NULL;
-      char *errmsg;
+      char *errmsg = NULL;
       snd_info *sp;
+#if HAVE_GAUCHE
+      if (!mus_xen_p(proc))
+#endif
       errmsg = procedure_ok(proc, 1, caller, "", 1);
       if (errmsg)
 	{

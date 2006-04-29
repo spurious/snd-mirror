@@ -1,6 +1,12 @@
 (use-modules (ice-9 common-list) (ice-9 format))
 (provide 'snd-peak-env.scm)
 
+(if (not (defined? 'find-if))
+    (define (find-if pred l)
+      (cond ((null? l) #f)
+	    ((pred (car l)) (car l))
+	    (else (find-if pred (cdr l))))))
+
 (define save-peak-env-info? #t)
 (define save-peak-env-info-directory "~/peaks")
 

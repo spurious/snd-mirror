@@ -1536,6 +1536,10 @@ XEN xen_gauche_object_to_string(XEN obj)
 
 void xen_gauche_permanent_object(XEN obj)
 {
+  /* I can't see how you're supposed to protect something from the gc, so I'll try
+   *   simply placing this object under a gensymmed name in the user module??
+   */
+  Scm_DefineConst(Scm_UserModule(), SCM_SYMBOL(Scm_Gensym(SCM_STRING(C_TO_XEN_STRING("Snd")))), obj);
 }
 
 XEN xen_gauche_eval_c_string(char *arg)
@@ -1561,6 +1565,7 @@ void xen_gauche_variable_set(const char *var, XEN value)
   len = strlen(var) + 128 + strlen(valstr);
   expr = (char *)calloc(len, sizeof(char));
   snprintf(expr, len, "(with-error-handler (lambda (e) (display e)) (lambda () (set! %s %s)))", var, valstr);
+  /* TODO: variable set is a mess! */
   Scm_EvalCString(expr, SCM_OBJ(Scm_UserModule()));
   free(expr);
 }
@@ -1574,13 +1579,16 @@ static XEN_OBJECT_TYPE smob_type = 0;
 static ScmClass **smob_classes = NULL;
 static int smob_classes_size = 0;
 
-XEN xen_gauche_make_object(XEN_OBJECT_TYPE type, void *val)
+XEN xen_gauche_make_object(XEN_OBJECT_TYPE type, void *val, XEN_MARK_OBJECT_TYPE (*protect_func)(XEN obj))
 {
   smob *s;
+  ScmForeignPointer *obj;
   s = (smob *)calloc(1, sizeof(smob));
   s->type = type;
   s->data = val;
-  return(Scm_MakeForeignPointer(smob_classes[type], (void *)s));
+  obj = Scm_MakeForeignPointer(smob_classes[type], (void *)s);
+  if (protect_func) protect_func((XEN)obj);
+  return(obj);
 }
 
 void *xen_gauche_object_ref(XEN obj)
@@ -1664,9 +1672,16 @@ static XEN g_xen_gauche_provided_p(XEN feature)
   return(C_TO_XEN_BOOLEAN(Scm_ProvidedP(feature)));
 }
 
+static XEN g_procedure_arity(XEN func)
+{
+  return(XEN_ARITY(func));
+}
+
 XEN_NARGIFY_1(g_defined_p_w, g_defined_p)
 XEN_NARGIFY_1(g_xen_gauche_provided_p_w, g_xen_gauche_provided_p)
 XEN_NARGIFY_1(g_xen_gauche_provide_w, g_xen_gauche_provide)
+XEN_NARGIFY_1(g_xen_gauche_object_to_string_w, xen_gauche_object_to_string)
+XEN_NARGIFY_1(g_procedure_arity_w, g_procedure_arity)
 
 void xen_initialize(void)
 {
@@ -1683,9 +1698,12 @@ void xen_initialize(void)
 
   /* Gauche doesn't have a *features* list!! */
   XEN_EVAL_C_STRING("(define *features* (list 'defmacro 'record))"); /* has to be first so *features* exists */
-  XEN_DEFINE_PROCEDURE("defined?", g_defined_p_w, 1, 0, 0, "(defined? arg) -> #t if arg is defined");
-  XEN_DEFINE_PROCEDURE("provided?", g_xen_gauche_provided_p_w, 1, 0, 0, "(provided? arg) -> #t if arg is on the *features* list");
-  XEN_DEFINE_PROCEDURE("provide", g_xen_gauche_provide_w, 1, 0, 0, "(provide arg) -> add arg to *features* list");
+
+  XEN_DEFINE_PROCEDURE("defined?",        g_defined_p_w,                   1, 0, 0, "(defined? arg) -> #t if arg is defined");
+  XEN_DEFINE_PROCEDURE("provided?",       g_xen_gauche_provided_p_w,       1, 0, 0, "(provided? arg) -> #t if arg is on the *features* list");
+  XEN_DEFINE_PROCEDURE("provide",         g_xen_gauche_provide_w,          1, 0, 0, "(provide arg) -> add arg to *features* list");
+  XEN_DEFINE_PROCEDURE("object->string",  g_xen_gauche_object_to_string_w, 1, 0, 0, "return string representation of arg");
+  XEN_DEFINE_PROCEDURE("procedure-arity", g_procedure_arity_w,             1, 0, 0, "return (list required optional) args");
 }
 
 

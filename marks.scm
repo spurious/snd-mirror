@@ -1,7 +1,13 @@
 ;;; examples of mark-related functions
 
-(use-modules (ice-9 format))
+(use-modules (ice-9 format) (ice-9 common-list))
 (provide 'snd-marks.scm)
+
+(if (not (defined? 'find-if))
+    (define (find-if pred l)
+      (cond ((null? l) #f)
+	    ((pred (car l)) (car l))
+	    (else (find-if pred (cdr l))))))
 
 ;;; Contents:
 ;;;     mark-name->id is a global version of find-mark

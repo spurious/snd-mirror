@@ -861,6 +861,9 @@ static XEN *make_vcts(int size)
 
 static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj) 
 {
+#if HAVE_GAUCHE
+  static char *keys[6] = {"mus-data", "mus-input", "mus-analyze", "mus-edit", "mus-synthesize", "mus-self"};
+#endif
   mus_xen *ms;
 #if HAVE_RUBY
   /* rb_gc_mark passes us the actual value, not the XEN wrapper! */
@@ -874,7 +877,13 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
       int i;
       for (i = 0; i < ms->nvcts; i++) 
 	if ((i != MUS_SELF_WRAPPER) && (XEN_BOUND_P(ms->vcts[i])))
-	  xen_gc_mark(ms->vcts[i]);
+#if HAVE_GAUCHE
+	    /* in Gauche we need to put the internal vcts on the foreign pointer attributes alist */
+	    /*   in this case, the "mark" function will be called at object creation, not during a gc mark-and-sweep pass */
+	  Scm_ForeignPointerAttrSet(SCM_FOREIGN_POINTER(obj), SCM_INTERN(keys[i]), ms->vcts[i]);
+#else
+          xen_gc_mark(ms->vcts[i]);
+#endif
     }
 #if HAVE_RUBY
   return(NULL);
@@ -4743,7 +4752,6 @@ The edit function, if any, should return the length in samples of the grain, or 
       gn->vcts[MUS_EDIT_FUNCTION] = edit_obj;
       gn->gen = ge;
       grn_obj = mus_xen_to_object(gn);
-      /* need scheme-relative backpointer for possible function calls */
       gn->vcts[MUS_SELF_WRAPPER] = grn_obj;
       return(grn_obj);
     }

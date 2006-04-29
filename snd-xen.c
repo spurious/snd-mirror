@@ -19,8 +19,22 @@
  *
  *    unwind-protects around scm_apply (snd-xen g_call)
  *
- *    snd-test/testsnd/compsnd/valgrind
- *       snd-test hangs?
+ *    snd-test
+ *       snd-test test4:  bigger env gets created even when not needed?
+ *                test13: bizarre n = \n in carg1?
+ *                test15: swap-selection-channels error handler complaint about thunk where 1 arg wanted
+ *                test16: gauche-format: column needs to be fixed (args run together)
+ *                test17: loop.scm load musglyphs -> and not valid with for: Iteration context: 'for i from 0 below' -> unbound err in cmn-glyphs 249?
+ *                test19: 34646 ptree-channel case
+ *                test22: run-eval unbound
+ *                test23: runs forever -- is this just unoptimized run?
+ *                test24: ca 45315 - 45346, unbound delete(!) then segfault with no stack
+ *                        file-sorters ref -> argument out of range: 0, is file_sorters vector ok? (needs to be gc protected)
+ *                test25: invalid application: (#f 0 0 (#<closure (add-mark-pane open-remarks #f)>)) 51406? gc of hook? reset didn't clear after-edit-hook
+ *                test28: arity returns '() in some case (maybe every case...) 57271
+ *
+ *       testsnd/compsnd
+ *
  *       valgrind: GC Warning: Out of Memory!  Returning NIL!
  *
  *    optimizer -- needs either property list or use info as alist
@@ -28,17 +42,10 @@
  *    check prefs and save/restore: these are broken
  *       even in Guile, 'Reset' doesn't set "full duration" or bounds to its default -- should it?
  *
- *    protect from gc (how does this gc work?)
- *
- *    simple-hook is broken (undo-hook in draw.scm):
- *       (add-hook! (undo-hook 0 0) (lambda (s c) (snd-print "undo")))
- *       has no effect (we're not accessing the actual variable in this case)
- *       may have to use an smob for hooks throughout
- *
  *    should hook arity be checked? should this use Gauche's hooks?
  *      need to define procedure-arity and save hook-arity somewhere
  *
- *    map-channel passed filter complains 
+ *    variable-set (xen.c) uses eval_string
  *
  * TODO in Forth:
  *    sndscm: forth doc (only have .snd_forth right now)
@@ -3654,6 +3661,17 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 void g_init_xmix(void);
 #endif
 
+#if HAVE_GUILE
+static XEN g_write_byte(XEN byte)
+{
+  XEN port;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(byte), byte, XEN_ONLY_ARG, "write-byte", "an integer");
+  port = scm_current_output_port();
+  scm_putc(XEN_TO_C_INT(byte), SCM_COERCE_OUTPORT(port));
+  return(byte);
+}
+#endif
+
 void g_initialize_gh(void)
 {
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe, g_mus_audio_describe_w, 0, 0, 0, H_mus_audio_describe);
@@ -3671,8 +3689,9 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_gc_off, g_gc_off_w, 0, 0, 0, H_gc_off);
   XEN_DEFINE_PROCEDURE(S_gc_on,  g_gc_on_w,  0, 0, 0, H_gc_on);
 
-#if (!HAVE_SCM_CONTINUATION_P)
 #if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE("write-byte", g_write_byte, 1, 0, 0, "write byte");
+#if (!HAVE_SCM_CONTINUATION_P)
   XEN_DEFINE_PROCEDURE("continuation?", g_continuation_p, 1, 0, 0, "#t if arg is a continuation");
 #endif
 #endif
@@ -4123,6 +4142,8 @@ that name is presented in the New File dialog."
     scm_read_hash_extend(C_TO_XEN_CHAR('|'), proc);
   }
 
+
+
   XEN_EVAL_C_STRING("(read-set! keywords 'prefix)");
   XEN_EVAL_C_STRING("(print-enable 'source)");
 
@@ -4175,6 +4196,7 @@ that name is presented in the New File dialog."
   XEN_EVAL_C_STRING("(define localtime sys-localtime)");
   XEN_EVAL_C_STRING("(define current-time sys-time)");
   XEN_EVAL_C_STRING("(define strftime sys-strftime)");
+  XEN_EVAL_C_STRING("(define shell sys-system)");
 
   XEN_EVAL_C_STRING("(define (list-set! lis pos val)\
                        (set-car! (list-tail lis pos) val)\
@@ -4203,6 +4225,7 @@ that name is presented in the New File dialog."
   XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
   XEN_EVAL_C_STRING("(defmacro declare args #f)");     /* for optimizer */
   XEN_EVAL_C_STRING("(define (procedure-source proc) #f)"); /* SOMEDAY: procedure-source in gauche? */
+  XEN_EVAL_C_STRING("(define procedure-with-setter? has-setter?)");
 
   /* Gauche has hooks (in Scheme), but this is quicker */
   XEN_EVAL_C_STRING("(define hook? list?)");

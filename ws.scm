@@ -292,6 +292,10 @@ returning you to the true top-level."
 			 (lambda args 
 			   ;; if from ws-interrupt? we have (continue stack message) as args
 			   (begin
+
+			     (if (provided? 'snd-gauche)
+				 (snd-print (object->string args)))
+
 			     (if (and (not (null? (cdr args)))
 				      (continuation? (cadr args)))
 				 ;; instrument passed us a way to continue, so drop into the with-sound debugger

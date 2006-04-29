@@ -684,7 +684,7 @@ void global_control_panel_state(void)
   FREE(buf);
 }
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 static void save_property_list(FILE *fd, XEN property_list, int chan)
 {
   XEN ignore_list;
@@ -817,7 +817,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
 }
 #endif
 
-#if (!HAVE_EXTENSION_LANGUAGE) || HAVE_GAUCHE
+#if (!HAVE_EXTENSION_LANGUAGE)
 static void save_property_list(FILE *fd, XEN property_list, int chan) {}
 #endif
 

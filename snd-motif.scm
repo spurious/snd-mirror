@@ -40,6 +40,12 @@
 (use-modules (ice-9 common-list) (ice-9 format))
 (provide 'snd-snd-motif.scm)
 
+(if (not (defined? 'find-if))
+    (define (find-if pred l)
+      (cond ((null? l) #f)
+	    ((pred (car l)) (car l))
+	    (else (find-if pred (cdr l))))))
+
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)

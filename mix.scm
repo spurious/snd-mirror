@@ -23,7 +23,27 @@
 ;;; track-property associates a property list with a track
 ;;; mix-click-sets-amp sets up hook functions so that mix click zeros amps, then subsequent click resets to the before-zero value
 
+(use-modules (ice-9 common-list))
 (provide 'snd-mix.scm)
+
+(if (not (defined? 'remove-if))
+    (define (remove-if pred l) ; from guile/ice-9/common-list.scm
+      (let loop ((l l) (result '()))
+	(cond ((null? l) (reverse! result))
+	      ((pred (car l)) (loop (cdr l) result))
+	      (else (loop (cdr l) (cons (car l) result)))))))
+
+(if (not (defined? 'some))
+    (define (some pred l . rest)
+      (cond ((null? rest)
+	     (let mapf ((l l))
+	       (and (not (null? l))
+		    (or (pred (car l)) (mapf (cdr l))))))
+	    (else (let mapf ((l l) (rest rest))
+		    (and (not (null? l))
+			 (or (apply pred (car l) (map car rest))
+			     (mapf (cdr l) (map cdr rest)))))))))
+
 
 (define (tree-for-each func tree)
   "(tree-for-each func tree) applies func to every leaf of 'tree'"

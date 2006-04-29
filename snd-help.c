@@ -2569,7 +2569,19 @@ and its value is returned."
 	  {
 	    value = Scm_SymbolValue(Scm_UserModule(), SCM_SYMBOL(sym));
 	    if (XEN_PROCEDURE_P(value))
-	      str = XEN_TO_C_STRING(XEN_PROCEDURE_HELP(value));
+	      {
+#if HAVE_GAUCHE
+		/* here documentation strings in scheme-defined functions are ignored, and
+		 *    procedure->info seems to be the procedure itself?
+		 */
+		XEN hlp;
+		hlp = XEN_PROCEDURE_HELP(value);
+		if (XEN_STRING_P(hlp))
+		  str = XEN_TO_C_STRING(hlp);
+#else
+		str = XEN_TO_C_STRING(XEN_PROCEDURE_HELP(value));
+#endif
+	      }
 	  }
       }
   }

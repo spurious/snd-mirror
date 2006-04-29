@@ -1505,6 +1505,8 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_LIST_9(a, b, c, d, e, f, g, h, i) Scm_List(a, b, c, d, e, f, g, h, i, NULL)
 #define XEN_APPEND(a, b)             Scm_Append2(a, b)
 #define XEN_COPY_ARG(Lst)            Lst
+#define XEN_MEMBER(a, b)             Scm_Member(a, b, SCM_CMP_EQUAL)
+#define XEN_ASSOC(a, b)              Scm_Assoc(a, b, SCM_CMP_EQUAL)
 
 #define XEN_VECTOR_P(Arg)            SCM_VECTORP(Arg)
 #define XEN_VECTOR_LENGTH(Arg)       SCM_VECTOR_SIZE(Arg)
@@ -1599,7 +1601,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_DOCUMENTATION_SYMBOL            SCM_SYMBOL(SCM_INTERN("documentation"))
 #define XEN_OBJECT_HELP(Name)               SCM_PROCEDURE_INFO(Name)
 
-#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Ignore1, Ignore2) return(xen_gauche_make_object(Tag, (void *)Val))
+#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Protect, Ignore2) return(xen_gauche_make_object(Tag, (void *)Val, Protect))
 /* tag here is int -- needs ScmClass* for underlying call */
 #define XEN_OBJECT_REF(a)                   xen_gauche_object_ref(a)
 #define XEN_OBJECT_TYPE                     int
@@ -1864,7 +1866,7 @@ XEN xen_gauche_eval_c_string(char *arg);
 void xen_gauche_provide(const char *feature);
 const char *xen_gauche_features(void);
 void xen_gauche_variable_set(const char *var, XEN value);
-XEN xen_gauche_make_object(XEN_OBJECT_TYPE type, void *val);
+XEN xen_gauche_make_object(XEN_OBJECT_TYPE type, void *val, XEN_MARK_OBJECT_TYPE (*protect_func)(XEN obj));
 void *xen_gauche_object_ref(XEN obj);
 XEN_OBJECT_TYPE xen_gauche_new_type(const char *name, ScmClassPrintProc print, ScmForeignCleanupProc cleanup);
 bool xen_gauche_type_p(XEN obj, XEN_OBJECT_TYPE type);

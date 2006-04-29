@@ -22,6 +22,20 @@
 (use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
 (provide 'snd-extensions.scm)
 
+(if (not (defined? 'remove-if))
+    (define (remove-if pred l) ; from guile/ice-9/common-list.scm
+      (let loop ((l l) (result '()))
+	(cond ((null? l) (reverse! result))
+	      ((pred (car l)) (loop (cdr l) result))
+	      (else (loop (cdr l) (cons (car l) result)))))))
+
+(if (not (defined? 'find-if))
+    (define (find-if pred l)
+      (cond ((null? l) #f)
+	    ((pred (car l)) (car l))
+	    (else (find-if pred (cdr l))))))
+
+
 ;;; -------- channel-property
 
 (define channel-property

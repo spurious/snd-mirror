@@ -603,6 +603,10 @@ void save_added_sound_file_extensions(FILE *fd)
       }
 }
 
+/* mus_header_read here (or stripped-down equivalent) was very slow, and is just as easy to
+ * fool as an extension check (file might start with the word ".snd" or whatever).
+ */
+
 bool sound_file_p(const char *name)
 {
   int i, dot_loc = -1, len;
@@ -1091,10 +1095,6 @@ file_info *free_file_info(file_info *hdr)
     }
   return(NULL);
 }
-
-/* mus_header_read here (or stripped-down equivalent) was very slow, and is just as easy to
- * fool as an extension check (file might start with the word ".snd" or whatever).
- */
 
 static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 {
@@ -4718,8 +4718,10 @@ static XEN g_add_file_sorter(XEN name, XEN proc)
 {
   #define H_add_file_sorter "(" S_add_file_sorter " name proc) -- add proc with identifier name to file sorter list, returns its index"
   int i, len, choice = -1;
+  /* redundant
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_file_sorter, "a string");   
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_2, S_add_file_sorter, "a procedure");
+  */
   if (file_sorter_ok(name, proc, S_add_file_sorter))
     {
       len = ss->file_sorters_size;

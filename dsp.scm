@@ -1,10 +1,12 @@
 ;;; a DSP-related grabbag
 
-(use-modules (ice-9 optargs))
-(use-modules (ice-9 format))
+(use-modules (ice-9 optargs) (ice-9 format))
 
 (provide 'snd-dsp.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+
+(if (not (defined? 'log10))
+    (define (log10 a) (/ (log a) (log 10))))
 
 ;;; src-duration (see src-channel in extsnd.html)
 

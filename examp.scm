@@ -56,10 +56,7 @@
 ;;; scramble-channel -- randomly reorder segments within a sound
 ;;; reverse-by-blocks and reverse-within-blocks -- reorder or reverse blocks within a channel
 
-(use-modules (ice-9 debug))
-(use-modules (ice-9 format))
-(use-modules (ice-9 optargs))
-(use-modules (ice-9 common-list))
+(use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs) (ice-9 common-list))
 
 (provide 'snd-examp.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
@@ -151,6 +148,9 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	  (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f)))))
 
 ;(add-hook! lisp-graph-hook display-energy)
+
+(if (not (defined? 'log10))
+    (define (log10 a) (/ (log a) (log 10))))
 
 (define display-db
   (lambda (snd chn)
@@ -411,15 +411,16 @@ this can be confusing if fft normalization is on (the default)"
 
 (use-modules (ice-9 popen))  
 
-(define (shell cmd)
-  "(shell cmd) sends 'cmd' to a shell (executes it as a shell command) and returns the result."
-  (let* ((str "")
-	 (fil (open-pipe cmd "r")))
-    (do ((val (read-char fil) (read-char fil))) 
-	((eof-object? val))
-      (set! str (string-append str (string val))))
-    (close-pipe fil)
-    str))
+(if (provided? 'snd-guile)
+    (define (shell cmd)
+      "(shell cmd) sends 'cmd' to a shell (executes it as a shell command) and returns the result."
+      (let* ((str "")
+	     (fil (open-pipe cmd "r")))
+	(do ((val (read-char fil) (read-char fil))) 
+	    ((eof-object? val))
+	  (set! str (string-append str (string val))))
+	(close-pipe fil)
+	str)))
 
 ;;; to simply make a system call, you can use the system function
 ;;;   (system "ls *.snd")

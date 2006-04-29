@@ -21,8 +21,14 @@
 ;;; make-color-selector-dialog
 ;;; add-main-menu-mnemonics
 
-(use-modules (ice-9 format))
+(use-modules (ice-9 format) (ice-9 common-list))
 (provide 'snd-snd-gtk.scm)
+
+(if (not (defined? 'find-if))
+    (define (find-if pred l)
+      (cond ((null? l) #f)
+	    ((pred (car l)) (car l))
+	    (else (find-if pred (cdr l))))))
 
 (if (not (provided? 'xg))
     (let ((hxm (dlopen "xg.so")))
