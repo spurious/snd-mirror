@@ -101,7 +101,7 @@ static XEN optimization_hook;
 enum {RUN_UNSAFE, RUN_SAFE};
 static int run_safety = RUN_UNSAFE;
 
-/* WITH_RUN set only if HAVE_STRINGIZE, HAVE_GUILE, and Guile version >= 1.5 */
+/* WITH_RUN set only if HAVE_STRINGIZE, HAVE_GUILE, and Guile version >= 1.5 or HAVE_GAUCHE (in progress) */
 #if WITH_RUN
 
 #define Int off_t
@@ -122,37 +122,69 @@ static int run_safety = RUN_UNSAFE;
 #define GLOBAL_SET_OK 5
 #define SOURCE_OK 6
 
-#define XEN_CDDDR(a)                        SCM_CDDDR(a)
+#define XEN_CDDDR(a)                        XEN_CDR(XEN_CDR(XEN_CDR(a)))
 #define XEN_CAAR(a)                         XEN_CAR(XEN_CAR(a))
 #define XEN_CDAR(a)                         XEN_CDR(XEN_CAR(a))
 #define XEN_CDADR(a)                        XEN_CDR(XEN_CADR(a))
-#define XEN_CAAAR(a)                        SCM_CAAAR(a)
-#define XEN_CAADR(a)                        SCM_CAADR(a)
-#define XEN_CADAR(a)                        SCM_CADAR(a)
-#define XEN_CADDR(a)                        SCM_CADDR(a)
-#define XEN_CAAAAR(a)                       SCM_CAAAAR(a)
-#define XEN_CAAADR(a)                       SCM_CAAADR(a)
-#define XEN_CAADAR(a)                       SCM_CAADAR(a)
-#define XEN_CAADDR(a)                       SCM_CAADDR(a)
-#define XEN_CADAAR(a)                       SCM_CADAAR(a)
-#define XEN_CADADR(a)                       SCM_CADADR(a)
-#define XEN_CADDAR(a)                       SCM_CADDAR(a)
-#define XEN_CADDDR(a)                       SCM_CADDDR(a)
+#define XEN_CAAAR(a)                        XEN_CAR(XEN_CAAR(a))
+#define XEN_CAADR(a)                        XEN_CAAR(XEN_CDR(a))
+#define XEN_CADAR(a)                        XEN_CAR(XEN_CDAR(a))
+#define XEN_CAAAAR(a)                       XEN_CAR(XEN_CAAAR(a))
+#define XEN_CAAADR(a)                       XEN_CAAAR(XEN_CDR(a))
+#define XEN_CAADAR(a)                       XEN_CAAR(XEN_CDAR(a))
+#define XEN_CAADDR(a)                       XEN_CAAR(XEN_CDDR(a))
+#define XEN_CADAAR(a)                       XEN_CADR(XEN_CAAR(a))
+#define XEN_CADADR(a)                       XEN_CADR(XEN_CADR(a))
+#define XEN_CADDAR(a)                       XEN_CADR(XEN_CDAR(a))
+
+#if HAVE_GUILE
 #define XEN_APPLICABLE_SMOB_P(a)            (SCM_TYP7(a) == scm_tc7_smob)
 #define XEN_ENV(a)                          SCM_ENV(a)
-#define XEN_SET_CDR(pair, new_val)          scm_set_cdr_x(pair, new_val)
+#define XEN_SET_SYMBOL_VALUE(pair, new_val) scm_set_cdr_x(pair, new_val)
 #define INTEGER_TO_STRING(a)                XEN_TO_C_STRING(scm_number_to_string(R_C_TO_XEN_INT(a), XEN_UNDEFINED))
 #define INTEGER_TO_STRING_WITH_RADIX(a, b)  XEN_TO_C_STRING(scm_number_to_string(R_C_TO_XEN_INT(a), R_C_TO_XEN_INT(b)))
 #define DOUBLE_TO_STRING(a)                 XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), XEN_UNDEFINED))
 #define DOUBLE_TO_STRING_WITH_RADIX(a, b)   XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), R_C_TO_XEN_INT(b)))
 #define XEN_LIST_REF_WRAPPED(a, b)          scm_list_ref(a, b)
-#define XEN_OBJECT_PROPERTY(Obj, Prop)      scm_object_property(Obj, Prop)
-#define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(Obj, Prop, Val)
+#define XEN_WALKER(Obj)                     scm_object_property(Obj, walk_sym)
+#define XEN_SET_WALKER(Obj, Val)            scm_set_object_property_x(Obj, walk_sym, Val)
 #define XEN_PROCEDURE_WITH_SETTER_P(Proc)   scm_procedure_with_setter_p(Proc)
+#endif
+
+#if HAVE_GAUCHE
 
 /* in Gauche Scm_VM() returns the current evaluator, vm->env is the current environment -- an array of ScmObjs */
 /*   might also be able to use Scm_FindBinding */
 
+#define XEN_APPLICABLE_SMOB_P(a)            true
+#define INTEGER_TO_STRING(a)                XEN_TO_C_STRING(Scm_NumberToString(R_C_TO_XEN_INT(a), 10, false))
+#define INTEGER_TO_STRING_WITH_RADIX(a, b)  XEN_TO_C_STRING(Scm_NumberToString(R_C_TO_XEN_INT(a), b, false))
+#define DOUBLE_TO_STRING(a)                 XEN_TO_C_STRING(Scm_NumberToString(C_TO_XEN_DOUBLE(a), 10, false))
+#define DOUBLE_TO_STRING_WITH_RADIX(a, b)   XEN_TO_C_STRING(Scm_NumberToString(C_TO_XEN_DOUBLE(a), b, false))
+#define XEN_LIST_REF_WRAPPED(a, b)          Scm_ListRef(a, XEN_TO_C_INT(b), false)
+
+/* obj is a symbol, I think */
+#define XEN_WALKER(Obj)                     gauche_walker(Obj)
+#define XEN_SET_WALKER(Obj, Val)            gauche_set_walker(Obj, Val)
+/* Prop is always walk_sym, Val is always ulong result of make_walker */
+#define XEN_PROCEDURE_WITH_SETTER_P(Proc)   C_TO_XEN_BOOLEAN(Scm_HasSetter(Proc))
+
+static XEN walker_hash_table = XEN_FALSE;
+
+static XEN gauche_walker(XEN func)
+{
+  ScmHashEntry *e = NULL;
+  e = Scm_HashTableGet(SCM_HASH_TABLE(walker_hash_table), func);
+  if (e) return((XEN)(e->value));
+  return(XEN_FALSE);
+}
+
+static XEN gauche_set_walker(XEN func, XEN walker)
+{
+  Scm_HashTableAdd(SCM_HASH_TABLE(walker_hash_table), func, walker);
+  return(walker);
+}
+#endif
 
 #define FLT_PT  "d%d(%.4f)"
 #define PTR_PT  "i%d(%p)"
@@ -176,8 +208,9 @@ static int run_safety = RUN_UNSAFE;
 #define UNLIMITED_ARGS -1
 static XEN walk_sym = XEN_FALSE;
 
-/* find and set (Guile) variable values */
+/* find and set (Scheme) variable values */
 
+#if HAVE_GUILE
 static void xen_symbol_name_set_value(const char *a, XEN b)
 {
   XEN var = XEN_FALSE;
@@ -265,7 +298,7 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 		}
 	      if ((XEN_PAIR_P(pair)) && (XEN_EQ_P(XEN_CAR(pair), sym)))
 		{
-		  XEN_SET_CDR(pair, new_val);
+		  XEN_SET_SYMBOL_VALUE(pair, new_val);
 		  return;
 		}
 	      code_env = XEN_CDR(code_env);
@@ -276,6 +309,22 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
   if (!(XEN_FALSE_P(var)))
     XEN_VARIABLE_SET(var, new_val);
 }
+#endif
+
+#if HAVE_GAUCHE
+static void xen_symbol_name_set_value(const char *a, XEN b)
+{
+}
+
+static XEN symbol_to_value(XEN code, XEN sym, bool *local)
+{
+  return(XEN_FALSE);
+}
+
+static void symbol_set_value(XEN code, XEN sym, XEN new_val)
+{
+}
+#endif
 
 enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR, 
       R_SYMBOL, R_KEYWORD, R_FUNCTION, R_GOTO, R_VCT, 
@@ -9823,9 +9872,13 @@ static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
 {
   if (!clm_print_walk_property_set)
     {
-      XEN_SET_OBJECT_PROPERTY(XEN_NAME_AS_C_STRING_TO_VARIABLE("clm-print"),
-			      walk_sym,
-			      C_TO_XEN_ULONG(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
+#if HAVE_GUILE
+      XEN_SET_WALKER(XEN_NAME_AS_C_STRING_TO_VARIABLE("clm-print"),
+		     C_TO_XEN_ULONG(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
+#else
+      XEN_SET_WALKER((XEN)(C_STRING_TO_XEN_SYMBOL("clm-print")),
+		     C_TO_XEN_ULONG(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
+#endif
       clm_print_walk_property_set = true;
     }
   return(package_n_xen_args(prog, R_STRING, clm_print_s, descr_clm_print_s, args, num_args));
@@ -9836,20 +9889,33 @@ static bool format_walk_property_set = false;
 static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, bool is_format)
 {
   XEN format_var = XEN_FALSE;
-  format_var = XEN_NAME_AS_C_STRING_TO_VARIABLE("format");
+  format_var = (XEN)XEN_NAME_AS_C_STRING_TO_VARIABLE("format");
+#if HAVE_GUILE
   if ((!(XEN_FALSE_P(format_var))) &&
       (XEN_PROCEDURE_P(XEN_VARIABLE_REF(format_var))))
+#else
+  if ((!(XEN_FALSE_P(format_var))) &&
+      (XEN_PROCEDURE_P(format_var)))
+#endif
     {
       int i;
       /* define a walker for format */
       if (!format_walk_property_set)
 	{
 	  format_walk_property_set = true; /* odd -- why is this being called more than once? */
-	  XEN_SET_OBJECT_PROPERTY(format_var, 
-				  walk_sym,
-				  C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
+#if HAVE_GUILE
+	  XEN_SET_WALKER(format_var, 
+			 C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
+#else
+	  XEN_SET_WALKER((XEN)(C_STRING_TO_XEN_SYMBOL("format")),
+			 C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
+#endif
 	}
+#if HAVE_GUILE
       format_func = XEN_VARIABLE_REF(format_var);
+#else
+      format_func = XEN_VARIABLE_REF("format");
+#endif
       /* any further formats will be checked in walk, but this one needs explicit check */
       for (i = 1; i <= num_args; i++)
 	if (!(xenable(args[i])))
@@ -9870,6 +9936,7 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
 
 /* -------- CLM make functions -------- */
 
+#if HAVE_GUILE
 #define CLM_MAKE_FUNC(Name) \
 static void make_ ## Name ## _0(int *args, ptree *pt) \
 { \
@@ -9887,6 +9954,25 @@ static xen_value *make_ ## Name ## _1(ptree *prog, xen_value **args, int num_arg
 { \
   return(package_n_xen_args(prog, R_CLM, make_ ## Name ## _0, descr_make_ ## Name ## _0, args, num_args)); \
 }
+#else
+#define CLM_MAKE_FUNC(Name) \
+static void make_ ## Name ## _0(int *args, ptree *pt) \
+{ \
+  XEN res; \
+  res = XEN_APPLY(XEN_VARIABLE_REF(S_make_ ## Name), xen_values_to_list(pt, args), S_make_ ## Name); \
+  if (mus_xen_p(res)) \
+    { \
+      add_loc_to_protected_list(pt, snd_protect(res)); \
+      CLM_RESULT = XEN_TO_MUS_ANY(res); \
+    } \
+  else CLM_RESULT = NULL; \
+} \
+static char *descr_make_ ## Name ## _0(int *args, ptree *pt) {return(describe_xen_args(S_make_ ## Name, R_CLM, args, pt));} \
+static xen_value *make_ ## Name ## _1(ptree *prog, xen_value **args, int num_args) \
+{ \
+  return(package_n_xen_args(prog, R_CLM, make_ ## Name ## _0, descr_make_ ## Name ## _0, args, num_args)); \
+}
+#endif
 
 CLM_MAKE_FUNC(all_pass)
 CLM_MAKE_FUNC(average)
@@ -9936,7 +10022,11 @@ CLM_MAKE_FUNC(zpolar)
 static void make_fft_window_0(int *args, ptree *pt)
 {
   XEN res;
+#if HAVE_GUILE
   res = XEN_APPLY(XEN_VARIABLE_REF(XEN_NAME_AS_C_STRING_TO_VARIABLE(S_make_fft_window)), xen_values_to_list(pt, args), S_make_fft_window);
+#else
+  res = XEN_APPLY(XEN_VARIABLE_REF(S_make_fft_window), xen_values_to_list(pt, args), S_make_fft_window);
+#endif
   add_loc_to_protected_list(pt, snd_protect(res));
   VCT_RESULT = get_vct(res);
 }
@@ -10385,7 +10475,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
       num_args = XEN_LIST_LENGTH(all_args);
       if (XEN_SYMBOL_P(function))
 	{
-	  walker = XEN_OBJECT_PROPERTY(function, walk_sym);
+	  walker = XEN_WALKER(function);
 	  if (XEN_ULONG_P(walker))
 	    {
 	      w = (walk_info *)(XEN_TO_C_ULONG(walker));
@@ -10712,7 +10802,7 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
   int k, happy = 0;
   XEN walker;
   walk_info *w = NULL;
-  walker = XEN_OBJECT_PROPERTY(acc_form, walk_sym);
+  walker = XEN_WALKER(acc_form);
   if (XEN_ULONG_P(walker))
     {
       w = (walk_info *)(XEN_TO_C_ULONG(walker));
@@ -10990,7 +11080,7 @@ static XEN eval_ptree_to_xen(ptree *pt)
 
 static void init_walkers(void)
 {
-  #define INIT_WALKER(Name, Val) XEN_SET_OBJECT_PROPERTY(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val))
+#define INIT_WALKER(Name, Val) XEN_SET_WALKER((XEN)(C_STRING_TO_XEN_SYMBOL(Name)), C_TO_XEN_ULONG(Val))
 
   XEN declare;
 #if (!HAVE_GUILE_CALL_CC)
@@ -11733,27 +11823,42 @@ XEN_NARGIFY_1(g_set_optimization_w, g_set_optimization)
 XEN_NARGIFY_0(g_run_safety_w, g_run_safety)
 XEN_NARGIFY_1(g_set_run_safety_w, g_set_run_safety)
 XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
+XEN_NARGIFY_1(g_run_w, g_run)
+XEN_NARGIFY_1(g_show_ptree_w, g_show_ptree)
+XEN_ARGIFY_3(g_add_clm_field_w, g_add_clm_field)
+XEN_NARGIFY_1(g_add_clm_type_w, g_add_clm_type)
+XEN_ARGIFY_4(g_run_eval_w, g_run_eval)
 #else
 #define g_optimization_w g_optimization
 #define g_set_optimization_w g_set_optimization
 #define g_run_safety_w g_run_safety
 #define g_set_run_safety_w g_set_run_safety
 #define g_vct_map_w g_vct_map
+#define g_run_w g_run
+#define g_show_ptree_w g_show_ptree
+#define g_add_clm_field_w g_add_clm_field
+#define g_add_clm_type_w g_add_clm_type
+#define g_run_eval_w g_run_eval
 #endif
 
 void g_init_run(void)
 {
 #if WITH_RUN
-  XEN_DEFINE_PROCEDURE("run-internal", g_run, 1, 0, 0, "run macro testing...");
+  XEN_DEFINE_PROCEDURE("run-internal", g_run_w, 1, 0, 0, "run macro testing...");
   XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(run-internal (list ',thunk ,thunk)))");
   XEN_SET_DOCUMENTATION(S_run, H_run);
-  XEN_DEFINE_PROCEDURE("run-eval", g_run_eval, 1, 3, 0, "run macro testing...");
-  XEN_DEFINE_PROCEDURE("vct-map-2", g_vct_map, 2, 0, 0, H_vct_map);
+  XEN_DEFINE_PROCEDURE("run-eval", g_run_eval_w, 1, 3, 0, "run macro testing...");
+  XEN_DEFINE_PROCEDURE("vct-map-2", g_vct_map_w, 2, 0, 0, H_vct_map);
   XEN_EVAL_C_STRING("(defmacro " S_vct_map " (thunk . args) `(vct-map-2 (list ',thunk ,thunk) (list ,@args)))");
   XEN_SET_DOCUMENTATION(S_vct_map, H_vct_map);
-  XEN_DEFINE_PROCEDURE(S_add_clm_field, g_add_clm_field, 2, 1, 0, H_add_clm_field);
-  XEN_DEFINE_PROCEDURE(S_add_clm_type, g_add_clm_type, 1, 0, 0, H_add_clm_type);
-  XEN_DEFINE_PROCEDURE("show-ptree", g_show_ptree, 1, 0, 0, "internal debugging stuff");
+  XEN_DEFINE_PROCEDURE(S_add_clm_field, g_add_clm_field_w, 2, 1, 0, H_add_clm_field);
+  XEN_DEFINE_PROCEDURE(S_add_clm_type, g_add_clm_type_w, 1, 0, 0, H_add_clm_type);
+  XEN_DEFINE_PROCEDURE("show-ptree", g_show_ptree_w, 1, 0, 0, "internal debugging stuff");
+  XEN_YES_WE_HAVE("run");
+#if HAVE_GAUCHE
+  walker_hash_table = Scm_MakeHashTableSimple(SCM_HASH_EQ, 1024);
+  xen_gauche_permanent_object(walker_hash_table);
+#endif
 #else
   XEN_DEFINE_PROCEDURE(S_vct_map, g_vct_map_w, 2, 0, 0, H_vct_map);
 #if HAVE_SCHEME

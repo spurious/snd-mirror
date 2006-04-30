@@ -39,7 +39,6 @@
 
 (if (provided? 'snd-gauche)
     (begin
-      (if (not (provided? 'gauche-format.scm)) (load "gauche-format.scm"))
       (if (not (provided? 'gauche-optargs.scm)) (load "gauche-optargs.scm"))
 
       (define (ftell fd) 0) ; TODO: ftell for gauche: can't use port-tell because it expects a port
@@ -61,7 +60,7 @@
       ))
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f) ; huge arg testing
 
 (if (not (defined? 'snd-test)) (define snd-test -1))

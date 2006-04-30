@@ -15655,7 +15655,7 @@ _ACEOF
 echo "${ECHO_T}$gauche_version" >&6
 
     OLD_CFLAGS="CFLAGS"
-    # gauche-config inserts idiotic single-quotes in the -I and -L results thereby rendering them useless,
+    # gauche-config inserts single-quotes in the -I and -L results thereby rendering them useless,
     #   so the following sed command tries to remove them.  You apparently can't quote a single-quote
     #   in this context, so I use \x27 = ASCII for single quote.
 #   GUILE_CFLAGS=`$GAUCHE_CONFIG -I | sed 's/\x27//g'`
@@ -15727,6 +15727,9 @@ _ACEOF
                  GUILE_LIBS=`$GAUCHE_CONFIG -L  | sed 's/\x27//g'`
                  GUILE_LIBS="$GUILE_LIBS -lgauche"
                  LOCAL_LANGUAGE="Gauche"
+#      		 if test $ac_cv_c_stringize = yes; then
+#        	   AC_DEFINE(WITH_RUN)
+#      		 fi
 
 else
   echo "$as_me: failed program was:" >&5

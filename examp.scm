@@ -426,9 +426,6 @@ this can be confusing if fft normalization is on (the default)"
 ;;;   (system "ls *.snd")
 ;;; but output goes to stdout.
 
-;;; see also Thien-Thi Nguyen's shell-command-to-string in his package of useful Scheme code at
-;;;   http://www.glug.org/people/ttn/software/ttn-pers-scheme/
-
 
 
 ;;; -------- translate mpeg input to 16-bit linear and read into Snd

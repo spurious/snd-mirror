@@ -12,8 +12,6 @@
  */
 
 /* TODO in Gauche:
- *    procedure->info as alist usable in snd-run for reader
- *
  *    stacktrace and errors->listener
  *       (current-load-history)
  *
@@ -22,28 +20,28 @@
  *    snd-test
  *       snd-test test4:  bigger env gets created even when not needed?
  *                test13: bizarre n = \n in carg1?
- *                test15: swap-selection-channels error handler complaint about thunk where 1 arg wanted
+ *                test15: swap-selection-channels error handler complaint about thunk where 1 arg wanted -- throw bug?
  *                test16: gauche-format: column needs to be fixed (args run together)
  *                test17: loop.scm load musglyphs -> and not valid with for: Iteration context: 'for i from 0 below' -> unbound err in cmn-glyphs 249?
  *                test19: 34646 ptree-channel case
+ *                test21: remember-sound-state format ~S omits the quotes? -- this is gauche's format!
  *                test22: run-eval unbound
  *                test23: runs forever -- is this just unoptimized run?
- *                test24: ca 45315 - 45346, unbound delete(!) then segfault with no stack
+ *                test24: ca 45315 - 45346 45390, unbound delete(!) -- this is just a name -- then segfault with no stack
  *                        file-sorters ref -> argument out of range: 0, is file_sorters vector ok? (needs to be gc protected)
  *                test25: invalid application: (#f 0 0 (#<closure (add-mark-pane open-remarks #f)>)) 51406? gc of hook? reset didn't clear after-edit-hook
- *                test28: arity returns '() in some case (maybe every case...) 57271
+ *                test28: arity returns '() in some case 57271
  *
  *       testsnd/compsnd
  *
  *       valgrind: GC Warning: Out of Memory!  Returning NIL!
  *
- *    optimizer -- needs either property list or use info as alist
+ *    test optimizer
  *
  *    check prefs and save/restore: these are broken
  *       even in Guile, 'Reset' doesn't set "full duration" or bounds to its default -- should it?
  *
- *    should hook arity be checked? should this use Gauche's hooks?
- *      need to define procedure-arity and save hook-arity somewhere
+ *    should hook arity be checked? should this use Gauche's hooks? -- another hash table!
  *
  *    variable-set (xen.c) uses eval_string
  *
@@ -3196,7 +3194,7 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
   return(data);
 }
 
-#if HAVE_COMPLEX_TRIG && (!HAVE_RUBY)
+#if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
 #include <gsl/gsl_poly.h>
 #include <complex.h>
 
@@ -3451,7 +3449,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 XEN_NARGIFY_1(g_gsl_ellipk_w, g_gsl_ellipk)
 XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
 XEN_NARGIFY_4(g_gsl_dht_w, g_gsl_dht)
-#if HAVE_COMPLEX_TRIG && (!HAVE_RUBY)
+#if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
 XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
 #endif
 #if HAVE_GAUCHE
@@ -3638,7 +3636,7 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #define g_gsl_ellipk_w g_gsl_ellipk
 #define g_gsl_ellipj_w g_gsl_ellipj
 #define g_gsl_dht_w g_gsl_dht
-#if HAVE_COMPLEX_TRIG && (!HAVE_RUBY)
+#if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
 #define g_gsl_roots_w g_gsl_roots
 #endif
 #endif
@@ -3694,6 +3692,13 @@ void g_initialize_gh(void)
 #if (!HAVE_SCM_CONTINUATION_P)
   XEN_DEFINE_PROCEDURE("continuation?", g_continuation_p, 1, 0, 0, "#t if arg is a continuation");
 #endif
+#endif
+
+#if HAVE_GAUCHE
+  /* defmacro used in vct init called from sndlib init if with-run */
+  XEN_EVAL_C_STRING("(define-syntax defmacro\
+                       (syntax-rules ()\
+                         ((_ name params . body) (define-macro (name . params) . body))))");
 #endif
 
   Init_sndlib();
@@ -3965,7 +3970,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE("gsl-gegenbauer",  g_gsl_gegenbauer,  3, 0, 0, "internal test func");
 #endif
 
-#if HAVE_COMPLEX_TRIG && (!HAVE_RUBY)
+#if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
   XEN_DEFINE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
 #endif
 
@@ -3975,9 +3980,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE("random",    g_random_w, 1, 0, 0, "(random arg) -> random number between 0 and arg ");
   XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
   XEN_DEFINE_CONSTANT("internal-time-units-per-second", CLOCKS_PER_SEC, "clock speed");
-  XEN_EVAL_C_STRING("(define-syntax defmacro\
-                       (syntax-rules ()\
-                         ((_ name params . body) (define-macro (name . params) . body))))");
 #endif
 
 #if HAVE_SCHEME

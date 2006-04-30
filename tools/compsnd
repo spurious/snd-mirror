@@ -926,3 +926,57 @@ make
 
 setenv PKG_CONFIG_PATH /usr/local/lib/pkgconfig
 
+echo ' '
+echo ' '
+echo ' CFLAGS="-I/home/bil/test/g13/include" LDFLAGS="-L/home/bil/test/g13/lib" GUILE_CONFIG_path=/home/bil/test/g13/bin'
+./configure CFLAGS="-I/home/bil/test/g13/include" LDFLAGS="-L/home/bil/test/g13/lib" GUILE_CONFIG_path=/home/bil/test/g13/bin
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-guile"
+make allclean
+
+echo ' '
+echo ' '
+echo ' CFLAGS="-I/home/bil/test/g14/include" LDFLAGS="-L/home/bil/test/g14/lib" GUILE_CONFIG_path=/home/bil/test/g14/bin'
+./configure CFLAGS="-I/home/bil/test/g14/include" LDFLAGS="-L/home/bil/test/g14/lib" GUILE_CONFIG_path=/home/bil/test/g14/bin
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-guile"
+make allclean
+
+echo ' '
+echo ' '
+echo ' CFLAGS="-I/home/bil/test/g13/include" LDFLAGS="-L/home/bil/test/g13/lib" GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xm'
+./configure CFLAGS="-I/home/bil/test/g13/include" LDFLAGS="-L/home/bil/test/g13/lib" GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xm
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-guile"
+make allclean
+
+echo ' '
+echo ' '
+echo ' CFLAGS="-I/home/bil/test/g14/include" LDFLAGS="-L/home/bil/test/g14/lib" GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xm'
+./configure CFLAGS="-I/home/bil/test/g14/include" LDFLAGS="-L/home/bil/test/g14/lib" GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xm
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-guile"
+make allclean
+
+echo ' '
+echo ' '
+echo ' CFLAGS="-I/home/bil/test/g13/include" LDFLAGS="-L/home/bil/test/g13/lib" GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xg --with-gtk'
+./configure CFLAGS="-I/home/bil/test/g13/include" LDFLAGS="-L/home/bil/test/g13/lib" GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xg --with-gtk
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-guile"
+make allclean
+
+echo ' '
+echo ' '
+echo ' CFLAGS="-I/home/bil/test/g14/include" LDFLAGS="-L/home/bil/test/g14/lib" GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xg --with-gtk'
+./configure CFLAGS="-I/home/bil/test/g14/include" LDFLAGS="-L/home/bil/test/g14/lib" GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xg --with-gtk
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-guile"
+make allclean
+

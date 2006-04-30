@@ -1435,33 +1435,76 @@ void xen_gauche_load_args(XEN *args, int incoming_args, int args_size, XEN *arg_
     }
 }
 
+static XEN help_hash_table = XEN_FALSE;
+
+XEN xen_gauche_help(XEN sym)
+{
+  ScmHashEntry *e = NULL;
+  if (XEN_STRING_P(sym))
+    e = Scm_HashTableGet(SCM_HASH_TABLE(help_hash_table), SCM_INTERN(XEN_TO_C_STRING(sym)));
+  else e = Scm_HashTableGet(SCM_HASH_TABLE(help_hash_table), sym);
+  if (e) return((XEN)(e->value));
+  return(XEN_FALSE);
+}
+
+void xen_gauche_set_help(XEN sym, const char *help)
+{
+  if (XEN_STRING_P(sym))
+    Scm_HashTableAdd(SCM_HASH_TABLE(help_hash_table), SCM_INTERN(XEN_TO_C_STRING(sym)), (help) ? C_TO_XEN_STRING(help) : XEN_FALSE);
+  else Scm_HashTableAdd(SCM_HASH_TABLE(help_hash_table), sym, (help) ? C_TO_XEN_STRING(help) : XEN_FALSE);
+}
+
+XEN xen_gauche_define_constant(const char *name, int value, const char *help)
+{
+  XEN obj, sym;
+  sym = SCM_INTERN(name);
+  obj = Scm_DefineConst(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(sym), C_TO_XEN_INT(value));
+  xen_gauche_set_help(sym, help);
+  return(obj);
+}
+
+XEN xen_gauche_define_hook(const char *name, int arity, const char *help)
+{
+  XEN obj, sym;
+  sym = SCM_INTERN(name);
+  obj = Scm_Define(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(sym), XEN_EMPTY_LIST);
+  xen_gauche_set_help(sym, help);
+  return(obj);
+}
+
 #ifndef __cplusplus
 void xen_gauche_define_procedure(char *Name, XEN (*Func)(), int ReqArg, int OptArg, int RstArg, char *Doc)
 {
-  XEN proc;
+  XEN proc, sym;
   if (RstArg > 0)
     OptArg = 24; /* vargify but I think 24 args will handle most cases */
-  proc = Scm_MakeSubr(Func, NULL, ReqArg, OptArg, SCM_MAKE_STR_COPYING((Doc) ? Doc : Name));
-  SCM_DEFINE(Scm_UserModule(), Name, proc);
+  proc = Scm_MakeSubr(Func, NULL, ReqArg, OptArg, SCM_MAKE_STR_COPYING(Name));
+  sym = SCM_INTERN(Name);
+  xen_gauche_set_help(sym, Doc);
+  Scm_Define(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(sym), proc);
 }
 
 void xen_gauche_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), 
 					     int get_req, int get_opt, int set_req, int set_opt)
 {
-  XEN proc, set_proc;
-  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_help));
-  SCM_DEFINE(Scm_UserModule(), get_name, proc);
-  set_proc = Scm_MakeSubr(set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING((get_help) ? get_help : get_name));
+  XEN proc, set_proc, sym;
+  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_name));
+  sym = SCM_INTERN(get_name);
+  xen_gauche_set_help(sym, get_help);
+  Scm_Define(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(sym), proc);
+  set_proc = Scm_MakeSubr(set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING(get_name));
   Scm_SetterSet((ScmProcedure *)proc, (ScmProcedure *)set_proc, false);
 }
 
 void xen_gauche_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
 						      int get_req, int get_opt, int set_req, int set_opt)
 {
-  XEN proc, set_proc;
-  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_help));
-  SCM_DEFINE(Scm_UserModule(), get_name, proc);
-  set_proc = Scm_MakeSubr(reversed_set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING((get_help) ? get_help : get_name));
+  XEN proc, set_proc, sym;
+  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_name));
+  sym = SCM_INTERN(get_name);
+  xen_gauche_set_help(sym, get_help);
+  Scm_Define(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(sym), proc);
+  set_proc = Scm_MakeSubr(reversed_set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING(get_name));
   Scm_SetterSet((ScmProcedure *)proc, (ScmProcedure *)set_proc, false);
 }
 #else
@@ -1469,11 +1512,13 @@ void xen_gauche_define_procedure(char *Name,
 				 ScmHeaderRec* (*Func)(ScmHeaderRec**, int, void*), 
 				 int ReqArg, int OptArg, int RstArg, char *Doc)
 {
-  XEN proc;
+  XEN proc, sym;
   if (RstArg > 0)
     OptArg = 24; /* vargify but I think 24 args will handle most cases */
-  proc = Scm_MakeSubr(Func, NULL, ReqArg, OptArg, SCM_MAKE_STR_COPYING((Doc) ? Doc : Name));
-  SCM_DEFINE(Scm_UserModule(), Name, proc);
+  proc = Scm_MakeSubr(Func, NULL, ReqArg, OptArg, SCM_MAKE_STR_COPYING(Name));
+  sym = SCM_INTERN(Name);
+  xen_gauche_set_help(sym, Doc);
+  Scm_Define(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(sym), proc);
 }
 
 void xen_gauche_define_procedure_with_reversed_setter(char *get_name, 
@@ -1483,10 +1528,12 @@ void xen_gauche_define_procedure_with_reversed_setter(char *get_name,
 						      ScmHeaderRec* (*reversed_set_func)(ScmHeaderRec**, int, void*), 
 						      int get_req, int get_opt, int set_req, int set_opt)
 {
-  XEN proc, set_proc;
-  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_help));
-  SCM_DEFINE(Scm_UserModule(), get_name, proc);
-  set_proc = Scm_MakeSubr(reversed_set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING((get_help) ? get_help : get_name));
+  XEN proc, set_proc, sym;
+  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_name));
+  sym = SCM_INTERN(get_name);
+  xen_gauche_set_help(sym, get_help);
+  Scm_Define(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(sym), proc);
+  set_proc = Scm_MakeSubr(reversed_set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING(get_name));
   Scm_SetterSet((ScmProcedure *)proc, (ScmProcedure *)set_proc, false);
 }
 
@@ -1496,10 +1543,12 @@ void xen_gauche_define_procedure_with_setter(char *get_name,
 					     ScmHeaderRec* (*set_func)(ScmHeaderRec**, int, void*),
 					     int get_req, int get_opt, int set_req, int set_opt)
 {
-  XEN proc, set_proc;
-  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_help));
-  SCM_DEFINE(Scm_UserModule(), get_name, proc);
-  set_proc = Scm_MakeSubr(set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING((get_help) ? get_help : get_name));
+  XEN proc, set_proc, sym;
+  proc = Scm_MakeSubr(get_func, NULL, get_req, get_opt, SCM_MAKE_STR_COPYING(get_name));
+  sym = SCM_INTERN(get_name);
+  xen_gauche_set_help(sym, get_help);
+  Scm_Define(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(sym), proc);
+  set_proc = Scm_MakeSubr(set_func, NULL, set_req, set_opt, SCM_MAKE_STR_COPYING(get_name));
   Scm_SetterSet((ScmProcedure *)proc, (ScmProcedure *)set_proc, false);
 }
 #endif
@@ -1582,12 +1631,12 @@ static int smob_classes_size = 0;
 XEN xen_gauche_make_object(XEN_OBJECT_TYPE type, void *val, XEN_MARK_OBJECT_TYPE (*protect_func)(XEN obj))
 {
   smob *s;
-  ScmForeignPointer *obj;
+  XEN obj;
   s = (smob *)calloc(1, sizeof(smob));
   s->type = type;
   s->data = val;
   obj = Scm_MakeForeignPointer(smob_classes[type], (void *)s);
-  if (protect_func) protect_func((XEN)obj);
+  if (protect_func) protect_func(obj);
   return(obj);
 }
 
@@ -1698,6 +1747,8 @@ void xen_initialize(void)
 
   /* Gauche doesn't have a *features* list!! */
   XEN_EVAL_C_STRING("(define *features* (list 'defmacro 'record))"); /* has to be first so *features* exists */
+  help_hash_table = Scm_MakeHashTableSimple(SCM_HASH_EQ, 2048);
+  xen_gauche_permanent_object(help_hash_table);
 
   XEN_DEFINE_PROCEDURE("defined?",        g_defined_p_w,                   1, 0, 0, "(defined? arg) -> #t if arg is defined");
   XEN_DEFINE_PROCEDURE("provided?",       g_xen_gauche_provided_p_w,       1, 0, 0, "(provided? arg) -> #t if arg is on the *features* list");

@@ -5459,7 +5459,9 @@ XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 void g_init_sig(void)
 {
 #if WITH_RUN
+#if HAVE_GUILE
   XEN_EVAL_C_STRING("(use-modules (ice-9 optargs))");
+#endif
   XEN_DEFINE_PROCEDURE(S_scan_channel "-1",       g_scan_channel_w,  1, 5, 0, H_scan_channel);
   XEN_DEFINE_PROCEDURE(S_scan_chan "-1",          g_scan_chan_w,     1, 5, 0, H_scan_chan);
   XEN_DEFINE_PROCEDURE(S_find_channel "-1",       g_find_channel_w,  1, 4, 0, H_find_channel);

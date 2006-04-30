@@ -1581,7 +1581,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_UNWRAP_C_POINTER(a)      XEN_TO_C_ULONG(a)
 #define XEN_WRAPPED_C_POINTER_P(a)   XEN_NUMBER_P(a)
 
-#define XEN_DEFINE_CONSTANT(Name, Value, Help) Scm_DefineConst(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(Name)), C_TO_XEN_INT(Value))
+#define XEN_DEFINE_CONSTANT(Name, Value, Help) xen_gauche_define_constant(Name, Value, Help)
 #define XEN_DEFINE_VARIABLE(Name, Var, Value)  Var = SCM_DEFINE(Scm_UserModule(), Name, Value)
 #define XEN_VARIABLE_REF(Var)             Scm_SymbolValue(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(Var)))
 #define XEN_VARIABLE_SET(Var, Val)        xen_gauche_variable_set(Var, Val)
@@ -1597,9 +1597,9 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a) Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(a)), false)
 #define XEN_SYMBOL_TO_VARIABLE(a)           Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(a), false)
 
-#define XEN_SET_DOCUMENTATION(Func, Help)   SCM_PROCEDURE_INFO(Func) = C_TO_XEN_STRING(Help)
+#define XEN_SET_DOCUMENTATION(Name, Help)   xen_gauche_set_help((XEN)(SCM_INTERN(Name)), Help)
 #define XEN_DOCUMENTATION_SYMBOL            SCM_SYMBOL(SCM_INTERN("documentation"))
-#define XEN_OBJECT_HELP(Name)               SCM_PROCEDURE_INFO(Name)
+#define XEN_OBJECT_HELP(Name)               xen_gauche_help(Name)
 
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Protect, Ignore2) return(xen_gauche_make_object(Tag, (void *)Val, Protect))
 /* tag here is int -- needs ScmClass* for underlying call */
@@ -1635,7 +1635,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_DEFINE(Name, Value)       SCM_DEFINE(Scm_UserModule(), Name, Value)
 
 #define XEN_HOOK_P(Arg)                    (!XEN_FALSE_P(Arg) && XEN_LIST_P(SCM_GLOC_GET(SCM_GLOC(Arg))))
-#define XEN_DEFINE_HOOK(Name, Arity, Help) XEN_DEFINE(Name, XEN_EMPTY_LIST)
+#define XEN_DEFINE_HOOK(Name, Arity, Help) xen_gauche_define_hook(Name, Arity, Help)
 /* "simple hooks are for channel-local hooks (unnamed, accessed through the channel) */
 #define XEN_DEFINE_SIMPLE_HOOK(Arity)      Scm_Define(Scm_UserModule(), SCM_SYMBOL(Scm_Gensym(SCM_STRING(C_TO_XEN_STRING("snd-hook")))), XEN_EMPTY_LIST)
 #define XEN_HOOKED(Arg)                    XEN_NOT_NULL_P(SCM_GLOC_GET(SCM_GLOC(Arg)))
@@ -1655,7 +1655,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
                        XEN_LIST_1(Arg)))
 
 #define XEN_PROCEDURE_P(Arg)              SCM_PROCEDUREP(Arg)
-#define XEN_PROCEDURE_HELP(Name)          SCM_PROCEDURE_INFO(Name)
+#define XEN_PROCEDURE_HELP(Sym)           XEN_OBJECT_HELP(Sym)
 #define XEN_PROCEDURE_SOURCE_HELP(Name)   XEN_FALSE
 #define XEN_PROCEDURE_SOURCE(Func)        XEN_FALSE
 #define XEN_ARITY(Func)                   XEN_CONS(C_TO_XEN_INT(SCM_PROCEDURE_REQUIRED(Func)), C_TO_XEN_INT(SCM_PROCEDURE_OPTIONAL(Func)))
@@ -1870,6 +1870,10 @@ XEN xen_gauche_make_object(XEN_OBJECT_TYPE type, void *val, XEN_MARK_OBJECT_TYPE
 void *xen_gauche_object_ref(XEN obj);
 XEN_OBJECT_TYPE xen_gauche_new_type(const char *name, ScmClassPrintProc print, ScmForeignCleanupProc cleanup);
 bool xen_gauche_type_p(XEN obj, XEN_OBJECT_TYPE type);
+XEN xen_gauche_help(XEN proc);
+void xen_gauche_set_help(XEN proc, const char *help);
+XEN xen_gauche_define_constant(const char *name, int value, const char *help);
+XEN xen_gauche_define_hook(const char *name, int arity, const char *help);
 
 #endif
 

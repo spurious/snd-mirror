@@ -2544,7 +2544,7 @@ and its value is returned."
 
 #if HAVE_GAUCHE
   {
-    XEN sym, value;
+    XEN sym;
     if (XEN_STRING_P(text))
       {
 	subject = XEN_TO_C_STRING(text);
@@ -2565,24 +2565,10 @@ and its value is returned."
       }
     if (!str)
       {
-	if (Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(sym), false) != NULL)
-	  {
-	    value = Scm_SymbolValue(Scm_UserModule(), SCM_SYMBOL(sym));
-	    if (XEN_PROCEDURE_P(value))
-	      {
-#if HAVE_GAUCHE
-		/* here documentation strings in scheme-defined functions are ignored, and
-		 *    procedure->info seems to be the procedure itself?
-		 */
-		XEN hlp;
-		hlp = XEN_PROCEDURE_HELP(value);
-		if (XEN_STRING_P(hlp))
-		  str = XEN_TO_C_STRING(hlp);
-#else
-		str = XEN_TO_C_STRING(XEN_PROCEDURE_HELP(value));
-#endif
-	      }
-	  }
+	XEN hlp;
+	hlp = XEN_OBJECT_HELP(sym);
+	if (XEN_STRING_P(hlp))
+	  str = XEN_TO_C_STRING(hlp);
       }
   }
 #endif
