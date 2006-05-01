@@ -3359,7 +3359,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   bool temp_file = false;
   XEN res = XEN_FALSE;
   XEN proc = XEN_FALSE;
-
+#if WITH_RUN
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
   else proc = proc_and_list;
@@ -3368,6 +3368,9 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
    *   which is not considered a procedure
    *     (map-channel (make-fir-filter 3 :xcoeffs (vct .5 1.0 .5)))
    */
+#else
+  proc = proc_and_list;
+#endif
 
   if (XEN_STRING_P(org)) 
     caller = XEN_TO_C_STRING(org);
@@ -3744,15 +3747,13 @@ the current sample, the vct returned by 'init-func', and the current read direct
   XEN proc = XEN_FALSE;
   /* (ptree-channel (lambda (y) (* y 2))) -> ((lambda (y) (* y 2)) #<procedure #f ((y) (* y 2))>) as "proc_and_list" */
   /*   the cadr proc gives access to the environment, run walks the car */
-#if HAVE_RUBY || HAVE_FORTH || HAVE_GAUCHE
-  proc = proc_and_list;
-#endif
-#if HAVE_GUILE
+
+#if WITH_RUN
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
+#else
+  proc = proc_and_list;
 #endif
-
-  /* fprintf(stderr,"proc: %s, args: %d\n", XEN_AS_STRING(proc_and_list), XEN_REQUIRED_ARGS(proc_and_list)); */
 
   XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) && ((XEN_REQUIRED_ARGS_OK(proc, 1)) || (XEN_REQUIRED_ARGS_OK(proc, 3))),
 		  proc, XEN_ARG_1, S_ptree_channel, "a procedure of one or three args");
@@ -3936,9 +3937,13 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   char *errmsg;
   XEN proc = XEN_FALSE;
   struct ptree *pt = NULL;
+#if WITH_RUN
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
   else proc = proc_and_list;
+#else
+  proc = proc_and_list;
+#endif
   XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, caller, "a procedure");
   ASSERT_SAMPLE_TYPE(caller, s_beg, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(caller, s_end, XEN_ARG_3);

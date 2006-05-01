@@ -101,7 +101,7 @@ static XEN optimization_hook;
 enum {RUN_UNSAFE, RUN_SAFE};
 static int run_safety = RUN_UNSAFE;
 
-/* WITH_RUN set only if HAVE_STRINGIZE, HAVE_GUILE, and Guile version >= 1.5 or HAVE_GAUCHE (in progress) */
+/* WITH_RUN set only if HAVE_STRINGIZE, HAVE_GUILE, and Guile version >= 1.5 or HAVE_GAUCHE (work stopped -- no local var access) */
 #if WITH_RUN
 
 #define Int off_t
@@ -314,15 +314,42 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 #if HAVE_GAUCHE
 static void xen_symbol_name_set_value(const char *a, XEN b)
 {
+  /* global var set */
+  ScmGloc *obj;
+  obj = Scm_FindBinding(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(SCM_INTERN(a)), 0);
+  if (obj)
+    {
+      SCM_GLOC_SET(obj, b);
+    }
 }
 
 static XEN symbol_to_value(XEN code, XEN sym, bool *local)
 {
-  return(XEN_FALSE);
+  ScmGloc *obj;
+
+  /* and here we stopped: I can't see how to get at local variables such as "a" in:
+   *   (let ((a 32)) (run (lambda () (+ a 1))))
+   *   and this code isn't much use if only global variables are allowed
+   */
+
+  /* look for global var */
+  obj = Scm_FindBinding(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(sym), 0);
+  if (obj)
+    {
+      return(SCM_GLOC_GET(obj));
+    }
 }
 
 static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 {
+  ScmGloc *obj;
+
+  /* look for global var */
+  obj = Scm_FindBinding(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(sym), 0);
+  if (obj)
+    {
+      SCM_GLOC_SET(obj, new_val);
+    }
 }
 #endif
 
@@ -10901,10 +10928,17 @@ static struct ptree *form_to_ptree(XEN code)
   if (current_optimization == DONT_OPTIMIZE) return(NULL);
   form = XEN_CAR(code);
   prog = make_ptree(8);
+#if HAVE_GUILE
   if ((XEN_PROCEDURE_P(XEN_CADR(code))) && 
       (!(XEN_APPLICABLE_SMOB_P(XEN_CADR(code))))) /* applicable smobs cause confusion here */
     prog->code = XEN_CADR(code);                  /* need env before starting to walk the code */
   else prog->code = XEN_FALSE;                    /* many confusing cases here -- we'll just give up */
+#else
+  if ((SCM_CLOSUREP(XEN_CADR(code))) || (SCM_PROCEDUREP(XEN_CADR(code))))
+    prog->code = XEN_CADR(code);
+  else prog->code = XEN_FALSE;
+#endif
+
   if (XEN_SYMBOL_P(form))
     {
       free_ptree(prog);
@@ -11716,6 +11750,7 @@ in multi-channel situations where you want the optimization that vct-map! provid
   XEN proc, obj, code;
   Float *vals;
   mus_any *f;
+#if WITH_RUN
   if (XEN_LIST_P(proc_and_code))
     {
       proc = XEN_CAR(proc_and_code);
@@ -11726,6 +11761,10 @@ in multi-channel situations where you want the optimization that vct-map! provid
       proc = proc_and_code;
       code = proc_and_code;
     }
+#else
+  proc = proc_and_code;
+  code = proc_and_code;
+#endif
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ARG_1, S_vct_map, "a thunk");
   len = XEN_LIST_LENGTH(arglist);
   if (len == 0)
@@ -11823,22 +11862,26 @@ XEN_NARGIFY_1(g_set_optimization_w, g_set_optimization)
 XEN_NARGIFY_0(g_run_safety_w, g_run_safety)
 XEN_NARGIFY_1(g_set_run_safety_w, g_set_run_safety)
 XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
+#if WITH_RUN
 XEN_NARGIFY_1(g_run_w, g_run)
 XEN_NARGIFY_1(g_show_ptree_w, g_show_ptree)
 XEN_ARGIFY_3(g_add_clm_field_w, g_add_clm_field)
 XEN_NARGIFY_1(g_add_clm_type_w, g_add_clm_type)
 XEN_ARGIFY_4(g_run_eval_w, g_run_eval)
+#endif
 #else
 #define g_optimization_w g_optimization
 #define g_set_optimization_w g_set_optimization
 #define g_run_safety_w g_run_safety
 #define g_set_run_safety_w g_set_run_safety
 #define g_vct_map_w g_vct_map
+#if WITH_RUN
 #define g_run_w g_run
 #define g_show_ptree_w g_show_ptree
 #define g_add_clm_field_w g_add_clm_field
 #define g_add_clm_type_w g_add_clm_type
 #define g_run_eval_w g_run_eval
+#endif
 #endif
 
 void g_init_run(void)

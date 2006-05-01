@@ -567,9 +567,15 @@ spring, summer, rainbow, and flag.  These names are defined in rgb.scm."
 static XEN g_colormap_size(void) {return(C_TO_XEN_INT(color_map_size(ss)));}
 static XEN g_set_colormap_size(XEN val) 
 {
+  int maps;
   #define H_colormap_size "(" S_colormap_size "): current colormap size; default is 512."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_colormap_size, "an integer"); 
-  set_color_map_size(XEN_TO_C_INT(val));
+  maps = XEN_TO_C_INT(val);
+  if (maps < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_colormap_size, 1, val, "size ~A < 0?");
+  if (maps > (1 << 26))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_colormap_size, 1, val, "size ~A too large");
+  set_color_map_size(maps);
   check_colormap_sizes(color_map_size(ss));
   return(C_TO_XEN_INT(color_map_size(ss)));
 }

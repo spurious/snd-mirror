@@ -1531,7 +1531,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   #define XEN_TO_C_INT(a)               (SCM_INTP(a) ? SCM_INT_VALUE(a) : Scm_GetInteger(a))
   #define XEN_TO_C_INT_OR_ELSE(a, b)    ((XEN_INTEGER_P(a)) ? XEN_TO_C_INT(a) : b)
   #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ((XEN_NUMBER_P(a)) ? XEN_TO_C_DOUBLE(a) : b)
-  #define C_TO_XEN_INT(a)               (SCM_SMALL_INT_FITS(a)) ? SCM_MAKE_INT(a) : Scm_MakeInteger((long)a)
+  #define C_TO_XEN_INT(a)               Scm_MakeInteger((long)a)
 #endif
 #define XEN_DOUBLE_P(Arg)            SCM_REALP(Arg)
 #define XEN_TO_C_DOUBLE(a)           xen_to_c_double(a)

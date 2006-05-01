@@ -266,6 +266,8 @@ static XEN g_make_vct(XEN len, XEN filler)
   size = XEN_TO_C_INT(len);
   if (size <= 0) 
     XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "len ~A <= 0?");
+  if (size > (1 << 26)) /* matches malloc max in snd-utils/clm2xen etc if floats (<<24 for doubles) */
+    XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "len ~A too large");
   if (XEN_NUMBER_P(filler))
     return(vct_fill(make_vct(size, (Float *)CALLOC(size, sizeof(Float))), filler));
   return(make_vct(size, (Float *)CALLOC(size, sizeof(Float))));

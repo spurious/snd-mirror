@@ -1283,6 +1283,8 @@ static XEN g_set_max_regions(XEN n)
   regs = XEN_TO_C_INT(n);
   if (regs < 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_max_regions, 1, n, S_max_regions " ~A < 0?");
+  if (regs > (1 << 26))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_max_regions, 1, n, S_max_regions " ~A too large");
   set_max_regions(regs);
   return(C_TO_XEN_INT(max_regions(ss)));
 }

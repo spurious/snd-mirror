@@ -5,7 +5,7 @@
 
 #include <config.h>
 
-#define XM_DATE "21-Apr-06"
+#define XM_DATE "1-May-06"
 
 /* HISTORY: 
  *
@@ -7376,7 +7376,6 @@ static XEN gxm_XmContainerReorder(XEN arg1, XEN arg2, XEN arg3)
   #define H_XmContainerReorder "void XmContainerReorder(Widget container, WidgetList widgets, int num_widgets) Container function to reorder children"
   /* DIFF: XmContainerReorder arg2 is list of Widgets
    */
-  WidgetList ws;
   int len;
   XEN_ASSERT_TYPE(XEN_ContainerWidget_P(arg1), arg1, 1, "XmContainerReorder", "Container Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmContainerReorder", "WidgetList");
@@ -7384,9 +7383,15 @@ static XEN gxm_XmContainerReorder(XEN arg1, XEN arg2, XEN arg3)
   len = XEN_TO_C_INT(arg3);
   if (len > 0)
     {
-      ws = XEN_TO_C_Widgets(arg2, len);
-      XmContainerReorder(XEN_TO_C_Widget(arg1), ws, len);
-      if (ws) FREE(ws);
+      if (len > XEN_LIST_LENGTH(arg2))
+	XEN_OUT_OF_RANGE_ERROR("XmContainerReorder", 3, arg3, "len too large");
+      else
+	{
+	  WidgetList ws;
+	  ws = XEN_TO_C_Widgets(arg2, len);
+	  XmContainerReorder(XEN_TO_C_Widget(arg1), ws, len);
+	  if (ws) FREE(ws);
+	}
     }
   return(XEN_FALSE);
 }
@@ -17582,16 +17587,21 @@ static XEN gxm_XtUnmanageChildren(XEN arg1, XEN arg2)
   #define H_XtUnmanageChildren "void XtUnmanageChildren(children, num_children)"
   /* DIFF: XtUnmanageChildren arg1 is list of widgets
    */
-  WidgetList ws1;
   int len;
   XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XtUnmanageChildren", "WidgetList");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg2), arg2, 2, "XtUnmanageChildren", "int");
   if (XEN_INTEGER_P(arg2)) len = XEN_TO_C_INT(arg2); else len = XEN_LIST_LENGTH(arg1);
   if (len > 0)
     {
-      ws1 = XEN_TO_C_Widgets(arg1, len);
-      XtUnmanageChildren(ws1, len);
-      if (ws1) FREE(ws1);
+      if (len > XEN_LIST_LENGTH(arg1))
+	XEN_OUT_OF_RANGE_ERROR("XmContainerReorder", 2, arg2, "len too large");
+      else
+	{
+	  WidgetList ws1;
+	  ws1 = XEN_TO_C_Widgets(arg1, len);
+	  XtUnmanageChildren(ws1, len);
+	  if (ws1) FREE(ws1);
+	}
     }
   return(XEN_FALSE);
 }
@@ -17609,16 +17619,21 @@ static XEN gxm_XtManageChildren(XEN arg1, XEN arg2)
   #define H_XtManageChildren "void XtManageChildren(children, num_children)"
   /* DIFF: XtManageChildren arg1 is list of widgets
    */
-  WidgetList ws1;
   int len;
   XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XtManageChildren", "WidgetList");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg2), arg2, 2, "XtManageChildren", "int");
   if (XEN_INTEGER_P(arg2)) len = XEN_TO_C_INT(arg2); else len = XEN_LIST_LENGTH(arg1);
   if (len > 0)
     {
-      ws1 = XEN_TO_C_Widgets(arg1, len);
-      XtManageChildren(ws1, len);
-      if (ws1) FREE(ws1);
+      if (len > XEN_LIST_LENGTH(arg1))
+	XEN_OUT_OF_RANGE_ERROR("XmContainerReorder", 2, arg2, "len too large");
+      else
+	{
+	  WidgetList ws1;
+	  ws1 = XEN_TO_C_Widgets(arg1, len);
+	  XtManageChildren(ws1, len);
+	  if (ws1) FREE(ws1);
+	}
     }
   return(XEN_FALSE);
 }

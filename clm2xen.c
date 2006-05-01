@@ -644,6 +644,8 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
       n = XEN_TO_C_INT(len); 
       if (n <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_mus_fft, 3, len, "size ~A <= 0?");
+      if (n > MAX_ALLOC_SIZE)
+	XEN_OUT_OF_RANGE_ERROR(S_mus_fft, 3, len, "size ~A too large");
       if (n > v1->length)
 	n = v1->length;
     }
@@ -678,6 +680,8 @@ is the window family parameter, if any:\n\
   n = XEN_TO_C_INT(size);
   if (n <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 2, size, "size ~A <= 0?");
+  if (n > MAX_ALLOC_SIZE)
+    XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 2, size, "size arg ~A too large");
   t = (mus_fft_window_t)XEN_TO_C_INT(type);
   if (!(MUS_FFT_WINDOW_OK(t)))
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 1, type, "~A: unknown fft window");
@@ -740,6 +744,8 @@ of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
       n = XEN_TO_C_INT(un); 
       if (n <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_convolution, 3, un, "size ~A <= 0?");
+      if (n > MAX_ALLOC_SIZE)
+	XEN_OUT_OF_RANGE_ERROR(S_convolution, 3, un, "size ~A too large");
       if (n > v1->length)
 	n = v1->length;
     }
@@ -3007,6 +3013,7 @@ with 'chans' channels, and 'val' along the diagonal"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_make_scalar_mixer, "a number");
   size = XEN_TO_C_INT(chans);
   if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_scalar_mixer, 1, chans, "chans ~A <= 0?");
+  if (size > MUS_MAX_CHANS) XEN_OUT_OF_RANGE_ERROR(S_make_scalar_mixer, 1, chans, "too many chans: ~A");
   mx = mus_make_scalar_mixer(size, XEN_TO_C_DOUBLE(val));
   if (mx)
     return(mus_xen_to_object(_mus_wrap_no_vcts(mx)));

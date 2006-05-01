@@ -21,29 +21,27 @@
  *       snd-test test4:  bigger env gets created even when not needed?
  *                test13: bizarre n = \n in carg1?
  *                test15: swap-selection-channels error handler complaint about thunk where 1 arg wanted -- throw bug?
- *                test16: gauche-format: column needs to be fixed (args run together)
  *                test17: loop.scm load musglyphs -> and not valid with for: Iteration context: 'for i from 0 below' -> unbound err in cmn-glyphs 249?
  *                test19: 34646 ptree-channel case
  *                test21: remember-sound-state format ~S omits the quotes? -- this is gauche's format!
- *                test22: run-eval unbound
  *                test23: runs forever -- is this just unoptimized run?
  *                test24: ca 45315 - 45346 45390, unbound delete(!) -- this is just a name -- then segfault with no stack
  *                        file-sorters ref -> argument out of range: 0, is file_sorters vector ok? (needs to be gc protected)
- *                test25: invalid application: (#f 0 0 (#<closure (add-mark-pane open-remarks #f)>)) 51406? gc of hook? reset didn't clear after-edit-hook
- *                test28: arity returns '() in some case 57271
  *
  *       testsnd/compsnd
  *
  *       valgrind: GC Warning: Out of Memory!  Returning NIL!
  *
- *    test optimizer
+ *    optimizer needs local variable access -- procs/globals appear to work
  *
  *    check prefs and save/restore: these are broken
  *       even in Guile, 'Reset' doesn't set "full duration" or bounds to its default -- should it?
  *
- *    should hook arity be checked? should this use Gauche's hooks? -- another hash table!
+ *    should hook arity be checked? -- another hash table!
  *
  *    variable-set (xen.c) uses eval_string
+ *
+ *    apropos is defined in lib/gauche/interactive.scm (also object->string)
  *
  * TODO in Forth:
  *    sndscm: forth doc (only have .snd_forth right now)

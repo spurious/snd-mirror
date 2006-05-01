@@ -663,8 +663,12 @@ static XEN g_make_sound_data(XEN chans, XEN frames)
   frms = XEN_TO_C_INT(frames);
   if (chns <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 1, chans, "chans ~A <= 0?");
+  if (chns > (1 << 26))
+    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 1, chans, "chans arg ~A too large");
   if (frms <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames ~A <= 0?");
+  if (frms > (1 << 26))
+    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames arg ~A too large");
   return(make_sound_data(chns, frms));
 			 
 }

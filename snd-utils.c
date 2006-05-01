@@ -1188,7 +1188,7 @@ void stop_timing(void) {fprintf(stderr, "time: %d ",(int)((clock() - start) * 10
 
 #endif
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 #define S_file_to_string "file->string"
 static XEN g_file_to_string(XEN name)
 { 
@@ -1210,19 +1210,28 @@ static XEN g_mem_report(void)
 }
 #endif
 
-#if DEBUGGING
 #ifdef XEN_ARGIFY_1
+#if DEBUGGING
   XEN_NARGIFY_0(g_mem_report_w, g_mem_report)
+#endif
+#if HAVE_SCHEME
+  XEN_NARGIFY_1(g_file_to_string_w, g_file_to_string)
+#endif
 #else
+#if DEBUGGING
   #define g_mem_report_w g_mem_report
 #endif
+#if HAVE_SCHEME
+  #define g_file_to_string_w g_file_to_string
 #endif
+#endif
+
 
 void g_init_utils(void)
 {
   decimal_pt = local_decimal_point();
-#if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE(S_file_to_string, g_file_to_string, 1, 0, 0, "file contents as string");
+#if HAVE_SCHEME
+  XEN_DEFINE_PROCEDURE(S_file_to_string, g_file_to_string_w, 1, 0, 0, "file contents as string");
 #endif
 
 #if DEBUGGING
