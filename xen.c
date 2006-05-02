@@ -1599,7 +1599,7 @@ XEN xen_gauche_eval_c_string(char *arg)
     result = Scm_EvalCString(arg, SCM_OBJ(Scm_UserModule()));
   }
   SCM_WHEN_ERROR {
-    fprintf(stderr, "Error!");
+    fprintf(stderr, "Error in %s\n", arg);
   }
   SCM_END_PROTECT;
 

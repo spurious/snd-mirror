@@ -75,7 +75,9 @@
 		 (car args)
 		 (apply format #f args))))
     (newline) 
-    (display str)
+    (if (provided? 'snd-guile)
+	(display str)
+	(display str (current-error-port))) ;turn off buffering?
     (if (not (provided? 'snd-nogui))
 	(begin
 	  (snd-print #\newline)
@@ -401,7 +403,7 @@
 
 
 (define overall-start-time (real-time))
-(snd-display ";~%~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
+(snd-display ";~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
 (define (log-mem tst) 
   (if (> tests 1) (begin (snd-display ";test ~D:~D " test-number (1+ tst)) (gc)(gc)))
@@ -25330,22 +25332,22 @@ EDITS: 5
 
 (defmacro carg1 (hook)
   `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
-     (if (not (string=? str "((lambda (n) (+ n 32)))"))
+     (if (not (string=? str "((lambda (n) (if (number? n) (+ n 32) n)))"))
 	 (snd-display ";~A: ~A?" ',hook str))))
 
 (defmacro carg2 (hook)
   `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
-     (if (not (string=? str "((lambda (n m) (+ n m 32)))"))
+     (if (not (string=? str "((lambda (n m) (if (and (number? n) (number? m)) (+ n m 32) n)))"))
 	 (snd-display ";~A: ~A?" ',hook str))))
 
 (defmacro carg3 (hook)
   `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
-     (if (not (string=? str "((lambda (a b c) (+ a b c 32)))"))
+     (if (not (string=? str "((lambda (a b c) (if (and (number? a) (number? b) (number? c)) (+ a b c 32) a)))"))
 	 (snd-display ";~A: ~A?" ',hook str))))
 
 (defmacro carg4 (hook)
   `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
-     (if (not (string=? str "((lambda (a b c d) (+ a b c d 32)))"))
+     (if (not (string=? str "((lambda (a b c d) (if (and (number? a) (number? b) (number? c) (number? d)) (+ a b c 32) a)))"))
 	 (snd-display ";~A: ~A?" ',hook str))))
 
 (defmacro carg5 (hook)
@@ -25355,17 +25357,17 @@ EDITS: 5
 
 (defmacro carg6 (hook)
   `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
-     (if (not (string=? str "((lambda (a b c d e f) (+ a b c d e f 32)))"))
+     (if (not (string=? str "((lambda (a b c d e f) (if (and (number? a) (number? b) (number? c) (number? d) (number? e)) (+ a b c d e f 32) a)))"))
 	 (snd-display ";~A: ~A?" ',hook str))))
 
 (define (test-hooks)
   (define (arg0) 32)
-  (define (arg1 n) (+ n 32))
-  (define (arg2 n m) (+ n m 32))
-  (define (arg3 a b c) (+ a b c 32))
-  (define (arg4 a b c d) (+ a b c d 32))
+  (define (arg1 n) (if (number? n) (+ n 32) n))
+  (define (arg2 n m) (if (and (number? n) (number? m)) (+ n m 32) n))
+  (define (arg3 a b c) (if (and (number? a) (number? b) (number? c)) (+ a b c 32) a))
+  (define (arg4 a b c d) (if (and (number? a) (number? b) (number? c) (number? d)) (+ a b c 32) a))
   (define (arg5 a b c d e) (list 0 0 1 1))
-  (define (arg6 a b c d e f) (+ a b c d e f 32))
+  (define (arg6 a b c d e f) (if (and (number? a) (number? b) (number? c) (number? d) (number? e)) (+ a b c d e f 32) a))
   (reset-almost-all-hooks)
   
   (add-hook! after-graph-hook arg2) (carg2 after-graph-hook)
@@ -34664,21 +34666,22 @@ EDITS: 1
 	  (revert-sound ind)
 	  
 	  ;; ---- simple ptree
-	  (let ((old-opt (optimization)))
-	    (set! (optimization) 6)
-	    (ptree-channel (lambda (y) (+ y .1)))
-	    (if (fneq (maxamp) 0.247) (snd-display ";edit-list ptree: ~A" (maxamp)))
-	    (let ((func (edit-list->function)))
-	      (if (not (procedure? func)) 
-		  (snd-display ";edit-list->function 8: ~A" func))
-	      (if (not (string=? (object->string (procedure-source func)) 
-				 "(lambda (snd chn) (ptree-channel (lambda (y) (+ y 0.1)) 0 #f snd chn))"))
-		  (snd-display ";edit-list->function 8: ~A" (object->string (procedure-source func))))
-	      (func ind 0)
-	      (let ((mx (maxamp)))
-		(if (fneq mx 0.347) (snd-display ";edit-list->function called (8): ~A" mx))))
-	    (revert-sound ind)
-	    (set! (optimization) old-opt))
+	  (if (provided? 'run)
+	      (let ((old-opt (optimization)))
+		(set! (optimization) 6)
+		(ptree-channel (lambda (y) (+ y .1)))
+		(if (fneq (maxamp) 0.247) (snd-display ";edit-list ptree: ~A" (maxamp)))
+		(let ((func (edit-list->function)))
+		  (if (not (procedure? func)) 
+		      (snd-display ";edit-list->function 8: ~A" func))
+		  (if (not (string=? (object->string (procedure-source func)) 
+				     "(lambda (snd chn) (ptree-channel (lambda (y) (+ y 0.1)) 0 #f snd chn))"))
+		      (snd-display ";edit-list->function 8: ~A" (object->string (procedure-source func))))
+		  (func ind 0)
+		  (let ((mx (maxamp)))
+		    (if (fneq mx 0.347) (snd-display ";edit-list->function called (8): ~A" mx))))
+		(revert-sound ind)
+		(set! (optimization) old-opt)))
 	  
 	  ;; ---- simple 1 sample insert
 	  (insert-sample 100 .1)
@@ -44590,6 +44593,10 @@ EDITS: 1
 	    (char=? ch #\~))
 	1
 	0))
+
+
+      (display (format #f "w->s: ~A" text) (current-error-port))
+
   (focus-widget widget)
   (take-keyboard-focus widget)
   (if cleared 
@@ -44607,7 +44614,6 @@ EDITS: 1
 (if (not (defined? 'move-scale))
     (define (move-scale a b) #f))
 
-#|
 (add-file-sorter 
  "duration"
  (lambda (a b)
@@ -44622,7 +44628,6 @@ EDITS: 1
  (lambda (a)
    (and (sound-file? a)
 	(= (mus-sound-chans a) 1))))
-|#
 
 (if (or full-test (= snd-test 24) (and keep-going (<= snd-test 24)))
     (begin
@@ -44708,7 +44713,7 @@ EDITS: 1
 	    (set! (transform-graph-type) graph-once)
 	    (XSynchronize (XtDisplay (cadr (main-widgets))) #t)
 	    ;; don't touch the mouse during this test!
-	    
+
 	    ;; -------- drive channel graph
 	    (let ((ind (open-sound "oboe.snd")))
 	      
@@ -45387,7 +45392,6 @@ EDITS: 1
 		  (key-event minibuffer snd-return-key 0) (force-event)
 		  (if (not (= mxa 3))
 		      (snd-display ";M-x (set! mxa 3) -> ~A" mxa))
-		  
 		  (key-event cwid (char->integer #\x) 8) (force-event)
 		  (widget-string minibuffer "(mus-sound-frames \"fyow")
 		  (key-event minibuffer snd-tab-key 0) (force-event)
@@ -45397,11 +45401,16 @@ EDITS: 1
 		  
 		  (reset-listener-cursor)
 		  (goto-listener-end)
+		  (if (provided? 'snd-gauche) (clear-listener))
 		  (let ((lst (list-ref (main-widgets) 4))
 			(snd-return-key #xFF0D))
 		    (take-keyboard-focus lst)
-		    (key-event lst snd-return-key 0) (force-event) ; possible pre-existing error msg etc
-		    (key-event lst snd-return-key 0) (force-event)
+		    (catch #t
+			   (lambda ()
+			     (key-event lst snd-return-key 0) (force-event) ; possible pre-existing error msg etc
+			     (key-event lst snd-return-key 0) (force-event))
+			   (lambda args #f))
+
 		    (widget-string lst "(set! mxa (+ 1 4))" #f)
 		    (key-event lst snd-return-key 0) (force-event)
 		    (if (not (= mxa 5))
@@ -45438,8 +45447,11 @@ EDITS: 1
 		    (key-event lst (char->integer #\C) 9) (force-event)
 		    (key-event lst (char->integer #\a) 4)
 		    (key-event lst (char->integer #\k) 4)
-		    (widget-string lst "(mus-sound-s" #f)
-		    (key-event lst snd-tab-key 0) (force-event)
+		    (catch #t
+			   (lambda ()
+			     (widget-string lst "(mus-sound-s" #f)
+			     (key-event lst snd-tab-key 0) (force-event))
+			   (lambda args #f))
 		    (let ((helpd (list-ref (dialog-widgets) 15)))
 		      (if helpd
 			  (if (not (XtIsManaged helpd))
@@ -59170,6 +59182,7 @@ EDITS: 1
   "1"
   "gtk-errors"
   "accelmap"
+  ".snd-remember-sound"
 
   (string-append sf-dir "mus10.snd.snd")
   (string-append sf-dir "ieee-text-16.snd.snd")

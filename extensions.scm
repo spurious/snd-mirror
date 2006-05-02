@@ -22,6 +22,10 @@
 (use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
 (provide 'snd-extensions.scm)
 
+(if (and (provided? 'snd-gauche)
+	 (not (provided? 'gauche-optargs.scm)))
+    (load-from-path "gauche-optargs.scm"))
+
 (if (not (defined? 'remove-if))
     (define (remove-if pred l) ; from guile/ice-9/common-list.scm
       (let loop ((l l) (result '()))
@@ -455,7 +459,9 @@ If 'check' is #f, the hooks are removed."
     (define (print-readably fd field depth first)
       (if (not first) (format fd " "))
       (if (string? field)
-	  (format fd "~S" field)
+	  (if (= (string-length (format #f "~S" "1")) 3)
+	      (format fd "~S" field)
+	      (format fd "\"~S\"" field)) ; sometimes format omits the double quotes!
 	  (if (number? field)
 	      (if (and (exact? field)
 		       (rational? field)) ; get these out of our way before float stuff

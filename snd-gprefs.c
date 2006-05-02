@@ -1386,7 +1386,7 @@ static void preferences_help_callback(GtkWidget *w, gpointer context)
   prefs_helping = true;
   snd_help("preferences",
 	   "This dialog sets various global variables. 'Save' then writes the new values \
-to ~/.snd_prefs_guile|ruby so that they take effect the next time you start Snd.  'Reset' resets all variables to \
+to ~/.snd_prefs_guile|ruby|forth|gauche so that they take effect the next time you start Snd.  'Reset' resets all variables to \
 their default (initial) values. 'Help' starts this dialog, and as long as it is active, it will post helpful \
 information if the mouse lingers over some variable -- sort of a tooltip that stays out of your way. \
 You can also request help on a given topic by clicking the variable name on the far right.",
@@ -2734,10 +2734,15 @@ static void initial_bounds_toggle(prefs_info *prf)
 {
   bool use_full_duration = false;
   use_full_duration = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle));
-#if HAVE_GUILE
+#if HAVE_SCHEME
   if (!(XEN_DEFINED_P("prefs-initial-beg")))
     XEN_LOAD_FILE_WITH_PATH("extensions.scm");
+#if HAVE_GUILE
   XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-show-full-duration"), C_TO_XEN_BOOLEAN(use_full_duration));
+#endif
+#if HAVE_GAUCHE
+  XEN_VARIABLE_SET("prefs-show-full-duration", C_TO_XEN_BOOLEAN(use_full_duration));
+#endif
 #endif
 #if HAVE_RUBY
   if (!(XEN_DEFINED_P("prefs-initial-beg")))
@@ -2746,19 +2751,23 @@ static void initial_bounds_toggle(prefs_info *prf)
 #endif
 }
 
-/* TODO: all the variable sets in prefs for gauche */
-
 static void initial_bounds_text(prefs_info *prf)
 {
   float beg = 0.0, dur = 0.1;
   char *str;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
   sscanf(str, "%f : %f", &beg, &dur);
-#if HAVE_GUILE
+#if HAVE_SCHEME
   if (!(XEN_DEFINED_P("prefs-initial-beg")))
     XEN_LOAD_FILE_WITH_PATH("extensions.scm");
+#if HAVE_GUILE
   XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-beg"), C_TO_XEN_DOUBLE(beg));
   XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-dur"), C_TO_XEN_DOUBLE(dur));
+#endif
+#if HAVE_GAUCHE
+   XEN_VARIABLE_SET("prefs-initial-beg", C_TO_XEN_DOUBLE(beg));
+   XEN_VARIABLE_SET("prefs-initial-dur", C_TO_XEN_DOUBLE(dur));
+#endif
 #endif
 #if HAVE_RUBY
    if (!(XEN_DEFINED_P("prefs-initial-beg")))

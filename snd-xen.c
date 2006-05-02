@@ -9,9 +9,11 @@
  *   In Forth, Snd's exit is named snd-exit.
  *   In Gauche, random is implemented via mus-i|frandom (clm.c).
  *   In Scheme, filter is defined in srfi-1 so we need protection against that
+ *
+ *   In Gauche, apropos is defined in lib/gauche/interactive.scm (also object->string)
  */
 
-/* TODO in Gauche:
+/* TODO in Gauche: fix error handling, hooks, and format strangeness
  *    stacktrace and errors->listener
  *       (current-load-history)
  *
@@ -19,20 +21,18 @@
  *
  *    snd-test
  *       snd-test test4:  bigger env gets created even when not needed?
- *                test13: bizarre n = \n in carg1?
+ *                test13: snd-hooks returns list of hook lists! -- needs to be list of symbols, I guess -- none of this works right
  *                test15: swap-selection-channels error handler complaint about thunk where 1 arg wanted -- throw bug?
  *                test17: loop.scm load musglyphs -> and not valid with for: Iteration context: 'for i from 0 below' -> unbound err in cmn-glyphs 249?
- *                test19: 34646 ptree-channel case
- *                test21: remember-sound-state format ~S omits the quotes? -- this is gauche's format!
+ *                test19: add-notes format ~S trouble
  *                test23: runs forever -- is this just unoptimized run?
- *                test24: ca 45315 - 45346 45390, unbound delete(!) -- this is just a name -- then segfault with no stack
- *                        file-sorters ref -> argument out of range: 0, is file_sorters vector ok? (needs to be gc protected)
+ *                test24: eval error (on bogus string typed to listener) causes segfault after reporting error
  *
- *       testsnd/compsnd
+ *       testsnd/compsnd/memlog
  *
  *       valgrind: GC Warning: Out of Memory!  Returning NIL!
  *
- *    optimizer needs local variable access -- procs/globals appear to work
+ *    optimizer needs local variable access [this is not currently possible -- perhaps in 1.0 says Shiro]
  *
  *    check prefs and save/restore: these are broken
  *       even in Guile, 'Reset' doesn't set "full duration" or bounds to its default -- should it?
@@ -40,8 +40,6 @@
  *    should hook arity be checked? -- another hash table!
  *
  *    variable-set (xen.c) uses eval_string
- *
- *    apropos is defined in lib/gauche/interactive.scm (also object->string)
  *
  * TODO in Forth:
  *    sndscm: forth doc (only have .snd_forth right now)
@@ -4249,7 +4247,8 @@ that name is presented in the New File dialog."
   /* Gauche doesn't handle documentation strings correctly */
   XEN_EVAL_C_STRING("(defmacro define+ (args . body) `(define ,args ,@(cdr body)))"); /* strip out documentation string if embedded defines */
 
-  Scm_AddLoadPath(".", false);
+  /* Scm_AddLoadPath(".", false); */
+  Scm_AddLoadPath(mus_getcwd(), false);
 #endif
 
 #if HAVE_RUBY

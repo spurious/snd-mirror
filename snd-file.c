@@ -1203,7 +1203,6 @@ static void read_snd_opened_sound_file(snd_info *sp)
 }
 
 static XEN snd_opened_sound;
-static XEN snd_memo_sound;
 static XEN open_hook;
 static XEN close_hook;
 static XEN before_close_hook;
@@ -1243,7 +1242,6 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
 #endif
 #if HAVE_GUILE
       XEN_VARIABLE_SET(snd_opened_sound, C_TO_XEN_INT(sp->index));
-      XEN_VARIABLE_SET(snd_memo_sound, C_TO_XEN_INT(sp->index)); /* backwards compatibility */
 #endif
       sp->write_date = file_write_date(sp->filename);
       sp->need_update = false;
@@ -4891,7 +4889,6 @@ void g_init_file(void)
 				   S_setB S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
 
   XEN_DEFINE_VARIABLE(S_snd_opened_sound, snd_opened_sound, XEN_FALSE);
-  XEN_DEFINE_VARIABLE("memo-sound", snd_memo_sound, XEN_FALSE); /* backwards compatibility */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
 				   S_setB S_view_files_sort, g_set_view_files_sort_w,  0, 1, 1, 1);

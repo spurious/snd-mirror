@@ -281,6 +281,10 @@ static void set_clm_file_name(const char *str)
   if (XEN_DEFINED_P("*clm-file-name*"))
     XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("*clm-file-name*"), C_TO_XEN_STRING(str));
 #endif
+#if HAVE_GAUCHE
+  if (XEN_DEFINED_P("*clm-file-name*"))
+    XEN_VARIABLE_SET("*clm-file-name*", C_TO_XEN_STRING(str));
+#endif
 #if HAVE_RUBY
   if (XEN_DEFINED_P("clm-file-name"))
     XEN_VARIABLE_SET("clm-file-name", C_TO_XEN_STRING(str));
@@ -1087,7 +1091,7 @@ static char *find_sources(void) /* returns full filename if found else null */
 #endif
 #if HAVE_GAUCHE 
   #define BASE_FILE "extensions.scm"
-  file = C_TO_XEN_STRING("extensions.scm"); /* TODO: how to search load path? */
+  file = C_TO_XEN_STRING("extensions.scm");
 #endif
 #if HAVE_RUBY
   #define BASE_FILE "extensions.rb"
