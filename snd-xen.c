@@ -11,6 +11,7 @@
  *   In Scheme, filter is defined in srfi-1 so we need protection against that
  *
  *   In Gauche, apropos is defined in lib/gauche/interactive.scm (also object->string)
+ *              optimizer needs local variable access [this is not currently possible -- perhaps in 1.0 says Shiro]
  */
 
 /* TODO in Gauche: fix error handling, hooks, and format strangeness
@@ -20,8 +21,7 @@
  *    unwind-protects around scm_apply (snd-xen g_call)
  *
  *    snd-test
- *       snd-test test4:  bigger env gets created even when not needed?
- *                test13: snd-hooks returns list of hook lists! -- needs to be list of symbols, I guess -- none of this works right
+ *       snd-test test13: snd-hooks returns list of hook lists! -- needs to be list of symbols, I guess -- none of this works right
  *                test15: swap-selection-channels error handler complaint about thunk where 1 arg wanted -- throw bug?
  *                test17: loop.scm load musglyphs -> and not valid with for: Iteration context: 'for i from 0 below' -> unbound err in cmn-glyphs 249?
  *                test19: add-notes format ~S trouble
@@ -30,16 +30,10 @@
  *
  *       testsnd/compsnd/memlog
  *
- *       valgrind: GC Warning: Out of Memory!  Returning NIL!
- *
- *    optimizer needs local variable access [this is not currently possible -- perhaps in 1.0 says Shiro]
- *
  *    check prefs and save/restore: these are broken
  *       even in Guile, 'Reset' doesn't set "full duration" or bounds to its default -- should it?
  *
  *    should hook arity be checked? -- another hash table!
- *
- *    variable-set (xen.c) uses eval_string
  *
  * TODO in Forth:
  *    sndscm: forth doc (only have .snd_forth right now)
@@ -2999,29 +2993,39 @@ static XEN g_snd_stdin_test(XEN str)
 #endif
 
 
-#define S_gc_off "gc-off"
-#define S_gc_on "gc-on"
+#if HAVE_GAUCHE
+/* these declarations are in gc/include/gc.h */
+void GC_disable(void);
+void GC_enable(void);
+/* there's also void GC_enable_incremental(void); */
+#endif
 
 static XEN g_gc_off(void) 
 {
-  #define H_gc_off "(" S_gc_off ") turns off garbage collection (Ruby and Forth only)"
+  #define H_gc_off "(" S_gc_off ") turns off garbage collection (a no-op in Guile)"
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
   rb_gc_disable();
 #endif
 #if HAVE_FORTH
   fth_gc_off();
 #endif
+#if HAVE_GAUCHE
+  GC_disable();
+#endif
   return(XEN_FALSE);
 }
 
 static XEN g_gc_on(void) 
 {
-  #define H_gc_on "(" S_gc_on ") turns on garbage collection (Ruby and Forth only)"
+  #define H_gc_on "(" S_gc_on ") turns on garbage collection (a no-op in Guile)"
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
   rb_gc_enable();
 #endif
 #if HAVE_FORTH
   fth_gc_on();
+#endif
+#if HAVE_GAUCHE
+  GC_enable();
 #endif
   return(XEN_FALSE);
 }

@@ -1578,6 +1578,8 @@ XEN xen_gauche_object_to_string(XEN obj)
 {
   /* return XEN string description of obj */
   ScmObj ostr;
+  if (XEN_STRING_P(obj))
+    return(obj);
   ostr = Scm_MakeOutputStringPort(true);
   Scm_Write(obj, SCM_OBJ(ostr), true);
   return(Scm_GetOutputString(SCM_PORT(ostr)));

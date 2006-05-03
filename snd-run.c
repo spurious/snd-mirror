@@ -152,10 +152,6 @@ static int run_safety = RUN_UNSAFE;
 #endif
 
 #if HAVE_GAUCHE
-
-/* in Gauche Scm_VM() returns the current evaluator, vm->env is the current environment -- an array of ScmObjs */
-/*   might also be able to use Scm_FindBinding */
-
 #define XEN_APPLICABLE_SMOB_P(a)            true
 #define INTEGER_TO_STRING(a)                XEN_TO_C_STRING(Scm_NumberToString(R_C_TO_XEN_INT(a), 10, false))
 #define INTEGER_TO_STRING_WITH_RADIX(a, b)  XEN_TO_C_STRING(Scm_NumberToString(R_C_TO_XEN_INT(a), b, false))

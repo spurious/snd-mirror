@@ -225,6 +225,8 @@
 #define S_free_player                   "free-player"
 #define S_free_sample_reader            "free-sample-reader"
 #define S_free_track                    "free-track"
+#define S_gc_off                        "gc-off"
+#define S_gc_on                         "gc-on"
 #define S_goto_listener_end             "goto-listener-end"
 #define S_graph                         "graph"
 #define S_graph_as_sonogram             "graph-as-sonogram"

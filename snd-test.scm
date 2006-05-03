@@ -86,8 +86,7 @@
 
 (define with-big-file #f)
 (define big-file-name "/home/bil/zap/sounds/bigger.snd")
-(if (and (not (provided? 'snd-gauche))
-	 (not (string=? (version) "1.8.0")))
+(if (not (string=? (version) "1.8.0"))
     (begin
       (set! with-big-file (file-exists? big-file-name))
       (if (not with-big-file) (snd-display ";no big file"))))

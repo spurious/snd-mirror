@@ -621,7 +621,7 @@ but I decided that was a worse kludge than log-freq-start).
 <td><code>0</code></td></tr>
 <tr><td></td><td colspan=2>If non-zero, try to optimize simple lambda forms passed to the searches and so forth.
 This depends partly on the optargs module (not available in the correct form before Guile 1.5),
-only applies to Guile (not Ruby), and is highly experimental.
+only applies to Guile (not Ruby, Gauche, or Forth), and is highly experimental.
 The actual values of the optimization switch are:
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -11505,6 +11505,22 @@ The following gives us a green cursor:
 <pre>
   (set! (<em class=red>foreground-color</em> 0 0 <a class=quiet href="#cursorcontext">cursor-context</a>) (<a class=quiet href="#makecolor">make-color</a> 1 0 1))
 </pre>
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+<!-- gc-off -->
+<tr><td colspan=2>
+<code><a class=def name="gcoff">gc-off</a> ()</code></td></tr>
+<tr><td></td><td>
+<i>gc-off</i> turns garbage collection off (except in Guile where it's a no-op).
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+<!-- gc-on -->
+<tr><td colspan=2>
+<code><a class=def name="gcon">gc-on</a> ()</code></td></tr>
+<tr><td></td><td>
+<i>gc-on</i> turns garbage collection on (except in Guile where it's a no-op).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
