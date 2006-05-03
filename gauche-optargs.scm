@@ -384,8 +384,8 @@
 (defmacro define* (ARGLIST . BODY)
   (define*-guts 'define ARGLIST BODY))
 
-(defmacro define*-public (ARGLIST . BODY)
-  (define*-guts 'define-public ARGLIST BODY))
+;(defmacro define*-public (ARGLIST . BODY)
+;  (define*-guts 'define-public ARGLIST BODY))
 
 ;; The guts of define* and define*-public.
 (define (define*-guts DT ARGLIST BODY)

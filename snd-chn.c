@@ -5479,6 +5479,26 @@ the edit is aborted. \n\
   return(channel_get(snd_n, chn_n, CP_EDIT_HOOK, S_edit_hook));
 }
 
+#if HAVE_GAUCHE
+static XEN g_set_edit_hook(XEN val, XEN snd, XEN chn)
+{
+  /* macros in snd-xen use set! on the hook function */
+  chan_info *cp;
+  ASSERT_CHANNEL(S_setB S_edit_hook, snd, chn, 1);
+  cp = get_cp(snd, chn, S_setB S_edit_hook);
+  if (!cp) return(XEN_FALSE);
+  if (!(XEN_HOOK_P(cp->edit_hook)))
+    {
+      cp->edit_hook = XEN_DEFINE_SIMPLE_HOOK(0);
+      cp->edit_hook_loc = snd_protect(cp->edit_hook);
+    }
+  SCM_GLOC_SET(SCM_GLOC(cp->edit_hook), val);
+  return(val);
+}
+
+WITH_THREE_SETTER_ARGS(g_set_edit_hook_reversed, g_set_edit_hook)
+#endif
+
 static XEN g_after_edit_hook(XEN snd_n, XEN chn_n) 
 {
   #define H_after_edit_hook "(" S_after_edit_hook " (snd #f) (chn #f)): snd's channel chn's " S_after_edit_hook ". \
@@ -5489,6 +5509,26 @@ arguments. " S_after_edit_hook " is called after an edit, but before " S_after_g
   return(channel_get(snd_n, chn_n, CP_AFTER_EDIT_HOOK, S_after_edit_hook));
 }
 
+#if HAVE_GAUCHE
+static XEN g_set_after_edit_hook(XEN val, XEN snd, XEN chn)
+{
+  /* macros in snd-xen use set! on the hook function */
+  chan_info *cp;
+  ASSERT_CHANNEL(S_setB S_after_edit_hook, snd, chn, 1);
+  cp = get_cp(snd, chn, S_setB S_after_edit_hook);
+  if (!cp) return(XEN_FALSE);
+  if (!(XEN_HOOK_P(cp->after_edit_hook)))
+    {
+      cp->after_edit_hook = XEN_DEFINE_SIMPLE_HOOK(0);
+      cp->after_edit_hook_loc = snd_protect(cp->after_edit_hook);
+    }
+  SCM_GLOC_SET(SCM_GLOC(cp->after_edit_hook), val);
+  return(val);
+}
+
+WITH_THREE_SETTER_ARGS(g_set_after_edit_hook_reversed, g_set_after_edit_hook)
+#endif
+
 static XEN g_undo_hook(XEN snd_n, XEN chn_n) 
 {
   #define H_undo_hook "(" S_undo_hook " (snd #f) (chn #f)): snd's channel chn's " S_undo_hook ". \
@@ -5497,6 +5537,26 @@ arguments. " S_undo_hook " is called just after any undo, redo, or revert that a
 
   return(channel_get(snd_n, chn_n, CP_UNDO_HOOK, S_undo_hook));
 }
+
+#if HAVE_GAUCHE
+static XEN g_set_undo_hook(XEN val, XEN snd, XEN chn)
+{
+  /* macros in snd-xen use set! on the hook function */
+  chan_info *cp;
+  ASSERT_CHANNEL(S_setB S_undo_hook, snd, chn, 1);
+  cp = get_cp(snd, chn, S_setB S_undo_hook);
+  if (!cp) return(XEN_FALSE);
+  if (!(XEN_HOOK_P(cp->undo_hook)))
+    {
+      cp->undo_hook = XEN_DEFINE_SIMPLE_HOOK(0);
+      cp->undo_hook_loc = snd_protect(cp->undo_hook);
+    }
+  SCM_GLOC_SET(SCM_GLOC(cp->undo_hook), val);
+  return(val);
+}
+
+WITH_THREE_SETTER_ARGS(g_set_undo_hook_reversed, g_set_undo_hook)
+#endif
 
 static XEN g_show_y_zero(XEN snd, XEN chn)
 {
@@ -7153,6 +7213,11 @@ XEN_ARGIFY_3(g_peaks_w, g_peaks)
 XEN_ARGIFY_2(g_edit_hook_w, g_edit_hook)
 XEN_ARGIFY_2(g_after_edit_hook_w, g_after_edit_hook)
 XEN_ARGIFY_2(g_undo_hook_w, g_undo_hook)
+#if HAVE_GAUCHE
+XEN_ARGIFY_3(g_set_edit_hook_w, g_set_edit_hook)
+XEN_ARGIFY_3(g_set_after_edit_hook_w, g_set_after_edit_hook)
+XEN_ARGIFY_3(g_set_undo_hook_w, g_set_undo_hook)
+#endif
 XEN_ARGIFY_2(g_ap_sx_w, g_ap_sx)
 XEN_ARGIFY_3(g_set_ap_sx_w, g_set_ap_sx)
 XEN_ARGIFY_2(g_ap_sy_w, g_ap_sy)
@@ -7445,9 +7510,18 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE(S_graph,                   g_graph_w,                  1, 8, 0, H_graph);
   XEN_DEFINE_PROCEDURE(S_edits,                   g_edits_w,                  0, 2, 0, H_edits);
   XEN_DEFINE_PROCEDURE(S_peaks,                   g_peaks_w,                  0, 3, 0, H_peaks);
+#if (!HAVE_GAUCHE)
   XEN_DEFINE_PROCEDURE(S_edit_hook,               g_edit_hook_w,              0, 2, 0, H_edit_hook);
   XEN_DEFINE_PROCEDURE(S_after_edit_hook,         g_after_edit_hook_w,        0, 2, 0, H_after_edit_hook);
   XEN_DEFINE_PROCEDURE(S_undo_hook,               g_undo_hook_w,              0, 2, 0, H_undo_hook);
+#else
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_edit_hook, g_edit_hook_w, H_edit_hook,
+					    S_setB S_edit_hook, g_set_edit_hook_w, g_set_edit_hook_reversed, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_after_edit_hook, g_after_edit_hook_w, H_after_edit_hook,
+					    S_setB S_after_edit_hook, g_set_after_edit_hook_w, g_set_after_edit_hook_reversed, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_undo_hook, g_undo_hook_w, H_undo_hook,
+					    S_setB S_undo_hook, g_set_undo_hook_w, g_set_undo_hook_reversed, 0, 2, 1, 2);
+#endif
   XEN_DEFINE_PROCEDURE(S_update_time_graph,       g_update_time_graph_w,      0, 2, 0, H_update_time_graph);
   XEN_DEFINE_PROCEDURE(S_update_lisp_graph,       g_update_lisp_graph_w,      0, 2, 0, H_update_lisp_graph);
   XEN_DEFINE_PROCEDURE(S_update_transform_graph,  g_update_transform_graph_w, 0, 2, 0, H_update_transform_graph);
