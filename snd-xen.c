@@ -14,15 +14,14 @@
  *              optimizer needs local variable access [this is not currently possible -- perhaps in 1.0 says Shiro]
  */
 
-/* TODO in Gauche: fix error handling, hooks, and format strangeness
+/* TODO in Gauche: fix error handling, format strangeness
  *    stacktrace and errors->listener
  *       (current-load-history)
  *
  *    unwind-protects around scm_apply (snd-xen g_call)
  *
  *    snd-test
- *       snd-test test13: snd-hooks returns list of hook lists! -- needs to be list of symbols, I guess -- none of this works right
- *                test15: swap-selection-channels error handler complaint about thunk where 1 arg wanted -- throw bug?
+ *       snd-test test15: swap-selection-channels error handler complaint about thunk where 1 arg wanted -- throw bug?
  *                test17: loop.scm load musglyphs -> and not valid with for: Iteration context: 'for i from 0 below' -> unbound err in cmn-glyphs 249?
  *                test19: add-notes format ~S trouble
  *                test23: runs forever -- is this just unoptimized run?
@@ -32,8 +31,6 @@
  *
  *    check prefs and save/restore: these are broken
  *       even in Guile, 'Reset' doesn't set "full duration" or bounds to its default -- should it?
- *
- *    should hook arity be checked? -- another hash table!
  *
  * TODO in Forth:
  *    sndscm: forth doc (only have .snd_forth right now)
@@ -2993,8 +2990,8 @@ static XEN g_snd_stdin_test(XEN str)
 #endif
 
 
-#if HAVE_GAUCHE
-/* these declarations are in gc/include/gc.h */
+#if 0
+/* these declarations are in gc/include/gc.h -- apparently included in gauche.h */
 void GC_disable(void);
 void GC_enable(void);
 /* there's also void GC_enable_incremental(void); */
@@ -4228,25 +4225,6 @@ that name is presented in the New File dialog."
   XEN_EVAL_C_STRING("(defmacro declare args #f)");     /* for optimizer */
   XEN_EVAL_C_STRING("(define (procedure-source proc) #f)"); /* SOMEDAY: procedure-source in gauche? */
   XEN_EVAL_C_STRING("(define procedure-with-setter? has-setter?)");
-
-  /* Gauche has hooks (in Scheme), but this is quicker */
-  XEN_EVAL_C_STRING("(define hook? list?)");
-  XEN_EVAL_C_STRING("(define hook-empty? null?)");
-  XEN_EVAL_C_STRING("(define (make-hook . args) (list))");
-  XEN_EVAL_C_STRING("(defmacro add-hook! (a b) `(set! ,a (cons ,b ,a)))");
-  XEN_EVAL_C_STRING("(defmacro reset-hook! (a) `(set! ,a (list)))");
-  XEN_EVAL_C_STRING("(define (run-hook hook . args) (for-each (lambda (p) (apply p args)) hook))");
-  XEN_EVAL_C_STRING("(define hook->list list-copy)");
-
-  XEN_EVAL_C_STRING("(define (filter-list pred lis)\
-                       (let loop ((lis lis)\
-                                  (r '()))\
-                         (cond ((null-list? lis) (reverse! r))\
-                               ((pred (car lis)) (loop (cdr lis) (cons (car lis) r)))\
-                               (else (loop (cdr lis) r)))))");
-
-  XEN_EVAL_C_STRING("(defmacro remove-hook! (a b)\
-                       `(set! ,a (filter-list (lambda (p) (eq? p ,b)) ,a)))");
 
   /* Gauche doesn't handle documentation strings correctly */
   XEN_EVAL_C_STRING("(defmacro define+ (args . body) `(define ,args ,@(cdr body)))"); /* strip out documentation string if embedded defines */

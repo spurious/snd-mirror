@@ -1634,13 +1634,13 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #define XEN_DEFINE(Name, Value)       SCM_DEFINE(Scm_UserModule(), Name, Value)
 
-#define XEN_HOOK_P(Arg)                    (!XEN_FALSE_P(Arg) && XEN_LIST_P(SCM_GLOC_GET(SCM_GLOC(Arg))))
+#define XEN_HOOK_P(Arg)                    xen_gauche_hook_p(Arg)
 #define XEN_DEFINE_HOOK(Name, Arity, Help) xen_gauche_define_hook(Name, Arity, Help)
 /* "simple hooks are for channel-local hooks (unnamed, accessed through the channel) */
-#define XEN_DEFINE_SIMPLE_HOOK(Arity)      Scm_Define(Scm_UserModule(), SCM_SYMBOL(Scm_Gensym(SCM_STRING(C_TO_XEN_STRING("snd-hook")))), XEN_EMPTY_LIST)
-#define XEN_HOOKED(Arg)                    XEN_NOT_NULL_P(SCM_GLOC_GET(SCM_GLOC(Arg)))
-#define XEN_CLEAR_HOOK(Arg)                SCM_GLOC_SET(SCM_GLOC(Arg), XEN_EMPTY_LIST)
-#define XEN_HOOK_PROCEDURES(Arg)           SCM_OBJ(SCM_GLOC_GET(SCM_GLOC(Arg)))
+#define XEN_DEFINE_SIMPLE_HOOK(Arity)      xen_gauche_define_hook(NULL, Arity, NULL)
+#define XEN_HOOKED(Arg)                    xen_gauche_hook_empty_p(Arg)
+#define XEN_CLEAR_HOOK(Arg)                xen_gauche_reset_hook(Arg)
+#define XEN_HOOK_PROCEDURES(Arg)           xen_gauche_hook_to_list(Arg)
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
    do {if (!(Assertion)) Scm_Error("%s: wrong type argument (arg %d): %S, wanted %s", Caller, Position, Arg, Correct_Type);} while (0)
@@ -1874,7 +1874,10 @@ XEN xen_gauche_help(XEN proc);
 void xen_gauche_set_help(XEN proc, const char *help);
 XEN xen_gauche_define_constant(const char *name, int value, const char *help);
 XEN xen_gauche_define_hook(const char *name, int arity, const char *help);
-
+XEN xen_gauche_hook_to_list(XEN hook);
+XEN xen_gauche_reset_hook(XEN hook);
+bool xen_gauche_hook_empty_p(XEN hook);
+bool xen_gauche_hook_p(XEN val);
 #endif
 
 

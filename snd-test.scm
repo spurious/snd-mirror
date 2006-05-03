@@ -418,8 +418,10 @@
 (if (not (provided? 'snd-hooks.scm)) (load "hooks.scm"))
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
-(define (reset-almost-all-hooks)
-  (with-local-hook optimization-hook '() reset-all-hooks))
+(if (provided? 'snd-guile)
+    (define (reset-almost-all-hooks)
+      (with-local-hook optimization-hook '() reset-all-hooks))
+    (define reset-almost-all-hooks reset-all-hooks))
 
 (define (list-p val)
   (and (list? val)
