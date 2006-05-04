@@ -42,7 +42,6 @@
       (if (not (provided? 'gauche-optargs.scm)) (load "gauche-optargs.scm"))
       (if (not (provided? 'gauche-format.scm)) (load "gauche-format.scm"))
 
-      (define (ftell fd) 0) ; TODO: ftell for gauche: can't use port-tell because it expects a port
       (define (run thunk) (thunk))
       (define (continuation? val) #f)
       (define O_RDWR 2)
@@ -61,7 +60,7 @@
       ))
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #f) ; huge arg testing
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
@@ -83,10 +82,10 @@
 	  (snd-print #\newline)
 	  (snd-print str)))))
 
-
 (define with-big-file #f)
 (define big-file-name "/home/bil/zap/sounds/bigger.snd")
-(if (not (string=? (version) "1.8.0"))
+(if (and with-big-file 
+	 (not (string=? (version) "1.8.0")))
     (begin
       (set! with-big-file (file-exists? big-file-name))
       (if (not with-big-file) (snd-display ";no big file"))))
@@ -3752,6 +3751,8 @@
       (add-hook! open-raw-sound-hook (lambda (a b) #t))
       (reset-hook! bad-header-hook)
       (add-hook! bad-header-hook (lambda (n) #t))
+      (if (hook-empty? open-raw-sound-hook) (snd-display ";add-hook open-raw-sound-hook failed??"))
+      (if (hook-empty? bad-header-hook) (snd-display ";add-hook bad-header-hook failed??"))
       (let* ((magic-words (list ".snd" "FORM" "AIFF" "AIFC" "COMM" "COMT" "INFO" "INST" "inst" "MARK" "SSND"
 				"FVER" "NONE" "ULAW" "ulaw" "ima4" "raw " "sowt" "in32" "in24" "ni23" "fl32"
 				"FL32" "fl64" "twos" "ALAW" "alaw" "APPL" "CLM " "RIFF" "RIFX" "WAVE" "fmt "
@@ -3767,6 +3768,8 @@
 	     (ctr 0))
 	(for-each
 	 (lambda (magic)
+	   (if (hook-empty? open-raw-sound-hook) (snd-display ";open-raw-sound-hook cleared??"))
+	   (if (hook-empty? bad-header-hook) (snd-display ";bad-header-hook cleared??"))
 	   (if (file-exists? "test.snd")
 	       (delete-file "test.snd"))
 	   (mus-sound-forget "test.snd")
@@ -3784,7 +3787,7 @@
 	     (if (and (number? tag)
 		      (sound? tag))
 		 (begin
-		   (snd-display ";open-sound garbage ~A: ~A?" magic tag)
+		   (snd-display ";open-sound garbage ~A: ~A -> ~A?" magic tag (file->string "test.snd"))
 		   (if (sound? tag) (close-sound tag)))))
 	   (delete-file "test.snd")
 	   (mus-sound-forget "test.snd")
@@ -5448,6 +5451,8 @@ EDITS: 5
 	    (snd-display ";multi-ramp 5: ~A" (safe-display-edits ind 0 12)))
 	(close-sound ind))
       
+      (if (provided? 'run) (begin
+
       (let ((ind (new-sound "test.snd")))
 	
 	;; ptree+scale
@@ -7672,6 +7677,7 @@ EDITS: 5
 	    (snd-display ";ptree4: ~A" (edit-tree)))
 
 	(close-sound ind))
+      )) ; end 'run cases?
 
       (let ((data (make-vct 101 1.0))
 	    (rto1-data (make-vct 101))
@@ -9030,7 +9036,7 @@ EDITS: 5
 	    (reset-hook! after-apply-hook)
 	    (add-hook! after-apply-hook (lambda (snd) (set! after-ran snd)))
 	    (apply-controls ind)
-	    (if (not (= ind after-ran)) (snd-display ";after-apply-hook: ~A?" after-ran))
+	    (if (or (not (number? after-ran)) (not (= ind after-ran))) (snd-display ";after-apply-hook: ~A?" after-ran))
 	    (reset-hook! after-apply-hook))
 	  (revert-sound ind)
 	  (set! (sync ind) 1)
@@ -25327,39 +25333,60 @@ EDITS: 5
      select)))
 
 (defmacro carg0 (hook)
-  `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
-     (if (not (string=? str "((lambda () 32))"))
-	 (snd-display ";~A: ~A?" ',hook str))))
+  (if (provided? 'snd-guile)
+      `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
+	 (if (not (string=? str "((lambda () 32))"))
+	     (snd-display ";~A: ~A?" ',hook str)))
+      `(if (hook-empty? ,hook)
+	   (snd-display ";~A: empty?" ',hook))))
 
 (defmacro carg1 (hook)
-  `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
-     (if (not (string=? str "((lambda (n) (if (number? n) (+ n 32) n)))"))
-	 (snd-display ";~A: ~A?" ',hook str))))
+  (if (provided? 'snd-guile)
+      `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
+	 (if (not (string=? str "((lambda (n) (if (number? n) (+ n 32) n)))"))
+	     (snd-display ";~A: ~A?" ',hook str)))
+      `(if (hook-empty? ,hook)
+	   (snd-display ";~A: empty?" ',hook))))
 
 (defmacro carg2 (hook)
-  `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
-     (if (not (string=? str "((lambda (n m) (if (and (number? n) (number? m)) (+ n m 32) n)))"))
-	 (snd-display ";~A: ~A?" ',hook str))))
+  (if (provided? 'snd-guile)
+      `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
+	 (if (not (string=? str "((lambda (n m) (if (and (number? n) (number? m)) (+ n m 32) n)))"))
+	     (snd-display ";~A: ~A?" ',hook str)))
+      `(if (hook-empty? ,hook)
+	   (snd-display ";~A: empty?" ',hook))))
 
 (defmacro carg3 (hook)
-  `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
-     (if (not (string=? str "((lambda (a b c) (if (and (number? a) (number? b) (number? c)) (+ a b c 32) a)))"))
-	 (snd-display ";~A: ~A?" ',hook str))))
+  (if (provided? 'snd-guile)
+      `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
+	 (if (not (string=? str "((lambda (a b c) (if (and (number? a) (number? b) (number? c)) (+ a b c 32) a)))"))
+	     (snd-display ";~A: ~A?" ',hook str)))
+      `(if (hook-empty? ,hook)
+	   (snd-display ";~A: empty?" ',hook))))
 
 (defmacro carg4 (hook)
-  `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
-     (if (not (string=? str "((lambda (a b c d) (if (and (number? a) (number? b) (number? c) (number? d)) (+ a b c 32) a)))"))
-	 (snd-display ";~A: ~A?" ',hook str))))
+  (if (provided? 'snd-guile)
+      `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
+	 (if (not (string=? str "((lambda (a b c d) (if (and (number? a) (number? b) (number? c) (number? d)) (+ a b c 32) a)))"))
+	     (snd-display ";~A: ~A?" ',hook str)))
+      `(if (hook-empty? ,hook)
+	   (snd-display ";~A: empty?" ',hook))))
 
 (defmacro carg5 (hook)
-  `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
-     (if (not (string=? str "((lambda (a b c d e) (list 0 0 1 1)))"))
-	 (snd-display ";~A: ~A?" ',hook str))))
+  (if (provided? 'snd-guile)
+      `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
+	 (if (not (string=? str "((lambda (a b c d e) (list 0 0 1 1)))"))
+	     (snd-display ";~A: ~A?" ',hook str)))
+      `(if (hook-empty? ,hook)
+	   (snd-display ";~A: empty?" ',hook))))
 
 (defmacro carg6 (hook)
-  `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
-     (if (not (string=? str "((lambda (a b c d e f) (if (and (number? a) (number? b) (number? c) (number? d) (number? e)) (+ a b c d e f 32) a)))"))
-	 (snd-display ";~A: ~A?" ',hook str))))
+  (if (provided? 'snd-guile)
+      `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list ,hook)))))))
+	 (if (not (string=? str "((lambda (a b c d e f) (if (and (number? a) (number? b) (number? c) (number? d) (number? e)) (+ a b c d e f 32) a)))"))
+	     (snd-display ";~A: ~A?" ',hook str)))
+      `(if (hook-empty? ,hook)
+	   (snd-display ";~A: empty?" ',hook))))
 
 (define (test-hooks)
   (define (arg0) 32)
@@ -25958,21 +25985,30 @@ EDITS: 5
 	
 	(reset-hook! (edit-hook ind 0))
 	(add-hook! (edit-hook ind 0) (lambda () (+ snd chn)))
-	(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list (edit-hook ind 0))))))))
-	  (if (not (string=? str "((lambda () (+ snd chn)))"))
-	      (snd-display ";edit-hook: ~A?" str)))
+	(if (provided? 'snd-guile)
+	    (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list (edit-hook ind 0))))))))
+	      (if (not (string=? str "((lambda () (+ snd chn)))"))
+		  (snd-display ";edit-hook: ~A?" str)))
+	    (if (hook-empty? (edit-hook ind 0))
+		(snd-display ";edit-hook empty?")))
 	(reset-hook! (edit-hook ind 0))
 	(reset-hook! (after-edit-hook ind 0))
 	(add-hook! (after-edit-hook ind 0) (lambda () (+ snd chn)))
-	(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list (after-edit-hook ind 0))))))))
-	  (if (not (string=? str "((lambda () (+ snd chn)))"))
-	      (snd-display ";after-edit-hook: ~A?" str)))
+	(if (provided? 'snd-guile)
+	    (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list (after-edit-hook ind 0))))))))
+	      (if (not (string=? str "((lambda () (+ snd chn)))"))
+		  (snd-display ";after-edit-hook: ~A?" str)))
+	    (if (hook-empty? (after-edit-hook ind 0))
+		(snd-display ";after-edit-hook empty?")))
 	(reset-hook! (after-edit-hook ind 0))
 	(reset-hook! (undo-hook ind 0))
 	(add-hook! (undo-hook ind 0) (lambda () (+ snd chn)))
-	(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list (undo-hook ind 0))))))))
-	  (if (not (string=? str "((lambda () (+ snd chn)))"))
-	      (snd-display ";undo-hook: ~A?" str)))
+	(if (provided? 'snd-guile)
+	    (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook->list (undo-hook ind 0))))))))
+	      (if (not (string=? str "((lambda () (+ snd chn)))"))
+		  (snd-display ";undo-hook: ~A?" str)))
+	    (if (hook-empty? (undo-hook ind 0))
+		(snd-display ";undo-hook empty?")))
 	(reset-hook! (undo-hook ind 0))
 	(let ((calls 0))
 	  (add-hook! (undo-hook ind 0) (lambda () (set! calls (1+ calls))))

@@ -1586,12 +1586,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_VARIABLE_REF(Var)             Scm_SymbolValue(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(Var)))
 #define XEN_VARIABLE_SET(Var, Val)        xen_gauche_variable_set(Var, Val)
 
-#define XEN_ERROR_TYPE(Typ)                 C_STRING_TO_XEN_SYMBOL(Typ)
-#define XEN_ERROR(Type, Info)               Scm_Error(XEN_AS_STRING(Info))
-/* calls VMThrowException */
-#define XEN_THROW(Tag, Arg)                 Scm_RaiseCondition(Tag, Arg)
-/* might need symbol_value of tag */
-
 #define C_STRING_TO_XEN_SYMBOL(a)           SCM_INTERN(a)
 #define XEN_NAME_AS_C_STRING_TO_VALUE(a)    Scm_SymbolValue(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(a)))
 #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a) Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(a)), false)
@@ -1638,15 +1632,24 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_DEFINE_HOOK(Name, Arity, Help) xen_gauche_define_hook(Name, Arity, Help)
 /* "simple hooks are for channel-local hooks (unnamed, accessed through the channel) */
 #define XEN_DEFINE_SIMPLE_HOOK(Arity)      xen_gauche_define_hook(NULL, Arity, NULL)
-#define XEN_HOOKED(Arg)                    xen_gauche_hook_empty_p(Arg)
+#define XEN_HOOKED(Arg)                    (!xen_gauche_hook_empty_p(Arg))
 #define XEN_CLEAR_HOOK(Arg)                xen_gauche_reset_hook(Arg)
 #define XEN_HOOK_PROCEDURES(Arg)           xen_gauche_hook_to_list(Arg)
 
-#define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
-   do {if (!(Assertion)) Scm_Error("%s: wrong type argument (arg %d): %S, wanted %s", Caller, Position, Arg, Correct_Type);} while (0)
+#define XEN_ERROR_TYPE(Typ)                 C_STRING_TO_XEN_SYMBOL(Typ)
+#define XEN_ERROR(Type, Info)               Scm_Raise(XEN_CONS(Type, Info))
+#define XEN_THROW(Tag, Arg)                 Scm_Raise(XEN_CONS(Type, Arg))
 
-#define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
-   Scm_Error("%s: wrong type argument (arg %d): %S, wanted %s", Caller, ArgN, Arg, Descr)
+#define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
+  do {if (!(Assertion)) \
+      XEN_ERROR(XEN_ERROR_TYPE("wrong-type-arg"),\
+		XEN_LIST_3(C_TO_XEN_STRING(Caller),			\
+			   C_TO_XEN_STRING("wrong type argument (arg %S): %S, wanted %S"), \
+			   XEN_LIST_3(C_TO_XEN_INT(Position), \
+				      Arg,				\
+				      C_TO_XEN_STRING(Correct_Type))));} while (0)
+
+#define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) XEN_ASSERT_TYPE(false, Arg, ArgN, Caller, Descr)
 
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr) \
   XEN_ERROR(XEN_ERROR_TYPE("out-of-range"), \

@@ -1783,12 +1783,12 @@ static XEN g_hook_p(XEN val)
 static XEN g_hook_empty_p(XEN hook)
 {
   XEN_ASSERT_TYPE(xen_gauche_hook_p(hook), hook, XEN_ONLY_ARG, "hook-empty?", "a hook");
-  return(C_TO_XEN_BOOLEAN(XEN_NOT_NULL_P(ghook_functions((ghook *)XEN_OBJECT_REF(hook)))));
+  return(C_TO_XEN_BOOLEAN(XEN_NULL_P(ghook_functions((ghook *)XEN_OBJECT_REF(hook)))));
 }
 
 bool xen_gauche_hook_empty_p(XEN hook)
 {
-  return(XEN_NOT_NULL_P(ghook_functions((ghook *)XEN_OBJECT_REF(hook))));
+  return(XEN_NULL_P(ghook_functions((ghook *)XEN_OBJECT_REF(hook))));
 }
 
 static XEN g_make_hook(XEN arity, XEN help)

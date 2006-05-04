@@ -14,18 +14,18 @@
  *              optimizer needs local variable access [this is not currently possible -- perhaps in 1.0 says Shiro]
  */
 
-/* TODO in Gauche: fix error handling, format strangeness
+/* TODO in Gauche: format strangeness
  *    stacktrace and errors->listener
  *       (current-load-history)
  *
  *    unwind-protects around scm_apply (snd-xen g_call)
  *
  *    snd-test
- *       snd-test test15: swap-selection-channels error handler complaint about thunk where 1 arg wanted -- throw bug?
- *                test17: loop.scm load musglyphs -> and not valid with for: Iteration context: 'for i from 0 below' -> unbound err in cmn-glyphs 249?
+ *       snd-test test17: loop.scm load musglyphs -> and not valid with for: Iteration context: 'for i from 0 below' -> unbound err in cmn-glyphs 249?
  *                test19: add-notes format ~S trouble
  *                test23: runs forever -- is this just unoptimized run?
  *                test24: eval error (on bogus string typed to listener) causes segfault after reporting error
+ *                test28: all-args #t: vct_map -> malloc -4?
  *
  *       testsnd/compsnd/memlog
  *
@@ -3041,12 +3041,14 @@ static SCM g_continuation_p(XEN obj)
 #endif
 #endif
 
+#if (!HAVE_GAUCHE)
 static XEN g_fmod(XEN a, XEN b)
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(a), a, XEN_ARG_1, "fmod", " a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(b), b, XEN_ARG_2, "fmod", " a number");
   return(C_TO_XEN_DOUBLE(fmod(XEN_TO_C_DOUBLE(a), XEN_TO_C_DOUBLE(b))));
 }
+#endif
 
 #if HAVE_SPECIAL_FUNCTIONS
 static XEN g_j0(XEN x)
@@ -3426,7 +3428,9 @@ XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 #if DEBUGGING
   XEN_NARGIFY_1(g_snd_sound_pointer_w, g_snd_sound_pointer)
 #endif
-XEN_NARGIFY_2(g_fmod_w, g_fmod)
+#if (!HAVE_GAUCHE)
+  XEN_NARGIFY_2(g_fmod_w, g_fmod)
+#endif
 XEN_NARGIFY_0(g_gc_off_w, g_gc_off)
 XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 
@@ -3614,7 +3618,9 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #if DEBUGGING
   #define g_snd_sound_pointer_w g_snd_sound_pointer
 #endif
-#define g_fmod_w g_fmod
+#if (!HAVE_GAUCHE)
+  #define g_fmod_w g_fmod
+#endif
 #define g_gc_off_w g_gc_off
 #define g_gc_on_w g_gc_on
 #if HAVE_SPECIAL_FUNCTIONS
@@ -3665,6 +3671,14 @@ static XEN g_write_byte(XEN byte)
   scm_putc(XEN_TO_C_INT(byte), SCM_COERCE_OUTPORT(port));
   return(byte);
 }
+#endif
+
+#if HAVE_GAUCHE
+static XEN g_ftell(XEN fd)
+{
+  return(C_TO_XEN_OFF_T(lseek(XEN_TO_C_INT(fd), 0, SEEK_CUR)));
+}
+XEN_NARGIFY_1(g_ftell_w, g_ftell)
 #endif
 
 void g_initialize_gh(void)
@@ -3940,7 +3954,9 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_samples_to_sound_data, g_samples_to_sound_data_w, 0, 7, 0, H_samples_to_sound_data);
   XEN_DEFINE_PROCEDURE(S_snd_print,             g_snd_print_w,             1, 0, 0, H_snd_print);
   XEN_DEFINE_PROCEDURE("little-endian?",        g_little_endian_w,         0, 0, 0, "return #t if host is little endian");
+#if (!HAVE_GAUCHE)
   XEN_DEFINE_PROCEDURE("fmod",                  g_fmod_w,                  2, 0, 0, "C's fmod");
+#endif
   XEN_DEFINE_PROCEDURE("snd-completion",        g_snd_completion_w,        1, 0, 0, "return completion of arg");
   /* XEN_DEFINE_PROCEDURE(S_clm_print,          g_clm_print,               0, 0, 1, H_clm_print); */
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
@@ -3974,9 +3990,10 @@ void g_initialize_gh(void)
 #endif
 
 #if HAVE_GAUCHE
-  XEN_DEFINE_PROCEDURE("random",    g_random_w, 1, 0, 0, "(random arg) -> random number between 0 and arg ");
+  XEN_DEFINE_PROCEDURE("random", g_random_w, 1, 0, 0, "(random arg) -> random number between 0 and arg ");
   XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
   XEN_DEFINE_CONSTANT("internal-time-units-per-second", CLOCKS_PER_SEC, "clock speed");
+  XEN_DEFINE_PROCEDURE("ftell", g_ftell_w, 1, 0, 0, "(ftell fd) -> lseek");
 #endif
 
 #if HAVE_SCHEME
@@ -4206,10 +4223,28 @@ that name is presented in the New File dialog."
                          (set! (setter proc) set)\
                          proc))");
 
-  XEN_EVAL_C_STRING("(defmacro catch (sym thunk handler) `(with-error-handler ,handler ,thunk))");
-  /* TODO: does handler need to return #t? how to find/check error type? */
-  /*    we need the handler to return some arbitrary value, and it should be able to examine (and return) the error type (a symbol) */
-  /* this probably should use "guard" and error should be "condition" etc */
+  XEN_EVAL_C_STRING("(define (throw . args) (raise args))");
+  XEN_EVAL_C_STRING("(define (catch tag body error-handler)                                                         \
+                       (guard (err                                                                                  \
+ 	                        ((and (condition-has-type? err <error>)                                             \
+		                      (or (equal? tag #t)                                                           \
+		                          (member? tag (list 'wrong-number-of-args 'wrong-type-arg 'out-of-range))))\
+	                         (let ((msg (slot-ref err 'message))                                                \
+		                       (translated-error (list err)))                                               \
+	                           (if (string? msg)                                                                \
+		                       (let ((len (string-length msg)))                                             \
+		                         (if (and (> len 26)                                                        \
+			                          (string=? (substring msg 0 25) \"wrong number of arguments\"))    \
+		                             (set! translated-error (list 'wrong-number-of-args msg))               \
+		                             (if (and (> len 21)                                                    \
+				                      (string=? (substring msg 0 21) \"argument out of range\"))    \
+			                         (set! translated-error (list 'out-of-range msg))))))               \
+	                           (apply error-handler translated-error)))                                         \
+	                         ((or (equal? tag #t)                                                               \
+	                              (and (list? err)                                                              \
+		                           (eq? tag (car err))))                                                    \
+	                          (apply error-handler (if (list? err) err (list err)))))                           \
+	                 (body)))");
 
   XEN_EVAL_C_STRING("(define (symbol->keyword key) (make-keyword (symbol->string key)))");
   XEN_EVAL_C_STRING("(define (keyword->symbol key) (string->symbol (keyword->string key)))");
@@ -4223,7 +4258,7 @@ that name is presented in the New File dialog."
   XEN_EVAL_C_STRING("(define (debug-set! . args) #f)");
   XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
   XEN_EVAL_C_STRING("(defmacro declare args #f)");     /* for optimizer */
-  XEN_EVAL_C_STRING("(define (procedure-source proc) #f)"); /* SOMEDAY: procedure-source in gauche? */
+  XEN_EVAL_C_STRING("(define procedure-source procedure-info)");
   XEN_EVAL_C_STRING("(define procedure-with-setter? has-setter?)");
 
   /* Gauche doesn't handle documentation strings correctly */
