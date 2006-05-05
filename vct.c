@@ -532,6 +532,8 @@ static XEN vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
       iend = XEN_TO_C_INT(end);
       if (iend < istart)
 	XEN_OUT_OF_RANGE_ERROR(S_vct_subseq, 3, end, "end ~A < start?");
+      if (iend > old_len)
+	XEN_OUT_OF_RANGE_ERROR(S_vct_subseq, 3, end, "end ~A > vct length?");
       new_len = iend - istart + 1;
     }
   else new_len = old_len - istart;

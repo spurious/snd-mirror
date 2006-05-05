@@ -171,7 +171,7 @@
 	 (apply (setter sound-comment) (list #f snd))
 	 (apply (setter sound-comment) (list snd val))))))
 
-(load "loop.scm") ; Rick's loop implementation (cm/src/loop.scm)
+;(load "loop.scm") ; Rick's loop implementation (cm/src/loop.scm)
 (define progn begin)
 
 (load-from-path "cmn-glyphs.lisp")

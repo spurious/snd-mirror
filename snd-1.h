@@ -1004,11 +1004,13 @@ char *g_print_1(XEN obj);
 chan_info *get_cp(XEN snd_n, XEN chn_n, const char *caller);
 snd_info *get_sp(XEN snd_n, sp_sound_t accept_player);
 XEN g_c_make_sample_reader(snd_fd *fd);
-XEN g_call0(XEN proc, const char *caller);
-XEN g_call1(XEN proc, XEN arg, const char *caller);
-XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller);
-XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller);
-XEN g_call_any(XEN proc, XEN arglist, const char *caller);
+#if HAVE_GUILE
+  XEN g_call0(XEN proc, const char *caller);
+  XEN g_call1(XEN proc, XEN arg, const char *caller);
+  XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller);
+  XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller);
+  XEN g_call_any(XEN proc, XEN arglist, const char *caller);
+#endif
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn);
 bool procedure_ok_with_error(XEN proc, int req_args, const char *caller, const char *arg_name, int argn);
 bool procedure_arity_ok(XEN proc, int args);

@@ -1570,7 +1570,33 @@ XEN xen_gauche_object_to_string(XEN obj)
   /* return XEN string description of obj */
   ScmObj ostr;
   if (XEN_STRING_P(obj))
-    return(obj);
+    {
+      char *str, *newstr;
+      int i, j, quotes = 0, len, oldlen;
+      str = XEN_TO_C_STRING(obj);
+      if (str)
+	{
+	  XEN result;
+	  len = strlen(str);
+	  oldlen = len;
+	  for (i = 0; i < len; i++)
+	    if (str[i] == '"') quotes++;
+	  len = len + 2 + quotes;
+	  newstr = (char *)calloc(len + 1, sizeof(char));
+	  newstr[0] = '"';
+	  newstr[len - 1] = '"';
+	  for (j = 1, i = 0; i < oldlen; i++)
+	    {
+	      if (str[i] == '"')
+		newstr[j++] = '\\';
+	      newstr[j++] = str[i];
+	    }
+	  result = C_TO_XEN_STRING(newstr);
+	  free(newstr);
+	  return(result);
+	}
+      return(C_TO_XEN_STRING("\"\""));
+    }
   ostr = Scm_MakeOutputStringPort(true);
   Scm_Write(obj, SCM_OBJ(ostr), true);
   return(Scm_GetOutputString(SCM_PORT(ostr)));
@@ -1805,7 +1831,10 @@ static XEN g_add_hook(XEN hook, XEN function)
   ghook *obj;
   XEN_ASSERT_TYPE(xen_gauche_hook_p(hook), hook, XEN_ARG_1, "add-hook!", "a hook");
   obj = (ghook *)XEN_OBJECT_REF(hook);
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(function) && (XEN_REQUIRED_ARGS(function) == ghook_arity(obj)), function, XEN_ARG_2, "add-hook!", "a function");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(function) && 
+		  ((XEN_REQUIRED_ARGS(function) == ghook_arity(obj)) ||
+		   ((SCM_PROCEDURE_REQUIRED(function) + SCM_PROCEDURE_OPTIONAL(function)) == ghook_arity(obj))),
+		  function, XEN_ARG_2, "add-hook!", "a function");
   add_ghook(obj, function);
   Scm_ForeignPointerAttrSet(SCM_FOREIGN_POINTER(hook), SCM_INTERN("functions"), obj->functions);
   return(hook);

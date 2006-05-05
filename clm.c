@@ -108,7 +108,7 @@ static char describe_buffer[DESCRIBE_BUFFER_SIZE];
 
 static void *clm_calloc(int num, int size, const char* what)
 {
-  register void *mem;
+  void *mem;
   mem = CALLOC(num, size);
 #if DEBUGGING
   set_printable(0);

@@ -10,22 +10,19 @@
  *   In Gauche, random is implemented via mus-i|frandom (clm.c).
  *   In Scheme, filter is defined in srfi-1 so we need protection against that
  *
- *   In Gauche, apropos is defined in lib/gauche/interactive.scm (also object->string)
+ *   In Gauche, apropos is defined in lib/gauche/interactive.scm
  *              optimizer needs local variable access [this is not currently possible -- perhaps in 1.0 says Shiro]
  */
 
-/* TODO in Gauche: format strangeness
+/* TODO in Gauche: 
  *    stacktrace and errors->listener
  *       (current-load-history)
  *
  *    unwind-protects around scm_apply (snd-xen g_call)
  *
  *    snd-test
- *       snd-test test17: loop.scm load musglyphs -> and not valid with for: Iteration context: 'for i from 0 below' -> unbound err in cmn-glyphs 249?
- *                test19: add-notes format ~S trouble
- *                test23: runs forever -- is this just unoptimized run?
+ *       snd-test test19: add-notes format ~S trouble (examp.scm)
  *                test24: eval error (on bogus string typed to listener) causes segfault after reporting error
- *                test28: all-args #t: vct_map -> malloc -4?
  *
  *       testsnd/compsnd/memlog
  *
@@ -35,6 +32,7 @@
  * TODO in Forth:
  *    sndscm: forth doc (only have .snd_forth right now)
  *    features check (below)
+ *    .snd_forth init -> segfaults
  *
  * TODO in Ruby:
  *    prefs for show-selection
@@ -64,11 +62,10 @@ void dump_protection(FILE *Fp)
 	  gcdat = XEN_VECTOR_REF(gc_protection, i);
 	  if (!(XEN_EQ_P(gcdat, DEFAULT_GC_VALUE)))
 	    {
-#if HAVE_GAUCHE
+#if HAVE_SCHEME
 	      fprintf(Fp,"  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdat));
 #endif
 #if HAVE_GUILE
-	      fprintf(Fp,"  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdat));
 	      if (XEN_HOOK_P(gcdat))
 		fprintf(Fp, " -> %s", XEN_AS_STRING(scm_hook_to_list(gcdat)));
 #endif
@@ -184,13 +181,6 @@ void snd_unprotect_at(int loc)
       XEN_VECTOR_SET(gc_protection, loc, DEFAULT_GC_VALUE);
       gc_last_cleared = loc;
     }
-#if DEBUGGING
-  else
-    {
-      fprintf(stderr,"attempt to unprotect at %d\n", loc);
-      abort();
-    }
-#endif  
 }
 
 /* -------- error handling -------- */
@@ -240,6 +230,7 @@ void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data)
 
 static char *gl_print(XEN result);
 
+#if (!HAVE_GAUCHE)
 static XEN snd_format_if_needed(XEN args)
 {
   /* if car has formatting info, use next arg as arg list for it */
@@ -331,6 +322,8 @@ static XEN snd_format_if_needed(XEN args)
   FREE(errmsg);
   return(xen_return_first(result, args));
 }
+#endif
+
 
 /* ---------------- GUILE error handler ---------------- */
 
@@ -589,7 +582,73 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
   return(snd_internal_stack_catch(XEN_TRUE, body, body_data, snd_catch_scm_error, (void *)caller));
 }
+
+static XEN g_call0_1(void *arg)
+{
+  return(XEN_CALL_0_NO_CATCH((XEN)arg));
+}
+
+XEN g_call0(XEN proc, const char *caller) /* replacement for gh_call0 -- protect ourselves from premature exit(!$#%@$) */
+{
+  return(snd_catch_any(g_call0_1, (void *)proc, caller));
+}
+
+static XEN g_call1_1(void *arg)
+{
+  return(XEN_CALL_1_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1]));
+}
+
+XEN g_call1(XEN proc, XEN arg, const char *caller)
+{
+  XEN args[2];
+  args[0] = proc;
+  args[1] = arg;
+  return(snd_catch_any(g_call1_1, (void *)args, caller));
+}
+
+static XEN g_call_any_1(void *arg)
+{
+  return(XEN_APPLY_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1]));
+}
+
+XEN g_call_any(XEN proc, XEN arglist, const char *caller)
+{
+  XEN args[2];
+  args[0] = proc;
+  args[1] = arglist;
+  return(snd_catch_any(g_call_any_1, (void *)args, caller));
+}
+
+static XEN g_call2_1(void *arg)
+{
+  return(XEN_CALL_2_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], ((XEN *)arg)[2]));
+}
+
+XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller)
+{
+  XEN args[3];
+  args[0] = proc;
+  args[1] = arg1;
+  args[2] = arg2;
+  return(snd_catch_any(g_call2_1, (void *)args, caller));
+}
+
+static XEN g_call3_1(void *arg)
+{
+  return(XEN_CALL_3_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], ((XEN *)arg)[2], ((XEN *)arg)[3]));
+}
+
+XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
+{
+  XEN args[4];
+  args[0] = proc;
+  args[1] = arg1;
+  args[2] = arg2;
+  args[3] = arg3;
+  return(snd_catch_any(g_call3_1, (void *)args, caller));
+}
 #endif
+
 
 #if HAVE_GAUCHE
 
@@ -638,17 +697,8 @@ ScmObj Scm_VMRepl(ScmObj reader, ScmObj evaluator,
  *   format   - SCM_STACK_TRACE_FORMAT_* enum value.  EXPERIMENTAL.
  */
 
-XEN snd_catch_scm_error(XEN e)
-{
-  fprintf(stderr,"got error: %s\n", XEN_AS_STRING(e));
-  return(XEN_FALSE);
-}
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
-#if 0
-  /* result = Scm_VMWithErrorHandler(SCM_OBJ(snd_catch_scm_error), catcher); */
-  return((*body)(body_data));
-#endif
   XEN result = XEN_FALSE;
 
   SCM_UNWIND_PROTECT {
@@ -908,104 +958,10 @@ static XEN eval_file_wrapper(void *data)
   return(error);
 }
 
-#if HAVE_GUILE
-static XEN g_call0_1(void *arg)
-{
-  return(XEN_CALL_0_NO_CATCH((XEN)arg));
-}
-#endif
-
-XEN g_call0(XEN proc, const char *caller) /* replacement for gh_call0 -- protect ourselves from premature exit(!$#%@$) */
-{
-#if HAVE_GUILE
-  return(snd_catch_any(g_call0_1, (void *)proc, caller));
-#else
-  return(proc);
-#endif
-}
-
-#if HAVE_GUILE
-static XEN g_call1_1(void *arg)
-{
-  return(XEN_CALL_1_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1]));
-}
-#endif
-
-XEN g_call1(XEN proc, XEN arg, const char *caller)
-{
-#if HAVE_GUILE
-  XEN args[2];
-  args[0] = proc;
-  args[1] = arg;
-  return(snd_catch_any(g_call1_1, (void *)args, caller));
-#else
-  return(arg);
-#endif
-}
-
-#if HAVE_GUILE
-static XEN g_call_any_1(void *arg)
-{
-  return(XEN_APPLY_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1]));
-}
-#endif
-
-XEN g_call_any(XEN proc, XEN arglist, const char *caller)
-{
-  XEN args[2];
-  args[0] = proc;
-  args[1] = arglist;
-#if HAVE_GUILE
-  return(snd_catch_any(g_call_any_1, (void *)args, caller));
-#else
-  return(arglist);
-#endif
-}
-
-#if HAVE_GUILE
-static XEN g_call2_1(void *arg)
-{
-  return(XEN_CALL_2_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], ((XEN *)arg)[2]));
-}
-#endif
-
-XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller)
-{
-#if HAVE_GUILE
-  XEN args[3];
-  args[0] = proc;
-  args[1] = arg1;
-  args[2] = arg2;
-  return(snd_catch_any(g_call2_1, (void *)args, caller));
-#else
-  return(arg1);
-#endif
-}
-
-#if HAVE_GUILE
-static XEN g_call3_1(void *arg)
-{
-  return(XEN_CALL_3_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], ((XEN *)arg)[2], ((XEN *)arg)[3]));
-}
-#endif
-
-XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
-{
-#if HAVE_GUILE
-  XEN args[4];
-  args[0] = proc;
-  args[1] = arg1;
-  args[2] = arg2;
-  args[3] = arg3;
-  return(snd_catch_any(g_call3_1, (void *)args, caller));
-#else
-  return(arg1);
-#endif
-}
 
 char *g_print_1(XEN obj) /* free return val */
 {
-#if HAVE_GAUCHE
+#if HAVE_GAUCHE || HAVE_FORTH || HAVE_RUBY
   return(copy_string(XEN_AS_STRING(obj))); 
 #endif
 #if HAVE_GUILE
@@ -1021,12 +977,6 @@ char *g_print_1(XEN obj) /* free return val */
   XEN_CLOSE_PORT(port);
   return(copy_string(XEN_TO_C_STRING(val)));
 #endif
-#endif
-#if HAVE_RUBY
-  return(copy_string(XEN_AS_STRING(obj)));
-#endif
-#if HAVE_FORTH
-  return(copy_string(XEN_AS_STRING(obj)));
 #endif
 #if (!HAVE_EXTENSION_LANGUAGE)
   return(NULL);
@@ -2990,13 +2940,6 @@ static XEN g_snd_stdin_test(XEN str)
 #endif
 
 
-#if 0
-/* these declarations are in gc/include/gc.h -- apparently included in gauche.h */
-void GC_disable(void);
-void GC_enable(void);
-/* there's also void GC_enable_incremental(void); */
-#endif
-
 static XEN g_gc_off(void) 
 {
   #define H_gc_off "(" S_gc_off ") turns off garbage collection (a no-op in Guile)"
@@ -3030,13 +2973,20 @@ static XEN g_gc_on(void)
 
 #if (!HAVE_SCM_CONTINUATION_P)
 #if HAVE_GUILE
-static SCM g_continuation_p(XEN obj)
+static XEN g_continuation_p(XEN obj)
 {
 #ifdef SCM_CONTINUATIONP
-  return(C_TO_XEN_BOOLEAN(SCM_NIMP(obj) && (SCM_CONTINUATIONP(obj))));
+  return(C_TO_XEN_BOOLEAN(SCM_NIMP(obj) && SCM_CONTINUATIONP(obj)));
 #else
-  return(XEN_PROCEDURE_P(obj));
+  return(C_TO_XEN_BOOLEAN(XEN_PROCEDURE_P(obj)));
 #endif
+}
+#endif
+/* in Gauche there's SCM_CCONTP(obj), but it doesn't appear to be used or declared publically */
+#if HAVE_GAUCHE
+static XEN g_continuation_p(XEN obj)
+{
+  return(XEN_FALSE);
 }
 #endif
 #endif
@@ -3239,7 +3189,8 @@ static XEN g_random(XEN val)
   #include <sys/time.h>
 #endif
 
-static XEN g_get_internal_real_time(void) {return(C_TO_XEN_INT((int)clock()));}
+/* this number is overflowing (gauche int = 29 bits) if left as a bare int */
+static XEN g_get_internal_real_time(void) {return(C_TO_XEN_INT((int)(100.0 * ((double)clock() / (double)CLOCKS_PER_SEC))));}
 #endif
 
 #if HAVE_GUILE
@@ -3275,6 +3226,9 @@ XEN_NARGIFY_1(g_dlopen_w, g_dlopen)
 XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
 XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
 XEN_NARGIFY_2(g_dlinit_w, g_dlinit)
+#endif
+#if HAVE_SCHEME && (!HAVE_SCM_CONTINUATION_P)
+XEN_NARGIFY_1(g_continuation_p_w, g_continuation_p)
 #endif
 XEN_NARGIFY_0(g_save_state_file_w, g_save_state_file)
 XEN_NARGIFY_1(g_set_save_state_file_w, g_set_save_state_file)
@@ -3425,12 +3379,14 @@ XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
 XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
+
 #if DEBUGGING
   XEN_NARGIFY_1(g_snd_sound_pointer_w, g_snd_sound_pointer)
 #endif
 #if (!HAVE_GAUCHE)
   XEN_NARGIFY_2(g_fmod_w, g_fmod)
 #endif
+
 XEN_NARGIFY_0(g_gc_off_w, g_gc_off)
 XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 
@@ -3445,26 +3401,35 @@ XEN_NARGIFY_1(g_erf_w, g_erf)
 XEN_NARGIFY_1(g_erfc_w, g_erfc)
 XEN_NARGIFY_1(g_lgamma_w, g_lgamma)
 #endif
+
 XEN_NARGIFY_1(g_i0_w, g_i0)
+
 #if HAVE_GSL
-XEN_NARGIFY_1(g_gsl_ellipk_w, g_gsl_ellipk)
-XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
-XEN_NARGIFY_4(g_gsl_dht_w, g_gsl_dht)
+  XEN_NARGIFY_1(g_gsl_ellipk_w, g_gsl_ellipk)
+  XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
+  XEN_NARGIFY_4(g_gsl_dht_w, g_gsl_dht)
+
 #if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
-XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
-#endif
-#if HAVE_GAUCHE
-XEN_NARGIFY_1(g_random_w, g_random)
-XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
+  XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
 #endif
 #endif
 
+#if HAVE_GAUCHE
+  XEN_NARGIFY_1(g_random_w, g_random)
+  XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
+#endif
+
 #else
+/* not argify */
+
 #if HAVE_SCHEME && HAVE_DLFCN_H
 #define g_dlopen_w g_dlopen
 #define g_dlclose_w g_dlclose
 #define g_dlerror_w g_dlerror
 #define g_dlinit_w g_dlinit
+#endif
+#if HAVE_SCHEME && (!HAVE_SCM_CONTINUATION_P)
+#define g_continuation_p_w g_continuation_p
 #endif
 #define g_save_state_file_w g_save_state_file
 #define g_set_save_state_file_w g_set_save_state_file
@@ -3700,9 +3665,10 @@ void g_initialize_gh(void)
 
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE("write-byte", g_write_byte, 1, 0, 0, "write byte");
-#if (!HAVE_SCM_CONTINUATION_P)
-  XEN_DEFINE_PROCEDURE("continuation?", g_continuation_p, 1, 0, 0, "#t if arg is a continuation");
 #endif
+
+#if HAVE_SCHEME && (!HAVE_SCM_CONTINUATION_P)
+  XEN_DEFINE_PROCEDURE("continuation?", g_continuation_p_w, 1, 0, 0, "#t if arg is a continuation");
 #endif
 
 #if HAVE_GAUCHE
@@ -3992,7 +3958,7 @@ void g_initialize_gh(void)
 #if HAVE_GAUCHE
   XEN_DEFINE_PROCEDURE("random", g_random_w, 1, 0, 0, "(random arg) -> random number between 0 and arg ");
   XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
-  XEN_DEFINE_CONSTANT("internal-time-units-per-second", CLOCKS_PER_SEC, "clock speed");
+  XEN_DEFINE_CONSTANT("internal-time-units-per-second", 100, "clock speed");
   XEN_DEFINE_PROCEDURE("ftell", g_ftell_w, 1, 0, 0, "(ftell fd) -> lseek");
 #endif
 

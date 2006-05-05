@@ -4,6 +4,8 @@
 ;;
 ;; This code is in the public domain.
 
+;;; edited slightly to work (more or less and only) in Gauche, bil 5-May-06
+
 ;; Authors of the original version (< 1.4) were Ken Dickey and Aubrey Jaffer.
 ;; Please send error reports to bug-guile@gnu.org.
 ;; For documentation see slib.texi and format.doc.
@@ -23,6 +25,8 @@
 ;	   format:expch))
 
 (define (port-column port) 0)
+(define (inf? arg) #f)
+(define (nan? arg) #f)
 
 ;;; Configuration ------------------------------------------------------------
 
@@ -39,10 +43,12 @@
 (define format:expch #\E)
 ;; The character prefixing the exponent value in ~e printing.
 
-(define format:floats (provided? 'inexact))
+;(define format:floats (provided? 'inexact))
+(define format:floats #t)
 ;; Detects if the scheme system implements flonums (see at eof).
 
-(define format:complex-numbers (provided? 'complex))
+;(define format:complex-numbers (provided? 'complex))
+(define format:complex-numbers #t)
 ;; Detects if the scheme system implements complex numbers.
 
 (define format:radix-pref (char=? #\# (string-ref (number->string 8 8) 0)))
@@ -1175,7 +1181,6 @@
 	(lambda (modifier number pars)
 	  (if (not (or (number? number) (string? number)))
 	      (format:error "argument is not a number or a number string"))
-
 	  (let ((l (length pars)))
 	    (let ((width (format:par pars l 0 #f "width"))
 		  (digits (format:par pars l 1 #f "digits"))

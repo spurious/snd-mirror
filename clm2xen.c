@@ -4827,7 +4827,8 @@ return a new convolution generator which convolves its input with the impulse re
       if (filter) filt = keys[1];
       fft_size = mus_optkey_to_int(keys[2], S_make_convolve, orig_arg[2], fft_size);
       if ((fft_size  < 0) || 
-	  ((fft_size == 0) && (!XEN_KEYWORD_P(keys[2]))))
+	  ((fft_size == 0) && (!XEN_KEYWORD_P(keys[2]))) ||
+	  (fft_size > MAX_ALLOC_SIZE))
 	XEN_OUT_OF_RANGE_ERROR(S_make_convolve, orig_arg[2], keys[2], "fft-size ~A?");
     }
   if (filter == NULL)

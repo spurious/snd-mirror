@@ -37,6 +37,10 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
+(define tests 1)
+(define keep-going #f)
+(define all-args #f) ; huge arg testing
+
 (if (provided? 'snd-gauche)
     (begin
       (if (not (provided? 'gauche-optargs.scm)) (load "gauche-optargs.scm"))
@@ -58,10 +62,6 @@
 	      (list (car args) (cdr args))) ; pair->list for compatibility with Guile
 	    (procedure-info func)))
       ))
-
-(define tests 1)
-(define keep-going #t)
-(define all-args #f) ; huge arg testing
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (define full-test (< snd-test 0))
@@ -3926,8 +3926,8 @@
 		      )))))
 	(if (file-exists? "test.aif") (delete-file "test.aif"))
 	(mus-sound-forget "test.aif")
-	;;correct (make-aifc-file #\002 #\004 #\020)
-	(make-aifc-file #\102 #\004 #\020)
+	;;correct (make-aifc-file #o002 #o004 #o020)
+	(make-aifc-file #o102 #o004 #o020)
 	(catch #t
 	       (lambda ()
 		 (let ((ind (open-sound "test.aif")))
@@ -3936,7 +3936,7 @@
 	       (lambda args (snd-display args)))
 	(delete-file "test.aif")
 	(mus-sound-forget "test.aif")
-	(make-aifc-file #\002 #\150 #\020)
+	(make-aifc-file #o002 #o150 #o020)
 	(let ((tag (catch #t
 			  (lambda ()
 			    (open-sound "test.aif"))
@@ -3948,7 +3948,7 @@
 		(close-sound tag))))
 	(delete-file "test.aif")
 	(mus-sound-forget "test.aif")
-	(make-aifc-file #\002 #\000 #\020)
+	(make-aifc-file #o002 #o000 #o020)
 	(let ((tag (catch #t
 			  (lambda ()
 			    (open-sound "test.aif"))
@@ -3960,7 +3960,7 @@
 		(close-sound tag))))
 	(delete-file "test.aif")
 	(mus-sound-forget "test.aif")
-	(make-aifc-file #\002 #\150 #\120)
+	(make-aifc-file #o002 #o150 #o120)
 	(let ((tag (catch #t
 			  (lambda ()
 			    (open-sound "test.aif"))
@@ -7677,7 +7677,7 @@ EDITS: 5
 	    (snd-display ";ptree4: ~A" (edit-tree)))
 
 	(close-sound ind))
-      )) ; end 'run cases?
+      ) (snd-display "skipping ptree cases")) ; end 'run cases?
 
       (let ((data (make-vct 101 1.0))
 	    (rto1-data (make-vct 101))
@@ -43604,7 +43604,7 @@ EDITS: 1
 (def-optkey-fun (optkey-3 a b c) (list a b c))
 (def-optkey-fun (optkey-4 (a 1) (b 2) (c 3) d) (list a b c d))
 
-(if (or full-test (= snd-test 23) (and keep-going (<= snd-test 23)))
+(if (and (provided? 'run) (or full-test (= snd-test 23) (and keep-going (<= snd-test 23))))
     (begin
       (def-clm-struct st1 one two)
       (def-clm-struct st2 (one 11) (two 22))
@@ -43647,7 +43647,7 @@ EDITS: 1
 	      (if (not (= (frames ind) 2205)) (snd-display ";with-sound frames: ~A" (frames ind))))
 	    (play-and-wait 0 ind)))
 	(set! (optimization) old-opt))
-      
+
       (with-sound (:continue-old-file #t) (fm-violin .2 .1 440 .25))
       (let ((ind (find-sound "test.snd")))
 	(if (not ind) (snd-display ";with-sound continued: ~A" (map file-name (sounds))))
@@ -43680,7 +43680,7 @@ EDITS: 1
 	      (snd-display ";with-sound chans (1): ~A" (chans ind))))
 	(close-sound ind)
 	(delete-file "test1.snd"))
-      
+
       (with-sound (:srate 48000 :channels 2 :header-type mus-riff :data-format mus-lshort :output "test1.snd") (fm-violin 0 .1 440 .1))
       (let ((ind (find-sound "test1.snd")))
 	(if (or (not (= (srate ind) 48000))
@@ -43708,7 +43708,7 @@ EDITS: 1
 	(if (not (= (chans ind) 4)) (snd-display ";with-sound chans (4, t): ~A" (chans ind)))
 	(close-sound ind)
 	(delete-file "test1.snd"))
-      
+
       (with-sound (:srate 22050 :channels 1 :header-type mus-raw :output "test1.snd") (fm-violin 0 .1 440 .1))
       (let ((ind (find-sound "test1.snd")))
 	(if (not (= (srate ind) 22050)) (snd-display ";with-sound srate (22050, u): ~A (~A, ~A)" 
@@ -43728,7 +43728,7 @@ EDITS: 1
 	(if (not ind) (snd-display ";with-sound (2): ~A" (map file-name (sounds))))
 	(if (not (= (frames ind) (+ 22050 2205))) (snd-display ";with-sound reverbed frames (2): ~A" (frames ind)))
 	(close-sound ind))
-      
+
       (let ((old-opt (optimization)))
 	(do ((opt 0 (1+ opt)))
 	    ((> opt max-optimization))
@@ -43786,7 +43786,7 @@ EDITS: 1
 	    (for-each close-sound (sounds))
 	    (delete-file "test.snd")
 	    (delete-file "test.rev")))
-      
+
       (let ((var (make-st1 :one 1 :two 2)))
 	(if (not (= (st1-one var) 1)) (snd-display ";st1-one: ~A" (st1-one var)))
 	(if (not (= (st1-two var) 2)) (snd-display ";st1-two: ~A" (st1-two var)))
@@ -44179,7 +44179,7 @@ EDITS: 1
       (let ((old-date (check-with-mix 6 .1 1.1 .398 "()" "((fm-violin 0 0.1 550 0.3))" #f #f)))
 	(with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1) (with-mix () "with-mix" 0 (fm-violin 0 .1 550 .3)))
 	(check-with-mix 6 .1 1.1 .398 "()" "((fm-violin 0 0.1 550 0.3))" old-date #f))
-      
+
       (with-sound (:srate 44100 :play #f) (bigbird 0 2 60 0 .5 '(0 0 1 1) '(0 0 1 1 2 1 3 0) '(1 1 2 1 3 1 4 1 5 1 6 1 7 1 8 1 9 1 10 1)))
       (let ((ind (or (find-sound "test.snd") (open-sound "oboe.snd"))))
 	(let ((mx (maxamp)))
@@ -44212,6 +44212,7 @@ EDITS: 1
 		    (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))))
 
 	  (close-sound ind)))
+
       (with-sound (:srate 44100 :play #f) (bigbird 0 60 60 0 .5 '(0 0 1 1) '(0 0 1 1 2 1 3 0) '(1 1 2 1 3 1 4 1 5 1 6 1 7 1 8 1 9 1 10 1)))
       (let ((ind (find-sound "test.snd")))
 	(let ((mx (maxamp)))

@@ -11741,7 +11741,7 @@ static XEN g_vct_map(XEN proc_and_code, XEN arglist)
   #define H_vct_map "(" S_vct_map " thunk v ...): call 'thunk' which should return a frame; the frame result \
 is then parcelled out to the vcts passed as the trailing arguments.  This is intended for use with locsig \
 in multi-channel situations where you want the optimization that vct-map! provides."
-  int i, j, len, min_len = 0;
+  int i, j, len = 0, min_len = 0;
   vct **vs = NULL;
   XEN proc, obj, code;
   Float *vals;
@@ -11762,13 +11762,15 @@ in multi-channel situations where you want the optimization that vct-map! provid
   code = proc_and_code;
 #endif
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ARG_1, S_vct_map, "a thunk");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arglist), arglist, XEN_ARG_2, S_vct_map, "a list of vcts");
   len = XEN_LIST_LENGTH(arglist);
-  if (len == 0)
+  if (len <= 0) /* in Gauche, if arglist is not a list, its "length" is -1 */
     {
-      XEN_ERROR(XEN_ERROR_TYPE("arg-error"),
+      XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 		XEN_LIST_3(C_TO_XEN_STRING(S_vct_map),
 			   C_TO_XEN_STRING("no vct args!"),
 			   arglist));
+      return(XEN_FALSE);
     }
   vs = (vct **)CALLOC(len, sizeof(vct *));
   for (i = 0; i < len; i++, arglist = XEN_CDR(arglist))
@@ -11899,9 +11901,12 @@ void g_init_run(void)
   xen_gauche_permanent_object(walker_hash_table);
 #endif
 #else
-  XEN_DEFINE_PROCEDURE(S_vct_map, g_vct_map_w, 2, 0, 0, H_vct_map);
 #if HAVE_SCHEME
+  XEN_DEFINE_PROCEDURE("vct-map-2", g_vct_map_w, 2, 0, 0, H_vct_map);
+  XEN_EVAL_C_STRING("(defmacro " S_vct_map " (thunk . args) `(vct-map-2 ,thunk (list ,@args)))");
   XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(,thunk))");
+#else
+  XEN_DEFINE_PROCEDURE(S_vct_map, g_vct_map_w, 2, 0, 0, H_vct_map);
 #endif
 #endif
 
