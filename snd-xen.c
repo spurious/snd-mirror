@@ -17,12 +17,52 @@
 /* TODO in Gauche: 
  *    stacktrace and errors->listener
  *       (current-load-history)
+ *    currently eval_c_string simply dies upon error!  so the protect macros don't work
  *
  *    unwind-protects around scm_apply (snd-xen g_call)
  *
- *    snd-test
- *       snd-test test19: add-notes format ~S trouble (examp.scm)
- *                test24: eval error (on bogus string typed to listener) causes segfault after reporting error
+ *    snd-test: 
+ *      ;test 4
+ *      ;set null loop-info (no mode1): (1200 1400 4 3 2 1 1 0)
+ *      ;set header-type: Sun/Next?
+ *      ;set chans: 1?
+ *      ;set data-location: 60?
+ *      ;set data-size: 101656?
+ *      ;test 8
+ *      ;oscil +-: 1.9938535690307617
+ *      ;cosil +-: 1.9597358703613281
+ *      ;sum-of-cosines +-: 1.2261708080768585
+ *      ;sum-of-sines +-: 1.0913542732596397
+ *      ;sawtooth +-: 1.6364032626152039
+ *      ;square-wave -.5: #<vct[len=20]: -0.5 -0.5 0.0 0.0 0.0 0.0 -0.5 -0.5 -0.5 -0.5 0.0 0.0 0.0 0.0 -0.5 -0.5 -0.5 -0.5 0.0 0.000> 
+ *      ;triangle +-: 1.6371872425079346
+ *      ;pulse-train -.5: #<vct[len=20]: 0.0 -0.5 0.0 -0.5 -0.5 -0.5 -0.5 -0.5 -0.5 -0.5 0.0 -0.5 -0.5 -0.5 -0.5 -0.5 -0.5 -0.5 0.0 -0.500> 
+ *      ;gran edit 2* (2): 0.147247314453125 0.17697551846504211
+ *      ;test 11
+ *      ;snd-help open-soud (misspelled on purpose) failed
+ *      ;plus other printout?
+ *      ;test 13
+ *      ;add-to-menu non-thunk: wrong-type-arg
+ *      ;open-raw-sound-hook choice: (1 22050 11)?
+ *      ;open-raw-sound-hook 3: 11 2 2 44100 50828
+ *      ;open-raw-sound-hook 4: 11 2 2 44100folding 3 chans into 2 
+ *      ;test 15
+ *      ;set! srate: 44100.0 22050
+ *      ;test 16
+ *      ; numbers are still ignoring ~,2F 
+ *      ;test 21
+ *      ;data-location set no arg: 142 123
+ *      ;data-location set arg: 40 123
+ *      ;data-location sound-func arg set #t: (40 142), sep: (123 123)
+ *      ;data-location set arg #t: 40 123
+ *      ;data-location set arg #t (2): 142 123
+ *      ;data-size set no arg: 1200 12348
+ *      ;data-size set arg: 400 12348
+ *      ;data-size sound-func arg set #t: (400 1200), sep: (12348 12348)
+ *      ;data-size set arg #t: 400 12348
+ *      ;test 28
+ *      ; complex args don't trigger wrong-type-arg
+ *
  *
  *       testsnd/compsnd/memlog
  *
@@ -705,7 +745,8 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
     result = (*body)(body_data);
   }
   SCM_WHEN_ERROR {
-    fprintf(stderr, "eval Error!");
+    fprintf(stderr, "Error!");
+    /* SCM_NEXT_HANDLER; */
   }
   SCM_END_PROTECT;
 
@@ -2273,450 +2314,6 @@ static XEN g_preferences_dialog(void)
 
 
 
-#if (!USE_NO_GUI)
-/* -------- shared color funcs -------- */
-
-static XEN g_color_p(XEN obj) 
-{
-  #define H_color_p "(" S_color_p " obj): #t if obj is a color"
-  return(C_TO_XEN_BOOLEAN(XEN_PIXEL_P(obj)));
-}
-
-Float check_color_range(const char *caller, XEN val)
-{
-  Float rf;
-  rf = XEN_TO_C_DOUBLE(val);
-  if ((rf > 1.0) || (rf < 0.0))
-    XEN_OUT_OF_RANGE_ERROR(caller, 1, val, "value ~A must be between 0.0 and 1.0");
-  return(rf);
-}
-
-static XEN g_set_cursor_color (XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_cursor_color, "a color"); 
-  color_cursor(XEN_UNWRAP_PIXEL(color));
-  for_each_chan(update_graph);
-  return(color);
-}
-
-static XEN g_cursor_color(void) 
-{
-  #define H_cursor_color "(" S_cursor_color "): cursor color"
-  return(XEN_WRAP_PIXEL(ss->sgx->cursor_color));
-}
-
-#if USE_MOTIF
-static void highlight_recolor_everything(widget_t w, void *ptr)
-{
-  Pixel curcol;
-  if (XtIsWidget(w))
-    {
-      XtVaGetValues(w, XmNbackground, &curcol, NULL);
-      if (curcol == (Pixel)ptr)
-	XmChangeColor(w, ss->sgx->highlight_color);
-    }
-  /* to handle the gtk side correctly here, we'd need a list of widgets to modify --
-   *    currently basic-color hits every background, so the whole thing is messed up.
-   */
-}
-#endif
-
-void set_highlight_color(color_t color)
-{
-  color_t old_color;
-  old_color = ss->sgx->highlight_color;
-  ss->sgx->highlight_color = color; 
-#if USE_MOTIF
-  map_over_children(MAIN_SHELL(ss), highlight_recolor_everything, (void *)old_color);
-#endif
-}
-
-static XEN g_set_highlight_color (XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_highlight_color, "a color"); 
-  set_highlight_color(XEN_UNWRAP_PIXEL(color));
-  return(color);
-}
-
-static XEN g_highlight_color(void) 
-{
-  #define H_highlight_color "(" S_highlight_color "): color of highlighted text or buttons"
-  return(XEN_WRAP_PIXEL(ss->sgx->highlight_color));
-}
-
-static XEN g_set_mark_color (XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_mark_color, "a color"); 
-  color_marks(XEN_UNWRAP_PIXEL(color));
-  for_each_chan(update_graph);
-  return(color);
-}
-
-static XEN g_mark_color(void) 
-{
-  #define H_mark_color "(" S_mark_color "): mark color"
-  return(XEN_WRAP_PIXEL(ss->sgx->mark_color));
-}
-
-void set_zoom_color(color_t color)
-{
-  ss->sgx->zoom_color = color; 
-  color_chan_components(ss->sgx->zoom_color, COLOR_ZOOM);
-}
-
-static XEN g_set_zoom_color (XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_zoom_color, "a color"); 
-  set_zoom_color(XEN_UNWRAP_PIXEL(color)); 
-  return(color);
-}
-
-static XEN g_zoom_color(void) 
-{
-  #define H_zoom_color "(" S_zoom_color "): color of zoom sliders"
-  return(XEN_WRAP_PIXEL(ss->sgx->zoom_color));
-}
-
-void set_position_color(color_t color)
-{
-  ss->sgx->position_color = color; 
-  color_chan_components(ss->sgx->position_color, COLOR_POSITION);
-}
-
-static XEN g_set_position_color (XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_position_color, "a color"); 
-  set_position_color(XEN_UNWRAP_PIXEL(color)); 
-  return(color);
-}
-
-static XEN g_position_color(void) 
-{
-  #define H_position_color "(" S_position_color "): color of position sliders"
-  return(XEN_WRAP_PIXEL(ss->sgx->position_color));
-}
-
-static XEN g_set_listener_color (XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_listener_color, "a color"); 
-  color_listener(XEN_UNWRAP_PIXEL(color));
-  return(color);
-}
-
-static XEN g_listener_color(void) 
-{
-  #define H_listener_color "(" S_listener_color "): background color of the lisp listener"
-  return(XEN_WRAP_PIXEL(ss->sgx->listener_color));
-}
-
-static XEN g_set_listener_text_color (XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_listener_text_color, "a color"); 
-  color_listener_text(XEN_UNWRAP_PIXEL(color));
-  return(color);
-}
-
-static XEN g_listener_text_color(void) 
-{
-  #define H_listener_text_color "(" S_listener_text_color "): text color in the lisp listener"
-  return(XEN_WRAP_PIXEL(ss->sgx->listener_text_color));
-}
-
-static XEN g_set_enved_waveform_color (XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_enved_waveform_color, "a color"); 
-  color_enved_waveform(XEN_UNWRAP_PIXEL(color));
-  return(color);
-}
-
-static XEN g_enved_waveform_color(void) 
-{
-  #define H_enved_waveform_color "(" S_enved_waveform_color "): color of the envelope editor wave display"
-  return(XEN_WRAP_PIXEL(ss->sgx->enved_waveform_color));
-}
-
-static XEN g_set_filter_control_waveform_color (XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_filter_control_waveform_color, "a color");
-  color_filter_waveform(XEN_UNWRAP_PIXEL(color));
-  return(color);
-}
-
-static XEN g_filter_control_waveform_color(void) 
-{
-  #define H_filter_control_waveform_color "(" S_filter_control_waveform_color "): color of the filter waveform"
-  return(XEN_WRAP_PIXEL(ss->sgx->filter_control_waveform_color));
-}
-
-static XEN g_set_selection_color (XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_selection_color, "a color"); 
-  color_selection(XEN_UNWRAP_PIXEL(color));
-  for_each_chan(update_graph);
-  return(color);
-}
-
-static XEN g_selection_color(void) 
-{
-  #define H_selection_color "(" S_selection_color "): selection color"
-  return(XEN_WRAP_PIXEL(ss->sgx->selection_color));
-}
-
-static XEN g_set_text_focus_color (XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_text_focus_color, "a color"); 
-  ss->sgx->text_focus_color = XEN_UNWRAP_PIXEL(color);
-  return(color);
-}
-
-static XEN g_text_focus_color(void) 
-{
-  #define H_text_focus_color "(" S_text_focus_color "): color used to show a text field has focus"
-  return(XEN_WRAP_PIXEL(ss->sgx->text_focus_color));
-}
-
-static XEN g_set_sash_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_sash_color, "a color"); 
-  ss->sgx->sash_color = XEN_UNWRAP_PIXEL(color);
-  return(color);
-}
-
-static XEN g_sash_color(void) 
-{
-  #define H_sash_color "(" S_sash_color "): color used to draw paned window sashes"
-  return(XEN_WRAP_PIXEL(ss->sgx->sash_color));
-}
-
-static XEN g_set_help_button_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_help_button_color, "a color"); 
-  ss->sgx->help_button_color = XEN_UNWRAP_PIXEL(color);
-  return(color);
-}
-
-static XEN g_help_button_color(void) 
-{
-  #define H_help_button_color "(" S_help_button_color "): color used to draw help buttons"
-  return(XEN_WRAP_PIXEL(ss->sgx->help_button_color));
-}
-
-static XEN g_set_quit_button_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_quit_button_color, "a color"); 
-  ss->sgx->quit_button_color = XEN_UNWRAP_PIXEL(color);
-  return(color);
-}
-
-static XEN g_quit_button_color(void) 
-{
-  #define H_quit_button_color "(" S_quit_button_color "): color used to draw quit (dismiss, cancel) buttons"
-  return(XEN_WRAP_PIXEL(ss->sgx->quit_button_color));
-}
-
-static XEN g_set_doit_button_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_doit_button_color, "a color"); 
-  ss->sgx->doit_button_color = XEN_UNWRAP_PIXEL(color);
-  return(color);
-}
-
-static XEN g_doit_button_color(void) 
-{
-  #define H_doit_button_color "(" S_doit_button_color "): color used to draw doit (Ok, Apply) buttons"
-  return(XEN_WRAP_PIXEL(ss->sgx->doit_button_color));
-}
-
-static XEN g_set_doit_again_button_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_doit_again_button_color, "a color"); 
-  ss->sgx->doit_again_button_color = XEN_UNWRAP_PIXEL(color);
-  return(color);
-}
-
-static XEN g_doit_again_button_color(void) 
-{
-  #define H_doit_again_button_color "(" S_doit_again_button_color "): color used to doit again (Undo&Apply) buttons"
-  return(XEN_WRAP_PIXEL(ss->sgx->doit_again_button_color));
-}
-
-static XEN g_set_reset_button_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_reset_button_color, "a color"); 
-  ss->sgx->reset_button_color = XEN_UNWRAP_PIXEL(color);
-  return(color);
-}
-
-static XEN g_reset_button_color(void) 
-{
-  #define H_reset_button_color "(" S_reset_button_color "): color used to draw reset buttons"
-  return(XEN_WRAP_PIXEL(ss->sgx->reset_button_color));
-}
-
-
-static XEN g_data_color(void) 
-{
-  #define H_data_color "(" S_data_color "): color used to draw unselected data"
-  return(XEN_WRAP_PIXEL(ss->sgx->data_color));
-}
-
-void set_data_color(color_t color)
-{
-  color_data(color);
-  ss->sgx->grid_color = get_in_between_color(ss->sgx->data_color, ss->sgx->graph_color);
-  for_each_chan(update_graph);
-}
-
-static XEN g_set_data_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_data_color, "a color"); 
-  set_data_color(XEN_UNWRAP_PIXEL(color));
-  return(color);
-}
-
-void set_selected_data_color(color_t color)
-{
-  chan_info *cp;
-  color_selected_data(color);
-  ss->sgx->selected_grid_color = get_in_between_color(ss->sgx->selected_data_color, ss->sgx->selected_graph_color);
-  cp = selected_channel();
-  if (cp) update_graph(cp);
-}
-
-static XEN g_set_selected_data_color(XEN color)
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_selected_data_color, "a color"); 
-  set_selected_data_color(XEN_UNWRAP_PIXEL(color));
-  return(color);
-}
-
-static XEN g_selected_data_color(void) 
-{
-  #define H_selected_data_color "(" S_selected_data_color "): color used for selected data"
-  return(XEN_WRAP_PIXEL(ss->sgx->selected_data_color));
-}
-
-void set_graph_color(color_t color)
-{
-  color_graph(color);
-  color_unselected_graphs(color);
-  ss->sgx->grid_color = get_in_between_color(ss->sgx->data_color, ss->sgx->graph_color);
-}
-
-static XEN g_set_graph_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_graph_color, "a color");
-  set_graph_color(XEN_UNWRAP_PIXEL(color));
-  return(color);
-}
-
-static XEN g_graph_color(void) 
-{
-  #define H_graph_color "(" S_graph_color "): background color used for unselected data"
-  return(XEN_WRAP_PIXEL(ss->sgx->graph_color));
-}
-
-void set_selected_graph_color(color_t color)
-{
-  chan_info *cp;
-  color_selected_graph(color);
-  ss->sgx->selected_grid_color = get_in_between_color(ss->sgx->selected_data_color, ss->sgx->selected_graph_color);
-  cp = selected_channel();
-  if (cp) 
-    {
-#if USE_MOTIF
-      XtVaSetValues(channel_graph(cp), XmNbackground, ss->sgx->selected_graph_color, NULL);
-#else
-      gtk_widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, ss->sgx->selected_graph_color);
-#endif
-    }
-}
-
-static XEN g_set_selected_graph_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_selected_graph_color, "a color");
-  set_selected_graph_color(XEN_UNWRAP_PIXEL(color));
-  return(color);
-}
-
-static XEN g_selected_graph_color(void) 
-{
-  #define H_selected_graph_color "(" S_selected_graph_color "): background color of selected data"
-  return(XEN_WRAP_PIXEL(ss->sgx->selected_graph_color));
-}
-
-static XEN g_set_pushed_button_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_pushed_button_color, "a color"); 
-  ss->sgx->pushed_button_color = XEN_UNWRAP_PIXEL(color);
-#if USE_MOTIF
-  map_over_children(MAIN_SHELL(ss), recolor_button, NULL);
-#endif
-  return(color);
-}
-
-static XEN g_pushed_button_color(void) 
-{
-  #define H_pushed_button_color "(" S_pushed_button_color "): color of a pushed button"
-  return(XEN_WRAP_PIXEL(ss->sgx->pushed_button_color));
-}
-
-static XEN g_basic_color(void) 
-{
-  #define H_basic_color "(" S_basic_color "): Snd's basic color"
-  return(XEN_WRAP_PIXEL(ss->sgx->basic_color));
-}
-
-static void recolor_everything(widget_t w, void *ptr)
-{
-  /* yow! these are treating ptr differently */
-#if USE_GTK
-  if (GTK_IS_WIDGET(w)) 
-    {
-      gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (GdkColor *)ptr);
-      if (GTK_IS_CONTAINER(w))
-	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything, (gpointer)ptr);
-    }
-#endif
-#if USE_MOTIF
-  Pixel curcol;
-  if (XtIsWidget(w))
-    {
-      XtVaGetValues(w, XmNbackground, &curcol, NULL);
-      if (curcol == (Pixel)ptr)
-	XmChangeColor(w, ss->sgx->basic_color);
-    }
-#endif
-}
-
-
-void set_basic_color(color_t color)
-{
-  color_t old_color;
-  old_color = ss->sgx->basic_color;
-  ss->sgx->basic_color = color; 
-#if USE_MOTIF
-  map_over_children(MAIN_SHELL(ss), recolor_everything, (void *)old_color);
-#endif
-#if USE_GTK
-  gtk_container_foreach(GTK_CONTAINER(MAIN_SHELL(ss)), recolor_everything, (gpointer)(ss->sgx->basic_color));
-#endif
-
-#if HAVE_XPM && USE_MOTIF
-  make_sound_icons_transparent_again(old_color, ss->sgx->basic_color);
-  make_recorder_icons_transparent_again(ss->sgx->basic_color);
-  make_mixer_icons_transparent_again(old_color, ss->sgx->basic_color);
-#endif
-}
-
-static XEN g_set_basic_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_basic_color, "a color"); 
-  set_basic_color(XEN_UNWRAP_PIXEL(color));
-  return(color);
-}
-#endif
-
 
 static XEN during_open_hook;
 static XEN after_open_hook;
@@ -3314,55 +2911,6 @@ XEN_NARGIFY_0(g_window_width_w, g_window_width)
 XEN_NARGIFY_1(g_set_window_width_w, g_set_window_width)
 XEN_NARGIFY_0(g_window_height_w, g_window_height)
 XEN_NARGIFY_1(g_set_window_height_w, g_set_window_height)
-#if (!USE_NO_GUI)
-XEN_NARGIFY_0(g_selection_color_w, g_selection_color)
-XEN_NARGIFY_1(g_set_selection_color_w, g_set_selection_color)
-XEN_NARGIFY_0(g_zoom_color_w, g_zoom_color)
-XEN_NARGIFY_1(g_set_zoom_color_w, g_set_zoom_color)
-XEN_NARGIFY_0(g_position_color_w, g_position_color)
-XEN_NARGIFY_1(g_set_position_color_w, g_set_position_color)
-XEN_NARGIFY_0(g_mark_color_w, g_mark_color)
-XEN_NARGIFY_1(g_set_mark_color_w, g_set_mark_color)
-XEN_NARGIFY_0(g_listener_color_w, g_listener_color)
-XEN_NARGIFY_1(g_set_listener_color_w, g_set_listener_color)
-XEN_NARGIFY_0(g_listener_text_color_w, g_listener_text_color)
-XEN_NARGIFY_1(g_set_listener_text_color_w, g_set_listener_text_color)
-XEN_NARGIFY_0(g_enved_waveform_color_w, g_enved_waveform_color)
-XEN_NARGIFY_1(g_set_enved_waveform_color_w, g_set_enved_waveform_color)
-XEN_NARGIFY_0(g_filter_control_waveform_color_w, g_filter_control_waveform_color)
-XEN_NARGIFY_1(g_set_filter_control_waveform_color_w, g_set_filter_control_waveform_color)
-XEN_NARGIFY_0(g_highlight_color_w, g_highlight_color)
-XEN_NARGIFY_1(g_set_highlight_color_w, g_set_highlight_color)
-XEN_NARGIFY_0(g_cursor_color_w, g_cursor_color)
-XEN_NARGIFY_1(g_set_cursor_color_w, g_set_cursor_color)
-XEN_NARGIFY_0(g_text_focus_color_w, g_text_focus_color)
-XEN_NARGIFY_1(g_set_text_focus_color_w, g_set_text_focus_color)
-XEN_NARGIFY_0(g_sash_color_w, g_sash_color)
-XEN_NARGIFY_1(g_set_sash_color_w, g_set_sash_color)
-XEN_NARGIFY_0(g_help_button_color_w, g_help_button_color)
-XEN_NARGIFY_1(g_set_help_button_color_w, g_set_help_button_color)
-XEN_NARGIFY_0(g_reset_button_color_w, g_reset_button_color)
-XEN_NARGIFY_1(g_set_reset_button_color_w, g_set_reset_button_color)
-XEN_NARGIFY_0(g_quit_button_color_w, g_quit_button_color)
-XEN_NARGIFY_1(g_set_quit_button_color_w, g_set_quit_button_color)
-XEN_NARGIFY_0(g_doit_button_color_w, g_doit_button_color)
-XEN_NARGIFY_1(g_set_doit_button_color_w, g_set_doit_button_color)
-XEN_NARGIFY_0(g_doit_again_button_color_w, g_doit_again_button_color)
-XEN_NARGIFY_1(g_set_doit_again_button_color_w, g_set_doit_again_button_color)
-XEN_NARGIFY_0(g_data_color_w, g_data_color)
-XEN_NARGIFY_1(g_set_data_color_w, g_set_data_color)
-XEN_NARGIFY_0(g_graph_color_w, g_graph_color)
-XEN_NARGIFY_1(g_set_graph_color_w, g_set_graph_color)
-XEN_NARGIFY_0(g_selected_graph_color_w, g_selected_graph_color)
-XEN_NARGIFY_1(g_set_selected_graph_color_w, g_set_selected_graph_color)
-XEN_NARGIFY_0(g_selected_data_color_w, g_selected_data_color)
-XEN_NARGIFY_1(g_set_selected_data_color_w, g_set_selected_data_color)
-XEN_NARGIFY_0(g_basic_color_w, g_basic_color)
-XEN_NARGIFY_1(g_set_basic_color_w, g_set_basic_color)
-XEN_NARGIFY_0(g_pushed_button_color_w, g_pushed_button_color)
-XEN_NARGIFY_1(g_set_pushed_button_color_w, g_set_pushed_button_color)
-XEN_NARGIFY_1(g_color_p_w, g_color_p)
-#endif
 XEN_NARGIFY_0(g_snd_tempnam_w, g_snd_tempnam)
 XEN_ARGIFY_1(g_color_dialog_w, g_color_dialog)
 XEN_ARGIFY_1(g_orientation_dialog_w, g_orientation_dialog)
@@ -3515,55 +3063,6 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #define g_set_window_width_w g_set_window_width
 #define g_window_height_w g_window_height
 #define g_set_window_height_w g_set_window_height
-#if (!USE_NO_GUI)
-#define g_selection_color_w g_selection_color
-#define g_set_selection_color_w g_set_selection_color
-#define g_zoom_color_w g_zoom_color
-#define g_set_zoom_color_w g_set_zoom_color
-#define g_position_color_w g_position_color
-#define g_set_position_color_w g_set_position_color
-#define g_mark_color_w g_mark_color
-#define g_set_mark_color_w g_set_mark_color
-#define g_listener_color_w g_listener_color
-#define g_set_listener_color_w g_set_listener_color
-#define g_listener_text_color_w g_listener_text_color
-#define g_set_listener_text_color_w g_set_listener_text_color
-#define g_enved_waveform_color_w g_enved_waveform_color
-#define g_set_enved_waveform_color_w g_set_enved_waveform_color
-#define g_filter_control_waveform_color_w g_filter_control_waveform_color
-#define g_set_filter_control_waveform_color_w g_set_filter_control_waveform_color
-#define g_highlight_color_w g_highlight_color
-#define g_set_highlight_color_w g_set_highlight_color
-#define g_cursor_color_w g_cursor_color
-#define g_set_cursor_color_w g_set_cursor_color
-#define g_text_focus_color_w g_text_focus_color
-#define g_set_text_focus_color_w g_set_text_focus_color
-#define g_sash_color_w g_sash_color
-#define g_set_sash_color_w g_set_sash_color
-#define g_help_button_color_w g_help_button_color
-#define g_set_help_button_color_w g_set_help_button_color
-#define g_doit_again_button_color_w g_doit_again_button_color
-#define g_set_doit_again_button_color_w g_set_doit_again_button_color
-#define g_doit_button_color_w g_doit_button_color
-#define g_set_doit_button_color_w g_set_doit_button_color
-#define g_quit_button_color_w g_quit_button_color
-#define g_set_quit_button_color_w g_set_quit_button_color
-#define g_reset_button_color_w g_reset_button_color
-#define g_set_reset_button_color_w g_set_reset_button_color
-#define g_data_color_w g_data_color
-#define g_set_data_color_w g_set_data_color
-#define g_graph_color_w g_graph_color
-#define g_set_graph_color_w g_set_graph_color
-#define g_selected_graph_color_w g_selected_graph_color
-#define g_set_selected_graph_color_w g_set_selected_graph_color
-#define g_selected_data_color_w g_selected_data_color
-#define g_set_selected_data_color_w g_set_selected_data_color
-#define g_basic_color_w g_basic_color
-#define g_set_basic_color_w g_set_basic_color
-#define g_pushed_button_color_w g_pushed_button_color
-#define g_set_pushed_button_color_w g_set_pushed_button_color
-#define g_color_p_w g_color_p
-#endif
 #define g_snd_tempnam_w g_snd_tempnam
 #define g_color_dialog_w g_color_dialog
 #define g_orientation_dialog_w g_orientation_dialog
@@ -3833,79 +3332,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_height, g_window_height_w, H_window_height,
 				   S_setB S_window_height, g_set_window_height_w,  0, 0, 1, 0);
 
-
-#if (!USE_NO_GUI)
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_color, g_selection_color_w, H_selection_color,
-				   S_setB S_selection_color, g_set_selection_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_zoom_color, g_zoom_color_w, H_zoom_color,
-				   S_setB S_zoom_color, g_set_zoom_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_position_color, g_position_color_w, H_position_color,
-				   S_setB S_position_color, g_set_position_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_color, g_mark_color_w, H_mark_color,
-				   S_setB S_mark_color, g_set_mark_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_color, g_listener_color_w, H_listener_color,
-				   S_setB S_listener_color, g_set_listener_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_text_color, g_listener_text_color_w, H_listener_text_color,
-				   S_setB S_listener_text_color, g_set_listener_text_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_waveform_color, g_enved_waveform_color_w, H_enved_waveform_color,
-				   S_setB S_enved_waveform_color, g_set_enved_waveform_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_waveform_color, g_filter_control_waveform_color_w, H_filter_control_waveform_color,
-				   S_setB S_filter_control_waveform_color, g_set_filter_control_waveform_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_highlight_color, g_highlight_color_w, H_highlight_color,
-				   S_setB S_highlight_color, g_set_highlight_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_cursor_color, g_cursor_color_w, H_cursor_color,
-				   S_setB S_cursor_color, g_set_cursor_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_text_focus_color, g_text_focus_color_w, H_text_focus_color,
-				   S_setB S_text_focus_color, g_set_text_focus_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sash_color, g_sash_color_w, H_sash_color,
-				   S_setB S_sash_color, g_set_sash_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_help_button_color, g_help_button_color_w, H_help_button_color,
-				   S_setB S_help_button_color, g_set_help_button_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_reset_button_color, g_reset_button_color_w, H_reset_button_color,
-				   S_setB S_reset_button_color, g_set_reset_button_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_quit_button_color, g_quit_button_color_w, H_quit_button_color,
-				   S_setB S_quit_button_color, g_set_quit_button_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_doit_button_color, g_doit_button_color_w, H_doit_button_color,
-				   S_setB S_doit_button_color, g_set_doit_button_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_doit_again_button_color, g_doit_again_button_color_w, H_doit_again_button_color,
-				   S_setB S_doit_again_button_color, g_set_doit_again_button_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_data_color, g_data_color_w, H_data_color,
-				   S_setB S_data_color, g_set_data_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_color, g_graph_color_w, H_graph_color,
-				   S_setB S_graph_color, g_set_graph_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_graph_color, g_selected_graph_color_w, H_selected_graph_color,
-				   S_setB S_selected_graph_color, g_set_selected_graph_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_data_color, g_selected_data_color_w, H_selected_data_color,
-				   S_setB S_selected_data_color, g_set_selected_data_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_basic_color, g_basic_color_w, H_basic_color,
-				   S_setB S_basic_color, g_set_basic_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pushed_button_color, g_pushed_button_color_w, H_pushed_button_color,
-				   S_setB S_pushed_button_color, g_set_pushed_button_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE(S_color_p, g_color_p_w, 1, 0, 0, H_color_p);
-#endif
 
   XEN_DEFINE_PROCEDURE(S_snd_tempnam,           g_snd_tempnam_w,           0, 0, 0, H_snd_tempnam);
   XEN_DEFINE_PROCEDURE(S_color_dialog,          g_color_dialog_w,          0, 1, 0, H_color_dialog);

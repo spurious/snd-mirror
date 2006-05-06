@@ -1,51 +1,36 @@
-Snd 8.0
+Snd 8.1
 
-The reason for the new major version: Mike Scholz has provided a complete
-  implementation of Forth as an extension language!  It's based on
-  http://sourceforge.net/projects/fth.  Use --with-forth with the
-  configuration script.
-  
-  This is in snd-8.tar.gz at the ccrma ftp site -- I'll update all the
-  other versions as soon as possible.
+added a bunch of Forth files (*.fs) thanks to Mike Scholz. 
 
+many more improvements from Kjetil and Mike.
 
-Other changes since version 7.19:
+Gauche support in Snd -- this is a Scheme extension language like Guile.
 
-many improvements (ladspa.scm etc) thanks to Kjetil.
+     http://www.shiro.dreamhost.com/scheme/gauche/index.html
 
-kmenu.scm and add-main-menu-mnemonics in snd-gtk.scm thanks to Maxim Krikun.
+  use --with-gauche in configure.  There are a number of small differences
+  between Gauche and Guile.  
 
-in clm bandedwg.ins thanks to Juan Reyes.
+    added gauche-optargs.scm to get define* (but not defmacro*)
+          gauche-format.scm to get ~{ and others, but it's semi-broken
+          block comments in '#| |#' to the Guile Snd to be compatible with Gauche (and CL).  
+    removed ws-interrupt? arg (no defmacro* currently in Gauche version).
+    added define+ and definstrument+ to get around lack of documentation string support in Gauche.
+    changed all '#! !#' to "#| |#'
+    changed all '#:' to ':'
+    "run" is a no-op in Gauche -- local variables aren't (currently) accessible in this context.
 
-granulate now has a local random number seed (settable via the mus-location method)
-  also peak-env.scm is smarter about data formats (both thanks to Kjetil).
+clisp support in clm.  Due to Clisp's way of macroexpanding "loop", the
+  loop macro can't be used within "run" (this affects Clisp users only of course).  
+  I changed a bunch of such cases to use "do". Also, "run*" doesn't currently work in
+  the Clisp clm.
 
-main-menu changed in gtk so that added top level menus return the same widget type as
-  the built-in ones -- to get the old menu-shell, wrap the main-menu calls with:
-  (gtk_menu_item_get_submenu (GTK_MENU_ITEM (main-menu ...)))
+changed show-listener slightly; if optional arg is #f, listener is not created.
 
-show-selection (extensions.scm)
+removed envelope-base.
 
-replaced useless "Filter" button in file dialogs with "Mkdir"
+clm-load (ws.scm) for cm.
 
-added a stop sign to interrupt long computations (equivalent to C-g)
+checked: sbcl 0.9.11|12, gsl 1.8, gtk 2.8.17, fftw 3.1.1, fth up to 0.8.16
 
-x-axis-as-clock for more informative x-axis tick labels in very large files
-
-heart.scm (use Snd with non-sound data)
-
-added support for more sound file decoders (along the lines of the current mpeg reader): 
-  shorten (propietary, read-only), tta (GPL, via ttaenc), wavpack (propietary)
-
-in cmn, removed nxtcmn.c, sgicmn.c, xcmnw.c, cmn-mcl-utils.lisp, cmn-mcl.lisp,
-          cmn-excl.lisp, cmn-scroll.lisp.  Removed all FFI, quickdraw, and Braille stuff.
-          cmn is now a pure Lisp program that outputs only postscript files.
-
-checked: gtk 2.8.14|15|16, sbcl 0.9.10, Fedora Core 5 (gcc 4.1), netBSD 3.0
-
-with much help from: Mike, Kjetil, Fernando, Maxim Krikun, Juan Reyes, Steve Kuhlmann,
-  Tim Blechmann
-
-
-
-
+with much help from: Michael Klingbeil, Kjetil, Mike.

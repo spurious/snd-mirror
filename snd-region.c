@@ -1636,7 +1636,8 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
   len = XEN_TO_C_OFF_T_OR_ELSE(num, 0);
   if (len < 0)
     XEN_OUT_OF_RANGE_ERROR(S_region_to_vct, 2, num, "length ~A < 0?");
-  if (len == 0) len = region_len(reg);
+  if ((len == 0) || (len > region_len(reg)))
+    len = region_len(reg);
   if (len > 0)
     {
       off_t beg;

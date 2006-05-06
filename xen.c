@@ -1613,15 +1613,17 @@ void xen_gauche_permanent_object(XEN obj)
 XEN xen_gauche_eval_c_string(char *arg)
 {
   XEN result = XEN_FALSE;
-
-  SCM_UNWIND_PROTECT {
-    result = Scm_EvalCString(arg, SCM_OBJ(Scm_UserModule()));
-  }
-  SCM_WHEN_ERROR {
-    fprintf(stderr, "Error in %s\n", arg);
-  }
+  SCM_UNWIND_PROTECT 
+    {
+      result = Scm_EvalCString(arg, SCM_OBJ(Scm_UserModule()));
+    }
+  SCM_WHEN_ERROR 
+    {
+      fprintf(stderr, "Error in %s\n", arg);
+      /* SCM_NEXT_HANDLER; */
+      /* if this is left in, Snd exits on an error! -- exactly what we're trying to avoid */
+    }
   SCM_END_PROTECT;
-
   return(result);
 }
 
@@ -1934,6 +1936,7 @@ void xen_initialize(void)
     }
     SCM_WHEN_ERROR {
       fprintf(stderr, "Error in Gauche initialization file.\n");
+      /* SCM_NEXT_HANDLER; */
     }
     SCM_END_PROTECT;
   }

@@ -47,7 +47,6 @@
       (if (not (provided? 'gauche-format.scm)) (load "gauche-format.scm"))
 
       (define (run thunk) (thunk))
-      (define (continuation? val) #f)
       (define O_RDWR 2)
       (define O_APPEND 1024)
       (define O_RDONLY 0)
@@ -396,7 +395,7 @@
 	     (gc)(gc)
 	     (if (not (null? (sounds)))
 		 (begin
-		   (snd-display ";test ~D: open sounds: ~A" n (map short-file-name (sounds)))
+		   (snd-display ";end test ~D: open sounds: ~A" n (map short-file-name (sounds)))
 		   (for-each close-sound (sounds))))))
 
 
@@ -3905,8 +3904,8 @@
 		      (display "COMM")
 		      (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o046) ; COMM chunk size
 		      (write-byte #o000) (write-byte #o001) ; 1 chan
-		      (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-char frames) ; frames
-		      (write-byte #o000) (write-char bits) ; bits
+		      (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte frames) ; frames
+		      (write-byte #o000) (write-byte bits) ; bits
 		      (write-byte #o100) (write-byte #o016) (write-byte #o254) (write-byte #o104) (write-byte #o000) 
 		      (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ;
 		      ;; srate as 80-bit float (sheesh)
@@ -3915,7 +3914,7 @@
 		      (display "not compressed")
 		      (write-byte #o000)
 		      (display "AUTH")
-		      (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-char auth-lo) ; AUTH chunk size
+		      (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte auth-lo) ; AUTH chunk size
 		      (display "bil")
 		      (write-byte #o000)
 		      (display "SSND")
@@ -33858,30 +33857,34 @@ EDITS: 1
 	(for-each forget-region (regions))
 	(load (save-state-file))
 	(let ((ind (find-sound "oboe.snd")))
-	  (if (or (> (abs (- (car old-bounds) (car (x-bounds ind 0)))) .05)
-		  (> (abs (- (cadr old-bounds) (cadr (x-bounds ind 0)))) .05))
-	      (snd-display ";save bounds: ~A" (x-bounds ind 0)))
-	  (if (not (= (length (marks ind 0)) 1))
-	      (snd-display ";save marks: ~A?" (marks ind 0)))
-	  (if (not (= (mark-sample (car (marks ind 0))) 122))
-	      (snd-display ";save mark: ~A?" (mark-sample (car (marks ind 0)))))
-	  (if (not (= (edit-position ind 0) 1))
-	      (snd-display ";save edit-position: ~A" (edit-position ind 0)))
-	  (if (not (equal? (edit-fragment 1 ind 0) (list "delete-samples 12 1" "delete" 12 1)))
-	      (snd-display ";save edits: ~A" (edit-fragment 1 ind 0)))
-	  (if (not (equal? (edit-tree ind 0) 
-			   (list (list 0 0 0 11 1.0 0.0 0.0 0) (list 12 0 13 50827 1.0 0.0 0.0 0) (list 50827 -2 0 0 0.0 0.0 0.0 0))))
-	      (snd-display ";save edit tree: ~A" (edit-tree ind 0)))
-	  (if (or (not (number? (sound-property 'ho ind)))
-		  (not (= (sound-property 'ho ind) 1234)))
-	      (snd-display ";sound-property saved: 1234 -> ~A" (sound-property 'ho ind)))
-	  (if (or (not (string? (sound-property :hi ind)))
-		  (not (string=? (sound-property :hi ind) "hi")))
-	      (snd-display ";sound-property saved: hi -> ~A" (sound-property :hi ind)))
-	  (if (or (not (number? (channel-property :ha ind 0)))
-		  (fneq (channel-property :ha ind 0) 3.14))
-	      (snd-display ";channel-property saved: 3.14 -> ~A" (channel-property :ha ind 0)))
-	  (close-sound ind)
+	  (if (not (sound? ind))
+	      (snd-display ";can't restore oboe.snd from ~A?" (save-state-file))
+	      (begin
+		(if (or (> (abs (- (car old-bounds) (car (x-bounds ind 0)))) .05)
+			(> (abs (- (cadr old-bounds) (cadr (x-bounds ind 0)))) .05))
+		    (snd-display ";save bounds: ~A" (x-bounds ind 0)))
+		(if (not (= (length (marks ind 0)) 1))
+		    (snd-display ";save marks: ~A (~A)?" (marks ind 0) (save-state-file))
+		    (begin
+		      (if (not (= (mark-sample (car (marks ind 0))) 122))
+			  (snd-display ";save mark: ~A?" (mark-sample (car (marks ind 0)))))
+		      (if (not (= (edit-position ind 0) 1))
+			  (snd-display ";save edit-position: ~A" (edit-position ind 0)))))
+		(if (not (equal? (edit-fragment 1 ind 0) (list "delete-samples 12 1" "delete" 12 1)))
+		    (snd-display ";save edits: ~A" (edit-fragment 1 ind 0)))
+		(if (not (equal? (edit-tree ind 0) 
+				 (list (list 0 0 0 11 1.0 0.0 0.0 0) (list 12 0 13 50827 1.0 0.0 0.0 0) (list 50827 -2 0 0 0.0 0.0 0.0 0))))
+		    (snd-display ";save edit tree: ~A" (edit-tree ind 0)))
+		(if (or (not (number? (sound-property 'ho ind)))
+			(not (= (sound-property 'ho ind) 1234)))
+		    (snd-display ";sound-property saved: 1234 -> ~A" (sound-property 'ho ind)))
+		(if (or (not (string? (sound-property :hi ind)))
+			(not (string=? (sound-property :hi ind) "hi")))
+		    (snd-display ";sound-property saved: hi -> ~A" (sound-property :hi ind)))
+		(if (or (not (number? (channel-property :ha ind 0)))
+			(fneq (channel-property :ha ind 0) 3.14))
+		    (snd-display ";channel-property saved: 3.14 -> ~A" (channel-property :ha ind 0)))
+		(close-sound ind)))
 	  (if (not (= after-save-state-hook-var 1234))
 	      (snd-display ";after-save-state-hook: ~A" after-save-state-hook-var))
 	  (reset-hook! after-save-state-hook)
@@ -35042,6 +35045,10 @@ EDITS: 1
 	  (revert-sound)
 	  
 	  ;; ---- *.scm
+	  (if (or (not (list? (procedure-source (lambda () (+ 1 2)))))
+		  (eq? (car (procedure-source (lambda () (+ 1 2)))) '%internal-eval))
+	      (snd-display ";skipping edit-list->function tests since procedure-source is useless")
+	      (begin
 	  (if (or (provided? 'xm) (provided? 'xg))
 	  (let ((ctr 1))
 	    (for-each
@@ -35201,7 +35208,7 @@ EDITS: 1
 	      "(lambda (snd chn) (effects-jc-reverb-1 0.1 0 #f snd chn))"
 
 	      )
-	     )))
+	     )))))
 	  
 	  (close-sound ind)
 	  ))
@@ -44631,10 +44638,6 @@ EDITS: 1
 	    (char=? ch #\~))
 	1
 	0))
-
-
-      (display (format #f "w->s: ~A" text) (current-error-port))
-
   (focus-widget widget)
   (take-keyboard-focus widget)
   (if cleared 
@@ -44667,7 +44670,7 @@ EDITS: 1
    (and (sound-file? a)
 	(= (mus-sound-chans a) 1))))
 
-(if (or full-test (= snd-test 24) (and keep-going (<= snd-test 24)))
+(if (and (provided? 'snd-guile) (or full-test (= snd-test 24) (and keep-going (<= snd-test 24))))
     (begin
       (run-hook before-test-hook 24)
       (add-hook! snd-error-hook (lambda (msg) (snd-display ";err: ~A" msg) #t))
@@ -45531,10 +45534,14 @@ EDITS: 1
 		    (if (not (= aval 208)) (snd-display ";listener paren check: ~A" aval))
 		    
 					;(key-event lst (char->integer #\g) 12) (force-event)
-		    (widget-string lst "(define frs (mus-sound-frames \"fyow." #f)
-		    (key-event lst snd-tab-key 0) (force-event)
-		    (widget-string lst "\"))" #f)
-		    (key-event lst snd-return-key 0) (force-event)
+		    (catch #t
+			   (lambda ()
+			     (widget-string lst "(define frs (mus-sound-frames \"fyow." #f)
+			     (key-event lst snd-tab-key 0) (force-event)
+			     (widget-string lst "\"))" #f)
+			     (key-event lst snd-return-key 0) (force-event))
+			   (lambda args #f))
+
 		    (if (not (defined? 'frs)) 
 			(snd-display ";frs not defined")
 			(begin
@@ -45803,10 +45810,13 @@ EDITS: 1
 		
 		(set! (widget-text minibuffer) #f)
 		(key-event cwid (char->integer #\x) 8) (force-event)
-		(widget-string minibuffer "(short-")
-		(key-event minibuffer snd-tab-key 0) (force-event)
-		(append-to-minibuffer ")")
-		(key-event minibuffer snd-return-key 0) (force-event)
+		(catch #t
+		       (lambda ()
+			 (widget-string minibuffer "(short-")
+			 (key-event minibuffer snd-tab-key 0) (force-event)
+			 (append-to-minibuffer ")")
+			 (key-event minibuffer snd-return-key 0) (force-event))
+		       (lambda args #f))
 		(let ((str (widget-text minibuffer)))
 		  (if (not (string=? str "\"oboe.snd\""))
 		      (snd-display ";completed mini: ~A" str)))
@@ -45882,8 +45892,11 @@ EDITS: 1
 		(let ((tmp (temp-dir)))
 		  (key-event name-button (char->integer #\x) 4) (force-event)
 		  (key-event name-button (char->integer #\d) 0) (force-event)
-		  (widget-string minibuffer (string-append home-dir "/snd-8"))
-		  (key-event minibuffer snd-return-key 0) (force-event)
+		  (catch #t
+			 (lambda ()
+			   (widget-string minibuffer (string-append home-dir "/snd-8"))
+			   (key-event minibuffer snd-return-key 0) (force-event))
+			 (lambda args #f))
 		  (if (or (not (string? (temp-dir)))
 			  (not (string=? (temp-dir) (string-append home-dir "/snd-8"))))
 		      (snd-display ";temp-dir via prompt: ~A?" (temp-dir)))
@@ -50000,6 +50013,7 @@ EDITS: 1
 							      (length tags)
 							      XmMERGE_NEW)))
 		
+		(if (file-exists? "hiho") (delete-file "hiho"))
 		(let* ((dpy (XtDisplay (cadr (main-widgets))))
 		       (scr (DefaultScreenOfDisplay dpy))
 		       (p1 (XmGetPixmap scr "hiho" (car pixels) (cadr pixels))))
@@ -56853,56 +56867,72 @@ EDITS: 1
 
 ;;; ---------------- test 27: GL --------------------
 
-(if (and (provided? 'snd-motif) (or full-test (= snd-test 27) (and keep-going (<= snd-test 27))))
+(if (and (provided? 'snd-motif) 
+	 (provided? 'gl)
+	 (provided? 'xm)
+	 (or full-test (= snd-test 27) (and keep-going (<= snd-test 27))))
     (begin
       (run-hook before-test-hook 27)
-      (if (and (provided? 'gl)
-	       (provided? 'xm))
-	  (begin
-	    (if (not (provided? 'snd-snd-gl.scm)) (load "snd-gl.scm"))
-	    (gl-info)
-	    (if all-args (gl-dump-state))
-	    (let ((gl-procs 
-		   (list
-		    glXChooseVisual glXCopyContext glXCreateContext glXCreateGLXPixmap glXDestroyContext glXDestroyGLXPixmap glXGetConfig
-		    glXGetCurrentContext glXGetCurrentDrawable glXIsDirect glXMakeCurrent glXQueryExtension glXQueryVersion glXSwapBuffers
-		    glXUseXFont glXWaitGL glXWaitX glXGetClientString glXQueryServerString glXQueryExtensionsString glClearIndex glClearColor
-		    glClear glIndexMask glColorMask glAlphaFunc glBlendFunc glLogicOp glCullFace glFrontFace glPointSize glLineWidth glLineStipple
-		    glPolygonMode glPolygonOffset glPolygonStipple glEdgeFlag glScissor glClipPlane glGetClipPlane
-		    glDrawBuffer glReadBuffer glEnable glDisable glIsEnabled glEnableClientState glDisableClientState glGetBooleanv
-		    glGetDoublev glGetFloatv glGetIntegerv glPushAttrib glPopAttrib glPushClientAttrib glPopClientAttrib glRenderMode
-		    glGetError glGetString glFinish glFlush glHint glClearDepth glDepthFunc glDepthMask glDepthRange glClearAccum glAccum
-		    glMatrixMode glOrtho glFrustum glViewport glPushMatrix glPopMatrix glLoadIdentity glLoadMatrixd glLoadMatrixf
-		    glMultMatrixd glMultMatrixf glRotated glRotatef glScaled glScalef glTranslated glTranslatef glIsList glDeleteLists
-		    glGenLists glNewList glEndList glCallList glCallLists glListBase glBegin glEnd glVertex2d glVertex2f glVertex2i glVertex2s
-		    glVertex3d glVertex3f glVertex3i glVertex3s glVertex4d glVertex4f glVertex4i glVertex4s glNormal3b glNormal3d glNormal3f
-		    glNormal3i glNormal3s glIndexd glIndexf glIndexi glIndexs glIndexub glColor3b glColor3d glColor3f glColor3i glColor3s
-		    glColor3ub glColor3ui glColor3us glColor4b glColor4d glColor4f glColor4i glColor4s glColor4ub glColor4ui glColor4us glTexCoord1d
-		    glTexCoord1f glTexCoord1i glTexCoord1s glTexCoord2d glTexCoord2f glTexCoord2i glTexCoord2s glTexCoord3d glTexCoord3f glTexCoord3i
-		    glTexCoord3s glTexCoord4d glTexCoord4f glTexCoord4i glTexCoord4s glRasterPos2d glRasterPos2f glRasterPos2i glRasterPos2s
-		    glRasterPos3d glRasterPos3f glRasterPos3i glRasterPos3s glRasterPos4d glRasterPos4f glRasterPos4i glRasterPos4s glRectd
-		    glRectf glRecti glRects glVertexPointer glNormalPointer glColorPointer glIndexPointer glTexCoordPointer glEdgeFlagPointer
-		    glGetPointerv glArrayElement glDrawArrays glDrawElements glInterleavedArrays glShadeModel glLightf glLighti glGetLightfv
-		    glGetLightiv glLightModelf glLightModeli glMaterialf glMateriali glGetMaterialfv glGetMaterialiv glColorMaterial glPixelZoom
-		    glPixelStoref glPixelStorei glPixelTransferf glPixelTransferi glGetPixelMapfv glGetPixelMapuiv glGetPixelMapusv glBitmap
-		    glReadPixels glDrawPixels glCopyPixels glStencilFunc glStencilMask glStencilOp glClearStencil glTexGend glTexGenf glTexGeni
-		    glGetTexGendv glGetTexGenfv glGetTexGeniv glTexEnvf glTexEnvi glGetTexEnvfv glGetTexEnviv glTexParameterf glTexParameteri
-		    glGetTexParameterfv glGetTexParameteriv glGetTexLevelParameterfv glGetTexLevelParameteriv glTexImage1D glTexImage2D
-		    glGenTextures glDeleteTextures glBindTexture glAreTexturesResident glIsTexture glTexSubImage1D glTexSubImage2D glCopyTexImage1D
-		    glCopyTexImage2D glCopyTexSubImage1D glCopyTexSubImage2D glMap1d glMap1f glMap2d glMap2f glGetMapdv glGetMapfv glGetMapiv
-		    glEvalCoord1d glEvalCoord1f glEvalCoord2d glEvalCoord2f glMapGrid1d glMapGrid1f glMapGrid2d glMapGrid2f glEvalPoint1
-		    glEvalPoint2 glEvalMesh1 glEvalMesh2 glFogf glFogi glFeedbackBuffer glPassThrough glSelectBuffer glInitNames glLoadName
-		    glPushName glPopName glDrawRangeElements glTexImage3D glTexSubImage3D glCopyTexSubImage3D glColorTable glColorSubTable
-		    glCopyColorSubTable glCopyColorTable glGetColorTableParameterfv glGetColorTableParameteriv glBlendEquation glBlendColor
-		    glHistogram glResetHistogram glGetHistogram glGetHistogramParameterfv glGetHistogramParameteriv glMinmax glResetMinmax
-		    glGetMinmax glGetMinmaxParameterfv glGetMinmaxParameteriv glConvolutionFilter1D glConvolutionFilter2D glConvolutionParameterf
-		    glConvolutionParameteri glCopyConvolutionFilter1D glCopyConvolutionFilter2D glSeparableFilter2D gluBeginPolygon gluBuild1DMipmaps
-		    gluBuild2DMipmaps gluDeleteTess gluEndPolygon gluErrorString gluGetString gluGetTessProperty gluLookAt gluNewTess gluNextContour
-		    gluOrtho2D gluPerspective gluPickMatrix gluProject gluScaleImage gluTessBeginContour gluTessBeginPolygon gluTessEndContour
-		    gluTessEndPolygon gluTessNormal gluTessProperty gluTessVertex gluUnProject
-		    )))
-	      
-	      ;; ---------------- 1 Arg
+      (if (not (provided? 'snd-snd-gl.scm)) (load "snd-gl.scm"))
+      (gl-info)
+      (if all-args (gl-dump-state))
+      (let ((gl-procs 
+	     (list
+	      glXChooseVisual glXCopyContext glXCreateContext glXCreateGLXPixmap glXDestroyContext glXDestroyGLXPixmap glXGetConfig
+	      glXGetCurrentContext glXGetCurrentDrawable glXIsDirect glXMakeCurrent glXQueryExtension glXQueryVersion glXSwapBuffers
+	      glXUseXFont glXWaitGL glXWaitX glXGetClientString glXQueryServerString glXQueryExtensionsString glClearIndex glClearColor
+	      glClear glIndexMask glColorMask glAlphaFunc glBlendFunc glLogicOp glCullFace glFrontFace glPointSize glLineWidth glLineStipple
+	      glPolygonMode glPolygonOffset glPolygonStipple glEdgeFlag glScissor glClipPlane glGetClipPlane
+	      glDrawBuffer glReadBuffer glEnable glDisable glIsEnabled glEnableClientState glDisableClientState glGetBooleanv
+	      glGetDoublev glGetFloatv glGetIntegerv glPushAttrib glPopAttrib glPushClientAttrib glPopClientAttrib glRenderMode
+	      glGetError glGetString glFinish glFlush glHint glClearDepth glDepthFunc glDepthMask glDepthRange glClearAccum glAccum
+	      glMatrixMode glOrtho glFrustum glViewport glPushMatrix glPopMatrix glLoadIdentity glLoadMatrixd glLoadMatrixf
+	      glMultMatrixd glMultMatrixf glRotated glRotatef glScaled glScalef glTranslated glTranslatef glIsList glDeleteLists
+	      glGenLists glNewList glEndList glCallList glCallLists glListBase glBegin glEnd glVertex2d glVertex2f glVertex2i glVertex2s
+	      glVertex3d glVertex3f glVertex3i glVertex3s glVertex4d glVertex4f glVertex4i glVertex4s glNormal3b glNormal3d glNormal3f
+	      glNormal3i glNormal3s glIndexd glIndexf glIndexi glIndexs glIndexub glColor3b glColor3d glColor3f glColor3i glColor3s
+	      glColor3ub glColor3ui glColor3us glColor4b glColor4d glColor4f glColor4i glColor4s glColor4ub glColor4ui glColor4us glTexCoord1d
+	      glTexCoord1f glTexCoord1i glTexCoord1s glTexCoord2d glTexCoord2f glTexCoord2i glTexCoord2s glTexCoord3d glTexCoord3f glTexCoord3i
+	      glTexCoord3s glTexCoord4d glTexCoord4f glTexCoord4i glTexCoord4s glRasterPos2d glRasterPos2f glRasterPos2i glRasterPos2s
+	      glRasterPos3d glRasterPos3f glRasterPos3i glRasterPos3s glRasterPos4d glRasterPos4f glRasterPos4i glRasterPos4s glRectd
+	      glRectf glRecti glRects glVertexPointer glNormalPointer glColorPointer glIndexPointer glTexCoordPointer glEdgeFlagPointer
+	      glGetPointerv glArrayElement glDrawArrays glDrawElements glInterleavedArrays glShadeModel glLightf glLighti glGetLightfv
+	      glGetLightiv glLightModelf glLightModeli glMaterialf glMateriali glGetMaterialfv glGetMaterialiv glColorMaterial glPixelZoom
+	      glPixelStoref glPixelStorei glPixelTransferf glPixelTransferi glGetPixelMapfv glGetPixelMapuiv glGetPixelMapusv glBitmap
+	      glReadPixels glDrawPixels glCopyPixels glStencilFunc glStencilMask glStencilOp glClearStencil glTexGend glTexGenf glTexGeni
+	      glGetTexGendv glGetTexGenfv glGetTexGeniv glTexEnvf glTexEnvi glGetTexEnvfv glGetTexEnviv glTexParameterf glTexParameteri
+	      glGetTexParameterfv glGetTexParameteriv glGetTexLevelParameterfv glGetTexLevelParameteriv glTexImage1D glTexImage2D
+	      glGenTextures glDeleteTextures glBindTexture glAreTexturesResident glIsTexture glTexSubImage1D glTexSubImage2D glCopyTexImage1D
+	      glCopyTexImage2D glCopyTexSubImage1D glCopyTexSubImage2D glMap1d glMap1f glMap2d glMap2f glGetMapdv glGetMapfv glGetMapiv
+	      glEvalCoord1d glEvalCoord1f glEvalCoord2d glEvalCoord2f glMapGrid1d glMapGrid1f glMapGrid2d glMapGrid2f glEvalPoint1
+	      glEvalPoint2 glEvalMesh1 glEvalMesh2 glFogf glFogi glFeedbackBuffer glPassThrough glSelectBuffer glInitNames glLoadName
+	      glPushName glPopName glDrawRangeElements glTexImage3D glTexSubImage3D glCopyTexSubImage3D glColorTable glColorSubTable
+	      glCopyColorSubTable glCopyColorTable glGetColorTableParameterfv glGetColorTableParameteriv glBlendEquation glBlendColor
+	      glHistogram glResetHistogram glGetHistogram glGetHistogramParameterfv glGetHistogramParameteriv glMinmax glResetMinmax
+	      glGetMinmax glGetMinmaxParameterfv glGetMinmaxParameteriv glConvolutionFilter1D glConvolutionFilter2D glConvolutionParameterf
+	      glConvolutionParameteri glCopyConvolutionFilter1D glCopyConvolutionFilter2D glSeparableFilter2D ))
+	    (glu-procs 
+	     (if (defined? 'gluBeginPolygon)
+		 (list
+		  gluBeginPolygon gluBuild1DMipmaps gluLookAt gluNewTess gluNextContour gluTessEndContour
+		  gluBuild2DMipmaps gluDeleteTess gluEndPolygon gluErrorString gluGetString gluGetTessProperty 
+		  gluOrtho2D gluPerspective gluPickMatrix gluProject gluScaleImage gluTessBeginContour gluTessBeginPolygon 
+		  gluTessEndPolygon gluTessNormal gluTessProperty gluTessVertex gluUnProject)
+		 '())))
+	
+	;; ---------------- 1 Arg
+	(for-each 
+	 (lambda (arg)
+	   (for-each 
+	    (lambda (n)
+	      (catch #t
+		     (lambda () (n arg))
+		     (lambda args (car args))))
+	    gl-procs))
+	 (list (list 0 1) (sqrt -1.0)))
+	
+	(if (not (null? glu-procs))
+	    (begin
 	      (for-each 
 	       (lambda (arg)
 		 (for-each 
@@ -56912,45 +56942,42 @@ EDITS: 1
 			   (lambda args (car args))))
 		  gl-procs))
 	       (list (list 0 1) (sqrt -1.0)))
-	      )
-	    
-	    (let ((ind (open-sound "oboe.snd")))
-	      (glXMakeCurrent (XtDisplay (cadr (main-widgets))) 
-			      (XtWindow (car (channel-widgets)))
-			      (snd-glx-context))
-	      (glEnable GL_DEPTH_TEST)
-	      (glDepthFunc GL_LEQUAL)
-	      (glClearDepth 1.0)
-	      (glClearColor 0.0 0.0 0.0 0.0)
-	      (glLoadIdentity)
-	      (gluPerspective 40.0 1.0 10.0 200.0)
-	      (glTranslatef 0.0 0.0 -50.0)
-	      (glRotatef -58.0 0.0 1.0 0.0)
-	      (let ((vals (XtVaGetValues (car (channel-widgets)) (list XmNwidth 0 XmNheight 0))))
-		(glViewport 0 0 (list-ref vals 1) (list-ref vals 3)))
-	      (glClear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-	      (glBegin GL_POLYGON)
-	      (glColor3f 0.0 0.0 0.0)   (glVertex3f -10.0 -10.0 0.0)
-	      (glColor3f 0.7 0.7 0.7)   (glVertex3f 10.0 -10.0 0.0)
-	      (glColor3f 1.0 1.0 1.0)   (glVertex3f -10.0 10.0 0.0)
-	      (glEnd)
-	      (glBegin GL_POLYGON)
-	      (glColor3f 1.0 1.0 0.0)   (glVertex3f 0.0 -10.0 -10.0)
-	      (glColor3f 0.0 1.0 0.7)   (glVertex3f 0.0 -10.0 10.0)
-	      (glColor3f 0.0 0.0 1.0)   (glVertex3f 0.0 5.0 -10.0)
-	      (glEnd)
-	      (glBegin GL_POLYGON)
-	      (glColor3f 1.0 1.0 0.0)   (glVertex3f -10.0 6.0 4.0)
-	      (glColor3f 1.0 0.0 1.0)   (glVertex3f -10.0 3.0 4.0)
-	      (glColor3f 0.0 0.0 1.0)   (glVertex3f 4.0 -9.0 -10.0)
-	      (glColor3f 1.0 0.0 1.0)   (glVertex3f 4.0 -6.0 -10.0)
-	      (glEnd)
-	      (glXSwapBuffers (XtDisplay (cadr (main-widgets))) 
-			      (XtWindow (car (channel-widgets))))
-	      (glFlush)
-	      (close-sound ind))
-	    
-	    ))
+	      
+	      (let ((ind (open-sound "oboe.snd")))
+		(glXMakeCurrent (XtDisplay (cadr (main-widgets))) 
+				(XtWindow (car (channel-widgets)))
+				(snd-glx-context))
+		(glEnable GL_DEPTH_TEST)
+		(glDepthFunc GL_LEQUAL)
+		(glClearDepth 1.0)
+		(glClearColor 0.0 0.0 0.0 0.0)
+		(glLoadIdentity)
+		(gluPerspective 40.0 1.0 10.0 200.0)
+		(glTranslatef 0.0 0.0 -50.0)
+		(glRotatef -58.0 0.0 1.0 0.0)
+		(let ((vals (XtVaGetValues (car (channel-widgets)) (list XmNwidth 0 XmNheight 0))))
+		  (glViewport 0 0 (list-ref vals 1) (list-ref vals 3)))
+		(glClear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
+		(glBegin GL_POLYGON)
+		(glColor3f 0.0 0.0 0.0)   (glVertex3f -10.0 -10.0 0.0)
+		(glColor3f 0.7 0.7 0.7)   (glVertex3f 10.0 -10.0 0.0)
+		(glColor3f 1.0 1.0 1.0)   (glVertex3f -10.0 10.0 0.0)
+		(glEnd)
+		(glBegin GL_POLYGON)
+		(glColor3f 1.0 1.0 0.0)   (glVertex3f 0.0 -10.0 -10.0)
+		(glColor3f 0.0 1.0 0.7)   (glVertex3f 0.0 -10.0 10.0)
+		(glColor3f 0.0 0.0 1.0)   (glVertex3f 0.0 5.0 -10.0)
+		(glEnd)
+		(glBegin GL_POLYGON)
+		(glColor3f 1.0 1.0 0.0)   (glVertex3f -10.0 6.0 4.0)
+		(glColor3f 1.0 0.0 1.0)   (glVertex3f -10.0 3.0 4.0)
+		(glColor3f 0.0 0.0 1.0)   (glVertex3f 4.0 -9.0 -10.0)
+		(glColor3f 1.0 0.0 1.0)   (glVertex3f 4.0 -6.0 -10.0)
+		(glEnd)
+		(glXSwapBuffers (XtDisplay (cadr (main-widgets))) 
+				(XtWindow (car (channel-widgets))))
+		(glFlush)
+		(close-sound ind)))))
       (run-hook after-test-hook 27)
       ))
 
