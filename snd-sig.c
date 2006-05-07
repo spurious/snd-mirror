@@ -3902,7 +3902,7 @@ static XEN scan_body(void *context)
       if (ss->stopped_explicitly)
 	{
 	  ss->stopped_explicitly = false;
-	  report_in_minibuffer(sc->sp, _("%s stopped at sample " PRId64), sc->caller, kp + sc->beg);
+	  report_in_minibuffer(sc->sp, _("%s stopped at sample " OFF_TD), sc->caller, kp + sc->beg);
 	  break;
 	}
     }
@@ -4057,7 +4057,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       if (ss->stopped_explicitly)
 	{
 	  ss->stopped_explicitly = false;
-	  report_in_minibuffer(sp, _("%s stopped at sample " PRId64), caller, kp + beg);
+	  report_in_minibuffer(sp, _("%s stopped at sample " OFF_TD), caller, kp + beg);
 	  break;
 	}
     }

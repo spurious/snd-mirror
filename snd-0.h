@@ -21,23 +21,6 @@
   #define bindtextdomain(Package, Directory)
 #endif
 
-#ifdef PRId64
-/* this is needed because guile's libguile.h->tags.h->inttypes.h picks up
-   a version of PRId64 that doesn't work with gettext as advertised.
-*/
-  #undef PRId64
-#endif
-
-#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
-  #if (SIZEOF_OFF_T == SIZEOF_LONG)
-    #define PRId64 "%ld"
-  #else
-    #define PRId64 "%lld"
-  #endif
-#else
-  #define PRId64 "%d"
-#endif
-
 #if (!HAVE_FAM)
   #define FAMRequest int
   #define FAMEvent int

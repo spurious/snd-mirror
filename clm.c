@@ -8569,42 +8569,11 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
 
 /* ---------------- mus-apply ---------------- */
 
-Float mus_apply(mus_any *gen, ...)
+Float mus_apply(mus_any *gen, double f1, double f2)
 {
   /* what about non-gen funcs such as polynomial, ring_modulate etc? */
-  #define NEXT_ARG (Float)(va_arg(ap, double))
   if ((gen) && (MUS_RUN_P(gen)))
-    {
-      va_list ap;
-      Float f1 = 0.0, f2 = 0.0; /* force order of evaluation */
-      va_start(ap, gen);
-      /* might want a run_args field */
-      switch (gen->core->type)
-	{
-	  /* 2 actual args */
-	case MUS_OSCIL:	case MUS_DELAY:	case MUS_COMB:	case MUS_NOTCH:	case MUS_ALL_PASS: case MUS_MIXER:
-	case MUS_WAVESHAPE: case MUS_AVERAGE: case MUS_SSB_AM: case MUS_FILE_TO_SAMPLE: case MUS_LOCSIG: 
-	case MUS_POLYSHAPE:
-	  f1 = NEXT_ARG; 
-	  f2 = NEXT_ARG; 
-	  break;
-
-	  /* 1 arg, 2nd arg ignored */
-	case MUS_SUM_OF_COSINES: case MUS_SUM_OF_SINES: case MUS_TABLE_LOOKUP: case MUS_SQUARE_WAVE: case MUS_SAWTOOTH_WAVE:
-	case MUS_TRIANGLE_WAVE: case MUS_PULSE_TRAIN: case MUS_RAND: case MUS_RAND_INTERP:  
-	case MUS_ASYMMETRIC_FM:	case MUS_ONE_ZERO: case MUS_ONE_POLE: case MUS_TWO_ZERO: case MUS_TWO_POLE:     
-	case MUS_FORMANT: case MUS_SRC: case MUS_SINE_SUMMATION: case MUS_WAVE_TRAIN:    
-	case MUS_FILTER: case MUS_FIR_FILTER: case MUS_IIR_FILTER: case MUS_FRAME:
-	  f1 = NEXT_ARG; 
-	  break;
-
-	  /* both args ignored */
-	case MUS_READIN: case MUS_CONVOLVE: case MUS_ENV: case MUS_GRANULATE: case MUS_PHASE_VOCODER:
-	  break;
-	}
-      va_end(ap);
-      return(MUS_RUN(gen, f1, f2));
-    }
+    return(MUS_RUN(gen, f1, f2));
   return(0.0);
 }
 

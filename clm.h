@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 21
-#define MUS_DATE "1-Mar-06"
+#define MUS_REVISION 22
+#define MUS_DATE "8-May-06"
 
 /*
+ * 8-May:      mus_apply now takes 3 args: gen, two doubles (rather than bug-prone varargs).
  * 1-Mar-06:   granulate now has a local random number seed (settable via the mus-location method).
  * --------
  * 20-Dec:     samaraki and ultraspherical windows.
@@ -619,7 +620,7 @@ int mus_file_buffer_size(void);
 
 void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out_samps, off_t in_start, mus_any *mx, mus_any ***envs);
 void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs);
-Float mus_apply(mus_any *gen, ...);
+Float mus_apply(mus_any *gen, double f1, double f2);
 
 bool mus_phase_vocoder_p(mus_any *ptr);
 mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction), 

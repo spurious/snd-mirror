@@ -1150,7 +1150,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 	      bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
 	      for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
 	      if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(name))
-		snd_warning(_("not enough space to save region? -- need " PRId64 " bytes"),
+		snd_warning(_("not enough space to save region? -- need " OFF_TD " bytes"),
 			    frames * chans * mus_sound_datum_size(r->filename));
 	      err = 0;
 	      for (ioff = 0; ioff < frames; ioff += FILE_BUFFER_SIZE)

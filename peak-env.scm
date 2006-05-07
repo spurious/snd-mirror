@@ -73,7 +73,8 @@
 			 ((= i (chans snd)))
 		       (let ((peak-file (mus-expand-filename (peak-env-info-file-name snd i))))
 			 (if (file-exists? peak-file)
-			     (delete-file peak-file)))))))
+			     (delete-file peak-file)))))
+		 #f))
 
     (lambda (snd)
       (if (and save-peak-env-info?

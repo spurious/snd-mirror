@@ -947,7 +947,7 @@ void display_info(snd_info *sp)
 	    ampstr = display_maxamps(sp->filename, sp->nchans);
 	  buffer = (char *)CALLOC(INFO_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buffer, INFO_BUFFER_SIZE, 
-		       _("srate: %d\nchans: %d\nlength: %.3f (" PRId64 " %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n"),
+		       _("srate: %d\nchans: %d\nlength: %.3f (" OFF_TD " %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n"),
 		       hdr->srate,
 		       hdr->chans,
 		       (Float)((double)(hdr->samples) / (Float)(hdr->chans * hdr->srate)),

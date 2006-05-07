@@ -41,7 +41,7 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes, const char *
   if (kfree < (bytes >> 10))
     { 
       mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   _("only " PRId64 " bytes left on device (we need %d bytes)"),
+		   _("only " OFF_TD " bytes left on device (we need %d bytes)"),
 		   kfree << 10, bytes);
       return(MUS_ERROR);
     }

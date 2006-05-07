@@ -1289,13 +1289,15 @@ static XEN g_mus_apply(XEN arglist)
 #endif
   gen = XEN_TO_MUS_ANY(XEN_CAR(arglist));
   if (arglist_len == 1) 
-    return(C_TO_XEN_DOUBLE(mus_apply(gen)));
+    return(C_TO_XEN_DOUBLE(mus_apply(gen, 0.0, 0.0)));
   if (arglist_len == 2)
     return(C_TO_XEN_DOUBLE(mus_apply(gen, 
-				     XEN_TO_C_DOUBLE(XEN_CADR(arglist)))));
-  return(C_TO_XEN_DOUBLE(mus_apply(gen, 
-				   XEN_TO_C_DOUBLE(XEN_CADR(arglist)), 
-				   XEN_TO_C_DOUBLE(XEN_CADDR(arglist)))));
+				     XEN_TO_C_DOUBLE(XEN_CADR(arglist)),
+				     0.0)));
+  return(xen_return_first(C_TO_XEN_DOUBLE(mus_apply(gen, 
+						    XEN_TO_C_DOUBLE(XEN_CADR(arglist)), 
+						    XEN_TO_C_DOUBLE(XEN_CADDR(arglist)))),
+			  arglist));
 }
 
 

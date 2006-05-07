@@ -17,52 +17,16 @@
 /* TODO in Gauche: 
  *    stacktrace and errors->listener
  *       (current-load-history)
- *    currently eval_c_string simply dies upon error!  so the protect macros don't work
+ *    error in find lambda -> exit (need better error protection)
  *
  *    unwind-protects around scm_apply (snd-xen g_call)
  *
  *    snd-test: 
- *      ;test 4
- *      ;set null loop-info (no mode1): (1200 1400 4 3 2 1 1 0)
- *      ;set header-type: Sun/Next?
- *      ;set chans: 1?
- *      ;set data-location: 60?
- *      ;set data-size: 101656?
- *      ;test 8
- *      ;oscil +-: 1.9938535690307617
- *      ;cosil +-: 1.9597358703613281
- *      ;sum-of-cosines +-: 1.2261708080768585
- *      ;sum-of-sines +-: 1.0913542732596397
- *      ;sawtooth +-: 1.6364032626152039
- *      ;square-wave -.5: #<vct[len=20]: -0.5 -0.5 0.0 0.0 0.0 0.0 -0.5 -0.5 -0.5 -0.5 0.0 0.0 0.0 0.0 -0.5 -0.5 -0.5 -0.5 0.0 0.000> 
- *      ;triangle +-: 1.6371872425079346
- *      ;pulse-train -.5: #<vct[len=20]: 0.0 -0.5 0.0 -0.5 -0.5 -0.5 -0.5 -0.5 -0.5 -0.5 0.0 -0.5 -0.5 -0.5 -0.5 -0.5 -0.5 -0.5 0.0 -0.500> 
- *      ;gran edit 2* (2): 0.147247314453125 0.17697551846504211
  *      ;test 11
- *      ;snd-help open-soud (misspelled on purpose) failed
+ *      ;snd-help open-soud (misspelled on purpose) failed? (works outside snd-test)
  *      ;plus other printout?
- *      ;test 13
- *      ;add-to-menu non-thunk: wrong-type-arg
- *      ;open-raw-sound-hook choice: (1 22050 11)?
- *      ;open-raw-sound-hook 3: 11 2 2 44100 50828
- *      ;open-raw-sound-hook 4: 11 2 2 44100folding 3 chans into 2 
- *      ;test 15
- *      ;set! srate: 44100.0 22050
- *      ;test 16
- *      ; numbers are still ignoring ~,2F 
- *      ;test 21
- *      ;data-location set no arg: 142 123
- *      ;data-location set arg: 40 123
- *      ;data-location sound-func arg set #t: (40 142), sep: (123 123)
- *      ;data-location set arg #t: 40 123
- *      ;data-location set arg #t (2): 142 123
- *      ;data-size set no arg: 1200 12348
- *      ;data-size set arg: 400 12348
- *      ;data-size sound-func arg set #t: (400 1200), sep: (12348 12348)
- *      ;data-size set arg #t: 400 12348
  *      ;test 28
  *      ; complex args don't trigger wrong-type-arg
- *
  *
  *       testsnd/compsnd/memlog
  *
@@ -76,6 +40,9 @@
  *
  * TODO in Ruby:
  *    prefs for show-selection
+ *
+ * TODO: fam crosstalk?
+ * TODO: open-raw-sound-hook seems unhappy
  */
 
 /* -------- protect XEN vars from GC -------- */
@@ -2246,7 +2213,7 @@ off_t string_to_off_t(char *str, off_t lo, const char *field_name)
       off_t val;
       val = XEN_TO_C_OFF_T(res);
       if (val < lo)
-	snd_error(_("%s: " PRId64 " is invalid"), field_name, val);
+	snd_error(_("%s: " OFF_TD " is invalid"), field_name, val);
       else return(val);
     }
   else snd_error(_("%s: %s is not a number"), field_name, str);
@@ -2260,7 +2227,7 @@ off_t string_to_off_t(char *str, off_t lo, const char *field_name)
       else
 	{
 	  if (res < lo)
-	    snd_error(_("%s: " PRId64 " is invalid"), field_name, res);
+	    snd_error(_("%s: " OFF_TD " is invalid"), field_name, res);
 	}
     }
   return(res);
