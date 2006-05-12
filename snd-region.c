@@ -1663,6 +1663,25 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
   return(XEN_FALSE);
 }
 
+static XEN g_region_graph_style(void) {return(C_TO_XEN_INT(region_graph_style(ss)));}
+static XEN g_set_region_graph_style(XEN val) 
+{
+  graph_style_t style;
+  #define H_region_graph_style "(" S_region_graph_style "): graph style of the region dialog graph. \
+The " S_region_graph_style " choices are " S_graph_lines ", " S_graph_dots ", " S_graph_filled ", " S_graph_lollipops ", \
+and " S_graph_dots_and_lines "."
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_region_graph_style, "an integer");
+  style = (graph_style_t)XEN_TO_C_INT(val);
+  if (!(GRAPH_STYLE_OK(style)))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_region_graph_style, 1, val, "~A: unknown " S_lisp_graph_style);
+  else
+    {
+      set_region_graph_style(style);
+      reflect_region_graph_style();
+    }
+  return(val);
+}
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_10(g_restore_region_w, g_restore_region)
 XEN_ARGIFY_4(g_insert_region_w, g_insert_region)
@@ -1683,6 +1702,8 @@ XEN_ARGIFY_5(g_region_to_vct_w, g_region_to_vct)
 XEN_NARGIFY_1(g_region_p_w, g_region_p)
 XEN_NARGIFY_0(g_max_regions_w, g_max_regions)
 XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
+XEN_NARGIFY_0(g_region_graph_style_w, g_region_graph_style)
+XEN_NARGIFY_1(g_set_region_graph_style_w, g_set_region_graph_style)
 #else
 #define g_restore_region_w g_restore_region
 #define g_insert_region_w g_insert_region
@@ -1703,6 +1724,8 @@ XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
 #define g_region_p_w g_region_p
 #define g_max_regions_w g_max_regions
 #define g_set_max_regions_w g_set_max_regions
+#define g_region_graph_style_w g_region_graph_style
+#define g_set_region_graph_style_w g_set_region_graph_style
 #endif
 
 void g_init_regions(void)
@@ -1728,5 +1751,8 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_region_p,               g_region_p_w,               1, 0, 0, H_region_p);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_regions, g_max_regions_w, H_max_regions, S_setB S_max_regions, g_set_max_regions_w, 0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_region_graph_style, g_region_graph_style_w, H_region_graph_style,
+				   S_setB S_region_graph_style, g_set_region_graph_style_w,  0, 0, 1, 0);
 }
 

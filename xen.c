@@ -1627,19 +1627,6 @@ XEN xen_gauche_eval_c_string(char *arg)
   return(result);
 }
 
-void xen_gauche_variable_set(const char *var, XEN value)
-{
-  char *expr, *valstr;
-  int len;
-  valstr = XEN_TO_C_STRING(xen_gauche_object_to_string(value));
-  len = strlen(var) + 128 + strlen(valstr);
-  expr = (char *)calloc(len, sizeof(char));
-  snprintf(expr, len, "(with-error-handler (lambda (e) (display e)) (lambda () (set! %s %s)))", var, valstr);
-  /* TODO: variable set is a mess! */
-  Scm_EvalCString(expr, SCM_OBJ(Scm_UserModule()));
-  free(expr);
-}
-
 typedef struct {
   XEN_OBJECT_TYPE type;
   void *data;
@@ -1710,7 +1697,7 @@ bool xen_gauche_type_p(XEN obj, XEN_OBJECT_TYPE type)
 
 void xen_gauche_provide(const char *feature)
 {
-  /* there is no *features* list built-in Gauche!! I've defined one in snd-xen.c */
+  /* there is no *features* list built-in Gauche!! I've defined one below */
   /*   also Gauche's provide and provided? take strings! so I'll have to encapsulate them */
   char *expr;
   int len;
@@ -1800,8 +1787,14 @@ static XEN_MARK_OBJECT_TYPE mark_ghook(XEN obj)
 static int ghook_arity(ghook *hook) {return(hook->arity);}
 static XEN ghook_functions(ghook *hook) {return(hook->functions);}
 static void reset_ghook(ghook *hook) {hook->functions = XEN_EMPTY_LIST;}
-static void add_ghook(ghook *hook, XEN function) {hook->functions = XEN_CONS(function, hook->functions);}
 bool xen_gauche_hook_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, ghook_tag));}
+
+static void add_ghook(ghook *hook, XEN function, bool at_end) 
+{
+  if (at_end)
+    hook->functions = XEN_APPEND(hook->functions, XEN_LIST_1(function));
+  else hook->functions = XEN_CONS(function, hook->functions);
+}
 
 static XEN g_hook_p(XEN val) 
 {
@@ -1828,16 +1821,19 @@ static XEN g_make_hook(XEN arity, XEN help)
   return(xen_gauche_make_object(ghook_tag, (void *)hook, mark_ghook));
 }
 
-static XEN g_add_hook(XEN hook, XEN function)
+static XEN g_add_hook(XEN hook, XEN function, XEN position)
 {
   ghook *obj;
+  bool at_end = false;
   XEN_ASSERT_TYPE(xen_gauche_hook_p(hook), hook, XEN_ARG_1, "add-hook!", "a hook");
   obj = (ghook *)XEN_OBJECT_REF(hook);
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(function) && 
 		  ((XEN_REQUIRED_ARGS(function) == ghook_arity(obj)) ||
 		   ((SCM_PROCEDURE_REQUIRED(function) + SCM_PROCEDURE_OPTIONAL(function)) == ghook_arity(obj))),
 		  function, XEN_ARG_2, "add-hook!", "a function");
-  add_ghook(obj, function);
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(position), position, XEN_ARG_3, "add-hook!", "boolean");
+  if (XEN_BOOLEAN_P(position)) at_end = XEN_TO_C_BOOLEAN(position);
+  add_ghook(obj, function, at_end);
   Scm_ForeignPointerAttrSet(SCM_FOREIGN_POINTER(hook), SCM_INTERN("functions"), obj->functions);
   return(hook);
 }
@@ -1925,7 +1921,7 @@ XEN_NARGIFY_1(g_hook_to_list_w, xen_gauche_hook_to_list)
 XEN_VARGIFY(g_run_hook_w, g_run_hook)
 XEN_NARGIFY_1(g_reset_hook_w, xen_gauche_reset_hook)
 XEN_ARGIFY_2(g_make_hook_w, g_make_hook)
-XEN_NARGIFY_2(g_add_hook_w, g_add_hook)
+XEN_ARGIFY_3(g_add_hook_w, g_add_hook)
 
 void xen_initialize(void)
 {
@@ -1941,7 +1937,6 @@ void xen_initialize(void)
     SCM_END_PROTECT;
   }
 
-  /* Gauche doesn't have a *features* list!! */
   XEN_EVAL_C_STRING("(define *features* (list 'defmacro 'record))"); /* has to be first so *features* exists */
   help_hash_table = Scm_MakeHashTableSimple(SCM_HASH_EQ, 2048);
   xen_gauche_permanent_object(help_hash_table);
@@ -1961,8 +1956,7 @@ void xen_initialize(void)
   XEN_DEFINE_PROCEDURE("hook->list",   g_hook_to_list_w, 1, 0, 0, "(hook->list hook) -> list of functions on hook obj");
   XEN_DEFINE_PROCEDURE("run-hook",     g_run_hook_w,     0, 0, 1, "(run-hook hook . args) applies each hook function to args");
   XEN_DEFINE_PROCEDURE("make-hook",    g_make_hook_w,    1, 1, 0, "(make-hook arity :optional help) makes a new hook object");
-  XEN_DEFINE_PROCEDURE("add-hook!",    g_add_hook_w,     2, 0, 0, "(add-hook! hook func) adds func to the hooks function list");
-
+  XEN_DEFINE_PROCEDURE("add-hook!",    g_add_hook_w,     2, 1, 0, "(add-hook! hook func :optional append) adds func to the hooks function list");
 }
 
 
@@ -1977,14 +1971,14 @@ void xen_initialize(void)
 char *xen_version(void)
 {
 #if HAVE_STRDUP
-  return(strdup("no embedded language"));
+  return(strdup("no extension language"));
 #else
   char *buf;
   buf = (char *)calloc(64, sizeof(char));
 #if HAVE_SNPRINTF
-  snprintf(buf, 64, "no embedded language");
+  snprintf(buf, 64, "no extension language");
 #else
-  sprintf(buf, "no embedded language");
+  sprintf(buf, "no extension language");
 #endif
   return(buf);
 #endif

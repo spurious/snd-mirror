@@ -8569,7 +8569,7 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
 
 /* ---------------- mus-apply ---------------- */
 
-Float mus_apply(mus_any *gen, double f1, double f2)
+Float mus_apply(mus_any *gen, Float f1, Float f2)
 {
   /* what about non-gen funcs such as polynomial, ring_modulate etc? */
   if ((gen) && (MUS_RUN_P(gen)))

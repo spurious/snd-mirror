@@ -1,7 +1,7 @@
 #!/usr/local/bin/guile -s
 !#
 
-;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c, xg-ruby.c, xg-x11.h
+;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c, xg-x11.h
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -99,6 +99,16 @@
 (define names-273 '())
 (define strings-273 '())
 
+(define funcs-290 '())
+(define ints-290 '())
+(define ulongs-290 '())
+(define types-290 '())
+(define casts-290 '())
+(define checks-290 '())
+(define check-types-290 '())
+(define names-290 '())
+(define strings-290 '())
+
 (define all-types '())
 (define all-check-types '())
 
@@ -118,7 +128,7 @@
 	"GtkCalendar*" "GtkCellLayout*" "GtkCellLayoutDataFunc" "GtkCellRendererPixbuf*" "GtkCellRendererText*" "GtkCellRendererToggle*"
 	"GtkCheckMenuItem*" "GtkClipboardTargetsReceivedFunc" "GtkColorButton*" "GtkColorSelection*" "GtkColorSelectionDialog*"
 	"GtkCombo*" "GtkComboBox*" "GtkComboBoxEntry*" "GtkContainer*" "GtkCurve*" "GtkDialog*" "GtkDrawingArea*" "GtkEditable*"
-	"GtkEntry*" "GtkEventBox*" "GtkExpander*" "GtkFileChooser*" "GtkFileFilterFunc"
+	"GtkEventBox*" "GtkExpander*" "GtkFileChooser*" "GtkFileFilterFunc"
 	"GtkFileSelection*" "GtkFixed*" "GtkFontButton*" "GtkFontSelection*" "GtkFontSelectionDialog*" "GtkFrame*" "GtkGammaCurve*"
 	"GtkHandleBox*" "GtkIMContextSimple*" "GtkIMMulticontext*" "GtkIconLookupFlags" "GtkImage*" "GtkImageMenuItem*" "GtkInputDialog*"
 	"GtkInvisible*" "GtkItem*" "GtkItemFactoryEntry*" "GtkLabel*" "GtkLayout*" "GtkMenuDetachFunc" "GtkMenuItem*" "GtkMenuShell*"
@@ -129,7 +139,7 @@
 	"GtkToggleActionEntry*" "GtkToggleButton*" "GtkToggleToolButton*" "GtkToolButton*" "GtkToolbar*" "GtkTreeDragDest*"
 	"GtkTreeDragSource*" "GtkTreeModel**" "GtkTreeModelFilter*" "GtkTreeModelSort*" "GtkTreeSortable*" "GtkUIManagerItemType"
 	"GtkViewport*" "PangoAnalysis*" "PangoAttrList**" "PangoFontDescription**" "PangoFontMap*" "PangoRectangle*"
-	"gchar***" "gfloat*" "gint8*" "gsize" "gssize" "guint16*" "guint8*" "gunichar*" "GtkFileChooserButton*"
+	"gchar***" "gfloat*" "gint8*" "gssize" "guint16*" "gunichar*" "GtkFileChooserButton*"
 	"GtkCellView*" "GValue*" "GtkAboutDialog*" "PangoAttrFilterFunc" "PangoScript*" "GtkMenuToolButton*"
 	"GtkClipboardImageReceivedFunc" "PangoMatrix*" "GdkTrapezoid*" "GdkPangoRenderer*" "PangoRenderPart"
 	"GLogFunc" "GError*"
@@ -139,10 +149,14 @@
 	"GtkAttachOptions" "GtkCellRendererState" "GtkCurveType" "GtkDestDefaults" "GtkDestroyNotify" "GtkDialogFlags"
 	"GtkDirectionType" "GtkExpanderStyle" "GtkIconLookupFlags" "GtkMenuPositionFunc" "GtkPathType" "GtkSpinType"
 	"GtkTextSearchFlags" "GtkTreeIterCompareFunc" "GtkTreeSelectionFunc" "GtkUIManagerItemType" "GtkWindowPosition"
-	"GtkWindowType" "PangoGlyph" "PangoUnderline" "double" "gsize" "gssize" 
+	"GtkWindowType" "PangoGlyph" "PangoUnderline" "double" "gssize" 
 
 	"GtkMenuBar*" "GtkTranslateFunc" "GtkMenuPositionFunc" "GtkTreeIterCompareFunc" "GtkTreeSelectionFunc"
 	"GtkDestroyNotify"
+
+	"GtkClipboardRichTextReceivedFunc" "GtkNotebookWindowCreationFunc" "GtkAssistant*" "GtkAssistantPageFunc"
+	"GtkLinkButton*" "GtkRecentChooser*" "GtkRecentSortFunc" "gsize*" "GtkRecentChooserMenu*" "GtkRecentFilterFunc"
+	"GtkRecentFilterInfo*" "GtkRecentData*" "GtkTextBufferSerializeFunc" "GtkTextBufferDeserializeFunc" 
 	))
 
 (define no-xen-p 
@@ -150,11 +164,13 @@
 	"GtkWidgetAuxInfo*" "PangoFontFamily**" "PangoFontset*" "PangoEngineShape*" "PangoLayoutRun*" "GdkDeviceAxis*"
 	"GdkDeviceKey*" "GtkWidget**" "GtkLabelSelectionInfo*" "GtkItemFactoryCallback" "GtkNotebookPage*" "GtkRangeLayout*"
 	"GData*" "GtkRangeStepTimer*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTextBTree*" "GtkTextLogAttrCache*"
-	"GtkTableRowCol*" "GtkAccelMap*" "GtkTooltipsData*" "GdkAtom*" "PangoScript" "PangoFontFace**"
+	"GtkTableRowCol*" "GtkAccelMap*" "GtkTooltipsData*" "PangoScript" "PangoFontFace**"
 
 	"GValue*" "GdkByteOrder" "GdkCrossingMode" "GdkEventType" "GdkGrabStatus" "GdkNotifyType"
 	"GdkOverlapType" "GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "gint16" "gint8" "gshort" "guint8" "lambda" 
+
+	"time_t" "GtkWindowGroup*"
 	))
 
 (define no-xen-to-c 
@@ -162,11 +178,13 @@
 	"GtkWidgetAuxInfo*" "PangoFontFamily**" "PangoFontset*" "PangoEngineShape*" "PangoLayoutRun*" "GdkDeviceAxis*" 
 	"GdkDeviceKey*" "GtkWidget**" "GtkItemFactoryCallback" "GtkLabelSelectionInfo*" "GtkNotebookPage*" "GtkRangeLayout*" 
 	"GtkRangeStepTimer*" "GData*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTableRowCol*" "GtkTextBTree*" 
-	"GtkTextLogAttrCache*" "GtkAccelMap*" "GtkTooltipsData*" "GdkAtom*" "PangoScript" "PangoFontFace**"
+	"GtkTextLogAttrCache*" "GtkAccelMap*" "GtkTooltipsData*" "PangoScript" "PangoFontFace**"
 
 	"GValue*" "GdkByteOrder" "GdkCrossingMode" "GdkEventType" "GdkGrabStatus" "GdkNotifyType"
 	"GdkOverlapType" "GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "etc" "gint16" "gshort"
+
+	"GtkWindowGroup*" "time_t"
 	))
 
 (define (cadr-str data)
@@ -372,8 +390,10 @@
 							  (set! types-260 (cons type types-260))
 							  (if (eq? extra '270)
 							      (set! types-270 (cons type types-270))
-							      (if (not (member type types))
-								  (set! types (cons type types)))))))))))))
+							      (if (eq? extra '290)
+								  (set! types-290 (cons type types-290))
+								  (if (not (member type types))
+								      (set! types (cons type types))))))))))))))
 			(set! type #f))
 		      (if (> i (1+ sp))
 			  (set! type (substring args (1+ sp) i))))
@@ -736,6 +756,15 @@
 	(cons "GtkFileChooserConfirmation" "INT")
 	(cons "GtkFileChooserProp" "INT")
 
+	(cons "GtkSensitivityType" "INT")
+	(cons "GtkTextBufferTargetInfo" "INT")
+	(cons "GtkAssistantPageType" "INT")
+	(cons "GtkCellRendererAccelMode" "INT")
+	(cons "GtkRecentSortType" "INT")
+	(cons "GtkRecentChooserError" "INT")
+	(cons "GtkRecentFilterFlags" "INT")
+	(cons "GtkRecentManagerError" "INT")
+
 	))
 
 (define (type-it type)
@@ -984,6 +1013,22 @@
 	    (set! funcs-22 (cons (list name type strs args) funcs-22))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CFNC-290 data #:optional spec)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "CFNC-290: ~A~%" (list name data))
+	(let ((type (car-str data)))
+	  (if (not (member type all-types))
+	      (begin
+		(set! all-types (cons type all-types))
+		(set! types-290 (cons type types-290))))
+	  (let ((strs (parse-args args '290)))
+	    (if spec
+		(set! funcs-290 (cons (list name type strs args spec) funcs-290))
+		(set! funcs-290 (cons (list name type strs args) funcs-290)))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 (define (helpify name type args)
   (let* ((initial (format #f "  #define H_~A \"~A ~A(" name type name))
 	 (line-len (string-length initial))
@@ -1050,6 +1095,13 @@
 	(set! strings-273 (cons name strings-273))
 	(set! names-273 (cons (cons name 'string) names-273)))))
 
+(define (CSTR-290 name)
+  (if (assoc name names-290)
+      (no-way "~A CSTR-290~%" name)
+      (begin
+	(set! strings-290 (cons name strings-290))
+	(set! names-290 (cons (cons name 'string) names-290)))))
+
 (define (CDBL name)
   (if (assoc name names)
       (no-way "~A CDBL~%" name)
@@ -1099,6 +1151,14 @@
       (no-way "~A CLNG-256~%" name)
       (begin
 	(set! ulongs-256 (cons (list name type spec-name) ulongs-256))
+	(set! names (cons (cons name 'ulong) names)))))
+
+(define* (CLNG-290 name #:optional type spec-name)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CLNG-290~%" name)
+      (begin
+	(set! ulongs-290 (cons (list name type spec-name) ulongs-290))
 	(set! names (cons (cons name 'ulong) names)))))
 
 (define* (CINT name #:optional type)
@@ -1173,6 +1233,14 @@
 	(set! ints-273 (cons name ints-273))
 	(set! names (cons (cons name 'int) names)))))
 
+(define* (CINT-290 name #:optional type)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CINT-290~%" name)
+      (begin
+	(set! ints-290 (cons name ints-290))
+	(set! names (cons (cons name 'int) names)))))
+
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
   (if (assoc name names)
       (no-way "~A CCAST~%" name)
@@ -1215,6 +1283,13 @@
       (no-way "~A CCAST-256~%" name)
       (begin
 	(set! casts-256 (cons (list name type) casts-256))
+	(set! names (cons (cons name 'def) names)))))
+
+(define (CCAST-290 name type)
+  (if (assoc name names)
+      (no-way "~A CCAST-290~%" name)
+      (begin
+	(set! casts-290 (cons (list name type) casts-290))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCHK name type)
@@ -1281,6 +1356,17 @@
 	      (set! all-check-types (cons type all-check-types))
 	      (set! check-types-256 (cons type check-types-256))))
 	(set! checks-256 (cons (list name type) checks-256))
+	(set! names (cons (cons name 'def) names)))))
+
+(define (CCHK-290 name type)
+  (if (assoc name names)
+      (no-way "~A CCHK-290~%" name)
+      (begin
+	(if (not (member type all-check-types))
+	    (begin
+	      (set! all-check-types (cons type all-check-types))
+	      (set! check-types-290 (cons type check-types-290))))
+	(set! checks-290 (cons (list name type) checks-290))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (STRUCT data)
@@ -1390,6 +1476,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-290 dpy thunk)
+  (dpy "#if HAVE_GTK_LINK_BUTTON_NEW~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 
 
 ;;; ---------------------------------------- write output files ----------------------------------------
@@ -1407,6 +1498,7 @@
 (hey " *     HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION for gtk 2.6.0~%")
 (hey " *     HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION for gtk 2.7.0~%")
 (hey " *     HAVE_GTK_TREE_VIEW_GET_VISIBLE_RANGE for gtk 2.7.3~%")
+(hey " *     HAVE_GTK_LINK_BUTTON_NEW for gtk 2.9.0~%")
 (hey " *~%")
 (hey " * reference args initial values are usually ignored, resultant values are returned in a list.~%")
 (hey " * null ptrs are passed and returned as #f, trailing \"user_data\" callback function arguments are optional (default: #f).~%")
@@ -1441,6 +1533,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     12-May:    2.9.0~%")
 (hey " *     21-Apr:    Gauche support.~%")
 (hey " *     29-Mar:    Forth support.~%")
 (hey " *     7-Mar:     if g_set_error, return the error message, not the GError pointer~%")
@@ -1732,6 +1825,12 @@
     (with-270 hey
 	     (lambda ()
 	       (for-each type-it (reverse types-270))
+	       )))
+
+(if (not (null? types-290))
+    (with-290 hey
+	     (lambda ()
+	       (for-each type-it (reverse types-290))
 	       )))
 
 (hey "#define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))~%")
@@ -2342,6 +2441,7 @@
 (if (not (null? funcs-260)) (with-260 hey (lambda () (for-each handle-func (reverse funcs-260)))))
 (if (not (null? funcs-270)) (with-270 hey (lambda () (for-each handle-func (reverse funcs-270)))))
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each handle-func (reverse funcs-273)))))
+(if (not (null? funcs-290)) (with-290 hey (lambda () (for-each handle-func (reverse funcs-290)))))
 
 
 (hey "#define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))~%~%")
@@ -2362,6 +2462,7 @@
 (if (not (null? casts-236)) (with-236 hey (lambda () (for-each cast-it (reverse casts-236)))))
 (if (not (null? casts-250)) (with-250 hey (lambda () (for-each cast-it (reverse casts-250)))))
 (if (not (null? casts-256)) (with-256 hey (lambda () (for-each cast-it (reverse casts-256)))))
+(if (not (null? casts-290)) (with-290 hey (lambda () (for-each cast-it (reverse casts-290)))))
 
 ;;; checks have to use the built-in macros, not local symbol-based type checks
 
@@ -2375,6 +2476,7 @@
 (if (not (null? checks-236)) (with-236 hey (lambda () (for-each make-check (reverse checks-236)))))
 (if (not (null? checks-250)) (with-250 hey (lambda () (for-each make-check (reverse checks-250)))))
 (if (not (null? checks-256)) (with-256 hey (lambda () (for-each make-check (reverse checks-256)))))
+(if (not (null? checks-290)) (with-290 hey (lambda () (for-each make-check (reverse checks-290)))))
 
 
 (hey "~%~%/* ---------------------------------------- special functions ---------------------------------------- */~%~%")
@@ -2682,6 +2784,7 @@
 (if (not (null? funcs-260)) (with-260 hey (lambda () (for-each argify-func (reverse funcs-260)))))
 (if (not (null? funcs-270)) (with-270 hey (lambda () (for-each argify-func (reverse funcs-270)))))
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each argify-func (reverse funcs-273)))))
+(if (not (null? funcs-290)) (with-290 hey (lambda () (for-each argify-func (reverse funcs-290)))))
 
 (define (ruby-cast func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (hey "XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)~%")
@@ -2699,6 +2802,7 @@
 (if (not (null? casts-236)) (with-236 hey (lambda () (for-each ruby-cast (reverse casts-236)))))
 (if (not (null? casts-250)) (with-250 hey (lambda () (for-each ruby-cast (reverse casts-250)))))
 (if (not (null? casts-256)) (with-256 hey (lambda () (for-each ruby-cast (reverse casts-256)))))
+(if (not (null? casts-290)) (with-290 hey (lambda () (for-each ruby-cast (reverse casts-290)))))
 
 (define (ruby-check func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func))))
 (for-each ruby-check (reverse checks))
@@ -2707,6 +2811,7 @@
 (if (not (null? checks-236)) (with-236 hey (lambda () (for-each ruby-check (reverse checks-236)))))
 (if (not (null? checks-250)) (with-250 hey (lambda () (for-each ruby-check (reverse checks-250)))))
 (if (not (null? checks-256)) (with-256 hey (lambda () (for-each ruby-check (reverse checks-256)))))
+(if (not (null? checks-290)) (with-290 hey (lambda () (for-each ruby-check (reverse checks-290)))))
 
 
 (let ((in-x11 #f))
@@ -2784,6 +2889,7 @@
 (if (not (null? funcs-260)) (with-260 hey (lambda () (for-each unargify-func (reverse funcs-260)))))
 (if (not (null? funcs-270)) (with-270 hey (lambda () (for-each unargify-func (reverse funcs-270)))))
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each unargify-func (reverse funcs-273)))))
+(if (not (null? funcs-290)) (with-290 hey (lambda () (for-each unargify-func (reverse funcs-290)))))
 
 (hey "#define gxg_GPOINTER_w gxg_GPOINTER~%")
 (hey "#define c_array_to_xen_list_w c_array_to_xen_list~%")
@@ -2800,6 +2906,7 @@
 (if (not (null? casts-236)) (with-236 hey (lambda () (for-each ruby-uncast (reverse casts-236)))))
 (if (not (null? casts-250)) (with-250 hey (lambda () (for-each ruby-uncast (reverse casts-250)))))
 (if (not (null? casts-256)) (with-256 hey (lambda () (for-each ruby-uncast (reverse casts-256)))))
+(if (not (null? casts-290)) (with-290 hey (lambda () (for-each ruby-uncast (reverse casts-290)))))
 
 (define (ruby-uncheck func) (hey "#define gxg_~A_w gxg_~A~%" (no-arg (car func)) (no-arg (car func))))
 (for-each ruby-uncheck (reverse checks))
@@ -2808,6 +2915,7 @@
 (if (not (null? checks-236)) (with-236 hey (lambda () (for-each ruby-uncheck (reverse checks-236)))))
 (if (not (null? checks-250)) (with-250 hey (lambda () (for-each ruby-uncheck (reverse checks-250)))))
 (if (not (null? checks-256)) (with-256 hey (lambda () (for-each ruby-uncheck (reverse checks-256)))))
+(if (not (null? checks-290)) (with-290 hey (lambda () (for-each ruby-uncheck (reverse checks-290)))))
 
 (let ((in-x11 #f))
   (for-each 
@@ -2908,6 +3016,7 @@
 (if (not (null? funcs-260)) (with-260 hey (lambda () (for-each defun (reverse funcs-260)))))
 (if (not (null? funcs-270)) (with-270 hey (lambda () (for-each defun (reverse funcs-270)))))
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each defun (reverse funcs-273)))))
+(if (not (null? funcs-290)) (with-290 hey (lambda () (for-each defun (reverse funcs-290)))))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) casts obj to ~A\");~%" 
@@ -2924,6 +3033,7 @@
 (if (not (null? casts-236)) (with-236 hey (lambda () (for-each cast-out (reverse casts-236)))))
 (if (not (null? casts-250)) (with-250 hey (lambda () (for-each cast-out (reverse casts-250)))))
 (if (not (null? casts-256)) (with-256 hey (lambda () (for-each cast-out (reverse casts-256)))))
+(if (not (null? casts-290)) (with-290 hey (lambda () (for-each cast-out (reverse casts-290)))))
 
 (hey "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);~%")
 (hey "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);~%")
@@ -2945,6 +3055,7 @@
 (if (not (null? checks-236)) (with-236 hey (lambda () (for-each check-out (reverse checks-236)))))
 (if (not (null? checks-250)) (with-250 hey (lambda () (for-each check-out (reverse checks-250)))))
 (if (not (null? checks-256)) (with-256 hey (lambda () (for-each check-out (reverse checks-256)))))
+(if (not (null? checks-290)) (with-290 hey (lambda () (for-each check-out (reverse checks-290)))))
 
 (hey "}~%~%")
 
@@ -3033,6 +3144,8 @@
     (with-270 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-270)))))
 (if (not (null? ints-273))
     (with-273 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-273)))))
+(if (not (null? ints-290))
+    (with-290 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-290)))))
 
 
 (for-each 
@@ -3049,6 +3162,8 @@
     (with-250 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-250)))))
 (if (not (null? ulongs-256))
     (with-256 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-256)))))
+(if (not (null? ulongs-290))
+    (with-290 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-290)))))
      
 
 (hey "}~%~%")
@@ -3093,6 +3208,8 @@
     (with-250 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-250)))))
 (if (not (null? strings-273))
     (with-273 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-273)))))
+(if (not (null? strings-290))
+    (with-290 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-290)))))
 (hey "}~%~%")
 
 

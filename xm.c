@@ -403,7 +403,6 @@ static void define_xm_obj(void)
 #if (!HAVE_GAUCHE)
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
 #else
-  /* TODO: gauche print and in xg.c (also free) */
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *), NULL, xm_obj_free);
 #endif
 #if HAVE_GUILE

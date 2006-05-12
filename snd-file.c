@@ -1,5 +1,6 @@
 #include "snd.h"
 #include "snd-file.h"
+#include "sndlib-strings.h"
 
 #if HAVE_DIRENT_H
   #include <dirent.h>
@@ -1206,6 +1207,48 @@ static XEN snd_opened_sound;
 static XEN open_hook;
 static XEN close_hook;
 static XEN before_close_hook;
+static XEN during_open_hook;
+static XEN after_open_hook;
+static XEN output_name_hook;
+
+void during_open(int fd, const char *file, open_reason_t reason)
+{
+  if (XEN_HOOKED(during_open_hook))
+    run_hook(during_open_hook,
+	     XEN_LIST_3(C_TO_XEN_INT(fd),
+			C_TO_XEN_STRING(file),
+			C_TO_XEN_INT((int)reason)),
+	     S_during_open_hook);
+}
+
+void after_open(int index)
+{
+  if (XEN_HOOKED(after_open_hook))
+    run_hook(after_open_hook,
+	     XEN_LIST_1(C_TO_XEN_INT(index)),
+	     S_after_open_hook);
+  call_ss_watchers(SS_FILE_OPEN_WATCHER, SS_FILE_OPENED);
+}
+
+char *output_name(const char *current_name)
+{
+  if (XEN_HOOKED(output_name_hook))
+    {
+      XEN result;
+      XEN procs = XEN_HOOK_PROCEDURES (output_name_hook);
+      while (XEN_NOT_NULL_P(procs))
+	{
+	  result = XEN_CALL_1(XEN_CAR(procs),
+			      C_TO_XEN_STRING(current_name),
+			      S_output_name_hook);
+	  if (XEN_STRING_P(result)) 
+	    return(copy_string(XEN_TO_C_STRING(result)));
+	  procs = XEN_CDR (procs);
+	}
+    }
+  return(copy_string(current_name));
+}
+
 
 #if HAVE_GUILE_DYNAMIC_WIND
 /* cleanup even if error in file lookup process */
@@ -4764,6 +4807,117 @@ static XEN g_sound_file_p(XEN name)
   return(C_TO_XEN_BOOLEAN(sound_file_p(XEN_TO_C_STRING(name))));
 }
 
+static XEN g_snd_tempnam(void) 
+{
+  #define H_snd_tempnam "(" S_snd_tempnam "): return a new temp file name using " S_temp_dir "."
+  char *tmp;
+  XEN res;
+  tmp = snd_tempnam();
+  res = C_TO_XEN_STRING(tmp);
+  FREE(tmp);
+  return(res);
+}
+
+static XEN g_auto_update(void) {return(C_TO_XEN_BOOLEAN(auto_update(ss)));}
+static XEN g_set_auto_update(XEN val) 
+{
+  #define H_auto_update "(" S_auto_update "): #t if Snd should automatically update a file if it changes unexpectedly (default: #f). \
+The number of seconds between update checks is set by " S_auto_update_interval "."
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_auto_update, "a boolean");
+  set_auto_update(XEN_TO_C_BOOLEAN(val)); 
+  return(C_TO_XEN_BOOLEAN(auto_update(ss)));
+}
+
+static XEN g_auto_update_interval(void) {return(C_TO_XEN_DOUBLE(auto_update_interval(ss)));}
+static XEN g_set_auto_update_interval(XEN val) 
+{
+  Float ctime, old_time;
+  #define H_auto_update_interval "(" S_auto_update_interval "): time (seconds) between background checks for changed file on disk (default: 60). \
+This value only matters if " S_auto_update " is #t"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_auto_update_interval, "a number"); 
+  ctime = XEN_TO_C_DOUBLE(val);
+  if ((ctime < 0.0) || (ctime > (24 * 3600)))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_auto_update_interval, 1, val, "~A: invalid time");
+  old_time = auto_update_interval(ss);
+  set_auto_update_interval(ctime);
+  /* if new value is 0.0, auto_update_check will notice that, and not run or re-start the update check */
+  /* if new value is not 0.0, and old value was 0.0, we need to restart the timeout proc, unless it's still on the queue */
+  if ((ctime > 0.0) && (old_time == 0.0))
+    auto_update_restart();
+  return(C_TO_XEN_DOUBLE(auto_update_interval(ss)));
+}
+
+static XEN g_default_output_chans(void) {return(C_TO_XEN_INT(default_output_chans(ss)));}
+static XEN g_set_default_output_chans(XEN val) 
+{
+  #define MAX_OUTPUT_CHANS 1024
+  #define H_default_output_chans "(" S_default_output_chans "): default number of channels when a new or temporary file is created (1)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_chans, "an integer"); 
+  set_default_output_chans(mus_iclamp(1, XEN_TO_C_INT(val), MAX_OUTPUT_CHANS));
+  return(C_TO_XEN_INT(default_output_chans(ss)));
+}
+
+static XEN g_default_output_srate(void) {return(C_TO_XEN_INT(default_output_srate(ss)));}
+static XEN g_set_default_output_srate(XEN val) 
+{
+  #define MAX_OUTPUT_SRATE 1000000000
+  #define H_default_output_srate "(" S_default_output_srate "): default srate when a new or temporary file is created (22050)" 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_srate, "a number"); 
+  set_default_output_srate(mus_iclamp(1, XEN_TO_C_INT_OR_ELSE(val, 0), MAX_OUTPUT_SRATE));
+  return(C_TO_XEN_INT(default_output_srate(ss)));
+}
+
+static XEN g_default_output_header_type(void) {return(C_TO_XEN_INT(default_output_header_type(ss)));}
+static XEN g_set_default_output_header_type(XEN val) 
+{
+  int typ;
+  #define H_default_output_header_type "(" S_default_output_header_type "): default header type when a new or temporary file is created. \
+Normally this is " S_mus_next "; -1 here indicates you want Snd to use the current sound's header type, if possible. \
+Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", " S_mus_nist ", " S_mus_aifc ", and " S_mus_raw "."
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_header_type, "an integer"); 
+  typ = XEN_TO_C_INT(val);
+  if (mus_header_writable(typ, -2))
+    set_default_output_header_type(typ); 
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_header_type, 1, val, "~A: unwritable header type");
+  return(C_TO_XEN_INT(default_output_header_type(ss)));
+}
+
+static XEN g_default_output_data_format(void) {return(C_TO_XEN_INT(default_output_data_format(ss)));}
+static XEN g_set_default_output_data_format(XEN val) 
+{
+  int format;
+  #define H_default_output_data_format "(" S_default_output_data_format "): default data format when a new or temporary file is created, \
+normally " S_mus_bshort "; -1 here means try to use the current sound's data format; many other formats \
+are available, but not all are compatible with all header types"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_data_format, "an integer"); 
+  format = XEN_TO_C_INT(val);
+  if (MUS_DATA_FORMAT_OK(format))
+    set_default_output_data_format(format); 
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_data_format, 1, val, "~A: unknown data format");
+  return(C_TO_XEN_INT(default_output_data_format(ss)));
+}
+
+static XEN g_clipping(void) {return(C_TO_XEN_BOOLEAN(clipping(ss)));}
+static XEN g_set_clipping(XEN val) 
+{
+  #define H_clipping "(" S_clipping "): #t if Snd should clip output values to the current \
+output data format's maximum. The default (#f) allows them to wrap-around which makes a very loud click"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_clipping, "a boolean");
+  set_clipping(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(clipping(ss)));
+}
+
+static XEN g_ask_before_overwrite(void) {return(C_TO_XEN_BOOLEAN(ask_before_overwrite(ss)));}
+static XEN g_set_ask_before_overwrite(XEN val) 
+{
+  #define H_ask_before_overwrite "(" S_ask_before_overwrite "): #t if you want Snd to ask before overwriting a file. \
+If #f, any existing file of the same name will be overwritten without warning when you save a sound."
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_ask_before_overwrite, "a boolean");
+  set_ask_before_overwrite(XEN_TO_C_BOOLEAN(val)); 
+  return(C_TO_XEN_BOOLEAN(ask_before_overwrite(ss)));
+}
+
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_view_files_sort_w, g_view_files_sort)
@@ -4806,6 +4960,23 @@ XEN_NARGIFY_2(g_add_file_filter_w, g_add_file_filter)
 XEN_NARGIFY_1(g_delete_file_sorter_w, g_delete_file_sorter)
 XEN_NARGIFY_2(g_add_file_sorter_w, g_add_file_sorter)
 XEN_NARGIFY_1(g_sound_file_p_w, g_sound_file_p)
+XEN_NARGIFY_0(g_snd_tempnam_w, g_snd_tempnam)
+XEN_NARGIFY_0(g_auto_update_w, g_auto_update)
+XEN_NARGIFY_1(g_set_auto_update_w, g_set_auto_update)
+XEN_NARGIFY_0(g_auto_update_interval_w, g_auto_update_interval)
+XEN_NARGIFY_1(g_set_auto_update_interval_w, g_set_auto_update_interval)
+XEN_NARGIFY_0(g_default_output_chans_w, g_default_output_chans)
+XEN_NARGIFY_1(g_set_default_output_chans_w, g_set_default_output_chans)
+XEN_NARGIFY_0(g_default_output_srate_w, g_default_output_srate)
+XEN_NARGIFY_1(g_set_default_output_srate_w, g_set_default_output_srate)
+XEN_NARGIFY_0(g_default_output_header_type_w, g_default_output_header_type)
+XEN_NARGIFY_1(g_set_default_output_header_type_w, g_set_default_output_header_type)
+XEN_NARGIFY_0(g_default_output_data_format_w, g_default_output_data_format)
+XEN_NARGIFY_1(g_set_default_output_data_format_w, g_set_default_output_data_format)
+XEN_NARGIFY_0(g_ask_before_overwrite_w, g_ask_before_overwrite)
+XEN_NARGIFY_1(g_set_ask_before_overwrite_w, g_set_ask_before_overwrite)
+XEN_NARGIFY_0(g_clipping_w, g_clipping)
+XEN_NARGIFY_1(g_set_clipping_w, g_set_clipping)
 #else
 #define g_view_files_sort_w g_view_files_sort
 #define g_set_view_files_sort_w g_set_view_files_sort
@@ -4847,6 +5018,23 @@ XEN_NARGIFY_1(g_sound_file_p_w, g_sound_file_p)
 #define g_delete_file_sorter_w g_delete_file_sorter
 #define g_add_file_sorter_w g_add_file_sorter
 #define g_sound_file_p_w g_sound_file_p
+#define g_snd_tempnam_w g_snd_tempnam
+#define g_auto_update_w g_auto_update
+#define g_set_auto_update_w g_set_auto_update
+#define g_auto_update_interval_w g_auto_update_interval
+#define g_set_auto_update_interval_w g_set_auto_update_interval
+#define g_default_output_chans_w g_default_output_chans
+#define g_set_default_output_chans_w g_set_default_output_chans
+#define g_default_output_srate_w g_default_output_srate
+#define g_set_default_output_srate_w g_set_default_output_srate
+#define g_default_output_header_type_w g_default_output_header_type
+#define g_set_default_output_header_type_w g_set_default_output_header_type
+#define g_default_output_data_format_w g_default_output_data_format
+#define g_set_default_output_data_format_w g_set_default_output_data_format
+#define g_ask_before_overwrite_w g_ask_before_overwrite
+#define g_set_ask_before_overwrite_w g_set_ask_before_overwrite
+#define g_clipping_w g_clipping
+#define g_set_clipping_w g_set_clipping
 #endif
 
 void g_init_file(void)
@@ -4904,18 +5092,78 @@ If it returns #t, the file is not closed."
   #define H_bad_header_hook S_bad_header_hook " (filename): called if a file has some bogus-looking header. \
 Return #t to give up on that file."
 
-  #define H_after_save_as_hook " (saved-sound-index save-as-full-filename from-save-as-dialog): called \
+  #define H_after_save_as_hook S_after_save_as_hook " (saved-sound-index save-as-full-filename from-save-as-dialog): called \
 upon File:Save as or " S_save_sound_as " completion."
 
-  #define H_before_save_as_hook " (index filename selection srate type format comment): called \
+  #define H_before_save_as_hook S_before_save_as_hook " (index filename selection srate type format comment): called \
 before File:Save as or " S_save_sound_as ". Provides a way to fixup a sound just before it is saved."
 
-  open_hook =           XEN_DEFINE_HOOK(S_open_hook, 1,           H_open_hook);           /* arg = filename */
-  before_close_hook =   XEN_DEFINE_HOOK(S_before_close_hook, 1,   H_before_close_hook);   /* arg = sound index */
-  close_hook =          XEN_DEFINE_HOOK(S_close_hook, 1,          H_close_hook);          /* arg = sound index */
-  bad_header_hook =     XEN_DEFINE_HOOK(S_bad_header_hook, 1,     H_bad_header_hook);     /* arg = filename */
-  after_save_as_hook =  XEN_DEFINE_HOOK(S_after_save_as_hook, 3,  H_after_save_as_hook);  /* args: index filename from-dialog */
+#if HAVE_SCHEME
+  #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \
+but before data has been read. \n\
+  (add-hook! " S_during_open_hook "\n\
+    (lambda (fd name reason) \n\
+      (if (= (" S_mus_sound_header_type " name) " S_mus_raw ")\n\
+          (set! (" S_mus_file_prescaler " fd) 500.0))))"
+
+  #define H_after_open_hook S_after_open_hook " (snd): called just before the new file's window is displayed. \
+This provides a way to set various sound-specific defaults. \n\
+  (add-hook! " S_after_open_hook "\n\
+    (lambda (snd) \n\
+      (if (> (" S_channels " snd) 1) \n\
+          (set! (" S_channel_style " snd) " S_channels_combined "))))"
+#endif
+
+#if HAVE_RUBY
+  #define H_during_open_hook "$" S_during_open_hook " lambda do |fd, name, reason| ...; called after file is opened, \
+but before data has been read. \n\
+  $during_open_hook.add_hook!(\"during-open-hook\") do |fd, name, reason|\n\
+    if (mus_sound_header_type(name) == Mus_raw)\n\
+      set_mus_file_prescaler(fd, 500.0)\n\
+    end\n\
+  end"
+  #define H_after_open_hook S_after_open_hook " (snd): called just before the new file's window is displayed. \
+This provides a way to set various sound-specific defaults. \n\
+  $after_open_hook.add-hook!(\"set-channels-combined\") do |snd| \n\
+    if (channels(snd) > 1) \n\
+      set_channel_style(snd, Channels_combined)\n\
+    end\n\
+  end"
+#endif
+
+#if HAVE_FORTH
+  #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \
+but before data has been read. \n\
+" S_during_open_hook " lambda: { fd name reason }\n\
+  name " S_mus_sound_header_type " " S_mus_raw " = if\n\
+    500.0 fd set-" S_mus_file_prescaler "\n\
+  else\n\
+    #f\n\
+  then\n\
+; 3 make-proc add-hook!"
+  #define H_after_open_hook S_after_open_hook " (snd): called just before the new file's window is displayed. \
+This provides a way to set various sound-specific defaults. \n\
+" S_after_open_hook " lambda: { snd }\n\
+  snd " S_channels " 1 > if\n\
+    " S_channels_combined " snd set-" S_channel_style "\n\
+  else\n\
+    #f\n\
+  then\n\
+; 1 make-proc add-hook!"
+#endif
+
+  #define H_output_name_hook S_output_name_hook " (current-name): called from the File:New dialog.  If it returns a filename, \
+that name is presented in the New File dialog."
+
+  open_hook =           XEN_DEFINE_HOOK(S_open_hook,           1, H_open_hook);           /* arg = filename */
+  before_close_hook =   XEN_DEFINE_HOOK(S_before_close_hook,   1, H_before_close_hook);   /* arg = sound index */
+  close_hook =          XEN_DEFINE_HOOK(S_close_hook,          1, H_close_hook);          /* arg = sound index */
+  bad_header_hook =     XEN_DEFINE_HOOK(S_bad_header_hook,     1, H_bad_header_hook);     /* arg = filename */
+  after_save_as_hook =  XEN_DEFINE_HOOK(S_after_save_as_hook,  3, H_after_save_as_hook);  /* args: index filename from-dialog */
   before_save_as_hook = XEN_DEFINE_HOOK(S_before_save_as_hook, 7, H_before_save_as_hook); /* args: index filename selection srate type format comment */
+  during_open_hook =    XEN_DEFINE_HOOK(S_during_open_hook,    3, H_during_open_hook);    /* args = fd filename reason */
+  after_open_hook =     XEN_DEFINE_HOOK(S_after_open_hook,     1, H_after_open_hook);     /* args = sound */
+  output_name_hook =    XEN_DEFINE_HOOK(S_output_name_hook,    1, H_output_name_hook);    /* arg = current name, if any */
 
   #define H_open_raw_sound_hook S_open_raw_sound_hook " (filename current-choices): called when a headerless sound file is opened. \
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \
@@ -4951,10 +5199,38 @@ files list of the View Files dialog.  If it returns #t, the default action, open
   XEN_PROTECT_FROM_GC(ss->file_filters);
   XEN_PROTECT_FROM_GC(ss->file_sorters);
 
-  XEN_DEFINE_PROCEDURE(S_add_file_filter,    g_add_file_filter_w,                2, 0, 0, H_add_file_filter);
-  XEN_DEFINE_PROCEDURE(S_delete_file_filter, g_delete_file_filter_w,             1, 0, 0, H_delete_file_filter);
+  XEN_DEFINE_PROCEDURE(S_add_file_filter,    g_add_file_filter_w,    2, 0, 0, H_add_file_filter);
+  XEN_DEFINE_PROCEDURE(S_delete_file_filter, g_delete_file_filter_w, 1, 0, 0, H_delete_file_filter);
 
-  XEN_DEFINE_PROCEDURE(S_add_file_sorter,    g_add_file_sorter_w,                2, 0, 0, H_add_file_sorter);
-  XEN_DEFINE_PROCEDURE(S_delete_file_sorter, g_delete_file_sorter_w,             1, 0, 0, H_delete_file_sorter);
+  XEN_DEFINE_PROCEDURE(S_add_file_sorter,    g_add_file_sorter_w,    2, 0, 0, H_add_file_sorter);
+  XEN_DEFINE_PROCEDURE(S_delete_file_sorter, g_delete_file_sorter_w, 1, 0, 0, H_delete_file_sorter);
+  XEN_DEFINE_PROCEDURE(S_snd_tempnam,        g_snd_tempnam_w,        0, 0, 0, H_snd_tempnam);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_auto_update, g_auto_update_w, H_auto_update,
+				   S_setB S_auto_update, g_set_auto_update_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_auto_update_interval, g_auto_update_interval_w, H_auto_update_interval,
+				   S_setB S_auto_update_interval, g_set_auto_update_interval_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_ask_before_overwrite, g_ask_before_overwrite_w, H_ask_before_overwrite,
+				   S_setB S_ask_before_overwrite, g_set_ask_before_overwrite_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_chans, g_default_output_chans_w, H_default_output_chans,
+				   S_setB S_default_output_chans, g_set_default_output_chans_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_srate, g_default_output_srate_w, H_default_output_srate,
+				   S_setB S_default_output_srate, g_set_default_output_srate_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_header_type, g_default_output_header_type_w, H_default_output_header_type,
+				   S_setB S_default_output_header_type, g_set_default_output_header_type_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_data_format, g_default_output_data_format_w, H_default_output_data_format,
+				   S_setB S_default_output_data_format, g_set_default_output_data_format_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_clipping, g_clipping_w, H_clipping,
+				   S_setB S_clipping, g_set_clipping_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER("data-clipped", g_clipping_w, H_clipping,
+				   S_setB "data-clipped", g_set_clipping_w,  0, 0, 1, 0);
 
 }

@@ -934,4 +934,3 @@ char *slist_selection(slist *lst)
     return((char *)gtk_button_get_label(GTK_BUTTON(lst->items[lst->selected_item])));
   return(NULL);
 }
-

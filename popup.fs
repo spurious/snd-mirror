@@ -1499,7 +1499,7 @@ lambda: ( us -- )
 lambda: ( -- )
   main-widgets 4 list-ref dup unless
     drop
-    show-listener drop
+    #t show-listener drop
     #f set-show-listener drop
     main-widgets 4 list-ref
   then { parent }

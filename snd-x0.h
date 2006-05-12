@@ -1,7 +1,6 @@
 #ifndef SND_X0_H
 #define SND_X0_H
 
-#include <config.h>
 #include <Xm/XmAll.h>
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>

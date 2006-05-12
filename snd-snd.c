@@ -2,6 +2,31 @@
 #include "sndlib-strings.h"
 #include "clm2xen.h"
 
+snd_info *get_sp(XEN x_snd_n, sp_sound_t accept_player)
+{
+  /* if x_snd_n is a number, it is sp->index */
+  if (XEN_INTEGER_P(x_snd_n))
+    {
+      int snd_n;
+      snd_n = XEN_TO_C_INT(x_snd_n);
+      if (snd_n >= 0)
+	{
+	  if ((snd_n < ss->max_sounds) && 
+	      (snd_ok(ss->sounds[snd_n])))
+	    return(ss->sounds[snd_n]);
+	}
+      else
+	{
+	  if (accept_player == PLAYERS_OK)
+	    return(player(snd_n));
+	}
+      return(NULL);
+    }
+  /* use default sound, if any */
+  return(any_selected_sound());
+}
+
+
 /* SOMEDAY: draggable (focusable) freq axis in filter control */
 
 snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples)
@@ -1062,7 +1087,7 @@ void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
     }
 }
 
-#if HAVE_RATIOS
+#if XEN_HAVE_RATIOS
 void snd_rationalize(Float a, int *num, int *den)
 {
   XEN ratio;
@@ -1078,7 +1103,7 @@ void snd_rationalize(Float a, int *num, int *den)
 
 /* -------- control panel speed -------- */
 
-#if (!HAVE_RATIOS)
+#if (!XEN_HAVE_RATIOS)
 #define TOTAL_RATS 123
 
 static char *rat_names[TOTAL_RATS] = {
@@ -1095,7 +1120,7 @@ Float speed_changed(Float val, char *srcbuf, speed_style_t style, int tones, int
   switch (style)
     {
     case SPEED_CONTROL_AS_RATIO:
-#if HAVE_RATIOS
+#if XEN_HAVE_RATIOS
       {
 	int num, den;
 	snd_rationalize(val, &num, &den);
@@ -2205,7 +2230,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, const char *caller)
     case SP_EXPAND_HOP:          return(C_TO_XEN_DOUBLE(sp->expand_control_hop));      break;
     case SP_EXPAND_JITTER:       return(C_TO_XEN_DOUBLE(sp->expand_control_jitter));   break;
     case SP_SPEED:
-#if HAVE_RATIOS
+#if XEN_HAVE_RATIOS
       if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
 	{
 	  if (sp->speed_control_direction == -1)
@@ -2354,7 +2379,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
       break;
     case SP_SPEED_STYLE:
       sp->speed_control_style = (speed_style_t)XEN_TO_C_INT(val); /* range checked already */
-#if HAVE_RATIOS
+#if XEN_HAVE_RATIOS
       if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
 	snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
 #endif
@@ -2538,7 +2563,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
       return(C_TO_XEN_DOUBLE(sp->expand_control_jitter));
       break;
     case SP_SPEED: 
-#if HAVE_RATIOS
+#if XEN_HAVE_RATIOS
       if ((sp->speed_control_style == SPEED_CONTROL_AS_RATIO) &&
 	  (XEN_RATIO_P(val)))
 	{
@@ -2563,7 +2588,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
 	  int direction;
 	  if (fval > 0.0) direction = 1; else direction = -1;
 	  set_speed(sp, fabs(fval)); 
-#if HAVE_RATIOS
+#if XEN_HAVE_RATIOS
 	  if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
 	    snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
 #endif
@@ -4997,6 +5022,22 @@ static XEN g_equalize_panes(XEN snd)
   return(XEN_FALSE);
 }
 
+static XEN g_sounds(void)
+{
+  #define H_sounds "(" S_sounds "): list of active sounds (a list of indices)"
+  int i;
+  XEN result;
+  result = XEN_EMPTY_LIST;
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
+	result = XEN_CONS(C_TO_XEN_INT(i),
+			  result);
+    }
+  return(result);
+}
 
 
 
@@ -5124,6 +5165,7 @@ XEN_VARGIFY(g_open_sound_file_w, g_open_sound_file)
 XEN_NARGIFY_2(g_close_sound_file_w, g_close_sound_file)
 XEN_NARGIFY_3(g_vct_to_sound_file_w, g_vct_to_sound_file)
 XEN_ARGIFY_1(g_equalize_panes_w, g_equalize_panes)
+XEN_NARGIFY_0(g_sounds_w, g_sounds)
 #else
 #define g_sound_p_w g_sound_p
 #define g_bomb_w g_bomb
@@ -5248,6 +5290,7 @@ XEN_ARGIFY_1(g_equalize_panes_w, g_equalize_panes)
 #define g_close_sound_file_w g_close_sound_file
 #define g_vct_to_sound_file_w g_vct_to_sound_file
 #define g_equalize_panes_w g_equalize_panes
+#define g_sounds_w g_sounds
 #endif
 
 void g_init_snd(void)
@@ -5454,4 +5497,7 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   XEN_DEFINE_PROCEDURE(S_close_sound_file,         g_close_sound_file_w,         2, 0, 0, H_close_sound_file);
   XEN_DEFINE_PROCEDURE(S_vct_to_sound_file,        g_vct_to_sound_file_w,        3, 0, 0, H_vct_to_sound_file);
   XEN_DEFINE_PROCEDURE(S_equalize_panes,           g_equalize_panes_w,           0, 1, 0, H_equalize_panes);
+
+  XEN_DEFINE_PROCEDURE(S_sounds,                   g_sounds_w,                   0, 0, 0, H_sounds);
+
 }

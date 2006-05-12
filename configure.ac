@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 8.1, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz)
+AC_INIT(snd, 8.2, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz)
 
 INVOKED_PROG="$[0]"
 INVOKED_ARGS="$[@]"
@@ -22,7 +22,7 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=snd
-VERSION=8.1
+VERSION=8.2
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -964,6 +964,8 @@ else
 	# for snd-prefs/gfile (2.3.6)
 	AC_CHECK_LIB(m, gtk_combo_box_entry_new_text, [AC_DEFINE(HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT)], ,$GTK_LIBS)
 	# for snd-prefs/gfile (2.3.6)
+	AC_CHECK_LIB(m, gtk_link_button_new, [AC_DEFINE(HAVE_GTK_LINK_BUTTON_NEW)], ,$GTK_LIBS)
+	# for 2.9.0
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)

@@ -408,12 +408,24 @@
 						       (not (mark? (car val))))
 						     all-mark-properties)))))
 
+(if (not (defined? 'open-appending))
+    (define (open-appending filename)
+      (if (provided? 'snd-guile)
+	  (open filename (logior O_RDWR O_APPEND))
+	  (open-output-file filename :if-exists :append :if-does-not-exist :create))))
+
+(if (not (defined? 'close-appending))
+    (define (close-appending fd)
+      (if (provided? 'snd-guile)
+	  (close fd)
+	  (close-output-port fd))))
+
 (define (save-mark-properties)
   "(save-mark-properties) sets up an after-save-state-hook function to save any mark-properties"
   (if (defined? 'open)
   (add-hook! after-save-state-hook 
     (lambda (filename)
-      (let ((fd (open filename (logior O_RDWR O_APPEND))))
+      (let ((fd (open-appending filename)))
 	(format fd "~%~%;;; from remember-mark-properties in marks.scm~%")
 	(format fd "(if (not (defined? 'mark-property)) (load-from-path \"marks.scm\"))~%")
 	(for-each 
@@ -436,7 +448,7 @@
 	       chn-m))
 	    snd-m))
 	 (marks))
-	(close fd))))))
+	(close-appending fd))))))
 
 
 (define (mark-click-info n)

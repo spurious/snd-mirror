@@ -24869,10 +24869,12 @@ EDITS: 5
 	(if (or (not (number? hamming-window))
 		(not (= hamming-window old-val)))
 	    (snd-display ";snd-help clobbered out-of-module variable: ~A ~A" old-value hamming-window)))
-      (let ((val (snd-help (list "hi" "ho") #f)))
-	(if val (snd-display ";snd-help list: ~A" val)))
-      (let ((val (snd-help 123.123 #f)))
-	(if val (snd-display ";snd-help num: ~A" val)))
+      (if (provided? 'snd-guile)
+	  (begin
+	    (let ((val (snd-help (list "hi" "ho") #f)))
+	      (if val (snd-display ";snd-help list: ~A" val)))
+	    (let ((val (snd-help 123.123 #f)))
+	      (if val (snd-display ";snd-help num: ~A" val)))))
       (let ((vals (snd-urls)))
 	(do ((i 0 (1+ i)))
 	    ((= i 25)) ; need to cycle the 8's
@@ -26086,10 +26088,10 @@ EDITS: 5
 	  (close-sound ind)
 	  (add-hook! open-raw-sound-hook
 		     (lambda (file choice)
-		       ;; append to list originally (#t as 3rd arg -- TODO 3rd arg to add-hook! in gauche)
 		       (if (not (equal? choice (list 2 44100 mus-mulaw)))
 			   (snd-display ";open-raw-sound-hook 2: ~A" choice))
-		       (list 1 22050 mus-lint)))
+		       (list 1 22050 mus-lint))
+		     #t)
 	      
 	  (set! ind (open-sound "test.snd"))
 	  (if (or (not (= (header-type ind) mus-raw))
@@ -48000,7 +48002,8 @@ EDITS: 1
 			 (save-button (XmMessageBoxGetChild prefs XmDIALOG_CANCEL_BUTTON))
 			 (help-button (XmMessageBoxGetChild prefs XmDIALOG_HELP_BUTTON))
 			 (dismiss-button (XmMessageBoxGetChild prefs XmDIALOG_OK_BUTTON))
-			 (reset-button (find-child prefs "Reset"))
+			 (revert-button (find-child prefs "Revert"))
+			 (clear-button (find-child prefs "Clear"))
 			 (topics (find-child prefs "pref-scroller"))
 			 (old-width (window-width))
 			 (old-height (window-height)))
@@ -48040,9 +48043,10 @@ EDITS: 1
 		    (XtCallCallbacks save-button XmNactivateCallback #f)
 		    (if (not (file-exists? "/home/bil/.snd_prefs_guile"))
 			(snd-display ";prefs not saved?"))
-		    (XtCallCallbacks reset-button XmNactivateCallback #f)
+		    (XtCallCallbacks revert-button XmNactivateCallback #f)
 		    (if (file-exists? "/home/bil/.snd_prefs_guile")
 			(snd-display ";prefs not deleted?"))
+		    (XtCallCallbacks clear-button XmNactivateCallback #f)
 		    (XtCallCallbacks help-button XmNactivateCallback #f)
 		    (XtUnmanageChild prefs)
 		    (if (Widget? (list-ref (dialog-widgets) 14))
@@ -59141,7 +59145,9 @@ EDITS: 1
 (for-each free-track (tracks))
 
 (close-output-port optimizer-log)
+
 (if (and full-test
+	 (provided? 'run)
 	 (= tests 1)
 	 (file-exists? "oldopt.log"))
     (system "diff -w optimizer.log oldopt.log"))

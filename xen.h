@@ -1,7 +1,6 @@
 #ifndef XEN_H
 #define XEN_H
 
-/* SOMEDAY: we're using flags (config.h) like HAVE_COMPLEX_TRIG and defining HAVE_RATIOS -- bad names */
 /* SOMEDAY: the notion of "variable" here is confused -- in some cases it's the name, others the object */
 
 /* macros for extension language support 
@@ -9,7 +8,7 @@
  * Guile:     covers 1.3.4 to present (1.8.0)
  * Ruby:      covers 1.6 to present (1.9)
  * Forth:     covers all
- * Gauche:    covers 0.8.7 (work in progress)
+ * Gauche:    covers 0.8.7
  * None:      covers all known versions of None
  */
 
@@ -19,6 +18,7 @@
 
 /* HISTORY:
  *
+ *  12-May-06: changed HAVE_RATIOS to XEN_HAVE_RATIOS.
  *  17-Apr-06: removed XEN_MAKE_OBJECT.
  *  15-Apr-06: Gauche support (in progress).
  *  28-Mar-06: Forth support thanks to Mike Scholz.
@@ -230,7 +230,7 @@
 #endif
 
 #if HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR
-  #define HAVE_RATIOS                 1
+  #define XEN_HAVE_RATIOS                 1
   #define XEN_NUMERATOR(Arg)          scm_numerator(Arg)
   #define XEN_DENOMINATOR(Arg)        scm_denominator(Arg)
   #define XEN_RATIONALIZE(Arg1, Arg2) scm_rationalize(scm_inexact_to_exact(Arg1), scm_inexact_to_exact(Arg2))
@@ -600,7 +600,7 @@
 #define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)       scm_apply(Func, Arg1, scm_cons(Arg2, XEN_APPLY_ARG_LIST_END))
 #define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, XEN_APPLY_ARG_LIST_END))
 
-#ifdef MUS_WINDOZE
+#if defined(__MINGW32__) || defined(__CYGWIN__)
   #define XEN_APPLY_ARG_LIST_END      scm_cons(SCM_EOL, SCM_EOL)
 #else
   #define XEN_APPLY_ARG_LIST_END      scm_listofnull
@@ -1246,7 +1246,7 @@ bool xen_rb_arity_ok(int rargs, int args);
 #endif
 
 #if HAVE_SCM_MAKE_RATIO
-# define HAVE_RATIOS                    true
+# define XEN_HAVE_RATIOS                    true
 # define XEN_RATIO_P(Arg)               FTH_RATIO_P(Arg)
 # define XEN_MAKE_RATIO(Num, Den)       fth_make_ratio(Num, Den)
 # define XEN_NUMERATOR(Arg)             fth_numerator(Arg)
@@ -1515,7 +1515,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_VECTOR_TO_LIST(Vect)     Scm_VectorToList(SCM_VECTOR(Vect), 0, XEN_VECTOR_LENGTH(Vect) - 1)
 #define XEN_MAKE_VECTOR(Num, Fill)   Scm_MakeVector(Num, Fill)
 
-#define XEN_NUMBER_P(Arg)            SCM_NUMBERP(Arg)
+#define XEN_NUMBER_P(Arg)            SCM_REALP(Arg)
 #define XEN_ZERO                     SCM_MAKE_INT(0)
 #define XEN_INTEGER_P(Arg)           SCM_INTEGERP(Arg)
 
@@ -1572,7 +1572,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define C_TO_XEN_STRINGN(Str, Len)   Scm_MakeString(Str, Len, Len, SCM_MAKSTR_COPYING)
 #define C_STRING_TO_XEN_FORM(Str)    Scm_ReadFromCString(Str)
 #define XEN_EVAL_FORM(Form)          Scm_Eval(Form, SCM_OBJ(Scm_UserModule()))
-#define XEN_EVAL_C_STRING(Arg)       Scm_EvalCString(Arg, SCM_OBJ(Scm_UserModule()))
+#define XEN_EVAL_C_STRING(Arg)       xen_gauche_eval_c_string(Arg)
 #define XEN_SYMBOL_P(Arg)            SCM_SYMBOLP(Arg)
 #define XEN_SYMBOL_TO_C_STRING(a)    XEN_TO_C_STRING(SCM_SYMBOL_NAME(a))
 #define XEN_TO_STRING(Obj)           xen_gauche_object_to_string(Obj)
@@ -1583,13 +1583,12 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) xen_gauche_define_constant(Name, Value, Help)
 #define XEN_DEFINE_VARIABLE(Name, Var, Value)  Var = SCM_DEFINE(Scm_UserModule(), Name, Value)
-#define XEN_VARIABLE_REF(Var)             Scm_SymbolValue(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(Var)))
-#define XEN_VARIABLE_SET(Var, Val)        xen_gauche_variable_set(Var, Val)
-
 #define C_STRING_TO_XEN_SYMBOL(a)           SCM_INTERN(a)
-#define XEN_NAME_AS_C_STRING_TO_VALUE(a)    Scm_SymbolValue(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(a)))
 #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a) Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(a)), false)
 #define XEN_SYMBOL_TO_VARIABLE(a)           Scm_FindBinding(Scm_UserModule(), SCM_SYMBOL(a), false)
+#define XEN_VARIABLE_REF(Var)               Scm_SymbolValue(Scm_UserModule(), SCM_SYMBOL(SCM_INTERN(Var)))
+#define XEN_VARIABLE_SET(Var, Val)          SCM_GLOC_SET(SCM_GLOC(XEN_NAME_AS_C_STRING_TO_VARIABLE(Var)), Val)
+#define XEN_NAME_AS_C_STRING_TO_VALUE(a)    XEN_VARIABLE_REF(a)
 
 #define XEN_SET_DOCUMENTATION(Name, Help)   xen_gauche_set_help((XEN)(SCM_INTERN(Name)), Help)
 #define XEN_DOCUMENTATION_SYMBOL            SCM_SYMBOL(SCM_INTERN("documentation"))
@@ -1868,7 +1867,6 @@ void xen_gauche_load_args(XEN *args, int incoming_args, int args_size, XEN *arg_
 XEN xen_gauche_eval_c_string(char *arg);
 void xen_gauche_provide(const char *feature);
 const char *xen_gauche_features(void);
-void xen_gauche_variable_set(const char *var, XEN value);
 XEN xen_gauche_make_object(XEN_OBJECT_TYPE type, void *val, XEN_MARK_OBJECT_TYPE (*protect_func)(XEN obj));
 void *xen_gauche_object_ref(XEN obj);
 XEN_OBJECT_TYPE xen_gauche_new_type(const char *name, ScmClassPrintProc print, ScmForeignCleanupProc cleanup);
@@ -2059,7 +2057,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   #define XEN_INTEGER_OR_BOOLEAN_P(Arg)          ((XEN_BOOLEAN_P(Arg))   || (XEN_INTEGER_P(Arg)))
 #endif
 
-#if GUILE
+#if HAVE_GUILE
 #define XEN_ONLY_ARG 0
 #else
 #define XEN_ONLY_ARG 1
@@ -2085,7 +2083,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
                        C_TO_XEN_STRING(Descr), \
                        Arg))
 
-#ifndef HAVE_RATIOS
+#ifndef XEN_HAVE_RATIOS
   #define XEN_NUMERATOR(Arg)          0
   #define XEN_DENOMINATOR(Arg)        1
   #define XEN_RATIONALIZE(Arg1, Arg2) 1

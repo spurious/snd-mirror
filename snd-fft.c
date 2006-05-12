@@ -2019,6 +2019,50 @@ static XEN g_delete_transform(XEN type)
   return(XEN_FALSE);
 }
 
+static void update_log_freq_fft_graph(chan_info *cp)
+{
+  if ((!(cp->active)) ||
+      (cp->cgx == NULL) || 
+      (cp->sounds == NULL) || 
+      (cp->sounds[cp->sound_ctr] == NULL) ||
+      (!(cp->graph_transform_p)) ||
+      (!(cp->fft_log_frequency)) ||
+      (chan_fft_in_progress(cp)))
+    return;
+  calculate_fft(cp);
+}
+
+void set_log_freq_start(Float base)
+{
+  in_set_log_freq_start(base);
+  for_each_chan(update_log_freq_fft_graph);
+}
+
+static XEN g_log_freq_start(void) {return(C_TO_XEN_DOUBLE(log_freq_start(ss)));}
+static XEN g_set_log_freq_start(XEN val) 
+{
+  Float base;
+  #define H_log_freq_start "(" S_log_freq_start "): log freq base (default: 25.0)"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_log_freq_start, "a number");
+  base = XEN_TO_C_DOUBLE(val);
+  if (base < 0.0)
+    XEN_OUT_OF_RANGE_ERROR(S_log_freq_start, XEN_ONLY_ARG, val, "a number >= 0.0");
+  if (base > 100000.0)
+    XEN_OUT_OF_RANGE_ERROR(S_log_freq_start, XEN_ONLY_ARG, val, "a number < srate/2");
+  set_log_freq_start(base);
+  reflect_log_freq_start_in_transform_dialog();
+  return(C_TO_XEN_DOUBLE(log_freq_start(ss)));
+}
+
+static XEN g_show_selection_transform(void) {return(C_TO_XEN_BOOLEAN(show_selection_transform(ss)));}
+static XEN g_set_show_selection_transform(XEN val) 
+{
+  #define H_show_selection_transform "(" S_show_selection_transform "): #t if transform display reflects selection, not time-domain window"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_selection_transform, "a boolean");
+  set_show_selection_transform(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(show_selection_transform(ss)));
+}
+
 
 
 #ifdef XEN_ARGIFY_1
@@ -2030,6 +2074,10 @@ XEN_NARGIFY_5(g_add_transform_w, g_add_transform)
 XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
 XEN_NARGIFY_1(g_transform_p_w, g_transform_p)
 XEN_NARGIFY_1(g_delete_transform_w, g_delete_transform)
+XEN_NARGIFY_0(g_log_freq_start_w, g_log_freq_start)
+XEN_NARGIFY_1(g_set_log_freq_start_w, g_set_log_freq_start)
+XEN_NARGIFY_0(g_show_selection_transform_w, g_show_selection_transform)
+XEN_NARGIFY_1(g_set_show_selection_transform_w, g_set_show_selection_transform)
 #else
 #define g_transform_frames_w g_transform_frames
 #define g_transform_sample_w g_transform_sample
@@ -2039,6 +2087,10 @@ XEN_NARGIFY_1(g_delete_transform_w, g_delete_transform)
 #define g_snd_transform_w g_snd_transform
 #define g_transform_p_w g_transform_p
 #define g_delete_transform_w g_delete_transform
+#define g_log_freq_start_w g_log_freq_start
+#define g_set_log_freq_start_w g_set_log_freq_start
+#define g_show_selection_transform_w g_show_selection_transform
+#define g_set_show_selection_transform_w g_set_show_selection_transform
 #endif
 
 void g_init_fft(void)
@@ -2107,6 +2159,11 @@ of a moving mark:\n\
   XEN_DEFINE_PROCEDURE(S_transform_p,          g_transform_p_w,      1, 0, 0, H_transform_p);
   XEN_DEFINE_PROCEDURE(S_delete_transform,     g_delete_transform_w, 1, 0, 0, H_delete_transform);
   XEN_DEFINE_PROCEDURE("snd-transform",        g_snd_transform_w,    2, 1, 0, "call transform code directly");
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_log_freq_start, g_log_freq_start_w, H_log_freq_start,
+				   S_setB S_log_freq_start, g_set_log_freq_start_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_selection_transform, g_show_selection_transform_w, H_show_selection_transform,
+				   S_setB S_show_selection_transform, g_set_show_selection_transform_w,  0, 0, 1, 0);
 }
 
 /* display by wavelength is not so useful in the context of sound because

@@ -18,7 +18,10 @@ static prefs_info **prefs = NULL;
 
 static void remember_pref(prefs_info *prf, 
 			  void (*reflect_func)(struct prefs_info *prf),
-			  void (*save_func)(struct prefs_info *prf, FILE *fd))
+			  void (*save_func)(struct prefs_info *prf, FILE *fd),
+			  void (*help_func)(struct prefs_info *prf),
+			  void (*clear_func)(struct prefs_info *prf),
+			  void (*revert_func)(struct prefs_info *prf))
 {
   if (prefs_size == 0)
     {
@@ -37,7 +40,9 @@ static void remember_pref(prefs_info *prf,
     }
   prf->reflect_func = reflect_func;
   prf->save_func = save_func;
-  prf->help_func = NULL;
+  prf->help_func = help_func;
+  prf->clear_func = clear_func;
+  prf->revert_func = revert_func;
   prefs[prefs_top++] = prf;
 }
 
@@ -51,6 +56,32 @@ static void reflect_prefs(void)
       if ((prf) &&
 	  (prf->reflect_func))
 	(*(prf->reflect_func))(prf);
+    }
+}
+
+static void revert_prefs(void)
+{
+  int i;
+  for (i = 0; i < prefs_top; i++)
+    {
+      prefs_info *prf;
+      prf = prefs[i];
+      if ((prf) &&
+	  (prf->revert_func))
+	(*(prf->revert_func))(prf);
+    }
+}
+
+static void clear_prefs(void)
+{
+  int i;
+  for (i = 0; i < prefs_top; i++)
+    {
+      prefs_info *prf;
+      prf = prefs[i];
+      if ((prf) &&
+	  (prf->clear_func))
+	(*(prf->clear_func))(prf);
     }
 }
 
@@ -262,64 +293,188 @@ static int header_to_data(int ht, int frm)
   return(frm);
 }
 
-static char *clm_file_name(void)
-{
-#if HAVE_SCHEME || HAVE_FORTH
-  if (XEN_DEFINED_P("*clm-file-name*"))
-    return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-name*")));
-#endif
 #if HAVE_RUBY
-  if (XEN_DEFINED_P("clm-file-name"))
-    return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("clm-file-name")));
-#endif
-  return(NULL);
+static char *no_stars(const char *name)
+{
+  if (name[0] == '*')
+    {
+      char *val;
+      val = (char *)CALLOC(strlen(name), sizeof(char));
+      strncpy(val, (char *)(name + 1), strlen(name) - 2);
+      return(val);
+    }
+  else return(copy_string(name));
 }
+#endif
 
-static void set_clm_file_name(const char *str)
+static void prefs_variable_set(const char *name, XEN val)
 {
 #if HAVE_GUILE
-  if (XEN_DEFINED_P("*clm-file-name*"))
-    XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("*clm-file-name*"), C_TO_XEN_STRING(str));
+  if (XEN_DEFINED_P(name))
+    XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE(name), val);
 #endif
-#if HAVE_GAUCHE
-  if (XEN_DEFINED_P("*clm-file-name*"))
-    XEN_VARIABLE_SET("*clm-file-name*", C_TO_XEN_STRING(str));
+
+#if HAVE_GAUCHE || HAVE_FORTH
+  if (XEN_DEFINED_P(name))
+    XEN_VARIABLE_SET(name, val);
 #endif
+
 #if HAVE_RUBY
-  if (XEN_DEFINED_P("clm-file-name"))
-    XEN_VARIABLE_SET("clm-file-name", C_TO_XEN_STRING(str));
-#endif
-#if HAVE_FORTH
-  if (XEN_DEFINED_P("*clm-file-name*"))
-    XEN_VARIABLE_SET("*clm-file-name*", C_TO_XEN_STRING(str));
+  {
+    char *str;
+    str = no_stars(name);
+    if (XEN_DEFINED_P(str))
+      XEN_VARIABLE_SET(str, val);
+    FREE(str);
+  }
 #endif
 }
 
-static int clm_table_size(void)
+static XEN prefs_variable_get(const char *name)
 {
 #if HAVE_SCHEME || HAVE_FORTH
-  if (XEN_DEFINED_P("*clm-table-size*"))
-    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-table-size*")));
+  if (XEN_DEFINED_P(name))
+    return(XEN_NAME_AS_C_STRING_TO_VALUE(name));
 #endif
+
 #if HAVE_RUBY
-  if (XEN_DEFINED_P("clm-table-size"))
-    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("clm-table-size")));
+  {
+    char *str;
+    XEN val = XEN_FALSE;
+    str = no_stars(name);
+    if (XEN_DEFINED_P(str))
+      val = XEN_NAME_AS_C_STRING_TO_VALUE(name);
+    FREE(str);
+    return(val);
+  }
 #endif
-  return(512);
+  
+  return(XEN_FALSE);
 }
 
-static int clm_file_buffer_size(void)
-{
-#if HAVE_SCHEME || HAVE_FORTH
-  if (XEN_DEFINED_P("*clm-file-buffer-size*"))
-    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-buffer-size*")));
-#endif
-#if HAVE_RUBY
-  if (XEN_DEFINED_P("clm-file-buffer-size"))
-    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("clm-file-buffer-size")));
-#endif
-  return(65536);
-}
+
+/* ---------------- auto-resize ---------------- */
+
+static bool rts_auto_resize = DEFAULT_AUTO_RESIZE;
+static void reflect_auto_resize(prefs_info *prf) {SET_TOGGLE(prf->toggle, auto_resize(ss));}
+static void resize_toggle(prefs_info *prf) {set_auto_resize(GET_TOGGLE(prf->toggle));}
+static void revert_auto_resize(prefs_info *prf) {set_auto_resize(rts_auto_resize);}
+static void save_auto_resize(prefs_info *prf, FILE *ignore) {rts_auto_resize = auto_resize(ss);}
+
+
+/* ---------------- ask-before-overwrite ---------------- */
+
+static bool rts_ask_before_overwrite = DEFAULT_ASK_BEFORE_OVERWRITE;
+static void reflect_ask_before_overwrite(prefs_info *prf) {SET_TOGGLE(prf->toggle, ask_before_overwrite(ss));}
+static void overwrite_toggle(prefs_info *prf) {set_ask_before_overwrite(GET_TOGGLE(prf->toggle));}
+static void revert_ask_before_overwrite(prefs_info *prf) {set_ask_before_overwrite(rts_ask_before_overwrite);}
+static void save_ask_before_overwrite(prefs_info *prf, FILE *ignore) {rts_ask_before_overwrite = ask_before_overwrite(ss);}
+
+
+/* ---------------- show-controls ---------------- */
+
+static bool rts_show_controls = DEFAULT_SHOW_CONTROLS;
+static void reflect_show_controls(prefs_info *prf) {SET_TOGGLE(prf->toggle, in_show_controls(ss));}
+static void controls_toggle(prefs_info *prf) {in_set_show_controls(ss, GET_TOGGLE(prf->toggle));}
+static void revert_show_controls(prefs_info *prf) {in_set_show_controls(ss, rts_show_controls);}
+static void save_show_controls(prefs_info *prf, FILE *ignore) {rts_show_controls = in_show_controls(ss);}
+
+
+/* ---------------- just-sounds ---------------- */
+
+static bool rts_just_sounds = DEFAULT_JUST_SOUNDS;
+static void prefs_reflect_just_sounds(prefs_info *prf) {SET_TOGGLE(prf->toggle, just_sounds(ss));}
+static void just_sounds_toggle(prefs_info *prf) {set_just_sounds(GET_TOGGLE(prf->toggle));}
+static void revert_just_sounds(prefs_info *prf) {set_just_sounds(rts_just_sounds);}
+static void save_just_sounds(prefs_info *prf, FILE *ignore) {rts_just_sounds = just_sounds(ss);}
+
+
+/* ---------------- verbose-cursor ---------------- */
+
+static bool rts_verbose_cursor = DEFAULT_VERBOSE_CURSOR;
+static void reflect_verbose_cursor(prefs_info *prf) {SET_TOGGLE(prf->toggle, verbose_cursor(ss));}
+static void verbose_cursor_toggle(prefs_info *prf) {in_set_verbose_cursor(GET_TOGGLE(prf->toggle));}
+static void revert_verbose_cursor(prefs_info *prf) {in_set_verbose_cursor(rts_verbose_cursor);}
+static void save_verbose_cursor(prefs_info *prf, FILE *ignore) {rts_verbose_cursor = verbose_cursor(ss);}
+
+
+/* ---------------- graphs-horizontal ---------------- */
+
+static bool rts_graphs_horizontal = DEFAULT_GRAPHS_HORIZONTAL;
+static void reflect_graphs_horizontal(prefs_info *prf) {SET_TOGGLE(prf->toggle, graphs_horizontal(ss));}
+static void graphs_horizontal_toggle(prefs_info *prf) {in_set_graphs_horizontal(GET_TOGGLE(prf->toggle));}
+static void revert_graphs_horizontal(prefs_info *prf) {in_set_graphs_horizontal(rts_graphs_horizontal);}
+static void save_graphs_horizontal(prefs_info *prf, FILE *ignore) {rts_graphs_horizontal = graphs_horizontal(ss);}
+
+
+/* ---------------- show-y-zero ---------------- */
+
+static bool rts_show_y_zero = DEFAULT_SHOW_Y_ZERO;
+static void reflect_show_y_zero(prefs_info *prf) {SET_TOGGLE(prf->toggle, show_y_zero(ss));}
+static void y_zero_toggle(prefs_info *prf) {in_set_show_y_zero(GET_TOGGLE(prf->toggle));}
+static void revert_show_y_zero(prefs_info *prf) {in_set_show_y_zero(rts_show_y_zero);}
+static void save_show_y_zero(prefs_info *prf, FILE *ignore) {rts_show_y_zero = show_y_zero(ss);}
+
+
+/* ---------------- show-grid ---------------- */
+
+static with_grid_t rts_show_grid = DEFAULT_SHOW_GRID;
+static void reflect_show_grid(prefs_info *prf) {SET_TOGGLE(prf->toggle, show_grid(ss) == WITH_GRID);}
+static void grid_toggle(prefs_info *prf) {in_set_show_grid(((GET_TOGGLE(prf->toggle)) ? WITH_GRID : NO_GRID));}
+static void revert_show_grid(prefs_info *prf) {in_set_show_grid(rts_show_grid);}
+static void save_show_grid(prefs_info *prf, FILE *ignore) {rts_show_grid = show_grid(ss);}
+
+
+/* ---------------- fft-log-magnitude ---------------- */
+
+static bool rts_fft_log_magnitude = DEFAULT_FFT_LOG_MAGNITUDE;
+static void reflect_fft_log_magnitude(prefs_info *prf) {SET_TOGGLE(prf->toggle, fft_log_magnitude(ss));}
+static void log_magnitude_toggle(prefs_info *prf) {in_set_fft_log_magnitude(GET_TOGGLE(prf->toggle));}
+static void revert_fft_log_magnitude(prefs_info *prf) {in_set_fft_log_magnitude(rts_fft_log_magnitude);}
+static void save_fft_log_magnitude(prefs_info *prf, FILE *ignore) {rts_fft_log_magnitude = fft_log_magnitude(ss);}
+
+
+/* ---------------- fft-log-frequency ---------------- */
+
+static bool rts_fft_log_frequency = DEFAULT_FFT_LOG_FREQUENCY;
+static void reflect_fft_log_frequency(prefs_info *prf) {SET_TOGGLE(prf->toggle, fft_log_frequency(ss));}
+static void log_frequency_toggle(prefs_info *prf) {in_set_fft_log_frequency(GET_TOGGLE(prf->toggle));}
+static void revert_fft_log_frequency(prefs_info *prf) {in_set_fft_log_frequency(rts_fft_log_frequency);}
+static void save_fft_log_frequency(prefs_info *prf, FILE *ignore) {rts_fft_log_frequency = fft_log_frequency(ss);}
+
+
+/* ---------------- show-backtrace ---------------- */
+
+static bool rts_show_backtrace = DEFAULT_SHOW_BACKTRACE;
+static void reflect_show_backtrace(prefs_info *prf) {SET_TOGGLE(prf->toggle, show_backtrace(ss));}
+static void show_backtrace_toggle(prefs_info *prf) {set_show_backtrace(GET_TOGGLE(prf->toggle));}
+static void revert_show_backtrace(prefs_info *prf) {set_show_backtrace(rts_show_backtrace);}
+static void save_show_backtrace(prefs_info *prf, FILE *ignore) {rts_show_backtrace = show_backtrace(ss);}
+
+
+/* ---------------- dac-combines-channels ---------------- */
+
+static bool rts_dac_combines_channels = DEFAULT_DAC_COMBINES_CHANNELS;
+static void reflect_dac_combines_channels(prefs_info *prf) {SET_TOGGLE(prf->toggle, dac_combines_channels(ss));}
+static void dac_combines_channels_toggle(prefs_info *prf) {set_dac_combines_channels(GET_TOGGLE(prf->toggle));}
+static void revert_dac_combines_channels(prefs_info *prf) {set_dac_combines_channels(rts_dac_combines_channels);}
+static void save_dac_combines_channels(prefs_info *prf, FILE *ignore) {rts_dac_combines_channels = dac_combines_channels(ss);}
+
+
+/* ---------------- recorder-autoload ---------------- */
+
+static bool rts_recorder_autoload = false; /* DEFAULT_RECORDER_AUTOLOAD is defined in snd-rec.c */
+static void reflect_recorder_autoload(prefs_info *prf) {SET_TOGGLE(prf->toggle, rec_autoload());}
+static void recorder_autoload_toggle(prefs_info *prf) {rec_set_autoload(GET_TOGGLE(prf->toggle));}
+static void revert_recorder_autoload(prefs_info *prf) {rec_set_autoload(rts_recorder_autoload);}
+static void save_recorder_autoload(prefs_info *prf, FILE *ignore) {rts_recorder_autoload = rec_autoload();}
+
+
+
+
+
+
+
 
 
 /* ---------------- various extra help strings ---------------- */
@@ -565,6 +720,8 @@ static void show_selection_help(prefs_info *prf)
 	   "This option binds a key to cause the current selection to fill the time domain graph.",
 	   WITH_WORD_WRAP);
 }
+
+
 
 
 
@@ -1082,6 +1239,34 @@ static void bind_show_selection(prefs_info *prf)
 
 /* ---------------- find functions ---------------- */
 
+static char *find_clm_file_name(void)
+{
+  return(XEN_TO_C_STRING(prefs_variable_get("*clm-file-name*")));
+}
+
+static void set_clm_file_name(const char *str)
+{
+  prefs_variable_set(str, C_TO_XEN_STRING(str));
+}
+
+static int find_clm_table_size(void)
+{
+  XEN size;
+  size = prefs_variable_get("*clm-table-size*");
+  if (XEN_INTEGER_P(size))
+    return(XEN_TO_C_INT(size));
+  return(512);
+}
+
+static int find_clm_file_buffer_size(void)
+{
+  XEN size;
+  size = prefs_variable_get("*clm-file-buffer-size*");
+  if (XEN_INTEGER_P(size))
+    return(XEN_TO_C_INT(size));
+  return(65536);
+}
+
 static char *find_sources(void) /* returns full filename if found else null */
 {
   XEN file;
@@ -1127,10 +1312,20 @@ static char *find_sources(void) /* returns full filename if found else null */
   return(NULL);
 }
 
+static bool local_unsaved_edits = false;
 static bool unsaved_edits(void)
 {
-  return((XEN_DEFINED_P("checking-for-unsaved-edits")) &&
-	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("checking-for-unsaved-edits"))));
+  local_unsaved_edits = XEN_TO_C_BOOLEAN(prefs_variable_get("checking-for-unsaved-edits"));
+  return(local_unsaved_edits);
+}
+
+static void set_unsaved_edits(bool val)
+{
+  local_unsaved_edits = val;
+  if (XEN_DEFINED_P("checking-for-unsaved-edits"))
+    {
+      /* TODO: should the unsaved-edits toggle screw around with the hook? reflect case currently assumes it does */
+    }
 }
 
 static bool find_current_window_display(void)
@@ -1240,3 +1435,51 @@ static bool find_debugging_aids(void)
 	 (XEN_DEFINED_P("untrace-stack")));
 }
 #endif
+
+
+/* ---------------- revert/clear functions ---------------- */
+
+static int rts_init_window_width = DEFAULT_INIT_WINDOW_WIDTH, rts_init_window_height = DEFAULT_INIT_WINDOW_HEIGHT;
+static void revert_init_window_size(prefs_info *prf)
+{
+  ss->init_window_width = rts_init_window_width;
+  ss->init_window_height = rts_init_window_height;
+}
+static void clear_init_window_size(prefs_info *prf)
+{
+  ss->init_window_width = DEFAULT_INIT_WINDOW_WIDTH;
+  ss->init_window_height = DEFAULT_INIT_WINDOW_HEIGHT;
+}
+
+static bool rts_unsaved_edits = false;
+static void revert_unsaved_edits(prefs_info *prf) {set_unsaved_edits(rts_unsaved_edits);}
+static void clear_unsaved_edits(prefs_info *prf) {set_unsaved_edits(false);}
+
+
+static void preferences_revert_or_clear(bool revert)
+{
+  clear_prefs_dialog_error();
+  if (revert)
+    {
+      revert_prefs();
+    }
+  else
+    {
+      snd_set_global_defaults(true);
+      clear_prefs();
+    }
+  reflect_prefs();
+  prefs_unsaved = false;
+  if (prefs_saved_filename) 
+    {
+      char *fullname;
+      fullname = mus_expand_filename(prefs_saved_filename);
+      if (mus_file_probe(fullname))
+	snd_remove(fullname, IGNORE_CACHE);
+      FREE(prefs_saved_filename);
+      FREE(fullname);
+      prefs_saved_filename = NULL;
+    }
+  prefs_set_dialog_title(NULL);
+}
+

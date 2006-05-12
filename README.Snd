@@ -76,7 +76,7 @@ The configure program has several Snd-related arguments:
 
    --with-forth              use Forth (FTH) as the extension language.
 
-   --with-gauche             use Gauche (Scheme) as the extension language (work in progress).
+   --with-gauche             use Gauche (Scheme) as the extension language.
 
 			     To build Snd without any extension language, use --without-guile
 
@@ -175,8 +175,8 @@ ftp://ccrma-ftp.stanford.edu/pub/Lisp/old-cmdist.html.
 
 To follow the Snd CVS repository, the first time you need to
 
-       cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/snd login 
-       cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/snd co cvs-snd
+       cvs -d:pserver:anonymous@snd.cvs.sourceforge.net:/cvsroot/snd login 
+       cvs -z3 -d:pserver:anonymous@snd.cvs.sourceforge.net:/cvsroot/snd co cvs-snd
 
 When prompted for a password for anonymous, press the Enter key. 
 After that, you go to your local cvs-snd directory and

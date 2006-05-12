@@ -16,6 +16,30 @@
  * PERHAPS: x-axis-as-date (would need a way to set the start time)
  */
 
+
+chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
+{
+  snd_info *sp;
+  int chn_n;
+  sp = get_sp(x_snd_n, NO_PLAYERS);
+  if ((sp == NULL) || (!(sp->active)) || (sp->inuse == SOUND_IDLE))
+    {
+      snd_no_such_sound_error(caller, x_snd_n); 
+      return(NULL); /* gad -- just in case our catch has been clobbered */
+    }
+  if (XEN_INTEGER_P(x_chn_n))
+    chn_n = XEN_TO_C_INT(x_chn_n);
+  else
+    if (sp->selected_channel != NO_SELECTION) 
+      chn_n = sp->selected_channel;
+    else chn_n = 0;
+  if ((chn_n >= 0) && (chn_n < sp->nchans) && (sp->chans[chn_n]))
+    return(sp->chans[chn_n]);
+  snd_no_such_channel_error(caller, x_snd_n, x_chn_n);
+  return(NULL);
+}
+
+
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
 
 static XEN lisp_graph_hook;
@@ -7119,6 +7143,58 @@ to a standard Snd channel graph placed in the widget 'container'."
   return(C_TO_XEN_INT(sp->index));
 }
 
+static XEN g_zoom_focus_style(void) 
+{
+  if (zoom_focus_style(ss) != ZOOM_FOCUS_PROC)
+    return(C_TO_XEN_INT((int)zoom_focus_style(ss)));
+  return(ss->zoom_focus_proc);
+}
+
+static XEN g_set_zoom_focus_style(XEN focus) 
+{
+  #define H_zoom_focus_style "(" S_zoom_focus_style "): one of " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle \
+", or " S_zoom_focus_active ". This determines what zooming centers on (default: " S_zoom_focus_active ").  It can also \
+be a function of 6 args (snd chan zx x0 x1 range) that returns the new window left edge as a float."
+  zoom_focus_t choice;
+  XEN_ASSERT_TYPE((XEN_INTEGER_P(focus)) || (XEN_PROCEDURE_P(focus)), focus, XEN_ONLY_ARG, S_setB S_zoom_focus_style, "an integer or a function");
+  if ((XEN_PROCEDURE_P(focus)) && (!(procedure_arity_ok(focus, 6))))
+    return(snd_bad_arity_error(S_setB S_zoom_focus_style, 
+			       C_TO_XEN_STRING("zoom focus func should take 4 args"), 
+			       focus));
+  if (zoom_focus_style(ss) == ZOOM_FOCUS_PROC)
+    {
+      snd_unprotect_at(ss->zoom_focus_proc_loc);
+      ss->zoom_focus_proc = XEN_UNDEFINED;
+    }
+  if (XEN_INTEGER_P(focus))
+    {
+      choice = (zoom_focus_t)XEN_TO_C_INT(focus);
+      if (choice > ZOOM_FOCUS_MIDDLE)
+	XEN_OUT_OF_RANGE_ERROR(S_setB S_zoom_focus_style, 
+			       1, focus, 
+			       "~A, but must be " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle ", or " S_zoom_focus_active);
+      set_zoom_focus_style(choice);
+      return(C_TO_XEN_INT((int)zoom_focus_style(ss)));
+    }
+  set_zoom_focus_style(ZOOM_FOCUS_PROC);
+  ss->zoom_focus_proc = focus;
+  ss->zoom_focus_proc_loc = snd_protect(focus);
+  return(focus);
+}
+
+static XEN g_with_gl(void) {return(C_TO_XEN_BOOLEAN(with_gl(ss)));}
+static XEN g_set_with_gl(XEN val) 
+{
+  #define H_with_gl "(" S_with_gl "): #t if Snd should use GL graphics"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_gl, "a boolean");
+#if HAVE_GL
+  set_with_gl(XEN_TO_C_BOOLEAN(val));
+  for_each_chan(update_graph);
+#endif
+  return(C_TO_XEN_BOOLEAN(with_gl(ss)));
+}
+
+
 #if DEBUGGING && HAVE_GUILE
 static XEN g_edit_hook_checked(XEN snd, XEN chn) 
 {
@@ -7272,6 +7348,10 @@ XEN_ARGIFY_3(g_set_y_bounds_w, g_set_y_bounds)
 XEN_ARGIFY_2(g_update_time_graph_w, g_update_time_graph)
 XEN_ARGIFY_2(g_update_lisp_graph_w, g_update_lisp_graph)
 XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
+XEN_NARGIFY_0(g_zoom_focus_style_w, g_zoom_focus_style)
+XEN_NARGIFY_1(g_set_zoom_focus_style_w, g_set_zoom_focus_style)
+XEN_NARGIFY_0(g_with_gl_w, g_with_gl)
+XEN_NARGIFY_1(g_set_with_gl_w, g_set_with_gl)
 #if HAVE_GL
   XEN_NARGIFY_9(g_gl_spectrogram_w, g_gl_spectrogram)
 #endif
@@ -7417,6 +7497,10 @@ XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
 #define g_update_time_graph_w g_update_time_graph
 #define g_update_lisp_graph_w g_update_lisp_graph
 #define g_update_transform_graph_w g_update_transform_graph
+#define g_zoom_focus_style_w g_zoom_focus_style
+#define g_set_zoom_focus_style_w g_set_zoom_focus_style
+#define g_with_gl_w g_with_gl
+#define g_set_with_gl_w g_set_with_gl
 #if HAVE_GL
   #define g_gl_spectrogram_w g_gl_spectrogram
 #endif
@@ -7696,6 +7780,21 @@ void g_init_chn(void)
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_y_bounds, g_y_bounds_w, H_y_bounds,
 					    S_setB S_y_bounds, g_set_y_bounds_w, g_set_y_bounds_reversed, 0, 2, 1, 2);
+
+  #define H_zoom_focus_left "The value for " S_zoom_focus_style " that causes zooming to maintain the left edge steady"
+  #define H_zoom_focus_right "The value for " S_zoom_focus_style " that causes zooming to maintain the right edge steady"
+  #define H_zoom_focus_middle "The value for " S_zoom_focus_style " that causes zooming to focus on the middle sample"
+  #define H_zoom_focus_active "The value for " S_zoom_focus_style " that causes zooming to focus on the currently active object"
+
+  XEN_DEFINE_CONSTANT(S_zoom_focus_left,       ZOOM_FOCUS_LEFT,   H_zoom_focus_left);
+  XEN_DEFINE_CONSTANT(S_zoom_focus_right,      ZOOM_FOCUS_RIGHT,  H_zoom_focus_right);
+  XEN_DEFINE_CONSTANT(S_zoom_focus_active,     ZOOM_FOCUS_ACTIVE, H_zoom_focus_active);
+  XEN_DEFINE_CONSTANT(S_zoom_focus_middle,     ZOOM_FOCUS_MIDDLE, H_zoom_focus_middle);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_zoom_focus_style, g_zoom_focus_style_w, H_zoom_focus_style,
+				   S_setB S_zoom_focus_style, g_set_zoom_focus_style_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_gl, g_with_gl_w, H_with_gl,
+				   S_setB S_with_gl, g_set_with_gl_w,  0, 0, 1, 0);
 
 #if HAVE_GL
   XEN_DEFINE_PROCEDURE(S_glSpectrogram, g_gl_spectrogram_w, 9, 0, 0, H_glSpectrogram);

@@ -34,7 +34,7 @@
  *   (vct->vector v)                  return vector of vct contents
  *   (vct-move! v new old)            v[new++] = v[old++] -> v
  *   (vct-subseq v start end vnew)    vnew = v[start..end]
- *   (vct-reverse v (len #f))         reverse contents (using len as end point if given)
+ *   (vct-reverse! v (len #f))        reverse contents (using len as end point if given)
  *   (vct->string v)                  scheme-readable description of vct
  *
  *   (vct* obj1 obj2) combines vct-multiply and vct-scale
@@ -970,9 +970,22 @@ void vct_init(void)
   XEN_EVAL_C_STRING("(define-method equal? ((v1 <vct>) (v2 <vct>)) (vct-equal? v1 v2))");
   XEN_DEFINE_PROCEDURE("vct-equal?", equalp_vct_w, 2, 0, 0, "internal function for 'equal? method");
 
-  /* TODO: various methods (Ruby-style) for vcts
-   *   we could even add (* v1 v2) etc, and for readers (+ rd1 rd2) etc -- an infinite source of amusement
-   * (define-method + ((v1 <vct>) (v2 <vct>)) (vct-add! v1 v2))
+  /* are these useful?
+   *
+   * (define-method length ((v <vct>)) (vct-length v))
+   * (define-method reverse ((v <vct>)) (vct-reverse! (vct-copy v)))
+   * (define-method + ((v1 <vct>) (v2 <vct>)) (vct-add! (vct-copy v1) v2))
+   * (define-method + ((v1 <vct>) (off <number>)) (vct-offset! (vct-copy v1) off))
+   * (define-method + ((off <number>) (v1 <vct>)) (vct-offset! (vct-copy v1) off))
+   * (define-method - ((v1 <vct>) (v2 <vct>)) (vct-subtract! (vct-copy v1) v2))
+   * (define-method - ((v1 <vct>) (off <number>)) (vct-offset! (vct-copy v1) (- off)))
+   * (define-method - ((off <number>) (v1 <vct>)) (vct-offset! (vct-copy v1) (- off)))
+   * (define-method * ((v1 <vct>) (v2 <vct>)) (vct-multiply! (vct-copy v1) v2))
+   * (define-method * ((v1 <vct>) (scl <number>)) (vct-scale! (vct-copy v1) scl))
+   * (define-method * ((scl <number>) (v1 <vct>)) (vct-scale! (vct-copy v1) scl))
+   * (define-method / ((v1 <vct>) (scl <number>)) (vct-scale! (vct-copy v1) (/ 1.0 scl)))
+   *
+   * see gauche.collection and gauche.sequence: call-with-iterator, and inherit <collection> and probably <sequence>
    */
 
 #endif

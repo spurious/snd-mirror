@@ -500,14 +500,11 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+7-May:   Snd 8.1.\n\
 21-Apr:  many .fs files thanks to Mike Scholz (removed obsolete gfm directory).\n\
 15-Apr:  first portion of Gauche support.\n\
 12-Apr:  clm-load (ws.scm) for cm.\n\
 31-Mar:  rt-player.scm (Kjetil).\n\
-28-Mar:  Snd 8.0.\n\
-         Forth as extension language, thanks to Mike Scholz.\n\
-         shorten, tta, wavpack support.\n\
-14-Mar:  x-axis-as-clock for more informative x-axis tick labels in very large files.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
@@ -2544,7 +2541,7 @@ and its value is returned."
 
 #if HAVE_GAUCHE
   {
-    XEN sym;
+    XEN sym = XEN_FALSE;
     if (XEN_STRING_P(text))
       {
 	subject = XEN_TO_C_STRING(text);
@@ -2559,8 +2556,21 @@ and its value is returned."
 	  }
 	else 
 	  {
-	    subject = S_snd_help;
-	    str = H_snd_help;
+	    if (XEN_PROCEDURE_P(text))
+	      {
+		XEN name;
+		name = SCM_PROCEDURE_INFO(text);
+		if (XEN_STRING_P(name))
+		  {
+		    subject = XEN_TO_C_STRING(name);
+		    sym = C_STRING_TO_XEN_SYMBOL(subject);
+		  }
+	      }
+	    else
+	      {
+		subject = S_snd_help;
+		str = H_snd_help;
+	      }
 	  }
       }
     if (!str)
@@ -2569,6 +2579,28 @@ and its value is returned."
 	hlp = XEN_OBJECT_HELP(sym);
 	if (XEN_STRING_P(hlp))
 	  str = XEN_TO_C_STRING(hlp);
+	else
+	  {
+	    int i, min_loc = 0, this_diff, topic_min = 0;
+	    topic_min = snd_int_log2(snd_strlen(subject));
+	    for (i = 0; i < HELP_NAMES_SIZE; i++)
+	      {
+		this_diff = levenstein(subject, help_names[i]);
+		if (this_diff < min_diff)
+		  {
+		    min_diff = this_diff;
+		    min_loc = i;
+		  }
+	      }
+	    if (min_diff < topic_min)
+	      {
+		subject = help_names[min_loc];
+		sym = C_STRING_TO_XEN_SYMBOL(subject);
+		hlp = XEN_OBJECT_HELP(sym);
+		if (XEN_STRING_P(hlp))
+		  str = XEN_TO_C_STRING(hlp);
+	      }
+	  }
       }
   }
 #endif

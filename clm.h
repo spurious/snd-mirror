@@ -620,7 +620,7 @@ int mus_file_buffer_size(void);
 
 void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out_samps, off_t in_start, mus_any *mx, mus_any ***envs);
 void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs);
-Float mus_apply(mus_any *gen, double f1, double f2);
+Float mus_apply(mus_any *gen, Float f1, Float f2);
 
 bool mus_phase_vocoder_p(mus_any *ptr);
 mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction), 

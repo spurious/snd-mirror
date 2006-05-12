@@ -1,5 +1,6 @@
 #include "snd.h"
 #include "clm-strings.h"
+#include "sndlib-strings.h"
 #include "clm2xen.h"
 
 static void remove_temp_files(chan_info *cp)
@@ -937,7 +938,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
   if (sp->speed_control_style != DEFAULT_SPEED_CONTROL_STYLE) psp_ss(fd, S_speed_control_style, speed_control_style_name(sp->speed_control_style));
   if (fneq(sp->speed_control, DEFAULT_SPEED_CONTROL)) 
     {
-#if HAVE_RATIOS
+#if XEN_HAVE_RATIOS
       if (sp->speed_control == SPEED_CONTROL_AS_RATIO)
 	{
 	  /* no ratios in Ruby */
@@ -1524,18 +1525,686 @@ static XEN g_exit(XEN val)
   return(XEN_FALSE);
 }
 
+static int snd_access(char *dir, const char *caller)
+{
+  int err;
+  char *temp;
+  temp = shorter_tempnam(dir, "snd_");
+  err = mus_file_create(temp);
+  if (err == -1)
+    {
+      XEN res;
+      FREE(temp);
+      temp = mus_format(_("%s: directory %s is not writable: %s"), caller, dir, snd_open_strerror());
+      res = C_TO_XEN_STRING(temp);
+      FREE(temp);
+      XEN_ERROR(NO_SUCH_FILE,
+		XEN_LIST_1(res));
+    }
+  else snd_close(err, temp);
+  snd_remove(temp, IGNORE_CACHE);
+  FREE(temp);
+  return(1);
+}
+
+static XEN g_temp_dir(void) {return(C_TO_XEN_STRING(temp_dir(ss)));}
+static XEN g_set_temp_dir(XEN val) 
+{
+  #define H_temp_dir "(" S_temp_dir "): name of directory for temp files (or " PROC_FALSE "=null)"
+  char *dir = DEFAULT_TEMP_DIR;
+  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_temp_dir, "a string or " PROC_FALSE "=default (null)"); 
+  if (XEN_STRING_P(val)) dir = XEN_TO_C_STRING(val);
+  if (snd_access(dir, S_temp_dir))
+    {
+      if (temp_dir(ss)) FREE(temp_dir(ss));
+      set_temp_dir(copy_string(dir));
+    }
+  return(C_TO_XEN_STRING(temp_dir(ss)));
+}
+
+static XEN g_ladspa_dir(void) {return(C_TO_XEN_STRING(ladspa_dir(ss)));}
+static XEN g_set_ladspa_dir(XEN val) 
+{
+  #define H_ladspa_dir "(" S_ladspa_dir "): name of directory for ladspa plugin libraries"
+  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_ladspa_dir, "a string or " PROC_FALSE "=default (null)"); 
+  if (ladspa_dir(ss)) FREE(ladspa_dir(ss));
+  if (XEN_FALSE_P(val))
+    set_ladspa_dir(copy_string(DEFAULT_LADSPA_DIR));
+  else set_ladspa_dir(copy_string(XEN_TO_C_STRING(val)));
+  return(C_TO_XEN_STRING(ladspa_dir(ss)));
+}
+
+static XEN g_save_state_file(void) {return(C_TO_XEN_STRING(save_state_file(ss)));}
+static XEN g_set_save_state_file(XEN val) 
+{
+  char *filename;
+  #define H_save_state_file "(" S_save_state_file "): the name of the saved state file (\"saved-snd." XEN_FILE_EXTENSION "\")"
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_save_state_file, "a string"); 
+  filename = XEN_TO_C_STRING(val);
+  if (save_state_file(ss)) FREE(save_state_file(ss));
+  in_set_save_state_file(copy_string(filename));
+  return(C_TO_XEN_STRING(save_state_file(ss)));
+}
+
+static XEN g_save_dir(void) {return(C_TO_XEN_STRING(save_dir(ss)));}
+static XEN g_set_save_dir(XEN val) 
+{
+  #define H_save_dir "(" S_save_dir "): name of directory for saved state data (or " PROC_FALSE "=null)"
+  char *dir = DEFAULT_SAVE_DIR;
+  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_save_dir, "a string or " PROC_FALSE "=default (null)"); 
+  if (XEN_STRING_P(val)) dir = XEN_TO_C_STRING(val);
+  if (snd_access(dir, S_save_dir))
+    {
+      if (save_dir(ss)) FREE(save_dir(ss));
+      set_save_dir(copy_string(dir));
+    }
+  return(C_TO_XEN_STRING(save_dir(ss)));
+}
+
+
+static int snd_screen_height(void)
+{
+#if USE_MOTIF
+  return(HeightOfScreen(ScreenOfDisplay(MAIN_DISPLAY(ss), 0)));
+#else
+#if USE_GTK
+  return(gdk_screen_height());
+#else
+  return(4000);
+#endif
+#endif
+}
+
+static int snd_screen_width(void)
+{
+#if USE_MOTIF
+  return(WidthOfScreen(ScreenOfDisplay(MAIN_DISPLAY(ss), 0)));
+#else
+#if USE_GTK
+  return(gdk_screen_width());
+#else
+  return(4000);
+#endif
+#endif
+}
+
+static XEN g_window_height(void) 
+{
+  #define H_window_height "(" S_window_height "): current Snd window height in pixels"
+  return(C_TO_XEN_INT(widget_height(MAIN_SHELL(ss))));
+}
+
+static XEN g_set_window_height(XEN height) 
+{
+  Latus val;
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(height), height, XEN_ONLY_ARG, S_setB S_window_height, "a number"); 
+  val = (Latus)XEN_TO_C_INT_OR_ELSE(height, 0);
+  if ((val > 0) && (val < snd_screen_height()))
+    {
+#if (!USE_NO_GUI)
+      set_widget_height(MAIN_SHELL(ss), val);
+#endif
+      ss->init_window_height = val;
+    }
+  return(height);
+}
+
+static XEN g_window_width(void) 
+{
+  #define H_window_width "(" S_window_width "): current Snd window width in pixels"
+  return(C_TO_XEN_INT(widget_width(MAIN_SHELL(ss))));
+}
+
+static XEN g_set_window_width(XEN width) 
+{
+  Latus val;
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(width), width, XEN_ONLY_ARG, S_setB S_window_width, "a number"); 
+  val = (Latus)XEN_TO_C_INT_OR_ELSE(width, 0);
+  if ((val > 0) && (val < snd_screen_width()))
+    {
+#if (!USE_NO_GUI)
+      set_widget_width(MAIN_SHELL(ss), val);
+#endif
+      ss->init_window_width = val;
+    }
+  return(width);
+}
+
+static XEN g_window_x(void) 
+{
+  #define H_window_x "(" S_window_x "): current Snd window x position in pixels"
+  return(C_TO_XEN_INT(widget_x(MAIN_SHELL(ss))));
+}
+
+static XEN g_set_window_x(XEN val) 
+{
+  Locus x;
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_window_x, "a number"); 
+  x = (Locus)XEN_TO_C_INT_OR_ELSE(val, 0);
+  if ((x >= 0) && (x < snd_screen_width()))
+    {
+      set_widget_x(MAIN_SHELL(ss), x);
+      ss->init_window_x = x;
+    }
+  return(val);
+}
+
+static XEN g_window_y(void) 
+{
+  #define H_window_y "(" S_window_y "): current Snd window y position in pixels"
+  return(C_TO_XEN_INT(widget_y(MAIN_SHELL(ss))));
+}
+
+static XEN g_set_window_y(XEN val) 
+{
+  Locus y;
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_window_y, "a number"); 
+  y = (Locus)XEN_TO_C_INT_OR_ELSE(val, 0);
+  if ((y >= 0) && (y < snd_screen_height()))
+    {
+      set_widget_y(MAIN_SHELL(ss), y);
+      ss->init_window_y = y;
+    }
+  return(val);
+}
+
+static XEN g_just_sounds(void)
+{
+  #define H_just_sounds "(" S_just_sounds "): the 'just sounds' choice in the file chooser dialog"
+  return(C_TO_XEN_BOOLEAN(just_sounds(ss)));
+}
+
+static XEN g_set_just_sounds(XEN on) 
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_just_sounds, "a boolean");
+  set_just_sounds(XEN_TO_C_BOOLEAN(on));
+  reflect_just_sounds();
+  return(C_TO_XEN_BOOLEAN(just_sounds(ss)));
+}
+
+static XEN g_tiny_font(void) {return(C_TO_XEN_STRING(tiny_font(ss)));}
+static XEN g_set_tiny_font(XEN val) 
+{
+  #define H_tiny_font "(" S_tiny_font "): font use for some info in the graphs"
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_tiny_font, "a string"); 
+  set_tiny_font(XEN_TO_C_STRING(val)); 
+  return(C_TO_XEN_STRING(tiny_font(ss)));
+}
+
+static XEN g_axis_label_font(void) {return(C_TO_XEN_STRING(axis_label_font(ss)));}
+static XEN g_set_axis_label_font(XEN val) 
+{
+  #define H_axis_label_font "(" S_axis_label_font "): font used for axis labels"
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_axis_label_font, "a string"); 
+  set_axis_label_font(XEN_TO_C_STRING(val)); 
+  return(C_TO_XEN_STRING(axis_label_font(ss)));
+}
+
+static XEN g_axis_numbers_font(void) {return(C_TO_XEN_STRING(axis_numbers_font(ss)));}
+static XEN g_set_axis_numbers_font(XEN val) 
+{
+  #define H_axis_numbers_font "(" S_axis_numbers_font "): font used for axis numbers"
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_axis_numbers_font, "a string"); 
+  set_axis_numbers_font(XEN_TO_C_STRING(val)); 
+  return(C_TO_XEN_STRING(axis_numbers_font(ss)));
+}
+
+static XEN g_listener_font(void) {return(C_TO_XEN_STRING(listener_font(ss)));}
+static XEN g_set_listener_font(XEN val) 
+{
+  #define H_listener_font "(" S_listener_font "): font used by the lisp listener"
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_listener_font, "a string");
+  set_listener_font(XEN_TO_C_STRING(val)); 
+  return(C_TO_XEN_STRING(listener_font(ss)));
+}
+
+static XEN g_bold_peaks_font(void) {return(C_TO_XEN_STRING(bold_peaks_font(ss)));}
+static XEN g_set_bold_peaks_font(XEN val) 
+{
+  #define H_bold_peaks_font "(" S_bold_peaks_font "): bold font used by fft peak display"
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_bold_peaks_font, "a string"); 
+  set_bold_peaks_font(XEN_TO_C_STRING(val)); 
+  return(C_TO_XEN_STRING(bold_peaks_font(ss)));
+}
+
+static XEN g_peaks_font(void) {return(C_TO_XEN_STRING(peaks_font(ss)));}
+static XEN g_set_peaks_font(XEN val) 
+{
+  #define H_peaks_font "(" S_peaks_font "): normal font used by fft peak display"
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_peaks_font, "a string"); 
+  set_peaks_font(XEN_TO_C_STRING(val)); 
+  return(C_TO_XEN_STRING(peaks_font(ss)));
+}
+
+
+static XEN g_audio_output_device(void) {return(C_TO_XEN_INT(audio_output_device(ss)));}
+static XEN g_set_audio_output_device(XEN val) 
+{
+  #define H_audio_output_device "(" S_audio_output_device "): the current sndlib default output device (" S_mus_audio_default ")"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_audio_output_device, "an integer"); 
+  set_audio_output_device(XEN_TO_C_INT(val)); 
+  return(C_TO_XEN_INT(audio_output_device(ss)));
+}
+
+static XEN g_audio_input_device(void) {return(C_TO_XEN_INT(audio_input_device(ss)));}
+static XEN g_set_audio_input_device(XEN val) 
+{
+  #define H_audio_input_device "(" S_audio_input_device "): the current sndlib default input device (" S_mus_audio_default ")"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_audio_input_device, "an integer"); 
+  set_audio_input_device(XEN_TO_C_INT(val)); 
+  return(C_TO_XEN_INT(audio_input_device(ss)));
+}
+
+static XEN g_minibuffer_history_length(void) {return(C_TO_XEN_INT(minibuffer_history_length(ss)));}
+static XEN g_set_minibuffer_history_length(XEN val) 
+{
+  #define H_minibuffer_history_length "(" S_minibuffer_history_length "): the minibuffer history length. \
+This pertains to the M-p and M-n commands."
+  int len;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_minibuffer_history_length, "an integer");
+  len = XEN_TO_C_INT(val);
+  if (len > 0)
+    set_minibuffer_history_length(len);
+  return(C_TO_XEN_INT(minibuffer_history_length(ss)));
+}
+
+static XEN g_auto_resize(void) {return(C_TO_XEN_BOOLEAN(auto_resize(ss)));}
+static XEN g_set_auto_resize(XEN val) 
+{
+  #define H_auto_resize "(" S_auto_resize "): #t if Snd can change its main window size as it pleases (default: #t)"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_auto_resize, "a boolean");
+  set_auto_resize(XEN_TO_C_BOOLEAN(val)); 
+#if USE_MOTIF
+  XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, auto_resize(ss), NULL);
+#endif
+  return(C_TO_XEN_BOOLEAN(auto_resize(ss)));
+}
+
+static XEN g_color_cutoff(void) {return(C_TO_XEN_DOUBLE(color_cutoff(ss)));}
+static XEN g_set_color_cutoff(XEN val) 
+{
+  #define H_color_cutoff "(" S_color_cutoff "): color map cutoff point (default .003).  Any values \
+below the cutoff are displayed in the background color"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_color_cutoff, "a number");
+  set_color_cutoff(mus_fclamp(0.0,
+			      XEN_TO_C_DOUBLE(val),
+			      0.25)); 
+  return(C_TO_XEN_DOUBLE(color_cutoff(ss)));
+}
+
+static XEN g_color_inverted(void) {return(C_TO_XEN_BOOLEAN(color_inverted(ss)));}
+static XEN g_set_color_inverted(XEN val) 
+{
+  #define H_color_inverted "(" S_color_inverted "): whether the colormap in operation should be inverted"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_color_inverted, "a boolean");
+  set_color_inverted(XEN_TO_C_BOOLEAN(val)); 
+  return(C_TO_XEN_BOOLEAN(color_inverted(ss)));
+}
+
+static XEN g_color_scale(void) {return(C_TO_XEN_DOUBLE(color_scale(ss)));}
+static XEN g_set_color_scale(XEN val) 
+{
+  #define H_color_scale "(" S_color_scale "): darkness setting for colormaps (0.5)"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_color_scale, "a number"); 
+  set_color_scale(mus_fclamp(0.0,
+			     XEN_TO_C_DOUBLE(val),
+			     1000.0)); 
+  return(C_TO_XEN_DOUBLE(color_scale(ss)));
+}
+
+static XEN g_selection_creates_region(void) {return(C_TO_XEN_BOOLEAN(selection_creates_region(ss)));}
+static XEN g_set_selection_creates_region(XEN val) 
+{
+  #define H_selection_creates_region "(" S_selection_creates_region "): #t if a region should be created each time a selection is made. \
+The default is currently #t, but that may change.  If you're dealing with large selections, and have no need of \
+regions (saved selections), you can speed up many operations by setting this flag to #f"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_selection_creates_region, "a boolean");
+  set_selection_creates_region(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(selection_creates_region(ss)));
+}
+
+static XEN g_print_length(void) {return(C_TO_XEN_INT(print_length(ss)));}
+static XEN g_set_print_length(XEN val) 
+{
+  int len;
+  #define H_print_length "(" S_print_length "): number of vector elements to print in the listener (default: 12)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_print_length, "an integer"); 
+  len = XEN_TO_C_INT(val);
+  if (len < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_print_length, XEN_ONLY_ARG, val, "must be >= 0");
+  set_print_length(len);
+  set_vct_print_length(len);
+  return(C_TO_XEN_INT(print_length(ss)));
+}
+
+static XEN g_show_indices(void) {return(C_TO_XEN_BOOLEAN(show_indices(ss)));}
+static XEN g_set_show_indices(XEN val) 
+{
+  #define H_show_indices "(" S_show_indices "): #t if sound name should be preceded by its index in the sound display."
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_indices, "a boolean");
+  set_show_indices(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(show_indices(ss)));
+}
+
+static XEN g_show_backtrace(void) {return(C_TO_XEN_BOOLEAN(show_backtrace(ss)));}
+static XEN g_set_show_backtrace(XEN val) 
+{
+  #define H_show_backtrace "(" S_show_backtrace "): #t to show backtrace automatically upon error"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_backtrace, "a boolean");
+  set_show_backtrace(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(show_backtrace(ss)));
+}
+
+static XEN g_trap_segfault(void) {return(C_TO_XEN_BOOLEAN(trap_segfault(ss)));}
+static XEN g_set_trap_segfault(XEN val) 
+{
+  #define H_trap_segfault "(" S_trap_segfault "): #t if Snd should try to trap (and whine about) segfaults"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_trap_segfault, "a boolean");
+  set_trap_segfault(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(trap_segfault(ss)));
+}
+
+static XEN g_with_relative_panes(void) {return(C_TO_XEN_BOOLEAN(with_relative_panes(ss)));}
+static XEN g_set_with_relative_panes(XEN val) 
+{
+  #define H_with_relative_panes "(" S_with_relative_panes "): #t if multichannel sounds should try to maintain relative pane sizes"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_relative_panes, "a boolean");
+  set_with_relative_panes(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(with_relative_panes(ss)));
+}
+
+static XEN g_with_background_processes(void) {return(C_TO_XEN_BOOLEAN(with_background_processes(ss)));}
+static XEN g_set_with_background_processes(XEN val) 
+{
+  #define H_with_background_processes "(" S_with_background_processes "): #t if Snd should use background (idle time) processing"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_background_processes, "a boolean");
+  set_with_background_processes(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(with_background_processes(ss)));
+}
+
+static XEN g_snd_version(void) 
+{
+  #define H_snd_version "(" S_snd_version "): current Snd version (a string)"
+  return(C_TO_XEN_STRING(SND_DATE));
+}
+
+static XEN g_color_dialog(XEN managed) 
+{
+  widget_t w;
+  #define H_color_dialog "(" S_color_dialog "): start the Color dialog"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_color_dialog, "a boolean");
+  w = start_color_dialog(XEN_TO_C_BOOLEAN(managed));
+  return(XEN_WRAP_WIDGET(w));
+}
+
+static XEN g_orientation_dialog(XEN managed) 
+{
+  widget_t w;
+  #define H_orientation_dialog "(" S_orientation_dialog " (managed #t)): start the Orientation dialog"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_orientation_dialog, "a boolean");
+  w = start_orientation_dialog(XEN_TO_C_BOOLEAN(managed));
+  return(XEN_WRAP_WIDGET(w));
+}
+
+static XEN g_transform_dialog(XEN managed) 
+{
+  widget_t w;
+  #define H_transform_dialog "(" S_transform_dialog " (managed #t)): start the Transforms dialog"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_transform_dialog, "a boolean");
+  w = fire_up_transform_dialog(XEN_TO_C_BOOLEAN(managed));
+  return(XEN_WRAP_WIDGET(w));
+}
+
+static XEN g_print_dialog(XEN managed, XEN direct_to_printer) 
+{
+  widget_t w;
+  #define H_print_dialog "(" S_print_dialog " managed direct): start the File Print dialog"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ARG_1, S_print_dialog, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(direct_to_printer), direct_to_printer, XEN_ARG_2, S_print_dialog, "a boolean");
+  w = make_file_print_dialog(!(XEN_FALSE_P(managed)), XEN_TRUE_P(direct_to_printer));
+  return(XEN_WRAP_WIDGET(w));
+}
+
+static XEN g_preferences_dialog(void)
+{
+  widget_t w;
+  #define H_preferences_dialog "(" S_preferences_dialog "): start the Options:Preferences dialog"
+  w = start_preferences_dialog();
+  return(XEN_WRAP_WIDGET(w));
+}
+
+static XEN g_abort(void)
+{
+  #define H_abort "(" S_abort "): exit Snd via \"abort\", presumably to land in the debugger"
+  abort();
+  return(XEN_FALSE);
+}
+
+static XEN g_abortq(void)
+{
+  #define H_abortQ "(" S_c_g "): allow pending user interface events to occur, returning #t if C-g was typed"
+  check_for_event();
+  if (ss->stopped_explicitly)
+    {
+      ss->stopped_explicitly = false;
+      return(XEN_TRUE);
+    }
+  return(XEN_FALSE);
+}
+
+
+static XEN g_samples_to_sound_data(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN sdobj, XEN edpos, XEN sdchan)
+{
+  #define H_samples_to_sound_data "(" S_samples_to_sound_data " (start-samp 0) (samps len) (snd #f) (chn #f) (sdobj #f) (edpos #f) (sdobj-chan 0)): \
+return a sound-data object (sdobj if given) containing snd channel chn's data starting at start-samp for samps, \
+reading edit version edpos"
+
+  chan_info *cp;
+  XEN newsd = XEN_FALSE;
+  int i, len, pos, maxlen = 0, loc = NOT_A_GC_LOC;
+  off_t beg;
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, S_samples_to_sound_data, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, S_samples_to_sound_data, "a number");
+  ASSERT_CHANNEL(S_samples_to_sound_data, snd_n, chn_n, 3);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sdchan), sdchan, XEN_ARG_7, S_samples_to_sound_data, "an integer");
+  cp = get_cp(snd_n, chn_n, S_samples_to_sound_data);
+  pos = to_c_edit_position(cp, edpos, S_samples_to_sound_data, 6);
+  beg = beg_to_sample(samp_0, S_samples_to_sound_data);
+  maxlen = (int)(cp->samples[pos] - beg);
+  len = XEN_TO_C_INT_OR_ELSE(samps, maxlen);
+  if (len > maxlen) len = maxlen;
+  if (len > 0)
+    {
+      int chn = 0;
+      sound_data *sd;
+      chn = XEN_TO_C_INT_OR_ELSE(sdchan, 0);
+      if (chn < 0)
+	XEN_OUT_OF_RANGE_ERROR(S_samples_to_sound_data, 7, sdchan, "sound-data channel ~A < 0?");
+      if (sound_data_p(sdobj))
+	sd = (sound_data *)XEN_OBJECT_REF(sdobj);
+      else
+	{
+	  newsd = make_sound_data(chn + 1, len);
+	  loc = snd_protect(newsd);
+	  sd = (sound_data *)XEN_OBJECT_REF(newsd);
+	  if ((sd->data == NULL) || (sd->data[chn] == NULL))
+	    {
+	      XEN_ERROR(XEN_ERROR_TYPE("memory-error"),
+			XEN_LIST_2(C_TO_XEN_STRING(S_samples_to_sound_data), 
+				   C_TO_XEN_STRING("can't allocate memory for sound_data!")));
+	    }
+	}
+      if (chn < sd->chans)
+	{
+	  snd_fd *sf;
+	  if (len > sd->length) len = sd->length;
+	  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
+	  if (sf)
+	    {
+	      for (i = 0; i < len; i++) 
+		sd->data[chn][i] = read_sample(sf);
+	      sf = free_snd_fd(sf);
+	    }
+	}
+      else 
+	{
+	  if (loc != NOT_A_GC_LOC) snd_unprotect_at(loc);
+	  XEN_OUT_OF_RANGE_ERROR(S_samples_to_sound_data, 7, sdchan, "sound-data channel ~A > available chans");
+	}
+    }
+  if (loc != NOT_A_GC_LOC) snd_unprotect_at(loc);
+  if (XEN_NOT_FALSE_P(newsd))
+    return(newsd);
+  return(sdobj);
+}
+
+
 #ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_save_state_file_w, g_save_state_file)
+XEN_NARGIFY_1(g_set_save_state_file_w, g_set_save_state_file)
+XEN_NARGIFY_0(g_save_dir_w, g_save_dir)
+XEN_NARGIFY_1(g_set_save_dir_w, g_set_save_dir)
+XEN_NARGIFY_0(g_temp_dir_w, g_temp_dir)
+XEN_NARGIFY_1(g_set_temp_dir_w, g_set_temp_dir)
+XEN_NARGIFY_0(g_ladspa_dir_w, g_ladspa_dir)
+XEN_NARGIFY_1(g_set_ladspa_dir_w, g_set_ladspa_dir)
 XEN_ARGIFY_1(g_save_state_w, g_save_state)
 XEN_ARGIFY_1(g_exit_w, g_exit)
 XEN_NARGIFY_0(g_script_arg_w, g_script_arg)
 XEN_NARGIFY_1(g_set_script_arg_w, g_set_script_arg)
 XEN_NARGIFY_0(g_script_args_w, g_script_args)
+XEN_NARGIFY_0(g_window_x_w, g_window_x)
+XEN_NARGIFY_1(g_set_window_x_w, g_set_window_x)
+XEN_NARGIFY_0(g_window_y_w, g_window_y)
+XEN_NARGIFY_1(g_set_window_y_w, g_set_window_y)
+XEN_NARGIFY_0(g_window_width_w, g_window_width)
+XEN_NARGIFY_1(g_set_window_width_w, g_set_window_width)
+XEN_NARGIFY_0(g_window_height_w, g_window_height)
+XEN_NARGIFY_1(g_set_window_height_w, g_set_window_height)
+XEN_NARGIFY_0(g_just_sounds_w, g_just_sounds)
+XEN_NARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
+XEN_NARGIFY_0(g_audio_output_device_w, g_audio_output_device)
+XEN_NARGIFY_1(g_set_audio_output_device_w, g_set_audio_output_device)
+XEN_NARGIFY_0(g_audio_input_device_w, g_audio_input_device)
+XEN_NARGIFY_1(g_set_audio_input_device_w, g_set_audio_input_device)
+XEN_NARGIFY_0(g_minibuffer_history_length_w, g_minibuffer_history_length)
+XEN_NARGIFY_1(g_set_minibuffer_history_length_w, g_set_minibuffer_history_length)
+XEN_NARGIFY_0(g_auto_resize_w, g_auto_resize)
+XEN_NARGIFY_1(g_set_auto_resize_w, g_set_auto_resize)
+XEN_NARGIFY_0(g_color_cutoff_w, g_color_cutoff)
+XEN_NARGIFY_1(g_set_color_cutoff_w, g_set_color_cutoff)
+XEN_NARGIFY_0(g_color_inverted_w, g_color_inverted)
+XEN_NARGIFY_1(g_set_color_inverted_w, g_set_color_inverted)
+XEN_NARGIFY_0(g_color_scale_w, g_color_scale)
+XEN_NARGIFY_1(g_set_color_scale_w, g_set_color_scale)
+XEN_NARGIFY_0(g_selection_creates_region_w, g_selection_creates_region)
+XEN_NARGIFY_1(g_set_selection_creates_region_w, g_set_selection_creates_region)
+XEN_NARGIFY_0(g_print_length_w, g_print_length)
+XEN_NARGIFY_1(g_set_print_length_w, g_set_print_length)
+XEN_NARGIFY_0(g_show_indices_w, g_show_indices)
+XEN_NARGIFY_1(g_set_show_indices_w, g_set_show_indices)
+XEN_NARGIFY_0(g_show_backtrace_w, g_show_backtrace)
+XEN_NARGIFY_1(g_set_show_backtrace_w, g_set_show_backtrace)
+XEN_NARGIFY_0(g_trap_segfault_w, g_trap_segfault)
+XEN_NARGIFY_1(g_set_trap_segfault_w, g_set_trap_segfault)
+XEN_NARGIFY_0(g_with_relative_panes_w, g_with_relative_panes)
+XEN_NARGIFY_1(g_set_with_relative_panes_w, g_set_with_relative_panes)
+XEN_NARGIFY_0(g_with_background_processes_w, g_with_background_processes)
+XEN_NARGIFY_1(g_set_with_background_processes_w, g_set_with_background_processes)
+XEN_NARGIFY_0(g_tiny_font_w, g_tiny_font)
+XEN_NARGIFY_1(g_set_tiny_font_w, g_set_tiny_font)
+XEN_NARGIFY_0(g_peaks_font_w, g_peaks_font)
+XEN_NARGIFY_1(g_set_peaks_font_w, g_set_peaks_font)
+XEN_NARGIFY_0(g_bold_peaks_font_w, g_bold_peaks_font)
+XEN_NARGIFY_1(g_set_bold_peaks_font_w, g_set_bold_peaks_font)
+XEN_NARGIFY_0(g_axis_label_font_w, g_axis_label_font)
+XEN_NARGIFY_1(g_set_axis_label_font_w, g_set_axis_label_font)
+XEN_NARGIFY_0(g_axis_numbers_font_w, g_axis_numbers_font)
+XEN_NARGIFY_1(g_set_axis_numbers_font_w, g_set_axis_numbers_font)
+XEN_NARGIFY_0(g_listener_font_w, g_listener_font)
+XEN_NARGIFY_1(g_set_listener_font_w, g_set_listener_font)
+XEN_NARGIFY_0(g_snd_version_w, g_snd_version)
+XEN_ARGIFY_1(g_color_dialog_w, g_color_dialog)
+XEN_ARGIFY_1(g_orientation_dialog_w, g_orientation_dialog)
+XEN_ARGIFY_1(g_transform_dialog_w, g_transform_dialog)
+XEN_ARGIFY_2(g_print_dialog_w, g_print_dialog)
+XEN_NARGIFY_0(g_preferences_dialog_w, g_preferences_dialog)
+XEN_NARGIFY_0(g_abort_w, g_abort)
+XEN_NARGIFY_0(g_abortq_w, g_abortq)
+XEN_ARGIFY_7(g_samples_to_sound_data_w, g_samples_to_sound_data)
 #else
+#define g_save_state_file_w g_save_state_file
+#define g_set_save_state_file_w g_set_save_state_file
+#define g_save_dir_w g_save_dir
+#define g_set_save_dir_w g_set_save_dir
+#define g_temp_dir_w g_temp_dir
+#define g_set_temp_dir_w g_set_temp_dir
+#define g_ladspa_dir_w g_ladspa_dir
+#define g_set_ladspa_dir_w g_set_ladspa_dir
 #define g_save_state_w g_save_state
 #define g_exit_w g_exit
 #define g_script_arg_w g_script_arg
 #define g_set_script_arg_w g_set_script_arg
 #define g_script_args_w g_script_args
+#define g_window_x_w g_window_x
+#define g_set_window_x_w g_set_window_x
+#define g_window_y_w g_window_y
+#define g_set_window_y_w g_set_window_y
+#define g_window_width_w g_window_width
+#define g_set_window_width_w g_set_window_width
+#define g_window_height_w g_window_height
+#define g_set_window_height_w g_set_window_height
+#define g_just_sounds_w g_just_sounds
+#define g_set_just_sounds_w g_set_just_sounds
+#define g_audio_output_device_w g_audio_output_device
+#define g_set_audio_output_device_w g_set_audio_output_device
+#define g_audio_input_device_w g_audio_input_device
+#define g_set_audio_input_device_w g_set_audio_input_device
+#define g_minibuffer_history_length_w g_minibuffer_history_length
+#define g_set_minibuffer_history_length_w g_set_minibuffer_history_length
+#define g_auto_resize_w g_auto_resize
+#define g_set_auto_resize_w g_set_auto_resize
+#define g_color_cutoff_w g_color_cutoff
+#define g_set_color_cutoff_w g_set_color_cutoff
+#define g_color_inverted_w g_color_inverted
+#define g_set_color_inverted_w g_set_color_inverted
+#define g_color_scale_w g_color_scale
+#define g_set_color_scale_w g_set_color_scale
+#define g_selection_creates_region_w g_selection_creates_region
+#define g_set_selection_creates_region_w g_set_selection_creates_region
+#define g_print_length_w g_print_length
+#define g_set_print_length_w g_set_print_length
+#define g_show_indices_w g_show_indices
+#define g_set_show_indices_w g_set_show_indices
+#define g_show_backtrace_w g_show_backtrace
+#define g_set_show_backtrace_w g_set_show_backtrace
+#define g_trap_segfault_w g_trap_segfault
+#define g_set_trap_segfault_w g_set_trap_segfault
+#define g_with_relative_panes_w g_with_relative_panes
+#define g_set_with_relative_panes_w g_set_with_relative_panes
+#define g_with_background_processes_w g_with_background_processes
+#define g_set_with_background_processes_w g_set_with_background_processes
+#define g_tiny_font_w g_tiny_font
+#define g_set_tiny_font_w g_set_tiny_font
+#define g_peaks_font_w g_peaks_font
+#define g_set_peaks_font_w g_set_peaks_font
+#define g_bold_peaks_font_w g_bold_peaks_font
+#define g_set_bold_peaks_font_w g_set_bold_peaks_font
+#define g_axis_label_font_w g_axis_label_font
+#define g_set_axis_label_font_w g_set_axis_label_font
+#define g_axis_numbers_font_w g_axis_numbers_font
+#define g_set_axis_numbers_font_w g_set_axis_numbers_font
+#define g_listener_font_w g_listener_font
+#define g_set_listener_font_w g_set_listener_font
+#define g_snd_version_w g_snd_version
+#define g_color_dialog_w g_color_dialog
+#define g_orientation_dialog_w g_orientation_dialog
+#define g_transform_dialog_w g_transform_dialog
+#define g_print_dialog_w g_print_dialog
+#define g_preferences_dialog_w g_preferences_dialog
+#define g_abort_w g_abort
+#define g_abortq_w g_abortq
+#define g_samples_to_sound_data_w g_samples_to_sound_data
 #endif
 
 void g_init_main(void)
@@ -1549,6 +2218,18 @@ void g_init_main(void)
 #else
   XEN_DEFINE_PROCEDURE(S_exit,         g_exit_w,         0, 1, 0, H_exit);
 #endif
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_state_file, g_save_state_file_w, H_save_state_file,
+				   S_setB S_save_state_file, g_set_save_state_file_w, 0, 0, 1, 0);
+  
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_dir, g_save_dir_w, H_save_dir,
+				   S_setB S_save_dir, g_set_save_dir_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_temp_dir, g_temp_dir_w, H_temp_dir,
+				   S_setB S_temp_dir, g_set_temp_dir_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_ladspa_dir, g_ladspa_dir_w, H_ladspa_dir,
+				   S_setB S_ladspa_dir, g_set_ladspa_dir_w,  0, 0, 1, 0);
 
   #define H_start_hook S_start_hook " (filename): called upon start-up. If it returns #t, snd exits immediately."
   start_hook = XEN_DEFINE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
@@ -1572,4 +2253,89 @@ the hook functions return #t, the save state process opens 'filename' for append
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_script_arg, g_script_arg_w, H_script_arg, S_setB S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE(S_script_args, g_script_args_w, 0, 0, 0, H_script_args);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_x, g_window_x_w, H_window_x,
+				   S_setB S_window_x, g_set_window_x_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_y, g_window_y_w, H_window_y,
+				   S_setB S_window_y, g_set_window_y_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_width, g_window_width_w, H_window_width,
+				   S_setB S_window_width, g_set_window_width_w,  0, 0, 1, 0);  
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_height, g_window_height_w, H_window_height,
+				   S_setB S_window_height, g_set_window_height_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_audio_output_device, g_audio_output_device_w, H_audio_output_device,
+				   S_setB S_audio_output_device, g_set_audio_output_device_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_audio_input_device, g_audio_input_device_w, H_audio_input_device,
+				   S_setB S_audio_input_device, g_set_audio_input_device_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_minibuffer_history_length, g_minibuffer_history_length_w, H_minibuffer_history_length,
+				   S_setB S_minibuffer_history_length, g_set_minibuffer_history_length_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_auto_resize, g_auto_resize_w, H_auto_resize,
+				   S_setB S_auto_resize, g_set_auto_resize_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_color_cutoff, g_color_cutoff_w, H_color_cutoff,
+				   S_setB S_color_cutoff, g_set_color_cutoff_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_color_inverted, g_color_inverted_w, H_color_inverted,
+				   S_setB S_color_inverted, g_set_color_inverted_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_color_scale, g_color_scale_w, H_color_scale,
+				   S_setB S_color_scale, g_set_color_scale_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_creates_region, g_selection_creates_region_w, H_selection_creates_region,
+				   S_setB S_selection_creates_region, g_set_selection_creates_region_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_print_length, g_print_length_w, H_print_length,
+				   S_setB S_print_length, g_set_print_length_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_indices, g_show_indices_w, H_show_indices,
+				   S_setB S_show_indices, g_set_show_indices_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_backtrace, g_show_backtrace_w, H_show_backtrace,
+				   S_setB S_show_backtrace, g_set_show_backtrace_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_trap_segfault, g_trap_segfault_w, H_trap_segfault,
+				   S_setB S_trap_segfault, g_set_trap_segfault_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_relative_panes, g_with_relative_panes_w, H_with_relative_panes,
+				   S_setB S_with_relative_panes, g_set_with_relative_panes_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_background_processes, g_with_background_processes_w, H_with_background_processes,
+				   S_setB S_with_background_processes, g_set_with_background_processes_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_tiny_font, g_tiny_font_w, H_tiny_font,
+				   S_setB S_tiny_font, g_set_tiny_font_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_peaks_font, g_peaks_font_w, H_peaks_font,
+				   S_setB S_peaks_font, g_set_peaks_font_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_bold_peaks_font, g_bold_peaks_font_w, H_bold_peaks_font,
+				   S_setB S_bold_peaks_font, g_set_bold_peaks_font_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_axis_label_font, g_axis_label_font_w, H_axis_label_font,
+				   S_setB S_axis_label_font, g_set_axis_label_font_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_axis_numbers_font, g_axis_numbers_font_w, H_axis_numbers_font,
+				   S_setB S_axis_numbers_font, g_set_axis_numbers_font_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_font, g_listener_font_w, H_listener_font,
+				   S_setB S_listener_font, g_set_listener_font_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, 
+				   S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE(S_snd_version,           g_snd_version_w,           0, 0, 0, H_snd_version);
+  XEN_DEFINE_PROCEDURE(S_color_dialog,          g_color_dialog_w,          0, 1, 0, H_color_dialog);
+  XEN_DEFINE_PROCEDURE(S_orientation_dialog,    g_orientation_dialog_w,    0, 1, 0, H_orientation_dialog);
+  XEN_DEFINE_PROCEDURE(S_transform_dialog,      g_transform_dialog_w,      0, 1, 0, H_transform_dialog);
+  XEN_DEFINE_PROCEDURE(S_print_dialog,          g_print_dialog_w,          0, 2, 0, H_print_dialog);
+  XEN_DEFINE_PROCEDURE(S_preferences_dialog,    g_preferences_dialog_w,    0, 0, 0, H_preferences_dialog);
+  XEN_DEFINE_PROCEDURE(S_abort,                 g_abort_w,                 0, 0, 0, H_abort);
+  XEN_DEFINE_PROCEDURE(S_c_g,                   g_abortq_w,                0, 0, 0, H_abortQ);
+  XEN_DEFINE_PROCEDURE(S_samples_to_sound_data, g_samples_to_sound_data_w, 0, 7, 0, H_samples_to_sound_data);
 }

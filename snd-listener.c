@@ -648,6 +648,20 @@ static XEN g_set_listener_prompt(XEN val)
   return(C_TO_XEN_STRING(listener_prompt(ss)));
 }
 
+static XEN g_snd_completion(XEN text)
+{
+  /* perhaps callable from emacs? */
+  char *str, *temp;
+  XEN res;
+  temp = copy_string(XEN_TO_C_STRING(text));
+  str = command_completer(temp, NULL);
+  res = C_TO_XEN_STRING(str);
+  FREE(str);
+  FREE(temp);
+  return(res);
+}
+
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_save_listener_w, g_save_listener)
 XEN_NARGIFY_0(g_clear_listener_w, g_clear_listener);
@@ -655,6 +669,7 @@ XEN_ARGIFY_1(g_show_listener_w, g_show_listener)
 XEN_NARGIFY_1(g_set_show_listener_w, g_set_show_listener)
 XEN_NARGIFY_0(g_listener_prompt_w, g_listener_prompt)
 XEN_NARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
+XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #else
 #define g_save_listener_w g_save_listener
 #define g_clear_listener_w g_clear_listener
@@ -662,6 +677,7 @@ XEN_NARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
 #define g_set_show_listener_w g_set_show_listener
 #define g_listener_prompt_w g_listener_prompt
 #define g_set_listener_prompt_w g_set_listener_prompt
+#define g_snd_completion_w g_snd_completion
 #endif
 
 void g_init_listener(void)
@@ -692,4 +708,6 @@ If it returns true, Snd assumes you've dealt the text yourself, and does not try
 #endif
   
   read_hook = XEN_DEFINE_HOOK(S_read_hook, 1, H_read_hook);
+
+  XEN_DEFINE_PROCEDURE("snd-completion",        g_snd_completion_w,        1, 0, 0, "return completion of arg");
 }

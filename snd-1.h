@@ -974,6 +974,7 @@ void set_fft_info_xlabel(chan_info *cp, const char *new_label);
 void fourier_spectrum(snd_fd *sf, Float *data, int fft_size, int data_len, Float *window);
 char *wavelet_name(int i);
 char **wavelet_names(void);
+void set_log_freq_start(Float base);
 
 char *transform_name(int type);
 char *transform_program_name(int type);
@@ -1001,8 +1002,6 @@ XEN eval_str_wrapper(void *data);
 XEN eval_form_wrapper(void *data);
 XEN string_to_form(void *data);
 char *g_print_1(XEN obj);
-chan_info *get_cp(XEN snd_n, XEN chn_n, const char *caller);
-snd_info *get_sp(XEN snd_n, sp_sound_t accept_player);
 XEN g_c_make_sample_reader(snd_fd *fd);
 #if HAVE_GUILE
   XEN g_call0(XEN proc, const char *caller);
@@ -1024,9 +1023,6 @@ void snd_unprotect_at(int loc);
 XEN run_or_hook (XEN hook, XEN args, const char *caller);
 XEN run_progn_hook (XEN hook, XEN args, const char *caller);
 XEN run_hook(XEN hook, XEN args, const char *caller);
-void during_open(int fd, const char *file, open_reason_t reason);
-void after_open(int index);
-char *output_name(const char *current_name);
 bool listener_print_p(const char *msg);
 void check_features_list(char *features);
 #if (!USE_NO_GUI)
@@ -1053,7 +1049,6 @@ void clear_stdin(void);
 #if HAVE_RUBY
   void snd_rb_raise(XEN type, XEN info);
 #endif
-void set_log_freq_start(Float base);
 
 
 /* -------- snd-select.c -------- */
@@ -1214,6 +1209,7 @@ void dac_set_reverb_lowpass(snd_info *sp, Float newval);
 
 /* -------- snd-chn.c -------- */
 
+chan_info *get_cp(XEN snd_n, XEN chn_n, const char *caller);
 snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t with_arrows, 
 				      graph_style_t grf_style, widget_t container, bool with_events);
 axis_info *lisp_info_axis(chan_info *cp);
@@ -1327,6 +1323,7 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
 
 /* -------- snd-snd.c -------- */
 
+snd_info *get_sp(XEN snd_n, sp_sound_t accept_player);
 env_info *free_amp_env(chan_info *cp, int pos);
 void free_env_state(chan_info *cp);
 env_info *free_env_info(env_info *ep);
@@ -1356,7 +1353,7 @@ void amp_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func);
 void amp_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t num, int pos, XEN init_func);
 void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos);
 snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples);
-#if HAVE_RATIOS
+#if XEN_HAVE_RATIOS
   void snd_rationalize(Float a, int *num, int *den);
 #endif
 int add_sp_watcher(snd_info *sp, sp_watcher_t type, void (*watcher)(struct snd_info *sp, sp_watcher_reason_t reason, int list_loc), void *context);
@@ -1414,6 +1411,9 @@ void set_fallback_format(int fr);
 
 void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, bool from_save_as_dialog);
 bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int type, int format, const char *comment);
+void during_open(int fd, const char *file, open_reason_t reason);
+void after_open(int index);
+char *output_name(const char *current_name);
 void save_view_files_dialogs(FILE *fd);
 widget_t start_view_files_dialog(bool managed, bool make_new);
 void view_files_unplay(void);

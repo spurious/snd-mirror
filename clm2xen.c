@@ -6329,7 +6329,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 
   XEN_DEFINE_PROCEDURE(S_env_p,       g_env_p_w,       1, 0, 0, H_env_p);
   XEN_DEFINE_PROCEDURE(S_env,         g_env_w,         1, 0, 0, H_env);
-  XEN_DEFINE_PROCEDURE("restart-env", g_mus_reset_w,   1, 0, 0, H_mus_reset); /* backwards compatibility */
   XEN_DEFINE_PROCEDURE(S_make_env,    g_make_env_w,    0, 0, 1, H_make_env);
   XEN_DEFINE_PROCEDURE(S_env_interp,  g_env_interp_w,  2, 0, 0, H_env_interp);
 

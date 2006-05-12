@@ -418,7 +418,11 @@ GtkWidget *add_menu(void)
   edit_select_all_menu = gtk_image_menu_item_new_with_label(_("Select all"));
   ml[e_select_all_menu] = _("Select all");
   gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_select_all_menu);
+#ifdef GTK_STOCK_SELECT_ALL
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_select_all_menu), gtk_image_new_from_stock(GTK_STOCK_SELECT_ALL, GTK_ICON_SIZE_MENU));
+#else
   gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_select_all_menu), gtk_image_new_from_stock(GTK_STOCK_BOLD, GTK_ICON_SIZE_MENU));
+#endif
   gtk_widget_show(edit_select_all_menu);
   set_sensitive(edit_select_all_menu, false);
   SG_SIGNAL_CONNECT(edit_select_all_menu, "activate", edit_select_all_callback, NULL);
