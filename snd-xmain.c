@@ -923,6 +923,21 @@ void snd_doit(int argc, char **argv)
   sx->grid_color = get_in_between_color(sx->data_color, sx->graph_color);
   sx->selected_grid_color = get_in_between_color(sx->selected_data_color, sx->selected_graph_color);
 
+  sx->orig_data_color = sx->data_color;
+  sx->orig_selected_data_color = sx->selected_data_color;
+  sx->orig_mark_color = sx->mark_color;
+  sx->orig_mix_color = sx->mix_color;
+  sx->orig_graph_color = sx->graph_color;
+  sx->orig_selected_graph_color = sx->selected_graph_color;
+  sx->orig_listener_color = sx->listener_color;
+  sx->orig_listener_text_color = sx->listener_text_color;
+  sx->orig_cursor_color = sx->cursor_color;
+  sx->orig_basic_color = sx->basic_color;
+  sx->orig_selection_color = sx->selection_color;
+  sx->orig_zoom_color = sx->zoom_color;
+  sx->orig_position_color = sx->position_color;
+  sx->orig_highlight_color = sx->highlight_color;
+
   if ((!(set_peaks_font(snd_rs.peaks_font))) &&
       (!(set_peaks_font(DEFAULT_PEAKS_FONT))) &&
       (!(set_peaks_font(FALLBACK_FONT))))

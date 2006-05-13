@@ -472,6 +472,209 @@ static void save_recorder_autoload(prefs_info *prf, FILE *ignore) {rts_recorder_
 
 
 
+/* ---------------- basic-color ---------------- */
+
+/* we need the original color (Clear), the last saved color (Revert)
+ *   the colors are updated continuously, so the current color variable is irrelevant
+ *   so: 
+ *       set original in snd-gxmain or somewhere: requires ss->sgx fields
+ *       set rts in prefs dialog startup
+ *       reflect_color: a no-op
+ *       save_color: save current color_t value in rts value (actual fd output dealt with elsewhere)
+ *       clear_color: set to original (leave rts value alone)
+ *       revert_color: set to rts (leave original alone)
+ *       help_color: built-in via color variable name
+ *       color_func: set color based on rgb values
+ */
+
+static color_t saved_basic_color;
+static void clear_basic_color(prefs_info *prf) {set_basic_color(ss->sgx->orig_basic_color);}
+static void save_basic_color(prefs_info *prf, FILE *ignore) {saved_basic_color = ss->sgx->basic_color;}
+static void basic_color_func(prefs_info *prf, float r, float g, float b) {set_basic_color(rgb_to_color(r, g, b));}
+static void revert_basic_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_basic_color); 
+  set_basic_color(saved_basic_color);
+}
+
+
+/* ---------------- highlight-color ---------------- */
+
+static color_t saved_highlight_color;
+static void clear_highlight_color(prefs_info *prf) {set_highlight_color(ss->sgx->orig_highlight_color);}
+static void save_highlight_color(prefs_info *prf, FILE *ignore) {saved_highlight_color = ss->sgx->highlight_color;}
+static void highlight_color_func(prefs_info *prf, float r, float g, float b) {set_highlight_color(rgb_to_color(r, g, b));}
+static void revert_highlight_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_highlight_color); 
+  set_highlight_color(saved_highlight_color);
+}
+
+
+/* ---------------- position-color ---------------- */
+
+static color_t saved_position_color;
+static void clear_position_color(prefs_info *prf) {set_position_color(ss->sgx->orig_position_color);}
+static void save_position_color(prefs_info *prf, FILE *ignore) {saved_position_color = ss->sgx->position_color;}
+static void position_color_func(prefs_info *prf, float r, float g, float b) {set_position_color(rgb_to_color(r, g, b));}
+static void revert_position_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_position_color); 
+  set_position_color(saved_position_color);
+}
+
+
+/* ---------------- zoom-color ---------------- */
+
+static color_t saved_zoom_color;
+static void clear_zoom_color(prefs_info *prf) {set_zoom_color(ss->sgx->orig_zoom_color);}
+static void save_zoom_color(prefs_info *prf, FILE *ignore) {saved_zoom_color = ss->sgx->zoom_color;}
+static void zoom_color_func(prefs_info *prf, float r, float g, float b) {set_zoom_color(rgb_to_color(r, g, b));}
+static void revert_zoom_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_zoom_color); 
+  set_zoom_color(saved_zoom_color);
+}
+
+
+/* ---------------- cursor-color ---------------- */
+
+static color_t saved_cursor_color;
+static void clear_cursor_color(prefs_info *prf) {color_cursor(ss->sgx->orig_cursor_color);}
+static void save_cursor_color(prefs_info *prf, FILE *ignore) {saved_cursor_color = ss->sgx->cursor_color;}
+static void cursor_color_func(prefs_info *prf, float r, float g, float b)
+{
+  color_cursor(rgb_to_color(r, g, b));
+  for_each_chan(update_graph);
+}
+static void revert_cursor_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_cursor_color); 
+  color_cursor(saved_cursor_color);
+}
+
+
+/* ---------------- data-color ---------------- */
+
+static color_t saved_data_color;
+static void clear_data_color(prefs_info *prf) {set_data_color(ss->sgx->orig_data_color);}
+static void save_data_color(prefs_info *prf, FILE *ignore) {saved_data_color = ss->sgx->data_color;}
+static void data_color_func(prefs_info *prf, float r, float g, float b) {set_data_color(rgb_to_color(r, g, b));}
+static void revert_data_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_data_color); 
+  set_data_color(saved_data_color);
+}
+
+
+/* ---------------- graph-color ---------------- */
+
+static color_t saved_graph_color;
+static void clear_graph_color(prefs_info *prf) {set_graph_color(ss->sgx->orig_graph_color);}
+static void save_graph_color(prefs_info *prf, FILE *ignore) {saved_graph_color = ss->sgx->graph_color;}
+static void graph_color_func(prefs_info *prf, float r, float g, float b) {set_graph_color(rgb_to_color(r, g, b));}
+static void revert_graph_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_graph_color); 
+  set_graph_color(saved_graph_color);
+}
+
+
+/* ---------------- selected-data-color ---------------- */
+
+static color_t saved_selected_data_color;
+static void clear_selected_data_color(prefs_info *prf) {set_selected_data_color(ss->sgx->orig_selected_data_color);}
+static void save_selected_data_color(prefs_info *prf, FILE *ignore) {saved_selected_data_color = ss->sgx->selected_data_color;}
+static void selected_data_color_func(prefs_info *prf, float r, float g, float b) {set_selected_data_color(rgb_to_color(r, g, b));}
+static void revert_selected_data_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_selected_data_color); 
+  set_selected_data_color(saved_selected_data_color);
+}
+
+
+/* ---------------- selected-graph-color ---------------- */
+
+static color_t saved_selected_graph_color;
+static void clear_selected_graph_color(prefs_info *prf) {set_selected_graph_color(ss->sgx->orig_selected_graph_color);}
+static void save_selected_graph_color(prefs_info *prf, FILE *ignore) {saved_selected_graph_color = ss->sgx->selected_graph_color;}
+static void selected_graph_color_func(prefs_info *prf, float r, float g, float b) {set_selected_graph_color(rgb_to_color(r, g, b));}
+static void revert_selected_graph_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_selected_graph_color); 
+  set_selected_graph_color(saved_selected_graph_color);
+}
+
+
+/* ---------------- selection-color ---------------- */
+
+static void set_selection_color(color_t color)
+{
+  color_selection(color);
+  for_each_chan(update_graph);
+}
+
+static color_t saved_selection_color;
+static void clear_selection_color(prefs_info *prf) {set_selection_color(ss->sgx->orig_selection_color);}
+static void save_selection_color(prefs_info *prf, FILE *ignore) {saved_selection_color = ss->sgx->selection_color;}
+static void selection_color_func(prefs_info *prf, float r, float g, float b) {set_selection_color(rgb_to_color(r, g, b));}
+static void revert_selection_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_selection_color); 
+  set_selection_color(saved_selection_color);
+}
+
+
+/* ---------------- mark-color ---------------- */
+
+static color_t saved_mark_color;
+static void clear_mark_color(prefs_info *prf) {color_marks(ss->sgx->orig_mark_color);}
+static void save_mark_color(prefs_info *prf, FILE *ignore) {saved_mark_color = ss->sgx->mark_color;}
+static void mark_color_func(prefs_info *prf, float r, float g, float b) {color_marks(rgb_to_color(r, g, b));}
+static void revert_mark_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_mark_color);
+  color_marks(saved_mark_color);
+}
+
+
+/* ---------------- mix-color (waveform) ---------------- */
+
+static color_t saved_mix_color;
+static void clear_mix_color(prefs_info *prf) {color_mixes(ss->sgx->orig_mix_color);}
+static void save_mix_color(prefs_info *prf, FILE *ignore) {saved_mix_color = ss->sgx->mix_color;}
+static void mix_color_func(prefs_info *prf, float r, float g, float b) {color_mixes(rgb_to_color(r, g, b));}
+static void revert_mix_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_mix_color);
+  color_mixes(saved_mix_color);
+}
+
+
+/* ---------------- listener-color ---------------- */
+
+static color_t saved_listener_color;
+static void clear_listener_color(prefs_info *prf) {color_listener(ss->sgx->orig_listener_color);}
+static void save_listener_color(prefs_info *prf, FILE *ignore) {saved_listener_color = ss->sgx->listener_color;}
+static void listener_color_func(prefs_info *prf, float r, float g, float b) {color_listener(rgb_to_color(r, g, b));}
+static void revert_listener_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_listener_color);
+  color_listener(saved_listener_color);
+}
+
+
+/* ---------------- listener-text-color ---------------- */
+
+static color_t saved_listener_text_color;
+static void clear_listener_text_color(prefs_info *prf) {color_listener_text(ss->sgx->orig_listener_text_color);}
+static void save_listener_text_color(prefs_info *prf, FILE *ignore) {saved_listener_text_color = ss->sgx->listener_text_color;}
+static void listener_text_color_func(prefs_info *prf, float r, float g, float b) {color_listener_text(rgb_to_color(r, g, b));}
+static void revert_listener_text_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_listener_text_color);
+  color_listener_text(saved_listener_text_color);
+}
 
 
 

@@ -138,6 +138,10 @@ typedef struct {
   GdkColor *help_button_color, *doit_again_button_color, *doit_button_color, *quit_button_color, *reset_button_color;
   GdkColor *selected_grid_color, *grid_color;
 
+  GdkColor *orig_data_color, *orig_selected_data_color, *orig_mark_color, *orig_mix_color;
+  GdkColor *orig_graph_color, *orig_selected_graph_color, *orig_listener_color, *orig_listener_text_color, *orig_cursor_color;
+  GdkColor *orig_basic_color, *orig_selection_color, *orig_zoom_color, *orig_position_color, *orig_highlight_color;
+
   GdkGC *basic_gc, *selected_basic_gc, *combined_basic_gc;        
   GdkGC *cursor_gc, *selected_cursor_gc;      
   GdkGC *selection_gc, *selected_selection_gc;

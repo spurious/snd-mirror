@@ -2,6 +2,8 @@
 #include "snd-menu.h"
 #include <X11/cursorfont.h>
 
+/* TODO: the button backgrounds remain in the original basic color? */
+
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
 
 /* -------------------------------- FILE MENU -------------------------------- */

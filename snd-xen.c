@@ -16,32 +16,27 @@
 
 /* Other extension language possibilities:
  *
+ * chicken:     (Scheme) looks clean, but no vararg functions, no bignums, gc protection looks iffy, not clear
+ *                         how to call C function from Scheme.
  * ecl:         (CL)     do-able; will require that all direct refs be through xen.c (can't include its header files!)
  *                         it also requires config.h, and uses the field "complex" which confuses C.
  * eel:         (C)      a commercial product
  * elastic:     (C)      looks dead (no change since 2001), like Lua in calling sequences
- * elk:         (Scheme) looks dead (no change since 1996) and is worse than stklos in terms of name-space problems
+ * elk:         (Scheme) looks dead (no change since 1996) and has very severe name-space problems
+ * Gambit:      (Scheme) not an extension language, complicated connection to C
  * GameMonkey:  ()       c++, windows oriented (no linux I think)
  * librep:      (CL)     looks dead, was very hard to debug a long time ago, but I still have the macros (xen.h)
- * lua:         ()       do-able, but it looks like akcl to me -- very primitive! (and it's not freeware?)
+ * lua:         ()       do-able, very primitive -- push-pop-stack etc. (I'm told it is freeware, just a funny license)
+ * lush:        (CL)     compilation problem, serious name-space problems (not really an extension language)
  * mzscheme:    (Scheme) support semi-exists (I have the xen.h macros for it), but I refuse to touch it
  * ocaml:       (ML)     not an extension language, as far as I can tell
  * octave:      (Matlab) c++, probably do-able -- I'm looking into this currently [2.1.73 won't build -- g++ trouble?]
  * pike:        (C)      not an extension language
  * python:      ()       looks like ruby to me -- why duplicate? (I have about 1/4 of xen.h for this)
  * rscheme:     (Scheme) won't build on my systems
- * s-lang:      (C)      probably doable -- would need tp wrap everything in my own struct, and 7 args max is too few.
+ * s-lang:      (C)      probably doable -- would need to wrap everything in my own struct, and 7 args max is too few.
  * squirrel:    ()       c++, like lua in call sequence
  * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers
- *
- * others that call themselves "extension" languages mean "extensible" -- they mean that you can
- *   add your own C functions via an FFI, or run their repl in your own shell widget -- this is
- *   not what we want!  The adjective "embedded" has the same ambiguity -- we need some clear name 
- *   for an interpreter that extends some other program.
- *
- * (c++ is a serious liability...)
- *
- * so... ecl and octave are the only ones in contention, and ecl is now on indefinite hold
  */
 
 
@@ -52,6 +47,7 @@
  *    unwind-protects around scm_apply (snd-xen g_call)
  *
  * TODO: check prefs and save/restore: these are broken [work in progress...]
+ *       to clear back to default colors, need to save original somewhere (this is affected by .Xdefaults etc)
  *
  * TODO in Forth: features check (below)
  *    sndscm: forth doc (only have .snd_forth right now)
