@@ -76,43 +76,17 @@ static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m,
 static void clear_prefs_dialog_error(void);
 static void scale_set_color(prefs_info *prf, color_t pixel);
 static color_t rgb_to_color(Float r, Float g, Float b);
-#define GET_TOGGLE(Toggle) (XmToggleButtonGetState(Toggle) == XmSET)
+
+#define GET_TOGGLE(Toggle)        (XmToggleButtonGetState(Toggle) == XmSET)
 #define SET_TOGGLE(Toggle, Value) XmToggleButtonSetState(Toggle, Value, false)
+#define GET_TEXT(Text)            XmTextFieldGetString(Text)
+#define SET_TEXT(Text, Val)       XmTextFieldSetString(Text, Val)
+#define FREE_TEXT(Val)            XtFree(Val)
+
 #include "snd-prefs.c"
 
 
 /* ---------------- utilities ---------------- */
-
-static void int_to_textfield(Widget w, int val)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(w), w);
-  str = (char *)CALLOC(16, sizeof(char));
-  mus_snprintf(str, 16, "%d", val);
-  XmTextFieldSetString(w, str);
-  FREE(str);
-}
-
-static void float_to_textfield(Widget w, Float val)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(w), w);
-  str = (char *)CALLOC(12, sizeof(char));
-  mus_snprintf(str, 12, "%.3f", val);
-  XmTextFieldSetString(w, str);
-  FREE(str);
-}
-
-static void float_1_to_textfield(Widget w, Float val)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(w), w);
-  str = (char *)CALLOC(12, sizeof(char));
-  mus_snprintf(str, 12, "%.1f", val);
-  XmTextFieldSetString(w, str);
-  FREE(str);
-}
-
 
 #include <X11/IntrinsicP.h>
 
@@ -2270,103 +2244,6 @@ static void save_dir_text(prefs_info *prf)
   if (str) XtFree(str);
 }
 
-/* ---------------- save-state-file ---------------- */
-
-static void reflect_save_state_file(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, save_state_file(ss));
-}
-
-static void save_state_file_text(prefs_info *prf)
-{
-  char *str, *file = NULL;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((!str) || (!(*str))) 
-    file = DEFAULT_SAVE_STATE_FILE;
-  else file = str;
-  if (save_state_file(ss)) FREE(save_state_file(ss));
-  in_set_save_state_file(copy_string(file));
-  if (str) XtFree(str);
-}
-
-
-#if HAVE_LADSPA
-/* ---------------- ladspa-dir ---------------- */
-
-static void reflect_ladspa_dir(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, ladspa_dir(ss));
-}
-
-static void ladspa_dir_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if (ladspa_dir(ss)) FREE(ladspa_dir(ss));
-  if (str)
-    {
-      set_ladspa_dir(copy_string(str));
-      XtFree(str);
-    }
-  else set_ladspa_dir(copy_string(DEFAULT_LADSPA_DIR));
-}
-#endif
-
-
-/* ---------------- view-files directory ---------------- */
-
-static char *include_vf_directory = NULL;
-
-static void reflect_view_files_directory(prefs_info *prf)
-{
-  if (include_vf_directory) FREE(include_vf_directory);
-  include_vf_directory = copy_string(view_files_find_any_directory());
-  XmTextFieldSetString(prf->text, view_files_find_any_directory());
-}
-
-static void view_files_directory_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if (include_vf_directory) FREE(include_vf_directory);
-  include_vf_directory = copy_string(str); /* could be null to cancel */
-  if (str)
-    {
-      view_files_add_directory(NULL_WIDGET, (const char *)str);
-      XtFree(str);
-    }
-}
-
-static void save_view_files_directory(prefs_info *prf, FILE *fd)
-{
-  if (include_vf_directory) save_view_files_directory_1(prf, fd, include_vf_directory);
-}
-
-
-/* ---------------- html-program ---------------- */
-
-static void reflect_html_program(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, html_program(ss));
-}
-
-static void html_program_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if (html_program(ss)) FREE(html_program(ss));
-  if (str)
-    {
-      set_html_program(copy_string(str));
-      XtFree(str);
-    }
-  else set_html_program(copy_string(DEFAULT_HTML_PROGRAM));
-}
-
 /* ---------------- default-output-chans etc ---------------- */
 
 #define NUM_OUTPUT_CHAN_CHOICES 4
@@ -3508,36 +3385,6 @@ static void fft_window_beta_text_callback(prefs_info *prf)
 }
 
 
-/* ---------------- show-transform-peaks ---------------- */
-
-static void reflect_show_transform_peaks(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, show_transform_peaks(ss), false);
-}
-
-static void transform_peaks_toggle(prefs_info *prf)
-{
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
-  in_set_show_transform_peaks(XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void max_peaks_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      int value = 0;
-      sscanf(str, "%d", &value);
-      if (value >= 0)
-	in_set_max_transform_peaks(value);
-      else int_to_textfield(prf->text, max_transform_peaks(ss));
-      XtFree(str);
-    }
-}
-
-
 /* ---------------- colormap ---------------- */
 
 static char *colormap_completer(char *text, void *data)
@@ -3609,28 +3456,6 @@ static void colormap_from_menu(prefs_info *prf, char *value)
 	XmTextFieldSetString(prf->text, value);
 	return;
       }
-}
-
-
-/* ---------------- min-dB ---------------- */
-
-static void reflect_min_dB(prefs_info *prf)
-{
-  float_1_to_textfield(prf->text, min_dB(ss));
-}
-
-static void min_dB_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      float value = 0.0;
-      sscanf(str, "%f", &value);
-      set_min_db(value); /* snd-chn.c -- redisplays */
-      XtFree(str);
-    }
 }
 
 
@@ -3779,35 +3604,6 @@ static void mix_tag_size_text(prefs_info *prf)
 	  if (height > 0) set_mix_tag_height(height);
 	  XtFree(str);
 	}
-    }
-}
-
-/* ---------------- show-mix-waveforms ---------------- */
-
-static void reflect_show_mix_waveforms(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, show_mix_waveforms(ss), false);
-}
-
-static void show_mix_waveforms_toggle(prefs_info *prf)
-{
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
-  in_set_show_mix_waveforms(XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void mix_waveform_height_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      int value = 0;
-      sscanf(str, "%d", &value);
-      if (value >= 0)
-	in_set_mix_waveform_height(value);
-      else int_to_textfield(prf->text, mix_waveform_height(ss));
-      XtFree(str);
     }
 }
 
@@ -3979,30 +3775,6 @@ static void reflect_hidden_controls(prefs_info *prf)
 #endif
 
 
-/* ---------------- sinc width ---------------- */
-
-static void sinc_width_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      int value = 0;
-      sscanf(str, "%d", &value);
-      if (value >= 0)
-	set_sinc_width(value);
-      else int_to_textfield(prf->text, sinc_width(ss));
-      XtFree(str);
-    }
-}
-
-static void reflect_sinc_width(prefs_info *prf)
-{
-  int_to_textfield(prf->text, sinc_width(ss));
-}
-
-
 /* ---------------- clm file name ---------------- */
 
 static void clm_file_name_text(prefs_info *prf)
@@ -4151,26 +3923,6 @@ static void optimization_from_text(prefs_info *prf)
 #endif
 
 
-/* ---------------- listener-prompt ---------------- */
-
-static void reflect_listener_prompt(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, listener_prompt(ss));
-}
-
-static void listener_prompt_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if (str)
-    {
-      if (listener_prompt(ss)) FREE(listener_prompt(ss));
-      set_listener_prompt(copy_string(str));
-      XtFree(str);
-    }
-}
-
 #if HAVE_GUILE
 /* ---------------- debugging aids ---------------- */
 
@@ -4201,29 +3953,6 @@ static void save_debugging_aids(prefs_info *prf, FILE *fd)
     }
 }
 #endif
-
-/* ---------------- print-length ---------------- */
-
-static void reflect_print_length(prefs_info *prf)
-{
-  int_to_textfield(prf->text, print_length(ss));
-}
-
-static void print_length_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      int value = 0;
-      sscanf(str, "%d", &value);
-      set_print_length(value);
-      set_vct_print_length(value);
-      /* the clm array print length variable will be taken care of when ww.scm is loaded in the new context */
-      XtFree(str);
-    }
-}
 
 /* ---------------- listener-font ---------------- */
 
@@ -4259,71 +3988,6 @@ static void listener_font_text(prefs_info *prf)
   if (str) XtFree(str);
 }
 
-
-/* ---------------- dac-size ---------------- */
-
-static void reflect_dac_size(prefs_info *prf) 
-{
-  int_to_textfield(prf->text, dac_size(ss));
-}
-
-static void dac_size_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      int value = 0;
-      sscanf(str, "%d", &value);
-      if (value > 0)
-	set_dac_size(value);
-      else int_to_textfield(prf->text, dac_size(ss));
-      XtFree(str);
-    }
-}
-
-/* ---------------- recorder file name ---------------- */
-
-static void recorder_filename_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      rec_set_filename(str);
-      XtFree(str);
-    }
-}
-
-static void reflect_recorder_filename(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, rec_filename());
-}
-
-/* ---------------- recorder-buffer-size ---------------- */
-
-static void reflect_recorder_buffer_size(prefs_info *prf) 
-{
-  int_to_textfield(prf->text, rec_buffer_size());
-}
-
-static void recorder_buffer_size_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      int value = 0;
-      sscanf(str, "%d", &value);
-      if (value > 0)
-	rec_set_buffer_size(value);
-      else int_to_textfield(prf->text, rec_buffer_size());
-      XtFree(str);
-    }
-}
 
 /* ---------------- recorder-out-chans etc ---------------- */
 
@@ -4700,35 +4364,38 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_save_dir, NULL, NULL, NULL, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    rts_save_state_file = copy_string(save_state_file(ss));
     prf = prefs_row_with_text("default save-state filename", S_save_state_file, 
 			      save_state_file(ss), 
 			      dpy_box, current_sep,
 			      save_state_file_text);
-    remember_pref(prf, reflect_save_state_file, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_save_state_file, save_save_state_file, NULL, NULL, revert_save_state_file);
 
 #if HAVE_LADSPA
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    rts_ladspa_dir = copy_string(ladspa_dir(ss));
     prf = prefs_row_with_text("directory for ladspa plugins", S_ladspa_dir, 
 			      ladspa_dir(ss), 
 			      dpy_box, current_sep,
 			      ladspa_dir_text);
-    remember_pref(prf, reflect_ladspa_dir, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_ladspa_dir, save_ladspa_dir, NULL, NULL, revert_ladspa_dir);
 #endif
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    include_vf_directory = copy_string(view_files_find_any_directory());
+    rts_vf_directory = copy_string(view_files_find_any_directory());
     prf = prefs_row_with_text("directory for view-files dialog", S_add_directory_to_view_files_list,
-			      include_vf_directory,
+			      rts_vf_directory,
 			      dpy_box, current_sep,
 			      view_files_directory_text);
-    remember_pref(prf, reflect_view_files_directory, save_view_files_directory, NULL, NULL, NULL);
+    remember_pref(prf, reflect_view_files_directory, save_view_files_directory, NULL, NULL, revert_view_files_directory);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    rts_html_program = copy_string(html_program(ss));
     prf = prefs_row_with_text("external program to read HTML files via snd-help", S_html_program,
 			      html_program(ss),
 			      dpy_box, current_sep,
 			      html_program_text);
-    remember_pref(prf, reflect_html_program, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_html_program, save_html_program, NULL, NULL, revert_html_program);
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
     prf = prefs_row_with_radio_box("default new sound attributes: chans", S_default_output_chans,
@@ -5254,13 +4921,13 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_fft_window_beta, NULL, NULL, NULL, NULL);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
-    str = mus_format("%d", max_transform_peaks(ss));
+    str = mus_format("%d", rts_max_transform_peaks = max_transform_peaks(ss));
     prf = prefs_row_with_toggle_with_text("show fft peak data", S_show_transform_peaks,
-					  show_transform_peaks(ss),
+					  rts_show_transform_peaks = show_transform_peaks(ss),
 					  "max peaks:", str, 5,
 					  fft_box, current_sep,
 					  transform_peaks_toggle, max_peaks_text);
-    remember_pref(prf, reflect_show_transform_peaks, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_transform_peaks, save_transform_peaks, NULL, NULL, revert_transform_peaks);
     FREE(str);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
@@ -5289,11 +4956,11 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_fft_log_magnitude, save_fft_log_magnitude, NULL, NULL, revert_fft_log_magnitude);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
-    str = mus_format("%.1f", min_dB(ss));
+    str = mus_format("%.1f", rts_min_dB = min_dB(ss));
     prf = prefs_row_with_text("minimum y-axis dB value", S_min_dB, str,
 			      fft_box, current_sep,
 			      min_dB_text);
-    remember_pref(prf, reflect_min_dB, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_min_dB, save_min_dB, NULL, NULL, revert_min_dB);
     FREE(str);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
@@ -5360,13 +5027,13 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, NULL, save_mix_color, NULL, clear_mix_color, revert_mix_color);
 
     current_sep = make_inter_variable_separator(mmr_box, prf->rscl);
-    str = mus_format("%d", mix_waveform_height(ss));
+    str = mus_format("%d", rts_mix_waveform_height = mix_waveform_height(ss));
     prf = prefs_row_with_toggle_with_text("show mix waveforms (attached to the mix tag)", S_show_mix_waveforms,
-					  show_mix_waveforms(ss),
+					  rts_show_mix_waveforms = show_mix_waveforms(ss),
 					  "max waveform height:", str, 5,
 					  mmr_box, current_sep,
 					  show_mix_waveforms_toggle, mix_waveform_height_text);
-    remember_pref(prf, reflect_show_mix_waveforms, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_mix_waveforms, save_mix_waveforms, NULL, NULL, revert_mix_waveforms);
     FREE(str);
 
     current_sep = make_inter_variable_separator(mmr_box, prf->label);
@@ -5416,11 +5083,11 @@ widget_t start_preferences_dialog(void)
 #endif
 
     current_sep = make_inter_variable_separator(clm_box, prf->label);
-    str = mus_format("%d", sinc_width(ss));
+    str = mus_format("%d", rts_sinc_width = sinc_width(ss));
     prf = prefs_row_with_text("sinc interpolation width in srate converter", S_sinc_width, str,
 			      clm_box, current_sep,
 			      sinc_width_text);
-    remember_pref(prf, reflect_sinc_width, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_sinc_width, save_sinc_width, NULL, NULL, revert_sinc_width);
     FREE(str);
 
     current_sep = make_inter_variable_separator(clm_box, prf->label);
@@ -5470,11 +5137,12 @@ widget_t start_preferences_dialog(void)
 #endif
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
+    rts_listener_prompt = copy_string(listener_prompt(ss));
     prf = prefs_row_with_text("prompt", S_listener_prompt, 
 			      listener_prompt(ss), 
 			      prg_box, current_sep,
 			      listener_prompt_text);
-    remember_pref(prf, reflect_listener_prompt, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_listener_prompt, save_listener_prompt, NULL, NULL, revert_listener_prompt);
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     prf = prefs_row_with_toggle("include backtrace in error report", S_show_backtrace,
@@ -5494,11 +5162,11 @@ widget_t start_preferences_dialog(void)
 #endif
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
-    str = mus_format("%d", print_length(ss));
+    str = mus_format("%d", rts_print_length = print_length(ss));
     prf = prefs_row_with_text("number of vector elements to display", S_print_length, str,
 			      prg_box, current_sep,
 			      print_length_text);
-    remember_pref(prf, reflect_print_length, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_print_length, save_print_length, NULL, NULL, revert_print_length);
     FREE(str);
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
@@ -5534,12 +5202,12 @@ widget_t start_preferences_dialog(void)
     aud_box = make_top_level_box(topics);
     aud_label = make_top_level_label("audio options", aud_box);
 
-    str = mus_format("%d", dac_size(ss));
+    str = mus_format("%d", rts_dac_size = dac_size(ss));
     prf = prefs_row_with_text("dac buffer size", S_dac_size, 
 			      str,
 			      aud_box, aud_label,
 			      dac_size_text);
-    remember_pref(prf, reflect_dac_size, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_dac_size, save_dac_size, NULL, NULL, revert_dac_size);
     FREE(str);
 
     current_sep = make_inter_variable_separator(aud_box, prf->label);
@@ -5552,10 +5220,11 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(aud_box, prf->label);
     recorder_label = make_inner_label("  recorder options", aud_box, current_sep);
 
+    rts_recorder_filename = copy_string(rec_filename());
     prf = prefs_row_with_text("recorder output file name", S_recorder_file, rec_filename(),
 			      aud_box, recorder_label,
 			      recorder_filename_text);
-    remember_pref(prf, reflect_recorder_filename, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_recorder_filename, save_recorder_filename, NULL, NULL, revert_recorder_filename);
     current_sep = make_inter_variable_separator(aud_box, prf->label);
 
     prf = prefs_row_with_toggle("automatically open the recorded sound", S_recorder_autoload,
@@ -5565,12 +5234,12 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_recorder_autoload, save_recorder_autoload, NULL, NULL, revert_recorder_autoload);
     current_sep = make_inter_variable_separator(aud_box, prf->label);
 
-    str = mus_format("%d", rec_buffer_size());
+    str = mus_format("%d", rts_recorder_buffer_size = rec_buffer_size());
     prf = prefs_row_with_text("input buffer size", S_recorder_buffer_size, 
 			      str,
 			      aud_box, current_sep,
 			      recorder_buffer_size_text);
-    remember_pref(prf, reflect_recorder_buffer_size, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_recorder_buffer_size, save_recorder_buffer_size, NULL, NULL, revert_recorder_buffer_size);
     FREE(str);
     current_sep = make_inter_variable_separator(aud_box, prf->label);
 

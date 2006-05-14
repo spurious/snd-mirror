@@ -13,6 +13,35 @@
   #define LANG_NAME "source"
 #endif
 
+
+static void int_to_textfield(widget_t w, int val)
+{
+  char *str;
+  str = (char *)CALLOC(16, sizeof(char));
+  mus_snprintf(str, 16, "%d", val);
+  SET_TEXT(w, str);
+  FREE(str);
+}
+
+static void float_to_textfield(widget_t w, Float val)
+{
+  char *str;
+  str = (char *)CALLOC(12, sizeof(char));
+  mus_snprintf(str, 12, "%.3f", val);
+  SET_TEXT(w, str);
+  FREE(str);
+}
+
+static void float_1_to_textfield(widget_t w, Float val)
+{
+  char *str;
+  str = (char *)CALLOC(12, sizeof(char));
+  mus_snprintf(str, 12, "%.1f", val);
+  SET_TEXT(w, str);
+  FREE(str);
+}
+
+
 static int prefs_size = 0, prefs_top = 0;
 static prefs_info **prefs = NULL;
 
@@ -475,7 +504,7 @@ static void save_recorder_autoload(prefs_info *prf, FILE *ignore) {rts_recorder_
 /* ---------------- basic-color ---------------- */
 
 /* we need the original color (Clear), the last saved color (Revert)
- *   the colors are updated continuously, so the current color variable is irrelevant
+ *   the colors are updated continuously, so the current color variable (and the reflection func) is irrelevant
  *   so: 
  *       set original in snd-gxmain or somewhere: requires ss->sgx fields
  *       set rts in prefs dialog startup
@@ -675,6 +704,429 @@ static void revert_listener_text_color(prefs_info *prf)
   scale_set_color(prf, saved_listener_text_color);
   color_listener_text(saved_listener_text_color);
 }
+
+
+
+/* ---------------- save-state-file ---------------- */
+
+static char *rts_save_state_file = NULL;
+
+static void reflect_save_state_file(prefs_info *prf) 
+{
+  SET_TEXT(prf->text, save_state_file(ss));
+}
+
+static void revert_save_state_file(prefs_info *prf) 
+{
+  if (save_state_file(ss)) FREE(save_state_file(ss));
+  in_set_save_state_file(copy_string(rts_save_state_file));
+}
+
+static void save_save_state_file(prefs_info *prf, FILE *ignore) 
+{
+  if (rts_save_state_file) FREE(rts_save_state_file);
+  rts_save_state_file = copy_string(save_state_file(ss));
+}
+
+static void save_state_file_text(prefs_info *prf)
+{
+  char *str, *file = NULL;
+  str = GET_TEXT(prf->text);
+  if ((!str) || (!(*str))) 
+    file = DEFAULT_SAVE_STATE_FILE; /* local, not freed */
+  else file = str;
+  if (save_state_file(ss)) FREE(save_state_file(ss));
+  in_set_save_state_file(copy_string(file));
+  if (str) FREE_TEXT(str);
+}
+
+
+#if HAVE_LADSPA
+/* ---------------- ladspa-dir ---------------- */
+
+static char *rts_ladspa_dir = NULL;
+
+static void reflect_ladspa_dir(prefs_info *prf)
+{
+  SET_TEXT(prf->text, ladspa_dir(ss));
+}
+
+static void revert_ladspa_dir(prefs_info *prf)
+{
+  if (ladspa_dir(ss)) FREE(ladspa_dir(ss));
+  set_ladspa_dir(copy_string(rts_ladspa_dir));
+}
+
+static void save_ladspa_dir(prefs_info *prf, FILE *ignore)
+{
+  if (rts_ladspa_dir) FREE(rts_ladspa_dir);
+  rts_ladspa_dir = copy_string(ladspa_dir(ss));
+}
+
+static void ladspa_dir_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if (ladspa_dir(ss)) FREE(ladspa_dir(ss));
+  if (str)
+    {
+      set_ladspa_dir(copy_string(str));
+      FREE_TEXT(str);
+    }
+  else set_ladspa_dir(copy_string(DEFAULT_LADSPA_DIR));
+}
+#endif
+
+
+/* ---------------- view-files directory ---------------- */
+
+static char *rts_vf_directory = NULL;
+
+static void reflect_view_files_directory(prefs_info *prf)
+{
+  SET_TEXT(prf->text, view_files_find_any_directory());
+}
+
+static void revert_view_files_directory(prefs_info *prf)
+{
+  if (rts_vf_directory)
+    view_files_add_directory(NULL_WIDGET, (const char *)rts_vf_directory);
+}
+
+static void save_view_files_directory(prefs_info *prf, FILE *fd)
+{
+  if (rts_vf_directory) FREE(rts_vf_directory);
+  rts_vf_directory = copy_string(view_files_find_any_directory());
+  if (rts_vf_directory) 
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(%s \"%s\")\n", S_add_directory_to_view_files_list, rts_vf_directory);
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_directory_to_view_files_list), rts_vf_directory);
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "$\" %s\" %s drop\n", rts_vf_directory, S_add_directory_to_view_files_list);
+#endif
+    }
+}
+
+static void view_files_directory_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if (str)
+    {
+      view_files_add_directory(NULL_WIDGET, (const char *)str);
+      FREE_TEXT(str);
+    }
+}
+
+
+/* ---------------- html-program ---------------- */
+
+static char *rts_html_program = NULL;
+
+static void reflect_html_program(prefs_info *prf)
+{
+  SET_TEXT(prf->text, html_program(ss));
+}
+
+static void revert_html_program(prefs_info *prf)
+{
+  if (html_program(ss)) FREE(html_program(ss));
+  set_html_program(copy_string(rts_html_program));
+}
+
+static void save_html_program(prefs_info *prf, FILE *ignore)
+{
+  if (rts_html_program) FREE(rts_html_program);
+  rts_html_program = copy_string(html_program(ss));
+}
+
+static void html_program_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if (html_program(ss)) FREE(html_program(ss));
+  if (str)
+    {
+      set_html_program(copy_string(str));
+      FREE_TEXT(str);
+    }
+  else set_html_program(copy_string(DEFAULT_HTML_PROGRAM));
+}
+
+
+/* ---------------- listener-prompt ---------------- */
+
+static char *rts_listener_prompt = NULL;
+
+static void reflect_listener_prompt(prefs_info *prf)
+{
+  SET_TEXT(prf->text, listener_prompt(ss));
+}
+
+static void revert_listener_prompt(prefs_info *prf)
+{
+  if (rts_listener_prompt)
+    {
+      if (listener_prompt(ss)) FREE(listener_prompt(ss));
+      set_listener_prompt(copy_string(rts_listener_prompt));
+    }
+}
+
+static void save_listener_prompt(prefs_info *prf, FILE *ignore)
+{
+  if (rts_listener_prompt) FREE(rts_listener_prompt);
+  rts_listener_prompt = copy_string(listener_prompt(ss));
+}
+
+static void listener_prompt_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if (str)
+    {
+      if (listener_prompt(ss)) FREE(listener_prompt(ss));
+      set_listener_prompt(copy_string(str));
+      FREE_TEXT(str);
+    }
+}
+
+
+/* ---------------- recorder file name ---------------- */
+
+static char *rts_recorder_filename = NULL;
+
+static void reflect_recorder_filename(prefs_info *prf)
+{
+  SET_TEXT(prf->text, rec_filename());
+}
+
+static void revert_recorder_filename(prefs_info *prf)
+{
+  if (rts_recorder_filename) rec_set_filename(rts_recorder_filename);
+}
+
+static void save_recorder_filename(prefs_info *prf, FILE *ignore)
+{
+  if (rts_recorder_filename) FREE(rts_recorder_filename);
+  rts_recorder_filename = copy_string(rec_filename());
+}
+
+static void recorder_filename_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      rec_set_filename(str);
+      FREE_TEXT(str);
+    }
+}
+
+
+/* ---------------- show-transform-peaks ---------------- */
+
+static bool rts_show_transform_peaks = DEFAULT_SHOW_TRANSFORM_PEAKS;
+static int rts_max_transform_peaks = DEFAULT_MAX_TRANSFORM_PEAKS;
+
+static void reflect_transform_peaks(prefs_info *prf) 
+{
+  SET_TOGGLE(prf->toggle, show_transform_peaks(ss));
+  int_to_textfield(prf->text, max_transform_peaks(ss));
+}
+
+static void revert_transform_peaks(prefs_info *prf) 
+{
+  in_set_show_transform_peaks(rts_show_transform_peaks);
+  in_set_max_transform_peaks(rts_max_transform_peaks);
+}
+
+static void save_transform_peaks(prefs_info *prf, FILE *ignore)
+{
+  rts_show_transform_peaks = show_transform_peaks(ss);
+  rts_max_transform_peaks = max_transform_peaks(ss);
+}
+
+static void transform_peaks_toggle(prefs_info *prf)
+{
+  in_set_show_transform_peaks(GET_TOGGLE(prf->toggle));
+}
+
+static void max_peaks_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      if (value >= 0)
+	in_set_max_transform_peaks(value);
+      else int_to_textfield(prf->text, max_transform_peaks(ss));
+      FREE_TEXT(str);
+    }
+}
+
+
+/* ---------------- show-mix-waveforms ---------------- */
+
+static bool rts_show_mix_waveforms = DEFAULT_SHOW_MIX_WAVEFORMS;
+static int rts_mix_waveform_height = DEFAULT_MIX_WAVEFORM_HEIGHT;
+
+static void reflect_mix_waveforms(prefs_info *prf) 
+{
+  SET_TOGGLE(prf->toggle, show_mix_waveforms(ss));
+  int_to_textfield(prf->text, mix_waveform_height(ss));
+}
+
+static void revert_mix_waveforms(prefs_info *prf) 
+{
+  in_set_show_mix_waveforms(rts_show_mix_waveforms);
+  in_set_mix_waveform_height(rts_mix_waveform_height);
+}
+
+static void save_mix_waveforms(prefs_info *prf, FILE *ignore)
+{
+  rts_show_mix_waveforms = show_mix_waveforms(ss);
+  rts_mix_waveform_height = mix_waveform_height(ss);
+}
+
+static void show_mix_waveforms_toggle(prefs_info *prf)
+{
+  in_set_show_mix_waveforms(GET_TOGGLE(prf->toggle));
+}
+
+static void mix_waveform_height_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      if (value >= 0)
+	in_set_mix_waveform_height(value);
+      else int_to_textfield(prf->text, mix_waveform_height(ss));
+      FREE_TEXT(str);
+    }
+}
+
+
+/* ---------------- sinc width ---------------- */
+
+static int rts_sinc_width = DEFAULT_SINC_WIDTH;
+static void reflect_sinc_width(prefs_info *prf) {int_to_textfield(prf->text, sinc_width(ss));}
+static void revert_sinc_width(prefs_info *prf) {set_sinc_width(rts_sinc_width);}
+static void save_sinc_width(prefs_info *prf, FILE *ignore) {rts_sinc_width = sinc_width(ss);}
+
+static void sinc_width_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      if (value >= 0)
+	set_sinc_width(value);
+      else int_to_textfield(prf->text, sinc_width(ss));
+      FREE_TEXT(str);
+    }
+}
+
+
+/* ---------------- print-length ---------------- */
+
+static int rts_print_length = DEFAULT_PRINT_LENGTH;
+static void reflect_print_length(prefs_info *prf) {int_to_textfield(prf->text, print_length(ss));}
+static void revert_print_length(prefs_info *prf) {set_print_length(rts_print_length); set_vct_print_length(rts_print_length);}
+static void save_print_length(prefs_info *prf, FILE *ignore) {rts_print_length = print_length(ss);}
+
+static void print_length_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      set_print_length(value);
+      set_vct_print_length(value);
+      /* the clm array print length variable will be taken care of when ww.scm is loaded in the new context */
+      FREE_TEXT(str);
+    }
+}
+
+
+/* ---------------- dac-size ---------------- */
+
+static int rts_dac_size = DEFAULT_DAC_SIZE;
+static void reflect_dac_size(prefs_info *prf) {int_to_textfield(prf->text, dac_size(ss));}
+static void revert_dac_size(prefs_info *prf) {set_dac_size(rts_dac_size);}
+static void save_dac_size(prefs_info *prf, FILE *ignore) {rts_dac_size = dac_size(ss);}
+
+static void dac_size_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      if (value > 0)
+	set_dac_size(value);
+      else int_to_textfield(prf->text, dac_size(ss));
+      FREE_TEXT(str);
+    }
+}
+
+
+/* ---------------- recorder-buffer-size ---------------- */
+
+static int rts_recorder_buffer_size = 4096; /* snd-rec.c */
+static void reflect_recorder_buffer_size(prefs_info *prf) {int_to_textfield(prf->text, rec_buffer_size());}
+static void revert_recorder_buffer_size(prefs_info *prf) {rec_set_buffer_size(rts_recorder_buffer_size);}
+static void save_recorder_buffer_size(prefs_info *prf, FILE *ignore) {rts_recorder_buffer_size = rec_buffer_size();}
+
+static void recorder_buffer_size_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      if (value > 0)
+	rec_set_buffer_size(value);
+      else int_to_textfield(prf->text, rec_buffer_size());
+      FREE_TEXT(str);
+    }
+}
+
+/* ---------------- min-dB ---------------- */
+
+static Float rts_min_dB = DEFAULT_MIN_DB;
+static void reflect_min_dB(prefs_info *prf) {float_1_to_textfield(prf->text, min_dB(ss));}
+static void revert_min_dB(prefs_info *prf) {set_min_dB(rts_min_dB);}
+static void save_min_dB(prefs_info *prf, FILE *ignore) {rts_min_dB = min_dB(ss);}
+
+static void min_dB_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      float value = 0.0;
+      sscanf(str, "%f", &value);
+      set_min_db(value); /* snd-chn.c -- redisplays */
+      FREE_TEXT(str);
+    }
+}
+
+
 
 
 
@@ -1028,19 +1480,6 @@ static void save_peak_envs_1(prefs_info *prf, FILE *fd, char *pdir)
   fprintf(fd, "require peak-env\n");
   if (pdir)
     fprintf(fd, "$\" %s\" to save-peak-env-info-directory\n", pdir);
-#endif
-}
-
-static void save_view_files_directory_1(prefs_info *prf, FILE *fd, char *vdir)
-{
-#if HAVE_SCHEME
-  fprintf(fd, "(%s \"%s\")\n", S_add_directory_to_view_files_list, vdir);
-#endif
-#if HAVE_RUBY
-  fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_directory_to_view_files_list), vdir);
-#endif
-#if HAVE_FORTH
-  fprintf(fd, "$\" %s\" %s drop\n", vdir, S_add_directory_to_view_files_list);
 #endif
 }
 
