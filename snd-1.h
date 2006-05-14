@@ -486,6 +486,7 @@ typedef struct snd_state {
   show_axes_t Show_Axes;
   char *Eps_File, *Temp_Dir, *Save_Dir, *Ladspa_Dir;
   char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
+  char *orig_listener_font, *orig_axis_label_font, *orig_axis_numbers_font, *orig_tiny_font, *orig_peaks_font, *orig_bold_peaks_font;
   bool Verbose_Cursor, Trap_Segfault;
   int Enved_Filter_Order;
   Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size, Log_Freq_Start;

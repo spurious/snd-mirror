@@ -76,7 +76,6 @@
  *        xen.c:#include <config.h>
  *        xg.c:#include <config.h>
  *        xm.c:#include <config.h>
- *
  */
 
 /* -------- protect XEN vars from GC -------- */

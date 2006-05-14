@@ -966,6 +966,13 @@ void snd_doit(int argc, char **argv)
       (!(set_listener_font(snd_rs.listener_font))))
     fprintf(stderr, _("can't find listener font %s"), snd_rs.listener_font);
 
+  ss->orig_axis_label_font = copy_string(axis_label_font(ss));
+  ss->orig_axis_numbers_font = copy_string(axis_numbers_font(ss));
+  ss->orig_peaks_font = copy_string(peaks_font(ss));
+  ss->orig_bold_peaks_font = copy_string(bold_peaks_font(ss));
+  ss->orig_listener_font = copy_string(listener_font(ss));
+  ss->orig_tiny_font = copy_string(tiny_font(ss));
+
   XtVaSetValues(shell, XmNbackground, sx->basic_color, NULL);
   set_color_map(snd_rs.spectrogram_color);
 

@@ -57,6 +57,8 @@ static void sg_entry_set_text(GtkEntry* entry, const char *text);
 #define GET_TEXT(Text)            (char *)gtk_entry_get_text(GTK_ENTRY(Text))
 #define SET_TEXT(Text, Val)       sg_entry_set_text(GTK_ENTRY(Text), Val)
 #define FREE_TEXT(Val)            
+#define TIMEOUT(Func)             g_timeout_add_full(0, ERROR_WAIT_TIME, Func, (gpointer)prf, NULL)
+#define TIMEOUT_ARGS              gpointer context
 
 #include "snd-prefs.c"
 
@@ -1474,20 +1476,14 @@ static void startup_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   sg_entry_set_text(GTK_ENTRY(prf->text), "must be > 0");
-  g_timeout_add_full(0,
-		     ERROR_WAIT_TIME,
-		     startup_width_erase_func,
-		     (gpointer)prf, NULL);
+  TIMEOUT(startup_width_erase_func);
 }
 
 static void startup_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   sg_entry_set_text(GTK_ENTRY(prf->rtxt), "must be > 0");
-  g_timeout_add_full(0,
-		     ERROR_WAIT_TIME,
-		     startup_height_erase_func,
-		     (gpointer)prf, NULL);
+  TIMEOUT(startup_height_erase_func);
 }
 
 static void startup_size_text(prefs_info *prf)
@@ -1572,40 +1568,6 @@ static void save_focus_follows_mouse(prefs_info *prf, FILE *fd)
 {
   if (focus_follows_mouse) save_focus_follows_mouse_1(prf, fd);
 }
-
-/* ---------------- sync choice ---------------- */
-
-static int global_sync_choice = 0;
-
-static void reflect_sync_choice(prefs_info *prf)
-{
-  global_sync_choice = find_sync_choice();
-  set_toggle_button(prf->toggle, global_sync_choice == 2, false, (void *)prf);
-  set_toggle_button(prf->toggle2, global_sync_choice == 1, false, (void *)prf);
-}
-
-static void save_sync_choice(prefs_info *prf, FILE *fd)
-{
-  if (global_sync_choice != 0)
-    save_sync_choice_1(prf, fd, global_sync_choice);
-}
-
-static void sync1_choice(prefs_info *prf)
-{
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)))
-    global_sync_choice = 2;
-  else global_sync_choice = 0;
-  set_toggle_button(prf->toggle2, false, false, (void *)prf);
-}
-
-static void sync2_choice(prefs_info *prf)
-{
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle2)))
-    global_sync_choice = 1;
-  else global_sync_choice = 0;
-  set_toggle_button(prf->toggle, false, false, (void *)prf);
-}
-
 
 /* ---------------- remember sound state ---------------- */
 
@@ -1987,10 +1949,7 @@ static void temp_dir_text(prefs_info *prf)
   else
     {
       sg_entry_set_text(GTK_ENTRY(prf->text), "can't access that directory");
-      g_timeout_add_full(0,
-			 ERROR_WAIT_TIME,
-			 temp_dir_error_erase_func,
-			 (gpointer)prf, NULL);
+      TIMEOUT(temp_dir_error_erase_func);
     }
 
 }
@@ -2024,10 +1983,7 @@ static void save_dir_text(prefs_info *prf)
   else
     {
       sg_entry_set_text(GTK_ENTRY(prf->text), "can't access that directory");
-      g_timeout_add_full(0,
-			 ERROR_WAIT_TIME,
-			 save_dir_error_erase_func,
-			 (gpointer)prf, NULL);
+      TIMEOUT(save_dir_error_erase_func);
     }
 
 }
@@ -2676,177 +2632,6 @@ static void save_smpte(prefs_info *prf, FILE *fd)
 }
 
 
-/* ---------------- axis-label-font ---------------- */
-
-static gint axis_label_font_error_erase_func(gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  sg_entry_set_text(GTK_ENTRY(prf->text), axis_label_font(ss));
-  return(0);
-}
-
-static void reflect_axis_label_font(prefs_info *prf)
-{
-  sg_entry_set_text(GTK_ENTRY(prf->text), axis_label_font(ss));
-}
-
-static void axis_label_font_text(prefs_info *prf)
-{
-  char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((!str) || (!(*str)))
-    {
-      sg_entry_set_text(GTK_ENTRY(prf->text), axis_label_font(ss));
-      return;
-    }
-  if (!(set_axis_label_font(str)))
-    {
-      sg_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
-      g_timeout_add_full(0,
-		      ERROR_WAIT_TIME,
-		      axis_label_font_error_erase_func,
-			 (gpointer)prf, NULL);
-    }
-
-}
-
-/* ---------------- axis-numbers-font ---------------- */
-
-static gint axis_numbers_font_error_erase_func(gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  sg_entry_set_text(GTK_ENTRY(prf->text), axis_numbers_font(ss));
-  return(0);
-}
-
-static void reflect_axis_numbers_font(prefs_info *prf)
-{
-  sg_entry_set_text(GTK_ENTRY(prf->text), axis_numbers_font(ss));
-}
-
-static void axis_numbers_font_text(prefs_info *prf)
-{
-  char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((!str) || (!(*str)))
-    {
-      sg_entry_set_text(GTK_ENTRY(prf->text), axis_numbers_font(ss));
-      return;
-    }
-  if (!(set_axis_numbers_font(str)))
-    {
-      sg_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
-      g_timeout_add_full(0,
-		      ERROR_WAIT_TIME,
-		      axis_numbers_font_error_erase_func,
-			 (gpointer)prf, NULL);
-    }
-
-}
-
-/* ---------------- peaks-font ---------------- */
-
-static gint peaks_font_error_erase_func(gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  sg_entry_set_text(GTK_ENTRY(prf->text), peaks_font(ss));
-  return(0);
-}
-
-static void reflect_peaks_font(prefs_info *prf)
-{
-  sg_entry_set_text(GTK_ENTRY(prf->text), peaks_font(ss));
-}
-
-static void peaks_font_text(prefs_info *prf)
-{
-  char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((!str) || (!(*str)))
-    {
-      sg_entry_set_text(GTK_ENTRY(prf->text), peaks_font(ss));
-      return;
-    }
-  if (!(set_peaks_font(str)))
-    {
-      sg_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
-      g_timeout_add_full(0,
-		      ERROR_WAIT_TIME,
-		      peaks_font_error_erase_func,
-			 (gpointer)prf, NULL);
-    }
-
-}
-
-/* ---------------- bold-peaks-font ---------------- */
-
-static gint bold_peaks_font_error_erase_func(gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  sg_entry_set_text(GTK_ENTRY(prf->text), bold_peaks_font(ss));
-  return(0);
-}
-
-static void reflect_bold_peaks_font(prefs_info *prf)
-{
-  sg_entry_set_text(GTK_ENTRY(prf->text), bold_peaks_font(ss));
-}
-
-static void bold_peaks_font_text(prefs_info *prf)
-{
-  char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((!str) || (!(*str)))
-    {
-      sg_entry_set_text(GTK_ENTRY(prf->text), bold_peaks_font(ss));
-      return;
-    }
-  if (!(set_bold_peaks_font(str)))
-    {
-      sg_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
-      g_timeout_add_full(0,
-		      ERROR_WAIT_TIME,
-		      bold_peaks_font_error_erase_func,
-			 (gpointer)prf, NULL);
-    }
-}
-
-/* ---------------- tiny-font ---------------- */
-
-static gint tiny_font_error_erase_func(gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  sg_entry_set_text(GTK_ENTRY(prf->text), tiny_font(ss));
-  return(0);
-}
-
-static void reflect_tiny_font(prefs_info *prf)
-{
-  sg_entry_set_text(GTK_ENTRY(prf->text), tiny_font(ss));
-}
-
-static void tiny_font_text(prefs_info *prf)
-{
-  char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((!str) || (!(*str)))
-    {
-      sg_entry_set_text(GTK_ENTRY(prf->text), tiny_font(ss));
-      return;
-    }
-  if (!(set_tiny_font(str)))
-    {
-      sg_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
-      g_timeout_add_full(0,
-		      ERROR_WAIT_TIME,
-		      tiny_font_error_erase_func,
-			 (gpointer)prf, NULL);
-    }
-
-}
-
-
-
 /* ---------------- fft-size ---------------- */
 
 #define MAX_TRANSFORM_SIZE 1073741824
@@ -3172,20 +2957,14 @@ static void mark_tag_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   sg_entry_set_text(GTK_ENTRY(prf->text), "must be > 0");
-  g_timeout_add_full(0,
-		     ERROR_WAIT_TIME,
-		     mark_tag_width_erase_func,
-		     (gpointer)prf, NULL);
+  TIMEOUT(mark_tag_width_erase_func);
 }
 
 static void mark_tag_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   sg_entry_set_text(GTK_ENTRY(prf->rtxt), "must be > 0");
-  g_timeout_add_full(0,
-		     ERROR_WAIT_TIME,
-		     mark_tag_height_erase_func,
-		     (gpointer)prf, NULL);
+  TIMEOUT(mark_tag_height_erase_func);
 }
 
 static void mark_tag_size_text(prefs_info *prf)
@@ -3238,20 +3017,14 @@ static void mix_tag_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   sg_entry_set_text(GTK_ENTRY(prf->text), "must be > 0");
-  g_timeout_add_full(0,
-		  ERROR_WAIT_TIME,
-		  mix_tag_width_erase_func,
-		     (gpointer)prf, NULL);
+  TIMEOUT(mix_tag_width_erase_func);
 }
 
 static void mix_tag_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   sg_entry_set_text(GTK_ENTRY(prf->rtxt), "must be > 0");
-  g_timeout_add_full(0,
-		  ERROR_WAIT_TIME,
-		  mix_tag_height_erase_func,
-		     (gpointer)prf, NULL);
+  TIMEOUT(mix_tag_height_erase_func);
 }
 
 static void mix_tag_size_text(prefs_info *prf)
@@ -3582,40 +3355,6 @@ static void save_debugging_aids(prefs_info *prf, FILE *fd)
 }
 #endif
 
-/* ---------------- listener-font ---------------- */
-
-static gint listener_font_error_erase_func(gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  sg_entry_set_text(GTK_ENTRY(prf->text), listener_font(ss));
-  return(0);
-}
-
-static void reflect_listener_font(prefs_info *prf)
-{
-  sg_entry_set_text(GTK_ENTRY(prf->text), listener_font(ss));
-}
-
-static void listener_font_text(prefs_info *prf)
-{
-  char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((!str) || (!(*str)))
-    {
-      sg_entry_set_text(GTK_ENTRY(prf->text), listener_font(ss));
-      return;
-    }
-  if (!(set_listener_font(str)))
-    {
-      sg_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
-      g_timeout_add_full(0,
-		      ERROR_WAIT_TIME,
-		      listener_font_error_erase_func,
-			 (gpointer)prf, NULL);
-    }
-
-}
-
 /* ---------------- recorder-out-chans etc ---------------- */
 
 #define NUM_RECORDER_OUT_CHANS_CHOICES 4
@@ -3918,12 +3657,13 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_focus_follows_mouse, save_focus_follows_mouse, mouse_focus_help, NULL, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box);
+    rts_sync_choice = sync_choice();
     prf = prefs_row_with_two_toggles("operate on all channels together", S_sync,
-				     "within each sound", find_sync_choice() == 1,
-				     "across all sounds", find_sync_choice() == 2,
+				     "within each sound", rts_sync_choice == 1,
+				     "across all sounds", rts_sync_choice == 2,
 				     dpy_box,
 				     sync1_choice, sync2_choice);
-    remember_pref(prf, reflect_sync_choice, save_sync_choice, sync_choice_help, NULL, NULL);
+    remember_pref(prf, reflect_sync_choice, save_sync_choice, sync_choice_help, clear_sync_choice, revert_sync_choice);
 
     current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_two_toggles("restore a sound's state if reopened later", "remember-sound-state",
@@ -4460,39 +4200,44 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(grf_box);
     colgrf_label = make_inner_label("  fonts", grf_box);
 
+    rts_axis_label_font = copy_string(axis_label_font(ss));
     prf = prefs_row_with_text("axis label font", S_axis_label_font, 
 			      axis_label_font(ss), 
 			      grf_box, 
 			      axis_label_font_text);
-    remember_pref(prf, reflect_axis_label_font, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_axis_label_font, save_axis_label_font, NULL, clear_axis_label_font, revert_axis_label_font);
 
-    current_sep = make_inter_variable_separator(grf_box);     
+    current_sep = make_inter_variable_separator(grf_box);    
+    rts_axis_numbers_font = copy_string(axis_numbers_font(ss)); 
     prf = prefs_row_with_text("axis number font", S_axis_numbers_font, 
 			      axis_numbers_font(ss), 
 			      grf_box,
 			      axis_numbers_font_text);
-    remember_pref(prf, reflect_axis_numbers_font, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_axis_numbers_font, save_axis_numbers_font, NULL, clear_axis_numbers_font, revert_axis_numbers_font);
 
-    current_sep = make_inter_variable_separator(grf_box);     
+    current_sep = make_inter_variable_separator(grf_box);  
+    rts_peaks_font = copy_string(peaks_font(ss));    
     prf = prefs_row_with_text("fft peaks font", S_peaks_font, 
 			      peaks_font(ss), 
 			      grf_box,
 			      peaks_font_text);
-    remember_pref(prf, reflect_peaks_font, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_peaks_font, save_peaks_font, NULL, clear_peaks_font, revert_peaks_font);
 
-    current_sep = make_inter_variable_separator(grf_box);     
+    current_sep = make_inter_variable_separator(grf_box);    
+    rts_bold_peaks_font = copy_string(bold_peaks_font(ss));     
     prf = prefs_row_with_text("fft peaks bold font (for main peaks)", S_bold_peaks_font, 
 			      bold_peaks_font(ss), 
 			      grf_box,
 			      bold_peaks_font_text);
-    remember_pref(prf, reflect_bold_peaks_font, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_bold_peaks_font, save_bold_peaks_font, NULL, clear_bold_peaks_font, revert_bold_peaks_font);
 
-    current_sep = make_inter_variable_separator(grf_box);     
+    current_sep = make_inter_variable_separator(grf_box);  
+    rts_tiny_font = copy_string(tiny_font(ss));        
     prf = prefs_row_with_text("tiny font (for various annotations)", S_peaks_font, 
 			      tiny_font(ss), 
 			      grf_box,
 			      tiny_font_text);
-    remember_pref(prf, reflect_tiny_font, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_tiny_font, save_tiny_font, NULL, clear_tiny_font, revert_tiny_font);
   }
 
   current_sep = make_inter_topic_separator(topics);
@@ -4791,11 +4536,12 @@ widget_t start_preferences_dialog(void)
     FREE(str);
 
     current_sep = make_inter_variable_separator(prg_box);
+    rts_listener_font = copy_string(listener_font(ss));
     prf = prefs_row_with_text("font", S_listener_font, 
 			      listener_font(ss), 
 			      prg_box,
 			      listener_font_text);
-    remember_pref(prf, reflect_listener_font, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_listener_font, save_listener_font, NULL, clear_listener_font, revert_listener_font);
 
     current_sep = make_inter_variable_separator(prg_box);
     saved_listener_color = ss->sgx->listener_color;

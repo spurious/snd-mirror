@@ -82,6 +82,8 @@ static color_t rgb_to_color(Float r, Float g, Float b);
 #define GET_TEXT(Text)            XmTextFieldGetString(Text)
 #define SET_TEXT(Text, Val)       XmTextFieldSetString(Text, Val)
 #define FREE_TEXT(Val)            XtFree(Val)
+#define TIMEOUT(Func)             XtAppAddTimeOut(MAIN_APP(ss), ERROR_WAIT_TIME, Func, (XtPointer)prf)
+#define TIMEOUT_ARGS              XtPointer context, XtIntervalId *id
 
 #include "snd-prefs.c"
 
@@ -1322,6 +1324,19 @@ static void prefs_call_color_func_callback(Widget w, XtPointer context, XtPointe
     }
 }
 
+static void scale_set_color(prefs_info *prf, color_t pixel)
+{
+  float r = 0.0, g = 0.0, b = 0.0;
+  pixel_to_rgb(pixel, &r, &g, &b);
+  float_to_textfield(prf->rtxt, r);
+  XmScaleSetValue(prf->rscl, (int)(100 * r));
+  float_to_textfield(prf->gtxt, g);
+  XmScaleSetValue(prf->gscl, (int)(100 * g));
+  float_to_textfield(prf->btxt, b);
+  XmScaleSetValue(prf->bscl, (int)(100 * b));
+  XtVaSetValues(prf->color, XmNbackground, pixel, NULL);
+}
+
 static Pixel red, green, blue;
 
 static prefs_info *prefs_color_selector_row(const char *label, const char *varname, 
@@ -1676,20 +1691,14 @@ static void startup_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   XmTextFieldSetString(prf->text, "must be > 0");
-  XtAppAddTimeOut(MAIN_APP(ss),
-		  ERROR_WAIT_TIME,
-		  startup_width_erase_func,
-		  (XtPointer)prf);
+  TIMEOUT(startup_width_erase_func);
 }
 
 static void startup_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   XmTextFieldSetString(prf->rtxt, "must be > 0");
-  XtAppAddTimeOut(MAIN_APP(ss),
-		  ERROR_WAIT_TIME,
-		  startup_height_erase_func,
-		  (XtPointer)prf);
+  TIMEOUT(startup_height_erase_func);
 }
 
 static void startup_size_text(prefs_info *prf)
@@ -1773,39 +1782,6 @@ static void focus_follows_mouse_toggle(prefs_info *prf)
 static void save_focus_follows_mouse(prefs_info *prf, FILE *fd) 
 {
   if (focus_follows_mouse) save_focus_follows_mouse_1(prf, fd);
-}
-
-/* ---------------- sync choice ---------------- */
-
-static int global_sync_choice = 0;
-
-static void reflect_sync_choice(prefs_info *prf)
-{
-  global_sync_choice = find_sync_choice();
-  XmToggleButtonSetState(prf->toggle, global_sync_choice == 2, false);
-  XmToggleButtonSetState(prf->toggle2, global_sync_choice == 1, false);
-}
-
-static void save_sync_choice(prefs_info *prf, FILE *fd)
-{
-  if (global_sync_choice != 0)
-    save_sync_choice_1(prf, fd, global_sync_choice);
-}
-
-static void sync1_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->toggle) == XmSET)
-    global_sync_choice = 2;
-  else global_sync_choice = 0;
-  XmToggleButtonSetState(prf->toggle2, false, false);    
-}
-
-static void sync2_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->toggle2) == XmSET)
-    global_sync_choice = 1;
-  else global_sync_choice = 0;
-  XmToggleButtonSetState(prf->toggle, false, false);    
 }
 
 /* ---------------- remember sound state ---------------- */
@@ -1913,19 +1889,6 @@ static void max_regions_text(prefs_info *prf)
       else int_to_textfield(prf->text, max_regions(ss));
       XtFree(str);
     }
-}
-
-static void scale_set_color(prefs_info *prf, color_t pixel)
-{
-  float r = 0.0, g = 0.0, b = 0.0;
-  pixel_to_rgb(pixel, &r, &g, &b);
-  float_to_textfield(prf->rtxt, r);
-  XmScaleSetValue(prf->rscl, (int)(100 * r));
-  float_to_textfield(prf->gtxt, g);
-  XmScaleSetValue(prf->gscl, (int)(100 * g));
-  float_to_textfield(prf->btxt, b);
-  XmScaleSetValue(prf->bscl, (int)(100 * b));
-  XtVaSetValues(prf->color, XmNbackground, pixel, NULL);
 }
 
 /* ---------------- with-tracking-cursor ---------------- */
@@ -2199,10 +2162,7 @@ static void temp_dir_text(prefs_info *prf)
   else
     {
       XmTextFieldSetString(prf->text, "can't access that directory");
-      XtAppAddTimeOut(MAIN_APP(ss),
-		      ERROR_WAIT_TIME,
-		      temp_dir_error_erase_func,
-		      (XtPointer)prf);
+      TIMEOUT(temp_dir_error_erase_func);
     }
   if (str) XtFree(str);
 }
@@ -2236,10 +2196,7 @@ static void save_dir_text(prefs_info *prf)
   else
     {
       XmTextFieldSetString(prf->text, "can't access that directory");
-      XtAppAddTimeOut(MAIN_APP(ss),
-		      ERROR_WAIT_TIME,
-		      save_dir_error_erase_func,
-		      (XtPointer)prf);
+      TIMEOUT(save_dir_error_erase_func);
     }
   if (str) XtFree(str);
 }
@@ -2953,178 +2910,6 @@ static void save_smpte(prefs_info *prf, FILE *fd)
 
 
 
-/* ---------------- axis-label-font ---------------- */
-
-static void axis_label_font_error_erase_func(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  XmTextFieldSetString(prf->text, axis_label_font(ss));
-}
-
-static void reflect_axis_label_font(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, axis_label_font(ss));
-}
-
-static void axis_label_font_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((!str) || (!(*str)))
-    {
-      XmTextFieldSetString(prf->text, axis_label_font(ss));
-      return;
-    }
-  if (!(set_axis_label_font(str)))
-    {
-      XmTextFieldSetString(prf->text, "can't find that font");
-      XtAppAddTimeOut(MAIN_APP(ss),
-		      ERROR_WAIT_TIME,
-		      axis_label_font_error_erase_func,
-		      (XtPointer)prf);
-    }
-  if (str) XtFree(str);
-}
-
-/* ---------------- axis-numbers-font ---------------- */
-
-static void axis_numbers_font_error_erase_func(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  XmTextFieldSetString(prf->text, axis_numbers_font(ss));
-}
-
-static void reflect_axis_numbers_font(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, axis_numbers_font(ss));
-}
-
-static void axis_numbers_font_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((!str) || (!(*str)))
-    {
-      XmTextFieldSetString(prf->text, axis_numbers_font(ss));
-      return;
-    }
-  if (!(set_axis_numbers_font(str)))
-    {
-      XmTextFieldSetString(prf->text, "can't find that font");
-      XtAppAddTimeOut(MAIN_APP(ss),
-		      ERROR_WAIT_TIME,
-		      axis_numbers_font_error_erase_func,
-		      (XtPointer)prf);
-    }
-  if (str) XtFree(str);
-}
-
-/* ---------------- peaks-font ---------------- */
-
-static void peaks_font_error_erase_func(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  XmTextFieldSetString(prf->text, peaks_font(ss));
-}
-
-static void reflect_peaks_font(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, peaks_font(ss));
-}
-
-static void peaks_font_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((!str) || (!(*str)))
-    {
-      XmTextFieldSetString(prf->text, peaks_font(ss));
-      return;
-    }
-  if (!(set_peaks_font(str)))
-    {
-      XmTextFieldSetString(prf->text, "can't find that font");
-      XtAppAddTimeOut(MAIN_APP(ss),
-		      ERROR_WAIT_TIME,
-		      peaks_font_error_erase_func,
-		      (XtPointer)prf);
-    }
-  if (str) XtFree(str);
-}
-
-/* ---------------- bold-peaks-font ---------------- */
-
-static void bold_peaks_font_error_erase_func(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  XmTextFieldSetString(prf->text, bold_peaks_font(ss));
-}
-
-static void reflect_bold_peaks_font(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, bold_peaks_font(ss));
-}
-
-static void bold_peaks_font_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((!str) || (!(*str)))
-    {
-      XmTextFieldSetString(prf->text, bold_peaks_font(ss));
-      return;
-    }
-  if (!(set_bold_peaks_font(str)))
-    {
-      XmTextFieldSetString(prf->text, "can't find that font");
-      XtAppAddTimeOut(MAIN_APP(ss),
-		      ERROR_WAIT_TIME,
-		      bold_peaks_font_error_erase_func,
-		      (XtPointer)prf);
-    }
-  if (str) XtFree(str);
-}
-
-/* ---------------- tiny-font ---------------- */
-
-static void tiny_font_error_erase_func(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  XmTextFieldSetString(prf->text, tiny_font(ss));
-}
-
-static void reflect_tiny_font(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, tiny_font(ss));
-}
-
-static void tiny_font_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((!str) || (!(*str)))
-    {
-      XmTextFieldSetString(prf->text, tiny_font(ss));
-      return;
-    }
-  if (!(set_tiny_font(str)))
-    {
-      XmTextFieldSetString(prf->text, "can't find that font");
-      XtAppAddTimeOut(MAIN_APP(ss),
-		      ERROR_WAIT_TIME,
-		      tiny_font_error_erase_func,
-		      (XtPointer)prf);
-    }
-  if (str) XtFree(str);
-}
-
-
-
 /* ---------------- fft-size ---------------- */
 
 #define MAX_TRANSFORM_SIZE 1073741824
@@ -3500,20 +3285,14 @@ static void mark_tag_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   XmTextFieldSetString(prf->text, "must be > 0");
-  XtAppAddTimeOut(MAIN_APP(ss),
-		  ERROR_WAIT_TIME,
-		  mark_tag_width_erase_func,
-		  (XtPointer)prf);
+  TIMEOUT(mark_tag_width_erase_func);
 }
 
 static void mark_tag_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   XmTextFieldSetString(prf->rtxt, "must be > 0");
-  XtAppAddTimeOut(MAIN_APP(ss),
-		  ERROR_WAIT_TIME,
-		  mark_tag_height_erase_func,
-		  (XtPointer)prf);
+  TIMEOUT(mark_tag_height_erase_func);
 }
 
 static void mark_tag_size_text(prefs_info *prf)
@@ -3566,20 +3345,14 @@ static void mix_tag_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   XmTextFieldSetString(prf->text, "must be > 0");
-  XtAppAddTimeOut(MAIN_APP(ss),
-		  ERROR_WAIT_TIME,
-		  mix_tag_width_erase_func,
-		  (XtPointer)prf);
+  TIMEOUT(mix_tag_width_erase_func);
 }
 
 static void mix_tag_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   XmTextFieldSetString(prf->rtxt, "must be > 0");
-  XtAppAddTimeOut(MAIN_APP(ss),
-		  ERROR_WAIT_TIME,
-		  mix_tag_height_erase_func,
-		  (XtPointer)prf);
+  TIMEOUT(mix_tag_height_erase_func);
 }
 
 static void mix_tag_size_text(prefs_info *prf)
@@ -3954,41 +3727,6 @@ static void save_debugging_aids(prefs_info *prf, FILE *fd)
 }
 #endif
 
-/* ---------------- listener-font ---------------- */
-
-static void listener_font_error_erase_func(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  XmTextFieldSetString(prf->text, listener_font(ss));
-}
-
-static void reflect_listener_font(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, listener_font(ss));
-}
-
-static void listener_font_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((!str) || (!(*str)))
-    {
-      XmTextFieldSetString(prf->text, listener_font(ss));
-      return;
-    }
-  if (!(set_listener_font(str)))
-    {
-      XmTextFieldSetString(prf->text, "can't find that font");
-      XtAppAddTimeOut(MAIN_APP(ss),
-		      ERROR_WAIT_TIME,
-		      listener_font_error_erase_func,
-		      (XtPointer)prf);
-    }
-  if (str) XtFree(str);
-}
-
-
 /* ---------------- recorder-out-chans etc ---------------- */
 
 #define NUM_RECORDER_OUT_CHANS_CHOICES 4
@@ -4285,12 +4023,13 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_focus_follows_mouse, save_focus_follows_mouse, mouse_focus_help, NULL, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    rts_sync_choice = sync_choice();
     prf = prefs_row_with_two_toggles("operate on all channels together", S_sync,
-				     "within each sound", find_sync_choice() == 1,
-				     "across all sounds", find_sync_choice() == 2,
+				     "within each sound", rts_sync_choice == 1,
+				     "across all sounds", rts_sync_choice == 2,
 				     dpy_box, current_sep, 
 				     sync1_choice, sync2_choice);
-    remember_pref(prf, reflect_sync_choice, save_sync_choice, sync_choice_help, NULL, NULL);
+    remember_pref(prf, reflect_sync_choice, save_sync_choice, sync_choice_help, clear_sync_choice, revert_sync_choice);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_two_toggles("restore a sound's state if reopened later", "remember-sound-state",
@@ -4833,39 +4572,44 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
     colgrf_label = make_inner_label("  fonts", grf_box, current_sep);
 
+    rts_axis_label_font = copy_string(axis_label_font(ss));
     prf = prefs_row_with_text("axis label font", S_axis_label_font, 
 			      axis_label_font(ss), 
 			      grf_box, colgrf_label,
 			      axis_label_font_text);
-    remember_pref(prf, reflect_axis_label_font, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_axis_label_font, save_axis_label_font, NULL, clear_axis_label_font, revert_axis_label_font);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);     
+    rts_axis_numbers_font = copy_string(axis_numbers_font(ss));
     prf = prefs_row_with_text("axis number font", S_axis_numbers_font, 
 			      axis_numbers_font(ss), 
 			      grf_box, current_sep,
 			      axis_numbers_font_text);
-    remember_pref(prf, reflect_axis_numbers_font, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_axis_numbers_font, save_axis_numbers_font, NULL, clear_axis_numbers_font, revert_axis_numbers_font);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);     
+    rts_peaks_font = copy_string(peaks_font(ss));
     prf = prefs_row_with_text("fft peaks font", S_peaks_font, 
 			      peaks_font(ss), 
 			      grf_box, current_sep,
 			      peaks_font_text);
-    remember_pref(prf, reflect_peaks_font, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_peaks_font, save_peaks_font, NULL, clear_peaks_font, revert_peaks_font);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);     
+    rts_bold_peaks_font = copy_string(bold_peaks_font(ss));
     prf = prefs_row_with_text("fft peaks bold font (for main peaks)", S_bold_peaks_font, 
 			      bold_peaks_font(ss), 
 			      grf_box, current_sep,
 			      bold_peaks_font_text);
-    remember_pref(prf, reflect_bold_peaks_font, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_bold_peaks_font, save_bold_peaks_font, NULL, clear_bold_peaks_font, revert_bold_peaks_font);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);     
+    rts_tiny_font = copy_string(tiny_font(ss));
     prf = prefs_row_with_text("tiny font (for various annotations)", S_peaks_font, 
 			      tiny_font(ss), 
 			      grf_box, current_sep,
 			      tiny_font_text);
-    remember_pref(prf, reflect_tiny_font, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_tiny_font, save_tiny_font, NULL, clear_tiny_font, revert_tiny_font);
   }
 
   current_sep = make_inter_topic_separator(topics);
@@ -5170,11 +4914,12 @@ widget_t start_preferences_dialog(void)
     FREE(str);
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
+    rts_listener_font = copy_string(listener_font(ss));
     prf = prefs_row_with_text("font", S_listener_font, 
 			      listener_font(ss), 
 			      prg_box, current_sep,
 			      listener_font_text);
-    remember_pref(prf, reflect_listener_font, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_listener_font, save_listener_font, NULL, clear_listener_font, revert_listener_font);
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     saved_listener_color = ss->sgx->listener_color;

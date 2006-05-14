@@ -706,6 +706,229 @@ static void revert_listener_text_color(prefs_info *prf)
 }
 
 
+/* ---------------- axis-label-font ---------------- */
+
+static char *rts_axis_label_font = NULL;
+
+static void axis_label_font_error_erase_func(TIMEOUT_ARGS)
+{
+  prefs_info *prf = (prefs_info *)context;
+  SET_TEXT(prf->text, axis_label_font(ss));
+}
+
+static void save_axis_label_font(prefs_info *prf, FILE *ignore)
+{
+  if (rts_axis_label_font) FREE(rts_axis_label_font);
+  rts_axis_label_font = copy_string(axis_label_font(ss));
+}
+
+static void reflect_axis_label_font(prefs_info *prf) {SET_TEXT(prf->text, axis_label_font(ss));}
+static void revert_axis_label_font(prefs_info *prf) {set_axis_label_font(rts_axis_label_font);}
+static void clear_axis_label_font(prefs_info *prf) {set_axis_label_font(ss->orig_axis_label_font);}
+
+static void axis_label_font_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((!str) || (!(*str)))
+    {
+      SET_TEXT(prf->text, axis_label_font(ss));
+      return;
+    }
+  if (!(set_axis_label_font(str)))
+    {
+      SET_TEXT(prf->text, "can't find that font");
+      TIMEOUT(axis_label_font_error_erase_func);
+    }
+  if (str) FREE_TEXT(str);
+}
+
+/* ---------------- axis-numbers-font ---------------- */
+
+static char *rts_axis_numbers_font = NULL;
+
+static void axis_numbers_font_error_erase_func(TIMEOUT_ARGS)
+{
+  prefs_info *prf = (prefs_info *)context;
+  SET_TEXT(prf->text, axis_numbers_font(ss));
+}
+
+static void save_axis_numbers_font(prefs_info *prf, FILE *ignore)
+{
+  if (rts_axis_numbers_font) FREE(rts_axis_numbers_font);
+  rts_axis_numbers_font = copy_string(axis_numbers_font(ss));
+}
+
+static void reflect_axis_numbers_font(prefs_info *prf) {SET_TEXT(prf->text, axis_numbers_font(ss));}
+static void revert_axis_numbers_font(prefs_info *prf) {set_axis_numbers_font(rts_axis_numbers_font);}
+static void clear_axis_numbers_font(prefs_info *prf) {set_axis_numbers_font(ss->orig_axis_numbers_font);}
+
+static void axis_numbers_font_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((!str) || (!(*str)))
+    {
+      SET_TEXT(prf->text, axis_numbers_font(ss));
+      return;
+    }
+  if (!(set_axis_numbers_font(str)))
+    {
+      SET_TEXT(prf->text, "can't find that font");
+      TIMEOUT(axis_numbers_font_error_erase_func);
+    }
+  if (str) FREE_TEXT(str);
+}
+
+/* ---------------- peaks-font ---------------- */
+
+static char *rts_peaks_font = NULL;
+
+static void peaks_font_error_erase_func(TIMEOUT_ARGS)
+{
+  prefs_info *prf = (prefs_info *)context;
+  SET_TEXT(prf->text, peaks_font(ss));
+}
+
+static void save_peaks_font(prefs_info *prf, FILE *ignore)
+{
+  if (rts_peaks_font) FREE(rts_peaks_font);
+  rts_peaks_font = copy_string(peaks_font(ss));
+}
+
+static void reflect_peaks_font(prefs_info *prf) {SET_TEXT(prf->text, peaks_font(ss));}
+static void revert_peaks_font(prefs_info *prf) {set_peaks_font(rts_peaks_font);}
+static void clear_peaks_font(prefs_info *prf) {set_peaks_font(ss->orig_peaks_font);}
+
+static void peaks_font_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((!str) || (!(*str)))
+    {
+      SET_TEXT(prf->text, peaks_font(ss));
+      return;
+    }
+  if (!(set_peaks_font(str)))
+    {
+      SET_TEXT(prf->text, "can't find that font");
+      TIMEOUT(peaks_font_error_erase_func);
+    }
+  if (str) FREE_TEXT(str);
+}
+
+/* ---------------- bold-peaks-font ---------------- */
+
+static char *rts_bold_peaks_font = NULL;
+
+static void bold_peaks_font_error_erase_func(TIMEOUT_ARGS)
+{
+  prefs_info *prf = (prefs_info *)context;
+  SET_TEXT(prf->text, bold_peaks_font(ss));
+}
+
+static void save_bold_peaks_font(prefs_info *prf, FILE *ignore)
+{
+  if (rts_bold_peaks_font) FREE(rts_bold_peaks_font);
+  rts_bold_peaks_font = copy_string(bold_peaks_font(ss));
+}
+
+static void reflect_bold_peaks_font(prefs_info *prf) {SET_TEXT(prf->text, bold_peaks_font(ss));}
+static void revert_bold_peaks_font(prefs_info *prf) {set_bold_peaks_font(rts_bold_peaks_font);}
+static void clear_bold_peaks_font(prefs_info *prf) {set_bold_peaks_font(ss->orig_bold_peaks_font);}
+
+static void bold_peaks_font_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((!str) || (!(*str)))
+    {
+      SET_TEXT(prf->text, bold_peaks_font(ss));
+      return;
+    }
+  if (!(set_bold_peaks_font(str)))
+    {
+      SET_TEXT(prf->text, "can't find that font");
+      TIMEOUT(bold_peaks_font_error_erase_func);
+    }
+  if (str) FREE_TEXT(str);
+}
+
+/* ---------------- tiny-font ---------------- */
+
+static char *rts_tiny_font = NULL;
+
+static void tiny_font_error_erase_func(TIMEOUT_ARGS)
+{
+  prefs_info *prf = (prefs_info *)context;
+  SET_TEXT(prf->text, tiny_font(ss));
+}
+
+static void save_tiny_font(prefs_info *prf, FILE *ignore)
+{
+  if (rts_tiny_font) FREE(rts_tiny_font);
+  rts_tiny_font = copy_string(tiny_font(ss));
+}
+
+static void reflect_tiny_font(prefs_info *prf) {SET_TEXT(prf->text, tiny_font(ss));}
+static void revert_tiny_font(prefs_info *prf) {set_tiny_font(rts_tiny_font);}
+static void clear_tiny_font(prefs_info *prf) {set_tiny_font(ss->orig_tiny_font);}
+
+static void tiny_font_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((!str) || (!(*str)))
+    {
+      SET_TEXT(prf->text, tiny_font(ss));
+      return;
+    }
+  if (!(set_tiny_font(str)))
+    {
+      SET_TEXT(prf->text, "can't find that font");
+      TIMEOUT(tiny_font_error_erase_func);
+    }
+  if (str) FREE_TEXT(str);
+}
+
+
+/* ---------------- listener-font ---------------- */
+
+static char *rts_listener_font = NULL;
+
+static void listener_font_error_erase_func(TIMEOUT_ARGS)
+{
+  prefs_info *prf = (prefs_info *)context;
+  SET_TEXT(prf->text, listener_font(ss));
+}
+
+static void save_listener_font(prefs_info *prf, FILE *ignore)
+{
+  if (rts_listener_font) FREE(rts_listener_font);
+  rts_listener_font = copy_string(listener_font(ss));
+}
+
+static void reflect_listener_font(prefs_info *prf) {SET_TEXT(prf->text, listener_font(ss));}
+static void revert_listener_font(prefs_info *prf) {set_listener_font(rts_listener_font);}
+static void clear_listener_font(prefs_info *prf) {set_listener_font(ss->orig_listener_font);}
+
+static void listener_font_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((!str) || (!(*str)))
+    {
+      SET_TEXT(prf->text, listener_font(ss));
+      return;
+    }
+  if (!(set_listener_font(str)))
+    {
+      SET_TEXT(prf->text, "can't find that font");
+      TIMEOUT(listener_font_error_erase_func);
+    }
+  if (str) FREE_TEXT(str);
+}
+
 
 /* ---------------- save-state-file ---------------- */
 
@@ -1127,6 +1350,103 @@ static void min_dB_text(prefs_info *prf)
 }
 
 
+/* ---------------- sync choice ---------------- */
+
+static int sync_choice(void)
+{
+  if (XEN_DEFINED_P("global-sync-choice"))
+    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("global-sync-choice")));
+  return(0);
+}
+
+static void set_sync_choice(int val)
+{
+  if (XEN_DEFINED_P("global-sync-choice"))
+    {
+      char *str = NULL;
+#if HAVE_SCHEME
+      str = mus_format("(set-global-sync %d)", val);
+#endif
+#if HAVE_RUBY
+      str = mus_format("set_global_sync(%d)", val);
+#endif
+#if HAVE_FORTH
+      str = mus_format("%d set-global-sync", val);
+#endif
+      if (str)
+	{
+	  XEN_EVAL_C_STRING(str);
+	  FREE(str);
+	}
+    }
+}
+
+static void sync_choice_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "Many operations can operate on all channels at once, or only on the currently selected \
+channel.  If either of these buttons is selected, such operations operate either on all channels \
+within each sound (but not across sounds), or on all current channels at once.  The default is \
+to operate only on the selected channel (neither button selected).",
+	   WITH_WORD_WRAP);
+}
+
+static int global_sync_choice = 0, rts_sync_choice = 0;
+
+static void reflect_sync_choice(prefs_info *prf)
+{
+  global_sync_choice = sync_choice();
+  SET_TOGGLE(prf->toggle, global_sync_choice == 2);
+  SET_TOGGLE(prf->toggle2, global_sync_choice == 1);
+}
+
+static void revert_sync_choice(prefs_info *prf)
+{
+  set_sync_choice(rts_sync_choice);
+}
+
+static void clear_sync_choice(prefs_info *prf)
+{
+  set_sync_choice(0);
+}
+
+static void save_sync_choice(prefs_info *prf, FILE *fd)
+{
+  rts_sync_choice = global_sync_choice;
+  if (global_sync_choice != 0)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
+      fprintf(fd, "(set-global-sync %d)\n", global_sync_choice);
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "require \"extensions\"\n");
+      fprintf(fd, "set_global_sync(%d)\n", global_sync_choice);
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "require extensions\n");
+      fprintf(fd, "%d set-global-sync\n", global_sync_choice);
+#endif
+    }
+}
+
+static void sync1_choice(prefs_info *prf)
+{
+  if (GET_TOGGLE(prf->toggle))
+    global_sync_choice = 2;
+  else global_sync_choice = 0;
+  SET_TOGGLE(prf->toggle2, false);
+}
+
+static void sync2_choice(prefs_info *prf)
+{
+  if (GET_TOGGLE(prf->toggle2))
+    global_sync_choice = 1;
+  else global_sync_choice = 0;
+  SET_TOGGLE(prf->toggle, false);
+}
+
+
 
 
 
@@ -1170,16 +1490,6 @@ static void mouse_focus_help(prefs_info *prf)
 	   "This option implements 'pointer focus' in Snd; that is, the widget under the mouse \
 is the active widget. In this mode, you don't need to click a graph or text widget before \
 taking some action in it.",
-	   WITH_WORD_WRAP);
-}
-
-static void sync_choice_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "Many operations can operate on all channels at once, or only on the currently selected \
-channel.  If either of these buttons is selected, such operations operate either on all channels \
-within each sound (but not across sounds), or on all current channels at once.  The default is \
-to operate only on the selected channel (neither button selected). Not fully implemented yet.",
 	   WITH_WORD_WRAP);
 }
 
@@ -1427,22 +1737,6 @@ static void save_focus_follows_mouse_1(prefs_info *prf, FILE *fd)
 #if HAVE_FORTH
   fprintf(fd, "require extensions\n");
   fprintf(fd, "focus-follows-mouse\n");
-#endif
-}
-
-static void save_sync_choice_1(prefs_info *prf, FILE *fd, int choice)
-{
-#if HAVE_SCHEME
-  fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
-  fprintf(fd, "(set-global-sync %d)\n", choice);
-#endif
-#if HAVE_RUBY
-  fprintf(fd, "require \"extensions\"\n");
-  fprintf(fd, "set_global_sync(%d)\n", choice);
-#endif
-#if HAVE_FORTH
-  fprintf(fd, "require extensions\n");
-  fprintf(fd, "%d set-global-sync\n", choice);
 #endif
 }
 
@@ -1981,13 +2275,6 @@ static bool focus_is_following_mouse(void)
 {
   return((XEN_DEFINED_P("focus-is-following-mouse")) &&
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("focus-is-following-mouse"))));
-}
-
-static int find_sync_choice(void)
-{
-  if (XEN_DEFINED_P("global-sync-choice"))
-    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("global-sync-choice")));
-  return(0);
 }
 
 static int find_remember_sound_state_choice(void)
