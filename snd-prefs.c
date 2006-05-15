@@ -1,5 +1,7 @@
 /* this file included as text in snd-g|xprefs.c */
 
+/* TODO: ruby var get/set probably isn't working */
+
 #if HAVE_SCHEME
   #define LANG_NAME "scheme"
 #endif
@@ -359,6 +361,25 @@ static void prefs_variable_set(const char *name, XEN val)
 #endif
 }
 
+static void prefs_variable_save(FILE *fd, const char *name, const char *file, XEN val)
+{
+#if HAVE_SCHEME
+  fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load-from-path \"%s.scm\"))\n", file, file);
+  fprintf(fd, "(set! %s %s)\n", name, XEN_AS_STRING(val));
+#endif
+#if HAVE_RUBY
+  char *str;
+  str = no_stars(name);
+  fprintf(fd, "require \"%s\"\n", file);
+  fprintf(fd, "set_%s(%s)\n", str, XEN_AS_STRING(val));
+  FREE(str);
+#endif
+#if HAVE_FORTH
+  fprintf(fd, "require %s\n", file);
+  fprintf(fd, "%s set-%s\n", XEN_AS_STRING(val), name);
+#endif
+}
+
 static XEN prefs_variable_get(const char *name)
 {
 #if HAVE_SCHEME || HAVE_FORTH
@@ -380,6 +401,32 @@ static XEN prefs_variable_get(const char *name)
   
   return(XEN_FALSE);
 }
+
+static void xen_load_file_with_path_and_extension(const char *file)
+{
+  /* file is bare (no extension, no directory) file name */
+  char *str;
+  str = mus_format("%s.%s", file, XEN_FILE_EXTENSION);
+  XEN_LOAD_FILE_WITH_PATH(str);
+  FREE(str);
+}
+
+static void prefs_function_call_1(const char *func, XEN arg)
+{
+  char *str;
+#if HAVE_SCHEME
+  str = mus_format("(%s %s)\n", func, XEN_AS_STRING(arg));
+#endif
+#if HAVE_RUBY
+  str = mus_format("%s(%s)\n", TO_PROC_NAME(func), XEN_AS_STRING(arg));
+#endif
+#if HAVE_FORTH
+  str = mus_format("%s %s\n", XEN_AS_STRING(arg), func);
+#endif
+  XEN_EVAL_C_STRING(str);
+  FREE(str);
+}
+
 
 
 /* ---------------- auto-resize ---------------- */
@@ -497,8 +544,6 @@ static void reflect_recorder_autoload(prefs_info *prf) {SET_TOGGLE(prf->toggle, 
 static void recorder_autoload_toggle(prefs_info *prf) {rec_set_autoload(GET_TOGGLE(prf->toggle));}
 static void revert_recorder_autoload(prefs_info *prf) {rec_set_autoload(rts_recorder_autoload);}
 static void save_recorder_autoload(prefs_info *prf, FILE *ignore) {rts_recorder_autoload = rec_autoload();}
-
-
 
 
 /* ---------------- basic-color ---------------- */
@@ -710,10 +755,11 @@ static void revert_listener_text_color(prefs_info *prf)
 
 static char *rts_axis_label_font = NULL;
 
-static void axis_label_font_error_erase_func(TIMEOUT_ARGS)
+static TIMEOUT_TYPE axis_label_font_error_erase_func(TIMEOUT_ARGS)
 {
   prefs_info *prf = (prefs_info *)context;
   SET_TEXT(prf->text, axis_label_font(ss));
+  TIMEOUT_RESULT
 }
 
 static void save_axis_label_font(prefs_info *prf, FILE *ignore)
@@ -747,10 +793,11 @@ static void axis_label_font_text(prefs_info *prf)
 
 static char *rts_axis_numbers_font = NULL;
 
-static void axis_numbers_font_error_erase_func(TIMEOUT_ARGS)
+static TIMEOUT_TYPE axis_numbers_font_error_erase_func(TIMEOUT_ARGS)
 {
   prefs_info *prf = (prefs_info *)context;
   SET_TEXT(prf->text, axis_numbers_font(ss));
+  TIMEOUT_RESULT
 }
 
 static void save_axis_numbers_font(prefs_info *prf, FILE *ignore)
@@ -784,10 +831,11 @@ static void axis_numbers_font_text(prefs_info *prf)
 
 static char *rts_peaks_font = NULL;
 
-static void peaks_font_error_erase_func(TIMEOUT_ARGS)
+static TIMEOUT_TYPE peaks_font_error_erase_func(TIMEOUT_ARGS)
 {
   prefs_info *prf = (prefs_info *)context;
   SET_TEXT(prf->text, peaks_font(ss));
+  TIMEOUT_RESULT
 }
 
 static void save_peaks_font(prefs_info *prf, FILE *ignore)
@@ -821,10 +869,11 @@ static void peaks_font_text(prefs_info *prf)
 
 static char *rts_bold_peaks_font = NULL;
 
-static void bold_peaks_font_error_erase_func(TIMEOUT_ARGS)
+static TIMEOUT_TYPE bold_peaks_font_error_erase_func(TIMEOUT_ARGS)
 {
   prefs_info *prf = (prefs_info *)context;
   SET_TEXT(prf->text, bold_peaks_font(ss));
+  TIMEOUT_RESULT
 }
 
 static void save_bold_peaks_font(prefs_info *prf, FILE *ignore)
@@ -858,10 +907,11 @@ static void bold_peaks_font_text(prefs_info *prf)
 
 static char *rts_tiny_font = NULL;
 
-static void tiny_font_error_erase_func(TIMEOUT_ARGS)
+static TIMEOUT_TYPE tiny_font_error_erase_func(TIMEOUT_ARGS)
 {
   prefs_info *prf = (prefs_info *)context;
   SET_TEXT(prf->text, tiny_font(ss));
+  TIMEOUT_RESULT
 }
 
 static void save_tiny_font(prefs_info *prf, FILE *ignore)
@@ -896,10 +946,11 @@ static void tiny_font_text(prefs_info *prf)
 
 static char *rts_listener_font = NULL;
 
-static void listener_font_error_erase_func(TIMEOUT_ARGS)
+static TIMEOUT_TYPE listener_font_error_erase_func(TIMEOUT_ARGS)
 {
   prefs_info *prf = (prefs_info *)context;
   SET_TEXT(prf->text, listener_font(ss));
+  TIMEOUT_RESULT
 }
 
 static void save_listener_font(prefs_info *prf, FILE *ignore)
@@ -1238,6 +1289,50 @@ static void mix_waveform_height_text(prefs_info *prf)
 }
 
 
+/* ---------------- selection-creates-region, max-regions ---------------- */
+
+static bool rts_selection_creates_region = DEFAULT_SELECTION_CREATES_REGION;
+static int rts_max_regions = DEFAULT_MAX_REGIONS;
+
+static void reflect_selection_creates_region(prefs_info *prf) 
+{
+  SET_TOGGLE(prf->toggle, selection_creates_region(ss));
+  int_to_textfield(prf->text, max_regions(ss));
+}
+
+static void revert_selection_creates_region(prefs_info *prf) 
+{
+  set_selection_creates_region(rts_selection_creates_region);
+  in_set_max_regions(rts_max_regions);
+}
+
+static void save_selection_creates_region(prefs_info *prf, FILE *ignore)
+{
+  rts_selection_creates_region = selection_creates_region(ss);
+  rts_max_regions = max_regions(ss);
+}
+
+static void selection_creates_region_toggle(prefs_info *prf)
+{
+  set_selection_creates_region(GET_TOGGLE(prf->toggle));
+}
+
+static void max_regions_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      if (value >= 0)
+	in_set_max_regions(value);
+      else int_to_textfield(prf->text, max_regions(ss));
+      FREE_TEXT(str);
+    }
+}
+
+
 /* ---------------- sinc width ---------------- */
 
 static int rts_sinc_width = DEFAULT_SINC_WIDTH;
@@ -1329,6 +1424,7 @@ static void recorder_buffer_size_text(prefs_info *prf)
     }
 }
 
+
 /* ---------------- min-dB ---------------- */
 
 static Float rts_min_dB = DEFAULT_MIN_DB;
@@ -1349,37 +1445,72 @@ static void min_dB_text(prefs_info *prf)
     }
 }
 
+/* ---------------- fft-window-beta ---------------- */
+
+static Float rts_fft_window_beta = DEFAULT_FFT_WINDOW_BETA;
+
+static void reflect_fft_window_beta(prefs_info *prf)
+{
+  SET_SCALE(fft_window_beta(ss) / prf->scale_max);
+  float_to_textfield(prf->text, fft_window_beta(ss));
+}
+
+static void revert_fft_window_beta(prefs_info *prf) {in_set_fft_window_beta(rts_fft_window_beta);}
+static void save_fft_window_beta(prefs_info *prf, FILE *ignore) {rts_fft_window_beta = fft_window_beta(ss);}
+static void fft_window_beta_scale_callback(prefs_info *prf) {in_set_fft_window_beta(GET_SCALE() * prf->scale_max);}
+
+static void fft_window_beta_text_callback(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      float value = 0.0;
+      sscanf(str, "%f", &value);
+      if ((value >= 0.0) &&
+	  (value <= prf->scale_max))
+	{
+	  in_set_fft_window_beta(value);
+	  SET_SCALE(value / prf->scale_max);
+	}
+      else SET_TEXT(prf->text, "must be >= 0.0");
+      FREE_TEXT(str);
+    }
+}
+
 
 /* ---------------- sync choice ---------------- */
 
-static int sync_choice(void)
+#define SYNC_WITHIN_EACH_SOUND 2
+#define SYNC_ACROSS_ALL_SOUNDS 1
+#define SYNC_DISABLED 0
+#define SYNC_UNSET -1
+
+static int global_sync_choice = SYNC_UNSET, rts_sync_choice = 0;
+
+static int sync_choice(void) 
 {
-  if (XEN_DEFINED_P("global-sync-choice"))
-    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("global-sync-choice")));
-  return(0);
+  return(XEN_TO_C_INT_OR_ELSE(prefs_variable_get("global-sync-choice"), 
+			      SYNC_DISABLED));
 }
 
-static void set_sync_choice(int val)
+static void set_sync_choice(int val, const char *load)
 {
-  if (XEN_DEFINED_P("global-sync-choice"))
+  if ((load) &&
+      (!XEN_DEFINED_P("global-sync-choice")))
+    xen_load_file_with_path_and_extension(load);
+  if (XEN_DEFINED_P("global-sync-choice")) 
     {
-      char *str = NULL;
-#if HAVE_SCHEME
-      str = mus_format("(set-global-sync %d)", val);
-#endif
-#if HAVE_RUBY
-      str = mus_format("set_global_sync(%d)", val);
-#endif
-#if HAVE_FORTH
-      str = mus_format("%d set-global-sync", val);
-#endif
-      if (str)
-	{
-	  XEN_EVAL_C_STRING(str);
-	  FREE(str);
-	}
+      prefs_variable_set("global-sync-choice", 
+			 C_TO_XEN_INT(val));
+      if ((load) && 
+	  (val != SYNC_DISABLED))
+	prefs_function_call_1("set-global-sync", C_TO_XEN_INT(val));
     }
 }
+
+static void revert_sync_choice(prefs_info *prf) {set_sync_choice(rts_sync_choice, NULL);}
+static void clear_sync_choice(prefs_info *prf) {set_sync_choice(SYNC_DISABLED, NULL);}
 
 static void sync_choice_help(prefs_info *prf)
 {
@@ -1391,62 +1522,195 @@ to operate only on the selected channel (neither button selected).",
 	   WITH_WORD_WRAP);
 }
 
-static int global_sync_choice = 0, rts_sync_choice = 0;
-
 static void reflect_sync_choice(prefs_info *prf)
 {
   global_sync_choice = sync_choice();
-  SET_TOGGLE(prf->toggle, global_sync_choice == 2);
-  SET_TOGGLE(prf->toggle2, global_sync_choice == 1);
-}
-
-static void revert_sync_choice(prefs_info *prf)
-{
-  set_sync_choice(rts_sync_choice);
-}
-
-static void clear_sync_choice(prefs_info *prf)
-{
-  set_sync_choice(0);
+  SET_TOGGLE(prf->toggle, global_sync_choice == SYNC_WITHIN_EACH_SOUND);
+  SET_TOGGLE(prf->toggle2, global_sync_choice == SYNC_ACROSS_ALL_SOUNDS);
 }
 
 static void save_sync_choice(prefs_info *prf, FILE *fd)
 {
-  rts_sync_choice = global_sync_choice;
-  if (global_sync_choice != 0)
+  if (global_sync_choice != SYNC_UNSET) 
     {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
-      fprintf(fd, "(set-global-sync %d)\n", global_sync_choice);
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "require \"extensions\"\n");
-      fprintf(fd, "set_global_sync(%d)\n", global_sync_choice);
-#endif
-#if HAVE_FORTH
-      fprintf(fd, "require extensions\n");
-      fprintf(fd, "%d set-global-sync\n", global_sync_choice);
-#endif
+      rts_sync_choice = global_sync_choice;
+      if (global_sync_choice != SYNC_DISABLED)
+	prefs_variable_save(fd, "global-sync-choice", "extensions", C_TO_XEN_INT(global_sync_choice));
     }
 }
 
 static void sync1_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->toggle))
-    global_sync_choice = 2;
-  else global_sync_choice = 0;
+    global_sync_choice = SYNC_WITHIN_EACH_SOUND;
+  else global_sync_choice = SYNC_DISABLED;
   SET_TOGGLE(prf->toggle2, false);
+  /* if user has not loaded extensions, but sets one of the toggle buttons, load extensions and
+   *    set the global-sync-choice variable
+   */
+  set_sync_choice(global_sync_choice, "extensions"); 
 }
 
 static void sync2_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->toggle2))
-    global_sync_choice = 1;
-  else global_sync_choice = 0;
+    global_sync_choice = SYNC_ACROSS_ALL_SOUNDS;
+  else global_sync_choice = SYNC_DISABLED;
   SET_TOGGLE(prf->toggle, false);
+  set_sync_choice(global_sync_choice, "extensions");
 }
 
 
+/* ---------------- mark-tag size ---------------- */
+
+static int rts_mark_tag_width = DEFAULT_MARK_TAG_WIDTH, rts_mark_tag_height = DEFAULT_MARK_TAG_HEIGHT;
+
+static void reflect_mark_tag_size(prefs_info *prf)
+{
+  int_to_textfield(prf->text, mark_tag_width(ss));
+  int_to_textfield(prf->rtxt, mark_tag_height(ss));
+}
+
+static void revert_mark_tag_size(prefs_info *prf)
+{
+  set_mark_tag_width(rts_mark_tag_width);
+  set_mark_tag_height(rts_mark_tag_height);
+}
+
+static void save_mark_tag_size(prefs_info *prf, FILE *ignore)
+{
+  rts_mark_tag_width = mark_tag_width(ss);
+  rts_mark_tag_height = mark_tag_height(ss);
+}
+
+static TIMEOUT_TYPE mark_tag_width_erase_func(TIMEOUT_ARGS)
+{
+  prefs_info *prf = (prefs_info *)context;
+  int_to_textfield(prf->text, mark_tag_width(ss));
+  TIMEOUT_RESULT
+}
+
+static TIMEOUT_TYPE mark_tag_height_erase_func(TIMEOUT_ARGS)
+{
+  prefs_info *prf = (prefs_info *)context;
+  int_to_textfield(prf->rtxt, mark_tag_height(ss));
+  TIMEOUT_RESULT
+}
+
+static void mark_tag_width_error(const char *msg, void *data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  SET_TEXT(prf->text, "must be > 0");
+  TIMEOUT(mark_tag_width_erase_func);
+}
+
+static void mark_tag_height_error(const char *msg, void *data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  SET_TEXT(prf->rtxt, "must be > 0");
+  TIMEOUT(mark_tag_height_erase_func);
+}
+
+static void mark_tag_size_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      int width = 0;
+      redirect_errors_to(mark_tag_width_error, (void *)prf);
+      width = string_to_int(str, 1, "mark tag width");
+      redirect_errors_to(NULL, NULL);
+      if (width > 0) set_mark_tag_width(width);
+      FREE_TEXT(str);
+      str = GET_TEXT(prf->rtxt);
+      if ((str) && (*str))
+	{
+	  int height;
+	  redirect_errors_to(mark_tag_height_error, (void *)prf);
+	  height = string_to_int(str, 1, "mark tag height");
+	  redirect_errors_to(NULL, NULL);
+	  if (height > 0) set_mark_tag_height(height);
+	  FREE_TEXT(str);
+	}
+    }
+}
+
+
+/* ---------------- mix-tag size ---------------- */
+
+static int rts_mix_tag_width = DEFAULT_MIX_TAG_WIDTH, rts_mix_tag_height = DEFAULT_MIX_TAG_HEIGHT;
+
+static void reflect_mix_tag_size(prefs_info *prf)
+{
+  int_to_textfield(prf->text, mix_tag_width(ss));
+  int_to_textfield(prf->rtxt, mix_tag_height(ss));
+}
+
+static void revert_mix_tag_size(prefs_info *prf)
+{
+  set_mix_tag_width(rts_mix_tag_width);
+  set_mix_tag_height(rts_mix_tag_height);
+}
+
+static void save_mix_tag_size(prefs_info *prf, FILE *ignore)
+{
+  rts_mix_tag_width = mix_tag_width(ss);
+  rts_mix_tag_height = mix_tag_height(ss);
+}
+
+static TIMEOUT_TYPE mix_tag_width_erase_func(TIMEOUT_ARGS)
+{
+  prefs_info *prf = (prefs_info *)context;
+  int_to_textfield(prf->text, mix_tag_width(ss));
+  TIMEOUT_RESULT
+}
+
+static TIMEOUT_TYPE mix_tag_height_erase_func(TIMEOUT_ARGS)
+{
+  prefs_info *prf = (prefs_info *)context;
+  int_to_textfield(prf->rtxt, mix_tag_height(ss));
+  TIMEOUT_RESULT
+}
+
+static void mix_tag_width_error(const char *msg, void *data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  SET_TEXT(prf->text, "must be > 0");
+  TIMEOUT(mix_tag_width_erase_func);
+}
+
+static void mix_tag_height_error(const char *msg, void *data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  SET_TEXT(prf->rtxt, "must be > 0");
+  TIMEOUT(mix_tag_height_erase_func);
+}
+
+static void mix_tag_size_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      int width = 0;
+      redirect_errors_to(mix_tag_width_error, (void *)prf);
+      width = string_to_int(str, 1, "mix tag width");
+      redirect_errors_to(NULL, NULL);
+      if (width > 0) set_mix_tag_width(width);
+      FREE_TEXT(str);
+      str = GET_TEXT(prf->rtxt);
+      if ((str) && (*str))
+	{
+	  int height;
+	  redirect_errors_to(mix_tag_height_error, (void *)prf);
+	  height = string_to_int(str, 1, "mix tag height");
+	  redirect_errors_to(NULL, NULL);
+	  if (height > 0) set_mix_tag_height(height);
+	  FREE_TEXT(str);
+	}
+    }
+}
 
 
 
@@ -2177,7 +2441,11 @@ static void bind_show_selection(prefs_info *prf)
 
 static char *find_clm_file_name(void)
 {
-  return(XEN_TO_C_STRING(prefs_variable_get("*clm-file-name*")));
+  XEN val;
+  val = prefs_variable_get("*clm-file-name*");
+  if (XEN_STRING_P(val))
+    return(XEN_TO_C_STRING(val));
+  return(NULL);
 }
 
 static void set_clm_file_name(const char *str)
@@ -2189,18 +2457,14 @@ static int find_clm_table_size(void)
 {
   XEN size;
   size = prefs_variable_get("*clm-table-size*");
-  if (XEN_INTEGER_P(size))
-    return(XEN_TO_C_INT(size));
-  return(512);
+  return(XEN_TO_C_INT_OR_ELSE(size, 512));
 }
 
 static int find_clm_file_buffer_size(void)
 {
   XEN size;
   size = prefs_variable_get("*clm-file-buffer-size*");
-  if (XEN_INTEGER_P(size))
-    return(XEN_TO_C_INT(size));
-  return(65536);
+  return(XEN_TO_C_INT_OR_ELSE(size, 65536));
 }
 
 static char *find_sources(void) /* returns full filename if found else null */

@@ -84,6 +84,18 @@ static color_t rgb_to_color(Float r, Float g, Float b);
 #define FREE_TEXT(Val)            XtFree(Val)
 #define TIMEOUT(Func)             XtAppAddTimeOut(MAIN_APP(ss), ERROR_WAIT_TIME, Func, (XtPointer)prf)
 #define TIMEOUT_ARGS              XtPointer context, XtIntervalId *id
+#define TIMEOUT_TYPE              void
+#define TIMEOUT_RESULT            
+#define SET_SCALE(Value)          XmScaleSetValue(prf->scale, (int)(100 * Value))
+
+static int get_scale_1(Widget scale)
+{
+  int val = 0;
+  XmScaleGetValue(scale, &val);
+  return(val);
+}
+
+#define GET_SCALE()               (get_scale_1(prf->scale) * 0.01)
 
 #include "snd-prefs.c"
 
@@ -592,7 +604,7 @@ static prefs_info *prefs_row_with_two_toggles(const char *label, const char *var
   sep1 = make_row_inner_separator(20, prf->toggle, box, top_widget);
   prf->toggle2 = make_row_toggle_with_label(prf, value2, sep1, box, top_widget, label2);
   help = make_row_help(prf, varname, box, top_widget, prf->toggle2);
-  
+
   XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (XtPointer)prf);
   XtAddCallback(prf->toggle2, XmNvalueChangedCallback, call_toggle2_func, (XtPointer)prf);
   return(prf);
@@ -1862,35 +1874,6 @@ static void save_peak_envs(prefs_info *prf, FILE *fd)
 }
 
 
-/* ---------------- selection-creates-region, max-regions ---------------- */
-
-static void reflect_selection_creates_region(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, selection_creates_region(ss), false);
-  int_to_textfield(prf->text, max_regions(ss));
-}
-
-static void selection_creates_region_toggle(prefs_info *prf)
-{
-  set_selection_creates_region(XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void max_regions_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      int value = 0;
-      sscanf(str, "%d", &value);
-      if (value >= 0)
-	in_set_max_regions(value);
-      else int_to_textfield(prf->text, max_regions(ss));
-      XtFree(str);
-    }
-}
-
 /* ---------------- with-tracking-cursor ---------------- */
 
 static void reflect_with_tracking_cursor(prefs_info *prf) 
@@ -3133,43 +3116,6 @@ static void fft_window_from_text(prefs_info *prf)
   else post_prefs_error("no window?", (XtPointer)prf);
 }
 
-/* ---------------- fft-window-beta ---------------- */
-
-static void reflect_fft_window_beta(prefs_info *prf)
-{
-  XmScaleSetValue(prf->scale, (int)(100 * fft_window_beta(ss) / prf->scale_max));
-  float_to_textfield(prf->text, fft_window_beta(ss));
-}
-
-static void fft_window_beta_scale_callback(prefs_info *prf)
-{
-  int val = 0;
-  ASSERT_WIDGET_TYPE(XmIsScale(prf->scale), prf->scale);
-  XmScaleGetValue(prf->scale, &val);
-  in_set_fft_window_beta(val * prf->scale_max / 100.0);
-}
-
-static void fft_window_beta_text_callback(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      float value = 0.0;
-      sscanf(str, "%f", &value);
-      if ((value >= 0.0) &&
-	  (value <= prf->scale_max))
-	{
-	  in_set_fft_window_beta(value);
-	  XmScaleSetValue(prf->scale, (int)(100 * value / prf->scale_max));
-	}
-      else XmTextFieldSetString(prf->text, "must be >= 0.0");
-      XtFree(str);
-    }
-}
-
-
 /* ---------------- colormap ---------------- */
 
 static char *colormap_completer(char *text, void *data)
@@ -3260,125 +3206,6 @@ static void transform_normalization_choice(prefs_info *prf)
     in_set_transform_normalization(transform_normalizations_i[which_radio_button(prf)]);
 }
 
-
-/* ---------------- mark-tag size ---------------- */
-
-static void reflect_mark_tag_size(prefs_info *prf)
-{
-  int_to_textfield(prf->text, mark_tag_width(ss));
-  int_to_textfield(prf->rtxt, mark_tag_height(ss));
-}
-
-static void mark_tag_width_erase_func(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  int_to_textfield(prf->text, mark_tag_width(ss));
-}
-
-static void mark_tag_height_erase_func(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  int_to_textfield(prf->rtxt, mark_tag_height(ss));
-}
-
-static void mark_tag_width_error(const char *msg, void *data)
-{
-  prefs_info *prf = (prefs_info *)data;
-  XmTextFieldSetString(prf->text, "must be > 0");
-  TIMEOUT(mark_tag_width_erase_func);
-}
-
-static void mark_tag_height_error(const char *msg, void *data)
-{
-  prefs_info *prf = (prefs_info *)data;
-  XmTextFieldSetString(prf->rtxt, "must be > 0");
-  TIMEOUT(mark_tag_height_erase_func);
-}
-
-static void mark_tag_size_text(prefs_info *prf)
-{
-  char *str;
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      int width = 0;
-      redirect_errors_to(mark_tag_width_error, (void *)prf);
-      width = string_to_int(str, 1, "mark tag width");
-      redirect_errors_to(NULL, NULL);
-      if (width > 0) set_mark_tag_width(width);
-      XtFree(str);
-      str = XmTextFieldGetString(prf->rtxt);
-      if ((str) && (*str))
-	{
-	  int height;
-	  redirect_errors_to(mark_tag_height_error, (void *)prf);
-	  height = string_to_int(str, 1, "mark tag height");
-	  redirect_errors_to(NULL, NULL);
-	  if (height > 0) set_mark_tag_height(height);
-	  XtFree(str);
-	}
-    }
-}
-
-
-/* ---------------- mix-tag size ---------------- */
-
-static void reflect_mix_tag_size(prefs_info *prf)
-{
-  int_to_textfield(prf->text, mix_tag_width(ss));
-  int_to_textfield(prf->rtxt, mix_tag_height(ss));
-}
-
-static void mix_tag_width_erase_func(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  int_to_textfield(prf->text, mix_tag_width(ss));
-}
-
-static void mix_tag_height_erase_func(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  int_to_textfield(prf->rtxt, mix_tag_height(ss));
-}
-
-static void mix_tag_width_error(const char *msg, void *data)
-{
-  prefs_info *prf = (prefs_info *)data;
-  XmTextFieldSetString(prf->text, "must be > 0");
-  TIMEOUT(mix_tag_width_erase_func);
-}
-
-static void mix_tag_height_error(const char *msg, void *data)
-{
-  prefs_info *prf = (prefs_info *)data;
-  XmTextFieldSetString(prf->rtxt, "must be > 0");
-  TIMEOUT(mix_tag_height_erase_func);
-}
-
-static void mix_tag_size_text(prefs_info *prf)
-{
-  char *str;
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      int width = 0;
-      redirect_errors_to(mix_tag_width_error, (void *)prf);
-      width = string_to_int(str, 1, "mix tag width");
-      redirect_errors_to(NULL, NULL);
-      if (width > 0) set_mix_tag_width(width);
-      XtFree(str);
-      str = XmTextFieldGetString(prf->rtxt);
-      if ((str) && (*str))
-	{
-	  int height;
-	  redirect_errors_to(mix_tag_height_error, (void *)prf);
-	  height = string_to_int(str, 1, "mix tag height");
-	  redirect_errors_to(NULL, NULL);
-	  if (height > 0) set_mix_tag_height(height);
-	  XtFree(str);
-	}
-    }
-}
 
 /* ---------------- mark-pane ---------------- */
 
@@ -3900,8 +3727,13 @@ widget_t start_preferences_dialog(void)
     XtSetArg(args[n], XmNdialogTitle, title); n++;
     XtSetArg(args[n], XmNallowShellResize, true); n++;
     XtSetArg(args[n], XmNautoUnmanage, false); n++;
-    XtSetArg(args[n], XmNwidth, STARTUP_WIDTH); n++;
-    XtSetArg(args[n], XmNheight, STARTUP_HEIGHT); n++;
+    {
+      Dimension width, height;
+      width = XDisplayWidth(MAIN_DISPLAY(ss), DefaultScreen(MAIN_DISPLAY(ss)));
+      height = XDisplayHeight(MAIN_DISPLAY(ss), DefaultScreen(MAIN_DISPLAY(ss)));
+      XtSetArg(args[n], XmNwidth, (STARTUP_WIDTH < width) ? STARTUP_WIDTH : ((Dimension)(width - 50))); n++;
+      XtSetArg(args[n], XmNheight, (STARTUP_HEIGHT < height) ? STARTUP_HEIGHT : ((Dimension)(height - 50))); n++;
+    }
     preferences_dialog = XmCreateTemplateDialog(MAIN_PANE(ss), "preferences", args, n);
 
     n = 0;
@@ -4025,8 +3857,8 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     rts_sync_choice = sync_choice();
     prf = prefs_row_with_two_toggles("operate on all channels together", S_sync,
-				     "within each sound", rts_sync_choice == 1,
-				     "across all sounds", rts_sync_choice == 2,
+				     "within each sound", rts_sync_choice == SYNC_WITHIN_EACH_SOUND,
+				     "across all sounds", rts_sync_choice == SYNC_ACROSS_ALL_SOUNDS,
 				     dpy_box, current_sep, 
 				     sync1_choice, sync2_choice);
     remember_pref(prf, reflect_sync_choice, save_sync_choice, sync_choice_help, clear_sync_choice, revert_sync_choice);
@@ -4057,13 +3889,13 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_peak_envs, save_peak_envs, peak_env_help, NULL, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    str = mus_format("%d", max_regions(ss));
+    str = mus_format("%d", rts_max_regions = max_regions(ss));
     prf = prefs_row_with_toggle_with_text("selection creates an associated region", S_selection_creates_region,
-					  selection_creates_region(ss),
+					  rts_selection_creates_region = selection_creates_region(ss),
 					  "max regions:", str, 5,
 					  dpy_box, current_sep,
 					  selection_creates_region_toggle, max_regions_text);
-    remember_pref(prf, reflect_selection_creates_region, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_selection_creates_region, save_selection_creates_region, NULL, NULL, revert_selection_creates_region);
     FREE(str);
 
     /* ---------------- file options ---------------- */
@@ -4659,10 +4491,10 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_scale("data window family parameter", S_fft_window_beta, 
-			       1.0, fft_window_beta(ss),
+			       1.0, rts_fft_window_beta = fft_window_beta(ss),
 			       fft_box, current_sep,
 			       fft_window_beta_scale_callback, fft_window_beta_text_callback);
-    remember_pref(prf, reflect_fft_window_beta, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_fft_window_beta, save_fft_window_beta, NULL, NULL, revert_fft_window_beta);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     str = mus_format("%d", rts_max_transform_peaks = max_transform_peaks(ss));
@@ -4742,24 +4574,24 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(mmr_box, prf->rscl);
 
-    str1 = mus_format("%d", mark_tag_width(ss));
-    str2 = mus_format("%d", mark_tag_height(ss));
+    str1 = mus_format("%d", rts_mark_tag_width = mark_tag_width(ss));
+    str2 = mus_format("%d", rts_mark_tag_height = mark_tag_height(ss));
     prf = prefs_row_with_two_texts("mark tag size", S_mark_tag_width, 
 				   "width:", str1, "height:", str2, 4,
 				   mmr_box, current_sep,
 				   mark_tag_size_text);
-    remember_pref(prf, reflect_mark_tag_size, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_mark_tag_size, save_mark_tag_size, NULL, NULL, revert_mark_tag_size);
     FREE(str2);
     FREE(str1);
 
     current_sep = make_inter_variable_separator(mmr_box, prf->label);
-    str1 = mus_format("%d", mix_tag_width(ss));
-    str2 = mus_format("%d", mix_tag_height(ss));
+    str1 = mus_format("%d", rts_mix_tag_width = mix_tag_width(ss));
+    str2 = mus_format("%d", rts_mix_tag_height = mix_tag_height(ss));
     prf = prefs_row_with_two_texts("mix tag size", S_mix_tag_width, 
 				   "width:", str1, "height:", str2, 4,
 				   mmr_box, current_sep,
 				   mix_tag_size_text);
-    remember_pref(prf, reflect_mix_tag_size, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_mix_tag_size, save_mix_tag_size, NULL, NULL, revert_mix_tag_size);
     FREE(str2);
     FREE(str1);
 

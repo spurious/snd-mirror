@@ -59,6 +59,10 @@ static void sg_entry_set_text(GtkEntry* entry, const char *text);
 #define FREE_TEXT(Val)            
 #define TIMEOUT(Func)             g_timeout_add_full(0, ERROR_WAIT_TIME, Func, (gpointer)prf, NULL)
 #define TIMEOUT_ARGS              gpointer context
+#define TIMEOUT_TYPE              gint
+#define TIMEOUT_RESULT            return(0);
+#define SET_SCALE(Value)          gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->adj), Value)
+#define GET_SCALE()               (GTK_ADJUSTMENT(prf->adj)->value * prf->scale_max)
 
 #include "snd-prefs.c"
 
@@ -1066,6 +1070,19 @@ static void pixel_to_rgb(color_t pix, float *r, float *g, float *b)
   (*b) = (float)(pix->blue) / 65535.0;
 }
 
+static void scale_set_color(prefs_info *prf, color_t pixel)
+{
+  float r = 0.0, g = 0.0, b = 0.0;
+  pixel_to_rgb(pixel, &r, &g, &b);
+  float_to_textfield(prf->rtxt, r);
+  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->radj), r);
+  float_to_textfield(prf->gtxt, g);
+  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->gadj), g);
+  float_to_textfield(prf->btxt, b);
+  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->badj), b);
+  gtk_widget_modify_bg(prf->color, GTK_STATE_NORMAL, pixel);
+}
+
 static void reflect_color(prefs_info *prf)
 {
   Float r, g, b;
@@ -1643,48 +1660,6 @@ static void peak_envs_text(prefs_info *prf)
 static void save_peak_envs(prefs_info *prf, FILE *fd)
 {
   if (include_peak_envs) save_peak_envs_1(prf, fd, include_peak_env_directory);
-}
-
-
-/* ---------------- selection-creates-region ---------------- */
-
-static void reflect_selection_creates_region(prefs_info *prf) 
-{
-  set_toggle_button(prf->toggle, selection_creates_region(ss), false, (void *)prf);
-  int_to_textfield(prf->text, max_regions(ss));
-}
-
-static void selection_creates_region_toggle(prefs_info *prf)
-{
-  set_selection_creates_region(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-}
-
-static void max_regions_text(prefs_info *prf)
-{
-  char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((str) && (*str))
-    {
-      int value = 0;
-      sscanf(str, "%d", &value);
-      if (value >= 0)
-	in_set_max_regions(value);
-      else int_to_textfield(prf->text, max_regions(ss));
-    }
-}
-
-
-static void scale_set_color(prefs_info *prf, color_t pixel)
-{
-  float r = 0.0, g = 0.0, b = 0.0;
-  pixel_to_rgb(pixel, &r, &g, &b);
-  float_to_textfield(prf->rtxt, r);
-  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->radj), r);
-  float_to_textfield(prf->gtxt, g);
-  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->gadj), g);
-  float_to_textfield(prf->btxt, b);
-  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->badj), b);
-  gtk_widget_modify_bg(prf->color, GTK_STATE_NORMAL, pixel);
 }
 
 
@@ -2824,38 +2799,6 @@ static void fft_window_from_text(prefs_info *prf)
   else post_prefs_error("no window?", (void *)prf);
 }
 
-/* ---------------- fft-window-beta ---------------- */
-
-static void reflect_fft_window_beta(prefs_info *prf)
-{
-  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->adj), fft_window_beta(ss) / prf->scale_max);
-  float_to_textfield(prf->text, fft_window_beta(ss));
-}
-
-static void fft_window_beta_scale_callback(prefs_info *prf)
-{
-  in_set_fft_window_beta(GTK_ADJUSTMENT(prf->adj)->value * prf->scale_max);
-}
-
-static void fft_window_beta_text_callback(prefs_info *prf)
-{
-  char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((str) && (*str))
-    {
-      float value = 0.0;
-      sscanf(str, "%f", &value);
-      if ((value >= 0.0) &&
-	  (value <= prf->scale_max))
-	{
-	  in_set_fft_window_beta(value);
-	  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->adj), value / prf->scale_max);
-	}
-      else sg_entry_set_text(GTK_ENTRY(prf->text), "must be >= 0.0");
-    }
-}
-
-
 /* ---------------- colormap ---------------- */
 
 static char *colormap_completer(char *text, void *data)
@@ -2930,125 +2873,6 @@ static void transform_normalization_choice(prefs_info *prf)
     in_set_transform_normalization((fft_normalize_t)get_user_int_data(G_OBJECT(prf->radio_button)));
 }
 
-
-/* ---------------- mark-tag size ---------------- */
-
-static void reflect_mark_tag_size(prefs_info *prf)
-{
-  int_to_textfield(prf->text, mark_tag_width(ss));
-  int_to_textfield(prf->rtxt, mark_tag_height(ss));
-}
-
-static gint mark_tag_width_erase_func(gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  int_to_textfield(prf->text, mark_tag_width(ss));
-  return(0);
-}
-
-static gint mark_tag_height_erase_func(gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  int_to_textfield(prf->rtxt, mark_tag_height(ss));
-  return(0);
-}
-
-static void mark_tag_width_error(const char *msg, void *data)
-{
-  prefs_info *prf = (prefs_info *)data;
-  sg_entry_set_text(GTK_ENTRY(prf->text), "must be > 0");
-  TIMEOUT(mark_tag_width_erase_func);
-}
-
-static void mark_tag_height_error(const char *msg, void *data)
-{
-  prefs_info *prf = (prefs_info *)data;
-  sg_entry_set_text(GTK_ENTRY(prf->rtxt), "must be > 0");
-  TIMEOUT(mark_tag_height_erase_func);
-}
-
-static void mark_tag_size_text(prefs_info *prf)
-{
-  char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((str) && (*str))
-    {
-      int width = 0;
-      redirect_errors_to(mark_tag_width_error, (void *)prf);
-      width = string_to_int(str, 1, "mark tag width");
-      redirect_errors_to(NULL, NULL);
-      if (width > 0) set_mark_tag_width(width);
-      str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->rtxt));
-      if ((str) && (*str))
-	{
-	  int height;
-	  redirect_errors_to(mark_tag_height_error, (void *)prf);
-	  height = string_to_int(str, 1, "mark tag height");
-	  redirect_errors_to(NULL, NULL);
-	  if (height > 0) set_mark_tag_height(height);
-	}
-    }
-}
-
-
-/* ---------------- mix-tag size ---------------- */
-
-static void reflect_mix_tag_size(prefs_info *prf)
-{
-  int_to_textfield(prf->text, mix_tag_width(ss));
-  int_to_textfield(prf->rtxt, mix_tag_height(ss));
-}
-
-static gint mix_tag_width_erase_func(gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  int_to_textfield(prf->text, mix_tag_width(ss));
-  return(0);
-}
-
-static gint mix_tag_height_erase_func(gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  int_to_textfield(prf->rtxt, mix_tag_height(ss));
-  return(0);
-}
-
-static void mix_tag_width_error(const char *msg, void *data)
-{
-  prefs_info *prf = (prefs_info *)data;
-  sg_entry_set_text(GTK_ENTRY(prf->text), "must be > 0");
-  TIMEOUT(mix_tag_width_erase_func);
-}
-
-static void mix_tag_height_error(const char *msg, void *data)
-{
-  prefs_info *prf = (prefs_info *)data;
-  sg_entry_set_text(GTK_ENTRY(prf->rtxt), "must be > 0");
-  TIMEOUT(mix_tag_height_erase_func);
-}
-
-static void mix_tag_size_text(prefs_info *prf)
-{
-  char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((str) && (*str))
-    {
-      int width = 0;
-      redirect_errors_to(mix_tag_width_error, (void *)prf);
-      width = string_to_int(str, 1, "mix tag width");
-      redirect_errors_to(NULL, NULL);
-      if (width > 0) set_mix_tag_width(width);
-      str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->rtxt));
-      if ((str) && (*str))
-	{
-	  int height;
-	  redirect_errors_to(mix_tag_height_error, (void *)prf);
-	  height = string_to_int(str, 1, "mix tag height");
-	  redirect_errors_to(NULL, NULL);
-	  if (height > 0) set_mix_tag_height(height);
-	}
-    }
-}
 
 /* ---------------- include with-sound ---------------- */
 
@@ -3524,7 +3348,6 @@ static void recorder_out_format_choice(prefs_info *prf)
 
 /* ---------------- preferences dialog ---------------- */
 
-
 widget_t start_preferences_dialog(void)
 {
   GtkWidget *saveB, *revertB, *clearB, *helpB, *dismissB, *topics, *scroller, *current_sep;
@@ -3542,7 +3365,10 @@ widget_t start_preferences_dialog(void)
   sg_make_resizable(preferences_dialog);
   /* gtk_container_set_border_width (GTK_CONTAINER(preferences_dialog), 10); */
   gtk_widget_realize(preferences_dialog);
-  gtk_window_resize(GTK_WINDOW(preferences_dialog), STARTUP_WIDTH, STARTUP_HEIGHT);
+
+  if ((STARTUP_WIDTH < gdk_screen_width()) &&
+      (STARTUP_HEIGHT < gdk_screen_height()))
+    gtk_window_resize(GTK_WINDOW(preferences_dialog), STARTUP_WIDTH, STARTUP_HEIGHT);
 
   helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
   gtk_widget_set_name(helpB, "help_button");
@@ -3659,8 +3485,8 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box);
     rts_sync_choice = sync_choice();
     prf = prefs_row_with_two_toggles("operate on all channels together", S_sync,
-				     "within each sound", rts_sync_choice == 1,
-				     "across all sounds", rts_sync_choice == 2,
+				     "within each sound", rts_sync_choice == SYNC_WITHIN_EACH_SOUND,
+				     "across all sounds", rts_sync_choice == SYNC_ACROSS_ALL_SOUNDS,
 				     dpy_box,
 				     sync1_choice, sync2_choice);
     remember_pref(prf, reflect_sync_choice, save_sync_choice, sync_choice_help, clear_sync_choice, revert_sync_choice);
@@ -3691,13 +3517,13 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_peak_envs, save_peak_envs, peak_env_help, NULL, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    str = mus_format("%d", max_regions(ss));
+    str = mus_format("%d", rts_max_regions = max_regions(ss));
     prf = prefs_row_with_toggle_with_text("selection creates an associated region", S_selection_creates_region,
-					  selection_creates_region(ss),
+					  rts_selection_creates_region = selection_creates_region(ss),
 					  "max regions:", str, 5,
 					  dpy_box,
 					  selection_creates_region_toggle, max_regions_text);
-    remember_pref(prf, reflect_selection_creates_region, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_selection_creates_region, save_selection_creates_region, NULL, NULL, revert_selection_creates_region);
     FREE(str);
 
 
@@ -4287,10 +4113,10 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(fft_box);
     prf = prefs_row_with_scale("data window family parameter", S_fft_window_beta, 
-			       1.0, fft_window_beta(ss),
+			       1.0, rts_fft_window_beta = fft_window_beta(ss),
 			       fft_box,
 			       fft_window_beta_scale_callback, fft_window_beta_text_callback);
-    remember_pref(prf, reflect_fft_window_beta, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_fft_window_beta, save_fft_window_beta, NULL, NULL, revert_fft_window_beta);
 
     current_sep = make_inter_variable_separator(fft_box);
     str = mus_format("%d", rts_max_transform_peaks = max_transform_peaks(ss));
@@ -4371,24 +4197,24 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(mmr_box);
 
-    str1 = mus_format("%d", mark_tag_width(ss));
-    str2 = mus_format("%d", mark_tag_height(ss));
+    str1 = mus_format("%d", rts_mark_tag_width = mark_tag_width(ss));
+    str2 = mus_format("%d", rts_mark_tag_height = mark_tag_height(ss));
     prf = prefs_row_with_two_texts("mark tag size", S_mark_tag_width, 
 				   "width:", str1, "height:", str2, 4,
 				   mmr_box,
 				   mark_tag_size_text);
-    remember_pref(prf, reflect_mark_tag_size, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_mark_tag_size, save_mark_tag_size, NULL, NULL, revert_mark_tag_size);
     FREE(str2);
     FREE(str1);
 
     current_sep = make_inter_variable_separator(mmr_box);
-    str1 = mus_format("%d", mix_tag_width(ss));
-    str2 = mus_format("%d", mix_tag_height(ss));
+    str1 = mus_format("%d", rts_mix_tag_width = mix_tag_width(ss));
+    str2 = mus_format("%d", rts_mix_tag_height = mix_tag_height(ss));
     prf = prefs_row_with_two_texts("mix tag size", S_mix_tag_width, 
 				   "width:", str1, "height:", str2, 4,
 				   mmr_box,
 				   mix_tag_size_text);
-    remember_pref(prf, reflect_mix_tag_size, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_mix_tag_size, save_mix_tag_size, NULL, NULL, revert_mix_tag_size);
     FREE(str2);
     FREE(str1);
 

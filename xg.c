@@ -9896,12 +9896,6 @@ static XEN gxg_GTK_OBJECT_FLAGS(XEN obj)
   XEN_ASSERT_TYPE(XEN_GtkObject__P(obj), obj, 1, "GTK_OBJECT_FLAGS", "GtkObject*");
   return(C_TO_XEN_int(GTK_OBJECT_FLAGS(XEN_TO_C_GtkObject_(obj))));
 }
-static XEN gxg_GTK_OBJECT_FLOATING(XEN obj)
-{
-  #define H_GTK_OBJECT_FLOATING "gboolean GTK_OBJECT_FLOATING(GtkObject* obj)"
-  XEN_ASSERT_TYPE(XEN_GtkObject__P(obj), obj, 1, "GTK_OBJECT_FLOATING", "GtkObject*");
-  return(C_TO_XEN_gboolean(GTK_OBJECT_FLOATING(XEN_TO_C_GtkObject_(obj))));
-}
 static XEN gxg_GTK_OBJECT_SET_FLAGS(XEN obj, XEN flag)
 {
   #define H_GTK_OBJECT_SET_FLAGS "void GTK_OBJECT_SET_FLAGS(GtkObject* obj, int flag)"
@@ -30382,7 +30376,6 @@ XEN_NARGIFY_5(gxg_gtk_notebook_set_tab_label_packing_w, gxg_gtk_notebook_set_tab
 XEN_NARGIFY_3(gxg_gtk_notebook_reorder_child_w, gxg_gtk_notebook_reorder_child)
 XEN_NARGIFY_1(gxg_GTK_OBJECT_TYPE_NAME_w, gxg_GTK_OBJECT_TYPE_NAME)
 XEN_NARGIFY_1(gxg_GTK_OBJECT_FLAGS_w, gxg_GTK_OBJECT_FLAGS)
-XEN_NARGIFY_1(gxg_GTK_OBJECT_FLOATING_w, gxg_GTK_OBJECT_FLOATING)
 XEN_NARGIFY_2(gxg_GTK_OBJECT_SET_FLAGS_w, gxg_GTK_OBJECT_SET_FLAGS)
 XEN_NARGIFY_2(gxg_GTK_OBJECT_UNSET_FLAGS_w, gxg_GTK_OBJECT_UNSET_FLAGS)
 XEN_NARGIFY_0(gxg_gtk_object_get_type_w, gxg_gtk_object_get_type)
@@ -34199,7 +34192,6 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_notebook_reorder_child_w gxg_gtk_notebook_reorder_child
 #define gxg_GTK_OBJECT_TYPE_NAME_w gxg_GTK_OBJECT_TYPE_NAME
 #define gxg_GTK_OBJECT_FLAGS_w gxg_GTK_OBJECT_FLAGS
-#define gxg_GTK_OBJECT_FLOATING_w gxg_GTK_OBJECT_FLOATING
 #define gxg_GTK_OBJECT_SET_FLAGS_w gxg_GTK_OBJECT_SET_FLAGS
 #define gxg_GTK_OBJECT_UNSET_FLAGS_w gxg_GTK_OBJECT_UNSET_FLAGS
 #define gxg_gtk_object_get_type_w gxg_gtk_object_get_type
@@ -38023,7 +38015,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_notebook_reorder_child, gxg_gtk_notebook_reorder_child_w, 3, 0, 0, H_gtk_notebook_reorder_child);
   XG_DEFINE_PROCEDURE(GTK_OBJECT_TYPE_NAME, gxg_GTK_OBJECT_TYPE_NAME_w, 1, 0, 0, H_GTK_OBJECT_TYPE_NAME);
   XG_DEFINE_PROCEDURE(GTK_OBJECT_FLAGS, gxg_GTK_OBJECT_FLAGS_w, 1, 0, 0, H_GTK_OBJECT_FLAGS);
-  XG_DEFINE_PROCEDURE(GTK_OBJECT_FLOATING, gxg_GTK_OBJECT_FLOATING_w, 1, 0, 0, H_GTK_OBJECT_FLOATING);
   XG_DEFINE_PROCEDURE(GTK_OBJECT_SET_FLAGS, gxg_GTK_OBJECT_SET_FLAGS_w, 2, 0, 0, H_GTK_OBJECT_SET_FLAGS);
   XG_DEFINE_PROCEDURE(GTK_OBJECT_UNSET_FLAGS, gxg_GTK_OBJECT_UNSET_FLAGS_w, 2, 0, 0, H_GTK_OBJECT_UNSET_FLAGS);
   XG_DEFINE_PROCEDURE(gtk_object_get_type, gxg_gtk_object_get_type_w, 0, 0, 0, H_gtk_object_get_type);
@@ -41637,9 +41628,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_NOTEBOOK_TAB_FIRST);
   DEFINE_INTEGER(GTK_NOTEBOOK_TAB_LAST);
   DEFINE_INTEGER(GTK_IN_DESTRUCTION);
-  DEFINE_INTEGER(GTK_FLOATING);
-  DEFINE_INTEGER(GTK_RESERVED_1);
-  DEFINE_INTEGER(GTK_RESERVED_2);
   DEFINE_INTEGER(GTK_PROGRESS_LEFT_TO_RIGHT);
   DEFINE_INTEGER(GTK_PROGRESS_RIGHT_TO_LEFT);
   DEFINE_INTEGER(GTK_PROGRESS_BOTTOM_TO_TOP);
@@ -42546,7 +42534,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("12-May-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("15-May-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

@@ -1064,6 +1064,7 @@ If 'check' is #f, the hooks are removed."
 ;;; -------- global-sync (for prefs dialog)
 
 (define global-sync-choice 0) ; global var so that we can reflect the current setting in prefs dialog
+;; 0 = no sync, 1 = all synced, 2 = sync within sound
 
 (define (global-sync-func snd)
   (if (= global-sync-choice 1)

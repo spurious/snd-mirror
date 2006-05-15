@@ -1278,6 +1278,7 @@ bool xen_rb_arity_ok(int rargs, int args);
 #define XEN_EVAL_FORM(Form)             XEN_EVAL_C_STRING(XEN_TO_C_STRING(Form))
 #define C_STRING_TO_XEN_FORM(str)       XEN_EVAL_C_STRING(str)
 #define XEN_LOAD_FILE(a)                fth_load_file(a)
+#define XEN_LOAD_FILE_WITH_PATH(a)      fth_load_file(a)
 
 /* === Vector (Array) === */
 #define XEN_MAKE_VECTOR(Num, Fill)      fth_make_array_with_init(Num, Fill)

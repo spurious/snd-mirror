@@ -55720,7 +55720,7 @@ EDITS: 1
 		(g_source_remove _guint))
 	      (let ((_GtkTargetList_ (gtk_target_list_new #f 0)))
 		(gtk_target_list_add _GtkTargetList_ GDK_TARGET_STRING 0 0)
-		(gtk_target_list_ref _GtkTargetList_)
+;		(gtk_target_list_ref _GtkTargetList_)
 		(gtk_target_list_unref _GtkTargetList_)
 		(gtk_target_list_remove _GtkTargetList_ GDK_TARGET_STRING)
 		(gtk_drag_dest_set (cadr (main-widgets)) GTK_DEST_DEFAULT_ALL 
@@ -56420,7 +56420,8 @@ EDITS: 1
 	      gtk_table_get_default_row_spacing gtk_table_get_homogeneous gtk_table_get_row_spacing gtk_table_get_type gtk_table_new
 	      gtk_table_resize gtk_table_set_col_spacing gtk_table_set_col_spacings gtk_table_set_homogeneous gtk_table_set_row_spacing
 	      gtk_table_set_row_spacings gtk_target_list_add gtk_target_list_add_image_targets gtk_target_list_add_table gtk_target_list_add_text_targets
-	      gtk_target_list_add_uri_targets gtk_target_list_find gtk_target_list_ref gtk_target_list_remove ;gtk_target_list_new
+	      gtk_target_list_add_uri_targets gtk_target_list_find ;gtk_target_list_ref 
+	      gtk_target_list_remove ;gtk_target_list_new
 	      gtk_target_list_unref gtk_tearoff_menu_item_get_type gtk_tearoff_menu_item_new gtk_text_attributes_copy gtk_text_attributes_copy_values
 	      gtk_text_attributes_new gtk_text_attributes_unref gtk_text_buffer_add_selection_clipboard gtk_text_buffer_apply_tag
 	      gtk_text_buffer_apply_tag_by_name gtk_text_buffer_backspace gtk_text_buffer_begin_user_action 

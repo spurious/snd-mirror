@@ -2219,11 +2219,11 @@
 ;(CCAST2 "GTK_OBJECT_TYPE(object)")
 (CFNC "char* GTK_OBJECT_TYPE_NAME GtkObject* object")
 (CINT "GTK_IN_DESTRUCTION")
-(CINT "GTK_FLOATING")
-(CINT "GTK_RESERVED_1")
-(CINT "GTK_RESERVED_2")
+;(CINT "GTK_FLOATING") ; out 2.9.0
+;(CINT "GTK_RESERVED_1")
+;(CINT "GTK_RESERVED_2")
 (CFNC "int GTK_OBJECT_FLAGS GtkObject* obj")
-(CFNC "gboolean GTK_OBJECT_FLOATING GtkObject* obj")
+;(CFNC "gboolean GTK_OBJECT_FLOATING GtkObject* obj") ; out 2.9.0
 (CFNC "void GTK_OBJECT_SET_FLAGS GtkObject* obj int flag")
 (CFNC "void GTK_OBJECT_UNSET_FLAGS GtkObject* obj int flag")
 (CFNC "GtkType gtk_object_get_type void")
