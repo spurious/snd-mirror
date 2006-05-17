@@ -47,11 +47,12 @@ static char *include_load_path = NULL;
 typedef struct prefs_info {
   Widget label, text, arrow_up, arrow_down, arrow_right, error, toggle, scale, toggle2, toggle3;
   Widget color, rscl, gscl, bscl, rtxt, gtxt, btxt, list_menu, radio_button;
+  Widget *radio_buttons;
   bool got_error;
   XtIntervalId help_id, power_id;
   const char *var_name;
   const char **values;
-  int num_values;
+  int num_values, num_buttons;
   Float scale_max;
   void (*toggle_func)(struct prefs_info *prf);
   void (*toggle2_func)(struct prefs_info *prf);
@@ -76,6 +77,12 @@ static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m,
 static void clear_prefs_dialog_error(void);
 static void scale_set_color(prefs_info *prf, color_t pixel);
 static color_t rgb_to_color(Float r, Float g, Float b);
+static void post_prefs_error(const char *msg, void *data);
+#ifdef __GNUC__
+  static void va_post_prefs_error(const char *msg, void *data, ...) __attribute__ ((format (printf, 1, 0)));
+#else
+  static void va_post_prefs_error(const char *msg, void *data, ...);
+#endif
 
 #define GET_TOGGLE(Toggle)        (XmToggleButtonGetState(Toggle) == XmSET)
 #define SET_TOGGLE(Toggle, Value) XmToggleButtonSetState(Toggle, Value, false)
@@ -87,6 +94,7 @@ static color_t rgb_to_color(Float r, Float g, Float b);
 #define TIMEOUT_TYPE              void
 #define TIMEOUT_RESULT            
 #define SET_SCALE(Value)          XmScaleSetValue(prf->scale, (int)(100 * Value))
+#define SET_SENSITIVE(Wid, Val)   XtSetSensitive(Wid, Val)
 
 static int get_scale_1(Widget scale)
 {
@@ -97,56 +105,31 @@ static int get_scale_1(Widget scale)
 
 #define GET_SCALE()               (get_scale_1(prf->scale) * 0.01)
 
-#include "snd-prefs.c"
-
-
-/* ---------------- utilities ---------------- */
-
-#include <X11/IntrinsicP.h>
-
-static Widget find_radio_button(Widget parent, const char *name, int *which)
+static void set_radio_button(prefs_info *prf, int which)
 {
-  unsigned int i;
-  CompositeWidget cw = (CompositeWidget)parent;
-  for (i = 0; i < cw->composite.num_children; i++)
+  if ((which >= 0) && (which < prf->num_buttons))
     {
-      Widget child;
-      child = cw->composite.children[i];
-      if ((child) &&
-	  (strcmp(XtName(child), name) == 0))
-	{
-	  (*which) = i;
-	  return(child);
-	}
-    }
-  return(NULL);
-}
-
-static void handle_radio_button(prefs_info *prf, const char *value)
-{
-  Widget w;
-  int which = -1;
-  w = find_radio_button(prf->toggle, value, &which);
-  if (w)
-    {
-      XmToggleButtonSetState(w, true, false);
+      XmToggleButtonSetState(prf->radio_buttons[which], true, false);
       if ((prf->radio_button) &&
 	  (XmIsToggleButton(prf->radio_button)) &&
-	  (w != prf->radio_button))
+	  (prf->radio_buttons[which] != prf->radio_button))
 	{
 	  /* motif docs are incorrect -- the set above does not unset the currently set radio button */
 	  XmToggleButtonSetState(prf->radio_button, false, false);
-	  prf->radio_button = w;
+	  prf->radio_button = prf->radio_buttons[which];
 	}
     }
 }
 
 static int which_radio_button(prefs_info *prf)
 {
-  int which = -1;
-  find_radio_button(prf->toggle, XtName(prf->radio_button), &which);
+  int which = 0;
+  XtVaGetValues(prf->radio_button, XmNuserData, &which, NULL);
   return(which);
 }
+
+#include "snd-prefs.c"
+
 
 
 /* ---------------- help strings ---------------- */
@@ -809,6 +792,9 @@ static Widget make_row_radio_box(prefs_info *prf,
   int i, n;
   Widget w;
 
+  prf->radio_buttons = (Widget *)CALLOC(num_labels, sizeof(Widget));
+  prf->num_buttons = num_labels;
+
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -838,7 +824,9 @@ static Widget make_row_radio_box(prefs_info *prf,
       XtSetArg(args[n], XmNindicatorOn, XmINDICATOR_FILL); n++;
       XtSetArg(args[n], XmNindicatorSize, 14); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->green); n++;
+      XtSetArg(args[n], XmNuserData, i); n++;
       button = XtCreateManagedWidget(labels[i], xmToggleButtonWidgetClass, w, args, n);
+      prf->radio_buttons[i] = button;
 
       XtAddCallback(button, XmNvalueChangedCallback, call_radio_func, (XtPointer)prf);
       XtAddCallback(button, XmNvalueChangedCallback, prefs_change_callback, NULL);
@@ -1668,10 +1656,6 @@ static void post_prefs_error(const char *msg, void *data)
   XtAddCallback(prf->text, XmNvalueChangedCallback, clear_prefs_error, (XtPointer)prf);
 }
 
-#ifdef __GNUC__
-static void va_post_prefs_error(const char *msg, void *data, ...) __attribute__ ((format (printf, 1, 0)));
-#endif
-
 static void va_post_prefs_error(const char *msg, void *data, ...)
 {
   char *buf;
@@ -1684,117 +1668,6 @@ static void va_post_prefs_error(const char *msg, void *data, ...)
 }
 
 /* -------------------------------------------------------------------------------- */
-
-/* ---------------- start up size ---------------- */
-
-static void startup_width_erase_func(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  int_to_textfield(prf->text, ss->init_window_width);
-}
-
-static void startup_height_erase_func(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  int_to_textfield(prf->rtxt, ss->init_window_height);
-}
-
-static void startup_width_error(const char *msg, void *data)
-{
-  prefs_info *prf = (prefs_info *)data;
-  XmTextFieldSetString(prf->text, "must be > 0");
-  TIMEOUT(startup_width_erase_func);
-}
-
-static void startup_height_error(const char *msg, void *data)
-{
-  prefs_info *prf = (prefs_info *)data;
-  XmTextFieldSetString(prf->rtxt, "must be > 0");
-  TIMEOUT(startup_height_erase_func);
-}
-
-static void startup_size_text(prefs_info *prf)
-{
-  char *str;
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      int width = 0;
-      redirect_errors_to(startup_width_error, (void *)prf);
-      width = string_to_int(str, 1, "startup width");
-      redirect_errors_to(NULL, NULL);
-      if (width > 0) ss->init_window_width = width;
-      XtFree(str);
-      str = XmTextFieldGetString(prf->rtxt);
-      if ((str) && (*str))
-	{
-	  int height;
-	  redirect_errors_to(startup_height_error, (void *)prf);
-	  height = string_to_int(str, 1, "startup height");
-	  redirect_errors_to(NULL, NULL);
-	  if (height > 0) ss->init_window_height = height;
-	  XtFree(str);
-	}
-    }
-}
-
-/* ---------------- check-for-unsaved-edits ---------------- */
-
-static void reflect_unsaved_edits(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, unsaved_edits(), false);
-}
-
-static void unsaved_edits_toggle(prefs_info *prf)
-{
-  set_unsaved_edits(XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void save_unsaved_edits(prefs_info *prf, FILE *fd)
-{
-  rts_unsaved_edits = unsaved_edits();
-  if (rts_unsaved_edits) save_unsaved_edits_1(prf, fd);
-}
-
-
-/* ---------------- current-window-display ---------------- */
-
-static bool include_current_window_display = false;
-
-static void save_current_window_display(prefs_info *prf, FILE *fd)
-{
-  if (include_current_window_display) save_current_window_display_1(prf, fd);
-}
-
-static void current_window_display_toggle(prefs_info *prf)
-{
-  include_current_window_display = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void reflect_current_window_display(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, find_current_window_display(), false);
-}
-
-/* ---------------- focus-follows-mouse ---------------- */
-
-static bool focus_follows_mouse = false;
-
-static void reflect_focus_follows_mouse(prefs_info *prf) 
-{
-  focus_follows_mouse = focus_is_following_mouse();
-  XmToggleButtonSetState(prf->toggle, focus_follows_mouse, false);
-}
-
-static void focus_follows_mouse_toggle(prefs_info *prf)
-{
-  focus_follows_mouse = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void save_focus_follows_mouse(prefs_info *prf, FILE *fd) 
-{
-  if (focus_follows_mouse) save_focus_follows_mouse_1(prf, fd);
-}
 
 /* ---------------- remember sound state ---------------- */
 
@@ -1872,141 +1745,6 @@ static void save_peak_envs(prefs_info *prf, FILE *fd)
 {
   if (include_peak_envs) save_peak_envs_1(prf, fd, include_peak_env_directory);
 }
-
-
-/* ---------------- with-tracking-cursor ---------------- */
-
-static void reflect_with_tracking_cursor(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, with_tracking_cursor(ss), false);
-  int_to_textfield(prf->rtxt, cursor_location_offset(ss));
-  float_to_textfield(prf->text, cursor_update_interval(ss));
-}
-
-static void with_tracking_cursor_toggle(prefs_info *prf)
-{
-  in_set_with_tracking_cursor(ss, (XmToggleButtonGetState(prf->toggle) == XmSET) ? ALWAYS_TRACK : DONT_TRACK);
-}
-
-static void cursor_location_text(prefs_info *prf)
-{
-  char *str;
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      float interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
-      sscanf(str, "%f", &interval);
-      if (interval >= 0.0)
-	set_cursor_update_interval(interval);
-      XtFree(str);
-      str = XmTextFieldGetString(prf->rtxt);
-      if ((str) && (*str))
-	{
-	  int loc = DEFAULT_CURSOR_LOCATION_OFFSET;
-	  sscanf(str, "%d", &loc);
-	  set_cursor_location_offset(loc);
-	  XtFree(str);
-	}
-    }
-}
-
-/* ---------------- cursor-size ---------------- */
-
-#define MIN_CURSOR_SIZE 1
-#define MAX_CURSOR_SIZE 500
-
-static void show_cursor_size(prefs_info *prf)
-{
-  int_to_textfield(prf->text, cursor_size(ss));
-}
-
-static void reflect_cursor_size(prefs_info *prf)
-{
-  show_cursor_size(prf);
-  XtSetSensitive(prf->arrow_up, cursor_size(ss) < MAX_CURSOR_SIZE);
-  XtSetSensitive(prf->arrow_down, cursor_size(ss) > MIN_CURSOR_SIZE);
-}
-
-static void cursor_size_up(prefs_info *prf)
-{
-  int size;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  size = cursor_size(ss) + 1;
-  if (size >= MAX_CURSOR_SIZE) XtSetSensitive(prf->arrow_up, false);
-  if (size > MIN_CURSOR_SIZE) XtSetSensitive(prf->arrow_down, true);
-  in_set_cursor_size(size);
-  show_cursor_size(prf);
-}
-
-static void cursor_size_down(prefs_info *prf)
-{
-  int size;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  size = cursor_size(ss) - 1;
-  if (size <= MIN_CURSOR_SIZE) XtSetSensitive(prf->arrow_down, false);
-  if (size < MAX_CURSOR_SIZE) XtSetSensitive(prf->arrow_up, true);
-  in_set_cursor_size(size);
-  show_cursor_size(prf);
-}
-
-static void cursor_size_from_text(prefs_info *prf)
-{
-  int size;
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      prf->got_error = false;
-      redirect_errors_to(post_prefs_error, (void *)prf);
-      size = string_to_int(str, 0, "cursor size"); 
-      redirect_errors_to(NULL, NULL);
-      XtFree(str);
-      if (!(prf->got_error))
-	{
-	  if (size >= MIN_CURSOR_SIZE)
-	    {
-	      if (size <= MAX_CURSOR_SIZE)
-		in_set_cursor_size(size);
-	      else va_post_prefs_error("%s > %d?", (void *)prf, str, MAX_CURSOR_SIZE);
-	    }
-	  else va_post_prefs_error("%s < %d?", (void *)prf, str, MIN_CURSOR_SIZE);
-	}
-      else prf->got_error = false;
-    }
-  else post_prefs_error("no size?", (XtPointer)prf);
-}
-
-/* ---------------- cursor-style ---------------- */
-
-#define NUM_CURSOR_STYLES 2
-static const char *cursor_styles[NUM_CURSOR_STYLES] = {"cross", "line"};
-static cursor_style_t cursor_styles_i[NUM_CURSOR_STYLES] = {CURSOR_CROSS, CURSOR_LINE};
-
-static void reflect_cursor_style(prefs_info *prf)
-{
-  handle_radio_button(prf, cursor_styles[cursor_style(ss)]);
-}
-
-static void cursor_style_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    in_set_cursor_style(cursor_styles_i[which_radio_button(prf)]);
-}
-
-/* ---------------- tracking-cursor-style ---------------- */
-
-static void reflect_tracking_cursor_style(prefs_info *prf)
-{
-  handle_radio_button(prf, cursor_styles[tracking_cursor_style(ss)]);
-}
-
-static void tracking_cursor_style_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    in_set_tracking_cursor_style(cursor_styles_i[which_radio_button(prf)]);
-}
-
 
 
 /* ---------------- keys ---------------- */
@@ -2113,326 +1851,6 @@ static void load_path_text(prefs_info *prf)
 #endif
     }
   if (str) XtFree(str);
-}
-
-
-/* ---------------- temp-dir ---------------- */
-
-static void reflect_temp_dir(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, temp_dir(ss));
-}
-
-static void temp_dir_error_erase_func(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  XmTextFieldSetString(prf->text, temp_dir(ss));
-}
-
-static void temp_dir_text(prefs_info *prf)
-{
-  char *str, *dir = NULL;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((!str) || (!(*str))) 
-    dir = DEFAULT_TEMP_DIR;
-  else dir = str;
-  if (local_access(dir))
-    {
-      if (temp_dir(ss)) FREE(temp_dir(ss));
-      set_temp_dir(copy_string(dir));
-    }
-  else
-    {
-      XmTextFieldSetString(prf->text, "can't access that directory");
-      TIMEOUT(temp_dir_error_erase_func);
-    }
-  if (str) XtFree(str);
-}
-
-/* ---------------- save-dir ---------------- */
-
-static void save_dir_error_erase_func(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  XmTextFieldSetString(prf->text, save_dir(ss));
-}
-
-static void reflect_save_dir(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, save_dir(ss));
-}
-
-static void save_dir_text(prefs_info *prf)
-{
-  char *str, *dir = NULL;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((!str) || (!(*str))) 
-    dir = DEFAULT_SAVE_DIR;
-  else dir = str;
-  if (local_access(dir))
-    {
-      if (save_dir(ss)) FREE(save_dir(ss));
-      set_save_dir(copy_string(dir));
-    }
-  else
-    {
-      XmTextFieldSetString(prf->text, "can't access that directory");
-      TIMEOUT(save_dir_error_erase_func);
-    }
-  if (str) XtFree(str);
-}
-
-/* ---------------- default-output-chans etc ---------------- */
-
-#define NUM_OUTPUT_CHAN_CHOICES 4
-static const char *output_chan_choices[NUM_OUTPUT_CHAN_CHOICES] = {"1", "2", "4", "8"};
-static int output_chan_choices_i[NUM_OUTPUT_CHAN_CHOICES] = {1, 2, 4, 8};
-
-#define NUM_OUTPUT_SRATE_CHOICES 4
-static const char *output_srate_choices[NUM_OUTPUT_SRATE_CHOICES] = {"8000", "22050", "44100", "48000"};
-static int output_srate_choices_i[NUM_OUTPUT_SRATE_CHOICES] = {8000, 22050, 44100, 48000};
-
-static void reflect_output_chans(prefs_info *prf)
-{
-  char *str;
-  str = (char *)CALLOC(6, sizeof(char));
-  mus_snprintf(str, 6, "%d", default_output_chans(ss));
-  handle_radio_button(prf, str);
-  FREE(str);
-}
-
-static void reflect_output_srate(prefs_info *prf)
-{
-  char *str;
-  str = (char *)CALLOC(8, sizeof(char));
-  mus_snprintf(str, 8, "%d", default_output_srate(ss));
-  handle_radio_button(prf, str);
-  FREE(str);
-}
-
-static void output_chans_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    set_default_output_chans(output_chan_choices_i[which_radio_button(prf)]);
-}
-
-static void output_srate_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    set_default_output_srate(output_srate_choices_i[which_radio_button(prf)]);
-}
-
-#define NUM_OUTPUT_TYPE_CHOICES 5
-static const char *output_type_choices[NUM_OUTPUT_TYPE_CHOICES] = {"aifc", "wave", "next/sun", "nist", "aiff"};
-static int output_type_choices_i[NUM_OUTPUT_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_NIST, MUS_AIFF};
-
-#define NUM_OUTPUT_FORMAT_CHOICES 4
-static const char *output_format_choices[NUM_OUTPUT_FORMAT_CHOICES] = {"short", "int", "float", "double"};
-static int output_format_choices_i[NUM_OUTPUT_FORMAT_CHOICES] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
-
-static char *header_type_to_string(int type)
-{
-  switch (type)
-    {
-    case MUS_AIFC: return("aifc");     break;
-    case MUS_AIFF: return("aiff");     break;
-    case MUS_RIFF: return("wave");     break;
-    case MUS_NEXT: return("next/sun"); break;
-    case MUS_NIST: return("nist");     break;
-    }
-  return("aifc");
-}
-
-static char *data_format_to_string(int frm)
-{
-  switch (frm)
-    {
-    case MUS_LINT: case MUS_BINT:       return("int");    break;
-    case MUS_LSHORT: case MUS_BSHORT:   return("short");  break;
-    case MUS_LFLOAT: case MUS_BFLOAT:   return("float");  break;
-    case MUS_LDOUBLE: case MUS_BDOUBLE: return("double"); break;
-    }
-  return("short");
-}
-
-static void reflect_output_type(prefs_info *prf)
-{
-  handle_radio_button(prf, header_type_to_string(default_output_header_type(ss)));
-}
-
-static void reflect_output_format(prefs_info *prf)
-{
-  handle_radio_button(prf, data_format_to_string(default_output_data_format(ss)));
-}
-
-static prefs_info *output_data_format_prf = NULL, *output_header_type_prf = NULL;
-
-static void output_type_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    {
-      set_default_output_header_type(output_type_choices_i[which_radio_button(prf)]);
-      set_default_output_data_format(header_to_data(default_output_header_type(ss), default_output_data_format(ss)));
-      reflect_output_format(output_data_format_prf);
-    }
-}
-
-static void output_format_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    {
-      set_default_output_data_format(output_format_choices_i[which_radio_button(prf)]);
-
-      switch (default_output_data_format(ss))
-	{
-	case MUS_LSHORT:
-	  switch (default_output_header_type(ss))
-	    {
-	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
-	      set_default_output_data_format(MUS_BSHORT); 
-	      break;
-	    }
-	  break;
-	  
-	case MUS_LINT:
-	  switch (default_output_header_type(ss))
-	    {
-	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
-	      set_default_output_data_format(MUS_BINT); 
-	      break;
-	    }
-	  break;
-	case MUS_LFLOAT:
-	  switch (default_output_header_type(ss))
-	    {
-	    case MUS_AIFC: case MUS_NEXT: 
-	      set_default_output_data_format(MUS_BFLOAT); 
-	      break;
-	    case MUS_AIFF:
-	      set_default_output_header_type(MUS_AIFC);
-	      set_default_output_data_format(MUS_BFLOAT); 
-	      break;
-	    case MUS_NIST: 
-	      set_default_output_header_type(MUS_RIFF); 
-	      break;
-	    }
-	  break;
-	case MUS_LDOUBLE:
-	  switch (default_output_header_type(ss))
-	    {
-	    case MUS_AIFC: case MUS_NEXT: 
-	      set_default_output_data_format(MUS_BDOUBLE); 
-	      break;
-	    case MUS_AIFF:
-	      set_default_output_header_type(MUS_AIFC);
-	      set_default_output_data_format(MUS_BDOUBLE); 
-	      break;
-	    case MUS_NIST: 
-	      set_default_output_header_type(MUS_RIFF); 
-	      break;
-	    }
-	  break;
-	}
-      reflect_output_type(output_header_type_prf);
-    }
-}
-
-/* ---------------- raw sound defaults ---------------- */
-
-static void reflect_raw_chans(prefs_info *prf)
-{
-  int srate = 0, chans = 0, format = 0;
-  mus_header_raw_defaults(&srate, &chans, &format);
-  int_to_textfield(prf->text, chans);
-}
-
-static void raw_chans_choice(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if (str)
-    {
-      int srate = 0, chans = 0, format = 0;
-      mus_header_raw_defaults(&srate, &chans, &format);
-      sscanf(str, "%d", &chans);
-      if (chans > 0)
-	mus_header_set_raw_defaults(srate, chans, format);
-      else reflect_raw_chans(prf);
-      XtFree(str);
-    }
-}
-
-static void reflect_raw_srate(prefs_info *prf)
-{
-  int srate = 0, chans = 0, format = 0;
-  mus_header_raw_defaults(&srate, &chans, &format);
-  int_to_textfield(prf->text, srate);
-}
-
-static void raw_srate_choice(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if (str)
-    {
-      int srate = 0, chans = 0, format = 0;
-      mus_header_raw_defaults(&srate, &chans, &format);
-      sscanf(str, "%d", &srate);
-      if (srate > 0)
-	mus_header_set_raw_defaults(srate, chans, format);
-      else reflect_raw_srate(prf);
-      XtFree(str);
-    }
-}
-
-static void reflect_raw_data_format(prefs_info *prf)
-{
-  int srate = 0, chans = 0, format = 0;
-  char *str;
-  mus_header_raw_defaults(&srate, &chans, &format);
-  str = raw_data_format_to_string(format);
-  XmTextFieldSetString(prf->text, str);
-  FREE(str);
-}
-
-static char **raw_data_format_choices = NULL;
-
-static void raw_data_format_from_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if (str)
-    {
-      int i, srate = 0, chans = 0, format = 0;
-      mus_header_raw_defaults(&srate, &chans, &format);
-      for (i = 0; i < MUS_NUM_DATA_FORMATS - 1; i++)
-	if (STRCMP(raw_data_format_choices[i], str) == 0)
-	  {
-	    mus_header_set_raw_defaults(srate, chans, i + 1); /* skipping MUS_UNKNOWN = 0 */
-	    XtFree(str);
-	    return;
-	  }
-      XtFree(str);
-    }
-  reflect_raw_data_format(prf);
-}
-
-static void raw_data_format_from_menu(prefs_info *prf, char *value)
-{
-  int i, srate = 0, chans = 0, format = 0;
-  mus_header_raw_defaults(&srate, &chans, &format);
-  for (i = 0; i < MUS_NUM_DATA_FORMATS - 1; i++)
-    if (STRCMP(raw_data_format_choices[i], value) == 0)
-      {
-	mus_header_set_raw_defaults(srate, chans, i + 1);
-	XmTextFieldSetString(prf->text, raw_data_format_choices[i]);
-	return;
-      }
 }
 
 
@@ -2576,87 +1994,6 @@ static void reflect_reopen_menu(prefs_info *prf)
 }
 
 
-/* ---------------- graph-style ---------------- */
-
-static const char *graph_styles[NUM_GRAPH_STYLES] = {"line", "dot", "filled", "dot+line", "lollipop"};
-static graph_style_t graph_styles_i[NUM_GRAPH_STYLES] = {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS};
-
-static void reflect_graph_style(prefs_info *prf)
-{
-  handle_radio_button(prf, graph_styles[graph_style(ss)]);
-}
-
-static void graph_style_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    in_set_graph_style(graph_styles_i[which_radio_button(prf)]);
-}
-
-/* ---------------- dot-size ---------------- */
-
-static void show_dot_size(prefs_info *prf)
-{
-  int_to_textfield(prf->text, dot_size(ss));
-}
-
-static void reflect_dot_size(prefs_info *prf)
-{
-  show_dot_size(prf);
-  XtSetSensitive(prf->arrow_up, dot_size(ss) < MAX_DOT_SIZE);
-  XtSetSensitive(prf->arrow_down, dot_size(ss) > MIN_DOT_SIZE);
-}
-
-static void dot_size_up(prefs_info *prf)
-{
-  int size;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  size = dot_size(ss) + 1;
-  if (size >= MAX_DOT_SIZE) XtSetSensitive(prf->arrow_up, false);
-  if (size > MIN_DOT_SIZE) XtSetSensitive(prf->arrow_down, true);
-  in_set_dot_size(size);
-  show_dot_size(prf);
-}
-
-static void dot_size_down(prefs_info *prf)
-{
-  int size;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  size = dot_size(ss) - 1;
-  if (size <= MIN_DOT_SIZE) XtSetSensitive(prf->arrow_down, false);
-  if (size < MAX_DOT_SIZE) XtSetSensitive(prf->arrow_up, true);
-  in_set_dot_size(size);
-  show_dot_size(prf);
-}
-
-static void dot_size_from_text(prefs_info *prf)
-{
-  int size;
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      prf->got_error = false;
-      redirect_errors_to(post_prefs_error, (void *)prf);
-      size = string_to_int(str, 0, "dot size"); 
-      redirect_errors_to(NULL, NULL);
-      XtFree(str);
-      if (!(prf->got_error))
-	{
-	  if (size >= MIN_DOT_SIZE)
-	    {
-	      if (size <= MAX_DOT_SIZE)
-		in_set_dot_size(size);
-	      else va_post_prefs_error("%s > %d?", (void *)prf, str, MAX_DOT_SIZE);
-	    }
-	  else va_post_prefs_error("%s < %d?", (void *)prf, str, MIN_DOT_SIZE);
-	}
-      else prf->got_error = false;
-    }
-  else post_prefs_error("no size?", (XtPointer)prf);
-}
-
-
 /* ---------------- initial bounds ---------------- */
 
 static void reflect_initial_bounds(prefs_info *prf)
@@ -2717,58 +2054,6 @@ static void initial_bounds_text(prefs_info *prf)
   XtFree(str);
 }
 
-
-/* ---------------- channel-style ---------------- */
-
-static const char *channel_styles[NUM_CHANNEL_STYLES] = {"separate", "combined", "superimposed"};
-static channel_style_t channel_styles_i[NUM_CHANNEL_STYLES] = {CHANNELS_SEPARATE, CHANNELS_COMBINED, CHANNELS_SUPERIMPOSED};
-
-static void reflect_channel_style(prefs_info *prf)
-{
-  handle_radio_button(prf, channel_styles[(int)channel_style(ss)]);
-}
-
-static void channel_style_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    in_set_channel_style(channel_styles_i[which_radio_button(prf)]);
-}
-
-/* ---------------- grid-density ---------------- */
-
-static void reflect_grid_density(prefs_info *prf)
-{
-  XmScaleSetValue(prf->scale, (int)(100 * grid_density(ss) / prf->scale_max));
-  float_to_textfield(prf->text, grid_density(ss));
-}
-
-static void grid_density_scale_callback(prefs_info *prf)
-{
-  int val = 0;
-  ASSERT_WIDGET_TYPE(XmIsScale(prf->scale), prf->scale);
-  XmScaleGetValue(prf->scale, &val);
-  in_set_grid_density(val * prf->scale_max / 100.0);
-}
-
-static void grid_density_text_callback(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      float value = 0.0;
-      sscanf(str, "%f", &value);
-      if ((value >= 0.0) &&
-	  (value <= prf->scale_max))
-	{
-	  in_set_grid_density(value);
-	  XmScaleSetValue(prf->scale, (int)(100 * value / prf->scale_max));
-	}
-      else XmTextFieldSetString(prf->text, "must be >= 0.0");
-      XtFree(str);
-    }
-}
 
 /* ---------------- show-axes ---------------- */
 
@@ -2891,93 +2176,6 @@ static void save_smpte(prefs_info *prf, FILE *fd)
   if (include_smpte) save_smpte_1(prf, fd);
 }
 
-
-
-/* ---------------- fft-size ---------------- */
-
-#define MAX_TRANSFORM_SIZE 1073741824
-#define MIN_TRANSFORM_SIZE 2
-
-static void fft_size_to_text(prefs_info *prf)
-{
-  char *new_size;
-  new_size = mus_format(OFF_TD, transform_size(ss));
-  XmTextFieldSetString(prf->text, new_size);
-  FREE(new_size);
-}
-
-static void reflect_fft_size(prefs_info *prf)
-{
-  fft_size_to_text(prf);
-  XtSetSensitive(prf->arrow_up, transform_size(ss) < MAX_TRANSFORM_SIZE);
-  XtSetSensitive(prf->arrow_down, transform_size(ss) > MIN_TRANSFORM_SIZE);
-}
-
-static void fft_size_up(prefs_info *prf)
-{
-  off_t size;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  size = transform_size(ss) * 2;
-  if (size >= MAX_TRANSFORM_SIZE) XtSetSensitive(prf->arrow_up, false);
-  if (size > MIN_TRANSFORM_SIZE) XtSetSensitive(prf->arrow_down, true);
-  in_set_transform_size(size);
-  fft_size_to_text(prf);
-}
-
-static void fft_size_down(prefs_info *prf)
-{
-  off_t size;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  size = transform_size(ss) / 2;
-  if (size <= MIN_TRANSFORM_SIZE) XtSetSensitive(prf->arrow_down, false);
-  if (size < MAX_TRANSFORM_SIZE) XtSetSensitive(prf->arrow_up, true);
-  in_set_transform_size(size);
-  fft_size_to_text(prf);
-}
-
-static void fft_size_from_text(prefs_info *prf)
-{
-  off_t size;
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      prf->got_error = false;
-      redirect_errors_to(post_prefs_error, (void *)prf);
-      size = string_to_off_t(str, MIN_TRANSFORM_SIZE, "size"); 
-      redirect_errors_to(NULL, NULL);
-      XtFree(str);
-      if (!(prf->got_error))
-	{
-	  if (POWER_OF_2_P(size))
-	    {
-	      if (size <= MAX_TRANSFORM_SIZE)
-		in_set_transform_size(size);
-	      else va_post_prefs_error("%s > %d?", (void *)prf, str, MAX_TRANSFORM_SIZE);
-	    }
-	  else post_prefs_error("size must be a power of 2", (XtPointer)prf);
-	}
-      else prf->got_error = false;
-    }
-}
-
-/* ---------------- transform-graph-type ---------------- */
-
-#define NUM_TRANSFORM_GRAPH_TYPES 3
-static const char *transform_graph_types[NUM_TRANSFORM_GRAPH_TYPES] = {"normal", "sonogram", "spectrogram"};
-static graph_type_t transform_graph_types_i[NUM_TRANSFORM_GRAPH_TYPES] = {GRAPH_ONCE, GRAPH_AS_SONOGRAM, GRAPH_AS_SPECTROGRAM};
-
-static void reflect_transform_graph_type(prefs_info *prf)
-{
-  handle_radio_button(prf, transform_graph_types[transform_graph_type(ss)]);
-}
-
-static void transform_graph_type_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    in_set_transform_graph_type(transform_graph_types_i[which_radio_button(prf)]);
-}
 
 
 /* ---------------- transform-type ---------------- */
@@ -3190,23 +2388,6 @@ static void colormap_from_menu(prefs_info *prf, char *value)
 }
 
 
-/* ---------------- transform-normalization ---------------- */
-
-static const char *transform_normalizations[NUM_TRANSFORM_NORMALIZATIONS] = {"none", "by channel", "by sound", "global"};
-static fft_normalize_t transform_normalizations_i[NUM_TRANSFORM_NORMALIZATIONS] = {DONT_NORMALIZE, NORMALIZE_BY_CHANNEL, NORMALIZE_BY_SOUND, NORMALIZE_GLOBALLY};
-
-static void reflect_transform_normalization(prefs_info *prf)
-{
-  handle_radio_button(prf, transform_normalizations[transform_normalization(ss)]);
-}
-
-static void transform_normalization_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    in_set_transform_normalization(transform_normalizations_i[which_radio_button(prf)]);
-}
-
-
 /* ---------------- mark-pane ---------------- */
 
 static bool include_mark_pane = false;
@@ -3284,67 +2465,6 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
 	fprintf(fd, "%d to *clm-table-size*\n", include_clm_table_size);
 #endif
     }
-}
-
-/* ---------------- speed control ---------------- */
-
-#define MIN_SPEED_CONTROL_SEMITONES 1
-
-static const char *speed_control_styles[NUM_SPEED_CONTROL_STYLES] = {"float", "ratio", "semitones:"};
-static speed_style_t speed_control_styles_i[NUM_SPEED_CONTROL_STYLES] = {SPEED_CONTROL_AS_FLOAT, SPEED_CONTROL_AS_RATIO, SPEED_CONTROL_AS_SEMITONE};
-
-static void show_speed_control_semitones(prefs_info *prf)
-{
-  int_to_textfield(prf->text, speed_control_tones(ss));
-  XtSetSensitive(prf->arrow_down, (speed_control_tones(ss) > MIN_SPEED_CONTROL_SEMITONES));
-}
-
-static void speed_control_up(prefs_info *prf)
-{
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  in_set_speed_control_tones(ss, speed_control_tones(ss) + 1);
-  show_speed_control_semitones(prf);
-}
-
-static void speed_control_down(prefs_info *prf)
-{
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  in_set_speed_control_tones(ss, speed_control_tones(ss) - 1);
-  show_speed_control_semitones(prf);
-}
-
-static void speed_control_text(prefs_info *prf)
-{
-  int tones;
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      prf->got_error = false;
-      redirect_errors_to(post_prefs_error, (void *)prf);
-      tones = string_to_int(str, MIN_SPEED_CONTROL_SEMITONES, "semitones");
-      redirect_errors_to(NULL, NULL);
-      XtFree(str);
-      if (!(prf->got_error))
-	{
-	  in_set_speed_control_tones(ss, tones);
-	  XtSetSensitive(prf->arrow_down, (speed_control_tones(ss) > MIN_SPEED_CONTROL_SEMITONES));
-	}
-      else prf->got_error = false;
-    }
-}
-
-static void reflect_speed_control(prefs_info *prf)
-{
-  show_speed_control_semitones(prf);
-  handle_radio_button(prf, speed_control_styles[(int)speed_control_style(ss)]);
-}
-
-static void speed_control_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    in_set_speed_control_style(ss, speed_control_styles_i[which_radio_button(prf)]);
 }
 
 #if HAVE_SCHEME
@@ -3436,93 +2556,6 @@ static void clm_sizes_text(prefs_info *prf)
 }
 
 
-/* ---------------- show-listener ---------------- */
-
-static bool include_listener = false;
-
-static void reflect_show_listener(prefs_info *prf) 
-{
-  include_listener = listener_is_visible();
-  XmToggleButtonSetState(prf->toggle, include_listener, false);
-}
-
-static void show_listener_toggle(prefs_info *prf)
-{
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
-  include_listener = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void save_show_listener(prefs_info *prf, FILE *fd)
-{
-  if (include_listener) save_show_listener_1(prf, fd);
-}
-
-
-#if HAVE_GUILE
-/* ---------------- optimization ---------------- */
-
-#define MAX_OPTIMIZATION 6
-#define MIN_OPTIMIZATION 0
-
-static void show_opt(prefs_info *prf)
-{
-  int_to_textfield(prf->text, optimization(ss));
-}
-
-static void reflect_optimization(prefs_info *prf)
-{
-  int_to_textfield(prf->text, optimization(ss));
-  XtSetSensitive(prf->arrow_up, optimization(ss) < MAX_OPTIMIZATION);
-  XtSetSensitive(prf->arrow_down, optimization(ss) > MIN_OPTIMIZATION);
-}
-
-static void optimization_up(prefs_info *prf)
-{
-  int val;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  val = optimization(ss) + 1;
-  if (val >= MAX_OPTIMIZATION) XtSetSensitive(prf->arrow_up, false);
-  if (val > MIN_OPTIMIZATION) XtSetSensitive(prf->arrow_down, true);
-  set_optimization(val);
-  show_opt(prf);
-}
-
-static void optimization_down(prefs_info *prf)
-{
-  int val;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  val = optimization(ss) - 1;
-  if (val <= MIN_OPTIMIZATION) XtSetSensitive(prf->arrow_down, false);
-  if (val < MAX_OPTIMIZATION) XtSetSensitive(prf->arrow_up, true);
-  set_optimization(val);
-  show_opt(prf);
-}
-
-static void optimization_from_text(prefs_info *prf)
-{
-  int opt;
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      prf->got_error = false;
-      redirect_errors_to(post_prefs_error, (void *)prf);
-      opt = string_to_int(str, MIN_OPTIMIZATION, "optimization"); 
-      redirect_errors_to(NULL, NULL);
-      XtFree(str);
-      if (!(prf->got_error))
-	{
-	  if (opt <= MAX_OPTIMIZATION)
-	    set_optimization(opt);		 
-	  else va_post_prefs_error("%s > %d?", (void *)prf, str, MAX_OPTIMIZATION);
-	}
-      else prf->got_error = false;
-    }
-}
-#endif
-
-
 #if HAVE_GUILE
 /* ---------------- debugging aids ---------------- */
 
@@ -3553,135 +2586,6 @@ static void save_debugging_aids(prefs_info *prf, FILE *fd)
     }
 }
 #endif
-
-/* ---------------- recorder-out-chans etc ---------------- */
-
-#define NUM_RECORDER_OUT_CHANS_CHOICES 4
-static const char *recorder_out_chans_choices[NUM_RECORDER_OUT_CHANS_CHOICES] = {"1", "2", "4", "8"};
-static int recorder_out_chans_choices_i[NUM_RECORDER_OUT_CHANS_CHOICES] = {1, 2, 4, 8};
-
-#define NUM_RECORDER_SRATE_CHOICES 5
-static const char *recorder_srate_choices[NUM_RECORDER_SRATE_CHOICES] = {"8000", "22050", "44100", "48000", "96000"};
-static int recorder_srate_choices_i[NUM_RECORDER_SRATE_CHOICES] = {8000, 22050, 44100, 48000, 96000};
-
-static void reflect_recorder_out_chans(prefs_info *prf)
-{
-  char *str;
-  str = (char *)CALLOC(6, sizeof(char));
-  mus_snprintf(str, 6, "%d", rec_output_chans());
-  handle_radio_button(prf, str);
-  FREE(str);
-}
-
-static void reflect_recorder_srate(prefs_info *prf)
-{
-  char *str;
-  str = (char *)CALLOC(8, sizeof(char));
-  mus_snprintf(str, 8, "%d", rec_srate());
-  handle_radio_button(prf, str);
-  FREE(str);
-}
-
-static void recorder_out_chans_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    rec_set_output_chans(recorder_out_chans_choices_i[which_radio_button(prf)]);
-}
-
-static void recorder_srate_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    rec_set_srate(recorder_srate_choices_i[which_radio_button(prf)]);
-}
-
-#define NUM_RECORDER_OUT_TYPE_CHOICES 5
-static const char *recorder_out_type_choices[NUM_RECORDER_OUT_TYPE_CHOICES] = {"aifc", "wave", "next/sun", "nist", "aiff"};
-static int recorder_out_type_choices_i[NUM_RECORDER_OUT_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_NIST, MUS_AIFF};
-
-#define NUM_RECORDER_OUT_FORMAT_CHOICES 4
-static const char *recorder_out_format_choices[NUM_RECORDER_OUT_FORMAT_CHOICES] = {"short", "int", "float", "double"};
-static int recorder_out_format_choices_i[NUM_RECORDER_OUT_FORMAT_CHOICES] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
-
-static void reflect_recorder_out_type(prefs_info *prf)
-{
-  handle_radio_button(prf, header_type_to_string(rec_output_header_type()));
-}
-
-static void reflect_recorder_out_format(prefs_info *prf)
-{
-  handle_radio_button(prf, data_format_to_string(rec_output_data_format()));
-}
-
-static prefs_info *recorder_out_data_format_prf = NULL, *recorder_out_header_type_prf = NULL;
-
-static void recorder_out_type_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    {
-      rec_set_output_header_type(recorder_out_type_choices_i[which_radio_button(prf)]);
-      rec_set_output_data_format(header_to_data(rec_output_header_type(), rec_output_data_format()));
-      reflect_recorder_out_format(recorder_out_data_format_prf);
-    }
-}
-
-static void recorder_out_format_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    {
-      rec_set_output_data_format(recorder_out_format_choices_i[which_radio_button(prf)]);
-      switch (rec_output_data_format())
-	{
-	case MUS_LSHORT:
-	  switch (rec_output_header_type())
-	    {
-	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
-	      rec_set_output_data_format(MUS_BSHORT); 
-	      break;
-	    }
-	  break;
-	  
-	case MUS_LINT:
-	  switch (rec_output_header_type())
-	    {
-	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
-	      rec_set_output_data_format(MUS_BINT); 
-	      break;
-	    }
-	  break;
-	case MUS_LFLOAT:
-	  switch (rec_output_header_type())
-	    {
-	    case MUS_AIFC: case MUS_NEXT: 
-	      rec_set_output_data_format(MUS_BFLOAT); 
-	      break;
-	    case MUS_AIFF:
-	      rec_set_output_header_type(MUS_AIFC);
-	      rec_set_output_data_format(MUS_BFLOAT); 
-	      break;
-	    case MUS_NIST: 
-	      rec_set_output_header_type(MUS_RIFF); 
-	      break;
-	    }
-	  break;
-	case MUS_LDOUBLE:
-	  switch (rec_output_header_type())
-	    {
-	    case MUS_AIFC: case MUS_NEXT: 
-	      rec_set_output_data_format(MUS_BDOUBLE); 
-	      break;
-	    case MUS_AIFF:
-	      rec_set_output_header_type(MUS_AIFC);
-	      rec_set_output_data_format(MUS_BDOUBLE); 
-	      break;
-	    case MUS_NIST: 
-	      rec_set_output_header_type(MUS_RIFF); 
-	      break;
-	    }
-	  break;
-	}
-      reflect_recorder_out_type(output_header_type_prf);
-    }
-}
 
 
 
@@ -3813,8 +2717,8 @@ widget_t start_preferences_dialog(void)
 				   "width:", str1, "height:", str2, 6,
 				   dpy_box, current_sep,
 				   startup_size_text);
-    /* this is not reflected, and is saved via window-width|height */
-    remember_pref(prf, NULL, NULL, NULL, clear_init_window_size, revert_init_window_size); 
+    /* this is not reflected */
+    remember_pref(prf, NULL, save_init_window_size, NULL, clear_init_window_size, revert_init_window_size); 
     FREE(str2);
     FREE(str1);
 
@@ -3834,10 +2738,11 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("include thumbnail graph in upper right corner", "make-current-window-display",
-				find_current_window_display(),
+				rts_current_window_display = current_window_display(),
 				dpy_box, current_sep,
 				current_window_display_toggle);
-    remember_pref(prf, reflect_current_window_display, save_current_window_display, current_window_help, NULL, NULL);
+    remember_pref(prf, reflect_current_window_display, save_current_window_display, current_window_help, 
+		  clear_current_window_display, revert_current_window_display);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("resize main window as sounds open and close", S_auto_resize,
@@ -3847,13 +2752,11 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_auto_resize, save_auto_resize, NULL, NULL, revert_auto_resize);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    focus_follows_mouse = focus_is_following_mouse();
     prf = prefs_row_with_toggle("focus follows mouse", "focus-follows-mouse",
-				focus_follows_mouse,
+				rts_focus_follows_mouse = focus_follows_mouse(),
 				dpy_box, current_sep,
 				focus_follows_mouse_toggle);
-    remember_pref(prf, reflect_focus_follows_mouse, save_focus_follows_mouse, mouse_focus_help, NULL, NULL);
-
+    remember_pref(prf, reflect_focus_follows_mouse, save_focus_follows_mouse, help_focus_follows_mouse, clear_focus_follows_mouse, revert_focus_follows_mouse);
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     rts_sync_choice = sync_choice();
     prf = prefs_row_with_two_toggles("operate on all channels together", S_sync,
@@ -3921,18 +2824,20 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, prefs_reflect_just_sounds, save_just_sounds, NULL, NULL, revert_just_sounds);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    rts_temp_dir = copy_string(temp_dir(ss));
     prf = prefs_row_with_text("directory for temporary files", S_temp_dir, 
 			      temp_dir(ss), 
 			      dpy_box, current_sep,
 			      temp_dir_text);
-    remember_pref(prf, reflect_temp_dir, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_temp_dir, save_temp_dir, NULL, NULL, revert_temp_dir);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    rts_save_dir = copy_string(save_dir(ss));
     prf = prefs_row_with_text("directory for save-state files", S_save_dir, 
 			      save_dir(ss), 
 			      dpy_box, current_sep,
 			      save_dir_text);
-    remember_pref(prf, reflect_save_dir, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_save_dir, save_save_dir, NULL, NULL, revert_save_dir);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     rts_save_state_file = copy_string(save_state_file(ss));
@@ -3969,40 +2874,47 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_html_program, save_html_program, NULL, NULL, revert_html_program);
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
+    rts_default_output_chans = default_output_chans(ss);
     prf = prefs_row_with_radio_box("default new sound attributes: chans", S_default_output_chans,
 				   output_chan_choices, NUM_OUTPUT_CHAN_CHOICES, -1,
 				   dpy_box, current_sep,
-				   output_chans_choice);
-    reflect_output_chans(prf);
-    remember_pref(prf, reflect_output_chans, NULL, NULL, NULL, NULL);
+				   default_output_chans_choice);
+    remember_pref(prf, reflect_default_output_chans, save_default_output_chans, NULL, NULL, revert_default_output_chans);
+    reflect_default_output_chans(prf);
 
+    rts_default_output_srate = default_output_srate(ss);
     prf = prefs_row_with_radio_box("srate", S_default_output_srate,
 				   output_srate_choices, NUM_OUTPUT_SRATE_CHOICES, -1,
 				   dpy_box, prf->label,
-				   output_srate_choice);
-    reflect_output_srate(prf);
-    remember_pref(prf, reflect_output_srate, NULL, NULL, NULL, NULL);
+				   default_output_srate_choice);
+    remember_pref(prf, reflect_default_output_srate, save_default_output_srate, NULL, NULL, revert_default_output_srate);
+    reflect_default_output_srate(prf);
 
+    rts_default_output_header_type = default_output_header_type(ss);
     prf = prefs_row_with_radio_box("header type", S_default_output_header_type,
 				   output_type_choices, NUM_OUTPUT_TYPE_CHOICES, -1,
 				   dpy_box, prf->label,
-				   output_type_choice);
+				   default_output_header_type_choice);
     output_header_type_prf = prf;
-    remember_pref(prf, reflect_output_type, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_default_output_header_type, save_default_output_header_type, NULL, NULL, revert_default_output_header_type);
 
+    rts_default_output_data_format = default_output_data_format(ss);
     prf = prefs_row_with_radio_box("data format", S_default_output_data_format,
 				   output_format_choices, NUM_OUTPUT_FORMAT_CHOICES, -1,
 				   dpy_box, prf->label,
-				   output_format_choice);
+				   default_output_data_format_choice);
     output_data_format_prf = prf;
-    remember_pref(prf, reflect_output_format, NULL, NULL, NULL, NULL);
-    reflect_output_type(output_header_type_prf);
-    reflect_output_format(output_data_format_prf);
+    remember_pref(prf, reflect_default_output_data_format, save_default_output_data_format, NULL, NULL, revert_default_output_data_format);
+    reflect_default_output_header_type(output_header_type_prf);
+    reflect_default_output_data_format(output_data_format_prf);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     {
       int i, srate = 0, chans = 0, format = 0;
       mus_header_raw_defaults(&srate, &chans, &format);
+      rts_raw_chans = chans;
+      rts_raw_srate = srate;
+      rts_raw_data_format = format;
       str = mus_format("%d", chans);
       str1 = mus_format("%d", srate);
       raw_data_format_choices = (char **)CALLOC(MUS_NUM_DATA_FORMATS - 1, sizeof(char *));
@@ -4011,12 +2923,12 @@ widget_t start_preferences_dialog(void)
       prf = prefs_row_with_text("default raw sound attributes: chans", S_mus_header_raw_defaults, str,
 				dpy_box, current_sep,
 				raw_chans_choice);
-      remember_pref(prf, reflect_raw_chans, NULL, NULL, NULL, NULL);
+      remember_pref(prf, reflect_raw_chans, save_raw_chans, NULL, NULL, revert_raw_chans);
 
       prf = prefs_row_with_text("srate", S_mus_header_raw_defaults, str1,
 				dpy_box, prf->label,
 				raw_srate_choice);
-      remember_pref(prf, reflect_raw_srate, NULL, NULL, NULL, NULL);
+      remember_pref(prf, reflect_raw_srate, save_raw_srate, NULL, NULL, revert_raw_srate);
 
       prf = prefs_row_with_list("data format", S_mus_header_raw_defaults, raw_data_format_choices[format - 1],
 				(const char **)raw_data_format_choices, MUS_NUM_DATA_FORMATS - 1,
@@ -4024,7 +2936,7 @@ widget_t start_preferences_dialog(void)
 				raw_data_format_from_text,
 				NULL, NULL,
 				raw_data_format_from_menu);
-      remember_pref(prf, reflect_raw_data_format, NULL, NULL, NULL, NULL);
+      remember_pref(prf, reflect_raw_data_format, save_raw_data_format, NULL, NULL, revert_raw_data_format);
       FREE(str);
       FREE(str1);
     }
@@ -4183,43 +3095,45 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     {
       char *str1;
-      str = mus_format("%.2f", cursor_update_interval(ss));
-      str1 = mus_format("%d", cursor_location_offset(ss));
+      str = mus_format("%.2f", rts_cursor_update_interval = cursor_update_interval(ss));
+      str1 = mus_format("%d", rts_cursor_location_offset = cursor_location_offset(ss));
       prf = prefs_row_with_toggle_with_two_texts("track current location while playing", S_with_tracking_cursor,
-						 with_tracking_cursor(ss), 
+						 (rts_with_tracking_cursor = with_tracking_cursor(ss)), 
 						 "update:", str,
 						 "offset:", str1, 8, 
 						 dpy_box, current_sep,
 						 with_tracking_cursor_toggle,
 						 cursor_location_text);
-      remember_pref(prf, reflect_with_tracking_cursor, NULL, NULL, NULL, NULL);
+      remember_pref(prf, reflect_with_tracking_cursor, save_with_tracking_cursor, NULL, NULL, revert_with_tracking_cursor);
       FREE(str);
       FREE(str1);
     }
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    str = mus_format("%d", cursor_size(ss));
+    str = mus_format("%d", rts_cursor_size = cursor_size(ss));
     prf = prefs_row_with_number("size", S_cursor_size,
 				str, 4, 
 				dpy_box, current_sep,
 				cursor_size_up, cursor_size_down, cursor_size_from_text);
-    remember_pref(prf, reflect_cursor_size, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_cursor_size, save_cursor_size, NULL, NULL, revert_cursor_size);
     FREE(str);
     if (cursor_size(ss) <= 0) XtSetSensitive(prf->arrow_down, false);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_radio_box("shape", S_cursor_style,
-				   cursor_styles, NUM_CURSOR_STYLES, cursor_style(ss),
+				   cursor_styles, NUM_CURSOR_STYLES, 
+				   rts_cursor_style = cursor_style(ss),
 				   dpy_box, current_sep, 
 				   cursor_style_choice);
-    remember_pref(prf, reflect_cursor_style, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_cursor_style, save_cursor_style, NULL, NULL, revert_cursor_style);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_radio_box("tracking cursor shape", S_tracking_cursor_style,
-				   cursor_styles, NUM_CURSOR_STYLES, tracking_cursor_style(ss),
+				   cursor_styles, NUM_CURSOR_STYLES, 
+				   rts_tracking_cursor_style = tracking_cursor_style(ss),
 				   dpy_box, current_sep, 
 				   tracking_cursor_style_choice);
-    remember_pref(prf, reflect_tracking_cursor_style, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_tracking_cursor_style, save_tracking_cursor_style, NULL, NULL, revert_tracking_cursor_style);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     saved_cursor_color = ss->sgx->cursor_color;
@@ -4274,18 +3188,19 @@ widget_t start_preferences_dialog(void)
     grf_label = make_top_level_label("graph options", grf_box);
 
     prf = prefs_row_with_radio_box("how to connect the dots", S_graph_style,
-				   graph_styles, NUM_GRAPH_STYLES, graph_style(ss),
+				   graph_styles, NUM_GRAPH_STYLES, 
+				   rts_graph_style = graph_style(ss),
 				   grf_box, grf_label,
 				   graph_style_choice);
-    remember_pref(prf, reflect_graph_style, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_graph_style, save_graph_style, NULL, NULL, revert_graph_style);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
-    str = mus_format("%d", dot_size(ss));
+    str = mus_format("%d", rts_dot_size = dot_size(ss));
     prf = prefs_row_with_number("dot size", S_dot_size,
 				str, 4, 
 				grf_box, current_sep,
 				dot_size_up, dot_size_down, dot_size_from_text);
-    remember_pref(prf, reflect_dot_size, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_dot_size, save_dot_size, NULL, NULL, revert_dot_size);
     FREE(str);
     if (dot_size(ss) <= 0) XtSetSensitive(prf->arrow_down, false);
 
@@ -4301,10 +3216,11 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_radio_box("how to layout multichannel graphs", S_channel_style,
-				   channel_styles, NUM_CHANNEL_STYLES, channel_style(ss),
+				   channel_styles, NUM_CHANNEL_STYLES, 
+				   rts_channel_style = channel_style(ss),
 				   grf_box, current_sep,
 				   channel_style_choice);
-    remember_pref(prf, reflect_channel_style, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_channel_style, save_channel_style, NULL, NULL, revert_channel_style);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_toggle("layout wave and fft graphs horizontally", S_graphs_horizontal,
@@ -4314,7 +3230,7 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_graphs_horizontal, save_graphs_horizontal, NULL, NULL, revert_graphs_horizontal);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
-    prf = prefs_row_with_toggle("include y=0 line in sound graphs", S_show_y_zero,
+   prf = prefs_row_with_toggle("include y=0 line in sound graphs", S_show_y_zero,
 				rts_show_y_zero = show_y_zero(ss),
 				grf_box, current_sep,
 				y_zero_toggle);
@@ -4330,10 +3246,10 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_scale("grid density", S_grid_density, 
-			       2.0, grid_density(ss),
+			       2.0, rts_grid_density = grid_density(ss),
 			       grf_box, current_sep,
 			       grid_density_scale_callback, grid_density_text_callback);
-    remember_pref(prf, reflect_grid_density, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_grid_density, save_grid_density, NULL, NULL, revert_grid_density);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_list("what axes to display", S_show_axes, show_axes_choices[(int)show_axes(ss)],
@@ -4455,21 +3371,22 @@ widget_t start_preferences_dialog(void)
     fft_box = make_top_level_box(topics);
     fft_label = make_top_level_label("transform options", fft_box);
 
-    str = mus_format(OFF_TD, transform_size(ss));
+    str = mus_format("%d", rts_fft_size = transform_size(ss));
     prf = prefs_row_with_number("size", S_transform_size,
 				str, 12, 
 				fft_box, fft_label, 
 				fft_size_up, fft_size_down, fft_size_from_text);
-    remember_pref(prf, reflect_fft_size, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_fft_size, save_fft_size, NULL, NULL, revert_fft_size);
     FREE(str);
     if (transform_size(ss) <= 2) XtSetSensitive(prf->arrow_down, false);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_radio_box("transform graph choice", S_transform_graph_type,
-				   transform_graph_types, NUM_TRANSFORM_GRAPH_TYPES, transform_graph_type(ss),
+				   transform_graph_types, NUM_TRANSFORM_GRAPH_TYPES, 
+				   rts_transform_graph_type = transform_graph_type(ss),
 				   fft_box, current_sep,
 				   transform_graph_type_choice);
-    remember_pref(prf, reflect_transform_graph_type, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_transform_graph_type, save_transform_graph_type, NULL, NULL, revert_transform_graph_type);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_list("transform", S_transform_type, transform_types[transform_type(ss)],
@@ -4548,10 +3465,11 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_radio_box("normalization", S_transform_normalization,
-				   transform_normalizations, NUM_TRANSFORM_NORMALIZATIONS, transform_normalization(ss),
+				   transform_normalizations, NUM_TRANSFORM_NORMALIZATIONS, 
+				   rts_transform_normalization = transform_normalization(ss),
 				   fft_box, current_sep,
 				   transform_normalization_choice);
-    remember_pref(prf, reflect_transform_normalization, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_transform_normalization, save_transform_normalization, NULL, NULL, revert_transform_normalization);
   }
 
   current_sep = make_inter_topic_separator(topics);
@@ -4639,14 +3557,15 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_with_sound, save_with_sound, with_sound_help, NULL, NULL);
 
     current_sep = make_inter_variable_separator(clm_box, prf->label);
-    str = mus_format("%d", speed_control_tones(ss));
+    rts_speed_control_style = speed_control_style(ss);
+    str = mus_format("%d", rts_speed_control_tones = speed_control_tones(ss));
     prf = prefs_row_with_radio_box_and_number("speed control choice", S_speed_control_style,
 					      speed_control_styles, NUM_SPEED_CONTROL_STYLES, (int)speed_control_style(ss),
 					      speed_control_tones(ss), str, 6,
 					      clm_box, current_sep,
 					      speed_control_choice, speed_control_up, speed_control_down, speed_control_text);
     XtSetSensitive(prf->arrow_down, (speed_control_tones(ss) > MIN_SPEED_CONTROL_SEMITONES));
-    remember_pref(prf, reflect_speed_control, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_speed_control, save_speed_control, NULL, NULL, revert_speed_control);
     FREE(str);
 
 #if HAVE_SCHEME
@@ -4692,21 +3611,20 @@ widget_t start_preferences_dialog(void)
     prg_box = make_top_level_box(topics);
     prg_label = make_top_level_label("listener options", prg_box);
 
-    include_listener = listener_is_visible();
     prf = prefs_row_with_toggle("show listener at start up", S_show_listener,
-				include_listener,
+				rts_show_listener = listener_is_visible(),
 				prg_box, prg_label,
 				show_listener_toggle);
-    remember_pref(prf, reflect_show_listener, save_show_listener, NULL, NULL, NULL);
+    remember_pref(prf, reflect_show_listener, save_show_listener, NULL, clear_show_listener, revert_show_listener);
 
 #if HAVE_GUILE
     current_sep = make_inter_variable_separator(prg_box, prf->label);
-    str = mus_format("%d", optimization(ss));
+    str = mus_format("%d", rts_optimization = optimization(ss));
     prf = prefs_row_with_number("optimization level", S_optimization,
 				str, 3, 
 				prg_box, current_sep, 
 				optimization_up, optimization_down, optimization_from_text);
-    remember_pref(prf, reflect_optimization, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_optimization, save_optimization, NULL, NULL, revert_optimization);
     FREE(str);
     if (optimization(ss) == 6) XtSetSensitive(prf->arrow_up, false);
     if (optimization(ss) == 0) XtSetSensitive(prf->arrow_down, false);
@@ -4820,35 +3738,39 @@ widget_t start_preferences_dialog(void)
     FREE(str);
     current_sep = make_inter_variable_separator(aud_box, prf->label);
 
+    rts_recorder_output_chans = rec_output_chans();
     prf = prefs_row_with_radio_box("default recorder output sound attributes: chans", S_recorder_out_chans,
 				   recorder_out_chans_choices, NUM_RECORDER_OUT_CHANS_CHOICES, -1,
 				   aud_box, current_sep,
-				   recorder_out_chans_choice);
-    reflect_recorder_out_chans(prf);
-    remember_pref(prf, reflect_recorder_out_chans, NULL, NULL, NULL, NULL);
+				   recorder_output_chans_choice);
+    reflect_recorder_output_chans(prf);
+    remember_pref(prf, reflect_recorder_output_chans, save_recorder_output_chans, NULL, NULL, revert_recorder_output_chans);
 
+    rts_recorder_srate = rec_srate();
     prf = prefs_row_with_radio_box("srate", S_recorder_srate,
 				   recorder_srate_choices, NUM_RECORDER_SRATE_CHOICES, -1,
 				   aud_box, prf->label,
 				   recorder_srate_choice);
     reflect_recorder_srate(prf);
-    remember_pref(prf, reflect_recorder_srate, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_recorder_srate, save_recorder_srate, NULL, NULL, revert_recorder_srate);
 
+    rts_recorder_output_header_type = rec_output_header_type();
     prf = prefs_row_with_radio_box("header type", S_recorder_out_header_type,
 				   recorder_out_type_choices, NUM_RECORDER_OUT_TYPE_CHOICES, -1,
 				   aud_box, prf->label,
-				   recorder_out_type_choice);
-    recorder_out_header_type_prf = prf;
-    remember_pref(prf, reflect_recorder_out_type, NULL, NULL, NULL, NULL);
+				   recorder_output_header_type_choice);
+    recorder_output_header_type_prf = prf;
+    remember_pref(prf, reflect_recorder_output_header_type, save_recorder_output_header_type, NULL, NULL, revert_recorder_output_header_type);
 
+    rts_recorder_output_data_format = rec_output_data_format();
     prf = prefs_row_with_radio_box("data format", S_recorder_out_data_format,
 				   recorder_out_format_choices, NUM_RECORDER_OUT_FORMAT_CHOICES, -1,
 				   aud_box, prf->label,
-				   recorder_out_format_choice);
-    recorder_out_data_format_prf = prf;
-    remember_pref(prf, reflect_recorder_out_format, NULL, NULL, NULL, NULL);
-    reflect_recorder_out_type(recorder_out_header_type_prf);
-    reflect_recorder_out_format(recorder_out_data_format_prf);
+				   recorder_output_data_format_choice);
+    recorder_output_data_format_prf = prf;
+    remember_pref(prf, reflect_recorder_output_data_format, save_recorder_output_data_format, NULL, NULL, revert_recorder_output_data_format);
+    reflect_recorder_output_header_type(recorder_output_header_type_prf);
+    reflect_recorder_output_data_format(recorder_output_data_format_prf);
   }
 
   {
