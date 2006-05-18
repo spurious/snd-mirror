@@ -109,15 +109,14 @@ static void set_radio_button(prefs_info *prf, int which)
 {
   if ((which >= 0) && (which < prf->num_buttons))
     {
-      XmToggleButtonSetState(prf->radio_buttons[which], true, false);
-      if ((prf->radio_button) &&
-	  (XmIsToggleButton(prf->radio_button)) &&
-	  (prf->radio_buttons[which] != prf->radio_button))
+      int i;
+      for (i = 0; i < prf->num_buttons; i++)
 	{
-	  /* motif docs are incorrect -- the set above does not unset the currently set radio button */
-	  XmToggleButtonSetState(prf->radio_button, false, false);
-	  prf->radio_button = prf->radio_buttons[which];
+	  if ((prf->radio_buttons[i]) &&
+	      (XmIsToggleButton(prf->radio_buttons[i])))
+	    XmToggleButtonSetState(prf->radio_buttons[i], (i == which), false);
 	}
+      prf->radio_button = prf->radio_buttons[which];
     }
 }
 
@@ -1669,37 +1668,6 @@ static void va_post_prefs_error(const char *msg, void *data, ...)
 
 /* -------------------------------------------------------------------------------- */
 
-/* ---------------- remember sound state ---------------- */
-
-static int global_remember_sound_state_choice = 0; /* 0=none, 1=local, 2=global+not local, 3=local+global */
-
-static void reflect_remember_sound_state_choice(prefs_info *prf)
-{
-  global_remember_sound_state_choice = find_remember_sound_state_choice();
-  XmToggleButtonSetState(prf->toggle, global_remember_sound_state_choice & 1, false);
-  XmToggleButtonSetState(prf->toggle2, global_remember_sound_state_choice & 2, false);
-}
-
-static void save_remember_sound_state_choice(prefs_info *prf, FILE *fd)
-{
-  if (global_remember_sound_state_choice != 0)
-    save_remember_sound_state_choice_1(prf, fd, global_remember_sound_state_choice);
-}
-
-static void remember_sound_state_1_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->toggle) == XmSET)
-    global_remember_sound_state_choice |= 1;
-  else global_remember_sound_state_choice &= 2;
-}
-
-static void remember_sound_state_2_choice(prefs_info *prf)
-{
-  if (XmToggleButtonGetState(prf->toggle2) == XmSET)
-    global_remember_sound_state_choice |= 2;
-  else global_remember_sound_state_choice &= 1;
-}
-
 /* ---------------- peak-envs ---------------- */
 
 static bool include_peak_envs = false;
@@ -1851,146 +1819,6 @@ static void load_path_text(prefs_info *prf)
 #endif
     }
   if (str) XtFree(str);
-}
-
-
-/* ---------------- context sensitive popup ---------------- */
-
-static bool include_context_sensitive_popup = false;
-
-static void save_context_sensitive_popup(prefs_info *prf, FILE *fd)
-{
-  if (include_context_sensitive_popup) save_context_sensitive_popup_1(prf, fd);
-}
-
-static void context_sensitive_popup_toggle(prefs_info *prf)
-{
-  include_context_sensitive_popup = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void reflect_context_sensitive_popup(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, find_context_sensitive_popup(), false);
-}
-
-/* ---------------- effects menu ---------------- */
-
-static bool include_effects_menu = false;
-
-static void save_effects_menu(prefs_info *prf, FILE *fd)
-{
-  if (include_effects_menu) save_effects_menu_1(prf, fd);
-}
-
-static void effects_menu_toggle(prefs_info *prf)
-{
-  include_effects_menu = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void reflect_effects_menu(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, find_effects_menu(), false);
-}
-
-#if HAVE_SCHEME
-/* ---------------- edit menu ---------------- */
-
-static bool include_edit_menu = false;
-
-static void save_edit_menu(prefs_info *prf, FILE *fd)
-{
-  if (include_edit_menu)
-    fprintf(fd, "(if (not (provided? 'snd-edit-menu.scm)) (load-from-path \"edit-menu.scm\"))\n"); /* ok for either case */
-}
-
-static void edit_menu_toggle(prefs_info *prf)
-{
-  include_edit_menu = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void reflect_edit_menu(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, find_edit_menu(), false);
-}
-
-/* ---------------- marks menu ---------------- */
-
-static bool include_marks_menu = false;
-
-static void save_marks_menu(prefs_info *prf, FILE *fd)
-{
-  if (include_marks_menu)
-    fprintf(fd, "(if (not (provided? 'snd-marks-menu.scm)) (load-from-path \"marks-menu.scm\"))\n");
-}
-
-static void marks_menu_toggle(prefs_info *prf)
-{
-  include_marks_menu = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void reflect_marks_menu(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, find_marks_menu(), false);
-}
-
-/* ---------------- mix menu ---------------- */
-
-static bool include_mix_menu = false;
-
-static void save_mix_menu(prefs_info *prf, FILE *fd)
-{
-  if (include_mix_menu)
-    fprintf(fd, "(if (not (provided? 'snd-mix-menu.scm)) (load-from-path \"mix-menu.scm\"))\n");
-}
-
-static void mix_menu_toggle(prefs_info *prf)
-{
-  include_mix_menu = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void reflect_mix_menu(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, find_mix_menu(), false);
-}
-
-/* ---------------- icon box ---------------- */
-
-static bool include_icon_box = false;
-
-static void save_icon_box(prefs_info *prf, FILE *fd)
-{
-  if (include_icon_box)
-    fprintf(fd, "(if (not (provided? 'snd-new-buttons.scm)) (load-from-path \"new-buttons.scm\"))\n");
-}
-
-static void icon_box_toggle(prefs_info *prf)
-{
-  include_icon_box = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void reflect_icon_box(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, find_icon_box(), false);
-}
-#endif
-
-/* ---------------- reopen menu ---------------- */
-
-static bool include_reopen_menu = false;
-
-static void save_reopen_menu(prefs_info *prf, FILE *fd)
-{
-  if (include_reopen_menu) save_reopen_menu_1(prf, fd);
-}
-
-static void reopen_menu_toggle(prefs_info *prf)
-{
-  include_reopen_menu = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void reflect_reopen_menu(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, find_reopen_menu(), false);
 }
 
 
@@ -2156,27 +1984,6 @@ static void x_axis_style_from_text(prefs_info *prf)
     }
   else post_prefs_error("need an axis style", (XtPointer)prf);
 }
-
-/* ---------------- smpte ---------------- */
-
-static bool include_smpte = false;
-
-static void reflect_smpte(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, find_smpte(), false);
-}
-
-static void smpte_toggle(prefs_info *prf)
-{
-  include_smpte = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void save_smpte(prefs_info *prf, FILE *fd)
-{
-  if (include_smpte) save_smpte_1(prf, fd);
-}
-
-
 
 /* ---------------- transform-type ---------------- */
 
@@ -2387,205 +2194,6 @@ static void colormap_from_menu(prefs_info *prf, char *value)
       }
 }
 
-
-/* ---------------- mark-pane ---------------- */
-
-static bool include_mark_pane = false;
-
-static void reflect_mark_pane(prefs_info *prf) 
-{
-  include_mark_pane = find_mark_pane();
-  XmToggleButtonSetState(prf->toggle, include_mark_pane, false);
-}
-
-static void mark_pane_toggle(prefs_info *prf)
-{
-  include_mark_pane = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void save_mark_pane(prefs_info *prf, FILE *fd)
-{
-  if (include_mark_pane)
-    save_mark_pane_1(prf, fd);
-}
-
-
-/* ---------------- include with-sound ---------------- */
-
-static bool include_with_sound = false;
-static char *include_clm_file_name = NULL;
-static int include_clm_file_buffer_size = 65536;
-static int include_clm_table_size = 512;
-
-static bool with_sound_is_loaded(void)
-{
-  return(XEN_DEFINED_P("with-sound"));
-}
-
-static void reflect_with_sound(prefs_info *prf) 
-{
-  include_with_sound = with_sound_is_loaded();
-  XmToggleButtonSetState(prf->toggle, include_with_sound, false);
-}
-
-static void with_sound_toggle(prefs_info *prf)
-{
-  include_with_sound = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void save_with_sound(prefs_info *prf, FILE *fd)
-{
-  if (include_with_sound)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-ws.scm)) (load-from-path \"ws.scm\"))\n");
-      if (include_clm_file_name)
-	fprintf(fd, "(set! *clm-file-name* \"%s\")\n", include_clm_file_name);
-      if (include_clm_file_buffer_size != 65536)
-	fprintf(fd, "(set! *clm-file-buffer-size* %d)\n", include_clm_file_buffer_size);
-      if (include_clm_table_size != 512)
-	fprintf(fd, "(set! *clm-table-size* %d)\n", include_clm_table_size);
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "require \"ws\"\n");
-      if (include_clm_file_name)
-	fprintf(fd, "$clm_file_name = \"%s\"\n", include_clm_file_name);
-      if (include_clm_file_buffer_size != 65536)
-	fprintf(fd, "$clm_file_buffer_size = %d\n", include_clm_file_buffer_size);
-      if (include_clm_table_size != 512)
-	fprintf(fd, "$clm_table_size = %d\n", include_clm_table_size);
-#endif
-#if HAVE_FORTH
-      fprintf(fd, "require clm\n");
-      if (include_clm_file_name)
-	fprintf(fd, "$\" %s\" to *clm-file-name*\n", include_clm_file_name);
-      if (include_clm_file_buffer_size != 65536)
-	fprintf(fd, "%d to *clm-file-buffer-size*\n", include_clm_file_buffer_size);
-      if (include_clm_table_size != 512)
-	fprintf(fd, "%d to *clm-table-size*\n", include_clm_table_size);
-#endif
-    }
-}
-
-#if HAVE_SCHEME
-/* ---------------- hidden controls dialog ---------------- */
-
-static bool include_hidden_controls = false;
-
-static void save_hidden_controls(prefs_info *prf, FILE *fd)
-{
-  if (include_hidden_controls)
-    {
-      fprintf(fd, "(if (not (provided? 'snd-snd-motif.scm)) (load-from-path \"snd-motif.scm\"))\n");
-      fprintf(fd, "(make-hidden-controls-dialog)\n");
-    }
-}
-
-static void hidden_controls_toggle(prefs_info *prf)
-{
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
-  include_hidden_controls = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void reflect_hidden_controls(prefs_info *prf) 
-{
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
-  XmToggleButtonSetState(prf->toggle, find_hidden_controls(), false);
-}
-#endif
-
-
-/* ---------------- clm file name ---------------- */
-
-static void clm_file_name_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      include_with_sound = true;
-      if (include_clm_file_name) FREE(include_clm_file_name); /* save is done after we're sure with-sound is loaded */
-      include_clm_file_name = copy_string(str);
-      set_clm_file_name(str);
-      XtFree(str);
-    }
-}
-
-static void reflect_clm_file_name(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, find_clm_file_name());
-}
-
-/* ---------------- clm sizes ---------------- */
-
-static void reflect_clm_sizes(prefs_info *prf)
-{
-  include_clm_table_size = find_clm_table_size();
-  int_to_textfield(prf->text, include_clm_table_size);
-  include_clm_file_buffer_size = find_clm_file_buffer_size();
-  int_to_textfield(prf->rtxt, include_clm_file_buffer_size);
-}
-
-static void clm_sizes_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      int size = 0;
-      include_with_sound = true;
-      sscanf(str, "%d", &size);
-      if (size > 0)
-	include_clm_table_size = size;
-      else int_to_textfield(prf->text, include_clm_table_size);
-      XtFree(str);
-    }
-  str = XmTextFieldGetString(prf->rtxt);
-  if ((str) && (*str))
-    {
-      int size = 0;
-      include_with_sound = true;
-      sscanf(str, "%d", &size);
-      if (size > 0)
-	include_clm_file_buffer_size = size;
-      else int_to_textfield(prf->rtxt, include_clm_file_buffer_size);
-      XtFree(str);
-    }
-}
-
-
-#if HAVE_GUILE
-/* ---------------- debugging aids ---------------- */
-
-static bool include_debugging_aids = false;
-
-static void reflect_debugging_aids(prefs_info *prf) 
-{
-  XmToggleButtonSetState(prf->toggle, find_debugging_aids(), false);
-}
-
-static void debugging_aids_toggle(prefs_info *prf)
-{
-  include_debugging_aids = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void save_debugging_aids(prefs_info *prf, FILE *fd)
-{
-  if (include_debugging_aids)
-    {
-      fprintf(fd, "(use-modules (ice-9 debug) (ice-9 session))\n");
-#if HAVE_SCM_OBJECT_TO_STRING
-      /* 1.6 or later -- not sure 1.4 etc can handle these things */
-      fprintf(fd, "(debug-set! stack 0)\n");
-      fprintf(fd, "(debug-enable 'debug 'backtrace)\n");
-      fprintf(fd, "(read-enable 'positions)\n");
-#endif
-      fprintf(fd, "(if (not (provided? 'snd-debug.scm)) (load-from-path \"debug.scm\"))\n");
-    }
-}
-#endif
 
 
 
@@ -3549,12 +3157,12 @@ widget_t start_preferences_dialog(void)
     clm_box = make_top_level_box(topics);
     clm_label = make_top_level_label("clm", clm_box);
 
-    include_with_sound = with_sound_is_loaded();
+    rts_with_sound = with_sound_is_loaded();
     prf = prefs_row_with_toggle("include with-sound", "with-sound",
-				include_with_sound,
+				rts_with_sound,
 				clm_box, clm_label,
 				with_sound_toggle);
-    remember_pref(prf, reflect_with_sound, save_with_sound, with_sound_help, NULL, NULL);
+    remember_pref(prf, reflect_with_sound, save_with_sound, help_with_sound, clear_with_sound, revert_with_sound);
 
     current_sep = make_inter_variable_separator(clm_box, prf->label);
     rts_speed_control_style = speed_control_style(ss);
@@ -3586,18 +3194,21 @@ widget_t start_preferences_dialog(void)
     FREE(str);
 
     current_sep = make_inter_variable_separator(clm_box, prf->label);
-    prf = prefs_row_with_text("with-sound default output file name", "*clm-file-name*", find_clm_file_name(),
+    rts_clm_file_name = copy_string(find_clm_file_name());
+    prf = prefs_row_with_text("with-sound default output file name", "*clm-file-name*", rts_clm_file_name,
 			      clm_box, current_sep,
 			      clm_file_name_text);
-    remember_pref(prf, reflect_clm_file_name, NULL, clm_file_name_help, NULL, NULL);
+    remember_pref(prf, reflect_clm_file_name, save_clm_file_name, help_clm_file_name, clear_clm_file_name, revert_clm_file_name);
 
     current_sep = make_inter_variable_separator(clm_box, prf->label);
+    rts_clm_table_size = find_clm_table_size();
+    rts_clm_file_buffer_size = find_clm_file_buffer_size();
     prf = prefs_row_with_two_texts("sizes", "*clm-table-size*",
 				   "wave table:", NULL, "file buffer:", NULL, 8,
 				   clm_box, current_sep,
 				   clm_sizes_text);
     reflect_clm_sizes(prf);
-    remember_pref(prf, reflect_clm_sizes, NULL, clm_table_size_help, NULL, NULL);
+    remember_pref(prf, reflect_clm_sizes, save_clm_sizes, help_clm_sizes, clear_clm_sizes, revert_clm_sizes);
   }
 
   current_sep = make_inter_topic_separator(topics);

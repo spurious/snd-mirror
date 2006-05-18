@@ -4,7 +4,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat May 24 20:35:03 CEST 2003
-# Last: Mon May 10 19:10:32 CEST 2004
+# Changed: Wed May 03 14:24:31 CEST 2006
 
 # This file is part of Sndins.
 
@@ -16,30 +16,28 @@ require "ws"
 require "env"
 require "sndins"
 
-$rbm_play = 1
-$rbm_statistics = true
-$rbm_verbose = true
-$rbm_srate = 44100
-$rbm_channels = 2
-$rbm_reverb_func = :freeverb
-$rbm_reverb_data = [:room_decay, 0.9]
-$rbm_reverb_channels = 2
-$rbm_delete_reverb = true
-$rbm_locsig_type = Mus_interp_sinusoidal
-# Mus_interp_linear or Mus_interp_sinusoidal
+$clm_play            = true
+$clm_statistics      = true
+$clm_verbose         = true
+$clm_srate           = 44100
+$clm_channels        = 2
+$clm_reverb          = :freeverb
+$clm_reverb_data     = [:room_decay, 0.8]
+$clm_reverb_channels = 2
+$clm_delete_reverb   = true
 
 class Agn
   include Math
   include Env
+  Limit = 256
+  Time  = 60
   
   def initialize
     mode = [0, 0, 2, 4, 11, 11, 5, 6, 7, 0, 0, 0, 0]
-    @lim = 256
-    @time = 60
-    @octs = make_array(@lim + 1) do |i| (4 + 2 * rbell(rbm_random(1.0))).floor end
-    @pits = make_array(@lim + 1) do |i| mode[(12 * rbm_random(1.0)).floor] end
-    @rhys = make_array(@lim + 1) do |i| (4 + 6 * rbm_random(1.0)).floor end
-    @amps = make_array(@lim + 1) do |i| (1 + 8 * rbell(rbm_random(1.0))).floor end
+    @octs = make_array(Limit) do |i| (4 + 2 * rbell(random(1.0))).floor end
+    @pits = make_array(Limit) do |i| mode[(12 * random(1.0)).floor] end
+    @rhys = make_array(Limit) do |i| (4 + 6 * random(1.0)).floor end
+    @amps = make_array(Limit) do |i| (1 + 8 * rbell(random(1.0))).floor end
   end
   
   def tune(x)
@@ -54,7 +52,9 @@ class Agn
 
   def agn(file)
     File.open(file, "w") do |f|
+      f << "# -*- snd-ruby -*-\n"
       f << "# from agn.cl (see clm-2/clm-example.clm and clm-2/bess5.cl)\n"
+      f << "#\n"
       f << "# " << make_default_comment() << "\n\n"
       wins = [[0, 0, 40, 0.1, 60, 0.2, 75, 0.4, 82, 1, 90, 1, 100, 0],
               [0, 0, 60, 0.1, 80, 0.2, 90, 0.4, 95, 1, 100, 0],
@@ -70,13 +70,13 @@ class Agn
         cellbeg, cellsiz, cellctr = 0, 4, 0
         whichway, base, mi, winnum, mytempo = 1, i, i - 1, 0, 0.2
         nextbeg = revamt = ranamt = beg = dur = freq = ampl = ind = 0.0
-        while beg < @time and cellctr < @lim
+        while beg < Time and cellctr < Limit
           beg += nextbeg
-          nextbeg = dur = [0.25, mytempo * (0.9 + 0.2 * rbm_random(1.0)) * @rhys[cellctr]].max
+          nextbeg = dur = [0.25, mytempo * (0.9 + 0.2 * random(1.0)) * @rhys[cellctr]].max
           freq = (16.352 / 2 ** mi) * tune(@pits[cellctr]) * 2 ** @octs[cellctr]
           dur += dur if freq < 100
           ampl = [0.003, @amps[cellctr] * (1.0 / (60 * base))].max
-          ind = rbm_random(1.0) * 2 * base
+          ind = random(1.0) * 2 * base
           revamt = base * 0.1
           winnum = (10 * (beg - beg.floor)).floor
           ranamt = 0.00001 * (logn(freq, 2.0) - 4) ** 4
@@ -87,12 +87,12 @@ class Agn
           cellctr += 1
           if cellctr > (cellsiz + cellbeg)
             cellbeg += 1
-            if rbm_random(1.0) > 0.5
+            if random(1.0) > 0.5
               cellsiz += whichway
             end
-            if cellsiz > 16 and rbm_random(1.0) > 0.99
+            if cellsiz > 16 and random(1.0) > 0.99
               whichway = -2
-              if cellsiz > 12 and rbm_random(1.0) > 0.999
+              if cellsiz > 12 and random(1.0) > 0.999
                 whichway = -1
                 if cellsiz < 4
                   whichway = 1
@@ -113,9 +113,9 @@ def do_agn(file = "agn.rbm")
   sndfile = File.basename(file, ".*") + ".snd"
   message("Writing %s", file.inspect)
   Agn.new.agn(file)
-  rbm_load(file, :output, sndfile)
+  clm_load(file, :output, sndfile)
 end
 
-do_agn((ARGV[0] or "agn.rbm")) unless provided? "snd"
+do_agn((ARGV[0] or "agn.rbm")) unless provided? :snd
 
 # agn.rb ends here

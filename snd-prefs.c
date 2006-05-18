@@ -2046,8 +2046,7 @@ static void set_current_window_display(bool val, const char *load)
       xen_load_file_with_path_and_extension(load);
       prefs_function_call_0("make-current-window-display");
     }
-  if (XEN_DEFINED_P("current-window-display-is-running")) 
-    prefs_variable_set("current-window-display-is-running", C_TO_XEN_BOOLEAN(val));
+  prefs_variable_set("current-window-display-is-running", C_TO_XEN_BOOLEAN(val));
 }
 
 static void revert_current_window_display(prefs_info *prf) {set_current_window_display(rts_current_window_display, NULL);}
@@ -2093,8 +2092,7 @@ static bool focus_follows_mouse(void)
 static void set_focus_follows_mouse(bool val, const char *load)
 {
   prefs_focus_follows_mouse = val;
-  if (XEN_DEFINED_P("focus-is-following-mouse")) 
-    prefs_variable_set("focus-is-following-mouse", C_TO_XEN_BOOLEAN(val));
+  prefs_variable_set("focus-is-following-mouse", C_TO_XEN_BOOLEAN(val));
 }
 
 static void revert_focus_follows_mouse(prefs_info *prf) {set_focus_follows_mouse(rts_focus_follows_mouse, NULL);}
@@ -3181,6 +3179,754 @@ static void recorder_output_data_format_choice(prefs_info *prf)
 }
 
 
+/* ---------------- include with-sound ---------------- */
+
+static bool rts_with_sound = false;
+static char *rts_clm_file_name = NULL;
+static int rts_clm_file_buffer_size = 65536;
+static int rts_clm_table_size = 512;
+
+static bool with_sound_is_loaded(void)
+{
+  return(XEN_DEFINED_P("with-sound"));
+}
+
+static void reflect_with_sound(prefs_info *prf) 
+{
+  SET_TOGGLE(prf->toggle, with_sound_is_loaded());
+}
+
+static void revert_with_sound(prefs_info *prf)
+{
+  rts_with_sound = with_sound_is_loaded();
+}
+
+static void clear_with_sound(prefs_info *prf)
+{
+  SET_TOGGLE(prf->toggle, false);
+}
+
+static void with_sound_toggle(prefs_info *prf)
+{
+  if ((GET_TOGGLE(prf->toggle)) &&
+      (!(XEN_DEFINED_P("with-sound"))))
+    xen_load_file_with_path_and_extension("ws");
+}
+
+static void save_with_sound(prefs_info *prf, FILE *fd)
+{
+  if (rts_with_sound)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(if (not (provided? 'snd-ws.scm)) (load-from-path \"ws.scm\"))\n");
+      if (rts_clm_file_name)
+	fprintf(fd, "(set! *clm-file-name* \"%s\")\n", rts_clm_file_name);
+      if (rts_clm_file_buffer_size != 65536)
+	fprintf(fd, "(set! *clm-file-buffer-size* %d)\n", rts_clm_file_buffer_size);
+      if (rts_clm_table_size != 512)
+	fprintf(fd, "(set! *clm-table-size* %d)\n", rts_clm_table_size);
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "require \"ws\"\n");
+      if (rts_clm_file_name)
+	fprintf(fd, "$clm_file_name = \"%s\"\n", rts_clm_file_name);
+      if (rts_clm_file_buffer_size != 65536)
+	fprintf(fd, "$clm_file_buffer_size = %d\n", rts_clm_file_buffer_size);
+      if (rts_clm_table_size != 512)
+	fprintf(fd, "$clm_table_size = %d\n", rts_clm_table_size);
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "require clm\n");
+      if (rts_clm_file_name)
+	fprintf(fd, "$\" %s\" to *clm-file-name*\n", rts_clm_file_name);
+      if (rts_clm_file_buffer_size != 65536)
+	fprintf(fd, "%d to *clm-file-buffer-size*\n", rts_clm_file_buffer_size);
+      if (rts_clm_table_size != 512)
+	fprintf(fd, "%d to *clm-table-size*\n", rts_clm_table_size);
+#endif
+    }
+}
+
+static void help_with_sound(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "with-sound is the main CLM sound-producing macro.  If you want to use CLM functions to create \
+new sounds, then edit them in Snd, include with-sound.",
+	   WITH_WORD_WRAP);
+}
+
+
+/* ---------------- clm file name ---------------- */
+
+#define CLM_FILE_NAME "*clm-file-name*"
+
+static void set_clm_file_name(const char *str) {prefs_variable_set(CLM_FILE_NAME, C_TO_XEN_STRING(str));}
+
+static char *find_clm_file_name(void)
+{
+  XEN val;
+  val = prefs_variable_get(CLM_FILE_NAME);
+  if (XEN_STRING_P(val))
+    return(XEN_TO_C_STRING(val));
+  return(NULL);
+}
+
+static void clm_file_name_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      rts_with_sound = true;
+      if (rts_clm_file_name) FREE(rts_clm_file_name); /* save is done after we're sure with-sound is loaded */
+      rts_clm_file_name = copy_string(str);
+      set_clm_file_name(str);
+      FREE_TEXT(str);
+    }
+}
+
+static void reflect_clm_file_name(prefs_info *prf) {SET_TEXT(prf->text, find_clm_file_name());}
+static void clear_clm_file_name(prefs_info *prf) {prefs_variable_set(CLM_FILE_NAME, C_TO_XEN_STRING("test.snd"));}
+
+static void revert_clm_file_name(prefs_info *prf) 
+{
+  prefs_variable_set(CLM_FILE_NAME, C_TO_XEN_STRING((rts_clm_file_name) ? rts_clm_file_name : "test.snd"));
+}
+
+static void help_clm_file_name(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This option sets the default output file name used by with-sound.",
+	   WITH_WORD_WRAP);
+}
+
+static void save_clm_file_name(prefs_info *prf, FILE *ignore)
+{
+  if (rts_clm_file_name) FREE(rts_clm_file_name);
+  rts_clm_file_name = copy_string(find_clm_file_name());
+}
+
+
+/* ---------------- clm sizes ---------------- */
+
+#define CLM_TABLE_SIZE "*clm-table-size*"
+#define CLM_FILE_BUFFER_SIZE "*clm-file-buffer-size*"
+
+static int find_clm_table_size(void)
+{
+  XEN size;
+  size = prefs_variable_get(CLM_TABLE_SIZE);
+  return(XEN_TO_C_INT_OR_ELSE(size, 512));
+}
+
+static int find_clm_file_buffer_size(void)
+{
+  XEN size;
+  size = prefs_variable_get(CLM_FILE_BUFFER_SIZE);
+  return(XEN_TO_C_INT_OR_ELSE(size, 65536));
+}
+
+static void reflect_clm_sizes(prefs_info *prf)
+{
+  rts_clm_table_size = find_clm_table_size();
+  int_to_textfield(prf->text, rts_clm_table_size);
+  rts_clm_file_buffer_size = find_clm_file_buffer_size();
+  int_to_textfield(prf->rtxt, rts_clm_file_buffer_size);
+}
+
+static void clm_sizes_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      int size = 0;
+      rts_with_sound = true;
+      sscanf(str, "%d", &size);
+      if (size > 0)
+	rts_clm_table_size = size;
+      else int_to_textfield(prf->text, rts_clm_table_size);
+      FREE_TEXT(str);
+    }
+  str = GET_TEXT(prf->rtxt);
+  if ((str) && (*str))
+    {
+      int size = 0;
+      rts_with_sound = true;
+      sscanf(str, "%d", &size);
+      if (size > 0)
+	rts_clm_file_buffer_size = size;
+      else int_to_textfield(prf->rtxt, rts_clm_file_buffer_size);
+      FREE_TEXT(str);
+    }
+}
+
+static void help_clm_sizes(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This option sets the default clm table size and file buffer size.",
+	   WITH_WORD_WRAP);
+}
+
+static void revert_clm_sizes(prefs_info *prf)
+{
+  prefs_variable_set(CLM_FILE_BUFFER_SIZE, C_TO_XEN_INT(rts_clm_file_buffer_size));
+  prefs_variable_set(CLM_TABLE_SIZE, C_TO_XEN_INT(rts_clm_table_size));
+}
+
+static void clear_clm_sizes(prefs_info *prf)
+{
+  prefs_variable_set(CLM_FILE_BUFFER_SIZE, C_TO_XEN_INT(65536));
+  prefs_variable_set(CLM_TABLE_SIZE, C_TO_XEN_INT(512));
+}
+
+static void save_clm_sizes(prefs_info *prf, FILE *ignore)
+{
+  rts_clm_file_buffer_size = find_clm_file_buffer_size();
+  rts_clm_table_size = find_clm_table_size();
+}
+
+
+
+/* STOPPED HERE */
+
+
+/* ---------------- context sensitive popup ---------------- */
+
+static bool include_context_sensitive_popup = false;
+
+static void context_sensitive_popup_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This option creates a context-sensitive popup menu (activated by button 3).  The menu \
+displayed depends on where the mouse is at the time; there are special menus for the waveform and fft \
+portions of the graphs, the listener, the edit history pane, and the current selection.",
+	   WITH_WORD_WRAP);
+}
+
+static bool find_context_sensitive_popup(void)
+{
+  return(XEN_DEFINED_P("edhist-help-edits")); /* defined in both cases */
+}
+
+static void save_context_sensitive_popup_1(prefs_info *prf, FILE *fd)
+{
+#if HAVE_SCHEME
+  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-popup.scm))\n        (load-from-path \"popup.scm\"))\n    (if (not (provided? 'snd-gtk-popup.scm))\n	(load-from-path \"gtk-popup.scm\")))\n");
+#endif
+#if HAVE_RUBY
+  fprintf(fd, "require \"popup\"\n");
+#endif
+#if HAVE_FORTY
+  fprintf(fd, "require popup\n");
+#endif
+}
+
+static void save_context_sensitive_popup(prefs_info *prf, FILE *fd)
+{
+  if (include_context_sensitive_popup) save_context_sensitive_popup_1(prf, fd);
+}
+
+static void context_sensitive_popup_toggle(prefs_info *prf)
+{
+  include_context_sensitive_popup = GET_TOGGLE(prf->toggle);
+}
+
+static void reflect_context_sensitive_popup(prefs_info *prf) 
+{
+  SET_TOGGLE(prf->toggle, find_context_sensitive_popup());
+}
+
+/* ---------------- effects menu ---------------- */
+
+static bool include_effects_menu = false;
+
+static void effects_menu_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This option creates a top-level menu named 'Effects'.  The effects include such things as \
+reverberation, reversal, normalizations, gains and envelopes, inversion, echos, flanging, companding, \
+filtering, padding, cross synthesis, and so on.",
+	   WITH_WORD_WRAP);
+}
+
+static bool find_effects_menu(void)
+{
+  return(XEN_DEFINED_P("effects-menu"));
+}
+
+static void save_effects_menu_1(prefs_info *prf, FILE *fd)
+{
+#if HAVE_SCHEME
+  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-new-effects.scm))\n        (load-from-path \"new-effects.scm\"))\n    (if (not (provided? 'snd-gtk-effects.scm))\n	(load-from-path \"gtk-effects.scm\")))\n");
+#endif
+#if HAVE_RUBY
+  fprintf(fd, "require \"effects\"\n");
+#endif
+#if HAVE_FORTH
+  fprintf(fd, "require effects\n");
+#endif
+}
+
+static void save_effects_menu(prefs_info *prf, FILE *fd)
+{
+  if (include_effects_menu) save_effects_menu_1(prf, fd);
+}
+
+static void effects_menu_toggle(prefs_info *prf)
+{
+  include_effects_menu = GET_TOGGLE(prf->toggle);
+}
+
+static void reflect_effects_menu(prefs_info *prf) 
+{
+  SET_TOGGLE(prf->toggle, find_effects_menu());
+}
+
+#if HAVE_SCHEME
+/* ---------------- edit menu ---------------- */
+
+static bool include_edit_menu = false;
+
+static void edit_menu_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This option adds several options to the top-level Edit menu: selection to file, \
+append selection, mono to stereo, trim, crop, etc.",
+	   WITH_WORD_WRAP);
+}
+
+static bool find_edit_menu(void)
+{
+  return(XEN_DEFINED_P("make-stereofile")); /* a kludge... currently this is only defined in edit-menu.scm */
+}
+
+static void save_edit_menu(prefs_info *prf, FILE *fd)
+{
+  if (include_edit_menu)
+    fprintf(fd, "(if (not (provided? 'snd-edit-menu.scm)) (load-from-path \"edit-menu.scm\"))\n"); /* ok for either case */
+}
+
+static void edit_menu_toggle(prefs_info *prf)
+{
+  include_edit_menu = GET_TOGGLE(prf->toggle);
+}
+
+static void reflect_edit_menu(prefs_info *prf) 
+{
+  SET_TOGGLE(prf->toggle, find_edit_menu());
+}
+
+/* ---------------- marks menu ---------------- */
+
+static bool include_marks_menu = false;
+
+static bool find_marks_menu(void)
+{
+  return(XEN_DEFINED_P("marks-menu"));
+}
+
+static void marks_menu_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This option adds a top-level 'Marks' menu that includes such things as play between marks, \
+trim, crop, define selection via marks, etc",
+	   WITH_WORD_WRAP);
+}
+
+static void save_marks_menu(prefs_info *prf, FILE *fd)
+{
+  if (include_marks_menu)
+    fprintf(fd, "(if (not (provided? 'snd-marks-menu.scm)) (load-from-path \"marks-menu.scm\"))\n");
+}
+
+static void marks_menu_toggle(prefs_info *prf)
+{
+  include_marks_menu = GET_TOGGLE(prf->toggle);
+}
+
+static void reflect_marks_menu(prefs_info *prf) 
+{
+  SET_TOGGLE(prf->toggle, find_marks_menu());
+}
+
+/* ---------------- mix menu ---------------- */
+
+static bool include_mix_menu = false;
+
+static void mix_menu_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This option adds a top-level 'Mix/Track' menu.  Included are such choices as delete mix, \
+snap mix to beat, delete, play, reverse, save, and transpose track, set track amplitude, speed, and tempo, etc.",
+	   WITH_WORD_WRAP);
+}
+
+static bool find_mix_menu(void)
+{
+  return(XEN_DEFINED_P("mix-menu"));
+}
+
+static void save_mix_menu(prefs_info *prf, FILE *fd)
+{
+  if (include_mix_menu)
+    fprintf(fd, "(if (not (provided? 'snd-mix-menu.scm)) (load-from-path \"mix-menu.scm\"))\n");
+}
+
+static void mix_menu_toggle(prefs_info *prf)
+{
+  include_mix_menu = GET_TOGGLE(prf->toggle);
+}
+
+static void reflect_mix_menu(prefs_info *prf) 
+{
+  SET_TOGGLE(prf->toggle, find_mix_menu());
+}
+
+#if USE_MOTIF
+/* ---------------- icon box ---------------- */
+
+static bool include_icon_box = false;
+
+static void icon_box_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This option adds a top-level box full of various handy icons.  Not implemented in Gtk yet.",
+	   WITH_WORD_WRAP);
+}
+
+static bool find_icon_box(void)
+{
+  return(XEN_DEFINED_P("add-useful-icons"));
+}
+
+static void save_icon_box(prefs_info *prf, FILE *fd)
+{
+  if (include_icon_box)
+    fprintf(fd, "(if (not (provided? 'snd-new-buttons.scm)) (load-from-path \"new-buttons.scm\"))\n");
+}
+
+static void icon_box_toggle(prefs_info *prf)
+{
+  include_icon_box = GET_TOGGLE(prf->toggle);
+}
+
+static void reflect_icon_box(prefs_info *prf) 
+{
+  SET_TOGGLE(prf->toggle, find_icon_box());
+}
+#endif
+#endif
+
+/* ---------------- reopen menu ---------------- */
+
+static bool include_reopen_menu = false;
+
+static void reopen_menu_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This option adds a top-level 'Reopen' menu. Previously opened sounds that are not currently open are listed \
+as menu items.",
+	   WITH_WORD_WRAP);
+}
+
+static bool find_reopen_menu(void)
+{
+  return((XEN_DEFINED_P("including-reopen-menu")) &&
+	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-reopen-menu")));
+}
+
+static void save_reopen_menu_1(prefs_info *prf, FILE *fd)
+{
+#if HAVE_SCHEME
+  fprintf(fd, "(if (provided? 'snd-extensions) (load-from-path \"extensions.scm\"))\n");
+  fprintf(fd, "(with-reopen-menu)\n");
+#endif
+#if HAVE_RUBY
+  fprintf(fd, "require \"extensions\"\n");
+  fprintf(fd, "with_reopen_menu\n");
+#endif
+#if HAVE_FORTH
+  fprintf(fd, "require extensions\n");
+  fprintf(fd, "with-reopen-menu\n");
+#endif
+}
+
+static void save_reopen_menu(prefs_info *prf, FILE *fd)
+{
+  if (include_reopen_menu) save_reopen_menu_1(prf, fd);
+}
+
+static void reopen_menu_toggle(prefs_info *prf)
+{
+  include_reopen_menu = GET_TOGGLE(prf->toggle);
+}
+
+static void reflect_reopen_menu(prefs_info *prf) 
+{
+  SET_TOGGLE(prf->toggle, find_reopen_menu());
+}
+
+
+#if USE_MOTIF
+/* ---------------- mark-pane ---------------- */
+
+static bool include_mark_pane = false;
+
+static void mark_pane_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This option adds a pane to each channel window containing information about that channel's marks.",
+	   WITH_WORD_WRAP);
+}
+
+static bool find_mark_pane(void)
+{
+  return((XEN_DEFINED_P("including-mark-pane")) &&
+	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-mark-pane")));
+}
+
+static void save_mark_pane_1(prefs_info *prf, FILE *fd)
+{
+#if HAVE_SCHEME
+  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-snd-motif.scm))\n        (load-from-path \"snd-motif.scm\"))\n    (if (not (provided? 'snd-snd-gtk.scm))\n        (load-from-path \"snd-gtk.scm\")))\n");
+  fprintf(fd, "(add-mark-pane)\n");
+#endif
+#if HAVE_RUBY
+  fprintf(fd, "require \"snd-xm\"\n");
+  fprintf(fd, "add_mark_pane\n");
+#endif
+#if HAVE_FORTH
+  fprintf(fd, "require snd-xm\n");
+  fprintf(fd, "add-mark-pane\n");
+#endif
+}
+
+static void reflect_mark_pane(prefs_info *prf) 
+{
+  include_mark_pane = find_mark_pane();
+  SET_TOGGLE(prf->toggle, include_mark_pane);
+}
+
+static void mark_pane_toggle(prefs_info *prf)
+{
+  include_mark_pane = GET_TOGGLE(prf->toggle);
+}
+
+static void save_mark_pane(prefs_info *prf, FILE *fd)
+{
+  if (include_mark_pane)
+    save_mark_pane_1(prf, fd);
+}
+#endif
+
+
+#if HAVE_SCHEME
+/* ---------------- hidden controls dialog ---------------- */
+
+static bool include_hidden_controls = false;
+
+static void hidden_controls_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This adds a 'Hidden Controls' option to the Option menu.  The dialog \
+gives access to all the synthesis variables that aren't reflected in the standard \
+control panel: 'expand-hop' sets the hop size (per grain), 'expand-length' \
+sets the grain length, 'expand-ramp' sets the slope of the grain amplitude envelope, \
+'contrast-amp' sets the prescaler for the contrast effect, 'reverb-feedback' sets the feedback \
+amount in the reverberator (it sets all the comb filter scalers), and 'reverb-lowpass' sets \
+the lowpass filter coefficient in the reverberator.",
+	   WITH_WORD_WRAP);
+}
+
+static bool find_hidden_controls(void)
+{
+  return((XEN_DEFINED_P("hidden-controls-dialog")) &&
+	 (XEN_NOT_FALSE_P(XEN_NAME_AS_C_STRING_TO_VALUE("hidden-controls-dialog"))));
+}
+
+static void save_hidden_controls(prefs_info *prf, FILE *fd)
+{
+  if (include_hidden_controls)
+    {
+      fprintf(fd, "(if (not (provided? 'snd-snd-motif.scm)) (load-from-path \"snd-motif.scm\"))\n");
+      fprintf(fd, "(make-hidden-controls-dialog)\n");
+    }
+}
+
+static void hidden_controls_toggle(prefs_info *prf)
+{
+  include_hidden_controls = GET_TOGGLE(prf->toggle);
+}
+
+static void reflect_hidden_controls(prefs_info *prf) 
+{
+  SET_TOGGLE(prf->toggle, find_hidden_controls());
+}
+#endif
+
+
+#if HAVE_GUILE
+/* ---------------- debugging aids ---------------- */
+
+static bool include_debugging_aids = false;
+
+static bool find_debugging_aids(void)
+{
+  return((XEN_DEFINED_P("snd-break")) && 
+	 (XEN_DEFINED_P("untrace-stack")));
+}
+
+static void reflect_debugging_aids(prefs_info *prf) 
+{
+  SET_TOGGLE(prf->toggle, find_debugging_aids());
+}
+
+static void debugging_aids_toggle(prefs_info *prf)
+{
+  include_debugging_aids = GET_TOGGLE(prf->toggle);
+}
+
+static void save_debugging_aids(prefs_info *prf, FILE *fd)
+{
+  if (include_debugging_aids)
+    {
+      fprintf(fd, "(use-modules (ice-9 debug) (ice-9 session))\n");
+#if HAVE_SCM_OBJECT_TO_STRING
+      /* 1.6 or later -- not sure 1.4 etc can handle these things */
+      fprintf(fd, "(debug-set! stack 0)\n");
+      fprintf(fd, "(debug-enable 'debug 'backtrace)\n");
+      fprintf(fd, "(read-enable 'positions)\n");
+#endif
+      fprintf(fd, "(if (not (provided? 'snd-debug.scm)) (load-from-path \"debug.scm\"))\n");
+    }
+}
+#endif
+
+/* ---------------- smpte ---------------- */
+
+static bool include_smpte = false;
+
+static void smpte_label_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This option adds a label to the time domain graph showing the current SMPTE frame of the leftmost sample.",
+	   WITH_WORD_WRAP);
+}
+
+static bool find_smpte(void)
+{
+#if HAVE_SCHEME 
+  return((XEN_DEFINED_P("smpte-is-on")) && 
+	 (!(XEN_FALSE_P(XEN_EVAL_C_STRING("(smpte-is-on)"))))); /* "member" of hook-list -> a list if successful */ 
+#else 
+  return((XEN_DEFINED_P("smpte-is-on")) && 
+	 XEN_TO_C_BOOLEAN(XEN_EVAL_C_STRING(TO_PROC_NAME("smpte-is-on")))); /* "member" of hook-list -> true */ 
+#endif 
+}
+
+static void save_smpte_1(prefs_info *prf, FILE *fd)
+{
+#if HAVE_SCHEME
+  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-snd-motif.scm))\n        (load-from-path \"snd-motif.scm\"))\n    (if (not (provided? 'snd-snd-gtk.scm))\n        (load-from-path \"snd-gtk.scm\")))\n");
+  fprintf(fd, "(show-smpte-label #t)\n");
+#endif
+#if HAVE_RUBY
+  fprintf(fd, "require \"snd-xm\"\n");
+  fprintf(fd, "show_smpte_label(true)\n");
+#endif
+#if HAVE_FORTH
+  fprintf(fd, "require snd-xm\n");
+  fprintf(fd, "#t show-smpte-label\n");
+#endif
+}
+
+static void reflect_smpte(prefs_info *prf) 
+{
+  SET_TOGGLE(prf->toggle, find_smpte());
+}
+
+static void smpte_toggle(prefs_info *prf)
+{
+  include_smpte = GET_TOGGLE(prf->toggle);
+}
+
+static void save_smpte(prefs_info *prf, FILE *fd)
+{
+  if (include_smpte) save_smpte_1(prf, fd);
+}
+
+
+/* ---------------- remember-sound-state ---------------- */
+
+static int global_remember_sound_state_choice = 0; /* 0=none, 1=local, 2=global+not local, 3=local+global */
+
+static void remember_sound_state_choice_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This option causes Snd to save most of a sound's display state when it is closed, \
+and if that same sound is later re-opened, Snd restores the previous state. Not fully implemented yet.",
+	   WITH_WORD_WRAP);
+}
+
+static int find_remember_sound_state_choice(void)
+{
+  if (XEN_DEFINED_P("remembering-sound-state"))
+    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("remembering-sound-state")));
+  return(0);
+}
+
+static void save_remember_sound_state_choice_1(prefs_info *prf, FILE *fd, int choice)
+{
+#if HAVE_SCHEME
+  fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
+  fprintf(fd, "(remember-sound-state %d)\n", choice);
+#endif
+#if HAVE_RUBY
+  fprintf(fd, "require \"extensions\"\n");
+  if (choice & 2)
+    fprintf(fd, "remember_all_sound_properties\n");
+  else fprintf(fd, "remember_sound_state\n");
+#endif
+#if HAVE_FORTH
+  fprintf(fd, "require extensions\n");
+  fprintf(fd, "%d remember-sound-state\n", choice);
+#endif
+}
+
+static void reflect_remember_sound_state_choice(prefs_info *prf)
+{
+  global_remember_sound_state_choice = find_remember_sound_state_choice();
+  SET_TOGGLE(prf->toggle, global_remember_sound_state_choice & 1);
+  SET_TOGGLE(prf->toggle2, global_remember_sound_state_choice & 2);
+}
+
+static void save_remember_sound_state_choice(prefs_info *prf, FILE *fd)
+{
+  if (global_remember_sound_state_choice != 0)
+    save_remember_sound_state_choice_1(prf, fd, global_remember_sound_state_choice);
+}
+
+static void remember_sound_state_1_choice(prefs_info *prf)
+{
+  if (GET_TOGGLE(prf->toggle))
+    global_remember_sound_state_choice |= 1;
+  else global_remember_sound_state_choice &= 2;
+}
+
+static void remember_sound_state_2_choice(prefs_info *prf)
+{
+  if (GET_TOGGLE(prf->toggle2))
+    global_remember_sound_state_choice |= 2;
+  else global_remember_sound_state_choice &= 1;
+}
+
+
+
+
+
+
+
 
 
 
@@ -3200,14 +3946,6 @@ find elsewhere.",
 	   WITH_WORD_WRAP);
 }
 
-static void remember_sound_state_choice_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option causes Snd to save most of a sound's display state when it is closed, \
-and if that same sound is later re-opened, Snd restores the previous state. Not fully implemented yet.",
-	   WITH_WORD_WRAP);
-}
-
 static void peak_env_help(prefs_info *prf)
 {
   snd_help(prf->var_name,
@@ -3218,67 +3956,6 @@ and it resides in the 'peak-env-directory'.",
 	   WITH_WORD_WRAP);
 }
 
-static void context_sensitive_popup_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option creates a context-sensitive popup menu (activated by button 3).  The menu \
-displayed depends on where the mouse is at the time; there are special menus for the waveform and fft \
-portions of the graphs, the listener, the edit history pane, and the current selection.",
-	   WITH_WORD_WRAP);
-}
-
-static void effects_menu_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option creates a top-level menu named 'Effects'.  The effects include such things as \
-reverberation, reversal, normalizations, gains and envelopes, inversion, echos, flanging, companding, \
-filtering, padding, cross synthesis, and so on.",
-	   WITH_WORD_WRAP);
-}
-
-#if HAVE_SCHEME
-static void edit_menu_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option adds several options to the top-level Edit menu: selection to file, \
-append selection, mono to stereo, trim, crop, etc.",
-	   WITH_WORD_WRAP);
-}
-
-static void marks_menu_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option adds a top-level 'Marks' menu that includes such things as play between marks, \
-trim, crop, define selection via marks, etc",
-	   WITH_WORD_WRAP);
-}
-
-static void mix_menu_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option adds a top-level 'Mix/Track' menu.  Included are such choices as delete mix, \
-snap mix to beat, delete, play, reverse, save, and transpose track, set track amplitude, speed, and tempo, etc.",
-	   WITH_WORD_WRAP);
-}
-
-#if USE_MOTIF
-static void icon_box_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option adds a top-level box full of various handy icons.  Not implemented in Gtk yet.",
-	   WITH_WORD_WRAP);
-}
-#endif
-#endif
-
-static void reopen_menu_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option adds a top-level 'Reopen' menu. Previously opened sounds that are not currently open are listed \
-as menu items.",
-	   WITH_WORD_WRAP);
-}
-
 static void initial_bounds_help(prefs_info *prf)
 {
   snd_help(prf->var_name,
@@ -3286,59 +3963,6 @@ static void initial_bounds_help(prefs_info *prf)
 sets either new bounds for that display, or directs Snd to display the entire sound.",
 	   WITH_WORD_WRAP);
 }
-
-static void with_sound_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "with-sound is the main CLM sound-producing macro.  If you want to use CLM functions to create \
-new sounds, then edit them in Snd, include with-sound.",
-	   WITH_WORD_WRAP);
-}
-
-#if HAVE_SCHEME
-static void hidden_controls_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This adds a 'Hidden Controls' option to the Option menu.  The dialog \
-gives access to all the synthesis variables that aren't reflected in the standard \
-control panel: 'expand-hop' sets the hop size (per grain), 'expand-length' \
-sets the grain length, 'expand-ramp' sets the slope of the grain amplitude envelope, \
-'contrast-amp' sets the prescaler for the contrast effect, 'reverb-feedback' sets the feedback \
-amount in the reverberator (it sets all the comb filter scalers), and 'reverb-lowpass' sets \
-the lowpass filter coefficient in the reverberator.",
-	   WITH_WORD_WRAP);
-}
-#endif
-
-static void clm_file_name_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option sets the default output file name used by with-sound.",
-	   WITH_WORD_WRAP);
-}
-
-static void clm_table_size_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option sets the default clm table size and file buffer size.",
-	   WITH_WORD_WRAP);
-}
-
-static void smpte_label_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option adds a label to the time domain graph showing the current SMPTE frame of the leftmost sample.",
-	   WITH_WORD_WRAP);
-}
-
-#if USE_MOTIF
-static void mark_pane_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option adds a pane to each channel window containing information about that channel's marks.",
-	   WITH_WORD_WRAP);
-}
-#endif
 
 static void play_from_cursor_help(prefs_info *prf)
 {
@@ -3399,24 +4023,6 @@ static void show_selection_help(prefs_info *prf)
 
 /* ---------------- save functions ---------------- */
 
-static void save_remember_sound_state_choice_1(prefs_info *prf, FILE *fd, int choice)
-{
-#if HAVE_SCHEME
-  fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
-  fprintf(fd, "(remember-sound-state %d)\n", choice);
-#endif
-#if HAVE_RUBY
-  fprintf(fd, "require \"extensions\"\n");
-  if (choice & 2)
-    fprintf(fd, "remember_all_sound_properties\n");
-  else fprintf(fd, "remember_sound_state\n");
-#endif
-#if HAVE_FORTH
-  fprintf(fd, "require extensions\n");
-  fprintf(fd, "%d remember-sound-state\n", choice);
-#endif
-}
-
 static void save_peak_envs_1(prefs_info *prf, FILE *fd, char *pdir)
 {
 #if HAVE_SCHEME
@@ -3433,48 +4039,6 @@ static void save_peak_envs_1(prefs_info *prf, FILE *fd, char *pdir)
   fprintf(fd, "require peak-env\n");
   if (pdir)
     fprintf(fd, "$\" %s\" to save-peak-env-info-directory\n", pdir);
-#endif
-}
-
-static void save_context_sensitive_popup_1(prefs_info *prf, FILE *fd)
-{
-#if HAVE_SCHEME
-  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-popup.scm))\n        (load-from-path \"popup.scm\"))\n    (if (not (provided? 'snd-gtk-popup.scm))\n	(load-from-path \"gtk-popup.scm\")))\n");
-#endif
-#if HAVE_RUBY
-  fprintf(fd, "require \"popup\"\n");
-#endif
-#if HAVE_FORTY
-  fprintf(fd, "require popup\n");
-#endif
-}
-
-static void save_effects_menu_1(prefs_info *prf, FILE *fd)
-{
-#if HAVE_SCHEME
-  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-new-effects.scm))\n        (load-from-path \"new-effects.scm\"))\n    (if (not (provided? 'snd-gtk-effects.scm))\n	(load-from-path \"gtk-effects.scm\")))\n");
-#endif
-#if HAVE_RUBY
-  fprintf(fd, "require \"effects\"\n");
-#endif
-#if HAVE_FORTH
-  fprintf(fd, "require effects\n");
-#endif
-}
-
-static void save_reopen_menu_1(prefs_info *prf, FILE *fd)
-{
-#if HAVE_SCHEME
-  fprintf(fd, "(if (provided? 'snd-extensions) (load-from-path \"extensions.scm\"))\n");
-  fprintf(fd, "(with-reopen-menu)\n");
-#endif
-#if HAVE_RUBY
-  fprintf(fd, "require \"extensions\"\n");
-  fprintf(fd, "with_reopen_menu\n");
-#endif
-#if HAVE_FORTH
-  fprintf(fd, "require extensions\n");
-  fprintf(fd, "with-reopen-menu\n");
 #endif
 }
 
@@ -3524,40 +4088,6 @@ static void save_initial_bounds(prefs_info *prf, FILE *fd)
       /* code repeated to make emacs' paren matcher happy */
     }
 }
-
-static void save_smpte_1(prefs_info *prf, FILE *fd)
-{
-#if HAVE_SCHEME
-  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-snd-motif.scm))\n        (load-from-path \"snd-motif.scm\"))\n    (if (not (provided? 'snd-snd-gtk.scm))\n        (load-from-path \"snd-gtk.scm\")))\n");
-  fprintf(fd, "(show-smpte-label #t)\n");
-#endif
-#if HAVE_RUBY
-  fprintf(fd, "require \"snd-xm\"\n");
-  fprintf(fd, "show_smpte_label(true)\n");
-#endif
-#if HAVE_FORTH
-  fprintf(fd, "require snd-xm\n");
-  fprintf(fd, "#t show-smpte-label\n");
-#endif
-}
-
-#if USE_MOTIF
-static void save_mark_pane_1(prefs_info *prf, FILE *fd)
-{
-#if HAVE_SCHEME
-  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-snd-motif.scm))\n        (load-from-path \"snd-motif.scm\"))\n    (if (not (provided? 'snd-snd-gtk.scm))\n        (load-from-path \"snd-gtk.scm\")))\n");
-  fprintf(fd, "(add-mark-pane)\n");
-#endif
-#if HAVE_RUBY
-  fprintf(fd, "require \"snd-xm\"\n");
-  fprintf(fd, "add_mark_pane\n");
-#endif
-#if HAVE_FORTH
-  fprintf(fd, "require snd-xm\n");
-  fprintf(fd, "add-mark-pane\n");
-#endif
-}
-#endif
 
 
 /* -------- key: play all chans from cursor -------- */
@@ -3820,34 +4350,6 @@ static void bind_show_selection(prefs_info *prf)
 
 /* ---------------- find functions ---------------- */
 
-static char *find_clm_file_name(void)
-{
-  XEN val;
-  val = prefs_variable_get("*clm-file-name*");
-  if (XEN_STRING_P(val))
-    return(XEN_TO_C_STRING(val));
-  return(NULL);
-}
-
-static void set_clm_file_name(const char *str)
-{
-  prefs_variable_set(str, C_TO_XEN_STRING(str));
-}
-
-static int find_clm_table_size(void)
-{
-  XEN size;
-  size = prefs_variable_get("*clm-table-size*");
-  return(XEN_TO_C_INT_OR_ELSE(size, 512));
-}
-
-static int find_clm_file_buffer_size(void)
-{
-  XEN size;
-  size = prefs_variable_get("*clm-file-buffer-size*");
-  return(XEN_TO_C_INT_OR_ELSE(size, 65536));
-}
-
 static char *find_sources(void) /* returns full filename if found else null */
 {
   XEN file;
@@ -3893,97 +4395,8 @@ static char *find_sources(void) /* returns full filename if found else null */
   return(NULL);
 }
 
-static int find_remember_sound_state_choice(void)
-{
-  if (XEN_DEFINED_P("remembering-sound-state"))
-    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("remembering-sound-state")));
-  return(0);
-}
-
 static bool find_peak_envs(void)
 {
   return((XEN_DEFINED_P("save-peak-env-info?")) &&
 	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info?")));
 }
-
-static bool find_context_sensitive_popup(void)
-{
-  return(XEN_DEFINED_P("edhist-help-edits")); /* defined in both cases */
-}
-
-static bool find_effects_menu(void)
-{
-  return(XEN_DEFINED_P("effects-menu"));
-}
-
-#if HAVE_SCHEME
-static bool find_edit_menu(void)
-{
-  return(XEN_DEFINED_P("make-stereofile")); /* a kludge... currently this is only defined in edit-menu.scm */
-}
-
-static bool find_marks_menu(void)
-{
-  return(XEN_DEFINED_P("marks-menu"));
-}
-
-static bool find_mix_menu(void)
-{
-  return(XEN_DEFINED_P("mix-menu"));
-}
-
-#if USE_MOTIF
-static bool find_icon_box(void)
-{
-  return(XEN_DEFINED_P("add-useful-icons"));
-}
-#endif
-#endif
-
-static bool find_reopen_menu(void)
-{
-  return((XEN_DEFINED_P("including-reopen-menu")) &&
-	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-reopen-menu")));
-}
-
-static bool find_smpte(void)
-{
-#if HAVE_SCHEME 
-  return((XEN_DEFINED_P("smpte-is-on")) && 
-	 (!(XEN_FALSE_P(XEN_EVAL_C_STRING("(smpte-is-on)"))))); /* "member" of hook-list -> a list if successful */ 
-#else 
-  return((XEN_DEFINED_P("smpte-is-on")) && 
-	 XEN_TO_C_BOOLEAN(XEN_EVAL_C_STRING(TO_PROC_NAME("smpte-is-on")))); /* "member" of hook-list -> true */ 
-#endif 
-}
-
-#if HAVE_SCHEME
-static bool find_hidden_controls(void)
-{
-  return((XEN_DEFINED_P("hidden-controls-dialog")) &&
-	 (XEN_NOT_FALSE_P(XEN_NAME_AS_C_STRING_TO_VALUE("hidden-controls-dialog"))));
-}
-#endif
-
-#if USE_MOTIF
-static bool find_mark_pane(void)
-{
-  return((XEN_DEFINED_P("including-mark-pane")) &&
-	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-mark-pane")));
-}
-#endif
-
-#if HAVE_GUILE
-static bool find_debugging_aids(void)
-{
-  return((XEN_DEFINED_P("snd-break")) && 
-	 (XEN_DEFINED_P("untrace-stack")));
-}
-#endif
-
-
-
-
-
-
-

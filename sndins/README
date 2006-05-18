@@ -4,10 +4,11 @@
 
 The C/XEN library `libsndins.so' provides the instrument FM-VIOLIN and
 the reverberators JC-REVERB, NREV, and FREEVERB to use them in longer
-notelists in Snd/Guile and Snd/Ruby.  They are not so fast as the
-ffi-lisp versions, at least not on my machine, but they run much
-faster than the Scheme or Ruby variants.  In addition I have added the
-FCOMB example from sndscm.html which is used in freeverb.
+notelists in Snd/Guile, Snd/Gauche, Snd/Ruby, or Snd/Forth.  They are
+not so fast as Lisp's FFI versions, at least not on my machine, but
+they run much faster than the Scheme, Ruby, or Forth variants.  In
+addition I have added the FCOMB example from sndscm.html which is used
+in freeverb.
 
 The library is based on Bill Schottstaedt's `xen' and `sndlib'
 libraries and the Snd editor itself.  Thank you for these great music
@@ -15,8 +16,8 @@ programs and libraries!
 
 * XEN-Instruments
 
-The following generator and instruments are accessible from Guile or
-Ruby.
+The following generator and instruments are accessible from Scheme,
+Ruby and Forth.
 
 ** make-fcomb, fcomb?, and fcomb
 
@@ -24,37 +25,43 @@ These are the examples from sndscm.html.
 
 *** (make-fcomb (:scaler 0.0) (:size 1) (:a0 0.0) (:a1 0.0))
 *** make_fcomb(:scaler, 0.0, :size, 1, :a0, 0.0, :a1, 0.0)
+*** make-fcomb ( :scaler 0.0 :size 1 :a0 0.0 :a1 0.0 -- gen )
 
-Returns a new fcomb generator.
+Return a new fcomb generator.
 
 *** (fcomb? gen)
 *** fcomb?(gen)
+*** fcomb? ( gen -- f )
 
-Tests if gen is an fcomb generator.
+Test if GEN is an fcomb generator.
 
 *** (fcomb gen (input 0.0))
-*** fcomb(gen[, input = 0.0])
+*** fcomb(gen[, input=0.0])
+*** fcomb ( gen input=0.0 -- result )
 
-Returns the next value of the fcomb generator gen.
+Return the next value of the fcomb generator GEN.
 
 *** (mus-describe gen)
 *** gen.to_s
+*** object->string ( gen -- str )
 
-Shows the inspect string of the fcomb gen.
+Show the inspect string of the fcomb GEN.
 
 *** (mus-length gen)
 *** gen.length
+*** mus-length ( gen -- len )
 
-Shows length of delay line.
+Show length of delay line.
 
-*** (mus-scaler gen) (set! (mus-scaler gen) val)
-*** gen.scaler       set_mus_scaler(gen, val)
+*** (mus-scaler gen)            (set! (mus-scaler gen) scl)
+*** gen.scaler                  set_mus_scaler(gen, scl)
+*** mus-scaler ( gen -- scl )   set-mus-scaler ( gen scl -- scl )
 
-Shows the scaler value, settable.
+Show the scaler value, settable.
 
 ** fm-violin
 
-Keyword options for fm-violin (v.ins, v.scm, examp.rb).
+Keyword options for fm-violin (v.ins, v.scm, examp.rb, clm-ins.fs).
 
 *** (:startime 0.0)			    :startime, 0.0,
 *** (:duration 1.0)			    :duration, 1.0,
@@ -92,7 +99,8 @@ Keyword options for fm-violin (v.ins, v.scm, examp.rb).
 
 ** jc-reverb
 
-Keyword options for jc-reverb (jcrev.ins, jcrev.scm, examp.rb).
+Keyword options for jc-reverb (jcrev.ins, jcrev.scm, examp.rb,
+clm-ins.fs).
 
 *** (:startime 0.0)           		    :startime, 0.0,
 *** (:duration #f)	      		    :duration, nil,
@@ -150,8 +158,7 @@ like output channels.
 
 * C-Instruments
 
-The following generator and instruments are accessible from C (or
-Gforth).
+The following functions are accessible from C.
 
 ** mus_any *mus_make_fcomb(Float scaler, int size, Float a0, Float a1);
 
@@ -192,111 +199,165 @@ Gforth).
 	    int *combtuning, int comb_len, int *allpasstuning, int all_len,
 	    mus_any *output_mixer, mus_any *out, mus_any *rev);
 
+* Prerequisite	    
+
+Sndins depends on a configured and compiled, but not necessary
+installed, libsndlib.a one directory in the hierarchy above sndins.
+Configuring sndlib from sndlib.tar.gz creates a Makefile in
+sndlib/sndins, sndlib's config.h is needed as well and the compiled
+sndlib/libsndlib.a will be linked in sndlib/sndins/libsndins.*
+
+* Compilation
+
+Running Sndlib's configure script in sndlib path creates
+sndins/Makefile from sndins/Makefile.in so we can use the configured
+variables from Sndlib.  Then one can cd to sndins and run make.
+Again: Sndlib must be configured before!
+
+    cd sndins
+    make
+
 * Installation
 
-After running `configure' and `make' in the normal sndlib directory
-you can cd to sndins and run
+** Guile	
 
+You can install libsndlib.so and libsndins.so to ${prefix}/lib with
+the usual `make install' command.  Again: Sndlib must be configured
+before!
+
+    cd ${compile_sndlib_dir}
     make
-    make install (as root)
+    make install
+    cd sndins
+    make
+    make install
 
 The library path should be in your LD_LIBRARY_PATH, e.g. if you have
-installed the library in /usr/gnu/lib.:
+installed the library in the unusual path /usr/gnu/lib., you can add
+it by:
 
-	(csh) setenv LD_LIBRARY_PATH /usr/gnu/lib:$LD_LIBRARY_PATH
+	(csh) setenv LD_LIBRARY_PATH /usr/gnu/lib:${LD_LIBRARY_PATH}
 
-	(sh)  LD_LIBRARY_PATH=/usr/gnu/lib:$LD_LIBRARY_PATH; export LD_LIBRARY_PATH
+	(sh)  LD_LIBRARY_PATH=/usr/gnu/lib:${LD_LIBRARY_PATH}; export LD_LIBRARY_PATH
 
-In Snd/Guile you can add the line
+In Snd/Guile one can add to the ~/.snd(_guile) init file:
 
-	(load-extension "libsndins" "init_sndins")
+(if (provided? 'snd)
+    (begin
+      (if (not (provided? 'sndlib))
+	  (let ((hsndlib (dlopen "sndlib.so")))
+	    (if (string? hsndlib)
+		(snd-error (format #f "script needs the sndlib module: ~A" hsndlib))
+		(dlinit hsndlib "Init_sndlib"))))
+      (if (not (provided? 'sndins))
+	  (let ((hsndins (dlopen "sndins.so")))
+	    (if (string? hsndins)
+		(snd-error (format #f "script needs the sndins module: ~A" hsndins))
+		(dlinit hsndins "Init_sndins")))))
+    (begin
+      (if (not (provided? 'sndlib)) (load-extension "libsndlib" "Init_sndlib"))
+      (if (not (provided? 'sndins)) (load-extension "libsndins" "Init_sndins"))))
 
-in your ~/.snd init file or wherever you need it if the library is
-installed in a proper directory.
+** Gauche
 
-I set symlinks from libsndlib.so and libsndins.so to the ruby library
-path, i.e.
+You can install sndlib.so and sndins.so in the gauche library path, e.g.
 
-ln -s $(prefix)/lib/libsndlib.so $(prefix)/lib/ruby/site_ruby/1.9/i686-freebsd5.1/sndlib.so
-ln -s $(prefix)/lib/libsndins.so $(prefix)/lib/ruby/site_ruby/1.9/i686-freebsd5.1/sndins.so
+    cd ${compile_sndlib_dir}
+    make
+    install -c sndlib.so ${prefix}/lib/gauche/site/0.8.7/i686-socrates-freebsd5.1/
+    cd sndins
+    make
+    install -c sndins.so ${prefix}/lib/gauche/site/0.8.7/i686-socrates-freebsd5.1/
 
-So in Snd/Ruby one can add the line
+In Snd/Gauche one can add to the ~/.snd(_gauche) init file:
 
-      	require "sndlib"
-	require "sndins"
+    (if (not (provided? 'sndlib))
+        (dynamic-load "sndlib" :init-function "Init_sndlib" :export-symbols #t))
+    (if (not (provided? 'sndins))
+        (dynamic-load "sndins" :init-function "Init_sndins" :export-symbols #t))
 
-in ~/.snd init.
+** Ruby
+
+You can install sndlib.so and sndins.so in the ruby library path, e.g.
+
+    cd ${compile_sndlib_dir}
+    make
+    install -c sndlib.so ${prefix}/lib/ruby/site_ruby/1.9/i686-freebsd5.1/
+    cd sndins
+    make
+    install -c sndins.so ${prefix}/lib/ruby/site_ruby/1.9/i686-freebsd5.1/
+
+So in Snd/Ruby one can add to the ~/.snd(_ruby) init file:
+
+    require "sndlib"
+    require "sndins"
+
+** Forth
+
+Installing so-libs in Forth is possible with these command lines:
+
+    cd ${compile_sndlib_dir}
+    make
+    fth --verbose --no-init --eval "install sndlib.so"
+    cd sndins
+    make
+    fth --verbose --no-init --eval "install sndins.so"
+
+These lines install the libraries in $(prefix)/lib/fth where FTH will
+look for so-libs at first.
+
+Then in Snd/Forth one can add to the ~/.snd(_forth) init file:
+
+    dl-load sndlib Init_sndlib
+    dl-load sndins Init_sndins
 
 * Samples
 
-The four scripts in sndins/samples may run outside in a shell and
-inside Snd too.  If you have compiled and installed the Guile sndlib
-and sndins libraries, you can type
+You can load the sample files into Snd and with Ruby and Forth you can
+test them in a shell too.  One may set with-sound variables in agn.*
+and fmviolin.* files.
 
-	./agn.scm [ outfile.clm ]
-	./fmviolin.scm [ -s ]
+The agn.* files are translations of clm-2/clm-example.clm into Scheme,
+Ruby, and Forth as a test case.
 
-The default outfile is agn.clm (or agn.rbm in Ruby).  A different
-outfile name should end in *.clm (or in *.rbm). The option -s can be
-everything, its only meaning is to choose the (short-example), without
-an option (long-example) is chosen.
+The fmviolin.* files are translations of clm-2/fmviolin.clm into
+Scheme, Ruby, and Forth as a test case.
+
+** Scheme (Guile, Gauche)
+
+You can load the *.scm scripts into Snd.  If you have compiled and
+installed the Scheme sndlib and sndins libraries, you can type
+
+    (do-agn)                  ;; agn.scm
+    (short-example)           ;; fmviolin.scm
+    (long-example)            ;; fmviolin.scm
+
+** Ruby
 
 If you have compiled and installed the Ruby sndlib and sndins
+libraries, you can type in a shell
+
+    ./agn.rb [ outfile.rbm ]
+    ./fmviolin.rb [ -s ]
+
+The default outfile is agn.rbm.  A different outfile name may end
+in *.rbm.  The option -s can be everything, its only meaning is to
+choose the short_example, without an option long_example is chosen.
+
+You can load these scripts into Snd too.
+
+** Forth
+
+If you have compiled and installed the Forth sndlib and sndins
 libraries, you can type
 
-        ./agn.rb [ outfile.rbm ]
-        ./fmviolin.rb [ -s ]
+    ./agn.fth [ outfile.fsm ]
+    ./fmviolin.fth [ -s ]
 
-The options are like above.
+The default outfile is agn.fsm.  A different outfile name should end
+in *.fsm.  The option -s can be everything, its only meaning is to
+choose the short-example, without an option long-example is chosen.
 
-You can set some variables in fmviolin.* to change the channels,
-srate, reverb function etc.
-
-** agn.scm, agn.rb
-
-Translation of clm-2/clm-example.clm into Guile and Ruby as a test
-case.
-
-** fmviolin.scm, fmviolin.rb
-
-Translation of clm-2/fmviolin.clm into Guile and Ruby as a test case.
-
-** ws_s.scm
-
-Simple with-sound for running the Guile examples outside Snd.
-
-* Emacs Fontifying for C-, Scheme-, SND-Guile-, and Lisp-Mode
-
-The following font variables and functions are set in my .emacs file.
-
-(setq c-font-lock-extra-types
-      (append '("Float" "XEN" "mus_any" "mus_xen") c-font-lock-extra-types))
-
-(font-lock-add-keywords
- 'scheme-mode
- '(("(\\(definstrument\\|run\\)\\>\\s-*(?\\(\\sw+\\)?"
-    (1 font-lock-keyword-face)
-    (2 (cond ((match-beginning 1) font-lock-function-name-face)
-	     ((match-beginning 2) font-lock-variable-name-face)
-	     (t font-lock-type-face))
-       nil t))))
-
-(font-lock-add-keywords
- 'snd-guile-mode
- '(("(\\(definstrument\\|run\\)\\>\\s-*(?\\(\\sw+\\)?"
-    (1 font-lock-keyword-face)
-    (2 (cond ((match-beginning 1) font-lock-function-name-face)
-	     ((match-beginning 2) font-lock-variable-name-face)
-	     (t font-lock-type-face))
-       nil t))))
-
-(font-lock-add-keywords
- 'lisp-mode
- '(("(\\(def[p]?instrument\\|def-optkey-fun\\|run\\|let\\*?\\)\\>\\s-*(?\\(\\sw+\\)?"
-    (1 font-lock-keyword-face)
-    (2 (cond ((match-beginning 1) font-lock-function-name-face)
-	     ((match-beginning 2) font-lock-variable-name-face)
-	     (t font-lock-type-face))
-       nil t))))
+You can load these scripts into Snd too.
 
 * README ends here

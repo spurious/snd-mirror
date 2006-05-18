@@ -2650,6 +2650,8 @@
 (CSTR-290 "GTK_STOCK_ORIENTATION_REVERSE_LANDSCAPE")
 (CSTR-290 "GTK_STOCK_SELECT_ALL")
 
+(CSTR-29x "GTK_STOCK_ORIENTATION_REVERSE_PORTRAIT")
+
 (CCAST "GTK_STYLE(object)" "GtkStyle*")
 (CCHK "GTK_IS_STYLE(object)" "GtkStyle*")
 ;(CCAST2 "GTK_STYLE_ATTACHED(style)")
@@ -5658,10 +5660,10 @@
 (CINT-290 "GTK_RECENT_FILTER_AGE" "GtkRecentFilterFlags")
 (CINT-290 "GTK_RECENT_MANAGER_ERROR_NOT_FOUND" "GtkRecentManagerError")
 (CINT-290 "GTK_RECENT_MANAGER_ERROR_INVALID_URI" "GtkRecentManagerError")
-(CINT-290 "GTK_RECENT_MANAGER_ERROR_INVALID_MIME" "GtkRecentManagerError")
+;out 2.9.1 (CINT-290 "GTK_RECENT_MANAGER_ERROR_INVALID_MIME" "GtkRecentManagerError")
 (CINT-290 "GTK_RECENT_MANAGER_ERROR_INVALID_ENCODING" "GtkRecentManagerError")
 (CINT-290 "GTK_RECENT_MANAGER_ERROR_NOT_REGISTERED" "GtkRecentManagerError")
-(CINT-290 "GTK_RECENT_MANAGER_ERROR_BAD_EXEC_STRING" "GtkRecentManagerError")
+;out 2.9.1 (CINT-290 "GTK_RECENT_MANAGER_ERROR_BAD_EXEC_STRING" "GtkRecentManagerError")
 (CINT-290 "GTK_RECENT_MANAGER_ERROR_READ" "GtkRecentManagerError")
 (CINT-290 "GTK_RECENT_MANAGER_ERROR_WRITE" "GtkRecentManagerError")
 (CINT-290 "GTK_RECENT_MANAGER_ERROR_UNKNOWN" "GtkRecentManagerError")
@@ -5895,3 +5897,9 @@
 (CFNC-290 "GdkAtom* gtk_text_buffer_get_deserialize_formats GtkTextBuffer* buffer gint* n_formats")
 (CFNC-290 "guint8* gtk_text_buffer_serialize GtkTextBuffer* register_buffer GtkTextBuffer* content_buffer GdkAtom format GtkTextIter* start GtkTextIter* end gsize* length")
 (CFNC-290 "gboolean gtk_text_buffer_deserialize GtkTextBuffer* register_buffer GtkTextBuffer* content_buffer GdkAtom format GtkTextIter* iter guint8* data gsize length GError** [error]")
+
+
+;;; 29x just collected for now, not output to xg.c
+(CINT-29x "GTK_MESSAGE_OTHER" "GtkMessageType")
+;(CFNC-29x "void gtk_message_dialog_set_image GtkMessageDialog* dialog GtkWidget* image")
+;; messagedialog is commented out above so this needs to wait until it is "real"

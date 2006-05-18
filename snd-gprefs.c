@@ -1485,38 +1485,6 @@ static void va_post_prefs_error(const char *msg, void *data, ...)
 }
 
 
-/* ---------------- remember sound state ---------------- */
-
-static int global_remember_sound_state_choice = 0; /* 0=none, 1=local, 2=global+not local, 3=local+global */
-
-static void reflect_remember_sound_state_choice(prefs_info *prf)
-{
-  global_remember_sound_state_choice = find_remember_sound_state_choice();
-  set_toggle_button(prf->toggle, global_remember_sound_state_choice & 1, false, (void *)prf);
-  set_toggle_button(prf->toggle2, global_remember_sound_state_choice & 2, false, (void *)prf);
-}
-
-static void save_remember_sound_state_choice(prefs_info *prf, FILE *fd)
-{
-  if (global_remember_sound_state_choice != 0)
-    save_remember_sound_state_choice_1(prf, fd, global_remember_sound_state_choice);
-}
-
-static void remember_sound_state_1_choice(prefs_info *prf)
-{
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)))
-    global_remember_sound_state_choice |= 1;
-  else global_remember_sound_state_choice &= 2;
-}
-
-static void remember_sound_state_2_choice(prefs_info *prf)
-{
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle2)))
-    global_remember_sound_state_choice |= 2;
-  else global_remember_sound_state_choice &= 1;
-}
-
-
 /* ---------------- peak-envs ---------------- */
 
 static bool include_peak_envs = false;
@@ -1655,126 +1623,6 @@ static void load_path_text(prefs_info *prf)
 }
 
 
-/* ---------------- context sensitive popup ---------------- */
-
-static bool include_context_sensitive_popup = false;
-
-static void save_context_sensitive_popup(prefs_info *prf, FILE *fd)
-{
-  if (include_context_sensitive_popup) save_context_sensitive_popup_1(prf, fd);
-}
-
-static void context_sensitive_popup_toggle(prefs_info *prf)
-{
-  include_context_sensitive_popup = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-}
-
-static void reflect_context_sensitive_popup(prefs_info *prf) 
-{
-  set_toggle_button(prf->toggle, find_context_sensitive_popup(), false, (void *)prf);
-}
-
-/* ---------------- effects menu ---------------- */
-
-static bool include_effects_menu = false;
-
-static void save_effects_menu(prefs_info *prf, FILE *fd)
-{
-  if (include_effects_menu) save_effects_menu_1(prf, fd);
-}
-
-static void effects_menu_toggle(prefs_info *prf)
-{
-  include_effects_menu = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-}
-
-static void reflect_effects_menu(prefs_info *prf) 
-{
-  set_toggle_button(prf->toggle, find_effects_menu(), false, (void *)prf);
-}
-
-#if HAVE_SCHEME
-/* ---------------- edit menu ---------------- */
-
-static bool include_edit_menu = false;
-
-static void save_edit_menu(prefs_info *prf, FILE *fd)
-{
-  if (include_edit_menu)
-    fprintf(fd, "(if (not (provided? 'snd-edit-menu.scm)) (load-from-path \"edit-menu.scm\"))\n");
-}
-
-static void edit_menu_toggle(prefs_info *prf)
-{
-  include_edit_menu = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-}
-
-static void reflect_edit_menu(prefs_info *prf) 
-{
-  set_toggle_button(prf->toggle, find_edit_menu(), false, (void *)prf);
-}
-
-/* ---------------- marks menu ---------------- */
-
-static bool include_marks_menu = false;
-
-static void save_marks_menu(prefs_info *prf, FILE *fd)
-{
-  if (include_marks_menu)
-    fprintf(fd, "(if (not (provided? 'snd-marks-menu.scm)) (load-from-path \"marks-menu.scm\"))\n");
-}
-
-static void marks_menu_toggle(prefs_info *prf)
-{
-  include_marks_menu = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-}
-
-static void reflect_marks_menu(prefs_info *prf) 
-{
-  set_toggle_button(prf->toggle, find_marks_menu(), false, (void *)prf);
-}
-
-/* ---------------- mix menu ---------------- */
-
-static bool include_mix_menu = false;
-
-static void save_mix_menu(prefs_info *prf, FILE *fd)
-{
-  if (include_mix_menu)
-    fprintf(fd, "(if (not (provided? 'snd-mix-menu.scm)) (load-from-path \"mix-menu.scm\"))\n");
-}
-
-static void mix_menu_toggle(prefs_info *prf)
-{
-  include_mix_menu = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-}
-
-static void reflect_mix_menu(prefs_info *prf) 
-{
-  set_toggle_button(prf->toggle, find_mix_menu(), false, (void *)prf);
-}
-#endif
-
-/* ---------------- reopen menu ---------------- */
-
-static bool include_reopen_menu = false;
-
-static void save_reopen_menu(prefs_info *prf, FILE *fd)
-{
-  if (include_reopen_menu) save_reopen_menu_1(prf, fd);
-}
-
-static void reopen_menu_toggle(prefs_info *prf)
-{
-  include_reopen_menu = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-}
-
-static void reflect_reopen_menu(prefs_info *prf) 
-{
-  set_toggle_button(prf->toggle, find_reopen_menu(), false, (void *)prf);
-}
-
-
 /* ---------------- initial bounds ---------------- */
 
 static void reflect_initial_bounds(prefs_info *prf)
@@ -1908,26 +1756,6 @@ static void x_axis_style_from_text(prefs_info *prf)
     }
   else post_prefs_error("need an axis style", (void *)prf);
 }
-
-/* ---------------- smpte ---------------- */
-
-static bool include_smpte = false;
-
-static void reflect_smpte(prefs_info *prf) 
-{
-  set_toggle_button(prf->toggle, find_smpte(), false, (void *)prf);
-}
-
-static void smpte_toggle(prefs_info *prf)
-{
-  include_smpte = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-}
-
-static void save_smpte(prefs_info *prf, FILE *fd)
-{
-  if (include_smpte) save_smpte_1(prf, fd);
-}
-
 
 /* ---------------- transform-type ---------------- */
 
@@ -2097,175 +1925,6 @@ static void colormap_from_text(prefs_info *prf)
   else post_prefs_error("no colormap?", (void *)prf);
 }
 
-
-/* ---------------- include with-sound ---------------- */
-
-static bool include_with_sound = false;
-static char *include_clm_file_name = NULL;
-static int include_clm_file_buffer_size = 65536;
-static int include_clm_table_size = 512;
-
-static bool with_sound_is_loaded(void)
-{
-  return(XEN_DEFINED_P("with-sound"));
-}
-
-static void reflect_with_sound(prefs_info *prf) 
-{
-  include_with_sound = with_sound_is_loaded();
-  set_toggle_button(prf->toggle, include_with_sound, false, (void *)prf);
-}
-
-static void with_sound_toggle(prefs_info *prf)
-{
-  include_with_sound = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle));
-}
-
-static void save_with_sound(prefs_info *prf, FILE *fd)
-{
-  if (include_with_sound)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-ws.scm)) (load-from-path \"ws.scm\"))\n");
-      if (include_clm_file_name)
-	fprintf(fd, "(set! *clm-file-name* \"%s\")\n", include_clm_file_name);
-      if (include_clm_file_buffer_size != 65536)
-	fprintf(fd, "(set! *clm-file-buffer-size* %d)\n", include_clm_file_buffer_size);
-      if (include_clm_table_size != 512)
-	fprintf(fd, "(set! *clm-table-size* %d)\n", include_clm_table_size);
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "require \"ws\"\n");
-      if (include_clm_file_name)
-	fprintf(fd, "$clm_file_name = \"%s\"\n", include_clm_file_name);
-      if (include_clm_file_buffer_size != 65536)
-	fprintf(fd, "$clm_file_buffer_size = %d\n", include_clm_file_buffer_size);
-      if (include_clm_table_size != 512)
-	fprintf(fd, "$clm_table_size = %d\n", include_clm_table_size);
-#endif
-#if HAVE_FORTH
-      fprintf(fd, "require clm\n");
-      if (include_clm_file_name)
-	fprintf(fd, "$\" %s\" to *clm-file-name*\n", include_clm_file_name);
-      if (include_clm_file_buffer_size != 65536)
-	fprintf(fd, "%d to *clm-file-buffer-size*\n", include_clm_file_buffer_size);
-      if (include_clm_table_size != 512)
-	fprintf(fd, "%d to *clm-table-size*\n", include_clm_table_size);
-#endif
-    }
-}
-
-#if HAVE_SCHEME
-/* ---------------- hidden controls dialog ---------------- */
-
-static bool include_hidden_controls = false;
-
-static void save_hidden_controls(prefs_info *prf, FILE *fd)
-{
-  if (include_hidden_controls)
-    {
-      fprintf(fd, "(if (not (provided? 'snd-snd-motif.scm)) (load-from-path \"snd-motif.scm\"))\n");
-      fprintf(fd, "(make-hidden-controls-dialog)\n");
-    }
-}
-
-static void hidden_controls_toggle(prefs_info *prf)
-{
-  include_hidden_controls = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-}
-
-static void reflect_hidden_controls(prefs_info *prf) 
-{
-  set_toggle_button(prf->toggle, find_hidden_controls(), false, (void *)prf);
-}
-#endif
-
-/* ---------------- clm file name ---------------- */
-
-static void clm_file_name_text(prefs_info *prf)
-{
-  char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((str) && (*str))
-    {
-      include_with_sound = true;
-      if (include_clm_file_name) FREE(include_clm_file_name); /* save is done after we're sure with-sound is loaded */
-      include_clm_file_name = copy_string(str);
-      set_clm_file_name(str);
-    }
-}
-
-static void reflect_clm_file_name(prefs_info *prf)
-{
-  sg_entry_set_text(GTK_ENTRY(prf->text), find_clm_file_name());
-}
-
-/* ---------------- clm sizes ---------------- */
-
-static void reflect_clm_sizes(prefs_info *prf)
-{
-  include_clm_table_size = find_clm_table_size();
-  int_to_textfield(prf->text, include_clm_table_size);
-  include_clm_file_buffer_size = find_clm_file_buffer_size();
-  int_to_textfield(prf->rtxt, include_clm_file_buffer_size);
-}
-
-static void clm_sizes_text(prefs_info *prf)
-{
-  char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if (str)
-    {
-      int size = 0;
-      include_with_sound = true;
-      sscanf(str, "%d", &size);
-      if (size > 0)
-	include_clm_table_size = size;
-      else int_to_textfield(prf->text, include_clm_table_size);
-    }
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->rtxt));
-  if ((str) && (*str))
-    {
-      int size = 0;
-      include_with_sound = true;
-      sscanf(str, "%d", &size);
-      if (size > 0)
-	include_clm_file_buffer_size = size;
-      else int_to_textfield(prf->rtxt, include_clm_file_buffer_size);
-    }
-}
-
-
-#if HAVE_GUILE
-/* ---------------- debugging aids ---------------- */
-
-static bool include_debugging_aids = false;
-
-static void reflect_debugging_aids(prefs_info *prf) 
-{
-  set_toggle_button(prf->toggle, find_debugging_aids(), false, (void *)prf);
-}
-
-static void debugging_aids_toggle(prefs_info *prf)
-{
-  include_debugging_aids = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle));
-}
-
-static void save_debugging_aids(prefs_info *prf, FILE *fd)
-{
-  if (include_debugging_aids)
-    {
-      fprintf(fd, "(use-modules (ice-9 debug) (ice-9 session))\n");
-#if HAVE_SCM_OBJECT_TO_STRING
-      /* 1.6 or later -- not sure 1.4 etc can handle these things */
-      fprintf(fd, "(debug-set! stack 0)\n");
-      fprintf(fd, "(debug-enable 'debug 'backtrace)\n");
-      fprintf(fd, "(read-enable 'positions)\n");
-#endif
-      fprintf(fd, "(if (not (provided? 'snd-debug.scm)) (load-from-path \"debug.scm\"))\n");
-    }
-}
-#endif
 
 
 
@@ -3186,12 +2845,12 @@ widget_t start_preferences_dialog(void)
     clm_box = make_top_level_box(topics);
     clm_label = make_top_level_label("clm", clm_box);
 
-    include_with_sound = with_sound_is_loaded();
+    rts_with_sound = with_sound_is_loaded();
     prf = prefs_row_with_toggle("include with-sound", "with-sound",
-				include_with_sound,
+				rts_with_sound,
 				clm_box,
 				with_sound_toggle);
-    remember_pref(prf, reflect_with_sound, save_with_sound, with_sound_help, NULL, NULL);
+    remember_pref(prf, reflect_with_sound, save_with_sound, help_with_sound, clear_with_sound, revert_with_sound);
 
     current_sep = make_inter_variable_separator(clm_box);
     str = mus_format("%d", rts_speed_control_tones = speed_control_tones(ss));
@@ -3222,18 +2881,21 @@ widget_t start_preferences_dialog(void)
     FREE(str);
 
     current_sep = make_inter_variable_separator(clm_box);
-    prf = prefs_row_with_text("with-sound default output file name", "*clm-file-name*", find_clm_file_name(),
+    rts_clm_file_name = copy_string(find_clm_file_name());
+    prf = prefs_row_with_text("with-sound default output file name", "*clm-file-name*", rts_clm_file_name,
 			      clm_box,
 			      clm_file_name_text);
-    remember_pref(prf, reflect_clm_file_name, NULL, clm_file_name_help, NULL, NULL);
+    remember_pref(prf, reflect_clm_file_name, save_clm_file_name, help_clm_file_name, clear_clm_file_name, revert_clm_file_name);
 
     current_sep = make_inter_variable_separator(clm_box);
+    rts_clm_table_size = find_clm_table_size();
+    rts_clm_file_buffer_size = find_clm_file_buffer_size();
     prf = prefs_row_with_two_texts("sizes", "*clm-table-size*",
 				   "wave table:", NULL, "file buffer:", NULL, 8,
 				   clm_box,
 				   clm_sizes_text);
     reflect_clm_sizes(prf);
-    remember_pref(prf, reflect_clm_sizes, NULL, clm_table_size_help, NULL, NULL);
+    remember_pref(prf, reflect_clm_sizes, save_clm_sizes, help_clm_sizes, clear_clm_sizes, revert_clm_sizes);
   }
 
   current_sep = make_inter_topic_separator(topics);

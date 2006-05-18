@@ -4,18 +4,17 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Fri Oct 18 11:29:08 CEST 2002
-# Last: Sat Dec 11 03:52:33 CET 2004
+# Changed: Wed May 03 19:26:18 CEST 2006
 
 # This file is part of Sndins.
 
 # Commentary:
 
-# A translation from Lisp into Ruby of Bill Schottstaedt's
-# clm-2/fmviolin.clm.
+# A translation of Bill Schottstaedt's clm-3/fmviolin.clm from Lisp
+# into Ruby.
 
-# Type short_example or
-#      long_example
-# or start the script in a shell by ./fmviolin.rb
+# short_example
+# long_example
 
 # Code:
 
@@ -23,18 +22,16 @@ require "examp"
 require "ws"
 require "sndins"
 
-$rbm_file_name = "rtest.snd"
-$rbm_play = 1
-$rbm_statistics = true
-$rbm_verbose = true
-$rbm_srate = 22050
-$rbm_channels = 2
-$rbm_reverb_func = :freeverb
-$rbm_reverb_data = [:room_decay, 0.8]
-$rbm_reverb_channels = 2
-$rbm_delete_reverb = true
-$rbm_locsig_type = Mus_interp_sinusoidal
-# Mus_interp_linear or Mus_interp_sinusoidal
+$clm_file_name = "test-ins-r.snd"
+$clm_play = true
+$clm_statistics = true
+$clm_verbose = true
+$clm_srate = 22050
+$clm_channels = 2
+$clm_reverb = :freeverb
+$clm_reverb_data = [:room_decay, 0.8]
+$clm_reverb_channels = 2
+$clm_delete_reverb = true
 
 # show progress of long example
 $show = true
@@ -68,9 +65,9 @@ def restore_fm_violin_defaults
   $fm1_rat                    = 1.0
   $fm2_rat                    = 3.0
   $fm3_rat                    = 4.0
-  $fm1_index                  = 0.0
-  $fm2_index                  = 0.0
-  $fm3_index                  = 0.0
+  $fm1_index                  = false
+  $fm2_index                  = false
+  $fm3_index                  = false
   $base                       = 0.0
   $degree                     = 0.0
   $distance                   = 1.0
@@ -116,11 +113,11 @@ end
 
 def vln_one_sin(start, dur, freq, amp, *args)
   old_fm_violin(start, dur, freq, amp * 0.125,
-                *args + [:degree, rbm_random(90.0), :noise_amount, 0.0])
+                *args + [:degree, random(90.0), :noise_amount, 0.0])
 end
 
 def vln_one_sin_ran(start, dur, freq, amp, *args)
-  old_fm_violin(start, dur, freq, amp * 0.125, *args + [:degree, rbm_random(90.0)])
+  old_fm_violin(start, dur, freq, amp * 0.125, *args + [:degree, random(90.0)])
 end
 
 def vln_one_sin_exp(start, dur, freq, amp, *args)
@@ -131,7 +128,7 @@ alias violin vln_one_sin
 
 def cel_one_sum(start, dur, freq, amp, *args)
   old_fm_violin(start, dur, freq, amp * 0.125,
-                *args + [:degree, rbm_random(90.0), :index_type, CELLO])
+                *args + [:degree, random(90.0), :index_type, CELLO])
 end
 
 restore_fm_violin_defaults()
@@ -141,20 +138,20 @@ def violin_new(beg, dur, freq, amp, *args)
   amp_env       = get_args(args, :amp_env, [0, 0, 221, 1, 240, 0])
   reverb_amount = get_args(args, :reverb_amount, 0.2)
   nfreq = if(freq > 400.0)
-            freq * (0.99 + 0.02 * rbm_random(1.0))
+            freq * (0.99 + 0.02 * random(1.0))
           else
             if(freq > 200.0)
-              freq * (0.995 + 0.01 * rbm_random(1.0))
+              freq * (0.995 + 0.01 * random(1.0))
             else
-              freq * (0.999 + 0.002 * rbm_random(1.0))
+              freq * (0.999 + 0.002 * random(1.0))
             end
           end
   6.times do |i|
-    fm_violin(beg + i * 0.05 * rbm_random(1.0),
-              dur + i * 0.1 * rbm_random(1.0),
+    fm_violin(beg + i * 0.05 * random(1.0),
+              dur + i * 0.1 * random(1.0),
               nfreq, amp,
               :reverb_amount, reverb_amount,
-              :fm_index, fm_index * (0.75 + rbm_random(1.0)),
+              :fm_index, fm_index * (0.75 + random(1.0)),
               :amp_env, amp_env)
   end
 end
@@ -181,7 +178,7 @@ def long_example
   st = my_times
   trace_var(:$t) do |t|
     i += 1
-    message("%2d:   score %3d   utime %8.3f", i, t, my_times.utime - st.utime) if $show
+    message("%2d: score %3d utime %8.3f", i, t, my_times.utime - st.utime) if $show
   end
   with_sound do
     tap = [0, 0, 1, 1, 99, 1, 100, 0]
@@ -1183,110 +1180,102 @@ def long_example
                     :fm_index, 1.1140, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
     vln_one_sin_ran($t + 0.5050, 2.4900, 859.5863, 0.0083, 
                     :fm_index, 0.5890, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    $t += 1.0
-    vln_one_sin_ran($t + 0.0590, 1.0550, 1758.0816, 0.0053,
+    vln_one_sin_ran($t + 1.0590, 1.0550, 1758.0816, 0.0053,
                     :fm_index, 1.8640, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.0930, 1.8580, 229.0566, 0.0110,
+    vln_one_sin_ran($t + 1.0930, 1.8580, 229.0566, 0.0110,
                     :fm_index, 1.9690, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.3490, 3.3680, 479.1994, 0.0083,
+    vln_one_sin_ran($t + 1.3490, 3.3680, 479.1994, 0.0083,
                     :fm_index, 1.9970, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.5010, 3.0680, 411.8241, 0.0110,
+    vln_one_sin_ran($t + 1.5010, 3.0680, 411.8241, 0.0110,
                     :fm_index, 1.5390, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.5200, 2.8290, 984.8456, 0.0053,
+    vln_one_sin_ran($t + 1.5200, 2.8290, 984.8456, 0.0053,
                     :fm_index, 0.0560, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.6100, 0.7040, 1767.7444, 0.0053,
+    vln_one_sin_ran($t + 1.6100, 0.7040, 1767.7444, 0.0053,
                     :fm_index, 1.2620, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.8480, 3.0510, 859.7203, 0.0083,
+    vln_one_sin_ran($t + 1.8480, 3.0510, 859.7203, 0.0083,
                     :fm_index, 1.6080, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    $t += 1.0
-    vln_one_sin_ran($t + 0.4880, 3.2350, 231.9431, 0.0110,
+    vln_one_sin_ran($t + 2.4880, 3.2350, 231.9431, 0.0110,
                     :fm_index, 0.9690, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.5610, 3.2810, 475.2009, 0.0083,
+    vln_one_sin_ran($t + 2.5610, 3.2810, 475.2009, 0.0083,
                     :fm_index, 0.3740, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.7970, 2.8400, 988.8375, 0.0053,
+    vln_one_sin_ran($t + 2.7970, 2.8400, 988.8375, 0.0053,
                     :fm_index, 0.4200, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    $t += 1.0
-    vln_one_sin_ran($t + 0.0620, 1.0210, 411.7247, 0.0110,
+    vln_one_sin_ran($t + 3.0620, 1.0210, 411.7247, 0.0110,
                     :fm_index, 0.1370, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.2130, 1.1610, 848.5959, 0.0083,
+    vln_one_sin_ran($t + 3.2130, 1.1610, 848.5959, 0.0083,
                     :fm_index, 1.3120, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.4410, 2.6160, 390.0600, 0.0110,
+    vln_one_sin_ran($t + 3.4410, 2.6160, 390.0600, 0.0110,
                     :fm_index, 1.9030, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.4490, 0.7000, 802.3538, 0.0083,
+    vln_one_sin_ran($t + 3.4490, 0.7000, 802.3538, 0.0083,
                     :fm_index, 1.5940, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.5270, 2.5080, 1773.9366, 0.0053,
+    vln_one_sin_ran($t + 3.5270, 2.5080, 1773.9366, 0.0053,
                     :fm_index, 1.8030, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.7820, 2.7990, 232.4344, 0.0110,
+    vln_one_sin_ran($t + 3.7820, 2.7990, 232.4344, 0.0110,
                     :fm_index, 0.0590, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.7830, 2.7660, 1650.1434, 0.0053,
+    vln_one_sin_ran($t + 3.7830, 2.7660, 1650.1434, 0.0053,
                     :fm_index, 0.4400, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.7890, 3.1560, 475.7231, 0.0083,
+    vln_one_sin_ran($t + 3.7890, 3.1560, 475.7231, 0.0083,
                     :fm_index, 0.7370, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    $t += 1.0
-    vln_one_sin_ran($t + 0.1540, 2.1290, 976.0237, 0.0053,
+    vln_one_sin_ran($t + 4.1540, 2.1290, 976.0237, 0.0053,
                     :fm_index, 1.2690, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.4890, 3.3650, 390.0525, 0.0110,
+    vln_one_sin_ran($t + 4.4890, 3.3650, 390.0525, 0.0110,
                     :fm_index, 1.4580, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.7450, 1.5070, 1665.9722, 0.0053,
+    vln_one_sin_ran($t + 4.7450, 1.5070, 1665.9722, 0.0053,
                     :fm_index, 1.9330, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.8320, 1.4430, 798.1238, 0.0083,
+    vln_one_sin_ran($t + 4.8320, 1.4430, 798.1238, 0.0083,
                     :fm_index, 0.8560, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.9440, 3.1560, 229.0528, 0.0110,
+    vln_one_sin_ran($t + 4.9440, 3.1560, 229.0528, 0.0110,
                     :fm_index, 1.8300, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    $t += 1.0
-    vln_one_sin_ran($t + 0.3930, 1.1100, 473.7225, 0.0083,
+    vln_one_sin_ran($t + 5.3930, 1.1100, 473.7225, 0.0083,
                     :fm_index, 1.6260, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.6970, 1.6170, 988.7953, 0.0053,
+    vln_one_sin_ran($t + 5.6970, 1.6170, 988.7953, 0.0053,
                     :fm_index, 0.4230, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    $t += 1.0
-    vln_one_sin_ran($t + 0.0620, 1.3190, 390.9769, 0.0110,
+    vln_one_sin_ran($t + 6.0620, 1.3190, 390.9769, 0.0110,
                     :fm_index, 0.4100, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.0840, 3.3660, 804.6413, 0.0083,
+    vln_one_sin_ran($t + 6.0840, 3.3660, 804.6413, 0.0083,
                     :fm_index, 1.8760, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.1740, 2.7210, 418.6819, 0.0110,
+    vln_one_sin_ran($t + 6.1740, 2.7210, 418.6819, 0.0110,
                     :fm_index, 0.0910, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.5700, 3.4460, 845.4019, 0.0077,
+    vln_one_sin_ran($t + 6.5700, 3.4460, 845.4019, 0.0077,
                     :fm_index, 0.7660, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.6440, 1.1790, 1656.5756, 0.0049,
+    vln_one_sin_ran($t + 6.6440, 1.1790, 1656.5756, 0.0049,
                     :fm_index, 0.2960, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.6600, 2.8520, 1758.9788, 0.0049,
+    vln_one_sin_ran($t + 6.6600, 2.8520, 1758.9788, 0.0049,
                     :fm_index, 0.4520, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.8270, 1.8840, 387.0009, 0.0099,
+    vln_one_sin_ran($t + 6.8270, 1.8840, 387.0009, 0.0099,
                     :fm_index, 1.3010, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.8870, 3.4040, 796.7213, 0.0077,
+    vln_one_sin_ran($t + 6.8870, 3.4040, 796.7213, 0.0077,
                     :fm_index, 1.1820, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.9640, 3.3230, 416.3916, 0.0099,
+    vln_one_sin_ran($t + 6.9640, 3.3230, 416.3916, 0.0099,
                     :fm_index, 0.6290, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    $t += 1.0
-    vln_one_sin_ran($t + 0.1320, 1.7050, 1637.2303, 0.0049,
+    vln_one_sin_ran($t + 7.1320, 1.7050, 1637.2303, 0.0049,
                     :fm_index, 1.0570, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.15, 3.1250, 1762.4906, 0.0049,
+    vln_one_sin_ran($t + 7.15, 3.1250, 1762.4906, 0.0049,
                     :fm_index, 1.3170, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.3860, 2.9670, 852.0487, 0.0077,
+    vln_one_sin_ran($t + 7.3860, 2.9670, 852.0487, 0.0077,
                     :fm_index, 1.4790, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.6670, 0.6780, 413.7094, 0.0099,
+    vln_one_sin_ran($t + 7.6670, 0.6780, 413.7094, 0.0099,
                     :fm_index, 0.9470, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.8780, 2.7490, 1749.7509, 0.0049,
+    vln_one_sin_ran($t + 7.8780, 2.7490, 1749.7509, 0.0049,
                     :fm_index, 0.5040, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.9730, 0.5990, 848.1253, 0.0077,
+    vln_one_sin_ran($t + 7.9730, 0.5990, 848.1253, 0.0077,
                     :fm_index, 1.9380, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
-    $t += 1.0
-    vln_one_sin_ran($t + 0.0880, 3.3360, 229.9144, 0.0099,
+    vln_one_sin_ran($t + 8.0880, 3.3360, 229.9144, 0.0099,
                     :fm_index, 1.3930, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.1170, 1.1300, 984.0816, 0.0049,
+    vln_one_sin_ran($t + 8.1170, 1.1300, 984.0816, 0.0049,
                     :fm_index, 0.3560, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.4640, 1.7330, 478.7184, 0.0077,
+    vln_one_sin_ran($t + 8.4640, 1.7330, 478.7184, 0.0077,
                     :fm_index, 0.2840, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.5760, 0.5680, 413.4253, 0.0099,
+    vln_one_sin_ran($t + 8.5760, 0.5680, 413.4253, 0.0099,
                     :fm_index, 1.5020, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.8200, 1.2150, 230.9588, 0.0099,
+    vln_one_sin_ran($t + 8.8200, 1.2150, 230.9588, 0.0099,
                     :fm_index, 1.0990, :reverb_amount, 0.1, :amp_env, z1amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.8320, 3.4590, 473.8903, 0.0077,
+    vln_one_sin_ran($t + 8.8320, 3.4590, 473.8903, 0.0077,
                     :fm_index, 0.7680, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
-    vln_one_sin_ran($t + 0.8320, 0.7260, 857.2875, 0.0077,
+    vln_one_sin_ran($t + 8.8320, 0.7260, 857.2875, 0.0077,
                     :fm_index, 0.7520, :reverb_amount, 0.1, :amp_env, z2amp, :noise_amount, 0.0050)
 
-    $t += 4.0
+    $t += 12.0
     indfunc = [0, 1, 20, 0, 100, 0]
     indfunc2 = [0, 1, 90, 1, 100, 0]
     ampfunc = [0, 1, 6, 1, 10, 0.5000, 20, 0.3630, 30, 0.2700, 40, 0.2, 
@@ -1295,55 +1284,48 @@ def long_example
     restore_fm_violin_defaults()
     violin($t + 0.2600, 0.0500, 80, 0.8, 
            :fm_index, 5, :reverb_amount, 0, :amp_env, ampfunc1, :fm1_env, indfunc2)
-    $t += 1.0
-    violin($t + 0.2610, 0.2, 80, 0.8,
+    violin($t + 1.2610, 0.2, 80, 0.8,
            :fm_index, 4, :reverb_amount, 0, :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    $t += 1.0
-    violin($t + 0.2600, 0.0500, 80, 0.8,
+    violin($t + 2.2600, 0.0500, 80, 0.8,
            :fm_index, 5, :reverb_amount, 0, :amp_env, ampfunc1, :fm1_env, indfunc2) 
-    violin($t + 0.2620, 0.2, 80, 0.8,
+    violin($t + 2.2620, 0.2, 80, 0.8,
            :fm_index, 5, :reverb_amount, 0, :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    $t += 1.0
-    violin($t + 0.2600, 0.0500, 80, 0.8,
+    violin($t + 3.2600, 0.0500, 80, 0.8,
            :fm_index, 6, :reverb_amount, 0, :amp_env, ampfunc1, :fm1_env, indfunc2) 
-    violin($t + 0.2630, 0.2, 80, 0.8,
+    violin($t + 3.2630, 0.2, 80, 0.8,
            :fm_index, 6, :reverb_amount, 0, :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    $t += 1.0
-    violin($t + 0.2600, 0.0500, 80, 0.3,
+    violin($t + 4.2600, 0.0500, 80, 0.3,
            :fm_index, 4, :reverb_amount, 0, :amp_env, ampfunc1, :fm1_env, indfunc2) 
-    violin($t + 0.2620, 0.1, 160, 0.3,
+    violin($t + 4.2620, 0.1, 160, 0.3,
            :fm_index, 4, :reverb_amount, 0, :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 0.2620, 0.2500, 80, 0.8,
+    violin($t + 4.2620, 0.2500, 80, 0.8,
            :fm_index, 4, :reverb_amount, 0, :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    $t += 1.0
-    violin($t + 0.2600, 0.0500, 80, 0.5000,
+    violin($t + 5.2600, 0.0500, 80, 0.5000,
            :fm_index, 4, :reverb_amount, 0, :amp_env, ampfunc1, :fm1_env, indfunc2)
-    violin($t + 0.2610, 0.1, 210, 0.3,
+    violin($t + 5.2610, 0.1, 210, 0.3,
            :fm_index, 4, :reverb_amount, 0, :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 0.2620, 0.2, 80, 0.1,
+    violin($t + 5.2620, 0.2, 80, 0.1,
            :fm_index, 4, :reverb_amount, 0, :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 0.2630, 0.2500, 320, 0.1,
+    violin($t + 5.2630, 0.2500, 320, 0.1,
            :fm_index, 2, :reverb_amount, 0, :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    $t += 1.0
-    violin($t + 0.2600, 0.0500, 80, 0.8,
+    violin($t + 6.2600, 0.0500, 80, 0.8,
            :fm_index, 4, :reverb_amount, 0, :amp_env, ampfunc1, :fm1_env, indfunc2) 
-    violin($t + 0.2610, 0.1, 210, 0.1,
+    violin($t + 6.2610, 0.1, 210, 0.1,
            :fm_index, 2, :reverb_amount, 0, :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 0.2620, 0.2, 80, 0.2,
+    violin($t + 6.2620, 0.2, 80, 0.2,
            :fm_index, 4, :reverb_amount, 0, :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 0.2630, 0.2500, 320, 0.3,
+    violin($t + 6.2630, 0.2500, 320, 0.3,
            :reverb_amount, 0, :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875) 
-    $t += 1.0
-    violin($t + 0.2600, 0.0500, 80, 0.8,
+    violin($t + 7.2600, 0.0500, 80, 0.8,
            :fm_index, 2, :reverb_amount, 0, :amp_env, ampfunc1, :fm1_env, indfunc2) 
-    violin($t + 0.2610, 0.1, 210, 0.1,
+    violin($t + 7.2610, 0.1, 210, 0.1,
            :fm_index, 2, :reverb_amount, 0, :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 0.2620, 0.2, 80, 0.2,
+    violin($t + 7.2620, 0.2, 80, 0.2,
            :fm_index, 2, :reverb_amount, 0, :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 0.2630, 0.2500, 320, 0.3,
+    violin($t + 7.2630, 0.2500, 320, 0.3,
            :reverb_amount, 0, :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
 
-    $t += 1.0
+    $t += 8.0
     $glissando_amount = 0.0
     $noise_amount = 0.004
     $fm1_rat = 3.141
@@ -1430,94 +1412,85 @@ def long_example
                     :amp_env, [0, 0, 3.2082, 1, 4.3311, 0.7, 4.8123, 1, 96.7918, 0.7895, 100, 0])
     vln_one_sin_exp($t + 0.9810, 3.5670, 123.4710, 0.0420, :fm_index, 0.2330,
                     :amp_env, [0, 0, 2.8035, 1, 3.7847, 0.7, 4.2052, 1.0, 97.1965, 0.8095, 100, 0])
-    $t += 1.0
-    vln_one_sin_exp($t + 0.1280, 1.0450, 246.9420, 0.0170, :fm_index, 1.2050,
+    vln_one_sin_exp($t + 1.1280, 1.0450, 246.9420, 0.0170, :fm_index, 1.2050,
                     :amp_env, [0, 0, 9.5694, 1, 12.9187, 0.7, 14.3541, 1, 90.4306, 0.5294, 100, 0])
-    vln_one_sin_exp($t + 0.2550, 3.3870, 374.1370, 0.0170, :fm_index, 0.1800,
+    vln_one_sin_exp($t + 1.2550, 3.3870, 374.1370, 0.0170, :fm_index, 0.1800,
                     :amp_env, [0, 0, 2.9525, 1.0, 3.9858, 0.7, 4.4287, 1, 97.0475, 0.5294, 100, 0])
-    vln_one_sin_exp($t + 0.2990, 8.3050, 1576.9120, 0.0200, :fm_index, 0.2990,
+    vln_one_sin_exp($t + 1.2990, 8.3050, 1576.9120, 0.0200, :fm_index, 0.2990,
                     :amp_env, [0, 0, 1.2041, 1, 1.6255, 0.7, 1.8061, 1, 98.7959, 0.6, 100, 0])
-    vln_one_sin_exp($t + 0.3300, 4.4630, 246.9420, 0.0170, :fm_index, 0.0020,
+    vln_one_sin_exp($t + 1.3300, 4.4630, 246.9420, 0.0170, :fm_index, 0.0020,
                     :amp_env, [0, 0, 2.2406, 1, 3.0249, 0.7, 3.3610, 1.0, 97.7594, 0.5294, 100, 0])
-    vln_one_sin_exp($t + 0.6600, 8.9940, 1576.9120, 0.0200, :fm_index, 0.2990,
+    vln_one_sin_exp($t + 1.6600, 8.9940, 1576.9120, 0.0200, :fm_index, 0.2990,
                     :amp_env, [0, 0, 1.1119, 1, 1.5010, 0.7, 1.6678, 1, 98.8881, 0.6, 100, 0])
-    vln_one_sin_exp($t + 0.9060, 8.8360, 1172.5830, 0.0180, :fm_index, 1.1350,
+    vln_one_sin_exp($t + 1.9060, 8.8360, 1172.5830, 0.0180, :fm_index, 1.1350,
                     :amp_env, [0, 0, 1.1317, 1, 1.5278, 0.7, 1.6976, 1, 98.8683, 0.5556, 100, 0])
-    $t += 1.0
-    vln_one_sin_exp($t + 0.1510, 4.9320, 374.1370, 0.0170, :fm_index, 0.1800,
+    vln_one_sin_exp($t + 2.1510, 4.9320, 374.1370, 0.0170, :fm_index, 0.1800,
                     :amp_env, [0, 0, 2.0276, 1, 2.7372, 0.7, 3.0414, 1, 97.9724, 0.5294, 100, 0])
-    vln_one_sin_exp($t + 0.2720, 2.3250, 369.9940, 0.0170, :fm_index, 1.1030,
+    vln_one_sin_exp($t + 2.2720, 2.3250, 369.9940, 0.0170, :fm_index, 1.1030,
                     :amp_env, [0, 0, 4.3011, 1, 5.8065, 0.7, 6.4516, 1, 95.6989, 0.5294, 100, 0])
-    $t += 1.0
-    vln_one_sin_exp($t + 0.6960, 3.5540, 366.3330, 0.0310, :fm_index, 1.0480,
+    vln_one_sin_exp($t + 3.6960, 3.5540, 366.3330, 0.0310, :fm_index, 1.0480,
                     :amp_env, [0, 0, 2.8137, 1, 3.7985, 0.7, 4.2206, 1, 97.1863, 0.7419, 100, 0])
-    $t += 1.0
-    vln_one_sin_exp($t + 0.7240, 0.6040, 246.9420, 0.0170, :fm_index, 1.2050,
+    vln_one_sin_exp($t + 4.7240, 0.6040, 246.9420, 0.0170, :fm_index, 1.2050,
                     :amp_env, [0, 0, 16.5563, 1, 22.351, 0.7, 24.8344, 1, 83.4437, 0.5294, 100, 0])
-    vln_one_sin_exp($t + 0.9420, 2.5010, 123.4710, 0.0330, :fm_index, 0.2330,
+    vln_one_sin_exp($t + 4.9420, 2.5010, 123.4710, 0.0330, :fm_index, 0.2330,
                     :amp_env, [0, 0, 3.9984, 1, 5.3978, 0.7, 5.9976, 1, 96.0016, 0.7576, 100, 0])
-    $t += 1.0
-    vln_one_sin_exp($t + 0.0340, 2.3860, 246.9420, 0.0170, :fm_index, 0.0020,
+    vln_one_sin_exp($t + 5.0340, 2.3860, 246.9420, 0.0170, :fm_index, 0.0020,
                     :amp_env, [0, 0, 4.1911, 1, 5.6580, 0.7, 6.2867, 1, 95.8089, 0.5294, 100, 0])
-    vln_one_sin_exp($t + 0.3850, 1.4510, 369.9940, 0.0170, :fm_index, 1.1030,
+    vln_one_sin_exp($t + 5.3850, 1.4510, 369.9940, 0.0170, :fm_index, 1.1030,
                     :amp_env, [0, 0, 6.8918, 1, 9.3039, 0.7, 10.3377, 1, 93.1082, 0.5294, 100, 0])
-    vln_one_sin_exp($t + 0.5670, 2.6550, 374.1370, 0.0170, :fm_index, 0.1800,
+    vln_one_sin_exp($t + 5.5670, 2.6550, 374.1370, 0.0170, :fm_index, 0.1800,
                     :amp_env, [0, 0, 3.7665, 1, 5.0847, 0.7, 5.6497, 1, 96.2335, 0.5294, 100, 0])
-    vln_one_sin_exp($t + 0.9830, 2.9860, 123.4710, 0.0380, :fm_index, 0.2330,
+    vln_one_sin_exp($t + 5.9830, 2.9860, 123.4710, 0.0380, :fm_index, 0.2330,
                     :amp_env, [0, 0, 3.3490, 1, 4.5211, 0.7, 5.0234, 1, 96.6510, 0.7895, 100, 0])
-    $t += 1.0
-    vln_one_sin_exp($t + 0.4910, 0.6110, 123.9770, 0.0170, :fm_index, 0.7550,
+    vln_one_sin_exp($t + 6.4910, 0.6110, 123.9770, 0.0170, :fm_index, 0.7550,
                     :amp_env, [0, 0, 16.3666, 1, 22.0949, 0.7, 24.55, 1, 83.6334, 0.5294, 100, 0])
-    vln_one_sin_exp($t + 0.7570, 1.4440, 123.4710, 0.0170, :fm_index, 0.0020,
+    vln_one_sin_exp($t + 6.7570, 1.4440, 123.4710, 0.0170, :fm_index, 0.0020,
                     :amp_env, [0, 0, 6.9252, 1, 9.3490, 0.7, 10.3878, 1, 93.0748, 0.5294, 100, 0])
-    vln_one_sin_exp($t + 0.7750, 0.5370, 92.4435, 0.0330, :fm_index, 0.9200,
+    vln_one_sin_exp($t + 6.7750, 0.5370, 92.4435, 0.0330, :fm_index, 0.9200,
                     :amp_env, [0, 0, 18.622, 1, 25.1397, 0.7, 27.9330, 1, 81.3780, 0.7576, 100, 0])
-    vln_one_sin_exp($t + 0.7750, 10.5370, 92.4435, 0.0130, :fm_index, 0.9200,
+    vln_one_sin_exp($t + 6.7750, 10.5370, 92.4435, 0.0130, :fm_index, 0.9200,
                     :amp_env, [0, 0, 0.9490, 1, 1.2812, 0.7, 1.4236, 1, 99.0510, 0.3846, 100, 0])
-    vln_one_sin_exp($t + 0.9380, 0.6520, 122.2995, 0.0170, :fm_index, 1.8380,
+    vln_one_sin_exp($t + 6.9380, 0.6520, 122.2995, 0.0170, :fm_index, 1.8380,
                     :amp_env, [0, 0, 15.3374, 1, 20.706, 0.7, 23.0061, 1, 84.6626, 0.5294, 100, 0])
-    $t += 1.0 
-    vln_one_sin_exp($t + 0.2350, 3.7250, 586.2915, 0.0180, :fm_index, 1.1350, 
+    vln_one_sin_exp($t + 7.2350, 3.7250, 586.2915, 0.0180, :fm_index, 1.1350, 
                     :amp_env, [0, 0, 2.6846, 1, 3.6242, 0.7, 4.0268, 1, 97.3154, 0.5556, 100, 0]) 
-    vln_one_sin_exp($t + 0.2560, 2.8900, 183.1665, 0.0260, :fm_index, 1.0480, 
+    vln_one_sin_exp($t + 7.2560, 2.8900, 183.1665, 0.0260, :fm_index, 1.0480, 
                     :amp_env, [0, 0, 3.4602, 1, 4.6713, 0.7, 5.1903, 1, 96.5398, 0.6923, 100, 0]) 
-    vln_one_sin_exp($t + 0.2710, 1.6210, 187.0685, 0.0170, :fm_index, 0.1800, 
+    vln_one_sin_exp($t + 7.2710, 1.6210, 187.0685, 0.0170, :fm_index, 0.1800, 
                     :amp_env, [0, 0, 6.169, 1.0, 8.3282, 0.7, 9.2535, 1, 93.8310, 0.5294, 100, 0]) 
-    vln_one_sin_exp($t + 0.2920, 2.0160, 183.1665, 0.0290, :fm_index, 1.0480,
+    vln_one_sin_exp($t + 7.2920, 2.0160, 183.1665, 0.0290, :fm_index, 1.0480,
                     :amp_env, [0, 0, 4.9603, 1, 6.6964, 0.7, 7.4405, 1, 95.0397, 0.7241, 100, 0])
-    vln_one_sin_exp($t + 0.2920, 12.0160, 183.1665, 0.0290, :fm_index, 1.0480,
+    vln_one_sin_exp($t + 7.2920, 12.0160, 183.1665, 0.0290, :fm_index, 1.0480,
                     :amp_env, [0, 0, 0.832, 1, 1.1235, 0.7, 1.248, 1.0, 99.1678, 0.7241, 100, 0])
-    vln_one_sin_exp($t + 0.3300, 0.7300, 184.9970, 0.0170, :fm_index, 0.0960,
+    vln_one_sin_exp($t + 7.3300, 0.7300, 184.9970, 0.0170, :fm_index, 0.0960,
                     :amp_env, [0, 0, 13.699, 1, 18.4932, 0.7, 20.548, 1.0, 86.3014, 0.529, 100, 0])
-    vln_one_sin_exp($t + 0.3570, 1.9600, 183.1665, 0.0280, :fm_index, 1.0480,
+    vln_one_sin_exp($t + 7.3570, 1.9600, 183.1665, 0.0280, :fm_index, 1.0480,
                     :amp_env, [0, 0, 5.1020, 1.0, 6.8878, 0.7, 7.6531, 1, 94.8980, 0.7143, 100, 0])
-    vln_one_sin_exp($t + 0.3820, 2.2450, 61.7355, 0.0330, :fm_index, 0.2330,
+    vln_one_sin_exp($t + 7.3820, 2.2450, 61.7355, 0.0330, :fm_index, 0.2330,
                     :amp_env, [0, 0, 4.4543, 1, 6.0134, 0.7, 6.6815, 1, 95.5457, 0.7576, 100, 0])
-    vln_one_sin_exp($t + 0.3820, 12.2450, 61.7355, 0.0330, :fm_index, 0.2330,
+    vln_one_sin_exp($t + 7.3820, 12.2450, 61.7355, 0.0330, :fm_index, 0.2330,
                     :amp_env, [0, 0, 0.8167, 1, 1.1025, 0.7, 1.2250, 1, 99.1833, 0.7576, 100, 0])
-    vln_one_sin_exp($t + 0.5410, 3.0130, 246.5050, 0.0360, :fm_index, 1.1350,
+    vln_one_sin_exp($t + 7.5410, 3.0130, 246.5050, 0.0360, :fm_index, 1.1350,
                     :amp_env, [0, 0, 3.3190, 1.0, 4.4806, 0.7, 4.9784, 1, 96.6810, 0.7778, 100, 0])
-    vln_one_sin_exp($t + 0.5570, 2.3220, 1251.5960, 0.0400, :fm_index, 0.2990,
+    vln_one_sin_exp($t + 7.5570, 2.3220, 1251.5960, 0.0400, :fm_index, 0.2990,
                     :amp_env, [0, 0, 4.3066, 1, 5.8140, 0.7, 6.4599, 1, 95.6934, 0.8, 100, 0])
-    vln_one_sin_exp($t + 0.5570, 18.3220, 1251.5960, 0.0200, :fm_index, 0.2990,
+    vln_one_sin_exp($t + 7.5570, 18.3220, 1251.5960, 0.0200, :fm_index, 0.2990,
                     :amp_env, [0, 0, 0.5458, 1.000, 0.7368, 0.7, 0.8187, 1, 99.4542, 0.6, 100, 0])
-    $t += 1.0
-    vln_one_sin_exp($t + 0.1060, 1.9900, 183.1665, 0.0230, :fm_index, 1.0480,
+    vln_one_sin_exp($t + 8.1060, 1.9900, 183.1665, 0.0230, :fm_index, 1.0480,
                     :amp_env, [0, 0, 5.0251, 1.0, 6.7839, 0.7, 7.5377, 1, 94.9749, 0.6522, 100, 0])
-    vln_one_sin_exp($t + 0.2570, 1.9180, 61.7355, 0.0330, :fm_index, 0.2330,
+    vln_one_sin_exp($t + 8.2570, 1.9180, 61.7355, 0.0330, :fm_index, 0.2330,
                     :amp_env, [0, 0, 5.2138, 1, 7.0386, 0.7, 7.8206, 1, 94.7862, 0.7576, 100, 0])
-    vln_one_sin_exp($t + 0.6370, 1.3090, 183.1665, 0.0310, :fm_index, 1.0480,
+    vln_one_sin_exp($t + 8.6370, 1.3090, 183.1665, 0.0310, :fm_index, 1.0480,
                     :amp_env, [0, 0, 7.6394, 1, 10.3132, 0.7, 11.4591, 1, 92.3606, 0.7419, 100, 0])
-    $t += 1.0 
-    vln_one_sin_exp($t + 0.0330, 1.1590, 183.1665, 0.0250, :fm_index, 1.0480,
+    vln_one_sin_exp($t + 9.0330, 1.1590, 183.1665, 0.0250, :fm_index, 1.0480,
                     :amp_env, [0, 0, 8.6281, 1, 11.6480, 0.7, 12.9422, 1, 91.3719, 0.6800, 100, 0])
-    vln_one_sin_exp($t + 0.0980, 1.2400, 30.8675, 0.0330, :fm_index, 0.2330,
+    vln_one_sin_exp($t + 9.0980, 1.2400, 30.8675, 0.0330, :fm_index, 0.2330,
                     :amp_env, [0, 0, 8.0645, 1, 10.8871, 0.7, 12.0968, 1, 91.9355, 0.7576, 100, 0])
-    vln_one_sin_exp($t + 0.0980, 11.2400, 30.8675, 0.0130, :fm_index, 0.2330,
+    vln_one_sin_exp($t + 9.0980, 11.2400, 30.8675, 0.0130, :fm_index, 0.2330,
                     :amp_env, [0, 0, 0.8897, 1, 1.2011, 0.7, 1.3345, 1, 99.1103, 0.3846, 100, 0])
-    vln_one_sin_exp($t + 0.1260, 0.2600, 123.4710, 0.0170, :fm_index, 1.2050,
+    vln_one_sin_exp($t + 9.1260, 0.2600, 123.4710, 0.0170, :fm_index, 1.2050,
                     :amp_env, [0, 0, 38.462, 1, 51.9231, 0.7, 57.6923, 1, 61.5385, 0.5294, 100, 0])
-    vln_one_sin_exp($t + 0.1260, 10.2600, 123.4710, 0.0170, :fm_index, 1.2050,
+    vln_one_sin_exp($t + 9.1260, 10.2600, 123.4710, 0.0170, :fm_index, 1.2050,
                     :amp_env, [0, 0, 0.9747, 1, 1.3158, 0.7, 1.4620, 1, 99.0253, 0.5294, 100, 0])
     vln_one_sin($t + 0.0600, 13.8770, 3951.1200, 0.0090, :amp_env, updown)
     vln_one_sin($t + 0.2600, 14.8770, 123.4725, 0.0170, :fm_index, 1.5, :amp_env, updown)
@@ -1525,7 +1498,7 @@ def long_example
     vln_one_sin($t + 0.2600, 12.8770, 30.8681, 0.0170, :fm_index, 1.5, :amp_env, updown)
     vln_one_sin($t + 0.2600, 11.8770, 15.4341, 0.0170, :fm_index, 1.5, :amp_env, updown)
 
-    $t += 19.0
+    $t += 28.0
     restore_fm_violin_defaults()
     cel_one_sum($t + 0.2620, 0.3906, 440, 0.4500, :fm_index, 1.2, :reverb_amount, 0.0013,
                 :amp_env, [0, 0, 0.7680, 1, 4.7774, 0.6, 9.7891, 0.3, 24.8243, 0.1, 100, 0])
@@ -1573,6 +1546,6 @@ def long_example
   end
 end
 
-main() unless provided? "snd"
+main() unless provided? :snd
 
 # fmviolin.rb ends here

@@ -109,6 +109,12 @@
 (define names-290 '())
 (define strings-290 '())
 
+(define funcs-29x '())
+(define strings-29x '())
+(define ints-29x '())
+(define names-29x '())
+(define types-29x '())
+
 (define all-types '())
 (define all-check-types '())
 
@@ -1029,6 +1035,22 @@
 		(set! funcs-290 (cons (list name type strs args) funcs-290)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CFNC-29x data #:optional spec)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "CFNC-29x: ~A~%" (list name data))
+	(let ((type (car-str data)))
+	  (if (not (member type all-types))
+	      (begin
+		(set! all-types (cons type all-types))
+		(set! types-29x (cons type types-29x))))
+	  (let ((strs (parse-args args '29x)))
+	    (if spec
+		(set! funcs-29x (cons (list name type strs args spec) funcs-29x))
+		(set! funcs-29x (cons (list name type strs args) funcs-29x)))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 (define (helpify name type args)
   (let* ((initial (format #f "  #define H_~A \"~A ~A(" name type name))
 	 (line-len (string-length initial))
@@ -1101,6 +1123,13 @@
       (begin
 	(set! strings-290 (cons name strings-290))
 	(set! names-290 (cons (cons name 'string) names-290)))))
+
+(define (CSTR-29x name)
+  (if (assoc name names-29x)
+      (no-way "~A CSTR-29x~%" name)
+      (begin
+	(set! strings-29x (cons name strings-29x))
+	(set! names-29x (cons (cons name 'string) names-29x)))))
 
 (define (CDBL name)
   (if (assoc name names)
@@ -1239,6 +1268,14 @@
       (no-way "~A CINT-290~%" name)
       (begin
 	(set! ints-290 (cons name ints-290))
+	(set! names (cons (cons name 'int) names)))))
+
+(define* (CINT-29x name #:optional type)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CINT-29x~%" name)
+      (begin
+	(set! ints-29x (cons name ints-29x))
 	(set! names (cons (cons name 'int) names)))))
 
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
