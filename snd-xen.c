@@ -46,8 +46,7 @@
  *
  *    unwind-protects around scm_apply (snd-xen g_call)
  *
- * TODO: check prefs and save/restore: these are broken [work in progress...]
- *       to clear back to default colors, need to save original somewhere (this is affected by .Xdefaults etc)
+ * TODO: check prefs and save/restore: these are broken [endless work in progress...]
  *
  * TODO in Forth: features check (below)
  *    sndscm: forth doc (only have .snd_forth right now)
@@ -59,7 +58,7 @@
  * TODO: change config.h to snd-config.h and clm-config.h (collisions in several cases like ecl)
  *         but if user is loading libsndlib, how to avoid collisions between its config.h and snd's?
  *
- *        cmus.h:#include <config.h>
+ *        cmus.h:#include <config.h> -- clm configure also uses all of the sndlib files, so this can't be changed to clm-config
  *        snd.h:#include <config.h>
  *        _sndlib.h:#include <config.h>
  *

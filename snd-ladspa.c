@@ -6,8 +6,6 @@
 
 #include "snd.h"
 
-/* TODO: check this in 86_64 case */
-
 #if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DIRENT_H
 
 #include <dlfcn.h>

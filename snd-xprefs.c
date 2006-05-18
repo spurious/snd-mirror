@@ -95,6 +95,9 @@ static void post_prefs_error(const char *msg, void *data);
 #define TIMEOUT_RESULT            
 #define SET_SCALE(Value)          XmScaleSetValue(prf->scale, (int)(100 * Value))
 #define SET_SENSITIVE(Wid, Val)   XtSetSensitive(Wid, Val)
+#define black_text(Prf)           XtVaSetValues(Prf->label, XmNforeground, ss->sgx->black, NULL)
+#define red_text(Prf)             XtVaSetValues(Prf->label, XmNforeground, ss->sgx->red, NULL)
+
 
 static int get_scale_1(Widget scale)
 {
@@ -988,15 +991,6 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
   return(prf);
 }
 
-static void red_text(prefs_info *prf)
-{
-  XtVaSetValues(prf->label, XmNforeground, ss->sgx->red, NULL);
-}
-
-static void black_text(prefs_info *prf)
-{
-  XtVaSetValues(prf->label, XmNforeground, ss->sgx->black, NULL);
-}
 
 
 /* ---------------- two texts in a row ---------------- */
@@ -1666,536 +1660,6 @@ static void va_post_prefs_error(const char *msg, void *data, ...)
   FREE(buf);
 }
 
-/* -------------------------------------------------------------------------------- */
-
-/* ---------------- peak-envs ---------------- */
-
-static bool include_peak_envs = false;
-static char *include_peak_env_directory = NULL;
-
-static char *peak_env_directory(void)
-{
-  if (include_peak_env_directory)
-    return(include_peak_env_directory);
-  if (XEN_DEFINED_P("save-peak-env-info-directory"))
-    return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info-directory")));
-  return(NULL);
-}
-
-static void reflect_peak_envs(prefs_info *prf) 
-{
-  if (include_peak_env_directory) {FREE(include_peak_env_directory); include_peak_env_directory = NULL;}
-  include_peak_env_directory = copy_string(peak_env_directory());
-  include_peak_envs = find_peak_envs();
-  XmToggleButtonSetState(prf->toggle, include_peak_envs, false);
-  XmTextFieldSetString(prf->text, include_peak_env_directory);
-}
-
-static void peak_envs_toggle(prefs_info *prf)
-{
-  include_peak_envs = (XmToggleButtonGetState(prf->toggle) == XmSET);
-}
-
-static void peak_envs_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      if (include_peak_env_directory) {FREE(include_peak_env_directory); include_peak_env_directory = NULL;}
-      include_peak_env_directory = copy_string(str);
-      XtFree(str);
-    }
-}
-
-static void save_peak_envs(prefs_info *prf, FILE *fd)
-{
-  if (include_peak_envs) save_peak_envs_1(prf, fd, include_peak_env_directory);
-}
-
-
-/* ---------------- keys ---------------- */
-
-static void reflect_key(prefs_info *prf, const char *key_name)
-{
-  key_info *ki;
-  ki = find_prefs_key_binding(key_name);
-  XmToggleButtonSetState(prf->toggle, ki->c, false);
-  XmToggleButtonSetState(prf->toggle2, ki->m, false);
-  XmToggleButtonSetState(prf->toggle3, ki->x, false);
-  XmTextFieldSetString(prf->text, ki->key);
-  FREE(ki);
-}
-
-static void save_key_binding(prefs_info *prf, FILE *fd, char *(*binder)(char *key, bool c, bool m, bool x))
-{
-  char *key, *expr;
-  key = XmTextFieldGetString(prf->text);
-  if ((key) && (*key))
-    {
-      expr = (*binder)(key, 
-		       XmToggleButtonGetState(prf->toggle) == XmSET, 
-		       XmToggleButtonGetState(prf->toggle2) == XmSET,
-		       XmToggleButtonGetState(prf->toggle3) == XmSET);
-      fprintf(fd, expr);
-      FREE(expr);
-      XtFree(key);
-    }
-}
-
-static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m, bool x))
-{
-  char *key, *expr;
-  bool ctrl, meta, cx;
-  key = XmTextFieldGetString(prf->text);
-  ctrl = (XmToggleButtonGetState(prf->toggle) == XmSET);
-  meta = (XmToggleButtonGetState(prf->toggle2) == XmSET);
-  cx = (XmToggleButtonGetState(prf->toggle3) == XmSET);
-  if ((key) && (*key))
-    {
-      expr = (*binder)(key, ctrl, meta, cx);
-      XtFree(key);
-    }
-  else
-    {
-      expr = mus_format("(unbind-key %s %d %s)",
-			possibly_quote(key), 
-			((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-			(cx) ? "#t" : "#f");
-    }
-  XEN_EVAL_C_STRING(expr);
-  FREE(expr);
-}
-
-
-
-/* ---------------- load path ---------------- */
-
-static void reflect_load_path(prefs_info *prf)
-{
-  char *str;
-  str = find_sources();
-  XmTextFieldSetString(prf->text, str);
-  if (str) 
-    {
-      black_text(prf);
-      FREE(str);
-    }
-  else red_text(prf);
-}
-
-static void load_path_text(prefs_info *prf)
-{
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((!str) || (!(*str)))
-    return;
-  if (local_access(str))
-    {
-      black_text(prf);
-      if (include_load_path) FREE(include_load_path);
-      include_load_path = copy_string(str);
-#if HAVE_RUBY
-      {
-	extern VALUE rb_load_path;
-	rb_ary_unshift(rb_load_path, rb_str_new2(str));
-      }
-#endif
-#if HAVE_GUILE
-      {
-	char *buf;
-	buf = mus_format("(set! %%load-path (cons \"%s\" %%load-path))", str);
-	XEN_EVAL_C_STRING(buf);
-	FREE(buf);
-      }
-#endif
-#if HAVE_FORTH
-      fth_add_load_path(str);
-#endif
-#if HAVE_GAUCHE
-      Scm_AddLoadPath(str, false);
-#endif
-    }
-  if (str) XtFree(str);
-}
-
-
-/* ---------------- initial bounds ---------------- */
-
-static void reflect_initial_bounds(prefs_info *prf)
-{
-  /* text has beg : dur, toggle true if full dur */
-  char *str;
-  str = initial_bounds_to_string();
-  XmTextFieldSetString(prf->text, str);
-  FREE(str);
-  XmToggleButtonSetState(prf->toggle, use_full_duration(), false);
-}
-
-static void initial_bounds_toggle(prefs_info *prf)
-{
-  bool use_full_duration = false;
-  use_full_duration = (XmToggleButtonGetState(prf->toggle) == XmSET);
-#if HAVE_SCHEME
-  if (!(XEN_DEFINED_P("prefs-initial-beg")))
-    XEN_LOAD_FILE_WITH_PATH("extensions.scm");
-#if HAVE_GUILE
-  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-show-full-duration"), C_TO_XEN_BOOLEAN(use_full_duration));
-#endif
-#if HAVE_GAUCHE
-  XEN_VARIABLE_SET("prefs-show-full-duration", C_TO_XEN_BOOLEAN(use_full_duration));
-#endif
-#endif
-#if HAVE_RUBY
-  if (!(XEN_DEFINED_P("prefs-initial-beg")))
-    XEN_LOAD_FILE_WITH_PATH("extensions.rb");
-  XEN_VARIABLE_SET("prefs-show-full-duration", C_TO_XEN_BOOLEAN(use_full_duration));
-#endif
-}
-
-static void initial_bounds_text(prefs_info *prf)
-{
-  float beg = 0.0, dur = 0.1;
-  char *str;
-  str = XmTextFieldGetString(prf->text);
-  sscanf(str, "%f : %f", &beg, &dur);
-#if HAVE_SCHEME
-  if (!(XEN_DEFINED_P("prefs-initial-beg")))
-    XEN_LOAD_FILE_WITH_PATH("extensions.scm");
-#if HAVE_GUILE
-  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-beg"), C_TO_XEN_DOUBLE(beg));
-  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-dur"), C_TO_XEN_DOUBLE(dur));
-#endif
-#if HAVE_GAUCHE
-  XEN_VARIABLE_SET("prefs-initial-beg", C_TO_XEN_DOUBLE(beg));
-  XEN_VARIABLE_SET("prefs-initial-dur", C_TO_XEN_DOUBLE(dur));
-#endif
-#endif
-#if HAVE_RUBY
-  if (!(XEN_DEFINED_P("prefs-initial-beg")))
-    XEN_LOAD_FILE_WITH_PATH("extensions.rb");
-  XEN_VARIABLE_SET("prefs-initial-beg", C_TO_XEN_DOUBLE(beg));
-  XEN_VARIABLE_SET("prefs-initial-dur", C_TO_XEN_DOUBLE(dur));
-#endif
-  XtFree(str);
-}
-
-
-/* ---------------- show-axes ---------------- */
-
-static const char *show_axes_choices[NUM_SHOW_AXES] = {"none", "X and Y", "just X", "X and Y unlabelled", "just X unlabelled"};
-
-static void reflect_show_axes(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, (char *)show_axes_choices[(int)show_axes(ss)]);
-}
-
-static void show_axes_from_menu(prefs_info *prf, char *value)
-{
-  int i;
-  for (i = 0; i < NUM_SHOW_AXES; i++)
-    if (strcmp(value, show_axes_choices[i]) == 0)
-      {
-	in_set_show_axes((show_axes_t)i);
-	XmTextFieldSetString(prf->text, value);
-	return;
-      }
-}
-
-static void show_axes_from_text(prefs_info *prf)
-{
-  int i;
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      char *trimmed_str;
-      trimmed_str = trim_string(str);
-      XtFree(str);
-      if (snd_strlen(trimmed_str) > 0)
-	{
-	  int curpos = -1;
-	  for (i = 0; i < NUM_SHOW_AXES; i++)
-	    if (STRCMP(trimmed_str, show_axes_choices[i]) == 0)
-	      {
-		curpos = i;
-		break;
-	      }
-	  if (curpos >= 0)
-	    in_set_show_axes((show_axes_t)curpos);
-	  else post_prefs_error("unknown axis choice", (XtPointer)prf);
-	}
-      else post_prefs_error("need an axis choice", (XtPointer)prf);
-      FREE(trimmed_str);
-    }
-  else post_prefs_error("need an axis choice", (XtPointer)prf);
-}
-
-/* ---------------- x-axis-style ---------------- */
-
-static const char *x_axis_styles[NUM_X_AXIS_STYLES] = {"seconds", "samples", "% of total", "beats", "measures", "clock"};
-
-static void reflect_x_axis_style(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, (char *)x_axis_styles[(int)x_axis_style(ss)]);
-}
-
-static void x_axis_style_from_menu(prefs_info *prf, char *value)
-{
-  int i;
-  for (i = 0; i < NUM_X_AXIS_STYLES; i++)
-    if (strcmp(value, x_axis_styles[i]) == 0)
-      {
-	in_set_x_axis_style((x_axis_style_t)i);
-	XmTextFieldSetString(prf->text, value);
-	return;
-      }
-}
-
-static void x_axis_style_from_text(prefs_info *prf)
-{
-  int i;
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      char *trimmed_str;
-      trimmed_str = trim_string(str);
-      XtFree(str);
-      if (snd_strlen(trimmed_str) > 0)
-	{
-	  int curpos = -1;
-	  for (i = 0; i < NUM_X_AXIS_STYLES; i++)
-	    if (STRCMP(trimmed_str, x_axis_styles[i]) == 0)
-	      {
-		curpos = i;
-		break;
-	      }
-	  if (curpos >= 0)
-	    in_set_x_axis_style((x_axis_style_t)curpos);
-	  else post_prefs_error("unknown axis style", (XtPointer)prf);
-	}
-      else post_prefs_error("need an axis style", (XtPointer)prf);
-      FREE(trimmed_str);
-    }
-  else post_prefs_error("need an axis style", (XtPointer)prf);
-}
-
-/* ---------------- transform-type ---------------- */
-
-static const char *transform_types[NUM_BUILTIN_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Haar"};
-
-static list_completer_info *transform_type_completer_info = NULL;
-
-static void reflect_transform_type(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, (char *)transform_types[mus_iclamp(0, transform_type(ss), NUM_BUILTIN_TRANSFORM_TYPES - 1)]); 
-}
-
-static char *transform_type_completer(char *text, void *data)
-{
-  if (!transform_type_completer_info)
-    {
-      transform_type_completer_info = (list_completer_info *)CALLOC(1, sizeof(list_completer_info));
-      transform_type_completer_info->exact_match = false;
-      transform_type_completer_info->values = (char **)transform_types;
-      transform_type_completer_info->num_values = NUM_BUILTIN_TRANSFORM_TYPES;
-      transform_type_completer_info->values_size = NUM_BUILTIN_TRANSFORM_TYPES;
-    }
-  return(list_completer(text, (void *)transform_type_completer_info));
-}
-
-static void transform_type_from_menu(prefs_info *prf, char *value)
-{
-  int i;
-  for (i = 0; i < NUM_BUILTIN_TRANSFORM_TYPES; i++)
-    if (strcmp(value, transform_types[i]) == 0)
-      {
-	in_set_transform_type(i);
-	XmTextFieldSetString(prf->text, value);
-	return;
-      }
-}
-
-static void transform_type_from_text(prefs_info *prf)
-{
-  int i;
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      char *trimmed_str;
-      trimmed_str = trim_string(str);
-      XtFree(str);
-      if (snd_strlen(trimmed_str) > 0)
-	{
-	  int curpos = -1;
-	  for (i = 0; i < NUM_BUILTIN_TRANSFORM_TYPES; i++)
-	    if (STRCMP(trimmed_str, transform_types[i]) == 0)
-	      {
-		curpos = i;
-		break;
-	      }
-	  if (curpos >= 0)
-	    in_set_transform_type(curpos);
-	  else post_prefs_error("unknown tranform", (XtPointer)prf);
-	}
-      else post_prefs_error("no transform?", (XtPointer)prf);
-      FREE(trimmed_str);
-    }
-  else post_prefs_error("no transform?", (XtPointer)prf);
-}
-
-
-/* -------- fft-window -------- */
-
-static const char *fft_windows[MUS_NUM_WINDOWS] = 
-  {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
-   "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
-   "Samaraki", "Ultraspherical"};
-
-static list_completer_info *fft_window_completer_info = NULL;
-
-static void reflect_fft_window(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, (char *)fft_windows[(int)fft_window(ss)]);
-}
-
-static char *fft_window_completer(char *text, void *data)
-{
-  if (!fft_window_completer_info)
-    {
-      fft_window_completer_info = (list_completer_info *)CALLOC(1, sizeof(list_completer_info));
-      fft_window_completer_info->exact_match = false;
-      fft_window_completer_info->values = (char **)fft_windows;
-      fft_window_completer_info->num_values = MUS_NUM_WINDOWS;
-      fft_window_completer_info->values_size = MUS_NUM_WINDOWS;
-    }
-  return(list_completer(text, (void *)fft_window_completer_info));
-}
-
-static void fft_window_from_menu(prefs_info *prf, char *value)
-{
-  int i;
-  for (i = 0; i < MUS_NUM_WINDOWS; i++)
-    if (strcmp(value, fft_windows[i]) == 0)
-      {
-	in_set_fft_window((mus_fft_window_t)i);
-	XmTextFieldSetString(prf->text, value);
-	return;
-      }
-}
-
-static void fft_window_from_text(prefs_info *prf)
-{
-  int i;
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      char *trimmed_str;
-      trimmed_str = trim_string(str);
-      XtFree(str);
-      if (snd_strlen(trimmed_str) > 0)
-	{
-	  int curpos = -1;
-	  for (i = 0; i < MUS_NUM_WINDOWS; i++)
-	    if (STRCMP(trimmed_str, fft_windows[i]) == 0)
-	      {
-		curpos = i;
-		break;
-	      }
-	  if (curpos >= 0)
-	    in_set_fft_window((mus_fft_window_t)curpos);
-	  else post_prefs_error("unknown window", (XtPointer)prf);
-	}
-      else post_prefs_error("no window?", (XtPointer)prf);
-      FREE(trimmed_str);
-    }
-  else post_prefs_error("no window?", (XtPointer)prf);
-}
-
-/* ---------------- colormap ---------------- */
-
-static char *colormap_completer(char *text, void *data)
-{
-  list_completer_info *compinfo;
-  char **cmaps;
-  int i, len;
-  char *result;
-  len = num_colormaps();
-  cmaps = (char **)CALLOC(len, sizeof(char *));
-  for (i = 0; i < len; i++)
-    cmaps[i] = colormap_name(i);
-  compinfo = (list_completer_info *)CALLOC(1, sizeof(list_completer_info));
-  compinfo->exact_match = false;
-  compinfo->values = (char **)fft_windows;
-  compinfo->num_values = len;
-  compinfo->values_size = len;
-  result = list_completer(text, (void *)compinfo);
-  FREE(cmaps);
-  return(result);
-}
-
-static void reflect_colormap(prefs_info *prf)
-{
-  XmTextFieldSetString(prf->text, colormap_name(color_map(ss)));
-}
-
-static void colormap_from_text(prefs_info *prf)
-{
-  int i;
-  char *str;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextFieldGetString(prf->text);
-  if ((str) && (*str))
-    {
-      char *trimmed_str;
-      trimmed_str = trim_string(str);
-      XtFree(str);
-      if (snd_strlen(trimmed_str) > 0)
-	{
-	  int len, curpos = -1;
-	  len = num_colormaps();
-	  for (i = 0; i < len; i++)
-	    if ((colormap_name(i)) &&
-		(STRCMP(trimmed_str, colormap_name(i)) == 0))
-	      {
-		curpos = i;
-		break;
-	      }
-	  if (curpos >= 0)
-	    in_set_color_map(curpos);
-	  else post_prefs_error("unknown colormap", (XtPointer)prf);
-	}
-      else post_prefs_error("no colormap?", (XtPointer)prf);
-      FREE(trimmed_str);
-    }
-  else post_prefs_error("no colormap?", (XtPointer)prf);
-}
-
-static void colormap_from_menu(prefs_info *prf, char *value)
-{
-  int i, len;
-  len = num_colormaps();
-  for (i = 0; i < len; i++)
-    if ((colormap_name(i)) &&
-	(strcmp(value, colormap_name(i)) == 0))
-      {
-	in_set_color_map(i);
-	XmTextFieldSetString(prf->text, value);
-	return;
-      }
-}
-
-
-
 
 /* ---------------- preferences dialog ---------------- */
 
@@ -2342,14 +1806,14 @@ widget_t start_preferences_dialog(void)
 				rts_unsaved_edits = unsaved_edits(), 
 				dpy_box, current_sep,
 				unsaved_edits_toggle);
-    remember_pref(prf, reflect_unsaved_edits, save_unsaved_edits, unsaved_edits_help, clear_unsaved_edits, revert_unsaved_edits);
+    remember_pref(prf, reflect_unsaved_edits, save_unsaved_edits, help_unsaved_edits, clear_unsaved_edits, revert_unsaved_edits);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("include thumbnail graph in upper right corner", "make-current-window-display",
 				rts_current_window_display = current_window_display(),
 				dpy_box, current_sep,
 				current_window_display_toggle);
-    remember_pref(prf, reflect_current_window_display, save_current_window_display, current_window_help, 
+    remember_pref(prf, reflect_current_window_display, save_current_window_display, help_current_window, 
 		  clear_current_window_display, revert_current_window_display);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2372,15 +1836,17 @@ widget_t start_preferences_dialog(void)
 				     "across all sounds", rts_sync_choice == SYNC_ACROSS_ALL_SOUNDS,
 				     dpy_box, current_sep, 
 				     sync1_choice, sync2_choice);
-    remember_pref(prf, reflect_sync_choice, save_sync_choice, sync_choice_help, clear_sync_choice, revert_sync_choice);
+    remember_pref(prf, reflect_sync_choice, save_sync_choice, help_sync_choice, clear_sync_choice, revert_sync_choice);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    rts_remember_sound_state_choice = find_remember_sound_state_choice();
     prf = prefs_row_with_two_toggles("restore a sound's state if reopened later", "remember-sound-state",
-				     "within one run", find_remember_sound_state_choice() & 1,
-				     "across runs", find_remember_sound_state_choice() & 2,
+				     "within one run", rts_remember_sound_state_choice & 1,
+				     "across runs", rts_remember_sound_state_choice & 2,
 				     dpy_box, current_sep, 
 				     remember_sound_state_1_choice, remember_sound_state_2_choice);
-    remember_pref(prf, reflect_remember_sound_state_choice, save_remember_sound_state_choice, remember_sound_state_choice_help, NULL, NULL);
+    remember_pref(prf, reflect_remember_sound_state_choice, save_remember_sound_state_choice, help_remember_sound_state_choice, 
+		  clear_remember_sound_state, revert_remember_sound_state);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("show the control panel upon opening a sound", S_show_controls,
@@ -2397,7 +1863,7 @@ widget_t start_preferences_dialog(void)
 					  "directory:", include_peak_env_directory, 25,
 					  dpy_box, current_sep,
 					  peak_envs_toggle, peak_envs_text);
-    remember_pref(prf, reflect_peak_envs, save_peak_envs, peak_env_help, NULL, NULL);
+    remember_pref(prf, reflect_peak_envs, save_peak_envs, help_peak_env, NULL, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     str = mus_format("%d", rts_max_regions = max_regions(ss));
@@ -2419,7 +1885,7 @@ widget_t start_preferences_dialog(void)
 			      str,
 			      dpy_box, file_label,
 			      load_path_text);
-    remember_pref(prf, reflect_load_path, NULL, load_path_help, NULL, NULL);
+    remember_pref(prf, reflect_load_path, NULL, help_load_path, NULL, NULL);
     if (str) 
       FREE(str);
     else red_text(prf);
@@ -2559,54 +2025,55 @@ widget_t start_preferences_dialog(void)
 #endif
 
     prf = prefs_row_with_toggle("context-sensitive popup menu", "add-selection-popup",
-				find_context_sensitive_popup(),
+				(include_context_sensitive_popup = find_context_sensitive_popup()),
 				dpy_box, cursor_label, 
 				context_sensitive_popup_toggle);
-    remember_pref(prf, reflect_context_sensitive_popup, save_context_sensitive_popup, context_sensitive_popup_help, NULL, NULL);
+    remember_pref(prf, reflect_context_sensitive_popup, save_context_sensitive_popup, help_context_sensitive_popup, 
+		  clear_context_sensitive_popup, revert_context_sensitive_popup);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("effects menu", "new-effects.scm",
-				find_effects_menu(),
+				(include_effects_menu = find_effects_menu()),
 				dpy_box, current_sep, 
 				effects_menu_toggle);
-    remember_pref(prf, reflect_effects_menu, save_effects_menu, effects_menu_help, NULL, NULL);
+    remember_pref(prf, reflect_effects_menu, save_effects_menu, help_effects_menu, clear_effects_menu, revert_effects_menu);
 
 #if HAVE_SCHEME
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("edit menu additions", "edit-menu.scm",
-				find_edit_menu(),
+				(include_edit_menu = find_edit_menu()),
 				dpy_box, current_sep, 
 				edit_menu_toggle);
-    remember_pref(prf, reflect_edit_menu, save_edit_menu, edit_menu_help, NULL, NULL);
+    remember_pref(prf, reflect_edit_menu, save_edit_menu, help_edit_menu, clear_edit_menu, revert_edit_menu);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("marks menu", "marks-menu.scm",
-				find_marks_menu(),
+				(include_marks_menu = find_marks_menu()),
 				dpy_box, current_sep, 
 				marks_menu_toggle);
-    remember_pref(prf, reflect_marks_menu, save_marks_menu, marks_menu_help, NULL, NULL);
+    remember_pref(prf, reflect_marks_menu, save_marks_menu, help_marks_menu, clear_marks_menu, revert_marks_menu);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("mix/track menu", "mix-menu.scm",
-				find_mix_menu(),
+				(include_mix_menu = find_mix_menu()),
 				dpy_box, current_sep, 
 				mix_menu_toggle);
-    remember_pref(prf, reflect_mix_menu, save_mix_menu, mix_menu_help, NULL, NULL);
+    remember_pref(prf, reflect_mix_menu, save_mix_menu, help_mix_menu, clear_mix_menu, revert_mix_menu);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("box of handy icons", "new-buttons.scm",
-				find_icon_box(),
+				(include_icon_box = find_icon_box()),
 				dpy_box, current_sep, 
 				icon_box_toggle);
-    remember_pref(prf, reflect_icon_box, save_icon_box, icon_box_help, NULL, NULL);
+    remember_pref(prf, reflect_icon_box, save_icon_box, help_icon_box, clear_icon_box, revert_icon_box);
 #endif
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("reopen menu", "with-reopen-menu",
-				find_reopen_menu(),
+				(include_reopen_menu = find_reopen_menu()),
 				dpy_box, current_sep, 
 				reopen_menu_toggle);
-    remember_pref(prf, reflect_reopen_menu, save_reopen_menu, reopen_menu_help, NULL, NULL);
+    remember_pref(prf, reflect_reopen_menu, save_reopen_menu, help_reopen_menu, clear_reopen_menu, revert_reopen_menu);
 
 
     /* ---------------- additional key bindings ---------------- */
@@ -2623,7 +2090,7 @@ widget_t start_preferences_dialog(void)
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, key_label,
 						  bind_play_from_cursor);
-      remember_pref(prf, reflect_play_from_cursor, save_pfc_binding, play_from_cursor_help, NULL, NULL);
+      remember_pref(prf, reflect_play_from_cursor, save_pfc_binding, help_play_from_cursor, NULL, NULL);
       FREE(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2633,7 +2100,7 @@ widget_t start_preferences_dialog(void)
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_show_all);
-      remember_pref(prf, reflect_show_all, save_show_all_binding, show_all_help, NULL, NULL);
+      remember_pref(prf, reflect_show_all, save_show_all_binding, help_show_all, NULL, NULL);
       FREE(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2643,7 +2110,7 @@ widget_t start_preferences_dialog(void)
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_select_all);
-      remember_pref(prf, reflect_select_all, save_select_all_binding, select_all_help, NULL, NULL);
+      remember_pref(prf, reflect_select_all, save_select_all_binding, help_select_all, NULL, NULL);
       FREE(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2653,7 +2120,7 @@ widget_t start_preferences_dialog(void)
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_show_selection);
-      remember_pref(prf, reflect_show_selection, save_show_selection_binding, show_selection_help, NULL, NULL);
+      remember_pref(prf, reflect_show_selection, save_show_selection_binding, help_show_selection, NULL, NULL);
       FREE(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2663,7 +2130,7 @@ widget_t start_preferences_dialog(void)
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_revert);
-      remember_pref(prf, reflect_revert, save_revert_binding, revert_help, NULL, NULL);
+      remember_pref(prf, reflect_revert, save_revert_binding, help_revert, NULL, NULL);
       FREE(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2673,7 +2140,7 @@ widget_t start_preferences_dialog(void)
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_exit);
-      remember_pref(prf, reflect_exit, save_exit_binding, exit_help, NULL, NULL);
+      remember_pref(prf, reflect_exit, save_exit_binding, help_exit, NULL, NULL);
       FREE(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2683,7 +2150,7 @@ widget_t start_preferences_dialog(void)
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_goto_maxamp);
-      remember_pref(prf, reflect_goto_maxamp, save_goto_maxamp_binding, goto_maxamp_help, NULL, NULL);
+      remember_pref(prf, reflect_goto_maxamp, save_goto_maxamp_binding, help_goto_maxamp, NULL, NULL);
       FREE(ki);
 
     }
@@ -2820,7 +2287,7 @@ widget_t start_preferences_dialog(void)
 					  initial_bounds_toggle,
 					  initial_bounds_text);
     FREE(str);
-    remember_pref(prf, reflect_initial_bounds, save_initial_bounds, initial_bounds_help, NULL, NULL);
+    remember_pref(prf, reflect_initial_bounds, save_initial_bounds, help_initial_bounds, NULL, NULL);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_radio_box("how to layout multichannel graphs", S_channel_style,
@@ -2860,29 +2327,31 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_grid_density, save_grid_density, NULL, NULL, revert_grid_density);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
-    prf = prefs_row_with_list("what axes to display", S_show_axes, show_axes_choices[(int)show_axes(ss)],
+    rts_show_axes = show_axes(ss);
+    prf = prefs_row_with_list("what axes to display", S_show_axes, show_axes_choices[(int)rts_show_axes],
 			      show_axes_choices, NUM_SHOW_AXES,
 			      grf_box, current_sep,
 			      show_axes_from_text,
 			      NULL, NULL,
 			      show_axes_from_menu);
-    remember_pref(prf, reflect_show_axes, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_show_axes, save_show_axes, NULL, clear_show_axes, revert_show_axes);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
-    prf = prefs_row_with_list("time division", S_x_axis_style, x_axis_styles[(int)x_axis_style(ss)],
+    rts_x_axis_style = x_axis_style(ss);
+    prf = prefs_row_with_list("time division", S_x_axis_style, x_axis_styles[(int)rts_x_axis_style],
 			      x_axis_styles, NUM_X_AXIS_STYLES,
 			      grf_box, current_sep,
 			      x_axis_style_from_text,
 			      NULL, NULL,
 			      x_axis_style_from_menu);
-    remember_pref(prf, reflect_x_axis_style, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_x_axis_style, save_x_axis_style, NULL, clear_x_axis_style, revert_x_axis_style);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_toggle("include smpte info", "show-smpte-label",
-				find_smpte(),
+				(include_smpte = find_smpte()),
 				grf_box, current_sep,
 				smpte_toggle);
-    remember_pref(prf, reflect_smpte, save_smpte, smpte_label_help, NULL, NULL);
+    remember_pref(prf, reflect_smpte, save_smpte, help_smpte, clear_smpte, revert_smpte);
 
     /* ---------------- (graph) colors ---------------- */
 
@@ -2997,22 +2466,24 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_transform_graph_type, save_transform_graph_type, NULL, NULL, revert_transform_graph_type);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
-    prf = prefs_row_with_list("transform", S_transform_type, transform_types[transform_type(ss)],
+    rts_transform_type = transform_type(ss);
+    prf = prefs_row_with_list("transform", S_transform_type, transform_types[rts_transform_type],
 			      transform_types, NUM_BUILTIN_TRANSFORM_TYPES,
 			      fft_box, current_sep,
 			      transform_type_from_text,
 			      transform_type_completer, NULL,
 			      transform_type_from_menu);
-    remember_pref(prf, reflect_transform_type, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_transform_type, save_transform_type, NULL, clear_transform_type, revert_transform_type);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
-    prf = prefs_row_with_list("data window", S_fft_window, fft_windows[(int)fft_window(ss)],
+    rts_fft_window = fft_window(ss);
+    prf = prefs_row_with_list("data window", S_fft_window, fft_windows[(int)rts_fft_window],
 			      fft_windows, MUS_NUM_WINDOWS,
 			      fft_box, current_sep,
 			      fft_window_from_text,
 			      fft_window_completer, NULL,
 			      fft_window_from_menu);
-    remember_pref(prf, reflect_fft_window, NULL, NULL, NULL, NULL);
+    remember_pref(prf, reflect_fft_window, save_fft_window, NULL, clear_fft_window, revert_fft_window);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_scale("data window family parameter", S_fft_window_beta, 
@@ -3039,13 +2510,14 @@ widget_t start_preferences_dialog(void)
       cmaps = (const char **)CALLOC(len, sizeof(const char *));
       for (i = 0; i < len; i++)
 	cmaps[i] = (const char *)colormap_name(i);
-      prf = prefs_row_with_list("sonogram colormap", S_colormap, cmaps[color_map(ss)],
+      rts_colormap = color_map(ss);
+      prf = prefs_row_with_list("sonogram colormap", S_colormap, cmaps[rts_colormap],
 				cmaps, len,
 				fft_box, current_sep,
 				colormap_from_text,
 				colormap_completer, NULL,
 				colormap_from_menu);
-      remember_pref(prf, reflect_colormap, NULL, NULL, NULL, NULL);
+      remember_pref(prf, reflect_colormap, save_colormap, NULL, clear_colormap, revert_colormap);
       FREE(cmaps);
     }
 
@@ -3140,10 +2612,10 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(mmr_box, prf->label);
     prf = prefs_row_with_toggle("include mark pane", "mark-pane",
-				find_mark_pane(),
+				(include_mark_pane = find_mark_pane()),
 				mmr_box, current_sep,
 				mark_pane_toggle);
-    remember_pref(prf, reflect_mark_pane, save_mark_pane, mark_pane_help, NULL, NULL);
+    remember_pref(prf, reflect_mark_pane, save_mark_pane, help_mark_pane, clear_mark_pane, revert_mark_pane);
   }
   
   current_sep = make_inter_topic_separator(topics);
@@ -3179,10 +2651,10 @@ widget_t start_preferences_dialog(void)
 #if HAVE_SCHEME
     current_sep = make_inter_variable_separator(clm_box, prf->label);
     prf = prefs_row_with_toggle("include hidden controls dialog", "hidden-controls-dialog",
-				find_hidden_controls(),
+				(include_hidden_controls = find_hidden_controls()),
 				clm_box, current_sep, 
 				hidden_controls_toggle);
-    remember_pref(prf, reflect_hidden_controls, save_hidden_controls, hidden_controls_help, NULL, NULL);
+    remember_pref(prf, reflect_hidden_controls, save_hidden_controls, help_hidden_controls, clear_hidden_controls, revert_hidden_controls);
 #endif
 
     current_sep = make_inter_variable_separator(clm_box, prf->label);
@@ -3259,10 +2731,10 @@ widget_t start_preferences_dialog(void)
 #if HAVE_GUILE
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     prf = prefs_row_with_toggle("include debugging aids", "snd-break",
-				find_debugging_aids(),
+				(include_debugging_aids = find_debugging_aids()),
 				prg_box, current_sep,
 				debugging_aids_toggle);
-    remember_pref(prf, reflect_debugging_aids, save_debugging_aids, NULL, NULL, NULL);
+    remember_pref(prf, reflect_debugging_aids, save_debugging_aids, NULL, clear_debugging_aids, revert_debugging_aids);
     include_debugging_aids = find_debugging_aids();
 #endif
 

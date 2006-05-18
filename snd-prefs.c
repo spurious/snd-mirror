@@ -1701,7 +1701,7 @@ static void set_sync_choice(int val, const char *load)
 static void revert_sync_choice(prefs_info *prf) {set_sync_choice(rts_sync_choice, NULL);}
 static void clear_sync_choice(prefs_info *prf) {set_sync_choice(SYNC_DISABLED, NULL);}
 
-static void sync_choice_help(prefs_info *prf)
+static void help_sync_choice(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "Many operations can operate on all channels at once, or only on the currently selected \
@@ -2013,7 +2013,7 @@ static void reflect_unsaved_edits(prefs_info *prf)
   SET_TOGGLE(prf->toggle, prefs_unsaved_edits);
 }
 
-static void unsaved_edits_help(prefs_info *prf)
+static void help_unsaved_edits(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This option looks for unsaved edits when you close a file, or exit Snd.  If it \
@@ -2059,7 +2059,7 @@ static void save_current_window_display(prefs_info *prf, FILE *fd)
     prefs_function_save_0(fd, "make-current-window-display", "draw");
 }
 
-static void current_window_help(prefs_info *prf)
+static void help_current_window(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This option displays a small graph of the entire sound in the upper right corner \
@@ -3179,32 +3179,17 @@ static void recorder_output_data_format_choice(prefs_info *prf)
 }
 
 
-/* ---------------- include with-sound ---------------- */
+/* ---------------- with-sound ---------------- */
 
 static bool rts_with_sound = false;
 static char *rts_clm_file_name = NULL;
 static int rts_clm_file_buffer_size = 65536;
 static int rts_clm_table_size = 512;
 
-static bool with_sound_is_loaded(void)
-{
-  return(XEN_DEFINED_P("with-sound"));
-}
-
-static void reflect_with_sound(prefs_info *prf) 
-{
-  SET_TOGGLE(prf->toggle, with_sound_is_loaded());
-}
-
-static void revert_with_sound(prefs_info *prf)
-{
-  rts_with_sound = with_sound_is_loaded();
-}
-
-static void clear_with_sound(prefs_info *prf)
-{
-  SET_TOGGLE(prf->toggle, false);
-}
+static bool with_sound_is_loaded(void) {return(XEN_DEFINED_P("with-sound"));}
+static void reflect_with_sound(prefs_info *prf) {}
+static void revert_with_sound(prefs_info *prf) {SET_TOGGLE(prf->toggle, rts_with_sound);}
+static void clear_with_sound(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 
 static void with_sound_toggle(prefs_info *prf)
 {
@@ -3215,6 +3200,7 @@ static void with_sound_toggle(prefs_info *prf)
 
 static void save_with_sound(prefs_info *prf, FILE *fd)
 {
+  rts_with_sound = GET_TOGGLE(prf->toggle);
   if (rts_with_sound)
     {
 #if HAVE_SCHEME
@@ -3314,16 +3300,12 @@ static void save_clm_file_name(prefs_info *prf, FILE *ignore)
 
 static int find_clm_table_size(void)
 {
-  XEN size;
-  size = prefs_variable_get(CLM_TABLE_SIZE);
-  return(XEN_TO_C_INT_OR_ELSE(size, 512));
+  return(XEN_TO_C_INT_OR_ELSE(prefs_variable_get(CLM_TABLE_SIZE), 512));
 }
 
 static int find_clm_file_buffer_size(void)
 {
-  XEN size;
-  size = prefs_variable_get(CLM_FILE_BUFFER_SIZE);
-  return(XEN_TO_C_INT_OR_ELSE(size, 65536));
+  return(XEN_TO_C_INT_OR_ELSE(prefs_variable_get(CLM_FILE_BUFFER_SIZE), 65536));
 }
 
 static void reflect_clm_sizes(prefs_info *prf)
@@ -3387,15 +3369,11 @@ static void save_clm_sizes(prefs_info *prf, FILE *ignore)
 }
 
 
-
-/* STOPPED HERE */
-
-
 /* ---------------- context sensitive popup ---------------- */
 
 static bool include_context_sensitive_popup = false;
 
-static void context_sensitive_popup_help(prefs_info *prf)
+static void help_context_sensitive_popup(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This option creates a context-sensitive popup menu (activated by button 3).  The menu \
@@ -3404,44 +3382,46 @@ portions of the graphs, the listener, the edit history pane, and the current sel
 	   WITH_WORD_WRAP);
 }
 
-static bool find_context_sensitive_popup(void)
-{
-  return(XEN_DEFINED_P("edhist-help-edits")); /* defined in both cases */
-}
-
-static void save_context_sensitive_popup_1(prefs_info *prf, FILE *fd)
-{
-#if HAVE_SCHEME
-  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-popup.scm))\n        (load-from-path \"popup.scm\"))\n    (if (not (provided? 'snd-gtk-popup.scm))\n	(load-from-path \"gtk-popup.scm\")))\n");
-#endif
-#if HAVE_RUBY
-  fprintf(fd, "require \"popup\"\n");
-#endif
-#if HAVE_FORTY
-  fprintf(fd, "require popup\n");
-#endif
-}
+static bool find_context_sensitive_popup(void) {return(XEN_DEFINED_P("edhist-help-edits"));}
 
 static void save_context_sensitive_popup(prefs_info *prf, FILE *fd)
 {
-  if (include_context_sensitive_popup) save_context_sensitive_popup_1(prf, fd);
+  include_context_sensitive_popup = GET_TOGGLE(prf->toggle);
+  if (include_context_sensitive_popup)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-popup.scm))\n        (load-from-path \"popup.scm\"))\n    (if (not (provided? 'snd-gtk-popup.scm))\n	(load-from-path \"gtk-popup.scm\")))\n");
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "require \"popup\"\n");
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "require popup\n");
+#endif
+    }
 }
 
 static void context_sensitive_popup_toggle(prefs_info *prf)
 {
-  include_context_sensitive_popup = GET_TOGGLE(prf->toggle);
+  if ((GET_TOGGLE(prf->toggle)) &&
+      (!(find_context_sensitive_popup())))
+#if USE_MOTIF
+    xen_load_file_with_path_and_extension("popup");
+#else
+    xen_load_file_with_path_and_extension("gtk-popup");
+#endif
 }
 
-static void reflect_context_sensitive_popup(prefs_info *prf) 
-{
-  SET_TOGGLE(prf->toggle, find_context_sensitive_popup());
-}
+static void reflect_context_sensitive_popup(prefs_info *prf) {}
+static void revert_context_sensitive_popup(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_context_sensitive_popup);}
+static void clear_context_sensitive_popup(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+
 
 /* ---------------- effects menu ---------------- */
 
 static bool include_effects_menu = false;
 
-static void effects_menu_help(prefs_info *prf)
+static void help_effects_menu(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This option creates a top-level menu named 'Effects'.  The effects include such things as \
@@ -3450,45 +3430,47 @@ filtering, padding, cross synthesis, and so on.",
 	   WITH_WORD_WRAP);
 }
 
-static bool find_effects_menu(void)
-{
-  return(XEN_DEFINED_P("effects-menu"));
-}
-
-static void save_effects_menu_1(prefs_info *prf, FILE *fd)
-{
-#if HAVE_SCHEME
-  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-new-effects.scm))\n        (load-from-path \"new-effects.scm\"))\n    (if (not (provided? 'snd-gtk-effects.scm))\n	(load-from-path \"gtk-effects.scm\")))\n");
-#endif
-#if HAVE_RUBY
-  fprintf(fd, "require \"effects\"\n");
-#endif
-#if HAVE_FORTH
-  fprintf(fd, "require effects\n");
-#endif
-}
+static bool find_effects_menu(void) {return(XEN_DEFINED_P("effects-menu"));}
 
 static void save_effects_menu(prefs_info *prf, FILE *fd)
 {
-  if (include_effects_menu) save_effects_menu_1(prf, fd);
+  include_effects_menu = GET_TOGGLE(prf->toggle);
+  if (include_effects_menu)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-new-effects.scm))\n        (load-from-path \"new-effects.scm\"))\n    (if (not (provided? 'snd-gtk-effects.scm))\n	(load-from-path \"gtk-effects.scm\")))\n");
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "require \"effects\"\n");
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "require effects\n");
+#endif
+    }
 }
 
 static void effects_menu_toggle(prefs_info *prf)
 {
-  include_effects_menu = GET_TOGGLE(prf->toggle);
+  if ((GET_TOGGLE(prf->toggle)) &&
+      (!(find_effects_menu())))
+#if USE_MOTIF
+    xen_load_file_with_path_and_extension("new-effects");
+#else
+    xen_load_file_with_path_and_extension("gtk-effects");
+#endif
 }
 
-static void reflect_effects_menu(prefs_info *prf) 
-{
-  SET_TOGGLE(prf->toggle, find_effects_menu());
-}
+static void reflect_effects_menu(prefs_info *prf) {}
+static void revert_effects_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_effects_menu);}
+static void clear_effects_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+
 
 #if HAVE_SCHEME
 /* ---------------- edit menu ---------------- */
 
 static bool include_edit_menu = false;
 
-static void edit_menu_help(prefs_info *prf)
+static void help_edit_menu(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This option adds several options to the top-level Edit menu: selection to file, \
@@ -3503,30 +3485,30 @@ static bool find_edit_menu(void)
 
 static void save_edit_menu(prefs_info *prf, FILE *fd)
 {
+  include_edit_menu = GET_TOGGLE(prf->toggle);
   if (include_edit_menu)
     fprintf(fd, "(if (not (provided? 'snd-edit-menu.scm)) (load-from-path \"edit-menu.scm\"))\n"); /* ok for either case */
 }
 
 static void edit_menu_toggle(prefs_info *prf)
 {
-  include_edit_menu = GET_TOGGLE(prf->toggle);
+  if ((GET_TOGGLE(prf->toggle)) &&
+      (!(find_edit_menu())))
+    xen_load_file_with_path_and_extension("edit-menu");
 }
 
-static void reflect_edit_menu(prefs_info *prf) 
-{
-  SET_TOGGLE(prf->toggle, find_edit_menu());
-}
+static void reflect_edit_menu(prefs_info *prf) {}
+static void revert_edit_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_edit_menu);}
+static void clear_edit_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+
 
 /* ---------------- marks menu ---------------- */
 
 static bool include_marks_menu = false;
 
-static bool find_marks_menu(void)
-{
-  return(XEN_DEFINED_P("marks-menu"));
-}
+static bool find_marks_menu(void) {return(XEN_DEFINED_P("marks-menu"));}
 
-static void marks_menu_help(prefs_info *prf)
+static void help_marks_menu(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This option adds a top-level 'Marks' menu that includes such things as play between marks, \
@@ -3536,25 +3518,28 @@ trim, crop, define selection via marks, etc",
 
 static void save_marks_menu(prefs_info *prf, FILE *fd)
 {
+  include_marks_menu = GET_TOGGLE(prf->toggle);
   if (include_marks_menu)
     fprintf(fd, "(if (not (provided? 'snd-marks-menu.scm)) (load-from-path \"marks-menu.scm\"))\n");
 }
 
 static void marks_menu_toggle(prefs_info *prf)
 {
-  include_marks_menu = GET_TOGGLE(prf->toggle);
+  if ((GET_TOGGLE(prf->toggle)) &&
+      (!(find_marks_menu())))
+    xen_load_file_with_path_and_extension("marks-menu");
 }
 
-static void reflect_marks_menu(prefs_info *prf) 
-{
-  SET_TOGGLE(prf->toggle, find_marks_menu());
-}
+static void reflect_marks_menu(prefs_info *prf) {}
+static void revert_marks_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_marks_menu);}
+static void clear_marks_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+
 
 /* ---------------- mix menu ---------------- */
 
 static bool include_mix_menu = false;
 
-static void mix_menu_help(prefs_info *prf)
+static void help_mix_menu(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This option adds a top-level 'Mix/Track' menu.  Included are such choices as delete mix, \
@@ -3562,59 +3547,59 @@ snap mix to beat, delete, play, reverse, save, and transpose track, set track am
 	   WITH_WORD_WRAP);
 }
 
-static bool find_mix_menu(void)
-{
-  return(XEN_DEFINED_P("mix-menu"));
-}
+static bool find_mix_menu(void) {return(XEN_DEFINED_P("mix-menu"));}
 
 static void save_mix_menu(prefs_info *prf, FILE *fd)
 {
+  include_mix_menu = GET_TOGGLE(prf->toggle);
   if (include_mix_menu)
     fprintf(fd, "(if (not (provided? 'snd-mix-menu.scm)) (load-from-path \"mix-menu.scm\"))\n");
 }
 
 static void mix_menu_toggle(prefs_info *prf)
 {
-  include_mix_menu = GET_TOGGLE(prf->toggle);
+  if ((GET_TOGGLE(prf->toggle)) &&
+      (!(find_mix_menu())))
+    xen_load_file_with_path_and_extension("mix-menu");
 }
 
-static void reflect_mix_menu(prefs_info *prf) 
-{
-  SET_TOGGLE(prf->toggle, find_mix_menu());
-}
+static void reflect_mix_menu(prefs_info *prf) {}
+static void revert_mix_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_mix_menu);}
+static void clear_mix_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+
 
 #if USE_MOTIF
 /* ---------------- icon box ---------------- */
 
 static bool include_icon_box = false;
 
-static void icon_box_help(prefs_info *prf)
+static void help_icon_box(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This option adds a top-level box full of various handy icons.  Not implemented in Gtk yet.",
 	   WITH_WORD_WRAP);
 }
 
-static bool find_icon_box(void)
-{
-  return(XEN_DEFINED_P("add-useful-icons"));
-}
+static bool find_icon_box(void) {return(XEN_DEFINED_P("add-useful-icons"));}
 
 static void save_icon_box(prefs_info *prf, FILE *fd)
 {
+  include_icon_box = GET_TOGGLE(prf->toggle);
   if (include_icon_box)
     fprintf(fd, "(if (not (provided? 'snd-new-buttons.scm)) (load-from-path \"new-buttons.scm\"))\n");
 }
 
 static void icon_box_toggle(prefs_info *prf)
 {
-  include_icon_box = GET_TOGGLE(prf->toggle);
+  if ((GET_TOGGLE(prf->toggle)) &&
+      (!(find_icon_box())))
+    xen_load_file_with_path_and_extension("new-buttons");
 }
 
-static void reflect_icon_box(prefs_info *prf) 
-{
-  SET_TOGGLE(prf->toggle, find_icon_box());
-}
+static void reflect_icon_box(prefs_info *prf) {}
+static void revert_icon_box(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_icon_box);}
+static void clear_icon_box(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+
 #endif
 #endif
 
@@ -3622,7 +3607,7 @@ static void reflect_icon_box(prefs_info *prf)
 
 static bool include_reopen_menu = false;
 
-static void reopen_menu_help(prefs_info *prf)
+static void help_reopen_menu(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This option adds a top-level 'Reopen' menu. Previously opened sounds that are not currently open are listed \
@@ -3636,36 +3621,26 @@ static bool find_reopen_menu(void)
 	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-reopen-menu")));
 }
 
-static void save_reopen_menu_1(prefs_info *prf, FILE *fd)
-{
-#if HAVE_SCHEME
-  fprintf(fd, "(if (provided? 'snd-extensions) (load-from-path \"extensions.scm\"))\n");
-  fprintf(fd, "(with-reopen-menu)\n");
-#endif
-#if HAVE_RUBY
-  fprintf(fd, "require \"extensions\"\n");
-  fprintf(fd, "with_reopen_menu\n");
-#endif
-#if HAVE_FORTH
-  fprintf(fd, "require extensions\n");
-  fprintf(fd, "with-reopen-menu\n");
-#endif
-}
-
 static void save_reopen_menu(prefs_info *prf, FILE *fd)
 {
-  if (include_reopen_menu) save_reopen_menu_1(prf, fd);
+  include_reopen_menu = GET_TOGGLE(prf->toggle);
+  if (include_reopen_menu)
+    prefs_function_save_0(fd, "with-reopen-menu", "extensions");
 }
 
 static void reopen_menu_toggle(prefs_info *prf)
 {
-  include_reopen_menu = GET_TOGGLE(prf->toggle);
+  if ((GET_TOGGLE(prf->toggle)) &&
+      (!(find_reopen_menu())))
+    {
+      xen_load_file_with_path_and_extension("extensions");
+      prefs_function_call_0("with-reopen-menu");
+    }
 }
 
-static void reflect_reopen_menu(prefs_info *prf) 
-{
-  SET_TOGGLE(prf->toggle, find_reopen_menu());
-}
+static void reflect_reopen_menu(prefs_info *prf) {}
+static void revert_reopen_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_reopen_menu);}
+static void clear_reopen_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 
 
 #if USE_MOTIF
@@ -3673,7 +3648,7 @@ static void reflect_reopen_menu(prefs_info *prf)
 
 static bool include_mark_pane = false;
 
-static void mark_pane_help(prefs_info *prf)
+static void help_mark_pane(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This option adds a pane to each channel window containing information about that channel's marks.",
@@ -3686,38 +3661,26 @@ static bool find_mark_pane(void)
 	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-mark-pane")));
 }
 
-static void save_mark_pane_1(prefs_info *prf, FILE *fd)
-{
-#if HAVE_SCHEME
-  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-snd-motif.scm))\n        (load-from-path \"snd-motif.scm\"))\n    (if (not (provided? 'snd-snd-gtk.scm))\n        (load-from-path \"snd-gtk.scm\")))\n");
-  fprintf(fd, "(add-mark-pane)\n");
-#endif
-#if HAVE_RUBY
-  fprintf(fd, "require \"snd-xm\"\n");
-  fprintf(fd, "add_mark_pane\n");
-#endif
-#if HAVE_FORTH
-  fprintf(fd, "require snd-xm\n");
-  fprintf(fd, "add-mark-pane\n");
-#endif
-}
-
-static void reflect_mark_pane(prefs_info *prf) 
-{
-  include_mark_pane = find_mark_pane();
-  SET_TOGGLE(prf->toggle, include_mark_pane);
-}
-
 static void mark_pane_toggle(prefs_info *prf)
 {
-  include_mark_pane = GET_TOGGLE(prf->toggle);
+  if ((GET_TOGGLE(prf->toggle)) &&
+      (!(find_mark_pane())))
+    {
+      xen_load_file_with_path_and_extension("snd-motif");
+      prefs_function_call_0("add-mark-pane");
+    }
 }
 
 static void save_mark_pane(prefs_info *prf, FILE *fd)
 {
+  include_mark_pane = GET_TOGGLE(prf->toggle);
   if (include_mark_pane)
-    save_mark_pane_1(prf, fd);
+    prefs_function_save_0(fd, "add-mark-pane", "snd-motif");
 }
+
+static void reflect_mark_pane(prefs_info *prf) {}
+static void revert_mark_pane(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_mark_pane);}
+static void clear_mark_pane(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 #endif
 
 
@@ -3726,7 +3689,7 @@ static void save_mark_pane(prefs_info *prf, FILE *fd)
 
 static bool include_hidden_controls = false;
 
-static void hidden_controls_help(prefs_info *prf)
+static void help_hidden_controls(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This adds a 'Hidden Controls' option to the Option menu.  The dialog \
@@ -3747,6 +3710,7 @@ static bool find_hidden_controls(void)
 
 static void save_hidden_controls(prefs_info *prf, FILE *fd)
 {
+  include_hidden_controls = GET_TOGGLE(prf->toggle);
   if (include_hidden_controls)
     {
       fprintf(fd, "(if (not (provided? 'snd-snd-motif.scm)) (load-from-path \"snd-motif.scm\"))\n");
@@ -3756,15 +3720,22 @@ static void save_hidden_controls(prefs_info *prf, FILE *fd)
 
 static void hidden_controls_toggle(prefs_info *prf)
 {
-  include_hidden_controls = GET_TOGGLE(prf->toggle);
+  if ((GET_TOGGLE(prf->toggle)) &&
+      (!(find_hidden_controls())))
+    {
+      xen_load_file_with_path_and_extension("snd-motif");
+      prefs_function_call_0("make-hidden-controls-dialog");
+    }
 }
 
-static void reflect_hidden_controls(prefs_info *prf) 
-{
-  SET_TOGGLE(prf->toggle, find_hidden_controls());
-}
+static void reflect_hidden_controls(prefs_info *prf) {}
+static void revert_hidden_controls(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_hidden_controls);}
+static void clear_hidden_controls(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+
 #endif
 
+
+/* STOPPED HERE */
 
 #if HAVE_GUILE
 /* ---------------- debugging aids ---------------- */
@@ -3777,18 +3748,20 @@ static bool find_debugging_aids(void)
 	 (XEN_DEFINED_P("untrace-stack")));
 }
 
-static void reflect_debugging_aids(prefs_info *prf) 
-{
-  SET_TOGGLE(prf->toggle, find_debugging_aids());
-}
+static void reflect_debugging_aids(prefs_info *prf) {}
+static void revert_debugging_aids(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_debugging_aids);}
+static void clear_debugging_aids(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 
 static void debugging_aids_toggle(prefs_info *prf)
 {
-  include_debugging_aids = GET_TOGGLE(prf->toggle);
+  if ((GET_TOGGLE(prf->toggle)) &&
+      (!(find_debugging_aids())))
+    xen_load_file_with_path_and_extension("debug");
 }
 
 static void save_debugging_aids(prefs_info *prf, FILE *fd)
 {
+  include_debugging_aids = GET_TOGGLE(prf->toggle);
   if (include_debugging_aids)
     {
       fprintf(fd, "(use-modules (ice-9 debug) (ice-9 session))\n");
@@ -3807,26 +3780,43 @@ static void save_debugging_aids(prefs_info *prf, FILE *fd)
 
 static bool include_smpte = false;
 
-static void smpte_label_help(prefs_info *prf)
+static void help_smpte(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This option adds a label to the time domain graph showing the current SMPTE frame of the leftmost sample.",
 	   WITH_WORD_WRAP);
 }
 
-static bool find_smpte(void)
+static bool find_smpte(void) {return(XEN_TO_C_BOOLEAN(prefs_variable_get("smpte-is-on")));}
+static void reflect_smpte(prefs_info *prf) {}
+static void revert_smpte(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_smpte);}
+static void clear_smpte(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+
+static void smpte_toggle(prefs_info *prf)
 {
-#if HAVE_SCHEME 
-  return((XEN_DEFINED_P("smpte-is-on")) && 
-	 (!(XEN_FALSE_P(XEN_EVAL_C_STRING("(smpte-is-on)"))))); /* "member" of hook-list -> a list if successful */ 
-#else 
-  return((XEN_DEFINED_P("smpte-is-on")) && 
-	 XEN_TO_C_BOOLEAN(XEN_EVAL_C_STRING(TO_PROC_NAME("smpte-is-on")))); /* "member" of hook-list -> true */ 
-#endif 
+  if ((GET_TOGGLE(prf->toggle)) &&
+      (!(find_smpte())))
+    {
+#if HAVE_SCHEME
+#if USE_MOTIF
+      xen_load_file_with_path_and_extension("snd-motif");
+#else
+      xen_load_file_with_path_and_extension("snd-gtk");
+#endif
+#endif
+#if HAVE_FORTH || HAVE_RUBY
+      xen_load_file_with_path_and_extension("snd-xm");
+#endif
+    }
+  if (find_smpte())
+    prefs_function_call_1("show-smpte-label", C_TO_XEN_BOOLEAN(GET_TOGGLE(prf->toggle)));
 }
 
-static void save_smpte_1(prefs_info *prf, FILE *fd)
+static void save_smpte(prefs_info *prf, FILE *fd)
 {
+  include_smpte = GET_TOGGLE(prf->toggle);
+  if (include_smpte)
+    {
 #if HAVE_SCHEME
   fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-snd-motif.scm))\n        (load-from-path \"snd-motif.scm\"))\n    (if (not (provided? 'snd-snd-gtk.scm))\n        (load-from-path \"snd-gtk.scm\")))\n");
   fprintf(fd, "(show-smpte-label #t)\n");
@@ -3839,114 +3829,411 @@ static void save_smpte_1(prefs_info *prf, FILE *fd)
   fprintf(fd, "require snd-xm\n");
   fprintf(fd, "#t show-smpte-label\n");
 #endif
-}
-
-static void reflect_smpte(prefs_info *prf) 
-{
-  SET_TOGGLE(prf->toggle, find_smpte());
-}
-
-static void smpte_toggle(prefs_info *prf)
-{
-  include_smpte = GET_TOGGLE(prf->toggle);
-}
-
-static void save_smpte(prefs_info *prf, FILE *fd)
-{
-  if (include_smpte) save_smpte_1(prf, fd);
+    }
 }
 
 
 /* ---------------- remember-sound-state ---------------- */
 
-static int global_remember_sound_state_choice = 0; /* 0=none, 1=local, 2=global+not local, 3=local+global */
+static int rts_remember_sound_state_choice = 0, remember_sound_state_choice = 0; /* 0=none, 1=local, 2=global+not local, 3=local+global */
 
-static void remember_sound_state_choice_help(prefs_info *prf)
+static void help_remember_sound_state_choice(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This option causes Snd to save most of a sound's display state when it is closed, \
-and if that same sound is later re-opened, Snd restores the previous state. Not fully implemented yet.",
+and if that same sound is later re-opened, Snd restores the previous state. This only takes effect upon restarting Snd.",
 	   WITH_WORD_WRAP);
 }
 
-static int find_remember_sound_state_choice(void)
-{
-  if (XEN_DEFINED_P("remembering-sound-state"))
-    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("remembering-sound-state")));
-  return(0);
-}
-
-static void save_remember_sound_state_choice_1(prefs_info *prf, FILE *fd, int choice)
-{
-#if HAVE_SCHEME
-  fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
-  fprintf(fd, "(remember-sound-state %d)\n", choice);
-#endif
-#if HAVE_RUBY
-  fprintf(fd, "require \"extensions\"\n");
-  if (choice & 2)
-    fprintf(fd, "remember_all_sound_properties\n");
-  else fprintf(fd, "remember_sound_state\n");
-#endif
-#if HAVE_FORTH
-  fprintf(fd, "require extensions\n");
-  fprintf(fd, "%d remember-sound-state\n", choice);
-#endif
-}
+static int find_remember_sound_state_choice(void) {return(XEN_TO_C_INT_OR_ELSE(prefs_variable_get("remembering-sound-state"), 0));}
+static void revert_remember_sound_state(prefs_info *prf) {remember_sound_state_choice = rts_remember_sound_state_choice;}
+static void clear_remember_sound_state(prefs_info *prf) {remember_sound_state_choice = 0;}
 
 static void reflect_remember_sound_state_choice(prefs_info *prf)
 {
-  global_remember_sound_state_choice = find_remember_sound_state_choice();
-  SET_TOGGLE(prf->toggle, global_remember_sound_state_choice & 1);
-  SET_TOGGLE(prf->toggle2, global_remember_sound_state_choice & 2);
+  SET_TOGGLE(prf->toggle, remember_sound_state_choice & 1);
+  SET_TOGGLE(prf->toggle2, remember_sound_state_choice & 2);
 }
 
 static void save_remember_sound_state_choice(prefs_info *prf, FILE *fd)
 {
-  if (global_remember_sound_state_choice != 0)
-    save_remember_sound_state_choice_1(prf, fd, global_remember_sound_state_choice);
+  rts_remember_sound_state_choice = remember_sound_state_choice;
+  if (remember_sound_state_choice != 0)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
+      fprintf(fd, "(remember-sound-state %d)\n", remember_sound_state_choice);
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "require \"extensions\"\n");
+      if (remember_sound_state_choice & 2)
+	fprintf(fd, "remember_all_sound_properties\n");
+      else fprintf(fd, "remember_sound_state\n");
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "require extensions\n");
+      fprintf(fd, "%d remember-sound-state\n", remember_sound_state_choice);
+#endif
+    }
 }
 
 static void remember_sound_state_1_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->toggle))
-    global_remember_sound_state_choice |= 1;
-  else global_remember_sound_state_choice &= 2;
+    remember_sound_state_choice |= 1;
+  else remember_sound_state_choice &= 2;
 }
 
 static void remember_sound_state_2_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->toggle2))
-    global_remember_sound_state_choice |= 2;
-  else global_remember_sound_state_choice &= 1;
+    remember_sound_state_choice |= 2;
+  else remember_sound_state_choice &= 1;
 }
 
 
+/* ---------------- show-axes ---------------- */
 
+static show_axes_t rts_show_axes = DEFAULT_SHOW_AXES;
 
+static const char *show_axes_choices[NUM_SHOW_AXES] = {"none", "X and Y", "just X", "X and Y unlabelled", "just X unlabelled"};
 
+static void reflect_show_axes(prefs_info *prf) {SET_TEXT(prf->text, (char *)show_axes_choices[(int)show_axes(ss)]);}
+static void revert_show_axes(prefs_info *prf) {in_set_show_axes(rts_show_axes);}
+static void clear_show_axes(prefs_info *prf) {in_set_show_axes(DEFAULT_SHOW_AXES);}
+static void save_show_axes(prefs_info *prf, FILE *ignore) {rts_show_axes = show_axes(ss);}
 
-
-
-
-
-
-/* ---------------- various extra help strings ---------------- */
-
-static void load_path_help(prefs_info *prf)
+#if USE_MOTIF
+static void show_axes_from_menu(prefs_info *prf, char *value)
 {
-  snd_help("load paths",
-	   "Much of Snd's functionality is loaded as needed from the Scheme or Ruby \
-files found in the Snd tarball.  You can run Snd without \
-these files, but there's no reason to!  Just add the directory containing \
-them to the \"load-path\".  For example, if the Snd build directory was \"/home/bil/snd\", \
-add that string to the load paths given here.  Guile and Ruby search these \
-directories for any *.scm or *.rb files that they can't \
-find elsewhere.",
-	   WITH_WORD_WRAP);
+  int i;
+  for (i = 0; i < NUM_SHOW_AXES; i++)
+    if (strcmp(value, show_axes_choices[i]) == 0)
+      {
+	in_set_show_axes((show_axes_t)i);
+	SET_TEXT(prf->text, value);
+	return;
+      }
+}
+#endif
+
+static void show_axes_from_text(prefs_info *prf)
+{
+  int i;
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      char *trimmed_str;
+      trimmed_str = trim_string(str);
+      FREE_TEXT(str);
+      if (snd_strlen(trimmed_str) > 0)
+	{
+	  int curpos = -1;
+	  for (i = 0; i < NUM_SHOW_AXES; i++)
+	    if (STRCMP(trimmed_str, show_axes_choices[i]) == 0)
+	      {
+		curpos = i;
+		break;
+	      }
+	  if (curpos >= 0)
+	    in_set_show_axes((show_axes_t)curpos);
+	  else post_prefs_error("unknown axis choice", (void *)prf);
+	}
+      else post_prefs_error("need an axis choice", (void *)prf);
+      FREE(trimmed_str);
+    }
+  else post_prefs_error("need an axis choice", (void *)prf);
 }
 
-static void peak_env_help(prefs_info *prf)
+/* ---------------- x-axis-style ---------------- */
+
+static x_axis_style_t rts_x_axis_style = DEFAULT_X_AXIS_STYLE;
+
+static const char *x_axis_styles[NUM_X_AXIS_STYLES] = {"seconds", "samples", "% of total", "beats", "measures", "clock"};
+
+static void reflect_x_axis_style(prefs_info *prf) {SET_TEXT(prf->text, (char *)x_axis_styles[(int)x_axis_style(ss)]);}
+static void revert_x_axis_style(prefs_info *prf) {in_set_x_axis_style(rts_x_axis_style);}
+static void clear_x_axis_style(prefs_info *prf) {in_set_x_axis_style(DEFAULT_X_AXIS_STYLE);}
+static void save_x_axis_style(prefs_info *prf, FILE *ignore) {rts_x_axis_style = x_axis_style(ss);}
+
+#if USE_MOTIF
+static void x_axis_style_from_menu(prefs_info *prf, char *value)
+{
+  int i;
+  for (i = 0; i < NUM_X_AXIS_STYLES; i++)
+    if (strcmp(value, x_axis_styles[i]) == 0)
+      {
+	in_set_x_axis_style((x_axis_style_t)i);
+	SET_TEXT(prf->text, value);
+	return;
+      }
+}
+#endif
+
+static void x_axis_style_from_text(prefs_info *prf)
+{
+  int i;
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      char *trimmed_str;
+      trimmed_str = trim_string(str);
+      FREE_TEXT(str);
+      if (snd_strlen(trimmed_str) > 0)
+	{
+	  int curpos = -1;
+	  for (i = 0; i < NUM_X_AXIS_STYLES; i++)
+	    if (STRCMP(trimmed_str, x_axis_styles[i]) == 0)
+	      {
+		curpos = i;
+		break;
+	      }
+	  if (curpos >= 0)
+	    in_set_x_axis_style((x_axis_style_t)curpos);
+	  else post_prefs_error("unknown axis style", (void *)prf);
+	}
+      else post_prefs_error("need an axis style", (void *)prf);
+      FREE(trimmed_str);
+    }
+  else post_prefs_error("need an axis style", (void *)prf);
+}
+
+
+/* ---------------- transform-type ---------------- */
+
+static int rts_transform_type = DEFAULT_TRANSFORM_TYPE;
+
+static const char *transform_types[NUM_BUILTIN_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Haar"};
+
+static list_completer_info *transform_type_completer_info = NULL;
+
+static void reflect_transform_type(prefs_info *prf)
+{
+  SET_TEXT(prf->text, (char *)transform_types[mus_iclamp(0, transform_type(ss), NUM_BUILTIN_TRANSFORM_TYPES - 1)]); 
+}
+
+static void revert_transform_type(prefs_info *prf) {in_set_transform_type(rts_transform_type);}
+static void clear_transform_type(prefs_info *prf) {in_set_transform_type(DEFAULT_TRANSFORM_TYPE);}
+static void save_transform_type(prefs_info *prf, FILE *ignore) {rts_transform_type = transform_type(ss);}
+
+static char *transform_type_completer(char *text, void *data)
+{
+  if (!transform_type_completer_info)
+    {
+      transform_type_completer_info = (list_completer_info *)CALLOC(1, sizeof(list_completer_info));
+      transform_type_completer_info->exact_match = false;
+      transform_type_completer_info->values = (char **)transform_types;
+      transform_type_completer_info->num_values = NUM_BUILTIN_TRANSFORM_TYPES;
+      transform_type_completer_info->values_size = NUM_BUILTIN_TRANSFORM_TYPES;
+    }
+  return(list_completer(text, (void *)transform_type_completer_info));
+}
+
+#if USE_MOTIF
+static void transform_type_from_menu(prefs_info *prf, char *value)
+{
+  int i;
+  for (i = 0; i < NUM_BUILTIN_TRANSFORM_TYPES; i++)
+    if (strcmp(value, transform_types[i]) == 0)
+      {
+	in_set_transform_type(i);
+	SET_TEXT(prf->text, value);
+	return;
+      }
+}
+#endif
+
+static void transform_type_from_text(prefs_info *prf)
+{
+  int i;
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      char *trimmed_str;
+      trimmed_str = trim_string(str);
+      FREE_TEXT(str);
+      if (snd_strlen(trimmed_str) > 0)
+	{
+	  int curpos = -1;
+	  for (i = 0; i < NUM_BUILTIN_TRANSFORM_TYPES; i++)
+	    if (STRCMP(trimmed_str, transform_types[i]) == 0)
+	      {
+		curpos = i;
+		break;
+	      }
+	  if (curpos >= 0)
+	    in_set_transform_type(curpos);
+	  else post_prefs_error("unknown tranform", (void *)prf);
+	}
+      else post_prefs_error("no transform?", (void *)prf);
+      FREE(trimmed_str);
+    }
+  else post_prefs_error("no transform?", (void *)prf);
+}
+
+
+/* -------- fft-window -------- */
+
+static mus_fft_window_t rts_fft_window = DEFAULT_FFT_WINDOW;
+
+static const char *fft_windows[MUS_NUM_WINDOWS] = 
+  {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
+   "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
+   "Samaraki", "Ultraspherical"};
+
+static void reflect_fft_window(prefs_info *prf) {SET_TEXT(prf->text, (char *)fft_windows[(int)fft_window(ss)]);}
+static void revert_fft_window(prefs_info *prf) {in_set_fft_window(rts_fft_window);}
+static void clear_fft_window(prefs_info *prf) {in_set_fft_window(DEFAULT_FFT_WINDOW);}
+static void save_fft_window(prefs_info *prf, FILE *ignore) {rts_fft_window = fft_window(ss);}
+
+static list_completer_info *fft_window_completer_info = NULL;
+
+static char *fft_window_completer(char *text, void *data)
+{
+  if (!fft_window_completer_info)
+    {
+      fft_window_completer_info = (list_completer_info *)CALLOC(1, sizeof(list_completer_info));
+      fft_window_completer_info->exact_match = false;
+      fft_window_completer_info->values = (char **)fft_windows;
+      fft_window_completer_info->num_values = MUS_NUM_WINDOWS;
+      fft_window_completer_info->values_size = MUS_NUM_WINDOWS;
+    }
+  return(list_completer(text, (void *)fft_window_completer_info));
+}
+
+#if USE_MOTIF
+static void fft_window_from_menu(prefs_info *prf, char *value)
+{
+  int i;
+  for (i = 0; i < MUS_NUM_WINDOWS; i++)
+    if (strcmp(value, fft_windows[i]) == 0)
+      {
+	in_set_fft_window((mus_fft_window_t)i);
+	SET_TEXT(prf->text, value);
+	return;
+      }
+}
+#endif
+
+static void fft_window_from_text(prefs_info *prf)
+{
+  int i;
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      char *trimmed_str;
+      trimmed_str = trim_string(str);
+      FREE_TEXT(str);
+      if (snd_strlen(trimmed_str) > 0)
+	{
+	  int curpos = -1;
+	  for (i = 0; i < MUS_NUM_WINDOWS; i++)
+	    if (STRCMP(trimmed_str, fft_windows[i]) == 0)
+	      {
+		curpos = i;
+		break;
+	      }
+	  if (curpos >= 0)
+	    in_set_fft_window((mus_fft_window_t)curpos);
+	  else post_prefs_error("unknown window", (void *)prf);
+	}
+      else post_prefs_error("no window?", (void *)prf);
+      FREE(trimmed_str);
+    }
+  else post_prefs_error("no window?", (void *)prf);
+}
+
+
+/* ---------------- colormap ---------------- */
+
+static int rts_colormap = DEFAULT_COLOR_MAP;
+
+static char *colormap_completer(char *text, void *data)
+{
+  list_completer_info *compinfo;
+  char **cmaps;
+  int i, len;
+  char *result;
+  len = num_colormaps();
+  cmaps = (char **)CALLOC(len, sizeof(char *));
+  for (i = 0; i < len; i++)
+    cmaps[i] = colormap_name(i);
+  compinfo = (list_completer_info *)CALLOC(1, sizeof(list_completer_info));
+  compinfo->exact_match = false;
+  compinfo->values = (char **)fft_windows;
+  compinfo->num_values = len;
+  compinfo->values_size = len;
+  result = list_completer(text, (void *)compinfo);
+  FREE(cmaps);
+  return(result);
+}
+
+static void reflect_colormap(prefs_info *prf) {SET_TEXT(prf->text, colormap_name(color_map(ss)));}
+static void revert_colormap(prefs_info *prf) {in_set_color_map(rts_colormap);}
+static void clear_colormap(prefs_info *prf) {in_set_color_map(DEFAULT_COLOR_MAP);}
+static void save_colormap(prefs_info *prf, FILE *ignore) {rts_colormap = color_map(ss);}
+
+static void colormap_from_text(prefs_info *prf)
+{
+  int i;
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
+    {
+      char *trimmed_str;
+      trimmed_str = trim_string(str);
+      FREE_TEXT(str);
+      if (snd_strlen(trimmed_str) > 0)
+	{
+	  int len, curpos = -1;
+	  len = num_colormaps();
+	  for (i = 0; i < len; i++)
+	    if ((colormap_name(i)) &&
+		(STRCMP(trimmed_str, colormap_name(i)) == 0))
+	      {
+		curpos = i;
+		break;
+	      }
+	  if (curpos >= 0)
+	    in_set_color_map(curpos);
+	  else post_prefs_error("unknown colormap", (void *)prf);
+	}
+      else post_prefs_error("no colormap?", (void *)prf);
+      FREE(trimmed_str);
+    }
+  else post_prefs_error("no colormap?", (void *)prf);
+}
+
+#if USE_MOTIF
+static void colormap_from_menu(prefs_info *prf, char *value)
+{
+  int i, len;
+  len = num_colormaps();
+  for (i = 0; i < len; i++)
+    if ((colormap_name(i)) &&
+	(strcmp(value, colormap_name(i)) == 0))
+      {
+	in_set_color_map(i);
+	SET_TEXT(prf->text, value);
+	return;
+      }
+}
+#endif
+
+
+
+/* STOPPED HERE */
+
+/* ---------------- peak-envs ---------------- */
+
+static bool include_peak_envs = false;
+static char *include_peak_env_directory = NULL;
+
+static void help_peak_env(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "When a very large file is first opened, Snd scans all the data to build up an overall \
@@ -3956,72 +4243,7 @@ and it resides in the 'peak-env-directory'.",
 	   WITH_WORD_WRAP);
 }
 
-static void initial_bounds_help(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "Normally Snd displays just the first 0.1 seconds of a sound in its initial graph. This option \
-sets either new bounds for that display, or directs Snd to display the entire sound.",
-	   WITH_WORD_WRAP);
-}
-
-static void play_from_cursor_help(prefs_info *prf)
-{
-  snd_help("play from cursor",
-	   "By default, C-q plays the current channel from the cursor, but one often wants to play the entire \
-sound; this option binds a key for that purpose, and also overrides the pause setting.  The new binding does \
-not take effect until you type return in the text widget.",
-	   WITH_WORD_WRAP);
-}
-
-static void show_all_help(prefs_info *prf)
-{
-  snd_help("show entire sound",
-	   "This option binds a key to show all of the current sound in the current time domain window, \
-equivalent to moving the 'zoom' slider all the way to the right.",
-	   WITH_WORD_WRAP);
-}
-
-static void select_all_help(prefs_info *prf)
-{
-  snd_help("select entire sound",
-	   "This option binds a key to select all of the current sound.  The 'Select all' Edit menu item \
-follows the 'sync' buttons when deciding which channels to select.",
-	   WITH_WORD_WRAP);
-}
-
-static void revert_help(prefs_info *prf)
-{
-  snd_help("undo all edits (revert)",
-	   "This option binds a key to undo any edits in the current sound, equivalent to the File:Revert menu item.",
-	   WITH_WORD_WRAP);
-}
-
-static void exit_help(prefs_info *prf)
-{
-  snd_help("exit from Snd",
-	   "This option binds a key to exit from Snd, equivalent to the File:Exit menu item.",
-	   WITH_WORD_WRAP);
-}
-
-static void goto_maxamp_help(prefs_info *prf)
-{
-  snd_help("go to maxamp",
-	   "This option binds a key to move the view (and cursor) to the position of the current channel's maximum sample.",
-	   WITH_WORD_WRAP);
-}
-
-static void show_selection_help(prefs_info *prf)
-{
-  snd_help("show selection",
-	   "This option binds a key to cause the current selection to fill the time domain graph.",
-	   WITH_WORD_WRAP);
-}
-
-
-
-
-
-/* ---------------- save functions ---------------- */
+static bool find_peak_envs(void) {return(XEN_TO_C_BOOLEAN(prefs_variable_get("save-peak-env-info?")));}
 
 static void save_peak_envs_1(prefs_info *prf, FILE *fd, char *pdir)
 {
@@ -4042,313 +4264,63 @@ static void save_peak_envs_1(prefs_info *prf, FILE *fd, char *pdir)
 #endif
 }
 
-static bool use_full_duration(void)
+static char *peak_env_directory(void)
 {
-  return((XEN_DEFINED_P("prefs-show-full-duration")) &&
-	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))));
+  if (include_peak_env_directory)
+    return(include_peak_env_directory);
+  if (XEN_DEFINED_P("save-peak-env-info-directory"))
+    return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info-directory")));
+  return(NULL);
 }
 
-static char *initial_bounds_to_string(void)
+static void reflect_peak_envs(prefs_info *prf) 
 {
-  if (XEN_DEFINED_P("prefs-initial-beg"))
-    return(mus_format("%.2f : %.2f", 
-		      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
-		      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur"))));
-  return(copy_string("0.0 : 0.1"));
+  if (include_peak_env_directory) {FREE(include_peak_env_directory); include_peak_env_directory = NULL;}
+  include_peak_env_directory = copy_string(peak_env_directory());
+  include_peak_envs = find_peak_envs();
+  SET_TOGGLE(prf->toggle, include_peak_envs);
+  SET_TEXT(prf->text, include_peak_env_directory);
 }
 
-static void save_initial_bounds(prefs_info *prf, FILE *fd)
+static void peak_envs_toggle(prefs_info *prf)
 {
-  if ((use_full_duration()) ||
-      ((XEN_DEFINED_P("prefs-initial-beg")) &&
-       ((!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")), 0.0))) ||
-	(!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")), 0.1))))))
+  include_peak_envs = GET_TOGGLE(prf->toggle);
+}
+
+static void peak_envs_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((str) && (*str))
     {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
-      fprintf(fd, "(prefs-activate-initial-bounds %.2f %.2f %s)\n",
-	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
-	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
-	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "require \"extensions\"\n");
-      fprintf(fd, "prefs_activate_initial_bounds(%.2f, %.2f, %s)\n",
-  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
-  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
- 	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
-#endif
-#if HAVE_FORTH
-      fprintf(fd, "require extensions\n");
-      fprintf(fd, "%.2f %.2f %s prefs-activate-initial-bounds\n",
-  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
-  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
- 	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
-#endif
-      /* code repeated to make emacs' paren matcher happy */
+      if (include_peak_env_directory) {FREE(include_peak_env_directory); include_peak_env_directory = NULL;}
+      include_peak_env_directory = copy_string(str);
+      FREE_TEXT(str);
     }
 }
 
-
-/* -------- key: play all chans from cursor -------- */
-
-static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
+static void save_peak_envs(prefs_info *prf, FILE *fd)
 {
-#if HAVE_SCHEME
-  return(mus_format("(bind-key %s %d (lambda () (set! (pausing) #f) (play (cursor))) %s \"play sound from cursor\" \"play-from-cursor\")\n", 
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "#t" : "#f"));
-#endif
-#if HAVE_RUBY
-  return(mus_format("bind_key(%s, %d, lambda do\n  set_pausing(false)\n  play(cursor())\n  end, %s, \"play sound from cursor\", \"play-from-cursor\")\n", 
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "true" : "false"));
-#endif
-  return(NULL);
-}
-
-static void reflect_play_from_cursor(prefs_info *prf)
-{
-  reflect_key(prf, "play-from-cursor");
-}
-
-static void save_pfc_binding(prefs_info *prf, FILE *fd)
-{
-  save_key_binding(prf, fd, make_pfc_binding);
-}
-
-static void bind_play_from_cursor(prefs_info *prf)
-{
-  key_bind(prf, make_pfc_binding);
-}
-
-/* -------- key: show all of sound -------- */
-
-static char *make_show_all_binding(char *key, bool ctrl, bool meta, bool cx)
-{
-#if HAVE_SCHEME
-  return(mus_format("(bind-key %s %d (lambda () \
-                                       (let ((old-sync (sync))) \
-                                         (set! (sync) (1+ (max-sync))) \
-                                         (set! (x-bounds) (list 0.0 (/ (frames) (srate)))) \
-                                         (set! (sync) old-sync))) %s \"show entire sound\" \"show-all\")\n",
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "#t" : "#f"));
-#endif
-#if HAVE_RUBY
-  return(mus_format("bind_key(%s, %d, lambda do\n\
-                                        old_sync = sync()\n\
-                                        sync(1 + sync_max())\n\
-                                        set_x_bounds([0.0, frames() / srate()])\n\
-                                        set_sync(old_sync)\n\
-                                        end, %s, \"show entire sound\", \"show-all\")\n", 
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "true" : "false"));
-#endif
-  return(NULL);
-}
-
-static void reflect_show_all(prefs_info *prf)
-{
-  reflect_key(prf, "show-all");
-}
-
-static void save_show_all_binding(prefs_info *prf, FILE *fd)
-{
-  save_key_binding(prf, fd, make_show_all_binding);
-}
-
-static void bind_show_all(prefs_info *prf)
-{
-  key_bind(prf, make_show_all_binding);
-}
-
-/* -------- key: select all of sound -------- */
-
-static char *make_select_all_binding(char *key, bool ctrl, bool meta, bool cx)
-{
-#if HAVE_SCHEME
-  return(mus_format("(bind-key %s %d (lambda () \
-                                       (let ((old-sync (sync))) \
-                                         (set! (sync) (1+ (max-sync))) \
-                                         (select-all) \
-                                         (set! (sync) old-sync))) %s \"select entire sound\" \"select-all\")\n",
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "#t" : "#f"));
-#endif
-#if HAVE_RUBY
-  return(mus_format("bind_key(%s, %d, lambda do\n\
-                                        old_sync = sync()\n\
-                                        sync(1 + sync_max())\n\
-                                        select_all()\n\
-                                        set_sync(old_sync)\n\
-                                        end, %s, \"select entire sound\", \"select-all\")\n", 
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "true" : "false"));
-#endif
-  return(NULL);
-}
-
-static void reflect_select_all(prefs_info *prf)
-{
-  reflect_key(prf, "select-all");
-}
-
-static void save_select_all_binding(prefs_info *prf, FILE *fd)
-{
-  save_key_binding(prf, fd, make_select_all_binding);
-}
-
-static void bind_select_all(prefs_info *prf)
-{
-  key_bind(prf, make_select_all_binding);
-}
-
-/* -------- key: undo all edits -------- */
-
-static char *make_revert_binding(char *key, bool ctrl, bool meta, bool cx)
-{
-#if HAVE_SCHEME
-  return(mus_format("(bind-key %s %d revert-sound %s \"undo all edits\" \"revert-sound\")\n", 
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "#t" : "#f"));
-#endif
-#if HAVE_RUBY
-  return(mus_format("bind_key(%s, %d, lambda do\n  revert_sound())\n  end, %s, \"undo all edits\", \"revert-sound\")\n", 
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "true" : "false"));
-#endif
-  return(NULL);
-}
-
-static void reflect_revert(prefs_info *prf)
-{
-  reflect_key(prf, "revert-sound");
-}
-
-static void save_revert_binding(prefs_info *prf, FILE *fd)
-{
-  save_key_binding(prf, fd, make_revert_binding);
-}
-
-static void bind_revert(prefs_info *prf)
-{
-  key_bind(prf, make_revert_binding);
-}
-
-/* -------- key: exit -------- */
-
-static char *make_exit_binding(char *key, bool ctrl, bool meta, bool cx)
-{
-#if HAVE_SCHEME
-  return(mus_format("(bind-key %s %d exit %s \"exit\" \"exit\")\n", 
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "#t" : "#f"));
-#endif
-#if HAVE_RUBY
-  return(mus_format("bind_key(%s, %d, lambda do\n  exit())\n  end, %s, \"exit\", \"exit\")\n", 
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "true" : "false"));
-#endif
-  return(NULL);
-}
-
-static void reflect_exit(prefs_info *prf)
-{
-  reflect_key(prf, "exit");
-}
-
-static void save_exit_binding(prefs_info *prf, FILE *fd)
-{
-  save_key_binding(prf, fd, make_exit_binding);
-}
-
-static void bind_exit(prefs_info *prf)
-{
-  key_bind(prf, make_exit_binding);
-}
-
-/* -------- key: goto maxamp -------- */
-
-static char *make_goto_maxamp_binding(char *key, bool ctrl, bool meta, bool cx)
-{
-#if HAVE_SCHEME
-  return(mus_format("(bind-key %s %d (lambda () (set! (cursor) (maxamp-position))) %s \"goto maxamp\" \"goto-maxamp\")\n", 
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "#t" : "#f"));
-#endif
-#if HAVE_RUBY
-  return(mus_format("bind_key(%s, %d, lambda do\n  set_cursor(maxamp_position())\n  end, %s, \"goto maxamp\", \"goto-maxamp\")\n", 
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "true" : "false"));
-#endif
-  return(NULL);
-}
-
-static void reflect_goto_maxamp(prefs_info *prf)
-{
-  reflect_key(prf, "goto-maxamp");
-}
-
-static void save_goto_maxamp_binding(prefs_info *prf, FILE *fd)
-{
-  save_key_binding(prf, fd, make_goto_maxamp_binding);
-}
-
-static void bind_goto_maxamp(prefs_info *prf)
-{
-  key_bind(prf, make_goto_maxamp_binding);
-}
-
-/* -------- key: show selection -------- */
-
-static char *make_show_selection_binding(char *key, bool ctrl, bool meta, bool cx)
-{
-#if HAVE_SCHEME
-  return(mus_format("(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n\(bind-key %s %d show-selection %s \"show selection\" \"show-selection\")\n", 
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "#t" : "#f"));
-#endif
-#if HAVE_RUBY
-  return(mus_format("require \"extensions\"\nbind_key(%s, %d, lambda do\n  show_selection())\n  end, %s, \"show selection\", \"show-selection\")\n", 
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "true" : "false"));
-#endif
-  return(NULL);
-}
-
-static void reflect_show_selection(prefs_info *prf)
-{
-  reflect_key(prf, "show-selection");
-}
-
-static void save_show_selection_binding(prefs_info *prf, FILE *fd)
-{
-  save_key_binding(prf, fd, make_show_selection_binding);
-}
-
-static void bind_show_selection(prefs_info *prf)
-{
-  key_bind(prf, make_show_selection_binding);
+  if (GET_TOGGLE(prf->toggle))
+    save_peak_envs_1(prf, fd, include_peak_env_directory);
 }
 
 
+/* ---------------- load path ---------------- */
 
-/* ---------------- find functions ---------------- */
+static void help_load_path(prefs_info *prf)
+{
+  snd_help("load paths",
+	   "Much of Snd's functionality is loaded as needed from the Scheme or Ruby \
+files found in the Snd tarball.  You can run Snd without \
+these files, but there's no reason to!  Just add the directory containing \
+them to the \"load-path\".  For example, if the Snd build directory was \"/home/bil/snd\", \
+add that string to the load paths given here.  Guile and Ruby search these \
+directories for any *.scm or *.rb files that they can't \
+find elsewhere.",
+	   WITH_WORD_WRAP);
+}
+
 
 static char *find_sources(void) /* returns full filename if found else null */
 {
@@ -4395,8 +4367,534 @@ static char *find_sources(void) /* returns full filename if found else null */
   return(NULL);
 }
 
-static bool find_peak_envs(void)
+static void reflect_load_path(prefs_info *prf)
 {
-  return((XEN_DEFINED_P("save-peak-env-info?")) &&
-	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info?")));
+  char *str;
+  str = find_sources();
+  SET_TEXT(prf->text, str);
+  if (str) 
+    {
+      black_text(prf);
+      FREE(str);
+    }
+  else red_text(prf);
+}
+
+static void load_path_text(prefs_info *prf)
+{
+  char *str;
+  str = GET_TEXT(prf->text);
+  if ((!str) || (!(*str)))
+    return;
+  if (local_access(str))
+    {
+      black_text(prf);
+      if (include_load_path) FREE(include_load_path);
+      include_load_path = copy_string(str);
+#if HAVE_RUBY
+      {
+	extern VALUE rb_load_path;
+	rb_ary_unshift(rb_load_path, rb_str_new2(str));
+      }
+#endif
+#if HAVE_GUILE
+      {
+	char *buf;
+	buf = mus_format("(set! %%load-path (cons \"%s\" %%load-path))", str);
+	XEN_EVAL_C_STRING(buf);
+	FREE(buf);
+      }
+#endif
+#if HAVE_FORTH
+      fth_add_load_path(str);
+#endif
+#if HAVE_GAUCHE
+      Scm_AddLoadPath(str, false);
+#endif
+    }
+  if (str) FREE_TEXT(str);
+}
+
+
+/* ---------------- initial bounds ---------------- */
+
+static bool use_full_duration(void)
+{
+  return((XEN_DEFINED_P("prefs-show-full-duration")) &&
+	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))));
+}
+
+static void help_initial_bounds(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "Normally Snd displays just the first 0.1 seconds of a sound in its initial graph. This option \
+sets either new bounds for that display, or directs Snd to display the entire sound.",
+	   WITH_WORD_WRAP);
+}
+
+static char *initial_bounds_to_string(void)
+{
+  if (XEN_DEFINED_P("prefs-initial-beg"))
+    return(mus_format("%.2f : %.2f", 
+		      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
+		      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur"))));
+  return(copy_string("0.0 : 0.1"));
+}
+
+static void save_initial_bounds(prefs_info *prf, FILE *fd)
+{
+  if ((use_full_duration()) ||
+      ((XEN_DEFINED_P("prefs-initial-beg")) &&
+       ((!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")), 0.0))) ||
+	(!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")), 0.1))))))
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
+      fprintf(fd, "(prefs-activate-initial-bounds %.2f %.2f %s)\n",
+	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
+	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
+	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "require \"extensions\"\n");
+      fprintf(fd, "prefs_activate_initial_bounds(%.2f, %.2f, %s)\n",
+  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
+  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
+ 	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
+#endif
+#if HAVE_FORTH
+      fprintf(fd, "require extensions\n");
+      fprintf(fd, "%.2f %.2f %s prefs-activate-initial-bounds\n",
+  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
+  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
+ 	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
+#endif
+      /* code repeated to make emacs' paren matcher happy */
+    }
+}
+
+static void reflect_initial_bounds(prefs_info *prf)
+{
+  /* text has beg : dur, toggle true if full dur */
+  char *str;
+  str = initial_bounds_to_string();
+  SET_TEXT(prf->text, str);
+  FREE(str);
+  SET_TOGGLE(prf->toggle, use_full_duration());
+}
+
+static void initial_bounds_toggle(prefs_info *prf)
+{
+  bool use_full_duration = false;
+  use_full_duration = GET_TOGGLE(prf->toggle);
+#if HAVE_SCHEME
+  if (!(XEN_DEFINED_P("prefs-initial-beg")))
+    XEN_LOAD_FILE_WITH_PATH("extensions.scm");
+#if HAVE_GUILE
+  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-show-full-duration"), C_TO_XEN_BOOLEAN(use_full_duration));
+#endif
+#if HAVE_GAUCHE
+  XEN_VARIABLE_SET("prefs-show-full-duration", C_TO_XEN_BOOLEAN(use_full_duration));
+#endif
+#endif
+#if HAVE_RUBY
+  if (!(XEN_DEFINED_P("prefs-initial-beg")))
+    XEN_LOAD_FILE_WITH_PATH("extensions.rb");
+  XEN_VARIABLE_SET("prefs-show-full-duration", C_TO_XEN_BOOLEAN(use_full_duration));
+#endif
+}
+
+static void initial_bounds_text(prefs_info *prf)
+{
+  float beg = 0.0, dur = 0.1;
+  char *str;
+  str = GET_TEXT(prf->text);
+  sscanf(str, "%f : %f", &beg, &dur);
+#if HAVE_SCHEME
+  if (!(XEN_DEFINED_P("prefs-initial-beg")))
+    XEN_LOAD_FILE_WITH_PATH("extensions.scm");
+#if HAVE_GUILE
+  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-beg"), C_TO_XEN_DOUBLE(beg));
+  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-dur"), C_TO_XEN_DOUBLE(dur));
+#endif
+#if HAVE_GAUCHE
+  XEN_VARIABLE_SET("prefs-initial-beg", C_TO_XEN_DOUBLE(beg));
+  XEN_VARIABLE_SET("prefs-initial-dur", C_TO_XEN_DOUBLE(dur));
+#endif
+#endif
+#if HAVE_RUBY
+  if (!(XEN_DEFINED_P("prefs-initial-beg")))
+    XEN_LOAD_FILE_WITH_PATH("extensions.rb");
+  XEN_VARIABLE_SET("prefs-initial-beg", C_TO_XEN_DOUBLE(beg));
+  XEN_VARIABLE_SET("prefs-initial-dur", C_TO_XEN_DOUBLE(dur));
+#endif
+  FREE_TEXT(str);
+}
+
+
+/* ---------------- keys ---------------- */
+
+static void reflect_key(prefs_info *prf, const char *key_name)
+{
+  key_info *ki;
+  ki = find_prefs_key_binding(key_name);
+  SET_TOGGLE(prf->toggle, ki->c);
+  SET_TOGGLE(prf->toggle2, ki->m);
+  SET_TOGGLE(prf->toggle3, ki->x);
+  SET_TEXT(prf->text, ki->key);
+  FREE(ki);
+}
+
+static void save_key_binding(prefs_info *prf, FILE *fd, char *(*binder)(char *key, bool c, bool m, bool x))
+{
+  char *key, *expr;
+  key = GET_TEXT(prf->text);
+  if ((key) && (*key))
+    {
+      expr = (*binder)(key, 
+		       GET_TOGGLE(prf->toggle),
+		       GET_TOGGLE(prf->toggle2),
+		       GET_TOGGLE(prf->toggle3));
+      fprintf(fd, expr);
+      FREE(expr);
+      FREE_TEXT(key);
+    }
+}
+
+static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m, bool x))
+{
+  char *key, *expr;
+  bool ctrl, meta, cx;
+  key = GET_TEXT(prf->text);
+  ctrl = GET_TOGGLE(prf->toggle);
+  meta = GET_TOGGLE(prf->toggle2);
+  cx = GET_TOGGLE(prf->toggle3);
+  if ((key) && (*key))
+    {
+      expr = (*binder)(key, ctrl, meta, cx);
+      FREE_TEXT(key);
+    }
+  else
+    {
+      expr = mus_format("(unbind-key %s %d %s)",
+			possibly_quote(key), 
+			((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+			(cx) ? "#t" : "#f");
+    }
+  XEN_EVAL_C_STRING(expr);
+  FREE(expr);
+}
+
+/* -------- key: play all chans from cursor -------- */
+
+static void help_play_from_cursor(prefs_info *prf)
+{
+  snd_help("play from cursor",
+	   "By default, C-q plays the current channel from the cursor, but one often wants to play the entire \
+sound; this option binds a key for that purpose, and also overrides the pause setting.  The new binding does \
+not take effect until you type return in the text widget.",
+	   WITH_WORD_WRAP);
+}
+
+static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(bind-key %s %d (lambda () (set! (pausing) #f) (play (cursor))) %s \"play sound from cursor\" \"play-from-cursor\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  return(mus_format("bind_key(%s, %d, lambda do\n  set_pausing(false)\n  play(cursor())\n  end, %s, \"play sound from cursor\", \"play-from-cursor\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "true" : "false"));
+#endif
+  return(NULL);
+}
+
+static void reflect_play_from_cursor(prefs_info *prf)
+{
+  reflect_key(prf, "play-from-cursor");
+}
+
+static void save_pfc_binding(prefs_info *prf, FILE *fd)
+{
+  save_key_binding(prf, fd, make_pfc_binding);
+}
+
+static void bind_play_from_cursor(prefs_info *prf)
+{
+  key_bind(prf, make_pfc_binding);
+}
+
+
+/* -------- key: show all of sound -------- */
+
+static void help_show_all(prefs_info *prf)
+{
+  snd_help("show entire sound",
+	   "This option binds a key to show all of the current sound in the current time domain window, \
+equivalent to moving the 'zoom' slider all the way to the right.",
+	   WITH_WORD_WRAP);
+}
+
+static char *make_show_all_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(bind-key %s %d (lambda () \
+                                       (let ((old-sync (sync))) \
+                                         (set! (sync) (1+ (max-sync))) \
+                                         (set! (x-bounds) (list 0.0 (/ (frames) (srate)))) \
+                                         (set! (sync) old-sync))) %s \"show entire sound\" \"show-all\")\n",
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  return(mus_format("bind_key(%s, %d, lambda do\n\
+                                        old_sync = sync()\n\
+                                        sync(1 + sync_max())\n\
+                                        set_x_bounds([0.0, frames() / srate()])\n\
+                                        set_sync(old_sync)\n\
+                                        end, %s, \"show entire sound\", \"show-all\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "true" : "false"));
+#endif
+  return(NULL);
+}
+
+static void reflect_show_all(prefs_info *prf)
+{
+  reflect_key(prf, "show-all");
+}
+
+static void save_show_all_binding(prefs_info *prf, FILE *fd)
+{
+  save_key_binding(prf, fd, make_show_all_binding);
+}
+
+static void bind_show_all(prefs_info *prf)
+{
+  key_bind(prf, make_show_all_binding);
+}
+
+/* -------- key: select all of sound -------- */
+
+static void help_select_all(prefs_info *prf)
+{
+  snd_help("select entire sound",
+	   "This option binds a key to select all of the current sound.  The 'Select all' Edit menu item \
+follows the 'sync' buttons when deciding which channels to select.",
+	   WITH_WORD_WRAP);
+}
+
+static char *make_select_all_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(bind-key %s %d (lambda () \
+                                       (let ((old-sync (sync))) \
+                                         (set! (sync) (1+ (max-sync))) \
+                                         (select-all) \
+                                         (set! (sync) old-sync))) %s \"select entire sound\" \"select-all\")\n",
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  return(mus_format("bind_key(%s, %d, lambda do\n\
+                                        old_sync = sync()\n\
+                                        sync(1 + sync_max())\n\
+                                        select_all()\n\
+                                        set_sync(old_sync)\n\
+                                        end, %s, \"select entire sound\", \"select-all\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "true" : "false"));
+#endif
+  return(NULL);
+}
+
+static void reflect_select_all(prefs_info *prf)
+{
+  reflect_key(prf, "select-all");
+}
+
+static void save_select_all_binding(prefs_info *prf, FILE *fd)
+{
+  save_key_binding(prf, fd, make_select_all_binding);
+}
+
+static void bind_select_all(prefs_info *prf)
+{
+  key_bind(prf, make_select_all_binding);
+}
+
+
+/* -------- key: undo all edits -------- */
+
+static void help_revert(prefs_info *prf)
+{
+  snd_help("undo all edits (revert)",
+	   "This option binds a key to undo any edits in the current sound, equivalent to the File:Revert menu item.",
+	   WITH_WORD_WRAP);
+}
+
+static char *make_revert_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(bind-key %s %d revert-sound %s \"undo all edits\" \"revert-sound\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  return(mus_format("bind_key(%s, %d, lambda do\n  revert_sound())\n  end, %s, \"undo all edits\", \"revert-sound\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "true" : "false"));
+#endif
+  return(NULL);
+}
+
+static void reflect_revert(prefs_info *prf)
+{
+  reflect_key(prf, "revert-sound");
+}
+
+static void save_revert_binding(prefs_info *prf, FILE *fd)
+{
+  save_key_binding(prf, fd, make_revert_binding);
+}
+
+static void bind_revert(prefs_info *prf)
+{
+  key_bind(prf, make_revert_binding);
+}
+
+
+/* -------- key: exit -------- */
+
+static void help_exit(prefs_info *prf)
+{
+  snd_help("exit from Snd",
+	   "This option binds a key to exit from Snd, equivalent to the File:Exit menu item.",
+	   WITH_WORD_WRAP);
+}
+
+static char *make_exit_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(bind-key %s %d exit %s \"exit\" \"exit\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  return(mus_format("bind_key(%s, %d, lambda do\n  exit())\n  end, %s, \"exit\", \"exit\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "true" : "false"));
+#endif
+  return(NULL);
+}
+
+static void reflect_exit(prefs_info *prf)
+{
+  reflect_key(prf, "exit");
+}
+
+static void save_exit_binding(prefs_info *prf, FILE *fd)
+{
+  save_key_binding(prf, fd, make_exit_binding);
+}
+
+static void bind_exit(prefs_info *prf)
+{
+  key_bind(prf, make_exit_binding);
+}
+
+
+/* -------- key: goto maxamp -------- */
+
+static void help_goto_maxamp(prefs_info *prf)
+{
+  snd_help("go to maxamp",
+	   "This option binds a key to move the view (and cursor) to the position of the current channel's maximum sample.",
+	   WITH_WORD_WRAP);
+}
+
+static char *make_goto_maxamp_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(bind-key %s %d (lambda () (set! (cursor) (maxamp-position))) %s \"goto maxamp\" \"goto-maxamp\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  return(mus_format("bind_key(%s, %d, lambda do\n  set_cursor(maxamp_position())\n  end, %s, \"goto maxamp\", \"goto-maxamp\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "true" : "false"));
+#endif
+  return(NULL);
+}
+
+static void reflect_goto_maxamp(prefs_info *prf)
+{
+  reflect_key(prf, "goto-maxamp");
+}
+
+static void save_goto_maxamp_binding(prefs_info *prf, FILE *fd)
+{
+  save_key_binding(prf, fd, make_goto_maxamp_binding);
+}
+
+static void bind_goto_maxamp(prefs_info *prf)
+{
+  key_bind(prf, make_goto_maxamp_binding);
+}
+
+
+/* -------- key: show selection -------- */
+
+static void help_show_selection(prefs_info *prf)
+{
+  snd_help("show selection",
+	   "This option binds a key to cause the current selection to fill the time domain graph.",
+	   WITH_WORD_WRAP);
+}
+
+static char *make_show_selection_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n\(bind-key %s %d show-selection %s \"show selection\" \"show-selection\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  return(mus_format("require \"extensions\"\nbind_key(%s, %d, lambda do\n  show_selection())\n  end, %s, \"show selection\", \"show-selection\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "true" : "false"));
+#endif
+  return(NULL);
+}
+
+static void reflect_show_selection(prefs_info *prf)
+{
+  reflect_key(prf, "show-selection");
+}
+
+static void save_show_selection_binding(prefs_info *prf, FILE *fd)
+{
+  save_key_binding(prf, fd, make_show_selection_binding);
+}
+
+static void bind_show_selection(prefs_info *prf)
+{
+  key_bind(prf, make_show_selection_binding);
 }
