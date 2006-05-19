@@ -319,18 +319,21 @@ static void prefs_variable_set(const char *name, XEN val)
 static void prefs_variable_save(FILE *fd, const char *name, const char *file, XEN val)
 {
 #if HAVE_SCHEME
-  fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load-from-path \"%s.scm\"))\n", file, file);
+  if (file)
+    fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load-from-path \"%s.scm\"))\n", file, file);
   fprintf(fd, "(set! %s %s)\n", name, XEN_AS_STRING(val));
 #endif
 #if HAVE_RUBY
   char *str;
   str = no_stars(name);
-  fprintf(fd, "require \"%s\"\n", file);
+  if (file)
+    fprintf(fd, "require \"%s\"\n", file);
   fprintf(fd, "set_%s(%s)\n", str, XEN_AS_STRING(val));
   FREE(str);
 #endif
 #if HAVE_FORTH
-  fprintf(fd, "require %s\n", file);
+  if (file)
+    fprintf(fd, "require %s\n", file);
   fprintf(fd, "%s set-%s\n", XEN_AS_STRING(val), name);
 #endif
 }
@@ -580,7 +583,7 @@ static void show_listener_toggle(prefs_info *prf)
 static void save_show_listener(prefs_info *prf, FILE *fd)
 {
   rts_show_listener = prefs_show_listener;
-  if (prefs_show_listener)
+  if (GET_TOGGLE(prf->toggle))
     prefs_function_save_0(fd, "show-listener", NULL);
   /* TODO: is this safe in Forth? (might need prefs_function_save_1(fd, "show-listener", NULL, XEN_TRUE)) */
 }
@@ -615,121 +618,176 @@ static void clear_show_listener(prefs_info *prf)
  */
 
 static color_t saved_basic_color;
-static void clear_basic_color(prefs_info *prf) {set_basic_color(ss->sgx->orig_basic_color);}
 static void save_basic_color(prefs_info *prf, FILE *ignore) {saved_basic_color = ss->sgx->basic_color;}
 static void basic_color_func(prefs_info *prf, float r, float g, float b) {set_basic_color(rgb_to_color(r, g, b));}
+
 static void revert_basic_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_basic_color); 
   set_basic_color(saved_basic_color);
 }
 
+static void clear_basic_color(prefs_info *prf) 
+{
+  scale_set_color(prf, ss->sgx->basic_color);
+  set_basic_color(ss->sgx->orig_basic_color);
+}
+
 
 /* ---------------- highlight-color ---------------- */
 
 static color_t saved_highlight_color;
-static void clear_highlight_color(prefs_info *prf) {set_highlight_color(ss->sgx->orig_highlight_color);}
 static void save_highlight_color(prefs_info *prf, FILE *ignore) {saved_highlight_color = ss->sgx->highlight_color;}
 static void highlight_color_func(prefs_info *prf, float r, float g, float b) {set_highlight_color(rgb_to_color(r, g, b));}
+
 static void revert_highlight_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_highlight_color); 
   set_highlight_color(saved_highlight_color);
 }
 
+static void clear_highlight_color(prefs_info *prf) 
+{
+  scale_set_color(prf, ss->sgx->orig_highlight_color); 
+  set_highlight_color(ss->sgx->orig_highlight_color);
+}
+
 
 /* ---------------- position-color ---------------- */
 
 static color_t saved_position_color;
-static void clear_position_color(prefs_info *prf) {set_position_color(ss->sgx->orig_position_color);}
 static void save_position_color(prefs_info *prf, FILE *ignore) {saved_position_color = ss->sgx->position_color;}
 static void position_color_func(prefs_info *prf, float r, float g, float b) {set_position_color(rgb_to_color(r, g, b));}
+
 static void revert_position_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_position_color); 
   set_position_color(saved_position_color);
 }
 
+static void clear_position_color(prefs_info *prf) 
+{
+  scale_set_color(prf, ss->sgx->orig_position_color); 
+  set_position_color(ss->sgx->orig_position_color);
+}
+
 
 /* ---------------- zoom-color ---------------- */
 
 static color_t saved_zoom_color;
-static void clear_zoom_color(prefs_info *prf) {set_zoom_color(ss->sgx->orig_zoom_color);}
 static void save_zoom_color(prefs_info *prf, FILE *ignore) {saved_zoom_color = ss->sgx->zoom_color;}
 static void zoom_color_func(prefs_info *prf, float r, float g, float b) {set_zoom_color(rgb_to_color(r, g, b));}
+
 static void revert_zoom_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_zoom_color); 
   set_zoom_color(saved_zoom_color);
 }
 
+static void clear_zoom_color(prefs_info *prf) 
+{
+  scale_set_color(prf, ss->sgx->orig_zoom_color); 
+  set_zoom_color(ss->sgx->orig_zoom_color);
+}
+
 
 /* ---------------- cursor-color ---------------- */
 
 static color_t saved_cursor_color;
-static void clear_cursor_color(prefs_info *prf) {color_cursor(ss->sgx->orig_cursor_color);}
 static void save_cursor_color(prefs_info *prf, FILE *ignore) {saved_cursor_color = ss->sgx->cursor_color;}
+
 static void cursor_color_func(prefs_info *prf, float r, float g, float b)
 {
   color_cursor(rgb_to_color(r, g, b));
   for_each_chan(update_graph);
 }
+
 static void revert_cursor_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_cursor_color); 
   color_cursor(saved_cursor_color);
 }
 
+static void clear_cursor_color(prefs_info *prf) 
+{
+  scale_set_color(prf, ss->sgx->orig_cursor_color); 
+  color_cursor(ss->sgx->orig_cursor_color);
+}
+
 
 /* ---------------- data-color ---------------- */
 
 static color_t saved_data_color;
-static void clear_data_color(prefs_info *prf) {set_data_color(ss->sgx->orig_data_color);}
 static void save_data_color(prefs_info *prf, FILE *ignore) {saved_data_color = ss->sgx->data_color;}
 static void data_color_func(prefs_info *prf, float r, float g, float b) {set_data_color(rgb_to_color(r, g, b));}
+
 static void revert_data_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_data_color); 
   set_data_color(saved_data_color);
 }
 
+static void clear_data_color(prefs_info *prf) 
+{
+  scale_set_color(prf, ss->sgx->orig_data_color); 
+  set_data_color(ss->sgx->orig_data_color);
+}
+
 
 /* ---------------- graph-color ---------------- */
 
 static color_t saved_graph_color;
-static void clear_graph_color(prefs_info *prf) {set_graph_color(ss->sgx->orig_graph_color);}
 static void save_graph_color(prefs_info *prf, FILE *ignore) {saved_graph_color = ss->sgx->graph_color;}
 static void graph_color_func(prefs_info *prf, float r, float g, float b) {set_graph_color(rgb_to_color(r, g, b));}
+
 static void revert_graph_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_graph_color); 
   set_graph_color(saved_graph_color);
 }
 
+static void clear_graph_color(prefs_info *prf) 
+{
+  scale_set_color(prf, ss->sgx->orig_graph_color); 
+  set_graph_color(ss->sgx->orig_graph_color);
+}
+
 
 /* ---------------- selected-data-color ---------------- */
 
 static color_t saved_selected_data_color;
-static void clear_selected_data_color(prefs_info *prf) {set_selected_data_color(ss->sgx->orig_selected_data_color);}
 static void save_selected_data_color(prefs_info *prf, FILE *ignore) {saved_selected_data_color = ss->sgx->selected_data_color;}
 static void selected_data_color_func(prefs_info *prf, float r, float g, float b) {set_selected_data_color(rgb_to_color(r, g, b));}
+
 static void revert_selected_data_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_selected_data_color); 
   set_selected_data_color(saved_selected_data_color);
 }
 
+static void clear_selected_data_color(prefs_info *prf) 
+{
+  scale_set_color(prf, ss->sgx->orig_selected_data_color); 
+  set_selected_data_color(ss->sgx->orig_selected_data_color);
+}
+
 
 /* ---------------- selected-graph-color ---------------- */
 
 static color_t saved_selected_graph_color;
-static void clear_selected_graph_color(prefs_info *prf) {set_selected_graph_color(ss->sgx->orig_selected_graph_color);}
 static void save_selected_graph_color(prefs_info *prf, FILE *ignore) {saved_selected_graph_color = ss->sgx->selected_graph_color;}
 static void selected_graph_color_func(prefs_info *prf, float r, float g, float b) {set_selected_graph_color(rgb_to_color(r, g, b));}
+
 static void revert_selected_graph_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_selected_graph_color); 
   set_selected_graph_color(saved_selected_graph_color);
+}
+
+static void clear_selected_graph_color(prefs_info *prf) 
+{
+  scale_set_color(prf, ss->sgx->orig_selected_graph_color); 
+  set_selected_graph_color(ss->sgx->orig_selected_graph_color);
 }
 
 
@@ -742,65 +800,95 @@ static void set_selection_color(color_t color)
 }
 
 static color_t saved_selection_color;
-static void clear_selection_color(prefs_info *prf) {set_selection_color(ss->sgx->orig_selection_color);}
 static void save_selection_color(prefs_info *prf, FILE *ignore) {saved_selection_color = ss->sgx->selection_color;}
 static void selection_color_func(prefs_info *prf, float r, float g, float b) {set_selection_color(rgb_to_color(r, g, b));}
+
 static void revert_selection_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_selection_color); 
   set_selection_color(saved_selection_color);
 }
 
+static void clear_selection_color(prefs_info *prf) 
+{
+  scale_set_color(prf, ss->sgx->orig_selection_color); 
+  set_selection_color(ss->sgx->orig_selection_color);
+}
+
 
 /* ---------------- mark-color ---------------- */
 
 static color_t saved_mark_color;
-static void clear_mark_color(prefs_info *prf) {color_marks(ss->sgx->orig_mark_color);}
 static void save_mark_color(prefs_info *prf, FILE *ignore) {saved_mark_color = ss->sgx->mark_color;}
 static void mark_color_func(prefs_info *prf, float r, float g, float b) {color_marks(rgb_to_color(r, g, b));}
+
 static void revert_mark_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_mark_color);
   color_marks(saved_mark_color);
 }
 
+static void clear_mark_color(prefs_info *prf) 
+{
+  scale_set_color(prf, ss->sgx->orig_mark_color);
+  color_marks(ss->sgx->orig_mark_color);
+}
+
 
 /* ---------------- mix-color (waveform) ---------------- */
 
 static color_t saved_mix_color;
-static void clear_mix_color(prefs_info *prf) {color_mixes(ss->sgx->orig_mix_color);}
 static void save_mix_color(prefs_info *prf, FILE *ignore) {saved_mix_color = ss->sgx->mix_color;}
 static void mix_color_func(prefs_info *prf, float r, float g, float b) {color_mixes(rgb_to_color(r, g, b));}
+
 static void revert_mix_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_mix_color);
   color_mixes(saved_mix_color);
 }
 
+static void clear_mix_color(prefs_info *prf) 
+{
+  scale_set_color(prf, ss->sgx->orig_mix_color);
+  color_mixes(ss->sgx->orig_mix_color);
+}
+
 
 /* ---------------- listener-color ---------------- */
 
 static color_t saved_listener_color;
-static void clear_listener_color(prefs_info *prf) {color_listener(ss->sgx->orig_listener_color);}
 static void save_listener_color(prefs_info *prf, FILE *ignore) {saved_listener_color = ss->sgx->listener_color;}
 static void listener_color_func(prefs_info *prf, float r, float g, float b) {color_listener(rgb_to_color(r, g, b));}
+
 static void revert_listener_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_listener_color);
   color_listener(saved_listener_color);
 }
 
+static void clear_listener_color(prefs_info *prf) 
+{
+  scale_set_color(prf, ss->sgx->orig_listener_color);
+  color_listener(ss->sgx->orig_listener_color);
+}
+
 
 /* ---------------- listener-text-color ---------------- */
 
 static color_t saved_listener_text_color;
-static void clear_listener_text_color(prefs_info *prf) {color_listener_text(ss->sgx->orig_listener_text_color);}
 static void save_listener_text_color(prefs_info *prf, FILE *ignore) {saved_listener_text_color = ss->sgx->listener_text_color;}
 static void listener_text_color_func(prefs_info *prf, float r, float g, float b) {color_listener_text(rgb_to_color(r, g, b));}
+
 static void revert_listener_text_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_listener_text_color);
   color_listener_text(saved_listener_text_color);
+}
+
+static void clear_listener_text_color(prefs_info *prf) 
+{
+  scale_set_color(prf, ss->sgx->orig_listener_text_color);
+  color_listener_text(ss->sgx->orig_listener_text_color);
 }
 
 
@@ -2002,8 +2090,8 @@ static void clear_unsaved_edits(prefs_info *prf) {set_unsaved_edits(false, NULL)
 
 static void save_unsaved_edits(prefs_info *prf, FILE *fd)
 {
-  rts_unsaved_edits = prefs_unsaved_edits;
-  if (prefs_unsaved_edits)
+  rts_unsaved_edits = GET_TOGGLE(prf->toggle);
+  if (rts_unsaved_edits)
     prefs_function_save_1(fd, "check-for-unsaved-edits", "extensions", C_TO_XEN_BOOLEAN(prefs_unsaved_edits));
 }
 
@@ -2054,8 +2142,8 @@ static void clear_current_window_display(prefs_info *prf) {set_current_window_di
 
 static void save_current_window_display(prefs_info *prf, FILE *fd)
 {
-  rts_current_window_display = prefs_current_window_display;
-  if (prefs_current_window_display)
+  rts_current_window_display = GET_TOGGLE(prf->toggle);
+  if (rts_current_window_display)
     prefs_function_save_0(fd, "make-current-window-display", "draw");
 }
 
@@ -2100,8 +2188,8 @@ static void clear_focus_follows_mouse(prefs_info *prf) {set_focus_follows_mouse(
 
 static void save_focus_follows_mouse(prefs_info *prf, FILE *fd) 
 {
-  rts_focus_follows_mouse = prefs_focus_follows_mouse;
-  if (prefs_focus_follows_mouse)
+  rts_focus_follows_mouse = GET_TOGGLE(prf->toggle);
+  if (rts_focus_follows_mouse)
     prefs_function_save_0(fd, "focus-follows-mouse", "extensions");
 }
 
@@ -2954,12 +3042,7 @@ static void reflect_raw_data_format(prefs_info *prf)
   char *str;
   mus_header_raw_defaults(&srate, &chans, &format);
   str = raw_data_format_to_string(format);
-#if USE_GTK
-  /* this is a combo box entry, so it's different from the SET_TEXT cases */
-  sg_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), str);
-#else
   SET_TEXT(prf->text, str);
-#endif
   FREE(str);
 }
 
@@ -2968,11 +3051,7 @@ static char **raw_data_format_choices = NULL;
 static void raw_data_format_from_text(prefs_info *prf)
 {
   char *str;
-#if USE_GTK
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(GTK_BIN(prf->text)->child));
-#else
   str = GET_TEXT(prf->text);
-#endif
   if (str)
     {
       int i, srate = 0, chans = 0, format = 0;
@@ -4225,15 +4304,12 @@ static void colormap_from_menu(prefs_info *prf, char *value)
 #endif
 
 
-
-/* STOPPED HERE */
-
 /* ---------------- peak-envs ---------------- */
 
-static bool include_peak_envs = false;
-static char *include_peak_env_directory = NULL;
+static bool include_peak_envs = false, rts_peak_envs = false;
+static char *include_peak_env_directory = NULL, *rts_peak_env_directory = NULL;
 
-static void help_peak_env(prefs_info *prf)
+static void help_peak_envs(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "When a very large file is first opened, Snd scans all the data to build up an overall \
@@ -4245,23 +4321,43 @@ and it resides in the 'peak-env-directory'.",
 
 static bool find_peak_envs(void) {return(XEN_TO_C_BOOLEAN(prefs_variable_get("save-peak-env-info?")));}
 
-static void save_peak_envs_1(prefs_info *prf, FILE *fd, char *pdir)
+static void clear_peak_envs(prefs_info *prf)
 {
+  if (include_peak_env_directory) FREE(include_peak_env_directory); 
+  include_peak_env_directory = NULL;
+  include_peak_envs = false;
+}
+
+static void revert_peak_envs(prefs_info *prf)
+{
+  if (include_peak_env_directory) FREE(include_peak_env_directory); 
+  include_peak_env_directory = copy_string(rts_peak_env_directory);
+  include_peak_envs = rts_peak_envs;
+}
+
+static void save_peak_envs(prefs_info *prf, FILE *fd)
+{
+  rts_peak_envs = GET_TOGGLE(prf->toggle);
+  if (rts_peak_env_directory) FREE(rts_peak_env_directory);
+  rts_peak_env_directory = copy_string(include_peak_env_directory);
+  if (rts_peak_envs)
+    {
 #if HAVE_SCHEME
-  fprintf(fd, "(if (not (provided? 'snd-peak-env.scm)) (load-from-path \"peak-env.scm\"))\n");
-  if (pdir)
-    fprintf(fd, "(set! save-peak-env-info-directory \"%s\")\n", pdir);
+      fprintf(fd, "(if (not (provided? 'snd-peak-env.scm)) (load-from-path \"peak-env.scm\"))\n");
+      if (include_peak_env_directory)
+	fprintf(fd, "(set! save-peak-env-info-directory \"%s\")\n", include_peak_env_directory);
 #endif
 #if HAVE_RUBY
-  fprintf(fd, "require \"env\"\n");
-  if (pdir)
-    fprintf(fd, "$save_peak_env_info_directory = \"%s\"\n", pdir);
+      fprintf(fd, "require \"env\"\n");
+      if (include_peak_env_directory)
+	fprintf(fd, "$save_peak_env_info_directory = \"%s\"\n", include_peak_env_directory);
 #endif
 #if HAVE_FORTH
-  fprintf(fd, "require peak-env\n");
-  if (pdir)
-    fprintf(fd, "$\" %s\" to save-peak-env-info-directory\n", pdir);
+      fprintf(fd, "require peak-env\n");
+      if (include_peak_env_directory)
+	fprintf(fd, "$\" %s\" to save-peak-env-info-directory\n", include_peak_env_directory);
 #endif
+    }
 }
 
 static char *peak_env_directory(void)
@@ -4275,9 +4371,6 @@ static char *peak_env_directory(void)
 
 static void reflect_peak_envs(prefs_info *prf) 
 {
-  if (include_peak_env_directory) {FREE(include_peak_env_directory); include_peak_env_directory = NULL;}
-  include_peak_env_directory = copy_string(peak_env_directory());
-  include_peak_envs = find_peak_envs();
   SET_TOGGLE(prf->toggle, include_peak_envs);
   SET_TEXT(prf->text, include_peak_env_directory);
 }
@@ -4299,14 +4392,10 @@ static void peak_envs_text(prefs_info *prf)
     }
 }
 
-static void save_peak_envs(prefs_info *prf, FILE *fd)
-{
-  if (GET_TOGGLE(prf->toggle))
-    save_peak_envs_1(prf, fd, include_peak_env_directory);
-}
-
 
 /* ---------------- load path ---------------- */
+
+static char *rts_load_path = NULL;
 
 static void help_load_path(prefs_info *prf)
 {
@@ -4320,7 +4409,6 @@ directories for any *.scm or *.rb files that they can't \
 find elsewhere.",
 	   WITH_WORD_WRAP);
 }
-
 
 static char *find_sources(void) /* returns full filename if found else null */
 {
@@ -4367,7 +4455,7 @@ static char *find_sources(void) /* returns full filename if found else null */
   return(NULL);
 }
 
-static void reflect_load_path(prefs_info *prf)
+static void clear_load_path(prefs_info *prf)
 {
   char *str;
   str = find_sources();
@@ -4379,6 +4467,16 @@ static void reflect_load_path(prefs_info *prf)
     }
   else red_text(prf);
 }
+
+static void revert_load_path(prefs_info *prf)
+{
+  SET_TEXT(prf->text, rts_load_path);
+  if (rts_load_path) 
+    black_text(prf);
+  else red_text(prf);
+}
+
+static void reflect_load_path(prefs_info *prf) {}
 
 static void load_path_text(prefs_info *prf)
 {
@@ -4418,10 +4516,23 @@ static void load_path_text(prefs_info *prf)
 
 /* ---------------- initial bounds ---------------- */
 
-static bool use_full_duration(void)
+static Float rts_initial_beg = 0.0, rts_initial_dur = 0.1;
+static bool rts_full_duration = false;
+static bool include_duration = false;
+
+static bool full_duration(void)
 {
-  return((XEN_DEFINED_P("prefs-show-full-duration")) &&
-	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))));
+  return(XEN_TO_C_BOOLEAN(prefs_variable_get("prefs-show-full-duration")));
+}
+
+static Float initial_beg(void)
+{
+  return(XEN_TO_C_DOUBLE_OR_ELSE(prefs_variable_get("prefs-initial-beg"), 0.0));
+}
+
+static Float initial_dur(void)
+{
+  return(XEN_TO_C_DOUBLE_OR_ELSE(prefs_variable_get("prefs-initial-dur"), 0.1));
 }
 
 static void help_initial_bounds(prefs_info *prf)
@@ -4434,42 +4545,39 @@ sets either new bounds for that display, or directs Snd to display the entire so
 
 static char *initial_bounds_to_string(void)
 {
-  if (XEN_DEFINED_P("prefs-initial-beg"))
-    return(mus_format("%.2f : %.2f", 
-		      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
-		      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur"))));
-  return(copy_string("0.0 : 0.1"));
+  return(mus_format("%.2f : %.2f", initial_beg(), initial_dur()));
 }
 
 static void save_initial_bounds(prefs_info *prf, FILE *fd)
 {
-  if ((use_full_duration()) ||
-      ((XEN_DEFINED_P("prefs-initial-beg")) &&
-       ((!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")), 0.0))) ||
-	(!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")), 0.1))))))
+  char *str;
+  rts_full_duration = GET_TOGGLE(prf->toggle);
+  str = GET_TEXT(prf->text);
+  if (str)
+    {
+      sscanf(str, "%f : %f", &rts_initial_beg, &rts_initial_dur);
+      FREE_TEXT(str);
+    }
+  else
+    {
+      rts_initial_beg = 0.0;
+      rts_initial_dur = 0.1;
+    }
+  if (include_duration)
     {
 #if HAVE_SCHEME
       fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
-      fprintf(fd, "(prefs-activate-initial-bounds %.2f %.2f %s)\n",
-	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
-	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
-	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
+      fprintf(fd, "(prefs-activate-initial-bounds %.2f %.2f %s)\n", rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "#t" : "#f");
 #endif
 #if HAVE_RUBY
       fprintf(fd, "require \"extensions\"\n");
-      fprintf(fd, "prefs_activate_initial_bounds(%.2f, %.2f, %s)\n",
-  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
-  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
- 	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
+      fprintf(fd, "prefs_activate_initial_bounds(%.2f, %.2f, %s)\n", rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "true" : "false");
+
 #endif
 #if HAVE_FORTH
       fprintf(fd, "require extensions\n");
-      fprintf(fd, "%.2f %.2f %s prefs-activate-initial-bounds\n",
-  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
-  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
- 	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
+      fprintf(fd, "%.2f %.2f %s prefs-activate-initial-bounds\n", rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "true" : "false");
 #endif
-      /* code repeated to make emacs' paren matcher happy */
     }
 }
 
@@ -4480,54 +4588,42 @@ static void reflect_initial_bounds(prefs_info *prf)
   str = initial_bounds_to_string();
   SET_TEXT(prf->text, str);
   FREE(str);
-  SET_TOGGLE(prf->toggle, use_full_duration());
+  SET_TOGGLE(prf->toggle, full_duration());
+}
+
+static void revert_initial_bounds(prefs_info *prf)
+{
+  prefs_variable_set("prefs-initial-beg", C_TO_XEN_DOUBLE(rts_initial_beg));
+  prefs_variable_set("prefs-initial-dur", C_TO_XEN_DOUBLE(rts_initial_dur));
+  prefs_variable_set("prefs-show-full-duration", C_TO_XEN_BOOLEAN(rts_full_duration));
+}
+
+static void clear_initial_bounds(prefs_info *prf)
+{
+  prefs_variable_set("prefs-initial-beg", C_TO_XEN_DOUBLE(0.0));
+  prefs_variable_set("prefs-initial-dur", C_TO_XEN_DOUBLE(0.1));
+  prefs_variable_set("prefs-show-full-duration", XEN_FALSE);
 }
 
 static void initial_bounds_toggle(prefs_info *prf)
 {
-  bool use_full_duration = false;
-  use_full_duration = GET_TOGGLE(prf->toggle);
-#if HAVE_SCHEME
-  if (!(XEN_DEFINED_P("prefs-initial-beg")))
-    XEN_LOAD_FILE_WITH_PATH("extensions.scm");
-#if HAVE_GUILE
-  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-show-full-duration"), C_TO_XEN_BOOLEAN(use_full_duration));
-#endif
-#if HAVE_GAUCHE
-  XEN_VARIABLE_SET("prefs-show-full-duration", C_TO_XEN_BOOLEAN(use_full_duration));
-#endif
-#endif
-#if HAVE_RUBY
-  if (!(XEN_DEFINED_P("prefs-initial-beg")))
-    XEN_LOAD_FILE_WITH_PATH("extensions.rb");
-  XEN_VARIABLE_SET("prefs-show-full-duration", C_TO_XEN_BOOLEAN(use_full_duration));
-#endif
+  include_duration = true;
+  if (!(XEN_DEFINED_P("prefs-show-full-duration")))
+    xen_load_file_with_path_and_extension("extensions");
+  prefs_variable_set("prefs-show-full-duration", C_TO_XEN_BOOLEAN(GET_TOGGLE(prf->toggle)));
 }
 
 static void initial_bounds_text(prefs_info *prf)
 {
   float beg = 0.0, dur = 0.1;
   char *str;
+  include_duration = true;
   str = GET_TEXT(prf->text);
   sscanf(str, "%f : %f", &beg, &dur);
-#if HAVE_SCHEME
   if (!(XEN_DEFINED_P("prefs-initial-beg")))
-    XEN_LOAD_FILE_WITH_PATH("extensions.scm");
-#if HAVE_GUILE
-  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-beg"), C_TO_XEN_DOUBLE(beg));
-  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-dur"), C_TO_XEN_DOUBLE(dur));
-#endif
-#if HAVE_GAUCHE
-  XEN_VARIABLE_SET("prefs-initial-beg", C_TO_XEN_DOUBLE(beg));
-  XEN_VARIABLE_SET("prefs-initial-dur", C_TO_XEN_DOUBLE(dur));
-#endif
-#endif
-#if HAVE_RUBY
-  if (!(XEN_DEFINED_P("prefs-initial-beg")))
-    XEN_LOAD_FILE_WITH_PATH("extensions.rb");
-  XEN_VARIABLE_SET("prefs-initial-beg", C_TO_XEN_DOUBLE(beg));
-  XEN_VARIABLE_SET("prefs-initial-dur", C_TO_XEN_DOUBLE(dur));
-#endif
+    xen_load_file_with_path_and_extension("extensions");
+  prefs_variable_set("prefs-initial-beg", C_TO_XEN_DOUBLE(beg));
+  prefs_variable_set("prefs-initial-dur", C_TO_XEN_DOUBLE(dur));
   FREE_TEXT(str);
 }
 
@@ -4573,17 +4669,29 @@ static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m,
     {
       expr = (*binder)(key, ctrl, meta, cx);
       FREE_TEXT(key);
+      XEN_EVAL_C_STRING(expr);
+      FREE(expr);
     }
-  else
-    {
-      expr = mus_format("(unbind-key %s %d %s)",
-			possibly_quote(key), 
-			((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-			(cx) ? "#t" : "#f");
-    }
-  XEN_EVAL_C_STRING(expr);
-  FREE(expr);
 }
+
+static void clear_key(prefs_info *prf, const char *name)
+{
+  key_info *ki;
+  ki = find_prefs_key_binding(name);
+  if ((ki) && (ki->key))
+    {
+      int state = 0;
+      if (ki->c) state |= 4;
+      if (ki->m) state |= 8;
+#if USE_MOTIF
+      set_keymap_entry((int)XStringToKeysym(ki->key), state, 0, XEN_UNDEFINED, ki->x, name, name);
+#else
+      set_keymap_entry((int)gdk_keyval_from_name(ki->key), state, 0, XEN_UNDEFINED, ki->x, name, name);
+#endif
+      FREE(ki);
+    }
+}
+
 
 /* -------- key: play all chans from cursor -------- */
 
@@ -4627,6 +4735,8 @@ static void bind_play_from_cursor(prefs_info *prf)
 {
   key_bind(prf, make_pfc_binding);
 }
+
+static void clear_play_from_cursor(prefs_info *prf) {clear_key(prf, "play-from-cursor");}
 
 
 /* -------- key: show all of sound -------- */
@@ -4680,6 +4790,9 @@ static void bind_show_all(prefs_info *prf)
   key_bind(prf, make_show_all_binding);
 }
 
+static void clear_show_all(prefs_info *prf) {clear_key(prf, "show-all");}
+
+
 /* -------- key: select all of sound -------- */
 
 static void help_select_all(prefs_info *prf)
@@ -4731,6 +4844,8 @@ static void bind_select_all(prefs_info *prf)
   key_bind(prf, make_select_all_binding);
 }
 
+static void clear_select_all(prefs_info *prf) {clear_key(prf, "select-all");}
+
 
 /* -------- key: undo all edits -------- */
 
@@ -4772,6 +4887,8 @@ static void bind_revert(prefs_info *prf)
 {
   key_bind(prf, make_revert_binding);
 }
+
+static void clear_revert_sound(prefs_info *prf) {clear_key(prf, "revert-sound");}
 
 
 /* -------- key: exit -------- */
@@ -4815,6 +4932,8 @@ static void bind_exit(prefs_info *prf)
   key_bind(prf, make_exit_binding);
 }
 
+static void clear_exit(prefs_info *prf) {clear_key(prf, "exit");}
+
 
 /* -------- key: goto maxamp -------- */
 
@@ -4857,6 +4976,8 @@ static void bind_goto_maxamp(prefs_info *prf)
   key_bind(prf, make_goto_maxamp_binding);
 }
 
+static void clear_goto_maxamp(prefs_info *prf) {clear_key(prf, "goto-maxamp");}
+
 
 /* -------- key: show selection -------- */
 
@@ -4898,3 +5019,5 @@ static void bind_show_selection(prefs_info *prf)
 {
   key_bind(prf, make_show_selection_binding);
 }
+
+static void clear_show_selection(prefs_info *prf) {clear_key(prf, "show-selection");}

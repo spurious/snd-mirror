@@ -7676,7 +7676,7 @@ EDITS: 5
 	    (snd-display ";ptree4: ~A" (edit-tree)))
 
 	(close-sound ind))
-      ) (snd-display "skipping ptree cases")) ; end 'run cases?
+      ) (snd-display ";skipping ptree cases")) ; end 'run cases?
 
       (let ((data (make-vct 101 1.0))
 	    (rto1-data (make-vct 101))

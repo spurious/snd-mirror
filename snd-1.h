@@ -589,7 +589,6 @@ typedef struct {
 
 typedef struct {
   char *key;
-  int state;
   bool c, m, x;
 } key_info;
 
@@ -1689,6 +1688,7 @@ void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);
 void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta);
 int in_user_keymap(int key, int state, bool cx_extended);
+void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, const char *origin, const char *prefs_info);
 char *key_binding_description(int key, int state, bool cx_extended);
 char *make_key_name(char *buf, int buf_size, int key, int state, bool extended);
 void map_over_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo, XEN xf));

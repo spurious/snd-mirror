@@ -425,7 +425,7 @@ char *key_binding_description(int key, int state, bool cx_extended)
   return(NULL);
 }
 
-static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, const char *origin, const char *prefs_info)
+void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, const char *origin, const char *prefs_info)
 {
   int i;
   i = in_user_keymap(key, state, cx_extended);
@@ -2177,7 +2177,9 @@ static XEN check_for_key_error(int k, int s, const char *caller)
 
 static XEN g_key_binding(XEN key, XEN state, XEN cx_extended)
 {
-  #define H_key_binding "(" S_key_binding " key (state 0) (extended #f)): function bound to this key"
+  #define H_key_binding "(" S_key_binding " key (state 0) (extended #f)): function bound to this key and associated \
+modifiers.  As in " S_bind_key ", state is the logical 'or' of ctrl=4, meta=8, and 'extended' is #t if the key is \
+prefixed with C-x. 'key' can be a character, a key name such as 'Home', or an integer."
   int i, k, s;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key) || XEN_CHAR_P(key) || XEN_STRING_P(key), key, XEN_ARG_1, S_key_binding, "an integer, character, or string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(state), state, XEN_ARG_2, S_key_binding, "an integer");

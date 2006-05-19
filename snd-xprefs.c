@@ -1857,13 +1857,15 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     include_peak_env_directory = copy_string(peak_env_directory());
+    rts_peak_env_directory = copy_string(include_peak_env_directory);
     include_peak_envs = find_peak_envs();
+    rts_peak_envs = include_peak_envs;
     prf = prefs_row_with_toggle_with_text("save peak envs to speed up initial display", "save-peak-env-info",
 					  include_peak_envs,
 					  "directory:", include_peak_env_directory, 25,
 					  dpy_box, current_sep,
 					  peak_envs_toggle, peak_envs_text);
-    remember_pref(prf, reflect_peak_envs, save_peak_envs, help_peak_env, NULL, NULL);
+    remember_pref(prf, reflect_peak_envs, save_peak_envs, help_peak_envs, clear_peak_envs, revert_peak_envs);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     str = mus_format("%d", rts_max_regions = max_regions(ss));
@@ -1880,15 +1882,13 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     file_label = make_inner_label("  file options", dpy_box, current_sep);
 
-    str = find_sources();
+    rts_load_path = find_sources();
     prf = prefs_row_with_text("directory containing Snd's " LANG_NAME " files", "load path", 
-			      str,
+			      rts_load_path,
 			      dpy_box, file_label,
 			      load_path_text);
-    remember_pref(prf, reflect_load_path, NULL, help_load_path, NULL, NULL);
-    if (str) 
-      FREE(str);
-    else red_text(prf);
+    remember_pref(prf, reflect_load_path, NULL, help_load_path, clear_load_path, revert_load_path);
+    if (rts_load_path == NULL) red_text(prf);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("display only sound files in various file lists", S_just_sounds,
@@ -2090,7 +2090,7 @@ widget_t start_preferences_dialog(void)
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, key_label,
 						  bind_play_from_cursor);
-      remember_pref(prf, reflect_play_from_cursor, save_pfc_binding, help_play_from_cursor, NULL, NULL);
+      remember_pref(prf, reflect_play_from_cursor, save_pfc_binding, help_play_from_cursor, clear_play_from_cursor, NULL);
       FREE(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2100,7 +2100,7 @@ widget_t start_preferences_dialog(void)
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_show_all);
-      remember_pref(prf, reflect_show_all, save_show_all_binding, help_show_all, NULL, NULL);
+      remember_pref(prf, reflect_show_all, save_show_all_binding, help_show_all, clear_show_all, NULL);
       FREE(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2110,7 +2110,7 @@ widget_t start_preferences_dialog(void)
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_select_all);
-      remember_pref(prf, reflect_select_all, save_select_all_binding, help_select_all, NULL, NULL);
+      remember_pref(prf, reflect_select_all, save_select_all_binding, help_select_all, clear_select_all, NULL);
       FREE(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2120,7 +2120,7 @@ widget_t start_preferences_dialog(void)
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_show_selection);
-      remember_pref(prf, reflect_show_selection, save_show_selection_binding, help_show_selection, NULL, NULL);
+      remember_pref(prf, reflect_show_selection, save_show_selection_binding, help_show_selection, clear_show_selection, NULL);
       FREE(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2130,7 +2130,7 @@ widget_t start_preferences_dialog(void)
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_revert);
-      remember_pref(prf, reflect_revert, save_revert_binding, help_revert, NULL, NULL);
+      remember_pref(prf, reflect_revert, save_revert_binding, help_revert, clear_revert_sound, NULL);
       FREE(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2140,7 +2140,7 @@ widget_t start_preferences_dialog(void)
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_exit);
-      remember_pref(prf, reflect_exit, save_exit_binding, help_exit, NULL, NULL);
+      remember_pref(prf, reflect_exit, save_exit_binding, help_exit, clear_exit, NULL);
       FREE(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2150,7 +2150,7 @@ widget_t start_preferences_dialog(void)
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_goto_maxamp);
-      remember_pref(prf, reflect_goto_maxamp, save_goto_maxamp_binding, help_goto_maxamp, NULL, NULL);
+      remember_pref(prf, reflect_goto_maxamp, save_goto_maxamp_binding, help_goto_maxamp, clear_goto_maxamp, NULL);
       FREE(ki);
 
     }
@@ -2280,14 +2280,17 @@ widget_t start_preferences_dialog(void)
     if (dot_size(ss) <= 0) XtSetSensitive(prf->arrow_down, false);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
-    str = initial_bounds_to_string();
-    prf = prefs_row_with_text_with_toggle("initial graph x bounds", S_initial_graph_hook, use_full_duration(),
+    rts_initial_beg = initial_beg();
+    rts_initial_dur = initial_dur();
+    str = mus_format("%.2f : %.2f", rts_initial_beg, rts_initial_dur);
+    prf = prefs_row_with_text_with_toggle("initial graph x bounds", S_initial_graph_hook, 
+					  (rts_full_duration = full_duration()),
 					  "show full duration", str, 16,
 					  grf_box, current_sep,
 					  initial_bounds_toggle,
 					  initial_bounds_text);
     FREE(str);
-    remember_pref(prf, reflect_initial_bounds, save_initial_bounds, help_initial_bounds, NULL, NULL);
+    remember_pref(prf, reflect_initial_bounds, save_initial_bounds, help_initial_bounds, clear_initial_bounds, revert_initial_bounds);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_radio_box("how to layout multichannel graphs", S_channel_style,

@@ -224,19 +224,41 @@ are in <em class=listener>this color</em>):
 </tr>
 <!-- ------------ -->
 
-<!--
+<tr>
+<td><pre>
+&gt;<em class=typing>(map-channel (lambda (y) (* y 2)))</em>
+<em class=listener>0</em>
+</pre></td><td></td>
 
-perhaps inline func case (map or something)?
+<td><pre>
+&gt;<em class=typing>map_channel(lambda do |y| y * 2 end)</em>
+<em class=listener>-0.0015869140625</em>
+</pre></td><td></td>
 
-(set! (basic-color) (make-color 1 0 0))
-(Pixel 16711680)
+<td><pre>
+&gt;<em class=typing>lambda: ( y -- val) { y } y 2.0 f* ; 1 make-proc map-channel</em>
+<em class=listener>-0.00158691</em>
+</pre></td>
+</tr>
+<!-- ------------ -->
 
-set_basic_color make_color(1, 0, 0)
-[:Pixel, 16711680]
+<tr>
+<td><pre>
+&gt;<em class=typing>(set! (basic-color) (make-color 1 0 0))</em>
+<em class=listener>(Pixel 16711680)</em>
+</pre></td><td></td>
 
-1 0 0 make-color set-basic-color
-#&lt;XmRaw: Pixel 0x9d3b430&gt;
--->
+<td><pre>
+&gt;<em class=typing>set_basic_color make_color(1, 0, 0)</em>
+<em class=listener>[:Pixel, 16711680]</em>
+</pre></td><td></td>
+
+<td><pre>
+&gt;<em class=typing>1 0 0 make-color set-basic-color</em>
+<em class=listener>#&lt;XmRaw: Pixel 0x9d3b430&gt;</em>
+</pre></td>
+</tr>
+<!-- ------------ -->
 
 </table>
 
