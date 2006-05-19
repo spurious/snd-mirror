@@ -636,6 +636,11 @@
 	  (/ (+ (sin fi) (- s3) (- s2) s1) s4)))))
 
 
+;;; square-wave in the same mold
+
+(define (band-limited-square-wave theta n) ; n sets how squared-off it is, theta is instantaneous phase
+  (tanh (* n (sin theta))))
+
 
 ;;; -------- brighten-slightly
 

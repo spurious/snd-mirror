@@ -960,8 +960,8 @@ same fm applied to the same waveform in <a href="#table-lookup">table-lookup</a>
 These are not band-limited; if the frequency is too high, you can get foldover,
 but as far as I
 know, no-one uses these as audio frequency tone generators -- who would want to
-listen to a square wave? I should remove these generators
-from CLM!
+listen to a square wave?  A more reasonable square-wave can be generated via
+tanh(n * sin(theta)), where "n" (a float) sets how squared-off it is.
 </p>
 
 <table border align=left hspace=40 cellpadding=4>

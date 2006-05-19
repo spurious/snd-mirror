@@ -774,7 +774,9 @@ Three other similar functions are <b>sum-of-n-sines</b>,
 <b>sum-of-n-odd-sines</b>, and <b>sum-of-n-odd-cosines</b>.
 <A class=def NAME="kosinesummation">kosine-summation</A> is a variation on <b>cosine-summation</b>; it includes
 a sort of "FM index" parameter (named "k", hence the generator name) to vary the harmonic content at run-time.
-There is also a <a href="clm.html#sinc-train">sinc-train</a> generator in clm.html.
+There is also a <a href="clm.html#sinc-train">sinc-train</a> generator in clm.html.  And for band-limited
+square-waves, there's <b>band-limited-square-wave</b> which uses the formula tanh(n * sin(theta)) ('n' here
+is not restricted to being an integer).
 </p>
 
 <p><A class=def NAME="brightenslightly1">brighten-slightly</A> is a slight simplification of contrast-enhancement.

@@ -1,7 +1,5 @@
 /* this file included as text in snd-g|xprefs.c */
 
-/* TODO: ruby var get/set probably isn't working */
-
 #if HAVE_SCHEME
   #define LANG_NAME "scheme"
 #endif

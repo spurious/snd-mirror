@@ -5670,7 +5670,7 @@
 ;;;void gtk_tree_store_insert_with_values GtkTreeStore* tree_store GtkTreeIter* iter GtkTreeIter* parent gint position ...
 
 
-;;; SOMEDAY: the following need more checks for refargs, also new callback func support
+;;; SOMEDAY: the following need new callback func support
 (CFNC-290 "gboolean gdk_display_supports_shapes GdkDisplay* display")
 (CFNC-290 "gboolean gdk_display_supports_input_shapes GdkDisplay* display")
 (CFNC-290 "gboolean gdk_screen_is_composited GdkScreen* screen")
@@ -5707,7 +5707,7 @@
 (CFNC-290 "GtkSensitivityType gtk_range_get_upper_stepper_sensitivity GtkRange* range")
 (CFNC-290 "void gtk_scrolled_window_unset_placement GtkScrolledWindow* scrolled_window")
 (CFNC-290 "void gtk_target_list_add_rich_text_targets GtkTargetList* list guint info gboolean deserializable GtkTextBuffer* buffer")
-(CFNC-290 "GtkTargetEntry* gtk_target_table_new_from_list GtkTargetList* list gint* n_targets")
+(CFNC-290 "GtkTargetEntry* gtk_target_table_new_from_list GtkTargetList* list gint* [n_targets]")
 (CFNC-290 "void gtk_target_table_free GtkTargetEntry* targets gint n_targets")
 (CFNC-290 "gboolean gtk_selection_data_targets_include_rich_text GtkSelectionData* selection_data GtkTextBuffer* buffer")
 (CFNC-290 "gboolean gtk_selection_data_targets_include_uri GtkSelectionData* selection_data")
@@ -5721,7 +5721,7 @@
 (CFNC-290 "gboolean gtk_text_buffer_get_has_selection GtkTextBuffer* buffer")
 (CFNC-290 "GtkTargetList* gtk_text_buffer_get_copy_target_list GtkTextBuffer* buffer")
 (CFNC-290 "GtkTargetList* gtk_text_buffer_get_paste_target_list GtkTextBuffer* buffer")
-(CFNC-290 "void gtk_tree_store_insert_with_valuesv GtkTreeStore* tree_store GtkTreeIter* iter GtkTreeIter* parent gint position gint* columns GValue* values gint n_values")
+;(CFNC-290 "void gtk_tree_store_insert_with_valuesv GtkTreeStore* tree_store GtkTreeIter* iter GtkTreeIter* parent gint position gint* columns GValue* values gint n_values")
 (CFNC-290 "gboolean gtk_tree_view_get_headers_clickable GtkTreeView* tree_view")
 (CFNC-290 "GtkEntry* gtk_tree_view_get_search_entry GtkTreeView* tree_view")
 (CFNC-290 "void gtk_tree_view_set_search_entry GtkTreeView* tree_view GtkEntry* entry")
@@ -5796,7 +5796,7 @@
 (CFNC-290 "void gtk_recent_chooser_select_all GtkRecentChooser* chooser")
 (CFNC-290 "void gtk_recent_chooser_unselect_all GtkRecentChooser* chooser")
 (CFNC-290 "GList* gtk_recent_chooser_get_items GtkRecentChooser* chooser")
-(CFNC-290 "gchar** gtk_recent_chooser_get_uris GtkRecentChooser* chooser gsize* length")
+(CFNC-290 "gchar** gtk_recent_chooser_get_uris GtkRecentChooser* chooser gsize* [length]")
 (CFNC-290 "void gtk_recent_chooser_add_filter GtkRecentChooser* chooser GtkRecentFilter* filter")
 (CFNC-290 "void gtk_recent_chooser_remove_filter GtkRecentChooser* chooser GtkRecentFilter* filter")
 (CFNC-290 "GSList* gtk_recent_chooser_list_filters GtkRecentChooser* chooser")
@@ -5884,7 +5884,7 @@
 (CFNC-290 "void gtk_status_icon_set_blinking GtkStatusIcon* status_icon gboolean blinking")
 (CFNC-290 "gboolean gtk_status_icon_get_blinking GtkStatusIcon* status_icon")
 (CFNC-290 "gboolean gtk_status_icon_is_embedded GtkStatusIcon* status_icon")
-(CFNC-290 "void gtk_status_icon_position_menu GtkMenu* menu gint* x gint* y gboolean* push_in gpointer user_data")
+(CFNC-290 "void gtk_status_icon_position_menu GtkMenu* menu gint* [x] gint* [y] gboolean* [push_in] gpointer user_data")
 (CFNC-290 "GdkAtom gtk_text_buffer_register_serialize_format GtkTextBuffer* buffer gchar* mime_type GtkTextBufferSerializeFunc function gpointer user_data GDestroyNotify user_data_destroy")
 (CFNC-290 "GdkAtom gtk_text_buffer_register_serialize_tagset GtkTextBuffer* buffer gchar* tagset_name")
 (CFNC-290 "GdkAtom gtk_text_buffer_register_deserialize_format GtkTextBuffer* buffer gchar* mime_type GtkTextBufferDeserializeFunc function gpointer user_data GDestroyNotify user_data_destroy")
@@ -5893,9 +5893,9 @@
 (CFNC-290 "void gtk_text_buffer_unregister_deserialize_format GtkTextBuffer* buffer GdkAtom format")
 (CFNC-290 "void gtk_text_buffer_deserialize_set_can_create_tags GtkTextBuffer* buffer GdkAtom format gboolean can_create_tags")
 (CFNC-290 "gboolean gtk_text_buffer_deserialize_get_can_create_tags GtkTextBuffer* buffer GdkAtom format")
-(CFNC-290 "GdkAtom* gtk_text_buffer_get_serialize_formats GtkTextBuffer* buffer gint* n_formats")
-(CFNC-290 "GdkAtom* gtk_text_buffer_get_deserialize_formats GtkTextBuffer* buffer gint* n_formats")
-(CFNC-290 "guint8* gtk_text_buffer_serialize GtkTextBuffer* register_buffer GtkTextBuffer* content_buffer GdkAtom format GtkTextIter* start GtkTextIter* end gsize* length")
+(CFNC-290 "GdkAtom* gtk_text_buffer_get_serialize_formats GtkTextBuffer* buffer gint* [n_formats]")
+(CFNC-290 "GdkAtom* gtk_text_buffer_get_deserialize_formats GtkTextBuffer* buffer gint* [n_formats]")
+(CFNC-290 "guint8* gtk_text_buffer_serialize GtkTextBuffer* register_buffer GtkTextBuffer* content_buffer GdkAtom format GtkTextIter* start GtkTextIter* end gsize* [length]")
 (CFNC-290 "gboolean gtk_text_buffer_deserialize GtkTextBuffer* register_buffer GtkTextBuffer* content_buffer GdkAtom format GtkTextIter* iter guint8* data gsize length GError** [error]")
 
 
