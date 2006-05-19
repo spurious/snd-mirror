@@ -244,6 +244,24 @@ are in <em class=listener>this color</em>):
 
 <tr>
 <td><pre>
+&gt;<em class=typing>(define (plus a b) (+ a b))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+</pre></td><td></td>
+
+<td><pre>
+&gt;<em class=typing>def plus(a, b) a+b end</em>
+
+</pre></td><td></td>
+
+<td><pre>
+&gt;<em class=typing>: plus ( a b --) { a b } a b + ;</em>
+<em class=listener>nil</em>
+</pre></td>
+</tr>
+<!-- ------------ -->
+
+<tr>
+<td><pre>
 &gt;<em class=typing>(set! (basic-color) (make-color 1 0 0))</em>
 <em class=listener>(Pixel 16711680)</em>
 </pre></td><td></td>

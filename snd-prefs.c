@@ -3866,7 +3866,19 @@ static void help_smpte(prefs_info *prf)
 	   WITH_WORD_WRAP);
 }
 
-static bool find_smpte(void) {return(XEN_TO_C_BOOLEAN(prefs_variable_get("smpte-is-on")));}
+static bool find_smpte(void) 
+{
+#if HAVE_SCHEME 
+  return((XEN_DEFINED_P("smpte-is-on")) && 
+	 (!(XEN_FALSE_P(XEN_EVAL_C_STRING("(smpte-is-on)"))))); /* "member" of hook-list -> a list if successful */ 
+#endif
+#if HAVE_RUBY || HAVE_FORTH
+  return((XEN_DEFINED_P("smpte-is-on")) && 
+	 XEN_TO_C_BOOLEAN(XEN_EVAL_C_STRING(TO_PROC_NAME("smpte-is-on")))); /* "member" of hook-list -> true */ 
+#endif 
+  return(false);
+}
+
 static void reflect_smpte(prefs_info *prf) {}
 static void revert_smpte(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_smpte);}
 static void clear_smpte(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}

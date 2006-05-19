@@ -46,16 +46,13 @@
  *
  *    unwind-protects around scm_apply (snd-xen g_call)
  *
- * TODO: check prefs and save/restore: these are broken [endless work in progress...]
- *
  * TODO in Forth: features check (below)
  *    sndscm: forth doc (only have .snd_forth right now)
- *
- * TODO in Ruby: prefs for show-selection
+ *    prefs can't find extensions.fs?
  *
  * TODO: fam crosstalk?
  *
- * TODO: change config.h to snd-config.h and clm-config.h (collisions in several cases like ecl)
+ * SOMEDAY: change config.h to snd-config.h and clm-config.h (collisions in several cases like ecl)
  *         but if user is loading libsndlib, how to avoid collisions between its config.h and snd's?
  *
  *        cmus.h:#include <config.h> -- clm configure also uses all of the sndlib files, so this can't be changed to clm-config
