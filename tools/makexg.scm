@@ -590,6 +590,40 @@
 			      'permanent)
 			))
 
+(define callbacks-290 (list
+		       (list 'GtkClipboardRichTextReceivedFunc
+			     "void"
+			     "clip_rich_text_received"
+			     (parse-args "GtkClipboard* clipboard GdkAtom format guint8* text gsize length lambda_data func_data" 'callback-290)
+			     'permanent)
+		       (list 'GtkRecentFilterFunc
+			     "gboolean"
+			     "recent_filter"
+			     (parse-args "GtkRecentFilterInfo* filter_info lambda_data func_data" 'callback-290)
+			     'permanent)
+		       (list 'GtkTreeViewSearchPositionFunc
+			     "void"
+			     "search_position"
+			     (parse-args "GtkTreeView* tree_view GtkWidget* search_dialog lambda_data func_data" 'callback-290)
+			     'permanent)
+		       (list 'GtkAssistantPage
+			     "gint"
+			     "page_func"
+			     (parse-args "gint current_page lambda_data func_data" 'callback-290)
+			     'permanent)
+		       (list 'GtkLinkButtonUriFunc
+			     "void"
+			     "link_button_uri"
+			     (parse-args "GtkLinkButton* button gchar* link lambda_data func_data" 'callback-290)
+			     'permanent)
+;		       (list 'GtkRecentSortFunc
+;			     "gint"
+;			     "recent_sort"
+;			     (parse-args "GetRecentInfo* a GtkRecentInfo* b lambda_data func_data" 'callback-290)
+;			     'permanent)
+		       ))
+
+
 (define (callback-name func) (car func))
 (define (callback-type func) (cadr func))
 (define (callback-func func) (caddr func))
@@ -605,6 +639,7 @@
       (find-callback-1 test callbacks-23)
       (find-callback-1 test callbacks-250)
       (find-callback-1 test callbacks-256)
+      (find-callback-1 test callbacks-290)
       ))
 
 (define direct-types 
@@ -1764,6 +1799,7 @@
 (with-23 hey (lambda () (for-each callback-p callbacks-23)))
 (with-250 hey (lambda () (for-each callback-p callbacks-250)))
 (with-256 hey (lambda () (for-each callback-p callbacks-256)))
+(with-290 hey (lambda () (for-each callback-p callbacks-290)))
 
 (hey "#define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)~%")
 (hey "#define XEN_GCallback_P(Arg) XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS_OK(Arg, 2)) || (XEN_REQUIRED_ARGS_OK(Arg, 3)))~%")
@@ -1777,6 +1813,7 @@
 (with-23 hey (lambda () (for-each xen-callback callbacks-23)))
 (with-250 hey (lambda () (for-each xen-callback callbacks-250)))
 (with-256 hey (lambda () (for-each xen-callback callbacks-256)))
+(with-290 hey (lambda () (for-each xen-callback callbacks-290)))
 
 (hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)~%")
 (hey "#define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr~%")
@@ -2045,7 +2082,9 @@
     (for-each xc callbacks)
     (with-23 hey (lambda () (for-each xc callbacks-23)))
     (with-250 hey (lambda () (for-each xc callbacks-250)))
-    (with-256 hey (lambda () (for-each xc callbacks-256)))))
+    (with-256 hey (lambda () (for-each xc callbacks-256)))
+    (with-290 hey (lambda () (for-each xc callbacks-290)))
+    ))
 
 (hey "~%static gboolean gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)~%")
 (hey "{~%")

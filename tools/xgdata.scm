@@ -5670,7 +5670,6 @@
 ;;;void gtk_tree_store_insert_with_values GtkTreeStore* tree_store GtkTreeIter* iter GtkTreeIter* parent gint position ...
 
 
-;;; SOMEDAY: the following need new callback func support
 (CFNC-290 "gboolean gdk_display_supports_shapes GdkDisplay* display")
 (CFNC-290 "gboolean gdk_display_supports_input_shapes GdkDisplay* display")
 (CFNC-290 "gboolean gdk_screen_is_composited GdkScreen* screen")
@@ -5679,7 +5678,7 @@
 (CFNC-290 "GdkWindow* gdk_screen_get_active_window GdkScreen* screen")
 (CFNC-290 "GList* gdk_screen_get_window_stack GdkScreen* screen")
 (CFNC-290 "GdkWindowTypeHint gdk_window_get_type_hint GdkWindow* window")
-(CFNC-290 "void gtk_clipboard_request_rich_text GtkClipboard* clipboard GtkTextBuffer* buffer GtkClipboardRichTextReceivedFunc callback gpointer user_data")
+(CFNC-290 "void gtk_clipboard_request_rich_text GtkClipboard* clipboard GtkTextBuffer* buffer GtkClipboardRichTextReceivedFunc func lambda_data #func_data")
 (CFNC-290 "guint8* gtk_clipboard_wait_for_rich_text GtkClipboard* clipboard GtkTextBuffer* buffer GdkAtom* format gsize* [length]")
 (CFNC-290 "gboolean gtk_clipboard_wait_is_rich_text_available GtkClipboard* clipboard GtkTextBuffer* buffer")
 (CFNC-290 "gchar* gtk_combo_box_get_title GtkComboBox* combo_box") ; 'const
@@ -5726,7 +5725,7 @@
 (CFNC-290 "GtkEntry* gtk_tree_view_get_search_entry GtkTreeView* tree_view")
 (CFNC-290 "void gtk_tree_view_set_search_entry GtkTreeView* tree_view GtkEntry* entry")
 (CFNC-290 "GtkTreeViewSearchPositionFunc gtk_tree_view_get_search_position_func GtkTreeView* tree_view")
-(CFNC-290 "void gtk_tree_view_set_search_position_func GtkTreeView* tree_view GtkTreeViewSearchPositionFunc func gpointer data GDestroyNotify destroy")
+(CFNC-290 "void gtk_tree_view_set_search_position_func GtkTreeView* tree_view GtkTreeViewSearchPositionFunc func lambda_data #func_data GDestroyNotify destroy")
 (CFNC-290 "gboolean gtk_widget_is_composited GtkWidget* widget")
 (CFNC-290 "void gtk_widget_input_shape_combine_mask GtkWidget* widget GdkBitmap* shape_mask gint offset_x gint offset_y")
 (CFNC-290 "void gtk_window_set_deletable GtkWindow* window gboolean setting")
@@ -5741,7 +5740,7 @@
 (CFNC-290 "gint gtk_assistant_prepend_page GtkAssistant* assistant GtkWidget* page")
 (CFNC-290 "gint gtk_assistant_append_page GtkAssistant* assistant GtkWidget* page")
 (CFNC-290 "gint gtk_assistant_insert_page GtkAssistant* assistant GtkWidget* page gint position")
-(CFNC-290 "void gtk_assistant_set_forward_page_func GtkAssistant* assistant GtkAssistantPageFunc page_func gpointer data GDestroyNotify destroy")
+(CFNC-290 "void gtk_assistant_set_forward_page_func GtkAssistant* assistant GtkAssistantPageFunc page_func lambda_data #func_data GDestroyNotify destroy")
 (CFNC-290 "void gtk_assistant_set_page_type GtkAssistant* assistant GtkWidget* page GtkAssistantPageType type")
 (CFNC-290 "GtkAssistantPageType gtk_assistant_get_page_type GtkAssistant* assistant GtkWidget* page")
 (CFNC-290 "void gtk_assistant_set_page_title GtkAssistant* assistant GtkWidget* page gchar* title")
@@ -5764,7 +5763,7 @@
 (CFNC-290 "GtkWidget* gtk_link_button_new_with_label gchar* uri gchar* label")
 (CFNC-290 "gchar* gtk_link_button_get_uri GtkLinkButton* link_button") ; 'const
 (CFNC-290 "void gtk_link_button_set_uri GtkLinkButton* link_button gchar* uri")
-(CFNC-290 "GtkLinkButtonUriFunc gtk_link_button_set_uri_hook GtkLinkButtonUriFunc func gpointer data GDestroyNotify destroy")
+(CFNC-290 "GtkLinkButtonUriFunc gtk_link_button_set_uri_hook GtkLinkButtonUriFunc func lambda_data #func_data GDestroyNotify destroy")
 (CFNC-290 "GType gtk_recent_chooser_dialog_get_type void")
 ;;;(CFNC-290 "GtkWidget* gtk_recent_chooser_dialog_new gchar* title GtkWindow* parent gchar* first_button_text ... G_GNUC_NULL_TERMINATED")
 ;;;(CFNC-290 "GtkWidget* gtk_recent_chooser_dialog_new_for_manager gchar* title GtkWindow* parent GtkRecentManager* manager gchar* first_button_text ... G_GNUC_NULL_TERMINATED")
@@ -5787,7 +5786,7 @@
 (CFNC-290 "gboolean gtk_recent_chooser_get_show_icons GtkRecentChooser* chooser")
 (CFNC-290 "void gtk_recent_chooser_set_sort_type GtkRecentChooser* chooser GtkRecentSortType sort_type")
 (CFNC-290 "GtkRecentSortType gtk_recent_chooser_get_sort_type GtkRecentChooser* chooser")
-(CFNC-290 "void gtk_recent_chooser_set_sort_func GtkRecentChooser* chooser GtkRecentSortFunc sort_func gpointer sort_data GDestroyNotify data_destroy")
+(CFNC-290 "void gtk_recent_chooser_set_sort_func GtkRecentChooser* chooser GtkRecentSortFunc func lambda_data #func_data GDestroyNotify data_destroy")
 (CFNC-290 "gboolean gtk_recent_chooser_set_current_uri GtkRecentChooser* chooser gchar* uri GError** [error]")
 (CFNC-290 "gchar* gtk_recent_chooser_get_current_uri GtkRecentChooser* chooser")
 (CFNC-290 "GtkRecentInfo* gtk_recent_chooser_get_current_item GtkRecentChooser* chooser")
@@ -5820,7 +5819,7 @@
 (CFNC-290 "void gtk_recent_filter_add_application GtkRecentFilter* filter gchar* application")
 (CFNC-290 "void gtk_recent_filter_add_group GtkRecentFilter* filter gchar* group")
 (CFNC-290 "void gtk_recent_filter_add_age GtkRecentFilter* filter gint days")
-(CFNC-290 "void gtk_recent_filter_add_custom GtkRecentFilter* filter GtkRecentFilterFlags needed GtkRecentFilterFunc func gpointer data GDestroyNotify data_destroy")
+(CFNC-290 "void gtk_recent_filter_add_custom GtkRecentFilter* filter GtkRecentFilterFlags needed GtkRecentFilterFunc func lambda_data #func_data GDestroyNotify data_destroy")
 (CFNC-290 "GtkRecentFilterFlags gtk_recent_filter_get_needed GtkRecentFilter* filter")
 (CFNC-290 "gboolean gtk_recent_filter_filter GtkRecentFilter* filter GtkRecentFilterInfo* filter_info")
 (CFNC-290 "GQuark gtk_recent_manager_error_quark void")

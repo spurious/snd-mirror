@@ -332,7 +332,7 @@ static void prefs_variable_save(FILE *fd, const char *name, const char *file, XE
 #if HAVE_FORTH
   if (file)
     fprintf(fd, "require %s\n", file);
-  fprintf(fd, "%s set-%s\n", XEN_AS_STRING(val), name);
+  fprintf(fd, "%s set-%s drop\n", XEN_AS_STRING(val), name);
 #endif
 }
 
@@ -582,8 +582,11 @@ static void save_show_listener(prefs_info *prf, FILE *fd)
 {
   rts_show_listener = prefs_show_listener;
   if (GET_TOGGLE(prf->toggle))
+#if (!HAVE_FORTH)
     prefs_function_save_0(fd, "show-listener", NULL);
-  /* TODO: is this safe in Forth? (might need prefs_function_save_1(fd, "show-listener", NULL, XEN_TRUE)) */
+#else
+    prefs_function_save_1(fd, "show-listener", NULL, XEN_TRUE);
+#endif
 }
 
 static void revert_show_listener(prefs_info *prf)
