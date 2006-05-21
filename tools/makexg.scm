@@ -396,7 +396,8 @@
 							  (set! types-260 (cons type types-260))
 							  (if (eq? extra '270)
 							      (set! types-270 (cons type types-270))
-							      (if (eq? extra '290)
+							      (if (or (eq? extra 'callback-290)
+								      (eq? extra '290))
 								  (set! types-290 (cons type types-290))
 								  (if (not (member type types))
 								      (set! types (cons type types))))))))))))))
@@ -594,7 +595,7 @@
 		       (list 'GtkClipboardRichTextReceivedFunc
 			     "void"
 			     "clip_rich_text_received"
-			     (parse-args "GtkClipboard* clipboard GdkAtom format guint8* text gsize length lambda_data func_data" 'callback-290)
+			     (parse-args "GtkClipboard* clipboard GdkAtom format guint8* text gsize length lambda_data func_data" 'callback); 'callback-290)
 			     'permanent)
 		       (list 'GtkRecentFilterFunc
 			     "gboolean"

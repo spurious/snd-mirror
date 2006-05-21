@@ -397,8 +397,6 @@ XM_TYPE_PTR(guint8_, guint8*)
 #define C_TO_XEN_gsize(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_gsize(Arg) (gsize)(XEN_TO_C_INT(Arg))
 #define XEN_gsize_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR_1(GtkRecentFilterInfo_, GtkRecentFilterInfo*)
-XM_TYPE_PTR_1(GtkLinkButton_, GtkLinkButton*)
 #define C_TO_XEN_GType(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GType(Arg) (GType)(XEN_TO_C_ULONG(Arg))
 #define XEN_GType_P(Arg) XEN_ULONG_P(Arg)
@@ -969,6 +967,8 @@ XM_TYPE_PTR_1(GtkMenuBar_, GtkMenuBar*)
 #endif
 
 #if HAVE_GTK_LINK_BUTTON_NEW
+XM_TYPE_PTR_1(GtkRecentFilterInfo_, GtkRecentFilterInfo*)
+XM_TYPE_PTR_1(GtkLinkButton_, GtkLinkButton*)
 XM_TYPE_1(GtkNotebookWindowCreationFunc, GtkNotebookWindowCreationFunc)
 #define C_TO_XEN_GtkSensitivityType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkSensitivityType(Arg) (GtkSensitivityType)(XEN_TO_C_INT(Arg))
@@ -42616,7 +42616,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("20-May-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-May-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

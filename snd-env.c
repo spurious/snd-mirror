@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* SOMEDAY: removal of env-base means the view-envs display does not reflect any base/exp setting,
- *   and the exp button is reset to linear upon change back 
- */
-
 #define ENVED_DOT_SIZE 10
 
 env *free_env(env *e)
@@ -1464,16 +1460,8 @@ env *string_to_env(char *str)
 
 env *position_to_env(int pos)
 {
-  env *e;
   if (pos < 0) return(NULL);
-#if HAVE_SCHEME || HAVE_FORTH
-  e = xen_to_env(XEN_NAME_AS_C_STRING_TO_VALUE(all_names[pos]));
-#else
-  e = xen_to_env(XEN_EVAL_C_STRING(all_names[pos]));
-#endif
-  free_env(all_envs[pos]);
-  all_envs[pos] = copy_env(e);
-  return(e);
+  return(copy_env(all_envs[pos]));
 }
 
 env *name_to_env(const char *str)
@@ -1481,16 +1469,12 @@ env *name_to_env(const char *str)
   env *e;
   int pos;
   pos = find_env(str);
+  if (pos >= 0) return(copy_env(all_envs[pos]));
 #if HAVE_SCHEME || HAVE_FORTH
   e = xen_to_env(XEN_NAME_AS_C_STRING_TO_VALUE(str));
 #else
   e = xen_to_env(XEN_EVAL_C_STRING((char *)str));
 #endif
-  if ((pos >= 0) && (e) && (!(envs_equal(e, all_envs[pos]))))
-    {
-      free_env(all_envs[pos]);
-      all_envs[pos] = copy_env(e);
-    }
   return(e);
 }
 

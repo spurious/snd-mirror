@@ -346,6 +346,7 @@ static void text_field_activated(void)
 	      add_or_edit_symbol(str, active_env);
 	      set_sensitive(saveB, false);
 	      env_redisplay(); /* updates label */
+	      /* e is null here */
 	    }
 	  else 
 	    {
