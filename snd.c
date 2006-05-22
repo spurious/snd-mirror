@@ -229,6 +229,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Eps_Left_Margin = DEFAULT_EPS_LEFT_MARGIN;
   ss->Eps_Size = DEFAULT_EPS_SIZE;
   ss->Listener_Prompt = copy_string(DEFAULT_LISTENER_PROMPT);
+  ss->listener_prompt_length = snd_strlen(ss->Listener_Prompt);
   ss->Show_Transform_Peaks = DEFAULT_SHOW_TRANSFORM_PEAKS;
   ss->Show_Y_Zero = DEFAULT_SHOW_Y_ZERO;
   ss->Show_Grid = DEFAULT_SHOW_GRID;

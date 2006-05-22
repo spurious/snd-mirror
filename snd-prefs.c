@@ -3356,7 +3356,7 @@ static void clear_clm_file_name(prefs_info *prf) {prefs_variable_set(CLM_FILE_NA
 
 static void revert_clm_file_name(prefs_info *prf) 
 {
-  prefs_variable_set(CLM_FILE_NAME, C_TO_XEN_STRING((rts_clm_file_name) ? rts_clm_file_name : "test.snd"));
+  prefs_variable_set(CLM_FILE_NAME, C_TO_XEN_STRING((char *)((rts_clm_file_name) ? rts_clm_file_name : "test.snd")));
 }
 
 static void help_clm_file_name(prefs_info *prf)

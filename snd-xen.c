@@ -50,8 +50,7 @@
  *
  * TODO: fam crosstalk?
  *
- * TODO: if listener prompt is set in initialization file, why does default come up as first prompt?
- *       also it's possible to back up over (erasing) the prompt
+ * TODO: it's possible to back up over (erasing) the prompt
  *
  * SOMEDAY: change config.h to snd-config.h and clm-config.h (collisions in several cases like ecl)
  *         but if user is loading libsndlib, how to avoid collisions between its config.h and snd's?

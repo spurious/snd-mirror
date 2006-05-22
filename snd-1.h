@@ -539,7 +539,7 @@ typedef struct snd_state {
   bool Show_Controls;
   tracking_cursor_t With_Tracking_Cursor;
   XEN cursor_proc;
-  int cursor_proc_loc;
+  int cursor_proc_loc, listener_prompt_length;
   XEN zoom_focus_proc;
   int zoom_focus_proc_loc;
   Float lin_dB;
@@ -1493,6 +1493,7 @@ void set_printable(int val);
 void backup_listener_to_previous_command(void);
 void command_return(widget_t w, int last_prompt);
 char *listener_prompt_with_cr(void);
+void set_listener_prompt(const char *new_prompt);
 int check_balance(char *expr, int start, int end, bool in_listener);
 int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highlight_pos);
 void provide_listener_help(char *source);

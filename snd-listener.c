@@ -233,6 +233,7 @@ void provide_listener_help(char *source)
       prompt = listener_prompt(ss);
       for (i = len - 1; i >= 0; i--)
 	{
+	  /* TODO: prompt len here */
 	  if ((source[i] == '(') || 
 	      ((source[i] == prompt[0]) && ((i == 0) || (source[i - 1] == '\n'))))
 	    {
@@ -341,7 +342,7 @@ void command_return(widget_t w, int last_prompt)
   /* try to find complete form either enclosing current cursor, or just before it */
   GUI_TEXT_POSITION_TYPE new_eot = 0, cmd_eot = 0;
   char *str = NULL, *full_str = NULL, *prompt;
-  int i, j, prompt_length = 1;
+  int i, j;
   XEN form = XEN_UNDEFINED;
   GUI_TEXT_POSITION_TYPE end_of_text = 0, start_of_text = 0, last_position = 0, current_position = 0;
 #if (!HAVE_RUBY && !HAVE_FORTH)
@@ -374,7 +375,6 @@ void command_return(widget_t w, int last_prompt)
 	}
     }
   prompt = listener_prompt(ss);
-  prompt_length = snd_strlen(prompt);
   /* first look for a form just before the current mouse location,
    *   independent of everything (i.e. user may have made changes
    *   in a form included in a comment, then typed return, expecting
@@ -395,8 +395,8 @@ void command_return(widget_t w, int last_prompt)
 	    if (full_str[k] == '\n')
 	      break;
 	  if (i == 0)
-	    start = prompt_length;
-	  else start = i + prompt_length + 1;
+	    start = ss->listener_prompt_length;
+	  else start = i + ss->listener_prompt_length + 1;
 	  len = (k - start + 1);
 	  str = (char *)CALLOC(len, sizeof(char));
 	  for (k = 0; k < len - 1; k++)
@@ -460,7 +460,7 @@ void command_return(widget_t w, int last_prompt)
 		((i == 0) || 
 		 (full_str[i - 1] == '\n')))
 	      {
-		start_of_text = i + prompt_length;
+		start_of_text = i + ss->listener_prompt_length;
 		break;
 	      }
 	}
@@ -627,15 +627,28 @@ static XEN g_set_show_listener(XEN val)
   return(C_TO_XEN_BOOLEAN(listener_is_visible()));
 }
 
-static XEN g_listener_prompt(void) {return(C_TO_XEN_STRING(listener_prompt(ss)));}
-static XEN g_set_listener_prompt(XEN val) 
+void set_listener_prompt(const char *new_prompt)
 {
-  #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt character ('>') "
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_listener_prompt, "a string"); 
-  if (listener_prompt(ss)) FREE(listener_prompt(ss));
-  set_listener_prompt(copy_string(XEN_TO_C_STRING(val)));
+  in_set_listener_prompt((char *)new_prompt);
+  ss->listener_prompt_length = snd_strlen(new_prompt);
+
 #if USE_NO_GUI
   {
+
+    /* SOMEDAY: how to set ruby/forth/gauche repl prompt? (no-gui calls xen-repl) */
+
+    /* forth has before-prompt-hook 
+     *  "before-prompt-hook lambda: ( prompt pos -- prompt) { prompt pos } $\" %s\" ; 2 make-proc add-hook!" prompt
+     *   (but doc show 3 args)
+     */
+
+    /* ruby (xen.c) is assuming ">" -- need some way to get at that portion of xen.c
+     */
+
+    /* gauche (xen.c) calls Scm_Repl with #f args = "gosh" as prompt builtin in repl.c line 117 unless "prompter" proc?
+     *   prompter is 4th arg to Scm_Repl, but no docs or examples
+     */
+
 #if HAVE_GUILE
     char *str;
     str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
@@ -644,7 +657,27 @@ static XEN g_set_listener_prompt(XEN val)
     FREE(str);
 #endif
   }
+
+
+#else
+
+  /* here if the prompt changes and the listener exists, we need to make sure
+   *   we output a new prompt; otherwise the expression finder gets confused
+   *   by the old prompt.
+   */
+  listener_append_and_prompt(NULL); /* this checks first that the listener exists */
+  
 #endif
+  
+}
+
+static XEN g_listener_prompt(void) {return(C_TO_XEN_STRING(listener_prompt(ss)));}
+static XEN g_set_listener_prompt(XEN val) 
+{
+  #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt character ('>') "
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_listener_prompt, "a string"); 
+  if (listener_prompt(ss)) FREE(listener_prompt(ss));
+  set_listener_prompt(copy_string(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(listener_prompt(ss)));
 }
 

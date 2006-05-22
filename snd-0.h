@@ -860,7 +860,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define DEFAULT_SOUND_STYLE SOUNDS_VERTICAL
 
 #define listener_prompt(ss) ss->Listener_Prompt
-#define set_listener_prompt(a) ss->Listener_Prompt = a
+#define in_set_listener_prompt(a) ss->Listener_Prompt = a
 #define DEFAULT_LISTENER_PROMPT ">"
 
 #define print_length(ss) ss->Print_Length
