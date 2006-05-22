@@ -2,7 +2,8 @@
 #include "snd-menu.h"
 #include <X11/cursorfont.h>
 
-/* TODO: the button backgrounds remain in the original basic color? */
+/* SOMEDAY: the button backgrounds remain in the original highlight color? but the widget (if it is one) is not the child of any obvious widget
+ */
 
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
 

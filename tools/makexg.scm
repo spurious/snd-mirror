@@ -583,6 +583,10 @@
 			      "clip_image_received"
 			      (parse-args "GtkClipboard* clipboard GdkPixbuf* pixbuf lambda_data func_data" 'callback) ; 'callback-256)
 			      ;; these arg types are not new in 256, but this parse-args precedes the basic ones, so comment out the callback-256
+			      ;; the problem here (and below callback-290) is that parse-args sees a new type (new to it so far),
+			      ;;   and chooses which type list to put it on based on the "extra" arg -- since these types
+			      ;;   are not new in version 2.5.6, we don't want the callback-256 flag to sequester them
+			      ;;   on the 256-type list.
 			      'permanent)
 			(list 'GLogFunc
 			      "void"

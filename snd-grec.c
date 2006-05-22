@@ -3,6 +3,7 @@
 
 /* TODO  buttons that choose which devices to display are no-ops */
 /* TODO: rotate-text for numbers in grec vu meter labels (for non-default vu-size meters) */
+/* TODO: if screen is small, use smaller fonts and vu meters */
 
 #define SMALL_FONT "Monospace 10"
 #define SMALLER_FONT "Monospace 8"

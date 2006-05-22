@@ -2101,8 +2101,26 @@ http://sourceforge.net/projects/fth
 </pre>
 <p>An example initialization file (~/.snd_forth) is given in the <a href="#sndinitfile">initialization</a> section.
 Mike Scholz (creator of the Forth library we use) has provided a bunch of Forth files along the lines of the
-Scheme and Ruby files described above -- see *.fs.  Once I learn a bit more Forth, I'll expand this section.
+Scheme and Ruby files described above -- see *.fs.  See also Mike's very fine documentation in the fth package.
+Here's an example from his fth.texi file showing how to define an instrument and use it in with-sound:
 </p>
+<pre>
+instrument: src-simp { start dur amp sr sr-env fname -- }
+    :file fname make-readin { f }
+    :input f input-fn :srate sr make-src { sr }
+    :envelope sr-env :duration dur make-env { en }
+    start dur run
+        i                 \ sample position for outa
+        sr en env #f src
+        amp f*
+        *output* outa drop
+    loop
+    f mus-close drop
+;instrument
+"/usr/gnu/sound/SFiles/fyow.snd" value fyow-snd
+#( 0.0 0.0 50.0 1.0 100.0 0.0 ) value sr-env
+0.0 1.5 0.5 0.2 sr-env array-&gt;list fyow-snd ' src-simp with-sound
+</pre>
 
 <br>
 

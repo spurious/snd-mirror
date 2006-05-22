@@ -46,11 +46,12 @@
  *
  *    unwind-protects around scm_apply (snd-xen g_call)
  *
- * TODO in Forth: features check (below)
- *    sndscm: forth doc (only have .snd_forth right now)
- *    prefs can't find extensions.fs?
+ * TODO in Forth: prefs can't find extensions.fs?
  *
  * TODO: fam crosstalk?
+ *
+ * TODO: if listener prompt is set in initialization file, why does default come up as first prompt?
+ *       also it's possible to back up over (erasing) the prompt
  *
  * SOMEDAY: change config.h to snd-config.h and clm-config.h (collisions in several cases like ecl)
  *         but if user is loading libsndlib, how to avoid collisions between its config.h and snd's?
@@ -1333,7 +1334,7 @@ void snd_load_file(char *filename)
 
 static XEN g_snd_print(XEN msg)
 {
-  #define H_snd_print "(" S_snd_print " str): display str in the lisp listener window"
+  #define H_snd_print "(" S_snd_print " str): display str in the listener window"
   char *str = NULL;
   if (XEN_STRING_P(msg))
     str = copy_string(XEN_TO_C_STRING(msg));
@@ -1371,10 +1372,30 @@ bool listener_print_p(const char *msg)
  return(XEN_FALSE_P(res));
 }
 
+#if HAVE_FORTH
+static int features_length(char *features)
+{
+  int i, len, num = 1;
+  len = strlen(features);
+  for (i = 0; i < len - 2; i++)
+    if (features[i] == ' ') num++;
+  return(num);
+}
+
+static void fth_local_print(ficlVm *vm, char *msg)
+{
+  /* can't use g_snd_print (as in xen.c) because listener doesn't exist in this context */
+  fprintf(stderr, "error: %s\n", msg);
+}
+
+static void (*old_print_hook)(ficlVm *vm, char *msg);
+#endif
+
 void check_features_list(char *features)
 {
   /* check for list of features, report any missing, exit (for compsnd) */
   /*  this can't be in snd.c because we haven't fully initialized the extension language and so on at that point */
+  if (!features) return;
 
 #if HAVE_GUILE
   XEN_EVAL_C_STRING(mus_format("(for-each \
@@ -1399,7 +1420,12 @@ void check_features_list(char *features)
                                   (list %s))", features));
 #endif
 #if HAVE_FORTH
-  /* TODO: forth side of features check */
+  old_print_hook = fth_print_hook;
+  fth_print_hook = fth_local_print;
+  XEN_EVAL_C_STRING(mus_format("%s %d >list [each] provided? not [if] \"oops\" .error [end-each]\n",
+			       features, 
+			       features_length(features)));
+  fth_print_hook = old_print_hook;
 #endif
   snd_exit(0);
 }
