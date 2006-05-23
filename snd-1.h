@@ -1492,6 +1492,8 @@ void set_printable(int val);
 
 void backup_listener_to_previous_command(void);
 void command_return(widget_t w, int last_prompt);
+bool is_prompt(const char *str, int beg, int end);
+bool within_prompt(const char *str, int beg, int end);
 char *listener_prompt_with_cr(void);
 void set_listener_prompt(const char *new_prompt);
 int check_balance(char *expr, int start, int end, bool in_listener);

@@ -18,6 +18,36 @@
   )
 */
 
+bool is_prompt(const char *str, int beg, int end)
+{
+  int i, j;
+  for (i = beg, j = ss->listener_prompt_length - 1; (i >= 0) && (j >= 0); i--, j--)
+    if (str[i] != ss->Listener_Prompt[j])
+      return(false);
+  if (j != -1) return(false);
+  if ((i == -1) || (str[i] == '\n'))
+    return(true);
+  return(false);
+}
+
+bool within_prompt(const char *str, int beg, int end)
+{
+  /* search backwards up to prompt length for cr (or 0), check for prompt */
+  int i, lim;
+  lim = beg - ss->listener_prompt_length;
+  if (lim < 0) lim = 0;
+  for (i = beg; i >= lim; i--)
+    if ((str[i] == '\n') || (i == 0))
+      {
+	int j, k;
+	for (j = 0, k = i + 1; (j < ss->listener_prompt_length) && (k < end); j++, k++)
+	  if (str[k] != ss->Listener_Prompt[j])
+	    return(false);
+	return(true);
+      }
+  return(false);
+}
+
 int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highlight_pos)
 {
   int i, j;
@@ -25,7 +55,7 @@ int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highl
   int up_comment = -1;
   for (i = pos - 1; i > 0;)
     {
-      if ((i > 0) && (str[i] == prompt[0]) && (str[i - 1] == '\n'))
+      if (is_prompt(str, i, pos))
 	break;
       if ((str[i] == '\"') && (str[i - 1] != '\\'))
 	quoting = !quoting;
@@ -233,9 +263,8 @@ void provide_listener_help(char *source)
       prompt = listener_prompt(ss);
       for (i = len - 1; i >= 0; i--)
 	{
-	  /* TODO: prompt len here */
 	  if ((source[i] == '(') || 
-	      ((source[i] == prompt[0]) && ((i == 0) || (source[i - 1] == '\n'))))
+	      (is_prompt(source, i, len)))
 	    {
 	      int j, start_of_name = -1;
 	      start_of_name = i + 1;
@@ -386,17 +415,13 @@ void command_return(widget_t w, int last_prompt)
   {
     int k, len, start, full_len;
     for (i = current_position - 1; i >= 0; i--)
-      if (((full_str[i] == '\n') &&
-	   (full_str[i + 1] == prompt[0])) ||
-	  (i == 0))
+      if (is_prompt(full_str, i, current_position))
 	{
 	  full_len = strlen(full_str);
 	  for (k = current_position - 1; k < full_len; k++)
 	    if (full_str[k] == '\n')
 	      break;
-	  if (i == 0)
-	    start = ss->listener_prompt_length;
-	  else start = i + ss->listener_prompt_length + 1;
+	  start = i + 1;
 	  len = (k - start + 1);
 	  str = (char *)CALLOC(len, sizeof(char));
 	  for (k = 0; k < len - 1; k++)
@@ -446,21 +471,18 @@ void command_return(widget_t w, int last_prompt)
       if (last_position > end_of_text)
 	{
 	  for (i = current_position; i < last_position; i++)
-	    if ((full_str[i + 1] == prompt[0]) && 
-		(full_str[i] == '\n'))
+	    if (is_prompt(full_str, i + 1, current_position))
 	      {
-		end_of_text = i - 1;
+		end_of_text = i - ss->listener_prompt_length + 1;
 		break;
 	      }
 	}
       if (start_of_text > 0)
 	{
 	  for (i = end_of_text; i >= 0; i--)
-	    if ((full_str[i] == prompt[0]) && 
-		((i == 0) || 
-		 (full_str[i - 1] == '\n')))
+	    if (is_prompt(full_str, i, end_of_text))
 	      {
-		start_of_text = i + ss->listener_prompt_length;
+		start_of_text = i + 1;
 		break;
 	      }
 	}

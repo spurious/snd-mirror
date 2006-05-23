@@ -283,13 +283,11 @@ static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num)
   found = XmTextFindString(w, curpos, "\n", XmTEXT_BACKWARD, &loc);
   if (found) 
     {
-      int prompt_len;
       char *str = NULL;
-      prompt_len = snd_strlen(listener_prompt(ss));
-      str = (char *)CALLOC(prompt_len + 3, sizeof(char));
-      XmTextGetSubstring(w, loc + 1, prompt_len, prompt_len + 2, str);
-      if (strncmp(listener_prompt(ss), str, prompt_len) == 0)
-	XmTextSetCursorPosition(w, loc + prompt_len + 1);
+      str = (char *)CALLOC(ss->listener_prompt_length + 3, sizeof(char));
+      XmTextGetSubstring(w, loc + 1, ss->listener_prompt_length, ss->listener_prompt_length + 2, str);
+      if (strncmp(listener_prompt(ss), str, ss->listener_prompt_length) == 0)
+	XmTextSetCursorPosition(w, loc + ss->listener_prompt_length + 1);
       else XmTextSetCursorPosition(w, loc + 1);
       FREE(str);
     }
@@ -1127,24 +1125,15 @@ static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
     cbs->doit = true;
   else
     { 
-      if (cbs->currInsert < 2) 
+      char *str = NULL, *prompt;
+      int len;
+      prompt = listener_prompt(ss);
+      str = XmTextGetString(w);
+      len = XmTextGetLastPosition(w);
+      if (within_prompt(str, cbs->startPos, len))
 	cbs->doit = false;
-      else
-	{
-	  char *str = NULL, *prompt;
-	  int len;
-	  prompt = listener_prompt(ss);
-	  str = XmTextGetString(w);
-	  len = XmTextGetLastPosition(w);
-	  if ( ((str[cbs->currInsert - 1] == prompt[0]) && 
-		(str[cbs->currInsert - 2] == '\n')) ||
-	       ((cbs->currInsert < (len - 1)) && 
-		(str[cbs->currInsert] == prompt[0]) && 
-		(str[cbs->currInsert - 1] == '\n')))
-	    cbs->doit = false;
-	  else cbs->doit = true;
-	  if (str) XtFree(str);
-	}
+      else cbs->doit = true;
+      if (str) XtFree(str);
     }
 }
 

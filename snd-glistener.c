@@ -119,6 +119,22 @@ void append_listener_text(int end, const char *msg)
     }
 }
 
+static GtkTextTag *prompt_not_editable = NULL;
+
+static void append_listener_prompt()
+{
+  /* append cr + prompt with not-editable tag */
+  if (listener_text)
+    {
+      int chars;
+      GtkTextIter pos;
+      chars = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
+      if (chars > 0) sg_set_cursor(listener_text, chars + 1);
+      gtk_text_buffer_get_end_iter(LISTENER_BUFFER, &pos);
+      gtk_text_buffer_insert_with_tags(LISTENER_BUFFER, &pos, listener_prompt_with_cr(), ss->listener_prompt_length + 1, prompt_not_editable, NULL);
+    }
+}
+
 static void listener_completion(int end)
 {
   int beg;
@@ -193,7 +209,7 @@ void listener_append_and_prompt(const char *msg)
 {
   if (msg)
     append_listener_text(0, msg);
-  append_listener_text(0, listener_prompt_with_cr());
+  append_listener_prompt();
   if (listener_text)
     {
       int cmd_eot;
@@ -219,8 +235,7 @@ static void back_to_start(void)
     {
       int i;
       for (i = start_of_text; i >= 0; i--)
-	if ((full_str[i] == prompt[0]) && 
-	    ((i == 0) || (full_str[i - 1] == '\n')))
+	if (is_prompt(full_str, i, start_of_text))
 	  {
 	    start_of_text = i + 1;
 	    break;
@@ -364,7 +379,7 @@ static void add_inverse(int pos)
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text));
   gtk_text_buffer_get_iter_at_offset(buf, &start, pos);
   gtk_text_buffer_get_iter_at_offset(buf, &end, pos + 1);
-  if (!flash_tag) flash_tag = gtk_text_buffer_create_tag (buf, "red_background", "background", "red", NULL);
+  if (!flash_tag) flash_tag = gtk_text_buffer_create_tag(buf, "red_background", "background", "red", NULL);
   gtk_text_buffer_apply_tag(buf, flash_tag, &start, &end);
 }
 
@@ -622,7 +637,11 @@ static XEN listener_click_hook;
 static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   ss->sgx->graph_is_active = false;
-  /* goto_listener(); */
+  return(false);
+}
+
+static gboolean listener_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
+{
   check_parens();
   return(false);
 }
@@ -853,10 +872,19 @@ static void make_command_widget(int height)
       SG_SIGNAL_CONNECT(listener_text, "key_press_event", listener_key_press, NULL);
       SG_SIGNAL_CONNECT(listener_text, "key_release_event", listener_key_release, NULL);
       SG_SIGNAL_CONNECT(listener_text, "button_press_event", listener_button_press, NULL);
+      SG_SIGNAL_CONNECT(listener_text, "button_release_event", listener_button_release, NULL);
       SG_SIGNAL_CONNECT(listener_text, "enter_notify_event", listener_focus_callback, NULL);
       SG_SIGNAL_CONNECT(listener_text, "leave_notify_event", listener_unfocus_callback, NULL);
       ss->sgx->listener_pane = listener_text;
-      sg_text_insert(listener_text, listener_prompt(ss));
+
+      if (!prompt_not_editable) 
+	prompt_not_editable = gtk_text_buffer_create_tag(LISTENER_BUFFER, "prompt_not_editable", "editable", false, NULL);
+      {
+	GtkTextIter pos;
+	gtk_text_buffer_get_end_iter(LISTENER_BUFFER, &pos);
+	gtk_text_buffer_insert_with_tags(LISTENER_BUFFER, &pos, listener_prompt(ss), ss->listener_prompt_length, prompt_not_editable, NULL);
+      }
+
       gtk_widget_show(listener_text);
     }
 }
