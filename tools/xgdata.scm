@@ -5902,3 +5902,5 @@
 (CINT-29x "GTK_MESSAGE_OTHER" "GtkMessageType")
 ;(CFNC-29x "void gtk_message_dialog_set_image GtkMessageDialog* dialog GtkWidget* image")
 ;; messagedialog is commented out above so this needs to wait until it is "real"
+
+;;; SOMEDAY: include all the printer support

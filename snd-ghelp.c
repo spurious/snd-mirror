@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: use entry completion rather than the popup dialog for completion choices (in motif too?) */
+
+
 /* ---------------- HELP MONOLOG ---------------- */
 
 /* I tried gtkhtml (and XmHTML in 1999), and in both cases decided not to use them.  Both work fine,

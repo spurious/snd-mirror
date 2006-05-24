@@ -656,13 +656,16 @@ void set_listener_prompt(const char *new_prompt)
 
 #if USE_NO_GUI
   {
-    /* SOMEDAY: how to set gauche repl prompt? (no-gui calls xen-repl) */
-    /* gauche (xen.c) calls Scm_Repl with #f args = "gosh" as prompt builtin in repl.c line 117 unless "prompter" proc?
-     *   prompter is 4th arg to Scm_Repl, but no docs or examples
-     */
+    char *str;
+
+#if HAVE_GAUCHE
+    XEN_EVAL_C_STRING("(if (not (defined? 'gauche-repl-prompt)) (define gauche-repl-prompt \">\"))");
+    str = mus_format("(set! gauche-repl-prompt \"%s\")", listener_prompt(ss)); /* defined in xen.c */
+    XEN_EVAL_C_STRING(str);
+    FREE(str);
+#endif
 
 #if HAVE_FORTH
-    char *str;
     XEN_EVAL_C_STRING("before-prompt-hook reset-hook!\n");
     str = mus_format("before-prompt-hook lambda: { prompt pos } \"%s\" ; 2 make-proc add-hook!", listener_prompt(ss));
     XEN_EVAL_C_STRING(str);
@@ -670,7 +673,6 @@ void set_listener_prompt(const char *new_prompt)
 #endif
 
 #if HAVE_GUILE
-    char *str;
     str = mus_format("(set! scm-repl-prompt \"%s\")", listener_prompt(ss)); /* defined in ice-9/boot9.scm */
     XEN_EVAL_C_STRING(str);
     FREE(str);
@@ -687,12 +689,35 @@ void set_listener_prompt(const char *new_prompt)
   /* here if the prompt changes and the listener exists, we need to make sure
    *   we output a new prompt; otherwise the expression finder gets confused
    *   by the old prompt.
+   *
+   * PERHAPS: ideally we'd replace all the old prompts with the new one
+   *          (harder in gtk because all the prompts are write protected)
    */
   listener_append_and_prompt(NULL); /* this checks first that the listener exists */
   
 #endif
   
 }
+
+#if 0
+static void find_and_replace_all_old_prompts(const char *new_prompt)
+{
+  /* Motif docs p527 */
+  if (listener_text)
+    {
+      int old_len, new_len, cur_len;
+      XmTextPosition cur_pos = 0, search_pos = 0;
+      cur_len = XmTextGetLastPosition(listener_text);
+      old_len = ss->listener_prompt_length + 1;
+      new_len = snd_strlen(new_prompt) + 1;
+      while (XmTextFindString(listener_text, cur_pos, listener_prompt_with_cr(), XmTEXT_FORWARD, &search_pos))
+	{
+	  XmTextReplace(listener_text, seach_pos, search_pos + old_len, new_prompt_with_cr());
+	  curpos = search_pos + 1;
+	}
+    }
+}
+#endif
 
 static XEN g_listener_prompt(void) {return(C_TO_XEN_STRING(listener_prompt(ss)));}
 static XEN g_set_listener_prompt(XEN val) 

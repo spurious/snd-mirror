@@ -1416,7 +1416,8 @@ double xen_to_c_double(XEN a)
 
 void xen_repl(int argc, char **argv)
 {
-  Scm_Repl(SCM_FALSE, SCM_FALSE, SCM_FALSE, SCM_FALSE);
+  XEN_EVAL_C_STRING("(if (not (defined? 'gauche-repl-prompt)) (define gauche-repl-prompt \">\"))");
+  XEN_EVAL_C_STRING("(read-eval-print-loop #f #f #f (lambda () (display gauche-repl-prompt (current-output-port)) (flush (current-output-port))))");
 }
 
 static XEN g_defined_p(XEN sym)

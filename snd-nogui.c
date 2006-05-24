@@ -671,6 +671,7 @@ void snd_doit(int argc, char **argv)
 : " S_colormap_p " { a } #f ;\n\
 : " S_current_font " #f ;\n\
 : " S_dialog_widgets " #f ;\n\
+: " S_focus_widget " #f ;\n\
 : " S_graph_data " { a b c } #f ;\n\
 : " S_in " { a b } #f ;\n\
 : " S_main_widgets " { s } #f ;\n\
