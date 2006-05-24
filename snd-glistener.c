@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* PERHAPS: use tags to colorize the listener text?  Or pass this up to user somehow?
+ */
+
 static GtkWidget *completion_dialog = NULL;
 static GtkWidget *listener_text = NULL;
 static slist *completion_list = NULL;
@@ -878,7 +881,10 @@ static void make_command_widget(int height)
       ss->sgx->listener_pane = listener_text;
 
       if (!prompt_not_editable) 
-	prompt_not_editable = gtk_text_buffer_create_tag(LISTENER_BUFFER, "prompt_not_editable", "editable", false, NULL);
+	prompt_not_editable = gtk_text_buffer_create_tag(LISTENER_BUFFER, "prompt_not_editable", 
+							 "editable", false, 
+							 "weight", PANGO_WEIGHT_BOLD,
+							 NULL);
       {
 	GtkTextIter pos;
 	gtk_text_buffer_get_end_iter(LISTENER_BUFFER, &pos);

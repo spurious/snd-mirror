@@ -362,8 +362,8 @@
 (add-hook! before-test-hook (lambda (n)
 			      (dismiss-all-dialogs)
 			      (set! test-number n)
-			      (if (and (> n 0) (number? (vector-ref timings (- n 1))))
-				  (vector-set! timings (- n 1) (hundred (- (real-time) (vector-ref timings (- n 1))))))
+;			      (if (and (> n 0) (number? (vector-ref timings (- n 1))))
+;				  (vector-set! timings (- n 1) (hundred (- (real-time) (vector-ref timings (- n 1))))))
 			      (vector-set! timings n (real-time))
 			      (snd-display ";test ~D" n)
 			      (gc)(gc)
@@ -396,8 +396,9 @@
 	     (if (not (null? (sounds)))
 		 (begin
 		   (snd-display ";end test ~D: open sounds: ~A" n (map short-file-name (sounds)))
-		   (for-each close-sound (sounds))))))
-
+		   (for-each close-sound (sounds))))
+	     (if (number? (vector-ref timings n))
+		 (vector-set! timings n (hundred (- (real-time) (vector-ref timings n)))))))
 
 (define overall-start-time (real-time))
 (snd-display ";~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
@@ -59160,8 +59161,8 @@ EDITS: 1
 
 (display (format #f "~%;all done!~%~A" original-prompt))
 
-(if (number? (vector-ref timings total-tests)) 
-    (vector-set! timings total-tests (hundred (- (real-time) (vector-ref timings total-tests)))))
+;(if (number? (vector-ref timings total-tests)) 
+;    (vector-set! timings total-tests (hundred (- (real-time) (vector-ref timings total-tests)))))
 
 (set! (print-length) 64)
 (display (format "~%;times: ~A~%;total: ~A~%~%" timings (inexact->exact (round (- (real-time) overall-start-time)))))

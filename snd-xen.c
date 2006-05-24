@@ -46,6 +46,8 @@
  *
  *    unwind-protects around scm_apply (snd-xen g_call)
  *
+ *    memory trouble (double free -> segfault) if all-args in snd-test 8
+ *
  * TODO in Forth: prefs can't find extensions.fs?
  *
  * TODO: fam crosstalk?

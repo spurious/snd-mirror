@@ -656,32 +656,33 @@ void set_listener_prompt(const char *new_prompt)
 
 #if USE_NO_GUI
   {
-
-    /* SOMEDAY: how to set ruby/forth/gauche repl prompt? (no-gui calls xen-repl) */
-
-    /* forth has before-prompt-hook 
-     *  "before-prompt-hook lambda: ( prompt pos -- prompt) { prompt pos } $\" %s\" ; 2 make-proc add-hook!" prompt
-     *   (but doc show 3 args)
-     */
-
-    /* ruby (xen.c) is assuming ">" -- need some way to get at that portion of xen.c
-     */
-
+    /* SOMEDAY: how to set gauche repl prompt? (no-gui calls xen-repl) */
     /* gauche (xen.c) calls Scm_Repl with #f args = "gosh" as prompt builtin in repl.c line 117 unless "prompter" proc?
      *   prompter is 4th arg to Scm_Repl, but no docs or examples
      */
 
-#if HAVE_GUILE
+#if HAVE_FORTH
     char *str;
-    str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-    mus_snprintf(str, PRINT_BUFFER_SIZE, "(set! scm-repl-prompt \"%s\")", listener_prompt(ss));
+    XEN_EVAL_C_STRING("before-prompt-hook reset-hook!\n");
+    str = mus_format("before-prompt-hook lambda: { prompt pos } \"%s\" ; 2 make-proc add-hook!", listener_prompt(ss));
     XEN_EVAL_C_STRING(str);
     FREE(str);
 #endif
+
+#if HAVE_GUILE
+    char *str;
+    str = mus_format("(set! scm-repl-prompt \"%s\")", listener_prompt(ss)); /* defined in ice-9/boot9.scm */
+    XEN_EVAL_C_STRING(str);
+    FREE(str);
+#endif
+
+#if HAVE_RUBY
+    xen_rb_repl_set_prompt(listener_prompt(ss));
+#endif
   }
 
-
 #else
+  /* not USE_NO_GUI */
 
   /* here if the prompt changes and the listener exists, we need to make sure
    *   we output a new prompt; otherwise the expression finder gets confused

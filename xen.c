@@ -585,13 +585,15 @@ static XEN xen_rb_report_error(XEN nada, XEN err_info)
   return(XEN_FALSE);
 }
 
+static char *rb_prompt = NULL;
+
 static XEN xen_rb_rep(XEN ig)
 {
   XEN val;
   char *str;
 #if HAVE_READLINE
   char *line_read = NULL;
-  line_read = readline(">");
+  line_read = readline(rb_prompt);
   if ((line_read) && (*line_read))
     {
       add_history(line_read);
@@ -606,7 +608,7 @@ static XEN xen_rb_rep(XEN ig)
   char **buffer = NULL;
   buffer = (char **)calloc(1, sizeof(char *));
   buffer[0] = (char *)calloc(size, sizeof(char));
-  fprintf(stdout, ">");
+  fprintf(stdout, rb_prompt);
 #if HAVE_GETLINE
   getline(buffer, &size, stdin);
 #else
@@ -621,8 +623,15 @@ static XEN xen_rb_rep(XEN ig)
   return(ig);
 }
 
+void xen_rb_repl_set_prompt(const char *prompt)
+{
+  if (rb_prompt) free(rb_prompt);
+  rb_prompt = strdup(prompt);
+}
+
 static XEN xen_rb_rescue(XEN val)
 {
+  if (!rb_prompt) rb_prompt = strdup(">");
   return(rb_rescue(XEN_PROCEDURE_CAST xen_rb_rep,
 		   XEN_FALSE,
 		   XEN_PROCEDURE_CAST xen_rb_report_error,
