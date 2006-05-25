@@ -33,7 +33,7 @@
  * octave:      (Matlab) c++, probably do-able -- I'm looking into this currently [2.1.73 won't build -- g++ trouble?]
  * pike:        (C)      not an extension language
  * python:      ()       looks like ruby to me -- why duplicate? (I have about 1/4 of xen.h for this)
- * rscheme:     (Scheme) won't build on my systems
+ * rscheme:     (Scheme) serious name-space problems
  * s-lang:      (C)      probably doable -- would need to wrap everything in my own struct, and 7 args max is too few.
  * squirrel:    ()       c++, like lua in call sequence
  * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers

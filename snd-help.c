@@ -500,6 +500,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+25-May:  Walter Zorn's wz_tooltip.js to spruce up the documentation.\n\
 7-May:   Snd 8.1.\n\
 21-Apr:  many .fs files thanks to Mike Scholz (removed obsolete gfm directory).\n\
 15-Apr:  first portion of Gauche support.\n\

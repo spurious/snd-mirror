@@ -35,7 +35,7 @@ bool within_prompt(const char *str, int beg, int end)
   /* search backwards up to prompt length for cr (or 0), check for prompt */
   int i, lim;
   lim = beg - ss->listener_prompt_length;
-  if (lim < 0) lim = 0;
+  if (lim < 0) return(true);
   for (i = beg; i >= lim; i--)
     if ((str[i] == '\n') || (i == 0))
       {
@@ -689,35 +689,12 @@ void set_listener_prompt(const char *new_prompt)
   /* here if the prompt changes and the listener exists, we need to make sure
    *   we output a new prompt; otherwise the expression finder gets confused
    *   by the old prompt.
-   *
-   * PERHAPS: ideally we'd replace all the old prompts with the new one
-   *          (harder in gtk because all the prompts are write protected)
    */
   listener_append_and_prompt(NULL); /* this checks first that the listener exists */
   
 #endif
   
 }
-
-#if 0
-static void find_and_replace_all_old_prompts(const char *new_prompt)
-{
-  /* Motif docs p527 */
-  if (listener_text)
-    {
-      int old_len, new_len, cur_len;
-      XmTextPosition cur_pos = 0, search_pos = 0;
-      cur_len = XmTextGetLastPosition(listener_text);
-      old_len = ss->listener_prompt_length + 1;
-      new_len = snd_strlen(new_prompt) + 1;
-      while (XmTextFindString(listener_text, cur_pos, listener_prompt_with_cr(), XmTEXT_FORWARD, &search_pos))
-	{
-	  XmTextReplace(listener_text, seach_pos, search_pos + old_len, new_prompt_with_cr());
-	  curpos = search_pos + 1;
-	}
-    }
-}
-#endif
 
 static XEN g_listener_prompt(void) {return(C_TO_XEN_STRING(listener_prompt(ss)));}
 static XEN g_set_listener_prompt(XEN val) 

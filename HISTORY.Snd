@@ -1,5 +1,6 @@
 Snd change log
 
+  25-May:    Walter Zorn's wz_tooltip.js to spruce up the documentation.
   7-May:     Snd 8.1.
   21-Apr:    many .fs files thanks to Mike Scholz (removed obsolete gfm directory).
   15-Apr:    first portion of Gauche support.

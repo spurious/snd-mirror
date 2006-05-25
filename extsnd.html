@@ -28,16 +28,17 @@
 <A NAME="extsndcontents"></a>
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h1>Snd Customization and Extension</h1></td></tr></table>
 <br>
+
 <center>
 <table border=1><tr><td>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
-<td><small><a href="snd.html">snd.html</a></small></td>
-<td><small><a href="grfsnd.html">grfsnd.html</a></small></td>
-<td><small><a href="clm.html">clm.html</a></small></td>
-<td><small><a href="sndlib.html">sndlib.html</a></small></td>
-<td><small><a href="sndscm.html">sndscm.html</a></small></td>
-<td><small><a href="libxm.html">libxm.html</a></small></td>
+<td><small><a href="snd.html" onmouseover="return escape('basic Snd user-interface documentation')">snd.html</a></small></td>
+<td><small><a href="grfsnd.html" onmouseover="return escape('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
+<td><small><a href="clm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">clm.html</a></small></td>
+<td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
+<td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
+<td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd\'s extension language')">libxm.html</a></small></td>
 <td><small><a href="index.html">index.html</a></small></td>
 </tr></table>
 </td></tr></table>
@@ -55,16 +56,16 @@
     </ul>
   <li><a href="#sndobjects">Snd's objects</a>
     <ul>
-    <li><a href="#Vcts">Vcts</a>
+    <li><a href="#Vcts" onmouseover="return escape('real arrays')">Vcts</a>
     <li><a href="#sndsounddata">Sound-data and Sndlib</a>
-    <li><a href="#samplereaders">Sample-readers</a>
-    <li><a href="#sndmarks">Marks</a>
-    <li><a href="#sndmixes">Mixes and Tracks</a>
-    <li><a href="#sndregions">Regions and Selections</a>
+    <li><a href="#samplereaders" onmouseover="return escape('sound data iterators')">Sample-readers</a>
+    <li><a href="#sndmarks" onmouseover="return escape('location markers in sound data')">Marks</a>
+    <li><a href="#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes and Tracks</a>
+    <li><a href="#sndregions" onmouseover="return escape('selected or saved portions of sound data')">Regions and Selections</a>
     <li><a href="#sndsounds">Sounds and channels</a>
       <ul><li><a href="#customcontrols">the control panel</a></ul>
-    <li><a href="#editlists">Edit Lists</a>
-    <li><a href="#sndtransforms">Transforms</a>
+    <li><a href="#editlists" onmouseover="return escape('current edit sequence')">Edit Lists</a>
+    <li><a href="#sndtransforms" onmouseover="return escape('Fourier transform, wavelets, autocorelation, etc')">Transforms</a>
     <li><a href="#snddialogs">Dialogs</a>
     <li><a href="#sndmisc">Miscellaneous functions</a>
     <li><a href="#sndconstants">Constants</a>
@@ -89,8 +90,6 @@
 <A NAME="lisplistener"></a>
 
 <p>Snd is a highly customizable, extensible program.
-The syntax used throughout this documentation is Scheme (a form of lisp) as implemented by Guile or Gauche.
-You can also use Ruby or Forth, but need to make various minor <a href="grfsnd.html#sndandruby">changes</a>.
 I've tried to bring out to the extension language nearly every portion
 of Snd, both the signal-processing functions and
 much of the user interface.  You can, for example,
@@ -101,8 +100,20 @@ file, loaded at any time from a text file of program code, or specified in a <a 
 It can also be set 
 via inter-process communication or from stdin
 from any other program (CLM and Emacs in particular),
-imbedded in a keyboard macro, or typed in the
-listener.  The easiest way to get acquainted
+embedded in a keyboard macro, or typed in the
+listener.
+</p>
+<p>
+The syntax used throughout this documentation is Scheme (a form of lisp) as implemented by Guile or Gauche.
+You can also use Ruby or Forth, but need to make various minor <a href="grfsnd.html#sndandruby">changes</a>.
+I'm slowly adding parallel Forth and Ruby examples in tooltips -- if the mouse lingers over some piece of code,
+and you're lucky today, the corresponding Ruby or Forth code is shown in a tooltip.
+</p>
+
+<! TODO: scripting in Ruby/Forth? parallel examples in grfsnd -->
+
+<p>
+The easiest way to get acquainted
 with this aspect of Snd is to open the listener
 (via the View:Open listener menu option), and type
 experiments in its window.  Its prompt is "&gt;". So,
@@ -312,7 +323,7 @@ sections, each of the basic entities is treated in a separate
 section with cross-references where needed.  The <a href="index.html">index</a>
 provides alphabetical entry.</p>
 
-<p>There are many examples in <a href="sndscm.html#exampdoc">examp.scm</a>, examp.rb, and <a href="sndscm.html#sndtestdoc">snd-test.scm</a>. 
+<p>There are many examples in <a href="sndscm.html#exampdoc">examp.scm, examp.rb, examp.fs</a>, and <a href="sndscm.html#sndtestdoc">snd-test.scm</a>. 
 Extensions to Snd can be found in:
 </p>
 
@@ -322,19 +333,19 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#bessdoc">bess.scm, bess.rb</a></td>     <td>FM demo (from bess.cl in CLM)</td></tr>
 <tr><td><a href="sndscm.html#bess1doc">bess1.scm, bess1.rb</a></td>  <td>FM violin demo (from bess5.cl in CLM)</td></tr>
 <tr><td><a href="sndscm.html#birddoc">bird.scm, bird.rb</a></td>     <td>various North-American birds (from bird.clm)</td></tr>
-<tr><td><a href="sndscm.html#clminsdoc">clm-ins.scm, clm-ins.rb, clm23.scm</a></td><td>various CLM instruments translated to Snd</td></tr>
+<tr><td><a href="sndscm.html#clminsdoc">clm-ins.scm, clm-ins.rb, clm23.scm, clm-ins.fs</a></td><td>various CLM instruments translated to Snd</td></tr>
 <tr><td><a href="sndscm.html#debugdoc">debug.scm</a></td>            <td>debugging aids</td></tr>
 <tr><td><a href="sndscm.html#dlocsigdoc">dlocsig.rb</a></td>         <td>CLM's dlocsig in Ruby (Michael Scholz)</td></tr>
 <tr><td><a href="sndscm.html#dlpdoc">additional menus, etc</a></td>  <td>various contributions from Dave Phillips</td></tr>
-<tr><td><a href="sndscm.html#drawdoc">draw.scm</a></td>              <td>graphics additions</td></tr>
-<tr><td><a href="sndscm.html#dspdoc">dsp.scm, dsp.rb</a></td>        <td>various DSP-related procedures</td></tr>
+<tr><td><a href="sndscm.html#drawdoc">draw.scm, draw.rb, draw.fs</a></td>              <td>graphics additions</td></tr>
+<tr><td><a href="sndscm.html#dspdoc">dsp.scm, dsp.rb, dsp.fs</a></td>        <td>various DSP-related procedures</td></tr>
 <tr><td><a href="sndscm.html#editmenudoc">edit-menu.scm</a></td>     <td>Edit menu additions</td></tr>
 <tr><td><a href="sndscm.html#dotsnd">edit123.scm, snd_conffile.scm</a></td><td>.snd examples (Tom Roth, Kjetil S. Matheussen)</td></tr>
-<tr><td><a href="sndscm.html#effectsdoc">new-effects.scm, gtk-effects.scm, effects.rb</a></td><td>an Effects menu</td></tr>
-<tr><td><a href="sndscm.html#envdoc">env.scm, env.rb</a></td>        <td>various envelope functions from CLM</td></tr>
-<tr><td><a href="sndscm.html#enveddoc">enved.scm</a></td>            <td>envelope editor in lisp graph section</td></tr>
+<tr><td><a href="sndscm.html#effectsdoc">new-effects.scm, gtk-effects.scm, effects.rb, effects.fs</a></td><td>an Effects menu</td></tr>
+<tr><td><a href="sndscm.html#envdoc">env.scm, env.rb, env.fs</a></td>        <td>various envelope functions from CLM</td></tr>
+<tr><td><a href="sndscm.html#enveddoc">enved.scm, enved.fs</a></td>            <td>envelope editor in lisp graph section</td></tr>
 <tr><td><a href="sndscm.html#eventdoc">event.scm</a></td>            <td>xm module stuff for automatic user-interface tests</td></tr>
-<tr><td><a href="sndscm.html#extensionsdoc">extensions.scm, extensions.rb</a></td><td>extensions of Snd</td></tr>
+<tr><td><a href="sndscm.html#extensionsdoc">extensions.scm, extensions.rb, extensions.fs</a></td><td>extensions of Snd</td></tr>
 <tr><td><a href="sndscm.html#fadedoc">fade.scm</a></td>              <td>frequency-domain cross-fades</td></tr>
 <tr><td><a href="sndscm.html#fmvdoc">fmv.scm</a></td>                <td>the fm-violin tied to real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#freeverbdoc">freverb.scm, freeverb.rb</a></td><td>a reverb</td></tr>
@@ -346,29 +357,29 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#jcrevdoc">jcrev.scm</a></td>            <td>John Chowning's reverb</td></tr>
 <tr><td><a href="sndscm.html#ladspadoc">ladspa.scm</a></td>          <td>Kjetil S. Matheussen's LADSPA GUI-builder and previewer.</td></tr>
 <tr><td><a href="sndscm.html#maracadoc">maraca.scm, maraca.rb</a></td><td>Perry Cook's maraca physical model</td></tr>
-<tr><td><a href="sndscm.html#marksdoc">marks.scm, marks.rb</a></td>  <td>functions related to marks</td></tr>
+<tr><td><a href="sndscm.html#marksdoc">marks.scm, marks.rb, marks.fs</a></td>  <td>functions related to marks</td></tr>
 <tr><td><a href="sndscm.html#maxfdoc">maxf.scm, maxf.rb</a></td>     <td>Max Mathews resonator</td></tr>
-<tr><td><a href="sndscm.html#mixdoc">mix.scm, mix.rb</a></td>        <td>functions related to mixes and tracks</td></tr>
+<tr><td><a href="sndscm.html#mixdoc">mix.scm, mix.rb, mix.fs</a></td>        <td>functions related to mixes and tracks</td></tr>
 <tr><td><a href="sndscm.html#mixerdoc">mixer.scm</a></td>            <td>functions related to mixers and frames (linear algebra)</td></tr>
 <tr><td><a href="sndscm.html#moogdoc">moog.scm</a></td>              <td>Moog filter (from CLM)</td></tr>
-<tr><td><a href="sndscm.html#musglyphs">musglyphs.scm</a></td>       <td>Music notation symbols (from CMN)</td></tr>
+<tr><td><a href="sndscm.html#musglyphs">musglyphs.scm, musglyphs.rb</a></td>       <td>Music notation symbols (from CMN)</td></tr>
 <tr><td><a href="sndscm.html#nbdoc">nb.scm, nb.rb</a></td>           <td>Popup File info etc</td></tr>
 <tr><td><a href="sndscm.html#noisedoc">noise.scm, noise.rb</a></td>  <td>CLM's noise.ins</td></tr>
 <tr><td><a href="sndscm.html#oscopedoc">oscope.scm</a></td>          <td>oscilloscope dialog</td></tr>
-<tr><td><a href="sndscm.html#peakenvdoc">peak-env.scm</a></td>       <td>peak envelope support</td></tr>
+<tr><td><a href="sndscm.html#peakenvdoc">peak-env.scm, peak-env.fs</a></td>       <td>peak envelope support</td></tr>
 <tr><td><a href="sndscm.html#pianodoc">piano.scm, piano.rb</a></td>  <td>piano physical model</td></tr>
 <tr><td><a href="sndscm.html#playdoc">play.scm, play.rb</a></td>     <td>play-related functions</td></tr>
-<tr><td><a href="sndscm.html#polydoc">poly.scm</a></td>              <td>polynomial-related functions</td></tr>
-<tr><td><a href="sndscm.html#popupdoc">popup.scm, gtk-popup.scm, popup.rb</a></td><td>Popup menu specializations</td></tr>
+<tr><td><a href="sndscm.html#polydoc">poly.scm, poly.rb</a></td>              <td>polynomial-related functions</td></tr>
+<tr><td><a href="sndscm.html#popupdoc">popup.scm, gtk-popup.scm, popup.rb, popup.fs</a></td><td>Popup menu specializations</td></tr>
 <tr><td><a href="sndscm.html#prc95doc">prc95.scm,prc95.rb</a></td>   <td>Perry Cook's physical model examples (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#pvocdoc">pvoc.scm, pvoc.rb</a></td>     <td>phase-vocoder examples</td></tr>
 <tr><td><a href="sndscm.html#rgbdoc">rgb.scm, rgb.rb</a></td>        <td>color definitions</td></tr>
 <tr><td><a href="sndscm.html#rmsgaindoc">rmsgain.scm</a></td>        <td>RMS-based gain and balance (Fabio Furlanete)</td></tr>
 <tr><td><a href="sndscm.html#rtexdoc">rt-examples.scm and friends</a></td><td>hard real-time support (Kjetil Matheussen) (see rt.tex)</td></tr>
 <tr><td><a href="sndscm.html#rtiodoc">rtio.scm, rtio.rb</a></td>     <td>real-time stuff</td></tr>
-<tr><td><a href="sndscm.html#rubberdoc">rubber.scm, rubber.rb</a></td><td>rubber-sound</td></tr>
+<tr><td><a href="sndscm.html#rubberdoc">rubber.scm, rubber.rb, rubber.fs</a></td><td>rubber-sound</td></tr>
 <tr><td><a href="sndscm.html#singerdoc">singer.scm, singer.rb</a></td><td>Perry Cook's vocal-tract physical model</td></tr>
-<tr><td><a href="sndscm.html#sndmotifdoc">snd-motif.scm, snd-gtk.scm, snd-xm.rb</a></td><td>Motif/Gtk modules (xm.c, xg.c)</td></tr>
+<tr><td><a href="sndscm.html#sndmotifdoc">snd-motif.scm, snd-gtk.scm, snd-xm.rb, snd-xm.fs</a></td><td>Motif/Gtk modules (xm.c, xg.c)</td></tr>
 <tr><td><a href="sndscm.html#sndgldoc">snd-gl.scm</a></td>           <td>OpenGL examples (gl.c)</td></tr>
 <tr><td><a href="sndscm.html#sndwarpdoc">sndwarp.scm</a></td>        <td>Bret Battey's sndwarp instrument</td></tr>
 <tr><td><a href="sndscm.html#snd4doc">snd4|5|6|7.scm</a></td>        <td>backwards compatibility</td></tr>
@@ -376,7 +387,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#straddoc">strad.scm, strad.rb</a></td>  <td>string physical model (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#vdoc">v.scm, v.rb</a></td>              <td>fm-violin (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#wsdoc">ws.scm, ws.rb</a></td>           <td>with-sound implementation</td></tr>
-<tr><td><a href="sndscm.html#xmenveddoc">xm-enved.scm, xm-enved.rb</a></td><td>xm-based envelope editor</td></tr>
+<tr><td><a href="sndscm.html#xmenveddoc">xm-enved.scm, xm-enved.rb, xm-enved.fs</a></td><td>xm-based envelope editor</td></tr>
 <tr><td><a href="sndscm.html#zipdoc">zip.scm, zip.rb</a></td>        <td>the zipper (a cross-fader, sort of) (from CLM)</td></tr>
 </table>
 
@@ -394,17 +405,16 @@ on the <a href="#beforeexithook">before-exit-hook</a> list are evaluated; if any
 Snd does not exit.</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define <A NAME="unsavededitsp">unsaved-edits?</A>
-  (lambda (lst)
-    (if (not (null? lst))
-	(if (&gt; (car (<a class=quiet href="#edits">edits</a> (car lst))) 0)
-	    (begin
-	      (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> "there are unsaved edits")
-	      #t)
-	    (unsaved-edits? (cdr lst)))
-	#f)))
+(define <A NAME="unsavededitsp">(unsaved-edits? lst)</A>
+  (if (not (null? lst))
+      (if (&gt; (car (<a class=quiet  onmouseover="return escape('edits returns \'(unsaved-edits undone-edits) for the given sound and channel')"href="#edits">edits</a> (car lst))) 0)
+	  (begin
+	    (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> "there are unsaved edits")
+	    #t)
+	  (unsaved-edits? (cdr lst)))
+      #f))
 
-(add-hook! <em class=red>before-exit-hook</em> (lambda () (unsaved-edits? (<a class=quiet href="#sounds">sounds</a>))))
+(add-hook! <em class=red>before-exit-hook</em> (lambda () (unsaved-edits? (<a class=quiet href="#sounds" onmouseover="return escape('list of currently open sounds')">sounds</a>))))
 </pre></td></tr></table>
 
 <p>Now when Snd is told to exit, it checks before-exit-hook, runs
@@ -448,7 +458,7 @@ function. </p>
 <!-- audio-input-device -->
 <tr><td colspan=2><code><a class=def name="audioinputdevice">audio-input-device</a></code></td>
 <td><code>mus-audio-default</code></td></tr>
-<tr><td></td><td colspan=2>Audio input device (for the recorder).
+<tr><td></td><td colspan=2>Audio input device (for the recorder): e.g. mus-audio-microphone.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -574,13 +584,39 @@ an inch is 2.54 cm:
 </td></tr>
 
 <tr><td></td><td colspan=2>
+
+<table border=0><tr><td>
+
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (inches-to-ps inches) 
   (* inches 72))
 
 (define (cm-to-ps cm) 
   (* cm (/ 72.0 2.54)))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
+
+</td><td>
+
+<table border=1 cellpadding=5><tr><td bgcolor="Beige"><pre>
+Ruby:
+
+def inches_to_ps(inches) inches * 72 end
+
+def cm_to_ps(cm) cm * 72.0 / 2.54 end
+</pre></td></tr></table>
+
+</td><td>
+
+<table border=1 cellpadding=5><tr><td bgcolor="LightGreen"><pre>
+Forth:
+
+: inches-to-ps { inches } inches 72 f* ;
+
+: cm-to-ps { cm } cm 2.54 f/ 72 f* ;
+</pre></td></tr></table>
+</td></tr></table>
+
+</td></tr>
 
 <tr><td></td><td colspan=2>
 In the resulting .eps file, you'll find a concat statement near the 
@@ -717,14 +753,15 @@ an edit that requires saved data, it is written as a separate sound file, and
 that file is reloaded automatically when you restart the saved session.  To keep such
 files safe, or at least separate from others, you can set up separate
 directory for them.
-<code>(set! (<a class=quiet href="#savedir">save-dir</a>) "/tmp")</code>.
+<span onmouseover="return escape('<pre>Ruby: set_save_dir(&quot;/tmp&quot;), Forth: &quot;/tmp&quot; set-save-dir</pre>')"
+<code>(set! (<a class=quiet href="#savedir">save-dir</a>) "/tmp")</code></span>.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- save-state-file -->
 <tr><td colspan=2><code><a class=def name="savestatefile">save-state-file</a></code></td>
 <td><code>"saved-snd.scm"</code></td></tr>
-<tr><td></td><td colspan=2>The default <a href="snd.html#savedstate">saved state</a> file name.
+<tr><td></td><td colspan=2>The <a href="snd.html#savedstate">saved state</a> file name; defaults to "saved-snd.scm".
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -755,7 +792,7 @@ them); if you're not using regions anyway, this switch can turn them off.
 <tr><td colspan=2><code><a class=def name="showselectiontransform">show-selection-transform</a></code></td>
 <td><code>#f</code></td></tr>
 <tr><td></td><td colspan=2>If #t, display the transform of the current active selection, if any.
-(Thie sonogram and spectrogram displays ignore this flag because they assume their time axis
+(The sonogram and spectrogram displays ignore this flag because they assume their time axis
 matches that of the time domain graph).
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -775,7 +812,7 @@ a sine wave at (say) 55 Hz, then <code>(<a class=quiet href="#srcsound">src-soun
 <!-- temp-dir -->
 <tr><td colspan=2><code><a class=def name="tempdir">temp-dir</a></code></td>
 <td><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>Name of directory for temporary files.  #f usually means "/tmp" or "/var/tmp".  
+<tr><td></td><td colspan=2>directory for temporary files;  #f uses whatever the system default is, usually "/tmp" or "/var/tmp".  
 See <a href="#sndtempnam">snd-tempnam</a>, and autosave.scm.
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -873,9 +910,12 @@ The hook itself is list of functions.  The Scheme function add-hook! adds a func
 list, remove-hook! removes a function, and reset-hook! clears out the list.
 For example, the hook that is checked when you click the sound's name in the minibuffer is
 name-click-hook.  We can cause that action to print "hi" in the listener by:</p>
-<pre>
-&gt;<em class=typing>(add-hook! name-click-hook (lambda (snd) (snd-print "hi") #t))</em>
+
+<pre><span onmouseover="return escape('<pre>Ruby: $name_click_hook.add_hook!(&quot;print&quot;) do |snd| snd_print(&quot;hi&quot;); true end</pre><pre>Forth: name-click-hook lambda: &quot;hi&quot; snd-print drop #t ; 1 make-proc add-hook!</pre>')">
+&gt;<em class=typing>(add-hook! name-click-hook (lambda (snd) (snd-print "hi") #t))</em></span>
 </pre>
+<!-- this snd-print is left unreferenced via class=quiet etc because we want it to be red like the rest of the line -->
+
 <p>
 If there is more than one function attached to a hook, some of the hooks
 "or" the functions together (marked <b>or</b> below); that is they
@@ -934,11 +974,11 @@ and filled graphs:
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>after-open-hook</em>
   (lambda (snd)
-    (if (&gt; (<a class=quiet href="#channels">channels</a> snd) 1)
+    (if (&gt; (<a class=quiet href="#channels" onmouseover="return escape('number of channels in the given sound')">channels</a> snd) 1)
         (begin
-          (set! (<a class=quiet href="#sync">sync</a> snd) (1+ snd)) ; 0 = #f
-          (set! (<a class=quiet href="#channelstyle">channel-style</a> snd) <a class=quiet href="#channelstyle">channels-combined</a>)
-          (set! (<a class=quiet href="#graphstyle">graph-style</a> snd) <a class=quiet href="#graphstyle">graph-filled</a>)))))
+          (set! (<a class=quiet href="#sync" onmouseover="return escape('sync controls which sounds are handled together')">sync</a> snd) (1+ snd)) ; 0 = #f
+          (set! (<a class=quiet href="#channelstyle" onmouseover="return escape('channel-style chooses between various layouts')">channel-style</a> snd) <a class=quiet href="#channelstyle" onmouseover="return escape('channels-combined means the channels are in one window')">channels-combined</a>)
+          (set! (<a class=quiet href="#graphstyle" onmouseover="return escape('graph-style chooses how data is drawn -- lines, dots, etc')">graph-style</a> snd) <a class=quiet href="#graphstyle" onmouseover="return escape('graph-filled means the data is filled in, rather than just a line')">graph-filled</a>)))))
 </pre></td></tr></table>
 <br>
 See also <i>C-x b support</i> in examp.scm, <i>remember-sound-state</i> in extensions.scm, enved.scm, and various
@@ -1121,11 +1161,24 @@ called when a file is closed (before the actual close, so the index <i>snd</i> i
 </td></tr>
 
 <tr><td></td><td colspan=2>
+
+<table border=0><tr><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>close-hook</em>
   (lambda (snd) 
-    (system \"sndplay wood16.wav\")))
-</pre></td></tr></table></td></tr>
+    (system "sndplay wood16.wav")))
+</pre></td></tr></table>
+
+</td><td width=30></td><td>
+
+<table border=1 cellpadding=5><tr><td bgcolor="Beige"><pre>
+$close_hook.add_hook!("play") do |snd| 
+  system("aplay wood16.wav")
+end
+</pre></td></tr></table>
+</td></tr></table>
+</td></tr>
+
 
 <tr><td></td><td colspan=2>
 <i>close-hook</i> is used in autosave.scm, examp.scm, extensions.scm, and peak-env.scm; see, for example,
@@ -1191,7 +1244,7 @@ This provides an opportunity to set sndlib prescaling values:
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>during-open-hook</em>
   (lambda (fd name reason)
-    (if (= (<a class=quiet href="#mussoundheadertype">mus-sound-header-type</a> name) <a class=quiet href="#headertype">mus-raw</a>)
+    (if (= (<a class=quiet href="#mussoundheadertype">mus-sound-header-type</a> name) <a class=quiet href="#headertype" onmouseover="return escape('mus-raw means headerless')">mus-raw</a>)
         (set! (<a href="#musfileprescaler">mus-file-prescaler</a> fd) 500.0))))
 </pre></td></tr></table></td></tr>
 
@@ -2292,6 +2345,9 @@ of these below.
 </p>
 
 <br>
+
+<!-- TODO: vct methods in ruby -->
+
 <!-- INDEX Vcts:Vcts -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="Vcts">Vcts</a></h3></td></tr></table>
 <p>
@@ -2514,6 +2570,9 @@ vct data as desired, write the samples to the file via vct-&gt;sound-file, then
 when finished, close-sound-file.  If the new data is to replace the old,
 call (set! (samples...) data) with the new sound file's name; otherwise call insert-samples.
 </p>
+
+<!-- TODO: applicable smobs are also in ruby gauche -->
+
 <p>If you have Guile 1.4.1 or later, it's possible to access a vct's
 elements with the syntax (v index), equivalent to (<a class=quiet href="#vctref">vct-ref</a> v index),
 but without some of the type checks.
@@ -11849,7 +11908,18 @@ If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></
 
 <center>
 <table border=1><tr><td>
-<table bgcolor="aliceblue" border=0 cellspacing=8><tr><td><small>related documentation:</small></td><td><small><a href="snd.html">snd.html</a></small></td><td><small><a href="grfsnd.html">grfsnd.html</a></small></td><td><small><a href="clm.html">clm.html</a></small></td><td><small><a href="sndlib.html">sndlib.html</a></small></td><td><small><a href="sndscm.html">sndscm.html</a></small></td><td><small><a href="libxm.html">libxm.html</a></small></td><td><small><a href="index.html">index.html</a></small></td></tr></table>
+<table bgcolor="aliceblue" border=0 cellspacing=8><tr>
+<td><small>related documentation:</small></td>
+<td><small><a href="snd.html" onmouseover="return escape('basic Snd user-interface documentation')">snd.html</a></small></td>
+<td><small><a href="grfsnd.html" onmouseover="return escape('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
+<td><small><a href="clm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">clm.html</a></small></td>
+<td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
+<td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
+<td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd\'s extension language')">libxm.html</a></small></td>
+<td><small><a href="index.html">index.html</a></small></td>
+</tr></table>
 </td></tr></table>
 </center>
+
+<script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
 </body></html>

@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: use entry completion rather than the popup dialog for completion choices (in motif too?) */
-
-
 /* ---------------- HELP MONOLOG ---------------- */
 
 /* I tried gtkhtml (and XmHTML in 1999), and in both cases decided not to use them.  Both work fine,
@@ -25,7 +22,7 @@ static gint delete_help_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 
 #define HELP_ROWS 12
 #define HELP_COLUMNS 56
-/* these set the initial size of the (non XmHTML) help dialog text area */
+/* these set the initial size of the help dialog text area */
 
 static GtkWidget *help_text = NULL;
 slist *related_items = NULL;
