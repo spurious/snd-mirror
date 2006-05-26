@@ -59,7 +59,7 @@ var ttSticky      = false;        // do NOT hide tooltip on mouseout? Alternativ
 var ttTemp        = 0;            // time span after which the tooltip disappears; 0 (zero) means "infinite timespan"
 var ttTextAlign   = "left";
 var ttTitleColor  = "#ffffff";    // color of caption text
-var ttWidth       = 500;
+var ttWidth       = 400;
 ////////////////////  END OF TOOLTIP CONFIG  ////////////////////////
 
 

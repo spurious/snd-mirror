@@ -980,6 +980,37 @@ producing the echo.
 
 ;;; (<a class=quiet href="clm.html#with-sound">with-sound</a> () (echo 0 60000 .5 1.0 "pistol.snd"))
 </pre></td></tr></table>
+
+<p>Generators are "applicable" in most versions of Snd: the generator knows its type, so the
+explicit "oscil" function (for example) isn't needed.
+</p>
+<pre>
+  &gt;<em class=typing>(define hi (make-oscil 440.0))</em>
+  <em class=listener>#&lt;unspecified&gt;</em>
+  &gt;<em class=typing>(hi)</em>
+  <em class=listener>0.0</em>
+  &gt;<em class=typing>(oscil hi)</em>
+  <em class=listener>0.125050634145737</em>
+</pre>
+<p>
+We can make a generator that is either
+an oscil or a sawtooth-wave:
+</p>
+<pre>
+  &gt;<em class=typing>(define sine-or-sawtooth
+     (lambda (sine)
+        (let ((gen ((if sine make-oscil make-sawtooth-wave) 440.0)))
+           (lambda (fm)
+              (gen fm)))))</em>
+  <em class=listener>#&lt;unspecified&gt;</em>
+  &gt;<em class=typing>(define osc (sine-or-sawtooth #t))</em>
+  <em class=listener>#&lt;unspecified&gt;</em>
+  &gt;<em class=typing>(osc 0.0)</em>
+  <em class=listener>0.0</em>
+  &gt;<em class=typing>(osc 0.0)</em>
+  <em class=listener>0.125050634145737</em>
+</pre>
+
 <br>
 
 <!-- INDEX clmfuncs:CLM generators -->

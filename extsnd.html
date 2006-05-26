@@ -56,15 +56,15 @@
     </ul>
   <li><a href="#sndobjects">Snd's objects</a>
     <ul>
-    <li><a href="#Vcts" onmouseover="return escape('real arrays')">Vcts</a>
+    <li><a href="#Vcts" onmouseover="this.T_WIDTH=100; return escape('real arrays')">Vcts</a>
     <li><a href="#sndsounddata">Sound-data and Sndlib</a>
-    <li><a href="#samplereaders" onmouseover="return escape('sound data iterators')">Sample-readers</a>
+    <li><a href="#samplereaders" onmouseover="this.T_WIDTH=200; return escape('sound data iterators')">Sample-readers</a>
     <li><a href="#sndmarks" onmouseover="return escape('location markers in sound data')">Marks</a>
     <li><a href="#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes and Tracks</a>
     <li><a href="#sndregions" onmouseover="return escape('selected or saved portions of sound data')">Regions and Selections</a>
     <li><a href="#sndsounds">Sounds and channels</a>
       <ul><li><a href="#customcontrols">the control panel</a></ul>
-    <li><a href="#editlists" onmouseover="return escape('current edit sequence')">Edit Lists</a>
+    <li><a href="#editlists" onmouseover="this.T_WIDTH=200; return escape('current edit sequence')">Edit Lists</a>
     <li><a href="#sndtransforms" onmouseover="return escape('Fourier transform, wavelets, autocorelation, etc')">Transforms</a>
     <li><a href="#snddialogs">Dialogs</a>
     <li><a href="#sndmisc">Miscellaneous functions</a>
@@ -452,13 +452,13 @@ function. </p>
 <!-- ask-before-overwrite -->
 <tr><td colspan=2><code><a class=def name="askbeforeoverwrite">ask-before-overwrite</a></code></td>
 <td><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>should Snd ask before overwriting an existing file.</td></tr>
+<tr><td></td><td colspan=2>should Snd ask before overwriting an existing file. <code>(set! (ask-before-overwrite) #t)</code></td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- audio-input-device -->
-<tr><td colspan=2><code><a class=def name="audioinputdevice">audio-input-device</a></code></td>
+<tr><td colspan=2><code><a class=def name="audioinputdevice"">audio-input-device</a></code></td>
 <td><code>mus-audio-default</code></td></tr>
-<tr><td></td><td colspan=2>Audio input device (for the recorder): e.g. mus-audio-microphone.
+<tr><td></td><td colspan=2>Audio input device (for the recorder): e.g. mus-audio-microphone. <code>(set! (audio-input-device) mus-audio-microphone)</code>
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -555,7 +555,14 @@ or a save dialog is opened.
 <tr><td colspan=2><code><a class=def name="defaultoutputdataformat">default-output-data-format</a></code></td>
 <td><code>mus-bshort</code></td></tr>
 <tr><td></td><td colspan=2>The default data format when a new or temporary file is created, 
-or a save dialog is opened. (mus-bshort is from sndlib, standing for 16-bit big-endian data).  Use <a href="#musoutformat">mus-out-format</a> for fastest IO.
+or a save dialog is opened. (mus-bshort is from sndlib, standing for 16-bit big-endian data).  
+Use <a href="#musoutformat">mus-out-format</a> for fastest IO.
+The available output data formats are (b=big-endian, l=little, u=unsigned):
+<pre>
+mus-bshort  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat
+mus-lfloat  mus-bint   mus-lint   mus-b24int mus-l24int mus-bdouble mus-ldouble
+mus-ubshort mus-ulshort
+</pre>
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -572,6 +579,10 @@ or a save dialog is opened.
 <td><code>mus-next</code></td></tr>
 <tr><td></td><td colspan=2>The default header type when a new file is created, 
 or a save dialog is opened. (<code>mus-next</code> stands for the NeXT/Sun sound file header).
+The available output header-types are:
+<pre>
+mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff mus-soundfont mus-bicsf mus-voc mus-svx
+</pre>
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -651,7 +662,24 @@ bottom margin.
 <tr><td colspan=2><code><a class=def name="graphcursor">graph-cursor</a></code></td>
 <td><code>XC_crosshair (34)</code></td></tr>
 <tr><td></td><td colspan=2>The kind of cursor displayed following the mouse in the data graph.
-The X cursors are declared in /usr/X11R6/include/X11/cursorfont.h or some such file.
+<b>graph-cursor</b> is an integer: <code>(set! (graph-cursor) 22)</code>; and must be one
+of the cursor choices provided by either X or Gtk+.
+The X/Motif cursors are declared in /usr/include/X11/cursorfont.h or some such file;
+gtk versions are in gdkcursor.h.  Some useful choices are:
+<br><br>
+
+<table border=1 cellpadding=3><th>Motif</th><th>Gtk+</th><th>value</th>
+<tr><td>XC_arrow</td><td>GDK_ARROW</td><td>2</td></tr>
+<tr><td>XC_center_ptr</td><td>GDK_CENTER_PTR</td><td>22</td></tr>
+<tr><td>XC_cross</td><td>GDK_CROSS</td><td>30</td></tr>
+<tr><td>XC_crosshair</td><td>GDK_CROSSHAIR</td><td>34</td></tr>
+<tr><td>XC_left_ptr</td><td>GDK_LEFT_PTR</td><td>68</td></tr>
+<tr><td>XC_plus</td><td>GDK_PLUS</td><td>90</td></tr>
+<tr><td>XC_right_ptr</td><td>GDK_RIGHT_PTR</td><td>94</td></tr>
+<tr><td>XC_tcross</td><td>GDK_TCROSS</td><td>130</td></tr>
+<tr><td>XC_xterm</td><td>GDK_XTERM</td><td>152</td></tr>
+</table>
+
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -680,7 +708,8 @@ but I decided that was a worse kludge than log-freq-start).
 <!-- max-regions -->
 <tr><td colspan=2><code><a class=def name="maxregions">max-regions</a></code></td>
 <td><code>16</code></td></tr>
-<tr><td></td><td colspan=2>Maximum size of the region list; the number of regions that are accessible.</td></tr>
+<tr><td></td><td colspan=2>Maximum size of the region list; the number of regions that are accessible.
+</td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- minibuffer-history-length -->
@@ -753,8 +782,7 @@ an edit that requires saved data, it is written as a separate sound file, and
 that file is reloaded automatically when you restart the saved session.  To keep such
 files safe, or at least separate from others, you can set up separate
 directory for them.
-<span onmouseover="return escape('<pre>Ruby: set_save_dir(&quot;/tmp&quot;), Forth: &quot;/tmp&quot; set-save-dir</pre>')"
-<code>(set! (<a class=quiet href="#savedir">save-dir</a>) "/tmp")</code></span>.
+<span onmouseover="return escape('<pre>Ruby: set_save_dir(&quot;/tmp&quot;), Forth: &quot;/tmp&quot; set-save-dir</pre>')"><code>(set! (<a class=quiet href="#savedir">save-dir</a>) "/tmp")</code></span>.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -897,6 +925,8 @@ See also <a href="snd.html#zoomoption">Zoom options</a>.
 </table>
 <br>
 
+
+<!-- ---------------------------------------- HOOKS ---------------------------------------- -->
 <!-- INDEX sndhooks:Hooks -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndhooks">Hooks</a></h4></td></tr></table>
 
@@ -909,12 +939,15 @@ actions.
 The hook itself is list of functions.  The Scheme function add-hook! adds a function to a hook's
 list, remove-hook! removes a function, and reset-hook! clears out the list.
 For example, the hook that is checked when you click the sound's name in the minibuffer is
-name-click-hook.  We can cause that action to print "hi" in the listener by:</p>
+name-click-hook.  We can cause that action to print "hi":</p>
 
-<pre><span onmouseover="return escape('<pre>Ruby: $name_click_hook.add_hook!(&quot;print&quot;) do |snd| snd_print(&quot;hi&quot;); true end</pre><pre>Forth: name-click-hook lambda: &quot;hi&quot; snd-print drop #t ; 1 make-proc add-hook!</pre>')">
-&gt;<em class=typing>(add-hook! name-click-hook (lambda (snd) (snd-print "hi") #t))</em></span>
+<pre>
+  Scheme: (add-hook! name-click-hook (lambda (snd) (<a class=quiet href="#sndprint">snd-print</a> "hi") #t))
+
+  Ruby:   $name_click_hook.add_hook!("print") do |snd| snd_print("hi"); true end
+
+  Forth:  name-click-hook lambda: "hi" snd-print drop #t ; 1 make-proc add-hook!
 </pre>
-<!-- this snd-print is left unreferenced via class=quiet etc because we want it to be red like the rest of the line -->
 
 <p>
 If there is more than one function attached to a hook, some of the hooks
@@ -926,15 +959,114 @@ the final function's value is returned.
 In the other
 cases (named "progn" from Common Lisp), the result returned by the hook is the result of the last function in the list.
 Whatever the hook combination choice, all the functions on the hook list are run
-on each invocatiion.
-In the list below the arguments after the hook name refer to the arguments to the functions invoked by
+on each invocation.  There are a variety of hook-related functions in hooks.scm.
+</p>
+<p>There are several basic actions that involve a bunch of hooks.  Here is a schematic view of
+some of these sequences.
+</p>
+
+<pre>
+    Open filename
+        bad header?: bad-header-hook -- can cancel request
+        no header?:  open-raw-sound-hook -- can cancel request
+        file ok: 
+             open-hook -- can change filename
+             file opened (no data read yet)
+                 during-open-hook (can set prescaling etc)
+             data read, no graphics yet
+             after-open-hook 
+             initial-graph-hook
+    
+    
+    Save current sound
+        before-save-as-hook -- can cancel the request or set its output parameters
+        save-hook 
+            sound saved
+        after-save-as-hook 
+    
+    
+    Close sound
+        before-close-hook -- can cancel close
+        close-hook (snd is still open)
+        snd closed
+    
+    
+    Save current Snd ("session") state
+        save-state-hook -- can change output filename (crummy name is an historical artifact)
+        output save-state file opened
+            before-save-state-hook
+            Snd saves its state
+            after-save-state-hook
+        output closed
+    
+    
+    Exit Snd
+        before-exit-hook -- can cancel exit request
+        exit-hook
+        Snd cleans up and exits
+</pre>
+
+
+<p>
+You can find out what's on a given hook with the following (which is mostly adding carriage returns to the
+printout from hook-&gt;list):
+</p>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(define (describe-hook hook)
+  (for-each 
+    (lambda (n) 
+      (<a class=quiet href="#sndprint">snd-print</a> (format #f "~A~%" n)))
+    (reverse (<em class=red>hook-&gt;list</em> hook))))
+</pre></td></tr></table>
+
+<p>Here's the Ruby version of some of the hook-related functions:
+</p>
+<pre>
+$var_hook.remove_hook!("proc_name")
+$var_hook.reset_hook!
+$var_hook.run_hook do |prc| prc.call(1, 2, 3) end
+$var_hook.call(1, 2, 3)   # calls all procedures
+
+require 'hooks'
+$var_hook.show            # prints the code of the procedure(s)
+$va_hook.to_a
+</pre>
+
+<p>And some Forth examples, taken from Mike Scholz's documentation:
+</p>
+<pre>
+open-hook ' open-buffer 1 make-proc add-hook!
+open-hook "open-buffer" remove-hook!
+open-hook reset-hook!
+open-hook hook->list
+
+2 "A simple hook." create-hook my-new-hook
+my-new-hook ' + 2 make-proc add-hook!
+my-new-hook '( 2 3 ) run-hook
+help my-new-hook             
+</pre>
+
+
+<p>These hooks are extremely easy to add; if there's some user-interface action
+you'd like to specialize in some way, send me a note.  I'm slowly replacing
+many of the global variables with hooks, since the latter are much more
+flexible.  hooks.scm has snd-hooks and reset-all-hooks, as well as other
+useful hook-related functions.
+</p>
+
+<br>
+
+<!-- -------------------------------- HOOK TABLE -------------------------------- -->
+<!-- TODO: give overview of the complicated hooks (open, graph, exit, save-state) and crossrefs -->
+
+<hr>
+<h3>Hooks</h3>
+
+<p>
+In this list the arguments after the hook name refer to the arguments to the functions invoked by
 the hook.  That is, <code>after-apply-hook (snd)</code> means that the functions on the
 after-apply-hook list each take one argument, a sound index.
 </p>
-<p>In Ruby, the hook is a global variable that holds either a procedure or is false.
-</p>
-
-<!-- -------------------------------- HOOK TABLE -------------------------------- -->
 
 <table border=0 cellspacing=12>
 
@@ -2243,54 +2375,7 @@ up protected portions of the edit history:
 <i>add-mark-pane</i> in snd-motif.scm uses them to make sure the mark list reflects the current edit history location.
 See also autosave.scm.  <small>It is possible for after-edit-hook to be called more often that edit-hook.</small>
 </p>
-<p>
-You can find out what's on a given hook with the following (which is mostly adding carriage returns to the
-printout from hook-&gt;list):
-</p>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define (describe-hook hook)
-  (for-each 
-    (lambda (n) 
-      (<a class=quiet href="#sndprint">snd-print</a> (format #f "~A~%" n)))
-    (reverse (<em class=red>hook-&gt;list</em> hook))))
-</pre></td></tr></table>
 
-<p>Say we pile up some random stuff on name-click-hook:
-</p>
-<pre>
-(add-hook! name-click-hook snd-print)
-(add-hook! name-click-hook (lambda (n) (<a class=quiet href="#sndprint">snd-print</a> n)))
-(add-hook! name-click-hook (let ((ha 32)) (lambda (n) ha)))
-</pre>
-<p>Then we go skiing for a week, get home, and can't remember where
-we were.  Do we panic and dial 911? No!  We simply type:
-</p>
-<pre>
-<em class=listener>:</em><em class=typing>(describe-hook name-click-hook)</em>
-<em class=listener>#&lt;primitive-procedure snd-print&gt;
-#&lt;procedure (n) (snd-print n)&gt;
-#&lt;procedure (n) ha&gt;
-#&lt;unspecified&gt;
-:</em>
-</pre>
-<p>These hooks are extremely easy to add; if there's some user-interface action
-you'd like to specialize in some way, send me a note.  I'm slowly replacing
-many of the global variables with hooks, since the latter are much more
-flexible.  hooks.scm has snd-hooks and reset-all-hooks, as well as other
-useful hook-related functions.
-</p>
-<p>Here's the Ruby version of many of these functions:
-</p>
-<pre>
-$var_hook.add_hook!("proc_name") do |a, b, c| ... end
-$var_hook.remove_hook!("proc_name")
-$var_hook.reset_hook!
-$var_hook.run_hook do |prc| prc.call(1, 2, 3) end
-$var_hook.call(1, 2, 3)   # calls all procedures
-
-require 'hooks'
-$var_hook.show            # prints the code of the procedure(s)
-</pre>
 
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndobjects">Snd's objects</a></h3></td></tr></table>
@@ -2363,11 +2448,34 @@ sets an element (the "!" appended to the setter functions is standard in Scheme;
 another is the use of "?" where Common Lisp is more likely to use "-p").
 Once created, a vct can be passed to a variety of built-in
 functions:</p>
-<pre>
+
+<table border=0><tr><td>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+Scheme:
   (define hi (<a class=quiet href="#makevct">make-vct</a> 100))
   (<a class=quiet href="#vctfill">vct-fill!</a> hi 3.14)
   (<a class=quiet href="#vctscale">vct-scale!</a> hi -1.0)
-</pre>
+</pre></td></tr></table>
+</td><td>
+
+<table border=1 cellpadding=5><tr><td bgcolor="Beige"><pre>
+Ruby: 
+      hi = make_vct(100)
+      vct_fill!(hi, 3.14)
+      vct_scale!(hi, -1.0)
+</pre></td></tr></table>
+</td><td>
+
+<table border=1 cellpadding=5><tr><td bgcolor="LightGreen"><pre>
+Forth: variable hi
+       100 0.0 make-vct hi !
+       hi @ 3.14 vct-fill!
+       hi @ -1.0 vct-scale!
+</pre></td></tr></table>
+</td></tr></table>
+
+
 <p>Now our vct <i>hi</i> has 100 -3.14's. </p>
 
 <!-- -------------------------------- VCT TABLE -------------------------------- -->
@@ -2571,45 +2679,19 @@ when finished, close-sound-file.  If the new data is to replace the old,
 call (set! (samples...) data) with the new sound file's name; otherwise call insert-samples.
 </p>
 
-<!-- TODO: applicable smobs are also in ruby gauche -->
-
-<p>If you have Guile 1.4.1 or later, it's possible to access a vct's
-elements with the syntax (v index), equivalent to (<a class=quiet href="#vctref">vct-ref</a> v index),
-but without some of the type checks.
-This is using a feature called "applicable smobs" in Guile.
-The clm generators also use this syntax:
+<p>In some cases (Gauche, Ruby, Guile 1.4.1 or later) it's possible to access a vct's
+elements with the syntax (v index), equivalent to (<a class=quiet href="#vctref">vct-ref</a> v index).
+CLM generators can also use this shortcut.
 </p>
-<pre>
-  &gt;<em class=typing>(define hi (make-oscil 440.0))</em>
-  <em class=listener>#&lt;unspecified&gt;</em>
-  &gt;<em class=typing>(hi)</em>
-  <em class=listener>0.0</em>
-  &gt;<em class=typing>(oscil hi)</em>
-  <em class=listener>0.125050634145737</em>
-</pre>
-<p>It's no accident that the generator's type (i.e. oscil or whatever)
-is hidden here.  We can make a generator that is either
-an oscil or a sawtooth-wave:
-</p>
-<pre>
-  &gt;<em class=typing>(define sine-or-sawtooth
-     (lambda (sine)
-        (let ((gen ((if sine make-oscil make-sawtooth-wave) 440.0)))
-           (lambda (fm)
-              (gen fm)))))</em>
-  <em class=listener>#&lt;unspecified&gt;</em>
-  &gt;<em class=typing>(define osc (sine-or-sawtooth #t))</em>
-  <em class=listener>#&lt;unspecified&gt;</em>
-  &gt;<em class=typing>(osc 0.0)</em>
-  <em class=listener>0.0</em>
-  &gt;<em class=typing>(osc 0.0)</em>
-  <em class=listener>0.125050634145737</em>
-</pre>
+<!-- TODO: ruby methods for vcts, similarly for sound-data -->
 
-<br>
+<br><br>
+
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounddata">Sound-data and Sndlib</a></h3></td></tr></table>
 
-<p>Another sound data object is the sound-data array used in Sndlib.</p>
+<p>Another sound data object is the sound-data array used in Sndlib.  It is essentially an array of vcts, each
+vct representing one channel's data.
+</p>
 
 <!-- -------------------------------- SOUND-DATA TABLE -------------------------------- -->
 
@@ -3078,7 +3160,7 @@ and <i>read-track-sample</i>.
 <!-- copy-sample-reader -->
 <tr><td colspan=2><code><a class=def name="copysamplereader">copy-sample-reader</a> (obj)</code></td></tr>
 <tr><td width=50><br></td>
-<td>return a copy of <i>obj</i> (any kind of sample-reader).
+<td>return a copy of <i>obj</i> (any kind of sample-reader). 
 <br>
 <br>
 <!-- INDEX copying:Copying -->
@@ -6890,6 +6972,9 @@ See <a href="#optimization">optimization</a>
 for some timings.  In Ruby, it's possible to use the <a href="http://www.zenspider.com/Languages/Ruby/">RubyInline</a> module instead.
 </td></tr><tr><td colspan=2></td></tr>
 
+
+<!-- TODO: set sample examples in ruby and forth [also bind-key] -->
+<!-- TODO: clm.fs doc and parallels -->
 
 <!-- sample -->
 <tr><td colspan=2>

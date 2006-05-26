@@ -586,7 +586,8 @@
 		  (let ((c (elt line i)))
 		    (if (char= c #\<)
 			(progn
-			  (if (not (= openctr 0))
+			  (if (and (not (= openctr 0))
+				   (not (> p-quotes 0)))
 			      (if (not in-comment) (warn "~A[~D]: ~A has unclosed <?" file linectr line)))
 			  (incf openctr)
 			  (if (and (< i (- len 3))
@@ -601,7 +602,8 @@
 				     (char= (elt line (- i 1)) #\-)
 				     (char= (elt line (- i 2)) #\-))
 				(setf in-comment nil)
-			      (if (not (= openctr 0))
+			      (if (and (not (= openctr 0))
+				       (not (> p-quotes 0)))
 				  (if (not in-comment) (warn "~A[~D]: ~A has unmatched >?" file linectr line))))
 			    (setf openctr 0))
 			(if (char= c #\&)
@@ -609,6 +611,7 @@
 				     (not (string-equal "&lt;" (my-subseq line i (+ i 4))))
 				     (not (string-equal "&amp;" (my-subseq line i (+ i 5))))
 				     (not (string-equal "&micro;" (my-subseq line i (+ i 7))))
+				     (not (string-equal "&quot;" (my-subseq line i (+ i 6))))
 				     (not (string-equal "&&" (my-subseq line i (+ i 2))))
 				     (not (string-equal "& " (my-subseq line i (+ i 2))))) ; following char -- should skip this
 				(warn "~A[~D]: unknown escape sequence: ~A" file linectr line))
@@ -628,7 +631,8 @@
 		    (let ((c (elt line i)))
 		      (if (char= c #\<)
 			  (if start
-			      (if (not scripting)
+			      (if (and (not scripting)
+				       (not (> p-quotes 0)))
 				  (warn "nested < ~A from ~A[~D]" line file linectr))
 			    (setf start i))
 			(if (char= c #\/)
@@ -699,6 +703,7 @@
 						  (setf scripting t)
 						(if (not (member opener (list "br" "spacer" "li" "img" "hr" "area") :test #'string-equal))
 						    (if (and (member opener commands :test #'string-equal)
+							     (= p-quotes 0)
 							     (not (member opener (list "ul" "tr" "td" "table" "small" "sub" "blockquote") :test #'string-equal)))
 							(warn "nested ~A? ~A from ~A[~D]" opener line file linectr)
 						      (progn
