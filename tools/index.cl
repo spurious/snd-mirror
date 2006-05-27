@@ -566,6 +566,7 @@
       (with-open-file (f file :if-does-not-exist nil)
 	(let ((line t)
 	      (linectr 0)
+	      (comments 0)
 	      (openctr 0)
 	      (warned nil)
 	      (p-parens 0)
@@ -594,14 +595,26 @@
 				   (char= (elt line (+ i 1)) #\!)
 				   (char= (elt line (+ i 2)) #\-)
 				   (char= (elt line (+ i 3)) #\-))
-			      (setf in-comment t)))
+			      (progn
+				(incf comments)
+				(if (> comments 1)
+				    (progn 
+				      (warn "~A[~D]: nested <!--?" file linectr)
+				      (decf comments)))
+				(setf in-comment t))))
 		      (if (char= c #\>)
 			  (progn
 			    (decf openctr)
-			    (if (and (> i 2)
+			    (if (and (>= i 2)
 				     (char= (elt line (- i 1)) #\-)
 				     (char= (elt line (- i 2)) #\-))
-				(setf in-comment nil)
+				(progn
+				  (setf in-comment nil)
+				  (decf comments)
+				  (if (< comments 0)
+				      (progn
+					(warn "~A[~D]: extra -->?" file linectr)
+					(setf comments 0))))
 			      (if (and (not (= openctr 0))
 				       (not (> p-quotes 0)))
 				  (if (not in-comment) (warn "~A[~D]: ~A has unmatched >?" file linectr line))))
@@ -705,7 +718,7 @@
 						    (if (and (member opener commands :test #'string-equal)
 							     (= p-quotes 0)
 							     (not (member opener (list "ul" "tr" "td" "table" "small" "sub" "blockquote") :test #'string-equal)))
-							(warn "nested ~A? ~A from ~A[~D]" opener line file linectr)
+							(warn "nested ~A? ~A from ~A[~D]: ~A" opener line file linectr commands)
 						      (progn
 							(if (not warned)
 							    (progn
@@ -723,6 +736,8 @@
 								    (setf warned t)
 								    (remove "td" commands :test #'string-equal :count 1)
 								    (format t "unclosed td at table ~A ~A~%" file linectr)))))
+							(if (string-equal opener "--")
+							    (format t "~A[~D]: <-- missing !?~%" file linectr))
 							(setf commands (push opener commands)))))))))
 				      (setf start nil))))))))))
 		
