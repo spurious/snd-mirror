@@ -124,6 +124,8 @@ To use any of these files, (load &lt;file&gt;); for example <code>(load "v.scm")
 the file already loaded, <code>snd -l v.scm</code>, or put the load statement in ~/.snd.
 </p>
 
+<br>
+
 <A NAME="analogfilterdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>analog-filter.scm</h2></td></tr></table>
 <br>
 <table border=1 cellpadding=3>
@@ -158,6 +160,7 @@ To start auto-saving, (load "autosave.scm").  Thereafter <code>(cancel-auto-save
 stops autosaving, and <code>(auto-save)</code> restarts it.
 </p>
 
+<br>
 <A NAME="bessdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>bess.scm, bess.rb</h2></td></tr></table>
 
 <p>bess.scm is a Guile script (independent of Snd) that loads sndlib and xmlib into Guile,
@@ -168,7 +171,7 @@ Michael Scholz has contributed a Ruby translation of this with many improvements
 bess.rb.
 </p>
 
-
+<br>
 <A NAME="bess1doc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>bess1.scm, bess1.rb</h2></td></tr></table>
 
 <p>bess1.scm and bess1.rb are scripts (independent of Snd), similar to bess.scm and bess.rb,
@@ -177,7 +180,7 @@ compositional algorithm.  Both were written by
 Michael Scholz, based on CLM's bess5.cl and rt.lisp.
 </p>
 
-
+<br>
 <A NAME="birddoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>bird.scm, bird.rb</h2></td></tr></table>
 <pre>
   <em class=emdef>bird</em> start dur frequency freqskew amplitude freq-envelope amp-envelope
@@ -214,7 +217,7 @@ easily be turned into sonograms and transcribed as envelopes.
 </p>
 <p>In CLM, the bird is:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="clm.html#definstrument">definstrument</a> bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope 
 	             &amp;optional (lpfilt 1.0) (degree 0) (reverb-amount 0))
   (multiple-value-bind (beg end) (<a class=quiet href="clm.html#times-&gt;samples">times-&gt;samples</a> startime dur)
@@ -232,7 +235,7 @@ easily be turned into sonograms and transcribed as envelopes.
 The Ruby version of this file is bird.rb.  Just for comparison, the bird instrument
 in Ruby is:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 def bird(start, dur, frequency, freqskew, amplitude, freq_envelope, amp_envelope)
   gls_env = make_env(freq_envelope, hz2radians(freqskew), dur)
   os = make_oscil(frequency)
@@ -248,7 +251,7 @@ end
 <p>The Forth version (written by Michael Scholz) is:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 instrument: bird { f: start f: dur f: freq f: freq-skew f: amp freq-env amp-envel }
     freq make-oscil-1 { os }
     amp-envel amp dur make-env { amp-env }
@@ -258,7 +261,7 @@ instrument: bird { f: start f: dur f: freq f: freq-skew f: amp freq-env amp-enve
 ;instrument
 </pre></td></tr></table>
 <br>
-
+<br>
 <A NAME="clminsdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>clm-ins.scm, clm-ins.rb</h2></td></tr></table>
 
 <p>These are instruments from the CLM tarball translated for use in Snd.
@@ -421,18 +424,18 @@ The 'returned-value' is the value to return from the original call on snd-break.
 Here is a brief session in Snd's listener:
 </p>
 <pre>
-<em class=listener>:</em><em class=typing>(define (test-break a) (let ((b (+ a (snd-break "hiho")))) b))</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-<em class=listener>:</em><em class=typing>(define hi 123)</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-<em class=listener>:</em><em class=typing>(set! hi (test-break 1))</em>
-<em class=listener>break:("hiho")</em>
-<em class=listener>break:</em><em class=typing>hi</em>
-<em class=listener>123</em>
-<em class=listener>break:</em><em class=typing>(break-go 32)</em>
-<em class=listener>:#&lt;unspecified&gt;</em>
-<em class=listener>:</em><em class=typing>hi</em>
-<em class=listener>33</em>
+    <em class=listener>:</em><em class=typing>(define (test-break a) (let ((b (+ a (snd-break "hiho")))) b))</em>
+    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>:</em><em class=typing>(define hi 123)</em>
+    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>:</em><em class=typing>(set! hi (test-break 1))</em>
+    <em class=listener>break:("hiho")</em>
+    <em class=listener>break:</em><em class=typing>hi</em>
+    <em class=listener>123</em>
+    <em class=listener>break:</em><em class=typing>(break-go 32)</em>
+    <em class=listener>:#&lt;unspecified&gt;</em>
+    <em class=listener>:</em><em class=typing>hi</em>
+    <em class=listener>33</em>
 </pre>
 <p>In words, we put a breakpoint in the midst of an expression in the test-break function,
 asking it to type "hiho" and drop into the debugger if it is executed.  Then we call
@@ -455,12 +458,12 @@ that you may have requested and redirects its output to the Snd listener.
 Here's how to trace fm-violin calls in a notelist:
 </p>
 <pre>
-(trace fm-violin)
-(<em class=red>snd-trace</em> (with-sound () (fm-violin 0 1 440 .1)))
+    (trace fm-violin)
+    (<em class=red>snd-trace</em> (with-sound () (fm-violin 0 1 440 .1)))
 </pre>
 <p>To turn off the trace</p>
 <pre>
-(untrace fm-violin)
+    (untrace fm-violin)
 </pre>
 <br>
 
@@ -740,7 +743,7 @@ pitch tracking; it's easily fooled, but could probably be made relatively robust
 The code:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
  (let* ((logla (log10 (/ (+ cor-peak (<a class=quiet href="extsnd.html#vctref">vct-ref</a> data i)) (* 2 cor-peak))))
 	(logca (log10 (/ (+ cor-peak (<a class=quiet href="extsnd.html#vctref">vct-ref</a> data (+ i 1))) (* 2 cor-peak))))
 	(logra (log10 (/ (+ cor-peak (<a class=quiet href="extsnd.html#vctref">vct-ref</a> data (+ i 2))) (* 2 cor-peak))))
@@ -801,7 +804,7 @@ explicitly via the <i>width</i> argument, and implicitly via the
 filter <i>order</i>.  A common application cancels 60 Hz hum:
 </p>
 <pre>
-(notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)))
+    (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)))
 </pre>
 
 <p>Here we've built a list of multiples of 60 and passed it to notch-channel. Its default notch
@@ -812,7 +815,7 @@ cases, this can reduce the hum and its harmonics by about 90%.
 But, if the hum is not absolutely stable, you'll probably want wider notches:
 </p>
 <pre>
-(notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) 1024)
+    (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) 1024)
 </pre>
 
 <p>The order of 1024 means we get 20 Hz width minima (44100 Hz srate), so this
@@ -834,9 +837,9 @@ a sound channel.  <a class=def name="spectralpolynomial">spectral-polynomial</a>
 multiply being a convolution).
 </p>
 <pre>
-<em class=listener>:</em><em class=typing>(vct-polynomial (vct 0.0 2.0) (vct 1.0 2.0))</em> ; x*2 + 1
-<em class=listener>#&lt;vct[len=2]: 1.000 5.000&gt;</em>
-<em class=listener>:</em><em class=typing>(channel-polynomial (vct 0.0 1.0 1.0 1.0))</em> ; x*x*x + x*x + x
+    <em class=listener>:</em><em class=typing>(vct-polynomial (vct 0.0 2.0) (vct 1.0 2.0))</em> ; x*2 + 1
+    <em class=listener>#&lt;vct[len=2]: 1.000 5.000&gt;</em>
+    <em class=listener>:</em><em class=typing>(channel-polynomial (vct 0.0 1.0 1.0 1.0))</em> ; x*x*x + x*x + x
 </pre>
 <p>The "constant" (coeff 0) term in spectral polynomial is treated as a dither amount (that is,
 it has the given magnitude, but its phase is randomized, rather than being simple DC).
@@ -879,9 +882,9 @@ To get a duration change without a pitch change, use this function
 followed by sampling rate conversion back to the original pitch:
 </p>
 <pre>
-(define (stretch-oboe factor)
-  (<em class=red>ssb-bank</em> 557 (* factor 557) 7 40 40)
-  (src-sound (/ 1.0 factor)))
+    (define (stretch-oboe factor)
+      (<em class=red>ssb-bank</em> 557 (* factor 557) 7 40 40)
+      (src-sound (/ 1.0 factor)))
 </pre>
 <p>A similar idea is used in <a class=def name="ssbfm">make-ssb-fm</a> and <b>ssb-fm</b> to implement
 a sort of asymmetric FM.
@@ -1023,7 +1026,7 @@ the update-callback function itself calls each effect's update function to
 get its current option label.  That is,
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define effects-list '())
 (define effects-menu 
   (<a class=quiet href="extsnd.html#addtomainmenu">add-to-main-menu</a> "Effects" 
@@ -1044,7 +1047,7 @@ adds its update function to the effects-list when it is loaded.
 The sound effect itself is the callback function of the given option:
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#addtomenu">add-to-menu</a> effects-menu "reverse" (lambda () (<a class=quiet href="extsnd.html#reversesound">reverse-sound</a>)))
+    (<a class=quiet href="extsnd.html#addtomenu">add-to-menu</a> effects-menu "reverse" (lambda () (<a class=quiet href="extsnd.html#reversesound">reverse-sound</a>)))
 </pre>
 <p>I can't decide whether it would be useful to describe some of these
 effects in more detail.  The code is straightforward, and
@@ -1245,7 +1248,7 @@ These functions depend on the xm module and XSendEvent primarily, but there are
 also Scheme implementations of some of the built-in functions (<a class=quiet href="extsnd.html#windowproperty">window-property</a>).
 </p>
 
-
+<br>
 <A NAME="exampdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>examp.scm, examp.rb</h2></td></tr></table>
 
 <p>examp.scm has become a bit of a grab-bag; rather than get organized, I just
@@ -1379,26 +1382,26 @@ filter using the envelope <i>pm</i>.  <b>notch-filter</b> parallels comb-filter.
 Some examples:
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-filter .8 32))
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-chord .95 100 .3))
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-chord .95 60 .3))
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (zcomb .8 32 '(0 0 1 10)))
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (notch-filter .8 32))
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (formant-filter .99 2400))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-filter .8 32))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-chord .95 100 .3))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-chord .95 60 .3))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (zcomb .8 32 '(0 0 1 10)))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (notch-filter .8 32))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (formant-filter .99 2400))
 </pre>
 <p>In all these cases, however, it's actually much faster to pass the
 filter to filter-sound:</p>
 <pre>
-(<a class=quiet href="extsnd.html#filtersound">filter-sound</a> (<a class=quiet href="clm.html#make-formant">make-formant</a> .99 2400))
+    (<a class=quiet href="extsnd.html#filtersound">filter-sound</a> (<a class=quiet href="clm.html#make-formant">make-formant</a> .99 2400))
 </pre>
 <p><b>formants</b> applies three formants in parallel.
 <b>moving-formant</b> moves a formant according to an envelope.
 <b>osc-formants</b> sets up any number of independently oscillating formants, then calls map-channel.
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (formants .99 900 .98 1800 .99 2700))
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (moving-formant .99 '(0 1200 1 2400)))
-(osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (formants .99 900 .98 1800 .99 2700))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (moving-formant .99 '(0 1200 1 2400)))
+    (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3))
 </pre>
 <pre>
   <em class=emdef>filtered-env</em> envelope
@@ -1453,7 +1456,7 @@ of using graph-hook to set the fft size based on the current time domain window
 size.  The simpler one is:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a> 
 	   (lambda (snd chn y0 y1)
 	     (if (and (<a class=quiet href="extsnd.html#transformgraphp">transform-graph?</a> snd chn) 
@@ -1490,8 +1493,8 @@ To activate this, we need
 to:
 </p>
 <pre>
-(add-hook! <a class=quiet href="extsnd.html#openhook">open-hook</a> open-buffer)
-(add-hook! <a class=quiet href="extsnd.html#closehook">close-hook</a> close-buffer)
+    (add-hook! <a class=quiet href="extsnd.html#openhook">open-hook</a> open-buffer)
+    (add-hook! <a class=quiet href="extsnd.html#closehook">close-hook</a> close-buffer)
 </pre>
 
 <pre>
@@ -1505,7 +1508,7 @@ One way around this is to reset the current-output-port to be a soft port
 that actually calls <a href="extsnd.html#sndprint">snd-print</a> instead:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define stdout (current-output-port)) ;save it in case we want to go back to it
 (define snd-out
   (make-soft-port
@@ -1531,7 +1534,7 @@ number of samples in the graph:
 <pre>
   <em class=emdef>auto-dot</em> snd chn y0 y1
 
-(add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a> auto-dot)
+    (add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a> auto-dot)
 </pre>
 <p>There are also examples tying the channel graph sliders to the fft display.
 Finally there are several somewhat frivolous examples:
@@ -1547,13 +1550,13 @@ flash red and green.  And there are functions to display colored text
 in rxvt:
 </p>
 <pre>
-(display (format #f "~Athis is red!~Abut this is not" red-text normal-text))
-(display (format #f "~A~Ahiho~Ahiho" yellow-bg red-fg normal-text))
+    (display (format #f "~Athis is red!~Abut this is not" red-text normal-text))
+    (display (format #f "~A~Ahiho~Ahiho" yellow-bg red-fg normal-text))
 </pre>
 <p>It's possible to use the same escape sequences in a normal shell script, of course:
 </p>
 <pre>
-echo '\e[41m This is red! \e[0m'
+    echo '\e[41m This is red! \e[0m'
 </pre>
 <br>
 <pre>
@@ -1561,7 +1564,7 @@ echo '\e[41m This is red! \e[0m'
 </pre>
 <p>This is a mouse-click-hook function. If you call</p>
 <pre>
-(click-middle-button-to-open-next-file-in-directory)
+    (click-middle-button-to-open-next-file-in-directory)
 </pre>
 <p>it sets up the mouse-click-hook and open-hook so that clicking the middle
 mouse button closes the current file and opens for the next (alphabetical
@@ -1609,7 +1612,7 @@ The various rms functions return the rms value of the desired data in a variety
 of ways. The fastest and simplest uses CLM's dot-product function:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define (region-rms n)
   "(region-rms n) -&gt; rms of region n's data (chan 0)"
   (if (<a class=quiet href="extsnd.html#regionok">region?</a> n)
@@ -1691,20 +1694,20 @@ are essentially the same idea, but the former drives the synthesis with white no
 Here are some sample calls:
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (echo .5 .5) 0 44100)
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (zecho .5 .75 6 10.0) 0 65000)
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (flecho .5 .9) 0 75000)
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (ring-mod 100 '(0 0 1 0)))
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (ring-mod 10 (list 0 0 1 (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> 100))))
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (am 440))
-(hello-dentist 40.0 .1)
-(fp 1.0 .3 20)
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (compand))
-(expsnd '(0 1 2 .4))
-(expsnd '(0 .5 2 2.0))
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (cross-synthesis 1 .5 128 6.0))
-(voiced-&gt;unvoiced 1.0 256 2.0 2.0)
-(cnvtest 0 1 .1)
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (echo .5 .5) 0 44100)
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (zecho .5 .75 6 10.0) 0 65000)
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (flecho .5 .9) 0 75000)
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (ring-mod 100 '(0 0 1 0)))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (ring-mod 10 (list 0 0 1 (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> 100))))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (am 440))
+    (hello-dentist 40.0 .1)
+    (fp 1.0 .3 20)
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (compand))
+    (expsnd '(0 1 2 .4))
+    (expsnd '(0 .5 2 2.0))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (cross-synthesis 1 .5 128 6.0))
+    (voiced-&gt;unvoiced 1.0 256 2.0 2.0)
+    (cnvtest 0 1 .1)
 </pre>
 <p>There are lots more sound effects scattered around the Snd distribution.
 "vector synthesis" cycles through a collection of incoming audio streams, playing whatever
@@ -1737,9 +1740,9 @@ to Guile's <i>system</i> function, but output is sent to Snd's listener, rather 
 format sound file to a headerless ("raw") file containing 16-bit samples.
 </p>
 <pre>
-(shell "df")
-(add-hook! <a class=quiet href="extsnd.html#closehook">close-hook</a> (lambda (snd) (shell \"sndplay wood16.wav\")))
-(mpg "mpeg.mpg" "mpeg.raw")
+    (shell "df")
+    (add-hook! <a class=quiet href="extsnd.html#closehook">close-hook</a> (lambda (snd) (shell \"sndplay wood16.wav\")))
+    (mpg "mpeg.mpg" "mpeg.raw")
 </pre>
 <p>
 Presumably a similar function could be written to call TiMidity to translate
@@ -1921,7 +1924,7 @@ name might be map-selection.
 The code:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\x 4
   (lambda () "eval over selection"
     (if (<a class=quiet href="extsnd.html#selectionok">selection?</a>)
@@ -1943,7 +1946,7 @@ The <i>func</i> is passed one argument, the sound file name.
 <b>match-sound-files</b> applies <i>func</i> to each sound file in <i>dir</i> and returns a list of files for which func does not return #f.
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (for-each-sound-file
   (lambda (n) 
     (if (&gt; (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> n) 10.0) 
@@ -1954,14 +1957,14 @@ The <i>func</i> is passed one argument, the sound file name.
 <p>We can use Guile's regexp support here to search for all .snd and .wav files:
 </p>
 <pre>
-(let ((reg (make-regexp "\\.(wav|.snd)$")))
-  (match-sound-files (lambda (file) (regexp-exec reg file))))
+    (let ((reg (make-regexp "\\.(wav|.snd)$")))
+      (match-sound-files (lambda (file) (regexp-exec reg file))))
 </pre>
 <p>In fact, we could replace the built-in procedures <A class=def NAME="addsoundextension1">add-sound-file-extension</a> and
 sound-files in directory.  We're using some procedures written by Dirk Herrman here.
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define (filter-list pred? objects)
   (let loop ((objs objects)
 	     (result '()))
@@ -2002,7 +2005,7 @@ original data. <b>enveloped-mix</b> is like <a href="#mixsound">mix-sound</a>, b
 amplitude envelope over the mixed-in data.
 </p>
 <pre>
-(enveloped-mix "pistol.snd" 0 '(0 0 1 1 2 0))
+    (enveloped-mix "pistol.snd" 0 '(0 0 1 1 2 0))
 </pre>
 <p><b>check-for-unsaved-edits</b> adds functions to the <a href="extsnd.html#beforeexithook">before-exit-hook</a>
 and <a href="extsnd.html#beforeclosehook">before-close-hook</a> to check
@@ -2021,10 +2024,10 @@ It's first argument can be either a filename (a string) or a list containing the
 start point in the file, and (optionally) the channel of the file to mix:
 </p>
 <pre>
-  (mix-channel "pistol.snd")
-  (mix-channel "pistol.snd" 10000)       ; mixing starts at sample 10000 in current sound
-  (mix-channel (list "pistol.snd" 1000)) ; mixed data starts at sample 1000 in pistol.snd
-  (mix-channel (list "2.snd" 0 1))       ; mixed data reads channel 1 in 2.snd
+    (mix-channel "pistol.snd")
+    (mix-channel "pistol.snd" 10000)       ; mixing starts at sample 10000 in current sound
+    (mix-channel (list "pistol.snd" 1000)) ; mixed data starts at sample 1000 in pistol.snd
+    (mix-channel (list "2.snd" 0 1))       ; mixed data reads channel 1 in 2.snd
 </pre>
 <p><b>insert-channel</b> is the same as mix-channel, but inserts the specified data.
 </p>
@@ -2091,6 +2094,7 @@ cross-fade is handled by a bank of bandpass filters (<a class=quiet href="clm.ht
 is sometimes only slightly different from a normal (time-domain) cross-fade, but
 there are some interesting possibilities ("sound evaporation", etc).
 </p>
+<br>
 
 <A NAME="fmvdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>fmv.scm</h2></td></tr></table>
 
@@ -2101,7 +2105,7 @@ to call in "real-time" situations.  Any other CLM-style instrument could
 be rewritten in the same form.
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
   <em class=emdef>make-fm-violin</em>
     frequency amplitude #:key (fm-index 1.0) (amp-env #f) (periodic-vibrato-rate 5.0) (random-vibrato-rate 16.0)
     (periodic-vibrato-amplitude 0.0025) (random-vibrato-amplitude 0.005) (noise-amount 0.0) (noise-freq 1000.0)
@@ -2120,7 +2124,7 @@ normally only a few of them are used at a time.  There are two examples of calli
 in fmv.scm, the simpler one being:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define test-v 
   (lambda (beg dur freq amp amp-env)
     (let ((v (<em class=red>make-fm-violin</em>
@@ -2151,18 +2155,20 @@ the note itself should be called until it has had time to ramp off; an exercise
 for the interested reader.
 </p>
 
+<br>
 <A NAME="freeverbdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>freeverb.scm, freeverb.rb</h2></td></tr></table>
 
 <p>These are translations by Michael Scholz of CLM's freeverb.ins.
 </p>
 
-
+<br>
 <A NAME="granidoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>grani.scm</h2></td></tr></table>
 
 <p>This is Fernando Lopez-Lezcano's grani instrument (CLM) translated to Scheme by Mike Scholz.
 The Ruby version is in clm-ins.rb.
 </p>
 
+<br>
 <A NAME="heartdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>heart.scm</h2></td></tr></table>
 
 <p>Snd can be used with non-sound data, and <a href="#wsdoc">with-sound</a> makes it easy to
@@ -2193,6 +2199,7 @@ returns all hooks to the empty state.
 <b>hook-member</b> returns #t if <i>func</i> is already on the hook list.
 </p>
 
+<br>
 <A NAME="indexdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>index.scm, index.rb</h2></td></tr></table>
 <pre>
   <em class=emdef>html</em> obj
@@ -2207,6 +2214,7 @@ in the Snd documents.
 The function that actually passes the url to the reader is <a href="extsnd.html#sendmozilla">send-mozilla</a>.
 </p>
 
+<br>
 <A NAME="dotemacs"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>inf-snd.el, DotEmacs</h2></td></tr></table>
 
 <p>These two files provide support for Snd as an Emacs subjob.  inf-snd.el is by Michael Scholz,
@@ -2346,15 +2354,14 @@ that runs as a normal snd editing function (via <a href="extsnd.html#mapchannel"
 jcrev.scm version assumes it is being called within with-sound:
 </p>
 <pre>
-(with-sound (:reverb jc-reverb) 
-  (fm-violin 0 .1 440 .1 :reverb-amount .1))
+    (with-sound (:reverb jc-reverb) 
+      (fm-violin 0 .1 440 .1 :reverb-amount .1))
 </pre>
 <p>It is possible to use the CLM/with-sound reverbs (or any such instrument) as
 an ordinary editing function:
 </p>
 
-
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (if (not (defined? '*output*)) (load-from-path "ws.scm"))
 (define* (clm-reverb-sound reverb-amount reverb #:optional (reverb-data '()) snd)
   (let ((output (<a class=quiet href="extsnd.html#sndtempnam">snd-tempnam</a>))
@@ -2404,6 +2411,7 @@ plate-reverb: ladspa.scm (a LADSPA effect)<br>
 </td></tr></TABLE>
 <br>
 
+<br>
 <A NAME="ladspadoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>ladspa.scm, ladspa-help.scm, gui.scm</h2></td></tr></table>
 
 <p>ladspa.scm takes your LADSPA library and builds a set of dialogs
@@ -2411,12 +2419,13 @@ to control and preview each effect.  The related help strings are in ladspa-help
 the GUI extensions are in gui.scm.
 </p>
 
-
+<br>
 <A NAME="maracadoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>maraca.scm, maraca.rb</h2></td></tr></table>
 
 <p>This file has a translation to Snd/Scheme of Perry Cook's maraca physical model.
 </p>
 
+<br>
 <A NAME="marksdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>marks.scm, marks.rb</h2></td></tr></table>
 
 <p>marks.scm/rb is a collection of mark-related functions.</p>
@@ -2443,8 +2452,8 @@ the GUI extensions are in gui.scm.
 </p><p><b>describe-mark</b> returns a description of the movements of mark id over the channel's edit history:
 </p>
 <pre>
-:<em class=typing>(describe-mark 0)</em>
-<em class=listener>((mark 0 sound 0 "oboe.snd" channel 0) 654 478)</em>
+    :<em class=typing>(describe-mark 0)</em>
+    <em class=listener>((mark 0 sound 0 "oboe.snd" channel 0) 654 478)</em>
 </pre>
 <p>Here I placed a mark in oboe.snd at sample 654, then deleted a few samples
 before it, causing it to move to sample 478.
@@ -2466,9 +2475,9 @@ functions in examp.scm and scattered around the documentation.
 between the leftmost marks in <i>snd</i>.
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\m 0 
-  (lambda () "eval between marks"
-    (<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "mark eval:" eval-between-marks)))
+    (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\m 0 
+      (lambda () "eval between marks"
+        (<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "mark eval:" eval-between-marks)))
 </pre>
 <p><b>snap-marks</b> places marks at the start and end of the current selection.
 </p><p><b>define-selection-via-marks</b> selects the portion between the given marks.
@@ -2490,7 +2499,7 @@ is used by with-marked-sound in ws.scm.
 Max Mathews.
 </p>
 
-
+<br>
 <A NAME="mixdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>mix.scm, mix.rb</h2></td></tr></table>
 
 <p>mix.scm provides various mix and track related utilities. 
@@ -2524,7 +2533,7 @@ track amp env is interpreted as a panning envelope.
 To tie this into C-x C-q, in place of the default "mix" function,
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\q 4 ; C-q
   (lambda () "pan mix"
     (<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "mix:" (lambda (str) ; use pan-mix at cursor
@@ -2575,14 +2584,14 @@ If the 'chan' arg is #t, all channels are saved.
 mixes happen more quickly):
 </p>
 <pre>
-:<em class=typing>(retempo-track (track 1) 2.0)</em>
-<em class=listener>(1500 7770)</em>
-:<em class=typing>(mix-position 0)</em>
-<em class=listener>1500</em>
-:<em class=typing>(mix-position 1)</em>
-<em class=listener>7770</em>
-:<em class=typing>(+ 1500 (* .5 (- 14039 1500))) ; 14039 is the former mix 1 begin time (see above)</em>
-<em class=listener>7769.5</em>
+    :<em class=typing>(retempo-track (track 1) 2.0)</em>
+    <em class=listener>(1500 7770)</em>
+    :<em class=typing>(mix-position 0)</em>
+    <em class=listener>1500</em>
+    :<em class=typing>(mix-position 1)</em>
+    <em class=listener>7770</em>
+    :<em class=typing>(+ 1500 (* .5 (- 14039 1500))) ; 14039 is the former mix 1 begin time (see above)</em>
+    <em class=listener>7769.5</em>
 </pre>
 <p>
 <b>filter-track</b> applies a filter to each mix sound at the pre-mix point (that is, the
@@ -2593,7 +2602,7 @@ mixed in sound is filtered, then the mix takes place).
 
 
 <!-- INDEX mixerdoc:Matrices -->
-
+<br>
 <A NAME="mixerdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>mixer.scm</h2></td></tr></table>
 
 <p>mixer.scm has functions related to mixers and frames (linear algebra).  There are some
@@ -2623,13 +2632,13 @@ variables, and (in the original mixer) the inverse of the matrix
 of coefficients.  
 </p>
 <pre>
-:<em class=typing>(mixer-inverse (make-mixer 2  2.0 0.0  0.0 1.4))</em>
-<em class=listener>#&lt;mixer: chans: 2, vals: [
- 0.500 0.000
- 0.000 0.714
-]&gt;</em>
-:<em class=typing>(mixer-solve (make-mixer 2 1.0 1.0 2.0 1.0) (make-frame 2 4.0 5.0))</em>
-<em class=listener>#&lt;frame[2]: [1.000 3.000]&gt;</em>
+    :<em class=typing>(mixer-inverse (make-mixer 2  2.0 0.0  0.0 1.4))</em>
+    <em class=listener>#&lt;mixer: chans: 2, vals: [
+     0.500 0.000
+     0.000 0.714
+    ]&gt;</em>
+    :<em class=typing>(mixer-solve (make-mixer 2 1.0 1.0 2.0 1.0) (make-frame 2 4.0 5.0))</em>
+    <em class=listener>#&lt;frame[2]: [1.000 3.000]&gt;</em>
 </pre>
 <p>
 The rest should be obvious -- these are mostly
@@ -2638,29 +2647,29 @@ vectors, then performing the usual tricks upon them.  There are
 more such functions in snd-test.
 </p>
 <pre>
-:<em class=typing>(mixer-determinant (make-mixer 2 1.0 0.0 2.0 1.0))</em>
-<em class=listener>1.0</em>
-:<em class=typing>(mixer-trace (make-mixer 2 1.0 0.0 2.0 1.5))</em>
-<em class=listener>2.5</em>
-:<em class=typing>(mixer-transpose (make-mixer 2 1.0 0.0 2.0 1.5))</em>
-<em class=listener>#&lt;mixer: chans: 2, vals: [
- 1.000 2.000
- 0.000 1.500
-]&gt;</em>
-:<em class=typing>(mixer-diagonal? (make-mixer 2 1.0 0.0 2.0 1.5))</em>
-<em class=listener>#f</em>
-:<em class=typing>(mixer-poly (make-mixer 2  1.0 0.0 0.0 1.0)  0.5 2.0)</em>
-<em class=listener>#&lt;mixer: chans: 2, vals: [
- 2.500 0.000
- 0.000 2.500
-]&gt;</em>
+    :<em class=typing>(mixer-determinant (make-mixer 2 1.0 0.0 2.0 1.0))</em>
+    <em class=listener>1.0</em>
+    :<em class=typing>(mixer-trace (make-mixer 2 1.0 0.0 2.0 1.5))</em>
+    <em class=listener>2.5</em>
+    :<em class=typing>(mixer-transpose (make-mixer 2 1.0 0.0 2.0 1.5))</em>
+    <em class=listener>#&lt;mixer: chans: 2, vals: [
+     1.000 2.000
+     0.000 1.500
+    ]&gt;</em>
+    :<em class=typing>(mixer-diagonal? (make-mixer 2 1.0 0.0 2.0 1.5))</em>
+    <em class=listener>#f</em>
+    :<em class=typing>(mixer-poly (make-mixer 2  1.0 0.0 0.0 1.0)  0.5 2.0)</em>
+    <em class=listener>#&lt;mixer: chans: 2, vals: [
+     2.500 0.000
+     0.000 2.500
+    ]&gt;</em>
 </pre>
 <p><b>mixer-poly</b> treats its mixer argument as the variable in a polynomial.
 The rest of the arguments are the polynomial coefficients starting with the constant term,
 so the example above computes 
 </p>
 <pre>
-  2.0 * <b>M</b> + 0.5 * <b>I</b>
+    2.0 * <b>M</b> + 0.5 * <b>I</b>
 </pre>
 <br>
 
@@ -2683,7 +2692,7 @@ a bit simple-minded; with a little effort, this could run much
 faster.
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
   (define (moog freq Q)
     (let ((gen (<em class=red>make-moog-filter</em> freq Q)))
       (lambda (inval)
@@ -2695,6 +2704,7 @@ faster.
 <p>The Ruby version of this is in examp.rb.
 </p>
 
+<br>
 <A NAME="musglyphs"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>musglyphs.scm, musglyphs.rb</h2></td></tr></table>
 
 <p>musglyphs.scm provides Scheme/Snd wrappers to load CMN's cmn-glyphs.lisp (directly!),
@@ -2707,7 +2717,7 @@ at position (100 100) of size 50; since the <i>style</i> argument defaults to
 the clef instead.  You need CMN, or at least the CMN file cmn-glyphs.lisp
 before loading this file, and Rick Taube's loop.scm (from Common Music).
 </p>
-<img src="sndcmn.png" alt="Snd with music symbols">
+<img src="sndcmn.png" alt="Snd with music symbols" hspace=20>
 <br>
 <p>(The dot size bug in this picture has been fixed, but I'm too lazy
 to make a new version of the picture).
@@ -2737,6 +2747,7 @@ guile-gdbm, set the variable <b>use-gdbm</b> to #t).
 <p>Michael Scholz's translation of this to Ruby is included in examp.rb.
 </p>
 
+<br>
 <A NAME="noisedoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>noise.scm, noise.rb</h2></td></tr></table>
 
 <p>The noise files are translations (thanks to Michael Scholz) of CLM's noise.ins.
@@ -2744,13 +2755,14 @@ noise.ins has a very long pedigree; I think it dates back to about 1978.  It can
 those all-important whooshing sounds.
 </p>
 
+<br>
 <A NAME="oscopedoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>oscope.scm</h2></td></tr></table>
 
 <p>oscope.scm sets up a dialog with a standard Snd channel window (time domain, fft etc) that
 displays the data read from the microphone in "real time".
 </p>
 
-
+<br>
 <A NAME="peakenvdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>peak-env.scm</h2></td></tr></table>
 
 <p>The functions in peak-env.scm provide relatively robust access to
@@ -2764,7 +2776,7 @@ The file has a variable <b>save-peak-env-info</b> (default #t) which
 determines whether these envelopes are being saved.  The procedure
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define (peak-env-info-file-name snd chn)	
   (format #f "~A/~A-peaks-~D" save-peak-env-info-directory (<a class=quiet href="extsnd.html#shortfilename">short-file-name</a> snd) chn))
 </pre></td></tr></table>
@@ -2774,12 +2786,14 @@ case, it looks for the directory ~/peaks, but this
 could be changed to suit your situation.
 </p>
 
+<br>
 <A NAME="pianodoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>piano.scm, piano.rb</h2></td></tr></table>
 
 <p>These files are translations of CLM's piano.ins, a piano physical
 model by Scott van Duyne.
 </p>
 
+<br>
 <A NAME="playdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>play.scm, play.rb</h2></td></tr></table>
 
 <p>These functions play sounds in various ways.</p>
@@ -2795,7 +2809,7 @@ play-channel and friends. The latter are easier to use, in most cases.
 The following doubles each sample in channel 0 during playback:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>play-sound</em>
  (lambda (data)
    (let ((len (sound-data-length data)))
@@ -2814,15 +2828,15 @@ situations).
 and <b>play-sines</b> produces a spectrum given a list of lists of frequency and amplitude:
 </p>
 <pre>
-(play-sines '((425 .05) (450 .01) (470 .01) (546 .02) (667 .01) (789 .034) (910 .032)))
+    (play-sines '((425 .05) (450 .01) (470 .01) (546 .02) (667 .01) (789 .034) (910 .032)))
 </pre>
 <p>
 To set up the keyboard
 as a kind of extended piano, we could map keys to sounds:
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\o 0 (lambda () "play oboe" (<a class=quiet href="extsnd.html#play">play</a> "oboe.snd")))
-(<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\p 0 (lambda () "play pistol" (<a class=quiet href="extsnd.html#play">play</a> "pistol.snd")))
+    (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\o 0 (lambda () "play oboe" (<a class=quiet href="extsnd.html#play">play</a> "oboe.snd")))
+    (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\p 0 (lambda () "play pistol" (<a class=quiet href="extsnd.html#play">play</a> "pistol.snd")))
 </pre>
 <p>The various play hooks can be used to play sounds over and over. 
 </p>
@@ -2831,8 +2845,8 @@ as a kind of extended piano, we could map keys to sounds:
   <A class=def NAME="explayuntilcg">play-until-c-g</A>
   <A class=def NAME="explayregionforever">play-region-forever</a> region
 
-(<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\p 0 (lambda (n) "play often" (play-often (max 1 n))))
-(<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\r 0 (lambda (n) "play region forever" (play-region-forever (max 0 n))))
+    (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\p 0 (lambda (n) "play often" (play-often (max 1 n))))
+    (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\r 0 (lambda (n) "play region forever" (play-region-forever (max 0 n))))
 </pre>
 <p>Now C-u 31 p plays the current sound 31 times; C-u 3 r plays region 3 until we type C-g.
 With a sufficiently fast computer, it's possible to create the samples to be played 
@@ -2840,7 +2854,7 @@ in "real-time".  <b>play-fun</b> starts and stops the DAC, <i>ampit</i> and <i>a
 fill up the audio buffer with data.
 </p>
 <pre>
-(play-fun (ampit (<a class=quiet href="extsnd.html#frames">frames</a>) 2.0) 256)
+    (play-fun (ampit (<a class=quiet href="extsnd.html#frames">frames</a>) 2.0) 256)
 </pre>
 <p>scales sound 0's samples by 2 and sends them to the DAC. (These three functions are now obsolete).
 More useful is:</p>
@@ -2862,7 +2876,7 @@ It reads any number of sound files, using a function to
 decide which one to send to the DAC.
 </p>
 
-
+<br>
 <A NAME="polydoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>poly.scm, poly.rb</h2></td></tr></table>
 
 <pre>
@@ -2890,7 +2904,7 @@ just for fun.
 convolution the infinitely slow way is <b>poly*</b>:
 </p>
 <pre>
-(vct-&gt;channel (poly* (channel-&gt;vct 0 (frames)) (vct 2.0)))
+    (vct-&gt;channel (poly* (channel-&gt;vct 0 (frames)) (vct 2.0)))
 </pre>
 <br>
 
@@ -2909,7 +2923,7 @@ posted if you click button3 in the listener.
 A popup menu is also created for the edit-history pane.
 </p>
 
-
+<br>
 <A NAME="prc95doc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>prc95.scm, prc95.rb</h2></td></tr></table>
 
 <!-- INDEX prc95doc:Physical Models -->
@@ -2923,7 +2937,7 @@ The example instruments are:
 <table border=0>
 <tr><td>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
   <em class=emdef>plucky</em> beg dur freq amplitude maxa
   <em class=emdef>bow</em> beg dur frq amplitude maxa
   <em class=emdef>brass</em> beg dur freq amplitude maxa
@@ -2958,6 +2972,7 @@ plate-reverb: ladspa.scm<br>
 </td></tr></table>
 <br>
 
+<br>
 <A NAME="pvocdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>pvoc.scm, pvoc.rb</h2></td></tr></table>
 <p>
 This is the same as the CLM phase-vocoder generator, but implemented in Scheme.  If you're interested
@@ -2975,7 +2990,7 @@ argument to pvocoder can be a function.
 pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define test-pv-4
   (lambda (gate)
     (let ((pv (<a class=quiet href="clm.html#make-phase-vocoder">make-phase-vocoder</a> #f
@@ -3007,16 +3022,17 @@ to the current sound; <i>pitch</i> specifies the pitch transposition ratio,
 the gate value will not be synthesized), <i>hoffset</i> is a pitch offset in Hz.
 </p>
 
+<br>
 <A NAME="rgbdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>rgb.scm, rgb.rb</h2></td></tr></table>
 <p>rgb.scm (rgb.rb) is a simple translation of the standard X11 color names into Snd
 color objects.
 </p>
 <pre>
-(define snow (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1.00 0.98 0.98))
+    (define snow (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1.00 0.98 0.98))
 </pre>
 <p>is taken from the line</p>
 <pre>
-255 250 250             snow
+    255 250 250             snow
 </pre>
 <p>/usr/lib/X11/rgb.txt.  The choice of a float between 0.0 and 1.0 (rather
 than an integer between 0 and 255) mimics PostScript;
@@ -3028,6 +3044,7 @@ which is already used by Scheme, so (at the suggestion of Dave Phillips)
 this color is named "tawny" in rgb.scm.
 </p>
 
+<br>
 <A NAME="rmsgaindoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>rmsgain.scm</h2></td></tr></table>
 
 <p>rmsgain.scm is an implementation of the balance generators of CLM (based
@@ -3035,8 +3052,8 @@ on CSound originals).  I assume, from a glance at the code, that they're used
 something like this:
 </p>
 <pre>
-(define gen (make-instance &lt;rmsgain&gt;))
-(map-channel (lambda (y) (balance gen y (rms gen y))))
+    (define gen (make-instance &lt;rmsgain&gt;))
+    (map-channel (lambda (y) (balance gen y (rms gen y))))
 </pre>
 <br>
 
@@ -3070,7 +3087,7 @@ spectrum.  <b>show-draggable-input-fft</b> is the same, but the X axis
 <p>Here's some info from Michael Scholz about the Ruby version of rtio:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 rt = make_rtio
 rt.show_input
 rt.show_input_fft
@@ -3083,7 +3100,7 @@ rt.close
 </pre></td></tr></table>
 
 <br>
-
+<br>
 <A NAME="rubberdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>rubber.scm, rubber.rb</h2></td></tr></table>
 
 <pre>
@@ -3104,6 +3121,7 @@ shortened.
 <!-- ((((((( --><!-- this matches the preceding open parens for index.cl's benefit -->
 </p>
 
+<br>
 <A NAME="singerdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>singer.scm, singer.rb</h2></td></tr></table>
 
 <p>singer.scm is a translation of CLM's singer.ins.  It implements
@@ -3125,21 +3143,21 @@ a physical model of the vocal tract described in
 There are a couple example calls at the end of the instrument code.
 </p>
 
-
+<br>
 <A NAME="sndwarpdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>sndwarp.scm</h2></td></tr></table>
 
 <p>
 This is a translation from CLM of Bret Battey's sndwarp instrument. It is similar to <a href="#exexpsrc">expsrc</a>.
 </p>
 
-
+<br>
 <A NAME="snd4doc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd4|5|6|7.scm</h2></td></tr></table>
 
 <p>These files contain a number of the procedures
 that were removed from or renamed in earlier versions of Snd.  Some of them are:
 </p>
 
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=10 hspace=20>
 
 <!-- backward-graph -->
 <tr><td colspan=2>
@@ -3247,7 +3265,7 @@ sample and a vct as the second argument.  Use <a href="extsnd.html#vct_to_channe
 
 </table>
 
-<table border=0 cellspacing=5>
+<table border=0 cellspacing=5 hspace=20>
 <!-- vct-do! -->
 <tr><td><em class=emdef>vct-do!</em> (vobj proc)</td>
 <td><code>vobj[i] = (funcall proc i)</code>.</td></tr>
@@ -3286,7 +3304,7 @@ appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
 </p>
 
 
-
+<br>
 <A NAME="sndgldoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd-gl.scm</h2></td></tr></table>
 
 <p>snd-gl.scm has examples of using OpenGL.
@@ -3312,7 +3330,7 @@ viewing angle.  To move one sample at a time through a sound,
 you could bind the arrow keys:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (bind-key "Left" 0 (lambda () 
                      (set! (left-sample) (max 0 (1- (left-sample)))) 
                      keyboard-no-action))
@@ -3322,7 +3340,7 @@ you could bind the arrow keys:
 </pre></td></tr></table>
 
 <br>
-
+<br>
 <A NAME="sndmotifdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd-motif.scm, snd-xm.rb</h2></td></tr></table>
 
 <pre>
@@ -3416,7 +3434,7 @@ These can be edited to move the mark, or deleted to delete the mark.
 <p><b>select-file</b> starts a file selection dialog, running <i>func</i> if a file is selected:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
  (<a class=quiet href="extsnd.html#addtomenu">add-to-menu</a> 0 "Insert File" 
    (lambda () 
      (<em class=red>select-file</em>
@@ -3437,7 +3455,7 @@ and if you drag it to a channel graph, it will be mixed at the
 mouse location in that channel.
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>make-sound-box</em> "sounds"
 		(list-ref (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>) 3)
 		(lambda (file) 
@@ -3451,7 +3469,7 @@ mouse location in that channel.
 any sounds found in the directory passed as its argument, defaulting to 
 the current directory.
 </p>
-<img src="soundbox.png" alt="show-sounds-in-directory">
+<img src="soundbox.png" alt="show-sounds-in-directory" hspace=20>
 
 <p><b>show-smpte-label</b> shows the current SMPTE frame number in a box
 in the upper left corner of the graph.
@@ -3538,7 +3556,7 @@ instrument is running.  Display points can be organized as pages in a notebook
 widget:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define wid (make-variable-display "do-loop" "i*2" 'text))
 (define wid1 (make-variable-display "do-loop" "i" 'text))
 (do ((i 0 (1+ i)))
@@ -3553,8 +3571,8 @@ although you have to give the sound index explicitly:
 </p>
 
 <pre>
-(define wid2 (make-variable-display "do-loop" "x" 'spectrum))
-(set! (<a class=quiet href="extsnd.html#showfftpeaks">show-transform-peaks</a> (car wid2)) #t)
+    (define wid2 (make-variable-display "do-loop" "x" 'spectrum))
+    (set! (<a class=quiet href="extsnd.html#showfftpeaks">show-transform-peaks</a> (car wid2)) #t)
 </pre>
 
 <p>Each graph or spectrum display is placed in its own pane (this is a desperate
@@ -3563,7 +3581,7 @@ The 'scale choice has an additional argument that gives the range of the
 scale as a list (low high):
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define wid2 (make-variable-display "do-loop" "i*2" 'scale '(-1.0 1.0)))
 </pre></td></tr></table>
 
@@ -3571,7 +3589,7 @@ scale as a list (low high):
 putting it in a text display:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define wid1 (make-variable-display "do-loop" "beg" 'text))
 (define wid2 (make-variable-display "do-loop" "oscil" 'text))
 (definstrument (simp)
@@ -3610,7 +3628,7 @@ this idea.
 <b>load-font</b> loads a font and returns a handle for it.
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define new-font (<em class=red>load-font</em> "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
 
 (define show-hiho
@@ -3631,7 +3649,7 @@ this idea.
 </pre></td></tr></table>
 
 <br>
-
+<br>
 <A NAME="sndtestdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd-test.scm and event.scm</h2></td></tr></table>
 
 <p>
@@ -3646,13 +3664,14 @@ event.scm has some XEvent-related functions used by snd-test.scm.  The Ruby vers
 snd-test.rb.
 </p>
 
+<br>
 <A NAME="straddoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>strad.scm, strad.rb</h2></td></tr></table>
 
 <p>strad.scm is a translation (by Michael Scholz) of CLM's strad.ins (by Juan Reyes).
 It implements a physical model of a bowed string with stiffness.
 </p>
 
-
+<br>
 <A NAME="spectrdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>spectr.scm, spectr.rb</h2></td></tr></table>
 
 <p>The spectr files were translated by Michael Scholz from CLM's spectr.clm.  They contain a large 
@@ -3671,7 +3690,7 @@ a Mus10 version was (in this code ":=" is used in place of the original SAIL lef
 and so on):
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 ARRAY GlissFunc, DecayFunc, AttackFunc, SineWave, AmpFunc(512);
 SYNTH(Sinewave); 1,1 999;
 SEG(AmpFunc); 0,0 1,25 1,50 0,75 0,100;
@@ -3794,7 +3813,7 @@ To give a feel for how one worked in those days, here's a brief quote from the M
 Leland Smith, May 1977):
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 The following generates  1 second of a  440 Hz sine wave  followed by
 1/2 sec. of a  660Hz sine wave. The output goes to a file, MUSIC.MSB,
 which is written on DSKM.  
@@ -3822,7 +3841,7 @@ get us to go away.  I was normally the primary user (in terms of computrons) for
 of going away.  
 In the Samson box world, this (in its initial "chorus" version) was:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 Instrument(Violin);
 RECORD_POINTER(seg) nullfunc;
 INTEGER ARRAY gens[1:4],indgens[1:6], GensA[1:4],AmpGens[1:2];
@@ -3891,7 +3910,7 @@ run about 5 or 6 of these in "real-time", similar to a modern-day
 The parallel in the Sambox world to the SIMP example above is (this is
 taken from SAMBOX.BIL, November 1984):</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
     Instrument(Simp);
     Integer Gen1;
     Gen1:=Osc(Pns,OutA,Zero,SineMode,0,0,Pn[3]);
@@ -3901,7 +3920,7 @@ taken from SAMBOX.BIL, November 1984):</p>
 
 <p>The CLM version of this is:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="clm.html#definstrument">definstrument</a> simp (start-time duration frequency amplitude
                      &amp;optional (amp-env '(0 0 50 1 100 0)))
   (multiple-value-bind (beg end) (<a class=quiet href="clm.html#times-&gt;samples">times-&gt;samples</a> start-time duration)
@@ -3915,7 +3934,7 @@ taken from SAMBOX.BIL, November 1984):</p>
 <p>
 In CLM, the fm-violin became (fm.html, 1989):</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="clm.html#definstrument">definstrument</a> violin (beg end frequency amplitude fm-index)
   (let* ((frq-scl (hz-&gt;radians frequency))
          (maxdev (* frq-scl fm-index))
@@ -3947,7 +3966,7 @@ In CLM, the fm-violin became (fm.html, 1989):</p>
 <p>or in its actual (non-simplified) form:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (defun bit20 (x)			;Samson box modifier got 2's complement 20 bit interpreted as fraction 
   (if (&gt;= x (expt 2 19))                ;(this needed to keep fm-violin backwards compatible with old note lists)
       (float (/ (- x (expt 2 20)) (expt 2 19)))
@@ -4096,7 +4115,7 @@ hard to read due to the way the Sambox system worked).
 And I just found this out on the net; I'm no csound expert, so I merely quote what I find:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 ;ORC
 ; edited by R. Pinkston, modified for use with MIDI2CS by R. Borrmann
 ;
@@ -4162,7 +4181,7 @@ continue:
 in C/CLM is:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
       if (noise_amount != 0.0) fuzz = mus_rand(fmnoi,0.0);
       if (frqf) vib = mus_env(frqf); else vib = 0.0;
       vib += mus_triangle_wave(pervib, 0.0) + 
@@ -4181,7 +4200,7 @@ in C/CLM is:
 
 <p>And here is the Ruby version, written by Michael Scholz (see examp.rb):</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 #
 # fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
 #
@@ -4339,13 +4358,13 @@ end
 </pre></td></tr></table>
 
 <br>
-
+<br>
 <A NAME="wsdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>ws.scm, ws.rb</h2></td></tr></table>
 <p>
 <i>with-sound</i> is the primary sound producing macro in CLM (in a sense, it is CLM's user-interface).
 In Common Lisp it's defined as:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
  (defmacro with-sound ((&amp;key (srate 22050) ...) &amp;body body) 
    (unwind-protect
      (let (...) ,.body)
@@ -4356,7 +4375,7 @@ In Common Lisp it's defined as:</p>
 Kalle Olavi Niemitalo came up with this Scheme/Guile replacement:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define* (with-sound-helper thunk #:key (srate 22050) (explode #f))
   (let ((old-srate (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>)))
     (dynamic-wind 
@@ -4410,7 +4429,7 @@ The global variables that parallel CLM's *clm-...* are:
 </pre>
 <p>As far as possible, this parallels CLM's <a href="clm.html#with-sound">with-sound</a>.</p>
 <pre>
-  (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
+    (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
 </pre>
 <p>
 <b>with-sound</b> opens its output file (<i>output</i> above)
@@ -4420,7 +4439,7 @@ way in outa or locsig.  If <i>reverb</i> is specified, *reverb* is also
 opened (corresponding to CLM's *reverb*).  So the cooperating instrument code is:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (definstrument (ins args)
   (let ...
     (ws-interrupt?) ; see below
@@ -4441,7 +4460,7 @@ The easiest way to mix an existing file into the with-sound output is to use
 mus-mix with *output*:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (with-sound () 
   (fm-violin 0 .1 440 .1) 
   (<a class=quiet href="grfsnd.html#musmix">mus-mix</a> *output* "oboe.snd") 
@@ -4451,7 +4470,7 @@ mus-mix with *output*:
 <p>To continue adding notes to an existing file, set <i>continue-old-file</i>:
 </p>
 <pre>
-(with-sound (:continue-old-file #t) (fm-violin 0 1 440 .1))
+    (with-sound (:continue-old-file #t) (fm-violin 0 1 440 .1))
 </pre>
 <p>with-sound returns the output file name. If a previous file of the same name
 is currently open, it is closed before the new version is opened.
@@ -4464,14 +4483,14 @@ for user-defined generators.  In pure-Scheme it just sets up functions to make
 and access such a list, but in Snd's run macro, it also provides type declarations:
 </p>
 <pre>
-(def-clm-struct hiho i x (s "hiho") (ii 3 :type int) (xx 0.0 :type float))
+    (def-clm-struct hiho i x (s "hiho") (ii 3 :type int) (xx 0.0 :type float))
 </pre>
 <p>defines a structure type ("hiho") with 5 fields.  "hiho-s" defaults to the
 string "hiho", "hiho-ii" defaults to 3, and declares that its type will always
 be int (so it can be used without restriction in run), and so on.
 </p>
 <pre>
-(define hi (make-hiho :xx 3.14))
+    (define hi (make-hiho :xx 3.14))
 </pre>
 <p>defines a variable named hi whose value is a hiho structure (a list) with
 all the fields taking their default value except "xx" which is set to 3.14.
@@ -4481,15 +4500,15 @@ So, hi's value is <code>(list 'hiho #f #f "hiho" 3 3.14)</code>.
 split with-sound into two pieces, primarily for Common Music's benefit.
 </p>
 <pre>
-(define w (init-with-sound :scaled-to .5))
-(fm-violin 0 1 440 .1)
-(finish-with-sound w)
+    (define w (init-with-sound :scaled-to .5))
+    (fm-violin 0 1 440 .1)
+    (finish-with-sound w)
 </pre>
 <p>is equivalent to 
 </p>
 <pre>
-(with-sound (:scaled-to .5)
-  (fm-violin 0 1 440 .1))
+    (with-sound (:scaled-to .5)
+      (fm-violin 0 1 440 .1))
 </pre>
 <p>ws.scm also has a lightly tested translation of CLM's <a href="clm.html#optional-key">def-optkey-fun</a>.
 A variant of with-sound is <b><a name="clmload">clm-load</a></b>.  Its first argument is a filename, assumed to
@@ -4497,8 +4516,8 @@ be a text file containing the body of with-sound, followed by the usual with-sou
 For example, if we have a file named clm-load-test.clm with these contents:
 </p>
 <pre>
-  (fm-violin 0 1 440 .1)
-  (fm-violin 1 1 660 .1)
+    (fm-violin 0 1 440 .1)
+    (fm-violin 1 1 660 .1)
 </pre>
 <p>
 then <code>(clm-load "clm-load-test.clm")</code> is the same as <code>(with-sound () (fm-violin 0 1 440 .1) (fm-violin 1 1 660 .1))</code>.
@@ -4566,7 +4585,7 @@ resource argument list is <i>args</i>.  The editor's current envelope is accessi
 (read and write) via <i>xe-envelope</i>:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define outer (add-main-pane "hiho" xmFormWidgetClass '()))
 (define editor (<em class=red>xe-create-enved</em> "a name" outer 
 			     (list XmNleftAttachment   XmATTACH_FORM
@@ -4577,7 +4596,7 @@ resource argument list is <i>args</i>.  The editor's current envelope is accessi
 (set! (<em class=red>xe-envelope</em> editor) (list 0.0 1.0 1.0 0.5))
 </pre></td></tr></table>
 <br>
-
+<br>
 
 <A NAME="zipdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>zip.scm, zip.rb</h2></td></tr></table>
 <pre>
@@ -4597,7 +4616,7 @@ The following function sets up two sounds,
 an upward ramp and a downward ramp, then zips them together:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define (ramp-test)
   (let ((data (<a class=quiet href="extsnd.html#makevct">make-vct</a> 10000)))
     (<a class=quiet href="extsnd.html#newsound">new-sound</a> "new-0.snd")
@@ -4662,7 +4681,7 @@ generator is allocated that they can call whenever a new value is needed.
 A simple C case is:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 #include &lt;stdio.h&gt;
 #include "clm.h"
 
@@ -4711,7 +4730,7 @@ function is a Scheme function passed in as Scheme code.
 a low-pass filter on the feedback:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define (fcomb gen input)
   (gen input))	
 
@@ -4726,7 +4745,7 @@ a low-pass filter on the feedback:
 classes and methods in Scheme:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (use-modules (oop goops))
 
 (define-class fcmb ()
@@ -4763,7 +4782,7 @@ classes and methods in Scheme:
 To do the same thing in CLM-in-C (clm.c) takes a bit more effort:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 #include &lt;stddef.h&gt;
 #include &lt;math.h&gt;
 #include &lt;stdio.h&gt;
@@ -4947,7 +4966,7 @@ static void init_fcomb(void)
 </pre></td></tr></table>
 <br>
 
-
+<br>
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="noisystory">A Note on Noise Reduction</a></h2></td></tr></table>
 <!-- INDEX noisystory:Noise Reduction -->
 
@@ -4982,7 +5001,7 @@ returned 5437 (in 18 minutes of sound).  That seemed high, and I thought "maybe
 those are just one sample clicks that can easily be smoothed over", so
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define* (count-clips #:optional snd chn)
   (let ((y0 0.0))
     (<a class=quiet href="extsnd.html#countmatches">count-matches</a> 
@@ -4999,7 +5018,7 @@ portions (this function has at least one bug, but I plowed past it -- no
 time for perfection...):
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define* (list-clips #:optional snd chn)
   (let* ((max-clips (count-clips snd chn))
 	 (clip-data (make-vector (* 2 max-clips) 0))
@@ -5035,7 +5054,7 @@ which returned a vector of 669 clipped portions, the worst being 42 samples long
 I saved that data in a separate file, just in case of disaster:
 </p>
 <pre>
-(with-output-to-file "clips" (display (list-clips)))
+    (with-output-to-file "clips" (display (list-clips)))
 </pre>
 <p>
 Since filtering can pad the sound at the beginning, and tends to
@@ -5045,14 +5064,14 @@ back down at the end.
 To see how things look, I reset the graph y bounds:
 </p>
 <pre>
-(set! (<a class=quiet href="extsnd.html#ybounds">y-bounds</a>) (list -1.5 1.5))
+    (set! (<a class=quiet href="extsnd.html#ybounds">y-bounds</a>) (list -1.5 1.5))
 </pre>
 <p>
 Now to conjure up a plausible sine wave between the clip begin and
 end points.  (This is also "just-good-enough" software).
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (if (not (defined? 'pi)) (define pi 3.141592653589793))
 
 (define (fix-clip clip-beg-1 clip-end-1)
@@ -5128,7 +5147,7 @@ telephone recordings, I assumed anything under 40 Hz or above
 </p>
 
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define* (<a name="notchoutrumbleandhiss">notch-out-rumble-and-hiss</a> #:optional (snd #f) (chn #f))
   (let* ((cur-srate (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate">srate</a> snd))))
     (<a class=quiet href="extsnd.html#filtersound">filter-sound</a>
@@ -5154,7 +5173,7 @@ So I bound a few keys:
 </p>
 
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define (play-from-cursor current)
   (<a class=quiet href="extsnd.html#play">play</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#editposition">edit-position</a>)))))
 
@@ -5185,13 +5204,13 @@ I FFT'd a portion containing only that noise and got this spectrum
 (plus a zillion other peaks that didn't look interesting):
 </p>
 <pre>
-((425 .05) (450 .01) (546 .02) (667 .01) (789 .034) (910 .032) (470 .01))
+    ((425 .05) (450 .01) (546 .02) (667 .01) (789 .034) (910 .032) (470 .01))
 </pre>
 <p>To hear that, I took play-sound from play.scm, and
 changed it to play a list of sine tones generated on the fly (the changes are in red):
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define (<em class=red>play-sines freqs-and-amps</em>)
   ;; <em class=red>(play-sines '((440 .4) (660 .3)))</em>
   (let* ((size 256)
@@ -5221,7 +5240,7 @@ its own amplitude, rather than opening and reading a sound file. (I added this f
 I could then resynthesize the suspect tone with:
 </p>
 <pre>
-(play-sines '((425 .05) (450 .01) (546 .02) (667 .01) (789 .034) (910 .032) (470 .01)))
+    (play-sines '((425 .05) (450 .01) (546 .02) (667 .01) (789 .034) (910 .032) (470 .01)))
 </pre>
 <p>
 And to my surprise, the result was close to the main portion of the hum.  So now to notch out those frequencies,
@@ -5229,7 +5248,7 @@ and see what is left:
 </p>
 
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define* (make-notch-frequency-response cur-srate freqs #:optional (notch-width 2))
   (let ((freq-response (list 0.0 0.0)))
     (for-each

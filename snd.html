@@ -529,12 +529,12 @@ something more readable, you can invoke Snd with an
 explicit setting:
 </p>
 <pre>
-  ./snd -xrm "*fontList: 9x15" oboe.snd
+    ./snd -xrm "*fontList: 9x15" oboe.snd
 </pre>
 <p>or place the equivalent line in your .Xdefaults file:
 </p>
 <pre>
-snd*fontList:           9x15
+    snd*fontList:           9x15
 </pre>
 <p>For more on resources and defaults, see <a href="grfsnd.html#startup">Snd Startup</a>.
 </p>
@@ -806,7 +806,7 @@ is a very awkward thing to do), or by calling add-file-sorter and friends, or
 by typing the file or directory name in the 'add:' text widget.
 </p>
 
-<img src="vf.png" alt="View:Files dialog">
+<center><img src="vf.png" alt="View:Files dialog"></center>
 
 <p>Files can be added to the list at startup
 via the -p switch, and the functions <a href="extsnd.html#addfiletoviewfileslist">add-file-to-view-files-list</a>
@@ -892,7 +892,7 @@ current window and is updated as the window bounds change.
 If you'd like the fft size to reflect the current time domain
 window size:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a>
   (lambda (snd chn y0 y1)
     (if (and (<a class=quiet href="extsnd.html#transformgraphp">transform-graph?</a>) 
@@ -937,7 +937,7 @@ of the spectrogram, wavogram, and sonogram, is to use the Color and Orientation
 dialogs from the View menu.
 The keypad keys are mapped to various variables as follows:</p>
 <br>
-<table border=4 bordercolor="lightsteelblue">
+<table border=4 bordercolor="lightsteelblue" hspace=20>
 <tr><th>variable</th><th>increase</th><th>decrease</th></tr>
 <tr><td width = 160><a href="extsnd.html#spectrocutoff">spectro-cutoff</a></td><td width=180>PageUp</td><td width=180>PageDown</td></tr>
 <tr><td><a href="extsnd.html#spectrohop">spectro-hop</a></td><td>Add (+)</td><td>Subtract (-)</td></tr>
@@ -1513,7 +1513,7 @@ The search commands are:</p>
 <p>These searching functions can be closures; the following searches for
 the next positive-going zero crossing, placing the cursor just before it:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define (zero+)
   (let ((lastn 0.0))
     (lambda (n)
@@ -2072,8 +2072,10 @@ the cursor and the next mark, so C-u C-m C-z zeros
 all the samples between the cursor and the next mark.</p>
 
 <!-- INDEX builtinkeys:Key bindings -->
-<p>The <A NAME="builtinkeys"></a>predefined commands are (<i>prompt</i> below is an abbreviation for prompt-in-minibuffer, and some of the return values are omitted for simplicity):</p>
-<table border=0 cellpadding=0>
+<p>The <A NAME="builtinkeys"></a>predefined commands are (<i>prompt</i> below is an abbreviation for prompt-in-minibuffer, and some of the return values are omitted for simplicity):
+</p>
+
+<table border=0 cellpadding=0 hspace=20>
 <tr><td>[Down]</td><td>zoom out</td><td><code><small>;algorithm depends on zoom-focus-style choice</small></code></td></tr>
 <tr><td>[Up]</td><td>zoom in</td><td><code><small>;algorithm depends on zoom-focus-style choice</small></code></td></tr>
 <tr><td valign=top>[Left]</td><td valign=top>move window left</td>

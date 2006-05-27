@@ -2140,10 +2140,15 @@ char *make_key_name(char *buf, int buf_size, int key, int state, bool extended)
 
 static int key_name_to_key(XEN key, const char *caller)
 {
+  /* Ruby thinks chars are strings */
   if (XEN_INTEGER_P(key))
-    return(XEN_TO_C_INT(key)); /* includes 0xffc0 style keys */
+    return(XEN_TO_C_INT(key)); /* includes 0xffc0 style keys, and in Ruby things like ?a */
+
+#if (!HAVE_RUBY)
   if (XEN_CHAR_P(key))
     return((int)(XEN_TO_C_CHAR(key)));
+#endif
+
 #if USE_MOTIF
   return((int)XStringToKeysym(XEN_TO_C_STRING(key)));  /* these are the X/Gtk names: not "+" but "plus" etc */
 #else

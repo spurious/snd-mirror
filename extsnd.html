@@ -858,7 +858,13 @@ a chance to save your current work, but please also send bil@ccrma.stanford.edu 
 <td><code>0</code></td></tr>
 <tr><td></td><td colspan=2>The current Snd window height in pixels.
 This is the same as <br>
-<code>(cadr (<a class=quiet href="#widgetsize">widget-size</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))))</code><br>
+<pre>
+  Scheme: (cadr (<a class=quiet href="#widgetsize">widget-size</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))))
+
+  Ruby:   widget_size(main_widgets.cadr).cadr
+
+  Forth:  main-widgets cadr widget-size cadr
+</pre>
 except at startup when the window-height function and friends defer the set until after the main widgets
 have been created.  If Snd becomes confused about screen size, it can make its main window so large that
 you can't get at any of the decorations for resizing the window; in this emergency you can
@@ -1057,7 +1063,6 @@ useful hook-related functions.
 <br>
 
 <!-- -------------------------------- HOOK TABLE -------------------------------- -->
-<!-- TODO: give overview of the complicated hooks (open, graph, exit, save-state) and crossrefs -->
 
 <hr>
 <h3>Hooks</h3>
@@ -1159,10 +1164,10 @@ called just after an FFT (or spectrum) is calculated.
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (<A NAME="fftpeak">fft-peak</A> snd chn scale)
-  (if (and (<a class=quiet href="#transformgraphp">transform-graph?</a>) 
-           (= (<a class=quiet href="#transformgraphtype">transform-graph-type</a>) <a class=quiet href="#transformgraphtype">graph-once</a>))
+  (if (and (<a class=quiet href="#transformgraphp" onmouseover="return escape('is the fft graph displayed?')">transform-graph?</a>) 
+           (= (<a class=quiet href="#transformgraphtype" onmouseover="return escape('just one fft in the graph (not a sonogram for example)')">transform-graph-type</a>) <a class=quiet href="#transformgraphtype">graph-once</a>))
       (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> 
-        (number-&gt;string (/ (* 2 (<a class=quiet href="#vctpeak">vct-peak</a> (<a class=quiet href="#transform_to_vct">transform-&gt;vct</a> snd chn))) 
+        (number-&gt;string (/ (* 2 (<a class=quiet href="#vctpeak" onmouseover="return escape('maximum value in vct')">vct-peak</a> (<a class=quiet href="#transform_to_vct" onmouseover="return escape('put the transform data in the vct')">transform-&gt;vct</a> snd chn))) 
                            (<a class=quiet href="#transformsize">transform-size</a> snd chn))))))
 (add-hook! <em class=red>after-transform-hook</em> fft-peak)
 </pre></td></tr></table>
@@ -1215,11 +1220,11 @@ just before a sound is saved.
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>before-save-as-hook</em>
   (lambda (index filename selection sr type format comment)
-    (if (not (= sr (<a class=quiet href="#srate">srate</a> index)))
+    (if (not (= sr (<a class=quiet href="#srate" onmouseover="return escape('sampling rate of sound identified by index')">srate</a> index)))
         (let ((chns (<a class=quiet href="#chans">chans</a> index)))
 	  (do ((i 0 (1+ i)))
 	      ((= i chns))
-	    (<a class=quiet href="#srcchannel">src-channel</a> (exact-&gt;inexact (/ (<a class=quiet href="#srate">srate</a> index) sr)) 0 #f index i))
+	    (<a class=quiet href="#srcchannel" onmouseover="return escape('sampling-rate conversion on the given channel')">src-channel</a> (exact-&gt;inexact (/ (<a class=quiet href="#srate">srate</a> index) sr)) 0 #f index i))
 	  (<a class=quiet href="#savesoundas">save-sound-as</a> filename index :header-type type :data-format format :srate sr :comment comment) 
 	  ;; hook won't be invoked recursively
 	  (do ((i 0 (1+ i)))
@@ -1265,7 +1270,7 @@ the fft starts from the left window edge.  To have it start at mid-window:
 (add-hook! <em class=red>before-transform-hook</em>
   (lambda (s c) 
     (inexact-&gt;exact 
-      (* .5 (+ (right-sample s c) (left-sample s c))))))
+      (* .5 (+ (<a class=quiet hred="#rightsample">right-sample</a> s c) (<a class=quiet href="#leftsample">left-sample</a> s c))))))
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td colspan=2>
@@ -1279,8 +1284,8 @@ of a moving mark:
 (define fft-position #f)
 (add-hook! <em class=red>before-transform-hook</em> (lambda (snd chn) fft-position))
 (add-hook! <a class=quiet href="#markdraghook">mark-drag-hook</a> (lambda (id)
-                            (set! fft-position (<a class=quiet href="#marksample">mark-sample</a> id))
-                            (<a class=quiet href="#updatetransformgraph">update-transform-graph</a>)))
+                            (set! fft-position (<a class=quiet href="#marksample" onmouseover="return escape('location of the mark as a sample number')">mark-sample</a> id))
+                            (<a class=quiet href="#updatetransformgraph" onmouseover="return escape('force the fft graph to be displayed again')">update-transform-graph</a>)))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1452,7 +1457,7 @@ See examp.scm for many examples.
     "set the dot size depending on the number of samples being displayed"
     (let ((dots (- (<a class=quiet href="#rightsample">right-sample</a> snd chn) (<a class=quiet href="#leftsample">left-sample</a> snd chn))))
       (if (&gt; dots 100) 
-	  (set! (<a class=quiet href="#dotsize">dot-size</a> snd chn) 1)
+	  (set! (<a class=quiet href="#dotsize" onmouseover="return escape('we have dots if graph-style is graph-dots, graph-dots-and-lines or graph-lollipops')">dot-size</a> snd chn) 1)
 	(if (&gt; dots 50)
 	    (set! (<a class=quiet href="#dotsize">dot-size</a> snd chn) 2)
 	  (if (&gt; dots 25)
@@ -1496,7 +1501,7 @@ uses the maxamp data only if it is already available:
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>initial-graph-hook</em>
   (lambda (snd chn dur)
-    (if (<a class=quiet href="#mussoundmaxampexists">mus-sound-maxamp-exists?</a> (<a class=quiet href="#filename">file-name</a> snd))
+    (if (<a class=quiet href="#mussoundmaxampexists" onmouseover="return escape('this is #t if we have the maxamp already')">mus-sound-maxamp-exists?</a> (<a class=quiet href="#filename">file-name</a> snd))
 	(let* ((amp-vals (<a class=quiet href="#mussoundmaxamp">mus-sound-maxamp</a> (<a class=quiet href="#filename">file-name</a> snd)))
 	       (max-val (list-ref amp-vals (+ (* chn 2) 1))))
 	  (list 0.0 dur (- max-val) max-val))
@@ -1542,7 +1547,7 @@ If it returns a function (of no arguments), that function is called rather than 
 	   (lambda (snd chn)
 	     (lambda ()
 	       (<a class=quiet href="#drawstring">draw-string</a> "hi" 
-			    (<a class=quiet href="#x_to_position">x-&gt;position</a> 0.5 snd chn <a class=quiet href="#y_to_position">lisp-graph</a>) 
+			    (<a class=quiet href="#x_to_position">x-&gt;position</a> 0.5 snd chn <a class=quiet href="#y_to_position" onmouseover="return escape('lisp-graph refers to the 3rd graph displayed by make-graph')">lisp-graph</a>) 
 			    (<a class=quiet href="#y_to_position">y-&gt;position</a> 0.0 snd chn <a class=quiet href="#y_to_position">lisp-graph</a>)
 			    snd chn))))
 </pre></td></tr></table></td></tr>
@@ -1636,7 +1641,7 @@ and #t thereafter:
     (lambda (id x time dragged-before)
       (if (not dragged-before)
 	  (set! first-x x)
-	  (set! (<a class=quiet href="#speedcontrol">speed-control</a>) (/ (- x first-x) 16.0)))
+	  (set! (<a class=quiet href="#speedcontrol" onmouseover="return escape('this is the srate control in the control panel')">speed-control</a>) (/ (- x first-x) 16.0)))
       dragged-before)))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
@@ -2420,7 +2425,7 @@ control panel expansion settings of all sounds, and
 turns on the fft display in all channels of all sounds.
 </p>
 
-<p>When an error occurs, in most cases the function throws a tag such as 'no-such-sound,
+<p>When an error occurs, the function throws a tag such as 'no-such-sound,
 'no-active-selection, etc.
 All the functions that take sound and channel args (<i>snd chn</i> below) can return the errors
 'no-such-sound and 'no-such-channel; all the mix-related functions can return 'no-such-mix;
@@ -2431,8 +2436,6 @@ of these below.
 
 <br>
 
-<!-- TODO: vct methods in ruby -->
-
 <!-- INDEX Vcts:Vcts -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="Vcts">Vcts</a></h3></td></tr></table>
 <p>
@@ -2440,12 +2443,11 @@ Many of the Snd and CLM functions handle vectors (arrays) of data.
 By defining a new vector type, named vct, and providing a package
 of old-style array-processing calls upon that type, we can speed up many
 operations by a factor of 30 -- enough of a difference to warrant
-the added complexity.  A vct can be viewed as a vector;
-to make one, call <i>make-vct</i>.  It is freed by the
+the added complexity.  
+<i>make-vct</i> creates a new vct object.  It is freed by the
 garbage collector when it can't be referenced any further.  To get 
 an element of a vct, use <i>vct-ref</i>; similarly <i>vct-set!</i>
-sets an element (the "!" appended to the setter functions is standard in Scheme;
-another is the use of "?" where Common Lisp is more likely to use "-p").
+sets an element.
 Once created, a vct can be passed to a variety of built-in
 functions:</p>
 
@@ -2680,10 +2682,10 @@ call (set! (samples...) data) with the new sound file's name; otherwise call ins
 </p>
 
 <p>In some cases (Gauche, Ruby, Guile 1.4.1 or later) it's possible to access a vct's
-elements with the syntax (v index), equivalent to (<a class=quiet href="#vctref">vct-ref</a> v index).
-CLM generators can also use this shortcut.
+elements with the syntax <code>(v index)</code>, equivalent to <code>(<a class=quiet href="#vctref">vct-ref</a> v index)</code>.
+In Ruby, vcts partake in the Enumerable and Comparable classes, and have a variety of
+additional methods: map, each, &lt;=&gt;, etc.  See vct.c for a complete list.
 </p>
-<!-- TODO: ruby methods for vcts, similarly for sound-data -->
 
 <br><br>
 
@@ -3125,7 +3127,7 @@ a given position in a sound's channel.  This simplicity, however, comes at
 a price in computation:  if the desired sample is not in Snd's
 in-core (already loaded) view of the data, it has to go get the sample,
 which can sometimes require that it open, read, and close a sound file.
-The result is that <i>sample</i> will bring your code
+The result is that <i>sample</i> can bring your code
 to a grinding halt.  There are two alternatives, leaving aside the scanning
 and mapping functions mentioned below.  One involves keeping the buffer of
 data around explicitly (<i>channel-&gt;vct</i>), and the other involves the
@@ -3369,7 +3371,7 @@ If *reverb* is a snd-&gt;sample generator, for example,
 
 <p>A mark is an object that refers to a particular sample.
 Each mark has an associated sample number (<b>mark-sample</b>), name (<b>mark-name</b>), sync value (<b>mark-sync</b>), and
-a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>).  See <a href="snd.html#marks">Marks</a>
+a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>).  See <a href="snd.html#marks">Marks</a> in snd.html
 for an overview and key bindings associated with marks.
 </p>
 
@@ -3580,7 +3582,7 @@ show mark properties upon click: <a href="sndscm.html#markclickinfo">mark-click-
 <br>
 </td></tr></TABLE>
 
-<p>Other examples can be found in Dave Phillips' marks-menu.scm, snd-motif.scm (<i>add-mark-pane</i>),<br>
+<p>Other examples can be found in Dave Phillips' marks-menu.scm, snd-motif.scm (<i>add-mark-pane</i>),
 edit-menu.scm (trim from mark, etc), examp.scm (move window to correspond to mark, looping).
 </p>
 <br>
@@ -4703,7 +4705,8 @@ The following code sets the 'unite' button if the current sound has more than 4 
 <code><a class=def name="channel_to_vct">channel-&gt;vct</a> (<i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-return vct with the specified data.
+return vct with the specified data.  In Ruby, the "-&gt;" in a function name is translated to "2",
+so the function call is: <code>v = channel2vct(0, 100)</code>.
 </td></tr>
 
 <tr><td></td><td>
@@ -4834,8 +4837,14 @@ Convolve-with in conjunction with mix can provide high-quality reverb:
 <tr><td></td><td>
 return how many samples satisfy the function <i>proc</i>; <i>proc</i> should
 take one argument (the current sample value), and return #t for a hit. <i>sample</i> 
-determines where to start the search.<br><br>
-<code>(count-matches (lambda (y) (&gt; y .1)))</code>
+determines where to start the search.
+<pre>
+    Scheme: (count-matches (lambda (y) (&gt; y .1)))
+
+    Ruby:   count_matches(lambda do |y| y > 0.1 end)
+
+    Forth:  lambda: { y } y 0.1 f- f0< if #f else #t then ; 1 make-proc count-matches
+</pre>
 </td></tr>
 <tr><td></td><td>
 This function is modelled after Emacs. It could be defined along these lines:
@@ -5392,13 +5401,20 @@ Scheme srfi-1 filter function: %filter.<br>
 <tr><td></td><td>
 find the sample that satisfies the function <i>proc</i>. <i>sample</i>
 determines where to start the search. 
-If 'proc' returns some non-#f value, find-channel itself returns a list with that value and the sample number.
+If 'proc' returns some non-#f value, find-channel itself returns a list with that value (if optimization is off) and the sample number.
 In the find dialog and in C-s or C-r searches, if the value returned is an integer, the cursor is offset by that number of samples.
-<br><br><code>(find-channel (lambda (y) (&gt; y .1)))</code><br><code>(find-channel (lambda (y) (and (&gt; y .1) -2)))</code><br>
+
+<pre>
+&gt;<em class=typing>(find-channel (lambda (y) (&gt; y .1)))</em>
+<em class=listener>(#t 4423)</em>
+
+&gt;<em class=typing>(find-channel (lambda (y) (and (&gt; y .1) 'a-big-sample)))</em>
+<em class=listener>(a-big-sample 4423)</em> ; if optimization is on, this will be (#t 4423)
+</pre>
 
 <!-- INDEX searchexamples:Searching -->
 <A NAME="searchexamples"></a>
-<br><br>
+<br>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
@@ -6028,7 +6044,7 @@ actual dB value calculated to -140.0 or -180.0 (depending on which function is c
 <tr><td></td><td>
 create a new sound named <i>file</i>.  The following function opens a new sound,
 extends it to 'dur' samples, and initializes all samples to 'val':
-<br><br><pre>
+<pre>
 (define (init-sound val dur)
   (let ((ind (<em class=red>new-sound</em> "test.snd" :size dur)))
     (<a class=quiet href="#mapchannel">map-channel</a> (lambda (y) val))
@@ -6933,7 +6949,7 @@ and <a href="#moveonepixel">move-one-pixel</a>.
 <b>run</b> is the Snd equivalent of the CL/CLM run macro.  You can wrap it around any numerically-intensive
 block of code, and the result will usually run 10 to 20 times faster.  In the context of with-sound, run is used
 to speed up instrument bodies.  My timing tests indicate that Snd+Run instruments are within a factor of two to four
-of the speed of CL+run+C in CLM.
+of the speed of CL+run+C in CLM.  Currently, only Guile supports this optimization.
 <br><br>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
@@ -6972,8 +6988,6 @@ See <a href="#optimization">optimization</a>
 for some timings.  In Ruby, it's possible to use the <a href="http://www.zenspider.com/Languages/Ruby/">RubyInline</a> module instead.
 </td></tr><tr><td colspan=2></td></tr>
 
-
-<!-- TODO: set sample examples in ruby and forth [also bind-key] -->
 <!-- TODO: clm.fs doc and parallels -->
 
 <!-- sample -->
@@ -6983,7 +6997,11 @@ for some timings.  In Ruby, it's possible to use the <a href="http://www.zenspid
 <tr><td></td><td>
 value of sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 <pre>
-  (set! (sample 100) .5)
+  Scheme: (set! (sample 100) .5)
+
+  Ruby:   set_sample(100, 0.5)
+
+  Forth:  100 0.5 set-sample
 </pre>
 If the desired sample happens to fall outside the current buffer 
 for the indicated channel, this function grinds to a halt -- if you're 
@@ -8554,13 +8572,35 @@ Apply the current control panel state as an edit.
 apply-controls can be used in conjunction with the various control panel variables:
 </td></tr>
 <tr><td></td><td>
+
+<table border=0><tr><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define expnd 
-  (lambda (amt) 
+(define expnd
+  (lambda (amt)
     (set! (<a class=quiet href="#expandcontrolp">expand-control?</a>) #t) 
     (set! (<a class=quiet href="#expandcontrol">expand-control</a>) amt) 
     (<em class=red>apply-controls</em>)))
-</pre></td></tr></table><br>
+</pre></td></tr></table>
+
+</td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="Beige"><pre>
+def expnd(amt)
+  set_expand_control? true
+  set_expand_control amt
+  apply_controls
+end
+</pre></td></tr></table>
+
+</td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="LightGreen"><pre>
+: expnd ( amt -- ) { amt }
+  #t set-expand-control? drop
+  amt set-expand-control drop
+  apply-controls
+;
+</pre></td></tr></table>
+</td></tr></table>
+
 For many examples see new-effects.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -10104,7 +10144,13 @@ In X, these can be found in &lt;X11/xkeysymdef.h&gt;, and in Gtk in gdk/gdkkeysy
 cases, remove the XK_ or GDK_ prefix.  So, for example, the key marked "Page Down" is named
 "Page_Down" in both tables.  Similarly "+" is "plus".  
 </p>
+<pre>
+  Scheme: (<em class=red>bind-key</em> "End" 0 (lambda () "view full sound" (set! (<a class=quiet href="#xbounds">x-bounds</a>) (list 0.0 (/ (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#srate">srate</a>))))))
 
+  Ruby: <em class=red>bind_key</em>("End", 0, lambda do || set_x_bounds([0.0, frames.to_f / srate.to_f]) end)
+
+  Forth: "End" 0 lambda: 0.0 #f #f #f frames #f srate f/ 2 >list set-x-bounds ; 0 make-proc <em class=red>bind-key</em>
+<pre>
 </td></tr><tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>bind-key</em> #\a 4 
@@ -10176,9 +10222,7 @@ Or, more useful perhaps, have C-c set the cursor at a particular sample:
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
-<pre>
-  (<em class=red>bind-key</em> "End" 0 (lambda () "view full sound" (set! (<a class=quiet href="#xbounds">x-bounds</a>) (list 0.0 (/ (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#srate">srate</a>))))))
-</pre>
+
 A similar set rebinds the arrow keys to give much more precise window position and size control:
 </td></tr>
 <tr><td></td><td>
@@ -11145,7 +11189,7 @@ There are a variety of functions and variables related to widget colors and so f
 rgb (red green blue) settings as numbers between 0.0 and 1.0.  A color
 object is created via make-color:</p>
 <pre>
-&gt;<em class=typing>(define blue (<a class=quiet href="#makecolor">make-color</a> 0 0 1))</em>
+    &gt;<em class=typing>(define blue (<a class=quiet href="#makecolor">make-color</a> 0 0 1))</em>
 </pre>
 <p>This declares the Scheme variable "blue" and gives it the value
 of the color whose rgb components include only blue in full force.
@@ -11153,85 +11197,85 @@ The X11 color names are defined in <a href="sndscm.html#rgbdoc">rgb.scm</a>. The
 widget background color is <i>basic-color</i>.
 </p>
 <pre>
-&gt;<em class=typing>(set! (<a class=quiet href="#basiccolor">basic-color</a>) blue)</em>
+    &gt;<em class=typing>(set! (<a class=quiet href="#basiccolor">basic-color</a>) blue)</em>
 </pre>
 
 <p>The color variables
 are:</p>
 
-<table border=0 cellpadding=0 cellspacing=0>
+<table border=0 cellpadding=0 cellspacing=0 hspace=20>
 <tr><td width=220><code><a class=def name="basiccolor">basic-color</a></code></td>
     <td width=180><code>ivory2</code></td>
     <td>main Snd color.</td></tr>
-<tr><td><code><a class=def name="cursorcolor">cursor-color</a></code></td>
-    <td><code>red</code></td>
-    <td>cursor color.</td></tr>
+<tr><td bgcolor="ghostwhite"><code><a class=def name="cursorcolor">cursor-color</a></code></td>
+    <td bgcolor="ghostwhite"><code>red</code></td>
+    <td bgcolor="ghostwhite">cursor color.</td></tr>
 <tr><td><code><a class=def name="datacolor">data-color</a></code></td>
     <td><code>black</code></td>
     <td>color of data in unselected graph.</td></tr>
-<tr><td><code><a class=def name="doitbuttoncolor">doit-button-color</a></code></td>
-    <td><code>palegreen2</code></td>
-    <td>color of Ok and Apply buttons.</td></tr>
+<tr><td bgcolor="ghostwhite"><code><a class=def name="doitbuttoncolor">doit-button-color</a></code></td>
+    <td bgcolor="ghostwhite"><code>palegreen2</code></td>
+    <td bgcolor="ghostwhite">color of Ok and Apply buttons.</td></tr>
 <tr><td><code><a class=def name="doitagainbuttoncolor">doit-again-button-color</a></code></td>
     <td><code>darkolivegreen1</code></td>
     <td>color of Undo&amp;Apply buttons.</td></tr>
-<tr><td><code><em class=emdef>enved-waveform-color</em></code></td>
-    <td><code>blue</code></td>
-    <td>color of waveform displayed in envelope editor.</td></tr>
+<tr><td bgcolor="ghostwhite"><code><em class=emdef>enved-waveform-color</em></code></td>
+    <td bgcolor="ghostwhite"><code>blue</code></td>
+    <td bgcolor="ghostwhite">color of waveform displayed in envelope editor.</td></tr>
 <tr><td><code><em class=emdef>filter-control-waveform-color</em></code></td>
     <td><code>blue</code></td>
     <td>color of control panel filter waveform.</td></tr>
-<tr><td><code><a class=def name="graphcolor">graph-color</a></code></td>
-    <td><code>white</code></td>
-    <td>background color of unselected graph.</td></tr>
+<tr><td bgcolor="ghostwhite"><code><a class=def name="graphcolor">graph-color</a></code></td>
+    <td bgcolor="ghostwhite"><code>white</code></td>
+    <td bgcolor="ghostwhite">background color of unselected graph.</td></tr>
 <tr><td><code><a class=def name="helpbuttoncolor">help-button-color</a></code></td>
     <td><code>lightsteelblue2</code></td>
     <td>color of Help buttons.</td></tr>
-<tr><td><code><a class=def name="highlightcolor">highlight-color</a></code></td>
-    <td><code>ivory1</code></td>
-    <td>highlighting color.</td></tr>
+<tr><td bgcolor="ghostwhite"><code><a class=def name="highlightcolor">highlight-color</a></code></td>
+    <td bgcolor="ghostwhite"><code>ivory1</code></td>
+    <td bgcolor="ghostwhite">highlighting color.</td></tr>
 <tr><td><code><em class=emdef>listener-color</em></code></td>
     <td><code>aliceblue</code></td>
     <td>background color of listener.</td></tr>
-<tr><td><code><em class=emdef>listener-text-color</em></code></td>
-    <td><code>black</code></td>
-    <td>text color in listener.</td></tr>
+<tr><td bgcolor="ghostwhite"><code><em class=emdef>listener-text-color</em></code></td>
+    <td bgcolor="ghostwhite"><code>black</code></td>
+    <td bgcolor="ghostwhite">text color in listener.</td></tr>
 <tr><td><code><a class=def name="markcolor">mark-color</a></code></td>
     <td><code>red</code></td>
     <td>color of mark indicator.</td></tr>
-<tr><td><code><em class=emdef>mix-color</em></code></td>
-    <td><code>darkgray</code></td>
-    <td>color of mix waveforms.</td></tr>
+<tr><td bgcolor="ghostwhite"><code><em class=emdef>mix-color</em></code></td>
+    <td bgcolor="ghostwhite"><code>darkgray</code></td>
+    <td bgcolor="ghostwhite">color of mix waveforms.</td></tr>
 <tr><td><code><a class=def name="positioncolor">position-color</a></code></td>
     <td><code>ivory3</code></td>
     <td>position slider color</td></tr>
-<tr><td><code><a class=def name="pushedbuttoncolor">pushed-button-color</a></code></td>
-    <td><code>lightsteelblue1</code></td>
-    <td>color of pushed button.</td></tr>
+<tr><td bgcolor="ghostwhite"><code><a class=def name="pushedbuttoncolor">pushed-button-color</a></code></td>
+    <td bgcolor="ghostwhite"><code>lightsteelblue1</code></td>
+    <td bgcolor="ghostwhite">color of pushed button.</td></tr>
 <tr><td><code><a class=def name="quitbuttoncolor">quit-button-color</a></code></td>
     <td><code>indianred</code></td>
     <td>color of Dismiss and Cancel buttons.</td></tr>
-<tr><td><code><a class=def name="resetbuttoncolor">reset-button-color</a></code></td>
-    <td><code>goldenrod1</code></td>
-    <td>color of Reset buttons.</td></tr>
+<tr><td bgcolor="ghostwhite"><code><a class=def name="resetbuttoncolor">reset-button-color</a></code></td>
+    <td bgcolor="ghostwhite"><code>goldenrod1</code></td>
+    <td bgcolor="ghostwhite">color of Reset buttons.</td></tr>
 <tr><td><code><a class=def name="sashcolor">sash-color</a></code></td>
     <td><code>lightgreen</code></td>
     <td>color of paned window sashes.</td></tr>
-<tr><td><code><a class=def name="selecteddatacolor">selected-data-color</a></code></td>
-    <td><code>black</code></td>
-    <td>color of data in currently selected graph.</td></tr>
+<tr><td bgcolor="ghostwhite"><code><a class=def name="selecteddatacolor">selected-data-color</a></code></td>
+    <td bgcolor="ghostwhite"><code>black</code></td>
+    <td bgcolor="ghostwhite">color of data in currently selected graph.</td></tr>
 <tr><td><code><a class=def name="selectedgraphcolor">selected-graph-color</a></code></td>
     <td><code>white</code></td>
     <td>background color of currently selected graph.</td></tr>
-<tr><td><code><a class=def name="selectioncolor">selection-color</a></code></td>
-    <td><code>lightsteelblue1</code></td>
-    <td>color of selected portion of graph.</td></tr>
+<tr><td bgcolor="ghostwhite"><code><a class=def name="selectioncolor">selection-color</a></code></td>
+    <td bgcolor="ghostwhite"><code>lightsteelblue1</code></td>
+    <td bgcolor="ghostwhite">color of selected portion of graph.</td></tr>
 <tr><td><code><a class=def name="textfocuscolor">text-focus-color</a></code></td>
     <td><code>white</code></td>
     <td>color of text field when it has focus.</td></tr>
-<tr><td><code><a class=def name="zoomcolor">zoom-color</a></code></td>
-    <td><code>ivory4</code></td>
-    <td>zoom slider color.</td></tr>
+<tr><td bgcolor="ghostwhite"><code><a class=def name="zoomcolor">zoom-color</a></code></td>
+    <td bgcolor="ghostwhite"><code>ivory4</code></td>
+    <td bgcolor="ghostwhite">zoom slider color.</td></tr>
 </table>
 
 <br>

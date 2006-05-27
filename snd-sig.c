@@ -3876,6 +3876,7 @@ static XEN scan_body(void *context)
     {
       XEN res;
       res = XEN_CALL_1_NO_CATCH(sc->proc, C_TO_XEN_DOUBLE((double)read_sample_to_float(sc->sf)));
+      /* in Forth, a return value of 0 is assumed to be false -- should we check for that? */
       if (XEN_NOT_FALSE_P(res))
 	{
 	  if ((sc->counting) &&
