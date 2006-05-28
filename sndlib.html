@@ -907,8 +907,7 @@ of Snd and CLM, both of which are freely available.
 
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="currentstatus">Current Status</a></h2></td></tr></table>
 <br>
-<center>
-<table border=8 bordercolor="lightgreen" cellpadding=4> 
+<table border=8 bordercolor="lightgreen" cellpadding=4 hspace=20> 
   <tr><th>System</th><th>SndSine</th><th>SndInfo</th><th>Audinfo</th><th>SndPlay</th><th>SndRecord</th><th>CLM</th><th>MIDI</th></tr>
   <tr><td>SGI old and new AL</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>partly tested</td></tr>
   <tr><td>OSS (Linux et al)</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>untested</td></tr>
@@ -923,41 +922,43 @@ of Snd and CLM, both of which are freely available.
 </table>
 
 <br>
-</center>
 
-<ul>
-<li>headers supported read/write
-<ul>
-<li>NeXT/Sun/DEC/AFsp
-<li>AIFF/AIFC
-<li>RIFF (Microsoft wave)
-<li>IRCAM (old style)
-<li>NIST-sphere
-<li>no header
-</ul>
-<li>headers supported read-only
-<ul>
-<li>8SVX (IFF), EBICSF, INRS, ESPS, 
-<li>SPPACK, ADC (OGI), AVR, VOC, PVF,
-<li>Sound Tools, Turtle Beach SMP, SoundFont 2.0, 
-<li>Sound Designer I, PSION, MAUD, Kurzweil 2000,
-<li>Gravis Ultrasound, ASF, PAF, CSL, NVF,
-<li>Comdisco SPW, Goldwave sample, omf, quicktime
-<li>Sonic Foundry, SBStudio II, Delusion digital, 
-<li>Digiplayer ST3, Farandole Composer WaveSample,
-<li>Ultratracker WaveSample, Sample Dump exchange, 
-<li>Yamaha SY85, SY99, and TX16, Covox v8, AVI,
-<li>Impulse tracker, Korg, Akai, Turtle Beach
-</ul>
-</ul>
 
+<table border=0 hspace=20>
+<tr><td bgcolor="#EEFDEE">read/write (many data formats)</td></tr>
+<tr><td>
 <pre>
-<small>
-Incomplete: OMF, AVI, ASF, SoundFont 2.0.
-Handled by Snd: Mus10, IEEE text, HCOM, various compression schemes.
-</small>
+    NeXT/Sun/DEC/AFsp
+    AIFF/AIFC
+    RIFF (Microsoft wave)
+    IRCAM (old style)
+    NIST-sphere
+    no header ("raw")
 </pre>
-<br>
+</td></tr>
+<tr><td><br></td></tr>
+<tr><td bgcolor="#EEFDEE">read-only (in selected data formats)</td></tr>
+<tr><td>
+<pre>
+    8SVX (IFF), EBICSF, INRS, ESPS, SPPACK, ADC (OGI), AVR, VOC, PVF, NVF,
+    Sound Tools, Turtle Beach SMP, SoundFont 2.0, Sound Designer I, PSION, MAUD, Kurzweil 2000,
+    Gravis Ultrasound, ASF, PAF, CSL, Comdisco SPW, Goldwave sample, omf, quicktime
+    Sonic Foundry, SBStudio II, Delusion digital, Digiplayer ST3, Farandole Composer WaveSample,
+    Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85, SY99, and TX16, Covox v8, AVI, 
+    Impulse tracker, Korg, Akai, Turtle Beach
+</pre>
+</td></tr>
+<tr><td><br></td></tr>
+<tr><td bgcolor="#EEFDEE">automatically translated to a readable format</td></tr>
+<tr><td>
+<pre>
+    IEEE text, Mus10, SAM 16-bit (modes 1 and 4), AVI, NIST shortpack, HCOM, Intel, 
+    IBM, and Oki (Dialogic) ADPCM, G721, G723_24, G723_40, MIDI sample dump, Ogg, Speex, 
+    Flac, Midi, Mpeg, Shorten, Wavepack, tta (via external programs)
+</pre>
+</td></tr></table>
+
+<br><br>
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="lowerlevels">Lower Levels</a></h2></td></tr></table>
 
 <p>If you'd like to go below the "sound" interface described above,

@@ -1376,7 +1376,7 @@ called when a file is closed (before the actual close, so the index <i>snd</i> i
 </td><td width=30></td><td>
 
 <table border=1 cellpadding=5><tr><td bgcolor="Beige"><pre>
-$close_hook.add_hook!("play") do |snd| 
+<em class=red>$close_hook</em>.add_hook!("play") do |snd| 
   system("aplay wood16.wav")
 end
 </pre></td></tr></table>
@@ -3454,7 +3454,9 @@ If it is a mix reader, return the mix's id.  If it is a track reader, return a l
 
 <p>The <i>read-sample</i> functions can be omitted: <code>(reader)</code> is the same as <code>(<a class=quiet href="#readsample">read-sample</a> reader)</code>.
 </p>
-<hr>
+
+<br>
+<table width="35%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Snd-&gt;sample</h4></td></tr></table>
 
 <p>There is a Snd-specific CLM-style generator that redirects CLM instrument input (via in-any, ina, etc)
 to Snd data, snd-&gt;sample. 
@@ -4124,6 +4126,9 @@ various other dialogs for track operations: mix-menu.scm and track-colors.scm<br
 
 <table width="50%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndregions">Regions and Selections</a></h3></td></tr></table>
 
+<br>
+<table width="35%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Regions</h4></td></tr></table>
+
 <p>A region is a saved portion of sound data.  There is a dialog, the View:Region browser, to inspect regions.
 As regions are defined, the new ones are pushed on a stack, and if enough regions already
 exist, old ones are pushed off (and deleted) to make room.
@@ -4302,9 +4307,9 @@ region-play-list and region-play-sequence in examp.scm<br>
 <br>
 </blockquote></small>
 </td></tr></TABLE>
-<br>
-<hr>
+<br><br>
 
+<table width="35%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Selections</h4></td></tr></table>
 
 <!-- -------------------------------- SELECTION TABLE -------------------------------- -->
 
@@ -11421,7 +11426,9 @@ stack of listeners.  Normally that means you jump out of a breakpoint
 or whatever and find yourself back at the top level.  <code>(throw 'snd-top-level)</code>.
 </p>
 
-<hr>
+<br>
+<table width="50%" border=1><tr><td bgcolor="EEFDEE" valign="middle"><h4>Scheme debugging</h4></td></tr></table>
+
 <p>There are a variety of debugging aids supplied by Guile, including
 a backtrace facility.  To be sure all Guile's debugging support
 code is loaded,
@@ -11455,8 +11462,10 @@ of infinite recursion,
 backtrace information doesn't include a file name or line number, you can watch the
 load process by setting <b>%load-verbosely</b> to #t.
 </p>
-<hr>
-<A NAME="cdebugging"></a>
+
+<br>
+<table width="50%" border=1><tr><td bgcolor="EEFDEE" valign="middle"><h4><A NAME="cdebugging">C debugging</a></h4></td></tr></table>
+
 <!-- INDEX cdebugging:Debugging (C) -->
 <p>If you hit a bug in Snd's C code, you'll need to use gdb (or dbx on the SGI)
 to track it down, or mail me the gory details;
