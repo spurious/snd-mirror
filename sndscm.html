@@ -47,6 +47,22 @@
 
 <A NAME="introduction"></a>
 
+<p>This file contains notes on the Scheme, Ruby, and Forth files included with Snd.
+To use any of these files, load them:
+</p>
+<pre>
+  Scheme: (load "dsp.scm")
+  Ruby:   load "dsp.rb"
+  Forth:  "dsp.fs" file-eval
+</pre>
+<p>
+To start Snd with
+the file already loaded, <code>snd -l v.scm</code>, or put the load statement in your initialization file.
+</p>
+
+<br>
+
+
 <table border=8 bordercolor="lightsteelblue" cellpadding=4>
 <tr><td width=100><a href="#analogfilterdoc">analog-filter.scm</a></td><td>standard analog filters (Butterworth, Chebyshev, Bessel, Elliptic)</td></tr>
 <tr><td><a href="#autosavedoc">autosave.scm</a></td>                   <td>auto-save (edit backup) support</td></tr>
@@ -117,14 +133,7 @@
 <tr><td><a href="#noisystory">A Note on Noise Reduction</a></td><td></td></tr>
 </table>
 
-<br>
-
-<p>This file contains notes on the Scheme, Ruby, and Forth files included with Snd.
-To use any of these files, (load &lt;file&gt;); for example <code>(load "v.scm")</code>.  To start Snd with
-the file already loaded, <code>snd -l v.scm</code>, or put the load statement in ~/.snd.
-</p>
-
-<br>
+<br><br>
 
 <A NAME="analogfilterdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>analog-filter.scm</h2></td></tr></table>
 <br>
@@ -1360,7 +1369,8 @@ I'm slowly dividing out related groups of procedures to separate files.
 
 
 <!-- -------------------------------- FILTERS -------------------------------- -->
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssfilters">filters</a></h3></td></tr></table>
+<br>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssfilters">filters</a></h3></td></tr></table>
 
 <pre>
   <em class=emdef>comb-filter</em> scaler size
@@ -1421,7 +1431,8 @@ is at 1.0, no filtering takes place.
 </p>
 
 <!-- -------------------------------- FFTS -------------------------------- -->
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssffts">ffts</a></h3></td></tr></table>
+<br>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssffts">ffts</a></h3></td></tr></table>
 <pre>
   <A class=def NAME="excorrelate">correlate</a> snd chn y0 y1
   <a class=def name="exsuperimposeffts">superimpose-ffts</a> snd chn y0 y1
@@ -1475,7 +1486,8 @@ up to the nearest power of 2.
 </p>
 
 <!-- -------------------------------- USER-INTERFACE -------------------------------- -->
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssuserinterface">user-interface</a></h3></td></tr></table>
+<br>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssuserinterface">user-interface</a></h3></td></tr></table>
 
 <p><b>show-draggable-graph</b>, in imitation of Snd's FFT display, implements a
 draggable X axis in the lisp graph window.  (This is slightly messier than
@@ -1573,7 +1585,8 @@ by filename) in the current directory.
 
 
 <!-- -------------------------------- MARKS -------------------------------- -->
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssmarks">marks</a></h3></td></tr></table>
+<br>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssmarks">marks</a></h3></td></tr></table>
 
 <p><a href="#marksdoc">marks.scm and marks.rb</a> have most of the mark-related extensions.
 The two in examp.scm are:
@@ -1595,7 +1608,8 @@ a sound as a key is held down).
 </p>
 
 <!-- -------------------------------- SELECTIONS -------------------------------- -->
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssselections">selections</a></h3></td></tr></table>
+<br>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssselections">selections</a></h3></td></tr></table>
 
 <pre>
   <em class=emdef>all-chans</em>
@@ -1629,7 +1643,8 @@ is the currently selected sound) into a bunch of files of the form sample-name.a
 
 
 <!-- -------------------------------- MIXES -------------------------------- -->
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssmixes">mixes</a></h3></td></tr></table>
+<br>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssmixes">mixes</a></h3></td></tr></table>
 
 <p><a href="#mixdoc">mix.scm and mix.rb</a> have mix and track related functions.
 </p>
@@ -1662,7 +1677,8 @@ Cross fade in frequency domain: <a href="#fadedoc">fade.scm</a><br>
 <br>
 
 <!-- -------------------------------- SOUND EFFECTS -------------------------------- -->
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sssoundeffects">sound effects</a></h3></td></tr></table>
+<br>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sssoundeffects">sound effects</a></h3></td></tr></table>
 
 <p>Most of these sound effects are based on CLM generators.
 </p>
@@ -1717,7 +1733,8 @@ happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
 
 
 <!-- -------------------------------- MISCELLANEOUS EXTENSIONS -------------------------------- -->
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssmiscellaneousextensions">miscellaneous extensions</a></h3></td></tr></table>
+<br>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssmiscellaneousextensions">miscellaneous extensions</a></h3></td></tr></table>
 
 <pre>
   <a class=def name="dop">do?</a>
@@ -2082,7 +2099,7 @@ up and down moving ramps look symmetrical around a break point.
 (env-expt-channel '(0 0 1 1 2 -.75 3 0) .3)
 -->
 
-<center><img src="exptenvs.png"></center>
+<img src="exptenvs.png" hspace=20>
 <br><br>
 
 
@@ -2564,7 +2581,7 @@ pre-zero value.
 clicked mix in the help dialog.
 <b>save-mix</b> saves a given mix's data in a file.
 </p>
-<center><img src="pan.png" alt="picture of panning"></center>
+<img src="pan.png" alt="picture of panning" hspace=20>
 <pre>
   <a class=def name="track2vct">track-&gt;vct</a> track (chan 0)
   <a class=def name="savetrack">save-track</a> track filename (chan #t)
@@ -4637,7 +4654,7 @@ an upward ramp and a downward ramp, then zips them together:
 </pre></td></tr></table>
 
 <br>
-<center><img src="zramp.png" alt="zipper ramp output"></center>
+<img src="zramp.png" alt="zipper ramp output" hspace=20>
 <p>Needless to say, this is not intended to be a suave, romantic gesture!
 </p>
 <br>

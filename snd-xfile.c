@@ -5660,7 +5660,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
-      vdat->mixB = XtCreateManagedWidget(_("Mix"), xmPushButtonGadgetClass, bform, args, n);
+      vdat->mixB = XtCreateManagedWidget(_("Mix"), xmPushButtonWidgetClass, bform, args, n);
       XtAddCallback(vdat->mixB, XmNactivateCallback, view_files_mix_selected_callback, (XtPointer)vdat);
 
       n = 0;
@@ -5674,7 +5674,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, vdat->mixB); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      vdat->insertB = XtCreateManagedWidget(_("Insert"), xmPushButtonGadgetClass, bform, args, n);
+      vdat->insertB = XtCreateManagedWidget(_("Insert"), xmPushButtonWidgetClass, bform, args, n);
       XtAddCallback(vdat->insertB, XmNactivateCallback, view_files_insert_selected_callback, (XtPointer)vdat);
 
       n = 0;

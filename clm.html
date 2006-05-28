@@ -292,7 +292,7 @@ difference is that run in Scheme takes a function:
           (<a class=quiet href="#outa">outa</a> (+ i beg) (* amplitude (<a class=quiet href="#oscil">oscil</a> osc)) *output*))))))
 </pre>
 </td></tr></table>
-<br>
+<br><br>
 
 
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A class=def NAME="instruments">CLM instruments</a></h2></td></tr></table>
@@ -364,10 +364,10 @@ and any def-clm-struct name.
 <br>
 
 <!-- INDEX generators:Generators -->
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="generators">Generators</a></h3></td></tr></table>
-<br><center>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="generators">Generators</a></h3></td></tr></table>
+<br>
 
-<table border=8 bordercolor="lightsteelblue" cellpadding=8>
+<table border=8 bordercolor="lightsteelblue" cellpadding=8 hspace=20>
 <tr><td>
 <table border=0>
   <tr><td><a href="#all-pass">all-pass</a></td><td>all-pass filter</td></tr>
@@ -415,7 +415,7 @@ and any def-clm-struct name.
 </table>
 </td></tr>
 </table>
-</center>
+
 <br><br>
 
 <p>A generator is a function that returns the next sample in an infinite stream of samples
@@ -499,7 +499,7 @@ remember what they are and what order they come in.
 
 <!-- ---------------------------------------- OSCIL ---------------------------------------- -->
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>OSCIL (sinusoids)</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>OSCIL (sinusoids)</h4></td></tr></table>
 <pre>
   <a class=def name="make-oscil">make-oscil</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0)
   <a class=def name="oscil">oscil</a> <i>os</i> &amp;optional (<i>fm-input</i> 0.0) (<i>pm-input</i> 0.0)
@@ -612,7 +612,8 @@ using Scheme (Snd/CLM) syntax:
 <!-- ---------------------------------------- ENV ---------------------------------------- -->
 
 <!-- INDEX envelopes:Envelopes --><A class=def NAME="envelopes"></a>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ENV (envelopes)</h4></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ENV (envelopes)</h4></td></tr></table>
 
 <pre>
   <a class=def name="make-env">make-env</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
@@ -775,7 +776,7 @@ duration), it's simplest to use make-env:
 
 <!-- ---------------------------------------- TABLE-LOOKUP ---------------------------------------- -->
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>TABLE-LOOKUP</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>TABLE-LOOKUP</h4></td></tr></table>
 
 <pre>
   <a class=def name="make-table-lookup">make-table-lookup</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
@@ -848,7 +849,7 @@ several standard orchestral instruments, courtesy of James A. Moorer.
 
 <!-- ---------------------------------------- WAVESHAPE ---------------------------------------- -->
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>WAVESHAPE (waveshaping synthesis)</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>WAVESHAPE (waveshaping synthesis)</h4></td></tr></table>
 <pre>
   <a class=def name="make-waveshape">make-waveshape</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>partials</i> '(1 1)) <i>wave</i> <i>size</i>
   <a class=def name="waveshape">waveshape</a> <i>w</i> &amp;optional (<i>index</i> 1.0) (<i>fm</i> 0.0)
@@ -937,7 +938,7 @@ See also <a href="pqw.ins">pqw.ins</a> for phase quadrature waveshaping (single-
 
 <!-- ---------------------------------------- SAWTOOTH ETC ---------------------------------------- -->
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SAWTOOTH-WAVE, TRIANGLE-WAVE, PULSE-TRAIN, SQUARE-WAVE</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SAWTOOTH-WAVE, TRIANGLE-WAVE, PULSE-TRAIN, SQUARE-WAVE</h4></td></tr></table>
 
 <pre>
   <a class=def name="make-triangle-wave">make-triangle-wave</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>initial-phase</i> pi)
@@ -1006,7 +1007,8 @@ One popular kind of vibrato is:
 
 <!-- ---------------------------------------- SUM-OF-COSINES ---------------------------------------- -->
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SUM-OF-COSINES</h4></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SUM-OF-COSINES</h4></td></tr></table>
 <pre>
   <a class=def name="make-sum-of-cosines">make-sum-of-cosines</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>cosines</i> 1) (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0)
   <a class=def name="sum-of-cosines">sum-of-cosines</a> <i>cs</i> &amp;optional (<i>fm</i> 0.0)
@@ -1090,8 +1092,8 @@ work when it doesn't matter.
 
 
 <!-- ---------------------------------------- SUM-OF-SINES ---------------------------------------- -->
-
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SUM-OF-SINES</h4></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SUM-OF-SINES</h4></td></tr></table>
 <pre>
   <a class=def name="make-sum-of-sines">make-sum-of-sines</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
         (<i>sines</i> 1) (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0)
@@ -1120,8 +1122,8 @@ based on:
 
 
 <!-- ---------------------------------------- SSB-AM ---------------------------------------- -->
-
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SSB-AM (pitch shifting via single-sideband AM)</h4></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SSB-AM (pitch shifting via single-sideband AM)</h4></td></tr></table>
 <pre>
   <a class=def name="make-ssb-am">make-ssb-am</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>order</i> 40)
   <a class=def name="ssb-am">ssb-am</a> <i>gen</i> &amp;optional (<i>insig</i> 0.0) (<i>fm</i> 0.0)
@@ -1172,8 +1174,8 @@ Here's a complicated way to get a sine wave at 550 Hz:
 
 
 <!-- ---------------------------------------- WAVE-TRAIN ---------------------------------------- -->
-
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>WAVE-TRAIN</h4></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>WAVE-TRAIN</h4></td></tr></table>
 <pre>
   <a class=def name="make-wave-train">make-wave-train</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0) <i>wave size type</i>
   <a class=def name="wave-train">wave-train</a> <i>w</i> &amp;optional (<i>fm</i> 0.0)
@@ -1241,9 +1243,9 @@ use this for VOSIM and other related techniques.</p>
 
 
 <!-- ---------------------------------------- RAND, RAND-INTERP ---------------------------------------- -->
-
+<br>
 <!-- INDEX randomnumbers:Random Numbers --><a name="randomnumbers"></a>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>RAND, RAND-INTERP (random numbers)</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>RAND, RAND-INTERP (random numbers)</h4></td></tr></table>
 
 <pre>
   <a class=def name="make-rand">make-rand</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
@@ -1424,7 +1426,7 @@ averager has the same period (length) as the rand.
 <!-- ---------------------------------------- SIMPLE FILTERS ---------------------------------------- -->
 
 <!-- INDEX filters:Filters --><A class=def NAME="filters"></a>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ONE-POLE, ONE-ZERO, TWO-POLE, TWO-ZERO (simple filters)</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ONE-POLE, ONE-ZERO, TWO-POLE, TWO-ZERO (simple filters)</h4></td></tr></table>
 
 <pre>
    <a class=def name="make-one-pole">make-one-pole</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>a0</i> <i>b1</i>    ; <i>b1</i> &lt; 0.0 gives lowpass, <i>b1</i> &gt; 0.0 gives highpass
@@ -1493,7 +1495,7 @@ used by freeverb is:
 
 <!-- ---------------------------------------- FORMANT ---------------------------------------- -->
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>FORMANT (resonances)</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>FORMANT (resonances)</h4></td></tr></table>
 
 <pre>
   <a class=def name="make-formant">make-formant</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>radius</i> <i>frequency</i> (<i>gain</i> 1.0)
@@ -1609,8 +1611,8 @@ for cross-synthesis with a bank of 128 formants:
 
 
 <!-- ---------------------------------------- FILTERS ---------------------------------------- -->
-
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>FILTER, IIR-FILTER, FIR-FILTER</h4></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>FILTER, IIR-FILTER, FIR-FILTER</h4></td></tr></table>
 
 <pre>
    <a class=def name="make-filter">make-filter</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>order</i> <i>xcoeffs</i> <i>ycoeffs</i>
@@ -1707,8 +1709,8 @@ get to the envelope.</p>
 
 
 <!-- ---------------------------------------- DELAY ---------------------------------------- -->
-
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>DELAY, TAP</h4></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>DELAY, TAP</h4></td></tr></table>
 <pre>
   <a class=def name="make-delay">make-delay</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>size</i> <i>initial-contents initial-element max-size type</i>
   <a class=def name="delay">delay</a> <i>d</i> <i>input</i> &amp;optional (<i>pm</i> 0.0)
@@ -1806,7 +1808,7 @@ last "size" samples).
 
 <!-- ---------------------------------------- COMB, NOTCH ---------------------------------------- -->
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>COMB, NOTCH</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>COMB, NOTCH</h4></td></tr></table>
 
 <pre>
   <a class=def name="make-comb">make-comb</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>scaler size initial-contents initial-element max-size</i>
@@ -1871,8 +1873,8 @@ The following instrument sweeps the comb filter using the <i>pm</i> argument:
 
 
 <!-- ---------------------------------------- ALL-PASS ---------------------------------------- -->
-
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ALL-PASS</h4></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ALL-PASS</h4></td></tr></table>
 <pre>
   <a class=def name="make-all-pass">make-all-pass</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>feedback feedforward size initial-contents initial-element max-size</i>
   <a class=def name="all-pass">all-pass</a> <i>f input</i> &amp;optional (<i>pm</i> 0.0)
@@ -1903,7 +1905,7 @@ average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 
 <!-- ---------------------------------------- AVERAGE ---------------------------------------- -->
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>AVERAGE (moving window average)</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>AVERAGE (moving window average)</h4></td></tr></table>
 <pre>
   <a class=def name="make-average">make-average</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>size initial-contents initial-element</i>
   <a class=def name="average">average</a> <i>f input</i>
@@ -1944,13 +1946,13 @@ that are squelched and those that are unchanged (to avoid clicks):
                  0 #f snd chn)))
 </pre>
 </td></tr></table>
-<BR>
+<br>
 
 
 <!-- ---------------------------------------- SRC ---------------------------------------- -->
-
+<br>
 <!-- INDEX make-src:sampling-rate conversion -->
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SRC (sampling-rate conversion)</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SRC (sampling-rate conversion)</h4></td></tr></table>
 <pre>
   <a class=def name="make-src">make-src</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>input</i> (<i>srate</i> 1.0) (<i>width</i> 5)
   <a class=def name="src">src</a> <i>s</i> &amp;optional (<i>sr-change</i> 0.0) <i>input-function</i>
@@ -2056,7 +2058,7 @@ a click).
 
 <!-- ---------------------------------------- CONVOLVE ---------------------------------------- -->
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>CONVOLVE</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>CONVOLVE</h4></td></tr></table>
 <pre>
   <a class=def name="make-convolve">make-convolve</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>input filter fft-size filter-size</i>
    <a class=def name="convolve">convolve</a> <i>ff</i> &amp;optional <i>input-function</i>
@@ -2102,7 +2104,7 @@ handier.</p>
 <!-- ---------------------------------------- GRANULATE ---------------------------------------- -->
 
 <!-- INDEX grains:Granular synthesis --><A class=def NAME="grains"></a>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>GRANULATE (granular synthesis)</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>GRANULATE (granular synthesis)</h4></td></tr></table>
 <pre>
   <a class=def name="make-granulate">make-granulate</a> <a class=quiet href="#optional-key">&amp;optional-key</a>   
         <i>input</i>
@@ -2239,8 +2241,8 @@ In the following code, we use the edit function to reverse every other grain:
 
 
 <!-- ---------------------------------------- PHASE-VOCODER ---------------------------------------- -->
-
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>PHASE-VOCODER</h4></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>PHASE-VOCODER</h4></td></tr></table>
 <pre>
   <a class=def name="make-phase-vocoder">make-phase-vocoder</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>input</i> (<i>fft-size</i> 512) (<i>overlap</i> 4) <i>interp</i> (<i>pitch</i> 1.0) <i>analyze edit synthesize</i>
   <a class=def name="phase-vocoder">phase-vocoder</a> pv <i>input-function analyze-function edit-function synthesize-function</i>
@@ -2290,7 +2292,7 @@ in functions that do what the phase-vocoder would have done without any function
 
 <!-- ---------------------------------------- SINE-SUMMATION ---------------------------------------- -->
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SINE-SUMMATION (sum of sines with different amplitudes)</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SINE-SUMMATION (sum of sines with different amplitudes)</h4></td></tr></table>
 <pre>
   <a class=def name="make-sine-summation">make-sine-summation</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0) (<i>n</i> 1) (<i>a</i> .5) (<i>ratio</i> 1.0)
   <a class=def name="sine-summation">sine-summation</a> <i>s</i> &amp;optional (<i>fm</i> 0.0)
@@ -2342,8 +2344,8 @@ don't set <i>a</i> to 1.0!).
 <br>
 
 <!-- ---------------------------------------- ASYMMETRIC-FM ---------------------------------------- -->
-
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ASYMMETRIC-FM</h4></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ASYMMETRIC-FM</h4></td></tr></table>
 <pre>
   <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0) (<i>r</i> 1.0) (<i>ratio</i> 1.0)
   <a class=def name="asymmetric-fm">asymmetric-fm</a> <i>af index</i> &amp;optional (<i>fm</i> 0.0)
@@ -2392,8 +2394,9 @@ would be tricky to get time-varying indices.
 
 <p>For the other kind of asymmetric-fm, and for asymmetric spectra via "single sideband FM", see dsp.scm.
 </p>
+<br>
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>Other Generators</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>Other Generators</h4></td></tr></table>
 <p>There are a number of other generators in the CLM distribution that aren't
 loaded by default.  Among these are:</p>
 <pre>
@@ -2409,7 +2412,7 @@ the output is compatible with CLM's filter generator).
 </p>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A class=def NAME="generic-functions">Generic Functions</a></h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A class=def NAME="generic-functions">Generic Functions</a></h4></td></tr></table>
 
 <p>The generators have internal fields that are sometimes of interest at run-time.  To get or
 set these fields, use these functions (they are described in conjunction with the associated generators):</p>
@@ -2484,10 +2487,10 @@ a CLM generator.
 
 
 <!-- ---------------------------------------- FRAME, MIXER ---------------------------------------- -->
-
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="framesandmixers">Frames, Mixers, Sound IO</a></h3></td></tr></table>
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>Frames and Mixers</h4></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="framesandmixers">Frames, Mixers, Sound IO</a></h3></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>Frames and Mixers</h4></td></tr></table>
 
 <p>There are two special data types in CLM: frames and mixers.
 A frame is an array that represents
@@ -2567,7 +2570,8 @@ functions that are sometimes useful: mixer-solve, mixer-determinant, frame-rever
 
 
 <!-- ---------------------------------------- IN-ANY/OUT-ANY ---------------------------------------- -->
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><a class=def NAME="soundio">Sound IO</a></h4></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><a class=def NAME="soundio">Sound IO</a></h4></td></tr></table>
 
 <p>Sound file IO is supported by a variety of functions.  To read and write sound files into an
 array, use <b>array-&gt;file</b> and <b>file-&gt;array</b>.  (In the CL version of CLM, these
@@ -2621,7 +2625,7 @@ you can use <b>mus-close</b>, but it's also called automatically during garbage 
 <A class=def NAME="outd"></a>
 <A class=def NAME="ina"></a>
 <A class=def NAME="inb"></a>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>OUT-ANY (sound file output)</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>OUT-ANY (sound file output)</h4></td></tr></table>
 <pre>
   <a class=def name="out-any">out-any</a> <i>loc</i> <i>data</i> &amp;optional (<i>channel</i> 0) (<i>o-stream</i> *output*)
 </pre>
@@ -2638,7 +2642,7 @@ These are macros equivalent to <code>(out-any loc data 0 *output*)</code> etc.
 </p>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>INA, INB, IN-ANY (sound file input)</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>INA, INB, IN-ANY (sound file input)</h4></td></tr></table>
 <pre>
   <a class=def name="in-any">in-any</a> <i>loc channel i-stream</i>
 </pre>
@@ -2667,8 +2671,8 @@ These are macros equivalent to <code>(in-any loc 0 stream)</code>.
 
 
 <!-- ---------------------------------------- READIN ---------------------------------------- -->
-
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>READIN (sound file input)</h4></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>READIN (sound file input)</h4></td></tr></table>
 <pre>
  <a class=def name="make-readin">make-readin</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>file</i> (<i>channel</i> 0) <i>start</i> <i>(direction 1)</i>
  <a class=def name="readin">readin</a> <i>rd</i>
@@ -2716,7 +2720,8 @@ readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.in
 <!-- ---------------------------------------- LOCSIG ---------------------------------------- -->
 
 <!-- INDEX make-locsig:Sound placement -->
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>LOCSIG (sound placement)</h4></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>LOCSIG (sound placement)</h4></td></tr></table>
 <pre>
  <a class=def name="make-locsig">make-locsig</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>degree</i> 0.0) (<i>distance</i> 1.0) <i>reverb channels type</i>
  <a class=def name="locsig">locsig</a> <i>loc i in-sig</i>
@@ -2822,8 +2827,8 @@ Here is an example of move-locsig:
 </td></tr></table>
 <br>
 
-
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="functions">Useful functions</a></h3></td></tr></table>
+<br>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="functions">Useful functions</a></h3></td></tr></table>
 
 <p>There are several commonly-used functions, some of which can occur in the run macro. These include
 a few that look for all the world like generators.</p>
@@ -2888,8 +2893,8 @@ current output sampling rate; this is the same as <code>*srate*</code> (in CL) o
 </p>
 
 <!-- ---------------------------------------- POLYNOMIAL ---------------------------------------- -->
-
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>POLYNOMIAL</h4></td></tr></table>
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>POLYNOMIAL</h4></td></tr></table>
 <pre>
    <a class=def name="polynomial">polynomial</a> <i>coeffs x</i>
 </pre>
@@ -2908,7 +2913,7 @@ See also the <a href="#brighten">brighten</a> instrument.
 
 <!-- ---------------------------------------- ARRAY-INTERP ---------------------------------------- -->
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ARRAY-INTERP, DOT-PRODUCT, SINE-BANK</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ARRAY-INTERP, DOT-PRODUCT, SINE-BANK</h4></td></tr></table>
 <pre>
   <a class=def name="array-interp">array-interp</a> <i>fn x</i> &amp;optional <i>size</i>
   <a class=def name="dot-product">dot-product</a> <i>in1 in2</i>
@@ -2968,7 +2973,7 @@ delay or wave-train. The <i>type</i> is one of the interpolation types (mus-inte
 
 <!-- ---------------------------------------- CONTRAST-ENHANCEMENT ---------------------------------------- -->
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>CONTRAST-ENHANCEMENT</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>CONTRAST-ENHANCEMENT</h4></td></tr></table>
 <pre>
    <a class=def name="contrast-enhancement">contrast-enhancement</a> <i>in-samp</i> &amp;optional (<i>fm-index</i> 1.0)
 </pre>
@@ -3042,7 +3047,7 @@ resulting in a steady modulation, rather than an intensification of just the pea
 
 <!-- ---------------------------------------- AMPLITUDE-MODULATE ---------------------------------------- -->
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>RING-MODULATE, AMPLITUDE-MODULATE</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>RING-MODULATE, AMPLITUDE-MODULATE</h4></td></tr></table>
 <pre>
   <a class=def name="ring-modulate">ring-modulate</a> <i>in1 in2</i>
   <a class=def name="amplitude-modulate">amplitude-modulate</a> <i>am-carrier input1 input2</i>
@@ -3105,7 +3110,7 @@ it would be:
 <!-- ---------------------------------------- FFT ---------------------------------------- -->
 
 <!-- INDEX fft:Fourier transforms  -->
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3>FFT (Fourier Transform)</h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3>FFT (Fourier Transform)</h3></td></tr></table>
 <pre>
   <a class=def Name="fft">fft</a> <i>rdat idat fftsize</i> &amp;optional <i>sign</i>
   <a class=def name="make-fft-window">make-fft-window</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>type size</i> (<i>beta</i> 0.0) (<i>alpha</i> 0.0)
@@ -3217,7 +3222,7 @@ and <a href="anoi.ins">anoi.ins</a>.
 </p>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><a class=def name="def-clm-struct">def-clm-struct</a></h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><a class=def name="def-clm-struct">def-clm-struct</a></h4></td></tr></table>
 
 <p><b>def-clm-struct</b> is syntactically like def-struct, but sets up
 the struct field names for the run macro.  There are several examples in prc-toolkit95.lisp, and other instruments.
@@ -3226,7 +3231,7 @@ The fields can only be of a numerical type (no generators, for example).
 <br>
 
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a class=def name="definstrument">Definstrument</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a class=def name="definstrument">Definstrument</a></h3></td></tr></table>
 
 <!-- INDEX ins-files:Instruments --><A class=def NAME="ins-files"></a>
 <p><b>definstrument</b> defines an instrument in CLM.
@@ -3714,8 +3719,9 @@ good reason not to write an instrument such as:</p>
 </pre>
 </td></tr></table>
 <br>
+<br>
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="guileetc">CLM in Scheme, Ruby, C, Forth</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="guileetc">CLM in Scheme, Ruby, C, Forth</a></h3></td></tr></table>
 
 <p>Although this document is aimed at Common Lisp, CLM instruments can also be written
 in Scheme (via Guile or Gauche), Ruby, C, or Forth.  Most the standard CLM instruments are in the Snd tarball (clm-ins.scm primarily).
@@ -3867,7 +3873,7 @@ do this is with with-sound or clm-load.
 </p>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3>With-sound and clm-load</h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3>With-sound and clm-load</h3></td></tr></table>
 <pre>
  <a class=def name="with-sound">with-sound</a> &amp;key 
    ;; "With-sound: check it out!" -- Duane Kuiper, Giants broadcaster after Strawberry homer
@@ -4125,7 +4131,7 @@ and *statistics*.
 
 
 <!-- INDEX mix-and-with-mix:Checkpoints -->
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="mix-and-with-mix">With-mix</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="mix-and-with-mix">With-mix</a></h3></td></tr></table>
 <pre>
   <a class=def name="with-mix">with-mix</a> <i>options</i> <i>file</i> <i>begin</i> &amp;body <i>body</i>
 </pre>
@@ -4244,7 +4250,7 @@ messages).</p>
 
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a name="sound-let">Sound-let</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a name="sound-let">Sound-let</a></h3></td></tr></table>
 
 <p><b>sound-let</b> is a form of <i>let*</i> that creates temporary sound streams
 within with-sound.  Its syntax is like that of <i>let</i> and
@@ -4273,7 +4279,7 @@ its explicitly named output intact.
 </p>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>CLM Defaults</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>CLM Defaults</h4></td></tr></table>
 <p>These are set in defaults.lisp. Generally, the default value is *clm-&lt;var&gt;, and the
 current dynamic value of that variable is *&lt;var&gt;*.
 </p>
@@ -4343,8 +4349,9 @@ begin time offsets.  Its argument is in seconds:</p>
 </pre>
 </td></tr></table>
 <br>
+<br>
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>CLM examples and whatnot</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>CLM examples and whatnot</h4></td></tr></table>
 <p>The file <a href="files">files</a> describes briefly each of the files in the clm
 directory;  <a href="clm-example.lisp">clm-example.lisp</a> shows one way to write notelists;  
 <a href="cm-clm.lisp">cm-clm.lisp</a> is
@@ -4355,7 +4362,7 @@ provides the standard pitch names as lisp variables (a4 = 440.0 and so on).
 </p>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a Name="run*">Run*</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a Name="run*">Run*</a></h3></td></tr></table>
 
 <p><b>run*</b> takes two arguments, a list of variables, and the usual
 run macro body.  The run body is executed (in C normally) and then
@@ -4421,7 +4428,7 @@ Here's another instrument that implements legato between notes by using the prev
 </td></tr></table>
 <br>
 
-
+<br>
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="debugging-aids">Debugging</a></h2></td></tr></table>
 <!-- INDEX debugging-aids:Debugging  -->
 
@@ -4437,8 +4444,9 @@ you anything useful.
 generator problems (these will be reported as bus errors and segmentation
 faults).
 </p>
+<br>
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>The Error Handler</h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>The Error Handler</h4></td></tr></table>
 <p>When you hit an error within with-sound, depending on the context of the error and
 the lisp you're running, you'll see a variety of restart options:</p>
 <pre>
@@ -4469,7 +4477,7 @@ lisp loading clm, load your instrument, and run it.  This is incredibly tedious!
 </p>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndcommunication">CLM and Snd</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndcommunication">CLM and Snd</a></h3></td></tr></table>
 
 <p>If the Snd sound editor is available (currently this is the case on the SGI and
 some Linux systems, and should work on the Sun, but I haven't been able to try it), there are a variety of hooks in clm-snd.lisp that enable
@@ -4628,12 +4636,12 @@ and make sure the control panel is open:
 	             (<a class=quiet href="#with-sound">with-sound</a> ,args ,@body))))
 </pre>
 </td></tr></table>
-<br>
+<br><br>
 
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="appendices">Appendices</a></h2></td></tr></table>
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="header-types">Header and data types</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="header-types">Header and data types</a></h3></td></tr></table>
 <!-- INDEX header-types:Sound file formats  -->
 <!-- INDEX header-types:Data formats  -->
 <!-- INDEX header-types:Headers  -->
@@ -4704,7 +4712,7 @@ respectively.  To change these, call (<a class=quiet href="#mus-set-raw-header-d
 
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="unwanted-noise">Sources of unwanted noise</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="unwanted-noise">Sources of unwanted noise</a></h3></td></tr></table>
 
 <p>The major source of unwanted noise in computer music is amplitude
 quantization.  This means soft notes are buzzy.  If these are later used as
@@ -4820,7 +4828,7 @@ field gradient.
 </smaller>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="clm-init.lisp">clm-init.lisp</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="clm-init.lisp">clm-init.lisp</a></h3></td></tr></table>
 <!-- INDEX clm-init.lisp:CLM Initialization  -->
 
 <p>If the file clm-init.lisp exists in the same directory as <a href="all.lisp">all.lisp,</a> or
@@ -4849,7 +4857,7 @@ Here is my clm-init.lisp:</p>
 </td></tr></table>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="savedimages">About CLM in saved images</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="savedimages">About CLM in saved images</a></h3></td></tr></table>
 <!-- INDEX savedimages:saved images -->
 
 <p>Many lisps have some mechanism to dump the current lisp image as an

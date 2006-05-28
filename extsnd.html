@@ -123,20 +123,20 @@ are in <em class=listener>this color</em>):
 </p>
 
 <table border=0 cellspacing=10>
-<tr><th bgcolor="ghostwhite">Scheme</th><th></th><th bgcolor="beige">Ruby</th><th></th><th bgcolor="lightgreen">Forth</th></tr>
+<tr><th bgcolor="ghostwhite" align=left>Scheme</th><th></th><th bgcolor="beige" align=left>Ruby</th><th></th><th bgcolor="lightgreen" align=left>Forth</th></tr>
 
 <tr>
-<td><pre>
+<td bgcolor="#fbfbff"><pre>
 &gt;<em class=typing>(+ 1 2)</em>
 <em class=listener>3</em>
 </pre></td><td width=50></td>
 
-<td><pre>
+<td bgcolor="#FdFdf2"><pre>
 &gt;<em class=typing>1+2</em>
 <em class=listener>3</em>
 </pre></td><td width=50></td>
 
-<td><pre>
+<td bgcolor="#EefdEe"><pre>
 &gt;<em class=typing>1 2 +</em>
 <em class=listener>3</em>
 </pre></td>
@@ -144,17 +144,17 @@ are in <em class=listener>this color</em>):
 <!-- ------------ -->
 
 <tr>
-<td><pre>
+<td bgcolor="#fbfbff"><pre>
 &gt;<em class=typing>(open-sound "oboe.snd")</em>
 <em class=listener>0</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#FdFdf2"><pre>
 &gt;<em class=typing>open_sound("oboe.snd")</em>
 <em class=listener>0</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#EefdEe"><pre>
 &gt;<em class=typing>"oboe.snd" open-sound</em>
 <em class=listener>0</em>
 </pre></td>
@@ -162,17 +162,17 @@ are in <em class=listener>this color</em>):
 <!-- ------------ -->
 
 <tr>
-<td><pre>
+<td bgcolor="#fbfbff"><pre>
 &gt;<em class=typing>(auto-resize)</em>
 <em class=listener>#t</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#FdFdf2"><pre>
 &gt;<em class=typing>auto_resize</em>
 <em class=listener>true</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#EefdEe"><pre>
 &gt;<em class=typing>auto-resize</em>
 <em class=listener>#t</em>
 </pre></td>
@@ -180,17 +180,17 @@ are in <em class=listener>this color</em>):
 <!-- ------------ -->
 
 <tr>
-<td><pre>
+<td bgcolor="#fbfbff"><pre>
 &gt;<em class=typing>(set! (auto-resize) #f)</em>
 <em class=listener>#f</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#FdFdf2"><pre>
 &gt;<em class=typing>set_auto_resize false</em>
 <em class=listener>false</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#EefdEe"><pre>
 &gt;<em class=typing>#f set-auto-resize</em>
 <em class=listener>#f</em>
 </pre></td>
@@ -198,17 +198,17 @@ are in <em class=listener>this color</em>):
 <!-- ------------ -->
 
 <tr>
-<td><pre>
+<td bgcolor="#fbfbff"><pre>
 &gt;<em class=typing>(set! (x-bounds) '(0.0 1.0))</em>
 <em class=listener>(0.0 1.0)</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#FdFdf2"><pre>
 &gt;<em class=typing>set_x_bounds([0.0, 1.0])</em>
 <em class=listener>0.01.0</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#EefdEe"><pre>
 &gt;<em class=typing>'( 0.0 1.0 ) set-x-bounds</em>
 <em class=listener>'( 0.0 1.0 )</em>
 </pre></td>
@@ -216,17 +216,17 @@ are in <em class=listener>this color</em>):
 <!-- ------------ -->
 
 <tr>
-<td><pre>
+<td bgcolor="#fbfbff"><pre>
 &gt;<em class=typing>(load "bird.scm")</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#FdFdf2"><pre>
 &gt;<em class=typing>load "bird.rb"</em>
 <em class=listener>true</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#EefdEe"><pre>
 &gt;<em class=typing>"bird.fs" file-eval</em>
 <em class=listener>0</em>
 </pre></td>
@@ -234,17 +234,17 @@ are in <em class=listener>this color</em>):
 <!-- ------------ -->
 
 <tr>
-<td><pre>
+<td bgcolor="#fbfbff"><pre>
 &gt;<em class=typing>(map-channel (lambda (y) (* y 2)))</em>
 <em class=listener>0</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#FdFdf2"><pre>
 &gt;<em class=typing>map_channel(lambda do |y| y * 2 end)</em>
 <em class=listener>-0.0015869140625</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#EefdEe"><pre>
 &gt;<em class=typing>lambda: ( y -- val) { y } y 2.0 f* ; 1 make-proc map-channel</em>
 <em class=listener>-0.00158691</em>
 </pre></td>
@@ -252,17 +252,17 @@ are in <em class=listener>this color</em>):
 <!-- ------------ -->
 
 <tr>
-<td><pre>
+<td bgcolor="#fbfbff"><pre>
 &gt;<em class=typing>(define (plus a b) (+ a b))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#FdFdf2"><pre>
 &gt;<em class=typing>def plus(a, b) a+b end</em>
 
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#EefdEe"><pre>
 &gt;<em class=typing>: plus ( a b -- sum ) { a b } a b + ;</em>
 <em class=listener>nil</em>
 </pre></td>
@@ -270,17 +270,17 @@ are in <em class=listener>this color</em>):
 <!-- ------------ -->
 
 <tr>
-<td><pre>
+<td bgcolor="#fbfbff"><pre>
 &gt;<em class=typing>(set! (basic-color) (make-color 1 0 0))</em>
 <em class=listener>(Pixel 16711680)</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#FdFdf2"><pre>
 &gt;<em class=typing>set_basic_color make_color(1, 0, 0)</em>
 <em class=listener>[:Pixel, 16711680]</em>
 </pre></td><td></td>
 
-<td><pre>
+<td bgcolor="#EefdEe"><pre>
 &gt;<em class=typing>1 0 0 make-color set-basic-color</em>
 <em class=listener>#&lt;XmRaw: Pixel 0x9d3b430&gt;</em>
 </pre></td>
@@ -392,7 +392,7 @@ Extensions to Snd can be found in:
 </table>
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="behavior">Customizing Snd's behavior</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="behavior">Customizing Snd's behavior</a></h3></td></tr></table>
 
 <p>Most of Snd's behavior can be customized.  For example,
 when a sound is saved, some people want to be warned if
@@ -424,23 +424,38 @@ exit.  Similar hooks customize actions such as closing
 a sound (<a href="#closehook">close-hook</a>), clicking a mark (<a href="#markclickhook">mark-click-hook</a>),
 pressing a key (<a href="#keypresshook">key-press-hook</a>), and so on.</p>
 
+<br>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndglobalvars">Global variables</a></h4></td></tr></table>
+
 <p>The global variables handle various customizations that aren't callback-oriented.
 For example, 
 as panes (sounds) come and go, Snd's overall size may change (this is
 partly determined by the window manager, but is also
 up to Snd); many people find this distracting -- they would rather that the
 overall window stick to one size.  The Snd variable associated
-with this is "auto-resize"; it can be accessed as <code>(auto-resize)</code> (see Ruby and Forth examples above),
-and set via <code>(set! (auto-resize) #f)</code>.
+with this is "auto-resize"; it can be accessed as:
+</p>
+<pre>
+  Scheme: (auto-resize)
+  Ruby:   auto_resize()
+  Forth:  auto-resize
+</pre>
+<p>and set via:</p>
+<pre>
+  Scheme: (set! (auto-resize) #f)
+  Ruby:   set_auto_resize(false)
+  Forth:  #f set-auto-resize
+</pre>
+<p>
+The variables are presented as a special kind of function, rather than as bare variables, mainly
+to ensure that Snd's response to the assignment is immediate.
 The statement <code>(set! (auto-resize) #f)</code> can be placed in your ~/.snd initialization file
 to make it the default setting for your version of Snd, or placed
 in a separate file of Scheme code and loaded at any time via the load
 function. </p>
 
-<br>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndglobalvars">Global variables</a></h4></td></tr></table>
-
-<p>The variables affecting Snd's overall behavior are:</p>
+<p>The variables affecting Snd's overall behavior are:
+</p>
 
 <!-- -------------------------------- GLOBAL VARIABLE TABLE -------------------------------- -->
 
@@ -784,7 +799,7 @@ the speed-up ratio:<br><br></td></tr>
 <td bgcolor="black"><br></td><td>*2     </td><td>274</td><td>20</td><td>14</td>
 <td bgcolor="black"><br></td><td>fm vln </td><td>206</td><td>16</td><td>13</td></tr>
 </table>
-<br><br></small></td></tr>
+<br></small></td></tr>
 
 
 <!-- run-safety -->
@@ -920,8 +935,10 @@ you can't get at any of the decorations for resizing the window; in this emergen
 <tr><td colspan=2 bgcolor="ghostwhite"><code><a class=def name="windowx">window-x</a></code></td>
 <td bgcolor="ghostwhite"><code>-1</code></td></tr>
 <tr><td></td><td colspan=2>The current Snd window left side in pixels.
-This is (usually) the same as <br>
-<code>(car (<a class=quiet href="#widgetposition">widget-position</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))))</code><br>
+This is (usually) the same as
+<pre>
+    (car (<a class=quiet href="#widgetposition">widget-position</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))))
+</pre>
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -975,7 +992,7 @@ See also <a href="snd.html#zoomoption">Zoom options</a>.
 
 <!-- ---------------------------------------- HOOKS ---------------------------------------- -->
 <!-- INDEX sndhooks:Hooks -->
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndhooks">Hooks</a></h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndhooks">Hooks</a></h4></td></tr></table>
 
 <p>When some user-interface action takes place, code is called that responds to that action;
 these functions are sometimes called callbacks; in Guile the variable that holds a list of such
@@ -1098,21 +1115,16 @@ help my-new-hook
 you'd like to specialize in some way, send me a note.  I'm slowly replacing
 many of the global variables with hooks, since the latter are much more
 flexible.  hooks.scm has snd-hooks and reset-all-hooks, as well as other
-useful hook-related functions.
+useful hook-related functions.  
 </p>
-
-<br>
 
 <!-- -------------------------------- HOOK TABLE -------------------------------- -->
 
-<hr>
-<h3>Hooks</h3>
-
 <p>
-In this list the arguments after the hook name refer to the arguments to the functions invoked by
+In the following list of hooks, the arguments after the hook name refer to the arguments to the functions invoked by
 the hook.  That is, <code>after-apply-hook (snd)</code> means that the functions on the
-after-apply-hook list each take one argument, a sound index.  If the list is followed by some
-indication such as "or", that means the various hook function values are or-d together.
+after-apply-hook list each take one argument, a sound index.  If the argument list is followed by some
+indication such as "[or]", that means the various hook function values are or-d together.
 </p>
 
 <table border=0 cellspacing=12>
@@ -2438,9 +2450,9 @@ If it returns #t, the command is not evaluated.  (This is mostly an internal deb
 </td></tr>
 </table>
 
-<pre>
-  <h4>Channel-specific hooks:</h4>
 
+<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Channel-specific hooks:</h4></td></tr></table>
+<pre>
   <a class=def name="edithook">edit-hook</a> (<i>snd chn</i>)
   <a class=def name="undohook">undo-hook</a> (<i>snd chn</i>)
   <a class=def name="afteredithook">after-edit-hook</a> (<i>snd chn</i>)
@@ -2492,7 +2504,7 @@ See also autosave.scm.  <small>It is possible for after-edit-hook to be called m
 
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndobjects">Snd's objects</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndobjects">Snd's objects</a></h3></td></tr></table>
 
 <p>Snd presents its various data structures as a list
 of sounds, each with a list of channels, each with lists of edits,
@@ -2546,7 +2558,7 @@ of these below.
 <br>
 
 <!-- INDEX Vcts:Vcts -->
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="Vcts">Vcts</a></h3></td></tr></table>
+<table width="50%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="Vcts">Vcts</a></h3></td></tr></table>
 <p>
 Many of the Snd and CLM functions handle vectors (arrays) of data.
 By defining a new vector type, named vct, and providing a package
@@ -2798,7 +2810,7 @@ additional methods: map, each, &lt;=&gt;, etc.  See vct.c for a complete list.
 
 <br><br>
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounddata">Sound-data and Sndlib</a></h3></td></tr></table>
+<table width="50%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounddata">Sound-data and Sndlib</a></h3></td></tr></table>
 
 <p>Another sound data object is the sound-data array used in Sndlib.  It is essentially an array of vcts, each
 vct representing one channel's data.
@@ -3229,7 +3241,7 @@ throw 'mus-error upon encountering an error, rather than returning -1 like the u
 <br>
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="samplereaders">Sample-readers</a></h3></td></tr></table>
+<table width="50%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="samplereaders">Sample-readers</a></h3></td></tr></table>
 <p>
 The simplest data access function is <a href="#sample">sample</a> which returns the sample at
 a given position in a sound's channel.  This simplicity, however, comes at
@@ -3474,7 +3486,7 @@ If *reverb* is a snd-&gt;sample generator, for example,
 
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmarks">Marks</a></h3></td></tr></table>
+<table width="50%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmarks">Marks</a></h3></td></tr></table>
 
 <A NAME="markstuff"></a>
 
@@ -3696,7 +3708,7 @@ edit-menu.scm (trim from mark, etc), examp.scm (move window to correspond to mar
 </p>
 <br>
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmixes">Mixes and Tracks</a></h3></td></tr></table>
+<table width="50%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmixes">Mixes and Tracks</a></h3></td></tr></table>
 
 <p>Mixing operations have a lot of extra support built into Snd.  In nearly every mixing function, you
 can request a "mix tag" (or set that request globally via <a href="#withmixtags">with-mix-tags</a>).
@@ -3706,7 +3718,7 @@ into "tracks", which have a very similar set of functions.
 </p>
 
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3>Mixes</h3></td></tr></table>
+<table width="35%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Mixes</h4></td></tr></table>
 
 <p>A mix is an object that represents a channel of a sound mix.
 Each mix object has a unique identifier called its id that identifies it in the following functions.
@@ -3927,7 +3939,7 @@ delete all mixes: <a href="sndscm.html#deleteallmixes">delete-all-mixes</a><br>
 <br>
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3>Tracks</h3></td></tr></table>
+<table width="35%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Tracks</h4></td></tr></table>
 
 <A NAME="trackstuff"></a>
 
@@ -4110,7 +4122,7 @@ various other dialogs for track operations: mix-menu.scm and track-colors.scm<br
 <br>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndregions">Regions and Selections</a></h3></td></tr></table>
+<table width="50%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndregions">Regions and Selections</a></h3></td></tr></table>
 
 <p>A region is a saved portion of sound data.  There is a dialog, the View:Region browser, to inspect regions.
 As regions are defined, the new ones are pushed on a stack, and if enough regions already
@@ -4539,7 +4551,7 @@ It's easy to extend the notion of a selection to an arbitrary list of sound port
 
 
 <br><br>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounds">Sounds and channels</a></h3></td></tr></table>
+<table width="50%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounds">Sounds and channels</a></h3></td></tr></table>
 
 <p>This is the heart of Snd; we've waded through all the ancillary junk, and we've
 finally reached the functions that actually edit sounds!  Most of these functions
@@ -8621,7 +8633,7 @@ of the fft points, making the display look smoother.
 </table>
 
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="customcontrols">the control panel</a></h4></td></tr></table>
+<table width="35%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="customcontrols">the control panel</a></h4></td></tr></table>
 
 <p>The control panel makes it easy to try out various quick effects without
 editing anything.  You can change volume ('amp'), pitch ('speed'), tempo
@@ -9135,7 +9147,7 @@ entire panel.
 <!-- INDEX editlists:Edit lists -->
 <!-- Edit Lists -->
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="editlists">Edit Lists</a></h3></td></tr></table>
+<table width="35%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="editlists">Edit Lists</a></h4></td></tr></table>
 
 <p>An edit list (in other editors this is called an "edit decision list", I guess because it sounds decisive)
 describes the edit history of a channel. When, for example, you type C-d, nothing actually
@@ -9386,7 +9398,7 @@ sound).  <a href="#ptreechannel">ptree-channel</a> (still in the experimental st
 
 <!-- Transforms -->
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndtransforms">Transforms</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndtransforms">Transforms</a></h3></td></tr></table>
 
 <p>Most of the transform functions and variables have been treated above, so they are only mentioned here.
 </p>
@@ -9559,7 +9571,7 @@ More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fou
 
 <!-- Dialogs -->
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snddialogs">Dialogs</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snddialogs">Dialogs</a></h3></td></tr></table>
 
 <p>The built-in dialogs, accessible from the main menu, provide the standard, but sometimes clumsy
 ways to open and save sounds, edit envelopes and headers, and set various global variables.
@@ -10229,7 +10241,7 @@ to do!
 </p>
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndmisc">Miscellaneous functions</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndmisc">Miscellaneous functions</a></h3></td></tr></table>
 
 <p>These functions don't seem to fit anywhere else:</p>
 
@@ -11232,7 +11244,7 @@ to put the date and time in the Snd title bar.
 </table>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndconstants">Constants</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndconstants">Constants</a></h3></td></tr></table>
 
 <p><b>Sndlib</b> (see <a href="sndlib.html#sndlibguile">sndlib.html</a> for a complete list):</p>
 <pre>
@@ -11342,7 +11354,7 @@ to put the date and time in the Snd title bar.
 </pre>
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snderrors">Errors and Debugging</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snderrors">Errors and Debugging</a></h3></td></tr></table>
 <!-- INDEX snderrors:Debugging (Scheme) -->
 <p> When something goes awry, the various functions can throw an error (a symbol)
 which is normally caught by the default error handler (this is a kind of goto 
@@ -11477,7 +11489,7 @@ run
 <br>
 
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="appearance">Customizing Snd's appearance</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="appearance">Customizing Snd's appearance</a></h3></td></tr></table>
 
 <p>Snd's overall appearance is controlled first by the startup <a href="grfsnd.html#sndswitches">switches</a> that
 choose the outermost widget; normally this is a paned window with a sound
@@ -11488,7 +11500,7 @@ and -vertical determine which way the outer panes are laid out.
 There are a variety of functions and variables related to widget colors and so forth.
 </p>
 
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="colors">Colors</a></h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="colors">Colors</a></h4></td></tr></table>
 
 <p>A color in Snd is an object with three fields representing the
 rgb (red green blue) settings as numbers between 0.0 and 1.0.  A color
@@ -11665,7 +11677,7 @@ Snd graphics contexts: <a href="#sndgcs">snd-gcs</a><br>
 
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="fonts">Fonts</a></h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="fonts">Fonts</a></h4></td></tr></table>
 
 <p>Fonts in Snd are strings containing a description of the
 desired font.  These can be the abbreviated forms such as
@@ -11698,7 +11710,7 @@ If the requested font can't be loaded, the set! statement returns the old (uncha
 </pre>
 <br>
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndwidgets">Widgets</a></h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndwidgets">Widgets</a></h4></td></tr></table>
 
 <p>Snd can be built with Motif, Gtk, or no GUI; other toolkits might be supported in the future.
 Unfortunately, each toolkit has its own way of handling widgets.  I originally started implementing
@@ -11766,7 +11778,7 @@ for looks):
 <p>See also snd-motif.scm, new-effects.scm, and examp.scm.</p>
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="graphics">Graphics</a></h4></td></tr></table>
+<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="graphics">Graphics</a></h4></td></tr></table>
 
 <p>It is possible to draw directly on any of the channel graphs.  Simple examples include the
 <a href="#showoriginal">show-original</a> after-graph-hook function, and the
