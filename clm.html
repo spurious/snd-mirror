@@ -152,12 +152,12 @@ To get an arpeggio:</p>
 To listen to the last computed sound again:
 </p>
 <pre>
-(play)
+    (play)
 </pre>
 <p>or, if you have some saved sound file:
 </p>
 <pre>
-(<a class=quiet href="#dac">play</a> "a-great.snd")
+    (<a class=quiet href="#dac">play</a> "a-great.snd")
 </pre>
 
 <p>Although you can use CLM simply as a bunch of canned functions, it's a lot more
@@ -184,12 +184,12 @@ mostly in Common Lisp):</p>
 
 <p>Now to hear our sine wave:</p>
 <pre>
-(<a class=quiet href="#with-sound">with-sound</a> () (simp 0 0.25 440.0 0.2))
+    (<a class=quiet href="#with-sound">with-sound</a> () (simp 0 0.25 440.0 0.2))
 </pre>
 <p>This creates a sine-wave at 440.0 Hz, 0.2 amplitude, between times 0 and
 0.25 seconds.  The line:</p>
 <pre>
-(definstrument simp (start-time duration frequency amplitude) <!-- ) -->
+    (definstrument simp (start-time duration frequency amplitude) <!-- ) -->
 </pre>
 <p>says that we are defining an instrument (definstrument) named simp which
 takes the four parameters start-time, duration, frequency, and amplitude.
@@ -218,7 +218,7 @@ to increment the current phase in the last line:</p>
 adds its third argument (in this case a complicated expression) into channel 0 of the
 current output stream at sample <i>i</i>.  The expression itself:</p>
 <pre>
-(* amplitude (sin (* j 2.0 pi (/ frequency *srate*)))))))) <!-- (((( -->
+    (* amplitude (sin (* j 2.0 pi (/ frequency *srate*)))))))) <!-- (((( -->
 </pre>
 <p>is creating a sinusoid (via the "sin" function) at the specified
 volume ("amplitude" is passed as an argument to simp), and the
@@ -236,7 +236,7 @@ detailed and explicit than would be the case in any real
 instrument.  
 Finally, the line:</p>
 <pre>
-(<a class=quiet href="#with-sound">with-sound</a> () (simp 0 0.25 440.0 0.2))
+    (<a class=quiet href="#with-sound">with-sound</a> () (simp 0 0.25 440.0 0.2))
 </pre>
 <p>opens an output sound file, calls simp, closes the file, and
 plays the result.  
@@ -299,7 +299,7 @@ difference is that run in Scheme takes a function:
 
 <p>The normal structure of an instrument is:</p>
 <pre>
-(<i>definstrument</i> name (args) (setup code (<i>run</i> run-time code)))
+    (<i>definstrument</i> name (args) (setup code (<i>run</i> run-time code)))
 </pre>
 <p>The setup code creates any needed generators for the
 run-time code which actually generates the samples.
@@ -3226,7 +3226,8 @@ and <a href="anoi.ins">anoi.ins</a>.
 
 <p><b>def-clm-struct</b> is syntactically like def-struct, but sets up
 the struct field names for the run macro.  There are several examples in prc-toolkit95.lisp, and other instruments.
-The fields can only be of a numerical type (no generators, for example).
+In CL, the fields can only be of a numerical type (no generators, for example).
+Elsewhere, use <code>:type clm</code> for any such fields (see snd-test.scm for examples).
 </p>
 <br>
 

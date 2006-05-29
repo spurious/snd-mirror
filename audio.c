@@ -9801,7 +9801,7 @@ void mus_reset_audio_c (void)
 
 int mus_audio_compatible_format(int dev) 
 {
-#if HAVE_ALSA
+#if HAVE_ALSA || HAVE_JACK
   int err, i;
   float val[32];
   int ival[32];

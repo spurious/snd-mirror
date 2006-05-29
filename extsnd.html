@@ -11442,9 +11442,9 @@ and fall into the debugger.
 To get backtraces,
 </p>
 <pre>
-  (read-enable 'positions)
-  (debug-enable 'debug 'backtrace)
-  (set! (show-backtrace) #t)
+    (read-enable 'positions)
+    (debug-enable 'debug 'backtrace)
+    (set! (show-backtrace) #t)
 </pre>
 <p>
 The debugger in Snd is just the normal
@@ -11456,7 +11456,7 @@ around.  These can be examined via <b>bt</b> (backtrace) and
 of infinite recursion,
 </p>
 <pre>
-(debug-set! stack 0)
+    (debug-set! stack 0)
 </pre>
 <p>turns off the (very conservative) stack overflow check.  If for some reason the
 backtrace information doesn't include a file name or line number, you can watch the
@@ -11473,16 +11473,16 @@ if the error is a segfault, there is probably a file named "core" or "core.nnnn"
 on the current directory:
 </p>
 <pre>
-gdb snd core
-where
+    gdb snd core
+    where
 </pre>
 <p>The "where" command displays the stack at the point of the error.
 "up", and "down" move around in the stack, and "info locals" prints out
 the current frame's variables.  If it's not a segfault, you can
 </p>
 <pre>
-gdb snd
-run
+    gdb snd
+    run
 </pre>
 <p>Then get the error to happen, at which point you should fall into gdb
 where you can type "where" and so on.  If the problem involves X, you
@@ -11490,9 +11490,9 @@ may need to run -sync.  If Gtk, run --g-fatal-errors.  If Snd gets hung
 and you need to type C-C to get out, 
 </p>
 <pre>
-gdb snd
-break exit
-run
+    gdb snd
+    break exit
+    run
 </pre>
 
 <br>
@@ -11605,7 +11605,7 @@ are:</p>
 </table>
 
 <br>
-<p>I have these lines in my ~/.snd file:
+<p>I have these lines in my ~/.snd_guile file:
 </p>
 <pre>
     (define beige (<a class=quiet href="#makecolor">make-color</a> 0.96 0.96 0.86))
@@ -11613,15 +11613,26 @@ are:</p>
     (set! (<a class=quiet href="#selectedgraphcolor">selected-graph-color</a>) beige)
     (set! (<a class=quiet href="#selecteddatacolor">selected-data-color</a>) blue)
 </pre>
-<p>The buttons colors (help-button-color, etc) only work in a few cases (Motif, 2.n where
-"n" is less than 3).  I should probably deprecate them.
+<p>In Forth (~/.snd_forth) this is:
 </p>
+<pre>
+    0.96 0.96 0.86 make-color ( beige ) set-selected-graph-color drop
+    0.00 0.00 1.00 make-color ( blue )  set-selected-data-color drop
+</pre>
+<p>And in Ruby (~/.snd_ruby):
+</p>
+<pre>
+    beige = make_color 0.96, 0.96, 0.86
+    blue = make_color 0, 0, 1
+    set_selected_graph_color beige
+    set_selected_data_color blue
+</pre>
 <br>
 
-<p>In addition, the various transforms can be displayed using colormaps.  The following
+<p>The various transforms can be displayed using colormaps.  The following
 variables and functions control this:</p>
 
-<table border=0 cellspacing=6>
+<table border=0 cellspacing=6 hspace=20>
 
 <tr><td width=180><code><a class=def name="colorcutoff">color-cutoff</a></code></td><td width=100>0.003</td>
 <td>In spectra, sets the lowest data value that will be colored.</td></tr>
@@ -11641,7 +11652,7 @@ These names are defined (with '-colormap' appended) in rgb.scm and rgb.rb.
 
 <p>The color object handlers are:</p>
 
-<table border=0 cellspacing=6>
+<table border=0 cellspacing=6 hspace=20>
 <tr>
 <td width="20%"><code><a class=def name="colorp">color?</a> (obj)</code></td>
 <td>#t if <i>obj</i> is a color (this is the same as Pixel? in xm), (see <a href="#makecolor">make-color</a>).</td></tr>
@@ -11694,7 +11705,7 @@ desired font.  These can be the abbreviated forms such as
 (In Gtk, the font names resemble "Monospace 10" etc).
 The font variables are:
 </p>
-<table cellpadding=0 cellspacing=0>
+<table cellpadding=0 cellspacing=0 hspace=20>
 <tr><td width=200><code><a class=def name="axislabelfont">axis-label-font</a></code></td><td>used in axis labels</td></tr>
 <tr><td><code><a class=def name="axisnumbersfont">axis-numbers-font</a></code></td><td>used in axis tick numbers</td></tr>
 <tr><td><code><a class=def name="boldpeaksfont">bold-peaks-font</a></code></td><td>used by fft peaks display</td></tr>
@@ -11703,11 +11714,12 @@ The font variables are:
 <tr><td><code><a class=def name="tinyfont">tiny-font</a></code></td><td>smallest font used</td></tr>
 </table>
 <br>
-<center><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20>
+<tr><td bgcolor="GhostWhite"><pre>
 (set! (<a class=quiet href="#listenerfont">listener-font</a>) "9x15")
 (set! (<a class=quiet href="#axislabelfont">axis-label-font</a>) "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
 (set! (<a class=quiet href="#axisnumbersfont">axis-numbers-font</a>) "9x15")
-</pre></td></tr></table></center>
+</pre></td></tr></table>
 
 <p>See also <a href="#currentfont">current-font</a> below.
 In Gtk2, Pango-style names are used for the fonts: "Monospace 8" for example.
@@ -11728,17 +11740,19 @@ and decided to implement the libxm connection.  This left the earlier graphics f
 they are still useful, but they probably should not be built-in.  I'm currently planning to move
 them to Scheme/Ruby/Forth.  But, for now, here are some of them:
 </p>
-<table cellspacing=0>
+<table cellspacing=0 hspace=20>
 <tr><td><code><em class=emdef>widget-position</em> (widget)</code></td>
 <td>return a list giving the widget x and y positions</td></tr>
 <tr><td valign=top><code><em class=emdef>widget-size</em> (widget)</code></td>
-<td>return a list giving the widget width and height.  The corresponding set! forms also take a list:<br>
-<code>(set! (<a class=quiet href="#widgetposition">widget-position</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))) (list 300 100))</code></td></tr>
+<td>return a list giving the widget width and height.  The corresponding set! forms also take a list:
+<pre>
+    (set! (<a class=quiet href="#widgetposition">widget-position</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))) (list 300 100))
+</pre></td></tr>
 <tr><td><code><a class=def name="widgettext">widget-text</a> (widget)</code></td><td>return or set the contents of text widget</td></tr>
 <tr><td><code><a class=def name="showwidget">show-widget</a> (widget)</code></td><td>show (manage) widget</td></tr>
 <tr><td><code><a class=def name="hidewidget">hide-widget</a> (widget)</code></td><td>hide (unmanage) widget</td></tr>
 <tr><td><code><a class=def name="focuswidget">focus-widget</a> (widget)</code></td><td>give widget keyboard focus</td></tr>
-<tr><td colspan=2 bgcolor="ghostwhite"><br></td></tr>
+<tr><td colspan=2><br></td></tr>
 <tr><td><code><a class=def name="mainmenu">main-menu</a> (menu)</code></td><td></td></tr>
 <tr><td><code><a class=def name="mainwidgets">main-widgets</a> ()</code></td><td></td></tr>
 <tr><td><code><a class=def name="menuwidgets">menu-widgets</a> ()</code></td><td></td></tr>
@@ -11751,27 +11765,70 @@ them to Scheme/Ruby/Forth.  But, for now, here are some of them:
 The four "-widgets" procedures return lists of possibly useful widgets:
 </p>
 <pre>
-  main-widgets:    '(0:top-level-application 1:top-level-shell 2:main-pane 3:main-sound-pane 
-                     4:listener-pane 5:notebook-outer-pane)
+  main-widgets:      0:top-level-application      ; XtAppContext in Motif, top level window in Gtk+
+                     1:top-level-shell 
+                     2:main-pane                  ; outer paned window top window (holds sounds)
+                     3:main-sound-pane 
+                     4:listener-pane              ; outer paned window bottom window
+                     5:notebook-outer-pane
 
-  menu-widgets:    '(0:top-level-menu-bar 1:file-menu 2:edit-menu 3:view-menu 
-                     4:options-menu 5:help-menu, 6:default popup menu)
+  menu-widgets:      0:top-level-menu-bar 
+                     1:file-menu                  ; file cascade menu in Motif, file menu bar in Gtk+
+                     2:edit-menu 
+                     3:view-menu 
+                     4:options-menu 
+                     5:help-menu, 
+                     6:default popup menu
 
-  sound-widgets:   '(0:main-pane 1:name-label 2:control-panel 3:minibuffer 
-                     4:play 5:filter-graph 6:unite 7:minibuffer-label 8:name-icon 9:sync)
+  sound-widgets:     0:main-pane 
+                     1:name-label                 ; sound's file name
+                     2:control-panel 
+                     3:minibuffer 
+                     4:play button
+                     5:filter-graph               ; control panel drawing area for filter envelope
+                     6:unite button               ; invisible in mono sounds
+                     7:minibuffer-label           ; prompt area for the minibuffer
+                     8:name-icon                  ; hour-glass or whatever
+                     9:sync button
 
-  channel-widgets: '(0:graph 1:w-button 2:f-button 3:x-position 4:y-position 
-                     5:x-zoom 6:y-zoom 7:edit history list 
-                     8:right(united-chans) y-position 9:right y-zoom) + others in gtk
+  channel-widgets:   0:graph                      ;drawing area for all 3 graphs (time, fft, lisp)
+                     1:w-button 
+                     2:f-button 
+                     3:x-position 
+                     4:y-position 
+                     5:x-zoom 
+                     6:y-zoom 
+                     7:edit history list 
+                     8:right(united-chans) y-position 
+                     9:right y-zoom
+                     10:main pane for channel
+                     ------ the rest in only gtk+
+                     11..16: adjustment widgets associated with the sliders
 
-  dialog-widgets:  '(0:color_dialog 1:orientation_dialog 2:enved_dialog 3:#f
-                     4:#f 5:transform_dialog 6:file_open_dialog 
-                     7:sound_save_as_dialog 8:view_files_dialog 9:raw_data_dialog 
-                     10:new_sound_dialog 11:file_mix_dialog 12:edit_header_dialog 
-                     13:find_dialog 14:help_dialog 15:completion_dialog 16:view_mixes_dialog
-                     17:print_dialog 18:recorder_dialog 19:view_regions_dialog, 20:info_dialog
-                     21:view_tracks_dialog 22:selection_save_as_dialog, 23:insert_file_dialog,
-                     24:region_save_as_dialog, 25:preferences_dialog)
+  dialog-widgets:    0:color_dialog 
+                     1:orientation_dialog 
+                     2:enved_dialog               ; 3 and 4: unused
+                     5:transform_dialog 
+                     6:file_open_dialog 
+                     7:sound_save_as_dialog 
+                     8:view_files_dialog 
+                     9:raw_data_dialog 
+                     10:new_sound_dialog 
+                     11:file_mix_dialog 
+                     12:edit_header_dialog 
+                     13:find_dialog 
+                     14:help_dialog 
+                     15:completion_dialog 
+                     16:view_mixes_dialog
+                     17:print_dialog 
+                     18:recorder_dialog 
+                     19:view_regions_dialog
+                     20:info_dialog
+                     21:view_tracks_dialog 
+                     22:selection_save_as_dialog
+                     23:insert_file_dialog
+                     24:region_save_as_dialog
+                     25:preferences_dialog
 </pre>
 <p>
 <i>dialog-widgets</i> entries are #f for any dialog that has not
