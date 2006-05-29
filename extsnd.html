@@ -702,16 +702,16 @@ The X/Motif cursors are declared in /usr/include/X11/cursorfont.h or some such f
 gtk versions are in gdkcursor.h.  Some useful choices are:
 <br><br>
 
-<table border=1 cellpadding=3><th>Motif</th><th>Gtk+</th><th>value</th>
-<tr><td>XC_arrow</td><td>GDK_ARROW</td><td>2</td></tr>
-<tr><td>XC_center_ptr</td><td>GDK_CENTER_PTR</td><td>22</td></tr>
-<tr><td>XC_cross</td><td>GDK_CROSS</td><td>30</td></tr>
-<tr><td>XC_crosshair</td><td>GDK_CROSSHAIR</td><td>34</td></tr>
-<tr><td>XC_left_ptr</td><td>GDK_LEFT_PTR</td><td>68</td></tr>
-<tr><td>XC_plus</td><td>GDK_PLUS</td><td>90</td></tr>
-<tr><td>XC_right_ptr</td><td>GDK_RIGHT_PTR</td><td>94</td></tr>
-<tr><td>XC_tcross</td><td>GDK_TCROSS</td><td>130</td></tr>
-<tr><td>XC_xterm</td><td>GDK_XTERM</td><td>152</td></tr>
+<table border=1 cellpadding=6><th><small>Motif</small></th><th><small>Gtk+</small></th><th><small>value</small></th>
+<tr><td><small>XC_arrow</small></td><td><small>GDK_ARROW</small></td><td><small>2</small></td></tr>
+<tr><td><small>XC_center_ptr</small></td><td><small>GDK_CENTER_PTR</small></td><td><small>22</small></td></tr>
+<tr><td><small>XC_cross</small></td><td><small>GDK_CROSS</small></td><td><small>30</small></td></tr>
+<tr><td><small>XC_crosshair</small></td><td><small>GDK_CROSSHAIR</small></td><td><small>34</small></td></tr>
+<tr><td><small>XC_left_ptr</small></td><td><small>GDK_LEFT_PTR</small></td><td><small>68</small></td></tr>
+<tr><td><small>XC_plus</small></td><td><small>GDK_PLUS</small></td><td><small>90</small></td></tr>
+<tr><td><small>XC_right_ptr</small></td><td><small>GDK_RIGHT_PTR</small></td><td><small>94</small></td></tr>
+<tr><td><small>XC_tcross</small></td><td><small>GDK_TCROSS</small></td><td><small>130</small></td></tr>
+<tr><td><small>XC_xterm</small></td><td><small>GDK_XTERM</small></td><td><small>152</small></td></tr>
 </table>
 
 </td></tr>
@@ -3288,7 +3288,7 @@ and <i>read-track-sample</i>.
 <br>
 <!-- INDEX copying:Copying -->
 <A NAME="copying"></a>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <blockquote><small>
 <br>
 copy file: in Scheme: copy-file, in Ruby: File.copy or File.syscopy<br>
@@ -3682,7 +3682,7 @@ the list of ids reflects the mark list at that time in the edit history.  See de
 See <a href="sndscm.html#marksdoc">marks.scm</a> for
 more examples including:
 </p>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <blockquote><small>
 <br>
 global find-mark: <a href="sndscm.html#markname2id">mark-name-&gt;id</a><br>
@@ -3909,7 +3909,7 @@ mix so that it can be easily moved around.
 
 <!-- INDEX sndmixes:Mixing -->
 <br>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <blockquote><small>
 <br>
 mix sound file: <a href="#mix">mix</a> or drag-and-drop it where you want it mixed<br>
@@ -4105,7 +4105,7 @@ tighter spacing between mixes.
 <br>
 
 <!-- INDEX trackstuff:Tracks -->
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <blockquote><small>
 <br>
 place track in vct: <a href="sndscm.html#track2vct">track-&gt;vct</a><br>
@@ -4294,7 +4294,7 @@ args (that is, they are normal keyword arguments, but the keywords are optional)
 
 <br>
 <!-- INDEX regionstuff:Regions -->
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <small><blockquote>
 Max length of region list: <a href="#maxregions">max-regions</a><br>
 Whether selection creates a region: <a href="#selectioncreatesregion">selection-creates-region</a><br>
@@ -4507,7 +4507,7 @@ this is the same as <i>src-sound</i> but applied to selection.
 <br>
 
 <!-- INDEX selectionstuff:Selections -->
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <small><blockquote>
 show the current selection: <a href="sndscm.html#showselection">show-selection</a><br>
 color of selected portion: <a href="#selectioncolor">selection-color</a><br>
@@ -5002,7 +5002,7 @@ mark in that it moves if you delete or insert samples in front of it.
 <!-- INDEX cursorexamples:Cursors -->
 <A NAME="cursorexamples"></a>
 <br><br>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <blockquote><small>
 <br>
 Tracking cursor: <a href="#withtrackingcursor">with-tracking-cursor</a> (cursor-follows-play was the old name)<br>
@@ -5203,7 +5203,7 @@ delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 <!-- INDEX deletionexamples:Deletions -->
 <A NAME="deletionexamples"></a>
 <br><br>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <small><blockquote>
 delete a file: use the Scheme function delete-file or Ruby's File.delete<br>
 delete a region: <a href="#forgetregion">forget-region</a><br>
@@ -5265,7 +5265,7 @@ It can be declared via define, just like any other variable, or <a href="#defvar
 or <a href="#defineenvelope">define-envelope</a>.
 <!-- INDEX envexamples:Envelopes -->
 <br><br>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <blockquote><small>
 <br>
 envelopes in Snd:<br>
@@ -5482,7 +5482,7 @@ some other form, see <b>cascade-&gt;canonical</b> in dsp.scm, and the examples t
 </p>
 
 <!-- INDEX filtersinsnd:Filters -->
-<TABLE border=3 bordercolor="tan" hspace=40>
+<TABLE border=3 bordercolor="tan" hspace=20>
 <tr><td width=800>
 <blockquote><small>
 <br>
@@ -5545,7 +5545,7 @@ In the find dialog and in C-s or C-r searches, if the value returned is an integ
 <!-- INDEX searchexamples:Searching -->
 <A NAME="searchexamples"></a>
 <br>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <blockquote><small>
 <br>
 find a mark: <a href="#findmark">find-mark</a><br>
@@ -5757,7 +5757,7 @@ insert sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <i>chn<
 <!-- INDEX insertionexamples:Insertions -->
 <A NAME="insertionexamples"></a>
 <br><br>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <small><blockquote>
 insert some portion of a channel: <a href="sndscm.html#insertchannel">insert-channel</a><br>
 insert a silence: <a href="#padchannel">pad-channel</a>, <a href="#insertsilence">insert-silence</a><br>
@@ -5842,7 +5842,7 @@ See also <a href="#moveonepixel">move-one-pixel</a>.
 <!-- INDEX movingwindows:Window size and position -->
 <A NAME="movingwindows"></a>
 <br><br>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <blockquote><small>
 <br>
 time domain window:<br>
@@ -5980,10 +5980,21 @@ more complicated than it is!  Basically, a map-channel function receives
 each sample and returns either #f (no corresponding output), a number
 (the new output), or a bunch of numbers.
 If every value returned for a given channel is #f, the data is not edited.
+Here we add 0.2 to every sample in a channel:
 <br>
+
 <pre>
-&gt;<em class=typing>(map-channel (lambda (y) (+ y .2)))</em>
-<em class=listener>#f</em>
+Scheme:
+    &gt;<em class=typing>(map-channel (lambda (y) (+ y 0.2)))</em>
+    <em class=listener>0</em>
+
+Ruby:
+    &gt;<em class=typing>map_channel(lambda do |y| y + 0.2 end)</em>
+    <em class=listener>-0.0015869140625</em>
+
+Forth:
+    &gt;<em class=typing>lambda: { y } y 0.2 f+ ; 1 make-proc map-channel</em>
+    <em class=listener>-0.00158691</em>
 </pre>
 
 <p>
@@ -6114,8 +6125,8 @@ max amp of <i>snd</i>'s channel <i>chn</i>.  Used with set!, this is equivalent 
 
 <!-- INDEX maxampexamples:Maxamps -->
 <A NAME="maxampexamples"></a>
-<br><br>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<br>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <blockquote><small>
 <br>
 Sound file maxamp: <a href="#mussoundmaxamp">mus-sound-maxamp</a><br>
@@ -6128,7 +6139,7 @@ To set the y axis bounds to reflect the channel's maxamp: <a href="#ybounds">y-b
 Mix maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
 Track maxamp: <a href="sndscm.html#trackmaxamp">track-maxamp</a><br>
 maxamp locations: <a href="#maxampposition">maxamp-position</a>, <a href="#regionmaxampposition">region-maxamp-position</a>, <a href="#selectionmaxampposition">selection-maxamp-position</a>
-<br>
+<br><br>
 </small></blockquote>
 </td></tr></TABLE>
 </td></tr>
@@ -6375,7 +6386,7 @@ The following code plays from the cursor with a moving ("tracking") cursor:<br><
 <!-- INDEX playexamples:Playing -->
 <A NAME="playexamples"></a>
 <br><br>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <small><blockquote>
 play one channel: <a href="#playchannel">play-channel</a>, play button in control panel or files dialog<br>
 play from cursor: C-q and example above<br>
@@ -6753,6 +6764,7 @@ the following call:
 higher.  But, the notion of an accessor that returns a different thing each time a sample
 is accessed is not foolish:
 </p>
+<br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (dither-channel #:optional (amount .00006) beg dur snd chn edpos)
   "(dither-channel #:optional (amount .00006) beg dur snd chn edpos) adds 'amount' dither to each sample"
@@ -6895,7 +6907,7 @@ result appear to be one operation in the edit history list.
 	     (set! base (list-ref envelope (+ i 2)))))))))
 </pre></td></tr></table><br>
 <br>
-<table border=3 bordercolor="tan" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=20><tr><td>
 <blockquote><small>
 <br>
 more ptree-channel examples:<br>
@@ -7003,7 +7015,7 @@ See also <a href="#promptinminibuffer">prompt-in-minibuffer</a>.
 <!-- INDEX reverseexamples:Reversing -->
 <br><br>
 <A NAME="reverseexamples"></a>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <blockquote><small>
 <br>
 reverse selected portion: <a href="#reverseselection">reverse-selection</a><br>
@@ -7178,7 +7190,7 @@ save <i>snd</i>, writing the current state of the sound to its underlying sound 
 <!-- INDEX saveexamples:Saving -->
 <br><br>
 <A NAME="saveexamples"></a>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <small><blockquote>
 save all sounds: <code>(for-each save-sound (sounds))</code><br>
 save a sound under a different name: <a href="#savesoundas">save-sound-as</a><br>
@@ -7613,7 +7625,7 @@ If #t, the y=0 axis is displayed.  This is the '<a href="snd.html#viewy0">Show Y
 <!-- INDEX smoothexamples:Smoothing -->
 <br><br>
 <A NAME="smoothexamples"></a>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <small><blockquote>
 smooth all channels: <a href="#smoothsound">smooth-sound</a><br>
 smooth selection: <a href="#smoothselection">smooth-selection</a><br>
@@ -7886,7 +7898,7 @@ This is the <a class=quiet href="#regularizedargs">regularized</a> version of <a
 <!-- INDEX resampleexamples:Resampling -->
 <br><br>
 <A NAME="resampleexamples"></a>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <small><blockquote>
 resample all chans: <a href="#srcsound">src-sound</a><br>
 resample selection: <a href="#srcsoundselection">src-selection</a><br>
@@ -8260,7 +8272,7 @@ undo can also be accessed under the name undo_edit (in Scheme, <a name="undoedit
 <!-- INDEX undoexamples:Undo and Redo -->
 <br><br>
 <A NAME="undoexamples"></a>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <small><blockquote>
 undo all edits: <a href="#revertsound">revert-sound</a><br>
 specialize undo: <a href="#undohook">undo-hook</a><br>
@@ -8408,7 +8420,7 @@ try <code>(set! (cursor-location-offset) (* 4 (expt 2 11)))</code>.
 <!-- INDEX trackingcursors:Tracking cursors -->
 <A NAME="trackingcursors"></a>
 <br><br>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <blockquote><small>
 <br>
 play from the current cursor position with a tracking cursor:  <a href="#pfc">pfc</a><br>
@@ -9180,13 +9192,39 @@ Returns result of 'func'.
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+<table border=0><tr><td>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite">
+<pre>
 (<em class=red>as-one-edit</em> 
   (lambda () 
     (set! (<a class=quiet href="#sample">sample</a> 100) .1) 
     (set! (<a class=quiet href="#sample">sample</a> 200) .2)))
-</pre></td></tr></table>
-<br>
+</pre>
+</td></tr></table>
+
+</td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="beige">
+<pre>
+<em class=red>as_one_edit</em>(lambda do || 
+  set_sample(100, 0.1)
+  set_sample(200, 0.2)
+  end)
+</pre>
+</td></tr></table>
+
+</td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="lightgreen">
+<pre>
+lambda: 
+  100 .1 set-sample drop 
+  200 .2 set-sample drop
+; 0 make-proc <em class=red>as-one-edit</em>
+</pre>
+</td></tr></table>
+</td></tr></table>
+</td></tr>
+<td></td><td>
+
 See mix.scm for many examples. If you want to save Snd's state after using as-one-edit, you need to
 set 'origin' to some string that can restore the effect of the as-one-edit 'func'; the default is
 to copy the last edit history string and use its associated bounds -- unlikely to be what you want.
@@ -9542,7 +9580,7 @@ return #t if <i>type</i> refers to an active transform type.
 </p>
 <!-- INDEX fftexamples:FFTs -->
 <A NAME="fftexamples"></a>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <small><blockquote>
 CLM fft function: <a href="clm.html#fft">mus-fft</a><br>
 CLM spectrum: <a href="clm.html#spectrum">spectrum</a><br>
@@ -10835,7 +10873,7 @@ is named "<a name="callin">call_in</a>".
 <code><a class=def name="key">key</a> (key state <i>snd chn</i>) </code></td></tr>
 <tr><td></td><td>
 execute the keyboard command <i>key</i> with modifier keys <i>state</i>.
-<i>state</i> is the bitwise OR of shift: 1, control: 4, meta: 8
+<i>state</i> is the bitwise OR of control: 4, meta: 8
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -11262,27 +11300,27 @@ to put the date and time in the Snd title bar.
 
   <a name="musoutformat">mus-out-format</a>
 </pre>
-<br>
+
 <p><b>Time domain graph type</b> (<a href="#timegraphtype">time-graph-type</a>):</p>
 <pre>
   graph-once  graph-as-wavogram
 </pre>
-<br>
+
 <p><b>Transform graph type</b> (the Transform Options Display choice, <a href="#transformgraphtype">transform-graph-type</a>):</p>
 <pre>
   graph-once  graph-as-sonogram  graph-as-spectrogram
 </pre>
-<br>
+
 <p><b>Transform type</b> (<a href="#transformtype">transform-type</a>):</p>
 <pre>
   <a name="fouriertransform">fourier-transform</a>  wavelet-transform   cepstrum   haar-transform
   autocorrelation    walsh-transform
-</pre><br>
+</pre>
 
 <p><b>Transform normalization</b> (<a href="#normalizefft">transform-normalization</a>):</p>
 <pre>
   dont-normalize     normalize-by-channel    normalize-by-sound    normalize-globally
-</pre><br>
+</pre>
 
 <p><b>FFT Window</b> type (<a href="#fftwindow">fft-window</a>):</p>
 <pre>
@@ -11292,63 +11330,63 @@ to put the date and time in the Snd title bar.
   cauchy-window          poisson-window        gaussian-window      tukey-window
   dolph-chebyshev-window hann-poisson-window   connes-window        samaraki-window
   ultraspherical-window
-</pre><br>
+</pre>
 
 <p><b>Zoom Focus</b> style (<a href="#zoomfocusstyle">zoom-focus-style</a>):</p>
 <pre>
   zoom-focus-left    zoom-focus-right   zoom-focus-active zoom-focus-middle
-</pre><br>
+</pre>
 
 <p><b>X-axis Label</b> (<a href="#xaxisstyle">x-axis-style</a>):</p>
 <pre>
   x-axis-in-seconds  x-axis-in-samples  x-axis-as-percentage  x-axis-in-beats  x-axis-in-measures x-axis-as-clock
-</pre><br>
+</pre>
 
 <p><b>Speed Control</b> style (<a href="#speedstyle">speed-control-style</a>, <a href="#viewfilesspeedstyle">view-files-speed-style</a>):</p>
 <pre>
   speed-control-as-float     speed-control-as-ratio     speed-control-as-semitone
-</pre><br>
+</pre>
 
 <p><b>Channel Combination</b> style (<a href="#channelstyle">channel-style</a>):</p>
 <pre>
   <a name="channelstyleconstants">channels-separate</a>  channels-combined  channels-superimposed
-</pre><br>
+</pre>
 
 <p><b>Envelope Editor</b> target (<a href="#envedtarget">enved-target</a>):</p>
 <pre>
   enved-amplitude      enved-spectrum       enved-srate
-</pre><br>
+</pre>
 
 <p><b>Envelope Editor</b> ramp choice (<a href="#envedstyle">enved-style</a>):</p>
 <pre>
   envelope-linear   envelope-exponential
-</pre><br>
+</pre>
 
 <p><b>Graph Line</b> style (<a href="#graphstyle">graph-style</a>):</p>
 <pre>
   <a name="graphlines">graph-lines</a>        graph-dots         graph-filled      graph-lollipops
   graph-dots-and-lines 
-</pre><br>
+</pre>
 
 <p><b>Key binding</b> cursor action (<a href="#bindkey">bind-key</a>):</p>
 <pre>
   <a name="cursorchoices">cursor-in-view</a>     cursor-on-left     cursor-on-right   cursor-in-middle  keyboard-no-action
-</pre><br>
+</pre>
 
 <p><b>Cursor</b> style (<a href="#cursorstyle">cursor-style</a>):</p>
 <pre>
   cursor-cross   cursor-line
-</pre><br>
+</pre>
 
 <p><b>Axis placement</b> choice (<a href="#showaxes">show-axes</a>):</p>
 <pre>
   show-all-axes  show-no-axes  show-x-axis  show-all-axes-unlabelled  show-x-axis-unlabelled
-</pre><br>
+</pre>
 
 <p><b>Graph</b> id (for <a href="#y_to_position">y-&gt;position</a> etc):</p>
 <pre>
   time-graph     transform-graph     lisp-graph
-</pre><br>
+</pre>
 
 <p><b>Colormap</b> choice (<a href="#colormap">colormap</a>, defined in rgb.scm):</p>
 <pre>
@@ -11752,83 +11790,117 @@ them to Scheme/Ruby/Forth.  But, for now, here are some of them:
 <tr><td><code><a class=def name="showwidget">show-widget</a> (widget)</code></td><td>show (manage) widget</td></tr>
 <tr><td><code><a class=def name="hidewidget">hide-widget</a> (widget)</code></td><td>hide (unmanage) widget</td></tr>
 <tr><td><code><a class=def name="focuswidget">focus-widget</a> (widget)</code></td><td>give widget keyboard focus</td></tr>
-<tr><td colspan=2><br></td></tr>
-<tr><td><code><a class=def name="mainmenu">main-menu</a> (menu)</code></td><td></td></tr>
-<tr><td><code><a class=def name="mainwidgets">main-widgets</a> ()</code></td><td></td></tr>
-<tr><td><code><a class=def name="menuwidgets">menu-widgets</a> ()</code></td><td></td></tr>
-<tr><td><code><a class=def name="soundwidgets">sound-widgets</a> (snd)</code></td><td></td></tr>
-<tr><td><code><a class=def name="channelwidgets">channel-widgets</a> (snd chn)</code></td><td></td></tr>
-<tr><td><code><a class=def name="dialogwidgets">dialog-widgets</a> ()</code></td><td></td></tr>
 </table>
 
 <p>
-The four "-widgets" procedures return lists of possibly useful widgets:
+The six "-widgets" functions give access to various possibly useful widgets.
 </p>
 <pre>
-  main-widgets:      0:top-level-application      ; XtAppContext in Motif, top level window in Gtk+
-                     1:top-level-shell 
-                     2:main-pane                  ; outer paned window top window (holds sounds)
-                     3:main-sound-pane 
-                     4:listener-pane              ; outer paned window bottom window
-                     5:notebook-outer-pane
+<a class=def name="mainmenu">main-menu</a> (menu)
+<a class=def name="mainwidgets">main-widgets</a> ()
+<a class=def name="menuwidgets">menu-widgets</a> ()
+<a class=def name="soundwidgets">sound-widgets</a> (snd)
+<a class=def name="channelwidgets">channel-widgets</a> (snd chn)
+<a class=def name="dialogwidgets">dialog-widgets</a> ()
+</pre>
 
-  menu-widgets:      0:top-level-menu-bar 
-                     1:file-menu                  ; file cascade menu in Motif, file menu bar in Gtk+
-                     2:edit-menu 
-                     3:view-menu 
-                     4:options-menu 
-                     5:help-menu, 
-                     6:default popup menu
+<p><b>main-menu</b> returns the top-level menu 
+associated with its integer argument:
+<pre>
+    0: File menu
+    1: Edit menu
+    2: View menu
+    3: Options menu
+    4: Help menu
+    5: built-in popup menu
+    and others as added by add-main-menu
+</pre>
 
-  sound-widgets:     0:main-pane 
-                     1:name-label                 ; sound's file name
-                     2:control-panel 
-                     3:minibuffer 
-                     4:play button
-                     5:filter-graph               ; control panel drawing area for filter envelope
-                     6:unite button               ; invisible in mono sounds
-                     7:minibuffer-label           ; prompt area for the minibuffer
-                     8:name-icon                  ; hour-glass or whatever
-                     9:sync button
+<p><b>main-widgets</b> returns a list of the top-level widgets in Snd:
+<p>
+<pre>
+    0: top-level-application      ; XtAppContext in Motif, top level window in Gtk+
+    1: top-level-shell 
+    2: main-pane                  ; outer paned window top window (holds sounds)
+    3: main-sound-pane 
+    4: listener-pane              ; outer paned window bottom window
+    5: notebook-outer-pane
+</pre>
 
-  channel-widgets:   0:graph                      ;drawing area for all 3 graphs (time, fft, lisp)
-                     1:w-button 
-                     2:f-button 
-                     3:x-position 
-                     4:y-position 
-                     5:x-zoom 
-                     6:y-zoom 
-                     7:edit history list 
-                     8:right(united-chans) y-position 
-                     9:right y-zoom
-                     10:main pane for channel
-                     ------ the rest in only gtk+
-                     11..16: adjustment widgets associated with the sliders
+<p><b>menu-widgets</b> returns the top-level menu widgets (cascade menus in Motif or menu bars in Gtk+ associated)
+as a list:
+</p>
+<pre>
+    0: top-level-menu-bar 
+    1: file-menu
+    2: edit-menu 
+    3: view-menu 
+    4: options-menu 
+    5: help-menu, 
+    6: default popup menu
+</pre>
 
-  dialog-widgets:    0:color_dialog 
-                     1:orientation_dialog 
-                     2:enved_dialog               ; 3 and 4: unused
-                     5:transform_dialog 
-                     6:file_open_dialog 
-                     7:sound_save_as_dialog 
-                     8:view_files_dialog 
-                     9:raw_data_dialog 
-                     10:new_sound_dialog 
-                     11:file_mix_dialog 
-                     12:edit_header_dialog 
-                     13:find_dialog 
-                     14:help_dialog 
-                     15:completion_dialog 
-                     16:view_mixes_dialog
-                     17:print_dialog 
-                     18:recorder_dialog 
-                     19:view_regions_dialog
-                     20:info_dialog
-                     21:view_tracks_dialog 
-                     22:selection_save_as_dialog
-                     23:insert_file_dialog
-                     24:region_save_as_dialog
-                     25:preferences_dialog
+<p><b>sound-widgets</b> returns a list of various widgets specific to a given sound (chosen by its index, of course):
+<p>
+<pre>
+    0: main-pane 
+    1: name-label                 ; sound's file name
+    2: control-panel 
+    3: minibuffer 
+    4: play button
+    5: filter-graph               ; control panel drawing area for filter envelope
+    6: unite button               ; invisible in mono sounds
+    7: minibuffer-label           ; prompt area for the minibuffer
+    8: name-icon                  ; hour-glass or whatever
+    9: sync button
+</pre>
+
+<p><b>channel-widgets</b> returns a list of various widgets associated with a given channel:
+<p>
+<pre>
+    0: graph                      ;drawing area for all 3 graphs (time, fft, lisp)
+    1: w-button 
+    2: f-button 
+    3: x-position 
+    4: y-position 
+    5: x-zoom 
+    6: y-zoom 
+    7: edit history list 
+    8: right(united-chans) y-position 
+    9: right y-zoom
+    10: main pane for channel
+    ------ the rest only in Gtk+
+    11..16: adjustment widgets associated with the zoom and position sliders
+</pre>
+
+<p><b>dialog-widgets</b> returns a list of dialog widgets (or lists thereof):
+<p>
+<pre>
+    0: View: Color dialog 
+    1: View: Orientation dialog 
+    2: Edit: EnvelopeEditor dialog 
+    3 and 4: unused
+    5: Options: Transform dialog 
+    6: File: Open dialog 
+    7: File: Save as dialog 
+    8: View: Files dialog 
+    9: raw data dialog (activated when raw sound opened, sometimes)
+    10: File: New sound dialog 
+    11: File: Mix dialog 
+    12: Edit: Edit header dialog 
+    13: Edit: Find dialog 
+    14: Help dialog 
+    15: completion dialog (activated by TAB sometimes)
+    16: View: Mixes dialog
+    17: File: Print dialog 
+    18: File: Recorder dialog 
+    19: View: Regions dialog
+    20: info dialog (activated by info-dialog function)
+    21: View: Tracks dialog 
+    22: Edit: Selection Save as dialog
+    23: File: Insert file dialog
+    24: region save as dialog (from regions dialog save button)
+    25: Options: Preferences dialog
 </pre>
 <p>
 <i>dialog-widgets</i> entries are #f for any dialog that has not
@@ -12274,9 +12346,39 @@ the desired url.
 <tr><td colspan=2 bgcolor="ghostwhite">
 <code><a class=def name="sndgcs">snd-gcs</a></code></td></tr>
 <tr><td></td><td>
-<i>snd-gcs</i> returns a list of Snd's graphics contexts (intended for use with the xm module in snd-motif.scm):
-(0)basic (1)selected_basic (2)combined (3)cursor (4)selected_cursor (5)selection (6)selected_selection 
-(7)erase (8)selected_erase (9)mark (10)selected_mark (11)mix (12)selected_mix (13)fltenv_basic (14)fltenv_data.
+<i>snd-gcs</i> returns a list of Snd's graphics contexts:
+<pre>
+    0: bg=graph-color, fg=data-color
+    1: bg=selected-graph-color, fg=selected-data-color
+    2: bg=graph-color, fg=data-color, fg changes for superimposed graphs
+
+    3: bg=graph-color, fg=cursor-color, XOR (for cursor)
+    4: bg=selected-graph-color, fg=cursor-color, XOR (for cursor in selection)
+
+    5: bg=graph-color, fg=selection-color, XOR (for selection highlighting)
+    6: bg=selected-graph-color, fg=selection-color, XOR (selection highlighting)
+
+    7: bg=data-color, fg=graph-color (to erase data)
+    8: bg=selected-data-color, fg=selected-graph-color (erase data in selected channel)
+
+    9: bg=graph-color, fg=mark-color, XOR (for marks)
+   10: bg=selected-graph-color, fg=mark-color, XOR (marks in selected channel)
+
+   11: bg=graph-color, fg=mix-color
+   12: bg=selected-graph-color, fg=mix-color
+
+   13: bg=basic-color, fg=black
+   14: bg=basic-color, fg=filter-waveform-color
+</pre>
+These graphics-contexts make it easier to fit in with whatever color scheme is currently in use.  For example,
+in snd-motif.xm's SMPTE time display, we make sure the font color reflects whether we're in the selected channel:
+<pre>
+      (XSetFont dpy
+		(if (= chn (selected-channel snd))
+		    (cadr (snd-gcs))
+		    (car (snd-gcs)))
+		(.fid fs))
+<pre>
 </td>
 </tr><tr><td colspan=2></td></tr>
 

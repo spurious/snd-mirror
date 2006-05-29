@@ -64,6 +64,7 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 
 
 <table border=8 bordercolor="lightsteelblue" cellpadding=4>
+<tr><th colspan=2 bgcolor="beige">Contents</th></tr>
 <tr><td width=100><a href="#analogfilterdoc">analog-filter.scm</a></td><td>standard analog filters (Butterworth, Chebyshev, Bessel, Elliptic)</td></tr>
 <tr><td><a href="#autosavedoc">autosave.scm</a></td>                   <td>auto-save (edit backup) support</td></tr>
 <tr><td><a href="#bessdoc">bess.scm, bess.rb</a></td>                  <td>FM demo</td></tr>
@@ -127,7 +128,6 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 <tr><td><a href="#wsdoc">ws.scm, ws.rb</a></td>                        <td>with-sound</td></tr>
 <tr><td><a href="#xmenveddoc">xm-enved.scm, xm-enved.rb, xm-enved.fs</a></td>       <td>envelope editors</td></tr>
 <tr><td><a href="#zipdoc">zip.scm, zip.rb</a></td>                     <td>the zipper (the anti-cross-fader)</td></tr>
-<tr><td><a href="#extsndvarexpl">A Note on Scheme variables in Snd</a></td><td></td></tr>
 <tr><td><a href="#extsndasneededexpl">A Note on "As-Needed" input functions</a></td><td></td></tr>
 <tr><td><a href="#extsndcgens">A Note on User-defined Generators in C-CLM</a></td><td></td></tr>
 <tr><td><a href="#noisystory">A Note on Noise Reduction</a></td><td></td></tr>
@@ -148,7 +148,14 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 <p><A NAME="analogfilters"></a>analog-filter.scm has the usual analog filters: Butterworth, Chebyshev, inverse Chebyshev, Bessel,
 and Elliptic filters in lowpass, highpass, bandpass, and bandstop versions.  Each of the associated
 "make" functions returns a function ready for use as a filter (using the CLM filter generator).
+The filter order should be an even number; very high orders can cause numerical disaster!  If you
+want to push these guys, be sure to build Snd with the --with-doubles configuration switch.  The
+elliptic filters depend on GSL, so you'll also need GSL (Snd's configure script includes it by default, if possible).
 </p>
+<pre>
+    (let* ((flt (make-elliptic-lowpass 8 .1))) ; flt is a clm filter generator
+      (map-channel flt))
+</pre>
 <br>
 
 
@@ -600,7 +607,7 @@ the cursor is moved to the clicked point.
 If you're using a line cursor (cursor-style is cursor-line), it will draw itself in the little graph;
 to get a more polite cursor, use <b>smart-line-cursor</b>, defined in draw.scm.
 </p>
-<center><img src="uppergrf.png" alt="make-current-window-display"></center>
+<img src="uppergrf.png" alt="make-current-window-display" hspace=20>
 <br>
 <p>
 <b>click-for-listener-help</b> is intended as a <a href="extsnd.html#listenerclickhook">listener-click-hook</a> entry.  It posts help about
@@ -1180,7 +1187,7 @@ It's usually easier to use mus-reset to restart an envelope over and over.
 :<em class=typing>(repeat-envelope '(0 0 .1 .9 1 1 1.3 .2 2 0) 2)</em>
 <em class=listener>(0 0 0.1 0.9 1.0 1 1.3 0.2 2.0 0 2.1 0.9 3.0 1 3.3 0.2 4.0 0)</em>
 </pre>
-</td><td><img src="repenv.png">
+</td><td><img src="repenv.png" hspace=20>
 </td></tr></table>
 
 <p>If the final y value is different from the first y value (as above), a quick ramp is
@@ -1206,7 +1213,7 @@ mechanism as an extension of env-channel.
 
 <A NAME="enveddoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>enved.scm</h2></td></tr></table>
 <br>
-<img src="envs.png" alt="channel enveds">
+<img src="envs.png" alt="channel enveds" hspace=20>
 
 <pre>
   <em class=emdef>start-enveloping</em>
@@ -2718,7 +2725,7 @@ faster.
   (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (moog 1200.0 .7))
 </pre></td></tr></table>
 
-<p>The Ruby version of this is in examp.rb.
+<p>The Ruby version of this is in examp.rb, and the Forth version is in examp.fs.
 </p>
 
 <br>
@@ -4658,36 +4665,6 @@ an upward ramp and a downward ramp, then zips them together:
 <p>Needless to say, this is not intended to be a suave, romantic gesture!
 </p>
 <br>
-
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="extsndvarexpl">A Note on Scheme variables in Snd</a></h2></td></tr></table>
-
-<p>Snd's use of functions for nearly all variable accesses
-may seem unmotivated.  Guile makes it easy to
-access Scheme-level variables in C, and vice-versa.  So why the extra parentheses in something
-like:
-</p>
-<pre>
-  (set! (transform-size) 16)
-</pre>
-<p>rather than:
-</p>
-<pre>
-  (set! transform-size 16)
-</pre>
-<p>
-The problem is that <i>set!</i> in Guile does not inform Snd's
-C code that a set! has occurred.
-We need to see that set! as soon as it happens to make the user interface
-responsive.  <code>(set! basic-color red)</code> will have no effect unless
-our C code can be informed that the <code>basic-color</code> variable's value has changed.
-It would be tedious to define 
-several hundred functions with the prefix "set-" (or whatever), simply to
-be able to set the variables.  Instead we use the 
-"generalized set!" to package up both the accessor functions under the (nominal) variable name.
-</p>
-
-<br>
-
 
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="extsndasneededexpl">A Note on "As-Needed" input functions</a></h2></td></tr></table>
 
