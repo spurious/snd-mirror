@@ -71,9 +71,9 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <td><small>related documentation:</small></td>
 <td><small><a href="extsnd.html" onmouseover="return escape('Snd extension and customization')">extsnd.html</a></small></td>
 <td><small><a href="grfsnd.html" onmouseover="return escape('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
+<td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
 <td><small><a href="clm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">clm.html</a></small></td>
 <td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
 <td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
 <td><small><a href="index.html">index.html</a></small></td>
 </tr></table>
@@ -83,7 +83,8 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <br><br>
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
 
-<table border=1 cellpadding=5><th>this file:</th><th>extsnd.html:</th><th>grfsnd.html:</th>
+<table border=1 cellpadding=5><th>this file:
+</th><th>extsnd.html:</th><th>grfsnd.html:</th>
 <tr><td><small>
 <ul>
 <li><a href="#gettingstarted">Getting Started</a>
@@ -99,7 +100,8 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
   <li><a href="#regions">Regions</a>
   <li><a href="#edithistory">The Edit List</a>
   <li><a href="#howtoedit">How to ...</a>
-    <small><ul>
+    <small>
+    <ul>
     <li><a href="#saveopen">Save, open, close, print</a>
     <li><a href="#deleteinsert">Delete, insert, mix</a>
     <li><a href="#multichannel">Multichannel operations</a>
@@ -118,7 +120,8 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
     <li><a href="#centeryaxis">Center a tiny signal with DC</a>
     <li><a href="#savedstate">Save session for later restart</a>
     <li><a href="#misccommands">Miscellaneous commands</a>
-    </ul></small>
+    </ul>
+    </small>
   <li><a href="#keyboardcommands">Keyboard Commands</a>
   </ul>
 <li><a href="#controls">The  Control Panel</a>
@@ -127,8 +130,6 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 </td><td><small>
 <ul>
 <li><a href="extsnd.html#extsndcontents">Customization and Extension</a>
-  <ul>
-  <li><a href="extsnd.html#lisplistener">Introduction</a>
   <li><a href="extsnd.html#etc">Snd Programming</a>
     <ul>
     <li><a href="extsnd.html#behavior">Customizing Snd's behavior</a>
@@ -160,7 +161,6 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
       <li><a href="extsnd.html#graphics">Graphics</a>
       </ul>
     </ul>
-  </ul>
 </ul></small>
 </td><td><small>
   <ul>
@@ -190,7 +190,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
     <li><a href="grfsnd.html#sndandalsa">Snd and ALSA</a>
     <li><a href="grfsnd.html#sndandx">Driving Snd remotely</a>
     <li><a href="grfsnd.html#sndandgl">Snd and OpenGL</a>
-
+    </ul>
   <li><a href="sndscm.html#introduction">Scheme, Ruby, and Forth</a>
   <li><a href="index.html">Overall Index</a>
   </ul></small>
@@ -808,7 +808,7 @@ by typing the file or directory name in the 'add:' text widget.
 <p>Files can be added to the list at startup
 via the -p switch, and with the functions <a href="extsnd.html#addfiletoviewfileslist">add-file-to-view-files-list</a>
 and <a href="extsnd.html#adddirectorytoviewfileslist">add-directory-to-view-files-list</a>.
-The 'Mix" button mixes in the currently selected sound, and 'Insert' inserts it.
+The 'Mix' button mixes in the currently selected sound, and 'Insert' inserts it.
 See nb.scm for an extension of this dialog that posts various kinds of information
 about each file as the mouse passes over it.
 </p>
@@ -921,7 +921,6 @@ of the spectrogram, wavogram, and sonogram, is to use the Color and Orientation
 dialogs from the View menu.
 The keypad keys are mapped to various variables as follows:</p>
 
-<!-- <table border=4 bordercolor="lightsteelblue" hspace=20> -->
 <table border=0 hspace=20>
 <tr><th align=left><small>variable</small></th><th align=left><small>increase</small></th><th align=left><small>decrease</small></th></tr>
 <tr><td width = 130><a href="extsnd.html#spectrocutoff"><small>spectro-cutoff</small></a></td><td width=150><small>PageUp</small></td><td width=180><small>PageDown</small></td></tr>
@@ -2347,7 +2346,7 @@ panel are:</p>
 <h2>Customization and Extension</h2>
 
 <p>For information on the extension language functions, see <a href="extsnd.html#extsndcontents">extsnd.html</a>.
-For information on initialization, configuration, and connections to other programs, see <a href="grtsnd.html#grfsndcontents">grfsnd.html</a>.
+For information on initialization, configuration, and connections to other programs, see <a href="grfsnd.html#grfsndcontents">grfsnd.html</a>.
 </p>
 <br><br>
 
@@ -2486,9 +2485,9 @@ For information on initialization, configuration, and connections to other progr
 <td><small>related documentation:</small></td>
 <td><small><a href="extsnd.html" onmouseover="return escape('Snd extension and customization')">extsnd.html</a></small></td>
 <td><small><a href="grfsnd.html" onmouseover="return escape('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
+<td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
 <td><small><a href="clm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">clm.html</a></small></td>
 <td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
 <td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
 <td><small><a href="index.html">index.html</a></small></td>
 </tr></table>

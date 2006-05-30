@@ -282,8 +282,8 @@ difference is that run in Scheme takes a function:
 <table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> (scm-simp start-time duration frequency amplitude)
-  (let* ((beg (inexact-&gt;exact (floor (* start-time (mus-srate)))))
-         (dur (inexact-&gt;exact (floor (* duration (mus-srate)))))
+  (let* ((beg (inexact-&gt;exact (floor (* start-time (<a class=quiet href="#mussrate">mus-srate</a>)))))
+         (dur (inexact-&gt;exact (floor (* duration (<a class=quiet href="#mussrate">mus-srate</a>)))))
          (osc (<a class=quiet href="#make-oscil">make-oscil</a> :frequency frequency)))
     (run
       (lambda ()
@@ -1069,11 +1069,11 @@ work when it doesn't matter.
 <table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (define* (make-sinc-train #:optional (frequency 440.0) (width #f))
-  (let ((range (or width (* pi (- (* 2 (inexact-&gt;exact (floor (/ (mus-srate) (* 2.2 frequency))))) 1)))))
+  (let ((range (or width (* pi (- (* 2 (inexact-&gt;exact (floor (/ (<a class=quiet href="#mussrate">mus-srate</a>) (* 2.2 frequency))))) 1)))))
     ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
     (list (- (* range 0.5))
 	  range
-	  (/ (* range frequency) (mus-srate)))))
+	  (/ (* range frequency) (<a class=quiet href="#mussrate">mus-srate</a>)))))
 	
 (define* (sinc-train gen #:optional (fm 0.0))
   (let* ((ang (car gen))
@@ -3753,8 +3753,8 @@ To provide a quick overview, the CL bird instrument is</p>
   (let* ((gls-env (<a class=quiet href="#make-env">make-env</a> freq-envelope (<a class=quiet href="#hz-&gt;radians">hz-&gt;radians</a> freqskew) dur))
          (os (<a class=quiet href="#make-oscil">make-oscil</a> :frequency frequency))
          (amp-env (<a class=quiet href="#make-env">make-env</a> amp-envelope amplitude dur))
-	 (len (inexact-&gt;exact (round (* (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>) dur))))
-	 (beg (inexact-&gt;exact (round (* (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>) start))))
+	 (len (inexact-&gt;exact (round (* (<a class=quiet href="#mussrate">mus-srate</a>) dur))))
+	 (beg (inexact-&gt;exact (round (* (<a class=quiet href="#mussrate">mus-srate</a>) start))))
 	 (end (+ beg len)))
     (run
      (lambda ()
@@ -3840,7 +3840,7 @@ leave the generator type decision until run time:</p>
 						     (<a class=quiet href="#make-env">make-env</a> gen :duration dur)
 						     gen))
 					       dsps))))
-	 (output (make-vct (inexact-&gt;exact (floor (* dur (mus-srate))))))
+	 (output (make-vct (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
 	 (len (vector-length dsp-chain)))
     (vct-map! output (lambda ()
 		       (let ((val 0.0))
@@ -3854,7 +3854,7 @@ leave the generator type decision until run time:</p>
 				     (set! val (+ val (gen)))
 				     (set! val (gen val))))))
 			 val)))
-    (mix-vct output (inexact-&gt;exact (floor (* beg (mus-srate)))) #f #f #f)))
+    (mix-vct output (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))) #f #f #f)))
 
 ;(chain-dsps 0 1.0 '(0 0 1 1 2 0) (<a class=quiet href="#make-oscil">make-oscil</a> 440))
 ;(chain-dsps 0 1.0 '(0 0 1 1 2 0) (<a class=quiet href="#make-one-zero">make-one-zero</a> .5) (<a class=quiet href="#make-readin">make-readin</a> "oboe.snd"))
@@ -4126,8 +4126,16 @@ otherwise it reflects the :srate value for the duration of the with-sound call.
 The local variables (in CL) that are currently exported are:
 *srate*, *safety*, and *debug*.  Unexported, but available in the clm package
 are *channels*, *data-format*, *header-type*, *notehook*, *clipped*, *verbose*,
-and *statistics*.
+and *statistics*.  In Snd, <a class=def name="mus-srate">mus-srate</a> gives access to
+the CLM-level sampling rate.  Similarly:
 </p>
+<pre>
+  <a class=def name="formantbank">formant-bank</a> (scls gens inval)
+  <a class=def name="musarrayprintlength">mus-array-print-length</a> ()        how many array (vct) elements to print in mus-describe
+  <a class=def name="musfilebuffersize">mus-file-buffer-size</a> ()          size of input/ouput buffers (default 8192)
+  <a class=def name="makefircoeffs">make-fir-coeffs</a> (order spectr)
+  <a class=def name="mussrate">mus-srate</a> ()                     current sampling rate
+</pre>
 <br>
 
 
@@ -4197,6 +4205,19 @@ it does not recompute its body, leaving the resultant amplitude at .1.
 <pre>
   <a class=def Name="mix">mix</a> &amp;optional-key <i>filename</i> (<i>input-frame</i> 0) (<i>output-frame</i> 0) <i>frames</i> output
 </pre>
+
+<p>In Snd, use mus-mix:
+</p>
+<pre>
+  <a class=def name="musmix">mus-mix</a> (outfile infile <i>(outloc 0) frames (inloc 0) mixer envs</i>)
+</pre>
+<p>
+<b>mus-mix</b> mixes <i>infile</i> into <i>outfile</i> starting at <i>outloc</i> in <i>outfile</i> and <i>inloc</i> in <i>infile</i>
+mixing <i>frames</i> frames of <i>infile</i>.  <i>frames</i> defaults to the length of <i>infile</i>. If <i>mixer</i>,
+use it to scale the various channels; if <i>envs</i> (an array of envelope generators), use
+it in conjunction with <i>mixer</i>to scale/envelope all the various ins and outs.
+<i>outfile</i> can be a frame-&gt;file generator, and <i>infile</i> can be a file-&gt;frame generator.
+</p>
 
 <br>
 <table width="50%" border=1><tr><td bgcolor="EEFDEE" valign="middle"><h4>C-level file IO</h4></td></tr></table>

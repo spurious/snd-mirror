@@ -1672,7 +1672,7 @@ the split depends on the panning envelope (0 = all in chan 0, etc).
 Panning or Sound Placement<br>
 Place sound: <a href="#placesound">place-sound</a> above.<br>
 Pan mix: <a href="#panmix">pan-mix</a>, or via the amplitude and envelope controls in the mix dialog<br>
-Place mix: <a href="grfsnd.html#musmix">mus-mix</a><br>
+Place mix: <a href="clm.html#musmix">mus-mix</a><br>
 Play sound with panning: <a href="#explaypanned">play-panned</a><br>
 CLM placement generator: <a href="clm.html#locsig">locsig</a><br>
 CLM moving sound generator: <a href="#dlocsigdoc">dlocsig</a><br>
@@ -2398,7 +2398,7 @@ an ordinary editing function:
     (<a class=quiet href="extsnd.html#savesoundas">save-sound-as</a> revout snd)
     (<a class=quiet href="extsnd.html#undo">undo</a> 1 snd)
     (set! *output* (<a class=quiet href="clm.html#continue-sample-&gt;file">continue-sample-&gt;file</a> output))
-    (set! (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>) (<a class=quiet href="extsnd.html#srate">srate</a> snd))
+    (set! (<a class=quiet href="clm.html#mussrate">mus-srate</a>) (<a class=quiet href="extsnd.html#srate">srate</a> snd))
     (set! *reverb* (<a class=quiet href="clm.html#make-file-&gt;sample">make-file-&gt;sample</a> revout))
     (apply reverb reverb-data)
     (<a class=quiet href="clm.html#mus-close">mus-close</a> *reverb*)
@@ -4401,13 +4401,13 @@ Kalle Olavi Niemitalo came up with this Scheme/Guile replacement:
 
 <table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (define* (with-sound-helper thunk #:key (srate 22050) (explode #f))
-  (let ((old-srate (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>)))
+  (let ((old-srate (<a class=quiet href="clm.html#mussrate">mus-srate</a>)))
     (dynamic-wind 
       (lambda () 
-        (set! (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>) srate))
+        (set! (<a class=quiet href="clm.html#mussrate">mus-srate</a>) srate))
       thunk
       (lambda () 
-        (set! (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>) old-srate)))))
+        (set! (<a class=quiet href="clm.html#mussrate">mus-srate</a>) old-srate)))))
 
 (defmacro with-sound (args . body)
   `(with-sound-helper (lambda () ,@body)
@@ -4487,7 +4487,7 @@ mus-mix with *output*:
 <table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 (with-sound () 
   (fm-violin 0 .1 440 .1) 
-  (<a class=quiet href="grfsnd.html#musmix">mus-mix</a> *output* "oboe.snd") 
+  (<a class=quiet href="clm.html#musmix">mus-mix</a> *output* "oboe.snd") 
   (fm-violin .1 .1 660 .1))
 </pre></td></tr></table>
 
