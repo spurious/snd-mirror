@@ -47,34 +47,29 @@
 <li><a href="#startup">Snd Startup</a>
   <ul>
   <li><a href="#sndswitches">Snd invocation flags</a>
-  <li><a href="#sndinitfile">The initialization file</a>
+  <li><a href="#sndinitfile" onmouseover="return escape('~/.snd, ~/.snd_guile, ~/.snd_prefs_guile, etc')">The initialization file</a>
   <li><a href="#sndresources" onmouseover="return escape('X resources: Xdefaults, gtkrc')">Snd resources</a>
   <li><a href="#sndconfigurationswitches">Configuration choices</a>
   <li><a href="#sndenvvars">Environment variables</a>
   </ul>
 <li><a href="#snddynamic">Runtime modules and external programs</a>
   <ul>
-  <li><a href="#emacssnd">Snd as an Emacs subjob</a>
-  <li><a href="#dynamic">Dynamically loaded modules</a>
-  <li><a href="#programs">External Programs</a>
-  <li><a href="#sndaswidget">Snd as a Widget</a>
+  <li><a href="#emacssnd" onmouseover="return escape('Use Emacs as the listener')">Snd as an Emacs subjob</a>
+  <li><a href="#dynamic" onmouseover="return escape('Load your own C code into Snd')">Dynamically loaded modules</a>
+  <li><a href="#programs" onmouseover="return escape('Control Snd through X window properties')">External Programs</a>
+  <li><a href="#sndaswidget" onmouseover="return escape('Embed Snd in some other program')">Snd as a Widget</a>
   <li><a href="#sndwithclm" onmouseover="return escape('CLM is built into Snd')">Snd and CLM</a>
-    <ul>
-    <li><a href="#clmfuncs">CLM functions</a>
-    <li><a href="#sndinstruments">Instruments</a>
-    </ul>
-  <li><a href="#sndwithcm">Snd and Common Music</a>
-  <li><a href="#sndwithpd">Snd and Pd</a>
-  <li><a href="#sndwithmotif">Snd and Motif</a>
-  <li><a href="#sndwithgtk">Snd and Gtk</a>
+  <li><a href="#sndwithcm" onmouseover="return escape('CM is Rick Taube\'s composition environment')">Snd and Common Music</a>
+  <li><a href="#sndwithpd" onmouseover="return escape('PD is Miller Puckette\'s synthesis and composition program')">Snd and Pd</a>
+  <li><a href="#sndwithmotif" onmouseover="return escape('Motif extensions from xm.c')">Snd and Motif</a>
+  <li><a href="#sndwithgtk" onmouseover="return escape('Gtk extensions from xg.c')">Snd and Gtk</a>
   <li><a href="#sndwithnogui">Snd with no GUI and as script engine</a>
   <li><a href="#sndandruby">Snd with Ruby</a>
   <li><a href="#sndandforth">Snd with Forth</a>
-  <li><a href="#sndandladspa">Snd and LADSPA plugins</a>
-  <li><a href="#sndandalsa">Snd and ALSA</a>
+  <li><a href="#sndandladspa" onmouseover="return escape('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
+  <li><a href="#sndandalsa" onmouseover="return escape('This is the new Linux audio library')">Snd and ALSA</a>
   <li><a href="#sndandx">Driving Snd remotely</a>
-  <li><a href="#sndandgl">Snd and OpenGL</a>
-  <li><a href="#sndandgdb">Snd and gdb</a>
+  <li><a href="#sndandgl" onmouseover="return escape('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
   </ul>
 </ul>
 </td><td>
@@ -147,19 +142,55 @@ want the Snd window to start out 800x500, want to predefine an envelope named
 "env1", and want the file selection box to
 show just sound files.  We make ~/.snd and put in it:</p>
 <pre>
+Scheme:
     (set! (<a class=quiet href="extsnd.html#windowwidth">window-width</a>) 800)
     (set! (<a class=quiet href="extsnd.html#windowheight">window-height</a>) 500)
-    (<a class=quiet href="extsnd.html#defvar">defvar</a> env1 '(0 0 1 1 2 0))
     (set! (<a class=quiet href="extsnd.html#justsounds">just-sounds</a>) #t)
+    (<a class=quiet href="extsnd.html#defineenvelope">define-envelope</a> env1 '(0 0 1 1 2 0))
+
+Ruby:
+    set_window_width(800)
+    set_window_height(500)
+    set_just_sounds(true)
+    define_envelope("env1", [0, 0, 1, 1, 2, 0])
+
+Forth:
+    800 set-window-width drop
+    500 set-window-height drop
+    #t set-just-sounds drop
+    $" env1" '( 0.0 0.0 1.0 1.0 2.0 0.0 ) 1.0 define-envelope drop
 </pre>
+
 <p>
 In more
-complex situations, you may want an initialization file particular to a given
-machine, and global across users; the 
+complex situations, you may want an initialization file particular to a given extension language, machine, or
+global across users;  the 
 name of this optional global initialization file is "/etc/snd.conf". It
 is read before your local file; both can, of course, be
 absent.  To override reading the global init file when Snd is invoked, include the switch -noglob.
-To override the local init file, use -noinit.  
+To override the local init file, use -noinit. 
+</p>
+<p>
+The initialization files particular to a given extension language have names such as ~/.snd_guile
+and ~/.snd_prefs_ruby.  Currently the possibilities are:
+~/.snd_prefs_guile|ruby|forth|gauche, /etc/snd_guile|ruby|forth|gauche.conf,
+~/.snd_guile|ruby|forth|gauche (the notation "guile|ruby|forth" means either "guile" or "ruby" or "forth", so the file names
+spelled out completely are "/etc/snd_guile.conf", "/etc/snd_ruby.conf", etc; which one is loaded
+obviously depends on which language you chose during configuration).  
+The save-options (preferences dialog) process writes to
+.snd_prefs_* which is loaded first, if it exists; then Snd looks for .snd_* (guile, ruby, forth, or gauche);
+then .snd.  If you're always using just one version of Snd, it's simplest to stick with
+.snd.  The actual load sequence is:
+</p>
+<pre>
+    /etc/snd_guile|ruby|forth|gauche.conf    (these two canceled by -noglob)
+    /etc/snd.conf               
+    ~/.snd_prefs_guile|ruby|forth|gauche     (the rest canceled by -noinit)
+    ~/.snd_guile|ruby|forth|gauche
+    ~/.snd                                   (changed by initFile resource, -init arg, SND_INIT_FILE_ENVRIONMENT_NAME, etc)
+</pre>
+
+ 
 Here's a more elaborate initialization file (~/.snd_guile):
 </p>
 
@@ -449,23 +480,6 @@ it will override Snd's default arithmetic mode settings.  GSL recommends the set
 </pre>
 <p>For more complex initialization files, see snd_conffile.scm and edit123.scm.
 </p>
-<p>With the advent of the preferences dialog, and other complications, this initialization sequence
-has changed slightly.  The old files ~/.snd and /etc/snd.conf are still loaded, but now there
-are additional initialization possibilities: ~/.snd_prefs_guile|ruby|forth|gauche, /etc/snd_guile|ruby|forth|gauche.conf,
-~/.snd_guile|ruby|forth|gauche (the notation "guile|ruby|forth" means either "guile" or "ruby" or "forth", so the file names
-spelled out completely are "/etc/snd_guile.conf", "/etc/snd_ruby.conf", etc; which one is loaded
-obviously depends on which language you chose during configuration).  Currently, the save-options (preferences dialog) process writes to
-.snd_prefs_* which is loaded first, if it exists; then Snd looks for .snd_* (guile, ruby, forth, or gauche);
-then .snd.  If you're always using just one version of Snd, it's simplest to stick with
-.snd.  The actual load sequence is:
-</p>
-<pre>
-    /etc/snd_guile|ruby|forth|gauche.conf    (these two canceled by -noglob)
-    /etc/snd.conf               
-    ~/.snd_prefs_guile|ruby|forth|gauche     (the rest canceled by -noinit)
-    ~/.snd_guile|ruby|forth|gauche
-    ~/.snd                                   (changed by initFile resource, -init arg, SND_INIT_FILE_ENVRIONMENT_NAME, etc)
-</pre>
 
 <p>
 Normally, the initialization file also adds the Snd sources directory to the load path (see README.Snd or
@@ -475,45 +489,109 @@ It is a colon-separated list of directories that will be added to the load path 
 <br>
 <table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndresources">Snd resources</a></h3></td></tr></table>
 
-<p>In the Motif version, there are a few X-style resources that Snd looks for (see Snd.ad); each has
-a built-in default value, so you can ignore any that are already acceptable:</p>
+<p>In the Motif version, there are a few X-style resources (for use in your ~/.Xdefaults file) that Snd looks for (see Snd.ad); each has
+a built-in default value, so you can ignore this entirely, and use the extension language initialization file to choose new values.
+</p>
 
 <table cellspacing=0 cellpadding=0 hspace=20>
-<tr><td width=200>initFile</td>               <td>"~/.snd_guile (etc)"</td></tr>
-<tr><td bgcolor="ghostwhite">autoResize</td>                       <td bgcolor="ghostwhite">1</td></tr>
-<tr><td>horizontalPanes</td>                  <td>0</td></tr>
-<tr><td bgcolor="ghostwhite"><br></td><td bgcolor="ghostwhite"><br></td></tr>
-<tr><td>peaksFont</td>                        <td>-*-times-medium-r-*-*-14-*-*-*-*-*-*-*</td></tr>
-<tr><td bgcolor="ghostwhite">boldpeaksFont</td>                    <td bgcolor="ghostwhite">-*-times-bold-r-*-*-14-*-*-*-*-*-*-*</td></tr>
-<tr><td>axisLabelFont</td>                    <td>-*-times-medium-r-normal-*-20-*-*-*-*-*-*-*</td></tr>
-<tr><td bgcolor="ghostwhite">axisNumbersFont</td>                  <td bgcolor="ghostwhite">-*-courier-medium-r-normal-*-14-*-*-*-*-*-*-*</td></tr>
-<tr><td>listenerFont</td>                     <td>default font (fixed 7x13, I think)</td></tr>
-<tr><td bgcolor="ghostwhite"><br></td><td bgcolor="ghostwhite"><br></td></tr>
-<tr><td>highlightcolor</td>                   <td>ivory1</td></tr>
-<tr><td bgcolor="ghostwhite">basiccolor</td>                       <td bgcolor="ghostwhite">ivory2</td></tr>
-<tr><td>positioncolor</td>                    <td>ivory3</td></tr>
-<tr><td bgcolor="ghostwhite">zoomcolor</td>                        <td bgcolor="ghostwhite">ivory4</td></tr>
-<tr><td>cursorcolor</td>                      <td>red</td></tr>
-<tr><td bgcolor="ghostwhite">selectioncolor</td>                   <td bgcolor="ghostwhite">lightsteelblue1</td></tr>
-<tr><td>mixcolor</td>                         <td>lightgreen</td></tr>
-<tr><td bgcolor="ghostwhite">mixfocuscolor</td>                    <td bgcolor="ghostwhite">yellow2</td></tr>
-<tr><td>listenercolor</td>                    <td>aliceblue</td></tr>
-<tr><td bgcolor="ghostwhite">envedwaveformcolor</td>               <td bgcolor="ghostwhite">blue</td></tr>
-<tr><td>filterwaveformcolor</td>              <td>blue</td></tr>
-<tr><td bgcolor="ghostwhite">mixwaveformcolor</td>                 <td bgcolor="ghostwhite">darkgray</td></tr>
-<tr><td>graphcolor</td>                       <td>white</td></tr>
-<tr><td bgcolor="ghostwhite">selectedgraphcolor</td>               <td bgcolor="ghostwhite">white</td></tr>
-<tr><td>datacolor</td>                        <td>black</td></tr>
-<tr><td bgcolor="ghostwhite">selecteddatacolor</td>                <td bgcolor="ghostwhite">black</td></tr>
-<tr><td>markcolor</td>                        <td>red</td></tr>
-<tr><td bgcolor="ghostwhite">pushedbuttoncolor</td>                <td bgcolor="ghostwhite">lightsteelblue1</td></tr>
-<tr><td>sashcolor</td>                        <td>lightgreen</td></tr>
-<tr><td bgcolor="ghostwhite">helpbuttoncolor</td>                  <td bgcolor="ghostwhite">ivory1</td></tr>
-<tr><td>quitbuttoncolor</td>                  <td>ivory1</td></tr>
-<tr><td bgcolor="ghostwhite">resetbuttoncolor</td>                 <td bgcolor="ghostwhite">ivory1</td></tr>
-<tr><td>doitbuttoncolor</td>                  <td>ivory1</td></tr>
-<tr><td bgcolor="ghostwhite">doitagainbuttoncolor</td>             <td bgcolor="ghostwhite">ivory1</td></tr>
+<tr><th align=left bgcolor="beige">Resource Name</th><th align=left bgcolor="beige">Default Value</th><th align=left bgcolor="beige">Purpose</th><th align=left bgcolor="beige">Scheme Name</th></tr>
+<tr><td width=160>initFile</td><td width=130>"~/.snd"</td><td width=300>initialization file name</td><td></td></tr>
+
+<tr><td bgcolor="ghostwhite">autoResize</td><td bgcolor="ghostwhite">1</td><td bgcolor="ghostwhite">should Snd window resize automatically</td><td bgcolor="ghostwhite"><a href="extsnd.html#autoresize">auto-resize</a></td></tr>
+
+<tr><td>horizontalPanes</td><td>0</td><td>basic paned window layout</td><td></td></tr>
+
+<tr><td bgcolor="ghostwhite"><br></td><td bgcolor="ghostwhite"><br></td><td bgcolor="ghostwhite"></td><td bgcolor="ghostwhite"></td></tr>
+
+
+
+<tr><td>peaksFont</td><td>times 14</td><td>fft peaks font</td><td><a href="extsnd.html#peaksfont">peaks-font</a></td></tr>
+
+<tr><td bgcolor="ghostwhite">boldpeaksFont</td><td bgcolor="ghostwhite">times bold 14</td><td bgcolor="ghostwhite">main fft peaks font</td><td bgcolor="ghostwhite"><a href="extsnd.html#boldpeaksfont">bold-peaks-font</a></td></tr>
+
+<tr><td>axisLabelFont</td><td>times 20</td><td>axis label ("Time")</td><td><a href="extsnd.html#axislabelfont">axis-label-font</a></td></tr>
+
+<tr><td bgcolor="ghostwhite">axisNumbersFont</td><td bgcolor="ghostwhite">courier 14</td><td bgcolor="ghostwhite">axis tick numbers</td><td bgcolor="ghostwhite"><a href="extsnd.html#axisnumbersfont">aixs-numbers-font</a></td></tr>
+
+<tr><td>listenerFont</td><td>fixed 7x13</td><td>listener text</td><td><a href="extsnd.html#listenerfont">listener-font</a></td></tr>
+
+<tr><td bgcolor="ghostwhite"><br></td><td bgcolor="ghostwhite"><br></td><td bgcolor="ghostwhite"></td><td bgcolor="ghostwhite"></td></tr>
+
+
+
+<tr><td>basiccolor</td><td>ivory2</td><td>default background color everywhere</td><td><code><a href="extsnd.html#basiccolor">basic-color</a></code></td></tr>
+
+<tr><td bgcolor="ghostwhite">cursorcolor</td><td bgcolor="ghostwhite">red</td>         <td bgcolor="ghostwhite">color of the cursor</td>                   <td bgcolor="ghostwhite"><code><a href="extsnd.html#cursorcolor">cursor-color</a></code></td></tr>
+
+<tr><td>datacolor</td><td>black</td><td>unselected data color</td>                 <td><code><a href="extsnd.html#datacolor">data-color</a></code></td></tr>
+
+<tr><td bgcolor="ghostwhite">doitbuttoncolor</td><td bgcolor="ghostwhite">ivory1</td>     <td bgcolor="ghostwhite">color of Apply or Ok buttons</td>          <td bgcolor="ghostwhite"><code><a href="extsnd.html#doitbuttoncolor">doit-button-color</a></code></td></tr>
+
+<tr><td>doitagainbuttoncolor</td><td>ivory1</td><td>color of Undo&amp;Apply buttons</td>       <td><code><a href="extsnd.html#doitagainbuttoncolor">doit-again-button-color</a></code></td></tr>
+
+<tr><td bgcolor="ghostwhite">envedwaveformcolor</td><td bgcolor="ghostwhite">blue</td>  <td bgcolor="ghostwhite">color of envelope editor waveform</td>     <td bgcolor="ghostwhite"><code><a href="extsnd.html#envedwaveformcolor">enved-waveform-color</a></code></td></tr>
+
+<tr><td>filterwaveformcolor</td><td>blue</td> <td>color of control panel filter waveform</td><td><code><a href="extsnd.html#filterwaveformcolor">filter-control-waveform-color</a></code></td></tr>
+
+<tr><td bgcolor="ghostwhite">graphcolor</td><td bgcolor="ghostwhite">white</td>          <td bgcolor="ghostwhite">unselected channels' graph background</td> <td bgcolor="ghostwhite"><code><a href="extsnd.html#graphcolor">graph-color</a></code></td></tr>
+
+<tr><td>helpbuttoncolor</td><td>ivory1</td>     <td>color of Help buttons</td>                 <td><code><a href="extsnd.html#helpbuttoncolor">help-button-color</a></code></td></tr>
+
+<tr><td bgcolor="ghostwhite">highlightcolor</td><td bgcolor="ghostwhite">ivory1</td>      <td bgcolor="ghostwhite">highlighting here and there</td>           <td bgcolor="ghostwhite"><code><a href="extsnd.html#highlightcolor">highlight-color</a></code></td></tr>
+
+<tr><td>listenercolor</td><td>aliceblue</td>       <td>background color of the listener</td>      <td><code><a href="extsnd.html#listenercolor">listener-color</a></code></td></tr>
+
+<tr><td bgcolor="ghostwhite">listenertextcolor</td><td bgcolor="ghostwhite">black</td>   <td bgcolor="ghostwhite">text color in the listener</td>            <td bgcolor="ghostwhite"><code><a href="extsnd.html#listenertextcolor">listener-text-color</a></code></td></tr>
+
+<tr><td>markcolor</td><td>red</td>           <td>color of the mark indicator</td>           <td><code><a href="extsnd.html#markcolor">mark-color</a></code></td></tr>
+
+<tr><td bgcolor="ghostwhite">mixcolor</td><td bgcolor="ghostwhite">darkgray</td>            <td bgcolor="ghostwhite">used for mix waveforms</td>                <td bgcolor="ghostwhite"><code><a href="extsnd.html#mixcolor">mix-color</a></code></td></tr>
+
+<tr><td>positioncolor</td><td>ivory3</td>       <td>color of position sliders</td>             <td><code><a href="extsnd.html#positioncolor">position-color</a></code></td></tr>
+
+<tr><td bgcolor="ghostwhite">pushedbuttoncolor</td><td bgcolor="ghostwhite">ivory1</td>   <td bgcolor="ghostwhite">color of pushed button</td>                <td bgcolor="ghostwhite"><code><a href="extsnd.html#pushedbuttoncolor">pushed-button-color</a></code></td></tr>
+
+<tr><td>quitbuttoncolor</td><td>ivory1</td>     <td>color of Cancel or Dismiss buttons</td>    <td><code><a href="extsnd.html#quitbuttoncolor">quit-button-color</a></code></td></tr>
+
+<tr><td bgcolor="ghostwhite">resetbuttoncolor</td><td bgcolor="ghostwhite">ivory1</td>    <td bgcolor="ghostwhite">color of Reset buttons</td>                <td bgcolor="ghostwhite"><code><a href="extsnd.html#resetbuttoncolor">reset-button-color</a></code></td></tr>
+
+<tr><td>sashcolor</td><td>lightgreen</td>           <td>color of paned window sash handles</td>    <td><code><a href="extsnd.html#sashcolor">sash-color</a></code></td></tr>
+
+<tr><td bgcolor="ghostwhite">selecteddatacolor</td><td bgcolor="ghostwhite">black</td>   <td bgcolor="ghostwhite">color of the data in selected channel</td> <td bgcolor="ghostwhite"><code><a href="extsnd.html#selecteddatacolor">selected-data-color</a></code></td></tr>
+
+<tr><td>selectedgraphcolor</td><td>white</td>  <td>background of selected channel's graph</td><td><code><a href="extsnd.html#selectedgraphcolor">selected-graph-color</a></code></td></tr>
+
+<tr><td bgcolor="ghostwhite">selectioncolor</td><td bgcolor="ghostwhite">lightsteelblue1</td>      <td bgcolor="ghostwhite">color of an active selection</td>          <td bgcolor="ghostwhite"><code><a href="extsnd.html#selectioncolor">selection-color</a></code></td></tr>
+
+<tr><td>textfocuscolor</td><td>white</td>      <td>color of text field with focus</td>        <td><code><a href="extsnd.html#textfocuscolor">text-focus-color</a></code></td></tr>
+
+<tr><td bgcolor="ghostwhite">zoomcolor</td><td bgcolor="ghostwhite">ivory4</td>           <td bgcolor="ghostwhite">color of zoom sliders</td>                 <td bgcolor="ghostwhite"><code><a href="extsnd.html#zoomcolor">zoom-color</a></code></td></tr>
+
 </table>
+
+<p><A NAME="aboutcolors"></a>
+In the extension language,
+colors are defined by <a href="extsnd.html#makecolor">make-color</a> with the three red/green/blue values,
+each a float between 0.0 and 1.0.
+</p>
+<pre>
+    (set! (<a class=quiet href="extsnd.html#basiccolor">basic-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1.0 0.0 0.0))
+</pre>
+<p>sets
+the overall background color of Snd to red.  <a href="sndscm.html#rgbdoc">rgb.scm</a> defines all the standard X11 color names.
+</p>
+
+<p>help-button-color and friends only work in a few cases (Motif, 2.n where n &lt; 3), so I may
+deprecate them someday.
+</p>
+
+<p>There are several other resources that set widget sizes: zoomSliderWidth,
+positionSliderWidth, toggleSize, sashSize, sashIndent, channelSashSize, and channelSashIndent.
+And several more color resources: whitecolor (list background),
+blackcolor (recorder VU meter text), redcolor (buttons, VU clipping, etc), 
+greencolor (a few buttons),
+yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and lighterbluecolor (the fft option panel).
+</p>
 
 <p>You can experiment with other choices by
 using the -xrm switch:</p>
@@ -525,9 +603,9 @@ using the -xrm switch:</p>
     snd -xrm '*listenerFont: 6x10' oboe.snd
     snd -xrm '*mixwaveformcolor: red' oboe.snd -notebook
     snd oboe.snd pistol.snd -xrm '*selectedgraphcolor: black' -xrm '*selecteddatacolor: white'
-    snd oboe.snd -title hiho -display hummer.hiho:0.0 -xrm '*chn-graph*backgroundPixmap: text.xpm'
     snd -xrm '*fontList: -*-times-medium-r-*-*-14-*-*-*-*-*-*-*'
     snd -xrm '*fontList: -*-symbol-*-*-*-*-18-*-*-*-*-*-*-*'
+    snd oboe.snd -title hiho -display fatty.hiho:0.0 -xrm '*chn-graph*backgroundPixmap: text.xpm'
 </pre>
 <p>Perhaps this is most useful when your window manager assumes white text for labels (menus);
 since Snd defaults to an off-white background, this makes everything unreadable. You can get
@@ -540,16 +618,16 @@ the black text back with:
 via <code>(set! (<a class=quiet href="extsnd.html#listenertextcolor">listener-text-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0 0 0))</code> in ~/.snd.
 </p>
 
-<p>The colors are defined in <a href="sndscm.html#rgbdoc">rgb.scm</a>. 
+<p>
 The last example above sets the window title to "hiho", rather than
-"snd", displays the window on the machine hummer.hiho (presumably accessible over the net),
+"snd", displays the window on the machine fatty.hiho (presumably accessible over the net),
 and tiles the graph backgrounds with the contents of text.xpm.  To get the -geometry argument
 to work, set the autoResize resource to 0:</p>
 <pre>
     snd oboe.snd -geometry 800x200 -xrm '*autoResize: 0'
 </pre>
 
-<p>These resources can be set in Snd.ad or in your .Xdefaults file:</p>
+<p>These resources can be set in Snd.ad or in your ~/.Xdefaults file:</p>
 <pre>
     snd*axisLabelFont:      -*-times-medium-r-normal-*-18-*-*-*-*-*-*-*
     snd*axisNumbersFont:    9x15
@@ -607,54 +685,7 @@ is to change the "default" or "default_menu" styles in Snd.gtkrc:
 <img src="snd-ls.png" alt="snd-ls">
 
 <br>
-<p><A NAME="aboutcolors"></a>The Snd-specific X (Motif) color resources are:</p>
-
-<table cellspacing=0 cellpadding=0 hspace=20>
-<tr><td width=200>basiccolor</td><td width=300>default background color everywhere</td><td><code><a href="extsnd.html#basiccolor">basic-color</a></code></td></tr>
-<tr><td bgcolor="ghostwhite">cursorcolor</td>         <td bgcolor="ghostwhite">color of the cursor</td>                   <td bgcolor="ghostwhite"><code><a href="extsnd.html#cursorcolor">cursor-color</a></code></td></tr>
-<tr><td>datacolor</td>           <td>unselected data color</td>                 <td><code><a href="extsnd.html#datacolor">data-color</a></code></td></tr>
-<tr><td bgcolor="ghostwhite">doitbuttoncolor</td>     <td bgcolor="ghostwhite">color of Apply or Ok buttons</td>          <td bgcolor="ghostwhite"><code><a href="extsnd.html#doitbuttoncolor">doit-button-color</a></code></td></tr>
-<tr><td>doitagainbuttoncolor</td><td>color of Undo&amp;Apply buttons</td>       <td><code><a href="extsnd.html#doitagainbuttoncolor">doit-again-button-color</a></code></td></tr>
-<tr><td bgcolor="ghostwhite">envedwaveformcolor</td>  <td bgcolor="ghostwhite">color of envelope editor waveform</td>     <td bgcolor="ghostwhite"><code><a href="extsnd.html#envedwaveformcolor">enved-waveform-color</a></code></td></tr>
-<tr><td>filterwaveformcolor</td> <td>color of control panel filter waveform</td><td><code><a href="extsnd.html#filterwaveformcolor">filter-control-waveform-color</a></code></td></tr>
-<tr><td bgcolor="ghostwhite">graphcolor</td>          <td bgcolor="ghostwhite">unselected channels' graph background</td> <td bgcolor="ghostwhite"><code><a href="extsnd.html#graphcolor">graph-color</a></code></td></tr>
-<tr><td>helpbuttoncolor</td>     <td>color of Help buttons</td>                 <td><code><a href="extsnd.html#helpbuttoncolor">help-button-color</a></code></td></tr>
-<tr><td bgcolor="ghostwhite">highlightcolor</td>      <td bgcolor="ghostwhite">highlighting here and there</td>           <td bgcolor="ghostwhite"><code><a href="extsnd.html#highlightcolor">highlight-color</a></code></td></tr>
-<tr><td>listenercolor</td>       <td>background color of the listener</td>      <td><code><a href="extsnd.html#listenercolor">listener-color</a></code></td></tr>
-<tr><td bgcolor="ghostwhite">listenertextcolor</td>   <td bgcolor="ghostwhite">text color in the listener</td>            <td bgcolor="ghostwhite"><code><a href="extsnd.html#listenertextcolor">listener-text-color</a></code></td></tr>
-<tr><td>markcolor</td>           <td>color of the mark indicator</td>           <td><code><a href="extsnd.html#markcolor">mark-color</a></code></td></tr>
-<tr><td bgcolor="ghostwhite">mixcolor</td>            <td bgcolor="ghostwhite">used for mix waveforms</td>                <td bgcolor="ghostwhite"><code><a href="extsnd.html#mixcolor">mix-color</a></code></td></tr>
-<tr><td>positioncolor</td>       <td>color of position sliders</td>             <td><code><a href="extsnd.html#positioncolor">position-color</a></code></td></tr>
-<tr><td bgcolor="ghostwhite">pushedbuttoncolor</td>   <td bgcolor="ghostwhite">color of pushed button</td>                <td bgcolor="ghostwhite"><code><a href="extsnd.html#pushedbuttoncolor">pushed-button-color</a></code></td></tr>
-<tr><td>quitbuttoncolor</td>     <td>color of Cancel or Dismiss buttons</td>    <td><code><a href="extsnd.html#quitbuttoncolor">quit-button-color</a></code></td></tr>
-<tr><td bgcolor="ghostwhite">resetbuttoncolor</td>    <td bgcolor="ghostwhite">color of Reset buttons</td>                <td bgcolor="ghostwhite"><code><a href="extsnd.html#resetbuttoncolor">reset-button-color</a></code></td></tr>
-<tr><td>sashcolor</td>           <td>color of paned window sash handles</td>    <td><code><a href="extsnd.html#sashcolor">sash-color</a></code></td></tr>
-<tr><td bgcolor="ghostwhite">selecteddatacolor</td>   <td bgcolor="ghostwhite">color of the data in selected channel</td> <td bgcolor="ghostwhite"><code><a href="extsnd.html#selecteddatacolor">selected-data-color</a></code></td></tr>
-<tr><td>selectedgraphcolor</td>  <td>background of selected channel's graph</td><td><code><a href="extsnd.html#selectedgraphcolor">selected-graph-color</a></code></td></tr>
-<tr><td bgcolor="ghostwhite">selectioncolor</td>      <td bgcolor="ghostwhite">color of an active selection</td>          <td bgcolor="ghostwhite"><code><a href="extsnd.html#selectioncolor">selection-color</a></code></td></tr>
-<tr><td>textfocuscolor</td>      <td>color of text field with focus</td>        <td><code><a href="extsnd.html#textfocuscolor">text-focus-color</a></code></td></tr>
-<tr><td bgcolor="ghostwhite">zoomcolor</td>           <td bgcolor="ghostwhite">color of zoom sliders</td>                 <td bgcolor="ghostwhite"><code><a href="extsnd.html#zoomcolor">zoom-color</a></code></td></tr>
-</table>
-<p>
-Each of these colors can be set in Guile/Gauche using the second name given above ("basic-color").
-Colors are defined by <a href="extsnd.html#makecolor">make-color</a> with the three red/green/blue values,
-each a float between 0.0 and 1.0. <code>(set! (<a class=quiet href="extsnd.html#basiccolor">basic-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1.0 0.0 0.0))</code> sets
-the overall background color of Snd to red.  <a href="sndscm.html#rgbdoc">rgb.scm</a> defines all the standard X11 color names
-(you probably don't want to load the whole thing; just use the names as needed). 
-</p>
-
-<p>help-button-color and friends only work in a few cases (Motif, 2.n where n &lt; 3), so I may
-deprecate them someday.
-</p>
-
-<p>There are several other resources that set widget sizes: zoomSliderWidth,
-positionSliderWidth, toggleSize, sashSize, sashIndent, channelSashSize, and channelSashIndent.
-And several more color resources: whitecolor (list background),
-blackcolor (recorder VU meter text), redcolor (buttons, VU clipping, etc), 
-greencolor (a few buttons),
-yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and lighterbluecolor (the fft option panel).
-</p>
-<br>
+<br><br>
 
 <table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndconfigurationswitches">Configuration choices</a></h3></td></tr></table>
 
@@ -902,19 +933,17 @@ these declarations in ~/.snd:
 (define data-size 1024)
 (define data (<a class=quiet href="extsnd.html#makevct">make-vct</a> data-size))
 
-(define run-gen
-  (lambda (fun)
-    (do ((i 0 (1+ i))) 
-        ((= i data-size))
-      (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (fun)))
-    (<a class=quiet href="extsnd.html#graph">graph</a> data)))
+(define (run-gen func)        ; func is a function of no arguments (a "thunk")
+  (do ((i 0 (1+ i))) 
+      ((= i data-size))
+    (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (func))) ; fill data vct with output of 'func'
+  (<a class=quiet href="extsnd.html#graph">graph</a> data))               ; display data as a graph
 
-(define run-fft
-  (lambda (fun)
-    (do ((i 0 (1+ i))) 
-        ((= i data-size))
-      (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (fun)))
-    (<a class=quiet href="extsnd.html#graph">graph</a> (<a class=quiet href="extsnd.html#sndspectrum">snd-spectrum</a> data blackman2-window data-size #t))))
+(define (run-fft func)
+  (do ((i 0 (1+ i))) 
+      ((= i data-size))
+    (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (func)))
+  (<a class=quiet href="extsnd.html#graph">graph</a> (<a class=quiet href="extsnd.html#sndspectrum">snd-spectrum</a> data blackman2-window data-size #t)))
 </pre></td></tr></table>
 
 <p>Now we can open the listener, and type:</p>
@@ -1012,289 +1041,13 @@ an oscil or a sawtooth-wave:
     <em class=listener>0.125050634145737</em>
 </pre>
 
-<br>
-
-<!-- INDEX clmfuncs:CLM generators -->
-<table width="50%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="clmfuncs">CLM functions</a></h4></td></tr></table>
-
-<p>See <a href="clm.html">clm.html</a> for full details. Optional argumentss are in italics.</p>
-<br>
-
-<table border=0 cellpadding=0 cellspacing=0 hspace=20>
-<tr><td width=175></td><td></td><td></td></tr>
-<!-- this width setting is needed in Safari -->
-
-<tr><td><a href="clm.html#all-pass">all-pass</a></td><td>(gen input <i>pm</i>)</td><td>all-pass filter</td></tr>
-<tr><td><a href="clm.html#all-pass?">all-pass?</a></td><td>(gen)</td><td>#t if gen is all-pass filter</td></tr>
-<tr><td><a href="clm.html#amplitude-modulate">amplitude-modulate</a></td><td>(carrier in1 in2)</td><td>amplitude modulation</td></tr>
-<tr><td><a href="clm.html#array-interp">array-interp</a></td><td>(arr x)</td><td>interpolated array lookup</td></tr>
-<tr><td><a href="clm.html#array-&gt;file">array-&gt;file</a></td><td colspan=2>(filename vct <i>len srate channels</i>)</td></tr>
-<tr><td></td><td colspan=2>
-write the contents of <i>vct</i> to the newly created sound file <i>filename</i>, giving 
-the new file <i>channels</i> channels (data assumed to be interleaved in <i>vct</i>),
-sampling rate <i>srate</i>, and <i>len</i> samples (not frames).
-</td></tr>
-<tr><td><a href="clm.html#asymmetric-fm">asymmetric-fm</a></td><td>(gen index <i>fm</i>)</td><td>asymmetric-fm generator</td></tr>
-<tr><td><a href="clm.html#asymmetric-fm?">asymmetric-fm?</a></td><td>(gen)</td><td>#t if gen is asymmetric-fm generator</td></tr>
-<tr><td><a href="clm.html#average">average</a></td><td>(gen input)</td><td>moving window average</td></tr>
-<tr><td><a href="clm.html#average?">average?</a></td><td>(gen)</td><td>#t if gen is an average generator</td></tr>
-<tr><td><a href="clm.html#clear-array">clear-array</a></td><td>(arr)</td><td>set all elements of arr to 0.0</td></tr>
-<tr><td><a href="clm.html#comb">comb</a></td><td>(gen input <i>pm</i>)</td><td>comb filter</td></tr>
-<tr><td><a href="clm.html#comb?">comb?</a></td><td>(gen)</td><td>#t if gen is comb filter</td></tr>
-<tr><td><a href="clm.html#continue-frame-&gt;file">continue-frame-&gt;file</a></td><td>(file)</td><td>reopen file for more output</td></tr>
-<tr><td><a href="clm.html#continue-sample-&gt;file">continue-sample-&gt;file</a></td><td>(file)</td><td>reopen file for more output</td></tr>
-<tr><td><a href="clm.html#contrast-enhancement">contrast-enhancement</a></td><td>(input (<i>index</i> 1.0))</td><td>a kind of phase modulation or companding</td></tr>
-<tr><td><a href="clm.html#convolution">convolution</a></td><td>(sig1 sig2 n)</td><td>convolve sig1 with sig2 (size n), returning new sig1</td></tr>
-<tr><td><a href="clm.html#convolve">convolve</a></td><td>(gen <i>input-function</i>)</td><td>convolve generator</td></tr>
-<tr><td><a href="clm.html#convolve?">convolve?</a></td><td>(gen)</td><td>#t if gen is convolve generator</td></tr>
-<tr><td><a href="clm.html#convolvefiles">convolve-files</a></td><td>(f1 f2 maxamp outf)</td><td>convolve f1 with f2, normalize to maxamp, write outf</td></tr>
-<tr><td><a href="clm.html#db-&gt;linear">db-&gt;linear</a></td><td>(db)</td><td>translate dB value to linear</td></tr>
-<tr><td><a href="clm.html#degrees-&gt;radians">degrees-&gt;radians</a></td><td>(deg)</td><td>translate degrees to radians</td></tr>
-<tr><td><a href="clm.html#delay">delay</a></td><td>(gen input <i>pm</i>)</td><td>delay line</td></tr>
-<tr><td></td><td colspan=2><br>
-In Scheme <b>delay</b> is a built-in syntactic form; it is renamed <b>%delay</b> here.
-</td></tr>
-<tr><td colspan=3><br></td></tr>
-<tr><td><a href="clm.html#delay?">delay?</a></td><td>(gen)</td><td>#t if gen is delay line</td></tr>
-<tr><td><a href="clm.html#dot-product">dot-product</a></td><td>(sig1 sig2)</td><td>return dot-product of sig1 with sig2</td></tr>
-<tr><td><a href="clm.html#env">env</a></td><td>(gen)</td><td>envelope generator</td></tr>
-<tr><td><a href="clm.html#env-interp">env-interp</a></td><td>(x env (<i>base</i> 1.0))</td><td>return value of env at x</td></tr>
-<tr><td><a href="clm.html#env?">env?</a></td><td>(gen)</td><td>#t if gen is env (from make-env)</td></tr>
-<tr><td><a href="clm.html#fft">mus-fft</a></td><td>(rl im <i>n sign</i>)</td><td>fft of rl and im (sign = -1 for ifft), result in rl</td></tr>
-<tr><td valign=top><a href="clm.html#file-&gt;array">file-&gt;array</a></td><td valign=top>(filename <i>chan start len vct</i>)</td><td>
-load <i>len</i> samples of <i>filename</i> into <i>vct</i> starting at frame <i>start</i> in channel <i>chan</i>.
-</td></tr>
-<tr><td><a href="clm.html#file-&gt;frame">file-&gt;frame</a></td><td>(gen loc <i>frame</i>)</td><td>return frame from file at loc</td></tr>
-<tr><td><a href="clm.html#file-&gt;frame?">file-&gt;frame?</a></td><td>(gen)</td><td>#t if gen is file-&gt;frame generator</td></tr>
-<tr><td><a href="clm.html#file-&gt;sample">file-&gt;sample</a></td><td>(gen loc <i>(chan 0)</i>)</td><td>return sample from file at loc</td></tr>
-<tr><td><a href="clm.html#file-&gt;sample?">file-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is file-&gt;sample generator</td></tr>
-<tr><td><a href="clm.html#filter">filter</a></td><td>(gen input)</td><td>filter</td></tr>
-<tr><td></td><td colspan=2><br>
-Some versions of Guile and Gauche define an unrelated function named <b>filter</b> (from srfi-1 I think).
-It is renamed <b>%filter</b>, if it is noticed in time.  In case clm's filter is still overwritten,
-you can use the synonym <b>clm:filter</b>.
-</td></tr>
-<tr><td colspan=3><br></td></tr>
-<tr><td><a href="clm.html#filter?">filter?</a></td><td>(gen)</td><td>#t if gen is filter</td></tr>
-<tr><td><a href="clm.html#fir-filter">fir-filter</a></td><td>(gen input)</td><td>FIR filter</td></tr>
-<tr><td><a href="clm.html#fir-filter?">fir-filter?</a></td><td>(gen)</td><td>#t if gen is fir filter</td></tr>
-<tr><td><a href="clm.html#formant">formant</a></td><td>(gen input)</td><td>formant generator</td></tr>
-<tr><td><a class=def name="formantbank">formant-bank</a></td><td>(scls gens inval)</td><td></td></tr>
-<tr><td><a href="clm.html#formant?">formant?</a></td><td>(gen)</td><td>#t if gen is formant generator</td></tr>
-<tr><td><a href="clm.html#frame*">frame*</a></td><td>(fr1 fr2 <i>outfr</i>)</td><td>element-wise multiply</td></tr>
-<tr><td><a href="clm.html#frame+">frame+</a></td><td>(fr1 fr2 <i>outfr</i>)</td><td>element-wise add</td></tr>
-<tr><td><a href="clm.html#frame-&gt;file">frame-&gt;file</a></td><td>(gen loc frame)</td><td>write (add) frame to file at loc</td></tr>
-<tr><td><a href="clm.html#frame-&gt;file?">frame-&gt;file?</a></td><td>(gen)</td><td>#t if gen is frame-&gt;file generator</td></tr>
-<tr><td><a href="clm.html#frame-&gt;frame">frame-&gt;frame</a></td><td>(mixer frame <i>outfr</i>)</td><td>pass frame through mixer</td></tr>
-<tr><td><a href="clm.html#frame-&gt;list">frame-&gt;list</a></td><td>(frame)</td><td>return list of frame contents</td></tr>
-<tr><td><a href="clm.html#frame-ref">frame-ref</a></td><td>(frame chan)</td><td>return frame[chan]</td></tr>
-<tr><td><a href="clm.html#frame-&gt;sample">frame-&gt;sample</a></td><td>(frmix frame)</td><td>pass frame through frame or mixer to produce sample</td></tr>
-<tr><td><a href="clm.html#frame-set!">frame-set!</a></td><td>(frame chan val)</td><td>frame[chan]=val</td></tr>
-<tr><td><a href="clm.html#frame?">frame?</a></td><td>(gen)</td><td>#t if gen is frame object</td></tr>
-<tr><td></td><td colspan=2><br>
-In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> here.
-</td></tr>
-<tr><td colspan=3><br></td></tr>
-<tr><td><a href="clm.html#granulate">granulate</a></td><td>(gen <i>input-function edit-function</i>)</td><td>granular synthesis generator</td></tr>
-<tr><td><a href="clm.html#granulate?">granulate?</a></td><td>(gen)</td><td>#t if gen is granulate generator</td></tr>
-<tr><td><a href="clm.html#hz-&gt;radians">hz-&gt;radians</a></td><td>(freq)</td><td>translate freq to radians/sample</td></tr>
-<tr><td><a href="clm.html#iir-filter">iir-filter</a></td><td>(gen input)</td><td>IIR filter</td></tr>
-<tr><td><a href="clm.html#iir-filter?">iir-filter?</a></td><td>(gen)</td><td>#t if gen is iir-filter</td></tr>
-<tr><td><a href="clm.html#in-any">in-any</a></td><td>(loc <i>chan stream</i>)</td><td>return sample in stream at loc and chan</td></tr>
-<tr><td><a href="clm.html#ina">ina</a></td><td>(loc <i>stream</i>)</td><td>return sample in stream at loc, chan 0</td></tr>
-<tr><td><a href="clm.html#inb">inb</a></td><td>(loc <i>stream</i>)</td><td>return sample in stream at loc, chan 1</td></tr>
-<tr><td><a href="clm.html#linear-&gt;db">linear-&gt;db</a></td><td>(val)</td><td>translate linear val to dB</td></tr>
-<tr><td><a href="clm.html#locsig">locsig</a></td><td>(gen loc input)</td><td>place input in output channels at loc</td></tr>
-<tr><td><a href="clm.html#locsig-ref">locsig-ref</a></td><td>(gen chan)</td><td>locsig-scaler[chan]</td></tr>
-<tr><td><a href="clm.html#locsig-reverb-ref">locsig-reverb-ref</a></td><td>(gen chan)</td><td>locsig-reverb-scaler[chan]</td></tr>
-<tr><td><a href="clm.html#locsig-set!">locsig-set!</a></td><td>(gen chan val)</td><td>locsig-scaler[chan] = val</td></tr>
-<tr><td><a href="clm.html#locsig-reverb-set!">locsig-reverb-set!</a></td><td>(gen chan val)</td><td>locsig-reverb-scaler[chan] = val</td></tr>
-<tr><td><a href="clm.html#locsig?">locsig?</a></td><td>(gen)</td><td>#t if gen is locsig generator</td></tr>
-<tr><td colspan=3><br>
-;; all the make function arguments are <a href="clm.html#optional-key">optional-key</a> args
-</td></tr>
-<tr><td><a href="clm.html#make-all-pass">make-all-pass</a></td><td colspan=2>(feedback feedforward size initial-contents initial-element max-size type)</td></tr>
-<tr><td><a href="clm.html#make-average">make-average</a></td><td colspan=2>(size initial-contents initial-element)</td></tr>
-<tr><td><a href="clm.html#make-asymmetric-fm">make-asymmetric-fm</a></td><td colspan=2>(frequency initial-phase r ratio)</td></tr>
-<tr><td><a href="clm.html#make-comb">make-comb</a></td><td colspan=2>(scaler size initial-contents initial-element max-size type)</td></tr>
-<tr><td><a href="clm.html#make-convolve">make-convolve</a></td><td colspan=2>(input filter fft-size filter-size)</td></tr>
-<tr><td><a href="clm.html#make-delay">make-delay</a></td><td colspan=2>(size initial-contents initial-element max-size type)</td></tr>
-<tr><td><a href="clm.html#make-env">make-env</a></td><td colspan=2>(envelope scaler duration offset base end start)</td></tr>
-<tr><td><a href="clm.html#make-fft-window">make-fft-window</a></td colspan=2><td>(type size beta)</td></tr>
-<tr><td><a href="clm.html#make-file-&gt;frame">make-file-&gt;frame</a></td><td colspan=2>(name)</td></tr>
-<tr><td><a href="clm.html#make-file-&gt;sample">make-file-&gt;sample</a></td><td colspan=2>(name)</td></tr>
-<tr><td><a href="clm.html#make-filter">make-filter</a></td><td colspan=2>(order xcoeffs ycoeffs)</td></tr>
-<tr><td><a class=def name="makefircoeffs">make-fir-coeffs</a></td><td colspan=2>(order spectr)</td></tr>
-<tr><td><a href="clm.html#make-fir-filter">make-fir-filter</a></td><td colspan=2>(order xcoeffs)</td></tr>
-<tr><td><a href="clm.html#make-formant">make-formant</a></td><td colspan=2>(radius frequency gain)</td></tr>
-<tr><td><a href="clm.html#make-frame">make-frame</a></td><td colspan=2>(chans &amp;rest vals)</td></tr>
-<tr><td><a href="clm.html#make-frame-&gt;file">make-frame-&gt;file</a></td><td colspan=2>(name chans format type)</td></tr>
-<tr><td><a href="clm.html#make-granulate">make-granulate</a></td><td colspan=2>(input expansion length scaler hop ramp jitter max-size edit)</td></tr>
-<tr><td><a href="clm.html#make-iir-filter">make-iir-filter</a></td><td colspan=2>(order ycoeffs)</td></tr>
-<tr><td><a href="clm.html#make-locsig">make-locsig</a></td><td colspan=2>(degree distance reverb output revout channels type)</td></tr>
-<tr><td><a href="clm.html#make-mixer">make-mixer</a></td><td colspan=2>(chans &amp;rest vals)</td></tr>
-<tr><td><a href="clm.html#make-notch">make-notch</a></td><td colspan=2>(scaler size initial-contents initial-element max-size type)</td></tr>
-<tr><td><a href="clm.html#make-one-pole">make-one-pole</a></td><td colspan=2>(a0 b1)</td></tr>
-<tr><td><a href="clm.html#make-one-zero">make-one-zero</a></td><td colspan=2>(a0 a1)</td></tr>
-<tr><td><a href="clm.html#make-oscil">make-oscil</a></td><td colspan=2>(frequency initial-phase)</td></tr>
-<tr><td><a href="clm.html#make-phase-vocoder">make-phase-vocoder</a></td><td colspan=2>(fftsize overlap interp pitch analyze edit synthesize)</td></tr>
-<tr><td><a href="clm.html#make-polyshape">make-polyshape</a></td><td colspan=2>(frequency initial-phase coeffs partials kind)</td></tr>
-<tr><td><a href="clm.html#make-ppolar">make-ppolar</a></td><td colspan=2>(radius frequency)</td></tr>
-<tr><td><a href="clm.html#make-pulse-train">make-pulse-train</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
-<tr><td><a href="clm.html#make-rand">make-rand</a></td><td colspan=2>(frequency amplitude envelope distribution)</td></tr>
-<tr><td><a href="clm.html#make-rand-interp">make-rand-interp</a></td><td colspan=2>(frequency amplitude envelope distribution)</td></tr>
-<tr><td><a href="clm.html#make-readin">make-readin</a></td><td colspan=2>(file channel start)</td></tr>
-<tr><td><a href="clm.html#make-sample-&gt;file">make-sample-&gt;file</a></td><td colspan=2>(name chans format type <i>comment</i>)</td></tr>
-<tr><td><a href="clm.html#make-sawtooth-wave">make-sawtooth-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
-<tr><td><a href="clm.html#make-sine-summation">make-sine-summation</a></td><td colspan=2>(frequency initial-phase n a ratio)</td></tr>
-<tr><td><a href="extsnd.html#makesnd_to_sample">make-snd-&gt;sample</a></td><td colspan=2>(index)</td></tr>
-<tr><td><a href="clm.html#make-square-wave">make-square-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
-<tr><td><a href="clm.html#make-src">make-src</a></td><td colspan=2>(input srate width)</td></tr>
-<tr><td><a href="clm.html#make-ssb-am">make-ssb-am</a></td><td colspan=2>(frequency order)</td></tr>
-<tr><td><a href="clm.html#make-sum-of-cosines">make-sum-of-cosines</a></td><td colspan=2>(cosines frequency initial-phase)</td></tr>
-<tr><td><a href="clm.html#make-sum-of-sines">make-sum-of-sines</a></td><td colspan=2>(sines frequency initial-phase)</td></tr>
-<tr><td><a href="clm.html#make-table-lookup">make-table-lookup</a></td><td colspan=2>(frequency initial-phase wave size)</td></tr>
-<tr><td><a href="clm.html#make-triangle-wave">make-triangle-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
-<tr><td><a href="clm.html#make-two-pole">make-two-pole</a></td><td colspan=2>(a0 b1 b2)</td></tr>
-<tr><td><a href="clm.html#make-two-zero">make-two-zero</a></td><td colspan=2>(a0 a1 a2)</td></tr>
-<tr><td><a href="clm.html#make-wave-train">make-wave-train</a></td><td colspan=2>(frequency initial-phase wave size)</td></tr>
-<tr><td><a href="clm.html#make-waveshape">make-waveshape</a></td><td colspan=2>(frequency partials wave size)</td></tr>
-<tr><td><a href="clm.html#make-zpolar">make-zpolar</a></td><td colspan=2>(radius frequency)</td></tr>
-<tr><td><a href="clm.html#mixermultiply">mixer*</a></td><td>(mix1 mix2 <i>outmx</i>)</td><td>matrix multiply of mix1 and mix2</td></tr>
-<tr><td><a href="clm.html#mixeradd">mixer+</a></td><td>(mix1 mix2 <i>outmx</i>)</td><td>add mixers mix1 and mix2</td></tr>
-<tr><td><a href="clm.html#mixer-ref">mixer-ref</a></td><td>(mixer in out)</td><td>mix-scaler[in,out]</td></tr>
-<tr><td><a href="clm.html#mixer-set!">mixer-set!</a></td><td>(mixer in out val)</td><td>mix-scaler[in,out] = val</td></tr>
-<tr><td><a href="clm.html#mixer?">mixer?</a></td><td>(gen)</td><td>#t if gen is mixer object</td></tr>
-<tr><td><a href="clm.html#move-locsig">move-locsig</a></td><td colspan=2>(gen degree distance)</td></tr>
-<tr><td><a href="clm.html#multiply-arrays">multiply-arrays</a></td><td>(arr1 arr2)</td><td>arr1[i] *= arr2[i]</td></tr>
-<tr><td><a class=def name="musarrayprintlength">mus-array-print-length</a></td><td>()</td><td>how many array (vct) elements to print in mus-describe</td></tr>
-<tr><td><a href="clm.html#mus-channel">mus-channel</a></td><td>(gen)</td><td>channel of gen</td></tr>
-<tr><td><a href="clm.html#mus-channels">mus-channels</a></td><td>(gen)</td><td>channels of gen</td></tr>
-<tr><td><a href="clm.html#mus-cosines">mus-cosines</a></td><td>(gen)</td><td>cosines of sum-of-cosines gen</td></tr>
-<tr><td><a href="clm.html#mus-data">mus-data</a></td><td>(gen)</td><td>data array of gen</td></tr>
-<tr><td><a href="clm.html#mus-describe">mus-describe</a></td><td>(gen)</td><td>return description of gen</td></tr>
-<tr><td><a href="clm.html#mus-feedback">mus-feedback</a></td><td>(gen)</td><td>feedback term of gen (simple filters)</td></tr>
-<tr><td><a href="clm.html#mus-feedforward">mus-feedforward</a></td><td>(gen)</td><td>feedforward term of gen (<a class=quiet href="clm.html#all-pass">all-pass</a>)</td></tr>
-<tr><td><a class=def name="musfilebuffersize">mus-file-buffer-size</a></td><td>()</td><td>size of input/ouput buffers (default 8192)</td></tr>
-<tr><td><a href="clm.html#mus-file-name">mus-file-name</a></td><td>(gen)</td><td>name of file assoicated with gen</td></tr>
-<tr><td><a href="clm.html#mus-formant-radius">mus-formant-radius</a></td><td>(gen)</td><td>formant radius</td></tr>
-<tr><td><a href="clm.html#mus-frequency">mus-frequency</a></td><td>(gen)</td><td>frequency of gen (Hz)</td></tr>
-<tr><td><a href="clm.html#mus-hop">mus-hop</a></td><td>(gen)</td><td>hop amount of gen (<a class=quiet href="clm.html#granulate">granulate</a>)</td></tr>
-<tr><td><a href="clm.html#mus-increment">mus-increment</a></td><td>(gen)</td><td>increment of gen (src, readin, granulate)</td></tr>
-<tr><td><a href="clm.html#mus-input?">mus-input?</a></td><td>(gen)</td><td>#t if gen is input source</td></tr>
-<tr><td><a href="clm.html#mus-interp-type">mus-interp-type</a></td><td>(gen)</td><td>interpolation choice of gen</td></tr>
-<tr><td><a href="clm.html#mus-length">mus-length</a></td><td>(gen)</td><td>length of gen</td></tr>
-<tr><td><a href="clm.html#mus-location">mus-location</a></td><td>(gen)</td><td>location (read point) of gen</td></tr>
-<tr><td><a class=def name="musmix">mus-mix</a></td><td colspan=2>(outfile infile <i>(outloc 0) frames (inloc 0) mixer envs</i>)</td></tr>
-<tr><td></td><td colspan=2><br>
-mix <i>infile</i> into <i>outfile</i> starting at <i>outloc</i> in <i>outfile</i> and <i>inloc</i> in <i>infile</i>
-mixing <i>frames</i> frames of <i>infile</i>.  <i>frames</i> defaults to the length of <i>infile</i>. If <i>mixer</i>,
-use it to scale the various channels; if <i>envs</i> (an array of envelope generators), use
-it in conjunction with <i>mixer</i>to scale/envelope all the various ins and outs.
-<i>outfile</i> can be a frame-&gt;file generator, and <i>infile</i> can be a file-&gt;frame generator.
-</td></tr>
-<tr><td colspan=3><br></td></tr>
-<tr><td><a href="clm.html#mus-order">mus-order</a></td><td>(gen)</td><td>order of gen (filters)</td></tr>
-<tr><td><a href="clm.html#mus-output?">mus-output?</a></td><td>(gen)</td><td>#t if gen is output generator</td></tr>
-<tr><td><a href="clm.html#mus-phase">mus-phase</a></td><td>(gen)</td><td>phase of gen (radians)</td></tr>
-<tr><td><a href="clm.html#mus-ramp">mus-ramp</a></td><td>(gen)</td><td>ramp time of gen (<a class=quiet href="clm.html#granulate">granulate</a>)</td></tr>
-<tr><td><a href="clm.html#mus-random">mus-random</a></td><td>(val)</td><td>random numbers bewteen -val and val</td></tr>
-<tr><td><a href="clm.html#mus-reset">mus-reset</a></td><td>(gen)</td><td>reset gen to default start state</td></tr>
-<tr><td><a href="clm.html#mus-run">mus-run</a></td><td>(gen <i>arg1 arg2</i>)</td><td>apply gen to args</td></tr>
-<tr><td><a href="clm.html#mus-scaler">mus-scaler</a></td><td>(gen)</td><td>scaler of gen</td></tr>
-<tr><td><a href="clm.html#mus-set-rand-seed">mus-rand-seed</a></td><td>(val)</td><td>random number generator seed (settable via set!)</td></tr>
-<tr><td><a class=def name="mussrate">mus-srate</a></td><td>()</td><td>current sampling rate</td></tr>
-<tr><td><a href="clm.html#mus-xcoeff">mus-xcoeffs</a></td><td>(gen index)</td><td>x coeff of filter at index</td></tr>
-<tr><td><a href="clm.html#mus-xcoeffs">mus-xcoeffs</a></td><td>(gen)</td><td>feedforward (FIR) coeffs of filter</td></tr>
-<tr><td><a href="clm.html#mus-ycoeff">mus-ycoeffs</a></td><td>(gen index)</td><td>y coeff of filter at index</td></tr>
-<tr><td><a href="clm.html#mus-ycoeffs">mus-ycoeffs</a></td><td>(gen)</td><td>feedback (IIR) coeffs of filter</td></tr>
-<tr><td><a href="clm.html#notch">notch</a></td><td>(gen input <i>pm</i>)</td><td>notch filter</td></tr>
-<tr><td><a href="clm.html#notch?">notch?</a></td><td>(gen)</td><td>#t if gen is notch filter</td></tr>
-<tr><td><a href="clm.html#one-pole">one-pole</a></td><td>(gen input)</td><td>one-pole filter</td></tr>
-<tr><td><a href="clm.html#one-pole?">one-pole?</a></td><td>(gen)</td><td>#t if gen is one-pole filter</td></tr>
-<tr><td><a href="clm.html#one-zero">one-zero</a></td><td>(gen input)</td><td>one-zero filter</td></tr>
-<tr><td><a href="clm.html#one-zero?">one-zero?</a></td><td>(gen)</td><td>#t if gen is one-zero filter</td></tr>
-<tr><td><a href="clm.html#oscil">oscil</a></td><td>(gen <i>fm pm</i>)</td><td>sine wave generator</td></tr>
-<tr><td><a href="clm.html#oscil?">oscil?</a></td><td>(gen)</td><td>#t if gen is oscil generator</td></tr>
-<tr><td><a href="clm.html#out-any">out-any</a></td><td>(loc samp chan <i>stream</i>)</td><td>write (add) samp to stream at loc in channel chan</td></tr>
-<tr><td><a href="clm.html#outa">outa</a></td><td>(loc samp <i>stream</i>)</td><td>write (add) samp to stream at loc in chan 0</td></tr>
-<tr><td><a href="clm.html#outb">outb</a></td><td>(loc samp <i>stream</i>)</td><td>write (add) samp to stream at loc in chan 1</td></tr>
-<tr><td><a href="clm.html#outc">outc</a></td><td>(loc samp <i>stream</i>)</td><td>write (add) samp to stream at loc in chan 2</td></tr>
-<tr><td><a href="clm.html#outd">outd</a></td><td>(loc samp <i>stream</i>)</td><td>write (add) samp to stream at loc in chan 3</td></tr>
-<tr><td><a href="clm.html#partials-&gt;polynomial">partials-&gt;polynomial</a></td><td>(partials <i>kind</i>)</td><td>create waveshaping polynomial from partials</td></tr>
-<tr><td><a href="clm.html#partials-&gt;wave">partials-&gt;wave</a></td><td>(synth-data table <i>norm</i>)</td><td>load table from synth-data</td></tr>
-<tr><td><a href="clm.html#partials-&gt;waveshape">partials-&gt;waveshape</a></td><td>(partials <i>norm size</i>)</td><td>create waveshaping table from partials</td></tr>
-<tr><td><a href="clm.html#phase-partials-&gt;wave">phase-partials-&gt;wave</a></td><td>(synth-data table <i>norm</i>)</td><td>load table from synth-data</td></tr>
-<tr><td><a href="clm.html#phase-vocoder">phase-vocoder</a></td><td>(pv <i>input analyze edit synthesize</i>)</td><td>phase vocoder generator</td></tr>
-<tr><td><a href="clm.html#phase-vocoder?">phase-vocoder?</a></td><td>(pv)</td><td>#t if pv is phase vocoder generator</td></tr>
-<tr><td><a href="clm.html#polar-&gt;rectangular">polar-&gt;rectangular</a></td><td>(rl im)</td><td>translate from polar to rectangular coordinates</td></tr>
-<tr><td><a href="clm.html#polynomial">polynomial</a></td><td>(coeffs x)</td><td>evaluate polynomial at x</td></tr>
-<tr><td><a href="clm.html#polyshape">polyshape</a></td><td>(gen <i>index fm</i>)</td><td>waveshaping generator</td></tr>
-<tr><td><a href="clm.html#polyshape?">polyshape?</a></td><td>(gen)</td><td>#t if gen is waveshape generator</td></tr>
-<tr><td><a href="clm.html#pulse-train">pulse-train</a></td><td>(gen <i>fm</i>)</td><td>pulse-train generator</td></tr>
-<tr><td><a href="clm.html#pulse-train?">pulse-train?</a></td><td>(gen)</td><td>#t if gen is pulse-train generator</td></tr>
-<tr><td><a href="clm.html#radians-&gt;degrees">radians-&gt;degrees</a></td><td>(rads)</td><td>convert radians to degrees</td></tr>
-<tr><td><a href="clm.html#radians-&gt;hz">radians-&gt;hz</a></td><td>(rads)</td><td>convert radians/sample to Hz</td></tr>
-<tr><td><a href="clm.html#rand">rand</a></td><td>(gen <i>fm</i>)</td><td>random number generator</td></tr>
-<tr><td></td><td colspan=2><br>
-In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> here.
-</td></tr>
-<tr><td colspan=3><br></td></tr>
-<tr><td><a href="clm.html#rand-interp">rand-interp</a></td><td>(gen <i>fm</i>)</td><td>interpolating random number generator</td></tr>
-<tr><td><a href="clm.html#rand-interp?">rand-interp?</a></td><td>(gen)</td><td>#t if gen is interpolating random number generator</td></tr>
-<tr><td><a href="clm.html#rand?">rand?</a></td><td>(gen)</td><td>#t if gen is random number generator</td></tr>
-<tr><td><a href="clm.html#readin">readin</a></td><td>(gen)</td><td>read one value from associated input stream</td></tr>
-<tr><td><a href="clm.html#readin?">readin?</a></td><td>(gen)</td><td>#t if gen is readin generator</td></tr>
-<tr><td><a href="clm.html#rectangular-&gt;polar">rectangular-&gt;polar</a></td><td>(rl im)</td><td>translate from rectangular to polar coordinates</td></tr>
-<tr><td><a href="clm.html#ring-modulate">ring-modulate</a></td><td>(sig1 sig2)</td><td>sig1 * sig2 (element-wise)</td></tr>
-<tr><td><a href="clm.html#sample-&gt;file">sample-&gt;file</a></td><td>(gen loc chan val)</td><td>store val in file at loc in channel chan</td></tr>
-<tr><td><a href="clm.html#sample-&gt;file?">sample-&gt;file?</a></td><td>(gen)</td><td>#t if gen is sample-&gt;file generator</td></tr>
-<tr><td><a href="clm.html#sample-&gt;frame">sample-&gt;frame</a></td><td>(frmix samp <i>outfr</i>)</td><td>convert samp to frame</td></tr>
-<tr><td><a href="clm.html#samples-&gt;seconds">samples-&gt;seconds</a></td><td>(val)</td><td>use mus-srate to convert samples into seconds</td></tr>
-<tr><td><a href="clm.html#sawtooth-wave">sawtooth-wave</a></td><td>(gen <i>fm</i>)</td><td>sawtooth-wave generator</td></tr>
-<tr><td><a href="clm.html#sawtooth-wave?">sawtooth-wave?</a></td><td>(gen)</td><td>#t if gen is sawtooth-wave generator</td></tr>
-<tr><td><a href="clm.html#seconds-&gt;samples">seconds-&gt;samples</a></td><td>(val)</td><td>use mus-srate to convert seconds into samples</td></tr>
-<tr><td><a href="clm.html#sine-bank">sine-bank</a></td><td>(amps phases)</td><td>additive synthesis</td></tr>
-<tr><td><a href="clm.html#sine-summation">sine-summation</a></td><td>(gen <i>fm</i>)</td><td>sine-summation generator</td></tr>
-<tr><td><a href="clm.html#sine-summation?">sine-summation?</a></td><td>(gen)</td><td>#t if gen is sine-summation generator</td></tr>
-<tr><td><a href="extsnd.html#snd_to_sample">snd-&gt;sample</a></td><td>(loc (chan 0))</td><td>return sample from sound (index=snd) at loc</td></tr>
-<tr><td><a href="extsnd.html#snd_to_samplep">snd-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is snd-&gt;sample generator</td></tr>
-<tr><td><a href="clm.html#spectrum">spectrum</a></td><td>(rl im <i>win type</i>)</td><td>produce spectrum of data in rl (return rl)</td></tr>
-<tr><td><a href="clm.html#square-wave">square-wave</a></td><td>(gen <i>fm</i>)</td><td>square-wave generator</td></tr>
-<tr><td><a href="clm.html#square-wave?">square-wave?</a></td><td>(gen)</td><td>#t if gen is square-wave generator</td></tr>
-<tr><td><a href="clm.html#src">src</a></td><td>(gen <i>fm input-function</i>)</td><td>sample rate converter</td></tr>
-<tr><td><a href="clm.html#src?">src?</a></td><td>(gen)</td><td>#t if gen is sample-rate converter</td></tr>
-<tr><td><a href="clm.html#ssb-am">ssb-am</a></td><td>(gen <i>insig fm</i>)</td><td>ssb-am</td></tr>
-<tr><td><a href="clm.html#ssb-am?">ssb-am?</a></td><td>(gen)</td><td>#t if gen is ssb-am generator</td></tr>
-<tr><td><a href="clm.html#sum-of-cosines">sum-of-cosines</a></td><td>(gen <i>fm</i>)</td><td>sum-of-cosines (<a class=quiet href="clm.html#pulse-train">pulse-train</a>) generator</td></tr>
-<tr><td><a href="clm.html#sum-of-cosines?">sum-of-cosines?</a></td><td>(gen)</td><td>#t if gen is sum-of-cosines generator</td></tr>
-<tr><td><a href="clm.html#sum-of-sines">sum-of-sines</a></td><td>(gen <i>fm</i>)</td><td>sum-of-sines</td></tr>
-<tr><td><a href="clm.html#sum-of-sines?">sum-of-sines?</a></td><td>(gen)</td><td>#t if gen is sum-of-sines generator</td></tr>
-<tr><td><a href="clm.html#table-lookup">table-lookup</a></td><td>(gen <i>fm</i>)</td><td>table-lookup generator</td></tr>
-<tr><td><a href="clm.html#table-lookup?">table-lookup?</a></td><td>(gen)</td><td>#t if gen is table-lookup generator</td></tr>
-<tr><td><a href="clm.html#tap">tap</a></td><td>(gen <i>pm</i>)</td><td>delay line tap</td></tr>
-<tr><td><a href="clm.html#triangle-wave">triangle-wave</a></td><td>(gen <i>fm</i>)</td><td>triangle-wave generator</td></tr>
-<tr><td><a href="clm.html#triangle-wave?">triangle-wave?</a></td><td>(gen)</td><td>#t if gen is triangle-wave generator</td></tr>
-<tr><td><a href="clm.html#two-pole">two-pole</a></td><td>(gen input)</td><td>two-pole filter</td></tr>
-<tr><td><a href="clm.html#two-pole?">two-pole?</a></td><td>(gen)</td><td>#t if gen is two-pole filter</td></tr>
-<tr><td><a href="clm.html#two-zero">two-zero</a></td><td>(gen input)</td><td>two-zero filter</td></tr>
-<tr><td><a href="clm.html#two-zero?">two-zero?</a></td><td>(gen)</td><td>#t if gen is two-zero filter</td></tr>
-<tr><td><a href="clm.html#wave-train">wave-train</a></td><td>(gen <i>fm</i>)</td><td>wave-train generator</td></tr>
-<tr><td><a href="clm.html#wave-train?">wave-train?</a></td><td>(gen)</td><td>#t if gen is wave-train generator</td></tr>
-<tr><td><a href="clm.html#waveshape">waveshape</a></td><td>(gen <i>index fm</i>)</td><td>waveshaping generator</td></tr>
-<tr><td><a href="clm.html#waveshape?">waveshape?</a></td><td>(gen)</td><td>#t if gen is waveshape generator</td></tr>
-</table>
-<br>
-
-<p>In Snd, the default locsig interpolation type is handled via locsig-type, rather than CLM's global
+<p>clm.html has lots of information about CLM.  For historical reasons, it is oriented toward
+Common Lisp, rather than Scheme, but it should not be hard to move back and forth.
+There are a few minor differences, mostly involving global variable names.
+For example,
+in Snd, the default locsig interpolation type is handled via locsig-type, rather than CLM's global
 variable *clm-locsig-type*.
 </p>
-
-<p><b>formant-bank</b> is an optimization for a situation like
-cross synthesis (see <a href="sndscm.html#exampdoc">examp.scm</a>).  It is assumed that you have a vector of formant generators,
-all reading a single input signal, and summing their outputs.  The amplitude scalers are in a vct.
-</p>
-
 
 <p>Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.scm</a>.
 </p>
@@ -1663,7 +1416,12 @@ Here's a dialog window with a slider:</p>
 (create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>)))
 </pre></td></tr></table>
 
-<p>In Ruby, this is:</p>
+<p>which creates a little dialog:
+</p>
+
+<img src="scldlog.png" hspace=20 vspace=20>
+<p>
+In Ruby, this is:</p>
 
 <table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
 $scale_dialog = false
@@ -2465,7 +2223,14 @@ sets SND_COMMAND to <i>str</i>, which Snd subsequently notices.
 
 <p>Snd can be used in conjunction with OpenGL.  If it is configured
 with the switch --with-gl or --with-just-gl, the top level Snd shell
-is setup to handle OpenGL graphics; the GLXContext is (snd-glx-context).
+is setup to handle OpenGL graphics.  These are used automatically by
+the spectrogram display; the colormap is set by either the View:Colors
+dialog or <a href="extsnd.html#colormap">color-map"</a>, and the orientation
+is set by either the View:Orientation dialog or the various spectro-*
+variables.
+</p>
+<img src="nowgl.png">
+<p>
 The GL-to-Scheme bindings are in gl.c, and follow the same name and type
 conventions of the Motif bindings in xm.c.
 Any of the Snd drawing area widgets (or your own) can receive GL graphics
@@ -2476,7 +2241,7 @@ program:
 (define (draw-it)
   (glXMakeCurrent (XtDisplay (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>))) 
 		  (XtWindow (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a>)))
-		  (snd-glx-context))
+		  (snd-glx-context)) ; the GL context
   (glEnable GL_DEPTH_TEST)
   (glDepthFunc GL_LEQUAL)
   (glClearDepth 1.0)
@@ -2519,71 +2284,6 @@ program:
 </td></tr></table>
 <br><br>
 
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandgdb">Snd and gdb</a></h3></td></tr></table>
-
-<p>Here are some gdb functions (for your ~/.gbdinit file) that might
-come in handy:
-</p>
-
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
-define gp
-set gdb_print($arg0)
-print gdb_output
-end
-document gp
-Executes (object-&gt;string arg)
-end
-
-define ge
-call gdb_read($arg0)
-call gdb_eval(gdb_result)
-set gdb_print(gdb_result)
-print gdb_output
-end
-document ge
-Executes (print (eval (read arg))): ge "(+ 1 2)" =&gt; 3
-end
-
-define gh
-call g_help(scm_str2symbol($arg0), 20)
-# in Guile 1.7 this should use scm_from_locale_symbol
-set gdb_print($1)
-print gdb_output
-end
-document gh
-Prints help string for arg: gh "enved-target"
-end
-</pre></td></tr></table>
-
-<p>SCM values are displayed as integers in gdb, so say
-Snd halts and you notice it's loading some unknown file:
-</p>
-<pre>
-    #32 0x081ae8f4 in scm_primitive_load (filename=1112137128) at load.c:129
-</pre>
-<p>You can get the file name with gp:
-</p>
-<pre>
-    (gdb) gp 1112137128
-    $1 = 0
-    $2 = 0x40853fac "\"/home/bil/test/share/guile/1.5.0/ice-9/session.scm\""
-</pre>
-<p>
-If you have a pointer to a CLM generator, you can use:
-</p>
-<pre>
-    p mus_describe(arg)  --  show the outsider's view of arg
-</pre>
-<p>The ge function can show current Snd state:</p>
-<pre>
-    (gdb) ge "(<a class=quiet href="extsnd.html#epsfile">eps-file</a>)"
-    $5 = 0
-    $6 = 0
-    $7 = 0
-    $8 = 0x8296cf0 "\"snd.eps\""
-</pre>
-
-<br>
 
 <center>
 <table border=1><tr><td>

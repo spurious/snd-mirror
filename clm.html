@@ -518,7 +518,7 @@ To get a cosine (as opposed to sin), set the initial-phase to (/ pi 2).
 </p>
 
 <table border align=left hspace=40 cellpadding=4>
-<tr><td colspan=2><center>oscil methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>oscil methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-cosines</em></td><td>1 (no setf)</td></tr>
@@ -632,7 +632,7 @@ using Scheme (Snd/CLM) syntax:
 </pre>
 
 <table border cellpadding=4>
-<tr><td colspan=2><center>env methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>env methods</center></td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>call counter value (number of calls so far on <i>env</i>)</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>base value (no setf)</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>original breakpoint list</td></tr>
@@ -801,7 +801,7 @@ mus-interp-linear, mus-interp-lagrange, mus-interp-bezier, or mus-interp-hermite
 </p>
 
 <table border align=left hspace=40 cellpadding=4>
-<tr><td colspan=2><center>table-lookup methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>table-lookup methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians (wave-size/(2*pi))</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>wave array</td></tr>
@@ -871,7 +871,7 @@ a polynomial.  <i>kind</i> can be <b>mus-chebyshev-first-kind</b> or <b>mus-cheb
 </p>
 
 <table border align=left hspace=40 cellpadding=4>
-<tr><td colspan=2><center>waveshape methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>waveshape methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>wave array (no setf)</td></tr>
@@ -975,7 +975,7 @@ tanh(n * sin(theta)), where "n" (a float) sets how squared-off it is.
 </p>
 
 <table border align=left hspace=40 cellpadding=4>
-<tr><td colspan=2><center>saw-tooth and friends' methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>saw-tooth and friends' methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>amplitude arg used in make-&lt;gen&gt;</td></tr>
@@ -1025,7 +1025,7 @@ formula 2sin(a)cos(b) = sin(b+a)-sin(b-a), and notice that all the terms in the 
 cancel except the last.
 </p>
 <table border align=left hspace=40 cellpadding=4>
-<tr><td colspan=2><center>sum-of-cosines methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>sum-of-cosines methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>(/ 1.0 cosines)</td></tr>
@@ -1103,7 +1103,7 @@ work when it doesn't matter.
 <p><b>sum-of-sines</b> produces a sum of <i>sines</i> sines.  It is very similar (good and bad) to sum-of-cosines.
 </p>
 <table border align=left hspace=40 cellpadding=4>
-<tr><td colspan=2><center>sum-of-sines methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>sum-of-sines methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>dependent on number of sines</td></tr>
@@ -1132,7 +1132,7 @@ based on:
 <p><b>ssb-am</b> provides single sideband suppressed carrier amplitude modulation, normally used for frequency shifting.
 </p>
 <table border align=left hspace=40 cellpadding=4>
-<tr><td colspan=2><center>ssb-am methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>ssb-am methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase (of embedded sin osc) in radians</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>embedded delay line size</td></tr>
@@ -1188,7 +1188,7 @@ Successive waves can overlap.  With some simple envelopes, or filters, you can
 use this for VOSIM and other related techniques.</p>
 
 <table border cellpadding=4>
-<tr><td colspan=2><center>wave-train methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>wave-train methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>wave array (no setf)</td></tr>
@@ -1275,7 +1275,7 @@ way around Lisp's clumsy mechanism for repeating a random number sequence.
 </p>
 
 <table border align=left hspace=40 cellpadding=4>
-<tr><td colspan=2><center>rand and rand-interp methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>rand and rand-interp methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>amplitude arg used in make-&lt;gen&gt;</td></tr>
@@ -1450,7 +1450,7 @@ averager has the same period (length) as the rand.
 </pre>
 <br>
 <table border align=left hspace=20 cellpadding=4>
-<tr><td colspan=2><center>simple filter methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>simple filter methods</center></td></tr>
 <tr><td><em class=gen>mus-xcoeff</em></td><td>a0, a1, a2 in equations</td></tr>
 <tr><td><em class=gen>mus-ycoeff</em></td><td>b1, b2 in equations</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>1 or 2 (no setf)</td></tr>
@@ -1504,7 +1504,7 @@ used by freeverb is:
 </pre>
 
 <table border align=left hspace=20 cellpadding=4>
-<tr><td colspan=2><center>simple filter methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>formant methods</center></td></tr>
 <tr><td><em class=gen>mus-xcoeff</em></td><td>a0, a1, a2 in equations</td></tr>
 <tr><td><em class=gen>mus-ycoeff</em></td><td>b1, b2 in equations</td></tr>
 <tr><td><em class=gen>mus-formant-radius</em></td><td>formant radius</td></tr>
@@ -1635,7 +1635,7 @@ order (it is the size of the arrays).
 </p>
 
 <table border align=left hspace=20 cellpadding=4>
-<tr><td colspan=2><center>general filter methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>general filter methods</center></td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>filter order</td></tr>
 <tr><td><em class=gen>mus-xcoeff</em></td><td>x (input) coeff</td></tr>
 <tr><td><em class=gen>mus-xcoeffs</em></td><td>x (input) coeffs</td></tr>
@@ -1740,7 +1740,7 @@ where a <b>tap</b> is doing the actual delay line read.
 </p>
 
 <table border align=left hspace=20 cellpadding=4>
-<tr><td colspan=2><center>delay methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>delay methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay (no setf)</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>delay line itself (no setf)</td></tr>
@@ -1827,7 +1827,7 @@ Other arguments are handled as in <a href="#delay">delay</a>.
 </p>
 
 <table border align=left hspace=20 cellpadding=4>
-<tr><td colspan=2><center>comb and notch methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>comb and notch methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay (no setf)</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>delay line itself (no setf)</td></tr>
@@ -1885,7 +1885,7 @@ an added feedforward term.  If <i>feedback</i> = 0, we get a moving
 average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 
 <table border align=left hspace=20 cellpadding=4>
-<tr><td colspan=2><center>all-pass methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>all-pass methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay (no setf)</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>delay line itself (no setf)</td></tr>
@@ -1917,7 +1917,7 @@ effect in new-effects.scm and in rms-envelope in env.scm (Snd).  It could also b
 </p>
 
 <table align=left border hspace=20 cellpadding=4>
-<tr><td colspan=2><center>average methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>average methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of table</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>table of last 'size' values</td></tr>
@@ -1960,7 +1960,7 @@ that are squelched and those that are unchanged (to avoid clicks):
 </pre>
 
 <table border cellpadding=4 hspace=20>
-<tr><td colspan=2><center>src methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>src methods</center></td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>srate arg to make-src</td></tr>
 </table>
 
@@ -2067,7 +2067,7 @@ a click).
 </pre>
 
 <table border cellpadding=4 hspace=20>
-<tr><td colspan=2><center>convolve methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>convolve methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>fft size used in the convolution</td></tr>
 </table>
 
@@ -2121,7 +2121,7 @@ handier.</p>
 </pre>
 
 <table align=left border cellpadding=4 hspace=20>
-<tr><td colspan=2><center>granulate methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>granulate methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>time (seconds) between output grains (<i>hop</i>)</td></tr>
 <tr><td><em class=gen>mus-ramp</em></td><td>length (samples) of grain envelope ramp segment</td></tr>
 <tr><td><em class=gen>mus-hop</em></td><td>time (samples)  between output grains (<i>hop</i>)</td></tr>
@@ -2250,7 +2250,7 @@ In the following code, we use the edit function to reverse every other grain:
 </pre>
 
 <table border cellpadding=4 hspace=20>
-<tr><td colspan=2><center>phase-vocoder methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>phase-vocoder methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>pitch shift</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>fft-size ("N")</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>interp</td></tr>
@@ -2300,7 +2300,7 @@ in functions that do what the phase-vocoder would have done without any function
 </pre>
 
 <table align=left border cellpadding=4 hspace=20>
-<tr><td colspan=2><center>sine-summation methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>sine-summation methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>"a" parameter; sideband scaler</td></tr>
@@ -2353,7 +2353,7 @@ don't set <i>a</i> to 1.0!).
 </pre>
 
 <table align=left border cellpadding=4 hspace=20>
-<tr><td colspan=2><center>asymmetric-fm methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>asymmetric-fm methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>"r" parameter; sideband scaler</td></tr>
@@ -2532,7 +2532,7 @@ data IO.
 </pre>
 
 <table border cellpadding=4 hspace=20>
-<tr><td colspan=2><center>frame and mixer methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>frame and mixer methods</center></td></tr>
 <tr><td><em class=gen>mus-channels</em></td><td>number of channels accommodated</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>same as mus-channels</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>the matrix data (float array)</td></tr>
@@ -2680,7 +2680,7 @@ These are macros equivalent to <code>(in-any loc 0 stream)</code>.
 </pre>
 
 <table border cellpadding=4 hspace=20>
-<tr><td colspan=2><center>readin methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>readin methods</center></td></tr>
 <tr><td><em class=gen>mus-channel</em></td><td><i>channel</i> arg to make-readin (no setf)</td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>current location in file</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>sample increment (<i>direction</i> arg to make-readin)</td></tr>
@@ -2735,7 +2735,7 @@ readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.in
 </pre>
 
 <table border cellpadding=4 hspace=20>
-<tr><td colspan=2><center>locsig methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>locsig methods</center></td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>output scalers (a vct)</td></tr>
 <tr><td><em class=gen>mus-xcoeff</em></td><td>reverb scaler</td></tr>
 <tr><td><em class=gen>mus-xcoeffs</em></td><td>reverb scalers (a vct)</td></tr>
@@ -3245,7 +3245,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
 </p>
 
 <table border=8 bordercolor="lightgreen" cellpadding=2>
-<tr><th width=120>instrument</th><th>function</th><th>CL</th><th>Scheme</th><th>Ruby</th><th>Forth</th></tr>
+<tr><th width=120 bgcolor="beige">instrument</th><th bgcolor="beige">function</th><th bgcolor="beige">CL</th><th bgcolor="beige">Scheme</th bgcolor="beige"><th bgcolor="beige">Ruby</th><th bgcolor="beige">Forth</th></tr>
 <tr><td>complete-add</td>      
     <td>additive synthesis</td>
     <td><a href="add.ins">add.ins</a></td>

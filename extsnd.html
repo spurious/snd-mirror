@@ -702,7 +702,7 @@ The X/Motif cursors are declared in /usr/include/X11/cursorfont.h or some such f
 gtk versions are in gdkcursor.h.  Some useful choices are:
 <br><br>
 
-<table border=1 cellpadding=6><th><small>Motif</small></th><th><small>Gtk+</small></th><th><small>value</small></th>
+<table border=1 cellpadding=6><th bgcolor="beige"><small>Motif</small></th><th bgcolor="beige"><small>Gtk+</small></th><th bgcolor="beige"><small>value</small></th>
 <tr><td><small>XC_arrow</small></td><td><small>GDK_ARROW</small></td><td><small>2</small></td></tr>
 <tr><td><small>XC_center_ptr</small></td><td><small>GDK_CENTER_PTR</small></td><td><small>22</small></td></tr>
 <tr><td><small>XC_cross</small></td><td><small>GDK_CROSS</small></td><td><small>30</small></td></tr>
@@ -9646,7 +9646,10 @@ to the File:Open dialog, first makes sure the dialog exists with <code>(open-fil
 <tr><td></td><td>
 Add an envelope to the envelope editor's list, under the name 'name', using the list of breakpoints
 'data', and the optional 'base'.  If the 'base' is omitted, this is the same as <a href="#defvar">defvar</a>.
-<code>(define-envelope ramp '(0 0 1 1))</code>.
+<pre>
+    Scheme: (define-envelope ramp '(0 0 1 1))
+    Ruby:   define_envelope("ramp", [0, 0, 1, 1])
+    Forth:  $" ramp" '( 0.0 0.0 1.0 1.0 ) 1.0 define-envelope
 </td></tr>
 <tr><td colspan=2></td></tr>
 

@@ -178,11 +178,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
     <li><a href="grfsnd.html#dynamic">Dynamically loaded modules</a>
     <li><a href="grfsnd.html#programs">External Programs</a>
     <li><a href="grfsnd.html#sndaswidget">Snd as a Widget</a>
-    <li><a href="grfsnd.html#sndwithclm">Snd and the CLM module</a>
-      <ul>
-      <li><a href="grfsnd.html#clmfuncs">CLM functions</a>
-      <li><a href="grfsnd.html#sndinstruments">Instruments</a>
-      </ul>
+    <li><a href="grfsnd.html#sndwithclm">Snd and CLM</a>
     <li><a href="grfsnd.html#sndwithcm">Snd and Common Music</a>
     <li><a href="grfsnd.html#sndwithpd">Snd and Pd</a>
     <li><a href="grfsnd.html#sndwithmotif">Snd and Motif</a>
@@ -194,7 +190,6 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
     <li><a href="grfsnd.html#sndandalsa">Snd and ALSA</a>
     <li><a href="grfsnd.html#sndandx">Driving Snd remotely</a>
     <li><a href="grfsnd.html#sndandgl">Snd and OpenGL</a>
-    <li><a href="grfsnd.html#sndandgdb">Snd and gdb</a>
 
   <li><a href="sndscm.html#introduction">Scheme, Ruby, and Forth</a>
   <li><a href="index.html">Overall Index</a>
@@ -210,11 +205,11 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 
 <table border=8 bordercolor="lightgreen" hspace=20>
 <tr>
-<th width=140><a href="#fileoperations">File</a> Menu</th>
-<th width=140><a href="#editoperations">Edit</a> Menu</th>
-<th width=160><a href="#viewing">View</a> Menu</th>
-<th width=160><a href="#options">Options</a> Menu</th>
-<th width=140>Help Menu</th>
+<th width=140 bgcolor="beige"><a href="#fileoperations">File</a> Menu</th>
+<th width=140 bgcolor="beige"><a href="#editoperations">Edit</a> Menu</th>
+<th width=160 bgcolor="beige"><a href="#viewing">View</a> Menu</th>
+<th width=160 bgcolor="beige"><a href="#options">Options</a> Menu</th>
+<th width=140 bgcolor="beige">Help Menu</th>
 </tr>
 <tr>
 <td><a href="#openfile">Open</a></td>
@@ -2071,7 +2066,10 @@ all the samples between the cursor and the next mark.</p>
 <p>The <A NAME="builtinkeys"></a>predefined commands are (<i>prompt</i> below is an abbreviation for prompt-in-minibuffer, and some of the return values are omitted for simplicity):
 </p>
 
+<table border=8 bordercolor="lightgreen"><tr><td>
+
 <table border=0 cellpadding=0 hspace=20>
+<tr><th  bgcolor="beige">Key</th><th bgcolor="beige">Binding</th><th bgcolor="beige">Scheme Equivalent</th></tr>
 <tr><td>[Down]</td><td>zoom out</td><td><code><small>;algorithm depends on zoom-focus-style choice</small></code></td></tr>
 <tr><td>[Up]</td><td>zoom in</td><td><code><small>;algorithm depends on zoom-focus-style choice</small></code></td></tr>
 <tr><td valign=top>[Left]</td><td valign=top>move window left</td>
@@ -2211,6 +2209,10 @@ all the samples between the cursor and the next mark.</p>
 </pre></small></code></td></tr>
 <tr><td>C-x C-z</td><td>smooth using cosine</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#smoothsound">smooth-sound</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg))</small></code></td></tr>
 </table>
+
+</td></tr></table>
+
+
 <p>In the listener, the minibuffer, and the filter text field, the commands M-p and M-n
 march back and forth in a list of saved strings, much as in
 a shell (this applies only to the Motif version; in the Gtk+
@@ -2353,9 +2355,9 @@ For information on initialization, configuration, and connections to other progr
 <br>
 
 <table border rows=118 hspace=20>
-  <caption>Index</caption>
+
   <!-- created whenever -->
-  <tr><th>Action</th><th>Menu</th><th>Keyboard</th><th>Lisp</th><th>Other</th></tr>
+  <tr><th bgcolor="beige">Action</th><th bgcolor="beige">Menu</th><th bgcolor="beige">Keyboard</th><th bgcolor="beige">Lisp</th><th bgcolor="beige">Other</th></tr>
   <tr><td><a href="#kgc">abort command</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#cgp"><small>c-g?</small></a></td><td><small>mouse click</small></td></tr>
   <tr><td><a href="#ampenvs">amp env</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><a href="#cxca"><small>Cx Ca, Cx a</small></a></td><td><a href="extsnd.html#envsound"><small>env-sound</small></a></td><td><a href="extsnd.html#scaleto"><small>scale-to, scale-by</small></a></td></tr>
   <tr><td><a href="sndscm.html#exautosave">auto save</a></td><td><br></td><td><br></td><td><a href="sndscm.html#exautosave"><small>auto-save</small></a></td><td><small>autosave.scm</small></td></tr>
