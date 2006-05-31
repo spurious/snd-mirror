@@ -874,7 +874,7 @@ current window and is updated as the window bounds change.
 If you'd like the fft size to reflect the current time domain
 window size:</p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite" 
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke" 
  onmouseover="this.T_OFFSETX=200; return escape('This is Scheme code that adds a \'hook\', a callback function that gets called whenever a graph is redrawn.  The function checks for a simple FFT graph (not a sonogram) via &quot;transform-graph?&quot; and &quot;transform-graph-type&quot;, then sets the FFT size (a power of 2) to reflect the current time domain window bounds.  See extsnd.html for full details on the extension language capabilities.  This code can be added to your Snd initialization file if you want it by default.  That process is described in grfsnd.html.')">
 <pre>
 (add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a>
@@ -887,7 +887,6 @@ window size:</p>
                             (log 2.0))))))))
 </pre></td></tr></table>
 
-<br>
 <p>
 The fft data is scaled to fit between 0.0 and 1.0 unless
 transform normalization is off. 
@@ -1502,7 +1501,7 @@ The search commands are:</p>
 <p>These searching functions can be closures; the following searches for
 the next positive-going zero crossing, placing the cursor just before it:</p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite" onmouseover="this.T_OFFSETX=100; return escape('This function is used in conjunction with C-s to search for a positive-going zero crossing.  C-s calls it on each sample, passing the sample value to us as \'n\' (the argument to the inner lambda). We save the last sample in \'lastn\', and watch for a case where lastn is less than 0.0 and the current sample is greater than or equal to 0.0.  When that happens, \'rtn\' is set to -1 to cause the cursor to back up one sample.  Otherwise the function returns #f which tells C-s to keep searching. The search function is wrapped in a \'let\' so that the last sample value is saved across function calls.')">
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke" onmouseover="this.T_OFFSETX=100; return escape('This function is used in conjunction with C-s to search for a positive-going zero crossing.  C-s calls it on each sample, passing the sample value to us as \'n\' (the argument to the inner lambda). We save the last sample in \'lastn\', and watch for a case where lastn is less than 0.0 and the current sample is greater than or equal to 0.0.  When that happens, \'rtn\' is set to -1 to cause the cursor to back up one sample.  Otherwise the function returns #f which tells C-s to keep searching. The search function is wrapped in a \'let\' so that the last sample value is saved across function calls.')">
 <pre>
 (define (zero+)
   (let ((lastn 0.0))

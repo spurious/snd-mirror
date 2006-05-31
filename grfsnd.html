@@ -90,21 +90,21 @@
 the usual Xt/X-related flags like -xrm).</p>
 
 <table cellspacing=0 cellpadding=0 hspace=20>
-<tr><td width=200 bgcolor="ghostwhite"><code>-h -horizontal</code></td><td bgcolor="ghostwhite">layout sounds as horizontal panes</td></tr>
+<tr><td width=200 bgcolor="#f6f8ff"><code>-h -horizontal</code></td><td bgcolor="#f6f8ff">layout sounds as horizontal panes</td></tr>
 <tr><td><code>-v -vertical</code></td>            <td>layout sounds vertically (the default)</td></tr>
-<tr><td bgcolor="ghostwhite"><code>-notebook</code></td>               <td bgcolor="ghostwhite">layout sounds in a notebook widget (Motif 2.0 or later)</td></tr>
+<tr><td bgcolor="#f6f8ff"><code>-notebook</code></td>               <td bgcolor="#f6f8ff">layout sounds in a notebook widget (Motif 2.0 or later)</td></tr>
 <tr><td><code>-separate</code></td>               <td>layout sounds each in a separate window (listener is in main window)</td></tr>
-<tr><td bgcolor="ghostwhite"><code>--help</code></td>                  <td bgcolor="ghostwhite">print some help, version info, and exit</td></tr>
+<tr><td bgcolor="#f6f8ff"><code>--help</code></td>                  <td bgcolor="#f6f8ff">print some help, version info, and exit</td></tr>
 <tr><td><code>--version</code></td>               <td>print version info</td></tr>
-<tr><td bgcolor="ghostwhite"><code>-noglob</code></td>                 <td bgcolor="ghostwhite">don't read /etc/snd.conf</td></tr>
+<tr><td bgcolor="#f6f8ff"><code>-noglob</code></td>                 <td bgcolor="#f6f8ff">don't read /etc/snd.conf</td></tr>
 <tr><td><code>-noinit</code></td>                 <td>don't read ~/.snd</td></tr>
-<tr><td bgcolor="ghostwhite"><code>-nostdin</code></td>                <td bgcolor="ghostwhite">don't watch for possible input from stdin</td></tr>
+<tr><td bgcolor="#f6f8ff"><code>-nostdin</code></td>                <td bgcolor="#f6f8ff">don't watch for possible input from stdin</td></tr>
 <tr><td><code>-p -preload &lt;dir&gt;</code></td> <td>add sound files in directory &lt;dir&gt; to the View:Files list (snd -p .)</td></tr>
-<tr><td bgcolor="ghostwhite"><code>-l -load &lt;file&gt;</code></td>   <td bgcolor="ghostwhite">load Scheme, Ruby, or Forth code in &lt;file&gt; (snd -l test.scm)</td></tr>
+<tr><td bgcolor="#f6f8ff"><code>-l -load &lt;file&gt;</code></td>   <td bgcolor="#f6f8ff">load Scheme, Ruby, or Forth code in &lt;file&gt; (snd -l test.scm)</td></tr>
 <tr><td><code>-e -eval expr</code></td>           <td>evaluate expr</td></tr>
-<tr><td bgcolor="ghostwhite"><code>-b -batch &lt;file&gt;</code></td>  <td bgcolor="ghostwhite">load Scheme, Ruby, or Forth code in &lt;file&gt; as a batch (no GUI) job</td></tr>
+<tr><td bgcolor="#f6f8ff"><code>-b -batch &lt;file&gt;</code></td>  <td bgcolor="#f6f8ff">load Scheme, Ruby, or Forth code in &lt;file&gt; as a batch (no GUI) job</td></tr>
 <tr><td><code>-I &lt;dir&gt;</code></td>          <td>add &lt;dir&gt; to the load search list</td></tr>
-<tr><td bgcolor="ghostwhite"><code>-init &lt;file&gt;</code></td>      <td bgcolor="ghostwhite">use &lt;file&gt; as the init file, rather than ~/.snd</td></tr>
+<tr><td bgcolor="#f6f8ff"><code>-init &lt;file&gt;</code></td>      <td bgcolor="#f6f8ff">use &lt;file&gt; as the init file, rather than ~/.snd</td></tr>
 </table>
 
 <p>
@@ -194,7 +194,7 @@ then .snd.  If you're always using just one version of Snd, it's simplest to sti
 Here's a more elaborate initialization file (~/.snd_guile):
 </p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 (use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs))
 (debug-set! stack 0)                ;turn off Guile's stack-size check
 
@@ -250,7 +250,7 @@ Here's a more elaborate initialization file (~/.snd_guile):
 
 <p>A similar Ruby initialization file (~/.snd_ruby):
 </p>
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 require "draw"
 require "popup"
 
@@ -281,7 +281,7 @@ $mouse_enter_text_hook.add_hook!("focus") do |widget| focus_widget(widget) end
 <p>And Forth:
 </p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 \ .snd_forth -- start up file for Snd/Forth -*- snd-forth -*-
 
 \ You can easily install the *.fs scripts with:
@@ -497,75 +497,75 @@ a built-in default value, so you can ignore this entirely, and use the extension
 <tr><th align=left bgcolor="beige">Resource Name</th><th align=left bgcolor="beige">Default Value</th><th align=left bgcolor="beige">Purpose</th><th align=left bgcolor="beige">Scheme Name</th></tr>
 <tr><td width=160>initFile</td><td width=130>"~/.snd"</td><td width=300>initialization file name</td><td></td></tr>
 
-<tr><td bgcolor="ghostwhite">autoResize</td><td bgcolor="ghostwhite">1</td><td bgcolor="ghostwhite">should Snd window resize automatically</td><td bgcolor="ghostwhite"><a href="extsnd.html#autoresize">auto-resize</a></td></tr>
+<tr><td bgcolor="#f6f8ff">autoResize</td><td bgcolor="#f6f8ff">1</td><td bgcolor="#f6f8ff">should Snd window resize automatically</td><td bgcolor="#f6f8ff"><a href="extsnd.html#autoresize">auto-resize</a></td></tr>
 
 <tr><td>horizontalPanes</td><td>0</td><td>basic paned window layout</td><td></td></tr>
 
-<tr><td bgcolor="ghostwhite"><br></td><td bgcolor="ghostwhite"><br></td><td bgcolor="ghostwhite"></td><td bgcolor="ghostwhite"></td></tr>
+<tr><td bgcolor="#f6f8ff"><br></td><td bgcolor="#f6f8ff"><br></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff"></td></tr>
 
 
 
 <tr><td>peaksFont</td><td>times 14</td><td>fft peaks font</td><td><a href="extsnd.html#peaksfont">peaks-font</a></td></tr>
 
-<tr><td bgcolor="ghostwhite">boldpeaksFont</td><td bgcolor="ghostwhite">times bold 14</td><td bgcolor="ghostwhite">main fft peaks font</td><td bgcolor="ghostwhite"><a href="extsnd.html#boldpeaksfont">bold-peaks-font</a></td></tr>
+<tr><td bgcolor="#f6f8ff">boldpeaksFont</td><td bgcolor="#f6f8ff">times bold 14</td><td bgcolor="#f6f8ff">main fft peaks font</td><td bgcolor="#f6f8ff"><a href="extsnd.html#boldpeaksfont">bold-peaks-font</a></td></tr>
 
 <tr><td>axisLabelFont</td><td>times 20</td><td>axis label ("Time")</td><td><a href="extsnd.html#axislabelfont">axis-label-font</a></td></tr>
 
-<tr><td bgcolor="ghostwhite">axisNumbersFont</td><td bgcolor="ghostwhite">courier 14</td><td bgcolor="ghostwhite">axis tick numbers</td><td bgcolor="ghostwhite"><a href="extsnd.html#axisnumbersfont">aixs-numbers-font</a></td></tr>
+<tr><td bgcolor="#f6f8ff">axisNumbersFont</td><td bgcolor="#f6f8ff">courier 14</td><td bgcolor="#f6f8ff">axis tick numbers</td><td bgcolor="#f6f8ff"><a href="extsnd.html#axisnumbersfont">aixs-numbers-font</a></td></tr>
 
 <tr><td>listenerFont</td><td>fixed 7x13</td><td>listener text</td><td><a href="extsnd.html#listenerfont">listener-font</a></td></tr>
 
-<tr><td bgcolor="ghostwhite"><br></td><td bgcolor="ghostwhite"><br></td><td bgcolor="ghostwhite"></td><td bgcolor="ghostwhite"></td></tr>
+<tr><td bgcolor="#f6f8ff"><br></td><td bgcolor="#f6f8ff"><br></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff"></td></tr>
 
 
 
 <tr><td>basiccolor</td><td>ivory2</td><td>default background color everywhere</td><td><code><a href="extsnd.html#basiccolor">basic-color</a></code></td></tr>
 
-<tr><td bgcolor="ghostwhite">cursorcolor</td><td bgcolor="ghostwhite">red</td>         <td bgcolor="ghostwhite">color of the cursor</td>                   <td bgcolor="ghostwhite"><code><a href="extsnd.html#cursorcolor">cursor-color</a></code></td></tr>
+<tr><td bgcolor="#f6f8ff">cursorcolor</td><td bgcolor="#f6f8ff">red</td>         <td bgcolor="#f6f8ff">color of the cursor</td>                   <td bgcolor="#f6f8ff"><code><a href="extsnd.html#cursorcolor">cursor-color</a></code></td></tr>
 
 <tr><td>datacolor</td><td>black</td><td>unselected data color</td>                 <td><code><a href="extsnd.html#datacolor">data-color</a></code></td></tr>
 
-<tr><td bgcolor="ghostwhite">doitbuttoncolor</td><td bgcolor="ghostwhite">ivory1</td>     <td bgcolor="ghostwhite">color of Apply or Ok buttons</td>          <td bgcolor="ghostwhite"><code><a href="extsnd.html#doitbuttoncolor">doit-button-color</a></code></td></tr>
+<tr><td bgcolor="#f6f8ff">doitbuttoncolor</td><td bgcolor="#f6f8ff">ivory1</td>     <td bgcolor="#f6f8ff">color of Apply or Ok buttons</td>          <td bgcolor="#f6f8ff"><code><a href="extsnd.html#doitbuttoncolor">doit-button-color</a></code></td></tr>
 
 <tr><td>doitagainbuttoncolor</td><td>ivory1</td><td>color of Undo&amp;Apply buttons</td>       <td><code><a href="extsnd.html#doitagainbuttoncolor">doit-again-button-color</a></code></td></tr>
 
-<tr><td bgcolor="ghostwhite">envedwaveformcolor</td><td bgcolor="ghostwhite">blue</td>  <td bgcolor="ghostwhite">color of envelope editor waveform</td>     <td bgcolor="ghostwhite"><code><a href="extsnd.html#envedwaveformcolor">enved-waveform-color</a></code></td></tr>
+<tr><td bgcolor="#f6f8ff">envedwaveformcolor</td><td bgcolor="#f6f8ff">blue</td>  <td bgcolor="#f6f8ff">color of envelope editor waveform</td>     <td bgcolor="#f6f8ff"><code><a href="extsnd.html#envedwaveformcolor">enved-waveform-color</a></code></td></tr>
 
 <tr><td>filterwaveformcolor</td><td>blue</td> <td>color of control panel filter waveform</td><td><code><a href="extsnd.html#filterwaveformcolor">filter-control-waveform-color</a></code></td></tr>
 
-<tr><td bgcolor="ghostwhite">graphcolor</td><td bgcolor="ghostwhite">white</td>          <td bgcolor="ghostwhite">unselected channels' graph background</td> <td bgcolor="ghostwhite"><code><a href="extsnd.html#graphcolor">graph-color</a></code></td></tr>
+<tr><td bgcolor="#f6f8ff">graphcolor</td><td bgcolor="#f6f8ff">white</td>          <td bgcolor="#f6f8ff">unselected channels' graph background</td> <td bgcolor="#f6f8ff"><code><a href="extsnd.html#graphcolor">graph-color</a></code></td></tr>
 
 <tr><td>helpbuttoncolor</td><td>ivory1</td>     <td>color of Help buttons</td>                 <td><code><a href="extsnd.html#helpbuttoncolor">help-button-color</a></code></td></tr>
 
-<tr><td bgcolor="ghostwhite">highlightcolor</td><td bgcolor="ghostwhite">ivory1</td>      <td bgcolor="ghostwhite">highlighting here and there</td>           <td bgcolor="ghostwhite"><code><a href="extsnd.html#highlightcolor">highlight-color</a></code></td></tr>
+<tr><td bgcolor="#f6f8ff">highlightcolor</td><td bgcolor="#f6f8ff">ivory1</td>      <td bgcolor="#f6f8ff">highlighting here and there</td>           <td bgcolor="#f6f8ff"><code><a href="extsnd.html#highlightcolor">highlight-color</a></code></td></tr>
 
 <tr><td>listenercolor</td><td>aliceblue</td>       <td>background color of the listener</td>      <td><code><a href="extsnd.html#listenercolor">listener-color</a></code></td></tr>
 
-<tr><td bgcolor="ghostwhite">listenertextcolor</td><td bgcolor="ghostwhite">black</td>   <td bgcolor="ghostwhite">text color in the listener</td>            <td bgcolor="ghostwhite"><code><a href="extsnd.html#listenertextcolor">listener-text-color</a></code></td></tr>
+<tr><td bgcolor="#f6f8ff">listenertextcolor</td><td bgcolor="#f6f8ff">black</td>   <td bgcolor="#f6f8ff">text color in the listener</td>            <td bgcolor="#f6f8ff"><code><a href="extsnd.html#listenertextcolor">listener-text-color</a></code></td></tr>
 
 <tr><td>markcolor</td><td>red</td>           <td>color of the mark indicator</td>           <td><code><a href="extsnd.html#markcolor">mark-color</a></code></td></tr>
 
-<tr><td bgcolor="ghostwhite">mixcolor</td><td bgcolor="ghostwhite">darkgray</td>            <td bgcolor="ghostwhite">used for mix waveforms</td>                <td bgcolor="ghostwhite"><code><a href="extsnd.html#mixcolor">mix-color</a></code></td></tr>
+<tr><td bgcolor="#f6f8ff">mixcolor</td><td bgcolor="#f6f8ff">darkgray</td>            <td bgcolor="#f6f8ff">used for mix waveforms</td>                <td bgcolor="#f6f8ff"><code><a href="extsnd.html#mixcolor">mix-color</a></code></td></tr>
 
 <tr><td>positioncolor</td><td>ivory3</td>       <td>color of position sliders</td>             <td><code><a href="extsnd.html#positioncolor">position-color</a></code></td></tr>
 
-<tr><td bgcolor="ghostwhite">pushedbuttoncolor</td><td bgcolor="ghostwhite">ivory1</td>   <td bgcolor="ghostwhite">color of pushed button</td>                <td bgcolor="ghostwhite"><code><a href="extsnd.html#pushedbuttoncolor">pushed-button-color</a></code></td></tr>
+<tr><td bgcolor="#f6f8ff">pushedbuttoncolor</td><td bgcolor="#f6f8ff">ivory1</td>   <td bgcolor="#f6f8ff">color of pushed button</td>                <td bgcolor="#f6f8ff"><code><a href="extsnd.html#pushedbuttoncolor">pushed-button-color</a></code></td></tr>
 
 <tr><td>quitbuttoncolor</td><td>ivory1</td>     <td>color of Cancel or Dismiss buttons</td>    <td><code><a href="extsnd.html#quitbuttoncolor">quit-button-color</a></code></td></tr>
 
-<tr><td bgcolor="ghostwhite">resetbuttoncolor</td><td bgcolor="ghostwhite">ivory1</td>    <td bgcolor="ghostwhite">color of Reset buttons</td>                <td bgcolor="ghostwhite"><code><a href="extsnd.html#resetbuttoncolor">reset-button-color</a></code></td></tr>
+<tr><td bgcolor="#f6f8ff">resetbuttoncolor</td><td bgcolor="#f6f8ff">ivory1</td>    <td bgcolor="#f6f8ff">color of Reset buttons</td>                <td bgcolor="#f6f8ff"><code><a href="extsnd.html#resetbuttoncolor">reset-button-color</a></code></td></tr>
 
 <tr><td>sashcolor</td><td>lightgreen</td>           <td>color of paned window sash handles</td>    <td><code><a href="extsnd.html#sashcolor">sash-color</a></code></td></tr>
 
-<tr><td bgcolor="ghostwhite">selecteddatacolor</td><td bgcolor="ghostwhite">black</td>   <td bgcolor="ghostwhite">color of the data in selected channel</td> <td bgcolor="ghostwhite"><code><a href="extsnd.html#selecteddatacolor">selected-data-color</a></code></td></tr>
+<tr><td bgcolor="#f6f8ff">selecteddatacolor</td><td bgcolor="#f6f8ff">black</td>   <td bgcolor="#f6f8ff">color of the data in selected channel</td> <td bgcolor="#f6f8ff"><code><a href="extsnd.html#selecteddatacolor">selected-data-color</a></code></td></tr>
 
 <tr><td>selectedgraphcolor</td><td>white</td>  <td>background of selected channel's graph</td><td><code><a href="extsnd.html#selectedgraphcolor">selected-graph-color</a></code></td></tr>
 
-<tr><td bgcolor="ghostwhite">selectioncolor</td><td bgcolor="ghostwhite">lightsteelblue1</td>      <td bgcolor="ghostwhite">color of an active selection</td>          <td bgcolor="ghostwhite"><code><a href="extsnd.html#selectioncolor">selection-color</a></code></td></tr>
+<tr><td bgcolor="#f6f8ff">selectioncolor</td><td bgcolor="#f6f8ff">lightsteelblue1</td>      <td bgcolor="#f6f8ff">color of an active selection</td>          <td bgcolor="#f6f8ff"><code><a href="extsnd.html#selectioncolor">selection-color</a></code></td></tr>
 
 <tr><td>textfocuscolor</td><td>white</td>      <td>color of text field with focus</td>        <td><code><a href="extsnd.html#textfocuscolor">text-focus-color</a></code></td></tr>
 
-<tr><td bgcolor="ghostwhite">zoomcolor</td><td bgcolor="ghostwhite">ivory4</td>           <td bgcolor="ghostwhite">color of zoom sliders</td>                 <td bgcolor="ghostwhite"><code><a href="extsnd.html#zoomcolor">zoom-color</a></code></td></tr>
+<tr><td bgcolor="#f6f8ff">zoomcolor</td><td bgcolor="#f6f8ff">ivory4</td>           <td bgcolor="#f6f8ff">color of zoom sliders</td>                 <td bgcolor="#f6f8ff"><code><a href="extsnd.html#zoomcolor">zoom-color</a></code></td></tr>
 
 </table>
 
@@ -792,23 +792,23 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 </p>
 <table hspace=20>
 <tr><td width=100>clm</td><td>clm module (always included -- once upon a time it was optional)</td></tr>
-<tr><td bgcolor="ghostwhite">gl</td><td bgcolor="ghostwhite">OpenGL callable from Scheme/Ruby/Forth (--with-gl switch)</td></tr>
+<tr><td bgcolor="#f6f8ff">gl</td><td bgcolor="#f6f8ff">OpenGL callable from Scheme/Ruby/Forth (--with-gl switch)</td></tr>
 <tr><td>snd-ladspa</td><td>LADSPA loaded (--with-ladspa, but also the default in Linux if ladspa.h can be found)</td></tr>
-<tr><td bgcolor="ghostwhite">sndlib</td><td bgcolor="ghostwhite">sndlib module (always included)</td></tr>
+<tr><td bgcolor="#f6f8ff">sndlib</td><td bgcolor="#f6f8ff">sndlib module (always included)</td></tr>
 <tr><td><A NAME="sndmotiffeature">snd-motif</a></td><td>Motif used as GUI toolkit (--with-motif, usually the default if Motif can be found)</td></tr>
-<tr><td bgcolor="ghostwhite"><A NAME="sndgtkfeature">snd-gtk</a></td><td bgcolor="ghostwhite">Gtk+ used as GUI toolkit (--with-gtk)</td></tr>
+<tr><td bgcolor="#f6f8ff"><A NAME="sndgtkfeature">snd-gtk</a></td><td bgcolor="#f6f8ff">Gtk+ used as GUI toolkit (--with-gtk)</td></tr>
 <tr><td>snd-nogui</td><td>No GUI built-in (--with-no-gui, or neither Motif nor Gtk+ found)</td></tr>
-<tr><td bgcolor="ghostwhite">snd-guile</td><td bgcolor="ghostwhite">Guile as extension language (--with-guile, usually the default if guile can be found)</td></tr>
+<tr><td bgcolor="#f6f8ff">snd-guile</td><td bgcolor="#f6f8ff">Guile as extension language (--with-guile, usually the default if guile can be found)</td></tr>
 <tr><td>snd-ruby</td><td>Ruby as extension language (--with-ruby)</td></tr>
-<tr><td bgcolor="ghostwhite">snd-forth</td><td bgcolor="ghostwhite">Forth as extension language (--with-forth)</td></tr>
+<tr><td bgcolor="#f6f8ff">snd-forth</td><td bgcolor="#f6f8ff">Forth as extension language (--with-forth)</td></tr>
 <tr><td>snd-gauche</td><td>Gauche as extension language (--with-gauche)</td></tr>
-<tr><td bgcolor="ghostwhite">snd-debug</td><td bgcolor="ghostwhite">internal debugging hooks included (--enable-snd-debug)</td></tr>
+<tr><td bgcolor="#f6f8ff">snd-debug</td><td bgcolor="#f6f8ff">internal debugging hooks included (--enable-snd-debug)</td></tr>
 <tr><td>snd</td><td>It's Snd, ferchrissake... (always included)</td></tr>
-<tr><td bgcolor="ghostwhite">xg</td><td bgcolor="ghostwhite">Gtk module (xg.c) included (--with-static-xg, or loaded dynamically)</td></tr>
+<tr><td bgcolor="#f6f8ff">xg</td><td bgcolor="#f6f8ff">Gtk module (xg.c) included (--with-static-xg, or loaded dynamically)</td></tr>
 <tr><td>Xp</td><td>Xprint library included and available from Scheme/Ruby/Forth (--with-xp, the default if it exists)</td></tr>
-<tr><td bgcolor="ghostwhite">xm</td><td bgcolor="ghostwhite">Motif module (xm.c) included (--with-static-xm, or loaded dynamically)</td></tr>
+<tr><td bgcolor="#f6f8ff">xm</td><td bgcolor="#f6f8ff">Motif module (xm.c) included (--with-static-xm, or loaded dynamically)</td></tr>
 <tr><td>alsa</td><td>ALSA is in use, rather than OSS (--with-alsa)</td></tr>
-<tr><td bgcolor="ghostwhite">gsl</td><td bgcolor="ghostwhite">GSL is loaded (--with-gsl)</td></tr>
+<tr><td bgcolor="#f6f8ff">gsl</td><td bgcolor="#f6f8ff">GSL is loaded (--with-gsl)</td></tr>
 </table>
 
 <p>To check whether something is available in the current Snd, use:
@@ -826,13 +826,13 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 </p>
 <table hspace=20>
 <tr><td width=300>SND_PATH</td><td>Snd source load path list (a colon separated directory list)</td></tr>
-<tr><td bgcolor="ghostwhite">SND_INIT_FILE_ENVIRONMENT_NAME</td><td bgcolor="ghostwhite">init file name</td></tr>
+<tr><td bgcolor="#f6f8ff">SND_INIT_FILE_ENVIRONMENT_NAME</td><td bgcolor="#f6f8ff">init file name</td></tr>
 <tr><td>LADSPA_PATH</td><td>Ladspa modules directory</td></tr>
-<tr><td bgcolor="ghostwhite">MUS_ALSA_PLAYBACK_DEVICE</td><td bgcolor="ghostwhite">name of playback device (Alsa only)</td></tr>
+<tr><td bgcolor="#f6f8ff">MUS_ALSA_PLAYBACK_DEVICE</td><td bgcolor="#f6f8ff">name of playback device (Alsa only)</td></tr>
 <tr><td>MUS_ALSA_CAPTURE_DEVICE</td><td>name of capture device (Alsa only)</td></tr>
-<tr><td bgcolor="ghostwhite">MUS_ALSA_DEVICE</td><td bgcolor="ghostwhite">name of the playback and capture device (Alsa only)</td></tr>
+<tr><td bgcolor="#f6f8ff">MUS_ALSA_DEVICE</td><td bgcolor="#f6f8ff">name of the playback and capture device (Alsa only)</td></tr>
 <tr><td>MUS_ALSA_BUFFERS</td><td>number of "periods" used (Alsa only)</td></tr>
-<tr><td bgcolor="ghostwhite">MUS_ALSA_BUFFER_SIZE</td><td bgcolor="ghostwhite">number of samples per channel per buffer (Alsa only)</td></tr>
+<tr><td bgcolor="#f6f8ff">MUS_ALSA_BUFFER_SIZE</td><td bgcolor="#f6f8ff">number of samples per channel per buffer (Alsa only)</td></tr>
 <tr><td>AUDIODEV</td><td>audio device name (Sun and related drivers)</td></tr>
 </table>
 
@@ -929,7 +929,7 @@ listener, and using the graph and spectrum functions.  Say we have
 these declarations in ~/.snd:
 </p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 (define data-size 1024)
 (define data (<a class=quiet href="extsnd.html#makevct">make-vct</a> data-size))
 
@@ -956,7 +956,7 @@ these declarations in ~/.snd:
 <p>Any CLM instrument or function can be used in this way 
 to edit sounds.  Say we want an echo effect:</p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 (define echo 
   (lambda (scaler secs)
     (let ((del (<a class=quiet href="clm.html#make-delay">make-delay</a> (round (* secs (<a class=quiet href="extsnd.html#srate">srate</a>))))))
@@ -996,7 +996,7 @@ producing the echo.
 </pre>
 <p>The Common Lisp version is:</p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 (<a class=quiet href="clm.html#definstrument">definstrument</a> echo (beg dur scaler secs file)
   (let ((del (<a class=quiet href="clm.html#make-delay">make-delay</a> (round (* secs *srate*))))
 	(inf (<a class=quiet href="clm.html#open-input">open-input</a> file))
@@ -1195,62 +1195,62 @@ it as something that can be called as a note in a notelist (say in with-sound) a
 generate its own sound.
 Test 23 in snd-test.scm has a with-sound that includes most of these instruments.
 </p>
-<TABLE border=1 cellpadding=3 hspace=20>
-<tr><th>Instrument</th><th>Sources</th><th>Description</th></tr>
+<TABLE border=1 cellpadding=6 hspace=20><tr><td>
+<table border=0 cellpadding=0 cellspacing=4>
+<tr><th bgcolor="beige">Instrument</th><th bgcolor="beige">Sources</th><th bgcolor="beige">Description</th></tr>
 <tr><td>anoi</td><td>clm-ins.scm, clm-ins.rb</td><td>noise reduction based on P Cook's Scrubber.m</td></tr>
-<tr><td>attract</td><td>clm-ins.scm, clm-ins.rb</td><td>James McCarthy's chaotic brass</td></tr>
+<tr><td bgcolor="#f6f8ff">attract</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">James McCarthy's chaotic brass</td></tr>
 <tr><td>bes-fm</td><td>clm-ins.scm</td><td>FM analog using Bessel j1 rather than sin</td></tr>
-<tr><td>bigbird</td><td>bird.scm, bird.rb</td><td>more bird songs</td></tr>
+<tr><td bgcolor="#f6f8ff">bigbird</td><td bgcolor="#f6f8ff">bird.scm, bird.rb</td><td bgcolor="#f6f8ff">more bird songs</td></tr>
 <tr><td>bird</td><td>bird.scm, bird.rb</td><td>bird songs</td></tr>
-<tr><td>bow</td><td>strad.scm, strad.rb</td><td>bowed string physical model (Juan Reyes, Michael Scholz)</td></tr>
+<tr><td bgcolor="#f6f8ff">bow</td><td bgcolor="#f6f8ff">strad.scm, strad.rb</td><td bgcolor="#f6f8ff">bowed string physical model (Juan Reyes, Michael Scholz)</td></tr>
 <tr><td>bowstr</td><td>prc95.scm, prc95.rb</td><td>bowed string physical model</td></tr>
-<tr><td>brass</td><td>prc95.scm</td><td>brass physical model</td></tr>
+<tr><td bgcolor="#f6f8ff">brass</td><td bgcolor="#f6f8ff">prc95.scm</td><td bgcolor="#f6f8ff">brass physical model</td></tr>
 <tr><td>cellon</td><td>clm-ins.scm, clm-ins.rb</td><td>S Krupowicz's feedback FM</td></tr>
-<tr><td>chain-dsps</td><td>examp.scm</td><td>instrument gets gen patch from its args</td></tr>
+<tr><td bgcolor="#f6f8ff">chain-dsps</td><td bgcolor="#f6f8ff">examp.scm</td><td bgcolor="#f6f8ff">instrument gets gen patch from its args</td></tr>
 <tr><td>clarinet</td><td>prc95.scm</td><td>clarinet physical model</td></tr>
-<tr><td>drone, canter</td><td>clm-ins.scm, clm-ins.rb</td><td>Peter Common's bagpipe</td></tr>
+<tr><td bgcolor="#f6f8ff">drone, canter</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">Peter Common's bagpipe</td></tr>
 <tr><td>exp-snd</td><td>clm-ins.scm, clm-ins.rb</td><td>granulate to the max</td></tr>
-<tr><td>expfil</td><td>clm-ins.scm, clm-ins.rb</td><td>granular synthesis interleaving two files</td></tr>
+<tr><td bgcolor="#f6f8ff">expfil</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">granular synthesis interleaving two files</td></tr>
 <tr><td>flute</td><td>prc95.scm, clm-ins.rb</td><td>flute physical model</td></tr>
-<tr><td>fm-bell</td><td>clm-ins.scm, examp.rb</td><td>Mike McNabb's FM bell</td></tr>
+<tr><td bgcolor="#f6f8ff">fm-bell</td><td bgcolor="#f6f8ff">clm-ins.scm, examp.rb</td><td bgcolor="#f6f8ff">Mike McNabb's FM bell</td></tr>
 <tr><td>fm-drum</td><td>clm-ins.scm, clm-ins.rb</td><td>Jan Mattox's FM dum</td></tr>
-<tr><td>fm-insect</td><td>clm-ins.scm, clm-ins.rb</td><td>FM insect (katydid)</td></tr>
+<tr><td bgcolor="#f6f8ff">fm-insect</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">FM insect (katydid)</td></tr>
 <tr><td>fm-noise</td><td>noise.scm, noise.rb</td><td>noise maker</td></tr>
-<tr><td>fm-trumpet</td><td>clm-ins.scm, clm-ins.rb</td><td>Dexter Morrill's FM trumpet</td></tr>
+<tr><td bgcolor="#f6f8ff">fm-trumpet</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">Dexter Morrill's FM trumpet</td></tr>
 <tr><td>fm-violin</td><td>v.scm, v.rb, fmv.scm, sndscm.html</td><td>violin-like sounds via FM</td></tr>
-<tr><td>fofins</td><td>clm-ins.scm, clm-ins.rb</td><td>FOF synthesis</td></tr>
+<tr><td bgcolor="#f6f8ff">fofins</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">FOF synthesis</td></tr>
 <tr><td>fullmix</td><td>clm-ins.scm</td><td>complicated mixer</td></tr>
-<tr><td>freeverb</td><td>freeverb.scm, freeverb.rb</td><td>a reverberator</td></tr>
+<tr><td bgcolor="#f6f8ff">freeverb</td><td bgcolor="#f6f8ff">freeverb.scm, freeverb.rb</td><td bgcolor="#f6f8ff">a reverberator</td></tr>
 <tr><td>gong</td><td>clm-ins.scm, clm-ins.rb</td><td>Paul Weineke's FM gong</td></tr>
-<tr><td>gran-synth</td><td>clm-ins.scm, clm-ins.rb</td><td>simple granular synthesis</td></tr>
+<tr><td bgcolor="#f6f8ff">gran-synth</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">simple granular synthesis</td></tr>
 <tr><td>graphEq</td><td>clm-ins.scm, clm-ins.rb</td><td>Marco Trevisani's semi-graphical equalizer</td></tr>
-<tr><td>jc-reverb</td><td>jcrev.scm, examp.rb</td><td>Chowning's old reverb</td></tr>
+<tr><td bgcolor="#f6f8ff">jc-reverb</td><td bgcolor="#f6f8ff">jcrev.scm, examp.rb</td><td bgcolor="#f6f8ff">Chowning's old reverb</td></tr>
 <tr><td>jl-reverb</td><td>clm-ins.scm, clm-ins.rb</td><td>cavernous version of jc-reverb</td></tr>
-<tr><td>lbj-piano</td><td>clm-ins.scm, clm-ins.rb</td><td>additive synthesis piano (Doug Fulton)</td></tr>
+<tr><td bgcolor="#f6f8ff">lbj-piano</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">additive synthesis piano (Doug Fulton)</td></tr>
 <tr><td>maraca, big-maraca</td><td>maraca.scm, maraca.rb</td><td>Perry Cook's maraca physical model</td></tr>
-<tr><td>metal</td><td>clm-ins.scm, clm-ins.rb</td><td>more FM by Perry</td></tr>
+<tr><td bgcolor="#f6f8ff">metal</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">more FM by Perry</td></tr>
 <tr><td>nrev</td><td>clm-ins.scm, clm-ins.rb</td><td>Mike McNabb's reverb</td></tr>
-<tr><td>p</td><td>piano.scm, piano.rb</td><td>Scott van Duyne's piano physical model</td></tr>
+<tr><td bgcolor="#f6f8ff">p</td><td bgcolor="#f6f8ff">piano.scm, piano.rb</td><td bgcolor="#f6f8ff">Scott van Duyne's piano physical model</td></tr>
 <tr><td>pins</td><td>clm-ins.scm, clm-ins.rb</td><td>Xavier Serra SMS-style spectral modeling</td></tr>
-<tr><td>pluck</td><td>clm-ins.scm, clm-ins.rb</td><td>David Jaffe's Karplus-Strong (physical model) plucked string</td></tr>
+<tr><td bgcolor="#f6f8ff">pluck</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">David Jaffe's Karplus-Strong (physical model) plucked string</td></tr>
 <tr><td>plucky</td><td>prc95.scm</td><td>plucked string physical model</td></tr>
-<tr><td>pqw-vox</td><td>clm-ins.scm, clm-ins.rb</td><td>vocal sounds from phase-quadrature waveshaping</td></tr>
+<tr><td bgcolor="#f6f8ff">pqw-vox</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">vocal sounds from phase-quadrature waveshaping</td></tr>
 <tr><td>pqw</td><td>clm-ins.scm, clm-ins.rb</td><td>phase-quadrature waveshaping</td></tr>
-<tr><td>resflt</td><td>clm-ins.scm</td><td>two-poles for resonances (Xavier Serra)</td></tr>
+<tr><td bgcolor="#f6f8ff">resflt</td><td bgcolor="#f6f8ff">clm-ins.scm</td><td bgcolor="#f6f8ff">two-poles for resonances (Xavier Serra)</td></tr>
 <tr><td>reson</td><td>clm-ins.scm, clm-ins.rb</td><td>parallel FM creating resonances</td></tr>
-<tr><td>rhodey, wurley, hammondoid</td><td>clm-ins.scm, clm-ins.rb</td><td>FM stuff from Perry Cook</td></tr>
+<tr><td bgcolor="#f6f8ff">rhodey, wurley, hammondoid</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">FM stuff from Perry Cook</td></tr>
 <tr><td>scratch</td><td>clm-ins.scm, clm-ins.rb</td><td>move around in sound via list of turn points and src</td></tr>
-<tr><td>singer</td><td>singer.scm, singer.rb</td><td>Perry Cook's vocal tract physical model</td></tr>
+<tr><td bgcolor="#f6f8ff">singer</td><td bgcolor="#f6f8ff">singer.scm, singer.rb</td><td bgcolor="#f6f8ff">Perry Cook's vocal tract physical model</td></tr>
 <tr><td>spectra</td><td>clm-ins.scm, clm-ins.rb</td><td>simple additive synthesis</td></tr>
-<tr><td>stereo-flute</td><td>clm-ins.scm, clm-ins.rb</td><td>Nicky Hind's flute physical model</td></tr>
+<tr><td bgcolor="#f6f8ff">stereo-flute</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">Nicky Hind's flute physical model</td></tr>
 <tr><td>touch-tone</td><td>clm-ins.scm, clm-ins.rb</td><td>touch-tone telephone</td></tr>
-<tr><td>tubebell</td><td>clm-ins.scm, clm-ins.rb</td><td>Perry Cook's FM tubular bell</td></tr>
+<tr><td bgcolor="#f6f8ff">tubebell</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">Perry Cook's FM tubular bell</td></tr>
 <tr><td>two-tab</td><td>clm-ins.scm, clm-ins.rb</td><td>interpolate between two spectra</td></tr>
-<tr><td>vox</td><td>clm-ins.scm, clm-ins.rb</td><td>voice using "leapfrog" FM-generated formants</td></tr>
+<tr><td bgcolor="#f6f8ff">vox</td><td bgcolor="#f6f8ff">clm-ins.scm, clm-ins.rb</td><td bgcolor="#f6f8ff">voice using "leapfrog" FM-generated formants</td></tr>
 <tr><td>zc, zn, za</td><td>clm-ins.scm, clm-ins.rb</td><td>interpolating delay effects</td></tr>
 </TABLE>
-<br><br>
-
+</td></tr></table>
 <br><br>
 
 <!-- TODO: update the CM docs to reflect new version -->
@@ -1364,7 +1364,7 @@ configure switch --with-static-xm, and the xm module will be included
 in the base Snd image.
 Here's a dialog window with a slider:</p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 (define scale-dialog #f)
 (define current-scaler 1.0)
 
@@ -1423,7 +1423,7 @@ Here's a dialog window with a slider:</p>
 <p>
 In Ruby, this is:</p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 $scale_dialog = false
 $current_scaler = 1.0
 
@@ -1477,7 +1477,7 @@ The next function installs our own file filtering procedure into the File:Open d
 match-sound-files from extensions.scm):
 </p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 (define (install-searcher proc)
   (define (XmString-&gt;string str)
     (cadr (XmStringGetLtoR str XmFONTLIST_DEFAULT_TAG)))
@@ -1516,7 +1516,7 @@ the dialog's files list.  See snd-motif.scm and popup.scm.
 Here's the scale-dialog in xg/gtk:
 </p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 (define scale-dialog #f)
 (define current-scaler 1.0)
 
@@ -1599,7 +1599,7 @@ can treat this version of Snd as a scripting engine.  For example,
 if you have an executable file with:
 </p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite">
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke">
 <pre>
 #!/home/bil/test/snd-8/snd -l
 !#
@@ -1626,7 +1626,7 @@ Here's a script that doubles every sample in "oboe.snd" and
 writes the result as "test.snd":
 </p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 #!/home/bil/test/snd-8/snd -l
 !#
 (<a class=quiet href="extsnd.html#opensound">open-sound</a> "oboe.snd")
@@ -1644,7 +1644,7 @@ a higher value, Snd will subsequently ignore the intervening arguments
 as it scans the startup arguments (see snd-test.scm).
 </p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 #!/home/bil/test/snd-8/snd -l
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2) ;i.e. ("-l" "script")
@@ -1667,7 +1667,7 @@ doubling all the sounds or whatever by using a do loop --
 the following displays all the comments it finds:
 </p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 #!/home/bil/cl/snd -l
 !#
 (use-modules (ice-9 format))
@@ -1703,7 +1703,7 @@ Here's another script; it looks for any sounds that are longer
 than 40 seconds in duration, and truncates them to 40 seconds:
 </p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 #!/usr/local/bin/snd -l
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2)
@@ -1721,7 +1721,7 @@ than 40 seconds in duration, and truncates them to 40 seconds:
 
 <p>Here's a sndplay replacement script:</p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 #!snd -b
 !#
 (<a class=quiet href="extsnd.html#playandwait">play-and-wait</a> (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1)))
@@ -1732,7 +1732,7 @@ than 40 seconds in duration, and truncates them to 40 seconds:
 into a bunch of mono files:
 </p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 #!snd -b
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2)
@@ -1778,7 +1778,7 @@ Here's a Ruby version of the init file given
 above:
 </p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 set_window_width 800
 set_window_height 500
 
@@ -1844,7 +1844,7 @@ Keywords, CLM generic functions, and optional arguments work as in Scheme:
 Here's one more example, a translation of display-energy in draw.scm:
 </p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 def display_energy(snd, chn)
   ls = left_sample
   rs = right_sample
@@ -1896,7 +1896,7 @@ Scheme and Ruby files described above -- see *.fs.  See also Mike's very fine do
 Here's an example from his fth.texi file showing how to define an instrument and use it in with-sound:
 </p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 instrument: src-simp { start dur amp sr sr-env fname -- }
     :file fname make-readin { f }
     :input f input-fn :srate sr make-src { sr }
@@ -2000,7 +2000,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 </pre>
 <p><a name="ladspachannel"></a>The "regularized" version of apply-ladspa could be defined:
 </p>
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (ladspa-channel ladspa-data #:optional nbeg ndur nsnd nchn nedpos)
   (let* ((beg (or nbeg 0)) 
 	 (snd (or nsnd (<a class=quiet href="extsnd.html#selectedsound">selected-sound</a>) (car (<a class=quiet href="extsnd.html#sounds">sounds</a>))))
@@ -2040,7 +2040,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 </pre>
 <p>See ladspa.h for full details. We could replace analyse-ladspa using these functions:
 </p>
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 (define (analyze-ladspa library label)
   (let* ((descriptor (<em class=red>ladspa-descriptor</em> library label))
 	 (data '())
@@ -2078,7 +2078,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 <p>Here's a function that processes a channel of data through a plugin, sending the 
 data directly to the DAC:
 </p>
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (ladspa-it library label #:rest plugin-parameters)
   ;; (ladspa-it "cmt" "delay_5s" .3 .5)
   (init-ladspa)
@@ -2237,7 +2237,7 @@ Any of the Snd drawing area widgets (or your own) can receive GL graphics
 commands.  Here is a translation of the SGI/xjournal glxmotif
 program:
 </p>
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="GhostWhite"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 (define (draw-it)
   (glXMakeCurrent (XtDisplay (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>))) 
 		  (XtWindow (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a>)))
