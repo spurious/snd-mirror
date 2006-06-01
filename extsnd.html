@@ -1619,7 +1619,7 @@ uses the maxamp data only if it is already available:
 	(list 0.0 dur -1.0 1.0))))            ; max amp unknown, so use defaults
 </pre></td></tr></table>
 
-<tr><td></td><td colspan=2>A similar problem affects the <i>dur</i> argument.  If the file is very long, Snd starts
+A similar problem affects the <i>dur</i> argument.  If the file is very long, Snd starts
 a background process reading the file's data to get an overall amplitude envelope,
 and this envelope is what it actually displays when you zoom out to look at the entire
 sound. If you set <i>x1</i> to <i>dur</i>, you effectively get two such processes
@@ -2046,7 +2046,7 @@ You can redirect mus_print output from stderr (the default) to stdout via:
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the sound name is clicked.
-If it returns #t, the usual informative minibuffer babbling is squelched.
+If it returns #t, the usual highly informative minibuffer babbling is squelched.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
@@ -2105,7 +2105,7 @@ If it returns a string (a filename), that file is opened instead of the original
 	    (let ((aufile (string-append filename ".au")))
 	      (if (file-exists? aufile) (delete-file aufile))
 	      (system (format #f "ogg123 -d au -f ~A ~A" aufile filename))
-	      aufile)
+	      aufile) ; now open-sound will read the new .au file
 	    #f)
 	#f)))
 </pre></td></tr></table>
@@ -2116,7 +2116,7 @@ See also <a href="sndscm.html#exopenbuffer">open-buffer</a> in examp.scm.
 
 <!-- open-raw-sound-hook -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="openrawsoundhook">open-raw-sound-hook</a> (filename current-choices)</code> [<b>progn</b>]
+<code><a class=def name="openrawsoundhook">open-raw-sound-hook</a> (filename current-choices)</code> [<b>cascade</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time <a href="#opensound">open-sound</a> encounters a headerless file.
@@ -2126,7 +2126,7 @@ be omitted (location defaults to 0, and length defaults to the file length in by
 If there is more than one function on the hook list, functions after the first get the
 on-going list result (if any) as the <i>current-choices</i> argument (the empty list is the default).
 <pre>
-    (add-hook! open-raw-sound-hook (lambda (file choices) (list 1 44100 <a class=quiet href="#dataformat">mus-lshort</a>)))
+    (add-hook! <em class=red>open-raw-sound-hook</em> (lambda (file choices) (list 1 44100 <a class=quiet href="#dataformat">mus-lshort</a>)))
 </pre>
 Return '() to accept all the current raw header defaults; return #f to fallback on the Raw File Dialog.
 The raw header defaults are stereo, 44100 Hz, big endian short data; these values can be changed in the
@@ -2143,7 +2143,7 @@ If the hook returns #t, the open-sound returns without opening.
 <tr><td></td><td colspan=2>
 called each time the optimizer hits something it can't handle; <i>message</i> tries to give some information about the situation.
 <pre>
-    (add-hook! optimization-hook (lambda (n) (display (format #f "~A~%" n))))
+    (add-hook! <em class=red>optimization-hook</em> (lambda (n) (display (format #f "~A~%" n))))
 </pre>
 Normally, if the optimizer fails for some reason, it falls back silently on the Guile evaluator, so
 the code simply runs slower.  This hook gives you a way to find out why the optimizer gave up.
@@ -2166,17 +2166,19 @@ called whenever one of the variables associated with the orientation dialog chan
 <code><a class=def name="outputcommenthook">output-comment-hook</a> (str)</code> [<b>cascade</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
-called in the Save-As dialog. <i>str</i> is the current sound's comment.
+called in the Save-As dialog to set the default output comment value. <i>str</i> is the current sound's comment.
 If there is more than one hook function, each function's result is passed as input to the next function in the list.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
+<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke">
+<pre>
 (add-hook! <em class=red>output-comment-hook</em>
-  (lambda (str) 
-    (string-append str ": written " 
-      (strftime "%a %d-%b-%Y %H:%M %Z" 
-        (localtime (current-time)))))) 
-</pre></td></tr></table></td></tr>
+  (lambda (str)   ; append a time-stamp
+    (string-append str ": written " (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time))))))
+
+    ;; in Ruby: format("%s: written %s", str, Time.new.localtime.strftime("%d-%b %H:%M %Z"))
+</pre>
+</td></tr></table></td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
 
@@ -2185,7 +2187,8 @@ If there is more than one hook function, each function's result is passed as inp
 <code><a class=def name="outputnamehook">output-name-hook</a> (current-name)</code> [<b>progn</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
-called in the New File dialog. If it returns a filename, that name is presented in the New File dialog.
+called in the New File dialog. If it returns a filename, that name is presented in the New File dialog,
+making it slightly easier to set default output names.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
@@ -2193,7 +2196,7 @@ called in the New File dialog. If it returns a filename, that name is presented 
   (add-hook! <em class=red>output-name-hook</em>
     (lambda (ignored-name)
       (set! file-ctr (+ file-ctr 1))
-      (format #f "~A-~D.snd" 
+      (format #f "~A-~D.snd"    ; make new file name based on date and file-ctr: "Jun-01-23.snd"
 	(strftime "%b-%d" (localtime (current-time)))
         file-ctr))))
 </pre></td></tr></table></td></tr>
@@ -2202,7 +2205,7 @@ called in the New File dialog. If it returns a filename, that name is presented 
 
 <!-- play-hook -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="playhook">play-hook</a> (samps)</code> [<b>progn</b>]
+<code><a class=def name="playhook">play-hook</a> (samps)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time a buffer (size: <i>samps</i>) is about to be 
@@ -2222,7 +2225,8 @@ The prompt is important!  Snd uses it to find the current form to evaluate, so i
 forgets to include it, you can end up with a comatose listener.  To get out of this state, include
 the prompt by hand (i.e. type in the shell that Snd started in, "&gt;(reset-hook! print-hook)").
 This is intended to make it possible to
-distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, etc.
+distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, but both should be handled
+in some other way -- I should rewrite this part of Snd.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
@@ -2283,7 +2287,7 @@ the file is being saved under a new name (as in <a href="#savesoundas">save-soun
 <tr><td></td><td colspan=2>
 called each time the <a href="#savestate">save-state</a>
 mechanism is about to create a new temporary file to save some edit history sample values; that is,
-each channel's edit history data is saved in a separate temporary file, and this hooks provides
+each channel's edit history data is saved in a separate temporary file, and this hook provides
 a way to specify the name of that file.
 <i>temp-filename</i> is the temporary file name that will be used unless
 the hook returns a different one (as a string).  This hook provides a way to
@@ -2329,9 +2333,9 @@ desensitize the "selection" button when there is no selection.
 <code><a class=def name="snderrorhook">snd-error-hook</a> (error-message)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon <a href="#snderror">snd-error</a>, and if the listener is closed, any Scheme, Ruby, or Forth error.
+called upon <a href="#snderror">snd-error</a>.  If the listener is closed, it is also called upon any Scheme, Ruby, or Forth error.
 If it returns #t, Snd flushes the error (it assumes you've 
-reported it via the hook).
+dealt with it via the hook).
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
@@ -2372,7 +2376,7 @@ reported it via the hook).
 <tr><td></td><td colspan=2>
 called when Snd starts.
 If it returns #t, Snd exits immediately.
-Say we are so annoyed with the X/Motif file browser that we want
+Say we are so annoyed with Snd's really very fine file browser that we want
 Snd to exit back to the shell if its file argument is not
 found (this code has to be in the ~/.snd init file):
 </td></tr>
@@ -2513,9 +2517,8 @@ uses this hook to update a mark list after each edit
 so that the displayed mark positions are correct).
 You can use edit-hook to set
 up protected portions of the edit history:
-</td></tr></table>
-<br>
-<table border=1 cellpadding=5 hspace=100><tr><td bgcolor="WhiteSmoke"><pre>
+
+<table border=1 cellpadding=5 hspace=20 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define protect
   "(protect #:optional snd chn) disallows any edits before the current one"
   (lambda args
@@ -2534,13 +2537,14 @@ up protected portions of the edit history:
     (reset-hook! (apply <em class=red>edit-hook</em> args))))
 </pre></td></tr></table>
 
-<p><a href="sndscm.html#enveddoc">enved.scm</a> uses several of these hooks to implement an envelope editor in lisp.
+<a href="sndscm.html#enveddoc">enved.scm</a> uses several of these hooks to implement an envelope editor in lisp.
 <i>add-mark-pane</i> in snd-motif.scm uses them to make sure the mark list reflects the current edit history location.
 See also autosave.scm.  <small>It is possible for after-edit-hook to be called more often that edit-hook.</small>
-</p>
+
+</td></tr></table>
 
 
-<br>
+<br><br>
 <table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndobjects">Snd's objects</a></h3></td></tr></table>
 
 <p>Snd presents its various data structures as a list
@@ -2564,8 +2568,8 @@ In the argument lists
 below, <i>snd</i> as an argument refers to the sound's index, and defaults to the currently
 selected sound.  Similarly, <i>chn</i> is the channel number, starting from 0, and defaults
 to the currently selected channel.  So if there's only one sound active (say its index is 0), and it has only
-one channel, (cursor) (cursor 0), and (cursor 0 0) all refer to the same
-thing.  If you want to refer to the currently selected sound, either use #f
+one channel, (cursor), (cursor 0), and (cursor 0 0) all refer to the same
+thing.  If you want to refer to the currently selected sound explicitly, either use #f
 as the sound index or <a href="#selectedsound">selected-sound</a>.
 </p>
 
@@ -2644,17 +2648,29 @@ Forth: variable hi
 
 <!-- list->vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="list_to_vct">list-&gt;vct</a> (lst)</code></td></tr>
-<tr><td width=100></td><td>return vct with elements of list <i>lst</i>. Equivalent to <code>(apply vct lst)</code>.</td></tr>
+<tr><td width=100></td><td>return a new vct with elements of list <i>lst</i> (equivalent to the <a href="#vct">vct</a> function).
+<pre>
+    :<em class=typing>(list-&gt;vct (list 0.1 0.2 0.3))</em>
+    <em class=listener>#&lt;vct[len=3]: 0.100 0.200 0.300&gt;</em>
+    :<em class=typing>(vct 0.1 0.2 0.3)</em>
+    <em class=listener>#&lt;vct[len=3]: 0.100 0.200 0.300&gt;</em>
+</pre>
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- make-vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makevct">make-vct</a> (len (initial-element 0.0))</code></td></tr>
-<tr><td></td><td>create vct of size <i>len</i>.</td></tr>
+<tr><td></td><td>create vct of size <i>len</i>.
+<pre>
+    :<em class=typing>(make-vct 3 0.1)</em>
+    <em class=listener>#&lt;vct[len=3]: 0.100 0.100 0.100&gt;</em>
+</pre>
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- sound-date->vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef>sound-data-&gt;vct</em> (sdobj (chan 0) (v #f))</code></td></tr>
-<tr><td></td><td>place sound-data channel data in vct, returning <i>v</i> or the new vct.</td></tr>
+<tr><td></td><td>place sound-data data in vct, returning <i>v</i> or the new vct.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- vct -->
@@ -2669,12 +2685,40 @@ Forth: variable hi
 
 <!-- vct-add! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctadd">vct-add!</a> (v1 v2 (off 0))</code></td></tr>
-<tr><td></td><td>element-wise add: <code>v1[i + off] += v2[i]</code>, returns <i>v1</i>.</td></tr>
+<tr><td></td><td>element-wise add: <code>v1[i + off] += v2[i]</code>, returns <i>v1</i>.  To protect the
+original vct, use vct-copy: <code>(vct-add! (vct-vopy v1) v2)</code>.
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-copy -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctcopy">vct-copy</a> (v)</code></td></tr>
-<tr><td></td><td>return a copy of <i>v</i>.</td></tr>
+<tr><td></td><td>return a copy of <i>v</i>.
+
+<!-- INDEX copying:Copying -->
+<A NAME="copying"></a>
+<TABLE border=3 bordercolor="tan" hspace=20 vspace=10><tr><td>
+<blockquote><small>
+<br>
+copy file: in Scheme: copy-file, in Ruby: File.copy or File.syscopy<br>
+copy string: in Guile: string-copy<br>
+copy list: in Guile: list-copy or copy-tree<br>
+copy vct: <a href="#vctcopy">vct-copy</a>, <a href="#vct_to_vector">vct-&gt;vector</a><br>
+copy mix: <a href="#copymix">copy-mix</a>, <a href="sndscm.html#mix2vct">mix-&gt;vct</a><br>
+copy track: <a href="#copytrack">copy-track</a>, <a href="sndscm.html#track2vct">track-&gt;vct</a><br>
+copy sample reader: <a href="#copysamplereader">copy-sample-reader</a><br>
+copy (clone) current sound edit state: <a href="#clonesoundas">clone-sound-as</a><br>
+copy channel data: <a href="#channel_to_vct">channel-&gt;vct</a>, or <a href="#savesoundas">save-sound-as</a><br>
+copy selection data: <a href="#selection2vct">selection-&gt;vct</a> or <a href="#saveselection">save-selection</a><br>
+copy region data: <a href="#region2vct">region-&gt;vct</a>, <a href="#region_to_vct">region-&gt;vct</a>, or <a href="#saveregion">save-region</a><br>
+copy transform data: <a href="#transform_to_vct">transform-&gt;vct</a><br>
+copy sound-data: <a href="#sounddata2vct">sound-data-&gt;vct</a><br>
+copy vector: <a href="#vector_to_vct">vector-&gt;vct</a><br>
+copy random state: Guile: copy-random-state, or use <a href="clm.html#mus-set-rand-seed">mus-rand-seed</a><br>
+<br>
+</small></blockquote>
+</td></tr></TABLE>
+
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-fill! -->
@@ -2689,7 +2733,9 @@ Forth: variable hi
 
 <!-- vct-map -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctmap1">vct-map</a> (thunk v0 vcts...)</code></td></tr>
-<tr><td></td><td>map 'thunk' (which should return a frame) into the vcts passed as trailing args.</td></tr>
+<tr><td></td><td>map 'thunk' (which should return a frame) into the vcts passed as trailing args.
+This is mostly an internal testing function -- I can't think of any legitimate use for it.
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-map! -->
@@ -2756,6 +2802,7 @@ to the end of <i>v</i>.</td></tr>
 combines <a class=quiet href="#vctadd">vct-add!</a> and <a class=quiet href="#vctoffset">vct-offset!</a>, depending on the type of its arguments.
 <code>(vct+ v 1.0)</code> or <code>(vct+ 1.0 v)</code> is the same as 
 <code>(vct-offset! v 1.0)</code>, and <code>(vct+ v1 v2)</code> is the same as <code>(vct-add! v1 v2)</code>.
+In Gauche this could be a specialization of "+" -- much nicer!
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -2772,12 +2819,27 @@ combines <a class=quiet href="#vctmultiply">vct-multiply!</a> and <a class=quiet
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vct_to_channel">vct-&gt;channel</a> (v (beg 0) (dur len) (snd #f) (chn #f) (edpos #f) (origin #f))</code></td></tr>
 <tr><td></td><td>
 set the samples from <i>beg</i> to <i>beg+dur</i> from the values in <i>v</i>.
+This changes (edits) the channel, so <i>origin</i> provides a way to name the edit (for the edit history list and whatnot).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- vct->list -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vct_to_list">vct-&gt;list</a> (v)</code></td></tr>
-<tr><td></td><td>return list with elements of <i>v</i></td></tr>
+<tr><td></td><td>return list with elements of <i>v</i>
+<pre>
+    ;; Scheme:
+    :<em class=typing>(vct-&gt;list (list-&gt;vct (list 0.1 0.2 0.3)))</em>
+    <em class=listener>(0.100000001490116 0.200000002980232 0.300000011920929)</em> ; (sigh...)
+
+    ;; Ruby:
+    :<em class=typing>vct2list(list2vct([0.1, 0.2, 0.3]))</em>
+    <em class=listener>[0.100000001490116, 0.200000002980232, 0.300000011920929]</em>
+
+    ;; Forth:
+    <em class=listener>snd&gt;</em> <em class=typing>'( 0.1 0.2 0.3 ) list-&gt;vct vct-&gt;list</em>
+    <em class=listener>'( 0.1 0.2 0.3 )</em>
+</pre>
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- vct->sound-data -->
@@ -2796,6 +2858,12 @@ set the samples from <i>beg</i> to <i>beg+dur</i> from the values in <i>v</i>.
 <tr><td></td>
 <td>return a Scheme-readable string describing <i>v</i>.  The standard way of displaying a vct
 uses "#&lt;vct...&gt;" which is not useful if you want to read the string later as a piece of Scheme code.
+<pre>
+    :<em class=typing>(define v1 (make-vct 3 0.1))</em>
+    prints v1 as <em class=listener>#&lt;vct[len=3]: 0.100 0.100 0.100&gt;</em>
+    :<em class=typing>(vct-&gt;string v1)</em>
+    <em class=listener>"(vct 0.100 0.100 0.100)"</em>
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -2856,11 +2924,13 @@ function to get the values to assign into the vct.  For example</p>
 </pre>
 <p>in the cnvtest function in <a href="sndscm.html#exampdoc">examp.scm</a> is calling the convolve generator and
 assigning the result to each successive member of the out-data vct.
+</p>
+<p>
 We can use vcts to write new sound files:</p>
 <pre>
   <a href="#opensoundfile">open-sound-file</a> (name chans srate comment)   ; returns fd
   <a href="#vct2soundfile">vct-&gt;sound-file</a> (fd vct vals)                ; writes vals floats to fd
-  <a href="#closesoundfile">close-sound-file</a> (fd vals)
+  <a href="#closesoundfile">close-sound-file</a> (fd size)
 </pre>
 <p>After opening the file, loop through the data calling channel-&gt;vct, deal with the
 vct data as desired, write the samples to the file via vct-&gt;sound-file, then
@@ -2879,7 +2949,8 @@ additional methods: map, each, &lt;=&gt;, etc.  See vct.c for a complete list.
 <table width="50%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounddata">Sound-data</a></h3></td></tr></table>
 
 <p>Another sound data object is the sound-data array used in Sndlib.  It is essentially an array of vcts, each
-vct representing one channel's data.
+vct representing one channel's data.  (This is a low-level optimization, not used much except for internal testing --
+I may remove the whole section someday).
 </p>
 
 <!-- -------------------------------- SOUND-DATA TABLE -------------------------------- -->
@@ -2896,7 +2967,7 @@ vct representing one channel's data.
 <tr><td colspan=2 height=16></td></tr>
 
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddataset">sound-data-set!</a> (obj chan frame val)</code></td></tr>
-<tr><td></td><td>set <i>obj</i>'s sample at <i>frame</i> in <i>chan</i> to (the float) <i>val</i></td></tr>
+<tr><td></td><td>set <i>obj</i>'s sample at <i>frame</i> in <i>chan</i> to <i>val</i></td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddata?">sound-data?</a> (obj)</code></td></tr>
@@ -2937,7 +3008,7 @@ This is an experimental function currently used in the oscilloscope (oscope.scm)
 
 <p>All of the underlying sound library (<a href="sndlib.html">Sndlib</a>)
 functions are available, as well as most of CLM (clm.html).
-See play.scm and rtio.scm. The most important Sndlib functions for Snd are:
+For many eamples, see play.scm and rtio.scm. The most important Sndlib functions for Snd are:
 </p>
 
 <!-- -------------------------------- SNDLIB TABLE -------------------------------- -->
@@ -2947,7 +3018,7 @@ See play.scm and rtio.scm. The most important Sndlib functions for Snd are:
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsabuffers">mus-alsa-buffers</a> ()</code></td></tr>
 <tr><td width=100><br>
 </td><td>
-Number of buffers ("periods") used in ALSA. (A settable variable).
+Number of buffers ("periods") used in ALSA. A settable variable; the same as the environment variable MUS_ALSA_BUFFERS.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -2955,7 +3026,7 @@ Number of buffers ("periods") used in ALSA. (A settable variable).
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsabuffersize">mus-alsa-buffer-size</a> ()</code></td></tr>
 <tr><td><br>
 </td><td>
-Buffer size used in ALSA. (A settable variable).
+Buffer size used in ALSA. A settable variable; the same as the environment variable MUS_ALSA_BUFFER_SIZE.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -2963,7 +3034,7 @@ Buffer size used in ALSA. (A settable variable).
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsadevice">mus-alsa-device</a> ()</code></td></tr>
 <tr><td width><br>
 </td><td>
-ALSA audio device. (A settable variable).
+ALSA audio device. A settable variable; environment variable name is MUS_ALSA_DEVICE.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -2971,7 +3042,7 @@ ALSA audio device. (A settable variable).
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsacapturedevice">mus-alsa-capture-device</a> ()</code></td></tr>
 <tr><td width><br>
 </td><td>
-ALSA audio capture (recording) device. (A settable variable).
+ALSA audio capture (recording) device. A settable variable; MUS_ALSA_CAPTURE_DEVICE.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -2979,7 +3050,7 @@ ALSA audio capture (recording) device. (A settable variable).
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsaplaybackdevice">mus-alsa-playback-device</a> ()</code></td></tr>
 <tr><td width><br>
 </td><td>
-ALSA audio playback-device. (A settable variable).
+ALSA audio playback-device. A settable variable; MUS_ALSA_PLAYBACK_DEVICE.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -2995,21 +3066,24 @@ Whether to squelch warnings from ALSA about srate mismatches. (A settable variab
 <!-- mus-audio-close -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudioclose">mus-audio-close</a> (line)</code></td></tr>
 <tr><td><br>
-</td><td>close audio port <i>line</i></td></tr>
+</td><td>close audio port <i>line</i>.  The port <i>line</i> comes from either <a href="#musaudioopeninput">mus-audio-open-input</a>
+or <a href="#musaudioopenoutput">mus-audio-open-output</a>, and refers to the sound card's IO channels.
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-audio-describe -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiodescribe">mus-audio-describe</a> ()</code></td></tr>
-<tr><td></td><td>describe audio hardware state (in help window)</td></tr>
+<tr><td></td><td>describe audio hardware state (in the help dialog)</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-audio-mixer-read -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiomixerread">mus-audio-mixer-read</a> (device field channel vals)</code></td></tr>
 <tr><td></td>
-<td>read current state of <i>device</i>'s <i>field</i>:
+<td>read current state of <i>device</i>'s <i>field</i> (device names are listed below under <a href="#musaudioopeninput">mus-audio-open-input</a>):
 </td></tr>
 <tr><td></td><td>
 <pre>
+
   mus-audio-amp         mus-audio-srate    mus-audio-channel mus-audio-format
   mus-audio-imix        mus-audio-igain    mus-audio-reclev  mus-audio-pcm 
   mus-audio-ogain       mus-audio-line     mus-audio-synth   mus-audio-bass
@@ -3017,6 +3091,9 @@ Whether to squelch warnings from ALSA about srate mismatches. (A settable variab
   mus-audio-samples-per-channel
 </pre>
 <i>vals</i> should be a vct big enough to handle the returned data (the <i>channel</i> argument normally is the size).
+These fields originally referred to OSS soundcard settings; many years have passed, and the whole notion is now
+obsolete, but if you think there's some easy way to reflect the same idea in modern hardware, check out ALSA or
+the new Mac audio system.  I can't face this mess!
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3037,7 +3114,8 @@ Whether to squelch warnings from ALSA about srate mismatches. (A settable variab
 (<a class=quiet href="#vctset">vct-set!</a> vals 0 1.0)
 (<a class=quiet href="#vctset">vct-set!</a> vals 1 1.0)
 (<em class=red>mus-audio-mixer-write</em> mus-audio-mixer mus-audio-igain 2 vals)
-</pre></td></tr></table></td></tr>
+</pre>
+</td></tr></table></td></tr>
 
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3048,6 +3126,7 @@ Whether to squelch warnings from ALSA about srate mismatches. (A settable variab
 </td></tr>
 <tr><td></td><td>
 <pre>
+
   mus-audio-default      mus-audio-duplex-default   mus-audio-line-out
   mus-audio-microphone   mus-audio-speakers         mus-audio-dac-out    
   mus-audio-aes-in       mus-audio-digital-in       mus-audio-digital-out
@@ -3111,10 +3190,11 @@ The default is #f which makes clipping very obvious (it will cause wrap-around).
 <tr><td></td><td>convert <i>format</i> from an integer to an explanatory string, e.g. "16-bit big endian linear".  The sndlib data formats are:</td></tr>
 <tr><td></td><td>
 <pre>
-  mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
-  mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
-  mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
-  mus-ldouble  mus-unknown
+
+    mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
+    mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
+    mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
+    mus-ldouble  mus-unknown
 </pre></td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3122,7 +3202,7 @@ The default is #f which makes clipping very obvious (it will cause wrap-around).
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musdataformattostring">mus-data-format-&gt;string</a> (format)</code></td></tr>
 <tr><td></td><td>convert <i>format</i> from an integer to a string, e.g. "mus-mulaw".
 <pre>
-    :<em class=typing>(mus-data-format->string mus-bdouble)</em>
+    :<em class=typing>(mus-data-format-&gt;string mus-bdouble)</em>
     <em class=listener>"mus-bdouble"</em>
 </pre>
 </td></tr>
@@ -3157,18 +3237,22 @@ The default is #f which makes clipping very obvious (it will cause wrap-around).
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musfileprescaler">mus-file-prescaler</a> (fd)</code></td></tr>
 <tr><td></td><td>The prescaling value for reading data from the sndlib file descriptor <i>fd</i>.
 If you're reading float data that is extremely soft (i.e. max amp
-below .001), the transfer to integer form in sndlib can cause bits
+below .001), the transfer to integer form in sndlib (if you're using integer internal sample format) can cause bits
 to be lost, resulting in hiss.  In this case set the prescaler for
 the file to 1000.0 or so to get the data into a more normal
 range.  Since the set of mus-file-prescaler should come just after opening
 the sound file, but before trying to read any data, you need to use it in the context of <a href="#duringopenhook">during-open-hook</a>.
+The default prescaler value is <a href="#musprescaler">mus-prescaler</a>, normally 1.0.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-header-raw-defaults -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musheaderrawdefaults">mus-header-raw-defaults</a> ()</code></td></tr>
 <tr><td></td><td>returns a list: '(srate chans data-format) of the current raw header defaults.  These can be
-set by: <code>(set! (mus-header-raw-defaults) (list 22050 4 mus-lint))</code>, or whatever.
+set: 
+<pre>
+    (set! (mus-header-raw-defaults) (list 22050 4 mus-lint))
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3176,8 +3260,9 @@ set by: <code>(set! (mus-header-raw-defaults) (list 22050 4 mus-lint))</code>, o
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musheadertypename">mus-header-type-name</a> (type)</code></td></tr>
 <tr><td></td><td>convert <i>type</i>, an integer, to a string, e.g. "AIFF".  Some of the sndlib header types are:</td></tr>
 <tr><td></td><td><pre>
-  mus-next  mus-aifc  mus-riff  mus-nist  mus-raw  mus-ircam  mus-aiff 
-  mus-bicsf mus-soundfont mus-voc mus-svx mus-unsupported
+
+    mus-next  mus-aifc  mus-riff  mus-nist  mus-raw  mus-ircam  mus-aiff 
+    mus-bicsf mus-soundfont mus-voc mus-svx mus-unsupported
 </pre></td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3210,12 +3295,37 @@ My initialization file includes <code>(mus-oss-set-buffers 2 12)</code>.</td></t
 
 <!-- mus-sound-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundchans">mus-sound-chans</a> (filename)</code></td></tr>
-<tr><td></td><td>number of channels in <i>filename</i> (settable)</td></tr>
+<tr><td></td><td>number of channels in <i>filename</i>.  This value can be set (as can the others like it mentioned below);
+the assignment refers to the table of sound file data maintained by sndlib.  The file itself is not touched, but any
+subsequent reference to it in Snd will assume the new value.  In the mus-sound-chans case, say we have a sound file
+whose header claims it has 43 channels, but we know it only has 2:
+<pre>
+    (set! (<em class=red>mus-sound-chans</em> "43chans.snd") 2)
+</pre>
+tells Snd that it has 2 channels no matter what the header says.
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-close-input -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundcloseinput">mus-sound-close-input</a> (fd)</code></td></tr>
-<tr><td></td><td>close sound file</td></tr>
+<tr><td></td><td>close sound file. <i>fd</i> is an integer returned by <a href="#mussoundopeninput">mus-sound-open-input</a>.
+These mus-sound-* file functions refer to a direct path to read and write sound files.  Any such operation is beneath the
+notice, so to speak, of Snd.  
+This function reads the first 32 samples of a file, returning the 30th in channel 0:
+
+<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
+(define read-sample-30 
+  (lambda (file)
+    (let* ((fd (<a class=quiet href="#mussoundopeninput">>mus-sound-open-input</a> file))
+	   (<a class=quiet href="#chans">chans</a> (<a class=quiet href="#mussoundchans">mus-sound-chans</a> file))
+	   (data (<a class=quiet href="#makesounddata">make-sound-data</a> chans 32)))
+      (<a class=quiet href="#mussoundread">mus-sound-read</a> fd 0 31 chans data)
+      (let ((val (<a class=quiet href="#sounddataref">sound-data-ref</a> data 0 29)))
+	(<em class=red>mus-sound-close-input</em> fd)
+	val))))
+</pre></td></tr></table>
+
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-close-output -->
@@ -3230,17 +3340,18 @@ My initialization file includes <code>(mus-oss-set-buffers 2 12)</code>.</td></t
 
 <!-- mus-sound-data-format -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussounddataformat">mus-sound-data-format</a> (filename)</code></td></tr>
-<tr><td></td><td>data format (e.g. <i>mus-bshort</i>) (settable)</td></tr>
+<tr><td></td><td>data format (e.g. <i>mus-bshort</i>) (settable, see mus-sound-chans above)</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-data-location -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussounddatalocation">mus-sound-data-location</a> (filename)</code></td></tr>
-<tr><td></td><td>location of first sample (bytes) (settable)</td></tr>
+<tr><td></td><td>location of first sample (bytes) (settable, see mus-sound-chans)</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-datum-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussounddatumsize">mus-sound-datum-size</a> (filename)</code></td></tr>
-<tr><td></td><td>size in bytes of each sample in <i>filename</i>.</td></tr>
+<tr><td></td><td>size in bytes of each sample in <i>filename</i>.  Equivalent to <code>(mus-bytes-per-sample (mus-sound-data-format filename))</code>.
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-duration -->
@@ -3260,7 +3371,7 @@ My initialization file includes <code>(mus-oss-set-buffers 2 12)</code>.</td></t
 
 <!-- mus-sound-header-type -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundheadertype">mus-sound-header-type</a> (filename)</code></td></tr>
-<tr><td></td><td>header type (e.g. <i>mus-aifc</i>) (settable)</td></tr>
+<tr><td></td><td>header type (e.g. <i>mus-aifc</i>) (settable, see mus-sound-chans)</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-length -->
@@ -3277,7 +3388,7 @@ My initialization file includes <code>(mus-oss-set-buffers 2 12)</code>.</td></t
 <!-- mus-sound-maxamp -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundmaxamp">mus-sound-maxamp</a> (filename)</code></td></tr>
 <tr><td></td><td>a list of max amps and locations thereof.  The corresponding set! 
-affects only the sndlib table of sound file info, not the sound file itself.</td></tr>
+affects only the sndlib table of sound file info, not the sound file itself, as in all such cases -- see mus-sound-chans.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-maxamp-exists? -->
@@ -3297,18 +3408,20 @@ in the sound cache; if it isn't, a call on mus-sound-maxamp has to open and read
 
 <!-- mus-sound-open-input -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundopeninput">mus-sound-open-input</a> (filename)</code></td></tr>
-<tr><td></td><td>open filename (a sound file) returning an integer ("fd" below)</td></tr>
+<tr><td></td><td>open filename (a sound file) return an integer (for use with mus-sound-read and mus-sound-close-input).
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-open-output -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundopenoutput">mus-sound-open-output</a> (filename srate chans data-format header-type comment)</code></td></tr>
 <tr><td></td>
-<td>create a new sound file with the indicated attributes, return "fd"</td></tr>
+<td>create a new sound file with the indicated attributes, return an integer (for use with mus-sound-write and mus-sound-close-output)</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-prune -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundprune">mus-sound-prune</a> ()</code></td></tr>
-<tr><td></td><td>remove all defunct (non-existent) files from the sound cache.</td></tr>
+<tr><td></td><td>remove all defunct (non-existent) files from the sound cache.  This is primarily aimed at internal testing.
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-read -->
@@ -3316,7 +3429,7 @@ in the sound cache; if it isn't, a call on mus-sound-maxamp has to open and read
 <tr><td></td>
 <td>read data from sound file <i>fd</i> loading the data array from beg
 to end. <i>sdata</i> is a sound-data object that should be able to
-accommodate the read</td></tr>
+accommodate the read.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-reopen-output -->
@@ -3332,7 +3445,7 @@ accommodate the read</td></tr>
 
 <!-- mus-sound-samples -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundsamples">mus-sound-samples</a> (filename)</code></td></tr>
-<tr><td></td><td>number of samples in sound according to header (can be incorrect) (settable)</td></tr>
+<tr><td></td><td>number of samples in sound according to header (can be incorrect), (settable, see mus-sound-chans)</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-seek-frame -->
@@ -3342,7 +3455,7 @@ accommodate the read</td></tr>
 
 <!-- mus-sound-srate -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundsrate">mus-sound-srate</a> (filename)</code></td></tr>
-<tr><td></td><td>sampling rate (settable)</td></tr>
+<tr><td></td><td>sampling rate (settable, see mus-sound-chans)</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-type-specifier -->
@@ -3413,7 +3526,7 @@ use of a special object known as a <i>sample-reader</i>.  The sample-reader
 returns the next sample in its sound each time it is called; this kind
 of access is sometimes called an "enumerator".
 The buffer approach (<i>channel-&gt;vct</i> in <a href="grfsnd.html#expsrc">expsrc</a>)
-is better if you're jumping around in the data, the sample-by-sample approach (examp.scm has examples) if you're treating
+is better if you're jumping around in the data, the sample-by-sample approach if you're treating
 the data as a sequence of samples.
 To get a sample reader,
 you create a reader (via <i>make-sample-reader</i>) giving it the start position, the sound and channel
@@ -3441,39 +3554,14 @@ and <i>read-track-sample</i>.
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="copysamplereader">copy-sample-reader</a> (obj)</code></td></tr>
 <tr><td width=100><br></td>
 <td>return a copy of <i>obj</i> (any kind of sample-reader). 
-<br>
-<br>
-<!-- INDEX copying:Copying -->
-<A NAME="copying"></a>
-<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
-<blockquote><small>
-<br>
-copy file: in Scheme: copy-file, in Ruby: File.copy or File.syscopy<br>
-copy string: in Guile: string-copy<br>
-copy list: in Guile: list-copy or copy-tree<br>
-copy vct: <a href="#vctcopy">vct-copy</a>, <a href="#vct_to_vector">vct-&gt;vector</a><br>
-copy mix: <a href="#copymix">copy-mix</a>, <a href="sndscm.html#mix2vct">mix-&gt;vct</a><br>
-copy track: <a href="#copytrack">copy-track</a>, <a href="sndscm.html#track2vct">track-&gt;vct</a><br>
-copy sample reader: <a href="#copysamplereader">copy-sample-reader</a><br>
-copy (clone) current sound edit state: <a href="#clonesoundas">clone-sound-as</a><br>
-copy channel data: <a href="#channel_to_vct">channel-&gt;vct</a>, or <a href="#savesoundas">save-sound-as</a><br>
-copy selection data: <a href="#selection2vct">selection-&gt;vct</a> or <a href="#saveselection">save-selection</a><br>
-copy region data: <a href="#region2vct">region-&gt;vct</a>, <a href="#region_to_vct">region-&gt;vct</a>, or <a href="#saveregion">save-region</a><br>
-copy transform data: <a href="#transform_to_vct">transform-&gt;vct</a><br>
-copy sound-data: <a href="#sounddata2vct">sound-data-&gt;vct</a><br>
-copy vector: <a href="#vector_to_vct">vector-&gt;vct</a><br>
-copy random state: Guile: copy-random-state, or use <a href="clm.html#mus-set-rand-seed">mus-rand-seed</a><br>
-<br>
-</small></blockquote>
-</td></tr></TABLE>
-<br>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- free-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="freesamplereader">free-sample-reader</a> (obj)</code></td></tr>
 <tr><td></td><td>release sample-reader <i>obj</i> (any kind of reader).  You never need to call this
-function because the garbage collector handles the sample-reader object, but it doesn't hurt anything.</td></tr>
+function because the garbage collector handles the sample-reader object, but it doesn't hurt anything (but don't try to use a sample-reader
+after you've freed it!).</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- make-mix-sample-reader -->
@@ -3504,7 +3592,7 @@ between two edits:
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke"><pre>
+<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define snd-diff
   (lambda () ;assume mono, get diff between current state and previous
     (let* ((index (<a class=quiet href="#selectedsound">selected-sound</a>))
@@ -3626,7 +3714,7 @@ If it is a mix reader, return the mix's id.  If it is a track reader, return a l
 
 </table>
 
-<p>The <i>read-sample</i> functions can be omitted: <code>(reader)</code> is the same as <code>(<a class=quiet href="#readsample">read-sample</a> reader)</code>.
+<p>If your extension language supports it, the <i>read-sample</i> functions can be omitted: <code>(reader)</code> is the same as <code>(<a class=quiet href="#readsample">read-sample</a> reader)</code>.
 </p>
 
 <br>
@@ -11567,7 +11655,7 @@ sound files.  It is settable, a list of extensions as strings:
 Returns #t if <i>filename</i> has an extension that matches one in the <a href="#soundfileextensions">sound-file-extensions</a> list.
 <pre>
     :<em class=typing>(sound-file? "oboe.snd")</em>
-    <em class=listener>#t</a>
+    <em class=listener>#t</em>
     :<em class=typing>(sound-file? "extsnd.html")</em>
     <em class=listener>#f</em>
 </pre>
@@ -11639,9 +11727,9 @@ return a list giving the widget width and height (pixels).  Can be set. See nb.s
 to put the date and time in the Snd title bar.
 <pre>
     :<em class=typing>(window-property "SND_VERSION" "SND_VERSION")</em>
-    <em class=listener>"1-Jun-06"</a>
+    <em class=listener>"1-Jun-06"</em>
     :<em class=typing>(set! (<em class=red>window-property</em> "SND_VERSION" "WM_NAME") "a new name")</em>
-    <em class=listener>#f</a>
+    <em class=listener>#f</em>
 </pre>
 </td></tr>
 
@@ -11767,10 +11855,10 @@ and sometimes appends a stack trace.  So, as a simple example, selection-positio
 throws 'no-active-selection if there isn't a selection:
 </p>
 <pre>
-&gt;<em class=typing>(selection-position)</em>
-<em class=listener>selection-position: no-active-selection</em>
-&gt;<em class=typing>asdf</em>
-<em class=listener>Unbound variable: asdf</em>
+    &gt;<em class=typing>(selection-position)</em>
+    <em class=listener>selection-position: no-active-selection</em>
+    &gt;<em class=typing>asdf</em>
+    <em class=listener>Unbound variable: asdf</em>
 </pre>
 <p>But there are cases where you'd rather handle an error (or all errors) specially.
 In the case of 'no-active-selection, we set up our own handler for that as follows:</p>
@@ -12692,7 +12780,7 @@ the graphics context to use to draw a mark (XOR mode).
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="selectioncontext">selection-context</a></code></td></tr>
 <tr><td></td><td>
-the graphics context for XOR drawing in the selection color (used by <a href="#fillrectangle">fill-rectangle).</td></tr>
+the graphics context for XOR drawing in the selection color (used by <a href="#fillrectangle">fill-rectangle</a>).</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- send-mozilla -->
