@@ -4013,10 +4013,10 @@ Each mix object has a unique identifier called its id that identifies it in the 
 A track is a list of mixes that are treated in many ways as a single big mix.
 Say we have a mix whose id is 123:</p>
 <pre>
-&gt;<em class=typing>(mix-chans 123)</em>
-<em class=listener>1</em>
-&gt;<em class=listener>(set! (mix-amp 123 0) .5)</em>
-<em class=typing>.5</em>
+    &gt;<em class=typing>(mix-chans 123)</em>
+    <em class=listener>1</em>
+    &gt;<em class=listener>(set! (mix-amp 123 0) .5)</em>
+    <em class=typing>.5</em>
 </pre>
 <p>This 
 sets mix 123's channel 0 amplitude scaler to .5.
@@ -4048,6 +4048,14 @@ mix returns the id of the first channel's mix (subsequent channels simply
 increment this number). If <a class=quiet href="#sync">sync</a> is off and <i>in-chan</i> is not #t, only the first channel is mixed.
 If <i>with-mix-tags</i> is #f (default is #t), the data is simply
 mixed without creating any mix tags.  <i>track</i> is the newly created mix's track number.
+<br>
+<img src="mix1.png" vspace=10>
+<br>
+Now we can drag either of the red tags to move the mixed sounds, or call up the View:Mixes dialog to edit them,
+or use the functions in this section.  For example, we'll set the amplitude of the first and the position of
+the second:
+<br>
+<img src="mix2.png" vspace=10>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
