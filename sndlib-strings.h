@@ -92,7 +92,6 @@
 #define S_mus_lint                      "mus-lint"
 #define S_mus_lintn                     "mus-lintn"
 #define S_mus_lshort                    "mus-lshort"
-#define S_mus_make_error                "mus-make-error"
 #define S_mus_mulaw                     "mus-mulaw"
 #define S_mus_netbsd_set_outputs        "mus-netbsd-set-outputs"
 #define S_mus_next                      "mus-next"

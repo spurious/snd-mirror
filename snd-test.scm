@@ -2097,7 +2097,7 @@
 			 'mus-interp-hermite 'mus-interp-lagrange 'mus-interp-linear 'mus-interp-none 'mus-interp-sinusoidal
 			 'mus-interp-type 'mus-interpolate 'mus-ircam 'mus-l24int 'mus-ldouble
 			 'mus-ldouble-unscaled 'mus-length 'mus-lfloat 'mus-lfloat-unscaled 'mus-lint
-			 'mus-lintn 'mus-location 'mus-lshort 'mus-make-error 'mus-midi-close
+			 'mus-lintn 'mus-location 'mus-lshort 'mus-midi-close
 			 'mus-midi-describe 'mus-midi-device-name 'mus-midi-open-read 'mus-midi-open-write 'mus-midi-read
 			 'mus-midi-write 'mus-mix 'mus-mulaw 'mus-name 'mus-netbsd-set-outputs
 			 'mus-next 'mus-nist 'mus-offset 'mus-order 'mus-oss-set-buffers
@@ -3588,9 +3588,9 @@
 		      (snd-display ";mus-error-type->string ~D: ~A ~A" i (list-ref errs i) (mus-error-type->string i))
 		      (set! happy #f))))))
 
-	  (let ((new-id (mus-make-error "hiho all messed up")))
-	    (if (not (string=? (mus-error-type->string new-id) "hiho all messed up"))
-		(snd-display ";mus-make-error :~A ~A" new-id (mus-error-type->string new-id))))
+;	  (let ((new-id (mus-make-error "hiho all messed up")))
+;	    (if (not (string=? (mus-error-type->string new-id) "hiho all messed up"))
+;		(snd-display ";mus-make-error :~A ~A" new-id (mus-error-type->string new-id))))
 	  
 	  (let ((cur-srate (mus-sound-srate "oboe.snd"))
 		(cur-chans (mus-sound-chans "oboe.snd"))
@@ -57252,7 +57252,7 @@ EDITS: 1
 		     track-track delete-track delete-mix track-color free-track track-speed-style
 
 		     delay-tick playing pausing draw-axes copy-mix copy-track copy-sample-reader html-dir html-program
-		     lock-track make-fir-coeffs make-identity-mixer mus-interp-type mus-make-error mus-run phase-vocoder
+		     lock-track make-fir-coeffs make-identity-mixer mus-interp-type mus-run phase-vocoder
 		     player-home redo-edit undo-edit widget-position widget-size 
 		     (if (defined? 'window-property) window-property identity)
 		     focus-widget ;edit-fragment-type-name

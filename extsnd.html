@@ -465,8 +465,7 @@ function. </p>
 
 <table border=0 cellspacing=0>
 
-<tr><td width=100></td><td width=100></td><td></td></tr>
-<!-- this width info is needed in Safari -->
+<tr><td width=60></td><td></td><td></td></tr>
 
 <!-- ask-before-overwrite -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="askbeforeoverwrite">ask-before-overwrite</a></code></td>
@@ -726,6 +725,36 @@ gtk versions are in gdkcursor.h.  Some useful choices are:
 <tr><td colspan=3 height=16></td></tr>
 
 
+<!-- html-dir -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="htmldir">html-dir</a></code></td>
+<td bgcolor="#f6f8ff"><code>"."</code></td></tr>
+<tr><td></td><td colspan=2>The directory to search for documentation if an HTML reader is in use.
+See <i>html</i> in index.scm.
+</td></tr>
+<tr><td colspan=3 height=16></td></tr>
+
+
+<!-- html-program -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="htmlprogram">html-program</a></code></td>
+<td bgcolor="#f6f8ff"><code>"mozilla"</code></td></tr>
+<tr><td></td><td colspan=2>The program to use to read HTML files.
+On the Mac, you need to give the full path to the executable image: "/Applications/Safari.app/Contents/MacOS/Safari".
+See <i>html</i> in index.scm.
+</td></tr>
+<tr><td colspan=3 height=16></td></tr>
+
+
+<!-- just-sounds -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="justsounds">just-sounds</a></code></td>
+<td bgcolor="#f6f8ff"><code>#f</code></td></tr>
+<tr><td></td><td colspan=2>In Motif and in Gtk versions 2.3 or later,
+if <i>just-sounds</i> is #t,
+the file lists displayed by the file selection dialogs are filtered to show just
+sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a>).
+</td></tr>
+<tr><td colspan=3 height=16></td></tr>
+
+
 <!-- ladspa-dir -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="ladspadir">ladspa-dir</a></code></td>
 <td bgcolor="#f6f8ff"><code>#f</code></td></tr>
@@ -804,6 +833,13 @@ the speed-up ratio:<br><br></td></tr>
 <td bgcolor="black"><br></td><td>fm vln </td><td>206</td><td>16</td><td>13</td></tr>
 </table>
 <br></td></tr>
+
+
+<!-- print-length -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="printlength">print-length</a></code></td>
+<td bgcolor="#f6f8ff"><code>12</code></td></tr>
+<tr><td></td><td colspan=2>number of elements of lists and vectors that are printed.</td></tr>
+<tr><td colspan=3 height=16></td></tr>
 
 
 <!-- run-safety -->
@@ -885,6 +921,15 @@ The higher this number, the better the src low-pass filter, but the slower
 src runs.  If you use too low a setting, you can sometimes hear high 
 frequency whistles leaking through. To hear these on purpose, make 
 a sine wave at (say) 55 Hz, then <code>(<a class=quiet href="#srcsound">src-sound</a> '(0 3 1 1))</code> with sinc-width at 4.
+</td></tr>
+<tr><td colspan=3 height=16></td></tr>
+
+
+<!-- snd-version -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sndversion">snd-version</a></code></td>
+<td bgcolor="#f6f8ff"><code>"1-Jun-06" etc</code></td></tr>
+<tr><td></td><td colspan=2>
+Snd version: a string, normally a date. <b>version</b> is a Guile function.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
@@ -991,7 +1036,7 @@ mimics zoom-focus-right.  <i>zoom-focus-active</i> tries to focus on some object
 See also <a href="snd.html#zoomoption">Zoom options</a>.
 </td></tr>
 </table>
-<br>
+<br><br>
 
 
 <!-- ---------------------------------------- HOOKS ---------------------------------------- -->
@@ -1051,8 +1096,16 @@ some of these sequences.
         save-hook 
             sound saved
         after-save-as-hook 
+
+
+    Play sound
+        when a play request occurs: start-playing-hook -- can cancel the request, also start-playing-selection-hook
+            (any number of sounds can be playing at once)
+        as each buffer is sent to the audio device: play-hook and dac-hook 
+        as each sound ends: stop-playing-hook, stop-playing-selection-hook
+        close audio device: stop-dac-hook
     
-    
+
     Close sound
         before-close-hook -- can cancel close
         close-hook (snd is still open)
@@ -2036,7 +2089,10 @@ You can redirect mus_print output from stderr (the default) to stdout via:
   (lambda (typ msg)
     (and (= typ 0)         ; it's mus_print, not mus_error
          (display msg))))  ; display returns some non-#f result, I assume
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
+
+To decode the <i>typ</i> argument, see <a href="#muserrortypetostring">mus-error-type-&gt;string</a>.
+</td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
 
@@ -2648,7 +2704,7 @@ Forth: variable hi
 
 <!-- list->vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="list_to_vct">list-&gt;vct</a> (lst)</code></td></tr>
-<tr><td width=100></td><td>return a new vct with elements of list <i>lst</i> (equivalent to the <a href="#vct">vct</a> function).
+<tr><td width=60></td><td>return a new vct with elements of list <i>lst</i> (equivalent to the <a href="#vct">vct</a> function).
 <pre>
     :<em class=typing>(list-&gt;vct (list 0.1 0.2 0.3))</em>
     <em class=listener>#&lt;vct[len=3]: 0.100 0.200 0.300&gt;</em>
@@ -2941,7 +2997,19 @@ call (set! (samples...) data) with the new sound file's name; otherwise call ins
 <p>In some cases (Gauche, Ruby, Guile 1.4.1 or later) it's possible to access a vct's
 elements with the syntax <code>(v index)</code>, equivalent to <code>(<a class=quiet href="#vctref">vct-ref</a> v index)</code>.
 In Ruby, vcts partake in the Enumerable and Comparable classes, and have a variety of
-additional methods: map, each, &lt;=&gt;, etc.  See vct.c for a complete list.
+additional methods: map, each, &lt;=&gt;, etc.  See vct.c and the Ruby documentation for a complete list.
+<pre>
+    :<em class=typing>v1</em>
+    <em class=listener>#&lt;vct[len=10]: 0.100 0.100 0.100 3.000 0.100 0.100 0.100 0.100 0.100 0.100&gt;</em>
+    :<em class=typing>v1.find_all {|x| x &gt; 1.0 }</em>
+    <em class=listener>[3.0, 4.0]</em>
+    :<em class=typing>v1.max</em>
+    <em class=listener>4.0</em>
+    :<em class=typing>v2 = make_vct(10, 0.1)</em>
+    <em class=listener>#&lt;vct[len=10]: 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100&gt;</em>
+    :<em class=typing>v2 &lt; v1</em>
+    <em class=listener>true</em>
+</pre>
 </p>
 
 <br><br>
@@ -2949,8 +3017,9 @@ additional methods: map, each, &lt;=&gt;, etc.  See vct.c for a complete list.
 <table width="50%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounddata">Sound-data</a></h3></td></tr></table>
 
 <p>Another sound data object is the sound-data array used in Sndlib.  It is essentially an array of vcts, each
-vct representing one channel's data.  (This is a low-level optimization, not used much except for internal testing --
-I may remove the whole section someday).
+vct representing one channel's data.  (This is a low-level optimization, probably a bad idea --
+I may remove the whole section someday).  As with vcts, sound-data objects partake in the Enumerable and Comparable
+classes in Ruby.
 </p>
 
 <!-- -------------------------------- SOUND-DATA TABLE -------------------------------- -->
@@ -2958,7 +3027,7 @@ I may remove the whole section someday).
 <table border=0 cellspacing=0 hspace=10>
 
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makesounddata">make-sound-data</a> (chans frames)</code></td></tr>
-<tr><td width=100><br>
+<tr><td width=60><br>
 </td><td>return a sound-data object with <i>chans</i> arrays, each of length <i>frames</i></td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3016,7 +3085,7 @@ For many eamples, see play.scm and rtio.scm. The most important Sndlib functions
 <table border=0 cellspacing=0 hspace=10>
 <!-- mus-alsa-buffers -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsabuffers">mus-alsa-buffers</a> ()</code></td></tr>
-<tr><td width=100><br>
+<tr><td width=60><br>
 </td><td>
 Number of buffers ("periods") used in ALSA. A settable variable; the same as the environment variable MUS_ALSA_BUFFERS.
 </td></tr>
@@ -3211,7 +3280,7 @@ The default is #f which makes clipping very obvious (it will cause wrap-around).
 <!-- mus-error-type->string -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="muserrortypetostring">mus-error-type-&gt;string</a> (error)</code></td></tr>
 <tr><td></td><td>
-return a brief string description of <i>error</i> (a mus-error return type).
+return a brief string description of <i>error</i> (a mus-error return type; useful only in <a href="#muserrorhook">mus-error-hook</a>).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3270,11 +3339,6 @@ set:
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musheadertypetostring">mus-header-type-&gt;string</a> (type)</code></td></tr>
 <tr><td></td><td>convert <i>type</i>, an integer, to a string, e.g. "mus-aifc".
 </td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<!-- mus-make-error -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musmakeerror">mus-make-error</a> (error-string)</code></td></tr>
-<tr><td></td><td>make a new 'mus-error choice, returning its id</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-oss-set-buffers -->
@@ -3524,7 +3588,7 @@ and mapping functions mentioned below.  One involves keeping the buffer of
 data around explicitly (<i>channel-&gt;vct</i>), and the other involves the
 use of a special object known as a <i>sample-reader</i>.  The sample-reader
 returns the next sample in its sound each time it is called; this kind
-of access is sometimes called an "enumerator".
+of access is sometimes called an "enumerator" (Ruby) or perhaps "iterator" (Gtk+).
 The buffer approach (<i>channel-&gt;vct</i> in <a href="grfsnd.html#expsrc">expsrc</a>)
 is better if you're jumping around in the data, the sample-by-sample approach if you're treating
 the data as a sequence of samples.
@@ -3552,7 +3616,7 @@ and <i>read-track-sample</i>.
 
 <!-- copy-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="copysamplereader">copy-sample-reader</a> (obj)</code></td></tr>
-<tr><td width=100><br></td>
+<tr><td width=60><br></td>
 <td>return a copy of <i>obj</i> (any kind of sample-reader). 
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -3728,7 +3792,7 @@ to Snd data, snd-&gt;sample.
 
 <!-- makesnd_to_sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makesnd_to_sample">make-snd-&gt;sample</a> (<i>snd</i>)</code></td></tr>
-<tr><td width=100><br></td>
+<tr><td width=60><br></td>
 <td>create a Snd data reader for CLM's in-any, file-&gt;sample, etc.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -3768,7 +3832,7 @@ for an overview and key bindings associated with marks.
 
 <!-- add-mark -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="addmark">add-mark</a> (sample <i>snd chn</i>)</code></td></tr>
-<tr><td width=100><br></td><td>
+<tr><td width=60><br></td><td>
 add mark at <i>sample</i>, returning mark id.  If <i>sample</i> is out-of-range, <i>add-mark</i> throws 'no-such-sample.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -3847,6 +3911,12 @@ channel; the inverse function is <b>marks</b>.
 <tr><td></td><td>sample (number) marked by mark <i>id</i> at edit history position <i>pos</i>; also <code>(set! (mark-sample id) samp)</code>.
 It might be more consistent with other Snd names to call this mark-position, but I wanted to emphasize
 that a mark follows its sample around as a sound is edited; that is, it marks a sample, not a position in the sound.
+Here we have three named marks, then delete the initial word ("now"); each mark backs up with the deletion so that it
+continues to point to its original sample.
+<br>
+<img src="mark1.png" align=left vspace=10 hspace=20 onmouseover="return escape('This is a recording of a man saying &quot;now the same piece is played&quot;. The three marks are set at the start of three of the words.  I have no idea why gimp colored the title bar that way.')">
+<img src="mark2.png" vspace=10 hspace=20 onmouseover="return escape('The cursor also moves to maintain its relative position. The red triangles on the x axis can be clicked or dragged to play the sound from that point.')">
+<br>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -4008,7 +4078,7 @@ into "tracks", which have a very similar set of functions.
 
 <table width="35%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Mixes</h4></td></tr></table>
 
-<p>A mix is an object that represents a channel of a sound mix.
+<p>A mix is an object that represents an output channel of a sound mix.
 Each mix object has a unique identifier called its id that identifies it in the following functions.
 A track is a list of mixes that are treated in many ways as a single big mix.
 Say we have a mix whose id is 123:</p>
@@ -4019,7 +4089,11 @@ Say we have a mix whose id is 123:</p>
     <em class=typing>.5</em>
 </pre>
 <p>This 
-sets mix 123's channel 0 amplitude scaler to .5.
+sets mix 123's channel 0 amplitude scaler to .5.  If a multichannel sound is mixed into a channel, the
+mix object associated with that action has the same number of channels as the input sound, any of which can contribute to 
+the target channel. Similarly, a multichannel sound mixed into a multichannel sound results in a mix
+for each target channel, each such mix having the full set of input channels reflecting the mixed-in
+sound.
 </p>
 
 
@@ -4029,7 +4103,7 @@ sets mix 123's channel 0 amplitude scaler to .5.
 
 <!-- copy-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="copymix">copy-mix</a> (mix <i>beg</i>)</code></td></tr>
-<tr><td width=100></td><td>copy <i>mix</i>, placing the copy at <i>beg</i> which defaults to the copied mix's position.  The new mix's track is set to 0.
+<tr><td width=60></td><td>copy <i>mix</i>, placing the copy at <i>beg</i> which defaults to the copied mix's position.  The new mix's track is set to 0.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -4049,7 +4123,7 @@ increment this number). If <a class=quiet href="#sync">sync</a> is off and <i>in
 If <i>with-mix-tags</i> is #f (default is #t), the data is simply
 mixed without creating any mix tags.  <i>track</i> is the newly created mix's track number.
 <br>
-<img src="mix1.png" vspace=10>
+<img src="mix1.png" vspace=10 onmouseover="return escape('the mix tag is the red rectangle at the left end of the mix waveform.  The number under it is that mix\'s id.')">
 <br>
 Now we can drag either of the red tags to move the mixed sounds, or call up the View:Mixes dialog to edit them,
 or use the functions in this section.  For example, we'll set the amplitude of the first and the position of
@@ -4061,7 +4135,27 @@ the second:
 
 <!-- mixes -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixes">mixes</a> (<i>snd chn pos</i>)</code></td></tr>
-<tr><td></td><td>a list of currently active mixes in <i>snd</i>'s channel <i>chn</i> at history <i>pos</i>.
+<tr><td></td><td>a list of currently active mixes (their id numbers) in <i>snd</i>'s channel <i>chn</i> at history <i>pos</i>.
+If the channel argument is omitted, you get a list of lists, each inner list referring to a single channel of that sound.
+If the sound index is also omitted, you get a list of lists of lists, the outer list referring to each sound, each
+inner list to that sound's channels.  Say we have two sounds open, 2 mixes in the first (a mono sound), and 1 mix
+in the 2nd channel of the 2nd (a stereo sound):
+<pre>
+    :<em class=typing>(mixes 0 0)</em>
+    <em class=listener>(0 1)</em>     ; these are mix id's, as returned by the mix function for example
+    :<em class=typing>(mixes 1)</em>
+    <em class=listener>(() (2))</em>  ; no mix in channel 0, one in channel 1
+    :<em class=typing>(mixes)</em>
+    <em class=listener>(((0 1)) (() (2)))</em>
+
+    Ruby:
+    :<em class=typing>mixes()</em>
+    <em class=listener>[[[0, 1]], [nil, [2]]]</em>
+
+    Forth:
+    <em class=listener>snd&gt;</em> <em class=typing>mixes</em>
+    <em class=listener>'( '( '( 0 1 ) ) '( nil '( 2 ) ) )</em>
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -4074,18 +4168,21 @@ the second:
 <!-- mix-amp-env -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixampenv">mix-amp-env</a> (mix <i>chan</i>)</code></td></tr>
 <tr><td></td><td>amplitude envelope of <i>mix</i>'s channel <i>chan</i> (a list of breakpoints).  To reset this to its default (null) state, use #f.
-<code>(set! (mix-amp-env 0 0) '(0 0 1 1))</code> sets mix 0's 0-chan envelope to a ramp.
+<pre>
+    (set! (mix-amp-env 0 0) '(0 0 1 1))
+</pre> 
+sets mix 0's 0-chan envelope to a ramp.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mix-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixchans">mix-chans</a> (<i>mix</i>)</code></td></tr>
-<tr><td></td><td>chans in <i>mix</i>.
+<tr><td></td><td>input chans in <i>mix</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mix-color -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixcolor">mix-color</a>()</code></td></tr>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixcolor">mix-color</a> ()</code></td></tr>
 <tr><td></td><td>color of mix waveforms (defaults to dark-gray).
 The set form, <code>(set! (mix-color) ...)</code>, has an optional second argument; if you
 want to set just a particular mix's color, give the id of the mix
@@ -4163,7 +4260,7 @@ See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 
 <!-- mix-tag-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagposition">mix-tag-position</a> (mix)</code></td></tr>
-<tr><td></td><td>tag position (within the mix) of <i>mix</i>; a sample number.
+<tr><td></td><td>tag position (within the mix) of <i>mix</i>; a sample number (default: 0).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -4200,7 +4297,7 @@ See also <a href="sndscm.html#panmixvct">pan-mix-vct</a> in mix.scm.
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mix-waveform-height -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixwaveformheight">mix-waveform-height</a>()</code></td></tr>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixwaveformheight">mix-waveform-height</a> ()</code></td></tr>
 <tr><td></td><td>Max height (pixels) of mix waveforms; default is 20 (see <a href="#showmixwaveforms">show-mix-waveforms</a>).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -4220,7 +4317,7 @@ rather than <a href="#play">play</a>).
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- with-mix-tags -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="withmixtags">with-mix-tags</a>()</code></td></tr>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="withmixtags">with-mix-tags</a> ()</code></td></tr>
 <tr><td></td><td>If #f (default #t), automatically lock each new mix; the default is to place a tag above each
 mix so that it can be easily moved around.
 </td></tr>
@@ -4265,15 +4362,22 @@ delete all mixes: <a href="sndscm.html#deleteallmixes">delete-all-mixes</a><br>
 
 <A NAME="trackstuff"></a>
 
-<p>A track is a list of mixes, each member mix having its track set to the track id.  The <b>make-track</b>
+<p>A track is a list of mixes, each mix having its <a href="#mixtrack">mix-track</a> field set to the track id.  The <b>make-track</b>
 function takes the initial mixes, returning the track id (an integer).  The
 <b>track</b> function returns the list of mixes that are members of the given track.  The rest of the track functions
 take the track id as their initial argument.  A track has much the same structure as a mix: an amplitude, speed,
 amplitude envelope, track, position, and so on.  If its track field is not 0, the entire track is a member
-of the given track, just as a mix would be.  Tracks provide a mechanism to group mixes, for panning,
-global envelopes, and so on. If a mix is dragged, and it is part of a track, all the mixes in that track move
-with it.  Tracks can be nested indefinitely, so multi-level phrase operations are relatively easy.
+of another, higher level track.  Tracks provide a mechanism to group together related notes or mixes, for panning,
+global envelopes, intra-voice tempo control, and so on. If a mix is dragged, and it is part of a track, all the mixes in that track move
+with it.  
 </p>
+<img src="track1.png" align=left vspace=10 hspace=20>
+<img src="track2.png" vspace=10 hspace=20>
+<p>
+Here we have two tracks, each holding four mixes; one track's color is green, the other blue.  We then
+change the second (blue) track's tempo to be twice as slow, and move the first (green) track to the right.
+</p>
+<br>
 
 <!-- -------------------------------- TRACK FUNCTION TABLE -------------------------------- -->
 
@@ -4307,7 +4411,7 @@ to preserve its overall amp-env despite some subsequent editing that changes the
 
 <!-- make-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="maketrack">make-track</a> (<i>mix-ids...</i>)</code></td></tr>
-<tr><td width=50><br></td><td>Create new track, returning its id.  You can add a mix to the track subsequently by setting mix-track.
+<tr><td width=50><br></td><td>Create a new track, returning its id.  You can add a mix to the track subsequently by setting mix-track.
 <code>(make-track 1 3)</code> creates a new track with mixes 1 and 3.  A mix can be a member (directly) of only one track, so
 if its track field is already set, and it is included as an argument to make-track, the previous setting is cancelled.
 If the previous track had an amplitude envelope, this can cause its remaining mixes to be re-enveloped.
@@ -4366,7 +4470,7 @@ track envelope as a panning control.
 <!-- track-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackchans">track-chans</a> (track-id)</code></td></tr>
 <tr><td width=50><br></td><td>chans associated with track <i>track-id</i>. Each such channel
-has at least one active mix that is a member of the given track.
+has at least one active mix.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -4392,8 +4496,8 @@ of the tag).
 <!-- track-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackposition">track-position</a> (track-id <i>chn</i>)</code></td></tr>
 <tr><td width=50><br></td><td>Track position (minimum member mix position).  If you set track-position, all
-the member mixes are moved by the same amount to make the minimum mix position coincide with the new track-position.
-If you include the channel number when setting the track-position, only that channel's mixes that are members of the
+its mixes are moved by the same amount to make the minimum mix position coincide with the new track-position.
+If you include the channel number when setting the track-position, only the mixes that are members of that channel of the
 track are moved.
 <br>
 <pre>
@@ -4466,7 +4570,7 @@ various other dialogs for track operations: mix-menu.scm and track-colors.scm<br
 <br>
 <table width="35%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Regions</h4></td></tr></table>
 
-<p>A region is a saved portion of sound data.  There is a dialog, the View:Region browser, to inspect regions.
+<p>A region is a saved portion of sound data.  Use the View:Region browser to inspect, edit, and save regions.
 As regions are defined, the new ones are pushed on a stack, and if enough regions already
 exist, old ones are pushed off (and deleted) to make room.
 Each region has a unique id returned by make-region and shown beside the region name in the Region Browser.
@@ -4512,7 +4616,7 @@ function uses insert-region (and other region functions) to rotate the samples i
 <tr><td></td><td>
 create a new region spanning samples <i>beg</i> to <i>end</i> in <i>snd</i>'s channel <i>chn</i>.
 return region's id.  If no arguments are given, the 
-selection is used. If <i>chn</i> is #t, all chans are included, taking the <i>snd</i> <a class=quiet href="#sync">sync</a> field into account if it's not 0.
+current selection is used. If <i>chn</i> is #t, all chans are included, taking the <i>snd</i> <a class=quiet href="#sync">sync</a> field into account if it's not 0.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -4631,7 +4735,7 @@ deleted.
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- save-region -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="saveregion">save-region</a> (reg <a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file (:header-type mus-next) :data-format :comment) </code></td></tr>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="saveregion">save-region</a> (reg <a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :header-type :data-format :comment) </code></td></tr>
 <tr><td></td><td>
 save region <i>reg</i> in <i>file</i> in data format (default is mus-bshort), header type (default
 is mus-next), and comment.  Return the output filename.  The arguments after <i>reg</i> are <a class=quiet href="clm.html#optional-key">optional-key</a>
@@ -4698,10 +4802,10 @@ is ignored).
 <tr><td></td><td>
 apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
 to the selection.  <i>env</i> can be the filter coefficients
-themselves in a vct with at least order elements, or 
+themselves in a vct with at least <i>order</i> elements, or 
 a CLM filtering generator (see <a href="#filtersound">filter-sound</a>).
-If <i>truncate</i> is #t (its default), the filter output is truncated at the selection
-end.  If #f, the extra output (order samples) is mixed into the stuff following the selection.
+If <i>truncate</i> is #t (the default), the filter output is truncated at the selection
+end.  If #f, the extra output (<i>order</i> samples worth) is mixed into the stuff following the selection.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -4781,7 +4885,7 @@ saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"
 <!-- scale-selection-by -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="scaleselectionby">scale-selection-by</a> (scalers)</code></td></tr>
 <tr><td></td><td>
-<a href="snd.html#scaling">scale</a> the selection by <i>scalers</i> which can be either a float, 
+scale the selection by <i>scalers</i> which can be either a float, 
 a list of floats, or a vct.  In a multichannel selection, each member of the vct or list
 is applied to the next channel in the selection.  <code>(scale-selection-by '(0.0 2.0))</code> scales
 the first channel by 0.0, the second (if any) by 2.0.  <code>(scale-selection-by 2.0)</code> scales
@@ -4792,7 +4896,7 @@ all channels by 2.0.  Normally the order of channels follows the order of the so
 <!-- scale-selection-to -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="scaleselectionto">scale-selection-to</a> (<i>norms</i>)</code></td></tr>
 <tr><td></td><td>
-<a href="snd.html#scaling">normalize</a> the selection to <i>norms</i> which can be either a float, 
+normalize the selection to <i>norms</i> which can be either a float, 
 a list of floats, or a vct.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -4913,7 +5017,7 @@ hook called when selection created or deleted.: <a href="#selectionchangedhook">
 <p>The selected portion can be chosen, independent of any region, by setting selection-position and selection-frames.
 It's easy to extend the notion of a selection to an arbitrary list of sound portions:
 </p>
-<table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 (define (make-section . members)
   ;; each member is '(beg dur snd chn)
   (append (list 'Section) members))
@@ -4930,7 +5034,7 @@ It's easy to extend the notion of a selection to an arbitrary list of sound port
 </pre></td></tr></table>
 
 
-<br><br>
+<br><br><br>
 <table width="50%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounds">Sounds and channels</a></h3></td></tr></table>
 
 <p>This is the heart of Snd; we've waded through all the ancillary junk, and we've
@@ -4995,10 +5099,8 @@ The following substitutions can be made:
 <p><small>Another case that might deserve "regularization" is make-sample-reader which confusingly interpolates
 the direction argument between the channel and edit-position:
 </small></p>
-<pre>
-<small>
- (define* (read-channel #:optional (beg 0) snd chn edpos (direction 1))
-   (<a class=quiet href="#makesamplereader">make-sample-reader</a> beg snd chn direction edpos))
+<pre><small>   (define* (read-channel #:optional (beg 0) snd chn edpos (direction 1))
+     (<a class=quiet href="#makesamplereader">make-sample-reader</a> beg snd chn direction edpos))
 </small>
 </pre>
 <hr>
@@ -5011,11 +5113,11 @@ the direction argument between the channel and edit-position:
 
 <!-- add-player -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="addplayer">add-player</a> (player <i>start end pos stop-proc out-chan</i>)</code>
+<code><a class=def name="addplayer">add-player</a> (player <i>start end edpos stop-proc out-chan</i>)</code>
 </td></tr>
 <tr><td width=50><br></td><td>
 add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). 
-If <i>pos</i> is given, play at that edit position. See <i>play-with-envs</i> in enved.scm, <i>play-syncd-marks</i>
+If <i>edpos</i> is given, play at that edit position. See <i>play-with-envs</i> in enved.scm, <i>play-syncd-marks</i>
 in marks.scm, or <i>start-dac</i> in play.scm.
 If <i>stop-proc</i> is a procedure of one argument, it is called when the play process stops.
 The argument provides the reason the play is stopping; it will be 0 if the play completed normally.
@@ -5031,7 +5133,7 @@ send channel 1 data to channel 1 of the DAC, and so on).
 	(end (<a class=quiet href="#frames">frames</a> snd)))
     (<a class=quiet href="#musaudiomixerread">mus-audio-mixer-read</a> mus-audio-default mus-audio-channel 3 vals)
     (let ((chans (max (inexact-&lt;exact (<a class=quiet href="#vctref">vct-ref</a> vals 0)) 2)))       ; assume stereo is out there
-      (do ((chan 0 (1+ chan)))                                      ; get a player for each output channel
+      (do ((chan 0 (1+ chan)))                                     ; get a player for each output channel
 	  ((= chan chans))
 	(let ((player (<em class=red>make-player</em> snd 0)))
 	  (<em class=red>add-player</em> player 0 end current-edit-position #f chan)))
@@ -5049,7 +5151,8 @@ return a list describing the specified axis:
 <code>'(<a class=quiet href="#leftsample">left-sample</a> right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
 x0-position y0-position x1-position y1-position y-offset xlabel ylabel new-peaks)</code>.  This might be
 useful if you're drawing arbitrary figures in a graph.  <i>grf</i> defaults to
-time-graph; the other choices are transform-graph and lisp-graph.  The procedure <a href="#x_to_position">x-&gt;position</a>
+<code>time-graph</code>; the other choices are <code>transform-graph</code> and <code>lisp-graph</code>.  
+The procedure <a href="#x_to_position">x-&gt;position</a>
 can be defined as:
 </td></tr>
 <tr><td></td><td>
@@ -6723,7 +6826,7 @@ by <a href="#maxfftpeaks">max-transform-peaks</a>.
 
 <!-- play -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="play">play</a> (<i>samp snd chn sync end pos stop-proc out-chan</i>)</code>
+<code><a class=def name="play">play</a> (<i>samp snd chn sync end edpos stop-proc out-chan</i>)</code>
 </td></tr>
 <tr><td></td><td>
 play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i>. 
@@ -6823,7 +6926,7 @@ Currently the "reasons" that might be passed to the stop-procedure are:
 
 <!-- play-and-wait -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="playandwait">play-and-wait</a> (<i>samp snd chn sync end pos stop-proc out-chan</i>)</code>
+<code><a class=def name="playandwait">play-and-wait</a> (<i>samp snd chn sync end edpos stop-proc out-chan</i>)</code>
 </td></tr>
 <tr><td></td><td>
 play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait 
@@ -9590,7 +9693,7 @@ The edit list functions are:
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="asoneedit">as-one-edit</a> (func <i>origin</i>)</code>
 </td></tr>
-<tr><td width=100></td><td>
+<tr><td width=60></td><td>
 apply <i>func</i>, a function of no arguments, treating it as
 one edit (in all channels) in the edit history mechanism.  Graphics redisplays are squelched during as-one-edit.
 Returns result of 'func'.
@@ -9813,7 +9916,7 @@ should go, and we have religious objections to using a
 graphical user interface.  So we create myfile.scm, and
 put in it something like:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke"><pre>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
 (let ((myfile (<a class=quiet href="#newsound">new-sound</a> "mysound.snd" mus-aifc-sound-file mus-bshort 44100 2 "this is my sound")))
 	;; this is equivalent to the New file menu option
   (<a class=quiet href="#mix">mix</a> "oboe.snd" 0 0 myfile 0)
@@ -10053,7 +10156,7 @@ to the File:Open dialog, first makes sure the dialog exists with <code>(open-fil
 
 <!-- color-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="colordialog">color-dialog</a> (<i>managed</i>)</code></td></tr>
-<tr><td width=100></td><td>Create and (if <i>managed</i> which defaults to #t) activate the Color dialog. Return the dialog widget.</td></tr>
+<tr><td width=60></td><td>Create and (if <i>managed</i> which defaults to #t) activate the Color dialog. Return the dialog widget.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- define-envelope -->
@@ -10727,7 +10830,7 @@ to do!
 <!-- abort -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="abort">abort</a> ()</code></td></tr>
-<tr><td width=100><br>
+<tr><td width=60><br>
 </td><td>
 exit Snd via "abort", presumably to fall into the C debugger (gdb).  To stop some on-going Snd operation,
 use <a href="#cgp">C-g</a>.
@@ -11237,6 +11340,24 @@ exit Snd.  Scheme's exit function is renamed %exit.  In Forth, this function is 
 <tr><td colspan=2 height=16></td></tr>
 
 
+<!-- gc-off -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="gcoff">gc-off</a> ()</code></td></tr>
+<tr><td></td><td>
+gc-off turns garbage collection off (except in Guile where it's a no-op).
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- gc-on -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="gcon">gc-on</a> ()</code></td></tr>
+<tr><td></td><td>
+gc-on turns garbage collection on (except in Guile where it's a no-op).
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
 <!-- goto-listener-end -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="gotolistenerend">goto-listener-end</a></code></td></tr>
@@ -11253,33 +11374,6 @@ See ws.scm for examples.
 <tr><td></td><td>
 create Postscript picture of current display.
 <i>file</i> defaults to <a href="#epsfile">eps-file</a>.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- html-dir -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="htmldir">html-dir</a> ()</code></td></tr>
-<tr><td></td><td>The directory to search for documentation if an HTML reader is in use.
-See <i>html</i> in index.scm.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- html-program -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="htmlprogram">html-program</a> ()</code></td></tr>
-<tr><td></td><td>The program to use to read HTML files (defaults to "mozilla", but can also be "netscape").
-On the Mac, you need to give the full path to the executable image: "/Applications/Safari.app/Contents/MacOS/Safari".
-See <i>html</i> in index.scm.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- just-sounds -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="justsounds">just-sounds</a> ()</code></td></tr>
-<tr><td width=50></td><td>In Motif and in Gtk versions 2.3 or later,
-if <i>just-sounds</i> is #t,
-the file lists displayed by the file selection dialogs are filtered to show just
-sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a>).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11384,15 +11478,9 @@ loads a file into Snd for editing.
 <tr><td colspan=2 height=16></td></tr>
 
 
-<!-- print-length -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="printlength">print-length</a> ()</code></td></tr>
-<tr><td></td><td>number of elements of lists and vectors that are printed. default: 12.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
 <!-- reset-listener-cursor -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="resetlistenercursor">reset-listener-cursor</a></code></td></tr>
+<code><a class=def name="resetlistenercursor">reset-listener-cursor</a> ()</code></td></tr>
 <tr><td></td><td>
 reset the listener cursor to the default pointer shape
 </td></tr>
@@ -11461,6 +11549,20 @@ current startup argument number (normally 1). See <a href="grfsnd.html#sndwithno
 startup arguments as a list of strings. See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> and snd-test.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
+
+<!-- send-mozilla -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="sendmozilla">send-mozilla</a> (url)</code></td></tr>
+<tr><td></td><td>
+Start mozilla, if necessary, and tell it to go to the location 'url'.
+The actual HTML reader invoked is determined by <a href="#htmlprogram">html-program</a>,
+but it's currently assumed that netscape/mozilla url syntax can be used to jump to
+the desired url.
+<pre>
+    (<em class=red>send-mozilla</em> "/home/bil/cl/extsnd.html#sendmozilla")
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- snd-error -->
@@ -11621,15 +11723,6 @@ return a list of lists each inner list containing a Snd function name (as a stri
     :<em class=typing>(assoc "open-sound" (snd-urls))</em>
     <em class=listener>: ("open-sound" . "extsnd.html#opensound")
 </em></pre>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- snd-version -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="sndversion">snd-version</a> ()</code></td></tr>
-<tr><td></td><td>
-Snd version: a string, normally a date. <b>version</b> is a Guile function.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -12646,22 +12739,6 @@ The following gives us a green cursor:
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
-<!-- gc-off -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="gcoff">gc-off</a> ()</code></td></tr>
-<tr><td></td><td>
-<i>gc-off</i> turns garbage collection off (except in Guile where it's a no-op).
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<!-- gc-on -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="gcon">gc-on</a> ()</code></td></tr>
-<tr><td></td><td>
-<i>gc-on</i> turns garbage collection on (except in Guile where it's a no-op).
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
 <!-- glSpectrogram -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="glspectrogram">glSpectrogram</a> (data gl-list cutoff use-dB min-dB scale br bg bb)</code></td></tr>
@@ -12790,19 +12867,6 @@ the graphics context to use to draw a mark (XOR mode).
 <tr><td></td><td>
 the graphics context for XOR drawing in the selection color (used by <a href="#fillrectangle">fill-rectangle</a>).</td></tr>
 <tr><td colspan=2 height=16></td></tr>
-
-<!-- send-mozilla -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="sendmozilla">send-mozilla</a> (url)</code></td></tr>
-<tr><td></td><td>
-Start mozilla, if necessary, and tell it to go to the location 'url'.
-The actual HTML reader invoked is determined by <a href="#htmlprogram">html-program</a>,
-but it's currently assumed that netscape/mozilla url syntax can be used to jump to
-the desired url.
-<pre>
-    (<em class=red>send-mozilla</em> "/home/bil/cl/extsnd.html#sendmozilla")
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- snd-gcs -->
 <tr><td colspan=2 bgcolor="#f6f8ff">

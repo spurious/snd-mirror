@@ -3280,10 +3280,10 @@ def test104
       snd_display("mus_error_type2string %d: %s %s?", i, err, res)
     end
   end
-  new_id = mus_make_error("hiho all messed up")
-  if (res = mus_error_type2string(new_id)) != "hiho all messed up"
-    snd_display("mus_make_error %d: %s?", new_id, res)
-  end
+#  new_id = mus_make_error("hiho all messed up")
+#  if (res = mus_error_type2string(new_id)) != "hiho all messed up"
+#    snd_display("mus_make_error %d: %s?", new_id, res)
+#  end
   oboe_snd = "oboe.snd"
   cur_srate = mus_sound_srate(oboe_snd)
   cur_chans = mus_sound_chans(oboe_snd)
@@ -38898,7 +38898,7 @@ Procs = [:add_mark, :add_sound_file_extension, :sound_file?, :add_to_main_menu, 
   :track_tempo, :track_amp_env, :track_track, :delete_track, :delete_mix, :track_color,
   :free_track, :track_speed_style, :delay_tick, :playing, :draw_axes, :copy_mix, :copy_track,
   :copy_sample_reader, :html_dir, :html_program, :lock_track, :make_fir_coeffs,
-  :make_identity_mixer, :mus_interp_type, :mus_make_error, :mus_run, :phase_vocoder,
+  :make_identity_mixer, :mus_interp_type, :mus_run, :phase_vocoder,
   :player_home, :redo_edit, :undo_edit, :widget_position, :widget_size,
   ((defined? window_property) ? :window_property : :identity),
   :focus_widget]
