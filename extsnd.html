@@ -5286,7 +5286,7 @@ added with:
 <pre>
     (cons (cons key value) a-list)
 </pre>
-In Common Lisp, property lists have other properties, so to speak, but <b>channel-properties</b> (and
+In Common Lisp, property lists have other properties, so to speak, but channel-properties (and
 <a href="#soundproperties">sound-properties</a>) can be handled in any way you like.
 See <a href="sndscm.html#channelsync">channel-sync</a> in extensions.scm for a brief example; more
 elaborate examples are in enved.scm (enved-envelope), or draw.scm (colored-samples and insert-envelope).
@@ -5817,9 +5817,20 @@ based on <i>env-base</i>.  <i>env-base</i> defaults to 1.0.
 <i>samp</i> defaults to 0.  <i>samps</i> defaults to the full duration.
 <i>envelope</i> is a list containing the breakpoint values 
 (as in CLM) or an env generator.
+
+<table hspace=20 cellpadding=10><tr><td>
+<img src="ampenv1.png" vpsace=10>
+</td><td>
 <pre>
-    (env-sound '(0 0 1 1 2 0))
+(env-sound '(0 0 1 1 2 0))
+
+env_sound([0.0, 0.0, 1.0, 1.0, 2.0, 0.0])
+
+'( 0.0 0.0 1.0 1.0 2.0 0.0 ) env-sound
 </pre>
+</td><td>
+<img src="ampenv2.png">
+</td></tr></table>
 
 As mentioned in <a href="clm.html#make-env">clm.html</a>, 
 <i>env-base</i> determines how the break-points are connected.  If it is 1.0 (the
@@ -6967,7 +6978,7 @@ If <i>pos</i> is given, play at that edit position.
 <code><a class=def name="playchannel">play-channel</a> (<i>beg dur snd chn edpos stop-proc out-chan</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>play-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#play">play</a>.
+play-channel is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#play">play</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -6986,10 +6997,10 @@ return a list of the sound index and channel number associated with <a href="#ma
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="playing">playing</a> ()</code></td></tr>
 <tr><td></td><td>
-#t if sound output is currently in progress.  You can also start playing by setting <b>playing</b> to #t (equivalent
+#t if sound output is currently in progress.  You can also start playing by setting playing to #t (equivalent
 to calling <a href="#startplaying">start-playing</a> with default arguments), and stop by setting it to #f
 (equivalent to <a href="#stopplaying">stop-playing</a>).
-<b>playing</b> only notices Snd-instigated "play" processes;
+playing only notices Snd-instigated "play" processes;
 <a href="#musaudioopenoutput">mus-audio-open-output</a> is invisible to it.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -7044,7 +7055,7 @@ See gui.scm for examples.
 <code><a class=def name="progressreport">progress-report</a> (pct <i>name current-channel channels snd</i>)</code>
 </td></tr>
 <tr><td></td><td>
-The functions <a href="#startprogressreport">start-progress-report</a>, <b>progress-report</b>, and 
+The functions <a href="#startprogressreport">start-progress-report</a>, progress-report, and 
 <a href="#finishprogressreport">finish-progress-report</a> handle the animated hour-glass icon
 that amuses the idle user while some long computation is in progress.  
 The <i>pct</i> argument is a float between 0.0 and 1.0 which indicates how 
@@ -7129,7 +7140,7 @@ more like Emacs (which prompts for confirmation first):
 <code><a class=def name="ptreechannel">ptree-channel</a> (proc <i>beg dur snd chn edpos env-too init-func origin</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>ptree-channel</b>
+ptree-channel
 applies the function 'proc' as a 'virtual edit'; that is, the effect of 'proc'
 comes about as an implicit change in the way the data is read. 
 <br><br>
@@ -7144,7 +7155,7 @@ unnecessary to save any data in temp files or internal arrays, and editing the e
 fast (we just tack a new accessor choice onto the edit-history list), so the edit operation
 appears to be instantaneous and memory-less.  Lots of other operations
 are already being done this way in Snd (deletions, scaling, most
-envelopes, some channel swaps, etc).  <b>ptree-channel</b> extends the idea to (nearly) arbitrary
+envelopes, some channel swaps, etc).  ptree-channel extends the idea to (nearly) arbitrary
 functions.  When you call 
 <pre>
     (ptree-channel (lambda (y) (* y 2)))
@@ -7452,8 +7463,8 @@ dithering: <a href="sndscm.html#ditherchannel">dither-channel</a> (extensions.sc
 <code><a class=def name="rampchannel">ramp-channel</a> (rmp0 rmp1 <i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>ramp-channel</b> is a slight extension of scale-channel. It scales samples in the given sound/channel
-between beg and beg + dur by a (linear) ramp going from rmp0 to rmp1. (<b>ramp-channel</b> underlies the virtual envelope operations).
+ramp-channel is a slight extension of scale-channel. It scales samples in the given sound/channel
+between beg and beg + dur by a (linear) ramp going from rmp0 to rmp1. (ramp-channel underlies the virtual envelope operations).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7503,7 +7514,7 @@ is not 0, which sometimes means that the channel arg is simply ignored.  The fol
 edit position to the start of the list.
 For more about the edit history list, see <a href="#editlists">Edit Lists</a>.
 <br><br>
-In Ruby, <b>redo</b> is a part of the loop handling, so Snd's redo is renamed redo_edit.
+In Ruby, redo is a part of the loop handling, so Snd's redo is renamed redo_edit.
 <a name="redoedit">redo-edit</a> also exists in Scheme, for consistency.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -7528,7 +7539,7 @@ See also <a href="#promptinminibuffer">prompt-in-minibuffer</a>.
 <code><a class=def name="reversechannel">reverse-channel</a> (<i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>reverse-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#reversesound">reverse-sound</a>.
+reverse-channel is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#reversesound">reverse-sound</a>.
 <!-- INDEX reverseexamples:Reversing -->
 
 <A NAME="reverseexamples"></a>
@@ -7605,7 +7616,7 @@ and <a href="#moveonepixel">move-one-pixel</a>.
 <code><a class=def name="run">run</a> (thunk)</code>
 </td></tr>
 <tr><td></td><td>
-<b>run</b> is the Snd equivalent of the CL/CLM run macro.  You can wrap it around any numerically-intensive
+run is the Snd equivalent of the CL/CLM run macro.  You can wrap it around any numerically-intensive
 block of code, and the result will usually run 10 to 20 times faster.  In the context of with-sound, run is used
 to speed up instrument bodies.  My timing tests indicate that Snd+Run instruments are within a factor of two to four
 of the speed of CL+run+C in CLM.  Currently, only Guile supports this optimization.
@@ -7623,7 +7634,7 @@ of the speed of CL+run+C in CLM.  Currently, only Guile supports this optimizati
 
 <tr><td></td><td>
 Functions embedded within run (leaving aside the "thunk" argument itself) need to declare the type of their arguments (the type defaults to integer, and
-<b>run</b> assumes each variable has one type throughout its life).  So, the following code
+run assumes each variable has one type throughout its life).  So, the following code
 displays "0", rather than "3.14":
 <br>
 <pre>
@@ -7635,7 +7646,7 @@ causes nothing but confusion.  To get this code to work right:
 <pre>
   (<em class=red>run</em> (lambda () (let ((x 3.14)) (<em class=red>define</em> (a b) (<em class=red>declare</em> (b real)) (display b)) (a x))))
 </pre>
-<b>declare</b> is modelled after Common Lisp's declare; it is specific to run.
+declare is modelled after Common Lisp's declare; it is specific to run.
 For more examples see <a href="#ptreechannel">Virtual Edits</a> and, in
 particular, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>.
 <br><br>
@@ -7677,7 +7688,7 @@ or <a href="#channel_to_vct">channel-&gt;vct</a> instead.  <i>samp</i> defaults 
 return vct of <i>samps</i> samples starting at <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 <i>samp</i> defaults to 0.  <i>samps</i> defaults to frames - samp.
 <i>pos</i> is the edit history position to read (defaults to current position).
-This is settable (as is <b>sample</b>) -- see <a href="#setsamples">set-samples</a>.
+This is settable (as is sample) -- see <a href="#setsamples">set-samples</a>.
 (<i>samples</i> is basically another name for channel-&gt;vct).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -7778,7 +7789,7 @@ is scaled (defaults to the currently selected channel).  <code>(scale-by 2.0)</c
 <code><a class=def name="scalechannel">scale-channel</a> (scl <i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>scale-channel</b> 
+scale-channel 
 scales (changes the amplitude) of a sound by <i>scl</i>.
 <a href="sndscm.html#channelpolynomial">channel-polynomial</a> is a generalization of the idea.
 There are approximately a bazillion ways to scale samples in Snd; here's a potpourri of increasingly silly choices:
@@ -7866,7 +7877,7 @@ If all the samples are 0.0, scale-to returns #f and does not perform any edit.
 <code><a class=def>scan-chan</a> (func <i>start end snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>scan-chan</b> applies <i>func</i> to samples in the specified channel.
+scan-chan applies <i>func</i> to samples in the specified channel.
 It is the old ("irregular") version of <a href="#scanchannel">scan-channel</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -8058,7 +8069,7 @@ the brief (no directory) form of <i>snd</i>'s filename.
 </td></tr>
 <tr><td></td><td>
 (default: <code>show-all-axes</code>)
-If <b>show-axes</b> is <code>show-all-axes</code>, display x and y axes; if <code>show-x-axis</code>, 
+If show-axes is <code>show-all-axes</code>, display x and y axes; if <code>show-x-axis</code>, 
 just one (bottom) x axis is displayed, reducing screen clutter. 
 <code>show-no-axes</code> omits both x and y axes.  To remove the x axis label, use
 either <code>show-x-axis-unlabelled</code> or <code>show-all-axes-unlabelled</code>.
@@ -8136,7 +8147,7 @@ If #t, the y=0 axis is displayed.  This is the '<a href="snd.html#viewy0">Show Y
 <code><a class=def name="smoothchannel">smooth-channel</a> (<i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>smooth-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#smoothsound">smooth-sound</a>.
+smooth-channel is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#smoothsound">smooth-sound</a>.
 <i>smooth-channel-via-ptree</i> in examp.scm is the virtual form.
 
 <!-- INDEX smoothexamples:Smoothing -->
@@ -8638,7 +8649,7 @@ The choices are:
 <code><a class=def name="timegraphtype">time-graph-type</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-If <b>time-graph-type</b> is <code>graph-as-wavogram</code>, the time domain waveform is displayed as a '<a href="snd.html#wavogram">wavogram</a>'.
+If time-graph-type is <code>graph-as-wavogram</code>, the time domain waveform is displayed as a '<a href="snd.html#wavogram">wavogram</a>'.
 The default is <code>graph-once</code>.  See also <a href="#wavohop">wavo-hop</a> and <a href="#wavotrace">wavo-trace</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -8787,7 +8798,7 @@ is not 0, which sometimes means that the channel arg is simply ignored.  The fol
 </pre>
 
 See also <a href="#undohook">undo-hook</a>.
-Since <b>redo</b> collides with Ruby, forcing me to change its name to redo_edit,
+Since redo collides with Ruby, forcing me to change its name to redo_edit,
 undo can also be accessed under the name undo_edit (in Scheme, <a name="undoedit">undo-edit</a>).
 
 <!-- INDEX undoexamples:Undo and Redo -->
@@ -9068,9 +9079,9 @@ value of x axis zoom slider.  See <a href="#zoomonepixel">zoom-one-pixel</a>.
 <code><a class=def name="xrampchannel">xramp-channel</a> (rmp0 rmp1 base <i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>xramp-channel</b> is a slight extension of <a href="#rampchannel">ramp-channel</a>. It scales samples in the given sound/channel
+xramp-channel is a slight extension of <a href="#rampchannel">ramp-channel</a>. It scales samples in the given sound/channel
 between beg and beg + dur by an exponential ramp going from rmp0 to rmp1 with the connecting segment curvature
-set by base. (<b>xramp-channel</b> underlies the virtual exponential envelope operations).
+set by base. (xramp-channel underlies the virtual exponential envelope operations).
 <pre>
     (xramp-channel 0.0 1.0 32.0)
 </pre>
@@ -10164,13 +10175,13 @@ In addition, many other dialogs are implemented in various Scheme/Ruby/Forth fil
 The following
 functions refer to the built-in dialogs.  They were aimed originally at semi-internal needs like
 saving the current Snd state, but might be useful elsewhere.
-Functions such as <b>color-dialog</b> normally create and start the dialog in question; that is,
+Functions such as color-dialog normally create and start the dialog in question; that is,
 <code>(color-dialog)</code> puts the color dialog on the screen.  If you're trying instead to
 customize the dialog in some way (in your initialization file, for example), you want the
 dialog to be created (so that the various widget children exist), but don't want it to pop
 up on the screen (be 'managed' in X jargon). So, most of the dialog functions have a <i>managed</i> argument
 that defaults to #t.  If #f, the dialog is created, if need be, but not started.
-<b>install-searcher</b> in snd-motif.scm, which adds customized file filtering code
+install-searcher in snd-motif.scm, which adds customized file filtering code
 to the File:Open dialog, first makes sure the dialog exists with <code>(open-file-dialog #f)</code>.
 </p>
 
@@ -11246,7 +11257,7 @@ See <i>save-track</i> in mix.scm, and <a href="#opensoundfile">open-sound-file</
 <code><a class=def name="cgp">c-g?</a> ()</code></td></tr>
 <tr><td></td><td>
 check for C-g to interrupt an on-going computation, and let other UI 
-events through.  <b>c-g?</b> is especially useful in loops; we could define our own safe 'while' loop as follows
+events through.  c-g? is especially useful in loops; we could define our own safe 'while' loop as follows
 (this is a slight revision of Guile's while macro from ice-9/boot-9.scm):
 </td></tr>
 <tr><td></td><td>
@@ -11263,9 +11274,9 @@ events through.  <b>c-g?</b> is especially useful in loops; we could define our 
 	    (lambda v (cadr v)))))
 </pre></td></tr></table>
 <p>
-Here's a version of "do" that is interruptible and continuable.  <b>c-g?</b> provides
-the interrupt, and <b>call-with-current-continuation</b> provides the continuation.
-To continue running an interrupted <b>do?</b>, <code>(do-go-on)</code>.
+Here's a version of "do" that is interruptible and continuable.  c-g? provides
+the interrupt, and call-with-current-continuation provides the continuation.
+To continue running an interrupted do?, <code>(do-go-on)</code>.
 </p>
 </td></tr>
 <tr><td></td><td>
