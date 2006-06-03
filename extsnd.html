@@ -556,8 +556,8 @@ If dac-combines-channels is #f, extra channels are not played.
 <!-- dac-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="dacsize">dac-size</a></code></td>
 <td bgcolor="#f6f8ff"><code>256</code></td></tr>
-<tr><td></td><td colspan=2>Audio output buffer size (not always meaningful).  See <i>play-with-envs</i> in enved.scm or
-<i>play-sound</i> in play.scm.  When you change the control panel settings during playback, the snappiness of the
+<tr><td></td><td colspan=2>Audio output buffer size (not always meaningful).  See play-with-envs in enved.scm or
+play-sound in play.scm.  When you change the control panel settings during playback, the snappiness of the
 response is set, to some extent, by the dac-size.  The default of 256 gives a stair-case effect in many
 cases, whereas 2048 is smoother.  This also affects the resampling smoothness of playback while dragging the
 mark play triangle.  (Some audio choices, ALSA in particular, may ignore dac-size).
@@ -730,7 +730,7 @@ gtk versions are in gdkcursor.h.  Some useful choices are:
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="htmldir">html-dir</a></code></td>
 <td bgcolor="#f6f8ff"><code>"."</code></td></tr>
 <tr><td></td><td colspan=2>The directory to search for documentation if an HTML reader is in use.
-See <i>html</i> in index.scm.
+See the function html in index.scm.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
@@ -740,7 +740,7 @@ See <i>html</i> in index.scm.
 <td bgcolor="#f6f8ff"><code>"mozilla"</code></td></tr>
 <tr><td></td><td colspan=2>The program to use to read HTML files.
 On the Mac, you need to give the full path to the executable image: "/Applications/Safari.app/Contents/MacOS/Safari".
-See <i>html</i> in index.scm.
+See the function html in index.scm.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
@@ -749,7 +749,7 @@ See <i>html</i> in index.scm.
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="justsounds">just-sounds</a></code></td>
 <td bgcolor="#f6f8ff"><code>#f</code></td></tr>
 <tr><td></td><td colspan=2>In Motif and in Gtk versions 2.3 or later,
-if <i>just-sounds</i> is #t,
+if just-sounds is #t,
 the file lists displayed by the file selection dialogs are filtered to show just
 sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a>).
 </td></tr>
@@ -1025,7 +1025,7 @@ Mono sounds and the listener are not affected (perhaps they should be?).
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="zoomfocusstyle">zoom-focus-style</a></code></td>
 <td bgcolor="#f6f8ff"><code>zoom-focus-active</code></td></tr>
 <tr><td></td><td colspan=2>This determines what a zoom action focuses (centers) on. The choices are 
-<i>zoom-focus-left</i>, <i>zoom-focus-right</i>, <i>zoom-focus-active</i>, <i>zoom-focus-middle</i>,
+<code>zoom-focus-left</code>, <code>zoom-focus-right</code>, <code>zoom-focus-active</code>, <code>zoom-focus-middle</code>,
 or a function of 6 arguments.  The function should return the new window left edge as a float.
 Its arguments are the current sound index, channel number, zoom slider value (0.0 to 1.0), time domain window left and right
 edges in seconds, and the current total x axis size (seconds) corresponding to a slider value
@@ -1033,7 +1033,7 @@ of 1.0.
 <pre>
     (set! (zoom-focus-style) (lambda (snd chn zx x0 x1 range) (- x1 (* zx range))))
 </pre>
-mimics zoom-focus-right.  <i>zoom-focus-active</i> tries to focus on some object in the view: the cursor, a mix or mark, etc.
+mimics zoom-focus-right.  <code>zoom-focus-active</code> tries to focus on some object in the view: the cursor, a mix or mark, etc.
 See also <a href="snd.html#zoomoption">Zoom options</a>.
 </td></tr>
 </table>
@@ -1192,7 +1192,7 @@ indication such as "[or]", that means the various hook function values are or-d 
 <code><a class=def name="afterapplyhook">after-apply-hook</a> (snd)</code>
 </td></tr>
 <tr><td width=60></td><td colspan=2>
-called when 'Apply' finishes.  <i>add-amp-controls</i> in snd-motif.scm uses this hook to
+called when 'Apply' finishes.  add-amp-controls in snd-motif.scm uses this hook to
 reset any added amplitude sliders to 1.0 when Apply finishes.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
@@ -1204,7 +1204,7 @@ reset any added amplitude sliders to 1.0 when Apply finishes.
 </td></tr>
 <tr><td></td><td colspan=2>
 called after a graph is updated or redisplayed; see <a href="#displaysampsinred">display-samps-in-red</a>,
-<i>draw-smpte-label</i> in snd-motif.scm, or <a href="#addcomment">add-comment</a>.
+draw-smpte-label in snd-motif.scm, or <a href="#addcomment">add-comment</a>.
 This is the hook to use when adding your own finishing touches to the display; if added earlier they risk
 being erased by Snd as it redraws graphs.
 </td></tr>
@@ -1233,7 +1233,7 @@ and filled graphs (not line segments or dots, etc):
           (set! (<a class=quiet href="#channelstyle" onmouseover="return escape('channel-style chooses between various layouts')">channel-style</a> snd) <a class=quiet href="#channelstyle" onmouseover="return escape('channels-combined means the channels are in one window')">channels-combined</a>)
           (set! (<a class=quiet href="#graphstyle" onmouseover="return escape('graph-style chooses how data is drawn -- lines, dots, etc')">graph-style</a> snd) <a class=quiet href="#graphstyle" onmouseover="return escape('graph-filled means the data is filled in, rather than just a line')">graph-filled</a>)))))
 </pre></td></tr></table>
-See also <i>C-x b support</i> in examp.scm, <i>remember-sound-state</i> in extensions.scm, enved.scm, and various
+See also C-x b support in examp.scm, remember-sound-state in extensions.scm, enved.scm, and various
 examples in snd-motif.scm.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
@@ -1298,7 +1298,7 @@ called just after an FFT (or spectrum) is calculated.
 <tr><td></td><td colspan=2>
 called if a file has a bogus-looking header (a header with what appear to be bad values such as a negative number of channels). Return #t to give up on that file. 
 <pre>
-    (add-hook! <em class=red>bad-header-hook</em> (lambda (n) #t))
+    (add-hook! bad-header-hook (lambda (n) #t))
 </pre>
 If no header is found, <a href="#openrawsoundhook">open-raw-sound-hook</a> is invoked instead ("raw" = "headerless").
 </td></tr>
@@ -1311,7 +1311,7 @@ If no header is found, <a href="#openrawsoundhook">open-raw-sound-hook</a> is in
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a file is about to be closed.  If it returns #t, the file is not closed (see
-<i>check-for-unsaved-edits</i> in extensions.scm).
+check-for-unsaved-edits in extensions.scm).
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
@@ -1444,8 +1444,8 @@ end
 </td></tr>
 
 <tr><td></td><td colspan=2>
-<i>close-hook</i> is used in autosave.scm, examp.scm, extensions.scm, and peak-env.scm; see, for example,
-<i>remember-sound-state</i> in extensions.scm.
+close-hook is used in autosave.scm, examp.scm, extensions.scm, and peak-env.scm; see, for example,
+remember-sound-state in extensions.scm.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
@@ -1456,7 +1456,7 @@ end
 </td></tr>
 
 <tr><td></td><td colspan=2>
-called whenever one of the variables associated with the color dialog changes.  See <i>start-waterfall</i> in snd-gl.scm.
+called whenever one of the variables associated with the color dialog changes.  See start-waterfall in snd-gl.scm.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1466,7 +1466,7 @@ called whenever one of the variables associated with the color dialog changes.  
 </td></tr>
 
 <tr><td></td><td colspan=2>
-called just before data is sent to DAC; <i>data</i> is a <a href="#sndsounddata">sound-data</a> object. See <i>with-level-meters</i> in snd-motif.scm.
+called just before data is sent to DAC; <i>data</i> is a <a href="#sndsounddata">sound-data</a> object. See with-level-meters in snd-motif.scm.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1475,7 +1475,7 @@ called just before data is sent to DAC; <i>data</i> is a <a href="#sndsounddata"
 <code><a class=def name="drawmarkhook">draw-mark-hook</a> (id)</code> [<b>progn</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
-called before a mark is drawn (in XOR mode). If the hook returns #t, the mark is not drawn.  <i>mark-sync-color</i>
+called before a mark is drawn (in XOR mode). If the hook returns #t, the mark is not drawn.  mark-sync-color
 in snd-motif.scm (for Gtk+, snd-gtk.scm) uses this hook to draw sync'd marks in some other color than the current mark-color.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
@@ -1519,7 +1519,7 @@ This provides an opportunity to set sndlib prescaling values:
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td colspan=2>
-The prescaling affects only sound data made up of floats or doubles.  <A NAME="openreasons"><i>reason</i></a> is an integer indicating why this file is being opened:
+The prescaling affects only sound data made up of floats or doubles.  <i>reason</i> is an integer indicating why this file is being opened:
 <pre>
     0: reopen a file closed to conserve file channels (this is an internal re-open normally invisible to the user)
     1: sound-open, File:open etc -- the normal path to open a sound
@@ -1584,7 +1584,7 @@ called upon exit.
 This can be used
 to perform cleanup activities; in peak-env.scm, for example, we save peak-env info upon exit:
 <pre>
-    (add-hook! <em class=red>exit-hook</em> (lambda () (for-each save-peak-env-info (sounds))))
+    (add-hook! exit-hook (lambda () (for-each save-peak-env-info (sounds))))
 </pre>
 For more examples, see extensions.scm and autosave.scm.
 Guile's exit-hook is shadowed by this variable.
@@ -1628,7 +1628,7 @@ See examp.scm for many examples.  If you want to add your own graphics to the di
 called from snd-help with the current help subject and default help-string.  Say we want the index.scm
 procedure 'html' called any time snd-help is called (from C-? for example):
 <pre>
-    (add-hook! <em class=red>help-hook</em> (lambda (subject help) (html subject) #f))
+    (add-hook! help-hook (lambda (subject help) (html subject) #f))
 </pre>
 If there is more than one hook function, each function's result is passed as input to the next function.
 </td></tr>
@@ -1650,12 +1650,12 @@ If it returns a list, the list's contents are interpreted as:
 initial x and y axis limits and the x axis label.
 The default (empty hook) is equivalent to:
 <pre>
-    (add-hook! <em class=red>initial-graph-hook</em> (lambda (snd chn dur) (list 0.0 0.1 -1.0 1.0 "time" -1.0 1.0)))
+    (add-hook! initial-graph-hook (lambda (snd chn dur) (list 0.0 0.1 -1.0 1.0 "time" -1.0 1.0)))
 </pre>
 The <i>dur</i> argument is the total length in seconds of the channel, so to cause the
 entire sound to be displayed initially:
 <pre>
-    (add-hook! <em class=red>initial-graph-hook</em> (lambda (snd chn dur) (list 0.0 dur)))
+    (add-hook! initial-graph-hook (lambda (snd chn dur) (list 0.0 dur)))
 </pre>
 To get the data limits (rather than the default y axis limits of -1.0 to 1.0), you can use <a href="#mussoundmaxamp">mus-sound-maxamp</a>,
 but if that sound's maxamp isn't already known, it can require a long process of reading the file. The following hook procedure
@@ -1907,7 +1907,7 @@ hook's responsibility.  See snap-mix-to-beat in mix.scm.
 </td></tr>
 <tr><td></td><td colspan=2>
 called upon a mouse button release or click (with various exceptions).  If it returns #t, the click is ignored by Snd.
-See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler example:</td></tr>
+See the current-window-location procedures in draw.scm.  Here's a simpler example:</td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (click-to-center snd chn button state x y axis)
@@ -1975,7 +1975,7 @@ to popup file info as follows:
     (if (not (= type 2))
         (<a class=quiet href="#infodialog">info-dialog</a> name (finfo name)))))
 </pre></td></tr></table></td></tr>
-<tr><td></td><td>See also <i>files-popup-buffer</i> in examp.scm</td></tr>
+<tr><td></td><td>See also files-popup-buffer in examp.scm</td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
 
@@ -2080,7 +2080,7 @@ relative to the lisp graph axis (as if the raw mouse pixel position was passed t
 <tr><td></td><td colspan=2>
 called upon mus-error.
 If it returns #t, Snd ignores the error (it assumes you've handled it via the hook).
-This hook is used in <i>play-sound</i> in play.scm to flush an error message that the Snd ALSA support code generates (or used to generate).
+This hook is used in play-sound in play.scm to flush an error message that the Snd ALSA support code generates (or used to generate).
 Both mus_error and mus_print run this hook; in the mus_print case, the <i>type</i> is mus-no-error (0).
 You can redirect mus_print output from stderr (the default) to stdout via:
 </td></tr>
@@ -2131,7 +2131,7 @@ this hook to keep track of newly created temporary sounds so that it can delete 
 <code><a class=def name="newwidgethook">new-widget-hook</a> (widget)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
-called each time a dialog or a new set of channel or sound widgets is created.  This is used in snd-motif.scm (<i>paint-all</i>) to
+called each time a dialog or a new set of channel or sound widgets is created.  This is used in snd-motif.scm (paint-all) to
 make sure all newly created widgets have the same background pixmaps.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
@@ -2183,7 +2183,7 @@ be omitted (location defaults to 0, and length defaults to the file length in by
 If there is more than one function on the hook list, functions after the first get the
 on-going list result (if any) as the <i>current-choices</i> argument (the empty list is the default).
 <pre>
-    (add-hook! <em class=red>open-raw-sound-hook</em> (lambda (file choices) (list 1 44100 <a class=quiet href="#dataformat">mus-lshort</a>)))
+    (add-hook! open-raw-sound-hook (lambda (file choices) (list 1 44100 <a class=quiet href="#dataformat">mus-lshort</a>)))
 </pre>
 Return '() to accept all the current raw header defaults; return #f to fallback on the Raw File Dialog.
 The raw header defaults are stereo, 44100 Hz, big endian short data; these values can be changed in the
@@ -2200,7 +2200,7 @@ If the hook returns #t, the open-sound returns without opening.
 <tr><td></td><td colspan=2>
 called each time the optimizer hits something it can't handle; <i>message</i> tries to give some information about the situation.
 <pre>
-    (add-hook! <em class=red>optimization-hook</em> (lambda (n) (display (format #f "~A~%" n))))
+    (add-hook! optimization-hook (lambda (n) (display (format #f "~A~%" n))))
 </pre>
 Normally, if the optimizer fails for some reason, it falls back silently on the Guile evaluator, so
 the code simply runs slower.  This hook gives you a way to find out why the optimizer gave up.
@@ -2214,7 +2214,7 @@ the code simply runs slower.  This hook gives you a way to find out why the opti
 </td></tr>
 
 <tr><td></td><td colspan=2>
-called whenever one of the variables associated with the orientation dialog changes.  See <i>start-waterfall</i> in snd-gl.scm.
+called whenever one of the variables associated with the orientation dialog changes.  See start-waterfall in snd-gl.scm.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -2455,7 +2455,7 @@ found (this code has to be in the ~/.snd init file):
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a sound is about to be played.
-If it returns #t, Snd does not play (see <i>report-mark-names</i> in marks.scm).
+If it returns #t, Snd does not play (see report-mark-names in marks.scm).
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
@@ -2512,7 +2512,7 @@ The hook is passed the sound's index.  If it returns #t, the update is cancelled
 recommended!); if it returns a procedure of one argument, that procedure is called upon 
 completion of the update operation; its argument is the (possibly different) sound index. 
 Snd tries to maintain the index across the update, but if you change the number of channels 
-the newly updated sound may have a different index.  <i>add-mark-pane</i> in snd-motif.scm uses
+the newly updated sound may have a different index.  add-mark-pane in snd-motif.scm uses
 the returned procedure to make sure the mark pane is reactivated right away when a sound is updated. The basic idea is:
 </td></tr>
 
@@ -2563,7 +2563,7 @@ edit-hook is called just before any attempt to edit the channel's data; if it re
 the edit is cancelled. So,
 </td></tr></table>
 <pre>
-            (add-hook! (<em class=red>edit-hook</em>) (lambda () #t))
+            (add-hook! (edit-hook) (lambda () #t))
 </pre>
 <table border=0><tr><td width=60><br></td><td>
 halts any attempt to edit the data; this is even more restrictive than setting the read-only
@@ -2595,7 +2595,7 @@ up protected portions of the edit history:
 </pre></td></tr></table>
 
 <a href="sndscm.html#enveddoc">enved.scm</a> uses several of these hooks to implement an envelope editor in lisp.
-<i>add-mark-pane</i> in snd-motif.scm uses them to make sure the mark list reflects the current edit history location.
+add-mark-pane in snd-motif.scm uses them to make sure the mark list reflects the current edit history location.
 See also autosave.scm.  <small>It is possible for after-edit-hook to be called more often that edit-hook.</small>
 
 </td></tr></table>
@@ -2608,7 +2608,7 @@ See also autosave.scm.  <small>It is possible for after-edit-hook to be called m
 of sounds, each with a list of channels, each with lists of edits,
 marks, and mixes.  The sound data itself is accessed through
 a variety of structures and functions, each aimed at a particular
-kind of use.  One of the most commonly used is the <i>vct</i>.
+kind of use.  One of the most commonly used is the vct.
 But before launching into vcts, I need to explain a few things
 about the following documentation.
 </p>
@@ -2663,9 +2663,9 @@ By defining a new vector type, named vct, and providing a package
 of old-style array-processing calls upon that type, we can speed up many
 operations by a factor of 30 -- enough of a difference to warrant
 the added complexity.  
-<i>make-vct</i> creates a new vct object.  It is freed by the
+make-vct creates a new vct object.  It is freed by the
 garbage collector when it can't be referenced any further.  To get 
-an element of a vct, use <i>vct-ref</i>; similarly <i>vct-set!</i>
+an element of a vct, use vct-ref; similarly vct-set!
 sets an element.
 Once created, a vct can be passed to a variety of built-in
 functions:</p>
@@ -2971,7 +2971,7 @@ channel:
 </pre></td></tr></table>
 
 <p>There is one slightly
-unusual function in this family: <i>vct-map!</i>.
+unusual function in this family: vct-map!.
 This is a do-loop (or for-each) over a vct, calling some 
 function to get the values to assign into the vct.  For example</p>
 <pre>
@@ -3365,7 +3365,7 @@ the assignment refers to the table of sound file data maintained by sndlib.  The
 subsequent reference to it in Snd will assume the new value.  In the mus-sound-chans case, say we have a sound file
 whose header claims it has 43 channels, but we know it only has 2:
 <pre>
-    (set! (<em class=red>mus-sound-chans</em> "43chans.snd") 2)
+    (set! (mus-sound-chans "43chans.snd") 2)
 </pre>
 tells Snd that it has 2 channels no matter what the header says.
 </td></tr>
@@ -3405,7 +3405,7 @@ This function reads the first 32 samples of a file, returning the 30th in channe
 
 <!-- mus-sound-data-format -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussounddataformat">mus-sound-data-format</a> (filename)</code></td></tr>
-<tr><td></td><td>data format (e.g. <i>mus-bshort</i>) (settable, see mus-sound-chans above)</td></tr>
+<tr><td></td><td>data format (e.g. <code>mus-bshort</code>) (settable, see mus-sound-chans above)</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-data-location -->
@@ -3436,7 +3436,7 @@ This function reads the first 32 samples of a file, returning the 30th in channe
 
 <!-- mus-sound-header-type -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundheadertype">mus-sound-header-type</a> (filename)</code></td></tr>
-<tr><td></td><td>header type (e.g. <i>mus-aifc</i>) (settable, see mus-sound-chans)</td></tr>
+<tr><td></td><td>header type (e.g. <code>mus-aifc</code>) (settable, see mus-sound-chans)</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-length -->
@@ -3583,32 +3583,32 @@ a given position in a sound's channel.  This simplicity, however, comes at
 a price in computation:  if the desired sample is not in Snd's
 in-core (already loaded) view of the data, it has to go get the sample,
 which can sometimes require that it open, read, and close a sound file.
-The result is that <i>sample</i> can bring your code
+The result is that sample can bring your code
 to a grinding halt.  There are two alternatives, leaving aside the scanning
 and mapping functions mentioned below.  One involves keeping the buffer of
-data around explicitly (<i>channel-&gt;vct</i>), and the other involves the
-use of a special object known as a <i>sample-reader</i>.  The sample-reader
+data around explicitly (channel-&gt;vct), and the other involves the
+use of a special object known as a sample-reader.  The sample-reader
 returns the next sample in its sound each time it is called; this kind
 of access is sometimes called an "enumerator" (Ruby) or perhaps "iterator" (Gtk+).
-The buffer approach (<i>channel-&gt;vct</i> in <a href="grfsnd.html#expsrc">expsrc</a>)
+The buffer approach (channel-&gt;vct in <a href="grfsnd.html#expsrc">expsrc</a>)
 is better if you're jumping around in the data, the sample-by-sample approach if you're treating
 the data as a sequence of samples.
 To get a sample reader,
-you create a reader (via <i>make-sample-reader</i>) giving it the start position, the sound and channel
-to read, and the initial read direction, then get data via <i>read-sample</i> (which remembers the
-read direction passed to make-sample-reader), or <i>next-sample</i> (read forward) and
-<i>previous-sample</i> (read backward); when done, you can close the reader with <i>free-sample-reader</i>, 
+you create a reader (via make-sample-reader) giving it the start position, the sound and channel
+to read, and the initial read direction, then get data via read-sample (which remembers the
+read direction passed to make-sample-reader), or next-sample (read forward) and
+previous-sample (read backward); when done, you can close the reader with free-sample-reader, 
 but it's not necessary; the
 garbage collector will take care of it if you forget.
 </p>
 
 <p>There is a similar set of functions giving access to the mix data.
-<i>make-mix-sample-reader</i> returns a mix reader for the desired mix,
-<i>mix-sample-reader?</i> returns #t if its argument in a mix sample reader,
-and <i>read-mix-sample</i> returns the next sample (before it is mixed into
+make-mix-sample-reader returns a mix reader for the desired mix,
+mix-sample-reader? returns #t if its argument in a mix sample reader,
+and read-mix-sample returns the next sample (before it is mixed into
 the output).
-Mixes can be collected into tracks, so there are also <i>make-track-sample-reader</i>, <i>track-sample-reader?</i>,
-and <i>read-track-sample</i>.
+Mixes can be collected into tracks, so there are also make-track-sample-reader, track-sample-reader?,
+and read-track-sample.
 </p>
 
 <!-- -------------------------------- SAMPLE-READER TABLE -------------------------------- -->
@@ -3633,7 +3633,7 @@ after you've freed it!).</td></tr>
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makemixsamplereader">make-mix-sample-reader</a> (mix <i>beg</i>)</code></td></tr>
 <tr><td></td>
 <td>create a mix-sample-reader reading <i>mix</i> starting (in the mix input) at <i>beg</i> which defaults to 0.
-See <i>mix-&gt;vct</i> in mix.scm.
+See mix-&gt;vct in mix.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3779,7 +3779,7 @@ If it is a mix reader, return the mix's id.  If it is a track reader, return a l
 
 </table>
 
-<p>If your extension language supports it, the <i>read-sample</i> functions can be omitted: <code>(reader)</code> is the same as <code>(<a class=quiet href="#readsample">read-sample</a> reader)</code>.
+<p>If your extension language supports it, the read-sample functions can be omitted: <code>(reader)</code> is the same as <code>(<a class=quiet href="#readsample">read-sample</a> reader)</code>.
 </p>
 
 <br>
@@ -3822,8 +3822,8 @@ If *reverb* is a snd-&gt;sample generator, for example,
 <A NAME="markstuff"></a>
 
 <p>A mark is an object that refers to a particular sample.
-Each mark has an associated sample number (<b>mark-sample</b>), name (<b>mark-name</b>), sync value (<b>mark-sync</b>), and
-a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>).  See <a href="snd.html#marks">Marks</a> in snd.html
+Each mark has an associated sample number (mark-sample), name (mark-name), sync value (mark-sync), and
+a globally unique id number (returned by find-mark or add-mark).  See <a href="snd.html#marks">Marks</a> in snd.html
 for an overview and key bindings associated with marks.
 </p>
 
@@ -3834,7 +3834,7 @@ for an overview and key bindings associated with marks.
 <!-- add-mark -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="addmark">add-mark</a> (sample <i>snd chn</i>)</code></td></tr>
 <tr><td width=60><br></td><td>
-add mark at <i>sample</i>, returning mark id.  If <i>sample</i> is out-of-range, <i>add-mark</i> throws 'no-such-sample.
+add mark at <i>sample</i>, returning mark id.  If <i>sample</i> is out-of-range, add-mark throws 'no-such-sample.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3860,8 +3860,8 @@ add mark at <i>sample</i>, returning mark id.  If <i>sample</i> is out-of-range,
 <tr><td></td><td>return identifier of the mark at sample <i>samp</i> or #f if none.
 This identifier is used in calls such as <a href="#marksample">mark-sample</a>.  Since marks
 can move around during editing, a unique 'tag' is needed to refer to a 
-particular mark. <i>samp</i> can also be a string; in this case <i>find-mark</i> 
-looks for a mark of that name.  <i>mark-name-&gt;id</i> in marks.scm finds a named mark in any channel (a global version of find-mark).
+particular mark. <i>samp</i> can also be a string; in this case find-mark 
+looks for a mark of that name.  mark-name-&gt;id in marks.scm finds a named mark in any channel (a global version of find-mark).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -4062,7 +4062,7 @@ show mark properties upon click: <a href="sndscm.html#markclickinfo">mark-click-
 <br>
 </td></tr></TABLE>
 
-<p>Other examples can be found in Dave Phillips' marks-menu.scm, snd-motif.scm (<i>add-mark-pane</i>),
+<p>Other examples can be found in Dave Phillips' marks-menu.scm, snd-motif.scm (add-mark-pane),
 edit-menu.scm (trim from mark, etc), examp.scm (move window to correspond to mark, looping).
 </p>
 <br>
@@ -4349,7 +4349,7 @@ pan mix vct: <a href="sndscm.html#panmixvct">pan-mix-vct</a><br>
 the mix dialog: <a href="snd.html#mixdialog">Mix Dialog</a><br>
 use pan-mix in File:Mix dialog: <a href="sndscm.html#usepanmixinmixmenu">use-pan-mix-in-mix-menu</a><br>
 mix menu: see mix-menu.scm<br>
-cross-fade in frequency: <i>cross-fade</i> and <i>dissolve-fade</i> in <a href="sndscm.html#fadedoc">fade.scm</a><br>
+cross-fade in frequency: cross-fade and dissolve-fade in <a href="sndscm.html#fadedoc">fade.scm</a><br>
 zipper cross-fade: <a href="sndscm.html#zipdoc">zipper.scm</a><br>
 snap mix to beat after drag: <a href="sndscm.html#snapmixtobeat">snap-mix-to-beat</a><br>
 delete all mixes: <a href="sndscm.html#deleteallmixes">delete-all-mixes</a><br>
@@ -4738,7 +4738,7 @@ deleted.
 <!-- save-region -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="saveregion">save-region</a> (reg <a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :header-type :data-format :comment) </code></td></tr>
 <tr><td></td><td>
-save region <i>reg</i> in <i>file</i> in data format (default is mus-bshort), header type (default
+save region <i>reg</i> in <i>file</i> in data format (default is <code>mus-bshort</code>), header type (default
 is mus-next), and comment.  Return the output filename.  The arguments after <i>reg</i> are <a class=quiet href="clm.html#optional-key">optional-key</a>
 args (that is, they are normal keyword arguments, but the keywords are optional).  The following calls are equivalent:
 <pre>
@@ -4981,7 +4981,7 @@ the end points.</td></tr>
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="srcsoundselection">src-selection</a> (num-or-env <i>base</i>) </code></td></tr>
 <tr><td></td><td>
 apply sampling rate conversion to the selection;
-this is the same as <i>src-sound</i> but applied to selection.
+this is the same as src-sound but applied to selection.
 </td></tr>
 </table>
 <br>
@@ -5140,7 +5140,7 @@ send channel 1 data to channel 1 of the DAC, and so on).
 	  (<em class=red>add-player</em> player 0 end current-edit-position #f chan)))
       (<em class=red>start-playing</em> chans (srate snd)))))
 </pre></td></tr></table>
-See <i>play-with-envs</i> in enved.scm, <i>play-syncd-marks</i> in marks.scm, or <i>start-dac</i> in play.scm.
+See play-with-envs in enved.scm, play-syncd-marks in marks.scm, or start-dac in play.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -5183,7 +5183,7 @@ could be:
 	   (/ (- axis-right axis-left)
 	      (- x1 x0)))))))
 </pre></td></tr></table>
-See <i>draw-smpte-label</i> in snd-motif.scm, or <i>make-current-window-display</i> in draw.scm.
+See draw-smpte-label in snd-motif.scm, or make-current-window-display in draw.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -5562,7 +5562,7 @@ tracking playback (a "tracking-cursor").
 The procedure
 should draw the cursor at the current cursor position using the
 <a href="#cursorcontext">cursor-context</a>.
-One example is <i>smart-line-cursor</i> in draw.scm.
+One example is smart-line-cursor in draw.scm.
 Here is a simpler one that
 replaces the normal "+" cursor with an "x":
 </td></tr>
@@ -5618,7 +5618,7 @@ Some NeXT/Sun (au) header files using byte-wide data
 assume the byte is unsigned, whereas most others assume it is signed.  Sndlib
 treats it as signed by default, so to make one of the unsigned-byte files playable,
 <pre>
-    (set! (<em class=red>data-format</em>) <a class=quiet href="#dataformat">mus-ubyte</a>)
+    (set! (data-format) <a class=quiet href="#dataformat">mus-ubyte</a>)
 </pre>
 Float data is another source of confusion;
 there is apparently no agreement on whether the data is between -1.0 and 1.0, or -32768.0 and 32767.0 or anything else.
@@ -5732,7 +5732,7 @@ Scheme delete funcs: remove-if assoc-remove! hash-remove! delete-if! delete! str
 </td></tr>
 <tr><td></td><td>
 This deletes a block of samples.  The deleted portion starts at sample <i>samp</i> and runs for <i>samps</i> samples.
-See <a href="#deletetozero">delete-to-zero</a> or <i>delete-selection-and-smooth</i> in extensions.scm.
+See <a href="#deletetozero">delete-to-zero</a> or delete-selection-and-smooth in extensions.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -6957,7 +6957,7 @@ play an external file: (play "file")<br>
 </blockquote></small>
 </td></tr></TABLE>
 
-<A NAME="playstopreasons"></a>
+<A NAME="stopplayreasons"></a>
 <pre><small>
 The "reasons" that might be passed to the stop-procedure are:
 
@@ -7051,7 +7051,7 @@ This returns #t if <i>obj</i> is an active <a href="#makeplayer">player</a>.
 This returns the x axis value that corresponds to the graph (screen pixel) position <i>xpos</i>.
 To find the sample that the mouse is pointing at, given the current mouse position,
 <pre>
-    (inexact-&gt;exact (round (* (<a class=quiet href="#srate">srate</a> snd) (position-&gt;x x snd chn)))
+    (inexact-&gt;exact (round (* (<a class=quiet href="#srate">srate</a> snd) (position-&gt;x x snd chn))))
 </pre>
 See gui.scm for examples.
 </td></tr>
@@ -8174,7 +8174,7 @@ If show-sonogram-cursor is #t (the default is #f), the cursor is also displayed 
 
 <!-- show-transform-peaks -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="showfftpeaks">show-transform-peaks</a> (<em class=narg>snd chn</em>)</code>
+<code><a class=def name="showtransformpeaks">show-transform-peaks</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 If show-transform-peaks is #t (the default is #f), transform peak information is included in the transform display.
@@ -8199,7 +8199,7 @@ If show-y-zero is #t (the default is #f), the y=0 axis is displayed.  This is th
 </td></tr>
 <tr><td></td><td>
 smooth-channel is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#smoothsound">smooth-sound</a>.
-<i>smooth-channel-via-ptree</i> in examp.scm is the virtual form.
+smooth-channel-via-ptree in examp.scm is the virtual form.
 
 <!-- INDEX smoothexamples:Smoothing -->
 
@@ -8291,7 +8291,7 @@ This gives info about loop points from the sound's header.  The loop info is a l
 up to 4 points, the first two (start, end) refer to the sustain loop,
 the second two to the release.  The 5th and 6th list entries are the base note and detune values.
 For historical reasons, the 7th and 8th entries are the sustain and release modes.
-This is similar to <a href="#mussoundloopinfo">mus-sound-loop-info</a> (but it's settable).  See <i>explode-sf2</i> in examp.scm.
+This is similar to <a href="#mussoundloopinfo">mus-sound-loop-info</a> (but it's settable).  See explode-sf2 in examp.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8354,7 +8354,7 @@ take the "snd chn" arguments):
 This is the amount of the frequency domain to include in the spectrum 
 display (the default is 1.0 = all of it). 
 spectro-cutoff the slider labelled '% of spectrum' in the View 
-Orientation dialog. See <i>zoom-fft</i> in examp.scm.
+Orientation dialog. See zoom-fft in examp.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8375,8 +8375,8 @@ This is the distance (in pixels) moved between successive spectrogram traces
 <code><a class=def name="spectrostart">spectro-start</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The start point of the frequency domain to include in the spectrum
-display (default 0.0).  See <i>zoom-fft</i> in examp.scm.
+This is the start point of the frequency domain in the spectrum
+display (default is 0.0).  See zoom-fft in examp.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8386,7 +8386,7 @@ display (default 0.0).  See <i>zoom-fft</i> in examp.scm.
 <code><a class=def name="spectroxangle">spectro-x-angle</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-Default spectrogram x-axis viewing angle (default 90.0, in GL: 300.0).  See snd-gl.scm.
+This is the spectrogram x-axis viewing angle (the default is 90.0 except in GL where it is 300.0).  See snd-gl.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8396,7 +8396,7 @@ Default spectrogram x-axis viewing angle (default 90.0, in GL: 300.0).  See snd-
 <code><a class=def name="spectroxscale">spectro-x-scale</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-Default scaler (stretch) along the spectrogram x axis (default 1.0, in GL: 1.5).
+This is the scaler (stretch amount) along the spectrogram x axis (the is default 1.0, in GL: 1.5).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8406,7 +8406,7 @@ Default scaler (stretch) along the spectrogram x axis (default 1.0, in GL: 1.5).
 <code><a class=def name="spectroyangle">spectro-y-angle</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-Same for y-axis (default 0.0, in GL: 320.0).
+This is the spectrogram y axis viewing angle (the default is 0.0, in GL: 320.0).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8416,7 +8416,7 @@ Same for y-axis (default 0.0, in GL: 320.0).
 <code><a class=def name="spectroyscale">spectro-y-scale</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-Same for y-axis (default 1.0).
+This is the scaler (stretch amount) for the spectrogram y axis (the default is 1.0).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8426,7 +8426,7 @@ Same for y-axis (default 1.0).
 <code><a class=def name="spectrozangle">spectro-z-angle</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-Same for z-axis (default 358.0, in GL: 0.0).
+This is the spectrogram viewing angle for the z axis (the default is 358.0, in GL: 0.0).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8436,7 +8436,7 @@ Same for z-axis (default 358.0, in GL: 0.0).
 <code><a class=def name="spectrozscale">spectro-z-scale</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-Same for z-axis (default 0.1, in GL: 1.0).
+This is the scaler (stretch amount) for the z axis (the default is 0.1, in GL: 1.0).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8446,7 +8446,7 @@ Same for z-axis (default 0.1, in GL: 1.0).
 <code><a class=def name="squelchupdate">squelch-update</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-#t if graphic updates are currently squelched (turned off).  If you're doing a sequence of edits where intermediate
+This is #t if graphic updates are currently squelched (turned off).  If you're doing a sequence of edits where intermediate
 states aren't of great interest, you can save time by turning off redisplays.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -8457,17 +8457,18 @@ states aren't of great interest, you can save time by turning off redisplays.
 <code><a class=def name="srate">srate</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-<i>snd</i>'s sampling rate.  If you set this to a new value, update-sound is called to
+This is <i>snd</i>'s sampling rate.  If you set this to a new value, update-sound is called to
 reflect the new srate, but any current edits are simply flushed.  This is consistent
-with the other header fields (data-format, etc), but can be annoying.
+with the other header fields (data-format, etc), but it can be annoying.
 <br><br>
-There are several srates floating around in Snd.  <code>(srate snd)</code> returns the
-sampling rate of a particular (currently open) sound. <code>(<a class=quiet href="#mussoundsrate">mus-sound-srate</a> filename)</code> returns a sound file's sampling
-rate.  <code>mus-srate</code> is associated with the CLM package (setting the implicit srate for oscil etc).  
-<code>default-output-srate</code> is the default sampling rate used when opening new files.  <code>enved-srate</code>
-is a constant that can be assigned to the envelope editor's <code>enved-target</code> (to apply an envelope to 
-the sampling rate).  <code>region-srate</code> is the sampling rate associated with a region.  <code>recorder-srate</code>
-is the sampling rate of the ADC.
+There are several srates floating around in Snd.  
+<code>(srate snd)</code> returns the sampling rate of a particular (currently open) sound. 
+<code>(<a class=quiet href="#mussoundsrate">mus-sound-srate</a> filename)</code> returns a sound file's sampling rate.  
+<code>mus-srate</code> is associated with the CLM package (setting the implicit srate for oscil etc).  
+<code>default-output-srate</code> is the default sampling rate used when opening new files.  
+<code>enved-srate</code> is a constant that can be assigned to the envelope editor's <code>enved-target</code> (to apply an envelope to the sampling rate).  
+<code>region-srate</code> is the sampling rate associated with a region.  
+<code>recorder-srate</code> is the sampling rate of the ADC.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8477,7 +8478,7 @@ is the sampling rate of the ADC.
 <code><a class=def name="srcchannel">src-channel</a> (num-or-env <i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-sampling rate conversion using 'warped sinc interpolation'.  The
+src-channel preforms sampling rate conversion using 'warped sinc interpolation'.  The
 argument <i>num-or-env</i> can be a number, an envelope, or a CLM env generator.
 <code>(src-channel 2.0)</code> makes the sound go twice as fast.
 This is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#srcsound">src-sound</a>.
@@ -8516,9 +8517,9 @@ linear src: linear-src-channel in dsp.scm<br>
 <code><a class=def name="srcsound">src-sound</a> (num-or-env <i>base snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-sampling rate conversion using 'warped sinc interpolation'.  The
+src-sound performs sampling rate conversion using 'warped sinc interpolation'.  The
 argument <i>num-or-env</i> can be either a number or an envelope.  In 
-the latter case, <i>base</i> sets the segment base (default is 1.0 = linear).
+the latter case, <i>base</i> sets the segment base (the default is 1.0 = linear).
 A value greater than 1.0 causes the sound to be transposed up.
 A value less than 0.0 causes the sound to be reversed. 
 <br><br>
@@ -8582,7 +8583,7 @@ how long the resultant note will be given an src envelope:
 <code><a class=def name="startplaying">start-playing</a> (<i>chans srate background</i>)</code>
 </td></tr>
 <tr><td></td><td>
-if a <a href="#makeplayer">play-list</a> is waiting, start it.  <i>chans</i> defaults to 1, 
+If a <a href="#makeplayer">play-list</a> is waiting, this starts it.  <i>chans</i> defaults to 1, 
 <i>srate</i> defaults to 44100, <i>background</i> defaults to #t. See play.scm or marks.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -8593,7 +8594,7 @@ if a <a href="#makeplayer">play-list</a> is waiting, start it.  <i>chans</i> def
 <code><a class=def name="startprogressreport">start-progress-report</a> (<i>snd</i>)</code>
 </td></tr>
 <tr><td></td><td>
-Start a progress report; see <a href="#progressreport">progress-report</a>.
+This starts a <a href="#progressreport">progress-report</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8603,7 +8604,7 @@ Start a progress report; see <a href="#progressreport">progress-report</a>.
 <code><a class=def name="stopplayer">stop-player</a> (player)</code>
 </td></tr>
 <tr><td></td><td>
-remove <i>player</i> from play-list (see <a href="#makeplayer">make-player</a>).
+This removes <i>player</i> from the current play-list (see <a href="#makeplayer">make-player</a>).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8613,9 +8614,9 @@ remove <i>player</i> from play-list (see <a href="#makeplayer">make-player</a>).
 <code><a class=def name="stopplaying">stop-playing</a> (<i>snd</i>)</code>
 </td></tr>
 <tr><td></td><td>
-if <i>snd</i> is playing, stop it.
-If no argument is given, stop all sounds (channels) in progress.  See play.scm or popup.scm; also
-<a href="#stopplayinghook">stop-playing-hook</a>, <a href="#stopplayingselectionhook">stop-playing-selection-hook</a>.
+If <i>snd</i> is playing, this stops it.
+If no argument is given, it stops all playback.  See play.scm, popup.scm,
+<a href="#stopplayinghook">stop-playing-hook</a>, or <a href="#stopplayingselectionhook">stop-playing-selection-hook</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8625,7 +8626,7 @@ If no argument is given, stop all sounds (channels) in progress.  See play.scm o
 <code><a class=def name="swapchannels">swap-channels</a> (<i>snd1 chn1 snd2 chn2 beg dur edpos0 edpos1</i>)</code>
 </td></tr>
 <tr><td></td><td>
-Swap the indicated channels, between beg and beg+dur.  See <i>swap-selection-channels</i> in examp.scm.
+This swaps the indicated channels, between <i>beg</i> and <i>beg</i> + <i>dur</i>. 
 In simple cases, this is a virtual operation.  swap-channels can be used to change channel order arbitrarily.
 For example, the following function reverses the channel order:
 </td></tr>
@@ -8645,9 +8646,9 @@ For example, the following function reverses the channel order:
 </td></tr><tr><td></td><td>
 Channel rotation is similar, though slightly more work; see scramble-channels in examp.scm.
 Since swap-channels is a virtual operation in many cases, it's worth using it even
-where just a channel copy is desired.  See <a href="sndscm.html#monotostereo">mono-&gt;stereo</a>
-in extensions.scm for an example.  Here the "extra" channel is empty (brand-new) anyway, so
-nothing is wasted.
+where just a channel copy is desired; <a href="sndscm.html#monotostereo">mono-&gt;stereo</a>
+in extensions.scm for an example.  
+Another example is swap-selection-channels in examp.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8657,7 +8658,7 @@ nothing is wasted.
 <code><a class=def name="sync">sync</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-<i>snd</i>'s 'sync' value (an integer, 0=none). Several functions (scale-by, for example), apply to the
+sync returns <i>snd</i>'s 'sync' value (an integer, 0 = not sync'd). Several functions (<a href="#scaleby">scale-by</a>, for example), apply to the
 currently selected sound and also to any other sounds that share its sync value.  (I later decided that
 this was a bad idea, hence the regularized replacements).  Sounds that share a given sync value 
 move together when you drag an x-axis slider and so on.
@@ -8671,8 +8672,8 @@ move together when you drag an x-axis slider and so on.
 <code><a class=def name="syncmax">sync-max</a> ()</code>
 </td></tr>
 <tr><td></td><td>
-Maximum <a href="#sync">sync</a> setting seen so far (this provides a painless way to get a sync value that
-is guaranteed to be unique).
+This is the maximum <a href="#sync">sync</a> setting seen so far -- it provides a painless way to get a sync value that
+is guaranteed to be unique.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8682,7 +8683,7 @@ is guaranteed to be unique).
 <code><a class=def name="timegraphp">time-graph?</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-#t if the time domain graph is being displayed (the 'w' button).
+This is #t if the time domain graph is being displayed (the 'w' button).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8692,7 +8693,7 @@ is guaranteed to be unique).
 <code><a class=def name="timegraphstyle">time-graph-style</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-how time-domain data is displayed.
+This determines how time-domain data is displayed.
 The choices are:
 <pre>
     graph-lines  graph-dots  graph-filled  graph-lollipops  graph-dots-and-lines 
@@ -8717,8 +8718,8 @@ The default is <code>graph-once</code>.  See also <a href="#wavohop">wavo-hop</a
 <code><a class=def name="trackingcursorstyle">tracking-cursor-style</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="#cursorstyle">cursor-style</a> in effect when the cursor is tracking playback (<a href="#withtrackingcursor">with-tracking-cursor</a>).
-tracking-cursor-style can be <i>cursor-cross</i> or <i>cursor-line</i>.  If you want some other shape, 
+This is the <a href="#cursorstyle">cursor-style</a> in effect when the cursor is tracking playback (<a href="#withtrackingcursor">with-tracking-cursor</a>).
+tracking-cursor-style can be <code>cursor-cross</code> or <code>cursor-line</code>.  If you want some other shape, 
 use the function choice for cursor-style (that function's third argument can tell you when you're tracking).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -8729,8 +8730,9 @@ use the function choice for cursor-style (that function's third argument can tel
 <code><a class=def name="transformframes">transform-frames</a> (<i>snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-return either 0 if no transform, <a href="#transformsize">transform-size</a> if graph-once,
-or (list full-size bins slices) if sonogram or spectrogram.
+This returns either 0 if there is no transform, <a href="#transformsize">transform-size</a> if 
+<a href="#transformgraphtype">transform-graph-type</a> is <code>graph-once</code>,
+or (list full-size bins slices) if either a sonogram or a spectrogram is being displayed.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8740,7 +8742,7 @@ or (list full-size bins slices) if sonogram or spectrogram.
 <code><a class=def name="transformgraphp">transform-graph?</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-#t if <i>snd</i>'s channel <i>chn</i> is displaying a spectrum (the 'f' button).
+This is #t if <i>snd</i>'s channel <i>chn</i> is displaying a spectrum (the 'f' button).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8750,7 +8752,7 @@ or (list full-size bins slices) if sonogram or spectrogram.
 <code><a class=def name="transformgraphstyle">transform-graph-style</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-how frequency-domain data is displayed.
+This determines how frequency-domain data is displayed.
 The choices are:
 <pre>
     graph-lines  graph-dots  graph-filled  graph-lollipops  graph-dots-and-lines 
@@ -8764,8 +8766,8 @@ The choices are:
 <code><a class=def name="transformgraphtype">transform-graph-type</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-choice of spectral display.  The choices are (default) <i>graph-once</i>, 
-<i>graph-as-sonogram</i>, and <i>graph-as-spectrogram</i>.
+This determines the choice of spectral display.  The choices are (default) <code>graph-once</code>, 
+<code>graph-as-sonogram</code>, and <code>graph-as-spectrogram</code>.
 Currently, the <a href="#fftlogfrequency">fft-log-frequency</a> and <a href="#normalizefft">transform-normalization</a>
 choices are ignored by the spectrogram display.
 If you've included openGL in Snd, the spectrogram will use it if <a href="#withgl">with-gl</a> is #t (the
@@ -8779,11 +8781,12 @@ default).
 <code><a class=def name="normalizefft">transform-normalization</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-Transform normalization choice (default: <i>normalize-by-channel</i>)
-If <i>normalize-by-channel</i> or <i>normalize-by-sound</i>, spectral data is 
-normalized to 1.0 before display. If <i>dont-normalize</i>, you get the 
+This is the transform normalization choice (default: <code>normalize-by-channel</code>)
+If it is <code>normalize-by-channel</code> or <code>normalize-by-sound</code>, spectral data is 
+normalized to 1.0 before display. If <code>dont-normalize</code>, you get the 
 raw data values, which can reflect amplitude changes -- Snd tries to 
-choose a y axis limit that makes successive displays move smoothly. The other choice is <i>normalize-globally</i> (i.e. across all sounds).
+choose a y axis limit that makes successive displays move smoothly. 
+The other choice is <code>normalize-globally</code> (i.e. across all sounds).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8793,7 +8796,7 @@ choose a y axis limit that makes successive displays move smoothly. The other ch
 <code><a class=def name="transformsample">transform-sample</a> (<i>bin slice snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-the current value of the transform (if any) in <i>bin</i> and (if a 
+This is the current value of the transform (if any) in <i>bin</i> and (if a 
 sonogram or spectrogram) <i>slice</i> in <i>snd</i>'s channel <i>chn</i>.  
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -8804,11 +8807,11 @@ sonogram or spectrogram) <i>slice</i> in <i>snd</i>'s channel <i>chn</i>.
 <code><a class=def name="transformsize">transform-size</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-FFT size (the default size is 512).  Should be a power of 2.  Any size is ok, if you have sufficient
-memory and time.  If your version of Snd was built with FFTW, and you set transform-size
+This is the fft size (the default size is 512).  It should be a power of 2.
+If your version of Snd was built with FFTW, and you set transform-size
 too large (on my machine, with 2 GBytes of memory,
 <code>(expt 2 26)</code> is apparently too large), FFTW simply exits Snd!  There is currently
-no way to trap the error (it is not really a fatal error). 
+no way to trap the error.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8818,7 +8821,7 @@ no way to trap the error (it is not really a fatal error).
 <code><a class=def name="transformtype">transform-type</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The spectrum transform type (default: <i>fourier-transform</i>).
+This is the spectrum transform type (the default is <code>fourier-transform</code>).
 <pre>
     fourier-transform  wavelet-transform   haar-transform
     autocorrelation    walsh-transform     cepstrum     
@@ -8831,8 +8834,8 @@ The spectrum transform type (default: <i>fourier-transform</i>).
 <code><a class=def name="transform_to_vct">transform-&gt;vct</a> (<i>snd chn v</i>)</code>
 </td></tr>
 <tr><td></td><td>
-return vct struct with the transform data currently in <i>snd</i>'s channel <i>chn</i>.
-If v (a vct) is provided, it is filled, rather than creating a new vct.
+This returns a vct with the transform data from <i>snd</i>'s channel <i>chn</i>.
+If <i>v</i> (a vct) is provided, it is filled, rather than creating a new vct.
 See <a href="#fftpeak">fft-peak</a> for an example.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -8842,9 +8845,9 @@ See <a href="#fftpeak">fft-peak</a> for an example.
 <code><a class=def name="undo">undo</a> (<i>edits snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-undo <i>edits</i> edits (default 1) in <i>snd</i>'s channel <i>chn</i>.
+This undoes <i>edits</i> edits (the default is 1) in <i>snd</i>'s channel <i>chn</i>.
 Undo follows the <a class=quiet href="#sync">sync</a> field if it
-is not 0, which sometimes means that the channel arg is simply ignored.  The following might be a more reasonable undo function:
+is not 0.  The following might be a more reasonable undo function:
 <br>
 <pre>
 (define* (<a name="undochannel">undo-channel</a> #:optional (<a class=quiet href="#edits">edits</a> 1) snd chn)
@@ -8881,7 +8884,7 @@ About edit lists: <a href="#editlists">Edit lists</a><br><br>
 <code><a class=def name="updatelispgraph">update-lisp-graph</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-redisplay <i>chn's</i> lisp graph.  See <a href="sndscm.html#enveddoc">enved.scm</a> which uses the lisp graph as a local envelope editor.
+This forces Snd to redisplay <i>chn's</i> lisp graph.  See <a href="sndscm.html#enveddoc">enved.scm</a> which uses the lisp graph as a local envelope editor.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8891,7 +8894,7 @@ redisplay <i>chn's</i> lisp graph.  See <a href="sndscm.html#enveddoc">enved.scm
 <code><a class=def name="updatesound">update-sound</a> (snd)</code>
 </td></tr>
 <tr><td></td><td>
-update <i>snd</i> (re-reads data from disk, flushing any pending edits).  In some cases (primarily involving
+This causes Snd to update <i>snd</i> (it re-reads the data from disk, flushing any pending edits).  In some cases (primarily involving
 a change in the number of channels), update-sound can change the index of the sound referred to by <i>snd</i>.
 See <a href="#updatehook">update-hook</a> for a way to deal with the index confusion.
 </td></tr>
@@ -8903,7 +8906,7 @@ See <a href="#updatehook">update-hook</a> for a way to deal with the index confu
 <code><a class=def name="updatetimegraph">update-time-graph</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-redisplay <i>chn's</i> time domain graph.  See <i>color-samples</i> in draw.scm.
+This forces Snd to redisplay <i>chn's</i> time domain graph.  See color-samples in draw.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8913,8 +8916,7 @@ redisplay <i>chn's</i> time domain graph.  See <i>color-samples</i> in draw.scm.
 <code><a class=def name="updatetransformgraph">update-transform-graph</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-redisplay <i>chn's</i> fft graph; for historical reasons, it also forces the current transform to completion.  
-See <a href="#zeropad">zero-pad</a> and <a href="#beforetransformhook">before-transform-hook</a>.
+This forces Snd to redisplay <i>chn's</i> fft graph.  For historical reasons, it also forces the current transform to completion.  
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8925,7 +8927,7 @@ See <a href="#zeropad">zero-pad</a> and <a href="#beforetransformhook">before-tr
 <code><a class=def name="variablegraphp">variable-graph?</a> (index)</code>
 </td></tr>
 <tr><td></td><td>
-return #t if <i>index</i> refers to a variable graph (see <a href="#makevariablegraph">make-variable-graph</a>).
+This returns #t if <i>index</i> refers to a variable graph (see <a href="#makevariablegraph">make-variable-graph</a>).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8936,7 +8938,7 @@ return #t if <i>index</i> refers to a variable graph (see <a href="#makevariable
 <code><a class=def name="viewsound">view-sound</a> (filename)</code>
 </td></tr>
 <tr><td></td><td>
-open <i>filename</i> read-only (you can edit the sound within Snd, but you can't overwrite the original sound).
+This opens <i>filename</i> read-only (you can edit the sound within Snd, but you can't overwrite the original sound).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8946,9 +8948,9 @@ open <i>filename</i> read-only (you can edit the sound within Snd, but you can't
 <code><a class=def name="verbosecursor">verbose-cursor</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-If #t, the cursor's position and other information is constantly 
-displayed in the minibuffer.  This is the View:Verbose cursor option 
-(default: #f).  The new name of this variable is <a href="#withverbosecursor">with-verbose-cursor</a>; 
+If verbose-cursor #t (the default is #f), the cursor's position and other information is constantly 
+displayed in the minibuffer.  This is the View:Verbose cursor option .  The new name of this variable 
+is <a href="#withverbosecursor">with-verbose-cursor</a>; 
 eventually "verbose-cursor" will be retired.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -8959,10 +8961,10 @@ eventually "verbose-cursor" will be retired.
 <code><a class=def name="wavelettype">wavelet-type</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-If <i><a href="#transformtype">transform-type</a></i> is <i>wavelet-transform</i>, <i>wavelet-type</i> selects which 
+If <a href="#transformtype">transform-type</a> is <code>wavelet-transform</code>, wavelet-type selects which 
 wavelet is used.  The list of available wavelets is in the Transform 
-Dialog. There are currently 48 choices, so this variable goes from 
-0 to 47 (default: 0).
+Dialog. There are around 48 choices, so this variable goes from 
+0 to 47 (the default is 0).
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8972,8 +8974,8 @@ Dialog. There are currently 48 choices, so this variable goes from
 <code><a class=def name="wavohop">wavo-hop</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-This sets the distance upward between wavogram traces; that is,
-the smaller this number, the more traces can be displayed (default: 3).  See <a href="#timegraphtype">time-graph-type</a>.
+This sets the distance upward (pixels) between wavogram traces; that is,
+the smaller this number, the more traces can be displayed (the default is 3).  See <a href="#timegraphtype">time-graph-type</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8983,7 +8985,7 @@ the smaller this number, the more traces can be displayed (default: 3).  See <a 
 <code><a class=def name="wavotrace">wavo-trace</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-This sets the length (in samples) of each wavogram trace (default: 64).  See <a href="#timegraphtype">time-graph-type</a>.
+This sets the length (in samples) of each wavogram trace (the default is 64).  See <a href="#timegraphtype">time-graph-type</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8993,7 +8995,7 @@ This sets the length (in samples) of each wavogram trace (default: 64).  See <a 
 <code><a class=def name="withtrackingcursor">with-tracking-cursor</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-#t if cursor is following along in the sound as it plays.  To make this the default:
+This is #t if the cursor is following along in the sound during playback.  To make this the default:
 <pre>
     (set! (with-tracking-cursor) #t)
 </pre>
@@ -9032,7 +9034,7 @@ tracking cursor updating: <a href="#cursorupdateinterval">cursor-update-interval
 <code><a class=def name="withverbosecursor">with-verbose-cursor</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-If #t, the cursor's position and other information is constantly 
+If with-verbose-cursor is #t, the cursor's position and other information is constantly 
 displayed in the minibuffer.  This is the View:Verbose cursor option 
 (default: #f).  The old name of this variable was <a href="#verbosecursor">verbose-cursor</a>.
 </td></tr>
@@ -9044,9 +9046,9 @@ displayed in the minibuffer.  This is the View:Verbose cursor option
 <code><a class=def name="writepeakenvinfofile">write-peak-env-info-file</a> (snd chn filename)</code>
 </td></tr>
 <tr><td></td><td>
-writes the current peak-env amp info of the given channel to <i>filename</i>.  See peak-env.scm which uses
+This function writes the current peak-env amp info of the given channel to <i>filename</i>.  See peak-env.scm which uses
 this function and its friends to write the peak env data to a file when a sound is closed; a subsequent
-open of that sound can use that data to speed up the sound's redisplay; without the peak env data,
+open of that sound can use the saved peak-env data to speed up the sound's redisplay; without the peak env data,
 a background process is launched to read the entire sound to get the needed data.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -9056,7 +9058,8 @@ a background process is launched to read the entire sound to get the needed data
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="xaxislabel">x-axis-label</a> (snd chn context)</code></td></tr>
 <tr><td></td><td>
-the current x axis label. <i>context</i> is one of time-graph (the default), lisp-graph, or transform-graph.
+This is the current x axis label. <i>context</i> is one of <code>time-graph</code> (the default), <code>lisp-graph</code>, or 
+<code>transform-graph</code>.
 <pre>
     :<em class=typing>(x-axis-label)</em>
     <em class=listener>"time"</em>
@@ -9072,13 +9075,12 @@ the current x axis label. <i>context</i> is one of time-graph (the default), lis
 <code><a class=def name="xaxisstyle">x-axis-style</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
+x-axis-style is the View menu 'X-axis units' option (the default value is <code>x-axis-in-seconds</code>). 
 The x axis labelling of the time domain waveform can be in seconds
-(<i>x-axis-in-seconds</i>), in samples (<i>x-axis-in-samples</i>), expressed
-as a percentage of the overall duration (<i>x-axis-as-percentage</i>, useful in envelope definitions), as a beat number (<i>x-axis-in-beats</i>),
-as a measure number (<i>x-axis-in-measures</i>), or in digital clock format (DD:HH:MM:SS.ddd) (<i>x-axis-as-clock</i>, useful in
+(<code>x-axis-in-seconds</code>), in samples (<code>x-axis-in-samples</code>), expressed
+as a percentage of the overall duration (<code>x-axis-as-percentage</code>, useful in envelope definitions), as a beat number (<code>x-axis-in-beats</code>),
+as a measure number (<code>x-axis-in-measures</code>), or in digital clock format (DD:HH:MM:SS.ddd) (<code>x-axis-as-clock</code>, useful in
 very large files).
-This is the View menu 'X-axis units' option.
-(default: <i>x-axis-in-seconds</i>). 
 When the x axis labelling is in measures, the label has the form M(B)F or M(B) where M is the one-based
 measure number (that is, the first measure, at time 0.0, is measure 1), B is the one-based beat number
 within that measure, and F (if present) is the location within that beat on a scale of 0.0 to 1.0.
@@ -9093,8 +9095,10 @@ is distinguished from the beat by having a longer tick mark.
 <code><a class=def name="xbounds">x-bounds</a> (<i>snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-return (list x0 x1) -- current x axis time domain bounds in seconds.
-<code>(set! (x-bounds) (list 0.0 (/ (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#srate">srate</a>))))</code> shows the full sound.
+This returns (list x0 x1), the current x axis time domain bounds in seconds.  To display the entire sound:
+<pre>
+    (set! (x-bounds) (list 0.0 (/ (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#srate">srate</a>))))
+</pre> 
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -9104,8 +9108,8 @@ return (list x0 x1) -- current x axis time domain bounds in seconds.
 <code><a class=def name="x_to_position">x-&gt;position</a> (x snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
-the graph (screen pixel) position that corresponds to the X axis value <i>x</i>. 
-<i>axis</i> is one of time-graph (the default), lisp-graph, or transform-graph.
+This returns the graph (screen pixel) position that corresponds to the x axis value <i>x</i>. 
+<i>axis</i> is one of <code>time-graph</code> (the default), <code>lisp-graph</code>, or <code>transform-graph</code>.
 See draw.scm or gtk-popup.scm for examples.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -9116,7 +9120,7 @@ See draw.scm or gtk-popup.scm for examples.
 <code><a class=def name="xpositionslider">x-position-slider</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-value of x axis position slider.  See <i>zoom-fft</i> in examp.scm.
+This is the value of x axis position slider.  See zoom-fft in examp.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -9126,7 +9130,7 @@ value of x axis position slider.  See <i>zoom-fft</i> in examp.scm.
 <code><a class=def name="xzoomslider">x-zoom-slider</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-value of x axis zoom slider.  See <a href="#zoomonepixel">zoom-one-pixel</a>.
+This is the value of x axis zoom slider.  See <a href="#zoomonepixel">zoom-one-pixel</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -9137,8 +9141,8 @@ value of x axis zoom slider.  See <a href="#zoomonepixel">zoom-one-pixel</a>.
 </td></tr>
 <tr><td></td><td>
 xramp-channel is a slight extension of <a href="#rampchannel">ramp-channel</a>. It scales samples in the given sound/channel
-between beg and beg + dur by an exponential ramp going from rmp0 to rmp1 with the connecting segment curvature
-set by base. (xramp-channel underlies the virtual exponential envelope operations).
+between <i>beg</i> and <i>beg</i> + <i>dur</i> by an exponential ramp going from <i>rmp0</i> to <i>rmp1</i> with the connecting segment curvature
+set by <i>base</i>.
 <pre>
     (xramp-channel 0.0 1.0 32.0)
 </pre>
@@ -9150,7 +9154,7 @@ set by base. (xramp-channel underlies the virtual exponential envelope operation
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="yaxislabel">y-axis-label</a> (snd chn context)</code></td></tr>
 <tr><td></td><td>
-the current y axis label. <i>context</i> is one of time-graph (the default), lisp-graph, or transform-graph,
+This is the current y axis label. <i>context</i> is one of <code>time-graph</code> (the default), <code>lisp-graph</code>, or <code>transform-graph</code>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -9160,8 +9164,8 @@ the current y axis label. <i>context</i> is one of time-graph (the default), lis
 <code><a class=def name="ybounds">y-bounds</a> (<i>snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-return (list y0 y1) -- current y axis bounds.
-To set the bounds to reflect the channel's maxamp, use (set! (y-bounds) '()).
+This returns (list y0 y1), the current y axis bounds.
+To set the bounds to reflect the channel's maxamp, use <code>(set! (y-bounds) '())</code>.
 To set all channels at once using the selected sound's maxamp:
 </td></tr>
 
@@ -9193,9 +9197,9 @@ Or to set each channel to its own maxamp:
 <code><a class=def name="y_to_position">y-&gt;position</a> (y snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
-the graph (screen pixel) position that corresponds to the Y axis value <i>y</i>. 
-<i>axis</i> is one of time-graph (the default), lisp-graph, or transform-graph.
-This is used in <i>samples-via-colormap</i> in draw.scm to draw the time domain samples in many colors.
+This returns the graph (screen pixel) position that corresponds to the y axis value <i>y</i>. 
+<i>axis</i> is one of <code>time-graph</code> (the default), <code>lisp-graph</code>, or <code>transform-graph</code>.
+This is used in samples-via-colormap in draw.scm to draw the time domain samples in many colors.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -9205,7 +9209,7 @@ This is used in <i>samples-via-colormap</i> in draw.scm to draw the time domain 
 <code><a class=def name="ypositionslider">y-position-slider</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-value of y axis position slider.  See <i>zync</i> in snd-motif.scm.
+This is the value of y axis position slider.  See zync in snd-motif.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -9215,7 +9219,7 @@ value of y axis position slider.  See <i>zync</i> in snd-motif.scm.
 <code><a class=def name="yzoomslider">y-zoom-slider</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-value of y axis zoom slider.  See, for example, <a href="#xdisplayenergy">display-energy</a>, or <i>zync</i> in snd-motif.scm.
+This is the value of y axis zoom slider.  See <a href="#xdisplayenergy">display-energy</a>, or zync in snd-motif.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -9225,9 +9229,9 @@ value of y axis zoom slider.  See, for example, <a href="#xdisplayenergy">displa
 <code><a class=def name="zeropad">zero-pad</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-fft zero pad size as a multiple of the fft size; <code>(set! (zero-pad) 1)</code>
-gives you half data, half zeros (default: 0) (the data length is 
-determined by the nominal transform-size).  Zero padding causes interpolation 
+zero-pad is the fft zero pad size as a multiple of the fft size; <code>(set! (zero-pad) 1)</code>
+gives you half data, half zeros (the default value is 0).  The data length is 
+determined by the nominal transform-size.  Zero padding causes interpolation 
 of the fft points, making the display look smoother.
 </td></tr>
 
@@ -9252,6 +9256,7 @@ of the fft points, making the display look smoother.
 
 <table width="35%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="customcontrols">the control panel</a></h4></td></tr></table>
 
+<!-- STOPPED HERE -->
 <p>The control panel makes it easy to try out various quick effects without
 editing anything.  You can change volume ('amp'), pitch ('speed'), tempo
 ('expand'), reverb amount ('reverb'), simulated room size ('reverb len'),
@@ -9282,7 +9287,7 @@ The control panel procedures are:
 The current amp value.
 It is possible to use these controls (in "real-time") in your own functions.
 See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example,
-or <i>add-amp-control</i> in snd-motif.scm.
+or add-amp-control in snd-motif.scm.
 As an experiment, I added the optional <i>chn</i> argument; if it is specified, the
 channel's local amp-control value is set instead of the sound's.  This affects
 <a class=quiet href="#applycontrols">apply-controls</a> and playback.
@@ -9374,7 +9379,7 @@ where each entry can also be #f or an empty list.
 <tr><td></td><td>
 The <a class=quiet href="snd.html#contrast">contrast</a> amount.
 The contrast-enhancement algorithm treats this variable as a kind of modulation index (the higher, the brighter),
-whereas <i>contrast-control-amp</i> below prescales the in-coming signal to be closer to -1.0 to 1.0
+whereas contrast-control-amp below prescales the in-coming signal to be closer to -1.0 to 1.0
 (the brightening effect works best if it has a full amplitude signal to work with).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -9724,9 +9729,9 @@ If no <i>snd</i> argument is given, this also affects the Mix, Track, and View:F
 </td></tr>
 <tr><td></td><td>
 The speed control can be interpreted as a 
-float, (<i>speed-control-as-float</i>, the default), as a ratio 
-of relatively small integers (<i>speed-control-as-ratio</i>), or as a step in a 
-microtonal scale (<i>speed-control-as-semitone</i>).  
+float, (<code>speed-control-as-float</code>, the default), as a ratio 
+of relatively small integers (<code>speed-control-as-ratio</code>), or as a step in a 
+microtonal scale (<code>speed-control-as-semitone</code>).  
 In the various speed controls, you can click the number to cycle through the speed style choices.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -9737,7 +9742,7 @@ In the various speed controls, you can click the number to cycle through the spe
 <code><a class=def name="speedtones">speed-control-tones</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The number of tones per octave in the <i>speed-control-as-semitone</i> speed 
+The number of tones per octave in the <code>speed-control-as-semitone</code> speed 
 style (default: 12).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -10174,7 +10179,7 @@ return #t if <i>type</i> refers to an active transform type.
 
 <p>Other related variables and functions:</p>
 <table cellpadding=0 celspacing=10 border=0 hspace=20>
-<tr><td width=200><a href="#transformgraphp"><small>transform-graph?</small></a></td><td width=200><a href="#showfftpeaks"><small>show-transform-peaks</small></a></td><td><a href="#transformsample"><small>transform-sample</small></a></td></tr>
+<tr><td width=200><a href="#transformgraphp"><small>transform-graph?</small></a></td><td width=200><a href="#showtransformpeaks"><small>show-transform-peaks</small></a></td><td><a href="#transformsample"><small>transform-sample</small></a></td></tr>
 <tr><td><a href="#fftbeta"><small>fft-window-beta</small></a></td><td><a href="#showselectiontransform"><small>show-selection-transform</small></a></td><td><a href="#transform_to_vct"><small>transform-&gt;vct</small></a></td></tr>
 <tr><td><a href="#transformhook"><small>after-transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformframes"><small>transform-frames</small></a></td></tr>
 <tr><td><a href="#fftlogfrequency"><small>fft-log-frequency</small></a></td><td><a href="#spectrohop"><small>spectro-hop</small></a></td><td><a href="#transformtype"><small>transform-type</small></a></td></tr>
@@ -10326,8 +10331,8 @@ as the default:
 
 <!-- enved-style -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envedstyle">enved-style</a> ()</code></td></tr>
-<tr><td></td><td>envelope editor choice for connecting breakpoints.  Can be <i>envelope-linear</i> (the default), or
-<i>envelope-exponential</i>.
+<tr><td></td><td>envelope editor choice for connecting breakpoints.  Can be <code>envelope-linear</code> (the default), or
+<code>envelope-exponential</code>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -10335,7 +10340,7 @@ as the default:
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envedtarget">enved-target</a> ()</code></td></tr>
 <tr><td></td><td>
 Determines how the envelope editor's current envelope is applied to the currently selected data.
-The choices are <i>enved-amplitude</i>, <i>enved-srate</i> and <i>enved-spectrum</i>.
+The choices are <code>enved-amplitude</code>, <code>enved-srate</code> and <code>enved-spectrum</code>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -10756,7 +10761,7 @@ speed-control-as-ratio, or speed-control-as-semitone.
 <!-- vu-font -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vufont">vu-font</a> ()</code></td></tr>
 <tr><td></td><td>The "vu-" variables refer to the VU meters in the recorder.
-<i>vu-font</i> is the font used to label the meters.  It is normally "courier".
+vu-font is the font used to label the meters.  It is normally "courier".
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11304,7 +11309,7 @@ delete listener text from the beginning to the cursor position (C-M-g is bound t
 <tr><td></td><td>
 close file (opened by <a href="#opensoundfile">open-sound-file</a>) updating header to report <i>bytes</i> bytes of data.  This refers to data files
 handled directly, not sounds displayed in Snd (the latter are handled by <a href="#opensound">open-sound</a> and <a href="#closesound">close-sound</a>).
-See <i>save-track</i> in mix.scm, and <a href="#opensoundfile">open-sound-file</a>.
+See save-track in mix.scm, and <a href="#opensoundfile">open-sound-file</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11378,8 +11383,8 @@ simulate typing C-g (intended for use with bind-key to remap C-g).
 <code><a class=def name="defvar">defvar</a> (var val)</code></td></tr>
 <tr><td></td><td>
 same as <code>(define var val)</code> except that the envelope editor keeps track
-of <i>var</i> thereafter and treats lists as envelopes. (<i>defvar</i> is a macro).
-<i>defvar</i> exists in this context so that Snd and CLM can share envelope files;
+of <i>var</i> thereafter and treats lists as envelopes. (defvar is a macro).
+defvar exists in this context so that Snd and CLM can share envelope files;
 non-CLM users might prefer <a href="#defineenvelope">define-envelope</a>.
 <pre>
     (defvar a-func '(0 0 1 1))
@@ -11525,7 +11530,7 @@ is preceded by C-x.
 <code><a class=def name="listenerselection">listener-selection</a> ()</code></td></tr>
 <tr><td></td><td>
 
-<i>listener-selection</i> returns the currently selected text in the listener, or #f if there isn't any.  The following code 
+listener-selection returns the currently selected text in the listener, or #f if there isn't any.  The following code 
 starts the help dialog with help related to the selection if "h" is typed in the graph:
 <pre>
   (<a class=quiet href="#bindkey">bind-key</a> #\h 0 
@@ -11559,7 +11564,7 @@ Open (create) a sound file <i>file</i> (file name defaults to "test.snd" or "tes
 It is assumed that the data will be floats in the native format (written by 
 the caller interleaving channels), and that the file will be closed by 
 <a href="#closesoundfile">close-sound-file</a>. One simple way to write the data is to call 
-<a href="#vct2soundfile">vct-&gt;sound-file</a>.  <i>open-sound-file</i> opens an output file external to Snd, whereas <i>open-sound</i>
+<a href="#vct2soundfile">vct-&gt;sound-file</a>.  open-sound-file opens an output file external to Snd, whereas open-sound
 loads a file into Snd for editing.
 <pre>
   (let ((fd (<em class=red>open-sound-file</em> "hiho.snd" 1 :srate 22050 :comment "hiho is from snd-test")))
@@ -11652,7 +11657,7 @@ The actual HTML reader invoked is determined by <a href="#htmlprogram">html-prog
 but it's currently assumed that netscape/mozilla url syntax can be used to jump to
 the desired url.
 <pre>
-    (<em class=red>send-mozilla</em> "/home/bil/cl/extsnd.html#sendmozilla")
+    (send-mozilla "/home/bil/cl/extsnd.html#sendmozilla")
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -11704,7 +11709,7 @@ To get a more global help function (i.e. one that knows about Scheme built-ins a
 help (and apropos) support which uses 'regexps' and so forth.
 <br><br>
 Normally snd-help adds carriage-returns to fit the current size of the listener; to
-get the raw string instead, set the argument <i>formatted</i> to #f.  <i>click-for-listener-help</i>
+get the raw string instead, set the argument <i>formatted</i> to #f.  click-for-listener-help
 in draw.scm uses this to put off formatting the help string until the help dialog (rather than
 the listener) gets it.
 </td></tr>
@@ -11728,7 +11733,7 @@ files currently loaded into Snd.  The Guile boot file may be missing from the li
 <tr><td></td><td>
 When a sound file is opened, Snd looks for a file with the same 
 name but with an appended ".scm" extension.  If such a file is found, 
-it is loaded automatically.  The variable <i>*snd-opened-sound*</i> is set to 
+it is loaded automatically.  The variable *snd-opened-sound* is set to 
 the newly opened sound's index.  This supports the <a href="clm.html#snd-memo">snd-memo</a> feature 
 in CLM, but can be used independently of CLM to store marks, selections,
 or whatever that you want associated with a particular sound. Confusingly
@@ -11916,7 +11921,7 @@ return a list giving the widget width and height (pixels).  Can be set. See nb.s
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="windowproperty">window-property</a> (known-atom property)</code></td></tr>
 <tr><td width=60></td><td>
-<i>window-property</i> returns or (via set!) changes an X-window's property; <a href="sndscm.html#titlewithdate">title-with-date</a> in examp.scm uses this function
+window-property returns or (via set!) changes an X-window's property; <a href="sndscm.html#titlewithdate">title-with-date</a> in examp.scm uses this function
 to put the date and time in the Snd title bar.
 <pre>
     :<em class=typing>(window-property "SND_VERSION" "SND_VERSION")</em>
@@ -12077,8 +12082,8 @@ etc.  The Snd-specific errors are:</p>
 'gsl-error        'no-such-key    'no-such-direction  'cannot-parse
 'no-such-colormap
 </pre>
-<p><i>bad-arity</i> is jargon indicating that a procedure has been passed the
-wrong number of arguments.  <i>gsl-error</i> indicates that the GSL
+<p><code>bad-arity</code> is jargon indicating that a procedure has been passed the
+wrong number of arguments.  <code>gsl-error</code> indicates that the GSL
 library is the source of the error.
 The symbol #t stands for all errors in this case, so we can 
 run rough-shod over any error with:</p>
@@ -12200,7 +12205,7 @@ object is created via make-color:</p>
 <p>This declares the Scheme variable "blue" and gives it the value
 of the color whose rgb components include only blue in full force.
 The X11 color names are defined in <a href="sndscm.html#rgbdoc">rgb.scm</a>. The overall
-widget background color is <i>basic-color</i>.
+widget background color is basic-color.
 </p>
 <pre>
     &gt;<em class=typing>(set! (<a class=quiet href="#basiccolor">basic-color</a>) blue)</em>
@@ -12321,7 +12326,7 @@ variables and functions control this:</p>
 <tr><td><code><a class=def name="colorscale">color-scale</a></code></td><td>0.5</td>
 <td>The darkness setting in the <a href="snd.html#colorbrowser">color</a> dialog, divided by 100.</td></tr>
 <tr><td valign=top><code><a class=def name="colormap">colormap</a></code></td><td valign=top>0</td>
-<td>Colormap choice for various displays (see the Color dialog, or <i>samples-via-colormap</i> in draw.scm).
+<td>Colormap choice for various displays (see the Color dialog, or samples-via-colormap in draw.scm).
 <br>
 The built-in maps (from 0 to 15) are: 
 black-and-white, gray, hot, cool, bone, copper, pink, jet, prism, autumn, winter, 
@@ -12545,7 +12550,7 @@ as a list:
 </pre>
 
 <p>
-<i>dialog-widgets</i> entries are #f for any dialog that has not
+dialog-widgets entries are #f for any dialog that has not
 yet been created.  In gtk, the first element of the main-widgets list is the top level shell's window.
 If there are several copies of a given dialog, the dialog-widgets list entry is a list of widgets.
 </p>
@@ -12573,7 +12578,7 @@ The lowest level procedures are:
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="addcolormap">add-colormap</a> (name func)</code></td></tr>
 <tr><td></td><td>
-<i>add-colormap</i> adds a new colormap to the colormap table, returning its index (for
+add-colormap adds a new colormap to the colormap table, returning its index (for
 use with <a href="#colormap">colormap</a> or <a href="#colormapref">colormap-ref</a>).
 <i>name</i> is the name displayed in the Color Dialog's list of colormaps.
 <i>func</i> is a function of one argument, the desired colormap size; it will be
@@ -12624,24 +12629,24 @@ of FractInt's royal colormap):
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="colormapname">colormap-name</a> (index)</code></td></tr>
 <tr><td></td><td>
-<i>colormap-name</i> returns the specified colormap's name.
+colormap-name returns the specified colormap's name.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- colormap-ref -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="colormapref">colormap-ref</a> (map pos)</code></td></tr>
 <tr><td></td><td>
-<i>colormap-ref</i> returns the rgb values of the colormap <i>map</i> at position <i>pos</i>,
+colormap-ref returns the rgb values of the colormap <i>map</i> at position <i>pos</i>,
 suitable for use with make-color.  <i>pos</i> should be a float between
 0.0 and 1.0.
-See <i>samples-via-colormap</i> in draw.scm.
+See samples-via-colormap in draw.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- colormap-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="colormapsize">colormap-size</a> ()</code></td></tr>
 <tr><td></td><td>
-<i>colormap-size</i> returns (or sets) the current number of colors in each colormap.
+colormap-size returns (or sets) the current number of colors in each colormap.
 The default is 512.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -12649,7 +12654,7 @@ The default is 512.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="colormapp">colormap?</a> (index)</code></td></tr>
 <tr><td></td><td>
-<i>colormap?</i> returns #t if <i>index</i> represents a usable colormap.
+colormap? returns #t if <i>index</i> represents a usable colormap.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- copy-context -->
@@ -12657,8 +12662,8 @@ The default is 512.
 <code><a class=def name="copycontext">copy-context</a></code></td></tr>
 <tr><td></td><td>
 the graphics mode to use to draw over whatever is currently in a graph.
-The "contexts" refer to graphics contexts used throughout Snd; the <i>copy-context</i>
-copies into the current graph, whereas the <i>cursor-context</i> uses XOR.
+The "contexts" refer to graphics contexts used throughout Snd; the <code>copy-context</code>
+copies into the current graph, whereas the <code>cursor-context</code> uses XOR.
 The error thrown for an unimplemented 'context' is 'no-such-graphics-context.
 See draw.scm or <a href="#displaysampsinred">display-samps-in-red</a>.
 </td></tr>
@@ -12685,7 +12690,7 @@ See <a href="#xcursor">x-cursor</a> or
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="deletecolormap">delete-colormap</a> (index)</code></td></tr>
 <tr><td></td><td>
-<i>delete-colormap</i> deletes the colormap represented by <i>index</i>.
+delete-colormap deletes the colormap represented by <i>index</i>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- draw-axes -->
@@ -12695,7 +12700,7 @@ See <a href="#xcursor">x-cursor</a> or
 draw axes in the widget <i>wid</i>, using the graphics context <i>gc</i>, with the x-axis label <i>label</i>
 going from <i>x0</i> to <i>x1</i> (floats) along the x axis, <i>y0</i> to <i>y1</i> along the y axis, with x-axis-style
 <i>style</i> (x-axis-in-seconds etc); which axes are actually displayed or just implied
-depends on <i>axes</i> (it defaults to <i>show-all-axes</i>). Return a list of the actual (pixel) axis bounds.  See the scanned-synthesis display code in snd-motif.scm,
+depends on <i>axes</i> (it defaults to <code>show-all-axes</code>). Return a list of the actual (pixel) axis bounds.  See the scanned-synthesis display code in snd-motif.scm,
 or the local envelope editor code in xm-enved.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -12703,14 +12708,14 @@ or the local envelope editor code in xm-enved.scm.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="drawdot">draw-dot</a> (x0 y0 dot-size snd chn context)</code></td></tr>
 <tr><td width=60></td><td>
-draw a dot at (x0 y0) of <i>dot-size</i> pixels diameter in the given graph.  See musglyphs.scm.</td></tr>
+draw a dot at (x0 y0) of <a href="#dotsize">dot-size</a> pixels diameter in the given graph.  See musglyphs.scm.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- draw-dots -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="drawdots">draw-dots</a> (positions dot-size snd chn context)</code></td></tr>
 <tr><td></td><td>
-draw dots of size <i>dot-size</i> from the (x y) pairs in the vector <i>positions</i> in the given context.
+draw dots of size <a href="#dotsize">dot-size</a> from the (x y) pairs in the vector <i>positions</i> in the given context.
 draw-dots, draw-lines, and fill-polygon take vectors, rather than vcts (which would be more consistent
 with the rest of Snd) because the values passed are supposed to be short ints.  The xm and xg modules
 have made these functions obsolete.
@@ -12722,7 +12727,7 @@ have made these functions obsolete.
 <code><a class=def name="drawline">draw-line</a> (x0 y0 x1 y1 snd chn context)</code></td></tr>
 <tr><td></td><td>
 draw a line from (x0 y0) to (x1 y1) in the given context.
-See <i>show-hiho</i> below.
+See show-hiho below.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -12731,8 +12736,8 @@ See <i>show-hiho</i> below.
 <code><a class=def name="drawlines">draw-lines</a> (lines size snd chn context)</code></td></tr>
 <tr><td></td><td>
 draw lines following the (x y) pairs in the vector <i>lines</i> in the given graphics context (<a class=quiet href="#copycontext">copy-context</a> is the default).
-See <i>make-current-window-display</i> in draw.scm.
-<i>make-bezier-1</i> in <a href="sndscm.html#musglyphs">musglyphs.scm</a> can be used to draw Bezier curves.
+See make-current-window-display in draw.scm.
+make-bezier-1 in <a href="sndscm.html#musglyphs">musglyphs.scm</a> can be used to draw Bezier curves.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -12826,7 +12831,7 @@ musglyphs.scm has some elaborate examples that use fill-polygon to draw music no
 the current foreground color.
 The following gives us a green cursor:
 <pre>
-  (set! (<em class=red>foreground-color</em> 0 0 <a class=quiet href="#cursorcontext">cursor-context</a>) (<a class=quiet href="#makecolor">make-color</a> 1 0 1))
+  (set! (foreground-color 0 0 <a class=quiet href="#cursorcontext">cursor-context</a>) (<a class=quiet href="#makecolor">make-color</a> 1 0 1))
 </pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -12835,7 +12840,7 @@ The following gives us a green cursor:
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="glspectrogram">glSpectrogram</a> (data gl-list cutoff use-dB min-dB scale br bg bb)</code></td></tr>
 <tr><td></td><td>
-<i>glSpectrogram</i> takes spectrogram data and passes it to openGL.  
+glSpectrogram takes spectrogram data and passes it to openGL.  
 The <a href="sndscm.html#startwaterfall">waterfall</a> function in snd-gl.scm uses this function.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -12843,11 +12848,11 @@ The <a href="sndscm.html#startwaterfall">waterfall</a> function in snd-gl.scm us
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="graphdata">graph-data</a> (data snd chn context low high graphics-style)</code></td></tr>
 <tr><td></td><td>
-<i>graph-data</i> displays <i>data</i> in the time domain graph of <i>snd</i>'s channel
+graph-data displays <i>data</i> in the time domain graph of <i>snd</i>'s channel
 <i>chn</i> using the graphics context <i>context</i> (normally copy-context), placing the
 data in the recipient's graph between points <i>low</i> and <i>high</i>
-in the drawing mode (<i>graphics-style</i>).
-With this function and <i>make-graph-data</i> we can overlay sounds,
+in the drawing mode (graphics-style).
+With this function and make-graph-data, we can overlay sounds,
 overlay different versions of the same sound, place a portion of a
 sound over another at an arbitrary point, and so on (see draw.scm):
 </td></tr>
@@ -12898,7 +12903,7 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="makegraphdata">make-graph-data</a> (snd chn edit-position low-sample high-sample)</code></td></tr>
 <tr><td></td><td>
-Use <i>make-graph-data</i> to get the currently displayed data (i.e. the waveform displayed
+Use make-graph-data to get the currently displayed data (i.e. the waveform displayed
 in the graph, which can be based on an overall peak envelope rather than the
 individual samples).
 It returns either a vct (if the graph has one trace), or a
@@ -12937,9 +12942,9 @@ The result can be used in the lisp graph:
 </td></tr>
 <tr><td></td><td>
 Here we are taking whatever is displayed in the time domain, and
-presenting the same thing in dB in the lisp graph.  <i>display-energy</i>
+presenting the same thing in dB in the lisp graph.  display-energy
 in examp.scm is another example.  But the real power of this function
-comes from its use with <i>graph-data</i>.  
+comes from its use with graph-data.  
 The latter takes its argument (either a vct or a list of two
 vcts), and displays it in any channel's time domain graph using its current graph-style.
 </td></tr>
@@ -12964,7 +12969,7 @@ the graphics context for XOR drawing in the selection color (used by <a href="#f
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sndgcs">snd-gcs</a></code></td></tr>
 <tr><td></td><td>
-<i>snd-gcs</i> returns a list of Snd's graphics contexts:
+snd-gcs returns a list of Snd's graphics contexts:
 <pre>
     0: bg=graph-color, fg=data-color
     1: bg=selected-graph-color, fg=selected-data-color
@@ -13032,7 +13037,7 @@ If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></
         <!-- I(combine channels):L(channel-style)(channelstyle) -->
         <!-- I(normalize display):L(equalize-panes)(equalizepanes) -->
         <!-- I(control panel):L(show-controls)(showcontrols) -->
-	<!-- I(fft peaks):L(show-transform-peaks)(showfftpeaks) -->
+	<!-- I(fft peaks):L(show-transform-peaks)(showtransformpeaks) -->
         <!-- I(fft peaks):O(peaks)(peaks) -->
 	<!-- I(fft/sono/spectrogram):L(transform-graph-type)(transformgraphtype) -->
         <!-- I(zoom focus):L(zoom-focus-style)(zoomfocusstyle) -->

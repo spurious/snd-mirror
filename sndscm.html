@@ -3595,13 +3595,13 @@ widget:
 
 <p>The 'graph and 'spectrum cases create legitimate Snd channel displays,
 accessible via a sound index (and channel 0); these respond to the
-various channel-related functions such as <a href="extsnd.html#showfftpeaks">show-transform-peaks</a>,
+various channel-related functions such as <a href="extsnd.html#showtransformpeaks">show-transform-peaks</a>,
 although you have to give the sound index explicitly:
 </p>
 
 <pre>
     (define wid2 (make-variable-display "do-loop" "x" 'spectrum))
-    (set! (<a class=quiet href="extsnd.html#showfftpeaks">show-transform-peaks</a> (car wid2)) #t)
+    (set! (<a class=quiet href="extsnd.html#showtransformpeaks">show-transform-peaks</a> (car wid2)) #t)
 </pre>
 
 <p>Each graph or spectrum display is placed in its own pane (this is a desperate
