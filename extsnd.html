@@ -702,7 +702,7 @@ bottom margin.
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="graphcursor">graph-cursor</a></code></td>
 <td bgcolor="#f6f8ff"><code>XC_crosshair (34)</code></td></tr>
 <tr><td></td><td colspan=2>The kind of cursor displayed following the mouse in the data graph.
-<b>graph-cursor</b> is an integer: <code>(set! (graph-cursor) 22)</code>; and must be one
+graph-cursor is an integer: <code>(set! (graph-cursor) 22)</code>; and must be one
 of the cursor choices provided by either X or Gtk+.
 The X/Motif cursors are declared in /usr/include/X11/cursorfont.h or some such file;
 gtk versions are in gdkcursor.h.  Some useful choices are:
@@ -847,7 +847,7 @@ the speed-up ratio:<br><br></td></tr>
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="runsafety">run-safety</a></code></td>
 <td bgcolor="#f6f8ff"><code>0</code></td></tr>
 <tr><td></td><td colspan=2>
-If <b>run-safety</b> is not 0, code is added by the run macro to perform various
+If run-safety is not 0, code is added by the run macro to perform various
 error checks, much as in CLM with *clm-safety*.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
@@ -1255,7 +1255,7 @@ opens the newly created one, to mimic Emacs.
 <code><a class=def name="aftersavestatehook">after-save-state-hook</a> (filename)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
-called after Snd has saved its state (<a href="#savestate">save-state</a>).  'filename' is the (otherwise complete) saved state
+called after Snd has saved its state (<a href="#savestate">save-state</a>).  <i>filename</i> is the (otherwise complete) saved state
 program.  See ws-save-state in ws.scm or remember-sound-state in extensions.scm.  Both use this sequence:
 <br>
 <pre>
@@ -1365,7 +1365,7 @@ we're saving the selection, not some sound.
 <code><a class=def name="beforesavestatehook">before-save-state-hook</a> (filename)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
-called before Snd saves its state (<a href="#savestate">save-state</a>).  'filename' is the saved state
+called before Snd saves its state (<a href="#savestate">save-state</a>).  <i>filename</i> is the saved state
 file.  If the hook functions return #t, the save state file is opened in append mode (rather than create/truncate),
 so you can write preliminary stuff via this hook, then instruct Snd not to clobber it during the save process.
 </td></tr>
@@ -1546,8 +1546,8 @@ Each time a breakpoint is changed in the envelope editor, this hook
 is called; if it returns a list, that list defines the new envelope, 
 otherwise the breakpoint is moved (but not beyond the neighboring 
 breakpoint), leaving other points untouched.  The kind of change that triggered the hook callback
-is indicated by the argument <i>reason</i>. It can be <b>enved-move-point</b>, <b>enved-delete-point</b>,
-or <b>enved-add-point</b>.  This hook makes it possible to define attack 
+is indicated by the argument <i>reason</i>. It can be <code>enved-move-point</code>, <code>enved-delete-point</code>,
+or <code>enved-add-point</code>.  This hook makes it possible to define attack 
 and decay portions in the envelope editor, or use functions such as 
 stretch-envelope from env.scm:
 </td></tr>
@@ -1691,7 +1691,7 @@ load peak-env.scm to make this process automatic.
 called upon key press while the mouse is in the lisp graph (the third graph, to the right of the time and fft graphs, normally not displayed).
 If it returns #t, the key press is not passed to the main handler.
 <i>state</i> refers to the control, meta, and shift keys.
-<b>start-enveloping</b> in enved.scm uses this hook to add C-g and C-. support to the
+start-enveloping in enved.scm uses this hook to add C-g and C-. support to the
 channel-specific envelope editors.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
@@ -1822,8 +1822,8 @@ and #t thereafter:
 <code><a class=def name="markhook">mark-hook</a> (id snd chn reason)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when a mark is added, deleted, or moved (but not while moving). 'id' can be -1 (i.e. no specific mark).
-'Reason' can be 0: add, 1: delete, 2: move (via set! mark-sample), 3: delete all marks, 4: release (after drag). 
+called when a mark is added, deleted, or moved (but not while moving). <i>id</i> can be -1 (i.e. no specific mark).
+<i>reason</i> can be 0: add, 1: delete, 2: move (via set! mark-sample), 3: delete all marks, 4: release (after drag). 
 In the "release" case, the hook is called upon button release before any edits (control-drag of mark) or sorting (simple drag),
 and if the mark-sync is active, the hook is called on each syncd mark.
 </td></tr>
@@ -1963,9 +1963,9 @@ called when the mouse enters a channel's drawing area (graph pane).
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse enters a file viewer or region label.
-The 'type' is 1 for view files list, and 2 for regions. 
-The 'position' is the scrolled list position of the label. 
-The label itself is 'label'. We can use the <i>finfo</i> procedure in examp.scm
+The <i>type</i> is 1 for view files list, and 2 for regions. 
+The <i>position</i> is the scrolled list position of the label. 
+The label itself is <i>label</i>. We can use the <i>finfo</i> procedure in examp.scm
 to popup file info as follows:
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2790,7 +2790,7 @@ copy random state: Guile: copy-random-state, or use <a href="clm.html#mus-set-ra
 
 <!-- vct-map -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctmap1">vct-map</a> (thunk v0 vcts...)</code></td></tr>
-<tr><td></td><td>map 'thunk' (which should return a frame) into the vcts passed as trailing args.
+<tr><td></td><td>map <i>thunk</i> (which should return a frame) into the vcts passed as trailing args.
 This is mostly an internal testing function -- I can't think of any legitimate use for it.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -3298,7 +3298,7 @@ and whatever else seems appropriate.
 
 <!-- mus-file-clipping -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musfileclipping">mus-file-clipping</a> (fd)</code></td></tr>
-<tr><td></td><td>The clipping choice for the file 'fd'.
+<tr><td></td><td>The clipping choice for the file <i>fd</i>.
 The default is #f which makes clipping very obvious (it will cause wrap-around).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -3884,7 +3884,7 @@ looks for a mark of that name.  <i>mark-name-&gt;id</i> in marks.scm finds a nam
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="markhome">mark-home</a> (<i>id</i>)</code></td></tr>
 <tr><td></td><td>a list with the sound index and channel that hold mark <i>id</i>.
 mark-home provides a way to go from a mark to its sound and
-channel; the inverse function is <b>marks</b>.  
+channel; the inverse function is marks.  
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3928,7 +3928,7 @@ The sync value is very similar to
 the mix track number or the sound sync field; it provides a way to group marks for simultaneous
 changes.  Marks that share the same sync value (if not 0), move together when any one of them is
 dragged, play together if clicked, etc.  To find which marks share a given
-sync value, use <b>syncd-marks</b>; to find an unused sync value use <b>mark-sync-max</b>.
+sync value, use syncd-marks; to find an unused sync value use mark-sync-max.
 <br><br>
 Marks that are syncd together can be used for insertions, and deletions, and can
 set arbitrary groups of play points.  But it's a bit tedious to type (set! (mark-sync ...)...)
@@ -3992,10 +3992,10 @@ each sound and its channels.
 </pre></td></tr></table>
 </td></tr>
 <tr><td></td><td>
-<b>marks</b>
+marks
 without any argument, or with just a sound index returns a list of lists; each inner list is the list
 of current marks (ids) active in that channel, ordered by sample number.  If the channel argument is
-specified, <b>marks</b> returns just the list of mark ids.  If the edit history position is given,
+specified, marks returns just the list of mark ids.  If the edit history position is given,
 the list of ids reflects the mark list at that time in the edit history.  See describe-marks in marks.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -4311,7 +4311,7 @@ See also <a href="sndscm.html#panmixvct">pan-mix-vct</a> in mix.scm.
 
 <!-- play-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="playmix">play-mix</a> (mix <i>beg</i>)</code></td></tr>
-<tr><td></td><td>play mix <i>mix</i>.  'beg' is where to start playing within the mix.
+<tr><td></td><td>play mix <i>mix</i>.  <i>beg</i> is where to start playing within the mix.
 This function does not return until the play is complete or interrupted (it is similar to <a href="#playandwait">play-and-wait</a>,
 rather than <a href="#play">play</a>).
 </td></tr>
@@ -4363,9 +4363,9 @@ delete all mixes: <a href="sndscm.html#deleteallmixes">delete-all-mixes</a><br>
 
 <A NAME="trackstuff"></a>
 
-<p>A track is a list of mixes, each mix having its <a href="#mixtrack">mix-track</a> field set to the track id.  The <b>make-track</b>
+<p>A track is a list of mixes, each mix having its <a href="#mixtrack">mix-track</a> field set to the track id.  The make-track
 function takes the initial mixes, returning the track id (an integer).  The
-<b>track</b> function returns the list of mixes that are members of the given track.  The rest of the track functions
+track function returns the list of mixes that are members of the given track.  The rest of the track functions
 take the track id as their initial argument.  A track has much the same structure as a mix: an amplitude, speed,
 amplitude envelope, track, position, and so on.  If its track field is not 0, the entire track is a member
 of another, higher level track.  Tracks provide a mechanism to group together related notes or mixes, for panning,
@@ -4422,7 +4422,7 @@ If the previous track had an amplitude envelope, this can cause its remaining mi
 <!-- play-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="playtrack">play-track</a> (track-id <i>chn beg</i>)</code></td></tr>
 <tr><td></td><td>play track <i>track</i>. If chn is #t, play all associated mixes, even if in different sounds.
-'beg' is where to start playing within the track.
+<i>beg</i> is where to start playing within the track.
 This function does not return until the play is complete or interrupted (it is similar to <a href="#playandwait">play-and-wait</a>,
 rather than <a href="#play">play</a>).
 </td></tr>
@@ -6855,38 +6855,55 @@ by <a href="#maxfftpeaks">max-transform-peaks</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
-<!-- STOPPED HERE -->
+
 <!-- play -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="play">play</a> (<i>samp snd chn sync end edpos stop-proc out-chan</i>)</code>
 </td></tr>
 <tr><td></td><td>
-play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i>. 
-If 'sync' is #t, play all sounds syncd to snd.  If 'end' is not given or #f, 
-play until end of sound. If 'end' is given (as a sample number), the 
+This plays <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i>. 
+If <i>sync</i> is #t, it plays all sounds sync'd to <i>snd</i>.  If <i>end</i> is not given or is #f, 
+it plays until the end of the sound. If <i>end</i> is given (as a sample number), the 
 actual end point may be off by a few samples; Snd only checks on 
-dac-buffer boundaries (normally around 256 samples).  <i>samp</i> can
+dac-buffer boundaries (normally around 256 samples).
+<pre>
+    (play)                                         ; play current sound, all chans from start to end
+    (play (<a class=quiet href="#cursor">cursor</a>))                                ; play starting from the cursor
+    (play (round (* 3.0 (<a class=quiet href="#srate">srate</a>))) 1 3)             ; play snd 1, chan 3 (4th channel), starting at 3.0 secs
+    (play 0 #f #f #t)                              ; play sync'd sounds
+    (play 0 #f #f #f (round (* 3.0 (<a class=quiet href="#srate">srate</a>))))      ; play from start for 3.0 secs
+    (play 0 #f #f #f #f 2)                         ; play the version at edit history position 2
+    (play 0 0 2 #f #f #f #f 0)                     ; play chan 2, but send it to DAC chan 0
+    (play (mark-sample 0) #f #f #f (mark-sample 1)); play between marks 0 and 1
+    (play (selection-position) #f #f (+ (selection-position) (selection-frames))) ; play selection
+</pre>
+<i>samp</i> can
 also be a filename (a string).  In this case, <i>snd</i> can be the start 
 sample (default 0), and <i>chn</i> can be the end sample (default end-of-file).
-If 'chn' is not given, or is a boolean, play all channels together.
-If <i>pos</i> is given, play at that edit position.
+
+<pre>
+    (play "1a.snd")                                ; play 1a.snd
+    (play "1a.snd" 1000 4000)                      ; play 1a.snd from sample 1000 to 4000
+</pre>
+
+If <i>chn</i> is not given, or is a boolean, play plays all channels together.
+If <i>pos</i> is given, it plays at that edit position.
 If <i>stop-proc</i> is a procedure of one argument, it is called when the play process stops.
-The argument provides the reason the play is stopping; it will be 0 if the play completed normally.
+The argument passed to <i>stop-proc</i> provides the reason the play is stopping; it will be 0 if the play completed normally.
 <i>stop-proc</i> is intended mainly for looping plays, as in <a href="sndscm.html#explayoften">play-often</a>.
-Originally, we used <a href="#stopplayinghook">stop-playing-hook</a> for this, but that turned
-out to be prone to confusion.  There is no general way to tell that the hook function list already
-has a looper queued up, so it was easy to accidentally add another.  If the two had different
-mechanisms for deciding when to stop playing, you could end up with an unstopable explosion of play
-processes.  By associating the stop function directly with the play call that started the process,
-this kind of "cross-talk" becomes less likely. 
-<br><br>
-The <i>pos</i> argument makes it easier to try "A:B" comparisons.
+<pre>
+    (play 0 #f #f #f #f #f 
+      (lambda (reason)                             ; if interrupted, say so in the listener
+        (if (not (= reason 0))
+            (snd-print ";play interrupted"))))
+</pre>
+
+The <i>pos</i> argument makes it easier to try "A:B" comparisons; this plays the version before the latest edit:
 <pre>
     (play 0 #f #f #f #f (1- (<a class=quiet href="#editposition">edit-position</a>)))
 </pre>
-plays the version before the latest edit.
-<br><br>
-This code binds the "p" key to play all channels of the current sound from the cursor, and
+
+The following code binds the "p" key to play all channels of the current sound from the cursor, and
 the "P" key to play the previous version of the current sound:
 
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
@@ -6897,7 +6914,7 @@ the "P" key to play the previous version of the current sound:
 (<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\P) 0 (lambda () "play previous version from cursor" (play-from-cursor #f) keyboard-no-action))
 </pre></td></tr></table>
 
-The following code plays from the cursor with a moving ("tracking") cursor:
+And here we play from the cursor with a moving ("tracking") cursor:
 
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (<A NAME="pfc">pfc</a>)
@@ -6964,10 +6981,10 @@ The "reasons" that might be passed to the stop-procedure are:
 <code><a class=def name="playandwait">play-and-wait</a> (<i>samp snd chn sync end edpos stop-proc out-chan</i>)</code>
 </td></tr>
 <tr><td></td><td>
-play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait 
-for it to finish. (<a href="#play">play</a> on the other hand returns immediately so subsequent calls on play 
-mix multiple sample streams together, rather than playing them one after the other).
-If <i>pos</i> is given, play at that edit position.
+This plays <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and waits
+for it to finish.  <a href="#play">play</a> on the other hand returns immediately so subsequent calls on play 
+mix multiple sample streams together, rather than playing them one after the other.
+If <i>pos</i> is given, play-and-wait plays at that edit position.
 <i>stop-proc</i> is explained under <i>play</i> above; it's not really needed here, but "consistency is a virtue", I guess.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -6988,7 +7005,7 @@ play-channel is the <a class=quiet href="#regularizedargs">regularized</a> versi
 <code><a class=def name="playerhome">player-home</a> (player)</code>
 </td></tr>
 <tr><td></td><td>
-return a list of the sound index and channel number associated with <a href="#makeplayer">player</a>.
+This returns a list of the sound index and channel number associated with <a href="#makeplayer">player</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -6997,7 +7014,7 @@ return a list of the sound index and channel number associated with <a href="#ma
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="playing">playing</a> ()</code></td></tr>
 <tr><td></td><td>
-#t if sound output is currently in progress.  You can also start playing by setting playing to #t (equivalent
+This returns #t if sound output is currently in progress.  You can also start playing by setting playing to #t (equivalent
 to calling <a href="#startplaying">start-playing</a> with default arguments), and stop by setting it to #f
 (equivalent to <a href="#stopplaying">stop-playing</a>).
 playing only notices Snd-instigated "play" processes;
@@ -7011,7 +7028,7 @@ playing only notices Snd-instigated "play" processes;
 <code><a class=def name="players">players</a> ()</code>
 </td></tr>
 <tr><td></td><td>
-return a list of currently active players.
+This returns a list of currently active <a href="#makeplayer">players</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7021,7 +7038,7 @@ return a list of currently active players.
 <code><a class=def name="playerQ">player?</a> (obj)</code>
 </td></tr>
 <tr><td></td><td>
-#t if <i>obj</i> is an active <a href="#makeplayer">player</a>.
+This returns #t if <i>obj</i> is an active <a href="#makeplayer">player</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7031,9 +7048,11 @@ return a list of currently active players.
 <code><a class=def name="position_to_x">position-&gt;x</a> (xpos snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
-the X axis value that corresponds to the graph (screen pixel) position <i>xpos</i>.
+This returns the x axis value that corresponds to the graph (screen pixel) position <i>xpos</i>.
 To find the sample that the mouse is pointing at, given the current mouse position,
-<code>(inexact-&gt;exact (* (srate snd) (position-&gt;x x snd chn)))</code>.
+<pre>
+    (inexact-&gt;exact (round (* (<a class=quiet href="#srate">srate</a> snd) (position-&gt;x x snd chn)))
+</pre>
 See gui.scm for examples.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -7044,7 +7063,7 @@ See gui.scm for examples.
 <code><a class=def name="position_to_y">position-&gt;y</a> (ypos snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
-the Y axis value that corresponds to the graph (screen pixel) position <i>ypos</i>.
+This returns the y axis value that corresponds to the graph (screen pixel) position <i>ypos</i>.
 See gui.scm for examples.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -7057,13 +7076,13 @@ See gui.scm for examples.
 <tr><td></td><td>
 The functions <a href="#startprogressreport">start-progress-report</a>, progress-report, and 
 <a href="#finishprogressreport">finish-progress-report</a> handle the animated hour-glass icon
-that amuses the idle user while some long computation is in progress.  
+that hopes to amuse the idle user while some long computation is in progress.  
 The <i>pct</i> argument is a float between 0.0 and 1.0 which indicates how 
-far along we are in the computation (there are only 20 separate 
-icons, so there's no point in calling this more often than that).  
-start-progress-report posts the initial icon, and finish-progress-report 
+far along we are in the computation; there are only 20 separate 
+icons, so there's no point in calling this more often than that.  
+<a href="#startprogressreport">start-progress-report</a> posts the initial icon, and <a href="#finishprogressreport">finish-progress-report</a> 
 removes it.  If the icons are not available, a message is posted in 
-<i>snd's</i> minibuffer using <i>name</i> and so on to identify itself.
+<i>snd</i>'s minibuffer using <i>name</i> to identify itself.
 See ladspa.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -7071,13 +7090,13 @@ See ladspa.scm.
 
 <!-- prompt-in-minibuffer -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="promptinminibuffer">prompt-in-minibuffer</a> (msg <i>callback snd (raw #f)</i>)</code>
+<code><a class=def name="promptinminibuffer">prompt-in-minibuffer</a> (msg <i>callback snd raw</i>)</code>
 </td></tr>
 <tr><td></td><td>
-Post <i>msg</i> in <i>snd</i>'s minibuffer, and when you respond,
-call <i>callback</i> with the response as the callback's argument.
+This posts <i>msg</i> in <i>snd</i>'s minibuffer and when you respond,
+it calls <i>callback</i> with the response as the callback's argument.
 If <i>callback</i> is specified it should be either #f or a function of 
-one argument (the raw response if 'raw' is #t, otherwise the evaluated response).
+one argument: the raw response if <i>raw</i> is #t, otherwise the evaluated response.
 For example, the following fragment asks for 
 a yes-or-no response, then takes some action:
 </td></tr>
@@ -7108,10 +7127,10 @@ We could also use a continuation here:
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
-The 'raw' argument is useful when we want to prompt for yes or no, without forcing the
+The <i>raw</i> argument is useful when we want to prompt for yes or no, without forcing the
 user to put the answer in double quotes.  In the next example, we replace Snd's
 built-in C-x k action (which immediately closes the sound) with one that is
-more like Emacs (which prompts for confirmation first):
+more like Emacs (it prompts for confirmation first):
 </td></tr>
 
 <tr><td></td><td>
@@ -7141,18 +7160,19 @@ more like Emacs (which prompts for confirmation first):
 </td></tr>
 <tr><td></td><td>
 ptree-channel
-applies the function 'proc' as a 'virtual edit'; that is, the effect of 'proc'
+applies the function <i>proc</i> as a 'virtual edit'; that is, the effect of <i>proc</i>
 comes about as an implicit change in the way the data is read. 
+
 <br><br>
 To be less Orphic:
 all the data accesses in Snd go through the edit-history list.  The currently
 active member of that list
 chooses a channel data accessor based on the type of edit. A  multiply by 2, for
 example, does not multiply anything by 2 internally; it just chooses
-the accessor that multiplies by 2 on any read.  From any other
+the accessor that multiplies by 2 on any read.  Since every other data access goes through this reader, from any other
 point of view, the data has been multiplied.  These accessors make it
 unnecessary to save any data in temp files or internal arrays, and editing the edit-history list is very
-fast (we just tack a new accessor choice onto the edit-history list), so the edit operation
+fast -- we just tack a new accessor choice onto the edit-history list, so the edit operation
 appears to be instantaneous and memory-less.  Lots of other operations
 are already being done this way in Snd (deletions, scaling, most
 envelopes, some channel swaps, etc).  ptree-channel extends the idea to (nearly) arbitrary
@@ -7167,16 +7187,19 @@ which has the same effect as
 the
 optimizer makes the parse-tree that represents <code>(lambda (y) (* y 2))</code>, then the
 data accessor system uses that parse-tree every time the data is
-read.<br><br>
-If the argument 'env-too' is #t,
+read.
+<br><br>
+
+If the argument <i>env-too</i> is #t,
 the same function is applied to the peak env values to get the new version of the peak env data.  
-The default is #f, and should be #t only if the old max and min values as processed through 'proc'
+The default is #f, and should be #t only if the old max and min values as processed through <i>proc</i>
 will be the new max and min values. 
 Snd uses the peak env values when the graph of the sound covers very large amounts of data.
-If 'env-too' is #f, a background process is launched reading all the sound data through
-'proc'; this can be time-consuming, so if you're viewing a half-hour of sound data,
-it can take awhile for the ptree-channel results to be displayed if 'env-too' is #f.
+If <i>env-too</i> is #f, a background process is launched reading all the sound data through
+<i>proc</i>; this can be time-consuming, so if you're viewing a half-hour of sound data,
+it can take awhile for the ptree-channel results to be displayed.
 <br><br>
+
 Here is a simple example that adds a constant to each sample in a file. It needs the
 inner "let" because the define* arguments are hidden from the optimizer.
 <pre>
@@ -7192,21 +7215,22 @@ know where it is in the data), you need to add an <i>init-func</i> (the 8th argu
 The <i>init-func</i> takes two arguments, the begin time of the read operation, relative to
 the original start of the fragment, and the original fragment duration (both in samples).
 It should return a vct
-holding all the information the main function ('proc' above) needs to
+holding all the information the main function (<i>proc</i> above) needs to
 handle the current fragment correctly.  Global variables are not guaranteed to 
-be set within the body of 'proc', so use the vct for local values that change
+be set within the body of <i>proc</i>, so use the vct for local values that change
 as the read operation progresses.
 <br><br>
-The other new argument to 'proc'
+
+The other new argument to <i>proc</i>
 is the read direction; the read operations can change direction at any
 time, and any ptree-channel function needs to know how to deal with that.
 So, in the complicated, 3 argument case,
 the sequence of operations is:
-a read is requested, 'init-func' is called with the read start point (relative to the
+a read is requested, <i>init-func</i> is called with the read start point (relative to the
 original segment start),
-it returns in a vct any state that 'proc' may need
+it returns in a vct any state that <i>proc</i> may need
 to refer to, then each time a sample is needed from the current sample
-reader, 'proc' is called passing it the current underlying sample, the vct of 'init-func',
+reader, <i>proc</i> is called passing it the current underlying sample, the vct of <i>init-func</i>,
 and the read direction.
 Here is an example that mixes a sine wave into the current channel:
 </td></tr>
@@ -7227,28 +7251,29 @@ Here is an example that mixes a sine wave into the current channel:
    beg dur snd chn edpos #f
    (lambda (frag-beg frag-dur)
      (let ((incr (/ (* 2 pi freq) (<a class=quiet href="#srate">srate</a>))))
-       (<a class=quiet href="#vct">vct</a> (fmod (* frag-beg incr) (* 2 pi)) incr amp)))))
+       (<a class=quiet href="#vct">vct</a> (fmod (* frag-beg incr) (* 2 pi)) incr amp))))) ; fmod from C
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
-(<i>fmod</i> is C's fmod, provided by Snd).  In the "normal" case,
-the function simply mixes in a sine wave: <code>(+ y (* (<a class=quiet href="#vctref">vct-ref</a> data 2) (sin angle)))</code>
+In the normal case,
+this function simply mixes in a sine wave: <code>(+ y (* (<a class=quiet href="#vctref">vct-ref</a> data 2) (sin angle)))</code>
 where the amplitude scaler is stored in <code>(<a class=quiet href="#vctref">vct-ref</a> data 2)</code>.  In subsequent
 reads, the init-func sets up a vct with the current phase (dependent on the frequency
 and the fragment begin sample), the phase increment (dependent on the frequency), and
 the amplitude (passed as an argument to sine-channel, but stored in the vct since
-the outer function's arguments won't be accessible in the main function ('proc')).
+the outer function's arguments won't be accessible in the main function (<i>proc</i>)).
 See <i>sine-ramp</i> in extensions.scm for another example.
 <br><br>
-In our <i>sine-channel</i> function, we passed #f as the 'env-too' argument,
+
+In our <i>sine-channel</i> function, we passed #f as the <i>env-too</i> argument,
 to make sure Snd doesn't blithely apply the sine mix to the peak amplitude
-envelopes.  When 'env-too' is #t,
-'proc' is evaluated over the peak env data, rather than the
+envelopes.  When <i>env-too</i> is #t,
+<i>proc</i> is evaluated over the peak env data, rather than the
 original data.  This makes redisplay much faster whenever a lot of data
 is being displayed, but only works if the function's output at the peak
 env min and max values are still the min and max values in the actual
 data (this is the case in the sinusoidal envelope, sine-ramp, mentioned above).
-When 'proc' is being called to calculate the new peak env, 
+When <i>proc</i> is being called to calculate the new peak env, 
 the duration passed to the init-func is the envelope size. 
 Here is a
 version of cosine-channel given under
@@ -7276,47 +7301,48 @@ version of cosine-channel given under
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
-<p>
+
 If the underlying data
 has too many previous ptree operations, map-channel is called instead and the new
 data is saved in the normal manner (that is, I don't currently try to chain any number of these operations
 together).
 <br><br>
-If no 'init-func' is specified, the editing procedure ('proc') should not assume anything about
-the context in which it is called;  in this case, there's no way for 'proc' to know where it starts, or when it is being restarted,
+
+If no <i>init-func</i> is specified, the editing procedure (<i>proc</i>) should not assume anything about
+the context in which it is called;  in this case, there's no way for <i>proc</i> to know where it starts, or when it is being restarted,
 or which direction it is running, so,
 the following call:
-</p>
-<table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke"><pre>
+
+<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
    (let ((ctr 0)) 
      (<em class=red>ptree-channel</em> (lambda (y) 
                       (set! ctr (1+ ctr)) 
                       (* ctr .0001))))
 </pre></td></tr></table>
 
-<p>will never reset ctr to 0!  Every time a portion of the data is read by Snd, the samples will be
+will never reset ctr to 0!  Every time a portion of the data is read by Snd, the samples will be
 higher.  But, the notion of an accessor that returns a different thing each time a sample
 is accessed is not foolish:
-</p>
-<table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke"><pre>
+
+<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (dither-channel #:optional (amount .00006) beg dur snd chn edpos)
-  "(dither-channel #:optional (amount .00006) beg dur snd chn edpos) adds 'amount' dither to each sample"
+  "(dither-channel #:optional (amount .00006) beg dur snd chn edpos) adds <i>amount</i> dither to each sample"
   (let ((dither (* .5 amount)))
     (<em class=red>ptree-channel</em> 
       (lambda (y) 
         (+ y (<a class=quiet href="clm.html#mus-random">mus-random</a> dither) (<a class=quiet href="clm.html#mus-random">mus-random</a> dither))) 
       beg dur snd chn edpos #t)))
 </pre></td></tr></table>
-<p>
+
 This gives a slightly different take on the sound each time you look at it or listen to it;
 the dithering is never exactly the same.  But if the details of the noise don't
 matter (presumably the case with dithering), the difference is unproblematic.  You're editing a sort
 of mobile in sound (analogous to mobile sculpture).
 <br><br>
-One major limitation of ptree-channel with an 'init-func' is that <a href="#savestate">save-state</a>
+One major limitation of ptree-channel with an <i>init-func</i> is that <a href="#savestate">save-state</a>
 currently doesn't know how to save the enclosing environment along with the init-func. So,
-</p>
-<table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke"><pre>
+
+<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
   (let ((outer 0.5))
     (<em class=red>ptree-channel</em> (lambda (y data forward)
 		     (declare (y real) (data vct) (forward boolean))
@@ -7325,14 +7351,15 @@ currently doesn't know how to save the enclosing environment along with the init
 		   (lambda (pos dur)
 		     (<a class=quiet href="#vct">vct</a> outer))))
 </pre></td></tr></table>
-<p>
+
 will not save the "outer" declaration in the saved state file. 
 This is a general problem with save-state; there's no obvious way in Guile to
 save the current closure as text.
 You can fix the saved state file by hand (it is just Scheme, Ruby, or Forth code, of course),
 but that's not a very elegant solution.
 <br><br>
-The real limitation in using ptree-channel, however, is that the read direction
+
+The real limitation in using ptree-channel, however, arises from the fact that the read direction
 can not only be backwards, but it can also change at any time.  In conjunction with
 the fragmentation during editing, this makes it
 hard to use CLM generators, or anything that depends on previous samples.
@@ -7343,8 +7370,8 @@ The read direction argument can be ignored if you know you're not going to read 
 The only hidden reverse read is in the src generator where a negative increment can be
 generated in a variety of ways (for example, src driven by oscil).  A one-zero filter
 could in this case be:
-</p>
-<table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke"><pre>
+
+<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
   (<em class=red>ptree-channel</em> (lambda (y data forward)
 		   (declare (y real) (data vct) (forward boolean))
 		   (let ((val (* 0.5 (+ y (<a class=quiet href="#vctref">vct-ref</a> data 0)))))
@@ -7356,9 +7383,9 @@ could in this case be:
 		     (<a class=quiet href="#vct">vct</a> (if (= pos 0) 0.0
 			      (<a class=quiet href="#sample">sample</a> (1- pos) ind 0 edpos))))))
 </pre></td></tr></table>
-<p>
+
 Here are a couple more examples:
-</p>
+
 </td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
@@ -7397,6 +7424,7 @@ Here are a couple more examples:
 	    (/ (- r1 r0) (- base 1.0))
 	    (/ frag-beg frag-dur))))))
 </pre></td></tr></table>
+
 To handle an envelope in a ptree-channel application, it's probably
 easiest to split it up into a sequence of ramps, each ramp keeping track
 of its local begin point and increment.  This is how sine-env-channel
@@ -7410,6 +7438,7 @@ calls.  It also uses <a href="#asoneedit">as-one-edit</a> to make the
 result appear to be one operation in the edit history list.
 </td></tr>
 <tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 <A NAME="powenvchannel"></a>(define* (powenv-channel envelope #:optional (beg 0) dur snd chn edpos)
   ;; envelope with a separate base for each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))
@@ -7464,7 +7493,7 @@ dithering: <a href="sndscm.html#ditherchannel">dither-channel</a> (extensions.sc
 </td></tr>
 <tr><td></td><td>
 ramp-channel is a slight extension of scale-channel. It scales samples in the given sound/channel
-between beg and beg + dur by a (linear) ramp going from rmp0 to rmp1. (ramp-channel underlies the virtual envelope operations).
+between <i>beg</i> and <i>beg</i> + <i>dur</i> by a (linear) ramp going from <i>rmp0</i> to <i>rmp1</i>. 
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7474,7 +7503,7 @@ between beg and beg + dur by a (linear) ramp going from rmp0 to rmp1. (ramp-chan
 <code><a class=def name="readonly">read-only</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-#t if <i>snd</i> is read-only, #f otherwise.  If you open
+This returns #t if <i>snd</i> is read-only, #f otherwise.  If you open
 a file with <a href="#viewsound">view-sound</a>, read-only is set to #t.
 read-only does not reflect (or affect) the write permission state of the underlying file; it is a way
 to keep from accidentally clobbering an otherwise writable file.  
@@ -7488,8 +7517,8 @@ If it is #t (or if the file is not writable), a lock icon is displayed beside th
 <code><a class=def name="readpeakenvinfofile">read-peak-env-info-file</a> (snd chn filename)</code>
 </td></tr>
 <tr><td></td><td>
-opens <i>filename</i>, assumed to be the peak-env amp info written by <a href="#writepeakenvinfofile">write-peak-env-info-file</a>
-for the given channel.  This should be called only within <a href="#initialgraphhook">initial-graph-hook</a>.  See peak-env.scm.
+This opens and reads the data in <i>filename</i>, assumed to be the peak-env amp info written by <a href="#writepeakenvinfofile">write-peak-env-info-file</a>
+for the given channel.  It expects to be called within <a href="#initialgraphhook">initial-graph-hook</a>.  See peak-env.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7499,8 +7528,9 @@ for the given channel.  This should be called only within <a href="#initialgraph
 <code><a class=def name="redo">redo</a> (<i>edits snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-redo <i>edits</i> edits (default is 1) in <i>snd</i>'s channel <i>chn</i>. Redo follows the <a class=quiet href="#sync">sync</a> field if it
-is not 0, which sometimes means that the channel arg is simply ignored.  The following might be a more reasonable redo function:
+This re-activates <i>edits</i> edits (the default is 1) in <i>snd</i>'s channel <i>chn</i>. 
+Redo follows the <a class=quiet href="#sync">sync</a> field if it
+is not 0.  The following might be a more reasonable redo function:
 
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (<a name="redochannel">redo-channel</a> #:optional (<a class=quiet href="#edits">edits</a> 1) snd chn)
@@ -7509,7 +7539,7 @@ is not 0, which sometimes means that the channel arg is simply ignored.  The fol
       (<em class=red>redo</em> edits snd)))
 </pre></td></tr></table>
 
-<i>redo</i> simply moves forward in the edit history list, whereas 
+redo moves forward in the edit history list, whereas 
 <a href="#undo">undo</a> backs up, and <a href="#revertsound">revert-sound</a> resets the current
 edit position to the start of the list.
 For more about the edit history list, see <a href="#editlists">Edit Lists</a>.
@@ -7525,10 +7555,10 @@ In Ruby, redo is a part of the loop handling, so Snd's redo is renamed redo_edit
 <code><a class=def name="reportinminibuffer">report-in-minibuffer</a> (msg <i>snd as-error</i>)</code>
 </td></tr>
 <tr><td></td><td>
-post <i>msg</i> in <i>snd</i>'s minibuffer.  This is the text widget between the sound's filename and the buttons
+This posts <i>msg</i> in <i>snd</i>'s minibuffer.  The 'minibuffer' is the text widget between the sound's filename and the buttons
 on the right, beneath the graph.  It is intended to mimic Emacs' minibuffer, being useful mainly for short,
 temporary messages.  C-g clears it, as does <a href="#clearminibuffer">clear-minibuffer</a>.  
-If 'as-error' is #t, the message is placed in the minibuffer error label, rather than in the text entry area.
+If <i>as-error</i> is #t, the message is placed in the minibuffer error label, rather than in the usual text area.
 See also <a href="#promptinminibuffer">prompt-in-minibuffer</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -7569,12 +7599,12 @@ reverse vct: <a href="#vctreverse">vct-reverse!</a><br>
 <code><a class=def name="reversesound">reverse-sound</a> (<i>snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<p>reverse data.  There are some interesting non-causal effects you can get with this:
+reverse-sound reverses the sound data in <i>snd</i>'s channel <i>chn</i>.  There are some interesting non-causal effects you can get with this:
 take a voice sound, reverse it, reverberate it, reverse it again, and you get the original with
 reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotation) by doing two ffts
 (DSP-ers call this a "flip"):
-</p>
-<table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke"><pre>
+
+<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (<A NAME="sillyreverse">silly-reverse</a> #:optional snd)
   (let* ((len (<a class=quiet href="#frames">frames</a> snd 0))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
@@ -7595,7 +7625,7 @@ reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotati
 <code><a class=def name="revertsound">revert-sound</a> (<i>snd</i>)</code>
 </td></tr>
 <tr><td></td><td>
-revert <i>snd</i> to saved state (<a class=quiet href="#undo">undo</a> all edits).
+This reverts <i>snd</i> to its saved (unedited) state.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7605,8 +7635,8 @@ revert <i>snd</i> to saved state (<a class=quiet href="#undo">undo</a> all edits
 <code><a class=def name="rightsample">right-sample</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-position (in samples) of right edge of time domain waveform.  See <a href="#leftsample">left-sample</a>, many examples in examp.scm,
-and <a href="#moveonepixel">move-one-pixel</a>.
+This returns the position (in samples) of right edge of time domain waveform.  See <a href="#leftsample">left-sample</a>, 
+<a href="#moveonepixel">move-one-pixel</a>, and many examples in examp.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7638,20 +7668,20 @@ run assumes each variable has one type throughout its life).  So, the following 
 displays "0", rather than "3.14":
 <br>
 <pre>
-  (<em class=red>run</em> (lambda () (let ((x 3.14)) (<em class=red>define</em> (a b) (display b)) (a x))))
+  (run (lambda () (let ((x 3.14)) (define (a b) (display b)) (a x))))
 </pre>
 The "b" argument to "a" is assumed to be an integer, and passing in a float 
 causes nothing but confusion.  To get this code to work right:
 <br>
 <pre>
-  (<em class=red>run</em> (lambda () (let ((x 3.14)) (<em class=red>define</em> (a b) (<em class=red>declare</em> (b real)) (display b)) (a x))))
+  (run (lambda () (let ((x 3.14)) (define (a b) (<em class=red>declare</em> (b real)) (display b)) (a x))))
 </pre>
 declare is modelled after Common Lisp's declare; it is specific to run.
 For more examples see <a href="#ptreechannel">Virtual Edits</a> and, in
 particular, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>.
 <br><br>
-This optimization is also hidden in many contexts (<a class=quiet href="#mapchannel">map-channel</a>, 
-<a class=quiet href="#findchannel">find-channel</a>, etc).  Internally the Snd run macro
+This optimization is also hidden in many contexts: <a class=quiet href="#mapchannel">map-channel</a>, 
+<a class=quiet href="#findchannel">find-channel</a>, etc.  Internally the Snd run macro
 uses 64-bit ints and doubles, so large sounds should not present any numerical problems.
 See <a href="#optimization">optimization</a>
 for some timings.  In Ruby, it's possible to use the <a href="http://www.zenspider.com/Languages/Ruby/">RubyInline</a> module instead.
@@ -7664,7 +7694,7 @@ for some timings.  In Ruby, it's possible to use the <a href="http://www.zenspid
 <code><a class=def name="sample">sample</a> (<i>samp snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-value of sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
+This function gives the value of sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 <pre>
   Scheme: (set! (sample 100) .5)
 
@@ -7673,7 +7703,7 @@ value of sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
   Forth:  100 0.5 set-sample
 </pre>
 If the desired sample happens to fall outside the current buffer 
-for the indicated channel, this function grinds to a halt -- if you're 
+for the indicated channel, sample grinds to a halt -- if you're 
 running a loop through a bunch of samples, use the <a href="#samplereaders">sample-readers</a> 
 or <a href="#channel_to_vct">channel-&gt;vct</a> instead.  <i>samp</i> defaults to the current cursor location.
 </td></tr>
@@ -7685,11 +7715,10 @@ or <a href="#channel_to_vct">channel-&gt;vct</a> instead.  <i>samp</i> defaults 
 <code><a class=def name="samples">samples</a> (<i>samp samps snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-return vct of <i>samps</i> samples starting at <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
-<i>samp</i> defaults to 0.  <i>samps</i> defaults to frames - samp.
-<i>pos</i> is the edit history position to read (defaults to current position).
-This is settable (as is sample) -- see <a href="#setsamples">set-samples</a>.
-(<i>samples</i> is basically another name for channel-&gt;vct).
+This returns a vct of <i>samps</i> samples starting at <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
+<i>samp</i> defaults to 0.  <i>samps</i> defaults to frames - <i>samp</i> (i.e. read to the end of the data).
+<i>pos</i> is the edit history position to read (it defaults to the current position).
+This is settable (as is <a href="#sample">sample</a>) -- see <a href="#setsamples">set-samples</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7699,8 +7728,8 @@ This is settable (as is sample) -- see <a href="#setsamples">set-samples</a>.
 <code><a class=def name="samples2sounddata">samples-&gt;sound-data</a> (<i>samp samps snd chn sdobj edpos sdchan</i>)</code>
 </td></tr>
 <tr><td></td><td>
-similar to channel-&gt;vct, but fill a <a href="#sndsounddata">sound-data</a> object.  This is an optimization
-for real-time audio applications; see play.scm.
+This is similar to <a href="#channel_to_vct">channel-&gt;vct</a>, but it fills a <a href="#sndsounddata">sound-data</a> object.
+See play.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7710,7 +7739,7 @@ for real-time audio applications; see play.scm.
 <code><a class=def name="savesound">save-sound</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-save <i>snd</i>, writing the current state of the sound to its underlying sound file; this is the same as File menu's Save option. 
+save-sound saves <i>snd</i>, writing the current state of the sound to its underlying sound file, (like the File menu's Save option).
 <a href="#savehook">save-hook</a> is invoked upon save-sound.  After save-sound, the sound has no undoable edits in its edit history
 (this is different from Emacs, but I find Emac's way of handling this very confusing, and it's never what I want).
 
@@ -7756,11 +7785,17 @@ save the current fft peak info: <a href="#peaks">peaks</a><br>
 <code><a class=def name="savesoundas">save-sound-as</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :sound :header-type :data-format :srate :channel :edit-position :comment)</code>
 </td></tr>
 <tr><td></td><td>
-save <i>sound</i> as <i>file</i> (same as File Save as option).  If channel is specified,
-only that channel is saved (extracted).  <i>edit-position</i>, if given, specifies which edit history position to save.
+This saves <i>sound</i> as <i>file</i> (like the File Save as menu option).  If <i>channel</i> is specified,
+only that channel is saved (it is extracted if necessary from the multichannel original).  
+<i>edit-position</i>, if given, specifies which edit history position to save.
 Any omitted argument's value
 is taken from the sound being saved. 
-To start a parallel editing branch on a given file, you could <code>(save-sound-as "test.snd") (<a class=quiet href="#opensound">open-sound</a> "test.snd")</code>.  To define an explicit channel extraction function:<br>
+To start a parallel editing branch on a given file, you could:
+<pre>
+    (save-sound-as "test.snd") (<a class=quiet href="#opensound">open-sound</a> "test.snd")
+</pre>
+
+To define an explicit channel extraction function:<br>
 <pre>
     (define (<a name="extractchannel">extract-channel</a> filename snd chn)
       (<em class=red>save-sound-as</em> filename snd :channel chn))
@@ -7774,12 +7809,12 @@ To start a parallel editing branch on a given file, you could <code>(save-sound-
 <code><a class=def name="scaleby">scale-by</a> (scalers <i>snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<a href="snd.html#scaling">scale</a> amplitude of <i>snd</i> by <i>scalers</i>.  Unlike most of these functions,
+scale-by <a href="snd.html#scaling">scales</a> the amplitude of <i>snd</i> by <i>scalers</i>.  Unlike most of these functions,
 scale-by follows the 'sync' buttons and affects all currently sync'd 
 channels. <i>scalers</i> can be either a float, a list, or a vct.  
 In the latter case, the values are used one by one, applying each as 
 scale-by moves through the channels. If 'sync' is off, channel <i>chn</i> 
-is scaled (defaults to the currently selected channel).  <code>(scale-by 2.0)</code> doubles all samples.
+is scaled (it defaults to the currently selected channel).  <code>(scale-by 2.0)</code> doubles all samples.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7861,13 +7896,13 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 
 <!-- scale-to -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="scaleto">scale-to</a> (<i>scalers snd chn</i>)</code>
+<code><a class=def name="scaleto">scale-to</a> (<i>norms snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i> (following <a class=quiet href="#sync">sync</a> as in <a href="#scaleby">scale-by</a>).
+scale-to <a href="snd.html#scaling">normalizes</a> <i>snd</i> to <i>norms</i> (following <a class=quiet href="#sync">sync</a> as in <a href="#scaleby">scale-by</a>).
 <code>(scale-to 0.5)</code> scales the current channel so that its maxamp is 0.5.
-If all the samples are 0.0, scale-to returns #f and does not perform any edit.
-<i>scalers</i> can be a number, a list of numbers, or a vct.
+If all the sound's samples are 0.0, scale-to returns #f and does not perform any edit.
+<i>norms</i> can be a number, a list of numbers, or a vct.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7881,12 +7916,14 @@ scan-chan applies <i>func</i> to samples in the specified channel.
 It is the old ("irregular") version of <a href="#scanchannel">scan-channel</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
+
+
 <!-- scan-channel -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="scanchannel">scan-channel</a> (func <i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-scan-channel "scans" the data in the specified channel between the given sample numbers (default
+scan-channel "scans" the data in the specified channel between the given sample numbers (the default
 is the entire sound) by applying <i>func</i> to each sample.
 If <i>func</i> returns something other than #f, the scan is halted, 
 and a list is returned
@@ -7953,8 +7990,10 @@ subsequent <code>(scan-again)</code> calls continue the search where the last ca
 <code><a class=def name="searchprocedure">search-procedure</a> (<i>snd</i>)</code>
 </td></tr>
 <tr><td></td><td>
-the current global or sound-local (if <i>snd</i> is specified) search procedure.
-<code>(set! (<a class=quiet href="#searchprocedure">search-procedure</a>) (lambda (y) (&gt; y .1)))</code>
+This gives the current global or sound-local (if <i>snd</i> is specified) search procedure.
+<pre>
+    (set! (<a class=quiet href="#searchprocedure">search-procedure</a>) (lambda (y) (&gt; y .1)))
+</pre>
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7964,7 +8003,7 @@ the current global or sound-local (if <i>snd</i> is specified) search procedure.
 <code><a class=def name="selectedchannel">selected-channel</a> (<i>snd</i>)</code>
 </td></tr>
 <tr><td></td><td>
-selected channel in <i>snd</i> (set it to select a channel).  Return #f is no channel is selected in snd. 
+This gives the selected channel in <i>snd</i>; you can set it to select a channel.  It returns #f is no channel is selected in <i>snd</i>. 
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7974,8 +8013,7 @@ selected channel in <i>snd</i> (set it to select a channel).  Return #f is no ch
 <code><a class=def name="selectedsound">selected-sound</a> ()</code>
 </td></tr>
 <tr><td></td><td>
-selected sound (index) (set it to select a sound). Return #f is there is no selected sound. 
-All the functions that take a sound index argument default to using the selected sound.
+This gives the currently selected sound (its index, of course); you can set it to select a sound. It returns #f is there is no selected sound. 
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7985,7 +8023,8 @@ All the functions that take a sound index argument default to using the selected
 <code><a class=def name="selectchannel">select-channel</a> (<i>chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-select channel <i>chn</i>. This is the same as <code>(set! (<a class=quiet href="#selectedchannel">selected-channel</a>) chn)</code>. 
+This selects channel <i>chn</i> in the currently selected sound;
+equivalent to <code>(set! (<a class=quiet href="#selectedchannel">selected-channel</a>) chn)</code>. 
 See also <a href="#selectchannelhook">select-channel-hook</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -7996,7 +8035,7 @@ See also <a href="#selectchannelhook">select-channel-hook</a>.
 <code><a class=def name="selectsound">select-sound</a> (<i>snd</i>)</code>
 </td></tr>
 <tr><td></td><td>
-select sound <i>snd</i> (an index). This is the same as <code>(set! (<a class=quiet href="#selectedsound">selected-sound</a>) snd)</code>.
+This selects sound <i>snd</i> (an index); equivalent to <code>(set! (<a class=quiet href="#selectedsound">selected-sound</a>) snd)</code>.
 See also <a href="#selectsoundhook">select-sound-hook</a>.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -8007,17 +8046,29 @@ See also <a href="#selectsoundhook">select-sound-hook</a>.
 <code><a class=def name="setsamples">set-samples</a> (samp samps data <i>snd chn trunc edname infile-chan edpos auto-delete</i>)</code>
 </td></tr>
 <tr><td></td><td>
-set <i>snd</i>'s channel <i>chn</i>'s samples starting from
+set-samples (and its related (set! (samples...)...) form) set <i>snd</i>'s channel <i>chn</i>'s samples starting from
 sample <i>samp</i> for <i>samps</i> samples to the values in <i>data</i>.
+<pre>
+    (set! (samples 0 100) (make-vct 100 .1))
+    (set-samples 0 100 (make-vct 100 .1))
+
+</pre>
+both change all samples between 0 and 100 to be 0.1. 
 If <i>samp</i> is beyond the end of the file, the file is first zero-padded to reach it.
-<i>data</i> can be a filename.  If <i>data</i> is a vct, this is identical to <a href="#vct_to_channel">vct-&gt;channel</a>.
+<i>data</i> can be a filename.  
+<pre>
+    (set-samples 10000 20000 "oboe.snd")
+</pre>
+replaces 10000 samples with data from oboe.snd.
+If <i>data</i> is a vct, set-samples is identical to <a href="#vct_to_channel">vct-&gt;channel</a>.
 If <i>trunc</i> is #t and <i>samp</i> is 0, the
 sound is truncated (if necessary) to reflect the end of <i>data</i>.
 If the in-coming data file has more than one channel, <i>infile-chan</i>
-sets which input file to read. The data file is not deleted by Snd
+sets which input file to read. The in-coming data file is not deleted by Snd
 unless <i>auto-delete</i> is #t.  (If you write a temporary sound
 as an edit, it can be non-obvious when it is safe to delete that
 file; <i>auto-delete</i> set to #t asks Snd to handle cleanup).
+<br><br>
 The form (set! (<a class=quiet href="#samples">samples</a> samp samps <i>snd chn trunc edname infile-chan</i>) data) can also be used.
 <i>env-sound-interp</i> in examp.scm has an example of the file version, using
 sound-data objects and mus-sound-write to create a temporary file, but
@@ -8048,15 +8099,15 @@ it's probably simpler to use <a href="clm.html#with-sound">with-sound</a> (see a
 <code><a class=def name="shortfilename">short-file-name</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-the brief (no directory) form of <i>snd</i>'s filename.
+This returns the brief (no directory) form of <i>snd</i>'s filename.
 
 <pre>
-&gt;<em class=typing>(open-sound "oboe.snd")</em>
-<em class=listener>0</em>
-&gt;<em class=typing>(file-name 0)</em>
-<em class=listener>"/home/bil/cl/oboe.snd"</em>
-&gt;<em class=typing>(short-file-name 0)</em>
-<em class=listener>"oboe.snd"</em>
+    &gt;<em class=typing>(open-sound "oboe.snd")</em>
+    <em class=listener>0</em>
+    &gt;<em class=typing>(file-name 0)</em>
+    <em class=listener>"/home/bil/cl/oboe.snd"</em>
+    &gt;<em class=typing>(short-file-name 0)</em>
+    <em class=listener>"oboe.snd"</em>
 </pre>
 
 </td></tr>
@@ -8068,8 +8119,8 @@ the brief (no directory) form of <i>snd</i>'s filename.
 <code><a class=def name="showaxes">show-axes</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-(default: <code>show-all-axes</code>)
-If show-axes is <code>show-all-axes</code>, display x and y axes; if <code>show-x-axis</code>, 
+This determines what axes are displayed.
+If show-axes is <code>show-all-axes</code> (the default), both the x and y axes are displayed; if it is <code>show-x-axis</code>, 
 just one (bottom) x axis is displayed, reducing screen clutter. 
 <code>show-no-axes</code> omits both x and y axes.  To remove the x axis label, use
 either <code>show-x-axis-unlabelled</code> or <code>show-all-axes-unlabelled</code>.
@@ -8083,7 +8134,7 @@ This is the View:Axes choice.
 <code><a class=def name="showgrid">show-grid</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-If #t, a background grid is displayed (default is #f).  See also <a href="#griddensity">grid-density</a>.
+If show-grid is #t (the default is #f), a background grid is displayed (default is #f).  See also <a href="#griddensity">grid-density</a>.
 <br><br>
 <img src="grid.png" alt="grid">
 </td></tr>
@@ -8095,7 +8146,7 @@ If #t, a background grid is displayed (default is #f).  See also <a href="#gridd
 <code><a class=def name="showmarks">show-marks</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-If #t, marks are displayed.  This is the '<a href="snd.html#marks">Show marks</a>' View menu option.
+If show-marks is #t (the default), marks are displayed.  This is the '<a href="snd.html#marks">Show marks</a>' View menu option.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8105,7 +8156,7 @@ If #t, marks are displayed.  This is the '<a href="snd.html#marks">Show marks</a
 <code><a class=def name="showmixwaveforms">show-mix-waveforms</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-If #t (default is #t), a mixed sound is displayed as a separate waveform above the main data.  The rectangular tag
+If show-mix-waveforms is #t (the default), a mixed sound is displayed as a separate waveform above the main data.  The rectangular tag
 at the start of the waveform can be dragged to move the mix, or clicked to select it for the mix dialog.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -8116,7 +8167,7 @@ at the start of the waveform can be dragged to move the mix, or clicked to selec
 <code><a class=def name="showsonogramcursor">show-sonogram-cursor</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-If #t (default is #f) the cursor is also displayed in the sonogram.
+If show-sonogram-cursor is #t (the default is #f), the cursor is also displayed in the sonogram.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8126,7 +8177,7 @@ If #t (default is #f) the cursor is also displayed in the sonogram.
 <code><a class=def name="showfftpeaks">show-transform-peaks</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-If #t, transform peak information is included in the transform display (default: #f).
+If show-transform-peaks is #t (the default is #f), transform peak information is included in the transform display.
 This is the 'peaks' button in the <a href="snd.html#viewfft">Transform</a> options dialog.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -8137,7 +8188,7 @@ This is the 'peaks' button in the <a href="snd.html#viewfft">Transform</a> optio
 <code><a class=def name="showyzero">show-y-zero</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-If #t, the y=0 axis is displayed.  This is the '<a href="snd.html#viewy0">Show Y=0</a>' View menu option.
+If show-y-zero is #t (the default is #f), the y=0 axis is displayed.  This is the '<a href="snd.html#viewy0">Show Y=0</a>' View menu option.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8173,7 +8224,7 @@ smooth over click: <a href="sndscm.html#exremoveclick">remove-click</a> in examp
 <code><a class=def name="smoothsound">smooth-sound</a> (beg num <i>snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-apply a smoothing function to the indicated data.  This produces a sinusoid between
+smooth-sound applies a smoothing function to the indicated data.  This produces a sinusoid between
 the end points:</td></tr>
 <tr><td></td><td>
 <table border=0><tr><td>
@@ -8201,8 +8252,7 @@ the end points:</td></tr>
 <code><a class=def name="soundp">sound?</a> (<i>snd</i>)</code>
 </td></tr>
 <tr><td></td><td>
-#t if <i>snd</i> (an index) points to an open sound. (After <a href="#updatesound">update-sound</a>, it is possible, though unlikely
-for the updated sound's index to change; a better way to deal with this problem is via <a href="#updatehook">update-hook</a>).
+sound? returns #t if <i>snd</i> (an index) points to an open sound. 
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8212,7 +8262,7 @@ for the updated sound's index to change; a better way to deal with this problem 
 <code><a class=def name="soundfontinfo">soundfont-info</a> (<i>snd</i>)</code>
 </td></tr>
 <tr><td></td><td>
-return a list of lists describing <i>snd</i> as a soundfont.  Each inner list
+This returns a list of lists describing <i>snd</i> as a soundfont.  Each inner list
 consists of the sound name, start point, loop start, and loop end.
 To set a named mark at the start of each sound with un-named marks 
 at the loop points:
@@ -8236,8 +8286,8 @@ at the loop points:
 
 <!-- sound-loop-info -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="soundloopinfo">sound-loop-info</a> (<i>snd</i>)</code></td>
-</tr><tr><td></td>
-<td>return or set loop points in header.  In each case, the loop info is a list of
+</tr><tr><td></td><td>
+This gives info about loop points from the sound's header.  The loop info is a list of
 up to 4 points, the first two (start, end) refer to the sustain loop,
 the second two to the release.  The 5th and 6th list entries are the base note and detune values.
 For historical reasons, the 7th and 8th entries are the sustain and release modes.
@@ -8250,7 +8300,7 @@ This is similar to <a href="#mussoundloopinfo">mus-sound-loop-info</a> (but it's
 <code><a class=def name="soundproperties">sound-properties</a> (<i>snd</i>)</code>
 </td></tr>
 <tr><td></td><td>
-A property list associated with the given sound.  It is set to '() at the time a sound is opened.  The accessor
+This is a property list associated with the given sound.  It is set to '() at the time a sound is opened.  The accessor
 <a href="sndscm.html#exsoundproperty">sound-property</a> is provided in extensions.scm.  There are several
 examples of using it in snd-motif.scm and autosave.scm.
 </td></tr>
@@ -8262,9 +8312,16 @@ examples of using it in snd-motif.scm and autosave.scm.
 <code><a class=def name="sounds">sounds</a> ()</code>
 </td></tr>
 <tr><td></td><td>
-list of currently active sounds (id numbers).
-A common Snd trope is (map func (sounds)): <code>(map maxamp (<em class=red>sounds</em>))</code>.  Or, if
-the return value is not needed: <code>(for-each (lambda (snd) (display (<a class=quiet href="#shortfilename">short-file-name</a> snd))) (<em class=red>sounds</em>))</code>.
+sounds returns a list of currently active sounds (index numbers).
+A common Snd trope is (map func (sounds)): 
+<pre>
+    (map maxamp (sounds))
+</pre>
+Or, if
+the return value is not needed:
+<pre>
+    (for-each (lambda (snd) (display (<a class=quiet href="#shortfilename">short-file-name</a> snd))) (sounds))
+</pre>
 This can be
 extended to provide a complete list of sounds and channels (since many Snd functions
 take the "snd chn" arguments):
@@ -8294,9 +8351,9 @@ take the "snd chn" arguments):
 <code><a class=def name="spectrocutoff">spectro-cutoff</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The amount of the frequency domain to include in the spectrum 
-display (default: 1.0). This number changes as you drag the frequency
-axis. This is the slider labelled '% of spectrum' in the View 
+This is the amount of the frequency domain to include in the spectrum 
+display (the default is 1.0 = all of it). 
+spectro-cutoff the slider labelled '% of spectrum' in the View 
 Orientation dialog. See <i>zoom-fft</i> in examp.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -8307,8 +8364,8 @@ Orientation dialog. See <i>zoom-fft</i> in examp.scm.
 <code><a class=def name="spectrohop">spectro-hop</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The distance (pixels) moved between successive spectrogram traces 
-(default = 4).  This is the 'hop' slider in the Orientation dialog.
+This is the distance (in pixels) moved between successive spectrogram traces 
+(default is 4).  spectro-hop is the 'hop' slider in the Orientation dialog.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8835,7 +8892,7 @@ redisplay <i>chn's</i> lisp graph.  See <a href="sndscm.html#enveddoc">enved.scm
 </td></tr>
 <tr><td></td><td>
 update <i>snd</i> (re-reads data from disk, flushing any pending edits).  In some cases (primarily involving
-a change in the number of channels), update-sound can change the index of the sound referred to by 'snd'.
+a change in the number of channels), update-sound can change the index of the sound referred to by <i>snd</i>.
 See <a href="#updatehook">update-hook</a> for a way to deal with the index confusion.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -9297,7 +9354,7 @@ For many examples see new-effects.scm.
 </td></tr>
 <tr><td></td><td>
 sets up snd's controls to reflect 'settings' (unspecified settings are not changed), then applies the controls as
-an edit of channel 'chn'. The 'settings' argument is a list:
+an edit of channel <i>chn</i>. The 'settings' argument is a list:
 <pre>
     (list amp speed
       (list contrast contrast_amp)
@@ -9731,7 +9788,7 @@ The edit list functions are:
 <tr><td width=60></td><td>
 apply <i>func</i>, a function of no arguments, treating it as
 one edit (in all channels) in the edit history mechanism.  Graphics redisplays are squelched during as-one-edit.
-Returns result of 'func'.
+Returns result of <i>func</i>.
 </td></tr>
 
 <tr><td></td><td>
@@ -9770,7 +9827,7 @@ lambda:
 <tr><td></td><td>
 
 See mix.scm for many examples. If you want to save Snd's state after using as-one-edit, you need to
-set 'origin' to some string that can restore the effect of the as-one-edit 'func'; the default is
+set <i>origin</i> to some string that can restore the effect of the as-one-edit <i>func</i>; the default is
 to copy the last edit history string and use its associated bounds -- unlikely to be what you want.
 </td></tr>
 <tr><td></td><td></td></tr>
@@ -10197,8 +10254,8 @@ to the File:Open dialog, first makes sure the dialog exists with <code>(open-fil
 <!-- define-envelope -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="defineenvelope">define-envelope</a> (name data (base 1.0))</code></td></tr>
 <tr><td></td><td>
-Add an envelope to the envelope editor's list, under the name 'name', using the list of breakpoints
-'data', and the optional 'base'.  If the 'base' is omitted, this is the same as <a href="#defvar">defvar</a>.
+Add an envelope to the envelope editor's list, under the name <i>name</i>, using the list of breakpoints
+<i>data</i>, and the optional <i>base</i>.  If the <i>base</i> is omitted, this is the same as <a href="#defvar">defvar</a>.
 <pre>
     Scheme: (define-envelope ramp '(0 0 1 1))
     Ruby:   define_envelope("ramp", [0, 0, 1, 1])
@@ -11590,7 +11647,7 @@ startup arguments as a list of strings. See <a href="grfsnd.html#sndwithnogui">S
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sendmozilla">send-mozilla</a> (url)</code></td></tr>
 <tr><td></td><td>
-Start mozilla, if necessary, and tell it to go to the location 'url'.
+Start mozilla, if necessary, and tell it to go to the location <i>url</i>.
 The actual HTML reader invoked is determined by <a href="#htmlprogram">html-program</a>,
 but it's currently assumed that netscape/mozilla url syntax can be used to jump to
 the desired url.
@@ -11604,7 +11661,7 @@ the desired url.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="snderror">snd-error</a> (str)</code></td></tr>
 <tr><td></td><td>
-throws 'snd-error with the error message 'str'.  This is a way to dive directly into
+throws 'snd-error with the error message <i>str</i>.  This is a way to dive directly into
 Snd's error handling mechanism.
 See also <a href="#muserrorhook">mus-error-hook</a> and <a href="#snderrorhook">snd-error-hook</a>.
 </td></tr>
@@ -12575,7 +12632,7 @@ of FractInt's royal colormap):
 <code><a class=def name="colormapref">colormap-ref</a> (map pos)</code></td></tr>
 <tr><td></td><td>
 <i>colormap-ref</i> returns the rgb values of the colormap <i>map</i> at position <i>pos</i>,
-suitable for use with make-color.  'pos' should be a float between
+suitable for use with make-color.  <i>pos</i> should be a float between
 0.0 and 1.0.
 See <i>samples-via-colormap</i> in draw.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
