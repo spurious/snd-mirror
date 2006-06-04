@@ -4739,7 +4739,7 @@ deleted.
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="saveregion">save-region</a> (reg <a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :header-type :data-format :comment) </code></td></tr>
 <tr><td></td><td>
 save region <i>reg</i> in <i>file</i> in data format (default is <code>mus-bshort</code>), header type (default
-is mus-next), and comment.  Return the output filename.  The arguments after <i>reg</i> are <a class=quiet href="clm.html#optional-key">optional-key</a>
+is <code>mus-next</code>), and comment.  Return the output filename.  The arguments after <i>reg</i> are <a class=quiet href="clm.html#optional-key">optional-key</a>
 args (that is, they are normal keyword arguments, but the keywords are optional).  The following calls are equivalent:
 <pre>
     (save-region 2 "reg0.snd")
@@ -5591,17 +5591,17 @@ replaces the normal "+" cursor with an "x":
 This returns <i>snd</i>'s data format -- the encoding used for the sound samples (e.g. mus-bshort).
 
 <br><br>
-The standard formats nowadays are mus-bshort (big-endian 16-bit integers), mus-bfloat
-(32-bit big-endian floats), and mus-bint (32-bit big-endian integers), and the
-corresponding little-endian versions: mus-lshort, mus-lfloat, and mus-lint.
+The standard formats nowadays are <code>mus-bshort</code> (big-endian 16-bit integers), <code>mus-bfloat</code>
+(32-bit big-endian floats), and <code>mus-bint</code> (32-bit big-endian integers), and the
+corresponding little-endian versions: <code>mus-lshort</code>, <code>mus-lfloat</code>, and <code>mus-lint</code>.
 If you're using an Intel-style PC, you're using a little-endian machine;
 Old macs (PowerPC Macs) and Suns use big-endian (NeXT, SGI, and Atari also used it in the good old days).  If you
 write a Next file and use little-endian data, some programs other than Snd
 may complain; similarly, RIFF wants little-endian and AIFC wants big-endian
 data (both can handle the other kind, but most sound-related programs don't know
 that).  In the old days, when disk space was at a premium, 8-bit formats
-were used a lot: mus-mulaw and mus-alaw (kludges for a kind of 8-bit float),
-mus-byte and mus-ubyte (8-bit ints, unsigned in the latter case).  A few
+were used a lot: <code>mus-mulaw</code> and <code>mus-alaw</code> (kludges for a kind of 8-bit float),
+<code>mus-byte</code> and <code>mus-ubyte</code> (8-bit ints, unsigned in the latter case).  A few
 DACs want a particular kind of data, but Snd handles that conversion internally.
 Anything less than 12 bits will sound bad -- Perry Cook's book "Real Sound Synthesis"
 has examples.  
@@ -8264,6 +8264,10 @@ sound? returns #t if <i>snd</i> (an index) points to an open sound.
 <tr><td></td><td>
 This returns a list of lists describing <i>snd</i> as a soundfont.  Each inner list
 consists of the sound name, start point, loop start, and loop end.
+<pre>
+    :<em class=typing>(soundfont-info)</em>
+    <em class=listener>(("BrSteel_E4" 0 65390 65458) ("BrSteel_B2" 65490 131458 131637) ("BrSteel_E1" 131669 197296 197830) ...)</em>
+</pre>
 To set a named mark at the start of each sound with un-named marks 
 at the loop points:
 </td></tr>
@@ -8292,6 +8296,10 @@ up to 4 points, the first two (start, end) refer to the sustain loop,
 the second two to the release.  The 5th and 6th list entries are the base note and detune values.
 For historical reasons, the 7th and 8th entries are the sustain and release modes.
 This is similar to <a href="#mussoundloopinfo">mus-sound-loop-info</a> (but it's settable).  See explode-sf2 in examp.scm.
+<pre>
+    :<em class=typing>(sound-loop-info)</em>
+    <em class=listener>(24981 144332 0 0 60 0 1 0)</em>
+</pre>
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -9095,7 +9103,7 @@ is distinguished from the beat by having a longer tick mark.
 <code><a class=def name="xbounds">x-bounds</a> (<i>snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-This returns (list x0 x1), the current x axis time domain bounds in seconds.  To display the entire sound:
+This returns <code>(list x0 x1)</code>, the current x axis time domain bounds in seconds.  To display the entire sound:
 <pre>
     (set! (x-bounds) (list 0.0 (/ (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#srate">srate</a>))))
 </pre> 
@@ -9164,7 +9172,7 @@ This is the current y axis label. <i>context</i> is one of <code>time-graph</cod
 <code><a class=def name="ybounds">y-bounds</a> (<i>snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-This returns (list y0 y1), the current y axis bounds.
+This returns <code>(list y0 y1)</code>, the current y axis bounds.
 To set the bounds to reflect the channel's maxamp, use <code>(set! (y-bounds) '())</code>.
 To set all channels at once using the selected sound's maxamp:
 </td></tr>
@@ -9233,9 +9241,8 @@ zero-pad is the fft zero pad size as a multiple of the fft size; <code>(set! (ze
 gives you half data, half zeros (the default value is 0).  The data length is 
 determined by the nominal transform-size.  Zero padding causes interpolation 
 of the fft points, making the display look smoother.
-</td></tr>
 
-<tr><td></td><td>
+<table cellpadding=10><tr><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\p) 0 
   (lambda () 
@@ -9248,16 +9255,19 @@ of the fft points, making the display look smoother.
     "decrease zero-pad"
     (set! (zero-pad) (- (<em class=red>zero-pad</em>) 1)) 
     (<a class=quiet href="#updatetransformgraph">update-transform-graph</a>)))
-</pre></td></tr></table></td></tr>
-<tr><td colspan=2 height=18></td></tr>
+</pre></td></tr></table>
+</td><td>
+<img src="pad1.png"></td><td><img src="pad2.png"></td></tr></table>
+
+</td></tr>
 
 </table><!-- end of main sound/channel table -->
-<br>
+<br><br>
 
 <table width="35%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="customcontrols">the control panel</a></h4></td></tr></table>
 
-<!-- STOPPED HERE -->
-<p>The control panel makes it easy to try out various quick effects without
+
+<p>The control panel makes it easy to try out various sound effects without
 editing anything.  You can change volume ('amp'), pitch ('speed'), tempo
 ('expand'), reverb amount ('reverb'), simulated room size ('reverb len'),
 brightness ('contrast'), and dullness ('filter').  To treat a current
@@ -9358,8 +9368,8 @@ For many examples see new-effects.scm.
 <code><a class=def name="controlstochannel">controls-&gt;channel</a> (<i>settings beg dur snd chn origin</i>)</code>
 </td></tr>
 <tr><td></td><td>
-sets up snd's controls to reflect 'settings' (unspecified settings are not changed), then applies the controls as
-an edit of channel <i>chn</i>. The 'settings' argument is a list:
+This sets up <i>snd</i>'s controls to reflect <i>settings</i> (unspecified settings are not changed), then applies the controls as
+an edit of channel <i>chn</i>. The <i>settings</i> argument is a list where each entry can also be #f or an empty list:
 <pre>
     (list amp speed
       (list contrast contrast_amp)
@@ -9367,7 +9377,6 @@ an edit of channel <i>chn</i>. The 'settings' argument is a list:
       (list reverb_scale reverb_length reverb_feedback reverb_low_pass reverb_decay)
       (list filter_order filter_env))
 </pre>
-where each entry can also be #f or an empty list.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -9455,7 +9464,7 @@ The <a class=quiet href="snd.html#expand">expansion</a> hop amount in seconds (t
 </td></tr>
 <tr><td></td><td>
 The <a class=quiet href="snd.html#expand">expansion</a> grain timing jitter.  This defaults to .1; if you set it
-to too small a number (0.0 for example), you'll probably notice (unwanted) notch-filter effects.
+to too small a number (0.0 for example), you'll probably notice (presumably unwanted) notch-filter effects.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -9531,7 +9540,7 @@ graph is displayed in dB.
 <code><a class=def name="filtercontrolinhz">filter-control-in-hz</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-If #t, filter frequency response envelope (sound control panel) x axis is in Hz, otherwise 0 to 1.0 (where 1.0 corresponds to srate/2).
+If #t, the filter frequency response envelope x axis is in Hz, otherwise 0 to 1.0 (where 1.0 corresponds to srate/2).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -9592,7 +9601,7 @@ controls to the last saved state.
 <code><a class=def name="reverbdecay">reverb-control-decay</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The length (seconds) of the reverberation after the sound has 
+The length (in seconds) of the reverberation after the sound has 
 finished (default: 1.0).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -9677,15 +9686,15 @@ The reverb-control-scale min and max amounts as a list.  The default is
 <code><a class=def name="savecontrols">save-controls</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-Remember the current control
+This remembers the current control
 settings for a later <a class=quiet href="#restorecontrols">restore-controls</a>.  In new-effects.scm, the effects that use the control panel
-internally (post-expsrc-dialog, for example) can save and restore the current state via:
+internally (post-expsrc-dialog, for example) save and restore the current state via:
 <pre>
-(<em class=red>save-controls</em>)
-(reset-controls)
-;;; now set the ones that are of interest for the current effect
-(apply-controls)
-(restore-controls)
+    (<em class=red>save-controls</em>)
+    (reset-controls)
+    ;;; now set the ones that are of interest for the current effect
+    (apply-controls)
+    (restore-controls)
 </pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -9706,7 +9715,7 @@ If set to #t, <i>snd</i>'s control panel is opened, else it is closed.
 <code><a class=def name="speedcontrol">speed-control</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-current <a class=quiet href="snd.html#speed">speed</a>.  A speed of 2 plays the sound twice as fast.
+current <a class=quiet href="snd.html#speed">speed</a> (sampling rate conversion factor).  A speed of 2 plays the sound twice as fast.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -9791,9 +9800,9 @@ The edit list functions are:
 <code><a class=def name="asoneedit">as-one-edit</a> (func <i>origin</i>)</code>
 </td></tr>
 <tr><td width=60></td><td>
-apply <i>func</i>, a function of no arguments, treating it as
+call <i>func</i>, a function of no arguments, treating it as
 one edit (in all channels) in the edit history mechanism.  Graphics redisplays are squelched during as-one-edit.
-Returns result of <i>func</i>.
+as-one-edit returns the result of <i>func</i>.
 </td></tr>
 
 <tr><td></td><td>
@@ -9831,107 +9840,129 @@ lambda:
 </td></tr>
 <tr><td></td><td>
 
-See mix.scm for many examples. If you want to save Snd's state after using as-one-edit, you need to
-set <i>origin</i> to some string that can restore the effect of the as-one-edit <i>func</i>; the default is
+See mix.scm for many examples. If you want to save and restore Snd's state after using as-one-edit, you need to
+set <i>origin</i> to some string that can restore the effect of the as-one-edit; the default is
 to copy the last edit history string and use its associated bounds -- unlikely to be what you want.
 </td></tr>
 <tr><td></td><td></td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- display-edits -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="displayedits">display-edits</a> (<i>snd chn edpos with-source</i>)</code>
 </td></tr>
 <tr><td></td><td>
-the current edit list contents as a string.  If <i>edpos</i> is specified, only that position is described.
-<i>with-source</i> (default #t) determines whether ptree source code is included in the output.
+This returns the current edit list contents as a string.  If <i>edpos</i> is specified, only that position is described.
+<i>with-source</i> (default: #t) determines whether ptree source code is included in the output.
+<pre>
+    :<em class=typing>(open-sound "oboe.snd")</em>
+    <em class=listener>0</em>
+    :<em class=typing>(scale-channel 2.0)</em>
+    <em class=listener>2.0</em>
+    :<em class=typing>(pad-channel 100 200)</em>
+    <em class=listener>100</em>
+    :<em class=typing>(display-edits 0 0 1)</em>  ; show just edit 1 (the scale-channel call)
+    <em class=listener>"
+     (scale 0 50828) ; scale-channel 2.000 0 #f [1:2]:
+       (at 0, cp->sounds[0][0:50827, 2.000]) [file: /home/bil/cl/oboe.snd[0]]
+       (at 50828, end_mark)
+    "</em>
+</pre>
 </td></tr>
 <tr><td></td><td></td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- edit-fragment -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="editfragment">edit-fragment</a> (<i>num snd chn</i>)</code>
+<code><a class=def name="editfragment">edit-fragment</a> (<i>edpos snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-return a list similar to that displayed in the edit history window giving 
+This returns a list similar to that displayed in the edit history window giving 
 the origin of the specified edit, its type (delete, insert, etc), its 
 begin sample, and the number of samples 
-affected.  If num is omitted, edit-fragment returns the currently active
+affected.  If <i>edpos</i> is omitted, edit-fragment returns the currently active
 edit.
+<pre>
+    :<em class=typing>(edit-fragment 2 0 0)</em> ; continuing example above
+    <em class=listener>("pad-channel" "zero" 100 200)</em>
+</pre>
 </td></tr>
 <tr><td></td><td></td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- edit-list->function -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="editlist_to_function">edit-list-&gt;function</a> (<i>snd chn start end</i>)</code>
 </td></tr>
 <tr><td></td><td>
-return a function encapsulating the current edit history list.  This provides a way to save an edit
+This returns a function encapsulating the current edit history list,  providing a way to save an edit
 sequence and re-apply it in some other context.  For example, you can back up to some earlier point,
-save the edit list, make a change, then re-run the saved edit sequence.  Eventually I'll add user
-interface support for this "sound spreadsheet" approach to editing.  This facility is not finished!
-The function returned takes 2 arguments, a sound index and channel number.
-</td></tr>
-
-<tr><td></td><td>
+save the edit list, make a change, then re-run the saved edit sequence.  
+The function returned takes 2 arguments, a sound index and a channel number.
 <pre>
-
-:<em class=typing>(scale-channel 2.0)</em>
-<em class=listener>2.0</em>
-:<em class=typing>(delete-samples 100 200)</em>
-<em class=listener>100</em>
-:<em class=typing>(set! (sample 150) .5)</em>
-<em class=listener>0.5</em>
-:<em class=typing>(define our-edits (</em><em class=red>edit-list-&gt;function</em><em class=typing>))</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-:<em class=typing>our-edits</em>
-<em class=listener>#&lt;procedure our-edits ((snd chn) (scale-channel 2.0 0 #f snd chn) (delete-samples 100 200 snd chn) (set-sample 150 0.5 snd chn))&gt;</em>
-:<em class=typing>(undo)</em>
-<em class=listener>1</em>
-:<em class=typing>(our-edits 0 0)</em>
-<em class=listener>0.5</em>
+    :<em class=typing>(define our-edits (</em><em class=red>edit-list-&gt;function</em><em class=typing>))</em> ; same example as above
+    <em class=listener>#&lt;unspecified&gt;</em>
+    :<em class=typing>our-edits</em>
+    <em class=listener>#&lt;procedure our-edits ((snd chn) (scale-channel 2.0 0 #f snd chn) (pad-channel 100 200 snd chn))&gt;</em>
+    :<em class=typing>(undo 2)</em>
+    <em class=listener>2</em>
+    :<em class=typing>(our-edits 0 0)</em>
+    <em class=listener>100</em>
 </pre>
 </td></tr>
 
+<!-- TODO: ruby returns a procedure here, but how to use it?
+-->
+
 <tr><td></td><td></td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- edit-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="editposition">edit-position</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-current position in the edit history list; can be set.  <code>(set! (edit-position) 0)</code> is equivalent
+The current position in the edit history list; it can be set:  <code>(set! (edit-position) 0)</code> is equivalent
 to <code>(<a class=quiet href="#revertsound">revert-sound</a>)</code>.
 See <a href="#makesamplereader">make-sample-reader</a>.
 </td></tr>
 <tr><td></td><td></td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- edits -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="edits">edits</a> (snd chn)</code>
 </td></tr>
 <tr><td></td><td>
-return a list with the number of undo-able edits and redo-able edits.  That is, if we have 2 undo-able edits and
-no redo-able edits, (edits) returns (list 2 0).
+This returns a list with the number of undo-able edits and redo-able edits.  That is, if we have 2 undo-able edits and
+no redo-able edits, <code>(edits)</code> returns <code>(list 2 0)</code>.
 </td></tr>
 <tr><td></td><td></td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- edit-tree -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="edittree">edit-tree</a> (<i>snd chn pos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-return a list of lists completely describing current edit list.
+This returns a list of lists completely describing current edit list.
 Each inner list has the form 
 <pre>
-    '(global-position data-number local-position local-end scaler ramp0 ramp1 type)
+    (list global-position data-number local-position local-end scaler ramp0 ramp1 type)
 </pre>
-If <i>data-number</i> is -2, it marks the end of the list.  The following function uses
+If <i>data-number</i> is -2, it marks the end of the list.  In our example above (the scale-channel/pad-channel sequence):
+<pre>
+    :<em class=typing>(edit-tree)</em>
+    <em class=listener>((0 0 0 99 2.0 0.0 0.0 0) (100 -1 0 199 0.0 0.0 0.0 1) (300 0 100 50827 2.0 0.0 0.0 0) (51028 -2 0 0 0.0 0.0 0.0 0))</em>
+</pre>
+
+The following function uses
 this information to highlight the changed portions of a given sound.
 </td></tr>
 
@@ -9958,6 +9989,7 @@ this information to highlight the changed portions of a given sound.
    (check-fragment (<em class=red>edit-tree</em> snd chn)
                    (<a class=quiet href="#leftsample">left-sample</a> snd chn)
                    (<a class=quiet href="#rightsample">right-sample</a> snd chn)))
+
 (add-hook! <a class=quiet href="#aftergraphhook">after-graph-hook</a> show-original)
 </pre></td></tr></table></td></tr>
 <tr><td></td><td></td></tr>
@@ -9970,8 +10002,8 @@ this information to highlight the changed portions of a given sound.
 <code><a class=def name="saveedithistory">save-edit-history</a> (filename <i>snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-save current edit list(s) in <i>filename</i>.
-If <i>chn</i> is omitted, all <i>snd</i>'s channels are saved; if <i>snd</i> is omitted,
+This function saves the current edit lists in <i>filename</i>.
+If <i>chn</i> is omitted, all of <i>snd</i>'s channels are saved; if <i>snd</i> is omitted,
 all edit lists are saved.  If the underlying files are not subsequently 
 changed, you can load this file to restore the current edit list state.
 save-edit-history returns #t if all went well.
@@ -9996,15 +10028,15 @@ edit sequences can be compared.
     (load scm)
     (delete-file scm)
     sfile))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
+
+</td></tr>
 <tr><td></td><td></td></tr>
 
 </table>
 
 <p>It is sometimes more convenient to edit the edit history lists
 directly, than to run Snd and invoke the <a href="snd.html#savedstate">"Save session"</a> menu option.
-To save a particular sound's or channel's edit list(s), use the
-function <a href="#saveedithistory">save-edit-history</a>.
 These lists are simply Scheme, Ruby, or Forth programs, just like anything else
 discussed in this document.  You could even write them from
 scratch.  Say we want to make a stereo file that consists
@@ -10037,19 +10069,6 @@ option or by calling the function <a href="#savestate">save-state</a>),
 the result is a program that can be edited just like any
 other such text.
 </p>
-<p>
-Many editing operations within Snd actually only affect the current
-edit lists.  For example, if you delete a portion of a sound, the
-only thing that happens is that the edit list of that sound is
-updated to reflect the jump over the deleted portion.  Similarly,
-all scaling operations, silences,
-envelopes, and simple cases of channel swaps only affect
-the edit list.  This means that ideally such operations are instantaneous
-and take no disk space no matter how large the sound being edited
-(in other cases we have to save at least the changed portion of the
-sound).  <a href="#ptreechannel">ptree-channel</a> (still in the experimental stages) extends this part of Snd to 
-(almost) arbitrary functions. 
-</p>
 
 
 
@@ -10069,7 +10088,7 @@ sound).  <a href="#ptreechannel">ptree-channel</a> (still in the experimental st
 <code><a class=def name="addtransform">add-transform</a> (name xlabel lo hi transform)</code>
 </td></tr>
 <tr><td width=60></td><td>
-add-transform adds a transform to the transform tables.  <i>name</i> is the name
+add-transform adds a transform to the transform choices (alongside Fourier, Wavelet, etc).  <i>name</i> is the name
 to use in the transform dialog. <i>xlabel</i> is the x axis label
 of the resultant graph.  <i>lo</i> and <i>hi</i> set which portion of the returned data
 to graph (normally 0.0 to 1.0).  <i>proc</i> is a function of two 
@@ -10136,7 +10155,7 @@ If GSL is included in Snd (via the --wth-gsl configuration switch), the followin
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="autocorrelate">autocorrelate</a> (data)</code></td></tr>
 <tr><td></td><td>
-perform an (in place) autocorrelation of <i>data</i> (a vct).  See <a href="sndscm.html#spotfreq">spot-freq</a> in dsp.scm, 
+This performs an (in place) autocorrelation of <i>data</i> (a vct).  See <a href="sndscm.html#spotfreq">spot-freq</a> in dsp.scm, 
 or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -10147,7 +10166,7 @@ or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
 <code><a class=def name="deletetransform">delete-transform</a> (type)</code>
 </td></tr>
 <tr><td></td><td>
-delete a transform that was added via <a class=quiet href="#addtransform">add-transform</a>.  The deleted type may be re-used by
+This removes a transform that was added via <a class=quiet href="#addtransform">add-transform</a>.  The deleted transform-type may be re-used by
 a subsequent add-transform.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -10157,8 +10176,8 @@ a subsequent add-transform.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="fft">fft</a> (rl im <i>sgn</i>)</code></td></tr>
 <tr><td></td><td>
-perform an FFT on vcts <i>rl</i> and <i>im</i> (the real and imaginary parts of the
-input data). <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
+This performs an FFT on vcts <i>rl</i> and <i>im</i> (the real and imaginary parts of the
+input data). <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (the default is 1).
 The CLM <a href="clm.html#fft">fft</a> function is called <a name="musfft">mus-fft</a> in Snd.
 The only difference between the two is that Snd's fft determines the fft size from 
 the size of the vcts passed to it, whereas CLM's takes the size as an argument.
@@ -10171,7 +10190,7 @@ the size of the vcts passed to it, whereas CLM's takes the size as an argument.
 <code><a class=def name="transformp">transform?</a> (type)</code>
 </td></tr>
 <tr><td></td><td>
-return #t if <i>type</i> refers to an active transform type.
+This returns #t if <i>type</i> refers to an active transform type.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -10191,7 +10210,7 @@ return #t if <i>type</i> refers to an active transform type.
 <tr><td><a href="#mindb"><small>min-dB</small></a></td><td><a href="#spectrozangle"><small>spectro-z-angle</small></a></td><td></td></tr>
 </table>
 
-<p>And some of the fft-based effects/editing functions:
+<p>Some FFT-based effects and editing functions:
 </p>
 <!-- INDEX fftexamples:FFTs -->
 <A NAME="fftexamples"></a>
@@ -10241,7 +10260,7 @@ Functions such as color-dialog normally create and start the dialog in question;
 <code>(color-dialog)</code> puts the color dialog on the screen.  If you're trying instead to
 customize the dialog in some way (in your initialization file, for example), you want the
 dialog to be created (so that the various widget children exist), but don't want it to pop
-up on the screen (be 'managed' in X jargon). So, most of the dialog functions have a <i>managed</i> argument
+up on the screen ('managed' in X jargon). So, most of the dialog functions have a <i>managed</i> argument
 that defaults to #t.  If #f, the dialog is created, if need be, but not started.
 install-searcher in snd-motif.scm, which adds customized file filtering code
 to the File:Open dialog, first makes sure the dialog exists with <code>(open-file-dialog #f)</code>.
@@ -10251,15 +10270,110 @@ to the File:Open dialog, first makes sure the dialog exists with <code>(open-fil
 <!-- -------------------------------- DIALOG TABLE -------------------------------- -->
 <table border=0 cellspacing=0 hspace=10>
 
+<!-- add-directory-to-view-files-list -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="adddirectorytoviewfileslist">add-directory-to-view-files-list</a> (dir <i>dialog</i>)</code></td></tr>
+<tr><td></td><td>
+This adds the sound files in directory <i>dir</i> to the list of files in the View:Files dialog.  
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- add-file-to-view-files-list -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="addfiletoviewfileslist">add-file-to-view-files-list</a> (file <i>dialog</i>)</code></td></tr>
+<tr><td></td><td>
+This adds <i>file</i> to the list of files in the View:Files dialog.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- add-file-filter -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="addfilefilter">add-file-filter</a> (name func)</code></td></tr>
+<tr><td></td><td>
+This adds <i>func</i> to the file filter list under the name <i>name</i>.  The file filter list is a list
+of functions, accessed from drop-down menus in the various file-related dialogs.  Each such function
+filters the list of files displayed by the dialog, so that only some interesting subset is posted.
+The built-in filter is <a href="#justsounds">just-sounds</a> which uses the sound file extension
+tables to decide which files are sounds, omitting all others from the file lists.
+You can add your own filters to this
+menu with add-file-filter.  The <i>name</i> appears as the menu item label corresponding to the function.
+The function should take one argument, a file name, and return #t to retain that file in the file list.
+add-file-filter returns an integer to identify <i>func</i> in other contexts.
+</td></tr><tr><td></td><td>
+<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
+(<em class=red>add-file-filter</em>
+ "mono"
+ (lambda (a)
+   "filter out all but mono sound files"
+   (and (<a class=quiet href="#soundfilep">sound-file?</a> a)
+	(= (<a class=quiet href="#mussoundchans">mus-sound-chans</a> a) 1))))
+</pre></td></tr></table></td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- add-file-sorter -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="addfilesorter">add-file-sorter</a> (name func)</code></td></tr>
+<tr><td></td><td>
+This adds <i>func</i> to the file-sorter list under the name <i>name</i>.  Some dialog file lists include
+a "sort" menu to reorder the files in the file list.  You can add your own sort functions to this
+menu with add-file-sorter.  The <i>name</i> appears as the menu item label corresponding to the function.
+The new sorter's index is returned; it is an integer for use with functions such as <a href="#viewfilessort">view-files-sort</a>.
+The function should take two arguments, each a filename, and return a strcmp-like number describing
+how to sort the pair.  The following adds a sorter named "duration" that sorts files from shorter
+to longer:
+</td></tr><tr><td></td><td>
+<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
+  (<em class=red>add-file-sorter</em>
+   "duration"
+   (lambda (a b)
+     "sort by duration from short to long"
+     (let ((dur1 (<a class=quiet href="#mussoundduration">mus-sound-duration</a> a))
+	   (dur2 (<a class=quiet href="#mussoundduration">mus-sound-duration</a> b)))
+       (if (&gt; dur1 dur2) 1
+	   (if (&lt; dur1 dur2) -1 0)))))
+</pre></td></tr></table></td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- add-sound-file-extension -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="addsoundfileextension">add-sound-file-extension</a> (ext)</code></td></tr>
+<tr><td></td><td>
+This adds <i>ext</i> to the list of (case sensitive) sound file extensions used by <a href="#soundfilesindirectory">sound-files-in-directory</a>.
+The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2").
+To add "ogg" as a recognized extension:
+<pre>
+     (add-sound-file-extension "ogg")
+</pre>
+The list itself is <a href="#soundfileextensions">sound-file-extensions</a>.
+See also <a href="sndscm.html#addsoundextension1">add-sound-file-extension-1</a>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- clear-listener -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="clearlistener">clear-listener</a> ()</code></td></tr>
+<tr><td width=60></td><td>
+This deletes all listener text from the beginning to the cursor position (C-M-g is bound to this function).
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
 <!-- color-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="colordialog">color-dialog</a> (<i>managed</i>)</code></td></tr>
-<tr><td width=60></td><td>Create and (if <i>managed</i> which defaults to #t) activate the Color dialog. Return the dialog widget.</td></tr>
+<tr><td width=60></td><td>
+This creates and (if <i>managed</i> which defaults to #t) activates the Color dialog; it returns the dialog widget.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- define-envelope -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="defineenvelope">define-envelope</a> (name data (base 1.0))</code></td></tr>
 <tr><td></td><td>
-Add an envelope to the envelope editor's list, under the name <i>name</i>, using the list of breakpoints
+This adds an envelope to the envelope editor's list, under the name <i>name</i>, using the list of breakpoints
 <i>data</i>, and the optional <i>base</i>.  If the <i>base</i> is omitted, this is the same as <a href="#defvar">defvar</a>.
 <pre>
     Scheme: (define-envelope ramp '(0 0 1 1))
@@ -10269,34 +10383,78 @@ Add an envelope to the envelope editor's list, under the name <i>name</i>, using
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
+<!-- defvar -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="defvar">defvar</a> (var val)</code></td></tr>
+<tr><td></td><td>
+This is the same as <code>(define var val)</code> except that the envelope editor keeps track
+of <i>var</i> thereafter and treats lists as envelopes.
+defvar exists in this context so that Snd and CLM can share envelope files.
+<pre>
+    (defvar a-func '(0 0 1 1))
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- delete-file-filter -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="deletefilefilter">delete-file-filter</a> (index)</code></td></tr>
+<tr><td></td><td>
+This removes the file filter function associated with <i>index</i> from the file filter list. 
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- delete-file-sorter -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="deletefilesorter">delete-file-sorter</a> (index)</code></td></tr>
+<tr><td></td><td>
+This removes the file sorter function associated with <i>index</i> from the file sorter list.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
 <!-- edit-header-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="editheaderdialog">edit-header-dialog</a> (snd) </code></td></tr>
-<tr><td></td><td>start the Edit Header dialog on <i>snd</i>, return the dialog widget.</td></tr>
+<tr><td></td><td>
+This starts the Edit Header dialog on <i>snd</i>, returning the dialog widget.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- enved-base -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envedbase">enved-base</a> () </code></td></tr>
-<tr><td></td><td>envelope editor exponential base value (1.0)</td></tr>
+<tr><td></td><td>
+This is the envelope editor exponential base value.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- enved-clip? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envedclipping">enved-clip?</a> ()</code></td></tr>
-<tr><td></td><td>envelope editor 'clip' button (restricts mouse motion) (#f)</td></tr>
+<tr><td></td><td>
+This reflects the state of the envelope editor 'clip' button.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- enved-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="enveddialog">enved-dialog</a> ()</code></td></tr>
-<tr><td></td><td>start the Envelope editor dialog, return the dialog widget.</td></tr>
+<tr><td></td><td>
+This starts the Envelope editor dialog, returning the dialog widget.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- enved-envelope -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envedenvelope">enved-envelope</a> ()</code></td></tr>
-<tr><td></td><td>current envelope in the envelope editor's graph window (list).</td></tr>
+<tr><td></td><td>
+This is the envelope (a list of breakpoints) in the envelope editor's graph window.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- enved-filter -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="filterenv">enved-filter</a> ()</code></td></tr>
-<tr><td></td><td>The type of the Envelope editor's filter. (default #t: FIR, #f is FFT).  To get the fft display in the envelope editor
+<tr><td></td><td>
+This reflects the type of the envelope editor's filter (the default #t means FIR; #f is FFT).  To get the FFT display in the envelope editor
 as the default:
 </td></tr>
 
@@ -10314,65 +10472,103 @@ as the default:
 </td></tr></table></td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- enved-filter-order -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="filterenvorder">enved-filter-order</a> ()</code></td></tr>
-<tr><td></td><td>The order of the envelope editor's FIR filter. (default is 40)</td></tr>
+<tr><td></td><td>
+This is the order of the envelope editor's FIR filter (the default is 40)</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- enved-in-dB -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envedin-dB">enved-in-dB</a> ()</code></td></tr>
-<tr><td></td><td>envelope editor 'dB' button (#f)</td></tr>
+<tr><td></td><td>
+This reflects the state of the envelope editor 'dB' button.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- enved-power -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envedpower">enved-power</a> ()</code></td></tr>
-<tr><td></td><td>envelope editor base scale range (9.0^power). (3.0)</td></tr>
+<tr><td></td><td>
+This is the envelope editor's base scale range (it defaults to 3.0).</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- enved-style -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envedstyle">enved-style</a> ()</code></td></tr>
-<tr><td></td><td>envelope editor choice for connecting breakpoints.  Can be <code>envelope-linear</code> (the default), or
+<tr><td></td><td>
+This is the envelope editor choice for connecting breakpoints.  It can be <code>envelope-linear</code> (the default), or
 <code>envelope-exponential</code>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- enved-target -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envedtarget">enved-target</a> ()</code></td></tr>
 <tr><td></td><td>
-Determines how the envelope editor's current envelope is applied to the currently selected data.
+This determines how the envelope editor's current envelope is applied to the selected data.
 The choices are <code>enved-amplitude</code>, <code>enved-srate</code> and <code>enved-spectrum</code>.
+The first treats the envelope as an amplitude envelope, the second as an srate curve (changing speed),
+and the last as a frequency response envelope for a filter.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- enved-waveform-color -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envedwaveformcolor">enved-waveform-color</a> ()</code></td></tr>
-<tr><td></td><td>color of waveform displayed in envelope editor. (default is blue).</td></tr>
+<tr><td></td><td>
+This is the color of the waveform displayed in envelope editor (the default is blue).</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- enved-wave? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envedwaving">enved-wave?</a> ()</code></td></tr>
-<tr><td></td><td>envelope editor 'wave' button.
+<tr><td></td><td>
+This reflects the state of the envelope editor 'wave' button.
 The wave shown is the time domain display, even when filtering.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- find-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="finddialog">find-dialog</a> (<i>managed text</i>) </code></td></tr>
-<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) start the Edit:Find dialog, return the dialog widget.</td></tr>
+<tr><td></td><td>
+This creates and (if <i>managed</i> which defaults to #t) starts the Edit:Find dialog, returning the dialog widget.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
+
+<!-- goto-listener-end -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="gotolistenerend">goto-listener-end</a></code></td></tr>
+<tr><td></td><td>
+This moves the cursor to the end of the listener text, and scrolls the window so that it is visible.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- graph->ps -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="graph_to_ps">graph-&gt;ps</a> (<i>file</i>)</code></td></tr>
+<tr><td></td><td>
+This creates a Postscript picture of the current display.
+<i>file</i> defaults to <a href="#epsfile">eps-file</a>.
+See also <a href="#epsbottommargin">eps-bottom-margin</a>, <a href="#epsleftmargin">eps-left-margin</a>, 
+and <a href="#epssize">eps-size</a>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
 
 <!-- help-dialog -->
 <tr><td colspan=2 valign=top><code><a class=def name="helpdialog">help-dialog</a> (subject help-string <i>xrefs urls</i>) </code></td></tr>
-<tr><td></td><td>start the help dialog with title <i>subject</i> and body <i>help</i>, returning the dialog widget.
+<tr><td></td><td>
+This starts the help dialog with the title <i>subject</i> and help area text <i>help</i>, returning the dialog widget.
 <i>xrefs</i> is an optional list of strings to post in the "related items" list.  <i>urls</i> is a corresponding
 list of urls.
 <pre>
     (help-dialog "xyzzy" "are we having fUn?")
 </pre>
 There are many examples in new-effects.scm.
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke">
 <pre>
 (defmacro with-snd-help (form)
@@ -10393,65 +10589,109 @@ There are many examples in new-effects.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- info-dialog -->
 <tr><td colspan=2 valign=top><code><a class=def name="infodialog">info-dialog</a> (subject info) </code></td></tr>
-<tr><td></td><td>start the info dialog with title <i>subject</i> and body <i>info</i>. Return the dialog widget.
+<tr><td></td><td>
+This starts the info dialog with the title <i>subject</i> and body <i>info</i> returning the dialog widget.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- insert-file-dialog -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="insertfiledialog">insert-file-dialog</a> (<i>managed</i>)</code></td></tr>
+<tr><td></td><td>
+This creates and (if <i>managed</i> which defaults to #t) activates the File:Insert dialog, returning the dialog widget.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- listener-color -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="listenercolor">listener-color</a> ()</code></td></tr>
+<tr><td></td><td>
+This is the background color of listener.
 <pre>
-    (info-dialog "xyzzy" "this is informative")
+    (set! (listener-color) (<a class=quiet href="#makecolor">make-color</a> 0 0 0))
 </pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
-<!-- insert-file-dialog -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="insertfiledialog">insert-file-dialog</a> (<i>managed</i>)</code></td></tr>
-<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the File:Insert dialog.
-Return the dialog widget.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<!-- listener-color -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="listenercolor">listener-color</a> ()</code></td></tr>
-<tr><td></td><td>background color of listener. <code>(set! (listener-color) (<a class=quiet href="#makecolor">make-color</a> 0 0 0))</code> is good too.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
 
 <!-- listener-font -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="listenerfont">listener-font</a> ()</code></td></tr>
-<tr><td></td><td>listener font.</td></tr>
+<tr><td></td><td>
+This is the listener font.
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- listener-prompt -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="listenerprompt">listener-prompt</a> ()</code></td></tr>
-<tr><td></td><td>listener prompt (defaults to "&gt;").</td></tr>
+<tr><td></td><td>
+This is the listener prompt which defaults to "&gt;".
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
+
+<!-- listener-selection -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="listenerselection">listener-selection</a> ()</code></td></tr>
+<tr><td></td><td>
+
+listener-selection returns the currently selected text in the listener, or #f if there isn't any.  The following code 
+starts the help dialog with help related to the selection if "h" is typed in the graph:
+<pre>
+  (<a class=quiet href="#bindkey">bind-key</a> #\h 0 
+    (lambda ()
+      "start help dialog based on listener selected text"
+      (let ((subject (<em class=red>listener-selection</em>)))
+	(if subject
+            (<a class=quiet href="#helpdialog">help-dialog</a> subject (<a class=quiet href="#sndhelp">snd-help</a> subject))))))
+</pre>
+<p>But it's probably more convenient to use the <a href="#listenerclickhook">listener-click-hook</a>
+and click-for-listener-help (draw.scm).
+</p>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
 
 <!-- listener-text-color -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="listenertextcolor">listener-text-color</a> ()</code></td></tr>
-<tr><td></td><td>text color in listener.</td></tr>
+<tr><td></td><td>
+This is the text color in the listener.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mix-dialog-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixdialogmix">mix-dialog-mix</a> ()</code></td></tr>
-<tr><td></td><td>the id of the mix displayed by the mix dialog</td></tr>
+<tr><td></td><td>
+This is the id (an integer) of the mix displayed by the mix dialog.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mix-file-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixfiledialog">mix-file-dialog</a> (<i>managed</i>)</code></td></tr>
-<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the File:Mix dialog.
-Return the dialog widget.
+<tr><td></td><td>
+This creates and (if <i>managed</i> which defaults to #t) activates the File:Mix dialog,
+returning the dialog widget.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- new-sound-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="newsounddialog">new-sound-dialog</a> (<i>managed</i>) </code></td></tr>
-<tr><td></td><td>create and (if <i>managed</i> which defaults to #t)
-start the File New sound dialog; return the dialog widget.
+<tr><td></td><td>
+This creates and (if <i>managed</i> which defaults to #t)
+starts the File:New sound dialog, returning the dialog widget.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- open-file-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="openfiledialog">open-file-dialog</a> (<i>managed</i>)</code></td></tr>
-<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the File:Open dialog (see snd-motif.scm for examples).
-Return the dialog widget.
+<tr><td></td><td>
+This creates and (if <i>managed</i> which defaults to #t) activates the File:Open dialog,
+returning the dialog widget.
 If the xm module is loaded, we could add our own info via:
 </td></tr>
 
@@ -10471,20 +10711,28 @@ If the xm module is loaded, we could add our own info via:
 </pre></td></tr></table></td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- orientation-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="orientationdialog">orientation-dialog</a> (<i>managed</i>)</code></td></tr>
-<tr><td></td><td>Create and (if <i>managed</i> which defaults to #t) activate the <a href="snd.html#orientationbrowser">Orientation</a> dialog. Return the dialog widget.</td></tr>
+<tr><td></td><td>
+This creates and (if <i>managed</i> which defaults to #t) activates the <a href="snd.html#orientationbrowser">View:Orientation</a> dialog,
+returning the dialog widget.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- preferences-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="preferencesdialog">preferences-dialog</a> ()</code></td></tr>
-<tr><td></td><td>Activate the Options:Preferences dialog.</td></tr>
+<tr><td></td><td>
+This activates the Options:Preferences dialog.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- print-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="printdialog">print-dialog</a> (<i>managed direct-to-printer</i>)</code></td></tr>
-<tr><td></td><td>Create and (if <i>managed</i> which defaults to #t) activate the File:Print dialog. Return the dialog widget.</td></tr>
+<tr><td></td><td>
+This creates and (if <i>managed</i> which defaults to #t) activates the File:Print dialog, returning the dialog widget.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-autoload -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderautoload">recorder-autoload</a> ()</code></td></tr>
@@ -10599,10 +10847,32 @@ If it returns a string, that becomes the output filename.
 <tr><td></td><td>Recorder auto-trigger value.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
-<!-- save-listener -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef><a href="#savelistener">save-listener</a></em> (filename) </code></td></tr>
-<tr><td></td><td>save listener text in <i>filename</i>.</td></tr>
+<!-- reset-listener-cursor -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="resetlistenercursor">reset-listener-cursor</a> ()</code></td></tr>
+<tr><td></td><td>
+reset the listener cursor to the default pointer shape
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
+
+<!-- save-envelopes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="saveenvelopes">save-envelopes</a> (filename)</code></td></tr>
+<tr><td></td><td>
+save envelope editor contents in <i>filename</i>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- save-listener -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="savelistener">save-listener</a> (filename)</code></td></tr>
+<tr><td></td><td>
+save listener contents in <i>filename</i>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
 
 <!-- save-region-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="saveregiondialog">save-region-dialog</a> (<i>managed</i>) </code></td></tr>
@@ -10629,6 +10899,61 @@ start the File Save-as dialog (to save the currently selected sound), return the
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="showlistener">show-listener</a> ()</code></td></tr>
 <tr><td></td><td>if #t, open the listener pane, else close it.  For backwards compatibility, if called outside set!, it opens the pane.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-file-extensions -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="soundfileextensions">sound-file-extensions</a> ()</code></td></tr>
+<tr><td></td><td>
+This is the list of sound file extensions used by the "just-sounds" buttons and 
+<a href="#soundfilesindirectory">sound-files-in-directory</a> to try to recognize
+sound files.  It is settable, a list of extensions as strings:
+<code>(set! (sound-file-extensions) (list "snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2"))</code>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- sound-file? -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="soundfilep">sound-file?</a> (filename)</code></td></tr>
+<tr><td></td><td>
+Returns #t if <i>filename</i> has an extension that matches one in the <a href="#soundfileextensions">sound-file-extensions</a> list.
+<pre>
+    :<em class=typing>(sound-file? "oboe.snd")</em>
+    <em class=listener>#t</em>
+    :<em class=typing>(sound-file? "extsnd.html")</em>
+    <em class=listener>#f</em>
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- sound-files-in-directory -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="soundfilesindirectory">sound-files-in-directory</a> (<i>dir</i>)</code></td></tr>
+<tr><td></td><td>
+return a list of sound file names.  A file is considered a sound if it has data and
+its extension is on the sound file extension list (see <a href="#addsoundfileextension">add-sound-file-extension</a>).
+The directory name defaults to the current directory.
+This is useful for batch processing of sounds.  The following
+prints the names of all the stereo AIFC files it finds:
+</td></tr>
+
+<tr><td></td><td>
+<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
+(for-each
+  (lambda (filename)
+    (if (and (= (<a class=quiet href="#mussoundheadertype">mus-sound-header-type</a> filename) <a class=quiet href="#headertype">mus-aifc</a>)
+             (= (<a class=quiet href="#mussoundchans">mus-sound-chans</a> filename) 2))
+        (<a class=quiet href="#sndprint">snd-print</a> (format #f "~%~A" filename))))
+  (<em class=red>sound-files-in-directory</em>))
+</pre></td></tr></table></td></tr>
+
+<tr><td></td><td>
+See also map-sound-files in <a href="sndscm.html#snd4doc">snd4.scm</a>, and 
+<a href="sndscm.html#exmapsoundfiles">map-sound-files</a> in extensions.scm.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
 
 <!-- spectro-cutoff -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a href="#spectrocutoff">spectro-cutoff</a> ()</code></td></tr>
@@ -10934,81 +11259,6 @@ use <a href="#cgp">C-g</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
-<!-- add-directory-to-view-files-list -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="adddirectorytoviewfileslist">add-directory-to-view-files-list</a> (dir <i>dialog</i>)</code></td></tr>
-<tr><td></td><td>
-add the sound files in directory <i>dir</i> to the list of files in the View:Files dialog.  
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<!-- add-file-to-view-files-list -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="addfiletoviewfileslist">add-file-to-view-files-list</a> (file <i>dialog</i>)</code></td></tr>
-<tr><td></td><td>
-add <i>file</i> to the list of files in the View:Files dialog.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- add-file-filter -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="addfilefilter">add-file-filter</a> (name func)</code></td></tr>
-<tr><td></td><td>
-add <i>func</i> to the file-filter list under the name <i>name</i>.  Some dialog file lists include
-a "filter" menu to remove uninteresting files from the file list ("just sounds" for example).  You can add your own filters to this
-menu with add-file-filter.  The name appears as the menu item label corresponding to the function.
-The function should take one argument, a file name, and return #t to retain that file in the file list.
-add-file-filter returns an integer to identify <i>func</i> in other contexts.
-</td></tr><tr><td></td><td>
-<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
-(<em class=red>add-file-filter</em>
- "mono"
- (lambda (a)
-   "filter out all but mono sound files"
-   (and (<a class=quiet href="#soundfilep">sound-file?</a> a)
-	(= (<a class=quiet href="#mussoundchans">mus-sound-chans</a> a) 1))))
-</pre></td></tr></table></td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- add-file-sorter -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="addfilesorter">add-file-sorter</a> (name func)</code></td></tr>
-<tr><td></td><td>
-add <i>func</i> to the file-sorter list under the name <i>name</i>.  Some dialog file lists include
-a "sort" menu to reorder the files in the file list.  You can add your own sort functions to this
-menu with add-file-sorter.  The name appears as the menu item label corresponding to the function.
-The new sorter's index is returned; it is an integer for use with functions such as <a href="#viewfilessort">view-files-sort</a>.
-The function should take two arguments, each a filename, and return a strcmp-like number describing
-how to sort the pair.  The following adds a sorter named "duration" that sorts files from shorter
-to longer:
-</td></tr><tr><td></td><td>
-<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
-  (<em class=red>add-file-sorter</em>
-   "duration"
-   (lambda (a b)
-     "sort by duration from short to long"
-     (let ((dur1 (<a class=quiet href="#mussoundduration">mus-sound-duration</a> a))
-	   (dur2 (<a class=quiet href="#mussoundduration">mus-sound-duration</a> b)))
-       (if (&gt; dur1 dur2) 1
-	   (if (&lt; dur1 dur2) -1 0)))))
-</pre></td></tr></table></td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- add-sound-file-extension -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="addsoundfileextension">add-sound-file-extension</a> (ext)</code></td></tr>
-<tr><td></td><td>
-add <i>ext</i> to the list of (case sensitive) sound file extensions used by <a href="#soundfilesindirectory">sound-files-in-directory</a>.
-The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2").
-To add "ogg" as a recognized extension: <code>(add-sound-file-extension "ogg")</code><br>
-A Scheme implementation: <a href="sndscm.html#addsoundextension1">add-sound-file-extension-1</a>.
-The list itself is <a href="#soundfileextensions">sound-file-extensions</a>.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
 
 <!-- bind-key -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -11294,15 +11544,6 @@ See edit123.scm and snd_conffile.scm for many more examples of bind-key.
 <tr><td colspan=2 height=16></td></tr>
 
 
-<!-- clear-listener -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="clearlistener">clear-listener</a> ()</code></td></tr>
-<tr><td width=60></td><td>
-delete listener text from the beginning to the cursor position (C-M-g is bound to this function).
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
 <!-- close-sound-file -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="closesoundfile">close-sound-file</a> (fd bytes)</code></td></tr>
@@ -11378,40 +11619,6 @@ simulate typing C-g (intended for use with bind-key to remap C-g).
 <tr><td colspan=2 height=16></td></tr>
 
 
-<!-- defvar -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="defvar">defvar</a> (var val)</code></td></tr>
-<tr><td></td><td>
-same as <code>(define var val)</code> except that the envelope editor keeps track
-of <i>var</i> thereafter and treats lists as envelopes. (defvar is a macro).
-defvar exists in this context so that Snd and CLM can share envelope files;
-non-CLM users might prefer <a href="#defineenvelope">define-envelope</a>.
-<pre>
-    (defvar a-func '(0 0 1 1))
-</pre>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- delete-file-filter -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="deletefilefilter">delete-file-filter</a> (index)</code></td></tr>
-<tr><td></td><td>
-delete the filter associated with <i>index</i> from the file-filter list. 
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- delete-file-sorter -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="deletefilesorter">delete-file-sorter</a> (index)</code></td></tr>
-<tr><td></td><td>
-delete the file-sorter associated with <i>index</i> from the file-sorter list. <i>index</i> is an
-integer returned by <a href="#addfilesorter">add-file-sorter</a>.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
 <!-- equalize-panes -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="equalizepanes">equalize-panes</a> (<i>snd</i>)</code></td></tr>
@@ -11451,26 +11658,6 @@ gc-off turns garbage collection off (except in Guile where it's a no-op).
 <code><a class=def name="gcon">gc-on</a> ()</code></td></tr>
 <tr><td></td><td>
 gc-on turns garbage collection on (except in Guile where it's a no-op).
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- goto-listener-end -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="gotolistenerend">goto-listener-end</a></code></td></tr>
-<tr><td></td><td>
-move the cursor to the end of the listener text, and scroll the window so that it is visible.
-See ws.scm for examples.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- graph->ps -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="graph_to_ps">graph-&gt;ps</a> (<i>file</i>)</code></td></tr>
-<tr><td></td><td>
-create Postscript picture of current display.
-<i>file</i> defaults to <a href="#epsfile">eps-file</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11525,28 +11712,6 @@ is preceded by C-x.
 <tr><td colspan=2 height=16></td></tr>
 
 
-<!-- listener-selection -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="listenerselection">listener-selection</a> ()</code></td></tr>
-<tr><td></td><td>
-
-listener-selection returns the currently selected text in the listener, or #f if there isn't any.  The following code 
-starts the help dialog with help related to the selection if "h" is typed in the graph:
-<pre>
-  (<a class=quiet href="#bindkey">bind-key</a> #\h 0 
-    (lambda ()
-      "start help dialog based on listener selected text"
-      (let ((subject (<em class=red>listener-selection</em>)))
-	(if subject
-            (<a class=quiet href="#helpdialog">help-dialog</a> subject (<a class=quiet href="#sndhelp">snd-help</a> subject))))))
-</pre>
-<p>But it's probably more convenient to use the <a href="#listenerclickhook">listener-click-hook</a>
-and click-for-listener-help (draw.scm).
-</p>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
 <!-- little-endian? -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="littleendianp">little-endian?</a> () </code></td></tr>
@@ -11571,33 +11736,6 @@ loads a file into Snd for editing.
     (<em class=red>vct-&gt;sound-file</em> fd v2 10) ; v2 has 10 samples of sound data, presumably
     (<em class=red>close-sound-file</em> fd 10))
 </pre>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- reset-listener-cursor -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="resetlistenercursor">reset-listener-cursor</a> ()</code></td></tr>
-<tr><td></td><td>
-reset the listener cursor to the default pointer shape
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- save-envelopes -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="saveenvelopes">save-envelopes</a> (filename)</code></td></tr>
-<tr><td></td><td>
-save envelope editor contents in <i>filename</i>.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- save-listener -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="savelistener">save-listener</a> (filename)</code></td></tr>
-<tr><td></td><td>
-save listener contents in <i>filename</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11834,85 +11972,11 @@ See also <a href="#sndwarninghook">snd-warning-hook</a>.
 <tr><td colspan=2 height=16></td></tr>
 
 
-<!-- sound-file-extensions -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="soundfileextensions">sound-file-extensions</a> ()</code></td></tr>
-<tr><td></td><td>
-This is the list of sound file extensions used by the "just-sounds" buttons and 
-<a href="#soundfilesindirectory">sound-files-in-directory</a> to try to recognize
-sound files.  It is settable, a list of extensions as strings:
-<code>(set! (sound-file-extensions) (list "snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2"))</code>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- sound-file? -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="soundfilep">sound-file?</a> (filename)</code></td></tr>
-<tr><td></td><td>
-Returns #t if <i>filename</i> has an extension that matches one in the <a href="#soundfileextensions">sound-file-extensions</a> list.
-<pre>
-    :<em class=typing>(sound-file? "oboe.snd")</em>
-    <em class=listener>#t</em>
-    :<em class=typing>(sound-file? "extsnd.html")</em>
-    <em class=listener>#f</em>
-</pre>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- sound-files-in-directory -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="soundfilesindirectory">sound-files-in-directory</a> (<i>dir</i>)</code></td></tr>
-<tr><td></td><td>
-return a list of sound file names.  A file is considered a sound if it has data and
-its extension is on the sound file extension list (see <a href="#addsoundfileextension">add-sound-file-extension</a>).
-The directory name defaults to the current directory.
-This is useful for batch processing of sounds.  The following
-prints the names of all the stereo AIFC files it finds:
-</td></tr>
-
-<tr><td></td><td>
-<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
-(for-each
-  (lambda (filename)
-    (if (and (= (<a class=quiet href="#mussoundheadertype">mus-sound-header-type</a> filename) <a class=quiet href="#headertype">mus-aifc</a>)
-             (= (<a class=quiet href="#mussoundchans">mus-sound-chans</a> filename) 2))
-        (<a class=quiet href="#sndprint">snd-print</a> (format #f "~%~A" filename))))
-  (<em class=red>sound-files-in-directory</em>))
-</pre></td></tr></table></td></tr>
-
-<tr><td></td><td>
-See also map-sound-files in <a href="sndscm.html#snd4doc">snd4.scm</a>, and 
-<a href="sndscm.html#exmapsoundfiles">map-sound-files</a> in extensions.scm.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
 <!-- unbind-key -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="unbindkey">unbind-key</a> (key state extended)</code></td></tr>
 <tr><td></td><td>
 cause <i>key</i> with modifiers <i>state</i> to be a no-op (or to revert to its built-in default).
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- widget-position -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="widgetposition">widget-position</a> (widget)</code></td></tr>
-<tr><td></td><td>
-return a list giving the widget x and y coordinates (pixels).  Can be set.  See <a href="#sndwidgets">Snd widgets</a> below,
-and nb.scm where it uses the current window position to try to find a convenient place for the help dialog.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- widget-size -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="widgetsize">widget-size</a> (widget) </code></td></tr>
-<tr><td></td><td>
-return a list giving the widget width and height (pixels).  Can be set. See nb.scm and examp.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -12423,14 +12487,31 @@ and decided to implement the libxm connection.  This left the earlier graphics f
 they are still useful, but they probably should not be built-in.  I'm currently planning to move
 them to Scheme/Ruby/Forth.  But, for now, here are some of them:
 </p>
+
 <table cellspacing=0 hspace=20>
-<tr><td><code><em class=emdef>widget-position</em> (widget)</code></td>
-<td>return a list giving the widget x and y positions</td></tr>
-<tr><td valign=top><code><em class=emdef>widget-size</em> (widget)</code></td>
-<td>return a list giving the widget width and height.  The corresponding set! forms also take a list:
+
+<!-- widget-position -->
+<tr><td bgcolor="#f6f8ff">
+<code><a class=def name="widgetposition">widget-position</a> (widget)</code></td></tr>
+<tr><td></td><td>
+return a list giving the widget x and y coordinates (pixels).  Can be set.  See <a href="#sndwidgets">Snd widgets</a> below,
+and nb.scm where it uses the current window position to try to find a convenient place for the help dialog.
+</td></tr>
+
+
+
+<!-- widget-size -->
+<tr><td bgcolor="#f6f8ff">
+<code><a class=def name="widgetsize">widget-size</a> (widget) </code></td></tr>
+<tr><td></td><td>
+return a list giving the widget width and height (pixels).  Can be set. See nb.scm and examp.scm.
+
 <pre>
     (set! (<a class=quiet href="#widgetposition">widget-position</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))) (list 300 100))
-</pre></td></tr>
+</pre>
+</td></tr>
+
+
 <tr><td><code><a class=def name="widgettext">widget-text</a> (widget)</code></td><td>return or set the contents of text widget</td></tr>
 <tr><td><code><a class=def name="showwidget">show-widget</a> (widget)</code></td><td>show (manage) widget</td></tr>
 <tr><td><code><a class=def name="hidewidget">hide-widget</a> (widget)</code></td><td>hide (unmanage) widget</td></tr>
@@ -12603,7 +12684,7 @@ of FractInt's royal colormap):
       (do ((i 0 (1+ i))
 	   (x 0.0 (+ x incr)))
 	  ((= i size))
-        (<a class=quiet href="#vctset">vct-set!</a> r i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x er) 256.0)))
+        (<a class=quiet href="#vctset">vct-set!</a> r i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x er) 256.0))) ; from env.scm
         (<a class=quiet href="#vctset">vct-set!</a> g i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x eg) 256.0)))
         (<a class=quiet href="#vctset">vct-set!</a> b i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x eb) 256.0))))
       (list r g b))))
@@ -12623,6 +12704,13 @@ of FractInt's royal colormap):
 	(<a class=quiet href="#vctset">vct-set!</a> b i (abs (sin (* 2.5 x)))))
       (list r g b))))
 </pre></td></tr></table>
+
+<table><tr>
+<td><img src="coscolor.png"></td>
+<td><img src="jetcolor.png"></td>
+<td><img src="hotcolor.png"></td>
+</tr></table>
+
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- colormap-name -->
