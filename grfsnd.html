@@ -42,7 +42,10 @@
 </td></tr></table>
 </center>
 
-<table border=0><tr><td>
+
+<table border=1 cellpadding=5 vspace=10 hspace=20>
+<th>this file:</th><th>extsnd.html:</th>
+<tr><td width="40%">
 <ul>
 <li><a href="#startup">Snd Startup</a>
   <ul>
@@ -72,8 +75,41 @@
   <li><a href="#sndandgl" onmouseover="return escape('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
   </ul>
 </ul>
-</td><td>
-<img src="note.png" alt="notebook" hspace=40>
+</td><td width="40%">
+  <ul>
+  <li><a href="#behavior">Customizing Snd's behavior</a>
+    <ul>
+    <li><a href="#sndglobalvars">Global variables</a>
+    <li><a href="#sndhooks">Hooks</a>
+    </ul>
+  <li><a href="#sndobjects">Snd's objects</a>
+    <ul>
+    <li><a href="#Vcts" onmouseover="this.T_WIDTH=100; return escape('real arrays')">Vcts</a>
+    <li><a href="#sndsounddata">Sound-data</a>
+    <li><a href="#extsndlib">Sndlib</a>
+    <li><a href="#samplereaders" onmouseover="this.T_WIDTH=200; return escape('sound data iterators')">Sample-readers</a>
+    <li><a href="#sndmarks" onmouseover="return escape('location markers in sound data')">Marks</a>
+    <li><a href="#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes and Tracks</a>
+    <li><a href="#sndregions" onmouseover="return escape('selected or saved portions of sound data')">Regions and Selections</a>
+    <li><a href="#sndsounds">Sounds and channels</a>
+      <ul>
+        <li><a href="#customcontrols">the control panel</a>
+        <li><a href="#editlists" onmouseover="this.T_WIDTH=200; return escape('current edit sequence')">edit lists</a>
+      </ul>
+    <li><a href="#sndtransforms" onmouseover="return escape('Fourier transform, wavelets, autocorelation, etc')">Transforms</a>
+    <li><a href="#snddialogs">Dialogs and Other Widgets</a>
+    <li><a href="#sndmisc">Miscellaneous functions</a>
+    <li><a href="#sndconstants">Constants</a>
+    <li><a href="#snderrors">Errors and Debugging</a>
+    </ul>
+  <li><a href="#appearance">Customizing Snd's appearance</a>
+    <ul>
+    <li><a href="#colors">Colors</a>
+    <li><a href="#fonts">Fonts</a>
+    <li><a href="#graphics">Graphics</a>
+    </ul>
+  </ul>
+
 </td></tr></table>
 <br>
 
@@ -107,6 +143,8 @@ the usual Xt/X-related flags like -xrm).</p>
 <tr><td bgcolor="#f6f8ff"><code>-init &lt;file&gt;</code></td>      <td bgcolor="#f6f8ff">use &lt;file&gt; as the init file, rather than ~/.snd</td></tr>
 </table>
 
+<img src="note.png" hspace=20 vspace=10>
+
 <p>
 The -e switch evaluates its argument as though it had been passed to M-X.  The
 initialization file, if any, is loaded first, then the arguments are processed
@@ -125,9 +163,8 @@ View:Files dialog's list:
 <pre>
     snd -e '(<a class=quiet href="extsnd.html#addsoundfileextension">add-sound-file-extension</a> "WAV")' -p /home/bil/sounds
 </pre>
-<br>
 
-<img src="bgd.png" alt="colors" vspace=10 hspace=10>
+<img src="bgd.png" hspace=20>
 <br>
 <br>
 

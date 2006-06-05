@@ -44,7 +44,10 @@
 </td></tr></table>
 </center>
 
-<table border=0><tr><td>
+
+<table border=1 cellpadding=5 vspace=10 hspace=20>
+<th>this file:</th><th>grfsnd.html:</th>
+<tr><td width="40%">
 <ul>
 <li><a href="#lisplistener">Introduction</a>
 <li><a href="#etc">Snd Programming</a>
@@ -57,16 +60,19 @@
   <li><a href="#sndobjects">Snd's objects</a>
     <ul>
     <li><a href="#Vcts" onmouseover="this.T_WIDTH=100; return escape('real arrays')">Vcts</a>
-    <li><a href="#sndsounddata">Sound-data and Sndlib</a>
+    <li><a href="#sndsounddata">Sound-data</a>
+    <li><a href="#extsndlib">Sndlib</a>
     <li><a href="#samplereaders" onmouseover="this.T_WIDTH=200; return escape('sound data iterators')">Sample-readers</a>
     <li><a href="#sndmarks" onmouseover="return escape('location markers in sound data')">Marks</a>
     <li><a href="#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes and Tracks</a>
     <li><a href="#sndregions" onmouseover="return escape('selected or saved portions of sound data')">Regions and Selections</a>
     <li><a href="#sndsounds">Sounds and channels</a>
-      <ul><li><a href="#customcontrols">the control panel</a></ul>
-    <li><a href="#editlists" onmouseover="this.T_WIDTH=200; return escape('current edit sequence')">Edit Lists</a>
+      <ul>
+        <li><a href="#customcontrols">the control panel</a>
+        <li><a href="#editlists" onmouseover="this.T_WIDTH=200; return escape('current edit sequence')">edit lists</a>
+      </ul>
     <li><a href="#sndtransforms" onmouseover="return escape('Fourier transform, wavelets, autocorelation, etc')">Transforms</a>
-    <li><a href="#snddialogs">Dialogs</a>
+    <li><a href="#snddialogs">Dialogs and Other Widgets</a>
     <li><a href="#sndmisc">Miscellaneous functions</a>
     <li><a href="#sndconstants">Constants</a>
     <li><a href="#snderrors">Errors and Debugging</a>
@@ -75,17 +81,46 @@
     <ul>
     <li><a href="#colors">Colors</a>
     <li><a href="#fonts">Fonts</a>
-    <li><a href="#sndwidgets">Widgets</a>
     <li><a href="#graphics">Graphics</a>
     </ul>
-  <li><a href="grfsnd.html#grfsndcontents" onmouseover="return escape('configuration, clm, connections with other programs')">Customization Part 2</a>
+  </ul>
+</ul>
+</td><td width="40%">
+
+<ul>
+<li><a href="grfsnd.html#startup">Snd Startup</a>
+  <ul>
+  <li><a href="grfsnd.html#sndswitches">Snd invocation flags</a>
+  <li><a href="grfsnd.html#sndinitfile" onmouseover="return escape('~/.snd, ~/.snd_guile, ~/.snd_prefs_guile, etc')">The initialization file</a>
+  <li><a href="grfsnd.html#sndresources" onmouseover="return escape('X resources: Xdefaults, gtkrc')">Snd resources</a>
+  <li><a href="grfsnd.html#sndconfigurationswitches">Configuration choices</a>
+  <li><a href="grfsnd.html#sndenvvars">Environment variables</a>
+  </ul>
+<li><a href="grfsnd.html#snddynamic">Runtime modules and external programs</a>
+  <ul>
+  <li><a href="grfsnd.html#emacssnd" onmouseover="return escape('Use Emacs as the listener')">Snd as an Emacs subjob</a>
+  <li><a href="grfsnd.html#dynamic" onmouseover="return escape('Load your own C code into Snd')">Dynamically loaded modules</a>
+  <li><a href="grfsnd.html#programs" onmouseover="return escape('Control Snd through X window properties')">External Programs</a>
+  <li><a href="grfsnd.html#sndaswidget" onmouseover="return escape('Embed Snd in some other program')">Snd as a Widget</a>
+  <li><a href="grfsnd.html#sndwithclm" onmouseover="return escape('CLM is built into Snd')">Snd and CLM</a>
+  <li><a href="grfsnd.html#sndwithcm" onmouseover="return escape('CM is Rick Taube\'s composition environment')">Snd and Common Music</a>
+  <li><a href="grfsnd.html#sndwithpd" onmouseover="return escape('PD is Miller Puckette\'s synthesis and composition program')">Snd and Pd</a>
+  <li><a href="grfsnd.html#sndwithmotif" onmouseover="return escape('Motif extensions from xm.c')">Snd and Motif</a>
+  <li><a href="grfsnd.html#sndwithgtk" onmouseover="return escape('Gtk extensions from xg.c')">Snd and Gtk</a>
+  <li><a href="grfsnd.html#sndwithnogui">Snd with no GUI and as script engine</a>
+  <li><a href="grfsnd.html#sndandruby">Snd with Ruby</a>
+  <li><a href="grfsnd.html#sndandforth">Snd with Forth</a>
+  <li><a href="grfsnd.html#sndandladspa" onmouseover="return escape('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
+  <li><a href="grfsnd.html#sndandalsa" onmouseover="return escape('This is the new Linux audio library')">Snd and ALSA</a>
+  <li><a href="grfsnd.html#sndandx">Driving Snd remotely</a>
+  <li><a href="grfsnd.html#sndandgl" onmouseover="return escape('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
   </ul>
 <li><a href="index.html">Index</a>
 </ul>
-</td><td>
-<img src="redsamps.png" alt="red samples" hspace=20 onmouseover="return escape('see draw.scm color-samples')">
 </td></tr></table>
-<br>
+<br><br>
+
+
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>Introduction</h2></td></tr></table>
 <A NAME="lisplistener"></a>
 
@@ -803,9 +838,8 @@ but I decided that was a worse kludge than log-freq-start).
 This depends partly on the optargs module (not available in the correct form before Guile 1.5),
 only applies to Guile (not Ruby, Gauche, or Forth), and is still experimental.
 The actual values of the optimization switch are:
-</td></tr>
-<tr><td></td><td colspan=2>
-<table border=1 cellpadding=5>
+
+<table border=1 cellpadding=5 vspace=10>
 <tr><td width=60>0:  </td><td> no use of parse trees at all (use the standard Guile parser/evaluator)</td></tr>
 <tr><td>1:  </td><td> allow simple ops (if complex result possible, give up)</td></tr>
 <tr><td>2:  </td><td>assume nothing will return a complex number</td></tr>
@@ -813,16 +847,17 @@ The actual values of the optimization switch are:
 <tr><td>4:  </td><td>make dangerous assumptions about variable types</td></tr>
 <tr><td>5:  </td><td>make dangerous assumptions about variable locations (for set!)</td></tr>
 <tr><td>6:  </td><td>try to splice in user-defined functions (buggy!)</td></tr>
-</table><br></td></tr>
-<tr><td></td><td colspan=2>Currently, the optimizer is able to speed up Scheme code by factors between
+</table>
+
+Currently, the optimizer is able to speed up Scheme code by factors between
 8 and 20; see snd-run.c for what is implemented, what the major limitations are, and so on.
 If you set the optimization-hook to print out whatever its argument is, you can
 find out what the optimizer found confusing.  
 Here are some representative results;
 the first number is the unoptimized time, the second is the optimized time, the third is
-the speed-up ratio:<br><br></td></tr>
-<tr><td></td><td colspan=2>
-<table border=1 cellpadding=5>
+the speed-up ratio:
+
+<table border=1 cellpadding=5 vspace=10>
 <tr><td>singer</td><td>1225</td><td>55</td><td>22</td>
 <td bgcolor="black"><br></td><td>abs sin</td><td>447</td><td>36</td><td>12</td>
 <td bgcolor="black"><br></td><td>jcrev  </td><td>505</td><td>44</td><td>11</td></tr>
@@ -833,7 +868,8 @@ the speed-up ratio:<br><br></td></tr>
 <td bgcolor="black"><br></td><td>*2     </td><td>274</td><td>20</td><td>14</td>
 <td bgcolor="black"><br></td><td>fm vln </td><td>206</td><td>16</td><td>13</td></tr>
 </table>
-<br></td></tr>
+</td></tr>
+<tr><td colspan=3 height=16></td></tr>
 
 
 <!-- print-length -->
@@ -1188,7 +1224,7 @@ indication such as "[or]", that means the various hook function values are or-d 
 
 
 <!-- after-apply-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="afterapplyhook">after-apply-hook</a> (snd)</code>
 </td></tr>
 <tr><td width=60></td><td colspan=2>
@@ -1199,7 +1235,7 @@ reset any added amplitude sliders to 1.0 when Apply finishes.
 
 
 <!-- after-graph-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="aftergraphhook">after-graph-hook</a> (snd chn)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1212,7 +1248,7 @@ being erased by Snd as it redraws graphs.
 
 
 <!-- after-open-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="afteropenhook">after-open-hook</a> (snd)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1222,8 +1258,7 @@ For example, the following causes Snd to default to locally
 sync'd channels (that is, each sound's channels are sync'd 
 together but are independent of any other sound), united channels (all chans in one graph), 
 and filled graphs (not line segments or dots, etc):
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>after-open-hook</em>
   (lambda (snd)
@@ -1233,6 +1268,7 @@ and filled graphs (not line segments or dots, etc):
           (set! (<a class=quiet href="#channelstyle" onmouseover="return escape('channel-style chooses between various layouts')">channel-style</a> snd) <a class=quiet href="#channelstyle" onmouseover="return escape('channels-combined means the channels are in one window')">channels-combined</a>)
           (set! (<a class=quiet href="#graphstyle" onmouseover="return escape('graph-style chooses how data is drawn -- lines, dots, etc')">graph-style</a> snd) <a class=quiet href="#graphstyle" onmouseover="return escape('graph-filled means the data is filled in, rather than just a line')">graph-filled</a>)))))
 </pre></td></tr></table>
+
 See also C-x b support in examp.scm, remember-sound-state in extensions.scm, enved.scm, and various
 examples in snd-motif.scm.
 </td></tr>
@@ -1240,7 +1276,7 @@ examples in snd-motif.scm.
 
 
 <!-- after-save-as-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="aftersaveashook">after-save-as-hook</a> (index filename from-dialog)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1251,7 +1287,7 @@ opens the newly created one, to mimic Emacs.
 
 
 <!-- after-save-state-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="aftersavestatehook">after-save-state-hook</a> (filename)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1270,15 +1306,13 @@ program.  See ws-save-state in ws.scm or remember-sound-state in extensions.scm.
 
 
 <!-- after-transform-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="transformhook">after-transform-hook</a> (snd chn scaler)</code>
 </td></tr>
 
 <tr><td></td><td colspan=2>
 called just after an FFT (or spectrum) is calculated.
-</td></tr>
 
-<tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (<A NAME="fftpeak">report-fft-peak</A> snd chn scale)
   (if (and (<a class=quiet href="#transformgraphp" onmouseover="return escape('is the fft graph displayed?')">transform-graph?</a>) 
@@ -1292,7 +1326,7 @@ called just after an FFT (or spectrum) is calculated.
 
 
 <!-- bad-header-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="badheaderhook">bad-header-hook</a> (filename)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1306,7 +1340,7 @@ If no header is found, <a href="#openrawsoundhook">open-raw-sound-hook</a> is in
 
 
 <!-- before-close-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="beforeclosehook">before-close-hook</a> (snd) </code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1317,7 +1351,7 @@ check-for-unsaved-edits in extensions.scm).
 
 
 <!-- before-exit-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="beforeexithook">before-exit-hook</a> ()</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1329,7 +1363,7 @@ for unsaved edits (see above or extensions.scm: <a href="#unsavededitsp">unsaved
 
 
 <!-- before-save-as-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="beforesaveashook">before-save-as-hook</a> (index filename selection srate header-type data-format comment)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1338,9 +1372,7 @@ save is not performed.  This hook provides a way to do last minute fixups (srate
 just before a sound is saved.  The arguments to the hook function describe the requested attributes of the saved sound;
 <i>index</i> is the to-be-saved sound's index; <i>filename</i> is the output file's name; <i>selection</i> is #t if
 we're saving the selection, not some sound.
-</td></tr>
 
-<tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>before-save-as-hook</em>
   (lambda (index filename selection sr type format comment)
@@ -1361,16 +1393,14 @@ we're saving the selection, not some sound.
 
 
 <!-- before-save-state-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="beforesavestatehook">before-save-state-hook</a> (filename)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
 called before Snd saves its state (<a href="#savestate">save-state</a>).  <i>filename</i> is the saved state
 file.  If the hook functions return #t, the save state file is opened in append mode (rather than create/truncate),
 so you can write preliminary stuff via this hook, then instruct Snd not to clobber it during the save process.
-</td></tr>
 
-<tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>before-save-state-hook</em>
   (lambda (name) 
@@ -1383,29 +1413,24 @@ so you can write preliminary stuff via this hook, then instruct Snd not to clobb
 
 
 <!-- before-transform-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="beforetransformhook">before-transform-hook</a> (snd chn)</code> [<b>progn</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
 called just before an FFT (or spectrum) is calculated.  If it returns 
 an integer, that value is used as the starting point (sample number) of the fft.  Normally,
 the fft starts from the left window edge.  To have it start at mid-window:
-</td></tr>
 
-<tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>before-transform-hook</em>
   (lambda (snd chn)        ; 0.5 * (left + right) = midpoint
     (inexact-&gt;exact (round (* 0.5 (+ (<a class=quiet hred="#rightsample">right-sample</a> snd chn) (<a class=quiet href="#leftsample">left-sample</a> snd chn)))))))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td colspan=2>
 The following 
 somewhat brute-force code shows a way to have the fft reflect the position 
 of a moving mark:
-</td></tr>
 
-<tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define fft-position #f)
 (add-hook! <em class=red>before-transform-hook</em> (lambda (snd chn) fft-position))
@@ -1417,14 +1442,11 @@ of a moving mark:
 
 
 <!-- close-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="closehook">close-hook</a> (snd)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a file is closed (before the actual close, so the index <i>snd</i> is still valid).
-</td></tr>
-
-<tr><td></td><td colspan=2>
 
 <table border=0><tr><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
@@ -1441,9 +1463,7 @@ called when a file is closed (before the actual close, so the index <i>snd</i> i
 end
 </pre></td></tr></table>
 </td></tr></table>
-</td></tr>
 
-<tr><td></td><td colspan=2>
 close-hook is used in autosave.scm, examp.scm, extensions.scm, and peak-env.scm; see, for example,
 remember-sound-state in extensions.scm.
 </td></tr>
@@ -1451,7 +1471,7 @@ remember-sound-state in extensions.scm.
 
 
 <!-- color-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="colorhook">color-hook</a> () </code> [<b>progn</b>]
 </td></tr>
 
@@ -1461,7 +1481,7 @@ called whenever one of the variables associated with the color dialog changes.  
 
 
 <!-- dac-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="dachook">dac-hook</a> (data) </code> [<b>progn</b>]
 </td></tr>
 
@@ -1471,7 +1491,7 @@ called just before data is sent to DAC; <i>data</i> is a <a href="#sndsounddata"
 
 
 <!-- draw-mark-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="drawmarkhook">draw-mark-hook</a> (id)</code> [<b>progn</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1482,7 +1502,7 @@ in snd-motif.scm (for Gtk+, snd-gtk.scm) uses this hook to draw sync'd marks in 
 
 
 <!-- drop-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="drophook">drop-hook</a> (filename) </code> [<b>or</b>]
 </td></tr>
 
@@ -1501,24 +1521,21 @@ change an existing callback (to pass the sound index and channel number to the d
 
 
 <!-- during-open-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="duringopenhook">during-open-hook</a> (fd name reason)</code>
 </td></tr>
 
 <tr><td></td><td colspan=2>
 called after file is opened, but before data has been read.
 This provides an opportunity to set sndlib prescaling values:
-</td></tr>
 
-<tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>during-open-hook</em>
   (lambda (fd name reason)
     (if (= (<a class=quiet href="#mussoundheadertype">mus-sound-header-type</a> name) <a class=quiet href="#headertype" onmouseover="return escape('mus-raw means headerless')">mus-raw</a>)
         (set! (<a href="#musfileprescaler" onmouseover="return escape('this sets a multiplier on the incoming data -- apparently the data in the sound file is saved as extremely small floats which are a pain to look at in Snd\'s graphs')">mus-file-prescaler</a> fd) 500.0))))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td colspan=2>
 The prescaling affects only sound data made up of floats or doubles.  <i>reason</i> is an integer indicating why this file is being opened:
 <pre>
     0: reopen a file closed to conserve file channels (this is an internal re-open normally invisible to the user)
@@ -1537,7 +1554,7 @@ Or even better, fix the blasted original!
 
 
 <!-- enved-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="envedhook">enved-hook</a> (env pt new-x new-y reason)</code> [<b>cascade</b>]
 </td></tr>
 
@@ -1550,9 +1567,7 @@ is indicated by the argument <i>reason</i>. It can be <code>enved-move-point</co
 or <code>enved-add-point</code>.  This hook makes it possible to define attack 
 and decay portions in the envelope editor, or use functions such as 
 stretch-envelope from env.scm:
-</td></tr>
 
-<tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>enved-hook</em>
   (lambda (env pt x y reason)
@@ -1564,9 +1579,8 @@ stretch-envelope from env.scm:
               new-env)
             env)
         #f)))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td colspan=2>
 If there are several functions on the hook, each gets the (envelope)
 result of the preceding function (if a function returns #f, the envelope
 is not changed).  A math-type would call this a "function composition"
@@ -1577,7 +1591,7 @@ I like the latter.
 
 
 <!-- exit-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="exithook">exit-hook</a> ()</code>
 </td></tr><tr><td></td><td colspan=2>
 called upon exit.
@@ -1593,7 +1607,7 @@ Guile's exit-hook is shadowed by this variable.
 
 
 <!-- graph-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="graphhook">graph-hook</a> (snd chn y0 y1) </code> [<b>or</b>]
 </td></tr>
 
@@ -1601,8 +1615,7 @@ Guile's exit-hook is shadowed by this variable.
 called each time a graph is updated or redisplayed.
 If it returns #t, the display is not updated.
 See examp.scm for many examples.  If you want to add your own graphics to the display, use <a href="#aftergraphhook">after-graph-hook</a>.
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>graph-hook</em>
   (lambda (snd chn y0 y1)
@@ -1621,7 +1634,7 @@ See examp.scm for many examples.  If you want to add your own graphics to the di
 
 
 <!-- help-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="helphook">help-hook</a> (subject help-string)</code> [<b>cascade</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1636,7 +1649,7 @@ If there is more than one hook function, each function's result is passed as inp
 
 
 <!-- initial-graph-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="initialgraphhook">initial-graph-hook</a> (snd chn dur) </code> [<b>or</b>]
 </td></tr>
 
@@ -1660,7 +1673,6 @@ entire sound to be displayed initially:
 To get the data limits (rather than the default y axis limits of -1.0 to 1.0), you can use <a href="#mussoundmaxamp">mus-sound-maxamp</a>,
 but if that sound's maxamp isn't already known, it can require a long process of reading the file. The following hook procedure
 uses the maxamp data only if it is already available:
-</td></tr><tr><td></td><td colspan=2>
 
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>initial-graph-hook</em>
@@ -1684,7 +1696,7 @@ load peak-env.scm to make this process automatic.
 
 
 <!-- key-press-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="keypresshook">key-press-hook</a> (snd chn key state)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1698,7 +1710,7 @@ channel-specific envelope editors.
 
 
 <!-- lisp-graph-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="lispgraphhook">lisp-graph-hook</a> (snd chn)</code> [<b>progn</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1707,8 +1719,6 @@ If it returns a list of pixels (xm style), these are used in order by the list o
 (this makes it possible to use different colors for the various graphs).
 If it returns a function (of no arguments), that function is called rather than the standard graph routine:
 
-</td></tr>
-<tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>lisp-graph-hook</em>
 	   (lambda (snd chn)
@@ -1722,7 +1732,7 @@ If it returns a function (of no arguments), that function is called rather than 
 
 
 <!-- listener-click-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="listenerclickhook">listener-click-hook</a> (textpos)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1733,14 +1743,13 @@ See click-for-listener-help in draw.scm.
 
 
 <!-- mark-click-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="markclickhook">mark-click-hook</a> (id)</code> [<b>progn</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a mark is clicked; return #t to squelch the default minibuffer mark identification.  The following 
 hook function is used in with-marked-sound in ws.scm to display arbitrary info about a mark.
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>mark-click-hook</em>
   (lambda (n) 
@@ -1768,13 +1777,12 @@ hook function is used in with-marked-sound in ws.scm to display arbitrary info a
 
 
 <!-- mark-drag-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="markdraghook">mark-drag-hook</a> (id)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a mark is dragged.
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (report-mark-location id)
   ;; print current mark location in minibuffer
@@ -1787,13 +1795,14 @@ called when a mark is dragged.
               (<a class=quiet href="#shortfilename">short-file-name</a> (car sndchn))
               (cadr sndchn)
 	      (<a class=quiet href="#sample">sample</a> samp (car sndchn) (cadr sndchn))))))
+
 (add-hook! <em class=red>mark-drag-hook</em> report-mark-location)
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mark-drag-triangle-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="markdragtrianglehook">mark-drag-triangle-hook</a> (id x time dragged-before)</code> [<b>progn</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1803,8 +1812,7 @@ largely determined by <a href="#dacsize">dac-size</a>.
 graph. <i>time</i> is the uninterpreted time at which the drag event was reported. <i>id</i> is the mark id. If the hook returns #t,
 Snd takes no further action.  To set up to play, then interpret the motion yourself, return #f on the first call,
 and #t thereafter:
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (let ((first-x 0))
   (add-hook! <em class=red>mark-drag-triangle-hook</em>
@@ -1818,7 +1826,7 @@ and #t thereafter:
 
 
 <!-- mark-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="markhook">mark-hook</a> (id snd chn reason)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1826,8 +1834,7 @@ called when a mark is added, deleted, or moved (but not while moving). <i>id</i>
 <i>reason</i> can be 0: add, 1: delete, 2: move (via set! mark-sample), 3: delete all marks, 4: release (after drag). 
 In the "release" case, the hook is called upon button release before any edits (control-drag of mark) or sorting (simple drag),
 and if the mark-sync is active, the hook is called on each syncd mark.
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (<A NAME="snpmark">snap-mark-to-beat</a>)
   ;; when a mark is dragged, its end position is always on a beat
@@ -1850,7 +1857,7 @@ and if the mark-sync is active, the hook is called on each syncd mark.
 
 
 <!-- mix-click-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="mixclickhook">mix-click-hook</a> (id)</code> [<b>progn</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1858,8 +1865,7 @@ called when a mix tag is clicked; return #t to omit the default action which is 
 the minibuffer.  A more informative version is <a href="sndscm.html#mixclickinfo">mix-click-info</a> in mix.scm.
 Here's an example that sets the mix amps to 0 if you click it (see <a href="sndscm.html#mixclicksetsamp">mix-click-sets-amp</a>
 in mix.scm for a fancier version):
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>mix-click-hook</em>
   (lambda (n)
@@ -1868,18 +1874,16 @@ in mix.scm for a fancier version):
       (set! (<a class=quiet href="#mixamp">mix-amp</a> n i) 0.0))
     #t))
 </pre></td></tr></table></td></tr>
-
 <tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mix-drag-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="mixdraghook">mix-drag-hook</a> (id)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a mix is dragged.
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>mix-drag-hook</em>
   (lambda (n) 
@@ -1890,7 +1894,7 @@ called when a mix is dragged.
 
 
 <!-- mix-release-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="mixreleasehook">mix-release-hook</a> (id samps)</code> [<b>progn</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1902,13 +1906,13 @@ hook's responsibility.  See snap-mix-to-beat in mix.scm.
 
 
 <!-- mouse-click-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="mouseclickhook">mouse-click-hook</a> (snd chn button state x y axis) </code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
 called upon a mouse button release or click (with various exceptions).  If it returns #t, the click is ignored by Snd.
-See the current-window-location procedures in draw.scm.  Here's a simpler example:</td></tr>
-<tr><td></td><td colspan=2>
+See the current-window-location procedures in draw.scm.  Here's a simpler example:
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (click-to-center snd chn button state x y axis)
   ;; if mouse click in time domain graph, set cursor as normally, but also center the window
@@ -1932,7 +1936,7 @@ See the current-window-location procedures in draw.scm.  Here's a simpler exampl
 
 
 <!-- mouse-drag-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="mousedraghook">mouse-drag-hook</a> (snd chn button state x y)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1942,13 +1946,12 @@ called when the mouse is dragged within the lisp graph (see enved.scm or rtio.sc
 
 
 <!-- mouse-enter-graph-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="mouseentergraphhook">mouse-enter-graph-hook</a> (snd chn)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse enters a channel's drawing area (graph pane).
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>mouse-enter-graph-hook</em>
   (lambda (snd chn) 
@@ -1958,7 +1961,7 @@ called when the mouse enters a channel's drawing area (graph pane).
 
 
 <!-- mouse-enter-label-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="mouseenterlabelhook">mouse-enter-label-hook</a> (type position name)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1967,20 +1970,20 @@ The <i>type</i> is 1 for view files list, and 2 for regions.
 The <i>position</i> is the scrolled list position of the label. 
 The label itself is <i>label</i>. We can use the <i>finfo</i> procedure in examp.scm
 to popup file info as follows:
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>mouse-enter-label-hook</em>
   (lambda (type position name)
     (if (not (= type 2))
         (<a class=quiet href="#infodialog">info-dialog</a> name (finfo name)))))
-</pre></td></tr></table></td></tr>
-<tr><td></td><td>See also files-popup-buffer in examp.scm</td></tr>
+</pre></td></tr></table>
+
+See also files-popup-buffer in examp.scm</td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mouse-enter-listener-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="mouseenterlistenerhook">mouse-enter-listener-hook</a> (widget)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1988,9 +1991,7 @@ called when the mouse enters the listener pane. This hook, along with the parall
 makes it possible to set up Snd to behave internally like a window manager with pointer-focus.  That is, to
 ensure that the pane under the mouse is the one that receives keyboard input, we could define the following
 hook procedures:
-</td></tr>
 
-<tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>mouse-enter-graph-hook</em>
   (lambda (snd chn)
@@ -1999,20 +2000,20 @@ hook procedures:
 (add-hook! <em class=red>mouse-enter-listener-hook</em>
   (lambda (widget)
     (<a class=quiet href="#focuswidget">focus-widget</a> widget)))
-</pre></td></tr></table></td></tr>
-<tr><td></td><td colspan=2>
+</pre></td></tr></table>
+
 I much prefer this style of operation.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mouse-enter-text-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="mouseentertexthook">mouse-enter-text-hook</a> (widget)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse enters a text widget (this is the third of the pointer-focus hooks).
-</td></tr><tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>mouse-enter-text-hook</em>
   (lambda (w)
@@ -2022,7 +2023,7 @@ called when the mouse enters a text widget (this is the third of the pointer-foc
 
 
 <!-- mouse-leave-graph-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="mouseleavegraphhook">mouse-leave-graph-hook</a> (snd chn)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2032,7 +2033,7 @@ called when the mouse leaves a channel's drawing area (graph pane).
 
 
 <!-- mouse-leave-label-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="mouseleavelabelhook">mouse-leave-label-hook</a> (type position name)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2042,7 +2043,7 @@ called when the mouse exits one of the labels covered by mouse-enter-label-hook.
 
 
 <!-- mouse-leave-listener-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="mousleavelistenerhook">mouse-leave-listener-hook</a> (widget)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2052,7 +2053,7 @@ called when the mouse leaves the listener pane.
 
 
 <!-- mouse-leave-text-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="mousleavetexthook">mouse-leave-text-hook</a> (widget)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2062,7 +2063,7 @@ called when the mouse leaves a text widget.
 
 
 <!-- mouse-press-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="mousepresshook">mouse-press-hook</a> (snd chn button state x y)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2074,7 +2075,7 @@ relative to the lisp graph axis (as if the raw mouse pixel position was passed t
 
 
 <!-- mus-error-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="muserrorhook">mus-error-hook</a> (error-type error-message)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2083,8 +2084,7 @@ If it returns #t, Snd ignores the error (it assumes you've handled it via the ho
 This hook is used in play-sound in play.scm to flush an error message that the Snd ALSA support code generates (or used to generate).
 Both mus_error and mus_print run this hook; in the mus_print case, the <i>type</i> is mus-no-error (0).
 You can redirect mus_print output from stderr (the default) to stdout via:
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>mus-error-hook</em>
   (lambda (typ msg)
@@ -2098,14 +2098,13 @@ To decode the <i>typ</i> argument, see <a href="#muserrortypetostring">mus-error
 
 
 <!-- name-click-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="nameclickhook">name-click-hook</a> (snd)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the sound name is clicked.
 If it returns #t, the usual highly informative minibuffer babbling is squelched.
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>name-click-hook</em>
   (lambda (snd) ; toggle read-only
@@ -2116,7 +2115,7 @@ If it returns #t, the usual highly informative minibuffer babbling is squelched.
 
 
 <!-- new-sound-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="newsoundhook">new-sound-hook</a> (filename)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2127,7 +2126,7 @@ this hook to keep track of newly created temporary sounds so that it can delete 
 
 
 <!-- new-widget-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="newwidgethook">new-widget-hook</a> (widget)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2138,7 +2137,7 @@ make sure all newly created widgets have the same background pixmaps.
 
 
 <!-- open-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="openhook">open-hook</a> (filename)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2146,8 +2145,7 @@ called before a sound file is opened.
 If it returns #t, or the sound is not readable (bad header, etc) the file is not opened
 (and any corresponding <a href="#afteropenhook">after-open-hook</a> functions are not called).
 If it returns a string (a filename), that file is opened instead of the original one.
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>open-hook</em>
   (lambda (filename)
@@ -2172,7 +2170,7 @@ See also <a href="sndscm.html#exopenbuffer">open-buffer</a> in examp.scm.
 
 
 <!-- open-raw-sound-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="openrawsoundhook">open-raw-sound-hook</a> (filename current-choices)</code> [<b>cascade</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2194,7 +2192,7 @@ If the hook returns #t, the open-sound returns without opening.
 
 
 <!-- optimization-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="optimizationhook">optimization-hook</a> (message)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2209,24 +2207,22 @@ the code simply runs slower.  This hook gives you a way to find out why the opti
 
 
 <!-- orientation-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="orientationhook">orientation-hook</a> () </code> [<b>progn</b>]
 </td></tr>
-
 <tr><td></td><td colspan=2>
 called whenever one of the variables associated with the orientation dialog changes.  See start-waterfall in snd-gl.scm.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- output-comment-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="outputcommenthook">output-comment-hook</a> (str)</code> [<b>cascade</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
 called in the Save-As dialog to set the default output comment value. <i>str</i> is the current sound's comment.
 If there is more than one hook function, each function's result is passed as input to the next function in the list.
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke">
 <pre>
 (add-hook! <em class=red>output-comment-hook</em>
@@ -2240,14 +2236,13 @@ If there is more than one hook function, each function's result is passed as inp
 
 
 <!-- output-name-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="outputnamehook">output-name-hook</a> (current-name)</code> [<b>progn</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
 called in the New File dialog. If it returns a filename, that name is presented in the New File dialog,
 making it slightly easier to set default output names.
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (let ((file-ctr -1))
   (add-hook! <em class=red>output-name-hook</em>
@@ -2261,7 +2256,7 @@ making it slightly easier to set default output names.
 
 
 <!-- play-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="playhook">play-hook</a> (samps)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2272,7 +2267,7 @@ filled for the DAC (see <a href="sndscm.html#enveddoc">enved.scm</a> and <a href
 
 
 <!-- print-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="printhook">print-hook</a> (text)</code> [<b>progn</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2284,8 +2279,7 @@ the prompt by hand (i.e. type in the shell that Snd started in, "&gt;(reset-hook
 This is intended to make it possible to
 distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, but both should be handled
 in some other way -- I should rewrite this part of Snd.
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>print-hook</em>
   (lambda (msg) 
@@ -2300,15 +2294,14 @@ in some other way -- I should rewrite this part of Snd.
 
 
 <!-- read-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="readhook">read-hook</a> (text)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time a line is typed into the listener (it is triggered by the carriage return).
 If it returns #t, Snd assumes you've dealt with the text yourself, and does not try to evaluate it.
 This is intended to make it possible to read user-typing in the listener.
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (read-listener-line prompt)
   "(read-listener-line prompt) prompts for input and returns it in Snd's listener"
@@ -2325,8 +2318,38 @@ This is intended to make it possible to read user-typing in the listener.
 </td></tr>
 
 
+<!-- recorder-file-hook -->
+<tr><td colspan=3 bgcolor="#f6f8ff">
+<code><a class=def name="recorderfilehook">recorder-file-hook</a> (name)</code>
+</td></tr>
+<tr><td></td><td colspan=2>
+This is called when 'Record' is pressed in the recorder dialog; it is passed the current recorder output filename.
+If it returns a string, that becomes the output filename.
+
+<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
+(add-hook! <em class=red>recorder-file-hook</em>
+  (lambda (name)
+    (let* ((header (<a class=quiet href="#recorderoutheadertype">recorder-out-header-type</a>))
+	   (extension (if (or (= header <a class=quiet href="#headertype">mus-aifc</a>) (= header <a class=quiet href="#headertype">mus-aiff</a>)) ".aif"
+			  (if (= header <a class=quiet href="#headertype">mus-next</a>) ".snd"
+			      ".wav"))))
+      (if name
+	  (let ((len (string-length name)))
+	    (do ((i 0 (1+ i)))
+		((or (= i len)
+		     (char=? (string-ref name i) #\.))
+		 (string-append (if (&gt; i 1)
+				    (substring name 0 i)
+				    "test")
+				extension))))
+	  (string-append "test" extension)))))
+</pre></td></tr></table>
+</td></tr>
+<tr><td colspan=3 height=16></td></tr>
+
+
 <!-- save-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="savehook">save-hook</a> (snd name)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2338,7 +2361,7 @@ the file is being saved under a new name (as in <a href="#savesoundas">save-soun
 
 
 <!-- save-state-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="savestatehook">save-state-hook</a> (temp-filename)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2355,7 +2378,7 @@ that later cleanup is easier to manage.
 
 
 <!-- select-channel-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="selectchannelhook">select-channel-hook</a> (snd chn)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2365,7 +2388,7 @@ called when a channel is selected (after the sound has been selected). The argum
 
 
 <!-- select-sound-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="selectsoundhook">select-sound-hook</a> (snd)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2375,7 +2398,7 @@ called when a sound is selected. The argument is the about-to-be-selected sound'
 
 
 <!-- selection-changed-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="selectionchangedhook">selection-changed-hook</a> ()</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2386,15 +2409,14 @@ desensitize the "selection" button when there is no selection.
 
 
 <!-- snd-error-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="snderrorhook">snd-error-hook</a> (error-message)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
 called upon <a href="#snderror">snd-error</a>.  If the listener is closed, it is also called upon any Scheme, Ruby, or Forth error.
 If it returns #t, Snd flushes the error (it assumes you've 
 dealt with it via the hook).
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>snd-error-hook</em>
   (lambda (msg) 
@@ -2406,15 +2428,14 @@ dealt with it via the hook).
 
 
 <!-- snd-warning-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="sndwarninghook">snd-warning-hook</a> (warning-message)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
 called upon snd-warning.
 If it returns #t, Snd flushes the warning (it assumes you've 
 reported it via the hook).
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define without-warnings
   (lambda (thunk)
@@ -2427,7 +2448,7 @@ reported it via the hook).
 
 
 <!-- start-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="starthook">start-hook</a> (filename)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2436,8 +2457,7 @@ If it returns #t, Snd exits immediately.
 Say we are so annoyed with Snd's really very fine file browser that we want
 Snd to exit back to the shell if its file argument is not
 found (this code has to be in the ~/.snd init file):
-</td></tr>
-<tr><td></td><td colspan=2>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>start-hook</em>
   (lambda (file)
@@ -2450,7 +2470,7 @@ found (this code has to be in the ~/.snd init file):
 
 
 <!-- start-playing-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="startplayinghook">start-playing-hook</a> (snd)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2461,7 +2481,7 @@ If it returns #t, Snd does not play (see report-mark-names in marks.scm).
 
 
 <!-- start-playing-selection-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="startplayingselectionhook">start-playing-selection-hook</a> ()</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2472,17 +2492,16 @@ If it returns #t, Snd does not play the selection.
 
 
 <!-- stop-dac-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="stopdachook">stop-dac-hook</a> ()</code>
 </td></tr>
-
 <tr><td></td><td colspan=2>
 called when Snd stops playing and turns off the DAC, normally upon <a href="#musaudioclose">mus-audio-close</a>.  See snd-motif.scm.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- stop-playing-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="stopplayinghook">stop-playing-hook</a> (snd)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2491,7 +2510,7 @@ called when a sound finishes playing.  stop-playing-hook may be called more ofte
 
 
 <!-- stop-playing-selection-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="stopplayingselectionhook">stop-playing-selection-hook</a> ()</code> [<b>progn</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2500,10 +2519,9 @@ called when the selection finishes playing.  See popup.scm.
 
 
 <!-- update-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="updatehook">update-hook</a> (snd)</code> [<b>or</b>]
 </td></tr>
-
 <tr><td></td><td colspan=2>
 update-hook is called just before a sound is updated (re-read from the disk, flushing the current version; this
 is useful if you overwrite a sound file while viewing it in Snd). 
@@ -2514,9 +2532,7 @@ completion of the update operation; its argument is the (possibly different) sou
 Snd tries to maintain the index across the update, but if you change the number of channels 
 the newly updated sound may have a different index.  add-mark-pane in snd-motif.scm uses
 the returned procedure to make sure the mark pane is reactivated right away when a sound is updated. The basic idea is:
-</td></tr>
 
-<tr><td></td><td colspan=2>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <em class=red>update-hook</em>
   (lambda (snd-about-to-be-updated)
@@ -2529,7 +2545,7 @@ the returned procedure to make sure the mark pane is reactivated right away when
 
 
 <!-- view-files-select-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="viewfilesselecthook">view-files-select-hook</a> (dialog filename)</code>
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -2539,7 +2555,7 @@ called each time a file is selected in a View Files dialog's files list.
 
 
 <!-- window-property-changed-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
+<tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="windowpropertychangedhook">window-property-changed-hook</a> (command)</code> [<b>or</b>]
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -3074,7 +3090,7 @@ This is an experimental function currently used in the oscilloscope (oscope.scm)
 
 <br>
 
-<table width="50%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3>Sndlib</h3></td></tr></table>
+<table width="50%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="extsndlib">Sndlib</a></h3></td></tr></table>
 
 <p>All of the underlying sound library (<a href="sndlib.html">Sndlib</a>)
 functions are available, as well as most of CLM (clm.html).
@@ -3102,7 +3118,7 @@ Buffer size used in ALSA. A settable variable; the same as the environment varia
 
 <!-- mus-alsa-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsadevice">mus-alsa-device</a> ()</code></td></tr>
-<tr><td width><br>
+<tr><td><br>
 </td><td>
 ALSA audio device. A settable variable; environment variable name is MUS_ALSA_DEVICE.
 </td></tr>
@@ -3110,7 +3126,7 @@ ALSA audio device. A settable variable; environment variable name is MUS_ALSA_DE
 
 <!-- mus-alsa-capture-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsacapturedevice">mus-alsa-capture-device</a> ()</code></td></tr>
-<tr><td width><br>
+<tr><td><br>
 </td><td>
 ALSA audio capture (recording) device. A settable variable; MUS_ALSA_CAPTURE_DEVICE.
 </td></tr>
@@ -3118,7 +3134,7 @@ ALSA audio capture (recording) device. A settable variable; MUS_ALSA_CAPTURE_DEV
 
 <!-- mus-alsa-playback-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsaplaybackdevice">mus-alsa-playback-device</a> ()</code></td></tr>
-<tr><td width><br>
+<tr><td><br>
 </td><td>
 ALSA audio playback-device. A settable variable; MUS_ALSA_PLAYBACK_DEVICE.
 </td></tr>
@@ -3126,7 +3142,7 @@ ALSA audio playback-device. A settable variable; MUS_ALSA_PLAYBACK_DEVICE.
 
 <!-- mus-alsa-squelch-warning -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsasquelchwarning">mus-alsa-squelch-warning</a> ()</code></td></tr>
-<tr><td width><br>
+<tr><td><br>
 </td><td>
 Whether to squelch warnings from ALSA about srate mismatches. (A settable variable).
 </td></tr>
@@ -3171,8 +3187,7 @@ the new Mac audio system.  I can't face this mess!
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiomixerwrite">mus-audio-mixer-write</a> (device field channel vals)</code></td></tr>
 <tr><td></td>
 <td>set state of <i>device</i>'s <i>field</i>.
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 ;;; here we get the microphone volume, then set it to .5
 (define vals (<a class=quiet href="#makevct">make-vct</a> 32))
@@ -3654,9 +3669,7 @@ starting at sample <i>start</i> with initial read direction <i>dir</i>
 (1=forward, -1=backward).  <i>pos</i> is the edit history position to read 
 (defaults to current position). One use of <i>pos</i> is to get the difference 
 between two edits:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define snd-diff
   (lambda () ;assume mono, get diff between current state and previous
@@ -3667,9 +3680,8 @@ between two edits:
         (- x (<a class=quiet href="#readsample">read-sample</a> previous-edit)) #f))))
 
 (<a class=quiet href="#mapchannel">map-channel</a> (snd-diff))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td>
 Once the reader has been setup to read at a given edit position, subsequent
 edits won't affect it. One sequence that takes advantage of this is: make-sample-reader, scale-by 0,
 then run an overlap-add process on the data before the scaling.
@@ -3712,9 +3724,7 @@ can read external sounds without going to the trouble of loading them into Snd.
 <!-- read-region-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readregionsample">read-region-sample</a> (obj)</code></td></tr>
 <tr><td></td><td>return next sample read by region-sample-reader <i>obj</i>.
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 <A NAME="region2vct"></a>(define* (region-&gt;vct reg #:optional (chn 0))
   (if (<a class=quiet href="#regionok">region?</a> reg)
@@ -3896,8 +3906,7 @@ channel; the inverse function is marks.
 <!-- mark-name -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="markname">mark-name</a> (<i>id</i>)</code></td></tr>
 <tr><td></td><td>name of mark <i>id</i>.
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (add-named-mark samp name #:optional snd chn)
   (let ((m (<a class=quiet href="#addmark">add-mark</a> samp snd chn)))
@@ -3934,8 +3943,6 @@ Marks that are syncd together can be used for insertions, and deletions, and can
 set arbitrary groups of play points.  But it's a bit tedious to type (set! (mark-sync ...)...)
 for each of the marks you want in the group.  The following uses the mark-clicked-hook
 instead; you type (start-sync), then click the set of marks to sync, then (stop-sync).
-</td></tr>
-<tr><td></td><td>
 
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define mark-sync-number 0)
@@ -3945,8 +3952,6 @@ instead; you type (start-sync), then click the set of marks to sync, then (stop-
 (add-hook! <a class=quiet href="#markclickhook">mark-click-hook</a> click-to-sync)
 </pre></td></tr></table>
 
-</td></tr>
-<tr><td></td><td>
 Now control-click and drag one of them, and all move together deleting data, or
 inserting zeros; or click the "play" triangle, and all play together starting from
 the respective marks (which need not be in separate channels). 
@@ -3978,8 +3983,7 @@ If <i>chn</i> and <i>pos</i> are omitted, a list of lists is returned,
 each inner list representing a channel of <i>snd</i>.  If <i>snd</i> is 
 also omitted, a list of lists of lists is returned, representing
 each sound and its channels.
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (how-many-marks-in-channel snd chn)
   (length (<em class=red>marks</em> snd chn)))
@@ -3990,8 +3994,7 @@ each sound and its channels.
 (define (how-many-marks)
   (apply + (map how-many-marks-in-sound (<a class=quiet href="#sounds">sounds</a>))))
 </pre></td></tr></table>
-</td></tr>
-<tr><td></td><td>
+
 marks
 without any argument, or with just a sound index returns a list of lists; each inner list is the list
 of current marks (ids) active in that channel, ordered by sample number.  If the channel argument is
@@ -4021,8 +4024,7 @@ the list of ids reflects the mark list at that time in the edit history.  See de
 <!-- syncd-marks -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="syncdmarks">syncd-marks</a> (sync)</code></td></tr>
 <tr><td></td><td>a list of marks (the mark id's) that share the mark-sync value <i>sync</i>.
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke"><pre>
 (define (move-syncd-marks sync diff)
   (for-each 
@@ -4039,7 +4041,8 @@ the list of ids reflects the mark list at that time in the edit history.  See de
 See <a href="sndscm.html#marksdoc">marks.scm</a> for
 more examples including:
 </p>
-<TABLE border=3 bordercolor="tan" hspace=20><tr><td>
+
+<TABLE border=3 bordercolor="tan" hspace=20><tr><td width=500>
 <blockquote><small>
 <br>
 global find-mark: <a href="sndscm.html#markname2id">mark-name-&gt;id</a><br>
@@ -4058,8 +4061,8 @@ split sound into separate files based on mark placement: <a href="sndscm.html#ex
 mark property lists: <a href="sndscm.html#markproperty">mark-property</a><br>
 save mark properties in saved state file: <a href="sndscm.html#savemarkproperties">save-mark-properties</a><br>
 show mark properties upon click: <a href="sndscm.html#markclickinfo">mark-click-info</a><br>
-</small></blockquote>
 <br>
+</small></blockquote>
 </td></tr></TABLE>
 
 <p>Other examples can be found in Dave Phillips' marks-menu.scm, snd-motif.scm (add-mark-pane),
@@ -4596,8 +4599,7 @@ Most of the region arguments default to the current region (the top of the regio
 <tr><td></td><td>
 insert region <i>reg</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.  The following
 function uses insert-region (and other region functions) to rotate the samples in a channel:
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (<a name="rotatechannel">rotate-channel</a> #:optional (samps 1) snd chn)
   (let* ((ind (or snd (<a class=quiet href="#selectedsound">selected-sound</a>) (car (<a class=quiet href="#sounds">sounds</a>))))
@@ -4700,8 +4702,7 @@ value of sample <i>samp</i> in region <i>reg</i> in channel <i>chn</i>.
 return a vct containing <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s 
 channel <i>chn</i>. If v (a vct) is provided, it is filled, 
 rather than creating a new vct.
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke"><pre>
 (define (region-rms n)
   (let* ((data (<em class=red>region-&gt;vct</em> 0 0 n)) ; len=0 =&gt; entire region
@@ -4846,8 +4847,7 @@ reverse the selection.
 <tr><td></td><td>
 save the selection in <i>file</i>.  If <i>channel</i> is given, save only that channel.
 See popup.scm for an example.
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr vspace=10><td bgcolor="WhiteSmoke"><pre>
 (define (brksnd dur base)
   "(brksnd dur base) divides the current sound into dur-sized pieces, 
@@ -4863,9 +4863,7 @@ saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"
       (<em class=red>save-selection</em> (string-append base "." (number-&gt;string j))))
     (set! (<a class=quiet href="#sync">sync</a>) old-sync)))
 </pre></td></tr></table>
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (<a name="extractchannels">extract-channels</a> #:rest chans)
   ;; extract a list of channels from the current sound and save as test.snd: (extract-channels 0 2)
@@ -5116,7 +5114,7 @@ the direction argument between the channel and edit-position:
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="addplayer">add-player</a> (player <i>start end edpos stop-proc out-chan</i>)</code>
 </td></tr>
-<tr><td width=60><br></td><td>
+<tr><td width=60></td><td>
 add-player adds <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). 
 If <i>edpos</i> is given, play at that edit position. 
 <i>stop-proc</i> can be a procedure of one argument; it is called when the play process stops and passed
@@ -5125,8 +5123,7 @@ are listed <a href="#stopplayreasons">here</a>, but they really aren't interesti
 The <i>out-chan</i> argument is the audio output channel to send the data to; it defaults to
 the channel number of the player's channel in the containing sound (that is, the default is to
 send channel 1 data to channel 1 of the DAC, and so on).
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (play-mono-as-stereo #:optional snd)
   "(play-mono-as-stereo snd) sends the channel 0 data in 'snd' to all available DAC channels."
@@ -5140,6 +5137,7 @@ send channel 1 data to channel 1 of the DAC, and so on).
 	  (<em class=red>add-player</em> player 0 end current-edit-position #f chan)))
       (<em class=red>start-playing</em> chans (srate snd)))))
 </pre></td></tr></table>
+
 See play-with-envs in enved.scm, play-syncd-marks in marks.scm, or start-dac in play.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -5168,8 +5166,7 @@ several channels share one drawing area.  You can use it to translate mouse coor
 to channel number in that situation.
 For example, <a href="#x_to_position">x-&gt;position</a>
 could be:
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (x-&gt;position-1 x snd chn)
   (let* ((axinfo (<em class=red>axis-info</em> snd chn <a class=quiet href="#y_to_position">time-graph</a>))
@@ -5183,6 +5180,7 @@ could be:
 	   (/ (- axis-right axis-left)
 	      (- x1 x0)))))))
 </pre></td></tr></table>
+
 See draw-smpte-label in snd-motif.scm, or make-current-window-display in draw.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -5223,9 +5221,7 @@ bomb displays an exploding bomb icon next to <i>snd's</i> name (in the minibuffe
 is called, the bomb icon moves to the next image in its sequence (showing the bomb's fuse burning down),
 restarting the sequence whenever it reaches the end.  This icon is used when a sound and its underlying file
 get out of sync somehow (<a href="#autoupdate">auto-update</a>).
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define show-bomb 
   (lambda (n speed) 
@@ -5302,9 +5298,7 @@ elaborate examples are in enved.scm (enved-envelope), or draw.scm (colored-sampl
 channel-style reflects the value of the '<a href="snd.html#unitebutton">unite</a>' button in multichannel files.  
 Possible values are <code>channels-separate</code>, <code>channels-combined</code> (the default), and <code>channels-superimposed</code>. 
 The following code sets the 'unite' button if the current sound has more than 4 channels: 
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <a class=quiet href="#afteropenhook">after-open-hook</a> 
   (lambda (snd)
@@ -5324,9 +5318,7 @@ channel-&gt;vct returns a vct with the specified data.  In Ruby, the "-&gt;" in 
 so the function call is: 
 <pre>    v = channel2vct(0, 100)
 </pre>
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 <A NAME="selection2vct"></a>(define* (selection-&gt;vct #:optional snd chn)
   (if (<a class=quiet href="#selectionmember">selection-member?</a> snd chn)
@@ -5373,9 +5365,7 @@ This clears <i>snd</i>'s minibuffer area (both the text and the error message wi
 clm-channel applies <i>clm-gen</i> to <i>snd</i>'s channel <i>chn</i> starting
 at sample <i>beg</i> for <i>dur</i> samples, and <i>overlap</i> samples of 'ring time'.
 This is used by some of the <a class=quiet href="#regularizedargs">regularized</a> functions, but it can also be used directly:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (convolve-channel kernel #:optional nbeg ndur nsnd nchn nedpos)
   (let* ((beg (or nbeg 0)) 
@@ -5436,9 +5426,7 @@ with the data in the sound file <i>file</i>. <i>amp</i> is the resultant
 peak amplitude (leave <i>amp</i> unset, or set it to #f to get the 
 unnormalized result).
 Convolve-with in conjunction with mix can provide high-quality reverb:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define conrev
   (lambda (impulse amp)
@@ -5465,13 +5453,9 @@ determines where to start the search.
 
     Forth:  lambda: { y } y 0.1 f- f0&lt; if #f else #t then ; 1 make-proc count-matches
 </pre>
-</td></tr>
-<tr><td></td><td>
-<br>
-count-matches is modelled after Emacs. It could be defined along these lines:
-</td></tr>
 
-<tr><td></td><td>
+count-matches is modelled after Emacs. It could be defined along these lines:
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (count-matches proc)
   (let ((count 0))
@@ -5565,9 +5549,7 @@ should draw the cursor at the current cursor position using the
 One example is smart-line-cursor in draw.scm.
 Here is a simpler one that
 replaces the normal "+" cursor with an "x":
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (<A NAME="xcursor">x-cursor</a> snd chn ax)
   (let* ((point (<em class=red>cursor-position</em>))
@@ -5629,9 +5611,7 @@ Yet another gotcha: files with 32-bit integers.  Some programs (Glame, apparentl
 placement of the fixed point, but not to worry!  Your data is ok:
 <code>(set! (<a class=quiet href="#ybounds">y-bounds</a>) (list -256.0 256.0))</code>. There are several ways you can handle
 these files automatically in Snd.  Perhaps the simplest is to use one of the open hooks:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <a class=quiet href="#afteropenhook">after-open-hook</a> 
   (lambda (snd) 
@@ -5639,12 +5619,9 @@ these files automatically in Snd.  Perhaps the simplest is to use one of the ope
     (if (= (<em class=red>data-format</em> snd) mus-lint)
         (set! (<em class=red>data-format</em> snd) mus-lintn))))
 </pre></td></tr></table>
-</td></tr>
-<tr><td></td><td>
-or (an alternative that sets the underlying database entry, rather than the current in-Snd choice):
-</td></tr>
 
-<tr><td></td><td>
+or (an alternative that sets the underlying database entry, rather than the current in-Snd choice):
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <a class=quiet href="#openhook">open-hook</a> 
   (lambda (name)
@@ -5652,8 +5629,7 @@ or (an alternative that sets the underlying database entry, rather than the curr
         (set! (<a class=quiet href="#mussounddataformat">mus-sound-data-format</a> name) mus-lintn))
     #f))
 </pre></td></tr></table>
-</td></tr>
-<tr><td></td><td>
+
 If you set any of these fields, the sound's index may change (there can be an embedded <a class=quiet href="#updatesound">update-sound</a>).
 To deal with MPEG, OGG, Flac, or Speex files, see examp.scm (<a class=quiet href="sndscm.html#exmpg">mpg</a>) or misc.scm (mpg123 and ogg123).
 Octave/WaveLab ASCII files can be translated by read-ascii (examp.scm).
@@ -5842,9 +5818,7 @@ out), and <i>env-base</i> &gt; 1.0 gives concave curves (i.e. sagging).
 If you'd rather think in terms of e^-kt, set <i>env-base</i> to (exp k).
 See env.lisp for a CLM instrument that shows the relation between the connecting
 curve's exponent and <i>env-base</i>.  Here's a brief restatement:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (compare-exp k)
    (let ((e (<a class=quiet href="clm.html#make-env">make-env</a> (list 0 1 1 (exp (- k))) :base (exp k) :end 10)))
@@ -5852,8 +5826,7 @@ curve's exponent and <i>env-base</i>.  Here's a brief restatement:
          ((= i 10))
          (<a class=quiet href="#sndprint">snd-print</a> (format #f "~A ~A~%" (<a class=quiet href="clm.html#env">env</a> e) (exp (* (- k) (/ i 10.0))))))))
 </pre></td></tr></table>
-</td></tr>
-<tr><td></td><td>
+
 If <i>envelope</i> is a CLM env generator, <i>env-base</i> 
 is ignored.
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -5970,9 +5943,7 @@ or any CLM filtering generator
 (e.g. comb, formant, one-pole, iir-filter, etc). The generator 
 is called in C, not Scheme, so this is the fastest way to apply 
 CLM filtering to a sound.  See also <a href="#clmchannel">clm-channel</a>.
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (<em class=red>filter-sound</em> '(0 1 1 0) 1024)                             ; FIR filter given frequency response
 (<em class=red>filter-sound</em> (<a class=quiet href="#vct">vct</a> .1 .2 .3 .3 .2 .1) 6)                   ; FIR filter given actual coefficients
@@ -5996,7 +5967,7 @@ some other form, see cascade-&gt;canonical in dsp.scm, and the examples that fol
 
 <!-- INDEX filtersinsnd:Filters -->
 <TABLE border=3 bordercolor="tan" hspace=20>
-<tr><td width=800>
+<tr><td>
 <blockquote><small>
 <br>
 <A NAME="filtersinsnd">Filters</a> in Snd:<br>
@@ -6091,8 +6062,7 @@ find-sound returns the index of <i>filename</i> or
 #f if no sound is found that matches <i>filename</i>.  If there is (or might be) more than one file
 open with the given filename, the <i>nth</i> parameter (which defaults to 0) chooses which to return.
 Leaving aside the <i>nth</i> parameter, find-sound could be defined as:
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (find-sound name)
   (call-with-current-continuation
@@ -6162,8 +6132,7 @@ is a list of numbers, it is assumed to be an envelope (a list of breakpoints).
 If <i>force-display</i> is #f (the default is #t), the graph is not
 explicitly drawn; this is useful when you're calling graph from
 the lisp-graph-hook, where the redisplay is automatic.
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define <A NAME="xdisplayenergy">display-energy</A>
   ;; y-zoom-slider controls the graph amp
@@ -6344,16 +6313,14 @@ channels are inserted. To append one sound to another, padding at the end with s
 This returns the position in samples of the left edge of the time domain
 waveform for <i>snd</i>'s channel <i>chn</i>.
 To get the data currently displayed in the time domain window:
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (<a class=quiet href="sndscm.html#exwindowsamples">window-samples</a>)
   (let ((wl (<em class=red>left-sample</em>))
 	(wr (<a href="#rightsample">right-sample</a>)))
    (<a href="#samples">samples</a> wl (+ 1 (- wr wl)))))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td>
 See also <a href="#moveonepixel">move-one-pixel</a>.
 
 <!-- INDEX movingwindows:Window size and position -->
@@ -6426,9 +6393,7 @@ the play with <a href="#startplaying">start-playing</a>, and stop it prematurely
 <a href="#stopplayer">stop-player</a> or <a href="#stopplaying">stop-playing</a>.  These functions make it possible 
 to build custom control panels.  Here's a simple example that plays a 
 sound with individual amplitudes for the channels:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define play-with-amps
   (lambda (sound . amps)
@@ -6613,6 +6578,7 @@ is an example of this.
       ((= i (<a class=quiet href="#chans">chans</a> snd)))
     (<em class=red>map-channel</em> proc beg dur snd i edpos origin)))
 </pre></td></tr></table>
+
 An esoteric aside: map-channel sets up the sample reader before calling the procedure, so if that procedure edits
 the sound itself (independent of map-channel), the result will be all such edits after the current edit, then the map-channel result
 applied to the original (not the newly edited) data.  That is,<br><pre>
@@ -7099,8 +7065,7 @@ If <i>callback</i> is specified it should be either #f or a function of
 one argument: the raw response if <i>raw</i> is #t, otherwise the evaluated response.
 For example, the following fragment asks for 
 a yes-or-no response, then takes some action:
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
   (define* (yes-or-no question action-if-yes action-if-no #:optional snd)
     (<em class=red>prompt-in-minibuffer</em> question
@@ -7110,30 +7075,24 @@ a yes-or-no response, then takes some action:
 			        (action-if-yes snd)
 			        (action-if-no snd)))
 			  snd #t))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td>
 See eval-over-selection in <a href="sndscm.html#extensionsdoc">extensions.scm</a> for a more useful example.
 We could also use a continuation here:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (prompt msg default)
   (call-with-current-continuation
    (lambda (rsvp)
      (<em class=red>prompt-in-minibuffer</em> msg rsvp)
      default)))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td>
 The <i>raw</i> argument is useful when we want to prompt for yes or no, without forcing the
 user to put the answer in double quotes.  In the next example, we replace Snd's
 built-in C-x k action (which immediately closes the sound) with one that is
 more like Emacs (it prompts for confirmation first):
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\k) 0 
   (lambda ()
@@ -7233,9 +7192,7 @@ to refer to, then each time a sample is needed from the current sample
 reader, <i>proc</i> is called passing it the current underlying sample, the vct of <i>init-func</i>,
 and the read direction.
 Here is an example that mixes a sine wave into the current channel:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (sine-channel freq amp #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   (<em class=red>ptree-channel</em>
@@ -7252,9 +7209,8 @@ Here is an example that mixes a sine wave into the current channel:
    (lambda (frag-beg frag-dur)
      (let ((incr (/ (* 2 pi freq) (<a class=quiet href="#srate">srate</a>))))
        (<a class=quiet href="#vct">vct</a> (fmod (* frag-beg incr) (* 2 pi)) incr amp))))) ; fmod from C
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td>
 In the normal case,
 this function simply mixes in a sine wave: <code>(+ y (* (<a class=quiet href="#vctref">vct-ref</a> data 2) (sin angle)))</code>
 where the amplitude scaler is stored in <code>(<a class=quiet href="#vctref">vct-ref</a> data 2)</code>.  In subsequent
@@ -7278,8 +7234,7 @@ the duration passed to the init-func is the envelope size.
 Here is a
 version of cosine-channel given under
 <a href="#mapchannel">map-channel</a> that can handle peak-envs:
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (<A NAME="cosinechannelviaptree">cosine-channel-via-ptree</a> #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   ;; vct: angle increment
@@ -7298,9 +7253,7 @@ version of cosine-channel given under
      (let ((incr (/ pi <em class=red>frag-dur</em>)))
        (<a class=quiet href="#vct">vct</a> (+ (* -0.5 pi) (* frag-beg incr))
 	    incr)))))
-</pre></td></tr></table></td></tr>
-
-<tr><td></td><td>
+</pre></td></tr></table>
 
 If the underlying data
 has too many previous ptree operations, map-channel is called instead and the new
@@ -7386,8 +7339,6 @@ could in this case be:
 
 Here are a couple more examples:
 
-</td></tr>
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (ptree-scale scl #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   "ptree-channel version of scale-channel"
@@ -7436,8 +7387,6 @@ of breakpoints with an added base for each segment), that splits
 the envelope into a sequence of <a href="#xrampchannel">xramp-channel</a>
 calls.  It also uses <a href="#asoneedit">as-one-edit</a> to make the
 result appear to be one operation in the edit history list.
-</td></tr>
-<tr><td></td><td>
 
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 <A NAME="powenvchannel"></a>(define* (powenv-channel envelope #:optional (beg 0) dur snd chn edpos)
@@ -7660,22 +7609,22 @@ of the speed of CL+run+C in CLM.  Currently, only Guile supports this optimizati
 	   ((= i 100))
 	 (<a class=quiet href="clm.html#outa">outa</a> i (<a class=quiet href="clm.html#oscil">oscil</a> o) *output*))))))
 </pre></td></tr></table>
-</td></tr>
 
-<tr><td></td><td>
 Functions embedded within run (leaving aside the "thunk" argument itself) need to declare the type of their arguments (the type defaults to integer, and
 run assumes each variable has one type throughout its life).  So, the following code
 displays "0", rather than "3.14":
-<br>
+
 <pre>
   (run (lambda () (let ((x 3.14)) (define (a b) (display b)) (a x))))
 </pre>
+
 The "b" argument to "a" is assumed to be an integer, and passing in a float 
 causes nothing but confusion.  To get this code to work right:
-<br>
+
 <pre>
   (run (lambda () (let ((x 3.14)) (define (a b) (<em class=red>declare</em> (b real)) (display b)) (a x))))
 </pre>
+
 declare is modelled after Common Lisp's declare; it is specific to run.
 For more examples see <a href="#ptreechannel">Virtual Edits</a> and, in
 particular, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>.
@@ -8225,9 +8174,8 @@ smooth over click: <a href="sndscm.html#exremoveclick">remove-click</a> in examp
 </td></tr>
 <tr><td></td><td>
 smooth-sound applies a smoothing function to the indicated data.  This produces a sinusoid between
-the end points:</td></tr>
-<tr><td></td><td>
-<table border=0><tr><td>
+the end points:
+
 
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (smoother y0 y1 num)
@@ -8242,9 +8190,9 @@ the end points:</td></tr>
          (+ off (* scale (cos (+ angle (* i (/ pi num))))))))))
 </pre></td></tr></table>
 
-</td><td><img src="click.png"></td></tr></table>
-</td></tr>
-<tr><td></td><td>For a fancier version, see fft-smoother in examp.scm.  See also remove-clicks in examp.scm.</td></tr>
+<img src="click.png">
+<br>
+For a fancier version, see fft-smoother in examp.scm.  See also remove-clicks in examp.scm.</td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
 <!-- sound? -->
@@ -8270,9 +8218,7 @@ consists of the sound name, start point, loop start, and loop end.
 </pre>
 To set a named mark at the start of each sound with un-named marks 
 at the loop points:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (mark-sf2)
   (letrec ((sf2it (lambda (lst)
@@ -8284,8 +8230,9 @@ at the loop points:
                           (<a class=quiet href="#addmark">add-mark</a> (cadddr vals))
                           (sf2it (cdr lst)))))))
    (sf2it (<em class=red>soundfont-info</em>))))
-</pre></td></tr></table></td></tr>
-<tr><td></td><td>See also explode-sf2 in examp.scm.</td></tr>
+</pre></td></tr></table>
+
+See also explode-sf2 in examp.scm.</td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
 <!-- sound-loop-info -->
@@ -8333,9 +8280,7 @@ the return value is not needed:
 This can be
 extended to provide a complete list of sounds and channels (since many Snd functions
 take the "snd chn" arguments):
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (all-chans)
   (let ((sndlist '())
@@ -8534,8 +8479,7 @@ A value less than 0.0 causes the sound to be reversed.
 <i>num-or-env</i> can also be a CLM env generator (its duration should
 be the same as the original sound, and its segments should not pass through 0.0).  The following function can be used to predict
 how long the resultant note will be given an src envelope:
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 ;;; find new duration of sound after using env as srate.
 ;;; the envelope gives the per-sample increment, so the "tempo"
@@ -8637,8 +8581,7 @@ If no argument is given, it stops all playback.  See play.scm, popup.scm,
 This swaps the indicated channels, between <i>beg</i> and <i>beg</i> + <i>dur</i>. 
 In simple cases, this is a virtual operation.  swap-channels can be used to change channel order arbitrarily.
 For example, the following function reverses the channel order:
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (<a name="reversechannels">reverse-channels</a> #:optional snd)
   (let* ((ind (or snd (<a class=quiet href="#selectedsound">selected-sound</a>) (car (<a class=quiet href="#sounds">sounds</a>))))
@@ -8651,7 +8594,7 @@ For example, the following function reverses the channel order:
 	     ((= i swaps))
 	   (<em class=red>swap-channels</em> ind i ind j)))))))
 </pre></td></tr></table>
-</td></tr><tr><td></td><td>
+
 Channel rotation is similar, though slightly more work; see scramble-channels in examp.scm.
 Since swap-channels is a virtual operation in many cases, it's worth using it even
 where just a channel copy is desired; <a href="sndscm.html#monotostereo">mono-&gt;stereo</a>
@@ -9175,21 +9118,16 @@ This is the current y axis label. <i>context</i> is one of <code>time-graph</cod
 This returns <code>(list y0 y1)</code>, the current y axis bounds.
 To set the bounds to reflect the channel's maxamp, use <code>(set! (y-bounds) '())</code>.
 To set all channels at once using the selected sound's maxamp:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (let ((maxval (apply max (<a class=quiet href="#maxamp">maxamp</a> #f #t)))) 
   (do ((i 0 (1+ i))) 
       ((= i (<a class=quiet href="#chans">chans</a>))) 
     (set! (<em class=red>y-bounds</em> #f i) (list (- maxval) maxval))))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td>
 Or to set each channel to its own maxamp:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (do ((i 0 (1+ i))) 
     ((= i (<a class=quiet href="#chans">chans</a>)))
@@ -9327,8 +9265,6 @@ Apply the current control panel state as an edit.
 <i>beg</i> sets where in samples the apply starts: <code>(apply-controls 0 0 (<a class=quiet href="#marksample">mark-sample</a> m))</code> starts from the given mark.
 <i>dur</i>, if given, sets how many samples to run through the apply process (the input duration).
 apply-controls can be used in conjunction with the various control panel variables:
-</td></tr>
-<tr><td></td><td>
 
 <table border=0 vspace=10><tr><td>
 <table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke"><pre>
@@ -9803,9 +9739,7 @@ The edit list functions are:
 call <i>func</i>, a function of no arguments, treating it as
 one edit (in all channels) in the edit history mechanism.  Graphics redisplays are squelched during as-one-edit.
 as-one-edit returns the result of <i>func</i>.
-</td></tr>
 
-<tr><td></td><td>
 <table border=0 vspace=10><tr><td>
 <table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke">
 <pre>
@@ -9964,9 +9898,7 @@ If <i>data-number</i> is -2, it marks the end of the list.  In our example above
 
 The following function uses
 this information to highlight the changed portions of a given sound.
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (<A NAME="showoriginal">show-original</a> snd chn)
   ;; draw a bar above unchanged portions of a sound
@@ -10012,8 +9944,7 @@ exact copy of the state (edit lists and all) of the given sound,
 providing a way to fork an edit path (geez, what jargon!).  The idea here
 is to copy the complete edit state into a new sound so that two or more
 edit sequences can be compared.
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define sfile 0)
 
@@ -10097,9 +10028,7 @@ can be used to get the current data.  Do not free the sample-reader!
 The function should return a vct containing the transform data.  
 add-transform returns the new transform's transform-type.
 Here's an example that displays a histogram of the current values in 16 bins:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (<em class=red>add-transform</em> "histogram" "bins" 0.0 1.0 
   (lambda (len fd)
@@ -10115,13 +10044,10 @@ Here's an example that displays a histogram of the current values in 16 bins:
             (<a class=quiet href="#vctset">vct-set!</a> v 
                       (+ j bin) 
                       (+ step (<a class=quiet href="#vctref">vct-ref</a> v (+ j bin))))))))))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td>
 This code ties the Hilbert transform in dsp.scm into the user-interface:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (<em class=red>add-transform</em> "Hilbert" "Hilbert" 0.0 1.0
   (lambda (len fd)
@@ -10133,13 +10059,10 @@ This code ties the Hilbert transform in dsp.scm into the user-interface:
        (<a class=quiet href="#makevct">make-vct</a> len) 
        (lambda () 
 	 (<a class=quiet href="clm.html#fir-filter">fir-filter</a> flt (<a class=quiet href="#readsample">read-sample</a> fd)))))))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td>
 If GSL is included in Snd (via the --wth-gsl configuration switch), the following code ties in the (slow) Hankel transform:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (<em class=red>add-transform</em> "Hankel" "Hankel" 0.0 1.0
    (lambda (n rd)
@@ -10181,6 +10104,25 @@ input data). <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (the default is 
 The CLM <a href="clm.html#fft">fft</a> function is called <a name="musfft">mus-fft</a> in Snd.
 The only difference between the two is that Snd's fft determines the fft size from 
 the size of the vcts passed to it, whereas CLM's takes the size as an argument.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- snd-spectrum -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="sndspectrum">snd-spectrum</a> (data window length <i>linear beta in-place normalized</i>)</code>
+</td></tr>
+<tr><td></td><td>
+This returns the spectrum (as a vct) of <i>data</i> (also a vct) using the fft window <i>win</i>.
+<i>length</i> is the number of samples 
+of data. 
+<pre>
+    (let ((spectr (snd-spectrum data rectangular-window (<a class=quiet href="#transformsize">transform-size</a>)))) 
+      ...)
+</pre>
+If <i>linear</i> is #f (its default is #t), the spectrum is in dB.
+<i>beta</i> is the fft data window family parameter; it is scaled internally so here it should be between 0.0 and 1.0.
+If <i>in-place</i> is #t, the spectrum is in <i>data</i>, otherwise snd-spectrum returns a new vct.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -10248,7 +10190,7 @@ More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fou
 <br>
 <!-- Dialogs -->
 <br>
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snddialogs">Dialogs</a></h3></td></tr></table>
+<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snddialogs">Dialogs and Other Widgets</a></h3></td></tr></table>
 
 <p>The built-in dialogs, accessible from the main menu, provide the standard, but sometimes clumsy
 ways to open and save sounds, edit envelopes and headers, and set various global variables.
@@ -10301,7 +10243,7 @@ You can add your own filters to this
 menu with add-file-filter.  The <i>name</i> appears as the menu item label corresponding to the function.
 The function should take one argument, a file name, and return #t to retain that file in the file list.
 add-file-filter returns an integer to identify <i>func</i> in other contexts.
-</td></tr><tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (<em class=red>add-file-filter</em>
  "mono"
@@ -10324,7 +10266,7 @@ The new sorter's index is returned; it is an integer for use with functions such
 The function should take two arguments, each a filename, and return a strcmp-like number describing
 how to sort the pair.  The following adds a sorter named "duration" that sorts files from shorter
 to longer:
-</td></tr><tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
   (<em class=red>add-file-sorter</em>
    "duration"
@@ -10350,6 +10292,64 @@ To add "ogg" as a recognized extension:
 </pre>
 The list itself is <a href="#soundfileextensions">sound-file-extensions</a>.
 See also <a href="sndscm.html#addsoundextension1">add-sound-file-extension-1</a>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- add-to-main-menu -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="addtomainmenu">add-to-main-menu</a> (menu-label <i>update-callback</i>)</code></td></tr>
+<tr><td></td><td>
+This adds a new top-level menu named <i>menu-label</i> and returns its menu index.  The index
+identifies the menu for add-to-menu and others.
+<i>update-callback</i> is a procedure of no arguments that is
+called each time the menu is displayed. <a href="sndscm.html#effectsdoc">new-effects.scm</a> calls this function
+to add a new "Effects" menu to the top level menubar.
+<pre>
+    &gt;<em class=typing>(add-to-main-menu "Tools")</em>
+    <em class=listener>5</em>
+</pre></td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- add-to-menu -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="addtomenu">add-to-menu</a> (top-menu menu-label callback <i>position</i>)</code></td></tr>
+<tr><td></td><td>
+This adds the menu <i>menu-label</i> to the top-level menu whose index is 
+<i>top-menu</i> with the callback function <i>callback</i>, then returns the new menu label widget.
+The built-in
+Snd menus are numbered from 0 ('File') to 5 ('Popup'); 'Help' is menu 4.  If the label and callback are #f, a separator is added to the menu.
+<i>position</i> sets the position of the new menu option; it defaults to the end of the menu.  See new-effects.scm for many examples.
+<pre>
+  (<em class=red>add-to-menu</em> 1 "Stop Playing" 
+    (lambda () (<a class=quiet href="#stopplaying">stop-playing</a>)))
+
+  (<em class=red>add-to-menu</em> 5 "Reduce height" 
+    (lambda () (set! (<a class=quiet href="#windowheight">window-height</a>) (/ (<a class=quiet href="#windowheight">window-height</a>) 2))))
+</pre></td></tr>
+<tr><td></td><td>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- channel-widgets -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="channelwidgets">channel-widgets</a> ()</code></td></tr>
+<tr><td></td><td>
+channel-widgets returns a list of various widgets associated with a given channel:
+<pre>
+    0: graph                      ;drawing area for all 3 graphs (time, fft, lisp)
+    1: w-button 
+    2: f-button 
+    3: x-position 
+    4: y-position 
+    5: x-zoom 
+    6: y-zoom 
+    7: edit history list 
+    8: right(united-chans) y-position 
+    9: right y-zoom
+    10: main pane for channel
+    ------ the rest only in Gtk+
+    11..16: adjustment widgets associated with the zoom and position sliders
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -10416,6 +10416,41 @@ This removes the file sorter function associated with <i>index</i> from the file
 <tr><td colspan=2 height=16></td></tr>
 
 
+<!-- dialog-widgets -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="dialogwidgets">dialog-widgets</a> ()</code></td></tr>
+<tr><td></td><td>
+dialog-widgets returns a list of dialog widgets (or lists thereof, or #f if none yet):
+<pre>
+    0: View: Color dialog 
+    1: View: Orientation dialog 
+    2: Edit: EnvelopeEditor dialog 
+    3 and 4: unused
+    5: Options: Transform dialog 
+    6: File: Open dialog 
+    7: File: Save as dialog 
+    8: View: Files dialog 
+    9: raw data dialog (activated when raw sound opened, sometimes)
+    10: File: New sound dialog 
+    11: File: Mix dialog 
+    12: Edit: Edit header dialog 
+    13: Edit: Find dialog 
+    14: Help dialog 
+    15: completion dialog (activated by TAB sometimes)
+    16: View: Mixes dialog
+    17: File: Print dialog 
+    18: File: Recorder dialog 
+    19: View: Regions dialog
+    20: info dialog (activated by info-dialog function)
+    21: View: Tracks dialog 
+    22: Edit: Selection Save as dialog
+    23: File: Insert file dialog
+    24: region save as dialog (from regions dialog save button)
+    25: Options: Preferences dialog
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
 <!-- edit-header-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="editheaderdialog">edit-header-dialog</a> (snd) </code></td></tr>
 <tr><td></td><td>
@@ -10456,9 +10491,8 @@ This is the envelope (a list of breakpoints) in the envelope editor's graph wind
 <tr><td></td><td>
 This reflects the type of the envelope editor's filter (the default #t means FIR; #f is FFT).  To get the FFT display in the envelope editor
 as the default:
-</td></tr>
 
-<tr><td></td><td><table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke">
+<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke">
 <pre>
 (define (enved-fft)
   (set! (<em class=red>enved-filter)</em> #f)
@@ -10537,6 +10571,15 @@ This creates and (if <i>managed</i> which defaults to #t) starts the Edit:Find d
 <tr><td colspan=2 height=16></td></tr>
 
 
+<!-- focus-widget -->
+<tr><td bgcolor="#f6f8ff" colspan=2>
+<code><a class=def name="focuswidget">focus-widget</a> (widget)</code></td></tr>
+<tr><td></td><td>
+This gives <i>widget</i> "focus" -- it becomes the active widget, receiving keystrokes and so on.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
 <!-- goto-listener-end -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="gotolistenerend">goto-listener-end</a></code></td></tr>
@@ -10586,6 +10629,20 @@ There are many examples in new-effects.scm.
 	    args)))
 </pre>
 </td></tr></table>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- hide-widget -->
+<tr><td bgcolor="#f6f8ff" colspan=2>
+<code><a class=def name="hidewidget">hide-widget</a> (widget)</code></td></tr>
+<tr><td></td><td>
+This hides (unmanages) <i>widget</i>.
+To remove the y-position slider (which is only there
+for looks):
+<pre>
+    (<a class=quiet href="#hidewidget">hide-widget</a> (list-ref (<a class=quiet href="#channelwidgets">channel-widgets</a>) 4))
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -10662,6 +10719,66 @@ This is the text color in the listener.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
+<!-- main-menu -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mainmenu">main-menu</a> (menu)</code></td></tr>
+<tr><td></td><td>
+main-menu returns the top-level menu 
+associated with its integer argument:
+<pre>
+    0: File menu
+    1: Edit menu
+    2: View menu
+    3: Options menu
+    4: Help menu
+    5: built-in popup menu
+    and others as added by add-main-menu
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+<!-- TODO: diff between menu-widgets and main-menus? -->
+
+<!-- main-widgets -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mainwidgets">main-widgets</a> ()</code></td></tr>
+<tr><td></td><td>
+main-widgets returns a list of the top-level widgets in Snd (#f if not created):
+<pre>
+    0: top-level-application      ; XtAppContext in Motif, top level window in Gtk+
+    1: top-level-shell 
+    2: main-pane                  ; outer paned window top window (holds sounds)
+    3: main-sound-pane 
+    4: listener-pane              ; outer paned window bottom window
+    5: notebook-outer-pane
+</pre>
+
+For example, to get at Snd's main shell widget:
+<pre>
+    Scheme:    (cadr (main-widgets)) 
+    Ruby:      main_widgets.cadr
+    Forth:     main-widgets cadr
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- menu-widgets -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="menuwidgets">menu-widgets</a> ()</code></td></tr>
+<tr><td></td><td>
+menu-widgets returns the top-level menu widgets (cascade menus in Motif or menu bars in Gtk+ associated)
+as a list:
+<pre>
+    0: top-level-menu-bar 
+    1: file-menu
+    2: edit-menu 
+    3: view-menu 
+    4: options-menu 
+    5: help-menu, 
+    6: default popup menu
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
 <!-- mix-dialog-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixdialogmix">mix-dialog-mix</a> ()</code></td></tr>
 <tr><td></td><td>
@@ -10693,9 +10810,8 @@ starts the File:New sound dialog, returning the dialog widget.
 This creates and (if <i>managed</i> which defaults to #t) activates the File:Open dialog,
 returning the dialog widget.
 If the xm module is loaded, we could add our own info via:
-</td></tr>
 
-<tr><td></td><td><table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
+<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
   (let* ((dialog (<em class=red>open-file-dialog</em> #f))
 	 (rc (find-child dialog "info-rc2")) ; holds the info labels if a sound file is selected
 	 (label (XtCreateManagedWidget "file-preview-info" xmLabelWidgetClass rc (list XmNbackground (<a class=quiet href="#highlightcolor">highlight-color</a>)))))
@@ -10736,122 +10852,136 @@ This creates and (if <i>managed</i> which defaults to #t) activates the File:Pri
 
 <!-- recorder-autoload -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderautoload">recorder-autoload</a> ()</code></td></tr>
-<tr><td></td><td>The '<a href="snd.html#Xautoload">autoload</a>' button in the recorder dialog. default: #f.</td></tr>
+<tr><td></td><td>
+This reflects the state of the '<a href="snd.html#Xautoload">autoload</a>' button in the recorder dialog.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-buffer-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderbuffersize">recorder-buffer-size</a> ()</code></td></tr>
-<tr><td></td><td>The size of the recorder input buffer (there's a trade-off between responsiveness and clicks in some cases).
+<tr><td></td><td>
+This is the size of the recorder input buffer (there's a trade-off between responsiveness and clicks in some cases).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderdialog">recorder-dialog</a> ()</code></td></tr>
-<tr><td></td><td>start the <a href="snd.html#recordfile">recorder</a> window, return the dialog widget.</td></tr>
+<tr><td></td><td>
+This starts the <a href="snd.html#recordfile">recorder</a> window, returning the dialog widget.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-file -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderfile">recorder-file</a> ()</code></td></tr>
-<tr><td></td><td>Default recorder output file name.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<!-- recorder-file-hook -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderfilehook">recorder-file-hook</a> (name)</code></td></tr>
-<tr><td></td><td>Called when 'Record' is pressed, passed the current recorder output filename.
-If it returns a string, that becomes the output filename.
-</td></tr>
-
 <tr><td></td><td>
-<table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
-(add-hook! <em class=red>recorder-file-hook</em>
-  (lambda (name)
-    (let* ((header (<a class=quiet href="#recorderoutheadertype">recorder-out-header-type</a>))
-	   (extension (if (or (= header <a class=quiet href="#headertype">mus-aifc</a>) (= header <a class=quiet href="#headertype">mus-aiff</a>)) ".aif"
-			  (if (= header <a class=quiet href="#headertype">mus-next</a>) ".snd"
-			      ".wav"))))
-      (if name
-	  (let ((len (string-length name)))
-	    (do ((i 0 (1+ i)))
-		((or (= i len)
-		     (char=? (string-ref name i) #\.))
-		 (string-append (if (&gt; i 1)
-				    (substring name 0 i)
-				    "test")
-				extension))))
-	  (string-append "test" extension)))))
-</pre></td></tr></table>
+This is the default recorder output file name.  Se also <a href="#recorderfilehook">recorder-file-hook</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-gain -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recordergain">recorder-gain</a> (gain)</code></td></tr>
-<tr><td></td><td>  recorder input (soundcard-audio) gain <i>gain</i>.</td></tr>
+<tr><td></td><td>
+This is the recorder input (sound card) gain.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-in-amp -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderinamp">recorder-in-amp</a> (in out)</code></td></tr>
-<tr><td></td><td> recorder input channel <i>in</i> to output channel <i>out</i> amplitude.</td></tr>
+<tr><td></td><td>
+This is the recorder input channel <i>in</i> to output channel <i>out</i> amplitude.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-in-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderinchans">recorder-in-chans</a> ()</code></td></tr>
-<tr><td></td><td>Recorder input channels. (default: 0 = ask the audio card how many channels it can handle)</td></tr>
+<tr><td></td><td>
+This is the number of recorder input channels (default is 0 = ask the audio card how many channels it can handle).</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-in-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderindevice">recorder-in-device</a> ()</code></td></tr>
-<tr><td></td><td>Input device for recorder.
+<tr><td></td><td>
+This is the recorder input device.
 <pre>
     (set! (recorder-in-device) mus-audio-line-in)
 </pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- recorder-in-data-format -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderindataformat">recorder-in-data-format</a> ()</code></td></tr>
-<tr><td></td><td>Incoming data format for the recorder. default 16-bit linear.</td></tr>
+<tr><td></td><td>
+This is the incoming data format for the recorder. Its default is 16-bit linear.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-max-duration -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recordermaxduration">recorder-max-duration</a> ()</code></td></tr>
-<tr><td></td><td>Recorder max output file length.</td></tr>
+<tr><td></td><td>
+This is the maximum output file length (in seconds) that the recorder will write.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-out-amp -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderoutamp">recorder-out-amp</a> (out)</code></td></tr>
-<tr><td></td><td>recorder file output channel <i>out</i> amplitude.</td></tr>
+<tr><td></td><td>
+This is the recorder output channel <i>out</i> amplitude.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-out-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderoutchans">recorder-out-chans</a> ()</code></td></tr>
-<tr><td></td><td>Recorder output file channels. (default: 2)</td></tr>
+<tr><td></td><td>
+This is the number of output channels in the recorder (the default is 2).</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-out-data-format -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderoutdataformat">recorder-out-data-format</a> ()</code></td></tr>
-<tr><td></td><td>recorder output file data format.</td></tr>
+<tr><td></td><td>
+This is the recorder's output data format.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-out-header-type -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderoutheadertype">recorder-out-header-type</a> ()</code></td></tr>
-<tr><td></td><td>recorder output file header type.</td></tr>
+<tr><td></td><td>
+This is the recorder's output header type.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-srate -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recordersrate">recorder-srate</a> ()</code></td></tr>
-<tr><td></td><td>Recorder sampling rate.</td></tr>
+<tr><td></td><td>
+This is the recorder's sampling rate.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- recorder-trigger -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recordertrigger">recorder-trigger</a> ()</code></td></tr>
-<tr><td></td><td>Recorder auto-trigger value.</td></tr>
+<tr><td></td><td>
+This is the recorder's auto-trigger value.  If the input amplitude gets louder than this value, the
+recorder starts writing output.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
+
+<!-- remove-from-menu -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="removefrommenu">remove-from-menu</a> (top-menu menu-label)</code></td></tr>
+<tr><td></td><td>
+This removes the menu <i>menu-label</i> from the top top-level menu whose index is <i>top-menu</i>.  See examp.scm or snd-motif.scm.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
 
 <!-- reset-listener-cursor -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="resetlistenercursor">reset-listener-cursor</a> ()</code></td></tr>
 <tr><td></td><td>
-reset the listener cursor to the default pointer shape
+This resets the listener cursor to the default pointer shape.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -10860,7 +10990,7 @@ reset the listener cursor to the default pointer shape
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="saveenvelopes">save-envelopes</a> (filename)</code></td></tr>
 <tr><td></td><td>
-save envelope editor contents in <i>filename</i>.
+This saves the envelope editor envelopes in <i>filename</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -10869,36 +10999,53 @@ save envelope editor contents in <i>filename</i>.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="savelistener">save-listener</a> (filename)</code></td></tr>
 <tr><td></td><td>
-save listener contents in <i>filename</i>.
+This saves the listener contents in <i>filename</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- save-region-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="saveregiondialog">save-region-dialog</a> (<i>managed</i>) </code></td></tr>
-<tr><td></td><td>create and (if <i>managed</i> which defaults to #t)
-start the Region Save-as dialog (to save the current Region browser region), return the dialog widget.
+<tr><td></td><td>
+This creates and (if <i>managed</i> which defaults to #t)
+starts the Region Save-as dialog (to save the current Region browser region), returning the dialog widget.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- save-selection-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="saveselectiondialog">save-selection-dialog</a> (<i>managed</i>) </code></td></tr>
-<tr><td></td><td>create and (if <i>managed</i> which defaults to #t)
-start the Edit Save-as dialog (to save the current selection), return the dialog widget.
+<tr><td></td><td>
+This creates and (if <i>managed</i> which defaults to #t)
+starts the Edit:Save selection as dialog (to save the current selection), returning the dialog widget.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- save-sound-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="savesounddialog">save-sound-dialog</a> (<i>managed</i>) </code></td></tr>
-<tr><td></td><td>create and (if <i>managed</i> which defaults to #t)
-start the File Save-as dialog (to save the currently selected sound), return the dialog widget.
+<tr><td></td><td>
+This creates and (if <i>managed</i> which defaults to #t)
+starts the File:Save as dialog (to save the currently selected sound), returning the dialog widget.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- show-listener -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="showlistener">show-listener</a> ()</code></td></tr>
-<tr><td></td><td>if #t, open the listener pane, else close it.  For backwards compatibility, if called outside set!, it opens the pane.</td></tr>
+<tr><td></td><td>
+If #t, this opens the listener pane, else closes it.  For backwards compatibility, if called outside set!, show-listener opens the pane.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
+
+<!-- show-widget -->
+<tr><td bgcolor="#f6f8ff" colspan=2>
+<code><a class=def name="showwidget">show-widget</a> (widget)</code></td></tr>
+<tr><td></td><td>
+This shows (manages) <i>widget</i>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
 
 <!-- sound-file-extensions -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -10906,8 +11053,10 @@ start the File Save-as dialog (to save the currently selected sound), return the
 <tr><td></td><td>
 This is the list of sound file extensions used by the "just-sounds" buttons and 
 <a href="#soundfilesindirectory">sound-files-in-directory</a> to try to recognize
-sound files.  It is settable, a list of extensions as strings:
-<code>(set! (sound-file-extensions) (list "snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2"))</code>
+sound files.  It is settable: a list of extensions as strings:
+<pre>
+    (set! (sound-file-extensions) (list "snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2"))
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -10916,7 +11065,7 @@ sound files.  It is settable, a list of extensions as strings:
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="soundfilep">sound-file?</a> (filename)</code></td></tr>
 <tr><td></td><td>
-Returns #t if <i>filename</i> has an extension that matches one in the <a href="#soundfileextensions">sound-file-extensions</a> list.
+This returns #t if <i>filename</i> has an extension that matches one in the <a href="#soundfileextensions">sound-file-extensions</a> list.
 <pre>
     :<em class=typing>(sound-file? "oboe.snd")</em>
     <em class=listener>#t</em>
@@ -10931,14 +11080,12 @@ Returns #t if <i>filename</i> has an extension that matches one in the <a href="
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="soundfilesindirectory">sound-files-in-directory</a> (<i>dir</i>)</code></td></tr>
 <tr><td></td><td>
-return a list of sound file names.  A file is considered a sound if it has data and
+This returns a list of the sound files found in <i>dir</i>.  A file is considered a sound if it has data and
 its extension is on the sound file extension list (see <a href="#addsoundfileextension">add-sound-file-extension</a>).
 The directory name defaults to the current directory.
 This is useful for batch processing of sounds.  The following
 prints the names of all the stereo AIFC files it finds:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (for-each
   (lambda (filename)
@@ -10946,160 +11093,213 @@ prints the names of all the stereo AIFC files it finds:
              (= (<a class=quiet href="#mussoundchans">mus-sound-chans</a> filename) 2))
         (<a class=quiet href="#sndprint">snd-print</a> (format #f "~%~A" filename))))
   (<em class=red>sound-files-in-directory</em>))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td>
 See also map-sound-files in <a href="sndscm.html#snd4doc">snd4.scm</a>, and 
 <a href="sndscm.html#exmapsoundfiles">map-sound-files</a> in extensions.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
-<!-- spectro-cutoff -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a href="#spectrocutoff">spectro-cutoff</a> ()</code></td></tr>
-<tr><td></td><td>The amount of the frequency domain to include in the spectrum display.
-This number changes as you drag the frequency axis.  
-This is the slider labelled '% of spectrum' in the View Orientation dialog.
-Its default value is 1.0.
+<!-- sound-widgets -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="soundwidgets">sound-widgets</a> ()</code></td></tr>
+<tr><td></td><td>
+sound-widgets returns a list of various widgets specific to a given sound (chosen by its index, of course):
+<pre>
+    0: main-pane 
+    1: name-label                 ; sound's file name
+    2: control-panel 
+    3: minibuffer 
+    4: play button
+    5: filter-graph               ; control panel drawing area for filter envelope
+    6: unite button               ; invisible in mono sounds
+    7: minibuffer-label           ; prompt area for the minibuffer
+    8: name-icon                  ; hour-glass or whatever
+    9: sync button
+</pre>
+
+For example, we can read and write the minibuffer:
+<pre>
+    Scheme:
+    :<em class=typing>(report-in-minibuffer "this is a test")</em>
+    <em class=listener>"this is a test"</em>
+    :<em class=typing>(widget-text (list-ref (sound-widgets) 3))</em>
+    <em class=listener>"this is a test"</em>
+    
+    Ruby:
+    :<em class=typing>report_in_minibuffer("this is a test")</em>
+    <em class=listener>this is a test</em>
+    :<em class=typing>widget_text(sound_widgets()[3])</em>
+    <em class=listener>this is a test</em>
+    
+    Forth:
+    <em class=listener>snd&gt;</em> <em class=typing>"this is a test" report-in-minibuffer</em>
+    <em class=listener>this is a test</em>
+    <em class=listener>snd&gt;</em> <em class=typing>0 sound-widgets 3 list-ref widget-text</em>
+    <em class=listener>this is a test</em>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
-<!-- spectro-hop -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a href="#spectrohop">spectro-hop</a> ()</code></td></tr>
-<tr><td></td><td>The distance (pixels) moved between successive spectrogram traces.
-This is the slider labelled 'hop' in the Orientation dialog.
-default: 4.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<!-- spectro-start -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a href="#spectrostart">spectro-start</a> ()</code></td></tr>
-<tr><td></td><td>The starting point of the frequency domain in the spectrum display. default: 0.0</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<!-- specro-x-angle -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a href="#spectroxangle">spectro-x-angle</a> ()</code></td></tr>
-<tr><td></td><td>Default spectrogram x-axis viewing angle. default: 90.0</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<!-- specro-x-scale -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a href="#spectroxscale">spectro-x-scale</a> ()</code></td></tr>
-<tr><td></td><td>Default scaler (stretch) along the spectrogram x axis. default: 1.0</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<!-- specro-y-angle -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a href="#spectroyangle">spectro-y-angle</a> ()</code></td></tr>
-<tr><td></td><td>Same for y-axis. default: 0.0</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<!-- specro-y-scale -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a href="#spectroyscale">spectro-y-scale</a> ()</code></td></tr>
-<tr><td></td><td>Same for y-axis. default: 1.0</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<!-- specro-z-angle -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a href="#spectrozangle">spectro-z-angle</a> ()</code></td></tr>
-<tr><td></td><td>Same for z-axis. default: -2.0</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<!-- specro-z-scale -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a href="#spectrozscale">spectro-z-scale</a> ()</code></td></tr>
-<tr><td></td><td>Same for z-axis. default: 0.1</td></tr>
-<tr><td colspan=2 height=16></td></tr>
 
 <!-- track-dialog-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackdialogtrack">track-dialog-track</a> ()</code></td></tr>
-<tr><td></td><td>the id of the track currently displayed by the track dialog.</td></tr>
+<tr><td></td><td>
+This is the id of the track currently displayed by the track dialog.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- transform-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="transformdialog">transform-dialog</a> (<i>managed</i>)</code></td></tr>
-<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the Options:Transform dialog. Return the dialog widget.</td></tr>
+<tr><td></td><td>
+This creates and (if <i>managed</i> which defaults to #t) activates the Options:Transform dialog, returning the dialog widget.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- view-files-amp -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewfilesamp">view-files-amp</a> (dialog)</code></td></tr>
-<tr><td></td><td>get or set the amp of a View:Files dialog.
+<tr><td></td><td>
+This is the value of the amplitude slider in the View:Files dialog.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- view-files-amp-env -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewfilesampenv">view-files-amp-env</a> (dialog)</code></td></tr>
-<tr><td></td><td>get or set the amp envelope of a View:Files dialog.
+<tr><td></td><td>
+This is the amplitude envelope displayed in the View:Files dialog.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- view-files-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewfilesdialog">view-files-dialog</a> (<i>managed</i>)</code></td></tr>
-<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate a
-View:Files <a href="snd.html#viewfiles">dialog</a> and return the dialog widget.
+<tr><td></td><td>
+This creates and (if <i>managed</i> which defaults to #t) activates a
+View:Files <a href="snd.html#viewfiles">dialog</a> and returns the dialog widget.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- view-files-files -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewfilesfiles">view-files-files</a> (dialog)</code></td></tr>
-<tr><td></td><td>get or set the file list of a View:Files dialog (the value is a list of strings).
+<tr><td></td><td>
+This is the file list (a list of strings) of a View:Files dialog.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- view-files-selected-files -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewfilesselectedfiles">view-files-selected-files</a> (dialog)</code></td></tr>
-<tr><td></td><td>get or set which files are selected in a View:Files dialog (the value is a list of strings).
+<tr><td></td><td>
+This is the list of selected files (a list of strings) in a View:Files dialog.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- view-files-sort -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewfilessort">view-files-sort</a> (<i>dialog</i>)</code></td></tr>
-<tr><td></td><td>Either the local (<i>dialog</i>-specific) sort choice, or (if <i>dialog</i> is omitted),
-the default (global) sort function choice in the View:Files dialog.
+<tr><td></td><td>
+This is the sort function choice in a View:Files dialog.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- view-files-speed -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewfilesspeed">view-files-speed</a> (dialog)</code></td></tr>
-<tr><td></td><td>get or set the speed of a View:Files dialog.
+<tr><td></td><td>
+This is the value of the speed slider in a View:Files dialog.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- view-files-speed-style -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewfilesspeedstyle">view-files-speed-style</a> (dialog)</code></td></tr>
-<tr><td></td><td>get or set the speed-style of a View:Files dialog. This is one of speed-control-as-float (the default),
-speed-control-as-ratio, or speed-control-as-semitone.
+<tr><td></td><td>
+This is the speed style choice in a View:Files dialog. It is one of <code>speed-control-as-float</code> (the default),
+<code>speed-control-as-ratio</code>, or <code>speed-control-as-semitone</code>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- view-mixes-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewmixesdialog">view-mixes-dialog</a> ()</code></td></tr>
-<tr><td></td><td>create and activate the Mix Dialog, return the dialog widget.</td></tr>
+<tr><td></td><td>
+This creates and activates the View:Mixes Dialog, returning the dialog widget.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- view-regions-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewregionsdialog">view-regions-dialog</a> ()</code></td></tr>
-<tr><td></td><td>start the <a href="snd.html#regionbrowser">region browser</a> (a no-op if there are no regions).  Return the dialog widget.</td></tr>
+<tr><td></td><td>
+This starts the <a href="snd.html#regionbrowser">region browser</a> (a no-op if there are no regions), and returns the dialog widget.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- view-tracks-dialog -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="viewtracksdialog">view-tracks-dialog</a> ()</code></td></tr>
-<tr><td></td><td>create and activate the Track dialog, return the dialog widget.</td></tr>
+<tr><td></td><td>
+This creates and activates the View:Tracks dialog, returning the dialog widget.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vu-font -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vufont">vu-font</a> ()</code></td></tr>
-<tr><td></td><td>The "vu-" variables refer to the VU meters in the recorder.
+<tr><td></td><td>
+The "vu-" variables refer to the VU meters in the recorder.
 vu-font is the font used to label the meters.  It is normally "courier".
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- vu-font-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vufontsize">vu-font-size</a> ()</code></td></tr>
-<tr><td></td><td>recorder VU meter label font size. (1.0)</td></tr>
+<tr><td></td><td>
+This is the recorder VU meter label font size (the default is 1.0)</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vu-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vusize">vu-size</a> ()</code></td></tr>
-<tr><td></td><td>overall size of the recorder VU meters. (1.0)</td></tr>
+<tr><td></td><td>
+This is the overall size of the recorder VU meters (the default is 1.0)</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- widget-position -->
+<tr><td bgcolor="#f6f8ff" colspan=2>
+<code><a class=def name="widgetposition">widget-position</a> (widget)</code></td></tr>
+<tr><td></td><td>
+This returns a list giving the widget's x and y coordinates (in pixels).  It can be set to reposition the widget.  
+See <a href="#sndwidgets">Snd widgets</a> below,
+and nb.scm where it uses the current window position to try to find a convenient place for the help dialog.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- widget-size -->
+<tr><td bgcolor="#f6f8ff" colspan=2>
+<code><a class=def name="widgetsize">widget-size</a> (widget) </code></td></tr>
+<tr><td></td><td>
+This returns a list giving the widget's width and height (in pixels).  It can be set to resize the widget. See nb.scm and examp.scm.
+<pre>
+    (set! (<a class=quiet href="#widgetposition">widget-position</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))) (list 300 100))
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- widget-text -->
+<tr><td bgcolor="#f6f8ff" colspan=2>
+<code><a class=def name="widgettext">widget-text</a> (widget)</code></td></tr>
+<tr><td></td><td>
+This returns the text widget's text.  It can be set.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
 
 </table>
+<!-- end of dialog table -->
+
 
 <!-- INDEX somedialogs:Dialogs -->
 <p>
@@ -11188,59 +11388,9 @@ Here is a partial list of the dialogs scattered around Snd.
 <tr><td colspan=6></td></tr>
 </tbody>
 </table>
-
-<p>The main menus can be extended, and new menus added with the following functions:</p>
-
-<!-- -------------------------------- MENU TABLE -------------------------------- -->
-<table border=0 cellspacing=0 hspace=10>
-
-<!-- add-to-main-menu -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="addtomainmenu">add-to-main-menu</a> (menu-label <i>update-callback</i>)</code></td></tr>
-<tr><td width=60></td><td>
-add a new top-level menu named <i>menu-label</i> and return its menu index.  This index
-identifies the menu for add-to-menu and others.
-<i>update-callback</i> is a procedure of no arguments that is
-called each time the menu is displayed. <a href="sndscm.html#effectsdoc">new-effects.scm</a> calls this function
-to add a new "Effects" menu to the top level menubar.
-<br><pre>
-  &gt;<em class=typing>(add-to-main-menu "Tools")</em>
-  <em class=listener>5</em>
-</pre></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<br><br>
 
 
-<!-- add-to-menu -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="addtomenu">add-to-menu</a> (top-menu menu-label callback <i>position</i>)</code></td></tr>
-<tr><td></td><td>
-add menu <i>menu-label</i> to top-level menu whose index is 
-<i>top-menu</i> with the callback function <i>callback</i>.  Return the new menu label widget.
-The built-in
-Snd menus are numbered from 0 ('File') to 5 ('Popup'); 'Help' is menu 4.  If the label and callback are #f, a separator is added to the menu.
-<i>position</i> sets the position of the new menu option; it defaults to the end of the menu.  See new-effects.scm for many examples.
-<br><pre>
-  (<em class=red>add-to-menu</em> 1 "Stop Playing" 
-    (lambda () (<a class=quiet href="#stopplaying">stop-playing</a>)))
-
-  (<em class=red>add-to-menu</em> 5 "Reduce height" 
-    (lambda () (set! (<a class=quiet href="#windowheight">window-height</a>) (/ (<a class=quiet href="#windowheight">window-height</a>) 2))))
-</pre></td></tr>
-<tr><td></td><td>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<!-- remove-from-menu -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="removefrommenu">remove-from-menu</a> (top-menu menu-label)</code></td></tr>
-<tr><td></td><td>
-remove menu <i>menu-label</i> from the top top-level menu whose index is <i>top-menu</i>.  See examp.scm or snd-motif.scm.
-</td></tr>
-</table>
-
-<p>I may change these menu handlers to use the menu-widgets list
-and more general functions; let me know what you'd like to be able
-to do!
-</p>
-
-<br>
 <table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndmisc">Miscellaneous functions</a></h3></td></tr></table>
 
 <p>These functions don't seem to fit anywhere else:</p>
@@ -11254,7 +11404,7 @@ to do!
 <code><a class=def name="abort">abort</a> ()</code></td></tr>
 <tr><td width=60><br>
 </td><td>
-exit Snd via "abort", presumably to fall into the C debugger (gdb).  To stop some on-going Snd operation,
+This exits Snd via "abort", presumably to fall into the C debugger.  To stop some on-going Snd operation,
 use <a href="#cgp">C-g</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -11264,44 +11414,38 @@ use <a href="#cgp">C-g</a>.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="bindkey">bind-key</a> (key state func <i>extended origin</i>) </code></td></tr>
 <tr><td></td><td>
-<p>
-Cause <i>key</i> (an integer or a key name) with modifiers <i>state</i> (and preceding C-x if <i>extended</i>) to evaluate <i>func</i>
-when the graph widget has keyboard "focus".  If bind-key seems to be a no-op, try clicking in the graph to
+
+bind-key causes <i>key</i> (an integer or a key name) with modifiers <i>state</i> (and preceding C-x if <i>extended</i>) to evaluate <i>func</i>
+when the graph is receiving keysrokes.  If bind-key seems to be a no-op, try clicking in the graph to
 force it to take the focus.
 If <i>origin</i> is included, it is the name reported if an error occurs.  The default is a description of the key.
 If you include a documentation string in the function, it is included in the Help menu's Key Bindings output.
-</p>
-<p>
+<br><br>
 The function (<i>func</i> above) should take zero or one arguments and
 return one of the cursor choices telling Snd what 
 action (if any) to take after evaluating <i>code</i>.  
 Possible return values are:
-<br>
 <pre>
     cursor-in-view  cursor-on-left  cursor-on-right  cursor-in-middle  keyboard-no-action
-
 </pre>
-</td></tr>
-<tr><td></td><td>
 If the function takes one argument, 
 that argument is the count (the C-u number prefixed to the keyboard command)
 defaulting to 1 if no prefix is typed.  
-</p>
-<p>
+<br><br>
 The modifier <i>state</i> is a combination of control = 4 and meta = 8.
 If the key argument is a string (a key name) it has to match exactly one of the known key names.
 In X, these can be found in &lt;X11/xkeysymdef.h&gt;, and in Gtk in gdk/gdkkeysyms.h; in both
 cases, remove the XK_ or GDK_ prefix.  So, for example, the key marked "Page Down" is named
 "Page_Down" in both tables.  Similarly "+" is "plus".  
-</p>
+
 <pre>
-  Scheme: (<em class=red>bind-key</em> "End" 0 (lambda () "view full sound" (set! (<a class=quiet href="#xbounds">x-bounds</a>) (list 0.0 (/ (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#srate">srate</a>))))))
+  Scheme: (bind-key "End" 0 (lambda () "view full sound" (set! (<a class=quiet href="#xbounds">x-bounds</a>) (list 0.0 (/ (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#srate">srate</a>))))))
 
-  Ruby: <em class=red>bind_key</em>("End", 0, lambda do || set_x_bounds([0.0, frames.to_f / srate.to_f]) end)
+  Ruby: bind_key("End", 0, lambda do || set_x_bounds([0.0, frames.to_f / srate.to_f]) end)
 
-  Forth: "End" 0 lambda: 0.0 #f #f #f frames #f srate f/ 2 >list set-x-bounds ; 0 make-proc <em class=red>bind-key</em>
+  Forth: "End" 0 lambda: 0.0 #f #f #f frames #f srate f/ 2 >list set-x-bounds ; 0 make-proc bind-key
 </pre>
-</td></tr><tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (<em class=red>bind-key</em> #\a 4 
           (lambda () 
@@ -11327,13 +11471,10 @@ cases, remove the XK_ or GDK_ prefix.  So, for example, the key marked "Page Dow
             "remove click" 
             (set! (<a class=quiet href="#sample">sample</a> (<a class=quiet href="#cursor">cursor</a>)) (* 0.5 (+ (<a class=quiet href="#sample">sample</a> (1- (<a class=quiet href="#cursor">cursor</a>))) (<a class=quiet href="#sample">sample</a> (1+ (<a class=quiet href="#cursor">cursor</a>)))))) 
             cursor-in-view))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td>
 <A NAME="extendedpiano"></A>We can use bind-key to turn the keyboard into a sort of extended piano:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (<em class=red>bind-key</em> #\o 0 
   (lambda () "play oboe.snd"
@@ -11344,38 +11485,29 @@ cases, remove the XK_ or GDK_ prefix.  So, for example, the key marked "Page Dow
   (lambda () "play pistol.snd"
     (<a class=quiet href="#play">play</a> "pistol.snd") 
     <a class=quiet href="#bindkey">keyboard-no-action</a>))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td>
 Now each time we hit "o", "oboe.snd" plays,  etc.  Or say we want to move
 forward two samples in the graph each time we type "l":
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (<em class=red>bind-key</em> #\l 0 
   (lambda () "move window forward 2 samples"
     (set! (<a class=quiet href="#leftsample">left-sample</a> 0 0) (+ 2 (<a class=quiet href="#leftsample">left-sample</a> 0 0))) 
     <a class=quiet href="#bindkey">keyboard-no-action</a>))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td>
 Or, more useful perhaps, have C-c set the cursor at a particular sample:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (<em class=red>bind-key</em> #\c 4
   (lambda (arg) "move cursor to arg"
     (set! (<a class=quiet href="#cursor">cursor</a>) arg) 
     <a class=quiet href="#bindkey">cursor-in-middle</a>))
-</pre></td></tr></table></td></tr>
-
-<tr><td></td><td>
+</pre></td></tr></table>
 
 A similar set rebinds the arrow keys to give much more precise window position and size control:
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (<a NAME="moveonepixel">move-one-pixel</a> s c right)
   (let* ((ax (<a class=quiet href="#axisinfo">axis-info</a> s c time-graph))
@@ -11390,8 +11522,15 @@ A similar set rebinds the arrow keys to give much more precise window position a
     (set! (<a class=quiet href="#leftsample">left-sample</a>) (+ lo change))
     keyboard-no-action))
 
-(<em class=red>bind-key</em> "Left" 0 (lambda () "move back one pixel" (move-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #f)))    ;left arrow
-(<em class=red>bind-key</em> "Right" 0 (lambda () "move forward one pixel" (move-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #t))) ;right arrow
+(<em class=red>bind-key</em> "Left" 0     ;left arrow
+  (lambda () 
+    "move back one pixel" 
+    (move-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #f)))
+
+(<em class=red>bind-key</em> "Right" 0    ;right arrow
+  (lambda () 
+    "move forward one pixel" 
+    (move-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #t)))
 
 
 (define (<a NAME="zoomonepixel">zoom-one-pixel</a> s c in)
@@ -11406,23 +11545,28 @@ A similar set rebinds the arrow keys to give much more precise window position a
 	(if (&gt; (- hi-pix lo-pix) samps-per-pixel)
 	    (begin
 	      (set! (<a class=quiet href="#leftsample">left-sample</a>) (+ lo samps-per-pixel))
-	      (set! (<a class=quiet href="#xzoomslider">x-zoom-slider</a>) (exact-&gt;inexact (/ (max samps-per-pixel (- hi lo (* 2 samps-per-pixel))) len)))))
+	      (set! (<a class=quiet href="#xzoomslider">x-zoom-slider</a>) 
+                (exact-&gt;inexact (round (/ (max samps-per-pixel (- hi lo (* 2 samps-per-pixel))) len))))))
 	(begin
 	  (set! (<a class=quiet href="#leftsample">left-sample</a>) (max 0 (- lo samps-per-pixel)))
-	  (set! (<a class=quiet href="#xzoomslider">x-zoom-slider</a>) (exact-&gt;inexact (/ (min len (+ (- hi lo) (* 2 samps-per-pixel))) len)))))
+	  (set! (<a class=quiet href="#xzoomslider">x-zoom-slider</a>) 
+            (exact-&gt;inexact (round (/ (min len (+ (- hi lo) (* 2 samps-per-pixel))) len))))))
     keyboard-no-action))
 
-(<em class=red>bind-key</em> "Up" 0 (lambda () "zoom out one pixel" (zoom-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #f))) ;up arrow
-(<em class=red>bind-key</em> "Down" 0 (lambda () "zoom in one pixel" (zoom-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #t)))  ;down arrow
-</pre></td></tr></table></td></tr>
+(<em class=red>bind-key</em> "Up" 0     ;up arrow
+  (lambda () 
+    "zoom out one pixel"
+    (zoom-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #f)))
+(<em class=red>bind-key</em> "Down" 0   ;down arrow
+  (lambda () 
+    "zoom in one pixel" 
+    (zoom-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #t)))
+</pre></td></tr></table>
 
-<tr><td></td><td>
 The emacs-style line-oriented commands C-p, C-n, and C-k aren't very useful in Snd,
 since there's no reason for 128 samples to consititute the audio analog of a line of text.
 In the next example, we rebind them to treat same-sense zero-crossings as line markers:
-</td></tr>
 
-<tr><td></td><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (<A NAME="newcp">find-zero</a> forwards)
   (let* ((loc (<a class=quiet href="#cursor">cursor</a>))
@@ -11472,12 +11616,12 @@ In the next example, we rebind them to treat same-sense zero-crossings as line m
   (do ((i 0 (1+ i))) 
       ((= i (abs arg)))
     (go-to-zero (&lt; arg 0)))))
-</pre></td></tr></table></td></tr>
-<tr><td></td><td>Most of the predefined key definitions are given in <a href="snd.html#builtinkeys">Keyboard Commands</a>.
+</pre></td></tr></table>
+
+Most of the predefined key definitions are given in <a href="snd.html#builtinkeys">Keyboard Commands</a>.
 The key bindings set by bind-key are active only when the active widget is a graph; when the listener is receiving
 key strokes, the underlying text widget interprets them itself (using Emacs as a vague guide).  You can change the listener's interpretation
 in the following manner (this assumes you're using Motif and have the xm module loaded):
-</td></tr><tr><td></td><td>
 
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (XtAppAddActions (car (<a class=quiet href="#mainwidgets">main-widgets</a>)) (list (list "hiho" (lambda args (<a class=quiet href="#sndprint">snd-print</a> "hiho")))))
@@ -11487,7 +11631,6 @@ in the following manner (this assumes you're using Motif and have the xm module 
 Since neither Motif nor Gtk explicitly support an Emacs-like extended mode, we have to go to
 a bit of trouble to add an extended command to the listener.  The following implements C-x C-f
 in either Motif or Gtk:
-</td></tr><tr><td></td><td>
 
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 
@@ -11548,8 +11691,9 @@ See edit123.scm and snd_conffile.scm for many more examples of bind-key.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="closesoundfile">close-sound-file</a> (fd bytes)</code></td></tr>
 <tr><td></td><td>
-close file (opened by <a href="#opensoundfile">open-sound-file</a>) updating header to report <i>bytes</i> bytes of data.  This refers to data files
-handled directly, not sounds displayed in Snd (the latter are handled by <a href="#opensound">open-sound</a> and <a href="#closesound">close-sound</a>).
+This closes the file <i>fd</i> opened by <a href="#opensoundfile">open-sound-file</a>, updating its
+header to report that it has <i>bytes</i> bytes of data.  close-sound-file refers to data files
+handled directly, not to sounds displayed in Snd (the latter are handled by <a href="#opensound">open-sound</a> and <a href="#closesound">close-sound</a>).
 See save-track in mix.scm, and <a href="#opensoundfile">open-sound-file</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -11559,11 +11703,10 @@ See save-track in mix.scm, and <a href="#opensoundfile">open-sound-file</a>.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="cgp">c-g?</a> ()</code></td></tr>
 <tr><td></td><td>
-check for C-g to interrupt an on-going computation, and let other UI 
-events through.  c-g? is especially useful in loops; we could define our own safe 'while' loop as follows
+This checks for C-g to interrupt an on-going computation, and let other UI 
+events through.  c-g? is especially useful in loops; we can define our own safe 'while' loop as follows
 (this is a slight revision of Guile's while macro from ice-9/boot-9.scm):
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (defmacro safe-while (cond . body)
   `(letrec ((break (lambda val (apply throw 'break val)))
@@ -11576,13 +11719,11 @@ events through.  c-g? is especially useful in loops; we could define our own saf
 	    (lambda () (continue))
 	    (lambda v (cadr v)))))
 </pre></td></tr></table>
-<p>
+
 Here's a version of "do" that is interruptible and continuable.  c-g? provides
 the interrupt, and call-with-current-continuation provides the continuation.
 To continue running an interrupted do?, <code>(do-go-on)</code>.
-</p>
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define do-go-on-continuation #f)
 (define (do-go-on)
@@ -11614,7 +11755,7 @@ See examp.scm and play.scm for other examples.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="cgx">c-g!</a> ()</code></td></tr>
 <tr><td></td><td>
-simulate typing C-g (intended for use with bind-key to remap C-g).
+This simulates typing C-g.  It is intended for use with <a href="#bindkey">bind-key</a> to remap C-g.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11623,11 +11764,10 @@ simulate typing C-g (intended for use with bind-key to remap C-g).
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="equalizepanes">equalize-panes</a> (<i>snd</i>)</code></td></tr>
 <tr><td></td><td>
-equalize Snd panes as in the View menu <a href="snd.html#menuequalizepanes">Equalize Panes</a> option.
+This equalizes Snd panes (tries to make them the same size) as in the View:<a href="snd.html#menuequalizepanes">Equalize Panes</a> option.
+It is specific to Motif since Gtk paned window widgets are too simple-minded to get into this predicament.
 If the <i>snd</i> argument is given, only that sound's panes are affected.
-This function is specific to the Motif version of Snd.
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-hook! <a class=quiet href="#afteropenhook">after-open-hook</a> 
   (lambda (n) (if (&gt; (<a class=quiet href="#channels">channels</a> n) 3) (<em class=red>equalize-panes</em>))))
@@ -11639,7 +11779,7 @@ This function is specific to the Motif version of Snd.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="exit">exit</a> (<i>exit-value</i>)</code></td></tr>
 <tr><td></td><td>
-exit Snd.  Scheme's exit function is renamed %exit.  In Forth, this function is "snd-exit".
+This exits Snd.  Scheme's exit function is renamed %exit.  In Forth, this function is snd-exit.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11671,8 +11811,7 @@ is named "<a name="callin">call_in</a>".
 <pre>
     (<em class=red>in</em> 5000 (lambda () (<a class=quiet href="#sndprint">snd-print</a> "boo!")))
 </pre>
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (at hour minute func)
   (let* ((cur-time (localtime (current-time)))
@@ -11691,8 +11830,8 @@ is named "<a name="callin">call_in</a>".
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="key">key</a> (key state <i>snd chn</i>) </code></td></tr>
 <tr><td></td><td>
-execute the keyboard command <i>key</i> with modifier keys <i>state</i>.
-<i>state</i> is the bitwise OR of control: 4, meta: 8
+This executes the keyboard command <i>key</i> with modifier keys <i>state</i>.
+<i>state</i> is a combination of control = 4 and meta = 8.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11701,8 +11840,8 @@ execute the keyboard command <i>key</i> with modifier keys <i>state</i>.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="keybinding">key-binding</a> (key <i>(state 0) extended</i>)</code></td></tr>
 <tr><td></td><td>
-the user-defined (not built-in) procedure, if any, currently bound to key+state+extended.
-<i>state</i> is the bitwise OR of control: 4 and meta: 8.  <i>extended</i> is #t if the command
+This returns the user-defined (not built-in) procedure, if any, currently bound to <i>key</i> with <i>state</i> and <i>extended</i> flags.
+<i>state</i> is a combination of control = 4 and meta = 8.  <i>extended</i> is #t if the command
 is preceded by C-x.
 <pre>
     :<em class=typing>(key-binding "Right" 0)</em>
@@ -11716,7 +11855,7 @@ is preceded by C-x.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="littleendianp">little-endian?</a> () </code></td></tr>
 <tr><td></td><td>
-return #t if underlying machine is little endian.
+This returns #t if underlying machine is little endian.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11725,7 +11864,7 @@ return #t if underlying machine is little endian.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="opensoundfile">open-sound-file</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :channels :srate :comment :header-type)</code></td></tr>
 <tr><td></td><td>
-Open (create) a sound file <i>file</i> (file name defaults to "test.snd" or "test.wav").  
+This opens (creates) a sound file <i>file</i>; the file name defaults to "test.snd" or "test.wav".
 It is assumed that the data will be floats in the native format (written by 
 the caller interleaving channels), and that the file will be closed by 
 <a href="#closesoundfile">close-sound-file</a>. One simple way to write the data is to call 
@@ -11744,7 +11883,7 @@ loads a file into Snd for editing.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="savemacros">save-macros</a> (filename)</code></td></tr>
 <tr><td></td><td>
-save <a href="snd.html#kbdmacros">keyboard macros</a> in <i>filename</i>.
+This saves all currently defined <a href="snd.html#kbdmacros">keyboard macros</a> in <i>filename</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11753,17 +11892,20 @@ save <a href="snd.html#kbdmacros">keyboard macros</a> in <i>filename</i>.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="savestate">save-state</a> (<i>filename</i>)</code></td></tr>
 <tr><td></td><td>
-save current state of Snd in <i>filename</i>.  The saved-state file is a Scheme/Ruby/Forth program that when loaded
-into Snd, recreates the state of Snd (as far as possible) at the point of the save.  There are a variety of
+This saves the current state of Snd in <i>filename</i>.  The saved-state file is a Scheme/Ruby/Forth program that when loaded
+into Snd, recreates the state of Snd (as far as possible) at the point of the save.  
+<a href="#savestatehook">save-state-hook</a> is called during the saving process (once on each temp file),
+and <a href="#aftersavestatehook">after-save-state-hook</a> is called afterwards.
+<i>filename</i> defaults to <a href="#savestatefile">save-state-file</a> which itself defaults to "saved-snd.scm"
+or some variant thereof.
+<br><br>
+There are a variety of
 limitations to this process; the worst is that save-state does not try to save hook values or global variable values --
 see also <a href="#ptreechannel">ptree-channel</a> in this regard.
 If you call save-state with active regions, and have the region browser running all the time, and subsequently
 want to back up to the saved state, it's safer to delete all the regions first (via <a href="#forgetregion">forget-region</a>), 
 then load the saved-state file.
-<a href="#savestatehook">save-state-hook</a> is called during the saving process (once on each temp file),
-and <a href="#aftersavestatehook">after-save-state-hook</a> is called afterwards.
-<i>filename</i> defaults to <a href="#savestatefile">save-state-file</a> which itself defaults to "saved-snd.scm"
-or some variant thereof.
+
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11772,7 +11914,7 @@ or some variant thereof.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="scriptarg">script-arg</a> ()</code></td></tr>
 <tr><td></td><td>
-current startup argument number (normally 1). See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> and snd-test.scm.
+This is the current startup argument number (normally 1). See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> and snd-test.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11781,7 +11923,7 @@ current startup argument number (normally 1). See <a href="grfsnd.html#sndwithno
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="scriptargs">script-args</a> ()</code></td></tr>
 <tr><td></td><td>
-startup arguments as a list of strings. See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> and snd-test.scm.
+This returns the startup arguments as a list of strings. See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> and snd-test.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11790,7 +11932,7 @@ startup arguments as a list of strings. See <a href="grfsnd.html#sndwithnogui">S
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sendmozilla">send-mozilla</a> (url)</code></td></tr>
 <tr><td></td><td>
-Start mozilla, if necessary, and tell it to go to the location <i>url</i>.
+This starts mozilla, if necessary, and tells it to go to the location <i>url</i>.
 The actual HTML reader invoked is determined by <a href="#htmlprogram">html-program</a>,
 but it's currently assumed that netscape/mozilla url syntax can be used to jump to
 the desired url.
@@ -11804,7 +11946,7 @@ the desired url.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="snderror">snd-error</a> (str)</code></td></tr>
 <tr><td></td><td>
-throws 'snd-error with the error message <i>str</i>.  This is a way to dive directly into
+This throws 'snd-error with the error message <i>str</i>.  It provides a way to dive directly into
 Snd's error handling mechanism.
 See also <a href="#muserrorhook">mus-error-hook</a> and <a href="#snderrorhook">snd-error-hook</a>.
 </td></tr>
@@ -11815,17 +11957,24 @@ See also <a href="#muserrorhook">mus-error-hook</a> and <a href="#snderrorhook">
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sndhelp">snd-help</a> (obj <i>(formatted #t)</i>)</code></td></tr>
 <tr><td></td><td>
-return (as a string) the help text associated with <i>obj</i>:
-<br>
+This returns the help text associated with <i>obj</i>:
 <pre>
-    :<em class=typing>(snd-help 'open-sound)</em>
+    Scheme:
+    :<em class=typing>(snd-help 'open-sound)</em>   ; or "open-sound"
     <em class=listener>"(open-sound filename) opens filename (as if opened from File:Open menu option), 
     and returns the new sound's index"</em>
+
+    Ruby:
+    :<em class=typing>snd_help("close_sound")</em>  ; or :open_sound
+    <em class=listener>close_sound((snd false)): close snd</em>
+
+    Forth:
+    snd> <em class=typing>"revert-sound" snd-help</em>
+    <em class=listener>(revert-sound (snd #f)): revert snd to its unedited state (undo all)</em>
 </pre>
 If no help string can be found, or if the name doesn't come close to any currently defined name,
 snd-help runs through the current load path searching *.scm (or *.rb) files for a definition
 of that name.  So, if you haven't loaded dsp.scm:
-<br>
 <pre>
     :<em class=typing>(snd-help "volterra-filter")</em>
     <em class=listener>"volterra-filter is not defined; it appears to be defined in:
@@ -11833,7 +11982,6 @@ of that name.  So, if you haven't loaded dsp.scm:
     and documented at sndscm.html#volterrafilter"</em>
 </pre>
 snd-help tries to be smart about minor mispellings:
-<br>
 <pre>
     :<em class=typing>(snd-help "close-soud")</em>
     <em class=listener>"(close-sound (snd #f)): close snd
@@ -11842,7 +11990,7 @@ snd-help tries to be smart about minor mispellings:
 </pre>
 To go to the
 HTML documentation for a given object, load <a href="sndscm.html#indexdoc">index.scm</a> and use the html function.
-To get a more global help function (i.e. one that knows about Scheme built-ins and so forth), 
+In Guile, to get a more global help function (i.e. one that knows about Scheme built-ins and so forth), 
 <code>(use-modules (ice-9 session))</code>.  This loads Guile's
 help (and apropos) support which uses 'regexps' and so forth.
 <br><br>
@@ -11853,14 +12001,14 @@ the listener) gets it.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+<!-- TODO: loaded file list in ruby/forth/gauche, also *snd-opened-sound* and memo business -->
 
 <!-- *snd-loaded-files* -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sndloadedfiles">*snd-loaded-files*</a></code></td></tr>
 <tr><td></td><td>
-A variable (not a function), a list containing the full names of (nearly) all the
+(Guile only).  This is a variable (not a function), a list containing the full names of (nearly) all the
 files currently loaded into Snd.  The Guile boot file may be missing from the list.
-(Guile only).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11889,8 +12037,7 @@ There are other fancier ways to do this (e.g. <a href="sndscm.html#exremembersou
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sndprint">snd-print</a> (str)</code></td></tr>
 <tr><td></td><td>
-displays <i>str</i> in lisp the listener, then returns <i>str</i>.  (This is intended as a
-debugging aid -- there's still nothing like a lowly print statement).
+This displays <i>str</i> in the listener, then returns <i>str</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11899,24 +12046,9 @@ debugging aid -- there's still nothing like a lowly print statement).
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sndrememberpaths">*snd-remember-paths*</a></code></td></tr>
 <tr><td></td><td>
-A variable (not a function); if #t (the default), Snd adds code to the Guile %load-hook that makes sure the
-current file's path is included in %load-path when load or load-from-path is called.  This makes it possible to
-use load-from-path inside a Scheme file when you don't know in advance where that file will reside at load time.
-(Guile only).
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- snd-spectrum -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="sndspectrum">snd-spectrum</a> (data window length <i>linear beta in-place normalized</i>)</code></td></tr>
-<tr><td></td><td>
-return the spectrum (as a vct) of <i>data</i> (also a vct) using fft-window <i>win</i>.
-<i>length</i> is the number of samples 
-of data. <code>(let ((spectr (snd-spectrum data rectangular-window (<a class=quiet href="#transformsize">transform-size</a>)))) ...)</code>
-If <i>linear</i> is #f (its default is #t), the spectrum is in dB.
-<i>beta</i> is the fft data window family parameter; it is scaled internally so here it should be between 0.0 and 1.0.
-If <i>in-place</i> is #t, the spectrum is in <i>data</i>, otherwise snd-spectrum returns a new vct.
+(Guile only).  This is a variable (not a function); if #t (the default), Snd adds code to the Guile %load-hook that makes sure the
+current file's path is included in %load-path when load or load-from-path is called.  With this set, we can
+use load-from-path inside a Scheme file when we don't know in advance where that file will reside at load time.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11925,7 +12057,7 @@ If <i>in-place</i> is #t, the spectrum is in <i>data</i>, otherwise snd-spectrum
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sndtempnam">snd-tempnam</a> ()</code></td></tr>
 <tr><td></td><td>
-return a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
+This returns a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
 <pre>
     <em class=listener>:</em><em class=typing>(temp-dir)</em>
     <em class=listener>"/home/bil/zap/tmp"</em>
@@ -11940,7 +12072,7 @@ return a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sndurl">snd-url</a> (name)</code></td></tr>
 <tr><td></td><td>
-the url (in the Snd documentation) corresponding to <i>name</i>; <i>name</i> can be a string or a symbol.
+This is the url (in the Snd documentation) corresponding to <i>name</i>; <i>name</i> can be a string or a symbol.
 <pre>
     <em class=listener>:</em><em class=typing>(snd-url 'open-sound)</em>
     <em class=listener>"extsnd.html#opensound"</em>
@@ -11953,11 +12085,11 @@ the url (in the Snd documentation) corresponding to <i>name</i>; <i>name</i> can
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sndurls">snd-urls</a> ()</code></td></tr>
 <tr><td></td><td>
-return a list of lists each inner list containing a Snd function name (as a string) and its associated url in the Snd documentation.
+This returns a list of lists, each inner list containing a Snd function name (as a string) and its associated url in the Snd documentation.
 <pre>
     :<em class=typing>(assoc "open-sound" (snd-urls))</em>
-    <em class=listener>: ("open-sound" . "extsnd.html#opensound")
-</em></pre>
+    <em class=listener>: ("open-sound" . "extsnd.html#opensound")</em>
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11966,7 +12098,7 @@ return a list of lists each inner list containing a Snd function name (as a stri
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sndwarning">snd-warning</a> (str)</code></td></tr>
 <tr><td></td><td>
-post a warning message, <i>str</i>, in the minibuffer, and return <i>str</i>.
+This posts a <i>str</i> in the minibuffer and returns <i>str</i>.
 See also <a href="#sndwarninghook">snd-warning-hook</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -11976,7 +12108,7 @@ See also <a href="#sndwarninghook">snd-warning-hook</a>.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="unbindkey">unbind-key</a> (key state extended)</code></td></tr>
 <tr><td></td><td>
-cause <i>key</i> with modifiers <i>state</i> to be a no-op (or to revert to its built-in default).
+This causes <i>key</i> with modifiers <i>state</i> and <i>extended</i> to revert to its built-in default.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11985,7 +12117,7 @@ cause <i>key</i> with modifiers <i>state</i> to be a no-op (or to revert to its 
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="windowproperty">window-property</a> (known-atom property)</code></td></tr>
 <tr><td width=60></td><td>
-window-property returns or (via set!) changes an X-window's property; <a href="sndscm.html#titlewithdate">title-with-date</a> in examp.scm uses this function
+window-property returns or changes an X-window's property; <a href="sndscm.html#titlewithdate">title-with-date</a> in examp.scm uses this function
 to put the date and time in the Snd title bar.
 <pre>
     :<em class=typing>(window-property "SND_VERSION" "SND_VERSION")</em>
@@ -11997,6 +12129,9 @@ to put the date and time in the Snd title bar.
 
 </table>
 <br>
+
+
+<!-- ---------------------------------------- CONSTANTS ---------------------------------------- -->
 
 <table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndconstants">Constants</a></h3></td></tr></table>
 
@@ -12108,9 +12243,14 @@ to put the date and time in the Snd title bar.
 </pre>
 
 <br>
+
+
+<!-- ---------------------------------------- ERRORS ---------------------------------------- -->
+
 <table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snderrors">Errors and Debugging</a></h3></td></tr></table>
 <!-- INDEX snderrors:Debugging (Scheme) -->
-<p> When something goes awry, the various functions can throw an error (a symbol)
+
+<p>When something goes awry, the various functions can throw an error (a symbol)
 which is normally caught by the default error handler (this is a kind of goto 
 but without the embarrassment).  It prints out some message,
 and sometimes appends a stack trace.  So, as a simple example, selection-position
@@ -12156,7 +12296,8 @@ run rough-shod over any error with:</p>
   `(catch #t 
 	  (lambda ()
 	    ,func)
-	  (lambda args (car args))))
+	  (lambda args 
+            (car args))))
 </pre>
 <p>You can use these errors in your code, if you like, or add your own.  The following
 throws the error 'no-such-file:</p>
@@ -12176,7 +12317,7 @@ or whatever and find yourself back at the top level.  <code>(throw 'snd-top-leve
 </p>
 
 <br>
-<table width="50%" border=1><tr><td bgcolor="EEFDEE" valign="middle"><h4>Scheme debugging</h4></td></tr></table>
+<table width="50%" border=1><tr><td bgcolor="EEFDEE" valign="middle"><h4>Guile debugging</h4></td></tr></table>
 
 <p>There are a variety of debugging aids supplied by Guile, including
 a backtrace facility.  To be sure all Guile's debugging support
@@ -12212,11 +12353,19 @@ backtrace information doesn't include a file name or line number, you can watch 
 load process by setting <b>%load-verbosely</b> to #t.
 </p>
 
+
+<table width="50%" border=1><tr><td bgcolor="EEFDEE" valign="middle"><h4>Ruby debugging</h4></td></tr></table>
+<table width="50%" border=1><tr><td bgcolor="EEFDEE" valign="middle"><h4>Forth debugging</h4></td></tr></table>
+<table width="50%" border=1><tr><td bgcolor="EEFDEE" valign="middle"><h4>Gauche debugging</h4></td></tr></table>
+
+<!-- TODO: debugging in Ruby, Gauche, and Forth -->
+
+
 <br>
 <table width="50%" border=1><tr><td bgcolor="EEFDEE" valign="middle"><h4><A NAME="cdebugging">C debugging</a></h4></td></tr></table>
 
 <!-- INDEX cdebugging:Debugging (C) -->
-<p>If you hit a bug in Snd's C code, you'll need to use gdb (or dbx on the SGI)
+<p>If you hit a bug in Snd's C code, you'll need to use gdb
 to track it down, or mail me the gory details;
 if the error is a segfault, there is probably a file named "core" or "core.nnnn"
 on the current directory:
@@ -12257,6 +12406,9 @@ puts each sound on a separate page of a notebook widget.  Similarly -horizontal
 and -vertical determine which way the outer panes are laid out. 
 There are a variety of functions and variables related to widget colors and so forth.
 </p>
+
+
+<!-- ---------------------------------------- COLORS ---------------------------------------- -->
 
 <table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="colors">Colors</a></h4></td></tr></table>
 
@@ -12353,7 +12505,6 @@ are:</p>
     <td bgcolor="#f6f8ff">zoom slider color.</td></tr>
 </table>
 
-<br>
 <p>I have these lines in my ~/.snd_guile file:
 </p>
 <pre>
@@ -12376,49 +12527,6 @@ are:</p>
     set_selected_graph_color beige
     set_selected_data_color blue
 </pre>
-<br>
-
-<p>The various transforms can be displayed using colormaps.  The following
-variables and functions control this:</p>
-
-<table border=0 cellspacing=6 hspace=20>
-
-<tr><td width=180><code><a class=def name="colorcutoff">color-cutoff</a></code></td><td width=100>0.003</td>
-<td>In spectra, sets the lowest data value that will be colored.</td></tr>
-<tr><td><code><a class=def name="colorinverted">color-inverted</a></code></td><td>#t</td>
-<td>The 'invert' button in the <a href="snd.html#colorbrowser">color</a> dialog, negated (hunh?!).</td></tr>
-<tr><td><code><a class=def name="colorscale">color-scale</a></code></td><td>0.5</td>
-<td>The darkness setting in the <a href="snd.html#colorbrowser">color</a> dialog, divided by 100.</td></tr>
-<tr><td valign=top><code><a class=def name="colormap">colormap</a></code></td><td valign=top>0</td>
-<td>Colormap choice for various displays (see the Color dialog, or samples-via-colormap in draw.scm).
-<br>
-The built-in maps (from 0 to 15) are: 
-black-and-white, gray, hot, cool, bone, copper, pink, jet, prism, autumn, winter, 
-spring, summer, rainbow, and flag. 
-These names are defined (with '-colormap' appended) in rgb.scm and rgb.rb.
-</td></tr>
-</table>
-
-<p>The color object handlers are:</p>
-
-<table border=0 cellspacing=6 hspace=20>
-<tr>
-<td width="20%"><code><a class=def name="colorp">color?</a> (obj)</code></td>
-<td>#t if <i>obj</i> is a color (this is the same as Pixel? in xm), (see <a href="#makecolor">make-color</a>).</td></tr>
-
-<tr>
-<td><code><a class=def name="color3list">color-&gt;list</a> (obj)</code></td>
-<td>return list (r g b) of color components.</td></tr>
-
-<tr>
-<td valign=top><code><a class=def name="makecolor">make-color</a> (r g b)</code></td>
-<td>return a color object using the red/green/blue values.  If the object is called
-as a function, it returns the list of rgb values.
-If, for example, blue is a defined color, <code>(blue)</code> is the same as <code>(<a class=quiet href="#color3list">color-&gt;list</a> blue)</code>.
-Two colors are equal (i.e. equal? returns #t) if their rgb values are the same.
-</td>
-</tr>
-</table>
 
 <!-- INDEX colors:Colors -->
 <TABLE border=3 bordercolor="tan" hspace=40 vspace=10><tr><td>
@@ -12444,12 +12552,15 @@ Snd graphics contexts: <a href="#sndgcs">snd-gcs</a><br>
 
 
 <br><br>
+
+<!-- ---------------------------------------- FONTS ---------------------------------------- -->
+
 <table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="fonts">Fonts</a></h4></td></tr></table>
 
 <p>Fonts in Snd are strings containing a description of the
 desired font.  These can be the abbreviated forms such as
 "8x14" or a full X font name such as "-misc-fixed-bold-r-normal--*-140-*-*-*-*-*-*".
-(In Gtk, the font names resemble "Monospace 10" etc).
+In Gtk, the font names resemble "Monospace 10", etc.
 The font variables are:
 </p>
 <table cellpadding=0 cellspacing=0 hspace=20>
@@ -12469,190 +12580,24 @@ The font variables are:
 </pre></td></tr></table>
 
 <p>See also <a href="#currentfont">current-font</a> below.
-In Gtk2, Pango-style names are used for the fonts: "Monospace 8" for example.
 If the requested font can't be loaded, the set! statement returns the old (unchanged) font name.
 </p>
 <pre>
-&gt;<em class=typing>(set! (axis-label-font) "8x14")</em>
-<em class=listener>"-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*"</em>
+    &gt;<em class=typing>(set! (axis-label-font) "8x14")</em>
+    <em class=listener>"-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*"</em>
 </pre>
 <br>
 <br>
-<table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndwidgets">Widgets</a></h4></td></tr></table>
-
-<p>Snd can be built with Motif, Gtk, or no GUI; other toolkits might be supported in the future.
-Unfortunately, each toolkit has its own way of handling widgets.  I originally started implementing
-a Snd-specific layer of calls that would work in any supported toolkit, but then changed direction
-and decided to implement the libxm connection.  This left the earlier graphics functions dangling;
-they are still useful, but they probably should not be built-in.  I'm currently planning to move
-them to Scheme/Ruby/Forth.  But, for now, here are some of them:
-</p>
-
-<table cellspacing=0 hspace=20>
-
-<!-- widget-position -->
-<tr><td bgcolor="#f6f8ff">
-<code><a class=def name="widgetposition">widget-position</a> (widget)</code></td></tr>
-<tr><td></td><td>
-return a list giving the widget x and y coordinates (pixels).  Can be set.  See <a href="#sndwidgets">Snd widgets</a> below,
-and nb.scm where it uses the current window position to try to find a convenient place for the help dialog.
-</td></tr>
 
 
-
-<!-- widget-size -->
-<tr><td bgcolor="#f6f8ff">
-<code><a class=def name="widgetsize">widget-size</a> (widget) </code></td></tr>
-<tr><td></td><td>
-return a list giving the widget width and height (pixels).  Can be set. See nb.scm and examp.scm.
-
-<pre>
-    (set! (<a class=quiet href="#widgetposition">widget-position</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))) (list 300 100))
-</pre>
-</td></tr>
-
-
-<tr><td><code><a class=def name="widgettext">widget-text</a> (widget)</code></td><td>return or set the contents of text widget</td></tr>
-<tr><td><code><a class=def name="showwidget">show-widget</a> (widget)</code></td><td>show (manage) widget</td></tr>
-<tr><td><code><a class=def name="hidewidget">hide-widget</a> (widget)</code></td><td>hide (unmanage) widget</td></tr>
-<tr><td><code><a class=def name="focuswidget">focus-widget</a> (widget)</code></td><td>give widget keyboard focus</td></tr>
-</table>
-
-<p>
-The six "-widgets" functions give access to various possibly useful widgets.
-</p>
-<pre>
-<a class=def name="mainmenu">main-menu</a> (menu)
-<a class=def name="mainwidgets">main-widgets</a> ()
-<a class=def name="menuwidgets">menu-widgets</a> ()
-<a class=def name="soundwidgets">sound-widgets</a> (snd)
-<a class=def name="channelwidgets">channel-widgets</a> (snd chn)
-<a class=def name="dialogwidgets">dialog-widgets</a> ()
-</pre>
-
-<p><b>main-menu</b> returns the top-level menu 
-associated with its integer argument:
-</p>
-<pre>
-    0: File menu
-    1: Edit menu
-    2: View menu
-    3: Options menu
-    4: Help menu
-    5: built-in popup menu
-    and others as added by add-main-menu
-</pre>
-
-<p><b>main-widgets</b> returns a list of the top-level widgets in Snd:
-</p>
-<pre>
-    0: top-level-application      ; XtAppContext in Motif, top level window in Gtk+
-    1: top-level-shell 
-    2: main-pane                  ; outer paned window top window (holds sounds)
-    3: main-sound-pane 
-    4: listener-pane              ; outer paned window bottom window
-    5: notebook-outer-pane
-</pre>
-
-<p><b>menu-widgets</b> returns the top-level menu widgets (cascade menus in Motif or menu bars in Gtk+ associated)
-as a list:
-</p>
-<pre>
-    0: top-level-menu-bar 
-    1: file-menu
-    2: edit-menu 
-    3: view-menu 
-    4: options-menu 
-    5: help-menu, 
-    6: default popup menu
-</pre>
-
-<p><b>sound-widgets</b> returns a list of various widgets specific to a given sound (chosen by its index, of course):
-</p>
-<pre>
-    0: main-pane 
-    1: name-label                 ; sound's file name
-    2: control-panel 
-    3: minibuffer 
-    4: play button
-    5: filter-graph               ; control panel drawing area for filter envelope
-    6: unite button               ; invisible in mono sounds
-    7: minibuffer-label           ; prompt area for the minibuffer
-    8: name-icon                  ; hour-glass or whatever
-    9: sync button
-</pre>
-
-<p><b>channel-widgets</b> returns a list of various widgets associated with a given channel:
-</p>
-<pre>
-    0: graph                      ;drawing area for all 3 graphs (time, fft, lisp)
-    1: w-button 
-    2: f-button 
-    3: x-position 
-    4: y-position 
-    5: x-zoom 
-    6: y-zoom 
-    7: edit history list 
-    8: right(united-chans) y-position 
-    9: right y-zoom
-    10: main pane for channel
-    ------ the rest only in Gtk+
-    11..16: adjustment widgets associated with the zoom and position sliders
-</pre>
-
-<p><b>dialog-widgets</b> returns a list of dialog widgets (or lists thereof):
-</p>
-<pre>
-    0: View: Color dialog 
-    1: View: Orientation dialog 
-    2: Edit: EnvelopeEditor dialog 
-    3 and 4: unused
-    5: Options: Transform dialog 
-    6: File: Open dialog 
-    7: File: Save as dialog 
-    8: View: Files dialog 
-    9: raw data dialog (activated when raw sound opened, sometimes)
-    10: File: New sound dialog 
-    11: File: Mix dialog 
-    12: Edit: Edit header dialog 
-    13: Edit: Find dialog 
-    14: Help dialog 
-    15: completion dialog (activated by TAB sometimes)
-    16: View: Mixes dialog
-    17: File: Print dialog 
-    18: File: Recorder dialog 
-    19: View: Regions dialog
-    20: info dialog (activated by info-dialog function)
-    21: View: Tracks dialog 
-    22: Edit: Selection Save as dialog
-    23: File: Insert file dialog
-    24: region save as dialog (from regions dialog save button)
-    25: Options: Preferences dialog
-</pre>
-
-<p>
-dialog-widgets entries are #f for any dialog that has not
-yet been created.  In gtk, the first element of the main-widgets list is the top level shell's window.
-If there are several copies of a given dialog, the dialog-widgets list entry is a list of widgets.
-</p>
-<p>To remove the y-position slider (which is only there
-for looks):
-</p>
-<pre>
-  (<a class=quiet href="#hidewidget">hide-widget</a> (list-ref (<a class=quiet href="#channelwidgets">channel-widgets</a>) 4))
-</pre>
-<p>See also snd-motif.scm, new-effects.scm, and examp.scm.</p>
-
-<br>
 <table width="60%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="graphics">Graphics</a></h4></td></tr></table>
 
 <p>It is possible to draw directly on any of the channel graphs.  Simple examples include the
 <a href="#showoriginal">show-original</a> after-graph-hook function, and the
 <a href="#xcursor">x-cursor</a> function that draws an "x" shaped cursor.
-The lowest level procedures are:
 </p>
 
-<!-- -------------------------------- GRAPHICS TABLE -------------------------------- -->
+<!-- -------------------------------- GRAPHICS -------------------------------- -->
 <table border=0 cellspacing=0 hspace=10>
 
 <!-- add-colormap -->
@@ -12669,8 +12614,7 @@ three vcts, each vct containing <i>size</i> values representing respectively
 the red, green, and blue values (each a number between 0.0 and 1.0).
 In the following code, the fields are set from envelopes (this is a loose translation
 of FractInt's royal colormap):
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (add-colormap "purple" 
   (lambda (size) 
@@ -12710,8 +12654,69 @@ of FractInt's royal colormap):
 <td><img src="jetcolor.png"></td>
 <td><img src="hotcolor.png"></td>
 </tr></table>
-
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- color? -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="colorp">color?</a> (obj)</code></td></tr>
+<tr><td></td><td>
+This returns #t if <i>obj</i> is a color (a Pixel in xm jargon); see <a href="#makecolor">make-color</a>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- color->list -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="color3list">color-&gt;list</a> (obj)</code></td></tr>
+<tr><td></td><td>
+This returns the rgb color components of <i>obj</i> in a list.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!--  color-cutoff -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="colorcutoff">color-cutoff</a> ()</code></td></tr>
+<tr><td></td><td>
+In spectra, this sets the lowest data value that will be colored (the default is 0.003).  Anything less than that
+is rendered in the background color.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!--  color-inverted -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="colorinverted">color-inverted</a> ()</code></td></tr>
+<tr><td></td><td>
+This reflects the 'invert' button in the View:<a href="snd.html#colorbrowser">Colors</a> dialog.
+If the colormap is inverted, the order of colors is reversed.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- color-scale -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="colorscale">color-scale</a> ()</code></td></tr>
+<tr><td></td><td>
+color-scale reflects the darkness setting in the View:<a href="snd.html#colorbrowser">Colors</a> dialog, divided by 100.</td></tr>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- colormap -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="colormap">colormap</a> ()</code></td></tr>
+<tr><td></td><td>
+This is the colormap choice for various displays, most prominently the transform sonogram and spectrogram,
+and the wavogram.
+The built-in maps (from 0 to 15) are: 
+black-and-white, gray, hot, cool, bone, copper, pink, jet, prism, autumn, winter, 
+spring, summer, rainbow, and flag. 
+These names are defined (with '-colormap' appended) in rgb.scm and rgb.rb.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
 
 <!-- colormap-name -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -12719,6 +12724,7 @@ of FractInt's royal colormap):
 <tr><td></td><td>
 colormap-name returns the specified colormap's name.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- colormap-ref -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -12730,6 +12736,7 @@ suitable for use with make-color.  <i>pos</i> should be a float between
 See samples-via-colormap in draw.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- colormap-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="colormapsize">colormap-size</a> ()</code></td></tr>
@@ -12738,6 +12745,7 @@ colormap-size returns (or sets) the current number of colors in each colormap.
 The default is 512.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- colormap? -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="colormapp">colormap?</a> (index)</code></td></tr>
@@ -12745,34 +12753,38 @@ The default is 512.
 colormap? returns #t if <i>index</i> represents a usable colormap.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- copy-context -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="copycontext">copy-context</a></code></td></tr>
 <tr><td></td><td>
-the graphics mode to use to draw over whatever is currently in a graph.
+This is the graphics mode to use to draw over whatever is currently in a graph.
 The "contexts" refer to graphics contexts used throughout Snd; the <code>copy-context</code>
 copies into the current graph, whereas the <code>cursor-context</code> uses XOR.
-The error thrown for an unimplemented 'context' is 'no-such-graphics-context.
+The error thrown for an unimplemented context is 'no-such-graphics-context.
 See draw.scm or <a href="#displaysampsinred">display-samps-in-red</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- current-font -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="currentfont">current-font</a> (snd chn context)</code></td></tr>
 <tr><td></td><td>
-the current font.</td></tr>
+This is the current font (a Font in Motif, a PangoFontDescription* in Gtk+).</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- cursor-context -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="cursorcontext">cursor-context</a></code></td></tr>
 <tr><td></td><td>
-the graphics mode for XOR drawing in the cursor color (for cursors, normally).
+This is the graphics mode for XOR drawing in the cursor color (for cursors, normally).
 See <a href="#xcursor">x-cursor</a> or
 <a href="#foregroundcolor">foreground-color</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- delete-colormap -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -12781,64 +12793,69 @@ See <a href="#xcursor">x-cursor</a> or
 delete-colormap deletes the colormap represented by <i>index</i>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- draw-axes -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="drawaxes">draw-axes</a> (wid gc <i>label x0 x1 y0 y1 style axes</i>)</code></td></tr>
 <tr><td width=60></td><td>
-draw axes in the widget <i>wid</i>, using the graphics context <i>gc</i>, with the x-axis label <i>label</i>
+This draws axes in the widget <i>wid</i>, using the graphics context <i>gc</i>, with the x-axis label <i>label</i>
 going from <i>x0</i> to <i>x1</i> (floats) along the x axis, <i>y0</i> to <i>y1</i> along the y axis, with x-axis-style
-<i>style</i> (x-axis-in-seconds etc); which axes are actually displayed or just implied
-depends on <i>axes</i> (it defaults to <code>show-all-axes</code>). Return a list of the actual (pixel) axis bounds.  See the scanned-synthesis display code in snd-motif.scm,
+<i>style</i> (<code>x-axis-in-seconds</code> etc).  Whether axes are actually displayed or just implied
+depends on <i>axes</i>, which defaults to <code>show-all-axes</code>. 
+draw-axes returns a list of the actual (pixel) axis bounds.  
+See the scanned-synthesis display code in snd-motif.scm,
 or the local envelope editor code in xm-enved.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- draw-dot -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="drawdot">draw-dot</a> (x0 y0 dot-size snd chn context)</code></td></tr>
 <tr><td width=60></td><td>
-draw a dot at (x0 y0) of <a href="#dotsize">dot-size</a> pixels diameter in the given graph.  See musglyphs.scm.</td></tr>
+This draws a dot at (<i>x0 y0</i>) of diameter <i>dot-size</i> pixels in the specified context.  See musglyphs.scm.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- draw-dots -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="drawdots">draw-dots</a> (positions dot-size snd chn context)</code></td></tr>
 <tr><td></td><td>
-draw dots of size <a href="#dotsize">dot-size</a> from the (x y) pairs in the vector <i>positions</i> in the given context.
+This draws dots of size <i>dot-size</i> from the (x y) pairs in the vector <i>positions</i> in the specified context.
 draw-dots, draw-lines, and fill-polygon take vectors, rather than vcts (which would be more consistent
-with the rest of Snd) because the values passed are supposed to be short ints.  The xm and xg modules
-have made these functions obsolete.
+with the rest of Snd) because the values passed are supposed to be short ints.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- draw-line -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="drawline">draw-line</a> (x0 y0 x1 y1 snd chn context)</code></td></tr>
 <tr><td></td><td>
-draw a line from (x0 y0) to (x1 y1) in the given context.
-See show-hiho below.
+This draws a line from (<i>x0 y0</i>) to (<i>x1 y1</i>) in the specified context.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- draw-lines -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="drawlines">draw-lines</a> (lines size snd chn context)</code></td></tr>
 <tr><td></td><td>
-draw lines following the (x y) pairs in the vector <i>lines</i> in the given graphics context (<a class=quiet href="#copycontext">copy-context</a> is the default).
+This draws lines following the (x y) pairs in the vector <i>lines</i> in the specified context.
 See make-current-window-display in draw.scm.
 make-bezier-1 in <a href="sndscm.html#musglyphs">musglyphs.scm</a> can be used to draw Bezier curves.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- draw-string -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="drawstring">draw-string</a> (text x0 y0 snd chn context)</code></td></tr>
 <tr><td></td><td>
-draw a string (<i>text</i>) in the current font and foreground color starting at (x0 y0) in the given graphics context.
+This draws a string (<i>text</i>) in the current font and foreground color starting at (<i>x0 y0</i>) in the specified context.
 The next procedures use the channel-property list (extensions.scm) to maintain a list
 of sample-oriented comments, displaying a given comment if its associated sample is
 currently in the time-domain graph:
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define* (<a name="addcomment">add-comment</a> sample comment #:optional snd1 chn1)
   (let* ((snd (or snd1 (<a class=quiet href="#selectedsound">selected-sound</a>)))
@@ -12869,23 +12886,24 @@ currently in the time-domain graph:
 </pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+
 
 <!-- fill-rectangle -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="fillrectangle">fill-rectangle</a> (x0 y0 width height snd chn context)</code></td></tr>
 <tr><td></td><td>
-draws a filled rectangle in the current foreground color from (x0 y0) of size (width height).
+This draws a filled rectangle in the current foreground color from (<i>x0 y0</i>) of size (<i>width height</i>).
 See draw.scm, snd-motif.scm, or <a href="#showoriginal">show-original</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- fill-polygon -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="fillpolygon">fill-polygon</a> (points snd chn context)</code></td></tr>
 <tr><td></td><td>
-draws a filled polygon whose vertices are in the vector <i>points</i>.</td></tr>
-<tr><td></td><td>
+This draws a filled polygon whose vertices are in the vector <i>points</i>.
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (-&gt; x0 y0 size snd chn)
   "draw an arrow pointing (from the left) at the point (x0 y0)"
@@ -12905,24 +12923,25 @@ draws a filled polygon whose vertices are in the vector <i>points</i>.</td></tr>
 		    (* 2 size)
 		    (inexact-&gt;exact (* .8 size))
                     snd chn)))	
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
 
-<tr><td></td><td>
 musglyphs.scm has some elaborate examples that use fill-polygon to draw music notation symbols.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- foreground-color -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="foregroundcolor">foreground-color</a> (snd chn context)</code></td></tr>
 <tr><td></td><td>
-the current foreground color.
+This is the current foreground color.
 The following gives us a green cursor:
 <pre>
   (set! (foreground-color 0 0 <a class=quiet href="#cursorcontext">cursor-context</a>) (<a class=quiet href="#makecolor">make-color</a> 1 0 1))
 </pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- glSpectrogram -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -12932,19 +12951,19 @@ glSpectrogram takes spectrogram data and passes it to openGL.
 The <a href="sndscm.html#startwaterfall">waterfall</a> function in snd-gl.scm uses this function.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- graph-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="graphdata">graph-data</a> (data snd chn context low high graphics-style)</code></td></tr>
 <tr><td></td><td>
 graph-data displays <i>data</i> in the time domain graph of <i>snd</i>'s channel
-<i>chn</i> using the graphics context <i>context</i> (normally copy-context), placing the
+<i>chn</i> using the graphics context <i>context</i> (normally <code>copy-context</code>), placing the
 data in the recipient's graph between points <i>low</i> and <i>high</i>
-in the drawing mode (graphics-style).
+in the drawing mode <i>graphics-style</i>.
 With this function and make-graph-data, we can overlay sounds,
 overlay different versions of the same sound, place a portion of a
 sound over another at an arbitrary point, and so on (see draw.scm):
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (define (<A NAME="displaysampsinred">display-samps-in-red</A> snd chn)
   "display samples 1000 to 2000 in red whenever they're in the current view"
@@ -12983,9 +13002,28 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 
 (add-hook! <a class=quiet href="#aftergraphhook">after-graph-hook</a> display-samps-in-red)
 </pre></td></tr></table></td></tr>
-<tr><td></td><td align=center>
+<tr><td></td><td>
+
+<img src="redsamps.png" alt="red samples" hspace=20>
+
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
+
+<!--  make-color -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="makecolor">make-color</a> (red green blue)</code></td></tr>
+<tr><td></td><td>
+make-color returns a color object using the rgb values <i>red</i>, <i>green</i>, and <i>blue</i>.  Each argument
+is a float between 0.0 (none of that color) and 1.0 (full value for that color).  So,
+<pre>
+    (make-color 1 0 0)
+</pre>
+returns a red color object.
+Two colors are equal (i.e. equal? returns #t) if their rgb values are the same.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
 
 <!-- make-graph-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -13000,8 +13038,7 @@ list of two vcts (the two sides of the peak envelope graph).
 <i>low-sample</i> defaults to the current window left sample, and
 <i>high-sample</i> defaults to the current rightmost sample.
 The result can be used in the lisp graph:
-</td></tr>
-<tr><td></td><td>
+
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke">
 <pre>
 (define <A NAME="displaydb">display-db</A>
@@ -13027,8 +13064,7 @@ The result can be used in the lisp graph:
 (add-hook! <a class=quiet href="#lispgraphhook">lisp-graph-hook</a> display-db)
 </pre>
 </td></tr></table>
-</td></tr>
-<tr><td></td><td>
+
 Here we are taking whatever is displayed in the time domain, and
 presenting the same thing in dB in the lisp graph.  display-energy
 in examp.scm is another example.  But the real power of this function
@@ -13038,20 +13074,23 @@ vcts), and displays it in any channel's time domain graph using its current grap
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mark-context -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="markcontext">mark-context</a></code></td></tr>
 <tr><td></td><td>
-the graphics context to use to draw a mark (XOR mode).
+This is the graphics context to use to draw a mark (XOR mode).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- selection-context -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="selectioncontext">selection-context</a></code></td></tr>
 <tr><td></td><td>
-the graphics context for XOR drawing in the selection color (used by <a href="#fillrectangle">fill-rectangle</a>).</td></tr>
+This is the graphics context for XOR drawing in the selection color.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- snd-gcs -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -13093,11 +13132,12 @@ in snd-motif.xm's SMPTE time display, we make sure the font color reflects wheth
 </td>
 </tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- with-gl -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="withgl">with-gl</a></code></td></tr>
 <tr><td></td><td>
-If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></tr>
+If with-gl is #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 </table>
