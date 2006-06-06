@@ -2821,7 +2821,6 @@ This is a snapshot of the oscope display (I'm singing "eeahhee" into the microph
 waveform and the FFT.  Eventually I hope to add a "waterfall" FFT display.
 </td></tr></table>
 
-
 <br>
 <A NAME="peakenvdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>peak-env.scm</h2></td></tr></table>
 
@@ -2969,20 +2968,24 @@ convolution the infinitely slow way is <b>poly*</b>:
 <br>
 
 <A NAME="popupdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>popup.scm, popup.rb, and gtk-popup.scm</h2></td></tr></table>
-<pre>
-  <a class=def name="addselectionpopup">add-selection-popup</a> 
-  <a class=def name="addlistenerpopup">add-listener-popup</a> 
-</pre>
 <p>
 gtk-popup.scm is the Gtk/xg version; popup.scm is Motif/xm based.
-<b>add-selection-popup</b> creates a selection-oriented popup menu that is
-posted if you click button3 in the selected portion, as well as a time-domain popup
-menu, and an fft-specific menu.
-<b>add-listener-popup</b> creates a listener-oriented popup menu that is
-posted if you click button3 in the listener.
-A popup menu is also created for the edit-history pane.
+These files create a set of context-sensitive popup menus.  Which menu
+is posted under the mouse depends on where the mouse is:  there are
+special menus for the current selection, the fft, the time domain window
+other than the selection, the edit history list, and the listener.
+Press button3 in one of these areas to get a menu.
+Here are the selection and fft popups:
 </p>
 
+<table border=0 hspace=20 cellpadding=10>
+<tr><td>
+<img src="selpop.png">
+</td><td>
+<img src="fftpop.png">
+</td></tr></table>
+
+<br>
 <br>
 <A NAME="prc95doc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>prc95.scm, prc95.rb</h2></td></tr></table>
 
