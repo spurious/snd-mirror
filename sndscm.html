@@ -2743,14 +2743,37 @@ functions (e.g. draw-bass-clef) becomes a Snd/Scheme procedure of the form
 <code>(draw-bass-clef 100 100 50)</code> draws a bass clef in the current graph
 at position (100 100) of size 50; since the <i>style</i> argument defaults to
 #f, the clef is displayed as a filled polygon; use #t to get an outline of
-the clef instead.  You need CMN, or at least the CMN file cmn-glyphs.lisp
-before loading this file, and Rick Taube's loop.scm (from Common Music).
+the clef instead.
 </p>
 <img src="sndcmn.png" alt="Snd with music symbols" hspace=20>
 <br>
-<p>(The dot size bug in this picture has been fixed, but I'm too lazy
-to make a new version of the picture).
+<p>This was created with:
 </p>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
+(with-sound () (fm-violin 0 1 440 .1))
+
+(define (draw-staff x0 y0 width line-sep)
+  (do ((line 0 (1+ line))
+       (x x0) 
+       (y y0 (+ y line-sep)))
+      ((= line 5))
+    (<a class=quiet href="extsnd.html#drawline">draw-line</a> x y (+ x width) y)))
+
+(define (draw-a-440 x0 y0 size)
+  (let ((width (* size 100))
+        (line-sep (* size 20))
+        (qsize (* size 80)))
+    (draw-staff (+ x0 (* size 5)) y0 width line-sep)	
+    (draw-treble-clef x0 (+ y0 (* size 61)) qsize)
+    (draw-quarter-note (+ x0 (* 70 size)) (+ y0 (* size 52)) qsize)
+    (<a class=quiet href="extsnd.html#fillrectangle">fill-rectangle</a> (+ x0 (* 90 size)) (- y0 (* size 10)) (* size 3) (* size 60))))
+
+(draw-a-440 50 80 1.0)
+</pre></td></tr></table>
+<p>
+We obviously need a direct connection to CMN!
+</p>
+
 <br>
 
 <A NAME="nbdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>nb.scm, nb.rb</h2></td></tr></table>
@@ -2790,6 +2813,14 @@ those all-important whooshing sounds.
 <p>oscope.scm sets up a dialog with a standard Snd channel window (time domain, fft etc) that
 displays the data read from the microphone in "real time".
 </p>
+
+<table border=0 cellpadding=10 hspace=20><tr><td>
+<img src="sndosc.png">
+</td><td>
+This is a snapshot of the oscope display (I'm singing "eeahhee" into the microphone); in normal operation, it's constantly updating both the
+waveform and the FFT.  Eventually I hope to add a "waterfall" FFT display.
+</td></tr></table>
+
 
 <br>
 <A NAME="peakenvdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>peak-env.scm</h2></td></tr></table>
@@ -5267,17 +5298,23 @@ and see what is left:
 
 (define* (notch-channel freqs #:optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
   (<a class=quiet href="extsnd.html#filtersound">filter-sound</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate">srate</a> snd)) freqs notch-width)
-		(or filter-order (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#srate">srate</a> snd) notch-width)) (log 2.0))))))
+		(or filter-order 
+                    (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#srate">srate</a> snd) notch-width))
+                                                        (log 2.0))))))
 		snd chn))
 
 (define* (notch-sound freqs #:optional (filter-order #f) (snd #f) (notch-width 2))
   (<a class=quiet href="extsnd.html#filtersound">filter-sound</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate">srate</a> snd)) freqs notch-width)
-		(or filter-order (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#srate">srate</a> snd) notch-width)) (log 2.0))))))
+		(or filter-order 
+                    (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#srate">srate</a> snd) notch-width)) 
+                                                        (log 2.0))))))
 		snd))
 
 (define* (notch-selection freqs #:optional (filter-order #f) (notch-width 2))
   (<a class=quiet href="extsnd.html#filterselection">filter-selection</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#selectionsrate">selection-srate</a>)) freqs notch-width)
-		    (or filter-order (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#selectionsrate">selection-srate</a>) notch-width)) (log 2.0))))))))
+		    (or filter-order 
+                        (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#selectionsrate">selection-srate</a>) notch-width)) 
+                                                            (log 2.0))))))))
 
 (notch-sound (list 425 450 470 546 667 789 910) #f 1 10)
 </pre></td></tr></table>

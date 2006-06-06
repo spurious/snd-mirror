@@ -163,6 +163,8 @@
 	"GtkClipboardRichTextReceivedFunc" "GtkNotebookWindowCreationFunc" "GtkAssistant*" "GtkAssistantPageFunc"
 	"GtkLinkButton*" "GtkRecentChooser*" "GtkRecentSortFunc" "gsize*" "GtkRecentChooserMenu*" "GtkRecentFilterFunc"
 	"GtkRecentFilterInfo*" "GtkRecentData*" "GtkTextBufferSerializeFunc" "GtkTextBufferDeserializeFunc" 
+	
+	"guint8*" "GtkEntry*"
 	))
 
 (define no-xen-p 
@@ -176,7 +178,7 @@
 	"GdkOverlapType" "GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "gint16" "gint8" "gshort" "guint8" "lambda" 
 
-	"time_t" "GtkWindowGroup*"
+	"time_t" "GtkWindowGroup*" "GdkAtom*"
 	))
 
 (define no-xen-to-c 
@@ -190,7 +192,7 @@
 	"GdkOverlapType" "GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "etc" "gint16" "gshort"
 
-	"GtkWindowGroup*" "time_t"
+	"GtkWindowGroup*" "time_t" "GdkAtom*"
 	))
 
 (define (cadr-str data)
@@ -3341,3 +3343,4 @@
 ;   (if (not (member (car v) declared-types))
 ;       (display (format #f "~A " (car v)))))
 ; direct-types)
+
