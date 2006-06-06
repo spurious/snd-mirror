@@ -21,7 +21,7 @@
  *  23-May-06: added xen_rb_repl_set_prompt to set (no-gui) Ruby repl prompt.
  *  12-May-06: changed HAVE_RATIOS to XEN_HAVE_RATIOS.
  *  17-Apr-06: removed XEN_MAKE_OBJECT.
- *  15-Apr-06: Gauche support (in progress).
+ *  15-Apr-06: Gauche support.
  *  28-Mar-06: Forth support thanks to Mike Scholz.
  *  --------
  *  7-Nov-05:  xen_rb_defined_p (Mike Scholz).
@@ -1167,7 +1167,7 @@ XEN rb_set_property(XEN obj, XEN prop, XEN val);
 XEN rb_documentation(XEN name);
 XEN rb_set_documentation(XEN name, XEN help);
 bool xen_rb_arity_ok(int rargs, int args);
-void xeb_rb_repl_set_prompt(const char *prompt);
+void xen_rb_repl_set_prompt(const char *prompt);
 #endif
 /* end HAVE_RUBY */
 

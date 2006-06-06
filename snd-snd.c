@@ -1575,7 +1575,7 @@ typedef struct {
   char *origin;
 } apply_state;
 
-static XEN after_apply_hook;
+static XEN after_apply_controls_hook;
 
 static void *make_apply_state(snd_info *sp)
 {
@@ -1937,10 +1937,10 @@ static bool apply_controls(apply_state *ap)
 	}
     }
   apply_unset_controls(sp);
-  if (XEN_HOOKED(after_apply_hook))
-    run_hook(after_apply_hook, 
+  if (XEN_HOOKED(after_apply_controls_hook))
+    run_hook(after_apply_controls_hook, 
 	     XEN_LIST_1(C_TO_XEN_INT(sp->index)),
-	     S_after_apply_hook);
+	     S_after_apply_controls_hook);
   sp->applying = false;
   ap = free_apply_state(ap);
   ss->stopped_explicitly = false;
@@ -5300,10 +5300,10 @@ void g_init_snd(void)
   #define H_name_click_hook S_name_click_hook " (snd): called when sound name clicked. \
 If it returns #t, the usual informative minibuffer babbling is squelched."
 
-  #define H_after_apply_hook S_after_apply_hook " (snd): called when apply-controls finishes."
+  #define H_after_apply_controls_hook S_after_apply_controls_hook " (snd): called when apply-controls finishes."
 
   name_click_hook =  XEN_DEFINE_HOOK(S_name_click_hook,   1, H_name_click_hook);       /* args = snd-index */
-  after_apply_hook = XEN_DEFINE_HOOK(S_after_apply_hook,  1, H_after_apply_hook);      /* args = snd-index */
+  after_apply_controls_hook = XEN_DEFINE_HOOK(S_after_apply_controls_hook,  1, H_after_apply_controls_hook);      /* args = snd-index */
 
   #define H_channels_separate "The value for " S_channel_style " that causes channel graphs to occupy separate panes"
   #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one pane (set by the 'unite' button)"

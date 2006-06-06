@@ -380,7 +380,7 @@ XM_TYPE_PTR(GtkTreePath_, GtkTreePath*)
 XM_TYPE_PTR(GtkTreeIter_, GtkTreeIter*)
 XM_TYPE_PTR(GtkClipboard_, GtkClipboard*)
 XM_TYPE_PTR(GtkSelectionData_, GtkSelectionData*)
-XM_TYPE_PTR(GdkAtom_, GdkAtom*)
+XM_TYPE_PTR_2(GdkAtom_, GdkAtom*)
 #define C_TO_XEN_gint(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_gint(Arg) (gint)(XEN_TO_C_INT(Arg))
 #define XEN_gint_P(Arg) XEN_INTEGER_P(Arg)
@@ -393,7 +393,7 @@ XM_TYPE_PTR(GtkCellRenderer_, GtkCellRenderer*)
 XM_TYPE_PTR(GtkTreeSelection_, GtkTreeSelection*)
 XM_TYPE_PTR(GdkPixbuf_, GdkPixbuf*)
 XM_TYPE(GdkAtom, GdkAtom)
-XM_TYPE_PTR(guint8_, guint8*)
+XM_TYPE_PTR_1(guint8_, guint8*)
 #define C_TO_XEN_gsize(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_gsize(Arg) (gsize)(XEN_TO_C_INT(Arg))
 #define XEN_gsize_P(Arg) XEN_INTEGER_P(Arg)
@@ -633,7 +633,7 @@ XM_TYPE_PTR_1(GtkDialog_, GtkDialog*)
 #define XEN_GtkDestDefaults_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GtkTargetList_, GtkTargetList*)
 XM_TYPE_PTR_1(GtkEditable_, GtkEditable*)
-XM_TYPE_PTR(GtkEntry_, GtkEntry*)
+XM_TYPE_PTR_1(GtkEntry_, GtkEntry*)
 XM_TYPE_PTR_1(GtkFileSelection_, GtkFileSelection*)
 XM_TYPE_PTR_1(GtkFixed_, GtkFixed*)
 XM_TYPE_PTR_1(GtkFontSelection_, GtkFontSelection*)
@@ -42616,7 +42616,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-May-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Jun-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

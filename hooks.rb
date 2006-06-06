@@ -185,7 +185,7 @@ need a String or Symbol, not %s"
   $dac_hook                     = Hook.new("$dac_hook", 1)
   $stop_dac_hook                = Hook.new("$stop_dac_hook", 0)
   $stop_playing_selection_hook  = Hook.new("$stop_playing_selection_hook", 0)
-  $after_apply_hook             = Hook.new("$after_apply_hook", 1)
+  $after_apply_controls_hook    = Hook.new("$after_apply_controls_hook", 1)
   $draw_mark_hook               = Hook.new("$draw_mark_hook", 1)
   $bad_header_hook              = Hook.new("$bad_header_hook", 1)
   $save_state_hook              = Hook.new("$save_state_hook", 1)
@@ -313,7 +313,7 @@ if defined? $after_graph_hook
     $dac_hook,
     $stop_dac_hook,
     $stop_playing_selection_hook,
-    $after_apply_hook,
+    $after_apply_controls_hook,
     $draw_mark_hook,
     $bad_header_hook,
     $save_state_hook,

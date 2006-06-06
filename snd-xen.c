@@ -42,13 +42,12 @@
 
 /* TODO in Gauche: stacktrace and errors->listener
  *       (current-load-history)
- *    error in find lambda -> exit (need better error protection)
- *
- *    unwind-protects around scm_apply (snd-xen g_call)
- *
- *    memory trouble (double free -> segfault) [if all-args?] in snd-test 8
+ * TODO: (gauche)   error in find lambda -> exit (need better error protection)
+ * TODO: (gauche)   unwind-protects around scm_apply (snd-xen g_call)
+ * TODO: (gauche)   memory trouble (double free -> segfault) [if all-args?] in snd-test 8
  *
  * TODO in Forth: prefs can't find extensions.fs?
+ * TODO: (forth)    if segfault, infinite tight loop -- must kill from some other machine!
  *
  * TODO: fam crosstalk?
  *

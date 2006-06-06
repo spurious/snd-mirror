@@ -500,13 +500,11 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+6-Jun:   changed after-apply-hook to after-apply-controls-hook.\n\
 2-Jun:   removed mus-make-error.\n\
 25-May:  Walter Zorn's wz_tooltip.js to spruce up the documentation.\n\
 7-May:   Snd 8.1.\n\
 21-Apr:  many .fs files thanks to Mike Scholz (removed obsolete gfm directory).\n\
-15-Apr:  first portion of Gauche support.\n\
-12-Apr:  clm-load (ws.scm) for cm.\n\
-31-Mar:  rt-player.scm (Kjetil).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

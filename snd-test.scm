@@ -1618,8 +1618,8 @@
 	  (snd-display ";snd-warning-hook: ~A?" snd-warning-hook))
       (if (or (not (hook? name-click-hook)) (not (hook-empty? name-click-hook)))
 	  (snd-display ";name-click-hook: ~A?" name-click-hook))
-      (if (or (not (hook? after-apply-hook)) (not (hook-empty? after-apply-hook)))
-	  (snd-display ";after-apply-hook: ~A?" after-apply-hook))
+      (if (or (not (hook? after-apply-controls-hook)) (not (hook-empty? after-apply-controls-hook)))
+	  (snd-display ";after-apply-controls-hook: ~A?" after-apply-controls-hook))
       (if (or (not (hook? enved-hook)) (not (hook-empty? enved-hook)))
 	  (snd-display ";enved-hook: ~A?" enved-hook))
       (if (or (not (hook? mouse-enter-label-hook)) (not (hook-empty? mouse-enter-label-hook)))
@@ -1969,7 +1969,7 @@
 	    (names (list '*snd-opened-sound* 'abort 'add-clm-field 'add-clm-type 'add-colormap 
 			 'add-directory-to-view-files-list 'add-file-filter 'add-file-sorter 'add-file-to-view-files-list 'add-mark
 			 'add-player 'add-sound-file-extension 'add-to-main-menu 'add-to-menu
-			 'add-transform 'after-apply-hook 'after-edit-hook 'after-graph-hook
+			 'add-transform 'after-apply-controls-hook 'after-edit-hook 'after-graph-hook
 			 'after-open-hook 'after-save-as-hook 'after-save-state-hook 'after-transform-hook 'all-pass
 			 'all-pass? 'amp-control 'amp-control-bounds 'amplitude-modulate 'analyse-ladspa
 			 'apply-controls 'apply-ladspa 'array->file 'array-interp 'as-one-edit
@@ -9033,11 +9033,11 @@ EDITS: 5
 	  (if (ffneq (amp-control ind 1) .5) (snd-display ";amp-control 1 after local set (.5): ~A?" (amp-control ind 1)))
 	  (let ((before-ran #f)
 		(after-ran #f))
-	    (reset-hook! after-apply-hook)
-	    (add-hook! after-apply-hook (lambda (snd) (set! after-ran snd)))
+	    (reset-hook! after-apply-controls-hook)
+	    (add-hook! after-apply-controls-hook (lambda (snd) (set! after-ran snd)))
 	    (apply-controls ind)
-	    (if (or (not (number? after-ran)) (not (= ind after-ran))) (snd-display ";after-apply-hook: ~A?" after-ran))
-	    (reset-hook! after-apply-hook))
+	    (if (or (not (number? after-ran)) (not (= ind after-ran))) (snd-display ";after-apply-controls-hook: ~A?" after-ran))
+	    (reset-hook! after-apply-controls-hook))
 	  (revert-sound ind)
 	  (set! (sync ind) 1)
 	  (scale-to (vct .1 .2))
@@ -12091,14 +12091,14 @@ EDITS: 5
 	    (reset-hook! dac-hook)
 	    (set! (speed-control) 1.5)
 	    (stop-playing)
-	    (add-hook! after-apply-hook (lambda (s) 
+	    (add-hook! after-apply-controls-hook (lambda (s) 
 					  (let ((tag (catch #t 
 							    (lambda () (apply-controls)) 
 							    (lambda args args))))
 					    (if (not (eq? (car tag) 'cannot-apply-controls))
-						(snd-display ";after-apply-hook: recursive attempt apply-controls: ~A" tag)))))
+						(snd-display ";after-apply-controls-hook: recursive attempt apply-controls: ~A" tag)))))
 	    (apply-controls)
-	    (reset-hook! after-apply-hook)
+	    (reset-hook! after-apply-controls-hook)
 	    (add-hook! dac-hook (lambda (s) 
 				  (let ((tag (catch #t 
 						    (lambda () (apply-controls)) 
@@ -25429,7 +25429,7 @@ EDITS: 5
   (add-hook! mark-drag-hook arg1) (carg1 mark-drag-hook)
   (add-hook! mix-drag-hook arg1) (carg1 mix-drag-hook)
   (add-hook! name-click-hook arg1) (carg1 name-click-hook)
-  (add-hook! after-apply-hook arg1) (carg1 after-apply-hook)
+  (add-hook! after-apply-controls-hook arg1) (carg1 after-apply-controls-hook)
   (add-hook! open-hook arg1) (carg1 open-hook)
   (add-hook! output-comment-hook arg1) (carg1 output-comment-hook)
   (add-hook! play-hook arg1) (carg1 play-hook)
@@ -58134,7 +58134,7 @@ EDITS: 1
 			(list mark-drag-triangle-hook 'mark-drag-triangle-hook)
 			(list mix-drag-hook 'mix-drag-hook)
 			(list name-click-hook 'name-click-hook)
-			(list after-apply-hook 'after-apply-hook)
+			(list after-apply-controls-hook 'after-apply-controls-hook)
 			(list open-hook 'open-hook)
 			(list output-comment-hook 'output-comment-hook)
 			(list help-hook 'help-hook)

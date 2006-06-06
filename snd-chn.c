@@ -3,9 +3,9 @@
 #include "clm-strings.h"
 
 /* 
- * TODO: overlay of rms env
+ * SOMEDAY: overlay of rms env
  *       fill in two-sided with colormap choice based on rms of underlying pixels (same for line graph?) -- would want peak-env style support
- * TODO: bark scale as axis or color as above: Fletcher-Munson post-process fft data -- is there a hook that would allow this?
+ * SOMEDAY: bark scale as axis or color as above: Fletcher-Munson post-process fft data -- is there a hook that would allow this?
  * SOMEDAY: user-addable graph-style? axis? (dB for example, or rms above)
  *          also affects cursor display, perhaps verbose cursor info display, peak-env graphing,
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
@@ -2345,8 +2345,8 @@ static bool make_spectrogram(chan_info *cp)
 #if HAVE_GL
       /* experiments with lighting were a bust -- does not improve things (ditto fog, translucency, grid) 
 
-         TODO: printing support for GL images.
-	       one kludgey possibility is xsnap -> pixmap file(xpm) -> a2ps
+         SOMEDAY: printing support for GL images.
+	          one kludgey possibility is xsnap -> pixmap file(xpm) -> a2ps
 
 	 TODO: multichannel resize: chan is messed up until expose event; can't see why:
 	       it does not help to try to redisplay etc -- -sync (or XSync) helps, but there's still some sort
@@ -2487,7 +2487,7 @@ static bool make_spectrogram(chan_info *cp)
 		    cp->spectro_x_scale, cp->spectro_y_scale, zscl,
 		    matrix);
       ax = copy_context(cp);
-      /* TODO: saved pix for spectrogram (needs angles/scalers saved as well as bounds) */
+      /* PREHAPS: saved pix for spectrogram (needs angles/scalers saved as well as bounds) */
       if (color_map(ss) == 0)
 	{
 	  ss->stopped_explicitly = false;

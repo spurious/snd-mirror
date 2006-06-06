@@ -1,5 +1,6 @@
 Snd change log
 
+  6-Jun:     changed after-apply-hook to after-apply-controls-hook.
   2-Jun:     removed mus-make-error.
   25-May:    Walter Zorn's wz_tooltip.js to spruce up the documentation.
   7-May:     Snd 8.1.

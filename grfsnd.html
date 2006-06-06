@@ -37,7 +37,7 @@
 <td><small><a href="clm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">clm.html</a></small></td>
 <td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
 <td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
-<td><small><a href="index.html">index.html</a></small></td>
+<td><small><a href="index.html" onmouseover="return escape('an actual index, not some introductory file')">index.html</a></small></td>
 </tr></table>
 </td></tr></table>
 </center>
@@ -49,11 +49,11 @@
 <ul>
 <li><a href="#startup">Snd Startup</a>
   <ul>
-  <li><a href="#sndswitches">Snd invocation flags</a>
+  <li><a href="#sndswitches" onmouseover="return escape('startup switches such as -l and -p')">Snd invocation flags</a>
   <li><a href="#sndinitfile" onmouseover="return escape('~/.snd, ~/.snd_guile, ~/.snd_prefs_guile, etc')">The initialization file</a>
   <li><a href="#sndresources" onmouseover="return escape('X resources: Xdefaults, gtkrc')">Snd resources</a>
-  <li><a href="#sndconfigurationswitches">Configuration choices</a>
-  <li><a href="#sndenvvars">Environment variables</a>
+  <li><a href="grfsnd.html#sndconfigurationswitches" onmouseover="return escape('this refers to the configure script that prepares a makefile to build Snd from its sources')">Configuration choices</a>
+  <li><a href="grfsnd.html#sndenvvars" onmouseover="return escape('mostly related to audio hardware choices')">Environment variables</a>
   </ul>
 <li><a href="#snddynamic">Runtime modules and external programs</a>
   <ul>
@@ -67,46 +67,46 @@
   <li><a href="#sndwithmotif" onmouseover="return escape('Motif extensions from xm.c')">Snd and Motif</a>
   <li><a href="#sndwithgtk" onmouseover="return escape('Gtk extensions from xg.c')">Snd and Gtk</a>
   <li><a href="#sndwithnogui">Snd with no GUI and as script engine</a>
-  <li><a href="#sndandruby">Snd with Ruby</a>
-  <li><a href="#sndandforth">Snd with Forth</a>
+  <li><a href="grfsnd.html#sndandruby" onmouseover="return escape('Ruby is a scripting/extension language somewhat like Python')">Snd with Ruby</a>
+  <li><a href="grfsnd.html#sndandforth" onmouseover="return escape('Forth is a postfix extension language')">Snd with Forth</a>
   <li><a href="#sndandladspa" onmouseover="return escape('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
   <li><a href="#sndandalsa" onmouseover="return escape('This is the new Linux audio library')">Snd and ALSA</a>
-  <li><a href="#sndandx">Driving Snd remotely</a>
+  <li><a href="grfsnd.html#sndandx" onmouseover="return escape('other programs can control Snd through window properties')">Driving Snd remotely</a>
   <li><a href="#sndandgl" onmouseover="return escape('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
   </ul>
 </ul>
 </td><td width="40%">
   <ul>
-  <li><a href="#behavior">Customizing Snd's behavior</a>
+  <li><a href="extsnd.html#behavior">Customizing Snd's behavior</a>
     <ul>
-    <li><a href="#sndglobalvars">Global variables</a>
-    <li><a href="#sndhooks">Hooks</a>
+    <li><a href="extsnd.html#sndglobalvars">Global variables</a>
+    <li><a href="extsnd.html#sndhooks" onmouseover="return escape('callbacks')">Hooks</a>
     </ul>
-  <li><a href="#sndobjects">Snd's objects</a>
+  <li><a href="extsnd.html#sndobjects">Snd's objects</a>
     <ul>
-    <li><a href="#Vcts" onmouseover="this.T_WIDTH=100; return escape('real arrays')">Vcts</a>
-    <li><a href="#sndsounddata">Sound-data</a>
-    <li><a href="#extsndlib">Sndlib</a>
-    <li><a href="#samplereaders" onmouseover="this.T_WIDTH=200; return escape('sound data iterators')">Sample-readers</a>
-    <li><a href="#sndmarks" onmouseover="return escape('location markers in sound data')">Marks</a>
-    <li><a href="#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes and Tracks</a>
-    <li><a href="#sndregions" onmouseover="return escape('selected or saved portions of sound data')">Regions and Selections</a>
-    <li><a href="#sndsounds">Sounds and channels</a>
+    <li><a href="extsnd.html#Vcts" onmouseover="this.T_WIDTH=100; return escape('real arrays')">Vcts</a>
+    <li><a href="extsnd.html#sndsounddata" onmouseover="return escape('arrays of vcts for multichannel data')">Sound-data</a>
+    <li><a href="extsnd.html#extsndlib" onmouseover="return escape('the underlying library that handles sound data and files')">Sndlib</a>
+    <li><a href="extsnd.html#samplereaders" onmouseover="this.T_WIDTH=200; return escape('sound data iterators')">Sample-readers</a>
+    <li><a href="extsnd.html#sndmarks" onmouseover="return escape('location markers in sound data')">Marks</a>
+    <li><a href="extsnd.html#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes and Tracks</a>
+    <li><a href="extsnd.html#sndregions" onmouseover="return escape('selected or saved portions of sound data')">Regions and Selections</a>
+    <li><a href="extsnd.html#sndsounds" onmouseover="return escape('editing functions, per-channel display decisions, etc')">Sounds and channels</a>
       <ul>
-        <li><a href="#customcontrols">the control panel</a>
-        <li><a href="#editlists" onmouseover="this.T_WIDTH=200; return escape('current edit sequence')">edit lists</a>
+        <li><a href="extsnd.html#customcontrols" onmouseover="return escape('a set of common sound effects below the main graph')">the control panel</a>
+        <li><a href="extsnd.html#editlists" onmouseover="this.T_WIDTH=200; return escape('current edit sequence')">edit lists</a>
       </ul>
-    <li><a href="#sndtransforms" onmouseover="return escape('Fourier transform, wavelets, autocorelation, etc')">Transforms</a>
-    <li><a href="#snddialogs">Dialogs and Other Widgets</a>
-    <li><a href="#sndmisc">Miscellaneous functions</a>
-    <li><a href="#sndconstants">Constants</a>
-    <li><a href="#snderrors">Errors and Debugging</a>
+    <li><a href="extsnd.html#sndtransforms" onmouseover="return escape('Fourier transform, wavelets, autocorelation, etc')">Transforms</a>
+    <li><a href="extsnd.html#snddialogs" onmouseover="return escape('customizing the built-in dialogs, etc')">Dialogs and Other Widgets</a>
+    <li><a href="extsnd.html#sndmisc" onmouseover="return escape('bind-key, exit, etc')">Miscellaneous functions</a>
+    <li><a href="extsnd.html#sndconstants">Constants</a>
+    <li><a href="extsnd.html#snderrors">Errors and Debugging</a>
     </ul>
-  <li><a href="#appearance">Customizing Snd's appearance</a>
+  <li><a href="extsnd.html#appearance">Customizing Snd's appearance</a>
     <ul>
-    <li><a href="#colors">Colors</a>
-    <li><a href="#fonts">Fonts</a>
-    <li><a href="#graphics">Graphics</a>
+    <li><a href="extsnd.html#colors">Colors</a>
+    <li><a href="extsnd.html#fonts">Fonts</a>
+    <li><a href="extsnd.html#graphics" onmouseover="return escape('write your own sound display functions or customize Snd\'s')">Graphics</a>
     </ul>
   </ul>
 
@@ -2332,7 +2332,7 @@ program:
 <td><small><a href="clm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">clm.html</a></small></td>
 <td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
 <td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
-<td><small><a href="index.html">index.html</a></small></td>
+<td><small><a href="index.html" onmouseover="return escape('an actual index, not some introductory file')">index.html</a></small></td>
 </tr></table>
 </td></tr></table>
 </center>

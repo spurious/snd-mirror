@@ -39,7 +39,7 @@
 <td><small><a href="clm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">clm.html</a></small></td>
 <td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
 <td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd\'s extension language')">libxm.html</a></small></td>
-<td><small><a href="index.html">index.html</a></small></td>
+<td><small><a href="index.html" onmouseover="return escape('this is an actual index, not some introductory file')">index.html</a></small></td>
 </tr></table>
 </td></tr></table>
 </center>
@@ -55,25 +55,25 @@
   <li><a href="#behavior">Customizing Snd's behavior</a>
     <ul>
     <li><a href="#sndglobalvars">Global variables</a>
-    <li><a href="#sndhooks">Hooks</a>
+    <li><a href="#sndhooks" onmouseover="return escape('callbacks')">Hooks</a>
     </ul>
   <li><a href="#sndobjects">Snd's objects</a>
     <ul>
     <li><a href="#Vcts" onmouseover="this.T_WIDTH=100; return escape('real arrays')">Vcts</a>
-    <li><a href="#sndsounddata">Sound-data</a>
-    <li><a href="#extsndlib">Sndlib</a>
+    <li><a href="#sndsounddata" onmouseover="return escape('arrays of vcts for multichannel data')">Sound-data</a>
+    <li><a href="#extsndlib" onmouseover="return escape('the underlying library that handles sound data and files')">Sndlib</a>
     <li><a href="#samplereaders" onmouseover="this.T_WIDTH=200; return escape('sound data iterators')">Sample-readers</a>
     <li><a href="#sndmarks" onmouseover="return escape('location markers in sound data')">Marks</a>
     <li><a href="#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes and Tracks</a>
     <li><a href="#sndregions" onmouseover="return escape('selected or saved portions of sound data')">Regions and Selections</a>
-    <li><a href="#sndsounds">Sounds and channels</a>
+    <li><a href="#sndsounds" onmouseover="return escape('editing functions, per-channel display decisions, etc')">Sounds and channels</a>
       <ul>
-        <li><a href="#customcontrols">the control panel</a>
+        <li><a href="#customcontrols" onmouseover="return escape('a set of common sound effects below the main graph')">the control panel</a>
         <li><a href="#editlists" onmouseover="this.T_WIDTH=200; return escape('current edit sequence')">edit lists</a>
       </ul>
     <li><a href="#sndtransforms" onmouseover="return escape('Fourier transform, wavelets, autocorelation, etc')">Transforms</a>
-    <li><a href="#snddialogs">Dialogs and Other Widgets</a>
-    <li><a href="#sndmisc">Miscellaneous functions</a>
+    <li><a href="#snddialogs" onmouseover="return escape('customizing the built-in dialogs, etc')">Dialogs and Other Widgets</a>
+    <li><a href="#sndmisc" onmouseover="return escape('bind-key, exit, etc')">Miscellaneous functions</a>
     <li><a href="#sndconstants">Constants</a>
     <li><a href="#snderrors">Errors and Debugging</a>
     </ul>
@@ -81,7 +81,7 @@
     <ul>
     <li><a href="#colors">Colors</a>
     <li><a href="#fonts">Fonts</a>
-    <li><a href="#graphics">Graphics</a>
+    <li><a href="#graphics" onmouseover="return escape('write your own sound display functions or customize Snd\'s')">Graphics</a>
     </ul>
   </ul>
 </ul>
@@ -90,11 +90,11 @@
 <ul>
 <li><a href="grfsnd.html#startup">Snd Startup</a>
   <ul>
-  <li><a href="grfsnd.html#sndswitches">Snd invocation flags</a>
+  <li><a href="grfsnd.html#sndswitches" onmouseover="return escape('startup switches such as -l and -p')">Snd invocation flags</a>
   <li><a href="grfsnd.html#sndinitfile" onmouseover="return escape('~/.snd, ~/.snd_guile, ~/.snd_prefs_guile, etc')">The initialization file</a>
   <li><a href="grfsnd.html#sndresources" onmouseover="return escape('X resources: Xdefaults, gtkrc')">Snd resources</a>
-  <li><a href="grfsnd.html#sndconfigurationswitches">Configuration choices</a>
-  <li><a href="grfsnd.html#sndenvvars">Environment variables</a>
+  <li><a href="grfsnd.html#sndconfigurationswitches" onmouseover="return escape('this refers to the configure script that prepares a makefile to build Snd from its sources')">Configuration choices</a>
+  <li><a href="grfsnd.html#sndenvvars" onmouseover="return escape('mostly related to audio hardware choices')">Environment variables</a>
   </ul>
 <li><a href="grfsnd.html#snddynamic">Runtime modules and external programs</a>
   <ul>
@@ -108,11 +108,11 @@
   <li><a href="grfsnd.html#sndwithmotif" onmouseover="return escape('Motif extensions from xm.c')">Snd and Motif</a>
   <li><a href="grfsnd.html#sndwithgtk" onmouseover="return escape('Gtk extensions from xg.c')">Snd and Gtk</a>
   <li><a href="grfsnd.html#sndwithnogui">Snd with no GUI and as script engine</a>
-  <li><a href="grfsnd.html#sndandruby">Snd with Ruby</a>
-  <li><a href="grfsnd.html#sndandforth">Snd with Forth</a>
+  <li><a href="grfsnd.html#sndandruby" onmouseover="return escape('Ruby is a scripting/extension language somewhat like Python')">Snd with Ruby</a>
+  <li><a href="grfsnd.html#sndandforth" onmouseover="return escape('Forth is a postfix extension language')">Snd with Forth</a>
   <li><a href="grfsnd.html#sndandladspa" onmouseover="return escape('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
   <li><a href="grfsnd.html#sndandalsa" onmouseover="return escape('This is the new Linux audio library')">Snd and ALSA</a>
-  <li><a href="grfsnd.html#sndandx">Driving Snd remotely</a>
+  <li><a href="grfsnd.html#sndandx" onmouseover="return escape('other programs can control Snd through window properties')">Driving Snd remotely</a>
   <li><a href="grfsnd.html#sndandgl" onmouseover="return escape('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
   </ul>
 <li><a href="index.html">Index</a>
@@ -279,7 +279,7 @@ are in <em class=listener>this color</em>):
 </pre></td><td></td>
 
 <td bgcolor="#EefdEe"><pre>
-&gt;<em class=typing>lambda: ( y -- val) { y } y 2.0 f* ; 1 make-proc map-channel</em>
+&gt;<em class=typing>lambda: { y } y 2.0 f* ; 1 make-proc map-channel</em>
 <em class=listener>-0.00158691</em>
 </pre></td>
 </tr>
@@ -447,7 +447,7 @@ Snd does not exit.</p>
 <tr><td bgcolor="WhiteSmoke"><pre>
 (define <A NAME="unsavededitsp">(unsaved-edits? lst)</A>
   (if (not (null? lst))
-      (if (&gt; (car (<a class=quiet  onmouseover="return escape('edits returns \'(unsaved-edits undone-edits) for the given sound and channel')"href="#edits">edits</a> (car lst))) 0)
+      (if (&gt; (car (<a class=quiet onmouseover="return escape('edits returns \'(unsaved-edits undone-edits) for the given sound and channel')"href="#edits">edits</a> (car lst))) 0)
 	  (begin
 	    (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> "there are unsaved edits")
 	    #t)
@@ -660,16 +660,15 @@ The available output header-types are:
 <!-- eps-bottom-margin -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="epsbottommargin">eps-bottom-margin</a></code></td>
 <td bgcolor="#f6f8ff"><code>0.0</code></td></tr>
-<tr><td></td><td colspan=2>bottom margin used in snd.eps, created by the Print command.
+<tr><td></td><td colspan=2>bottom margin used in snd.eps, created by the File:Print dialog, or the <a href="#graph_to_ps">graph-&gt;ps</a> function.
 PostScript units are 1/72 of an inch (a "point" in printer jargon); 
 an inch is 2.54 cm:
-</td></tr>
 
-<tr><td></td><td colspan=2>
-
-<table border=0><tr><td>
+<table border=0 cellpadding=5 vspace=10 hspace=20><tr><td>
 
 <table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke"><pre>
+Scheme:
+
 (define (inches-to-ps inches) 
   (* inches 72))
 
@@ -681,26 +680,27 @@ an inch is 2.54 cm:
 
 <table border=1 cellpadding=5><tr><td bgcolor="Beige"><pre>
 Ruby:
-
-def inches_to_ps(inches) inches * 72 end
-
-def cm_to_ps(cm) cm * 72.0 / 2.54 end
+def inches_to_ps(inches) 
+  inches * 72 
+end
+def cm_to_ps(cm) 
+  cm * 72.0 / 2.54 
+end
 </pre></td></tr></table>
 
 </td><td>
 
 <table border=1 cellpadding=5><tr><td bgcolor="LightGreen"><pre>
 Forth:
-
-: inches-to-ps { inches } inches 72 f* ;
-
-: cm-to-ps { cm } cm 2.54 f/ 72 f* ;
+: inches-to-ps { inches } 
+  inches 72 f* 
+;
+: cm-to-ps { cm } 
+  cm 2.54 f/ 72 f* 
+;
 </pre></td></tr></table>
 </td></tr></table>
 
-</td></tr>
-
-<tr><td></td><td colspan=2>
 In the resulting .eps file, you'll find a concat statement near the 
 top of the file; the first and fourth numbers are scale factors on 
 the entire graph, the fifth is the left margin, and the sixth is the 
@@ -712,7 +712,7 @@ bottom margin.
 <!-- eps-file -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="epsfile">eps-file</a></code></td>
 <td bgcolor="#f6f8ff"><code>"snd.eps"</code></td></tr>
-<tr><td></td><td colspan=2>Name of the Postscript file produced by the <a href="snd.html#printfile">File Print</a> option.
+<tr><td></td><td colspan=2>Name of the Postscript file produced by the File:Print dialog, or the <a href="#graph_to_ps">graph-&gt;ps</a> function.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
@@ -720,7 +720,7 @@ bottom margin.
 <!-- eps-left-margin -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="epsleftmargin">eps-left-margin</a></code></td>
 <td bgcolor="#f6f8ff"><code>0.0</code></td></tr>
-<tr><td></td><td colspan=2>left margin used in snd.eps, created by the Print command.
+<tr><td></td><td colspan=2>left margin used in snd.eps, created by the File:Print dialog, or the <a href="#graph_to_ps">graph-&gt;ps</a> function.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
@@ -728,7 +728,8 @@ bottom margin.
 <!-- eps-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="epssize">eps-size</a></code></td>
 <td bgcolor="#f6f8ff"><code>1.0</code></td></tr>
-<tr><td></td><td colspan=2>scaler used in snd.eps (Print command) for overall picture size.  
+<tr><td></td><td colspan=2>scaler used to set the overall picture size in snd.eps, 
+created by the File:Print dialog, or the <a href="#graph_to_ps">graph-&gt;ps</a> function,
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
@@ -1092,7 +1093,7 @@ For example, the hook that is checked when you click the sound's name in the min
 name-click-hook.  We can cause that action to print "hi":</p>
 
 <pre>
-  Scheme: (add-hook! name-click-hook (lambda (snd) (<a class=quiet href="#sndprint">snd-print</a> "hi") #t))
+  Scheme: (add-hook! <a class=quiet href="#nameclickhook">name-click-hook</a> (lambda (snd) (<a class=quiet href="#sndprint">snd-print</a> "hi") #t))
 
   Ruby:   $name_click_hook.add_hook!("print") do |snd| snd_print("hi"); true end
 
@@ -1117,50 +1118,50 @@ some of these sequences.
 
 <pre>
     Open filename
-        bad header?: bad-header-hook -- can cancel request
-        no header?:  open-raw-sound-hook -- can cancel request
+        bad header?: <a class=quiet href="#badheaderhook">bad-header-hook</a> -- can cancel request
+        no header?:  <a class=quiet href="#openrawsoundhook">open-raw-sound-hook</a> -- can cancel request
         file ok: 
-             open-hook -- can change filename
+             <a class=quiet href="#openhook">open-hook</a> -- can change filename
              file opened (no data read yet)
-                 during-open-hook (can set prescaling etc)
+                 <a class=quiet href="#duringopenhook">during-open-hook</a> (can set prescaling etc)
              data read, no graphics yet
-             after-open-hook 
-             initial-graph-hook
+             <a class=quiet href="#afteropenhook">after-open-hook</a>
+             <a class=quiet href="#initialgraphhook">initial-graph-hook</a>
     
     
     Save current sound
-        before-save-as-hook -- can cancel the request or set its output parameters
-        save-hook 
+        <a class=quiet href="#beforesaveashook">before-save-as-hook</a> -- can cancel the request or set its output parameters
+        <a class=quiet href="#savehook">save-hook</a>
             sound saved
-        after-save-as-hook 
+        <a class=quiet href="#aftersaveashook">after-save-as-hook</a>
 
 
     Play sound
-        when a play request occurs: start-playing-hook -- can cancel the request, also start-playing-selection-hook
+        when a play request occurs: <a class=quiet href="#startplayinghook">start-playing-hook</a> -- can cancel the request, also <a class=quiet href="#startplayingselectionhook">start-playing-selection-hook</a>
             (any number of sounds can be playing at once)
-        as each buffer is sent to the audio device: play-hook and dac-hook 
-        as each sound ends: stop-playing-hook, stop-playing-selection-hook
-        close audio device: stop-dac-hook
+        as each buffer is sent to the audio device: <a class=quiet href="#playhook">play-hook</a> and <a class=quiet href="#dachook">dac-hook</a>
+        as each sound ends: <a class=quiet href="#stopplayinghook">stop-playing-hook</a>, <a class=quiet href="#stopplayingselectionhook">stop-playing-selection-hook</a>
+        close audio device: <a class=quiet href="#stopdachook">stop-dac-hook</a>
     
 
     Close sound
-        before-close-hook -- can cancel close
-        close-hook (snd is still open)
-        snd closed
+        <a class=quiet href="#beforeclosehook">before-close-hook</a> -- can cancel close
+        <a class=quiet href="#closehook">close-hook</a> (sound is still open)
+        sound closed
     
     
     Save current Snd ("session") state
-        save-state-hook -- can change output filename (crummy name is an historical artifact)
+        <a class=quiet href="#savestatehook">save-state-hook</a> -- can change output filename (crummy name is an historical artifact)
         output save-state file opened
-            before-save-state-hook
+            <a class=quiet href="#beforesavestatehook">before-save-state-hook</a>
             Snd saves its state
-            after-save-state-hook
+            <a class=quiet href="#aftersavestatehook">after-save-state-hook</a>
         output closed
     
     
     Exit Snd
-        before-exit-hook -- can cancel exit request
-        exit-hook
+        <a class=quiet href="#beforeexithook">before-exit-hook</a> -- can cancel exit request
+        <a class=quiet href="#exithook">exit-hook</a>
         Snd cleans up and exits
 </pre>
 
@@ -1215,21 +1216,21 @@ useful hook-related functions.
 
 <p>
 In the following list of hooks, the arguments after the hook name refer to the arguments to the functions invoked by
-the hook.  That is, <code>after-apply-hook (snd)</code> means that the functions on the
-after-apply-hook list each take one argument, a sound index.  If the argument list is followed by some
+the hook.  That is, <code>after-apply-controls-hook (snd)</code> means that the functions on the
+after-apply-controls-hook list each take one argument, a sound index.  If the argument list is followed by some
 indication such as "[or]", that means the various hook function values are or-d together.
 </p>
 
 <table border=0 cellspacing=0>
 
 
-<!-- after-apply-hook -->
+<!-- after-apply-controls-hook -->
 <tr><td colspan=3 bgcolor="#f6f8ff">
-<code><a class=def name="afterapplyhook">after-apply-hook</a> (snd)</code>
+<code><a class=def name="afterapplycontrolshook">after-apply-controls-hook</a> (snd)</code>
 </td></tr>
 <tr><td width=60></td><td colspan=2>
-called when 'Apply' finishes.  add-amp-controls in snd-motif.scm uses this hook to
-reset any added amplitude sliders to 1.0 when Apply finishes.
+called when <a href="#applycontrols">apply-controls</a> finishes.  add-amp-controls in snd-motif.scm uses this hook to
+reset any added amplitude sliders to 1.0.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
@@ -4377,6 +4378,7 @@ with it.
 </p>
 <img src="track1.png" align=left vspace=10 hspace=20>
 <img src="track2.png" vspace=10 hspace=20>
+<br>
 <p>
 Here we have two tracks, each holding four mixes; one track's color is green, the other blue.  We then
 change the second (blue) track's tempo to be twice as slow, and move the first (green) track to the right.
@@ -5130,8 +5132,8 @@ send channel 1 data to channel 1 of the DAC, and so on).
   (let ((vals (<a class=quiet href="#makevct">make-vct</a> 3))
 	(end (<a class=quiet href="#frames">frames</a> snd)))
     (<a class=quiet href="#musaudiomixerread">mus-audio-mixer-read</a> mus-audio-default mus-audio-channel 3 vals)
-    (let ((chans (max (inexact-&lt;exact (<a class=quiet href="#vctref">vct-ref</a> vals 0)) 2)))       ; assume stereo is out there
-      (do ((chan 0 (1+ chan)))                                     ; get a player for each output channel
+    (let ((chans (max (inexact-&lt;exact (<a class=quiet href="#vctref">vct-ref</a> vals 0)) 2))) ; assume stereo is out there
+      (do ((chan 0 (1+ chan)))                               ; get a player for each output channel
 	  ((= chan chans))
 	(let ((player (<em class=red>make-player</em> snd 0)))
 	  (<em class=red>add-player</em> player 0 end current-edit-position #f chan)))
@@ -5794,7 +5796,7 @@ based on <i>env-base</i>.  <i>env-base</i> defaults to 1.0.
 <i>envelope</i> is a list containing the breakpoint values 
 (as in CLM) or an env generator.
 
-<table hspace=20 cellpadding=10><tr><td>
+<table hspace=20 cellpadding=5><tr><td>
 <img src="ampenv1.png" vpsace=10>
 </td><td>
 <pre>
@@ -6876,8 +6878,11 @@ the "P" key to play the previous version of the current sound:
 (define (play-from-cursor current)
   (<em class=red>play</em> (<a class=quiet href="#cursor">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="#editposition">edit-position</a>)))))
 
-(<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda () "play from cursor" (play-from-cursor #t) keyboard-no-action))
-(<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\P) 0 (lambda () "play previous version from cursor" (play-from-cursor #f) keyboard-no-action))
+(<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\p) 0 
+  (lambda () "play from cursor" (play-from-cursor #t) keyboard-no-action))
+
+(<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\P) 0 
+  (lambda () "play previous version from cursor" (play-from-cursor #f) keyboard-no-action))
 </pre></td></tr></table>
 
 And here we play from the cursor with a moving ("tracking") cursor:
@@ -9180,7 +9185,7 @@ gives you half data, half zeros (the default value is 0).  The data length is
 determined by the nominal transform-size.  Zero padding causes interpolation 
 of the fft points, making the display look smoother.
 
-<table cellpadding=10><tr><td>
+<table cellpadding=5><tr><td>
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
 (<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\p) 0 
   (lambda () 
@@ -10814,7 +10819,8 @@ If the xm module is loaded, we could add our own info via:
 <table border=1 cellpadding=5 vspace=10><tr><td bgcolor="WhiteSmoke"><pre>
   (let* ((dialog (<em class=red>open-file-dialog</em> #f))
 	 (rc (find-child dialog "info-rc2")) ; holds the info labels if a sound file is selected
-	 (label (XtCreateManagedWidget "file-preview-info" xmLabelWidgetClass rc (list XmNbackground (<a class=quiet href="#highlightcolor">highlight-color</a>)))))
+	 (label (XtCreateManagedWidget "file-preview-info" xmLabelWidgetClass rc 
+                  (list XmNbackground (<a class=quiet href="#highlightcolor">highlight-color</a>)))))
     (XtAddCallback (XmFileSelectionBoxGetChild dialog XmDIALOG_LIST)
 		   XmNbrowseSelectionCallback
 		   (lambda (widget context info)
@@ -11137,6 +11143,7 @@ For example, we can read and write the minibuffer:
     <em class=listener>this is a test</em>
     <em class=listener>snd&gt;</em> <em class=typing>0 sound-widgets 3 list-ref widget-text</em>
     <em class=listener>this is a test</em>
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11270,8 +11277,7 @@ This is the overall size of the recorder VU meters (the default is 1.0)</td></tr
 <code><a class=def name="widgetposition">widget-position</a> (widget)</code></td></tr>
 <tr><td></td><td>
 This returns a list giving the widget's x and y coordinates (in pixels).  It can be set to reposition the widget.  
-See <a href="#sndwidgets">Snd widgets</a> below,
-and nb.scm where it uses the current window position to try to find a convenient place for the help dialog.
+See nb.scm where it uses the current window position to try to find a convenient place for the help dialog.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -12001,7 +12007,6 @@ the listener) gets it.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
-<!-- TODO: loaded file list in ruby/forth/gauche, also *snd-opened-sound* and memo business -->
 
 <!-- *snd-loaded-files* -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -12009,6 +12014,7 @@ the listener) gets it.
 <tr><td></td><td>
 (Guile only).  This is a variable (not a function), a list containing the full names of (nearly) all the
 files currently loaded into Snd.  The Guile boot file may be missing from the list.
+In Forth, this variable is named *loaded-files*; in Ruby I think it is $". <!-- " (matching double-quote for index.cl's benefit) -->
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -12699,7 +12705,7 @@ If the colormap is inverted, the order of colors is reversed.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="colorscale">color-scale</a> ()</code></td></tr>
 <tr><td></td><td>
-color-scale reflects the darkness setting in the View:<a href="snd.html#colorbrowser">Colors</a> dialog, divided by 100.</td></tr>
+color-scale reflects the darkness setting in the View:<a href="snd.html#colorbrowser">Colors</a> dialog, divided by 100.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -13281,7 +13287,7 @@ If with-gl is #t and GL is loaded, use GL where possible (default is #t if HAVE_
 <td><small><a href="clm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">clm.html</a></small></td>
 <td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
 <td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd\'s extension language')">libxm.html</a></small></td>
-<td><small><a href="index.html">index.html</a></small></td>
+<td><small><a href="index.html" onmouseover="return escape('an actual index, not some introductory file')">index.html</a></small></td>
 </tr></table>
 </td></tr></table>
 </center>

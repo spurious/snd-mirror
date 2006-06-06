@@ -2155,7 +2155,7 @@ Reverb-feedback sets the scaler on the feedback.
 	      (set! (amp-control snd (- top i)) 1.0))))))
   
   (add-hook! after-open-hook amp-controls-reflect-chans)
-  (add-hook! after-apply-hook amp-controls-clear))
+  (add-hook! after-apply-controls-hook amp-controls-clear))
 
 ;(add-amp-controls)
 

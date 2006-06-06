@@ -7558,11 +7558,11 @@ def test145
     snd_display("amp_control 2 (0.25): %f?", res)
   end
   after_ran = false
-  $after_apply_hook.reset_hook!
-  $after_apply_hook.add_hook!("snd-test") do |snd| after_ran = snd end
+  $after_apply_controls_hook.reset_hook!
+  $after_apply_controls_hook.add_hook!("snd-test") do |snd| after_ran = snd end
   apply_controls(ind)
-  snd_display("$after_apply_hook: %d?", after_ran) if ind != after_ran
-  $after_apply_hook.reset_hook!
+  snd_display("$after_apply_controls_hook: %d?", after_ran) if ind != after_ran
+  $after_apply_controls_hook.reset_hook!
   revert_sound(ind)
   set_sync(1, ind)
   scale_to(vct(0.1, 0.2))
@@ -9996,13 +9996,13 @@ def test026
   revert_sound
   set_speed_control(1.5)
   stop_playing
-  $after_apply_hook.add_hook!("snd-test") do |s|
+  $after_apply_controls_hook.add_hook!("snd-test") do |s|
     if (res = Snd.catch do apply_controls end).first != :cannot_apply_controls
-      snd_display("after_apply_hook: recursive attempt apply_controls: %s", res)
+      snd_display("after_apply_controls_hook: recursive attempt apply_controls: %s", res)
     end
   end
   apply_controls
-  $after_apply_hook.reset_hook!
+  $after_apply_controls_hook.reset_hook!
   $dac_hook.add_hook!("snd-test") do |s|
     if (res = Snd.catch do apply_controls end).first != :cannot_apply_controls
       snd_display("dac_hook: recursive attempt apply_controls: %s", res)
@@ -39517,7 +39517,7 @@ def test0128
     :output_name_hook, :after_open_hook, :close_hook, :draw_mark_hook,
     :mark_click_hook, :listener_click_hook, :mix_click_hook,
     :after_save_state_hook, :before_save_state_hook, :mark_hook, :mark_drag_hook,
-    :mark_drag_triangle_hook, :mix_drag_hook, :name_click_hook, :after_apply_hook,
+    :mark_drag_triangle_hook, :mix_drag_hook, :name_click_hook, :after_apply_controls_hook,
     :open_hook, :output_comment_hook, :help_hook, :play_hook, :dac_hook,
     :new_widget_hook, :read_hook, :bad_header_hook, :snd_error_hook,
     :snd_warning_hook, :start_hook, :start_playing_hook, :stop_playing_hook,

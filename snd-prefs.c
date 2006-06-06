@@ -4568,7 +4568,10 @@ static void save_initial_bounds(prefs_info *prf, FILE *fd)
   str = GET_TEXT(prf->text);
   if (str)
     {
-      sscanf(str, "%f : %f", &rts_initial_beg, &rts_initial_dur);
+      float a = 0.0, b = 0.0;
+      sscanf(str, "%f : %f", &a, &b);  /* these can be doubles -- need conversion to fit all cases */
+      rts_initial_beg = (Float)a;
+      rts_initial_dur = (Float)b;
       FREE_TEXT(str);
     }
   else
