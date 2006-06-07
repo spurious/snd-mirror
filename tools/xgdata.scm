@@ -5904,3 +5904,14 @@
 ;; messagedialog is commented out above so this needs to wait until it is "real"
 
 ;;; SOMEDAY: include all the printer support
+
+#!
+2.9.2:
+
++ gboolean              gtk_status_icon_get_geometry       (GtkStatusIcon      *status_icon,
++ 							  GdkScreen         **screen,
++ 							  GdkRectangle       *area,
++ 							  GtkOrientation     *orientation);
+(CFNC "gboolean gdk_color_parse gchar* spec GdkColor* color") -- need both versions somehow
+
+!#

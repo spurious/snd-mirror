@@ -10,6 +10,9 @@
 ;;; (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html") "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t)
 ;;;   use (make-index)
 
+
+;;; for snd.html table, see snd-index.cl (snd-index "test.html")
+
 #+cmu (declaim (optimize (extensions:inhibit-warnings 3))) 
 #+cmu (setf extensions::*gc-verbose* nil)
 #+cmu (setf *compile-print* nil)

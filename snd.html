@@ -761,7 +761,7 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ex
         <!-- I(describe sample):L(with-verbose-cursor)(withverbosecursor) --><!-- I(describe sample):A(withverbosecursor) -->
         <!-- I(examine regions):M(View: Regions)(regionbrowser) --><!-- I(color):M(View: Color)(colorbrowser) -->
         <!-- I(orientation):M(View: Orientation)(orientationbrowser) -->
-        <!-- I(file lists):M(View: Files)(prevfiles) -->
+        <!-- I(file lists):M(View: Files)(viewfiles) -->
         <!-- I(X axis units):M(View: X axis units)(xaxisstyle) --><!-- I(X axis units):A(xaxisstyle) -->
 
 <p>The sound display can be modified in various ways.  <A NAME="viewdots"></a>Choose View:Graph style:dots
@@ -817,9 +817,9 @@ about each file as the mouse passes over it.
 </p>
 <br clear=left>
 
-        <!-- I(file lists):A(prevfiles) --><!-- I(play file):M(Popup: Play) -->
+        <!-- I(file lists):A(viewfiles) --><!-- I(play file):M(Popup: Play) -->
         <!-- I(play file):O(File or main window: 'play') --><!-- I(select sound):O(File dialog: click file) -->
-        <!-- I(select sound):A(prevfiles) --><!-- I(open file):O(Files dialog: click file) -->
+        <!-- I(open file):O(Files dialog: click file) -->
 
 <p>The <a href="#regionbrowser">Regions</a> and <a href="#mixdialog">Mix Dialog</a> options are described below.</p>
 
@@ -2095,7 +2095,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-g</td><td>abort current command</td><td><code><small>c-g!</small></code></td></tr>
 <tr><td>C-h</td><td>delete previous sample</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#deletesamples">delete-samples</a> (- (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg) arg))</small></code></td></tr>
 <tr><td>C-i</td><td>display cursor info</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#reportinminibuffer">report-in-minibuffer</a> (format #f "cursor at ~A" (<a class=quiet href="extsnd.html#sample">sample</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>)))))</small></code></td></tr>
-<tr><td>C-j</td><td>go to mark</td><td><code><small>(lambda (arg) (<a class=quiet href="sndscm.html#forwardmark">forward-mark</a> arg)) ;snd7.scm</small></code></td></tr>
+<tr><td>C-j</td><td>go to mark</td><td><code><small>(lambda (arg) (forward-mark arg)) ;snd7.scm</small></code></td></tr>
 <tr><td>C-k</td><td>delete one line's worth of samples</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#deletesamples">delete-samples</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) (* 128 arg)))</small></code></td></tr>
 <tr><td>C-l</td><td>position window so cursor is in the middle</td><td><code><small>(lambda () <a class=quiet href="extsnd.html#bindkey">cursor-in-middle</a>)</small></code></td></tr>
 <tr><td>C-m</td><td>place (or remove) mark at cursor location</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#addmark">add-mark</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>)))</small></code></td></tr>
@@ -2144,7 +2144,7 @@ all the samples between the cursor and the next mark.</p>
 	 (minx (max 0.0 (- mid-point (* 0.5 range)))))
     (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>) (list minx (+ minx range)))))
 </pre></small></code></td></tr>
-<tr><td>C-x o</td><td>move to next or previous graph</td><td><code><small>(lambda (arg) (<a class=quiet href="sndscm.html#forwardgraph">forward-graph</a> arg)) ;snd7.scm</small></code></td></tr>
+<tr><td>C-x o</td><td>move to next or previous graph</td><td><code><small>(lambda (arg) (forward-graph arg)) ;snd7.scm</small></code></td></tr>
 <tr><td>C-x p</td><td>play selection or region n</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#playregion">play-region</a> arg)) ;play-selection if no arg</small></code></td></tr>
 <tr><td>C-x q</td><td>mix in region</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#mixregion">mix-region</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg)) ;mix-selection if no arg</small></code></td></tr>
 <tr><td>C-x r</td><td>redo last undone edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#redo">redo</a> arg))</small></code></td></tr>
@@ -2358,8 +2358,9 @@ For information on initialization, configuration, and connections to other progr
 
 <table border rows=118 hspace=20>
 
-  <!-- created whenever -->
+  <!-- created 7-Jun-06 -->
   <tr><th bgcolor="beige">Action</th><th bgcolor="beige">Menu</th><th bgcolor="beige">Keyboard</th><th bgcolor="beige">Lisp</th><th bgcolor="beige">Other</th></tr>
+
   <tr><td><a href="#kgc">abort command</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#cgp"><small>c-g?</small></a></td><td><small>mouse click</small></td></tr>
   <tr><td><a href="#ampenvs">amp env</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><a href="#cxca"><small>Cx Ca, Cx a</small></a></td><td><a href="extsnd.html#envsound"><small>env-sound</small></a></td><td><a href="extsnd.html#scaleto"><small>scale-to, scale-by</small></a></td></tr>
   <tr><td><a href="sndscm.html#exautosave">auto save</a></td><td><br></td><td><br></td><td><a href="sndscm.html#exautosave"><small>auto-save</small></a></td><td><small>autosave.scm</small></td></tr>
@@ -2424,8 +2425,8 @@ For information on initialization, configuration, and connections to other progr
   <tr><td><a href="#thecursor">move cursor ahead</a></td><td><br></td><td><a href="#ce"><small>Cf, Cn, Ce</small></a></td><td><a href="extsnd.html#cursor"><small>set cursor</small></a></td><td><small>also &gt;</small></td></tr>
   <tr><td><a href="#thecursor">move cursor back</a></td><td><br></td><td><a href="#ca"><small>Cb, Cp, Ca</small></a></td><td><a href="extsnd.html#cursor"><small>set cursor</small></a></td><td><small>also &lt;</small></td></tr>
   <tr><td><a href="#mixingfiles">move mixed file</a></td><td><br></td><td><br></td><td><a href="extsnd.html#mixposition"><small>mix-position</small></a></td><td><a href="#mixingfiles"><small>drag mix tag</small></a></td></tr>
-  <tr><td><a href="#cj">move to mark</a></td><td><br></td><td><a href="#cj"><small>Cj, Cx j</small></a></td><td><a href="sndscm.html#forwardmark"><small>forward-mark</small></a></td><td><a href="#cxj"><small>Cx j -&gt; named mark</small></a></td></tr>
-  <tr><td><a href="#gotomix">move to mix</a></td><td><br></td><td><a href="#cxcj"><small>Cx Cj</small></a></td><td><a href="sndscm.html#forwardmix"><small>forward-mix</small></a></td><td><br></td></tr>
+  <tr><td><a href="#cj">move to mark</a></td><td><br></td><td><a href="#cj"><small>Cj, Cx j</small></a></td><td><br></td><td><a href="#cxj"><small>Cx j -&gt; named mark</small></a></td></tr>
+  <tr><td><a href="#gotomix">move to mix</a></td><td><br></td><td><a href="#cxcj"><small>Cx Cj</small></a></td><td><br></td><td><br></td></tr>
   <tr><td><a href="#movingwindow">move window ahead</a></td><td><br></td><td><a href="#cxf"><small>[Left], Cx f</small></a></td><td><a href="extsnd.html#rightsample"><small>right-sample</small></a></td><td><small>scroll bars</small></td></tr>
   <tr><td><a href="#movingwindow">move window back</a></td><td><br></td><td><a href="#movewindow"><small>[Right], Cx b</small></a></td><td><a href="extsnd.html#leftsample"><small>left-sample</small></a></td><td><small>scroll bars</small></td></tr>
   <tr><td><a href="#multichannel">multichannel ops</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sync"><small>sync</small></a></td><td><a href="#syncbutton"><small>sync button</small></a></td></tr>
@@ -2455,7 +2456,7 @@ For information on initialization, configuration, and connections to other progr
   <tr><td><a href="#saveoptions">save options</a></td><td><small>Options: <a href="#saveoptions">Save options</a></small></td><td><br></td><td><br></td><td><br></td></tr>
   <tr><td><a href="#cxw">save selection</a></td><td><small>Edit: <a href="#cxw">Save selection</a></small></td><td><a href="#cxw"><small>Cx w</small></a></td><td><a href="extsnd.html#saveregion"><small>save-region</small></a></td><td><a href="extsnd.html#saveselection"><small>save-selection</small></a></td></tr>
   <tr><td><a href="#savedstate">save session</a></td><td><small>Options: <a href="#savedstate">Save session</a></small></td><td><br></td><td><a href="extsnd.html#savestate"><small>save-state</small></a></td><td><br></td></tr>
-  <tr><td><a href="#viewfiles">select sound</a></td><td><br></td><td><a href="#cxo"><small>Cx o</small></a></td><td><a href="extsnd.html#selectedsound"><small>selected-sound</small></a></td><td><small>File dialog: click file</small></td></tr>
+  <tr><td>select sound</td><td><br></td><td><a href="#cxo"><small>Cx o</small></a></td><td><a href="extsnd.html#selectedsound"><small>selected-sound</small></a></td><td><small>File dialog: click file</small></td></tr>
   <tr><td><a href="#fw">show freq domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#transformgraphp"><small>transform-graph?</small></a></td><td><a href="#fw"><small>'f' button</small></a></td></tr>
   <tr><td><a href="extsnd.html#showmarks">show marks</a></td><td><br></td><td><br></td><td><a href="extsnd.html#showmarks"><small>show-marks</small></a></td><td><br></td></tr>
   <tr><td><a href="#fw">show time domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#timegraphp"><small>time-graph?</small></a></td><td><a href="#fw"><small>'w' button</small></a></td></tr>
@@ -2478,6 +2479,7 @@ For information on initialization, configuration, and connections to other progr
   <tr><td><a href="#viewy0">y=0 line</a></td><td><small>View: <a href="#viewy0">Show y=0</a></small></td><td><br></td><td><a href="extsnd.html#showyzero"><small>show-y-zero</small></a></td><td><br></td></tr>
   <tr><td><a href="#zoomoption">zoom focus</a></td><td><small>Options: <a href="#zoomoption">Zoom style</a></small></td><td><br></td><td><a href="extsnd.html#zoomfocusstyle"><small>zoom-focus-style</small></a></td><td><br></td></tr>
   <tr><td><a href="#movingwindow">zoom window</a></td><td><br></td><td><small>[Up],[Down]</small></td><td><a href="extsnd.html#xbounds"><small>x-bounds</small></a></td><td><a href="#movingwindow"><small>control keys intensify</small></a></td></tr>
+
 </table>
 
 <br>
