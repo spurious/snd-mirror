@@ -138,16 +138,36 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 <br><br>
 
 <A NAME="analogfilterdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>analog-filter.scm</h2></td></tr></table>
-<br>
-<table border=1 cellpadding=3>
-  <tr><td><a class=def href="#analogfilters">make-butterworth-*</a> freq</td><td>Butterworth filters</td></tr>
-  <tr><td><a class=def href="#analogfilters">make-chebyshev-*</a> freq</td><td>Chebyshev filters</td></tr>
-  <tr><td><a class=def href="#analogfilters">make-inverse-chebyshev-*</a> freq</td><td>Inverse Chebyshev filters</td></tr>
-  <tr><td><a class=def href="#analogfilters">make-bessel-*</a> freq</td><td>Bessel-Thompson filters</td></tr>
-  <tr><td><a class=def href="#analogfilters">make-elliptic-*</a> freq</td><td>Elliptic filters</td></tr>
-</table>
 
-<p><A NAME="analogfilters"></a>analog-filter.scm has the usual analog filters: Butterworth, Chebyshev, inverse Chebyshev, Bessel,
+<pre>
+    ;; fcut = cutoff frequency in terms of srate = 1.0, flo = low freq of band, fhi = high freq of band
+    <em class=emdef>make-butterworth-lowpass</em> order fcut
+    <em class=emdef>make-butterworth-highpass</em> order fcut
+    <em class=emdef>make-butterworth-bandpass</em> order flo fhi
+    <em class=emdef>make-butterworth-bandstop</em> order flo fhi
+
+    <em class=emdef>make-chebyshev-lowpass</em> order fcut (ripple-dB 1.0)
+    <em class=emdef>make-chebyshev-highpass</em> order fcut (ripple-dB 1.0)
+    <em class=emdef>make-chebyshev-bandpass</em> order flo fhi (ripple-dB 1.0)
+    <em class=emdef>make-chebyshev-bandstop</em> order flo fhi (ripple-dB 1.0)
+
+    <em class=emdef>make-inverse-chebyshev-lowpass</em> order fcut (loss-dB 60.0)
+    <em class=emdef>make-inverse-chebyshev-highpass</em> order fcut (loss-dB 60.0)
+    <em class=emdef>make-inverse-chebyshev-bandpass</em> order flo fhi (loss-dB 60.0)
+    <em class=emdef>make-inverse-chebyshev-bandstop</em> order flo fhi (loss-dB 60.0)
+
+    <em class=emdef>make-bessel-lowpass</em> order fcut
+    <em class=emdef>make-bessel-highpass</em> order fcut
+    <em class=emdef>make-bessel-bandpass</em> order flo fh
+    <em class=emdef>make-bessel-bandstop</em> order flo fh
+
+    <em class=emdef>make-elliptic-lowpass</em> order fcut (ripple-dB 1.0) (loss-dB 60.0)
+    <em class=emdef>make-elliptic-highpass</em> order fcut (ripple-dB 1.0) (loss-dB 60.0)
+    <em class=emdef>make-elliptic-bandpass</em> order flo fhi (ripple-dB 1.0) (loss-dB 60.0)
+    <em class=emdef>make-elliptic-bandstop</em> order flo fhi (ripple-dB 1.0) (loss-dB 60.0)
+</pre>
+
+<p><A NAME="analogfilters"></a>analog-filter.scm has the usual IIR filters: Butterworth, Chebyshev, inverse Chebyshev, Bessel,
 and Elliptic filters in lowpass, highpass, bandpass, and bandstop versions.  Each of the associated
 "make" functions returns a function ready for use as a filter (using the CLM filter generator).
 The filter order should be an even number; very high orders can cause numerical disaster!  If you
@@ -155,9 +175,46 @@ want to push these guys, be sure to build Snd with the --with-doubles configurat
 elliptic filters depend on GSL, so you'll also need GSL (Snd's configure script includes it by default, if possible).
 </p>
 <pre>
-    (let* ((flt (make-elliptic-lowpass 8 .1))) ; flt is a clm filter generator
-      (map-channel flt))
+    (let* ((flt (make-elliptic-lowpass 8 .1))) ; 8th order elliptic with cutoff at .1 * srate
+      (map-channel flt))                       ; flt is a clm filter generator
 </pre>
+<p>
+One quick way to see the frequency response of your filter is to create a sound that sweeps a sinewave upward
+in frequency, run it through the filter, then view the entire sound, treating the x axis as frequency
+in terms of srate = 1.0 (for convenience):
+</p>
+<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke"><pre>
+(define (filter-sweep flt)
+  (let ((ind (new-sound "flt.snd" mus-next mus-bfloat 44100 1 #f 22050))
+	(phase 0.0)
+	(freq 0.0)
+	(incr (/ (* 2 pi) 44100.0)))   ; go to srate/2 in 0.5 secs
+    (map-channel                       ; 0.5 secs because we preset the length above to 22050
+     (lambda (y)                       ; ignore current value (0.0)
+       (let ((val (* .5 (sin phase))))
+	 (set! phase (+ phase freq)) 
+	 (set! freq (+ freq incr))
+	 (filter flt val))))
+    (set! (x-bounds) (list 0.0 0.5)))) ; view entire sound
+
+(filter-sweep (<em class=red>make-butterworth-lowpass</em> 8 .1))
+</pre></td></tr></table>
+
+<table border=0 cellpadding=5 vspace=10 hspace=20><tr><td>
+<img src="iir.png">
+</td><td>
+<pre>
+;; this shows filter-sweep with:
+(make-butterworth-lowpass 8 .1)
+(make-elliptic-lowpass 8 .1)
+(make-butterworth-bandpass 8 .1 .2)
+(make-elliptic-bandpass 8 .1 .2)
+</pre>
+</td><tr>
+</table>
+
+
+<!-- TODO: include bandpass example, also sweep -> freq resp code, check the srate/2! -->
 <br>
 
 
@@ -174,9 +231,12 @@ elliptic filters depend on GSL, so you'll also need GSL (Snd's configure script 
 unsaved edits, and if any are found it saves them in a temporary file.
 The time between checks
 is set by the variable <i>auto-save-interval</i> which defaults to 60.0 seconds.
-To start auto-saving, (load "autosave.scm").  Thereafter <code>(cancel-auto-save)</code>
+To start auto-saving, <code>(load "autosave.scm")</code>.  Thereafter <code>(cancel-auto-save)</code>
 stops autosaving, and <code>(auto-save)</code> restarts it.
 </p>
+
+<!-- TODO: has auto-save been checked in the last 234 years? -->
+
 
 <br>
 <A NAME="bessdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>bess.scm, bess.rb</h2></td></tr></table>
@@ -187,6 +247,8 @@ frequency modulation in semi-real-time (how "real-time" it is depends on your
 audio setup).  This is a translation to the Sndlib/Libxm system of bess.cl in CLM.
 Michael Scholz has contributed a Ruby translation of this with many improvements:
 bess.rb.
+
+<!-- TODO: perhaps a picture of the bess series? -->
 </p>
 
 <br>
@@ -213,6 +275,9 @@ low-pass filter for distance effects (a bird song sounds really silly
 reverberated).  All the real information is in the amplitude and frequency
 envelopes.  These were transcribed from sonograms found in some bird guides and articles from
 the Cornell Ornithology Lab. 
+
+<!-- TODO: a comparison via sonograms of recorded and synthesized songs? or Marathon's opinion? -->
+
 Many of these birds were used in "Colony".  To hear all the
 birds, <code>(make-birds)</code>.  This writes the sequence out as "test.snd" using with-sound.
 Waveshaping is described in Le Brun, "Digital Waveshaping Synthesis", JAES 1979 April, vol 27, no 4, p250.
@@ -412,6 +477,8 @@ The <a name="besselfuncs">Bessel functions</a> I0, Jn, and Yn are built-in; Kn a
   <a class=def name="exsndbreak">snd-break</a> (message #f)
 </pre>
 <!-- INDEX debugdoc:Debugging (break/trace) -->
+
+<!-- TODO: debug.scm is currently Guile specific (memoized-environment?) -->
 
 <p>debug.scm is a package of debugging aids.
 <b>snd-break</b> sets a breakpoint; if it is called, you drop into the Snd debugger.
@@ -2419,7 +2486,7 @@ redirect the *reverb* input (without any change to the reverberator),
 getting its data from the current sound (probably after scaling it
 by the reverb amount). 
 </p>
-<br>
+
 
 <!-- INDEX reverbexamples:Reverb -->
 <A NAME="reverbexamples"></a>
@@ -3508,6 +3575,8 @@ Some of these have been translated to Gtk and xg.c -- snd-gtk.scm.
 our own search procedure into the filter mechanism in the File:Open
 dialog.
 </p>
+<!-- TODO: is there any need for install-searcher? -->
+<!-- TODO: pix of these graphics additions -->
 
 <p>The pair <b>zync</b> and <b>unzync</b> cause the
 y-axis zoom sliders of a multichannel file to move together or separately.

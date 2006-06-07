@@ -4376,9 +4376,11 @@ of another, higher level track.  Tracks provide a mechanism to group together re
 global envelopes, intra-voice tempo control, and so on. If a mix is dragged, and it is part of a track, all the mixes in that track move
 with it.  
 </p>
-<img src="track1.png" align=left vspace=10 hspace=20>
-<img src="track2.png" vspace=10 hspace=20>
-<br>
+
+<table border=0 cellpadding=10 hspace=20><tr><td>
+<img src="track1.png"></td><td>
+<img src="track2.png"></td></tr></table>
+
 <p>
 Here we have two tracks, each holding four mixes; one track's color is green, the other blue.  We then
 change the second (blue) track's tempo to be twice as slow, and move the first (green) track to the right.
@@ -11307,96 +11309,7 @@ This returns the text widget's text.  It can be set.
 <!-- end of dialog table -->
 
 
-<!-- INDEX somedialogs:Dialogs -->
-<p>
-<A NAME="somedialogs"></a>
-Here is a partial list of the dialogs scattered around Snd.
-</p>
-
-<table border=3 bordercolor="tan" hspace=20 cellspacing=1 cellpadding=1 style='font-size:small' rules=groups>
-<tbody>
-<tr><td width=10></td><td colspan=4></td><td width=10></td></tr>
-<tr><td></td><td colspan=2 height=16>Open file</td><td>File:<a href="snd.html#openfile">Open</a> and File:View</td>
-    <td><a href="#openfiledialog">open-file-dialog</a>, <a href="#openhook">open-hook</a>, <a href="#opensound">open-sound</a></td><td></td></tr>
-  <tr><td></td><td width=40></td><td><a href="sndscm.html#installsearcher">install-searcher</a></td>
-      <td colspan=2 height=16>Add colors and a filter to file menu</td><td></td></tr>
-  <tr><td></td><td></td><td><a href="sndscm.html#keepfiledialogopenuponok">keep-file-dialog-open-upon-ok</a></td>
-      <td colspan=2 height=16>don't close Open dialog upon "ok"</td><td></td></tr>
-  <tr><td></td><td></td><td><a href="sndscm.html#selectfile">select-file</a></td>
-      <td colspan=2 height=16>add a custom file dialog to File menu</td><td></td></tr>
-
-<tr><td></td><td colspan=2 height=16>Save sound</td><td>File:<a href="snd.html#savefile">Save as</a></td>
-    <td><a href="#savesounddialog">save-sound-dialog</a>, <a href="#savehook">save-hook</a>, <a href="#savesoundas">save-sound-as</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>New sound</td><td>File:<a href="snd.html#newfile">New</a></td>
-    <td><a href="#newsounddialog">new-sound-dialog</a>, <a href="#newsound">new-sound</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Mix sound</td><td>File:<a href="snd.html#mixingfiles">Mix</a></td>
-    <td><a href="#mix">mix</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Record</td><td>File:<a href="snd.html#recordfile">Record</a></td>
-    <td><a href="#recorderdialog">recorder-dialog</a>, <a href="#recorderfilehook">recorder-file-hook</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Create a new file</td><td>File:<a href="snd.html#newfile">New</a></td>
-    <td><a href="#newsoundhook">new-sound-hook</a>, <a href="#newsound">new-sound</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Print</td><td>File:<a href="snd.html#printfile">Print</a></td>
-    <td><a href="#printdialog">print-dialog</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Find globally</td><td>Edit:Find</td>
-    <td><a href="#finddialog">find-dialog</a>, <a href="#findchannel">find-channel</a></td><td></td></tr>
-  <tr><td></td><td></td><td>listener completions dialog</td><td></td><td></td><td></td></tr>
-  <tr><td></td><td></td><td><a href="sndscm.html#addfindtolistener">add-find-to-listener</a></td><td></td><td></td><td></td></tr>
-
-<tr><td></td><td colspan=2 height=16>Save selection</td><td>Edit:Save selection</td>
-    <td><a href="#saveselectiondialog">save-selection-dialog</a>, <a href="#saveselection">save-selection</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Edit envelope</td><td>Edit:<a href="snd.html#editenvelope">Envelope</a></td>
-    <td><a href="#enveddialog">enved-dialog</a>, <a href="#envedhook">enved-hook</a>, <a href="#defineenvelope">define-envelope</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Edit header</td><td>Edit:<a href="snd.html#editheader">Header</a></td>
-    <td><a href="#editheaderdialog">edit-header-dialog</a>, <a href="#badheaderhook">bad-header-hook</a></td><td></td></tr>
-  <tr><td></td><td></td><td>raw sound confirmation dialog</td><td></td><td></td><td></td></tr>
-  <tr><td></td><td></td><td>bogus header repair dialog</td><td></td><td></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Save region</td><td>Region browser:Save region</td>
-    <td><a href="#saveregiondialog">save-region-dialog</a>, <a href="#saveregion">save-region</a></td><td></td></tr>
-
-<tr><td></td><td colspan=2 height=16>View mixes and tracks</td><td>View:<a href="snd.html#mixdialog">Mixes and View:Tracks</a></td>
-    <td><a href="#viewmixesdialog">view-mixes-dialog</a>, <a href="#viewtracksdialog">view-tracks-dialog</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>View regions</td><td>View:<a href="snd.html#regionbrowser">Regions</a></td>
-    <td><a href="#viewregionsdialog">view-regions-dialog</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>View interesting files</td><td>View:<a href="snd.html#viewfiles">Files</a></td>
-    <td><a href="#viewfilesdialog">view-files-dialog</a></td><td></td></tr>
-  <tr><td></td><td></td><td><a href="sndscm.html#nb">nb</a></td>
-      <td colspan=2 height=16>post info about each file as mouse passes over it</td><td></td></tr>
-  <tr><td></td><td></td><td><a href="sndscm.html#makesoundbox">make-sound-box</a></td>
-      <td colspan=2 height=16>show available sounds in a box full of icons</td><td></td></tr>
-
-<tr><td></td><td colspan=2 height=16>Spectrogram color scheme</td><td>View:<a href="snd.html#colorbrowser">Color</a></td>
-    <td><a href="#colordialog">color-dialog</a>, <a href="#colormap">colormap</a> and its friends</td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Spectrogram viewing angle</td><td>View:<a href="snd.html#orientationbrowser">Orientation</a></td>
-    <td><a href="#orientationdialog">orientation-dialog</a>, <a href="#spectroxangle">spectro-x-angle</a> and its friends</td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>FFT choices</td><td>Options:<a href="snd.html#viewfft">Transforms</a></td>
-    <td><a href="#transformdialog">transform-dialog</a>, <a href="#transformsize">transform-size</a> and its friends</td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Help choices</td><td>Help:*</td>
-    <td><a href="#helpdialog">help-dialog</a>, <a href="#sndhelp">snd-help</a>, <a href="#helphook">help-hook</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Preferences</td><td>Options:Preferences</td>
-    <td><a href="#preferencesdialog">preferences-dialog</a></td><td></td></tr>
-
-<tr><td></td><td colspan=2 height=16>Effects choices</td><td>Effects:*</td>
-    <td><a href="sndscm.html#effectsdoc">effects menu</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Ladspa choices</td><td>Ladspa:*</td>
-    <td><a href="sndscm.html#ladspadoc">install-ladspa-menues</a>, <a href="#ladspadir">ladspa-dir</a>, <a href="grfsnd.html#applyladspa">apply-ladspa</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Rename or delete sound</td><td>File:Rename and File:Delete</td>
-    <td><a href="sndscm.html#adddeleteoption">add-rename-option</a>, <a href="sndscm.html#adddeleteoption">add-delete-option</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Font choice</td><td>View:Select font</td>
-    <td><a href="sndscm.html#makefontselectordialog">make-font-selector-dialog</a>, <a href="#axislabelfont">axis-label-font</a> and its friends</td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Color choice</td><td>View:Select file</td>
-    <td><a href="sndscm.html#makecolorselectordialog">make-color-selector-dialog</a>, <a href="#basiccolor">basic-color</a> and its friends</td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Access more controls</td><td>Options:More controls</td>
-    <td><a href="sndscm.html#makehiddencontrolsdialog">make-hidden-controls-dialog</a>, <a href="#expandcontrolramp">expand-control-ramp</a> and its friends</td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>Realtime FM violin controls</td><td></td>
-    <td><a href="sndscm.html#createfmvdialog">create-fmv-dialog</a>, the <a href="sndscm.html#vdoc">fm-violin</a></td><td></td></tr>
-<tr><td></td><td colspan=2 height=16>with-sound variable display</td><td></td>
-    <td><a href="sndscm.html#makevariabledisplay">make-variable-display</a></td><td></td></tr>
-<tr><td colspan=6></td></tr>
-</tbody>
-</table>
-<br><br>
-
-
+<br>
 <table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndmisc">Miscellaneous functions</a></h3></td></tr></table>
 
 <p>These functions don't seem to fit anywhere else:</p>
