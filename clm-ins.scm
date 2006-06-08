@@ -187,15 +187,15 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 
 ;;; -------- FOF example
 
-(definstrument (fofins beg dur frq amp uvib f0 a0 f1 a1 f2 a2 :optional (ae '(0 0 25 1 75 1 100 0)))
-  "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional (ae '(0 0 25 1 75 1 100 0))) produces FOF 
+(definstrument (fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional (ae '(0 0 25 1 75 1 100 0)) ve)
+  "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional (ampenv '(0 0 25 1 75 1 100 0)) vibenv) produces FOF 
 synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
     (let* ((two-pi (* 2 3.141592653589793))
 	   (start (inexact->exact (floor (* beg (mus-srate)))))
 	   (len (inexact->exact (floor (* dur (mus-srate)))))
 	   (end (+ start len))
-	   (vib uvib) ; for the optimizer (it can't find define* args sometimes)
 	   (ampf (make-env :envelope ae :scaler amp :duration dur))
+	   (vibf (make-env :envelope (or ve (list 0 1 100 1)) :scaler vib :duration dur))
 	   (frq0 (hz->radians f0))
 	   (frq1 (hz->radians f1))
 	   (frq2 (hz->radians f2))
@@ -215,7 +215,10 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
        (lambda ()
 	 (do ((i start (1+ i)))
 	     ((= i end))
-	   (outa i (* (env ampf) (wave-train wt0 (* vib (oscil vibr)))) *output*))))))
+	   (outa i (* (env ampf) 
+		      (wave-train wt0 (* (env vibf) 
+					 (oscil vibr)))) 
+		 *output*))))))
 
 
 

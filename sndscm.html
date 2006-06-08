@@ -66,7 +66,7 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 <table border=8 bordercolor="lightsteelblue" cellpadding=6><tr><td>
 <table border=0 cellspacing=0 cellpadding=2>
 <tr><th colspan=2 bgcolor="beige">Contents</th></tr>
-<tr><td width=100><a href="#analogfilterdoc">analog-filter.scm</a></td><td>standard analog filters (Butterworth, Chebyshev, Bessel, Elliptic)</td></tr>
+<tr><td width=100><a href="#analogfilterdoc">analog-filter.scm</a></td><td>standard IIR filters (Butterworth, Chebyshev, Bessel, Elliptic)</td></tr>
 <tr><td bgcolor="#f6f8ff"><a href="#autosavedoc">autosave.scm</a></td>                   <td bgcolor="#f6f8ff">auto-save (edit backup) support</td></tr>
 <tr><td><a href="#bessdoc">bess.scm, bess.rb</a></td>                  <td>FM demo</td></tr>
 <tr><td bgcolor="#f6f8ff"><a href="#bess1doc">bess1.scm, bess1.rb</a></td>               <td bgcolor="#f6f8ff">FM violin demo</td></tr>
@@ -210,7 +210,7 @@ in terms of srate = 1.0 (for convenience):
 (make-butterworth-bandpass 8 .1 .2)
 (make-elliptic-bandpass 8 .1 .2)
 </pre>
-</td><tr>
+</td></tr>
 </table>
 
 
@@ -246,10 +246,11 @@ opens the DAC, puts up a bunch of scale widgets, and starts two CLM oscils doing
 frequency modulation in semi-real-time (how "real-time" it is depends on your
 audio setup).  This is a translation to the Sndlib/Libxm system of bess.cl in CLM.
 Michael Scholz has contributed a Ruby translation of this with many improvements:
-bess.rb.
+bess.rb.  You may need to make bess.scm executable before running it: <code>chmod 777 bess.scm</code>.
 
 <!-- TODO: perhaps a picture of the bess series? -->
 </p>
+
 
 <br>
 <A NAME="bess1doc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>bess1.scm, bess1.rb</h2></td></tr></table>
@@ -259,6 +260,7 @@ that give you real-time GUI-based control over the fm-violin while it cycles aro
 compositional algorithm.  Both were written by
 Michael Scholz, based on CLM's bess5.cl and rt.lisp.
 </p>
+
 
 <br>
 <A NAME="birddoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>bird.scm, bird.rb</h2></td></tr></table>
@@ -295,8 +297,8 @@ The lines
 additive synthesis).  <b>partials-&gt;polynomial</b> calculates the Chebyshev
 polynomial coefficients given the desired spectrum; the spectrum then
 results from driving that polynomial with an oscillator.  Besides the
-bird guides, there are now numerous recordings of birds that could
-easily be turned into sonograms and transcribed as envelopes.
+bird guides, there are now numerous recordings of birds that can
+be turned into sonograms and transcribed as envelopes.
 </p>
 <p>In CLM, the bird is:</p>
 
@@ -345,106 +347,657 @@ instrument: bird { f: start f: dur f: freq f: freq-skew f: amp freq-env amp-enve
 </pre></td></tr></table>
 <br>
 <br>
+
+
 <A NAME="clminsdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>clm-ins.scm, clm-ins.rb</h2></td></tr></table>
 
-<p>These are instruments from the CLM tarball translated for use in Snd.
+<p>These are instruments from CLM translated for use in Snd.  All expect to be called within <a href="clm.html#with-sound">with-sound</a>
+or some equivalent environment. Test 23 in snd-test.scm has examples of using these instruments.
 </p>
-<!-- remember to add corresponding entry to grfsnd instrument table -->
+
+<table border=0 cellspacing=0 hspace=20>
+
+<!-- anoi -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>anoi</em> <code>(file start dur (fftsize 128) (amp-scaler 1.0) (r 6.28))</code>
+</td></tr>
+<tr><td width=60></td><td>
+anoi is a stab at noise reduction
+based on Perry Cook's Scrubber.m.  It tracks an on-going average spectrum, then tries
+to squelch that, obviously aimed at reducing background noise in an intermittent signal.
 <pre>
-  <em class=emdef>anoi</em> file (etc)
-  <em class=emdef>attract</em> beg dur amp c
-  <em class=emdef>canter</em> beg dur freq amp (etc)
-  <em class=emdef>cellon</em> beg dur freq amp (etc)
-  <em class=emdef>drone</em> beg dur freq amp (etc)
-  <em class=emdef>expfil</em> start duration hopsecs rampsecs steadysecs file1 file2
-  <em class=emdef>exp-snd</em> file beg dur amp (etc)
-  <em class=emdef>fm-bell</em> beg dur frequency amplitude amp-env index-env index
-  <em class=emdef>fm-drum</em> beg dur freq amp ind (etc)
-  <em class=emdef>fm-insect</em> beg dur freq amp (etc)
-  <em class=emdef>fm-trumpet</em> beg dur (etc)
-  <em class=emdef>fofins</em> beg dur frq amp uvib f0 a0 f1 a1 f2 a2 (amp-env '(0 0 1 1 2 1 3 0))
-  <em class=emdef>fullmix</em> infile (etc)
-  <em class=emdef>gong</em> beg dur freq amp (etc)
-  <em class=emdef>gran-synth</em> beg dur freq grain-dur grain-hop amp
-  <em class=emdef>graphEq</em> file (etc)
-  <em class=emdef>hammondoid</em> beg dur freq amp
-  <em class=emdef>jl-reverb</em>
-  <em class=emdef>lbj-piano</em> beg dur freq amp (etc)
-  <em class=emdef>metal</em> beg dur freq amp
-  <em class=emdef>nrev</em> (reverb-factor 1.09) (lp-coeff 0.7) (volume-1 1.0)
-  <em class=emdef>pins</em> beg dur file amp (transposition 1.0) (time-scaler 1.0) (etc)
-  <em class=emdef>pluck</em> beg dur freq amp (weighting .5) (lossfact .9)
-  <em class=emdef>pqw-vox</em> beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes
-  <em class=emdef>pqw</em> beg dur freq (etc)
-  <em class=emdef>resflt</em> beg dur driver (etc)
-  <em class=emdef>reson</em> beg dur freq amp (etc)
-  <em class=emdef>rhodey</em> beg dur freq amp (base .5)
-  <A class=def NAME="scratch">scratch</a> beg file src-ratio turnlist
-  <em class=emdef>spectra</em> beg dur freq amp (etc)
-  <em class=emdef>stereo-flute</em> beg dur freq flow (etc)
-  <em class=emdef>touch-tone</em> beg number
-  <em class=emdef>tubebell</em> beg dur freq amp (base 32.0)
-  <em class=emdef>two-tab</em> beg dur freq amp (etc)
-  <em class=emdef>vox</em> beg dur freq amp ampfun freqfun freqscl voxfun index vibscl
-  <em class=emdef>wurley</em> beg dur freq amp
-  <em class=emdef>zc</em> time dur freq amp length1 length2 feedback
-  <em class=emdef>zn</em> time dur freq amp length1 length2 feedforward
-  <em class=emdef>za</em> time dur freq amp length1 length2 feedback feedforward
-  <em class=emdef>bes-fm</em> beg dur freq amp ratio index
+    (with-sound () (anoi "now.snd" 0 2))
 </pre>
-<p>Test 23 in snd-test.scm has examples of using these instruments.
-<b>fofins</b> is an implementation of FOF synthesis, taken originally from
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- attract -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>attract</em> <code>(beg dur amp c)</code>
+</td></tr>
+<tr><td></td><td>
+attract is a translation to CLM of an instrument developed by James McCartney (CMJ vol 21 no 3 p 6),
+based on a "chaotic" equation.
+<i>c</i> should be between 1 and 10 or thereabouts.
+<pre>
+    (with-sound () (attract 0 1 .1 1) (attract 1 1 .1 5))
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- bes-fm -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>bes-fm</em> <code>(beg dur freq amp ratio index)</code>
+</td></tr>
+<tr><td></td><td>
+bes-fm is J1(J1): <code>(bes-j1 (* index (bes-j1 phase)))</code>; it uses the Bessel functions where FM uses sinusoids.  J0 is also good in this context,
+and the few other Jn options that I've tried were ok.
+<pre>
+    (with-sound () (bes-fm 0 1 440 10.0 1.0 4.0))
+</pre>
+So why does this work?  My "back-of-the-envelope" guess is that the Bessel functions
+are basically a bump at the start followed by a decaying sinusoid, so
+the bump
+gives us a percussive attack, and the damped sinusoid gives us
+a dynamic spectrum, mimicking FM more or less.
+
+The Bessel functions I0, Jn, and Yn are built-in; Kn and In are implemented in Scheme in snd-test.scm.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- canter -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>canter</em> <code>(beg dur freq amp ...)</code>
+</td></tr>
+<tr><td></td><td>
+canter is half of a bagpipe instrument developed by Peter Commons (the other portion is <i>drone</i> below).
+The trailing parameters are:
+<pre>
+  deg dis pcrev ampfun ranfun skewfun skewpc ranpc ranfreq indexfun atdr dcdr
+  ampfun1 indfun1 fmtfun1 ampfun2 indfun2 fmtfun2 ampfun3 indfun3 fmtfun3 ampfun4 indfun4 fmtfun4
+</pre>
+It is not easy to keep track of all these arguments in a long note-list; hence the
+development of programs such as Common Music.
+Here is a portion of a bagpipe tune:
+<pre>
+(let ((fmt1 '(0 1200 100 1000))
+      (fmt2 '(0 2250 100 1800))
+      (fmt3 '(0 4500 100 4500))
+      (fmt4 '(0 6750 100 8100))
+      (amp1 '(0 .67 100 .7))
+      (amp2 '(0 .95 100 .95))
+      (amp3 '(0 .28 100 .33))
+      (amp4 '(0 .14 100 .15))
+      (ind1 '(0 .75 100 .65))
+      (ind2 '(0 .75 100 .75))
+      (ind3 '(0 1 100 1))
+      (ind4 '(0 1 100 1))
+      (skwf '(0 0 100 0))
+      (ampf '(0 0 25 1 75 1 100 0))
+      (ranf '(0 .5 100 .5))
+      (index '(0 1 100 1))
+      (zero_fun '(0 0 100 0))
+      (atskew '(0 -1 15 .3 22 -.1 25 0 75 0 100 -.2))
+      (vibfun '(0 0 .3 .3 15 .6 25 1 100 1))
+      (slopefun '(0 1 75 1 100 0))
+      (trap '(0 0 25 1 75 1 100 0))
+      (ramp '(0 0 25 0 75 1 100 1))
+      (solid '(0 0 5 1 95 1 100 0))
+      (sfz '(0 0 25 1 30 .6 50 .5 75 .2 100 0))
+      (mound '(0 0 10 .4 25 .8 40 1 60 1 75 .8 90 .4 100 0))
+      (vio '(0 0 7 .2 25 .5 40 .6 60 .6 75 .5 90 .2 100 0))
+      (bassdr2 '(.5 .06 1 .62 1.5 .07 2.0 .6 2.5 .08 3.0 .56 4.0 .24 5 .98 6 .53 7 
+                 .16 8 .33 9 .62 10 .12 12 .14 14 .86 16 .12 23 .14 24 .17))
+      (bassdrstr '(.5 .06 1.0 .63 1.5 .07 2.01 .6 2.5 .08 3.02 .56 4.04 .24 5.05 .98 6.06 .53 7.07 .16 8.08 .33 9.09 .62
+		    10.1 .12 12.12 .14 13.13 .37 14.14 .86 16.16 .12 23.23 .14 24.24 .17))
+      (tenordr '(.3 .04 1 .81 2 .27 3 .2 4 .21 5 .18 6 .35 7 .03 8 .07 9 .02 10 .025 11 .035))
+      (tenordrstr '(.3 .04 1.03 .81 2.03 .27 3.03 .20 4.03 .21 5.03 .18
+		     6.03 .35 7.03 .03 8.03 .07 9.03 .02 10.03 .03 11.03 .04)))
+  (with-sound (:reverb nrev)
+    (drone .000 4.000 115.000 (* .25 .500) solid bassdr2 .100 .500 .030 45.000 1 .010 10)
+    (drone .000 4.000 229.000 (* .25 .500) solid tenordr .100 .500 .030 45.000 1 .010 11)
+    (drone .000 4.000 229.500 (* .25 .500) solid tenordr .100 .500 .030 45.000 1 .010 9)
+    (canter .000 2.100 918 (* .25 .700) 45.000 1 .050 ampf ranf skwf 
+             .050 .010 10 index .005 .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  2.100  .300 688.5  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  2.400  .040 826.2  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  2.440  .560 459  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  3.000  .040 408  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  3.040  .040 619.65  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  3.080  .040 408  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  3.120  .040 688.5  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  3.160  .290 459  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  3.450  .150 516.375  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  3.600  .040 826.2  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  3.640  .040 573.75  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  3.680  .040 619.65  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  3.720  .180 573.75  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  3.900  .040 688.5  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
+    (canter  3.940  .260 459  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)))
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- cellon -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>cellon</em> beg dur freq amp (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- drone -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>drone</em> beg dur freq amp (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- expfil -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>expfil</em> start duration hopsecs rampsecs steadysecs file1 file2
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- exp-snd -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>exp-snd</em> file beg dur amp (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- fm-bell -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>fm-bell</em> <code>(beg dur frequency amplitude amp-env index-env index)</code>
+</td></tr>
+<tr><td></td><td>
+fm-bell is an <a href="<fm.html#fmintro">FM</a> instrument developed by Michael McNabb in Mus10 in the late '70s.  It is intended
+for low bell sounds (say middle C or so). The lines
+<pre>
+  (mod1 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 2)))
+  (mod2 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 1.41)))
+  (mod3 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 2.82)))
+  (mod4 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 2.4)))
+  (car1 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> frequency))
+  (car2 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> frequency))
+  (car3 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 2.4)))
+</pre>
+set up three FM pairs, car1 and mod1 handling the basic harmonic spectra,
+car2 and mod2 creating inharmonic spectra (using the square root of 2 more or less
+at random), and car3 and mod3 putting a sort of formant at the minor third
+(2.4 = a ratio of 12/5 = octave+6/5 = minor tenth).
+<pre>
+(with-sound ()
+  (let ((fbell '(0 1 2 1.1000 25 .7500 75 .5000 100 .5000))
+        (abell '(0 0 .1000 1 10 .6000 25 .3000 50 .1500 90 .1000 100 0)))
+    (fm-bell 0.0 2.0 220.0 .5 abell fbell 0.5)))
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- fm-drum -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>fm-drum</em> beg dur freq amp ind (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- fm-insect -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>fm-insect</em> beg dur freq amp (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- fm-trumpet -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>fm-trumpet</em> beg dur (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- fofins -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>fofins</em> <code>(beg dur frq amp uvib f0 a0 f1 a1 f2 a2 (amp-env '(0 0 1 1 2 1 3 0)))</code>
+</td></tr>
+<tr><td></td><td>
+fofins is an implementation of <a href="http://www-ccrma.stanford.edu/~serafin/320/lab3/FOF_synthesis.html">FOF synthesis</a>, taken originally from
 fof.c of Perry Cook and the article
 "Synthesis of the Singing Voice" by Bennett and Rodet in
 "Current Directions in Computer Music Research" (MIT Press).
-</p><p><b>pluck</b> is based on
-the Karplus-Strong algorithm as extended by David Jaffe and Julius Smith -- see 
+FOF synthesis sets up a wave with the desired spectrum (to mimic vocal formats, for example),
+then calls <a href="clm.html#wave-train">wave-train</a> to turn that into a tone.
+fofins just adds an amplitude envelope and vibrato.
+In the Scheme version, there is also an optional trailing vibrato envelope argument:
+<pre>
+(with-sound ()  ; slowly ramp up the vibrato
+  (fofins 0 4 270 .1 0.005 730 .6 1090 .3 2440 .1 
+          '(0 0 .5 1 3 .5 10 .2 20 .1 50 .1 60 .2 85 1 100 0)
+	  '(0 0 40 0 75 .2 100 1) )
+  (fofins 0 4 (* 6/5 540) .1 0.005 730 .6 1090 .3 2440 .1 
+          '(0 0 .5 .5 3 .25 6 .1 10 .1 50 .1 60 .2 85 1 100 0)
+	  '(0 0 40 0 75 .2 100 1) )
+  (fofins 0 4 135 .1 0.005 730 .6 1090 .3 2440 .1 
+          '(0 0 1 3 3 1 6 .2 10 .1 50 .1 60 .2 85 1 100 0)
+	  '(0 0 40 0 75 .2 100 1)))
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- fullmix -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>fullmix</em> infile (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- gong -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>gong</em> beg dur freq amp (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- gran-synth -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>gran-synth</em> beg dur freq grain-dur grain-hop amp
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- graphEq -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>graphEq</em> file (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- hammondoid -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>hammondoid</em> beg dur freq amp
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- jl-reverb -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>jl-reverb</em>
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- lbj-piano -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>lbj-piano</em> beg dur freq amp (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- metal -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>metal</em> beg dur freq amp
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- nrev -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>nrev</em> (reverb-factor 1.09) (lp-coeff 0.7) (volume-1 1.0)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- pins -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>pins</em> <code>(beg dur file amp (transposition 1.0) (time-scaler 1.0) (fft-size 256) (highest-bin 128) (max-peaks 16) printit attack)</code>
+</td></tr>
+<tr><td></td><td>
+pins is a simple implementation of the spectral modeling synthesis
+of Xavier Serra and Julius Smith (sometimes known as "Sansy" or "SMS").  See
+Serra, X., J. O. Smith. 1990. "Spectral Modeling Synthesis:A Sound Analysis/Synthesis Based on a Deterministic plus Stochastic Decomposition". Computer Music Journal, vol. 14(4), 1990.
+The idea behind SMS is similar to the phase vocoder,
+but tracks spectral peaks so that its resynthesis options are much more sophisticated.
+<i>transposition</i> can be used to transpose a sound;
+<i>time-scaler</i> changes the sound's duration;
+<i>fft-size</i> may need to be larger if your sampling rate is 44100, or the input sound's
+fundamental is below 300 Hz;
+<i>highest-bin</i> sets how many fft bins we search for spectral peaks;
+<i>max-peaks</i> sets how many peaks we track (at a maximum) through the sound;
+<i>printit</i>, if set to #t, causes the peak envelopes to be printied;
+<i>attack</i> is an optional vct containing the attack portion of the new sound.
+<pre>
+    (with-sound () (pins 0.0 1.0 "now.snd" 1.0 :time-scaler 2.0))
+</pre>
+Xavier has a website devoted to this system:
+<a href="http://www.iua.upf.es/mtg/sms">Spectral Modeling Synthesis</a>
+which has moved to the CLAM site:
+<a href="http://clam.iua.upf.es/">CLAM-SMSTools</a>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- pluck -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>pluck</em> <code>(beg dur freq amp (weighting .5) (lossfact .9))</code>
+</td></tr>
+<tr><td></td><td>
+pluck is based on
+the <a href="http://ccrma.stanford.edu/~jos/SimpleStrings/Karplus_Strong_Algorithm.html">Karplus-Strong</a> algorithm as extended by David Jaffe and Julius Smith -- see 
 Jaffe and Smith, "Extensions of the Karplus-Strong Plucked-String Algorithm"
 CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
-Another physical model is Nicky Hind's stereo-flute.
-</p>
-<p>
-<b>vox</b> is a translations of Marc LeBrun's MUS10 waveshaping voice instrument
-using FM in this case.  The waveshaping version is <b>pqwvox</b>
-("phase-quadrature waveshaping voice").
+The basic idea is to fill an array with noise, then filter the array values as it is played repeatedly,
+giving a sharp attack and a ringing decay, much like plucking a guitar.  The CMJ article
+gives many variations, changing pick position and so on.  Jaffe's "Silicon Valley Breakdown"
+makes great use of this instrument.
+<i>weighting</i> is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5 which gives a short decay;
+anything other than .5 produces a longer decay.  It should be between 0.0 and 1.0. 
+<i>lossfact</i> can be used to shorten decays.  The most useful values are between .8 and 1.0. 
+<pre>
+(with-sound () 
+  (pluck 0 1 330 .3 .95 .95) 
+  (pluck 1 2 330 .3 .9 .9999) 
+  (pluck 3 2 330 .3 .8 .99))
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- pqw-vox -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>pqw-vox</em> beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- pqw -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>pqw</em> beg dur freq (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- resflt -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>resflt</em> beg dur driver (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- reson -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>reson</em> beg dur freq amp (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- rhodey -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>rhodey</em> beg dur freq amp (base .5)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- scratch -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="scratch">scratch</a> beg file src-ratio turnlist
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- spectra -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>spectra</em> beg dur freq amp (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- stereo-flute -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>stereo-flute</em> <code>(beg dur freq flow ...)</code>
+</td></tr>
+<tr><td></td><td>
+This is a physical model of a flute developed by Nicky Hind.
+<pre>
+    (with-sound (:channels 2) 
+       (stereo-flute 0 1 440 0.55 :flow-envelope '(0 0 1 1 2 1 3 0))
+       (stereo-flute 1 3 220 0.55 :flow-envelope '(0 0 1 1 2 1 3 0)))
+</pre>
+
+The trailing parameters are:
+
+<pre>
+     (flow-envelope '(0 1 100 1))
+     (decay 0.01) 		; additional time for instrument to decay
+     (noise 0.0356) 
+     (embouchure-size 0.5)
+     (fbk-scl1 0.5)		; these two are crucial for good results
+     (fbk-scl2 0.55)
+     (offset-pos 0.764264)      ; from 0.0 to 1.0 along the bore
+     (out-scl 1.0)
+     (a0 0.7) (b1 -0.3)	        ; filter coefficients
+     (vib-rate 5) 
+     (vib-amount 0.03)
+     (ran-rate 5) 
+     (ran-amount 0.03)
+</pre>
+As with physical models in general, you may need to experiment a bit to find
+parameters that work.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- touch-tone -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>touch-tone</em> <code>(beg number)</code>
+</td></tr>
+<tr><td></td><td>
+This instrument produces telephone tones:
+<pre>
+    (with-sound () (touch-tone 0.0 '(7 2 3 4 9 7 1)))
+</pre>
+It is just two sine waves whose frequencies are chosen based on the number pressed.
+<pre>
+  1     2     3   697 Hz
+  4     5     6   770 Hz
+  7     8     9   852 Hz
+        0         941 Hz
+ 1209  1336  1477 Hz
+</pre>
+For more than you really want to know about other such sounds, see
+<a href="<http://www.tech-faq.com/telephone-tone-frequencies.shtml">Telephone Tone Frequencies</a>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- tubebell -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>tubebell</em> beg dur freq amp (base 32.0)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- two-tab -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>two-tab</em> beg dur freq amp (etc)
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- vox -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>vox</em> <code>(beg dur freq amp ampfun freqfun freqscl voxfun index vibscl)</code>
+</td></tr>
+<tr><td></td><td>
+vox is a translation of Marc LeBrun's MUS10 waveshaping voice instrument
+using FM in this case.  
 The basic idea is that each of the three vocal formants is created by two
-sets of waveshapers, one centered on the even multiple of the base frequency closest to the desired formant frequency,
-and the other on the nearest odd multiple.  As the base frequency moves (vibrato, glissando),
-these center frequencies are recalculated (on each sample), and the respective amplitudes
-set from the distance to the desired frequency.  If a center frequency moves (for example,
-the base frequency moves down far enough that the previous upper member of the pair has
-to become the lower member), the upper waveshaper (which has ramped to zero amplitude), jumps
-down to its new center. The formant table was provided by Robert Poor.
-The phase-quadrature part of the business creates single side-band spectra.
+sets of waveshapers (or oscils producing FM), one centered on the even multiple of the base frequency closest to the desired formant frequency,
+and the other on the nearest odd multiple.  As the base frequency moves (due to vibrato or glissando),
+these center frequencies are recalculated on each sample, and the respective amplitudes
+set to reflect the distance of the current center frequency from the desired formant frequency.  If a center frequency moves 
+enough that the previous upper member of the pair has
+to become the lower member, the upper waveshaper (which has meanwhile ramped to zero amplitude), jumps
+down to its new center. The male-speaker formant table was provided by Robert Poor (see the code
+for the complete table of formants).
 For details on waveshaping, see Le Brun, "Digital Waveshaping Synthesis", JAES 1979 April, vol 27, no 4, p250.
-</p>
-<p>The FM bell was developed by Michael McNabb in Mus10 in the late '70s.  It is intended
-for low bell sounds (say middle C or so). The lines
-</p>
+I used vox in the 5th movement of "Colony" and in "The New Music Liberation Army".
 <pre>
-	   (mod1 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 2)))
-	   (mod2 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 1.41)))
-	   (mod3 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 2.82)))
-	   (mod4 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 2.4)))
-	   (car1 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> frequency))
-	   (car2 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> frequency))
-	   (car3 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 2.4)))
+(with-sound ()
+  (vox 0 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 
+       '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) '(.8 .15 .05) '(.005 .0125 .025) .05 .1)
+  (vox 2 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .5
+       '(0 UH 25 UH 35 ER 65 ER 75 UH 100 UH) '(.8 .15 .05) '(.005 .0125 .025))
+  (vox 4 2 300 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 
+       '(0 I 5 OW 10 I 50 AE 100 OO) '(.8 .15 .05) '(.05 .0125 .025) .02 .1))
 </pre>
-<p>set up three FM pairs, car1+mod1 handling the basic harmonic spectra,
-car2+mod2 creating inharmonic spectra (using the square root of 2 more or less
-at random), and car3+mod3 putting a sort of formant at the minor third
-(2.4 = a ratio of 12/5 = octave+6/5 = minor tenth).
-</p>
-<pre>
-  (define fbell '(0 1 2 1.1000 25 .7500 75 .5000 100 .2000 ))
-  (define abell '(0 0 .1000 1 10 .6000 25 .3000 50 .1500 90 .1000 100 0 ))
-  (fm-bell 0.0 1.0 220.0 .5 abell fbell 1.0)
-</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- wurley -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>wurley</em> beg dur freq amp
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- zc -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>zc</em> time dur freq amp length1 length2 feedback
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- zn -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>zn</em> time dur freq amp length1 length2 feedforward
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- za -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>za</em> time dur freq amp length1 length2 feedback feedforward
+</td></tr>
+<tr><td></td><td>
+
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+
+
+</table>
+
+
+
 <p><b>scratch</b> moves back and forth in a sound file according to
 a list of turn times (see also <a href="#exenvsoundinterp">env-sound-interp</a>).
-</p>
-<p><b>pins</b> is a simple implementation of thje spectral modeling synthesis
-of Xavier Serra and Julius Smith.  It is similar to the phase vocoder.
 </p>
 <p>The "z" instruments demonstrate "zdelay" effects -- interpolating
 comb, notch, and all-pass filters.
@@ -455,19 +1008,13 @@ nearly every variable. <i>expfile</i> interleaves two granulate processes.
 <p><b>graphEq</b> mimics a graphical equalizer by setting up a bank of formant
 generators, with an optional envelope on each formant.
 </p>
-<p>
-<b>anoi</b> is a stab at noise reduction
-based on Perry Cook's Scrubber.m.
-</p>
 <p><b>fullmix</b> is a complicated way to mix stuff.  clm23.scm is a translation of
 the CLM test instruments in ug2.ins and ug3.ins.  It has some comments about
 the differences between the CL and Scheme instruments.
 </p>
 <p>
-<b>bes-fm</b> is J1(J1) essentially -- using the Bessel functions where FM uses sinusoids.
-The <a name="besselfuncs">Bessel functions</a> I0, Jn, and Yn are built-in; Kn and In are implemented in Scheme in snd-test.scm.
-</p>
 <br>
+
 
 <A NAME="debugdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>debug.scm</h2></td></tr></table>
 
