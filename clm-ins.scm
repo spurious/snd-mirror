@@ -1292,7 +1292,10 @@ is a physical model of a flute:
 			  (table-lookup s (+ (triangle-wave per-vib)
 					     (rand-interp ran-vib))))))))))
 
-;;; (with-sound ()  (spectrum 0 1 440.0 .1 p-a4 '(0.0 0.0 1.0 1.0 5.0 0.9 12.0 0.5 25.0 0.25 100.0 0.0))
+;    (with-sound ()
+;      (spectra 0 1 440.0 .1 '(1.0 .4 2.0 .2 3.0 .2 4.0 .1 6.0 .1) 
+;               '(0.0 0.0 1.0 1.0 5.0 0.9 12.0 0.5 25.0 0.25 100.0 0.0)))
+
 
 ;;; interpolate between two waveforms (this could be extended to implement all the various
 ;;; wavetable-based synthesis techniques).

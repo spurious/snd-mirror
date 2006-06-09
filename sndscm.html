@@ -570,7 +570,7 @@ of their file, one after the other).
 
 <!-- exp-snd -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>exp-snd</em> <code>(file beg dur amp :optional (exp-amt 1.0) (ramp .4) (seglen .15) (sr 1.0) (hop .05) ampenv))</code>
+<em class=emdef>exp-snd</em> <code>(file beg dur amp :optional (exp-amt 1.0) (ramp .4) (seglen .15) (sr 1.0) (hop .05) ampenv)</code>
 </td></tr>
 <tr><td></td><td>
 exp-snd is a granular synthesis instrument with envelopes on
@@ -825,7 +825,7 @@ Its trailing parameters are:
     (filt-gain-scale 1)                   
     (filt-gain-base 1)                    
     (a1 .99)
-    (stats #t))                      
+    (stats #t)
 </pre>
 <i>a1</i> is the formant radius.
 <i>gain-freq-list</i> is a list of gains and frequencies to
@@ -1000,86 +1000,170 @@ anything other than .5 produces a longer decay.  It should be between 0.0 and 1.
 </td></tr>
 <tr><td></td><td>
 pqw-vox is an extension of Marc LeBrun's instrument vox (described below) to use phase-quadrature (single-sideband)
-waveshaping.
+waveshaping.  It uses both Chebyshev polynomial kinds to set up spectra-producing pairs of waveshapers that will
+add in such a way as to cancel either the upper or lower set of sidebands.  These are then ganged together as in
+the vox instrument to mimic moving formants.
+<pre>
+    (with-sound () 
+      (pqw-vox 0 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 1) .3 '(0 L 100 L) '(.5 .25 .1) 
+              '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5))))
 
-<!-- STOPPED HERE
-(definstrument+ (pqw-vox beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes)
-
-;;; (pqw-vox 0 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 0) 0 '(0 L 100 L) '(.33 .33 .33) '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5)))
-;;; (a test to see if the cancellation is working -- sounds like a mosquito)
-
-;;; (pqw-vox 0 2 200 200 .1 '(0 0 50 1 100 0) '(0 0 100 1) .1 '(0 UH 100 ER) '(.8 .15 .05) '((1 1 2 .5) (1 1 2 .5 3 .2 4 .1) (1 1 3 .1 4 .5)))
-;;; (pqw-vox 0 2 100 314 .1 '(0 0 50 1 100 0) '(0 0 100 1) .1 '(0 UH 100 ER) '(.8 .15 .05) '((1 1 2 .5) (1 1 2 .5 3 .2 4 .1) (1 1 3 .1 4 .5)))
-;;; (pqw-vox 0 2 200 314 .1 '(0 0 50 1 100 0) '(0 0 100 1) .01 '(0 UH 100 ER) '(.8 .15 .05) '((1 1 2 .5) (1 1 4 .1) (1 1 2 .1 4 .05)))
-;;; (pqw-vox 0 2 100 414 .2 '(0 0 50 1 100 0) '(0 0 100 1) .01 '(0 OW 50 E 100 ER) '(.8 .15 .05) '((1 1 2 .5 3 .1 4 .01) (1 1 4 .1) (1 1 2 .1 4 .05)))
-
-		  (pqw-vox 1.5 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 0) 0 '(0 L 100 L) '(.33 .33 .33) '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5)))
--->
-
+    (with-sound ()
+      (pqw-vox 0 2 200 200 .1 '(0 0 50 1 100 0) '(0 0 100 1) .1 '(0 UH 100 ER) '(.8 .15 .05) 
+               '((1 1 2 .5) (1 1 2 .5 3 .2 4 .1) (1 1 3 .1 4 .5)))
+      (pqw-vox 2 2 200 314 .1 '(0 0 50 1 100 0) '(0 0 100 1) .01 '(0 UH 100 ER) '(.8 .15 .05) 
+               '((1 1 2 .5) (1 1 4 .1) (1 1 2 .1 4 .05)))
+      (pqw-vox 4 2 100 414 .2 '(0 0 50 1 100 0) '(0 0 100 1) .01 '(0 OW 50 E 100 ER) '(.8 .15 .05) 
+               '((1 1 2 .5 3 .1 4 .01) (1 1 4 .1) (1 1 2 .1 4 .05))))
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- pqw -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>pqw</em> beg dur freq (etc)
+<em class=emdef>pqw</em> <code>(beg dur freq spacing-freq carrier-freq amplitude ampfun indexfun partials ...)</code>
 </td></tr>
 <tr><td></td><td>
-
+pqw is a simple phase-quadrature waveshaping instrument which produces asymmetric spectra.
+The trailing parameters just set the usual degree, distance, and reverb values.
+<pre>
+    (with-sound () (pqw 0 .5 200 1000 .2 '(0 0 25 1 100 0) '(0 1 100 0) '(2 .1 3 .3 6 .5)))
+</pre>
+To see the asymmetric spectrum most clearly, set the index function above to '(0 1 100 1).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- resflt -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>resflt</em> beg dur driver (etc)
+<em class=emdef>resflt</em> <code>(beg dur driver ...)</code>
 </td></tr>
 <tr><td></td><td>
-
+resflt, developed by Richard Karpen and Xavier Serra, sets up three resonators (two-pole filters), 
+then drives them with either white noise or a sum-of-cosines pulse train.
+Both can be used for vocal effects:
+<pre>
+    (with-sound () 
+      (resflt 0 1.0 0 0 0 #f .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 
+              500 .995 .1 1000 .995 .1 2000 .995 .1)
+      (resflt 1 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 #f #f 
+              500 .995 .1 1000 .995 .1 2000 .995 .1))
+</pre>
+The trailing parameters are:
+<pre>
+     ranfreq noiamp noifun cosamp cosfreq1 cosfreq0 cosnum ampcosfun freqcosfun 
+     frq1 r1 g1 frq2 r2 g2 frq3 r3 g3
+     :key (degree 0.0) (distance 1.0)(reverb-amount 0.005)
+</pre>
+Set <i>driver</i> to 0 to get the pulse train, or to 1 to get white noise.
+In the latter case, <i>ranfreq</i> is the random number generator frequency, <i>noiamp</i> is its amplitude,
+and <i>noifun</i> is an amplitude envelope on its output (filter input)
+In the pulse case, <i>cosamp</i> is the pulse train amplitude, <i>ampcosfun</i> the amplitude envelope,
+<i>cosfreq0</i> and <i>cosfreq1</i> set the frequency limits of <i>freqcosfun</i>,
+and <i>cosnum</i> sets the number of cosines in the pulse.
+The three resonators are centered at <i>frq1</i>, <i>frq2</i>, <i>frq3</i>,
+with pole-radius <i>r1</i>, <i>r2</i>, and <i>r3</i> respectively, and
+with gains of <i>g1</i>, <i>g2</i>, and <i>g3</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- reson -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>reson</em> beg dur freq amp (etc)
+<em class=emdef>reson</em> <code>(beg dur freq amp ...)</code>
 </td></tr>
 <tr><td></td><td>
+reson is a vocal simulator developed by John Chowning.  Its trailing parameters are:
+<pre>
+    numformants indxfun skewfun pcskew skewat skewdc vibfreq vibpc ranvibfreq ranvibpc 
+    degree distance reverb-amount data
 
+    <i>data</i> is a list of lists of form 
+      '(ampf resonfrq resonamp ampat ampdc dev0 dev1 indxat indxdc)
+</pre>
+Needless to say, no one has ever written out these parameters by hand, so here's an all-time first:
+<pre>
+    (with-sound ()
+      (reson 0.0 1.0 440 .1 2 '(0 0 100 1) '(0 0 100 1) .1 .1 .1 5 .01 5 .01 0 1.0 0.01
+   	     '(((0 0 100 1) 1200 .5 .1 .1 0 1.0 .1 .1) ((0 1 100 0) 2400 .5 .1 .1 0 1.0 .1 .1))))
+</pre>
+But JC got very nice vocal sounds from this -- I must have mistyped somewhere...
+Here's another stab at it:
+<pre>
+(with-sound ()
+      (reson 0.0 1.0 440 .1 2 '(0 1 100 0) '(0 0 100 1) .01 .1 .1 5 .01 5 .01 0 1.0 0.01
+   	     '(((0 1 100 1) 1000 .65 .1 .1 0 1.0 .1 .1) ((0 0 100 1) 2400 .15 .1 .1 0 1.0 .1 .1))))
+</pre>
+Take my word for it -- this thing does work.  If you find a good example, send me it!
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- rhodey -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>rhodey</em> beg dur freq amp (base .5)
+<em class=emdef>rhodey</em> <code>(beg dur freq amp :optional (base .5))</code>
 </td></tr>
 <tr><td></td><td>
-
+rhodey is another of Perry Cook's instruments, based on a pair of FM generators.
+<pre>
+    (with-sound () (rhodey 0 1 440 .2))
+</pre>
+Is this an electric piano?
+One of the oscillators is set to a frequency 15 times the requested <i>freq</i>, so for higher notes, you'll need to set the srate higher:
+<pre>
+    (with-sound (:srate 44100) (rhodey 0 1 880 .2))
+</pre>
+On second thought...
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- scratch -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="scratch">scratch</a> beg file src-ratio turnlist
+<A class=def NAME="scratch">scratch</a> <code>(beg file src-ratio turnlist)</code>
 </td></tr>
 <tr><td></td><td>
-<p><b>scratch</b> moves back and forth in a sound file according to
-a list of turn times (see also <a href="#exenvsoundinterp">env-sound-interp</a>).
-</p>
-
-
+scratch moves back and forth in a sound file according to
+a list of turn times much like <a href="#exenvsoundinterp">env-sound-interp</a>.
+With voice input, we can create a "Remembrance of Bugs Bunny":
+<pre>
+    (with-sound () (scratch 0.0 "now.snd" 1.5 '(0.0 .5 .25 1.0)))
+</pre>
+I translate this as: "go forward from 0.0 to 0.5 secs, backwards to 0.25 secs, then forward to 1.0 secs".
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- spectra -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>spectra</em> beg dur freq amp (etc)
+<em class=emdef>spectra</em> <code>(beg dur freq amp ...)</code>
 </td></tr>
 <tr><td></td><td>
-
+spectra is an additive-synthesis instrument with vibrato and an amplitude envelope.  It was intended originally
+to be used with the spectra in spectra.scm (information laboriously gathered at the dawn of the computer era
+by James A Moorer).  One such spectrum is labelled "p-a4", so we can hear it via:
+<pre>
+    (load "spectr.scm")
+    (with-sound () 
+      (spectra 0 1 440.0 .1 p-a4 '(0.0 0.0 1.0 1.0 5.0 0.9 12.0 0.5 25.0 0.25 100.0 0.0)))
+</pre>
+The trailing parameters are:
+<pre>
+ :optional (partials '(1 1 2 0.5))
+           (amp-envelope '(0 0 50 1 100 0))
+           (vibrato-amplitude 0.005)
+           (vibrato-speed 5.0)
+           (degree 0.0)
+           (distance 1.0)
+           (reverb-amount 0.005)
+</pre>
+We can pass our own partials:
+<pre>
+    (with-sound ()
+      (spectra 0 1 440.0 .1 '(1.0 .4 2.0 .2 3.0 .2 4.0 .1 6.0 .1) 
+               '(0.0 0.0 1.0 1.0 5.0 0.9 12.0 0.5 25.0 0.25 100.0 0.0)))
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 

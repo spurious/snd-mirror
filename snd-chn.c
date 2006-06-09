@@ -3158,9 +3158,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	  (color_map(ss) == 0) ||
 	  ((sp->nchans > 1) && 
 	   (sp->channel_style != CHANNELS_SEPARATE)))
-	make_axes(cp, fap,
-		  ((cp->x_axis_style == X_AXIS_IN_SAMPLES) || 
-		   (cp->x_axis_style == X_AXIS_IN_BEATS)) ? X_AXIS_IN_SECONDS : (cp->x_axis_style),
+	make_axes(cp, fap, X_AXIS_IN_SECONDS, /* x-axis-style only affects the time domain graph */
 		  (((cp->chan == 0) ||
 		    (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
 		  ((cp->show_grid) && 
