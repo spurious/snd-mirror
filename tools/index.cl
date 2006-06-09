@@ -459,7 +459,7 @@
 </head>
 <body bgcolor=white>
 
-<table width=\"100%\" border=1><tr><td bgcolor=\"beige\" align=\"center\" valign=\"middle\"><h1>Index</h1></td></tr></table>
+<table width=\"100%\" border=0><tr><td bgcolor=\"beige\" align=\"center\" valign=\"middle\"><h1>Index</h1></td></tr></table>
 <br>
 <!-- created ~A -->~%"
 		    #+clm (clm::c-strftime "%a %d-%b-%y %H:%M %Z") #-clm "whenever")

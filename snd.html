@@ -66,7 +66,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <br>
 
 <center>
-<table border=1><tr><td>
+<table border=0><tr><td>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
 <td><small><a href="extsnd.html" onmouseover="return escape('Snd extension and customization')">extsnd.html</a></small></td>
@@ -81,9 +81,9 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 </center>
 
 <br><br>
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
 
-<table border=1 cellpadding=5><th>this file:
+<table border=0 cellpadding=5><th>this file:
 </th><th>extsnd.html:</th><th>grfsnd.html:</th>
 <tr><td><small>
 <ul>
@@ -323,7 +323,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 
 <br>
 <br>
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="gettingstarted">Getting Started</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="gettingstarted">Getting Started</a></h2></td></tr></table>
 
 <p>Once compiled and loaded (see README.Snd for instructions), start Snd:</p>
 <pre>
@@ -457,7 +457,7 @@ falling asleep, but I don't know how to fix it -- the grumpy programmer in me is
 
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="fileoperations">File Operations</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="fileoperations">File Operations</a></h2></td></tr></table>
 <br>
 
 <table border=8 bordercolor="lightgreen" hspace=20>
@@ -730,7 +730,7 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ex
         <!-- I(revert file):A(revertfile) --><!-- I(print file):A(printfile) -->
 <br>
 
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="viewing">The Display</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="viewing">The Display</a></h3></td></tr></table>
 <br>
 
 <table border=8 bordercolor="lightgreen" hspace=20>
@@ -825,7 +825,7 @@ about each file as the mouse passes over it.
 
 <br>
 
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="options">Other Options</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="options">Other Options</a></h3></td></tr></table>
 <br>
 
 <table border=8 bordercolor="lightgreen" hspace=20>
@@ -877,7 +877,7 @@ current window and is updated as the window bounds change.
 If you'd like the fft size to reflect the current time domain
 window size:</p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke" 
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa" 
  onmouseover="this.T_OFFSETX=200; return escape('This is Scheme code that adds a \'hook\', a callback function that gets called whenever a graph is redrawn.  The function checks for a simple FFT graph (not a sonogram) via &quot;transform-graph?&quot; and &quot;transform-graph-type&quot;, then sets the FFT size (a power of 2) to reflect the current time domain window bounds.  See extsnd.html for full details on the extension language capabilities.  This code can be added to your Snd initialization file if you want it by default.  That process is described in grfsnd.html.')">
 <pre>
 (add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a>
@@ -988,7 +988,7 @@ if you linger over some other topic, its help info will be posted in the help di
 <br>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="editoperations">Edit Operations</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="editoperations">Edit Operations</a></h2></td></tr></table>
 <br>
 
 <table border=8 bordercolor="lightgreen" hspace=20>
@@ -1037,9 +1037,9 @@ panel' provides more complex editing operations, but
 has a chapter to itself.</p>
 
 <br>
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="thecursor">The Active Channel and The Cursor</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="thecursor">The Active Channel and The Cursor</a></h3></td></tr></table>
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4>The Active Channel</h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>The Active Channel</h4></td></tr></table>
 
 <p>Click in the time domain waveform to activate the cursor and select that channel.
 To make the selected channel stand out from the rest,
@@ -1056,7 +1056,7 @@ also move between windows with <A NAME="cxo"></a>C-x o.</p>
         <!-- I(select sound):K(C-x o)(cxo) -->
 
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Moving the Cursor</h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Moving the Cursor</h4></td></tr></table>
 
 <A NAME="movecursor"></a>
 <p>Any mouse click on the waveform causes the cursor to move to that point.
@@ -1091,7 +1091,7 @@ the cursor forward 2.1 seconds in the data.</p>
         <!-- I(move to mark):A(cj) --><!-- I(numeric arguments):A(cu) -->
 
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Moving the Window</h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Moving the Window</h4></td></tr></table>
 
 <A NAME="movingwindow"></a>
 <p>The simplest way to move the window (the portion of the data in the current graph) is to drag the
@@ -1143,7 +1143,7 @@ see <a href="extsnd.html#moveonepixel">move-one-pixel</a> and
         <!-- I(center selection):K(C-x l)(cxl) --><!-- I(center selection):A(cxl) -->
         <!-- I(axis bounds):K(C-x C-b, C-x C-p)(cxcb) --><!-- I(axis bounds):A(cxcb) -->
 <br>
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="marks">Marks</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="marks">Marks</a></h3></td></tr></table>
 
 <p>A 'mark' marks a particular sample in a sound (not a
 position in that sound).
@@ -1191,7 +1191,7 @@ file.
         <!-- I(save marks):A(savemarks) -->
 
 <br>
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="regions">Regions</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="regions">Regions</a></h3></td></tr></table>
 
 <p>A region is a portion of the sound
 data.  Although I'm not completely consistent in this document, 
@@ -1273,7 +1273,7 @@ is #t), the fft display, if any, displays the transform of the selected portion.
 </p>
 <br>
 
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="edithistory">The Edit List</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="edithistory">The Edit List</a></h3></td></tr></table>
 
 <p>The current state of the undo/redo list can be viewed
 as a scrolled list of strings in the pane on the left of the 
@@ -1295,7 +1295,7 @@ See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
 </p>
 
 <br>
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="howtoedit">How to...</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="howtoedit">How to...</a></h3></td></tr></table>
 <br>
 <table><tr><td>
 <ul>
@@ -1330,7 +1330,7 @@ See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
         <!-- I(amp env):M(Edit: Edit Env)(editenvelope) -->
 
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="saveopen">Save, open, close, print</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="saveopen">Save, open, close, print</a></h4></td></tr></table>
 
 <p>Most of these kinds of operations are accessible from the File menu.
 They can also
@@ -1349,7 +1349,7 @@ file which can be sent to directly a printer or saved for later use.</p>
         <!-- I(open file):K(C-x C-f)(cxcf) --><!-- I(open file):A(saveopen) -->
 
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="deleteinsert">Delete, insert, mix</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="deleteinsert">Delete, insert, mix</a></h4></td></tr></table>
 
 <A NAME="editcut"></a><p>The fastest way to delete a section is to drag the mouse through it and
 call the Edit menu's Delete selection option.  Any region
@@ -1378,7 +1378,7 @@ the Edit:Insert Selection menu option does the same with the current selection.
 </p>
 
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="multichannel">Multichannel operations</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="multichannel">Multichannel operations</a></h4></td></tr></table>
 
 <A NAME="syncbutton"></a><p>Normally each operation applies only to the currently
 active channel.  If, however, the sound's 'sync' button is set,
@@ -1428,7 +1428,7 @@ portions of the other channels will also be
 selected.</p>
 
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="ampenvs">Amplitude envelopes and scaling</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="ampenvs">Amplitude envelopes and scaling</a></h4></td></tr></table>
 
 <p>An envelope in Snd is a list of x y break-point pairs.
 The x axis range is arbitrary. 
@@ -1480,7 +1480,7 @@ the actual scaled-to value is just less than 1.0 to avoid the
         <!-- I(amp env):O(scale-to, scale-by)(scaleto) -->
 
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="menufind">Find</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="menufind">Find</a></h4></td></tr></table>
 
 <p>Searches in Snd refer to the sound data, and are,
 in general, patterned after Emacs.  When you type
@@ -1505,7 +1505,7 @@ The search commands are:</p>
 <p>These searching functions can be closures; the following searches for
 the next positive-going zero crossing, placing the cursor just before it:</p>
 
-<table border=1 cellpadding=5 hspace=20><tr><td bgcolor="WhiteSmoke" onmouseover="this.T_OFFSETX=100; return escape('This function is used in conjunction with C-s to search for a positive-going zero crossing.  C-s calls it on each sample, passing the sample value to us as \'n\' (the argument to the inner lambda). We save the last sample in \'lastn\', and watch for a case where lastn is less than 0.0 and the current sample is greater than or equal to 0.0.  When that happens, \'rtn\' is set to -1 to cause the cursor to back up one sample.  Otherwise the function returns #f which tells C-s to keep searching. The search function is wrapped in a \'let\' so that the last sample value is saved across function calls.')">
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa" onmouseover="this.T_OFFSETX=100; return escape('This function is used in conjunction with C-s to search for a positive-going zero crossing.  C-s calls it on each sample, passing the sample value to us as \'n\' (the argument to the inner lambda). We save the last sample in \'lastn\', and watch for a case where lastn is less than 0.0 and the current sample is greater than or equal to 0.0.  When that happens, \'rtn\' is set to -1 to cause the cursor to back up one sample.  Otherwise the function returns #f which tells C-s to keep searching. The search function is wrapped in a \'let\' so that the last sample value is saved across function calls.')">
 <pre>
 (define (zero+)
   (let ((lastn 0.0))
@@ -1522,7 +1522,7 @@ There are more examples in <a href="sndscm.html#exzeroplus">sndscm.html</a>.
 See also the functions <a href="extsnd.html#findchannel">find-channel</a> and <a href="extsnd.html#countmatches">count-matches</a>.
 </p>
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="changesamples">Change samples</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="changesamples">Change samples</a></h4></td></tr></table>
 
 <p>The simplest changes are:</p>
 <pre>
@@ -1537,7 +1537,7 @@ at the cursor to .1.  To set several samples to zero, use C-u &lt;number&gt; C-z
         <!-- I(change samples):A(changesamples) --><!-- I(change samples):K(C-z, C-x C-z)(cz) -->
 
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="undoredo">Undo, redo, revert</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="undoredo">Undo, redo, revert</a></h4></td></tr></table>
 
 <p>Snd supports 'unlimited undo' in the sense that you can
 move back and forth in the list of edits without any
@@ -1556,7 +1556,7 @@ are these keyboard commands:</p>
 </pre>
 <p>Revert is the same as undoing all edits.</p>
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="menuplay">Play</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="menuplay">Play</a></h4></td></tr></table>
 
 <p>To play a sound, click the 'play' button.  If the sound has more
 channels than your DAC(s), Snd will (normally) try to mix the extra channels
@@ -1628,7 +1628,7 @@ C-x p plays the currently active selection.
 </p>
 
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="mixingfiles">Mix Files</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="mixingfiles">Mix Files</a></h4></td></tr></table>
 
 <p>Mixing (adding, not multiplying by a sinusoid) is the most common
 editing operation performed on sounds, so there is relatively
@@ -1653,7 +1653,7 @@ be changed independently of anything else either through such functions as
 <img src="mixer.png" alt="mix tags">
 <br>
 <br>
-<table width="35%" border=1><tr><td bgcolor="#FDFDF2" valign="middle"><A NAME="mixdialog">The Mix Dialog</a></td></tr></table>
+<table width="35%" border=0><tr><td bgcolor="#FDFDF2" valign="middle"><A NAME="mixdialog">The Mix Dialog</a></td></tr></table>
 
 <p>The Mix Dialog (under the View Menu) provides various
 commonly-used controls on the currently chosen mix.  At the top are
@@ -1697,7 +1697,7 @@ or drop it on the main menubar to open it.
 
 
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="kbdmacros">Keyboard macros</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="kbdmacros">Keyboard macros</a></h4></td></tr></table>
 
 <p><A NAME="kce"></a>As in Emacs, C-x ( begins keyboard macro definition, C-x )
 ends it, and C-x e executes the last keyboard macro.  Unlike
@@ -1710,7 +1710,7 @@ more details.</p>
         <!-- I(keyboard macros):K(C-(, C-x e)(kce) --><!-- ) -->
         <!-- I(save macros):A(kbdmacros) -->
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="changeformat">Change file format</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="changeformat">Change file format</a></h4></td></tr></table>
 
 <p>To change the sound file's header or data format, use the File or Edit menu Save as option.
 Choose the header type you want, then the data format,
@@ -1721,7 +1721,7 @@ The Edit:Save dialog saves the selection in a new file.
         <!-- I(save file as):A(changeformat) -->
         <!-- I(change format):A(changeformat) -->
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="extendfile">Extend a File</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="extendfile">Extend a File</a></h4></td></tr></table>
 
 <p>
 The easiest way to extend the
@@ -1737,7 +1737,7 @@ automatically pad with zeros, if necessary.
 </p>
 <br>
 <!-- INDEX recordfile:Recording -->
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="recordfile">Record a File</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="recordfile">Record a File</a></h4></td></tr></table>
 
 <p>To make a recording, choose Record from the File menu.
 A window opens with the various recording controls (SGI and Linux shown below):</p>
@@ -1844,7 +1844,7 @@ the corner to return to the default settings.
 </blockquote></blockquote>
 
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="editenvelope">Edit or View an Envelope</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="editenvelope">Edit or View an Envelope</a></h4></td></tr></table>
 
 <img src="env.png" alt="picture of envelope editor" align=right>
 
@@ -1936,7 +1936,7 @@ improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling r
 	<!-- I(edit env):A(editenvelope) --><!-- I(edit env):M(Edit: Edit Env)(editenvelope) -->
 	<!-- I(view envs):A(editenvelope) --><!-- I(view envs):M(Edit: Edit Env)(editenvelope) -->
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="editheader">Edit, add, or remove the header</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="editheader">Edit, add, or remove the header</a></h4></td></tr></table>
 
 <p>The Edit menu's Edit Header option starts a dialog to edit, add, or
 remove the sound's header.  No change is made to the actual sound
@@ -1951,7 +1951,7 @@ After writing the new header, you should either close or update the
 associated sound.
 </p>
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="savedstate">Save session</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="savedstate">Save session</a></h4></td></tr></table>
 
 <p>At any time you can save the current
 state of Snd by calling <code>(save-state name)</code> where <i>name</i>
@@ -1964,7 +1964,7 @@ whatever. To load such a file after startup, <code>(load name)</code>.
         <!-- I(save session):A(savedstate) -->
         <!-- I(save session):L(save-state)(savestate) -->
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="centeryaxis">Center a tiny signal with DC</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="centeryaxis">Center a tiny signal with DC</a></h4></td></tr></table>
 
 <p>Due to the quantized nature of the y-axis position scroller, a tiny
 signal that is not centered on 0 can be a pain to position in the
@@ -1976,7 +1976,7 @@ M-x (set! (<a class=quiet href="extsnd.html#ybounds">y-bounds</a>) '(-.01 .01)) 
 
 	<!-- I(center tiny signal):A(centeryaxis) --><!-- I(center tiny signal):L(y-bounds)(ybounds) -->
 <br>
-<table width="50%" border=1><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="misccommands">Miscellaneous commands</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="misccommands">Miscellaneous commands</a></h4></td></tr></table>
 
 <p><A NAME="kgc"></a>C-g at any point aborts the current keyboard command
 sequence, as does any mouse click.  C-g can also interrupt most long
@@ -2027,7 +2027,7 @@ If there is no completion routine active, Tab is a no-op.
         <!-- I(temp directory):O(TMPDIR or /var/tmp) -->
 	<!-- I(change key binding):A(bindkey) --><!-- I(change key binding):L(bind-key)(bindkey) -->
 <br>
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="keyboardcommands">Keyboard Commands</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="keyboardcommands">Keyboard Commands</a></h3></td></tr></table>
 
 <p>There are two types of keyboard commands in Snd: 
 those associated with the Meta ('Alt') key, used as 
@@ -2234,7 +2234,7 @@ To delete listener text back to the previous command, use C-_.
 	<!-- I(smooth samples):L(smooth-channel)(smoothchannel) -->
 <br>
 <!-- INDEX controls:Control Panel -->
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="controls">The Control Panel</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="controls">The Control Panel</a></h2></td></tr></table>
 
 <p>The control panel is the portion of each sound's pane
 beneath the channel graphs.
@@ -2353,7 +2353,7 @@ For information on initialization, configuration, and connections to other progr
 </p>
 <br><br>
 
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="index">Index</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="index">Index</a></h2></td></tr></table>
 <br>
 
 <table border rows=118 hspace=20>
@@ -2485,7 +2485,7 @@ For information on initialization, configuration, and connections to other progr
 <br>
 
 <center>
-<table border=1><tr><td>
+<table border=0><tr><td>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
 <td><small><a href="extsnd.html" onmouseover="return escape('Snd extension and customization')">extsnd.html</a></small></td>

@@ -2,6 +2,8 @@
 ;;;
 ;;; all assume they're called within with-sound, most set up C-g to (throw 'with-sound-interrupt)
 
+(use-modules (ice-9 optargs))
+
 (provide 'snd-clm-ins.scm)
 
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
@@ -289,7 +291,6 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 	 (car2 (make-oscil :frequency 0.0))
 	 (car2-f (make-env :envelope (stretch-envelope ampenv2 25 ampattpt2 75 ampdecpt2)
 			   :scaler amp2 :duration dur)))
-    
     (ws-interrupt?)
     (run
      (lambda ()
@@ -1182,7 +1183,7 @@ is a physical model of a flute:
 	   (locsig loc i (* (env amplenv) 
 			    (oscil car (+ fm vib))))))))))
 
-(definstrument (jl-reverb)
+(definstrument (jl-reverb :optional (decay 3.0))
   (let* ((allpass1 (make-all-pass -0.700 0.700 2111))
 	 (allpass2 (make-all-pass -0.700 0.700  673))
 	 (allpass3 (make-all-pass -0.700 0.700  223))
@@ -1199,7 +1200,7 @@ is a physical model of a flute:
 	 (all-sums 0.0)
 	 (delA 0.0)
 	 (delB 0.0)
-	 (decay-dur (mus-srate))
+	 (decay-dur (* decay (mus-srate)))
 	 (len (+ decay-dur (mus-length *reverb*))))
     (ws-interrupt?)
     (run
@@ -2635,7 +2636,7 @@ mjkoskin@sci.fi
 	 (out-chans (mus-channels *output*))
 	 (mx (if matrix
 		 (make-mixer (max in-chans out-chans))
-		 #f))
+		 (make-scalar-mixer (max in-chans out-chans) 1.0)))
 	 (rev-mx (if (and *reverb* reverb-amount (> reverb-amount 0.0))
 		     (let ((rmx (make-mixer in-chans)))
 		       (do ((i 0 (1+ i)))
@@ -2675,9 +2676,11 @@ mjkoskin@sci.fi
 		(if (< inp out-chans)
 		    (mixer-set! mx inp inp matrix))))))
     (if (not srate)
+	;; no src
 	(begin
 	  (mus-mix *output* file st samps inloc mx envs)
 	  (if rev-mx (mus-mix *reverb* revframe st samps inloc rev-mx #f)))
+	;; with src
 	(let* ((inframe (make-frame in-chans))
 	       (outframe (make-frame out-chans))
 	       (srcs (make-vector in-chans #f)))
@@ -2685,21 +2688,33 @@ mjkoskin@sci.fi
 	      ((= inp in-chans))
 	    (vector-set! srcs inp (make-src :srate srate)))
 	  ;; can't use run here yet because 2-dim vect and #f elements
-	  (do ((i st (1+ i)))
-	      ((= i nd))
-	    (if envs
-		(do ((inp 0 (1+ inp)))
-		    ((= inp in-chans))
-		  (do ((outp 0 (1+ outp)))
-		      ((= outp out-chans))
-		    (if (and (vector-ref envs inp)
-			     (env? (vector-ref (vector-ref envs inp) outp)))
-			(mixer-set! mx inp outp (env (vector-ref (vector-ref envs inp) outp)))))))
-	    (do ((inp 0 (1+ inp)))
-		((= inp in-chans))
-	      (frame-set! inframe inp (src (vector-ref srcs inp) 0.0 (lambda (dir) (readin (vector-ref file inp))))))
-	    (frame->file *output* i (frame->frame inframe mx outframe))
-	    (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))))
+	  (if envs
+	      (run 
+	       (lambda ()
+		 (do ((i st (1+ i)))
+		     ((= i nd))
+		   (do ((inp 0 (1+ inp)))
+		       ((= inp in-chans))
+		     (do ((outp 0 (1+ outp)))
+			 ((= outp out-chans))
+		       (if (and (vector-ref envs inp)
+				(env? (vector-ref (vector-ref envs inp) outp)))
+			   (mixer-set! mx inp outp (env (vector-ref (vector-ref envs inp) outp)))))))
+		 (do ((inp 0 (1+ inp)))
+		     ((= inp in-chans))
+		   (frame-set! inframe inp (src (vector-ref srcs inp) 0.0 (lambda (dir) (readin (vector-ref file inp))))))
+		 (frame->file *output* i (frame->frame inframe mx outframe))
+		 (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))
+	      ;; no envs
+	      (run 
+	       (lambda ()
+		 (do ((i st (1+ i)))
+		     ((= i nd))
+		   (do ((inp 0 (1+ inp)))
+		       ((= inp in-chans))
+		     (frame-set! inframe inp (src (vector-ref srcs inp) 0.0 (lambda (dir) (readin (vector-ref file inp))))))
+		   (frame->file *output* i (frame->frame inframe mx outframe))
+		   (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))))))))
 
 #|
   (with-sound (:channels 2 :statistics #t)

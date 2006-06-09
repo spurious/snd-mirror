@@ -23,7 +23,7 @@
 <br>
 
 <center>
-<table border=1><tr><td>
+<table border=0><tr><td>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
 <td><small><a href="snd.html" onmouseover="return escape('basic Snd user-interface documentation')">snd.html</a></small></td>
@@ -38,7 +38,7 @@
 </center>
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
 <ul>
 <li><a href="#introduction">Introduction</a>
 <li><a href="#headers">Headers</a>
@@ -62,7 +62,7 @@
 <li><a href="#sndlibforth">Sndlib and Forth</a>
 </ul>
 <br>
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="introduction">Introduction</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="introduction">Introduction</a></h2></td></tr></table>
 
 <p>The sound library is a collection of sound file and audio hardware
 handlers written in C and running currently on SGI (either
@@ -104,7 +104,7 @@ SGI, and Sun.  It could conceivably work elsewhere.
 </p>
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="headers">Headers</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="headers">Headers</a></h2></td></tr></table>
 
 <p>Sound files have built-in descriptors known as headers.
 The following functions return the information in the header.
@@ -159,7 +159,7 @@ components that have been found can be read via functions such as
 </p>
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="data">Data</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="data">Data</a></h2></td></tr></table>
 
 <p>The following functions provide access to
 sound file data:</p>
@@ -219,7 +219,7 @@ file indicated by <i>fd</i> to the desired frame.
 </p>
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="hardware">Hardware</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="hardware">Hardware</a></h2></td></tr></table>
 
 <p>The following functions provide access to audio harware.  If an
 error occurs, they return -1. </p>
@@ -358,7 +358,7 @@ MUS_AUDIO_PORT      return list of available devices (e.g. MUS_AUDIO_MICROPHONE)
 </pre>
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="midi">MIDI</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="midi">MIDI</a></h2></td></tr></table>
 
 <p>
 There is some simple, very low-level MIDI support in sndlib.  
@@ -407,7 +407,7 @@ went wrong.
 </p>
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="music5">MusicV</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="music5">MusicV</a></h2></td></tr></table>
 
 <p>clm.c and friends implement all the generators found in CLM, a common lisp
 music V implementation, and clm2xen.c ties these into the languages supported by the
@@ -537,13 +537,13 @@ through mus_error which can be redirected or muffled.  See clm2xen.c for an exam
 </p>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="examples">Examples</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="examples">Examples</a></h2></td></tr></table>
 
 <p>In the following examples I've omitted the usual garrulous C-header
 gab and other inessential stuff.  The full
 program code is available as noted below.</p>
 <br>
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndinfo">SndInfo</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndinfo">SndInfo</a></h3></td></tr></table>
 
 <p>This program prints out a description of a sound file (sndinfo.c).</p>
 <pre>
@@ -580,7 +580,7 @@ int main(int argc, char *argv[])
 }
 </pre>
 <br>
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndplay">SndPlay</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndplay">SndPlay</a></h3></td></tr></table>
 
 <p>This code plays a sound file (sndplay.c):</p>
 
@@ -627,7 +627,7 @@ int main(int argc, char *argv[])
 
 </pre>
 <br>
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndrecord">SndRecord</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndrecord">SndRecord</a></h3></td></tr></table>
 
 <p>This code records a couple seconds of sound from a microphone.
 Input formats and sampling rates are dependent on available
@@ -666,7 +666,7 @@ int main(int argc, char *argv[])
 </pre>
 
 <br>
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="audinfo">AudInfo</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="audinfo">AudInfo</a></h3></td></tr></table>
 
 <p>This program describes the current audio harware state (audinfo.c):</p>
 <pre>
@@ -680,7 +680,7 @@ int main(int argc, char *argv[])
 </pre>
 
 <br>
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndsine">SndSine</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndsine">SndSine</a></h3></td></tr></table>
 
 <p>This program writes a one channel NeXT/Sun sound file
 containing a sine wave at 440 Hz.</p>
@@ -720,7 +720,7 @@ int main(int argc, char *argv[])
 </pre>
 
 <br>
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="clmosc">clmosc</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="clmosc">clmosc</a></h3></td></tr></table>
 
 <p>This is program uses the clm.c oscillator and output functions to write the same sine wave 
 as we wrote in SndSine.</p>
@@ -897,7 +897,7 @@ see the sndins directory, and in particular the README file, for details.
 </p>
 
 <br>
-<table width="80%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="otherexamples">Other Examples</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="otherexamples">Other Examples</a></h3></td></tr></table>
 
 <p>The primary impetus for the sound library was the development
 of Snd and CLM, both of which are freely available.
@@ -905,7 +905,7 @@ of Snd and CLM, both of which are freely available.
 <br>
 
 
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="currentstatus">Current Status</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="currentstatus">Current Status</a></h2></td></tr></table>
 <br>
 <table border=8 bordercolor="lightgreen" cellpadding=4 hspace=20> 
   <tr><th bgcolor="beige">System</th><th bgcolor="beige">SndSine</th><th bgcolor="beige">SndInfo</th><th bgcolor="beige">Audinfo</th><th bgcolor="beige">SndPlay</th><th bgcolor="beige">SndRecord</th><th bgcolor="beige">CLM</th><th bgcolor="beige">MIDI</th></tr>
@@ -959,7 +959,7 @@ of Snd and CLM, both of which are freely available.
 </td></tr></table>
 
 <br><br>
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="lowerlevels">Lower Levels</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="lowerlevels">Lower Levels</a></h2></td></tr></table>
 
 <p>If you'd like to go below the "sound" interface described above,
 the following functions are exported from sndlib.  You need to remember
@@ -1061,7 +1061,7 @@ to and from arrays:</p>
   int mus_array_to_file (const char *filename, mus_sample_t *ddata, int len, int srate, int channels)
 </pre>
 <br>
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="sndlibguile">Sndlib and Guile</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="sndlibguile">Sndlib and Guile</a></h2></td></tr></table>
 
 <p>Much of sndlib is accessible at run time in any program that has one of
 the languages supported by the xen package (Guile, Ruby, Forth);
@@ -1224,7 +1224,7 @@ Here's a more extended example, using code from Snd's play.scm, slightly revised
 to make it independent of Snd:
 </p>
 <br>
-<table border=1 cellpadding=5><tr><td bgcolor="WhiteSmoke"><pre>
+<table border=0 cellpadding=5><tr><td bgcolor="#fafafa"><pre>
 (use-modules (ice-9 format) (ice-9 optargs))
 
 (define lib (dynamic-link "/home/bil/test/sndlib/sndlib.so"))
@@ -1287,13 +1287,13 @@ Now, load this code into guile+sndlib, and <code>(play-sine 440 .1)</code>.
 </p>
 
 <br>
-<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="sndlibforth">Sndlib and Forth</a></h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="sndlibforth">Sndlib and Forth</a></h2></td></tr></table>
 <p>
 Michael Scholz has provided a Forth version of sndlib and CLM -- see the various *.fs files in the Snd tarball.
 </p>
 
 <center>
-<table border=1><tr><td>
+<table border=0><tr><td>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
 <td><small><a href="snd.html" onmouseover="return escape('basic Snd user-interface documentation')">snd.html</a></small></td>
