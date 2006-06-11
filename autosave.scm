@@ -61,10 +61,10 @@
 	(begin
 	  (for-each (lambda (snd)
 		      (if (> (unsaved-edits snd) 0)
-			  (begin
-			    (report-in-minibuffer "auto-saving..." snd)
+			  (let ((save-name (auto-save-temp-name snd)))
+			    (report-in-minibuffer (string-append "auto-saving as " save-name "...") snd)
 			    (in (* 1000 3) (lambda () (report-in-minibuffer "" snd)))
-			    (save-sound-as (auto-save-temp-name snd) snd)
+			    (save-sound-as save-name snd)
 			    (clear-unsaved-edits snd))))
 		    (sounds))
 	  (in (* 1000 auto-save-interval) auto-save-func))))

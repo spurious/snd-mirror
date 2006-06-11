@@ -60,9 +60,9 @@ char *xen_version(void)
   char *buf;
   buf = (char *)calloc(64, sizeof(char));
 #if HAVE_SNPRINTF
-  snprintf(buf, 64, "Xen: %s, Guile: %s", XEN_VERSION, XEN_TO_C_STRING(scm_version()));
+  snprintf(buf, 64, "Guile: %s, Xen: %s", XEN_TO_C_STRING(scm_version()), XEN_VERSION);
 #else
-  sprintf(buf, "Xen: %s, Guile: %s", XEN_VERSION, XEN_TO_C_STRING(scm_version()));
+  sprintf(buf, "Guile: %s, Xen: %s", XEN_TO_C_STRING(scm_version()), XEN_VERSION);
 #endif
   return(buf);
 }
@@ -554,19 +554,18 @@ char *xen_version(void)
   char *buf;
   buf = (char *)calloc(128, sizeof(char));
 #if HAVE_SNPRINTF
-  snprintf(buf, 128, "Xen: %s, Ruby: %s (%s)", 
+  snprintf(buf, 128, "Ruby: %s (%s), Xen: %s", 
 #else
-  sprintf(buf, "Xen: %s, Ruby: %s (%s)", 
+  sprintf(buf, "Ruby: %s (%s), Xen: %s", 
 #endif
-	  XEN_VERSION,
 #ifdef MUS_RUBY_VERSION
 	  MUS_RUBY_VERSION,
-	  RUBY_RELEASE_DATE
+	  RUBY_RELEASE_DATE,
 #else
 	  XEN_TO_C_STRING(XEN_EVAL_C_STRING("RUBY_VERSION")),
-	  XEN_TO_C_STRING(XEN_EVAL_C_STRING("RUBY_RELEASE_DATE"))
+	  XEN_TO_C_STRING(XEN_EVAL_C_STRING("RUBY_RELEASE_DATE")),
 #endif
-	  );
+	  XEN_VERSION);
   return(buf);
 }
 
@@ -1217,7 +1216,7 @@ void Init_Hook(void)
 
 char *xen_version(void)
 {
-  return fth_format("Xen: " XEN_VERSION ", Fth: %s", FTH_VERSION);
+  return fth_format("Fth: %s, Xen: " XEN_VERSION, FTH_VERSION);
 }
 
 void xen_gc_mark(XEN val)
@@ -1369,9 +1368,9 @@ char *xen_version(void)
   char *buf;
   buf = (char *)calloc(64, sizeof(char));
 #if HAVE_SNPRINTF
-  snprintf(buf, 64, "Xen: %s, Gauche: %s", XEN_VERSION, GAUCHE_VERSION);
+  snprintf(buf, 64, "Gauche: %s, Xen: %s", GAUCHE_VERSION, XEN_VERSION);
 #else
-  sprintf(buf, "Xen: %s, Gauche: %s", XEN_VERSION, GAUCHE_VERSION);
+  sprintf(buf, "Gauche: %s, Xen: %s", GAUCHE_VERSION, XEN_VERSION);
 #endif
   return(buf);
 }

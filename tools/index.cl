@@ -68,34 +68,41 @@
 
 (defun clean-and-downcase-first-char (str caps topic file)
 
-  (let ((def-pos (search " class=def" str)))
-    (when def-pos
-      (setf str (concatenate 'string (my-subseq str 0 def-pos) (my-subseq str (+ def-pos 10))))))
-    
-  (let* ((line (concatenate 'string "<a href=\"" (or file "") "#" (my-subseq str 9)))
-	 (ipos (search "<em" line)))
-    (when ipos
-      (let ((ispos (search "</em>" line)))
-	(setf line (concatenate 'string (my-subseq line 0 ipos) (my-subseq line (+ ipos 14) ispos) (my-subseq line (+ ispos 5))))
-	(if (not line) (warn "<em...> but no </em> for ~A" str))))
-    (let ((hpos (or (search "<h2>" line) (search "<h1>" line) (search "<h3>" line) (search "<h4>" line))))
-      (when hpos
-	(let ((hspos (or (search "</h2>" line) (search "</h1>" line) (search "</h3>" line) (search "</h4>" line))))
-	  (setf line (concatenate 'string (my-subseq line 0 hpos) (my-subseq line (+ hpos 4) hspos) (my-subseq line (+ hspos 5))))
-	  (if (not line) (warn "<hn> but no </hn> for ~A" str)))))
-
-    (flet ((search-caps (ln)
-	     (when caps
-	       (loop for cap in caps do
-		 (when (search cap ln)
-		   (return-from search-caps t))))))
-      (when (not (search-caps line))
-	;; now the hard part -- find the first character of the >name< business and downcase it
-	(let* ((bpos (search ">" line)))
-	  (setf (elt line (1+ bpos)) (char-downcase (elt line (1+ bpos)))))))
-    (let ((bpos (search ">" line))
-	  (epos (or (search "</a>" line) (search "</A>" line))))
-      (make-ind :name line :topic topic :file file :sortby (string-downcase (my-subseq line (1+ bpos) epos))))))
+  (if (char= (elt str 0) #\|)
+    ;; this is a main-index entry
+      (let* ((colonpos (or (search ":" str) (warn "no : in ~A" str)))
+	     (line (concatenate 'string "<a href=\"" (or file "") "#" (subseq str 1 colonpos) "\">" (subseq str (1+ colonpos)) "</a>")))
+	(make-ind :name line :topic topic :file file :sortby (subseq str (1+ colonpos))))
+     
+    (progn 
+      (let ((def-pos (search " class=def" str)))
+	(when def-pos
+	  (setf str (concatenate 'string (my-subseq str 0 def-pos) (my-subseq str (+ def-pos 10))))))
+      
+      (let* ((line (concatenate 'string "<a href=\"" (or file "") "#" (my-subseq str 9)))
+	     (ipos (search "<em" line)))
+	(when ipos
+	  (let ((ispos (search "</em>" line)))
+	    (setf line (concatenate 'string (my-subseq line 0 ipos) (my-subseq line (+ ipos 14) ispos) (my-subseq line (+ ispos 5))))
+	    (if (not line) (warn "<em...> but no </em> for ~A" str))))
+	(let ((hpos (or (search "<h2>" line) (search "<h1>" line) (search "<h3>" line) (search "<h4>" line))))
+	  (when hpos
+	    (let ((hspos (or (search "</h2>" line) (search "</h1>" line) (search "</h3>" line) (search "</h4>" line))))
+	      (setf line (concatenate 'string (my-subseq line 0 hpos) (my-subseq line (+ hpos 4) hspos) (my-subseq line (+ hspos 5))))
+	      (if (not line) (warn "<hn> but no </hn> for ~A" str)))))
+	
+	(flet ((search-caps (ln)
+		 (when caps
+		   (loop for cap in caps do
+		     (when (search cap ln)
+		       (return-from search-caps t))))))
+	  (when (not (search-caps line))
+	    ;; now the hard part -- find the first character of the >name< business and downcase it
+	    (let* ((bpos (search ">" line)))
+	      (setf (elt line (1+ bpos)) (char-downcase (elt line (1+ bpos)))))))
+	(let ((bpos (search ">" line))
+	      (epos (or (search "</a>" line) (search "</A>" line))))
+	  (make-ind :name line :topic topic :file file :sortby (string-downcase (my-subseq line (1+ bpos) epos))))))))
 
 (defun create-general (str file)
   (let* ((mid (search ":" str)))
@@ -344,12 +351,15 @@
 	      (when (and line (plusp len))
 		(let* ((dline line)
 		       (compos (search "<!-- INDEX" dline))
+		       (indpos (search "<!-- main-index" dline))
 		       (xpos (search "<TABLE " dline))
 		       (unxpos (search "</TABLE>" dline))
-		       (pos-simple (and (not compos) (or (search "<a name=" dline :test #'string=)
-							 (and with-clm-locals (search "<a Name=" dline :test #'string=)))))
-		       (pos-def (and (not compos) (or (search "<a class=def name=" dline :test #'string=)
-						      (and with-clm-locals (search "<a class=def Name=" dline :test #'string=)))))
+		       (pos-simple (and (not compos) (not indpos)
+					(or (search "<a name=" dline :test #'string=)
+					    (and with-clm-locals (search "<a Name=" dline :test #'string=)))))
+		       (pos-def (and (not compos) (not indpos)
+				     (or (search "<a class=def name=" dline :test #'string=)
+					 (and with-clm-locals (search "<a class=def Name=" dline :test #'string=)))))
 		       (pos (or pos-simple pos-def))
 		       (tpos (and (not pos) (search "<!-- TOPIC " line))))
 		  (if unxpos (setf xrefing nil))
@@ -370,25 +380,35 @@
 			      (setf (aref gfiles g) file)
 			      (setf (aref xrefs g) "")
 			      (incf g))))
-		      (if xpos
-			  (setf xrefing t)
-			(loop while pos do
-			  (setf dline (my-subseq dline pos))
-			  (let ((epos (or (search "</a>" dline) (search "</A>" dline))))
+		      (if indpos
+			  (let ((epos (search " -->" dline)))
 			    (if (not epos) 
-				(warn "<a> but no </a> for ~A" dline)
-			      (progn
-				(setf (aref names n) (my-subseq dline 0 (+ epos 4)))
+				(warn "<!-- main-index but no --> for ~A" dline)
+			      (when (or (not no-bold)
+					(and with-scm
+					     (not (string= "clm.html" file))))
+				(setf (aref names n) (my-subseq dline (+ indpos 16) epos))
 				(setf (aref files n) file)
-				(setf (aref topics n) topic)
-				(incf n)
-				(setf dline (my-subseq dline (+ epos 4)))
-				(setf pos-simple (or (search "<a name=" dline :test #'string=)
-						     (and with-clm-locals (search "<a Name=" dline :test #'string=))))
-				(setf pos-def (or (search "<a class=def name=" dline :test #'string=)
-						  (and with-clm-locals (search "<a class=def Name=" dline :test #'string=))))
-				(setf pos (or pos-simple pos-def))
-				)))))))
+				(incf n))))
+			(if xpos
+			    (setf xrefing t)
+			  (loop while pos do
+			    (setf dline (my-subseq dline pos))
+			    (let ((epos (or (search "</a>" dline) (search "</A>" dline))))
+			      (if (not epos) 
+				  (warn "<a> but no </a> for ~A" dline)
+				(progn
+				  (setf (aref names n) (my-subseq dline 0 (+ epos 4)))
+				  (setf (aref files n) file)
+				  (setf (aref topics n) topic)
+				  (incf n)
+				  (setf dline (my-subseq dline (+ epos 4)))
+				  (setf pos-simple (or (search "<a name=" dline :test #'string=)
+						       (and with-clm-locals (search "<a Name=" dline :test #'string=))))
+				  (setf pos-def (or (search "<a class=def name=" dline :test #'string=)
+						    (and with-clm-locals (search "<a class=def Name=" dline :test #'string=))))
+				  (setf pos (or pos-simple pos-def))
+				  ))))))))
 		  (if (and xrefing
 			   (or (not (char= (elt dline 0) #\<))
 			       (search "<a href" dline)
@@ -778,8 +798,7 @@
 
 		;; search for href
 		(let* ((dline line)
-		       (pos-norm (or (search "<a href=" dline)
-				     (search "<A HREF=" dline)))
+		       (pos-norm (search "<a href=" dline)) ; ignore A HREF
 		       (pos-quiet (search "<a class=quiet href=" dline))
 		       (pos-def (search "<a class=def href=" dline))
 		       (pos (or pos-norm pos-quiet pos-def))
@@ -808,8 +827,7 @@
 			  (setf (aref refs href) file)
 			  (incf href)
 			  (setf dline (my-subseq dline epos))
-			  (setf pos-norm (or (search "<a href=" dline)
-					     (search "<A HREF=" dline)))
+			  (setf pos-norm (search "<a href=" dline))
 			  (setf pos-quiet (search "<a class=quiet href=" dline))
 			  (setf pos-def (search "<a class=def href=" dline))
 			  (setf pos (or pos-norm pos-quiet pos-def))
