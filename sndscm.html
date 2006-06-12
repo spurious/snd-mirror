@@ -63,10 +63,10 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 <!-- TODO: when this table settles, add back the bgcolor="#f6f8ff" -->
 <!-- TODO: second layer here: CLM/Instruments, Filters/DSP, Graphics/Dialogs, Ladspa/RealTime, Effects?, Etc -->
 <!-- TODO: add most the names to the index -->
-<!-- TODO: the following are empty: fade dlocsig edit123 event freeverb grani ladspa maraca maxf singer sndwarp strad -->
+<!-- TODO: the following are empty: fade dlocsig edit123 event grani ladspa maxf singer sndwarp strad -->
 <!-- TODO: these need tablize: draw dsp env extensions marks mix rmsgain sndmotif -->
 <!-- TODO: these need work: bess debug? addedmenus editmenu neweffects examp hooks index infsnd prc95 rtex rtio -->
-<!-- TODO: fmv -> v, jcrev decl, mixer comments, pvoc?, rubber? sndtest? spectr?, v decl+doc, ws doc, xm-enved gtk? -->
+<!-- TODO: fmv -> v, pvoc?, rubber? sndtest? spectr?, v decl+doc, ws doc, xm-enved gtk? -->
 <!-- TODO: forgotten: stochastic.scm -->
 <!-- TODO: remember ruby and forth examples especially for ins -->
 <!-- TODO: remember crossrefs and main-index additions (all files) -->
@@ -74,8 +74,8 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 
 
 <!-- done, I hope: 
-    analog-filter auto-save bess bird clm-ins
-    heart moog musglyphs noise oscope peak-env piano[needs cf] poly
+    analog-filter auto-save bess bird clm-ins freeverb
+    heart jcrev maraca mixer moog musglyphs noise oscope peak-env piano poly
     rgb snd4|5|6|7
 -->
 
@@ -3227,29 +3227,53 @@ for the interested reader.
 <br>
 <A NAME="freeverbdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>freeverb</h2></td></tr></table>
 
-<p>These are translations by Michael Scholz of CLM's freeverb.ins.
+<p>freeverb is Jezar Wakefield's reverberator, translated by Michael Scholz from CLM's freeverb.ins (written by Fernando Lopez-Lezcano), and documented
+in freeverb/index.html in the CLM tarball.
 </p>
-<!--
-freeverb :optional
-		   (startime 0)
-		   (dur (+ 1.0 (mus-sound-duration (mus-file-name *reverb*))))
-		   :key
-		   (room-decay 0.5)
-		   (damping 0.5)
-		   (global 0.3)
-		   (predelay 0.03)
-		   (output-gain 1.0)
-		   (output-mixer #f)
-		   (scale-room-decay 0.28)
-		   (offset-room-decay 0.7)
-		   (combtuning '(1116 1188 1277 1356 1422 1491 1557 1617))
-		   (allpasstuning '(556 441 341 225))
-		   (scale-damping 0.4)
-		   (stereo-spread 23)
-		   (verbose #t)
--->
+<pre>
+    <a class=def name="freeverb">freeverb</a> :optional (startime 0) (dur (+ 1.0 (mus-sound-duration (mus-file-name *reverb*))))
+       :key (room-decay 0.5)
+            (damping 0.5)
+            (global 0.3)
+            (predelay 0.03)
+            (output-gain 1.0)
+            (output-mixer #f)
+            (scale-room-decay 0.28)
+            (offset-room-decay 0.7)
+            (combtuning '(1116 1188 1277 1356 1422 1491 1557 1617))
+            (allpasstuning '(556 441 341 225))
+            (scale-damping 0.4)
+            (stereo-spread 23)
+            (verbose #t)
+</pre>
+
+<p>Here is a paraphrase of some of Fernando's documentation.
+<i>room-decay</i>
+determines the decay time of the reverberation.
+<i>damping</i> set the high frequency damping; this parameter can be a number, or an array or a list (with same number of elements as output channels). It is possible to control the damping for each output channel.
+<i>global</i>
+controls how the outputs of all reverbs (one per channel) are mixed into the output stream. Specifying "0" will connect each reverberator directly to each output channel, "1" will mix all reverberated channels equally into all output channels. Intermediate values will allow for an arbitrary balance between local and global reverberation. The overall gain of the mixing matrix is kept constant. <i>output-mixer</i> overrides this parameter.
+<i>predelay</i> 
+sets the predelay that is applied to the input streams. An array or list lets you specify the individual predelays for all chanenels.
+<i>output-gain</i>
+is the overall gain multiplier for the output streams.
+<i>output-mixer</i>
+sets the output mixing matrix directly (rather than through <i>global</i>).
+</p>
+<pre>
+    (with-sound (:reverb freeverb :reverb-data '(:output-gain 3.0)) (fm-violin 0 .1 440 .1 :reverb-amount .1))
+</pre>
+
+<table bgcolor="aliceblue" border=0><tr>
+<td>
+<pre>see also: <a href="#jcrevdoc" onmouseover="return escape('an old reverberator')">jcrev</a> <a href="#nrev">nrev</a> <a href="extsnd.html#convolvewith">convolution</a>
+</pre>
+</td></tr></table>
 
 <br>
+
+
+
 <A NAME="granidoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>grani</h2></td></tr></table>
 
 <p>This is Fernando Lopez-Lezcano's grani instrument (CLM) translated to Scheme by Mike Scholz.
@@ -3452,6 +3476,21 @@ jcrev.scm version assumes it is being called within with-sound:
     (with-sound (:reverb jc-reverb) 
       (fm-violin 0 .1 440 .1 :reverb-amount .1))
 </pre>
+<p>jc-reverb has three parameters:
+</p>
+<pre>
+    <em class=emdef>jc-reverb</em> :optional (low-pass #f) (volume 1.0) (amp-env #f)
+</pre>
+
+<p>
+if <i>low-pass</i> if #t, a low pass filter is inserted before the output;
+<i>volume</i> can be used to boost the output;
+<i>amp-env</i> is an amplitude envelope that can be used to squelch the reverb ringing at the end of a piece.
+</p>
+<pre>
+    (with-sound (:reverb jc-reverb :reverb-data '(#t 1.5 (0 0 1 1 2 1 3 0))) (fm-violin 0 .1 440 .1))
+</pre>
+
 <p>It is possible to use the CLM/with-sound reverbs (or any such instrument) as
 an ordinary editing function:
 </p>
@@ -3477,7 +3516,7 @@ an ordinary editing function:
     (delete-file revout)
     (set! (<a class=quiet href="extsnd.html#samples">samples</a> 0 len snd #f #f #f 0 #f #t) output)))
 
-;;; (clm-reverb-sound .1 (lambda (dur) (jc-reverb #f 1.0 #f dur)))
+(clm-reverb-sound .1 jc-reverb)
 </pre></td></tr></table>
 
 <p>Another approach to this problem would be to use <a href="extsnd.html#snd_to_sample">snd-&gt;sample</a> to
@@ -3516,8 +3555,60 @@ the GUI extensions are in gui.scm.
 <br>
 <A NAME="maracadoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>maraca</h2></td></tr></table>
 
-<p>This file has a translation to Snd/Scheme of Perry Cook's maraca physical model.
+<!-- main-index |maracadoc:maracas -->
+
+<p>The maracas are physical models developed by Perry Cook (CMJ, vol 21 no 3 Fall 97, p 44).
 </p>
+<pre>
+    <em class=emdef>maraca</em> beg dur :optional 
+           (amp .1) 
+           (sound-decay 0.95) 
+           (system-decay 0.999) 
+           (probability .0625)
+           (shell-freq 3200.0)
+           (shell-reso 0.96)
+
+    maraca: (with-sound () (maraca 0 5 .5))
+    cabasa: (with-sound () (maraca 0 5 .5 0.95 0.997 0.5 3000.0 0.7))
+
+    <em class=emdef>big-maraca</em> beg dur :optional 
+               (amp .1) 
+               (sound-decay 0.95) 
+               (system-decay 0.999) 
+               (probability .0625)
+               (shell-freqs '(3200.0))
+               (shell-resos '(0.96))
+               (randiff .01)
+               (with-filters #t)
+
+    tambourine: 
+        (with-sound () 
+          (big-maraca 0 1 .25 0.95 0.9985 .03125 '(2300 5600 8100) '(0.96 0.995 0.995) .01))
+
+    sleighbells: 
+        (with-sound () 
+          (big-maraca 0 2 .15 0.97 0.9994 0.03125 '(2500 5300 6500 8300 9800) '(0.999 0.999 0.999 0.999 0.999)))
+
+    sekere: 
+        (with-sound ()
+          (big-maraca 0 2 .5 0.96 0.999 .0625 '(5500) '(0.6)))
+
+    windchimes: 
+        (with-sound () 
+          (big-maraca 0 4 .5 0.99995 0.95 .001 '(2200 2800 3400) '(0.995 0.995 0.995) .01 #f))
+</pre>
+<p>
+big-maraca is like maraca, but takes a list of resonances and includes low-pass filter (or no filter).
+</p>
+
+<table bgcolor="aliceblue" border=0><tr><td>
+<pre>see also: <a href="#noisedoc" onmouseover="return escape('FM noise instrument')">noise</a> <a href="clm.html#randomnumbers" onmouseover="return escape('random number generators')">rand</a>
+</pre></td>
+</tr></table>
+
+</pre>
+
+
 
 <br>
 <A NAME="marksdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>marks</h2></td></tr></table>
@@ -3731,12 +3822,14 @@ mixed in sound is filtered, then the mix takes place).
 <br>
 <A NAME="mixerdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>mixer</h2></td></tr></table>
 
+<!-- main-index |mixerdoc:mixer as matrix -->
+
 <p>mixer.scm has functions related to mixers and frames (linear algebra).  There are some
 others in the relevant section of snd-test. 
 </p>
 <pre>
-  <em class=emdef>frame-reverse</em> frame
-  <em class=emdef>frame-copy</em> frame
+  <a class=def name="framereverse">frame-reverse</a> frame
+  <a class=def name="framecopy">frame-copy</a> frame
 
   <em class=emdef>make-zero-mixer</em> size
   <em class=emdef>mixer-diagonal?</em> mixer
@@ -3746,11 +3839,11 @@ others in the relevant section of snd-test.
   <a class=def name="mixer-poly">mixer-poly</a> mixer coeffs
   <a class=def name="mixer-inverse">mixer-inverse</a> mixer
   <a class=def name="mixer-solve">mixer-solve</a> mixer frame
-  <em class=emdef>mixer-copy</em> mixer
+  <a class=def name="mixercopy">mixer-copy</a> mixer
 </pre>
 
 <p>
-<b>mixer-solve</b> is probably the most useful of these functions. 
+mixer-solve is probably the most useful of these functions. 
 If passed a mixer representing the coefficients of a set of simultaneous
 linear equations, and a frame representing the values thereof, it
 returns (in the original frame) the values of the independent
@@ -3765,6 +3858,7 @@ of coefficients.
     ]&gt;</em>
     :<em class=typing>(mixer-solve (make-mixer 2 1.0 1.0 2.0 1.0) (make-frame 2 4.0 5.0))</em>
     <em class=listener>#&lt;frame[2]: [1.000 3.000]&gt;</em>
+    ;; that is, x+y=4, 2x+y=5, so x=1, y=3
 </pre>
 <p>
 The rest should be obvious -- these are mostly
@@ -3773,6 +3867,8 @@ vectors, then performing the usual tricks upon them.  There are
 more such functions in snd-test.
 </p>
 <pre>
+    :<em class=typing>(frame-reverse (make-frame 2 .1 .2))</em>
+    <em class=listener>#&lt;frame[2]: [0.200 0.100]&gt;</em>
     :<em class=typing>(mixer-determinant (make-mixer 2 1.0 0.0 2.0 1.0))</em>
     <em class=listener>1.0</em>
     :<em class=typing>(mixer-trace (make-mixer 2 1.0 0.0 2.0 1.5))</em>
@@ -3790,13 +3886,19 @@ more such functions in snd-test.
      0.000 2.500
     ]&gt;</em>
 </pre>
-<p><b>mixer-poly</b> treats its mixer argument as the variable in a polynomial.
+<p>mixer-poly treats its mixer argument as the variable in a polynomial.
 The rest of the arguments are the polynomial coefficients starting with the constant term,
 so the example above computes 
 </p>
 <pre>
     2.0 * <b>M</b> + 0.5 * <b>I</b>
 </pre>
+
+<table bgcolor="aliceblue" border=0><tr><td>
+<pre>see also: <a href="clm.html#polynomial">polynomial</a> <a href="#polydoc" onmouseover="return escape('polynomial stuff')">poly</a> <a href="clm.html#framesandmixers" onmouseover="return escape('mixers')">frames and mixers</a>
+</pre></td>
+</tr></table>
+
 <br>
 
 
@@ -3940,6 +4042,10 @@ There is also a generator-like version of the instrument:
                   (degree (random 90.0)) (distance 1.0) (reverb-amount 0.005))</code>
 </pre>
 
+<table bgcolor="aliceblue" border=0><tr><td>
+<pre>see also: <a href="#maracadoc" onmouseover="return escape('noisy physical models')">maraca</a> <a href="clm.html#randomnumbers" onmouseover="return escape('random number generators')">rand</a>
+</pre></td>
+</tr></table>
 
 <br>
 <A NAME="oscopedoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>oscope</h2></td></tr></table>
@@ -4027,60 +4133,82 @@ The actual instrument name is <i>p</i>:
 goof around with them.
 </p>
 <pre>
-<em class=emdef>p</em> (start :key 
-   (duration 1.0)
-   (keyNum 60.0)              ; middleC=60: can use fractional part to detune
-   (strike-velocity 0.5)      ; corresponding normalized velocities (range: 0.0--1.0)
-   (pedal-down #f)	      ; set to t for sustain pedal down...pedal-down-times not yet impl.
-   (release-time-margin 0.75) ; extra compute time allowed beyond duration
-   (amp .5)                   ; amp scale of noise inputs...
-   (detuningFactor 1.0)
-   (detuningFactor-table '())
-   (stiffnessFactor 1.0)
-   (stiffnessFactor-table '())
-   (pedalPresenceFactor .3)
-   (longitudinalMode 10.5)
-   (StrikePositionInvFac -0.9)
-   (singleStringDecayRateFactor 1.0)
-   
-   ;; parameter tables indexed by keyNum
-   ;; you can override the loudPole-table by directly setting :loudPole to a value
-
-   loudPole (loudPole-table default-loudPole-table)
-   softPole (softPole-table default-softPole-table)
-   loudGain (loudGain-table default-loudGain-table)
-   softGain (softGain-table default-softGain-table)
-   strikePosition (strikePosition-table default-strikePosition-table)
-   detuning2 (detuning2-table default-detuning2-table)
-   detuning3 (detuning3-table default-detuning3-table)
-   stiffnessCoefficient (stiffnessCoefficient-table default-stiffnessCoefficient-table)
-   singleStringDecayRate (singleStringDecayRate-table default-singleStringDecayRate-table)
-   singleStringZero (singleStringZero-table default-singleStringZero-table)
-   singleStringPole (singleStringPole-table default-singleStringPole-table)
-   releaseLoopGain (releaseLoopGain-table default-releaseLoopGain-table)
-   DryTapFiltCoeft60 (DryTapFiltCoeft60-table default-DryTapFiltCoeft60-table)
-   DryTapFiltCoefTarget (DryTapFiltCoefTarget-table default-DryTapFiltCoefTarget-table)
-   DryTapFiltCoefCurrent (DryTapFiltCoefCurrent-table default-DryTapFiltCoefCurrent-table)
-   DryTapAmpt60 (DryTapAmpt60-table default-DryTapAmpt60-table)
-   sustainPedalLevel (sustainPedalLevel-table default-sustainPedalLevel-table)
-   pedalResonancePole (pedalResonancePole-table default-pedalResonancePole-table)
-   pedalEnvelopet60 (pedalEnvelopet60-table default-pedalEnvelopet60-table)
-   soundboardCutofft60 (soundboardCutofft60-table default-soundboardCutofft60-table)
-   DryPedalResonanceFactor (DryPedalResonanceFactor-table default-DryPedalResonanceFactor-table)
-   unaCordaGain (unaCordaGain-table default-unaCordaGain-table))
+    <em class=emdef>p</em> (start :key 
+       (duration 1.0)
+       (keyNum 60.0)              ; middleC=60: can use fractional part to detune
+       (strike-velocity 0.5)      ; corresponding normalized velocities (range: 0.0--1.0)
+       (pedal-down #f)	      ; set to t for sustain pedal down...pedal-down-times not yet impl.
+       (release-time-margin 0.75) ; extra compute time allowed beyond duration
+       (amp .5)                   ; amp scale of noise inputs...
+       (detuningFactor 1.0)
+       (detuningFactor-table '())
+       (stiffnessFactor 1.0)
+       (stiffnessFactor-table '())
+       (pedalPresenceFactor .3)
+       (longitudinalMode 10.5)
+       (StrikePositionInvFac -0.9)
+       (singleStringDecayRateFactor 1.0)
+       
+       ;; parameter tables indexed by keyNum
+       ;; you can override the loudPole-table by directly setting :loudPole to a value
+    
+       loudPole (loudPole-table default-loudPole-table)
+       softPole (softPole-table default-softPole-table)
+       loudGain (loudGain-table default-loudGain-table)
+       softGain (softGain-table default-softGain-table)
+       strikePosition (strikePosition-table default-strikePosition-table)
+       detuning2 (detuning2-table default-detuning2-table)
+       detuning3 (detuning3-table default-detuning3-table)
+       stiffnessCoefficient (stiffnessCoefficient-table default-stiffnessCoefficient-table)
+       singleStringDecayRate (singleStringDecayRate-table default-singleStringDecayRate-table)
+       singleStringZero (singleStringZero-table default-singleStringZero-table)
+       singleStringPole (singleStringPole-table default-singleStringPole-table)
+       releaseLoopGain (releaseLoopGain-table default-releaseLoopGain-table)
+       DryTapFiltCoeft60 (DryTapFiltCoeft60-table default-DryTapFiltCoeft60-table)
+       DryTapFiltCoefTarget (DryTapFiltCoefTarget-table default-DryTapFiltCoefTarget-table)
+       DryTapFiltCoefCurrent (DryTapFiltCoefCurrent-table default-DryTapFiltCoefCurrent-table)
+       DryTapAmpt60 (DryTapAmpt60-table default-DryTapAmpt60-table)
+       sustainPedalLevel (sustainPedalLevel-table default-sustainPedalLevel-table)
+       pedalResonancePole (pedalResonancePole-table default-pedalResonancePole-table)
+       pedalEnvelopet60 (pedalEnvelopet60-table default-pedalEnvelopet60-table)
+       soundboardCutofft60 (soundboardCutofft60-table default-soundboardCutofft60-table)
+       DryPedalResonanceFactor (DryPedalResonanceFactor-table default-DryPedalResonanceFactor-table)
+       unaCordaGain (unaCordaGain-table default-unaCordaGain-table))
 </pre>
 <p>Here is another example; there are a couple other examples at the end of piano.scm:
 </p>
 <pre>
-(with-sound ()
-  (do ((i 0 (1+ i))) ((= i 8))
-    (p (* i .5) :duration .5 :keyNum (+ 24 (* 12 i)) :strike-velocity .5 :amp .4 :DryPedalResonanceFactor .25
-     :detuningFactor-table '(24 5 36 7.0 48 7.5 60 12.0 72 20 84 30 96 100 108 300)
-		; scales the above detuning values so 1.0 is nominal detuning, 
-                ;  0.0 is exactly in tune,  &gt; 1.0 is out of tune
-     :stiffnessFactor-table '(21 1.5 24 1.5 36 1.5 48 1.5 60 1.4 72 1.3 84 1.2 96 1.0 108 1.0))))
-		; 0.0 to 1.0 is less stiff, 1.0 to 2.0 is more stiff
+    (with-sound ()
+      (do ((i 0 (1+ i))) ((= i 8))
+        (p (* i .5) :duration .5 :keyNum (+ 24 (* 12 i)) :strike-velocity .5 :amp .4 :DryPedalResonanceFactor .25
+         :detuningFactor-table '(24 5 36 7.0 48 7.5 60 12.0 72 20 84 30 96 100 108 300)
+    		    ; scales the above detuning values so 1.0 is nominal detuning, 
+                    ;  0.0 is exactly in tune,  &gt; 1.0 is out of tune
+         :stiffnessFactor-table '(21 1.5 24 1.5 36 1.5 48 1.5 60 1.4 72 1.3 84 1.2 96 1.0 108 1.0))))
+    		    ; 0.0 to 1.0 is less stiff, 1.0 to 2.0 is more stiff
 </pre>
+<p>In Ruby:
+</p>
+<pre>
+    include Piano
+    with_sound(:clm, false, :channels, 1) do
+      7.times do |i|
+        p(i * 0.5,
+          :duration, 0.5,
+          :keyNum, 24 + 12.0 * i,
+          :strike_velocity, 0.5,
+          :amp, 0.4,
+          :dryPedalResonanceFactor, 0.25)
+      end
+    end
+</pre>
+
+<table bgcolor="aliceblue" border=0><tr>
+<td>
+<pre>see also: <a href="#stereoflute" onmouseover="return escape('flute physical model')">flute</a> <a href="#maracadoc" onmouseover="return escape('maraca physical models')">maraca</a> <a href="#pluck" onmouseover="return escape('plucked string physical model')">pluck</a> <a href="#prc95doc" onmouseover="return escape('several physical models')">prc95</a> <a href="#singerdoc" onmouseover="return escape('singer physical model')">singer</a> <a href="#straddoc" onmouseover="return escape('violin physical model')">strad</a>
+</pre>
+</td></tr></table>
+
 <br>
 
 

@@ -29,26 +29,15 @@
 
 ;; For more information see clm-2/freeverb/index.html [MS]
 
+;;; changed to accomodate run and mono output, bill 11-Jun-06
+
 ;;; Code:
 
 (use-modules (ice-9 format) (ice-9 optargs))
 (provide 'snd-freeverb.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
-(def-clm-struct fcomb
-  delay
-  filter
-  (feedback 0.0 :type float))
-
-(define-macro (fcomb comb input)
-  `(delay (fcomb-delay ,comb)
-	  (+ ,input (* (one-zero (fcomb-filter ,comb)
-				 (tap (fcomb-delay ,comb)))
-		       (fcomb-feedback ,comb)))))
-
-(definstrument (freeverb :optional
-		   (startime 0)
-		   (dur (+ 1.0 (mus-sound-duration (mus-file-name *reverb*))))
+(definstrument (freeverb
 		   :key
 		   (room-decay 0.5)
 		   (damping 0.5)
@@ -63,7 +52,9 @@
 		   (scale-damping 0.4)
 		   (stereo-spread 23)
 		   (verbose #t))
-  (let* ((beg (seconds->samples startime))
+  (let* ((startime 0.0)
+	 (dur (+ 1.0 (mus-sound-duration (mus-file-name *reverb*))))
+	 (beg (seconds->samples startime))
 	 (end (cadr (times->samples startime dur)))
 	 (out-chans (mus-channels *output*))
 	 (out-mix (if (mixer? output-mixer) output-mixer
@@ -73,30 +64,36 @@
 	 (f-out (make-frame out-chans 0.0))
 	 (in-chans (mus-channels *reverb*))
 	 (f-in (make-frame in-chans 0.0))
-	 (predelays (make-array #f in-chans))
-	 (local-gain (+ (/ (- 1 global) (- 1 (/ out-chans)))
-			(/ out-chans)))
-	 (global-gain (/ (- out-chans (* local-gain out-chans))
-			 (- (* out-chans out-chans) out-chans)))
+	 (predelays (make-vector in-chans))
+	 (local-gain (if (= out-chans 1)
+			 global
+			 (+ (/ (- 1.0 global) (- 1 (/ 1.0 out-chans)))
+			    (/ 1.0 out-chans))))
+	 (global-gain (if (= out-chans 1)
+			  local-gain
+			  (/ (- out-chans (* local-gain out-chans))
+			     (- (* out-chans out-chans) out-chans))))
 	 (srate-scale (/ *clm-srate* 44100.0))
 	 (room-decay-val (+ (* room-decay scale-room-decay)
 			    offset-room-decay))
 	 (numcombs (length combtuning))
 	 (numallpasses (length allpasstuning))
-	 (combs (make-array #f out-chans numcombs))
-	 (allpasses (make-array #f out-chans numallpasses)))
+	 (comb-delays (make-vector (* out-chans numcombs)))
+	 (comb-filters (make-vector (* out-chans numcombs)))
+	 (comb-feedbacks (make-vector (* out-chans numcombs)))
+	 (allpasses (make-vector (* out-chans numallpasses))))
     (if verbose
 	(format #t ";;; freeverb: ~d input channels, ~d output channels~%" in-chans out-chans))
     (if (and (> in-chans 1)
-	     (/= in-chans out-chans))
+	     (not (= in-chans out-chans)))
 	(snd-error "input must be mono or input channels must equal output channels"))
     (if (not (mixer? output-mixer))
-	(if (array? output-mixer)
+	(if (vector? output-mixer)
 	    (do ((i 0 (1+ i)))
 		((= i out-chans))
 	      (do ((j 0 (1+ j)))
 		  ((= j out-chans))
-		(set! (mixer-ref out-mix i j) (array-ref output-mixer i j))))
+		(set! (mixer-ref out-mix i j) (vector-ref output-mixer (+ (* i out-chans) j)))))
 	    (do ((i 0 (1+ i)))
 		((= i out-chans))
 	      (do ((j 0 (1+ j)))
@@ -108,72 +105,90 @@
 			 out-chans))))))
     (do ((c 0 (1+ c)))
 	((= c in-chans))
-      (array-set! predelays (make-delay :size (* *clm-srate*
-						 (if (array? predelay)
-						     (array-ref predelay c)
-						     (if (list? predelay)
-							 (list-ref predelay c)
-							 predelay))))
-		  c))
+      (vector-set! predelays
+		   c
+		   (make-delay :size (inexact->exact (round (* *clm-srate*
+							       (if (vector? predelay)
+								   (vector-ref predelay c)
+								   (if (list? predelay)
+								       (list-ref predelay c)
+								       predelay))))))))
     (do ((c 0 (1+ c)))
 	((= c out-chans))
       (do ((i 0 (1+ i)))
-	  ((= i (length combtuning)))
+	  ((= i numcombs))
 	(let* ((tuning (list-ref combtuning i))
 	       (len (inexact->exact (floor (* srate-scale tuning))))
 	       (dmp (* scale-damping
-		       (if (array? damping)
-			   (array-ref damping i)
+		       (if (vector? damping)
+			   (vector-ref damping i)
 			   (if (list? damping)
 			       (list-ref damping i)
 			       damping)))))
 	  (if (odd? c)
 	      (set! len (+ len (inexact->exact (floor (* srate-scale stereo-spread))))))
-	  (array-set! combs
-		      (make-fcomb :delay (make-delay len)
-				  :feedback room-decay-val
-				  :filter (make-one-zero :a0 (- 1.0 dmp) :a1 dmp))
-		      c i))))
+	  (vector-set! comb-delays
+		       (+ (* c numcombs) i)
+		       (make-delay len))
+	  (vector-set! comb-filters
+		       (+ (* c numcombs) i)
+		       (make-one-zero :a0 (- 1.0 dmp) :a1 dmp))
+	  (vector-set! comb-feedbacks
+		       (+ (* c numcombs) i)
+		       room-decay-val))))
+
     (do ((c 0 (1+ c)))
 	((= c out-chans))
       (do ((i 0 (1+ i)))
-	  ((= i (length allpasstuning)))
+	  ((= i numallpasses))
 	(let* ((tuning (list-ref allpasstuning i))
 	       (len (inexact->exact (floor (* srate-scale tuning)))))
 	  (if (odd? c)
 	      (set! len (+ len (floor (inexact->exact (* srate-scale stereo-spread))))))
-	  (array-set! allpasses
-		      (make-all-pass :size len :feedforward -1 :feedback 0.5)
-		      c i))))
+	  (vector-set! allpasses
+		       (+ (* c numallpasses) i)
+		       (make-all-pass :size len :feedforward -1 :feedback 0.5)))))
     (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
+	 (declare (predelays clm-vector) (allpasses clm-vector) (comb-filters clm-vector) (comb-delays clm-vector) (comb-feedbacks float-vector))
 	 (file->frame *reverb* i f-in)
 	 (if (> in-chans 1)
 	     (do ((c 0 (1+ c)))
 		 ((= c out-chans))
-	       (frame-set! f-in c (delay (array-ref predelays c) (frame-ref f-in c)))
+	       (frame-set! f-in c (delay (vector-ref predelays c) (frame-ref f-in c)))
 	       (frame-set! f-out c 0.0)
 	       (do ((j 0 (1+ j)))
 		   ((= j numcombs))
-		 (frame-set! f-out c (+ (frame-ref f-out c) (fcomb (array-ref combs c j)
-								   (frame-ref f-in c))))))
+		 (let ((ctr (+ (* c numcombs) j)))
+		   (frame-set! f-out c (+ (frame-ref f-out c) 
+					  (delay (vector-ref comb-delays ctr)
+						 (+ (frame-ref f-in 0)
+						    (* (vector-ref comb-feedbacks ctr)
+						       (one-zero (vector-ref comb-filters ctr)
+								 (tap (vector-ref comb-delays ctr)))))))))))
 	     (begin
-	       (frame-set! f-in 0 (delay (array-ref predelays 0) (frame-ref f-in 0)))
+	       (frame-set! f-in 0 (delay (vector-ref predelays 0) (frame-ref f-in 0)))
 	       (do ((c 0 (1+ c)))
 		   ((= c out-chans))
 		 (frame-set! f-out c 0.0)
 		 (do ((j 0 (1+ j)))
 		     ((= j numcombs))
-		   (frame-set! f-out c (+ (frame-ref f-out c) (fcomb (array-ref combs c j)
-								     (frame-ref f-in 0))))))))
+		   (let ((ctr (+ (* c numcombs) j)))
+		     (frame-set! f-out c (+ (frame-ref f-out c) 
+					    (delay (vector-ref comb-delays ctr)
+						   (+ (frame-ref f-in 0)
+						      (* (vector-ref comb-feedbacks ctr)
+							 (one-zero (vector-ref comb-filters ctr)
+								   (tap (vector-ref comb-delays ctr)))))))))))))
 	 (do ((c 0 (1+ c)))
 	     ((= c out-chans))
 	   (do ((j 0 (1+ j)))
 	       ((= j numallpasses))
-	     (frame-set! f-out c (all-pass (array-ref allpasses c j) (frame-ref f-out c)))))
+	     (frame-set! f-out c (all-pass (vector-ref allpasses (+ (* c numallpasses) j))
+					   (frame-ref f-out c)))))
 	 (frame->file *output* i (frame->frame f-out out-mix out-buf)))))))
 
 ;; freeverb.scm ends here
