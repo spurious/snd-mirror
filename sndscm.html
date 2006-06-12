@@ -1,4 +1,24 @@
 <html>
+
+<!-- TODO: when this table settles, add back the bgcolor="#f6f8ff" -->
+<!-- TODO: second layer here: CLM/Instruments, Filters/DSP, Graphics/Dialogs, Ladspa/RealTime, Effects?, Etc -->
+<!-- TODO: add most the names to the index -->
+<!-- TODO: the following are empty: dlocsig edit123 event grani ladspa maxf singer sndwarp strad -->
+<!-- TODO: these need tablize: draw dsp env extensions marks mix rmsgain sndmotif -->
+<!-- TODO: these need work: bess debug? addedmenus editmenu neweffects examp hooks index infsnd prc95 rtex rtio -->
+<!-- TODO: pvoc?, rubber? sndtest? spectr?, ws doc, xm-enved gtk? -->
+<!-- TODO: forgotten: stochastic.scm -->
+<!-- TODO: remember ruby and forth examples especially for ins -->
+<!-- TODO: remember crossrefs and main-index additions (all files) -->
+<!-- TODO: check effects-utils.scm kmenu.scm pd-*.scm snd-hobbit.scm (rb/fs?) -->
+
+
+<!-- done, I hope: 
+    analog-filter auto-save bess bird clm-ins fade freeverb
+    heart jcrev maraca mixer moog musglyphs noise oscope peak-env piano poly
+    rgb snd4|5|6|7 v
+-->
+
 <!-- documentation for some of the Scheme/Ruby/Forth code included with Snd -->
 <head>
 <title>Scheme, Ruby, and Forth Functions included with Snd</title>
@@ -60,26 +80,6 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 
 <br>
 
-<!-- TODO: when this table settles, add back the bgcolor="#f6f8ff" -->
-<!-- TODO: second layer here: CLM/Instruments, Filters/DSP, Graphics/Dialogs, Ladspa/RealTime, Effects?, Etc -->
-<!-- TODO: add most the names to the index -->
-<!-- TODO: the following are empty: fade dlocsig edit123 event grani ladspa maxf singer sndwarp strad -->
-<!-- TODO: these need tablize: draw dsp env extensions marks mix rmsgain sndmotif -->
-<!-- TODO: these need work: bess debug? addedmenus editmenu neweffects examp hooks index infsnd prc95 rtex rtio -->
-<!-- TODO: fmv -> v, pvoc?, rubber? sndtest? spectr?, v decl+doc, ws doc, xm-enved gtk? -->
-<!-- TODO: forgotten: stochastic.scm -->
-<!-- TODO: remember ruby and forth examples especially for ins -->
-<!-- TODO: remember crossrefs and main-index additions (all files) -->
-<!-- TODO: check effects-utils.scm kmenu.scm pd-*.scm snd-hobbit.scm (rb/fs?) -->
-
-
-<!-- done, I hope: 
-    analog-filter auto-save bess bird clm-ins freeverb
-    heart jcrev maraca mixer moog musglyphs noise oscope peak-env piano poly
-    rgb snd4|5|6|7
--->
-
-
 <table border=8 bordercolor="lightsteelblue" cellpadding=6><tr><td>
 <table border=0 cellspacing=0 cellpadding=2>
 <tr><th colspan=2 bgcolor="beige">Contents</th></tr>
@@ -102,7 +102,6 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 <tr><td><a href="#exampdoc">examp</a></td><td>many examples</td></tr>
 <tr><td><a href="#extensionsdoc">extensions</a></td><td>various generally useful Snd extensions</td></tr>
 <tr><td><a href="#fadedoc">fade</a></td>  <td>frequency-domain cross-fades</td></tr>
-<tr><td><a href="#fmvdoc">fmv</a></td>                      <td>a controller for the fm-violin</td></tr>
 <tr><td><a href="#freeverbdoc">freeverb</a></td><td>a reverb</td></tr>
 <tr><td><a href="#granidoc">grani</a></td>                  <td>CLM's grani (Fernando Lopez-Lezcano) translated by Mike Scholz</td></tr>
 <tr><td><a href="#heartdoc">heart</a></td><td>use Snd with non-sound (arbitrary range) data</td></tr>
@@ -1436,7 +1435,7 @@ the differences between the CL and Scheme instruments.
 
 <table bgcolor="aliceblue" border=0><tr>
 <td>
-<pre>see also: <a href="#birddoc" onmouseover="return escape('bird and bigbird')">bird</a> <a href="clm.html#clmtop" onmouseover="return escape('many examples')">clm</a> <a href="#dlocsigdoc" onmouseover="return escape('moving sounds')">dlocsig</a> <a href="#exampdoc" onmouseover="return escape('sound effects')">examp</a> <a href="#fadedoc" onmouseover="return escape('frequency domain cross fade')">fade</a> <a href="fm.html#fmintro" onmouseover="return escape('FM examples')">fm</a> <a href="#fmvdoc" onmouseover="return escape('realtime fm-violin controls')">fmv</a> <a href="#freeverbdoc" onmouseover="return escape('a reverberator')">freeverb</a> <a href="#grapheqdoc" onmouseover="return escape('graphic equalizer')">graphEq</a> <a href="#granidoc" onmouseover="return escape('granular synthesis')">grani</a> <a href="#jcrevdoc" onmouseover="return escape('an old reverberator')">jcrev</a> <a href="#maracadoc" onmouseover="return escape('maraca physical models')">maraca</a> 
+<pre>see also: <a href="#birddoc" onmouseover="return escape('bird and bigbird')">bird</a> <a href="clm.html#clmtop" onmouseover="return escape('many examples')">clm</a> <a href="#dlocsigdoc" onmouseover="return escape('moving sounds')">dlocsig</a> <a href="#exampdoc" onmouseover="return escape('sound effects')">examp</a> <a href="#fadedoc" onmouseover="return escape('frequency domain cross fade')">fade</a> <a href="fm.html#fmintro" onmouseover="return escape('FM examples')">fm</a> <a href="#vdoc" onmouseover="return escape('realtime fm-violin controls')">fmv</a> <a href="#freeverbdoc" onmouseover="return escape('a reverberator')">freeverb</a> <a href="#grapheqdoc" onmouseover="return escape('graphic equalizer')">graphEq</a> <a href="#granidoc" onmouseover="return escape('granular synthesis')">grani</a> <a href="#jcrevdoc" onmouseover="return escape('an old reverberator')">jcrev</a> <a href="#maracadoc" onmouseover="return escape('maraca physical models')">maraca</a> 
           <a href="#maxfdoc" onmouseover="return escape('a resonator')">maxf</a> <a href="#noisedoc" onmouseover="return escape('noise-maker')">noise</a> <a href="#pianodoc" onmouseover="return escape('piano physical model')">piano</a> <a href="#prc95doc" onmouseover="return escape('several physical models')">prc95</a> <a href="#pvocdoc" onmouseover="return escape('phase-vocoder')">pvoc</a> <a href="#rtexdoc" onmouseover="return escape('real-time examples')">rt-examples</a> <a href="#singerdoc" onmouseover="return escape('singer physical model')">singer</a> <a href="#sndwarpdoc" onmouseover="return escape('sound effect')">sndwarp</a> <a href="#stochasticdoc" onmouseover="return escape('dynamic stochastic synthesis')">stochastic</a> <a href="#straddoc" onmouseover="return escape('violin physical model')">strad</a> <a href="#wsdoc" onmouseover="return escape('with-sound')">ws</a>
 </pre>
 </td></tr></table>
@@ -3157,74 +3156,60 @@ up and down moving ramps look symmetrical around a break point.
 
 <A NAME="fadedoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>fade</h2></td></tr></table>
 
+<!-- main-index |fadedoc:cross-fade (frequency domain) -->
+
 <p>
-The two instruments in fade.scm perform frequency-domain cross-fades, that is, the
+The two functions in fade.scm perform frequency-domain cross-fades, that is, the
 cross-fade is handled by a bank of bandpass filters (<a class=quiet href="clm.html#formant">formant</a> generators).  The effect
 is sometimes only slightly different from a normal (time-domain) cross-fade, but
 there are some interesting possibilities ("sound evaporation", etc).
 </p>
+<pre>
+    <em class=emdef>cross-fade</em> beg dur amp file1 file2 ramp-beg ramp-dur ramp-type bank-dur fs fwidth
+</pre>
+<p>
+cross-fade stitches <i>file1</i> to <i>file2</i> using filtering to provide the
+join (rather than amplitude ramps).  <i>ramp-type</i> can be 0: sweep up,
+1: sweep down, 2: sweep split from the middle; "sweep up" means that the
+low frequencies are filtered out first, etc.  <i>fs</i> is how many formants to
+set up; <i>fwidth</i> is the formant resonance width control; <i>ramp-beg</i> and
+<i>ramp-dur</i> set the start point and length of the sweep; <i>bank-dur</i>
+controls how much time is spent in the formant bank before starting or after ending
+the ramp.
+For some reason, when I translated
+cross-fade from CLM, I turned it into a function, rather than an instrument, so
+the fade results are returned in a vct.
+</p>
+<pre>
+    (vct->channel (cross-fade 0 1.5 1.0 0 1 0.5 .5 0 1.0 256 2))
+</pre>
+<p>
+These fades seem more successful to me when done relatively quickly (the opposite of the dissolve-fade below
+which is best if done as slowly as possible).  With any luck the "sweep up" case can produce a sort of "evaporation" effect.
+A similar idea is behind dissolve-fade:
+</p>
+<pre>
+    <em class=emdef>dissolve-fade</em> beg dur amp file1 file2 fsize r lo hi
+</pre>
+<p>It ramps in and out frequency bands chosen at random.  The original hope was to get something like a graphical dissolve,
+but it turns out to be better to let the random changes float along with no overall
+direction.  If the current band amplitude is 1.0, we send it toward 0.0 and vice versa.  Given patience
+and a suitably noisy original, strange pitches emerge and submerge.  <i>fsize</i> is the formant bank size;
+<i>r</i> is the same as <i>fwidth</i> in cross-fade (resonance width) modulo a factor of 2 (sigh...).
+<i>lo</i> and <i>hi</i> set the portion of the formant bank that is active during the dissolve.
+</p>
+<pre>
+    (vct->channel (dissolve-fade 0 2 1 0 1 1024 2 2 #f))
+</pre>
+
+<table bgcolor="aliceblue" border=0><tr>
+<td>
+<pre>see also: <a href="#mixdoc" onmouseover="return escape('cross-fade in amplitude')">pan-mix</a>
+</pre>
+</td></tr></table>
+
 <br>
 
-<A NAME="fmvdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>fmv</h2></td></tr></table>
-
-<p>fmv.scm implements the fm-violin (v.scm) as a CLM-style generator, making it possible
-to call the violin anywhere a generator could be called; since each call on the fm-violin
-function produces the next sample of the given violin, this form of the fm-violin is easy
-to call in "real-time" situations.  Any other CLM-style instrument could
-be rewritten in the same form.
-</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-  <em class=emdef>make-fm-violin</em>
-    frequency amplitude #:key (fm-index 1.0) (amp-env #f) (periodic-vibrato-rate 5.0) (random-vibrato-rate 16.0)
-    (periodic-vibrato-amplitude 0.0025) (random-vibrato-amplitude 0.005) (noise-amount 0.0) (noise-freq 1000.0)
-    (ind-noise-freq 10.0) (ind-noise-amount 0.0) (amp-noise-freq 20.0) (amp-noise-amount 0.0) (gliss-env #f)
-    (fm1-env #f) (fm2-env #f) (fm3-env #f) (fm1-rat 1.0) (fm2-rat 3.0) (fm3-rat 4.0) (fm1-index #f) (fm2-index #f) 
-    (fm3-index #f) (base 1.0) #:allow-other-keys
-
-  <em class=emdef>fm-violin</em> gen
-  <em class=emdef>fm-violin-ins</em> [same args as original violin in v.scm]
-</pre></td></tr></table>
-
-<p><i>fm-violin-ins</i> shows how this generator can be fitted into the original fm-violin code.
-The <b>make-fm-violin</b> function uses the optional arguments support from Guile (optargs.scm, loaded
-via <code>(use-modules (ice-9 optargs))</code>). The plethora of arguments is an historical artifact;
-normally only a few of them are used at a time.  There are two examples of calling this generator
-in fmv.scm, the simpler one being:
-</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define test-v 
-  (lambda (beg dur freq amp amp-env)
-    (let ((v (<em class=red>make-fm-violin</em>
-	      freq amp 
-	      :amp-env (let ((e (<a class=quiet href="clm.html#make-env">make-env</a> :envelope (or amp-env '(0 0 1 1 2 0)) 
-					  :scaler amp 
-					  :end dur)))
-			 (lambda () (<a class=quiet href="clm.html#env">env</a> e)))))
-	  (data (<a class=quiet href="extsnd.html#channel_to_vct">channel-&gt;vct</a> beg dur)))
-      (do ((i 0 (1+ i)))
-	  ((= i dur))
-	(<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (+ (<a class=quiet href="extsnd.html#vctref">vct-ref</a> data i)
-			    (<em class=red>v</em>))))
-      (<a class=quiet href="extsnd.html#setsamples">set-samples</a> beg dur data))))
-</pre></td></tr></table>
-
-<p>Here we are setting up an fm-violin generator (via make-fm-violin), then
-calling it <i>dur</i> times, mixing its output into the current data (this could
-also use mix-vct and so on).  The generator is called via <code>(v)</code>.
-As can be seen here, each envelope is treated as a function called on each sample
-very much like the "as-needed" input in src or granulate; the envelopes could actually be any
-arbitrary function you like (see test-v1 in fmv.scm which uses an oscillator as one of
-the fm index envelopes).  One complication in some "real-time" situations is that
-you don't know in advance how long a note will be; in this case, the envelope
-generating functions should have attack and decay ramps, triggered by note-on and
-note-off; once the ramp has reached its end point, the end value should be held;
-the note itself should be called until it has had time to ramp off; an exercise
-for the interested reader.
-</p>
-
-<br>
 <A NAME="freeverbdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>freeverb</h2></td></tr></table>
 
 <p>freeverb is Jezar Wakefield's reverberator, translated by Michael Scholz from CLM's freeverb.ins (written by Fernando Lopez-Lezcano), and documented
@@ -3507,14 +3492,20 @@ an ordinary editing function:
     (<a class=quiet href="extsnd.html#scaleby">scale-by</a> reverb-amount snd)
     (<a class=quiet href="extsnd.html#savesoundas">save-sound-as</a> revout snd)
     (<a class=quiet href="extsnd.html#undo">undo</a> 1 snd)
-    (set! *output* (<a class=quiet href="clm.html#continue-sample-&gt;file">continue-sample-&gt;file</a> output))
-    (set! (<a class=quiet href="clm.html#mussrate">mus-srate</a>) (<a class=quiet href="extsnd.html#srate">srate</a> snd))
-    (set! *reverb* (<a class=quiet href="clm.html#make-file-&gt;sample">make-file-&gt;sample</a> revout))
-    (apply reverb reverb-data)
-    (<a class=quiet href="clm.html#mus-close">mus-close</a> *reverb*)
-    (<a class=quiet href="clm.html#mus-close">mus-close</a> *output*)
-    (delete-file revout)
-    (set! (<a class=quiet href="extsnd.html#samples">samples</a> 0 len snd #f #f #f 0 #f #t) output)))
+    (dynamic-wind
+      (lambda ()
+        (set! *output* (<a class=quiet href="clm.html#continue-sample-&gt;file">continue-sample-&gt;file</a> output))
+        (set! (<a class=quiet href="clm.html#mussrate">mus-srate</a>) (<a class=quiet href="extsnd.html#srate">srate</a> snd))
+        (set! *reverb* (<a class=quiet href="clm.html#make-file-&gt;sample">make-file-&gt;sample</a> revout)))
+      (lambda ()
+        (apply reverb reverb-data))
+      (lambda ()
+        (<a class=quiet href="clm.html#mus-close">mus-close</a> *reverb*)
+        (<a class=quiet href="clm.html#mus-close">mus-close</a> *output*)
+        (set! *reverb* #f)
+        (set! *output* #f)
+        (delete-file revout)
+        (set! (<a class=quiet href="extsnd.html#samples">samples</a> 0 len snd #f #f #f 0 #f #t) output)))))
 
 (clm-reverb-sound .1 jc-reverb)
 </pre></td></tr></table>
@@ -3718,6 +3709,8 @@ Max Mathews.
 
 <br>
 <A NAME="mixdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>mix</h2></td></tr></table>
+
+<!-- main-index |mixdoc:cross-fade (amplitude) -->
 
 <p>mix.scm provides various mix and track related utilities. 
 
@@ -5199,17 +5192,126 @@ know what instrument some of the labels refer to.
 </p>
 <br>
 
-<A NAME="vdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>v</h2></td></tr></table>
+<A NAME="vdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>v and fmv</h2></td></tr></table>
 
 <!-- main-index |vdoc:fm-violin -->
 
 <p>The fm violin was my favorite instrument while working in the 70's and 80's,
-primarily on the Samson box.  It was developed in Mus10 (ca 1977) based on ideas of John Chowning;
-a Mus10 version was (in this code ":=" is used in place of the original SAIL left arrow character,
-and so on):
+primarily on the Samson box.  It was developed in Mus10 (ca 1977) based on ideas of John Chowning.
+</p>
+<pre>
+<em class=emdef>fm-violin</em> startime dur frequency amplitude :key
+	    (fm-index 1.0)                        ; scales all indices
+	    (amp-env '(0 0  25 1  75 1  100 0))   ; amplitude envelope
+	    (periodic-vibrato-rate 5.0) 
+	    (random-vibrato-rate 16.0)            ; jitter added to vibrato
+	    (periodic-vibrato-amplitude 0.0025) 
+	    (random-vibrato-amplitude 0.005)
+	    (noise-amount 0.0)                    ; noise added to modulation
+	    (noise-freq 1000.0)
+	    (ind-noise-freq 10.0)                 ; index envelope jitter
+	    (ind-noise-amount 0.0)
+	    (amp-noise-freq 20.0)                 ; amplitude envelope jitter
+	    (amp-noise-amount 0.0)
+	    (gliss-env '(0 0  100 0))             ; frequency envelope
+	    (glissando-amount 0.0) 
+	    (fm1-env '(0 1  25 .4  75 .6  100 0)) ; 1:1 modulator amp (fm index) env
+	    (fm2-env '(0 1  25 .4  75 .6  100 0)) ; 3:1 mod env
+	    (fm3-env '(0 1  25 .4  75 .6  100 0)) ; 4:1 mod env
+	    (fm1-rat 1.0)                         ; 1:1 actual mod:carrier freq ratio
+	    (fm2-rat 3.0)	                  ; 3:1 same
+	    (fm3-rat 4.0)                         ; 4:1 same
+	    (fm1-index #f)                        ; 1:1 mod local index scaler
+	    (fm2-index #f)                        ; 3:1 same
+	    (fm3-index #f)                        ; 4:1 same
+	    (degree 0)
+	    (distance 1.0)
+	    (reverb-amount 0.01)
+	    (base 1.0)                            ; amp env base (1.0 = line segments)
+</pre>
+<p>Most of these parameters are for special cases; normally you need only:
+</p>
+<pre>
+  Scheme:    (with-sound () (fm-violin 0 1 440 .1))
+  Ruby:      with_sound() do fm_violin(0, 1, 440, .1, [[:fm_index, 2.0]]) end
+</pre>
+<p>
+fm-violin sets up several parallel modulators of one carrier (see <A HREF="fm.html">fm.html</A>
+for details, or (ah nostalgia...) 
+Schottstaedt,  "The Simulation of Natural Instrument Tones Using Frequency Modulation with a Complex Modulating Wave", CMJ vol 1 no 4 1977 p46-50). 
+The modulators
+themselves are modulated (vibrato, noise, etc). The FM indices were chosen to try
+to mimic violin or cello sounds over a wide range of frequencies.
+The various envelope "jitter" parameters set up slow moving random changes in
+the associated envelopes; in some case this can produce a much richer sound.
+There's no limit on what this instrument can do; nearly all my compositions in the 80's used
+it.  To hear some of the effects, load fmviolin.clm (it is a CLM notelist, but it is
+completely compatible with Snd/Scheme).
+</p>
+
+
+<p>fmv.scm (or v.rb in Ruby) implements the fm-violin as a CLM-style generator, making it possible
+to call the violin anywhere a generator could be called; since each call on the fm-violin
+function produces the next sample of the given violin, this form of the fm-violin is easy
+to call in "real-time" situations.  Any other CLM-style instrument could
+be rewritten in the same form.
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+  <em class=emdef>make-fm-violin</em>
+    frequency amplitude #:key (fm-index 1.0) (amp-env #f) (periodic-vibrato-rate 5.0) (random-vibrato-rate 16.0)
+    (periodic-vibrato-amplitude 0.0025) (random-vibrato-amplitude 0.005) (noise-amount 0.0) (noise-freq 1000.0)
+    (ind-noise-freq 10.0) (ind-noise-amount 0.0) (amp-noise-freq 20.0) (amp-noise-amount 0.0) (gliss-env #f)
+    (fm1-env #f) (fm2-env #f) (fm3-env #f) (fm1-rat 1.0) (fm2-rat 3.0) (fm3-rat 4.0) (fm1-index #f) (fm2-index #f) 
+    (fm3-index #f) (base 1.0)
+
+  <em class=emdef>fm-violin</em> gen
+  <em class=emdef>fm-violin-ins</em> [same args as original violin in v.scm]
+</pre></td></tr></table>
+
+<p><i>fm-violin-ins</i> shows how this generator can be fitted into the original fm-violin code.
+The <b>make-fm-violin</b> function uses the optional arguments support from Guile (optargs.scm, loaded
+via <code>(use-modules (ice-9 optargs))</code>). The plethora of arguments is an historical artifact;
+normally only a few of them are used at a time.  There are two examples of calling this generator
+in fmv.scm, the simpler one being:
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+(define test-v 
+  (lambda (beg dur freq amp amp-env)
+    (let ((v (<em class=red>make-fm-violin</em>
+	      freq amp 
+	      :amp-env (let ((e (<a class=quiet href="clm.html#make-env">make-env</a> :envelope (or amp-env '(0 0 1 1 2 0)) 
+					  :scaler amp 
+					  :end dur)))
+			 (lambda () (<a class=quiet href="clm.html#env">env</a> e)))))
+	  (data (<a class=quiet href="extsnd.html#channel_to_vct">channel-&gt;vct</a> beg dur)))
+      (do ((i 0 (1+ i)))
+	  ((= i dur))
+	(<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (+ (<a class=quiet href="extsnd.html#vctref">vct-ref</a> data i)
+			    (<em class=red>v</em>))))
+      (<a class=quiet href="extsnd.html#setsamples">set-samples</a> beg dur data))))
+</pre></td></tr></table>
+
+<p>Here we are setting up an fm-violin generator (via make-fm-violin), then
+calling it <i>dur</i> times, mixing its output into the current data (this could
+also use mix-vct and so on).  The generator is called via <code>(v)</code>.
+As can be seen here, each envelope is treated as a function called on each sample
+very much like the "as-needed" input in src or granulate; the envelopes could actually be any
+arbitrary function you like (see test-v1 in fmv.scm which uses an oscillator as one of
+the fm index envelopes).  One complication in some "real-time" situations is that
+you don't know in advance how long a note will be; in this case, the envelope
+generating functions should have attack and decay ramps, triggered by note-on and
+note-off; once the ramp has reached its end point, the end value should be held;
+the note itself should be called until it has had time to ramp off.
+</p>
+
+<p>
+I can't resist including an historical digression.
+Here is a Mus10 version of fm-violin (in this code ":=" is used in place of the original SAIL left arrow character,
+and so on):
+</p>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><small><pre>
 ARRAY GlissFunc, DecayFunc, AttackFunc, SineWave, AmpFunc(512);
 SYNTH(Sinewave); 1,1 999;
 SEG(AmpFunc); 0,0 1,25 1,50 0,75 0,100;
@@ -5319,9 +5421,9 @@ Mod3:=NOSCIL(Decay*ScFreq*(Att+Index3),3*NewMag,Sinewave);
 Snd:=ZOSCIL(Decay*ENV*Ramp,NewMag+Mod1+Mod2+Mod3,Sinewave);
 OUTA:=OUTA+Snd*0.5;
 END;
-</pre></td></tr></table>
+</small></pre></td></tr></table>
 
-<p>
+<p><small>
 This instrument required about 60 seconds of computing on a PDP-10
 (a $250,000 minicomputer) for 1 second of sound (our normal sampling
 rate was 12800).  Since the PDP was massively time-shared, 60 seconds
@@ -5330,9 +5432,9 @@ AI scientists play Space War.
 Mus10 was an extension of Music V for the PDP-10 family of computers.
 To give a feel for how one worked in those days, here's a brief quote from the Mus10 manual (by Tovar and
 Leland Smith, May 1977):
-</p>
+</small></p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><small><pre>
 The following generates  1 second of a  440 Hz sine wave  followed by
 1/2 sec. of a  660Hz sine wave. The output goes to a file, MUSIC.MSB,
 which is written on DSKM.  
@@ -5351,16 +5453,17 @@ PLAY ;
   SIMP 0, 1, 440, 1000;
   SIMP 1, 1/2, 660, 1000;
   FINISH;
-</pre></td></tr></table>
+</small></pre></td></tr></table>
 
-<p>
+<p><small>
 The computation involved was considered so burdensome, that the names of
 the main users were posted in the AI lab halls, apparently to try to
 get us to go away.  I was normally the primary user (in terms of computrons) for the entire lab, and I had no intention
 of going away.  
-In the Samson box world, this (in its initial "chorus" version) was:</p>
+In the Samson box world, this (in its initial "chorus" version) was:
+</small></p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><small><pre>
 Instrument(Violin);
 RECORD_POINTER(seg) nullfunc;
 INTEGER ARRAY gens[1:4],indgens[1:6], GensA[1:4],AmpGens[1:2];
@@ -5419,27 +5522,28 @@ AddArrEnv(Pns,Gens,4,"F",freq,Freq*skewmult,skewfunc,ratsA,
 AddArrEnv(Pns,GensA,4,"F",freq,Freq*skewmult,skewfunc,ratsA,
 	6,.010,.010,nullfunc,5,.017,.017,nullfunc,1,0);
 End!Instrument(Pns);			! deallocation;
-</pre></td></tr></table>
+</small></pre></td></tr></table>
 
-<p>
+<p><small>
 The Sambox version eventually became incredibly complicated, mainly to
 try to handle note list problems in the instrument.  The Samson box could
 run about 5 or 6 of these in "real-time", similar to a modern-day
 500 MHz Pentium running CLM.
 The parallel in the Sambox world to the SIMP example above is (this is
-taken from SAMBOX.BIL, November 1984):</p>
+taken from SAMBOX.BIL, November 1984):
+</small></p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><small><pre>
     Instrument(Simp);
     Integer Gen1;
     Gen1:=Osc(Pns,OutA,Zero,SineMode,0,0,Pn[3]);
     AddEnv(Pns,Gen1,"A",0,Pn[4],Pf[5]);
     End_Instrument(Pns);
-</pre></td></tr></table>
+</small></pre></td></tr></table>
 
-<p>The CLM version of this is:</p>
+<p><small>The CLM version of this is:</small></p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><small><pre>
 (<a class=quiet href="clm.html#definstrument">definstrument</a> simp (start-time duration frequency amplitude
                      &amp;optional (amp-env '(0 0 50 1 100 0)))
   (multiple-value-bind (beg end) (<a class=quiet href="clm.html#times-&gt;samples">times-&gt;samples</a> start-time duration)
@@ -5448,12 +5552,13 @@ taken from SAMBOX.BIL, November 1984):</p>
       (run
        (loop for i from beg below end do
          (<a class=quiet href="clm.html#outa">outa</a> i (* (<a class=quiet href="clm.html#env">env</a> amp) (<a class=quiet href="clm.html#oscil">oscil</a> s))))))))
-</pre></td></tr></table>
+</small></pre></td></tr></table>
 
-<p>
-In CLM, the fm-violin became (fm.html, 1989):</p>
+<p><small>
+In CLM, the fm-violin became (fm.html, 1989):
+</small></p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><small><pre>
 (<a class=quiet href="clm.html#definstrument">definstrument</a> violin (beg end frequency amplitude fm-index)
   (let* ((frq-scl (hz-&gt;radians frequency))
          (maxdev (* frq-scl fm-index))
@@ -5480,12 +5585,12 @@ In CLM, the fm-violin became (fm.html, 1989):</p>
                             (* (<a class=quiet href="clm.html#env">env</a> indf1) (<a class=quiet href="clm.html#oscil">oscil</a> fmosc1 vib))
                             (* (<a class=quiet href="clm.html#env">env</a> indf2) (<a class=quiet href="clm.html#oscil">oscil</a> fmosc2 (* 3.0 vib)))
                             (* (<a class=quiet href="clm.html#env">env</a> indf3) (<a class=quiet href="clm.html#oscil">oscil</a> fmosc3 (* 4.0 vib)))))))))))
-</pre></td></tr></table>
+</small></pre></td></tr></table>
 
-<p>or in its actual (non-simplified) form:
-</p>
+<p><small>or in its actual (non-simplified) form:
+</small></p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><small><pre>
 (defun bit20 (x)			;Samson box modifier got 2's complement 20 bit interpreted as fraction 
   (if (&gt;= x (expt 2 19))                ;(this needed to keep fm-violin backwards compatible with old note lists)
       (float (/ (- x (expt 2 20)) (expt 2 19)))
@@ -5619,22 +5724,13 @@ In CLM, the fm-violin became (fm.html, 1989):</p>
        (<a class=quiet href="clm.html#locsig">locsig</a> loc i
 	     (* (<a class=quiet href="clm.html#env">env</a> ampf) amp-fuzz
 		(<a class=quiet href="clm.html#oscil">oscil</a> carrier (+ vib (* ind-fuzz modulation)))))))))
-</pre></td></tr></table>
+</small></pre></td></tr></table>
 
-<p>which is very similar to the Scheme version (v.scm).
-It's basically setting up several parallel modulators of one carrier (see <a href="fm.html">fm.html</a>
-for details, or (ah nostalgia...) 
-Schottstaedt,  "The Simulation of Natural Instrument Tones Using Frequency Modulation with a Complex Modulating Wave", CMJ vol 1 no 4 1977 p46-50). 
-The modulators
-themselves are modulated (vibrato, noise, etc). The FM indices were chosen to try
-to mimic violin or cello sounds over a wide range of frequencies.
-There's no limit on what this instrument can do; nearly all my compositions in the 80's used
-it.  In CLM, there's fmviolin.clm which shows some of the effects (although it's unfortunately
-hard to read due to the way the Sambox system worked).
+<p><small>which is very similar to the Scheme version (v.scm).
 And I just found this out on the net; I'm no csound expert, so I merely quote what I find:
-</p>
+</small></p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><small><pre>
 ;ORC
 ; edited by R. Pinkston, modified for use with MIDI2CS by R. Borrmann
 ;
@@ -5694,13 +5790,13 @@ continue:
 ;                endin
         aright  = asig
         aleft   = asig
-</pre></td></tr></table>
+</small></pre></td></tr></table>
 
-<p>There's a C/CLM version of this instrument in sndlib.html.  The body of the fm-violin
+<p><small>There's a C/CLM version of this instrument in sndlib.html.  The body of the fm-violin
 in C/CLM is:
-</p>
+</small></p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><small><pre>
       if (noise_amount != 0.0) fuzz = mus_rand(fmnoi,0.0);
       if (frqf) vib = mus_env(frqf); else vib = 0.0;
       vib += mus_triangle_wave(pervib, 0.0) + 
@@ -5714,12 +5810,12 @@ in C/CLM is:
                      mus_env(indf3) * mus_oscil(fmosc3, (fuzz + fm3_rat * vib), 0.0);
       mus_locsig(loc, i, mus_env(ampf) *
                          mus_oscil(carrier, vib + indfuzz * modulation, 0.0));
-</pre></td></tr></table>
+</small></pre></td></tr></table>
 
 
-<p>And here is the Ruby version, written by Michael Scholz (see examp.rb):</p>
+<p><small>And here is the Ruby version, written by Michael Scholz (see examp.rb):</small></p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><small><pre>
 #
 # fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
 #
@@ -5874,7 +5970,8 @@ rescue
   die(usage + "fm_violin()");
 end
 
-</pre></td></tr></table>
+</small></pre></td></tr></table>
+
 
 <br>
 <br>
