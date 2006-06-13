@@ -500,6 +500,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+12-Jun:  fmviolin.clm.\n\
 6-Jun:   changed after-apply-hook to after-apply-controls-hook.\n\
 2-Jun:   removed mus-make-error.\n\
 25-May:  Walter Zorn's wz_tooltip.js to spruce up the documentation.\n\

@@ -70,7 +70,7 @@
   "(describe-hook hook) -> description of functions on 'hook'"
   (for-each 
     (lambda (n) 
-      (snd-print (format #f "~A~%" n)))
+      (snd-print (format #f "~%~A" n)))
     (reverse (hook->list hook))))
 
 

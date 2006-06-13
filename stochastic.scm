@@ -4,9 +4,10 @@
 ;; revised 01/22/06
 ;; Bill Sack wsack@buffalo.edu
 
+;; revised slightly to accomodate the run macro, Bill 13-Jun-06
+
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 (if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
-
 
 (definstrument 
   (stochastic start dur :key
@@ -26,9 +27,9 @@
   ;;      not really that useful
   ;;init-array - initial x and y breakpoints for wave. x values must be 
   ;;             integers and 1 or greater, y values between -1.0 and 1.0
-  (let* ((y 0) (dx 0) (prev-dx 0) (dy 0)
-	 (j 0) (m 0) (dt 0) (output 0) 
-	 (oldy 0) (xdev 0) (ydev 0)
+  (let* ((y 0.0) (dx 0) (prev-dx 0) (dy 0.0)
+	 (j 0.0) (m 0) (dt 0) (output 0.0) 
+	 (oldy 0.0) (xdev 0) (ydev 0)
 	 (beg (inexact->exact (floor (* start (mus-srate)))))
 	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
 	 (d-click (make-env (list 0 1 (- end 100) 1 end 0) :duration dur))
@@ -57,9 +58,9 @@
 	   ((= i end))
 	 (if (= dx dt);;when current sample is a breakpoint
 	     (begin
-	       (set! dx (vct-ref xy-array (modulo m xy-array-l)))
+	       (set! dx (inexact->exact (vct-ref xy-array (modulo m xy-array-l))))
 	       (set! y (vct-ref xy-array (+ (modulo m xy-array-l) 1)))
-	       (set! prev-dx (vct-ref xy-array (modulo (- m 2) xy-array-l)))
+	       (set! prev-dx (inexact->exact (vct-ref xy-array (modulo (- m 2) xy-array-l))))
 	       (set! dy (- y oldy))
 	       (set! oldy y)
 	       ;;straight uniform distribution for y
@@ -91,4 +92,4 @@
 	 (set! output (/ j b));normalization -1 to 1
 	 (outa i (* amp output (env d-click)) *output*))))))
 
-;(with-sound (:statistics t)(stochastic 0 10 :xwig .25 :ywig 10.0))
+;(with-sound (:statistics #t)(stochastic 0 10 :xwig .25 :ywig 10.0))
