@@ -1,12 +1,11 @@
 <html>
 
 <!-- TODO: when this table settles, add back the bgcolor="#f6f8ff" -->
-<!-- TODO: second layer here: CLM/Instruments, Filters/DSP, Graphics/Dialogs, Ladspa/RealTime, Effects?, Etc -->
 <!-- TODO: add most the names to the index -->
 <!-- TODO: the following are empty: dlocsig edit123 event grani ladspa maxf strad -->
 <!-- TODO: these need tablize: draw dsp env extensions marks mix rmsgain sndmotif -->
-<!-- TODO: these need work: bess debug? addedmenus editmenu neweffects examp index infsnd prc95 rtex rtio -->
-<!-- TODO: pvoc?, rubber? ws doc, xm-enved gtk? nb? -->
+<!-- TODO: these need work: bess debug? addedmenus editmenu neweffects examp infsnd prc95 rtex rtio -->
+<!-- TODO: rubber? ws doc, xm-enved gtk? -->
 <!-- TODO: remember ruby and forth examples especially for ins -->
 <!-- TODO: remember crossrefs and main-index additions (all files) -->
 <!-- TODO: check effects-utils.scm kmenu.scm pd-*.scm snd-hobbit.scm (rb/fs?) -->
@@ -14,8 +13,8 @@
 
 <!-- done, I hope: 
     analog-filter auto-save bess bird clm-ins fade freeverb
-    heart hooks jcrev maraca mixer moog musglyphs noise oscope peak-env piano poly
-    rgb singer sndwarp snd4567 snd-test spectr stochastic v
+    heart hooks index jcrev maraca mixer moog musglyphs nb noise oscope peak-env piano poly pvoc
+    rgb singer sndwarp snd4567 snd-gl snd-test spectr stochastic v
 -->
 
 <!-- documentation for some of the Scheme/Ruby/Forth code included with Snd -->
@@ -2801,7 +2800,7 @@ happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
 </pre>
 <p><b>do?</b> provides an interruptible "do" that can be continued from the point of the C-g interrupt.
 </p>
-<p><b>finfo</b> returns a description of the file <i>filename</i>. <b>shell</b> is similar
+<p><b><A NAME="finfo">finfo</a></b> returns a description of the file <i>filename</i>. <b>shell</b> is similar
 to Guile's <i>system</i> function, but output is sent to Snd's listener, rather than stdout.
 <b>mpg</b> uses the system function to call the program mpg123 to translate an MPEG
 format sound file to a headerless ("raw") file containing 16-bit samples.
@@ -3390,13 +3389,26 @@ we want to close all currently open sounds without invoking the peak-env stuff:
 </pre>
 <p>index.scm provides a connection between mozilla or netscape
 and the Snd documentation.  The index itself is
-built by index.cl, then accessed through the <b>html</b> and <b>?</b> functions.
-<code>(html arg)</code> where arg can be a string, symbol, or procedure sends mozilla to the corresponding url
+built by index.cl, then accessed through the the functions html and ?.
+<code>(html arg)</code>, where <i>arg</i> can be a string, a symbol, or a procedure sends mozilla to the corresponding url
 in the Snd documents.
-<code>(? obj)</code> prints out any help it can find for obj, and tries to find obj in the documentation.
+<code>(? obj)</code> prints out any help it can find for <i>obj</i>, and tries to find <i>obj</i> in the documentation.
 The function that actually passes the url to the reader is <a href="extsnd.html#sendmozilla">send-mozilla</a>.
 </p>
+<pre>
+    :<em class=typing>(html "open-sound")</em>  ; mozilla starts (if necessary), and goes to the open-sound documentation
+    <em class=listener>#t</em>
+    :<em class=typing>(? "open-sound")</em>
+    <em class=listener>(open-sound filename): open filename (as if opened from File:Open menu option), and return the new sound's index</em>
 
+</pre>
+
+<table bgcolor="aliceblue" border=0><tr><td>
+<pre>see also: <a href="extsnd.html#htmlprogram" onmouseover="return escape('name of html reader')">html-program</a> <a href="extsnd.html#sendmozilla" onmouseover="return escape('direct mozilla to a url')">send-mozilla</a> <a href="extsnd.html#sndhelp" onmouseover="return escape('main Snd help function')">snd-help</a> <a href="extsnd.html#sndurls" onmouseover="return escape('table of Snd documentation urls')">snd-urls</a>
+</pre></td>
+</tr></table>
+
+<br>
 <br>
 <A NAME="dotemacs"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>inf-snd.el, DotEmacs</h2></td></tr></table>
 
@@ -4047,25 +4059,23 @@ We obviously need a direct connection to CMN!
 
 <A NAME="nbdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>nb</h2></td></tr></table>
 
-<p>nb.scm provides popup help for files in the View:Files dialog; as you move
-the mouse through the lists, the help dialog posts information about the file
+<p>nb.scm provides popup help for files in the View:Files dialog.  As you move
+the mouse through the file list, the help dialog posts information about the file
 underneath the mouse.  This uses a slightly fancier file information procedure
-than 'finfo' in examp.scm.  If you have the guile-gdbm package, you can use
+than <a href="#finfo">finfo</a> in examp.scm.  If you have the guile-gdbm package, you can use
 its database procedures to associate arbitrary information with files which
-will be posted along with the header info:
+is posted along with the header info:
 </p>
 <pre>
-  <em class=emdef>nb</em> file note
-  <em class=emdef>unb</em> file
-  <em class=emdef>prune-db</em>
+  <em class=emdef>nb</em> file note     ; add note to file's info: (nb "test.snd" "test's info")
+  <em class=emdef>unb</em> file         ; erase file's info:       (unb "test.snd")
+  <em class=emdef>prune-db</em>         ; remove info associated with defunct files
 </pre>
-<p><code>(nb "test.snd" "this is a test")</code> adds the note "this is a test" to
-the data associated with "test.snd".  <code>(unb "test.snd")</code> erases anything
-associated with "test.snd".  <code>(prune-db)</code> erases anything associated with
-any files that no longer exist.  (nb.scm will work fine without guile-gdbm; to load
-guile-gdbm, set the variable <b>use-gdbm</b> to #t).
-</p>
-<p>Michael Scholz's translation of this to Ruby is included in examp.rb.
+<p>
+nb.scm works fine without guile-gdbm; to load
+guile-gdbm, set the variable <i>use-gdbm</i> to #t.
+The Ruby version of nb (written by Mike Scholz) has several other features -- see nb.rb
+for details.
 </p>
 
 <br>
@@ -4510,7 +4520,7 @@ plate-reverb: ladspa.scm<br>
 <br>
 <A NAME="pvocdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>pvoc</h2></td></tr></table>
 <p>
-This is the same as the CLM phase-vocoder generator, but implemented in Scheme.  If you're interested
+This is the same as the CLM <a href="clm.html#phase-vocoder">phase-vocoder</a> generator, but implemented in Scheme.  If you're interested
 in how the thing works, I think the Scheme version is easiest to understand; the Common Lisp version 
 is in mus.lisp, and the C version is in clm.c.
 </p>
@@ -4522,9 +4532,15 @@ is in mus.lisp, and the C version is in clm.c.
 <p>The <i>analyze</i>, <i>edit</i>, and <i>synthesize</i> arguments to make-pvocoder are
 functions that are applied as needed during pvocoder processing; similarly, the <i>input</i>
 argument to pvocoder can be a function.
+<pre>
+    (let* ((ind (<a class=quiet href="extsnd.html#opensound">open-sound</a> "oboe.snd"))
+	   (pv (<em class=red>make-pvocoder</em> 256 4 64))
+           (rd (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0)))
+      (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) (<em class=red>pvocoder</em> pv rd))))
+</pre>
+<p>
 pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 </p>
-
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (define test-pv-4
   (lambda (gate)
@@ -4546,17 +4562,29 @@ pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
       (<a class=quiet href="extsnd.html#freesamplereader">free-sample-reader</a> reader))))
 </pre></td></tr></table>
 
-<p>sets up a phase-vocoder generator whose edit function is squelching soft partials.
-In this case, the input function is reading the currently selected channel.  The fastest
-way to try out this generator is to use it as the argument to filter-sound.
-<i>pvoc</i> is yet another a phase-vocoder;
-it applies the phase-vocoder (i.e. fft analysis, oscil bank resynthesis)
+<p>This sets up a phase-vocoder generator whose edit function is squelching soft partials.
+In this case, the input function is reading the currently selected channel.
+</p>
+<p>
+pvoc is yet another (unoptimized) phase-vocoder;
+it applies the phase-vocoder
 to the current sound; <i>pitch</i> specifies the pitch transposition ratio, 
 <i>time</i> specifies the time dilation ratio,
 <i>gate</i> specifies a resynthesis gate in dB (partials with amplitudes lower than
 the gate value will not be synthesized), <i>hoffset</i> is a pitch offset in Hz.
 </p>
+<pre>
+    (pvoc :time 2.0)
+</pre>
 
+<table bgcolor="aliceblue" border=0><tr>
+<td>
+<pre>see also: <a href="clm.html#phase-vocoder" onmouseover="return escape('CLM phase-vocoder generator')">phase-vocoder</a> <a href="#pins" onmouseover="return escape('SMS instrument, an extension of the phase-vocoder')">pins</a>
+</pre>
+</td></tr></table>
+
+
+<br>
 <br>
 <A NAME="rgbdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>rgb</h2></td></tr></table>
 <p>rgb.scm (rgb.rb) is a simple translation of the standard X11 color names into Snd
@@ -4639,10 +4667,10 @@ rt.close
 <A NAME="rubberdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>rubber</h2></td></tr></table>
 
 <pre>
-  <a class=def name="rubbersound">rubber-sound</a> stretch-factor
+  <a class=def name="rubbersound">rubber-sound</a> stretch-factor :optional snd chn
 </pre>
 <p>
-<b>rubber-sound</b> tries to stretch or contract a sound (in time); it scans the sound
+rubber-sound tries to stretch or contract a sound (in time); it scans the sound
 looking for stable (periodic) sections, then either deletes periods or interpolates new ones
 to shorten or lengthen the sound.  It still needs a lot of robustification.
 The algorithm is 1) remove all frequencies below 16 Hz, 2) resample the file to be
@@ -4653,6 +4681,15 @@ is and see how much difference there is between the current period and the next,
 the smallest, throw away this crossing, 6) sort the remaining crossings by least weight,
 7) interpolate or delete periods until the sound has been sufficiently lengthened or
 shortened.
+rubber-sound is incredibly slow, and almost never works.  The idea seems good however...
+</p>
+
+<table bgcolor="aliceblue" border=0><tr>
+<td>
+<pre>see also: <a href="#clmexpsrc" onmouseover="return escape('clm-ins version of expsrc')">clm-expsrc</a> <a href="#exexpsrc" onmouseover="return escape('granular synthesis to stretch sound')">expsrc</a> <a href="#pvocdoc" onmouseover="return escape('phase-vocoder')">pvoc</a> <a href="#ssbbank" onmouseover="return escape('use ssb-am for time stretch')">ssb-bank</a>
+</pre>
+</td></tr></table>
+
 <!-- ((((((( --><!-- this matches the preceding open parens for index.cl's benefit -->
 </p>
 
@@ -4790,7 +4827,7 @@ in time.
 
 <table bgcolor="aliceblue" border=0><tr>
 <td>
-<pre>see also: <a href="#clmexpsrc" onmouseover="return escape('clm-ins version of expsrc')">clm-expsrc</a> <a href="#exexpsrc" onmouseover="return escape('granular synthesis to stretch sound')">expsrc</a> <a href="#pvocdoc" onmouseover="return escape('phase-vocoder')">pvoc</a> 
+<pre>see also: <a href="#clmexpsrc" onmouseover="return escape('clm-ins version of expsrc')">clm-expsrc</a> <a href="#exexpsrc" onmouseover="return escape('granular synthesis to stretch sound')">expsrc</a> <a href="#pvocdoc" onmouseover="return escape('phase-vocoder')">pvoc</a> <a href="#rubberdoc" onmouseover="return escape('phase-locked time stretch')">rubber</a> <a href="#ssbbank" onmouseover="return escape('use ssb-am for time stretch')">ssb-bank</a>
 </pre>
 </td></tr></table>
 
@@ -5002,20 +5039,20 @@ awaiting values and the loop index.  It should return a list of values.
 <br><br>
 <A NAME="sndgldoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd-gl</h2></td></tr></table>
 
-<p>snd-gl.scm has examples of using OpenGL.
+<p>snd-gl.scm has examples of using <A HREF="http://www.mesa3d.org/">OpenGL</A>.  To try out these functions, build Snd
+with GL: <code>configure --with-gl</code>.  You can tell if your current Snd has OpenGL loaded by checking the
+*features* list for 'gl: <code>(provided? 'gl)</code>.
 </p>
-<pre>
-  <em class=emdef>gl-info</em>
-  <a class=def name="startwaterfall">start-waterfall</a> #:optional (scl 1.0) (pc-spectrum 0.2) (fft-size 512)
-  <em class=emdef>stop-waterfall</em>
-  <em class=emdef>gl-dump-state</em>
-  <A class=def NAME="complexify">complexify</A>
-</pre>
-<p><b>gl-info</b> prints out information about the current GL system setup.  <b>start-waterfall</b> starts a
-waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> turns it off.
-<b>gl-dump-state</b> displays much of the current GL graphics state.
-<b>complexify</b> shows the FFT data in the complex plane; each bin is 
-rotated so that they all stack along the "x" axis, with
+
+<table border=0 cellspacing=0 hspace=20>
+
+<!-- complexify -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="complexify">complexify</a> <code>()</code>
+</td></tr>
+<tr><td width=60></td><td>
+complexify displays FFT data in the complex plane; each bin is 
+rotated so that they all stack along the x axis, with
 a line drawn from the x axis to the current real/imaginary
 point (as (z, y)), so as you move (slowly) through a
 file, you'll see the phase info as well as the magnitude --
@@ -5023,9 +5060,8 @@ the vectors whirl around in each slice of the complex
 plane.  Use the View:Orientation dialog to change the
 viewing angle.  To move one sample at a time through a sound,
 you could bind the arrow keys:
-</p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (bind-key "Left" 0 (lambda () 
                      (set! (left-sample) (max 0 (1- (left-sample)))) 
                      keyboard-no-action))
@@ -5033,6 +5069,60 @@ you could bind the arrow keys:
                      (set! (left-sample) (min (frames) (1+ (left-sample)))) 
                      keyboard-no-action))
 </pre></td></tr></table>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- gl-dump-state -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>gl-dump-state</a> <code>()</code>
+</td></tr>
+<tr><td></td><td>
+gl-dump-state displays much of the current GL graphics state.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- gl-info -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>gl-info</a> <code>()</code>
+</td></tr>
+<tr><td></td><td>
+gl-info prints out information about the current GL system setup.  
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- start-waterfall -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="startwaterfall">start-waterfall</a> <code>:optional (scl 1.0) (pc-spectrum 0.2) (fft-size 512)</code>
+</td></tr>
+<tr><td></td><td>
+start-waterfall starts a
+waterfall spectrum display of the incoming audio data. 
+<i>pc-spectrum</i> determines how much of the spectrum is displayed (very often the high portions are not interesting; we'd
+rather zoom in on the stuff we can hear).
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- stop-waterfall -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>stop-waterfall</a> <code>()</code>
+</td></tr>
+<tr><td></td><td>
+stop-waterfall turns off the waterfall spectrum display.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+</table>
+
+<table bgcolor="aliceblue" border=0><tr>
+<td>
+<pre>see also: <a href="extsnd.html#glspectrogram">glSpectrogram</a> <a href="grfsnd.html#sndandgl" onmouseover="return escape('OpenGL (Mesa) extensions via gl.c')">OpenGL</a>
+</pre>
+</td></tr></table>
+
 
 <br>
 <br>
