@@ -1,11 +1,12 @@
-#!/usr/bin/env guile \
--e main -s
+#!/usr/local/bin/guile -s
 !#
+
 ;;; bess1.scm -- some examples from clm-2/rt.lisp and clm-2/bess5.cl
 
 ;; Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Created: Thu May 29 04:14:35 CEST 2003
 ;; Last: Sun Jun 15 03:50:21 CEST 2003
+;; changed slightly 14-Jun-06 Bill to match bess.scm, avoid a segfault in Guile, fix pitch problem in make-oscil.
 
 ;;; Commentary:
 
@@ -25,14 +26,23 @@
 
 ;;; Code:
 
-(use-modules (ice-9 optargs) (ice-9 format))
+;;; load sndlib and xmlib
+(let ((sndlib (dynamic-link "libsndlib.so")))
+  (if (not (dynamic-object? sndlib))
+      (set! sndlib (dynamic-link "sndlib.so")))
+  (if (not (dynamic-object? sndlib))
+      (error "can't find sndlib.so or libsndlib.so")
+      (dynamic-call (dynamic-func "Init_sndlib" sndlib) #f)))
 
-;; You may correct next two lines to fit your needs.
-(load-extension "libsndlib" "Init_sndlib")
-(load-extension "libxm" "Init_libxm")
+(let ((libxm (dynamic-link "libxm.so")))
+  (if (not (dynamic-object? libxm))
+      (error "can't find libxm")
+      (dynamic-call (dynamic-func "Init_libxm" libxm) #f)))
 
-(define* (main #:rest args) (rt-motif))
+;(define* (main #:rest args) (rt-motif))
 ;;(define* (main #:rest args) (rt-motif #:srate 11025 #:bufsize 1024))
+
+(use-modules (ice-9 optargs) (ice-9 format))
 
 (define *clm-srate* 22050)
 (define *clm-data-format* mus-lshort)
@@ -528,5 +538,7 @@
       (set-defaults)
       (XtRealizeWidget shell))
     (XtAppMainLoop app)))
+
+(rt-motif)
 
 ;; bess1.scm ends here

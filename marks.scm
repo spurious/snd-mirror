@@ -286,14 +286,16 @@
 
 (define (snap-marks)
   "snap-marks places marks at current selection boundaries"
-  (if (selection?)
-      (for-each 
-       (lambda (select)
-	 (let ((pos  (apply selection-position select))
-	       (len  (apply selection-frames select)))
-	   (apply add-mark pos select)
-	   (apply add-mark (+ pos len) select)))
-       (selection-members))))
+  (let ((ms (list)))
+    (if (selection?)
+	(for-each 
+	 (lambda (select)
+	   (let ((pos (apply selection-position select))
+		 (len (apply selection-frames select)))
+	     (set! ms (cons (apply add-mark pos select) ms))
+	     (set! ms (cons (apply add-mark (+ pos len) select) ms))))
+	(selection-members)))
+    (reverse ms)))
 
 
 ;;; -------- define-selection-via-marks

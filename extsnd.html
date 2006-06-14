@@ -379,10 +379,10 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#effectsdoc">new-effects.scm, gtk-effects.scm, effects.rb, effects.fs</a></td><td>an Effects menu</td></tr>
 <tr><td bgcolor="#f6f8ff"><a href="sndscm.html#envdoc">env.scm, env.rb, env.fs</a></td>        <td bgcolor="#f6f8ff">envelope functions</td></tr>
 <tr><td><a href="sndscm.html#enveddoc">enved.scm, enved.fs</a></td>            <td>envelope editor in lisp graph section</td></tr>
-<tr><td bgcolor="#f6f8ff"><a href="sndscm.html#eventdoc">event.scm</a></td>            <td bgcolor="#f6f8ff">xm module stuff for automatic user-interface tests</td></tr>
-<tr><td><a href="sndscm.html#extensionsdoc">extensions.scm, extensions.rb, extensions.fs</a></td><td>properties, envelopes, stereo-&gt;mono, etc</td></tr>
-<tr><td bgcolor="#f6f8ff"><a href="sndscm.html#fadedoc">fade.scm</a></td>              <td bgcolor="#f6f8ff">frequency-domain cross-fades</td></tr>
-<tr><td><a href="sndscm.html#vdoc">fmv.scm</a></td>                <td>the fm-violin tied to real-time stuff</td></tr>
+
+<tr><td bgcolor="#f6f8ff"><a href="sndscm.html#extensionsdoc">extensions.scm, extensions.rb, extensions.fs</a></td><td bgcolor="#f6f8ff">properties, envelopes, stereo-&gt;mono, etc</td></tr>
+<tr><td><a href="sndscm.html#fadedoc">fade.scm</a></td>              <td>frequency-domain cross-fades</td></tr>
+
 <tr><td bgcolor="#f6f8ff"><a href="sndscm.html#freeverbdoc">freverb.scm, freeverb.rb</a></td><td bgcolor="#f6f8ff">a reverb</td></tr>
 <tr><td><a href="sndscm.html#granidoc">grani.scm</a>                 </td><td>grani instrument (Fernando Lopez-Lezcano) translated by Mike Scholz</td></tr>
 <tr><td bgcolor="#f6f8ff"><a href="sndscm.html#heartdoc">heart.scm</a></td>            <td bgcolor="#f6f8ff">use Snd with non-sound (arbitrary range) data</td></tr>
@@ -12968,8 +12968,8 @@ The result can be used in the lisp graph:
 </td></tr></table>
 
 Here we are taking whatever is displayed in the time domain, and
-presenting the same thing in dB in the lisp graph.  display-energy
-in examp.scm is another example.  But the real power of this function
+presenting the same thing in dB in the lisp graph.  <a href="sndscm.html#displayenergy">display-energy</a>
+in draw.scm is another example.  But the real power of this function
 comes from its use with graph-data.  
 The latter takes its argument (either a vct or a list of two
 vcts), and displays it in any channel's time domain graph using its current graph-style.

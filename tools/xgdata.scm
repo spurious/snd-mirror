@@ -5914,4 +5914,28 @@
 + 							  GtkOrientation     *orientation);
 (CFNC "gboolean gdk_color_parse gchar* spec GdkColor* color") -- need both versions somehow
 
+2.9.3:
++ typedef enum {
++   GTK_TREE_VIEW_GRID_LINES_NONE,
++   GTK_TREE_VIEW_GRID_LINES_HORIZONTAL,
++   GTK_TREE_VIEW_GRID_LINES_VERTICAL,
++   GTK_TREE_VIEW_GRID_LINES_BOTH
++ } GtkTreeViewGridLines;
++ 
+changed args
+  void gtk_notebook_set_window_creation_hook (GtkNotebookWindowCreationFunc  func,
+! 					    gpointer                       data,
+!                                             GDestroyNotify                 destroy);
+rtn type
+! gboolean      gtk_tree_model_filter_convert_child_iter_to_iter (GtkTreeModelFilter           *filter,
+                                                                  GtkTreeIter                  *filter_iter,
+                                                                  GtkTreeIter                  *child_iter);
++ GtkTreeViewGridLines        gtk_tree_view_get_grid_lines         (GtkTreeView                *tree_view);
++ void                        gtk_tree_view_set_grid_lines         (GtkTreeView                *tree_view,
++ 								  GtkTreeViewGridLines        grid_lines);
++ gboolean                    gtk_tree_view_get_enable_tree_lines  (GtkTreeView                *tree_view);
++ void                        gtk_tree_view_set_enable_tree_lines  (GtkTreeView                *tree_view,
++ 								  gboolean                    enabled);
+  
+
 !#

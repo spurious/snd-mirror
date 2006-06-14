@@ -6,9 +6,11 @@
 ;;;   for the Ruby version, see bess.rb by Michael Scholz
 
 ;;; load sndlib and xmlib
-(let ((sndlib (dynamic-link "sndlib.so")))
+(let ((sndlib (dynamic-link "libsndlib.so")))
   (if (not (dynamic-object? sndlib))
-      (error "can't find sndlib.so")
+      (set! sndlib (dynamic-link "sndlib.so")))
+  (if (not (dynamic-object? sndlib))
+      (error "can't find sndlib.so or libsndlib.so")
       (dynamic-call (dynamic-func "Init_sndlib" sndlib) #f)))
 
 (let ((libxm (dynamic-link "libxm.so")))

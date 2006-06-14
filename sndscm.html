@@ -2,9 +2,9 @@
 
 <!-- TODO: when this table settles, add back the bgcolor="#f6f8ff" -->
 <!-- TODO: add most the names to the index -->
-<!-- TODO: the following are empty: dlocsig edit123 event grani ladspa maxf strad -->
-<!-- TODO: these need tablize: draw dsp env extensions marks mix rmsgain sndmotif -->
-<!-- TODO: these need work: bess debug? addedmenus editmenu neweffects examp infsnd prc95 rtex rtio -->
+<!-- TODO: the following are empty: dlocsig edit123 grani ladspa maxf strad -->
+<!-- TODO: these need tablize: dsp env extensions mix rmsgain sndmotif -->
+<!-- TODO: these need work: bess addedmenus editmenu neweffects examp infsnd prc95 rtex rtio -->
 <!-- TODO: rubber? ws doc, xm-enved gtk? -->
 <!-- TODO: remember ruby and forth examples especially for ins -->
 <!-- TODO: remember crossrefs and main-index additions (all files) -->
@@ -12,8 +12,8 @@
 
 
 <!-- done, I hope: 
-    analog-filter auto-save bess bird clm-ins fade freeverb
-    heart hooks index jcrev maraca mixer moog musglyphs nb noise oscope peak-env piano poly pvoc
+    analog-filter auto-save bess bird clm-ins debug draw event fade freeverb
+    heart hooks index jcrev maraca marks mixer moog musglyphs nb noise oscope peak-env piano poly pvoc
     rgb singer sndwarp snd4567 snd-gl snd-test spectr stochastic v
 -->
 
@@ -96,7 +96,6 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 <tr><td><a href="#effectsdoc">new-effects, gtk-effects, effects</a></td><td>an Effects menu</td></tr>
 <tr><td><a href="#envdoc">env</a></td>                      <td>envelope functions</td></tr>
 <tr><td><a href="#enveddoc">enved</a></td><td>envelope editor</td></tr>
-<tr><td><a href="#eventdoc">event</a></td>                  <td>xm module stuff</td></tr>
 <tr><td><a href="#exampdoc">examp</a></td><td>many examples</td></tr>
 <tr><td><a href="#extensionsdoc">extensions</a></td><td>various generally useful Snd extensions</td></tr>
 <tr><td><a href="#fadedoc">fade</a></td>  <td>frequency-domain cross-fades</td></tr>
@@ -275,6 +274,20 @@ that give you real-time GUI-based control over the fm-violin while it cycles aro
 compositional algorithm.  Both were written by
 Michael Scholz, based on CLM's bess5.cl and rt.lisp.
 </p>
+<!-- TODO:
+also needs libsndlib.sp and libxm.so
+/home/bil/cl/ bess1.scm
+bess1.scm: Permission denied.
+/home/bil/cl/ chmod 777 bess1.scm
+/home/bil/cl/ bess1.scm
+/usr/bin/env: guile \: No such file or directory
+/home/bil/cl/ gad.scm
+gad.scm: Command not found. ; changed to explicit /usr/local/bin/guile
+/home/bil/cl/ gad.scm
+ERROR: In procedure dynamic-link:
+ERROR: file: "libxm", message: "libXm.so.3: cannot open shared object file: No such file or directory"
+remade sndlib/libxm
+-->
 
 
 <br>
@@ -1444,38 +1457,28 @@ the differences between the CL and Scheme instruments.
 <A NAME="debugdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>debug</h2></td></tr></table>
 
 <pre>
-  <a class=def name="exsnddebug">snd-debug</a>
-  <a class=def name="exsndtrace">snd-trace</a>
-  <a class=def name="exsndbreak">snd-break</a> (message #f)
+  <a class=def name="exsnddebug">snd-debug</a>               ; enable some command shortcuts
+  <a class=def name="exsndtrace">snd-trace</a>               ; enable trace output
+  <a class=def name="exsndbreak">snd-break</a> (message #f)  ; set a breakpoint
 </pre>
 <!-- INDEX debugdoc:Debugging (break/trace) -->
 
 <p>debug.scm is a package of Guile-specific debugging aids.
-<b>snd-break</b> sets a breakpoint; if it is called, you drop into the Snd debugger.
+snd-break sets a breakpoint; if it is called, you drop into the Snd debugger.
 You can continue from the breakpoint, optionally returning any value you like.
 While in the break context (while the listener prompt says "break"), 
 these functions are available:
 </p>
 <pre>
-  <em class=emdef>break-go</em> (returned-value #f)
-  <em class=emdef>break-locals</em> (stack-location 0)
-  <em class=emdef>break-local</em> local-var (stack-location 0)
-  <em class=emdef>break-backtrace</em> (all #f)
-  <em class=emdef>break-help</em>
-  <em class=emdef>break-quit</em>
-  <em class=emdef>break-quit!</em>
+  <em class=emdef>break-go</em> (returned-value #f)       ; continue execution from breakpoint, return <i>returned-value</i>
+  <em class=emdef>break-locals</em> (stack-location 0)    ; display local variables 
+  <em class=emdef>break-local</em> local-var (stack-location 0) ; print a local's value (<i>local-var</i> is a symbol or string)
+  <em class=emdef>break-backtrace</em> (all #f)           ; display stack at breakpoint (5 levels by default, <i>all</i> = #t: all levels)
+  <em class=emdef>break-help</em>                         ; display some help
+  <em class=emdef>break-quit</em>                         ; exit current break level
+  <em class=emdef>break-quit!</em>                        ; exit all break levels, return to top level
 </pre>
 <p>
-<b>break-locals</b> prints out the local variables and their values.
-<b>break-local</b> prints one such variable's value (the <i>local-var</i> argument should be a symbol or a string).
-<b>break-help</b> prints out help.
-<b>break-backtrace</b> shows the stack at the point of the snd-break call.  The stack trace
-is normally truncated to show just the 5 or so inner frames; to get the full
-backtrace, call break-backtrace with an argument of #t.
-<b>break-quit</b> exits the current break level.
-<b>break-quit!</b> exits all break levels, returning you to the true top-level.
-<b>break-go</b> continues from the point of the breakpoint.
-The 'returned-value' is the value to return from the original call on snd-break.
 Here is a brief session in Snd's listener:
 </p>
 <pre>
@@ -1492,23 +1495,24 @@ Here is a brief session in Snd's listener:
     <em class=listener>:</em><em class=typing>hi</em>
     <em class=listener>33</em>
 </pre>
-<p>In words, we put a breakpoint in the midst of an expression in the test-break function,
+<p>We put a breakpoint in the midst of an expression in the <i>test-break</i> function,
 asking it to type "hiho" and drop into the debugger if it is executed.  Then we call
-test-break in an expression that sets the variable hi.  The breakpoint is hit, "hiho"
-gets reported, and we're placed in the debugger.  As you can probably tell, this is
+<i>test-break</i> in an expression that sets the variable <i>hi</i>.  The breakpoint is hit, "hiho"
+gets reported, and we're placed in the debugger.  The debugger is
 just the Snd listener, but with some extra context to implement the break support.
 After poking around, we call break-go with an argument of 32.  This causes the original
 set! to continue with 32 plugged in where the snd-break call was, setting hi to 33.
 </p>
 <p>
-<b>snd-debug</b> sets up a debugger. You can examine the stack or local variables etc.
-After calling snd-debug, there are functions similar to the break functions listed above:
+snd-debug sets up some information needed by the <i>bt</i> and <i>lv</i> commands:
 </p>
 <pre>
-  <em class=emdef>bt</em> -- show backtrace
-  <em class=emdef>lv (obj)</em> -- show local vars
+  <em class=emdef>bt</em>                 ; show backtrace
+  <em class=emdef>lv</em> (:optional obj) ; show local var(s)
 </pre>
-<p><b>snd-trace</b> activates any tracing
+<p>
+These are active outside a breakpoint, so once set up, you can use them whenever an error occurs.
+snd-trace activates any tracing
 that you may have requested and redirects its output to the Snd listener.
 Here's how to trace fm-violin calls in a notelist:
 </p>
@@ -1627,35 +1631,117 @@ to things like Zoom, and Quit.
 
 <A NAME="drawdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>draw</h2></td></tr></table>
 
-<p>draw.scm has examples of graphics additions; some of these are shown in extsnd.html.
-</p><p><b>display-energy</b> is a lisp-graph-hook procedure that displays the current time
-domain data as energy, not amplitude, using the y zoom slider to control the
-y axis.  The other procedures in draw.scm are intended for use with the
-after-graph-hook.  
-</p><p><b>display-colored-samples</b> (color beg dur snd chn) displays samples from beg for dur in color
-whenever they're in the current view. This is intended for use with <b>color-samples</b>. 
-(<a class=def name="colorsamples">color-samples</a> color #:optional beg dur snd chn) causes samples from beg to beg+dur to be displayed in color;
-to undo this, use <b>uncolor-samples</b>.
-</p><p><b>display-previous-edits</b> displays all edits of the current sound, with older versions gradually fading away.
-</p><p><b>overlay-sounds</b> overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3).
-</p><p>
-<a class=def name="makecurrentwindowdisplay">make-current-window-display</a>
-displays in the upper right corner the overall current sound and where the current window fits in it.
-This info is implicit in the x sliders, but a redundant graph doesn't hurt.  If you click in that graph,
-the cursor is moved to the clicked point.
-If you're using a line cursor (cursor-style is cursor-line), it will draw itself in the little graph;
-to get a more polite cursor, use <b>smart-line-cursor</b>, defined in draw.scm.
+<p>draw.scm has examples of graphics-oriented extensions.  The most useful one is make-current-window-display.
 </p>
-<img src="uppergrf.png" alt="make-current-window-display" hspace=20>
-<br>
-<p>
-<b>click-for-listener-help</b> is intended as a <a href="extsnd.html#listenerclickhook">listener-click-hook</a> entry.  It posts help about
+
+<table border=0 cellspacing=0 hspace=20>
+
+<!-- click-for-listener-help -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>click-for-listener-help</em> <code>pos</code>
+</td></tr>
+<tr><td width=60></td><td>
+click-for-listener-help is intended as a <a href="extsnd.html#listenerclickhook">listener-click-hook</a> function.  It posts help about
 the closest entity it can find whenever you double click in the listener.  Unfortunately, the help
 dialog is a bit clunky for a use like this, but the minibuffer has only one line, and
 tooltips are irritating in their own way; perhaps it should post the help at the bottom of
 the listener?
-</p>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- color-samples -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>color-samples</em> <code>color :optional beg dur snd chn</code>,  <em class=emdef>uncolor-samples</em> <code>:optional snd chn</code>
+</td></tr>
+<tr><td width=60></td><td>
+color-samples displays the samples from sample <i>beg</i> for <i>dur</i> samples in <i>color</i>
+whenever they're in the current time domain view. uncolor-samples cancels this action.
+<a href="extsnd.html#displaysampsinred">Here</a> is a representative picture.
+To activate this, add it to <a href="extsnd.html#aftergraphhook">after-graph-hook</a>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- display-energy -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>display-energy</em> <code>snd chn</code>
+</td></tr>
+<tr><td width=60></td><td>
+display-energy is a <a href="extsnd.html#lispgraphhook">lisp-graph-hook</a> procedure that displays the current time
+domain data as energy, not amplitude, using the y zoom slider to control its
+y axis.  <code>(add-hook! lisp-graph-hook display-energy)</code> activates it.
+Here's a <a href="extsnd.html#xdisplayenergy">picture</a> of it in action.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- display-previous-edits -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>display-previous-edits</em> <code>snd chn</code>
+</td></tr>
+<tr><td width=60></td><td>
+display-previous-edits displays all the edits of the current sound, with older edits gradually fading away.
+To activate this, add it to <a href="extsnd.html#aftergraphhook">after-graph-hook</a>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- make-current-window-display -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="makecurrentwindowdisplay">make-current-window-display</a> ()
+</td></tr>
+<tr><td width=60></td><td>
+make-current-window-display
+displays in the upper right corner the overall current sound and where the current window fits in it.
+This information is implicit in the x axis zoom and position sliders, but a redundant graph doesn't hurt.  If you click in that graph,
+the cursor is moved to the clicked point.
+
+<img src="uppergrf.png" alt="make-current-window-display" hspace=20 vspace=10>
 <br>
+If you're using a line cursor (if <a href="extsnd.html#cursorstyle">cursor-style</a> is <code>cursor-line</code>), it may 
+collide at times with the little graph; 
+to get a more polite cursor, use <a href="#smartlinecursor">smart-line-cursor</a>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- overlay-sounds -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>overlay-sounds</em> <code>:rest sounds</code>
+</td></tr>
+<tr><td width=60></td><td>
+overlay-sounds overlays onto its first argument (a sound index) all subsequent arguments: <code>(overlay-sounds 1 0 3)</code>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- samples-via-colormap -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>samples-via-colormap</em> <code>snd chn</code>
+</td></tr>
+<tr><td width=60></td><td>
+samples-via-colormap displays the time domain graph using the current colormap (it is really just an example of 
+<a href="extsnd.html#colormapref">colormap-ref</a>).  
+To activate this, add it to <a href="extsnd.html#aftergraphhook">after-graph-hook</a>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- smart-line-cursor -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="smartlinecursor">smart-line-cursor</A> <code>snd chn tracking</code>
+</td></tr>
+<tr><td width=60></td><td>
+smart-line-cursor is a <a href="extsnd.html#cursorstyle">cursor-style</a> function that tries 
+not to overwrite the thumbnail graph drawn by <a href="#makecurrentwindowdisplay">make-current-window-display</a>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+</table>
+
+<br><br>
+
 
 <A NAME="dspdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>dsp</h2></td></tr></table>
 
@@ -2298,13 +2384,6 @@ the second if you're setting it to something new:
 </pre>
 <br clear=right>
 
-
-<A NAME="eventdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>event</h2></td></tr></table>
-
-<p>event.scm has functions used by snd-test.scm to exercise the user interface.
-These functions depend on the xm module and XSendEvent primarily, but there are
-also Scheme implementations of some of the built-in functions (<a class=quiet href="extsnd.html#windowproperty">window-property</a>).
-</p>
 
 <br>
 <A NAME="exampdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>examp</h2></td></tr></table>
@@ -3695,70 +3774,250 @@ big-maraca is like maraca, but takes a list of resonances and includes low-pass 
 <br>
 <A NAME="marksdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>marks</h2></td></tr></table>
 
-<p>marks.scm/rb is a collection of mark-related functions.</p>
-
-<pre>
-  <a class=def name="markname2id">mark-name-&gt;id</a> name
-  <a class=def name="describemark">describe-mark</a> id
-  <A class=def NAME="syncup">syncup</a> ids
-  <A class=def NAME="fitselectionbetweenmarks">fit-selection-between-marks</a> m1 m2
-  <a class=def name="padmarks">pad-marks</a> ids secs
-  <A class=def NAME="movesyncdmarks">move-syncd-marks</a> sync samples-to-move
-  <a class=def name="playsyncdmarks">play-syncd-marks</a> sync
-  <a class=def name="exevalbetweenmarks">eval-between-marks</a> func snd
-  <A class=def NAME="exsnapmarks">snap-marks</a>
-  <a class=def name="exdefineselectionviamarks">define-selection-via-marks</a> m1 m2
-  <a class=def name="exsnapmarktobeat">snap-mark-to-beat</a>
-  <a class=def name="exmarkexplode">mark-explode</a>
-  <a class=def name="markproperty">mark-property</a> key id
-  <A class=def NAME="markclickinfo">mark-click-info</a> id
-  <A class=def NAME="savemarkproperties">save-mark-properties</a>
-</pre>
-
-<p><b>mark-name-&gt;id</b> is like <a href="extsnd.html#findmark">find-mark</a> but searches all currently accessible channels.
-</p><p><b>describe-mark</b> returns a description of the movements of mark id over the channel's edit history:
+<p>marks.scm/rb is a collection of mark-related functions.
 </p>
+
+<table border=0 cellspacing=0 hspace=20>
+
+<!-- define-selection-via-marks -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exdefineselectionviamarks">define-selection-via-marks</a> <code>m1 m2</code>
+</td></tr>
+<tr><td width=60></td><td>
+define-selection-via-marks selects the portion between the given marks, then returns the selection length.
+The marks defining the selection bounds must be in the same channel.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- describe-mark -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+  <a class=def name="describemark">describe-mark</a> <code>id</code>
+</td></tr>
+<tr><td></td><td>
+describe-mark returns a description of the movements of mark <i>id</i> over the channel's edit history:
 <pre>
     :<em class=typing>(describe-mark 0)</em>
     <em class=listener>((mark 0 sound 0 "oboe.snd" channel 0) 654 478)</em>
 </pre>
-<p>Here I placed a mark in oboe.snd at sample 654, then deleted a few samples
+Here I placed a mark in oboe.snd at sample 654, then deleted a few samples
 before it, causing it to move to sample 478.
-</p><p><b>pad-marks</b> inserts <i>secs</i> seconds of silence before each in a list of marks (<i>ids</i>).
-</p><p><b>fit-selection-between-marks</b> tries to squeeze the current selection between two marks,
-using the granulate generator to fix up the selection duration (this still is not perfect).
-</p><p><b>syncup</b> synchronizes a list of marks by inserting silences as needed.
-</p><p><b>move-syncd-marks</b> moves any marks sharing the sync value <i>sync</i> by
-<i>samples-to-move</i> samples.  Similarly, <b>play-syncd-marks</b> starts
-playing from all marks sharing its <i>sync</i> argument.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- eval-bewteen-marks -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+  <a class=def name="exevalbetweenmarks">eval-between-marks</a> <code>func</code>
+</td></tr>
+<tr><td></td><td>
+eval-between-marks evaluates <i>func</i>
+between the leftmost marks in the currently selected channel.
+<i>func</i> should take one argument, a sample, and return the new sample value.
 </p>
-<p>marks.scm also has code that tries to make it simpler to sync marks together
-(see <b>start-sync</b> and <b>stop-sync</b>), and <b>report-mark-names</b>
-that causes any named mark to display its name in the minibuffer when 
-the underlying sample happens to be played.  There are also many mark-related
-functions in examp.scm and scattered around the documentation.
-</p>
-<p><b>eval-between-marks</b> evaluates <i>func</i>
-between the leftmost marks in <i>snd</i>.
-</p>
+<pre>
+    (eval-between-marks (lambda (y) (* y 2)))
+</pre>
+doubles the samples between the two chosen marks, then returns a vct with the new data (I can't
+remember why this is returned -- it doesn't seem necessary).
 <pre>
     (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\m 0 
       (lambda () "eval between marks"
         (<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "mark eval:" eval-between-marks)))
 </pre>
-<p><b>snap-marks</b> places marks at the start and end of the current selection.
-</p><p><b>define-selection-via-marks</b> selects the portion between the given marks.
-</p><p><b>snap-mark-to-beat</b> forces a dragged mark to end up on a beat.
-</p><p><b>mark-explode</b> splits a sound into a bunch of separate files based on mark placements.
-</p><p><b>mark-property</b> associates a property list with each mark.
-There is also some code (look for "eval-header") that saves mark info in the
-sound file header, and reads it when the file is subsequently reopened.
-</p><p><b>mark-click-info</b> is a mark-click-hook function that describes a mark and its properties.  It
-is used by with-marked-sound in ws.scm.
-</p><p><b>save-mark-properties</b> sets up an <a href="extsnd.html#aftersavestatehook">after-save-state-hook</a> function to save any mark-properties.
-</p>
-<br>
+prompts for a function in the minibuffer, then evaluates it between the marks.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
 
+
+<!-- fit-selection-between-marks -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="fitselectionbetweenmarks">fit-selection-between-marks</A> <code>m1 m2</code>
+</td></tr>
+<tr><td></td><td>
+fit-selection-between-marks tries to squeeze the current selection between two marks,
+using the granulate generator to fix up the selection duration (it currently does a less than perfect job).
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mark-click-info -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="markclickinfo">mark-click-info</a> <code>id</code>
+</td></tr>
+<tr><td></td><td>
+mark-click-info is a <a href="extsnd.html#markclickhook">mark-click-hook</a> function that describes a mark and its properties.  It
+is used by with-marked-sound in ws.scm.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mark-explode -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exmarkexplode">mark-explode</a> <code>:optional (htype mus-next) (dformat mus-bfloat)</code>
+</td></tr>
+<tr><td></td><td>
+mark-explode splits a sound into a bunch of separate files based on mark placements.  Each mark becomes the
+first sample of a separate sound.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mark-name-&gt;id -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="markname2id">mark-name-&gt;id</a> <code>name</code>
+</td></tr>
+<tr><td></td><td>
+mark-name-&gt;id is like <a href="extsnd.html#findmark">find-mark</a>, but searches all currently accessible channels.
+If a such a mark doesn't exist, it returns <code>'no-such-mark</code>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mark-property -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="markproperty">mark-property</a> <code>key id</code>
+</td></tr>
+<tr><td></td><td>
+mark-property associates a property list with a mark.
+<pre>
+    :<em class=typing>(set! (mark-property :weight 3) 2.5)</em>   ; 3 is the mark id
+    <em class=listener>2.5</em>
+    :<em class=typing>(mark-property :weight 3)</em>
+    <em class=listener>2.5</em>
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- move-syncd-marks -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="movesyncdmarks">move-syncd-marks</a> <code>sync samples-to-move</code>
+</td></tr>
+<tr><td></td><td>
+move-syncd-marks moves any marks sharing the <a href="extsnd.html#marksync">mark-sync</a> value <i>sync</i> by
+<i>samples-to-move</i> samples.  
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- pad-marks -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="padmarks">pad-marks</a> <code>ids secs</code>
+</td></tr>
+<tr><td></td><td>
+pad-marks inserts <i>secs</i> seconds of silence before each in a list of marks (<i>ids</i>).
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- play-between-marks -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="playbetweenmarks">play-between-marks</a> <code>:optional snd m1 m2</code>
+</td></tr>
+<tr><td></td><td>
+play-between-marks
+plays the portion in <i>snd</i> between the given marks.
+</p>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- play-syncd-marks -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="playsyncdmarks">play-syncd-marks</a> <code>sync</code>
+</td></tr>
+<tr><td></td><td>
+play-syncd-marks starts
+playing from all the marks sharing its <i>sync</i> argument (see <a href="extsnd.html#marksync">mark-sync</a>).
+</p>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- report-mark-names -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>report-mark-names</a>
+</td></tr>
+<tr><td></td><td>
+report-mark-names causes a named mark to display its name in the minibuffer when 
+its sample happens to be played.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+  
+
+<!-- save-mark-properties -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="savemarkproperties">save-mark-properties</a>
+</td></tr>
+<tr><td></td><td>
+save-mark-properties sets up an <a href="extsnd.html#aftersavestatehook">after-save-state-hook</a> function to save any mark-properties.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+  
+
+<!-- snap-mark-to-beat -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exsnapmarktobeat">snap-mark-to-beat</a>
+</td></tr>
+<tr><td></td><td>
+snap-mark-to-beat forces a dragged mark to end up on a beat.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- snap-marks -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="exsnapmarks">snap-marks</a>
+</td></tr>
+<tr><td></td><td>
+snap-marks places marks at the start and end of the current selection in all its portions (i.e. in every channel that
+has selected data).
+It returns a list of all the marks it has added.
+<pre>
+    :<em class=typing>(selection-position)</em>
+    <em class=listener>360</em>
+    :<em class=typing>(selection-frames)</em>
+    <em class=listener>259</em>
+    :<em class=typing>(snap-marks)</em>
+    <em class=listener>(8 9)</em>
+    :<em class=typing>(mark-sample 8)</em>
+    <em class=listener>360</em>
+    :<em class=typing>(mark-sample 9)</em>
+    <em class=listener>619</em>
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- syncup -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="syncup">syncup</a> <code>ids</code>
+</td></tr>
+<tr><td></td><td>
+syncup synchronizes a list of marks (positions them all at the same sample number) by inserting silences as needed.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+</table>
+
+<p>marks.scm also has code that tries to make it simpler to sync marks together --
+you simply click the marks that should share a <a href="extsnd.html#marksync">mark-sync</a> field,
+rather than laboriously setting each one in the listener;
+see <b>start-sync</b> and <b>stop-sync</b>.
+There is also some code (look for "eval-header" toward the end of the file) that saves mark info in a
+sound file header, and reads it when the file is subsequently reopened.
+</p>
+
+
+<table bgcolor="aliceblue" border=0><tr><td>
+<pre>see also: <a href="#addmarkpane" onmouseover="return escape('channel pane describing marks')">add-mark-pane</a> <a href="extsnd.html#sndmarks" onmouseover="return escape('general discussion of marks in Snd')">Marks</a> <a href="#exmarkloops" onmouseover="return escape('place marks at loop points')">mark-loops</a> <a href="#dlpdoc" onmouseover="return escape('add a top-level Marks menu')">marks-menu</a>
+</pre></td>
+</tr></table>
+
+
+<br>
+<br>
 <A NAME="maxfdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>maxf</h2></td></tr></table>
 
 <p>These files are translations (thanks to Michael Scholz!) of CLM's maxf.ins
@@ -5062,11 +5321,11 @@ viewing angle.  To move one sample at a time through a sound,
 you could bind the arrow keys:
 
 <table border=0 cellpadding=5 hspace=20 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(bind-key "Left" 0 (lambda () 
-                     (set! (left-sample) (max 0 (1- (left-sample)))) 
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> "Left" 0 (lambda () 
+                     (set! (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) (max 0 (1- (<a class=quiet href="extsnd.html#leftsample">left-sample</a>)))) 
                      keyboard-no-action))
-(bind-key "Right" 0 (lambda () 
-                     (set! (left-sample) (min (frames) (1+ (left-sample)))) 
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> "Right" 0 (lambda () 
+                     (set! (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) (min (<a class=quiet href="extsnd.html#frames">frames</a>) (1+ (<a class=quiet href="extsnd.html#leftsample">left-sample</a>)))) 
                      keyboard-no-action))
 </pre></td></tr></table>
 </td></tr>
@@ -5437,7 +5696,7 @@ this idea.
 
 <br>
 <br>
-<A NAME="sndtestdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd-test</h2></td></tr></table>
+<A NAME="sndtestdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd-test and event</h2></td></tr></table>
 
 <p>
 snd-test.scm and snd-test.rb are test suites for Snd. The simplest use is:
@@ -5455,7 +5714,9 @@ You can run a particular test with:
 <p>which runs test 23. 
 snd-test is primarily useful to non-developers as a source of
 a huge number of examples. 
+event.scm has functions used by snd-test.scm to exercise the user interface.
 </p>
+
 
 <br><br>
 
