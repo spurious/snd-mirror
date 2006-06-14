@@ -2,17 +2,16 @@
 
 <!-- TODO: when this table settles, add back the bgcolor="#f6f8ff" -->
 <!-- TODO: add most the names to the index -->
-<!-- TODO: the following are empty: dlocsig edit123 grani ladspa maxf strad -->
-<!-- TODO: these need tablize: dsp env extensions mix rmsgain sndmotif -->
-<!-- TODO: these need work: bess addedmenus editmenu neweffects examp infsnd prc95 rtex rtio -->
+<!-- TODO: the following are empty: edit123 grani ladspa maxf strad -->
+<!-- TODO: these need tablize: dsp extensions mix rmsgain sndmotif -->
+<!-- TODO: these need work: addedmenus editmenu neweffects examp infsnd prc95 rtex rtio -->
 <!-- TODO: rubber? ws doc, xm-enved gtk? -->
-<!-- TODO: remember ruby and forth examples especially for ins -->
 <!-- TODO: remember crossrefs and main-index additions (all files) -->
 <!-- TODO: check effects-utils.scm kmenu.scm pd-*.scm snd-hobbit.scm (rb/fs?) -->
 
 
 <!-- done, I hope: 
-    analog-filter auto-save bess bird clm-ins debug draw event fade freeverb
+    analog-filter auto-save bess bird clm-ins debug dlocsig draw env event fade freeverb
     heart hooks index jcrev maraca marks mixer moog musglyphs nb noise oscope peak-env piano poly pvoc
     rgb singer sndwarp snd4567 snd-gl snd-test spectr stochastic v
 -->
@@ -156,7 +155,6 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 <!-- main-index |analogfilterdoc:elliptic filters -->
 <!-- main-index |analogfilterdoc:chebyshev filters -->
 <pre>
-    ;; fcut = cutoff frequency in terms of srate = 1.0, flo = low freq of band, fhi = high freq of band
     <em class=emdef>make-butterworth-lowpass</em> order fcut
     <em class=emdef>make-butterworth-highpass</em> order fcut
     <em class=emdef>make-butterworth-bandpass</em> order flo fhi
@@ -181,6 +179,8 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
     <em class=emdef>make-elliptic-highpass</em> order fcut (ripple-dB 1.0) (loss-dB 60.0)
     <em class=emdef>make-elliptic-bandpass</em> order flo fhi (ripple-dB 1.0) (loss-dB 60.0)
     <em class=emdef>make-elliptic-bandstop</em> order flo fhi (ripple-dB 1.0) (loss-dB 60.0)
+
+    ;; fcut = cutoff frequency in terms of srate = 1.0, flo = low freq of band, fhi = high freq of band
 </pre>
 
 <p>analog-filter.scm has the usual IIR filters: Butterworth, Chebyshev, inverse Chebyshev, Bessel,
@@ -267,29 +267,32 @@ frequency modulation in semi-real-time (how "real-time" it is depends on your
 audio setup).  This is a translation to the Sndlib/Libxm system of bess.cl in CLM.
 Michael Scholz has contributed a Ruby translation of this with many improvements:
 bess.rb.  You may need to make bess.scm executable before running it: <code>chmod 777 bess.scm</code>.
+If you get "command not found", you need to edit the path to guile in the source.
 </p>
+
+<table border=0 hspace=20>
+<tr><td>
+<img src="fm.png">
+</td><td>
+<pre>
+   ;; bess opens the DAC, continuously sends the following:
+   (* amp 
+      (oscil carosc 
+        (+ (hz-&gt;radians frequency)
+           (* index (oscil modosc 
+                      (hz-&gt;radians (* ratio frequency)))))))
+</pre>
+</td></tr></table>
+<br>
 
 <p>bess1.scm and bess1.rb are scripts (independent of Snd), similar to bess.scm and bess.rb,
 that give you real-time GUI-based control over the fm-violin while it cycles around in a simple
 compositional algorithm.  Both were written by
 Michael Scholz, based on CLM's bess5.cl and rt.lisp.
 </p>
-<!-- TODO:
-also needs libsndlib.sp and libxm.so
-/home/bil/cl/ bess1.scm
-bess1.scm: Permission denied.
-/home/bil/cl/ chmod 777 bess1.scm
-/home/bil/cl/ bess1.scm
-/usr/bin/env: guile \: No such file or directory
-/home/bil/cl/ gad.scm
-gad.scm: Command not found. ; changed to explicit /usr/local/bin/guile
-/home/bil/cl/ gad.scm
-ERROR: In procedure dynamic-link:
-ERROR: file: "libxm", message: "libXm.so.3: cannot open shared object file: No such file or directory"
-remade sndlib/libxm
--->
 
 
+<br>
 <br>
 <A NAME="birddoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>bird</h2></td></tr></table>
 <pre>
@@ -1528,12 +1531,16 @@ Here's how to trace fm-violin calls in a notelist:
 
 <A NAME="dlocsigdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>dlocsig.rb</h2></td></tr></table>
 
-<p>dlocsig.rb is Michael Scholz's translation to Ruby of Fernando Lopez-Lezcano's
-dlocsig in CLM.  Fernando's documentation can be found in the CLM tarball
-(dlocsig/index.html).  dlocsig is a CLM generator that can produce moving sounds.
+<p>dlocsig is a CLM generator developed by Fernando Lopez-Lezcano that can move sounds in two or three dimensions.
+Fernando's CLM/lisp-oriented documentation can be found in the CLM tarball
+(dlocsig/index.html) and <A HREF="http://ccrma.stanford.edu/~nando/clm/dlocsig/">here</A>.
+dlocsig.rb is Michael Scholz's translation of dlocsig to Ruby.
+It has lots of documentation and examples.  If you load dlocsig.rb, a new menu is added named "Dlocsig".
+If you choose a path from this menu, you get a graphical user-interface to play with the various
+envelopes that drive dlocsig.  Click the "With_Snd" button to apply the current path choices to the
+currently selected sound.  Click "Gnuplot" to get a pretty picture of the path (in 3D!).
 </p>
-<p>See dlocsig.rb for documentation and examples.
-</p>
+
 <br>
 
 <A NAME="dlpdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>additional menus, etc</h2></td></tr></table>
@@ -2203,142 +2210,293 @@ it's not hard to try them out.
 
 <A NAME="envdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>env</h2></td></tr></table>
 
-<p>An envelope in Snd/CLM is simply a list of breakpoint pairs.  (In the function names, 
-I try to remember to use "envelope" to be a list of breakpoints, and "env" to be the result of make-env,
-a CLM env structure passed to the env generator).
+<p>
+env.scm provides a variety envelope functions.
+An envelope in Snd/CLM is simply a list of breakpoint pairs.  In the function names, 
+I try to remember to use "envelope" to be a list of breakpoints, and "env" to be the result of <a href="clm.html#make-env">make-env</a>,
+a CLM env structure passed to the <a href="clm.html#env">env</a> generator.
 In an envelope,
 the x axis extent
-is arbitrary, though it's simplest to use 0.0 to 1.0.  env.scm provides several
-envelope functions that are often useful:
+is arbitrary, though it's simplest to use 0.0 to 1.0.
 </p>
+
+<table border=0 cellspacing=0 hspace=20>
+
+<!-- add-envelopes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>add-envelopes</em> <code>env1 env2</code>
+</td></tr>
+<tr><td width=60></td><td>
+add-envelopes adds two envelopes together:
 <pre>
-  <a class=def Name="envelopeinterp">envelope-interp</a> x env <i>base</i>
-  <em class=emdef>window-envelope</em> beg end env
-  <em class=emdef>map-envelopes</em> func env1 env2
-  <em class=emdef>multiply-envelopes</em> env1 env2
-  <em class=emdef>add-envelopes</em> env1 env2
-  <a class=def name="maxenvelope">max-envelope</a> env
-  <em class=emdef>min-envelope</em> env
-  <em class=emdef>integrate-envelope</em> env
-  <em class=emdef>stretch-envelope</em> env old-attack new-attack <i>old-decay new-decay</i>
-  <em class=emdef>envelope-last-x</em> env
-  <a class=def name="scaleenvelope">scale-envelope</a> env scl <i>(offset 0.0)</i>
-  <a class=def name="reverseenvelope">reverse-envelope</a> env
-  <a class=def name="concatenateenvelopes">concatenate-envelopes</a> #:rest envs
-  <em class=emdef>repeat-envelope</em> env repeats #:optional (reflected #f) (normalized #f)
-  <a class=def name="powerenv">power-env</a> e
-  <em class=emdef>make-power-env</em> e #:key (scaler 1.0) (offset 0.0) duration
-  <em class=emdef>power-env-channel</em> pe #:optional (beg 0) dur snd chn edpos (edname "power-env-channel")
-  <em class=emdef>envelope-exp</em> e #:optional (power 1.0) (xgrid 100)
-  <em class=emdef>rms-envelope</em> file #:key (beg 0.0) (dur #f) (rfreq 30.0) (db #f)
+    :<em class=typing>(add-envelopes '(0 0 1 1) '(0 0 1 1 2 0))</em>
+    <em class=listener>(0 0 1/2 3/2 1 1)</em>  ; i.e. (0 0 1 1.5 2 1) in the 2nd env's terms
 </pre>
-<p>These are translated from CLM's env.lisp.
-<code>(envelope-interp x env base)</code> returns value of env at x.
-If base is 0, env is treated as a step function; if base is 1.0 (the
-default), its breakpoints are connected by a straight line, and
-any other base connects the breakpoints with a kind of exponential
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- concatenate-envelopes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="concatenateenvelopes">concatenate-envelopes</a> <code>:rest envs</code>
+</td></tr>
+<tr><td></td><td>
+concatenate-envelopes concatenates its arguments:
+<pre>
+    :<em class=typing>(concatenate-envelopes '(0 1 1 0) '(0 0 1 1))</em>
+    <em class=listener>(0.0 1 1.0 0 2.0 1)</em>
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- envelope-exp -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>envelope-exp</em> <code>e :optional (power 1.0) (xgrid 100)</code>
+</td></tr>
+<tr><td></td><td>
+envelope-exp interpolates segments into envelope to approximate exponential curves.
+<pre>
+    :<em class=typing>(format #f "~{~,3F ~}" (envelope-exp '(0 0 1 1) 3.0 6))</em>
+    <em class=listener>"0.000 0.000 0.167 0.005 0.333 0.037 0.500 0.125 0.667 0.296 0.833 0.579 1.000 1.000 "</em>
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- envelope-interp -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="envelopeinterp">envelope-interp</A> <code>x env (base 1.0)</code>
+</td></tr>
+<tr><td></td><td>
+<code>(envelope-interp x env base)</code> returns value of <i>env</i> at <i>x</i>.
+If <i>base</i> is 0, <i>env</i> is treated as a step function; if <i>base</i> is 1.0 (the
+default), <i>env</i>'s breakpoints are connected by a straight line, and
+any other <i>base</i> connects the breakpoints with a kind of exponential
 curve:
-</p>
 <pre>
-:<em class=typing>(envelope-interp .1 '(0 0 1 1))</em>
-<em class=listener>0.1</em>
-:<em class=typing>(envelope-interp .1 '(0 0 1 1) 32.0)</em>
-<em class=listener>0.0133617278184869</em>
-:<em class=typing>(envelope-interp .1 '(0 0 1 1) .012)</em>
-<em class=listener>0.361774730775292</em>
+    :<em class=typing>(envelope-interp .1 '(0 0 1 1))</em>
+    <em class=listener>0.1</em>
+    :<em class=typing>(envelope-interp .1 '(0 0 1 1) 32.0)</em>
+    <em class=listener>0.0133617278184869</em>
+    :<em class=typing>(envelope-interp .1 '(0 0 1 1) .012)</em>
+    <em class=listener>0.361774730775292</em>
 </pre>
-<p>The corresponding function for a CLM env generator is <a href="clm.html#env-interp">env-interp</a>.
-If you'd rather think in terms of e^-kt, set the base to (exp k).  
-</p>
-<p><b>window-envelope</b> returns (as an envelope) the portion of its envelope argument that lies
-between the X axis values <i>beg</i> and <i>end</i>.  This is useful when you're treating an
-envelope as a phrase-level control, applying successive portions of it to many underlying
-notes.
-</p>
+The corresponding function for a CLM env generator is <a href="clm.html#env-interp">env-interp</a>.
+If you'd rather think in terms of e^-kt, set the <i>base</i> to (exp k).  
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- envelope-last-x -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>envelope-last-x</em> <code>env</code>
+</td></tr>
+<tr><td></td><td>
+envelope-last-x returns the maximum x value:
 <pre>
-:<em class=typing>(window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0))</em>
-<em class=listener>(1.0 0.2 3.0 0.6)</em>
+    :<em class=typing>(envelope-last-x '(0 1 1 0 2 0))</em>
+    <em class=listener>2</em>
 </pre>
-<p><b>map-envelopes</b> applies its <i>func</i> argument to the breakpoints in the two
-envelope arguments, returning a new envelope. A simple application of this is
-<b>multiply-envelopes</b> which multiplies two envelopes:
-</p>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- integrate-envelope -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>integrate-envelope</em> <code>env</code>
+</td></tr>
+<tr><td></td><td>
+integrate-envelope returns the area under the envelope.
 <pre>
-:<em class=typing>(multiply-envelopes '(0 0 1 1) '(0 0 1 1 2 0))</em>
-<em class=listener>(0 0 0.5 0.5 1 0)</em>
+    :<em class=typing>(integrate-envelope '(0 0 1 1))</em>
+    <em class=listener>0.5</em>
+    :<em class=typing>(integrate-envelope '(0 1 1 1))</em>
+    <em class=listener>1.0</em>
+    :<em class=typing>(integrate-envelope '(0 0 1 1 2 .5))</em>
+    <em class=listener>1.25</em>
 </pre>
-<p>As this example shows, the new envelope goes from 0.0 to 1.0 along
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- make-power-env -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>make-power-env</em> <code>e :key (scaler 1.0) (offset 0.0) duration</code><br>
+<a class=def name="powerenv">power-env</a> <code>e</code><br>
+<em class=emdef>power-env-channel</em> <code>pe :optional (beg 0) dur snd chn edpos (edname "power-env-channel")</code>
+</td></tr>
+<tr><td></td><td>
+make-power-env and power-env implement an extension of exponential
+envelopes; each segment has its own base.  power-env-channel uses the same
+mechanism as an extension of env-channel.
+<pre>
+    (let ((pe (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1) :duration 1.0)))
+      (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) (* y (power-env pe)))))
+    
+    (let ((pe1 (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1.0  3 .5 3.0  4 0 0) :duration 1.0)))
+      (power-env-channel pe1))
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- map-envelopes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>map-envelopes</em> <code>func env1 env2</code>
+</td></tr>
+<tr><td></td><td>
+map-envelopes applies <i>func</i> to the breakpoints in the two
+envelope arguments, returning a new envelope.
+<pre>
+    :<em class=typing>(map-envelopes + '(0 0 1 1 2 0) '(0 1 2 0))</em>
+    <em class=listener>(0 1 1/2 3/2 1 0)</em>  ; i.e. '(0 1 1 1.5 2 0) in the original x-axis bounds
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- max-envelope -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>min-envelope</em> <code>env</code><br>
+<a class=def name="maxenvelope">max-envelope</a> <code>env</code>
+</td></tr>
+<tr><td></td><td>
+max-envelope returns the maximum y value in <i>env</i>, and min-envelope returns the minimum y value:
+<pre>
+    :<em class=typing>(max-envelope '(0 0 1 1 2 3 4 0))</em>
+    <em class=listener>3.0</em>
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- multiply-envelopes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>multiply-envelopes</em> <code>env1 env2</code>
+</td></tr>
+<tr><td></td><td>
+<b>multiply-envelopes</b> uses map-envelopes to multiply two envelopes:
+<pre>
+    :<em class=typing>(multiply-envelopes '(0 0 1 1) '(0 0 1 1 2 0))</em>
+    <em class=listener>(0 0 0.5 0.5 1 0)</em>
+</pre>
+The new envelope goes from 0.0 to 1.0 along
 the X axis; the multiplied envelopes are stretched or contracted to
 fit 0.0 to 1.0, and wherever one has a breakpoint, the corresponding
-point in the other envelope is interpolated, if necessary. The code
-for multiply envelopes is simply:</p>
-<pre>
-(define multiply-envelopes
-  (lambda (e1 e2)
-    (map-envelopes * e1 e2)))
-</pre>
-<p><b>max-envelope</b> returns the maximum Y value in <i>env</i>, and <b>envelope-last-x</b>
-returns the maximum X value:
-</p>
-<pre>
-:<em class=typing>(max-envelope '(0 0 1 1 2 3 4 0))</em>
-<em class=listener>3.0</em>
-</pre>
-<p>Similarly, <b>min-envelope</b> returns the minimum y value.</p>
-<p><b>integrate-envelope</b> returns the area under the envelope.
-</p>
-<pre>
-:<em class=typing>(integrate-envelope '(0 0 1 1))</em>
-<em class=listener>0.5</em>
-:<em class=typing>(integrate-envelope '(0 1 1 1))</em>
-<em class=listener>1.0</em>
-:<em class=typing>(integrate-envelope '(0 0 1 1 2 .5))</em>
-<em class=listener>1.25</em>
-</pre>
-<p><b>stretch-envelope</b> applies attack and optionally decay times
-to an envelope, much like divseg in clm-1.</p>
-<pre>
-:<em class=typing>(stretch-envelope '(0 0 1 1) .1 .2)</em>
-<em class=listener>(0 0 0.2 0.1 1.0 1)</em>
-:<em class=typing>(stretch-envelope '(0 0 1 1 2 0) .1 .2 1.5 1.6)</em>
-<em class=listener>(0 0 0.2 0.1 1.1 1 1.6 0.5 2.0 0)</em>
-</pre>
-<p><b>scale-envelope</b> scales the y values of an envelope by <i>scl</i>,
-<b>add-envelope</b> adds two envelopes together, <i>reverse-envelope</i>
-reverses an envelope.
-<b>repeat-envelope</b> repeats an envelope (concatenates copies of itself).
-It's usually easier to use mus-reset to restart an envelope over and over.
-</p>
+point in the other envelope is interpolated, if necessary.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- repeat-envelope -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>repeat-envelope</em> <code>env repeats :optional (reflected #f) (normalized #f)</code>
+</td></tr>
+<tr><td></td><td>
+repeat-envelope repeats an envelope (concatenates copies of itself).
+It's usually easier to use <a href="clm.html#mus-reset">mus-reset</a> to restart an envelope over and over.
 
 <table border=0><tr><td>
 <pre>
-:<em class=typing>(repeat-envelope '(0 0 .1 .9 1 1 1.3 .2 2 0) 2)</em>
-<em class=listener>(0 0 0.1 0.9 1.0 1 1.3 0.2 2.0 0 2.1 0.9 3.0 1 3.3 0.2 4.0 0)</em>
+    :<em class=typing>(repeat-envelope '(0 0 .1 .9 1 1 1.3 .2 2 0) 2)</em>
+    <em class=listener>(0 0 0.1 0.9 1.0 1 1.3 0.2 2.0 0 2.1 0.9 3.0 1 3.3 0.2 4.0 0)</em>
 </pre>
-</td><td><img src="repenv.png" hspace=20>
+</td></tr><tr>
+<td><img src="repenv.png" hspace=20>
 </td></tr></table>
 
-<p>If the final y value is different from the first y value (as above), a quick ramp is
-inserted between repeats. 'normalized' causes the new envelope's x axis
-to have the same extent as the original's. 'reflected' causes every other
+If the final y value is different from the first y value (as above), a quick ramp is
+inserted between repeats. <i>normalized</i> causes the new envelope's x axis
+to have the same extent as the original's. <i>reflected</i> causes every other
 repetition to be in reverse.
-</p>
-<p><b>make-power-env</b> and <b>power-env</b> implement an extension of exponential
-envelopes; each segment has its own base.  <b>power-env-channel</b> uses the same
-mechanism as an extension of env-channel.
-</p>
-<pre>
-(let ((pe (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1) :duration 1.0)))
-  (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) (* y (power-env pe)))))
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
 
-(let ((pe1 (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1.0  3 .5 3.0  4 0 0) :duration 1.0)))
-  (power-env-channel pe1))
+
+<!-- reverse-envelope -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="reverseenvelope">reverse-envelope</a> <code>env</code>
+</td></tr>
+<tr><td></td><td>
+reverse-envelope reverses an envelope.
+<pre>
+    :<em class=typing>(reverse-envelope '(0 0 1 1 2 1))</em>
+    <em class=listener>(0 1 1 1 2 0)</em>
 </pre>
-<p><b>envelope-exp</b> interpolates segments into envelope to approximate exponential curves.
-<b>rms-envelope</b> returns an rms envelope of a file; it is based on rmsenv.ins in the CLM package.
-</p>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- rms-envelope -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>rms-envelope</em> <code>file :key (beg 0.0) (dur #f) (rfreq 30.0) (db #f)</code>
+</td></tr>
+<tr><td></td><td>
+rms-envelope returns an rms envelope of a file; it is based on rmsenv.ins in the CLM package.
+<pre>
+    :<em class=typing>(format #f "~{~,3F ~}" (rms-envelope "1a.snd"))</em>
+    <em class=listener>"0.000 0.049 0.033 0.069 0.067 0.049 0.100 0.000 0.133 0.000 0.167 0.000 0.200 0.000 "</em>
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- scale-envelope -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="scaleenvelope">scale-envelope</a> <code>env scl (offset 0.0)</code>
+</td></tr>
+<tr><td></td><td>
+scale-envelope scales the y values of an envelope by <i>scl</i>, and optionally adds <i>offset</i>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- stretch-envelope -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>stretch-envelope</em> <code>env old-attack new-attack (old-decay #f) (new-decay #f)</code>
+</td></tr>
+<tr><td></td><td>
+stretch-envelope applies attack and optionally decay times
+to an envelope, much like divseg in clm-1.
+<pre>
+    :<em class=typing>(stretch-envelope '(0 0 1 1) .1 .2)</em>
+    <em class=listener>(0 0 0.2 0.1 1.0 1)</em>
+    :<em class=typing>(stretch-envelope '(0 0 1 1 2 0) .1 .2 1.5 1.6)</em>
+    <em class=listener>(0 0 0.2 0.1 1.1 1 1.6 0.5 2.0 0)</em>
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- window-envelope -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>window-envelope</em> <code>beg end env</code>
+</td></tr>
+<tr><td></td><td>
+window-envelope returns (as an envelope) the portion of its envelope argument that lies
+between the x axis values <i>beg</i> and <i>end</i>.  This is useful when you're treating an
+envelope as a phrase-level control, applying successive portions of it to many underlying
+notes.
+<pre>
+    :<em class=typing>(window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0))</em>
+    <em class=listener>(1.0 0.2 3.0 0.6)</em>
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+</table>
+
+<table bgcolor="aliceblue" border=0><tr>
+<td>
+<pre>see also: <a href="clm.html#envelopes" onmouseover="return escape('env and make-env: envelopes in CLM')">make-env</a> <a href="extsnd.html#envchannel" onmouseover="return escape('the main Snd enveloping function')">env-channel</a> <a href="snd.html#editenvelope" onmouseover="return escape('the envelope editor dialog')">Enved</a><br>
+</pre>
+</td></tr></table>
+
 <br>
 
+
+<br>
 <A NAME="enveddoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>enved</h2></td></tr></table>
 <br>
 <img src="envs.png" alt="channel enveds" hspace=20>
@@ -3814,7 +3972,6 @@ before it, causing it to move to sample 478.
 eval-between-marks evaluates <i>func</i>
 between the leftmost marks in the currently selected channel.
 <i>func</i> should take one argument, a sample, and return the new sample value.
-</p>
 <pre>
     (eval-between-marks (lambda (y) (* y 2)))
 </pre>
@@ -3918,7 +4075,6 @@ pad-marks inserts <i>secs</i> seconds of silence before each in a list of marks 
 <tr><td></td><td>
 play-between-marks
 plays the portion in <i>snd</i> between the given marks.
-</p>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3930,14 +4086,13 @@ plays the portion in <i>snd</i> between the given marks.
 <tr><td></td><td>
 play-syncd-marks starts
 playing from all the marks sharing its <i>sync</i> argument (see <a href="extsnd.html#marksync">mark-sync</a>).
-</p>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- report-mark-names -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>report-mark-names</a>
+<em class=emdef>report-mark-names</em>
 </td></tr>
 <tr><td></td><td>
 report-mark-names causes a named mark to display its name in the minibuffer when 
@@ -4791,6 +4946,7 @@ is in mus.lisp, and the C version is in clm.c.
 <p>The <i>analyze</i>, <i>edit</i>, and <i>synthesize</i> arguments to make-pvocoder are
 functions that are applied as needed during pvocoder processing; similarly, the <i>input</i>
 argument to pvocoder can be a function.
+</p>
 <pre>
     (let* ((ind (<a class=quiet href="extsnd.html#opensound">open-sound</a> "oboe.snd"))
 	   (pv (<em class=red>make-pvocoder</em> 256 4 64))
@@ -4941,6 +5097,8 @@ the smallest, throw away this crossing, 6) sort the remaining crossings by least
 7) interpolate or delete periods until the sound has been sufficiently lengthened or
 shortened.
 rubber-sound is incredibly slow, and almost never works.  The idea seems good however...
+
+<!-- ((((((( --><!-- this matches the preceding open parens for index.cl's benefit -->
 </p>
 
 <table bgcolor="aliceblue" border=0><tr>
@@ -4948,9 +5106,6 @@ rubber-sound is incredibly slow, and almost never works.  The idea seems good ho
 <pre>see also: <a href="#clmexpsrc" onmouseover="return escape('clm-ins version of expsrc')">clm-expsrc</a> <a href="#exexpsrc" onmouseover="return escape('granular synthesis to stretch sound')">expsrc</a> <a href="#pvocdoc" onmouseover="return escape('phase-vocoder')">pvoc</a> <a href="#ssbbank" onmouseover="return escape('use ssb-am for time stretch')">ssb-bank</a>
 </pre>
 </td></tr></table>
-
-<!-- ((((((( --><!-- this matches the preceding open parens for index.cl's benefit -->
-</p>
 
 <br>
 <A NAME="singerdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>singer</h2></td></tr></table>
@@ -5334,7 +5489,7 @@ you could bind the arrow keys:
 
 <!-- gl-dump-state -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>gl-dump-state</a> <code>()</code>
+<em class=emdef>gl-dump-state</em> <code>()</code>
 </td></tr>
 <tr><td></td><td>
 gl-dump-state displays much of the current GL graphics state.
@@ -5344,7 +5499,7 @@ gl-dump-state displays much of the current GL graphics state.
 
 <!-- gl-info -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>gl-info</a> <code>()</code>
+<em class=emdef>gl-info</em> <code>()</code>
 </td></tr>
 <tr><td></td><td>
 gl-info prints out information about the current GL system setup.  
@@ -5367,7 +5522,7 @@ rather zoom in on the stuff we can hear).
 
 <!-- stop-waterfall -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>stop-waterfall</a> <code>()</code>
+<em class=emdef>stop-waterfall</em> <code>()</code>
 </td></tr>
 <tr><td></td><td>
 stop-waterfall turns off the waterfall spectrum display.

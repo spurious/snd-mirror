@@ -136,9 +136,12 @@
 		  (if (> (random 1.0) 0.5) (set! cellsiz (1+ cellsiz)))
 		  (set! cellctr cellbeg)))
 	    (set! func (make-rt-violin dur
-				       (* cfreq 16.351 16
-					  (expt 2 (/ (array-ref vmode (array-ref vpits cellctr))
-						     12.0)))
+				       (let ((freq (* cfreq 16.351 16
+						      (expt 2 (/ (array-ref vmode (array-ref vpits cellctr))
+								 12.0)))))
+					 (if (< (* 8 freq) *clm-srate*)
+					     freq
+					     (/ freq 4)))
 				       (* camp 0.3) #:fm-index cindex))
 	    (set! len (inexact->exact (ceiling (/ (seconds->samples dur) bufsize))))))
       func)))
