@@ -12722,6 +12722,14 @@ EDITS: 5
 	  (if (not (filter-equal? local dsp))
 	      (snd-display ";butterworth highpass ~A ~A ~A" cutoff local dsp)))))
 
+    (let ((ind (open-sound "oboe.snd")))
+      (let ((hummer (make-eliminate-hum 550))) 
+	(map-channel (lambda (x) (eliminate-hum hummer x))))
+      (let ((peaker (make-peaking-2 500 1000 1.0)))
+	(map-channel peaker))
+      (map-channel (chordalize))
+      (close-sound ind))
+
     (let* ((f1 (make-butterworth-lowpass 8 .1))
 	   (vals (sweep->bins f1 10)))
       (if (fneq (car vals) .5) (snd-display ";butterworth lp 8 max: ~A" (car vals)))

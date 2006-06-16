@@ -3243,7 +3243,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
 </p>
 
 <table border=8 bordercolor="lightgreen" cellpadding=2>
-<tr><th width=120 bgcolor="beige">instrument</th><th bgcolor="beige">function</th><th bgcolor="beige">CL</th><th bgcolor="beige">Scheme</th bgcolor="beige"><th bgcolor="beige">Ruby</th><th bgcolor="beige">Forth</th></tr>
+<tr><th width=120 bgcolor="beige">instrument</th><th bgcolor="beige">function</th><th bgcolor="beige">CL</th><th bgcolor="beige">Scheme</th><th bgcolor="beige">Ruby</th><th bgcolor="beige">Forth</th></tr>
 <tr><td>complete-add</td>      
     <td>additive synthesis</td>
     <td><a href="add.ins">add.ins</a></td>
@@ -4172,30 +4172,28 @@ or makefile capability is built on <a href="#open-input">open-input</a>.</p>
 
 <blockquote>
 <small>
-<p>
 With-mix performs a string comparison of its body to decide whether
 it needs to recompute its note calls.  It then loads that body from
 a separate saved file.  This can be confusing if global variables
-are present.</p>
+are present.
 <pre>
   &gt; USER(2): (let ((rstr .1)) (<a class=quiet href="#with-sound">with-sound</a> () (<a class=quiet href="#with-mix">with-mix</a> () "sec" 0 (fm-violin 0 1 440 rstr))))
   &gt; ; Loading /zap/sec.clm
   &gt; Error: Attempt to take the value of the unbound variable `RSTR'.
 </pre>
-<p>Here the code evaluated is basically
+Here the code evaluated is basically
 <code>
 (let ((rstr .1)) (load "/zap/sec.clm"))
 </code>
-where rstr has lexical scope.  To make rstr visible within the load,</p>
+where rstr has lexical scope.  To make rstr visible within the load,
 <pre>
   (let ((rstr1 .1)) 
     (declare (special rstr1))
     (<a class=quiet href="#with-sound">with-sound</a> () (<a class=quiet href="#with-mix">with-mix</a> () "sec" 0 (fm-violin 0 1 440 rstr1))))
 </pre>
-<p>but if you then evaluate the same form again, changing rstr1 to (say) .5,
+but if you then evaluate the same form again, changing rstr1 to (say) .5,
 with-mix does not notice that rstr1's value has changed, so
 it does not recompute its body, leaving the resultant amplitude at .1.
-</p>
 </small>
 </blockquote>
 
@@ -4831,29 +4829,6 @@ from that equipment, and use the shortest wires possible.  If that's not an
 option, I'm told that it helps to use shielded cables.  If there's still
 interference, you might be able to go to balanced connections, but this
 normally means investing in pro-audio equipment.</p>
-
-<smaller>
-<p>Here are some interesting comments from Lamar Owen (a radio engineer):
-</p>
-<blockquote>
-Properly designed balanced in and out A/D and D/A converters can be completely 
-immune to the PC's internal noise.  But it all goes to proper design.  The 
-Antex SX series of cards likewise contain internal A/D converters.  I have 
-measured the noise figures of the Antex SX-36 we have at WGCR using state of 
-the art audio systems analyzers, and the noise floor is below the LSB 
-threshold.  All due to balanced I/O, sound PC layout techniques, and top of 
-the line components.  With unbalanced I/O all bets are off, of course.
-<br><br>
-In a high RF environment, unless the converters are optically isolated from 
-the PC, you might be asking for trouble.  When I say 'high RF' I'm talking 
-10KW of AM transmitter fifteen feet away, with a measured RF field intensity 
-of 105V/m (the ANSI exposure limit is around 645V/m).  This means a one meter 
-piece of wire that isn't properly grounded can develop 105V of RF energy.  I 
-have suffered RF burns of appreciable intensity touching wires that weren't 
-connected to anything on either end -- they were just oriented along the 
-field gradient.
-</blockquote>
-</smaller>
 <br>
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="clm-init.lisp">clm-init.lisp</a></h3></td></tr></table>

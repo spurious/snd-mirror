@@ -181,11 +181,8 @@ var olData = {childNodes:
  		 {item:new outlineInnerItem("clm-ins: more CLM instruments", "sndscm.html#clminsdoc")},
  		 {item:new outlineInnerItem("debug: debugging aids", "sndscm.html#debugdoc")},
  		 {item:new outlineInnerItem("dlocsig: moving sound simulation", "sndscm.html#dlocsigdoc")},
- 		 {item:new outlineInnerItem("mix-menu etc:tutorial and customization", "sndscm.html#dlpdoc")},
  		 {item:new outlineInnerItem("draw: graphics additions", "sndscm.html#drawdoc")},
  		 {item:new outlineInnerItem("dsp: various DSP-related procedures", "sndscm.html#dspdoc")},
- 		 {item:new outlineInnerItem("edit-menu: Edit menu additions", "sndscm.html#editmenudoc")},
- 		 {item:new outlineInnerItem("new-effects, gtk-effects: an Effects menu", "sndscm.html#effectsdoc")},
  		 {item:new outlineInnerItem("edit123, snd_conffile: .snd examples", "sndscm.html#dotsnd")},
  		 {item:new outlineInnerItem("env: envelope functions", "sndscm.html#envdoc")},
  		 {item:new outlineInnerItem("enved: envelope editor", "sndscm.html#enveddoc")},
@@ -204,6 +201,7 @@ var olData = {childNodes:
  		 {item:new outlineInnerItem("maraca: Perry Cook's maraca physical model", "sndscm.html#maracadoc")},
  		 {item:new outlineInnerItem("marks: functions related to marks", "sndscm.html#marksdoc")},
  		 {item:new outlineInnerItem("maxf: Max Mathews resonator", "sndscm.html#maxfdoc")},
+ 		 {item:new outlineInnerItem("menus: additional menus", "sndscm.html#menusdoc")},
  		 {item:new outlineInnerItem("mix: functions related to mixes and tracks", "sndscm.html#mixdoc")},
  		 {item:new outlineInnerItem("mixer: functions related to mixers and frames", "sndscm.html#mixerdoc")},
  		 {item:new outlineInnerItem("moog: Moog filter", "sndscm.html#moogdoc")},
@@ -233,7 +231,6 @@ var olData = {childNodes:
  		 {item:new outlineInnerItem("strad: violin physical model", "sndscm.html#straddoc")},
  		 {item:new outlineInnerItem("v: fm-violin", "sndscm.html#vdoc")},
  		 {item:new outlineInnerItem("ws: with-sound", "sndscm.html#wsdoc")},
- 		 {item:new outlineInnerItem("xm-enved: xm-based envelope editor", "sndscm.html#xmenveddoc")},
  		 {item:new outlineInnerItem("zip: the zipper (a cross-fader)", "sndscm.html#zipdoc")},
  		 {item:new outlineInnerItem("'As-Needed' input functions", "sndscm.html#extsndasneededexpl")},
  		 {item:new outlineInnerItem("User-defined Generators in C-CLM", "sndscm.html#extsndcgens")},
@@ -477,12 +474,9 @@ function initExpMenu() {
   <small><a href="sndscm.html#clminsdoc" target="snd1">clm-ins: more CLM instruments</a></small>
   <small><a href="sndscm.html#debugdoc" target="snd1">debug: debugging aids</a></small>
   <small><a href="sndscm.html#dlocsigdoc" target="snd1">dlocsig: moving sound simulation</a></small>
-  <small><a href="sndscm.html#dlpdoc" target="snd1">mix-menu etc (customization)</a></small>
   <small><a href="sndscm.html#drawdoc" target="snd1">draw: graphics additions</a></small>
   <small><a href="sndscm.html#dspdoc" target="snd1">dsp: various DSP-related procedures</a></small>
-  <small><a href="sndscm.html#editmenudoc" target="snd1">edit-menu: Edit menu additions</a></small>
   <small><a href="sndscm.html#dotsnd" target="snd1">edit123, snd_conffile: .snd examples</a></small>
-  <small><a href="sndscm.html#effectsdoc" target="snd1">new-effects, gtk-effects: an Effects menu</a></small>
   <small><a href="sndscm.html#envdoc" target="snd1">env: envelope functions</a></small>
   <small><a href="sndscm.html#enveddoc" target="snd1">enved: envelope editor</a></small>
   <small><a href="sndscm.html#exampdoc" target="snd1">examp: many examples</a></small>
@@ -500,6 +494,7 @@ function initExpMenu() {
   <small><a href="sndscm.html#maracadoc" target="snd1">maraca: Perry Cook's maraca physical model</a></small>
   <small><a href="sndscm.html#marksdoc" target="snd1">marks: functions related to marks</a></small>
   <small><a href="sndscm.html#maxfdoc" target="snd1">maxf: Max Mathews resonator</a></small>
+  <small><a href="sndscm.html#menusdoc" target="snd1">menu: additional menus</a></small>
   <small><a href="sndscm.html#mixdoc" target="snd1">mix: functions related to mixes and tracks</a></small>
   <small><a href="sndscm.html#mixerdoc" target="snd1">mixer: functions related to mixers and frames</a></small>
   <small><a href="sndscm.html#moogdoc" target="snd1">moog: Moog filter</a></small>
@@ -529,7 +524,6 @@ function initExpMenu() {
   <small><a href="sndscm.html#straddoc" target="snd1">strad: violin physical model</a></small>
   <small><a href="sndscm.html#vdoc" target="snd1">v: fm-violin</a></small>
   <small><a href="sndscm.html#wsdoc" target="snd1">ws: with-sound</a></small>
-  <small><a href="sndscm.html#xmenveddoc" target="snd1">xm-enved: xm-based envelope editor</a></small>
   <small><a href="sndscm.html#zipdoc" target="snd1">zip: the zipper (a cross-fader)</a></small>
   <small><a href="sndscm.html#extsndasneededexpl" target="snd1">A Note on "As-Needed" input functions</a></small>
   <small><a href="sndscm.html#extsndcgens" target="snd1">A Note on User-defined Generators in C-CLM</a></small>

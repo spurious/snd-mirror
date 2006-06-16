@@ -29,7 +29,7 @@
 <!-- these are then gathered into the reference table at the end by snd-index.cl -->
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
 
-<center><img src="title.png" usemap="#sndwindow" vspace=10></center>
+<center><img src="title.png" usemap="#sndwindow" vspace=10 alt="standard Snd appearance"></center>
 <map name="sndwindow">
   <area shape=rect coords="0,0,608,26" href="#overview" alt="title bar">
   <area shape=rect coords="0,26,75,60" href="#fileoperations" alt="File menu" onmouseover="return escape('open, close, save a file, exit Snd...')">
@@ -81,8 +81,8 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <br><br>
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
 
-<table border=0 cellpadding=5><th>this file:
-</th><th>extsnd.html:</th><th>grfsnd.html:</th>
+<table border=0 cellpadding=5>
+<tr><th>this file:</th><th>extsnd.html:</th><th>grfsnd.html:</th></tr>
 <tr><td><small>
 <ul>
 <li><a href="#gettingstarted">Getting Started</a>
@@ -435,6 +435,7 @@ build directory, you need to tell it where those files are. In Scheme,
 the list of directories to search is called %load-path.  So, for example, if 
 you put all the sources in /home/bil/cl, add this line to your
 ~/.snd_guile file:
+</p>
 <pre>
   (set! %load-path (cons "/home/bil/cl" %load-path))
 </pre>
@@ -442,7 +443,6 @@ Or in Ruby (~/.snd_ruby):
 <pre>
   $:.push("/home/bil/cl")
 </pre>
-</p>
 
 <p>
 Dave Phillips has written a 
@@ -703,7 +703,7 @@ There's also a list on the left of each channel pane containing a list of
 the current edits.  You can click anywhere in the list to move to that
 edit.
 </p>
-<img src="edithistory.png" alt="edit history list" hspace=20 onmouseover="return escape('the edit history list is on the left: we\'ve made two edits so far')"
+<img src="edithistory.png" alt="edit history list" hspace=20 onmouseover="return escape('the edit history list is on the left: we\'ve made two edits so far')">
 
 <A NAME="printfile"></a><p>The Print option opens the Print
 dialog.  You can send the currently active graph directly to
@@ -982,7 +982,7 @@ the far right, and click on the one you're
 interested in.  If you leave the help dialog active, it becomes a sort of tooltip --
 if you linger over some other topic, its help info will be posted in the help dialog.
 </p>
-<img src="prefs.png">
+<img src="prefs.png" alt="preferences dialog">
 <br>
 <br>
 
@@ -2073,11 +2073,11 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>[Down]</td><td>zoom out</td><td><code><small>;algorithm depends on zoom-focus-style choice</small></code></td></tr>
 <tr><td>[Up]</td><td>zoom in</td><td><code><small>;algorithm depends on zoom-focus-style choice</small></code></td></tr>
 <tr><td valign=top>[Left]</td><td valign=top>move window left</td>
-<td onmouseover="return escape('this odd looking code gets the window size divided by 2, and subtracts that from the current window left edge, thus moving the left edge back a half-windowful: left - (right - left) / 2')"><code><small><pre>
+<td onmouseover="return escape('this odd looking code gets the window size divided by 2, and subtracts that from the current window left edge, thus moving the left edge back a half-windowful: left - (right - left) / 2')"><pre><small>
 (lambda () 
   (set! (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) 
     (max 0 (- (* 1.5 (<a class=quiet href="extsnd.html#leftsample">left-sample</a>)) (* 0.5 (<a class=quiet href="extsnd.html#rightsample">right-sample</a>))))))
-</pre></small></code></td></tr>
+</small></pre></td></tr>
 <tr><td>[Right]</td><td>move window right</td><td onmouseover="return escape('we set the new window left edge to its current midpoint')"><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) (* 0.5 (+ (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) (<a class=quiet href="extsnd.html#rightsample">right-sample</a>)))))</small></code></td></tr>
 <tr><td>[Home]</td><td>update current file from disk</td><td><code><small>update-sound</small></code></td></tr>
 <tr><td>[Space]</td><td colspan=2>cancel selection; if playing, pause or continue playback</td></tr>
@@ -2128,39 +2128,39 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-x f</td><td>position window so cursor is on right</td><td><code><small>(lambda () <a class=quiet href="extsnd.html#bindkey">cursor-on-right</a>)</small></code></td></tr>
 <tr><td>C-x i</td><td>insert region</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#insertregion">insert-region</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg)) ;insert-selection if no arg</small></code></td></tr>
 <tr><td valign=top>C-x j</td><td valign=top>go to named mark</td><td>
-<code><small><pre>
+<pre><small>
 (lambda () 
   (prompt "mark:" 
     (lambda (val) (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) (<a class=quiet href="extsnd.html#marksample">mark-sample</a> (<a class=quiet href="extsnd.html#findmark">find-mark</a> val))))))
-</pre></small></code></td></tr>
+</small></pre></td></tr>
 <tr><td>C-x k</td><td>close file</td><td><code><small>close-sound</small></code></td></tr>
 <tr><td valign=top>C-x l</td><td valign=top>position selection in mid-view</td>
-<td><code><small><pre>
+<td><pre><small>
 (lambda ()
   (let* ((range (- (cadr (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>)) (car (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>))))
 	 (mid-point (/ (+ (<a class=quiet href="extsnd.html#selectionposition">selection-position</a>) (* 0.5 (<a class=quiet href="extsnd.html#selectionframes">selection-frames</a>))) (<a class=quiet href="extsnd.html#srate">srate</a>)))
 	 (minx (max 0.0 (- mid-point (* 0.5 range)))))
     (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>) (list minx (+ minx range)))))
-</pre></small></code></td></tr>
+</small></pre></td></tr>
 <tr><td>C-x o</td><td>move to next or previous graph</td><td><code><small>(lambda (arg) (forward-graph arg)) ;snd7.scm</small></code></td></tr>
 <tr><td>C-x p</td><td>play selection or region n</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#playregion">play-region</a> arg)) ;play-selection if no arg</small></code></td></tr>
 <tr><td>C-x q</td><td>mix in region</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#mixregion">mix-region</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg)) ;mix-selection if no arg</small></code></td></tr>
 <tr><td>C-x r</td><td>redo last undone edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#redo">redo</a> arg))</small></code></td></tr>
 <tr><td>C-x u</td><td>undo last edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#undo">undo</a> arg))</small></code></td></tr>
 <tr><td valign=top>C-x v</td><td valign=top>position window over current selection</td>
-<td><code><small><pre>
+<td><pre><small>
   (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>) 
     (list (/ (<a class=quiet href="extsnd.html#selectionposition">selection-position</a>) (<a class=quiet href="extsnd.html#srate">srate</a>))
 	  (/ (+ (<a class=quiet href="extsnd.html#selectionposition">selection-position</a>) (<a class=quiet href="extsnd.html#selectionframes">selection-frames</a>)) (<a class=quiet href="extsnd.html#srate">srate</a>))))
-</pre></small></code></td></tr>
+</small></pre></td></tr>
 <tr><td>C-x w</td><td>save selection as file</td><td><code><small>(lambda (arg) (prompt "file:" save-selection))</small></code></td></tr>
 <tr><td>C-x <A NAME="cxz"></a>z</td><td>smooth selection</td><td><code><small>smooth-selection</small></code></td></tr>
 <tr><td valign=top>C-x /</td><td valign=top>place named mark</td>
-<td><code><small><pre>
+<td><pre><small>
 (lambda (arg) 
   (prompt "mark:" 
     (lambda (val) (set! (<a class=quiet href="extsnd.html#markname">mark-name</a> (<a class=quiet href="extsnd.html#addmark">add-mark</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>))) val))))
-</pre></small></code></td></tr>
+</small></pre></td></tr>
 <tr><td>C-x ( <!-- ) --></td><td>begin keyboard macro definition</td><td><code><small>; bind-key</small></code></td></tr>
 <tr><td>C-x ) <!-- ( --></td><td>end keyboard macro definition</td><td></td></tr>
 
@@ -2178,35 +2178,35 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-x C-j</td><td>go to mix </td><td></td></tr>
 <tr><td>C-x <A NAME="cxcl"></a>C-l</td><td>load scm file</td><td><code><small>(lambda () (prompt "load:" load))</small></code></td></tr>
 <tr><td valign=top>C-x C-m</td><td valign=top>add named mark</td>
-<td><code><small><pre>
+<td><pre><small>
 (lambda () (prompt "mark:" 
              (lambda (val) 
                (set! (<a class=quiet href="extsnd.html#markname">mark-name</a> (<a class=quiet href="extsnd.html#addmark">add-mark</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>))) val))))
-</pre></small></code></td></tr>
+</small></pre></td></tr>
 <tr><td>C-x C-o</td><td>show ("open") controls</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#showcontrols">show-controls</a>) #t))</small></code></td></tr>
 <tr><td valign=top>C-x C-p</td><td valign=top>set displayed duration in seconds</td>
-<td><code><small><pre>
+<td><pre><small>
 (lambda (arg)
   (let* ((minx (max 0.0 (* 0.5 (- (apply + (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>)) arg)))))
     (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>) (list minx (+ minx arg)))))
-</pre></small></code></td></tr>
+</small></pre></td></tr>
 <tr><td>C-x C-q</td><td>mix in file</td><td><code><small>(lambda (arg) (prompt "mix file:" (lambda (val) (<a class=quiet href="sndscm.html#mixsound">mix-sound</a> val (<a class=quiet href="extsnd.html#cursor">cursor</a>)))))</small></code></td></tr>
 <tr><td>C-x C-r</td><td>redo last undone edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#redo">redo</a> arg))</small></code></td></tr>
 <tr><td>C-x C-s</td><td>save file</td><td><code><small>save-sound</small></code></td></tr>
 <tr><td>C-x C-u</td><td>undo last edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#undo">undo</a> arg))</small></code></td></tr>
 <tr><td valign=top>C-x C-v</td><td valign=top>set displayed duration as portion of total</td>
-<td><code><small><pre>
+<td><pre><small>
 (lambda (arg)
   (let* ((range (/ (* (<a class=quiet href="extsnd.html#frames">frames</a>) arg) (<a class=quiet href="extsnd.html#srate">srate</a>)))
 	 (minx (max 0.0 (* 0.5 (- (apply + (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>)) range)))))
     (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>) (list minx (+ minx range)))))
-</pre></small></code></td></tr>
+</small></pre></td></tr>
 <tr><td valign=top>C-x C-w</td><td valign=top>save current channel in file</td>
-<td><code><small><pre>
+<td><pre><small>
 (lambda (arg) (prompt "file:"
                 (lambda (val)
                   (<a class=quiet href="extsnd.html#savesound">save-sound</a> val (<a class=quiet href="extsnd.html#selectedsound">selected-sound</a>) (<a class=quiet href="extsnd.html#selectedchannel">selected-channel</a>)))))
-</pre></small></code></td></tr>
+</small></pre></td></tr>
 <tr><td>C-x C-z</td><td>smooth using cosine</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#smoothsound">smooth-sound</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg))</small></code></td></tr>
 </table>
 
@@ -2374,7 +2374,7 @@ For information on initialization, configuration, and connections to other progr
   <tr><td><a href="#speed">change pitch</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#srcsound"><small>src-sound</small></a></td><td><a href="#speed"><small>see 'speed' control</small></a></td></tr>
   <tr><td><a href="#changesamples">change samples</a></td><td><br></td><td><a href="#cz"><small>Cz, Cx Cz</small></a></td><td><a href="extsnd.html#setsamples"><small>set-samples</small></a></td><td><a href="extsnd.html#edithook"><small>edit-hook</small></a></td></tr>
   <tr><td><a href="#speed">change srate</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#srcsound"><small>src-sound</small></a></td><td><a href="#speed"><small>see 'speed' control</small></a></td></tr>
-  <tr><td><a href="#expand">change tempo</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Expsrc</a></small></td><td><br></td><td><a href="extsnd.html#expandcontrol"><small>expand</small></a></td><td><a href="#expand"><small>see 'expand' control</small></a></td></tr>
+  <tr><td><a href="#expand">change tempo</a></td><td><small>Effects: <a href="sndscm.html#menusdoc">Expsrc</a></small></td><td><br></td><td><a href="extsnd.html#expandcontrol"><small>expand</small></a></td><td><a href="#expand"><small>see 'expand' control</small></a></td></tr>
   <tr><td><a href="#closefile">close file</a></td><td><small>File: <a href="#closefile">Close</a></small></td><td><a href="#cxk"><small>Cx k</small></a></td><td><a href="extsnd.html#closesound"><small>close-sound</small></a></td><td><a href="extsnd.html#closehook"><small>close-hook</small></a></td></tr>
   <tr><td><a href="#colorbrowser">color</a></td><td><small>View: <a href="#colorbrowser">Color</a></small></td><td><br></td><td><a href="extsnd.html#colordialog"><small>color-dialog</small></a></td><td><a href="extsnd.html#colorscale"><small>color-scale,color-cutoff</small></a></td></tr>
   <tr><td><a href="#unitebutton">combine channels</a></td><td><small>View: <a href="#unitebutton">Channel style</a></small></td><td><br></td><td><a href="extsnd.html#channelstyle"><small>channel-style</small></a></td><td><br></td></tr>
@@ -2414,7 +2414,7 @@ For information on initialization, configuration, and connections to other progr
   <tr><td><a href="#verticalpane">horizontal panes</a></td><td><br></td><td><br></td><td><a href="extsnd.html#graphshorizontal"><small>graphs-horizontal</small></a></td><td><a href="#verticalpane"><small>-h switch to Snd</small></a></td></tr>
   <tr><td><a href="#insertfile">insert file</a></td><td><small>File: <a href="#insertfile">Insert</a></small></td><td><a href="#cxci"><small>Cx Ci</small></a></td><td><a href="extsnd.html#insertsound"><small>insert-sound</small></a></td><td><br></td></tr>
   <tr><td><a href="#editcut">insert selection</a></td><td><small>Edit: <a href="#editcut">Paste</a></small></td><td><a href="#cxi"><small>Cy or Cx i</small></a></td><td><a href="extsnd.html#insertselection"><small>insert-selection</small></a></td><td><a href="extsnd.html#insertregion"><small>insert-region</small></a></td></tr>
-  <tr><td><a href="#co">insert zeros</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Add Silence</a></small></td><td><a href="#cz"><small>Co, Cz</small></a></td><td><a href="extsnd.html#insertsilence"><small>insert-silence</small></a></td><td><a href="extsnd.html#padchannel"><small>pad-channel</small></a></td></tr>
+  <tr><td><a href="#co">insert zeros</a></td><td><small>Effects: <a href="sndscm.html#menusdoc">Add Silence</a></small></td><td><a href="#cz"><small>Co, Cz</small></a></td><td><a href="extsnd.html#insertsilence"><small>insert-silence</small></a></td><td><a href="extsnd.html#padchannel"><small>pad-channel</small></a></td></tr>
   <tr><td><a href="#kgc">interrupt Snd</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#stopplaying"><small>stop-playing</small></a></td><td><a href="extsnd.html#cgx"><small>c-g!</small></a></td></tr>
   <tr><td><a href="#kbdmacros">keyboard macros</a></td><td><br></td><td><a href="#kce"><small>C(, Cx e</small></a></td><td><a href="extsnd.html#key"><small>key</small></a></td><td><br></td></tr> <!-- ) -->
   <tr><td><a href="extsnd.html#maxamp">max amp</a></td><td><br></td><td><br></td><td><a href="extsnd.html#maxamp"><small>maxamp</small></a></td><td><br></td></tr>
@@ -2429,7 +2429,7 @@ For information on initialization, configuration, and connections to other progr
   <tr><td><a href="#movingwindow">move window back</a></td><td><br></td><td><a href="#movewindow"><small>[Right], Cx b</small></a></td><td><a href="extsnd.html#leftsample"><small>left-sample</small></a></td><td><small>scroll bars</small></td></tr>
   <tr><td><a href="#multichannel">multichannel ops</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sync"><small>sync</small></a></td><td><a href="#syncbutton"><small>sync button</small></a></td></tr>
   <tr><td><a href="#menuequalizepanes">normalize display</a></td><td><small>View: <a href="#menuequalizepanes">Equalize Panes</a></small></td><td><br></td><td><a href="extsnd.html#equalizepanes"><small>equalize-panes</small></a></td><td><small>Popup: Equalize Panes</small></td></tr>
-  <tr><td><a href="sndscm.html#effectsdoc">normalize sound</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Normalize</a></small></td><td><br></td><td><a href="extsnd.html#scaleto"><small>scale-to</small></a></td><td><br></td></tr>
+  <tr><td><a href="sndscm.html#menusdoc">normalize sound</a></td><td><small>Effects: <a href="sndscm.html#menusdoc">Normalize</a></small></td><td><br></td><td><a href="extsnd.html#scaleto"><small>scale-to</small></a></td><td><br></td></tr>
   <tr><td><a href="#cu">numeric arguments</a></td><td><br></td><td><a href="#kcu"><small>Cu</small></a></td><td><br></td><td><a href="#kcu"><small>see marks as args</small></a></td></tr>
   <tr><td><a href="#saveopen">open file</a></td><td><small>File: <a href="#openfile">Open</a></small></td><td><a href="#cxcf"><small>Cx Cf</small></a></td><td><a href="extsnd.html#opensound"><small>open-sound</small></a></td><td><small>Files dialog: click file</small></td></tr>
   <tr><td><a href="#viewfile">open file read-only</a></td><td><small>File: <a href="#viewfile">View</a></small></td><td><br></td><td><a href="extsnd.html#viewsound"><small>view-sound</small></a></td><td><br></td></tr>
@@ -2442,8 +2442,8 @@ For information on initialization, configuration, and connections to other progr
   <tr><td><a href="#recordfile">record sound</a></td><td><small>File: <a href="#recordfile">Record</a></small></td><td><br></td><td><a href="extsnd.html#recorderdialog"><small>recorder-dialog</small></a></td><td><br></td></tr>
   <tr><td><a href="#undoredo">redo edit</a></td><td><small>Edit: <a href="#undoredo">Redo</a></small></td><td><a href="#cxcr"><small>Cx Cr</small></a></td><td><a href="extsnd.html#redo"><small>redo</small></a></td><td><small>Popup: Redo</small></td></tr>
   <tr><td><a href="extsnd.html#srcsound">resample</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#srcsound"><small>src-sound</small></a></td><td><a href="extsnd.html#srcsoundselection"><small>src-selection</small></a></td></tr>
-  <tr><td><a href="#reverb">reverberate file</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Reverberate</a></small></td><td><br></td><td><a href="extsnd.html#convolvewith"><small>convolve-with</small></a></td><td><a href="#reverb"><small>see 'reverb' controls</small></a></td></tr>
-  <tr><td><a href="extsnd.html#reversesound">reverse samples</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Reverse</a></small></td><td><br></td><td><a href="extsnd.html#reversesound"><small>reverse-sound</small></a></td><td><a href="extsnd.html#reverseselection"><small>reverse-selection</small></a></td></tr>
+  <tr><td><a href="#reverb">reverberate file</a></td><td><small>Effects: <a href="sndscm.html#menusdoc">Reverberate</a></small></td><td><br></td><td><a href="extsnd.html#convolvewith"><small>convolve-with</small></a></td><td><a href="#reverb"><small>see 'reverb' controls</small></a></td></tr>
+  <tr><td><a href="extsnd.html#reversesound">reverse samples</a></td><td><small>Effects: <a href="sndscm.html#menusdoc">Reverse</a></small></td><td><br></td><td><a href="extsnd.html#reversesound"><small>reverse-sound</small></a></td><td><a href="extsnd.html#reverseselection"><small>reverse-selection</small></a></td></tr>
   <tr><td><a href="#revertfile">revert file</a></td><td><small>File: <a href="#revertfile">Revert</a></small></td><td><br></td><td><a href="extsnd.html#revertsound"><small>revert-sound</small></a></td><td><br></td></tr>
   <tr><td><a href="#cxcw">save channel</a></td><td><br></td><td><a href="#cxcw"><small>Cx Cw</small></a></td><td><a href="extsnd.html#savesoundas"><small>save-sound-as</small></a></td><td><br></td></tr>
   <tr><td>save control panel</td><td><br></td><td><br></td><td><a href="extsnd.html#savecontrols"><small>save-controls</small></a></td><td><br></td></tr>
@@ -2467,7 +2467,7 @@ For information on initialization, configuration, and connections to other progr
   <tr><td><a href="extsnd.html#swapchannels">swap channels</a></td><td><br></td><td><br></td><td><a href="extsnd.html#swapchannels"><small>swap-channels</small></a></td><td><br></td></tr>
   <tr><td><a href="#ktempdir">temp directory</a></td><td><br></td><td><a href="#ktempdir"><small>Cx d</small></a></td><td><a href="extsnd.html#tempdir"><small>temp-dir</small></a></td><td><small>TMPDIR or /var/tmp</small></td></tr>
   <tr><td><a href="#trackingcursor">tracking cursor</a></td><td><br></td><td><br></td><td><a href="extsnd.html#withtrackingcursor"><small>with-tracking-cursor</small></a></td><td><a href="#trackingcursor"><small>control click 'play'</small></a></td></tr>
-  <tr><td><a href="sndscm.html#editmenudoc">trim sound</a></td><td><small>Edit: <a href="sndscm.html#editmenudoc">Trim</a></small></td><td><br></td><td><br></td><td><br></td></tr>
+  <tr><td><a href="sndscm.html#menusdoc">trim sound</a></td><td><small>Edit: <a href="sndscm.html#menusdoc">Trim</a></small></td><td><br></td><td><br></td><td><br></td></tr>
   <tr><td><a href="#undoredo">undo edit</a></td><td><small>Edit: <a href="#undoredo">Undo</a></small></td><td><a href="#cxcu"><small>C_ or Cx Cu</small></a></td><td><a href="extsnd.html#undo"><small>undo</small></a></td><td><small>Popup: Undo</small></td></tr>
   <tr><td><a href="#updatefile">update file</a></td><td><small>File: <a href="#updatefile">Update</a></small></td><td><small>[Home]</small></td><td><a href="extsnd.html#updatesound"><small>update</small></a></td><td><a href="extsnd.html#autoupdateinterval"><small>auto-update</small></a></td></tr>
   <tr><td><a href="#editenvelope">view envs</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#enveddialog"><small>enved-dialog</small></a></td><td><br></td></tr>

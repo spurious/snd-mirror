@@ -503,3 +503,6 @@ repetition to be in reverse."
 		(set! e (cons (* 20.0 (/ (log rms-val) (log 10.0))) e)))
 	    (set! e (cons rms-val e)))))))
 
+
+(define* (normalize-envelope env :optional (new-max 1.0))
+  (scale-envelope env (/ new-max (max-envelope env))))
