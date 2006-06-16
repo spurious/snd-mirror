@@ -2,17 +2,17 @@
 
 <!-- TODO: add most the names to the index -->
 <!-- TODO: the following are empty: edit123 grani ladspa maxf strad -->
-<!-- TODO: these need tablize: menus dsp extensions mix rmsgain sndmotif -->
-<!-- TODO: these need work: examp infsnd prc95 rtex rtio -->
-<!-- TODO: rubber? ws doc, gtk? -->
+<!-- TODO: these need tablize: menus extensions mix rmsgain sndmotif -->
+<!-- TODO: these need work: enved examp infsnd prc95 rtex rtio -->
+<!-- TODO: ws doc, gtk? -->
 <!-- TODO: remember crossrefs and main-index additions (all files) -->
 <!-- TODO: check effects-utils.scm kmenu.scm pd-*.scm snd-hobbit.scm (rb/fs?) -->
 
 
 <!-- done, I hope: 
-    analog-filter auto-save bess bird clm-ins debug dlocsig draw env event fade freeverb
+    analog-filter auto-save bess bird clm-ins debug dlocsig draw dsp env event fade freeverb
     heart hooks index jcrev maraca marks mixer moog musglyphs nb noise oscope peak-env piano poly pvoc
-    rgb singer sndwarp snd4567 snd-gl snd-test spectr stochastic v
+    rgb rubber singer sndwarp snd4567 snd-gl snd-test spectr stochastic v
 -->
 
 <!-- documentation for some of the Scheme/Ruby/Forth code included with Snd -->
@@ -447,10 +447,9 @@ The Bessel functions I0, Jn, and Yn are built-in; Kn and In are implemented in S
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- main-index |bagpipe:bagpipe -->
-<A NAME="bagpipe"></A>
 <!-- canter -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>canter</em> <code>(beg dur freq amp ...)</code>
+<A class=def NAME="bagpipe">canter</A> <code>(beg dur freq amp ...)</code>
 </td></tr>
 <tr><td></td><td>
 canter is half of a bagpipe instrument developed by Peter Commons (the other portion is <i>drone</i> below).
@@ -526,10 +525,9 @@ The full note list is bag.clm in the CLM tarball.
 
 
 <!-- main-index |cellon:feedback fm -->
-<A NAME="cellon"></A>
 <!-- cellon -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>cellon</em> <code>(beg dur freq amp ...)</code>
+<A class=def NAME="cellon">cellon</A> <code>(beg dur freq amp ...)</code>
 </td></tr>
 <tr><td></td><td>
 cellon, developed by Stanislaw Krupowiecz, uses feedback FM as in some old synthesizers.  There's a brief discussion of it in fm.html.
@@ -621,10 +619,9 @@ stays the same (.05 in the first, and .2 in the second).
 
 
 <!-- main-index |fmbell:fm-bell -->
-<A NAME="fmbell"></A>
 <!-- fm-bell -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>fm-bell</em> <code>(beg dur frequency amplitude amp-env index-env index)</code>
+<A class=def NAME="fmbell">fm-bell</A> <code>(beg dur frequency amplitude amp-env index-env index)</code>
 </td></tr>
 <tr><td></td><td>
 fm-bell is an <a href="fm.html#fmintro">FM</a> instrument developed by Michael McNabb in Mus10 in the late '70s.  It is intended
@@ -653,10 +650,9 @@ at random), and car3 and mod3 putting a sort of formant at the minor third
 
 
 <!-- main-index |fmdrum:fm-drum -->
-<A NAME="fmdrum"></A>
 <!-- fm-drum -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>fm-drum</em> <code>(beg dur freq amp ind :optional (high #f) (deg 0.0) (dist 1.0) (rev-amount 0.01))</code>
+<A class=def NAME="fmdrum">fm-drum</A> <code>(beg dur freq amp ind :optional (high #f) (deg 0.0) (dist 1.0) (rev-amount 0.01))</code>
 </td></tr>
 <tr><td></td><td>
 The fm-drum uses "cascade FM" (see fm.html); it was developed by Jan Mattox.
@@ -693,10 +689,9 @@ ended with:
 
 
 <!-- main-index |fmtrumpet:fm-trumpet -->
-<A NAME="fmtrumpet"></A>
 <!-- fm-trumpet -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>fm-trumpet</em> <code>(beg dur ...)</code>
+<A class=def NAME="fmtrumpet">fm-trumpet</A> <code>(beg dur ...)</code>
 </td></tr>
 <tr><td></td><td>
 This is Dexter Morrill's FM-trumpet; see CMJ feb 77 p51.
@@ -723,10 +718,9 @@ The pitch depends on the <i>modfrq1</i> and <i>modfrq2</i> parameters, as well a
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- main-index |fofins:FOF synthesis -->
-<A NAME="fofins"></A>
 <!-- fofins -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>fofins</em> <code>(beg dur frq amp uvib f0 a0 f1 a1 f2 a2 :optional (amp-env '(0 0 1 1 2 1 3 0)))</code>
+<A class=def NAME="fofins">fofins</A> <code>(beg dur frq amp uvib f0 a0 f1 a1 f2 a2 :optional (amp-env '(0 0 1 1 2 1 3 0)))</code>
 </td></tr>
 <tr><td></td><td>
 fofins is an implementation of <A HREF="http://www-ccrma.stanford.edu/~serafin/320/lab3/FOF_synthesis.html">FOF synthesis</A>, taken originally from
@@ -754,10 +748,9 @@ In the Scheme version, there is also an optional trailing vibrato envelope argum
 
 
 <!-- main-index |fullmix:fullmix -->
-<A NAME="fullmix"></A>
 <!-- fullmix -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>fullmix</em> <code>(infile :optional beg outdur inbeg matrix srate reverb-amount)</code>
+<A class=def NAME="fullmix">fullmix</A> <code>(infile :optional beg outdur inbeg matrix srate reverb-amount)</code>
 </td></tr>
 <tr><td></td><td>
 fullmix is a complicated way to mix stuff. It's built into the CL version of CLM, so there was clamor for some sort
@@ -860,10 +853,9 @@ repeated), and <i>freq</i> sets the grain sinusoid's frequency.
 
 
 <!-- main-index |grapheq:graphic equalizer -->
-<A NAME="grapheq"></A>
 <!-- graphEq -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>graphEq</em> <code>(file :key beg dur or-beg amp (amp-env '(0 1.0 0.8 1.0 1.0 0.0)) (amp-base 1.0) ...)</code>
+<A class=def NAME="grapheq">graphEq</A> <code>(file :key beg dur or-beg amp (amp-env '(0 1.0 0.8 1.0 1.0 0.0)) (amp-base 1.0) ...)</code>
 </td></tr>
 <tr><td></td><td>
 <A NAME="grapheqdoc">graphEq</A> is a sort of non-graphical graphical equalizer, developed by Marco Trevisani. It sets up a bank of formant
@@ -962,10 +954,9 @@ metal is another Perry Cook creation (HeavyMtl); it's an FM instrument:
 
 
 <!-- main-index |nrev:nrev -->
-<A NAME="nrev"></A>
 <!-- nrev -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>nrev</em> <code>(:key (reverb-factor 1.09) (lp-coeff 0.7) (volume-1 1.0))</code>
+<A class=def NAME="nrev">nrev</A> <code>(:key (reverb-factor 1.09) (lp-coeff 0.7) (volume-1 1.0))</code>
 </td></tr>
 <tr><td></td><td>
 nrev, developed by Michael McNabb, is one of the more popular old-style reverbs. 
@@ -987,10 +978,9 @@ It is much cleaner than jc-reverb.
 <!-- TODO: point out the :key/:optional difference -->
 
 <!-- main-index |pins:SMS synthesis -->
-<A NAME="pins"></A>
 <!-- pins -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>pins</em> <code>(beg dur file amp ...)</code>
+<A class=def NAME="pins">pins</A> <code>(beg dur file amp ...)</code>
 </td></tr>
 <tr><td></td><td>
 pins is a simple implementation of the spectral modeling synthesis
@@ -1024,10 +1014,9 @@ which has moved to the CLAM site:
 
 
 <!-- main-index |pluck:pluck -->
-<A NAME="pluck"></A>
 <!-- pluck -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>pluck</em> <code>(beg dur freq amp :optional (weighting .5) (lossfact .9))</code>
+<A class=def NAME="pluck">pluck</A> <code>(beg dur freq amp :optional (weighting .5) (lossfact .9))</code>
 </td></tr>
 <tr><td></td><td>
 pluck is based on
@@ -1056,10 +1045,9 @@ In Ruby:
 
 
 <!-- main-index |pqwvox:waveshaping voice -->
-<A NAME="pqwvox"></A>
 <!-- pqw-vox -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>pqw-vox</em> <code>(beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes)</code>
+<A class=def NAME="pqwvox">pqw-vox</A> <code>(beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes)</code>
 </td></tr>
 <tr><td></td><td>
 pqw-vox is an extension of Marc LeBrun's instrument vox (described below) to use phase-quadrature (single-sideband)
@@ -1133,10 +1121,9 @@ with gains of <i>g1</i>, <i>g2</i>, and <i>g3</i>.
 
 
 <!-- main-index |reson:fm-voice -->
-<A NAME="reson"></A>
 <!-- reson -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>reson</em> <code>(beg dur freq amp ...)</code>
+<A class=def NAME="reson">reson</A> <code>(beg dur freq amp ...)</code>
 </td></tr>
 <tr><td></td><td>
 reson is a vocal simulator developed by John Chowning.  Its trailing parameters are:
@@ -1202,10 +1189,9 @@ I translate this as: "go forward from 0.0 to 0.5 secs, backwards to 0.25 secs, t
 
 
 <!-- main-index |spectra:additive synthesis -->
-<A NAME="spectra"></A>
 <!-- spectra -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>spectra</em> <code>(beg dur freq amp ...)</code>
+<A class=def NAME="spectra">spectra</A> <code>(beg dur freq amp ...)</code>
 </td></tr>
 <tr><td></td><td>
 spectra is an additive-synthesis instrument with vibrato and an amplitude envelope.  It was intended originally
@@ -1237,10 +1223,9 @@ We can pass our own partials:
 
 
 <!-- main-index |stereoflute:flute model -->
-<A NAME="stereoflute"></A>
 <!-- stereo-flute -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>stereo-flute</em> <code>(beg dur freq flow ...)</code>
+<A class=def NAME="stereoflute">stereo-flute</A> <code>(beg dur freq flow ...)</code>
 </td></tr>
 <tr><td></td><td>
 This is a physical model of a flute developed by Nicky Hind.
@@ -1278,10 +1263,9 @@ parameters that work.
 
 
 <!-- main-index |telephone:telephone -->
-<A NAME="telephone"></A>
 <!-- touch-tone -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>touch-tone</em> <code>(beg number)</code>
+<A class=def NAME="telephone">touch-tone</A> <code>(beg number)</code>
 </td></tr>
 <tr><td></td><td>
 This instrument produces telephone tones:
@@ -1304,10 +1288,9 @@ For more than you really want to know about other such sounds, see
 
 
 <!-- main-index |tubebell:tubular bell -->
-<A NAME="tubebell"></A>
 <!-- tubebell -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>tubebell</em> <code>beg dur freq amp :optional (base 32.0)</code>
+<A class=def NAME="tubebell">tubebell</A> <code>beg dur freq amp :optional (base 32.0)</code>
 </td></tr>
 <tr><td></td><td>
 Perry Cook's tubular bell:
@@ -1323,10 +1306,9 @@ Perry Cook's tubular bell:
 
 
 <!-- main-index |twotab:spectral interpolation -->
-<A NAME="twotab"></A>
 <!-- two-tab -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>two-tab</em> <code>beg dur freq amp ...</code>
+<A class=def NAME="twotab">two-tab</A> <code>beg dur freq amp ...</code>
 </td></tr>
 <tr><td></td><td>
 two-tab interpolates between two spectra.
@@ -1360,10 +1342,9 @@ is the reverse of the earlier sound.  To go out and back:
 
 
 <!-- main-index |fmvox:fm-talker -->
-<A NAME="fmvox"></A>
 <!-- vox -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>vox</em> <code>(beg dur freq amp ampfun freqfun freqscl voxfun index vibscl)</code>
+<A class=def NAME="fmvox">vox</A> <code>(beg dur freq amp ampfun freqfun freqscl voxfun index vibscl)</code>
 </td></tr>
 <tr><td></td><td>
 vox is a translation of Marc LeBrun's MUS10 waveshaping voice instrument
@@ -2402,7 +2383,7 @@ See also <a href="#polydoc">poly.scm</a>.
 
 <!-- windowed-maxamp -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>make-windowed-maxamp</em> <code>:optional (size 128)</code>
+<em class=emdef>make-windowed-maxamp</em> <code>:optional (size 128)</code><br>
 <a class=def name="windowedmaxamp">windowed-maxamp</a> <code>gen y</code>
 </td></tr><tr><td></td><td>
 windowed-maxamp is a specialization
@@ -4705,86 +4686,195 @@ to things like Zoom, and Quit.
 <!-- main-index |mixdoc:cross-fade (amplitude) -->
 
 <p>mix.scm provides various mix and track related utilities. 
-
 </p>
+
+<table width="60%" border=0><tr><td bgcolor="lightgreen" align="center" valign="middle"><h3>mixes</h3></td></tr></table>
+
+<table border=0 cellspacing=0 hspace=20>
+
+<!-- delete-all-mixes -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="deleteallmixes">delete-all-mixes</a>
+</td></tr><tr><td width=60></td><td>
+This removes all mixes (sets all mix amplitudes to 0.0).
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- find-mix -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="findmix">find-mix</a> <code>sample snd chn</code>
+</td></tr><tr><td></td><td>
+find-mix returns the identifier of the mix at sample <i>sample</i> (or anywhere in the given channel if 
+<i>sample</i> is not specified), or #f if no mix is found.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mix-click-info -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="mixclickinfo">mix-click-info</a> <code>id</code>
+</td></tr><tr><td></td><td>
+mix-click-info is a <a href="extsnd.html#mixclickhook">mix-click-hook</a> function that posts a description of the
+clicked mix in the help dialog.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mix-click-sets-amp -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="mixclicksetsamp">mix-click-sets-amp</A>
+</td></tr><tr><td></td><td>
+mix-click-sets-amp adds a <a href="extsnd.html#mixclickhook">mix-click-hook</a> function so that 
+if you click a mix, it is removed (its amplitudes are set to 0.0);
+a subsequent click resets it to its previous value.
+This is intended to make it easy to compare renditions with and without a given mix.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mix-maxamp -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="mixmaxamp">mix-maxamp</a> <code>id</code>
+</td></tr><tr><td></td><td>
+mix-maxamp returns the maxamp in the given mix.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mix-property -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="mixproperty">mix-property</a> <code>key id</code>
+</td></tr><tr><td></td><td>
+mix-property associates a property list with each mix.
 <pre>
-  <a class=def name="mixsound">mix-sound</a> file start
-  <a class=def name="mixproperty">mix-property</a> key id
-  <A class=def NAME="mixclicksetsamp">mix-click-sets-amp</A>
-  <a class=def name="mix2vct">mix-&gt;vct</a> id
-  <a class=def name="panmix">pan-mix</a> file (frame 0) (env 1.0) snd (chn 0)
-  <A class=def NAME="panmixselection">pan-mix-selection</A> (frame 0) (env 1.0) snd (chn 0)
-  <A class=def NAME="panmixregion">pan-mix-region</A> region (frame 0) (env 1.0) snd (chn 0)
-  <A class=def NAME="panmixvct">pan-mix-vct</A> vct (frame 0) (env 1.0) snd (chn 0)
-  <a class=def name="snapmixtobeat">snap-mix-to-beat</a> (at-anchor)
-  <A class=def NAME="deleteallmixes">delete-all-mixes</a>
-  <a class=def name="findmix">find-mix</a> sample snd chn
-  <A class=def NAME="mixmaxamp">mix-maxamp</a> id
-  <A class=def NAME="savemix">save-mix</a> id filename
-  <A class=def NAME="mixclickinfo">mix-click-info</a> id
+    :<em class=typing>(set! (mix-property :info 0) "this is a mix")</em>
+    <em class=listener>"this is a mix"</em>
+    :<em class=typing>(mix-property :info 0)</em>
+    <em class=listener>"this is a mix"</em>
 </pre>
-<p>
-<b>mix-sound</b> mixes <i>file</i> (all chans) into the currently selected sound at <i>start</i>.
-<b>mix-&gt;vct</b> returns the current samples
-of mix <i>id</i> (taking into account its current amplitude an so on). 
-<b>pan-mix</b>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mix-sound -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="mixsound">mix-sound</a> <code>file start</code>
+</td></tr><tr><td></td><td>
+mix-sound mixes <i>file</i> (all chans) into the currently selected sound at <i>start</i>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mix->vct -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="mix2vct">mix-&gt;vct</a> <code>id</code>
+</td></tr><tr><td></td><td>
+mix-&gt;vct returns in a vct the current samples
+of mix <i>id</i>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- pan-mix -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="panmix">pan-mix</a> <code>file (frame 0) (env 1.0) snd (chn 0) auto-delete</code>
+</td></tr><tr><td></td><td>
+pan-mix
 mixes <i>file</i> into the current sound starting at <i>frame</i> using the envelope <i>env</i>
 to pan the mixed samples (0: all chan 1, 1: all chan 0).
-The resultant mixes (if more than one) are placed in their own track, and the
-track amp env is interpreted as a panning envelope.
-To tie this into C-x C-q, in place of the default "mix" function,
-</p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+So, <code>(pan-mix \"oboe.snd\" .1 '(0 0 1 1))</code> goes from all chan 0 to all chan 1.  If
+the variable <a href="extsnd.html#withmixtags">with-mix-tags</a> is #t, the resultant mixes are placed in their own track, and 
+the track envelope controls the panning. 
+If <i>envelope</i> is a scaler, it is turned into an evelope at that value. <i>auto-delete</i> determines
+whether the in-coming file should be treated as a temporary file and deleted when the mix
+is no longer accessible.
+To tie this into C-x C-q, in place of the default "mix" function,
+<pre>
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\q 4 ; C-q
   (lambda () "pan mix"
     (<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "mix:" (lambda (str) ; use pan-mix at cursor
-				   (<em class=red>pan-mix</em> str (or (<a class=quiet href="extsnd.html#cursor">cursor</a>) 0)) #f #t)))
+				   (pan-mix str (or (<a class=quiet href="extsnd.html#cursor">cursor</a>) 0)) #f #t)))
   #t  ; an extended (C-x) command
   "C-x C-q")
-</pre></td></tr></table>
-
-<p>
-See <a href="#usepanmixinmixmenu">use-pan-mix-in-mix-menu</a> to change the
-File:Mix menu to use pan-mix.  The other pan-mix-* functions perform the
-same operation on a region (<b>pan-mix-region</b>), the current selection
-(<b>pan-mix-selection</b>), or a vct assumed to represent one channel of
-sound (<b>pan-mix-vct</b>).
-</p>
-<p>
-<b>snap-mix-to-beat</b> forces a dragged mix to end up on a beat.
-If <i>at-anchor</i> is #t, the anchor point, rather than the mix beginning falls on the beat.
-<b>mix-property</b> associates a property list with each mix.
-<b>track-property</b> associates a property list with each track.
-<b>mix-click-sets-amp</b> uses the property lists to keep track of
-whether the next click should set the mix amps to zero, or to the
-pre-zero value.
-<b>find-mix</b> returns the identifier of the mix at sample <i>sample</i> (or anywhere in the given channel if 
-<i>sample</i> is not specified), or #f if no mix is found.
-<b>mix-maxamp</b> returns the maxamp in the given mix.
-<b>mix-click-info</b> is a <a href="extsnd.html#mixclickhook">mix-click-hook</a> function that posts a description of the
-clicked mix in the help dialog.
-<b>save-mix</b> saves a given mix's data in a file.
-</p>
-<img src="pan.png" alt="picture of panning" hspace=20>
-<pre>
-  <a class=def name="track2vct">track-&gt;vct</a> track (chan 0)
-  <a class=def name="savetrack">save-track</a> track filename (chan #t)
-  <a class=def name="transposetrack">transpose-track</a> track semitones
-  <A class=def NAME="retempotrack">retempo-track</a> track tempo
-  <a class=def name="reversetrack">reverse-track</a> track
-  <a class=def name="filtertrack">filter-track</a> track coeffs
-  <em class=emdef>delete-all-tracks</em>
-  <a class=def name="trackproperty">track-property</a> key id
-  <A class=def NAME="trackmaxamp">track-maxamp</a> id chan
 </pre>
-<p>
-<b>track-&gt;vct</b> places all the mix samples
-in the track into a vct.  Similarly, <b>save-track</b> places the track's samples into a file.
-If the 'chan' arg is #t, all channels are saved.
-<b>retempo-track</b> affects the time between the successive mix begin points (tempo &gt; 1.0 makes the
+See <a href="#usepanmixinmixmenu">use-pan-mix-in-mix-menu</a> to change the
+File:Mix menu to use pan-mix.  
+<br>
+<img src="pan.png" alt="picture of panning" hspace=20 vspace=10>
+
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- pan-mix-region -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="panmixregion">pan-mix-region</A> <code>region (frame 0) (env 1.0) snd (chn 0)</code>
+</td></tr><tr><td></td><td>
+pan-mix-region is similar to pan-mix above, but mixes a region, rather than a file.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- pan-mix-selection -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="panmixselection">pan-mix-selection</A> <code>(frame 0) (env 1.0) snd (chn 0)</code>
+</td></tr><tr><td></td><td>
+pan-mix-selection is similar to pan-mix above, but mixes the current selection, rather than a file.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- pan-mix-vct -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="panmixvct">pan-mix-vct</A> <code>vct (frame 0) (env 1.0) snd (chn 0)</code>
+</td></tr><tr><td></td><td>
+pan-mix-vct is similar to pan-mix above, but mixes a vct, rather than a file.
+The vct data represents one channel of sound.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- save-mix -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="savemix">save-mix</a> <code>id filename</code>
+</td></tr><tr><td></td><td>
+save-mix saves a given mix's data in a file.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- snap-mix-to-beat -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="snapmixtobeat">snap-mix-to-beat</a> <code>(at-tag-position)</code>
+</td></tr><tr><td></td><td>
+snap-mix-to-beat forces a dragged mix to end up on a beat (see <a href="extsnd.html#xaxisstyle">x-axis-in-beats</a>).
+If <i>at-tag-position</i> is #t, the tagged point, rather than the mix beginning falls on the beat.
+Reset <a href="extsnd.html#mixreleasehook">mix-release-hook</a> to cancel this action.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+</table>
+
+<br>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" align="center" valign="middle"><h3>tracks</h3></td></tr></table>
+
+<table border=0 cellspacing=0 hspace=20>
+
+<!-- delete-all-tracks -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>delete-all-tracks</em>
+</td></tr><tr><td width=60></td><td>
+delete-all-tracks removes all mixes (by setting their amplitudes to 0.0) that have an associated track.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- filter-track -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="filtertrack">filter-track</a> <code>track fir-coeffs</code>
+</td></tr><tr><td></td><td>
+filter-track applies an FIR filter to each mix sound at the pre-mix point (that is, the
+mixed in sound is filtered, then the mix takes place).
+<i>fir-coeffs</i> are the filter coefficients:
+<pre>
+    (filter-track track-id '(.1 .2 .3 .3 .2 .1)) ; a low-pass filter
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- retempo-track -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="retempotrack">retempo-track</a> <code>track tempo</code>
+</td></tr><tr><td></td><td>
+retempo-track affects the time between the successive mix begin points (<i>tempo</i> &gt; 1.0 makes the
 mixes happen more quickly):
-</p>
 <pre>
     :<em class=typing>(retempo-track (track 1) 2.0)</em>
     <em class=listener>(1500 7770)</em>
@@ -4795,14 +4885,67 @@ mixes happen more quickly):
     :<em class=typing>(+ 1500 (* .5 (- 14039 1500))) ; 14039 is the former mix 1 begin time (see above)</em>
     <em class=listener>7769.5</em>
 </pre>
-<p>
-<b>filter-track</b> applies a filter to each mix sound at the pre-mix point (that is, the
-mixed in sound is filtered, then the mix takes place).
-<b>reverse-track</b> reverses the order in which a track's member mixes occur.
-<b>track-maxamp</b> returns the maxamp in the given track.
-</p>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- reverse-track -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="reversetrack">reverse-track</a> <code>track</code>
+</td></tr><tr><td></td><td>
+reverse-track reverses the order in which a track's member mixes occur.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- save-track -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="savetrack">save-track</a> <code>track filename (chan #t)</code>
+</td></tr><tr><td></td><td>
+save-track places the track's samples into the file <i>filename</i>.
+If the <i>chan</i> arg is #t, all channels are saved.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- track-maxamp -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="trackmaxamp">track-maxamp</a> <code>id chan</code>
+</td></tr><tr><td></td><td>
+track-maxamp returns the maxamp in the given track.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- track-property -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="trackproperty">track-property</a> <code>key id</code>
+</td></tr><tr><td></td><td>
+track-property associates a property list with each track.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- transpose-track -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="transposetrack">transpose-track</a> <code>track semitones</code>
+</td></tr><tr><td></td><td>
+transpose-track transposes each mix in <i>track</i> by <i>semitones</i>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- track-&gt;vct -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="track2vct">track-&gt;vct</a> <code>track (chan 0)</code>
+</td></tr><tr><td></td><td>
+track-&gt;vct places all the track samples (the samples of all the constituent mixes)
+into a vct.  
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+</table>
+
+<table bgcolor="aliceblue" border=0><tr><td>
+<pre>see also: <a href="extsnd.html#sndmixes">Mixes</a> <a href="snd.html#mixingfiles">View:Mix</a> <a href="#mixchannel">mix-channel</a> <a href="#fadedoc">dissolve-fade</a> <a href="clm.html#musmix">mus-mix</a> <a href="clm.html#with-mix">with-mix</a>
+</pre></td>
+</tr></table>
+
+
+
+<br>
 <!-- INDEX mixerdoc:Matrices -->
 <br>
 <A NAME="mixerdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>mixer</h2></td></tr></table>
@@ -4810,7 +4953,7 @@ mixed in sound is filtered, then the mix takes place).
 <!-- main-index |mixerdoc:mixer as matrix -->
 
 <p>mixer.scm has functions related to mixers and frames (linear algebra).  There are some
-others in the relevant section of snd-test. 
+others in the relevant section of snd-test. (In Ruby, see mix.rb).
 </p>
 <pre>
   <a class=def name="framereverse">frame-reverse</a> frame

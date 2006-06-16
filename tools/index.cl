@@ -72,7 +72,7 @@
     ;; this is a main-index entry
       (let* ((colonpos (or (search ":" str) (warn "no : in ~A" str)))
 	     (line (concatenate 'string "<a href=\"" (or file "") "#" (subseq str 1 colonpos) "\">" (subseq str (1+ colonpos)) "</a>")))
-	(make-ind :name line :topic topic :file file :sortby (subseq str (1+ colonpos))))
+	(make-ind :name line :topic topic :file file :sortby (string-downcase (subseq str (1+ colonpos)))))
      
     (progn 
       (let ((def-pos (search " class=def" str)))
@@ -648,6 +648,7 @@
 				     (not (string-equal "&amp;" (my-subseq line i (+ i 5))))
 				     (not (string-equal "&micro;" (my-subseq line i (+ i 7))))
 				     (not (string-equal "&quot;" (my-subseq line i (+ i 6))))
+				     (not (string-equal "&ouml;" (my-subseq line i (+ i 6))))
 				     (not (string-equal "&&" (my-subseq line i (+ i 2))))
 				     (not (string-equal "& " (my-subseq line i (+ i 2))))) ; following char -- should skip this
 				(warn "~A[~D]: unknown escape sequence: ~A" file linectr line))
