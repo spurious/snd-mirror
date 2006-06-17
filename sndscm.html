@@ -1,19 +1,25 @@
 <html>
 
-<!-- TODO: add most the names to the index -->
-<!-- TODO: the following are empty: edit123 grani ladspa maxf strad -->
-<!-- TODO: these need tablize: menus extensions mix rmsgain sndmotif -->
-<!-- TODO: these need work: enved examp infsnd prc95 rtex rtio -->
-<!-- TODO: ws doc, gtk? -->
-<!-- TODO: remember crossrefs and main-index additions (all files) -->
+<!-- TODO: these need work: 
+  edit123 
+  examp 
+  grani 
+  infsnd 
+  ladspa 
+  maxf 
+  menus 
+  play 
+  prc95 
+  rmsgain 
+  rtex 
+  rtio 
+  sndmotif
+  strad
+  ws
+-->
+
 <!-- TODO: check effects-utils.scm kmenu.scm pd-*.scm snd-hobbit.scm (rb/fs?) -->
 
-
-<!-- done, I hope: 
-    analog-filter auto-save bess bird clm-ins debug dlocsig draw dsp env event fade freeverb
-    heart hooks index jcrev maraca marks mixer moog musglyphs nb noise oscope peak-env piano poly pvoc
-    rgb rubber singer sndwarp snd4567 snd-gl snd-test spectr stochastic v
--->
 
 <!-- documentation for some of the Scheme/Ruby/Forth code included with Snd -->
 <head>
@@ -1556,7 +1562,7 @@ To activate this, add it to <a href="extsnd.html#aftergraphhook">after-graph-hoo
 
 <!-- display-energy -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>display-energy</em> <code>snd chn</code>
+<A class=def NAME="displayenergy">display-energy</A> <code>snd chn</code>
 </td></tr>
 <tr><td width=60></td><td>
 display-energy is a <a href="extsnd.html#lispgraphhook">lisp-graph-hook</a> procedure that displays the current time
@@ -1665,7 +1671,7 @@ Fourier Analysis book is by K&ouml;rner, but you don't want to start with it.
 <!-- ---------------------------------------- FFT ---------------------------------------- -->
 <tr><td colspan=2 bgcolor="lightgreen"><center><A NAME="dspdocfft">FFTs</A></center></td><td></td></tr>
 
-<!-- main-index |dspdocdht:Hartley transform -->
+<!-- main-index |exdht:Hartley transform -->
 <!-- dht -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="exdht">dht</A> <code>data</code>
@@ -1705,7 +1711,7 @@ extremely slow.
 <!-- goertzel and find-sine -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="goertzel">goertzel</a> <code>freq :optional beg dur</code><br>
-<A class=def NAME="findsine">find-sine</A> <code>freq beg dur</code>
+<em class=emdef>find-sine</em> <code>freq beg dur</code>
 </td></tr><tr><td></td><td>
 goertzel and find-sine find the amplitude of a single component of a spectrum (<i>freq</i>).
 <pre>
@@ -1765,7 +1771,7 @@ so that each time we click somewhere in the graph, the pitch at that point is re
 
 <!-- rotate-phase and zero-phase -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="rotatephase">rotate-phase</A> <code>func :optional snd chn</code><br>
+<em class=emdef>rotate-phase</em> <code>func :optional snd chn</code><br>
 <A class=def NAME="zerophase">zero-phase</A> <code>:optional snd chn</code>
 </td></tr><tr><td></td><td>
 These are fft phase manipulators taken from the phazor package of Scott McNab.
@@ -1852,7 +1858,7 @@ One example of its use is sound-&gt;amp-env (from R Lyons).  Another is the <a h
 
 <!-- invert-filter -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="invertfilter">invert-filter</A> <code>coeffs</code>
+<em class=emdef>invert-filter</em> <code>coeffs</code>
 </td></tr><tr><td></td><td>
 invert-filter inverts an FIR filter.
 Say we previously filtered a sound via 
@@ -1916,7 +1922,7 @@ also lose more of the original signal.
 
 <!-- spectrum->coeffs and fltit -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="spectrumtocoeffs">spectrum-&gt;coeffs</A> <code>order spectrum</code><br>
+<em class=emdef>spectrum-&gt;coeffs</em> <code>order spectrum</code><br>
 <em class=emdef>fltit-1</em> <code>order spectr</code>
 </td></tr><tr><td></td><td>
 spectrum-&gt;coeffs is a
@@ -1924,7 +1930,7 @@ version of Snd's very simple spectrum-&gt;coefficients procedure ("frequency sam
 It returns the FIR filter coefficients given the filter <i>order</i> and desired <i>spectrum</i> (a vct).
 An example of its use is fltit-1.
 <pre>
-    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (<a class=def NAME="fltit1">fltit-1</a> 10 (<a class=quiet href="extsnd.html#vct">vct</a> 0 1.0 0 0 0 0 0 0 1.0 0)))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (fltit-1 10 (<a class=quiet href="extsnd.html#vct">vct</a> 0 1.0 0 0 0 0 0 0 1.0 0)))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -2023,8 +2029,8 @@ Use the functions in <a href="#analogfilterdoc">analog-filter.scm</a>, rather th
 
 <!-- cosine-summation -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="cosinesummation">cosine-summation</A> <code>gen r</code><br>
-<A class=def NAME="kosinesummation">kosine-summation</A> <code>gen r k</code>
+<em class=emdef>cosine-summation</em> <code>gen r</code><br>
+<em class=emdef>kosine-summation</em> <code>gen r k</code>
 </td></tr><tr><td></td><td>
 cosine-summation 
 is a variation on Moorer's <a href="clm.html#sine-summation">sine-summation</a>;
@@ -2048,8 +2054,8 @@ suitably renamed (make-cosine-summation, etc).
 
 <!-- legendre-sum -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="legendresum">legendre-sum</A> <code>angle n</code><br>
-<A class=def NAME="fejersum">fejer-sum</A> <code>angle n</code>
+<em class=emdef>legendre-sum</em> <code>angle n</code><br>
+<em class=emdef>fejer-sum</em> <code>angle n</code>
 </td></tr><tr><td></td><td>
 These two functions
 produce a band-limited pulse-train whose
@@ -2098,7 +2104,7 @@ phase increment, <i>x</i> the current phase.
 <!-- asymfm -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>make-asyfm</em> <code>:key (frequency 440.0) (initial-phase 0.0) (ratio 1.0) (r 1.0) (index 1.0)</code><br>
-<A class=def NAME="asyfm1">asyfm-J</A> <code>gen input</code><br>
+<em class=emdef>asyfm-J</em> <code>gen input</code><br>
 <em class=emdef>asyfn-I</em> <code>gen input</code>
 </td></tr><tr><td></td><td>
 These functions are    
@@ -2222,8 +2228,8 @@ CLM (Scheme): mus-rand-seed (settable)<br>
 
 <!-- adsat, freqdiv -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="adsat">adsat</A> <code>size :optional beg dur snd chn</code><br>
-<A class=def NAME="freqdiv">freqdiv</A> <code>n :optional snd chn</code>
+<em class=emdef>adsat</em> <code>size :optional beg dur snd chn</code><br>
+<em class=emdef>freqdiv</em> <code>n :optional snd chn</code>
 </td></tr><tr><td></td><td>
 These two functions come from a package of effects developed by sed_sed@my-dejanews.com.
 adsat is "adaptive saturation", and freqdiv is "frequency division".
@@ -2234,7 +2240,7 @@ It turns your sound into a bunch of square waves.
 
 <!-- brighten-slightly -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="brightenslightly1">brighten-slightly</A> <code>amount :optional snd chn</code>
+<em class=emdef>brighten-slightly</em> <code>amount :optional snd chn</code>
 </td></tr><tr><td></td><td>
 brighten-slightly is a slight simplification of <a href="clm.html#contrast-enhancement">contrast-enhancement</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -2290,7 +2296,7 @@ produced by each harmonic.  <i>pairs</i> controls how many bands are used to spl
 
 <!-- spike -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="spike">spike</A> <code>:optional snd chn</code>
+<em class=emdef>spike</em> <code>:optional snd chn</code>
 </td></tr><tr><td></td><td>
 spike returns a product (rather than the more usual sum) of succesive samples, with the current sample's sign;
 this normally produces a more spikey output.
@@ -2336,7 +2342,7 @@ which means that if the original sound was 2 seconds long, and we apply the enve
 
 <!-- JOS -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="channelvariance">channel-variance</A> <code>:optional snd chn</code><br>
+<em class=emdef>channel-variance</em> <code>:optional snd chn</code><br>
 <em class=emdef>channel-mean</em> <code>:optional snd chn</code><br>
 <em class=emdef>channel-total-energy</em> <code>:optional snd chn</code><br>
 <em class=emdef>channel-average-power</em> <code>:optional snd chn</code><br>
@@ -2414,7 +2420,7 @@ upon output (to track the original sound's amplitude envelope):
 <!-- scanned synthesis -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="excomputeuniformcircularstring">compute-uniform-circular-string</A> <code>size x0 x1 x2 mass xspring damp</code><br>
-<A class=def NAME="computestring">compute-string</A> <code>size x0 x1 x2 masses xsprings esprings damps haptics</code>
+<em class=emdef>compute-string</em> <code>size x0 x1 x2 masses xsprings esprings damps haptics</code>
 </td></tr><tr><td></td><td>
 These functions implement
 scanned synthesis of Bill Verplank and Max Mathews.
@@ -2757,59 +2763,43 @@ notes.
 
 <br>
 <A NAME="enveddoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>enved</h2></td></tr></table>
-<br>
-<img src="envs.png" alt="channel enveds" hspace=20>
+
+<p>enved.scm implements an independent envelope editor in each channel.  
+</p>
 
 <pre>
-  <em class=emdef>start-enveloping</em>
-  <em class=emdef>stop-enveloping</em>
-  <a class=def name="channelenvelope">channel-envelope</a> <i>snd chn</i>
-  <A class=def NAME="explaywithenvs">play-with-envs</A> snd
-  <A class=def NAME="explaypanned">play-panned</A> snd
+  <em class=emdef>start-enveloping</em>          ; start including envelope editor windows
+  <em class=emdef>stop-enveloping</em>           ; stop including them
+  <a class=def name="channelenvelope">channel-envelope</a> <i>snd chn</i>  ; current envelope in a given channel's envelope editor
+  <A class=def NAME="explaywithenvs">play-with-envs</A> snd        ; apply envelope as sound plays
+  <A class=def NAME="explaypanned">play-panned</A> snd           ; treat envelope as panning control during playback
 </pre>
 
-<p>enved.scm implements an independent envelope editor in each channel.  <code>(start-enveloping)</code>
-sets this in progress (for subsequently opened sounds), <code>(stop-enveloping)</code> turns it off.
+<p>
+<code>(start-enveloping)</code> opens an envelope editor for each subsequently opened sound.
+<code>(stop-enveloping)</code> turns this off.
 Each envelope can be read or written via <code>(channel-envelope snd chn)</code>.
-There are also two examples that use these envelopes: <b>play-with-envs</b> and
-<b>play-panned</b>.  The former sets the channel's amplitude from its envelope
+There are also two examples that use these envelopes: play-with-envs and
+play-panned.  The former sets the channel's amplitude from its envelope
 during playback (it should be obvious how to apply the envelope to any of the
 control panel fields); the latter pans a mono sound into stereo following
-the envelope. The lines:
+the envelope. 
+</p>
+
+<img src="envs.png" alt="channel enveds" hspace=20 vspace=10>
+<br>
+<p>
+Closely related to this is xm-enved.scm which implements a separate envelope editor widget.
 </p>
 <pre>
-(define channel-envelope
-  (make-procedure-with-setter
-    (lambda (snd chn)
-      ...)
-    (lambda (snd chn new-env)
-      ...)))
+  <em class=emdef>xe-create-enved</em> name parent args axis   ; make a new editor
+  <em class=emdef>xe-envelope</em> xe-editor                   ; current envelope in <i>xe-editor</i>
 </pre>
 <p>
-use a feature of Guile 1.4 that provides a set! function
-for channel-envelope.  The first lambda is called if you're
-asking for the current value of that channel-envelope:
-</p>
-<pre>
-(channel-envelope s c)
-</pre>
-<p>and
-the second if you're setting it to something new:
-</p>
-<pre>
-(set! (channel-envelope s c) e)
-</pre>
-<br clear=right>
-
-<pre>
-  <em class=emdef>xe-create-enved</em> name parent args axis
-  <em class=emdef>xe-envelope</em> xe-editor
-</pre>
-<p>This file implements an envelope editor using the xm module.  <b>xe-create-enved</b>
-returns a new envelope editor whose X axis label is <i>name</i>, the X and Y axis bounds
+xe-create-enved returns a new envelope editor whose x axis label is <i>name</i>, the x and y axis bounds
 are in the list <i>axis</i>, the editor's parent widget is <i>parent</i>,  and the Xt-style
 resource argument list is <i>args</i>.  The editor's current envelope is accessible
-(read and write) via <i>xe-envelope</i>:
+(read and write) as <i>xe-envelope</i>:
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
@@ -2821,11 +2811,17 @@ resource argument list is <i>args</i>.  The editor's current envelope is accessi
 				   XmNrightAttachment  XmATTACH_FORM)
 			     '(0.0 1.0 0.0 1.0)))
 (set! (<em class=red>xe-envelope</em> editor) (list 0.0 1.0 1.0 0.5))
-</pre></td></tr></table>
-<br>
+</pre></td></tr>
+</table>
 <br>
 
+<table bgcolor="aliceblue" border=0><tr>
+<td>
+<pre>see also: <a href="clm.html#envelopes" onmouseover="return escape('env and make-env: envelopes in CLM')">make-env</a> <a href="extsnd.html#envchannel" onmouseover="return escape('the main Snd enveloping function')">env-channel</a> <a href="snd.html#editenvelope" onmouseover="return escape('the envelope editor dialog')">Enved</a> <a href="#envdoc">functions</a>
+</pre>
+</td></tr></table>
 
+<br>
 
 
 <br>
@@ -2997,7 +2993,7 @@ is at 1.0, no filtering takes place.
   <em class=emdef>fltit</em>
   <em class=emdef>remove-clicks</em>
 </pre>
-<p><b>fltit</b> is a simple FIR filter call.
+<p>fltit is a simple FIR filter call.
 <b>remove-clicks</b> looks for obvious clicks and uses smooth-sound to remove them.
 </p>
 
@@ -3183,7 +3179,7 @@ a sound as a key is held down).
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssselections">selections</a></h3></td></tr></table>
 
 <pre>
-  <em class=emdef>all-chans</em>
+  <A class=def NAME="allchans">all-chans</A>
   <a class=def name="exswapselectionchannels">swap-selection-channels</a>
   <em class=emdef>selection-rms-1</em>
   <A class=def NAME="exselectionrms">selection-rms</a>
@@ -3434,83 +3430,168 @@ speech. <b>reverse-by-blocks</b> divides a sound into blocks, then recombines th
 convenient if they were in one file.
 </p>
 
+<table border=0 cellspacing=0 hspace=20>
+
+
+<!-- channels-equal? -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="channelsequal">channels-equal?</a> <code>snd1 chn1 snd2 chn2 allowable-difference</code><br>
+<a class=def name="channels=">channels=?</a> <code>snd1 chn1 snd2 chn2 allowable-difference</code>
+</td></tr><tr><td width=60></td><td>
+channels=? returns #t if the two specified channels are the same within the
+given <i>allowable-difference</i>.
+The <i>allowable-difference</i> is checked on each sample, so any sample-wise difference
+larger than that causes the comparison to return #f.
+channels-equal? returns #t if channels=?
+and the channels are the same length.  In channels=? one the other hand, the trailing (extra) samples
+in one channel are compared with 0.0 (that is, the shorter channel is padded out with zeros).
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- channel-property -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exchannelproperty">channel-property</a> <code>key snd chn</code>
+</td></tr><tr><td></td><td>
+channel-property returns the value associated with <i>key</i> in the given channel's
+<a href="extsnd.html#channelproperties">property list</a>.  To add or change a property, use set! with this procedure. 
 <pre>
-  <a class=def name="exchannelproperty">channel-property</a> key snd chn
-  <a class=def name="exsoundproperty">sound-property</a> key snd
-  <a class=def name="channelsync">channel-sync</a> snd chn
-  <a class=def name="setglobalsync">set-global-sync</a> choice
+    Scheme:
+    :<em class=typing>(set! (channel-property 'info 0 0) "this is sound 0, first channel")</em>
+    <em class=listener>"this is sound 0, first channel"</em>
+    :<em class=typing>(channel-property 'info 0 0)</em>
+    <em class=listener>"this is sound 0, first channel"</em>
 
-  <a class=def name="exmakeselection">make-selection</a> beg end snd chn
-  <a class=def name="exdeleteselectionandsmooth">delete-selection-and-smooth</a>
-  <a class=def name="exevaloverselection">eval-over-selection</a> func #:optional snd
-  <a class=def name="exselectionmembers">selection-members</a>
+    Ruby:
+    ><em class=typing>set_channel_property(:info, "this is info", 0, 0)</em>
+    <em class=listener>this is info</em>
+    ><em class=typing>channel_property(:info, 0, 0)</em>
+    <em class=listener>this is info</em>
 
-  <a class=def name="exmapsoundfiles">map-sound-files</a> func #:optional dir
-  <a class=def name="exforeachsoundfile">for-each-sound-file</a> func #:optional dir
-  <a class=def name="exmatchsoundfiles">match-sound-files</a> func #:optional dir
-
-  <a class=def name="exnormalizedmix">normalized-mix</a> filename beg in-chan snd chn
-  <a class=def name="exenvelopedmix">enveloped-mix</a> filename beg env
-  <em class=emdef>enveloped-mix-1</em> filename beg env
-
-  <a class=def name="exunsavededits">check-for-unsaved-edits</a> #:optional (check #t)
-  <a class=def name="exremembersoundstate">remember-sound-state</a>
-  <a class=def name="exwithreopenmenu">with-reopen-menu</a>
-
-  <a class=def name="mixchannel">mix-channel</a> filedat #:optional beg dur snd chn edpos
-  <a class=def name="insertchannel">insert-channel</a> filedat #:optional beg dur snd chn edpos
-  <em class=emdef>redo-channel</em> #:optional (edits 1) snd chn
-  <em class=emdef>undo-channel</em> #:optional (edits 1) snd chn
-
-  <a class=def name="anyenvchannel">any-env-channel</a> env func #:optional beg dur snd chn edpos
-  <a class=def name="sineramp">sine-ramp</a> a0 a1 #:optional beg dur snd chn edpos
-  <a class=def name="sineenvchannel">sine-env-channel</a> env #:optional beg dur snd chn edpos
-  <em class=emdef>blackman4-ramp</em> a0 a1 #:optional beg dur snd chn edpos
-  <A class=def NAME="blackman4envchannel">blackman4-env-channel</A> env #:optional beg dur snd chn edpos
-  <em class=emdef>ramp-squared</em> a0 a1 #:optional (symmetric #t) beg dur snd chn edpos
-  <A class=def NAME="envsquaredchannel">env-squared-channel</A> env #:optional (symmetric #t) beg dur snd chn edpos
-  <em class=emdef>ramp-expt</em> a0 a1 exponent #:optional (symmetric #t) beg dur snd chn edpos
-  <a class=def name="envexptchannel">env-expt-channel</a> env exponent #:optional (symmetric #t) beg dur snd chn edpos
-
-  <a class=def name="offsetchannel">offset-channel</a> amount #:optional beg dur snd chn edpos	
-  <a class=def name="ditherchannel">dither-channel</a> #:optional (amount .00006) beg dur snd chn edpos	
-  <a class=def name="contrastchannel">contrast-channel</a> index #:optional beg dur snd chn edpos
-  <a class=def name="channelsequal">channels-equal?</a> snd1 chn1 snd2 chn2 allowable-difference	
-  <a class=def name="channels=">channels=?</a> snd1 chn1 snd2 chn2 allowable-difference	
-
-  <a class=def name="monotostereo">mono-&gt;stereo</a> new-name snd1 chn1 snd2 chn2
-  <em class=emdef>mono-files-&gt;stereo</em> new-name chan1-file chan2-file
-  <em class=emdef>stereo-&gt;mono</em> orig-snd chan1-name chan2-name
-
-  <a class=def name="focusfollowsmouse">focus-follows-mouse</a>
-  <a class=def name="showselection">show-selection</a>
+    Forth:
+    ><em class=typing>'info "this is info" 0 0 set-channel-property</em>
+    <em class=listener>'( '( 'info . this is info ) )</em>
+    ><em class=typing>'info 0 0 channel-property</em>
+    <em class=listener>this is info</em>
 </pre>
+The property list is convenient because the associated information goes away automatically
+when the channel is closed, and the property lists are saved by <a href="extsnd.html#savestate">save-state</a>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
-<p><b>focus-follows-mouse</b> sets up various hook functions to activate whatever widget is underneath the mouse cursor.
-</p>
 
-<p><b>channel-property</b> returns the value associated with <i>key</i> in the given channel's
-property list.  To add or change a property, use set! with this procedure.  Similarly,
-<b>sound-property</b> provides access to a sound's property list.
-These properties are normally saved when Snd's state is saved (via <a href="extsnd.html#savestate">save-state</a>
-or the Options:Save session menu).  To omit a given property at that time, add its name (a symbol) to
-the property 'save-state-ignore (a list of symbols); see 'inset-envelope in extensions.scm.
-<b>channel-sync</b> uses the channel-properties list to implement a channel-local sync field.
-</p>
-<p>
-<b>set-global-sync</b> sets up a hook function that syncs all of a sound's channels (<i>choice</i> == 2),
-or all channels (across all sounds) (<i>choice</i> == 1).  <i>choice</i> == 0 turns off the syncing.
-</p>
+<!-- channel-sync -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="channelsync">channel-sync</a> snd chn
+</td></tr><tr><td></td><td>
+channel-sync uses the channel-properties list to implement a channel-local sync field.  (This property is currently
+not used anywhere).
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
-<p><b>selection-members</b> returns a list of lists of (snd chn) indicating the channels participating in the current selection.
-It is very similar to <b>all-chans</b> which returns a list of lists of all (snd chn)'s.
-<b>delete-selection-and-smooth</b> deletes the current selection and smooths the splice.
-</p>
 
-<p><b>eval-over-selection</b> evaluates <i>func</i> on each sample in the current selection. A better
+<!-- check-for-unsaved-edits -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exunsavededits">check-for-unsaved-edits</a> <code>:optional (check #t)</code>
+</td></tr><tr><td></td><td>
+check-for-unsaved-edits adds functions to the <a href="extsnd.html#beforeexithook">before-exit-hook</a>
+and the <a href="extsnd.html#beforeclosehook">before-close-hook</a> to check
+for unsaved edits before exiting Snd or closing a file.  If its argument <i>check</i> is #f, it removes
+those hooks.  Normally Snd just closes such a sound, or exits silently, flushing any unsaved edits.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- contrast-channel -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="contrastchannel">contrast-channel</a> <code>index :optional beg dur snd chn edpos</code>
+</td></tr><tr><td></td><td>
+contrast-channel applies the CLM <a href="clm.html#contrast-enhancement">contrast-enhancement</a> function to a channel;
+this is largely equivalent to the control panel Contrast slider.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- delete-selection-and-smooth -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exdeleteselectionandsmooth">delete-selection-and-smooth</a>
+</td></tr><tr><td></td><td>
+delete-selection-and-smooth deletes the current selection and smooths the splice.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- dither-channel -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="ditherchannel">dither-channel</a> <code>:optional (amount .00006) beg dur snd chn edpos</code>	
+</td></tr><tr><td></td><td>
+dither-channel adds "dithering" (noise) to a channel; some experts insist this makes everything copacetic.
+The noise consists of two white noise generators adding together.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- enveloped-mix -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exenvelopedmix">enveloped-mix</a> <code>filename beg env</code><br>
+</td></tr><tr><td></td><td>
+enveloped-mix is like <a href="#mixsound">mix-sound</a>, but includes an
+amplitude envelope over the mixed-in data.
+<pre>
+    (enveloped-mix "pistol.snd" 0 '(0 0 1 1 2 0))
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- env-expt-channel -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="envexptchannel">env-expt-channel</a> <code>env exponent :optional (symmetric #t) beg dur snd chn edpos</code><br>
+<a class=def name="anyenvchannel">any-env-channel</a> <code>env func :optional beg dur snd chn edpos</code><br>
+<em class=emdef>ramp-expt</em> <code>a0 a1 exponent :optional (symmetric #t) beg dur snd chn edpos</code><br>
+<a class=def name="sineenvchannel">sine-env-channel</a> <code>env :optional beg dur snd chn edpos</code><br>
+<a class=def name="sineramp">sine-ramp</a> <code>a0 a1 :optional beg dur snd chn edpos</code><br>
+<A class=def NAME="blackman4envchannel">blackman4-env-channel</A> <code>env :optional beg dur snd chn edpos</code><br>
+<em class=emdef>blackman4-ramp</em> <code>a0 a1 :optional beg dur snd chn edpos</code><br>
+<A class=def NAME="envsquaredchannel">env-squared-channel</A> <code>env :optional (symmetric #t) beg dur snd chn edpos</code><br>
+<em class=emdef>ramp-squared</em> <code>a0 a1 :optional (symmetric #t) beg dur snd chn edpos</code>
+</td></tr><tr><td></td><td>
+These functions goof around with envelopes in various amusing ways.
+any-env-channel takes an envelope and a function to produce the connection between successive
+breakpoints, and applies the two to the current channel as an envelope.  This packages up most of
+the "boilerplate" associated with applying an envelope to a sound.  It is used by the other
+enveloping functions: sine-env-channel, blackman4-env-channel, and env-squared-channel.
+sine-ramp and sine-env-channel are the sinusoidal versions of <a href="extsnd.html#rampchannel">ramp-channel</a>
+and <a href="extsnd.html#envchannel">env-channel</a>.
+<pre>
+    (sine-env-channel '(0 0 1 1 2 -.5 3 1))
+</pre>
+applies the given envelope to the current channel,
+connecting the points with a sinusoidal curve.
+Similarly, blackman4-env-channel connects the dots with
+a sum of cosines, and env-squared-channel connects the dots with an x^2 curve.  To get any other positive exponent,
+use env-expt-channel.  The <i>symmetric</i> argument determines whether the
+up and down moving ramps look symmetrical around a break point.
+
+<table border=0>
+<tr><td><img src="exptenvs.png" alt="exponential envelopes" hspace=10></td><td>
+<pre>
+(env-channel '(0 0 1 1 2 -.75 3 0)) 
+(env-sound '(0 0 1 1 2 -.75 3 0) 0 100 32.0)  
+(env-sound '(0 0 1 1 2 -.75 3 0) 0 100 .032) 
+(env-sound '(0 0 1 1 2 -.75 3 0) 0 100 0.0)
+(sine-env-channel '(0 0 1 1 2 -.75 3 0))
+(env-squared-channel '(0 0 1 1 2 -.75 3 0))
+(blackman4-env-channel '(0 0 1 1 2 -.75 3 0))
+(env-squared-channel '(0 0 1 1 2 -.75 3 0) #f)
+(env-expt-channel '(0 0 1 1 2 -.75 3 0) 3.0)
+(env-expt-channel '(0 0 1 1 2 -.75 3 0) 3.0 #f)
+(env-expt-channel '(0 0 1 1 2 -.75 3 0) .3)
+(env-expt-channel '(0 0 1 1 2 -.75 3 0) .3)
+</pre>
+</td></tr></table>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- eval-over-selection -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exevaloverselection">eval-over-selection</a> <code>func :optional snd</code>
+</td></tr><tr><td></td><td>
+eval-over-selection evaluates <i>func</i> on each sample in the current selection. A better
 name might be map-selection.
 The code:
-</p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\x 4
@@ -3521,38 +3602,53 @@ The code:
   #t)
 </pre></td></tr></table>
 
-<p>binds the key sequence C-x x to a function that checks for an active selection,
+binds the key sequence C-x x to a function that checks for an active selection,
 then prompts (in the minibuffer) for the function to apply, and when
 you eventually reply with a function, applies that function
 to each sample in the selection.
-make-selection makes a selection (like make-region but without creating
-a region).
-</p>
-<p>
-<b>map-sound-files</b> applies <i>func</i> to each sound file in <i>dir</i>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- focus-follows-mouse -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="focusfollowsmouse">focus-follows-mouse</a>
+</td></tr><tr><td></td><td>
+focus-follows-mouse sets up various hook functions to activate whatever widget is underneath the mouse cursor
+(this is sometimes known as "point-to-focus" mode).
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- for-each-sound-file -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exforeachsoundfile">for-each-sound-file</a> <code>func :optional dir</code><br>
+<a class=def name="exmapsoundfiles">map-sound-files</a> <code>func :optional dir</code><br>
+<a class=def name="exmatchsoundfiles">match-sound-files</a> <code>func :optional dir</code>
+</td></tr><tr><td></td><td>
+for-each-sound-file and 
+map-sound-files apply <i>func</i> to each sound file in <i>dir</i>.
 The <i>func</i> is passed one argument, the sound file name.
-<b>match-sound-files</b> applies <i>func</i> to each sound file in <i>dir</i> and returns a list of files for which func does not return #f.
-</p>
+map-sound-files returns a list of the results, if any, returned from <i>func</i>.
+match-sound-files applies <i>func</i> to each sound file in <i>dir</i> and returns a list of files for which func does not return #f.
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (for-each-sound-file
   (lambda (n) 
     (if (&gt; (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> n) 10.0) 
       (<a class=quiet href="extsnd.html#sndprint">snd-print</a> n)))
-  (<a class=quiet href="extsnd.html#soundfilesindirectory"><em class=red>sound-files-in-directory</em></a> "."))
+  (<a class=quiet href="extsnd.html#soundfilesindirectory">sound-files-in-directory</a> "."))
 </pre></td></tr></table>
 
-<p>We can use Guile's regexp support here to search for all .snd and .wav files:
-</p>
+We can use Guile's regexp support here to search for all .snd and .wav files:
+
 <pre>
     (let ((reg (make-regexp "\\.(wav|.snd)$")))
       (match-sound-files (lambda (file) (regexp-exec reg file))))
 </pre>
-<p>In fact, we could replace the built-in procedures <A class=def NAME="addsoundextension1">add-sound-file-extension</a> and
-sound-files in directory.  We're using some procedures written by Dirk Herrman here.
-</p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+In fact, we could replace the built-in procedures <a href="extsnd.html#addsoundfileextension">add-sound-file-extension</a> and
+<a href="extsnd.html#soundfilesindirectory">sound-files-in-directory</a> (we're using some procedures written by Dirk Herrman here):
+
+<table border=0 cellpadding=5 hspace=20 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define (filter-list pred? objects)
   (let loop ((objs objects)
 	     (result '()))
@@ -3580,97 +3676,157 @@ sound-files in directory.  We're using some procedures written by Dirk Herrman h
 (define (add-sound-file-extension-1 ext) 
   (set! sound-file-extensions (cons ext sound-file-extensions)))
 
-(define* (sound-files-in-directory-1 #:optional (dir "."))
+(define* (sound-files-in-directory-1 :optional (dir "."))
   (sort (grep
 	 (format #f "\\.(~{~A~^|~})$" sound-file-extensions)
 	 (directory-&gt;list dir))
 	string&lt;?))
 </pre></td></tr></table>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<p><b>normalized-mix</b> is like <a href="extsnd.html#mix">mix</a> but the mixed result has same peak amplitude as the 
-original data. <b>enveloped-mix</b> is like <a href="#mixsound">mix-sound</a>, but includes an
-amplitude envelope over the mixed-in data.
-</p>
-<pre>
-    (enveloped-mix "pistol.snd" 0 '(0 0 1 1 2 0))
-</pre>
-<p><b>check-for-unsaved-edits</b> adds functions to the <a href="extsnd.html#beforeexithook">before-exit-hook</a>
-and <a href="extsnd.html#beforeclosehook">before-close-hook</a> to check
-for unsaved edits before exiting Snd or closing a file.  If its argument is #f, it removes
-those hooks.
-</p>
-<p><b>remember-sound-state</b> saves most of a sound's display state when it is closed,
-and if that same sound is later re-opened, restores the previous state.
-Along the same lines is the Reopen menu, created by <b>with-reopen-menu</b>;
-it presents a list of previously
-closed (and not subsequently re-opened) files in reverse order of closing.
-</p>
+<!-- insert-channel -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="insertchannel">insert-channel</a> <code>filedat :optional beg dur snd chn edpos</code>
+</td></tr><tr><td></td><td>
+insert-channel inserts the specified data (<i>filedat</i>) in the given channel at the given location.
+See mix-channel below for a description of <i>filedat</i>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
-<p><b>mix-channel</b> is a regularized version of the file mixing functions (<a class=quiet href="extsnd.html#mix">mix</a> and mix-sound).
-It's first argument can be either a filename (a string) or a list containing the filename, the
+
+<!-- make-selection -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exmakeselection">make-selection</a> <code>beg end snd chn</code>
+</td></tr><tr><td></td><td>
+make-selection makes a selection, like <a href="extsnd.html#makeregion">make-region</a> but without creating
+a region.  It selects the <i>dur</i> samples starting at <i>beg</i> in the given channel.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mix-channel -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="mixchannel">mix-channel</a> <code>filedat :optional beg dur snd chn edpos</code>
+</td></tr><tr><td></td><td>
+mix-channel is a "regularized" version of the file mixing functions (<a class=quiet href="extsnd.html#mix">mix</a> and 
+<a href="#mixsound">mix-sound</a>).
+Its first argument can be either a filename (a string) or a list containing the filename, the
 start point in the file, and (optionally) the channel of the file to mix:
-</p>
 <pre>
-    (mix-channel "pistol.snd")
+    (mix-channel "pistol.snd")             ; mixing starts at sample 0, entire sound is mixed
     (mix-channel "pistol.snd" 10000)       ; mixing starts at sample 10000 in current sound
     (mix-channel (list "pistol.snd" 1000)) ; mixed data starts at sample 1000 in pistol.snd
     (mix-channel (list "2.snd" 0 1))       ; mixed data reads channel 1 in 2.snd
 </pre>
-<p><b>insert-channel</b> is the same as mix-channel, but inserts the specified data.
-</p>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
-<p><b>redo-channel</b> and <b>undo-channel</b> are regularized versions of
-<a href="extsnd.html#redo">redo</a> and <a href="extsnd.html#undo">undo</a>.
-<b>offset-channel</b> adds a constant to a sound, using <a href="extsnd.html#ptreechannel">ptree-channel</a>.
-<b>dither-channel</b> adds "dithering" (noise) which supposedly makes everything copacetic.
-<b>contrast-channel</b> is the CLM <a href="clm.html#contrast-enhancement">contrast-enhancement</a> function,
-equivalent to the control panel Contrast slider.
-<b>channels=?</b> returns #t is the two specified channels are the same within the
-given tolerance (which can be 0.0).  <b>channels-equal?</b> returns #t if channels=?
-and the channels are the same length.  In the "=" case, the trailing (extra) samples
-in one channel are checked against 0.0.
-<b>mono-&gt;stereo</b> combines two mono sounds (currently open in Snd) into one (new) stereo file. <b>mono-files-&gt;stereo</b>
+
+<!-- mono->stereo -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="monotostereo">mono-&gt;stereo</a> <code>new-name snd1 chn1 snd2 chn2</code><br>
+<em class=emdef>stereo-&gt;mono</em> <code>orig-snd chan1-name chan2-name</code><br>
+<em class=emdef>mono-files-&gt;stereo</em> <code>new-name chan1-file chan2-file</code>
+</td></tr><tr><td></td><td>
+mono-&gt;stereo combines two mono sounds (currently open in Snd) into one (new) stereo file. 
+mono-files-&gt;stereo
 is the same, but the source sounds are files, not necessarily already open in Snd.
-<b>stereo-&gt;mono</b> takes a stereo sound and produces two new mono sounds.
-(The corresponding <b>stereo-&gt;mono-files</b> can be based on the existing
+stereo-&gt;mono takes a stereo sound and produces two new mono sounds.
+(The corresponding stereo-&gt;mono-files can be based on the existing
 <a href="extsnd.html#extractchannel">extract-channel</a> function).
-</p>
-<p>
-<b>show-selection</b> finds the bounds of the current selection (in all channels), and 
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- normalized-mix -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exnormalizedmix">normalized-mix</a> <code>filename beg in-chan snd chn</code>
+</td></tr><tr><td></td><td>
+normalized-mix is like <a href="extsnd.html#mix">mix</a> but the mixed result has same peak amplitude as the 
+original data. 
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- offset-channel -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="offsetchannel">offset-channel</a> <code>amount :optional beg dur snd chn edpos</code>	
+</td></tr><tr><td></td><td>
+offset-channel adds a constant (DC offset) to a channel.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- redo-channel -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>redo-channel</em> <code>:optional (edits 1) snd chn</code>
+</td></tr><tr><td></td><td>
+redo-channel is a "regularized" version of <a href="extsnd.html#redo">redo</a>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- remember-sound-state -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exremembersoundstate">remember-sound-state</a>
+</td></tr><tr><td></td><td>
+remember-sound-state saves most of a sound's display state when it is closed,
+and if that same sound is later re-opened, restores the previous state.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- selection-members -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exselectionmembers">selection-members</a>
+</td></tr><tr><td></td><td>
+selection-members returns a list of lists of <code>'(snd chn)</code> indicating the channels participating in the current selection.
+It is the selection-oriented version of <a href="#allchans">all-chans</a>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- set-global-sync -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="setglobalsync">set-global-sync</a> <code>choice</code>
+</td></tr><tr><td></td><td>
+set-global-sync sets up a hook function that syncs all of a sound's channels (<i>choice</i> == 2),
+or all channels (across all sounds) (<i>choice</i> == 1).  <i>choice</i> == 0 turns off the syncing.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- show-selection -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="showselection">show-selection</a>
+</td></tr><tr><td></td><td>
+show-selection finds the bounds of the current selection (in all channels), and 
 sets the time domain view to show it.
-</p>
-<p>
-<b>any-env-channel</b> takes an envelope and a function to produce the connection between successive
-breakpoints, and applies the two to the current channel as an envelope.  This packages up most of
-the "boilerplate" associated with applying an envelope to a sound.  It is used by the other three
-enveloping functions, sine-env-channel, blackman4-env-channel, and env-squared-channel.
-<b>sine-ramp</b> and <b>sine-env-channel</b> are the sinusoidal versions of <a href="extsnd.html#rampchannel">ramp-channel</a>
-and <a href="extsnd.html#envchannel">env-channel</a>.
-<code>(sine-env-channel '(0 0 1 1 2 -.5 3 1))</code> applies the given envelope to the current channel,
-connecting the points with a sinusoidal curve.  It uses <a href="extsnd.html#ptreechannel">ptree-channel</a>,
-so it's just as fast as env-channel.  Similarly, <b>blackman4-env-channel</b> connects the dots with
-a sum of cosines, and <b>env-squared-channel</b> connects the dots with an x^2 curve.  For any
-positive exponent, use <b>env-expt-channel</b>.  The <i>symmetric</i> argument determines whether the
-up and down moving ramps look symmetrical around a break point.
-</p>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
-<!--
-(env-channel '(0 0 1 1 2 -.75 3 0)) 
-(env-sound '(0 0 1 1 2 -.75 3 0) 0 100 32.0)  
-(env-sound '(0 0 1 1 2 -.75 3 0) 0 100 .032) 
-(env-sound '(0 0 1 1 2 -.75 3 0) 0 100 0.0)
-(sine-env-channel '(0 0 1 1 2 -.75 3 0))
-(env-squared-channel '(0 0 1 1 2 -.75 3 0))
-(blackman4-env-channel '(0 0 1 1 2 -.75 3 0))
-(env-squared-channel '(0 0 1 1 2 -.75 3 0) #f)
-(env-expt-channel '(0 0 1 1 2 -.75 3 0) 3.0)
-(env-expt-channel '(0 0 1 1 2 -.75 3 0) 3.0 #f)
-(env-expt-channel '(0 0 1 1 2 -.75 3 0) .3)
-(env-expt-channel '(0 0 1 1 2 -.75 3 0) .3)
--->
 
-<img src="exptenvs.png" alt="exponential envelopes" hspace=20>
+<!-- sound-property -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exsoundproperty">sound-property</a> <code>key snd</code>
+</td></tr><tr><td></td><td>
+sound-property provides access to a sound's <a href="extsnd.html#soundproperties">property list</a>.
+These properties are saved when Snd's state is saved (via <a href="extsnd.html#savestate">save-state</a>
+or the Options:Save session menu).  To omit a given property at that time, add its name (a symbol) to
+the property 'save-state-ignore (a list of symbols); see 'inset-envelope in extensions.scm.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- undo-channel -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>undo-channel</em> <code>:optional (edits 1) snd chn</code>
+</td></tr><tr><td></td><td>
+undo-channel is a "regularized" version of <a href="extsnd.html#undo">undo</a>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- with-reopen-menu -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exwithreopenmenu">with-reopen-menu</a>
+</td></tr><tr><td></td><td>
+with-reopen-menu creates a top-level Reopen menu, similar to the Emacs Buffers menu.
+It presents a list of previously
+closed (and not subsequently re-opened) files in the reverse order of closing.
+If you choose one, it is opened.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+</table>
+
 <br><br>
 
 
@@ -4098,7 +4254,7 @@ an ordinary editing function:
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (if (not (defined? '*output*)) (load-from-path "ws.scm"))
-(define* (clm-reverb-sound reverb-amount reverb #:optional (reverb-data '()) snd)
+(define* (clm-reverb-sound reverb-amount reverb :optional (reverb-data '()) snd)
   (let ((output (<a class=quiet href="extsnd.html#sndtempnam">snd-tempnam</a>))
 	(revout (<a class=quiet href="extsnd.html#sndtempnam">snd-tempnam</a>))
 	(len (+ (<a class=quiet href="extsnd.html#frames">frames</a> snd) (<a class=quiet href="extsnd.html#srate">srate</a> snd))))
@@ -4134,7 +4290,8 @@ by the reverb amount).
 
 <!-- INDEX reverbexamples:Reverb -->
 <A NAME="reverbexamples"></a>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<TABLE border=3 bordercolor="tan" hspace=40>
+<tr><td width="50%">
 <blockquote><small>
 <br>
 Reverbs in Snd<br>
@@ -4463,7 +4620,7 @@ sound file header, and reads it when the file is subsequently reopened.
 <p>These files are translations (thanks to Michael Scholz!) of CLM's maxf.ins
 (thanks to Juan Reyes!). They implement a new kind of resonator designed by
 Max Mathews.
-<!-- (test this)
+<!-- (test this and add to snd-test) -- needs optimization and true gen
 ;; (with-sound () (maxfilter "dog.snd" 0))
 ;; (with-sound (:srate 44100) (maxfilter "dog.snd" 0 :numf 12))
 ;; (with-sound (:srate 44100) (maxfilter "dog.snd" 0 :numf 13 :att 0.75))
@@ -4486,7 +4643,6 @@ Max Mathews.
 ;; It synthesizes equal-tempered frequencies
 ;; integer & just scales out of a wide-band input
 ;; signal.
-;; Based on  Max's code (filter.cpp)
 ;;
 ;;  This heuristic might be called Modal Synthesis.
 ;;  But as well it can also be  additive synthesis in
@@ -5064,7 +5220,7 @@ in Hz (more or less) and <i>Q</i> controls the resonance: 0.0 = no resonance, wh
 <p>musglyphs.scm provides Scheme/Snd wrappers to load CMN's cmn-glyphs.lisp (directly!),
 thereby defining most of the standard music notation symbols.  Each of the original
 functions (e.g. draw-bass-clef) becomes a Snd/Scheme procedure of the form
-<code>(name #:optional x y size style snd chn context)</code>. 
+<code>(name :optional x y size style snd chn context)</code>. 
 <code>(draw-bass-clef 100 100 50)</code> draws a bass clef in the current graph
 at position (100 100) of size 50; since the <i>style</i> argument defaults to
 #f, the clef is displayed as a filled polygon; use #t to get an outline of
@@ -5680,9 +5836,9 @@ See rt.tex for complete details.
 "real-time" operations.
 </p>
 <pre>
-  <em class=emdef>show-input</em> #:optional (in-sys 0)
-  <A class=def NAME="exshowinputfft">show-input-fft</a> #:optional (in-sys 0)
-  <A class=def NAME="exshowdraggableinputfft">show-draggable-input-fft</a> #:optional (in-sys 0)
+  <em class=emdef>show-input</em> :optional (in-sys 0)
+  <A class=def NAME="exshowinputfft">show-input-fft</a> :optional (in-sys 0)
+  <A class=def NAME="exshowdraggableinputfft">show-draggable-input-fft</a> :optional (in-sys 0)
   <em class=emdef>in-out</em> func in-sys out-sys
 </pre>
 <p>These three functions show how to read incoming data (from the adc),
@@ -5812,7 +5968,7 @@ A more complex example is singer's attempt to say "requiem":
 
 <table bgcolor="aliceblue" border=0><tr>
 <td>
-<pre>see also: <a href="#fofins" onmouseover="return escape('FOF synthesis')">fofins</a> <a href="#reson" onmouseover="return escape('FM voice via formants')">reson</a> <a href="#pqwvox" onmouseover="return escape('waveshaping voice')">pqw-vox</a> <a href="#vox" onmouseover="return escape('FM voice with movable formants')">vox</a>
+<pre>see also: <a href="#fofins" onmouseover="return escape('FOF synthesis')">fofins</a> <a href="#reson" onmouseover="return escape('FM voice via formants')">reson</a> <a href="#pqwvox" onmouseover="return escape('waveshaping voice')">pqw-vox</a> <a href="#fmvox" onmouseover="return escape('FM voice with movable formants')">vox</a>
 </pre>
 </td></tr></table>
 
@@ -7567,9 +7723,9 @@ file by <b>ws-save-state</b>, which may not be a good idea -- feedback welcome!
 
 <A NAME="zipdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>zip</h2></td></tr></table>
 <pre>
-  <em class=emdef>make-zipper</em> ramp-env <i>frame-size frame-env</i>
+  <em class=emdef>make-zipper</em> ramp-env :optional frame-size frame-env
   <a class=def name="zipper">zipper</a> gen in1 in2
-  <a class=def name="zipsound">zip-sound</a> beg dur file1 file2 <i>ramp size</i>
+  <a class=def name="zipsound">zip-sound</a> beg dur file1 file2 :optional ramp size
 </pre>
 <p>The zipper generator performs a kind of cross fade, but not one that
 tries to be smooth!  It marches through the two sounds taking equal short
@@ -7595,7 +7751,7 @@ an upward ramp and a downward ramp, then zips them together:
       (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (- 1.0 (* i .0001))))
     (<a class=quiet href="extsnd.html#vct_to_channel">vct-&gt;channel</a> data 0 10000 1)
     (let* ((dur (<a class=quiet href="extsnd.html#frames">frames</a>))
-	   (zp (make-zipper (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 1 1) :end dur)
+	   (zp (<em class=red>make-zipper</em> (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 1 1) :end dur)
 			    0.05
 			    (<a class=quiet href="clm.html#make-env">make-env</a> (list 0 (* (<a class=quiet href="extsnd.html#srate">srate</a>) 0.05)) :end dur)))
 	  (reader0 (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 0 0))
@@ -7607,6 +7763,13 @@ an upward ramp and a downward ramp, then zips them together:
 <img src="zramp.png" alt="zipper ramp output" hspace=20>
 <p>Needless to say, this is not intended to be a suave, romantic gesture!
 </p>
+
+<p>zip-sound applies the zipper to a pair of sounds:
+</p>
+<pre>
+    (zip-sound 0 1 "fyow.snd" "now.snd" '(0 0 1 1) .05)
+    (zip-sound 0 3 "mb.snd" "fyow.snd" '(0 0 1.0 0 1.5 1.0 3.0 1.0) .025)
+</pre>
 <br>
 
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="extsndasneededexpl">A Note on "As-Needed" input functions</a></h2></td></tr></table>
@@ -7939,7 +8102,7 @@ those are just one sample clicks that can easily be smoothed over", so
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define* (count-clips #:optional snd chn)
+(define* (count-clips :optional snd chn)
   (let ((y0 0.0))
     (<a class=quiet href="extsnd.html#countmatches">count-matches</a> 
      (lambda (y) (let ((val (and (or (&gt; y0 .9999) (&lt; y0 -.9999))
@@ -7956,7 +8119,7 @@ time for perfection...):
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define* (list-clips #:optional snd chn)
+(define* (list-clips :optional snd chn)
   (let* ((max-clips (count-clips snd chn))
 	 (clip-data (make-vector (* 2 max-clips) 0))
 	 (clip-ctr 0)
@@ -8085,7 +8248,7 @@ telephone recordings, I assumed anything under 40 Hz or above
 
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define* (<a name="notchoutrumbleandhiss">notch-out-rumble-and-hiss</a> #:optional (snd #f) (chn #f))
+(define* (<a name="notchoutrumbleandhiss">notch-out-rumble-and-hiss</a> :optional (snd #f) (chn #f))
   (let* ((cur-srate (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate">srate</a> snd))))
     (<a class=quiet href="extsnd.html#filtersound">filter-sound</a>
      (list 0.0 0.0                    ; get rid of DC
@@ -8186,7 +8349,7 @@ and see what is left:
 
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define* (make-notch-frequency-response cur-srate freqs #:optional (notch-width 2))
+(define* (make-notch-frequency-response cur-srate freqs :optional (notch-width 2))
   (let ((freq-response (list 0.0 0.0)))
     (for-each
      (lambda (i)
@@ -8203,21 +8366,21 @@ and see what is left:
     (set! freq-response (cons 1.0 freq-response)) 
     (reverse freq-response)))
 
-(define* (notch-channel freqs #:optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
+(define* (notch-channel freqs :optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
   (<a class=quiet href="extsnd.html#filtersound">filter-sound</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate">srate</a> snd)) freqs notch-width)
 		(or filter-order 
                     (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#srate">srate</a> snd) notch-width))
                                                         (log 2.0))))))
 		snd chn))
 
-(define* (notch-sound freqs #:optional (filter-order #f) (snd #f) (notch-width 2))
+(define* (notch-sound freqs :optional (filter-order #f) (snd #f) (notch-width 2))
   (<a class=quiet href="extsnd.html#filtersound">filter-sound</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate">srate</a> snd)) freqs notch-width)
 		(or filter-order 
                     (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#srate">srate</a> snd) notch-width)) 
                                                         (log 2.0))))))
 		snd))
 
-(define* (notch-selection freqs #:optional (filter-order #f) (notch-width 2))
+(define* (notch-selection freqs :optional (filter-order #f) (notch-width 2))
   (<a class=quiet href="extsnd.html#filterselection">filter-selection</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#selectionsrate">selection-srate</a>)) freqs notch-width)
 		    (or filter-order 
                         (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#selectionsrate">selection-srate</a>) notch-width)) 
