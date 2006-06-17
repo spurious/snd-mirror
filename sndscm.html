@@ -3,7 +3,6 @@
 <!-- TODO: these need work: 
   edit123 
   examp 
-  grani 
   infsnd 
   ladspa 
   maxf 
@@ -3937,10 +3936,56 @@ sets the output mixing matrix directly (rather than through <i>global</i>).
 
 <A NAME="granidoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>grani</h2></td></tr></table>
 
-<p>This is Fernando Lopez-Lezcano's grani instrument (CLM) translated to Scheme by Mike Scholz.
-The Ruby version is in clm-ins.rb.
+<p>This is Fernando Lopez-Lezcano's CLM <A HREF="http://ccrma.stanford.edu/~nando/clm/grani/">grani</a> 
+granular synthesis instrument translated to Scheme by Mike Scholz.
+The Ruby version is in clm-ins.rb.  There is further documentation <A HREF="http://ccrma.stanford.edu/courses/220b/topics/granularsynthesis/">here</a>.
+Rather than repeat everything, I'll merely paraphrase the main points, for completeness' sake
+or something.
 </p>
 
+<pre>
+    <em class=emdef>grani</em> start-time duration amplitude file :key
+      (input-channel 0)                       ; input file channel from which samples are read
+      (grains 0)                              ; if not 0, total number of grains to be generated
+      (amp-envelope '(0 0 0.3 1 0.7 1 1 0))   ; overall amplitude envelope for note
+      (grain-envelope '(0 0 0.3 1 0.7 1 1 0)) ; env for each individual grain
+      (grain-envelope-end #f)                 ; if not #f, a 2nd grain env
+      (grain-envelope-transition '(0 0 1 1))  ; interpolation such that 0: use grain-envelope, 1: use grain-envelope-end
+      (grain-envelope-array-size 512)         ; make-table-lookup table size
+      (grain-duration 0.1)                    ; number or envelope setting grain duration (in seconds)
+      (grain-duration-spread 0.0)             ; random spread around <i>grain-duration</i>
+      (grain-duration-limit 0.002)            ; minimum grain duration (in seconds)
+      (srate 0.0)                             ; number or envelope setting sampling rate conversion
+      (srate-spread 0.0)                      ; random spread of src around <i>srate</i>
+      (srate-linear #f)                       ; if #f, srate (envelope) is exponential
+      (srate-base (expt 2 (/ 12)))            ; srate env base if exponential
+      (srate-error 0.01)                      ; error bound for exponential conversion
+      (grain-start '(0 0 1 1))                ; env that sets input file read point of current grain
+      (grain-start-spread 0.0)                ; random spread around <i>grain-start</i>
+      (grain-start-in-seconds #f)             ; if #f, treat <i>grain-start</i> as a percentage
+      (grain-density 10.0)                    ; env on number of grains / second in output
+      (grain-density-spread 0.0)              ; random spread around <i>grain-density</i>
+      (reverb-amount 0.01)
+      (reverse #f)                            ; if #t, input is read backwards
+      (where-to 0)                            ; locsig stuff -- see the full documentation
+      (where-bins '())
+      (grain-distance 1.0)                    ; distance of sound source (<a href="clm.html#locsig">locsig</a>)
+      (grain-distance-spread 0.0)             ; random spread around <i>grain-distance</i>
+      (grain-degree 45.0)
+      (grain-degree-spread 0.0)
+      (verbose #t)
+
+    (with-sound (:channels 2 :reverb jc-reverb :reverb-channels 1)
+      (grani 0 1 .5 "oboe.snd" :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0)))
+</pre>
+
+<table bgcolor="aliceblue" border=0><tr><td>
+<pre>see also: <a href="clm.html#granulate" onmouseover="return escape('CLM granular synthesis generator')">granulate</a> <a href="#exexpsrc" onmouseover="return escape('granular synthesis to stretch sound')">expsrc</a> <a href="extsnd.html#customcontrols" onmouseover="return escape('expand in the control panel')">expand</a> 
+</pre></td>
+</tr></table>
+
+
+<br>
 <br>
 <A NAME="heartdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>heart</h2></td></tr></table>
 

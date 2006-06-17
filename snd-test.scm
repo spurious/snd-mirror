@@ -43507,6 +43507,7 @@ EDITS: 1
 (if (not (provided? 'snd-zip.scm)) (load "zip.scm"))
 (if (not (provided? 'snd-clm23.scm)) (load "clm23.scm"))
 (if (not (provided? 'snd-freeverb.scm)) (load "freeverb.scm"))
+(if (not (provided? 'snd-grani.scm)) (load "grani.scm"))
 
 (define old-opt-23 (optimization))
 (set! (optimization) max-optimization)
@@ -44273,6 +44274,61 @@ EDITS: 1
 
       (play-sine 440 .1)
       (play-sines '((425 .05) (450 .01) (470 .01) (546 .02) (667 .01) (789 .034) (910 .032)))
+
+      (with-sound (:channels 2 :reverb jc-reverb :reverb-channels 1 :statistics #t)
+	(grani 0 1 .5 "oboe.snd" :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0))
+	(grani 0 4 1 "oboe.snd")
+	(if (> (optimization) 4) (begin
+	(grani 0 4 1 "oboe.snd" :grains 10)
+	(grani 0 4 1 "oboe.snd" 
+	       :grain-start 0.11 
+	       :amp-envelope '(0 1 1 1) :grain-density 8
+	       :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0)
+	       :grain-envelope-end '(0 0 0.01 1 0.99 1 1 0)
+	       :grain-envelope-transition '(0 0 0.4 1 0.8 0 1 0))
+	(grani 0 3 1 "oboe.snd" 
+	       :grain-start 0.1 
+	       :amp-envelope '(0 1 1 1) :grain-density 20
+	       :grain-duration '(0 0.003 0.2 0.01 1 0.3))
+	(grani 0 3 1 "oboe.snd" 
+	       :grain-start 0.1 
+	       :amp-envelope '(0 1 1 1) :grain-density 20
+	       :grain-duration '(0 0.003 0.2 0.01 1 0.3)
+	       :grain-duration-limit 0.02)
+	(grani 0 2 1 "oboe.snd" 
+	       :amp-envelope '(0 1 1 1) :grain-density 40
+	       :grain-start '(0 0.1 0.3 0.1 1 0.6))
+	(grani 0 2 1 "oboe.snd" 
+	       :amp-envelope '(0 1 1 1) :grain-density 40
+	       :grain-start '(0 0.1 0.3 0.1 1 0.6)
+	       :grain-start-spread 0.01)
+	(grani 0 2.6 1 "oboe.snd" 
+	       :grain-start 0.1 :grain-start-spread 0.01
+	       :amp-envelope '(0 1 1 1) :grain-density 40
+	       :srate '(0 0 0.2 0 0.6 5 1 5))
+	(grani 0 2.6 1 "oboe.snd" 
+	       :grain-start 0.1 :grain-start-spread 0.01
+	       :amp-envelope '(0 1 1 1) :grain-density 40
+	       :srate-base 2
+	       :srate '(0 0 0.2 0 0.6 -1 1 -1))
+	(grani 0 2.6 1 "oboe.snd" 
+	       :grain-start 0.1 :grain-start-spread 0.01
+	       :amp-envelope '(0 1 1 1) :grain-density 40
+	       :srate-linear #t
+	       :srate (list 0 1 0.2 1 0.6 (expt 2 (/ 5 12)) 1 (expt 2 (/ 5 12))))
+	(grani 0 2 1 "oboe.snd" 
+	       :grain-start 0.1 :grain-start-spread 0.01
+	       :amp-envelope '(0 1 1 1) :grain-density 40
+	       :grain-duration '(0 0.02 1 0.1) 
+	       :grain-duration-spread '(0 0 0.5 0.1 1 0)
+	       :where-to grani-to-grain-duration
+	       :where-bins (vct 0 0.05 1))
+	(grani 0 2 1 "oboe.snd" 
+	       :grain-start 0.1 :grain-start-spread 0.01
+	       :amp-envelope '(0 1 1 1) :grain-density 40
+	       :grain-degree '(0 0 1 90)
+	       :grain-degree-spread 10)
+	)))
 
       (let ((ind (open-sound "oboe.snd")))
 	(with-sound (:output "test1.snd" :to-snd #f) (fm-violin 0 .1 440 .1))
