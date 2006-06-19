@@ -2442,7 +2442,7 @@ Reverb-feedback sets the scaler on the feedback.
       (let ((name (XGetAtomName dpy (list 'Atom i))))
 	(if (string? name)
 	    (display (format #f "~D: ~A~%" i name))
-	    (break #f)))
+	    (set! happy #f)))
       (set! i (1+ i)))
     (XSetErrorHandler #f)))
 
@@ -2852,7 +2852,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 
 ;;; get open file list across top of window (like Xemacs): use -notebook, then:
-
+;;; this is now the default
 (define (notebook-with-top-tabs)
   (let ((nb (list-ref (main-widgets) 3)))
     (XtVaSetValues nb (list XmNorientation XmVERTICAL

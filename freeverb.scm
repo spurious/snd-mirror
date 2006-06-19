@@ -51,7 +51,7 @@
 		   (allpasstuning '(556 441 341 225))
 		   (scale-damping 0.4)
 		   (stereo-spread 23)
-		   (verbose #t))
+		   (verbose #f))
   (let* ((startime 0.0)
 	 (dur (+ 1.0 (mus-sound-duration (mus-file-name *reverb*))))
 	 (beg (seconds->samples startime))

@@ -923,7 +923,9 @@
 ;;   who based his work on formulas from 
 ;;   Charles Dodge, Computer music: synthesis, composition, and performance.
 
-(define butter filter) ; kinda pointless
+(define (butter b sig) ; kinda pointless, but defined as a function here for run's sake (not (define butter filter))
+  "(butter b sig) is the generator side for the various make-butter procedure"
+  (filter b sig))
 
 (define (make-butter-high-pass fq)
   "(make-butter-high-pass freq) makes a Butterworth filter with high pass cutoff at 'freq'"

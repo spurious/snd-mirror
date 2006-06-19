@@ -308,26 +308,23 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;(add-hook! graph-hook zoom-spectrum)
 
 (define (zoom-fft snd chn y0 y1)
-  "(zoom-fft snd chn y0 y1) sets the transform size if the time domain is not displayed (use with graph-hook) 
-It also sets the spectrum display start point based on the x position slider -- 
-this can be confusing if fft normalization is on (the default)"
+  "(zoom-fft snd chn y0 y1) sets the transform size if the time domain is not displayed (use with graph-hook)"
   (if (and (transform-graph? snd chn)
 	   (not (time-graph? snd chn))
 	   (= (transform-graph-type snd chn) graph-once))
-      (begin
-	(set! (transform-size snd chn)
-	      (expt 2 (inexact->exact 
-		       (ceiling 
-			(/ (log (- (right-sample snd chn) (left-sample snd chn))) 
-			   (log 2.0))))))
-	(set! (spectro-start snd chn) (x-position-slider snd chn))
-	(set! (spectro-cutoff snd chn) (y-zoom-slider snd chn))))
+      (set! (transform-size snd chn)
+	    (expt 2 (inexact->exact 
+		     (ceiling 
+		      (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
+			 (log 2.0)))))))
   #f)
 
 ;(add-hook! graph-hook zoom-fft)
 
 
 ;;; -------- superimpose spectra of sycn'd sounds
+
+;;; TODO: fix superimpose-ffts!
 
 (define (superimpose-ffts snd chn y0 y1)
   "(superimpose-ffts snd chn y0 y1) superimposes ffts of multiple (syncd) sounds (use with graph-hook)"
@@ -1692,13 +1689,6 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 
 ;(add-hook! mouse-drag-hook dl-mouse-drag)
 ;(add-hook! mouse-press-hook dl-mouse-press)
-
-
-;;; -------- pointer focus within Snd
-
-;(add-hook! mouse-enter-graph-hook (lambda (snd chn) (focus-widget (car (channel-widgets snd chn)))))
-;(add-hook! mouse-enter-listener-hook (lambda (widget) (focus-widget widget)))
-;(add-hook! mouse-enter-text-hook (lambda (w) (focus-widget w)))
 
 
 ;;; -------- C-x b support: hide all but one of the current sounds (more like Emacs)
