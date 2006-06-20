@@ -307,19 +307,6 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 ;(add-hook! graph-hook zoom-spectrum)
 
-(define (zoom-fft snd chn y0 y1)
-  "(zoom-fft snd chn y0 y1) sets the transform size if the time domain is not displayed (use with graph-hook)"
-  (if (and (transform-graph? snd chn)
-	   (not (time-graph? snd chn))
-	   (= (transform-graph-type snd chn) graph-once))
-      (set! (transform-size snd chn)
-	    (expt 2 (inexact->exact 
-		     (ceiling 
-		      (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
-			 (log 2.0)))))))
-  #f)
-
-;(add-hook! graph-hook zoom-fft)
 
 
 ;;; -------- superimpose spectra of sycn'd sounds
@@ -977,19 +964,6 @@ section: (vct->channel (fft-smoother .1 (cursor) 400 0 0) (cursor) 400)"
 
 ;;; -------- comb-filter
 
-(define (comb-filter-1 scaler size)
-  "(comb-filter-1 scaler size) returns a comb-filter ready for map-channel etc: (map-channel (comb-filter-1 .8 32))"
-  (let ((delay-line (make-vct size 0.0))
-	(delay-loc 0))
-    (lambda (x)
-      (let ((result (vct-ref delay-line delay-loc)))
-	(vct-set! delay-line delay-loc (+ x (* scaler result)))
-	(set! delay-loc (1+ delay-loc))
-	(if (= delay-loc size) (set! delay-loc 0))
-	result))))
-
-;;; the same thing using the CLM module is:
-
 (define (comb-filter scaler size)
   "(comb-filter scaler size) returns a comb-filter ready for map-channel etc: (map-channel (comb-filter .8 32)).  If you're 
 in a hurry use: (clm-channel (make-comb .8 32)) instead"
@@ -1220,7 +1194,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 
 (define* (expsrc rate :optional snd chn)
   "(expsrc rate :optional snd chn) uses sampling-rate conversion and granular synthesis 
-to produce a sound at a new pitch but at the original tempo.  It returns a function for map-chan."
+to produce a sound at a new pitch but at the original tempo.  It returns a function for map-channel."
   (let* ((gr (make-granulate :expansion rate))
 	 ;; this can be improved by messing with make-granulate's hop and length args
 	 (sr (make-src :srate rate))

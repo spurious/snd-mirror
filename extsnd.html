@@ -1286,7 +1286,7 @@ program.  See ws-save-state in ws.scm or remember-sound-state in extensions.scm.
 
 <!-- after-transform-hook -->
 <tr><td colspan=3 bgcolor="#f6f8ff">
-<code><a class=def name="transformhook">after-transform-hook</a> (snd chn scaler)</code>
+<code><a class=def name="aftertransformhook">after-transform-hook</a> (snd chn scaler)</code>
 </td></tr>
 
 <tr><td></td><td colspan=2>
@@ -5975,7 +5975,7 @@ filtered echo sound effect: flecho in examp.scm<br>
 time varying filter: fltit in examp.scm<br>
 draw frequency response: use <a href="snd.html#editenvelope">envelope editor</a> or <a href="snd.html#filtercontrol">filter control</a> in control panel<br>
 Moog filter: <a href="sndscm.html#moogdoc">moog.scm</a><br>
-Click reduction: <a href="sndscm.html#exremoveclick">remove-click</a><br>
+Click reduction: <a href="sndscm.html#removeclicks">remove-clicks</a><br>
 Filter a track: <a href="sndscm.html#filtertrack">filter-track</a><br>
 LADSPA-based filter effects: see ladspa.scm<br>
 Max Mathews resonator: <a href="sndscm.html#maxfdoc">maxf.scm, maxf.rb</a><br>
@@ -8147,7 +8147,7 @@ delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselecti
 smoothing as virtual op: smooth-channel-via-ptree in examp.scm<br>
 smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a><br>
 smooth via low-pass <a href="#filtersinsnd">filter</a><br>
-smooth over click: <a href="sndscm.html#exremoveclick">remove-click</a> in examp.scm<br>
+smooth over click: <a href="sndscm.html#removeclicks">remove-clicks</a> in examp.scm<br>
 </blockquote></small>
 </td></tr></TABLE>
 </td></tr>
@@ -8178,7 +8178,7 @@ the end points:
 
 <img src="click.png" alt="smoother">
 <br>
-For a fancier version, see fft-smoother in examp.scm.  See also remove-clicks in examp.scm.</td></tr>
+For a fancier version, see fft-smoother in examp.scm.  See also <a href="sndscm.html#removeclicks">remove-clicks</a> in examp.scm.</td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
 <!-- sound? -->
@@ -10128,7 +10128,7 @@ This returns #t if <i>type</i> refers to an active transform type.
 <table cellpadding=0 celspacing=10 border=0 hspace=20>
 <tr><td width=200><a href="#transformgraphp"><small>transform-graph?</small></a></td><td width=200><a href="#showtransformpeaks"><small>show-transform-peaks</small></a></td><td><a href="#transformsample"><small>transform-sample</small></a></td></tr>
 <tr><td><a href="#fftbeta"><small>fft-window-beta</small></a></td><td><a href="#showselectiontransform"><small>show-selection-transform</small></a></td><td><a href="#transform_to_vct"><small>transform-&gt;vct</small></a></td></tr>
-<tr><td><a href="#transformhook"><small>after-transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformframes"><small>transform-frames</small></a></td></tr>
+<tr><td><a href="#aftertransformhook"><small>after-transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformframes"><small>transform-frames</small></a></td></tr>
 <tr><td><a href="#fftlogfrequency"><small>fft-log-frequency</small></a></td><td><a href="#spectrohop"><small>spectro-hop</small></a></td><td><a href="#transformtype"><small>transform-type</small></a></td></tr>
 <tr><td><a href="#fftlogmagnitude"><small>fft-log-magnitude</small></a></td><td><a href="#spectrostart"><small>spectro-start</small></a></td><td><a href="#updatetransformgraph"><small>update-transform-graph</small></a></td></tr>
 <tr><td><a href="#transformsize"><small>transform-size</small></a></td><td><a href="#spectroxangle"><small>spectro-x-angle</small></a></td><td><a href="#normalizefft"><small>transform-normalization</small></a></td></tr>
