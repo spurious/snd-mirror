@@ -656,7 +656,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; -------- mapping extensions (map arbitrary single-channel function over various channel collections)
 ;;;
 
-(define (do-all-chans func origin)
+(define* (do-all-chans func :optional origin)
   "(do-all-chans func edhist) applies func to all active channels, using edhist as the edit history 
 indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
   (apply map (lambda (snd chn)
@@ -669,7 +669,7 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
 	       (update-time-graph snd chn))
 	 (all-chans)))
 
-(define (do-chans func origin)
+(define* (do-chans func :optional origin)
   "(do-chans func edhist) applies func to all sync'd channels using edhist as the edit history indication"
   (let ((snc (sync)))
     (if (> snc 0)
@@ -680,7 +680,7 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
 	       (all-chans))
 	(snd-warning "sync not set"))))
 
-(define (do-sound-chans proc origin)
+(define* (do-sound-chans proc :optional origin)
   "(do-sound-chans func args edhist) applies func to all selected channels using edhist as the edit history indication"
   (let ((snd (selected-sound)))
     (if snd
@@ -1639,30 +1639,6 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 
 ;(display (format #f "~A~Ahiho~Ahiho" yellow-bg red-fg normal-text))
 |#
-
-;;; -------- lisp graph with draggable x axis
-
-(define mouse-down 0)
-(define mouse-pos 0.0)
-(define x1 1.0)
-
-(define (dl-mouse-press chn snd button state x y)
-  (set! mouse-pos (/ x x1))
-  (set! mouse-down x1))
-
-(define (dl-mouse-drag snd chn button state x y)
-  (let* ((xnew (/ x x1))
-	 (lim (min 1.0 (max 0.1 (+ mouse-down (- mouse-pos xnew))))))
-    (set! x1 lim)
-    (let* ((pts (inexact->exact (floor (* 100 x1))))
-	   (data (make-vct pts)))
-      (do ((i 0 (1+ i)))
-	  ((= i pts))
-	(vct-set! data i (* i .01)))
-      (graph data "ramp" 0.0 x1))))
-
-;(add-hook! mouse-drag-hook dl-mouse-drag)
-;(add-hook! mouse-press-hook dl-mouse-press)
 
 
 ;;; -------- C-x b support: hide all but one of the current sounds (more like Emacs)

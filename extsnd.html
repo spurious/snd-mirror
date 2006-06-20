@@ -2941,6 +2941,7 @@ there are also several functions that create and fill vcts with data:</p>
     <a href="sndscm.html#track2vct">track-&gt;vct</a>               track samples to vct
     <a href="#vector_to_vct">vector-&gt;vct</a>              vector data to vct (assumed to be floats)
     <a href="#selection2vct">selection-&gt;vct</a>           selected samples to vct
+    <a href="sndscm.html#file_to_vct">file-&gt;vct</a>                file data to vct
 </pre>
 
 <p>We could combine some of these vct functions to implement Horner's rule
@@ -8205,18 +8206,24 @@ consists of the sound name, start point, loop start, and loop end.
 To set a named mark at the start of each sound with un-named marks 
 at the loop points:
 
-<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=10><tr><td>
+<table border=0><tr><td bgcolor="#fafafa"><pre>
 (define (mark-sf2)
-  (letrec ((sf2it (lambda (lst)
-                    (if (not (null? lst))
-                        (let ((vals (car lst)))
-                          (let ((m1 (<a class=quiet href="#addmark">add-mark</a> (cadr vals))))
-                            (set! (<a class=quiet href="#markname">mark-name</a> m1) (car vals)))
-                          (<a class=quiet href="#addmark">add-mark</a> (caddr vals))
-                          (<a class=quiet href="#addmark">add-mark</a> (cadddr vals))
-                          (sf2it (cdr lst)))))))
+  (letrec 
+    ((sf2it 
+       (lambda (lst)
+         (if (not (null? lst))
+             (let* ((vals (car lst))
+                    (m1 (<a class=quiet href="#addmark">add-mark</a> (cadr vals))))
+               (set! (<a class=quiet href="#markname">mark-name</a> m1) (car vals)))
+               (<a class=quiet href="#addmark">add-mark</a> (caddr vals))
+               (<a class=quiet href="#addmark">add-mark</a> (cadddr vals))
+               (sf2it (cdr lst))))))
    (sf2it (<em class=red>soundfont-info</em>))))
 </pre></td></tr></table>
+</td><td>
+<img src="bongo.png" alt="soundfont marks">
+</td></tr></table>
 
 See also explode-sf2 in examp.scm.</td></tr>
 <tr><td colspan=2 height=18></td></tr>
