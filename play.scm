@@ -182,11 +182,6 @@
 
 (define stop-dac stop-playing)
 
-;(bind-key #\o 0 (lambda () "play oboe" (play "oboe.snd")))
-;(bind-key #\p 0 (lambda () "play pistol" (play "pistol.snd")))
-
-;;; in this particular case, there's no need to hold the DAC open
-;;;   but maybe this will come in handy someday
 
 
 ;;; -------- "vector synthesis"

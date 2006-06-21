@@ -3,6 +3,8 @@
 
 (if (not (defined? 'add-sliders)) (load-from-path "effects-utils.scm"))
 (if (not (provided? 'snd-edit-menu.scm)) (load-from-path "edit-menu.scm"))
+(if (not (defined? 'start-enveloping)) (load-from-path "enved.scm"))
+(if (not (defined? 'explode-sf2)) (load-from-path "examp.scm"))
 
 (define special-list '()) ; menu labels are updated to show current default settings
 

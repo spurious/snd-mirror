@@ -5,8 +5,6 @@
   infsnd 
   ladspa 
   maxf 
-  menus 
-  play 
   rmsgain 
   rtex 
   rtio 
@@ -5228,6 +5226,8 @@ Max Mathews.
 
 <A NAME="menusdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>menus</h2></td></tr></table>
 
+<!-- main-index |menusdoc:menus, optional -->
+
 <p>The files described in this section either add new top-level menus to Snd, or
 modify existing ones.  Most were written by Dave Phillips; see his tutorial for
 pictures and a more complete discussion.
@@ -5327,28 +5327,29 @@ mix-menu.scm adds a top-level "Mix/Track" menu with entries for:
 <em class=emdef>new-effects.scm, effects-utils.scm, gtk-effects.scm, effects.rb, effects.fs</em>
 </td></tr><tr><td></td><td>
 
-new-effects.scm implements an Effects menu.  If you have Motif,
-you can load xm.so (or build Snd with it preloaded), and get sliders
-to control most of the effects.  Use gtk-effects.scm with Gtk.
-The effects include:
+new-effects.scm (effects.rb, effects.fs) implements an Effects menu.  
+Use gtk-effects.scm with Gtk.  There are a ton of choices, most of them
+presented in separate dialogs.  The gain dialog is illustrated below.
+Some of the outer menu items are:
 
+<table border=0 cellpadding=10><tr><td>
 <pre>
-  reverse
-  normalize (normalization)
-  gain (gain-amount)
-  invert
-  flange (increase speed and amount to get phasing, flange-speed, flange-amount, flange-time)
-  compand, compand-channel
-  reverberate (reverb-amount)
-  intensify (contrast-amount)
-  echo (echo-length, echo-amount)
-  squelch (squelch-amount, omit-silence)
-  add silence (at cursor) (silence-amount)
-  remove DC
-  expsrc (independent pitch/time scaling) (time-scale and pitch-scale)
-  filter
-  cross synthesis
+  Amplitude effects (gain, normalize)
+  Delay effects (various echos)
+  Filter effects (various filters)
+  Frequency effects (src, expsrc)
+  Modulation effects (AM)
+  Reverbs (nrev, jcrev, convolution)
+  Various (flange, locsig, etc)
+  Octave down
+  Remove clicks
+  Remove DC
+  Compand
+  Reverse
 </pre>
+</td><td>
+<img src="gain.png" alt="gain effect dialog">
+</td></tr></table>
 
 <!-- I(reverse samples):M(Effects: Reverse)(menusdoc) -->
 <!-- I(reverberate file):M(Effects: Reverberate)(menusdoc) -->
@@ -5371,9 +5372,10 @@ currently active channel.
 panic.scm adds a "Panic Control" top-level menu with two
 entries: 
 <pre>
-  Stop play!
-  Stop all!
+  Stop play!   ; stop dac output (<a class=quiet href="extsnd.html#stopplaying">stop-playing</a>)
+  Stop all!    ; interrupt any on-going computation (<a class=quiet href="extsnd.html#cgp">C-g</a>)
 </pre>
+These are equivalent to C-g.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5383,14 +5385,14 @@ entries:
 </td></tr><tr><td></td><td>
 special-menu.scm adds a "Special" menu with entries:
 <pre>
-  MIDI to WAV (using timidity),
+  Append file
+  MIDI to WAV (using Timidity)
   Record input channel 
-  Envelope new file
+  Envelope new file (see <a href="#enveddoc">start-enveloping</a>)
   Play panned 
-  Save as MP3 (using bladeenc),
-  Save as Ogg (using oggenc), and 
-  Explode SF2 (using the code explode-sf2 in examp.scm) 
-   ;; the latter finds the samples in a SoundFont 2 file, and writes each as a separate sound (AIFC) file.
+  Save as MP3 (using bladeenc)
+  Save as Ogg (using oggenc)
+  Explode SF2 (using the code <a href="#exexplodesf2">explode-sf2</a> in examp.scm) 
 </pre>
 </td></tr>
 
@@ -5398,18 +5400,20 @@ special-menu.scm adds a "Special" menu with entries:
 
 <p>Associated with these menus is a group of files that change Snd's overall appearance, add a box of
 handy icons, and so on: misc.scm, track-colors.scm, new-buttons.scm, new-backgrounds.scm, and new-icons.scm.
-track-colors.scm defines the color choices for the tracks, based on rgb.scm.
-new-icons.scm provides all the xpm icon definitions used to draw the icon bar at
+<b>track-colors.scm</b> defines the color choices for the tracks, based on rgb.scm.
+<b>new-icons.scm</b> provides all the xpm icon definitions used to draw the icon bar at
 the bottom of the Snd window.
-new-backgrounds.scm defines some background pictures that can be applied to all the
+<b>new-backgrounds.scm</b> defines some background pictures that can be applied to all the
 Snd widgets: wood, granite, rough, blueish, and smoke.  I think "rough" is the
 default used by misc.scm.
-new-buttons.scm builds the menu bar full of icons providing convenient access
+<b>new-buttons.scm</b> builds the menu bar full of icons providing convenient access
 to things like Zoom, and Quit.
 </p>
 
+<img src="newbuttons.png" alt="button bar" hspace=20>
+
 <p>
-misc.scm loads these menus and interface improvements, adds several sound file extensions,
+<b>misc.scm</b> loads these menus and interface improvements, adds several sound file extensions,
 makes sure all the widget backgrounds
 reflect the current background choice (metal, granite, wood, etc), changes the popup menu colors,
 adds some hook functions for mpeg files etc,
@@ -6100,53 +6104,51 @@ goof around with them.
 
 <p>This file has a variety of "real-time" audio output examples.
 </p>
-<!-- TODO: table-ize this section -->
 
-<pre>
-  <A class=def NAME="explaysound">play-sound</A> func
-  <A class=def NAME="playsine">play-sine</A> freq amp
-  <a class=def name="playsines">play-sines</a> freqs-and-amps
-  <A class=def NAME="openplayoutput">open-play-output</A> chans srate format buffer-size
-</pre>
-<p>
-play-sound plays the current sound, calling (func data) on each buffer if func is passed.
-It is also an example of calling the low level mus-audio functions, rather than calling
-play-channel and friends. The latter are easier to use, in most cases.
-The following doubles each sample in channel 0 during playback:
-</p>
+<table border=0 cellspacing=0 hspace=20>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(<em class=red>play-sound</em>
- (lambda (data)
-   (let ((len (sound-data-length data)))
-     (do ((i 0 (1+ i)))
-	 ((= i len))
-       (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))
-</pre></td></tr></table>
 
-<p>
-play-sine plays a one-second sine wave at the given frequency and amplitude: <code>(play-sine 440 .1)</code>
-and play-sines produces a spectrum given a list of lists of frequency and amplitude:
-</p>
-<pre>
-    (play-sines '((425 .05) (450 .01) (470 .01) (546 .02) (667 .01) (789 .034) (910 .032)))
-</pre>
+<!-- loop-between-marks -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="exloopbetweenmarks">loop-between-marks</a> <code>mark1 mark2 buffer-size</code>
+</td></tr><tr><td width=60></td><td>
+loop-between-marks loops continuously between the two specified marks.
+The marks can be moved as the sound is played; C-g stops loop-between-marks.
+<code>(loop-between-marks 0 1 512)</code>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
-<p>
-open-dac-output opens an output audio port.  It
+
+<!-- open-play-output -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="openplayoutput">open-play-output</A> <code>:optional chans srate format buffer-size</code>
+</td></tr><tr><td></td><td>
+open-play-output opens an output audio port.  It
 takes the desired number of channels, sampling rate, data format, and DAC buffer size (in samples),
 and returns a list containing the audio port (-1 on failure), the opened output channels,
 and the actual DAC buffer size (these can differ from the requested amounts in various hardware
 situations).
-</p>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
-<p>The various play hooks can be used to play sounds over and over:
-</p>
-<pre>
-  <A class=def NAME="explayoften">play-often</A> times
-  <A class=def NAME="explayuntilcg">play-until-c-g</A>
-  <A class=def NAME="explayregionforever">play-region-forever</a> region
 
+<!-- play-with-amps -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>play-with-amps</em> <code>sound :rest amps</code>
+</td></tr><tr><td></td><td>
+
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- play-often -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="explayoften">play-often</A> <code>n</code><br>
+<A class=def NAME="explayuntilcg">play-until-c-g</A><br>
+<A class=def NAME="explayregionforever">play-region-forever</a> <code>reg</code>
+</td></tr><tr><td></td><td>
+play-often plays the selected sound <i>n</i> times.
+play-until-c-g plays the selected sound until you interrupt it via C-g.
+Similarly, play-region-forever plays region <i>reg</i> until you interrupt it with C-g.
+
+<table border=0 cellpadding=5><tr><td bgcolor="#fafafa"><pre>
     (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\p 0 
       (lambda (n) 
         "play often" 
@@ -6156,37 +6158,63 @@ situations).
       (lambda (n) 
         "play region forever" 
         (play-region-forever (max 0 n))))
-</pre>
+</pre></td></tr></table>
+Now <code>C-u 31 p</code> plays the current sound 31 times; <code>C-u 3 r</code> plays region 3 until we type C-g.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
-<p>Now C-u 31 p plays the current sound 31 times; C-u 3 r plays region 3 until we type C-g.
-A similar function is:
-</p>
-<pre>
-  <a class=def name="exloopbetweenmarks">loop-between-marks</a> mark1 mark2 buffer-size
-</pre>
-<p>
-which loops continuously between the two specified marks.
-The marks can be moved as the sound is played; C-g stops loop-between-marks.
-If you want the DAC to be held open in the background,
-</p>
-<pre>
-  <A class=def NAME="exstartdac">start-dac</A>
-  <em class=emdef>stop-dac</em>
-</pre>
 
-<p>A more complex use of the real-time audio stuff is:
-</p>
-
+<!-- play-sines -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="playsine">play-sine</A> <code>freq amp</code><br>
+<a class=def name="playsines">play-sines</a> <code>freqs-and-amps</code>
+</td></tr><tr><td></td><td>
+play-sine plays a one-second sine wave at the given frequency and amplitude: <code>(play-sine 440 .1)</code>.
+play-sines produces a spectrum given a list of lists of frequency and amplitude:
 <pre>
-   <em class=emdef>vector-synthesis</em> (driver files read-even-when-not-playing)
+    (play-sines '((425 .05) (450 .01) (470 .01) (546 .02) (667 .01) (789 .034) (910 .032)))
 </pre>
-<p>
-vector-synthesis uses <i>driver</i>, a 
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- play-sound -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="explaysound">play-sound</A> <code>:optional func</code>
+</td></tr><tr><td></td><td>
+play-sound plays the current sound, calling <code>(func data)</code> on each buffer if <i>func</i> is passed.
+The following doubles each sample in channel 0 during playback:
+
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+(<em class=red>play-sound</em>
+ (lambda (data)
+   (let ((len (sound-data-length data)))
+     (do ((i 0 (1+ i)))
+	 ((= i len))
+       (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))
+</pre></td></tr></table>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- start-dac -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="exstartdac">start-dac</A><br>
+<em class=emdef>stop-dac</em>
+</td></tr><tr><td></td><td>
+start-dac opens the DAC ready for sound output, and stop-dac closes it.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- vector-synthesis -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>vector-synthesis</em> <code>driver files read-even-when-not-playing</code>
+</td></tr><tr><td></td><td>
+vector-synthesis cycles through a collection of incoming audio streams, playing whatever
+happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
+It uses <i>driver</i>, a 
 function of two arguments (the number of files, and the number of samples between calls) to decide which file to play.  If 
 <i>read-even-when-not-playing</i> is #t (the default is #f), the input files are constantly 
 read, even if not playing.  <i>files</i> is a list of files to be played.
-</p>
-<pre>
+
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (vector-synthesis 
   (let ((ctr 0) (file 0)) 
     (lambda (files bufsize)
@@ -6199,18 +6227,22 @@ read, even if not playing.  <i>files</i> is a list of files to be played.
 	  (set! ctr (1+ ctr)))
       file))
   (list "oboe.snd" "pistol.snd") #t)
-</pre>
-<p>The vector-synthesis 
+</pre></td></tr></table>
+The vector-synthesis 
 idea (and the weird name) came from a linux-audio-development mailing list.
 Apparently some commercial synths (or software?) provide this.
-It reads any number of sound files, using a function to
-decide which one to send to the DAC.
-<!--
-"vector synthesis" cycles through a collection of incoming audio streams, playing whatever
-happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
--->
-</p>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
+</table>
+
+<table bgcolor="aliceblue" border=0><tr>
+<td>
+<pre>see also: <a href="extsnd.html#playexamples">Playing</a> <a href="extsnd.html#extsndlib">Sndlib</a>
+</pre>
+</td></tr></table>
+
+
+<br>
 <br>
 <A NAME="polydoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>poly</h2></td></tr></table>
 
