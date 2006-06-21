@@ -10295,12 +10295,24 @@ See also <a href="sndscm.html#exmatchsoundfiles">add-sound-file-extension-1</a>.
 This adds a new top-level menu named <i>menu-label</i> and returns its menu index.  The index
 identifies the menu for add-to-menu and others.
 <i>update-callback</i> is a procedure of no arguments that is
-called each time the menu is displayed. <a href="sndscm.html#menusdoc">new-effects.scm</a> calls this function
-to add a new "Effects" menu to the top level menubar.
+called each time the menu is displayed. 
 <pre>
-    &gt;<em class=typing>(add-to-main-menu "Tools")</em>
-    <em class=listener>5</em>
-</pre></td></tr>
+    Scheme:
+    (define new-menu (add-to-main-menu "New Menu"))
+    (<a class=quiet href="extsnd.html#addtomenu">add-to-menu</a> new-menu "First Item" (lambda () (<a class=quiet href="extsnd.html#sndprint">snd-print</a> ";item 1")))
+    (<a class=quiet href="extsnd.html#addtomenu">add-to-menu</a> new-menu "Second Item" (lambda () (<a class=quiet href="extsnd.html#sndprint">snd-print</a> ";item 2")))
+
+    Ruby:
+    new_menu = add_to_main_menu("New Menu")
+    add_to_menu(new_menu, "First Item", lambda do | | snd_print("item 1") end)
+    add_to_menu(new_menu, "Second Item", lambda do | | snd_print("item 2") end)
+
+    Forth:
+    "New Menu" add-to-main-menu constant new-menu drop
+    new-menu "First Item" lambda: { } "item1" snd-print ; 0 make-proc undef add-to-menu drop
+    new-menu "Second Item" lambda: { } "item2" snd-print ; 0 make-proc undef add-to-menu drop
+</pre>
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 

@@ -15,7 +15,9 @@
   (let* ((snd (selected-sound))
 	 (chn (selected-channel))
 	 (ms (marks snd chn)))
-    (list (car ms) (cadr ms))))
+    (if (> (length ms) 1)
+	(list (car ms) (cadr ms))
+	(list))))
 
 
 ;;; -------- Play between by marks
@@ -27,9 +29,8 @@
 (define play-between-marks-dialog #f)
 (define play-between-marks-menu-label #f)
 
-
 (define (cp-play-between-marks)
- (play-between-marks play-between-marks-m1 play-between-marks-m2))
+  (play-between-marks play-between-marks-m1 play-between-marks-m2))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -52,11 +53,15 @@
 
       (define (max-mark)
 	(let ((ms (marks (selected-sound) (selected-channel))))
-	  (apply max ms)))
+	  (if (not (null? ms))
+	      (apply max ms)
+	      -1)))
 
       (define (min-mark)
 	(let ((ms (marks (selected-sound) (selected-channel))))
-	  (apply min ms)))
+	  (if (not (null? ms))
+	      (apply min ms)
+	      -1)))
 
       (define (post-play-between-marks-dialog)
         (if (not (Widget? play-between-marks-dialog))
@@ -65,58 +70,61 @@
 		   (max-mark-id (max-mark))
 		   (sliders '()))
 
-	      (set! play-between-marks-m1 (or (car inits) 0))
-	      (set! play-between-marks-m2 (or (cadr inits) 1))
-	      (set-syncs)
-	      (mark-sync-color "yellow")
-
-              (set! play-between-marks-dialog 
-		    (make-effect-dialog play-between-marks-label
-					(lambda (w context info)
-					  (cp-play-between-marks))
-					(lambda (w context info)
-					  (help-dialog "Define selection by marks Help"
-						"Plays area between specified marks. Use the sliders to select the boundary marks."))
-					(lambda (w c i)
-					  (XtSetValues (list-ref sliders 0) (list XmNvalue play-between-marks-m1))
-					  (XtSetValues (list-ref sliders 1) (list XmNvalue play-between-marks-m2)))))
-	      (set! sliders
-		    (add-sliders play-between-marks-dialog
-				 (list (list "mark one" 0 play-between-marks-m1 max-mark-id
-					     (lambda (w context info)
-					       (set! play-between-marks-m1 (/ (.value info) 1))
-					       (set-syncs))
-					     1)
-				       (list "mark two" 0 play-between-marks-m2 max-mark-id
-					     (lambda (w context info)
-					       (set! play-between-marks-m2 (/ (.value info) 1))
-					       (set-syncs))
-					     1))))
-	      (add-hook! select-channel-hook (lambda (snd chn)
-					       (let ((max-ms (max-mark))
-						     (min-ms (min-mark))
-						     (current-ms (find-two-marks)))
-						 (if (null? current-ms)
-						     (set! current-ms (list min-ms max-ms)))
-						 (if max-ms
-						     (for-each
-						      (lambda (slider)
-							(XtVaSetValues slider 
-								       (list XmNmaximum max-ms
-									     XmNminimum min-ms
-									     XmNvalue (car current-ms)))
-							(set! current-ms (cdr current-ms)))
+	      (if (null? inits)
+		  (snd-display ";no marks")
+		  (begin
+		    (set! play-between-marks-m1 (car inits))
+		    (set! play-between-marks-m2 (cadr inits))
+		    (set-syncs)
+		    (mark-sync-color "yellow")
+		    
+		    (set! play-between-marks-dialog 
+			  (make-effect-dialog play-between-marks-label
+					      (lambda (w context info)
+						(cp-play-between-marks))
+					      (lambda (w context info)
+						(help-dialog "Define selection by marks Help"
+							     "Plays area between specified marks. Use the sliders to select the boundary marks."))
+					      (lambda (w c i)
+						(XtSetValues (list-ref sliders 0) (list XmNvalue play-between-marks-m1))
+						(XtSetValues (list-ref sliders 1) (list XmNvalue play-between-marks-m2)))))
+		    (set! sliders
+			  (add-sliders play-between-marks-dialog
+				       (list (list "mark one" 0 play-between-marks-m1 max-mark-id
+						   (lambda (w context info)
+						     (set! play-between-marks-m1 (/ (.value info) 1))
+						     (set-syncs))
+						   1)
+					     (list "mark two" 0 play-between-marks-m2 max-mark-id
+						   (lambda (w context info)
+						     (set! play-between-marks-m2 (/ (.value info) 1))
+						     (set-syncs))
+						   1))))
+		    (add-hook! select-channel-hook (lambda (snd chn)
+						     (let ((max-ms (max-mark))
+							   (min-ms (min-mark))
+							   (current-ms (find-two-marks)))
+						       (if (null? current-ms)
+							   (set! current-ms (list min-ms max-ms)))
+						       (if max-ms
+							   (for-each
+							    (lambda (slider)
+							      (XtVaSetValues slider 
+									     (list XmNmaximum max-ms
+										   XmNminimum min-ms
+										   XmNvalue (car current-ms)))
+							      (set! current-ms (cdr current-ms)))
 						      sliders)))))
-	      (add-hook! mark-hook (lambda (id snd chn reason)
-				     (if (and (= snd (selected-sound))
-					      (= chn (selected-channel))
-					      (= reason 0)) ; add-mark
-					 (for-each
-					  (lambda (slider)
-					    (XtVaSetValues slider (list XmNmaximum (max-mark))))
-					  sliders))))
-	      ))
-	(activate-dialog play-between-marks-dialog))
+		    (add-hook! mark-hook (lambda (id snd chn reason)
+					   (if (and (= snd (selected-sound))
+						    (= chn (selected-channel))
+						    (= reason 0)) ; add-mark
+					       (for-each
+						(lambda (slider)
+						  (XtVaSetValues slider (list XmNmaximum (max-mark))))
+						sliders))))))
+	      (if (Widget? play-between-marks-dialog)
+		  (activate-dialog play-between-marks-dialog)))))
 
       (set! play-between-marks-menu-label (add-to-menu marks-menu "Play between marks" (lambda () (post-play-between-marks-dialog)))))
 

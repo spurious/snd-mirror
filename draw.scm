@@ -109,22 +109,6 @@ whenever they're in the current view."
 			     base chn copy-context #f #f graph-dots)))
 		      (cdr args)))))))
 
-(define (display-energy snd chn)
-  "(display-energy snd chn) is a lisp-graph-hook function that displays the time domain data as energy in the lisp graph; 
-the y-zoom-slider controls the graph amp"
-  (let* ((ls (left-sample))
-	 (rs (right-sample))
-	 (datal (make-graph-data snd chn))
-	 (data (if (vct? datal) datal (cadr datal)))
-	 (len (vct-length data))
-	 (sr (srate snd))
-	 (y-max (y-zoom-slider snd chn)))
-    (vct-multiply! data data)
-    (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f)))
-
-;(add-hook! lisp-graph-hook display-energy)
-
-
 (define (samples-via-colormap snd chn)
   "(samples-via-colormap snd chn) displays time domain graph using current colormap (just an example of colormap-ref)"
   (let* ((left (left-sample snd chn))

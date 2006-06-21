@@ -14,7 +14,8 @@
   ws
 -->
 
-<!-- TODO: check effects-utils.scm kmenu.scm pd-*.scm snd-hobbit.scm (rb/fs?) -->
+<!-- TODO: check pd-*.scm snd-hobbit.scm (rb/fs?) -->
+<!-- SOMEDAY: more mouseovers -->
 
 
 <!-- documentation for some of the Scheme/Ruby/Forth code included with Snd -->
@@ -1510,7 +1511,7 @@ Here's how to trace fm-violin calls in a notelist:
 
 <A NAME="dlocsigdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>dlocsig.rb</h2></td></tr></table>
 
-<p>dlocsig is a CLM generator developed by Fernando Lopez-Lezcano that can move sounds in two or three dimensions.
+<p><a name="dlocsig">dlocsig</a> is a CLM generator developed by Fernando Lopez-Lezcano that can move sounds in two or three dimensions.
 Fernando's CLM/lisp-oriented documentation can be found in the CLM tarball
 (dlocsig/index.html) and <A HREF="http://ccrma.stanford.edu/~nando/clm/dlocsig/">here</A>.
 dlocsig.rb is Michael Scholz's translation of dlocsig to Ruby.
@@ -1545,26 +1546,14 @@ the listener?
 
 <!-- color-samples -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>color-samples</em> <code>color :optional beg dur snd chn</code>,  <em class=emdef>uncolor-samples</em> <code>:optional snd chn</code>
+<em class=emdef>color-samples</em> <code>color :optional beg dur snd chn</code><br>
+<em class=emdef>uncolor-samples</em> <code>:optional snd chn</code>
 </td></tr>
 <tr><td width=60></td><td>
 color-samples displays the samples from sample <i>beg</i> for <i>dur</i> samples in <i>color</i>
 whenever they're in the current time domain view. uncolor-samples cancels this action.
 <a href="extsnd.html#displaysampsinred">Here</a> is a representative picture.
 To activate this, add it to <a href="extsnd.html#aftergraphhook">after-graph-hook</a>.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- display-energy -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="displayenergy">display-energy</A> <code>snd chn</code>
-</td></tr>
-<tr><td width=60></td><td>
-display-energy is a <a href="extsnd.html#lispgraphhook">lisp-graph-hook</a> procedure that displays the current time
-domain data as energy, not amplitude, using the y zoom slider to control its
-y axis.  <code>(add-hook! lisp-graph-hook display-energy)</code> activates it.
-Here's a <a href="extsnd.html#xdisplayenergy">picture</a> of it in action.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -1845,7 +1834,7 @@ the edge frequencies in terms of srate = 2 * pi.
 <a class=def name="makehilberttransform">make-hilbert-transform</a> <code>:optional length</code><br>
 <a class=def name="hilberttransform">hilbert-transform</a> <code>f in</code><br>
 <em class=emdef>hilbert-transform-via-fft</em> <code>:optional snd chn</code><br>
-<em class=emdef>sound-&gt;amp-env</em> <code>:optional snd chn</code>
+<a class=def name="sound_to_amp_env">sound-&gt;amp-env</a> <code>:optional snd chn</code>
 </td></tr><tr><td></td><td>
 These functions perform the hilbert transform using either an FIR filter (the first two) or an FFT.
 One example of its use is sound-&gt;amp-env (from R Lyons).  Another is the <a href="clm.html#ssb-am">ssb-am</a> generator in CLM.
@@ -1918,7 +1907,7 @@ also lose more of the original signal.
 
 <!-- spectrum->coeffs and fltit -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>spectrum-&gt;coeffs</em> <code>order spectrum</code><br>
+<a class=def name="spectrum_to_coeffs">spectrum-&gt;coeffs</a> <code>order spectrum</code><br>
 <em class=emdef>fltit-1</em> <code>order spectr</code>
 </td></tr><tr><td></td><td>
 spectrum-&gt;coeffs is a
@@ -1964,7 +1953,7 @@ to return a biquad filter section.
 
 <!-- cascade->canonical -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>cascade-&gt;canonical</em> <code>coeffs</code>
+<a class=def name="cascade_to_canonical">cascade-&gt;canonical</a> <code>coeffs</code>
 </td></tr><tr><td></td><td>
 cascade-&gt;canonical 
 converts cascade coefficients to canonical form (the form used by CLM's <a href="clm.html#filter">filter</a> generator).
@@ -2025,7 +2014,7 @@ Use the functions in <a href="#analogfilterdoc">analog-filter.scm</a>, rather th
 
 <!-- cosine-summation -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>cosine-summation</em> <code>gen r</code><br>
+<a class=def name="cosinesummation">cosine-summation</a> <code>gen r</code><br>
 <em class=emdef>kosine-summation</em> <code>gen r k</code>
 </td></tr><tr><td></td><td>
 cosine-summation 
@@ -2068,7 +2057,7 @@ cosine components have a decreasing amplitude.
 
 <!-- sum-of-n-sines -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>sum-of-n-sines</em> <code>angle n</code><br>
+<a class=def name="sumofnsines">sum-of-n-sines</a> <code>angle n</code><br>
 <em class=emdef>sum-of-n-odd-sines</em> <code>angle n</code><br>
 <em class=emdef>sum-of-n-odd-cosines</em> <code>angle n</code>
 </td></tr><tr><td></td><td>
@@ -2085,8 +2074,8 @@ These three functions produce various spectra, similar to the cosine-summation f
 
 <!-- band-limited-sawtooth -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>band-limited-sawtooth</em> <code>x a N fi</code><br>
-<em class=emdef>band-limited-square-wave</em> <code>theta n</code>
+<a class=def name="bandlimitedsawtooth">band-limited-sawtooth</a> <code>x a N fi</code><br>
+<a class=def name="bandlimitedsquarewave">band-limited-square-wave</a> <code>theta n</code>
 </td></tr><tr><td></td><td>
 band-limited-square-wave uses the formula tanh(<i>n</i> * sin(<i>theta</i>)) (<i>n</i> here is a float).
 As <i>n</i> increases, you get closer to a square-wave.
@@ -2168,7 +2157,7 @@ a sort of asymmetric FM using ideas similar to those used in <a href="clm.html#s
 <!-- any-random -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="anyrandom">any-random</A> <code>:optional e</code><br>
-<em class=emdef>gaussian-distribution</em> <code>s</code><br>
+<a class=def name="gaussiandistribution">gaussian-distribution</a> <code>s</code><br>
 <em class=emdef>pareto-distribution</em> <code>a</code><br>
 <em class=emdef>gaussian-envelope</em> <code>s</code>
 </td></tr><tr><td></td><td>
@@ -2309,7 +2298,7 @@ See also the <a href="#volterrafilter">volterra filter</a>.
 
 <!-- linear-src-channel -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>linear-src-channel</em> <code>srinc :optional snd chn</code>
+<a class=def name="linearsrcchannel">linear-src-channel</a> <code>srinc :optional snd chn</code>
 </td></tr><tr><td></td><td>
 linear-src-channel performs sampling rate conversion using linear interpolation;
 this can sometimes be a nice effect.
@@ -2342,7 +2331,7 @@ which means that if the original sound was 2 seconds long, and we apply the enve
 <em class=emdef>channel-mean</em> <code>:optional snd chn</code><br>
 <em class=emdef>channel-total-energy</em> <code>:optional snd chn</code><br>
 <em class=emdef>channel-average-power</em> <code>:optional snd chn</code><br>
-<em class=emdef>channel-rms</em> <code>:optional snd chn</code><br>
+<a class=def name="channelrms">channel-rms</a> <code>:optional snd chn</code><br>
 <em class=emdef>channel-norm</em> <code>:optional snd chn</code><br>
 <em class=emdef>channel-lp</em> u-p <code>:optional snd chn</code><br>
 <em class=emdef>channel-lp-inf</em> <code>:optional snd chn</code><br>
@@ -2412,7 +2401,7 @@ upon output (to track the original sound's amplitude envelope):
 <!-- ---------------------------------------- scanned synthesis ---------------------------------------- -->
 <tr><td colspan=2 bgcolor="lightgreen"><center><A NAME="dspdocscanned">scanned synthesis</A></center></td><td></td></tr>
 
-
+<!-- main-index |dspdocscanned:scanned synthesis -->
 <!-- scanned synthesis -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="excomputeuniformcircularstring">compute-uniform-circular-string</A> <code>size x0 x1 x2 mass xspring damp</code><br>
@@ -2436,6 +2425,7 @@ then <code>(testunif 1.0 0.1 0.0)</code>.  There's also a dialog to experiment w
 
 <p>These two files are examples of Snd customization files, suitable for inclusion in ~/.snd.
 edit123.scm is by Tom Roth, and snd_conffile.scm is by Kjetil S. Matheussen.
+There are other examples in <a href="grfsnd.html#sndinitfile">Snd init file</a>.
 </p>
 
 
@@ -2535,7 +2525,7 @@ envelope-last-x returns the maximum x value:
 
 <!-- integrate-envelope -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>integrate-envelope</em> <code>env</code>
+<a class=def name="integrateenvelope">integrate-envelope</a> <code>env</code>
 </td></tr>
 <tr><td></td><td>
 integrate-envelope returns the area under the envelope.
@@ -2637,7 +2627,7 @@ point in the other envelope is interpolated, if necessary.
 
 <!-- normalize-envelope -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>normalize-envelope</em> <code>env :optional (new-max 1.0)</code>
+<a class=def name="normalizeenvelope">normalize-envelope</a> <code>env :optional (new-max 1.0)</code>
 </td></tr>
 <tr><td></td><td>
 normalize-envelope returns a version of <i>env</i> scaled so that its maximum y value is <i>new-max</i>.
@@ -2691,7 +2681,7 @@ reverse-envelope reverses an envelope.
 
 <!-- rms-envelope -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>rms-envelope</em> <code>file :key (beg 0.0) (dur #f) (rfreq 30.0) (db #f)</code>
+<a class=def name="rmsenvelope">rms-envelope</a> <code>file :key (beg 0.0) (dur #f) (rfreq 30.0) (db #f)</code>
 </td></tr>
 <tr><td></td><td>
 rms-envelope returns an rms envelope of a file; it is based on rmsenv.ins in the CLM package.
@@ -2915,7 +2905,7 @@ actually represents.  You can, of course, turn off the normalization:
 
 <!-- fft-smoother -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="exfftsmoother">fft-smoother</a> <code>cutoff start samps :optional snd chn</code>
+<a class=def name="exfftsmoother">fft-smoother</a> <code>cutoff start samps :optional snd chn</code>
 </td></tr><tr><td></td><td>
 fft-smoother uses fft filtering to
 smooth a portion of a sound, returning a vct with the smoothed data.  <i>cutoff</i> sets where we starting zeroing out high frequencies.
@@ -2937,7 +2927,7 @@ This is sometimes useful for noise-reduction.
 
 <!-- squelch-vowels -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>squelch-vowels</em> <code>:optional snd chn</code>
+<a class=def name="squelchvowels">squelch-vowels</a> <code>:optional snd chn</code>
 </td></tr><tr><td></td><td>
 squelch-vowels uses fft data to try to distinguish a steady state portion (a vowel in speech) from
 noise (a consonant, sometimes), then tries to remove (set to 0.0) the vowel-like portions.
@@ -3130,7 +3120,7 @@ See also <a href="clm.html#ssb-am">ssb-am</a>.
 
 <!-- chain-dsps -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>chain-dsps</em> <code>beg dur :rest dsps</code>
+<a class=def name="chaindsps">chain-dsps</a> <code>beg dur :rest dsps</code>
 </td></tr><tr><td></td><td>
 chain-dsps creates a patch of chained generators from its arguments.
 Someone wanted to set up generator patches in a note list:
@@ -3265,6 +3255,7 @@ expsnd needs dsp.scm (but doesn't check that it is loaded).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- main-index |exfp:Forbidden Planet -->
 <!-- fp -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="exfp">fp</a> <code>sr osamp osfrq :optional snd chn</code>
@@ -3294,7 +3285,7 @@ generator, producing a random quavering effect, hence the name.
 
 <!-- place-sound -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="placesound">place-sound</a> <code>mono-snd stereo-snd panning-envelope-or-degree</code>
+<a class=def name="placesound">place-sound</a> <code>mono-snd stereo-snd panning-envelope-or-degree</code>
 </td></tr><tr><td></td><td>
 place-sound mixes a mono sound (<i>mono-snd</i>, an index) into a stereo sound (<i>stereo-snd</i>) 
 with panning determined by <i>panning-envelope-or-degree</i>.
@@ -3511,7 +3502,7 @@ a sound as a key is held down.
 
 <!-- region-play-list -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>region-play-list</em> <code>data</code><br>
+<a class=def name="regionplaylist">region-play-list</a> <code>data</code><br>
 <em class=emdef>region-play-sequence</em> <code>data</code>
 </td></tr><tr><td></td><td>
 region-play-list plays a list of regions.  <i>data</i> is list of lists:
@@ -3579,7 +3570,7 @@ the current graph size.
 
 <!-- display-db -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>display-db</em> <code>snd chn</code>
+<a class=def name="displaydb">display-db</a> <code>snd chn</code>
 </td></tr><tr><td></td><td>
 display-db is a <a href="extsnd.html#lispgraphhook">lisp-graph-hook</a> function to display the time domain data in dB.
 <pre>
@@ -3591,9 +3582,10 @@ I just noticed that its y axis is labelled upside down.
 
 <!-- display-energy -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>display-energy</em> <code>snd chn</code>
+<A class=def NAME="displayenergy">display-energy</A> <code>snd chn</code>
 </td></tr><tr><td></td><td>
 display-energy is a <a href="extsnd.html#lispgraphhook">lisp-graph-hook</a> function to display the time domain data squared.
+<a href="extsnd.html#xdisplayenergy">Here</a> is a picture of it in action.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -3801,7 +3793,7 @@ to:
 
 <!-- open-next-file-in-directory -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>open-next-file-in-directory</em><br>
+<a class=def name="opennextfileindirectory">open-next-file-in-directory</a><br>
 <em class=emdef>click-middle-button-to-open-next-file-in-directory</em>
 </td></tr><tr><td></td><td>
 click-middle-button-to-open-next-file-in-directory sets up the mouse-click-hook and open-hook so that clicking the middle
@@ -3913,7 +3905,7 @@ sort-samples provides a histogram of the samples (by amplitude) in <i>bins</i> b
 
 <!-- update-graphs -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>update-graphs</em>
+<a class=def name="updategraphs">update-graphs</a>
 </td></tr><tr><td></td><td>
 update-graphs updates (redraws) all graphs.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -4257,7 +4249,7 @@ start point in the file, and (optionally) the channel of the file to mix:
 <!-- mono->stereo -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="monotostereo">mono-&gt;stereo</a> <code>new-name snd1 chn1 snd2 chn2</code><br>
-<em class=emdef>stereo-&gt;mono</em> <code>orig-snd chan1-name chan2-name</code><br>
+<a class=def name="stereo_to_mono">stereo-&gt;mono</a> <code>orig-snd chan1-name chan2-name</code><br>
 <em class=emdef>mono-files-&gt;stereo</em> <code>new-name chan1-file chan2-file</code>
 </td></tr><tr><td></td><td>
 mono-&gt;stereo combines two mono sounds (currently open in Snd) into one (new) stereo file. 
@@ -4399,7 +4391,7 @@ which is best if done as slowly as possible).  With any luck the "sweep up" case
 A similar idea is behind dissolve-fade:
 </p>
 <pre>
-    <em class=emdef>dissolve-fade</em> beg dur amp file1 file2 fsize r lo hi
+    <a class=def name="dissolvefade">dissolve-fade</a> beg dur amp file1 file2 fsize r lo hi
 </pre>
 <p>It ramps in and out frequency bands chosen at random.  The original hope was to get something like a graphical dissolve,
 but it turns out to be better to let the random changes float along with no overall
@@ -4479,7 +4471,7 @@ or something.
 </p>
 
 <pre>
-    <em class=emdef>grani</em> start-time duration amplitude file :key
+    <a class=def name="grani">grani</a> start-time duration amplitude file :key
       (input-channel 0)                       ; input file channel from which samples are read
       (grains 0)                              ; if not 0, total number of grains to be generated
       (amp-envelope '(0 0 0.3 1 0.7 1 1 0))   ; overall amplitude envelope for note
@@ -4684,10 +4676,10 @@ It includes a Snd-Ruby mode (snd-ruby-mode) and a Snd-Guile mode
 (snd-guile-mode) for editing source files. 
 The commands <b>inf-snd-help</b> and <b>snd-help</b>
 access the description which Snd provides for many functions.
-Using the prefix key `C-u' you get the HTML version of Snd's help.
+Using the prefix key C-u you get the HTML version of Snd's help.
 With tab-completion in the minibuffer you can scan all functions at
 a glance. 
-A menu ``Snd/Ruby'' is placed in the Emacs menu bar.  Entries in this
+A menu "Snd/Ruby" is placed in the Emacs menu bar.  Entries in this
 menu are disabled if no inferior Snd process exists.
 These variables may need to be customized to fit your system:
 </p>
@@ -4731,8 +4723,8 @@ See inf-snd.el for more info and examples of specializing these modes.
 You can change the mode while editing a Snd-Ruby, Snd-Guile, or Snd-Forth source file with
 M-x snd-ruby-mode, M-x snd-guile-mode, or M-x snd-forth-mode.  To have Emacs determine
 automatically which mode to set, you can use special
-file-extensions.  I use file-extension `.rbs' for Snd-Ruby source
-files, `.cms' for Snd-Guile, and `.fth' for Snd-Forth.
+file-extensions.  I use file-extension ".rbs" for Snd-Ruby source
+files, ".cms" for Snd-Guile, and ".fth" for Snd-Forth.
 </p>
 
 <pre>
@@ -4744,7 +4736,7 @@ files, `.cms' for Snd-Guile, and `.fth' for Snd-Forth.
 
 <p>
 Or you can use the local mode variable in source files, e.g. by
-`-*- snd-ruby -*-' or `-*- snd-guile -*-' in first line.
+"-*- snd-ruby -*-" or "-*- snd-guile -*-" in first line.
 </p>
 
 <p>
@@ -4797,6 +4789,7 @@ C-c C-k   	 snd-kill    	   kill Snd process and buffer
 </pre>
 <br>
 
+
 <A NAME="jcrevdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>jcrev</h2></td></tr></table>
 <p>
 
@@ -4816,7 +4809,7 @@ jcrev.scm version assumes it is being called within with-sound:
 <p>jc-reverb has three parameters:
 </p>
 <pre>
-    <em class=emdef>jc-reverb</em> :optional (low-pass #f) (volume 1.0) (amp-env #f)
+    <a class=def name="jcreverb">jc-reverb</a> :optional (low-pass #f) (volume 1.0) (amp-env #f)
 </pre>
 
 <p>
@@ -5125,7 +5118,7 @@ its sample happens to be played.
 
 <!-- save-mark-properties -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="savemarkproperties">save-mark-properties</a>
+<a class=def name="savemarkproperties">save-mark-properties</a>
 </td></tr>
 <tr><td></td><td>
 save-mark-properties sets up an <a href="extsnd.html#aftersavestatehook">after-save-state-hook</a> function to save any mark-properties.
@@ -5235,39 +5228,126 @@ Max Mathews.
 
 <A NAME="menusdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>menus</h2></td></tr></table>
 
-<p>edit-menu.scm adds some useful options to the Edit menu:
+<p>The files described in this section either add new top-level menus to Snd, or
+modify existing ones.  Most were written by Dave Phillips; see his tutorial for
+pictures and a more complete discussion.
 </p>
+
+<table border=0 cellspacing=0 hspace=20 vspace=10>
+
+<!-- edit-menu -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>edit-menu.scm</em>
+</td></tr><tr><td width=60></td><td>
+edit-menu.scm adds some useful options to the Edit menu:
 <pre>
-  <b>trim front</b> and <b>trim back</b> (to/from marks)
-  <b>crop</b> (first and last marks)
-  <b>selection-&gt;new</b>
-  <b>cut selection-&gt;new</b>
-  <b>append selection</b> (and append sound)
+  Selection-&gt;new      ; save selection in a new file, open that file
+  Cut selection-&gt;new  ; save selection in a new file, delete selection, open the file
+  Append selection    ; append selection to end of selected sound
+  Make stereofile     ; make a new 2-chan file, copy currently selected sound to it
+  Trim front          ; find first mark in each sync'd channel and remove all samples before it
+  Trim back           ; find last mark in each sync'd channel and remove all samples after it
+  Crop                ; find first and last mark in each sync'd channel and remove all samples outside them
 </pre>
 <!-- I(trim sound):M(Edit: Trim)(menusdoc) -->
 <!-- I(trim sound):A(menusdoc) -->
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
-<p>new-effects.scm implements an Effects menu.  If you have Motif,
-you can load xm.so (or build Snd with it preloaded), and get sliders
-to control most of the effects.  (Use gtk-effects.scm with Gtk).
-The effects include:
-</p>
+
+
+<!-- fft-menu.scm -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>mix-menu.scm</em>
+</td></tr><tr><td></td><td>
+fft-menu.scm adds an "FFT Edits" top-level menu.  It has entries for:
 <pre>
-  <b>reverse</b>
-  <b>normalize</b> (normalization)
-  <b>gain</b> (gain-amount)
-  <b>invert</b>
-  <b>flange</b> (increase speed and amount to get phasing, flange-speed, flange-amount, flange-time)
-  <b>compand</b>, compand-channel
-  <b>reverberate</b> (reverb-amount)
-  <b>intensify</b> (contrast-amount)
-  <b>echo</b> (echo-length, echo-amount)
-  <b>squelch</b> (squelch-amount, omit-silence)
-  <b>add silence</b> (at cursor) (silence-amount)
-  <b>remove DC</b>
-  <b>expsrc</b> (independent pitch/time scaling) (time-scale and pitch-scale)
-  <b>filter</b>
-  <b>cross synthesis</b>
+  FFT notch filter   ; use FFT to notch out a portion of the spectrum
+  FFT squelch        ; use FFT to squelch low-level noise
+  Squelch vowels     ; use FFT to squelch vowel-like portions of speech
+</pre>
+
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- kmenu.scm -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>kmenu.scm</em>
+</td></tr><tr><td></td><td>
+kmenu.scm adds a bunch of mnemonics to the Gtk main menus.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- marks-menu.scm -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>marks-menu.scm</em>
+</td></tr><tr><td></td><td>
+marks-menu.scm adds a "Marks" top-level menu with entries:
+<pre>
+  Play between marks         ; play samples between marks
+  Loop play between marks    ; continuous play looping between marks
+  Trim before mark           ; remove samples before mark
+  Trim behind mark           ; remove samples after mark
+  Crop around marks          ; remove samples outside marks
+  Fit selection to marks     ; squeeze selection to fit between marks
+  Define selection by marks  ; define selection based on marks
+  Mark sync                  ; if on, click mark to sync with other marks
+  Mark sample loop points    ; place marks at header loop points, if any
+  Show loop editor           ; edit loop points; this dialog is not really functional yet
+  Delete all marks           ; delete all marks
+  Explode marks to files     ; writes a separate file for each set of marks
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mix-menu.scm -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>mix-menu.scm</em>
+</td></tr><tr><td></td><td>
+mix-menu.scm adds a top-level "Mix/Track" menu with entries for:
+<pre>
+  Delete mix            ; delete mix (set its amp to 0.0)
+  Snap mix to beat      ; if on, make mixes start on a beat
+  Assign all tracks     ; set track numbers
+  Delete track          ; delete track (set its amp to 0.0)
+  Play track
+  Reverse track         ; reverse order of constituent mixes in track
+  Set track amplitude
+  Set track speed       ; track sampling rate conversion (2.0 = up octave)
+  Set track tempo       ; change tempo at which constituent mixes occur
+  Transpose track       ; transpose each mix
+  Save track            ; save track to file "track-1.snd" (number increments)
+  Colorize tracks       ; load track-colors.scm to get tracks in many colors
+  Delete all mixes and tracks
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- new-effects.scm -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>new-effects.scm, effects-utils.scm, gtk-effects.scm, effects.rb, effects.fs</em>
+</td></tr><tr><td></td><td>
+
+new-effects.scm implements an Effects menu.  If you have Motif,
+you can load xm.so (or build Snd with it preloaded), and get sliders
+to control most of the effects.  Use gtk-effects.scm with Gtk.
+The effects include:
+
+<pre>
+  reverse
+  normalize (normalization)
+  gain (gain-amount)
+  invert
+  flange (increase speed and amount to get phasing, flange-speed, flange-amount, flange-time)
+  compand, compand-channel
+  reverberate (reverb-amount)
+  intensify (contrast-amount)
+  echo (echo-length, echo-amount)
+  squelch (squelch-amount, omit-silence)
+  add silence (at cursor) (silence-amount)
+  remove DC
+  expsrc (independent pitch/time scaling) (time-scale and pitch-scale)
+  filter
+  cross synthesis
 </pre>
 
 <!-- I(reverse samples):M(Effects: Reverse)(menusdoc) -->
@@ -5278,144 +5358,84 @@ The effects include:
 <!-- I(insert zeros):M(Effects: Add Silence)(menusdoc) -->
 <!-- I(change tempo):M(Effects: Expsrc)(menusdoc) -->
 
-<p>Most of these are either simple calls on Snd functions ("invert" is <code>(<a class=quiet href="extsnd.html#scaleby">scale-by</a> -1)</code>),
+Most of these are either simple calls on Snd functions ("invert" is <code>(<a class=quiet href="extsnd.html#scaleby">scale-by</a> -1)</code>),
 or use functions in the other scm files.  The actual operations follow the <a class=quiet href="extsnd.html#sync">sync</a> chain of the
 currently active channel.  
-</p>
-<p>One possibly interesting part of new-effects.scm is the implementation of the
-Effects menu.  If you change one of the variables, you'll notice that the
-menu updates its notion of that variable as well.  This is handled through
-<i>update-callback</i> argument to <a href="extsnd.html#addtomainmenu">add-to-main-menu</a>
-function.  Each effect is added (when new-effects.scm is loaded) to the <i>effects-list</i>.
-Then each time you click the Effects menu, causing its options to be dispayed,
-the update-callback function itself calls each effect's update function to
-get its current option label.  That is,
-</p>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define effects-list '())
-(define effects-menu 
-  (<a class=quiet href="extsnd.html#addtomainmenu">add-to-main-menu</a> "Effects" 
-                    (lambda ()
- 		      (define (update-label effects)
-		        (if (not (null? effects))
-			    (begin
-			      ((car effects))
-			      (update-label (cdr effects)))))
-		      (update-label effects-list))))
-</pre></td></tr></table>
 
-<p>defines the update-callback to be a thunk (the outer lambda) that itself
-defines a local function (update-label) that runs through the effects-list
-calling each one via <code>((car effects))</code>.  Each effect that wants
-to recalculate its option label then
-adds its update function to the effects-list when it is loaded.
-The sound effect itself is the callback function of the given option:
-</p>
+<!-- panic.scm -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>panic.scm</em>
+</td></tr><tr><td></td><td>
+panic.scm adds a "Panic Control" top-level menu with two
+entries: 
 <pre>
-    (<a class=quiet href="extsnd.html#addtomenu">add-to-menu</a> effects-menu "reverse" (lambda () (<a class=quiet href="extsnd.html#reversesound">reverse-sound</a>)))
+  Stop play!
+  Stop all!
 </pre>
-<p>I can't decide whether it would be useful to describe some of these
-effects in more detail.  The code is straightforward, and
-it's not hard to try them out.
-</p>	
-<p>The Ruby version of this is in effects.rb.
-</p>
-<br>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
-<p>There is a set of Scheme files with many useful additions written by Dave Phillips.  These
-include:
-</p>
+
+<!-- special-menu.scm -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>special-menu.scm</em>
+</td></tr><tr><td></td><td>
+special-menu.scm adds a "Special" menu with entries:
 <pre>
-  <em class=emdef>misc.scm</em>               loads files for enhanced interface, many new menu options
-  <em class=emdef>new-icons.scm</em>          icon box entries
-  <em class=emdef>special-menu.scm</em>       the Special menu (OGG/MP3 etc)
-  <em class=emdef>mix-menu.scm</em>           the Mix menu
-  <em class=emdef>panic.scm</em>              the Panic menu (to stop sound output)
-  <em class=emdef>track-colors.scm</em>       track color choices (for mixing)
-  <em class=emdef>fft-menu.scm</em>           FFT-based editing
-  <em class=emdef>new-backgrounds.scm</em>    background choices (granite Snd!)
-  <em class=emdef>marks-menu.scm</em>         the Marks menu
-  <em class=emdef>new-buttons.scm</em>        sets the icon box actions
+  MIDI to WAV (using timidity),
+  Record input channel 
+  Envelope new file
+  Play panned 
+  Save as MP3 (using bladeenc),
+  Save as Ogg (using oggenc), and 
+  Explode SF2 (using the code explode-sf2 in examp.scm) 
+   ;; the latter finds the samples in a SoundFont 2 file, and writes each as a separate sound (AIFC) file.
 </pre>
-<p>For a full discussion, with pictures, see Dave's tutorial (in the tutorial directory).
-Here's a brief description of each of the files:
-</p>
+</td></tr>
 
-<p>
-misc.scm loads up all the auxiliary files needed by the rest of these files,
-adds a bunch of sound file extensions, and sets up numerous interface customizations.
-It also defines <b>paint-all-widgets</b> which makes sure all the widget backgrounds
-reflect the current background choice (metal, granite, wood, etc); <b>add-delete-option</b>
-which adds a Delete menu item to the File menu; <b>add-rename-option</b> which adds
-a File:Rename menu entry; <b>change-selection-popup-color</b> and <b>change-fft-popup-color</b>
-to make these context-sensitive popup menus jump out at you; <b>cut-selection-&gt;new</b>
-which deletes the current selection and makes a new sound with that data as its contents;
-<b>append-selection</b> which appends a copy of the current selection at the end of
-the current sound; <b>replace-with-selection</b> which puts a copy of the current selection
-at the cursor; and <b>deselect-all</b> which unselects everything.
-</p>
+</table>
 
-<p>
-new-icons.scm provides all the xpm icon definitions used to draw the icon bar at
-the bottom of the Snd window (<b>icon-save-as</b>, and so on).
-</p>
-
-<p>
-special-menu.scm defines the Special menu, added to the top-level menu bar.
-It has entries for "Append file", "MIDI to WAV" (using timidity),
-"Record input channel", "Play panned", "Save as MP3" (using bladeenc),
-"Save as OGG" (using oggenc), and "Explode SF2" (using the code explode-sf2
-in examp.scm) -- the latter finds the samples in a SoundFont 2 file, and
-writes each as a separate sound (AIFC) file.
-</p>
-
-<p>
-mix-menu.scm adds a top-level "Mix/Track" menu; it has entries for
-"Delete mix", "Snap mix to beat", "Assign all tracks", "Delete track",
-"Play track",  "Reverse track", "Set track amplitude", "Set track speed",
-"Set track tempo", "Transpose track", "Save track", "Colorize tracks",
-and "Delete all mixes and tracks".
-</p>
-
-<p>
-panic.scm adds a brief "Panic Control" top-level menu with two
-entries: "Stop play!" and "Stop all!".
-</p>
-
-<p>
+<p>Associated with these menus is a group of files that change Snd's overall appearance, add a box of
+handy icons, and so on: misc.scm, track-colors.scm, new-buttons.scm, new-backgrounds.scm, and new-icons.scm.
 track-colors.scm defines the color choices for the tracks, based on rgb.scm.
-</p>
-
-<p>
-fft-menu.scm adds an "FFT Edits" top-level menu.  It has entries for
-"FFT notch filter", "FFT squelch", and "Squelch vowels".
-</p>
-
-<p>
+new-icons.scm provides all the xpm icon definitions used to draw the icon bar at
+the bottom of the Snd window.
 new-backgrounds.scm defines some background pictures that can be applied to all the
 Snd widgets: wood, granite, rough, blueish, and smoke.  I think "rough" is the
 default used by misc.scm.
-</p>
-
-<p>
-marks-menu.scm adds a "Marks" top-level menu with entries for "Play between marks",
-"Loop play between marks", "Trim before mark", "Trim behind mark", "Crop around marks",
-"Fit selection to marks", "Define selection by marks", "Mark sync", "Mark sample
-loop points", "Show loop editor" (the associated dialog is not really functional
-yet), "Delete all marks", and "Explode marks to files" which writes a separate
-file for each set of marks.
-</p>
-
-<p>
 new-buttons.scm builds the menu bar full of icons providing convenient access
 to things like Zoom, and Quit.
 </p>
+
+<p>
+misc.scm loads these menus and interface improvements, adds several sound file extensions,
+makes sure all the widget backgrounds
+reflect the current background choice (metal, granite, wood, etc), changes the popup menu colors,
+adds some hook functions for mpeg files etc,
+and
+includes a number of options such as show-disk-space.
+It then adds these menu items:
+</p>
+<pre>
+  File:Delete                 ; delete the selected file
+  File:Rename                 ; rename the selected file
+  Edit:Append selection       ; append selection to end of current sound
+  Edit:Replace with selection ; put copy of selection at cursor
+</pre>
+
+<p>I think Dave expects you to customize this to suit yourself, perhaps even moving the stuff
+you want to your initialization file.
+</p>
+
+
+<table bgcolor="aliceblue" border=0><tr><td>
+<pre>see also: <a href="extsnd.html#addtomainmenu" onmouseover="return escape('add-to-main-menu and add-to-menu documentation')">add-to-main-menu</a> <a href="#exwithreopenmenu">Reopen menu</a> <a href="#exopenbuffer">Buffers menu</a> <a href="#ladspadoc">Ladspa menu</a> <a href="#popupdoc">Popup menus</a>
+</pre></td>
+</tr></table>
+
+
 <br>
-
-
-
-
 <br>
 <A NAME="mixdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>mix</h2></td></tr></table>
 
@@ -5430,7 +5450,7 @@ to things like Zoom, and Quit.
 
 <!-- delete-all-mixes -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="deleteallmixes">delete-all-mixes</a>
+<a class=def name="deleteallmixes">delete-all-mixes</a>
 </td></tr><tr><td width=60></td><td>
 This removes all mixes (sets all mix amplitudes to 0.0).
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5467,7 +5487,7 @@ This is intended to make it easy to compare renditions with and without a given 
 
 <!-- mix-maxamp -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="mixmaxamp">mix-maxamp</a> <code>id</code>
+<a class=def name="mixmaxamp">mix-maxamp</a> <code>id</code>
 </td></tr><tr><td></td><td>
 mix-maxamp returns the maxamp in the given mix.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5553,7 +5573,7 @@ pan-mix-selection is similar to pan-mix above, but mixes the current selection, 
 
 <!-- pan-mix-vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="panmixvct">pan-mix-vct</A> <code>vct (frame 0) (env 1.0) snd (chn 0)</code>
+<a class=def name="panmixvct">pan-mix-vct</A> <code>vct (frame 0) (env 1.0) snd (chn 0)</code>
 </td></tr><tr><td></td><td>
 pan-mix-vct is similar to pan-mix above, but mixes a vct, rather than a file.
 The vct data represents one channel of sound.
@@ -5562,7 +5582,7 @@ The vct data represents one channel of sound.
 
 <!-- save-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="savemix">save-mix</a> <code>id filename</code>
+<a class=def name="savemix">save-mix</a> <code>id filename</code>
 </td></tr><tr><td></td><td>
 save-mix saves a given mix's data in a file.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5586,7 +5606,7 @@ Reset <a href="extsnd.html#mixreleasehook">mix-release-hook</a> to cancel this a
 
 <!-- delete-all-tracks -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>delete-all-tracks</em>
+<a class=def name="deletealltracks">delete-all-tracks</a>
 </td></tr><tr><td width=60></td><td>
 delete-all-tracks removes all mixes (by setting their amplitudes to 0.0) that have an associated track.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5643,7 +5663,7 @@ If the <i>chan</i> arg is #t, all channels are saved.
 
 <!-- track-maxamp -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="trackmaxamp">track-maxamp</a> <code>id chan</code>
+<a class=def name="trackmaxamp">track-maxamp</a> <code>id chan</code>
 </td></tr><tr><td></td><td>
 track-maxamp returns the maxamp in the given track.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5846,6 +5866,7 @@ than <a href="#finfo">finfo</a> in examp.scm.  If you have the guile-gdbm packag
 its database procedures to associate arbitrary information with files which
 is posted along with the header info:
 </p>
+<!-- main-index |nbdoc:file database -->
 <pre>
   <em class=emdef>nb</em> file note     ; add note to file's info: (nb "test.snd" "test's info")
   <em class=emdef>unb</em> file         ; erase file's info:       (unb "test.snd")
@@ -5866,7 +5887,7 @@ noise.ins has a very long pedigree; I think it dates back to about 1978.  It can
 those all-important whooshing sounds.
 </p>
 <pre>
-    <em class=emdef>fm-noise</em> <code>(startime dur freq0 amp ampfun ampat ampdc
+    <a class=def name="fmnoise">fm-noise</a> <code>(startime dur freq0 amp ampfun ampat ampdc
 	      freq1 glissfun freqat freqdc rfreq0 rfreq1 rfreqfun rfreqat rfreqdc
 	      dev0 dev1 devfun devat devdc
 	      :key (degree 0.0) (distance 1.0) (reverb-amount 0.005))</code>
@@ -6141,7 +6162,7 @@ situations).
 A similar function is:
 </p>
 <pre>
-  <A class=def NAME="exloopbetweenmarks">loop-between-marks</a> mark1 mark2 buffer-size
+  <a class=def name="exloopbetweenmarks">loop-between-marks</a> mark1 mark2 buffer-size
 </pre>
 <p>
 which loops continuously between the two specified marks.
@@ -6920,7 +6941,7 @@ It returns the widget; you can write to it via XmTextFieldSetString.
 
 <!-- add-tooltip -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>add-tooltip</em> <code>widget tip</code>
+<a class=def name="addtooltip">add-tooltip</a> <code>widget tip</code>
 </td></tr><tr><td></td><td>
 add-tooltip adds a tooltip (also known as bubble-help) to a widget.  Once added,
 set the variable with-tooltips to #f to turn it off.
@@ -6973,7 +6994,7 @@ disable-control-panel does away with the control panel.
 
 <!-- display-scanned-synthesis -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="displayscannedsynthesis">display-scanned-synthesis</A> ()
+<a class=def name="displayscannedsynthesis">display-scanned-synthesis</A> ()
 </td></tr><tr><td></td><td>
 display-scanned-synthesis opens a pane for experimenting with
 scanned synthesis developed by Bill Verplank and Max Mathews.
@@ -7002,7 +7023,7 @@ display-widget-tree displays the hierarchy of widgets beneath <i>widget</i>.
 
 <!-- for-each-child -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="foreachchild">for-each-child</a> <code>w func</code>
+<a class=def name="foreachchild">for-each-child</a> <code>w func</code><br>
 <em class=emdef>find-child</em> <code>w name</code>
 </td></tr><tr><td></td><td>
 for-each-child applies <i>func</i> the widget <i>w</i> and to each widget in the hierarchy of widgets below it.
@@ -7066,10 +7087,10 @@ load-font loads a font and returns a handle for it.
 
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
-
+<!-- main-index |makedropsite:drop sites -->
 <!-- make-channel-drop-site -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>make-channel-drop-site</em> <code>snd chn</code><br>
+<A class=def NAME="makedropsite">make-channel-drop-site</A> <code>snd chn</code><br>
 <em class=emdef>set-channel-drop</em> <code>drop snd chn</code>
 </td></tr><tr><td></td><td>
 make-channel-drop-site shows how to add a drop site panel to a channel.  
@@ -7109,10 +7130,10 @@ amount in the reverberator (affecting all the comb filter scalers), and <i>rever
 the lowpass filter coefficient in the reverberator. 
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
-
+<!-- main-index |makelevelmeter:level meters -->
 <!-- make-level-meter -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>make-level-meter</em> <code>parent width height args :optional (resizable #t)</code><br>
+<A class=def NAME="makelevelmeter">make-level-meter</A> <code>parent width height args :optional (resizable #t)</code><br>
 <em class=emdef>with-level-meters</em> <code>n</code>
 <em class=emdef>display-level</em> <code>meter-data</code>
 </td></tr><tr><td></td><td>
@@ -7129,7 +7150,7 @@ in the respective meter.
 
 <!-- make-pixmap -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>make-pixmap</em> <code>widget strs</code>
+<a class=def name="makepixmap">make-pixmap</a> <code>widget strs</code>
 </td></tr><tr><td></td><td>
 make-pixmap turns an XPM-style description into pixmap.  Briefly an XPM pixmap description
 is an array of strings; the first gives the size in pixels of the pixmap, and the number of colors;
@@ -7307,7 +7328,7 @@ show-all-atoms displays all current X atom names (there are several hundred of t
 
 <!-- show-disk-space -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="showdiskspace">show-disk-space</A>
+<a class=def name="showdiskspace">show-disk-space</A>
 </td></tr><tr><td></td><td>
 show-disk-space adds a label in the
 minibuffer area which shows the current amount of disk space available
