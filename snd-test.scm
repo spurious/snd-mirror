@@ -44097,6 +44097,7 @@ EDITS: 1
 			  '(0 0 25 1 75 1 100 0) .75 1.0 0 0 0 0 1 0 0 220 
 			  '(0 0 25 1 75 1 100 0) 0 0 0 0 
 			  '(0 0 100 0) 0 0 0 0 '(0 0 100 0))
+		  (clm-expsrc 14.75 4 "oboe.snd" 2.0 1.0 1.0)
 		  (scratch 15.0 "now.snd" 1.5 '(0.0 .5 .25 1.0))
 		  (two-tab 15 1 440 .1)
 		  (exp-snd "fyow.snd" 15 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.05)
@@ -44170,6 +44171,13 @@ EDITS: 1
 		(fneq (cadr mxs) 0.664947509765625))
 	    (snd-display ";4->2(2) fullmix: ~A" mxs))
 	(close-sound ind))
+
+      (with-sound (:channels 2 :reverb nrev) 
+	(fullmix "pistol.snd" 0.0 2.0 0.25 #f 2.0 0.1)
+	(fullmix "pistol.snd" 1.0 2.0 0.25 0.2 2.0 0.1)
+	(fullmix "2a.snd" #f #f #f '((0.5 0.0) (0.0 0.75)))
+	(fullmix "oboe.snd" #f #f #f (list (list (list 0 0 1 1 2 0) 0.5)))
+	(fullmix "oboe.snd" 3 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
 
       (if (file-exists? "with-mix.snd") (delete-file "with-mix.snd"))
       (with-sound () (with-mix () "with-mix" 0 (fm-violin 0 .1 440 .1)))
@@ -47525,7 +47533,7 @@ EDITS: 1
 			(set! (selected-sound) curind)
 			(click-event at-end-button 1 0 0 0) (force-event)
 			(click-button insert-button)
-			(if (not (= (edit-position curind 0) (1+ edpos))) (snd-display ";vf insert edpos: ~A" edpos (edit-position curind 0)))
+			(if (not (= (edit-position curind 0) (1+ edpos))) (snd-display ";vf insert edpos: ~A ~A" edpos (edit-position curind 0)))
 			(if (not (= (car (list-ref (edit-tree curind 0 (1+ edpos)) (1+ edpos))) end))
 			    (snd-display ";insert at end: ~A ~A" end (edit-tree curind 0 (1+ edpos))))
 			(revert-sound curind)

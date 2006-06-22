@@ -1,17 +1,6 @@
 <html>
 
-<!-- TODO: these need work: 
-  edit123 
-  infsnd 
-  ladspa 
-  maxf 
-  rmsgain 
-  rtex 
-  rtio 
-  strad
-  ws
--->
-
+<!-- TODO: these need work: edit123 infsnd ladspa maxf rmsgain rtex strad ws -->
 <!-- TODO: check pd-*.scm snd-hobbit.scm (rb/fs?) -->
 <!-- SOMEDAY: more mouseovers -->
 
@@ -552,8 +541,6 @@ this is really ancient stuff.
 <tr><td colspan=2 height=16></td></tr>
 
 
-<!-- TODO: clm-expsrc is not in snd-test! -->
-
 <!-- clm-expsrc -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="clmexpsrc">clm-expsrc</A> <code>(beg dur input-file exp-ratio src-ratio amp :optional rev start-in-file)</code>
@@ -821,7 +808,6 @@ Now we need filters!
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
-<!-- TODO: fullmix with breakpoints in snd-test.scm -->
 
 <!-- gong -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -6477,12 +6463,13 @@ See rt.tex for complete details.
   <A class=def NAME="exshowdraggableinputfft">show-draggable-input-fft</a> :optional (in-sys 0)
   <em class=emdef>in-out</em> func in-sys out-sys
 </pre>
-<p>These three functions show how to read incoming data (from the adc),
+<p>These functions show how to read incoming data (from the adc),
 write data (to the dac), and interpose a function while reading and
-writing data.  There are several example functions (for the "func" argument) that filter the data or
-change its amplitude. <b>show-input-fft</b> displays the input data's
-spectrum.  <b>show-draggable-input-fft</b> is the same, but the X axis
+writing data.  There are several example functions (for the <i>func</i> argument) that filter the data or
+change its amplitude. show-input-fft displays the input data's
+spectrum.  show-draggable-input-fft is the same, but the X axis
 (the frequency axis in this case) is draggable, as in Snd's FFT display.
+See <a href="#oscopedoc">oscope</a> for a fancier version of the fft stuff.
 </p>
 <p>Here's some info from Michael Scholz about the Ruby version of rtio:
 </p>
@@ -6497,7 +6484,9 @@ rt.amplify(1.5).in_out(1, 0)
 rt.lp.in_out
 rt.hp(1150).in_out
 rt.close
-</pre></td></tr></table>
+</pre>
+</td></tr></table>
+
 
 <br>
 <br>

@@ -500,12 +500,10 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+23-Jun:  Snd 8.2.\n\
 12-Jun:  fmviolin.clm.\n\
 6-Jun:   changed after-apply-hook to after-apply-controls-hook.\n\
 2-Jun:   removed mus-make-error.\n\
-25-May:  Walter Zorn's wz_tooltip.js to spruce up the documentation.\n\
-7-May:   Snd 8.1.\n\
-21-Apr:  many .fs files thanks to Mike Scholz (removed obsolete gfm directory).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

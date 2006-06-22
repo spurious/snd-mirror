@@ -1,5 +1,6 @@
 Snd change log
 
+  23-Jun:    Snd 8.2.
   12-Jun:    fmviolin.clm.
   6-Jun:     changed after-apply-hook to after-apply-controls-hook.
   2-Jun:     removed mus-make-error.

@@ -362,7 +362,7 @@ make xm
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit -l snd-test.rb
+# ./snd -noinit -l snd-test.rb -- libxm problem here stops entire sequence
 make allclean
 echo ' CC=g++ CFLAGS="-Wall" --with-ruby '
 ./configure --quiet CC=g++ CFLAGS="-Wall" --with-ruby
@@ -374,7 +374,7 @@ echo ' CFLAGS="-Wall" --with-ruby --with-static-xm --with-gl --enable-snd-debug 
 make
 echo ' '
 echo ' '
-./snd --version
+./snd -noinit -l snd-test.rb
 date
 echo ' -------------------------------- ruby test (Gtk) -------------------------------- '
 make allclean

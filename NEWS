@@ -1,36 +1,21 @@
-Snd 8.1
+Snd 8.2
 
-added a bunch of Forth files (*.fs) thanks to Mike Scholz. 
+Most of the effort in this version of Snd went into the documentation.
 
-many more improvements from Kjetil and Mike.
+added sndins improvements thanks to Mike.
 
-Gauche support in Snd -- this is a Scheme extension language like Guile.
+      fmviolin.clm (fm-violin demo from CLM)
 
-     http://www.shiro.dreamhost.com/scheme/gauche/index.html
+      'clear' and 'revert' buttons in the preferences dialog
 
-  use --with-gauche in configure.  There are a number of small differences
-  between Gauche and Guile.  
+      normalize-envelope in env.scm.
 
-    added gauche-optargs.scm to get define* (but not defmacro*)
-          gauche-format.scm to get ~{ and others, but it's semi-broken
-          block comments in '#| |#' to the Guile Snd to be compatible with Gauche (and CL).  
-    removed ws-interrupt? arg (no defmacro* currently in Gauche version).
-    added define+ and definstrument+ to get around lack of documentation string support in Gauche.
-    changed all '#! !#' to "#| |#'
-    changed all '#:' to ':'
-    "run" is a no-op in Gauche -- local variables aren't (currently) accessible in this context.
+removed mus-make-error.
 
-clisp support in clm.  Due to Clisp's way of macroexpanding "loop", the
-  loop macro can't be used within "run" (this affects Clisp users only of course).  
-  I changed a bunch of such cases to use "do". Also, "run*" doesn't currently work in
-  the Clisp clm.
+changed (the name of) after-apply-hook to after-apply-controls-hook
 
-changed show-listener slightly; if optional arg is #f, listener is not created.
 
-removed envelope-base.
+Checked: gtk 2.9.0|1|2|3, fth 0.8.18|19|20|21|22
 
-clm-load (ws.scm) for cm.
+Thanks: Pete Thomas, Esbien Stieb, Mike Scholz
 
-checked: sbcl 0.9.11|12, gsl 1.8, gtk 2.8.17, fftw 3.1.1, fth up to 0.8.16
-
-with much help from: Michael Klingbeil, Kjetil, Mike.
