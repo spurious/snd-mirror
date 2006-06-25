@@ -113,7 +113,9 @@
     (vct-scale! im1 fftscale)
     (let ((rl2 (make-vct (* n fftlen)))
 	  (im2 (make-vct (* n fftlen))))
-      (do ((i 0 (+ i 1)) ; lower half
+      (vct-set! rl2 0 (vct-ref rl1 0))
+      (vct-set! im2 0 (vct-ref im1 0))
+      (do ((i 1 (+ i 1)) ; lower half
 	   (k (1- fftlen) (1- k))
 	   (j (1- (* n fftlen)) (1- j)))
 	  ((= i (/ fftlen 2)))
@@ -2052,3 +2054,46 @@ and replaces it with the spectrum given in coeffs"
     (set-samples 0 (1- len) tempfile snd chn #t "linear-src" 0 #f #t)
     ;; first #t=truncate to new length, #f=at current edpos, #t=auto delete temp file
     ))
+
+#|
+;;; ----------------
+;;; 
+;;; just for my amusement -- apply a linear-fractional or Mobius transformation to the fft data (treated as complex)
+;;; 
+;;; (automorph 1 0 0 1) is the identity
+;;; (automorph 2 0 0 1) scales by 2
+;;; (automorph (exp (* 0.5 pi (make-rectangular 0 1))) 0 0 1) rotates 90 degrees (so 4 times = identity)
+
+(define* (automorph a b c d :optional snd chn)
+  (let* ((len (frames snd chn))
+	 (pow2 (inexact->exact (ceiling (/ (log len) (log 2)))))
+	 (fftlen (inexact->exact (expt 2 pow2)))
+	 (fftscale (/ 1.0 fftlen))
+	 (rl (channel->vct 0 fftlen snd chn))
+	 (im (make-vct fftlen)))
+    (fft rl im 1)
+    (vct-scale! rl fftscale)
+    (vct-scale! im fftscale)
+    ;; handle 0 case by itself
+    (let* ((c1 (make-rectangular (vct-ref rl 0) (vct-ref im 0)))
+	   (val (/ (+ (* a c1) b)
+		   (+ (* c c1) d)))
+	   (rval (real-part val))
+	   (ival (imag-part val)))
+      (vct-set! rl 0 rval)
+      (vct-set! im 0 ival))
+    (do ((i 1 (+ i 1))
+	 (k (1- fftlen) (1- k)))
+	((= i (/ fftlen 2)))
+      (let* ((c1 (make-rectangular (vct-ref rl i) (vct-ref im i)))
+	     (val (/ (+ (* a c1) b)      ; (az + b) / (cz + d)
+		     (+ (* c c1) d)))
+	     (rval (real-part val))
+	     (ival (imag-part val)))
+	(vct-set! rl i rval)
+	(vct-set! im i ival)
+	(vct-set! rl k rval)
+	(vct-set! im k (- ival))))
+    (fft rl im -1)
+    (vct->channel rl 0 len snd chn #f (format #f "automorph ~A ~A ~A ~A" a b c d))))
+|#

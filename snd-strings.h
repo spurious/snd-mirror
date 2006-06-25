@@ -229,6 +229,7 @@
 #define S_gc_on                         "gc-on"
 #define S_goto_listener_end             "goto-listener-end"
 #define S_graph                         "graph"
+#define S_graph_as_complex              "graph-as-complex"
 #define S_graph_as_sonogram             "graph-as-sonogram"
 #define S_graph_as_spectrogram          "graph-as-spectrogram"
 #define S_graph_as_wavogram             "graph-as-wavogram"

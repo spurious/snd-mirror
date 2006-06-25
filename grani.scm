@@ -23,10 +23,6 @@
 ;;; out-scaler
 ;;;   scaler for the converted values
 
-
-;;; TODO: optimize for run, add all examples to snd-test
-
-
 (use-modules (ice-9 format) (ice-9 optargs))
 (provide 'snd-grani.scm)
 

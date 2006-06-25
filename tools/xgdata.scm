@@ -5897,7 +5897,7 @@
 (CFNC-290 "guint8* gtk_text_buffer_serialize GtkTextBuffer* register_buffer GtkTextBuffer* content_buffer GdkAtom format GtkTextIter* start GtkTextIter* end gsize* [length]")
 (CFNC-290 "gboolean gtk_text_buffer_deserialize GtkTextBuffer* register_buffer GtkTextBuffer* content_buffer GdkAtom format GtkTextIter* iter guint8* data gsize length GError** [error]")
 
-
+#!
 ;;; 29x just collected for now, not output to xg.c
 (CINT-29x "GTK_MESSAGE_OTHER" "GtkMessageType")
 ;(CFNC-29x "void gtk_message_dialog_set_image GtkMessageDialog* dialog GtkWidget* image")
@@ -5905,37 +5905,27 @@
 
 ;;; SOMEDAY: include all the printer support
 
-#!
-2.9.2:
-
-+ gboolean              gtk_status_icon_get_geometry       (GtkStatusIcon      *status_icon,
-+ 							  GdkScreen         **screen,
-+ 							  GdkRectangle       *area,
-+ 							  GtkOrientation     *orientation);
+;; 2.9.2:
+(CFNC-29x "gboolean gtk_status_icon_get_geometry GtkStatusIcon* status_icon GdkScreen** [screen] GdkRectangle* [area] GtkOrientation* [orientation]")
 (CFNC "gboolean gdk_color_parse gchar* spec GdkColor* color") -- need both versions somehow
 
-2.9.3:
-+ typedef enum {
-+   GTK_TREE_VIEW_GRID_LINES_NONE,
-+   GTK_TREE_VIEW_GRID_LINES_HORIZONTAL,
-+   GTK_TREE_VIEW_GRID_LINES_VERTICAL,
-+   GTK_TREE_VIEW_GRID_LINES_BOTH
-+ } GtkTreeViewGridLines;
-+ 
-changed args
-  void gtk_notebook_set_window_creation_hook (GtkNotebookWindowCreationFunc  func,
-! 					    gpointer                       data,
-!                                             GDestroyNotify                 destroy);
-rtn type
-! gboolean      gtk_tree_model_filter_convert_child_iter_to_iter (GtkTreeModelFilter           *filter,
-                                                                  GtkTreeIter                  *filter_iter,
-                                                                  GtkTreeIter                  *child_iter);
-+ GtkTreeViewGridLines        gtk_tree_view_get_grid_lines         (GtkTreeView                *tree_view);
-+ void                        gtk_tree_view_set_grid_lines         (GtkTreeView                *tree_view,
-+ 								  GtkTreeViewGridLines        grid_lines);
-+ gboolean                    gtk_tree_view_get_enable_tree_lines  (GtkTreeView                *tree_view);
-+ void                        gtk_tree_view_set_enable_tree_lines  (GtkTreeView                *tree_view,
-+ 								  gboolean                    enabled);
-  
+;; 2.9.3:
+(CINT-29x "GTK_TREE_VIEW_GRID_LINES_NONE" "GtkTreeViewGridLines")
+(CINT-29x "GTK_TREE_VIEW_GRID_LINES_HORIZONTAL" "GtkTreeViewGridLines")
+(CINT-29x "GTK_TREE_VIEW_GRID_LINES_VERTICAL" "GtkTreeViewGridLines")
+(CINT-29x "GTK_TREE_VIEW_GRID_LINES_BOTH" "GtkTreeViewGridLines")
 
+;;; changed args
+(CFNC-29x "void gtk_notebook_set_window_creation_hook GtkNotebookWindowCreationFunc func gpointer data GDestroyNotify destroy")
+;;; rtn type
+(CFNC-29x "gboolean gtk_tree_model_filter_convert_child_iter_to_iter GtkTreeModelFilter* filter GtkTreeIter* filter_iter GtkTreeIter* child_iter")
+
+(CFNC-29x "GtkTreeViewGridLines gtk_tree_view_get_grid_lines GtkTreeView* tree_view")
+(CFNC-29x "void gtk_tree_view_set_grid_lines GtkTreeView* tree_view GtkTreeViewGridLines grid_lines")
+(CFNC-29x "gboolean gtk_tree_view_get_enable_tree_lines GtkTreeView* tree_view")
+(CFNC-29x "void gtk_tree_view_set_enable_tree_lines GtkTreeView* tree_view gboolean enabled")
+  
+;; 2.9.4:
+(CFNC-29x "void gtk_label_set_line_wrap_mode GtkLabel* label PangoWrapMode wrap_mode")
+(CFNC-29x "PangoWrapMode gtk_label_get_line_wrap_mode GtkLabel* label")
 !#

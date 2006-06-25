@@ -381,8 +381,6 @@ simply paste the with-sound call into the listener.  It will automatically write
 new sound file and open it in Snd.
 </p>
 
-<!-- TODO: some way for ws auto-open to set initial dur to full sound? -->
-
 <table border=0 cellspacing=0 hspace=20>
 
 <!-- anoi -->
@@ -8414,6 +8412,60 @@ end
 
 <br>
 <br>
+<!-- TODO: ruby examples of with-sound (how are forth ins defined/called? -- clm.fs) definstrument doc? get rid of def-clm-struct? -->
+<!--
+\        ' resflt-test :play #f :channels 2 with-sound
+
+\ ' inst-test with-sound
+event: inst-test ( -- )
+  0.0 1.0 1.0 0.2 '( 0 0 50 1 100 0 ) $" oboe.snd" src-simp
+  1.2 1.0 40.0 1.0 $" oboe.snd" hello-dentist
+  2.4 1.0 vct( 0.5 0.2 0.1 0.05 0 0 0 0 ) $" fyow.snd" 1.0 conv-simp
+  3.6 1.0 $" pistol.snd" $" fyow.snd" 0.2 conv-simp
+;event
+
+
+with_sound() do
+  clm_mix(with_sound(:output, "hiho.snd") do
+            fm_violin(0, 1, 440, 0.1)
+          end.output, :scale, 0.5)
+end
+
+with_sound() do
+  with_mix "s1", %Q{
+  sound_let(lambda do fm_violin(0, 1, 440, 0.1) end) do |tmp|
+    clm_mix(tmp)
+  end
+  }
+end
+
+with_sound(:verbose, true) do
+  with_mix "s6", %Q{
+  sound_let(lambda do fm_violin(0, 1, 440, 0.1) end,
+            [:reverb, :nrev, lambda do clm_mix("oboe.snd") end]) do |tmp, tmp1|
+    clm_mix(tmp1)
+    clm_mix(tmp, :scale, 0.2, :output_frame, seconds2samples(1))
+  end
+  fm_violin(0.5, 0.1, 330, 0.1)
+  }
+end
+
+with_sound(:verbose, true) do
+  sound_let(lambda do
+                with_mix "s7", 0, %Q{
+                  sound_let(lambda do fm_violin(0, 1, 440, 0.1) end,
+                            lambda do clm_mix("oboe.snd") end) do |tmp, tmp1|
+                    clm_mix(tmp1)
+                    clm_mix(tmp, :output_frame, @srate)
+                  end
+                  fm_violin(0.5, 0.1, 330, 0.1)
+                }
+              end) do |tmp0|
+    clm_mix(tmp0, :scale, 0.5)
+  end
+end
+-->
+
 <A NAME="wsdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>ws</h2></td></tr></table>
 <p>
 <i>with-sound</i> is the primary sound producing macro in CLM (in a sense, it is CLM's user-interface).
@@ -8529,6 +8581,18 @@ mus-mix with *output*:
 </pre>
 <p>with-sound returns the output file name. If a previous file of the same name
 is currently open, it is closed before the new version is opened.
+To display the entire sound automatically (independent of <a href="extsnd.html#afteropenhook">after-open-hook</a>),
+use <b>with-full-sound</b>.  It is:
+</p>
+<pre>
+    (defmacro with-full-sound (args . body)
+      `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
+         (set! (x-bounds *snd-opened-sound*) (list 0.0 (/ (frames *snd-opened-sound*) (srate *snd-opened-sound*))))
+         snd))
+</pre>
+<p>Since with-sound returns the new sound's file name, we save that, get the new sound's index (<a href="extsnd.html#sndopenedsound">*snd-opened-sound*</a>),
+and set the <a href="extsnd.html#xbounds">x-bounds</a> to display the full sound, then return the file name.  You could obviously customize this any way
+you like.
 </p>
 <p>ws.scm also has a version of <a href="clm.html#def-clm-struct">def-clm-struct</a>,
 <a href="clm.html#sound-let">sound-let</a>, and <a href="clm.html#mix-and-with-mix">with-mix</a>.  with-sounds and sound-lets can be nested --

@@ -219,7 +219,6 @@ returning you to the true top-level."
 (defmacro definstrument+ (args . body)
   `(definstrument ,args ,@(cdr body)))
 
-
 ;;; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
 
 (define* (with-sound-helper thunk 
@@ -402,6 +401,11 @@ returning you to the true top-level."
 
 (defmacro with-sound (args . body)
   `(with-sound-helper (lambda () ,@body) ,@args))
+
+(defmacro with-full-sound (args . body)
+  `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
+     (set! (x-bounds *snd-opened-sound*) (list 0.0 (/ (frames *snd-opened-sound*) (srate *snd-opened-sound*))))
+     snd))
 
 (defmacro with-temp-sound (args . body)
   ;; with-sound but using tempnam for output (can be over-ridden by explicit :output) and does not open result in Snd
