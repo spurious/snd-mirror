@@ -2261,6 +2261,7 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool us
 	  float x1, y1;
 	  unsigned short r, g, b;
 	  Float val00, val01, val11, val10;
+
 	  glBegin(GL_POLYGON);
 	  x1 = x0 + xincr;
 	  y1 = y0 + yincr;

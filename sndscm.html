@@ -1,6 +1,7 @@
 <html>
 
 <!-- TODO: these need work: edit123 infsnd ladspa maxf rmsgain rtex strad ws -->
+<!--     rmsgain: clm/tb.ins uses balance gen but ... see balance.html -->
 <!-- TODO: check pd-*.scm snd-hobbit.scm (rb/fs?) -->
 <!-- SOMEDAY: more mouseovers -->
 
@@ -1621,10 +1622,8 @@ and <a href="#dspdocscanned">scanned synthesis</a>.
 </p>
 
 <p><small><blockquote>If you're new to DSP, I recommend Lyons' "Understanding Digital Signal Processing" and Steiglitz, "A
-Digital Signal Processing Primer"; Julius Smith's
-<A HREF="http://ccrma.stanford.edu/~jos">home page</a> has a ton of good stuff; if you insist on a book,
-check out his "Mathematics of
-the Discrete Fourier Transform"; there are many good books
+Digital Signal Processing Primer"; 
+there are many good books
 on advanced calculus -- I especially liked Hildebrand, "Advanced Calculus for Applications", but it may
 be out of print (this was about 25 years ago, I think); a great book on complex analysis is Needham, "Visual
 Complex Analysis"; Poole's "Linear Algebra" is a very straightforward
@@ -8604,6 +8603,7 @@ and access such a list, but in Snd's run macro, it also provides type declaratio
 <pre>
     (def-clm-struct hiho i x (s "hiho") (ii 3 :type int) (xx 0.0 :type float))
 </pre>
+<!-- TODO: does this example work? -->
 <p>defines a structure type ("hiho") with 5 fields.  "hiho-s" defaults to the
 string "hiho", "hiho-ii" defaults to 3, and declares that its type will always
 be int (so it can be used without restriction in run), and so on.

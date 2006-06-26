@@ -982,7 +982,34 @@ mus_any *mus_make_oscil(Float freq, Float phase)
 }
 
 
+/* PERHAPS: add feedback oscil:
+   
+(def-optkey-fun (make-feedback-oscil (frequency 440.0) (initial-phase 0.0) (index 2.0))
+  (list (make-oscil :frequency frequency :initial-phase initial-phase) index 0.0))
+
+(define* (feedback-oscil gen :optional fb)
+  (let* ((osc (car gen))
+	 (index (cadr gen))
+	 (prev (caddr gen))
+	 (val (oscil osc 0.0 (* index prev))))
+    (list-set! gen 2 (* 0.5 (+ prev val)))
+    val))
+
+(let ((gen (make-feedback-oscil 440.0 0.0 1.0))) ; reasonable sawtooth
+  (map-channel (lambda (y) (* .2 (feedback-oscil gen)))))
+
+(let ((gen0 (make-feedback-oscil 440.0 0.0 1.0)) ; sloppy square wave
+      (gen1 (make-feedback-oscil 440.0 pi 1.0)))
+  (map-channel (lambda (y) (* .1 (- (feedback-oscil gen0) (feedback-oscil gen1))))))
+
+  The (* 0.5 (+ a b)) could be a one-zero filter, or just do it by hand
+  Should fm be carried out?
+*/
+
+
 /* ---------------- sum-of-cosines ---------------- */
+
+/* PERHAPS: other such formulae (dsp.scm) */
 
 typedef struct {
   mus_any_class *core;
@@ -1331,6 +1358,7 @@ mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /
  return((mus_any *)gen);
 }
 
+/* PERHAPS: some way to access I0 case (dsp.scm) */
 
 
 /*---------------- sine-summation ---------------- */
@@ -2177,6 +2205,8 @@ bool mus_wave_train_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_WAV
 
 
 /* ---------------- delay, comb, notch, all-pass, average ---------------- */
+
+/* PERHAPS: running-max? (dsp.scm), fcomb|notch? */
 
 typedef struct {
   mus_any_class *core;
@@ -3720,6 +3750,13 @@ mus_any *mus_make_formant(Float radius, Float frequency, Float gain)
 
 /* ---------------- filter ---------------- */
 
+/* PERHAPS: biquad -- could just be a pair of macros:
+  #define mus_biquad(Filter, Input) mus_filter(Filter, Input)
+  (define (make-biquad a0 a1 a2 b1 b2) (make-filter 3 (vct a0 a1 a2) (vct 0.0 b1 b2)))
+*/
+
+/* PERHAPS: volterra filter (dsp.scm) */
+
 typedef struct {
   mus_any_class *core;
   int order, allocated_size;
@@ -4149,6 +4186,8 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 
 
 /* ---------------- env ---------------- */
+
+/* PERHAPS: filtered-env (examp.scm) */
 
 /* although a pain, this way of doing env is 5 times faster than a table lookup,
  * in the linear segment and step cases.  In the exponential case, it is
@@ -5206,6 +5245,7 @@ mus_any *mus_mixer_offset(mus_any *uf1, Float offset, mus_any *ures)
   return((mus_any *)res);
 }
 
+/* PERHAPS: mixer-invert (from mixer.scm) */
 
 
 /* ---------------- input/output ---------------- */
