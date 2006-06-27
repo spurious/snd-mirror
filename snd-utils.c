@@ -301,7 +301,6 @@ char *vstr(const char *format, va_list ap)
 {
   char *buf;
   int len;
-#if HAVE_VPRINTF
   len = snd_strlen(format) + PRINT_BUFFER_SIZE;
   buf = (char *)CALLOC(len, sizeof(char));
  #if HAVE_VSNPRINTF
@@ -309,15 +308,6 @@ char *vstr(const char *format, va_list ap)
  #else
   vsprintf(buf, format, ap);
  #endif
-#else
-  len = snd_strlen(format) + PRINT_BUFFER_SIZE;
-  buf = (char *)CALLOC(len, sizeof(char));
- #if HAVE_SNPRINTF
-  snprintf(buf, len, "%s...[you need vprintf]", format);
- #else
-  sprintf(buf, "%s...[you need vprintf]", format);
- #endif
-#endif
   return(buf);
 }
 

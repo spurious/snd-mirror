@@ -464,8 +464,8 @@ char *version_info(void)
 #ifdef SND_HOST
 	  "\n    host: ", SND_HOST,
 #endif
-#ifdef CONFIGURE_PROG
-	  "\n    configured via: ", CONFIGURE_PROG, " ", CONFIGURE_ARGS,
+#ifdef CONFIGURE_ARGS
+	  "\n    configured with: ", CONFIGURE_ARGS,
 	  "\n",
 #endif
 	  NULL);

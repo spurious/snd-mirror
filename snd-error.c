@@ -170,7 +170,6 @@ void snd_warning(char *format, ...)
   va_list ap;
   if (snd_error_buffer == NULL) 
     snd_error_buffer = (char *)CALLOC(SND_ERROR_BUFFER_SIZE, sizeof(char));
-#if HAVE_VPRINTF
   va_start(ap, format);
 #if HAVE_VSNPRINTF
   vsnprintf(snd_error_buffer, SND_ERROR_BUFFER_SIZE, format, ap);
@@ -179,9 +178,6 @@ void snd_warning(char *format, ...)
 #endif
   va_end(ap);
   snd_warning_1(snd_error_buffer);
-#else
-  fprintf(stderr, "warning...");
-#endif
 }
 
 void snd_warning_without_format(const char *msg)
@@ -191,7 +187,6 @@ void snd_warning_without_format(const char *msg)
 
 void snd_error(char *format, ...)
 {
-#if HAVE_VPRINTF
   va_list ap;
   if (snd_error_buffer == NULL) 
     snd_error_buffer = (char *)CALLOC(SND_ERROR_BUFFER_SIZE, sizeof(char));
@@ -203,10 +198,6 @@ void snd_error(char *format, ...)
 #endif
   va_end(ap);
   snd_error_1(snd_error_buffer, true);
-#else
-  fprintf(stderr, "error...");
-  fputc('\n', stderr);
-#endif
 }
 
 void snd_error_without_redirection_or_hook(const char *msg)

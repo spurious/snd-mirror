@@ -160,11 +160,8 @@
 	"GtkMenuBar*" "GtkTranslateFunc" "GtkMenuPositionFunc" "GtkTreeIterCompareFunc" "GtkTreeSelectionFunc"
 	"GtkDestroyNotify"
 
-	"GtkClipboardRichTextReceivedFunc" "GtkNotebookWindowCreationFunc" "GtkAssistant*" "GtkAssistantPageFunc"
-	"GtkLinkButton*" "GtkRecentChooser*" "GtkRecentSortFunc" "gsize*" "GtkRecentChooserMenu*" "GtkRecentFilterFunc"
-	"GtkRecentFilterInfo*" "GtkRecentData*" "GtkTextBufferSerializeFunc" "GtkTextBufferDeserializeFunc" 
-	
-	"guint8*" "GtkEntry*"
+	"GtkAssistant*" "GtkRecentChooser*" "GtkRecentChooserMenu*"
+	"GtkTextBufferSerializeFunc" "GtkTextBufferDeserializeFunc" 
 	))
 
 (define no-xen-p 
@@ -178,7 +175,7 @@
 	"GdkOverlapType" "GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "gint16" "gint8" "gshort" "guint8" "lambda" 
 
-	"time_t" "GtkWindowGroup*" "GdkAtom*"
+	"time_t" "GtkWindowGroup*" 
 	))
 
 (define no-xen-to-c 
@@ -192,7 +189,7 @@
 	"GdkOverlapType" "GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "etc" "gint16" "gshort"
 
-	"GtkWindowGroup*" "time_t" "GdkAtom*"
+	"GtkWindowGroup*" "time_t" 
 	))
 
 (define (cadr-str data)
@@ -613,7 +610,7 @@
 			     "search_position"
 			     (parse-args "GtkTreeView* tree_view GtkWidget* search_dialog lambda_data func_data" 'callback-290)
 			     'permanent)
-		       (list 'GtkAssistantPage
+		       (list 'GtkAssistantPageFunc
 			     "gint"
 			     "page_func"
 			     (parse-args "gint current_page lambda_data func_data" 'callback-290)
@@ -623,11 +620,11 @@
 			     "link_button_uri"
 			     (parse-args "GtkLinkButton* button gchar* link lambda_data func_data" 'callback-290)
 			     'permanent)
-;		       (list 'GtkRecentSortFunc
-;			     "gint"
-;			     "recent_sort"
-;			     (parse-args "GetRecentInfo* a GtkRecentInfo* b lambda_data func_data" 'callback-290)
-;			     'permanent)
+		       (list 'GtkRecentSortFunc
+			     "gint"
+			     "recent_sort"
+			     (parse-args "GtkRecentInfo* a GtkRecentInfo* b lambda_data func_data" 'callback-290)
+			     'permanent)
 		       ))
 
 
@@ -1826,7 +1823,10 @@
 (hey "#define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr~%")
 (hey "#define XEN_lambda_data_P(Arg) 1~%")
 
+;; needed if func returns func of this type
+(hey "#define C_TO_XEN_GtkTreeViewSearchPositionFunc(Arg) WRAP_FOR_XEN(\"GtkTreeViewSearchPositionFunc\", Arg)~%")
 (hey "#define C_TO_XEN_GtkTreeViewSearchEqualFunc(Arg) WRAP_FOR_XEN(\"GtkTreeViewSearchEqualFunc\", Arg)~%")
+(hey "#define C_TO_XEN_GtkLinkButtonUriFunc(Arg) WRAP_FOR_XEN(\"GtkLinkButtonUriFunc\", Arg)~%")
 ;(hey "#define C_TO_XEN_GtkTreeIterCompareFunc(Arg) WRAP_FOR_XEN(\"GtkTreeViewSearchEqualFunc\", Arg)~%")
 ;(hey "#define C_TO_XEN_GtkTreeSelectionFunc(Arg) WRAP_FOR_XEN(\"GtkTreeSelectionFunc\", Arg)~%")
 ;(hey "#define C_TO_XEN_GtkMenuPositionFunc(Arg) WRAP_FOR_XEN(\"GtkMenuPositionFunc\", Arg)~%")
@@ -3344,3 +3344,14 @@
 ;       (display (format #f "~A " (car v)))))
 ; direct-types)
 
+#!
+TODO:
+xg.c: In function 'gxg_gtk_clipboard_request_rich_text':
+xg.c:25580: warning: passing argument 3 of 'gtk_clipboard_request_rich_text' from incompatible pointer type
+xg.c: In function 'gxg_gtk_recent_filter_add_custom':
+xg.c:26549: warning: passing argument 3 of 'gtk_recent_filter_add_custom' from incompatible pointer type
+xg.c: At top level:
+xg.c:1413: warning: 'gxg_search_position' defined but not used
+xg.c:1422: warning: 'gxg_page_func' defined but not used
+xg.c:1430: warning: 'gxg_link_button_uri' defined but not used
+!#

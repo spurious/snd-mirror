@@ -274,8 +274,9 @@ static void define_xm_obj(void)
 #define XEN_GtkClipboardRichTextReceivedFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 5)))
 #define XEN_GtkRecentFilterFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 2)))
 #define XEN_GtkTreeViewSearchPositionFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
-#define XEN_GtkAssistantPage_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 2)))
+#define XEN_GtkAssistantPageFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 2)))
 #define XEN_GtkLinkButtonUriFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
+#define XEN_GtkRecentSortFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
 #endif
 
 #define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)
@@ -325,14 +326,16 @@ static void define_xm_obj(void)
 #define XEN_TO_C_GtkClipboardRichTextReceivedFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_clip_rich_text_received
 #define XEN_TO_C_GtkRecentFilterFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_recent_filter
 #define XEN_TO_C_GtkTreeViewSearchPositionFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_search_position
-#define XEN_TO_C_GtkAssistantPage(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_page_func
+#define XEN_TO_C_GtkAssistantPageFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_page_func
 #define XEN_TO_C_GtkLinkButtonUriFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_link_button_uri
+#define XEN_TO_C_GtkRecentSortFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_recent_sort
 #endif
 
 #define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)
 #define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr
 #define XEN_lambda_data_P(Arg) 1
 #define C_TO_XEN_GtkTreeViewSearchEqualFunc(Arg) WRAP_FOR_XEN("GtkTreeViewSearchEqualFunc", Arg)
+#define C_TO_XEN_GtkLinkButtonUriFunc(Arg) WRAP_FOR_XEN("GtkLinkButtonUriFunc", Arg)
 #define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)
 #define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)
 #define C_TO_XEN_String(Arg) ((Arg != NULL) ? C_TO_XEN_STRING((char *)Arg) : XEN_FALSE)
@@ -380,7 +383,7 @@ XM_TYPE_PTR(GtkTreePath_, GtkTreePath*)
 XM_TYPE_PTR(GtkTreeIter_, GtkTreeIter*)
 XM_TYPE_PTR(GtkClipboard_, GtkClipboard*)
 XM_TYPE_PTR(GtkSelectionData_, GtkSelectionData*)
-XM_TYPE_PTR_2(GdkAtom_, GdkAtom*)
+XM_TYPE_PTR(GdkAtom_, GdkAtom*)
 #define C_TO_XEN_gint(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_gint(Arg) (gint)(XEN_TO_C_INT(Arg))
 #define XEN_gint_P(Arg) XEN_INTEGER_P(Arg)
@@ -393,7 +396,7 @@ XM_TYPE_PTR(GtkCellRenderer_, GtkCellRenderer*)
 XM_TYPE_PTR(GtkTreeSelection_, GtkTreeSelection*)
 XM_TYPE_PTR(GdkPixbuf_, GdkPixbuf*)
 XM_TYPE(GdkAtom, GdkAtom)
-XM_TYPE_PTR_1(guint8_, guint8*)
+XM_TYPE_PTR(guint8_, guint8*)
 #define C_TO_XEN_gsize(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_gsize(Arg) (gsize)(XEN_TO_C_INT(Arg))
 #define XEN_gsize_P(Arg) XEN_INTEGER_P(Arg)
@@ -633,7 +636,7 @@ XM_TYPE_PTR_1(GtkDialog_, GtkDialog*)
 #define XEN_GtkDestDefaults_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GtkTargetList_, GtkTargetList*)
 XM_TYPE_PTR_1(GtkEditable_, GtkEditable*)
-XM_TYPE_PTR_1(GtkEntry_, GtkEntry*)
+XM_TYPE_PTR(GtkEntry_, GtkEntry*)
 XM_TYPE_PTR_1(GtkFileSelection_, GtkFileSelection*)
 XM_TYPE_PTR_1(GtkFixed_, GtkFixed*)
 XM_TYPE_PTR_1(GtkFontSelection_, GtkFontSelection*)
@@ -967,16 +970,15 @@ XM_TYPE_PTR_1(GtkMenuBar_, GtkMenuBar*)
 #endif
 
 #if HAVE_GTK_LINK_BUTTON_NEW
-XM_TYPE_PTR_1(GtkRecentFilterInfo_, GtkRecentFilterInfo*)
-XM_TYPE_PTR_1(GtkLinkButton_, GtkLinkButton*)
-XM_TYPE_1(GtkNotebookWindowCreationFunc, GtkNotebookWindowCreationFunc)
+XM_TYPE_PTR(GtkRecentFilterInfo_, GtkRecentFilterInfo*)
+XM_TYPE_PTR(GtkLinkButton_, GtkLinkButton*)
+XM_TYPE_PTR(GtkRecentInfo_, GtkRecentInfo*)
 #define C_TO_XEN_GtkSensitivityType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkSensitivityType(Arg) (GtkSensitivityType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkSensitivityType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_1(GDestroyNotify, GDestroyNotify)
 XM_TYPE_PTR_2(GtkWindowGroup_, GtkWindowGroup*)
 XM_TYPE_PTR_1(GtkAssistant_, GtkAssistant*)
-XM_TYPE_1(GtkAssistantPageFunc, GtkAssistantPageFunc)
+XM_TYPE_1(GDestroyNotify, GDestroyNotify)
 #define C_TO_XEN_GtkAssistantPageType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkAssistantPageType(Arg) (GtkAssistantPageType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkAssistantPageType_P(Arg) XEN_INTEGER_P(Arg)
@@ -984,15 +986,12 @@ XM_TYPE_PTR_1(GtkRecentChooser_, GtkRecentChooser*)
 #define C_TO_XEN_GtkRecentSortType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkRecentSortType(Arg) (GtkRecentSortType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkRecentSortType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_1(GtkRecentSortFunc, GtkRecentSortFunc)
-XM_TYPE_PTR(GtkRecentInfo_, GtkRecentInfo*)
 XM_TYPE_PTR(GtkRecentFilter_, GtkRecentFilter*)
 XM_TYPE_PTR(GtkRecentManager_, GtkRecentManager*)
 XM_TYPE_PTR_1(GtkRecentChooserMenu_, GtkRecentChooserMenu*)
 #define C_TO_XEN_GtkRecentFilterFlags(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkRecentFilterFlags(Arg) (GtkRecentFilterFlags)(XEN_TO_C_INT(Arg))
 #define XEN_GtkRecentFilterFlags_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR_1(GtkRecentData_, GtkRecentData*)
 XM_TYPE_NO_P_2(time_t, time_t)
 XM_TYPE_PTR(GtkStatusIcon_, GtkStatusIcon*)
 XM_TYPE_1(GtkTextBufferSerializeFunc, GtkTextBufferSerializeFunc)
@@ -1438,6 +1437,15 @@ static void gxg_link_button_uri(GtkLinkButton* button, gchar* link, gpointer fun
              C_TO_XEN_gchar_(link),
              XEN_CADR((XEN)func_data),
              c__FUNCTION__);
+}
+static gint gxg_recent_sort(GtkRecentInfo* a, GtkRecentInfo* b, gpointer func_data)
+{
+  if (!XEN_LIST_P((XEN)func_data)) return((gint)0);
+  return(XEN_TO_C_gint(XEN_CALL_3(XEN_CAR((XEN)func_data),
+                                  C_TO_XEN_GtkRecentInfo_(a),
+                                  C_TO_XEN_GtkRecentInfo_(b),
+                                  XEN_CADR((XEN)func_data),
+                                  c__FUNCTION__)));
 }
 #endif
 
@@ -25651,15 +25659,6 @@ gboolean focus_on_click)"
   gtk_file_chooser_button_set_focus_on_click(XEN_TO_C_GtkFileChooserButton_(button), XEN_TO_C_gboolean(focus_on_click));
   return(XEN_FALSE);
 }
-static XEN gxg_gtk_notebook_set_window_creation_hook(XEN func, XEN data)
-{
-  #define H_gtk_notebook_set_window_creation_hook "void gtk_notebook_set_window_creation_hook(GtkNotebookWindowCreationFunc func, \
-gpointer data)"
-  XEN_ASSERT_TYPE(XEN_GtkNotebookWindowCreationFunc_P(func), func, 1, "gtk_notebook_set_window_creation_hook", "GtkNotebookWindowCreationFunc");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 2, "gtk_notebook_set_window_creation_hook", "gpointer");
-  gtk_notebook_set_window_creation_hook(XEN_TO_C_GtkNotebookWindowCreationFunc(func), XEN_TO_C_gpointer(data));
-  return(XEN_FALSE);
-}
 static XEN gxg_gtk_notebook_set_group_id(XEN notebook, XEN group_id)
 {
   #define H_gtk_notebook_set_group_id "void gtk_notebook_set_group_id(GtkNotebook* notebook, gint group_id)"
@@ -25893,29 +25892,6 @@ GtkEntry* entry)"
   gtk_tree_view_set_search_entry(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_GtkEntry_(entry));
   return(XEN_FALSE);
 }
-static XEN gxg_gtk_tree_view_get_search_position_func(XEN tree_view)
-{
-  #define H_gtk_tree_view_get_search_position_func "GtkTreeViewSearchPositionFunc gtk_tree_view_get_search_position_func(GtkTreeView* tree_view)"
-  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_get_search_position_func", "GtkTreeView*");
-  return(C_TO_XEN_GtkTreeViewSearchPositionFunc(gtk_tree_view_get_search_position_func(XEN_TO_C_GtkTreeView_(tree_view))));
-}
-static XEN gxg_gtk_tree_view_set_search_position_func(XEN tree_view, XEN func, XEN func_data, XEN destroy)
-{
-  #define H_gtk_tree_view_set_search_position_func "void gtk_tree_view_set_search_position_func(GtkTreeView* tree_view, \
-GtkTreeViewSearchPositionFunc func, lambda_data func_data, GDestroyNotify destroy)"
-  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_set_search_position_func", "GtkTreeView*");
-  XEN_ASSERT_TYPE(XEN_GtkTreeViewSearchPositionFunc_P(func), func, 2, "gtk_tree_view_set_search_position_func", "GtkTreeViewSearchPositionFunc");
-  if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
-  else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_tree_view_set_search_position_func", "lambda_data");
-  XEN_ASSERT_TYPE(XEN_GDestroyNotify_P(destroy), destroy, 4, "gtk_tree_view_set_search_position_func", "GDestroyNotify");
-  {
-    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
-    xm_protect(gxg_ptr);
-    gtk_tree_view_set_search_position_func(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_GtkTreeViewSearchPositionFunc(func), XEN_TO_C_lambda_data(func_data), 
-                                       XEN_TO_C_GDestroyNotify(destroy));
-    return(XEN_FALSE);
-   }
-}
 static XEN gxg_gtk_widget_is_composited(XEN widget)
 {
   #define H_gtk_widget_is_composited "gboolean gtk_widget_is_composited(GtkWidget* widget)"
@@ -26025,9 +26001,13 @@ GtkAssistantPageFunc page_func, lambda_data func_data, GDestroyNotify destroy)"
   if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_assistant_set_forward_page_func", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GDestroyNotify_P(destroy), destroy, 4, "gtk_assistant_set_forward_page_func", "GDestroyNotify");
-  gtk_assistant_set_forward_page_func(XEN_TO_C_GtkAssistant_(assistant), XEN_TO_C_GtkAssistantPageFunc(page_func), XEN_TO_C_lambda_data(func_data), 
-                                      XEN_TO_C_GDestroyNotify(destroy));
-  return(XEN_FALSE);
+  {
+    XEN gxg_ptr = XEN_LIST_5(XEN_FALSE, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    gtk_assistant_set_forward_page_func(XEN_TO_C_GtkAssistant_(assistant), XEN_TO_C_GtkAssistantPageFunc(page_func), XEN_TO_C_lambda_data(func_data), 
+                                    XEN_TO_C_GDestroyNotify(destroy));
+    return(XEN_FALSE);
+   }
 }
 static XEN gxg_gtk_assistant_set_page_type(XEN assistant, XEN page, XEN type)
 {
@@ -26367,9 +26347,13 @@ GtkRecentSortFunc func, lambda_data func_data, GDestroyNotify data_destroy)"
   if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_recent_chooser_set_sort_func", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GDestroyNotify_P(data_destroy), data_destroy, 4, "gtk_recent_chooser_set_sort_func", "GDestroyNotify");
-  gtk_recent_chooser_set_sort_func(XEN_TO_C_GtkRecentChooser_(chooser), XEN_TO_C_GtkRecentSortFunc(func), XEN_TO_C_lambda_data(func_data), 
-                                   XEN_TO_C_GDestroyNotify(data_destroy));
-  return(XEN_FALSE);
+  {
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    gtk_recent_chooser_set_sort_func(XEN_TO_C_GtkRecentChooser_(chooser), XEN_TO_C_GtkRecentSortFunc(func), XEN_TO_C_lambda_data(func_data), 
+                                 XEN_TO_C_GDestroyNotify(data_destroy));
+    return(XEN_FALSE);
+   }
 }
 static XEN gxg_gtk_recent_chooser_set_current_uri(XEN chooser, XEN uri, XEN ignore_error)
 {
@@ -26676,34 +26660,6 @@ GdkScreen* screen)"
   XEN_ASSERT_TYPE(XEN_GdkScreen__P(screen), screen, 2, "gtk_recent_manager_set_screen", "GdkScreen*");
   gtk_recent_manager_set_screen(XEN_TO_C_GtkRecentManager_(manager), XEN_TO_C_GdkScreen_(screen));
   return(XEN_FALSE);
-}
-static XEN gxg_gtk_recent_manager_add_item(XEN manager, XEN uri, XEN ignore_error)
-{
-  #define H_gtk_recent_manager_add_item "gboolean gtk_recent_manager_add_item(GtkRecentManager* manager, \
-gchar* uri, GError** [error])"
-  GError* ref_error = NULL;
-  XEN_ASSERT_TYPE(XEN_GtkRecentManager__P(manager), manager, 1, "gtk_recent_manager_add_item", "GtkRecentManager*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(uri), uri, 2, "gtk_recent_manager_add_item", "gchar*");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_gboolean(gtk_recent_manager_add_item(XEN_TO_C_GtkRecentManager_(manager), XEN_TO_C_gchar_(uri), &ref_error));
-    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
-   }
-}
-static XEN gxg_gtk_recent_manager_add_full(XEN manager, XEN uri, XEN recent_data, XEN ignore_error)
-{
-  #define H_gtk_recent_manager_add_full "gboolean gtk_recent_manager_add_full(GtkRecentManager* manager, \
-gchar* uri, GtkRecentData* recent_data, GError** [error])"
-  GError* ref_error = NULL;
-  XEN_ASSERT_TYPE(XEN_GtkRecentManager__P(manager), manager, 1, "gtk_recent_manager_add_full", "GtkRecentManager*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(uri), uri, 2, "gtk_recent_manager_add_full", "gchar*");
-  XEN_ASSERT_TYPE(XEN_GtkRecentData__P(recent_data), recent_data, 3, "gtk_recent_manager_add_full", "GtkRecentData*");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_gboolean(gtk_recent_manager_add_full(XEN_TO_C_GtkRecentManager_(manager), XEN_TO_C_gchar_(uri), XEN_TO_C_GtkRecentData_(recent_data), 
-                                                           &ref_error));
-    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
-   }
 }
 static XEN gxg_gtk_recent_manager_remove_item(XEN manager, XEN uri, XEN ignore_error)
 {
@@ -32383,7 +32339,6 @@ XEN_NARGIFY_2(gxg_gtk_drag_dest_set_track_motion_w, gxg_gtk_drag_dest_set_track_
 XEN_NARGIFY_1(gxg_gtk_drag_dest_get_track_motion_w, gxg_gtk_drag_dest_get_track_motion)
 XEN_NARGIFY_1(gxg_gtk_file_chooser_button_get_focus_on_click_w, gxg_gtk_file_chooser_button_get_focus_on_click)
 XEN_NARGIFY_2(gxg_gtk_file_chooser_button_set_focus_on_click_w, gxg_gtk_file_chooser_button_set_focus_on_click)
-XEN_NARGIFY_2(gxg_gtk_notebook_set_window_creation_hook_w, gxg_gtk_notebook_set_window_creation_hook)
 XEN_NARGIFY_2(gxg_gtk_notebook_set_group_id_w, gxg_gtk_notebook_set_group_id)
 XEN_NARGIFY_1(gxg_gtk_notebook_get_group_id_w, gxg_gtk_notebook_get_group_id)
 XEN_NARGIFY_2(gxg_gtk_notebook_get_tab_reorderable_w, gxg_gtk_notebook_get_tab_reorderable)
@@ -32414,8 +32369,6 @@ XEN_NARGIFY_1(gxg_gtk_text_buffer_get_paste_target_list_w, gxg_gtk_text_buffer_g
 XEN_NARGIFY_1(gxg_gtk_tree_view_get_headers_clickable_w, gxg_gtk_tree_view_get_headers_clickable)
 XEN_NARGIFY_1(gxg_gtk_tree_view_get_search_entry_w, gxg_gtk_tree_view_get_search_entry)
 XEN_NARGIFY_2(gxg_gtk_tree_view_set_search_entry_w, gxg_gtk_tree_view_set_search_entry)
-XEN_NARGIFY_1(gxg_gtk_tree_view_get_search_position_func_w, gxg_gtk_tree_view_get_search_position_func)
-XEN_ARGIFY_4(gxg_gtk_tree_view_set_search_position_func_w, gxg_gtk_tree_view_set_search_position_func)
 XEN_NARGIFY_1(gxg_gtk_widget_is_composited_w, gxg_gtk_widget_is_composited)
 XEN_NARGIFY_4(gxg_gtk_widget_input_shape_combine_mask_w, gxg_gtk_widget_input_shape_combine_mask)
 XEN_NARGIFY_2(gxg_gtk_window_set_deletable_w, gxg_gtk_window_set_deletable)
@@ -32516,8 +32469,6 @@ XEN_NARGIFY_0(gxg_gtk_recent_manager_new_w, gxg_gtk_recent_manager_new)
 XEN_NARGIFY_0(gxg_gtk_recent_manager_get_default_w, gxg_gtk_recent_manager_get_default)
 XEN_NARGIFY_1(gxg_gtk_recent_manager_get_for_screen_w, gxg_gtk_recent_manager_get_for_screen)
 XEN_NARGIFY_2(gxg_gtk_recent_manager_set_screen_w, gxg_gtk_recent_manager_set_screen)
-XEN_ARGIFY_3(gxg_gtk_recent_manager_add_item_w, gxg_gtk_recent_manager_add_item)
-XEN_ARGIFY_4(gxg_gtk_recent_manager_add_full_w, gxg_gtk_recent_manager_add_full)
 XEN_ARGIFY_3(gxg_gtk_recent_manager_remove_item_w, gxg_gtk_recent_manager_remove_item)
 XEN_ARGIFY_3(gxg_gtk_recent_manager_lookup_item_w, gxg_gtk_recent_manager_lookup_item)
 XEN_NARGIFY_2(gxg_gtk_recent_manager_has_item_w, gxg_gtk_recent_manager_has_item)
@@ -36198,7 +36149,6 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_drag_dest_get_track_motion_w gxg_gtk_drag_dest_get_track_motion
 #define gxg_gtk_file_chooser_button_get_focus_on_click_w gxg_gtk_file_chooser_button_get_focus_on_click
 #define gxg_gtk_file_chooser_button_set_focus_on_click_w gxg_gtk_file_chooser_button_set_focus_on_click
-#define gxg_gtk_notebook_set_window_creation_hook_w gxg_gtk_notebook_set_window_creation_hook
 #define gxg_gtk_notebook_set_group_id_w gxg_gtk_notebook_set_group_id
 #define gxg_gtk_notebook_get_group_id_w gxg_gtk_notebook_get_group_id
 #define gxg_gtk_notebook_get_tab_reorderable_w gxg_gtk_notebook_get_tab_reorderable
@@ -36229,8 +36179,6 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_tree_view_get_headers_clickable_w gxg_gtk_tree_view_get_headers_clickable
 #define gxg_gtk_tree_view_get_search_entry_w gxg_gtk_tree_view_get_search_entry
 #define gxg_gtk_tree_view_set_search_entry_w gxg_gtk_tree_view_set_search_entry
-#define gxg_gtk_tree_view_get_search_position_func_w gxg_gtk_tree_view_get_search_position_func
-#define gxg_gtk_tree_view_set_search_position_func_w gxg_gtk_tree_view_set_search_position_func
 #define gxg_gtk_widget_is_composited_w gxg_gtk_widget_is_composited
 #define gxg_gtk_widget_input_shape_combine_mask_w gxg_gtk_widget_input_shape_combine_mask
 #define gxg_gtk_window_set_deletable_w gxg_gtk_window_set_deletable
@@ -36331,8 +36279,6 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_recent_manager_get_default_w gxg_gtk_recent_manager_get_default
 #define gxg_gtk_recent_manager_get_for_screen_w gxg_gtk_recent_manager_get_for_screen
 #define gxg_gtk_recent_manager_set_screen_w gxg_gtk_recent_manager_set_screen
-#define gxg_gtk_recent_manager_add_item_w gxg_gtk_recent_manager_add_item
-#define gxg_gtk_recent_manager_add_full_w gxg_gtk_recent_manager_add_full
 #define gxg_gtk_recent_manager_remove_item_w gxg_gtk_recent_manager_remove_item
 #define gxg_gtk_recent_manager_lookup_item_w gxg_gtk_recent_manager_lookup_item
 #define gxg_gtk_recent_manager_has_item_w gxg_gtk_recent_manager_has_item
@@ -40020,7 +39966,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_drag_dest_get_track_motion, gxg_gtk_drag_dest_get_track_motion_w, 1, 0, 0, H_gtk_drag_dest_get_track_motion);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_button_get_focus_on_click, gxg_gtk_file_chooser_button_get_focus_on_click_w, 1, 0, 0, H_gtk_file_chooser_button_get_focus_on_click);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_button_set_focus_on_click, gxg_gtk_file_chooser_button_set_focus_on_click_w, 2, 0, 0, H_gtk_file_chooser_button_set_focus_on_click);
-  XG_DEFINE_PROCEDURE(gtk_notebook_set_window_creation_hook, gxg_gtk_notebook_set_window_creation_hook_w, 2, 0, 0, H_gtk_notebook_set_window_creation_hook);
   XG_DEFINE_PROCEDURE(gtk_notebook_set_group_id, gxg_gtk_notebook_set_group_id_w, 2, 0, 0, H_gtk_notebook_set_group_id);
   XG_DEFINE_PROCEDURE(gtk_notebook_get_group_id, gxg_gtk_notebook_get_group_id_w, 1, 0, 0, H_gtk_notebook_get_group_id);
   XG_DEFINE_PROCEDURE(gtk_notebook_get_tab_reorderable, gxg_gtk_notebook_get_tab_reorderable_w, 2, 0, 0, H_gtk_notebook_get_tab_reorderable);
@@ -40051,8 +39996,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tree_view_get_headers_clickable, gxg_gtk_tree_view_get_headers_clickable_w, 1, 0, 0, H_gtk_tree_view_get_headers_clickable);
   XG_DEFINE_PROCEDURE(gtk_tree_view_get_search_entry, gxg_gtk_tree_view_get_search_entry_w, 1, 0, 0, H_gtk_tree_view_get_search_entry);
   XG_DEFINE_PROCEDURE(gtk_tree_view_set_search_entry, gxg_gtk_tree_view_set_search_entry_w, 2, 0, 0, H_gtk_tree_view_set_search_entry);
-  XG_DEFINE_PROCEDURE(gtk_tree_view_get_search_position_func, gxg_gtk_tree_view_get_search_position_func_w, 1, 0, 0, H_gtk_tree_view_get_search_position_func);
-  XG_DEFINE_PROCEDURE(gtk_tree_view_set_search_position_func, gxg_gtk_tree_view_set_search_position_func_w, 3, 1, 0, H_gtk_tree_view_set_search_position_func);
   XG_DEFINE_PROCEDURE(gtk_widget_is_composited, gxg_gtk_widget_is_composited_w, 1, 0, 0, H_gtk_widget_is_composited);
   XG_DEFINE_PROCEDURE(gtk_widget_input_shape_combine_mask, gxg_gtk_widget_input_shape_combine_mask_w, 4, 0, 0, H_gtk_widget_input_shape_combine_mask);
   XG_DEFINE_PROCEDURE(gtk_window_set_deletable, gxg_gtk_window_set_deletable_w, 2, 0, 0, H_gtk_window_set_deletable);
@@ -40153,8 +40096,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_recent_manager_get_default, gxg_gtk_recent_manager_get_default_w, 0, 0, 0, H_gtk_recent_manager_get_default);
   XG_DEFINE_PROCEDURE(gtk_recent_manager_get_for_screen, gxg_gtk_recent_manager_get_for_screen_w, 1, 0, 0, H_gtk_recent_manager_get_for_screen);
   XG_DEFINE_PROCEDURE(gtk_recent_manager_set_screen, gxg_gtk_recent_manager_set_screen_w, 2, 0, 0, H_gtk_recent_manager_set_screen);
-  XG_DEFINE_PROCEDURE(gtk_recent_manager_add_item, gxg_gtk_recent_manager_add_item_w, 2, 1, 0, H_gtk_recent_manager_add_item);
-  XG_DEFINE_PROCEDURE(gtk_recent_manager_add_full, gxg_gtk_recent_manager_add_full_w, 3, 1, 0, H_gtk_recent_manager_add_full);
   XG_DEFINE_PROCEDURE(gtk_recent_manager_remove_item, gxg_gtk_recent_manager_remove_item_w, 2, 1, 0, H_gtk_recent_manager_remove_item);
   XG_DEFINE_PROCEDURE(gtk_recent_manager_lookup_item, gxg_gtk_recent_manager_lookup_item_w, 2, 1, 0, H_gtk_recent_manager_lookup_item);
   XG_DEFINE_PROCEDURE(gtk_recent_manager_has_item, gxg_gtk_recent_manager_has_item_w, 2, 0, 0, H_gtk_recent_manager_has_item);
@@ -42616,7 +42557,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Jun-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Jun-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

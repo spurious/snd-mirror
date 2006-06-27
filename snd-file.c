@@ -4,17 +4,6 @@
 
 #if HAVE_DIRENT_H
   #include <dirent.h>
-#else
-  #define dirent direct
-  #if HAVE_SYS_NDIR_H
-    #include <sys/ndir.h>
-  #endif
-  #if HAVE_SYS_DIR_H
-    #include <sys/dir.h>
-  #endif
-  #if HAVE_NDIR_H
-    #include <ndir.h>
-  #endif
 #endif
 
 
@@ -412,13 +401,9 @@ dir_info *find_files_in_dir(const char *name)
     {
       dp = make_dir_info(name);
       load_dir(dpos, dp, not_directory_p);
-#if CLOSEDIR_VOID
-      closedir(dpos);
-#else
       if (closedir(dpos) != 0) 
 	snd_error(_("closedir %s failed (%s)!"),
 		  name, snd_io_strerror());
-#endif
     }
   return(dp);
 #endif
@@ -448,13 +433,9 @@ dir_info *find_directories_in_dir(const char *name)
 	  FREE(fullname);
 	}
       load_dir(dpos, dp, directory_p);
-#if CLOSEDIR_VOID
-      closedir(dpos);
-#else
       if (closedir(dpos) != 0) 
 	snd_error(_("closedir %s failed (%s)!"),
 		  name, snd_io_strerror());
-#endif
     }
   return(dp);
 #endif
@@ -497,13 +478,9 @@ dir_info *find_filtered_files_in_dir(const char *name, int filter_choice)
       dp = make_dir_info(name);
       load_dir(dpos, dp, filter);
 
-#if CLOSEDIR_VOID
-      closedir(dpos);
-#else
       if (closedir(dpos) != 0) 
 	snd_error(_("closedir %s failed (%s)!"),
 		  name, snd_io_strerror());
-#endif
     }
   return(dp);
 #endif

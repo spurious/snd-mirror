@@ -2759,6 +2759,139 @@ mus_any *mus_make_average(int size, Float *line)
   return(NULL);
 }
 
+/* running-max: keep current_max in delay line and number of copies of it
+ *              if abs(input)>max {max=abs(input) copies=1} else
+ *                if output = max, {copies--, if copies==0 get new max + copies}
+ */
+/* what about balance as average and gain/rms? */
+
+
+
+/* ---------------------------------------- filtered-* ---------------------------------------- */
+#if 0
+/* filtered delay (and notch) might be nice too, could share nearly all this machinery  */
+/*   on xen side, the "filt" could also be a lambda form packaged to look like a mus_run method(?) */
+/*   ot instead of passing in a mus_any*, pass the mus_run function (need state as well) */
+
+/* filtered-comb */
+typedef struct {
+  mus_any_class *core;
+  dly *cmb;
+  mus_any *filt;
+} fcomb;
+
+static void filtered_comb_reset(mus_any *ptr)
+{
+  fcomb *fc = (fcomb *)ptr;
+  mus_reset(fc->cmb);
+  mus_reset(fc->filt);
+}
+
+static int free_filtered_comb(mus_any *gen) 
+{
+  fcomb *fc = (fcomb *)ptr;
+  if (fc)
+    {
+      mus_free(fc->cmb);
+      /* mus_free(fc->filt); */
+      FREE(fc);
+    }
+  return(0); 
+}
+
+static bool filtered_comb_equalp(mus_any *p1, mus_any *p2)
+{
+  fcomb *fc1 = (fcomb *)p1;
+  fcomb *fc2 = (fcomb *)p2;
+  return((mus_equalp((mus_any *)(fc1->cmb), (mus_any *)(fc2->cmb))) &&
+	 (mus_equalp(fc1->filt, fc2->filt)));
+}
+
+static char *describe_filtered_comb(mus_any *ptr)
+{
+  char *comb_str, *filter_str;
+  static char *res = NULL;
+  int len;
+  if (res) FREE(res); /* left over from before (mus_describe result isn't freed by caller) */
+  comb_str = strdup(mus_decribe((mus_any *)(((fcomb *)ptr)->cmb)));
+  filter_str = strdup(mus_describe(((fcomb *)ptr)->filt));
+  len = strlen(comb_str) + strlen(filter_str) + 64;
+  res = (char *)CALLOC(len, sizeof(char));
+  mus_snprintf(res, len, "%s: %s %s", S_mus_filtered_comb, comb_str, filter_str);
+  FREE(comb_str);
+  FREE(filter_str);
+  return(res);
+}
+
+bool mus_filtered_comb_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_FILTERED_COMB));}
+
+Float mus_filtered_comb(mus_any *ptr, Float input, Float pm)
+{
+  fcomb *fc = (fcomb *)ptr;
+  dly *gen;
+  gen = fc->cmb;
+  if (gen->zdly)
+    return(mus_delay((mus_any *)gen, 
+		     input + (gen->yscl * 
+			      mus_run(fc->filt, 
+				      mus_tap((mus_any *)gen, pm), 
+				      0.0)), 
+		     pm)); 
+  else return(mus_delay((mus_any *)gen, 
+			input + (gen->yscl * 
+				 mus_run(fc->filt, 
+					 gen->line[gen->loc], 
+					 0.0)), 
+			0.0));
+}
+
+static mus_any_class FILTERED_COMB_CLASS = {
+  MUS_FILTERED_COMB,
+  S_filtered_comb,
+  &free_filtered_comb,
+  &describe_filtered_comb,
+  &filtered_comb_equalp,
+  &delay_data,
+  &delay_set_data,
+  &delay_length,
+  &set_delay_length,
+  0, 0, 0, 0, /* freq phase */
+  &delay_scaler,
+  &set_delay_scaler,
+  &delay_fb,
+  &set_delay_fb,
+  &mus_filtered_comb,
+  MUS_DELAY_LINE,
+  NULL,
+  &delay_interp_type,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &_mus_wrap_one_vct_wrapped,
+  &filtered_comb_reset,
+  0
+};
+
+mus_any *mus_make_filtered_comb(Float scaler, int size, Float *line, int line_size, mus_interp_t type, mus_any *filt)
+{
+  fcomb *fc;
+  if (filt)
+    {
+      fc = (fcomb *)clm_calloc(1, sizeof(fcomb), S_make_filtered_comb);
+      if (fc)
+	{  
+	  fc->core = &FILTERED_COMB_CLASS;
+	  fc->cmb = (dly *)mus_make_comb(scaler, size, line, line_size, type);
+	  fc->filt = filt;
+	  return((mus_any *)gen);
+	}
+      return(NULL);
+    }
+  return(mus_make_comb(scaler, size, line, line_size, type));
+}
+#endif
+
+
 
 
 /* ---------------- sawtooth et al ---------------- */

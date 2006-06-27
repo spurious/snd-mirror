@@ -8466,76 +8466,109 @@ end
 -->
 
 <A NAME="wsdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>ws</h2></td></tr></table>
+
+<!-- TODO: doc def-clm-struct etc -->
+
 <p>
-<i>with-sound</i> is the primary sound producing macro in CLM (in a sense, it is CLM's user-interface).
-In Common Lisp it's defined as:</p>
+with-sound provides a simple way to package up a bunch of instrument calls into a new
+sound file, opening that file in Snd when the computation is complete. 
+To hear (and see) the fm-violin, for example, we first load with-sound and the instrument:
+</p>
+<table border=0 cellspacing=0 hspace=20>
+<tr>
+<td bgcolor="#fbfbff">
+<pre>
+;; Scheme:
+(load "ws.scm")
+(load "v.scm")
+</pre></td><td width=60></td>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
- (defmacro with-sound ((&amp;key (srate 22050) ...) &amp;body body) 
-   (unwind-protect
-     (let (...) ,.body)
-     (progn (cleanup...))))
-</pre></td></tr></table>
+<td bgcolor="#FdFdf2">
+<pre>
+# Ruby:
+load("ws.rb")
+load("v.rb")
+</pre></td><td width=60></td>
 
-<p>and makes extensive use of Lisp's dynamic binding to handle nested with-sound calls and so on.
-Kalle Olavi Niemitalo came up with this Scheme/Guile replacement:
+<td bgcolor="#EefdEe">
+<pre>
+\ Forth:
+"clm.fs" file-eval
+"clm-ins.fs" file-eval
+</pre></td>
+</tr></table>
+
+<p>Then call with-sound, accepting the default sound file settings, with one fm-violin note at A4 (440 Hz):
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define* (with-sound-helper thunk :key (srate 22050) (explode #f))
-  (let ((old-srate (<a class=quiet href="clm.html#mussrate">mus-srate</a>)))
-    (dynamic-wind 
-      (lambda () 
-        (set! (<a class=quiet href="clm.html#mussrate">mus-srate</a>) srate))
-      thunk
-      (lambda () 
-        (set! (<a class=quiet href="clm.html#mussrate">mus-srate</a>) old-srate)))))
+<table border=0 cellspacing=0 hspace=20>
+<tr>
+<td bgcolor="#fbfbff">
+<pre>
+(with-sound () 
+  (fm-violin 0 1 440 .1))
+</pre></td><td width=30></td>
 
-(defmacro with-sound (args . body)
-  `(with-sound-helper (lambda () ,@body)
-                      ,@args))
-</pre></td></tr></table>
+<td bgcolor="#FdFdf2">
+<pre>
+with_sound() do 
+  fm_violin_rb(0, 1, 440, 0.1) 
+end
+</pre></td><td width=30></td>
+
+<td bgcolor="#EefdEe">
+<pre>
+0 1 440 0.1 ' fm-violin with-sound
+</pre></td>
+</tr></table>
+
+<p>The body of with-sound can hold any number of notes, or any arbitrary code.  For example, say
+we want to hear an arpeggio from the fm-violin:
+</p>
+
+<pre>
+    (with-sound ()
+      (do ((i 0 (1+ i)))
+          ((= i 4))                ; 4 notes in all
+        (fm-violin (* i 0.25)      ; notes 1/4 secs apart
+                   0.25            ; each note 1/4 sec long
+		   (* 220.0 (1+ i)); go up by 220 Hz on each note
+                   .1)))           ; all notes .1 amp
+</pre>
 
 <p>
-The version in ws.scm is simply an amplification of this code.
-The global variables that parallel CLM's *clm-...* are:
+See the <a href="#clminsdoc">clm instrument</a> documentation for more examples.
 </p>
 <pre>
-  <em class=emdef>*clm-srate*</em> (<a class=quiet href="extsnd.html#defaultoutputsrate">default-output-srate</a>)        ; default srate
-  <em class=emdef>*clm-file-name*</em> "test.snd"                ; default output file name
-  <em class=emdef>*clm-channels*</em> (<a class=quiet href="extsnd.html#defaultoutputchans">default-output-chans</a>)     ; default number of output chans
-  <em class=emdef>*clm-data-format*</em> (<a class=quiet href="extsnd.html#defaultoutputdataformat">default-output-data-format</a>) ; default output data format
-  <em class=emdef>*clm-header-type*</em> (<a class=quiet href="extsnd.html#defaultoutputheadertype">default-output-header-type</a>)   ; default output header type
-  <em class=emdef>*clm-delete-reverb*</em> #f                    ; should reverb stream be deleted?
-  <em class=emdef>*clm-verbose*</em> #f                          ; currently unused
-  <em class=emdef>*clm-play*</em> #f                             ; should the output be played at the end
-  <em class=emdef>*clm-statistics*</em> #f                       ; should stats be printed out at the end
-  <em class=emdef>*clm-reverb*</em> #f                           ; reverb function, if any
-  <em class=emdef>*clm-reverb-channels*</em> 1                   ; reverb stream chans
-  <em class=emdef>*clm-reverb-data*</em> '()                     ; args pass to reverb function
-
   <em class=emdef>with-sound</em>
-     :key (srate *clm-srate*)
-          (output *clm-file-name*)
-	  (channels *clm-channels*)
-	  (header-type *clm-header-type*)
-	  (data-format *clm-data-format*)
-	  (comment #f)
-	  ;(verbose *clm-verbose*)
-	  (reverb *clm-reverb*)
-	  (revfile "test.rev")
-	  (reverb-data *clm-reverb-data*)
-	  (reverb-channels *clm-reverb-channels*)
-	  (continue-old-file #f)
-	  (statistics *clm-statistics*)
-	  (scaled-to #f)
-	  (play *clm-play*)
-	  (to-snd *to-snd*)
-	  (scaled-by #f)
+     :key (srate *clm-srate*)                    ; output sampling rate (22050)
+          (output *clm-file-name*)               ; output file name ("test.snd")
+	  (channels *clm-channels*)              ; channels in output (1)
+	  (header-type *clm-header-type*)        ; output header type (mus-next or mus-aifc)
+	  (data-format *clm-data-format*)        ; output sample data type (mus-bfloat or mus-lshort)
+	  (comment #f)                           ; any comment to store in the header (a string)
+	  (verbose *clm-verbose*)                ; if #t, print out some info
+	  (reverb *clm-reverb*)                  ; reverb instrument (jc-reverb)
+	  (revfile "test.rev")                   ; reverb intermediate output file name ("test.rev")
+	  (reverb-data *clm-reverb-data*)        ; arguments passed to the reverb
+	  (reverb-channels *clm-reverb-channels*); chans in the reverb intermediate file
+	  (continue-old-file #f)                 ; if #t, continue a previous computation
+	  (statistics *clm-statistics*)          ; if #t, print various stats at end of with-sound (compile time, maxamps)
+	  (scaled-by #f)                         ; is a number, scale output by that amp
+	  (scaled-to #f)                         ; if a number, scale the output to peak at that amp
+	  (play *clm-play*)                      ; if #t, play the sound automatically
+	  (to-snd *to-snd*)                      ; if #t, open the output file in Snd
 </pre>
 <p>As far as possible, this parallels CLM's <a href="clm.html#with-sound">with-sound</a>.</p>
 <pre>
-    (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
+  :<em class=listener>(with-sound (:statistics #t :channels 2 :reverb jc-reverb)
+     (fm-violin 0 .1 440 .1 :reverb-amount .1 :degree 0)
+     (fm-violin 1 .1 660 .2 :degree 90))</em>
+  <em class=typing>test.snd:
+    maxamp: 0.1000 0.2032
+    rev max: 0.0100
+    compute time: 0.050
+  "test.snd"</em>               ; with-sound returns the new file name
 </pre>
 <p>
 <b>with-sound</b> opens its output file (<i>output</i> above)
@@ -8593,28 +8626,6 @@ use <b>with-full-sound</b>.  It is:
 and set the <a href="extsnd.html#xbounds">x-bounds</a> to display the full sound, then return the file name.  You could obviously customize this any way
 you like.
 </p>
-<p>ws.scm also has a version of <a href="clm.html#def-clm-struct">def-clm-struct</a>,
-<a href="clm.html#sound-let">sound-let</a>, and <a href="clm.html#mix-and-with-mix">with-mix</a>.  with-sounds and sound-lets can be nested --
-see clm.html.
-<b>def-clm-struct</b> in Snd/Guile provides a way to package up heterogenous data 
-for user-defined generators.  In pure-Scheme it just sets up functions to make
-and access such a list, but in Snd's run macro, it also provides type declarations:
-</p>
-<pre>
-    (def-clm-struct hiho i x (s "hiho") (ii 3 :type int) (xx 0.0 :type float))
-</pre>
-<!-- TODO: does this example work? -->
-<p>defines a structure type ("hiho") with 5 fields.  "hiho-s" defaults to the
-string "hiho", "hiho-ii" defaults to 3, and declares that its type will always
-be int (so it can be used without restriction in run), and so on.
-</p>
-<pre>
-    (define hi (make-hiho :xx 3.14))
-</pre>
-<p>defines a variable named hi whose value is a hiho structure (a list) with
-all the fields taking their default value except "xx" which is set to 3.14.
-So, hi's value is <code>(list 'hiho #f #f "hiho" 3 3.14)</code>.
-</p>
 <p><b>init-with-sound</b> and <b>finish-with-sound</b>
 split with-sound into two pieces, primarily for Common Music's benefit.
 </p>
@@ -8629,8 +8640,7 @@ split with-sound into two pieces, primarily for Common Music's benefit.
     (with-sound (:scaled-to .5)
       (fm-violin 0 1 440 .1))
 </pre>
-<p>ws.scm also has a lightly tested translation of CLM's <a href="clm.html#optional-key">def-optkey-fun</a>.
-A variant of with-sound is <b><a name="clmload">clm-load</a></b>.  Its first argument is a filename, assumed to
+<p>Another variant of with-sound is <b><a name="clmload">clm-load</a></b>.  Its first argument is a filename, assumed to
 be a text file containing the body of with-sound, followed by the usual with-sound arguments, if any.
 For example, if we have a file named clm-load-test.clm with these contents:
 </p>

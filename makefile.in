@@ -40,6 +40,7 @@ top_srcdir = .
 DESTDIR =
 PACKAGE = @PACKAGE@
 VERSION = @VERSION@
+datarootdir = @datarootdir@
 datadir = @datadir@
 localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@

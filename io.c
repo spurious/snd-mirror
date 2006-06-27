@@ -41,9 +41,7 @@
 #if HAVE_STRING_H
   #include <string.h>
 #endif
-#if HAVE_VPRINTF
-  #include <stdarg.h>
-#endif
+#include <stdarg.h>
 
 #include "_sndlib.h"
 
@@ -1442,7 +1440,6 @@ char *mus_expand_filename(const char *filename)
 
 void mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
 {
-#if HAVE_VPRINTF
   va_list ap;
   va_start(ap, format);
 #if HAVE_VSNPRINTF
@@ -1451,10 +1448,6 @@ void mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
   vsprintf(buffer, format, ap);
 #endif
   va_end(ap);
-#else
-  buffer[0] = '\0';
-  strcat(buffer, format);
-#endif
 }
 
 #define MUS_FORMAT_STRING_MAX 1024
@@ -1463,7 +1456,6 @@ char *mus_format(const char *format, ...)
 {
   /* caller should free result */
   char *buf = NULL, *rtn = NULL;
-#if HAVE_VPRINTF
   va_list ap;
   buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX, sizeof(char));
   va_start(ap, format);
@@ -1473,14 +1465,6 @@ char *mus_format(const char *format, ...)
   vsprintf(buf, format, ap);
 #endif
   va_end(ap);
-#else
-  buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX, sizeof(char));
-#if HAVE_SNPRINTF
-  snprintf(buf, MUS_FORMAT_STRING_MAX, "%s...[you need vprintf]", format);
-#else
-  sprintf(buf, "%s...[you need vprintf]", format);
-#endif
-#endif
 #if DEBUGGING
   rtn = copy_string(buf);
 #else

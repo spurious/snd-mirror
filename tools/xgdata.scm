@@ -5692,7 +5692,6 @@
 ;(CFNC-290 "void gtk_file_info_set_icon_name GtkFileInfo* info gchar* con_name")
 ;(CFNC-290 "gchar* gtk_file_info_get_icon_name GtkFileInfo* info") ; 'const
 ;(CFNC-290 "GdkPixbuf* gtk_file_info_render_icon GtkFileInfo* info GtkWidget* widget gint pixel_size GError** [error]")
-(CFNC-290 "void gtk_notebook_set_window_creation_hook GtkNotebookWindowCreationFunc func gpointer data")
 (CFNC-290 "void gtk_notebook_set_group_id GtkNotebook* notebook gint group_id")
 (CFNC-290 "gint gtk_notebook_get_group_id GtkNotebook* notebook")
 (CFNC-290 "gboolean gtk_notebook_get_tab_reorderable GtkNotebook* notebook GtkWidget* child")
@@ -5726,6 +5725,7 @@
 (CFNC-290 "void gtk_tree_view_set_search_entry GtkTreeView* tree_view GtkEntry* entry")
 (CFNC-290 "GtkTreeViewSearchPositionFunc gtk_tree_view_get_search_position_func GtkTreeView* tree_view")
 (CFNC-290 "void gtk_tree_view_set_search_position_func GtkTreeView* tree_view GtkTreeViewSearchPositionFunc func lambda_data #func_data GDestroyNotify destroy")
+
 (CFNC-290 "gboolean gtk_widget_is_composited GtkWidget* widget")
 (CFNC-290 "void gtk_widget_input_shape_combine_mask GtkWidget* widget GdkBitmap* shape_mask gint offset_x gint offset_y")
 (CFNC-290 "void gtk_window_set_deletable GtkWindow* window gboolean setting")
@@ -5741,6 +5741,7 @@
 (CFNC-290 "gint gtk_assistant_append_page GtkAssistant* assistant GtkWidget* page")
 (CFNC-290 "gint gtk_assistant_insert_page GtkAssistant* assistant GtkWidget* page gint position")
 (CFNC-290 "void gtk_assistant_set_forward_page_func GtkAssistant* assistant GtkAssistantPageFunc page_func lambda_data #func_data GDestroyNotify destroy")
+
 (CFNC-290 "void gtk_assistant_set_page_type GtkAssistant* assistant GtkWidget* page GtkAssistantPageType type")
 (CFNC-290 "GtkAssistantPageType gtk_assistant_get_page_type GtkAssistant* assistant GtkWidget* page")
 (CFNC-290 "void gtk_assistant_set_page_title GtkAssistant* assistant GtkWidget* page gchar* title")
@@ -5764,6 +5765,7 @@
 (CFNC-290 "gchar* gtk_link_button_get_uri GtkLinkButton* link_button") ; 'const
 (CFNC-290 "void gtk_link_button_set_uri GtkLinkButton* link_button gchar* uri")
 (CFNC-290 "GtkLinkButtonUriFunc gtk_link_button_set_uri_hook GtkLinkButtonUriFunc func lambda_data #func_data GDestroyNotify destroy")
+
 (CFNC-290 "GType gtk_recent_chooser_dialog_get_type void")
 ;;;(CFNC-290 "GtkWidget* gtk_recent_chooser_dialog_new gchar* title GtkWindow* parent gchar* first_button_text ... G_GNUC_NULL_TERMINATED")
 ;;;(CFNC-290 "GtkWidget* gtk_recent_chooser_dialog_new_for_manager gchar* title GtkWindow* parent GtkRecentManager* manager gchar* first_button_text ... G_GNUC_NULL_TERMINATED")
@@ -5787,6 +5789,7 @@
 (CFNC-290 "void gtk_recent_chooser_set_sort_type GtkRecentChooser* chooser GtkRecentSortType sort_type")
 (CFNC-290 "GtkRecentSortType gtk_recent_chooser_get_sort_type GtkRecentChooser* chooser")
 (CFNC-290 "void gtk_recent_chooser_set_sort_func GtkRecentChooser* chooser GtkRecentSortFunc func lambda_data #func_data GDestroyNotify data_destroy")
+
 (CFNC-290 "gboolean gtk_recent_chooser_set_current_uri GtkRecentChooser* chooser gchar* uri GError** [error]")
 (CFNC-290 "gchar* gtk_recent_chooser_get_current_uri GtkRecentChooser* chooser")
 (CFNC-290 "GtkRecentInfo* gtk_recent_chooser_get_current_item GtkRecentChooser* chooser")
@@ -5828,8 +5831,6 @@
 (CFNC-290 "GtkRecentManager* gtk_recent_manager_get_default void")
 (CFNC-290 "GtkRecentManager* gtk_recent_manager_get_for_screen GdkScreen* screen")
 (CFNC-290 "void gtk_recent_manager_set_screen GtkRecentManager* manager GdkScreen* screen")
-(CFNC-290 "gboolean gtk_recent_manager_add_item GtkRecentManager* manager gchar* uri GError** [error]")
-(CFNC-290 "gboolean gtk_recent_manager_add_full GtkRecentManager* manager gchar* uri GtkRecentData* recent_data GError** [error]")
 (CFNC-290 "gboolean gtk_recent_manager_remove_item GtkRecentManager* manager gchar* uri GError** [error]")
 (CFNC-290 "GtkRecentInfo* gtk_recent_manager_lookup_item GtkRecentManager* manager gchar* uri GError** [error]")
 (CFNC-290 "gboolean gtk_recent_manager_has_item GtkRecentManager* manager gchar* uri")
@@ -5897,7 +5898,14 @@
 (CFNC-290 "guint8* gtk_text_buffer_serialize GtkTextBuffer* register_buffer GtkTextBuffer* content_buffer GdkAtom format GtkTextIter* start GtkTextIter* end gsize* [length]")
 (CFNC-290 "gboolean gtk_text_buffer_deserialize GtkTextBuffer* register_buffer GtkTextBuffer* content_buffer GdkAtom format GtkTextIter* iter guint8* data gsize length GError** [error]")
 
+
 #!
+(CFNC-29x "void gtk_notebook_set_window_creation_hook GtkNotebookWindowCreationFunc func gpointer data GDestroyNotify destroy")
+;; destroy arg added later
+(CFNC-29x "gboolean gtk_recent_manager_add_item GtkRecentManager* manager gchar* uri")
+(CFNC-29x "gboolean gtk_recent_manager_add_full GtkRecentManager* manager gchar* uri GtkRecentData* recent_data")
+;; error arg removed
+
 ;;; 29x just collected for now, not output to xg.c
 (CINT-29x "GTK_MESSAGE_OTHER" "GtkMessageType")
 ;(CFNC-29x "void gtk_message_dialog_set_image GtkMessageDialog* dialog GtkWidget* image")

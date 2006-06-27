@@ -600,17 +600,6 @@ void printout_to_minibuffer(const char *msg, void *data)
 
 #if HAVE_DIRENT_H
   #include <dirent.h>
-#else
-  #define dirent direct
-  #if HAVE_SYS_NDIR_H
-    #include <sys/ndir.h>
-  #endif
-  #if HAVE_SYS_DIR_H
-    #include <sys/dir.h>
-  #endif
-  #if HAVE_NDIR_H
-    #include <ndir.h>
-  #endif
 #endif
 
 void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)

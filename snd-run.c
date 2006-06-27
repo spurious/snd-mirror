@@ -101,7 +101,7 @@ static XEN optimization_hook;
 enum {RUN_UNSAFE, RUN_SAFE};
 static int run_safety = RUN_UNSAFE;
 
-/* WITH_RUN set only if HAVE_STRINGIZE, HAVE_GUILE, and Guile version >= 1.5 or HAVE_GAUCHE (work stopped -- no local var access) */
+/* WITH_RUN set only if HAVE_GUILE, and Guile version >= 1.5 or HAVE_GAUCHE (work stopped -- no local var access) */
 #if WITH_RUN
 
 #define Int off_t
@@ -549,7 +549,6 @@ static xen_value *run_warn(const char *format, ...)
 {
   va_list ap;
   run_warned = true;
-#if HAVE_VPRINTF
   va_start(ap, format);
 #if HAVE_VSNPRINTF
   vsnprintf(optimizer_warning_buffer, OPTIMIZER_WARNING_BUFFER_SIZE, format, ap);
@@ -561,7 +560,6 @@ static xen_value *run_warn(const char *format, ...)
     run_hook(optimization_hook, 
 	     XEN_LIST_1(C_TO_XEN_STRING(optimizer_warning_buffer)),
 	     S_optimization_hook);
-#endif
   return(NULL); /* this is so we can insert the call into the error return call chain */
 }
 

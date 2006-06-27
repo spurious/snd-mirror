@@ -2,7 +2,6 @@
 
 AC_INIT(snd, 8.3, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz)
 
-INVOKED_PROG="$[0]"
 INVOKED_ARGS="$[@]"
 
 AC_CONFIG_SRCDIR(snd.c)
@@ -10,7 +9,7 @@ AC_CANONICAL_HOST
 AC_CONFIG_HEADERS(config.h sndlib.h)
 AC_CONFIG_FILES(makefile po/Makefile.in )
 AC_PROG_CC
-AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER!
+AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER! (is this the case in 2.60?)
 AC_PROG_INSTALL
 
 MAKE_TARGET="snd"
@@ -28,7 +27,6 @@ AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 
-AC_DEFINE_UNQUOTED(CONFIGURE_PROG, "$INVOKED_PROG")
 AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 
@@ -224,9 +222,8 @@ AC_ARG_WITH(snd-as-pd-external,
 # AC_CHECK_LIB(dl,main)
 LIBS=""
 
-AC_HEADER_DIRENT
-AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h)
-AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h pthread.h lrdf.h fam.h)
+AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h)
+AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h pthread.h lrdf.h fam.h dirent.h)
 
 AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
 				        #include <sys/param.h>
@@ -242,17 +239,14 @@ AC_CHECK_HEADER(sys/sam9407.h,[AC_DEFINE(HAVE_SAM_9407)])
 AC_CHECK_HEADER(gnu/libc-version.h,[AC_DEFINE(HAVE_GNU_LIBC_VERSION_H)])
 AC_CHECK_HEADER(alsa/asoundlib.h,[AC_DEFINE(HAVE_ALSA_ASOUNDLIB_H)])
 
-AC_HEADER_TIME
-
 AC_CHECK_DECLS(hypot,,,[#include <math.h>]) 
 AC_CHECK_DECLS(isnan,,,[#include <math.h>])
 AC_CHECK_DECLS(isinf,,,[#include <math.h>])
 
-AC_C_CONST
 AC_TYPE_MODE_T
 AC_TYPE_SIZE_T
 AC_TYPE_PID_T
-AC_STRUCT_TM
+
 AC_C_BIGENDIAN( [AC_DEFINE(MUS_LITTLE_ENDIAN, 0)
 		 AC_DEFINE(WORDS_BIGENDIAN)
     		 case "$host" in
@@ -292,9 +286,9 @@ AC_C_BIGENDIAN( [AC_DEFINE(MUS_LITTLE_ENDIAN, 0)
                    AC_DEFINE(MUS_OUT_FORMAT, MUS_LINT)
  		 fi
 		])
+
 AC_SYS_LARGEFILE
 AC_TYPE_OFF_T
-AC_C_STRINGIZE
 AM_LANGINFO_DECIMAL_POINT
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(long)
@@ -302,11 +296,10 @@ AC_CHECK_SIZEOF(long long)
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(int)
 AC_TYPE_SIGNAL
-AC_FUNC_STRFTIME
+
 AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs statfs clock getline)
-AC_CHECK_FUNCS(vsnprintf snprintf memmove strdup lstat fileno strcasecmp pathconf)
-AC_FUNC_CLOSEDIR_VOID
-AC_FUNC_VPRINTF
+AC_CHECK_FUNCS(vsnprintf snprintf strftime memmove strdup lstat fileno strcasecmp pathconf)
+
 AC_LIB_PROG_LD
 AC_PROG_FGREP
 AC_DEFINE_UNQUOTED(FGREP_PROG, "$ac_cv_prog_fgrep")
@@ -1177,9 +1170,7 @@ if test "$with_gauche" = yes ; then
                  GUILE_LIBS="$GUILE_LIBS -lgauche"
                  LOCAL_LANGUAGE="Gauche"
 # someday perhaps we'll figure out how to get at local variables in Gauche...
-#      		 if test $ac_cv_c_stringize = yes; then
-#        	   AC_DEFINE(WITH_RUN)
-#      		 fi
+#        	 AC_DEFINE(WITH_RUN)
                 ],
 		[
              	 AC_MSG_WARN([We need Gauche 0.8.7 or later])
@@ -1468,9 +1459,7 @@ if test $GUILE_CONFIG_works = yes; then
       echo found old out-of-date Guile library
     fi
     if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.5"))'`" = "#t"; then
-      if test $ac_cv_c_stringize = yes; then
-        AC_DEFINE(WITH_RUN)
-      fi
+      AC_DEFINE(WITH_RUN)
     fi
     if test "$with_snd_as_pd_external" = yes ; then
       GUILE_LIBS=["`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string-append (cdr (assoc (quote libdir) %guile-build-info)) "/libguile.a " (cdr (assoc (quote LIBS) %guile-build-info))))'`"]

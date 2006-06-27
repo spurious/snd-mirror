@@ -45,11 +45,8 @@ static char *mus_error_buffer = NULL;
 
 int mus_error(int error, const char *format, ...)
 {
-#if HAVE_VPRINTF
   va_list ap;
-#endif
   if (format == NULL) return(MUS_ERROR); /* else bus error in Mac OSX */
-#if HAVE_VPRINTF
   if (mus_error_buffer == NULL)
     mus_error_buffer = (char *)CALLOC(MUS_ERROR_BUFFER_SIZE, sizeof(char));
   va_start(ap, format);
@@ -66,11 +63,6 @@ int mus_error(int error, const char *format, ...)
       fprintf(stderr, mus_error_buffer);
       fputc('\n', stderr);
     }
-#else
-  if (error == 0) /* this case mainly for CLM */
-    fprintf(stderr, format);
-  else fprintf(stderr, "error: %d %s\n", error, format);
-#endif
   return(MUS_ERROR);
 }
 
@@ -86,7 +78,6 @@ mus_print_handler_t *mus_print_set_handler(mus_print_handler_t *new_print_handle
 
 void mus_print(const char *format, ...)
 {
-#if HAVE_VPRINTF
   va_list ap;
   if (mus_error_buffer == NULL)
     mus_error_buffer = (char *)CALLOC(MUS_ERROR_BUFFER_SIZE, sizeof(char));
@@ -107,7 +98,6 @@ void mus_print(const char *format, ...)
       vfprintf(stdout, format, ap);
       va_end(ap);
     }
-#endif
 }
 
 static const char *mus_initial_error_names[] = {
