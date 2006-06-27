@@ -1700,43 +1700,6 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 |#
 
 
-;;; this might be better named "quasi-ssb-fm" -- cancellations are not perfect
-
-(def-clm-struct sbfm 
-  (am0 #f :type clm) (am1 #f :type clm) 
-  (car0 #f :type clm) (car1 #f :type clm)
-  (mod0 #f :type clm) (mod1 #f :type clm))
-
-(define (make-ssb-fm freq)
-  (make-sbfm :am0 (make-oscil freq 0)
-	     :am1 (make-oscil freq (* 0.5 pi))
-	     :car0 (make-oscil 0 0)
-	     :car1 (make-oscil 0 (* 0.5 pi))
-	     :mod0 (make-hilbert-transform 40)
-	     :mod1 (make-delay 40)))
-
-(define (ssb-fm gen modsig)
-  (+ (* (oscil (sbfm-am0 gen)) 
-	(oscil (sbfm-car0 gen) (hilbert-transform (sbfm-mod0 gen) modsig)))
-     (* (oscil (sbfm-am1 gen)) 
-	(oscil (sbfm-car1 gen) (delay (sbfm-mod1 gen) modsig)))))
-
-
-;;; if all we want are asymmetric fm-generated spectra, we can just add 2 fm oscil pairs:
-
-(define (make-fm2 f1 f2 f3 f4 p1 p2 p3 p4)
-  ;; (make-fm2 1000 100 1000 100  0 0  (* 0.5 pi) (* 0.5 pi))
-  ;; (make-fm2 1000 100 1000 100  0 0  0 (* 0.5 pi))
-  (list (make-oscil f1 p1)
-	(make-oscil f2 p2)
-	(make-oscil f3 p3)
-	(make-oscil f4 p4)))
-
-(define (fm2 gen index)
-  (* .25 (+ (oscil (list-ref gen 0) (* index (oscil (list-ref gen 1))))
-	    (oscil (list-ref gen 2) (* index (oscil (list-ref gen 3)))))))
-
-
 #|
 ;;; a "bump function" (Stein and Shakarchi)
 (define (bumpy)

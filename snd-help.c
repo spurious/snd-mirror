@@ -464,10 +464,7 @@ char *version_info(void)
 #ifdef SND_HOST
 	  "\n    host: ", SND_HOST,
 #endif
-#ifdef CONFIGURE_ARGS
-	  "\n    configured with: ", CONFIGURE_ARGS,
 	  "\n",
-#endif
 	  NULL);
   free_snd_itoa();
   if (xversion) free(xversion); /* calloc in xen.c */
@@ -500,6 +497,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+28-Jun:  moved rmsgain code to clm-ins.scm.\n\
 23-Jun:  Snd 8.2.\n\
 12-Jun:  fmviolin.clm.\n\
 6-Jun:   changed after-apply-hook to after-apply-controls-hook.\n\

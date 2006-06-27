@@ -1,7 +1,6 @@
 <html>
 
-<!-- TODO: these need work: edit123 infsnd ladspa maxf rmsgain rtex strad ws -->
-<!--     rmsgain: clm/tb.ins uses balance gen but ... see balance.html -->
+<!-- TODO: these need work: edit123 infsnd ladspa maxf rtex strad ws -->
 <!-- TODO: check pd-*.scm snd-hobbit.scm (rb/fs?) -->
 <!-- SOMEDAY: more mouseovers -->
 
@@ -112,24 +111,23 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 <tr><td bgcolor="#f6f8ff"><a href="#prc95doc">prc95</a></td>                  <td bgcolor="#f6f8ff">Perry Cook's physical model examples</td></tr>
 <tr><td><a href="#pvocdoc">pvoc</a></td>  <td>phase-vocoder</td></tr>
 <tr><td bgcolor="#f6f8ff"><a href="#rgbdoc">rgb</a></td>                      <td bgcolor="#f6f8ff">color names</td></tr>
-<tr><td><A href="#rmsgaindoc">rmsgain</a></td><td>RMS-based gain and balance methods (Fabio Furlanete)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a href="#rtexdoc">rt-examples and friends</a></td> <td bgcolor="#f6f8ff">hard real-time support</td></tr>
-<tr><td><a href="#rtiodoc">rtio</a></td>  <td>real-time stuff</td></tr>
-<tr><td bgcolor="#f6f8ff"><a href="#rubberdoc">rubber</a></td>                <td bgcolor="#f6f8ff">rubber-sound</td></tr>
-<tr><td><a href="#singerdoc">singer</a></td><td>Perry Cook's vocal-tract physical model</td></tr>
-<tr><td bgcolor="#f6f8ff"><a href="#snd4doc">snd4|5|6|7.scm</a></td>                     <td bgcolor="#f6f8ff">Backwards compatibility</td></tr>
-<tr><td><a href="#sndgldoc">snd-gl</a></td>                 <td>OpenGL examples (gl.c)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a href="#sndmotifdoc">snd-motif, snd-gtk, snd-xm</a></td><td bgcolor="#f6f8ff">Motif/Gtk module (xm.c, xg.c)</td></tr>
-<tr><td><a href="#sndtestdoc">snd-test</a></td><td>Snd regression tests</td></tr>
-<tr><td bgcolor="#f6f8ff"><a href="#sndwarpdoc">sndwarp</a></td>              <td bgcolor="#f6f8ff">Bret Battey's sndwarp instrument</td></tr>
-<tr><td><a href="#spectrdoc">spectr</a></td><td>instrument steady state spectra</td></tr>
-<tr><td bgcolor="#f6f8ff"><a href="#straddoc">strad</a></td>                  <td bgcolor="#f6f8ff">string physical model (from CLM)</td></tr>
-<tr><td><a href="#vdoc">v</a></td>        <td>fm-violin</td></tr>
-<tr><td bgcolor="#f6f8ff"><a href="#wsdoc">ws</a></td>                        <td bgcolor="#f6f8ff">with-sound</td></tr>
-<tr><td><a href="#zipdoc">zip</a></td>                      <td>the zipper (the anti-cross-fader)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a href="#extsndasneededexpl">A Note on "As-Needed" input functions</a></td><td bgcolor="#f6f8ff"></td></tr>
-<tr><td><a href="#extsndcgens">A Note on User-defined Generators in C-CLM</a></td><td></td></tr>
-<tr><td bgcolor="#f6f8ff"><a href="#noisystory">A Note on Noise Reduction</a></td><td bgcolor="#f6f8ff"></td></tr>
+<tr><td><a href="#rtexdoc">rt-examples and friends</a></td> <td>hard real-time support</td></tr>
+<tr><td bgcolor="#f6f8ff"><a href="#rtiodoc">rtio</a></td>  <td bgcolor="#f6f8ff">real-time stuff</td></tr>
+<tr><td><a href="#rubberdoc">rubber</a></td>                <td>rubber-sound</td></tr>
+<tr><td bgcolor="#f6f8ff"><a href="#singerdoc">singer</a></td><td bgcolor="#f6f8ff">Perry Cook's vocal-tract physical model</td></tr>
+<tr><td><a href="#snd4doc">snd4|5|6|7.scm</a></td>                     <td>Backwards compatibility</td></tr>
+<tr><td bgcolor="#f6f8ff"><a href="#sndgldoc">snd-gl</a></td>                 <td bgcolor="#f6f8ff">OpenGL examples (gl.c)</td></tr>
+<tr><td><a href="#sndmotifdoc">snd-motif, snd-gtk, snd-xm</a></td><td>Motif/Gtk module (xm.c, xg.c)</td></tr>
+<tr><td bgcolor="#f6f8ff"><a href="#sndtestdoc">snd-test</a></td><td bgcolor="#f6f8ff">Snd regression tests</td></tr>
+<tr><td><a href="#sndwarpdoc">sndwarp</a></td>              <td>Bret Battey's sndwarp instrument</td></tr>
+<tr><td bgcolor="#f6f8ff"><a href="#spectrdoc">spectr</a></td><td bgcolor="#f6f8ff">instrument steady state spectra</td></tr>
+<tr><td><a href="#straddoc">strad</a></td>                  <td>string physical model (from CLM)</td></tr>
+<tr><td bgcolor="#f6f8ff"><a href="#vdoc">v</a></td>        <td bgcolor="#f6f8ff">fm-violin</td></tr>
+<tr><td><a href="#wsdoc">ws</a></td>                        <td>with-sound</td></tr>
+<tr><td bgcolor="#f6f8ff"><a href="#zipdoc">zip</a></td>                      <td bgcolor="#f6f8ff">the zipper (the anti-cross-fader)</td></tr>
+<tr><td><a href="#extsndasneededexpl">A Note on "As-Needed" input functions</a></td><td></td></tr>
+<tr><td bgcolor="#f6f8ff"><a href="#extsndcgens">A Note on User-defined Generators in C-CLM</a></td><td bgcolor="#f6f8ff"></td></tr>
+<tr><td><a href="#noisystory">A Note on Noise Reduction</a></td><td></td></tr>
 </table>
 </td></tr></table>
 
@@ -1143,18 +1141,58 @@ Take my word for it -- this thing does work.  If you find a good example, send m
 <em class=emdef>rhodey</em> <code>(beg dur freq amp :optional (base .5))</code>
 </td></tr>
 <tr><td></td><td>
-rhodey is another of Perry Cook's instruments, based on a pair of FM generators.
+rhodey is another of Perry Cook's instruments (an electric piano), based on a pair of FM generators.
 <pre>
     (with-sound () (rhodey 0 1 440 .2))
 </pre>
-Is this an electric piano?
 One of the oscillators is set to a frequency 15 times the requested <i>freq</i>, so for higher notes, you'll need to set the srate higher:
 <pre>
     (with-sound (:srate 44100) (rhodey 0 1 880 .2))
 </pre>
-On second thought...
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
+
+<!-- main-index |rmsgain:rms, gain, balance gens -->
+<!-- rms gain balance -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="rmsgain">rms</a> <code>gen sig</code><br>
+<em class=emdef>balance</em> <code>gen sig comparison</code><br>
+<em class=emdef>gain</em> <code>gen sig rsmval</code><br>
+<em class=emdef>make-rmsgain</em> <code>:optional (hp 10.0)</code>
+</td></tr>
+<tr><td></td><td>
+rms, balance, and gain are an implementation of the balance generators of CLM (based
+on CSound originals, Scheme versions originally provided by Fabio Furlanete). 
+This section is a paraphrase of balance.html in the CLM tarball which was
+written by Sam Hiesz.
+balance, rms, and gain are used to track the RMS value of a signal and use
+that information to scale some other signal.  rms returns the RMS value;
+gain takes a signal and an RMS value and modifies the signal to track the RMS
+value; balance packages gain and rms into one function call.
+make-rmsgain returns the generator used by rms, gain, and balance.
+The <i>hp</i> parameter sets the speed with which the balance process
+tracks the RMS signal.  An example is worth a zillion words:
+
+<table border=0 cellpadding=5 hspace=10 vspace=10><tr><td bgcolor="#fafafa"><pre>
+      (with-sound (:channels 3)
+        (let ((rg (make-rmsgain))
+	      (rg1 (make-rmsgain 40))
+	      (rg2 (make-rmsgain 2))
+	      (e (make-env '(0 0 1 1 2 0) :end 10000))
+	      (e1 (make-env '(0 0 1 1) :end 10000))
+	      (e2 (make-env '(0 0 1 1 2 0 10 0) :end 10000))
+	      (o (make-oscil 440.0)))
+	  (do ((i 0 (1+ i)))
+	      ((= i 10000))
+	    (let ((sig (env e)))
+	      (outa i (balance rg sig (env e2)) *output*)
+	      (outb i (balance rg1 sig (env e1)) *output*)
+	      (outc i (balance rg2 (* .1 (oscil o)) (env e2)) *output*)))))
+</pre></td></tr></table>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
 
 
 <!-- scratch -->
@@ -1206,6 +1244,16 @@ We can pass our own partials:
 </pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
+
+<!-- ssb-fm -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="ssbfm">ssb-fm</a> gen <code>modsig</code><br>
+<em class=emdef>make-ssb-fm</em> <code>freq</code>
+</td></tr><tr><td></td><td>
+These two functions implement
+a sort of asymmetric FM using ideas similar to those used in <a href="clm.html#ssb-am">ssb-am</a>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- main-index |stereoflute:flute model -->
@@ -2125,15 +2173,6 @@ is a variant of amplitude modulation).
 There is a dialog that runs ssb-bank in snd-motif.scm: create-ssb-dialog.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
-
-<!-- ssb-fm -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="ssbfm">ssb-fm</a> gen <code>modsig</code><br>
-<em class=emdef>make-ssb-fm</em> <code>freq</code>
-</td></tr><tr><td></td><td>
-These two functions implement
-a sort of asymmetric FM using ideas similar to those used in <a href="clm.html#ssb-am">ssb-am</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- any-random -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -6426,19 +6465,8 @@ There is one gotcha in this file -- X11 defines a color named "tan"
 which is already used by Scheme, so (at the suggestion of Dave Phillips)
 this color is named "tawny" in rgb.scm.
 </p>
-
 <br>
-<A NAME="rmsgaindoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>rmsgain</h2></td></tr></table>
 
-<p>rmsgain.scm is an implementation of the balance generators of CLM (based
-on CSound originals).  I assume, from a glance at the code, that they're used
-something like this:
-</p>
-<pre>
-    (define gen (make-instance &lt;rmsgain&gt;))
-    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) (balance gen y (rms gen y))))
-</pre>
-<br>
 
 <A NAME="rtexdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>rt-examples and friends</h2></td></tr></table>
 
@@ -8449,6 +8477,7 @@ with_sound(:verbose, true) do
   }
 end
 
+clm_mix is a wrapper for mus_mix -- ws.rb line 1700 or so
 with_sound(:verbose, true) do
   sound_let(lambda do
                 with_mix "s7", 0, %Q{
@@ -8467,11 +8496,11 @@ end
 
 <A NAME="wsdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>ws</h2></td></tr></table>
 
-<!-- TODO: doc def-clm-struct etc -->
+<!-- TODO: doc def-clm-struct, notehook, definstrument, with-temp-sound, clm-load, sound-let, with-mix (mus_mix/clm_mix in rb), def-optkey-fun -->
 
 <p>
 with-sound provides a simple way to package up a bunch of instrument calls into a new
-sound file, opening that file in Snd when the computation is complete. 
+sound file, and open that file in Snd when the computation is complete. 
 To hear (and see) the fm-violin, for example, we first load with-sound and the instrument:
 </p>
 <table border=0 cellspacing=0 hspace=20>

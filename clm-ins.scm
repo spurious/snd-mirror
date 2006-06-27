@@ -2747,3 +2747,84 @@ mjkoskin@sci.fi
 	 (set! mod-ph (+ mod-ph mod-incr)))))))
 
 ;;; (with-sound (:statistics #t) (bes-fm 0 1 440 10.0 1.0 4.0))
+
+
+;;; ssb-fm
+;;; this might be better named "quasi-ssb-fm" -- cancellations are not perfect
+
+(def-clm-struct sbfm 
+  (am0 #f :type clm) (am1 #f :type clm) 
+  (car0 #f :type clm) (car1 #f :type clm)
+  (mod0 #f :type clm) (mod1 #f :type clm))
+
+(define (make-ssb-fm freq)
+  (make-sbfm :am0 (make-oscil freq 0)
+	     :am1 (make-oscil freq (* 0.5 pi))
+	     :car0 (make-oscil 0 0)
+	     :car1 (make-oscil 0 (* 0.5 pi))
+	     :mod0 (make-hilbert-transform 40)
+	     :mod1 (make-delay 40)))
+
+(define (ssb-fm gen modsig)
+  (+ (* (oscil (sbfm-am0 gen)) 
+	(oscil (sbfm-car0 gen) (hilbert-transform (sbfm-mod0 gen) modsig)))
+     (* (oscil (sbfm-am1 gen)) 
+	(oscil (sbfm-car1 gen) (delay (sbfm-mod1 gen) modsig)))))
+
+
+;;; if all we want are asymmetric fm-generated spectra, we can just add 2 fm oscil pairs:
+
+(define (make-fm2 f1 f2 f3 f4 p1 p2 p3 p4)
+  ;; (make-fm2 1000 100 1000 100  0 0  (* 0.5 pi) (* 0.5 pi))
+  ;; (make-fm2 1000 100 1000 100  0 0  0 (* 0.5 pi))
+  (list (make-oscil f1 p1)
+	(make-oscil f2 p2)
+	(make-oscil f3 p3)
+	(make-oscil f4 p4)))
+
+(define (fm2 gen index)
+  (* .25 (+ (oscil (list-ref gen 0) (* index (oscil (list-ref gen 1))))
+	    (oscil (list-ref gen 2) (* index (oscil (list-ref gen 3)))))))
+
+
+;;; rms gain balance
+;;; This is a translation of the rmsgain code provided by Fabio Furlanete.
+
+(def-clm-struct rmsg 
+  (c1 0.0 :type float)
+  (c2 0.0 :type float)
+  (q 0.0 :type float)
+  (r 0.0 :type float)
+  (avg 0.0 :type float)
+  (avgc 0 :type int))
+
+(define* (make-rmsgain :optional (hp 10.0))
+  (let* ((b (- 2.0 (cos (* hp (/ (* 2.0 pi) (mus-srate))))))
+	 (c2 (- b (sqrt (- (* b b) 1.0))))
+	 (c1 (- 1.0 c2)))
+    (make-rmsg :c1 c1 :c2 c2)))
+
+(define (rms gen sig)
+  (set! (rmsg-q gen) (+ (* (rmsg-c1 gen) sig sig)
+			(* (rmsg-c2 gen) (rmsg-q gen))))
+  (sqrt (rmsg-q gen)))
+
+
+(define (gain gen sig rmsval)
+  (set! (rmsg-r gen) (+ (* (rmsg-c1 gen) sig sig)
+			(* (rmsg-c2 gen) (rmsg-r gen))))
+  (let ((this-gain (if (zero? (rmsg-r gen))
+		       rmsval
+		       (/ rmsval (sqrt (rmsg-r gen))))))
+    (set! (rmsg-avg gen) (+ (rmsg-avg gen) this-gain))
+    (set! (rmsg-avgc gen) (+ (rmsg-avgc gen) 1))
+    (* sig this-gain)))
+
+(define (balance gen signal compare)
+  (gain gen signal (rms gen compare)))
+
+(define (gain-avg gen)
+  (/ (rmsg-avg gen) (rmsg-avgc gen)))
+
+(define (balance-avg gen)
+  (rmsg-avg gen))
