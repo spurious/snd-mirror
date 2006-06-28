@@ -82,7 +82,6 @@
 #undef ENABLE_NLS
 #undef PACKAGE
 #undef VERSION
-#undef CONFIGURE_ARGS
 #undef SND_HOST
 
 #undef MUS_LINUX

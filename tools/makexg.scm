@@ -3345,13 +3345,9 @@
 ; direct-types)
 
 #!
-TODO:
+SOMEDAY: fix these const args somehow
 xg.c: In function 'gxg_gtk_clipboard_request_rich_text':
 xg.c:25580: warning: passing argument 3 of 'gtk_clipboard_request_rich_text' from incompatible pointer type
 xg.c: In function 'gxg_gtk_recent_filter_add_custom':
 xg.c:26549: warning: passing argument 3 of 'gtk_recent_filter_add_custom' from incompatible pointer type
-xg.c: At top level:
-xg.c:1413: warning: 'gxg_search_position' defined but not used
-xg.c:1422: warning: 'gxg_page_func' defined but not used
-xg.c:1430: warning: 'gxg_link_button_uri' defined but not used
 !#

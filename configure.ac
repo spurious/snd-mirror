@@ -2,8 +2,6 @@
 
 AC_INIT(snd, 8.3, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz)
 
-INVOKED_ARGS="$[@]"
-
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADERS(config.h sndlib.h)
@@ -27,7 +25,6 @@ AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 
-AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 
 #--------------------------------------------------------------------------------
