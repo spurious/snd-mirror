@@ -30,6 +30,7 @@
 ;; For more information see clm-2/freeverb/index.html [MS]
 
 ;;; changed to accomodate run and mono output, bill 11-Jun-06
+;;;            use the filtered-comb gen, bill 29-Jun-06
 
 ;;; Code:
 
@@ -78,9 +79,7 @@
 			    offset-room-decay))
 	 (numcombs (length combtuning))
 	 (numallpasses (length allpasstuning))
-	 (comb-delays (make-vector (* out-chans numcombs)))
-	 (comb-filters (make-vector (* out-chans numcombs)))
-	 (comb-feedbacks (make-vector (* out-chans numcombs)))
+	 (fcombs (make-vector (* out-chans numcombs)))
 	 (allpasses (make-vector (* out-chans numallpasses))))
     (if verbose
 	(format #t ";;; freeverb: ~d input channels, ~d output channels~%" in-chans out-chans))
@@ -127,16 +126,10 @@
 			       damping)))))
 	  (if (odd? c)
 	      (set! len (+ len (inexact->exact (floor (* srate-scale stereo-spread))))))
-	  (vector-set! comb-delays
-		       (+ (* c numcombs) i)
-		       (make-delay len))
-	  (vector-set! comb-filters
-		       (+ (* c numcombs) i)
-		       (make-one-zero :a0 (- 1.0 dmp) :a1 dmp))
-	  (vector-set! comb-feedbacks
-		       (+ (* c numcombs) i)
-		       room-decay-val))))
-
+	  (vector-set! fcombs (+ (* c numcombs) i)
+		       (make-filtered-comb :size len 
+					   :scaler room-decay-val 
+					   :filter (make-one-zero :a0 (- 1.0 dmp) :a1 dmp))))))
     (do ((c 0 (1+ c)))
 	((= c out-chans))
       (do ((i 0 (1+ i)))
@@ -145,15 +138,14 @@
 	       (len (inexact->exact (floor (* srate-scale tuning)))))
 	  (if (odd? c)
 	      (set! len (+ len (floor (inexact->exact (* srate-scale stereo-spread))))))
-	  (vector-set! allpasses
-		       (+ (* c numallpasses) i)
+	  (vector-set! allpasses (+ (* c numallpasses) i)
 		       (make-all-pass :size len :feedforward -1 :feedback 0.5)))))
     (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
-	 (declare (predelays clm-vector) (allpasses clm-vector) (comb-filters clm-vector) (comb-delays clm-vector) (comb-feedbacks float-vector))
+	 (declare (predelays clm-vector) (allpasses clm-vector) (fcombs clm-vector))
 	 (file->frame *reverb* i f-in)
 	 (if (> in-chans 1)
 	     (do ((c 0 (1+ c)))
@@ -163,12 +155,8 @@
 	       (do ((j 0 (1+ j)))
 		   ((= j numcombs))
 		 (let ((ctr (+ (* c numcombs) j)))
-		   (frame-set! f-out c (+ (frame-ref f-out c) 
-					  (delay (vector-ref comb-delays ctr)
-						 (+ (frame-ref f-in 0)
-						    (* (vector-ref comb-feedbacks ctr)
-						       (one-zero (vector-ref comb-filters ctr)
-								 (tap (vector-ref comb-delays ctr)))))))))))
+		   (frame-set! f-out c (+ (frame-ref f-out c)
+					  (filtered-comb (vector-ref fcombs ctr) (frame-ref f-in 0)))))))
 	     (begin
 	       (frame-set! f-in 0 (delay (vector-ref predelays 0) (frame-ref f-in 0)))
 	       (do ((c 0 (1+ c)))
@@ -177,12 +165,8 @@
 		 (do ((j 0 (1+ j)))
 		     ((= j numcombs))
 		   (let ((ctr (+ (* c numcombs) j)))
-		     (frame-set! f-out c (+ (frame-ref f-out c) 
-					    (delay (vector-ref comb-delays ctr)
-						   (+ (frame-ref f-in 0)
-						      (* (vector-ref comb-feedbacks ctr)
-							 (one-zero (vector-ref comb-filters ctr)
-								   (tap (vector-ref comb-delays ctr)))))))))))))
+		     (frame-set! f-out c (+ (frame-ref f-out c)
+					    (filtered-comb (vector-ref fcombs ctr) (frame-ref f-in 0)))))))))
 	 (do ((c 0 (1+ c)))
 	     ((= c out-chans))
 	   (do ((j 0 (1+ j)))

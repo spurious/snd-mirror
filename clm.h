@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 22
-#define MUS_DATE "8-May-06"
+#define MUS_REVISION 23
+#define MUS_DATE "28-June-06"
 
 /*
+ * 28-June:    filtered_comb generator.
  * 8-May:      mus_apply now takes 3 args: gen, two doubles (rather than bug-prone varargs).
  * 1-Mar-06:   granulate now has a local random number seed (settable via the mus-location method).
  * --------
@@ -470,6 +471,11 @@ Float *mus_filter_set_xcoeffs(mus_any *ptr, Float *new_data);
 Float *mus_filter_set_ycoeffs(mus_any *ptr, Float *new_data);
 int mus_filter_set_order(mus_any *ptr, int order);
 #define mus_order(Gen) mus_length(Gen)
+
+Float mus_filtered_comb(mus_any *ptr, Float input, Float pm);
+Float mus_filtered_comb_1(mus_any *ptr, Float input);
+bool mus_filtered_comb_p(mus_any *ptr);
+mus_any *mus_make_filtered_comb(Float scaler, int size, Float *line, int line_size, mus_interp_t type, mus_any *filt);
 
 Float mus_wave_train(mus_any *gen, Float fm);
 Float mus_wave_train_1(mus_any *gen);

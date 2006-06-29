@@ -1305,15 +1305,16 @@ static XEN g_mus_apply(XEN arglist)
 /* ---------------- delay ---------------- */
 
 
-typedef enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS, G_AVERAGE} xclm_delay_t;
+typedef enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS, G_AVERAGE, G_FCOMB} xclm_delay_t;
 
 static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 {
-  mus_any *ge = NULL;
+  mus_any *ge = NULL, *filt = NULL;
   char *caller = NULL;
   XEN args[MAX_ARGLIST_LEN]; 
-  XEN keys[8];
-  int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, (int)MUS_INTERP_NONE};
+  XEN keys[9];
+  XEN xen_filt = XEN_FALSE;
+  int orig_arg[9] = {0, 0, 0, 0, 0, 0, 0, (int)MUS_INTERP_NONE, 0};
   int vals, i, argn = 0, len = 0, arglist_len, max_size = -1, size = -1;
   mus_interp_t interp_type = MUS_INTERP_NONE;
   Float *line = NULL;
@@ -1321,14 +1322,15 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   vct *initial_contents = NULL;
   Float initial_element = 0.0;
   int scaler_key = -1, feedback_key = -1, feedforward_key = -1, size_key = -1, initial_contents_key = -1;
-  int initial_element_key = -1, max_size_key = -1, interp_type_key = -1;
+  int initial_element_key = -1, max_size_key = -1, interp_type_key = -1, filter_key = -1;
   bool size_set = false, max_size_set = false;
   switch (choice)
     {
-    case G_DELAY:    caller = S_make_delay;                                                               break;
-    case G_AVERAGE:  caller = S_make_average;                                                             break;
-    case G_COMB:     caller = S_make_comb;     scaler_key = argn; keys[argn++] = kw_scaler;               break;
-    case G_NOTCH:    caller = S_make_notch;    scaler_key = argn; keys[argn++] = kw_scaler;               break;
+    case G_DELAY:    caller = S_make_delay;                                                      break;
+    case G_AVERAGE:  caller = S_make_average;                                                    break;
+    case G_COMB:     caller = S_make_comb;     scaler_key = argn; keys[argn++] = kw_scaler;      break;
+    case G_FCOMB:    caller = S_make_filtered_comb; scaler_key = argn; keys[argn++] = kw_scaler; break;
+    case G_NOTCH:    caller = S_make_notch;    scaler_key = argn; keys[argn++] = kw_scaler;      break;
     case G_ALL_PASS: 
       caller = S_make_all_pass; 
       feedback_key = argn;
@@ -1342,6 +1344,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   initial_element_key = argn;  keys[argn++] = kw_initial_element;
   max_size_key = argn;         keys[argn++] = kw_max_size;
   interp_type_key = argn;      keys[argn++] = kw_type;
+  filter_key = argn;           keys[argn++] = kw_filter;
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
     XEN_ERROR(CLM_ERROR,
@@ -1366,6 +1369,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[size_key], keys[size_key], "size ~A too large");
 	  size_set = true;
 	}
+
       if (!(XEN_KEYWORD_P(keys[max_size_key])))
 	{
 	  max_size = mus_optkey_to_int(keys[max_size_key], caller, orig_arg[max_size_key], max_size); /* -1 = unset */
@@ -1397,13 +1401,25 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	case G_DELAY: 
 	case G_AVERAGE:
 	  break;
-	case G_COMB: case G_NOTCH:
+	case G_COMB: case G_NOTCH: case G_FCOMB:
 	  scaler = mus_optkey_to_float(keys[scaler_key], caller, orig_arg[scaler_key], scaler);
 	  break;
 	case G_ALL_PASS:
 	  feedback = mus_optkey_to_float(keys[feedback_key], caller, orig_arg[feedback_key], feedback);
 	  feedforward = mus_optkey_to_float(keys[feedforward_key], caller, orig_arg[feedforward_key], feedforward);
 	  break;
+	}
+
+      if (!(XEN_KEYWORD_P(keys[filter_key])))
+	{
+	  if (choice != G_FCOMB)
+	    XEN_ERROR(CLM_ERROR,
+		      XEN_LIST_3(C_TO_XEN_STRING(caller), 
+				 C_TO_XEN_STRING("filter arg passed??"),
+				 keys[filter_key]));
+	  XEN_ASSERT_TYPE(MUS_XEN_P(keys[filter_key]), keys[filter_key], orig_arg[filter_key], caller, "filter arg must be a generator");
+	  xen_filt = keys[filter_key];
+	  filt = XEN_TO_MUS_ANY(xen_filt);
 	}
 
       if (!(XEN_KEYWORD_P(keys[initial_contents_key])))
@@ -1481,14 +1497,30 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   old_error_handler = mus_error_set_handler(local_mus_error);
   switch (choice)
     {
-    case G_DELAY: ge = mus_make_delay(size, line, max_size, interp_type); break;
-    case G_AVERAGE: ge = mus_make_average(size, line); break;
-    case G_COMB: ge = mus_make_comb(scaler, size, line, max_size, interp_type); break;
-    case G_NOTCH: ge = mus_make_notch(scaler, size, line, max_size, interp_type); break;
+    case G_DELAY:    ge = mus_make_delay(size, line, max_size, interp_type); break;
+    case G_AVERAGE:  ge = mus_make_average(size, line); break;
+    case G_COMB:     ge = mus_make_comb(scaler, size, line, max_size, interp_type); break;
+    case G_NOTCH:    ge = mus_make_notch(scaler, size, line, max_size, interp_type); break;
     case G_ALL_PASS: ge = mus_make_all_pass(feedback, feedforward, size, line, max_size, interp_type); break;
+    case G_FCOMB:    ge = mus_make_filtered_comb(scaler, size, line, max_size, interp_type, filt); break;
     }
   mus_error_set_handler(old_error_handler);
-  if (ge) return(mus_xen_to_object(_mus_wrap_one_vct(ge)));
+  if (ge) 
+    {
+      if (choice != G_FCOMB)
+	return(mus_xen_to_object(_mus_wrap_one_vct(ge)));
+      else
+	{
+	  mus_xen *gn;
+	  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+	  gn->gen = ge;
+	  gn->nvcts = 2;
+	  gn->vcts = make_vcts(gn->nvcts);
+	  gn->vcts[MUS_DATA_WRAPPER] = make_vct(mus_length(ge), mus_data(ge));
+	  gn->vcts[MUS_INPUT_FUNCTION] = xen_filt; /* gc protect the filter */
+	  return(mus_xen_to_object(gn));
+	}
+    }
   if (line) FREE(line);
   return(xen_return_first(clm_mus_error(local_error_type, local_error_msg), arglist));
 }
@@ -1513,6 +1545,16 @@ If the comb length will be changing at run-time, max-size sets its maximum lengt
 initial-contents can be either a list or a vct."
 
   return(g_make_delay_1(G_COMB, args));
+}
+
+static XEN g_make_filtered_comb(XEN args) 
+{
+  #define H_make_filtered_comb "(" S_make_filtered_comb " :scaler :size :initial-contents (:initial-element 0.0) :max-size (:type " S_mus_interp_linear ") :filter): \
+return a new filtered comb filter (a delay line with a scaler and a filter on the feedback) of size elements. \
+If the comb length will be changing at run-time, max-size sets its maximum length. \
+initial-contents can be either a list or a vct."
+
+  return(g_make_delay_1(G_FCOMB, args));
 }
 
 static XEN g_make_notch(XEN args) 
@@ -1589,6 +1631,16 @@ static XEN g_comb(XEN obj, XEN input, XEN pm)
   return(C_TO_XEN_DOUBLE(mus_comb(XEN_TO_MUS_ANY(obj), in1, pm1)));
 }
 
+static XEN g_filtered_comb(XEN obj, XEN input, XEN pm)
+{
+  #define H_filtered_comb "(" S_filtered_comb " gen (val 0.0) (pm 0.0)): filtered comb filter val, pm changes the delay length."
+  Float in1 = 0.0, pm1 = 0.0;
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_filtered_comb_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_filtered_comb, "a filtered-comb filter");
+  if (XEN_NUMBER_P(input)) in1 = XEN_TO_C_DOUBLE(input); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_filtered_comb, "a number");
+  if (XEN_NUMBER_P(pm)) pm1 = XEN_TO_C_DOUBLE(pm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(pm), pm, XEN_ARG_3, S_filtered_comb, "a number");
+  return(C_TO_XEN_DOUBLE(mus_filtered_comb(XEN_TO_MUS_ANY(obj), in1, pm1)));
+}
+
 static XEN g_all_pass(XEN obj, XEN input, XEN pm)
 {
   #define H_all_pass "(" S_all_pass " gen (val 0.0) (pm 0.0)): all-pass filter val, pm changes the delay length."
@@ -1627,6 +1679,12 @@ static XEN g_comb_p(XEN obj)
 {
   #define H_comb_p "(" S_comb_p " gen): #t if gen is a comb filter"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_comb_p(XEN_TO_MUS_ANY(obj)))));
+}
+
+static XEN g_filtered_comb_p(XEN obj)
+{
+  #define H_filtered_comb_p "(" S_filtered_comb_p " gen): #t if gen is a filtered-comb filter"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_filtered_comb_p(XEN_TO_MUS_ANY(obj)))));
 }
 
 static XEN g_notch_p(XEN obj) 
@@ -5479,6 +5537,7 @@ XEN_ARGIFY_3(g_oscil_w, g_oscil)
 XEN_VARGIFY(g_mus_apply_w, g_mus_apply)
 XEN_VARGIFY(g_make_delay_w, g_make_delay)
 XEN_VARGIFY(g_make_comb_w, g_make_comb)
+XEN_VARGIFY(g_make_filtered_comb_w, g_make_filtered_comb)
 XEN_VARGIFY(g_make_notch_w, g_make_notch)
 XEN_VARGIFY(g_make_all_pass_w, g_make_all_pass)
 XEN_VARGIFY(g_make_average_w, g_make_average)
@@ -5487,11 +5546,13 @@ XEN_ARGIFY_2(g_delay_tick_w, g_delay_tick)
 XEN_ARGIFY_2(g_tap_w, g_tap)
 XEN_ARGIFY_3(g_notch_w, g_notch)
 XEN_ARGIFY_3(g_comb_w, g_comb)
+XEN_ARGIFY_3(g_filtered_comb_w, g_filtered_comb)
 XEN_ARGIFY_3(g_all_pass_w, g_all_pass)
 XEN_ARGIFY_2(g_average_w, g_average)
 XEN_NARGIFY_1(g_delay_p_w, g_delay_p)
 XEN_NARGIFY_1(g_notch_p_w, g_notch_p)
 XEN_NARGIFY_1(g_comb_p_w, g_comb_p)
+XEN_NARGIFY_1(g_filtered_comb_p_w, g_filtered_comb_p)
 XEN_NARGIFY_1(g_all_pass_p_w, g_all_pass_p)
 XEN_NARGIFY_1(g_average_p_w, g_average_p)
 XEN_ARGIFY_6(g_make_sum_of_cosines_w, g_make_sum_of_cosines)
@@ -5739,6 +5800,7 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_mus_apply_w g_mus_apply
 #define g_make_delay_w g_make_delay
 #define g_make_comb_w g_make_comb
+#define g_make_filtered_comb_w g_make_filtered_comb
 #define g_make_notch_w g_make_notch
 #define g_make_all_pass_w g_make_all_pass
 #define g_make_average_w g_make_average
@@ -5747,11 +5809,13 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_tap_w g_tap
 #define g_notch_w g_notch
 #define g_comb_w g_comb
+#define g_filtered_comb_w g_filtered_comb
 #define g_all_pass_w g_all_pass
 #define g_average_w g_average
 #define g_delay_p_w g_delay_p
 #define g_notch_p_w g_notch_p
 #define g_comb_p_w g_comb_p
+#define g_filtered_comb_p_w g_filtered_comb_p
 #define g_all_pass_p_w g_all_pass_p
 #define g_average_p_w g_average_p
 #define g_make_sum_of_cosines_w g_make_sum_of_cosines
@@ -6149,26 +6213,29 @@ void mus_xen_init(void)
 #if HAVE_SCHEME
   XEN_EVAL_C_STRING("(define %delay delay)"); /* protect the original meaning (a Scheme built-in function) */
 #endif
-  XEN_DEFINE_PROCEDURE(S_make_delay,    g_make_delay_w,    0, 0, 1, H_make_delay);
-  XEN_DEFINE_PROCEDURE(S_make_comb,     g_make_comb_w,     0, 0, 1, H_make_comb);
-  XEN_DEFINE_PROCEDURE(S_make_notch,    g_make_notch_w,    0, 0, 1, H_make_notch); 
-  XEN_DEFINE_PROCEDURE(S_make_all_pass, g_make_all_pass_w, 0, 0, 1, H_make_all_pass);
-  XEN_DEFINE_PROCEDURE(S_make_average,  g_make_average_w,  0, 0, 1, H_make_average);
-  XEN_DEFINE_PROCEDURE(S_delay,         g_delay_w,         1, 2, 0, H_delay); 
+  XEN_DEFINE_PROCEDURE(S_make_delay,      g_make_delay_w,      0, 0, 1, H_make_delay);
+  XEN_DEFINE_PROCEDURE(S_make_comb,       g_make_comb_w,       0, 0, 1, H_make_comb);
+  XEN_DEFINE_PROCEDURE(S_make_filtered_comb, g_make_filtered_comb_w, 0, 0, 1, H_make_filtered_comb);
+  XEN_DEFINE_PROCEDURE(S_make_notch,      g_make_notch_w,      0, 0, 1, H_make_notch); 
+  XEN_DEFINE_PROCEDURE(S_make_all_pass,   g_make_all_pass_w,   0, 0, 1, H_make_all_pass);
+  XEN_DEFINE_PROCEDURE(S_make_average,    g_make_average_w,    0, 0, 1, H_make_average);
+  XEN_DEFINE_PROCEDURE(S_delay,           g_delay_w,           1, 2, 0, H_delay); 
 #if HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE("clm:" S_delay,  g_delay_w,         1, 2, 0, H_delay);
+  XEN_DEFINE_PROCEDURE("clm:" S_delay,    g_delay_w,           1, 2, 0, H_delay);
 #endif
-  XEN_DEFINE_PROCEDURE(S_delay_tick,    g_delay_tick_w,    1, 1, 0, H_delay_tick); 
-  XEN_DEFINE_PROCEDURE(S_tap,           g_tap_w,           1, 1, 0, H_tap);
-  XEN_DEFINE_PROCEDURE(S_notch,         g_notch_w,         1, 2, 0, H_notch);
-  XEN_DEFINE_PROCEDURE(S_comb,          g_comb_w,          1, 2, 0, H_comb);
-  XEN_DEFINE_PROCEDURE(S_all_pass,      g_all_pass_w,      1, 2, 0, H_all_pass);
-  XEN_DEFINE_PROCEDURE(S_average,       g_average_w,       1, 1, 0, H_average);
-  XEN_DEFINE_PROCEDURE(S_delay_p,       g_delay_p_w,       1, 0, 0, H_delay_p);
-  XEN_DEFINE_PROCEDURE(S_notch_p,       g_notch_p_w,       1, 0, 0, H_notch_p);
-  XEN_DEFINE_PROCEDURE(S_comb_p,        g_comb_p_w,        1, 0, 0, H_comb_p);
-  XEN_DEFINE_PROCEDURE(S_all_pass_p,    g_all_pass_p_w,    1, 0, 0, H_all_pass_p);
-  XEN_DEFINE_PROCEDURE(S_average_p,     g_average_p_w,     1, 0, 0, H_average_p);
+  XEN_DEFINE_PROCEDURE(S_delay_tick,      g_delay_tick_w,      1, 1, 0, H_delay_tick); 
+  XEN_DEFINE_PROCEDURE(S_tap,             g_tap_w,             1, 1, 0, H_tap);
+  XEN_DEFINE_PROCEDURE(S_notch,           g_notch_w,           1, 2, 0, H_notch);
+  XEN_DEFINE_PROCEDURE(S_comb,            g_comb_w,            1, 2, 0, H_comb);
+  XEN_DEFINE_PROCEDURE(S_filtered_comb,   g_filtered_comb_w,   1, 2, 0, H_filtered_comb);
+  XEN_DEFINE_PROCEDURE(S_all_pass,        g_all_pass_w,        1, 2, 0, H_all_pass);
+  XEN_DEFINE_PROCEDURE(S_average,         g_average_w,         1, 1, 0, H_average);
+  XEN_DEFINE_PROCEDURE(S_delay_p,         g_delay_p_w,         1, 0, 0, H_delay_p);
+  XEN_DEFINE_PROCEDURE(S_notch_p,         g_notch_p_w,         1, 0, 0, H_notch_p);
+  XEN_DEFINE_PROCEDURE(S_comb_p,          g_comb_p_w,          1, 0, 0, H_comb_p);
+  XEN_DEFINE_PROCEDURE(S_filtered_comb_p, g_filtered_comb_p_w, 1, 0, 0, H_filtered_comb_p);
+  XEN_DEFINE_PROCEDURE(S_all_pass_p,      g_all_pass_p_w,      1, 0, 0, H_all_pass_p);
+  XEN_DEFINE_PROCEDURE(S_average_p,       g_average_p_w,       1, 0, 0, H_average_p);
 
   #define H_mus_feedback "(" S_mus_feedback " gen): feedback value of gen"
   #define H_mus_feedforward "(" S_mus_feedforward " gen): feedforward term of gen"
@@ -6486,6 +6553,8 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_file_to_sample_p,
 	       S_filter,
 	       S_filter_p,
+	       S_filtered_comb,
+	       S_filtered_comb_p,
 	       S_fir_filter,
 	       S_fir_filter_p,
 	       S_formant,
@@ -6533,6 +6602,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_make_file_to_frame,
 	       S_make_file_to_sample,
 	       S_make_filter,
+	       S_make_filtered_comb,
 	       S_make_fir_coeffs,
 	       S_make_fir_filter,
 	       S_make_formant,

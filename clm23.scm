@@ -291,6 +291,16 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (comb buf (* amp (oscil os))) 0 *output*))))))
 
+(define (simple-filtered-cmb beg dur freq amp)
+  (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
+	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
+	 (os (make-oscil freq))
+	 (buf (make-filtered-comb .1 100 :filter (make-one-zero .5 .5))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (out-any i (filtered-comb buf (* amp (oscil os))) 0 *output*))))))
+
 (define (simple-not beg dur freq amp)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))

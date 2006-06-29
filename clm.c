@@ -87,7 +87,7 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
-      MUS_AVERAGE, MUS_SUM_OF_SINES, MUS_SSB_AM, MUS_POLYSHAPE,
+      MUS_AVERAGE, MUS_SUM_OF_SINES, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
       MUS_INITIAL_GEN_TAG};
 
 static char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
@@ -592,6 +592,7 @@ struct mus_xen *_mus_wrap_one_vct_wrapped(mus_any *ge)
     }
   return(gn);
 }
+
 static struct mus_xen *wrap_filter(mus_any *gen)
 {
   mus_xen *gn;
@@ -606,6 +607,7 @@ static struct mus_xen *wrap_filter(mus_any *gen)
     gn->vcts[G_FILTER_YCOEFFS] = make_vct_wrapper(mus_order(gen), mus_ycoeffs(gen));
   return(gn);
 }
+
 static struct mus_xen *wrap_max_vcts(mus_any *ge)
 {
   mus_xen *gn;
@@ -2206,7 +2208,7 @@ bool mus_wave_train_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_WAV
 
 /* ---------------- delay, comb, notch, all-pass, average ---------------- */
 
-/* PERHAPS: running-max? (dsp.scm), fcomb|notch? */
+/* PERHAPS: moving-max? but that pushes average -> moving-average, (dsp.scm), fcomb|notch? */
 
 typedef struct {
   mus_any_class *core;
@@ -2216,6 +2218,7 @@ typedef struct {
   int zloc, zsize;
   Float xscl, yscl, yn1;
   mus_interp_t type;
+  mus_any *filt;
 } dly;
 
 
@@ -2311,75 +2314,6 @@ static char *describe_delay(mus_any *ptr)
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		    S_delay ": line[%d, %s]: %s", 
 		    gen->size, interp_name[gen->type], str = print_array(gen->line, gen->size, gen->loc));
-  if (str) FREE(str);
-  return(describe_buffer);
-}
-
-static char *describe_comb(mus_any *ptr)
-{
-  char *str = NULL;
-  dly *gen = (dly *)ptr;
-  if (gen->zdly)
-    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 S_comb ": scaler: %.3f, line[%d,%d, %s]: %s", 
-		 gen->yscl, gen->size, gen->zsize, 
-		 interp_name[gen->type],
-		 str = print_array(gen->line, gen->size, gen->zloc));
-  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    S_comb ": scaler: %.3f, line[%d, %s]: %s", 
-		    gen->yscl, gen->size, 
-		    interp_name[gen->type],
-		    str = print_array(gen->line, gen->size, gen->loc));
-  if (str) FREE(str);
-  return(describe_buffer);
-}
-
-static char *describe_notch(mus_any *ptr)
-{
-  char *str = NULL;
-  dly *gen = (dly *)ptr;
-  if (gen->zdly)
-    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 S_notch ": scaler: %.3f, line[%d,%d, %s]: %s", 
-		 gen->xscl, gen->size, gen->zsize, 
-		 interp_name[gen->type],
-		 str = print_array(gen->line, gen->size, gen->zloc));
-  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    S_notch ": scaler: %.3f, line[%d, %s]: %s", 
-		    gen->xscl, gen->size, 
-		    interp_name[gen->type],
-		    str = print_array(gen->line, gen->size, gen->loc));
-  if (str) FREE(str);
-  return(describe_buffer);
-}
-
-static char *describe_all_pass(mus_any *ptr)
-{
-  char *str = NULL;
-  dly *gen = (dly *)ptr;
-  if (gen->zdly)
-    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 S_all_pass ": feedback: %.3f, feedforward: %.3f, line[%d,%d, %s]:%s",
-		 gen->yscl, gen->xscl, gen->size, gen->zsize, 
-		 interp_name[gen->type],
-		 str = print_array(gen->line, gen->size, gen->zloc));
-  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    S_all_pass ": feedback: %.3f, feedforward: %.3f, line[%d, %s]:%s",
-		    gen->yscl, gen->xscl, gen->size, 
-		    interp_name[gen->type],
-		    str = print_array(gen->line, gen->size, gen->loc));
-  if (str) FREE(str);
-  return(describe_buffer);
-}
-
-static char *describe_average(mus_any *ptr)
-{
-  char *str = NULL;
-  dly *gen = (dly *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_average ": %.3f, line[%d]:%s",
-	       gen->xscl * gen->xscl, gen->size, 
-	       str = print_array(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
 }
@@ -2540,6 +2474,25 @@ Float mus_comb_1(mus_any *ptr, Float input)
   return(mus_delay_1(ptr, input + (gen->line[gen->loc] * gen->yscl)));
 }
 
+static char *describe_comb(mus_any *ptr)
+{
+  char *str = NULL;
+  dly *gen = (dly *)ptr;
+  if (gen->zdly)
+    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
+		 S_comb ": scaler: %.3f, line[%d,%d, %s]: %s", 
+		 gen->yscl, gen->size, gen->zsize, 
+		 interp_name[gen->type],
+		 str = print_array(gen->line, gen->size, gen->zloc));
+  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
+		    S_comb ": scaler: %.3f, line[%d, %s]: %s", 
+		    gen->yscl, gen->size, 
+		    interp_name[gen->type],
+		    str = print_array(gen->line, gen->size, gen->loc));
+  if (str) FREE(str);
+  return(describe_buffer);
+}
+
 static mus_any_class COMB_CLASS = {
   MUS_COMB,
   S_comb,
@@ -2581,6 +2534,25 @@ mus_any *mus_make_comb(Float scaler, int size, Float *line, int line_size, mus_i
 }
 
 bool mus_comb_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_COMB));}
+
+static char *describe_notch(mus_any *ptr)
+{
+  char *str = NULL;
+  dly *gen = (dly *)ptr;
+  if (gen->zdly)
+    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
+		 S_notch ": scaler: %.3f, line[%d,%d, %s]: %s", 
+		 gen->xscl, gen->size, gen->zsize, 
+		 interp_name[gen->type],
+		 str = print_array(gen->line, gen->size, gen->zloc));
+  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
+		    S_notch ": scaler: %.3f, line[%d, %s]: %s", 
+		    gen->xscl, gen->size, 
+		    interp_name[gen->type],
+		    str = print_array(gen->line, gen->size, gen->loc));
+  if (str) FREE(str);
+  return(describe_buffer);
+}
 
 static mus_any_class NOTCH_CLASS = {
   MUS_NOTCH,
@@ -2654,6 +2626,25 @@ Float mus_all_pass_1(mus_any *ptr, Float input)
 
 bool mus_all_pass_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_ALL_PASS));}
 
+static char *describe_all_pass(mus_any *ptr)
+{
+  char *str = NULL;
+  dly *gen = (dly *)ptr;
+  if (gen->zdly)
+    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
+		 S_all_pass ": feedback: %.3f, feedforward: %.3f, line[%d,%d, %s]:%s",
+		 gen->yscl, gen->xscl, gen->size, gen->zsize, 
+		 interp_name[gen->type],
+		 str = print_array(gen->line, gen->size, gen->zloc));
+  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
+		    S_all_pass ": feedback: %.3f, feedforward: %.3f, line[%d, %s]:%s",
+		    gen->yscl, gen->xscl, gen->size, 
+		    interp_name[gen->type],
+		    str = print_array(gen->line, gen->size, gen->loc));
+  if (str) FREE(str);
+  return(describe_buffer);
+}
+
 static mus_any_class ALL_PASS_CLASS = {
   MUS_ALL_PASS,
   S_all_pass,
@@ -2716,6 +2707,18 @@ static void average_reset(mus_any *ptr)
   gen->xscl = 0.0;
 }
 
+static char *describe_average(mus_any *ptr)
+{
+  char *str = NULL;
+  dly *gen = (dly *)ptr;
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
+	       S_average ": %.3f, line[%d]:%s",
+	       gen->xscl * gen->xscl, gen->size, 
+	       str = print_array(gen->line, gen->size, gen->loc));
+  if (str) FREE(str);
+  return(describe_buffer);
+}
+
 static mus_any_class AVERAGE_CLASS = {
   MUS_AVERAGE,
   S_average,
@@ -2759,52 +2762,26 @@ mus_any *mus_make_average(int size, Float *line)
   return(NULL);
 }
 
-/* running-max: keep current_max in delay line and number of copies of it
+/* moving-max: keep current_max in delay line and number of copies of it
  *              if abs(input)>max {max=abs(input) copies=1} else
  *                if output = max, {copies--, if copies==0 get new max + copies}
  */
-/* what about balance as average and gain/rms? */
 
 
-
-/* ---------------------------------------- filtered-* ---------------------------------------- */
-#if 0
-/* filtered delay (and notch) might be nice too, could share nearly all this machinery  */
-/*   on xen side, the "filt" could also be a lambda form packaged to look like a mus_run method(?) */
-/*   ot instead of passing in a mus_any*, pass the mus_run function (need state as well) */
-
-/* filtered-comb */
-typedef struct {
-  mus_any_class *core;
-  dly *cmb;
-  mus_any *filt;
-} fcomb;
+/* ---------------------------------------- filtered-comb ---------------------------------------- */
 
 static void filtered_comb_reset(mus_any *ptr)
 {
-  fcomb *fc = (fcomb *)ptr;
-  mus_reset(fc->cmb);
+  dly *fc = (dly *)ptr;
+  delay_reset(ptr);
   mus_reset(fc->filt);
-}
-
-static int free_filtered_comb(mus_any *gen) 
-{
-  fcomb *fc = (fcomb *)ptr;
-  if (fc)
-    {
-      mus_free(fc->cmb);
-      /* mus_free(fc->filt); */
-      FREE(fc);
-    }
-  return(0); 
 }
 
 static bool filtered_comb_equalp(mus_any *p1, mus_any *p2)
 {
-  fcomb *fc1 = (fcomb *)p1;
-  fcomb *fc2 = (fcomb *)p2;
-  return((mus_equalp((mus_any *)(fc1->cmb), (mus_any *)(fc2->cmb))) &&
-	 (mus_equalp(fc1->filt, fc2->filt)));
+  return((delay_equalp(p1, p2)) &&
+	 (mus_equalp(((dly *)p1)->filt, 
+		     ((dly *)p2)->filt)));
 }
 
 static char *describe_filtered_comb(mus_any *ptr)
@@ -2813,13 +2790,13 @@ static char *describe_filtered_comb(mus_any *ptr)
   static char *res = NULL;
   int len;
   if (res) FREE(res); /* left over from before (mus_describe result isn't freed by caller) */
-  comb_str = strdup(mus_decribe((mus_any *)(((fcomb *)ptr)->cmb)));
-  filter_str = strdup(mus_describe(((fcomb *)ptr)->filt));
+  comb_str = strdup(describe_comb(ptr));
+  filter_str = strdup(mus_describe(((dly *)ptr)->filt));
   len = strlen(comb_str) + strlen(filter_str) + 64;
   res = (char *)CALLOC(len, sizeof(char));
-  mus_snprintf(res, len, "%s: %s %s", S_mus_filtered_comb, comb_str, filter_str);
-  FREE(comb_str);
-  FREE(filter_str);
+  mus_snprintf(res, len, "%s: [%s], [%s]", S_filtered_comb, comb_str, filter_str);
+  free(comb_str);
+  free(filter_str);
   return(res);
 }
 
@@ -2827,28 +2804,36 @@ bool mus_filtered_comb_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_
 
 Float mus_filtered_comb(mus_any *ptr, Float input, Float pm)
 {
-  fcomb *fc = (fcomb *)ptr;
-  dly *gen;
-  gen = fc->cmb;
-  if (gen->zdly)
-    return(mus_delay((mus_any *)gen, 
-		     input + (gen->yscl * 
+  dly *fc = (dly *)ptr;
+  if (fc->zdly)
+    return(mus_delay(ptr,
+		     input + (fc->yscl * 
 			      mus_run(fc->filt, 
-				      mus_tap((mus_any *)gen, pm), 
+				      mus_tap(ptr, pm), 
 				      0.0)), 
 		     pm)); 
-  else return(mus_delay((mus_any *)gen, 
-			input + (gen->yscl * 
+  else return(mus_delay(ptr,
+			input + (fc->yscl * 
 				 mus_run(fc->filt, 
-					 gen->line[gen->loc], 
+					 fc->line[fc->loc], 
 					 0.0)), 
 			0.0));
+}
+
+Float mus_filtered_comb_1(mus_any *ptr, Float input)
+{
+  dly *fc = (dly *)ptr;
+  return(mus_delay_1(ptr,
+		     input + (fc->yscl * 
+			      mus_run(fc->filt, 
+				      fc->line[fc->loc], 
+				      0.0))));
 }
 
 static mus_any_class FILTERED_COMB_CLASS = {
   MUS_FILTERED_COMB,
   S_filtered_comb,
-  &free_filtered_comb,
+  &free_delay,
   &describe_filtered_comb,
   &filtered_comb_equalp,
   &delay_data,
@@ -2867,30 +2852,27 @@ static mus_any_class FILTERED_COMB_CLASS = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
+  &_mus_wrap_one_vct_wrapped, /* assume for now that the caller will protect the filter (we never create it ourselves) */
   &filtered_comb_reset,
   0
 };
 
 mus_any *mus_make_filtered_comb(Float scaler, int size, Float *line, int line_size, mus_interp_t type, mus_any *filt)
 {
-  fcomb *fc;
   if (filt)
     {
-      fc = (fcomb *)clm_calloc(1, sizeof(fcomb), S_make_filtered_comb);
+      dly *fc;
+      fc = (dly *)mus_make_comb(scaler, size, line, line_size, type);
       if (fc)
-	{  
+	{
 	  fc->core = &FILTERED_COMB_CLASS;
-	  fc->cmb = (dly *)mus_make_comb(scaler, size, line, line_size, type);
 	  fc->filt = filt;
-	  return((mus_any *)gen);
+	  return((mus_any *)fc);
 	}
-      return(NULL);
+      else return(NULL);
     }
   return(mus_make_comb(scaler, size, line, line_size, type));
 }
-#endif
-
 
 
 
@@ -3885,7 +3867,11 @@ mus_any *mus_make_formant(Float radius, Float frequency, Float gain)
 
 /* PERHAPS: biquad -- could just be a pair of macros:
   #define mus_biquad(Filter, Input) mus_filter(Filter, Input)
-  (define (make-biquad a0 a1 a2 b1 b2) (make-filter 3 (vct a0 a1 a2) (vct 0.0 b1 b2)))
+  #define mus_make_biquad(X_0, X_1, X_2, Y_1, Y_2) mus_make_filter(3, mus_make_coeffs(3, X_0, X_1, X_2), mus_make_coeffs(3, 0.0, Y_1, Y_2), NULL)
+    where mus_make_coeffs fills vct from trailing args -- or perhaps make_vct_va(...) -- is this a memory leak?
+  #define mus_biquad_p(Obj) ((mus_filter_p(Obj) && (mus_order(Obj) == 3)))
+    then need doc/test/tie into xen
+  PERHAPS: cascade_to_canonical
 */
 
 /* PERHAPS: volterra filter (dsp.scm) */

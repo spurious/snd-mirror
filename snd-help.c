@@ -498,6 +498,7 @@ void about_snd_help(void)
 		"\nRecent changes include:\n\
 \n\
 28-Jun:  moved rmsgain code to clm-ins.scm.\n\
+         new CLM generator: filtered-comb.\n\
 23-Jun:  Snd 8.2.\n\
 12-Jun:  fmviolin.clm.\n\
 6-Jun:   changed after-apply-hook to after-apply-controls-hook.\n\

@@ -7748,12 +7748,14 @@ static char *descr_int_gen0(int *args, ptree *pt, const char *which)
 #define mus_delay_0(Gen) mus_delay_1(Gen, 0.0)
 #define mus_notch_0(Gen) mus_notch_1(Gen, 0.0)
 #define mus_comb_0(Gen) mus_comb_1(Gen, 0.0)
+#define mus_filtered_comb_0(Gen) mus_filtered_comb_1(Gen, 0.0)
 #define mus_all_pass_0(Gen) mus_all_pass_1(Gen, 0.0)
 #define mus_ssb_am_0(Gen) mus_ssb_am_1(Gen, 0.0)
 
 GEN1(env)
 GEN3(notch)
 GEN3(comb)
+GEN3(filtered_comb)
 GEN3(delay)
 GEN3(all_pass)
 GEN2(average)
@@ -9999,6 +10001,7 @@ CLM_MAKE_FUNC(all_pass)
 CLM_MAKE_FUNC(average)
 CLM_MAKE_FUNC(asymmetric_fm)
 CLM_MAKE_FUNC(comb)
+CLM_MAKE_FUNC(filtered_comb)
 CLM_MAKE_FUNC(convolve)
 CLM_MAKE_FUNC(delay)
 CLM_MAKE_FUNC(env)
@@ -11304,6 +11307,7 @@ static void init_walkers(void)
   INIT_WALKER(S_env_p, make_walker(env_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_notch_p, make_walker(notch_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_comb_p, make_walker(comb_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_filtered_comb_p, make_walker(filtered_comb_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_delay_p, make_walker(delay_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_all_pass_p, make_walker(all_pass_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_average_p, make_walker(average_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
@@ -11386,6 +11390,7 @@ static void init_walkers(void)
   INIT_WALKER(S_env_interp, make_walker(env_interp_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_FLOAT, R_CLM));
   INIT_WALKER(S_notch, make_walker(notch_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_comb, make_walker(comb_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_filtered_comb, make_walker(filtered_comb_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_convolve, make_walker(convolve_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_FUNCTION));
   INIT_WALKER(S_delay, make_walker(delay_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_all_pass, make_walker(all_pass_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
@@ -11482,6 +11487,7 @@ static void init_walkers(void)
   INIT_WALKER(S_make_average, make_walker(make_average_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_asymmetric_fm, make_walker(make_asymmetric_fm_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_comb, make_walker(make_comb_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_filtered_comb, make_walker(make_filtered_comb_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_convolve, make_walker(make_convolve_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_delay, make_walker(make_delay_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_env, make_walker(make_env_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));

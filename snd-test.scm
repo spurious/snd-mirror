@@ -2018,6 +2018,7 @@
 			 'fft-log-magnitude 'fft-window 'fft-window-alpha 'fft-window-beta 'file->array
 			 'file->frame 'file->frame? 'file->sample 'file->sample? 'file->string
 			 'file-name 'file-write-date 'fill-polygon 'fill-rectangle 'filter
+			 'filtered-comb 'filtered-comb?
 			 'filter-channel 'filter-control-coeffs 'filter-control-envelope 'filter-control-in-dB 'filter-control-in-hz
 			 'filter-control-order 'filter-control-waveform-color 'filter-control? 'filter-selection 'filter-sound
 			 'filter? 'find-channel 'find-dialog 'find-mark 'find-sound
@@ -2046,7 +2047,7 @@
 			 'listener-prompt 'listener-selection 'listener-text-color 'lock-track 'locsig
 			 'locsig-ref 'locsig-reverb-ref 'locsig-reverb-set! 'locsig-set! 'locsig-type
 			 'locsig? 'log-freq-start 'main-menu 'main-widgets 'make-all-pass
-			 'make-asymmetric-fm 'make-average 'make-bezier 'make-color 'make-comb
+			 'make-asymmetric-fm 'make-average 'make-bezier 'make-color 'make-comb 'make-filtered-comb
 			 'make-convolve 'make-delay 'make-env 'make-fft-window 'make-file->frame
 			 'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant
 			 'make-frame 'make-frame->file 'make-granulate 'make-graph-data 'make-iir-filter
@@ -14672,6 +14673,82 @@ EDITS: 5
 	(set! (mus-feedback del) 1.0)
 	(if (fneq (mus-feedback del) 1.0)
 	    (snd-display ";comb feedback set: ~A" (mus-feedback del))))
+
+
+      (let ((gen (make-filtered-comb .4 5 :filter (make-one-zero .3 .7)))
+	    (v0 (make-vct 20)))
+	(print-and-check gen 
+			 "filtered-comb"
+			 "filtered-comb: [comb: scaler: 0.400, line[5, step]: [0.000 0.000 0.000 0.000 0.000]], [one-zero: a0: 0.300, a1: 0.700, x1: 0.000]")
+	(let ((val 1.0))
+	  (do ((i 0 (1+ i)))
+	      ((= i 20))
+	    (vct-set! v0 i (filtered-comb gen val))
+	    (set! val 0.0)))
+	(if (not (vequal v0 (vct 0.000 0.000 0.000 0.000 0.000 1.000 0.000 0.000 0.000 0.000 0.120 0.280 0.000 0.000 0.000 0.014 0.067 0.078 0.000 0.000)))
+	    (snd-display ";filtered-comb: ~A" v0))
+	(if (not (filtered-comb? gen)) (snd-display ";~A not filtered-comb?" gen))
+	(if (not (= (mus-length gen) 5)) (snd-display ";filtered-comb length: ~D?" (mus-length gen)))
+	(if (not (= (mus-order gen) 5)) (snd-display ";filtered-comb order: ~D?" (mus-order gen)))
+	(if (fneq (mus-feedback gen) .4) (snd-display ";filtered-comb feedback: ~F?" (mus-feedback gen))))
+      
+      (let ((gen (make-filtered-comb .9 5 :filter (make-one-zero .5 .5)))
+	    (v0 (make-vct 20)))
+	(print-and-check gen 
+			 "filtered-comb"
+			 "filtered-comb: [comb: scaler: 0.900, line[5, step]: [0.000 0.000 0.000 0.000 0.000]], [one-zero: a0: 0.500, a1: 0.500, x1: 0.000]")
+	(let ((val 1.0))
+	  (do ((i 0 (1+ i)))
+	      ((= i 20))
+	    (vct-set! v0 i (filtered-comb gen val))
+	    (set! val 0.0)))
+	(if (not (vequal v0 (vct 0.000 0.000 0.000 0.000 0.000 1.000 0.000 0.000 0.000 0.000 0.450 0.450 0.000 0.000 0.000 0.202 0.405 0.202 0.000 0.000)))
+	    (snd-display ";filtered-comb .5 .5: ~A" v0)))
+      
+      (let ((gen (make-filtered-comb .9 5 :filter (make-fir-filter 5 (vct .1 .2 .3 .2 .1))))
+	    (v0 (make-vct 20)))
+	(print-and-check gen 
+			 "filtered-comb"
+			 "filtered-comb: [comb: scaler: 0.900, line[5, step]: [0.000 0.000 0.000 0.000 0.000]], [fir-filter: order: 5, xs: [0.100 0.200 0.300 0.200 0.100]]")
+	(let ((val 1.0))
+	  (do ((i 0 (1+ i)))
+	      ((= i 20))
+	    (vct-set! v0 i (filtered-comb gen val))
+	    (set! val 0.0)))
+	(if (not (vequal v0 (vct 0.000 0.000 0.000 0.000 0.000 1.000 0.000 0.000 0.000 0.000 0.090 0.180 0.270 0.180 0.090 0.008 0.032 0.081 0.130 0.154)))
+	    (snd-display ";filtered-comb fir: ~A" v0)))
+      
+      (test-gen-equal (let ((d1 (make-filtered-comb 0.7 3 :filter (make-one-pole .3 .7)))) (filtered-comb d1 1.0) d1) 
+		      (let ((d2 (make-filtered-comb 0.7 3 :filter (make-one-pole .3 .7)))) (filtered-comb d2 1.0) d2) 
+		      (let ((d3 (make-filtered-comb 0.7 4 :filter (make-one-pole .3 .7)))) (filtered-comb d3 1.0) d3))
+      (test-gen-equal (make-filtered-comb 0.7 3 :initial-element 1.0 :filter (make-one-zero .5 .5)) 
+		      (make-filtered-comb 0.7 3 :initial-element 1.0 :filter (make-one-zero .5 .5)) 
+		      (make-filtered-comb 0.7 3 :initial-element 0.5 :filter (make-one-zero .5 .5)))
+      (test-gen-equal (make-filtered-comb 0.7 3 :initial-element 1.0 :filter (make-one-zero .5 .5)) 
+		      (make-filtered-comb 0.7 3 :initial-element 1.0 :filter (make-one-zero .5 .5)) 
+		      (make-filtered-comb 0.7 3 :initial-element 1.0 :filter (make-one-zero .25 .75)))
+      (test-gen-equal (make-filtered-comb 0.7 3 :initial-contents '(1.0 0.0 0.0) :filter (make-one-zero .5 .5)) 
+		      (make-filtered-comb 0.7 3 :initial-contents '(1.0 0.0 0.0) :filter (make-one-zero .5 .5)) 
+		      (make-filtered-comb 0.7 3 :initial-contents '(1.0 1.0 1.0) :filter (make-one-zero .5 .5)))
+      
+      (let* ((del (make-filtered-comb 0.0 5 :max-size 8 :filter (make-one-zero .5 .5))))
+	(filtered-comb del 1.0)
+	(do ((i 0 (1+ i))) ((= i 4)) (filtered-comb del 0.0))
+	(let ((v0 (make-vct 5)))
+	  (do ((i 0 (1+ i)))
+	      ((= i 5))
+	    (vct-set! v0 i (filtered-comb del 0.0 0.4)))
+	  (if (not (vequal v0 (vct 0.600 0.400 0.000 0.000 0.000))) ; this is assuming interpolation in the delay...
+	      (snd-display ";zfiltered-comb: ~A" v0))
+	  (filtered-comb del 1.0)
+	  (filtered-comb del 0.0 0.4)
+	  (if (not (string=? (mus-describe del)
+			     "filtered-comb: [comb: scaler: 0.000, line[5,8, linear]: [0.000 0.000 0.000 1.000 0.000]], [one-zero: a0: 0.500, a1: 0.500, x1: 0.000]"))
+	      (snd-display ";describe zfiltered-comb: ~A" (mus-describe del))))
+	(set! (mus-feedback del) 1.0)
+	(if (fneq (mus-feedback del) 1.0)
+	    (snd-display ";filtered-comb feedback set: ~A" (mus-feedback del))))
+
       
       (let ((gen (make-notch .4 3))
 	    (v0 (make-vct 10))
@@ -15017,6 +15094,60 @@ EDITS: 5
 	(if (not (vequal v0 (vct 0.500 0.000 0.000 0.500 0.000 0.000 0.000 0.000 0.000 0.000 1.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
 	    (snd-display ";6all-pass (5 .5 0): ~A" v0)))
       
+      (let ((gen (make-filtered-comb 0.5 5 :filter (make-one-zero .5 .5)))
+	    (v0 (make-vct 21))
+	    (in1 1.0))
+	(do ((i 0 (1+ i)))
+	    ((= i 21))
+	  (vct-set! v0 i (filtered-comb gen in1))
+	  (set! in1 0.0))
+	(if (not (vequal v0 (vct 0.000 0.000 0.000 0.000 0.000 1.000 0.000 0.000 0.000 0.000 0.250 0.250 
+				 0.000 0.000 0.000 0.062 0.125 0.062 0.000 0.000 0.016)))
+	    (snd-display ";filtered-comb (5 .5): ~A" v0)))
+      
+      (let ((gen (make-filtered-comb 0.5 5 :max-size 20 :filter (make-one-zero .25 .75)))
+	    (v0 (make-vct 21))
+	    (in1 1.0))
+	(do ((i 0 (1+ i)))
+	    ((= i 21))
+	  (vct-set! v0 i (filtered-comb gen in1))
+	  (set! in1 0.0))
+	(if (not (vequal v0 (vct 0.000 0.000 0.000 0.000 0.000 1.000 0.000 0.000 0.000 0.000 0.125 0.375 
+				 0.000 0.000 0.000 0.016 0.094 0.141 0.000 0.000 0.002)))
+	    (snd-display ";1filtered-comb (5 .5): ~A" v0)))
+      
+      (let ((gen (make-filtered-comb 0.5 5 :max-size 20 :filter (make-one-zero .5 .5)))
+	    (v0 (make-vct 20))
+	    (in1 1.0))
+	(do ((i 0 (1+ i))
+	     (angle 0.0 (+ angle .2)))
+	    ((= i 20))
+	  (vct-set! v0 i (filtered-comb gen in1 angle))
+	  (set! in1 0.0))
+	(if (not (vequal v0 (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.800 0.400 0.000 0.000 0.000 0.000 0.000 0.080 0.220 0.300 0.140 0.040 0.000 0.000)))
+	    (snd-display ";2filtered-comb (5 .5): ~A" v0)))
+      
+      (let ((gen (make-filtered-comb 0.5 5 :max-size 20 :filter (make-one-zero .5 .5)))
+	    (v0 (make-vct 20))
+	    (in1 1.0))
+	(do ((i 0 (1+ i))
+	     (angle 0.0 (- angle .2)))
+	    ((= i 20))
+	  (vct-set! v0 i (filtered-comb gen in1 angle))
+	  (set! in1 0.0))
+	(if (not (vequal v0 (vct 0.000 0.000 0.000 0.000 0.800 0.000 0.000 0.080 0.200 0.040 0.020 0.068 0.042 0.019 0.026 0.015 0.011 0.009 0.006 0.004)))
+	    (snd-display ";3filtered-comb (5 .5): ~A" v0)))
+      
+      (let ((gen (make-filtered-comb 0.5 5 :max-size 20 :filter (make-one-zero .5 .5)))
+	    (v0 (make-vct 20))
+	    (in1 1.0))
+	(do ((i 0 (1+ i))
+	     (angle 0.0 (+ angle .01)))
+	    ((= i 20))
+	  (vct-set! v0 i (filtered-comb gen in1 angle))
+	  (set! in1 0.0))
+	(if (not (vequal v0 (vct 0.000 0.000 0.000 0.000 0.000 0.950 0.060 0.000 0.000 0.000 0.214 0.251 0.043 0.002 0.000 0.045 0.106 0.081 0.023 0.003)))
+	    (snd-display ";4filtered-comb (5 .5): ~A" v0)))
       
       
       (let ((gen (make-one-pole .4 .7))
@@ -20715,6 +20846,7 @@ EDITS: 5
 			 make-all-pass make-asymmetric-fm make-average
 			 make-comb (lambda () (make-convolve :filter (vct 0 1 2))) make-delay (lambda () (make-env '(0 1 1 0)))
 			 (lambda () (make-filter :xcoeffs (vct 0 1 2))) (lambda () (make-fir-filter :xcoeffs (vct 0 1 2))) 
+			 (lambda () (make-filtered-comb :filter (make-one-zero .5 .5)))
 			 make-formant (lambda () (make-frame 3)) make-granulate
 			 (lambda () (make-iir-filter :xcoeffs (vct 0 1 2))) make-locsig (lambda () (make-mixer 3 3)) 
 			 make-notch make-one-pole make-one-zero make-oscil make-ppolar
@@ -20725,7 +20857,7 @@ EDITS: 5
 			 (lambda () (make-filter :xcoeffs (vct 1 2 3) :ycoeffs (vct 0 1 2)))))
 	    (run-procs (list all-pass asymmetric-fm average
 			     comb convolve delay env 
-			     filter fir-filter formant (lambda (gen ind) (frame-ref gen ind)) granulate
+			     filter fir-filter filtered-comb formant (lambda (gen ind) (frame-ref gen ind)) granulate
 			     iir-filter (lambda (gen a) (locsig gen 0 a)) (lambda (gen a) (mixer-ref gen a 0)) notch one-pole one-zero oscil two-pole
 			     pulse-train rand rand-interp sawtooth-wave
 			     sine-summation square-wave (lambda (gen a) (src gen 0.0 a)) sum-of-cosines sum-of-sines table-lookup triangle-wave
@@ -20733,7 +20865,7 @@ EDITS: 5
 			     filter filter))
 	    (ques-procs (list all-pass? asymmetric-fm? average?
 			      comb? convolve? delay? env? 
-			      filter? fir-filter? formant? frame? granulate?
+			      filter? fir-filter? filtered-comb? formant? frame? granulate?
 			      iir-filter? locsig? mixer? notch? one-pole? one-zero? oscil? two-pole?
 			      pulse-train? rand? rand-interp? sawtooth-wave?
 			      sine-summation? square-wave? src? sum-of-cosines? sum-of-sines? table-lookup? triangle-wave?
@@ -20741,7 +20873,7 @@ EDITS: 5
 			      filter? filter?))
 	    (func-names (list 'all-pass 'asymmetric-fm 'average
 			      'comb 'convolve 'delay 'env 
-			      'filter-x 'fir-filter 'formant 'frame 'granulate
+			      'filter-x 'fir-filter 'filtered-comb 'formant 'frame 'granulate
 			      'iir-filter 'locsig 'mixer 'notch 'one-pole 'one-zero 'oscil 'two-pole
 			      'pulse-train 'rand 'rand-interp 'sawtooth-wave
 			      'sine-summation 'square-wave 'src 'sum-of-cosines 'sum-of-sines 'table-lookup 'triangle-wave
@@ -20749,7 +20881,7 @@ EDITS: 5
 			      'filter-y 'filter-xy))
 	    (gen-args (list 0.0 0.0 1.0
 			    0.0 (lambda (dir) 0.0) 0.0 #f
-			    0.0 0.0 0.0 0 (lambda (dir) 0.0)
+			    0.0 0.0 0.0 0.0 0 (lambda (dir) 0.0)
 			    0.0 0.0 0 0.0 0.0 0.0 0.0 0.0
 			    0.0 0.0 0.0 0.0
 			    0.0 0.0 (lambda (dir) 0.0) 0.0 0.0 0.0 0.0
@@ -20790,6 +20922,7 @@ EDITS: 5
       (let ((make-procs (list
 			 make-all-pass make-asymmetric-fm make-average
 			 make-comb 
+			 (lambda () (make-filtered-comb :filter (make-one-zero .5 .5)))
 			 (lambda () (make-convolve :filter (vct 0 1 2) :input (lambda (dir) 1.0))) 
 			 make-delay 
 			 (lambda () (make-env :end 10 :envelope '(0 1 1 0)))
@@ -20817,7 +20950,7 @@ EDITS: 5
 			 (lambda () (make-filter :ycoeffs (vct 0 1 2)))
 			 (lambda () (make-filter :xcoeffs (vct 1 2 3) :ycoeffs (vct 0 1 2)))))
 	    (run-procs (list all-pass asymmetric-fm average
-			     comb convolve delay 
+			     comb filtered-comb convolve delay 
 			     (lambda (gen ignored) (env gen))
 			     filter fir-filter formant 
 			     granulate
@@ -20829,7 +20962,7 @@ EDITS: 5
 			     two-pole two-zero waveshape polyshape phase-vocoder ssb-am
 			     filter filter))
 	    (func-names (list 'all-pass 'asymmetric-fm 'average
-			      'comb 'convolve 'delay 'env 
+			      'comb 'filtered-comb 'convolve 'delay 'env 
 			      'filter-x 'fir-filter 'formant 'granulate
 			      'iir-filter 'locsig 'notch 'one-pole 'one-zero 'oscil 
 			      'pulse-train 'sawtooth-wave
@@ -20895,7 +21028,7 @@ EDITS: 5
 				  ))
 		    (gen-make-procs (list make-all-pass make-asymmetric-fm make-average make-table-lookup make-triangle-wave
 					  make-comb make-convolve make-delay make-env make-fft-window
-					  make-filter make-fir-filter make-formant make-frame make-granulate
+					  make-filter make-filtered-comb make-fir-filter make-formant make-frame make-granulate
 					  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
 					  make-pulse-train make-rand make-rand-interp make-sawtooth-wave make-polyshape
 					  make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines 
@@ -20961,10 +21094,10 @@ EDITS: 5
 			     (lambda args (car args)))))
 	     (if (not (eq? tag 'mus-error))
 		 (snd-display ";long arglist to ~A: ~A" name tag))))
-	 (list make-wave-train make-polyshape make-delay make-average make-comb make-notch
+	 (list make-wave-train make-polyshape make-delay make-average make-comb make-filtered-comb make-notch
 	       make-rand make-rand-interp make-table-lookup make-sine-summation make-env
 	       make-readin make-locsig make-granulate make-convolve make-phase-vocoder)
-	 (list 'make-wave-train 'make-polyshape 'make-delay 'make-average 'make-comb 'make-notch
+	 (list 'make-wave-train 'make-polyshape 'make-delay 'make-average 'make-comb 'make-filtered-comb 'make-notch
 	       'make-rand 'make-rand-interp 'make-table-lookup 'make-sine-summation 'make-env
 	       'make-readin 'make-locsig 'make-granulate 'make-convolve 'make-phase-vocoder)))
 
@@ -40433,6 +40566,7 @@ EDITS: 1
 	    (btst '(let ((gen (make-average))) (if gen #t #f)) #t)
 	    (btst '(let ((gen (make-asymmetric-fm))) (asymmetric-fm? gen)) #t)
 	    (btst '(let ((gen (make-comb))) (comb? gen)) #t)
+	    (btst '(let ((gen (make-filtered-comb))) (or (comb? gen) (filtered-comb? gen))) #t)
 	    (btst '(let ((gen (make-convolve :filter v))) (convolve? gen)) #t)
 	    (btst '(let ((gen (make-delay))) (delay? gen)) #t)
 	    (btst '(let ((gen (make-env '(0 0 1 1)))) (env? gen)) #t)
@@ -40489,6 +40623,8 @@ EDITS: 1
 	    (ftst '(let ((gen (make-asymmetric-fm))) (gen)) 0.0)
 	    (ftst '(let ((gen (make-comb))) (comb gen)) 0.0)
 	    (ftst '(let ((gen (make-comb))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
+	    (ftst '(let ((gen (make-filtered-comb :filter (make-one-zero .5 .5)))) (filtered-comb gen)) 0.0)
+	    (ftst '(let ((gen (make-filtered-comb :filter (make-one-zero .5 .5)))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
 	    (ftst '(let ((gen (make-convolve :filter v))) (convolve gen)) 0.0)
 	    (ftst '(let ((gen (make-convolve :filter v))) (gen)) 0.0)
 	    (ftst '(let ((gen (make-delay))) (delay gen)) 0.0)
@@ -41518,7 +41654,7 @@ EDITS: 1
 				   (lambda args (car args)))))
 		   (if (not (eq? tag 'mus-error))
 		       (snd-display ";~A ~A" n tag))))
-	       (list make-all-pass make-asymmetric-fm make-snd->sample make-average make-comb make-delay make-frame make-granulate
+	       (list make-all-pass make-asymmetric-fm make-snd->sample make-average make-comb make-filtered-comb make-delay make-frame make-granulate
 		     make-locsig make-mixer make-notch make-oscil make-pulse-train make-rand make-rand-interp make-sawtooth-wave
 		     make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
 		     make-wave-train make-waveshape make-phase-vocoder make-ssb-am make-polyshape))
@@ -41657,6 +41793,21 @@ EDITS: 1
 	      (catch #t (lambda () (vct-map (lambda () (comb cmb 1.0 2.0 3.0)) v)) (lambda args args)))
 	    
 	    
+	    (let ((cmb (make-filtered-comb .1 12 :filter (make-one-zero .5 .5)))
+		  (fb .123)
+		  (len 123)
+		  (v (make-vct 1)))
+	      (vct-map! v (lambda ()
+			    (set! fb (mus-feedback cmb))
+			    (set! len (mus-length cmb))
+			    (set! (mus-feedback cmb) .123)
+			    0.0))
+	      (if (fneq fb .1) (snd-display ";run feedback: ~A" fb))
+	      (if (not (= len 12)) (snd-display ";run mus-length: ~A" len))
+	      (if (fneq (mus-feedback cmb) .123) (snd-display ";run set feedback: ~A" (mus-feedback cmb)))
+	      (catch #t (lambda () (vct-map (lambda () (filtered-comb cmb 1.0 2.0 3.0)) v)) (lambda args args)))
+
+
 	    (let ((cmb (make-notch .1 12))
 		  (ff .123)
 		  (v (make-vct 1)))
@@ -42558,13 +42709,6 @@ EDITS: 1
 	      (set! (optimization) old-opt))
 	    ))
 
-      (let* ((mg (make-oscil 100.0))
-	     (gen (make-ssb-fm 1000))
-	     (ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1)))
-	(pad-channel 0 1000 ind 0)
-	(catch #t (lambda () (map-channel (lambda (y) (ssb-fm gen (* .02 (oscil mg)))))) (lambda arg (display arg) arg))
-	(close-sound ind))
-
       (let ((old-opt (optimization)))
 	(for-each
 	 (lambda (n)
@@ -42801,7 +42945,7 @@ EDITS: 1
       
       (let ((make-procs (list
 			 make-all-pass make-asymmetric-fm make-average
-			 make-comb (lambda () (make-convolve :filter (vct 0.0 .1 .2))) 
+			 make-comb make-filtered-comb (lambda () (make-convolve :filter (vct 0.0 .1 .2))) 
 			 make-delay (lambda () (make-env '(0 1 1 0)))
 			 (lambda () (make-filter :xcoeffs (vct 0.0 .1 .2))) (lambda () (make-fir-filter :xcoeffs (vct 0.0 .1 .2))) 
 			 make-formant (lambda () (make-frame 3 .1 .2 .3)) make-granulate
@@ -42849,6 +42993,13 @@ EDITS: 1
       (let ((val1 (run-eval '(format #f "~A" (make-comb ))))
 	    (val2 (run (lambda () (let ((gen (make-comb ))) (format #f "~A" gen)))))
 	    (val3 (format #f "~A" (make-comb ))))
+	(if (or (not (string=? val1 val2))
+		(not (string=? val2 val3)))
+	    (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
+      
+      (let ((val1 (run-eval '(format #f "~A" (make-filtered-comb  :filter (make-one-zero .5 .5)))))
+	    (val2 (run (lambda () (let ((gen (make-filtered-comb  :filter (make-one-zero .5 .5)))) (format #f "~A" gen)))))
+	    (val3 (format #f "~A" (make-filtered-comb  :filter (make-one-zero .5 .5)))))
 	(if (or (not (string=? val1 val2))
 		(not (string=? val2 val3)))
 	    (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
@@ -44570,6 +44721,7 @@ EDITS: 1
 		  (simple-poly 4.25 .2 440.0 .1)
 		  (simple-dly 4.75 .2 440.0 .1)
 		  (simple-cmb 5.0 .2 440.0 .1)
+		  (simple-filtered-cmb 5.125 .2 440.0 .1)
 		  (simple-not 5.25 .2 440.0 .1)
 		  (simple-alp 5.5 .2 440.0 .1)
 		  (simple-ave 5.75 .2 440.0 .1)
@@ -44757,6 +44909,13 @@ EDITS: 1
 	  (if (fneq (gain-avg rg) 0.98402) (snd-display ";rmsgain gain-avg: ~A" (gain-avg rg)))
 	  (if (fneq (balance-avg rg1) 19380.2848) (snd-display ";rmsgain balance-avg: ~A" (balance-avg rg1)))
 	  (if (not (= (rmsg-avgc rg2) 10000)) (snd-display ";rmsgain count: ~A" (rmsg-avgc rg2)))))
+
+      (let* ((mg (make-oscil 100.0))
+	     (gen (make-ssb-fm 1000))
+	     (ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1)))
+	(pad-channel 0 1000 ind 0)
+	(catch #t (lambda () (map-channel (lambda (y) (ssb-fm gen (* .02 (oscil mg)))))) (lambda arg (display arg) arg))
+	(close-sound ind))
 
       (if (not (null? (sounds))) (for-each close-sound (sounds)))
       
@@ -57386,13 +57545,13 @@ EDITS: 1
 		     mus-expand-filename make-sound-data sound-data-ref sound-data-set!  sound-data? sound-data-length
 		     sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm? sound-data->sound-data
-		     clear-array comb comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
+		     clear-array comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
 		     delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+
 		     frame->file frame->file? frame->frame frame->list frame->sample frame-ref frame-set! frame?
 		     granulate granulate? hz->radians iir-filter iir-filter?  in-any ina inb linear->db locsig
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
-		     make-comb make-convolve make-delay make-env make-fft-window make-file->frame
+		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
 		     make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
 		     make-iir-filter make-locsig move-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
@@ -57523,7 +57682,7 @@ EDITS: 1
       
       (define make-procs (list
 			  make-all-pass make-asymmetric-fm make-snd->sample make-average
-			  make-comb make-convolve make-delay make-env make-fft-window make-file->frame
+			  make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
 			  make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
 			  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
@@ -57779,7 +57938,7 @@ EDITS: 1
 					      (lambda args (car args)))))
 				  (if tag
 				      (snd-display ";?proc ~A: ~A" n tag))))
-			      (list all-pass? asymmetric-fm? comb? convolve? delay? env? file->frame? file->sample? snd->sample?
+			      (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frame? file->sample? snd->sample?
 				    filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? mus-input? 
 				    mus-output? notch? one-pole? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 				    sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? sum-of-sines? table-lookup? 
@@ -57796,7 +57955,7 @@ EDITS: 1
 				  (lambda args (car args)))))
 		      (if tag
 			  (snd-display ";oscil?proc ~A: ~A" n tag))))
-		  (list all-pass? asymmetric-fm? comb? convolve? delay? env? file->frame? file->sample? snd->sample?
+		  (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frame? file->sample? snd->sample?
 			filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? mus-input? 
 			mus-output? notch? one-pole? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? sum-of-sines? table-lookup? 
@@ -57858,9 +58017,9 @@ EDITS: 1
 					     (not (eq? tag 'arg-error)))
 					(snd-display ";clm ~A: tag: ~A arg: ~A [~A]" n tag arg ctr))
 				    (set! ctr (1+ ctr))))
-				(list all-pass asymmetric-fm clear-array comb convolve db->linear average
+				(list all-pass asymmetric-fm clear-array comb filtered-comb convolve db->linear average
 				      degrees->radians delay env formant frame->list granulate hz->radians linear->db
-				      make-all-pass make-asymmetric-fm make-comb make-convolve make-delay make-env
+				      make-all-pass make-asymmetric-fm make-comb make-filtered-comb make-convolve make-delay make-env
 				      make-file->frame make-file->sample make-filter make-fir-filter make-formant make-frame
 				      make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero
 				      make-oscil make-ppolar make-pulse-train make-rand make-rand-interp make-readin
@@ -57888,10 +58047,10 @@ EDITS: 1
 				   (eq? tag 'bad-arity)
 				   (eq? tag 'mus-error)))
 			  (snd-display ";clm-1 ~A: ~A" n tag))))
-		  (list all-pass array-interp asymmetric-fm comb contrast-enhancement convolution convolve average
+		  (list all-pass array-interp asymmetric-fm comb filtered-comb contrast-enhancement convolution convolve average
 			convolve-files delay dot-product env-interp file->frame file->sample snd->sample filter fir-filter formant
 			formant-bank frame* frame+ frame->frame frame-ref frame->sample granulate iir-filter ina
-			inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb 
+			inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb make-filtered-comb
 			make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-frame make-granulate
 			make-iir-filter make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder
 			make-ppolar make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-average
