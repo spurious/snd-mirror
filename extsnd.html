@@ -2782,13 +2782,6 @@ copy random state: Guile: copy-random-state, or use <a href="clm.html#mus-set-ra
 <tr><td></td><td>return length of <i>v</i>.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
-<!-- vct-map -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctmap1">vct-map</a> (thunk v0 vcts...)</code></td></tr>
-<tr><td></td><td>map <i>thunk</i> (which should return a frame) into the vcts passed as trailing args.
-This is mostly an internal testing function -- I can't think of any legitimate use for it.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
 <!-- vct-map! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctmap">vct-map!</a> (v proc)</code></td></tr>
 <tr><td></td><td>set each element of <i>v</i> to the value returned by (<i>proc</i>); <code>(vct-map! v (lambda () 3.0))</code>

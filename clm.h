@@ -6,7 +6,9 @@
 #define MUS_DATE "28-June-06"
 
 /*
- * 28-June:    filtered_comb generator.
+ * 3-July:     mus_move_sound (dlocsig) generator.
+ *             changed return type of mus_locsig to float.
+ * 28-June:    mus_filtered_comb generator.
  * 8-May:      mus_apply now takes 3 args: gen, two doubles (rather than bug-prone varargs).
  * 1-Mar-06:   granulate now has a local random number seed (settable via the mus-location method).
  * --------
@@ -576,7 +578,7 @@ mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *data);
 mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment);
 mus_any *mus_continue_frame_to_file(const char *filename);
 
-mus_any *mus_locsig(mus_any *ptr, off_t loc, Float val);
+Float mus_locsig(mus_any *ptr, off_t loc, Float val);
 mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_any *output, mus_any *revput, mus_interp_t type);
 bool mus_locsig_p(mus_any *ptr);
 int mus_channels(mus_any *ptr);
@@ -586,6 +588,13 @@ Float mus_locsig_reverb_ref(mus_any *ptr, int chan);
 Float mus_locsig_reverb_set(mus_any *ptr, int chan, Float val);
 void mus_move_locsig(mus_any *ptr, Float degree, Float distance);
 void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_interp_t type);
+
+bool mus_move_sound_p(mus_any *ptr);
+Float mus_move_sound(mus_any *ptr, off_t loc, Float val);
+mus_any *mus_make_move_sound(off_t start, off_t end, int out_channels, int rev_channels,
+			     mus_any *doppler_delay, mus_any *doppler_env, mus_any *rev_env,
+			     mus_any **out_delays, mus_any **out_envs, mus_any **rev_envs,
+			     int *out_map, mus_any *output, mus_any *revput, bool free_arrays, bool free_gens);
 
 mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int width, void *closure);
 Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int direction));

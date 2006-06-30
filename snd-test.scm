@@ -2194,7 +2194,7 @@
 			 'update-sound 'update-time-graph 'update-transform-graph 'variable-graph? 'vct
 			 'vct* 'vct+ 'vct->channel 'vct->list 'vct->sound-data
 			 'vct->sound-file 'vct->string 'vct->vector 'vct-add! 'vct-copy
-			 'vct-fill! 'vct-length 'vct-map 'vct-map! 'vct-move!
+			 'vct-fill! 'vct-length 'vct-map! 'vct-move!
 			 'vct-multiply! 'vct-offset! 'vct-peak 'vct-ref 'vct-reverse!
 			 'vct-scale! 'vct-set! 'vct-subseq 'vct-subtract! 'vct?
 			 'vector->vct 'view-files-amp 'view-files-amp-env
@@ -15948,6 +15948,13 @@ EDITS: 5
       (let ((fr (make-fir-filter 6 (vct 0 1 2 3 4 5))))
 	(if (not (= (mus-length fr) 6)) (snd-display ";filter-length: ~A" (mus-length fr))))
 
+      (let ((val (cascade->canonical (list (vct 1.0 0.0 0.0) (vct 1.0 0.5 0.25)))))
+	(if (not (vequal val (vct 1.000 0.500 0.250 0.000 0.000)))
+	    (snd-display ";cas2can 0: ~A" val)))
+      (let ((val (cascade->canonical (list (vct 1.0 1.0 0.0) (vct 1.0 0.5 0.25)))))
+	(if (not (vequal val (vct 1.000 1.500 0.750 0.250 0.000)))
+	    (snd-display ";cas2can 1: ~A" val)))
+
       (let ((val (cascade->canonical (list (vct 1 0.8 0) (vct 1 1.4 0.65) (vct 1 0 0)))))
 	(if (not (vequal val (vct 1.000 2.200 1.770 0.520 0.000 0.000 0.000)))
 	    (snd-display ";cascade->canonical: ~A" val)))
@@ -18886,7 +18893,6 @@ EDITS: 5
 	(if (eq? gen1 gen2) (snd-display ";locsig 1 eq? ~A ~A" gen1 gen2))
 	(if (equal? gen gen1) (snd-display ";locsig 2 equal? ~A ~A" gen gen1))
 	(if (equal? gen gen2) (snd-display ";locsig 3 equal? ~A ~A" gen gen2))
-	(if (or (fneq (frame-ref fr0 0) .667) (fneq (frame-ref fr0 1) .333)) (snd-display ";locsig output: ~A" fr0))
 	(if (or (fneq (locsig-ref gen 0) .667) (fneq (locsig-ref gen 1) .333))
 	    (snd-display ";locsig ref: ~F ~F?" (locsig-ref gen 0) (locsig-ref gen 1)))
 	(if (not (vequal (mus-data gen) (vct 0.667 0.333)))
@@ -18901,34 +18907,27 @@ EDITS: 5
 	(if (not (vequal (mus-data gen) (vct 0.250 0.333)))
 	    (snd-display ";locsig gen .25 outn: ~A" (mus-data gen)))
 	(set! fr0 (locsig gen 0 1.0))
-	(if (fneq (frame-ref fr0 0) .25) (snd-display ";set locsig-ref: ~F?" (frame-ref fr0 0)))
 	(locsig-set! gen 0 .5)
 	(if (not (vequal (mus-data gen) (vct 0.500 0.333)))
 	    (snd-display ";locsig gen .5 outn: ~A" (mus-data gen)))
 	(set! fr0 (locsig gen 0 1.0))
-	(if (fneq (frame-ref fr0 0) .5) (snd-display ";locsig-set: ~F?" (frame-ref fr0 0)))
 	(set! gen (make-locsig 120.0 2.0 .1 :channels 4))
 	(if (not (vequal (mus-data gen) (vct 0.000 0.333 0.167 0.000)))
 	    (snd-display ";locsig gen 120 outn: ~A" (mus-data gen)))
 	(set! fr0 (locsig gen 0 1.0))
-	(if (or (fneq (frame-ref fr0 1) .333) (fneq (frame-ref fr0 2) .167)) (snd-display ";locsig quad output: ~A" fr0))
 	(set! gen (make-locsig 300.0 2.0 .1 :channels 4))
 	(if (not (vequal (mus-data gen) (vct 0.167 0.000 0.000 0.333)))
 	    (snd-display ";locsig gen 300 outn: ~A" (mus-data gen)))
 	(set! fr0 (locsig gen 0 1.0))
-	(if (or (fneq (frame-ref fr0 3) .333) (fneq (frame-ref fr0 0) .167)) (snd-display ";300 locsig quad output: ~A" fr0))
 	(move-locsig gen1 90.0 1.0)
 	(if (not (vequal (mus-data gen1) (vct 0.000 1.000)))
 	    (snd-display ";locsig gen1 90 outn: ~A" (mus-data gen)))
-	(if (or (fneq (locsig-ref gen1 0) 0.0) (fneq (locsig-ref gen1 1) 1.0)) (snd-display ";move-locsig 90 1: ~A" gen1))
 	(move-locsig gen1 0.0 1.0)
 	(if (not (vequal (mus-data gen1) (vct 1.000 0.000)))
 	    (snd-display ";locsig gen1 0 outn: ~A" (mus-data gen)))
-	(if (or (fneq (locsig-ref gen1 0) 1.0) (fneq (locsig-ref gen1 1) 0.0)) (snd-display ";move-locsig 0 1: ~A" gen1))
 	(move-locsig gen1 45.0 1.0)
 	(if (not (vequal (mus-data gen1) (vct 0.500 0.500)))
 	    (snd-display ";locsig gen1 45 outn: ~A" (mus-data gen)))
-	(if (or (fneq (locsig-ref gen1 0) 0.5) (fneq (locsig-ref gen1 1) 0.5)) (snd-display ";move-locsig 45 1: ~A" gen1))
 	(move-locsig gen1 135.0 2.0)
 	(if (not (vequal (mus-data gen1) (vct 0.000 0.500)))
 	    (snd-display ";locsig gen1 135 outn: ~A" (mus-data gen)))
@@ -20955,7 +20954,7 @@ EDITS: 5
 			     filter fir-filter formant 
 			     granulate
 			     iir-filter 
-			     (lambda (gen a) (frame-ref (locsig gen 0 1.0) 0)) 
+			     (lambda (gen a) (locsig gen 0 1.0))
 			     notch one-pole one-zero oscil 
 			     pulse-train sawtooth-wave
 			     sine-summation square-wave sum-of-cosines sum-of-sines table-lookup triangle-wave
@@ -37184,6 +37183,43 @@ EDITS: 1
 		(if (= i 0) (set! x 0.5) (set! x 0.0)))
 	      (if (not (vequal data (vct 0.000 0.575 0.250 0.025 0.000 0.000 0.000 0.000 0.000 0.000)))
 		  (snd-display ";volterra-filter: ~A" data)))
+
+	    (let ((flt (make-volterra-filter (vct 1.0) (vct 1.0)))
+		  (data (make-vct 10)))
+	      (do ((i 0 (1+ i))
+		   (x 1.0 0.0))
+		  ((= i 10))
+		(vct-set! data i (volterra-filter flt x)))
+	      (if (not (vequal data (vct 2.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+		  (snd-display ";volterra-filter x + x^2: ~A" data)))
+
+	    (let ((flt (make-volterra-filter (vct 1.0) (vct 1.0)))
+		  (data (make-vct 10)))
+	      (do ((i 0 (1+ i))
+		   (x 1.0 (- x 0.1)))
+		  ((= i 10))
+		(vct-set! data i (volterra-filter flt x)))
+	      (if (not (vequal data (vct 2.000 1.710 1.440 1.190 0.960 0.750 0.560 0.390 0.240 0.110)))
+		  (snd-display ";volterra-filter x + x^2 by -0.1: ~A" data)))
+
+	    (let ((flt (make-volterra-filter (vct 1.0 0.5) (vct 1.0)))
+		  (data (make-vct 10)))
+	      (do ((i 0 (1+ i))
+		   (x 1.0 0.0))
+		  ((= i 10))
+		(vct-set! data i (volterra-filter flt x)))
+	      (if (not (vequal data (vct 2.000 0.500 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+		  (snd-display ";volterra-filter x + .5x(n-1) + x^2: ~A" data)))
+
+	    (let ((flt (make-volterra-filter (vct 1.0 0.5) (vct 1.0 0.6)))
+		  (data (make-vct 10)))
+	      (do ((i 0 (1+ i))
+		   (x 0.9 0.0))
+		  ((= i 10))
+		(vct-set! data i (volterra-filter flt x)))
+	      (if (not (vequal data (vct 1.710 0.936 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+		  (snd-display ";volterra-filter x + .5x(n-1) + x^2 + 0.6: ~A" data)))
+
 	    
 	    (let ((ind (new-sound "test.snd" :size 100))
 		  (gen (make-oscil 440.0)))
@@ -37256,10 +37292,10 @@ EDITS: 1
 		    (snd-display ";z 1 0.4g: ~A" res))))
 
 	    (let ((ind (open-sound "oboe.snd")))
-	      (automorph (exp (* 0.5 pi (make-rectangular 0 1))) 0 0 1)
-	      (automorph (exp (* 0.5 pi (make-rectangular 0 1))) 0 0 1)
-	      (automorph (exp (* 0.5 pi (make-rectangular 0 1))) 0 0 1)
-	      (automorph (exp (* 0.5 pi (make-rectangular 0 1))) 0 0 1)
+	      (automorph 0.0+1.0i 0 0 1)
+	      (automorph 0.0+1.0i 0 0 1)
+	      (automorph 0.0+1.0i 0 0 1)
+	      (automorph 0.0+1.0i 0 0 1)
 	      (let ((mxdiff 0.0) 
 		    (rd1 (make-sample-reader 0 ind 0)) 
 		    (rd2 (make-sample-reader 0 ind 0 1 0))) 
@@ -40647,7 +40683,7 @@ EDITS: 1
 	    (ftst '(let ((gen (make-granulate))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
 	    (ftst '(let ((gen (make-iir-filter 8 v))) (iir-filter gen)) 0.0)
 	    (ftst '(let ((gen (make-iir-filter 8 v))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
-	    (ftst '(let ((gen (make-locsig))) (frame-ref (locsig gen 0 0) 0)) 0.0)
+	    (ftst '(let ((gen (make-locsig))) (locsig gen 0 0)) 0.0)
 	    (ftst '(let ((gen (make-locsig))) (gen 0.0)) 0.0)
 	    (ftst '(let ((gen (make-mixer 2))) (mixer-ref gen 0 0)) 0.0)
 	    (ftst '(let ((gen (make-mixer 2))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
@@ -41347,54 +41383,7 @@ EDITS: 1
 			      (vct-ref val 0))))
 	      (if (not (vequal v (vct 0.25 2.0 2.0))) (snd-display ";vect vct set vct-map 1.0: ~A" v)))
 	    
-	    (let ((v (make-vct 3))
-		  (f (make-frame 1)))
-	      (vct-map (lambda () (frame-set! f 0 1.0) f) v)
-	      (if (not (vequal v (vct 1.0 1.0 1.0))) (snd-display ";vct-map 1.0: ~A (ref)" v)))
-	    
-	    (let ((v (make-vct 3))
-		  (f (make-frame 1)))
-	      (vct-map (lambda () (set! (frame-ref f 0) 1.0) f) v)
-	      (if (not (vequal v (vct 1.0 1.0 1.0))) (snd-display ";vct-map 1.0 (set ref): ~A" v)))
-	    
-	    (let ((v (make-vct 3))
-		  (f (make-frame 1)))
-	      (set! (optimization) 0)
-	      (vct-map (lambda () (frame-set! f 0 1.0) f) v)
-	      (set! (optimization) max-optimization)
-	      (if (not (vequal v (vct 1.0 1.0 1.0))) (snd-display ";unopt vct-map 1.0 (ref): ~A" v)))
-	    
-	    (let ((v (make-vct 3))
-		  (f (make-frame 1)))
-	      (vct-map (lambda () (frame-set! f 0 (+ mus-next 1.0)) f) v) ; force fall-through to Guile
-	      (if (not (vequal v (vct 2.0 2.0 2.0))) (snd-display ";vct-map 1.0 (set): ~A" v)))
-	    
-	    (let ((v0 (make-vct 3))
-		  (v1 (make-vct 3))
-		  (f (make-frame 2)))
-	      (vct-map (lambda () 
-			 (frame-set! f 0 1.0) 
-			 (frame-set! f 1 0.5) 
-			 f)
-		       v0 v1)
-	      (if (or (not (vequal v0 (vct 1.0 1.0 1.0)))
-		      (not (vequal v1 (vct 0.5 0.5 0.5))))
-		  (snd-display ";vct-map 1.0 0.5: ~A ~A" v0 v1)))
-
 	    (if (not (string=? (mus-describe (make-frame)) "frame[1]: [0.000]")) (snd-display ";make-frame 0 args: ~A" (mus-describe (make-frame))))
-	    
-	    (set! (locsig-type) mus-interp-linear)
-	    (let ((v0 (make-vct 3))
-		  (v1 (make-vct 3))
-		  (l (make-locsig 30.0 :channels 2)))
-	      (vct-map (lambda () 
-			 (locsig l 0 1.0))
-		       v0 v1)
-	      (if (or (not (vequal v0 (vct 0.667 0.667 0.667)))
-		      (not (vequal v1 (vct 0.333 0.333 0.333))))
-		  (snd-display ";vct-map locsig: ~A ~A" v0 v1))
-	      (catch #t (lambda () (vct-map! v0 (lambda () (locsig l)))) (lambda args args))
-	      (catch #t (lambda () (vct-map! v0 (lambda () (locsig l 1.0 2.0 3.0 4.0)))) (lambda args args)))
 	    
 	    (let ((v1 (make-vector 3 1.5))
 		  (v2 (make-vector 3 32))
@@ -41665,8 +41654,7 @@ EDITS: 1
 	      (vct-map! v (lambda ()
 			    (mus-set-formant-radius-and-frequency frm 2.0 100.0)))
 	      (if (fneq (mus-formant-radius frm) 2.0) (snd-display ";run set-formant-radius-etc: ~A" (mus-formant-radius frm)))
-	      (if (fneq (mus-frequency frm) 100.0) (snd-display ";run set-formant-radius-etc (frq): ~A" (mus-frequency frm)))
-	      (catch #t (lambda () (vct-map (lambda () (formant frm 1.0 2.0 3.0)) v)) (lambda args args)))
+	      (if (fneq (mus-frequency frm) 100.0) (snd-display ";run set-formant-radius-etc (frq): ~A" (mus-frequency frm))))
 	    
 	    (let ((v (make-vct 3)))
 	      (vct-map! v (let ((i 0))
@@ -41774,9 +41762,7 @@ EDITS: 1
 	      (if (not fq) (snd-display ";run frame?"))
 	      (if (not mq) (snd-display ";run mixer?"))
 	      (if (fneq (frame-ref fr 0) .123) (snd-display ";run frame-ref: ~A" (frame-ref fr 0)))
-	      (if (fneq (mixer-ref mx 0 1) .123) (snd-display ";run mixer-ref: ~A" (mixer-ref mx 0 1)))
-	      (catch #t (lambda () (vct-map (lambda () (frame-ref fr 1 2 3)) v)) (lambda args args))
-	      (catch #t (lambda () (vct-map (lambda () (mixer-ref mx 1 2 3 4)) v)) (lambda args args)))
+	      (if (fneq (mixer-ref mx 0 1) .123) (snd-display ";run mixer-ref: ~A" (mixer-ref mx 0 1))))
 	    
 	    (let ((cmb (make-comb .1 12))
 		  (fb .123)
@@ -41789,9 +41775,7 @@ EDITS: 1
 			    0.0))
 	      (if (fneq fb .1) (snd-display ";run feedback: ~A" fb))
 	      (if (not (= len 12)) (snd-display ";run mus-length: ~A" len))
-	      (if (fneq (mus-feedback cmb) .123) (snd-display ";run set feedback: ~A" (mus-feedback cmb)))
-	      (catch #t (lambda () (vct-map (lambda () (comb cmb 1.0 2.0 3.0)) v)) (lambda args args)))
-	    
+	      (if (fneq (mus-feedback cmb) .123) (snd-display ";run set feedback: ~A" (mus-feedback cmb))))
 	    
 	    (let ((cmb (make-filtered-comb .1 12 :filter (make-one-zero .5 .5)))
 		  (fb .123)
@@ -41804,9 +41788,7 @@ EDITS: 1
 			    0.0))
 	      (if (fneq fb .1) (snd-display ";run feedback: ~A" fb))
 	      (if (not (= len 12)) (snd-display ";run mus-length: ~A" len))
-	      (if (fneq (mus-feedback cmb) .123) (snd-display ";run set feedback: ~A" (mus-feedback cmb)))
-	      (catch #t (lambda () (vct-map (lambda () (filtered-comb cmb 1.0 2.0 3.0)) v)) (lambda args args)))
-
+	      (if (fneq (mus-feedback cmb) .123) (snd-display ";run set feedback: ~A" (mus-feedback cmb))))
 
 	    (let ((cmb (make-notch .1 12))
 		  (ff .123)
@@ -41816,8 +41798,7 @@ EDITS: 1
 			    (set! (mus-feedforward cmb) .321)
 			    0.0))
 	      (if (fneq ff .1) (snd-display ";run feedforward: ~A" ff))
-	      (if (fneq (mus-feedforward cmb) .321) (snd-display ";run set feedforward: ~A" (mus-feedforward cmb)))
-	      (catch #t (lambda () (vct-map (lambda () (notch cmb 1.0 2.0 3.0)) v)) (lambda args args)))
+	      (if (fneq (mus-feedforward cmb) .321) (snd-display ";run set feedforward: ~A" (mus-feedforward cmb))))
 	    
 	    (let ((gen (make-oscil 440))
 		  (res 0)
@@ -41826,8 +41807,7 @@ EDITS: 1
 			    (if (not (string=? (mus-name gen) "oscil")) (set! res 1))
 			    (if (not (string=? (mus-describe gen) "oscil freq: 440.000Hz, phase: 0.000")) (set! res (+ res 10)))
 			    0.0))
-	      (if (not (= res 0)) (snd-display ";run mus-name etc: ~A" res))
-	      (catch #t (lambda () (vct-map (lambda () (oscil gen 0.0 1.0 1.0)) v)) (lambda args args)))
+	      (if (not (= res 0)) (snd-display ";run mus-name etc: ~A" res)))
 	    
 	    (let ((r1 (make-rand 100))
 		  (r2 (make-rand-interp 100 .1))
@@ -57583,7 +57563,7 @@ EDITS: 1
 		     phase-vocoder-phase-increments phase-vocoder-phases mus-generator?
 
 		     read-sample reset-listener-cursor goto-listener-end sample-reader-home selection-chans selection-srate snd-gcs
-		     snd-warning sine-bank vct-map channel-data x-axis-label variable-graph? y-axis-label
+		     snd-warning sine-bank channel-data x-axis-label variable-graph? y-axis-label
 		     snd-url snd-urls tempo-control-bounds free-player
 		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 
@@ -58580,7 +58560,6 @@ EDITS: 1
 		    ))
 	      (check-error-tag 'no-such-menu (lambda () (main-menu -1)))
 	      (check-error-tag 'no-such-menu (lambda () (main-menu 111)))
-	      (check-error-tag 'arg-error (lambda () (vct-map (lambda () 1.0))))
 	      (check-error-tag 'out-of-range (lambda () (new-sound "hiho" 123)))
 	      (check-error-tag 'out-of-range (lambda () (new-sound "hiho" mus-nist 123)))
 	      (check-error-tag 'bad-header (lambda () (new-sound "hiho" mus-nist mus-bfloat)))

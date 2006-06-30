@@ -1081,7 +1081,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 
 (define (cascade->canonical A)
-  ;; convert cascade coeffs to canonical form
+  ;; convert a list of cascade coeffs [vcts with 3 entries] to canonical form
   ;; from Orfanidis "Introduction to Signal Processing"
 
   (define (conv M h L x y)
@@ -1089,7 +1089,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (do ((n 0 (1+ n)))
 	((= n (+ L M)))
       (vct-set! y n 0.0)
-      (do ((m (max 0 (- (+ n 1 L))) (1+ m)))
+      (do ((m (max 0 (- n (+ 1 L))) (1+ m)))  ; m always starts at 0 here since the other expression is always <= 0
 	  ((> m (min n M)))
 	(vct-set! y n (+ (vct-ref y n) (* (vct-ref h m) (vct-ref x (- n m))))))))
 
@@ -2025,7 +2025,7 @@ and replaces it with the spectrum given in coeffs"
 ;;; 
 ;;; (automorph 1 0 0 1) is the identity
 ;;; (automorph 2 0 0 1) scales by 2
-;;; (automorph (exp (* 0.5 pi (make-rectangular 0 1))) 0 0 1) rotates 90 degrees (so 4 times = identity)
+;;; (automorph 0.0+1.0i 0 0 1) rotates 90 degrees (so 4 times = identity)
 
 (define* (automorph a b c d :optional snd chn)
   (let* ((len (frames snd chn))

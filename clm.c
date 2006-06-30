@@ -88,6 +88,7 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
       MUS_AVERAGE, MUS_SUM_OF_SINES, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
+      MUS_MOVE_SOUND,
       MUS_INITIAL_GEN_TAG};
 
 static char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
@@ -983,30 +984,11 @@ mus_any *mus_make_oscil(Float freq, Float phase)
   return((mus_any *)gen);
 }
 
+/* decided against feedback-oscil (as in cellon) because it's not clear howto handle the index,
+ *   and there are many options for the filtering -- since this part of the signal path
+ *   is not hidden, there's no reason to bring it out explicitly (as in filtered-comb)
+ */
 
-/* PERHAPS: add feedback oscil:
-   
-(def-optkey-fun (make-feedback-oscil (frequency 440.0) (initial-phase 0.0) (index 2.0))
-  (list (make-oscil :frequency frequency :initial-phase initial-phase) index 0.0))
-
-(define* (feedback-oscil gen :optional fb)
-  (let* ((osc (car gen))
-	 (index (cadr gen))
-	 (prev (caddr gen))
-	 (val (oscil osc 0.0 (* index prev))))
-    (list-set! gen 2 (* 0.5 (+ prev val)))
-    val))
-
-(let ((gen (make-feedback-oscil 440.0 0.0 1.0))) ; reasonable sawtooth
-  (map-channel (lambda (y) (* .2 (feedback-oscil gen)))))
-
-(let ((gen0 (make-feedback-oscil 440.0 0.0 1.0)) ; sloppy square wave
-      (gen1 (make-feedback-oscil 440.0 pi 1.0)))
-  (map-channel (lambda (y) (* .1 (- (feedback-oscil gen0) (feedback-oscil gen1))))))
-
-  The (* 0.5 (+ a b)) could be a one-zero filter, or just do it by hand
-  Should fm be carried out?
-*/
 
 
 /* ---------------- sum-of-cosines ---------------- */
@@ -2208,8 +2190,6 @@ bool mus_wave_train_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_WAV
 
 /* ---------------- delay, comb, notch, all-pass, average ---------------- */
 
-/* PERHAPS: moving-max? but that pushes average -> moving-average, (dsp.scm), fcomb|notch? */
-
 typedef struct {
   mus_any_class *core;
   int loc, size;
@@ -2762,9 +2742,9 @@ mus_any *mus_make_average(int size, Float *line)
   return(NULL);
 }
 
-/* moving-max: keep current_max in delay line and number of copies of it
- *              if abs(input)>max {max=abs(input) copies=1} else
- *                if output = max, {copies--, if copies==0 get new max + copies}
+/* PERHAPS: moving-max (windowed-maxamp in dsp.scm): keep current_max in delay line
+ *              if abs(input)>max max=abs(input) else
+ *                if output = max, get new max
  */
 
 
@@ -3452,6 +3432,8 @@ mus_any *mus_make_rand_interp_with_distribution(Float freq, Float base, Float *d
 
 /* ---------------- simple filters ---------------- */
 
+/* PERHAPS: moog_filter, svf_filter */
+
 /* eventually this class/struct could be replaced by flt/filter below */
 typedef struct {
   mus_any_class *core;
@@ -3865,16 +3847,9 @@ mus_any *mus_make_formant(Float radius, Float frequency, Float gain)
 
 /* ---------------- filter ---------------- */
 
-/* PERHAPS: biquad -- could just be a pair of macros:
-  #define mus_biquad(Filter, Input) mus_filter(Filter, Input)
-  #define mus_make_biquad(X_0, X_1, X_2, Y_1, Y_2) mus_make_filter(3, mus_make_coeffs(3, X_0, X_1, X_2), mus_make_coeffs(3, 0.0, Y_1, Y_2), NULL)
-    where mus_make_coeffs fills vct from trailing args -- or perhaps make_vct_va(...) -- is this a memory leak?
-  #define mus_biquad_p(Obj) ((mus_filter_p(Obj) && (mus_order(Obj) == 3)))
-    then need doc/test/tie into xen
-  PERHAPS: cascade_to_canonical
+/* PERHAPS: cascade_to_canonical (currently it takes a list of vcts -- would need to be something like:
+            vct* cascade_to_canonical(num coeffs, ...) where the ... is a list of vct*s.
 */
-
-/* PERHAPS: volterra filter (dsp.scm) */
 
 typedef struct {
   mus_any_class *core;
@@ -4303,10 +4278,7 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 }
 
 
-
 /* ---------------- env ---------------- */
-
-/* PERHAPS: filtered-env (examp.scm) */
 
 /* although a pain, this way of doing env is 5 times faster than a table lookup,
  * in the linear segment and step cases.  In the exponential case, it is
@@ -5364,7 +5336,6 @@ mus_any *mus_mixer_offset(mus_any *uf1, Float offset, mus_any *ures)
   return((mus_any *)res);
 }
 
-/* PERHAPS: mixer-invert (from mixer.scm) */
 
 
 /* ---------------- input/output ---------------- */
@@ -6514,7 +6485,7 @@ mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, 
   return((mus_any *)gen);
 }
 
-mus_any *mus_locsig(mus_any *ptr, off_t loc, Float val)
+Float mus_locsig(mus_any *ptr, off_t loc, Float val)
 {
   locs *gen = (locs *)ptr;
   int i;
@@ -6525,8 +6496,8 @@ mus_any *mus_locsig(mus_any *ptr, off_t loc, Float val)
   if (gen->revn_writer)
     mus_frame_to_file(gen->revn_writer, loc, (mus_any *)(gen->revf));
   if (gen->outn_writer)
-    return(mus_frame_to_file(gen->outn_writer, loc, (mus_any *)(gen->outf)));
-  else return((mus_any *)(gen->outf));
+    mus_frame_to_file(gen->outn_writer, loc, (mus_any *)(gen->outf));
+  return(val);
 }
 
 void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
@@ -6540,6 +6511,202 @@ void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
   if (gen->rev_chans > 0)
     mus_fill_locsig(gen->revn, gen->rev_chans, degree, (gen->reverb * sqrt(dist)), gen->type);
   mus_fill_locsig(gen->outn, gen->chans, degree, dist, gen->type);
+}
+
+
+
+/* ---------------- move-sound ---------------- */
+/* 
+ * this is the run-time portion of dlocsig.
+ *   I first was going to call it moving-locsig, but that collides with move_locsig above,
+ *   and I want to get away from these cryptic names.  But moving-sound is not right
+ *   either -- I'm trying to use verbs where possible.
+ */
+
+typedef struct {
+  mus_any_class *core;
+  mus_any *outn_writer;
+  mus_any *revn_writer;
+  mus_frame *outf, *revf;
+  int out_channels, rev_channels;
+  off_t start, end;
+  mus_any *doppler_delay, *doppler_env, *rev_env;
+  mus_any **out_delays, **out_envs, **rev_envs;
+  int *out_map;
+  bool free_arrays, free_gens;
+} dloc;
+
+static bool move_sound_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
+static int move_sound_channels(mus_any *ptr) {return(((dloc *)ptr)->out_channels);}
+static off_t move_sound_length(mus_any *ptr) {return(((dloc *)ptr)->out_channels);} /* need both because return types differ */
+static void move_sound_reset(mus_any *ptr) {}
+
+static char *describe_move_sound(mus_any *ptr)
+{
+  dloc *gen = (dloc *)ptr;
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_move_sound ": out chans %d, rev chans: %d\n", gen->out_channels, gen->rev_channels);
+  return(describe_buffer);
+}
+
+static int free_move_sound(mus_any *p) 
+{
+  dloc *ptr = (dloc *)p;
+  if (ptr) 
+    {
+      if (ptr->free_gens)
+	{
+	  int i;
+	  /* free everything except outer arrays and IO stuff */
+	  if (ptr->doppler_delay) mus_free(ptr->doppler_delay);
+	  if (ptr->doppler_env) mus_free(ptr->doppler_env);
+	  if (ptr->rev_env) mus_free(ptr->rev_env);
+	  if (ptr->out_delays)
+	    for (i = 0; i < ptr->out_channels; i++)
+	      if (ptr->out_delays[i]) mus_free(ptr->out_delays[i]);
+	  if (ptr->out_envs)
+	    for (i = 0; i < ptr->out_channels; i++)
+	      if (ptr->out_envs[i]) mus_free(ptr->out_envs[i]);
+	  if (ptr->rev_envs)
+	    for (i = 0; i < ptr->rev_channels; i++)
+	      if (ptr->rev_envs[i]) mus_free(ptr->rev_envs[i]);
+	}
+      if (ptr->free_arrays)
+	{
+	  /* free outer arrays */
+	  if (ptr->out_envs) {FREE(ptr->out_envs); ptr->out_envs = NULL;}
+	  if (ptr->rev_envs) {FREE(ptr->rev_envs); ptr->rev_envs = NULL;}
+	  if (ptr->out_delays) {FREE(ptr->out_delays); ptr->out_delays = NULL;}
+	  if (ptr->out_map) FREE(ptr->out_map);
+	}
+      mus_free((mus_any *)(ptr->outf));
+      if (ptr->revf) mus_free((mus_any *)(ptr->revf));
+      FREE(ptr);
+    }
+  return(0);
+}
+
+bool mus_move_sound_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_MOVE_SOUND));}
+
+Float mus_move_sound(mus_any *ptr, off_t loc, Float uval)
+{
+  dloc *gen = (dloc *)ptr;
+  Float val;
+  int chan;
+
+  if (loc > gen->end) val = 0.0; else val = uval;
+
+  /* initial silence */
+  if (loc < gen->start)
+    {
+      mus_delay_1(gen->doppler_delay, val);
+      /* original calls out_any here with 0.0 -- a no-op */
+      return(val);
+    }
+
+  /* doppler */
+  val = mus_delay(gen->doppler_delay, val, mus_env(gen->doppler_env));
+
+  /* direct signal */
+  for (chan = 0; chan < gen->out_channels; chan++)
+    {
+      Float sample;
+      sample = val * mus_env(gen->out_envs[chan]);
+      if (gen->out_delays[chan])
+	sample = mus_delay_1(gen->out_delays[chan], sample);
+      gen->outf->vals[gen->out_map[chan]] = sample;
+    }
+
+  /* reverb */
+  val *= mus_env(gen->rev_env);
+  if (gen->rev_channels == 1)
+    gen->revf->vals[0] = val * mus_env(gen->rev_envs[0]);
+  else
+    {
+      for (chan = 0; chan < gen->rev_channels; chan++)
+	gen->revf->vals[gen->out_map[chan]] = val * mus_env(gen->rev_envs[chan]);
+    }
+
+  /* file output */
+  if (gen->revn_writer)
+    mus_frame_to_file(gen->revn_writer, loc, (mus_any *)(gen->revf));
+  if (gen->outn_writer)
+    mus_frame_to_file(gen->outn_writer, loc, (mus_any *)(gen->outf));
+  return(uval);
+}
+
+static Float run_move_sound(mus_any *ptr, Float arg1, Float arg2) {mus_move_sound(ptr, (off_t)arg1, arg2); return(arg2);}
+
+static mus_any_class MOVE_SOUND_CLASS = {
+  MUS_MOVE_SOUND,
+  S_move_sound,
+  &free_move_sound,
+  &describe_move_sound,
+  &move_sound_equalp,
+  0, 0,
+  &move_sound_length,
+  0,
+  0, 0, 0, 0,
+  0, 0,
+  0, 0,
+  &run_move_sound,
+  MUS_OUTPUT,
+  NULL,
+  &move_sound_channels,
+  0, 0, 0, 0,
+  0, 0,
+  0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 
+  0, 0,
+  &_mus_wrap_no_vcts,
+  &move_sound_reset,
+  0
+};
+
+mus_any *mus_make_move_sound(off_t start, off_t end, int out_channels, int rev_channels,
+			     mus_any *doppler_delay, mus_any *doppler_env, mus_any *rev_env,
+			     mus_any **out_delays, mus_any **out_envs, mus_any **rev_envs,
+			     int *out_map, mus_any *output, mus_any *revput, bool free_arrays, bool free_gens)
+{
+  /* most of these args come to us in a list at the lisp/xen level ("dlocs" struct is actually a list) 
+   *   so the make-move-sound function in lisp/xen is (make-move-sound dloc-list output revout)
+   *   where the trailing args mimic locsig.
+   */
+  dloc *gen;
+  if (out_channels <= 0)
+    {
+      mus_error(MUS_ARG_OUT_OF_RANGE, "chans: %d", out_channels);
+      return(NULL);
+    }
+  gen = (dloc *)clm_calloc(1, sizeof(dloc), S_make_move_sound);
+  gen->core = &MOVE_SOUND_CLASS;
+
+  gen->start = start;
+  gen->end = end;
+  gen->out_channels = out_channels;
+  gen->rev_channels = rev_channels;
+  gen->doppler_delay = doppler_delay;
+  gen->doppler_env = doppler_env;
+  gen->rev_env = rev_env;
+  gen->out_delays = out_delays;
+  gen->out_envs = out_envs;
+  gen->rev_envs = rev_envs;
+  gen->out_map = out_map;
+
+  /* default is to free only what we make ourselves */
+  gen->free_gens = free_gens;
+  gen->free_arrays = free_arrays;
+
+  gen->outf = (mus_frame *)mus_make_empty_frame(out_channels);
+  if (output) gen->outn_writer = output;
+
+  if ((revput) && (rev_channels > 0))
+    {
+      gen->revn_writer = revput;
+      gen->revf = (mus_frame *)mus_make_empty_frame(rev_channels);
+    }
+
+  return((mus_any *)gen);
 }
 
 

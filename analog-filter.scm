@@ -22,7 +22,7 @@
 	(do ((n 0 (1+ n)))
 	    ((= n (+ L M)))
 	  (vct-set! y n 0.0)
-	  (do ((m (max 0 (- (+ n 1 L))) (1+ m)))
+	  (do ((m (max 0 (- n (+ 1 L))) (1+ m)))
 	      ((> m (min n M)))
 	    (vct-set! y n (+ (vct-ref y n) (* (vct-ref h m) (vct-ref x (- n m))))))))
 

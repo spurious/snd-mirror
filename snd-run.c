@@ -7865,9 +7865,9 @@ GEN_P(file_to_sample)
 GEN_P(sample_to_file)
 GEN_P(file_to_frame)
 GEN_P(frame_to_file)
-GEN_P(locsig)
 GEN_P_1(input)
 GEN_P_1(output)
+GEN_P(locsig)
 
 static char *descr_close_0(int *args, ptree *pt)
 {
@@ -8248,18 +8248,17 @@ static xen_value *sample_to_file_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- locsig ---------------- */
 static char *descr_locsig_3(int *args, ptree *pt) 
 {
-  return(mus_format( CLM_PT " = locsig((" CLM_PT ", " INT_PT ", " FLT_PT ")", 
-		    args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
+  return(mus_format( FLT_PT " = locsig((" CLM_PT ", " INT_PT ", " FLT_PT ")", 
+		    args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
 static void locsig_3(int *args, ptree *pt) 
 {
-  /* frame result should not be freed */
-  CLM_RESULT = mus_locsig(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+  FLOAT_RESULT = mus_locsig(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
 }
 static xen_value *locsig_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, locsig_check, descr_locsig_check, args, 1);
-  return(package(prog, R_CLM, locsig_3, descr_locsig_3, args, 3));
+  return(package(prog, R_FLOAT, locsig_3, descr_locsig_3, args, 3));
 }
 
 
@@ -11471,7 +11470,7 @@ static void init_walkers(void)
   INIT_WALKER(S_frame_to_frame, make_walker(frame_to_frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
   INIT_WALKER(S_frame_to_sample, make_walker(frame_to_sample_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_CLM));
   INIT_WALKER(S_sample_to_frame, make_walker(sample_to_frame_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_FLOAT, R_CLM));
-  INIT_WALKER(S_locsig, make_walker(locsig_1, NULL, NULL, 3, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_locsig, make_walker(locsig_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_frame_to_file, make_walker(frame_to_file_1, NULL, NULL, 3, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_CLM));
   INIT_WALKER(S_file_to_frame, make_walker(file_to_frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_CLM));
 
@@ -11739,104 +11738,6 @@ Float evaluate_ptreec(struct ptree *pt, Float arg, vct *v, bool dir) {return(0.0
 #endif
 /* endif WITH_RUN */
 
-static XEN g_vct_map(XEN proc_and_code, XEN arglist)
-{
-  #define H_vct_map "(" S_vct_map " thunk v ...): call 'thunk' which should return a frame; the frame result \
-is then parcelled out to the vcts passed as the trailing arguments.  This is intended for use with locsig \
-in multi-channel situations where you want the optimization that vct-map! provides."
-  int i, j, len = 0, min_len = 0;
-  vct **vs = NULL;
-  XEN proc, obj, code;
-  Float *vals;
-  mus_any *f;
-#if WITH_RUN
-  if (XEN_LIST_P(proc_and_code))
-    {
-      proc = XEN_CAR(proc_and_code);
-      code = XEN_CADR(proc_and_code);
-    }
-  else
-    {
-      proc = proc_and_code;
-      code = proc_and_code;
-    }
-#else
-  proc = proc_and_code;
-  code = proc_and_code;
-#endif
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ARG_1, S_vct_map, "a thunk");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arglist), arglist, XEN_ARG_2, S_vct_map, "a list of vcts");
-  len = XEN_LIST_LENGTH(arglist);
-  if (len <= 0) /* in Gauche, if arglist is not a list, its "length" is -1 */
-    {
-      XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
-		XEN_LIST_3(C_TO_XEN_STRING(S_vct_map),
-			   C_TO_XEN_STRING("no vct args!"),
-			   arglist));
-      return(XEN_FALSE);
-    }
-  vs = (vct **)CALLOC(len, sizeof(vct *));
-  for (i = 0; i < len; i++, arglist = XEN_CDR(arglist))
-    {
-      obj = XEN_CAR(arglist);
-      if (!(VCT_P(obj)))
-	{
-	  FREE(vs);
-	  vs = NULL;
-	  XEN_ASSERT_TYPE(false, obj, i + 2, S_vct_map, "a vct"); /* i.e. throw the error */
-	  return(XEN_FALSE); /* won't happen, I hope */
-	}
-      vs[i] = TO_VCT(obj);
-      if (min_len == 0)
-	min_len = vs[i]->length;
-      else
-	{
-	  if (min_len > vs[i]->length)
-	    min_len = vs[i]->length;
-	}
-    }
-#if WITH_RUN
-  if (optimization(ss) != DONT_OPTIMIZE)
-    {
-      ptree *pt = NULL;
-      pt = form_to_ptree(proc_and_code);
-      if (pt)
-	{
-	  for (i = 0; i < min_len; i++) 
-	    {
-	      eval_ptree(pt);
-	      vals = mus_data(pt->clms[pt->result->addr]);
-	      for (j = 0; j < len; j++)
-		vs[j]->data[i] = vals[j];
-	    }
-	  if (pt) free_ptree(pt);
-	  if (vs) FREE(vs);
-	  return(proc);
-	}
-      /* else fall through to guile */
-      if (pt) free_ptree(pt);
-    }
-#endif
-
-  for (i = 0; i < min_len; i++) 
-    {
-      obj = XEN_CALL_0_NO_CATCH(code);
-      if (mus_xen_p(obj))
-	{
-	  f = XEN_TO_MUS_ANY(obj);
-	  if (mus_frame_p(f))
-	    {
-	      vals = mus_data(f);
-	      if (vals)
-		for (j = 0; j < len; j++)
-		  vs[j]->data[i] = vals[j];
-	    }
-	}
-    }
-  if (vs) FREE(vs);
-  return(proc);
-}
-
 static XEN g_optimization(void) {return(C_TO_XEN_INT(optimization(ss)));}
 static XEN g_set_optimization(XEN val) 
 {
@@ -11862,7 +11763,6 @@ XEN_NARGIFY_0(g_optimization_w, g_optimization)
 XEN_NARGIFY_1(g_set_optimization_w, g_set_optimization)
 XEN_NARGIFY_0(g_run_safety_w, g_run_safety)
 XEN_NARGIFY_1(g_set_run_safety_w, g_set_run_safety)
-XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
 #if WITH_RUN
 XEN_NARGIFY_1(g_run_w, g_run)
 XEN_NARGIFY_1(g_show_ptree_w, g_show_ptree)
@@ -11875,7 +11775,6 @@ XEN_ARGIFY_4(g_run_eval_w, g_run_eval)
 #define g_set_optimization_w g_set_optimization
 #define g_run_safety_w g_run_safety
 #define g_set_run_safety_w g_set_run_safety
-#define g_vct_map_w g_vct_map
 #if WITH_RUN
 #define g_run_w g_run
 #define g_show_ptree_w g_show_ptree
@@ -11892,9 +11791,6 @@ void g_init_run(void)
   XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(run-internal (list ',thunk ,thunk)))");
   XEN_SET_DOCUMENTATION(S_run, H_run);
   XEN_DEFINE_PROCEDURE("run-eval", g_run_eval_w, 1, 3, 0, "run macro testing...");
-  XEN_DEFINE_PROCEDURE("vct-map-2", g_vct_map_w, 2, 0, 0, H_vct_map);
-  XEN_EVAL_C_STRING("(defmacro " S_vct_map " (thunk . args) `(vct-map-2 (list ',thunk ,thunk) (list ,@args)))");
-  XEN_SET_DOCUMENTATION(S_vct_map, H_vct_map);
   XEN_DEFINE_PROCEDURE(S_add_clm_field, g_add_clm_field_w, 2, 1, 0, H_add_clm_field);
   XEN_DEFINE_PROCEDURE(S_add_clm_type, g_add_clm_type_w, 1, 0, 0, H_add_clm_type);
   XEN_DEFINE_PROCEDURE("show-ptree", g_show_ptree_w, 1, 0, 0, "internal debugging stuff");
@@ -11905,11 +11801,7 @@ void g_init_run(void)
 #endif
 #else
 #if HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE("vct-map-2", g_vct_map_w, 2, 0, 0, H_vct_map);
-  XEN_EVAL_C_STRING("(defmacro " S_vct_map " (thunk . args) `(vct-map-2 ,thunk (list ,@args)))");
   XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(,thunk))");
-#else
-  XEN_DEFINE_PROCEDURE(S_vct_map, g_vct_map_w, 2, 0, 0, H_vct_map);
 #endif
 #endif
 

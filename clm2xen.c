@@ -4421,10 +4421,10 @@ static XEN g_locsig(XEN obj, XEN loc, XEN val)
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_locsig_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_locsig, "a locsig gen");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(loc), loc, XEN_ARG_2, S_locsig, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_locsig, "a number");
-  return(g_wrap_frame(mus_locsig(XEN_TO_MUS_ANY(obj),
-				 XEN_TO_C_OFF_T_OR_ELSE(loc, 0),
-				 XEN_TO_C_DOUBLE(val)),
-		      true));
+  mus_locsig(XEN_TO_MUS_ANY(obj),
+	     XEN_TO_C_OFF_T_OR_ELSE(loc, 0),
+	     XEN_TO_C_DOUBLE(val));
+  return(val);  /* changed 30-June-06 to return val rather than a wrapped frame */
 }
 
 static mus_interp_t clm_locsig_type = MUS_INTERP_LINEAR;
@@ -4553,6 +4553,93 @@ static XEN g_move_locsig(XEN obj, XEN degree, XEN distance)
 		  XEN_TO_C_DOUBLE(distance));
   return(obj);
 }
+
+
+
+/* ---------------- move-sound ---------------- */
+
+static XEN g_move_sound_p(XEN obj)
+{
+  #define H_move_sound_p "(" S_move_sound_p " gen): #t if gen is a " S_move_sound
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_move_sound_p(XEN_TO_MUS_ANY(obj)))));
+}
+
+static XEN g_move_sound(XEN obj, XEN loc, XEN val)
+{
+  #define H_move_sound "(" S_move_sound " gen loc val): dlocsig run-time generator handling 'val' at sample 'loc'"
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_move_sound_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_move_sound, "a move-sound gen");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(loc), loc, XEN_ARG_2, S_move_sound, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_move_sound, "a number");
+  mus_move_sound(XEN_TO_MUS_ANY(obj),
+		 XEN_TO_C_OFF_T_OR_ELSE(loc, 0),
+		 XEN_TO_C_DOUBLE(val));
+  return(val);
+}
+
+static mus_any **xen_vector_to_mus_any_array(XEN vect)
+{
+  mus_any **gens;
+  int i, len;
+  len = XEN_VECTOR_LENGTH(vect);
+  gens = (mus_any **)CALLOC(len, sizeof(mus_any *));
+  for (i = 0; i < len; i++)
+    gens[i] = XEN_TO_MUS_ANY(XEN_VECTOR_REF(vect, i));
+  return(gens);
+}
+
+static int *xen_vector_to_int_array(XEN vect)
+{
+  int *vals;
+  int i, len;
+  len = XEN_VECTOR_LENGTH(vect);
+  vals = (int *)CALLOC(len, sizeof(int));
+  for (i = 0; i < len; i++)
+    vals[i] = XEN_TO_C_INT(XEN_VECTOR_REF(vect, i));
+  return(vals);
+}
+
+static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
+{
+  mus_any *ge;
+  mus_any **out_delays, **out_envs, **rev_envs;
+  int *out_map;
+
+  #define H_make_move_sound "(" S_make_move_sound " dloc-list out :optional rev) -> dlocsig run-time generator"
+
+  /* dloc-list is (list start end outchans revchans dopdly dopenv revenv outdelays outenvs revenvs outmap) */
+  /*   outdelays envs and revenvs are vectors */
+
+  XEN_ASSERT_TYPE(XEN_LIST_P(dloc_list) && (XEN_LIST_LENGTH(dloc_list) == 11), dloc_list, XEN_ARG_1, S_make_move_sound, "a dlocsig list");
+  XEN_ASSERT_TYPE((MUS_XEN_P(outp)) && (mus_output_p(XEN_TO_MUS_ANY(outp))), outp, XEN_ARG_2, S_make_move_sound, "output stream");
+  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(revp) || ((MUS_XEN_P(revp)) && (mus_output_p(XEN_TO_MUS_ANY(revp)))), revp, XEN_ARG_3, S_make_move_sound, "reverb stream");
+  
+  ge = mus_make_move_sound(XEN_TO_C_OFF_T(XEN_LIST_REF(dloc_list, 0)), /* start */
+			   XEN_TO_C_OFF_T(XEN_LIST_REF(dloc_list, 1)), /* end */
+			   XEN_TO_C_INT(XEN_LIST_REF(dloc_list, 2)),   /* out chans */
+			   XEN_TO_C_INT(XEN_LIST_REF(dloc_list, 3)),   /* rev chans */
+			   XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 4)), /* doppler delay */
+			   XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 5)), /* doppler env */
+			   XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 6)), /* global reverb env */
+			   out_delays = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 7)), /* out delays */
+			   out_envs = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 8)), /* out envs */
+			   rev_envs = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 9)), /* rev envs */
+			   out_map = xen_vector_to_int_array(XEN_LIST_REF(dloc_list, 10)), /* out map */
+			   XEN_TO_MUS_ANY(outp),
+			   (XEN_BOUND_P(revp) ? XEN_TO_MUS_ANY(revp) : NULL),
+			   true, false); /* free outer arrays but not gens */
+  if (ge)
+    {
+      mus_xen *gn;
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->nvcts = 1;
+      gn->vcts = make_vcts(gn->nvcts);
+      gn->vcts[MUS_DATA_WRAPPER] = dloc_list; 
+      gn->gen = ge;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
+}
+
 
 
 /* ---------------- src ---------------- */
@@ -5707,6 +5794,9 @@ XEN_NARGIFY_2(g_locsig_ref_w, g_locsig_ref)
 XEN_NARGIFY_2(g_locsig_reverb_ref_w, g_locsig_reverb_ref)
 XEN_NARGIFY_3(g_locsig_set_w, g_locsig_set)
 XEN_NARGIFY_3(g_locsig_reverb_set_w, g_locsig_reverb_set)
+XEN_NARGIFY_1(g_move_sound_p_w, g_move_sound_p)
+XEN_NARGIFY_3(g_move_sound_w, g_move_sound)
+XEN_ARGIFY_3(g_make_move_sound_w, g_make_move_sound)
 XEN_NARGIFY_0(g_mus_clear_sincs_w, g_mus_clear_sincs)
 XEN_NARGIFY_1(g_src_p_w, g_src_p)
 XEN_ARGIFY_3(g_src_w, g_src)
@@ -5970,6 +6060,9 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_locsig_reverb_ref_w g_locsig_reverb_ref
 #define g_locsig_set_w g_locsig_set
 #define g_locsig_reverb_set_w g_locsig_reverb_set
+#define g_move_sound_p_w g_move_sound_p
+#define g_move_sound_w g_move_sound
+#define g_make_move_sound_w g_make_move_sound
 #define g_mus_clear_sincs_w g_mus_clear_sincs
 #define g_src_p_w g_src_p
 #define g_src_w g_src
@@ -6422,6 +6515,10 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_locsig_reverb_set, g_locsig_reverb_set_w, 3, 0, 0, H_locsig_reverb_set);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_type, g_locsig_type_w, H_locsig_type, S_setB S_locsig_type, g_set_locsig_type_w,  0, 0, 1, 0);
 
+  XEN_DEFINE_PROCEDURE(S_move_sound_p,          g_move_sound_p_w,     1, 0, 0, H_move_sound_p);
+  XEN_DEFINE_PROCEDURE(S_move_sound,            g_move_sound_w,       3, 0, 0, H_move_sound);
+  XEN_DEFINE_PROCEDURE(S_make_move_sound,       g_make_move_sound_w,  2, 1, 0, H_make_move_sound);
+
   XEN_DEFINE_PROCEDURE(S_file_to_sample_p,        g_file_to_sample_p_w,        1, 0, 0, H_file_to_sample_p);
   XEN_DEFINE_PROCEDURE(S_make_file_to_sample,     g_make_file_to_sample_w,     1, 1, 0, H_make_file_to_sample);
   XEN_DEFINE_PROCEDURE(S_file_to_sample,          g_file_to_sample_w,          2, 1, 0, H_file_to_sample);
@@ -6612,6 +6709,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_make_iir_filter,
 	       S_make_locsig,
 	       S_make_mixer,
+	       S_make_move_sound,
 	       S_make_notch,
 	       S_make_one_pole,
 	       S_make_one_zero,
@@ -6645,6 +6743,8 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mixer_ref,
 	       S_mixer_set,
 	       S_move_locsig,
+	       S_move_sound,
+	       S_move_sound_p,
 	       S_multiply_arrays,
 	       S_mus_apply,
 	       S_mus_array_print_length,
