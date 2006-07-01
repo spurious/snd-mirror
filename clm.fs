@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <scholz-micha@gmx.de>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Sun Apr 02 23:34:54 CEST 2006
+\ Changed: Sat Jun 24 19:58:05 CEST 2006
 
 \ Commentary:
 \ 
@@ -427,7 +427,8 @@ previous
   *clm-channels* 2 min { chans }
   *clm-srate* { srate }
   srate srate-set!
-  *clm-audio-format* { fmt }
+  *clm-audio-format* { afmt }
+  *clm-data-format* { dfmt }
   *clm-header-type* { htype }
   chans bufsize make-sound-data { data }
   chans 0.25 make-vct { vals }
@@ -435,16 +436,16 @@ previous
   vals 0.75 vct-fill! drop
   vals each drop device  mus-audio-amp i vals mus-audio-mixer-write drop end-each
   $" written by %s at %s" _ '( get-func-name date ) string-format { descr }
-  fname srate chans fmt htype descr mus-sound-open-output { snd-fd }
+  fname srate chans dfmt htype descr mus-sound-open-output { snd-fd }
   snd-fd 0< if 'forth-error '( get-func-name $" cannot open %s" _ fname ) fth-throw then
-  device srate chans 2 min fmt bufsize mus-audio-open-input { dac-fd }
+  device srate chans 2 min afmt bufsize mus-audio-open-input { dac-fd }
   dac-fd 0< if 'forth-error '( get-func-name $" cannot open dac" _ ) fth-throw then
   *clm-verbose* if
     $" \\ filename: %s\n"                '( fname )                    fth-print
     $" \\   device: %d\n"                '( device )                   fth-print
     $" \\    chans: %d, srate: %d\n"     '( chans srate )              fth-print
-    $" \\ r format: %s\n"                '( fmt mus-data-format-name ) fth-print
-    $" \\ w format: %s [%s]\n" '( fmt mus-data-format-name htype mus-header-type-name ) fth-print
+    $" \\ r format: %s\n"                '( afmt mus-data-format-name ) fth-print
+    $" \\ w format: %s [%s]\n" '( dfmt mus-data-format-name htype mus-header-type-name ) fth-print
     $" \\   length: %.3f  (%d frames)\n" '( dur frms )                 fth-print
     $" \\  comment: %s\n"                '( descr )                    fth-print
   then
@@ -454,7 +455,7 @@ previous
     snd-fd 0 bufsize 1- chans data mus-sound-write drop
   bufsize +loop
   dac-fd mus-audio-close drop
-  snd-fd frms chans * fmt mus-bytes-per-sample * mus-sound-close-output drop
+  snd-fd frms chans * dfmt mus-bytes-per-sample * mus-sound-close-output drop
 ;
 
 \ === With-Sound Keywords ===

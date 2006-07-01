@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 23
-#define MUS_DATE "28-June-06"
+#define MUS_REVISION 24
+#define MUS_DATE "3-July-06"
 
 /*
  * 3-July:     mus_move_sound (dlocsig) generator.

@@ -138,13 +138,16 @@ char *mus_name(mus_any *ptr)
 
 Float mus_radians_to_hz(Float rads) {return(rads / w_rate);}
 Float mus_hz_to_radians(Float hz) {return(hz * w_rate);}
+
 Float mus_degrees_to_radians(Float degree) {return(degree * TWO_PI / 360.0);}
 Float mus_radians_to_degrees(Float rads) {return(rads * 360.0 / TWO_PI);}
+
 Float mus_db_to_linear(Float x) {return(pow(10.0, x / 20.0));}
 Float mus_linear_to_db(Float x) {if (x > 0.0) return(20.0 * log10(x)); return(-100.0);}
 
 Float mus_srate(void) {return(sampling_rate);}
 Float mus_set_srate(Float val) {if (val > 0.0) sampling_rate = val; w_rate = (TWO_PI / sampling_rate); return(sampling_rate);}
+
 off_t mus_seconds_to_samples(Float secs) {return((off_t)(secs * sampling_rate));}
 Float mus_samples_to_seconds(off_t samps) {return((Float)((double)samps / (double)sampling_rate));}
 
@@ -2745,6 +2748,7 @@ mus_any *mus_make_average(int size, Float *line)
 /* PERHAPS: moving-max (windowed-maxamp in dsp.scm): keep current_max in delay line
  *              if abs(input)>max max=abs(input) else
  *                if output = max, get new max
+ * "delay-max" ? (moving-max is not right)
  */
 
 
@@ -6523,6 +6527,17 @@ void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
  *   either -- I'm trying to use verbs where possible.
  */
 
+/* TODO: doc (also include dlocsig docs in snd tarball), clm.html 
+ *       test (clm23 + basic stuff, then dlocsig, snd-test gen stuff etc), memchecks, valgrind
+ *       lisp (mus+export+run+initmus(constant) + dlocsig old style + ugn)
+ *       scheme (dlocsig.scm)
+ *       c: better describe?, should mus-data return something?
+ *       c: is _mus_wrap_no_vcts correct for the wrapper?
+ *       c: type error checks in clm2xen dloc-list
+ *       c: snd-run opts
+ *       rb: update dlocsig.rb
+ */
+
 typedef struct {
   mus_any_class *core;
   mus_any *outn_writer;
@@ -6578,7 +6593,7 @@ static int free_move_sound(mus_any *p)
 	  if (ptr->out_delays) {FREE(ptr->out_delays); ptr->out_delays = NULL;}
 	  if (ptr->out_map) FREE(ptr->out_map);
 	}
-      mus_free((mus_any *)(ptr->outf));
+      if (ptr->outf) mus_free((mus_any *)(ptr->outf));
       if (ptr->revf) mus_free((mus_any *)(ptr->revf));
       FREE(ptr);
     }
@@ -6631,6 +6646,7 @@ Float mus_move_sound(mus_any *ptr, off_t loc, Float uval)
     mus_frame_to_file(gen->revn_writer, loc, (mus_any *)(gen->revf));
   if (gen->outn_writer)
     mus_frame_to_file(gen->outn_writer, loc, (mus_any *)(gen->outf));
+
   return(uval);
 }
 

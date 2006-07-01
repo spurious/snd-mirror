@@ -4613,20 +4613,20 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
   XEN_ASSERT_TYPE((MUS_XEN_P(outp)) && (mus_output_p(XEN_TO_MUS_ANY(outp))), outp, XEN_ARG_2, S_make_move_sound, "output stream");
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(revp) || ((MUS_XEN_P(revp)) && (mus_output_p(XEN_TO_MUS_ANY(revp)))), revp, XEN_ARG_3, S_make_move_sound, "reverb stream");
   
-  ge = mus_make_move_sound(XEN_TO_C_OFF_T(XEN_LIST_REF(dloc_list, 0)), /* start */
-			   XEN_TO_C_OFF_T(XEN_LIST_REF(dloc_list, 1)), /* end */
-			   XEN_TO_C_INT(XEN_LIST_REF(dloc_list, 2)),   /* out chans */
-			   XEN_TO_C_INT(XEN_LIST_REF(dloc_list, 3)),   /* rev chans */
-			   XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 4)), /* doppler delay */
-			   XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 5)), /* doppler env */
-			   XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 6)), /* global reverb env */
+  ge = mus_make_move_sound(XEN_TO_C_OFF_T(XEN_LIST_REF(dloc_list, 0)),                           /* start */
+			   XEN_TO_C_OFF_T(XEN_LIST_REF(dloc_list, 1)),                           /* end */
+			   XEN_TO_C_INT(XEN_LIST_REF(dloc_list, 2)),                             /* out chans */
+			   XEN_TO_C_INT(XEN_LIST_REF(dloc_list, 3)),                             /* rev chans */
+			   XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 4)),                           /* doppler delay */
+			   XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 5)),                           /* doppler env */
+			   XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 6)),                           /* global reverb env */
 			   out_delays = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 7)), /* out delays */
-			   out_envs = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 8)), /* out envs */
-			   rev_envs = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 9)), /* rev envs */
-			   out_map = xen_vector_to_int_array(XEN_LIST_REF(dloc_list, 10)), /* out map */
-			   XEN_TO_MUS_ANY(outp),
-			   (XEN_BOUND_P(revp) ? XEN_TO_MUS_ANY(revp) : NULL),
-			   true, false); /* free outer arrays but not gens */
+			   out_envs = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 8)),   /* out envs */
+			   rev_envs = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 9)),   /* rev envs */
+			   out_map = xen_vector_to_int_array(XEN_LIST_REF(dloc_list, 10)),       /* out map */
+			   XEN_TO_MUS_ANY(outp),                                                 /* output frame->file gen (*output*) */
+			   (XEN_BOUND_P(revp) ? XEN_TO_MUS_ANY(revp) : NULL),                    /* same for reverb (optional) */
+			   true, false);                                                         /* free outer arrays but not gens */
   if (ge)
     {
       mus_xen *gn;
