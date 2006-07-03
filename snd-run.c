@@ -7868,6 +7868,7 @@ GEN_P(frame_to_file)
 GEN_P_1(input)
 GEN_P_1(output)
 GEN_P(locsig)
+GEN_P(move_sound)
 
 static char *descr_close_0(int *args, ptree *pt)
 {
@@ -8259,6 +8260,23 @@ static xen_value *locsig_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, locsig_check, descr_locsig_check, args, 1);
   return(package(prog, R_FLOAT, locsig_3, descr_locsig_3, args, 3));
+}
+
+
+/* ---------------- move_sound ---------------- */
+static char *descr_move_sound_3(int *args, ptree *pt) 
+{
+  return(mus_format( FLT_PT " = move_sound((" CLM_PT ", " INT_PT ", " FLT_PT ")", 
+		    args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
+}
+static void move_sound_3(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = mus_move_sound(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+}
+static xen_value *move_sound_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, move_sound_check, descr_move_sound_check, args, 1);
+  return(package(prog, R_FLOAT, move_sound_3, descr_move_sound_3, args, 3));
 }
 
 
@@ -11345,6 +11363,7 @@ static void init_walkers(void)
   INIT_WALKER(S_file_to_frame_p, make_walker(file_to_frame_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_frame_to_file_p, make_walker(frame_to_file_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_locsig_p, make_walker(locsig_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_move_sound_p, make_walker(move_sound_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_mus_input_p, make_walker(input_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_mus_output_p, make_walker(output_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_snd_to_sample_p, make_walker(snd_to_sample_1p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
@@ -11471,6 +11490,7 @@ static void init_walkers(void)
   INIT_WALKER(S_frame_to_sample, make_walker(frame_to_sample_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_CLM));
   INIT_WALKER(S_sample_to_frame, make_walker(sample_to_frame_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_FLOAT, R_CLM));
   INIT_WALKER(S_locsig, make_walker(locsig_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_move_sound, make_walker(move_sound_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_frame_to_file, make_walker(frame_to_file_1, NULL, NULL, 3, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_CLM));
   INIT_WALKER(S_file_to_frame, make_walker(file_to_frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_CLM));
 
@@ -11500,7 +11520,7 @@ static void init_walkers(void)
   INIT_WALKER(S_make_frame_to_file, make_walker(make_frame_to_file_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_granulate, make_walker(make_granulate_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_iir_filter, make_walker(make_iir_filter_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_locsig, make_walker(make_locsig_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_locsig, make_walker(make_locsig_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN)); /* no move-sound -- way too complex */
   INIT_WALKER(S_make_mixer, make_walker(make_mixer_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_notch, make_walker(make_notch_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_one_pole, make_walker(make_one_pole_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));

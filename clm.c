@@ -154,7 +154,7 @@ Float mus_samples_to_seconds(off_t samps) {return((Float)((double)samps / (doubl
 int mus_array_print_length(void) {return(array_print_length);}
 int mus_set_array_print_length(int val) {if (val >= 0) array_print_length = val; return(array_print_length);}
 
-static char *print_array(Float *arr, int len, int loc)
+static char *float_array_to_string(Float *arr, int len, int loc)
 {
   char *base, *str;
   int i, lim, k, size = 128;
@@ -1925,7 +1925,7 @@ static char *describe_polyshape(mus_any *ptr)
 {
   ws *gen = (ws *)ptr;
   char *str;
-  str = print_array(gen->table, gen->table_size, 0);
+  str = float_array_to_string(gen->table, gen->table_size, 0);
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_polyshape " freq: %.3fHz, phase: %.3f, coeffs[%d]: %s",
 	       mus_frequency(ptr),
 	       mus_phase(ptr),
@@ -2293,10 +2293,10 @@ static char *describe_delay(mus_any *ptr)
 		 S_delay ": line[%d,%d, %s]: %s", 
 		 gen->size, gen->zsize, 
 		 interp_name[gen->type],
-		 str = print_array(gen->line, gen->size, gen->zloc));
+		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		    S_delay ": line[%d, %s]: %s", 
-		    gen->size, interp_name[gen->type], str = print_array(gen->line, gen->size, gen->loc));
+		    gen->size, interp_name[gen->type], str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
 }
@@ -2466,12 +2466,12 @@ static char *describe_comb(mus_any *ptr)
 		 S_comb ": scaler: %.3f, line[%d,%d, %s]: %s", 
 		 gen->yscl, gen->size, gen->zsize, 
 		 interp_name[gen->type],
-		 str = print_array(gen->line, gen->size, gen->zloc));
+		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		    S_comb ": scaler: %.3f, line[%d, %s]: %s", 
 		    gen->yscl, gen->size, 
 		    interp_name[gen->type],
-		    str = print_array(gen->line, gen->size, gen->loc));
+		    str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
 }
@@ -2527,12 +2527,12 @@ static char *describe_notch(mus_any *ptr)
 		 S_notch ": scaler: %.3f, line[%d,%d, %s]: %s", 
 		 gen->xscl, gen->size, gen->zsize, 
 		 interp_name[gen->type],
-		 str = print_array(gen->line, gen->size, gen->zloc));
+		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		    S_notch ": scaler: %.3f, line[%d, %s]: %s", 
 		    gen->xscl, gen->size, 
 		    interp_name[gen->type],
-		    str = print_array(gen->line, gen->size, gen->loc));
+		    str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
 }
@@ -2618,12 +2618,12 @@ static char *describe_all_pass(mus_any *ptr)
 		 S_all_pass ": feedback: %.3f, feedforward: %.3f, line[%d,%d, %s]:%s",
 		 gen->yscl, gen->xscl, gen->size, gen->zsize, 
 		 interp_name[gen->type],
-		 str = print_array(gen->line, gen->size, gen->zloc));
+		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		    S_all_pass ": feedback: %.3f, feedforward: %.3f, line[%d, %s]:%s",
 		    gen->yscl, gen->xscl, gen->size, 
 		    interp_name[gen->type],
-		    str = print_array(gen->line, gen->size, gen->loc));
+		    str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
 }
@@ -2697,7 +2697,7 @@ static char *describe_average(mus_any *ptr)
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 	       S_average ": %.3f, line[%d]:%s",
 	       gen->xscl * gen->xscl, gen->size, 
-	       str = print_array(gen->line, gen->size, gen->loc));
+	       str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
 }
@@ -4065,8 +4065,8 @@ static char *describe_filter(mus_any *ptr)
 {
   flt *gen = (flt *)ptr;
   char *xstr = NULL, *ystr = NULL;
-  xstr = print_array(gen->x, gen->order, 0);
-  ystr = print_array(gen->y, gen->order, 0);
+  xstr = float_array_to_string(gen->x, gen->order, 0);
+  ystr = float_array_to_string(gen->y, gen->order, 0);
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s: order: %d, xs: %s, ys: %s", 
 	       gen->core->name, 
 	       gen->order,
@@ -4080,7 +4080,7 @@ static char *describe_fir_filter(mus_any *ptr)
 {
   flt *gen = (flt *)ptr;
   char *xstr = NULL;
-  xstr = print_array(gen->x, gen->order, 0);
+  xstr = float_array_to_string(gen->x, gen->order, 0);
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s: order: %d, xs: %s", 
 	       gen->core->name, 
 	       gen->order,
@@ -4093,7 +4093,7 @@ static char *describe_iir_filter(mus_any *ptr)
 {
   flt *gen = (flt *)ptr;
   char *ystr = NULL;
-  ystr = print_array(gen->y, gen->order, 0);
+  ystr = float_array_to_string(gen->y, gen->order, 0);
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s: order: %d, ys: %s", 
 	       gen->core->name, 
 	       gen->order,
@@ -4482,7 +4482,7 @@ static char *describe_env(mus_any *ptr)
 	       ((e->style == ENV_SEG) ? "linear" : ((e->style == ENV_EXP) ? "exponential" : "step")),
 	       e->pass, e->end + 1, e->index,
 	       e->original_scaler, e->original_offset,
-	       str = print_array(e->original_data, e->size * 2, 0));
+	       str = float_array_to_string(e->original_data, e->size * 2, 0));
   if (str) FREE(str);
   return(describe_buffer);
 }
@@ -4722,7 +4722,7 @@ static char *describe_frame(mus_any *ptr)
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 	       S_frame "[%d]: %s", 
 	       gen->chans,
-	       str = print_array(gen->vals, gen->chans, 0));
+	       str = float_array_to_string(gen->vals, gen->chans, 0));
   if (str) FREE(str);
   return(describe_buffer);
 }
@@ -6527,15 +6527,13 @@ void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
  *   either -- I'm trying to use verbs where possible.
  */
 
-/* TODO: doc (also include dlocsig docs in snd tarball), clm.html 
- *       test (clm23 + basic stuff, then dlocsig, snd-test gen stuff etc), memchecks, valgrind
- *       lisp (mus+export+run+initmus(constant) + dlocsig old style + ugn)
+/* TODO: clm.html 
+ *       test (basic stuff, snd-test gen etc), memchecks, valgrind, snd-run opts
  *       scheme (dlocsig.scm)
- *       c: better describe?, should mus-data return something?
+ *       c: should mus-data return something?
  *       c: is _mus_wrap_no_vcts correct for the wrapper?
  *       c: type error checks in clm2xen dloc-list
- *       c: snd-run opts
- *       rb: update dlocsig.rb
+ *       rb: update dlocsig.rb (787, l788)
  */
 
 typedef struct {
@@ -6551,6 +6549,58 @@ typedef struct {
   bool free_arrays, free_gens;
 } dloc;
 
+static char *clm_array_to_string(mus_any **gens, int num_gens, char *name, char *indent)
+{
+  if (gens)
+    {
+      int i, len = 0;
+      char **descrs;
+      char *descr;
+      descrs = (char **)CALLOC(num_gens, sizeof(char *));
+      for (i = 0; i < num_gens; i++)
+	{
+	  if (gens[i])
+	    descrs[i] = mus_format("\n%s[%d]: %s", indent, i, mus_describe(gens[i]));
+	  else descrs[i] = mus_format("\n%s[%d]: nil", indent, i);
+	  len += strlen(descrs[i]);
+	}
+      len += (64 + strlen(name));
+      descr = (char *)CALLOC(len, sizeof(char));
+      mus_snprintf(descr, len, "%s[%d]:", name, num_gens);
+      for (i = 0; i < num_gens; i++)
+	{
+	  strcat(descr, descrs[i]);
+	  FREE(descrs[i]);
+	}
+      FREE(descrs);
+      return(descr);
+    }
+  return(strdup("nil"));
+}
+
+static char *int_array_to_string(int *arr, int num_ints, char *name)
+{
+  if (arr)
+    {
+      int i, len;
+      char *descr, *intstr;
+      len = num_ints * 32 + 64;
+      descr = (char *)CALLOC(len, sizeof(char));
+      intstr = (char *)CALLOC(32, sizeof(char));
+      mus_snprintf(descr, len, "%s[%d]: (", name, num_ints);      
+      for (i = 0; i < num_ints - 1; i++)
+	{
+	  mus_snprintf(intstr, 32, "%d ", arr[i]);
+	  strcat(descr, intstr);
+	}
+      mus_snprintf(intstr, 32, "%d)", arr[num_ints - 1]);
+      strcat(descr, intstr);
+      FREE(intstr);
+      return(descr);
+    }
+  return(strdup("nil"));
+}
+
 static bool move_sound_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 static int move_sound_channels(mus_any *ptr) {return(((dloc *)ptr)->out_channels);}
 static off_t move_sound_length(mus_any *ptr) {return(((dloc *)ptr)->out_channels);} /* need both because return types differ */
@@ -6559,8 +6609,32 @@ static void move_sound_reset(mus_any *ptr) {}
 static char *describe_move_sound(mus_any *ptr)
 {
   dloc *gen = (dloc *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_move_sound ": out chans %d, rev chans: %d\n", gen->out_channels, gen->rev_channels);
-  return(describe_buffer);
+  char *dopdly, *dopenv, *revenv;
+  char *outdlys, *outenvs, *revenvs = NULL;
+  char *outmap;
+  char *starts;
+  static char *allstr = NULL;
+  int len;
+  if (allstr) {FREE(allstr); allstr = NULL;}
+
+  starts = mus_format(S_move_sound ": start: " OFF_TD ", end: " OFF_TD ", out chans %d, rev chans: %d",
+		      gen->start, gen->end, gen->out_channels, gen->rev_channels);
+  dopdly = mus_format("doppler %s", mus_describe(gen->doppler_delay));
+  dopenv = mus_format("doppler %s", mus_describe(gen->doppler_env));
+  revenv = mus_format("global reverb %s", mus_describe(gen->rev_env));
+  outdlys = clm_array_to_string(gen->out_delays, gen->out_channels, "out_delays", "    ");
+  outenvs = clm_array_to_string(gen->out_envs, gen->out_channels, "out_envs", "    ");
+  revenvs = clm_array_to_string(gen->rev_envs, gen->out_channels, "rev_envs", "    ");
+  outmap = int_array_to_string(gen->out_map, gen->out_channels, "out_map");
+  len = 64 + strlen(starts) + strlen(dopdly) + strlen(dopenv) + strlen(revenv) + 
+    strlen(outdlys) + strlen(outenvs) + strlen(revenvs) + strlen(outmap);
+  allstr = (char *)CALLOC(len, sizeof(char));
+  mus_snprintf(allstr, len, "%s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  free: arrays: %s, gens: %s\n",
+		      starts, dopdly, dopenv, revenv, outdlys, outenvs, revenvs, outmap,
+		      (gen->free_arrays) ? "true" : "false",
+		      (gen->free_gens) ? "true" : "false");
+  FREE(starts); FREE(dopdly); FREE(dopenv); FREE(revenv); FREE(outdlys); FREE(outenvs); FREE(revenvs); FREE(outmap);
+  return(allstr);
 }
 
 static int free_move_sound(mus_any *p) 
@@ -6619,7 +6693,8 @@ Float mus_move_sound(mus_any *ptr, off_t loc, Float uval)
     }
 
   /* doppler */
-  val = mus_delay(gen->doppler_delay, val, mus_env(gen->doppler_env));
+  if (gen->doppler_delay)
+    val = mus_delay(gen->doppler_delay, val, mus_env(gen->doppler_env));
 
   /* direct signal */
   for (chan = 0; chan < gen->out_channels; chan++)
@@ -6633,12 +6708,15 @@ Float mus_move_sound(mus_any *ptr, off_t loc, Float uval)
 
   /* reverb */
   val *= mus_env(gen->rev_env);
-  if (gen->rev_channels == 1)
-    gen->revf->vals[0] = val * mus_env(gen->rev_envs[0]);
-  else
+  if (gen->rev_envs)
     {
-      for (chan = 0; chan < gen->rev_channels; chan++)
-	gen->revf->vals[gen->out_map[chan]] = val * mus_env(gen->rev_envs[chan]);
+      if (gen->rev_channels == 1)
+	gen->revf->vals[0] = val * mus_env(gen->rev_envs[0]);
+      else
+	{
+	  for (chan = 0; chan < gen->rev_channels; chan++)
+	    gen->revf->vals[gen->out_map[chan]] = val * mus_env(gen->rev_envs[chan]);
+	}
     }
 
   /* file output */
@@ -6700,7 +6778,6 @@ mus_any *mus_make_move_sound(off_t start, off_t end, int out_channels, int rev_c
   gen->start = start;
   gen->end = end;
   gen->out_channels = out_channels;
-  gen->rev_channels = rev_channels;
   gen->doppler_delay = doppler_delay;
   gen->doppler_env = doppler_env;
   gen->rev_env = rev_env;
@@ -6720,6 +6797,13 @@ mus_any *mus_make_move_sound(off_t start, off_t end, int out_channels, int rev_c
     {
       gen->revn_writer = revput;
       gen->revf = (mus_frame *)mus_make_empty_frame(rev_channels);
+      gen->rev_channels = rev_channels;
+    }
+  else
+    {
+      gen->revn_writer = NULL;
+      gen->rev_channels = 0;
+      gen->revf = NULL;
     }
 
   return((mus_any *)gen);
@@ -8246,7 +8330,7 @@ static char *describe_phase_vocoder(mus_any *ptr)
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
 	       S_phase_vocoder ": outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s",
 	       gen->outctr, gen->interp, gen->filptr, gen->N, gen->D,
-	       arr = print_array(gen->in_data, gen->N, 0));
+	       arr = float_array_to_string(gen->in_data, gen->N, 0));
   if (arr) FREE(arr);
   return(describe_buffer);
 }

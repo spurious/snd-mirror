@@ -16,7 +16,7 @@ dB display in VU meters (in the record dialog -- the dB value is ready
     to go, but the VU labels need different numbers).  A nicer VU meter 
     background (perhaps from OpenGL?).
 
-dlocsig from CLM to Scheme + a path envelope editor dialog
+a path envelope editor dialog for dlocsig (as in dlocsig.rb)
 
 A CD building script.
 
@@ -29,7 +29,7 @@ A Qt version of Snd?  An OSX-native version?  (These
     Qt requires C++, I think, and Cocoa may require Objective-C -- 
     major drawbacks).
 
-Perry Cook's whistle and PCRev translated to CLM/Snd.
+Perry Cook's whistle translated to CLM/Snd.
 
 Physical model of a thunder machine.
 

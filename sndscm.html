@@ -1544,7 +1544,7 @@ Here's how to trace fm-violin calls in a notelist:
 
 <p><a name="dlocsig">dlocsig</a> is a CLM generator developed by Fernando Lopez-Lezcano that can move sounds in two or three dimensions.
 Fernando's CLM/lisp-oriented documentation can be found in the CLM tarball
-(dlocsig/index.html) and <A HREF="http://ccrma.stanford.edu/~nando/clm/dlocsig/">here</A>.
+(dlocsig.html) and <A HREF="http://ccrma.stanford.edu/~nando/clm/dlocsig/">here</A>.
 dlocsig.rb is Michael Scholz's translation of dlocsig to Ruby.
 It has lots of documentation and examples.  If you load dlocsig.rb, a new menu is added named "Dlocsig".
 If you choose a path from this menu, you get a graphical user-interface to play with the various
@@ -4435,7 +4435,7 @@ and a suitably noisy original, strange pitches emerge and submerge.  <i>fsize</i
 <A NAME="freeverbdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>freeverb</h2></td></tr></table>
 
 <p>freeverb is Jezar Wakefield's reverberator, translated by Michael Scholz from CLM's freeverb.ins (written by Fernando Lopez-Lezcano), and documented
-in freeverb/index.html in the CLM tarball.
+in freeverb.html in the CLM tarball.
 </p>
 <pre>
     <a class=def name="freeverb">freeverb</a>
@@ -6271,6 +6271,7 @@ Apparently some commercial synths (or software?) provide this.
 <p>This file contains various functions related to the CLM polynomial function.  A polynomial here
 is a vct or a vector (for complex coefficients) holding the polynomial coefficients from lowest
 to highest (i.e. the constant is vct[0], x+2 is (vct 2 1), etc).
+</p>
 
 <!-- main-index |polydoc:polynomial operations -->
 
@@ -6284,6 +6285,7 @@ to highest (i.e. the constant is vct[0], x+2 is (vct 2 1), etc).
   <em class=emdef>poly-roots</em> p1         ; list of roots of p1
 </pre>
 
+<p>
 poly+ adds two polynomials, and poly* multiplies two polynomials.
 poly/ divides two polynomials, with a few restrictions, and returns
 a list containing the quotient and remainder polynomials.  poly-derivative

@@ -2026,6 +2026,7 @@ and replaces it with the spectrum given in coeffs"
 ;;; (automorph 1 0 0 1) is the identity
 ;;; (automorph 2 0 0 1) scales by 2
 ;;; (automorph 0.0+1.0i 0 0 1) rotates 90 degrees (so 4 times = identity)
+;;; most cases won't work right because we're assuming real output and so on
 
 (define* (automorph a b c d :optional snd chn)
   (let* ((len (frames snd chn))

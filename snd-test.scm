@@ -44742,6 +44742,7 @@ EDITS: 1
 		  (simple-rdf 19 .45 1 "oboe.snd")
 		  (simple-f2s 19.5 .45 1 "oboe.snd")
 		  (simple-loc 20 .2 440 .1)
+		  (simple-dloc 20.1 .2 440 .1)
 		  (simple-out 20.25 .2 440 .1)		  
 		  (simple-dup 20.5 .2 440 .1)
 		  (simple-du1 20.75 .2 440 .1)
