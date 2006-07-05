@@ -383,15 +383,16 @@ and any def-clm-struct name.
   <tr><td><a href="#iir-filter">iir-filter</a></td><td>IIR filter</td></tr>
   <tr><td><a href="#in-any">in-any</a></td><td>sound file input</td></tr>
   <tr><td><a href="#locsig">locsig</a></td><td>static sound placement</td></tr>
+  <tr><td><a href="#move-sound">move-sound</a></td><td>sound motion</td></tr>
   <tr><td><a href="#notch">notch</a></td><td>notch filter</td></tr>
   <tr><td><a href="#one-pole">one-pole</a></td><td>one pole filter</td></tr>
   <tr><td><a href="#one-zero">one-zero</a></td><td>one zero filter</td></tr>
   <tr><td><a href="#oscil">oscil</a></td><td>sine wave and FM</td></tr>
-  <tr><td><a href="#out-any">out-any</a></td><td>sound output</td></tr>
 </table>
 </td>
 <td>
 <table border=0>
+  <tr><td><a href="#out-any">out-any</a></td><td>sound output</td></tr>
   <tr><td><a href="#polyshape">polyshape</a></td><td>waveshaping</td></tr>
   <tr><td><a href="#phase-vocoder">phase-vocoder</a></td><td>vocoder analysis and resynthesis</td></tr>
   <tr><td><a href="#pulse-train">pulse-train</a></td><td>pulse train</td></tr>
@@ -500,9 +501,9 @@ remember what they are and what order they come in.
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>OSCIL (sinusoids)</h4></td></tr></table>
 <pre>
-  <a class=def name="make-oscil">make-oscil</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0)
-  <a class=def name="oscil">oscil</a> <i>os</i> &amp;optional (<i>fm-input</i> 0.0) (<i>pm-input</i> 0.0)
-  <a class=def name="oscil?">oscil?</a> <i>os</i>
+  <a class=def name="make-oscil">make-oscil</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (frequency 440.0) (initial-phase 0.0)
+  <a class=def name="oscil">oscil</a> os &amp;optional (fm-input 0.0) (pm-input 0.0)
+  <a class=def name="oscil?">oscil?</a> os
 </pre>
 
 <p><b>oscil</b> produces a sine wave (using sin) with optional frequency change (i.e. fm).
@@ -616,18 +617,18 @@ using Scheme (Snd/CLM) syntax:
 
 <pre>
   <a class=def name="make-env">make-env</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
-      <i>envelope</i>      ; list of x,y break-point pairs
-      (<i>scaler</i> 1.0)  ; scaler on every y value (before offset is added)
-      <i>duration</i>      ; seconds
-      (<i>offset</i> 0.0)  ; value added to every y value
-      <i>base</i>          ; type of connecting line between break-points
-      <i>end</i>           ; (- end start) =&gt; duration in samples (can be used instead of <i>duration</i>)
-      (<i>start</i> 0)     ; can be used in conjunction with <i>end</i>
-      <i>dur</i>           ; duration in samples (can be used instead of <i>start</i> and <i>end</i>)
-  <a class=def name="env">env</a> <i>e</i>
-  <a class=def name="env?">env?</a> <i>e</i>
-  <a class=def name="env-interp">env-interp</a> <i>x env</i> &amp;optional (<i>base</i> 1.0)
-  <a class=def name="envelope-interp">envelope-interp</a> <i>x envelope</i> &amp;optional (<i>base</i> 1.0)
+      envelope      ; list of x,y break-point pairs
+      (scaler 1.0)  ; scaler on every y value (before offset is added)
+      duration      ; seconds
+      (offset 0.0)  ; value added to every y value
+      base          ; type of connecting line between break-points
+      end           ; (- end start) =&gt; duration in samples (can be used instead of duration)
+      (start 0)     ; can be used in conjunction with end
+      dur           ; duration in samples (can be used instead of <i>start</i> and <i>end</i>)
+  <a class=def name="env">env</a> e
+  <a class=def name="env?">env?</a> e
+  <a class=def name="env-interp">env-interp</a> x env &amp;optional (base 1.0)
+  <a class=def name="envelope-interp">envelope-interp</a> x envelope &amp;optional (base 1.0)
 </pre>
 
 <table border cellpadding=4>
@@ -745,19 +746,19 @@ Say we want 40% .5, and 60% 1.0,
 <p>This idea is also available in the <a href="#rand">rand</a> and <a href="#rand-interp">rand-interp</a> generators.
 Other env-related functions are:</p>
 <pre>
-  <em class=emdef>envelope-reverse</em> <i>e</i>                         reverse an envelope
-  <em class=emdef>envelope-repeat</em> <i>e num</i> &amp;optional <i>refl xnorm</i> repeat an envelope
-  <em class=emdef>envelope-concatenate</em> &amp;rest <i>es</i>              concatenate any number of envelopes
-  <em class=emdef>envelope+</em> <i>es</i>                               add together any number of envelopes
-  <em class=emdef>envelope*</em> <i>es</i>                               same but multiply
-  <em class=emdef>envelope-simplify</em> <i>e</i> &amp;optional <i>yg xg</i>        simplify an evelope
-  <em class=emdef>meld-envelopes</em> <i>e0 e1</i>                       meld two envelopes together
-  <em class=emdef>map-across-envelopes</em> <i>func es</i>               map a function across any number of envelopes
-  <a class=def Name="envelope-exp">envelope-exp</a>  <i>e</i> &amp;optional <i>pow xg</i>           create exponential segments of envelopes
-  <a class=def Name="window-envelope">window-envelope</a> <i>beg end e</i>                  return portion of e between two x values
-  <a class=def Name="stretch-envelope">stretch-envelope</a> <i>e a0 a1</i> &amp;optional <i>d0 d1</i>   attack and decay portions
-  <a class=def Name="scale-envelope">scale-envelope</a> <i>e scale</i> &amp;optional <i>offset</i>    scale e
-  <a class=def Name="normalize-envelope">normalize-envelope</a> <i>e</i> &amp;optional <i>norm</i>        normalize e
+  <em class=emdef>envelope-reverse</em> e                         reverse an envelope
+  <em class=emdef>envelope-repeat</em> e num &amp;optional refl xnorm repeat an envelope
+  <em class=emdef>envelope-concatenate</em> &amp;rest es              concatenate any number of envelopes
+  <em class=emdef>envelope+</em> es                               add together any number of envelopes
+  <em class=emdef>envelope*</em> es                               same but multiply
+  <em class=emdef>envelope-simplify</em> e &amp;optional yg xg        simplify an evelope
+  <em class=emdef>meld-envelopes</em> e0 e1                       meld two envelopes together
+  <em class=emdef>map-across-envelopes</em> func es               map a function across any number of envelopes
+  <a class=def Name="envelope-exp">envelope-exp</a>  e &amp;optional pow xg           create exponential segments of envelopes
+  <a class=def Name="window-envelope">window-envelope</a> beg end e                  return portion of e between two x values
+  <a class=def Name="stretch-envelope">stretch-envelope</a> e a0 a1 &amp;optional d0 d1   attack and decay portions
+  <a class=def Name="scale-envelope">scale-envelope</a> e scale &amp;optional offset    scale e
+  <a class=def Name="normalize-envelope">normalize-envelope</a> e &amp;optional norm        normalize e
 </pre>
 <p>See env.lisp for more such functions.  To copy an existing envelope while changing one aspect (say
 duration), it's simplest to use make-env:
@@ -779,13 +780,13 @@ duration), it's simplest to use make-env:
 
 <pre>
   <a class=def name="make-table-lookup">make-table-lookup</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
-        (<i>frequency</i> 440.0)   ; in Hz
-        (<i>initial-phase</i> 0.0) ; in radians 
-        <i>wave</i>                ; double-float array
-        <i>size</i>                ; table size if wave not specified
-        <i>type</i>                ; interpolation type (mus-interp-linear)
-  <a class=def name="table-lookup">table-lookup</a> <i>tl</i> &amp;optional (<i>fm-input</i> 0.0)
-  <a class=def name="table-lookup?">table-lookup?</a> <i>tl</i>
+        (frequency 440.0)   ; in Hz
+        (initial-phase 0.0) ; in radians 
+        wave                ; double-float array
+        size                ; table size if wave not specified
+        type                ; interpolation type (mus-interp-linear)
+  <a class=def name="table-lookup">table-lookup</a> tl &amp;optional (fm-input 0.0)
+  <a class=def name="table-lookup?">table-lookup?</a> tl
 </pre>
 
 <p><b>table-lookup</b> performs interpolating table lookup.  Indices are first
@@ -850,16 +851,16 @@ several standard orchestral instruments, courtesy of James A. Moorer.
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>WAVESHAPE (waveshaping synthesis)</h4></td></tr></table>
 <pre>
-  <a class=def name="make-waveshape">make-waveshape</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>partials</i> '(1 1)) <i>wave</i> <i>size</i>
-  <a class=def name="waveshape">waveshape</a> <i>w</i> &amp;optional (<i>index</i> 1.0) (<i>fm</i> 0.0)
-  <a class=def name="waveshape?">waveshape?</a> <i>w</i>
+  <a class=def name="make-waveshape">make-waveshape</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (frequency 440.0) (partials '(1 1)) wave size
+  <a class=def name="waveshape">waveshape</a> w &amp;optional (index 1.0) (fm 0.0)
+  <a class=def name="waveshape?">waveshape?</a> w
 
-  <a class=def name="make-polyshape">make-polyshape</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0) <i>coeffs</i> (<i>partials</i> '(1 1)) (<i>kind</i> mus-chebyshev-first-kind)
-  <a class=def name="polyshape">polyshape</a> <i>w</i> &amp;optional (<i>index</i> 1.0) (<i>fm</i> 0.0)
-  <a class=def name="polyshape?">polyshape?</a> <i>w</i>
+  <a class=def name="make-polyshape">make-polyshape</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (frequency 440.0) (initial-phase 0.0) coeffs (partials '(1 1)) (kind mus-chebyshev-first-kind)
+  <a class=def name="polyshape">polyshape</a> w &amp;optional (index 1.0) (fm 0.0)
+  <a class=def name="polyshape?">polyshape?</a> w
 
-  <a class=def name="partials-&gt;waveshape">partials-&gt;waveshape</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>partials</i> (<i>size</i> *clm-table-size*)
-  <a class=def name="partials-&gt;polynomial">partials-&gt;polynomial</a> <i>partials</i> &amp;optional (<i>kind</i> mus-chebyshev-first-kind)
+  <a class=def name="partials-&gt;waveshape">partials-&gt;waveshape</a> <a class=quiet href="#optional-key">&amp;optional-key</a> partials (size *clm-table-size*)
+  <a class=def name="partials-&gt;polynomial">partials-&gt;polynomial</a> partials &amp;optional (kind mus-chebyshev-first-kind)
 </pre>
 
 <p><b>waveshape</b> and <b>polyshape</b> perform waveshaping; see
@@ -940,21 +941,21 @@ See also <a href="pqw.ins">pqw.ins</a> for phase quadrature waveshaping (single-
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>SAWTOOTH-WAVE, TRIANGLE-WAVE, PULSE-TRAIN, SQUARE-WAVE</h4></td></tr></table>
 
 <pre>
-  <a class=def name="make-triangle-wave">make-triangle-wave</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>initial-phase</i> pi)
-  <a class=def name="triangle-wave">triangle-wave</a> <i>s</i> &amp;optional (<i>fm</i> 0.0)
-  <a class=def name="triangle-wave?">triangle-wave?</a> <i>s</i>
+  <a class=def name="make-triangle-wave">make-triangle-wave</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (frequency 440.0) (amplitude 1.0) (initial-phase pi)
+  <a class=def name="triangle-wave">triangle-wave</a> s &amp;optional (fm 0.0)
+  <a class=def name="triangle-wave?">triangle-wave?</a> s
 
-  <a class=def name="make-square-wave">make-square-wave</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>initial-phase</i> 0)
-  <a class=def name="square-wave">square-wave</a> <i>s</i> &amp;optional (<i>fm</i>  0.0)
-  <a class=def name="square-wave?">square-wave?</a> <i>s</i>
+  <a class=def name="make-square-wave">make-square-wave</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (frequency 440.0) (amplitude 1.0) (initial-phase 0)
+  <a class=def name="square-wave">square-wave</a> s &amp;optional (fm  0.0)
+  <a class=def name="square-wave?">square-wave?</a> s
 
-  <a class=def name="make-sawtooth-wave">make-sawtooth-wave</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>initial-phase</i> pi)
-  <a class=def name="sawtooth-wave">sawtooth-wave</a> <i>s</i> &amp;optional (<i>fm</i> 0.0)
-  <a class=def name="sawtooth-wave?">sawtooth-wave?</a> <i>s</i>
+  <a class=def name="make-sawtooth-wave">make-sawtooth-wave</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (frequency 440.0) (amplitude 1.0) (initial-phase pi)
+  <a class=def name="sawtooth-wave">sawtooth-wave</a> s &amp;optional (fm 0.0)
+  <a class=def name="sawtooth-wave?">sawtooth-wave?</a> s
 
-  <a class=def name="make-pulse-train">make-pulse-train</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>initial-phase</i> two-pi)
-  <a class=def name="pulse-train">pulse-train</a> <i>s</i> &amp;optional (<i>fm</i> 0.0)
-  <a class=def name="pulse-train?">pulse-train?</a> <i>s</i>
+  <a class=def name="make-pulse-train">make-pulse-train</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (frequency 440.0) (amplitude 1.0) (initial-phase two-pi)
+  <a class=def name="pulse-train">pulse-train</a> s &amp;optional (fm 0.0)
+  <a class=def name="pulse-train?">pulse-train?</a> s
 </pre>
 
 <p>These generators produce some standard old-timey wave forms that are still occasionally useful (well, triangle-wave
@@ -1009,9 +1010,9 @@ One popular kind of vibrato is:
 <br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>SUM-OF-COSINES</h4></td></tr></table>
 <pre>
-  <a class=def name="make-sum-of-cosines">make-sum-of-cosines</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>cosines</i> 1) (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0)
-  <a class=def name="sum-of-cosines">sum-of-cosines</a> <i>cs</i> &amp;optional (<i>fm</i> 0.0)
-  <a class=def name="sum-of-cosines?">sum-of-cosines?</a> <i>cs</i>
+  <a class=def name="make-sum-of-cosines">make-sum-of-cosines</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (cosines 1) (frequency 440.0) (initial-phase 0.0)
+  <a class=def name="sum-of-cosines">sum-of-cosines</a> cs &amp;optional (fm 0.0)
+  <a class=def name="sum-of-cosines?">sum-of-cosines?</a> cs
 </pre>
 <p><b>sum-of-cosines</b> produces a band-limited pulse train containing
 <i>cosines</i> cosines.  I think this was originally viewed as a way to get a speech-oriented
@@ -1095,11 +1096,11 @@ work when it doesn't matter.
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>SUM-OF-SINES</h4></td></tr></table>
 <pre>
   <a class=def name="make-sum-of-sines">make-sum-of-sines</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
-        (<i>sines</i> 1) (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0)
-  <a class=def name="sum-of-sines">sum-of-sines</a> <i>cs</i> &amp;optional (<i>fm</i> 0.0)
-  <a class=def name="sum-of-sines?">sum-of-sines?</a> <i>cs</i>
+        (sines 1) (frequency 440.0) (initial-phase 0.0)
+  <a class=def name="sum-of-sines">sum-of-sines</a> cs &amp;optional (fm 0.0)
+  <a class=def name="sum-of-sines?">sum-of-sines?</a> cs
 </pre>
-<p><b>sum-of-sines</b> produces a sum of <i>sines</i> sines.  It is very similar (good and bad) to sum-of-cosines.
+<p><b>sum-of-sines</b> produces a sum of sines sines.  It is very similar (good and bad) to sum-of-cosines.
 </p>
 <table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>sum-of-sines methods</center></td></tr>
@@ -1124,9 +1125,9 @@ based on:
 <br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>SSB-AM (pitch shifting via single-sideband AM)</h4></td></tr></table>
 <pre>
-  <a class=def name="make-ssb-am">make-ssb-am</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>order</i> 40)
-  <a class=def name="ssb-am">ssb-am</a> <i>gen</i> &amp;optional (<i>insig</i> 0.0) (<i>fm</i> 0.0)
-  <a class=def name="ssb-am?">ssb-am?</a> <i>gen</i>
+  <a class=def name="make-ssb-am">make-ssb-am</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (frequency 440.0) (order 40)
+  <a class=def name="ssb-am">ssb-am</a> gen &amp;optional (insig 0.0) (fm 0.0)
+  <a class=def name="ssb-am?">ssb-am?</a> gen
 </pre>
 <p><b>ssb-am</b> provides single sideband suppressed carrier amplitude modulation, normally used for frequency shifting.
 </p>
@@ -1176,9 +1177,9 @@ Here's a complicated way to get a sine wave at 550 Hz:
 <br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>WAVE-TRAIN</h4></td></tr></table>
 <pre>
-  <a class=def name="make-wave-train">make-wave-train</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0) <i>wave size type</i>
-  <a class=def name="wave-train">wave-train</a> <i>w</i> &amp;optional (<i>fm</i> 0.0)
-  <a class=def name="wave-train?">wave-train?</a> <i>w</i>
+  <a class=def name="make-wave-train">make-wave-train</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (frequency 440.0) (initial-phase 0.0) wave size type
+  <a class=def name="wave-train">wave-train</a> w &amp;optional (fm 0.0)
+  <a class=def name="wave-train?">wave-train?</a> w
 </pre>
 
 <p><b>wave-train</b> produces a wave train (an extension of pulse-train and table-lookup).
@@ -1248,19 +1249,19 @@ use this for VOSIM and other related techniques.</p>
 
 <pre>
   <a class=def name="make-rand">make-rand</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
-        (<i>frequency</i> 440.0)          ;freq at which new random numbers occur
-        (<i>amplitude</i> 1.0)            ;numbers are between -amplitude and amplitude
-        (<i>envelope</i> '(-1 1 1 1))     ;distribution envelope (uniform distribution between -1 and 1 is default)
-        <i>distribution</i>               ;pre-computed distribution
-  <a class=def name="rand">rand</a> <i>r</i> &amp;optional (<i>sweep</i> 0.0)
-  <a class=def name="rand?">rand?</a> <i>r</i>
-  <a class=def name="make-rand-interp">make-rand-interp</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>envelope</i> '(-1 1 1 1) <i>distribution</i>)
-  <a class=def name="rand-interp">rand-interp</a> <i>r</i> &amp;optional (<i>sweep</i> 0.0)
-  <a class=def name="rand-interp?">rand-interp?</a> <i>r</i>
-  <em class=emdef>centered-random</em> <i>amp</i> 
-  <a class=def Name="clm-random">clm-random</a> <i>amp</i>
-  <a class=def name="mus-random">mus-random</a> <i>amp</i> ;same as centered-random (for C-side compatibility)
-  <a class=def Name="mus-set-rand-seed">mus-set-rand-seed</a> <i>seed</i>
+        (frequency 440.0)          ;freq at which new random numbers occur
+        (amplitude 1.0)            ;numbers are between -amplitude and amplitude
+        (envelope '(-1 1 1 1))     ;distribution envelope (uniform distribution between -1 and 1 is default)
+        distribution               ;pre-computed distribution
+  <a class=def name="rand">rand</a> r &amp;optional (sweep 0.0)
+  <a class=def name="rand?">rand?</a> r
+  <a class=def name="make-rand-interp">make-rand-interp</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (frequency 440.0) (amplitude 1.0) (envelope '(-1 1 1 1) distribution)
+  <a class=def name="rand-interp">rand-interp</a> r &amp;optional (sweep 0.0)
+  <a class=def name="rand-interp?">rand-interp?</a> r
+  <em class=emdef>centered-random</em> amp 
+  <a class=def Name="clm-random">clm-random</a> amp
+  <a class=def name="mus-random">mus-random</a> amp ;same as centered-random (for C-side compatibility)
+  <a class=def Name="mus-set-rand-seed">mus-set-rand-seed</a> seed
 </pre>
 <p><b>rand</b> returns a sequence of random numbers between -amplitude and
 amplitude (it produces a sort of step function).
@@ -1428,24 +1429,24 @@ averager has the same period (length) as the rand.
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>ONE-POLE, ONE-ZERO, TWO-POLE, TWO-ZERO (simple filters)</h4></td></tr></table>
 
 <pre>
-   <a class=def name="make-one-pole">make-one-pole</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>a0</i> <i>b1</i>    ; <i>b1</i> &lt; 0.0 gives lowpass, <i>b1</i> &gt; 0.0 gives highpass
-   <a class=def name="one-pole">one-pole</a> <i>f</i> <i>input</i> 
-   <a class=def name="one-pole?">one-pole?</a> <i>f</i>
+   <a class=def name="make-one-pole">make-one-pole</a> <a class=quiet href="#optional-key">&amp;optional-key</a> a0 b1    ; b1 &lt; 0.0 gives lowpass, b1 &gt; 0.0 gives highpass
+   <a class=def name="one-pole">one-pole</a> f input 
+   <a class=def name="one-pole?">one-pole?</a> f
 
-   <a class=def name="make-one-zero">make-one-zero</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>a0</i> <i>a1</i>    ; <i>a1</i> &gt; 0.0 gives weak lowpass, <i>a1</i> &lt; 0.0 highpass
-   <a class=def name="one-zero">one-zero</a> <i>f</i> <i>input</i> 
-   <a class=def name="one-zero?">one-zero?</a> <i>f</i>
+   <a class=def name="make-one-zero">make-one-zero</a> <a class=quiet href="#optional-key">&amp;optional-key</a> a0 a1    ; a1 &gt; 0.0 gives weak lowpass, a1 &lt; 0.0 highpass
+   <a class=def name="one-zero">one-zero</a> f input 
+   <a class=def name="one-zero?">one-zero?</a> f
 
-   <a class=def name="make-two-pole">make-two-pole</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>a0</i> <i>b1</i> <i>b2</i>
-   <a class=def name="two-pole">two-pole</a> <i>f</i> <i>input</i> 
-   <a class=def name="two-pole?">two-pole?</a> <i>f</i>
+   <a class=def name="make-two-pole">make-two-pole</a> <a class=quiet href="#optional-key">&amp;optional-key</a> a0 b1 b2
+   <a class=def name="two-pole">two-pole</a> f input 
+   <a class=def name="two-pole?">two-pole?</a> f
 
-   <a class=def name="make-two-zero">make-two-zero</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>a0</i> <i>a1</i> <i>a2</i>
-   <a class=def name="two-zero">two-zero</a> <i>f</i> <i>input</i> 
-   <a class=def name="two-zero?">two-zero?</a> <i>f</i>
+   <a class=def name="make-two-zero">make-two-zero</a> <a class=quiet href="#optional-key">&amp;optional-key</a> a0 a1 a2
+   <a class=def name="two-zero">two-zero</a> f input 
+   <a class=def name="two-zero?">two-zero?</a> f
 
-   <a class=def name="make-zpolar">make-zpolar</a> <i>radius frequency</i>  ; another name for make-two-zero
-   <a class=def name="make-ppolar">make-ppolar</a> <i>radius frequency</i>  ; another name for make-two-pole
+   <a class=def name="make-zpolar">make-zpolar</a> radius frequency  ; another name for make-two-zero
+   <a class=def name="make-ppolar">make-ppolar</a> radius frequency  ; another name for make-two-pole
 </pre>
 <br>
 <table border align=left hspace=20 cellpadding=4>
@@ -1484,9 +1485,9 @@ in conjunction with make-ppolar.
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>FORMANT (resonances)</h4></td></tr></table>
 
 <pre>
-  <a class=def name="make-formant">make-formant</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>radius</i> <i>frequency</i> (<i>gain</i> 1.0)
-  <a class=def name="formant">formant</a> <i>f</i> <i>input</i>       ; resonator centered at <i>frequency</i>, bandwidth set by <i>r</i>
-  <a class=def name="formant?">formant?</a> <i>f</i>
+  <a class=def name="make-formant">make-formant</a> <a class=quiet href="#optional-key">&amp;optional-key</a> radius frequency (gain 1.0)
+  <a class=def name="formant">formant</a> f input       ; resonator centered at frequency, bandwidth set by r
+  <a class=def name="formant?">formant?</a> f
 </pre>
 
 <table border align=left hspace=20 cellpadding=4>
@@ -1601,19 +1602,19 @@ for cross-synthesis with a bank of 128 formants:
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>FILTER, IIR-FILTER, FIR-FILTER</h4></td></tr></table>
 
 <pre>
-   <a class=def name="make-filter">make-filter</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>order</i> <i>xcoeffs</i> <i>ycoeffs</i>
-   <a class=def name="filter">filter</a> <i>fl</i> <i>inp</i> 
-   <a class=def name="filter?">filter?</a> <i>fl</i>
+   <a class=def name="make-filter">make-filter</a> <a class=quiet href="#optional-key">&amp;optional-key</a> order xcoeffs ycoeffs
+   <a class=def name="filter">filter</a> fl inp 
+   <a class=def name="filter?">filter?</a> fl
 
-   <a class=def name="make-fir-filter">make-fir-filter</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>order xcoeffs</i>
-   <a class=def name="fir-filter">fir-filter</a> <i>fl</i> <i>inp</i> 
-   <a class=def name="fir-filter?">fir-filter?</a> <i>fl</i>
+   <a class=def name="make-fir-filter">make-fir-filter</a> <a class=quiet href="#optional-key">&amp;optional-key</a> order xcoeffs
+   <a class=def name="fir-filter">fir-filter</a> fl inp 
+   <a class=def name="fir-filter?">fir-filter?</a> fl
 
-   <a class=def name="make-iir-filter">make-iir-filter</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>order ycoeffs</i>
-   <a class=def name="iir-filter">iir-filter</a> <i>fl</i> <i>inp</i> 
-   <a class=def name="iir-filter?">iir-filter?</a> <i>fl</i>
+   <a class=def name="make-iir-filter">make-iir-filter</a> <a class=quiet href="#optional-key">&amp;optional-key</a> order ycoeffs
+   <a class=def name="iir-filter">iir-filter</a> fl inp 
+   <a class=def name="iir-filter?">iir-filter?</a> fl
 
-   <a class=def Name="envelope-&gt;coeffs">envelope-&gt;coeffs</a> &amp;key <i>order envelope dc</i>
+   <a class=def Name="envelope-&gt;coeffs">envelope-&gt;coeffs</a> &amp;key order envelope dc
 </pre>
 <p>These are the general FIR/IIR filters of arbitrary order.
 The <i>order</i> argument is one greater than the nominal filter
@@ -1704,11 +1705,11 @@ get to the envelope.</p>
 <br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>DELAY, TAP</h4></td></tr></table>
 <pre>
-  <a class=def name="make-delay">make-delay</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>size</i> <i>initial-contents initial-element max-size type</i>
-  <a class=def name="delay">delay</a> <i>d</i> <i>input</i> &amp;optional (<i>pm</i> 0.0)
-  <a class=def name="delay?">delay?</a> <i>d</i>
-  <a class=def name="tap">tap</a> <i>d</i> &amp;optional (<i>offset</i> 0)
-  <a class=def name="delaytick">delay-tick</a> <i>d</i> <i>input</i>
+  <a class=def name="make-delay">make-delay</a> <a class=quiet href="#optional-key">&amp;optional-key</a> size initial-contents initial-element max-size type
+  <a class=def name="delay">delay</a> d input &amp;optional (pm 0.0)
+  <a class=def name="delay?">delay?</a> d
+  <a class=def name="tap">tap</a> d &amp;optional (offset 0)
+  <a class=def name="delaytick">delay-tick</a> d input
 </pre>
 <p><b>delay</b> is a delay line.  <i>size</i> is in samples.
 Input fed into a delay line reappears at the output <i>size</i> samples
@@ -1803,17 +1804,17 @@ last "size" samples).
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>COMB, NOTCH</h4></td></tr></table>
 
 <pre>
-  <a class=def name="make-comb">make-comb</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>scaler size initial-contents initial-element max-size</i>
-  <a class=def name="comb">comb</a> <i>cflt input</i> &amp;optional (<i>pm</i> 0.0)
-  <a class=def name="comb?">comb?</a> <i>cflt</i>
+  <a class=def name="make-comb">make-comb</a> <a class=quiet href="#optional-key">&amp;optional-key</a> scaler size initial-contents initial-element max-size
+  <a class=def name="comb">comb</a> cflt input &amp;optional (pm 0.0)
+  <a class=def name="comb?">comb?</a> cflt
 
-  <a class=def name="make-filtered-comb">make-filtered-comb</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>scaler size initial-contents initial-element max-size filter</i>
-  <a class=def name="filtered-comb">filtered-comb</a> <i>cflt input</i> &amp;optional (<i>pm</i> 0.0)
-  <a class=def name="filtered-comb?">filtered-comb?</a> <i>cflt</i>
+  <a class=def name="make-filtered-comb">make-filtered-comb</a> <a class=quiet href="#optional-key">&amp;optional-key</a> scaler size initial-contents initial-element max-size filter
+  <a class=def name="filtered-comb">filtered-comb</a> cflt input &amp;optional (pm 0.0)
+  <a class=def name="filtered-comb?">filtered-comb?</a> cflt
 
-  <a class=def name="make-notch">make-notch</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>scaler size initial-contents initial-element max-size</i>
-  <a class=def name="notch">notch</a> <i>cflt input</i> &amp;optional (<i>pm</i> 0.0)
-  <a class=def name="notch?">notch?</a> <i>cflt</i>
+  <a class=def name="make-notch">make-notch</a> <a class=quiet href="#optional-key">&amp;optional-key</a> scaler size initial-contents initial-element max-size
+  <a class=def name="notch">notch</a> cflt input &amp;optional (pm 0.0)
+  <a class=def name="notch?">notch?</a> cflt
 </pre>
 <p><b>comb</b> is a delay line with a scaler on the feedback term.  <b>notch</b>
 is a delay line with a scaler on the feedforward term.
@@ -1875,9 +1876,9 @@ The following instrument sweeps the comb filter using the <i>pm</i> argument:
 <br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>ALL-PASS</h4></td></tr></table>
 <pre>
-  <a class=def name="make-all-pass">make-all-pass</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>feedback feedforward size initial-contents initial-element max-size</i>
-  <a class=def name="all-pass">all-pass</a> <i>f input</i> &amp;optional (<i>pm</i> 0.0)
-  <a class=def name="all-pass?">all-pass?</a> <i>f</i>
+  <a class=def name="make-all-pass">make-all-pass</a> <a class=quiet href="#optional-key">&amp;optional-key</a> feedback feedforward size initial-contents initial-element max-size
+  <a class=def name="all-pass">all-pass</a> f input &amp;optional (pm 0.0)
+  <a class=def name="all-pass?">all-pass?</a> f
 </pre>
 <p><b>all-pass</b> or moving average comb is just like <a href="#comb">comb</a> but with
 an added feedforward term.  If <i>feedback</i> = 0, we get a moving
@@ -1906,9 +1907,9 @@ average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>AVERAGE (moving window average)</h4></td></tr></table>
 <pre>
-  <a class=def name="make-average">make-average</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>size initial-contents initial-element</i>
-  <a class=def name="average">average</a> <i>f input</i>
-  <a class=def name="average?">average?</a> <i>f</i>
+  <a class=def name="make-average">make-average</a> <a class=quiet href="#optional-key">&amp;optional-key</a> size initial-contents initial-element
+  <a class=def name="average">average</a> f input
+  <a class=def name="average?">average?</a> f
 </pre>
 <p><b>average</b> or moving window average returns the average of the last 'size' values input to it.
 This is used both to track rms values and to generate ramps between 0 and 1 in a "gate"
@@ -1953,9 +1954,9 @@ that are squelched and those that are unchanged (to avoid clicks):
 <!-- INDEX make-src:sampling-rate conversion -->
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>SRC (sampling-rate conversion)</h4></td></tr></table>
 <pre>
-  <a class=def name="make-src">make-src</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>input</i> (<i>srate</i> 1.0) (<i>width</i> 5)
-  <a class=def name="src">src</a> <i>s</i> &amp;optional (<i>sr-change</i> 0.0) <i>input-function</i>
-  <a class=def name="src?">src?</a> <i>s</i>
+  <a class=def name="make-src">make-src</a> <a class=quiet href="#optional-key">&amp;optional-key</a> input (srate 1.0) (width 5)
+  <a class=def name="src">src</a> s &amp;optional (sr-change 0.0) input-function
+  <a class=def name="src?">src?</a> s
 </pre>
 
 <table border cellpadding=4 hspace=20>
@@ -2059,10 +2060,10 @@ a click).
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>CONVOLVE</h4></td></tr></table>
 <pre>
-  <a class=def name="make-convolve">make-convolve</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>input filter fft-size filter-size</i>
-   <a class=def name="convolve">convolve</a> <i>ff</i> &amp;optional <i>input-function</i>
-   <a class=def name="convolve?">convolve?</a> <i>ff</i>
-   <a class=def name="convolvefiles">convolve-files</a> <i>file1 file2</i> &amp;optional (<i>maxamp</i> 1.0) (<i>output-file</i> "tmp.snd")
+  <a class=def name="make-convolve">make-convolve</a> <a class=quiet href="#optional-key">&amp;optional-key</a> input filter fft-size filter-size
+   <a class=def name="convolve">convolve</a> ff &amp;optional input-function
+   <a class=def name="convolve?">convolve?</a> ff
+   <a class=def name="convolvefiles">convolve-files</a> file1 file2 &amp;optional (maxamp 1.0) (output-file "tmp.snd")
 </pre>
 
 <table border cellpadding=4 hspace=20>
@@ -2106,17 +2107,17 @@ handier.</p>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>GRANULATE (granular synthesis)</h4></td></tr></table>
 <pre>
   <a class=def name="make-granulate">make-granulate</a> <a class=quiet href="#optional-key">&amp;optional-key</a>   
-        <i>input</i>
-        (<i>expansion</i> 1.0)   ;how much to lengthen or compress the file
-        (<i>length</i> .15)      ;length of file slices that are overlapped
-        (<i>scaler</i> .6)       ;amplitude scaler on slices (to avoid overflows)
-        (<i>hop</i> .05)         ;speed at which slices are repeated in output
-        (<i>ramp</i> .4)         ;amount of slice-time spent ramping up/down
-        (<i>jitter</i> 1.0)      ;affects spacing of successive grains
-        <i>max-size</i>          ;internal buffer size
-        <i>edit</i>              ;grain editing function (Scheme/Ruby, not CL)
-  <a class=def name="granulate">granulate</a> <i>e</i> &amp;optional <i>input-function edit-function</i>
-  <a class=def name="granulate?">granulate?</a> <i>e</i>
+        input
+        (expansion 1.0)   ;how much to lengthen or compress the file
+        (length .15)      ;length of file slices that are overlapped
+        (scaler .6)       ;amplitude scaler on slices (to avoid overflows)
+        (hop .05)         ;speed at which slices are repeated in output
+        (ramp .4)         ;amount of slice-time spent ramping up/down
+        (jitter 1.0)      ;affects spacing of successive grains
+        max-size          ;internal buffer size
+        edit              ;grain editing function (Scheme/Ruby, not CL)
+  <a class=def name="granulate">granulate</a> e &amp;optional input-function edit-function
+  <a class=def name="granulate?">granulate?</a> e
 </pre>
 
 <table align=left border cellpadding=4 hspace=20>
@@ -2243,8 +2244,8 @@ In the following code, we use the edit function to reverse every other grain:
 <br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>PHASE-VOCODER</h4></td></tr></table>
 <pre>
-  <a class=def name="make-phase-vocoder">make-phase-vocoder</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>input</i> (<i>fft-size</i> 512) (<i>overlap</i> 4) <i>interp</i> (<i>pitch</i> 1.0) <i>analyze edit synthesize</i>
-  <a class=def name="phase-vocoder">phase-vocoder</a> pv <i>input-function analyze-function edit-function synthesize-function</i>
+  <a class=def name="make-phase-vocoder">make-phase-vocoder</a> <a class=quiet href="#optional-key">&amp;optional-key</a> input (fft-size 512) (overlap 4) interp (pitch 1.0) analyze edit synthesize
+  <a class=def name="phase-vocoder">phase-vocoder</a> pv input-function analyze-function edit-function synthesize-function
   <a class=def name="phase-vocoder?">phase-vocoder?</a> pv
 </pre>
 
@@ -2293,9 +2294,9 @@ in functions that do what the phase-vocoder would have done without any function
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>SINE-SUMMATION (sum of sines with different amplitudes)</h4></td></tr></table>
 <pre>
-  <a class=def name="make-sine-summation">make-sine-summation</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0) (<i>n</i> 1) (<i>a</i> .5) (<i>ratio</i> 1.0)
-  <a class=def name="sine-summation">sine-summation</a> <i>s</i> &amp;optional (<i>fm</i> 0.0)
-  <a class=def name="sine-summation?">sine-summation?</a> <i>s</i>
+  <a class=def name="make-sine-summation">make-sine-summation</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (frequency 440.0) (initial-phase 0.0) (n 1) (a .5) (ratio 1.0)
+  <a class=def name="sine-summation">sine-summation</a> s &amp;optional (fm 0.0)
+  <a class=def name="sine-summation?">sine-summation?</a> s
 </pre>
 
 <table align=left border cellpadding=4 hspace=20>
@@ -2346,9 +2347,9 @@ don't set <i>a</i> to 1.0!).
 <br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>ASYMMETRIC-FM</h4></td></tr></table>
 <pre>
-  <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0) (<i>r</i> 1.0) (<i>ratio</i> 1.0)
-  <a class=def name="asymmetric-fm">asymmetric-fm</a> <i>af index</i> &amp;optional (<i>fm</i> 0.0)
-  <a class=def name="asymmetric-fm?">asymmetric-fm?</a> <i>af</i>
+  <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (frequency 440.0) (initial-phase 0.0) (r 1.0) (ratio 1.0)
+  <a class=def name="asymmetric-fm">asymmetric-fm</a> af index &amp;optional (fm 0.0)
+  <a class=def name="asymmetric-fm?">asymmetric-fm?</a> af
 </pre>
 
 <table align=left border cellpadding=4 hspace=20>
@@ -2505,29 +2506,29 @@ data IO.
 </p>
 <pre>
   <em class=emdef>make-empty-frame</em> chans                 ;create frame of 0's
-  <a class=def name="make-frame">make-frame</a> chans &amp;rest <i>args</i>            ;create frame and load it with args
-  <a class=def name="frame?">frame?</a> obj                             ;is <i>obj</i> a frame
-  <a class=def name="frame+">frame+</a> f1 f2 &amp;optional <i>outf</i>            ;add <i>f1</i> and <i>f2</i> element-wise, return new frame (or <i>outf</i>)
-  <a class=def name="frame*">frame*</a> f1 f2 &amp;optional <i>outf</i>            ;multiply <i>f1</i> and <i>f2</i> element-size, return new frame (or <i>outf</i>)
-  <a class=def name="frame-ref">frame-ref</a> f1 chan                      ;return <i>f1</i>[<i>chan</i>]
-  <a class=def name="frame-set!">frame-set!</a> f1 chan val                 ;<i>f1</i>[<i>chan</i>] = <i>val</i> (also setf with frame-ref)
+  <a class=def name="make-frame">make-frame</a> chans &amp;rest args            ;create frame and load it with args
+  <a class=def name="frame?">frame?</a> obj                             ;is obj a frame
+  <a class=def name="frame+">frame+</a> f1 f2 &amp;optional outf            ;add f1 and f2 element-wise, return new frame (or outf)
+  <a class=def name="frame*">frame*</a> f1 f2 &amp;optional outf            ;multiply f1 and f2 element-size, return new frame (or outf)
+  <a class=def name="frame-ref">frame-ref</a> f1 chan                      ;return f1[chan]
+  <a class=def name="frame-set!">frame-set!</a> f1 chan val                 ;f1[chan] = val (also setf with frame-ref)
 
   <em class=emdef>make-empty-mixer</em> chans                 ;create a mixer of 0's
   <a class=def name="make-identity-mixer">make-identity-mixer</a> chans              ;create a mixer of 1's on the diagonal
-  <a class=def name="make-scalar-mixer">make-scalar-mixer</a> chans scl            ;create a mixer with <i>scl</i> on the diagonal
-  <a class=def name="make-mixer">make-mixer</a> chans &amp;rest <i>args</i>            ;create a mixer and load it with args
-  <a class=def name="mixer?">mixer?</a> obj                             ;is <i>obj a mixer</i>
-  <a class=def name="mixermultiply">mixer*</a> m1 m2 &amp;optional <i>outm</i>            ;matrix multiply of <i>m1</i> and <i>m2</i>, return new mixer (or <i>outm</i>)
-  <a class=def name="mixeradd">mixer+</a> m1 m2 &amp;optional <i>outm</i>            ;matrix add of <i>m1</i> and <i>m2</i>, return new mixer (or <i>outm</i>)
-  <a class=def name="mixer-ref">mixer-ref</a> m1 in out                    ;<i>m1</i>[<i>in</i>,<i>out</i>] (use setf to change)
-  <a class=def name="mixer-set!">mixer-set!</a> m1 in out val               ;<i>m1</i>[<i>in,out</i>] = <i>val</i> (also setf with mixer-ref)
+  <a class=def name="make-scalar-mixer">make-scalar-mixer</a> chans scl            ;create a mixer with scl on the diagonal
+  <a class=def name="make-mixer">make-mixer</a> chans &amp;rest args            ;create a mixer and load it with args
+  <a class=def name="mixer?">mixer?</a> obj                             ;is obj a mixer
+  <a class=def name="mixermultiply">mixer*</a> m1 m2 &amp;optional outm            ;matrix multiply of m1 and m2, return new mixer (or outm)
+  <a class=def name="mixeradd">mixer+</a> m1 m2 &amp;optional outm            ;matrix add of m1 and m2, return new mixer (or outm)
+  <a class=def name="mixer-ref">mixer-ref</a> m1 in out                    ;m1[in,out] (use setf to change)
+  <a class=def name="mixer-set!">mixer-set!</a> m1 in out val               ;m1[in,out] = val (also setf with mixer-ref)
 
-  <a class=def name="frame-&gt;frame">frame-&gt;frame</a> mixer-or-frame frame-or-mixer &amp;optional <i>outf</i>
-                                         ;pass <i>frame</i> through <i>mixer</i>, return new frame (or outf)
-  <a class=def name="frame-&gt;list">frame-&gt;list</a> frame                      ;return list of <i>frame's</i> contents
-  <a class=def name="sample-&gt;frame">sample-&gt;frame</a> frame-or-mixer sample &amp;optional <i>outf</i>
-                                         ;pass <i>sample</i> through <i>frame-or-mixer</i>, return new frame (or <i>outf</i>)
-  <a class=def name="frame-&gt;sample">frame-&gt;sample</a> frame-or-mixer frame     ;pass <i>frame</i> through <i>frame-or-mixer</i>, return sample
+  <a class=def name="frame-&gt;frame">frame-&gt;frame</a> mixer-or-frame frame-or-mixer &amp;optional outf
+                                         ;pass frame through mixer, return new frame (or outf)
+  <a class=def name="frame-&gt;list">frame-&gt;list</a> frame                      ;return list of frame's contents
+  <a class=def name="sample-&gt;frame">sample-&gt;frame</a> frame-or-mixer sample &amp;optional outf
+                                         ;pass sample through frame-or-mixer, return new frame (or outf)
+  <a class=def name="frame-&gt;sample">frame-&gt;sample</a> frame-or-mixer frame     ;pass frame through frame-or-mixer, return sample
 </pre>
 
 <table border cellpadding=4 hspace=20>
@@ -2585,33 +2586,33 @@ writing) any sound files via <b>make-file-&gt;sample</b> (or -&gt;frame), and <b
 you can use <b>mus-close</b>, but it's also called automatically during garbage collection, if needed.
 </p>
 <pre>
-  <a class=def name="mus-input?">mus-input?</a> <i>obj</i>                        ;t if <i>obj</i> performs sound input
-  <a class=def name="mus-output?">mus-output?</a> <i>obj</i>                       ;t if <i>obj</i> performs sound output
-  <a class=def name="file-&gt;sample?">file-&gt;sample?</a> <i>obj</i>                     ;t if <i>obj</i> reads a sound file returning a sample
-  <a class=def name="sample-&gt;file?">sample-&gt;file?</a> <i>obj</i>                     ;t if <i>obj</i> writes a sample to a sound file
-  <a class=def name="frame-&gt;file?">frame-&gt;file?</a> <i>obj</i>                      ;t if <i>obj</i> writes a frame to a sound file
-  <a class=def name="file-&gt;frame?">file-&gt;frame?</a> <i>obj</i>                      ;t if <i>obj</i> reads a sound file returning a frame
+  <a class=def name="mus-input?">mus-input?</a> obj                        ;t if obj performs sound input
+  <a class=def name="mus-output?">mus-output?</a> obj                       ;t if obj performs sound output
+  <a class=def name="file-&gt;sample?">file-&gt;sample?</a> obj                     ;t if obj reads a sound file returning a sample
+  <a class=def name="sample-&gt;file?">sample-&gt;file?</a> obj                     ;t if obj writes a sample to a sound file
+  <a class=def name="frame-&gt;file?">frame-&gt;file?</a> obj                      ;t if obj writes a frame to a sound file
+  <a class=def name="file-&gt;frame?">file-&gt;frame?</a> obj                      ;t if obj reads a sound file returning a frame
    
-  <a class=def name="make-file-&gt;sample">make-file-&gt;sample</a> <i>name buffer-size</i>    ;return gen that reads samples from sound file <i>name</i>
-  <a class=def name="make-sample-&gt;file">make-sample-&gt;file</a> <i>name chans</i> &amp;optional <i>format type comment</i>
-                                        ;return gen that writes samples to sound file <i>name</i>
-  <a class=def name="make-file-&gt;frame">make-file-&gt;frame</a> <i>name buffer-size</i>     ;return gen that reads frames from sound file <i>name</i>
-  <a class=def name="make-frame-&gt;file">make-frame-&gt;file</a> <i>name chans</i> &amp;optional <i>format type comment</i>
-                                        ;return gen that writes frames to sound file <i>name</i>
+  <a class=def name="make-file-&gt;sample">make-file-&gt;sample</a> name buffer-size    ;return gen that reads samples from sound file name
+  <a class=def name="make-sample-&gt;file">make-sample-&gt;file</a> name chans &amp;optional format type comment
+                                        ;return gen that writes samples to sound file name
+  <a class=def name="make-file-&gt;frame">make-file-&gt;frame</a> name buffer-size     ;return gen that reads frames from sound file name
+  <a class=def name="make-frame-&gt;file">make-frame-&gt;file</a> name chans &amp;optional format type comment
+                                        ;return gen that writes frames to sound file name
 
-  <a class=def name="file-&gt;sample">file-&gt;sample</a> <i>obj samp</i> &amp;optional <i>chan</i>  ;return sample at <i>samp</i> in channel <i>chan</i>
-  <a class=def name="sample-&gt;file">sample-&gt;file</a> <i>obj samp chan val</i>        ;write (add) sample <i>val</i> at <i>samp</i> in channel <i>chan</i>
-  <a class=def name="file-&gt;frame">file-&gt;frame</a> <i>obj samp</i> &amp;optional <i>outf</i>   ;return frame at <i>samp</i>
-  <a class=def name="frame-&gt;file">frame-&gt;file</a> <i>obj samp val</i>              ;write (add) frame <i>val</i> at <i>samp</i>
+  <a class=def name="file-&gt;sample">file-&gt;sample</a> obj samp &amp;optional chan  ;return sample at samp in channel chan
+  <a class=def name="sample-&gt;file">sample-&gt;file</a> obj samp chan val        ;write (add) sample val at samp in channel chan
+  <a class=def name="file-&gt;frame">file-&gt;frame</a> obj samp &amp;optional outf   ;return frame at samp
+  <a class=def name="frame-&gt;file">frame-&gt;file</a> obj samp val              ;write (add) frame val at samp
 
-  <a class=def name="file-&gt;array">file-&gt;array</a> <i>filename channel start-sample samples array</i>
-  <a class=def name="array-&gt;file">array-&gt;file</a> <i>file data len srate channels</i>
+  <a class=def name="file-&gt;array">file-&gt;array</a> filename channel start-sample samples array
+  <a class=def name="array-&gt;file">array-&gt;file</a> file data len srate channels
   ;; these two read and write sample (sound) files to or from float arrays
 
-  <a class=def name="continue-frame-&gt;file">continue-frame-&gt;file</a> <i>file</i>              ;reopen <i>file</i> for more output
-  <a class=def name="continue-sample-&gt;file">continue-sample-&gt;file</a> <i>file</i>             ;reopen <i>file</i> for more output
+  <a class=def name="continue-frame-&gt;file">continue-frame-&gt;file</a> file              ;reopen file for more output
+  <a class=def name="continue-sample-&gt;file">continue-sample-&gt;file</a> file             ;reopen file for more output
 
-  <a class=def name="mus-close">mus-close</a> <i>obj</i>                          ;close the output file associated with <i>obj</i>
+  <a class=def name="mus-close">mus-close</a> obj                          ;close the output file associated with obj
 </pre>
 <p>In the Scheme version of CLM, the Guile built-in (but unused) function frame? is available as %frame?.
 </p>
@@ -2622,7 +2623,7 @@ you can use <b>mus-close</b>, but it's also called automatically during garbage 
 <A class=def NAME="ina"></a>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>OUT-ANY (sound file output)</h4></td></tr></table>
 <pre>
-  <a class=def name="out-any">out-any</a> <i>loc</i> <i>data</i> &amp;optional (<i>channel</i> 0) (<i>o-stream</i> *output*)
+  <a class=def name="out-any">out-any</a> loc data &amp;optional (channel 0) (o-stream *output*)
 </pre>
 <p><b>out-any</b> adds <i>data</i> into <i>o-stream</i> at sample
 position <i>loc</i>.  <i>O-stream</i> defaults to the current output
@@ -2669,9 +2670,9 @@ These are macros equivalent to <code>(in-any loc 0 stream)</code>.
 <br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>READIN (sound file input)</h4></td></tr></table>
 <pre>
- <a class=def name="make-readin">make-readin</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>file</i> (<i>channel</i> 0) <i>start</i> <i>(direction 1)</i>
- <a class=def name="readin">readin</a> <i>rd</i>
- <a class=def name="readin?">readin?</a> <i>rd</i>
+ <a class=def name="make-readin">make-readin</a> <a class=quiet href="#optional-key">&amp;optional-key</a> file (channel 0) start (direction 1)
+ <a class=def name="readin">readin</a> rd
+ <a class=def name="readin?">readin?</a> rd
 </pre>
 
 <table border cellpadding=4 hspace=20>
@@ -2718,13 +2719,13 @@ readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.in
 <br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>LOCSIG (sound placement)</h4></td></tr></table>
 <pre>
- <a class=def name="make-locsig">make-locsig</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>degree</i> 0.0) (<i>distance</i> 1.0) <i>reverb channels type</i>
- <a class=def name="locsig">locsig</a> <i>loc i in-sig</i>
- <a class=def name="locsig?">locsig?</a> <i>loc</i>
- <a class=def name="locsig-ref">locsig-ref</a> <i>loc chan</i>
- <a class=def name="locsig-set!">locsig-set!</a> <i>loc chan val</i>
- <a class=def name="locsig-reverb-ref">locsig-reverb-ref</a> <i>loc chan</i>
- <a class=def name="locsig-reverb-set!">locsig-reverb-set!</a> <i>loc chan val</i>
+ <a class=def name="make-locsig">make-locsig</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (degree 0.0) (distance 1.0) reverb channels type
+ <a class=def name="locsig">locsig</a> loc i in-sig
+ <a class=def name="locsig?">locsig?</a> loc
+ <a class=def name="locsig-ref">locsig-ref</a> loc chan
+ <a class=def name="locsig-set!">locsig-set!</a> loc chan val
+ <a class=def name="locsig-reverb-ref">locsig-reverb-ref</a> loc chan
+ <a class=def name="locsig-reverb-set!">locsig-reverb-set!</a> loc chan val
  <a class=def name="move-locsig">move-locsig</a> loc degree distance
  <a class=def name="locsig-type">locsig-type</a> ()
 </pre>
@@ -2822,22 +2823,75 @@ Here is an example of move-locsig:
 </td></tr></table>
 <br>
 
+
+<!-- ---------------------------------------- MOVE-SOUND ---------------------------------------- -->
+
+<br>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>MOVE-SOUND (sound motion)</h4></td></tr></table>
+<pre>
+ <a class=def name="make-move-sound">make-move-sound</a> dlocs-list output revout
+ <a class=def name="move-sound">move-sound</a> dloc i in-sig
+ <a class=def name="move-sound?">move-sound?</a> dloc
+</pre>
+
+<p><b>move-sound</b> is intended as the run-time portion of dlocsig.  make-dlocsig (described in
+dlocsig.html) creates a move-sound structure, passing it to the move-sound generator inside the
+dlocsig macro.  All the necessary data is packaged up in the <i>dlocs-list</i> structure defined
+as:
+</p>
+<pre>
+(defstruct (dlocs (:type list))
+  (start 0)               ; absolute sample number at which samples first reach the listener
+  (end 0)                 ; absolute sample number of end of input samples
+  (out-channels 0)        ; number of output channels in soundfile
+  (rev-channels 0)        ; number of reverb channels in soundfile
+  path                    ; interpolated delay line for doppler
+  delay                   ; tap doppler env
+  rev                     ; reverberation amount
+  out-delays              ; delay lines for output channels that have additional delays
+  gains                   ; gain envelopes, one for each output channel
+  rev-gains               ; reverb gain envelopes, one for each reverb channel
+  out-map)                ; mapping of speakers to output channels
+</pre>
+<p>A simple instrument that uses this directly (but doesn't actually do anything useful) is:
+</p>
+<pre>
+(definstrument simple-dloc (beg dur freq amp)
+  (let* ((os (make-oscil freq))
+	 (start (floor (* beg *srate*)))
+	 (end (+ start (floor (* dur *srate*))))
+	 (loc (make-move-sound (list start end 1 0
+				     (make-delay 32) 
+				     (make-env '(0 0 1 1) :end 1000)
+				     (make-env '(0 0 1 1) :end 1000)
+				     (make-array 1 :initial-contents (list (make-delay 32)))
+				     (make-array 1 :initial-contents (list (make-env '(0 0 1 1) :end 1000)))
+				     (make-array 1 :initial-contents (list (make-delay 32)))
+				     (make-integer-array 1 :initial-contents (list 0)))
+			       *output*)))
+    (run
+     (loop for i from start to end do
+       (move-sound loc i (* amp (oscil os)))))))
+</pre>
+<br>
+
+
 <br>
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="functions">Useful functions</a></h3></td></tr></table>
 
 <p>There are several commonly-used functions, some of which can occur in the run macro. These include
 a few that look for all the world like generators.</p>
 <pre>
-  <a class=def name="hz-&gt;radians">hz-&gt;radians</a> <i>freq</i>               convert <i>freq</i> to radians per sample
-  <a class=def name="radians-&gt;hz">radians-&gt;hz</a> <i>rads</i>               convert <i>rads</i> to Hz
-  <a class=def name="db-&gt;linear">db-&gt;linear</a> <i>dB</i>                  convert <i>dB</i> to linear value
-  <a class=def name="linear-&gt;db">linear-&gt;db</a> <i>val</i>                 convert <i>val</i> to dB
-  <a class=def Name="times-&gt;samples">times-&gt;samples</a> <i>start</i> <i>duration</i>  convert <i>start</i> and <i>duration</i> from seconds to samples (beg+dur in latter case)
-  <a class=def name="samples-&gt;seconds">samples-&gt;seconds</a> <i>samps</i>         convert <i>samps</i> to seconds
-  <a class=def name="seconds-&gt;samples">seconds-&gt;samples</a> <i>secs</i>          convert <i>secs</i> to samples
-  <a class=def name="degrees-&gt;radians">degrees-&gt;radians</a> <i>degs</i>          convert <i>degs</i> to radians
-  <a class=def name="radians-&gt;degrees">radians-&gt;degrees</a> <i>rads</i>          convert <i>rads</i> to degrees
-  <a class=def name="clear-array">clear-array</a> <i>arr</i>                set all values in <i>arr</i> to 0.0
+  <a class=def name="hz-&gt;radians">hz-&gt;radians</a> freq               convert freq to radians per sample
+  <a class=def name="radians-&gt;hz">radians-&gt;hz</a> rads               convert rads to Hz
+  <a class=def name="db-&gt;linear">db-&gt;linear</a> dB                  convert dB to linear value
+  <a class=def name="linear-&gt;db">linear-&gt;db</a> val                 convert val to dB
+  <a class=def Name="times-&gt;samples">times-&gt;samples</a> start duration  convert start and duration from seconds to samples (beg+dur in latter case)
+  <a class=def name="samples-&gt;seconds">samples-&gt;seconds</a> samps         convert samps to seconds
+  <a class=def name="seconds-&gt;samples">seconds-&gt;samples</a> secs          convert secs to samples
+  <a class=def name="degrees-&gt;radians">degrees-&gt;radians</a> degs          convert degs to radians
+  <a class=def name="radians-&gt;degrees">radians-&gt;degrees</a> rads          convert rads to degrees
+  <a class=def name="clear-array">clear-array</a> arr                set all values in arr to 0.0
   <a class=def Name="sound-samples">sound-samples</a> filename         samples of sound according to header (can be incorrect)
   <a class=def Name="sound-frames">sound-frames</a> filename          samples per channel
   <a class=def Name="sound-datum-size">sound-datum-size</a> filename      bytes per sample
@@ -2891,7 +2945,7 @@ current output sampling rate; this is the same as <code>*srate*</code> (in CL) o
 <br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>POLYNOMIAL</h4></td></tr></table>
 <pre>
-   <a class=def name="polynomial">polynomial</a> <i>coeffs x</i>
+   <a class=def name="polynomial">polynomial</a> coeffs x
 </pre>
 <p><b>polynomial</b> evaluates a polynomial, defined by giving its coefficients,
 at a particular point (x).
@@ -2910,11 +2964,11 @@ See also the <a href="#brighten">brighten</a> instrument.
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>ARRAY-INTERP, DOT-PRODUCT, SINE-BANK</h4></td></tr></table>
 <pre>
-  <a class=def name="array-interp">array-interp</a> <i>fn x</i> &amp;optional <i>size</i>
-  <a class=def name="dot-product">dot-product</a> <i>in1 in2</i>
-  <a class=def name="sine-bank">sine-bank</a> <i>amps phases</i>
-  <a class=def name="edot-product">edot-product</a> <i>freq data</i> [Scheme/C versions]
-  <a class=def name="mus-interpolate">mus-interpolate</a> type x v <i>size y1</i>
+  <a class=def name="array-interp">array-interp</a> fn x &amp;optional size
+  <a class=def name="dot-product">dot-product</a> in1 in2
+  <a class=def name="sine-bank">sine-bank</a> amps phases
+  <a class=def name="edot-product">edot-product</a> freq data [Scheme/C versions]
+  <a class=def name="mus-interpolate">mus-interpolate</a> type x v size y1
 </pre>
 <p>These functions underlie some of the generators, and can be
 called within run.  See <a href="mus.lisp">mus.lisp</a> for
@@ -2970,7 +3024,7 @@ delay or wave-train. The <i>type</i> is one of the interpolation types (mus-inte
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>CONTRAST-ENHANCEMENT</h4></td></tr></table>
 <pre>
-   <a class=def name="contrast-enhancement">contrast-enhancement</a> <i>in-samp</i> &amp;optional (<i>fm-index</i> 1.0)
+   <a class=def name="contrast-enhancement">contrast-enhancement</a> in-samp &amp;optional (fm-index 1.0)
 </pre>
 <p><b>contrast-enhancement</b> phase-modulates a sound file.  It's like audio MSG.
 The actual algorithm is sin(<i>in-samp</i>*pi/2 +
@@ -3044,8 +3098,8 @@ resulting in a steady modulation, rather than an intensification of just the pea
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>RING-MODULATE, AMPLITUDE-MODULATE</h4></td></tr></table>
 <pre>
-  <a class=def name="ring-modulate">ring-modulate</a> <i>in1 in2</i>
-  <a class=def name="amplitude-modulate">amplitude-modulate</a> <i>am-carrier input1 input2</i>
+  <a class=def name="ring-modulate">ring-modulate</a> in1 in2
+  <a class=def name="amplitude-modulate">amplitude-modulate</a> am-carrier input1 input2
 </pre>
 <b>ring-modulate</b> returns (* <i>in1</i> <i>in2</i>).
 <b>amplitude-modulate</b> returns (* <i>input1</i> (+ <i>am-carrier</i> <i>input2</i>))
@@ -3107,28 +3161,28 @@ it would be:
 <!-- INDEX fft:Fourier transforms  -->
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3>FFT (Fourier Transform)</h3></td></tr></table>
 <pre>
-  <a class=def Name="fft">fft</a> <i>rdat idat fftsize</i> &amp;optional <i>sign</i>
-  <a class=def name="make-fft-window">make-fft-window</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>type size</i> (<i>beta</i> 0.0) (<i>alpha</i> 0.0)
-  <a class=def name="multiply-arrays">multiply-arrays</a> <i>rdat</i> <i>window</i>
-  <a class=def name="rectangular-&gt;polar">rectangular-&gt;polar</a> <i>rdat</i> <i>idat</i>
-  <a class=def name="polar-&gt;rectangular">polar-&gt;rectangular</a> <i>rdat</i> <i>idat</i>
-  <a class=def name="spectrum">spectrum</a> <i>rdat</i> <i>idat</i> <i>window</i> <i>norm-type</i>
-  <a class=def name="convolution">convolution</a> <i>rdat</i> <i>idat</i> <i>size</i>
+  <a class=def Name="fft">fft</a> rdat idat fftsize &amp;optional sign
+  <a class=def name="make-fft-window">make-fft-window</a> <a class=quiet href="#optional-key">&amp;optional-key</a> type size (beta 0.0) (alpha 0.0)
+  <a class=def name="multiply-arrays">multiply-arrays</a> rdat window
+  <a class=def name="rectangular-&gt;polar">rectangular-&gt;polar</a> rdat idat
+  <a class=def name="polar-&gt;rectangular">polar-&gt;rectangular</a> rdat idat
+  <a class=def name="spectrum">spectrum</a> rdat idat window norm-type
+  <a class=def name="convolution">convolution</a> rdat idat size
 </pre>
 <p>These provide run-time access to the standard fft routines and their habitual companions.
 <b>make-fft-window</b> can return many of the standard windows including:</p>
 <pre>
-  <i>rectangular-window</i>   ;no change in data
-  <i>bartlett-window</i>      ;triangle
-  <i>parzen-window</i>        ;raised triangle
-  <i>welch-window</i>         ;parzen squared
-  <i>hann-window</i>          ;cosine (sometimes known as "hanning-window" -- a sort of in-joke)
-  <i>hamming-window</i>       ;raised cosine
-  <i>blackman2-window</i>     ;Blackman-Harris windows of various orders
-  <i>blackman3-window</i>
-  <i>blackman4-window</i>
-  <i>exponential-window</i>
-  <i>kaiser-window</i>        ;<i>beta</i> argument used here
+  rectangular-window   ;no change in data
+  bartlett-window      ;triangle
+  parzen-window        ;raised triangle
+  welch-window         ;parzen squared
+  hann-window          ;cosine (sometimes known as "hanning-window" -- a sort of in-joke)
+  hamming-window       ;raised cosine
+  blackman2-window     ;Blackman-Harris windows of various orders
+  blackman3-window
+  blackman4-window
+  exponential-window
+  kaiser-window        ;beta argument used here
 </pre>
 <p>The
 magnitude of the spectrum is returned by <b>rectangular-&gt;polar</b>.  The data can be windowed
@@ -3873,29 +3927,29 @@ do this is with with-sound or clm-load.
 <pre>
  <a class=def name="with-sound">with-sound</a> &amp;key 
    ;; "With-sound: check it out!" -- Duane Kuiper, Giants broadcaster after Strawberry homer
-   (<i>output</i> <a href="#*clm-file-name*">*clm-file-name*</a>)        ; name of output sound file ("test.snd" normally)
-   (<i>channels</i> <a href="#*clm-channels*">*clm-channels*</a>)       ; can be any number (defaults to 1, see defaults.lisp)
-   (<i>srate</i> <a href="#*clm-srate*">*clm-srate*</a>)             ; also 'sampling-rate' for backwards compatibility
-   <i>continue-old-file</i>               ; open and continue old output file
-   <i>reverb</i>                          ; name of the reverberator, if any.  The reverb
+   (output <a href="#*clm-file-name*">*clm-file-name*</a>)        ; name of output sound file ("test.snd" normally)
+   (channels <a href="#*clm-channels*">*clm-channels*</a>)       ; can be any number (defaults to 1, see defaults.lisp)
+   (srate <a href="#*clm-srate*">*clm-srate*</a>)             ; also 'sampling-rate' for backwards compatibility
+   continue-old-file               ; open and continue old output file
+   reverb                          ; name of the reverberator, if any.  The reverb
                                    ;   is a normal clm instrument (see <a href="nrev.ins">nrev.ins</a>)
-   <i>reverb-data</i>                     ; arguments passed to the reverberator; an unquoted list
-   (<i>reverb-channels</i> *clm-reverb-channels*) ; chans in temp reverb stream (input to reverb)
-   <i>revfile</i>                         ; reverb file name
-   (<i>play</i> *clm-play*)               ; play new sound automatically?
-   (<i>notehook</i> *clm-notehook*)       ; function evaluated on each instrument call
-   (<i>statistics</i> *clm-statistics*)   ; print out various fascinating numbers
-   (<i>decay-time</i> 1.0)                ; ring time of reverb after end of piece
-   <i>comment</i>                         ; comment placed in header (in CL set to :none to squelch comment)
-   <i>info</i>                            ; non-comment header string
-   (<i>header-type</i> <a href="#*clm-header-type*">*clm-header-type*</a>) ; output file type (see also <a href="#header-types">header types</a>)
-   (<i>data-format</i> <a href="#*clm-data-format*">*clm-data-format*</a>) ; output data format (see <a href="#header-types">header types</a>)
-   <i>save-body</i>                       ; if t, copy the body (as a string) into the header
-   <i>scaled-to</i>                       ; if a number, scale results to have that max amp
-   <i>scaled-by</i>                       ; scale output by some number
-   (<i>clipped</i> *clm-clipped*)         ; if t, clip output rather than allowing data to wrap-around
-   (<i>verbose</i> <em class=emdef>*clm-verbose*</em>)         ; some instruments use this to display info during computation
-   (<i>force-recomputation</i> nil)       ; if t, force with-mix calls to recompute
+   reverb-data                     ; arguments passed to the reverberator; an unquoted list
+   (reverb-channels *clm-reverb-channels*) ; chans in temp reverb stream (input to reverb)
+   revfile                         ; reverb file name
+   (play *clm-play*)               ; play new sound automatically?
+   (notehook *clm-notehook*)       ; function evaluated on each instrument call
+   (statistics *clm-statistics*)   ; print out various fascinating numbers
+   (decay-time 1.0)                ; ring time of reverb after end of piece
+   comment                         ; comment placed in header (in CL set to :none to squelch comment)
+   info                            ; non-comment header string
+   (header-type <a href="#*clm-header-type*">*clm-header-type*</a>) ; output file type (see also <a href="#header-types">header types</a>)
+   (data-format <a href="#*clm-data-format*">*clm-data-format*</a>) ; output data format (see <a href="#header-types">header types</a>)
+   save-body                       ; if t, copy the body (as a string) into the header
+   scaled-to                       ; if a number, scale results to have that max amp
+   scaled-by                       ; scale output by some number
+   (clipped *clm-clipped*)         ; if t, clip output rather than allowing data to wrap-around
+   (verbose <em class=emdef>*clm-verbose*</em>)         ; some instruments use this to display info during computation
+   (force-recomputation nil)       ; if t, force with-mix calls to recompute
 </pre>
 <p><b>with-sound</b> is a macro that performs all the various services needed to
 produce and play a sound file; it also wraps an unwind-protect around its body to
@@ -4093,12 +4147,12 @@ look like normal lisp, whereas with-sound's are unquoted in these two cases.</p>
 <p>The with-sound output is normally sent to the speakers via the <b>play</b> function.
 There are several associated functions:</p>
 <pre>
-  <em class=emdef>play</em> &amp;optional <i>file start end wait</i>
-  <a class=def Name="dac">dac</a> &amp;optional <i>file start end wait</i>
-  <a class=def Name="sldac">sl-dac</a> file &amp;optional (<i>output-device</i> mus-audio-default)
+  <em class=emdef>play</em> &amp;optional file start end wait
+  <a class=def Name="dac">dac</a> &amp;optional file start end wait
+  <a class=def Name="sldac">sl-dac</a> file &amp;optional (output-device mus-audio-default)
   <em class=emdef>stop-playing</em>
   <a class=def Name="stop-dac">stop-dac</a>
-  <a class=def Name="volume">volume</a> &amp;optional (<i>device</i> mus-audio-default) <i>channel</i>
+  <a class=def Name="volume">volume</a> &amp;optional (device mus-audio-default) channel
 </pre>
 <p><b>play</b> (or <b>dac</b>) starts playing <i>file</i> (or the last file played, if no
 argument is given); in some cases (MCL and ACL) it then returns to the lisp listener;
@@ -4137,7 +4191,7 @@ the CLM-level sampling rate.  Similarly:
 <!-- INDEX mix-and-with-mix:Checkpoints -->
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="mix-and-with-mix">With-mix</a></h3></td></tr></table>
 <pre>
-  <a class=def name="with-mix">with-mix</a> <i>options</i> <i>file</i> <i>begin</i> &amp;body <i>body</i>
+  <a class=def name="with-mix">with-mix</a> options file begin &amp;body body
 </pre>
 <p><i>With-mix</i> is a macro, callable within <a href="#with-sound">with-sound</a> or <a href="#clm-load">clm-load</a>,
 which saves the computation in its body in a separate file named <i>file</i>
@@ -4196,13 +4250,13 @@ it does not recompute its body, leaving the resultant amplitude at .1.
 
 <p>The fastest way to mix sound files is with <b>mix</b>:</p>
 <pre>
-  <a class=def Name="mix">mix</a> &amp;optional-key <i>filename</i> (<i>input-frame</i> 0) (<i>output-frame</i> 0) <i>frames</i> output
+  <a class=def Name="mix">mix</a> &amp;optional-key filename (input-frame 0) (output-frame 0) frames output
 </pre>
 
 <p>In Snd, use mus-mix:
 </p>
 <pre>
-  <a class=def name="musmix">mus-mix</a> (outfile infile <i>(outloc 0) frames (inloc 0) mixer envs</i>)
+  <a class=def name="musmix">mus-mix</a> (outfile infile (outloc 0) frames (inloc 0) mixer envs)
 </pre>
 <p>
 <b>mus-mix</b> mixes <i>infile</i> into <i>outfile</i> starting at <i>outloc</i> in <i>outfile</i> and <i>inloc</i> in <i>infile</i>
@@ -4217,9 +4271,9 @@ it in conjunction with <i>mixer</i>to scale/envelope all the various ins and out
 
 <!-- INDEX open-input:Sound file IO -->
 <pre>
-  <a class=def Name="open-input">open-input</a> &amp;optional <i>name</i> &amp;key <i>start channel restartable</i>
+  <a class=def Name="open-input">open-input</a> &amp;optional name &amp;key start channel restartable
   <a class=def Name="close-input">close-input</a> i-stream
-  <a class=def Name="open-input*">open-input*</a> <i>name</i> &amp;key <i>start channel restartable</i>
+  <a class=def Name="open-input*">open-input*</a> name &amp;key start channel restartable
 </pre>
 <p>These functions open and close input sound files.  <b>open-input</b>
 takes either a string or a pathname and returns an IO object.
@@ -4505,24 +4559,24 @@ it is only for good sports.  Currently,
 the most useful of the functions are:</p>
 <pre>
   <a class=def Name="start-snd">start-snd</a>
-  <a class=def Name="send-snd">send-snd</a> <i>code</i>
+  <a class=def Name="send-snd">send-snd</a> code
   <a class=def Name="receive-snd">receive-snd</a> 
-  <a class=def Name="send-and-receive-snd">send-and-receive-snd</a> <i>code</i> &amp;optional <i>with-eval</i>
+  <a class=def Name="send-and-receive-snd">send-and-receive-snd</a> code &amp;optional with-eval
 
-  <a class=def Name="snd-memo">snd-memo</a> <i>file format-string</i> &amp;rest <i>args</i>
-  <a class=def Name="add-mark">add-mark</a> <i>sample channel</i>
-  <a class=def Name="add-region">add-region</a> <i>beg end</i>
+  <a class=def Name="snd-memo">snd-memo</a> file format-string &amp;rest args
+  <a class=def Name="add-mark">add-mark</a> sample channel
+  <a class=def Name="add-region">add-region</a> beg end
 
-  <a class=def Name="snd-sound">snd-sound</a> &amp;optional <i>file-name</i>
-  <a class=def Name="snd-region">snd-region</a> &amp;optional (<i>reg</i> 0)
-  <a class=def Name="snd-cleanup">snd-cleanup</a> &amp;body <i>body</i>
+  <a class=def Name="snd-sound">snd-sound</a> &amp;optional file-name
+  <a class=def Name="snd-region">snd-region</a> &amp;optional (reg 0)
+  <a class=def Name="snd-cleanup">snd-cleanup</a> &amp;body body
 
-  <a class=def Name="to-snd">to-snd</a> (&amp;rest <i>args</i>) &amp;body <i>body</i>
-  <a class=def Name="snd-edit-sound">snd-edit-sound</a> <i>new-name</i> &amp;optional <i>old-name</i>
-  <a class=def Name="snd-edit">snd-edit</a> (&amp;optional <i>file</i>) &amp;body <i>body</i>
+  <a class=def Name="to-snd">to-snd</a> (&amp;rest args) &amp;body body
+  <a class=def Name="snd-edit-sound">snd-edit-sound</a> new-name &amp;optional old-name
+  <a class=def Name="snd-edit">snd-edit</a> (&amp;optional file) &amp;body body
 
-  <a class=def Name="sndenv">snd-envelope</a> <i>env</i>
-  <a class=def Name="clmenv">clm-envelope</a> <i>env</i>
+  <a class=def Name="sndenv">snd-envelope</a> env
+  <a class=def Name="clmenv">clm-envelope</a> env
 </pre>
 <p><b>snd-memo</b> provides access to the ".scm" file that can be associated with any sound
 in Snd; the memo file can contain any Snd-related Scheme code you want; it will be loaded

@@ -6527,9 +6527,8 @@ void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
  *   either -- I'm trying to use verbs where possible.
  */
 
-/* TODO: clm.html 
- *       test (basic stuff, snd-test gen etc), memchecks, valgrind, snd-run opts
- *       scheme (dlocsig.scm)
+/* TODO: test (basic stuff, snd-test gen, run clm-test, etc), memchecks, valgrind, snd-run opts
+ *       scheme (dlocsig.scm) (restore path -> gnunplot or use .rb case) (need good straight example for clm.html)
  *       c: should mus-data return something?
  *       c: is _mus_wrap_no_vcts correct for the wrapper?
  *       c: type error checks in clm2xen dloc-list
