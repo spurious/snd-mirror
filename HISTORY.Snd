@@ -1,5 +1,6 @@
 Snd change log
 
+  10-Jul:    dlocsig.scm.
   3-July:    removed vct-map.
   28-Jun:    moved rmsgain code to clm-ins.scm.
   23-Jun:    Snd 8.2.

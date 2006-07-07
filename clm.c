@@ -6574,7 +6574,11 @@ static char *clm_array_to_string(mus_any **gens, int num_gens, char *name, char 
       FREE(descrs);
       return(descr);
     }
+#if DEBUGGING
+  return(copy_string("nil"));
+#else
   return(strdup("nil"));
+#endif
 }
 
 static char *int_array_to_string(int *arr, int num_ints, char *name)
@@ -6597,7 +6601,11 @@ static char *int_array_to_string(int *arr, int num_ints, char *name)
       FREE(intstr);
       return(descr);
     }
+#if DEBUGGING
+  return(copy_string("nil"));
+#else
   return(strdup("nil"));
+#endif
 }
 
 static bool move_sound_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
@@ -6623,7 +6631,7 @@ static char *describe_move_sound(mus_any *ptr)
   revenv = mus_format("global reverb %s", mus_describe(gen->rev_env));
   outdlys = clm_array_to_string(gen->out_delays, gen->out_channels, "out_delays", "    ");
   outenvs = clm_array_to_string(gen->out_envs, gen->out_channels, "out_envs", "    ");
-  revenvs = clm_array_to_string(gen->rev_envs, gen->out_channels, "rev_envs", "    ");
+  revenvs = clm_array_to_string(gen->rev_envs, gen->rev_channels, "rev_envs", "    ");
   outmap = int_array_to_string(gen->out_map, gen->out_channels, "out_map");
   len = 64 + strlen(starts) + strlen(dopdly) + strlen(dopenv) + strlen(revenv) + 
     strlen(outdlys) + strlen(outenvs) + strlen(revenvs) + strlen(outmap);
@@ -6632,7 +6640,14 @@ static char *describe_move_sound(mus_any *ptr)
 		      starts, dopdly, dopenv, revenv, outdlys, outenvs, revenvs, outmap,
 		      (gen->free_arrays) ? "true" : "false",
 		      (gen->free_gens) ? "true" : "false");
-  FREE(starts); FREE(dopdly); FREE(dopenv); FREE(revenv); FREE(outdlys); FREE(outenvs); FREE(revenvs); FREE(outmap);
+  FREE(starts); 
+  FREE(dopdly); 
+  FREE(dopenv); 
+  FREE(revenv); 
+  FREE(outdlys); 
+  FREE(outenvs); 
+  FREE(revenvs); 
+  FREE(outmap);
   return(allstr);
 }
 
@@ -6706,21 +6721,24 @@ Float mus_move_sound(mus_any *ptr, off_t loc, Float uval)
     }
 
   /* reverb */
-  val *= mus_env(gen->rev_env);
-  if (gen->rev_envs)
+  if (gen->revn_writer)
     {
-      if (gen->rev_channels == 1)
-	gen->revf->vals[0] = val * mus_env(gen->rev_envs[0]);
-      else
+      val *= mus_env(gen->rev_env);
+      if (gen->rev_envs)
 	{
-	  for (chan = 0; chan < gen->rev_channels; chan++)
-	    gen->revf->vals[gen->out_map[chan]] = val * mus_env(gen->rev_envs[chan]);
+	  if (gen->rev_channels == 1)
+	    gen->revf->vals[0] = val * mus_env(gen->rev_envs[0]);
+	  else
+	    {
+	      for (chan = 0; chan < gen->rev_channels; chan++)
+		gen->revf->vals[gen->out_map[chan]] = val * mus_env(gen->rev_envs[chan]);
+	    }
 	}
+      else gen->revf->vals[0] = val;
+      mus_frame_to_file(gen->revn_writer, loc, (mus_any *)(gen->revf));
     }
 
   /* file output */
-  if (gen->revn_writer)
-    mus_frame_to_file(gen->revn_writer, loc, (mus_any *)(gen->revf));
   if (gen->outn_writer)
     mus_frame_to_file(gen->outn_writer, loc, (mus_any *)(gen->outf));
 

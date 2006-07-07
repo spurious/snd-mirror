@@ -497,6 +497,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+10-Jul:  dlocsig.scm.\n\
 3-July:  new CLM generator: move-sound.\n\
          locsig now returns a float, not a frame.\n\
          removed vct-map.\n\

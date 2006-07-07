@@ -4580,10 +4580,12 @@ static mus_any **xen_vector_to_mus_any_array(XEN vect)
 {
   mus_any **gens;
   int i, len;
+  if (!(XEN_VECTOR_P(vect))) return(NULL);
   len = XEN_VECTOR_LENGTH(vect);
   gens = (mus_any **)CALLOC(len, sizeof(mus_any *));
   for (i = 0; i < len; i++)
-    gens[i] = XEN_TO_MUS_ANY(XEN_VECTOR_REF(vect, i));
+    if (MUS_XEN_P(XEN_VECTOR_REF(vect, i)))
+      gens[i] = XEN_TO_MUS_ANY(XEN_VECTOR_REF(vect, i));
   return(gens);
 }
 
@@ -4611,8 +4613,9 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
 
   XEN_ASSERT_TYPE(XEN_LIST_P(dloc_list) && (XEN_LIST_LENGTH(dloc_list) == 11), dloc_list, XEN_ARG_1, S_make_move_sound, "a dlocsig list");
   XEN_ASSERT_TYPE((MUS_XEN_P(outp)) && (mus_output_p(XEN_TO_MUS_ANY(outp))), outp, XEN_ARG_2, S_make_move_sound, "output stream");
-  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(revp) || ((MUS_XEN_P(revp)) && (mus_output_p(XEN_TO_MUS_ANY(revp)))), revp, XEN_ARG_3, S_make_move_sound, "reverb stream");
-  
+  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(revp) || XEN_FALSE_P(revp) || ((MUS_XEN_P(revp)) && (mus_output_p(XEN_TO_MUS_ANY(revp)))), 
+		  revp, XEN_ARG_3, S_make_move_sound, "reverb stream");
+
   ge = mus_make_move_sound(XEN_TO_C_OFF_T(XEN_LIST_REF(dloc_list, 0)),                           /* start */
 			   XEN_TO_C_OFF_T(XEN_LIST_REF(dloc_list, 1)),                           /* end */
 			   XEN_TO_C_INT(XEN_LIST_REF(dloc_list, 2)),                             /* out chans */
@@ -4625,7 +4628,7 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
 			   rev_envs = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 9)),   /* rev envs */
 			   out_map = xen_vector_to_int_array(XEN_LIST_REF(dloc_list, 10)),       /* out map */
 			   XEN_TO_MUS_ANY(outp),                                                 /* output frame->file gen (*output*) */
-			   (XEN_BOUND_P(revp) ? XEN_TO_MUS_ANY(revp) : NULL),                    /* same for reverb (optional) */
+			   ((XEN_BOUND_P(revp) && (!(XEN_FALSE_P(revp)))) ? XEN_TO_MUS_ANY(revp) : NULL), /* same for reverb (optional) */
 			   true, false);                                                         /* free outer arrays but not gens */
   if (ge)
     {
