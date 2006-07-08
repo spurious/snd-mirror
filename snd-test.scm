@@ -43821,6 +43821,18 @@ EDITS: 1
 (def-optkey-fun (optkey-3 a b c) (list a b c))
 (def-optkey-fun (optkey-4 (a 1) (b 2) (c 3) d) (list a b c d))
 
+(define (fir+comb beg dur freq amp size)
+  (let* ((start (inexact->exact (floor (* (mus-srate) beg)))) 
+	 (end (+ start (inexact->exact (floor (* (mus-srate) dur)))))
+	 (dly (make-comb :scaler .9 :size size)) 
+	 (flt (make-fir-filter :order size :xcoeffs (mus-data dly))) 
+	 (r (make-rand freq)))
+    (run 
+     (lambda () 
+       (do ((i start (1+ i))) 
+	   ((= i end)) 
+	 (outa i (* amp (fir-filter flt (comb dly (rand r)))) *output*))))))
+
 (if (and (provided? 'run) (or full-test (= snd-test 23) (and keep-going (<= snd-test 23))))
     (begin
       (def-clm-struct st1 one two)
@@ -44289,6 +44301,11 @@ EDITS: 1
 		  (resflt 17.5 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 #f #f 500 .995 .1 1000 .995 .1 2000 .995 .1)
 		  (bes-fm 18 1 440 10.0 1.0 4.0)
 		  
+		  (fir+comb 20 2 10000 .001 200)
+		  (fir+comb 22 2 1000 .0005 400)
+		  (fir+comb 24 2 3000 .001 300)
+		  (fir+comb 26 2 3000 .0005 1000)
+
 		  (graphEq "oboe.snd")
 		  )
       (let ((ind (find-sound "test.snd")))

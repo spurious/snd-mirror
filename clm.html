@@ -19,6 +19,8 @@
 </style>
 </head>
 
+<!-- TODO: see also tables with tooltip expls throughout -->
+
 <!-- 
      The index at the end is generated automatically by index.cl which notices all names, and
      special comments labelled INDEX. 
@@ -1859,16 +1861,43 @@ The following instrument sweeps the comb filter using the <i>pm</i> argument:
 (definstrument zc (time dur freq amp length1 length2 feedback)
   (multiple-value-bind
       (beg end) (times-&gt;samples time dur)
-    (let ((s (make-pulse-train :frequency freq))  ; some raspy input so we can hear the effect easily
+    (let ((s (<a class=quiet href="#make-pulse-train">make-pulse-train</a> :frequency freq))  ; some raspy input so we can hear the effect easily
           (d0 (<em class=red>make-comb</em> :size length1 :max-size (max length1 length2) :scaler feedback))
-          (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
+          (zenv (<a class=quiet href="#make-env">make-env</a> :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
       (run
        (loop for i from beg to end do
-	 (outa i (<em class=red>comb</em> d0 (* amp (pulse-train s)) (env zenv))))))))
+	 (outa i (<em class=red>comb</em> d0 (* amp (<a class=quiet href="#pulse-train">pulse-train</a> s)) (<a class=quiet href="#end">env</a> zenv))))))))
 
 (with-sound () (zc 0 3 100 .1 20 100 .5) (zc 3.5 3 100 .1 90 100 .95))
-</pre>
-</td></tr></table>
+</pre></td></tr></table>
+
+<p>The comb filter can produce some nice effects; here's one that treats the comb filter's
+delay line as the coefficients for an FIR filter (this example is in Scheme):
+</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+(define (fir+comb beg dur freq amp size)
+  (let* ((start (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) beg)))) 
+	 (end (+ start (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) dur)))))
+	 (dly (<em class=red>make-comb</em> :scaler .9 :size size)) 
+	 (flt (<a class=quiet href="#make-fir-filter">make-fir-filter</a> :order size :xcoeffs (<em class=red>mus-data</em> dly))) ; use comb delay line as FIR coefficients
+	 (r (<a class=quiet href="make-rand">make-rand</a> freq)))                                       ; feed comb with white noise
+    (run 
+     (lambda () 
+       (do ((i start (1+ i))) 
+	   ((= i end)) 
+	 (outa i (* amp (<a class=quiet href="#fir-filter">fir-filter</a> flt (<em class=red>comb</em> dly (<a class=quiet href="#rand">rand</a> r)))) *output*))))))
+
+(with-sound () 
+  (fir+comb 0 2 10000 .001 200)
+  (fir+comb 2 2 1000 .0005 400)
+  (fir+comb 4 2 3000 .001 300)
+  (fir+comb 6 2 3000 .0005 1000))
+</pre></td></tr></table>
+
+<p>See also chordalize in dsp.scm (pull a chord out of a sound via harmonically related combs).
+</p>
 <br>
 
 

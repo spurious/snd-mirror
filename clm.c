@@ -205,6 +205,66 @@ static char *float_array_to_string(Float *arr, int len, int loc)
   return(base);
 }
 
+static char *clm_array_to_string(mus_any **gens, int num_gens, char *name, char *indent)
+{
+  if (gens)
+    {
+      int i, len = 0;
+      char **descrs;
+      char *descr;
+      descrs = (char **)CALLOC(num_gens, sizeof(char *));
+      for (i = 0; i < num_gens; i++)
+	{
+	  if (gens[i])
+	    descrs[i] = mus_format("\n%s[%d]: %s", indent, i, mus_describe(gens[i]));
+	  else descrs[i] = mus_format("\n%s[%d]: nil", indent, i);
+	  len += strlen(descrs[i]);
+	}
+      len += (64 + strlen(name));
+      descr = (char *)CALLOC(len, sizeof(char));
+      mus_snprintf(descr, len, "%s[%d]:", name, num_gens);
+      for (i = 0; i < num_gens; i++)
+	{
+	  strcat(descr, descrs[i]);
+	  FREE(descrs[i]);
+	}
+      FREE(descrs);
+      return(descr);
+    }
+#if DEBUGGING
+  return(copy_string("nil"));
+#else
+  return(strdup("nil"));
+#endif
+}
+
+static char *int_array_to_string(int *arr, int num_ints, char *name)
+{
+  if (arr)
+    {
+      int i, len;
+      char *descr, *intstr;
+      len = num_ints * 32 + 64;
+      descr = (char *)CALLOC(len, sizeof(char));
+      intstr = (char *)CALLOC(32, sizeof(char));
+      mus_snprintf(descr, len, "%s[%d]: (", name, num_ints);      
+      for (i = 0; i < num_ints - 1; i++)
+	{
+	  mus_snprintf(intstr, 32, "%d ", arr[i]);
+	  strcat(descr, intstr);
+	}
+      mus_snprintf(intstr, 32, "%d)", arr[num_ints - 1]);
+      strcat(descr, intstr);
+      FREE(intstr);
+      return(descr);
+    }
+#if DEBUGGING
+  return(copy_string("nil"));
+#else
+  return(strdup("nil"));
+#endif
+}
+
 
 /* ---------------- generic functions ---------------- */
 
@@ -6528,11 +6588,13 @@ void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
  */
 
 /* TODO: test (basic stuff, snd-test gen, run clm-test, etc), memchecks, valgrind, snd-run opts
- *       scheme (dlocsig.scm) (restore path -> gnunplot or use .rb case) (need good straight example for clm.html)
+ *           args, descr, chans+-rev, spkr, old style
+ *       scheme (restore path -> gnunplot or use .rb case) (need good example for clm.html)
  *       c: should mus-data return something?
  *       c: is _mus_wrap_no_vcts correct for the wrapper?
  *       c: type error checks in clm2xen dloc-list
  *       rb: update dlocsig.rb (787, l788)
+ *       cl: figure out the gc problem
  */
 
 typedef struct {
@@ -6548,66 +6610,6 @@ typedef struct {
   bool free_arrays, free_gens;
 } dloc;
 
-static char *clm_array_to_string(mus_any **gens, int num_gens, char *name, char *indent)
-{
-  if (gens)
-    {
-      int i, len = 0;
-      char **descrs;
-      char *descr;
-      descrs = (char **)CALLOC(num_gens, sizeof(char *));
-      for (i = 0; i < num_gens; i++)
-	{
-	  if (gens[i])
-	    descrs[i] = mus_format("\n%s[%d]: %s", indent, i, mus_describe(gens[i]));
-	  else descrs[i] = mus_format("\n%s[%d]: nil", indent, i);
-	  len += strlen(descrs[i]);
-	}
-      len += (64 + strlen(name));
-      descr = (char *)CALLOC(len, sizeof(char));
-      mus_snprintf(descr, len, "%s[%d]:", name, num_gens);
-      for (i = 0; i < num_gens; i++)
-	{
-	  strcat(descr, descrs[i]);
-	  FREE(descrs[i]);
-	}
-      FREE(descrs);
-      return(descr);
-    }
-#if DEBUGGING
-  return(copy_string("nil"));
-#else
-  return(strdup("nil"));
-#endif
-}
-
-static char *int_array_to_string(int *arr, int num_ints, char *name)
-{
-  if (arr)
-    {
-      int i, len;
-      char *descr, *intstr;
-      len = num_ints * 32 + 64;
-      descr = (char *)CALLOC(len, sizeof(char));
-      intstr = (char *)CALLOC(32, sizeof(char));
-      mus_snprintf(descr, len, "%s[%d]: (", name, num_ints);      
-      for (i = 0; i < num_ints - 1; i++)
-	{
-	  mus_snprintf(intstr, 32, "%d ", arr[i]);
-	  strcat(descr, intstr);
-	}
-      mus_snprintf(intstr, 32, "%d)", arr[num_ints - 1]);
-      strcat(descr, intstr);
-      FREE(intstr);
-      return(descr);
-    }
-#if DEBUGGING
-  return(copy_string("nil"));
-#else
-  return(strdup("nil"));
-#endif
-}
-
 static bool move_sound_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 static int move_sound_channels(mus_any *ptr) {return(((dloc *)ptr)->out_channels);}
 static off_t move_sound_length(mus_any *ptr) {return(((dloc *)ptr)->out_channels);} /* need both because return types differ */
@@ -6622,6 +6624,7 @@ static char *describe_move_sound(mus_any *ptr)
   char *starts;
   static char *allstr = NULL;
   int len;
+
   if (allstr) {FREE(allstr); allstr = NULL;}
 
   starts = mus_format(S_move_sound ": start: " OFF_TD ", end: " OFF_TD ", out chans %d, rev chans: %d",
@@ -6633,6 +6636,7 @@ static char *describe_move_sound(mus_any *ptr)
   outenvs = clm_array_to_string(gen->out_envs, gen->out_channels, "out_envs", "    ");
   revenvs = clm_array_to_string(gen->rev_envs, gen->rev_channels, "rev_envs", "    ");
   outmap = int_array_to_string(gen->out_map, gen->out_channels, "out_map");
+
   len = 64 + strlen(starts) + strlen(dopdly) + strlen(dopenv) + strlen(revenv) + 
     strlen(outdlys) + strlen(outenvs) + strlen(revenvs) + strlen(outmap);
   allstr = (char *)CALLOC(len, sizeof(char));
@@ -6673,6 +6677,7 @@ static int free_move_sound(mus_any *p)
 	    for (i = 0; i < ptr->rev_channels; i++)
 	      if (ptr->rev_envs[i]) mus_free(ptr->rev_envs[i]);
 	}
+
       if (ptr->free_arrays)
 	{
 	  /* free outer arrays */
@@ -6681,6 +6686,8 @@ static int free_move_sound(mus_any *p)
 	  if (ptr->out_delays) {FREE(ptr->out_delays); ptr->out_delays = NULL;}
 	  if (ptr->out_map) FREE(ptr->out_map);
 	}
+
+      /* we created these in make_move_sound, so it should always be safe to free them */
       if (ptr->outf) mus_free((mus_any *)(ptr->outf));
       if (ptr->revf) mus_free((mus_any *)(ptr->revf));
       FREE(ptr);
@@ -6786,7 +6793,7 @@ mus_any *mus_make_move_sound(off_t start, off_t end, int out_channels, int rev_c
   dloc *gen;
   if (out_channels <= 0)
     {
-      mus_error(MUS_ARG_OUT_OF_RANGE, "chans: %d", out_channels);
+      mus_error(MUS_ARG_OUT_OF_RANGE, "move-sound: out chans: %d", out_channels);
       return(NULL);
     }
   gen = (dloc *)clm_calloc(1, sizeof(dloc), S_make_move_sound);

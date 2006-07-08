@@ -81,7 +81,8 @@
 
 ;;; We use a couple of internal functions in the clm package: export them...
 
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm")) ; need def-optkey-fun
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))   ; need def-optkey-fun
+(if (not (provided? 'snd-env.scm)) (load-from-path "env.scm")) ; need envelope-interp
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Global Parameters
@@ -206,6 +207,20 @@
 			   result)))
 	      (else (loop (cdr l1) 
 			  result))))))
+
+(define (lastx env)
+  (list-ref env (- (length env) 2)))
+
+(define (x-norm env xmax)
+  ;; change x axis values so that they run to xmax
+  (let ((scl (/ xmax (lastx env)))
+	(val '())
+	(len (length env)))
+    (do ((i 0 (+ i 2)))
+	((>= i len))
+      (set! val (cons (* (list-ref env i) scl) val))
+      (set! val (cons (list-ref env (+ i 1)) val)))
+    (reverse val)))
 
 
 (def-optkey-fun (arrange-speakers (speakers '())
@@ -1626,6 +1641,7 @@
 		     (set! val (cons (/ ti tf) val)))
 		   times)
 		  (reverse val)))
+;	  (snd-print (format #f "rt: ~A~%" (rt path)))
 
 	  (reset-transformation path))))))
 
@@ -1640,9 +1656,9 @@
 
 ;;; Generic literal path class
 (define-class <literal-path> (<path>)
-  (points :init-value '() :init-keyword :points) ; points 
-  (3d :init-value #t :init-keyword :3d) ; it is parsed as a 3d or 2d path?
-  (polar :init-value #f :init-keyword :polar)) ; by default a path is cartesian
+  (points :init-value '() :init-keyword :points :accessor literal-points) ; points 
+  (3d :init-value #t :init-keyword :3d :accessor literal-3d)              ; it is parsed as a 3d or 2d path?
+  (polar :init-value #f :init-keyword :polar :accessor literal-polar))    ; by default a path is cartesian
 
 ;;; Generic literal path creation function
 (def-optkey-fun (make-literal-path points (3d path-3d) polar)
@@ -1662,9 +1678,9 @@
 
 (define-method (render-path (path <literal-path>))
   ;; decode the points into coordinates
-  (let* ((points (points path))
-	 (3d (3d path))
-	 (polar (polar path)))
+  (let* ((points (literal-points path))
+	 (3d (literal-3d path))
+	 (polar (literal-polar path)))
     (let ((vals (if polar (parse-polar-coordinates points 3d) (parse-cartesian-coordinates points 3d))))
       (set! (rx path) (car vals))
       (set! (ry path) (cadr vals))
@@ -1695,7 +1711,7 @@
 	       (ti 0)
 	       (times (list ti)))
 	  (do ((i 1 (1+ i)))
-	      ((> i n))
+	      ((= i len))
 	    (let ((x (list-ref rx i))
 		  (y (list-ref ry i))
 		  (z (list-ref rz i))
@@ -1739,6 +1755,9 @@
 			(set! vseg (list v))
 			(set! vi v)))))))
 
+;;; STOPPED HERE
+;;;	  (snd-print (format #f "times: ~A, ti: ~A~%" times ti)) ; -> times: (0 10.0 32.36068), ti: 32.36068
+
 	  (set! (rt path) (let ((val '())
 				(tf (list-ref times (1- (length times)))))
 			    (for-each
@@ -1746,6 +1765,7 @@
 			       (set! val (cons (/ ti tf) val)))
 			     times)
 			    (reverse val)))
+;	  (snd-print (format #f "rt (1765): ~A~%" (rt path)))
 	  (reset-transformation path)))))
 
 ;;;;;;;;;;;
@@ -1753,13 +1773,13 @@
 ;;;;;;;;;;;
 
 (define-class <spiral-path> (<literal-path>)
-  (start-angle :init-value 0d0 :init-keyword :start-angle)                    ; start angle
-  (total-angle :init-value #f :init-keyword :total-angle)                     ; total angle for the spiral
-  (step-angle :init-value (/ dlocsig-one-turn 100) :init-keyword :step-angle) ; step angle for rendering
-  (turns :init-value '() :init-keyword :turns)                                ; fractional number of turns
-  (distance :init-value '(0 10 1 10) :init-keyword :distance)                 ; distance envelope
-  (height :init-value '(0 0 1 0) :init-keyword :height)                       ; height envelope
-  (velocity :init-value '(0 1 1 1) :init-keyword :velocity))                  ; velocity envelope
+  (start-angle :init-value 0d0 :init-keyword :start-angle :accessor spiral-start-angle)                    ; start angle
+  (total-angle :init-value #f :init-keyword :total-angle :accessor spiral-total-angle)                     ; total angle for the spiral
+  (step-angle :init-value (/ dlocsig-one-turn 100) :init-keyword :step-angle :accessor spiral-step-angle)  ; step angle for rendering
+  (turns :init-value '() :init-keyword :turns :accessor spiral-turns)                                      ; fractional number of turns
+  (distance :init-value '(0 10 1 10) :init-keyword :distance :accessor spiral-distance)                    ; distance envelope
+  (height :init-value '(0 0 1 0) :init-keyword :height :accessor spiral-height)                            ; height envelope
+  (velocity :init-value '(0 1 1 1) :init-keyword :velocity :accessor spiral-velocity))                     ; velocity envelope
 
 ;;; Spiral path creation function
 
@@ -1784,27 +1804,27 @@
 ;;; Render a spiral path from the object data
 
 (define-method (render-path (path <spiral-path>))
-  (let* ((start (* (/ (start-angle path) dlocsig-one-turn) 2 pi))
-	 (total (if (total-angle path)
-		    (* (/ (total-angle path) dlocsig-one-turn) 2 pi)
-		  (if (turns path)
-		      (* (turns path) 2 pi)
+  (let* ((start (* (/ (spiral-start-angle path) dlocsig-one-turn) 2 pi))
+	 (total (if (spiral-total-angle path)
+		    (* (/ (spiral-total-angle path) dlocsig-one-turn) 2 pi)
+		  (if (spiral-turns path)
+		      (* (spiral-turns path) 2 pi)
 		    (snd-error (format #f "a spiral-path needs either a total-angle or turns, none specified")))))
-	 (steps (abs (/ total (* (/ (step-angle path) dlocsig-one-turn) 2 pi))))
+	 (steps (abs (/ total (* (/ (spiral-step-angle path) dlocsig-one-turn) 2 pi))))
 	 (step (/ total (ceiling steps)
-		  (if (< (step-angle path) 0) -1 1)))
-	 (distance (x-norm (distance path) total))
-	 (height (x-norm (height path) total)))
-
+		  (if (< (spiral-step-angle path) 0) -1 1)))
+	 (xdistance (x-norm (spiral-distance path) total))
+	 (height (x-norm (spiral-height path) total)))
     (let* ((x '())
 	   (y '())
 	   (z '())
-	   (segments (abs (/ total step))))
+	   (segments (inexact->exact (round (abs (/ total step)))))
+	   (len (1+ segments)))
       (do ((i 0 (1+ i))
 	   (angle start (+ angle step)))
-	  ((= i (1+ segments)))
+	  ((>= i len))
 	(let* ((xy (cis angle))
-	       (d (envelope-interp angle distance)))
+	       (d (envelope-interp angle xdistance)))
 	  (set! x (cons (* d (imag-part xy)) x))
 	  (set! y (cons (* d (real-part xy)) y))
 	  (set! z (cons (envelope-interp angle height) z))))
@@ -1814,28 +1834,29 @@
       (set! z (reverse z))
 
       (let* ((dp '())
-	     (len (length x))
+	     (len (1- (length x)))
 	     (sofar 0.0))
 	(do ((i 0 (1+ i)))
-	    ((= i len))
+	    ((>= i len))
 	  (let* ((xi (list-ref x i))
 		 (xf (list-ref x (+ i 1)))
 		 (yi (list-ref y i))
 		 (yf (list-ref y (+ i 1)))
 		 (zi (list-ref z i))
 		 (zf (list-ref z (+ i 1))))
+;	    (snd-print (format #f "~A ~A ~A ~A ~A ~A~%" xi xf yi yf zi zf))
 	    (set! sofar (+ sofar (distance (- xf xi) (- yf yi) (- zf zi))))
 	    (set! dp (cons sofar dp))))
 	(let ((df (car dp)))	
 	  (set! dp (reverse dp))
 	  (let* ((tp '())
 		 (td 0)
-		 (len (length dp)))
+		 (len (1- (length dp))))
 	    (do ((i 0 (1+ i)))
-		((= i len))
+		((>= i len))
 	      (let* ((di (list-ref dp i))
 		     (df (list-ref dp (+ i 1)))
-		     (vp (x-norm (velocity path) df))
+		     (vp (x-norm (spiral-velocity path) df))
 		     (vi (envelope-interp di vp))
 		     (vf (envelope-interp df vp)))
 		(set! tp (cons td tp))
@@ -1850,7 +1871,8 @@
 		 (lambda (ti)
 		   (set! val (cons (/ ti tf) val)))
 		 tp)
-		(set! (rt path) val)))))))
+		(set! (rt path) (reverse val))))))))
+
     (reset-transformation path)))
 
 
@@ -2080,6 +2102,7 @@
 	       (z (list-ref zcoords (+ i 1))))
 	  (set! dist (+ dist (distance (- x xp) (- y yp) (- z zp))))
 	  (set! now (cons (/ dist velocity) now))))
+;      (snd-print (format #f "now: ~A~%" now))
       (set! now (reverse now))
       (set! (rt path) (append (list start-time) now))
       (set! (tx path) (copy-list (rx path)))
@@ -2364,7 +2387,7 @@
 
     ;; Render a trajectory breakpoint through amplitude panning
     (define (famplitude-panning x y z dist time q)
-;      (snd-print (format #f "dist: ~A~%" dist))
+;      (snd-print (format #f "dist: ~A, prev-dist: ~A, time: ~A~%" dist prev-dist time))
       ;; output gains for current point
       (if prev-group
 	  (let* ((vals (calculate-gains x y z prev-group))
@@ -2654,6 +2677,7 @@
       (let ((room 0)
 	    (dist (distance x y z)))
 
+;	(snd-print (format #f "walk time: ~A~%" time))
 ;	(snd-print (format #f "walk [~D] dist: ~A {~A ~A ~A}~%" num dist x y z))
 
 	;; remember first and last distances
@@ -2784,14 +2808,13 @@
     ;; Loop for each pair of points in the position envelope and render them
     (if (= (length xpoints) 1)
 	;; static source (we should check if this is inside the inner radius?)
-	(begin ;(snd-print (format #f "xpoints 1~%"))
 	(walk-all-rooms (car xpoints) (car ypoints) (car zpoints) (car tpoints) 3)
-	)
 
 	;; moving source
-	(let ((len (1- (length xpoints))))
+	(let ((len (1- (min (length xpoints) (length ypoints) (length zpoints) (length tpoints)))))
+	  (snd-print (format #f "timepoints: ~A~%" tpoints))
 	  (do ((i 0 (1+ i)))
-	      ((= i len))
+	      ((>= i len))
 	    (let* ((xa (list-ref xpoints i))
 		   (ya (list-ref ypoints i))
 		   (za (list-ref zpoints i))
@@ -2802,9 +2825,7 @@
 		   (tb (list-ref tpoints (+ i 1))))
 	      (fminimum-segment-length xa ya za ta xb yb zb tb)
 	      (if (= i len)
-		  (begin ;(snd-print (format #f "walk ~D~%" i))
 		  (walk-all-rooms xb yb zb tb 4))))))
-	)
 
       ;; create delay lines for output channels that need them
     (let* ((delays (speaker-config-delays speakers))
@@ -3069,4 +3090,35 @@
 .000 .000 .031 .035 .039 .044 .049 .056 .064 .074 .085 .097 .113 .129 .148 .168 .190 .212 .233 .254 .272 .290 .304 .316 .328 .333 .336 .340 .344 .346 .350 .363 .370 .367 .352 .326 .295 .265 .237 .212 .191 .171 .155 .141 .128 .117 .108 .100 .092 
 
 
+(with-sound (:channels 4) (sinewave 0 1.0 440 .5 :path (make-spiral-path :total-angle 360)))
+
+.351 .304 .256 .200 .145 .084 .024 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .057 .115 .174 .232 .282 .331 .373 .411 .443 .467 .485 .496 .499 .499 .494 .482 .462 .436 
+
+.393 .426 .455 .476 .491 .498 .500 .497 .489 .474 .451 .421 .386 .343 .298 .246 .189 .134 .073 .014 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .006 .068 .126 .185 .239 .292 
+
+.000 .000 .000 .000 .000 .000 .034 .096 .153 .211 .266 .314 .360 .398 .432 .460 .480 .493 .499 .500 .496 .486 .470 .445 .416 .378 .335 .289 .236 .182 .123 .061 .002 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
+
+.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .045 .107 .164 .221 .272 .323 .368 .405 .438 .463 .483 .495 .499 .499 .495 .485 .466 .440 .409 .371 .328 .279 .225 .171 .111 .053 .000 .000 .000 .000 .000 
+
+
+(with-sound (:channels 8) (sinewave 0 3.0 440 .5 :path (make-spiral-path :turns 3)))
+
+.350 .010 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .099 .429 .500 .493 .280 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .168 .465 .500 .480 .214 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .235 .486 .499 
+
+.499 .500 .378 .042 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .069 .408 .500 .497 .320 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .129 .447 .499 .488 .248 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .201 
+
+.000 .319 .497 .500 .408 .070 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .036 .377 .500 .499 .351 .015 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .097 .429 .500 .493 .289 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
+
+.000 .000 .000 .279 .493 .500 .430 .101 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .009 .348 .498 .500 .385 .043 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .068 .402 .500 .497 .321 .000 .000 .000 .000 .000 .000 .000 .000 .000 
+
+.000 .000 .000 .000 .000 .245 .487 .499 .452 .138 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .311 .496 .500 .409 .071 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .034 .376 .500 .499 .352 .018 .000 .000 .000 .000 .000 .000 
+
+.000 .000 .000 .000 .000 .000 .000 .204 .478 .500 .467 .171 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .278 .493 .500 .431 .108 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .008 .347 .498 .500 .386 .044 .000 .000 .000 .000 
+
+.000 .000 .000 .000 .000 .000 .000 .000 .000 .170 .466 .500 .478 .212 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .243 .486 .499 .453 .139 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .309 .496 .500 .411 .074 .000 .000 
+
+.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .137 .448 .499 .488 .246 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .202 .477 .500 .467 .173 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .276 .493 .500 .436 .109 
+
+
+(with-sound (:channels 4) (sinewave 0 1.0 440 .5 :path (make-literal-path '((-10 10) (10 10)) :polar #f)))
 |#
