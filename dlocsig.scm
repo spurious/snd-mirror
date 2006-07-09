@@ -9,7 +9,7 @@
 ;;; address email to: nando@ccrma.stanford.edu
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-modules (oop goops))
+(use-modules (oop goops) (ice-9 format) (ice-9 optargs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Dynamic multichannel three-dimentional signal locator
@@ -83,6 +83,8 @@
 
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))   ; need def-optkey-fun
 (if (not (provided? 'snd-env.scm)) (load-from-path "env.scm")) ; need envelope-interp
+
+(provide 'snd-dlocsig.scm)
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Global Parameters
@@ -227,7 +229,7 @@
 				  (groups '())
 				  (delays '())
 				  (distances '())
-				  (omap '()))
+				  (channel-map '()))
   ;; sanity checking of configuration
 
   (define (invert3x3 mat) ; invert a 3x3 matrix using cofactors
@@ -333,12 +335,12 @@
 	 (if (< delay 0.0) (snd-error (format #f "distances must be all positive, ~A is negative" delay))))
        distances))
 
-  (if (not (null? omap))
-      (if (> (length speakers) (length omap))
-	  (snd-error (format #f "must map all speakers to output channels, only ~A mapped [~A]" (length omap) omap))
-	(if (< (length speakers) (length omap))
+  (if (not (null? channel-map))
+      (if (> (length speakers) (length channel-map))
+	  (snd-error (format #f "must map all speakers to output channels, only ~A mapped [~A]" (length channel-map) channel-map))
+	(if (< (length speakers) (length channel-map))
 	    (snd-error (format #f "trying to map more channels than there are speakers, ~A supplied instead of ~A [~A]" 
-			       (length omap) (length speakers) omap)))))
+			       (length channel-map) (length speakers) channel-map)))))
 
   ;; collect unit vectors describing the speaker positions
   (let* ((coords
@@ -417,17 +419,18 @@
 		     (reverse vals))))
     
       ;; check validity of map entries
-    (if omap
-	(let ((entries (length omap)))
+    (if channel-map
+	(let ((entries (length channel-map)))
 	  (for-each
 	   (lambda (entry)
 	     (if (>= entry entries)
-		 (snd-error (format #f "channel ~A in map ~A is out of range (max=~A)" entry omap entries))))
-	   omap)
-	  (if (has-duplicates? omap)
-	      (snd-error (format #f "there are duplicate channels in map ~A" omap)))))
+		 (snd-error (format #f "channel ~A in map ~A is out of range (max=~A)" entry channel-map entries))))
+	   channel-map)
+	  (if (has-duplicates? channel-map)
+	      (snd-error (format #f "there are duplicate channels in channel-map ~A" channel-map)))))
 
     ;; create the speaker configuration structure
+
     (make-speaker-config :number (length speakers)
 			 :dimension (group-size (car groups))
 			 :coords coords
@@ -436,7 +439,7 @@
 			 :omap (let ((v (make-vector (length speakers))))
 				 (do ((chan 0 (1+ chan)))
 				     ((= chan (length speakers)))
-				   (vector-set! v chan (or (and (not (null? omap)) (list-ref omap chan))
+				   (vector-set! v chan (or (and (not (null? channel-map)) (list-ref channel-map chan))
 							   chan)))
 				 v))))
 
@@ -552,10 +555,6 @@
 		     gains                   ; gain envelopes, one for each output channel
 		     rev-gains               ; reverb gain envelopes, one for each reverb channel
 		     out-map)                ; mapping of speakers to output channels
-;  (snd-print (format #f "dlocs: start ~A, end: ~A, out: ~A, rev: ~A~%    path: ~A~%    delay: ~A~%    rev: ~A~%    out-delays: ~A~%    gains: ~A~%    rev-gains: ~A~%    out-amp: ~A~%"
-;		     start end out-channels rev-channels
-;		     path delay rev out-delays gains rev-gains out-map))
-
   (list 'dlocs start end out-channels rev-channels path delay rev out-delays gains rev-gains out-map))
 
 (define dlocs-start (make-procedure-with-setter (lambda (a) (list-ref a 1)) (lambda (a b) (list-set! a 1 b))))
@@ -886,13 +885,11 @@
 	   (set! x (cons (car p) x))
 	   (set! y (cons (cadr p) y))
 	   (set! z (cons (if 3d (or (third p) 0.0) 0.0) z))
-;	   (snd-print (format #f "val: ~A " (fourth p)))
 	   (set! v (cons (if 3d 
 			     (fourth p)
 			     (third p))
 			 v)))
 	 points)
-;	(snd-print (format #f "list: ~A (~A)~%" v points))
 	(list (reverse x) (reverse y) (reverse z) (reverse v)))
 
     ;; decode a plain list
@@ -949,8 +946,9 @@
 	   (let* ((d (car p))
 		  (a (cadr p))
 		  (e (if 3d (if (not (null? (cddr p))) (caddr p) 0.0) 0.0))
-		  (evec (cis (* (/ a dlocsig-one-turn) 2 pi)))
-		  (dxy (* d (real-part evec))))
+		  (evec (cis (* (/ e dlocsig-one-turn) 2 pi)))
+		  (dxy (* d (real-part evec)))
+		  (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
 	     (set! x (cons (* dxy (imag-part avec)) x))
 	     (set! y (cons (* dxy (real-part avec)) y))
 	     (set! z (cons (* d (imag-part evec)) z))
@@ -1001,7 +999,6 @@
 
 
 (define-method (xparse-path (xpath <bezier-path>)) ; goops won't accept the name "parse-path"???
-;  (snd-print (format #f "parse-path: ~A~%" (describe xpath)))
   (let* ((polar (polar xpath))
 	 (points (path xpath))
 	 (3d (3d xpath)))
@@ -1018,14 +1015,12 @@
 	(set! (y xpath) (cadr vals))
 	(set! (z xpath) (caddr vals))
 	(set! (v xpath) (cadddr vals)))))
-;  (snd-print (format #f "parse-path v: ~A~%" (v xpath)))
   (for-each
    (lambda (v)
      (if (and (number? v) 
 	      (< v 0))
 	 (snd-error (format #f "velocities for path ~A must be all positive" (path xpath)))))
    (v xpath))
-;  (snd-print (format #f " -> ~A~%" (describe xpath)))
   (reset-fit xpath))
 
 
@@ -1052,8 +1047,6 @@
   (define (same a0 b0 c0 a1 b1 c1)
     (and (= a0 a1) (= b0 b1) (= c0 c1)))
 
-;  (snd-print (format #f "near: ~A ~A ~A ~A ~A ~A ~A ~A ~A~%" x0 y0 z0 x1 y1 z1 px py pz))
-
   (if (same x0 y0 z0 px py pz)
       (list x0 y0 z0)
     (if (same x1 y1 z1 px py pz)
@@ -1069,8 +1062,6 @@
 	       (p (* (vmag xm1 ym1 zm1) (vcos xm0 ym0 zm0 xm1 ym1 zm1)))
 	       (l (vmag xm0 ym0 zm0))
 	       (ratio (/ p l)))
-;	  (snd-print (format #f "xm0: ~A~%" xm0))
-
 	  (list (+ x0 (* xm0 ratio))
 		(+ y0 (* ym0 ratio))
 		(+ z0 (* zm0 ratio))))))))
@@ -1184,7 +1175,6 @@
     (list (- n 1) p d)))
 
 (define-method (calculate-fit (path <open-bezier-path>))
-;  (snd-print (format #f "calculate fit: ~A~%" (describe path)))
   (let* ((n (- (length (x path)) 1))
 	 (m (- n 1))
 	 ;; data points P(i)
@@ -1232,7 +1222,6 @@
 	(vector-set! (vector-ref d 2) n 0.0)))
 
     ;; calculate fit
-;    (snd-print (format #f "m: ~A, n: ~A, mcof: ~A~%" m n path-maxcoeff))
     (do ((i 1 (1+ i)))
 	((= i n))
       (do ((k 1 (1+ k)))
@@ -1248,9 +1237,6 @@
 					 (* (ac k n)
 					    (- (ref p 1 (+ i k))
 					       (ref p 1 (- i k))))))
-
-;	  (snd-print (format #f "2: ~A~%" (vector-ref (vector-ref d 1) i)))
-
 	  (vector-set! (vector-ref d 2) i (+ d2
 					 (* (ac k n)
 					    (- (ref p 2 (+ i k))
@@ -1269,14 +1255,12 @@
   (reset-rendering path))
 
 (define-method (fit-path (path <bezier-path>))
-;  (snd-print (format #f "bezier fit-path: ~A~%" (not-parsed path)))
   (if (not-parsed path)
       (xparse-path path))
   (fit-path (make-path path))
   (reset-rendering path))
 
 (define-method (fit-path (path <open-bezier-path>))
-;  (snd-print (format #f "open bezier fit-path: ~A~%" (not-parsed path)))
   (if (not-parsed path)
       (xparse-path path))
 
@@ -1286,9 +1270,6 @@
 	       (n (car vals))
 	       (p (cadr vals))
 	       (d (caddr vals)))
-
-;	  (snd-print (format #f "calculate-fit: ~A ~A ~A~%" n p d))
-
 	  (let* ((c (curvature path))
 		 (cs (make-vector n)))
 	       ;; setup the curvatures array
@@ -1358,7 +1339,6 @@
 ;;; Calculate bezier control points for the given closed path
 
 (define-method (fit-path (path <closed-bezier-path>))
-;  (snd-print (format #f "closed bezier fit-path: ~A~%" (not-parsed path)))
   (if (not-parsed path)
       (xparse-path path))
 
@@ -1424,7 +1404,6 @@
 ;;; Transform a Bezier control point fit to a linear segment approximation
 
 (define-method (render-path (path <bezier-path>))
-;  (snd-print (format #f "~%render-path: ~A~%" (not-fitted path)))
   (if (not-fitted path)
       (fit-path path))
   (let ((xrx '()) (xry '()) (xrz '()) (xrv '()))
@@ -1433,17 +1412,11 @@
       ;; Evaluate a point at parameter u in bezier segment
       (let* ((u1 (- 1 u))
 	     (cr (vector (make-vector 3 0.0) (make-vector 3 0.0) (make-vector 3 0.0))))
-
-;	(snd-print (format #f "bpoint ~A ~A~%" u1 c))
-
 	(do ((j 0 (1+ j)))
 	    ((= j 3))
 	  (vector-set! (vector-ref cr 0) j (+ (* u1 (vector-ref (vector-ref c 0) j)) (* u (vector-ref (vector-ref c 0) (+ j 1)))))
 	  (vector-set! (vector-ref cr 1) j (+ (* u1 (vector-ref (vector-ref c 1) j)) (* u (vector-ref (vector-ref c 1) (+ j 1)))))
 	  (vector-set! (vector-ref cr 2) j (+ (* u1 (vector-ref (vector-ref c 2) j)) (* u (vector-ref (vector-ref c 2) (+ j 1))))))
-
-;	(snd-print (format #f "cr: ~A~%" cr))
-
 	(do ((i 1 (1- i)))
 	    ((< i 0))
 	  (do ((j 0 (1+ j)))
@@ -1452,9 +1425,6 @@
 	  (vector-set! (vector-ref cr 0) j (+ (* u1 (vector-ref (vector-ref cr 0) j)) (* u (vector-ref (vector-ref cr 0) (+ j 1)))))
 	  (vector-set! (vector-ref cr 1) j (+ (* u1 (vector-ref (vector-ref cr 1) j)) (* u (vector-ref (vector-ref cr 1) (+ j 1)))))
 	  (vector-set! (vector-ref cr 2) j (+ (* u1 (vector-ref (vector-ref cr 2) j)) (* u (vector-ref (vector-ref cr 2) (+ j 1)))))
-
-;	  (snd-print (format #f "~A ~A cr: ~A~%" i j cr))
-
 	  ))
 	(list (vector-ref (vector-ref cr 0) 0)
 	      (vector-ref (vector-ref cr 1) 0)
@@ -1470,9 +1440,6 @@
 	       (xn (car val1))
 	       (yn (cadr val1))
 	       (zn (caddr val1)))
-
-;	  (snd-print (format #f "~%bern1: ~A ~A ~A ~A ~A ~A~%" x y z xn yn zn))
-
 	  (if (> (distance (- xn x) (- yn y) (- zn z)) err)
 	      (let* ((val2 (berny xl yl zl x y z ul (/ (+ ul u) 2) u c err))
 		     (xi (car val2))
@@ -1482,9 +1449,6 @@
 		       (xj (car val3))
 		       (yj (cadr val3))
 		       (zj (caddr val3)))
-
-;		  (snd-print (format #f "appending ~A ~A ~A~%" xj yj zj))
-
 		  (list (append xi (list x) xj)
 			(append yi (list y) yj)
 			(append zi (list z) zj))))
@@ -1509,9 +1473,6 @@
 	  (reset-transformation path)) ; after?
 	(begin
 	(let ((len (length (bx path))))
-
-;	  (snd-print (format #f "bx(~A): ~A (~A ~A ~A)~%" len (bx path) (by path) (bz path) (v path)))
-
 	  ;(path-x (make-path '((-10 10)(0 5)(10 10))))
 	  ;; render the path only if it has at least two points
 	  (do ((i 0 (1+ i)))
@@ -1527,9 +1488,6 @@
 		   (yf-bz (list-ref y-bz (1- (length y-bz))))
 		   (zi-bz (car z-bz))
 		   (zf-bz (list-ref z-bz (1- (length z-bz)))))
-
-;	      (snd-print (format #f "vi list: ~A~%" (v path)))
-
 	      (let* ((vals (berny xi-bz yi-bz zi-bz xf-bz yf-bz zf-bz 0.0 0.5 1.0 
 				  (vector (apply vector x-bz)
 					  (apply vector y-bz)
@@ -1539,8 +1497,6 @@
 		     (ys (cadr vals))
 		     (zs (caddr vals)))
 
-;		(snd-print (format #f "~A: bern: ~A ~A ~A~%" x-bz xs ys zs))
-
 		;; approximate the bezier curve with linear segments
 		(set! xrx (append xrx (list xi-bz) xs))
 		(set! xry (append xry (list yi-bz) ys))
@@ -1548,9 +1504,6 @@
 
 		;; accumulate intermediate unknown velocities as nils
 		(set! xrv (append xrv (list vi-bz) (make-list (length xs) #f)))
-
-;		(snd-print (format #f "rv: ~A~%" xrv))
-
 		(if (= i (1- len))
 		    (begin
 		      ;; add the last point
@@ -1561,9 +1514,6 @@
 		      ))))))
 
 	  ;; calculate times for each velocity segment
-
-;	(snd-print (format #f "rx etc: ~A ~A ~A ~A~%" xrx xry xrz xrv))
-
 	  (let ((len (1- (length xrx)))
 		(ti 0)
 		(times (list 0))
@@ -1572,18 +1522,12 @@
 		(zseg (list (list-ref xrz 0)))
 		(vseg (list (list-ref xrv 0)))
 		(vi (list-ref xrv 0)))
-
-;	    (snd-print (format #f "vi: ~A, xrv: ~A~%" vi xrv))
-
 	    (do ((i 0 (1+ i)))
 		((= i len))
 	      (let* ((x (list-ref xrx (+ i 1)))
 		     (y (list-ref xry (+ i 1)))
 		     (z (list-ref xrz (+ i 1)))
 		     (v (list-ref xrv (+ i 1))))
-
-;		(snd-print (format #f "v: ~A~%" v))
-
 		(set! xseg (append xseg (list x)))
 		(set! yseg (append yseg (list y)))
 		(set! zseg (append zseg (list z)))
@@ -1629,7 +1573,7 @@
 			  (set! vseg (list v))
 			  (set! vi v)))))
 		))
-;	    (snd-print (format #f "finally"))
+
 	  (set! (rx path) xrx)
 	  (set! (ry path) xry)
 	  (set! (rz path) xrz)
@@ -1641,8 +1585,6 @@
 		     (set! val (cons (/ ti tf) val)))
 		   times)
 		  (reverse val)))
-;	  (snd-print (format #f "rt: ~A~%" (rt path)))
-
 	  (reset-transformation path))))))
 
 ;; (set! p (make-path '((-10 10 0 0) (0 5 0 1) (10 10 0 0)) :error 0.01))
@@ -1720,13 +1662,13 @@
 	      (set! yseg (append yseg (list y)))
 	      (set! zseg (append zseg (list z)))
 	      (set! vseg (append vseg (list v)))
-	      
-	      (if (list? v) ; when v
+
+	      (if (number? v) ; when v
 		  (let* ((sofar 0.0)
 			 (dseg '())
-			 (len (length xseg)))
+			 (len (1- (length xseg))))
 		    (do ((i 0 (1+ i)))
-			((= i n))
+			((= i len))
 		      (let* ((xsi (list-ref xseg i))
 			     (ysi (list-ref yseg i))
 			     (zsi (list-ref zseg i))
@@ -1744,7 +1686,8 @@
 			 (lambda (d)
 			   (set! tseg (cons (+ ti (if (= vf vi)
 						      (/ d vi)
-						      (/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a)))))))
+						      (/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a))))
+					    tseg)))
 			 dseg)
 			(set! ti (car tseg))
 			(set! tseg (reverse tseg))
@@ -1755,9 +1698,6 @@
 			(set! vseg (list v))
 			(set! vi v)))))))
 
-;;; STOPPED HERE
-;;;	  (snd-print (format #f "times: ~A, ti: ~A~%" times ti)) ; -> times: (0 10.0 32.36068), ti: 32.36068
-
 	  (set! (rt path) (let ((val '())
 				(tf (list-ref times (1- (length times)))))
 			    (for-each
@@ -1765,7 +1705,6 @@
 			       (set! val (cons (/ ti tf) val)))
 			     times)
 			    (reverse val)))
-;	  (snd-print (format #f "rt (1765): ~A~%" (rt path)))
 	  (reset-transformation path)))))
 
 ;;;;;;;;;;;
@@ -1844,7 +1783,6 @@
 		 (yf (list-ref y (+ i 1)))
 		 (zi (list-ref z i))
 		 (zf (list-ref z (+ i 1))))
-;	    (snd-print (format #f "~A ~A ~A ~A ~A ~A~%" xi xf yi yf zi zf))
 	    (set! sofar (+ sofar (distance (- xf xi) (- yf yi) (- zf zi))))
 	    (set! dp (cons sofar dp))))
 	(let ((df (car dp)))	
@@ -2102,7 +2040,6 @@
 	       (z (list-ref zcoords (+ i 1))))
 	  (set! dist (+ dist (distance (- x xp) (- y yp) (- z zp))))
 	  (set! now (cons (/ dist velocity) now))))
-;      (snd-print (format #f "now: ~A~%" now))
       (set! now (reverse now))
       (set! (rt path) (append (list start-time) now))
       (set! (tx path) (copy-list (rx path)))
@@ -2130,8 +2067,6 @@
 			      (render-using dlocsig-render-using)
 			      out-channels
 			      rev-channels)
-
-  (snd-print (format #f "~%"))
 
   (if (null? start-time)
       (snd-error "a start time is required in make-dlocsig"))
@@ -2318,7 +2253,6 @@
       (let ((len (speaker-config-number speakers)))
 	(do ((i 0 (1+ i)))
 	    ((= i len))
-;	  (snd-print (format #f "    zero gains: ~A~%" (list time 0.0)))
 	  (vector-set! channel-gains i (cons time (vector-ref channel-gains i)))
 	  (vector-set! channel-gains i (cons 0.0 (vector-ref channel-gains i)))))
       (let ((len rev-channels))
@@ -2339,7 +2273,6 @@
 	     (ratt (if (>= dist inside-radius)
 		       (/ (expt dist reverb-power))
 		       (- 1.0 (expt (/ dist inside-radius) (/ inside-reverb-power))))))
-;      (snd-print (format #f "[~A] push ~A ~A~%" num dist inside-radius))
 	(if (>= dist inside-radius)
 	    ;; outside the inner sphere, signal is sent to group
 	    (let ((len (length gains)))
@@ -2348,7 +2281,9 @@
 		(let ((speaker (list-ref (group-speakers group) i))
 		      (gain (list-ref gains i)))
 		  (vector-set! outputs speaker (* gain att))
-		  (if (> rev-channels 1) (vector-set! rev-outputs speaker (* gain ratt))))))
+		  (if (and (> rev-channels 1)
+			   (< speaker (vector-length rev-outputs)))
+		      (vector-set! rev-outputs speaker (* gain ratt))))))
 
 	    (let ((gain 0.0)
 		  (len (speaker-config-number speakers)))
@@ -2371,13 +2306,14 @@
 	(let ((len (speaker-config-number speakers)))
 	  (do ((i 0 (1+ i)))
 	      ((= i len))
-;	    (snd-print (format #f "    [~D]: ~A~%" i (list time (vector-ref outputs i))))
 	    (vector-set! channel-gains i (cons time (vector-ref channel-gains i)))
-	    (vector-set! channel-gains i (cons (vector-ref outputs i) (vector-ref channel-gains i)))
-	    (if (> rev-channels 1)
-		(begin
-		  (vector-set! channel-rev-gains i (cons time (vector-ref channel-rev-gains i)))
-		  (vector-set! channel-rev-gains i (cons (vector-ref rev-outputs i) (vector-ref channel-rev-gains i)))))))
+	    (vector-set! channel-gains i (cons (vector-ref outputs i) (vector-ref channel-gains i)))))
+
+	(if (> rev-channels 1)
+	    (do ((i 0 (1+ i)))
+		((= i rev-channels))
+	      (vector-set! channel-rev-gains i (cons time (vector-ref channel-rev-gains i)))
+	      (vector-set! channel-rev-gains i (cons (vector-ref rev-outputs i) (vector-ref channel-rev-gains i)))))
 
 	;; push reverb gain into envelope for mono reverb
 	(if (= rev-channels 1)
@@ -2387,7 +2323,6 @@
 
     ;; Render a trajectory breakpoint through amplitude panning
     (define (famplitude-panning x y z dist time q)
-;      (snd-print (format #f "dist: ~A, prev-dist: ~A, time: ~A~%" dist prev-dist time))
       ;; output gains for current point
       (if prev-group
 	  (let* ((vals (calculate-gains x y z prev-group))
@@ -2676,10 +2611,6 @@
     (define (walk-all-rooms x y z time num)
       (let ((room 0)
 	    (dist (distance x y z)))
-
-;	(snd-print (format #f "walk time: ~A~%" time))
-;	(snd-print (format #f "walk [~D] dist: ~A {~A ~A ~A}~%" num dist x y z))
-
 	;; remember first and last distances
 	(if (not first-dist) ; set to #f (far) above
 	    (set! first-dist dist))
@@ -2713,7 +2644,6 @@
     ;;   doppler shift that has to be reflected as a new
     ;;   point in the rendered envelopes
     (define (change-direction xa ya za ta xb yb zb tb num)
-;      (snd-print (format #f "change dir[~D]: ~A ~A ~A~%" num xb yb zb))
       (walk-all-rooms xa ya za ta 1)
       (if (or (not (= xa xb))
 	      (not (= ya yb))
@@ -2723,7 +2653,6 @@
 		 (xi (car vals))
 		 (yi (cadr vals))
 		 (zi (caddr vals)))
-;	    (snd-print (format #f "nearest: ~A ~A ~A~%" xi yi zi))
 	    (if (and (if (< xa xb) (<= xa xi xb) (<= xb xi xa))
 		     (if (< ya yb) (<= ya yi yb) (<= yb yi ya))
 		     (if (< za zb) (<= za zi zb) (<= zb zi za)))
@@ -2791,7 +2720,6 @@
     ;;   the amplitude envelope as a linear function that does not reflect
     ;;   the chosen power function (1/d^n)
     (define (fminimum-segment-length xa ya za ta xb yb zb tb)
-;      (snd-print (format #f "min seglen: ~A ~A ~A ~A ~A ~A ~A ~A~%" xa ya za ta xb yb zb tb))
       (let* ((dist (distance (- xb xa) (- yb ya) (- zb za))))
 	(if (< dist minimum-segment-length)
 	    (intersects-inside-radius xa ya za ta xb yb zb tb)
@@ -2812,7 +2740,6 @@
 
 	;; moving source
 	(let ((len (1- (min (length xpoints) (length ypoints) (length zpoints) (length tpoints)))))
-	  (snd-print (format #f "timepoints: ~A~%" tpoints))
 	  (do ((i 0 (1+ i)))
 	      ((>= i len))
 	    (let* ((xa (list-ref xpoints i))
@@ -2861,7 +2788,6 @@
 				(if (not unity-gain-dist)                ; defaults to #f above
 				    (expt min-dist-unity reverb-power)
 				    1.0))))
-;    (snd-print (format #f "unity gain: ~A ~A ~A~%" unity-gain unity-gain-dist direct-power))
     (list 
     (make-move-sound
      ;; return runtime structure with all the information
@@ -2917,6 +2843,8 @@
 
 (define dlocsig move-sound)
 
+#|
+
 ;(define hi (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f :error 0.001))
 ;(make-dlocsig 0 1.0 :out-channels 2 :rev-channels 0 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f))
 
@@ -2929,7 +2857,6 @@
 	 (dloc (car vals))
 	 (beg (cadr vals))
 	 (end (caddr vals)))
-    (snd-print (format #f "dlocs: ~A~%" (mus-describe dloc)))
     (let* ((osc (make-oscil :frequency freq))
 	   (aenv (make-env :envelope amp-env :scaler amp :duration duration)))
       (run
@@ -2938,187 +2865,8 @@
 	     ((= i end))
 	   (dlocsig dloc i (* (env aenv) (oscil osc)))))))))
 
-#|
 ;(with-sound (:channels 2) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
 
-(define* (report-segments :optional snd chn)
-  (let* ((rd (make-sample-reader 0 snd chn))
-	 (len (frames snd chn))
-	 (seglen (inexact->exact (round (/ len 50))))
-	 (segctr 0)
-	 (segmax 0.0))
-    (do ((i 0 (1+ i)))
-	((= i len))
-      (let ((samp (abs (rd))))
-	(if (> samp segmax) (set! segmax samp))
-	(set! segctr (1+ segctr))
-	(if (>= segctr seglen)
-	    (begin
-	      (set! segctr 0)
-	      (snd-print (format #f "~1,3F " segmax))
-	      (set! segmax 0.0)))))))
-
-(define fneq (lambda (a b) (> (abs (- a b)) .001)))
-
-(define* (check-segments vals :optional snd chn)
-  (let* ((rd (make-sample-reader 0 snd chn))
-	 (len (frames snd chn))
-	 (seglen (inexact->exact (round (/ len 50))))
-	 (segctr 0)
-	 (segmax 0.0)
-	 (valctr 0)
-	 (unhappiest 0.0)
-	 (unhappiestseg 0)
-	 (unhappy 0)
-	 (alldone #f))
-    (do ((i 0 (1+ i)))
-	((or alldone (= i len)))
-      (let ((samp (abs (rd))))
-	(if (> samp segmax) (set! segmax samp))
-	(set! segctr (1+ segctr))
-	(if (>= segctr seglen)
-	    (begin
-	      (set! segctr 0)
-	      (if (fneq segmax (vector-ref vals valctr))
-		  (begin
-		    ;(if (< unhappy 2)
-		    (snd-print (format #f "seg ~D differs: ~A ~A~%" valctr segmax (vector-ref vals valctr)));)
-		    (let ((hdiff (abs (- segmax (vector-ref vals valctr)))))
-		      (if (> hdiff unhappiest)
-			  (begin
-			    (set! unhappiestseg valctr)
-			    (set! unhappiest hdiff))))
-		    (set! unhappy (1+ unhappy))))
-	      (set! valctr (1+ valctr))
-	      (if (>= valctr (vector-length vals)) (set! alldone #t))
-	      (set! segmax 0.0)))))
-    (if (> unhappy 0)
-	(snd-print (format #f "unhappiest: ~A ~A~%" unhappiestseg unhappiest)))))
-
-(with-sound (:channels 2) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
-
-(check-segments (vector .000 .000 .000 .010 .011 .012 .013 .014 .015 .017 .018 
-			.020 .023 .025 .029 .033 .039 .046 .055 .068 .088 .122 
-			.182 .301 .486 .477 .402 .160 .000 .000 .000 .000 .000 
-			.000 .000 .000 .001 .001 .002 .002 .002 .002 .002 .003 
-			.003 .003 .003 .003 .003)
-		0 0)
-
-(check-segments (vector .000 .000 .000 .003 .003 .003 .003 .003 .003 .003 .003 
-			.003 .003 .003 .003 .003 .003 .003 .003 .002 .002 .002 
-			.007 .036 .168 .386 .487 .497 .000 .000 .000 .000 .000 
-			.000 .000 .015 .033 .031 .027 .024 .021 .019 .018 .016 
-			.015 .014 .013 .012 .011)
-		0 1)
-
-(with-sound (:channels 4) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
-
-(check-segments (vector .000 .000 .000 .011 .011 .012 .013 .014 .015 .017 .018 
-			.020 .023 .025 .029 .033 .038 .045 .054 .066 .086 .118 
-			.178 .300 .499 .497 .399 .079 .000 .000 .000 .000 .000 
-			.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-			.000 .000 .000 .000 .000)
-		0 0)
-
-(check-segments (vector .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-			.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-			.000 .000 .052 .376 .499 .496 .339 .184 .122 .087 .068 
-			.055 .046 .039 .034 .030 .026 .023 .021 .019 .018 .016
-			.015 .014 .013 .012 .011)
-		0 1)
-
-(check-segments (vector .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-			.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-			.000 .000 .036 .160 .166 .122 .111 .078 .054 .037 .027 
-			.020 .015 .012 .009 .007 .006 .005 .004 .003 .002 .002 
-			.001 .001 .001 .001 .000)
-		0 2)
-
-(check-segments (vector .000 .000 .000 .000 .000 .001 .001 .001 .001 .002 .002 
-			.002 .003 .004 .005 .006 .007 .009 .012 .016 .022 .030 
-			.041 .048 .045 .160 .166 .079 .000 .000 .000 .000 .000 
-			.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-			.000 .000 .000 .000 .000)
-		0 3)
-
-
-(with-sound (:channels 8) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
-
-.000 .000 .000 .007 .007 .008 .008 .008 .009 .009 .010 .010 .011 .011 .012 .012 .013 .014 .015 .017 .021 .028 .050 .128 .382 .495 .389 .078 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-
-.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .036 .356 .497 .322 .042 .000 .000 .001 .003 .005 .006 .007 .007 .008 .008 .008 .008 .008 .008 .008 .008 .008 .007 .007 .007 
-
-.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .036 .163 .397 .480 .353 .197 .133 .095 .073 .058 .048 .040 .034 .030 .026 .023 .020 .018 .016 .014 .013 .011 .010 .009 .009 
-
-.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .036 .163 .169 .078 .003 .005 .004 .001 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-
-.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .036 .163 .169 .078 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-
-.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .036 .163 .169 .078 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-
-.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .036 .163 .169 .078 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-
-.000 .000 .000 .008 .009 .010 .010 .012 .013 .014 .016 .018 .020 .023 .027 .031 .036 .044 .053 .066 .086 .118 .175 .273 .377 .315 .169 .078 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-
-
-
-(with-sound (:channels 4) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #t)))
-.000 .000 .000 .011 .011 .012 .013 .014 .015 .017 .018 .020 .023 .025 .029 .033 .038 .045 .054 .066 .086 .118 .178 .300 .499 .497 .399 .079 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-
-.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .052 .376 .499 .496 .339 .184 .122 .087 .068 .055 .046 .039 .034 .030 .026 .023 .021 .019 .018 .016 .015 .014 .013 .012 .011 
-
-.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .036 .160 .166 .122 .111 .078 .054 .037 .027 .020 .015 .012 .009 .007 .006 .005 .004 .003 .002 .002 .001 .001 .001 .001 .000 
-
-.000 .000 .000 .000 .000 .001 .001 .001 .001 .002 .002 .002 .003 .004 .005 .006 .007 .009 .012 .016 .022 .030 .041 .048 .045 .160 .166 .079 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-
-
-(with-sound (:channels 4 :reverb jc-reverb) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :error .001 :3d #f)))
-
-.000 .011 .012 .014 .017 .020 .025 .036 .046 .070 .114 .261 .505 .453 .006 .006 .008 .007 .012 .034 .035 .027 .022 .022 .018 .040 .041 .032 .050 .044 .049 .037 .037 .040 .040 .033 .027 .028 .032 .029 .017 .020 .018 .015 .013 .011 .011 .017 .018 .015 
-
-.000 .000 .000 .000 .000 .000 .000 .004 .006 .008 .008 .007 .316 .503 .373 .130 .073 .052 .040 .050 .034 .026 .023 .022 .030 .040 .041 .032 .050 .044 .049 .037 .037 .040 .040 .033 .027 .028 .032 .029 .017 .020 .018 .015 .013 .011 .011 .017 .018 .015 
-
-.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .150 .173 .120 .058 .029 .017 .010 .006 .004 .003 .002 .001 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-
-.000 .000 .000 .001 .001 .002 .004 .006 .009 .015 .028 .049 .150 .173 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-
-
-(with-sound (:channels 2) (sinewave 0 1.0 440 .5 :path (make-path :path '((-10 10 0 1) (0 5 0 0) (10 10 10 1)) :3d #t)))
-
-.000 .000 .116 .125 .136 .148 .161 .175 .190 .206 .223 .241 .260 .278 .296 .313 .329 .342 .353 .361 .367 .370 .371 .370 .368 .367 .365 .362 .360 .358 .353 .354 .333 .288 .240 .196 .158 .127 .104 .085 .071 .060 .051 .045 .039 .035 .031 .028 .025 
-
-.000 .000 .031 .035 .039 .044 .049 .056 .064 .074 .085 .097 .113 .129 .148 .168 .190 .212 .233 .254 .272 .290 .304 .316 .328 .333 .336 .340 .344 .346 .350 .363 .370 .367 .352 .326 .295 .265 .237 .212 .191 .171 .155 .141 .128 .117 .108 .100 .092 
-
-
-(with-sound (:channels 4) (sinewave 0 1.0 440 .5 :path (make-spiral-path :total-angle 360)))
-
-.351 .304 .256 .200 .145 .084 .024 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .057 .115 .174 .232 .282 .331 .373 .411 .443 .467 .485 .496 .499 .499 .494 .482 .462 .436 
-
-.393 .426 .455 .476 .491 .498 .500 .497 .489 .474 .451 .421 .386 .343 .298 .246 .189 .134 .073 .014 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .006 .068 .126 .185 .239 .292 
-
-.000 .000 .000 .000 .000 .000 .034 .096 .153 .211 .266 .314 .360 .398 .432 .460 .480 .493 .499 .500 .496 .486 .470 .445 .416 .378 .335 .289 .236 .182 .123 .061 .002 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-
-.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .045 .107 .164 .221 .272 .323 .368 .405 .438 .463 .483 .495 .499 .499 .495 .485 .466 .440 .409 .371 .328 .279 .225 .171 .111 .053 .000 .000 .000 .000 .000 
-
-
-(with-sound (:channels 8) (sinewave 0 3.0 440 .5 :path (make-spiral-path :turns 3)))
-
-.350 .010 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .099 .429 .500 .493 .280 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .168 .465 .500 .480 .214 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .235 .486 .499 
-
-.499 .500 .378 .042 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .069 .408 .500 .497 .320 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .129 .447 .499 .488 .248 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .201 
-
-.000 .319 .497 .500 .408 .070 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .036 .377 .500 .499 .351 .015 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .097 .429 .500 .493 .289 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-
-.000 .000 .000 .279 .493 .500 .430 .101 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .009 .348 .498 .500 .385 .043 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .068 .402 .500 .497 .321 .000 .000 .000 .000 .000 .000 .000 .000 .000 
-
-.000 .000 .000 .000 .000 .245 .487 .499 .452 .138 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .311 .496 .500 .409 .071 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .034 .376 .500 .499 .352 .018 .000 .000 .000 .000 .000 .000 
-
-.000 .000 .000 .000 .000 .000 .000 .204 .478 .500 .467 .171 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .278 .493 .500 .431 .108 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .008 .347 .498 .500 .386 .044 .000 .000 .000 .000 
-
-.000 .000 .000 .000 .000 .000 .000 .000 .000 .170 .466 .500 .478 .212 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .243 .486 .499 .453 .139 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .309 .496 .500 .411 .074 .000 .000 
-
-.000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .137 .448 .499 .488 .246 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .202 .477 .500 .467 .173 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 .276 .493 .500 .436 .109 
-
-
-(with-sound (:channels 4) (sinewave 0 1.0 440 .5 :path (make-literal-path '((-10 10) (10 10)) :polar #f)))
 |#
+
+

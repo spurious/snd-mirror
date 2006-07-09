@@ -4622,7 +4622,8 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
 			   XEN_TO_C_INT(XEN_LIST_REF(dloc_list, 3)),                             /* rev chans */
 			   XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 4)),                           /* doppler delay */
 			   XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 5)),                           /* doppler env */
-			   XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 6)),                           /* global reverb env */
+			   (MUS_XEN_P(XEN_LIST_REF(dloc_list, 6))) ? XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 6)) : NULL,                           
+			                                                                         /* global reverb env */
 			   out_delays = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 7)), /* out delays */
 			   out_envs = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 8)),   /* out envs */
 			   rev_envs = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 9)),   /* rev envs */

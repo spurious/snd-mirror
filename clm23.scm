@@ -683,6 +683,30 @@
        (do ((i start (1+ i))) ((= i end))
 	 (move-sound loc i (* amp (oscil os))))))))
 
+(define (simple-dloc-4 beg dur freq amp)
+  (let* ((os (make-oscil freq))
+	 (start (floor (* beg (mus-srate))))
+	 (end (+ start (floor (* dur (mus-srate)))))
+	 (loc (make-move-sound (list start end 4 0
+				     (make-delay 12) 
+				     (make-env '(0 0 10 1) :duration dur)
+				     #f
+				     (make-vector 4 #f)
+				     (vector (make-env '(0 0 1 1 2 0 3 0 4 0) :duration dur)
+					     (make-env '(0 0 1 0 2 1 3 0 4 0) :duration dur)
+					     (make-env '(0 0 1 0 2 0 3 1 4 0) :duration dur)
+					     (make-env '(0 0 1 0 2 0 3 0 4 1) :duration dur))
+				     #f
+				     (vector 0 1 2 3))
+			       *output*)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (move-sound loc i (* amp (oscil os))))))))
+
+;(with-sound (:channels 4 :output "temp.snd") (simple-dloc-4 0 2 440 .5))
+
 (define (simple-dup beg dur freq amp)
   (let* ((os (make-oscil freq))
 	 (j 2)

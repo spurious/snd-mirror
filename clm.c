@@ -6587,10 +6587,7 @@ void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
  *   either -- I'm trying to use verbs where possible.
  */
 
-/* TODO: test (basic stuff, snd-test gen, run clm-test, etc), memchecks, valgrind, snd-run opts
- *           args, descr, chans+-rev, spkr, old style
- *       scheme (restore path -> gnunplot or use .rb case) (need good example for clm.html)
- *       c: should mus-data return something?
+/* TODO: test clm-test
  *       c: is _mus_wrap_no_vcts correct for the wrapper?
  *       c: type error checks in clm2xen dloc-list
  *       rb: update dlocsig.rb (787, l788)
