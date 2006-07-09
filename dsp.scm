@@ -462,6 +462,8 @@
 ;(rotate-phase (lambda (x) (random 3.1415))) randomizes phases
 ;(rotate-phase (lambda (x) x)) returns original
 ;(rotate-phase (lambda (x) (- x))) reverses original (might want to write fftlen samps here)
+;(rotate-phase (lambda (x) (* x 2))) reverb-effect (best with voice)
+;(rotate-phase (lambda (x) (* x 12)) "bruise blood" effect
 
 
 ;;; -------- asymmetric FM (bes-i0 case)

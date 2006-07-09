@@ -1268,7 +1268,10 @@ use this for VOSIM and other related techniques.</p>
 <p><b>rand</b> returns a sequence of random numbers between -amplitude and
 amplitude (it produces a sort of step function).
 <b>rand-interp</b> interpolates between successive
-random numbers. Lisp's function <i>random</i> returns a number between 0.0 and its argument.
+random numbers;
+it could be defined as (<a class=quiet href="#average">average</a> agen (rand rgen)) where the
+averager has the same period (length) as the rand.  
+Lisp's function <i>random</i> returns a number between 0.0 and its argument.
 In both cases, the <i>envelope</i> argument determines the random number distribution.
 <b>centered-random</b> returns a number between -<i>amp</i> and <i>amp</i>.
 <b>clm-random</b> returns a random number between 0 and <i>amp</i>. In the latter two cases,
@@ -1334,6 +1337,7 @@ If you already have the distribution table (the result of <code>(inverse-integra
 you can pass it through the <i>distribution</i> argument.  Here is gaussian noise
 using the distribution argument (this is Scheme, but the CL version should be self-evident):
 </p>
+<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (define (gaussian-envelope s)
   (let ((e '())
@@ -1348,6 +1352,7 @@ using the distribution argument (this is Scheme, but the CL version should be se
 
 (<em class=red>make-rand</em> :envelope (gaussian-envelope 1.0))
 </pre>
+</td></tr></table>
 
 <p>
 You can, of course, filter the output of rand to get a different
@@ -1358,6 +1363,7 @@ sum together n rand's, where each rand is running an octave slower
 than the preceding:
 </p>
 
+<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (defun make-1f-noise (n)
   ;; returns an array of rand's ready for the 1f-noise generator
@@ -1371,6 +1377,7 @@ than the preceding:
      (dotimes (i len) (incf val (<em class=red>rand</em> (aref ,rans i))))
      (/ val len)))
 </pre>
+</td></tr></table>
 
 <p>See also <a href="green.cl">green.cl</a> (bounded brownian noise that can mimic 1/f noise in some cases).
 And we can't talk about noise without mentioning fractals:</p>
@@ -1419,9 +1426,19 @@ Another instrument based on similar ideas is:</p>
 </td></tr></table>
 
 <p>which gives brass-like sounds!
-rand-interp could be defined as (<a class=quiet href="#average">average</a> agen (rand rgen)) where the
-averager has the same period (length) as the rand.
+We can even get noise from a single call on "sin":
 </p>
+<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+(define (make-sin-rand) 
+  (let ((x 1.0)) 
+    (lambda () 
+      (let ((nx (sin (* 100 pi x)))) ; lower "index" emphasizes high freqs
+        (set! x nx)                  ; feedback
+        nx))))
+</pre>
+</td></tr></table>
+
 <br>
 
 
