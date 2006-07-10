@@ -109,11 +109,11 @@
 (define names-290 '())
 (define strings-290 '())
 
-(define funcs-29x '())
-(define strings-29x '())
-(define ints-29x '())
-(define names-29x '())
-(define types-29x '())
+(define funcs-210 '())
+(define strings-210 '())
+(define ints-210 '())
+(define names-210 '())
+(define types-210 '())
 
 (define all-types '())
 (define all-check-types '())
@@ -398,8 +398,11 @@
 							      (if (or (eq? extra 'callback-290)
 								      (eq? extra '290))
 								  (set! types-290 (cons type types-290))
-								  (if (not (member type types))
-								      (set! types (cons type types))))))))))))))
+								  (if (or (eq? extra 'callback-210)
+									  (eq? extra '210))
+								      (set! types-210 (cons type types-210))
+								      (if (not (member type types))
+									  (set! types (cons type types)))))))))))))))
 			(set! type #f))
 		      (if (> i (1+ sp))
 			  (set! type (substring args (1+ sp) i))))
@@ -599,11 +602,13 @@
 			     "void"
 			     "clip_rich_text_received"
 			     (parse-args "GtkClipboard* clipboard GdkAtom format guint8* text gsize length lambda_data func_data" 'callback); 'callback-290)
+			     ;; guint8* is const
 			     'permanent)
 		       (list 'GtkRecentFilterFunc
 			     "gboolean"
 			     "recent_filter"
 			     (parse-args "GtkRecentFilterInfo* filter_info lambda_data func_data" 'callback-290)
+			     ;; const filter info
 			     'permanent)
 		       (list 'GtkTreeViewSearchPositionFunc
 			     "void"
@@ -619,6 +624,7 @@
 			     "void"
 			     "link_button_uri"
 			     (parse-args "GtkLinkButton* button gchar* link lambda_data func_data" 'callback-290)
+			     ;; const gchar *link
 			     'permanent)
 		       (list 'GtkRecentSortFunc
 			     "gint"
@@ -809,6 +815,7 @@
 	(cons "GtkRecentChooserError" "INT")
 	(cons "GtkRecentFilterFlags" "INT")
 	(cons "GtkRecentManagerError" "INT")
+	(cons "GtkTreeViewGridLines" "INT")
 
 	))
 
@@ -1074,20 +1081,20 @@
 		(set! funcs-290 (cons (list name type strs args) funcs-290)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-29x data #:optional spec)
+(define* (CFNC-210 data #:optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
-	(no-way "CFNC-29x: ~A~%" (list name data))
+	(no-way "CFNC-210: ~A~%" (list name data))
 	(let ((type (car-str data)))
 	  (if (not (member type all-types))
 	      (begin
 		(set! all-types (cons type all-types))
-		(set! types-29x (cons type types-29x))))
-	  (let ((strs (parse-args args '29x)))
+		(set! types-210 (cons type types-210))))
+	  (let ((strs (parse-args args '210)))
 	    (if spec
-		(set! funcs-29x (cons (list name type strs args spec) funcs-29x))
-		(set! funcs-29x (cons (list name type strs args) funcs-29x)))
+		(set! funcs-210 (cons (list name type strs args spec) funcs-210))
+		(set! funcs-210 (cons (list name type strs args) funcs-210)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
 (define (helpify name type args)
@@ -1163,12 +1170,12 @@
 	(set! strings-290 (cons name strings-290))
 	(set! names-290 (cons (cons name 'string) names-290)))))
 
-(define (CSTR-29x name)
-  (if (assoc name names-29x)
-      (no-way "~A CSTR-29x~%" name)
+(define (CSTR-210 name)
+  (if (assoc name names-210)
+      (no-way "~A CSTR-210~%" name)
       (begin
-	(set! strings-29x (cons name strings-29x))
-	(set! names-29x (cons (cons name 'string) names-29x)))))
+	(set! strings-210 (cons name strings-210))
+	(set! names-210 (cons (cons name 'string) names-210)))))
 
 (define (CDBL name)
   (if (assoc name names)
@@ -1309,12 +1316,12 @@
 	(set! ints-290 (cons name ints-290))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-29x name #:optional type)
+(define* (CINT-210 name #:optional type)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CINT-29x~%" name)
+      (no-way "~A CINT-210~%" name)
       (begin
-	(set! ints-29x (cons name ints-29x))
+	(set! ints-210 (cons name ints-210))
 	(set! names (cons (cons name 'int) names)))))
 
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
@@ -1557,6 +1564,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-210 dpy thunk)
+  (dpy "#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 
 
 ;;; ---------------------------------------- write output files ----------------------------------------
@@ -1565,16 +1577,17 @@
 (hey " *   needs xen.h~%")
 (hey " *~%")
 (hey " *   compile-time flags:~%")
-(hey " *     HAVE_GDK_DRAW_PIXBUF for gtk 2.1 additions~%")
-(hey " *     HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION for gtk 2.2~%")
-(hey " *     HAVE_GTK_FILE_CHOOSER_DIALOG_NEW for gtk 2.3~%")
-(hey " *     HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME for gtk 2.3.6~%")
-(hey " *     HAVE_GTK_ABOUT_DIALOG_NEW for gtk 2.5.0~%")
-(hey " *     HAVE_GDK_PANGO_RENDERER_NEW for gtk 2.5.6~%")
-(hey " *     HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION for gtk 2.6.0~%")
-(hey " *     HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION for gtk 2.7.0~%")
-(hey " *     HAVE_GTK_TREE_VIEW_GET_VISIBLE_RANGE for gtk 2.7.3~%")
-(hey " *     HAVE_GTK_LINK_BUTTON_NEW for gtk 2.9.0~%")
+(hey " *     HAVE_GDK_DRAW_PIXBUF for 2.1~%")
+(hey " *     HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION for 2.2~%")
+(hey " *     HAVE_GTK_FILE_CHOOSER_DIALOG_NEW for 2.3~%")
+(hey " *     HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME for 2.3.6~%")
+(hey " *     HAVE_GTK_ABOUT_DIALOG_NEW for 2.5.0~%")
+(hey " *     HAVE_GDK_PANGO_RENDERER_NEW for 2.5.6~%")
+(hey " *     HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION for 2.6.0~%")
+(hey " *     HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION for 2.7.0~%")
+(hey " *     HAVE_GTK_TREE_VIEW_GET_VISIBLE_RANGE for 2.7.3~%")
+(hey " *     HAVE_GTK_LINK_BUTTON_NEW for 2.9.0~%")
+(hey " *     HAVE_GTK_LABEL_GET_LINE_WRAP_MODE for 2.10.0~%")
 (hey " *~%")
 (hey " * reference args initial values are usually ignored, resultant values are returned in a list.~%")
 (hey " * null ptrs are passed and returned as #f, trailing \"user_data\" callback function arguments are optional (default: #f).~%")
@@ -1609,7 +1622,6 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
-(hey " *     12-May:    2.9.0~%")
 (hey " *     21-Apr:    Gauche support.~%")
 (hey " *     29-Mar:    Forth support.~%")
 (hey " *     7-Mar:     if g_set_error, return the error message, not the GError pointer~%")
@@ -1914,6 +1926,12 @@
 	       (for-each type-it (reverse types-290))
 	       )))
 
+(if (not (null? types-210))
+    (with-210 hey
+	     (lambda ()
+	       (for-each type-it (reverse types-210))
+	       )))
+
 (hey "#define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))~%")
 (hey "#define XLI(a, b) XEN_TO_C_INT(XEN_LIST_REF(a, b))~%")
 (hey "#define XLG(a, b) XEN_TO_C_GType(XEN_LIST_REF(a, b))~%")
@@ -2031,12 +2049,15 @@
 		  ;; ctr is 0-based here
 		  (if (or (and (or (eq? fname 'GtkClipboardTextReceivedFunc)
 				   (eq? fname 'GtkAccelMapForeach)
-				   (eq? fname 'GtkEntryCompletionMatchFunc))
+				   (eq? fname 'GtkEntryCompletionMatchFunc)
+				   (eq? fname 'GtkLinkButtonUriFunc))
 			       (= ctr 1))
 			  (and (or (eq? fname 'GtkTreeViewSearchEqualFunc)
-				   (eq? fname 'GLogFunc))
+				   (eq? fname 'GLogFunc)
+				   (eq? fname 'GtkClipboardRichTextReceivedFunc))
 			       (= ctr 2))
 			  (and (or (eq? fname 'GtkFileFilterFunc)
+				   (eq? fname 'GtkRecentFilterFunc)
 				   (eq? fname 'GLogFunc))
 			       (= ctr 0)))
 		      (hey "const "))
@@ -2525,6 +2546,7 @@
 (if (not (null? funcs-270)) (with-270 hey (lambda () (for-each handle-func (reverse funcs-270)))))
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each handle-func (reverse funcs-273)))))
 (if (not (null? funcs-290)) (with-290 hey (lambda () (for-each handle-func (reverse funcs-290)))))
+(if (not (null? funcs-210)) (with-210 hey (lambda () (for-each handle-func (reverse funcs-210)))))
 
 
 (hey "#define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))~%~%")
@@ -2868,6 +2890,7 @@
 (if (not (null? funcs-270)) (with-270 hey (lambda () (for-each argify-func (reverse funcs-270)))))
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each argify-func (reverse funcs-273)))))
 (if (not (null? funcs-290)) (with-290 hey (lambda () (for-each argify-func (reverse funcs-290)))))
+(if (not (null? funcs-210)) (with-210 hey (lambda () (for-each argify-func (reverse funcs-210)))))
 
 (define (ruby-cast func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (hey "XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)~%")
@@ -2973,6 +2996,7 @@
 (if (not (null? funcs-270)) (with-270 hey (lambda () (for-each unargify-func (reverse funcs-270)))))
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each unargify-func (reverse funcs-273)))))
 (if (not (null? funcs-290)) (with-290 hey (lambda () (for-each unargify-func (reverse funcs-290)))))
+(if (not (null? funcs-210)) (with-210 hey (lambda () (for-each unargify-func (reverse funcs-210)))))
 
 (hey "#define gxg_GPOINTER_w gxg_GPOINTER~%")
 (hey "#define c_array_to_xen_list_w c_array_to_xen_list~%")
@@ -3100,6 +3124,7 @@
 (if (not (null? funcs-270)) (with-270 hey (lambda () (for-each defun (reverse funcs-270)))))
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each defun (reverse funcs-273)))))
 (if (not (null? funcs-290)) (with-290 hey (lambda () (for-each defun (reverse funcs-290)))))
+(if (not (null? funcs-210)) (with-210 hey (lambda () (for-each defun (reverse funcs-210)))))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) casts obj to ~A\");~%" 
@@ -3229,6 +3254,8 @@
     (with-273 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-273)))))
 (if (not (null? ints-290))
     (with-290 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-290)))))
+(if (not (null? ints-210))
+    (with-210 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-210)))))
 
 
 (for-each 
@@ -3293,6 +3320,8 @@
     (with-273 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-273)))))
 (if (not (null? strings-290))
     (with-290 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-290)))))
+(if (not (null? strings-210))
+    (with-210 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-210)))))
 (hey "}~%~%")
 
 
@@ -3343,11 +3372,3 @@
 ;   (if (not (member (car v) declared-types))
 ;       (display (format #f "~A " (car v)))))
 ; direct-types)
-
-#!
-SOMEDAY: fix these const args somehow
-xg.c: In function 'gxg_gtk_clipboard_request_rich_text':
-xg.c:25580: warning: passing argument 3 of 'gtk_clipboard_request_rich_text' from incompatible pointer type
-xg.c: In function 'gxg_gtk_recent_filter_add_custom':
-xg.c:26549: warning: passing argument 3 of 'gtk_recent_filter_add_custom' from incompatible pointer type
-!#

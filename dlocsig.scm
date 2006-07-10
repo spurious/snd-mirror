@@ -2842,7 +2842,7 @@
 ;;; Run macro to localize samples
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define dlocsig move-sound)
+(define (dlocsig a b c) (move-sound a b c)) ; use this form for run's benefit
 
 #|
 

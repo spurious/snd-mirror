@@ -6581,18 +6581,11 @@ void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
 
 
 /* ---------------- move-sound ---------------- */
-/* 
- * this is the run-time portion of dlocsig.
- *   I first was going to call it moving-locsig, but that collides with move_locsig above,
- *   and I want to get away from these cryptic names.  But moving-sound is not right
- *   either -- I'm trying to use verbs where possible.
- */
 
-/* TODO: test clm-test
- *       c: is _mus_wrap_no_vcts correct for the wrapper?
- *       c: type error checks in clm2xen dloc-list
- *       rb: update dlocsig.rb (787, l788)
- *       cl: figure out the gc problem
+/* TODO: move-sound c: is _mus_wrap_no_vcts correct for the wrapper?
+ * TODO: move-sound c: type error checks in clm2xen dloc-list
+ * TODO: move-sound rb: update dlocsig.rb (787, l788)
+ * TODO: move-sound cl: figure out the gc problem (and move-sound?)
  */
 
 typedef struct {

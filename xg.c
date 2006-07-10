@@ -3,16 +3,17 @@
  *   needs xen.h
  *
  *   compile-time flags:
- *     HAVE_GDK_DRAW_PIXBUF for gtk 2.1 additions
- *     HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION for gtk 2.2
- *     HAVE_GTK_FILE_CHOOSER_DIALOG_NEW for gtk 2.3
- *     HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME for gtk 2.3.6
- *     HAVE_GTK_ABOUT_DIALOG_NEW for gtk 2.5.0
- *     HAVE_GDK_PANGO_RENDERER_NEW for gtk 2.5.6
- *     HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION for gtk 2.6.0
- *     HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION for gtk 2.7.0
- *     HAVE_GTK_TREE_VIEW_GET_VISIBLE_RANGE for gtk 2.7.3
- *     HAVE_GTK_LINK_BUTTON_NEW for gtk 2.9.0
+ *     HAVE_GDK_DRAW_PIXBUF for 2.1
+ *     HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION for 2.2
+ *     HAVE_GTK_FILE_CHOOSER_DIALOG_NEW for 2.3
+ *     HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME for 2.3.6
+ *     HAVE_GTK_ABOUT_DIALOG_NEW for 2.5.0
+ *     HAVE_GDK_PANGO_RENDERER_NEW for 2.5.6
+ *     HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION for 2.6.0
+ *     HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION for 2.7.0
+ *     HAVE_GTK_TREE_VIEW_GET_VISIBLE_RANGE for 2.7.3
+ *     HAVE_GTK_LINK_BUTTON_NEW for 2.9.0
+ *     HAVE_GTK_LABEL_GET_LINE_WRAP_MODE for 2.10.0
  *
  * reference args initial values are usually ignored, resultant values are returned in a list.
  * null ptrs are passed and returned as #f, trailing "user_data" callback function arguments are optional (default: #f).
@@ -44,7 +45,6 @@
  *     win32-specific functions
  *
  * HISTORY:
- *     12-May:    2.9.0
  *     21-Apr:    Gauche support.
  *     29-Mar:    Forth support.
  *     7-Mar:     if g_set_error, return the error message, not the GError pointer
@@ -334,6 +334,7 @@ static void define_xm_obj(void)
 #define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)
 #define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr
 #define XEN_lambda_data_P(Arg) 1
+#define C_TO_XEN_GtkTreeViewSearchPositionFunc(Arg) WRAP_FOR_XEN("GtkTreeViewSearchPositionFunc", Arg)
 #define C_TO_XEN_GtkTreeViewSearchEqualFunc(Arg) WRAP_FOR_XEN("GtkTreeViewSearchEqualFunc", Arg)
 #define C_TO_XEN_GtkLinkButtonUriFunc(Arg) WRAP_FOR_XEN("GtkLinkButtonUriFunc", Arg)
 #define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)
@@ -976,9 +977,9 @@ XM_TYPE_PTR(GtkRecentInfo_, GtkRecentInfo*)
 #define C_TO_XEN_GtkSensitivityType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkSensitivityType(Arg) (GtkSensitivityType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkSensitivityType_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_1(GDestroyNotify, GDestroyNotify)
 XM_TYPE_PTR_2(GtkWindowGroup_, GtkWindowGroup*)
 XM_TYPE_PTR_1(GtkAssistant_, GtkAssistant*)
-XM_TYPE_1(GDestroyNotify, GDestroyNotify)
 #define C_TO_XEN_GtkAssistantPageType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkAssistantPageType(Arg) (GtkAssistantPageType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkAssistantPageType_P(Arg) XEN_INTEGER_P(Arg)
@@ -996,6 +997,14 @@ XM_TYPE_NO_P_2(time_t, time_t)
 XM_TYPE_PTR(GtkStatusIcon_, GtkStatusIcon*)
 XM_TYPE_1(GtkTextBufferSerializeFunc, GtkTextBufferSerializeFunc)
 XM_TYPE_1(GtkTextBufferDeserializeFunc, GtkTextBufferDeserializeFunc)
+#endif
+
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+XM_TYPE(GtkNotebookWindowCreationFunc, GtkNotebookWindowCreationFunc)
+XM_TYPE_PTR(GtkRecentData_, GtkRecentData*)
+#define C_TO_XEN_GtkTreeViewGridLines(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkTreeViewGridLines(Arg) (GtkTreeViewGridLines)(XEN_TO_C_INT(Arg))
+#define XEN_GtkTreeViewGridLines_P(Arg) XEN_INTEGER_P(Arg)
 #endif
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
@@ -1393,7 +1402,7 @@ static void gxg_g_message_log_func(const gchar* domain, GLogLevelFlags log_level
 #endif
 
 #if HAVE_GTK_LINK_BUTTON_NEW
-static void gxg_clip_rich_text_received(GtkClipboard* clipboard, GdkAtom format, guint8* text, gsize length, gpointer func_data)
+static void gxg_clip_rich_text_received(GtkClipboard* clipboard, GdkAtom format, const guint8* text, gsize length, gpointer func_data)
 {
   if (!XEN_LIST_P((XEN)func_data)) return;
   XEN_CALL_5(XEN_CAR((XEN)func_data),
@@ -1404,7 +1413,7 @@ static void gxg_clip_rich_text_received(GtkClipboard* clipboard, GdkAtom format,
              XEN_CADR((XEN)func_data),
              c__FUNCTION__);
 }
-static gboolean gxg_recent_filter(GtkRecentFilterInfo* filter_info, gpointer func_data)
+static gboolean gxg_recent_filter(const GtkRecentFilterInfo* filter_info, gpointer func_data)
 {
   if (!XEN_LIST_P((XEN)func_data)) return((gboolean)0);
   return(XEN_TO_C_gboolean(XEN_CALL_2(XEN_CAR((XEN)func_data),
@@ -1429,7 +1438,7 @@ static gint gxg_page_func(gint current_page, gpointer func_data)
                                   XEN_CADR((XEN)func_data),
                                   c__FUNCTION__)));
 }
-static void gxg_link_button_uri(GtkLinkButton* button, gchar* link, gpointer func_data)
+static void gxg_link_button_uri(GtkLinkButton* button, const gchar* link, gpointer func_data)
 {
   if (!XEN_LIST_P((XEN)func_data)) return;
   XEN_CALL_3(XEN_CAR((XEN)func_data),
@@ -20463,17 +20472,6 @@ static XEN gxg_gtk_tree_model_filter_get_model(XEN filter)
   XEN_ASSERT_TYPE(XEN_GtkTreeModelFilter__P(filter), filter, 1, "gtk_tree_model_filter_get_model", "GtkTreeModelFilter*");
   return(C_TO_XEN_GtkTreeModel_(gtk_tree_model_filter_get_model(XEN_TO_C_GtkTreeModelFilter_(filter))));
 }
-static XEN gxg_gtk_tree_model_filter_convert_child_iter_to_iter(XEN filter, XEN filter_iter, XEN child_iter)
-{
-  #define H_gtk_tree_model_filter_convert_child_iter_to_iter "void gtk_tree_model_filter_convert_child_iter_to_iter(GtkTreeModelFilter* filter, \
-GtkTreeIter* filter_iter, GtkTreeIter* child_iter)"
-  XEN_ASSERT_TYPE(XEN_GtkTreeModelFilter__P(filter), filter, 1, "gtk_tree_model_filter_convert_child_iter_to_iter", "GtkTreeModelFilter*");
-  XEN_ASSERT_TYPE(XEN_GtkTreeIter__P(filter_iter), filter_iter, 2, "gtk_tree_model_filter_convert_child_iter_to_iter", "GtkTreeIter*");
-  XEN_ASSERT_TYPE(XEN_GtkTreeIter__P(child_iter), child_iter, 3, "gtk_tree_model_filter_convert_child_iter_to_iter", "GtkTreeIter*");
-  gtk_tree_model_filter_convert_child_iter_to_iter(XEN_TO_C_GtkTreeModelFilter_(filter), XEN_TO_C_GtkTreeIter_(filter_iter), 
-                                                   XEN_TO_C_GtkTreeIter_(child_iter));
-  return(XEN_FALSE);
-}
 static XEN gxg_gtk_tree_model_filter_convert_iter_to_child_iter(XEN filter, XEN child_iter, XEN filter_iter)
 {
   #define H_gtk_tree_model_filter_convert_iter_to_child_iter "void gtk_tree_model_filter_convert_iter_to_child_iter(GtkTreeModelFilter* filter, \
@@ -25892,6 +25890,29 @@ GtkEntry* entry)"
   gtk_tree_view_set_search_entry(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_GtkEntry_(entry));
   return(XEN_FALSE);
 }
+static XEN gxg_gtk_tree_view_get_search_position_func(XEN tree_view)
+{
+  #define H_gtk_tree_view_get_search_position_func "GtkTreeViewSearchPositionFunc gtk_tree_view_get_search_position_func(GtkTreeView* tree_view)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_get_search_position_func", "GtkTreeView*");
+  return(C_TO_XEN_GtkTreeViewSearchPositionFunc(gtk_tree_view_get_search_position_func(XEN_TO_C_GtkTreeView_(tree_view))));
+}
+static XEN gxg_gtk_tree_view_set_search_position_func(XEN tree_view, XEN func, XEN func_data, XEN destroy)
+{
+  #define H_gtk_tree_view_set_search_position_func "void gtk_tree_view_set_search_position_func(GtkTreeView* tree_view, \
+GtkTreeViewSearchPositionFunc func, lambda_data func_data, GDestroyNotify destroy)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_set_search_position_func", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreeViewSearchPositionFunc_P(func), func, 2, "gtk_tree_view_set_search_position_func", "GtkTreeViewSearchPositionFunc");
+  if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
+  else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_tree_view_set_search_position_func", "lambda_data");
+  XEN_ASSERT_TYPE(XEN_GDestroyNotify_P(destroy), destroy, 4, "gtk_tree_view_set_search_position_func", "GDestroyNotify");
+  {
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    gtk_tree_view_set_search_position_func(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_GtkTreeViewSearchPositionFunc(func), XEN_TO_C_lambda_data(func_data), 
+                                       XEN_TO_C_GDestroyNotify(destroy));
+    return(XEN_FALSE);
+   }
+}
 static XEN gxg_gtk_widget_is_composited(XEN widget)
 {
   #define H_gtk_widget_is_composited "gboolean gtk_widget_is_composited(GtkWidget* widget)"
@@ -27210,6 +27231,89 @@ GtkTextBuffer* content_buffer, GdkAtom format, GtkTextIter* iter, guint8* data, 
                                                            XEN_TO_C_gsize(length), &ref_error));
     return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
    }
+}
+#endif
+
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+static XEN gxg_gtk_notebook_set_window_creation_hook(XEN func, XEN data, XEN destroy)
+{
+  #define H_gtk_notebook_set_window_creation_hook "void gtk_notebook_set_window_creation_hook(GtkNotebookWindowCreationFunc func, \
+gpointer data, GDestroyNotify destroy)"
+  XEN_ASSERT_TYPE(XEN_GtkNotebookWindowCreationFunc_P(func), func, 1, "gtk_notebook_set_window_creation_hook", "GtkNotebookWindowCreationFunc");
+  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 2, "gtk_notebook_set_window_creation_hook", "gpointer");
+  XEN_ASSERT_TYPE(XEN_GDestroyNotify_P(destroy), destroy, 3, "gtk_notebook_set_window_creation_hook", "GDestroyNotify");
+  gtk_notebook_set_window_creation_hook(XEN_TO_C_GtkNotebookWindowCreationFunc(func), XEN_TO_C_gpointer(data), XEN_TO_C_GDestroyNotify(destroy));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_recent_manager_add_item(XEN manager, XEN uri)
+{
+  #define H_gtk_recent_manager_add_item "gboolean gtk_recent_manager_add_item(GtkRecentManager* manager, \
+gchar* uri)"
+  XEN_ASSERT_TYPE(XEN_GtkRecentManager__P(manager), manager, 1, "gtk_recent_manager_add_item", "GtkRecentManager*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(uri), uri, 2, "gtk_recent_manager_add_item", "gchar*");
+  return(C_TO_XEN_gboolean(gtk_recent_manager_add_item(XEN_TO_C_GtkRecentManager_(manager), XEN_TO_C_gchar_(uri))));
+}
+static XEN gxg_gtk_recent_manager_add_full(XEN manager, XEN uri, XEN recent_data)
+{
+  #define H_gtk_recent_manager_add_full "gboolean gtk_recent_manager_add_full(GtkRecentManager* manager, \
+gchar* uri, GtkRecentData* recent_data)"
+  XEN_ASSERT_TYPE(XEN_GtkRecentManager__P(manager), manager, 1, "gtk_recent_manager_add_full", "GtkRecentManager*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(uri), uri, 2, "gtk_recent_manager_add_full", "gchar*");
+  XEN_ASSERT_TYPE(XEN_GtkRecentData__P(recent_data), recent_data, 3, "gtk_recent_manager_add_full", "GtkRecentData*");
+  return(C_TO_XEN_gboolean(gtk_recent_manager_add_full(XEN_TO_C_GtkRecentManager_(manager), XEN_TO_C_gchar_(uri), XEN_TO_C_GtkRecentData_(recent_data))));
+}
+static XEN gxg_gtk_tree_model_filter_convert_child_iter_to_iter(XEN filter, XEN filter_iter, XEN child_iter)
+{
+  #define H_gtk_tree_model_filter_convert_child_iter_to_iter "gboolean gtk_tree_model_filter_convert_child_iter_to_iter(GtkTreeModelFilter* filter, \
+GtkTreeIter* filter_iter, GtkTreeIter* child_iter)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeModelFilter__P(filter), filter, 1, "gtk_tree_model_filter_convert_child_iter_to_iter", "GtkTreeModelFilter*");
+  XEN_ASSERT_TYPE(XEN_GtkTreeIter__P(filter_iter), filter_iter, 2, "gtk_tree_model_filter_convert_child_iter_to_iter", "GtkTreeIter*");
+  XEN_ASSERT_TYPE(XEN_GtkTreeIter__P(child_iter), child_iter, 3, "gtk_tree_model_filter_convert_child_iter_to_iter", "GtkTreeIter*");
+  return(C_TO_XEN_gboolean(gtk_tree_model_filter_convert_child_iter_to_iter(XEN_TO_C_GtkTreeModelFilter_(filter), XEN_TO_C_GtkTreeIter_(filter_iter), 
+                                                                            XEN_TO_C_GtkTreeIter_(child_iter))));
+}
+static XEN gxg_gtk_tree_view_get_grid_lines(XEN tree_view)
+{
+  #define H_gtk_tree_view_get_grid_lines "GtkTreeViewGridLines gtk_tree_view_get_grid_lines(GtkTreeView* tree_view)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_get_grid_lines", "GtkTreeView*");
+  return(C_TO_XEN_GtkTreeViewGridLines(gtk_tree_view_get_grid_lines(XEN_TO_C_GtkTreeView_(tree_view))));
+}
+static XEN gxg_gtk_tree_view_set_grid_lines(XEN tree_view, XEN grid_lines)
+{
+  #define H_gtk_tree_view_set_grid_lines "void gtk_tree_view_set_grid_lines(GtkTreeView* tree_view, GtkTreeViewGridLines grid_lines)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_set_grid_lines", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreeViewGridLines_P(grid_lines), grid_lines, 2, "gtk_tree_view_set_grid_lines", "GtkTreeViewGridLines");
+  gtk_tree_view_set_grid_lines(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_GtkTreeViewGridLines(grid_lines));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_tree_view_get_enable_tree_lines(XEN tree_view)
+{
+  #define H_gtk_tree_view_get_enable_tree_lines "gboolean gtk_tree_view_get_enable_tree_lines(GtkTreeView* tree_view)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_get_enable_tree_lines", "GtkTreeView*");
+  return(C_TO_XEN_gboolean(gtk_tree_view_get_enable_tree_lines(XEN_TO_C_GtkTreeView_(tree_view))));
+}
+static XEN gxg_gtk_tree_view_set_enable_tree_lines(XEN tree_view, XEN enabled)
+{
+  #define H_gtk_tree_view_set_enable_tree_lines "void gtk_tree_view_set_enable_tree_lines(GtkTreeView* tree_view, \
+gboolean enabled)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_set_enable_tree_lines", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(enabled), enabled, 2, "gtk_tree_view_set_enable_tree_lines", "gboolean");
+  gtk_tree_view_set_enable_tree_lines(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gboolean(enabled));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_label_set_line_wrap_mode(XEN label, XEN wrap_mode)
+{
+  #define H_gtk_label_set_line_wrap_mode "void gtk_label_set_line_wrap_mode(GtkLabel* label, PangoWrapMode wrap_mode)"
+  XEN_ASSERT_TYPE(XEN_GtkLabel__P(label), label, 1, "gtk_label_set_line_wrap_mode", "GtkLabel*");
+  XEN_ASSERT_TYPE(XEN_PangoWrapMode_P(wrap_mode), wrap_mode, 2, "gtk_label_set_line_wrap_mode", "PangoWrapMode");
+  gtk_label_set_line_wrap_mode(XEN_TO_C_GtkLabel_(label), XEN_TO_C_PangoWrapMode(wrap_mode));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_label_get_line_wrap_mode(XEN label)
+{
+  #define H_gtk_label_get_line_wrap_mode "PangoWrapMode gtk_label_get_line_wrap_mode(GtkLabel* label)"
+  XEN_ASSERT_TYPE(XEN_GtkLabel__P(label), label, 1, "gtk_label_get_line_wrap_mode", "GtkLabel*");
+  return(C_TO_XEN_PangoWrapMode(gtk_label_get_line_wrap_mode(XEN_TO_C_GtkLabel_(label))));
 }
 #endif
 
@@ -31668,7 +31772,6 @@ XEN_NARGIFY_0(gxg_gtk_tree_model_filter_get_type_w, gxg_gtk_tree_model_filter_ge
 XEN_NARGIFY_2(gxg_gtk_tree_model_filter_new_w, gxg_gtk_tree_model_filter_new)
 XEN_NARGIFY_2(gxg_gtk_tree_model_filter_set_visible_column_w, gxg_gtk_tree_model_filter_set_visible_column)
 XEN_NARGIFY_1(gxg_gtk_tree_model_filter_get_model_w, gxg_gtk_tree_model_filter_get_model)
-XEN_NARGIFY_3(gxg_gtk_tree_model_filter_convert_child_iter_to_iter_w, gxg_gtk_tree_model_filter_convert_child_iter_to_iter)
 XEN_NARGIFY_3(gxg_gtk_tree_model_filter_convert_iter_to_child_iter_w, gxg_gtk_tree_model_filter_convert_iter_to_child_iter)
 XEN_NARGIFY_2(gxg_gtk_tree_model_filter_convert_child_path_to_path_w, gxg_gtk_tree_model_filter_convert_child_path_to_path)
 XEN_NARGIFY_2(gxg_gtk_tree_model_filter_convert_path_to_child_path_w, gxg_gtk_tree_model_filter_convert_path_to_child_path)
@@ -32369,6 +32472,8 @@ XEN_NARGIFY_1(gxg_gtk_text_buffer_get_paste_target_list_w, gxg_gtk_text_buffer_g
 XEN_NARGIFY_1(gxg_gtk_tree_view_get_headers_clickable_w, gxg_gtk_tree_view_get_headers_clickable)
 XEN_NARGIFY_1(gxg_gtk_tree_view_get_search_entry_w, gxg_gtk_tree_view_get_search_entry)
 XEN_NARGIFY_2(gxg_gtk_tree_view_set_search_entry_w, gxg_gtk_tree_view_set_search_entry)
+XEN_NARGIFY_1(gxg_gtk_tree_view_get_search_position_func_w, gxg_gtk_tree_view_get_search_position_func)
+XEN_ARGIFY_4(gxg_gtk_tree_view_set_search_position_func_w, gxg_gtk_tree_view_set_search_position_func)
 XEN_NARGIFY_1(gxg_gtk_widget_is_composited_w, gxg_gtk_widget_is_composited)
 XEN_NARGIFY_4(gxg_gtk_widget_input_shape_combine_mask_w, gxg_gtk_widget_input_shape_combine_mask)
 XEN_NARGIFY_2(gxg_gtk_window_set_deletable_w, gxg_gtk_window_set_deletable)
@@ -32535,6 +32640,19 @@ XEN_ARGIFY_2(gxg_gtk_text_buffer_get_serialize_formats_w, gxg_gtk_text_buffer_ge
 XEN_ARGIFY_2(gxg_gtk_text_buffer_get_deserialize_formats_w, gxg_gtk_text_buffer_get_deserialize_formats)
 XEN_ARGIFY_6(gxg_gtk_text_buffer_serialize_w, gxg_gtk_text_buffer_serialize)
 XEN_ARGIFY_7(gxg_gtk_text_buffer_deserialize_w, gxg_gtk_text_buffer_deserialize)
+#endif
+
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+XEN_NARGIFY_3(gxg_gtk_notebook_set_window_creation_hook_w, gxg_gtk_notebook_set_window_creation_hook)
+XEN_NARGIFY_2(gxg_gtk_recent_manager_add_item_w, gxg_gtk_recent_manager_add_item)
+XEN_NARGIFY_3(gxg_gtk_recent_manager_add_full_w, gxg_gtk_recent_manager_add_full)
+XEN_NARGIFY_3(gxg_gtk_tree_model_filter_convert_child_iter_to_iter_w, gxg_gtk_tree_model_filter_convert_child_iter_to_iter)
+XEN_NARGIFY_1(gxg_gtk_tree_view_get_grid_lines_w, gxg_gtk_tree_view_get_grid_lines)
+XEN_NARGIFY_2(gxg_gtk_tree_view_set_grid_lines_w, gxg_gtk_tree_view_set_grid_lines)
+XEN_NARGIFY_1(gxg_gtk_tree_view_get_enable_tree_lines_w, gxg_gtk_tree_view_get_enable_tree_lines)
+XEN_NARGIFY_2(gxg_gtk_tree_view_set_enable_tree_lines_w, gxg_gtk_tree_view_set_enable_tree_lines)
+XEN_NARGIFY_2(gxg_gtk_label_set_line_wrap_mode_w, gxg_gtk_label_set_line_wrap_mode)
+XEN_NARGIFY_1(gxg_gtk_label_get_line_wrap_mode_w, gxg_gtk_label_get_line_wrap_mode)
 #endif
 
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
@@ -35478,7 +35596,6 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_tree_model_filter_new_w gxg_gtk_tree_model_filter_new
 #define gxg_gtk_tree_model_filter_set_visible_column_w gxg_gtk_tree_model_filter_set_visible_column
 #define gxg_gtk_tree_model_filter_get_model_w gxg_gtk_tree_model_filter_get_model
-#define gxg_gtk_tree_model_filter_convert_child_iter_to_iter_w gxg_gtk_tree_model_filter_convert_child_iter_to_iter
 #define gxg_gtk_tree_model_filter_convert_iter_to_child_iter_w gxg_gtk_tree_model_filter_convert_iter_to_child_iter
 #define gxg_gtk_tree_model_filter_convert_child_path_to_path_w gxg_gtk_tree_model_filter_convert_child_path_to_path
 #define gxg_gtk_tree_model_filter_convert_path_to_child_path_w gxg_gtk_tree_model_filter_convert_path_to_child_path
@@ -36179,6 +36296,8 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_tree_view_get_headers_clickable_w gxg_gtk_tree_view_get_headers_clickable
 #define gxg_gtk_tree_view_get_search_entry_w gxg_gtk_tree_view_get_search_entry
 #define gxg_gtk_tree_view_set_search_entry_w gxg_gtk_tree_view_set_search_entry
+#define gxg_gtk_tree_view_get_search_position_func_w gxg_gtk_tree_view_get_search_position_func
+#define gxg_gtk_tree_view_set_search_position_func_w gxg_gtk_tree_view_set_search_position_func
 #define gxg_gtk_widget_is_composited_w gxg_gtk_widget_is_composited
 #define gxg_gtk_widget_input_shape_combine_mask_w gxg_gtk_widget_input_shape_combine_mask
 #define gxg_gtk_window_set_deletable_w gxg_gtk_window_set_deletable
@@ -36345,6 +36464,19 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_text_buffer_get_deserialize_formats_w gxg_gtk_text_buffer_get_deserialize_formats
 #define gxg_gtk_text_buffer_serialize_w gxg_gtk_text_buffer_serialize
 #define gxg_gtk_text_buffer_deserialize_w gxg_gtk_text_buffer_deserialize
+#endif
+
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+#define gxg_gtk_notebook_set_window_creation_hook_w gxg_gtk_notebook_set_window_creation_hook
+#define gxg_gtk_recent_manager_add_item_w gxg_gtk_recent_manager_add_item
+#define gxg_gtk_recent_manager_add_full_w gxg_gtk_recent_manager_add_full
+#define gxg_gtk_tree_model_filter_convert_child_iter_to_iter_w gxg_gtk_tree_model_filter_convert_child_iter_to_iter
+#define gxg_gtk_tree_view_get_grid_lines_w gxg_gtk_tree_view_get_grid_lines
+#define gxg_gtk_tree_view_set_grid_lines_w gxg_gtk_tree_view_set_grid_lines
+#define gxg_gtk_tree_view_get_enable_tree_lines_w gxg_gtk_tree_view_get_enable_tree_lines
+#define gxg_gtk_tree_view_set_enable_tree_lines_w gxg_gtk_tree_view_set_enable_tree_lines
+#define gxg_gtk_label_set_line_wrap_mode_w gxg_gtk_label_set_line_wrap_mode
+#define gxg_gtk_label_get_line_wrap_mode_w gxg_gtk_label_get_line_wrap_mode
 #endif
 
 #define gxg_GPOINTER_w gxg_GPOINTER
@@ -39295,7 +39427,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tree_model_filter_new, gxg_gtk_tree_model_filter_new_w, 2, 0, 0, H_gtk_tree_model_filter_new);
   XG_DEFINE_PROCEDURE(gtk_tree_model_filter_set_visible_column, gxg_gtk_tree_model_filter_set_visible_column_w, 2, 0, 0, H_gtk_tree_model_filter_set_visible_column);
   XG_DEFINE_PROCEDURE(gtk_tree_model_filter_get_model, gxg_gtk_tree_model_filter_get_model_w, 1, 0, 0, H_gtk_tree_model_filter_get_model);
-  XG_DEFINE_PROCEDURE(gtk_tree_model_filter_convert_child_iter_to_iter, gxg_gtk_tree_model_filter_convert_child_iter_to_iter_w, 3, 0, 0, H_gtk_tree_model_filter_convert_child_iter_to_iter);
   XG_DEFINE_PROCEDURE(gtk_tree_model_filter_convert_iter_to_child_iter, gxg_gtk_tree_model_filter_convert_iter_to_child_iter_w, 3, 0, 0, H_gtk_tree_model_filter_convert_iter_to_child_iter);
   XG_DEFINE_PROCEDURE(gtk_tree_model_filter_convert_child_path_to_path, gxg_gtk_tree_model_filter_convert_child_path_to_path_w, 2, 0, 0, H_gtk_tree_model_filter_convert_child_path_to_path);
   XG_DEFINE_PROCEDURE(gtk_tree_model_filter_convert_path_to_child_path, gxg_gtk_tree_model_filter_convert_path_to_child_path_w, 2, 0, 0, H_gtk_tree_model_filter_convert_path_to_child_path);
@@ -39996,6 +40127,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tree_view_get_headers_clickable, gxg_gtk_tree_view_get_headers_clickable_w, 1, 0, 0, H_gtk_tree_view_get_headers_clickable);
   XG_DEFINE_PROCEDURE(gtk_tree_view_get_search_entry, gxg_gtk_tree_view_get_search_entry_w, 1, 0, 0, H_gtk_tree_view_get_search_entry);
   XG_DEFINE_PROCEDURE(gtk_tree_view_set_search_entry, gxg_gtk_tree_view_set_search_entry_w, 2, 0, 0, H_gtk_tree_view_set_search_entry);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_search_position_func, gxg_gtk_tree_view_get_search_position_func_w, 1, 0, 0, H_gtk_tree_view_get_search_position_func);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_search_position_func, gxg_gtk_tree_view_set_search_position_func_w, 3, 1, 0, H_gtk_tree_view_set_search_position_func);
   XG_DEFINE_PROCEDURE(gtk_widget_is_composited, gxg_gtk_widget_is_composited_w, 1, 0, 0, H_gtk_widget_is_composited);
   XG_DEFINE_PROCEDURE(gtk_widget_input_shape_combine_mask, gxg_gtk_widget_input_shape_combine_mask_w, 4, 0, 0, H_gtk_widget_input_shape_combine_mask);
   XG_DEFINE_PROCEDURE(gtk_window_set_deletable, gxg_gtk_window_set_deletable_w, 2, 0, 0, H_gtk_window_set_deletable);
@@ -40162,6 +40295,19 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_text_buffer_get_deserialize_formats, gxg_gtk_text_buffer_get_deserialize_formats_w, 1, 1, 0, H_gtk_text_buffer_get_deserialize_formats);
   XG_DEFINE_PROCEDURE(gtk_text_buffer_serialize, gxg_gtk_text_buffer_serialize_w, 5, 1, 0, H_gtk_text_buffer_serialize);
   XG_DEFINE_PROCEDURE(gtk_text_buffer_deserialize, gxg_gtk_text_buffer_deserialize_w, 6, 1, 0, H_gtk_text_buffer_deserialize);
+#endif
+
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+  XG_DEFINE_PROCEDURE(gtk_notebook_set_window_creation_hook, gxg_gtk_notebook_set_window_creation_hook_w, 3, 0, 0, H_gtk_notebook_set_window_creation_hook);
+  XG_DEFINE_PROCEDURE(gtk_recent_manager_add_item, gxg_gtk_recent_manager_add_item_w, 2, 0, 0, H_gtk_recent_manager_add_item);
+  XG_DEFINE_PROCEDURE(gtk_recent_manager_add_full, gxg_gtk_recent_manager_add_full_w, 3, 0, 0, H_gtk_recent_manager_add_full);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_filter_convert_child_iter_to_iter, gxg_gtk_tree_model_filter_convert_child_iter_to_iter_w, 3, 0, 0, H_gtk_tree_model_filter_convert_child_iter_to_iter);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_grid_lines, gxg_gtk_tree_view_get_grid_lines_w, 1, 0, 0, H_gtk_tree_view_get_grid_lines);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_grid_lines, gxg_gtk_tree_view_set_grid_lines_w, 2, 0, 0, H_gtk_tree_view_set_grid_lines);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_enable_tree_lines, gxg_gtk_tree_view_get_enable_tree_lines_w, 1, 0, 0, H_gtk_tree_view_get_enable_tree_lines);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_enable_tree_lines, gxg_gtk_tree_view_set_enable_tree_lines_w, 2, 0, 0, H_gtk_tree_view_set_enable_tree_lines);
+  XG_DEFINE_PROCEDURE(gtk_label_set_line_wrap_mode, gxg_gtk_label_set_line_wrap_mode_w, 2, 0, 0, H_gtk_label_set_line_wrap_mode);
+  XG_DEFINE_PROCEDURE(gtk_label_get_line_wrap_mode, gxg_gtk_label_get_line_wrap_mode_w, 1, 0, 0, H_gtk_label_get_line_wrap_mode);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, "(GPOINTER obj) casts obj to GPOINTER");
@@ -42045,6 +42191,14 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_RECENT_MANAGER_ERROR_UNKNOWN);
 #endif
 
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+  DEFINE_INTEGER(GTK_MESSAGE_OTHER);
+  DEFINE_INTEGER(GTK_TREE_VIEW_GRID_LINES_NONE);
+  DEFINE_INTEGER(GTK_TREE_VIEW_GRID_LINES_HORIZONTAL);
+  DEFINE_INTEGER(GTK_TREE_VIEW_GRID_LINES_VERTICAL);
+  DEFINE_INTEGER(GTK_TREE_VIEW_GRID_LINES_BOTH);
+#endif
+
   DEFINE_ULONG(GDK_TYPE_PIXBUF);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION_ITER);
@@ -42534,6 +42688,10 @@ static void define_strings(void)
   DEFINE_STRING(GTK_STOCK_SELECT_ALL);
 #endif
 
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+  DEFINE_STRING(GTK_STOCK_ORIENTATION_REVERSE_PORTRAIT);
+#endif
+
 }
 
 /* -------------------------------- initialization -------------------------------- */
@@ -42557,7 +42715,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Jun-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("10-Jul-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

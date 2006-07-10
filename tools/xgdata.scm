@@ -2650,7 +2650,7 @@
 (CSTR-290 "GTK_STOCK_ORIENTATION_REVERSE_LANDSCAPE")
 (CSTR-290 "GTK_STOCK_SELECT_ALL")
 
-(CSTR-29x "GTK_STOCK_ORIENTATION_REVERSE_PORTRAIT")
+(CSTR-210 "GTK_STOCK_ORIENTATION_REVERSE_PORTRAIT")
 
 (CCAST "GTK_STYLE(object)" "GtkStyle*")
 (CCHK "GTK_IS_STYLE(object)" "GtkStyle*")
@@ -4652,7 +4652,8 @@
 ;(CFNC-23 "void gtk_tree_model_filter_set_modify_func GtkTreeModelFilter* filter gint n_columns GType* types GtkTreeModelFilterModifyFunc func lambda_data func_data GtkDestroyNotify destroy") 
 (CFNC-23 "void gtk_tree_model_filter_set_visible_column GtkTreeModelFilter* filter gint column") 
 (CFNC-23 "GtkTreeModel* gtk_tree_model_filter_get_model GtkTreeModelFilter* filter") 
-(CFNC-23 "void gtk_tree_model_filter_convert_child_iter_to_iter GtkTreeModelFilter* filter GtkTreeIter* filter_iter GtkTreeIter* child_iter") 
+;(CFNC-23 "void gtk_tree_model_filter_convert_child_iter_to_iter GtkTreeModelFilter* filter GtkTreeIter* filter_iter GtkTreeIter* child_iter") 
+; rtn type change 210
 (CFNC-23 "void gtk_tree_model_filter_convert_iter_to_child_iter GtkTreeModelFilter* filter GtkTreeIter* child_iter GtkTreeIter* filter_iter") 
 (CFNC-23 "GtkTreePath* gtk_tree_model_filter_convert_child_path_to_path GtkTreeModelFilter* filter GtkTreePath* child_path")  ; FREE
 (CFNC-23 "GtkTreePath* gtk_tree_model_filter_convert_path_to_child_path GtkTreeModelFilter* path GtkTreePath* filter_path")  ; FREE
@@ -5899,41 +5900,39 @@
 (CFNC-290 "gboolean gtk_text_buffer_deserialize GtkTextBuffer* register_buffer GtkTextBuffer* content_buffer GdkAtom format GtkTextIter* iter guint8* data gsize length GError** [error]")
 
 
-#!
-(CFNC-29x "void gtk_notebook_set_window_creation_hook GtkNotebookWindowCreationFunc func gpointer data GDestroyNotify destroy")
+
+(CFNC-210 "void gtk_notebook_set_window_creation_hook GtkNotebookWindowCreationFunc func gpointer data GDestroyNotify destroy")
 ;; destroy arg added later
-(CFNC-29x "gboolean gtk_recent_manager_add_item GtkRecentManager* manager gchar* uri")
-(CFNC-29x "gboolean gtk_recent_manager_add_full GtkRecentManager* manager gchar* uri GtkRecentData* recent_data")
+(CFNC-210 "gboolean gtk_recent_manager_add_item GtkRecentManager* manager gchar* uri")
+(CFNC-210 "gboolean gtk_recent_manager_add_full GtkRecentManager* manager gchar* uri GtkRecentData* recent_data")
 ;; error arg removed
 
-;;; 29x just collected for now, not output to xg.c
-(CINT-29x "GTK_MESSAGE_OTHER" "GtkMessageType")
-;(CFNC-29x "void gtk_message_dialog_set_image GtkMessageDialog* dialog GtkWidget* image")
+(CINT-210 "GTK_MESSAGE_OTHER" "GtkMessageType")
+;(CFNC-210 "void gtk_message_dialog_set_image GtkMessageDialog* dialog GtkWidget* image")
 ;; messagedialog is commented out above so this needs to wait until it is "real"
 
 ;;; SOMEDAY: include all the printer support
 
 ;; 2.9.2:
-(CFNC-29x "gboolean gtk_status_icon_get_geometry GtkStatusIcon* status_icon GdkScreen** [screen] GdkRectangle* [area] GtkOrientation* [orientation]")
-(CFNC "gboolean gdk_color_parse gchar* spec GdkColor* color") -- need both versions somehow
+;(CFNC-210 "gboolean gtk_status_icon_get_geometry GtkStatusIcon* status_icon GdkScreen** [screen] GdkRectangle* [area] GtkOrientation* [orientation]")
+;rectangle ref arg to xen needs explicit conversion here
+;(CFNC "gboolean gdk_color_parse gchar* spec GdkColor* color"); -- need both versions somehow (gint above)
 
 ;; 2.9.3:
-(CINT-29x "GTK_TREE_VIEW_GRID_LINES_NONE" "GtkTreeViewGridLines")
-(CINT-29x "GTK_TREE_VIEW_GRID_LINES_HORIZONTAL" "GtkTreeViewGridLines")
-(CINT-29x "GTK_TREE_VIEW_GRID_LINES_VERTICAL" "GtkTreeViewGridLines")
-(CINT-29x "GTK_TREE_VIEW_GRID_LINES_BOTH" "GtkTreeViewGridLines")
+(CINT-210 "GTK_TREE_VIEW_GRID_LINES_NONE" "GtkTreeViewGridLines")
+(CINT-210 "GTK_TREE_VIEW_GRID_LINES_HORIZONTAL" "GtkTreeViewGridLines")
+(CINT-210 "GTK_TREE_VIEW_GRID_LINES_VERTICAL" "GtkTreeViewGridLines")
+(CINT-210 "GTK_TREE_VIEW_GRID_LINES_BOTH" "GtkTreeViewGridLines")
 
-;;; changed args
-(CFNC-29x "void gtk_notebook_set_window_creation_hook GtkNotebookWindowCreationFunc func gpointer data GDestroyNotify destroy")
 ;;; rtn type
-(CFNC-29x "gboolean gtk_tree_model_filter_convert_child_iter_to_iter GtkTreeModelFilter* filter GtkTreeIter* filter_iter GtkTreeIter* child_iter")
+(CFNC-210 "gboolean gtk_tree_model_filter_convert_child_iter_to_iter GtkTreeModelFilter* filter GtkTreeIter* filter_iter GtkTreeIter* child_iter")
 
-(CFNC-29x "GtkTreeViewGridLines gtk_tree_view_get_grid_lines GtkTreeView* tree_view")
-(CFNC-29x "void gtk_tree_view_set_grid_lines GtkTreeView* tree_view GtkTreeViewGridLines grid_lines")
-(CFNC-29x "gboolean gtk_tree_view_get_enable_tree_lines GtkTreeView* tree_view")
-(CFNC-29x "void gtk_tree_view_set_enable_tree_lines GtkTreeView* tree_view gboolean enabled")
+(CFNC-210 "GtkTreeViewGridLines gtk_tree_view_get_grid_lines GtkTreeView* tree_view")
+(CFNC-210 "void gtk_tree_view_set_grid_lines GtkTreeView* tree_view GtkTreeViewGridLines grid_lines")
+(CFNC-210 "gboolean gtk_tree_view_get_enable_tree_lines GtkTreeView* tree_view")
+(CFNC-210 "void gtk_tree_view_set_enable_tree_lines GtkTreeView* tree_view gboolean enabled")
   
 ;; 2.9.4:
-(CFNC-29x "void gtk_label_set_line_wrap_mode GtkLabel* label PangoWrapMode wrap_mode")
-(CFNC-29x "PangoWrapMode gtk_label_get_line_wrap_mode GtkLabel* label")
-!#
+(CFNC-210 "void gtk_label_set_line_wrap_mode GtkLabel* label PangoWrapMode wrap_mode")
+(CFNC-210 "PangoWrapMode gtk_label_get_line_wrap_mode GtkLabel* label")
+
