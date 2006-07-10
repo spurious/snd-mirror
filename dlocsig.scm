@@ -589,7 +589,7 @@
 (define amplitude-panning 1)
 (define b-format-ambisonics 2)
 (define decoded-ambisonics 3)
-(define stereo-hrtf 4)
+;(define stereo-hrtf 4)
 
 (define dlocsig-render-using amplitude-panning)
 
@@ -2509,13 +2509,13 @@
 	;; X: (* (cos A) (cos B))
 
 	(vector-set! channel-gains 1 (cons time (vector-ref channel-gains 1)))
-	(vector-set! channel-gains 1 (cons (* (if (zerop dist) 0 (/ y dist)) att) (vector-ref channel-gains 1)))
+	(vector-set! channel-gains 1 (cons (* (if (zero? dist) 0 (/ y dist)) att) (vector-ref channel-gains 1)))
 	;; Y: (* (sin A) (cos B))
 	(vector-set! channel-gains 2 (cons time (vector-ref channel-gains 2)))
-	(vector-set! channel-gains 2 (cons (* (if (zerop dist) 0 (/ (- x) dist)) att) (vector-ref channel-gains 2)))
+	(vector-set! channel-gains 2 (cons (* (if (zero? dist) 0 (/ (- x) dist)) att) (vector-ref channel-gains 2)))
 	;; Z: (sin B)
 	(vector-set! channel-gains 3 (cons time (vector-ref channel-gains 3)))
-	(vector-set! channel-gains 3 (cons (* (if (zerop dist) 0 (/ z dist)) att) (vector-ref channel-gains 3)))
+	(vector-set! channel-gains 3 (cons (* (if (zero? dist) 0 (/ z dist)) att) (vector-ref channel-gains 3)))
 	;; push reverb gain into envelope
 	(if (= rev-channels 1)
 	    (begin
@@ -2532,13 +2532,13 @@
 	      (vector-set! channel-rev-gains 0 (cons rattW (vector-ref channel-rev-gains 0)))
 	      ;; X: (* (cos A) (cos B))
 	      (vector-set! channel-rev-gains 1 (cons time (vector-ref channel-rev-gains 1)))
-	      (vector-set! channel-rev-gains 1 (cons (* (if (zerop dist) 0 (/ y dist)) ratt) (vector-ref channel-rev-gains 1)))
+	      (vector-set! channel-rev-gains 1 (cons (* (if (zero? dist) 0 (/ y dist)) ratt) (vector-ref channel-rev-gains 1)))
 	      ;; Y: (* (sin A) (cos B))
 	      (vector-set! channel-rev-gains 2 (cons time (vector-ref channel-rev-gains 2)))
-	      (vector-set! channel-rev-gains 2 (cons (* (if (zerop dist) 0 (/ (- x) dist)) ratt) (vector-ref channel-rev-gains 2)))
+	      (vector-set! channel-rev-gains 2 (cons (* (if (zero? dist) 0 (/ (- x) dist)) ratt) (vector-ref channel-rev-gains 2)))
 	      ;; Z: (sin B)
 	      (vector-set! channel-rev-gains 3 (cons time (vector-ref channel-rev-gains 3)))
-	      (vector-set! channel-rev-gains 3 (cons (* (if (zerop dist) 0 (/ z dist)) ratt) (vector-ref channel-rev-gains 3)))))))
+	      (vector-set! channel-rev-gains 3 (cons (* (if (zero? dist) 0 (/ z dist)) ratt) (vector-ref channel-rev-gains 3)))))))
 
     ;; Render a trajectory breakpoint to a room for decoded ambisonics
     ;;
@@ -2564,10 +2564,11 @@
 			(* point707 ratt)
 			(- 1 (* (- 1 point707) (expt (/ dist inside-radius) reverb-power))))))
 	;; output decoded gains for point
-	(let ((len (speaker-config-number speakers)))
+	(let ((len (speaker-config-number speakers))
+	      (spkrs (speaker-config-coords speakers)))
 	  (do ((i 0 (1+ i)))
 	      ((= i len))
-	    (let* ((s (speaker-config-coords speakers)) ; s is a list apparently
+	    (let* ((s (list-ref spkrs i))
 		   (signal (* dlocsig-ambisonics-scaler
 			      (+ 
 			       ;; W
@@ -2599,11 +2600,11 @@
 				 ;; W
 				 (* rattW point707)
 				 ;; (* X (cos az) (cos el))
-				 (* ratt (if (zerop dist) 0 (/ y dist)) (cadr s))
+				 (* ratt (if (zero? dist) 0 (/ y dist)) (cadr s))
 				 ;; (* Y (sin az) (cos el))
-				 (* ratt (if (zerop dist) 0 (/ x dist)) (car s))
+				 (* ratt (if (zero? dist) 0 (/ x dist)) (car s))
 				 ;; (* Z (sin el)
-				 (* ratt (if (zerop dist) 0 (/ z dist)) (third s))))))
+				 (* ratt (if (zero? dist) 0 (/ z dist)) (third s))))))
 		(vector-set! channel-rev-gains i (cons time (vector-ref channel-rev-gains i)))
 		(vector-set! channel-rev-gains i (cons signal (vector-ref channel-rev-gains i))))))))
 

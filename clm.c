@@ -207,11 +207,11 @@ static char *float_array_to_string(Float *arr, int len, int loc)
 
 static char *clm_array_to_string(mus_any **gens, int num_gens, char *name, char *indent)
 {
-  if (gens)
+  char *descr = NULL;
+  if ((gens) && (num_gens > 0))
     {
       int i, len = 0;
       char **descrs;
-      char *descr;
       descrs = (char **)CALLOC(num_gens, sizeof(char *));
       for (i = 0; i < num_gens; i++)
 	{
@@ -229,21 +229,22 @@ static char *clm_array_to_string(mus_any **gens, int num_gens, char *name, char 
 	  FREE(descrs[i]);
 	}
       FREE(descrs);
-      return(descr);
     }
-#if DEBUGGING
-  return(copy_string("nil"));
-#else
-  return(strdup("nil"));
-#endif
+  else
+    {
+      descr = (char *)CALLOC(128, sizeof(char));
+      mus_snprintf(descr, 128, "%s: nil", name);
+    }
+  return(descr);
 }
 
 static char *int_array_to_string(int *arr, int num_ints, char *name)
 {
-  if (arr)
+  char *descr = NULL;
+  if ((arr) && (num_ints > 0))
     {
       int i, len;
-      char *descr, *intstr;
+      char *intstr;
       len = num_ints * 32 + 64;
       descr = (char *)CALLOC(len, sizeof(char));
       intstr = (char *)CALLOC(32, sizeof(char));
@@ -256,13 +257,13 @@ static char *int_array_to_string(int *arr, int num_ints, char *name)
       mus_snprintf(intstr, 32, "%d)", arr[num_ints - 1]);
       strcat(descr, intstr);
       FREE(intstr);
-      return(descr);
     }
-#if DEBUGGING
-  return(copy_string("nil"));
-#else
-  return(strdup("nil"));
-#endif
+  else
+    {
+      descr = (char *)CALLOC(128, sizeof(char));
+      mus_snprintf(descr, 128, "%s: nil", name);
+    }
+  return(descr);
 }
 
 

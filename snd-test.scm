@@ -19266,6 +19266,125 @@ EDITS: 5
 	   (if revfile (mus-close revfile))))
        (list 0 1 2 4))
       
+
+      (let* ((outf1 (make-frame->file "fmv.snd" 1 mus-bshort mus-next))
+	     (outf4 (make-frame->file "fmv1.snd" 4 mus-bshort mus-next))
+	     (revf (make-frame->file "fmv2.snd" 1 mus-bshort mus-next))
+	     (start 0)
+	     (end 1000)
+	     (dur 1.0)
+	     (gen1 (make-move-sound (list 0 1000 1 0
+					  (make-delay 32) 
+					  (make-env '(0 0 1 1) :end 1000) 
+					  (make-env '(0 0 1 1) :end 1000)
+					  (vector (make-delay 32)) 
+					  (vector (make-env '(0 0 1 1) :end 1000)) 
+					  #f
+					  (vector 0 1))
+				    outf1))
+	     (gen2 (make-move-sound (list start end 4 0
+					  (make-delay 12) 
+					  (make-env '(0 0 10 1) :duration dur)
+					  #f
+					  (make-vector 4 #f)
+					  (vector (make-env '(0 0 1 1 2 0 3 0 4 0) :duration dur)
+						  (make-env '(0 0 1 0 2 1 3 0 4 0) :duration dur)
+						  (make-env '(0 0 1 0 2 0 3 1 4 0) :duration dur)
+						  (make-env '(0 0 1 0 2 0 3 0 4 1) :duration dur))
+					  #f
+					  (vector 0 1 2 3))
+				    outf4))
+	     (gen3 (make-move-sound (list 0 1000 1 1
+					  (make-delay 32) 
+					  (make-env '(0 0 1 1) :end 1000) 
+					  (make-env '(0 0 1 1) :end 1000)
+					  (vector (make-delay 32)) 
+					  (vector (make-env '(0 0 1 1) :end 1000)) 
+					  (vector (make-env '(0 1 1 1) :end 1000))
+					  (vector 0 1))
+				    outf1 revf)))
+	
+	(print-and-check gen1
+			 "move-sound"
+			 "move-sound: start: 0, end: 1000, out chans 1, rev chans: 0
+  doppler delay: line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
+  doppler env: linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+  global reverb env: linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+  out_delays[1]:
+    [0]: delay: line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
+  out_envs[1]:
+    [0]: env: linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+  rev_envs: nil
+  out_map[1]: (0)
+  free: arrays: true, gens: false
+")
+	
+	(print-and-check gen2
+			 "move-sound"
+			 "move-sound: start: 0, end: 1000, out chans 4, rev chans: 0
+  doppler delay: line[12, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
+  doppler env: linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 10.000 1.000]
+  global reverb null
+  out_delays[4]:
+    [0]: nil
+    [1]: nil
+    [2]: nil
+    [3]: nil
+  out_envs[4]:
+    [0]: env: linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000 2.000 0.000 3.000 0.000...(0: 0.000, 8: 4.000)]
+    [1]: env: linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 0.000 2.000 1.000 3.000 0.000...(0: 0.000, 8: 4.000)]
+    [2]: env: linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 0.000 2.000 0.000 3.000 1.000...(0: 0.000, 8: 4.000)]
+    [3]: env: linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 0.000 2.000 0.000 3.000 0.000...(0: 0.000, 8: 4.000)]
+  rev_envs: nil
+  out_map[4]: (0 1 2 3)
+  free: arrays: true, gens: false
+")
+	
+	(print-and-check gen3
+			 "move-sound"
+			 "move-sound: start: 0, end: 1000, out chans 1, rev chans: 1
+  doppler delay: line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
+  doppler env: linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+  global reverb env: linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+  out_delays[1]:
+    [0]: delay: line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
+  out_envs[1]:
+    [0]: env: linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+  rev_envs[1]:
+    [0]: env: linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 1.000 1.000 1.000]
+  out_map[1]: (0)
+  free: arrays: true, gens: false
+")
+	
+	(if (not (move-sound? gen1)) (snd-display ";move-sound?"))
+	(if (equal? gen1 gen2) (snd-display ";move-sounds are equal?"))
+	(if (not (= (mus-channels gen1) 1)) (snd-display ";mus-channels move-sound (1): ~A" (mus-channels gen1)))
+	(if (not (= (mus-channels gen2) 4)) (snd-display ";mus-channels move-sound (4): ~A" (mus-channels gen2)))
+	(mus-reset gen1) ; a no-op
+	
+	(let ((v (make-vct 10 0.0)))
+	  (do ((i 0 (1+ i)))
+	      ((= i 10))
+	    (vct-set! v i (+ (move-sound gen1 i 0.5)
+			     (gen2 i 0.25)
+			     (move-sound gen3 i 0.125))))
+	  (if (not (vequal v (make-vct 10 0.875)))
+	      (snd-display ";move-sound output: ~A" v)))
+	
+	
+	;; TODO: move-sound arg type error checks 
+	
+	
+	(mus-close outf1) 
+	(mus-close outf4) 
+	(mus-close revf)
+	
+	(if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
+	(if (file-exists? "fmv1.snd") (delete-file "fmv1.snd"))
+	(if (file-exists? "fmv2.snd") (delete-file "fmv2.snd"))
+	(mus-sound-prune))
+      
+      
       (let ((gen (make-src :srate 2.0))
 	    (v0 (make-vct 10))
 	    (rd (make-readin "oboe.snd" 0 2000))
@@ -43851,6 +43970,27 @@ EDITS: 1
 	     ((= i end))
 	   (dlocsig dloc i (* (env aenv) (oscil osc)))))))))
 
+(define* (dlocsig-sinewave-1 start-time duration freq amp 
+		   :key (amp-env '(0 1 1 1))
+		   (path (make-path :path '(-10 10 0 5 10 10)))
+		   (decode amplitude-panning)
+		   (initdly #f))
+  (let* ((vals (make-dlocsig :start-time start-time
+			     :duration duration
+			     :render-using decode
+			     :initial-delay initdly
+			     :path path))
+	 (dloc (car vals))
+	 (beg (cadr vals))
+	 (end (caddr vals)))
+    (let* ((osc (make-oscil :frequency freq))
+	   (aenv (make-env :envelope amp-env :scaler amp :duration duration)))
+      (run
+       (lambda ()
+	 (do ((i beg (1+ i)))
+	     ((= i end))
+	   (dlocsig dloc i (* (env aenv) (oscil osc)))))))))
+
 #|
 (define* (report-segments :optional snd chn)
   (let* ((rd (make-sample-reader 0 snd chn))
@@ -45487,7 +45627,74 @@ EDITS: 1
 			      .005 .006 .006 .003 .004 .004 .002 .002 .002 .001 
 			      .001 .001 .001 .000 .000 .000 .000 .000 .000 .000)
 		      ind 4 "dlocsig 13 4")
-      )
+
+
+      (with-sound (:channels 4) 
+        (dlocsig-sinewave-1 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f) :decode b-format-ambisonics))
+      (set! ind (find-sound "test.snd"))
+
+      (check-segments (vector .000 .000 .000 .008 .008 .009 .009 .010 .011 .012 
+			      .013 .014 .016 .018 .020 .023 .027 .032 .039 .048 
+			      .063 .086 .129 .215 .374 .437 .440 .398 .252 .141 
+			      .094 .067 .052 .041 .034 .029 .025 .022 .019 .017 
+			      .015 .014 .013 .011 .011 .010 .009 .008 .008)
+		      ind 0 "dlocsig 14 0")
+
+      (check-segments (vector .000 .000 .000 .007 .008 .008 .009 .009 .010 .011 
+			      .012 .013 .014 .015 .017 .019 .022 .025 .029 .036 
+			      .045 .062 .097 .180 .342 .337 .326 .275 .160 .075 
+			      .048 .035 .029 .025 .021 .019 .017 .016 .014 .013 
+			      .012 .011 .011 .010 .009 .009 .008 .008 .008)
+		      ind 1 "dlocsig 14 1")
+
+      (check-segments (vector .000 .000 .000 .008 .008 .009 .010 .011 .012 .013 
+			      .014 .016 .018 .021 .023 .027 .032 .038 .047 .058 
+			      .076 .105 .155 .244 .362 .301 .301 .424 .317 .185 
+			      .124 .088 .067 .053 .043 .036 .030 .026 .023 .020 
+			      .018 .016 .014 .013 .012 .010 .010 .009 .008)
+		      ind 2 "dlocsig 14 2")
+
+      (check-segments (vector .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
+			      .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
+			      .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
+			      .000 .000 .000 .000 .000 .000 .000 .000 .000 .000 
+			      .000 .000 .000 .000 .000 .000 .000 .000 .000)
+		      ind 3 "dlocsig 14 3")
+
+
+      (with-sound (:channels 4) 
+        (dlocsig-sinewave-1 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f) :decode decoded-ambisonics))
+      (set! ind (find-sound "test.snd"))
+
+      (check-segments (vector .000 .000 .000 .011 .012 .013 .014 .015 .016 .018 .020 
+			      .022 .024 .027 .030 .035 .041 .048 .058 .071 .092 .126 
+			      .190 .319 .529 .509 .385 .179 .047 .015 .009 .007 .007 
+			      .006 .006 .006 .006 .006 .005 .005 .005 .005 .005 .004 
+			      .004 .004 .004 .004 .004)
+		      ind 0 "dlocsig 15 0")
+
+      (check-segments (vector .000 .000 .000 .004 .004 .004 .004 .004 .005 .005 .005 
+			      .006 .006 .006 .007 .008 .008 .009 .011 .013 .016 .022 
+			      .036 .075 .199 .372 .491 .516 .365 .200 .133 .095 .074 
+			      .059 .049 .042 .036 .032 .028 .025 .022 .021 .019 .017 
+			      .016 .015 .014 .013 .012)
+		      ind 1 "dlocsig 15 1")
+
+      (check-segments (vector .000 .000 .000 .004 .004 .004 .005 .005 .005 .006 .006 
+			      .007 .008 .009 .010 .011 .013 .015 .019 .023 .029 .040 
+			      .061 .105 .175 .130 .214 .258 .204 .126 .085 .060 .045 
+			      .035 .028 .023 .019 .016 .014 .012 .010 .009 .008 .007 
+			      .006 .006 .005 .005 .004)
+		      ind 2 "dlocsig 15 2")
+
+      (check-segments (vector .000 .000 .000 .004 .004 .005 .005 .006 .006 .007 .008 
+			      .009 .010 .012 .013 .016 .019 .023 .028 .036 .047 .064 
+			      .093 .139 .187 .172 .087 .165 .113 .059 .039 .028 .022 
+			      .018 .015 .013 .011 .010 .009 .008 .007 .007 .006 .006 
+			      .005 .005 .004 .004 .004)
+		      ind 3 "dlocsig 15 3")
+      ); end dlocsig tests
+
       
       (if (not (null? (sounds))) (for-each close-sound (sounds)))
       
