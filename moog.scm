@@ -9,6 +9,7 @@
 ;;;
 ;;; translated to Snd scheme function by Bill,
 ;;;   changed 17-Apr-05 to use def-clm-struct (for the optimizer's benefit)
+;;;   changed 11-Jul-06 to use array-interp
 
 (provide 'snd-moog.scm)
 (if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
@@ -102,13 +103,9 @@
       (set! A (min (max -0.95 (+ A (* (moog-fc m) (- A st)))) 0.95))
       (vct-set! (moog-s m) cell A)
       (set! A (min (max -0.95 (+ A st)) 0.95)))
-    (let* ((ix (* (moog-fc m) 99.0))
-	   (ixint (inexact->exact (floor ix)))
-	   (ixfrac (- ix ixint)))
-      (set! (moog-y m) (* A (moog-Q m)
-			  (+ (* (- 1 ixfrac)
-				(vct-ref moog-gaintable (+ ixint 99)))
-			     (* ixfrac (vct-ref moog-gaintable (+ ixint 100)))))))
+    (set! (moog-y m)
+	    (* A (moog-Q m)
+	       (array-interp moog-gaintable (+ 99 (* (moog-fc m) 99.0)))))
     A))
 
 

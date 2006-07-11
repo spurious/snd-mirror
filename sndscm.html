@@ -793,7 +793,7 @@ mix, rather than just a scaler:
 And finally(!) each inner list element can also be a CLM env generator:
 <pre>
     (with-sound (:channels 2)
-      (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
+      (fullmix "oboe.snd" 1 2 0 (list (list .1 (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 1 1) :duration 2 :scaler .5)))))
 </pre>
 Here's a Ruby example:
 <pre>
@@ -1180,16 +1180,16 @@ tracks the RMS signal.  An example is worth a zillion words:
         (let ((rg (make-rmsgain))
 	      (rg1 (make-rmsgain 40))
 	      (rg2 (make-rmsgain 2))
-	      (e (make-env '(0 0 1 1 2 0) :end 10000))
-	      (e1 (make-env '(0 0 1 1) :end 10000))
-	      (e2 (make-env '(0 0 1 1 2 0 10 0) :end 10000))
-	      (o (make-oscil 440.0)))
+	      (e (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 1 1 2 0) :end 10000))
+	      (e1 (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 1 1) :end 10000))
+	      (e2 (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 1 1 2 0 10 0) :end 10000))
+	      (o (<a class=quiet href="clm.html#make-oscil">make-oscil</a> 440.0)))
 	  (do ((i 0 (1+ i)))
 	      ((= i 10000))
-	    (let ((sig (env e)))
-	      (<a class=quiet href="clm.html#outa">outa</a> i (balance rg sig (env e2)) *output*)
-	      (<a class=quiet href="clm.html#outa">outb</a> i (balance rg1 sig (env e1)) *output*)
-	      (<a class=quiet href="clm.html#outa">outc</a> i (balance rg2 (* .1 (oscil o)) (env e2)) *output*)))))
+	    (let ((sig (<a class=quiet href="clm.html#env">env</a> e)))
+	      (<a class=quiet href="clm.html#outa">outa</a> i (balance rg sig (<a class=quiet href="clm.html#env">env</a> e2)) *output*)
+	      (<a class=quiet href="clm.html#outa">outb</a> i (balance rg1 sig (<a class=quiet href="clm.html#env">env</a> e1)) *output*)
+	      (<a class=quiet href="clm.html#outa">outc</a> i (balance rg2 (* .1 (<a class=quiet href="clm.html#oscil">oscil</a> o)) (<a class=quiet href="clm.html#env">env</a> e2)) *output*)))))
 </pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -2148,9 +2148,9 @@ cases, the <i>r</i> parameter is accessible, so it's easy to experiment with
 the moving formant idea mentioned in the original article (<i>r</i> should be greater than 0.0).
 <pre>
      (let ((gen (make-asyfm :frequency 2000 :ratio .1))
-           (e (make-env '(0 0.5 1 1.5) :end (frames))))
+           (e (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0.5 1 1.5) :end (frames))))
        (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (n)
-                      (set! (asyfm-r gen) (env e))
+                      (set! (asyfm-r gen) (<a class=quiet href="clm.html#env">env</a> e))
                       (asyfm-J gen 0.0))))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -2183,7 +2183,7 @@ followed by sampling rate conversion back to the original pitch:
 <pre>
     (define (stretch-oboe factor)
       (ssb-bank 557 (* factor 557) 7 40 40)
-      (src-sound (/ 1.0 factor)))
+      (<a class=quiet href="extsnd.html#srcsound">src-sound</a> (/ 1.0 factor)))
 </pre>
 ssb-bank-env is the same as ssb-bank, but includes a frequency envelope:
 <code>(ssb-bank-env 557 880 '(0 0 1 100.0) 7)</code>.
@@ -3012,7 +3012,7 @@ comb-filter is a simple example of using the CLM <a href="clm.html#comb">comb</a
 </pre>
 it would be faster to use the comb filter directly:
 <pre>
-    (clm-channel (make-comb .8 32))
+    (<a class=quiet href="extsnd.html#clmchannel">clm-channel</a> (<a class=quiet href="clm.html#make-comb">make-comb</a> .8 32))
 </pre>
 zcomb is a time-varying comb
 filter using the envelope <i>pm</i> (the envelope is applied to the comb filter delay length).
@@ -6274,10 +6274,10 @@ The following doubles each sample in channel 0 during playback:
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (<em class=red>play-sound</em>
  (lambda (data)
-   (let ((len (sound-data-length data)))
+   (let ((len (<a class=quiet href="extsnd.html#sounddatalength">sound-data-length</a> data)))
      (do ((i 0 (1+ i)))
 	 ((= i len))
-       (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))
+       (<a class=quiet href="extsnd.html#sounddataset">sound-data-set!</a> data 0 i (* 2.0 (<a class=quiet href="extsnd.html#sounddataref">sound-data-ref</a> data 0 i)))))))
 </pre></td></tr></table>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -7368,7 +7368,7 @@ putting it in a text display:
 (define wid1 (make-variable-display "simp" "beg" 'text))
 (define wid2 (make-variable-display "simp" "oscil" 'text))
 (define wid3 (make-variable-display "simp" "outa" 'graph))
-(definstrument (simp)
+(<a class=quiet href="clm.html#definstrument">definstrument</a> (simp)
   (let* ((beg 0)
 	 (dur 1000)
 	 (end (+ beg dur))
@@ -8716,7 +8716,7 @@ use <b>with-full-sound</b>.  It is:
 <pre>
     (defmacro with-full-sound (args . body)
       `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
-         (set! (x-bounds *snd-opened-sound*) (list 0.0 (/ (frames *snd-opened-sound*) (srate *snd-opened-sound*))))
+         (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a> *snd-opened-sound*) (list 0.0 (/ (<a class=quiet href="extsnd.html#frames">frames</a> *snd-opened-sound*) (<a class=quiet href="extsnd.html#srate">srate</a> *snd-opened-sound*))))
          snd))
 </pre>
 <p>Since with-sound returns the new sound's file name, we save that, get the new sound's index (<a href="extsnd.html#sndopenedsound">*snd-opened-sound*</a>),

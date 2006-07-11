@@ -3494,16 +3494,9 @@ mus_any *mus_make_rand_interp_with_distribution(Float freq, Float base, Float *d
   return((mus_any *)gen);
 }
 
-/* TODO: incorporate green.cl/scm here as brownian-rand, brownian-rand-interp 
- *       (need only low and high fields in noi struct -- should also add *-with-distribution?)
- *       (could use width and offset method slots for these fields, possibly using those names and semantics as well)
- *       (would need low/high keys, but could piggyback on make_noi I think)
- */
 
 
 /* ---------------- simple filters ---------------- */
-
-/* PERHAPS: moog_filter, svf_filter */
 
 /* eventually this class/struct could be replaced by flt/filter below */
 typedef struct {

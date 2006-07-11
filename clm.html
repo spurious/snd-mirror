@@ -481,7 +481,7 @@ seen, the corresponding keyword is prepended in the argument list:
   (<a class=quiet href="#make-oscil">make-oscil</a> :frequency 440.0)
   (<a class=quiet href="#make-oscil">make-oscil</a> :frequency 440.0 :initial-phase 0.0)
   (<a class=quiet href="#make-oscil">make-oscil</a> 440.0)
-  (make-oscil)
+  (<a class=quiet href="#make-oscil">make-oscil</a>)
   (<a class=quiet href="#make-oscil">make-oscil</a> 440.0 :initial-phase 0.0)
   (<a class=quiet href="#make-oscil">make-oscil</a> 440.0 0.0)
 </pre>
@@ -575,7 +575,7 @@ create the individual spectral components:
 	 (do ((i 0 (1+ i)))
 	     ((= i (length arr)))
 	   (incf sum (<em class=red>oscil</em> (aref arr i))))
-	 (outa i (* amp .05 sum)))))))
+	 (<a class=quiet href="#outa">outa</a> i (* amp .05 sum)))))))
 </pre>
 </td></tr></table>
 
@@ -591,7 +591,7 @@ using Scheme (Snd/CLM) syntax:
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
-	 (outa i (* amp (<em class=red>oscil</em> carrier 0.0 (* index (<em class=red>oscil</em> pm)))) *output*))))))
+	 (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>oscil</em> carrier 0.0 (* index (<em class=red>oscil</em> pm)))) *output*))))))
 
 (definstrument (fm beg end freq amp mc-ratio index)
   (let ((fm (<em class=red>make-oscil</em> (* freq mc-ratio) :initial-phase (/ 3.14159 2.0)))
@@ -601,7 +601,7 @@ using Scheme (Snd/CLM) syntax:
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
-	 (outa i (* amp (<em class=red>oscil</em> carrier (* fm-index (<em class=red>oscil</em> fm)))) *output*))))))
+	 (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>oscil</em> carrier (* fm-index (<em class=red>oscil</em> fm)))) *output*))))))
 
 #!
 (with-sound () (pm 0 10000 1000 .25 0.1 4))
@@ -709,7 +709,7 @@ Here's a (Snd/Scheme) function that uses these methods to apply an envelope over
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (define (strum e)
-  (map-channel (lambda (y)
+  (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y)
 		 (if (&gt; (<em class=red>mus-location</em> e) (<em class=red>mus-length</em> e))
 		     (<em class=red>mus-reset</em> e))
 		 (* y (env e)))))
@@ -730,7 +730,7 @@ Here's a (Snd/Scheme) function that uses these methods to apply an envelope over
      (loop for i from beg below (+ beg dur) do 
        (if (&gt; (<em class=red>mus-location</em> e) (<em class=red>mus-length</em> e))
            (<em class=red>mus-reset</em> e))
-       (outa i (* (<a class=quiet href="#env">env</a> e) (<a class=quiet href="#oscil">oscil</a> os)))))))
+       (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> e) (<a class=quiet href="#oscil">oscil</a> os)))))))
 
 ;;; (with-sound () (strummer 0 22050 2000))
 </pre>
@@ -1005,7 +1005,7 @@ One popular kind of vibrato is:
 	 (end (+ start (floor (* dur *srate*)))))
     (run
      (loop for i from start to end do
-       (outa i (* amp (<em class=red>sawtooth-wave</em> os)))))))
+       (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>sawtooth-wave</em> os)))))))
 </pre>
 </td></tr></table>
 <br>
@@ -1066,7 +1066,7 @@ work when it doesn't matter.
 	 (end (+ start (floor (* dur *srate*)))))
     (run
      (loop for i from start to end do
-       (outa i (* amp (<em class=red>sum-of-cosines</em> os)))))))
+       (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>sum-of-cosines</em> os)))))))
 </pre>
 </td></tr></table>
 
@@ -1166,13 +1166,13 @@ Here's a complicated way to get a sine wave at 550 Hz:
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (definstrument shift-pitch (beg dur freq amp shift)
-  (let* ((os (make-oscil freq))
+  (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a> freq))
 	 (start (floor (* beg *srate*)))
 	 (end (+ start (floor (* dur *srate*))))
 	 (am (<em class=red>make-ssb-am</em> shift)))
     (run
      (loop for i from start to end do
-       (outa i (* amp (<em class=red>ssb-am</em> am (oscil os))))))))
+       (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>ssb-am</em> am (<a class=quiet href="#oscil">oscil</a> os))))))))
 </pre>
 </td></tr></table>
 
@@ -1806,7 +1806,7 @@ last "size" samples).
 
 (define (windowed-maxamp gen y)
   (let ((absy (abs y))
-        (mx (delay gen absy))
+        (mx (<a class=quiet href="#delay">delay</a> gen absy))
 	(pk (- (<em class=red>mus-scaler</em> gen) .001)))
     (if (&gt; absy pk)
 	(set! (<em class=red>mus-scaler</em> gen) absy)
@@ -1887,7 +1887,7 @@ The following instrument sweeps the comb filter using the <i>pm</i> argument:
           (zenv (<a class=quiet href="#make-env">make-env</a> :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
       (run
        (loop for i from beg to end do
-	 (outa i (<em class=red>comb</em> d0 (* amp (<a class=quiet href="#pulse-train">pulse-train</a> s)) (<a class=quiet href="#env">env</a> zenv))))))))
+	 (<a class=quiet href="#outa">outa</a> i (<em class=red>comb</em> d0 (* amp (<a class=quiet href="#pulse-train">pulse-train</a> s)) (<a class=quiet href="#env">env</a> zenv))))))))
 
 (with-sound () (zc 0 3 100 .1 20 100 .5) (zc 3.5 3 100 .1 90 100 .95))
 </pre></td></tr></table>
@@ -1908,7 +1908,7 @@ delay line as the coefficients for an FIR filter (this example is in Scheme):
      (lambda () 
        (do ((i start (1+ i))) 
 	   ((= i end)) 
-	 (outa i (* amp (<a class=quiet href="#fir-filter">fir-filter</a> flt (<em class=red>comb</em> dly (<a class=quiet href="#rand">rand</a> r)))) *output*))))))
+	 (<a class=quiet href="#outa">outa</a> i (* amp (<a class=quiet href="#fir-filter">fir-filter</a> flt (<em class=red>comb</em> dly (<a class=quiet href="#rand">rand</a> r)))) *output*))))))
 
 (with-sound () 
   (fir+comb 0 2 10000 .001 200)
@@ -1988,7 +1988,7 @@ that are squelched and those that are unchanged (to avoid clicks):
 (define (squelch-channel amount snd chn gate-size)  ; gate-size = ramp length and rms window length
   (let ((gate (<em class=red>make-average</em> gate-size))
         (ramp (<em class=red>make-average</em> gate-size :initial-element 1.0)))
-    (map-channel (lambda (y) 
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) 
                    (* y (<em class=red>average</em> ramp                           ; ramp between 0 and 1
                           (if (&lt; (<em class=red>average</em> gate (* y y)) amount) ; local (r)ms value
                               0.0                               ; below <i>amount</i> so squelch
@@ -2327,7 +2327,7 @@ ffts (for time stretching etc).
 	 (sr (<em class=red>make-phase-vocoder</em> file :fft-size size)))
       (run
        (loop for i from start to end do
-	 (outa i (* amp (<em class=red>phase-vocoder</em> sr)))))))
+	 (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>phase-vocoder</em> sr)))))))
 </pre>
 </td></tr></table>
 
@@ -2709,7 +2709,7 @@ These are macros equivalent to <code>(in-any loc 0 stream)</code>.
 	 (fil (<em class=red>open-input</em> file)))          ; actually make-file-&gt;sample
     (run
      (loop for i from start to end do
-       (outa i (* amp (<em class=red>in-any</em> i 0 fil))))) ; actually file-&gt;sample
+       (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>in-any</em> i 0 fil))))) ; actually file-&gt;sample
     (close-input fil)))
 </pre>
 </td></tr></table>
@@ -3123,7 +3123,7 @@ a simple instrument such as:</p>
 (define (waver spectr driver)
   (let ((v0 (make-vct 8192))
 	(poly (<a class=quiet href="#partials-&gt;polynomial">partials-&gt;polynomial</a> spectr)))
-    (mix-vct (vct-map! v0 (lambda () (<a class=quiet href="#polynomial">polynomial</a> poly (driver)))) 0 0 0 #f)))
+    (<a class=quiet href="extsnd.html#mixvct">mix-vct</a> (<a class=quiet href="extsnd.html#vctmap">vct-map!</a> v0 (lambda () (<a class=quiet href="#polynomial">polynomial</a> poly (driver)))) 0 0 0 #f)))
 
 (waver '(1 .6 2 .4) 
        (let ((g0 (<a class=quiet href="#make-oscil">make-oscil</a> 100)) 
@@ -3137,7 +3137,7 @@ a simple instrument such as:</p>
 </p>
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
-(let ((mx (maxamp))) (map-channel (lambda (y) (* mx (sin (/ (* pi y) mx))))))
+(let ((mx (maxamp))) (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) (* mx (sin (/ (* pi y) mx))))))
 </pre>
 </td></tr></table>
 <p>This modulates the sound but keeps the output maxamp the same as the input.
@@ -3164,9 +3164,9 @@ The nomenclature here is a bit confusing -- I can't remember now why I used
 these names; think of "carrier" as "carrier amplitude" and "input1" as "carrier". Normal amplitude modulation using this function would be:
 </p>
 <pre>
-  (defvar carrier (make-oscil carrier-freq (* .5 pi)))
+  (defvar carrier (<a class=quiet href="#make-oscil">make-oscil</a> carrier-freq (* .5 pi)))
   ...
-  (amplitude-modulate 1.0 (oscil carrier) signal)
+  (amplitude-modulate 1.0 (<a class=quiet href="#oscil">oscil</a> carrier) signal)
 </pre>
 
 <p>
@@ -3189,15 +3189,15 @@ it would be:
 <pre>
 (define* (ssb-am freq #:optional (order 40)) ; higher order = better cancellation
   (let* ((carrier-freq (abs freq))
-	 (cos-carrier (make-oscil carrier-freq (* .5 pi)))
-	 (sin-carrier (make-oscil carrier-freq))
+	 (cos-carrier (<a class=quiet href="#make-oscil">make-oscil</a> carrier-freq (* .5 pi)))
+	 (sin-carrier (<a class=quiet href="#make-oscil">make-oscil</a> carrier-freq))
 	 (dly (make-delay order))
 	 (hlb (make-hilbert-transform order))) ; in dsp.scm
-    (map-channel (lambda (y)
-		   (let ((ccos (oscil cos-carrier))
-			 (csin (oscil sin-carrier))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y)
+		   (let ((ccos (<a class=quiet href="#oscil">oscil</a> cos-carrier))
+			 (csin (<a class=quiet href="#oscil">oscil</a> sin-carrier))
 			 (yh (hilbert-transform hlb y))
-			 (yd (delay dly y)))
+			 (yd (<a class=quiet href="#delay">delay</a> dly y)))
 		     (if (&gt; freq 0.0)
 			 (- (* ccos yd) ; shift up
 			    (* csin yh))
@@ -3945,7 +3945,7 @@ leave the generator type decision until run time:</p>
 					       dsps))))
 	 (output (make-vct (inexact-&gt;exact (floor (* dur (<a class=quiet href="#mussrate">mus-srate</a>))))))
 	 (len (vector-length dsp-chain)))
-    (vct-map! output (lambda ()
+    (<a class=quiet href="extsnd.html#vctmap">vct-map!</a> output (lambda ()
 		       (let ((val 0.0))
 			 ;; using do and vector here for the run macro's benefit
 			 (do ((i 0 (1+ i)))
@@ -3957,7 +3957,7 @@ leave the generator type decision until run time:</p>
 				     (set! val (+ val (gen)))
 				     (set! val (gen val))))))
 			 val)))
-    (mix-vct output (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))) #f #f #f)))
+    (<a class=quiet href="extsnd.html#mixvct">mix-vct</a> output (inexact-&gt;exact (floor (* beg (<a class=quiet href="#mussrate">mus-srate</a>)))) #f #f #f)))
 
 ;(chain-dsps 0 1.0 '(0 0 1 1 2 0) (<a class=quiet href="#make-oscil">make-oscil</a> 440))
 ;(chain-dsps 0 1.0 '(0 0 1 1 2 0) (<a class=quiet href="#make-one-zero">make-one-zero</a> .5) (<a class=quiet href="#make-readin">make-readin</a> "oboe.snd"))
@@ -4528,10 +4528,10 @@ Here's another instrument that implements legato between notes by using the prev
 	 (end (+ start (floor (* *srate* dur))))
 	 (carrier (if previous-oscils
 		      (fmins-carrier previous-oscils)
-		    (make-oscil)))
+		    (<a class=quiet href="#make-oscil">make-oscil</a>)))
 	 (modulator (if previous-oscils
 			(fmins-modulator previous-oscils)
-		      (make-oscil))))
+		      (<a class=quiet href="#make-oscil">make-oscil</a>))))
     (setf (<a class=quiet href="#mus-frequency">mus-frequency</a> carrier) frq)
     (setf (<a class=quiet href="#mus-frequency">mus-frequency</a> modulator) frq)
     (<em class=red>run*</em> (carrier modulator)
@@ -4542,7 +4542,7 @@ Here's another instrument that implements legato between notes by using the prev
 	  (setf (fmins-carrier previous-oscils) carrier)
 	  (setf (fmins-modulator previous-oscils) modulator)))))
 
-;;; (defvar oscs (make-fmins :carrier (make-oscil) :modulator (make-oscil)))
+;;; (defvar oscs (make-fmins :carrier (<a class=quiet href="#make-oscil">make-oscil</a>) :modulator (<a class=quiet href="#make-oscil">make-oscil</a>)))
 ;;; (<a class=quiet href="#with-sound">with-sound</a> () (fmsimp 0 1.01 440 .1 0.0 oscs) (fmsimp 1.01 1 660 .1 0.0 oscs))
 ;;; (<a class=quiet href="#with-sound">with-sound</a> () (fmsimp 0 1.01 440 .1 0.0) (fmsimp 1.01 1 660 .1 0.0))
 ;;;     the 1.01 (as opposed to 1.0) is needed because the phases line up just by chance in the 1.0 case

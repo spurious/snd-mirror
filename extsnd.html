@@ -2952,7 +2952,7 @@ channel:
     new-v))
 
 (define* (channel-polynomial coeffs #:optional snd chn)
-  (let ((len (frames snd chn)))
+  (let ((len (<a class=quiet href="#frames">frames</a> snd chn)))
     (<em class=red>vct-&gt;channel</em> (vct-polynomial (<em class=red>channel-&gt;vct</em> 0 len snd chn) coeffs) 0 len snd chn)))
 
 ;;; (channel-polynomial (<em class=red>vct</em> 0.0 .5)) = x*.5
@@ -5111,7 +5111,7 @@ send channel 1 data to channel 1 of the DAC, and so on).
 	  ((= chan chans))
 	(let ((player (<em class=red>make-player</em> snd 0)))
 	  (<em class=red>add-player</em> player 0 end current-edit-position #f chan)))
-      (<em class=red>start-playing</em> chans (srate snd)))))
+      (<em class=red>start-playing</em> chans (<a class=quiet href="#srate">srate</a> snd)))))
 </pre></td></tr></table>
 
 See play-with-envs in enved.scm, play-syncd-marks in marks.scm, or start-dac in play.scm.
@@ -6100,7 +6100,7 @@ is labelled <i>xlabel</i>, the x axis units go from <i>x0</i> to <i>x1</i> (the 
 the y axis goes from <i>y0</i> to <i>y1</i> (the default fits the data), and the display is 
 associated with channel <i>chn</i> in <i>snd</i>.
 <pre>
-    (graph (vct 0 .1 .2 .3 .4 .3 .2 .1 0) "roof")
+    (graph (<a class=quiet href="#vct">vct</a> 0 .1 .2 .3 .4 .3 .2 .1 0) "roof")
 </pre>
 The current slider values can be read from <a href="#xpositionslider">x-position-slider</a>, 
 <a href="#xzoomslider">x-zoom-slider</a>, etc.  The <i>data</i> argument can be a list of vcts; each is graphed at the same time, following the sequence of
@@ -13034,7 +13034,7 @@ These graphics-contexts make it easier to fit in with whatever color scheme is c
 in snd-motif.xm's SMPTE time display, we make sure the font color reflects whether we're in the selected channel:
 <pre>
       (XSetFont dpy
-		(if (= chn (selected-channel snd))
+		(if (= chn (<a class=quiet href="#selectedsound">selected-channel</a> snd))
 		    (cadr (snd-gcs))
 		    (car (snd-gcs)))
 		(.fid fs))

@@ -3,11 +3,13 @@
 
 (use-modules (ice-9 optargs))
 
+(provide 'snd-green.scm)
+
 (if (not (defined? 'pi)) (define pi 3.14159265))
 (if (not (defined? 'two-pi)) (define two-pi (* 2 pi)))
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
-(def-clm-struct grn 
+(def-clm-struct grnoi
   (output 0.0 :type float) 
   (amp .1 :type float) 
   (lo -1.0 :type float) 
@@ -18,51 +20,51 @@
 
 
 (define (brownian-noise gr) ; unbounded output
-  (set! (grn-output gr) (+ (grn-output gr) (mus-random (grn-amp gr))))
-  (grn-output gr))
+  (set! (grnoi-output gr) (+ (grnoi-output gr) (mus-random (grnoi-amp gr))))
+  (grnoi-output gr))
 
 
 (define* (make-green-noise :key (frequency 440.0) (amplitude 1.0) (high 1.0) (low -1.0))
-  (make-grn :freq (hz->radians frequency)
-	    :amp amplitude
-	    :hi high
-	    :lo low))
+  (make-grnoi :freq (hz->radians frequency)
+	      :amp amplitude
+	      :hi high
+	      :lo low))
 
 (define (green-noise r sweep)
-  (if (>= (grn-phase r) two-pi)
+  (if (>= (grnoi-phase r) two-pi)
       (begin
-       (do () ((< (grn-phase r) two-pi)) (set! (grn-phase r) (- (grn-phase r) two-pi)))
-       (let ((val (mus-random (grn-amp r))))
-	 (set! (grn-output r) (+ (grn-output r) val))
-	 (if (not (<= (grn-lo r) (grn-output r) (grn-hi r)))
-	     (set! (grn-output r) (- (grn-output r) (* 2 val)))))))
-  (set! (grn-phase r) (+ (grn-phase r) (+ (grn-freq r) sweep)))
-  (do () ((>= (grn-phase r) 0.0)) (set! (grn-phase r) (+ (grn-phase r) two-pi)))
-  (grn-output r))
+       (do () ((< (grnoi-phase r) two-pi)) (set! (grnoi-phase r) (- (grnoi-phase r) two-pi)))
+       (let ((val (mus-random (grnoi-amp r))))
+	 (set! (grnoi-output r) (+ (grnoi-output r) val))
+	 (if (not (<= (grnoi-lo r) (grnoi-output r) (grnoi-hi r)))
+	     (set! (grnoi-output r) (- (grnoi-output r) (* 2 val)))))))
+  (set! (grnoi-phase r) (+ (grnoi-phase r) (+ (grnoi-freq r) sweep)))
+  (do () ((>= (grnoi-phase r) 0.0)) (set! (grnoi-phase r) (+ (grnoi-phase r) two-pi)))
+  (grnoi-output r))
 
 
 (define* (make-green-noise-interp :key (frequency 440.0) (amplitude 1.0) (high 1.0) (low -1.0))
-  (make-grn :freq (hz->radians frequency)
-	    :hi high
-	    :lo low
-	    :amp amplitude
-	    :incr (* (mus-random amplitude) (/ frequency (mus-srate)))))
+  (make-grnoi :freq (hz->radians frequency)
+	      :hi high
+	      :lo low
+	      :amp amplitude
+	      :incr (* (mus-random amplitude) (/ frequency (mus-srate)))))
 
 (define (green-noise-interp r sweep)
-  (set! (grn-output r) (+ (grn-output r) (grn-incr r)))
-  (if (>= (grn-phase r) two-pi)
-      (let* ((val (mus-random (grn-amp r)))
-	     (newg (+ (grn-output r) val)))
-	(if (not (<= (grn-lo r) newg (grn-hi r)))
+  (set! (grnoi-output r) (+ (grnoi-output r) (grnoi-incr r)))
+  (if (>= (grnoi-phase r) two-pi)
+      (let* ((val (mus-random (grnoi-amp r)))
+	     (newg (+ (grnoi-output r) val)))
+	(if (not (<= (grnoi-lo r) newg (grnoi-hi r)))
 	    (set! val (- val)))
-	(set! (grn-incr r) (* val (/ (+ (grn-freq r) sweep) two-pi)))
-	(do () ((< (grn-phase r) two-pi)) (set! (grn-phase r) (- (grn-phase r) two-pi)))))
+	(set! (grnoi-incr r) (* val (/ (+ (grnoi-freq r) sweep) two-pi)))
+	(do () ((< (grnoi-phase r) two-pi)) (set! (grnoi-phase r) (- (grnoi-phase r) two-pi)))))
   ;; (both grn-freq and sweep are in terms of radians/sample, so by dividing by two-pi, we get
   ;; the distance we go to the next new number in terms of 0..1 (i.e. inverse of number of
   ;; samples per period) -- this is equivalent to the multiply in the make function.
-  (set! (grn-phase r) (+ (grn-phase r) (+ (grn-freq r) sweep)))
-  (do () ((>= (grn-phase r) 0.0)) (set! (grn-phase r) (+ (grn-phase r) two-pi)))
-  (grn-output r))
+  (set! (grnoi-phase r) (+ (grnoi-phase r) (+ (grnoi-freq r) sweep)))
+  (do () ((>= (grnoi-phase r) 0.0)) (set! (grnoi-phase r) (+ (grnoi-phase r) two-pi)))
+  (grnoi-output r))
 
 #|
 (definstrument (green1 beg end freq amp lo hi)
