@@ -43808,10 +43808,46 @@ EDITS: 1
 (if (not (provided? 'snd-freeverb.scm)) (load "freeverb.scm"))
 (if (not (provided? 'snd-grani.scm)) (load "grani.scm"))
 (if (not (provided? 'snd-dlocsig.scm)) (load "dlocsig.scm"))
+(if (not (provided? 'snd-green.scm)) (load "green.scm"))
 
 (define old-opt-23 (optimization))
 (set! (optimization) max-optimization)
 (dismiss-all-dialogs)
+
+(definstrument (green3 start dur freq amp amp-env noise-freq noise-width noise-max-step)
+  ;; brownian noise on amp env
+  (let* ((grn (make-green-noise-interp :frequency noise-freq :amplitude noise-max-step :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
+	 (osc (make-oscil freq))
+	 (e (make-env amp-env :scaler amp :duration dur))
+	 (beg (inexact->exact (floor (* start (mus-srate)))))
+	 (end (+ beg (inexact->exact (floor (* dur (mus-srate)))))))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (outa i (* (env e) 
+		    (+ 1.0 (green-noise-interp grn 0.0))
+		    (oscil osc)) 
+	       *output*))))))
+
+;(with-sound () (green3 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 100 .2 .02))
+
+(definstrument (green4 start dur freq amp freq-env gliss noise-freq noise-width noise-max-step)
+  ;; same but on freq env
+  (let* ((grn (make-green-noise-interp :frequency noise-freq :amplitude noise-max-step :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
+	 (osc (make-oscil freq))
+	 (e (make-env freq-env :scaler gliss :duration dur))
+	 (beg (inexact->exact (floor (* start (mus-srate)))))
+	 (end (+ beg (inexact->exact (floor (* dur (mus-srate)))))))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (outa i (* amp (oscil osc (hz->radians (+ (env e) (green-noise-interp grn 0.0)))))
+	       *output*))))))
+
+;(with-sound () (green4 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 440 100 100 10))
+
 
 (define* (make-sinc-train :optional (frequency 440.0) (width #f))
   (let ((range (or width (* pi (- (* 2 (inexact->exact (floor (/ (mus-srate) (* 2.2 frequency))))) 1)))))
@@ -44514,6 +44550,9 @@ EDITS: 1
 		  (resflt 17.5 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 #f #f 500 .995 .1 1000 .995 .1 2000 .995 .1)
 		  (bes-fm 18 1 440 10.0 1.0 4.0)
 		  
+		  (green3 19 2.0 440 .5 '(0 0 1 1 2 1 3 0) 100 .2 .02)
+		  (green4 21 2.0 440 .5 '(0 0 1 1 2 1 3 0) 440 100 100 10)
+
 		  (fir+comb 20 2 10000 .001 200)
 		  (fir+comb 22 2 1000 .0005 400)
 		  (fir+comb 24 2 3000 .001 300)

@@ -497,6 +497,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+12-Jul:  green.scm.\n\
 10-Jul:  dlocsig.scm.\n\
 3-July:  new CLM generator: move-sound.\n\
          locsig now returns a float, not a frame.\n\
@@ -505,8 +506,6 @@ void about_snd_help(void)
          new CLM generator: filtered-comb.\n\
 23-Jun:  Snd 8.2.\n\
 12-Jun:  fmviolin.clm.\n\
-6-Jun:   changed after-apply-hook to after-apply-controls-hook.\n\
-2-Jun:   removed mus-make-error.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

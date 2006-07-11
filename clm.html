@@ -1887,7 +1887,7 @@ The following instrument sweeps the comb filter using the <i>pm</i> argument:
           (zenv (<a class=quiet href="#make-env">make-env</a> :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
       (run
        (loop for i from beg to end do
-	 (outa i (<em class=red>comb</em> d0 (* amp (<a class=quiet href="#pulse-train">pulse-train</a> s)) (<a class=quiet href="#end">env</a> zenv))))))))
+	 (outa i (<em class=red>comb</em> d0 (* amp (<a class=quiet href="#pulse-train">pulse-train</a> s)) (<a class=quiet href="#env">env</a> zenv))))))))
 
 (with-sound () (zc 0 3 100 .1 20 100 .5) (zc 3.5 3 100 .1 90 100 .95))
 </pre></td></tr></table>
@@ -1903,7 +1903,7 @@ delay line as the coefficients for an FIR filter (this example is in Scheme):
 	 (end (+ start (inexact-&gt;exact (floor (* (<a class=quiet href="#mussrate">mus-srate</a>) dur)))))
 	 (dly (<em class=red>make-comb</em> :scaler .9 :size size)) 
 	 (flt (<a class=quiet href="#make-fir-filter">make-fir-filter</a> :order size :xcoeffs (<em class=red>mus-data</em> dly))) ; use comb delay line as FIR coefficients
-	 (r (<a class=quiet href="make-rand">make-rand</a> freq)))                                       ; feed comb with white noise
+	 (r (<a class=quiet href="#make-rand">make-rand</a> freq)))                                       ; feed comb with white noise
     (run 
      (lambda () 
        (do ((i start (1+ i))) 
@@ -2911,15 +2911,15 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 	 (end (+ start (floor (* dur *srate*))))
 	 (loc (<em class=red>make-move-sound</em> (list start end 4 0
 				     (<a class=quiet href="#make-delay">make-delay</a> 12) 
-				     (<a class=quiet href="make-env">make-env</a> '(0 0 10 1) :end dur)
-				     (<a class=quiet href="make-env">make-env</a> '(0 0 1 0) :duration dur)
+				     (<a class=quiet href="#make-env">make-env</a> '(0 0 10 1) :end dur)
+				     (<a class=quiet href="#make-env">make-env</a> '(0 0 1 0) :duration dur)
 				     (make-array 4 :initial-element nil)
 				     (make-array 4 :initial-contents 
 				       (list
-					(<a class=quiet href="make-env">make-env</a> '(0 0 1 1 2 0 3 0 4 0) :duration dur)
-					(<a class=quiet href="make-env">make-env</a> '(0 0 1 0 2 1 3 0 4 0) :duration dur)
-					(<a class=quiet href="make-env">make-env</a> '(0 0 1 0 2 0 3 1 4 0) :duration dur)
-					(<a class=quiet href="make-env">make-env</a> '(0 0 1 0 2 0 3 0 4 1) :duration dur)))
+					(<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 0 3 0 4 0) :duration dur)
+					(<a class=quiet href="#make-env">make-env</a> '(0 0 1 0 2 1 3 0 4 0) :duration dur)
+					(<a class=quiet href="#make-env">make-env</a> '(0 0 1 0 2 0 3 1 4 0) :duration dur)
+					(<a class=quiet href="#make-env">make-env</a> '(0 0 1 0 2 0 3 0 4 1) :duration dur)))
 				     nil
 				     (make-integer-array 4 :initial-contents (list 0 1 2 3)))
 			       *output*)))
