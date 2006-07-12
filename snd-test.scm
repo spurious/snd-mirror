@@ -19371,8 +19371,26 @@ EDITS: 5
 	  (if (not (vequal v (make-vct 10 0.875)))
 	      (snd-display ";move-sound output: ~A" v)))
 	
-	
-	;; TODO: move-sound arg type error checks 
+	(let ((var (catch #t (lambda () (make-move-sound (list 0 1000 1 0 (make-oscil 32) (make-env '(0 0 1 1) :end 1000) 
+							    (make-env '(0 0 1 1) :end 1000) (vector (make-delay 32)) 
+							    (vector (make-env '(0 0 1 1) :end 1000)) #f (vector 0 1))
+						      outf1))
+			  (lambda args args))))
+	  (if (not (eq? (car var) 'wrong-type-arg))
+	    (snd-display ";make-move-sound bad doppler delay: ~A" var)))
+	(let ((var (catch #t (lambda () (make-move-sound (list 0 1000 1 0 (make-oscil 32) (make-env '(0 0 1 1) :end 1000) 
+							    (make-env '(0 0 1 1) :end 1000) (vector (make-delay 32)))
+						      outf1))
+			  (lambda args args))))
+	  (if (not (eq? (car var) 'wrong-type-arg))
+	    (snd-display ";make-move-sound truncated list: ~A" var)))
+	(let ((var (catch #t (lambda () (make-move-sound (list 0 1000 1 0 (make-delay 32) (make-env '(0 0 1 1) :end 1000) 
+							    #f (vector #f)
+							    (vector (make-env '(0 0 1 1) :end 1000)) #f #f)
+						      outf1))
+			  (lambda args args))))
+	  (if (not (eq? (car var) 'wrong-type-arg))
+	    (snd-display ";make-move-sound no out map: ~A" var)))
 	
 	
 	(mus-close outf1) 

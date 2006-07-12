@@ -4602,9 +4602,12 @@ static int *xen_vector_to_int_array(XEN vect)
 
 static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
 {
-  mus_any *ge;
+  mus_any *ge, *dopdly, *dopenv, *globrevenv = NULL;
   mus_any **out_delays, **out_envs, **rev_envs;
   int *out_map;
+  off_t start, end;
+  int outchans, revchans;
+  XEN ref;
 
   #define H_make_move_sound "(" S_make_move_sound " dloc-list out :optional rev) -> dlocsig run-time generator"
 
@@ -4616,21 +4619,66 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(revp) || XEN_FALSE_P(revp) || ((MUS_XEN_P(revp)) && (mus_output_p(XEN_TO_MUS_ANY(revp)))), 
 		  revp, XEN_ARG_3, S_make_move_sound, "reverb stream");
 
-  ge = mus_make_move_sound(XEN_TO_C_OFF_T(XEN_LIST_REF(dloc_list, 0)),                           /* start */
-			   XEN_TO_C_OFF_T(XEN_LIST_REF(dloc_list, 1)),                           /* end */
-			   XEN_TO_C_INT(XEN_LIST_REF(dloc_list, 2)),                             /* out chans */
-			   XEN_TO_C_INT(XEN_LIST_REF(dloc_list, 3)),                             /* rev chans */
-			   XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 4)),                           /* doppler delay */
-			   XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 5)),                           /* doppler env */
-			   (MUS_XEN_P(XEN_LIST_REF(dloc_list, 6))) ? XEN_TO_MUS_ANY(XEN_LIST_REF(dloc_list, 6)) : NULL,                           
-			                                                                         /* global reverb env */
-			   out_delays = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 7)), /* out delays */
-			   out_envs = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 8)),   /* out envs */
-			   rev_envs = xen_vector_to_mus_any_array(XEN_LIST_REF(dloc_list, 9)),   /* rev envs */
-			   out_map = xen_vector_to_int_array(XEN_LIST_REF(dloc_list, 10)),       /* out map */
-			   XEN_TO_MUS_ANY(outp),                                                 /* output frame->file gen (*output*) */
-			   ((XEN_BOUND_P(revp) && (!(XEN_FALSE_P(revp)))) ? XEN_TO_MUS_ANY(revp) : NULL), /* same for reverb (optional) */
-			   true, false);                                                         /* free outer arrays but not gens */
+  ref = XEN_LIST_REF(dloc_list, 0);
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(ref), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[0] (start): a sample number");
+  start = XEN_TO_C_OFF_T(ref);
+
+  ref = XEN_LIST_REF(dloc_list, 1);
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(ref), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[1] (end): a sample number");
+  end = XEN_TO_C_OFF_T(ref);
+
+  ref = XEN_LIST_REF(dloc_list, 2);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ref), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[2] (outchans): an integer");
+  outchans = XEN_TO_C_INT(ref);
+
+  ref = XEN_LIST_REF(dloc_list, 3);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ref), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[3] (revchans): an integer");
+  revchans = XEN_TO_C_INT(ref);
+
+  ref = XEN_LIST_REF(dloc_list, 4);
+  XEN_ASSERT_TYPE(MUS_XEN_P(ref), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[4] (doppler delay): a delay generator");
+  dopdly = XEN_TO_MUS_ANY(ref);
+  XEN_ASSERT_TYPE(mus_delay_p(dopdly), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[4] (doppler delay): a delay generator");
+
+  ref = XEN_LIST_REF(dloc_list, 5);
+  XEN_ASSERT_TYPE(MUS_XEN_P(ref), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[5] (doppler env): an env generator");
+  dopenv = XEN_TO_MUS_ANY(ref);
+  XEN_ASSERT_TYPE(mus_env_p(dopenv), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[5] (doppler env): an env generator");
+
+  ref = XEN_LIST_REF(dloc_list, 6);
+  XEN_ASSERT_TYPE(XEN_FALSE_P(ref) || MUS_XEN_P(ref), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[6] (global rev env): an env generator or #f");
+  if (MUS_XEN_P(ref))
+    {
+      globrevenv = XEN_TO_MUS_ANY(ref);
+      XEN_ASSERT_TYPE(mus_env_p(globrevenv), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[6] (global rev env): an env generator");
+    }
+
+  ref = XEN_LIST_REF(dloc_list, 7);
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(ref) && (XEN_VECTOR_LENGTH(ref) >= outchans), 
+		  ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[7] (out delays): a vector of #f or delay gens");
+  out_delays = xen_vector_to_mus_any_array(ref);
+
+  ref = XEN_LIST_REF(dloc_list, 8);
+  XEN_ASSERT_TYPE(XEN_FALSE_P(ref) || (XEN_VECTOR_P(ref) && (XEN_VECTOR_LENGTH(ref) >= outchans)), 
+		  ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[8] (out envs): #f or a vector of envs");
+  out_envs = xen_vector_to_mus_any_array(ref);
+
+  ref = XEN_LIST_REF(dloc_list, 9);
+  XEN_ASSERT_TYPE(XEN_FALSE_P(ref) || (XEN_VECTOR_P(ref) && (XEN_VECTOR_LENGTH(ref) >= revchans)), 
+		  ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[9] (rev envs): #f or a vector of envs");
+  rev_envs = xen_vector_to_mus_any_array(ref);
+
+  ref = XEN_LIST_REF(dloc_list, 10);
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(ref) && (XEN_VECTOR_LENGTH(ref) >= outchans), 
+		  ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[10] (out map): vector of ints");
+  out_map = xen_vector_to_int_array(ref);
+
+  ge = mus_make_move_sound(start, end, outchans, revchans,
+			   dopdly, dopenv, globrevenv,
+			   out_delays, out_envs, rev_envs, out_map,
+			   XEN_TO_MUS_ANY(outp),
+			   ((XEN_BOUND_P(revp) && (!(XEN_FALSE_P(revp)))) ? XEN_TO_MUS_ANY(revp) : NULL),
+			   true, false);                  /* free outer arrays but not gens */
   if (ge)
     {
       mus_xen *gn;

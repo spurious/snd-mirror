@@ -8564,8 +8564,6 @@ end
 
 <A NAME="wsdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>ws</h2></td></tr></table>
 
-<!-- TODO: doc def-clm-struct, notehook, definstrument, with-temp-sound, clm-load, sound-let, with-mix (mus_mix/clm_mix in rb), def-optkey-fun -->
-
 <p>
 with-sound provides a simple way to package up a bunch of instrument calls into a new
 sound file, and open that file in Snd when the computation is complete. 
@@ -8671,7 +8669,7 @@ See the <a href="#clminsdoc">clm instrument</a> documentation for more examples.
 <b>with-sound</b> opens its output file (<i>output</i> above)
 via make-sample-&gt;file, setting the global variable *output*.  This
 is equivalent to CLM's *output* variable, and can be used the same
-way in outa or locsig.  If <i>reverb</i> is specified, *reverb* is also
+way in <a class=quiet href="clm.html#outa">outa</a> or <a class=quiet href="clm.html#locsig">locsig</a>.  If <i>reverb</i> is specified, *reverb* is also
 opened (corresponding to CLM's *reverb*).  So the cooperating instrument code is:
 </p>
 
@@ -8679,7 +8677,7 @@ opened (corresponding to CLM's *reverb*).  So the cooperating instrument code is
 (definstrument (ins args)
   (let ...
     (ws-interrupt?) ; see below
-    (run
+    (run                             ; run is optional, but speeds up computation by a lot
       (lambda ()
         (do ((i start (1+ i)))
             ((= i end))
@@ -8687,11 +8685,30 @@ opened (corresponding to CLM's *reverb*).  So the cooperating instrument code is
 </pre></td></tr></table>
 
 <p>which parallels the Common Lisp CLM (change the loop statement to a do statement,
-add the lambda wrapper (needed by the run macro unfortunately),
+add the lambda wrapper, needed by the run macro unfortunately,
 and you're ready to go).  If the run macro can handle the instrument code (and
 it can handle anything the CL version can handle, I think), then the Snd with-sound
 should run within a factor of four of the fastest CL-based CLM, even though the
 latter is going through the C intermediate file and the (very good) C compiler!  
+</p>
+
+<p>with-sound returns the output file name. If a previous file of the same name
+is currently open in Snd, it is closed before the new version is opened.
+To display the entire sound automatically (independent of <a href="extsnd.html#afteropenhook">after-open-hook</a>),
+use <b>with-full-sound</b>.  It is:
+</p>
+<pre>
+    (defmacro with-full-sound (args . body)
+      `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
+         (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a> *snd-opened-sound*) (list 0.0 (/ (<a class=quiet href="extsnd.html#frames">frames</a> *snd-opened-sound*) (<a class=quiet href="extsnd.html#srate">srate</a> *snd-opened-sound*))))
+         snd))
+</pre>
+<p>Since with-sound returns the new sound's file name, we save that, get the new sound's index (<a href="extsnd.html#sndopenedsound">*snd-opened-sound*</a>),
+and set the <a href="extsnd.html#xbounds">x-bounds</a> to display the full sound, then return the file name.  You could obviously customize this any way
+you like.
+</p>
+
+<p>
 The easiest way to mix an existing file into the with-sound output is to use
 mus-mix with *output*:
 </p>
@@ -8708,21 +8725,50 @@ mus-mix with *output*:
 <pre>
     (with-sound (:continue-old-file #t) (fm-violin 0 1 440 .1))
 </pre>
-<p>with-sound returns the output file name. If a previous file of the same name
-is currently open, it is closed before the new version is opened.
-To display the entire sound automatically (independent of <a href="extsnd.html#afteropenhook">after-open-hook</a>),
-use <b>with-full-sound</b>.  It is:
+
+
+<br>
+<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>other forms of with-sound</h4></td></tr></table>
+
+<p>There are several other versions of with-sound: with-temp-sound, sound-let, clm-load, with-mix, and the Common Music
+handles, init-with-sound and finish-with-sound.
+</p>
+
+<p>
+<b>with-temp-sound</b> and <b>sound-let</b> set up temporary bindings for embedded with-sounds.
+Sound-let is documented in <a href="clm.html#sound-let">clm.html</a>; briefly it is a combination
+of "let" and with-sound:
 </p>
 <pre>
-    (defmacro with-full-sound (args . body)
-      `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
-         (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a> *snd-opened-sound*) (list 0.0 (/ (<a class=quiet href="extsnd.html#frames">frames</a> *snd-opened-sound*) (<a class=quiet href="extsnd.html#srate">srate</a> *snd-opened-sound*))))
-         snd))
+  (with-sound ()
+    (sound-let ((temp-sound () (fm-violin 0 1 440 .1))) ; create temp-sound with an fm-violin note (v.scm)
+       (pins 0.0 2.0 temp-sound 1.0 :time-scaler 2.0))  ; stretch it with the pins instrument (clm-ins.scm)
+    (fm-violin 1 1 550 .1))                             ; add another fm-violin note
 </pre>
-<p>Since with-sound returns the new sound's file name, we save that, get the new sound's index (<a href="extsnd.html#sndopenedsound">*snd-opened-sound*</a>),
-and set the <a href="extsnd.html#xbounds">x-bounds</a> to display the full sound, then return the file name.  You could obviously customize this any way
-you like.
+
+<p>Similarly, with-temp-sound creates a temporary sound file (using <a href="extsnd.html#sndtempnam">snd-tempnam</a>),
+and it does not open the result in Snd (it assumes its output is some intermediate file); here is an example that
+parallels the sound-let example above:
 </p>
+<pre>
+  (with-sound ()
+    (let ((temp-sound (with-temp-sound () (fm-violin 0 1 440 .1))))
+      (clm-expsrc 0 2 temp-sound 2.0 1.0 1.0)))
+</pre>
+
+<p>Another variant of with-sound is <b><a name="clmload">clm-load</a></b>.  Its first argument is a filename, assumed to
+be a text file containing the body of with-sound, followed by the usual with-sound arguments, if any.
+For example, if we have a file named clm-load-test.clm with these contents:
+</p>
+<pre>
+    (fm-violin 0 1 440 .1)
+    (fm-violin 1 1 660 .1)
+</pre>
+<p>
+then <code>(clm-load "clm-load-test.clm")</code> is the same as <code>(with-sound () (fm-violin 0 1 440 .1) (fm-violin 1 1 660 .1))</code>.
+Similarly for, <code>(clm-load "clm-load-test.clm" :srate 44100 :channels 2)</code> and so on.
+</p>
+
 <p><b>init-with-sound</b> and <b>finish-with-sound</b>
 split with-sound into two pieces, primarily for Common Music's benefit.
 </p>
@@ -8737,21 +8783,16 @@ split with-sound into two pieces, primarily for Common Music's benefit.
     (with-sound (:scaled-to .5)
       (fm-violin 0 1 440 .1))
 </pre>
-<p>Another variant of with-sound is <b><a name="clmload">clm-load</a></b>.  Its first argument is a filename, assumed to
-be a text file containing the body of with-sound, followed by the usual with-sound arguments, if any.
-For example, if we have a file named clm-load-test.clm with these contents:
-</p>
-<pre>
-    (fm-violin 0 1 440 .1)
-    (fm-violin 1 1 660 .1)
-</pre>
-<p>
-then <code>(clm-load "clm-load-test.clm")</code> is the same as <code>(with-sound () (fm-violin 0 1 440 .1) (fm-violin 1 1 660 .1))</code>.
-Similarly for, <code>(clm-load "clm-load-test.clm" :srate 44100 :channels 2)</code> and so on.
+
+<p><b>with-mix</b> is a "checkpointing" with-sound; it takes extended explication: see <a href="clm.html#mix-and-with-mix">clm.html</a>
+for details.
 </p>
 
+<br>
+<A NAME="wsdebug"></a><table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>debugging help in with-sound</h4></td></tr></table>
+
 <!-- INDEX wsdebug:Debugging (notelists) -->
-<A NAME="wsdebug"></a>
+
 <p>with-sound establishes a catch for debugging: 'with-sound-interrupt.  If you
 place the macro <b>ws-interrupt?</b> in your instrument, C-g will be caught at
 each such point, and control transferred to the with-sound debugging context.
@@ -8761,38 +8802,39 @@ Once in the debugger, you are simply in the standard listener loop, but
 there are several additional functions to help with debugging:
 </p>
 <pre>
-  <em class=emdef>ws-go</em> (returned-value #f)
-  <em class=emdef>ws-locals</em> (stack-location 0)
-  <em class=emdef>ws-local</em> local-var (stack-location 0)
-  <em class=emdef>ws-backtrace</em> (all #f)
-  <em class=emdef>ws-help</em>
-  <em class=emdef>ws-quit</em>
-  <em class=emdef>ws-quit!</em>
-  <em class=emdef>ws-stop</em>
-  <em class=emdef>ws-stop!</em>
+  <em class=emdef>ws-go</em> (returned-value #f)             ; continue with-sound from interrupt point
+  <em class=emdef>ws-locals</em> (stack-location 0)          ; display current instrument's local variables
+  <em class=emdef>ws-local</em> local-var (stack-location 0) ; display one local variable (<i>local-var</i>, a symbol or string)
+  <em class=emdef>ws-backtrace</em> (all #f)                 ; show backtrace at point of interrupt
+  <em class=emdef>ws-help</em>                               ; print debugger help
+  <em class=emdef>ws-quit</em>                               ; exit with-sound, omitting reverb, if any
+  <em class=emdef>ws-quit!</em>                              ; exit with-sound and return to the top-level
+  <em class=emdef>ws-stop</em>                               ; exit with-sound, but run the reverb, if any
+  <em class=emdef>ws-stop!</em>                              ; same as ws-stop, but also force return to top-level
 </pre>
+
 <p>
-<b>ws-locals</b> prints out the current instrument's local variables and their values.
-<b>ws-local</b> prints one such variable's value (the <i>local-var</i> argument should be a symbol or a string).
-<b>ws-help</b> prints out help.
-<b>ws-backtrace</b> shows the stack at the point of the interrupt.  The stack trace
+The <b>ws-backtrace</b> stack trace
 is normally truncated to show just the 5 or so inner frames; to get the full
 backtrace, call ws-backtrace with an argument of #t.
-<b>ws-quit</b> exits with-sound without running the reverb (it does, however, close the current output file).
-<b>ws-quit!</b> exits all interrupt levels (in case you called with-sound while in a previous interrupted one, then
-interrupted that one as well), returning you to the true top-level.
-<b>ws-stop</b> jumps out of the notelist at the interrupted point, but goes ahead and runs any reverb
-before closing the output.
-<b>ws-stop!</b> is similar to ws-stop, but it also makes sure you're back at the top level at the end.
-<b>ws-go</b> continues from the point of the interrupt.
-The 'returned-value' is the value to return from the original call on ws-interrupt? (or its equivalent).
+The <b>ws-go</b> 'returned-value' is the value to return from the original call on ws-interrupt? (or its equivalent).
 </p>
+
+<br>
+<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>functions associated with with-sound</h4></td></tr></table>
+
+<p>
+<b>definstrument</b> and <b>def-clm-struct</b> make sound-producing functions compatible with with-sound.
+See clm.html for documentation.  <!-- SOMEDAY: finish the ws docs -->
+</p>
+
 <p>Toward the end of ws.scm is an example, <b>with-marked-sound</b>, that is just
 like with-sound except that it adds a mark at the start of each note in the output
 sound; the corresponding code in your instrument sets the mark's :ws property
 to contain any info you might find amusing.  You then click the mark to see
 that info.
 </p>
+
 <p>Also defined in ws.scm are the CLM functions <b>seconds-&gt;samples</b> and <b>time-&gt;samples</b>.
 The *clm-* variables are saved in the save-state
 file by <b>ws-save-state</b>, which may not be a good idea -- feedback welcome!

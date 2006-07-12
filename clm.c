@@ -1048,7 +1048,7 @@ mus_any *mus_make_oscil(Float freq, Float phase)
   return((mus_any *)gen);
 }
 
-/* decided against feedback-oscil (as in cellon) because it's not clear howto handle the index,
+/* decided against feedback-oscil (as in cellon) because it's not clear how to handle the index,
  *   and there are many options for the filtering -- since this part of the signal path
  *   is not hidden, there's no reason to bring it out explicitly (as in filtered-comb)
  */
@@ -1406,7 +1406,6 @@ mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /
  return((mus_any *)gen);
 }
 
-/* PERHAPS: some way to access I0 case (dsp.scm) */
 
 
 /*---------------- sine-summation ---------------- */
@@ -6582,9 +6581,9 @@ void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
 /* ---------------- move-sound ---------------- */
 
 /* TODO: move-sound c: is _mus_wrap_no_vcts correct for the wrapper?
- * TODO: move-sound c: type error checks in clm2xen dloc-list
  * TODO: move-sound rb: update dlocsig.rb (787, l788)
  * TODO: move-sound cl: figure out the gc problem (and move-sound?)
+ * TODO: mix-move-sound (etc) in snd
  */
 
 typedef struct {
