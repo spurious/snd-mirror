@@ -714,7 +714,7 @@ static XEN g_mus_midi_read(XEN line, XEN bytes) /* returns list of midi bytes */
   len = XEN_TO_C_INT(bytes);
   buf = (unsigned char *)CALLOC(len, sizeof(unsigned char));
 #if DEBUGGING
-  set_printable(0);
+  set_printable(0);  /* why does this line trigger a warning in the forth version? */
 #endif
   err = mus_midi_read(XEN_TO_C_INT(line), buf, len);
   if (err == -1)

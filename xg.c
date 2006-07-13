@@ -1000,8 +1000,8 @@ XM_TYPE_1(GtkTextBufferDeserializeFunc, GtkTextBufferDeserializeFunc)
 #endif
 
 #if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
-XM_TYPE(GtkNotebookWindowCreationFunc, GtkNotebookWindowCreationFunc)
-XM_TYPE_PTR(GtkRecentData_, GtkRecentData*)
+XM_TYPE_1(GtkNotebookWindowCreationFunc, GtkNotebookWindowCreationFunc)
+XM_TYPE_PTR_1(GtkRecentData_, GtkRecentData*)
 #define C_TO_XEN_GtkTreeViewGridLines(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkTreeViewGridLines(Arg) (GtkTreeViewGridLines)(XEN_TO_C_INT(Arg))
 #define XEN_GtkTreeViewGridLines_P(Arg) XEN_INTEGER_P(Arg)
@@ -1405,6 +1405,7 @@ static void gxg_g_message_log_func(const gchar* domain, GLogLevelFlags log_level
 static void gxg_clip_rich_text_received(GtkClipboard* clipboard, GdkAtom format, const guint8* text, gsize length, gpointer func_data)
 {
   if (!XEN_LIST_P((XEN)func_data)) return;
+  #if (!(defined(__cplusplus)))
   XEN_CALL_5(XEN_CAR((XEN)func_data),
              C_TO_XEN_GtkClipboard_(clipboard),
              C_TO_XEN_GdkAtom(format),
@@ -1412,14 +1413,19 @@ static void gxg_clip_rich_text_received(GtkClipboard* clipboard, GdkAtom format,
              C_TO_XEN_gsize(length),
              XEN_CADR((XEN)func_data),
              c__FUNCTION__);
+  #endif
 }
 static gboolean gxg_recent_filter(const GtkRecentFilterInfo* filter_info, gpointer func_data)
 {
   if (!XEN_LIST_P((XEN)func_data)) return((gboolean)0);
+  #if (!(defined(__cplusplus)))
   return(XEN_TO_C_gboolean(XEN_CALL_2(XEN_CAR((XEN)func_data),
                                       C_TO_XEN_GtkRecentFilterInfo_(filter_info),
                                       XEN_CADR((XEN)func_data),
                                       c__FUNCTION__)));
+  #else
+  return((gboolean)0);
+  #endif
 }
 static void gxg_search_position(GtkTreeView* tree_view, GtkWidget* search_dialog, gpointer func_data)
 {
@@ -42715,7 +42721,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("10-Jul-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("13-Jul-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

@@ -126,7 +126,7 @@ void call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason)
 
 /* ---------------- save sound state (options, or entire state) ---------------- */
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
 
 static void save_loaded_files_list(FILE *fd, const char *current_filename)
 {

@@ -656,9 +656,8 @@ void set_listener_prompt(const char *new_prompt)
 
 #if USE_NO_GUI
   {
-    char *str;
-
 #if HAVE_GAUCHE
+    char *str;
     XEN_EVAL_C_STRING("(if (not (defined? 'gauche-repl-prompt)) (define gauche-repl-prompt \">\"))");
     str = mus_format("(set! gauche-repl-prompt \"%s\")", listener_prompt(ss)); /* defined in xen.c */
     XEN_EVAL_C_STRING(str);
@@ -666,6 +665,7 @@ void set_listener_prompt(const char *new_prompt)
 #endif
 
 #if HAVE_FORTH
+    char *str;
     XEN_EVAL_C_STRING("before-prompt-hook reset-hook!\n");
     str = mus_format("before-prompt-hook lambda: { prompt pos } \"%s\" ; 2 make-proc add-hook!", listener_prompt(ss));
     XEN_EVAL_C_STRING(str);
@@ -673,6 +673,7 @@ void set_listener_prompt(const char *new_prompt)
 #endif
 
 #if HAVE_GUILE
+    char *str;
     str = mus_format("(set! scm-repl-prompt \"%s\")", listener_prompt(ss)); /* defined in ice-9/boot9.scm */
     XEN_EVAL_C_STRING(str);
     FREE(str);

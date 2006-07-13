@@ -1057,8 +1057,6 @@ mus_any *mus_make_oscil(Float freq, Float phase)
 
 /* ---------------- sum-of-cosines ---------------- */
 
-/* PERHAPS: other such formulae (dsp.scm) */
-
 typedef struct {
   mus_any_class *core;
   int cosines;

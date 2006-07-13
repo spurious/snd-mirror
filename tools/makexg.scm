@@ -162,6 +162,7 @@
 
 	"GtkAssistant*" "GtkRecentChooser*" "GtkRecentChooserMenu*"
 	"GtkTextBufferSerializeFunc" "GtkTextBufferDeserializeFunc" 
+	"GtkRecentData*" "GtkNotebookWindowCreationFunc"
 	))
 
 (define no-xen-p 
@@ -603,13 +604,13 @@
 			     "clip_rich_text_received"
 			     (parse-args "GtkClipboard* clipboard GdkAtom format guint8* text gsize length lambda_data func_data" 'callback); 'callback-290)
 			     ;; guint8* is const
-			     'permanent)
+			     'permanent-gcc)
 		       (list 'GtkRecentFilterFunc
 			     "gboolean"
 			     "recent_filter"
 			     (parse-args "GtkRecentFilterInfo* filter_info lambda_data func_data" 'callback-290)
 			     ;; const filter info
-			     'permanent)
+			     'permanent-gcc)
 		       (list 'GtkTreeViewSearchPositionFunc
 			     "void"
 			     "search_position"
@@ -2076,6 +2077,8 @@
 		  (if void? 
 		      ""
 		      (format #f "((~A)0)" (no-stars type))))
+	     (if (eq? gctype 'permanent-gcc)
+		 (hey "#if (!(defined(__cplusplus)))~%  ")) ; const arg conversion causes trouble if g++
 	     (let ((castlen (+ 12 (if (not void?) 
 				      (+ 2 (string-length (format #f "return(XEN_TO_C_~A" (no-stars type))))
 				      1))))
@@ -2106,6 +2109,13 @@
 	       (if void?
 		   (hey ";~%")
 		   (hey "));~%")))
+	     (if (eq? gctype 'permanent-gcc)
+		 (begin
+		   (if (not void?)
+		       (begin
+			 (hey "  #else~%")
+			 (hey "  return((~A)0);~%" (no-stars type))))
+		   (hey "  #endif~%")))
 	     (hey "}~%")))))))
     (for-each xc callbacks)
     (with-23 hey (lambda () (for-each xc callbacks-23)))
