@@ -7614,7 +7614,6 @@ See <a href="#optimization">optimization</a>
 for some timings.  In Ruby, it's possible to use the <a href="http://www.zenspider.com/Languages/Ruby/">RubyInline</a> module instead.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
-<!-- TODO: clm.fs doc and parallels -->
 
 <!-- sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -9259,6 +9258,7 @@ apply-controls can be used in conjunction with the various control panel variabl
     (<em class=red>apply-controls</em>)))
 </pre></td></tr></table>
 
+</td><td width=20>
 </td><td>
 <table border=0 cellpadding=5><tr><td bgcolor="Beige"><pre>
 def expnd(amt)
@@ -9268,6 +9268,7 @@ def expnd(amt)
 end
 </pre></td></tr></table>
 
+</td><td width=20>
 </td><td>
 <table border=0 cellpadding=5><tr><td bgcolor="LightGreen"><pre>
 : expnd ( amt -- ) { amt }
@@ -9734,6 +9735,7 @@ as-one-edit returns the result of <i>func</i>.
 </pre>
 </td></tr></table>
 
+</td><td width=20>
 </td><td>
 <table border=0 cellpadding=5><tr><td bgcolor="beige">
 <pre>
@@ -9744,6 +9746,7 @@ as-one-edit returns the result of <i>func</i>.
 </pre>
 </td></tr></table>
 
+</td><td width=20>
 </td><td>
 <table border=0 cellpadding=5><tr><td bgcolor="lightgreen">
 <pre>
@@ -9851,19 +9854,19 @@ In Ruby:
 
 In Forth:
 <pre>
-    snd> <em class=typing>"oboe.snd" open-sound</em>
+    snd&gt; <em class=typing>"oboe.snd" open-sound</em>
     <em class=listener>0</em>
-    snd> <em class=typing>2.0 scale-channel</em>
+    snd&gt; <em class=typing>2.0 scale-channel</em>
     <em class=listener>2.0</em>
-    snd> <em class=typing>100 200 pad-channel</em>
+    snd&gt; <em class=typing>100 200 pad-channel</em>
     <em class=listener>100</em>
-    snd> <em class=typing>0 0 edit-list-&gt;function value our-edits</em>
+    snd&gt; <em class=typing>0 0 edit-list-&gt;function value our-edits</em>
     <em class=listener>nil</em>
-    snd> <em class=typing>our-edits proc-source-ref</em>
+    snd&gt; <em class=typing>our-edits proc-source-ref</em>
     <em class=listener>lambda: { snd chn } 2.000 0 #f snd chn scale-channel drop 100 200 snd chn pad-channel drop ; 2 make-proc</em>
-    snd> <em class=typing>2 undo</em>
+    snd&gt; <em class=typing>2 undo</em>
     <em class=listener>2</em>
-    snd> <em class=typing>our-edits '( 0 0 ) run-proc</em>
+    snd&gt; <em class=typing>our-edits '( 0 0 ) run-proc</em>
     <em class=listener>#f</em>
 </pre>
 </td></tr>
@@ -10806,8 +10809,6 @@ See snd-motif.scm, snd-gtk.scm, kmenu.scm, and new-effects.scm for various examp
 Manipulating menus can be tricky in both Motif and Gtk; if I were to try to explain
 submenus and whatnot here, I'd only get tangled up in half-forgotten complications.
 When I have to deal with this stuff, I always go to a working example.
-Don't even think about looking at the Gtk "documentation" -- it is some lazy-bastard-cant-give-a-damn-doxygen-crap
-and has no value whatsoever.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 

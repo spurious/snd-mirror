@@ -1,6 +1,6 @@
 <html>
 
-<!-- TODO: these need work: edit123 infsnd ladspa maxf rtex strad ws -->
+<!-- TODO: these need work: edit123 infsnd ladspa maxf rtex strad -->
 <!-- TODO: check pd-*.scm snd-hobbit.scm (rb/fs?) -->
 <!-- SOMEDAY: more mouseovers -->
 
@@ -8507,7 +8507,6 @@ end
 
 <br>
 <br>
-<!-- TODO: forth examples of with-sound (how are forth ins defined/called? -- clm.fs) definstrument doc? -->
 
 <A NAME="wsdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>ws</h2></td></tr></table>
 
@@ -8603,15 +8602,47 @@ See the <a href="#clminsdoc">clm instrument</a> documentation for more examples.
 </pre>
 <p>As far as possible, this parallels CLM's <a href="clm.html#with-sound">with-sound</a>.</p>
 <pre>
-  :<em class=listener>(with-sound (:statistics #t :channels 2 :reverb jc-reverb)
-     (fm-violin 0 .1 440 .1 :reverb-amount .1 :degree 0)
-     (fm-violin 1 .1 660 .2 :degree 90))</em>
-  <em class=typing>test.snd:
-    maxamp: 0.1000 0.2032
-    rev max: 0.0100
-    compute time: 0.050
-  "test.snd"</em>               ; with-sound returns the new file name
+    :<em class=typing>(with-sound (:statistics #t :channels 2 :reverb jc-reverb)
+       (fm-violin 0 .1 440 .1 :reverb-amount .1 :degree 0)
+       (fm-violin 1 .1 660 .2 :degree 90))</em>
+    <em class=listener>test.snd:
+      maxamp: 0.1000 0.2032
+      rev max: 0.0100
+      compute time: 0.050
+    "test.snd"</em>               ; with-sound returns the new file name
 </pre>
+<p>or in Ruby:
+</p>
+<pre>
+    :<em class=typing>with_sound(:channels, 2, :play, false, :statistics, true) do 
+      fm_violin(0, 1, 440, 0.1); 
+      fm_violin(1, 1, 660, 0.1);
+      end</em>
+    <em class=listener># filename: "test.snd"
+    #    chans: 2, srate: 22050
+    #   length: 2.000 (44100 frames)
+    #   format: big endian short (16 bits) [Sun/Next]
+    #     real: 2.248  (utime 2.240, stime 0.000)
+    #    ratio: 1.12  (uratio 1.12)
+    #  max out: [0.098, 0.024]
+    #&lt;With_Snd: output: "test.snd", channels: 2, srate: 22050&gt;</em>
+</pre>
+
+<p>and in Forth:
+</p>
+<pre>
+    snd&gt; <em class=typing>0.0 1.0 330.0 0.5 ' simp :play #f :channels 2 with-sound</em>
+    <em class=listener>\ filename: test.snd
+    \    chans: 2, srate: 22050
+    \   format: little endian float (32 bits) [Sun/Next]
+    \   length: 1.000  (22050 frames)
+    \     real: 0.162  (utime 0.267, stime 0.000)
+    \    ratio: 0.16  (uratio 0.27)
+    \ maxamp A: 0.500 (near 0.680 secs)
+    \ maxamp B: 0.000 (near 0.000 secs)
+    \  comment: Written on Fri Jul 14 07:41:47 PDT 2006 by bil at cat using clm (fth) of 30-Jun-06</em>
+</pre>
+
 <p>
 <b>with-sound</b> opens its output file (<i>output</i> above)
 via make-sample-&gt;file, setting the global variable *output*.  This

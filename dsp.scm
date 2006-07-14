@@ -1925,14 +1925,13 @@ a running window of the last 'size' inputs, returning the maxamp in that window.
     (set! (mus-scaler gen) 0.0)
     gen))
 
-(define (windowed-maxamp gen y)
+(define (windowed-maxamp-1 gen y)
   "(windowed-maxamp gen input) returns the maxamp in a running window on the last few inputs."
   (let* ((absy (abs y))
-	 (mx (delay gen absy))
-	 (pk (- (mus-scaler gen) .001)))
-    (if (> absy pk)
+	 (mx (delay gen absy)))
+    (if (>= absy (mus-scaler gen))
 	(set! (mus-scaler gen) absy)
-	(if (>= mx pk)
+	(if (> mx (mus-scaler gen))
 	    (set! (mus-scaler gen) (vct-peak (mus-data gen)))))
     (mus-scaler gen)))
 
