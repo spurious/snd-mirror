@@ -64,7 +64,7 @@
   <li><a href="#sndwithpd" onmouseover="return escape('PD is Miller Puckette\'s synthesis and composition program')">Snd and Pd</a>
   <li><a href="#sndwithmotif" onmouseover="return escape('Motif extensions from xm.c')">Snd and Motif</a>
   <li><a href="#sndwithgtk" onmouseover="return escape('Gtk extensions from xg.c')">Snd and Gtk</a>
-  <li><a href="#sndwithnogui">Snd with no GUI and as script engine</a>
+  <li><a href="#sndwithnogui">Snd with no GUI and as scripting engine</a>
   <li><a href="grfsnd.html#sndandruby" onmouseover="return escape('Ruby is a scripting/extension language somewhat like Python')">Snd with Ruby</a>
   <li><a href="grfsnd.html#sndandforth" onmouseover="return escape('Forth is a postfix extension language')">Snd with Forth</a>
   <li><a href="#sndandladspa" onmouseover="return escape('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
@@ -1608,7 +1608,7 @@ a GtkWidget, so we have to cast a GtkAdjustment back to its original type.
 <br>
 
 <!-- INDEX sndwithnogui:Scripting -->
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithnogui">Snd with no GUI and scripting</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithnogui">Snd with no GUI and as scripting engine</a></h3></td></tr></table>
 
 <p>If Snd is built without a graphical user interface (by specifying
 --with-no-gui to configure),
@@ -1616,18 +1616,53 @@ it runs the extension language's read-eval-print loop, with input from stdin.  A
 the non-interface related functions are available, so you can do things
 like:
 </p>
-<pre>
-    <em class=listener>snd&gt;</em><em class=typing> (new-sound "new.snd")</em>
-    <em class=listener>0</em>
-    <em class=listener>snd&gt;</em><em class=typing> (load "v.scm")</em>
-    <em class=listener>snd&gt;</em><em class=typing> (fm-violin 0 1 440 .1)</em>
-    <em class=listener>-1</em>
-    <em class=listener>snd&gt;</em><em class=typing> (frames 0)</em>
-    <em class=listener>22050</em>
-    <em class=listener>snd&gt;</em><em class=typing> (play)</em>
-    <em class=listener>#t</em>
-    <em class=listener>snd&gt;</em><em class=typing> (exit)</em>
-</pre>
+
+<table border=0 cellspacing=10>
+<tr><th bgcolor="#f6f8ff" align=left>Scheme</th><th></th><th bgcolor="beige" align=left>Ruby</th><th></th><th bgcolor="lightgreen" align=left>Forth</th></tr>
+
+<tr>
+<td bgcolor="#fbfbff"><pre>
+snd
+:<em class=typing>(new-sound "test.snd")</em>
+<em class=listener>0</em>
+:<em class=typing>(mix "oboe.snd")</em>
+<em class=listener>0</em>
+:<em class=typing>(frames)</em>
+<em class=listener>50828</em>
+:<em class=typing>(play)</em>
+<em class=listener>#f</em>
+:<em class=typing>(exit)</em>
+</pre></td><td width=60></td>
+
+<td bgcolor="#FdFdf2"><pre>
+snd
+&gt; <em class=typing>new_sound("test.snd")</em>
+<em class=listener>0</em>
+&gt; <em class=typing>mix("oboe.snd")</em>
+<em class=listener>-1</em>
+&gt; <em class=typing>frames</em>
+<em class=listener>50828</em>
+&gt; <em class=typing>play</em>
+<em class=listener>false</em>
+&gt; <em class=typing>exit</em>
+</pre></td><td width=60></td>
+
+<td bgcolor="#EefdEe"><pre>
+snd
+<em class=typing>"test.snd" new-sound</em>
+<em class=listener>0 ok</em>
+<em class=typing>"oboe.snd" mix</em>
+<em class=listener>-1 ok</em>
+<em class=typing>frames</em>
+<em class=listener>50828 ok</em>
+<em class=typing>play</em>
+<em class=listener>#f ok</em>
+<em class=typing>snd-exit</em>
+</pre></td>
+</tr>
+</table>
+
+
 <p>
 Since there's no graphics toolkit event loop to get in your way, you 
 can treat this version of Snd as a scripting engine.  For example,
@@ -1661,14 +1696,38 @@ Here's a script that doubles every sample in "oboe.snd" and
 writes the result as "test.snd":
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-#!/home/bil/test/snd-8/snd -l
+
+<table border=0 cellspacing=10>
+<tr><th bgcolor="#f6f8ff" align=left>Scheme</th><th></th><th bgcolor="beige" align=left>Ruby</th><th></th><th bgcolor="lightgreen" align=left>Forth</th></tr>
+
+<tr>
+<td bgcolor="#fbfbff"><pre>
+#!/home/bil/snd-8/snd -l
 !#
-(<a class=quiet href="extsnd.html#opensound">open-sound</a> "oboe.snd")
-(<a class=quiet href="extsnd.html#scaleby">scale-by</a> 2.0)
-(<a class=quiet href="extsnd.html#savesoundas">save-sound-as</a> "test.snd")
-(<a class=quiet href="extsnd.html#exit">exit</a>)
-</pre></td></tr></table>
+(open-sound "oboe.snd")
+(scale-by 2.0)
+(save-sound-as "test.snd")
+(exit)
+</pre></td><td width=60></td>
+
+<td bgcolor="#FdFdf2"><pre>
+#!/home/bil/snd-8/snd -batch
+open_sound "oboe.snd"
+scale_by 2.0
+save_sound_as "test.snd"
+exit
+</pre></td><td width=60></td>
+
+<td bgcolor="#EefdEe"><pre>
+#! /usr/bin/env /home/bil/forth-snd/snd
+"oboe.snd" open-sound drop
+2.0 #f #f scale-by drop
+"test.snd" save-sound-as
+snd-exit
+</pre></td>
+</tr>
+</table>
+
 
 <p>The functions <b>script-args</b> and <b>script-arg</b> can be used
 to access the script's arguments, and if necessary (if not exiting)

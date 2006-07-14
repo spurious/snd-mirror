@@ -142,8 +142,6 @@ You can also use Ruby or Forth, but need to make various minor <a href="grfsnd.h
 I'm slowly adding parallel Forth and Ruby examples.
 </p>
 
-<!-- TODO: scripting in Ruby/Forth? parallel examples in grfsnd -->
-
 <p>
 The easiest way to get acquainted
 with this aspect of Snd is to open the listener
@@ -9832,11 +9830,43 @@ The function returned takes 2 arguments, a sound index and a channel number.
     :<em class=typing>(our-edits 0 0)</em>
     <em class=listener>100</em>
 </pre>
+
+In Ruby:
+<pre>
+    :<em class=typing>open_sound "oboe.snd"</em>
+    <em class=listener>0</em>
+    :<em class=typing>scale_channel 2.0</em>
+    <em class=listener>2.0</em>
+    :<em class=typing>pad_channel 100, 200</em>
+    <em class=listener>100</em>
+    :<em class=typing>our_edits = edit_list2function</em>
+    <em class=listener>#&lt;Proc:0x40c713ec@(eval):2&gt;</em>
+    :<em class=typing>our_edits.source</em>
+    <em class=listener>Proc.new {|snd, chn|  scale_channel(2.000, 0, false, snd, chn); pad_channel(100, 200, snd, chn) }</em>
+    :<em class=typing>undo 2</em>
+    <em class=listener>2</em>
+    :<em class=typing>our_edits.call(0, 0)</em>
+    <em class=listener>100</em>
+</pre>
+
+In Forth:
+<pre>
+    snd> <em class=typing>"oboe.snd" open-sound</em>
+    <em class=listener>0</em>
+    snd> <em class=typing>2.0 scale-channel</em>
+    <em class=listener>2.0</em>
+    snd> <em class=typing>100 200 pad-channel</em>
+    <em class=listener>100</em>
+    snd> <em class=typing>0 0 edit-list-&gt;function value our-edits</em>
+    <em class=listener>nil</em>
+    snd> <em class=typing>our-edits proc-source-ref</em>
+    <em class=listener>lambda: { snd chn } 2.000 0 #f snd chn scale-channel drop 100 200 snd chn pad-channel drop ; 2 make-proc</em>
+    snd> <em class=typing>2 undo</em>
+    <em class=listener>2</em>
+    snd> <em class=typing>our-edits '( 0 0 ) run-proc</em>
+    <em class=listener>#f</em>
+</pre>
 </td></tr>
-
-<!-- TODO: ruby returns a procedure here, but how to use it?
--->
-
 <tr><td></td><td></td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -10734,7 +10764,6 @@ associated with its integer argument:
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
-<!-- TODO: diff between menu-widgets and main-menus? -->
 
 <!-- main-widgets -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mainwidgets">main-widgets</a> ()</code></td></tr>
@@ -10762,7 +10791,7 @@ For example, to get at Snd's main shell widget:
 <!-- menu-widgets -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="menuwidgets">menu-widgets</a> ()</code></td></tr>
 <tr><td></td><td>
-menu-widgets returns the top-level menu widgets (cascade menus in Motif or menu bars in Gtk+ associated)
+menu-widgets returns the top-level menu widgets (cascade menus in Motif or menu bars in Gtk+)
 as a list:
 <pre>
     0: top-level-menu-bar 
@@ -10773,6 +10802,12 @@ as a list:
     5: help-menu, 
     6: default popup menu
 </pre>
+See snd-motif.scm, snd-gtk.scm, kmenu.scm, and new-effects.scm for various examples.
+Manipulating menus can be tricky in both Motif and Gtk; if I were to try to explain
+submenus and whatnot here, I'd only get tangled up in half-forgotten complications.
+When I have to deal with this stuff, I always go to a working example.
+Don't even think about looking at the Gtk "documentation" -- it is some lazy-bastard-cant-give-a-damn-doxygen-crap
+and has no value whatsoever.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 

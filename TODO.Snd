@@ -29,8 +29,6 @@ A Qt version of Snd?  An OSX-native version?  (These
     Qt requires C++, I think, and Cocoa may require Objective-C -- 
     major drawbacks).
 
-Perry Cook's whistle translated to CLM/Snd.
-
 Physical model of a thunder machine.
 
 Should the Scheme/Ruby files be gettext-ized?  Here's a Guile example:

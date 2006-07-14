@@ -311,8 +311,6 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 ;;; -------- superimpose spectra of sycn'd sounds
 
-;;; TODO: fix superimpose-ffts!
-
 (define (superimpose-ffts snd chn y0 y1)
   "(superimpose-ffts snd chn y0 y1) superimposes ffts of multiple (syncd) sounds (use with graph-hook)"
   (let ((maxsync (apply max (map sync (sounds)))))

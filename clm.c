@@ -695,7 +695,9 @@ static struct mus_xen *wrap_max_vcts(mus_any *ge) {return(NULL);}
 
 Float mus_ring_modulate(Float sig1, Float sig2) {return(sig1 * sig2);}
 Float mus_amplitude_modulate(Float carrier, Float sig1, Float sig2) {return(sig1 * (carrier + sig2));}
+
 Float mus_contrast_enhancement(Float sig, Float index) {return(sin((sig * M_PI_2) + (index * sin(sig * TWO_PI))));}
+
 void mus_clear_array(Float *arr, int size) {memset((void *)arr, 0, size * sizeof(Float));}
 
 Float mus_dot_product(Float *data1, Float *data2, int size)
