@@ -21,7 +21,7 @@
 (if (not (provided? 'snd-new-backgrounds.scm)) (load-from-path "new-backgrounds.scm"))
 (if (not (provided? 'snd-marks-menu.scm)) (load-from-path "marks-menu.scm"))
 (if (not (provided? 'snd-mix-menu.scm))(load-from-path "mix-menu.scm"))
-(if (not (provided? 'snd-new-buttons.scm)) (load-from-path "new-buttons.scm"))
+(if (not (provided? 'snd-toolbar.scm)) (load-from-path "toolbar.scm"))
 (if (not (provided? 'snd-panic.scm)) (load-from-path "panic.scm"))
 (if (and (provided? 'snd-gtk) (not (provided? 'snd-ladspa.scm))) (load-from-path "ladspa.scm"))
 (if (and (provided? 'snd-gtk) (not (provided? 'snd-ladspa-help.scm))) (load-from-path "ladspa-help.scm"))

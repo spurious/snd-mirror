@@ -45,6 +45,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     17-Jul:    added g_signal_connect and other related macros.
  *     21-Apr:    Gauche support.
  *     29-Mar:    Forth support.
  *     7-Mar:     if g_set_error, return the error message, not the GError pointer
@@ -13542,7 +13543,8 @@ static XEN gxg_gtk_text_tag_table_foreach(XEN table, XEN func, XEN func_data)
 lambda_data func_data)"
   XEN_ASSERT_TYPE(XEN_GtkTextTagTable__P(table), table, 1, "gtk_text_tag_table_foreach", "GtkTextTagTable*");
   XEN_ASSERT_TYPE(XEN_GtkTextTagTableForeach_P(func), func, 2, "gtk_text_tag_table_foreach", "GtkTextTagTableForeach");
-  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_text_tag_table_foreach", "lambda_data");
+  if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
+  else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_text_tag_table_foreach", "lambda_data");
   {
     int loc;
     XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
@@ -23771,7 +23773,8 @@ static XEN gxg_gtk_icon_view_selected_foreach(XEN icon_view, XEN func, XEN func_
 GtkIconViewForeachFunc func, lambda_data func_data)"
   XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_selected_foreach", "GtkIconView*");
   XEN_ASSERT_TYPE(XEN_GtkIconViewForeachFunc_P(func), func, 2, "gtk_icon_view_selected_foreach", "GtkIconViewForeachFunc");
-  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_icon_view_selected_foreach", "lambda_data");
+  if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
+  else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_icon_view_selected_foreach", "lambda_data");
   {
     XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
@@ -24786,7 +24789,8 @@ GLogFunc func, lambda_data func_data)"
   XEN_ASSERT_TYPE(XEN_gchar__P(log_domain), log_domain, 1, "g_log_set_handler", "gchar*");
   XEN_ASSERT_TYPE(XEN_GLogLevelFlags_P(log_levels), log_levels, 2, "g_log_set_handler", "GLogLevelFlags");
   XEN_ASSERT_TYPE(XEN_GLogFunc_P(func), func, 3, "g_log_set_handler", "GLogFunc");
-  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "g_log_set_handler", "lambda_data");
+  if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
+  else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "g_log_set_handler", "lambda_data");
   {
     XEN result = XEN_FALSE;
     XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
@@ -27320,6 +27324,14 @@ static XEN gxg_gtk_label_get_line_wrap_mode(XEN label)
   #define H_gtk_label_get_line_wrap_mode "PangoWrapMode gtk_label_get_line_wrap_mode(GtkLabel* label)"
   XEN_ASSERT_TYPE(XEN_GtkLabel__P(label), label, 1, "gtk_label_get_line_wrap_mode", "GtkLabel*");
   return(C_TO_XEN_PangoWrapMode(gtk_label_get_line_wrap_mode(XEN_TO_C_GtkLabel_(label))));
+}
+static XEN gxg_gtk_toolbar_set_icon_size(XEN toolbar, XEN icon_size)
+{
+  #define H_gtk_toolbar_set_icon_size "void gtk_toolbar_set_icon_size(GtkToolbar* toolbar, GtkIconSize icon_size)"
+  XEN_ASSERT_TYPE(XEN_GtkToolbar__P(toolbar), toolbar, 1, "gtk_toolbar_set_icon_size", "GtkToolbar*");
+  XEN_ASSERT_TYPE(XEN_GtkIconSize_P(icon_size), icon_size, 2, "gtk_toolbar_set_icon_size", "GtkIconSize");
+  gtk_toolbar_set_icon_size(XEN_TO_C_GtkToolbar_(toolbar), XEN_TO_C_GtkIconSize(icon_size));
+  return(XEN_FALSE);
 }
 #endif
 
@@ -30908,7 +30920,7 @@ XEN_NARGIFY_0(gxg_gtk_text_tag_table_new_w, gxg_gtk_text_tag_table_new)
 XEN_NARGIFY_2(gxg_gtk_text_tag_table_add_w, gxg_gtk_text_tag_table_add)
 XEN_NARGIFY_2(gxg_gtk_text_tag_table_remove_w, gxg_gtk_text_tag_table_remove)
 XEN_NARGIFY_2(gxg_gtk_text_tag_table_lookup_w, gxg_gtk_text_tag_table_lookup)
-XEN_NARGIFY_3(gxg_gtk_text_tag_table_foreach_w, gxg_gtk_text_tag_table_foreach)
+XEN_ARGIFY_3(gxg_gtk_text_tag_table_foreach_w, gxg_gtk_text_tag_table_foreach)
 XEN_NARGIFY_1(gxg_gtk_text_tag_table_get_size_w, gxg_gtk_text_tag_table_get_size)
 XEN_NARGIFY_0(gxg_gtk_text_view_get_type_w, gxg_gtk_text_view_get_type)
 XEN_NARGIFY_0(gxg_gtk_text_view_new_w, gxg_gtk_text_view_new)
@@ -32200,7 +32212,7 @@ XEN_NARGIFY_1(gxg_gtk_icon_view_get_pixbuf_column_w, gxg_gtk_icon_view_get_pixbu
 XEN_NARGIFY_2(gxg_gtk_icon_view_set_orientation_w, gxg_gtk_icon_view_set_orientation)
 XEN_NARGIFY_1(gxg_gtk_icon_view_get_orientation_w, gxg_gtk_icon_view_get_orientation)
 XEN_NARGIFY_3(gxg_gtk_icon_view_get_path_at_pos_w, gxg_gtk_icon_view_get_path_at_pos)
-XEN_NARGIFY_3(gxg_gtk_icon_view_selected_foreach_w, gxg_gtk_icon_view_selected_foreach)
+XEN_ARGIFY_3(gxg_gtk_icon_view_selected_foreach_w, gxg_gtk_icon_view_selected_foreach)
 XEN_NARGIFY_2(gxg_gtk_icon_view_set_selection_mode_w, gxg_gtk_icon_view_set_selection_mode)
 XEN_NARGIFY_1(gxg_gtk_icon_view_get_selection_mode_w, gxg_gtk_icon_view_get_selection_mode)
 XEN_NARGIFY_2(gxg_gtk_icon_view_select_path_w, gxg_gtk_icon_view_select_path)
@@ -32330,7 +32342,7 @@ XEN_NARGIFY_2(gxg_pango_renderer_part_changed_w, gxg_pango_renderer_part_changed
 XEN_NARGIFY_3(gxg_pango_renderer_set_color_w, gxg_pango_renderer_set_color)
 XEN_NARGIFY_2(gxg_pango_renderer_get_color_w, gxg_pango_renderer_get_color)
 XEN_NARGIFY_2(gxg_pango_renderer_set_matrix_w, gxg_pango_renderer_set_matrix)
-XEN_NARGIFY_4(gxg_g_log_set_handler_w, gxg_g_log_set_handler)
+XEN_ARGIFY_4(gxg_g_log_set_handler_w, gxg_g_log_set_handler)
 XEN_NARGIFY_2(gxg_g_log_remove_handler_w, gxg_g_log_remove_handler)
 #endif
 
@@ -32659,6 +32671,7 @@ XEN_NARGIFY_1(gxg_gtk_tree_view_get_enable_tree_lines_w, gxg_gtk_tree_view_get_e
 XEN_NARGIFY_2(gxg_gtk_tree_view_set_enable_tree_lines_w, gxg_gtk_tree_view_set_enable_tree_lines)
 XEN_NARGIFY_2(gxg_gtk_label_set_line_wrap_mode_w, gxg_gtk_label_set_line_wrap_mode)
 XEN_NARGIFY_1(gxg_gtk_label_get_line_wrap_mode_w, gxg_gtk_label_get_line_wrap_mode)
+XEN_NARGIFY_2(gxg_gtk_toolbar_set_icon_size_w, gxg_gtk_toolbar_set_icon_size)
 #endif
 
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
@@ -36483,6 +36496,7 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_tree_view_set_enable_tree_lines_w gxg_gtk_tree_view_set_enable_tree_lines
 #define gxg_gtk_label_set_line_wrap_mode_w gxg_gtk_label_set_line_wrap_mode
 #define gxg_gtk_label_get_line_wrap_mode_w gxg_gtk_label_get_line_wrap_mode
+#define gxg_gtk_toolbar_set_icon_size_w gxg_gtk_toolbar_set_icon_size
 #endif
 
 #define gxg_GPOINTER_w gxg_GPOINTER
@@ -38563,7 +38577,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_text_tag_table_add, gxg_gtk_text_tag_table_add_w, 2, 0, 0, H_gtk_text_tag_table_add);
   XG_DEFINE_PROCEDURE(gtk_text_tag_table_remove, gxg_gtk_text_tag_table_remove_w, 2, 0, 0, H_gtk_text_tag_table_remove);
   XG_DEFINE_PROCEDURE(gtk_text_tag_table_lookup, gxg_gtk_text_tag_table_lookup_w, 2, 0, 0, H_gtk_text_tag_table_lookup);
-  XG_DEFINE_PROCEDURE(gtk_text_tag_table_foreach, gxg_gtk_text_tag_table_foreach_w, 3, 0, 0, H_gtk_text_tag_table_foreach);
+  XG_DEFINE_PROCEDURE(gtk_text_tag_table_foreach, gxg_gtk_text_tag_table_foreach_w, 2, 1, 0, H_gtk_text_tag_table_foreach);
   XG_DEFINE_PROCEDURE(gtk_text_tag_table_get_size, gxg_gtk_text_tag_table_get_size_w, 1, 0, 0, H_gtk_text_tag_table_get_size);
   XG_DEFINE_PROCEDURE(gtk_text_view_get_type, gxg_gtk_text_view_get_type_w, 0, 0, 0, H_gtk_text_view_get_type);
   XG_DEFINE_PROCEDURE(gtk_text_view_new, gxg_gtk_text_view_new_w, 0, 0, 0, H_gtk_text_view_new);
@@ -39855,7 +39869,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_icon_view_set_orientation, gxg_gtk_icon_view_set_orientation_w, 2, 0, 0, H_gtk_icon_view_set_orientation);
   XG_DEFINE_PROCEDURE(gtk_icon_view_get_orientation, gxg_gtk_icon_view_get_orientation_w, 1, 0, 0, H_gtk_icon_view_get_orientation);
   XG_DEFINE_PROCEDURE(gtk_icon_view_get_path_at_pos, gxg_gtk_icon_view_get_path_at_pos_w, 3, 0, 0, H_gtk_icon_view_get_path_at_pos);
-  XG_DEFINE_PROCEDURE(gtk_icon_view_selected_foreach, gxg_gtk_icon_view_selected_foreach_w, 3, 0, 0, H_gtk_icon_view_selected_foreach);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_selected_foreach, gxg_gtk_icon_view_selected_foreach_w, 2, 1, 0, H_gtk_icon_view_selected_foreach);
   XG_DEFINE_PROCEDURE(gtk_icon_view_set_selection_mode, gxg_gtk_icon_view_set_selection_mode_w, 2, 0, 0, H_gtk_icon_view_set_selection_mode);
   XG_DEFINE_PROCEDURE(gtk_icon_view_get_selection_mode, gxg_gtk_icon_view_get_selection_mode_w, 1, 0, 0, H_gtk_icon_view_get_selection_mode);
   XG_DEFINE_PROCEDURE(gtk_icon_view_select_path, gxg_gtk_icon_view_select_path_w, 2, 0, 0, H_gtk_icon_view_select_path);
@@ -39985,7 +39999,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_renderer_set_color, gxg_pango_renderer_set_color_w, 3, 0, 0, H_pango_renderer_set_color);
   XG_DEFINE_PROCEDURE(pango_renderer_get_color, gxg_pango_renderer_get_color_w, 2, 0, 0, H_pango_renderer_get_color);
   XG_DEFINE_PROCEDURE(pango_renderer_set_matrix, gxg_pango_renderer_set_matrix_w, 2, 0, 0, H_pango_renderer_set_matrix);
-  XG_DEFINE_PROCEDURE(g_log_set_handler, gxg_g_log_set_handler_w, 4, 0, 0, H_g_log_set_handler);
+  XG_DEFINE_PROCEDURE(g_log_set_handler, gxg_g_log_set_handler_w, 3, 1, 0, H_g_log_set_handler);
   XG_DEFINE_PROCEDURE(g_log_remove_handler, gxg_g_log_remove_handler_w, 2, 0, 0, H_g_log_remove_handler);
 #endif
 
@@ -40314,6 +40328,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tree_view_set_enable_tree_lines, gxg_gtk_tree_view_set_enable_tree_lines_w, 2, 0, 0, H_gtk_tree_view_set_enable_tree_lines);
   XG_DEFINE_PROCEDURE(gtk_label_set_line_wrap_mode, gxg_gtk_label_set_line_wrap_mode_w, 2, 0, 0, H_gtk_label_set_line_wrap_mode);
   XG_DEFINE_PROCEDURE(gtk_label_get_line_wrap_mode, gxg_gtk_label_get_line_wrap_mode_w, 1, 0, 0, H_gtk_label_get_line_wrap_mode);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_set_icon_size, gxg_gtk_toolbar_set_icon_size_w, 2, 0, 0, H_gtk_toolbar_set_icon_size);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, "(GPOINTER obj) casts obj to GPOINTER");
@@ -42721,12 +42736,22 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("13-Jul-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Jul-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();
 #endif
 
+/* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
+#if HAVE_SCHEME
+      /* using awkward dotted list as optional arg for gauche's sake */
+      XEN_EVAL_C_STRING("(define (g_signal_connect obj name func . data) \
+                           (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f 0))");
+      XEN_EVAL_C_STRING("(define (g_signal_connect_after obj name func . data) \
+                           (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_AFTER))");
+      XEN_EVAL_C_STRING("(define (g_signal_connect_swapped obj name func . data) \
+                           (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_SWAPPED))");
+#endif
     }
 }
 #else

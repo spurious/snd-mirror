@@ -21,13 +21,6 @@
 	  (gtk_label_set_text (GTK_LABEL w) new-label)
 	  (gtk_label_set_text (GTK_LABEL (gtk_bin_get_child (GTK_BIN w))) new-label))))
 
-(define* (g_signal_connect obj name func #:optional data)
-  (g_signal_connect_closure_by_id (GPOINTER obj)
-				  (g_signal_lookup name (G_OBJECT_TYPE (GTK_OBJECT obj)))
-				  0
-				  (g_cclosure_new func data #f)
-				  #f))
-
 (define (make-popup-menu top-field-func entries)
   "(make-popup-menu top-field-func entries) creates a popup menu"
   (let ((menu (gtk_menu_new)))

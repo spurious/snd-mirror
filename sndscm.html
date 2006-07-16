@@ -1,6 +1,6 @@
 <html>
 
-<!-- TODO: these need work: edit123 infsnd ladspa maxf rtex strad -->
+<!-- TODO: these need work: edit123 infsnd maxf rtex strad -->
 <!-- TODO: check pd-*.scm snd-hobbit.scm (rb/fs?) -->
 <!-- SOMEDAY: more mouseovers -->
 
@@ -959,8 +959,6 @@ It is much cleaner than jc-reverb.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
-
-<!-- TODO: point out the :key/:optional difference -->
 
 <!-- main-index |pins:SMS synthesis -->
 <!-- pins -->
@@ -4970,9 +4968,16 @@ plate-reverb: ladspa.scm (a LADSPA effect)<br>
 <br>
 <A NAME="ladspadoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>ladspa.scm, ladspa-help.scm, gui.scm</h2></td></tr></table>
 
-<p>ladspa.scm takes your LADSPA library and builds a set of dialogs
-to control and preview each effect.  The related help strings are in ladspa-help.scm, and
-the GUI extensions are in gui.scm.
+<p>ladspa.scm, written by Kjetil Matheussen, takes your LADSPA library and builds a set of dialogs
+to control and preview each effect.  Some of the related help strings are in ladspa-help.scm, and
+the GUI extensions are in gui.scm.  This file currently works best if you're running the Gtk
+version of Snd with the xg module already loaded (configure with --with-gtk and --with-static-xg).
+If you don't have librdf, you need to comment out the line (provide 'snd-lrdf).  Before loading
+ladspa.scm, be sure you've set either <a href="extsnd.html#ladspadir">ladspa-dir</a> or the
+environment variable LADSPA_PATH.  Once loaded, you get a new top-level menu "Ladspa" with
+an alphabetical set of submenus.  Some of the functions assume you have a sound open.
+</p>
+<p>ladspa.scm loads gui.scm which changes a lot of things in Snd's user interface.
 </p>
 
 <br>
@@ -5487,14 +5492,12 @@ special-menu.scm adds a "Special" menu with entries:
 </table>
 
 <p>Associated with these menus is a group of files that change Snd's overall appearance, add a box of
-handy icons, and so on: misc.scm, track-colors.scm, new-buttons.scm, new-backgrounds.scm, and new-icons.scm.
+handy icons, and so on: misc.scm, track-colors.scm, toolbar.scm, and new-backgrounds.scm.
 <b>track-colors.scm</b> defines the color choices for the tracks, based on rgb.scm.
-<b>new-icons.scm</b> provides all the xpm icon definitions used to draw the icon bar at
-the bottom of the Snd window.
 <b>new-backgrounds.scm</b> defines some background pictures that can be applied to all the
 Snd widgets: wood, granite, rough, blueish, and smoke.  I think "rough" is the
 default used by misc.scm.
-<b>new-buttons.scm</b> builds the menu bar full of icons providing convenient access
+<b>toolbar.scm</b> builds the menu bar full of icons providing convenient access
 to things like Zoom, and Quit.
 </p>
 

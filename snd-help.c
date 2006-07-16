@@ -497,6 +497,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+17-Jul:  merged new-icons.scm into new-buttons.scm and renamed the latter toolbar.scm.\n\
 12-Jul:  green.scm.\n\
 10-Jul:  dlocsig.scm.\n\
 3-July:  new CLM generator: move-sound.\n\
@@ -1964,9 +1965,9 @@ static char *snd_finder(const char *name, bool got_help)
   dirs = Scm_GetLoadPath();
 #endif
 #if HAVE_RUBY
-  #define NUM_DEFINES 1
+  #define NUM_DEFINES 2
   #define TRAILER ""
-  char *defines[NUM_DEFINES] = {"def "}; /* PERHAPS: add "class " to this search list? */
+  char *defines[NUM_DEFINES] = {"def ", "class "};
   extern VALUE rb_load_path;
   dirs = rb_load_path;
 #endif

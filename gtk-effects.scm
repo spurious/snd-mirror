@@ -16,14 +16,6 @@
 (if (not (provided? 'snd-rubber.scm)) (load-from-path "rubber.scm"))
 (if (not (provided? 'snd-dsp.scm)) (load-from-path "dsp.scm"))
 
-(if (not (defined? 'g_signal_connect))
-    (define* (g_signal_connect obj name func :optional data)
-      (g_signal_connect_closure_by_id (GPOINTER obj)
-				      (g_signal_lookup name (G_OBJECT_TYPE (GTK_OBJECT obj)))
-				      0
-				      (g_cclosure_new func data #f)
-				      #f)))
-
 (define effects-list '()) ; menu labels are updated to show current settings
 
 (define (update-label effects)

@@ -950,7 +950,7 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n\
   MAIN_SHELL(ss) = shell;
   gtk_container_add(GTK_CONTAINER(MAIN_SHELL(ss)), MAIN_PANE(ss));
 #endif
-  add_menu();
+  add_menu(); /* adds menubar to MAIN_PANE (via box_pack_start) */
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
       SOUND_PANE(ss) = gtk_vpaned_new();

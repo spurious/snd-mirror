@@ -89,17 +89,6 @@
 	 #f)))
 
 
-;; Copied from gtk-popup.scm
-(define* (c-g_signal_connect obj name func #:optional data)
-  (g_signal_connect_closure_by_id (GPOINTER obj)
-				  (g_signal_lookup name (G_OBJECT_TYPE (GTK_OBJECT obj)))
-				  0
-				  (g_cclosure_new func data #f)
-				  #f))
-
-
-
-
 (define-c <float> (c-scale ((<float> x)
 			    (<float> x1)
 			    (<float> x2)

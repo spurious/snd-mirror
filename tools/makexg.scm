@@ -1623,6 +1623,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     17-Jul:    added g_signal_connect and other related macros.~%")
 (hey " *     21-Apr:    Gauche support.~%")
 (hey " *     29-Mar:    Forth support.~%")
 (hey " *     7-Mar:     if g_set_error, return the error message, not the GError pointer~%")
@@ -3358,6 +3359,18 @@
 (hey "#if WITH_GTK_AND_X11~%")
 (hey "      Init_libx11();~%")
 (hey "#endif~%~%")
+
+(hey "/* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */~%")
+(hey "#if HAVE_SCHEME~%")
+(hey "      /* using awkward dotted list as optional arg for gauche's sake */~%")
+(hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect obj name func . data) \\~%\
+                           (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f 0))\");~%")
+(hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect_after obj name func . data) \\~%\
+                           (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_AFTER))\");~%")
+(hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect_swapped obj name func . data) \\~%\
+                           (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_SWAPPED))\");~%")
+(hey "#endif~%")
+
 (hey "    }~%")
 (hey "}~%")
 (hey "#else~%")

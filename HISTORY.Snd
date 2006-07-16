@@ -1,5 +1,6 @@
 Snd change log
 
+  17-Jul:    merged new-icons.scm into new-buttons.scm and renamed the latter toolbar.scm.
   12-Jul:    green.scm.
   10-Jul:    dlocsig.scm.
   3-July:    removed vct-map.

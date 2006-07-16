@@ -39,14 +39,6 @@
 (if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
 (if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))
 
-(if (not (defined? 'g_signal_connect))
-    (define* (g_signal_connect obj name func :optional data)
-      (g_signal_connect_closure_by_id (GPOINTER obj)
-				      (g_signal_lookup name (G_OBJECT_TYPE (GTK_OBJECT obj)))
-				      0
-				      (g_cclosure_new func data #f)
-				      #f)))
-
 (define (load-font name)
   (pango_font_description_from_string name))
 

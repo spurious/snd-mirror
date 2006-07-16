@@ -48,6 +48,15 @@
 (CFNC "gulong g_signal_connect_closure_by_id gpointer instance guint signal_id GQuark detail GClosure* closure gboolean after")
 (CFNC "gulong g_signal_connect_closure gpointer instance gchar* detailed_signal GClosure* closure gboolean after")
 (CFNC "gulong g_signal_connect_data gpointer instance gchar* detailed_signal GCallback func lambda_data func_data GClosureNotify @destroy_data GConnectFlags connect_flags")
+
+;; these are macros in glib/gobject/gsignal.h, but we can't use them directly here due to infinite type troubles
+;; (CFNC "gulong g_signal_connect gpointer instance gchar* detailed_signal GCallback func lambda_data #func_data")
+;; (CFNC "gulong g_signal_connect_after gpointer instance gchar* detailed_signal GCallback func lambda_data #func_data")
+;; (CFNC "gulong g_signal_connect_swapped gpointer instance gchar* detailed_signal GCallback func lambda_data #func_data")
+;; (CFNC "guint g_signal_handlers_disconnect_by_func gpointer instance GCallback func lambda_data #func_data")
+;; (CFNC "guint g_signal_handlers_block_by_func gpointer instance GCallback func lambda_data #func_data")
+;; (CFNC "guint g_signal_handlers_unblock_by_func gpointer instance GCallback func lambda_data #func_data")
+
 (CFNC "void g_signal_handler_block gpointer instance gulong handler_id")
 (CFNC "void g_signal_handler_unblock gpointer instance gulong handler_id")
 (CFNC "void g_signal_handler_disconnect gpointer instance gulong handler_id")
@@ -2882,7 +2891,7 @@
 (CFNC "void gtk_text_tag_table_add GtkTextTagTable* table GtkTextTag* tag")
 (CFNC "void gtk_text_tag_table_remove GtkTextTagTable* table GtkTextTag* tag")
 (CFNC "GtkTextTag* gtk_text_tag_table_lookup GtkTextTagTable* table gchar* name")
-(CFNC "void gtk_text_tag_table_foreach GtkTextTagTable* table GtkTextTagTableForeach func lambda_data func_data")
+(CFNC "void gtk_text_tag_table_foreach GtkTextTagTable* table GtkTextTagTableForeach func lambda_data #func_data")
 (CFNC "gint gtk_text_tag_table_get_size GtkTextTagTable* table")
 ;(CFNC "gboolean gtk_text_byte_begins_utf8_char gchar* byte")
 (CCAST "GTK_TEXT_VIEW(obj)" "GtkTextView*")
@@ -2995,7 +3004,6 @@
 
 (CFNC "void gtk_toolbar_set_orientation GtkToolbar* toolbar GtkOrientation orientation")
 (CFNC "void gtk_toolbar_set_style GtkToolbar* toolbar GtkToolbarStyle style")
-;;; out 2.3 (CFNC "void gtk_toolbar_set_icon_size GtkToolbar* toolbar GtkIconSize icon_size")
 (CFNC "void gtk_toolbar_set_tooltips GtkToolbar* toolbar gboolean enable")
 (CFNC "void gtk_toolbar_unset_style GtkToolbar* toolbar")
 ;;; out 2.3 (CFNC "void gtk_toolbar_unset_icon_size GtkToolbar* toolbar")
@@ -5132,7 +5140,7 @@
 (CFNC-250 "void gtk_icon_view_set_orientation GtkIconView* icon_view GtkOrientation orientation")
 (CFNC-250 "GtkOrientation gtk_icon_view_get_orientation GtkIconView* icon_view")
 (CFNC-250 "GtkTreePath* gtk_icon_view_get_path_at_pos GtkIconView* icon_view gint x gint y")
-(CFNC-250 "void gtk_icon_view_selected_foreach GtkIconView* icon_view GtkIconViewForeachFunc func lambda_data func_data")
+(CFNC-250 "void gtk_icon_view_selected_foreach GtkIconView* icon_view GtkIconViewForeachFunc func lambda_data #func_data")
 (CFNC-250 "void gtk_icon_view_set_selection_mode GtkIconView* icon_view GtkSelectionMode mode")
 (CFNC-250 "GtkSelectionMode gtk_icon_view_get_selection_mode GtkIconView* icon_view")
 ;;;; these two are in the header file but not the c file -- out 2.5.2
@@ -5423,7 +5431,7 @@
 (CINT-256 "G_LOG_LEVEL_MASK" "GLogLevelFlags")
 (CINT-256 "G_LOG_FATAL_MASK" "GLogLevelFlags")
 
-(CFNC-256 "guint g_log_set_handler gchar* log_domain GLogLevelFlags log_levels GLogFunc func lambda_data func_data")
+(CFNC-256 "guint g_log_set_handler gchar* log_domain GLogLevelFlags log_levels GLogFunc func lambda_data #func_data")
 (CFNC-256 "void g_log_remove_handler gchar* log_domain guint handler_id")
 
 
@@ -5936,3 +5944,5 @@
 (CFNC-210 "void gtk_label_set_line_wrap_mode GtkLabel* label PangoWrapMode wrap_mode")
 (CFNC-210 "PangoWrapMode gtk_label_get_line_wrap_mode GtkLabel* label")
 
+;;; out 2.3 then back in at some point
+(CFNC-210 "void gtk_toolbar_set_icon_size GtkToolbar* toolbar GtkIconSize icon_size")

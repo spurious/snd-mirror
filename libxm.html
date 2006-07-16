@@ -133,13 +133,6 @@ etc).  Here's a version of "hello world":
 
 ;;; translation of /usr/share/doc/gtk2-devel-2.0.6/examples/helloworld/helloworld.c
 
-(define* (g_signal_connect obj name func #:optional data)
-  (g_signal_connect_closure_by_id (list 'gpointer (cadr obj))
-				  (g_signal_lookup name (G_OBJECT_TYPE (GTK_OBJECT obj)))
-				  0
-				  (g_cclosure_new func data #f)
-				  #f))
-
 (gtk_init 0 #f)
 (let ((window (gtk_window_new GTK_WINDOW_TOPLEVEL)))
   (g_signal_connect window "delete_event" 
