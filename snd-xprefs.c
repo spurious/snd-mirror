@@ -5,7 +5,7 @@
  */
 
 /* SOMEDAY: completions and sscanf->string_to_* for better checks (xmnmessage?)
-   SOMEDAY: gtk side of icon box (are there others?)
+
      should the exit key work in the listener as well? -- how to handle C-x cmds in xttranslation tables?
 
    abandoned:
@@ -2061,7 +2061,7 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_mix_menu, save_mix_menu, help_mix_menu, clear_mix_menu, revert_mix_menu);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_toggle("box of handy icons", "new-buttons.scm",
+    prf = prefs_row_with_toggle("a toolbar", "toolbar.scm",
 				(include_icon_box = find_icon_box()),
 				dpy_box, current_sep, 
 				icon_box_toggle);

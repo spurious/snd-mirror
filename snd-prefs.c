@@ -3648,7 +3648,6 @@ static void revert_mix_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_mi
 static void clear_mix_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 
 
-#if USE_MOTIF
 /* ---------------- icon box ---------------- */
 
 static bool include_icon_box = false;
@@ -3666,7 +3665,7 @@ static void save_icon_box(prefs_info *prf, FILE *fd)
 {
   include_icon_box = GET_TOGGLE(prf->toggle);
   if (include_icon_box)
-    fprintf(fd, "(if (not (provided? 'snd-new-buttons.scm)) (load-from-path \"new-buttons.scm\"))\n");
+    fprintf(fd, "(if (not (provided? 'snd-toolbar.scm)) (load-from-path \"toolbar.scm\"))\n");
 }
 
 static void icon_box_toggle(prefs_info *prf)
@@ -3679,9 +3678,8 @@ static void icon_box_toggle(prefs_info *prf)
 static void reflect_icon_box(prefs_info *prf) {}
 static void revert_icon_box(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_icon_box);}
 static void clear_icon_box(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+#endif
 
-#endif
-#endif
 
 /* ---------------- reopen menu ---------------- */
 

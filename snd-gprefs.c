@@ -1890,6 +1890,13 @@ widget_t start_preferences_dialog(void)
 				dpy_box,
 				mix_menu_toggle);
     remember_pref(prf, reflect_mix_menu, save_mix_menu, help_mix_menu, clear_mix_menu, revert_mix_menu);
+
+    current_sep = make_inter_variable_separator(dpy_box);
+    prf = prefs_row_with_toggle("a toolbar", "toolbar.scm",
+				(include_icon_box = find_icon_box()),
+				dpy_box,
+				icon_box_toggle);
+    remember_pref(prf, reflect_icon_box, save_icon_box, help_icon_box, clear_icon_box, revert_icon_box);
 #endif
 
     current_sep = make_inter_variable_separator(dpy_box);

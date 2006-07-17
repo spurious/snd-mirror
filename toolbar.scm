@@ -1,12 +1,11 @@
 (provide 'snd-toolbar.scm)
 
-(if (not (provided? 'snd-snd7.scm)) (load-from-path "snd7.scm"))           ; backward-mix
-(if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))           ; play-until-c-g
-(if (provided? 'snd-motif)                                                 ; add-main-pane, add-tooltip (etc)
-    (if (not (provided? 'snd-snd-motif.scm)) 
-	(load-from-path "snd-motif.scm")) )
-;    (if (not (provided? 'snd-snd-gtk.scm)) 
-;	(load-from-path "snd-gtk.scm")))
+(if (provided? 'snd-motif) 
+    (begin
+      (if (not (provided? 'snd-snd7.scm)) (load-from-path "snd7.scm"))           ; backward-mix
+      (if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))           ; play-until-c-g
+      (if (not (provided? 'snd-snd-motif.scm))                                   ; add-main-pane, add-tooltip (etc)
+	  (load-from-path "snd-motif.scm"))))
 
 (if (provided? 'snd-motif)
     (let* ((toolscroll (add-main-pane "toolscroll" xmScrolledWindowWidgetClass
@@ -114,7 +113,6 @@
 			   " ..............................X"
 			   " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 	    
-	    
 	    (icon-regions-browser (list
 				   "32 25 4 1"
 				   "       c white"
@@ -178,7 +176,6 @@
 			    " ..............................X"
 			    " ..............................X"
 			    " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
-	    
 	    
 	    (icon-rec-pane (list
 			    "32 25 4 1"
@@ -274,7 +271,6 @@
 			   " ..............................X"
 			   " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 	    
-	    
 	    (icon-exit-it (list
 			   "32 25 4 1"
 			   "       c white"
@@ -339,7 +335,6 @@
 			   "                                "
 			   "................................"))
 	    
-	    
 	    (icon-play-direction-forward (list
 					  "32 25 4 1"
 					  "       c grey"
@@ -371,7 +366,6 @@
 					  "                                "
 					  "                                "
 					  "................................"))
-	    
 	    
 	    (icon-play-direction-backward (list
 					   "32 25 4 1"
@@ -446,7 +440,6 @@
 			     "dddddddddddddddddddddddddddddddd"
 			     "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"))
 	    
-	    
 	    (icon-loop-stop (list
 			     "32 25 11 1"
 			     
@@ -488,11 +481,6 @@
 			     "ddddXXddddddddddddddddddXXdddddd"
 			     "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"))
 	    
-	    
-	    
-	    
-	    
-	    
 	    (icon-full-stop (list
 			     "32 25 4 1"
 			     "X      c white"
@@ -525,7 +513,6 @@
 			     "                                "
 			     "................................"))
 	    
-	    
 	    (icon-open-file (list
 			     "32 25 4 1"
 			     "x      c white"
@@ -557,7 +544,6 @@
 			     "                                "
 			     "                                "
 			     "................................"))
-	    
 	    
 	    (icon-close-file (list
 			      "32 25 4 1"
@@ -653,7 +639,6 @@
 			      "                                "
 			      "................................"))
 	    
-	    
 	    (icon-end-of-window (list
 				 "32 25 3 1"
 				 "       c lightblue"
@@ -715,7 +700,6 @@
 				 "                                "
 				 "                                "
 				 "................................"))
-	    
 	    
 	    (icon-end-of-file (list
 			       "32 25 3 1"
@@ -841,7 +825,6 @@
 				      "                                "
 				      "................................"))
 	    
-	    
 	    (icon-back-one-window (list
 				   "32 25 3 1"
 				   "       c lightblue"
@@ -872,7 +855,6 @@
 				   "                                "
 				   "                                "
 				   "................................"))
-	    
 	    
 	    (icon-next-mix-point (list
 				  "32 25 4 1"
@@ -906,7 +888,6 @@
 				  "                                "
 				  "................................"))
 	    
-	    
 	    (icon-last-mix-point (list
 				  "32 25 4 1"
 				  "       c lightblue"
@@ -938,7 +919,6 @@
 				  "     XX     XX                  "
 				  "                                "
 				  "................................"))
-	    
 	    
 	    (icon-mixer (list
 			 "32 25 5 1"
@@ -1036,7 +1016,6 @@
 			       "                         XX     "
 			       "                                "
 			       "................................"))
-	    
 	    
 	    (icon-open-mix-file (list
 				 "32 25 5 1"
