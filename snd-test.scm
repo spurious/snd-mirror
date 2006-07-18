@@ -44062,6 +44062,26 @@ EDITS: 1
 	     ((= i end))
 	   (dlocsig dloc i (* (env aenv) (oscil osc)))))))))
 
+(define (mix-move-sound start-time file path)
+  (let* ((duration (mus-sound-duration file))
+	 (rd (make-sample-reader 0 file))
+	 (start (inexact->exact (round (* (mus-srate) start-time))))
+	 (tmp-sound (with-temp-sound (:channels (channels) :srate (mus-sound-srate file))
+		      (let* ((vals (make-dlocsig :start-time 0
+						 :duration duration
+						 :path path))
+			     (dloc (car vals))
+			     (beg (cadr vals))
+			     (end (caddr vals)))
+			(run
+			 (lambda ()
+			   (do ((i beg (1+ i)))
+			       ((= i end))
+			     (dlocsig dloc i (read-sample rd)))))))))
+    (mix tmp-sound start #t #f #f (with-mix-tags) #t)))
+
+
+
 #|
 (define* (report-segments :optional snd chn)
   (let* ((rd (make-sample-reader 0 snd chn))
@@ -45205,6 +45225,9 @@ EDITS: 1
 	(close-sound ind))
 
       ;; dlocsig tests
+      (with-sound (:channels 4)
+	(mix-move-sound 0 "oboe.snd" (make-spiral-path :turns 3)))
+
       (let ((ind 0))
       (with-sound (:channels 2) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
       (set! ind (find-sound "test.snd"))

@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: if sync multichan mix + show waveforms -- they're all in chan1? */
+/* TODO: is there an auto-delete mixup in 4-4 chan mixes? */
+
 typedef struct {
   int chans;
   Float *scalers;
@@ -399,14 +402,20 @@ static mix_info *free_mix_info(mix_info *md)
       release_dangling_mix_readers(md);
       if (md->wg) md->wg = free_mix_context(md->wg);
       mix_infos[md->id] = NULL;
-      if (md->temporary == DELETE_ME) 
-	snd_remove(md->in_filename, REMOVE_FROM_CACHE);
+      if (md->temporary == DELETE_ME)
+	{
+	  if (mus_file_probe(md->in_filename))
+	    snd_remove(md->in_filename, REMOVE_FROM_CACHE);
+	}
       else
 	{
 	  if (md->temporary == MULTICHANNEL_DELETION) /* n-chan selection via C-x q for example */
 	    {
 	      if (!(map_over_mixes(look_for_mix_tempfile, (void *)(md->in_filename))))
-		snd_remove(md->in_filename, REMOVE_FROM_CACHE);
+		{
+		  if (mus_file_probe(md->in_filename))
+		    snd_remove(md->in_filename, REMOVE_FROM_CACHE);
+		}
 	    }
 	}
       if (md->in_filename) {FREE(md->in_filename); md->in_filename = NULL;}
@@ -947,7 +956,8 @@ static mix_fd *free_mix_fd(mix_fd *mf)
 
 static int remove_temporary_mix_file(mix_info *md, void *ignore)
 {
-  if (md->temporary == DELETE_ME) 
+  if ((md->temporary == DELETE_ME) &&
+      (mus_file_probe(md->in_filename)))
     snd_remove(md->in_filename, REMOVE_FROM_CACHE);
   return(0);
 }

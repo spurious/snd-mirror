@@ -360,6 +360,9 @@ that it can't play big-endian shorts.
 The Record dialog only works in Linux (OSS, perhaps ALSA), Sun (not x86),
 some SGI systems, and perhaps Mac OSX.
 
+In X86 Solaris, you may need to install Jurgen Keil's audio drivers.
+They can be found at http://www.tools.de/solaris.
+
 
 ---- ALSA: ----
 

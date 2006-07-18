@@ -760,7 +760,7 @@ snd_data *free_snd_data(snd_data *sd)
 #endif
 	      FREE(sd->io);
 	      sd->io = NULL;
-	      if (sd->temporary == DELETE_ME) 
+	      if (sd->temporary == DELETE_ME)
 		snd_remove(sd->filename, REMOVE_FROM_CACHE);
 	    }
 	  if (sd->filename) FREE(sd->filename);

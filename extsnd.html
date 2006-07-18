@@ -4105,6 +4105,43 @@ or use the functions in this section.  For example, we'll set the amplitude of t
 the second:
 <br>
 <img src="mix2.png" alt="mixes" vspace=10>
+<br>
+We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix to move the mixed-in sound:
+
+<table border=0 cellpadding=5 vspace=20><tr><td bgcolor="#fafafa"><pre>
+(if (not (provided? 'snd-dlocsig.scm)) (load-from-path "dlocsig.scm"))
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+
+(define (<a name="mixmovesound">mix-move-sound</a> start-time file path)
+  "mix file at start-time in the currently selected sound following the given dlocsig path"
+  (let* ((duration (<a class=quiet href="#mussoundduration">mus-sound-duration</a> file))
+	 (rd (<a class=quiet href="#makesamplereader">make-sample-reader</a> 0 file))
+	 (start (inexact-&gt;exact (round (* (<a class=quiet href="clm.html#mussrate">mus-srate</a>) start-time))))
+         (tmp-sound (<a class=quiet href="clm.html#soundlet">with-temp-sound</a> (:channels (<a class=quiet href="#channels">channels</a>) :srate (<a class=quiet href="#mussoundsrate">mus-sound-srate</a> file))
+
+         ;; We use with-temp-sound here rather than sound-let because mix normally expects its input file to
+         ;; be around until it decides it doesn't need it anymore, but sound-let deletes all its temp files.
+         ;; We use with-temp-sound rather than with-sound because the latter would want to open the output
+         ;; file in Snd; this could be turned off by including the :to-snd #f argument.
+
+                       (let* ((vals (<em class=red>make-dlocsig</em> :start-time 0
+				                  :duration duration
+				                  :path path))
+		              (dloc (car vals))
+		              (beg (cadr vals))
+		              (end (caddr vals)))
+	                (run
+		         (lambda ()
+		           (do ((i beg (1+ i)))
+		               ((= i end))
+		             (<em class=red>dlocsig</em> dloc i (<a class=quiet href="#readsample">read-sample</a> rd)))))))))
+
+         ;; now tmp-sound is the name of a 4 channel temp sound that moves <i>file</i> in a spiral
+
+    (<em class=red>mix</em> tmp-sound start #t #f #f (<a class=quiet href="#withmixtags">with-mix-tags</a>) #t)))
+
+;;; (mix-move-sound 0 "oboe.snd" (make-spiral-path :turns 3))
+</pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -4316,6 +4353,7 @@ mix data to vct: <a href="sndscm.html#mix2vct">mix-&gt;vct</a><br>
 save mix data in file: <a href="sndscm.html#savemix">save-mix</a><br>
 mix property list: <a href="sndscm.html#mixproperty">mix-property</a> in mix.scm<br>
 pan mono sound into stereo: see <a href="sndscm.html#placesound">place-sound</a> in examp.scm<br>
+move a mixed sound via dlocsig: <a href="#mixmovesound">mix-move-sound</a><br>
 pan mix file with envelope: <a href="sndscm.html#panmix">pan-mix</a><br>
 pan mix selection: <a href="sndscm.html#panmixselection">pan-mix-selection</a><br>
 pan mix region: <a href="sndscm.html#panmixregion">pan-mix-region</a><br>
