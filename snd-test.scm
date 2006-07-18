@@ -21214,6 +21214,14 @@ EDITS: 5
 	  (if (not (vequal tv ov))
 	      (snd-display ";windowed-maxamp: ~A ~A" ov tv))))
 
+      (let ((g1 (make-windowed-maxamp 10)))
+	(do ((i 0 (1+ i)))
+	    ((= i 1000))
+	  (let ((val (windowed-maxamp g1 (random 1.0))))
+	    (let ((pk (vct-peak (mus-data g1))))
+	      (if (not (= pk val)) 
+		  (snd-display ";windowed-maxamp ~A ~A" pk val))))))
+
       (let ((ind (open-sound "oboe.snd")))
 	(harmonicizer 550.0 (list 1 .5 2 .3 3 .2) 10)
 	(close-sound ind))
@@ -38350,6 +38358,11 @@ EDITS: 1
      ,a 
      (- (real-time) start)))
 
+(define (make-osc frq)
+  (run
+   (lambda ()
+     (make-oscil frq))))
+
 (define fm-violin-opt
   (lambda* (startime dur frequency amplitude :key
 		     (fm-index 1.0)
@@ -43803,6 +43816,10 @@ EDITS: 1
 	     (do ((i 0 (1+ i)))
 		 ((= i 8))
 	       (test-run-protection-release))))
+
+      (let ((o (make-osc 440)))
+	(gc) (gc)
+	(oscil o))
 
       (run-hook after-test-hook 22)
       ))

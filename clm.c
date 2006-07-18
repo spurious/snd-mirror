@@ -2931,12 +2931,7 @@ typedef struct {
   Float width;
 } sw;
 
-static int free_sw(mus_any *ptr) 
-{
-  sw *gen = (sw *)ptr;
-  if (gen) FREE(gen);
-  return(0);
-}
+static int free_sw(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
 
 Float mus_sawtooth_wave(mus_any *ptr, Float fm)
 {
@@ -6580,10 +6575,9 @@ void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
 
 /* ---------------- move-sound ---------------- */
 
-/* TODO: move-sound c: is _mus_wrap_no_vcts correct for the wrapper?
- * TODO: move-sound rb: update dlocsig.rb (787, l788)
+/* TODO: move-sound rb: update dlocsig.rb (787, l788)
  * TODO: move-sound cl: figure out the gc problem (and move-sound?)
- * TODO: mix-move-sound (etc) in snd
+ * TODO: mix-move-sound or move-mix-sound? (etc) in snd
  */
 
 typedef struct {

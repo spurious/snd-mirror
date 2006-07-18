@@ -1931,7 +1931,7 @@ a running window of the last 'size' inputs, returning the maxamp in that window.
 	 (mx (delay gen absy)))
     (if (>= absy (mus-scaler gen))
 	(set! (mus-scaler gen) absy)
-	(if (> mx (mus-scaler gen))
+	(if (>= mx (mus-scaler gen))
 	    (set! (mus-scaler gen) (vct-peak (mus-data gen)))))
     (mus-scaler gen)))
 

@@ -2128,7 +2128,7 @@ static void eval_ptree(ptree *pt)
       {
 	char *buf;
 	buf = (*(curfunc->descr))(curfunc->args, pt);
-	fprintf(stderr, "%d: %s\n", PC, buf);
+	fprintf(stderr, OFF_TD ": %s\n", PC, buf);
 	FREE(buf);
       }
 #endif
@@ -9669,6 +9669,18 @@ static bool xenable(xen_value *v)
   return(false);
 }
 
+static XEN wrap_generator(mus_any *gen)
+{
+  mus_xen *gn;
+  gn = mus_wrapper(gen);
+  if (gn)
+    {
+      gn->dont_free_gen = true;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
+}
+
 static XEN xen_value_to_xen(ptree *pt, xen_value *v)
 {
   XEN val = XEN_UNDEFINED;
@@ -9702,7 +9714,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
       }
       break;
     case R_CLM:
-      val = mus_wrap_generator(pt->clms[v->addr]);
+      val = wrap_generator(pt->clms[v->addr]);
       break;
     default:
       if (CLM_STRUCT_P(v->type))
@@ -11108,7 +11120,53 @@ static XEN eval_ptree_to_xen(ptree *pt)
     case R_PAIR:
     case R_SYMBOL:
     case R_KEYWORD: result = pt->xens[pt->result->addr];                        break;
-    case R_CLM:     result = mus_wrap_generator(pt->clms[pt->result->addr]);    break;
+    case R_CLM:     
+      result = wrap_generator(pt->clms[pt->result->addr]);
+      /* now cancel earlier frees
+       *   all protected (run-created) gens should be in pt->gc_protected[pt->gc_protected_ctr++] = loc
+       *   the XEN value is XEN_VECTOR_REF(gc_protection, loc)
+       */
+      {
+	int i;
+	XEN val = XEN_FALSE;
+	mus_xen *gn = NULL;
+	for (i = 0; i < pt->gc_protected_ctr; i++)
+	  if (pt->gc_protected[i] >= 0)
+	    {
+	      val = snd_protected_at(pt->gc_protected[i]);
+	      if ((mus_xen_p(val)) && 
+		  (XEN_TO_MUS_ANY(val) == pt->clms[pt->result->addr]))
+		{
+		  gn = XEN_TO_MUS_XEN(val);
+		  gn->dont_free_gen = true;
+		}
+	    }
+#if 0
+	if ((gn) && 
+	     (mus_filtered_comb_p(pt->clms[pt->result->addr])))
+	  {
+	    mus_xen *res;
+	    res = XEN_TO_MUS_XEN(result);
+	    res->vcts[MUS_INPUT_FUNCTION] = gn->vcts[MUS_INPUT_FUNCTION];
+	    gn = XEN_TO_MUS_XEN(res->vcts[MUS_INPUT_FUNCTION]);
+	    gn->dont_free_gen = true;
+	  }
+	/* TODO: fix the filtered_comb case here (internal filter is freed prematurely)
+	 *       code above does not fix the problem
+	 *
+	 *   (define (make-fc scl size)
+	 *     (run 
+	 *       (lambda ()
+	 *         (make-filtered-comb scl size :filter (make-one-zero .4 .6)))))
+	 *   
+	 *   (let ((o (make-fc .8 128)))
+	 *     (gc) (gc)
+	 *     (filtered-comb o (random 1.0)))
+	 */
+#endif
+      }
+
+      break;
     case R_VCT:
       {
 	vct *v;

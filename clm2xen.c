@@ -5603,20 +5603,6 @@ static XEN g_ssb_bank(XEN ssbs, XEN filters, XEN inval, XEN size)
 }
 
 
-/* ---------------- wrap (for snd-run.c) ---------------- */
-
-XEN mus_wrap_generator(mus_any *gen)
-{
-  mus_xen *gn;
-  gn = mus_wrapper(gen);
-  if (gn)
-    {
-      gn->dont_free_gen = true;
-      return(mus_xen_to_object(gn));
-    }
-  return(XEN_FALSE);
-}
-
 /* ---------------- export ---------------- */
 
 #ifdef XEN_ARGIFY_1

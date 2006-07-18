@@ -218,6 +218,14 @@ void snd_unprotect_at(int loc)
     }
 }
 
+XEN snd_protected_at(int loc)
+{
+  if (loc >= 0)
+    return(XEN_VECTOR_REF(gc_protection, loc));
+  return(DEFAULT_GC_VALUE);
+}
+
+
 /* -------- error handling -------- */
 
 static char *last_file_loaded = NULL;
