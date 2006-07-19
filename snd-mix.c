@@ -1,6 +1,5 @@
 #include "snd.h"
 
-/* TODO: if sync multichan mix + show waveforms -- they're all in chan1? */
 /* TODO: is there an auto-delete mixup in 4-4 chan mixes? */
 
 typedef struct {
@@ -2833,8 +2832,8 @@ void display_channel_mixes(chan_info *cp)
 		    md->y = OFFSET_FROM_TOP + ap->y_offset + cs->tag_y;
 		  else
 		    {
-		      if (md->y == 0)
-			md->y = OFFSET_FROM_TOP + y + ap->y_offset;
+		      /* this used to check md->y == 0, but that messes up combined channel display */
+		      md->y = OFFSET_FROM_TOP + y + ap->y_offset;
 		    }
 		  if (((xspot + mix_tag_width(ss)) <= ap->x_axis_x1) &&      /* not cut off on right */
 		      (!combined))

@@ -1,5 +1,9 @@
 #include "snd.h"
 
+/* TODO: add gtk_print_operation support if gtk 2.10 
+ *       can this use the standard graphics?  openGL? or specialize the current printing stuff?
+ */
+
 static GtkWidget *print_dialog = NULL;
 static GtkWidget *print_name = NULL;
 static GtkWidget *print_eps_or_lpr = NULL;

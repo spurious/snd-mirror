@@ -114,6 +114,9 @@
 (define ints-210 '())
 (define names-210 '())
 (define types-210 '())
+(define casts-210 '())
+(define checks-210 '())
+(define check-types-210 '())
 
 (define all-types '())
 (define all-check-types '())
@@ -163,6 +166,8 @@
 	"GtkAssistant*" "GtkRecentChooser*" "GtkRecentChooserMenu*"
 	"GtkTextBufferSerializeFunc" "GtkTextBufferDeserializeFunc" 
 	"GtkRecentData*" "GtkNotebookWindowCreationFunc"
+
+	"GtkUnit" "GtkPageSetupDoneFunc"
 	))
 
 (define no-xen-p 
@@ -818,6 +823,12 @@
 	(cons "GtkRecentManagerError" "INT")
 	(cons "GtkTreeViewGridLines" "INT")
 
+	(cons "GtkPrintCapabilities" "INT")
+	(cons "GtkPrintStatus" "INT")
+	(cons "GtkPrintOperationResult" "INT")
+	(cons "GtkPrintOperationAction" "INT")
+	(cons "GtkPrintError" "INT")
+
 	))
 
 (define (type-it type)
@@ -1376,6 +1387,13 @@
 	(set! casts-290 (cons (list name type) casts-290))
 	(set! names (cons (cons name 'def) names)))))
 
+(define (CCAST-210 name type)
+  (if (assoc name names)
+      (no-way "~A CCAST-210~%" name)
+      (begin
+	(set! casts-210 (cons (list name type) casts-210))
+	(set! names (cons (cons name 'def) names)))))
+
 (define (CCHK name type)
   (if (assoc name names)
       (no-way "~A CCHK~%" name)
@@ -1451,6 +1469,17 @@
 	      (set! all-check-types (cons type all-check-types))
 	      (set! check-types-290 (cons type check-types-290))))
 	(set! checks-290 (cons (list name type) checks-290))
+	(set! names (cons (cons name 'def) names)))))
+
+(define (CCHK-210 name type)
+  (if (assoc name names)
+      (no-way "~A CCHK-210~%" name)
+      (begin
+	(if (not (member type all-check-types))
+	    (begin
+	      (set! all-check-types (cons type all-check-types))
+	      (set! check-types-210 (cons type check-types-210))))
+	(set! checks-210 (cons (list name type) checks-210))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (STRUCT data)
@@ -1623,6 +1652,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     20-Jul:    added gtkprint stuff.~%")
 (hey " *     17-Jul:    added g_signal_connect and other related macros.~%")
 (hey " *     21-Apr:    Gauche support.~%")
 (hey " *     29-Mar:    Forth support.~%")
@@ -2579,6 +2609,7 @@
 (if (not (null? casts-250)) (with-250 hey (lambda () (for-each cast-it (reverse casts-250)))))
 (if (not (null? casts-256)) (with-256 hey (lambda () (for-each cast-it (reverse casts-256)))))
 (if (not (null? casts-290)) (with-290 hey (lambda () (for-each cast-it (reverse casts-290)))))
+(if (not (null? casts-210)) (with-210 hey (lambda () (for-each cast-it (reverse casts-210)))))
 
 ;;; checks have to use the built-in macros, not local symbol-based type checks
 
@@ -2593,6 +2624,7 @@
 (if (not (null? checks-250)) (with-250 hey (lambda () (for-each make-check (reverse checks-250)))))
 (if (not (null? checks-256)) (with-256 hey (lambda () (for-each make-check (reverse checks-256)))))
 (if (not (null? checks-290)) (with-290 hey (lambda () (for-each make-check (reverse checks-290)))))
+(if (not (null? checks-210)) (with-210 hey (lambda () (for-each make-check (reverse checks-210)))))
 
 
 (hey "~%~%/* ---------------------------------------- special functions ---------------------------------------- */~%~%")
@@ -2920,6 +2952,7 @@
 (if (not (null? casts-250)) (with-250 hey (lambda () (for-each ruby-cast (reverse casts-250)))))
 (if (not (null? casts-256)) (with-256 hey (lambda () (for-each ruby-cast (reverse casts-256)))))
 (if (not (null? casts-290)) (with-290 hey (lambda () (for-each ruby-cast (reverse casts-290)))))
+(if (not (null? casts-210)) (with-210 hey (lambda () (for-each ruby-cast (reverse casts-210)))))
 
 (define (ruby-check func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func))))
 (for-each ruby-check (reverse checks))
@@ -2929,6 +2962,7 @@
 (if (not (null? checks-250)) (with-250 hey (lambda () (for-each ruby-check (reverse checks-250)))))
 (if (not (null? checks-256)) (with-256 hey (lambda () (for-each ruby-check (reverse checks-256)))))
 (if (not (null? checks-290)) (with-290 hey (lambda () (for-each ruby-check (reverse checks-290)))))
+(if (not (null? checks-210)) (with-210 hey (lambda () (for-each ruby-check (reverse checks-210)))))
 
 
 (let ((in-x11 #f))
@@ -3025,6 +3059,7 @@
 (if (not (null? casts-250)) (with-250 hey (lambda () (for-each ruby-uncast (reverse casts-250)))))
 (if (not (null? casts-256)) (with-256 hey (lambda () (for-each ruby-uncast (reverse casts-256)))))
 (if (not (null? casts-290)) (with-290 hey (lambda () (for-each ruby-uncast (reverse casts-290)))))
+(if (not (null? casts-210)) (with-210 hey (lambda () (for-each ruby-uncast (reverse casts-210)))))
 
 (define (ruby-uncheck func) (hey "#define gxg_~A_w gxg_~A~%" (no-arg (car func)) (no-arg (car func))))
 (for-each ruby-uncheck (reverse checks))
@@ -3034,6 +3069,7 @@
 (if (not (null? checks-250)) (with-250 hey (lambda () (for-each ruby-uncheck (reverse checks-250)))))
 (if (not (null? checks-256)) (with-256 hey (lambda () (for-each ruby-uncheck (reverse checks-256)))))
 (if (not (null? checks-290)) (with-290 hey (lambda () (for-each ruby-uncheck (reverse checks-290)))))
+(if (not (null? checks-210)) (with-210 hey (lambda () (for-each ruby-uncheck (reverse checks-210)))))
 
 (let ((in-x11 #f))
   (for-each 
@@ -3153,6 +3189,7 @@
 (if (not (null? casts-250)) (with-250 hey (lambda () (for-each cast-out (reverse casts-250)))))
 (if (not (null? casts-256)) (with-256 hey (lambda () (for-each cast-out (reverse casts-256)))))
 (if (not (null? casts-290)) (with-290 hey (lambda () (for-each cast-out (reverse casts-290)))))
+(if (not (null? casts-210)) (with-210 hey (lambda () (for-each cast-out (reverse casts-210)))))
 
 (hey "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);~%")
 (hey "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);~%")
@@ -3175,6 +3212,7 @@
 (if (not (null? checks-250)) (with-250 hey (lambda () (for-each check-out (reverse checks-250)))))
 (if (not (null? checks-256)) (with-256 hey (lambda () (for-each check-out (reverse checks-256)))))
 (if (not (null? checks-290)) (with-290 hey (lambda () (for-each check-out (reverse checks-290)))))
+(if (not (null? checks-210)) (with-210 hey (lambda () (for-each check-out (reverse checks-210)))))
 
 (hey "}~%~%")
 

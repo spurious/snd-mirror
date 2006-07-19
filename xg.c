@@ -45,6 +45,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     20-Jul:    added gtkprint stuff.
  *     17-Jul:    added g_signal_connect and other related macros.
  *     21-Apr:    Gauche support.
  *     29-Mar:    Forth support.
@@ -1006,6 +1007,20 @@ XM_TYPE_PTR_1(GtkRecentData_, GtkRecentData*)
 #define C_TO_XEN_GtkTreeViewGridLines(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkTreeViewGridLines(Arg) (GtkTreeViewGridLines)(XEN_TO_C_INT(Arg))
 #define XEN_GtkTreeViewGridLines_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR(GtkPrintOperation_, GtkPrintOperation*)
+XM_TYPE_PTR(GtkPageSetup_, GtkPageSetup*)
+XM_TYPE_PTR(GtkPrintSettings_, GtkPrintSettings*)
+XM_TYPE_1(GtkUnit, GtkUnit)
+#define C_TO_XEN_GtkPrintOperationResult(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkPrintOperationResult(Arg) (GtkPrintOperationResult)(XEN_TO_C_INT(Arg))
+#define XEN_GtkPrintOperationResult_P(Arg) XEN_INTEGER_P(Arg)
+#define C_TO_XEN_GtkPrintOperationAction(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkPrintOperationAction(Arg) (GtkPrintOperationAction)(XEN_TO_C_INT(Arg))
+#define XEN_GtkPrintOperationAction_P(Arg) XEN_INTEGER_P(Arg)
+#define C_TO_XEN_GtkPrintStatus(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkPrintStatus(Arg) (GtkPrintStatus)(XEN_TO_C_INT(Arg))
+#define XEN_GtkPrintStatus_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_1(GtkPageSetupDoneFunc, GtkPageSetupDoneFunc)
 #endif
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
@@ -27333,6 +27348,207 @@ static XEN gxg_gtk_toolbar_set_icon_size(XEN toolbar, XEN icon_size)
   gtk_toolbar_set_icon_size(XEN_TO_C_GtkToolbar_(toolbar), XEN_TO_C_GtkIconSize(icon_size));
   return(XEN_FALSE);
 }
+static XEN gxg_gtk_print_operation_get_type(void)
+{
+  #define H_gtk_print_operation_get_type "GType gtk_print_operation_get_type( void)"
+  return(C_TO_XEN_GType(gtk_print_operation_get_type()));
+}
+static XEN gxg_gtk_print_operation_new(void)
+{
+  #define H_gtk_print_operation_new "GtkPrintOperation* gtk_print_operation_new( void)"
+  return(C_TO_XEN_GtkPrintOperation_(gtk_print_operation_new()));
+}
+static XEN gxg_gtk_print_operation_set_default_page_setup(XEN op, XEN default_page_setup)
+{
+  #define H_gtk_print_operation_set_default_page_setup "void gtk_print_operation_set_default_page_setup(GtkPrintOperation* op, \
+GtkPageSetup* default_page_setup)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_set_default_page_setup", "GtkPrintOperation*");
+  XEN_ASSERT_TYPE(XEN_GtkPageSetup__P(default_page_setup), default_page_setup, 2, "gtk_print_operation_set_default_page_setup", "GtkPageSetup*");
+  gtk_print_operation_set_default_page_setup(XEN_TO_C_GtkPrintOperation_(op), XEN_TO_C_GtkPageSetup_(default_page_setup));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_print_operation_get_default_page_setup(XEN op)
+{
+  #define H_gtk_print_operation_get_default_page_setup "GtkPageSetup* gtk_print_operation_get_default_page_setup(GtkPrintOperation* op)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_get_default_page_setup", "GtkPrintOperation*");
+  return(C_TO_XEN_GtkPageSetup_(gtk_print_operation_get_default_page_setup(XEN_TO_C_GtkPrintOperation_(op))));
+}
+static XEN gxg_gtk_print_operation_set_print_settings(XEN op, XEN print_settings)
+{
+  #define H_gtk_print_operation_set_print_settings "void gtk_print_operation_set_print_settings(GtkPrintOperation* op, \
+GtkPrintSettings* print_settings)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_set_print_settings", "GtkPrintOperation*");
+  XEN_ASSERT_TYPE(XEN_GtkPrintSettings__P(print_settings), print_settings, 2, "gtk_print_operation_set_print_settings", "GtkPrintSettings*");
+  gtk_print_operation_set_print_settings(XEN_TO_C_GtkPrintOperation_(op), XEN_TO_C_GtkPrintSettings_(print_settings));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_print_operation_get_print_settings(XEN op)
+{
+  #define H_gtk_print_operation_get_print_settings "GtkPrintSettings* gtk_print_operation_get_print_settings(GtkPrintOperation* op)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_get_print_settings", "GtkPrintOperation*");
+  return(C_TO_XEN_GtkPrintSettings_(gtk_print_operation_get_print_settings(XEN_TO_C_GtkPrintOperation_(op))));
+}
+static XEN gxg_gtk_print_operation_set_job_name(XEN op, XEN job_name)
+{
+  #define H_gtk_print_operation_set_job_name "void gtk_print_operation_set_job_name(GtkPrintOperation* op, \
+gchar* job_name)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_set_job_name", "GtkPrintOperation*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(job_name), job_name, 2, "gtk_print_operation_set_job_name", "gchar*");
+  gtk_print_operation_set_job_name(XEN_TO_C_GtkPrintOperation_(op), XEN_TO_C_gchar_(job_name));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_print_operation_set_n_pages(XEN op, XEN n_pages)
+{
+  #define H_gtk_print_operation_set_n_pages "void gtk_print_operation_set_n_pages(GtkPrintOperation* op, \
+gint n_pages)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_set_n_pages", "GtkPrintOperation*");
+  XEN_ASSERT_TYPE(XEN_gint_P(n_pages), n_pages, 2, "gtk_print_operation_set_n_pages", "gint");
+  gtk_print_operation_set_n_pages(XEN_TO_C_GtkPrintOperation_(op), XEN_TO_C_gint(n_pages));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_print_operation_set_current_page(XEN op, XEN current_page)
+{
+  #define H_gtk_print_operation_set_current_page "void gtk_print_operation_set_current_page(GtkPrintOperation* op, \
+gint current_page)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_set_current_page", "GtkPrintOperation*");
+  XEN_ASSERT_TYPE(XEN_gint_P(current_page), current_page, 2, "gtk_print_operation_set_current_page", "gint");
+  gtk_print_operation_set_current_page(XEN_TO_C_GtkPrintOperation_(op), XEN_TO_C_gint(current_page));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_print_operation_set_use_full_page(XEN op, XEN full_page)
+{
+  #define H_gtk_print_operation_set_use_full_page "void gtk_print_operation_set_use_full_page(GtkPrintOperation* op, \
+gboolean full_page)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_set_use_full_page", "GtkPrintOperation*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(full_page), full_page, 2, "gtk_print_operation_set_use_full_page", "gboolean");
+  gtk_print_operation_set_use_full_page(XEN_TO_C_GtkPrintOperation_(op), XEN_TO_C_gboolean(full_page));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_print_operation_set_unit(XEN op, XEN unit)
+{
+  #define H_gtk_print_operation_set_unit "void gtk_print_operation_set_unit(GtkPrintOperation* op, GtkUnit unit)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_set_unit", "GtkPrintOperation*");
+  XEN_ASSERT_TYPE(XEN_GtkUnit_P(unit), unit, 2, "gtk_print_operation_set_unit", "GtkUnit");
+  gtk_print_operation_set_unit(XEN_TO_C_GtkPrintOperation_(op), XEN_TO_C_GtkUnit(unit));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_print_operation_set_export_filename(XEN op, XEN filename)
+{
+  #define H_gtk_print_operation_set_export_filename "void gtk_print_operation_set_export_filename(GtkPrintOperation* op, \
+gchar* filename)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_set_export_filename", "GtkPrintOperation*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(filename), filename, 2, "gtk_print_operation_set_export_filename", "gchar*");
+  gtk_print_operation_set_export_filename(XEN_TO_C_GtkPrintOperation_(op), XEN_TO_C_gchar_(filename));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_print_operation_set_track_print_status(XEN op, XEN track_status)
+{
+  #define H_gtk_print_operation_set_track_print_status "void gtk_print_operation_set_track_print_status(GtkPrintOperation* op, \
+gboolean track_status)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_set_track_print_status", "GtkPrintOperation*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(track_status), track_status, 2, "gtk_print_operation_set_track_print_status", "gboolean");
+  gtk_print_operation_set_track_print_status(XEN_TO_C_GtkPrintOperation_(op), XEN_TO_C_gboolean(track_status));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_print_operation_set_show_progress(XEN op, XEN show_progress)
+{
+  #define H_gtk_print_operation_set_show_progress "void gtk_print_operation_set_show_progress(GtkPrintOperation* op, \
+gboolean show_progress)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_set_show_progress", "GtkPrintOperation*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(show_progress), show_progress, 2, "gtk_print_operation_set_show_progress", "gboolean");
+  gtk_print_operation_set_show_progress(XEN_TO_C_GtkPrintOperation_(op), XEN_TO_C_gboolean(show_progress));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_print_operation_set_allow_async(XEN op, XEN allow_async)
+{
+  #define H_gtk_print_operation_set_allow_async "void gtk_print_operation_set_allow_async(GtkPrintOperation* op, \
+gboolean allow_async)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_set_allow_async", "GtkPrintOperation*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(allow_async), allow_async, 2, "gtk_print_operation_set_allow_async", "gboolean");
+  gtk_print_operation_set_allow_async(XEN_TO_C_GtkPrintOperation_(op), XEN_TO_C_gboolean(allow_async));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_print_operation_set_custom_tab_label(XEN op, XEN label)
+{
+  #define H_gtk_print_operation_set_custom_tab_label "void gtk_print_operation_set_custom_tab_label(GtkPrintOperation* op, \
+gchar* label)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_set_custom_tab_label", "GtkPrintOperation*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(label), label, 2, "gtk_print_operation_set_custom_tab_label", "gchar*");
+  gtk_print_operation_set_custom_tab_label(XEN_TO_C_GtkPrintOperation_(op), XEN_TO_C_gchar_(label));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_print_operation_run(XEN op, XEN action, XEN parent, XEN ignore_error)
+{
+  #define H_gtk_print_operation_run "GtkPrintOperationResult gtk_print_operation_run(GtkPrintOperation* op, \
+GtkPrintOperationAction action, GtkWindow* parent, GError** [error])"
+  GError* ref_error = NULL;
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_run", "GtkPrintOperation*");
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperationAction_P(action), action, 2, "gtk_print_operation_run", "GtkPrintOperationAction");
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(parent), parent, 3, "gtk_print_operation_run", "GtkWindow*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_GtkPrintOperationResult(gtk_print_operation_run(XEN_TO_C_GtkPrintOperation_(op), XEN_TO_C_GtkPrintOperationAction(action), 
+                                                                      XEN_TO_C_GtkWindow_(parent), &ref_error));
+    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
+   }
+}
+static XEN gxg_gtk_print_operation_get_error(XEN op, XEN ignore_error)
+{
+  #define H_gtk_print_operation_get_error "void gtk_print_operation_get_error(GtkPrintOperation* op, \
+GError** [error])"
+  GError* ref_error = NULL;
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_get_error", "GtkPrintOperation*");
+  gtk_print_operation_get_error(XEN_TO_C_GtkPrintOperation_(op), &ref_error);
+  return(XEN_LIST_1(C_TO_XEN_GError_(ref_error)));
+}
+static XEN gxg_gtk_print_operation_get_status(XEN op)
+{
+  #define H_gtk_print_operation_get_status "GtkPrintStatus gtk_print_operation_get_status(GtkPrintOperation* op)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_get_status", "GtkPrintOperation*");
+  return(C_TO_XEN_GtkPrintStatus(gtk_print_operation_get_status(XEN_TO_C_GtkPrintOperation_(op))));
+}
+static XEN gxg_gtk_print_operation_get_status_string(XEN op)
+{
+  #define H_gtk_print_operation_get_status_string "gchar* gtk_print_operation_get_status_string(GtkPrintOperation* op)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_get_status_string", "GtkPrintOperation*");
+  return(C_TO_XEN_gchar_(gtk_print_operation_get_status_string(XEN_TO_C_GtkPrintOperation_(op))));
+}
+static XEN gxg_gtk_print_operation_is_finished(XEN op)
+{
+  #define H_gtk_print_operation_is_finished "gboolean gtk_print_operation_is_finished(GtkPrintOperation* op)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_is_finished", "GtkPrintOperation*");
+  return(C_TO_XEN_gboolean(gtk_print_operation_is_finished(XEN_TO_C_GtkPrintOperation_(op))));
+}
+static XEN gxg_gtk_print_operation_cancel(XEN op)
+{
+  #define H_gtk_print_operation_cancel "void gtk_print_operation_cancel(GtkPrintOperation* op)"
+  XEN_ASSERT_TYPE(XEN_GtkPrintOperation__P(op), op, 1, "gtk_print_operation_cancel", "GtkPrintOperation*");
+  gtk_print_operation_cancel(XEN_TO_C_GtkPrintOperation_(op));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_print_run_page_setup_dialog(XEN parent, XEN page_setup, XEN settings)
+{
+  #define H_gtk_print_run_page_setup_dialog "GtkPageSetup* gtk_print_run_page_setup_dialog(GtkWindow* parent, \
+GtkPageSetup* page_setup, GtkPrintSettings* settings)"
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(parent), parent, 1, "gtk_print_run_page_setup_dialog", "GtkWindow*");
+  XEN_ASSERT_TYPE(XEN_GtkPageSetup__P(page_setup), page_setup, 2, "gtk_print_run_page_setup_dialog", "GtkPageSetup*");
+  XEN_ASSERT_TYPE(XEN_GtkPrintSettings__P(settings), settings, 3, "gtk_print_run_page_setup_dialog", "GtkPrintSettings*");
+  return(C_TO_XEN_GtkPageSetup_(gtk_print_run_page_setup_dialog(XEN_TO_C_GtkWindow_(parent), XEN_TO_C_GtkPageSetup_(page_setup), 
+                                                                XEN_TO_C_GtkPrintSettings_(settings))));
+}
+static XEN gxg_gtk_print_run_page_setup_dialog_async(XEN parent, XEN page_setup, XEN settings, XEN done_cb, XEN data)
+{
+  #define H_gtk_print_run_page_setup_dialog_async "void gtk_print_run_page_setup_dialog_async(GtkWindow* parent, \
+GtkPageSetup* page_setup, GtkPrintSettings* settings, GtkPageSetupDoneFunc done_cb, gpointer data)"
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(parent), parent, 1, "gtk_print_run_page_setup_dialog_async", "GtkWindow*");
+  XEN_ASSERT_TYPE(XEN_GtkPageSetup__P(page_setup), page_setup, 2, "gtk_print_run_page_setup_dialog_async", "GtkPageSetup*");
+  XEN_ASSERT_TYPE(XEN_GtkPrintSettings__P(settings), settings, 3, "gtk_print_run_page_setup_dialog_async", "GtkPrintSettings*");
+  XEN_ASSERT_TYPE(XEN_GtkPageSetupDoneFunc_P(done_cb), done_cb, 4, "gtk_print_run_page_setup_dialog_async", "GtkPageSetupDoneFunc");
+  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 5, "gtk_print_run_page_setup_dialog_async", "gpointer");
+  gtk_print_run_page_setup_dialog_async(XEN_TO_C_GtkWindow_(parent), XEN_TO_C_GtkPageSetup_(page_setup), XEN_TO_C_GtkPrintSettings_(settings), 
+                                        XEN_TO_C_GtkPageSetupDoneFunc(done_cb), XEN_TO_C_gpointer(data));
+  return(XEN_FALSE);
+}
 #endif
 
 #define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))
@@ -27550,6 +27766,10 @@ static XEN gxg_GTK_RECENT_MANAGER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN
 static XEN gxg_GTK_STATUS_ICON(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkStatusIcon_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+static XEN gxg_GTK_PRINT_OPERATION(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkPrintOperation"), XEN_CADR(obj)) : XEN_FALSE);}
+#endif
+
 static XEN gxg_GDK_IS_COLORMAP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_COLORMAP((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_DRAG_CONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_DRAG_CONTEXT((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_DRAWABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_DRAWABLE((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
@@ -27744,6 +27964,10 @@ static XEN gxg_GTK_IS_RECENT_CHOOSER_WIDGET(XEN obj) {return(C_TO_XEN_BOOLEAN(WR
 static XEN gxg_GTK_IS_RECENT_FILTER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_RECENT_FILTER((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_RECENT_MANAGER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_RECENT_MANAGER((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_STATUS_ICON(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_STATUS_ICON((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
+#endif
+
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+static XEN gxg_GTK_IS_PRINT_OPERATION(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_PRINT_OPERATION((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 #endif
 
 
@@ -32672,6 +32896,30 @@ XEN_NARGIFY_2(gxg_gtk_tree_view_set_enable_tree_lines_w, gxg_gtk_tree_view_set_e
 XEN_NARGIFY_2(gxg_gtk_label_set_line_wrap_mode_w, gxg_gtk_label_set_line_wrap_mode)
 XEN_NARGIFY_1(gxg_gtk_label_get_line_wrap_mode_w, gxg_gtk_label_get_line_wrap_mode)
 XEN_NARGIFY_2(gxg_gtk_toolbar_set_icon_size_w, gxg_gtk_toolbar_set_icon_size)
+XEN_NARGIFY_0(gxg_gtk_print_operation_get_type_w, gxg_gtk_print_operation_get_type)
+XEN_NARGIFY_0(gxg_gtk_print_operation_new_w, gxg_gtk_print_operation_new)
+XEN_NARGIFY_2(gxg_gtk_print_operation_set_default_page_setup_w, gxg_gtk_print_operation_set_default_page_setup)
+XEN_NARGIFY_1(gxg_gtk_print_operation_get_default_page_setup_w, gxg_gtk_print_operation_get_default_page_setup)
+XEN_NARGIFY_2(gxg_gtk_print_operation_set_print_settings_w, gxg_gtk_print_operation_set_print_settings)
+XEN_NARGIFY_1(gxg_gtk_print_operation_get_print_settings_w, gxg_gtk_print_operation_get_print_settings)
+XEN_NARGIFY_2(gxg_gtk_print_operation_set_job_name_w, gxg_gtk_print_operation_set_job_name)
+XEN_NARGIFY_2(gxg_gtk_print_operation_set_n_pages_w, gxg_gtk_print_operation_set_n_pages)
+XEN_NARGIFY_2(gxg_gtk_print_operation_set_current_page_w, gxg_gtk_print_operation_set_current_page)
+XEN_NARGIFY_2(gxg_gtk_print_operation_set_use_full_page_w, gxg_gtk_print_operation_set_use_full_page)
+XEN_NARGIFY_2(gxg_gtk_print_operation_set_unit_w, gxg_gtk_print_operation_set_unit)
+XEN_NARGIFY_2(gxg_gtk_print_operation_set_export_filename_w, gxg_gtk_print_operation_set_export_filename)
+XEN_NARGIFY_2(gxg_gtk_print_operation_set_track_print_status_w, gxg_gtk_print_operation_set_track_print_status)
+XEN_NARGIFY_2(gxg_gtk_print_operation_set_show_progress_w, gxg_gtk_print_operation_set_show_progress)
+XEN_NARGIFY_2(gxg_gtk_print_operation_set_allow_async_w, gxg_gtk_print_operation_set_allow_async)
+XEN_NARGIFY_2(gxg_gtk_print_operation_set_custom_tab_label_w, gxg_gtk_print_operation_set_custom_tab_label)
+XEN_ARGIFY_4(gxg_gtk_print_operation_run_w, gxg_gtk_print_operation_run)
+XEN_ARGIFY_2(gxg_gtk_print_operation_get_error_w, gxg_gtk_print_operation_get_error)
+XEN_NARGIFY_1(gxg_gtk_print_operation_get_status_w, gxg_gtk_print_operation_get_status)
+XEN_NARGIFY_1(gxg_gtk_print_operation_get_status_string_w, gxg_gtk_print_operation_get_status_string)
+XEN_NARGIFY_1(gxg_gtk_print_operation_is_finished_w, gxg_gtk_print_operation_is_finished)
+XEN_NARGIFY_1(gxg_gtk_print_operation_cancel_w, gxg_gtk_print_operation_cancel)
+XEN_NARGIFY_3(gxg_gtk_print_run_page_setup_dialog_w, gxg_gtk_print_run_page_setup_dialog)
+XEN_NARGIFY_5(gxg_gtk_print_run_page_setup_dialog_async_w, gxg_gtk_print_run_page_setup_dialog_async)
 #endif
 
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
@@ -32893,6 +33141,10 @@ XEN_NARGIFY_1(gxg_GTK_RECENT_MANAGER_w, gxg_GTK_RECENT_MANAGER)
 XEN_NARGIFY_1(gxg_GTK_STATUS_ICON_w, gxg_GTK_STATUS_ICON)
 #endif
 
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+XEN_NARGIFY_1(gxg_GTK_PRINT_OPERATION_w, gxg_GTK_PRINT_OPERATION)
+#endif
+
 XEN_NARGIFY_1(gxg_GDK_IS_COLORMAP_w, gxg_GDK_IS_COLORMAP)
 XEN_NARGIFY_1(gxg_GDK_IS_DRAG_CONTEXT_w, gxg_GDK_IS_DRAG_CONTEXT)
 XEN_NARGIFY_1(gxg_GDK_IS_DRAWABLE_w, gxg_GDK_IS_DRAWABLE)
@@ -33087,6 +33339,10 @@ XEN_NARGIFY_1(gxg_GTK_IS_RECENT_CHOOSER_WIDGET_w, gxg_GTK_IS_RECENT_CHOOSER_WIDG
 XEN_NARGIFY_1(gxg_GTK_IS_RECENT_FILTER_w, gxg_GTK_IS_RECENT_FILTER)
 XEN_NARGIFY_1(gxg_GTK_IS_RECENT_MANAGER_w, gxg_GTK_IS_RECENT_MANAGER)
 XEN_NARGIFY_1(gxg_GTK_IS_STATUS_ICON_w, gxg_GTK_IS_STATUS_ICON)
+#endif
+
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+XEN_NARGIFY_1(gxg_GTK_IS_PRINT_OPERATION_w, gxg_GTK_IS_PRINT_OPERATION)
 #endif
 
 #if (!WITH_GTK_AND_X11)
@@ -36497,6 +36753,30 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_label_set_line_wrap_mode_w gxg_gtk_label_set_line_wrap_mode
 #define gxg_gtk_label_get_line_wrap_mode_w gxg_gtk_label_get_line_wrap_mode
 #define gxg_gtk_toolbar_set_icon_size_w gxg_gtk_toolbar_set_icon_size
+#define gxg_gtk_print_operation_get_type_w gxg_gtk_print_operation_get_type
+#define gxg_gtk_print_operation_new_w gxg_gtk_print_operation_new
+#define gxg_gtk_print_operation_set_default_page_setup_w gxg_gtk_print_operation_set_default_page_setup
+#define gxg_gtk_print_operation_get_default_page_setup_w gxg_gtk_print_operation_get_default_page_setup
+#define gxg_gtk_print_operation_set_print_settings_w gxg_gtk_print_operation_set_print_settings
+#define gxg_gtk_print_operation_get_print_settings_w gxg_gtk_print_operation_get_print_settings
+#define gxg_gtk_print_operation_set_job_name_w gxg_gtk_print_operation_set_job_name
+#define gxg_gtk_print_operation_set_n_pages_w gxg_gtk_print_operation_set_n_pages
+#define gxg_gtk_print_operation_set_current_page_w gxg_gtk_print_operation_set_current_page
+#define gxg_gtk_print_operation_set_use_full_page_w gxg_gtk_print_operation_set_use_full_page
+#define gxg_gtk_print_operation_set_unit_w gxg_gtk_print_operation_set_unit
+#define gxg_gtk_print_operation_set_export_filename_w gxg_gtk_print_operation_set_export_filename
+#define gxg_gtk_print_operation_set_track_print_status_w gxg_gtk_print_operation_set_track_print_status
+#define gxg_gtk_print_operation_set_show_progress_w gxg_gtk_print_operation_set_show_progress
+#define gxg_gtk_print_operation_set_allow_async_w gxg_gtk_print_operation_set_allow_async
+#define gxg_gtk_print_operation_set_custom_tab_label_w gxg_gtk_print_operation_set_custom_tab_label
+#define gxg_gtk_print_operation_run_w gxg_gtk_print_operation_run
+#define gxg_gtk_print_operation_get_error_w gxg_gtk_print_operation_get_error
+#define gxg_gtk_print_operation_get_status_w gxg_gtk_print_operation_get_status
+#define gxg_gtk_print_operation_get_status_string_w gxg_gtk_print_operation_get_status_string
+#define gxg_gtk_print_operation_is_finished_w gxg_gtk_print_operation_is_finished
+#define gxg_gtk_print_operation_cancel_w gxg_gtk_print_operation_cancel
+#define gxg_gtk_print_run_page_setup_dialog_w gxg_gtk_print_run_page_setup_dialog
+#define gxg_gtk_print_run_page_setup_dialog_async_w gxg_gtk_print_run_page_setup_dialog_async
 #endif
 
 #define gxg_GPOINTER_w gxg_GPOINTER
@@ -36718,6 +36998,10 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_GTK_STATUS_ICON_w gxg_GTK_STATUS_ICON
 #endif
 
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+#define gxg_GTK_PRINT_OPERATION_w gxg_GTK_PRINT_OPERATION
+#endif
+
 #define gxg_GDK_IS_COLORMAP_w gxg_GDK_IS_COLORMAP
 #define gxg_GDK_IS_DRAG_CONTEXT_w gxg_GDK_IS_DRAG_CONTEXT
 #define gxg_GDK_IS_DRAWABLE_w gxg_GDK_IS_DRAWABLE
@@ -36912,6 +37196,10 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_GTK_IS_RECENT_FILTER_w gxg_GTK_IS_RECENT_FILTER
 #define gxg_GTK_IS_RECENT_MANAGER_w gxg_GTK_IS_RECENT_MANAGER
 #define gxg_GTK_IS_STATUS_ICON_w gxg_GTK_IS_STATUS_ICON
+#endif
+
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+#define gxg_GTK_IS_PRINT_OPERATION_w gxg_GTK_IS_PRINT_OPERATION
 #endif
 
 #if (!WITH_GTK_AND_X11)
@@ -40329,6 +40617,30 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_label_set_line_wrap_mode, gxg_gtk_label_set_line_wrap_mode_w, 2, 0, 0, H_gtk_label_set_line_wrap_mode);
   XG_DEFINE_PROCEDURE(gtk_label_get_line_wrap_mode, gxg_gtk_label_get_line_wrap_mode_w, 1, 0, 0, H_gtk_label_get_line_wrap_mode);
   XG_DEFINE_PROCEDURE(gtk_toolbar_set_icon_size, gxg_gtk_toolbar_set_icon_size_w, 2, 0, 0, H_gtk_toolbar_set_icon_size);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_get_type, gxg_gtk_print_operation_get_type_w, 0, 0, 0, H_gtk_print_operation_get_type);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_new, gxg_gtk_print_operation_new_w, 0, 0, 0, H_gtk_print_operation_new);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_set_default_page_setup, gxg_gtk_print_operation_set_default_page_setup_w, 2, 0, 0, H_gtk_print_operation_set_default_page_setup);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_get_default_page_setup, gxg_gtk_print_operation_get_default_page_setup_w, 1, 0, 0, H_gtk_print_operation_get_default_page_setup);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_set_print_settings, gxg_gtk_print_operation_set_print_settings_w, 2, 0, 0, H_gtk_print_operation_set_print_settings);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_get_print_settings, gxg_gtk_print_operation_get_print_settings_w, 1, 0, 0, H_gtk_print_operation_get_print_settings);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_set_job_name, gxg_gtk_print_operation_set_job_name_w, 2, 0, 0, H_gtk_print_operation_set_job_name);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_set_n_pages, gxg_gtk_print_operation_set_n_pages_w, 2, 0, 0, H_gtk_print_operation_set_n_pages);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_set_current_page, gxg_gtk_print_operation_set_current_page_w, 2, 0, 0, H_gtk_print_operation_set_current_page);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_set_use_full_page, gxg_gtk_print_operation_set_use_full_page_w, 2, 0, 0, H_gtk_print_operation_set_use_full_page);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_set_unit, gxg_gtk_print_operation_set_unit_w, 2, 0, 0, H_gtk_print_operation_set_unit);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_set_export_filename, gxg_gtk_print_operation_set_export_filename_w, 2, 0, 0, H_gtk_print_operation_set_export_filename);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_set_track_print_status, gxg_gtk_print_operation_set_track_print_status_w, 2, 0, 0, H_gtk_print_operation_set_track_print_status);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_set_show_progress, gxg_gtk_print_operation_set_show_progress_w, 2, 0, 0, H_gtk_print_operation_set_show_progress);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_set_allow_async, gxg_gtk_print_operation_set_allow_async_w, 2, 0, 0, H_gtk_print_operation_set_allow_async);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_set_custom_tab_label, gxg_gtk_print_operation_set_custom_tab_label_w, 2, 0, 0, H_gtk_print_operation_set_custom_tab_label);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_run, gxg_gtk_print_operation_run_w, 3, 1, 0, H_gtk_print_operation_run);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_get_error, gxg_gtk_print_operation_get_error_w, 1, 1, 0, H_gtk_print_operation_get_error);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_get_status, gxg_gtk_print_operation_get_status_w, 1, 0, 0, H_gtk_print_operation_get_status);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_get_status_string, gxg_gtk_print_operation_get_status_string_w, 1, 0, 0, H_gtk_print_operation_get_status_string);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_is_finished, gxg_gtk_print_operation_is_finished_w, 1, 0, 0, H_gtk_print_operation_is_finished);
+  XG_DEFINE_PROCEDURE(gtk_print_operation_cancel, gxg_gtk_print_operation_cancel_w, 1, 0, 0, H_gtk_print_operation_cancel);
+  XG_DEFINE_PROCEDURE(gtk_print_run_page_setup_dialog, gxg_gtk_print_run_page_setup_dialog_w, 3, 0, 0, H_gtk_print_run_page_setup_dialog);
+  XG_DEFINE_PROCEDURE(gtk_print_run_page_setup_dialog_async, gxg_gtk_print_run_page_setup_dialog_async_w, 5, 0, 0, H_gtk_print_run_page_setup_dialog_async);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, "(GPOINTER obj) casts obj to GPOINTER");
@@ -40544,6 +40856,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_STATUS_ICON, gxg_GTK_STATUS_ICON_w, 1, 0, 0, "(GTK_STATUS_ICON obj) casts obj to GTK_STATUS_ICON");
 #endif
 
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+  XG_DEFINE_PROCEDURE(GTK_PRINT_OPERATION, gxg_GTK_PRINT_OPERATION_w, 1, 0, 0, "(GTK_PRINT_OPERATION obj) casts obj to GTK_PRINT_OPERATION");
+#endif
+
   XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints_w, 1, 0, 0, H_freeGdkPoints);
@@ -40744,6 +41060,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_RECENT_FILTER, gxg_GTK_IS_RECENT_FILTER_w, 1, 0, 0, "(GTK_IS_RECENT_FILTER obj) -> #t if obj is a GTK_IS_RECENT_FILTER");
   XG_DEFINE_PROCEDURE(GTK_IS_RECENT_MANAGER, gxg_GTK_IS_RECENT_MANAGER_w, 1, 0, 0, "(GTK_IS_RECENT_MANAGER obj) -> #t if obj is a GTK_IS_RECENT_MANAGER");
   XG_DEFINE_PROCEDURE(GTK_IS_STATUS_ICON, gxg_GTK_IS_STATUS_ICON_w, 1, 0, 0, "(GTK_IS_STATUS_ICON obj) -> #t if obj is a GTK_IS_STATUS_ICON");
+#endif
+
+#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
+  XG_DEFINE_PROCEDURE(GTK_IS_PRINT_OPERATION, gxg_GTK_IS_PRINT_OPERATION_w, 1, 0, 0, "(GTK_IS_PRINT_OPERATION obj) -> #t if obj is a GTK_IS_PRINT_OPERATION");
 #endif
 
 }
@@ -42218,6 +42538,23 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_TREE_VIEW_GRID_LINES_HORIZONTAL);
   DEFINE_INTEGER(GTK_TREE_VIEW_GRID_LINES_VERTICAL);
   DEFINE_INTEGER(GTK_TREE_VIEW_GRID_LINES_BOTH);
+  DEFINE_INTEGER(GTK_PRINT_STATUS_INITIAL);
+  DEFINE_INTEGER(GTK_PRINT_STATUS_PREPARING);
+  DEFINE_INTEGER(GTK_PRINT_STATUS_GENERATING_DATA);
+  DEFINE_INTEGER(GTK_PRINT_STATUS_SENDING_DATA);
+  DEFINE_INTEGER(GTK_PRINT_STATUS_PENDING);
+  DEFINE_INTEGER(GTK_PRINT_STATUS_PENDING_ISSUE);
+  DEFINE_INTEGER(GTK_PRINT_STATUS_PRINTING);
+  DEFINE_INTEGER(GTK_PRINT_STATUS_FINISHED);
+  DEFINE_INTEGER(GTK_PRINT_STATUS_FINISHED_ABORTED);
+  DEFINE_INTEGER(GTK_PRINT_OPERATION_RESULT_ERROR);
+  DEFINE_INTEGER(GTK_PRINT_OPERATION_RESULT_APPLY);
+  DEFINE_INTEGER(GTK_PRINT_OPERATION_RESULT_CANCEL);
+  DEFINE_INTEGER(GTK_PRINT_OPERATION_RESULT_IN_PROGRESS);
+  DEFINE_INTEGER(GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG);
+  DEFINE_INTEGER(GTK_PRINT_OPERATION_ACTION_PRINT);
+  DEFINE_INTEGER(GTK_PRINT_OPERATION_ACTION_PREVIEW);
+  DEFINE_INTEGER(GTK_PRINT_OPERATION_ACTION_EXPORT);
 #endif
 
   DEFINE_ULONG(GDK_TYPE_PIXBUF);
@@ -42736,7 +43073,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Jul-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("19-Jul-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();
