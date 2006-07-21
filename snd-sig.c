@@ -3478,7 +3478,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			  if (VCT_P(res))
 			    {
 			      vct *v;
-			      v = TO_VCT(res);
+			      v = XEN_TO_VCT(res);
 			      for (i = 0; i < v->length; i++) 
 				MUS_OUTA_1(j++, v->data[i], outgen);
 			    }
@@ -3571,7 +3571,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			  if (VCT_P(res))
 			    {
 			      vct *v;
-			      v = TO_VCT(res);
+			      v = XEN_TO_VCT(res);
 			      for (i = 0; i < v->length; i++)
 				{
 				  if (data_pos >= cur_size)
@@ -4377,7 +4377,7 @@ static Float *load_Floats(XEN scalers, int *result_len, const char *caller)
     {
       if (VCT_P(scalers))
 	{
-	  v = TO_VCT(scalers);
+	  v = XEN_TO_VCT(scalers);
 	  len = v->length;
 	}
       else
@@ -4855,7 +4855,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beta), beta, XEN_ARG_5, S_snd_spectrum, "a number");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(in_place), in_place, XEN_ARG_6, S_snd_spectrum, "a boolean");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalized), normalized, XEN_ARG_7, S_snd_spectrum, "a boolean");
-  v = TO_VCT(data);
+  v = XEN_TO_VCT(data);
   rdat = v->data;
   n = XEN_TO_C_INT_OR_ELSE(len, v->length);
   if (n <= 0)
@@ -5227,7 +5227,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
     }
   else 
     {
-      v = TO_VCT(e);
+      v = XEN_TO_VCT(e);
       coeffs = v->data;
       if (order_1 == 0) order_1 = v->length;
     }
@@ -5282,7 +5282,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 	{
 	  vct *v;
 	  char *new_origin = NULL, *estr = NULL;
-	  v = TO_VCT(e);
+	  v = XEN_TO_VCT(e);
 	  if (len > v->length) 
 	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order ~A > length coeffs?");
 	  else

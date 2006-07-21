@@ -193,7 +193,7 @@ vct *mus_optkey_to_vct(XEN key, const char *caller, int n, vct *def)
   if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
     {
       XEN_ASSERT_TYPE(VCT_P(key), key, n, caller, "a vct");
-      return(TO_VCT(key));
+      return(XEN_TO_VCT(key));
     }
   return(def);
 }
@@ -491,8 +491,8 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
   XEN_ASSERT_TYPE(VCT_P(val1), val1, XEN_ARG_1, S_dot_product, "a vct");
   XEN_ASSERT_TYPE(VCT_P(val2), val2, XEN_ARG_2, S_dot_product, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_3, S_dot_product, "an integer");
-  v1 = TO_VCT(val1);
-  v2 = TO_VCT(val2);
+  v1 = XEN_TO_VCT(val1);
+  v2 = XEN_TO_VCT(val2);
   if (XEN_INTEGER_P(size))
     {
       len = XEN_TO_C_INT(size);
@@ -524,7 +524,7 @@ static XEN g_edot_product(XEN val1, XEN val2)
 
   if (VCT_P(val2))
     {
-      v = TO_VCT(val2);
+      v = XEN_TO_VCT(val2);
       len = v->length;
     }
   else
@@ -557,8 +557,8 @@ static XEN g_sine_bank(XEN amps, XEN phases, XEN size)
   XEN_ASSERT_TYPE(VCT_P(amps), amps, XEN_ARG_1, S_sine_bank, "a vct");
   XEN_ASSERT_TYPE(VCT_P(phases), phases, XEN_ARG_2, S_sine_bank, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_3, S_sine_bank, "an integer");
-  v1 = TO_VCT(amps);
-  v2 = TO_VCT(phases);
+  v1 = XEN_TO_VCT(amps);
+  v2 = XEN_TO_VCT(phases);
   if (XEN_INTEGER_P(size))
     {
       len = XEN_TO_C_INT(size);
@@ -583,8 +583,8 @@ static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, co
   XEN_ASSERT_TYPE(VCT_P(val1), val1, XEN_ARG_1, caller, "a vct");
   XEN_ASSERT_TYPE(VCT_P(val2), val2, XEN_ARG_2, caller, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ulen), ulen, XEN_ARG_3, caller, "an integer");
-  v1 = TO_VCT(val1);
-  v2 = TO_VCT(val2);
+  v1 = XEN_TO_VCT(val1);
+  v2 = XEN_TO_VCT(val2);
   if (XEN_INTEGER_P(ulen))
     {
       len = XEN_TO_C_INT(ulen);
@@ -636,8 +636,8 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
   vct *v1, *v2;
   XEN_ASSERT_TYPE((VCT_P(url)), url, XEN_ARG_1, S_mus_fft, "a vct");
   XEN_ASSERT_TYPE((VCT_P(uim)), uim, XEN_ARG_2, S_mus_fft, "a vct");
-  v1 = TO_VCT(url);
-  v2 = TO_VCT(uim);
+  v1 = XEN_TO_VCT(url);
+  v2 = XEN_TO_VCT(uim);
   if (XEN_INTEGER_P(usign)) sign = XEN_TO_C_INT(usign); else sign = 1;
   if (XEN_INTEGER_P(len)) 
     {
@@ -705,9 +705,9 @@ and type determines how the spectral data is scaled:\n\
   XEN_ASSERT_TYPE((VCT_P(url)), url, XEN_ARG_1, S_spectrum, "a vct");
   XEN_ASSERT_TYPE((VCT_P(uim)), uim, XEN_ARG_2, S_spectrum, "a vct");
   if (XEN_NOT_FALSE_P(uwin)) XEN_ASSERT_TYPE((VCT_P(uwin)), uwin, XEN_ARG_3, S_spectrum, "a vct or #f");
-  v1 = TO_VCT(url);
-  v2 = TO_VCT(uim);
-  if (XEN_NOT_FALSE_P(uwin)) v3 = TO_VCT(uwin);
+  v1 = XEN_TO_VCT(url);
+  v2 = XEN_TO_VCT(uim);
+  if (XEN_NOT_FALSE_P(uwin)) v3 = XEN_TO_VCT(uwin);
   n = v1->length;
   if (n > v2->length)
     n = v2->length;
@@ -737,8 +737,8 @@ of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
   vct *v1, *v2;
   XEN_ASSERT_TYPE((VCT_P(url1)), url1, XEN_ARG_1, S_convolution, "a vct");
   XEN_ASSERT_TYPE((VCT_P(url2)), url2, XEN_ARG_2, S_convolution, "a vct");
-  v1 = TO_VCT(url1);
-  v2 = TO_VCT(url2);
+  v1 = XEN_TO_VCT(url1);
+  v2 = XEN_TO_VCT(url2);
   if (XEN_INTEGER_P(un)) 
     {
       n = XEN_TO_C_INT(un); 
@@ -769,7 +769,7 @@ static XEN g_clear_array(XEN arr)
   #define H_clear_array "(" S_clear_array " v): clear vct v: v[i] = 0.0"
   vct *v;
   XEN_ASSERT_TYPE(VCT_P(arr), arr, XEN_ONLY_ARG, S_clear_array, "a vct");
-  v = TO_VCT(arr);
+  v = XEN_TO_VCT(arr);
   mus_clear_array(v->data, v->length);
   return(xen_return_first(arr));
 }
@@ -781,7 +781,7 @@ of degree, so coeff[0] is the constant term."
   vct *v;
   XEN_ASSERT_TYPE(VCT_P(arr), arr, XEN_ARG_1, S_polynomial, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_polynomial, "a number");
-  v = TO_VCT(arr);
+  v = XEN_TO_VCT(arr);
   return(xen_return_first(C_TO_XEN_DOUBLE(mus_polynomial(v->data, XEN_TO_C_DOUBLE(x), v->length)), arr));
 }
 
@@ -795,7 +795,7 @@ taking into account wrap-around (size is size of data), with linear interpolatio
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_array_interp, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(phase), phase, XEN_ARG_2, S_array_interp, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_3, S_array_interp, "an integer");
-  v = TO_VCT(obj);
+  v = XEN_TO_VCT(obj);
   if (XEN_BOUND_P(size)) 
     {
       len = XEN_TO_C_INT(size); 
@@ -824,7 +824,7 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
   itype = (mus_interp_t)XEN_TO_C_INT(type);
   if (!(MUS_INTERP_TYPE_OK(itype)))
     XEN_OUT_OF_RANGE_ERROR(S_mus_interpolate, 1, type, "unknown interp type ~A");
-  v = TO_VCT(obj);
+  v = XEN_TO_VCT(obj);
   if (XEN_BOUND_P(size)) 
     {
       len = XEN_TO_C_INT(size); 
@@ -1461,7 +1461,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 				   "initial-contents and initial-element in same call?");
 	  if (VCT_P(keys[initial_contents_key]))
 	    {
-	      initial_contents = TO_VCT(keys[initial_contents_key]);
+	      initial_contents = XEN_TO_VCT(keys[initial_contents_key]);
 	      orig_v = keys[initial_contents_key];
 	    }
 	  else
@@ -1473,7 +1473,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 			      XEN_LIST_2(C_TO_XEN_STRING(caller), 
 					 C_TO_XEN_STRING("initial-contents list empty?")));
 		  orig_v = list_to_vct(keys[initial_contents_key]);
-		  initial_contents = TO_VCT(orig_v);
+		  initial_contents = XEN_TO_VCT(orig_v);
 		  /* do I need to protect this until we read its contents? -- no extlang stuff except error returns */
 		}
 	      else XEN_ASSERT_TYPE(XEN_FALSE_P(keys[initial_contents_key]), 
@@ -2142,7 +2142,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
       table = make_vct(clm_table_size, wave);
     }
   else table = utable;
-  f = TO_VCT(table);
+  f = XEN_TO_VCT(table);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
   if (partial_data == NULL)
     return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
@@ -2189,7 +2189,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
       table = make_vct(clm_table_size, wave);
     }
   else table = utable;
-  f = TO_VCT(table);
+  f = XEN_TO_VCT(table);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
   if (partial_data == NULL)
     return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
@@ -2729,7 +2729,7 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 	  XEN_WRONG_TYPE_ARG_ERROR(S_formant_bank, i, datum, "a formant generator");
 	}
     }
-  scl_1 = get_vct(amps);
+  scl_1 = xen_to_vct(amps);
   if (scl_1->length < size) size = scl_1->length;
   scls = scl_1->data;
   inval = XEN_TO_C_DOUBLE(inp);
@@ -3123,6 +3123,7 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
   if (size > MUS_MAX_CHANS) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans ~A too big");
   if (len > (size * size + 1)) 
     clm_error(S_make_mixer, "extra trailing args?", arglist);
+
   ge = (mus_any *)mus_make_empty_mixer(size);
   if (ge)
     {
@@ -3621,7 +3622,7 @@ static XEN g_make_fir_coeffs(XEN order, XEN envl)
   vct *v;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), order, XEN_ARG_1, S_make_fir_coeffs, "int");
   XEN_ASSERT_TYPE(VCT_P(envl), envl, XEN_ARG_2, S_make_fir_coeffs, "a vct");
-  v = TO_VCT(envl);
+  v = XEN_TO_VCT(envl);
   size = XEN_TO_C_INT(order);
   if (size != v->length)
     XEN_ERROR(CLM_ERROR,
@@ -3706,19 +3707,19 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
 	  if (choice == G_IIR_FILTER)
 	    {
 	      ywave = keys[1];
-	      y = TO_VCT(ywave);
+	      y = XEN_TO_VCT(ywave);
 	    }
 	  else
 	    {
 	      xwave = keys[1];
-	      x = TO_VCT(xwave);
+	      x = XEN_TO_VCT(xwave);
 	    }
         }
       if (!(XEN_KEYWORD_P(keys[2])))
 	{
 	  XEN_ASSERT_TYPE(VCT_P(keys[2]), keys[2], orig_arg[2], caller, "a vct");
 	  ywave = keys[2];
-	  y = TO_VCT(ywave);
+	  y = XEN_TO_VCT(ywave);
 	}
       if ((choice != G_FILTER) && (!(XEN_KEYWORD_P(keys[3]))))
         {

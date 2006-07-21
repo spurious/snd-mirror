@@ -8590,7 +8590,7 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
 	  if (VCT_P(obj))
 	    {
 	      vct *v;
-	      v = TO_VCT(obj);
+	      v = XEN_TO_VCT(obj);
 	      num = v->length; 
 	      if (((*size) > 0) && (num > (*size)))
 		num = (*size);
@@ -8839,7 +8839,7 @@ set snd's channel chn's samples starting at beg for dur samps from vct data"
   if (XEN_NOT_BOUND_P(dur)) 
     {
       vct *v1;
-      v1 = TO_VCT(v);
+      v1 = XEN_TO_VCT(v);
       dur = C_TO_XEN_INT(v1->length);
     }
   if (XEN_NOT_BOUND_P(origin))

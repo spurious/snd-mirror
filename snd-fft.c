@@ -907,7 +907,7 @@ static void apply_fft(fft_state *fs)
 	gc_loc = snd_protect(res);
 	if (VCT_P(res))
 	  {
-	    v = TO_VCT(res);
+	    v = XEN_TO_VCT(res);
 	    len = v->length;
 	    memcpy((void *)fft_data, (void *)(v->data), len * sizeof(Float));
 	    /* for (i = 0; i < len; i++) fft_data[i] = v->data[i]; */
@@ -1869,7 +1869,7 @@ static XEN g_transform_to_vct(XEN snd_n, XEN chn_n, XEN v)
 return a vct (obj if it's passed), with the current transform data from snd's channel chn"
 
   chan_info *cp;
-  vct *v1 = get_vct(v);
+  vct *v1 = xen_to_vct(v);
   ASSERT_CHANNEL(S_transform_to_vct, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_transform_to_vct);
   if (!cp) return(XEN_FALSE);
@@ -1925,7 +1925,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
   trf = XEN_TO_C_INT(type);
   if ((trf < 0) || (trf > HAAR))
     XEN_OUT_OF_RANGE_ERROR("snd-transform", 1, type, "~A: invalid transform choice");
-  v = TO_VCT(data);
+  v = XEN_TO_VCT(data);
   switch (trf)
     {
     case FOURIER: 

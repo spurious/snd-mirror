@@ -1142,6 +1142,9 @@ void mem_report(void)
 		      case PRINT_CHAR:
 			fprintf(Fp, "[%s] ", (char *)(pointers[j]));
 			break;
+		      case PRINT_CLM:
+			fprintf(Fp, "[%p: %s] ", pointers[j], mus_describe((mus_any *)(pointers[j])));
+			break;
 		      }
 		  }
 	      fprintf(Fp, "\n");

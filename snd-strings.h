@@ -673,7 +673,6 @@
 #define S_update_time_graph             "update-time-graph"
 #define S_update_transform_graph        "update-transform-graph"
 #define S_variable_graph_p              "variable-graph?"
-#define S_vct_map                       "vct-map"
 #define S_vct_to_channel                "vct->channel"
 #define S_vct_to_sound_file             "vct->sound-file"
 #define S_view_files_amp                "view-files-amp"

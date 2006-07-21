@@ -1622,7 +1622,7 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
   Float *data;
   int reg, chn;
   off_t len;
-  vct *v1 = get_vct(v);
+  vct *v1 = xen_to_vct(v);
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg_n), beg_n, XEN_ARG_1, S_region_to_vct, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_2, S_region_to_vct, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_3, S_region_to_vct, "a region id");

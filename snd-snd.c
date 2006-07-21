@@ -4500,8 +4500,8 @@ static XEN g_env_info_to_vcts(env_info *ep, int len)
   res = XEN_LIST_2(make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))),
 		   make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))));
   loc = snd_protect(res);
-  vmin = get_vct(XEN_CAR(res));
-  vmax = get_vct(XEN_CADR(res));
+  vmin = xen_to_vct(XEN_CAR(res));
+  vmax = xen_to_vct(XEN_CADR(res));
   if (ep->amp_env_size == lim)
     {
       for (i = 0; i < lim; i++)
@@ -4973,7 +4973,7 @@ static XEN g_vct_to_sound_file(XEN g_fd, XEN obj, XEN g_nums)
     XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_file, 1, g_fd, "~A: invalid file number");
   nums = XEN_TO_C_INT_OR_ELSE(g_nums, 0);
   if (nums == 0) return(XEN_FALSE);
-  v = TO_VCT(obj);
+  v = XEN_TO_VCT(obj);
   if (v == NULL)
     XEN_ERROR(NO_DATA,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_vct_to_sound_file), 

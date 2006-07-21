@@ -1886,7 +1886,7 @@ static vect *read_vct_vector(XEN vectr)
       XEN datum;
       datum = XEN_VECTOR_REF(vectr, i);
       if (VCT_P(datum))
-	v->data.vcts[i] = get_vct(datum);
+	v->data.vcts[i] = xen_to_vct(datum);
       else
 	{
 	  run_warn("initial vct vector value at %d is %s: will try to abort ptree evaluation...", i, XEN_AS_STRING(datum));
@@ -2026,7 +2026,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
     case R_INT:        v = make_xen_value(R_INT, add_int_to_ptree(prog, R_XEN_TO_C_INT(val)), R_VARIABLE);                 break;
     case R_FLOAT:      v = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(val)), R_VARIABLE);              break;
     case R_BOOL:       v = make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)XEN_TO_C_BOOLEAN(val)), R_VARIABLE);         break;
-    case R_VCT:        v = make_xen_value(R_VCT, add_vct_to_ptree(prog, get_vct(val)), R_VARIABLE);                        break;
+    case R_VCT:        v = make_xen_value(R_VCT, add_vct_to_ptree(prog, xen_to_vct(val)), R_VARIABLE);                        break;
     case R_SOUND_DATA: v = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, (sound_data *)XEN_OBJECT_REF(val)), R_VARIABLE); break;
     case R_READER:     v = make_xen_value(R_READER, add_reader_to_ptree(prog, get_sf(val)), R_VARIABLE);                   break;
     case R_MIX_READER: v = make_xen_value(R_MIX_READER, add_mix_reader_to_ptree(prog, get_mf(val)), R_VARIABLE);           break;
@@ -9179,10 +9179,10 @@ static void pv_ ## Name ## _1(int *args, ptree *pt) \
 { \
   if (!VCT_RESULT) \
     { \
-      VCT_RESULT = (vct *)malloc(sizeof(vct)); \
-      VCT_RESULT->length = mus_length(CLM_ARG_1); \
-      VCT_RESULT->data = mus_phase_vocoder_ ## Name (CLM_ARG_1); \
-      VCT_RESULT->dont_free = true; \
+      XEN res; \
+      res = make_vct_wrapper(mus_length(CLM_ARG_1), mus_phase_vocoder_ ## Name (CLM_ARG_1)); \
+      add_loc_to_protected_list(pt, snd_protect(res)); \
+      VCT_RESULT = xen_to_vct(res); \
     } \
 } \
 static xen_value *phase_vocoder_ ## Name ## _1(ptree *prog, xen_value **args, int num_args) \
@@ -9417,17 +9417,17 @@ static void Name ## _1(int *args, ptree *pt) \
 { \
   if (!VCT_RESULT) \
     { \
-      VCT_RESULT = (vct *)malloc(sizeof(vct)); \
-      VCT_RESULT->length = mus_length(CLM_ARG_1); \
-      VCT_RESULT->data = mus_ ## Name (CLM_ARG_1); \
-      VCT_RESULT->dont_free = true; \
+      XEN res; \
+      res = make_vct_wrapper(mus_length(CLM_ARG_1), mus_ ## Name (CLM_ARG_1)); \
+      add_loc_to_protected_list(pt, snd_protect(res)); \
+      VCT_RESULT = xen_to_vct(res); \
     } \
 } \
 static xen_value *mus_ ## Name ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
   if (args[1]->type == R_CLM) \
     return(package(prog, R_VCT, Name ## _1, descr_ ## Name ## _1, args, 1)); \
-  return(run_warn("wrong type arg (%s) to mus_ " #Name , type_name(args[1]->type))); \
+  return(run_warn("wrong type arg (%s) to mus-" #Name , type_name(args[1]->type))); \
 }
 
 MUS_VCT_1(data, 0)
@@ -9573,7 +9573,7 @@ static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin,
     case R_FLOAT:   return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), R_CONSTANT)); break;
     case R_CHAR:    return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(form))), R_CONSTANT)); break;
     case R_STRING:  return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
-    case R_VCT:     return(make_xen_value(R_VCT, add_vct_to_ptree(prog, get_vct(form)), R_CONSTANT)); break;
+    case R_VCT:     return(make_xen_value(R_VCT, add_vct_to_ptree(prog, xen_to_vct(form)), R_CONSTANT)); break;
     case R_SOUND_DATA: return(make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, (sound_data *)XEN_OBJECT_REF(form)), R_CONSTANT)); break;
     case R_PAIR:    if (constant) return(make_xen_value(R_PAIR, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
     case R_LIST:    if (constant) return(make_xen_value(R_LIST, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
@@ -10121,7 +10121,7 @@ static void make_fft_window_0(int *args, ptree *pt)
   res = XEN_APPLY(XEN_VARIABLE_REF(S_make_fft_window), xen_values_to_list(pt, args), S_make_fft_window);
 #endif
   add_loc_to_protected_list(pt, snd_protect(res));
-  VCT_RESULT = get_vct(res);
+  VCT_RESULT = xen_to_vct(res);
 }
 static char *descr_make_fft_window_0(int *args, ptree *pt) {return(describe_xen_args(S_make_fft_window, R_VCT, args, pt));}
 static xen_value *make_fft_window_1(ptree *prog, xen_value **args, int num_args)
@@ -10167,7 +10167,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
     case R_INT:          pt->ints[addr] = R_XEN_TO_C_INT(arg);              break;
     case R_CHAR:         pt->ints[addr] = (Int)XEN_TO_C_CHAR(arg);          break;
     case R_BOOL:         pt->ints[addr] = (Int)XEN_TO_C_BOOLEAN(arg);       break;
-    case R_VCT:          pt->vcts[addr] = get_vct(arg);                     break;
+    case R_VCT:          pt->vcts[addr] = xen_to_vct(arg);                     break;
     case R_SOUND_DATA:   pt->sds[addr] = (sound_data *)XEN_OBJECT_REF(arg); break;
     case R_CLM:          pt->clms[addr] = XEN_TO_MUS_ANY(arg);              break;
     case R_READER:       pt->readers[addr] = get_sf(arg);                   break;

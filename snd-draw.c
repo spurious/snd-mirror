@@ -385,10 +385,10 @@ data in the recipient's graph between points low and high in the drawing mode gr
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(style), style, XEN_ARG_7, S_graph_data, "an integer");
   if (XEN_LIST_P(data))
     {
-      v0 = get_vct(XEN_CAR(data));
-      v1 = get_vct(XEN_CADR(data));
+      v0 = xen_to_vct(XEN_CAR(data));
+      v1 = xen_to_vct(XEN_CADR(data));
     }
-  else v0 = get_vct(data);
+  else v0 = xen_to_vct(data);
   draw_graph_data(cp, 
 		  XEN_TO_C_OFF_T_OR_ELSE(lo, -1),
 		  XEN_TO_C_OFF_T_OR_ELSE(hi, -1),

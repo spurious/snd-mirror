@@ -46,7 +46,7 @@ void vct_init(void);
 bool vct_p(XEN obj);
 XEN make_vct(int len, Float *data);
 XEN make_vct_wrapper(int len, Float *data);
-vct *get_vct(XEN arg);
+vct *xen_to_vct(XEN arg);
 void set_vct_print_length(int len);
 XEN mus_array_to_list(Float *arr, int i, int len);
 char *vct_to_string(vct *v);
@@ -57,7 +57,7 @@ bool vct_equalp(vct *v1, vct *v2);
 char *vct_to_readable_string(vct *v);
 XEN list_to_vct(XEN lst);
 
-#define TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
+#define XEN_TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #define VCT_P(arg) vct_p(arg)
 
 #endif

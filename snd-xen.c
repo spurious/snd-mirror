@@ -1871,7 +1871,7 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
       gsl_dht *t = gsl_dht_new(n, XEN_TO_C_DOUBLE(nu), XEN_TO_C_DOUBLE(xmax));
       indata = (double *)CALLOC(n, sizeof(double));
       outdata = (double *)CALLOC(n, sizeof(double));
-      v = TO_VCT(data);
+      v = XEN_TO_VCT(data);
       for (i = 0; i < n; i++)
 	indata[i] = v->data[i];
       gsl_dht_apply(t, indata, outdata);

@@ -755,7 +755,7 @@ static XEN g_sound_data_to_vct(XEN sdobj, XEN chan, XEN vobj)
   if ((chn >= sd->chans) || (chn < 0))
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_to_vct, 2, chan, "~A: invalid channel");
   if (!(VCT_P(vobj))) vobj = make_vct(sd->length, (Float *)CALLOC(sd->length, sizeof(Float)));
-  v = TO_VCT(vobj);
+  v = XEN_TO_VCT(vobj);
   if (sd->length < v->length) 
     len = sd->length; 
   else len = v->length;
@@ -773,7 +773,7 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
   XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ARG_1, S_vct_to_sound_data, "a vct");
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(sdobj) || SOUND_DATA_P(sdobj), sdobj, XEN_ARG_2, S_vct_to_sound_data, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_3, S_vct_to_sound_data, "an integer");
-  v = TO_VCT(vobj);
+  v = XEN_TO_VCT(vobj);
   if (!(SOUND_DATA_P(sdobj))) sdobj = make_sound_data(1, v->length);
   sd = (sound_data *)XEN_OBJECT_REF(sdobj);
   chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
@@ -1209,7 +1209,7 @@ sets (" S_vct_ref " vals 0) to the default device's desired audio sample data fo
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_read, 1, dev, "~A: invalid device");
   if (!(MUS_AUDIO_DEVICE_OK(MUS_AUDIO_DEVICE(XEN_TO_C_INT(field)))))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_read, 2, field, "~A: invalid field");
-  v = TO_VCT(vals);
+  v = XEN_TO_VCT(vals);
   len = v->length;
   fvals = (float *)CALLOC(len, sizeof(float));
   val = mus_audio_mixer_read(XEN_TO_C_INT(dev),
@@ -1236,7 +1236,7 @@ static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_write, 1, dev, "~A: invalid device");
   if (!(MUS_AUDIO_DEVICE_OK(MUS_AUDIO_DEVICE(XEN_TO_C_INT(field)))))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_write, 2, field, "~A: invalid field");
-  v = TO_VCT(vals);
+  v = XEN_TO_VCT(vals);
   len = v->length;
   fvals = (float *)CALLOC(len, sizeof(float));
   for (i = 0; i < len; i++) 
@@ -1366,7 +1366,7 @@ srate and channels.  'len' samples are written."
   XEN_ASSERT_TYPE(XEN_NUMBER_P(len), len, XEN_ARG_3, S_array_to_file, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(srate), srate, XEN_ARG_4, S_array_to_file, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(channels), channels, XEN_ARG_5, S_array_to_file, "an integer");
-  v = TO_VCT(data);
+  v = XEN_TO_VCT(data);
   samps = XEN_TO_C_INT_OR_ELSE(len, 1);
   if (samps <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_array_to_file, 3, len, "samples ~A <= 0?");
@@ -1400,7 +1400,7 @@ at frame 'start' and reading 'samples' samples altogether."
 	      XEN_LIST_3(C_TO_XEN_STRING(S_file_to_array),
 			 filename,
 			 C_TO_XEN_STRING(STRERROR(errno))));
-  v = TO_VCT(data);
+  v = XEN_TO_VCT(data);
   samps = XEN_TO_C_INT_OR_ELSE(samples, 1);
   if (samps <= 0) 
     XEN_OUT_OF_RANGE_ERROR(S_file_to_array, 4, samples, "samples ~A <= 0?");

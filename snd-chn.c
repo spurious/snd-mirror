@@ -7043,12 +7043,12 @@ data and passes it to openGL.  See snd-gl.scm for an example."
   si = (sono_info *)CALLOC(1, sizeof(sono_info));
   si->active_slices = XEN_VECTOR_LENGTH(data);
   si->data = (Float **)CALLOC(si->active_slices, sizeof(Float *));
-  v = get_vct(XEN_VECTOR_REF(data, 0));
+  v = xen_to_vct(XEN_VECTOR_REF(data, 0));
   si->target_bins = v->length;
   si->scale = XEN_TO_C_DOUBLE(scale);
   for (i = 0; i < si->active_slices; i++)
     {
-      v = get_vct(XEN_VECTOR_REF(data, i));
+      v = xen_to_vct(XEN_VECTOR_REF(data, i));
       si->data[i] = v->data;
     }
   gl_spectrogram(si, 

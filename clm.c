@@ -111,17 +111,7 @@ int mus_set_file_buffer_size(int size) {clm_file_buffer_size = size; return(size
 static char describe_buffer[DESCRIBE_BUFFER_SIZE];
 #define STR_SIZE 128
 
-static void *clm_calloc(int num, int size, const char* what)
-{
-  void *mem;
-  mem = CALLOC(num, size);
-#if DEBUGGING
-  set_printable(0);
-#endif
-  if (mem == 0)
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate %s", what);
-  return(mem);
-}
+#define clm_calloc(Num, Size, What) CALLOC(Num, Size)
 
 static bool check_gen(mus_any *ptr, const char *name)
 {
@@ -4871,7 +4861,7 @@ static char *describe_mixer(mus_any *ptr)
   char *str;
   int i, j, lim;
   lim = mus_array_print_length();
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_mixer ": chans: %d, vals: [\n ", gen->chans);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_mixer ": chans: %d [\n ", gen->chans);
   str = (char *)CALLOC(64, sizeof(char));
   if (gen->chans < lim) lim = gen->chans;
   for (i = 0; i < lim; i++)
@@ -4990,7 +4980,7 @@ mus_any *mus_make_mixer(int chans, ...)
 {
   mus_mixer *mx = NULL;
   if (chans <= 0) 
-    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_scalar_mixer ": chans: %d", chans);
+    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_mixer ": chans: %d", chans);
   else
     {
       mx = (mus_mixer *)mus_make_empty_mixer(chans);

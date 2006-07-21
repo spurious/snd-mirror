@@ -180,14 +180,14 @@ static Float **make_xen_colormap(int size, XEN lambda)
 		  XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
 			     C_TO_XEN_STRING("function did not return a list of vcts!"),
 			     xrgb));
-      xr = TO_VCT(XEN_LIST_REF(xrgb, 0));
+      xr = XEN_TO_VCT(XEN_LIST_REF(xrgb, 0));
       if (xr->length < size)
 	XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
 		  XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
 			     C_TO_XEN_STRING("function did not return a list of vcts of the correct size"),
 			     xrgb));
-      xg = TO_VCT(XEN_LIST_REF(xrgb, 1));
-      xb = TO_VCT(XEN_LIST_REF(xrgb, 2));
+      xg = XEN_TO_VCT(XEN_LIST_REF(xrgb, 1));
+      xb = XEN_TO_VCT(XEN_LIST_REF(xrgb, 2));
       rgb = make_base_rgb(size);
       for (i = 0; i < size; i++)
 	{

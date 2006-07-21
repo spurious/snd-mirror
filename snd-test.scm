@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [452]
-;;;  test 1: defaults                           [1027]
-;;;  test 2: headers                            [1230]
-;;;  test 3: variables                          [1534]
-;;;  test 4: sndlib                             [2188]
-;;;  test 5: simple overall checks              [4319]
-;;;  test 6: vcts                               [11740]
-;;;  test 7: colors                             [12050]
-;;;  test 8: clm                                [12556]
-;;;  test 9: mix                                [20885]
-;;;  test 10: marks                             [24015]
-;;;  test 11: dialogs                           [24718]
-;;;  test 12: extensions                        [25104]
-;;;  test 13: menus, edit lists, hooks, etc     [25532]
-;;;  test 14: all together now                  [26962]
-;;;  test 15: chan-local vars                   [28033]
-;;;  test 16: regularized funcs                 [29312]
-;;;  test 17: dialogs and graphics              [33726]
-;;;  test 18: enved                             [33814]
-;;;  test 19: save and restore                  [33834]
-;;;  test 20: transforms                        [35430]
-;;;  test 21: new stuff                         [37106]
-;;;  test 22: run                               [37994]
-;;;  test 23: with-sound                        [43510]
-;;;  test 24: user-interface                    [44615]
-;;;  test 25: X/Xt/Xm                           [48211]
-;;;  test 26: Gtk                               [52795]
-;;;  test 27: GL                                [56867]
-;;;  test 28: errors                            [56977]
-;;;  test all done                              [59118]
+;;;  test 0: constants                          [487]
+;;;  test 1: defaults                           [1062]
+;;;  test 2: headers                            [1265]
+;;;  test 3: variables                          [1569]
+;;;  test 4: sndlib                             [2225]
+;;;  test 5: simple overall checks              [4392]
+;;;  test 6: vcts                               [11831]
+;;;  test 7: colors                             [12141]
+;;;  test 8: clm                                [12647]
+;;;  test 9: mix                                [21347]
+;;;  test 10: marks                             [24413]
+;;;  test 11: dialogs                           [25118]
+;;;  test 12: extensions                        [25417]
+;;;  test 13: menus, edit lists, hooks, etc     [25866]
+;;;  test 14: all together now                  [27306]
+;;;  test 15: chan-local vars                   [28378]
+;;;  test 16: regularized funcs                 [29657]
+;;;  test 17: dialogs and graphics              [34071]
+;;;  test 18: enved                             [34159]
+;;;  test 19: save and restore                  [34179]
+;;;  test 20: transforms                        [35806]
+;;;  test 21: new stuff                         [37555]
+;;;  test 22: run                               [38442]
+;;;  test 23: with-sound                        [43949]
+;;;  test 24: user-interface                    [45928]
+;;;  test 25: X/Xt/Xm                           [49543]
+;;;  test 26: Gtk                               [54128]
+;;;  test 27: GL                                [58201]
+;;;  test 28: errors                            [58324]
+;;;  test all done                              [60466]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -58321,6 +58321,7 @@ EDITS: 1
 	(load "misc.scm")))
 
 
+
 ;;; ---------------- test 28: errors ----------------
 
 (if (and (provided? 'snd-guile)
@@ -60536,6 +60537,8 @@ EDITS: 1
 
 (if (file-exists? (string-append home-dir "/.snd_prefs_guile"))
     (delete-file (string-append home-dir "/.snd_prefs_guile")))
+
+(if (defined? 'dlocsig-speaker-configs) (set! dlocsig-speaker-configs #f)) ; this list is confusing the memleak checker!
 
 (for-each
  (lambda (f)
