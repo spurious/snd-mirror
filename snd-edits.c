@@ -9448,10 +9448,7 @@ static XEN g_make_snd_to_sample(XEN snd)
     return(snd_no_such_sound_error(S_make_snd_to_sample, snd));
   ge = make_snd_to_sample(sp);
   if (ge)
-    {
-      ge->core->wrapper = &_mus_wrap_no_vcts;
-      return(mus_xen_to_object(_mus_wrap_no_vcts(ge)));
-    }
+    return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(XEN_FALSE);
 }
 

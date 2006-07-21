@@ -52,7 +52,6 @@
 ;;; 11/26/1999: added code to check for intersection with inner radius
 ;;;             fixed nearest-point to handle trivial cases
 
-;;; TODO:
 ;;; 01/21/2001: fix envelope generated for mono reverberation stream.
 ;;;             change input and output to use frames and mixers
 ;;;             fix supersonic movement warning code

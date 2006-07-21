@@ -464,6 +464,7 @@ typedef struct ptree {
   sound_data **sds;
   int clm_ctr, clms_size;
   mus_any **clms;
+  int *clm_locs;
   int vect_ctr, vects_size;
   vect **vects;
   int reader_ctr, readers_size;
@@ -945,6 +946,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->vcts = inner->vcts;
   outer->sds = inner->sds;
   outer->clms = inner->clms;
+  outer->clm_locs = inner->clm_locs;
   outer->vects = inner->vects;
   outer->fncs = inner->fncs;
   outer->xens = inner->xens;
@@ -964,6 +966,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->vcts = NULL;
   inner->sds = NULL;
   inner->clms = NULL;
+  inner->clm_locs = NULL;
   inner->vects = NULL;
   inner->fncs = NULL;
   inner->xens = NULL;
@@ -1356,6 +1359,11 @@ void free_ptree(struct ptree *pt)
 	  FREE(pt->clms);
 	  pt->clms = NULL;
 	}
+      if (pt->clm_locs)
+	{
+	  FREE(pt->clm_locs);
+	  pt->clm_locs = NULL;
+	}
       if (pt->vects) 
 	{
 	  FREE(pt->vects);
@@ -1502,22 +1510,35 @@ static int add_sound_data_to_ptree(ptree *pt, sound_data *value)
   return(cur);
 }
 
-static int add_clm_to_ptree(ptree *pt, mus_any *value)
+static int add_loc_to_protected_list(ptree *pt, int loc);
+
+static int add_clm_to_ptree(ptree *pt, mus_any *value, XEN orig)
 {
   int cur;
   cur = pt->clm_ctr++;
   if (cur >= pt->clms_size)
     {
+      int i;
       pt->clms_size += 8;
       if (pt->clms)
 	{
-	  int i;
 	  pt->clms = (mus_any **)REALLOC(pt->clms, pt->clms_size * sizeof(mus_any *));
-	  for (i = cur; i < pt->clms_size; i++) pt->clms[i] = NULL;
+	  pt->clm_locs = (int *)REALLOC(pt->clm_locs, pt->clms_size * sizeof(int));
+	  for (i = cur; i < pt->clms_size; i++) {pt->clms[i] = NULL; pt->clm_locs[i] = -1;}
 	}
-      else pt->clms = (mus_any **)CALLOC(pt->clms_size, sizeof(mus_any *));
+      else 
+	{
+	  pt->clms = (mus_any **)CALLOC(pt->clms_size, sizeof(mus_any *));
+	  pt->clm_locs = (int *)CALLOC(pt->clms_size, sizeof(int));
+	  for (i = 0; i < pt->clms_size; i++) pt->clm_locs[i] = -1;
+	}
     }
   pt->clms[cur] = value;
+  if (mus_xen_p(orig))
+    {
+      if (pt->clm_locs[cur] >= 0) snd_unprotect_at(pt->clm_locs[cur]);
+      pt->clm_locs[cur] = add_loc_to_protected_list(pt, snd_protect(orig));
+    }
   return(cur);
 }
 
@@ -1712,26 +1733,26 @@ static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
 {
   switch (type)
     {
-    case R_BOOL:         return(make_xen_value(type, add_int_to_ptree(prog, false), R_VARIABLE));         break;
-    case R_FLOAT:        return(make_xen_value(type, add_dbl_to_ptree(prog, 0.0), R_VARIABLE));           break;
-    case R_STRING:       return(make_xen_value(type, add_string_to_ptree(prog, NULL), R_VARIABLE));       break;
-    case R_CLM:          return(make_xen_value(type, add_clm_to_ptree(prog, NULL), R_VARIABLE));          break;
-    case R_FUNCTION:     return(make_xen_value(type, add_fnc_to_ptree(prog, NULL), R_VARIABLE));          break;
-    case R_READER:       return(make_xen_value(type, add_reader_to_ptree(prog, NULL), R_VARIABLE));       break;
-    case R_MIX_READER:   return(make_xen_value(type, add_mix_reader_to_ptree(prog, NULL), R_VARIABLE));   break;
-    case R_TRACK_READER: return(make_xen_value(type, add_track_reader_to_ptree(prog, NULL), R_VARIABLE)); break;
-    case R_SOUND_DATA:   return(make_xen_value(type, add_sound_data_to_ptree(prog, NULL), R_VARIABLE));   break;
+    case R_BOOL:         return(make_xen_value(type, add_int_to_ptree(prog, false), R_VARIABLE));           break;
+    case R_FLOAT:        return(make_xen_value(type, add_dbl_to_ptree(prog, 0.0), R_VARIABLE));             break;
+    case R_STRING:       return(make_xen_value(type, add_string_to_ptree(prog, NULL), R_VARIABLE));         break;
+    case R_CLM:          return(make_xen_value(type, add_clm_to_ptree(prog, NULL, XEN_FALSE), R_VARIABLE)); break;
+    case R_FUNCTION:     return(make_xen_value(type, add_fnc_to_ptree(prog, NULL), R_VARIABLE));            break;
+    case R_READER:       return(make_xen_value(type, add_reader_to_ptree(prog, NULL), R_VARIABLE));         break;
+    case R_MIX_READER:   return(make_xen_value(type, add_mix_reader_to_ptree(prog, NULL), R_VARIABLE));     break;
+    case R_TRACK_READER: return(make_xen_value(type, add_track_reader_to_ptree(prog, NULL), R_VARIABLE));   break;
+    case R_SOUND_DATA:   return(make_xen_value(type, add_sound_data_to_ptree(prog, NULL), R_VARIABLE));     break;
     case R_FLOAT_VECTOR:
-    case R_VCT:          return(make_xen_value(type, add_vct_to_ptree(prog, NULL), R_VARIABLE));          break;
+    case R_VCT:          return(make_xen_value(type, add_vct_to_ptree(prog, NULL), R_VARIABLE));            break;
     case R_SYMBOL: 
-    case R_KEYWORD:      return(make_xen_value(type, add_xen_to_ptree(prog, XEN_FALSE), R_VARIABLE));     break;
+    case R_KEYWORD:      return(make_xen_value(type, add_xen_to_ptree(prog, XEN_FALSE), R_VARIABLE));       break;
     case R_LIST:
     case R_PAIR:         return(make_xen_value(type, add_xen_to_ptree(prog, XEN_UNDEFINED), R_VARIABLE)); 
       /* "undefined" for later check in walk for lists as args to embedded funcs */
       break;
     case R_CLM_VECTOR:
     case R_INT_VECTOR:
-    case R_VCT_VECTOR:   return(make_xen_value(type, add_vect_to_ptree(prog, NULL), R_VARIABLE));         break;
+    case R_VCT_VECTOR:   return(make_xen_value(type, add_vect_to_ptree(prog, NULL), R_VARIABLE));           break;
     default:
       if (CLM_STRUCT_P(type))
 	return(make_xen_value(type, add_xen_to_ptree(prog, XEN_FALSE), R_VARIABLE)); 
@@ -1802,14 +1823,14 @@ static void add_obj_to_gcs(ptree *pt, int type, int addr)
   add_xen_value_to_gcs(pt, v);
 }
 
-static void add_loc_to_protected_list(ptree *pt, int loc)
+static int add_loc_to_protected_list(ptree *pt, int loc)
 {
   /* here the protected entities (clm gens and fft windows created within run) are created at eval time.
    *   since we don't have an explicit list of such trees in the outer tree, we need to put the
    *   protected loc in the outer-most tree.
    */
   int i;
-  if (loc == NOT_A_GC_LOC) return;
+  if (loc == NOT_A_GC_LOC) return(-1);
   while (pt->outer_tree) pt = pt->outer_tree;
   if (pt->gc_protected_ctr >= pt->gc_protected_size)
     {
@@ -1822,6 +1843,7 @@ static void add_loc_to_protected_list(ptree *pt, int loc)
       for (i = old_size; i < pt->gc_protected_size; i++) pt->gc_protected[i] = NOT_A_GC_LOC;
     }
   pt->gc_protected[pt->gc_protected_ctr++] = loc;
+  return(loc);
 }
 
 static vect *read_int_vector(XEN vectr)
@@ -2015,7 +2037,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
     case R_PAIR:       v = make_xen_value(R_PAIR, add_xen_to_ptree(prog, val), R_VARIABLE);                                break;
     case R_SYMBOL:     v = make_xen_value(R_SYMBOL, add_xen_to_ptree(prog, val), R_VARIABLE);                              break;
     case R_KEYWORD:    v = make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, val), R_VARIABLE);                             break;
-    case R_CLM:        v = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(val)), R_VARIABLE);                 break;
+    case R_CLM:        v = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(val), val), R_VARIABLE);            break;
     case R_FLOAT_VECTOR:
       {
 	vct *vc;
@@ -2150,6 +2172,7 @@ static void eval_embedded_ptree(ptree *prog, ptree *pt)
   prog->vcts = pt->vcts;
   prog->sds = pt->sds;
   prog->clms = pt->clms;
+  prog->clm_locs = pt->clm_locs;
   prog->vects = pt->vects;
   prog->fncs = pt->fncs;
   prog->xens = pt->xens;
@@ -2164,6 +2187,7 @@ static void eval_embedded_ptree(ptree *prog, ptree *pt)
   prog->vcts = NULL;
   prog->sds = NULL;
   prog->clms = NULL;
+  prog->clm_locs = NULL;
   prog->vects = NULL;
   prog->fncs = NULL;
   prog->xens = NULL;
@@ -2263,6 +2287,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 
 #define CLM_RESULT pt->clms[args[0]]
 #define DESC_CLM_RESULT ((args[0] < pt->clm_ctr) ? pt->clms[args[0]] : NULL)
+#define CLM_LOC pt->clm_locs[args[0]]
 #define CLM_ARG_1 pt->clms[args[1]]
 #define CLM_ARG_2 pt->clms[args[2]]
 #define CLM_ARG_3 pt->clms[args[3]]
@@ -9669,16 +9694,29 @@ static bool xenable(xen_value *v)
   return(false);
 }
 
-static XEN wrap_generator(mus_any *gen)
+static XEN wrap_generator(ptree *pt, int addr)
 {
-  mus_xen *gn;
-  gn = mus_wrapper(gen);
-  if (gn)
+  mus_any *gen;
+  gen = pt->clms[addr];
+  if (pt->clm_locs[addr] >= 0)
     {
-      gn->dont_free_gen = true;
-      return(mus_xen_to_object(gn));
+      XEN val;
+      val = snd_protected_at(pt->clm_locs[addr]);  /* try to use the original XEN value holding this generator */
+      if ((mus_xen_p(val)) &&
+	  (gen == XEN_TO_MUS_ANY(val)))
+	{
+	  /* fprintf(stderr, "found internal gen: %s\n", mus_describe(gen)); */
+	  return(val);
+	}
     }
-  return(XEN_FALSE);
+
+  /* desperate fallback */
+  {
+    mus_xen *gn;
+    gn = mus_any_to_mus_xen(gen);
+    gn->dont_free_gen = true;
+    return(mus_xen_to_object(gn));
+  }
 }
 
 static XEN xen_value_to_xen(ptree *pt, xen_value *v)
@@ -9714,7 +9752,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
       }
       break;
     case R_CLM:
-      val = wrap_generator(pt->clms[v->addr]);
+      val = wrap_generator(pt, v->addr);
       break;
     default:
       if (CLM_STRUCT_P(v->type))
@@ -9996,7 +10034,8 @@ static void make_ ## Name ## _0(int *args, ptree *pt) \
   res = XEN_APPLY(XEN_VARIABLE_REF(XEN_NAME_AS_C_STRING_TO_VARIABLE(S_make_ ## Name)), xen_values_to_list(pt, args), S_make_ ## Name); \
   if (mus_xen_p(res)) \
     { \
-      add_loc_to_protected_list(pt, snd_protect(res)); \
+      if (CLM_LOC >= 0) snd_unprotect_at(CLM_LOC); \
+      add_loc_to_protected_list(pt, CLM_LOC = snd_protect(res)); \
       CLM_RESULT = XEN_TO_MUS_ANY(res); \
     } \
   else CLM_RESULT = NULL; \
@@ -10014,7 +10053,8 @@ static void make_ ## Name ## _0(int *args, ptree *pt) \
   res = XEN_APPLY(XEN_VARIABLE_REF(S_make_ ## Name), xen_values_to_list(pt, args), S_make_ ## Name); \
   if (mus_xen_p(res)) \
     { \
-      add_loc_to_protected_list(pt, snd_protect(res)); \
+      if (CLM_LOC >= 0) snd_unprotect_at(CLM_LOC); \
+      add_loc_to_protected_list(pt, CLM_LOC = snd_protect(res)); \
       CLM_RESULT = XEN_TO_MUS_ANY(res); \
     } \
   else CLM_RESULT = NULL; \
@@ -11120,53 +11160,7 @@ static XEN eval_ptree_to_xen(ptree *pt)
     case R_PAIR:
     case R_SYMBOL:
     case R_KEYWORD: result = pt->xens[pt->result->addr];                        break;
-    case R_CLM:     
-      result = wrap_generator(pt->clms[pt->result->addr]);
-      /* now cancel earlier frees
-       *   all protected (run-created) gens should be in pt->gc_protected[pt->gc_protected_ctr++] = loc
-       *   the XEN value is XEN_VECTOR_REF(gc_protection, loc)
-       */
-      {
-	int i;
-	XEN val = XEN_FALSE;
-	mus_xen *gn = NULL;
-	for (i = 0; i < pt->gc_protected_ctr; i++)
-	  if (pt->gc_protected[i] >= 0)
-	    {
-	      val = snd_protected_at(pt->gc_protected[i]);
-	      if ((mus_xen_p(val)) && 
-		  (XEN_TO_MUS_ANY(val) == pt->clms[pt->result->addr]))
-		{
-		  gn = XEN_TO_MUS_XEN(val);
-		  gn->dont_free_gen = true;
-		}
-	    }
-#if 0
-	if ((gn) && 
-	     (mus_filtered_comb_p(pt->clms[pt->result->addr])))
-	  {
-	    mus_xen *res;
-	    res = XEN_TO_MUS_XEN(result);
-	    res->vcts[MUS_INPUT_FUNCTION] = gn->vcts[MUS_INPUT_FUNCTION];
-	    gn = XEN_TO_MUS_XEN(res->vcts[MUS_INPUT_FUNCTION]);
-	    gn->dont_free_gen = true;
-	  }
-	/* TODO: fix the filtered_comb case here (internal filter is freed prematurely)
-	 *       code above does not fix the problem
-	 *
-	 *   (define (make-fc scl size)
-	 *     (run 
-	 *       (lambda ()
-	 *         (make-filtered-comb scl size :filter (make-one-zero .4 .6)))))
-	 *   
-	 *   (let ((o (make-fc .8 128)))
-	 *     (gc) (gc)
-	 *     (filtered-comb o (random 1.0)))
-	 */
-#endif
-      }
-
-      break;
+    case R_CLM:     result = wrap_generator(pt, pt->result->addr);              break;
     case R_VCT:
       {
 	vct *v;

@@ -32,6 +32,7 @@ off_t mus_optkey_to_off_t(XEN key, const char *caller, int n, off_t def);
 char *mus_optkey_to_string(XEN key, const char *caller, int n, char *def);
 vct *mus_optkey_to_vct(XEN key, const char *caller, int n, vct *def);
 XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int required_args, const char *err);
+mus_xen *mus_any_to_mus_xen(mus_any *ge);
 
 void Init_sndlib(void);
 

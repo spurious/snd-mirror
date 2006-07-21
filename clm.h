@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 24
-#define MUS_DATE "3-July-06"
+#define MUS_REVISION 25
+#define MUS_DATE "21-July-06"
 
 /*
+ * 21-July:    removed mus_wrapper field -- old way can't work since we need the original XEN object.
  * 3-July:     mus_move_sound (dlocsig) generator.
  *             changed return type of mus_locsig to float.
  * 28-June:    mus_filtered_comb generator.
@@ -187,7 +188,6 @@
 #define MUS_DEFAULT_ARRAY_PRINT_LENGTH 8
 
 typedef enum {MUS_NOT_SPECIAL, MUS_SIMPLE_FILTER, MUS_FULL_FILTER, MUS_OUTPUT, MUS_INPUT, MUS_DELAY_LINE} mus_clm_extended_t;
-enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCTION, MUS_SYNTHESIZE_FUNCTION, MUS_SELF_WRAPPER};
 
 typedef struct {
   struct mus_any_class *core;
@@ -236,7 +236,7 @@ typedef struct mus_any_class {
   Float (*set_ycoeff)(mus_any *ptr, int index, Float val);
   Float* (*xcoeffs)(mus_any *ptr);
   Float* (*ycoeffs)(mus_any *ptr);
-  struct mus_xen* (*wrapper)(mus_any *gen);
+  void *unused;
   void (*reset)(mus_any *ptr);
   void* (*set_closure)(mus_any *gen, void *e);
 } mus_any_class;
@@ -668,13 +668,6 @@ Float mus_ssb_am(mus_any *ptr, Float insig, Float fm);
 void mus_clear_sinc_tables(void);
 void *mus_environ(mus_any *gen);
 void *mus_set_environ(mus_any *gen, void *e);
-struct mus_xen *mus_wrapper(mus_any *gen);
-
-/* for internal use */
-struct mus_xen *_mus_wrap_no_vcts(mus_any *ge);
-struct mus_xen *_mus_wrap_one_vct(mus_any *ge);
-struct mus_xen *_mus_wrap_one_vct_wrapped(mus_any *ge);
-/* end internal stuff */
 
 #ifdef __cplusplus
 }

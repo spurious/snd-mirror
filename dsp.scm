@@ -203,16 +203,14 @@
   (lambda (amp dur mass xspring damp)
     (let* ((size 256)
 	   (x0 (make-vct size))	   
-	   (gx1 (make-vct size))	   
-	   (gx2 (make-vct size)))
+	   (x1 (make-vct size))	   
+	   (x2 (make-vct size)))
       (do ((i 0 (1+ i)))
 	  ((= i 12))
 	(let ((val (sin (/ (* 2 pi i) 12.0))))
-	  (vct-set! gx1 (+ i (- (/ size 4) 6)) val)))
-      (let* ((gen1 (make-table-lookup 440.0 :wave gx1))
-	     (gen2 (make-table-lookup 440.0 :wave gx2))
-	     (x1 (mus-data gen1))
-	     (x2 (mus-data gen2))
+	  (vct-set! x1 (+ i (- (/ size 4) 6)) val)))
+      (let* ((gen1 (make-table-lookup 440.0 :wave x1))
+	     (gen2 (make-table-lookup 440.0 :wave x2))
 	     (recompute-samps 30) ;just a quick guess
 	     (data (make-vct dur)))
 	(do ((i 0 (1+ i))
@@ -231,6 +229,8 @@
 	(let ((curamp (vct-peak data)))
 	  (vct-scale! data (/ amp curamp)))
 	(vct->channel data 0 dur)))))
+
+;;; (test-scanned-synthesis .1 10000 1.0 0.1 0.0)
 
 (define compute-string
   ;; this is the more general form

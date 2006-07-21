@@ -41,8 +41,8 @@
 #endif
 
 #include "_sndlib.h"
-#include "clm.h"
 #include "xen.h"
+#include "clm.h"
 #include "sndlib2xen.h"
 #include "vct.h"
 #include "snd-0.h"
@@ -71,7 +71,7 @@
 
 #include "snd-strings.h"
 
-#define SND_DATE "20-Jul-06"
+#define SND_DATE "24-Jul-06"
 #define SND_VERSION "8.3"
 #define SND_MAJOR_VERSION "8"
 #define SND_MINOR_VERSION "3"

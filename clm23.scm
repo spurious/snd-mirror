@@ -23,7 +23,6 @@
 ;;; two-pi -> (* 2 pi) and need pi definition
 ;;; make-empty-frame is make-frame essentially
 ;;; open-input and close-input -> make-readin or use name directly (in make-readin)
-;;; wave tables are copied upon make in scm, so make-wave-train array needs to be accessed via mus-data (also table-lookup)
 ;;; make-locsig needs :output *output* and similarly for *reverb* if it's active
 ;;; progn -> begin, when -> if+begin (prog1 prog2), dotimes
 ;;; string= -> string=? (also string-equal)

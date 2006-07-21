@@ -29,12 +29,16 @@
 #endif
 
 #include "_sndlib.h"
-#include "clm.h"
-#include "clm-strings.h"
 
 #if HAVE_EXTENSION_LANGUAGE
   #include "xen.h"
   #include "vct.h"
+#endif 
+
+#include "clm.h"
+#include "clm-strings.h"
+
+#if HAVE_EXTENSION_LANGUAGE
   #include "clm2xen.h"
 #endif
 
@@ -416,13 +420,6 @@ void *mus_set_environ(mus_any *gen, void *e)
   return(NULL);
 }
 
-struct mus_xen *mus_wrapper(mus_any *gen)
-{
-  if (gen->core->wrapper)
-    return((*(gen->core->wrapper))(gen));
-  return(NULL);
-}
-
 Float mus_run(mus_any *gen, Float arg1, Float arg2)
 {
   if ((check_gen(gen, "mus-run")) &&
@@ -581,114 +578,6 @@ off_t mus_location(mus_any *gen)
     return(((*gen->core->location))(gen));
   return((off_t)mus_error(MUS_NO_LOCATION, "can't get %s's location", mus_name(gen)));
 }
-
-
-#if HAVE_EXTENSION_LANGUAGE
-static XEN *make_vcts(int size)
-{
-  int i;
-  XEN *vcts;
-  vcts = (XEN *)MALLOC(size * sizeof(XEN));
-  for (i = 0; i < size; i++)
-    vcts[i] = XEN_UNDEFINED;
-  return(vcts);
-}
-
-#define MAX_VCTS (MUS_SELF_WRAPPER + 1)
-/* internal stuff */
-enum {G_FILTER_STATE, G_FILTER_XCOEFFS, G_FILTER_YCOEFFS};
-
-struct mus_xen *_mus_wrap_no_vcts(mus_any *ge)
-{
-  mus_xen *gn;
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = ge;
-  gn->nvcts = 0;
-  gn->vcts = NULL;
-  return(gn);
-}
-
-static int data_length(mus_any *ge)
-{
-  if (mus_env_p(ge))
-    return(mus_env_breakpoints(ge) * 2);
-  return((int)mus_length(ge));
-}
-
-struct mus_xen *_mus_wrap_one_vct(mus_any *ge)
-{
-  mus_xen *gn;
-  Float *data;
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = ge;
-  /* can't use mus_length here because some gens (env) don't return the data array length in that method */
-  data = mus_data(ge);
-  if (data)
-    {
-      gn->nvcts = 1;
-      gn->vcts = make_vcts(gn->nvcts);
-      gn->vcts[MUS_DATA_WRAPPER] = make_vct(data_length(ge), data);
-    }
-  else
-    {
-      gn->nvcts = 0;
-      gn->vcts = NULL;
-    }
-  return(gn);
-}
-
-struct mus_xen *_mus_wrap_one_vct_wrapped(mus_any *ge)
-{
-  mus_xen *gn;
-  Float *data;
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = ge;
-  data = mus_data(ge);
-  if (data)
-    {
-      gn->nvcts = 1;
-      gn->vcts = make_vcts(gn->nvcts);
-      gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(data_length(ge), data);
-    }
-  else
-    {
-      gn->nvcts = 0;
-      gn->vcts = NULL;
-    }
-  return(gn);
-}
-
-static struct mus_xen *wrap_filter(mus_any *gen)
-{
-  mus_xen *gn;
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = gen;
-  gn->nvcts = 3;
-  gn->vcts = make_vcts(gn->nvcts);
-  gn->vcts[G_FILTER_STATE] = make_vct_wrapper(mus_order(gen), mus_data(gen));
-  if (!mus_iir_filter_p(gen))
-    gn->vcts[G_FILTER_XCOEFFS] = make_vct_wrapper(mus_order(gen), mus_xcoeffs(gen));
-  if (!mus_fir_filter_p(gen))
-    gn->vcts[G_FILTER_YCOEFFS] = make_vct_wrapper(mus_order(gen), mus_ycoeffs(gen));
-  return(gn);
-}
-
-static struct mus_xen *wrap_max_vcts(mus_any *ge)
-{
-  mus_xen *gn;
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->nvcts = MAX_VCTS;
-  gn->vcts = make_vcts(gn->nvcts);
-  gn->gen = ge;
-  return(gn);
-}
-#else
-struct mus_xen *_mus_wrap_no_vcts(mus_any *ge) {return(NULL);}
-struct mus_xen *_mus_wrap_one_vct(mus_any *ge) {return(NULL);}
-struct mus_xen *_mus_wrap_one_vct_wrapped(mus_any *ge) {return(NULL);}
-static struct mus_xen *wrap_filter(mus_any *gen) {return(NULL);}
-static struct mus_xen *wrap_max_vcts(mus_any *ge) {return(NULL);}
-#endif
 
 
 /* ---------------- AM etc ---------------- */
@@ -1034,8 +923,7 @@ static mus_any_class OSCIL_CLASS = {
   0, 
   0, 0, 0, 0, 0, 0, &oscil_cosines, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &oscil_reset,
   0
 };
@@ -1147,8 +1035,7 @@ static mus_any_class SUM_OF_COSINES_CLASS = {
   0, 0, 0, 0, 0, 0, 
   &sum_of_cosines_cosines, &set_sum_of_cosines_cosines, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &sum_of_cosines_reset,
   0
 };
@@ -1261,8 +1148,7 @@ static mus_any_class SUM_OF_SINES_CLASS = {
   0, 0, 0, 0, 0, 0, 
   &sum_of_cosines_cosines, &set_sum_of_sines_sines, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &sum_of_cosines_reset,
   0
 };
@@ -1381,8 +1267,7 @@ static mus_any_class ASYMMETRIC_FM_CLASS = {
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &asyfm_reset,
   0
 };
@@ -1509,8 +1394,7 @@ static mus_any_class SINE_SUMMATION_CLASS = {
   &sss_n, /* mus-cosines */
   0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &sss_reset,
   0
 };
@@ -1699,8 +1583,7 @@ static mus_any_class TABLE_LOOKUP_CLASS = {
   &table_lookup_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
+  0, 0, 0, 0, 0,
   &table_lookup_reset,
   0
 };
@@ -1826,8 +1709,7 @@ static mus_any_class WAVESHAPE_CLASS = {
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
+  0, 0, 0, 0, 0,
   &ws_reset,
   0
 };
@@ -2048,8 +1930,7 @@ static mus_any_class POLYSHAPE_CLASS = {
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
+  0, 0, 0, 0, 0,
   &poly_reset,
   0
 };
@@ -2221,8 +2102,7 @@ static mus_any_class WAVE_TRAIN_CLASS = {
   &wt_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
+  0, 0, 0, 0, 0,
   &wt_reset,
   0
 };
@@ -2462,8 +2342,7 @@ static mus_any_class DELAY_CLASS = {
   &delay_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
+  0, 0, 0, 0, 0,
   &delay_reset,
   0
 };
@@ -2557,8 +2436,7 @@ static mus_any_class COMB_CLASS = {
   &delay_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
+  0, 0, 0, 0, 0,
   &delay_reset,
   0
 };
@@ -2617,8 +2495,7 @@ static mus_any_class NOTCH_CLASS = {
   &delay_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
+  0, 0, 0, 0, 0,
   &delay_reset,
   0
 };
@@ -2709,8 +2586,7 @@ static mus_any_class ALL_PASS_CLASS = {
   &delay_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
+  0, 0, 0, 0, 0,
   &delay_reset,
   0
 };
@@ -2782,8 +2658,7 @@ static mus_any_class AVERAGE_CLASS = {
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
+  0, 0, 0, 0, 0,
   &average_reset,
   0
 };
@@ -2895,8 +2770,7 @@ static mus_any_class FILTERED_COMB_CLASS = {
   &delay_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped, /* assume for now that the caller will protect the filter (we never create it ourselves) */
+  0, 0, 0, 0, 0,
   &filtered_comb_reset,
   0
 };
@@ -3010,8 +2884,7 @@ static mus_any_class SAWTOOTH_WAVE_CLASS = {
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &sawtooth_reset,
   0
 };
@@ -3078,8 +2951,7 @@ static mus_any_class SQUARE_WAVE_CLASS = {
   0, 0, 
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &square_wave_reset,
   0
 };
@@ -3151,8 +3023,7 @@ static mus_any_class TRIANGLE_WAVE_CLASS = {
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &triangle_wave_reset,
   0
 };
@@ -3220,8 +3091,7 @@ static mus_any_class PULSE_TRAIN_CLASS = {
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &pulse_train_reset,
   0
 };
@@ -3414,8 +3284,7 @@ static mus_any_class RAND_INTERP_CLASS = {
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &noi_reset,
   0
 };
@@ -3440,8 +3309,7 @@ static mus_any_class RAND_CLASS = {
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &noi_reset,
   0
 };
@@ -3594,8 +3462,7 @@ static mus_any_class ONE_ZERO_CLASS = {
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 
-  &smp_xcoeffs, &smp_ycoeffs,
-  &_mus_wrap_no_vcts,
+  &smp_xcoeffs, &smp_ycoeffs, 0,
   &smpflt_reset,
   0
 };
@@ -3639,8 +3506,7 @@ static mus_any_class ONE_POLE_CLASS = {
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   &smp_ycoeff, &smp_set_ycoeff, 
-  &smp_xcoeffs, &smp_ycoeffs,  
-  &_mus_wrap_no_vcts,
+  &smp_xcoeffs, &smp_ycoeffs, 0,
   &smpflt_reset,
   0
 };
@@ -3688,8 +3554,7 @@ static mus_any_class TWO_ZERO_CLASS = {
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0,
-  &smp_xcoeffs, &smp_ycoeffs,
-  &_mus_wrap_no_vcts,
+  &smp_xcoeffs, &smp_ycoeffs, 0,
   &smpflt_reset,
   0
 };
@@ -3742,8 +3607,7 @@ static mus_any_class TWO_POLE_CLASS = {
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   &smp_ycoeff, &smp_set_ycoeff, 
-  &smp_xcoeffs, &smp_ycoeffs,
-  &_mus_wrap_no_vcts,
+  &smp_xcoeffs, &smp_ycoeffs, 0,
   &smpflt_reset,
   0
 };
@@ -3885,8 +3749,7 @@ static mus_any_class FORMANT_CLASS = {
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   &smp_ycoeff, &smp_set_ycoeff, 
-  &smp_xcoeffs, &smp_ycoeffs,
-  &_mus_wrap_no_vcts,
+  &smp_xcoeffs, &smp_ycoeffs, 0,
   &smpflt_reset,
   0
 };
@@ -4181,8 +4044,7 @@ static mus_any_class FILTER_CLASS = {
   &filter_xcoeff, &filter_set_xcoeff, 
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  &filter_ycoeff, &filter_set_ycoeff, &filter_xcoeffs, &filter_ycoeffs,
-  &wrap_filter,
+  &filter_ycoeff, &filter_set_ycoeff, &filter_xcoeffs, &filter_ycoeffs, 0,
   &filter_reset,
   0
 };
@@ -4206,8 +4068,7 @@ static mus_any_class FIR_FILTER_CLASS = {
   &filter_xcoeff, &filter_set_xcoeff, 
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, &filter_xcoeffs, 0,
-  &wrap_filter,
+  0, 0, &filter_xcoeffs, 0, 0,
   &filter_reset,
   0
 };
@@ -4231,8 +4092,7 @@ static mus_any_class IIR_FILTER_CLASS = {
   0, 0,
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  &filter_ycoeff, &filter_set_ycoeff, 0, &filter_ycoeffs,
-  &wrap_filter,
+  &filter_ycoeff, &filter_set_ycoeff, 0, &filter_ycoeffs, 0,
   &filter_reset,
   0
 };
@@ -4613,8 +4473,7 @@ static mus_any_class ENV_CLASS = {
   0, 0, 0, 0, 
   &seg_pass, &seg_set_pass,
   0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
+  0, 0, 0, 0, 0,
   &env_reset,
   0
 };
@@ -4827,8 +4686,7 @@ static mus_any_class FRAME_CLASS = {
   &frame_channels,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
+  0, 0, 0, 0, 0,
   &frame_reset,
   0
 };
@@ -5075,8 +4933,7 @@ static mus_any_class MIXER_CLASS = {
   &mixer_channels,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &mixer_reset,
   0
 };
@@ -5526,8 +5383,7 @@ static mus_any_class FILE_TO_SAMPLE_CLASS = {
   0, /* location */
   0, /* set_location */
   0, /* channel */
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &no_reset,
   0
 };
@@ -5703,8 +5559,7 @@ static mus_any_class READIN_CLASS = {
   &rd_location,
   &rd_set_location,
   &rd_channel,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &no_reset,
   0
 };
@@ -5800,8 +5655,7 @@ static mus_any_class FILE_TO_FRAME_CLASS = {
   0, /* location */
   0, /* set_location */
   0, /* channel */
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &no_reset,
   0
 };
@@ -5909,8 +5763,7 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
   &sample_to_file_file_name,
   &sample_to_file_end,
   0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &no_reset,
   0
 };
@@ -6185,8 +6038,7 @@ static mus_any_class FRAME_TO_FILE_CLASS = {
   &sample_to_file_file_name,
   &sample_to_file_end,
   0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &no_reset,
   0
 };
@@ -6445,8 +6297,7 @@ static mus_any_class LOCSIG_CLASS = {
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 
-  &locsig_xcoeffs, 0,
-  &_mus_wrap_no_vcts,
+  &locsig_xcoeffs, 0, 0,
   &locsig_reset,
   0
 };
@@ -6757,8 +6608,7 @@ static mus_any_class MOVE_SOUND_CLASS = {
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 
-  0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0,
   &move_sound_reset,
   0
 };
@@ -6986,8 +6836,7 @@ static mus_any_class SRC_CLASS = {
   0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 
-  &wrap_max_vcts,
+  0, 0, 0, 0, 0,
   &src_reset,
   &src_set_closure
 };
@@ -7316,8 +7165,7 @@ static mus_any_class GRANULATE_CLASS = {
   &grn_ramp, &grn_set_ramp,
   0, 0, 0, 0, 
   &grn_location, &grn_set_location, /* local randx */
-  0, 0, 0, 0, 0,
-  &wrap_max_vcts,
+  0, 0, 0, 0, 0, 0,
   &grn_reset,
   &grn_set_closure
 };
@@ -8151,8 +7999,7 @@ static mus_any_class CONVOLVE_CLASS = {
   0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &convolve_reset,
   &conv_set_closure
 };
@@ -8415,8 +8262,7 @@ static mus_any_class PHASE_VOCODER_CLASS = {
   &pv_hop, &pv_set_hop, 
   0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
+  0, 0, 0, 0, 0,
   &pv_reset,
   &pv_set_closure
 };
@@ -8696,8 +8542,7 @@ static mus_any_class SSB_AM_CLASS = {
   &ssb_am_cosines, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 
-  &ssb_am_xcoeffs, 0,
-  &_mus_wrap_no_vcts,
+  &ssb_am_xcoeffs, 0, 0,
   &ssb_reset,
   0
 };

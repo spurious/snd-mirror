@@ -2,9 +2,8 @@
 
 /* PERHAPS: use tags to colorize the listener text?  Or pass this up to user somehow?
  */
-/* TODO: check out gtksourceview widget -- can this be made compatible with current?
- */
 
+/* gtksourceview widget looks gnome-specific -- perhaps the xemacs colorizers can be translated? */
 
 static GtkWidget *completion_dialog = NULL;
 static GtkWidget *listener_text = NULL;

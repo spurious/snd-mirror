@@ -16262,7 +16262,10 @@ EDITS: 5
 	  (set! b (make-butter-bs 4 1000.0 1500.0))
 	  (map-channel (lambda (y) (filter b y)))
 	  (undo))
-	
+
+	(revert-sound)
+	(test-scanned-synthesis .1 10000 1.0 0.1 0.0)
+
 	(close-sound ind))
       
       (let ((gen (make-sawtooth-wave 440.0))
@@ -21244,6 +21247,97 @@ EDITS: 5
 	 (list 'make-wave-train 'make-polyshape 'make-delay 'make-average 'make-comb 'make-filtered-comb 'make-notch
 	       'make-rand 'make-rand-interp 'make-table-lookup 'make-sine-summation 'make-env
 	       'make-readin 'make-locsig 'make-granulate 'make-convolve 'make-phase-vocoder)))
+
+      (let ((v1 (make-vct 10 .1)))
+	
+	(let ((g1 (make-table-lookup :wave v1)))
+	  (if (not (eq? v1 (mus-data g1))) (snd-display ";table-lookup data not eq?: ~A ~A" v1 (mus-data g1)))
+	  (if (not (eqv? v1 (mus-data g1))) (snd-display ";table-lookup data not eqv?: ~A ~A" v1 (mus-data g1)))
+	  (if (not (equal? v1 (mus-data g1))) (snd-display ";table-lookup data not equal?: ~A ~A" v1 (mus-data g1)))
+	  (vct-set! v1 1 .3)
+	  (if (fneq (vct-ref (mus-data g1) 1) .3) (snd-display ";table-lookup vctset: ~A ~A" (vct-ref v1 1) (vct-ref (mus-data g1) 1)))
+	  (vct-set! (mus-data g1) 1 .5)
+	  (if (fneq (vct-ref v1 1) .5) (snd-display ";table-lookup vctref: ~A ~A" (vct-ref v1 1) (vct-ref (mus-data g1) 1))))
+	
+	(let ((g1 (make-wave-train :wave v1)))
+	  (if (not (eq? v1 (mus-data g1))) (snd-display ";wave-train data not eq?: ~A ~A" v1 (mus-data g1)))
+	  (if (not (eqv? v1 (mus-data g1))) (snd-display ";wave-train data not eqv?: ~A ~A" v1 (mus-data g1)))
+	  (if (not (equal? v1 (mus-data g1))) (snd-display ";wave-train data not equal?: ~A ~A" v1 (mus-data g1)))
+	  (vct-set! v1 1 .3)
+	  (if (fneq (vct-ref (mus-data g1) 1) .3) (snd-display ";wave-train vctset: ~A ~A" (vct-ref v1 1) (vct-ref (mus-data g1) 1)))
+	  (vct-set! (mus-data g1) 1 .5)
+	  (if (fneq (vct-ref v1 1) .5) (snd-display ";wave-train vctref: ~A ~A" (vct-ref v1 1) (vct-ref (mus-data g1) 1))))
+	
+	(let ((g1 (make-waveshape :wave v1)))
+	  (if (not (eq? v1 (mus-data g1))) (snd-display ";waveshape data not eq?: ~A ~A" v1 (mus-data g1)))
+	  (if (not (eqv? v1 (mus-data g1))) (snd-display ";waveshape data not eqv?: ~A ~A" v1 (mus-data g1)))
+	  (if (not (equal? v1 (mus-data g1))) (snd-display ";waveshape data not equal?: ~A ~A" v1 (mus-data g1)))
+	  (vct-set! v1 1 .3)
+	  (if (fneq (vct-ref (mus-data g1) 1) .3) (snd-display ";waveshape vctset: ~A ~A" (vct-ref v1 1) (vct-ref (mus-data g1) 1)))
+	  (vct-set! (mus-data g1) 1 .5)
+	  (if (fneq (vct-ref v1 1) .5) (snd-display ";waveshape vctref: ~A ~A" (vct-ref v1 1) (vct-ref (mus-data g1) 1))))
+	
+	(let ((g1 (make-polyshape :coeffs v1)))
+	  (if (not (eq? v1 (mus-data g1))) (snd-display ";polyshape data not eq?: ~A ~A" v1 (mus-data g1)))
+	  (if (not (eqv? v1 (mus-data g1))) (snd-display ";polyshape data not eqv?: ~A ~A" v1 (mus-data g1)))
+	  (if (not (equal? v1 (mus-data g1))) (snd-display ";polyshape data not equal?: ~A ~A" v1 (mus-data g1)))
+	  (vct-set! v1 1 .3)
+	  (if (fneq (vct-ref (mus-data g1) 1) .3) (snd-display ";polyshape vctset: ~A ~A" (vct-ref v1 1) (vct-ref (mus-data g1) 1)))
+	  (vct-set! (mus-data g1) 1 .5)
+	  (if (fneq (vct-ref v1 1) .5) (snd-display ";polyshape vctref: ~A ~A" (vct-ref v1 1) (vct-ref (mus-data g1) 1))))
+	
+	(let ((g1 (make-delay :initial-contents v1)))
+	  (if (not (eq? v1 (mus-data g1))) (snd-display ";delay data not eq?: ~A ~A" v1 (mus-data g1)))
+	  (if (not (eqv? v1 (mus-data g1))) (snd-display ";delay data not eqv?: ~A ~A" v1 (mus-data g1)))
+	  (if (not (equal? v1 (mus-data g1))) (snd-display ";delay data not equal?: ~A ~A" v1 (mus-data g1)))
+	  (vct-set! v1 1 .3)
+	  (if (fneq (vct-ref (mus-data g1) 1) .3) (snd-display ";delay vctset: ~A ~A" (vct-ref v1 1) (vct-ref (mus-data g1) 1)))
+	  (vct-set! (mus-data g1) 1 .5)
+	  (if (fneq (vct-ref v1 1) .5) (snd-display ";delay vctref: ~A ~A" (vct-ref v1 1) (vct-ref (mus-data g1) 1))))
+	
+	(let ((g1 (make-filtered-comb :scaler .5 :initial-contents v1 :filter (make-one-zero .1 .2))))
+	  (if (not (eq? v1 (mus-data g1))) (snd-display ";filtered-comb data not eq?: ~A ~A" v1 (mus-data g1)))
+	  (if (not (eqv? v1 (mus-data g1))) (snd-display ";filtered-comb data not eqv?: ~A ~A" v1 (mus-data g1)))
+	  (if (not (equal? v1 (mus-data g1))) (snd-display ";filtered-comb data not equal?: ~A ~A" v1 (mus-data g1)))
+	  (vct-set! v1 1 .3)
+	  (if (fneq (vct-ref (mus-data g1) 1) .3) (snd-display ";filtered-comb vctset: ~A ~A" (vct-ref v1 1) (vct-ref (mus-data g1) 1)))
+	  (vct-set! (mus-data g1) 1 .5)
+	  (if (fneq (vct-ref v1 1) .5) (snd-display ";filtered-comb vctref: ~A ~A" (vct-ref v1 1) (vct-ref (mus-data g1) 1))))
+	
+	(let ((g1 (make-rand :distribution v1)))
+	  (if (not (eq? v1 (mus-data g1))) (snd-display ";rand data not eq?: ~A ~A" v1 (mus-data g1)))
+	  (if (not (eqv? v1 (mus-data g1))) (snd-display ";rand data not eqv?: ~A ~A" v1 (mus-data g1)))
+	  (if (not (equal? v1 (mus-data g1))) (snd-display ";rand data not equal?: ~A ~A" v1 (mus-data g1)))
+	  (vct-set! v1 1 .3)
+	  (if (fneq (vct-ref (mus-data g1) 1) .3) (snd-display ";rand vctset: ~A ~A" (vct-ref v1 1) (vct-ref (mus-data g1) 1)))
+	  (vct-set! (mus-data g1) 1 .5)
+	  (if (fneq (vct-ref v1 1) .5) (snd-display ";rand vctref: ~A ~A" (vct-ref v1 1) (vct-ref (mus-data g1) 1))))
+	
+	(let ((g1 (make-fir-filter :xcoeffs v1)))
+	  (if (not (eq? v1 (mus-xcoeffs g1))) (snd-display ";fir-filter xcoeffs not eq?: ~A ~A" v1 (mus-xcoeffs g1)))
+	  (if (not (eqv? v1 (mus-xcoeffs g1))) (snd-display ";fir-filter xcoeffs not eqv?: ~A ~A" v1 (mus-xcoeffs g1)))
+	  (if (not (equal? v1 (mus-xcoeffs g1))) (snd-display ";fir-filter xcoeffs not equal?: ~A ~A" v1 (mus-xcoeffs g1)))
+	  (vct-set! v1 1 .3)
+	  (if (fneq (vct-ref (mus-xcoeffs g1) 1) .3) (snd-display ";fir-filter vctset: ~A ~A" (vct-ref v1 1) (vct-ref (mus-xcoeffs g1) 1)))
+	  (vct-set! (mus-xcoeffs g1) 1 .5)
+	  (if (fneq (vct-ref v1 1) .5) (snd-display ";fir-filter vctref: ~A ~A" (vct-ref v1 1) (vct-ref (mus-xcoeffs g1) 1))))
+	
+	(let ((g1 (make-iir-filter :ycoeffs v1)))
+	  (if (not (eq? v1 (mus-ycoeffs g1))) (snd-display ";iir-filter ycoeffs not eq?: ~A ~A" v1 (mus-ycoeffs g1)))
+	  (if (not (eqv? v1 (mus-ycoeffs g1))) (snd-display ";iir-filter ycoeffs not eqv?: ~A ~A" v1 (mus-ycoeffs g1)))
+	  (if (not (equal? v1 (mus-ycoeffs g1))) (snd-display ";iir-filter ycoeffs not equal?: ~A ~A" v1 (mus-ycoeffs g1)))
+	  (vct-set! v1 1 .3)
+	  (if (fneq (vct-ref (mus-ycoeffs g1) 1) .3) (snd-display ";iir-filter vctset: ~A ~A" (vct-ref v1 1) (vct-ref (mus-ycoeffs g1) 1)))
+	  (vct-set! (mus-ycoeffs g1) 1 .5)
+	  (if (fneq (vct-ref v1 1) .5) (snd-display ";iir-filter vctref: ~A ~A" (vct-ref v1 1) (vct-ref (mus-ycoeffs g1) 1))))
+	
+	(let ((f1 (make-frame 2 .1 .2))
+	      (f2 (make-frame 2 .3 .5))
+	      (f3 (make-frame 2 0 0)))
+	  (let ((f4 (frame+ f1 f2 f3)))
+	    (if (not (eq? f3 f4)) (snd-display ";frame+ data not eq?: ~A ~A" f3 f4))
+	    (set! f4 (frame* f1 f2 f3))
+	    (if (not (eq? f3 f4)) (snd-display ";frame* data not eq?: ~A ~A" f3 f4)))))
 
       (run-hook after-test-hook 8)
       ))
@@ -38348,10 +38442,10 @@ EDITS: 1
 ;;; ---------------- test 22: run ----------------
 
 (define (test-run-protection-release)
-       (let ((this-oscil-protected-by-run (make-oscil 1234.567))
-	     (this-window-protected-by-run (make-fft-window rectangular-window 16)))
-	 (* (vct-ref this-window-protected-by-run 8) 
-	    (oscil this-oscil-protected-by-run))))
+  (let ((this-oscil-protected-by-run (make-oscil 1234.567))
+	(this-window-protected-by-run (make-fft-window rectangular-window 16)))
+    (* (vct-ref this-window-protected-by-run 8) 
+       (oscil this-oscil-protected-by-run))))
   
 (defmacro time-it (a) 
   `(let ((start (real-time))) 
@@ -38363,6 +38457,23 @@ EDITS: 1
    (lambda ()
      (make-oscil frq))))
 
+(define (make-fc scl size)
+  (run 
+   (lambda ()
+     (make-filtered-comb scl size :filter (make-one-zero .4 .6)))))
+
+(define (make-gr)
+  (run
+   (lambda ()
+     (make-granulate :expansion 2.0
+		     :input (lambda (dir) 1.0)
+		     :edit (lambda (g)
+			     (let ((grain (mus-data g))  ; current grain
+				   (len (mus-length g))) ; current grain length
+			       (do ((i 0 (1+ i)))
+				   ((= i len) len)       ; grain length unchanged in this case
+				 (vct-set! grain i (* 2 (vct-ref grain i))))
+			       0))))))
 (define fm-violin-opt
   (lambda* (startime dur frequency amplitude :key
 		     (fm-index 1.0)
@@ -43820,6 +43931,15 @@ EDITS: 1
       (let ((o (make-osc 440)))
 	(gc) (gc)
 	(oscil o))
+
+      (let ((o (make-fc .8 128)))
+	(gc) (gc)
+	(filtered-comb o (random 1.0)))
+
+      (let ((o (make-gr)))
+	(gc) (gc)
+	(granulate o))
+
 
       (run-hook after-test-hook 22)
       ))
