@@ -1,9 +1,8 @@
 #include "snd.h"
 
 /* PERHAPS: use tags to colorize the listener text?  Or pass this up to user somehow?
+ *            gtksourceview widget looks gnome-specific -- perhaps the xemacs colorizers can be translated?
  */
-
-/* gtksourceview widget looks gnome-specific -- perhaps the xemacs colorizers can be translated? */
 
 static GtkWidget *completion_dialog = NULL;
 static GtkWidget *listener_text = NULL;

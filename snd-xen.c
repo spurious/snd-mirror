@@ -129,8 +129,7 @@ int snd_protect(XEN obj)
   XEN tmp;
   if (gc_protection_size == 0)
     {
-      gc_protection_size = 128;
-      /* we don't know the size in advance since each channel can have its own edit/undo hooks */
+      gc_protection_size = 512;
       gc_protection = XEN_MAKE_VECTOR(gc_protection_size, DEFAULT_GC_VALUE);
       XEN_PROTECT_FROM_GC(gc_protection);
       XEN_VECTOR_SET(gc_protection, 0, obj);

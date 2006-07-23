@@ -29,18 +29,8 @@
 #endif
 
 #include "_sndlib.h"
-
-#if HAVE_EXTENSION_LANGUAGE
-  #include "xen.h"
-  #include "vct.h"
-#endif 
-
 #include "clm.h"
 #include "clm-strings.h"
-
-#if HAVE_EXTENSION_LANGUAGE
-  #include "clm2xen.h"
-#endif
 
 #if HAVE_GSL
   #include <gsl/gsl_complex.h>
@@ -4861,7 +4851,7 @@ static char *describe_mixer(mus_any *ptr)
   char *str;
   int i, j, lim;
   lim = mus_array_print_length();
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_mixer ": chans: %d [\n ", gen->chans);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_mixer ": chans: %d, [\n ", gen->chans);
   str = (char *)CALLOC(64, sizeof(char));
   if (gen->chans < lim) lim = gen->chans;
   for (i = 0; i < lim; i++)

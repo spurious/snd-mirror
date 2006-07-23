@@ -8713,6 +8713,34 @@ mus-mix with *output*:
     (with-sound (:continue-old-file #t) (fm-violin 0 1 440 .1))
 </pre>
 
+<p>You don't have to use definstrument; in the next example we make a Shepard tone
+by calling the oscils and whatnot directly in the with-sound body:
+</p>
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+(define (<a name="shepardtone">shepard-tone</a>)
+  (let* ((x 0.0)
+	 (incr .000001)               ; sets speed of glissandoes
+	 (oscs (make-vector 12)))
+    (do ((i 0 (1+ i)))
+	((= i 12))
+      (vector-set! oscs i (<a class=quiet href="clm.html#make-oscil">make-oscil</a> :frequency 0.0)))
+    (with-sound ()
+      (run                            ; use "run" to speed up computation by about a factor of 10
+       (lambda ()
+	 (do ((samp 0 (1+ samp)))
+	     ((= samp 300000))
+	   (let ((sum 0.0))
+	     (do ((i 0 (1+ i)))
+		 ((= i 12))
+	       (let ((loc (+ x (/ i 12.0))))  ; location of current oscil in overall trajectory
+		 (if (&gt; loc 1.0) (set! loc (- loc 1.0)))
+		 (set! sum (+ sum (* (let ((y (- 4.0 (* 8.0 loc))))
+				       (exp (* -0.5 y y)))  ; Gaussian normal curve as amplitude envelope
+				     (<a class=quiet href="clm.html#oscil">oscil</a> (vector-ref oscs i) 
+					    (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> (expt 2.0 (* loc 12.0))))))))) ; (- 1.0 loc) to go down
+	     (set! x (+ x incr))
+	     (<a class=quiet href="clm.html#outa">outa</a> samp (* .1 sum) *output*))))))))
+</pre></td></tr></table>
 
 <br>
 <table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>other forms of with-sound</h4></td></tr></table>

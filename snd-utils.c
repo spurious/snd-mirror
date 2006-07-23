@@ -731,7 +731,7 @@ static char *kmg (int num)
 }
 
 #define MEM_PAD_SIZE 32
-static int mem_size = 0, mem_top = -1;
+static int mem_size = 0;
 static int *sizes = NULL, *locations = NULL;
 static void **pointers = NULL, **true_pointers = NULL;
 static char **functions = NULL, **files = NULL;
@@ -798,18 +798,13 @@ static int find_mem_location(const char *func, const char *file, int line)
 
 static void fdescribe_pointer(FILE *fp, void *p)
 {
-  int i, loc;
-  for (i = mem_top; i >= 0; i--)
-    if (pointers[i] == p)
-      {
-	loc = locations[i];
-	fprintf(fp, "%s[%d]:%s, len:%d%s%s", 
-		files[loc], lines[loc], functions[loc], sizes[i],
-		(printable[loc] == PRINT_CHAR) ? ", " : "",
-		(printable[loc] == PRINT_CHAR) ? ((char *)p) : "");
-	return;
-      }
-  fprintf(fp, "lost??");
+  int loc;
+  char *p3 = (char *)p;
+  loc = (*((int *)(p3 - 4)));
+  fprintf(fp, "%s[%d]:%s, len:%d%s%s", 
+	  files[loc], lines[loc], functions[loc], sizes[loc],
+	  (printable[loc] == PRINT_CHAR) ? ", " : "",
+	  (printable[loc] == PRINT_CHAR) ? ((char *)p) : "");
 }
 
 static void describe_pointer(void *p)
@@ -818,12 +813,15 @@ static void describe_pointer(void *p)
 }
 
 static char pad[MEM_PAD_SIZE] = {'W','I','L','L','I','A','M',' ','G','A','R','D','N','E','R',' ','S','C','H','O','T','T','S','T','A','E','D','T',' ','D','M','A'};
-static void set_padding(void *p1, void *p2, int len)
+static void set_padding(void *p1, void *p2, int len, int loc)
 {
+  char *p3 = (char *)p1;
   char *ip2;
   ip2 = (char *)p2;
   memcpy((void *)ip2, (void *)pad, MEM_PAD_SIZE);
   memcpy((void *)(ip2 + len + MEM_PAD_SIZE), (void *)pad, MEM_PAD_SIZE);
+
+  (*((int *)(p3 - 4))) = loc;
 }
 
 static void check_padding(void *p1, void *p2, int len, bool refill)
@@ -838,7 +836,7 @@ static void check_padding(void *p1, void *p2, int len, bool refill)
       abort();
     }
   ip2 = (char *)p2;
-  for (i = 0; i < MEM_PAD_SIZE; i++) 
+  for (i = 0; i < MEM_PAD_SIZE - 4; i++) 
     if (ip2[i] != pad[i])
       {
 	fprintf(stderr, "memory clobbered %d bytes before %p (", MEM_PAD_SIZE - i, p1);
@@ -858,11 +856,6 @@ static void check_padding(void *p1, void *p2, int len, bool refill)
       }
 }
 
-#define PTR_HISTORY_SIZE 128
-static void *ptr_history[PTR_HISTORY_SIZE];
-static int ptr_history_loc[PTR_HISTORY_SIZE];
-static int ptr_history_ptr = 0;
-static int last_forgotten = -1;
 static int last_loc = -1;
 #define FREED_POINTER 0x99999999
 
@@ -871,94 +864,59 @@ void set_printable(int val)
   printable[last_loc] = val;
 }
 
+static int *freed = NULL;
+static int freed_out = 0, freed_in = 0;
+
 static void *forget_pointer(void *ptr, const char *func, const char *file, int line, bool refill)
 {
-  int i;
+  int loc;
   void *rtp;
+  char *p3 = (char *)ptr;
+
   if (ptr == NULL) {fprintf(stderr, "attempt to free NULL"); mem_report(); abort();}
   if (ptr == (void *)FREED_POINTER) {fprintf(stderr," attempt to free pointer twice"); abort();}
-  for (i = 0; i < PTR_HISTORY_SIZE; i++)
-    if (ptr_history[i] == ptr)
-      {
-	int last_remembered;
-	last_remembered = ptr_history_loc[i];
-	ptr_history[i] = 0;
-	ptr_history_loc[i] = -1;
-	rtp = true_pointers[last_remembered];
-	check_padding(ptr, rtp, sizes[last_remembered], refill);
-	pointers[last_remembered] = 0;
-	true_pointers[last_remembered] = 0;
-	last_forgotten = last_remembered;
-	return(rtp);
-      }
-  for (i = mem_top; i >= 0; i--)
-    if (pointers[i] == ptr)
-      {
-	rtp = true_pointers[i];
-	check_padding(ptr, rtp, sizes[i], refill);
-	pointers[i] = 0;
-	true_pointers[i] = 0;
-	last_forgotten = i;
-	while ((mem_top >= 0) && (pointers[mem_top] == 0)) mem_top--;
-	if (mem_top < last_forgotten) last_forgotten = mem_top + 1;
-	return(rtp);
-      }
-  fprintf(stderr, "forget %p ", ptr); 
-  abort();
-  return(NULL);
+
+  loc = (*((int *)(p3 - 4)));
+  if ((loc < 0) || (loc > mem_size))
+    {
+      fprintf(stderr, "loc clobbered: %p %d (%d)\n", ptr, loc, mem_size);
+      abort();
+    }
+  freed[freed_in++] = loc;
+  if (freed_in >= mem_size) freed_in = 0;
+
+  rtp = true_pointers[loc];
+  check_padding(ptr, rtp, sizes[loc], refill);
+  pointers[loc] = 0;
+  true_pointers[loc] = 0;
+  return(rtp);
 }
 
-static void remember_pointer(void *ptr, void *true_ptr, size_t len, const char *func, const char *file, int line)
+static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *func, const char *file, int line)
 {
-  int i, loc = 0;
-  if (last_forgotten == -1)
+  int i, loc;
+  if (mem_size == 0)
     {
-      if (mem_size == 0)
-	{
-	  mem_size = 8192;
-	  pointers = (void **)calloc(mem_size, sizeof(void *));
-	  true_pointers = (void **)calloc(mem_size, sizeof(void *));
-	  sizes = (int *)calloc(mem_size, sizeof(int));
-	  locations = (int *)calloc(mem_size, sizeof(int));
-	  loc = 0;
-	  goto GOT_ONE;
-	}
-      for (i = 0; i < mem_size; i++)
-	if (pointers[i] == 0) 
-	  {
-	    loc = i;
-	    goto GOT_ONE;
-	  }
-      loc = mem_size;
-      mem_size += 4096;
-      pointers = (void **)realloc(pointers, mem_size * sizeof(void *));
-      true_pointers = (void **)realloc(true_pointers, mem_size * sizeof(void *));
-      sizes = (int *)realloc(sizes, mem_size * sizeof(int));
-      locations = (int *)realloc(locations, mem_size * sizeof(int));
-      for (i = loc; i < mem_size; i++)
-	{
-	  pointers[i] = 0;
-	  true_pointers[i] = 0;
-	  sizes[i] = 0;
-	  locations[i] = 0;
-	}
+      mem_size = 65536 * 2;
+      pointers = (void **)calloc(mem_size, sizeof(void *));
+      true_pointers = (void **)calloc(mem_size, sizeof(void *));
+      sizes = (int *)calloc(mem_size, sizeof(int));
+      locations = (int *)calloc(mem_size, sizeof(int));
+      freed = (int *)calloc(mem_size, sizeof(int));
+      for (i = 0; i < mem_size; i++) freed[i] = i;
     }
-  else
-    {
-      loc = last_forgotten;
-      last_forgotten = -1;
-    }
- GOT_ONE:
+
+  loc = freed[freed_out++];
+  if (freed_out >= mem_size) freed_out = 0;
+  if (freed_out == freed_in) fprintf(stderr, "ran out of space ");
+
   pointers[loc] = ptr;
   true_pointers[loc] = true_ptr;
-  set_padding(ptr, true_ptr, (int)len);
+  set_padding(ptr, true_ptr, (int)len, loc);
   sizes[loc] = (int)len;
   locations[loc] = find_mem_location(func, file, line);
-  ptr_history[ptr_history_ptr] = ptr;
-  ptr_history_loc[ptr_history_ptr++] = loc;
-  if (ptr_history_ptr >= PTR_HISTORY_SIZE) ptr_history_ptr = 0;
-  if (mem_top < loc) mem_top = loc;
   last_loc = locations[loc];
+  return(loc);
 }
 
 #define MAX_MALLOC (1 << 28)
@@ -1069,9 +1027,10 @@ static char *mem_stats(int ub)
 	    }
 	}
     }
-  mus_snprintf(result, PRINT_BUFFER_SIZE, "snd mem: %s (%s ptrs), %d sounds, %d chans (%s, %d)\n",
+  mus_snprintf(result, PRINT_BUFFER_SIZE, "snd mem: %s (%s ptrs, max: %d), %d sounds, %d chans (%s, %d)\n",
 	       ksum = kmg(sum),
 	       kptrs = kmg(ptrs),
+	       mem_size,
 	       snds, chns,
 	       (chns > 0) ? (kpers = kmg(ub / chns)) : "", trees);
   if (ksum) free(ksum);

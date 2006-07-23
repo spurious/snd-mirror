@@ -16593,7 +16593,7 @@ EDITS: 5
 	    (fr1 (make-frame 2 0.0 0.0)))
 	(print-and-check gen 
 			 "mixer"
-			 "mixer: chans: 2, vals: [
+                         "mixer: chans: 2, [
  0.500 0.250
  0.125 1.000
 ]")
@@ -16608,7 +16608,7 @@ EDITS: 5
 	      (mixer-set! mx i j (+ j (* i 8)))))
 	  (print-and-check mx
 			   "mixer"
-			   "mixer: chans: 8, vals: [
+			   "mixer: chans: 8, [
  0.000 1.000 2.000 3.000...
  8.000 9.000 10.000 11.000...
  16.000 17.000 18.000 19.000...
@@ -16617,7 +16617,7 @@ EDITS: 5
 	  (set! (mus-array-print-length) 12)
 	  (print-and-check mx
 			   "mixer"
-			   "mixer: chans: 8, vals: [
+			   "mixer: chans: 8, [
  0.000 1.000 2.000 3.000 4.000 5.000 6.000 7.000
  8.000 9.000 10.000 11.000 12.000 13.000 14.000 15.000
  16.000 17.000 18.000 19.000 20.000 21.000 22.000 23.000
@@ -38462,18 +38462,6 @@ EDITS: 1
    (lambda ()
      (make-filtered-comb scl size :filter (make-one-zero .4 .6)))))
 
-(define (make-gr)
-  (run
-   (lambda ()
-     (make-granulate :expansion 2.0
-		     :input (lambda (dir) 1.0)
-		     :edit (lambda (g)
-			     (let ((grain (mus-data g))  ; current grain
-				   (len (mus-length g))) ; current grain length
-			       (do ((i 0 (1+ i)))
-				   ((= i len) len)       ; grain length unchanged in this case
-				 (vct-set! grain i (* 2 (vct-ref grain i))))
-			       0))))))
 (define fm-violin-opt
   (lambda* (startime dur frequency amplitude :key
 		     (fm-index 1.0)
@@ -43935,10 +43923,6 @@ EDITS: 1
       (let ((o (make-fc .8 128)))
 	(gc) (gc)
 	(filtered-comb o (random 1.0)))
-
-      (let ((o (make-gr)))
-	(gc) (gc)
-	(granulate o))
 
 
       (run-hook after-test-hook 22)
