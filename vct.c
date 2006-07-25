@@ -5,13 +5,13 @@
  * and Snd/CLM are applications where no user is willing to wait on a multiply.
  *
  * C side:
- *   void vct_init(void)                   called to declare the various functions and the vct type in Guile
- *   bool vct_p(XEN obj)                   is obj a vct
- *   XEN make_vct(int len, Float *data)    make a new vct
- *   XEN make_vct_wrapper(int len, Float *data) make a new vct that doesn't free data when garbage collector strikes
- *   vct *xen_to_vct(XEN arg)                 given XEN arg, return vct
- *   void set_vct_print_length(int val)    set vct print length (default 10)
- *   vct *c_vct_copy(vct *vc)              return copy of vc
+ *   void mus_vct_init(void)                    called to declare the various functions and the vct type in Guile
+ *   bool mus_vct_p(XEN obj)                    is obj a vct
+ *   XEN xen_make_vct(int len, Float *data)     make a new vct
+ *   XEN xen_make_vct_wrapper(int len, Float *data) make a new vct that doesn't free data when garbage collector strikes
+ *   vct *xen_to_vct(XEN arg)                   given XEN arg, return vct
+ *   void mus_vct_set_print_length(int val)     set vct print length (default 10) (also mus_vct_print_length)
+ *   vct *mus_vct_copy(vct *vc)                 return copy of vc
  *
  * Scheme side:
  *   (make-vct len (filler 0.0))      make new vct
@@ -84,9 +84,10 @@
 
 static XEN_OBJECT_TYPE vct_tag;
 static int vct_print_length = VCT_PRINT_LENGTH;
-void set_vct_print_length(int len) {vct_print_length = len;}
+void mus_vct_set_print_length(int len) {vct_print_length = len;}
+int mus_vct_print_length(void) {return(vct_print_length);}
 
-bool vct_p(XEN obj)
+bool mus_vct_p(XEN obj)
 {
   return(XEN_OBJECT_TYPE_P(obj, vct_tag));
 }
@@ -94,12 +95,12 @@ bool vct_p(XEN obj)
 static XEN g_vct_p(XEN obj) 
 {
   #define H_vct_p "(" S_vct_p " obj): is obj a vct"
-  return(C_TO_XEN_BOOLEAN(VCT_P(obj)));
+  return(C_TO_XEN_BOOLEAN(MUS_VCT_P(obj)));
 }
 
 vct *xen_to_vct(XEN arg)
 {
-  if (VCT_P(arg))
+  if (MUS_VCT_P(arg))
     return((vct *)XEN_OBJECT_REF(arg));
   return(NULL);
 }
@@ -118,7 +119,7 @@ static void vct_free(vct *v)
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(vct, free_vct, vct_free)
 
-char *vct_to_string(vct *v)
+char *mus_vct_to_string(vct *v)
 {
   int len;
   char *buf;
@@ -144,7 +145,7 @@ char *vct_to_string(vct *v)
   return(buf);
 }
 
-char *vct_to_readable_string(vct *v)
+char *mus_vct_to_readable_string(vct *v)
 {
   int i, len;
   char *buf;
@@ -180,14 +181,14 @@ static XEN g_vct_to_readable_string(XEN obj)
   char *vstr;
   XEN result;
   #define H_vct_to_string "(" S_vct_to_string " v) -> scheme readable description of v"
-  XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_to_string, "a vct");
-  vstr = vct_to_readable_string(XEN_TO_VCT(obj));
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_to_string, "a vct");
+  vstr = mus_vct_to_readable_string(XEN_TO_VCT(obj));
   result = C_TO_XEN_STRING(vstr);
   FREE(vstr);
   return(result);
 }
 
-bool vct_equalp(vct *v1, vct *v2)
+bool mus_vct_equalp(vct *v1, vct *v2)
 {
   int i;
   if (v1->length != v2->length) 
@@ -198,15 +199,15 @@ bool vct_equalp(vct *v1, vct *v2)
   return(true);
 }
 
-XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, vct_to_string)
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, mus_vct_to_string)
 
 static XEN equalp_vct(XEN obj1, XEN obj2)
 {
-  if ((!(VCT_P(obj1))) || (!(VCT_P(obj2)))) return(XEN_FALSE);
-  return(xen_return_first(C_TO_XEN_BOOLEAN(vct_equalp((vct *)XEN_OBJECT_REF(obj1), (vct *)XEN_OBJECT_REF(obj2))), obj1, obj2));
+  if ((!(MUS_VCT_P(obj1))) || (!(MUS_VCT_P(obj2)))) return(XEN_FALSE);
+  return(xen_return_first(C_TO_XEN_BOOLEAN(mus_vct_equalp((vct *)XEN_OBJECT_REF(obj1), (vct *)XEN_OBJECT_REF(obj2))), obj1, obj2));
 }
 
-vct *c_make_vct(int len)
+vct *mus_vct_make(int len)
 {
   vct *new_vct;
   new_vct = (vct *)MALLOC(sizeof(vct));
@@ -216,26 +217,26 @@ vct *c_make_vct(int len)
   return(new_vct);
 }
 
-vct *c_free_vct(vct *v) 
+vct *mus_vct_free(vct *v) 
 {
   vct_free(v);
   return(NULL);
 }
 
-vct *c_vct_copy(vct *vc)
+vct *mus_vct_copy(vct *vc)
 {
   vct *v = NULL;
   int len;
   if (vc)
     {
       len = vc->length;
-      v = c_make_vct(len);
+      v = mus_vct_make(len);
       memcpy((void *)(v->data), (void *)(vc->data), (len * sizeof(Float)));
     }
   return(v);
 }
 
-XEN make_vct(int len, Float *data)
+XEN xen_make_vct(int len, Float *data)
 {
   vct *new_vct;
   if (len <= 0) return(XEN_FALSE);
@@ -246,7 +247,7 @@ XEN make_vct(int len, Float *data)
   XEN_MAKE_AND_RETURN_OBJECT(vct_tag, new_vct, 0, free_vct);
 }
 
-XEN make_vct_wrapper(int len, Float *data)
+XEN xen_make_vct_wrapper(int len, Float *data)
 {
   vct *new_vct;
   new_vct = (vct *)MALLOC(sizeof(vct));
@@ -269,8 +270,8 @@ static XEN g_make_vct(XEN len, XEN filler)
   if (size > (1 << 26)) /* matches malloc max in snd-utils/clm2xen etc if floats (<<24 for doubles) */
     XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "len ~A too large");
   if (XEN_NUMBER_P(filler))
-    return(vct_fill(make_vct(size, (Float *)CALLOC(size, sizeof(Float))), filler));
-  return(make_vct(size, (Float *)CALLOC(size, sizeof(Float))));
+    return(vct_fill(xen_make_vct(size, (Float *)CALLOC(size, sizeof(Float))), filler));
+  return(xen_make_vct(size, (Float *)CALLOC(size, sizeof(Float))));
 }
 
 static XEN copy_vct(XEN obj)
@@ -279,12 +280,12 @@ static XEN copy_vct(XEN obj)
   vct *v;
   Float *copied_data;
   int len;
-  XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_copy, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_copy, "a vct");
   v = XEN_TO_VCT(obj);
   len = v->length;
   copied_data = (Float *)MALLOC(len * sizeof(Float));
   memcpy((void *)copied_data, (void *)(v->data), (len * sizeof(Float)));
-  return(make_vct(len, copied_data));
+  return(xen_make_vct(len, copied_data));
 }
 
 static XEN vct_move(XEN obj, XEN newi, XEN oldi, XEN backwards)
@@ -293,7 +294,7 @@ static XEN vct_move(XEN obj, XEN newi, XEN oldi, XEN backwards)
 v[new--] = v[old--] if backwards is #t"
   vct *v;
   int i, j, ni, nj;
-  XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_moveB, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_moveB, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(newi), newi, XEN_ARG_2, S_vct_moveB, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(oldi), oldi, XEN_ARG_3, S_vct_moveB, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(backwards), backwards, XEN_ARG_4, S_vct_moveB, "a boolean");
@@ -326,7 +327,7 @@ static XEN vct_length(XEN obj)
 {
   #define H_vct_length "(" S_vct_length " v): length of vct v"
   vct *v;
-  XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_length, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_length, "a vct");
   v = XEN_TO_VCT(obj);
   return(C_TO_XEN_INT(v->length));
 }
@@ -336,7 +337,7 @@ static XEN vct_ref(XEN obj, XEN pos)
   #define H_vct_ref "(" S_vct_ref " v n): element n of vct v, v[n]"
   vct *v;
   int loc;
-  XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_ref, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_ref, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, S_vct_ref, "an integer");
   v = XEN_TO_VCT(obj);
   loc = XEN_TO_C_INT(pos);
@@ -352,7 +353,7 @@ static XEN vct_set(XEN obj, XEN pos, XEN val)
   #define H_vct_setB "(" S_vct_setB " v n val): sets element of vct v to val, v[n] = val"
   vct *v;
   int loc;
-  XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_setB, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_setB, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, S_vct_setB, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a real number");
   v = XEN_TO_VCT(obj);
@@ -370,8 +371,8 @@ static XEN vct_multiply(XEN obj1, XEN obj2)
   #define H_vct_multiplyB "(" S_vct_multiplyB " v1 v2): element-wise multiply of vcts v1 and v2: v1[i] *= v2[i], returns v1"
   int i, lim;
   vct *v1, *v2;
-  XEN_ASSERT_TYPE(VCT_P(obj1), obj1, XEN_ARG_1, S_vct_multiplyB, "a vct");
-  XEN_ASSERT_TYPE(VCT_P(obj2), obj2, XEN_ARG_2, S_vct_multiplyB, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_multiplyB, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj2), obj2, XEN_ARG_2, S_vct_multiplyB, "a vct");
   v1 = XEN_TO_VCT(obj1);
   v2 = XEN_TO_VCT(obj2);
   lim = MIN(v1->length, v2->length);
@@ -384,8 +385,8 @@ static XEN vct_add(XEN obj1, XEN obj2, XEN offs)
   #define H_vct_addB "(" S_vct_addB " v1 v2 (offset 0)): element-wise add of vcts v1 and v2: v1[i + offset] += v2[i], returns v1"
   int i, lim, j;
   vct *v1, *v2;
-  XEN_ASSERT_TYPE(VCT_P(obj1), obj1, XEN_ARG_1, S_vct_addB, "a vct");
-  XEN_ASSERT_TYPE(VCT_P(obj2), obj2, XEN_ARG_2, S_vct_addB, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_addB, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj2), obj2, XEN_ARG_2, S_vct_addB, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(offs), offs, XEN_ARG_3, S_vct_addB, "an integer");
   v1 = XEN_TO_VCT(obj1);
   v2 = XEN_TO_VCT(obj2);
@@ -410,8 +411,8 @@ static XEN vct_subtract(XEN obj1, XEN obj2)
   #define H_vct_subtractB "(" S_vct_subtractB " v1 v2): element-wise subtract of vcts v1 and v2: v1[i] -= v2[i], returns v1"
   int i, lim;
   vct *v1, *v2;
-  XEN_ASSERT_TYPE(VCT_P(obj1), obj1, XEN_ARG_1, S_vct_subtractB, "a vct");
-  XEN_ASSERT_TYPE(VCT_P(obj2), obj2, XEN_ARG_2, S_vct_subtractB, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_subtractB, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj2), obj2, XEN_ARG_2, S_vct_subtractB, "a vct");
   v1 = XEN_TO_VCT(obj1);
   v2 = XEN_TO_VCT(obj2);
   lim = MIN(v1->length, v2->length);
@@ -425,7 +426,7 @@ static XEN vct_scale(XEN obj1, XEN obj2)
   int i;
   vct *v1;
   Float scl;
-  XEN_ASSERT_TYPE(VCT_P(obj1), obj1, XEN_ARG_1, S_vct_scaleB, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_scaleB, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_scaleB, "a number");
   v1 = XEN_TO_VCT(obj1);
   scl = XEN_TO_C_DOUBLE(obj2);
@@ -439,7 +440,7 @@ static XEN vct_offset(XEN obj1, XEN obj2)
   int i;
   vct *v1;
   Float scl;
-  XEN_ASSERT_TYPE(VCT_P(obj1), obj1, XEN_ARG_1, S_vct_offsetB, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_offsetB, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_offsetB, "a number");
   v1 = XEN_TO_VCT(obj1);
   scl = XEN_TO_C_DOUBLE(obj2);
@@ -453,7 +454,7 @@ static XEN vct_fill(XEN obj1, XEN obj2)
   int i;
   vct *v1;
   Float scl;
-  XEN_ASSERT_TYPE(VCT_P(obj1), obj1, XEN_ARG_1, S_vct_fillB, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_fillB, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_fillB, "a number");
   v1 = XEN_TO_VCT(obj1);
   scl = XEN_TO_C_DOUBLE(obj2);
@@ -467,7 +468,7 @@ static XEN vct_mapB(XEN obj, XEN proc)
 v. (" S_vct_mapB " v (lambda () 3.0)) is the same as (" S_vct_fillB " v 3.0)"
   int i;
   vct *v;
-  XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
   v = XEN_TO_VCT(obj);
 #if WITH_RUN && USE_SND
   {
@@ -502,7 +503,7 @@ static XEN vct_peak(XEN obj)
   int i;
   Float val = 0.0, absv;
   vct *v;
-  XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_peak, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_peak, "a vct");
   v = XEN_TO_VCT(obj);
   val = fabs(v->data[0]); 
   for (i = 1; i < v->length; i++) 
@@ -519,7 +520,7 @@ static XEN vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
   vct *vold, *vnew;
   XEN res;
   int i, old_len, new_len, j, istart, iend;
-  XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ARG_1, S_vct_subseq, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ARG_1, S_vct_subseq, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(start), start, XEN_ARG_2, S_vct_subseq, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(end), end, XEN_ARG_3, S_vct_subseq, "an integer");
   istart = XEN_TO_C_INT(start);
@@ -539,9 +540,9 @@ static XEN vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
   else new_len = old_len - istart;
   if (new_len <= 0) 
     return(XEN_FALSE);
-  if (VCT_P(newv))
+  if (MUS_VCT_P(newv))
     res = newv;
-  else res = make_vct(new_len, (Float *)CALLOC(new_len, sizeof(Float)));
+  else res = xen_make_vct(new_len, (Float *)CALLOC(new_len, sizeof(Float)));
   vnew = XEN_TO_VCT(res);
   if (new_len > vnew->length) 
     new_len = vnew->length;
@@ -550,7 +551,7 @@ static XEN vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
   return(xen_return_first(res, vobj, vnew));
 }
 
-XEN list_to_vct(XEN lst)
+XEN xen_list_to_vct(XEN lst)
 {
   #define H_list_to_vct "(" S_list_to_vct " lst): returns a new vct filled with elements of list lst"
   int len = 0, i;
@@ -559,7 +560,7 @@ XEN list_to_vct(XEN lst)
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(lst, len), lst, XEN_ONLY_ARG, S_list_to_vct, "a list");
   if (len == 0) 
     return(XEN_FALSE);
-  scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
+  scv = xen_make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
   v = XEN_TO_VCT(scv);
   for (i = 0, lst1 = XEN_COPY_ARG(lst); i < len; i++, lst1 = XEN_CDR(lst1)) 
     v->data[i] = (Float)XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst1), 0.0);
@@ -569,7 +570,7 @@ XEN list_to_vct(XEN lst)
 static XEN g_vct(XEN args) 
 {
   #define H_vct "(" S_vct " args...) returns a new vct with args as contents; same as " S_list_to_vct ": (vct 1 2 3)"
-  return(list_to_vct(args));
+  return(xen_list_to_vct(args));
 }
 
 XEN mus_array_to_list(Float *arr, int i, int len)
@@ -585,7 +586,7 @@ static XEN vct_to_list(XEN vobj)
 {
   #define H_vct_to_list "(" S_vct_to_list " v): returns a new list with elements of vct v"
   vct *v;
-  XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_to_list, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_to_list, "a vct");
   v = XEN_TO_VCT(vobj);
   return(xen_return_first(mus_array_to_list(v->data, 0, v->length), vobj));
 }
@@ -599,7 +600,7 @@ static XEN vector_to_vct(XEN vect)
   XEN_ASSERT_TYPE(XEN_VECTOR_P(vect), vect, XEN_ONLY_ARG, S_vector_to_vct, "a vector");
   len = XEN_VECTOR_LENGTH(vect);
   if (len == 0) return(XEN_FALSE);
-  scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
+  scv = xen_make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
   v = XEN_TO_VCT(scv);
   for (i = 0; i < len; i++) 
     v->data[i] = (Float)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vect, i));
@@ -612,7 +613,7 @@ static XEN vct_to_vector(XEN vobj)
   vct *v;
   int i, len;
   XEN new_vect;
-  XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_to_vector, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_to_vector, "a vct");
   v = XEN_TO_VCT(vobj);
   len = v->length;
   new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
@@ -636,7 +637,7 @@ static XEN vct_reverse(XEN vobj, XEN size)
   #define H_vct_reverse "(" S_vct_reverse " vct len): in-place reversal of vct contents"
   vct *v;
   int i, j, len = -1;
-  XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ARG_1, S_vct_to_vector, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ARG_1, S_vct_to_vector, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_2, S_vct_to_vector, "an integer");
   v = XEN_TO_VCT(vobj);
   if (XEN_INTEGER_P(size))
@@ -657,9 +658,9 @@ static XEN vct_reverse(XEN vobj, XEN size)
 static XEN vct_times(XEN obj1, XEN obj2)
 {
   #define H_vct_times "(" S_vct_times " obj1 obj2) is either " S_vct_multiplyB " or " S_vct_scaleB ", depending on the types of its arguments"
-  if (VCT_P(obj1))
+  if (MUS_VCT_P(obj1))
     {
-      if (VCT_P(obj2))
+      if (MUS_VCT_P(obj2))
 	return(vct_multiply(obj1, obj2));
       return(vct_scale(obj1, obj2));
     }
@@ -669,9 +670,9 @@ static XEN vct_times(XEN obj1, XEN obj2)
 static XEN vct_plus(XEN obj1, XEN obj2)
 {
   #define H_vct_plus "(" S_vct_plus " obj1 obj2) is either " S_vct_addB " or " S_vct_offsetB ", depending on the types of its arguments"
-  if (VCT_P(obj1))
+  if (MUS_VCT_P(obj1))
     {
-      if (VCT_P(obj2))
+      if (MUS_VCT_P(obj2))
 	return(vct_add(obj1, obj2, XEN_UNDEFINED));
       return(vct_offset(obj1, obj2));
     }
@@ -683,7 +684,7 @@ static XEN vct_plus(XEN obj1, XEN obj2)
 XEN_ARGIFY_2(g_make_vct_w, g_make_vct)
 XEN_NARGIFY_1(copy_vct_w, copy_vct)
 XEN_NARGIFY_1(g_vct_p_w, g_vct_p)
-XEN_NARGIFY_1(list_to_vct_w, list_to_vct)
+XEN_NARGIFY_1(list_to_vct_w, xen_list_to_vct)
 XEN_NARGIFY_1(vct_to_list_w, vct_to_list)
 XEN_NARGIFY_1(vector_to_vct_w, vector_to_vct)
 XEN_NARGIFY_1(vct_to_vector_w, vct_to_vector)
@@ -712,7 +713,7 @@ XEN_NARGIFY_2(equalp_vct_w, equalp_vct)
 #define g_make_vct_w g_make_vct
 #define copy_vct_w copy_vct
 #define g_vct_p_w g_vct_p
-#define list_to_vct_w list_to_vct
+#define list_to_vct_w xen_list_to_vct
 #define vct_to_list_w vct_to_list
 #define vector_to_vct_w vector_to_vct
 #define vct_to_vector_w vct_to_vector
@@ -751,7 +752,7 @@ static XEN vct_compare(XEN vr1, XEN vr2)
 {
   long i, len;
   vct *v1, *v2;
-  if ((VCT_P(vr1)) && (VCT_P(vr2)))
+  if ((MUS_VCT_P(vr1)) && (MUS_VCT_P(vr2)))
     {
       v1 = (vct *)XEN_OBJECT_REF(vr1);
       v2 = (vct *)XEN_OBJECT_REF(vr2);
@@ -780,16 +781,16 @@ static XEN g_rb_make_vct(int argc, XEN *argv, XEN self)
   if (size <= 0) 
     XEN_OUT_OF_RANGE_ERROR("Vct.new", 1, len, "len <= 0?");
   if (XEN_NUMBER_P(filler))
-    return(vct_fill(make_vct(size, (Float *)CALLOC(size, sizeof(Float))), filler));
+    return(vct_fill(xen_make_vct(size, (Float *)CALLOC(size, sizeof(Float))), filler));
   if (rb_block_given_p()) {
     long i;
     Float *buffer = (Float *)CALLOC(size, sizeof(Float));
     for(i = 0; i < size; i++) {
       buffer[i] = XEN_TO_C_DOUBLE(rb_yield(C_TO_XEN_INT(i)));
     }
-    return make_vct(size, buffer);
+    return xen_make_vct(size, buffer);
   }
-  return(make_vct(size, (Float *)CALLOC(size, sizeof(Float))));
+  return(xen_make_vct(size, (Float *)CALLOC(size, sizeof(Float))));
 }
 
 static XEN g_vct_map(XEN obj)
@@ -800,7 +801,7 @@ static XEN g_vct_map(XEN obj)
     Float *buffer = (Float *)CALLOC(v->length, sizeof(Float));
     for(i = 0; i < v->length; i++)
       buffer[i] = XEN_TO_C_DOUBLE(rb_yield(C_TO_XEN_DOUBLE(v->data[i])));
-    return make_vct(v->length, buffer);
+    return xen_make_vct(v->length, buffer);
   }
   return obj;
 }
@@ -938,7 +939,7 @@ Returns a new vct of length LEN with len items found on stack.\n\
 	  FICL_STACK_CHECK(vm->dataStack, size, 1);
 	  for (i = size - 1; i >= 0; i--)
 	    data[i] = ficlStackPop2Float(vm->dataStack);
-	  ficlStackPushUnsigned(vm->dataStack, make_vct(size, data));
+	  ficlStackPushUnsigned(vm->dataStack, xen_make_vct(size, data));
 	}
       else fth_throw(FTH_SYSTEM_ERROR, "cannot create Vct");
     }
@@ -955,9 +956,9 @@ vct( 0.5 0.3 0.1 ) .g => #<vct[len=3]: 0.500 0.300 0.100>"
 #endif
 
 #if WITH_MODULES
-static void vct_init_1(void *ignore)
+static void mus_vct_init_1(void *ignore)
 #else
-void vct_init(void)
+void mus_vct_init(void)
 #endif
 {
 
@@ -1130,9 +1131,9 @@ void vct_init(void)
 }
 
 #if WITH_MODULES
-void vct_init(void)
+void mus_vct_init(void)
 {
-  scm_c_define_module("snd sndlib", vct_init_1, NULL);
+  scm_c_define_module("snd sndlib", mus_vct_init_1, NULL);
 }
 #endif
 

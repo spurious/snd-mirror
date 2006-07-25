@@ -1856,7 +1856,7 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
   #define H_gsl_dht "(gsl-dht size data nu xmax) -> Hankel transform of data (a vct)"
   int n;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_1, "gsl-dht", "an integer");
-  XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, "gsl-dht", "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(data), data, XEN_ARG_2, "gsl-dht", "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(nu), nu, XEN_ARG_3, "gsl-dht", "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(xmax), xmax, XEN_ARG_4, "gsl-dht", "a number");
   n = XEN_TO_C_INT(size);

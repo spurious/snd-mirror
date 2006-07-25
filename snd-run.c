@@ -809,7 +809,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
       if ((pt->vcts) && (pt->vcts[addr]))
 	{
 	  char *buf = NULL, *vstr = NULL;
-	  vstr = vct_to_string(pt->vcts[addr]);
+	  vstr = mus_vct_to_string(pt->vcts[addr]);
 	  buf = mus_format(VCT_PT, addr, vstr);
 	  if (vstr) FREE(vstr);
 	  return(buf);
@@ -1078,13 +1078,13 @@ static vct *vector_to_vct(XEN vectr)
   vct *v;
   len = XEN_VECTOR_LENGTH(vectr);
   if (len == 0) return(NULL);
-  v = c_make_vct(len);
+  v = mus_vct_make(len);
   for (i = 0; i < len; i++) 
     if (XEN_DOUBLE_P(XEN_VECTOR_REF(vectr, i)))
       v->data[i] = (Float)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vectr, i));
     else
       {
-	c_free_vct(v);
+	mus_vct_free(v);
 	return(NULL);
       }
   return(v);
@@ -1222,7 +1222,7 @@ void free_ptree(struct ptree *pt)
 			      for (k = 0; k < pt->vct_ctr; k++)
 				if ((k != v->addr) && (pt->vcts[k] == pt->vcts[v->addr]))
 				  pt->vcts[k] = NULL;
-			      c_free_vct(pt->vcts[v->addr]); 
+			      mus_vct_free(pt->vcts[v->addr]); 
 			      pt->vcts[v->addr] = NULL;   
 			    }
 			  break;
@@ -1885,7 +1885,7 @@ static vect *read_vct_vector(XEN vectr)
     {
       XEN datum;
       datum = XEN_VECTOR_REF(vectr, i);
-      if (VCT_P(datum))
+      if (MUS_VCT_P(datum))
 	v->data.vcts[i] = xen_to_vct(datum);
       else
 	{
@@ -1949,7 +1949,7 @@ static int xen_to_run_type(XEN val)
   else
     {
       if (XEN_BOOLEAN_P(val)) return(R_BOOL); else
-	if (VCT_P(val)) return(R_VCT); else
+	if (MUS_VCT_P(val)) return(R_VCT); else
 	  if (sf_p(val)) return(R_READER); else
 	    if (mf_p(val)) return(R_MIX_READER); else
 	      if (tf_p(val)) return(R_TRACK_READER); else
@@ -1970,7 +1970,7 @@ static int xen_to_run_type(XEN val)
 				    else return(R_FLOAT_VECTOR);
 				  }
 				else
-				  if (VCT_P(val0)) return(R_VCT_VECTOR); else
+				  if (MUS_VCT_P(val0)) return(R_VCT_VECTOR); else
 				    if ((mus_xen_p(val0)) || (XEN_BOOLEAN_P(val0))) return(R_CLM_VECTOR);
 			      }
 			    else
@@ -4728,7 +4728,7 @@ static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
 
 /* -------- eqv/equal -------- */
 
-static void vct_eqv_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(vct_equalp(VCT_ARG_1, VCT_ARG_2));} 
+static void vct_eqv_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(mus_vct_equalp(VCT_ARG_1, VCT_ARG_2));} 
 static void sd_eqv_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(sound_data_equalp(SOUND_DATA_ARG_1, SOUND_DATA_ARG_2));} 
 static void xen_eqv_b(int *args, ptree *pt) {BOOL_RESULT = (Int)XEN_EQV_P(RXEN_ARG_1, RXEN_ARG_2);}
 static void eqv_fb(int *args, ptree *pt) {BOOL_RESULT = (Int)(FLOAT_ARG_1 == FLOAT_ARG_2);}
@@ -5788,7 +5788,7 @@ static char *descr_display_clm(int *args, ptree *pt) {return(mus_format("display
 static void display_vct(int *args, ptree *pt) 
 {
   char *v = NULL;
-  v = vct_to_string(VCT_ARG_1);
+  v = mus_vct_to_string(VCT_ARG_1);
   if (v)
     {
       fprintf(stderr, "%s", v);
@@ -7292,8 +7292,8 @@ static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
 
 static void make_vct_v(int *args, ptree *pt) 
 {
-  if (VCT_RESULT) c_free_vct(VCT_RESULT);
-  VCT_RESULT = c_make_vct(INT_ARG_1);
+  if (VCT_RESULT) mus_vct_free(VCT_RESULT);
+  VCT_RESULT = mus_vct_make(INT_ARG_1);
 }
 static char *descr_make_vct_v(int *args, ptree *pt) 
 {
@@ -7303,8 +7303,8 @@ static void make_vct_v2(int *args, ptree *pt)
 {
   vct *v;
   int i;
-  if (VCT_RESULT) c_free_vct(VCT_RESULT);
-  v = c_make_vct(INT_ARG_1);
+  if (VCT_RESULT) mus_vct_free(VCT_RESULT);
+  v = mus_vct_make(INT_ARG_1);
   VCT_RESULT = v;
   for (i = 0; i < v->length; i++) v->data[i] = FLOAT_ARG_2;
 }
@@ -7336,8 +7336,8 @@ static void vct_v(int *args, ptree *pt)
 {
   int i;
   vct *v;
-  if (VCT_RESULT) c_free_vct(VCT_RESULT);
-  v = c_make_vct(pt->ints[args[1]]);
+  if (VCT_RESULT) mus_vct_free(VCT_RESULT);
+  v = mus_vct_make(pt->ints[args[1]]);
   for (i = 0; i < v->length; i++)
     v->data[i] = pt->dbls[args[i + 2]];
   VCT_RESULT = v;
@@ -7357,8 +7357,8 @@ static xen_value *vct_1(ptree *prog, xen_value **args, int num_args)
 
 static void vct_copy_v(int *args, ptree *pt) 
 {
-  if (VCT_RESULT) c_free_vct(VCT_RESULT);
-  VCT_RESULT = c_vct_copy(VCT_ARG_1);
+  if (VCT_RESULT) mus_vct_free(VCT_RESULT);
+  VCT_RESULT = mus_vct_copy(VCT_ARG_1);
 }
 static char *descr_vct_copy_v(int *args, ptree *pt) 
 {
@@ -9180,7 +9180,7 @@ static void pv_ ## Name ## _1(int *args, ptree *pt) \
   if (!VCT_RESULT) \
     { \
       XEN res; \
-      res = make_vct_wrapper(mus_length(CLM_ARG_1), mus_phase_vocoder_ ## Name (CLM_ARG_1)); \
+      res = xen_make_vct_wrapper(mus_length(CLM_ARG_1), mus_phase_vocoder_ ## Name (CLM_ARG_1)); \
       add_loc_to_protected_list(pt, snd_protect(res)); \
       VCT_RESULT = xen_to_vct(res); \
     } \
@@ -9418,7 +9418,7 @@ static void Name ## _1(int *args, ptree *pt) \
   if (!VCT_RESULT) \
     { \
       XEN res; \
-      res = make_vct_wrapper(mus_length(CLM_ARG_1), mus_ ## Name (CLM_ARG_1)); \
+      res = xen_make_vct_wrapper(mus_length(CLM_ARG_1), mus_ ## Name (CLM_ARG_1)); \
       add_loc_to_protected_list(pt, snd_protect(res)); \
       VCT_RESULT = xen_to_vct(res); \
     } \
@@ -9741,7 +9741,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
       {
 	vct *vc;
 	vc = pt->vcts[v->addr];
-	val = make_vct_wrapper(vc->length, vc->data);
+	val = xen_make_vct_wrapper(vc->length, vc->data);
       }
       break;
     case R_SOUND_DATA:
@@ -11164,8 +11164,8 @@ static XEN eval_ptree_to_xen(ptree *pt)
     case R_VCT:
       {
 	vct *v;
-	v = c_vct_copy(pt->vcts[pt->result->addr]);
-	result = make_vct(v->length, v->data);
+	v = mus_vct_copy(pt->vcts[pt->result->addr]);
+	result = xen_make_vct(v->length, v->data);
 	FREE(v);
       }
       break;

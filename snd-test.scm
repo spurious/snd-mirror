@@ -371,7 +371,6 @@
 					;(snd-display (gc-stats))
 					;(if (file-exists? "memlog")
 					;	 (system (format #f "cp memlog memlog.~D" (1- n))))
-					;(if (defined? 'mem-report) (mem-report))
 			      ))
 
 
@@ -404,8 +403,7 @@
 (snd-display ";~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
 (define (log-mem tst) 
-  (if (> tests 1) (begin (snd-display ";test ~D:~D " test-number (1+ tst)) (gc)(gc)))
-  (if (= (modulo tst 10) 0) (if (defined? 'mem-report) (mem-report))))
+  (if (> tests 1) (begin (snd-display ";test ~D:~D " test-number (1+ tst)) (gc)(gc))))
 
 (defmacro without-errors (func)
   `(catch #t 
@@ -45903,10 +45901,6 @@ EDITS: 1
       ))
 (set! (optimization) old-opt-23)
 
-(gc)(gc)
-(if (defined? 'mem-report) (mem-report))
-(if (file-exists? "memlog")
-    (system "mv memlog memlog.23")) ; save pre-error version
 
 
 ;;; ---------------- test 24: user-interface ----------------
@@ -58396,12 +58390,6 @@ EDITS: 1
       (set! nlst (cons (vector-ref vals i) nlst)))
     nlst))
 
-(gc)(gc)
-(if (defined? 'mem-report) (mem-report))
-(if (file-exists? "memlog")
-    (system "mv memlog memlog.27")) ; save pre-error version
-;;; regions exist here (etc) so it's not a cleaned-out state
-
 (defmacro simple-time (a) 
   `(let ((start (get-internal-real-time))) 
    ,a 
@@ -59873,13 +59861,6 @@ EDITS: 1
 	
 ;	    (reset-hook! snd-error-hook)
 ;	    (add-hook! snd-error-hook (lambda (msg) (snd-display msg) #t))
-	
-	(if (defined? 'mem-report) 
-	    (begin
-	      (gc)(gc)
-	      (mem-report)
-	      (if (file-exists? "memlog")
-		  (system "mv memlog memlog.key"))))
 	
 	;; ---------------- key args
 	(for-each

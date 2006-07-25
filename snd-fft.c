@@ -905,7 +905,7 @@ static void apply_fft(fft_state *fs)
 			 sfd,
 			 "added transform func");
 	gc_loc = snd_protect(res);
-	if (VCT_P(res))
+	if (MUS_VCT_P(res))
 	  {
 	    v = XEN_TO_VCT(res);
 	    len = v->length;
@@ -1747,7 +1747,7 @@ static XEN g_autocorrelate(XEN reals)
   #define H_autocorrelate "(" S_autocorrelate " data): in place autocorrelation of data (a vct)"
   /* assumes length is power of 2 */
   vct *v1 = NULL;
-  XEN_ASSERT_TYPE(VCT_P(reals), reals, XEN_ONLY_ARG, S_autocorrelate, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(reals), reals, XEN_ONLY_ARG, S_autocorrelate, "a vct");
   v1 = (vct *)XEN_OBJECT_REF(reals);
   autocorrelation(v1->data, v1->length);
   return(reals);
@@ -1888,7 +1888,7 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
 	  memcpy((void *)fvals, (void *)(fp->data), len * sizeof(Float));
 	  if (v1)
 	    return(v);
-	  else return(make_vct(len, fvals));
+	  else return(xen_make_vct(len, fvals));
 	}
       else
 	{
@@ -1908,7 +1908,7 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
 		  fvals[k] = si->data[i][j];
 	      if (v1)
 		return(v);
-	      else return(make_vct(len, fvals));
+	      else return(xen_make_vct(len, fvals));
 	    }
 	}
     }
@@ -1921,7 +1921,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
   vct *v;
   Float *dat;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, "snd-transform", "an integer");
-  XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, "snd-transform", "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(data), data, XEN_ARG_2, "snd-transform", "a vct");
   trf = XEN_TO_C_INT(type);
   if ((trf < 0) || (trf > HAAR))
     XEN_OUT_OF_RANGE_ERROR("snd-transform", 1, type, "~A: invalid transform choice");

@@ -1991,7 +1991,7 @@ The <i>acoeffs</i> apply to the linear terms, and the <i>bcoeffs</i> to the quad
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-
+<br>
 <!-- ---------------------------------------- dsp IIR ---------------------------------------- -->
 <tr><td colspan=2 bgcolor="lightgreen"><center><A NAME="dspdociir">IIR filters</A></center></td><td></td></tr>
 
@@ -2440,6 +2440,7 @@ upon output (to track the original sound's amplitude envelope):
 		       (let ((amp (max .1 (<a class=quiet href="clm.html#fir-filter">fir-filter</a> flt (windowed-maxamp mx y)))))
 		         (* amp (<a class=quiet href="clm.html#contrast-enhancement">contrast-enhancement</a> (/ y amp) index)))))))
 </pre>
+This can also be used for automatic gain control -- see dsp.scm for the agc function.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -2785,7 +2786,7 @@ notes.
 
 <table bgcolor="aliceblue" border=0><tr>
 <td>
-<pre>see also: <a href="clm.html#envelopes" onmouseover="return escape('env and make-env: envelopes in CLM')">make-env</a> <a href="extsnd.html#envchannel" onmouseover="return escape('the main Snd enveloping function')">env-channel</a> <a href="snd.html#editenvelope" onmouseover="return escape('the envelope editor dialog')">Enved</a><br>
+<pre>see also: <a href="clm.html#envelopes" onmouseover="return escape('env and make-env: envelopes in CLM')">make-env</a> <a href="extsnd.html#envchannel" onmouseover="return escape('the main Snd enveloping function')">env-channel</a> <a href="snd.html#editenvelope" onmouseover="return escape('the envelope editor dialog')">Enved</a> <a href="#envexptchannel">env-expt-channel</a>
 </pre>
 </td></tr></table>
 
@@ -2848,7 +2849,7 @@ resource argument list is <i>args</i>.  The editor's current envelope is accessi
 
 <table bgcolor="aliceblue" border=0><tr>
 <td>
-<pre>see also: <a href="clm.html#envelopes" onmouseover="return escape('env and make-env: envelopes in CLM')">make-env</a> <a href="extsnd.html#envchannel" onmouseover="return escape('the main Snd enveloping function')">env-channel</a> <a href="snd.html#editenvelope" onmouseover="return escape('the envelope editor dialog')">Enved</a> <a href="#envdoc">functions</a>
+<pre>see also: <a href="clm.html#envelopes" onmouseover="return escape('env and make-env: envelopes in CLM')">make-env</a> <a href="extsnd.html#envchannel" onmouseover="return escape('the main Snd enveloping function')">env-channel</a> <a href="snd.html#editenvelope" onmouseover="return escape('the envelope editor dialog')">Enved</a> <a href="#envdoc">functions</a> <a href="#envexptchannel">env-expt-channel</a>
 </pre>
 </td></tr></table>
 
@@ -4137,7 +4138,7 @@ use env-expt-channel.  The <i>symmetric</i> argument determines whether the
 up and down moving ramps look symmetrical around a break point.
 
 <table border=0>
-<tr><td><img src="exptenvs.png" alt="exponential envelopes" hspace=10></td><td>
+<tr><td><img src="exptenvs.png" alt="exponential envelopes"></td><td>
 <pre>
 (env-channel '(0 0 1 1 2 -.75 3 0)) 
 (env-sound '(0 0 1 1 2 -.75 3 0) 0 100 32.0)  
@@ -9474,7 +9475,8 @@ changed it to play a list of sine tones generated on the fly (the changes are in
 	(let ((len <em class=red>22050</em>) ; <em class=red>play a one-second tone</em>
 	      (<em class=red>oscs (map make-oscil (map car freqs-and-amps))</em>)
 	      (<em class=red>amps (map cadr freqs-and-amps)</em>)
-	      (data (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> outchans size)))  ; the data buffer passed to the function (func above), then to mus-audio-write
+	      (data (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> outchans size)))  
+	      ;; the data buffer passed to the function (func above), then to mus-audio-write
 	  (set! (dac-size) outbytes)
 	  (do ((beg 0 (+ beg size)))
 	      ((or (c-g?)                   ; C-g to stop in mid-stream

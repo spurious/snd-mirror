@@ -42,22 +42,41 @@ typedef struct {
   bool dont_free;
 } vct;
 
-void vct_init(void);
-bool vct_p(XEN obj);
-XEN make_vct(int len, Float *data);
-XEN make_vct_wrapper(int len, Float *data);
-vct *xen_to_vct(XEN arg);
-void set_vct_print_length(int len);
+void mus_vct_init(void);
+bool mus_vct_p(XEN obj);
+int mus_vct_print_length(void);
+void mus_vct_set_print_length(int len);
 XEN mus_array_to_list(Float *arr, int i, int len);
-char *vct_to_string(vct *v);
-vct *c_make_vct(int len);
-vct *c_free_vct(vct *v);
-vct *c_vct_copy(vct *vc);
-bool vct_equalp(vct *v1, vct *v2);
-char *vct_to_readable_string(vct *v);
-XEN list_to_vct(XEN lst);
+char *mus_vct_to_string(vct *v);
+bool mus_vct_equalp(vct *v1, vct *v2);
+char *mus_vct_to_readable_string(vct *v);
+vct *mus_vct_make(int len);
+vct *mus_vct_free(vct *v);
+vct *mus_vct_copy(vct *vc);
+
+XEN xen_list_to_vct(XEN lst);
+vct *xen_to_vct(XEN arg);
+XEN xen_make_vct(int len, Float *data);
+XEN xen_make_vct_wrapper(int len, Float *data);
 
 #define XEN_TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
-#define VCT_P(arg) vct_p(arg)
+#define MUS_VCT_P(arg) mus_vct_p(arg)
+
+#ifndef SNDLIB_DISABLE_DEPRECATED
+#define vct_init() mus_vct_init()
+#define vct_p(Obj) mus_vct_p(Obj)
+#define set_vct_print_length(Len) mus_vct_set_print_length(Len)
+#define vct_to_string(Vct) mus_vct_to_string(Vct)
+#define vct_to_readable_string(Vct) mus_vct_to_readable_string(Vct)
+#define vct_equalp(V1, V2) mus_vct_equalp(V1, V2)
+#define list_to_vct(Lst) xen_list_to_vct(Lst)
+#define TO_VCT(Obj) XEN_TO_VCT(Obj)
+#define VCT_P(Obj) MUS_VCT_P(Obj)
+#define c_make_vct(Len) mus_vct_make(Len)
+#define c_free_vct(Vct) mus_vct_free(Vct)
+#define c_vct_copy(Vct) mus_vct_copy(Vct)
+#define make_vct(Len, Data) xen_make_vct(Len, Data)
+#define make_vct_wrapper(Len, Data) xen_make_vct_wrapper(Len, Data)
+#endif
 
 #endif

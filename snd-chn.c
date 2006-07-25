@@ -1556,9 +1556,9 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
     }
   sf = free_snd_fd(sf); 
   if (data1)
-    return(XEN_LIST_2(make_vct(data_size, data),
-		      make_vct(data_size, data1)));
-  else return(make_vct(data_size, data));
+    return(XEN_LIST_2(xen_make_vct(data_size, data),
+		      xen_make_vct(data_size, data1)));
+  else return(xen_make_vct(data_size, data));
 }
 
 void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size, 
@@ -6895,9 +6895,9 @@ If 'data' is a list of numbers, it is treated as an envelope."
   Locus o = 0, gx0 = 0;
   axis_info *uap = NULL;
   /* ldata can be a vct or a list of numbers or vcts */
-  XEN_ASSERT_TYPE(((VCT_P(ldata)) || 
+  XEN_ASSERT_TYPE(((MUS_VCT_P(ldata)) || 
 		   ((XEN_LIST_P(ldata)) && (XEN_LIST_LENGTH(ldata) > 0) && 
-		    ((XEN_NUMBER_P(XEN_CAR(ldata))) || (VCT_P(XEN_CAR(ldata)))))),
+		    ((XEN_NUMBER_P(XEN_CAR(ldata))) || (MUS_VCT_P(XEN_CAR(ldata)))))),
 		  ldata, XEN_ARG_1, S_graph, "a vct or a list");
   ASSERT_CHANNEL(S_graph, snd_n, chn_n, 7);
   cp = get_cp(snd_n, chn_n, S_graph);

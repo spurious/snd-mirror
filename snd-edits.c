@@ -8587,7 +8587,7 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
 	}
       else
 	{
-	  if (VCT_P(obj))
+	  if (MUS_VCT_P(obj))
 	    {
 	      vct *v;
 	      v = XEN_TO_VCT(obj);
@@ -8833,7 +8833,7 @@ static XEN g_vct_to_channel(XEN v, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN e
   #define H_vct_to_channel "(" S_vct_to_channel " vct (beg 0) (dur len) (snd #f) (chn #f) (edpos #f) (origin #f)): \
 set snd's channel chn's samples starting at beg for dur samps from vct data"
   char *caller;
-  XEN_ASSERT_TYPE(VCT_P(v), v, XEN_ARG_1, S_vct_to_channel, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(v), v, XEN_ARG_1, S_vct_to_channel, "a vct");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_7, S_vct_to_channel, "a string");
   if (XEN_NOT_BOUND_P(beg)) beg = XEN_ZERO;
   if (XEN_NOT_BOUND_P(dur)) 
@@ -8875,7 +8875,7 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edp
 	fvals[i] = read_sample_to_float(sf);
       free_snd_fd(sf);
     }
-  return(make_vct(len, fvals));
+  return(xen_make_vct(len, fvals));
 }
 
 static XEN g_channel_to_vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
@@ -9659,7 +9659,7 @@ If the hook returns a string, it is treated as the new temp filename.  This hook
 keep track of which files are in a given saved state batch, and a way to rename or redirect those files."
 
   save_state_hook = XEN_DEFINE_HOOK(S_save_state_hook, 1, H_save_state_hook);      /* arg = temp-filename */
-  empty_closure = make_vct(1, (Float *)CALLOC(1, sizeof(Float)));
+  empty_closure = xen_make_vct(1, (Float *)CALLOC(1, sizeof(Float)));
   XEN_PROTECT_FROM_GC(empty_closure);
 
   SND_TO_SAMPLE = mus_make_class_tag();

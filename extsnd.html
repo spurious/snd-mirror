@@ -4117,7 +4117,7 @@ We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix 
   (let* ((duration (<a class=quiet href="#mussoundduration">mus-sound-duration</a> file))
 	 (rd (<a class=quiet href="#makesamplereader">make-sample-reader</a> 0 file))
 	 (start (inexact-&gt;exact (round (* (<a class=quiet href="clm.html#mussrate">mus-srate</a>) start-time))))
-         (tmp-sound (<a class=quiet href="clm.html#soundlet">with-temp-sound</a> (:channels (<a class=quiet href="#channels">channels</a>) :srate (<a class=quiet href="#mussoundsrate">mus-sound-srate</a> file))
+         (tmp-sound (<a class=quiet href="clm.html#sound-let">with-temp-sound</a> (:channels (<a class=quiet href="#channels">channels</a>) :srate (<a class=quiet href="#mussoundsrate">mus-sound-srate</a> file))
 
          ;; We use with-temp-sound here rather than sound-let because mix normally expects its input file to
          ;; be around until it decides it doesn't need it anymore, but sound-let deletes all its temp files.

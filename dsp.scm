@@ -1935,6 +1935,21 @@ a running window of the last 'size' inputs, returning the maxamp in that window.
 	    (set! (mus-scaler gen) (vct-peak (mus-data gen)))))
     (mus-scaler gen)))
 
+#|
+;; perhaps also use average gen to avoid amplifying noise-sections (or even squlech them)
+(define* (agc :optional (ramp-speed .001) (window-size 512))
+  (let ((maxer (make-windowed-maxamp window-size))
+	(mult 1.0))
+    (map-channel
+     (lambda (y)
+       (let* ((curmax (windowed-maxamp maxer y))
+	      (diff (- 0.5 (* mult curmax)))
+	      (this-incr (* diff ramp-speed)))
+	 (set! mult (+ mult this-incr))
+	 (* y mult))))))
+|#
+	 
+
 
 ;;; ----------------
 ;;;
@@ -2061,4 +2076,30 @@ and replaces it with the spectrum given in coeffs"
 	(vct-set! im k (- ival))))
     (fft rl im -1)
     (vct->channel rl 0 len snd chn #f (format #f "automorph ~A ~A ~A ~A" a b c d))))
+|#
+
+
+#|
+(define factorial
+  (let* ((num-factorials 128)
+	 (factorials (let ((temp (make-vector num-factorials 0)))
+		       (vector-set! temp 0 1) ; is this correct?
+		       (vector-set! temp 1 1)
+		       temp)))
+    (lambda (n)
+      (if (> n num-factorials)
+	  (let ((old-num num-factorials)
+		(old-facts factorials))
+	    (set! num-factorials n)
+	    (set! factorials (make-vector num-factorials 0))
+	    (do ((i 0 (1+ i)))
+		((= i old-num))
+	      (vector-set! factorials i (vector-ref old-facts i)))))
+      (if (zero? (vector-ref factorials n))
+	  (vector-set! factorials n (* n (factorial (1- n)))))
+      (vector-ref factorials n))))
+
+(define (binomial n m)
+  (/ (factorial m)
+     (* (factorial n) (factorial (- m n)))))
 |#

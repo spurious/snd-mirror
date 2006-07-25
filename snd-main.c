@@ -1873,7 +1873,7 @@ static XEN g_set_print_length(XEN val)
   if (len < 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_print_length, XEN_ONLY_ARG, val, "must be >= 0");
   set_print_length(len);
-  set_vct_print_length(len);
+  mus_vct_set_print_length(len);
   return(C_TO_XEN_INT(print_length(ss)));
 }
 

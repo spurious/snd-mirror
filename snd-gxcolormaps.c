@@ -175,7 +175,7 @@ static Float **make_xen_colormap(int size, XEN lambda)
       int i, gc_loc;
       /* user-defined colormap func returns a list of 3 vcts (r g b) */
       gc_loc = snd_protect(xrgb);
-      if (!(vct_p(XEN_LIST_REF(xrgb, 0)))) 
+      if (!(mus_vct_p(XEN_LIST_REF(xrgb, 0)))) 
 	XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
 		  XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
 			     C_TO_XEN_STRING("function did not return a list of vcts!"),

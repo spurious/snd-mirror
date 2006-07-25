@@ -192,7 +192,7 @@ vct *mus_optkey_to_vct(XEN key, const char *caller, int n, vct *def)
 {
   if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
     {
-      XEN_ASSERT_TYPE(VCT_P(key), key, n, caller, "a vct");
+      XEN_ASSERT_TYPE(MUS_VCT_P(key), key, n, caller, "a vct");
       return(XEN_TO_VCT(key));
     }
   return(def);
@@ -488,8 +488,8 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
   #define H_dot_product "(" S_dot_product " v1 v2 (size)): sum of (vcts) v1[i] * v2[i] (also named scalar product)"
   vct *v1, *v2;
   int len;  
-  XEN_ASSERT_TYPE(VCT_P(val1), val1, XEN_ARG_1, S_dot_product, "a vct");
-  XEN_ASSERT_TYPE(VCT_P(val2), val2, XEN_ARG_2, S_dot_product, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(val1), val1, XEN_ARG_1, S_dot_product, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(val2), val2, XEN_ARG_2, S_dot_product, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_3, S_dot_product, "an integer");
   v1 = XEN_TO_VCT(val1);
   v2 = XEN_TO_VCT(val2);
@@ -519,10 +519,10 @@ static XEN g_edot_product(XEN val1, XEN val2)
   complex double *vals;
   XEN result;
   XEN_ASSERT_TYPE(XEN_COMPLEX_P(val1), val1, XEN_ARG_1, S_edot_product, "complex");
-  XEN_ASSERT_TYPE((VCT_P(val2)) || (XEN_VECTOR_P(val2)), val2, XEN_ARG_2, S_edot_product, "a vct");
+  XEN_ASSERT_TYPE((MUS_VCT_P(val2)) || (XEN_VECTOR_P(val2)), val2, XEN_ARG_2, S_edot_product, "a vct");
   freq = XEN_TO_C_COMPLEX(val1);
 
-  if (VCT_P(val2))
+  if (MUS_VCT_P(val2))
     {
       v = XEN_TO_VCT(val2);
       len = v->length;
@@ -532,7 +532,7 @@ static XEN g_edot_product(XEN val1, XEN val2)
       len = XEN_VECTOR_LENGTH(val2);
     }
   vals = (complex double *)CALLOC(len, sizeof(complex double));
-  if (VCT_P(val2))
+  if (MUS_VCT_P(val2))
     {
       for (i = 0; i < len; i++)
 	vals[i] = v->data[i];
@@ -554,8 +554,8 @@ static XEN g_sine_bank(XEN amps, XEN phases, XEN size)
   #define H_sine_bank "(" S_sine_bank " amps phases (size)): sum of amps[i] * sin(phases[i])"
   vct *v1, *v2;
   int len;
-  XEN_ASSERT_TYPE(VCT_P(amps), amps, XEN_ARG_1, S_sine_bank, "a vct");
-  XEN_ASSERT_TYPE(VCT_P(phases), phases, XEN_ARG_2, S_sine_bank, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(amps), amps, XEN_ARG_1, S_sine_bank, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(phases), phases, XEN_ARG_2, S_sine_bank, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_3, S_sine_bank, "an integer");
   v1 = XEN_TO_VCT(amps);
   v2 = XEN_TO_VCT(phases);
@@ -580,8 +580,8 @@ static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, co
 {
   vct *v1, *v2;
   int len;
-  XEN_ASSERT_TYPE(VCT_P(val1), val1, XEN_ARG_1, caller, "a vct");
-  XEN_ASSERT_TYPE(VCT_P(val2), val2, XEN_ARG_2, caller, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(val1), val1, XEN_ARG_1, caller, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(val2), val2, XEN_ARG_2, caller, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ulen), ulen, XEN_ARG_3, caller, "an integer");
   v1 = XEN_TO_VCT(val1);
   v2 = XEN_TO_VCT(val2);
@@ -634,8 +634,8 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
   int sign, n, np;
   Float nf;
   vct *v1, *v2;
-  XEN_ASSERT_TYPE((VCT_P(url)), url, XEN_ARG_1, S_mus_fft, "a vct");
-  XEN_ASSERT_TYPE((VCT_P(uim)), uim, XEN_ARG_2, S_mus_fft, "a vct");
+  XEN_ASSERT_TYPE((MUS_VCT_P(url)), url, XEN_ARG_1, S_mus_fft, "a vct");
+  XEN_ASSERT_TYPE((MUS_VCT_P(uim)), uim, XEN_ARG_2, S_mus_fft, "a vct");
   v1 = XEN_TO_VCT(url);
   v2 = XEN_TO_VCT(uim);
   if (XEN_INTEGER_P(usign)) sign = XEN_TO_C_INT(usign); else sign = 1;
@@ -687,7 +687,7 @@ is the window family parameter, if any:\n\
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 1, type, "~A: unknown fft window");
   data = (Float *)CALLOC(n, sizeof(Float));
   mus_make_fft_window_with_window(t, n, beta, alpha, data);
-  return(make_vct(n, data));
+  return(xen_make_vct(n, data));
 }
 
 static XEN g_spectrum(XEN url, XEN uim, XEN uwin, XEN utype)
@@ -702,9 +702,9 @@ and type determines how the spectral data is scaled:\n\
 
   int n, type;
   vct *v1, *v2, *v3 = NULL;
-  XEN_ASSERT_TYPE((VCT_P(url)), url, XEN_ARG_1, S_spectrum, "a vct");
-  XEN_ASSERT_TYPE((VCT_P(uim)), uim, XEN_ARG_2, S_spectrum, "a vct");
-  if (XEN_NOT_FALSE_P(uwin)) XEN_ASSERT_TYPE((VCT_P(uwin)), uwin, XEN_ARG_3, S_spectrum, "a vct or #f");
+  XEN_ASSERT_TYPE((MUS_VCT_P(url)), url, XEN_ARG_1, S_spectrum, "a vct");
+  XEN_ASSERT_TYPE((MUS_VCT_P(uim)), uim, XEN_ARG_2, S_spectrum, "a vct");
+  if (XEN_NOT_FALSE_P(uwin)) XEN_ASSERT_TYPE((MUS_VCT_P(uwin)), uwin, XEN_ARG_3, S_spectrum, "a vct or #f");
   v1 = XEN_TO_VCT(url);
   v2 = XEN_TO_VCT(uim);
   if (XEN_NOT_FALSE_P(uwin)) v3 = XEN_TO_VCT(uwin);
@@ -735,8 +735,8 @@ of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
 
   int n;
   vct *v1, *v2;
-  XEN_ASSERT_TYPE((VCT_P(url1)), url1, XEN_ARG_1, S_convolution, "a vct");
-  XEN_ASSERT_TYPE((VCT_P(url2)), url2, XEN_ARG_2, S_convolution, "a vct");
+  XEN_ASSERT_TYPE((MUS_VCT_P(url1)), url1, XEN_ARG_1, S_convolution, "a vct");
+  XEN_ASSERT_TYPE((MUS_VCT_P(url2)), url2, XEN_ARG_2, S_convolution, "a vct");
   v1 = XEN_TO_VCT(url1);
   v2 = XEN_TO_VCT(url2);
   if (XEN_INTEGER_P(un)) 
@@ -768,7 +768,7 @@ static XEN g_clear_array(XEN arr)
 {
   #define H_clear_array "(" S_clear_array " v): clear vct v: v[i] = 0.0"
   vct *v;
-  XEN_ASSERT_TYPE(VCT_P(arr), arr, XEN_ONLY_ARG, S_clear_array, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(arr), arr, XEN_ONLY_ARG, S_clear_array, "a vct");
   v = XEN_TO_VCT(arr);
   mus_clear_array(v->data, v->length);
   return(xen_return_first(arr));
@@ -779,7 +779,7 @@ static XEN g_polynomial(XEN arr, XEN x)
   #define H_polynomial "(" S_polynomial " coeffs x): evaluate a polynomial at x.  coeffs are in order \
 of degree, so coeff[0] is the constant term."
   vct *v;
-  XEN_ASSERT_TYPE(VCT_P(arr), arr, XEN_ARG_1, S_polynomial, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(arr), arr, XEN_ARG_1, S_polynomial, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_polynomial, "a number");
   v = XEN_TO_VCT(arr);
   return(xen_return_first(C_TO_XEN_DOUBLE(mus_polynomial(v->data, XEN_TO_C_DOUBLE(x), v->length)), arr));
@@ -792,7 +792,7 @@ taking into account wrap-around (size is size of data), with linear interpolatio
 
   int len;
   vct *v;
-  XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_array_interp, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_array_interp, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(phase), phase, XEN_ARG_2, S_array_interp, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_3, S_array_interp, "an integer");
   v = XEN_TO_VCT(obj);
@@ -818,7 +818,7 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
   Float y = 0.0;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, S_mus_interpolate, "an integer (interp type such as " S_mus_interp_all_pass ")");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_mus_interpolate, "a number");
-  XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_3, S_mus_interpolate, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_3, S_mus_interpolate, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_4, S_mus_interpolate, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(yn1), yn1, XEN_ARG_5, S_mus_interpolate, "a number");
   itype = (mus_interp_t)XEN_TO_C_INT(type);
@@ -1177,7 +1177,7 @@ static XEN g_mus_set_data(XEN gen, XEN val)
 {
   mus_xen *ms;
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_data, "a generator");
-  XEN_ASSERT_TYPE((VCT_P(val)), val, XEN_ARG_2, S_setB S_mus_data, "a vct");
+  XEN_ASSERT_TYPE((MUS_VCT_P(val)), val, XEN_ARG_2, S_setB S_mus_data, "a vct");
   ms = XEN_TO_MUS_XEN(gen);
   if (ms->vcts)
     {
@@ -1459,7 +1459,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 				   orig_arg[initial_contents_key], 
 				   keys[initial_contents_key], 
 				   "initial-contents and initial-element in same call?");
-	  if (VCT_P(keys[initial_contents_key]))
+	  if (MUS_VCT_P(keys[initial_contents_key]))
 	    {
 	      initial_contents = XEN_TO_VCT(keys[initial_contents_key]);
 	      orig_v = keys[initial_contents_key];
@@ -1472,7 +1472,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 		    XEN_ERROR(NO_DATA,
 			      XEN_LIST_2(C_TO_XEN_STRING(caller), 
 					 C_TO_XEN_STRING("initial-contents list empty?")));
-		  orig_v = list_to_vct(keys[initial_contents_key]);
+		  orig_v = xen_list_to_vct(keys[initial_contents_key]);
 		  initial_contents = XEN_TO_VCT(orig_v);
 		  /* do I need to protect this until we read its contents? -- no extlang stuff except error returns */
 		}
@@ -1518,7 +1518,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
       line = (Float *)CALLOC(max_size, sizeof(Float));
       if (line == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line"));
-      orig_v = make_vct(max_size, line);
+      orig_v = xen_make_vct(max_size, line);
       if (initial_element != 0.0) 
 	for (i = 0; i < max_size; i++) 
 	  line[i] = initial_element;
@@ -1964,14 +1964,14 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
 	  if (!(XEN_KEYWORD_P(keys[3])))
 	    clm_error(caller, ":envelope and :distribution in same call?", keys[3]);
 	  distribution = inverse_integrate(keys[2], distribution_size);
-	  orig_v = make_vct(distribution_size, distribution);
+	  orig_v = xen_make_vct(distribution_size, distribution);
 	}
       else
 	{
 	  if (!(XEN_KEYWORD_P(keys[3]))) /* i.e. distribution arg was specified */
 	    {
-	      XEN_ASSERT_TYPE(VCT_P(keys[3]) || XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], caller, "a vct");
-	      if (VCT_P(keys[3]))
+	      XEN_ASSERT_TYPE(MUS_VCT_P(keys[3]) || XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], caller, "a vct");
+	      if (MUS_VCT_P(keys[3]))
 		{
 		  orig_v = keys[3];
 		  v = mus_optkey_to_vct(orig_v, caller, orig_arg[3], NULL);
@@ -1995,7 +1995,7 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
     }
   if (ge)
     {
-      if (VCT_P(orig_v))
+      if (MUS_VCT_P(orig_v))
 	return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
       return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
     }
@@ -2119,7 +2119,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   Float *partial_data;
   int len = 0, i;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(partials, len), partials, XEN_ARG_1, S_partials_to_wave, "a list");
-  XEN_ASSERT_TYPE(VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_partials_to_wave, "a vct or #f");
+  XEN_ASSERT_TYPE(MUS_VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_partials_to_wave, "a vct or #f");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, XEN_ARG_3, S_partials_to_wave, "a boolean");
   if (len == 0)
     XEN_ERROR(NO_DATA, 
@@ -2133,13 +2133,13 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
 			 partials));
   if (!(XEN_NUMBER_P(XEN_CAR(partials))))
     XEN_ASSERT_TYPE(false, partials, XEN_ARG_1, S_partials_to_wave, "a list of numbers (partial numbers with amplitudes)");
-  if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
+  if ((XEN_NOT_BOUND_P(utable)) || (!(MUS_VCT_P(utable))))
     {
       Float *wave;
       wave = (Float *)CALLOC(clm_table_size, sizeof(Float));
       if (wave == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table"));
-      table = make_vct(clm_table_size, wave);
+      table = xen_make_vct(clm_table_size, wave);
     }
   else table = utable;
   f = XEN_TO_VCT(table);
@@ -2167,7 +2167,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   (set! gen (" S_make_table_lookup " 440.0 :wave (" S_phase_partials_to_wave " (list 1 .75 0.0 2 .25 (* pi .5)))))"
 
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(partials, len), partials, XEN_ARG_1, S_phase_partials_to_wave, "a list");
-  XEN_ASSERT_TYPE(VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_phase_partials_to_wave, "a vct or #f");
+  XEN_ASSERT_TYPE(MUS_VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_phase_partials_to_wave, "a vct or #f");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, XEN_ARG_3, S_phase_partials_to_wave, "a boolean");
   if (len == 0)
     XEN_ERROR(NO_DATA,
@@ -2181,12 +2181,12 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
 			 partials));
   if (!(XEN_NUMBER_P(XEN_CAR(partials))))
     XEN_ASSERT_TYPE(false, partials, XEN_ARG_1, S_phase_partials_to_wave, "a list of numbers (partial numbers with amplitudes and phases)");
-  if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
+  if ((XEN_NOT_BOUND_P(utable)) || (!(MUS_VCT_P(utable))))
     {
       wave = (Float *)CALLOC(clm_table_size, sizeof(Float));
       if (wave == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table"));
-      table = make_vct(clm_table_size, wave);
+      table = xen_make_vct(clm_table_size, wave);
     }
   else table = utable;
   f = XEN_TO_VCT(table);
@@ -2258,12 +2258,12 @@ is the same in effect as " S_make_oscil "."
       if (!(MUS_INTERP_TYPE_OK(type)))
 	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[4], keys[4], "no such interp-type: ~A");
     }
-  if (!(VCT_P(orig_v)))
+  if (!(MUS_VCT_P(orig_v)))
     {
       table = (Float *)CALLOC(table_size, sizeof(Float));
       if (table == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate table-lookup table"));
-      orig_v = make_vct(table_size, table);
+      orig_v = xen_make_vct(table_size, table);
     }
   ge = mus_make_table_lookup(freq, phase, table, table_size, type);
   return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
@@ -2712,7 +2712,7 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
   Float *scls = NULL;
   mus_any **gs;
   XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_2, S_formant_bank, "a vector of formant generators");
-  XEN_ASSERT_TYPE(VCT_P(amps), amps, XEN_ARG_1, S_formant_bank, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(amps), amps, XEN_ARG_1, S_formant_bank, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(inp), inp, XEN_ARG_3, S_formant_bank, "a number");
   size = XEN_VECTOR_LENGTH(gens);
   if (size == 0) return(XEN_ZERO);
@@ -2803,7 +2803,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 		XEN_WRONG_TYPE_ARG_ERROR(S_make_frame, i, XEN_CAR(lst), "a number");
 	      }
 	}
-      return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, make_vct_wrapper(mus_length(ge), mus_data(ge)))));
+      return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct_wrapper(mus_length(ge), mus_data(ge)))));
     }
   return(xen_return_first(XEN_FALSE, arglist));
 }
@@ -2846,7 +2846,7 @@ if outf is not given, a new frame is created. outf[i] = f1[i] + f2[i].  Either f
 
   if (res)
     return(ures);
-  return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(nf, make_vct_wrapper(mus_length(nf), mus_data(nf)))));
+  return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(nf, xen_make_vct_wrapper(mus_length(nf), mus_data(nf)))));
 }
 
 static XEN g_frame_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
@@ -2880,7 +2880,7 @@ if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
     }
   if (res)
     return(ures);
-  return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(nf, make_vct_wrapper(mus_length(nf), mus_data(nf)))));
+  return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(nf, xen_make_vct_wrapper(mus_length(nf), mus_data(nf)))));
 }
 
 static XEN g_frame_ref(XEN uf1, XEN uchan)
@@ -3079,7 +3079,7 @@ returning frame outf (creating it if necessary)"
   nf = mus_sample_to_frame(XEN_TO_MUS_ANY(mx), XEN_TO_C_DOUBLE(insp), res);
   if (res)
     return(outfr);
-  return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(nf, make_vct_wrapper(mus_length(nf), mus_data(nf)))));
+  return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(nf, xen_make_vct_wrapper(mus_length(nf), mus_data(nf)))));
 }
 
 static XEN g_make_scalar_mixer(XEN chans, XEN val)
@@ -3226,7 +3226,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
       wave = (Float *)CALLOC(wsize, sizeof(Float));
       if (wave == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave-train table"));
-      orig_v = make_vct(wsize, wave);
+      orig_v = xen_make_vct(wsize, wave);
     }
   ge = mus_make_wave_train(freq, phase, wave, wsize, type);
   return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
@@ -3345,7 +3345,7 @@ is the same in effect as " S_make_oscil
 	  wave = mus_partials_to_waveshape(2, data, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
 	}
       else wave = mus_partials_to_waveshape(npartials, partials, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
-      orig_v = make_vct(wsize, wave);
+      orig_v = xen_make_vct(wsize, wave);
     }
   if (partials_allocated) {FREE(partials); partials = NULL;}
   ge = mus_make_waveshape(freq, 0.0, wave, wsize);
@@ -3400,7 +3400,7 @@ returns partial 2 twice as loud as 3."
     XEN_ASSERT_TYPE(false, amps, XEN_ARG_1, S_partials_to_waveshape, "a list of numbers (partial numbers with amplitudes)");
   partials = list_to_partials(amps, &npartials);
   wave = mus_partials_to_waveshape(npartials, partials, size, (Float *)CALLOC(size, sizeof(Float)));
-  gwave = make_vct(size, wave);
+  gwave = xen_make_vct(size, wave);
   FREE(partials);
   return(xen_return_first(gwave, amps));
 }
@@ -3441,7 +3441,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
     XEN_ASSERT_TYPE(false, amps, XEN_ARG_1, S_partials_to_polynomial, "a list of numbers (partial numbers with amplitudes)");
   partials = list_to_partials(amps, &npartials);
   wave = mus_partials_to_polynomial(npartials, partials, kind);
-  return(xen_return_first(make_vct(npartials, wave), amps));
+  return(xen_return_first(xen_make_vct(npartials, wave), amps));
 }
 
 
@@ -3537,7 +3537,7 @@ is the same in effect as " S_make_oscil
 	      coeffs = mus_partials_to_polynomial(2, data, kind);
 	      csize = 2;
 	    }
-	  orig_v = make_vct(csize, coeffs);
+	  orig_v = xen_make_vct(csize, coeffs);
 	}
     }
   ge = mus_make_polyshape(freq, phase, coeffs, csize);
@@ -3621,7 +3621,7 @@ static XEN g_make_fir_coeffs(XEN order, XEN envl)
   Float *a;
   vct *v;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), order, XEN_ARG_1, S_make_fir_coeffs, "int");
-  XEN_ASSERT_TYPE(VCT_P(envl), envl, XEN_ARG_2, S_make_fir_coeffs, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(envl), envl, XEN_ARG_2, S_make_fir_coeffs, "a vct");
   v = XEN_TO_VCT(envl);
   size = XEN_TO_C_INT(order);
   if (size != v->length)
@@ -3630,7 +3630,7 @@ static XEN g_make_fir_coeffs(XEN order, XEN envl)
 			 C_TO_XEN_STRING("order (~A) != vct length (~A)"),
 			 XEN_LIST_2(order, envl)));
   a = mus_make_fir_coeffs(XEN_TO_C_INT(order), v->data, NULL);
-  return(xen_return_first(make_vct(v->length, a), envl));
+  return(xen_return_first(xen_make_vct(v->length, a), envl));
 }
 
 static XEN g_filter_p(XEN obj) 
@@ -3703,7 +3703,7 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
 	}
       if (!(XEN_KEYWORD_P(keys[1])))
         {
-	  XEN_ASSERT_TYPE(VCT_P(keys[1]), keys[1], orig_arg[1], caller, "a vct");
+	  XEN_ASSERT_TYPE(MUS_VCT_P(keys[1]), keys[1], orig_arg[1], caller, "a vct");
 	  if (choice == G_IIR_FILTER)
 	    {
 	      ywave = keys[1];
@@ -3717,7 +3717,7 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
         }
       if (!(XEN_KEYWORD_P(keys[2])))
 	{
-	  XEN_ASSERT_TYPE(VCT_P(keys[2]), keys[2], orig_arg[2], caller, "a vct");
+	  XEN_ASSERT_TYPE(MUS_VCT_P(keys[2]), keys[2], orig_arg[2], caller, "a vct");
 	  ywave = keys[2];
 	  y = XEN_TO_VCT(ywave);
 	}
@@ -3790,7 +3790,7 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
       gn->gen = fgen;                                    /* delay gn allocation since make_filter can throw an error */
       gn->nvcts = 3;
       gn->vcts = make_vcts(gn->nvcts);
-      gn->vcts[G_FILTER_STATE] = make_vct_wrapper(order, mus_data(fgen));
+      gn->vcts[G_FILTER_STATE] = xen_make_vct_wrapper(order, mus_data(fgen));
       gn->vcts[G_FILTER_XCOEFFS] = xwave;
       gn->vcts[G_FILTER_YCOEFFS] = ywave;
       return(mus_xen_to_object(gn));
@@ -3936,7 +3936,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   ge = mus_make_env(brkpts, npts, scaler, offset, base, duration, start, end, odata);
   mus_error_set_handler(old_error_handler);
   FREE(brkpts);
-  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, make_vct(mus_env_breakpoints(ge) * 2, odata))));
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct(mus_env_breakpoints(ge) * 2, odata))));
   FREE(odata);
   return(clm_mus_error(local_error_type, local_error_msg));
 }
@@ -4208,7 +4208,7 @@ static XEN g_file_to_frame(XEN obj, XEN samp, XEN outfr)
   nf = mus_file_to_frame(XEN_TO_MUS_ANY(obj), XEN_TO_C_OFF_T_OR_ELSE(samp, 0), res);
   if (res)
     return(outfr);
-  return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(nf, make_vct_wrapper(mus_length(nf), mus_data(nf)))));
+  return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(nf, xen_make_vct_wrapper(mus_length(nf), mus_data(nf)))));
 }
 
 static XEN g_make_frame_to_file(XEN name, XEN chans, XEN out_format, XEN out_type, XEN comment)
@@ -4547,10 +4547,10 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	  gn->nvcts = 2;
 	  gn->vcts = make_vcts(gn->nvcts);
 	  if (out_chans > 0)
-	    gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(out_chans, mus_data((mus_any *)ge)); /* G_FILTER_STATE = MUS_DATA WRAPPER */
+	    gn->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(out_chans, mus_data((mus_any *)ge)); /* G_FILTER_STATE = MUS_DATA WRAPPER */
 	  else gn->vcts[MUS_DATA_WRAPPER] = XEN_UNDEFINED;
 	  if ((revp) && (mus_channels(revp) > 0))
-	    gn->vcts[G_FILTER_XCOEFFS] = make_vct_wrapper(mus_channels(revp), mus_xcoeffs((mus_any *)ge));
+	    gn->vcts[G_FILTER_XCOEFFS] = xen_make_vct_wrapper(mus_channels(revp), mus_xcoeffs((mus_any *)ge));
 	  else gn->vcts[G_FILTER_XCOEFFS] = XEN_UNDEFINED;
 	}
       else 
@@ -4974,7 +4974,7 @@ The edit function, if any, should return the length in samples of the grain, or 
     {
       gn->nvcts = MUS_MAX_VCTS;
       gn->vcts = make_vcts(gn->nvcts);
-      gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(mus_granulate_grain_max_length(ge), mus_data(ge));
+      gn->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_granulate_grain_max_length(ge), mus_data(ge));
       gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
       gn->vcts[MUS_EDIT_FUNCTION] = edit_obj;
       gn->gen = ge;
@@ -5294,7 +5294,7 @@ static XEN g_phase_vocoder_amps(XEN pv)
   gn = XEN_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_amps(gn->gen); 
   len = (int)mus_length(gn->gen);
-  return(make_vct_wrapper(len / 2, amps));
+  return(xen_make_vct_wrapper(len / 2, amps));
 }
   
 static XEN g_phase_vocoder_freqs(XEN pv) 
@@ -5307,7 +5307,7 @@ static XEN g_phase_vocoder_freqs(XEN pv)
   gn = XEN_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_freqs(gn->gen); 
   len = (int)mus_length(gn->gen);
-  return(make_vct_wrapper(len, amps));
+  return(xen_make_vct_wrapper(len, amps));
 }
   
 static XEN g_phase_vocoder_phases(XEN pv) 
@@ -5320,7 +5320,7 @@ static XEN g_phase_vocoder_phases(XEN pv)
   gn = XEN_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_phases(gn->gen); 
   len = (int)mus_length(gn->gen);
-  return(make_vct_wrapper(len / 2, amps));
+  return(xen_make_vct_wrapper(len / 2, amps));
 }
   
 static XEN g_phase_vocoder_amp_increments(XEN pv) 
@@ -5333,7 +5333,7 @@ static XEN g_phase_vocoder_amp_increments(XEN pv)
   gn = XEN_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_amp_increments(gn->gen); 
   len = (int)mus_length(gn->gen);
-  return(make_vct_wrapper(len, amps));
+  return(xen_make_vct_wrapper(len, amps));
 }
   
 static XEN g_phase_vocoder_phase_increments(XEN pv) 
@@ -5346,7 +5346,7 @@ static XEN g_phase_vocoder_phase_increments(XEN pv)
   gn = XEN_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_phase_increments(gn->gen); 
   len = (int)mus_length(gn->gen);
-  return(make_vct_wrapper(len / 2, amps));
+  return(xen_make_vct_wrapper(len / 2, amps));
 }
   
 static XEN g_phase_vocoder_outctr(XEN obj)
@@ -6954,6 +6954,6 @@ void mus_xen_init(void)
 void Init_sndlib(void)
 {
   mus_sndlib_xen_initialize();
-  vct_init();
+  mus_vct_init();
   mus_xen_init();
 }

@@ -1658,7 +1658,7 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
       region_samples(reg, chn, beg, len, data);
       if (v1)
 	return(v);
-      else return(make_vct(len, data));
+      else return(xen_make_vct(len, data));
     }
   return(XEN_FALSE);
 }

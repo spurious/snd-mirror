@@ -864,11 +864,11 @@ void amp_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
       if (XEN_PROCEDURE_P(init_func))
 	{
 	  /* probably faster to copy locally than protect from GC */
-	  vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
+	  vlo = mus_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
 							     C_TO_XEN_OFF_T(0),
 							     C_TO_XEN_OFF_T(new_ep->amp_env_size),
 							     S_ptree_channel " init func"))));
-	  vhi = c_vct_copy(vlo);
+	  vhi = mus_vct_copy(vlo);
 	}
       for (i = 0; i < new_ep->amp_env_size; i++) 
 	{
@@ -895,8 +895,8 @@ void amp_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
 	  if (new_ep->data_min[i] < fmin) fmin = new_ep->data_min[i];
 	  if (new_ep->data_max[i] > fmax) fmax = new_ep->data_max[i];
 	}
-      if (vlo) c_free_vct(vlo);
-      if (vhi) c_free_vct(vhi);
+      if (vlo) mus_vct_free(vlo);
+      if (vhi) mus_vct_free(vhi);
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
       new_ep->completed = true;
@@ -948,11 +948,11 @@ void amp_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t n
 		    {
 		      if (!inited)
 			{
-			  vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
+			  vlo = mus_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
 									     C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
 									     C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
 									     S_ptree_channel " init func"))));
-			  vhi = c_vct_copy(vlo);
+			  vhi = mus_vct_copy(vlo);
 			  inited = true;
 			}
 		      dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i]), vlo, true));
@@ -979,8 +979,8 @@ void amp_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t n
 	  if (fmin > new_ep->data_min[i]) fmin = new_ep->data_min[i];
 	  if (fmax < new_ep->data_max[i]) fmax = new_ep->data_max[i];
 	}
-      if (vlo) c_free_vct(vlo);
-      if (vhi) c_free_vct(vhi);
+      if (vlo) mus_vct_free(vlo);
+      if (vhi) mus_vct_free(vhi);
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
       new_ep->completed = true;
@@ -2260,7 +2260,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, const char *caller)
 	  data = sample_linear_env(sp->filter_control_envelope, len);
 	  mus_make_fir_coeffs(len, data, coeffs);
 	  FREE(data);
-	  return(make_vct(len, coeffs));
+	  return(xen_make_vct(len, coeffs));
 	}
       break;
     case SP_FILTER_ENVELOPE:
@@ -4497,8 +4497,8 @@ static XEN g_env_info_to_vcts(env_info *ep, int len)
   if ((len == 0) || (len > ep->amp_env_size))
     lim = ep->amp_env_size;
   else lim = len;
-  res = XEN_LIST_2(make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))),
-		   make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))));
+  res = XEN_LIST_2(xen_make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))),
+		   xen_make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))));
   loc = snd_protect(res);
   vmin = xen_to_vct(XEN_CAR(res));
   vmax = xen_to_vct(XEN_CADR(res));
@@ -4966,7 +4966,7 @@ static XEN g_vct_to_sound_file(XEN g_fd, XEN obj, XEN g_nums)
   off_t err;
   vct *v = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(g_fd), g_fd, XEN_ARG_1, S_vct_to_sound_file, "an integer");
-  XEN_ASSERT_TYPE((VCT_P(obj)), obj, XEN_ARG_2, S_vct_to_sound_file, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_2, S_vct_to_sound_file, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(g_nums), g_nums, XEN_ARG_3, S_vct_to_sound_file, "a number");
   fd = XEN_TO_C_INT(g_fd);
   if ((fd < 0) || (fd == fileno(stdin)) || (fd == fileno(stdout)) || (fd == fileno(stderr)))

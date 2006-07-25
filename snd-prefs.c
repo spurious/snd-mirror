@@ -1604,7 +1604,7 @@ static void sinc_width_text(prefs_info *prf)
 
 static int rts_print_length = DEFAULT_PRINT_LENGTH;
 static void reflect_print_length(prefs_info *prf) {int_to_textfield(prf->text, print_length(ss));}
-static void revert_print_length(prefs_info *prf) {set_print_length(rts_print_length); set_vct_print_length(rts_print_length);}
+static void revert_print_length(prefs_info *prf) {set_print_length(rts_print_length); mus_vct_set_print_length(rts_print_length);}
 static void save_print_length(prefs_info *prf, FILE *ignore) {rts_print_length = print_length(ss);}
 
 static void print_length_text(prefs_info *prf)
@@ -1616,7 +1616,7 @@ static void print_length_text(prefs_info *prf)
       int value = 0;
       sscanf(str, "%d", &value);
       set_print_length(value);
-      set_vct_print_length(value);
+      mus_vct_set_print_length(value);
       /* the clm array print length variable will be taken care of when ww.scm is loaded in the new context */
       FREE_TEXT(str);
     }

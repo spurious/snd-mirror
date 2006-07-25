@@ -1720,7 +1720,7 @@ static void *pfilter_direct_run(void *context)
 	  v = (vct *)CALLOC(1, sizeof(vct));
 	  v->length = order;
 	  v->data = arg->precalculated_coeffs;
-	  vstr = vct_to_readable_string(v);
+	  vstr = mus_vct_to_readable_string(v);
 #if HAVE_FORTH
 	  if (arg->dur == (order + CURRENT_SAMPLES(cp)))
 	    arg->new_origin = mus_format("%s %d " OFF_TD PROC_SEP PROC_FALSE " %s", vstr, order, beg, S_filter_channel);
@@ -1733,7 +1733,7 @@ static void *pfilter_direct_run(void *context)
 				       TO_PROC_NAME(S_filter_channel), vstr, order, beg, arg->dur);
 #endif
 	  if (vstr) FREE(vstr);
-	  FREE(v); /* not c_free_vct because we don't own the data array */
+	  FREE(v); /* not mus_vct_free because we don't own the data array */
 	}
       else
 	{
@@ -1960,7 +1960,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
 	  v = (vct *)CALLOC(1, sizeof(vct));
 	  v->length = order;
 	  v->data = precalculated_coeffs;
-	  vstr = vct_to_readable_string(v);
+	  vstr = mus_vct_to_readable_string(v);
 #if HAVE_FORTH
 	  if (dur == (order + CURRENT_SAMPLES(cp)))
 	    new_origin = mus_format("%s %d " OFF_TD PROC_SEP PROC_FALSE " %s", vstr, order, beg, S_filter_channel);
@@ -1973,7 +1973,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
 				       TO_PROC_NAME(S_filter_channel), vstr, order, beg, dur);
 #endif
 	  if (vstr) FREE(vstr);
-	  FREE(v); /* not c_free_vct because we don't own the data array */
+	  FREE(v); /* not mus_vct_free because we don't own the data array */
 	}
       else
 	{
@@ -3475,7 +3475,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			break;
 		      else
 			{
-			  if (VCT_P(res))
+			  if (MUS_VCT_P(res))
 			    {
 			      vct *v;
 			      v = XEN_TO_VCT(res);
@@ -3568,7 +3568,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			break;
 		      else
 			{
-			  if (VCT_P(res))
+			  if (MUS_VCT_P(res))
 			    {
 			      vct *v;
 			      v = XEN_TO_VCT(res);
@@ -4375,7 +4375,7 @@ static Float *load_Floats(XEN scalers, int *result_len, const char *caller)
     len = 1;
   else
     {
-      if (VCT_P(scalers))
+      if (MUS_VCT_P(scalers))
 	{
 	  v = XEN_TO_VCT(scalers);
 	  len = v->length;
@@ -4801,8 +4801,8 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
   bool need_free = false;
   Float *rl = NULL, *im = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sign), sign, XEN_ARG_3, S_fft, "an integer");
-  XEN_ASSERT_TYPE(VCT_P(reals), reals, XEN_ARG_1, S_fft, "vct");
-  XEN_ASSERT_TYPE(VCT_P(imag), imag, XEN_ARG_2, S_fft, "vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(reals), reals, XEN_ARG_1, S_fft, "vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(imag), imag, XEN_ARG_2, S_fft, "vct");
   isign = XEN_TO_C_INT_OR_ELSE(sign, 1);
   v1 = (vct *)XEN_OBJECT_REF(reals);
   v2 = (vct *)XEN_OBJECT_REF(imag);
@@ -4848,7 +4848,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   Float maxa, lowest, b = 0.0;
   Float *idat, *rdat, *window;
   vct *v;
-  XEN_ASSERT_TYPE((VCT_P(data)), data, XEN_ARG_1, S_snd_spectrum, "a vct");
+  XEN_ASSERT_TYPE((MUS_VCT_P(data)), data, XEN_ARG_1, S_snd_spectrum, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(win), win, XEN_ARG_2, S_snd_spectrum, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(len), len, XEN_ARG_3, S_snd_spectrum, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(linear_or_dB), linear_or_dB, XEN_ARG_4, S_snd_spectrum, "a boolean");
@@ -4937,7 +4937,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
     }
   if (in_data)
     return(data);
-  return(xen_return_first(make_vct(n, idat), data, win));
+  return(xen_return_first(xen_make_vct(n, idat), data, win));
 }
 
 static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, const char *caller)
@@ -5205,7 +5205,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   env *e_1 = NULL;
   vct *v = NULL;
   Float *coeffs = NULL;
-  XEN_ASSERT_TYPE(XEN_LIST_P(e) || VCT_P(e), e, XEN_ARG_1, S_filter_channel, "an envelope or a vct");
+  XEN_ASSERT_TYPE(XEN_LIST_P(e) || MUS_VCT_P(e), e, XEN_ARG_1, S_filter_channel, "an envelope or a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, S_filter_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_9, S_filter_channel, "a string");
   if (XEN_INTEGER_P(order)) order_1 = XEN_TO_C_INT(order);
@@ -5278,7 +5278,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 	  if (len <= 0) 
 	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order ~A <= 0?");
 	}
-      if (VCT_P(e)) /* the filter coefficients direct */
+      if (MUS_VCT_P(e)) /* the filter coefficients direct */
 	{
 	  vct *v;
 	  char *new_origin = NULL, *estr = NULL;
@@ -5291,7 +5291,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 	    }
 	  if ((!origin) && (v->length < 16))
 	    {
-	      estr = vct_to_readable_string(v);
+	      estr = mus_vct_to_readable_string(v);
 #if HAVE_FORTH
 	      new_origin = mus_format("%s %d%s %s", 
 				      estr, len, 
