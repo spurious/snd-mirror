@@ -2663,7 +2663,7 @@ mus_any *mus_make_average(int size, Float *line)
 /* PERHAPS: moving-max (windowed-maxamp in dsp.scm): keep current_max in delay line
  *              if abs(input)>max max=abs(input) else
  *                if output = max, get new max
- * "delay-max" ? (moving-max is not right)
+ * "delay-max" ? (moving-max is not right) "maximum"?
  */
 
 

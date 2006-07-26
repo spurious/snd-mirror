@@ -26,11 +26,11 @@
  * Gambit:      (Scheme) not an extension language, complicated connection to C
  * GameMonkey:  ()       c++, windows oriented (no linux I think)
  * librep:      (CL)     looks dead, was very hard to debug a long time ago, but I still have the macros (xen.h)
- * lua:         ()       do-able, very primitive -- push-pop-stack etc. (I'm told it is freeware, just a funny license)
+ * lua:         (C)      do-able, very primitive -- push-pop-stack etc. (I'm told it is freeware, just a funny license)
  * lush:        (CL)     compilation problem, serious name-space problems (not really an extension language)
  * mzscheme:    (Scheme) support semi-exists (I have the xen.h macros for it), but I refuse to touch it
  * ocaml:       (ML)     not an extension language, as far as I can tell
- * octave:      (Matlab) c++, probably do-able -- I'm looking into this currently [2.1.73 won't build -- g++ trouble?]
+ * octave:      (Matlab) c++, probably do-able -- I'm looking into this currently [2.1.73|2.9.5 won't build -- useless bug response at octave]
  * pike:        (C)      not an extension language
  * python:      ()       looks like ruby to me -- why duplicate? (I have about 1/4 of xen.h for this)
  * rscheme:     (Scheme) serious name-space problems
@@ -46,7 +46,7 @@
  * TODO: (gauche)   unwind-protects around scm_apply (snd-xen g_call)
  * TODO: (gauche)   memory trouble (double free -> segfault) [if all-args?] in snd-test 8
  *
- * TODO in Forth: prefs can't find extensions.fs?
+ * TODO in Forth: prefs can't find extensions.fs? can't figure this one out -- data stack confusion?
  * TODO: (forth)    if segfault, infinite tight loop -- must kill from some other machine!
  *
  * TODO: fam crosstalk?
@@ -71,6 +71,8 @@
  *        xen.c:#include <config.h>
  *        xg.c:#include <config.h>
  *        xm.c:#include <config.h>
+ *
+ * SOMEDAY: vct -> mus_vct (struct name), also all sound_data stuff (sndlib2xen.h -- remove this entirely?), Init_sndlib: clm2xen.c -- ruby requirement?
  */
 
 /* -------- protect XEN vars from GC -------- */
@@ -83,7 +85,7 @@ static int gc_last_set = NOT_A_GC_LOC;
 
 #if DEBUGGING
 static char **snd_protect_callers = NULL; /* static char* const *callers? no thanks... */
-static int max_gc_index = 0;
+static int cur_gc_index = 0, max_gc_index = 0;
 void dump_protection(FILE *Fp);
 void dump_protection(FILE *Fp)
 {
@@ -127,6 +129,10 @@ int snd_protect(XEN obj)
 {
   int i, old_size;
   XEN tmp;
+#if DEBUGGING
+  cur_gc_index++;
+  if (cur_gc_index > max_gc_index) max_gc_index = cur_gc_index;
+#endif
   if (gc_protection_size == 0)
     {
       gc_protection_size = 512;
@@ -144,6 +150,7 @@ int snd_protect(XEN obj)
       if ((gc_last_cleared >= 0) && 
 	  XEN_EQ_P(XEN_VECTOR_REF(gc_protection, gc_last_cleared), DEFAULT_GC_VALUE))
 	{
+	  /* we hit this branch about 2/3 of the time */
 	  XEN_VECTOR_SET(gc_protection, gc_last_cleared, obj);
 #if DEBUGGING
 	  snd_protect_callers[gc_last_cleared] = (char *)caller;
@@ -161,22 +168,17 @@ int snd_protect(XEN obj)
 	    snd_protect_callers[i] = (char *)caller;
 #endif
 	    gc_last_set = i;
-#if DEBUGGING
-	    if (i > max_gc_index) max_gc_index = i;
-#endif
 	    return(gc_last_set);
 	  }
       for (i = 0; i < gc_last_set; i++)
 	if (XEN_EQ_P(XEN_VECTOR_REF(gc_protection, i), DEFAULT_GC_VALUE))
 	  {
+	    /* here we average 3 checks before a hit, so this isn't as bad as it looks */
 	    XEN_VECTOR_SET(gc_protection, i, obj);
 #if DEBUGGING
 	    snd_protect_callers[i] = (char *)caller;
 #endif
 	    gc_last_set = i;
-#if DEBUGGING
-	    if (i > max_gc_index) max_gc_index = i;
-#endif
 	    return(gc_last_set);
 	  }
 
@@ -202,14 +204,14 @@ int snd_protect(XEN obj)
 #endif
       gc_last_set = old_size;
     }
-#if DEBUGGING
-  if (gc_last_set > max_gc_index) max_gc_index = gc_last_set;
-#endif
   return(gc_last_set);
 }
 
 void snd_unprotect_at(int loc)
 {
+#if DEBUGGING
+  cur_gc_index--;
+#endif
   if (loc >= 0)
     {
       XEN_VECTOR_SET(gc_protection, loc, DEFAULT_GC_VALUE);
@@ -2128,6 +2130,7 @@ void g_initialize_gh(void)
 #endif
 
   Init_sndlib();
+
 #if HAVE_FORTH
   fth_add_loaded_files("sndlib.so");
 #endif
@@ -2140,6 +2143,7 @@ void g_initialize_gh(void)
 
   XEN_DEFINE_PROCEDURE(S_snd_print,             g_snd_print_w,             1, 0, 0, H_snd_print);
   XEN_DEFINE_PROCEDURE("little-endian?",        g_little_endian_w,         0, 0, 0, "return #t if host is little endian");
+
 #if (!HAVE_GAUCHE)
   XEN_DEFINE_PROCEDURE("fmod",                  g_fmod_w,                  2, 0, 0, "C's fmod");
 #endif
@@ -2417,24 +2421,42 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   Init_libgl();
 #endif
 
+#if DEBUGGING
+  XEN_YES_WE_HAVE("snd-debug");
+#endif
+
+#if HAVE_ALSA
+  XEN_YES_WE_HAVE("alsa");
+#endif
+
+#if HAVE_GSL
+  XEN_YES_WE_HAVE("gsl");
+#endif
+
 #if USE_MOTIF
   XEN_YES_WE_HAVE("snd-motif");
 #endif
+
 #if USE_GTK
   XEN_YES_WE_HAVE("snd-gtk");
 #endif
+
 #if USE_NO_GUI
   XEN_YES_WE_HAVE("snd-nogui");
 #endif
+
 #if HAVE_GUILE
   XEN_YES_WE_HAVE("snd-guile");
 #endif
+
 #if HAVE_GAUCHE
   XEN_YES_WE_HAVE("snd-gauche");
 #endif
+
 #if HAVE_FORTH
   XEN_YES_WE_HAVE("snd-forth");
 #endif
+
 #if HAVE_RUBY
   XEN_YES_WE_HAVE("snd-ruby");
   /* we need to set up the search path so that load and require will work as in the program Ruby */
@@ -2466,16 +2488,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
       FREE(buf);
     }
   #endif
-#endif
-#if DEBUGGING
-  XEN_YES_WE_HAVE("snd-debug");
-#endif
-
-#if HAVE_ALSA
-  XEN_YES_WE_HAVE("alsa");
-#endif
-#if HAVE_GSL
-  XEN_YES_WE_HAVE("gsl");
 #endif
 
   XEN_YES_WE_HAVE("snd");

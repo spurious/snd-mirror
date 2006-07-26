@@ -1,5 +1,12 @@
 #include "snd.h"
 
+/* TODO: short output should protect against this:
+:(set! (sample 0) 1.0)
+1.0
+:(sample 0)
+-1.0
+*/
+
 static XEN save_hook;
 static bool dont_save(snd_info *sp, const char *newname)
 {

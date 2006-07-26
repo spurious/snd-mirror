@@ -1,5 +1,6 @@
 Snd change log
 
+  27-Jul:    mfilter in dsp.scm.
   17-Jul:    merged new-icons.scm into new-buttons.scm and renamed the latter toolbar.scm.
   12-Jul:    green.scm.
   10-Jul:    dlocsig.scm.

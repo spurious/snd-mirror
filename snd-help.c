@@ -497,6 +497,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+27-Jul:  mfilter in dsp.scm.\n\
 17-Jul:  merged new-icons.scm into new-buttons.scm and renamed the latter toolbar.scm.\n\
 12-Jul:  green.scm.\n\
 10-Jul:  dlocsig.scm.\n\
