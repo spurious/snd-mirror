@@ -3,9 +3,11 @@
 
 #define MUS_VERSION 3
 #define MUS_REVISION 25
-#define MUS_DATE "21-July-06"
+#define MUS_DATE "28-July-06"
 
 /*
+ * 28-July:    renamed make_ppolar and make_zpolar to make_two_pole|zero_from_radius_and_frequency.
+ *             added mus_scaler and mus_frequency methods for two_pole and two_zero.
  * 21-July:    removed mus_wrapper field -- old way can't work since we need the original XEN object.
  * 3-July:     mus_move_sound (dlocsig) generator.
  *             changed return type of mus_locsig to float.
@@ -431,12 +433,12 @@ bool mus_one_pole_p(mus_any *gen);
 Float mus_two_zero(mus_any *gen, Float input);
 mus_any *mus_make_two_zero(Float a0, Float a1, Float a2);
 bool mus_two_zero_p(mus_any *gen);
-mus_any *mus_make_zpolar(Float radius, Float frequency);
+mus_any *mus_make_two_zero_from_radius_and_frequency(Float radius, Float frequency);
 
 Float mus_two_pole(mus_any *gen, Float input);
 mus_any *mus_make_two_pole(Float a0, Float b1, Float b2);
 bool mus_two_pole_p(mus_any *gen);
-mus_any *mus_make_ppolar(Float radius, Float frequency);
+mus_any *mus_make_two_pole_from_radius_and_frequency(Float radius, Float frequency);
 
 Float mus_formant(mus_any *ptr, Float input); 
 Float mus_formant_bank(Float *amps, mus_any **formants, Float inval, int size);
@@ -668,6 +670,11 @@ Float mus_ssb_am(mus_any *ptr, Float insig, Float fm);
 void mus_clear_sinc_tables(void);
 void *mus_environ(mus_any *gen);
 void *mus_set_environ(mus_any *gen, void *e);
+
+#ifndef CLM_DISABLE_DEPRECATED
+#define make_ppolar(Radius, Frequency) make_two_pole_from_radius_and_frequency(Radius, Frequency)
+#define make_zpolar(Radius, Frequency) make_two_zero_from_radius_and_frequency(Radius, Frequency)
+#endif
 
 #ifdef __cplusplus
 }

@@ -2478,8 +2478,8 @@ static XEN g_asymmetric_fm_p(XEN obj)
 
 /* ---------------- simple filters ---------------- */
 
-typedef enum {G_ONE_POLE, G_ONE_ZERO, G_TWO_POLE, G_TWO_ZERO, G_ZPOLAR, G_PPOLAR} xclm_filter_t;
-static char *smpflts[6] = {S_make_one_pole, S_make_one_zero, S_make_two_pole, S_make_two_zero, S_make_zpolar, S_make_ppolar};
+typedef enum {G_ONE_POLE, G_ONE_ZERO, G_TWO_POLE, G_TWO_ZERO} xclm_filter_t;
+static char *smpflts[6] = {S_make_one_pole, S_make_one_zero, S_make_two_pole, S_make_two_zero};
 
 static XEN g_make_smpflt_1(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
@@ -2507,8 +2507,8 @@ static XEN g_make_smpflt_1(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, X
     {
     case G_ONE_ZERO: gen = mus_make_one_zero(a0, a1); break;
     case G_ONE_POLE: gen = mus_make_one_pole(a0, a1); break;
-    case G_ZPOLAR: gen = mus_make_zpolar(a0, a1); break;
-    case G_PPOLAR: gen = mus_make_ppolar(a0, a1); break;
+    case G_TWO_ZERO: gen = mus_make_two_zero_from_radius_and_frequency(a0, a1); break;
+    case G_TWO_POLE: gen = mus_make_two_pole_from_radius_and_frequency(a0, a1); break;
     default: break;
     }
   if (gen) return(mus_xen_to_object(mus_any_to_mus_xen(gen)));
@@ -2525,24 +2525,6 @@ static XEN g_make_one_pole(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_make_one_pole "(" S_make_one_pole " :a0 :b1): return a new " S_one_pole " filter; a0*x(n) - b1*y(n-1)"
   return(g_make_smpflt_1(G_ONE_POLE, arg1, arg2, arg3, arg4));
-}
-
-static XEN g_make_zpolar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_make_zpolar "(" S_make_zpolar " :radius :frequency): return a new " S_two_zero " filter \
-where the coefficients (a0..a2) are set from the desired zero's radius and center frequency. \
-Use this in conjunction with the " S_two_zero " generator" 
-
-  return(g_make_smpflt_1(G_ZPOLAR, arg1, arg2, arg3, arg4));
-}
-
-static XEN g_make_ppolar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_make_ppolar "(" S_make_ppolar " :radius :frequency): return a new " S_two_pole " filter \
-where the coefficients are set from the desired pole's radius and center frequency. \
-Use this in conjunction with the " S_two_pole " generator" 
-
-  return(g_make_smpflt_1(G_PPOLAR, arg1, arg2, arg3, arg4));
 }
 
 static XEN g_make_smpflt_2(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
@@ -2582,18 +2564,54 @@ static XEN g_make_smpflt_2(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, X
   return(XEN_FALSE);
 }
 
+static bool found_polar_key(XEN arg)
+{
+  return((XEN_KEYWORD_P(arg)) && 
+	 ((XEN_KEYWORD_EQ_P(arg, kw_radius)) ||
+	  (XEN_KEYWORD_EQ_P(arg, kw_frequency))));
+}
+
+static bool found_coeff_key(XEN arg)
+{
+  return((XEN_KEYWORD_P(arg)) && 
+	 (!(XEN_KEYWORD_EQ_P(arg, kw_radius))) &&
+	 (!(XEN_KEYWORD_EQ_P(arg, kw_frequency))));
+}
+
 static XEN g_make_two_zero(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
 {
-  #define H_make_two_zero "(" S_make_two_zero " :a0 :a1 :a2): return a new " S_two_zero " filter; \
+  #define H_make_two_zero "(" S_make_two_zero " :a0 :a1 :a2 or :radius :frequency): return a new " S_two_zero " filter; \
 a0*x(n) + a1*x(n-1) + a2*x(n-2)"
+
+  if ((XEN_BOUND_P(arg2)) && /* 0 or 1 args -> coeffs */
+      (!(XEN_BOUND_P(arg5)))) /* 5 or more args -> coeffs */
+    {
+      if ((found_polar_key(arg1)) || 
+	  (found_polar_key(arg2)) ||    /* if arg1 is radius as number, then arg2 is either key or number */
+	  ((!(XEN_BOUND_P(arg3))) &&    /* make a guess that if 2 args, no keys, and a1 > 20, it is intended as a frequency */
+	   (!(found_coeff_key(arg1))) &&
+	   (XEN_TO_C_DOUBLE(arg2) >= 20.0)))
+	return(g_make_smpflt_1(G_TWO_ZERO, arg1, arg2, arg3, arg4));
+    }
 
   return(g_make_smpflt_2(G_TWO_ZERO, arg1, arg2, arg3, arg4, arg5, arg6));
 }
 
 static XEN g_make_two_pole(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
 {
-  #define H_make_two_pole "(" S_make_two_pole " :a0 :b1 :b2): return a new " S_two_pole " filter; \
+  #define H_make_two_pole "(" S_make_two_pole " :a0 :b1 :b2 or :radius :frequency): return a new " S_two_pole " filter; \
 a0*x(n) - b1*y(n-1) - b2*y(n-2)"
+
+  if ((XEN_BOUND_P(arg2)) && /* 0 or 1 args -> coeffs */
+      (!(XEN_BOUND_P(arg5)))) /* 5 or more args -> coeffs */
+    {
+      if ((found_polar_key(arg1)) || 
+	  (found_polar_key(arg2)) ||    /* if arg1 is radius as number, then arg2 is either key or number */
+	  ((!(XEN_BOUND_P(arg3))) &&    /* if arg2 is freq, it's >= 2.0 (see mus.lisp -- else unstable two-pole if b2) */
+	   (!(found_coeff_key(arg1))) &&
+	   (XEN_TO_C_DOUBLE(arg2) >= 2.0)))
+	return(g_make_smpflt_1(G_TWO_POLE, arg1, arg2, arg3, arg4));
+    }
 
   return(g_make_smpflt_2(G_TWO_POLE, arg1, arg2, arg3, arg4, arg5, arg6));
 }
@@ -5748,8 +5766,6 @@ XEN_NARGIFY_1(g_two_zero_p_w, g_two_zero_p)
 XEN_ARGIFY_6(g_make_two_pole_w, g_make_two_pole)
 XEN_ARGIFY_2(g_two_pole_w, g_two_pole)
 XEN_NARGIFY_1(g_two_pole_p_w, g_two_pole_p)
-XEN_ARGIFY_4(g_make_zpolar_w, g_make_zpolar)
-XEN_ARGIFY_4(g_make_ppolar_w, g_make_ppolar)
 XEN_ARGIFY_3(g_formant_bank_w, g_formant_bank)
 XEN_NARGIFY_1(g_formant_p_w, g_formant_p)
 XEN_ARGIFY_6(g_make_formant_w, g_make_formant)
@@ -6014,8 +6030,6 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_make_two_pole_w g_make_two_pole
 #define g_two_pole_w g_two_pole
 #define g_two_pole_p_w g_two_pole_p
-#define g_make_zpolar_w g_make_zpolar
-#define g_make_ppolar_w g_make_ppolar
 #define g_formant_bank_w g_formant_bank
 #define g_formant_p_w g_formant_p
 #define g_make_formant_w g_make_formant
@@ -6455,8 +6469,6 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_two_pole, g_make_two_pole_w, 0, 6, 0, H_make_two_pole);
   XEN_DEFINE_PROCEDURE(S_two_pole,      g_two_pole_w,      1, 1, 0, H_two_pole);
   XEN_DEFINE_PROCEDURE(S_two_pole_p,    g_two_pole_p_w,    1, 0, 0, H_two_pole_p);
-  XEN_DEFINE_PROCEDURE(S_make_zpolar,   g_make_zpolar_w,   0, 4, 0, H_make_zpolar);
-  XEN_DEFINE_PROCEDURE(S_make_ppolar,   g_make_ppolar_w,   0, 4, 0, H_make_ppolar);
 
   XEN_DEFINE_PROCEDURE(S_make_wave_train, g_make_wave_train_w, 0, 0, 1, H_make_wave_train);
   XEN_DEFINE_PROCEDURE(S_wave_train,      g_wave_train_w,      1, 1, 0, H_wave_train);
@@ -6775,7 +6787,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_make_oscil,
 	       S_make_phase_vocoder,
 	       S_make_polyshape,
-	       S_make_ppolar,
 	       S_make_pulse_train,
 	       S_make_rand,
 	       S_make_rand_interp,
@@ -6795,7 +6806,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_make_two_zero,
 	       S_make_wave_train,
 	       S_make_waveshape,
-	       S_make_zpolar,
 	       S_mixer_add,
 	       S_mixer_multiply,
 	       S_mixer_p,

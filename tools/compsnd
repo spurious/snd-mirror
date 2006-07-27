@@ -264,8 +264,8 @@ make allclean
 
 echo ' '
 echo ' '
-echo ' --quiet --with-forth CC=g++ --disable-deprecated CFLAGS="-Wall"'
-./configure --quiet --with-forth CC=g++ --disable-deprecated CFLAGS="-Wall"
+echo ' --quiet --with-forth CC=g++ --disable-deprecated
+./configure --quiet --with-forth CC=g++ --disable-deprecated
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-forth"

@@ -9,27 +9,27 @@
 ;;;  test 6: vcts                               [11831]
 ;;;  test 7: colors                             [12141]
 ;;;  test 8: clm                                [12647]
-;;;  test 9: mix                                [21347]
-;;;  test 10: marks                             [24413]
-;;;  test 11: dialogs                           [25118]
-;;;  test 12: extensions                        [25417]
-;;;  test 13: menus, edit lists, hooks, etc     [25866]
-;;;  test 14: all together now                  [27306]
-;;;  test 15: chan-local vars                   [28378]
-;;;  test 16: regularized funcs                 [29657]
-;;;  test 17: dialogs and graphics              [34071]
-;;;  test 18: enved                             [34159]
-;;;  test 19: save and restore                  [34179]
-;;;  test 20: transforms                        [35806]
-;;;  test 21: new stuff                         [37555]
-;;;  test 22: run                               [38442]
-;;;  test 23: with-sound                        [43949]
-;;;  test 24: user-interface                    [45928]
-;;;  test 25: X/Xt/Xm                           [49543]
-;;;  test 26: Gtk                               [54128]
-;;;  test 27: GL                                [58201]
-;;;  test 28: errors                            [58324]
-;;;  test all done                              [60466]
+;;;  test 9: mix                                [21387]
+;;;  test 10: marks                             [24453]
+;;;  test 11: dialogs                           [25158]
+;;;  test 12: extensions                        [25457]
+;;;  test 13: menus, edit lists, hooks, etc     [25906]
+;;;  test 14: all together now                  [27346]
+;;;  test 15: chan-local vars                   [28418]
+;;;  test 16: regularized funcs                 [29697]
+;;;  test 17: dialogs and graphics              [34111]
+;;;  test 18: enved                             [34199]
+;;;  test 19: save and restore                  [34219]
+;;;  test 20: transforms                        [35846]
+;;;  test 21: new stuff                         [37595]
+;;;  test 22: run                               [38482]
+;;;  test 23: with-sound                        [43953]
+;;;  test 24: user-interface                    [45947]
+;;;  test 25: X/Xt/Xm                           [49562]
+;;;  test 26: Gtk                               [54147]
+;;;  test 27: GL                                [58220]
+;;;  test 28: errors                            [58344]
+;;;  test all done                              [60473]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -474,7 +474,9 @@
 	(begin
 	  (if (not (provided? 'snd-snd-gtk.scm)) (load "snd-gtk.scm"))
 	  (if (not (provided? 'snd-gtk-popup.scm)) (load "gtk-popup.scm")))))
+
 (if (not (provided? 'snd-snd7.scm)) (load "snd7.scm")) ; forward-graph
+(if (not (provided? 'snd-snd8.scm)) (load "snd8.scm")) ; make-ppolar|zpolar
 
 ;(define widvardpy (make-variable-display "do-loop" "i*2" 'graph))
 
@@ -2051,12 +2053,12 @@
 			 'make-frame 'make-frame->file 'make-granulate 'make-graph-data 'make-iir-filter
 			 'make-locsig 'make-mix-sample-reader 'make-mixer 'make-notch 'make-one-pole
 			 'make-one-zero 'make-oscil 'make-phase-vocoder 'make-player 'make-polyshape
-			 'make-ppolar 'make-pulse-train 'make-rand 'make-rand-interp 'make-readin
+			 'make-pulse-train 'make-rand 'make-rand-interp 'make-readin
 			 'make-region 'make-region-sample-reader 'make-sample->file 'make-sample-reader 'make-sawtooth-wave
 			 'make-scalar-mixer 'make-sine-summation 'make-snd->sample 'make-sound-data 'make-square-wave
 			 'make-src 'make-ssb-am 'make-sum-of-cosines 'make-sum-of-sines 'make-table-lookup
 			 'make-track 'make-track-sample-reader 'make-triangle-wave 'make-two-pole 'make-two-zero
-			 'make-variable-graph 'make-vct 'make-wave-train 'make-waveshape 'make-zpolar
+			 'make-variable-graph 'make-vct 'make-wave-train 'make-waveshape
 			 'map-chan 'map-channel 'mark-click-hook 'mark-color 'mark-context
 			 'mark-drag-hook 'mark-drag-triangle-hook 'mark-home 'mark-hook 'mark-name
 			 'mark-sample 'mark-sync 'mark-sync-max 'mark-tag-height 'mark-tag-width
@@ -15194,7 +15196,7 @@ EDITS: 5
 	(if (fneq (mus-xcoeff gen 0) .4) (snd-display ";1z xcoeff 0 .4: ~A" gen))
 	(set! (mus-xcoeff gen 0) .1)
 	(if (fneq (mus-xcoeff gen 0) .1) (snd-display ";1z set xcoeff 0 .1: ~A" gen)))
-      
+     
       (let ((gen (make-two-zero .4 .7 .3))
 	    (v0 (make-vct 10))
 	    (gen1 (make-two-zero .4 .7 .3))
@@ -15215,7 +15217,20 @@ EDITS: 5
 	(if (or (fneq (vct-ref v0 1) 1.1) (fneq (vct-ref v0 8) 1.4)) (snd-display ";two-zero output: ~A" v0))
 	(if (fneq (mus-xcoeff gen 0) .4) (snd-display ";2z xcoeff 0 .4: ~A" gen))
 	(set! (mus-xcoeff gen 0) .1)
-	(if (fneq (mus-xcoeff gen 0) .1) (snd-display ";2z set xcoeff 0 .1: ~A" gen)))
+	(if (fneq (mus-xcoeff gen 0) .1) (snd-display ";2z set xcoeff 0 .1: ~A" gen))
+	(set! (mus-xcoeff gen 0) 1.0)
+	(let ((r (mus-scaler gen)))
+	  (set! (mus-frequency gen) 500.0)
+	  (if (ffneq (mus-frequency gen) 500.0) (snd-display ";set mus-frequency two-zero: ~A" (mus-frequency gen)))
+	  (if (fneq (mus-scaler gen) r) (snd-display ";set mus-frequency two-zero hit r: ~A" (mus-scaler gen)))
+	  (set! (mus-scaler gen) .99)
+	  (if (fneq (mus-scaler gen) .99) (snd-display ";set mus-scaler two-zero: ~A" (mus-scaler gen)))
+	  (if (ffneq (mus-frequency gen) 500.0) (snd-display ";set mus-scaler hit freq two-zero: ~A" (mus-frequency gen)))
+	  (let ((g3 (make-two-zero :radius .99 :frequency 500.0)))
+	    (if (or (fneq (mus-a0 gen) (mus-a0 g3))
+		    (fneq (mus-a1 gen) (mus-a1 g3))
+		    (fneq (mus-a2 gen) (mus-a2 g3)))
+		(snd-display ";two-zero setters: ~A ~A" gen g3)))))
       
       (let ((gen (make-two-zero .4 .7 .3)))
 	(let ((val (gen 1.0)))
@@ -15248,7 +15263,20 @@ EDITS: 5
 	(if (fneq (mus-ycoeff gen 1) .1) (snd-display ";2p set ycoeff 1 .1: ~A" gen))
 	(if (fneq (mus-xcoeff gen 0) .4) (snd-display ";2p xcoeff 0 .4: ~A" gen))
 	(set! (mus-xcoeff gen 0) .3)
-	(if (fneq (mus-xcoeff gen 0) .3) (snd-display ";2p set xcoeff 0 .3: ~A" gen)))
+	(if (fneq (mus-xcoeff gen 0) .3) (snd-display ";2p set xcoeff 0 .3: ~A" gen))
+	(set! (mus-xcoeff gen 0) 1.0)
+	(let ((r (mus-scaler gen)))
+	  (set! (mus-frequency gen) 500.0)
+	  (if (ffneq (mus-frequency gen) 500.0) (snd-display ";set mus-frequency two-pole: ~A" (mus-frequency gen)))
+	  (if (fneq (mus-scaler gen) r) (snd-display ";set mus-frequency two-pole hit r: ~A" (mus-scaler gen)))
+	  (set! (mus-scaler gen) .99)
+	  (if (fneq (mus-scaler gen) .99) (snd-display ";set mus-scaler two-pole: ~A" (mus-scaler gen)))
+	  (if (ffneq (mus-frequency gen) 500.0) (snd-display ";set mus-scaler hit freq two-pole: ~A" (mus-frequency gen)))
+	  (let ((g3 (make-two-pole :radius .99 :frequency 500.0)))
+	    (if (or (fneq (mus-a0 gen) (mus-a0 g3))
+		    (fneq (mus-b1 gen) (mus-b1 g3))
+		    (fneq (mus-b2 gen) (mus-b2 g3)))
+		(snd-display ";two-pole setters: ~A ~A" gen g3)))))
       
       (let ((gen (make-two-pole .4 .7 .3)))
 	(let ((val (gen 1.0)))
@@ -16425,17 +16453,37 @@ EDITS: 5
 	(if (fneq (mus-a0 gen) 1.0) (snd-display ";ppolar a0: ~F?" (mus-a0 gen)))
 	(if (fneq (mus-b1 gen) -.188) (snd-display ";ppolar b1: ~F?" (mus-b1 gen)))
 	(if (fneq (mus-b2 gen) .01) (snd-display ";ppolar b2: ~F?" (mus-b2 gen)))
-	(if (or (fneq (vct-ref v0 0) 1.0) (fneq (vct-ref v0 1) .188)) (snd-display ";ppolar output: ~A" v0)))
+	(if (or (fneq (vct-ref v0 0) 1.0) (fneq (vct-ref v0 1) .188)) (snd-display ";ppolar output: ~A" v0))
+	(if (fneq (mus-frequency gen) 1200.0) (snd-display ";freq ppolar: ~A" (mus-frequency gen)))
+	(if (fneq (mus-scaler gen) 0.1) (snd-display ";scaler ppolar: ~A" (mus-scaler gen))))
       
       (test-gen-equal (let ((z1 (make-ppolar .1 600.0))) (two-pole z1 1.0) z1)
 		      (let ((z2 (make-ppolar .1 600.0))) (two-pole z2 1.0) z2)
 		      (let ((z3 (make-ppolar .1 1200.0))) (two-pole z3 1.0) z3))
-      (test-gen-equal (let ((z1 (make-ppolar .1 600.0))) (two-pole z1 1.0) z1)
-		      (let ((z2 (make-ppolar .1 600.0))) (two-pole z2 1.0) z2)
-		      (let ((z3 (make-ppolar .2 1200.0))) (two-pole z3 1.0) z3))
+      (test-gen-equal (let ((z1 (make-ppolar :radius .1 :frequency 600.0))) (two-pole z1 1.0) z1)
+		      (let ((z2 (make-ppolar :radius .1 :frequency 600.0))) (two-pole z2 1.0) z2)
+		      (let ((z3 (make-ppolar :radius .2 :frequency 1200.0))) (two-pole z3 1.0) z3))
       (test-gen-equal (let ((z1 (make-ppolar .1 600.0))) (two-pole z1 1.0) z1)
 		      (let ((z2 (make-ppolar .1 600.0))) (two-pole z2 1.0) z2)
 		      (let ((z3 (make-ppolar .1 600.0))) (two-pole z3 0.5) z3))
+      
+      (let ((gen (make-two-pole .1 1200.0)))
+	(if (not (two-pole? gen)) (snd-display ";~A not 2ppolar?" gen))
+	(if (not (= (mus-order gen) 2)) (snd-display ";2ppolar order: ~D?" (mus-order gen)))
+	(if (fneq (mus-a0 gen) 1.0) (snd-display ";2ppolar a0: ~F?" (mus-a0 gen)))
+	(if (fneq (mus-b1 gen) -.188) (snd-display ";2ppolar b1: ~F?" (mus-b1 gen)))
+	(if (fneq (mus-b2 gen) .01) (snd-display ";2ppolar b2: ~F?" (mus-b2 gen)))
+	(if (fneq (mus-frequency gen) 1200.0) (snd-display ";freq 2ppolar: ~A" (mus-frequency gen)))
+	(if (fneq (mus-scaler gen) 0.1) (snd-display ";scaler 2ppolar: ~A" (mus-scaler gen))))
+      
+      (let ((gen (make-two-pole :frequency 1200.0 :radius .1)))
+	(if (not (two-pole? gen)) (snd-display ";~A not f2ppolar?" gen))
+	(if (not (= (mus-order gen) 2)) (snd-display ";f2ppolar order: ~D?" (mus-order gen)))
+	(if (fneq (mus-a0 gen) 1.0) (snd-display ";f2ppolar a0: ~F?" (mus-a0 gen)))
+	(if (fneq (mus-b1 gen) -.188) (snd-display ";f2ppolar b1: ~F?" (mus-b1 gen)))
+	(if (fneq (mus-b2 gen) .01) (snd-display ";f2ppolar b2: ~F?" (mus-b2 gen)))
+	(if (fneq (mus-frequency gen) 1200.0) (snd-display ";freq f2ppolar: ~A" (mus-frequency gen)))
+	(if (fneq (mus-scaler gen) 0.1) (snd-display ";scaler f2ppolar: ~A" (mus-scaler gen))))
       
       (let ((gen (make-zpolar :radius .1 :frequency 1200.0))
 	    (v0 (make-vct 10)))
@@ -16448,14 +16496,34 @@ EDITS: 5
 	(if (fneq (mus-a0 gen) 1.0) (snd-display ";zpolar a0: ~F?" (mus-a0 gen)))
 	(if (fneq (mus-a1 gen) -.188) (snd-display ";zpolar a1: ~F?" (mus-a1 gen)))
 	(if (fneq (mus-a2 gen) .01) (snd-display ";zpolar a2: ~F?" (mus-a2 gen)))
-	(if (or (fneq (vct-ref v0 0) 1.0) (fneq (vct-ref v0 1) -.188)) (snd-display ";zpolar output: ~A" v0)))
+	(if (or (fneq (vct-ref v0 0) 1.0) (fneq (vct-ref v0 1) -.188)) (snd-display ";zpolar output: ~A" v0))
+	(if (fneq (mus-frequency gen) 1200.0) (snd-display ";freq zpolar: ~A" (mus-frequency gen)))
+	(if (fneq (mus-scaler gen) 0.1) (snd-display ";scaler zpolar: ~A" (mus-scaler gen))))
+      
+      (let ((gen (make-two-zero :radius .1 :frequency 1200.0)))
+	(if (not (two-zero? gen)) (snd-display ";~A not 2zpolar?" gen))
+	(if (not (= (mus-order gen) 2)) (snd-display ";2zpolar order: ~D?" (mus-order gen)))
+	(if (fneq (mus-a0 gen) 1.0) (snd-display ";2zpolar a0: ~F?" (mus-a0 gen)))
+	(if (fneq (mus-a1 gen) -.188) (snd-display ";2zpolar a1: ~F?" (mus-a1 gen)))
+	(if (fneq (mus-a2 gen) .01) (snd-display ";2zpolar a2: ~F?" (mus-a2 gen)))
+	(if (fneq (mus-frequency gen) 1200.0) (snd-display ";freq 2zpolar: ~A" (mus-frequency gen)))
+	(if (fneq (mus-scaler gen) 0.1) (snd-display ";scaler 2zpolar: ~A" (mus-scaler gen))))
+      
+      (let ((gen (make-two-zero .1 1200.0)))
+	(if (not (two-zero? gen)) (snd-display ";~A not f2zpolar?" gen))
+	(if (not (= (mus-order gen) 2)) (snd-display ";f2zpolar order: ~D?" (mus-order gen)))
+	(if (fneq (mus-a0 gen) 1.0) (snd-display ";f2zpolar a0: ~F?" (mus-a0 gen)))
+	(if (fneq (mus-a1 gen) -.188) (snd-display ";f2zpolar a1: ~F?" (mus-a1 gen)))
+	(if (fneq (mus-a2 gen) .01) (snd-display ";f2zpolar a2: ~F?" (mus-a2 gen)))
+	(if (fneq (mus-frequency gen) 1200.0) (snd-display ";freq f2zpolar: ~A" (mus-frequency gen)))
+	(if (fneq (mus-scaler gen) 0.1) (snd-display ";scaler f2zpolar: ~A" (mus-scaler gen))))
       
       (test-gen-equal (let ((z1 (make-zpolar .1 600.0))) (two-zero z1 1.0) z1)
 		      (let ((z2 (make-zpolar .1 600.0))) (two-zero z2 1.0) z2)
 		      (let ((z3 (make-zpolar .1 1200.0))) (two-zero z3 1.0) z3))
-      (test-gen-equal (let ((z1 (make-zpolar .1 600.0))) (two-zero z1 1.0) z1)
-		      (let ((z2 (make-zpolar .1 600.0))) (two-zero z2 1.0) z2)
-		      (let ((z3 (make-zpolar .2 1200.0))) (two-zero z3 1.0) z3))
+      (test-gen-equal (let ((z1 (make-zpolar :radius .1 :frequency 600.0))) (two-zero z1 1.0) z1)
+		      (let ((z2 (make-zpolar :radius .1 :frequency 600.0))) (two-zero z2 1.0) z2)
+		      (let ((z3 (make-zpolar :radius .2 :frequency 1200.0))) (two-zero z3 1.0) z3))
       (test-gen-equal (let ((z1 (make-zpolar .1 600.0))) (two-zero z1 1.0) z1)
 		      (let ((z2 (make-zpolar .1 600.0))) (two-zero z2 1.0) z2)
 		      (let ((z3 (make-zpolar .1 600.0))) (two-zero z3 0.5) z3))
@@ -20478,7 +20546,7 @@ EDITS: 5
 	(start-progress-report nind)
 	(convolve-with "oboe.snd") 
 	(progress-report .1 "hiho" 0 1 nind)
-	(if (fneq (sample 1000) -0.22299) (snd-display ";convolve-with: ~A?" (sample 1000)))
+	(if (fneq (sample 1000) 0.223) (snd-display ";convolve-with: ~A?" (sample 1000)))
 	(progress-report .3 "hiho" 0 1 nind)
 	(revert-sound nind)
 	(progress-report .5 "hiho" 0 1 nind)
@@ -40869,7 +40937,6 @@ EDITS: 1
 	    (btst '(let ((gen (make-one-zero))) (one-zero? gen)) #t)
 	    (btst '(let ((gen (make-oscil 440.0))) (oscil? gen)) #t)
 	    (btst '(let ((gen (make-phase-vocoder))) (phase-vocoder? gen)) #t)
-	    (btst '(let ((gen (make-ppolar))) (two-pole? gen)) #t)
 	    (btst '(let ((gen (make-pulse-train))) (pulse-train? gen)) #t)
 	    (btst '(let ((gen (make-rand))) (rand? gen)) #t)
 	    (btst '(let ((gen (make-rand-interp))) (rand-interp? gen)) #t)
@@ -40889,7 +40956,6 @@ EDITS: 1
 	    (btst '(let ((gen (make-wave-train))) (wave-train? gen)) #t)
 	    (btst '(let ((gen (make-waveshape))) (waveshape? gen)) #t)
 	    (btst '(let ((gen (make-polyshape))) (polyshape? gen)) #t)
-	    (btst '(let ((gen (make-zpolar))) (two-zero? gen)) #t)
 	    
 	    (btst '(let ((win (make-fft-window hamming-window 8))) (vct? win)) #t)
 	    (btst '(if #f (oscil #f) #t) #t)
@@ -40945,8 +41011,6 @@ EDITS: 1
 	    (ftst '(let ((gen (make-oscil 440.0))) (gen)) 0.0)
 	    (ftst '(let ((gen (make-phase-vocoder))) (phase-vocoder gen)) 0.0)
 	    (ftst '(let ((gen (make-phase-vocoder))) (gen)) 0.0)
-	    (ftst '(let ((gen (make-ppolar))) (two-pole gen)) 0.0)
-	    (ftst '(let ((gen (make-ppolar))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
 	    (ftst '(let ((gen (make-pulse-train))) (pulse-train gen)) 1.0)
 	    (ftst '(let ((gen (make-pulse-train))) (gen)) 1.0)
 	    (btst '(let ((gen (make-rand))) (< (rand gen) 1.0)) #t)
@@ -40984,8 +41048,6 @@ EDITS: 1
 	    (ftst '(let ((gen (make-waveshape))) (gen)) 0.0)
 	    (ftst '(let ((gen (make-polyshape))) (polyshape gen)) 0.0)
 	    (ftst '(let ((gen (make-polyshape))) (gen)) 0.0)
-	    (ftst '(let ((gen (make-zpolar))) (two-zero gen)) 0.0)
-	    (ftst '(let ((gen (make-zpolar))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
 	    
 	    (ftst '(let ((win (make-fft-window hamming-window 8))) (vct-ref win 0)) 0.08)
 	    
@@ -43177,10 +43239,10 @@ EDITS: 1
 			 (lambda () (make-filter :xcoeffs (vct 0.0 .1 .2))) (lambda () (make-fir-filter :xcoeffs (vct 0.0 .1 .2))) 
 			 make-formant (lambda () (make-frame 3 .1 .2 .3)) make-granulate
 			 (lambda () (make-iir-filter :xcoeffs (vct 0.0 .1 .2))) make-locsig (lambda () (make-mixer 3 3)) 
-			 make-notch make-one-pole make-one-zero make-oscil make-ppolar
+			 make-notch make-one-pole make-one-zero make-oscil
 			 make-pulse-train make-rand make-rand-interp make-sawtooth-wave
 			 make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
-			 make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar make-phase-vocoder make-ssb-am make-polyshape
+			 make-two-pole make-two-zero make-wave-train make-waveshape make-phase-vocoder make-ssb-am make-polyshape
 			 (lambda () (make-filter :ycoeffs (vct 0.0 .1 .2)))
 			 (lambda () (make-filter :xcoeffs (vct 1.0 2.0 3.0) :ycoeffs (vct 0.0 1.0 2.0))))))
 	(for-each
@@ -43287,13 +43349,6 @@ EDITS: 1
 		(not (string=? val2 val3)))
 	    (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
       
-      (let ((val1 (run-eval '(format #f "~A" (make-ppolar))))
-	    (val2 (run (lambda () (let ((gen (make-ppolar))) (format #f "~A" gen)))))
-	    (val3 (format #f "~A" (make-ppolar))))
-	(if (or (not (string=? val1 val2))
-		(not (string=? val2 val3)))
-	    (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
-      
       (let ((val1 (run-eval '(format #f "~A" (make-pulse-train ))))
 	    (val2 (run (lambda () (let ((gen (make-pulse-train ))) (format #f "~A" gen)))))
 	    (val3 (format #f "~A" (make-pulse-train ))))
@@ -43395,13 +43450,6 @@ EDITS: 1
       (let ((val1 (run-eval '(format #f "~A" (make-polyshape ))))
 	    (val2 (run (lambda () (let ((gen (make-polyshape ))) (format #f "~A" gen)))))
 	    (val3 (format #f "~A" (make-polyshape ))))
-	(if (or (not (string=? val1 val2))
-		(not (string=? val2 val3)))
-	    (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
-      
-      (let ((val1 (run-eval '(format #f "~A" (make-zpolar ))))
-	    (val2 (run (lambda () (let ((gen (make-zpolar ))) (format #f "~A" gen)))))
-	    (val3 (format #f "~A" (make-zpolar ))))
 	(if (or (not (string=? val1 val2))
 		(not (string=? val2 val3)))
 	    (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
@@ -44168,7 +44216,7 @@ EDITS: 1
   (let* ((duration (mus-sound-duration file))
 	 (rd (make-sample-reader 0 file))
 	 (start (inexact->exact (round (* (mus-srate) start-time))))
-	 (tmp-sound (with-temp-sound (:channels (channels) :srate (mus-sound-srate file))
+	 (tmp-sound (with-temp-sound (:channels 4 :srate (mus-sound-srate file))
 		      (let* ((vals (make-dlocsig :start-time 0
 						 :duration duration
 						 :path path))
@@ -45301,7 +45349,7 @@ EDITS: 1
 		(if (fneq mx 1.0) (snd-display ";with-sound sinc-train max: ~A" mx))
 		(close-sound ind)))))
 
-      (with-sound (:channels 3)
+      (let ((file (with-sound (:channels 3)
         (let ((rg (make-rmsgain))
 	      (rg1 (make-rmsgain 40))
 	      (rg2 (make-rmsgain 2))
@@ -45317,7 +45365,11 @@ EDITS: 1
 	      (outc i (balance rg2 (* .1 (oscil o)) (env e2)) *output*)))
 	  (if (fneq (gain-avg rg) 0.98402) (snd-display ";rmsgain gain-avg: ~A" (gain-avg rg)))
 	  (if (fneq (balance-avg rg1) 19380.2848) (snd-display ";rmsgain balance-avg: ~A" (balance-avg rg1)))
-	  (if (not (= (rmsg-avgc rg2) 10000)) (snd-display ";rmsgain count: ~A" (rmsg-avgc rg2)))))
+	  (if (not (= (rmsg-avgc rg2) 10000)) (snd-display ";rmsgain count: ~A" (rmsg-avgc rg2)))))))
+	(let ((ind (find-sound file)))
+	  (if (not (sound? ind))
+	      (snd-display ";with-sound balance?")
+	      (close-sound ind))))
 
       (let* ((mg (make-oscil 100.0))
 	     (gen (make-ssb-fm 1000))
@@ -45326,9 +45378,24 @@ EDITS: 1
 	(catch #t (lambda () (map-channel (lambda (y) (ssb-fm gen (* .02 (oscil mg)))))) (lambda arg (display arg) arg))
 	(close-sound ind))
 
+      (let ((file (with-sound () 
+		    (let ((rd (make-sample-reader 0 "oboe.snd")) 
+			  (m (make-mfilter :decay .99 :frequency 1000)) 
+			  (e (make-env '(0 100 1 2000) :end 10000))) 
+		      (run (lambda () 
+			     (do ((i 0 (1+ i))) 
+				 ((= i 10000))
+			       (outa i (mfilter m (* .1 (rd))) *output*) 
+			       (set! (mflt-eps m) (* 2.0 (sin (/ (* pi (env e)) (mus-srate))))))))))))
+	(let ((ind (find-sound file)))
+	  (if (not (sound? ind))
+	      (snd-display ";with-sound mfilter?")
+	      (close-sound ind))))
+
       ;; dlocsig tests
-      (with-sound (:channels 4)
-	(mix-move-sound 0 "oboe.snd" (make-spiral-path :turns 3)))
+      (let ((file (new-sound "tmp.snd" mus-next mus-bfloat 22050 4)))
+	(mix-move-sound 0 "oboe.snd" (make-spiral-path :turns 3))
+	(close-sound file))
 
       (let ((ind 0))
       (with-sound (:channels 2) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
@@ -58522,10 +58589,10 @@ EDITS: 1
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
 		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
 		     make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
-		     make-iir-filter make-locsig move-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
+		     make-iir-filter make-locsig move-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 		     make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-ssb-am make-table-lookup make-triangle-wave
-		     make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer-ref mixer-set! mixer? mixer+
+		     make-two-pole make-two-zero make-wave-train make-waveshape mixer* mixer-ref mixer-set! mixer? mixer+
 		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape polyshape?
 		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
@@ -58653,10 +58720,10 @@ EDITS: 1
 			  make-all-pass make-asymmetric-fm make-snd->sample make-average
 			  make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
 			  make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
-			  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
+			  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 			  make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
-			  make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar make-phase-vocoder make-ssb-am make-polyshape
+			  make-two-pole make-two-zero make-wave-train make-waveshape make-phase-vocoder make-ssb-am make-polyshape
 			  make-color make-player make-track make-region make-scalar-mixer
 			  ))
       
@@ -58991,10 +59058,10 @@ EDITS: 1
 				      make-all-pass make-asymmetric-fm make-comb make-filtered-comb make-convolve make-delay make-env
 				      make-file->frame make-file->sample make-filter make-fir-filter make-formant make-frame
 				      make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero
-				      make-oscil make-ppolar make-pulse-train make-rand make-rand-interp make-readin
+				      make-oscil make-pulse-train make-rand make-rand-interp make-readin
 				      make-sawtooth-wave make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines 
 				      make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train make-ssb-am
-				      make-waveshape make-zpolar mus-channel mus-channels make-polyshape
+				      make-waveshape mus-channel mus-channels make-polyshape
 				      mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 				      mus-increment mus-length mus-file-name mus-location mus-order mus-phase mus-ramp mus-random mus-run
 				      mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-average seconds->samples samples->seconds
@@ -59022,9 +59089,9 @@ EDITS: 1
 			inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb make-filtered-comb
 			make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-frame make-granulate
 			make-iir-filter make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder
-			make-ppolar make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-average
+			make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-average
 			make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
-			make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer+ multiply-arrays
+			make-two-pole make-two-zero make-wave-train make-waveshape mixer* mixer+ multiply-arrays
 			notch one-pole one-zero oscil partials->polynomial partials->wave partials->waveshape make-polyshape
 			phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar
 			ring-modulate sample->frame sawtooth-wave sine-summation square-wave src sum-of-cosines sum-of-sines 

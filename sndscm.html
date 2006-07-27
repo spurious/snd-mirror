@@ -1,6 +1,6 @@
 <html>
 
-<!-- TODO: these need work: edit123 infsnd maxf rtex strad -->
+<!-- TODO: these need work: edit123 infsnd rtex strad -->
 <!-- TODO: check pd-*.scm snd-hobbit.scm (rb/fs?) -->
 <!-- SOMEDAY: more mouseovers -->
 
@@ -1857,7 +1857,7 @@ z-transform performs a z-transform returning a vector (to accomodate complex res
 which is a complicated way of showing that if <i>z</i> is e^2*pi*/n, you get a fourier transform.
 fractional-fourier-transform is the slow (DFT) version
 of the fractional Fourier Transform. If <i>angle</i> is 1.0, you get a fourier transform.
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=32></td></tr>
 
 
 <!-- ---------------------------------------- dsp FIR ---------------------------------------- -->
@@ -1988,10 +1988,9 @@ The <i>acoeffs</i> apply to the linear terms, and the <i>bcoeffs</i> to the quad
    (let ((flt (make-volterra-filter (vct .5 .1) (vct .3 .2 .1))))
      (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (x) (volterra-filter flt x))))
 </pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=32></td></tr>
 
 
-<br>
 <!-- ---------------------------------------- dsp IIR ---------------------------------------- -->
 <tr><td colspan=2 bgcolor="lightgreen"><center><A NAME="dspdociir">IIR filters</A></center></td><td></td></tr>
 
@@ -2059,6 +2058,38 @@ and returns a sample):
 In this case <i>m</i> is the gain in the pass band.
 Use the functions in <a href="#analogfilterdoc">analog-filter.scm</a>, rather than this group.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mfilter -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>make-mfilter</em> <code>:key (frequency 1000) (decay .99)</code><br>
+<a class=def NAME="mfilter">mfilter</a> <code>gen :optional x-input y-input</code>
+</td></tr><tr><td></td><td>
+These implement a high Q two-pole <a href="http://ccrma.stanford.edu/~jos/smac03maxjos/">filter</a>
+developed by Max Mathews and Julius Smith.  It is very  
+similar to CLM's <a href="clm.html#formant">formant</a>.
+A slightly different view of the same filter is provided
+by <a href="#maxfdoc">maxf</a>.  
+<pre>
+(with-sound ()    ; filter "now.snd" with default freq/decay
+  (let ((rd (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 "now.snd")) 
+	(m (<em class=red>make-mfilter</em>))) 
+    (run (lambda () 
+	   (do ((i 0 (1+ i))) 
+	       ((= i 10000))
+	     (<a class=quiet href="clm.html#outa">outa</a> i (<em class=red>mfilter</em> m (* .1 (rd))) *output*))))))
+
+(with-sound ()    ; sweep center freq from 100Hz to 2000Hz
+  (let ((rd (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 "oboe.snd")) 
+        (m (<em class=red>make-mfilter</em> :decay .99 :frequency 1000)) 
+        (e (<a class=quiet href="clm.html#make-env">make-env</a> '(0 100 1 2000) :end 10000))) 
+    (run (lambda () 
+	   (do ((i 0 (1+ i))) 
+	       ((= i 10000))
+	     (<a class=quiet href="clm.html#outa">outa</a> i (<em class=red>mfilter</em> m (* .1 (rd))) *output*) 
+	     (set! (<em class=red>mflt-eps</em> m) (* 2.0 (sin (/ (* pi (<a class=quiet href="clm.html#env">env</a> e)) (<a class=quiet href="clm.html#mussrate">mus-srate</a>))))))))))
+</pre>
+</td></tr><tr><td colspan=2 height=32></td></tr>
 
 
 <!-- ---------------------------------------- dsp generators ---------------------------------------- -->
@@ -2250,7 +2281,7 @@ bounded brownian noise: <a href="sndscm.html#greendoc">green.scm</a><br>
 </small></blockquote>
 </td></tr></TABLE>
 
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=32></td></tr>
 
 
 <!-- ---------------------------------------- dsp effects ---------------------------------------- -->
@@ -2334,7 +2365,7 @@ The more successive samples we include in the product, the more we
 limit the output to pulses placed at (just after) wave peaks.
 In spike's case, just three samples are multiplied.
 See also the <a href="#volterrafilter">volterra filter</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=32></td></tr>
 
 
 <!-- ---------------------------------------- dsp src ---------------------------------------- -->
@@ -2364,7 +2395,7 @@ length.
 which means that if the original sound was 2 seconds long, and we apply the envelope <code>'(0 1 1 2)</code>
 (via <a href="extsnd.html#srcchannel">src-channel</a>, for example) to that sound, the result will be
 .693 * 2 seconds long.
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=32></td></tr>
 
 
 <!-- ---------------------------------------- dsp algebra ---------------------------------------- -->
@@ -2441,7 +2472,7 @@ upon output (to track the original sound's amplitude envelope):
 		         (* amp (<a class=quiet href="clm.html#contrast-enhancement">contrast-enhancement</a> (/ y amp) index)))))))
 </pre>
 This can also be used for automatic gain control -- see dsp.scm for the agc function.
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=32></td></tr>
 
 
 <!-- ---------------------------------------- scanned synthesis ---------------------------------------- -->
@@ -5292,41 +5323,24 @@ sound file header, and reads it when the file is subsequently reopened.
 <A NAME="maxfdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>maxf</h2></td></tr></table>
 
 <p>These files are translations (thanks to Michael Scholz!) of CLM's maxf.ins
-(thanks to Juan Reyes!). They implement a new kind of resonator designed by
-Max Mathews.
-<!-- (test this and add to snd-test) -- needs optimization and true gen
-;; (with-sound () (maxfilter "dog.snd" 0))
-;; (with-sound (:srate 44100) (maxfilter "dog.snd" 0 :numf 12))
-;; (with-sound (:srate 44100) (maxfilter "dog.snd" 0 :numf 13 :att 0.75))
-;; (with-sound (:srate 44100) (maxfilter "dog.snd" 0 :numf 2 :att 0.25 :freqfactor 0.5))
-
- maxfilter file beg :key
-		    (att 1.0)
-		    (numf 1)
-		    (freqfactor 1.0)
-		    (amplitude 1.0)
-		    (amp-env '(0 1 100 1))
-		    (degree (random 90.0))
-		    (distance 1.0)
-		    (reverb-amount 0.2)
-
-;;  This is Max Mathews (mvm) new filter (2002)
-;;  High-Q, 2-Integrator, filter with
-;;  Two Poles, and one Zero at the Origin
-;;
-;; It synthesizes equal-tempered frequencies
-;; integer & just scales out of a wide-band input
-;; signal.
-;;
-;;  This heuristic might be called Modal Synthesis.
-;;  But as well it can also be  additive synthesis in
-;;  which a resonator is  initialized to generate the
-;;  exponentially decaying sinusoids at the desired
-;;  phase.
-
--->
+(thanks to Juan Reyes!). They implement a variant of the CLM <a href="clm.html#formant">formant</a> generator developed
+by Max Mathews and Julius Smith (see their online <a href="http://ccrma.stanford.edu/~jos/smac03maxjos/">paper</a>).
+For a version of the filter closer to the paper, see <a href="#mfilter">mfilter</a> in dsp.scm.
+maxf.scm and maxf.rb provide a kind of demo instrument showing various ways to
+use the filter (banks tuned to different sets of frequencies, etc).
 </p>
+<pre>
+ (with-sound () (maxfilter "dog.snd" 0))
+ (with-sound (:srate 44100) (maxfilter "dog.snd" 0 :numf 12))
+ (with-sound (:srate 44100) (maxfilter "dog.snd" 0 :numf 13 :att 0.75))
+ (with-sound (:srate 44100) (maxfilter "dog.snd" 0 :numf 2 :att 0.25 :freqfactor 0.5))
+</pre>
+<pre>
+<em class=emdef>maxfilter</em> file beg :key (att 1.0) (numf 1) (freqfactor 1.0) (amplitude 1.0)
+		    (amp-env '(0 1 100 1)) (degree (random 90.0)) (distance 1.0) (reverb-amount 0.2)
+</pre>
 
+<br><br>
 <A NAME="menusdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>menus</h2></td></tr></table>
 
 <!-- main-index |menusdoc:menus, optional -->

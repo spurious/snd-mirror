@@ -3515,6 +3515,33 @@ Float mus_two_zero(mus_any *ptr, Float input)
 
 static Float run_two_zero(mus_any *ptr, Float input, Float unused) {return(mus_two_zero(ptr, input));}
 
+static Float two_zero_radius(mus_any *ptr) 
+{
+  smpflt *gen = (smpflt *)ptr; 
+  return(sqrt(gen->xs[2]));
+}
+
+static Float set_two_zero_radius(mus_any *ptr, Float new_radius)
+{
+  smpflt *gen = (smpflt *)ptr; 
+  gen->xs[1] = -2.0 * new_radius * cos(mus_hz_to_radians(mus_frequency(ptr)));
+  gen->xs[2] = new_radius * new_radius;
+  return(new_radius);
+}
+
+static Float two_zero_frequency(mus_any *ptr)
+{
+  smpflt *gen = (smpflt *)ptr;
+  return(mus_radians_to_hz(acos(gen->xs[1] / (-2.0 * two_zero_radius(ptr)))));
+}
+
+static Float set_two_zero_frequency(mus_any *ptr, Float new_freq)
+{
+  smpflt *gen = (smpflt *)ptr; 
+  gen->xs[1] = -2.0 * mus_scaler(ptr) * cos(mus_hz_to_radians(new_freq));
+  return(new_freq);
+}
+
 static mus_any_class TWO_ZERO_CLASS = {
   MUS_TWO_ZERO,
   S_two_zero,
@@ -3523,8 +3550,9 @@ static mus_any_class TWO_ZERO_CLASS = {
   &smpflt_equalp,
   0, 0,
   &two_length, 0,
-  0, 0, 0, 0,
-  0, 0, 
+  &two_zero_frequency, &set_two_zero_frequency, 
+  0, 0,
+  &two_zero_radius, &set_two_zero_radius, 
   0, 0,
   &run_two_zero,
   MUS_SIMPLE_FILTER, 
@@ -3552,7 +3580,7 @@ mus_any *mus_make_two_zero(Float a0, Float a1, Float a2)
 
 bool mus_two_zero_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_TWO_ZERO));}
 
-mus_any *mus_make_zpolar(Float radius, Float frequency)
+mus_any *mus_make_two_zero_from_radius_and_frequency(Float radius, Float frequency)
 {
   return(mus_make_two_zero(1.0, -2.0 * radius * cos(mus_hz_to_radians(frequency)), radius * radius));
 }
@@ -3569,6 +3597,33 @@ Float mus_two_pole(mus_any *ptr, Float input)
 
 static Float run_two_pole(mus_any *ptr, Float input, Float unused) {return(mus_two_pole(ptr, input));}
 
+static Float two_pole_radius(mus_any *ptr) 
+{
+  smpflt *gen = (smpflt *)ptr; 
+  return(sqrt(gen->ys[2]));
+}
+
+static Float set_two_pole_radius(mus_any *ptr, Float new_radius)
+{
+  smpflt *gen = (smpflt *)ptr; 
+  gen->ys[1] = -2.0 * new_radius * cos(mus_hz_to_radians(mus_frequency(ptr)));
+  gen->ys[2] = new_radius * new_radius;
+  return(new_radius);
+}
+
+static Float two_pole_frequency(mus_any *ptr)
+{
+  smpflt *gen = (smpflt *)ptr;
+  return(mus_radians_to_hz(acos(gen->ys[1] / (-2.0 * two_pole_radius(ptr)))));
+}
+
+static Float set_two_pole_frequency(mus_any *ptr, Float new_freq)
+{
+  smpflt *gen = (smpflt *)ptr; 
+  gen->ys[1] = -2.0 * mus_scaler(ptr) * cos(mus_hz_to_radians(new_freq));
+  return(new_freq);
+}
+
 static mus_any_class TWO_POLE_CLASS = {
   MUS_TWO_POLE,
   S_two_pole,
@@ -3577,8 +3632,10 @@ static mus_any_class TWO_POLE_CLASS = {
   &smpflt_equalp,
   0, 0,
   &two_length, 0,
-  0, 0, 0, 0,
-  0, 0, 0, 0,
+  &two_pole_frequency, &set_two_pole_frequency, 
+  0, 0,
+  &two_pole_radius, &set_two_pole_radius, 
+  0, 0,
   &run_two_pole,
   MUS_SIMPLE_FILTER, 
   NULL, 0,
@@ -3623,7 +3680,7 @@ mus_any *mus_make_two_pole(Float a0, Float b1, Float b2)
 
 bool mus_two_pole_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_TWO_POLE));}
 
-mus_any *mus_make_ppolar(Float radius, Float frequency)
+mus_any *mus_make_two_pole_from_radius_and_frequency(Float radius, Float frequency)
 {
   return(mus_make_two_pole(1.0, -2.0 * radius * cos(mus_hz_to_radians(frequency)), radius * radius));
 }

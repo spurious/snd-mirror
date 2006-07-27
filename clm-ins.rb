@@ -1774,9 +1774,9 @@ def resflt(start, dur, driver,
   # There are then 3 resonators, centered at frq1, frq2, frq3,
   # with pole-radius r1, r2, and r3 respectively, and
   # with gains of g1, g2, and g3.
-  f1 = make_ppolar(r1, frq1)
-  f2 = make_ppolar(r2, frq2)
-  f3 = make_ppolar(r3, frq3)
+  f1 = make_two_pole(r1, frq1)
+  f2 = make_two_pole(r2, frq2)
+  f3 = make_two_pole(r3, frq3)
   with_noise = (driver == 1)
   frqf = if with_noise
            nil

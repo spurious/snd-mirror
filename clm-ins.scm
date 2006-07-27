@@ -1854,9 +1854,9 @@ is a physical model of a flute:
 
   (let* ((beg (inexact->exact (floor (* start (mus-srate)))))
 	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
-	 (f1 (make-ppolar r1 frq1))
-	 (f2 (make-ppolar r2 frq2))
-	 (f3 (make-ppolar r3 frq3))
+	 (f1 (make-two-pole :radius r1 :frequency frq1))
+	 (f2 (make-two-pole :radius r2 :frequency frq2))
+	 (f3 (make-two-pole :radius r3 :frequency frq3))
 	 (g1 g1-1) (g2 g2-1) (g3 g3-1)
 	 (with-noise (= driver 1))
 	 (loc (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))

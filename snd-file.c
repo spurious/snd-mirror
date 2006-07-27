@@ -6,7 +6,6 @@
   #include <dirent.h>
 #endif
 
-/* TODO: successive new file choices should bump the file counter! -- not just new-1.snd over and over */
 
 /* -------------------------------- basic file attributes -------------------------------- */
 #if USE_STATVFS

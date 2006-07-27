@@ -2140,8 +2140,7 @@ and replaces it with the spectrum given in coeffs"
 	       ((= i 10000))
 	     (outa i (mfilter m (* .1 (rd))) *output*))))))
 
-;;; or a sweeping center freq:
-
+;;; sweep center freq:
 (with-sound () 
   (let ((rd (make-sample-reader 0 "oboe.snd")) 
         (m (make-mfilter :decay .99 :frequency 1000)) 
@@ -2170,5 +2169,4 @@ and replaces it with the spectrum given in coeffs"
 	       ((= j 9))
 	     (set! sum (+ sum (* (/ 1.0 (+ j 1)) (mfilter (vector-ref filters j) input)))))
 	   (outa i sum *output*)))))))
-
 |#

@@ -497,6 +497,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+28-Jul:  snd8.scm, removed make-ppolar|zpolar (use make-two-pole|zero).\n\
 27-Jul:  mfilter in dsp.scm.\n\
 17-Jul:  merged new-icons.scm into new-buttons.scm and renamed the latter toolbar.scm.\n\
 12-Jul:  green.scm.\n\
@@ -507,7 +508,6 @@ void about_snd_help(void)
 28-Jun:  moved rmsgain code to clm-ins.scm.\n\
          new CLM generator: filtered-comb.\n\
 23-Jun:  Snd 8.2.\n\
-12-Jun:  fmviolin.clm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

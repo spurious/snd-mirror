@@ -118,7 +118,6 @@
 #define S_make_oscil                 "make-oscil"
 #define S_make_phase_vocoder         "make-phase-vocoder"
 #define S_make_polyshape             "make-polyshape"
-#define S_make_ppolar                "make-ppolar"
 #define S_make_pulse_train           "make-pulse-train"
 #define S_make_rand                  "make-rand"
 #define S_make_rand_interp           "make-rand-interp"
@@ -138,7 +137,6 @@
 #define S_make_two_zero              "make-two-zero"
 #define S_make_wave_train            "make-wave-train"
 #define S_make_waveshape             "make-waveshape"
-#define S_make_zpolar                "make-zpolar"
 #if HAVE_RUBY
   #define S_mixer_multiply           "mixer_multiply"
   #define S_mixer_add                "mixer_add"

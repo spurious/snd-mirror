@@ -13552,65 +13552,65 @@ def test068
   end
   set_mus_srate(old_srate)
   # 
-  gen = make_ppolar(0.1, 1200.0)
+  gen = make_two_pole(0.1, 1200.0)
   v0 = make_vct!(10) do |i| two_pole(gen, i.zero? ? 1.0 : 0.0) end
   snd_display("%s not two_pole?", gen) unless two_pole?(gen)
-  snd_display("ppolar order: %d?", gen.order) if gen.order != 2
-  snd_display("ppolar a0: %f?", gen.a0) if fneq(gen.a0, 1.0)
-  snd_display("ppolar b1: %f?", gen.b1) if fneq(gen.b1, -0.188)
-  snd_display("ppolar b2: %f?", gen.b2) if fneq(gen.b2, 0.01)
+  snd_display("two_pole order: %d?", gen.order) if gen.order != 2
+  snd_display("two_pole a0: %f?", gen.a0) if fneq(gen.a0, 1.0)
+  snd_display("two_pole b1: %f?", gen.b1) if fneq(gen.b1, -0.188)
+  snd_display("two_pole b2: %f?", gen.b2) if fneq(gen.b2, 0.01)
   if fneq(v0[0], 1.0) or fneq(v0[1], 0.188)
-    snd_display("ppolar output: %s?", v0)
+    snd_display("two_pole output: %s?", v0)
   end
-  z1 = make_ppolar(0.1, 600.0)
-  z2 = make_ppolar(0.1, 600.0)
-  z3 = make_ppolar(0.1, 1200.0)
+  z1 = make_two_pole(0.1, 600.0)
+  z2 = make_two_pole(0.1, 600.0)
+  z3 = make_two_pole(0.1, 1200.0)
   two_pole(z1, 1.0)
   two_pole(z2, 1.0)
   two_pole(z3, 1.0)
   test_gen_equal(z1, z2, z3)
-  z1 = make_ppolar(0.1, 600.0)
-  z2 = make_ppolar(0.1, 600.0)
-  z3 = make_ppolar(0.2, 1200.0)
+  z1 = make_two_pole(0.1, 600.0)
+  z2 = make_two_pole(0.1, 600.0)
+  z3 = make_two_pole(0.2, 1200.0)
   two_pole(z1, 1.0)
   two_pole(z2, 1.0)
   two_pole(z3, 1.0)
   test_gen_equal(z1, z2, z3)
-  z1 = make_ppolar(0.1, 600.0)
-  z2 = make_ppolar(0.1, 600.0)
-  z3 = make_ppolar(0.1, 600.0)
+  z1 = make_two_pole(0.1, 600.0)
+  z2 = make_two_pole(0.1, 600.0)
+  z3 = make_two_pole(0.1, 600.0)
   two_pole(z1, 1.0)
   two_pole(z2, 1.0)
   two_pole(z3, 0.5)
   test_gen_equal(z1, z2, z3)
   # 
-  gen = make_zpolar(:radius, 0.1, :frequency, 1200.0)
+  gen = make_two_zero(:radius, 0.1, :frequency, 1200.0)
   v0 = make_vct!(10) do |i| two_zero(gen, i.zero? ? 1.0 : 0.0) end
   snd_display("%s not two_zero?", gen) unless two_zero?(gen)
-  snd_display("zpolar order: %d?", gen.order) if gen.order != 2
-  snd_display("zpolar a0: %f?", gen.a0) if fneq(gen.a0, 1.0)
-  snd_display("zpolar a1: %f?", gen.a1) if fneq(gen.a1, -0.188)
-  snd_display("zpolar a2: %f?", gen.a2) if fneq(gen.a2, 0.01)
+  snd_display("two_zero order: %d?", gen.order) if gen.order != 2
+  snd_display("two_zero a0: %f?", gen.a0) if fneq(gen.a0, 1.0)
+  snd_display("two_zero a1: %f?", gen.a1) if fneq(gen.a1, -0.188)
+  snd_display("two_zero a2: %f?", gen.a2) if fneq(gen.a2, 0.01)
   if fneq(v0[0], 1.0) or fneq(v0[1], -0.188)
-    snd_display("zpolar output: %s?", v0)
+    snd_display("two_zero output: %s?", v0)
   end
-  z1 = make_zpolar(0.1, 600.0)
-  z2 = make_zpolar(0.1, 600.0)
-  z3 = make_zpolar(0.1, 1200.0)
+  z1 = make_two_zero(0.1, 600.0)
+  z2 = make_two_zero(0.1, 600.0)
+  z3 = make_two_zero(0.1, 1200.0)
   two_zero(z1, 1.0)
   two_zero(z2, 1.0)
   two_zero(z3, 1.0)
   test_gen_equal(z1, z2, z3)
-  z1 = make_zpolar(0.1, 600.0)
-  z2 = make_zpolar(0.1, 600.0)
-  z3 = make_zpolar(0.2, 1200.0)
+  z1 = make_two_zero(0.1, 600.0)
+  z2 = make_two_zero(0.1, 600.0)
+  z3 = make_two_zero(0.2, 1200.0)
   two_zero(z1, 1.0)
   two_zero(z2, 1.0)
   two_zero(z3, 1.0)
   test_gen_equal(z1, z2, z3)
-  z1 = make_zpolar(0.1, 600.0)
-  z2 = make_zpolar(0.1, 600.0)
-  z3 = make_zpolar(0.1, 600.0)
+  z1 = make_two_zero(0.1, 600.0)
+  z2 = make_two_zero(0.1, 600.0)
+  z3 = make_two_zero(0.1, 600.0)
   two_zero(z1, 1.0)
   two_zero(z2, 1.0)
   two_zero(z3, 0.5)
@@ -18350,7 +18350,7 @@ def test248
      :make_one_pole,
      :make_one_zero,
      :make_oscil,
-     :make_ppolar,
+     :make_two_pole,
      :make_pulse_train,
      :make_rand,
      :make_rand_interp,
@@ -18365,7 +18365,7 @@ def test248
      :make_wave_train,
      :make_waveshape,
      :make_polyshape,
-     :make_zpolar,
+     :make_two_zero,
      :make_phase_vocoder,
      :make_ssb_am].each do |make_func|
       if mus_generator?(gen = Snd.catch do snd_func(make_func, *args) end.first)
@@ -38855,11 +38855,11 @@ Procs = [:add_mark, :add_sound_file_extension, :sound_file?, :add_to_main_menu, 
   :make_env, :make_fft_window, :make_file2frame, :make_file2sample, :make_filter,
   :make_fir_filter, :make_formant, :make_frame, :make_frame2file, :make_granulate,
   :make_iir_filter, :make_locsig, :move_locsig, :make_mixer, :make_notch, :make_one_pole,
-  :make_one_zero, :make_oscil, :make_ppolar, :make_pulse_train, :make_rand, :make_rand_interp,
+  :make_one_zero, :make_oscil, :make_two_pole, :make_pulse_train, :make_rand, :make_rand_interp,
   :make_readin, :make_sample2file, :make_sawtooth_wave, :make_sine_summation, :make_square_wave,
   :make_src, :make_sum_of_cosines, :make_sum_of_sines, :make_ssb_am, :make_table_lookup,
   :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train, :make_waveshape,
-  :make_zpolar, :mixer_multiply, :mixer_ref, :mixer_set!, :mixer?, :mixer_add, :multiply_arrays,
+  :make_two_zero, :mixer_multiply, :mixer_ref, :mixer_set!, :mixer?, :mixer_add, :multiply_arrays,
   :mus_array_print_length, :mus_channel, :mus_channels, :make_polyshape, :mus_close,
   :mus_cosines, :mus_data, :mus_feedback, :mus_feedforward, :mus_fft, :mus_formant_radius,
   :mus_frequency, :mus_hop, :mus_increment, :mus_input?, :mus_file_name, :mus_length,
@@ -38976,11 +38976,11 @@ Make_procs = [:make_all_pass, :make_asymmetric_fm, :make_snd2sample, :make_avera
   :make_comb, :make_convolve, :make_delay, :make_env, :make_fft_window, :make_file2frame,
   :make_file2sample, :make_filter, :make_fir_filter, :make_formant, :make_frame,
   :make_frame2file, :make_granulate, :make_iir_filter, :make_locsig, :make_mixer,
-  :make_notch, :make_one_pole, :make_one_zero, :make_oscil, :make_ppolar, :make_pulse_train,
+  :make_notch, :make_one_pole, :make_one_zero, :make_oscil, :make_two_pole, :make_pulse_train,
   :make_rand, :make_rand_interp, :make_readin, :make_sample2file, :make_sawtooth_wave,
   :make_sine_summation, :make_square_wave, :make_src, :make_sum_of_cosines, :make_sum_of_sines,
   :make_table_lookup, :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train,
-  :make_waveshape, :make_zpolar, :make_phase_vocoder, :make_ssb_am, :make_polyshape,
+  :make_waveshape, :make_two_zero, :make_phase_vocoder, :make_ssb_am, :make_polyshape,
   :make_color, :make_player, :make_track, :make_region, :make_scalar_mixer]
 
 Keyargs = [:frequency, :initial_phase, :wave, :cosines, :amplitude, :ratio, :size,
@@ -39193,11 +39193,11 @@ def test0028
       :make_convolve, :make_delay, :make_env, :make_file2frame, :make_file2sample,
       :make_filter, :make_fir_filter, :make_formant, :make_frame, :make_granulate,
       :make_iir_filter, :make_locsig, :make_notch, :make_one_pole, :make_one_zero,
-      :make_oscil, :make_ppolar, :make_pulse_train, :make_rand, :make_rand_interp,
+      :make_oscil, :make_two_pole, :make_pulse_train, :make_rand, :make_rand_interp,
       :make_readin, :make_sawtooth_wave, :make_sine_summation, :make_square_wave,
       :make_src, :make_sum_of_cosines, :make_sum_of_sines, :make_table_lookup,
       :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train, :make_ssb_am,
-      :make_waveshape, :make_zpolar, :mus_channel, :mus_channels, :make_polyshape,
+      :make_waveshape, :make_two_zero, :mus_channel, :mus_channels, :make_polyshape,
       :mus_cosines, :mus_data, :mus_feedback, :mus_feedforward, :mus_formant_radius,
       :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_file_name, :mus_location,
       :mus_order, :mus_phase, :mus_ramp, :mus_random, :mus_run, :mus_scaler, :mus_xcoeffs,
@@ -39220,11 +39220,11 @@ def test0028
     :make_asymmetric_fm, :make_comb, :make_delay, :make_env, :make_fft_window,
     :make_filter, :make_fir_filter, :make_formant, :make_frame, :make_granulate,
     :make_iir_filter, :make_locsig, :make_notch, :make_one_pole, :make_one_zero,
-    :make_oscil, :make_phase_vocoder, :make_ppolar, :make_pulse_train, :make_rand,
+    :make_oscil, :make_phase_vocoder, :make_two_pole, :make_pulse_train, :make_rand,
     :make_rand_interp, :make_readin, :make_sawtooth_wave, :make_average, :make_sine_summation,
     :make_square_wave, :make_src, :make_sum_of_cosines, :make_sum_of_sines,
     :make_table_lookup, :make_triangle_wave, :make_two_pole, :make_two_zero,
-    :make_wave_train, :make_waveshape, :make_zpolar, :mixer_multiply, :mixer_add,
+    :make_wave_train, :make_waveshape, :make_two_zero, :mixer_multiply, :mixer_add,
     :multiply_arrays, :notch, :one_pole, :one_zero, :oscil, :partials2polynomial,
     :partials2wave, :partials2waveshape, :make_polyshape, :phase_partials2wave,
     :phase_vocoder, :polynomial, :pulse_train, :rand, :rand_interp, :rectangular2polar,

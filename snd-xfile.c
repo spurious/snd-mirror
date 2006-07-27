@@ -3480,10 +3480,25 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+static char *new_file_dialog_filename(int header_type)
+{
+  static int new_file_dialog_file_ctr = 1;
+  char *filename = NULL, *extension = NULL;
+  filename = (char *)CALLOC(64, sizeof(char));
+  switch (header_type)
+    {
+    case MUS_AIFC: extension = "aiff"; break;
+    case MUS_AIFF: extension = "aiff"; break;
+    case MUS_RIFF: extension = "wav";  break;
+    default:       extension = "snd";  break;
+    }
+  mus_snprintf(filename, 64, _("new-%d.%s"), new_file_dialog_file_ctr++, extension);
+  return(filename);
+}
+
 static void load_new_file_defaults(char *newname)
 {
-  static int new_ctr = 1;
-  char *filename = NULL, *extension = NULL, *new_comment = NULL;
+  char *filename = NULL, *new_comment = NULL;
   int header_type, data_format, chans, srate;
 
   header_type = default_output_header_type(ss);
@@ -3495,17 +3510,7 @@ static void load_new_file_defaults(char *newname)
   if ((newname) && (!(*newname))) newname = NULL;
   filename = output_name(newname); /* calls output-name-hook, always free */
   if (filename == NULL)
-    {
-      filename = (char *)CALLOC(64, sizeof(char));
-      switch (header_type)
-	{
-	case MUS_AIFC: extension = "aiff"; break;
-	case MUS_AIFF: extension = "aiff"; break;
-	case MUS_RIFF: extension = "wav";  break;
-	default:       extension = "snd";  break;
-	}
-      mus_snprintf(filename, 64, _("new-%d.%s"), new_ctr++, extension);
-    }
+    filename = new_file_dialog_filename(header_type);
   XmTextSetString(new_file_text, filename);  
   mus_sound_forget(filename);
 
@@ -3644,21 +3649,35 @@ widget_t make_new_file_dialog(bool managed)
 
       load_new_file_defaults(NULL);
     }
-#if (!HAVE_FAM)
   else
     {
-      /* if overwrite question pends, but file has been deleted in the meantime, go back to normal state */
+      char *new_name;
+      new_name = XmTextGetString(new_file_text);
+#if (!HAVE_FAM)
       if (new_file_watcher)
 	{
-	  char *new_name;
-	  new_name = XmTextGetString(new_file_text);
+	  /* if overwrite question pends, but file has been deleted in the meantime, go back to normal state */
 	  if ((!new_name) || (!(*new_name)) ||
 	      (!(mus_file_probe(new_name))))
 	    new_file_undoit();
-	  if (new_name) XtFree(new_name);
 	}
-    }
 #endif
+      if (strncmp(new_name, "new-", 4) == 0)
+	{
+	  /* if file is open with currently posted new-file dialog name, and it's our name (new-%d), then tick the counter */
+	  snd_info *sp;
+	  sp = find_sound(new_name, 0);
+	  if (sp)
+	    {
+	      char *filename;
+	      filename = new_file_dialog_filename(default_output_header_type(ss));
+	      XmTextSetString(new_file_text, filename);  
+	      mus_sound_forget(filename);
+	      FREE(filename);
+	    }
+	}
+      if (new_name) XtFree(new_name);
+    }
   if ((managed) && 
       (!(XtIsManaged(new_file_dialog))))
     XtManageChild(new_file_dialog);

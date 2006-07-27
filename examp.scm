@@ -1427,7 +1427,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 ;
 ;(map-channel (lambda (x) (two-zero flt x)))
 ;
-;;; similarly make-ppolar/two-pole (or better, make-formant)
+;;; similarly make-two-pole (or better, make-formant)
 ;;; can be used for resonances.
 |#
 

@@ -10090,7 +10090,6 @@ CLM_MAKE_FUNC(one_pole)
 CLM_MAKE_FUNC(one_zero)
 CLM_MAKE_FUNC(oscil)
 CLM_MAKE_FUNC(phase_vocoder)
-CLM_MAKE_FUNC(ppolar)
 CLM_MAKE_FUNC(pulse_train)
 CLM_MAKE_FUNC(rand)
 CLM_MAKE_FUNC(rand_interp)
@@ -10110,7 +10109,6 @@ CLM_MAKE_FUNC(two_zero)
 CLM_MAKE_FUNC(wave_train)
 CLM_MAKE_FUNC(waveshape)
 CLM_MAKE_FUNC(polyshape)
-CLM_MAKE_FUNC(zpolar)
 
 static void make_fft_window_0(int *args, ptree *pt)
 {
@@ -11579,7 +11577,6 @@ static void init_walkers(void)
   INIT_WALKER(S_make_one_zero, make_walker(make_one_zero_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_oscil, make_walker(make_oscil_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_phase_vocoder, make_walker(make_phase_vocoder_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_ppolar, make_walker(make_ppolar_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_pulse_train, make_walker(make_pulse_train_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_rand, make_walker(make_rand_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_rand_interp, make_walker(make_rand_interp_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
@@ -11599,7 +11596,6 @@ static void init_walkers(void)
   INIT_WALKER(S_make_wave_train, make_walker(make_wave_train_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_waveshape, make_walker(make_waveshape_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_polyshape, make_walker(make_polyshape_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_zpolar, make_walker(make_zpolar_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
 
 
   /* -------- sndlib funcs */

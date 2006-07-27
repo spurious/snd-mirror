@@ -1,12 +1,5 @@
 #include "snd.h"
 
-/* TODO: short output should protect against this:
-:(set! (sample 0) 1.0)
-1.0
-:(sample 0)
--1.0
-*/
-
 static XEN save_hook;
 static bool dont_save(snd_info *sp, const char *newname)
 {
@@ -8653,8 +8646,13 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   if (XEN_BOUND_P(samp_n))
     beg = beg_to_sample(samp_n, S_setB S_sample);
   else beg = CURSOR(cp);
+
   fval = XEN_TO_C_DOUBLE(val);
+  if ((fval == 1.0) && 
+      (mus_bytes_per_sample(((cp->sound)->hdr)->format) == 2))
+    fval = 32767.0 / 32768.0;
   ival[0] = MUS_FLOAT_TO_SAMPLE(fval);
+
 #if HAVE_FORTH
   origin = mus_format(OFF_TD " %.4f %s drop", beg, fval, "set-sample");
 #else
