@@ -500,12 +500,12 @@ REFLECTED causes every other repetition to be in reverse.")
     start = (beg * fsr).round
     reader = make_sample_reader(start, file)
     fin = dur ? [start + (fsr * dur).round, mus_sound_frames(file)].min : mus_sound_frames(file)
-    rms = make_average(incrsamps)
+    rms = make_moving_average(incrsamps)
     0.step(fin, incrsamps) do |i|
       rms_val = 0.0
       incrsamps.times do |j|
         val = reader.call
-        rms_val = average(rms, val * val)
+        rms_val = moving_average(rms, val * val)
       end
       e.push(i.to_f / fsr)
       rms_val = sqrt(rms_val)

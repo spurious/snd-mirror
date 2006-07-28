@@ -643,13 +643,13 @@ hide
   self @ { amp }
   self 1 cells + @ { f1 }
   self 2 cells + @ { f0 }
-  f1  f0 y y f* average amp f< if 0.0 else 1.0 then  average y f*
+  f1  f0 y y f* moving-average amp f< if 0.0 else 1.0 then  moving-average y f*
 ;
 set-current
 : effects-squelch-channel ( amount gate-size snd chn -- val )
   { amount gate-size snd chn }
-  :size gate-size make-average { f0 }
-  :size gate-size :initial-element 1.0 make-average { f1 }
+  :size gate-size make-moving-average { f0 }
+  :size gate-size :initial-element 1.0 make-moving-average { f1 }
   $" %.4f %s %s" '( amount gate-size get-func-name ) string-format { origin }
   f0 f1 amount squelch-cb 0 #f snd chn #f origin map-channel
 ;

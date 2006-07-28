@@ -486,7 +486,7 @@ repetition to be in reverse."
 	 (end (if dur (min (inexact->exact (+ start (round (* fsr dur))))
 			   (mus-sound-frames file))
 		  (mus-sound-frames file)))
-	 (rms (make-average incrsamps)))
+	 (rms (make-moving-average incrsamps)))
     (do ((i 0 (+ i incrsamps)))
 	((>= i end) 
 	 (reverse e))
@@ -494,7 +494,7 @@ repetition to be in reverse."
 	(do ((j 0 (1+ j)))
 	    ((= j incrsamps))
 	  (let ((val (reader)))
-	    (set! rms-val (average rms (* val val)))))
+	    (set! rms-val (moving-average rms (* val val)))))
 	(set! e (cons (exact->inexact (/ i fsr)) e))
 	(set! rms-val (sqrt rms-val))
 	(if db 

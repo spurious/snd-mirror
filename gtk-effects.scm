@@ -318,10 +318,10 @@
 ;;;
 
 (define* (effects-squelch-channel amount gate-size :optional snd chn)
-  (let ((f0 (make-average gate-size))
-	(f1 (make-average gate-size :initial-element 1.0))
+  (let ((f0 (make-moving-average gate-size))
+	(f1 (make-moving-average gate-size :initial-element 1.0))
 	(amp amount))
-    (map-channel (lambda (y) (* y (average f1 (if (< (average f0 (* y y)) amp) 0.0 1.0))))
+    (map-channel (lambda (y) (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0))))
 		 0 #f snd chn #f
 		 (format #f "effects-squelch-channel ~A ~A" amount gate-size))))
 

@@ -5777,7 +5777,7 @@ envelope with x^2 connections: <a href="sndscm.html#envsquaredchannel">env-squar
 envelope with x^n connections: <a href="sndscm.html#envexptchannel">env-expt-channel</a><br>
 envelope with sum-of-cosines connections: <a href="sndscm.html#blackman4envchannel">blackman4-env-channel</a><br>
 Customizing the envelope editor: <a href="#envedhook">enved-hook</a><br>
-peak amp follower: <a href="sndscm.html#windowedmaxamp">windowed-maxamp</a><br>
+peak amp follower: <a href="sndscm.html#movingmax">moving-max</a><br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -6530,17 +6530,17 @@ something:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define (<A NAME="mapsilence">map-silence</a> in-silence replacement)
-  (let ((buffer (<a class=quiet href="clm.html#make-average">make-average</a> 128))
+  (let ((buffer (<a class=quiet href="clm.html#make-moving-average">make-moving-average</a> 128))
         (silence (/ in-silence 128)))
     (lambda (y)
-      (let ((sum-of-squares (<a class=quiet href="clm.html#average">average</a> buffer (* y y))))
+      (let ((sum-of-squares (<a class=quiet href="clm.html#moving-average">moving-average</a> buffer (* y y))))
         (if (&gt; sum-of-squares silence) y replacement)))))
 
 (<em class=red>map-channel</em> (map-silence .01 0.0))  ; squelch background noise
 (<em class=red>map-channel</em> (map-silence .001 #f))  ; remove silences altogether
 </pre></td></tr></table>
 
-Here we're using <i>buffer</i>, a CLM <a href="clm.html#average">average</a> generator, to track the
+Here we're using <i>buffer</i>, a CLM <a href="clm.html#moving-average">moving-average</a> generator, to track the
 RMS value of the last 128 input samples.
 When that falls below
 the argument <i>silence</i>, we replace the current sample with <i>replacement</i>.

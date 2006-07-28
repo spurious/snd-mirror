@@ -1915,18 +1915,17 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 
 ;;; ----------------
-;;;
-;;; windowed-maxamp generator
+;;; moving-max generator (the max norm, or uniform norm, infinity-norm)
 
-(define* (make-windowed-maxamp :optional (size 128))
-  "(make-windowed-maxamp (size 128) returns a windowed-maxamp generator.  The generator keeps \
+(define* (make-moving-max :optional (size 128))
+  "(make-moving-max (size 128) returns a moving-max generator.  The generator keeps \
 a running window of the last 'size' inputs, returning the maxamp in that window."
   (let ((gen (make-delay size)))
     (set! (mus-scaler gen) 0.0)
     gen))
 
-(define (windowed-maxamp gen y)
-  "(windowed-maxamp gen input) returns the maxamp in a running window on the last few inputs."
+(define (moving-max gen y)
+  "(moving-max gen input) returns the maxamp in a moving window over the last few inputs."
   (let* ((absy (abs y))
 	 (mx (delay gen absy)))
     (if (>= absy (mus-scaler gen))
@@ -1935,14 +1934,59 @@ a running window of the last 'size' inputs, returning the maxamp in that window.
 	    (set! (mus-scaler gen) (vct-peak (mus-data gen)))))
     (mus-scaler gen)))
 
+
+;;; ----------------
+;;; moving-sum generator (the sum norm or 1-norm)
+
+(define* (make-moving-sum :optional (size 128))
+  "(make-moving-sum (size 128) returns a moving-sum generator.  The generator keeps \
+a running window of the last 'size' inputs, returning the sum of the absolute values of the samples in that window."
+  (let ((gen (make-moving-average size)))
+    (set! (mus-increment gen) 1.0) ; this is 1/size by default
+    gen))
+
+(define (moving-sum gen y)
+  "(moving-sum gen input) returns the sum of the absolute values in a moving window over the last few inputs."
+  (moving-average gen (abs y)))
+
+
+;;; ----------------
+;;; moving-rms generator
+
+(define* (make-moving-rms :optional (size 128))
+  "(make-moving-rms (size 128) returns a moving-rms generator.  The generator keeps \
+a running window of the last 'size' inputs, returning the rms of the samples in that window."
+  (make-moving-average size))
+
+(define (moving-rms gen y)
+  "(moving-rms gen input) returns the rms of the values in a window over the last few inputs."
+  (sqrt (moving-average gen (* y y))))
+
+
+;;; ----------------
+;;; moving-length generator (euclidean norm or 2-norm)
+
+(define* (make-moving-length :optional (size 128))
+  "(make-moving-length (size 128) returns a moving-length generator.  The generator keeps \
+a running window of the last 'size' inputs, returning the euclidean length of the vector in that window."
+  (let ((gen (make-moving-average size)))
+    (set! (mus-increment gen) 1.0)
+    gen))
+
+(define (moving-length gen y)
+  "(moving-length gen input) returns the length of the values in a window over the last few inputs."
+  (sqrt (moving-average gen (* y y))))
+
+
+
 #|
-;; perhaps also use average gen to avoid amplifying noise-sections (or even squlech them)
+;; perhaps also use moving-average gen to avoid amplifying noise-sections (or even squlech them)
 (define* (agc :optional (ramp-speed .001) (window-size 512))
-  (let ((maxer (make-windowed-maxamp window-size))
+  (let ((maxer (make-moving-max window-size))
 	(mult 1.0))
     (map-channel
      (lambda (y)
-       (let* ((curmax (windowed-maxamp maxer y))
+       (let* ((curmax (moving-max maxer y))
 	      (diff (- 0.5 (* mult curmax)))
 	      (this-incr (* diff ramp-speed)))
 	 (set! mult (+ mult this-incr))
@@ -1973,7 +2017,7 @@ and replaces it with the spectrum given in coeffs"
       (let* ((aff (* i freq))
 	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
 	(vector-set! peaks (1- i) (make-windowed-maxamp 128))
-	(vector-set! avgs (1- i) (make-average 128))
+	(vector-set! avgs (1- i) (make-moving-average 128))
 	(vector-set! bands (1- i) (make-bandpass (hz->2pi (- aff bwf)) 
 						 (hz->2pi (+ aff bwf)) 
 						 order))))
@@ -1986,7 +2030,7 @@ and replaces it with the spectrum given in coeffs"
 		((= i pairs))
 	      (let* ((sig (bandpass (vector-ref bands i) y))
 		     (mx (windowed-maxamp (vector-ref peaks i) sig)))
-		(let ((amp (average (vector-ref avgs i) (if (> mx 0.0) (min 100.0 (/ 1.0 mx)) 0.0))))
+		(let ((amp (moving-average (vector-ref avgs i) (if (> mx 0.0) (min 100.0 (/ 1.0 mx)) 0.0))))
 		  (if (> amp 0.0)
 		      (set! sum (+ sum (* mx (polynomial pcoeffs (* amp sig)))))))))
 	    (let ((val (filter flt sum))) ; get rid of DC

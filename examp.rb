@@ -5046,7 +5046,7 @@ turns the currently selected soundfont file into a bunch of files of the form sa
   end
 
   def scramble_channel(silence)
-    buffer = make_average(128)
+    buffer = make_moving_average(128)
     silence = silence / 128.0
     edges = []
     samp = 0
@@ -5056,7 +5056,7 @@ turns the currently selected soundfont file into a bunch of files of the form sa
     set_max_regions(1024)
     set_with_mix_tags(false)
     scan_channel(lambda do |y|
-                   if (now_silent = average(buffer, y * y) < silence) != in_silence
+                   if (now_silent = moving_average(buffer, y * y) < silence) != in_silence
                      edges.push(samp)
                    end
                    in_silence = now_silent

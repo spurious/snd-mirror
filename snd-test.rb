@@ -12032,74 +12032,74 @@ def test028
     snd_display("make_all_pass bad size error message: %s", err.inspect)
   end
   #
-  gen = make_average(4)
-  gen1 = make_average(4)
-  print_and_check(gen, "average", "average: 0.000, line[4]:[0.000 0.000 0.000 0.000]")
-  v0 = make_vct!(10) do average(gen, 1.0) end
+  gen = make_moving_average(4)
+  gen1 = make_moving_average(4)
+  print_and_check(gen, "moving_average", "moving_average: 0.000, line[4]:[0.000 0.000 0.000 0.000]")
+  v0 = make_vct!(10) do moving_average(gen, 1.0) end
   v1 = make_vct(10)
-  vct_map!(v1, lambda do | | average?(gen1) ? average(gen1, 1.0) : -1.0 end)
-  snd_display("map average: %s %s?", v0, v1) unless vequal(v0, v1)
-  snd_display("%s not average?", gen) unless average?(gen)
-  snd_display("average length: %d?", gen.length) if gen.length != 4
-  snd_display("average order: %d?", gen.order) if gen.order != 4
+  vct_map!(v1, lambda do | | moving_average?(gen1) ? moving_average(gen1, 1.0) : -1.0 end)
+  snd_display("map moving_average: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not moving_average?", gen) unless moving_average?(gen)
+  snd_display("moving_average length: %d?", gen.length) if gen.length != 4
+  snd_display("moving_average order: %d?", gen.order) if gen.order != 4
   if fneq(v0[1], 0.5) or fneq(v0[4], 1.0) or fneq(v0[8], 1.0)
-    snd_display("average output: %s?", v0)
+    snd_display("moving_average output: %s?", v0)
   end
-  gen = make_average(8)
-  if fneq(val = average(gen), 0.0)
-    snd_display("empty average: %f?", val)
+  gen = make_moving_average(8)
+  if fneq(val = moving_average(gen), 0.0)
+    snd_display("empty moving_average: %f?", val)
   end
-  if fneq(val = average(gen, 1.0), 0.125)
-    snd_display("average 1: %f?", val)
+  if fneq(val = moving_average(gen, 1.0), 0.125)
+    snd_display("moving_average 1: %f?", val)
   end
-  if fneq(val = average(gen, 1.0), 0.25)
-    snd_display("average 2: %f?", val)
+  if fneq(val = moving_average(gen, 1.0), 0.25)
+    snd_display("moving_average 2: %f?", val)
   end
-  if fneq(val = average(gen, 0.5), 0.3125)
-    snd_display("average 2: %f?", val)
+  if fneq(val = moving_average(gen, 0.5), 0.3125)
+    snd_display("moving_average 2: %f?", val)
   end
-  4.times do average(gen, 0.0) end
-  if fneq(val = average(gen, 0.0), 0.3125)
-    snd_display("average 6: %f?", val)
+  4.times do moving_average(gen, 0.0) end
+  if fneq(val = moving_average(gen, 0.0), 0.3125)
+    snd_display("moving_average 6: %f?", val)
   end
-  if fneq(val = average(gen, 0.0), 0.1875)
-    snd_display("average 7: %f?", val)
+  if fneq(val = moving_average(gen, 0.0), 0.1875)
+    snd_display("moving_average 7: %f?", val)
   end
-  if fneq(val = average(gen, 0.0), 0.0625)
-    snd_display("average 8: %f?", val)
+  if fneq(val = moving_average(gen, 0.0), 0.0625)
+    snd_display("moving_average 8: %f?", val)
   end
-  if fneq(val = average(gen, 0.0), 0.0)
-    snd_display("average 9: %f?", val)
+  if fneq(val = moving_average(gen, 0.0), 0.0)
+    snd_display("moving_average 9: %f?", val)
   end
-  gen = make_average(10, :initial_element, 0.5)
-  if fneq(val = average(gen, 0.5), 0.5)
-    snd_display("average initial_element: %f?", val)
+  gen = make_moving_average(10, :initial_element, 0.5)
+  if fneq(val = moving_average(gen, 0.5), 0.5)
+    snd_display("moving_average initial_element: %f?", val)
   end
-  gen = make_average(3, :initial_contents, [1.0, 1.0, 1.0])
-  if fneq(val = average(gen, 1.0), 1.0)
-    snd_display("average initial_contents: %f?", val)
+  gen = make_moving_average(3, :initial_contents, [1.0, 1.0, 1.0])
+  if fneq(val = moving_average(gen, 1.0), 1.0)
+    snd_display("moving_average initial_contents: %f?", val)
   end
-  d1 = make_average(3, :initial_contents, [0.7, 0.5, 3])
-  d2 = make_average(3, :initial_contents, vct(0.7, 0.5, 3))
-  d3 = make_average(4, :initial_contents, [0.7, 0.5, 0.1, 4])
-  average(d1, 1.0)
-  average(d2, 1.0)
-  average(d3, 1.0)
+  d1 = make_moving_average(3, :initial_contents, [0.7, 0.5, 3])
+  d2 = make_moving_average(3, :initial_contents, vct(0.7, 0.5, 3))
+  d3 = make_moving_average(4, :initial_contents, [0.7, 0.5, 0.1, 4])
+  moving_average(d1, 1.0)
+  moving_average(d2, 1.0)
+  moving_average(d3, 1.0)
   test_gen_equal(d1, d2, d3)
-  test_gen_equal(make_average(3, :initial_element, 1.0),
-                 make_average(3, :initial_element, 1.0),
-                 make_average(3, :initial_element, 0.5))
-  test_gen_equal(make_average(3, :initial_element, 1.0),
-                 make_average(3, :initial_element, 1.0),
-                 make_average(4, :initial_element, 1.0))
-  test_gen_equal(make_average(3, :initial_contents, [1.0, 0.0, 0.0]),
-                 make_average(3, :initial_contents, [1.0, 0.0, 0.0]),
-                 make_average(3, :initial_contents, [1.0, 1.0, 1.0]))
-  err = Snd.catch do make_average(:size, -2) end
+  test_gen_equal(make_moving_average(3, :initial_element, 1.0),
+                 make_moving_average(3, :initial_element, 1.0),
+                 make_moving_average(3, :initial_element, 0.5))
+  test_gen_equal(make_moving_average(3, :initial_element, 1.0),
+                 make_moving_average(3, :initial_element, 1.0),
+                 make_moving_average(4, :initial_element, 1.0))
+  test_gen_equal(make_moving_average(3, :initial_contents, [1.0, 0.0, 0.0]),
+                 make_moving_average(3, :initial_contents, [1.0, 0.0, 0.0]),
+                 make_moving_average(3, :initial_contents, [1.0, 1.0, 1.0]))
+  err = Snd.catch do make_moving_average(:size, -2) end
   if err.first != :out_of_range or
-      err[1] != "make_average" or
+      err[1] != "make_moving_average" or
       err[2] != "size _2 < 0?" or
-    snd_display("make_average bad size error message: %s", err.inspect)
+    snd_display("make_moving_average bad size error message: %s", err.inspect)
   end
   #
   gen = make_comb(0.4, 3)
@@ -18055,11 +18055,11 @@ def test228
   end
   free_sample_reader(reader)
   # 
-  gen = make_windowed_maxamp(4)
+  gen = make_moving_max(4)
   iv = vct(0.1, 0.05, -0.2, 0.15, -1.5, 0.1, 0.01, 0.001, 0.0, 0.0)
   tv = vct(0.1, 0.1, 0.2, 0.2, 1.5, 1.5, 1.5, 1.5, 0.1, 0.01)
-  ov = Vct.new(10) do |i| windowed_maxamp(gen, iv[i]) end
-  unless vequal(tv, ov) then snd_display("windowed_maxamp: %s %s", ov, tv) end
+  ov = Vct.new(10) do |i| moving_max(gen, iv[i]) end
+  unless vequal(tv, ov) then snd_display("moving_max: %s %s", ov, tv) end
   #
   ind = open_sound("oboe.snd")
   harmonicizer(550.0, [1, 0.5, 2, 0.3, 3, 0.2], 10)
@@ -18069,7 +18069,7 @@ end
 def test238
   [[:all_pass,       false, 0.0, false],
    [:asymmetric_fm,  false, 0.0, false],
-   [:average,        false, 1.0, false],
+   [:moving_average,        false, 1.0, false],
    [:comb,           false, 0.0, false],
    [:convolve,       [:filter, vct(0, 1, 2)], lambda { |dir| 0.0 }, false],
    [:delay,          false, 0.0, false],
@@ -18165,7 +18165,7 @@ def test238
   functions = [
     [:all_pass,       false, false],
     [:asymmetric_fm,  false, false],
-    [:average,        false, false],
+    [:moving_average,        false, false],
     [:comb,           false, false],
     [:convolve,       [:filter, vct(0, 1, 2), :input, lambda { |dir| 1.0 }], false],
     [:delay,          false, false],
@@ -18330,7 +18330,7 @@ def test248
   random_gen = lambda do |*args|
     [:make_all_pass,
      :make_asymmetric_fm,
-     :make_average,
+     :make_moving_average,
      :make_table_lookup,
      :make_triangle_wave,
      :make_comb,
@@ -38839,7 +38839,7 @@ Procs = [:add_mark, :add_sound_file_extension, :sound_file?, :add_to_main_menu, 
   :mus_header_type_name, :mus_data_format_name, :mus_sound_comment, :mus_sound_write_date,
   :mus_bytes_per_sample, :mus_sound_loop_info, :mus_audio_report, :mus_sun_set_outputs,
   :mus_sound_maxamp, :mus_sound_maxamp_exists?, :mus_file_prescaler, :mus_clipping,
-  :average, :average?, :make_average, :mus_expand_filename, :make_sound_data, :sound_data_ref,
+  :moving_average, :moving_average?, :make_moving_average, :mus_expand_filename, :make_sound_data, :sound_data_ref,
   :sound_data_set!, :sound_data?, :sound_data_length, :sound_data_maxamp, :sound_data_chans,
   :sound_data2vct, :vct2sound_data, :all_pass, :all_pass?, :amplitude_modulate, :array2file,
   :array_interp, :mus_interpolate, :asymmetric_fm, :asymmetric_fm?, :sound_data2sound_data,
@@ -38972,7 +38972,7 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
   :view_files_amp, :view_files_speed, :view_files_files, :view_files_selected_files,
   :view_files_speed_style, :view_files_amp_env]
 
-Make_procs = [:make_all_pass, :make_asymmetric_fm, :make_snd2sample, :make_average,
+Make_procs = [:make_all_pass, :make_asymmetric_fm, :make_snd2sample, :make_moving_average,
   :make_comb, :make_convolve, :make_delay, :make_env, :make_fft_window, :make_file2frame,
   :make_file2sample, :make_filter, :make_fir_filter, :make_formant, :make_frame,
   :make_frame2file, :make_granulate, :make_iir_filter, :make_locsig, :make_mixer,
@@ -39141,7 +39141,7 @@ def test0028
     :pulse_train?, :rand_interp?, :rand?, :readin?, :sample2file?, :sawtooth_wave?,
     :sine_summation?, :square_wave?, :src?, :sum_of_cosines?, :sum_of_sines?,
     :table_lookup?, :triangle_wave?, :two_pole?, :two_zero?, :wave_train?, :waveshape?,
-    :color?, :mix_sample_reader?, :average?, :ssb_am?, :sample_reader?,
+    :color?, :mix_sample_reader?, :moving_average?, :ssb_am?, :sample_reader?,
     :track_sample_reader?, :region_sample_reader?, :vct?]
   [Array.new(1), "hiho", sqrt(-1.0), 1.5, [1, 0], [0, 1]].each do |arg|
     procs_p.each do |n|
@@ -39188,7 +39188,7 @@ def test0028
   # Array.new(1): *partials_* functions return :bad_type (odd length partials list?)
   [Array.new(2), $color_95, sqrt(-1.0)].each do |arg|
     [:all_pass, :asymmetric_fm, :clear_array, :comb, :convolve, :db2linear,
-      :average, :degrees2radians, :delay, :env, :formant, :frame2list, :granulate,
+      :moving_average, :degrees2radians, :delay, :env, :formant, :frame2list, :granulate,
       :hz2radians, :linear2db, :make_all_pass, :make_asymmetric_fm, :make_comb,
       :make_convolve, :make_delay, :make_env, :make_file2frame, :make_file2sample,
       :make_filter, :make_fir_filter, :make_formant, :make_frame, :make_granulate,
@@ -39201,7 +39201,7 @@ def test0028
       :mus_cosines, :mus_data, :mus_feedback, :mus_feedforward, :mus_formant_radius,
       :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_file_name, :mus_location,
       :mus_order, :mus_phase, :mus_ramp, :mus_random, :mus_run, :mus_scaler, :mus_xcoeffs,
-      :mus_ycoeffs, :notch, :one_pole, :one_zero, :make_average, :seconds2samples,
+      :mus_ycoeffs, :notch, :one_pole, :one_zero, :make_moving_average, :seconds2samples,
       :samples2seconds, :oscil, :partials2polynomial, :partials2wave, :partials2waveshape,
       :phase_partials2wave, :phase_vocoder, :pulse_train, :radians2degrees, :radians2hz,
       :rand, :rand_interp, :readin, :sawtooth_wave, :sine_summation, :square_wave, :src,
@@ -39213,7 +39213,7 @@ def test0028
     end
   end
   [:all_pass, :array_interp, :asymmetric_fm, :comb, :contrast_enhancement, :convolution,
-    :convolve, :average, :convolve_files, :delay, :dot_product, :env_interp, :file2frame,
+    :convolve, :moving_average, :convolve_files, :delay, :dot_product, :env_interp, :file2frame,
     :file2sample, :snd2sample, :filter, :fir_filter, :formant, :formant_bank,
     :frame_multiply, :frame_add, :frame2frame, :frame_ref, :frame2sample, :granulate,
     :iir_filter, :ina, :inb, :locsig_ref, :locsig_reverb_ref, :make_all_pass,
@@ -39221,7 +39221,7 @@ def test0028
     :make_filter, :make_fir_filter, :make_formant, :make_frame, :make_granulate,
     :make_iir_filter, :make_locsig, :make_notch, :make_one_pole, :make_one_zero,
     :make_oscil, :make_phase_vocoder, :make_two_pole, :make_pulse_train, :make_rand,
-    :make_rand_interp, :make_readin, :make_sawtooth_wave, :make_average, :make_sine_summation,
+    :make_rand_interp, :make_readin, :make_sawtooth_wave, :make_moving_average, :make_sine_summation,
     :make_square_wave, :make_src, :make_sum_of_cosines, :make_sum_of_sines,
     :make_table_lookup, :make_triangle_wave, :make_two_pole, :make_two_zero,
     :make_wave_train, :make_waveshape, :make_two_zero, :mixer_multiply, :mixer_add,

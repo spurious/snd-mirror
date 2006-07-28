@@ -844,7 +844,7 @@ then inverse ffts."
   ;;  factor of the sound data -- the ramp gen produces a ramp up when 'up' is #t, sticking
   ;;  at 1.0, and a ramp down when 'up' is #f, sticking at 0.0
   ;;
-  ;; this could use the average generator, though the resultant envelopes would be slightly less bumpy
+  ;; this could use the moving-average generator, though the resultant envelopes would be slightly less bumpy
   (let* ((ctr (vct-ref gen 0))
 	 (size (vct-ref gen 1))
 	 (val (/ ctr size)))
@@ -2228,7 +2228,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 
 (define (scramble-channel silence-1)
   ;; (scramble-channel .01)
-  (let ((buffer (make-average 128))
+  (let ((buffer (make-moving-average 128))
 	(silence (/ silence-1 128))
 	(edges '())
 	(samp 0)
@@ -2242,7 +2242,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
      (lambda ()
        (scan-channel
 	(lambda (y)
-	  (let* ((sum-of-squares (average buffer (* y y)))
+	  (let* ((sum-of-squares (moving-average buffer (* y y)))
 		 (now-silent (< sum-of-squares silence)))
 	    (if (not (eq? in-silence now-silent))
 		(set! edges (cons samp edges)))

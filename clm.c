@@ -81,7 +81,7 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
-      MUS_AVERAGE, MUS_SUM_OF_SINES, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
+      MUS_MOVING_AVERAGE, MUS_SUM_OF_SINES, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
       MUS_MOVE_SOUND,
       MUS_INITIAL_GEN_TAG};
 
@@ -2111,7 +2111,7 @@ bool mus_wave_train_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_WAV
 
 
 
-/* ---------------- delay, comb, notch, all-pass, average ---------------- */
+/* ---------------- delay, comb, notch, all-pass, moving-average ---------------- */
 
 typedef struct {
   mus_any_class *core;
@@ -2586,9 +2586,9 @@ mus_any *mus_make_all_pass (Float backward, Float forward, int size, Float *line
 }
 
 
-bool mus_average_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_AVERAGE));}
+bool mus_moving_average_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_MOVING_AVERAGE));}
 
-Float mus_average(mus_any *ptr, Float input)
+Float mus_moving_average(mus_any *ptr, Float input)
 {
   dly *gen = (dly *)ptr;
   Float output;
@@ -2597,32 +2597,32 @@ Float mus_average(mus_any *ptr, Float input)
   return(gen->xscl * gen->yscl); /* xscl=sum, yscl=1/n */
 }
 
-static Float run_mus_average(mus_any *ptr, Float input, Float unused) {return(mus_average(ptr, input));}
+static Float run_mus_moving_average(mus_any *ptr, Float input, Float unused) {return(mus_moving_average(ptr, input));}
 
-static void average_reset(mus_any *ptr)
+static void moving_average_reset(mus_any *ptr)
 {
   dly *gen = (dly *)ptr;
   delay_reset(ptr);
   gen->xscl = 0.0;
 }
 
-static char *describe_average(mus_any *ptr)
+static char *describe_moving_average(mus_any *ptr)
 {
   char *str = NULL;
   dly *gen = (dly *)ptr;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_average ": %.3f, line[%d]:%s",
+	       S_moving_average ": %.3f, line[%d]:%s",
 	       gen->xscl * gen->xscl, gen->size, 
 	       str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
 }
 
-static mus_any_class AVERAGE_CLASS = {
-  MUS_AVERAGE,
-  S_average,
+static mus_any_class MOVING_AVERAGE_CLASS = {
+  MUS_MOVING_AVERAGE,
+  S_moving_average,
   &free_delay,
-  &describe_average,
+  &describe_moving_average,
   &delay_equalp,
   &delay_data,
   &delay_set_data,
@@ -2633,24 +2633,24 @@ static mus_any_class AVERAGE_CLASS = {
   &set_delay_scaler,
   &delay_fb,
   &set_delay_fb,
-  &run_mus_average,
+  &run_mus_moving_average,
   MUS_DELAY_LINE,
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
-  &average_reset,
+  &moving_average_reset,
   0
 };
 
-mus_any *mus_make_average(int size, Float *line)
+mus_any *mus_make_moving_average(int size, Float *line)
 {
   dly *gen;
   gen = (dly *)mus_make_delay(size, line, size, MUS_INTERP_NONE);
   if (gen)
     {
       int i;
-      gen->core = &AVERAGE_CLASS;
+      gen->core = &MOVING_AVERAGE_CLASS;
       gen->xscl = 0.0;
       for (i = 0; i < size; i++) 
 	gen->xscl += gen->line[i];
@@ -2660,11 +2660,6 @@ mus_any *mus_make_average(int size, Float *line)
   return(NULL);
 }
 
-/* PERHAPS: moving-max (windowed-maxamp in dsp.scm): keep current_max in delay line
- *              if abs(input)>max max=abs(input) else
- *                if output = max, get new max
- * "delay-max" ? (moving-max is not right) "maximum"?
- */
 
 
 /* ---------------------------------------- filtered-comb ---------------------------------------- */

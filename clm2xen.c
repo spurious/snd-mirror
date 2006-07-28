@@ -1331,7 +1331,7 @@ static XEN g_mus_apply(XEN arglist)
 /* ---------------- delay ---------------- */
 
 
-typedef enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS, G_AVERAGE, G_FCOMB} xclm_delay_t;
+typedef enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS, G_MOVING_AVERAGE, G_FCOMB} xclm_delay_t;
 
 static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 {
@@ -1355,7 +1355,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   switch (choice)
     {
     case G_DELAY:    caller = S_make_delay;                                                      break;
-    case G_AVERAGE:  caller = S_make_average;                                                    break;
+    case G_MOVING_AVERAGE: caller = S_make_moving_average;                                       break;
     case G_COMB:     caller = S_make_comb;     scaler_key = argn; keys[argn++] = kw_scaler;      break;
     case G_FCOMB:    caller = S_make_filtered_comb; scaler_key = argn; keys[argn++] = kw_scaler; break;
     case G_NOTCH:    caller = S_make_notch;    scaler_key = argn; keys[argn++] = kw_scaler;      break;
@@ -1429,7 +1429,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
       switch (choice)
 	{
 	case G_DELAY: 
-	case G_AVERAGE:
+	case G_MOVING_AVERAGE:
 	  break;
 	case G_COMB: case G_NOTCH: case G_FCOMB:
 	  scaler = mus_optkey_to_float(keys[scaler_key], caller, orig_arg[scaler_key], scaler);
@@ -1506,11 +1506,11 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	max_size = 1;
       else max_size = size;
     }
-  if ((choice == G_AVERAGE) && (max_size != size))
+  if ((choice == G_MOVING_AVERAGE) && (max_size != size))
     {
       if (size == 0)
-	XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(size), "size = 0 for the " S_average " generator is kinda loony?");
-      else XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "max_size is irrelevant to the " S_average " generator");
+	XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(size), "size = 0 for the " S_moving_average " generator is kinda loony?");
+      else XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "max_size is irrelevant to the " S_moving_average " generator");
     }
 
   if (initial_contents == NULL)
@@ -1532,7 +1532,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   switch (choice)
     {
     case G_DELAY:    ge = mus_make_delay(size, line, max_size, interp_type); break;
-    case G_AVERAGE:  ge = mus_make_average(size, line); break;
+    case G_MOVING_AVERAGE:  ge = mus_make_moving_average(size, line); break;
     case G_COMB:     ge = mus_make_comb(scaler, size, line, max_size, interp_type); break;
     case G_NOTCH:    ge = mus_make_notch(scaler, size, line, max_size, interp_type); break;
     case G_ALL_PASS: ge = mus_make_all_pass(feedback, feedforward, size, line, max_size, interp_type); break;
@@ -1600,12 +1600,12 @@ initial-contents can be either a list or a vct."
   return(g_make_delay_1(G_ALL_PASS, args));
 }
 
-static XEN g_make_average(XEN args) 
+static XEN g_make_moving_average(XEN args) 
 {
-  #define H_make_average "(" S_make_average " :size :initial-contents (:initial-element 0.0)): \
-return a new average generator. initial-contents can be either a list or a vct."
+  #define H_make_moving_average "(" S_make_moving_average " :size :initial-contents (:initial-element 0.0)): \
+return a new moving_average generator. initial-contents can be either a list or a vct."
 
-  return(g_make_delay_1(G_AVERAGE, args));
+  return(g_make_delay_1(G_MOVING_AVERAGE, args));
 }
 
 static XEN g_delay(XEN obj, XEN input, XEN pm)
@@ -1674,13 +1674,13 @@ static XEN g_all_pass(XEN obj, XEN input, XEN pm)
   return(C_TO_XEN_DOUBLE(mus_all_pass(XEN_TO_MUS_ANY(obj), in1, pm1)));
 }
 
-static XEN g_average(XEN obj, XEN input)
+static XEN g_moving_average(XEN obj, XEN input)
 {
-  #define H_average "(" S_average " gen (val 0.0)): moving window average."
+  #define H_moving_average "(" S_moving_average " gen (val 0.0)): moving window moving_average."
   Float in1 = 0.0;
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_average_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_average, "an average generator");
-  if (XEN_NUMBER_P(input)) in1 = XEN_TO_C_DOUBLE(input); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_average, "a number");
-  return(C_TO_XEN_DOUBLE(mus_average(XEN_TO_MUS_ANY(obj), in1)));
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_moving_average_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_moving_average, "a moving-average generator");
+  if (XEN_NUMBER_P(input)) in1 = XEN_TO_C_DOUBLE(input); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_moving_average, "a number");
+  return(C_TO_XEN_DOUBLE(mus_moving_average(XEN_TO_MUS_ANY(obj), in1)));
 }
 
 static XEN g_tap(XEN obj, XEN loc)
@@ -1722,10 +1722,10 @@ static XEN g_all_pass_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_all_pass_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-static XEN g_average_p(XEN obj) 
+static XEN g_moving_average_p(XEN obj) 
 {
-  #define H_average_p "(" S_average_p " gen): #t if gen is an average generator"
-  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_average_p(XEN_TO_MUS_ANY(obj)))));
+  #define H_moving_average_p "(" S_moving_average_p " gen): #t if gen is a moving-average generator"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_moving_average_p(XEN_TO_MUS_ANY(obj)))));
 }
 
 
@@ -5704,7 +5704,7 @@ XEN_VARGIFY(g_make_comb_w, g_make_comb)
 XEN_VARGIFY(g_make_filtered_comb_w, g_make_filtered_comb)
 XEN_VARGIFY(g_make_notch_w, g_make_notch)
 XEN_VARGIFY(g_make_all_pass_w, g_make_all_pass)
-XEN_VARGIFY(g_make_average_w, g_make_average)
+XEN_VARGIFY(g_make_moving_average_w, g_make_moving_average)
 XEN_ARGIFY_3(g_delay_w, g_delay)
 XEN_ARGIFY_2(g_delay_tick_w, g_delay_tick)
 XEN_ARGIFY_2(g_tap_w, g_tap)
@@ -5712,13 +5712,13 @@ XEN_ARGIFY_3(g_notch_w, g_notch)
 XEN_ARGIFY_3(g_comb_w, g_comb)
 XEN_ARGIFY_3(g_filtered_comb_w, g_filtered_comb)
 XEN_ARGIFY_3(g_all_pass_w, g_all_pass)
-XEN_ARGIFY_2(g_average_w, g_average)
+XEN_ARGIFY_2(g_moving_average_w, g_moving_average)
 XEN_NARGIFY_1(g_delay_p_w, g_delay_p)
 XEN_NARGIFY_1(g_notch_p_w, g_notch_p)
 XEN_NARGIFY_1(g_comb_p_w, g_comb_p)
 XEN_NARGIFY_1(g_filtered_comb_p_w, g_filtered_comb_p)
 XEN_NARGIFY_1(g_all_pass_p_w, g_all_pass_p)
-XEN_NARGIFY_1(g_average_p_w, g_average_p)
+XEN_NARGIFY_1(g_moving_average_p_w, g_moving_average_p)
 XEN_ARGIFY_6(g_make_sum_of_cosines_w, g_make_sum_of_cosines)
 XEN_ARGIFY_2(g_sum_of_cosines_w, g_sum_of_cosines)
 XEN_NARGIFY_1(g_sum_of_cosines_p_w, g_sum_of_cosines_p)
@@ -5968,7 +5968,7 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_make_filtered_comb_w g_make_filtered_comb
 #define g_make_notch_w g_make_notch
 #define g_make_all_pass_w g_make_all_pass
-#define g_make_average_w g_make_average
+#define g_make_moving_average_w g_make_moving_average
 #define g_delay_w g_delay
 #define g_delay_tick_w g_delay_tick
 #define g_tap_w g_tap
@@ -5976,13 +5976,13 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_comb_w g_comb
 #define g_filtered_comb_w g_filtered_comb
 #define g_all_pass_w g_all_pass
-#define g_average_w g_average
+#define g_moving_average_w g_moving_average
 #define g_delay_p_w g_delay_p
 #define g_notch_p_w g_notch_p
 #define g_comb_p_w g_comb_p
 #define g_filtered_comb_p_w g_filtered_comb_p
 #define g_all_pass_p_w g_all_pass_p
-#define g_average_p_w g_average_p
+#define g_moving_average_p_w g_moving_average_p
 #define g_make_sum_of_cosines_w g_make_sum_of_cosines
 #define g_sum_of_cosines_w g_sum_of_cosines
 #define g_sum_of_cosines_p_w g_sum_of_cosines_p
@@ -6384,7 +6384,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_filtered_comb, g_make_filtered_comb_w, 0, 0, 1, H_make_filtered_comb);
   XEN_DEFINE_PROCEDURE(S_make_notch,      g_make_notch_w,      0, 0, 1, H_make_notch); 
   XEN_DEFINE_PROCEDURE(S_make_all_pass,   g_make_all_pass_w,   0, 0, 1, H_make_all_pass);
-  XEN_DEFINE_PROCEDURE(S_make_average,    g_make_average_w,    0, 0, 1, H_make_average);
+  XEN_DEFINE_PROCEDURE(S_make_moving_average,    g_make_moving_average_w,    0, 0, 1, H_make_moving_average);
   XEN_DEFINE_PROCEDURE(S_delay,           g_delay_w,           1, 2, 0, H_delay); 
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("clm:" S_delay,    g_delay_w,           1, 2, 0, H_delay);
@@ -6395,13 +6395,13 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_comb,            g_comb_w,            1, 2, 0, H_comb);
   XEN_DEFINE_PROCEDURE(S_filtered_comb,   g_filtered_comb_w,   1, 2, 0, H_filtered_comb);
   XEN_DEFINE_PROCEDURE(S_all_pass,        g_all_pass_w,        1, 2, 0, H_all_pass);
-  XEN_DEFINE_PROCEDURE(S_average,         g_average_w,         1, 1, 0, H_average);
+  XEN_DEFINE_PROCEDURE(S_moving_average,         g_moving_average_w,         1, 1, 0, H_moving_average);
   XEN_DEFINE_PROCEDURE(S_delay_p,         g_delay_p_w,         1, 0, 0, H_delay_p);
   XEN_DEFINE_PROCEDURE(S_notch_p,         g_notch_p_w,         1, 0, 0, H_notch_p);
   XEN_DEFINE_PROCEDURE(S_comb_p,          g_comb_p_w,          1, 0, 0, H_comb_p);
   XEN_DEFINE_PROCEDURE(S_filtered_comb_p, g_filtered_comb_p_w, 1, 0, 0, H_filtered_comb_p);
   XEN_DEFINE_PROCEDURE(S_all_pass_p,      g_all_pass_p_w,      1, 0, 0, H_all_pass_p);
-  XEN_DEFINE_PROCEDURE(S_average_p,       g_average_p_w,       1, 0, 0, H_average_p);
+  XEN_DEFINE_PROCEDURE(S_moving_average_p,       g_moving_average_p_w,       1, 0, 0, H_moving_average_p);
 
   #define H_mus_feedback "(" S_mus_feedback " gen): feedback value of gen"
   #define H_mus_feedforward "(" S_mus_feedforward " gen): feedforward term of gen"
@@ -6680,8 +6680,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_array_interp,
 	       S_asymmetric_fm,
 	       S_asymmetric_fm_p,
-	       S_average,
-	       S_average_p,
 	       S_bartlett_window,
 	       S_blackman2_window,
 	       S_blackman3_window,
@@ -6760,7 +6758,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_locsig_set,
 	       S_locsig_type,
 	       S_make_all_pass,
-	       S_make_average,
 	       S_make_asymmetric_fm,
 	       S_make_comb,
 	       S_make_convolve,
@@ -6781,6 +6778,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_make_locsig,
 	       S_make_mixer,
 	       S_make_move_sound,
+	       S_make_moving_average,
 	       S_make_notch,
 	       S_make_one_pole,
 	       S_make_one_zero,
@@ -6814,6 +6812,8 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_move_locsig,
 	       S_move_sound,
 	       S_move_sound_p,
+	       S_moving_average,
+	       S_moving_average_p,
 	       S_multiply_arrays,
 	       S_mus_apply,
 	       S_mus_array_print_length,

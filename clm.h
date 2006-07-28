@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 25
-#define MUS_DATE "28-July-06"
+#define MUS_REVISION 26
+#define MUS_DATE "30-July-06"
 
 /*
+ * 30-July:    renamed average to moving_average.
  * 28-July:    renamed make_ppolar and make_zpolar to make_two_pole|zero_from_radius_and_frequency.
  *             added mus_scaler and mus_frequency methods for two_pole and two_zero.
  * 21-July:    removed mus_wrapper field -- old way can't work since we need the original XEN object.
@@ -366,9 +367,9 @@ Float mus_all_pass_1(mus_any *gen, Float input);
 mus_any *mus_make_all_pass(Float backward, Float forward, int size, Float *line, int line_size, mus_interp_t type);
 bool mus_all_pass_p(mus_any *ptr);
 
-mus_any *mus_make_average(int size, Float *line);
-bool mus_average_p(mus_any *ptr);
-Float mus_average(mus_any *ptr, Float input);
+mus_any *mus_make_moving_average(int size, Float *line);
+bool mus_moving_average_p(mus_any *ptr);
+Float mus_moving_average(mus_any *ptr, Float input);
 
 #define mus_feedforward(Gen) mus_scaler(Gen)
 #define mus_set_feedforward(Gen, Val) mus_set_scaler(Gen, Val)

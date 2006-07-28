@@ -178,9 +178,9 @@ module Effects
   end
 
   def effects_squelch_channel(amount, size, snd = false, chn = false)
-    f0 = make_average(size)
-    f1 = make_average(size, :initial_element, 1.0)
-    map_channel(lambda { |y| y * average(f1, ((average(f0, y * y) < amount) ? 0.0 : 1.0)) },
+    f0 = make_moving_average(size)
+    f1 = make_moving_average(size, :initial_element, 1.0)
+    map_channel(lambda { |y| y * moving_average(f1, ((moving_average(f0, y * y) < amount) ? 0.0 : 1.0)) },
                 0, false, snd, chn, false, format("%s(%s, %s", get_func_name, amount, size))
   end
 

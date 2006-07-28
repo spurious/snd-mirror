@@ -324,11 +324,11 @@
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (os (make-oscil freq))
-	 (buf (make-average 10)))
+	 (buf (make-moving-average 10)))
     (run
      (lambda ()
        (do ((i start (1+ i))) ((= i end))
-	 (out-any i (average buf (* amp (oscil os))) 0 *output*))))))
+	 (out-any i (moving-average buf (* amp (oscil os))) 0 *output*))))))
 
 (define (simple-tab beg dur freq amp)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))

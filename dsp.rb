@@ -172,15 +172,15 @@
 #  make_volterra_filter(acoeffs, bcoeffs)
 #  volterra_filter(flt, x)
 #
-#  class Windowed_maxamp < Musgen
+#  class moving_max < Musgen
 #   initialize(size = 128)
 #   inspect
 #   to_s
 #   run_func(val1, val2)
-#   windowed_maxamp(y)
+#   moving_max(y)
 #   
-#  make_windowed_maxamp(size = 128)
-#  windowed_maxamp(gen, y)
+#  make_moving_max(size = 128)
+#  moving_max(gen, y)
 #  harmonicizer(freq, coeffs, pairs, order, bw, beg, dur, snd, chn, edpos)
 #  linear_src_channel(srinc, snd = false, chn = false)
 
@@ -2022,7 +2022,7 @@ tries to return an inverse filter to undo the effect of the FIR filter coeffs.")
   # flt = make_volterra_filter([0.5, 0.1].to_vct, [0.3, 0.2, 0.1].to_vct)
   # map_channel(lambda do |y| volterra_filter(flt, y) end)
 
-  class Windowed_maxamp < Musgen
+  class moving_max < Musgen
     def initialize(size = 128)
       super()
       @size = size
@@ -2039,10 +2039,10 @@ tries to return an inverse filter to undo the effect of the FIR filter coeffs.")
     end
 
     def run_func(val1 = 0.0, val2 = 0.0)
-      windowed_maxamp(val1)
+      moving_max(val1)
     end
     
-    def windowed_maxamp(y)
+    def moving_max(y)
       absy = y.abs
       mx = delay(@gen, absy)
       pk = @gen.scaler - 0.001
@@ -2058,18 +2058,18 @@ tries to return an inverse filter to undo the effect of the FIR filter coeffs.")
   end
 
   add_help(:make_window_maxamp,
-           "make_windowed_maxamp(size = 128)  returns a windowed-maxamp generator.  \
+           "make_moving_max(size = 128)  returns a windowed-maxamp generator.  \
 The generator keeps a running window of the last 'size' inputs, \
 returning the maxamp in that window.")
-  def make_windowed_maxamp(size = 128)
-    Windowed_maxamp.new(size)
+  def make_moving_max(size = 128)
+    moving_max.new(size)
   end
 
-  add_help(:windowed_maxamp,
-           "windowed_maxamp(gen, input)  \
+  add_help(:moving_max,
+           "moving_max(gen, input)  \
 returns the maxamp in a running window on the last few inputs.")
-  def windowed_maxamp(gen, y)
-    gen.windowed_maxamp(y)
+  def moving_max(gen, y)
+    gen.moving_max(y)
   end
 
   # harmonicizer (each harmonic is split into a set of harmonics via Chebyshev polynomials)
@@ -2098,8 +2098,8 @@ splits out each harmonic and replaces it with the spectrum given in coeffs")
     1.upto(pairs) do |i|
       aff = i * freq
       bwf = bw * (1.0 + i / (2 * pairs))
-      peaks[i - 1] = make_windowed_maxamp(128)
-      avgs[i - 1] = make_average(128)
+      peaks[i - 1] = make_moving_max(128)
+      avgs[i - 1] = make_moving_average(128)
       bands[i - 1] = make_bandpass(hz_to_2pi(aff - bwf), hz_to_2pi(aff + bwf), order)
     end
     as_one_edit_rb do
@@ -2107,8 +2107,8 @@ splits out each harmonic and replaces it with the spectrum given in coeffs")
         sum = 0.0
         bands.zip(peaks, avgs) do |bs, ps, as|
           sig = bandpass(bs, y)
-          mx = windowed_maxamp(ps, sig)
-          amp = average(as, mx > 0.0 ? [100.0, 1.0 / mx].min : 0.0)
+          mx = moving_max(ps, sig)
+          amp = moving_average(as, mx > 0.0 ? [100.0, 1.0 / mx].min : 0.0)
           if amp > 0.0
             sum += mx * polynomial(pcoeffs, amp * sig)
           end
