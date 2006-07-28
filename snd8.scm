@@ -9,6 +9,6 @@
 (define average moving-average)
 (define average? moving-average?)
 
-(define windowed-maxamp moving-max)
-(define make-windowed-maxamp make-moving-max)
+;(define windowed-maxamp moving-max)
+;(define make-windowed-maxamp make-moving-max)
 

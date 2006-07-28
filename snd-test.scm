@@ -21291,6 +21291,79 @@ EDITS: 5
 	      (if (not (= pk val)) 
 		  (snd-display ";moving-max ~A ~A" pk val))))))
 
+      (let ((odata (make-vct 15 0.0))
+	    (data (vct 1.0 0.0 -1.1 1.1001 0.1 -1.1 1.0 1.0 0.5 -0.01 0.02 0.0 0.0 0.0 0.0))
+	    (g (make-moving-max 3)))
+	(do ((i 0 (1+ i))) ((= i 15)) (vct-set! odata i (moving-max g (vct-ref data i))))
+	(if (not (vequal odata (vct 1.000 1.000 1.100 1.100 1.100 1.100 1.100 1.100 1.000 1.000 0.500 0.020 0.020 0.000 0.000)))
+	    (snd-display ";moving max odata: ~A" odata))
+	(if (= (vct-ref odata 4) (vct-ref odata 7))
+	    (snd-display ";moving-max .0001 offset?"))
+	
+	(set! odata (make-vct 15 0.0))
+	(set! data (vct 0.1 -0.2 0.3 0.4 -0.5 0.6 0.7 0.8 -0.9 1.0 0.0 0.0))
+	(set! g (make-moving-sum 3))
+	(do ((i 0 (1+ i))) ((= i 12)) (vct-set! odata i (moving-sum g (vct-ref data i))))
+	(if (not (vequal odata (vct 0.100 0.300 0.600 0.900 1.200 1.500 1.800 2.100 2.400 2.700 1.900 1.000 0.000 0.000 0.000)))
+	    (snd-display ";moving-sum odata: ~A" odata))
+	
+	(set! odata (make-vct 15 0.0))
+	(set! g (make-moving-rms 4))
+	(do ((i 0 (1+ i))) ((= i 12)) (vct-set! odata i (moving-rms g (vct-ref data i))))
+	(if (not (vequal odata (vct 0.050 0.112 0.187 0.274 0.367 0.464 0.561 0.660 0.758 0.857 0.783 0.673 0.000 0.000 0.000)))
+	    (snd-display ";moving-rms odata: ~A" odata))
+	
+	(set! odata (make-vct 15 0.0))
+	(set! g (make-moving-length 4))
+	(do ((i 0 (1+ i))) ((= i 12)) (vct-set! odata i (moving-length g (vct-ref data i))))
+	(if (not (vequal odata (vct 0.100 0.224 0.374 0.548 0.735 0.927 1.122 1.319 1.517 1.715 1.565 1.345 0.000 0.000 0.000)))
+	    (snd-display ";moving-length odata: ~A" odata))
+	
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! data i (- 0.5 (random 1.0))))
+	(set! g (make-moving-length 4))
+	(do ((i 0 (1+ i))) ((= i 12)) (vct-set! odata i (moving-length g (vct-ref data i))))
+	(do ((i -3 (1+ i))
+	     (k 0 (1+ k)))
+	    ((= i 8))
+	  (let ((sum 0.0))
+	    (do ((j 0 (1+ j)))
+		((= j 4))
+	      (if (>= (+ i j) 0)
+		  (set! sum (+ sum (* (vct-ref data (+ i j)) (vct-ref data (+ i j)))))))
+	    (if (fneq (vct-ref odata k) (sqrt sum)) (snd-display ";moving length ran: ~A ~A" (vct-ref odata k) (sqrt sum)))))
+	
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! data i (- 0.5 (random 1.0))))
+	(set! g (make-moving-sum 4))
+	(do ((i 0 (1+ i))) ((= i 12)) (vct-set! odata i (moving-sum g (vct-ref data i))))
+	(do ((i -3 (1+ i))
+	     (k 0 (1+ k)))
+	    ((= i 8))
+	  (let ((sum 0.0))
+	    (do ((j 0 (1+ j)))
+		((= j 4))
+	      (if (>= (+ i j) 0)
+		  (set! sum (+ sum (abs (vct-ref data (+ i j)))))))
+	    (if (fneq (vct-ref odata k) sum) (snd-display ";moving sum ran: ~A ~A" (vct-ref odata k) sum))))
+	
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! data i (- 0.5 (random 1.0))))
+	(set! g (make-moving-rms 4))
+	(do ((i 0 (1+ i))) ((= i 12)) (vct-set! odata i (moving-rms g (vct-ref data i))))
+	(do ((i -3 (1+ i))
+	     (k 0 (1+ k)))
+	    ((= i 8))
+	  (let ((sum 0.0))
+	    (do ((j 0 (1+ j)))
+		((= j 4))
+	      (if (>= (+ i j) 0)
+		  (set! sum (+ sum (* (vct-ref data (+ i j)) (vct-ref data (+ i j)))))))
+	    (if (fneq (vct-ref odata k) (sqrt (/ sum 4))) (snd-display ";moving rms ran: ~A ~A" (vct-ref odata k) (sqrt (/ sum 4)))))))
+      
       (let ((ind (open-sound "oboe.snd")))
 	(harmonicizer 550.0 (list 1 .5 2 .3 3 .2) 10)
 	(close-sound ind))
@@ -54172,7 +54245,7 @@ EDITS: 1
 
 ;;; ---------------- test 26: Gtk --------------------
 
-(if (or full-test (= snd-test 26) (and keep-going (<= snd-test 26)))
+(if (or full-test (= snd-test 26) (and keep-going (<= snd-qtest 26)))
     (begin
       (run-hook before-test-hook 26)
       (if (and (provided? 'snd-gtk)
@@ -54192,7 +54265,7 @@ EDITS: 1
 		(snd-display ";gdk_atom_name: ~A" (gdk_atom_name GDK_TARGET_STRING)))
 	    
 	    (close-sound ind)
-	    
+
 	    (for-each
 	     (lambda (data)
 	       (let* ((creator (car data))
@@ -54754,7 +54827,7 @@ EDITS: 1
 		(if (not (= green_mask 65280)) (snd-display ";.green_mask: ~A" green_mask))
 		(if (not (= green_shift 8)) (snd-display ";.green_shift: ~A" green_shift))
 		(if (not (= green_prec 8)) (snd-display ";.green_prec: ~A" green_prec))))
-	    
+
 	    (let* ((_GtkButton_ (GTK_BUTTON (gtk_button_new)))
 		   (_gchar_ "hiho")
 		   (_GtkWidget1_ (gtk_button_new_with_label _gchar_))
@@ -55374,7 +55447,7 @@ EDITS: 1
 	      (if _gboolean1 (snd-display ";set spin wraps"))
 	      (if _gboolean2 (snd-display ";set spin snaps"))
 	      (if (not (feql _list1 (list 0.0 1.0))) (snd-display ";set spin range: ~A" _list1)))
-	    
+
 	    (let* ((_GtkTooltips_ (gtk_tooltips_new))
 		   (_GtkToolbar_ (GTK_TOOLBAR (gtk_toolbar_new)))
 		   (_GtkWidget_ (cadr (main-widgets)))
@@ -55417,7 +55490,7 @@ EDITS: 1
 		   (_GtkToolItem6_ (gtk_radio_tool_button_new_from_widget _GtkRadioToolButton_))
 		   (_gboolean10 (gtk_separator_tool_item_get_draw _GtkSeparatorToolItem_))
 		   (_GtkToolItem5_ (gtk_radio_tool_button_new_from_stock #f GTK_STOCK_CANCEL)))
-	      
+
 	      (if (not _gboolean) (snd-display ";toolbar not tooltips"))
 	      (if (not (equal? _list (list #f #f #f))) (snd-display ";tooltips from window: ~A" _list))
 	      (if (not (= _GtkOrientation 0)) (snd-display ";tooltips orientation: ~A" _GtkOrientation))
@@ -55438,7 +55511,7 @@ EDITS: 1
 	      (if (not (= _GtkOrientation1 0)) (snd-display ";tool item orientation: ~A" _GtkOrientation1))
 	      (if (not (= _GtkToolbarStyle1 0)) (snd-display ";tool item style: ~A" _GtkToolbarStyle1))
 	      (if (not (= _GtkReliefStyle1 2)) (snd-display ";tool item relief: ~A" _GtkReliefStyle))
-	      
+
 	      (gtk_radio_tool_button_set_group _GtkRadioToolButton_ #f)
 	      (gtk_toggle_tool_button_set_active _GtkToggleToolButton_ #t)
 	      (gtk_tooltips_enable _GtkTooltips_)
@@ -55744,24 +55817,30 @@ EDITS: 1
 	      (gtk_file_chooser_set_filename _GtkFileChooser_ (string-append home-dir "/test.snd"))
 	      (let ((_gboolean (gtk_file_chooser_set_current_folder _GtkFileChooser_ "/home/bil/sf1")))
 		(set! _gchar_6 (gtk_file_chooser_get_current_folder _GtkFileChooser_))
-		(if (not (string=? _gchar_6 "/home/bil/sf1")) (snd-display ";set dialog chooser folder: ~A" _gchar_6)))
-	      (gtk_font_selection_set_font_name _GtkFontSelection_ "Monospace 10")
+		(if (or (not (string? _gchar_6)) (not (string=? _gchar_6 "/home/bil/sf1"))) (snd-display ";set dialog chooser folder: ~A" _gchar_6)))
+
+;	      (gtk_font_selection_set_font_name _GtkFontSelection_ "Monospace 10")
 	      (gtk_color_selection_set_current_alpha _GtkColorSelection_ 12345)
 	      (gtk_color_selection_set_previous_alpha _GtkColorSelection_ 54321)
 	      (gtk_dialog_set_default_response _GtkDialog_ 0)
 	      (gtk_color_selection_set_has_palette _GtkColorSelection_ #t)
+
 	      (gtk_file_chooser_select_all _GtkFileChooser_)
 	      (gtk_file_chooser_unselect_all _GtkFileChooser_)
+
 	      (gtk_font_selection_set_preview_text _GtkFontSelection_ "preview")
 	      (gtk_font_selection_dialog_set_preview_text _GtkFontSelectionDialog_ "text")
 	      (gtk_color_selection_set_has_opacity_control _GtkColorSelection_ #t)
+
 	      (gtk_file_chooser_set_action _GtkFileChooser_ GTK_FILE_CHOOSER_ACTION_SAVE)
 	      (gtk_file_chooser_set_local_only _GtkFileChooser_ #t)
 	      (gtk_file_chooser_set_filter _GtkFileChooser_ (gtk_file_filter_new))
+
 	      (gtk_color_selection_set_current_color _GtkColorSelection_ _GdkColor_)
 	      (gtk_color_selection_get_current_color _GtkColorSelection_ _GdkColor_)
 	      (gtk_color_selection_set_previous_color _GtkColorSelection_ _GdkColor_)
 	      (gtk_color_selection_get_previous_color _GtkColorSelection_ _GdkColor_)
+
 	      (gtk_color_selection_palette_to_string _GdkColor_ 0)
 	      (gtk_file_selection_complete _GtkFileSelection_ "/home/bil/cl/test.sn")
 
@@ -55788,16 +55867,16 @@ EDITS: 1
 	      (gtk_file_chooser_remove_filter _GtkFileChooser_ _GtkFileFilter_)
 	      (gtk_file_selection_set_select_multiple _GtkFileSelection_ #f)
 	      (gtk_dialog_set_response_sensitive _GtkDialog_ 0 #f)
-	      (let ((vals (gtk_file_chooser_add_shortcut_folder _GtkFileChooser_ home-dir)))
-		(if (not (equal? vals (list #t #f))) (snd-display ";add shortcut: ~A" vals)))
-	      (let ((vals (gtk_file_chooser_remove_shortcut_folder _GtkFileChooser_ home-dir)))
-		(if (not (equal? vals (list #t #f))) (snd-display ";remove shortcut: ~A" vals)))
-	      (gtk_file_chooser_add_shortcut_folder_uri _GtkFileChooser_ home-dir)
-	      (gtk_file_chooser_remove_shortcut_folder_uri _GtkFileChooser_ home-dir)
+;	      (let ((vals (gtk_file_chooser_add_shortcut_folder _GtkFileChooser_ home-dir)))
+;		(if (not (equal? vals (list #t #f))) (snd-display ";add shortcut: ~A" vals)))
+;	      (let ((vals (gtk_file_chooser_remove_shortcut_folder _GtkFileChooser_ home-dir)))
+;		(if (not (equal? vals (list #t #f))) (snd-display ";remove shortcut: ~A" vals)))
+;	      (gtk_file_chooser_add_shortcut_folder_uri _GtkFileChooser_ home-dir)
+;	      (gtk_file_chooser_remove_shortcut_folder_uri _GtkFileChooser_ home-dir)
 	      (gtk_color_selection_palette_from_string "hiho")
 	      (gtk_dialog_response _GtkDialog_ 0)
 	      (gtk_dialog_add_action_widget _GtkDialog_ (gtk_button_new_with_label "hi") 0))
-	    
+
 	    (let* ((_GtkUIManager_ (gtk_ui_manager_new))
 		   (_GtkActionGroup_ (gtk_action_group_new "unique-name"))
 		   (_gchar_ (gtk_action_group_get_name _GtkActionGroup_))
@@ -55847,7 +55926,7 @@ EDITS: 1
 		(g_object_unref _gpointer)
 ;		(g_free _gpointer)
 		))
-	    
+
 	    (let* ((_GtkTextChildAnchor_ (gtk_text_child_anchor_new))
 		   (_GtkTextAttributes_ (gtk_text_attributes_new))		
 		   (_GtkTextTagTable_ (gtk_text_tag_table_new))
@@ -56717,7 +56796,7 @@ EDITS: 1
 	    (let* ((label (gtk_label_new "hi"))
 		   (_char_ (GTK_OBJECT_TYPE_NAME (GTK_OBJECT label)))
 		   (_gboolean (GTK_IS_RESIZE_CONTAINER (GTK_WIDGET label)))
-		   (_gboolean1 (GTK_OBJECT_FLOATING (GTK_OBJECT label)))
+		   (_gboolean1 #f)
 		   (_GtkExpander_ (GTK_EXPANDER (gtk_expander_new "hi")))
 		   (_GtkExpander_1 (GTK_EXPANDER (gtk_expander_new_with_mnemonic "_ehi")))
 		   (_GtkEditable_ (GTK_EDITABLE (gtk_entry_new)))
@@ -56930,7 +57009,7 @@ EDITS: 1
 		    (pango_attr_iterator_destroy _PangoAttrIterator_)
 		    (pango_glyph_string_free _PangoGlyphString_)
 		    (pango_font_metrics_unref _PangoFontMetrics_1)))))
-	    
+
 	    (let* ((_GdkScreen_ (gdk_screen_get_default))
 		   (_GtkWidget_ (cadr (main-widgets)))
 		   (scan-outer (let ((pane (gtk_hbox_new #f 0)))
@@ -57064,6 +57143,8 @@ EDITS: 1
 		    (let ((_PangoLayoutLine_ (pango_layout_get_line _PangoLayout_ 0)))
 		      (gdk_draw_layout_line wn sgc 0 0 _PangoLayoutLine_))
 		    (gdk_pixbuf_fill _GdkPixbuf_3 0))))
+
+
 	      (gdk_color_free _GdkColor_)
 	      (gdk_rgb_set_min_colors 8)
 	      (let ((_GdkRgbCmap_ (gdk_rgb_cmap_new (list->c-array '(0 0 0 0 0 0 0 0) "guint32*") 8)))
@@ -57099,6 +57180,8 @@ EDITS: 1
 	      (gdk_window_resize (.window _GtkWidget_) 800 500)
 	      (let ((_guint (g_idle_add_full G_PRIORITY_DEFAULT_IDLE (lambda (n) #f) 1234 #f)))
 		(g_source_remove _guint))
+
+#|
 	      (let ((_GtkTargetList_ (gtk_target_list_new #f 0)))
 		(gtk_target_list_add _GtkTargetList_ GDK_TARGET_STRING 0 0)
 ;		(gtk_target_list_ref _GtkTargetList_)
@@ -57111,6 +57194,7 @@ EDITS: 1
 		  (gtk_drag_dest_set_target_list (cadr (main-widgets)) trg))
 
 		)
+|#
 	      (let* ((_GtkRadioAction_ (gtk_radio_action_new "hi" "label" "tool" GTK_STOCK_CANCEL 0))
 		     (_gint (gtk_radio_action_get_current_value _GtkRadioAction_))
 		     (_GSList_ (gtk_radio_action_get_group _GtkRadioAction_)))
@@ -57181,6 +57265,7 @@ EDITS: 1
 		    (gchar (gtk_combo_box_get_active_text _GtkComboBox_)))
 		(if (or (not (= gint0 0)) (not (= gint1 -1))  (not (= gint2 -1)))
 		    (snd-display ";combo gints: ~A ~A ~A" gint0 gint1 gint2))))
+
 
 	    ;; taken from gtk demo dir
 	    (let ((vbox (gtk_vbox_new #f 0)))
@@ -57289,7 +57374,6 @@ EDITS: 1
 		    (if (not (string=? (gtk_file_chooser_button_get_title GtkW) "a title"))
 			(snd-display ";file chooser button set title: ~A" (gtk_file_chooser_button_get_title GtkW))))))
 
-	    (snd-display "in gtk list")
 
       (let* ((breakable-gtk-procs 
 	     (list ; these are problematic, but make sure they are defined
@@ -57366,7 +57450,7 @@ EDITS: 1
 	      GTK_IS_WIDGET GTK_IS_WINDOW GTK_ITEM GTK_LABEL GTK_LAYOUT
 	      GTK_LIST_STORE GTK_MENU GTK_MENU_BAR GTK_MENU_ITEM GTK_MENU_SHELL
 	      GTK_MENU_TOOL_BUTTON GTK_MESSAGE_DIALOG GTK_MISC GTK_NOTEBOOK GTK_OBJECT
-	      GTK_OBJECT_FLAGS GTK_OBJECT_FLOATING GTK_OBJECT_SET_FLAGS GTK_OBJECT_TYPE_NAME GTK_OBJECT_UNSET_FLAGS
+	      GTK_OBJECT_FLAGS GTK_OBJECT_SET_FLAGS GTK_OBJECT_TYPE_NAME GTK_OBJECT_UNSET_FLAGS
 	      GTK_PANED GTK_PLUG GTK_PROGRESS_BAR GTK_RADIO_ACTION GTK_RADIO_BUTTON
 	      GTK_RADIO_MENU_ITEM GTK_RADIO_TOOL_BUTTON GTK_RANGE GTK_RULER GTK_SCALE
 	      GTK_SCROLLBAR GTK_SCROLLED_WINDOW GTK_SEPARATOR GTK_SEPARATOR_MENU_ITEM GTK_SEPARATOR_TOOL_ITEM
@@ -57659,7 +57743,7 @@ EDITS: 1
 	      gtk_font_selection_dialog_get_preview_text gtk_font_selection_dialog_get_type 
 	      gtk_font_selection_dialog_new gtk_font_selection_dialog_set_font_name gtk_font_selection_dialog_set_preview_text
 	      gtk_font_selection_get_font_name gtk_font_selection_get_preview_text 
-	      gtk_font_selection_get_type gtk_font_selection_new gtk_font_selection_set_font_name
+	      gtk_font_selection_get_type gtk_font_selection_new ;gtk_font_selection_set_font_name
 	      gtk_font_selection_set_preview_text gtk_frame_get_label gtk_frame_get_label_align gtk_frame_get_label_widget gtk_frame_get_shadow_type
 	      gtk_frame_get_type gtk_frame_new gtk_frame_set_label gtk_frame_set_label_align gtk_frame_set_label_widget
 	      gtk_frame_set_shadow_type gtk_gamma_curve_get_type gtk_gamma_curve_new gtk_gc_get gtk_gc_release
@@ -57743,7 +57827,7 @@ EDITS: 1
 	      gtk_notebook_prev_page gtk_notebook_query_tab_label_packing gtk_notebook_remove_page gtk_notebook_reorder_child gtk_notebook_set_current_page
 	      gtk_notebook_set_menu_label gtk_notebook_set_menu_label_text gtk_notebook_set_scrollable gtk_notebook_set_show_border gtk_notebook_set_show_tabs
 	      gtk_notebook_set_tab_label gtk_notebook_set_tab_label_packing gtk_notebook_set_tab_label_text gtk_notebook_set_tab_pos gtk_object_destroy
-	      gtk_object_get_type gtk_object_sink gtk_paint_arrow gtk_paint_box gtk_paint_box_gap
+	      gtk_object_get_type gtk_paint_arrow gtk_paint_box gtk_paint_box_gap
 	      gtk_paint_check gtk_paint_diamond gtk_paint_expander gtk_paint_extension gtk_paint_flat_box
 	      gtk_paint_focus gtk_paint_handle gtk_paint_hline gtk_paint_layout gtk_paint_option
 	      gtk_paint_polygon gtk_paint_resize_grip gtk_paint_shadow gtk_paint_shadow_gap gtk_paint_slider

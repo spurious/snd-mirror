@@ -2,8 +2,6 @@
 ;;;
 ;;; all assume they're called within with-sound, most set up C-g to (throw 'with-sound-interrupt)
 
-;;; PERHAPS: PRC whistle?
-
 (use-modules (ice-9 optargs))
 
 (provide 'snd-clm-ins.scm)

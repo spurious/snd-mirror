@@ -28,7 +28,7 @@
 	    (fm1-index #f) 
 	    (fm2-index #f) 
 	    (fm3-index #f)
-	    (degree 0)
+	    (degree #f)
 	    (distance 1.0)
 	    (reverb-amount 0.01)
 	    (base 1.0)
@@ -45,7 +45,7 @@
    (fm2-env '(0 1  25 .4  75 .6  100 0)) (fm3-rat 4.0) 
    (fm3-env '(0 1  25 .4  75 .6  100 0)) (fm1-rat 1.0) 
    (fm2-rat 3.0) (fm1-index #f) (fm2-index #f) 
-   (fm3-index #f) (degree 0) (distance 1.0) 
+   (fm3-index #f) (degree #f) (distance 1.0) 
    (reverb-amount 0.01) (base 1.0)) 
 This version of the fm-violin assumes it is running within with-sound (where *output* and *reverb* are defined).
   (with-sound () (fm-violin 0 1 440 .1))"
@@ -98,7 +98,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	   (amp-noi (if (and (not (= 0.0 amp-noise-amount)) (not (= 0.0 amp-noise-freq)))
 			(make-rand-interp amp-noise-freq amp-noise-amount)
 			#f))
-	   (locs (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
+	   (locs (make-locsig (or degree (random 90.0)) distance reverb-amount *output* *reverb* (mus-channels *output*)))
 	   (vib 0.0) 
 	   (modulation 0.0)
 	   (fuzz 0.0)

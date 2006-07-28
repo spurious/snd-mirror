@@ -1915,6 +1915,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 
 ;;; ----------------
+;;;
 ;;; moving-max generator (the max norm, or uniform norm, infinity-norm)
 
 (define* (make-moving-max :optional (size 128))
@@ -1936,6 +1937,7 @@ a running window of the last 'size' inputs, returning the maxamp in that window.
 
 
 ;;; ----------------
+;;;
 ;;; moving-sum generator (the sum norm or 1-norm)
 
 (define* (make-moving-sum :optional (size 128))
@@ -1951,6 +1953,7 @@ a running window of the last 'size' inputs, returning the sum of the absolute va
 
 
 ;;; ----------------
+;;;
 ;;; moving-rms generator
 
 (define* (make-moving-rms :optional (size 128))
@@ -1964,6 +1967,7 @@ a running window of the last 'size' inputs, returning the rms of the samples in 
 
 
 ;;; ----------------
+;;;
 ;;; moving-length generator (euclidean norm or 2-norm)
 
 (define* (make-moving-length :optional (size 128))
@@ -2016,7 +2020,7 @@ and replaces it with the spectrum given in coeffs"
 	((> i pairs))
       (let* ((aff (* i freq))
 	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
-	(vector-set! peaks (1- i) (make-windowed-maxamp 128))
+	(vector-set! peaks (1- i) (make-moving-max 128))
 	(vector-set! avgs (1- i) (make-moving-average 128))
 	(vector-set! bands (1- i) (make-bandpass (hz->2pi (- aff bwf)) 
 						 (hz->2pi (+ aff bwf)) 
@@ -2029,7 +2033,7 @@ and replaces it with the spectrum given in coeffs"
 	    (do ((i 0 (1+ i)))
 		((= i pairs))
 	      (let* ((sig (bandpass (vector-ref bands i) y))
-		     (mx (windowed-maxamp (vector-ref peaks i) sig)))
+		     (mx (moving-max (vector-ref peaks i) sig)))
 		(let ((amp (moving-average (vector-ref avgs i) (if (> mx 0.0) (min 100.0 (/ 1.0 mx)) 0.0))))
 		  (if (> amp 0.0)
 		      (set! sum (+ sum (* mx (polynomial pcoeffs (* amp sig)))))))))

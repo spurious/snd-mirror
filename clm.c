@@ -579,6 +579,9 @@ Float mus_dot_product(Float *data1, Float *data2, int size)
 }
 
 #if HAVE_COMPLEX_TRIG
+#if HAVE_FORTH 
+  #include "xen.h" 
+#endif 
 complex double mus_edot_product(complex double freq, complex double *data, int size)
 {
   int i;

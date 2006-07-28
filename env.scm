@@ -486,7 +486,7 @@ repetition to be in reverse."
 	 (end (if dur (min (inexact->exact (+ start (round (* fsr dur))))
 			   (mus-sound-frames file))
 		  (mus-sound-frames file)))
-	 (rms (make-moving-average incrsamps)))
+	 (rms (make-moving-average incrsamps))) ; this could use make-moving-rms from dsp.scm
     (do ((i 0 (+ i incrsamps)))
 	((>= i end) 
 	 (reverse e))
