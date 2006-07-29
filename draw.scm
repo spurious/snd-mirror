@@ -5,6 +5,121 @@
 (provide 'snd-draw.scm)
 (if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
 
+;; these two are in dsp.scm
+(if (not (defined? 'make-moving-rms))
+    (define* (make-moving-rms :optional (size 128))
+      (make-moving-average size)))
+
+(if (not (defined? 'moving-rms))
+    (define (moving-rms gen y)
+      (sqrt (moving-average gen (* y y)))))
+
+(define (overlay-rms-env snd chn)
+  (let* ((red (make-color 1 0 0))            ; rms env displayed in red
+	 (left (left-sample snd chn))
+	 (right (right-sample snd chn))
+	 (rms-size 128)                      ; this could be a parameter -- not sure what the "right" size is
+	 (sr (/ 1.0 (srate snd)))
+	 (old-color (foreground-color snd chn))
+	 (axinf (axis-info snd chn))
+	 (old-axinf (channel-property 'rms-axis-info snd chn)))
+
+    ;; these functions are an optimization to speed up calculating the rms env graph.
+    ;; ideally we'd use something like:
+    ;;
+    ;;   (let* ((x1 (x->position (/ i (srate)) snd chn))
+    ;;          (y1 (y->position (moving-rms rms (reader)) snd chn)))
+    ;;     (draw-line x0 y0 x1 y1)
+    ;;
+    ;; in the do-loop below that runs through the samples, but I haven't added x|y->position or draw-line
+    ;; to the optimizer ("run"), and each would be looking up the graph axis info on each call even if
+    ;; available to the optimizer -- this seems wasteful.  So, the grf-it function below is using the
+    ;; axis info in axinf to get the pixel location for the envelope line segment break point.
+    ;; Also, draw-lines takes a vector for some reason, so we need to tell "run" that it is an
+    ;; integer vector (and preload it with 0).  We save the vector in the channel property 'rms-lines,
+    ;; and the associated axis info in 'rms-axis-info.  Since redisplay is common in Snd, it reduces
+    ;; "flashing" a lot to have this data instantly available.
+
+    (define (pack-x-info axinf)
+      (vct (list-ref axinf 2) ;  x0
+	   (list-ref axinf 4) ;  x1
+	   (list-ref axinf 10) ; x_axis_x0
+	   (list-ref axinf 12) ; x_axis_x1
+	   (list-ref axinf 15) ; scale
+	   (- (list-ref axinf 10) (* (list-ref axinf 2) (list-ref axinf 15))))) ; base
+
+    (define (pack-y-info axinf)
+      (vct (list-ref axinf 3) ;  y0
+	   (list-ref axinf 5) ;  y1
+	   (list-ref axinf 11) ; y_axis_y0
+	   (list-ref axinf 13) ; y_axis_y1
+	   (list-ref axinf 16) ; scale
+	   (- (list-ref axinf 11) (* (list-ref axinf 3) (list-ref axinf 16))))) ; base
+
+    (define (grf-it val v)
+      (inexact->exact 
+       (round
+	(if (>= val (vct-ref v 1))
+	    (vct-ref v 3)
+	    (if (<= val (vct-ref v 0))
+		(vct-ref v 2)
+		(+ (vct-ref v 5) (* val (vct-ref v 4))))))))
+
+    (if (equal? axinf old-axinf)                    ; the previously calculated lines can be re-used
+	(begin
+	  (set! (foreground-color snd chn) red)
+	  (draw-lines (channel-property 'rms-lines snd chn))
+	  (set! (foreground-color snd chn) old-color))
+	(let* ((xdata (pack-x-info axinf))
+	       (ydata (pack-y-info axinf))
+	       (start (max 0 (- left rms-size)))
+	       (reader (make-sample-reader start snd chn))
+	       (rms (make-moving-rms rms-size))
+	       (x0 0)
+	       (y0 0)
+	       (line-ctr 2)
+	       (lines (make-vector (* 2 (+ 1 (- (list-ref axinf 12) (list-ref axinf 10)))) 0)))
+	  (dynamic-wind
+	      (lambda ()
+		(set! (foreground-color snd chn) red))
+	      (lambda ()
+		(run
+		 (lambda ()
+		   (declare (int-vector lines))
+		   (if (< start left)                ; check previous samples to get first rms value
+		       (do ((i start (1+ i)))
+			   ((= i left))
+			 (moving-rms rms (reader))))
+		   (let ((first-sample (next-sample reader)))
+		     (set! x0 (grf-it (* left sr) xdata))
+		     (set! y0 (grf-it first-sample ydata))
+		     (vector-set! lines 0 x0)        ; first graph point
+		     (vector-set! lines 1 y0))
+		   (do ((i (+ left 1) (1+ i)))       ; loop through all samples calling moving-rms
+		       ((= i right))
+		     (let* ((x1 (grf-it (* i sr) xdata))
+			    (y (moving-rms rms (next-sample reader))))
+		       (if (> x1 x0)                 ; very often many samples are represented by one pixel
+			   (let ((y1 (grf-it y ydata)))
+			     (vector-set! lines line-ctr x1)
+			     (vector-set! lines (1+ line-ctr) y1)
+			     (set! line-ctr (+ line-ctr 2))
+			     (set! x0 x1)
+			     (set! y0 y1)))))))      ; else should we do "max" here? or draw a vertical line from min to max?
+		(if (< line-ctr (vector-length lines))
+		    (do ((j line-ctr (+ j 2)))       ; off-by-one in vector size calc -- need to pad so we don't get a bogus line to (0, 0)
+			((>= j (vector-length lines)))
+		      (vector-set! lines j x0)
+		      (vector-set! lines (+ j 1) y0)))
+		(draw-lines lines snd chn)
+		(set! (channel-property 'rms-lines snd chn) lines)  ; save current data for possible redisplay
+		(set! (channel-property 'rms-axis-info snd chn) axinf))
+	      (lambda ()
+		(set! (foreground-color snd chn) old-color)))))))
+
+;(add-hook! after-graph-hook overlay-rms-env)
+
+
 (define* (display-colored-samples color beg dur :optional snd chn)
   "(display-colored-samples color beg dur snd chn) displays samples from beg for dur in color 
 whenever they're in the current view."

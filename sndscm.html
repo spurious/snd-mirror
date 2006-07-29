@@ -1643,6 +1643,17 @@ to get a more polite cursor, use <a href="#smartlinecursor">smart-line-cursor</a
 <tr><td colspan=2 height=16></td></tr>
 
 
+<!-- overlay-rms-env -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="overlayrmsenv">overlay-rms-env</a> <code>snd chn</code>
+</td></tr>
+<tr><td width=60></td><td>
+overlay-rms-env displays the running rms value of the currently displayed data in red, overlayed upon the 
+normal graph. To activate it, add it to the <a href="extsnd.html#aftergraphhook">after-graph-hook</a>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
 <!-- overlay-sounds -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>overlay-sounds</em> <code>:rest sounds</code>
@@ -2481,6 +2492,7 @@ This can also be used for automatic gain control -- see dsp.scm for the agc func
 The other "moving" generators are specializations of the <a href="clm.html#moving-average">moving-average</a>
 generator.  moving-sum keeps the ongoing sum of absolute values, moving-length the square root of the sum
 of squares, and moving-rms the square root of the sum of squares divided by the size.
+moving-rms is used in <a href="#overlayrmsenv">overlay-rms-env</a> in draw.scm.
 </td></tr><tr><td colspan=2 height=32></td></tr>
 
 

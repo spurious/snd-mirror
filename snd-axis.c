@@ -1365,7 +1365,7 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
          Caller)
 
 
-static XEN g_grf_x(XEN val, XEN snd, XEN chn, XEN ap)
+static XEN g_x_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 {
   #define H_x_to_position "(" S_x_to_position " val (snd #f) (chn #f) (ax #f)): x pixel loc of val"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_x_to_position, "a number");
@@ -1375,7 +1375,7 @@ static XEN g_grf_x(XEN val, XEN snd, XEN chn, XEN ap)
 			    TO_C_AXIS_INFO(snd, chn, ap, S_x_to_position))));
 }
 
-static XEN g_grf_y(XEN val, XEN snd, XEN chn, XEN ap)
+static XEN g_y_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 {
 #define H_y_to_position "(" S_y_to_position " val (snd #f) (chn #f) (ax #f)): y pixel loc of val"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_y_to_position, "a number");
@@ -1385,7 +1385,7 @@ static XEN g_grf_y(XEN val, XEN snd, XEN chn, XEN ap)
 			    TO_C_AXIS_INFO(snd, chn, ap, S_y_to_position))));
 }
 
-static XEN g_ungrf_x(XEN val, XEN snd, XEN chn, XEN ap)
+static XEN g_position_to_x(XEN val, XEN snd, XEN chn, XEN ap)
 {
   #define H_position_to_x "(" S_position_to_x " val (snd #f) (chn #f) (ax #f)): x axis value corresponding to pixel val"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_position_to_x, "an integer");
@@ -1395,7 +1395,7 @@ static XEN g_ungrf_x(XEN val, XEN snd, XEN chn, XEN ap)
 				 XEN_TO_C_INT(val))));
 }
 
-static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
+static XEN g_position_to_y(XEN val, XEN snd, XEN chn, XEN ap)
 {
   #define H_position_to_y "(" S_position_to_y " val (snd #f) (chn #f) (ax #f)): y axis value corresponding to pixel val"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_position_to_y, "an integer");
@@ -1635,10 +1635,10 @@ static XEN g_set_y_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
 WITH_FOUR_SETTER_ARGS(g_set_y_axis_label_reversed, g_set_y_axis_label)
 
 #ifdef XEN_ARGIFY_1
-XEN_ARGIFY_4(g_grf_x_w, g_grf_x)
-XEN_ARGIFY_4(g_grf_y_w, g_grf_y)
-XEN_ARGIFY_4(g_ungrf_x_w, g_ungrf_x)
-XEN_ARGIFY_4(g_ungrf_y_w, g_ungrf_y)
+XEN_ARGIFY_4(g_x_to_position_w, g_x_to_position)
+XEN_ARGIFY_4(g_y_to_position_w, g_y_to_position)
+XEN_ARGIFY_4(g_position_to_x_w, g_position_to_x)
+XEN_ARGIFY_4(g_position_to_y_w, g_position_to_y)
 XEN_ARGIFY_3(g_axis_info_w, g_axis_info)
 #if (!USE_NO_GUI)
 XEN_VARGIFY(g_draw_axes_w, g_draw_axes)
@@ -1648,10 +1648,10 @@ XEN_ARGIFY_4(g_set_x_axis_label_w, g_set_x_axis_label)
 XEN_ARGIFY_3(g_y_axis_label_w, g_y_axis_label)
 XEN_ARGIFY_4(g_set_y_axis_label_w, g_set_y_axis_label)
 #else
-#define g_grf_x_w g_grf_x
-#define g_grf_y_w g_grf_y
-#define g_ungrf_x_w g_ungrf_x
-#define g_ungrf_y_w g_ungrf_y
+#define g_x_to_position_w g_x_to_position
+#define g_y_to_position_w g_y_to_position
+#define g_position_to_x_w g_position_to_x
+#define g_position_to_y_w g_position_to_y
 #define g_axis_info_w g_axis_info
 #define g_draw_axes_w g_draw_axes
 #define g_x_axis_label_w g_x_axis_label
@@ -1663,12 +1663,12 @@ XEN_ARGIFY_4(g_set_y_axis_label_w, g_set_y_axis_label)
 
 void g_init_axis(void)
 {
-  XEN_DEFINE_PROCEDURE(S_x_to_position, g_grf_x_w,     1, 3, 0, H_x_to_position);
-  XEN_DEFINE_PROCEDURE(S_y_to_position, g_grf_y_w,     1, 3, 0, H_y_to_position);
-  XEN_DEFINE_PROCEDURE(S_position_to_x, g_ungrf_x_w,   1, 3, 0, H_position_to_x);
-  XEN_DEFINE_PROCEDURE(S_position_to_y, g_ungrf_y_w,   1, 3, 0, H_position_to_y);
-  XEN_DEFINE_PROCEDURE(S_axis_info,     g_axis_info_w, 0, 3, 0, H_axis_info);
-  XEN_DEFINE_PROCEDURE(S_draw_axes,     g_draw_axes_w, 0, 0, 1, H_draw_axes);
+  XEN_DEFINE_PROCEDURE(S_x_to_position, g_x_to_position_w,   1, 3, 0, H_x_to_position);
+  XEN_DEFINE_PROCEDURE(S_y_to_position, g_y_to_position_w,   1, 3, 0, H_y_to_position);
+  XEN_DEFINE_PROCEDURE(S_position_to_x, g_position_to_x_w,   1, 3, 0, H_position_to_x);
+  XEN_DEFINE_PROCEDURE(S_position_to_y, g_position_to_y_w,   1, 3, 0, H_position_to_y);
+  XEN_DEFINE_PROCEDURE(S_axis_info,     g_axis_info_w,       0, 3, 0, H_axis_info);
+  XEN_DEFINE_PROCEDURE(S_draw_axes,     g_draw_axes_w,       0, 0, 1, H_draw_axes);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_axis_label, g_x_axis_label_w, H_x_axis_label,
 					    S_setB S_x_axis_label, g_set_x_axis_label_w, g_set_x_axis_label_reversed, 0, 3, 1, 3);

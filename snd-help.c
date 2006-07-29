@@ -499,6 +499,7 @@ void about_snd_help(void)
 \n\
 31-Jul:  windowed-maxamp renamed moving-max, added moving-rms, moving-sum, moving-length (dsp.scm)\n\
            average renamed moving-average in clm.\n\
+         overlay-rms-env in draw.scm.\n\
 28-Jul:  snd8.scm, removed make-ppolar|zpolar (use make-two-pole|zero).\n\
 27-Jul:  mfilter in dsp.scm.\n\
 17-Jul:  merged new-icons.scm into new-buttons.scm and renamed the latter toolbar.scm.\n\

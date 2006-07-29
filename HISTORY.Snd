@@ -2,6 +2,7 @@ Snd change log
 
   31-Jul:    windowed-maxamp renamed moving-max, added moving-rms, moving-sum, moving-length (dsp.scm)
              average renamed moving-average in clm.
+             overlay-rms-env in draw.scm.
   28-Jul:    snd8.scm, removed make-ppolar|zpolar (use make-two-pole|zero).
   27-Jul:    mfilter in dsp.scm.
   17-Jul:    merged new-icons.scm into new-buttons.scm and renamed the latter toolbar.scm.
