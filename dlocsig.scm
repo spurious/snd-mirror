@@ -604,6 +604,8 @@
 
 ;;; Generic path class
 
+;;; TODO: Gauche doesn't like the <path> class declaration ("bad slot specification")
+
 (define-class <path> ()
   ;; rendered coordinates
   (rx :init-value '() :accessor rx)

@@ -172,7 +172,7 @@
 #  make_volterra_filter(acoeffs, bcoeffs)
 #  volterra_filter(flt, x)
 #
-#  class moving_max < Musgen
+#  class Moving_max < Musgen
 #   initialize(size = 128)
 #   inspect
 #   to_s
@@ -2022,7 +2022,7 @@ tries to return an inverse filter to undo the effect of the FIR filter coeffs.")
   # flt = make_volterra_filter([0.5, 0.1].to_vct, [0.3, 0.2, 0.1].to_vct)
   # map_channel(lambda do |y| volterra_filter(flt, y) end)
 
-  class moving_max < Musgen
+  class Moving_max < Musgen
     def initialize(size = 128)
       super()
       @size = size
@@ -2062,7 +2062,7 @@ tries to return an inverse filter to undo the effect of the FIR filter coeffs.")
 The generator keeps a running window of the last 'size' inputs, \
 returning the maxamp in that window.")
   def make_moving_max(size = 128)
-    moving_max.new(size)
+    Moving_max.new(size)
   end
 
   add_help(:moving_max,

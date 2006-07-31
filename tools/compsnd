@@ -1,5 +1,9 @@
 #!/bin/csh -f
 
+cp ~/dist/snd/snd.tar .
+tar xf snd.tar
+make clean
+
 fgrep decrip *.html
 fgrep accomoda *.html
 fgrep pysical *.html
@@ -264,7 +268,7 @@ make allclean
 
 echo ' '
 echo ' '
-echo ' --quiet --with-forth CC=g++ --disable-deprecated
+echo ' --quiet --with-forth CC=g++ --disable-deprecated'
 ./configure --quiet --with-forth CC=g++ --disable-deprecated
 make
 ./snd --version
@@ -1035,3 +1039,66 @@ make
 ./snd -noinit --features "'clm 'snd-guile"
 make allclean
 
+
+cp ~/sndlib/* .
+echo ' sndlib tests '
+./configure
+make
+make clean
+./configure --with-ruby
+make
+make clean
+./configure --with-gauche
+make
+make clean
+./configure --with-forth
+make
+make clean
+./configure --without-guile --without-ruby --without-gauche --without-forth
+make
+make clean
+./configure --disable-deprecated
+make
+make clean
+
+cp ~/libxm/* .
+echo ' libxm tests '
+./configure
+make
+make clean
+./configure --with-ruby
+make
+make clean
+./configure --with-gauche
+make
+make clean
+./configure --with-forth
+make
+make clean
+./configure --without-guile --without-ruby --without-gauche --without-forth
+make
+make clean
+./configure --disable-deprecated
+make
+make clean
+./configure --with-gtk
+make
+make clean
+./configure --with-ruby --with-gtk
+make
+make clean
+./configure --with-gauche --with-gtk
+make
+make clean
+./configure --with-forth --with-gtk
+make
+make clean
+./configure --without-guile --without-ruby --without-gauche --without-forth --with-gtk
+make
+make clean
+./configure --disable-deprecated --with-gtk
+make
+make clean
+
+cp ~/dist/snd/snd.tar .
+tar xf snd.tar

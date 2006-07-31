@@ -38,7 +38,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #f) ; huge arg testing
 
 (if (provided? 'snd-gauche)
@@ -46860,9 +46860,10 @@ EDITS: 1
 		  (widget-string minibuffer "(do ((i 0 (1+ i))) ((= i 10)) (set! (sample i) 1.0))")
 		  (key-event minibuffer snd-return-key 0) (force-event)
 		  (if (not (equal? (edits) '(3 0)))
-		      (snd-display ";M-x edits 10 -> 1.0: ~A?" (edits)))
-		  (if (not (equal? (edit-fragment 3) (list "set-sample 9 1.0000" "set" 9 1)))
-		      (snd-display ";:M-x fragment (wierd!): ~A" (edit-fragment 3)))
+		      (snd-display ";M-x edits 10 -> 1.0: ~A?" (edits))
+		      (begin
+			(if (not (equal? (edit-fragment 3) (list "set-sample 9 1.0000" "set" 9 1)))
+			    (snd-display ";:M-x fragment (wierd!): ~A" (edit-fragment 3)))))
 		  (key-event cwid snd-space-key 4) (force-event)
 		  (do ((i 0 (1+ i)))
 		      ((= i 9))

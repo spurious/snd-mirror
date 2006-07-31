@@ -1,5 +1,6 @@
 Snd change log
 
+  1-Aug:     Snd 8.3.
   31-Jul:    windowed-maxamp renamed moving-max, added moving-rms, moving-sum, moving-length (dsp.scm)
              average renamed moving-average in clm.
              overlay-rms-env in draw.scm.

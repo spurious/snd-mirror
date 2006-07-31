@@ -1981,8 +1981,6 @@ a running window of the last 'size' inputs, returning the euclidean length of th
   "(moving-length gen input) returns the length of the values in a window over the last few inputs."
   (sqrt (moving-average gen (* y y))))
 
-
-
 #|
 ;; perhaps also use moving-average gen to avoid amplifying noise-sections (or even squlech them)
 (define* (agc :optional (ramp-speed .001) (window-size 512))
@@ -1995,6 +1993,9 @@ a running window of the last 'size' inputs, returning the euclidean length of th
 	      (this-incr (* diff ramp-speed)))
 	 (set! mult (+ mult this-incr))
 	 (* y mult))))))
+
+;;; moving-mean = average
+;;; moving-variance? = (sum of (y - average)^2) n = (average (* (- y average-overall) (- y average-overall)))
 |#
 	 
 

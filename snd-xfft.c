@@ -512,7 +512,7 @@ Widget fire_up_transform_dialog(bool managed)
       XmString wavelets[NUM_WAVELETS];
       XmString windows[MUS_NUM_WINDOWS];
       XGCValues gv;
-      XtCallbackList n1, n2;
+      XtCallbackList n1, n2, n3, n4;
       int size_pos = 1;
       int n, i;
 
@@ -1003,8 +1003,8 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
       XtSetArg(args[n], XmNvalue, 100 * fft_window_beta(ss)); n++;
-      XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(beta_callback, NULL)); n++;
-      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(beta_callback, NULL)); n++;
+      XtSetArg(args[n], XmNdragCallback, n3 = make_callback_list(beta_callback, NULL)); n++;
+      XtSetArg(args[n], XmNvalueChangedCallback, n4 = make_callback_list(beta_callback, NULL)); n++;
       window_beta_scale = XtCreateManagedWidget("beta-scale", xmScaleWidgetClass, window_form, args, n);
 
       n = 0;
@@ -1029,6 +1029,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtVaSetValues(window_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
       for (i = 0; i < MUS_NUM_WINDOWS; i++)
 	windows[i] = XmStringCreate(FFT_WINDOWS[i], XmFONTLIST_DEFAULT_TAG);
+
       XtVaSetValues(window_list, 
 		    XmNitems, windows, 
 		    XmNitemCount, MUS_NUM_WINDOWS, 
@@ -1110,6 +1111,8 @@ Widget fire_up_transform_dialog(bool managed)
 
       FREE(n1);
       FREE(n2);
+      FREE(n3);
+      FREE(n4);
       set_dialog_widget(TRANSFORM_DIALOG, transform_dialog);
 
       XtUnmanageChild(error_frame);

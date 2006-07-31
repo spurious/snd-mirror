@@ -11,7 +11,6 @@
  * TODO: audio mixer settings dialog (needed especially in alsa!)
  *
  * PERHAPS: if marks, show ticks on x axis or some way to move to each easily (clickable box)
- * PERHAPS: x-axis-as-date (would need a way to set the start time)
  */
 
 

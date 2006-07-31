@@ -497,6 +497,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+1-Aug:   Snd 8.3.\n\
 31-Jul:  windowed-maxamp renamed moving-max, added moving-rms, moving-sum, moving-length (dsp.scm)\n\
            average renamed moving-average in clm.\n\
          overlay-rms-env in draw.scm.\n\
@@ -510,7 +511,6 @@ void about_snd_help(void)
          removed vct-map.\n\
 28-Jun:  moved rmsgain code to clm-ins.scm.\n\
          new CLM generator: filtered-comb.\n\
-23-Jun:  Snd 8.2.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

@@ -3439,7 +3439,6 @@ static char *new_file_dialog_filename(int header_type)
 
 static void load_new_file_defaults(char *newname)
 {
-  static int new_ctr = 1;
   char *filename = NULL, *new_comment = NULL;
   int header_type, data_format, chans, srate;
 
