@@ -3839,6 +3839,10 @@ Float mus_filter(mus_any *ptr, Float input)
    the extra cases could be handled explicitly by the user, but that
    goes against all the other such cases, where the optimizations
    are handled internally (snd-run for example).
+
+   PERHAPS: mus_fir_filter_with_constant_symmetric_coeffs?
+            I'm actually thinking of things like the Hilbert transform as used in ssb_am where every other coeff is 0.0,
+	      and we'd have coeff * (xa - xb) for the others -- 1/4 as many multiplies, 1/2 as many adds as currently
 */
 Float mus_fir_filter(mus_any *ptr, Float input)
 {

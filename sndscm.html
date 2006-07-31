@@ -3534,13 +3534,17 @@ sound and so on.
     Ruby:   env_sound_interp([0, 0, 1, 1])
 </pre> 
 returns an unchanged copy of the
-current sound.
+current sound. To get the entire sound in reverse:
+<pre>
+    Scheme: (env-sound-interp '(0 1 1 0))
+    Ruby:   env_sound_interp([0, 1, 1, 0])
+</pre>
+And to go forward then backward, taking twice the original duration:
 <pre>
     Scheme: (env-sound-interp '(0 0 1 1 2 0) 2.0)
     Ruby:   env_sound_interp([0, 0, 1, 1, 2, 0], 2.0)
 </pre>
-returns a new sound 
-with the sound copied first in normal order, then reversed.  <a href="extsnd.html#srcsound">src-sound</a> with an
+<a href="extsnd.html#srcsound">src-sound</a> with an
 envelope could be used for this effect, but it is much more direct to apply the
 envelope to sound sample positions.  A similar function is <a href="#scratch">scratch</a> in clm-ins.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -8763,7 +8767,7 @@ by calling the oscils and whatnot directly in the with-sound body:
     (do ((i 0 (1+ i)))
 	((= i 12))
       (vector-set! oscs i (<a class=quiet href="clm.html#make-oscil">make-oscil</a> :frequency 0.0)))
-    (with-sound ()
+    (with-sound (:srate 44100)
       (run                            ; use "run" to speed up computation by about a factor of 10
        (lambda ()
 	 (do ((samp 0 (1+ samp)))
@@ -8776,12 +8780,12 @@ by calling the oscils and whatnot directly in the with-sound body:
 		 (set! sum (+ sum (* (let ((y (- 4.0 (* 8.0 loc))))
 				       (exp (* -0.5 y y)))  ; Gaussian normal curve as amplitude envelope
 				     (<a class=quiet href="clm.html#oscil">oscil</a> (vector-ref oscs i) 
-					    (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> (expt 2.0 (* loc 12.0))))))))) ; (- 1.0 loc) to go down
+					    (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> (expt 2.0 (+ 2 (* loc 12.0)))))))))) ; (- 1.0 loc) to go down
 	     (set! x (+ x incr))
 	     (<a class=quiet href="clm.html#outa">outa</a> samp (* .1 sum) *output*))))))))
 </pre></td></tr></table>
-
-<br>
+<img src="shepard.png" alt="shepard tone spectrum" vspace=10 hspace=20>
+<br><br>
 <table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>other forms of with-sound</h4></td></tr></table>
 
 <p>There are several other versions of with-sound: with-temp-sound, sound-let, clm-load, with-mix, and the Common Music

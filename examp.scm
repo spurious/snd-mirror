@@ -1554,6 +1554,9 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 		 (format #f "env-sound-interp '~A ~A" envelope time-scale))
     (delete-file tempfilename)))
 
+;;; TODO: env-sound-granulate(?): follow time env to get next grain -- 
+;;;         can't be done with granulate gen I think -- need direct reads as in zipper
+
 
 
 ;;; -------- add date and time to title bar
