@@ -1042,61 +1042,61 @@ make allclean
 
 cp ~/sndlib/* .
 echo ' sndlib tests '
-./configure
+./configure --quiet
 make
 make clean
-./configure --with-ruby
+./configure --quiet --with-ruby
 make
 make clean
-./configure --with-gauche
+./configure --quiet --with-gauche
 make
 make clean
-./configure --with-forth
+./configure --quiet --with-forth
 make
 make clean
-./configure --without-guile --without-ruby --without-gauche --without-forth
+./configure --quiet --without-guile --without-ruby --without-gauche --without-forth
 make
 make clean
-./configure --disable-deprecated
+./configure --quiet --disable-deprecated
 make
 make clean
 
 cp ~/libxm/* .
 echo ' libxm tests '
-./configure
+./configure --quiet
 make
 make clean
-./configure --with-ruby
+./configure --quiet --with-ruby
 make
 make clean
-./configure --with-gauche
+./configure --quiet --with-gauche
 make
 make clean
-./configure --with-forth
+./configure --quiet --with-forth
 make
 make clean
-./configure --without-guile --without-ruby --without-gauche --without-forth
+./configure --quiet --without-guile --without-ruby --without-gauche --without-forth
 make
 make clean
-./configure --disable-deprecated
+./configure --quiet --disable-deprecated
 make
 make clean
-./configure --with-gtk
+./configure --quiet --with-gtk
 make
 make clean
-./configure --with-ruby --with-gtk
+./configure --quiet --with-ruby --with-gtk
 make
 make clean
-./configure --with-gauche --with-gtk
+./configure --quiet --with-gauche --with-gtk
 make
 make clean
-./configure --with-forth --with-gtk
+./configure --quiet --with-forth --with-gtk
 make
 make clean
-./configure --without-guile --without-ruby --without-gauche --without-forth --with-gtk
+./configure --quiet --without-guile --without-ruby --without-gauche --without-forth --with-gtk
 make
 make clean
-./configure --disable-deprecated --with-gtk
+./configure --quiet --disable-deprecated --with-gtk
 make
 make clean
 

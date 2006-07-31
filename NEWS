@@ -1,21 +1,46 @@
-Snd 8.2
+Snd 8.3
 
-Most of the effort in this version of Snd went into the documentation.
+CLM generators: 
+  added filtered-comb ("fcomb" for freeverb)
+  added move-sound (runtime portion of dlocsig)
+  renamed average generator to moving-average
+  renamed windowed-maxamp to moving-max (dsp.scm)
+  added moving-rms, moving-sum, moving-length (dsp.scm)
+     overlay-rms-env (draw.scm) uses moving-rms
+     Perhaps these should be built-in CLM generators.
+  mfilter (dsp.scm) -- Mathews/Smith high-Q filter 
+    (similar to formant; another version is maxf.scm/ins)
+  removed make-ppolar|zpolar (use make-two-pole|zero)
+  moved ssb-fm and rmsgain.scm code to clm-ins.scm (removed rmgain.scm)
+  locsig now returns a float (not a frame)
 
-added sndins improvements thanks to Mike.
+dlocsig.scm (translation to Scheme of Fernando's dlocsig.lisp)
+  in CL-CLM, dlocsig.lisp and move-sound.ins now use the move-sound generator.
+  mix-move-sound (extsnd.html)
 
-      fmviolin.clm (fm-violin demo from CLM)
+green.scm (bounded brownian noise, from CLM's green.cl)
 
-      'clear' and 'revert' buttons in the preferences dialog
+snd8.scm (backwards compatibility stuff for snd 8)
 
-      normalize-envelope in env.scm.
+shepard-tone (sndscm.html)
+agc (dsp.scm)
+with-full-sound (ws.scm)
+def-clm-float-struct (CL-CLM only)
+fir+comb (clm.html)
+removed vct-map
 
-removed mus-make-error.
+g_signal_connect and other such macros, and gtk_print_operation* to xg.c
 
-changed (the name of) after-apply-hook to after-apply-controls-hook
+merged new-icons.scm into new-buttons.scm and renamed the latter toolbar.scm
+  toolbar.scm also works in gtk
+
+*.fs updates and other improvements from Mike Scholz
 
 
-Checked: gtk 2.9.0|1|2|3, fth 0.8.18|19|20|21|22
+checked: gtk 2.9.4, 2.10.0|1, autoconf 2.60, fth 0.10.0|2, sbcl 0.9.14, fftw 3.1.2,
+    clisp 2.39
 
-Thanks: Pete Thomas, Esbien Stieb, Mike Scholz
+
+Thanks: Michael Klingbeil, Kjetil Matheussen, Mike Scholz, Oded Ben-Tal,
+    Russell Aspinwall, Anders Vinjar
 
