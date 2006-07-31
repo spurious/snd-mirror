@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Tue Dec 27 02:53:47 CET 2005
+# Changed: Thu Mar 02 22:46:40 CET 2006
 
 # Commentary:
 # 
@@ -140,6 +140,8 @@
 #  with_reopen_menu
 #  with_buffers_menu
 #  set_global_sync(choice)
+#
+#  show_selection
 
 # Comments are mostly taken from extensions.scm.
 
@@ -986,11 +988,11 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
     
     def initialize(database)
       @database = database
-      @sound_funcs = [:sync, :cursor_follows_play]
+      @sound_funcs = [:sync, :with_tracking_cursor]
       @channel_funcs = [:time_graph?, :transform_graph?, :lisp_graph?, :x_bounds, :y_bounds,
                         :cursor, :cursor_size, :cursor_style, :show_marks, :show_y_zero,
                         :wavo_hop, :wavo_trace, :max_transform_peaks, :show_transform_peaks,
-                        :fft_log_frequency, :fft_log_magnitude, :verbose_cursor, :zero_pad,
+                        :fft_log_frequency, :fft_log_magnitude, :with_verbose_cursor, :zero_pad,
                         :wavelet_type, :min_dB, :transform_size, :transform_graph_type,
                         :time_graph_type, :fft_window, :transform_type, :transform_normalization,
                         :time_graph_style, :show_mix_waveforms,
@@ -1223,34 +1225,25 @@ enveloped_mix(\"pistol.snd\", 0, [0, 0, 1, 1, 2, 0])")
   end
   # enveloped_mix("pistol.snd", 0, [0, 0, 1, 1, 2, 0])
 
-  add_help(:map_sound_files,
-           "map_sound_files(*dir_array) do |file| ... end  \
-applies body to each sound file in dir")
-  def map_sound_files(*args, &func)
-    args << "./" if args.empty?
-    args.map do |dir|
-      if File.exists?(dir)
-        sound_files_in_directory(dir).map do |f| func.call(dir + f) end
-      end
-    end
-  end
-  # map_sound_files(".", "/usr/gnu/sound/SFiles") do |f| play_and_wait(f) end
-  
   add_help(:for_each_sound_file,
            "for_each_sound_file(*dir_args) do |file| ... end  \
+applies body to each sound file in dir")
+  add_help(:map_sound_files,
+           "map_sound_files(*dir_array) do |file| ... end  \
 applies body to each sound file in dir")
   add_help(:each_sound_file,
            "each_sound_file(*dir_args) do |file| ... end  \
 applies body to each sound file in dir")
   def each_sound_file(*args, &func)
-    args << "./" if args.empty?
-    args.each do |dir|
+    if args.empty? then args.push(Dir.pwd) end
+    args.map do |dir|
       if File.exists?(dir)
-        sound_files_in_directory(dir).each do |f| func.call(dir + f) end
+        sound_files_in_directory(dir).each do |f| func.call(dir + "/" + f) end
       end
     end
   end
   alias for_each_sound_file each_sound_file
+  alias map_sound_files each_sound_file
   # each_sound_file(".", "/usr/gnu/sound/SFiles") do |f| play_and_wait(f) end
 
   add_help(:match_sound_files,
@@ -1259,12 +1252,7 @@ applies func to each sound file in dir and returns a list of files \
 for which body does not return false")
   def match_sound_files(*args, &func)
     res = []
-    args << "./" if args.empty?
-    args.each do |dir|
-      sound_files_in_directory(dir).each do |f|
-        res << f if func.call(f)
-      end
-    end
+    each_sound_file(*args) do |f| func.call(f) and res.push(f) end
     res
   end
   # match_sound_files() do |f| f =~ /\.(wav|snd)$/ end
@@ -1441,15 +1429,16 @@ and if it is subsquently re-opened, restores that state")
     # states = {file_name => [date, sound_funcs, channel_funcs], ...}
     $remembering_sound_state = 1
     states = {}
-    sound_funcs = [:sync, :cursor_follows_play]
+    sound_funcs = [:sync, :with_tracking_cursor]
     channel_funcs = [:time_graph?, :transform_graph?, :lisp_graph?, :x_bounds, :y_bounds,
-      :cursor, :cursor_size, :cursor_style, :show_marks, :show_y_zero,
-      :wavo_hop, :wavo_trace, :max_transform_peaks, :show_transform_peaks,
-      :fft_log_frequency, :fft_log_magnitude, :verbose_cursor, :zero_pad,
-      :wavelet_type, :min_dB, :transform_size, :transform_graph_type,
-      :time_graph_type, :fft_window, :transform_type, :transform_normalization,
-      :time_graph_style, :show_mix_waveforms, :dot_size, :x_axis_style,
-      :show_axes, :graphs_horizontal, :lisp_graph_style, :transform_graph_style, :grid_density]
+                     :cursor, :cursor_size, :cursor_style, :show_marks, :show_y_zero,
+                     :wavo_hop, :wavo_trace, :max_transform_peaks, :show_transform_peaks,
+                     :fft_log_frequency, :fft_log_magnitude, :with_verbose_cursor, :zero_pad,
+                     :wavelet_type, :min_dB, :transform_size, :transform_graph_type,
+                     :time_graph_type, :fft_window, :transform_type, :transform_normalization,
+                     :time_graph_style, :show_mix_waveforms, :dot_size, :x_axis_style,
+                     :show_axes, :graphs_horizontal, :lisp_graph_style, :transform_graph_style,
+                     :grid_density, :tracking_cursor_style]
     $close_hook.add_hook!(get_func_name) do |snd|
       states[file_name(snd)] = [file_write_date(file_name(snd)),
                                 sound_funcs.map { |f| snd_func(f, snd) },
@@ -2033,6 +2022,25 @@ applies contrast enhancement to the sound" )
         when 2
           set_sync(sync_max + 1, snd)
         end
+      end
+    end
+  end
+
+  def show_selection
+    if selection?
+      beg = fin = false
+      Snd.sounds.each do |snd|
+        channels(snd).times do |chn|
+          if selection_member?(snd, chn)
+            pos = selection_position(snd, chn) / srate(snd)
+            len = selection_frames(snd, chn) / srate(snd)
+            if (not beg) or pos < beg then beg = pos end
+            if (not fin) or pos + len > fin then fin = pos + len end
+          end
+        end
+      end
+      Snd.sounds.each do |snd|
+        channels(snd).times do |chn| set_x_bounds([beg, fin], snd, chn) end
       end
     end
   end

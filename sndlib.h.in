@@ -448,16 +448,6 @@ char *mus_midi_device_name(int sysdev);
 char *mus_midi_describe(void);
 void mus_midi_init(void);
 
-#if (!SNDLIB_DISABLE_DEPRECATED)
-  #define MUS_COMPATIBLE_FORMAT MUS_AUDIO_COMPATIBLE_FORMAT
-  #define mus_file_data_clipped(Tfd)               mus_file_clipping(Tfd)
-  #define mus_file_set_data_clipped(Tfd, Clipping) mus_file_set_clipping(Tfd, Clipping)
-  #define mus_file_data_clipped_default()          mus_clipping()
-  #define mus_file_set_data_clipped_default(Val)   mus_set_clipping(Val)
-  #define mus_file_prescaler_default(void)  (float)mus_prescaler()
-  #define mus_file_set_prescaler_default(Val)      mus_set_prescaler((Float)Val)
-#endif
-
 #ifdef __cplusplus
 }
 #endif

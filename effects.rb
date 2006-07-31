@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Changed: Thu Jan 05 02:50:22 CET 2006
+# Changed: Fri Jul 28 20:49:14 CEST 2006
 
 # Commentary:
 #
@@ -180,8 +180,10 @@ module Effects
   def effects_squelch_channel(amount, size, snd = false, chn = false)
     f0 = make_moving_average(size)
     f1 = make_moving_average(size, :initial_element, 1.0)
-    map_channel(lambda { |y| y * moving_average(f1, ((moving_average(f0, y * y) < amount) ? 0.0 : 1.0)) },
-                0, false, snd, chn, false, format("%s(%s, %s", get_func_name, amount, size))
+    map_channel(lambda do
+                  |y|
+                  y * moving_average(f1, ((moving_average(f0, y * y) < amount) ? 0.0 : 1.0))
+                end, 0, false, snd, chn, false, format("%s(%s, %s", get_func_name, amount, size))
   end
 
   def effects_echo(input_samps, delay_time, echo_amount,

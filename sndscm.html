@@ -116,7 +116,7 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 <tr><td><a href="#rtiodoc">rtio</a></td>  <td>real-time stuff</td></tr>
 <tr><td bgcolor="#f6f8ff"><a href="#rubberdoc">rubber</a></td>                <td bgcolor="#f6f8ff">rubber-sound</td></tr>
 <tr><td><a href="#singerdoc">singer</a></td><td>Perry Cook's vocal-tract physical model</td></tr>
-<tr><td bgcolor="#f6f8ff"><a href="#snd4doc">snd4|5|6|7.scm</a></td>                     <td bgcolor="#f6f8ff">Backwards compatibility</td></tr>
+<tr><td bgcolor="#f6f8ff"><a href="#snd4doc">snd4|5|6|7|8.scm</a></td>                     <td bgcolor="#f6f8ff">Backwards compatibility</td></tr>
 <tr><td><a href="#sndgldoc">snd-gl</a></td>                 <td>OpenGL examples (gl.c)</td></tr>
 <tr><td bgcolor="#f6f8ff"><a href="#sndmotifdoc">snd-motif, snd-gtk, snd-xm</a></td><td bgcolor="#f6f8ff">Motif/Gtk module (xm.c, xg.c)</td></tr>
 <tr><td><a href="#sndtestdoc">snd-test</a></td><td>Snd regression tests</td></tr>
@@ -3537,7 +3537,7 @@ returns an unchanged copy of the
 current sound.
 <pre>
     Scheme: (env-sound-interp '(0 0 1 1 2 0) 2.0)
-    Ruby:   env_sound_interp([0, 0, 1, 1, 2, 0], 2.0) will return a new sound
+    Ruby:   env_sound_interp([0, 0, 1, 1, 2, 0], 2.0)
 </pre>
 returns a new sound 
 with the sound copied first in normal order, then reversed.  <a href="extsnd.html#srcsound">src-sound</a> with an
@@ -6741,7 +6741,7 @@ A more complex example is singer's attempt to say "requiem":
 <br>
 
 <br>
-<A NAME="snd4doc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd4|5|6|7</h2></td></tr></table>
+<A NAME="snd4doc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd4|5|6|7|8</h2></td></tr></table>
 
 <p>These files contain a number of the procedures
 that were removed from or renamed in earlier versions of Snd (in Ruby, look in extensions.rb).  Some of them are:

@@ -2494,18 +2494,24 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
 	/* null pointers can only come as explicitly type-declared args in run/run-eval */
 	switch (init_val->type)
 	  {
-	  case R_BOOL:       return(add_triple_to_ptree(pt, va_make_triple(store_b_b, descr_store_b_b, 2, var, init_val))); break;
-	  case R_VCT:        return(add_triple_to_ptree(pt, va_make_triple(store_b_vct, descr_store_b_vct, 2, var, init_val))); break;
-	  case R_SOUND_DATA: return(add_triple_to_ptree(pt, va_make_triple(store_b_sd, descr_store_b_sd, 2, var, init_val))); break;
-	  case R_CLM:        return(add_triple_to_ptree(pt, va_make_triple(store_b_clm, descr_store_b_clm, 2, var, init_val))); break;
-	  case R_READER:     return(add_triple_to_ptree(pt, va_make_triple(store_b_reader, descr_store_b_reader, 2, var, init_val))); break;
-	  case R_MIX_READER: return(add_triple_to_ptree(pt, va_make_triple(store_b_mix_reader, descr_store_b_mix_reader, 2, var, init_val))); break;
+	  case R_BOOL:         return(add_triple_to_ptree(pt, va_make_triple(store_b_b, descr_store_b_b, 2, var, init_val))); break;
+	  case R_VCT:          return(add_triple_to_ptree(pt, va_make_triple(store_b_vct, descr_store_b_vct, 2, var, init_val))); break;
+	  case R_SOUND_DATA:   return(add_triple_to_ptree(pt, va_make_triple(store_b_sd, descr_store_b_sd, 2, var, init_val))); break;
+	  case R_CLM:          return(add_triple_to_ptree(pt, va_make_triple(store_b_clm, descr_store_b_clm, 2, var, init_val))); break;
+	  case R_READER:       return(add_triple_to_ptree(pt, va_make_triple(store_b_reader, descr_store_b_reader, 2, var, init_val))); break;
+	  case R_MIX_READER:   return(add_triple_to_ptree(pt, va_make_triple(store_b_mix_reader, descr_store_b_mix_reader, 2, var, init_val))); break;
 	  case R_TRACK_READER: return(add_triple_to_ptree(pt, va_make_triple(store_b_track_reader, descr_store_b_track_reader, 2, var, init_val))); break;
 	  default:
-	    /* nearly everything is true in Scheme -- these are not pointers, or can't be created within run */
-	    return(add_triple_to_ptree(pt, va_make_triple(store_b_b, descr_store_b_b, 2, var, 
-							  make_xen_value(R_BOOL, add_int_to_ptree(pt, (Int)true), 
-									 R_CONSTANT)))); 
+	    {
+	      xen_value *temp_v = NULL;
+	      triple *trp;
+	      /* nearly everything is true in Scheme -- these are not pointers, or can't be created within run */
+	      temp_v = make_xen_value(R_BOOL, add_int_to_ptree(pt, (Int)true), R_CONSTANT); 
+	      trp = add_triple_to_ptree(pt, va_make_triple(store_b_b, descr_store_b_b, 2, var, temp_v));
+	      /* temp_v is used only as a way to pass in an address, so it should be freed */
+	      if (temp_v) FREE(temp_v);
+	      return(trp);
+	    }
 	    break;
 	  }
       }

@@ -38,7 +38,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f) ; huge arg testing
 
 (if (provided? 'snd-gauche)
@@ -2408,7 +2408,7 @@
 	  (set! (mus-header-raw-defaults) (list 44100 2 mus-bshort))
 	  
 	  (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
-	    (if (not (string=? str "10-Jul 10:20 PDT"))
+	    (if (not (string=? str "08-Jul 07:09 PDT"))
 		(snd-display ";mus-sound-write-date oboe.snd: ~A?" str)))
 	  (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
 	    (if (not (string-=? str "01-Jul 13:06 PDT"))
@@ -2615,7 +2615,7 @@
 	  (if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 		   (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	      (snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-	  (if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "10-Jul-2005 10:20"))
+	  (if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "08-Jul-2006 07:09"))
 	      (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
 	  (play-sound-1 "oboe.snd")
 	  

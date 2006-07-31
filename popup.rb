@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Wed Jan 04 03:43:03 CET 2006
+# Changed: Sat Jul 29 09:48:48 CEST 2006
 
 # Commentary:
 #
@@ -251,9 +251,8 @@ If it returns non-nil or non-false, the menu will be posted.")
     when :channels, :edhist
       if provided?(:xm) or (provided?(:xg) and @target == :edhist)
         Snd.sounds.each do |snd| set_channel_popup(snd) end
-        let(format("%s-popup", (@label or "channels").downcase.tr(" ", "-"))) do |hook_name|
-          $after_open_hook.add_hook!(hook_name) do |snd| set_channel_popup(snd) end
-        end
+        hook_name = format("%s-popup", (@label or "channels").downcase.tr(" ", "-"))
+        $after_open_hook.add_hook!(hook_name) do |snd| set_channel_popup(snd) end
       else                      # gtk :channels
         set_gtk_channel_popup
       end
@@ -1121,6 +1120,7 @@ all saved edit lists.",
         children(identity) do |snd| play(0, snd) end
       end
       entry("Open") do |snd, chn, w| open_file_dialog end
+      entry("Clear listener") do |snd, chn, w| clear_listener end
       cascade("Close") do
         children(identity) do |snd| close_sound_extend(snd) end
       end

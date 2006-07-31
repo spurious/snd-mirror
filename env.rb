@@ -1,8 +1,8 @@
-# env.rb -- snd-7/env.scm
+# env.rb -- snd/env.scm
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Sep 20 23:24:17 CEST 2003
-# Changed: Wed Dec 21 21:02:51 CET 2005
+# Changed: Fri Jul 28 19:44:51 CEST 2006
 
 # Commentary:
 #

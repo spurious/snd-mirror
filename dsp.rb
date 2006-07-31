@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Sat Dec 17 01:16:43 CET 2005
+# Changed: Sun Jul 30 23:30:26 CEST 2006
 
 # Commentary:
 #
@@ -15,7 +15,7 @@
 #  down_oct(n, snd = false, chn = false)
 #  edot_product(freq, data)
 #  stretch_sound_via_dft(factor, snd = false, chn = false)
-#  compute_uniform_circular_string(size, x0, x1, x2, xspring, damp)
+#  compute_uniform_circular_string(size, x0, x1, x2, mass, xspring, damp)
 #  testunif(mass, xspring, damp)
 #  test_scanned_synthesis(amp, dur, mass, xspring, damp)
 #  compute_string(size, x0, x1, x2, masses, xsprings, esprings, damps, haptics)
@@ -349,7 +349,7 @@ using 'gamma' as the window parameter.")
   # Snd has some place to put the graph), turn off the time domain
   # display (to give our graph all the window -- to do this in a much
   # more elegant manner, see snd-motif.scm under scanned-synthesis).
-  def compute_uniform_circular_string(size, x0, x1, x2, xspring, damp)
+  def compute_uniform_circular_string(size, x0, x1, x2, mass, xspring, damp)
     circle_vct_ref = lambda do |v, i|
       if i < 0
         v[i + size]
@@ -394,7 +394,7 @@ using 'gamma' as the window parameter.")
     x0 = make_vct(size)
     gx1 = make_vct(size)
     gx2 = make_vct(size)
-    12.times do |i| x1[i + size / 4 - 6] = sin((TWO_PI * i) / 12.0) end
+    12.times do |i| gx1[i + size / 4 - 6] = sin((TWO_PI * i) / 12.0) end
     gen1 = make_table_lookup(440.0, :wave, gx1)
     gen2 = make_table_lookup(440.0, :wave, gx2)
     x1 = gen1.data
@@ -2057,8 +2057,8 @@ tries to return an inverse filter to undo the effect of the FIR filter coeffs.")
     end
   end
 
-  add_help(:make_window_maxamp,
-           "make_moving_max(size = 128)  returns a windowed-maxamp generator.  \
+  add_help(:make_moving_max,
+           "make_moving_max(size = 128)  returns a moving_max generator.  \
 The generator keeps a running window of the last 'size' inputs, \
 returning the maxamp in that window.")
   def make_moving_max(size = 128)
@@ -2071,6 +2071,8 @@ returns the maxamp in a running window on the last few inputs.")
   def moving_max(gen, y)
     gen.moving_max(y)
   end
+  alias windowed_maxamp                 moving_max
+  alias make_windowed_maxamp            make_moving_max
 
   # harmonicizer (each harmonic is split into a set of harmonics via Chebyshev polynomials)
   # obviously very similar to ssb_bank above, but splits harmonics

@@ -1,36 +1,33 @@
 # ws.rb -- with_sound and friends for Snd/Ruby -*- snd-ruby -*-
 
-# Copyright (C) 2003--2005 Michael Scholz
+# Copyright (C) 2003--2006 Michael Scholz
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 08 17:05:03 CEST 2003
-# Last: Wed Aug 17 17:43:14 CEST 2005
+# Changed: Sun Jul 30 16:36:52 CEST 2006
 
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of
-# the License, or (at your option) any later version.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 
-# This program is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied
-# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-# PURPOSE.  See the GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 
-# You should have received a copy of the GNU General Public
-# License along with this program; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307 USA
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 # Commentary:
 #
 # module WS
 #   ws_interrupt?
 #   ws_break(*rest)
-#   with_snd(*args) do ... end
 #   with_reverb(reverb, reverb_data, reverb_amount, snd, *with_sound_args)
 #   with_sound(*args) do ... end
 #   with_dac(*args, &body)
-#   snd_load(rbm_file, *args)
 #   clm_load(rbm_file, *args)
 #   with_temp_sound(snd) do |temp_snd_file_name| ... end
 #   make_default_comment
@@ -122,8 +119,7 @@
 #   or with_sound(:clm, true) do my_simp(0, 1, 440, 0.2) end
 #
 # in Snd:
-#      with_snd do my_simp(0, 1, 440, 0.2) end
-#   or with_sound(:clm, false) do my_simp(0, 1, 440, 0.2) end
+#      with_sound(:clm, false) do my_simp(0, 1, 440, 0.2) end
 #
 # In addition, `with_dac do my_simp(0, 1, 440, 0.2) end' can use the
 # same instrument for dac-output.
@@ -175,8 +171,8 @@
 #
 # Class Snd_Instrument instruments can only be used in Snd, that means
 # the variables @ws_output and @ws_reverb are snd index numbers.
-# `with_snd' calls instruments from this class with higher priority
-# than from class Instrument or Object.
+# `with_sound(:clm, false)' calls instruments from this class with
+# higher priority than from class Instrument or Object.
 #
 # Class CLM_Instrument instruments use sample2file output and can be
 # used in Snd as well as in Ruby scripts, @ws_output and $output are
@@ -398,7 +394,7 @@ with_silence do
 end
 require "hooks"
 
-$clm_version            = "17-08-2005"
+$clm_version            = "29-07-2006"
 $output                 = nil
 $reverb                 = nil
 $clm_file_name          = "test.snd" unless defined? $clm_file_name
@@ -499,21 +495,6 @@ module WS
     raise(Break, msg.chomp(","), caller(1))
   end
 
-  add_help(:with_snd, ws_doc)
-  def with_snd(*args, &body)
-    ws = if provided? :snd
-           With_Snd.new(*args, &body)
-         else
-           With_CLM.new(*args, &body)
-         end
-    if get_args(args, :help, false)
-      Snd.message(ws.help)
-    else
-      ws.run
-    end
-    ws
-  end
-
   add_help(:with_reverb,
            "with_reverb(reverb,[reverb_data=[],[reverb_amount=0.05,[snd=false]]], *with_sound_args)
 with_reverb(:jc_reverb)
@@ -556,18 +537,13 @@ with_reverb(:jl_reverb, [], 0.2)")
     ws
   end
   
-  add_help(:snd_load, "snd_load(rbm_file, *with_sound_args)\n" + ws_doc)
-  def snd_load(rbm_file, *args)
-    ws = With_Snd.new(*args)
-    ws.clm_load(rbm_file)
-    ws
-  end
-  
   add_help(:clm_load, "clm_load(rbm_file, *with_sound_args)\n" + ws_doc)
   def clm_load(rbm_file, *args)
-    ws = With_CLM.new(*args)
-    ws.clm_load(rbm_file)
-    ws
+    assert_type(File.exists?(rbm_file), rbm_file, 1, "an existing file")
+    with_sound(*args) do
+      Snd.message("Loading %s", rbm_file.inspect) if @verbose
+      eval(File.open(rbm_file).read, nil, format("(clm_load %s)", rbm_file), 1)
+    end
   end
 
   add_help(:with_temp_sound,
@@ -863,14 +839,6 @@ installs the @with_sound_note_hook and prints the line
     outfile_list.apply(:remove_file)
   end
 
-  def clm_load(rbm_file, *args)
-    assert_type(File.exists?(rbm_file), rbm_file, 0, "an existing file")
-    with_sound(*args) do
-      Snd.message("Loading %s", rbm_file.inspect) if @verbose
-      eval(File.open(rbm_file).read, nil, format("(clm_load %s)", rbm_file), 1)
-    end
-  end
-
   def with_mix(*args)
     body_str = args.pop
     assert_type(string?(body_str), body_str, 0, "a string (body string)")
@@ -964,12 +932,12 @@ installs the @with_sound_note_hook and prints the line
     if @clipped == :undefined
       if (@scaled_by or @scaled_to) and
           [Mus_bfloat, Mus_lfloat, Mus_bdouble, Mus_ldouble].member?(@data_format)
-        set_mus_file_data_clipped(false)
+        set_mus_clipping(false)
       else
-        set_mus_file_data_clipped($clm_clipped)
+        set_mus_clipping($clm_clipped)
       end
     else
-      set_mus_file_data_clipped(@clipped)
+      set_mus_clipping(@clipped)
     end
     if defined? set_auto_update_interval then set_auto_update_interval(0.0) end
     set_mus_srate(@srate)
@@ -1001,7 +969,7 @@ installs the @with_sound_note_hook and prints the line
   def run_body
     frm1 = ws_frame_location
     instance_eval(&@body)
-  rescue Interrupt, ScriptError, StandardError
+  rescue Interrupt, ScriptError, NameError, StandardError
     set_mus_srate(@old_srate)
     finish_sound
     err, $! = $!, nil
@@ -1027,7 +995,7 @@ installs the @with_sound_note_hook and prints the line
     when String, Symbol
       snd_func(@reverb, @start, @dur, *@reverb_data)
     end
-  rescue Interrupt, ScriptError, StandardError
+  rescue Interrupt, ScriptError, NameError, StandardError
     set_mus_srate(@old_srate)
     finish_sound
     case $!
@@ -1203,7 +1171,7 @@ class Instrument < With_sound
     end
   end
 
-  # simple violin, see snd-7/fm.html
+  # simple violin, see snd/fm.html
   def fm_v(start = 0, dur = 1, freq = 440, amp = 0.5, fm_index = 1, amp_env = [0, 1, 1, 1])
     frq_scl = hz2radians(freq)
     maxdev = frq_scl * fm_index
@@ -1819,7 +1787,11 @@ Example: clm_mix(\"tmp\")")
         select_sound(@ws_output)
         update_sound(@ws_output)
       else
-        @ws_output = open_sound(@output)
+        @ws_output = if @header_type == Mus_raw
+                       open_raw_sound(@output, @channels, Integer(@srate), @data_format)
+                     else
+                       open_sound(@output)
+                     end
       end
     end
   end

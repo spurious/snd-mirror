@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Apr 09 23:55:07 CEST 2005
-# Last: Mon May 16 18:14:57 CEST 2005
+# Changed: Mon Jul 31 14:02:22 CEST 2006
 
 # Commentary: (see poly.scm)
 #
@@ -17,7 +17,13 @@
 #  /(other)
 #  derivative
 #  gcd(other)
+#  linear_root(a, b)
+#  quadratic_root(a, b, c)
+#  cubic_root(a, b, c, d)
+#  quartic_root(a, b, c, d, e)
+#  nth_root(a, b, deg)
 #  roots
+#  eval(x)
 #
 # class Float
 #  +(other)
@@ -51,7 +57,26 @@ require "examp"
 require "complex"
 require "rational"
 
+class Complex
+  attr_writer :real, :image
+  def to_f
+    self.real.to_f
+  end
+
+  def to_f_or_c
+    self.image.zero? ? self.to_f : self
+  end
+end
+
+class Numeric
+  def to_c
+    self.to_f + Complex::I
+  end
+end
+
 class Poly < Vec
+  Poly_roots_epsilon = 1.0e-6
+
   def inspect
     @name = "poly"
     super
@@ -63,21 +88,16 @@ class Poly < Vec
   
   def reduce
     if self.last.zero?
-      ret = self.dup
       i = 0
-      (ret.length - 1).downto(0) do |i|
-        if ret[i].nonzero?
-          break
-        end
-      end
-      ret[0, i + 1]
+      (self.length - 1).downto(0) do |i| break if self[i].nonzero? end
+      self[0, i + 1]
     else
       self
     end
   end
-  # [1, 2, 3].to_poly.reduce             ==> poly(1.000, 2.000, 3.000)
-  # poly(1, 2, 3, 0, 0, 0).reduce        ==> poly(1.000, 2.000, 3.000)
-  # vct(0, 0, 0, 0, 1, 0).to_poly.reduce ==> poly(0.000, 0.000, 0.000, 0.000, 1.000)
+  # [1, 2, 3].to_poly.reduce             ==> poly(1.0, 2.0, 3.0)
+  # poly(1, 2, 3, 0, 0, 0).reduce        ==> poly(1.0, 2.0, 3.0)
+  # vct(0, 0, 0, 0, 1, 0).to_poly.reduce ==> poly(0.0, 0.0, 0.0, 0.0, 1.0)
   
   def poly_add(other)
     assert_type((array?(other) or vct?(other) or number?(other)),
@@ -95,13 +115,13 @@ class Poly < Vec
     end
   end
   alias + poly_add
-  # poly(0.1, 0.2, 0.3) + poly(0, 1, 2, 3, 4) ==> poly(0.100, 1.200, 2.300, 3.000, 4.000)
-  # poly(0.1, 0.2, 0.3) + 0.5                 ==> poly(0.600, 0.200, 0.300)
-  # 0.5 + poly(0.1, 0.2, 0.3)                 ==> poly(0.600, 0.200, 0.300)
+  # poly(0.1, 0.2, 0.3) + poly(0, 1, 2, 3, 4) ==> poly(0.1, 1.2, 2.3, 3.0, 4.0)
+  # poly(0.1, 0.2, 0.3) + 0.5                 ==> poly(0.6, 0.2, 0.3)
+  # 0.5 + poly(0.1, 0.2, 0.3)                 ==> poly(0.6, 0.2, 0.3)
 
   def poly_multiply(other)
     assert_type((array?(other) or vct?(other) or number?(other)),
-                other, 0, "a poly, a vct an array, or a number")
+                other, 0, "a poly, a vct, an array, or a number")
     if number?(other)
       Poly(self.scale(Float(other)))
     else
@@ -116,11 +136,11 @@ class Poly < Vec
     end
   end
   alias * poly_multiply
-  # poly(1, 1) * poly(-1, 1)        ==> poly(-1.000, 0.000, 1.000, 0.000)
-  # poly(-5, 1) * poly(3, 7, 2)     ==> poly(-15.000, -32.000, -3.000, 2.000, 0.000)
-  # poly(-30, -4, 2) * poly(0.5, 1) ==> poly(-15.000, -32.000, -3.000, 2.000, 0.000)
-  # poly(-30, -4, 2) * 0.5          ==> poly(-15.000, -2.000, 1.000)
-  # 2.0 * poly(-30, -4, 2)          ==> poly(-60.000, -8.000, 4.000)
+  # poly(1, 1) * poly(-1, 1)        ==> poly(-1.0, 0.0, 1.0, 0.0)
+  # poly(-5, 1) * poly(3, 7, 2)     ==> poly(-15.0, -32.0, -3.0, 2.0, 0.0)
+  # poly(-30, -4, 2) * poly(0.5, 1) ==> poly(-15.0, -32.0, -3.0, 2.0, 0.0)
+  # poly(-30, -4, 2) * 0.5          ==> poly(-15.0, -2.0, 1.0)
+  # 2.0 * poly(-30, -4, 2)          ==> poly(-60.0, -8.0, 4.0)
 
   def poly_div(other)
     assert_type((array?(other) or vct?(other) or number?(other)),
@@ -129,17 +149,15 @@ class Poly < Vec
       [self * (1.0 / other), poly(0.0)]
     else
       if other.length > self.length
-        [poly(0.0), Poly(other)]
+        [poly(0.0), other.to_poly]
       else
-        len = [self.length, other.length].max
-        r = Poly.new(len, 0.0)
-        q = Poly.new(len, 0.0)
-        r.map_with_index! do |val, i| self[i] end
+        r = self.dup
+        q = Poly.new(self.length, 0.0)
         n = self.length - 1
         nv = other.length - 1
         (n - nv).downto(0) do |i|
           q[i] = r[nv + i] / other[nv]
-          (nv + i - 1).downto(i) do |j| r[j] -= q[i] * other[j - i] end
+          (nv + i - 1).downto(i) do |j| r[j] = r[j] - q[i] * other[j - i] end
         end
         nv.upto(n) do |i| r[i] = 0.0 end
         [q, r]
@@ -147,37 +165,24 @@ class Poly < Vec
     end
   end
   alias / poly_div
-  # poly(-1.0, 0.0, 1.0) / poly(1.0, 1.0)
-  #                      ==> [poly(-1.000, 1.000, 0.000), poly(0.000, 0.000, 0.000)]
-  # poly(-15, -32, -3, 2) / poly(-5, 1)
-  #                      ==> [poly(3.000, 7.000, 2.000, 0.000), poly(0.000, 0.000, 0.000, 0.000)]
-  # poly(-15, -32, -3, 2) / poly(3, 1)
-  #                      ==> [poly(-5.000, -9.000, 2.000, 0.000), poly(0.000, 0.000, 0.000, 0.000)]
-  # poly(-15, -32, -3, 2) / poly(0.5, 1)
-  #                      ==> [poly(-30.000, -4.000, 2.000, 0.000), poly(0.000, 0.000, 0.000, 0.000)]
-  # poly(-15, -32, -3, 2) / poly(3, 7, 2)
-  #                      ==> [poly(-5.000, 1.000, 0.000, 0.000), poly(0.000, 0.000, 0.000, 0.000)]
-  # poly(-15, -32, -3, 2) / 2.0
-  #                      ==> [poly(-7.500, -16.000, -1.500, 1.000), poly(0.000)]
+  # poly(-1.0, 0.0, 1.0) / poly(1.0, 1.0) ==> [poly(-1.0, 1.0, 0.0),       poly(0.0, 0.0, 0.0)]
+  # poly(-15, -32, -3, 2) / poly(-5, 1)   ==> [poly(3.0, 7.0, 2.0, 0.0),   poly(0.0, 0.0, 0.0, 0.0)]
+  # poly(-15, -32, -3, 2) / poly(3, 1)    ==> [poly(-5.0, -9.0, 2.0, 0.0), poly(0.0, 0.0, 0.0, 0.0)]
+  # poly(-15, -32, -3, 2) / poly(0.5, 1) ==> [poly(-30.0, -4.0, 2.0, 0.0), poly(0.0, 0.0, 0.0, 0.0)]
+  # poly(-15, -32, -3, 2) / poly(3, 7, 2) ==> [poly(-5.0, 1.0, 0.0, 0.0),  poly(0.0, 0.0, 0.0, 0.0)]
+  # poly(-15, -32, -3, 2) / 2.0           ==> [poly(-7.5, -16.0, -1.5, 1.0), poly(0.0)]
 
   def derivative
-    if complex?(self.first)
-      len = self.length
-      pl = Array.new(len, 0.0)
-      (len - 1).downto(0) do |i| pl[i] = self[i] * i.to_f end
-      pl
-    else
-      len = self.length - 1
-      pl = Poly.new(len, 0.0)
-      j = len
-      (len - 1).downto(0) do |i|
-        pl[i] = self[j] * j.to_f
-        j -= 1
-      end
-      pl
+    len = self.length - 1
+    pl = Poly.new(len, 0.0)
+    j = len
+    (len - 1).downto(0) do |i|
+      pl[i] = self[j] * j
+      j -= 1
     end
+    pl
   end
-  # poly(0.5, 1.0, 2.0, 4.0).derivative ==> poly(1.000, 4.000, 12.000)
+  # poly(0.5, 1.0, 2.0, 4.0).derivative ==> poly(1.0, 4.0, 12.0)
 
   def gcd(other)
     assert_type((array?(other) or vct?(other)), other, 0, "a poly, a vct or an array")
@@ -196,19 +201,20 @@ class Poly < Vec
       end
     end
   end
-  # (poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(2, 1))               ==> poly(2.000, 1.000)
-  # (poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(3, 1))               ==> poly(0.000)
-  # (poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(-3, 1))              ==> poly(-3.000, 1.000)
-  # (poly(8, 1) * poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(-3, 1)) ==> poly(-3.000, 1.000)
-  # (poly(8, 1) * poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(8, 1) * poly(-3, 1)).reduce
-  #                                                                 ==> poly(-24.000, 5.000, 1.000)
-  # poly(-1, 0, 1).gcd(poly(2, -2, -1, 1))                          ==> poly(0.000)
-  # poly(2, -2, -1, 1).gcd(poly(-1, 0, 1))                          ==> poly(1.000, -1.000)
-  # poly(2, -2, -1, 1).gcd(poly(-2.5, 1))                           ==> poly(0.000)
+  # (poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(2, 1))               ==> poly(2.0, 1.0)
+  # (poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(3, 1))               ==> poly(0.0)
+  # (poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(-3, 1))              ==> poly(-3.0, 1.0)
+  # (poly(8, 1) * poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(-3, 1)) ==> poly(-3.0, 1.0)
+  # (poly(8, 1) * poly(2, 1) * poly(-3, 1)).reduce.gcd((poly(8, 1) * poly(-3, 1)).reduce)
+  #                                                                 ==> poly(-24.0, 5.0, 1.0)
+  # poly(-1, 0, 1).gcd(poly(2, -2, -1, 1))                          ==> poly(0.0)
+  # poly(2, -2, -1, 1).gcd(poly(-1, 0, 1))                          ==> poly(1.0, -1.0)
+  # poly(2, -2, -1, 1).gcd(poly(-2.5, 1))                           ==> poly(0.0)
 
   def roots
+    rts = poly()
     if (deg = self.length - 1).zero?
-      []
+      rts
     else
       if self[0].zero?
         if deg == 1
@@ -218,159 +224,75 @@ class Poly < Vec
         end
       else
         if deg == 1
-          [-self[0] / self[1]]
+          linear_root(self[1], self[0])
         else
           if deg == 2
-            a = self[2]
-            b = self[1]
-            c = self[0]
-            d = sqrt(b * b - 4 * a * c)
-            [(-b + d ) / (2 * a), (-b - d) / (2 * a)]
+            quadratic_root(self[2], self[1], self[0])
           else
-            ones = 0
-            1.upto(deg) do |i| if self[i].nonzero? then ones += 1 end end
-            if ones == 1
-              val1 = -self[0] / self[deg]
-              val2 = 1.0 / deg
-              if (n = val1 ** val2).nan? then n = Complex(val1) ** Complex(val2) end
-              mag = n.abs
-              roots = [n]
-              incr = TWO_PI / deg
-              ang = incr
-              1.upto(deg - 1) do |i|
-                roots.unshift(simplify_complex(make_polar(mag, ang)))
-                ang += incr
-              end
-              roots
+            if deg == 3 and (rts = cubic_root(self[3], self[2], self[1], self[0]))
+              rts
             else
-              if ones == 2 and deg.even? and self[deg / 2].nonzero?
-                quad_roots = poly(self[0], self[deg / 2], self[deg]).roots
-                roots = []
-                n = deg / 2
-                quad_roots.each do |qr|
-                  if n == 2
-                    sq = sqrt(qr)
-                    roots.unshift(sq, -sq)
-                  else
-                    xqr = qr ** (1.0 / n)
-                    mag = xqr.abs
-                    incr = TWO_PI / n
-                    ang = 0.0
-                    n.times do
-                      roots.unshift(simplify_complex(make_polar(mag, ang)))
-                      ang += incr
-                    end
-                  end
-                end
-                roots
+              if deg == 4 and (rts = quartic_root(self[4], self[3], self[2], self[1], self[0]))
+                rts
               else
-                if deg == 3
-                  a0 = self[0] / self[3]
-                  a1 = self[1] / self[3]
-                  a2 = self[2] / self[3]
-                  q = a1 / 3.0 - (a2 * a2) / 9.0
-                  r = (a1 * a2 - 3.0 * a0) / 6.0 - (a2 * a2 * a2) / 27.0
-                  q3r2 = q * q * q + r * r
-                  sq3r2 = sqrt(q3r2)
-                  s1 = (q3r2.zero? ? -(r.abs ** (1.0 / 3.0)) : ((r + sq3r2) ** (1.0 / 3.0)))
-                  s2 = (q3r2.zero? ? s1 : ((r - sq3r2) ** (1.0 / 3.0)))
-                  z1 = (s1 + s2) - a2 / 3.0
-                  z2 = -0.5 * (s1 + s2) +
-                       a2 / -3.0 +
-                       (s1 - s2) * 0.5 * sqrt(3.0) * make_rectangular(0.0, 1.0)
-                  z3 = -0.5 * (s1 + s2) +
-                       a2 / -3.0 +
-                           (s1 - s2) * -0.5 * sqrt(3.0) * make_rectangular(0.0, 1.0)
-                  [z1, z2, z3].map do |val|
-                    if complex?(val) and val.image.zero?
-                      val.real
-                    else
-                      val
-                    end
-                  end
+                ones = 0
+                1.upto(deg) do |i| if self[i].nonzero? then ones += 1 end end
+                if ones == 1
+                  nth_root(self[deg], self[0], deg)
                 else
-                  if deg == 4
-                    a0 = self[0] / self[4]
-                    a1 = self[1] / self[4]
-                    a2 = self[2] / self[4]
-                    a3 = self[3] / self[4]
-                    yroot = poly(4 * a0 * a2 + -(a1 * a1) + -(a3 * a3 * a0),
-                                 a1 * a3 - 4 * a0,
-                                 -a2,
-                                 1.0).roots
-                    y1 = if (not complex?(yroot[0]))
-                           yroot[0]
-                         else
-                           if (not complex?(yroot[0]))
-                             yroot[1]
-                           else
-                             yroot[2]
-                           end
-                         end
-                    r = sqrt(0.25 * a3 * a3 + -a2 + y1)
-                    d = if r.zero?
-                          sqrt(0.75 * a3 * a3 + -2 * a2 + 2 * sqrt(y1 * y2 - 4 * a0))
-                        else
-                          sqrt(0.75 * a3 * a3 + -2 * a2 + -(r * r) +
-                                     (0.25 * (4 * a3 * a2 + -8 * a1 + -(a3 * a3 * a3))) / r)
-                        end
-                    e = if r.zero?
-                          sqrt(0.75 * a3 * a3 + -2 * a2 + -2 * sqrt(y1 * y1 - 4 * a0))
-                        else
-                          sqrt(0.75 * a3 * a3 + -2 * a2 + -(r * r) +
-                                     (-0.25 * (4 * a3 * a2 + -8 * a1 + -(a3 * a3 * a3))) / r)
-                        end
-                    z1 = -0.25 * a3 + 0.5 * r + 0.5 * d
-                    z2 = -0.25 * a3 + 0.5 * r + -0.5 * d
-                    z3 = -0.25 * a3 + -0.5 * r + 0.5 * e
-                    z4 = -0.25 * a3 + -0.5 * r + -0.5 * e
-                    [z1, z2, z3, z4].map do |val|
-                      if complex?(val) and val.image.zero?
-                        val.real
-                      else
-                        val
-                      end
+                  if ones == 2 and deg.even? and self[deg / 2].nonzero?
+                    n = deg / 2
+                    poly(self[0], self[deg / 2], self[deg]).roots.each do |qr|
+                      rts.push(*nth_root(1.0, -qr, n.to_f))
                     end
-                  else
-                    q = self.dup
-                    pp = self.derivative
-                    qp = pp.dup
-                    n = deg
-                    x = Complex(1.3, 0.314159)
-                    v = q.eval(x)
-                    m = v.abs * v.abs
-                    accuracy = 1.0e-7
-                    dx = 0.0
-                    until c_g?
-                      dx = v / qp.eval(x)
-                      break if dx.abs <= accuracy
-                      20.times do
-                        break if dx.abs <= accuracy
-                        y = x - dx
-                        v1 = q.eval(y)
-                        if (m1 = v1.abs * v1.abs) < m
-                          x = y
-                          v = v1
-                          m = m1
-                          break
-                        else
-                          dx /= 4.0
-                        end
-                      end
-                    end
-                    x -= self.eval(x) / pp.eval(x)
-                    x -= self.eval(x) / pp.eval(x)
-                    if x.image < accuracy
-                      x = x.real
-                      q = q.poly_div([-x, 1.0])
-                      n -= 1
-                    else
-                      q = q.poly_div([x.abs, 0.0, 1.0])
-                      n -= 2
-                    end
-                    rts = poly(x)
-                    if n > 0 then rts.unshift(*q.first.reduce.roots) end
                     rts
+                  else
+                    if deg > 3 and
+                        ones == 3 and
+                        (deg % 3).zero? and
+                        self[deg / 3].nonzero? and
+                        self[(deg * 2) / 3].nonzero?
+                      n = deg / 3
+                      poly(self[0], self[deg / 3], self[(deg *2) / 3], self[deg]).roots.each do |qr|
+                        rts.push(*nth_root(1.0, -qr, n.to_f))
+                      end
+                      rts
+                    else
+                      q = self.dup
+                      pp = self.derivative
+                      qp = pp.dup
+                      n = deg
+                      x = Complex(1.3, 0.314159)
+                      v = q.eval(x)
+                      m = v.abs * v.abs
+                      20.times do # until c_g?
+                        if (dx = v / qp.eval(x)).abs <= Poly_roots_epsilon then break end
+                        20.times do
+                          if dx.abs <= Poly_roots_epsilon then break end
+                          y = x - dx
+                          v1 = q.eval(y)
+                          if (m1 = v1.abs * v1.abs) < m
+                            x = y
+                            v = v1
+                            m = m1
+                            break
+                          else
+                            dx /= 4.0 # /: slash to fool Emacs' indentation commands
+                          end
+                        end
+                      end
+                      x = x - self.eval(x) / pp.eval(x)
+                      x = x - self.eval(x) / pp.eval(x)
+                      if x.image < Poly_roots_epsilon
+                        q = q.poly_div(poly(-x.real, 1.0))
+                        n -= 1
+                      else
+                        q = q.poly_div(poly(x.abs, 0.0, 1.0))
+                        n -= 2
+                      end
+                      rts = ((n > 0) ? q.car.reduce.roots : poly()) << x.to_f_or_c
+                      rts
+                    end
                   end
                 end
               end
@@ -380,31 +302,111 @@ class Poly < Vec
       end
     end
   end
-
+  
   def eval(x)
-    if self.null?
-      0.0
-    else
-      sum = self.last
-      (self.length - 2).downto(0) do |i| sum = sum * x + self[i] end
-      sum
-    end
+    sum = self.last
+    self.reverse[1..-1].each do |val| sum = sum * x + val end
+    sum
   end
 
   private
+  # ax + b
+  def linear_root(a, b)
+    poly(-b / a)
+  end
+
+  # ax^2 + bx + c
+  def quadratic_root(a, b, c)
+    d = sqrt(b * b - 4.0 * a * c)
+    poly((-b + d) / (2.0 * a), (-b - d) / (2.0 * a))
+  end
+
+  # ax^3 + bx^2 + cx + d
+  def cubic_root(a, b, c, d)
+    # Abramowitz & Stegun 3.8.2
+    a0 = d / a
+    a1 = c / a
+    a2 = b / a
+    q = (a1 / 3) - ((a2 * a2) / 9)
+    r = ((a1 * a2 - 3 * a0) / 6) - ((a2 * a2 * a2) / 27)
+    sq3r2 = sqrt(q * q * q + r * r)
+    r1 = (r + sq3r2) ** (1 / 3.0)
+    r2 = (r - sq3r2) ** (1 / 3.0)
+    incr = (TWO_PI * Complex::I) / 3
+    pl = poly(a0, a1, a2, 1)
+    sqrt3 = sqrt(-3)
+    3.times do |i|
+      3.times do |j|
+        s1 = r1 * exp(i * incr)
+        s2 = r2 * exp(j * incr)
+        z1 = simplify_complex((s1 + s2) - (a2 / 3))
+        if pl.eval(z1).abs < Poly_roots_epsilon
+          z2 = simplify_complex((-0.5 * (s1 + s2)) + (a2 / -3) + ((s1 - s2) * 0.5 * sqrt3))
+          if pl.eval(z2).abs < Poly_roots_epsilon
+            z3 = simplify_complex((-0.5 * (s1 + s2)) + (a2 / -3) + ((s1 - s2) * -0.5 * sqrt3))
+            if pl.eval(z3).abs < Poly_roots_epsilon
+              return poly(z1, z2, z3)
+            end
+          end
+        end
+      end
+    end
+    false
+  end
+
+  # ax^4 + bx^3 + cx^2 + dx + e
+  def quartic_root(a, b, c, d, e)
+    # Weisstein, "Encyclopedia of Mathematics"
+    a0 = e / a
+    a1 = d / a
+    a2 = c / a
+    a3 = b / a
+    if yroot = poly((4 * a2 * a0) + -(a1 * a1) + -(a3 * a3 * a0),
+                    (a1 * a3) - (4 * a0),
+                    -a2,
+                    1).roots
+      yroot.each do |y1|
+        r = sqrt((0.25 * a3 * a3) + (-a2 + y1))
+        dd = if r.zero?
+              sqrt((0.75 * a3 * a3) + (-2 * a2) + (2 * sqrt(y1 * y1 - 4 * a0)))
+            else
+              sqrt((0.75 * a3 * a3) + (-2 * a2) + (-(r * r)) +
+                   (0.25 * ((4 * a3 * a2) + (-8 * a1) + (-(a3 * a3 * a3)))) / r)
+            end
+        ee = if r.zero?
+              sqrt((0.75 * a3 * a3) + (-2 * a2) + (-2 * sqrt((y1 * y1) - (4 * a0))))
+            else
+              sqrt((0.75 * a3 * a3) + (-2 * a2) + (-(r * r)) +
+                   (-0.25 * ((4 * a3 * a2) + (-8 * a1) + (-(a3 * a3 * a3)))) / r)
+            end
+        z1 = (-0.25 * a3) + ( 0.5 * r) + ( 0.5 * dd)
+        z2 = (-0.25 * a3) + ( 0.5 * r) + (-0.5 * dd)
+        z3 = (-0.25 * a3) + (-0.5 * r) + ( 0.5 * ee)
+        z4 = (-0.25 * a3) + (-0.5 * r) + (-0.5 * ee)
+        if poly(e, d, c, b, a).eval(z1).abs < Poly_roots_epsilon
+          return poly(z1, z2, z3, z4)
+        end
+      end
+    end
+    false
+  end
+  
+  # ax^n + b
+  def nth_root(a, b, deg)
+    n = (-b / a) ** (1.0 / deg)
+    incr = (TWO_PI * Complex::I) / deg
+    rts = poly()
+    deg.to_i.times do |i| rts.unshift(simplify_complex(exp(i * incr) * n)) end
+    rts
+  end
+
+  Poly_roots_epsilon2 = 1.0e-6
   def simplify_complex(a)
-    if a.image.abs < 1.0e-7
-      if a.real.abs < 1.0e-7
-        0.0
-      else
-        a.real
-      end
+    if a.image.abs < Poly_roots_epsilon2
+      (a.real.abs < Poly_roots_epsilon2) ? 0.0 : a.real.to_f
     else
-      if a.real.abs < 1.0e-7
-        make_rectangular(0.0, a.image)
-      else
-        a
-      end
+      if a.real.abs < Poly_roots_epsilon2 then a.real = 0.0 end
+      a
     end
   end
 end
@@ -454,7 +456,7 @@ end
 class String
   def to_poly
     if self.scan(/^poly\([-+,.)\d\s]+/).null?
-      nil
+      poly()
     else
       eval(self)
     end

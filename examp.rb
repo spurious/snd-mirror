@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Mon Jan 09 02:50:48 CET 2006
+# Changed: Mon Jul 31 12:26:32 CEST 2006
 
 # Commentary:
 #
@@ -99,7 +99,7 @@
 #  cdr
 #  step(n)
 #  apply(func, *rest, &body)
-#  remove_fi(&body)
+#  remove_if(&body)
 #
 # class Vec < Array
 #  Vec[]
@@ -434,7 +434,7 @@
 #  scramble_channel(silence)
 #
 #  reverse_by_blocks(block_len, snd, chn)
-#  reverse_with_blocks(block_len, snd, chn)
+#  reverse_within_blocks(block_len, snd, chn)
 #  
 # class Moog_filter < Musgen (moog.scm)
 #   initialize(freq, q)
@@ -475,7 +475,7 @@ def make_polar(r, theta)
   Complex.new(cos(theta) * r, sin(theta) * r)
 end
 
-def make_rectangular(re, im)
+def make_rectangular(re, im = 1.0)
   Complex.new(re, im)
 end
 
@@ -570,6 +570,7 @@ def ignore(*rest)
 end
 
 # backward compatibility aliases and constants (mostly from snd7.scm)
+# alias new old
 if provided? :snd
   alias save_options                    save_state
   alias delete_samples_with_origin      delete_samples
@@ -586,6 +587,23 @@ if provided? :snd
   Sort_files_by_date = 2
   Sort_files_by_size = 4
   Sort_files_by_entry = -1
+  alias mus_audio_sun_outputs           mus_sun_set_outputs
+  alias set_oss_buffers                 mus_oss_set_buffers
+  alias mus_audio_set_oss_buffers       mus_oss_set_buffers
+  unless defined? mus_file_data_clipped
+    alias mus_file_data_clipped         mus_clipping
+    alias set_mus_file_data_clipped     set_mus_clipping
+  end
+  alias mus_data_clipped                mus_clipping
+  alias set_mus_data_clipped            set_mus_clipping
+  alias dac_is_running                  playing
+  # backwards compatibility for snd 8
+  alias make_ppolar                     make_two_pole
+  alias make_zpolar                     make_two_zero
+  alias make_average                    make_moving_average
+  alias average                         moving_average
+  alias average?                        moving_average?
+  # *windowed_maxamp -> dsp.rb
 end
 
 # enum("foo", :bar, "FOO_BAR")
@@ -613,7 +631,7 @@ class Object
   end
 
   def function?(obj)
-    func?(obj) and self.method(obj)
+    func?(obj) and Snd.catch(:all, false) do self.method(obj) end.first
   rescue
     false
   end
@@ -1156,16 +1174,12 @@ a: 2
     alias * ary_times
   end
 
-  # removes self's items where block is true and returns removed items
-  # in a newly created array (similar to Scheme's remove-if, I hope)
+  # Returns all elements of self in a newly created array where block
+  # is true.
+  # [0, 1, 2].remove_if do |el| el > 0 end #=> [1, 2]
   def remove_if
     result = []
-    self.each_with_index do |x, i|
-      if yield(x)
-        result.push(x)
-        self.delete_at(i)
-      end
-    end
+    self.each do |x| yield(x) and result.push(x) end
     result
   end
 end
@@ -1176,12 +1190,12 @@ class Vec < Array
     self.new(ary.length) do |i| ary[i] end
   end
   
-  def initialize(len, init = 0.0)
+  def initialize(len, init = 0.0, &body)
     assert_type((number?(len) and len >= 0), len, 0, "a number")
     @name = "vector"
     len = Integer(len)
     if block_given?
-      super(len, init).map_with_index! do |val, i| yield(i) end
+      super(len, &body)
     else
       super(len, init)
     end
@@ -1191,7 +1205,7 @@ class Vec < Array
 
   def inspect
     str = "%s(" % @name
-    self.each do |val| str += "%s, " % val.inspect end
+    self.each do |val| str += "%s, " % val end
     if self.length > 0 then str.chop!.chop! end
     str += ")"
     str
@@ -2052,7 +2066,7 @@ def run_emacs_eval_hook(line)
     set_snd_input(:emacs)
     begin
       Snd.display(eval(line, TOPLEVEL_BINDING, file, 1).inspect)
-    rescue Interrupt, ScriptError, StandardError
+    rescue Interrupt, ScriptError, NameError, StandardError
       Snd.display(verbose_message_string(true, "# ", file))
     end
     set_snd_input(:snd)
@@ -2125,7 +2139,7 @@ def install_eval_hooks(file, retval, input, hook, &reset_cursor)
       set_snd_input(input)
       begin
         Snd.display(eval(eval_line, TOPLEVEL_BINDING, file, 1).inspect)
-      rescue Interrupt, ScriptError, StandardError 
+      rescue Interrupt, ScriptError, NameError, StandardError 
         Snd.display(verbose_message_string(true, "# ", file))
       ensure
         eval_line = ""
@@ -2253,8 +2267,10 @@ end
 def let(*args, &prc)
   locals = Hash.new
   eval("local_variables", prc).each do |name| locals[name] = eval(name, prc) end
-  yield(*args)
-rescue Interrupt, ScriptError, StandardError
+  # yield(*args)
+  # See ruby/ChangeLog: Tue Jul 18 16:52:29 2006  Yukihiro Matsumoto  <matz@ruby-lang.org>
+  prc.call(*args)
+rescue Interrupt, ScriptError, NameError, StandardError
   raise
 ensure
   @locals = locals
@@ -2345,22 +2361,18 @@ end
 
 def verbose_message_string(stack_p, remark, *args)
   fmt_remark = format("\n%s", remark)
-  args.to_a[0] = remark.to_s + args.to_a.car.to_s
+  # args.to_a.car = remark.to_s + args.to_a.car.to_s
+  args.to_a.car = String(args.to_a.car)
   str = if args.length < 2
           format(args.car)
         else
           format(*args)
         end.split(/\n/).join(fmt_remark)
   if $!
-    unless str.length == remark.to_s.length then str += ": " end
     str += format("[%s] %s (%s)", rb_error_to_mus_tag.inspect, snd_error_to_message, $!.class)
-    if stack_p
-      str += format("\n%s%s", remark, $!.backtrace.join(fmt_remark))
-    end
+    if stack_p then str += format("\n%s%s", remark, $!.backtrace.join(fmt_remark)) end
   else
-    if stack_p and caller(2)
-      str += format("\n%s%s", remark, caller(2).join(fmt_remark))
-    end
+    if stack_p and caller(2) then str += format("\n%s%s", remark, caller(2).join(fmt_remark)) end
   end
   str
 end
@@ -2566,7 +2578,11 @@ class Snd
       else
         [val]
       end
-    rescue Interrupt, ScriptError, StandardError
+      # ruby1.9/ChangeLog
+      # Thu Feb  2 16:01:24 2006  Yukihiro Matsumoto  <matz@ruby-lang.org>
+      # 	* error.c (Init_Exception): change NameError to direct subclass of
+      # 	  Exception so that default rescue do not handle it silently.
+    rescue Interrupt, ScriptError, NameError, StandardError
       # raise part
       if (tag == (mus_tag = rb_error_to_mus_tag) or tag == :all)
         if retval != :undefined
@@ -2609,53 +2625,78 @@ class Snd
 end
 
 # nearly all are instance of StandardError
-Snd_error_tags = [
-  # snd-0.h
-  :no_such_mix,
-  :no_such_track,
-  :no_such_region,
-  :no_such_envelope,
-  :no_such_sample,
-  :no_such_edit,
-  :cannot_save,
-  :cannot_print,
-  :no_such_axis,
-  :no_such_widget,
-  :no_such_graphics_context,
-  :no_such_player,
-  :no_such_direction,
-  :no_such_key,
-  :no_such_plugin,
-  :plugin_error,
-  :no_such_mark,
-  :no_such_menu,
-  :cannot_parse,
-  :no_active_selection,
-  :bad_arity,
-  :no_such_color,
-  :no_such_sound,
-  :gsl_error,
-  :no_such_colormap,
-  :cant_open_file,
-  :cant_close_file,
-  :cant_delete_file,
-  :cant_update_file,
-  # snd-error.c
-  :snd_error,
-  # snd-run.c/xen.c
-  :wrong_number_of_args,
-  # snd-snd.c
-  :cannot_apply_controls,
-  # sndlib2xen.h
-  :no_such_channel,
-  :no_such_file,
-  :mus_error,
-  :bad_type,
-  :no_data,
-  :bad_header,
-  # xen.h
-  :out_of_range,                # RangeError
-  :wrong_type_arg]              # TypeError
+Snd_error_tags = [# clm2xen.c
+                  :mus_error,
+                  :arg_error,
+                  # snd-0.h
+                  :no_such_track,
+                  :no_such_envelope,
+                  :no_such_sample,
+                  :no_such_edit,
+                  :cannot_save,
+                  :cant_update_file,
+                  # snd-chn.c
+                  :cant_open_file,
+                  # snd-dac.c
+                  :bad_format,
+                  :no_such_player,
+                  # snd-draw.c
+                  :no_such_widget,
+                  :no_such_graphics_context,
+                  :no_such_axis,
+                  # snd-edits.c
+                  :no_such_direction,
+                  :no_such_region,
+                  # snd-env.c
+                  :env_error,
+                  # snd-error.c
+                  :snd_error,
+                  # snd-gxcolormaps.c
+                  :no_such_colormap,
+                  :colormap_error,
+                  # snd-key.c
+                  :no_such_key,
+                  # snd-ladspa.c
+                  :no_such_plugin,
+                  :plugin_error,
+                  # snd-main.c
+                  :memory_error,
+                  # snd-marks.c
+                  :no_such_mark,
+                  # snd-menu.c
+                  :no_such_menu,
+                  # snd-mix.c
+                  :no_such_mix,
+                  :io_error,
+                  # snd-print.c
+                  :cannot_print,
+                  # snd-run.c/xen.c|h
+                  :wrong_number_of_args,
+                  :cannot_parse,
+                  :out_of_range,
+                  # snd-snd.c
+                  :no_such_sound,
+                  :not_a_sound_file,
+                  :cannot_apply_controls,
+                  :bad_size,
+                  :snd_internal_error,
+                  # snd-xen.c
+                  :no_active_selection,
+                  :bad_arity,
+                  # snd-xmain.c
+                  :xt_error,
+                  # snd-xxen.c
+                  :no_such_color,
+                  # snd.c
+                  :gsl_error,
+                  # sndlib2xen.h
+                  :no_such_channel,
+                  :no_such_file,
+                  :bad_type,
+                  :no_data,
+                  :bad_header,
+                  # xen.h
+                  :wrong_type_arg]              # TypeError
 
 def rb_error_to_mus_tag
   # to_s and string error-names intended here
@@ -2702,7 +2743,7 @@ def snd_error_to_message
           end
   end
   str.gsub(rb_error_to_mus_tag.to_s.capitalize + ": ", "")
-rescue Interrupt, ScriptError, StandardError
+rescue Interrupt, ScriptError, NameError, StandardError
   if $DEBUG
     $stderr.printf("# Warning (%s)\n", get_func_name)
     each_variables do |k, v| $stderr.printf("# %s = %s\n", k, v.inspect) end
@@ -2768,7 +2809,7 @@ Ruby_exceptions = {
   :interrupt,             Interrupt,
   :system_exit,           SystemExit,
   :standard_error,        StandardError,
-  :argument_error,        ArgumentError,
+  :arg_error,             ArgumentError,
   :float_domain_error,    FloatDomainError,
   :index_error,           IndexError,
   :io_error,              IOError,
@@ -3231,7 +3272,7 @@ looks for successive samples that sum to less than 'limit', moving the cursor if
     set_cursor(n)
   end
   
-  # make a system call from the listener
+  # make a system call from irb or snd listener
   # 
   #   shell("df") for example
   # or to play a sound whenever a file is closed:
@@ -3240,17 +3281,11 @@ looks for successive samples that sum to less than 'limit', moving the cursor if
   add_help(:shell, "shell(*cmd) \
 sends 'cmd' to a shell (executes it as a shell command) and returns the result string.")
   def shell(*cmd)
-    if !string?(cmd.first) or cmd.first.empty?
-      ""
-    else
-      str = ""
-      IO.popen(format(*cmd)) do |f|
-        until f.eof?
-          str << f.gets
-        end
-      end
-      str
+    str = ""
+    if string?(cmd.first) and (not cmd.first.empty?)
+      IO.popen(format(*cmd).split, "r") do |f| str = f.readlines.join end
     end
+    str
   end
 
   # translate mpeg input to 16-bit linear and read into Snd
@@ -5101,9 +5136,9 @@ turns the currently selected soundfont file into a bunch of files of the form sa
 divide sound into block-len blocks, recombine blocks in reverse order.")
   def reverse_by_blocks(block_len, snd = false, chn = false)
     len = frames(snd, chn)
-    num_blocks = (len / (srate(snd) * block_len)).floor
+    num_blocks = (len / (srate(snd).to_f * block_len)).floor
     if num_blocks > 1
-      actual_block_len = (len / num_blocks).ceil
+      actual_block_len = len / num_blocks
       rd = make_sample_reader(len - actual_block_len, snd, chn)
       beg = 0
       ctr = 1
@@ -5128,17 +5163,17 @@ divide sound into block-len blocks, recombine blocks in reverse order.")
     end
   end
 
-  add_help(:reverse_with_blocks,
-           "reverse_with_blocks(block_len, snd=false, chn=false) \
+  add_help(:reverse_within_blocks,
+           "reverse_within_blocks(block_len, snd=false, chn=false) \
 divide sound into blocks, recombine in order, but each block internally reversed.")
-  def reverse_with_blocks(block_len, snd = false, chn = false)
+  def reverse_within_blocks(block_len, snd = false, chn = false)
     len = frames(snd, chn)
-    num_blocks = (len / (srate(snd) * block_len)).floor
+    num_blocks = (len / (srate(snd).to_f * block_len)).floor
     if num_blocks > 1
-      actual_block_len = (len / num_blocks).ceil
+      actual_block_len = len / num_blocks
       no_clicks_env = [0.0, 0.0, 0.01, 1.0, 0.99, 1.0, 1.0, 0.0]
       as_one_edit(lambda do | |
-                    0.step(len, actual_block_len) do
+                    0.step(len, actual_block_len) do |beg|
                       reverse_channel(beg, actual_block_len, snd, chn)
                       env_channel(no_clicks_env, beg, actual_block_len, snd, chn)
                     end
