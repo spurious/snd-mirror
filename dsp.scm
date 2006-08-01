@@ -708,13 +708,14 @@
 (define* (make-hilbert-transform :optional (len 30))
   "(make-hilbert-transform :optional (len 30) makes a Hilbert transform filter"
   (let* ((arrlen (1+ (* 2 len)))
-	 (arr (make-vct arrlen)))
+	 (arr (make-vct arrlen))
+	 (lim (if (even? len) len (1+ len))))
     (do ((i (- len) (1+ i)))
-	((= i len))
+	((= i lim))
       (let* ((k (+ i len))
 	     (denom (* pi i))
 	     (num (- 1.0 (cos (* pi i)))))
-	(if (= i 0)
+	(if (or (= num 0.0) (= i 0))
 	    (vct-set! arr k 0.0)
 	    ;; this is the "ideal" -- rectangular window -- version:
 	    ;; (vct-set! arr k (/ num denom))
@@ -1586,6 +1587,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
       (let* ((aff (* i old-freq))
 	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
 	(vector-set! ssbs (1- i) (make-ssb-am (* i factor old-freq)))
+	;; TODO: the ssb-am order should be larger for low freqs
+	;;       simple experiments indicate we should use ssb-am order around the filter center period (i.e. (/ srate aff)), or maybe use old-freq throughout
 	(vector-set! bands (1- i) (make-bandpass (hz->2pi (- aff bwf)) 
 						 (hz->2pi (+ aff bwf)) 
 						 order))))

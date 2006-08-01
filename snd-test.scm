@@ -10727,7 +10727,15 @@ EDITS: 5
 		((= i 20))
 	      (vct-set! data i (hilbert-transform hlb (if (= i 0) 1.0 0.0))))
 	    (if (not (vequal data (vct 0.0 -0.010 0.0 -0.046 0.0 -0.152 0.0 -0.614 0.0 0.614 0.0 0.152 0.0 0.046 0.0 0.010 0.0 0.0 0.0 0.0)))
-		(snd-display ";hilbert-transform impulse response: ~A" data)))
+		(snd-display ";hilbert-transform 8 impulse response: ~A" data)))
+
+	  (let ((hlb (make-hilbert-transform 7))
+		(data (make-vct 20)))
+	    (do ((i 0 (1+ i)))
+		((= i 20))
+	      (vct-set! data i (hilbert-transform hlb (if (= i 0) 1.0 0.0))))
+	    (if (not (vequal data (vct -0.007 0.0 -0.032 0.0 -0.136 0.0 -0.608 0.0 0.608 0.0 0.136 0.0 0.032 0.0 0.007 0.0 0.0 0.0 0.0 0.0)))
+		(snd-display ";hilbert-transform 7 impulse response: ~A" data)))
 
 	  (let ((ind (new-sound "test.snd")))
 	    (pad-channel 0 1000)
@@ -10743,6 +10751,18 @@ EDITS: 5
 	      (set! (sample 500) 0.0)
 	      (if (> (maxamp ind 0) .02)
 		  (snd-display ";hilbert sidelobes: ~A" (maxamp ind 0)))
+	      (scale-channel 0.0)
+	      (set! (sample 100) 1.0)
+	      (set! h (make-hilbert-transform 101))
+	      (map-channel (lambda (y) (hilbert-transform h y)))
+	      (map-channel (lambda (y) (hilbert-transform h y)))
+	      (map-channel (lambda (y) (hilbert-transform h y)))
+	      (map-channel (lambda (y) (hilbert-transform h y)))
+	      (if (> (abs (- (sample 504) .98)) .01)
+		  (snd-display ";hilbert 101 impulse: ~A: ~A" (sample 504) (channel->vct 498 10)))
+	      (set! (sample 504) 0.0)
+	      (if (> (maxamp ind 0) .02)
+		  (snd-display ";hilbert 101 sidelobes: ~A" (maxamp ind 0)))
 	      (revert-sound))
 	    (pad-channel 0 1000)
 	    (set! (sample 100) 1.0)
@@ -13625,6 +13645,7 @@ EDITS: 5
 (def-clm-struct sa1 (freq 0.0 :type float) (coscar #f :type clm) (sincar #f :type clm) (dly #f :type clm) (hlb #f :type clm))
 
 (define* (make-ssb-am-1 freq :optional (order 40))
+  (if (even? order) (set! order (1+ order)))
   (make-sa1 :freq (abs freq)
 	    :coscar (make-oscil freq (* .5 pi))
 	    :sincar (make-oscil freq)
@@ -20461,14 +20482,14 @@ EDITS: 5
 	  (delete-samples 0 200)
 	  (set! gen1 (make-oscil 320.0 :initial-phase (asin (* 2 (sample 0))))) ; depends on rising side
 	  (map-channel (lambda (y) (- y (* 0.5 (oscil gen1)))))
-	  (if (> (maxamp) .003) (snd-display ";ssb-am cancelled: ~A" (maxamp)))
+	  (if (> (maxamp) .004) (snd-display ";ssb-am cancelled: ~A" (maxamp)))
 	  (undo 3)
 	  (set! gen (make-ssb-am 100.0 100))
 	  (map-channel (lambda (y) (ssb-am gen y (hz->radians 50.0))))
 	  (delete-samples 0 180)
 	  (set! gen1 (make-oscil 370.0 :initial-phase (asin (* 2 (sample 0))))) ; depends on rising side
 	  (map-channel (lambda (y) (- y (* 0.5 (oscil gen1)))))
-	  (if (> (maxamp) .003) (snd-display ";ssb-am fm cancelled: ~A" (maxamp)))
+	  (if (> (maxamp) .004) (snd-display ";ssb-am fm cancelled: ~A" (maxamp)))
 	  (close-sound ind)))
 
       (if (defined? 'mus-ssb-bank) ; not defined if --with-modules
@@ -20944,8 +20965,8 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "ssb-am"
-			 "ssb-am: shift: up, sin/cos: 439.999975 Hz (0.000000 radians), order: 40"
-			 "ssb-am: shift: up, sin/cos: 440.000000 Hz (0.000000 radians), order: 40")
+			 "ssb-am: shift: up, sin/cos: 439.999975 Hz (0.000000 radians), order: 41"
+			 "ssb-am: shift: up, sin/cos: 440.000000 Hz (0.000000 radians), order: 41")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (ssb-am gen 0.0)))
@@ -20954,12 +20975,12 @@ EDITS: 5
 	(if (not (ssb-am? gen)) (snd-display ";~A not ssb-am?" gen))
 	(if (fneq (mus-phase gen) 1.253787) (snd-display ";ssb-am phase: ~F?" (mus-phase gen)))
 	(if (fneq (mus-frequency gen) 440.0) (snd-display ";ssb-am frequency: ~F?" (mus-frequency gen)))
-	(if (not (= (mus-order gen) 40)) (snd-display ";ssb-am order: ~F?" (mus-order gen)))
+	(if (not (= (mus-order gen) 41)) (snd-display ";ssb-am order: ~F?" (mus-order gen)))
 	(if (not (= (mus-cosines gen) 1)) (snd-display ";ssb-am cosines: ~D?" (mus-cosines gen)))
-	(if (not (= (mus-length gen) 40)) (snd-display ";ssb-am length: ~D?" (mus-length gen)))
+	(if (not (= (mus-length gen) 41)) (snd-display ";ssb-am length: ~D?" (mus-length gen)))
 	(if (not (= (mus-interp-type gen) mus-interp-none)) (snd-display ";ssb-am interp type: ~D?" (mus-interp-type gen)))
-	(if (fneq (mus-xcoeff gen 0) 0.0) (snd-display ";ssb-am xcoeff 0: ~A" (mus-xcoeff gen 0)))
-	(if (fneq (mus-xcoeff gen 1) -.001) (snd-display ";ssb-am xcoeff 1: ~A" (mus-xcoeff gen 1)))
+	(if (fneq (mus-xcoeff gen 0) -0.00124) (snd-display ";ssb-am xcoeff 0: ~A" (mus-xcoeff gen 0)))
+	(if (fneq (mus-xcoeff gen 1) 0.0) (snd-display ";ssb-am xcoeff 1: ~A" (mus-xcoeff gen 1)))
 ;	(if (not (vct? (mus-data gen))) (snd-display ";mus-data ssb-am: ~A" (mus-data gen)))
 ;	(if (not (vct? (mus-xcoeffs gen))) (snd-display ";mus-xcoeffs ssb-am: ~A" (mus-xcoeffs gen)))
 ;; these apparently aren't handled in clm2xen

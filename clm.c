@@ -3839,10 +3839,6 @@ Float mus_filter(mus_any *ptr, Float input)
    the extra cases could be handled explicitly by the user, but that
    goes against all the other such cases, where the optimizations
    are handled internally (snd-run for example).
-
-   PERHAPS: mus_fir_filter_with_constant_symmetric_coeffs?
-            I'm actually thinking of things like the Hilbert transform as used in ssb_am where every other coeff is 0.0,
-	      and we'd have coeff * (xa - xb) for the others -- 1/4 as many multiplies, 1/2 as many adds as currently
 */
 Float mus_fir_filter(mus_any *ptr, Float input)
 {
@@ -8460,18 +8456,33 @@ typedef struct {
 
 bool mus_ssb_am_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_SSB_AM));}
 
+static Float run_hilbert(flt *g, Float insig)
+{
+  /* every odd-numbered entry in the coeffs array is 0 in this filter
+   *   but we have to run the loop twice to skip the 0 mults --
+   *   not very elaborate timing tests indicate all this silliness saves 10% compute time
+   */
+  int i, len;
+  Float val = 0.0;
+  len = g->order;
+  g->state[0] = insig;
+  for (i = 0; i < len; i += 2) val += (g->x[i] * g->state[i]);
+  for (i = len - 1; i >= 1; i--) g->state[i] = g->state[i - 1];
+  return(val);
+}
+
 Float mus_ssb_am_1(mus_any *ptr, Float insig)
 {
   ssbam *gen = (ssbam *)ptr;
   return((mus_oscil_0(gen->cos_osc) * mus_delay_1(gen->dly, insig)) +
-	 (mus_oscil_0(gen->sin_osc) * mus_fir_filter(gen->hilbert, insig)));
+	 (mus_oscil_0(gen->sin_osc) * run_hilbert((flt *)(gen->hilbert), insig)));
 }
 
 Float mus_ssb_am(mus_any *ptr, Float insig, Float fm)
 {
   ssbam *gen = (ssbam *)ptr;
   return((mus_oscil_1(gen->cos_osc, fm) * mus_delay_1(gen->dly, insig)) +
-	 (mus_oscil_1(gen->sin_osc, fm) * mus_fir_filter(gen->hilbert, insig)));
+	 (mus_oscil_1(gen->sin_osc, fm) * run_hilbert((flt *)(gen->hilbert), insig)));
 }
 
 static int free_ssb_am(mus_any *ptr) 
@@ -8590,6 +8601,7 @@ mus_any *mus_make_ssb_am(Float freq, int order)
 {
   ssbam *gen;
   int i, k, len;
+  if ((order & 1) == 0) order++; /* if order is even, the first Hilbert coeff is 0.0 */
   gen = (ssbam *)clm_calloc(1, sizeof(ssbam), S_make_ssb_am);
   gen->core = &SSB_AM_CLASS;
   if (freq > 0)
@@ -8598,9 +8610,9 @@ mus_any *mus_make_ssb_am(Float freq, int order)
   gen->sin_osc = mus_make_oscil(fabs(freq), (gen->shift_up) ? M_PI : 0.0);
   gen->cos_osc = mus_make_oscil(fabs(freq), M_PI * 0.5);
   gen->dly = mus_make_delay(order, NULL, order, MUS_INTERP_NONE);
-  len = order * 2; /* trailing is always 0.0 */
+  len = order * 2 + 1;
   gen->coeffs = (Float *)CALLOC(len, sizeof(Float));
-  for (i = -order, k = 0; i < order; i++, k++)
+  for (i = -order, k = 0; i <= order; i++, k++)
     {
       Float denom, num;
       denom = i * M_PI;
