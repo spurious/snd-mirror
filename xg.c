@@ -45,6 +45,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     4-Aug:     added a form of g_object_get and gtk_settings_get_for_screen.
  *     20-Jul:    added gtkprint stuff.
  *     17-Jul:    added g_signal_connect and other related macros.
  *     21-Apr:    Gauche support.
@@ -1021,6 +1022,7 @@ XM_TYPE_1(GtkUnit, GtkUnit)
 #define XEN_TO_C_GtkPrintStatus(Arg) (GtkPrintStatus)(XEN_TO_C_INT(Arg))
 #define XEN_GtkPrintStatus_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_1(GtkPageSetupDoneFunc, GtkPageSetupDoneFunc)
+XM_TYPE_PTR(GtkSettings_, GtkSettings*)
 #endif
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
@@ -27549,6 +27551,12 @@ GtkPageSetup* page_setup, GtkPrintSettings* settings, GtkPageSetupDoneFunc done_
                                         XEN_TO_C_GtkPageSetupDoneFunc(done_cb), XEN_TO_C_gpointer(data));
   return(XEN_FALSE);
 }
+static XEN gxg_gtk_settings_get_for_screen(XEN screen)
+{
+  #define H_gtk_settings_get_for_screen "GtkSettings* gtk_settings_get_for_screen(GdkScreen* screen)"
+  XEN_ASSERT_TYPE(XEN_GdkScreen__P(screen), screen, 1, "gtk_settings_get_for_screen", "GdkScreen*");
+  return(C_TO_XEN_GtkSettings_(gtk_settings_get_for_screen(XEN_TO_C_GdkScreen_(screen))));
+}
 #endif
 
 #define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))
@@ -28200,6 +28208,16 @@ static XEN c_array_to_xen_list(XEN val_1, XEN clen)
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_ULONG(g_list_nth_data(lst, i)), result);
     }
   return(result);
+}
+
+static XEN xg_object_get(XEN val, XEN name, XEN string_type)
+{
+  gint temp; gchar *str;
+  XEN_ASSERT_TYPE(XEN_gpointer_P(val), val, 1, "g_object_get", "gpointer");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 2, "g_object_get", "string");
+  if (XEN_FALSE_P(string_type))
+    {g_object_get(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), &temp, NULL); return(C_TO_XEN_INT(temp));}
+  else {g_object_get(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), &str, NULL); return(C_TO_XEN_STRING(str));}
 }
 
 static XEN xen_list_to_c_array(XEN val, XEN type)
@@ -32920,6 +32938,7 @@ XEN_NARGIFY_1(gxg_gtk_print_operation_is_finished_w, gxg_gtk_print_operation_is_
 XEN_NARGIFY_1(gxg_gtk_print_operation_cancel_w, gxg_gtk_print_operation_cancel)
 XEN_NARGIFY_3(gxg_gtk_print_run_page_setup_dialog_w, gxg_gtk_print_run_page_setup_dialog)
 XEN_NARGIFY_5(gxg_gtk_print_run_page_setup_dialog_async_w, gxg_gtk_print_run_page_setup_dialog_async)
+XEN_NARGIFY_1(gxg_gtk_settings_get_for_screen_w, gxg_gtk_settings_get_for_screen)
 #endif
 
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
@@ -32929,6 +32948,7 @@ XEN_NARGIFY_1(gxg_freeGdkPoints_w, gxg_freeGdkPoints)
 XEN_NARGIFY_1(gxg_vector2GdkPoints_w, gxg_vector2GdkPoints)
 XEN_NARGIFY_1(gxg_make_target_entry_w, gxg_make_target_entry)
 XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)
+XEN_NARGIFY_3(xg_object_get_w, xg_object_get);
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
 XEN_NARGIFY_1(gxg_GDK_DRAG_CONTEXT_w, gxg_GDK_DRAG_CONTEXT)
 XEN_NARGIFY_1(gxg_GDK_DRAWABLE_w, gxg_GDK_DRAWABLE)
@@ -36777,6 +36797,7 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_print_operation_cancel_w gxg_gtk_print_operation_cancel
 #define gxg_gtk_print_run_page_setup_dialog_w gxg_gtk_print_run_page_setup_dialog
 #define gxg_gtk_print_run_page_setup_dialog_async_w gxg_gtk_print_run_page_setup_dialog_async
+#define gxg_gtk_settings_get_for_screen_w gxg_gtk_settings_get_for_screen
 #endif
 
 #define gxg_GPOINTER_w gxg_GPOINTER
@@ -36786,6 +36807,7 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_vector2GdkPoints_w gxg_vector2GdkPoints
 #define gxg_make_target_entry_w gxg_make_target_entry
 #define c_to_xen_string_w c_to_xen_string
+#define xg_object_get_w xg_object_get
 #define gxg_GDK_COLORMAP_w gxg_GDK_COLORMAP
 #define gxg_GDK_DRAG_CONTEXT_w gxg_GDK_DRAG_CONTEXT
 #define gxg_GDK_DRAWABLE_w gxg_GDK_DRAWABLE
@@ -40641,6 +40663,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_print_operation_cancel, gxg_gtk_print_operation_cancel_w, 1, 0, 0, H_gtk_print_operation_cancel);
   XG_DEFINE_PROCEDURE(gtk_print_run_page_setup_dialog, gxg_gtk_print_run_page_setup_dialog_w, 3, 0, 0, H_gtk_print_run_page_setup_dialog);
   XG_DEFINE_PROCEDURE(gtk_print_run_page_setup_dialog_async, gxg_gtk_print_run_page_setup_dialog_async_w, 5, 0, 0, H_gtk_print_run_page_setup_dialog_async);
+  XG_DEFINE_PROCEDURE(gtk_settings_get_for_screen, gxg_gtk_settings_get_for_screen_w, 1, 0, 0, H_gtk_settings_get_for_screen);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, "(GPOINTER obj) casts obj to GPOINTER");
@@ -40866,6 +40889,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints_w, 1, 0, 0, H_vector2GdkPoints);
   XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);
+  XG_DEFINE_PROCEDURE(g_object_get, xg_object_get, 3, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_IS_COLORMAP, gxg_GDK_IS_COLORMAP_w, 1, 0, 0, "(GDK_IS_COLORMAP obj) -> #t if obj is a GDK_IS_COLORMAP");
   XG_DEFINE_PROCEDURE(GDK_IS_DRAG_CONTEXT, gxg_GDK_IS_DRAG_CONTEXT_w, 1, 0, 0, "(GDK_IS_DRAG_CONTEXT obj) -> #t if obj is a GDK_IS_DRAG_CONTEXT");
   XG_DEFINE_PROCEDURE(GDK_IS_DRAWABLE, gxg_GDK_IS_DRAWABLE_w, 1, 0, 0, "(GDK_IS_DRAWABLE obj) -> #t if obj is a GDK_IS_DRAWABLE");
@@ -43073,7 +43097,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("19-Jul-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("03-Aug-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

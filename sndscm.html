@@ -3,7 +3,13 @@
 <!-- TODO: these need work: edit123 infsnd rtex strad -->
 <!-- TODO: check pd-*.scm snd-hobbit.scm (rb/fs?) -->
 <!-- SOMEDAY: more mouseovers -->
-<!-- TODO: example of handling double-click -->
+<!-- TODO: example of handling double-click
+
+     XtGetMultiClickTime(dpy)
+
+    (define settings (gtk_settings_get_for_screen (gdk_display_get_default_screen (gdk_display_get_default))))
+    (g_object_get (GPOINTER settings) "gtk-double-click-time" #f)
+-->
 
 
 <!-- documentation for some of the Scheme/Ruby/Forth code included with Snd -->
@@ -6410,6 +6416,8 @@ to highest (i.e. the constant is vct[0], x+2 is (vct 2 1), etc).
   <em class=emdef>poly-reduce</em> p1        ; new poly = p1 without high zeros
   <em class=emdef>poly-gcd</em> p1 p2        ; new poly = gcd(p1, p2)
   <em class=emdef>poly-roots</em> p1         ; list of roots of p1
+  <em class=emdef>poly-resultant</em> p1 p2  ; resultant of p1 and p2
+  <em class=emdef>poly-discriminant</em> p1  ; discriminant of p1
 </pre>
 
 <p>
@@ -6419,7 +6427,7 @@ a list containing the quotient and remainder polynomials.  poly-derivative
 returns the derivative of a polynomial.  In all these cases, the resultant
 polynomials may have extra high-degree entries whose coefficients are zero.
 To remove these pointless coefficients, use poly-reduce.
-The last two functions, poly-gcd and poly-roots, are
+The last functions are
 just for fun.
 </p>
 

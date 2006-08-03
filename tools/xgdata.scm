@@ -5945,7 +5945,6 @@
 ;;; out 2.3 then back in at some point
 (CFNC-210 "void gtk_toolbar_set_icon_size GtkToolbar* toolbar GtkIconSize icon_size")
 
-
 ;;; printer stuff -- only include gtkprintoperation for now (it's in gtk.h)
 ;(CCAST-210 "GTK_PRINTER(obj)" "GtkPrinter")
 ;(CCHK-210 "GTK_IS_PRINTER(obj)" "GtkPrinter")
@@ -6176,3 +6175,37 @@
 ;(CFNC-210 "GtkPrinter* gtk_print_unix_dialog_get_selected_printer GtkPrintUnixDialog* dialog")
 ;(CFNC-210 "void gtk_print_unix_dialog_add_custom_tab GtkPrintUnixDialog* dialog GtkWidget* child GtkWidget* tab_label")
 ;(CFNC-210 "void gtk_print_unix_dialog_set_manual_capabilities GtkPrintUnixDialog* dialog GtkPrintCapabilities capabilities")
+
+
+(CFNC-210 "GtkSettings* gtk_settings_get_for_screen GdkScreen* screen")
+
+
+;;; maybe someday...
+;(CFNC-210 "gboolean G_VALUE_HOLDS_CHAR GValue* value")
+;(CFNC-210 "gboolean G_VALUE_HOLDS_UCHAR GValue* value")
+;(CFNC-210 "gboolean G_VALUE_HOLDS_BOOLEAN GValue* value")
+;(CFNC-210 "gboolean G_VALUE_HOLDS_INT GValue* value")
+;(CFNC-210 "gboolean G_VALUE_HOLDS_UINT GValue* value")
+;(CFNC-210 "gboolean G_VALUE_HOLDS_LONG GValue* value")
+;(CFNC-210 "gboolean G_VALUE_HOLDS_ULONG GValue* value")
+;(CFNC-210 "gboolean G_VALUE_HOLDS_INT64 GValue* value")
+;(CFNC-210 "gboolean G_VALUE_HOLDS_UINT64 GValue* value")
+;(CFNC-210 "gboolean G_VALUE_HOLDS_FLOAT GValue* value")
+;(CFNC-210 "gboolean G_VALUE_HOLDS_DOUBLE GValue* value")
+;(CFNC-210 "gboolean G_VALUE_HOLDS_STRING GValue* value")
+;(CFNC-210 "gboolean G_VALUE_HOLDS_POINTER GValue* value")
+;
+;(CFNC-210 "gchar g_value_get_char GValue* value" 'const)
+;(CFNC-210 "guchar g_value_get_uchar GValue* value" 'const)
+;(CFNC-210 "gboolean g_value_get_boolean GValue* value" 'const)
+;(CFNC-210 "gint g_value_get_int GValue* value" 'const)
+;(CFNC-210 "guint g_value_get_uint GValue* value" 'const)
+;(CFNC-210 "glong g_value_get_long GValue* value" 'const)
+;(CFNC-210 "gulong g_value_get_ulong GValue* value" 'const)
+;(CFNC-210 "gint64 g_value_get_int64 GValue* value" 'const)
+;(CFNC-210 "guint64 g_value_get_uint64 GValue* value" 'const)
+;(CFNC-210 "gfloat g_value_get_float GValue* value" 'const)
+;(CFNC-210 "gdouble g_value_get_double GValue* value" 'const)
+;(CFNC-210 "gpointer g_value_get_pointer GValue* value" 'const)
+;(CFNC-210 "gchar* g_value_get_string GValue* value" 'const)
+

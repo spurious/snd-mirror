@@ -1652,6 +1652,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     4-Aug:     added a form of g_object_get and gtk_settings_get_for_screen.~%")
 (hey " *     20-Jul:    added gtkprint stuff.~%")
 (hey " *     17-Jul:    added g_signal_connect and other related macros.~%")
 (hey " *     21-Apr:    Gauche support.~%")
@@ -2458,7 +2459,8 @@
 				       (or (string=? argtype "char**")
 					   (string=? argtype "gchar**")
 					   (string=? argtype "gchar*")
-					   (string=? argtype "char*")))
+					   (string=? argtype "char*")
+					   (string=? argtype "GValue*")))
 				  (hey "(const ~A)" argtype))
 			      (set! previous-arg #t)
 			      (if (ref-arg? arg)
@@ -2740,6 +2742,16 @@
 (hey "  return(result);~%")
 (hey "}~%~%")
 
+(hey "static XEN xg_object_get(XEN val, XEN name, XEN string_type)~%")
+(hey "{~%")
+(hey "  gint temp; gchar *str;~%")
+(hey "  XEN_ASSERT_TYPE(XEN_gpointer_P(val), val, 1, \"g_object_get\", \"gpointer\");~%")
+(hey "  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 2, \"g_object_get\", \"string\");~%")
+(hey "  if (XEN_FALSE_P(string_type))~%")
+(hey "    {g_object_get(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), &temp, NULL); return(C_TO_XEN_INT(temp));}~%")
+(hey "  else {g_object_get(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), &str, NULL); return(C_TO_XEN_STRING(str));}~%")
+(hey "}~%~%")
+
 (hey "static XEN xen_list_to_c_array(XEN val, XEN type)~%")
 (hey "{~%")
 (hey "  int i, len;~%")
@@ -2943,6 +2955,7 @@
 (hey "XEN_NARGIFY_1(gxg_vector2GdkPoints_w, gxg_vector2GdkPoints)~%")
 (hey "XEN_NARGIFY_1(gxg_make_target_entry_w, gxg_make_target_entry)~%")
 (hey "XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)~%")
+(hey "XEN_NARGIFY_3(xg_object_get_w, xg_object_get);~%")
 
 (define (ruby-cast func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (for-each ruby-cast (reverse casts))
@@ -3050,6 +3063,7 @@
 (hey "#define gxg_vector2GdkPoints_w gxg_vector2GdkPoints~%")
 (hey "#define gxg_make_target_entry_w gxg_make_target_entry~%")
 (hey "#define c_to_xen_string_w c_to_xen_string~%")
+(hey "#define xg_object_get_w xg_object_get~%")
 
 (define (ruby-uncast func) (hey "#define gxg_~A_w gxg_~A~%" (no-arg (car func)) (no-arg (car func)))) 
 (for-each ruby-uncast (reverse casts))
@@ -3197,6 +3211,7 @@
 (hey "  XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints_w, 1, 0, 0, H_vector2GdkPoints);~%")
 (hey "  XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);~%")
 (hey "  XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);~%")
+(hey "  XG_DEFINE_PROCEDURE(g_object_get, xg_object_get, 3, 0, 0, NULL);~%")
 
 (define (check-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) -> #t if obj is a ~A\");~%" 
