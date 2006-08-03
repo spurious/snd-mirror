@@ -3,6 +3,7 @@
 ;;; poly+ poly* poly/ poly-gcd poly-reduce poly-roots poly-derivative
 
 (provide 'snd-poly.scm)
+(if (not (provided? 'snd-mixer.scm)) (load-from-path "mixer.scm")) ; need matrix determinant for poly-resultant
 
 ;;; using lists and vectors internally for complex intermediates
 
@@ -157,6 +158,52 @@
 
 ;;; (poly-derivative (vct 0.5 1.0 2.0 4.0)) -> #<vct[len=3]: 1.000 4.000 12.000>
 
+
+(define (poly-as-vector-resultant p1 p2)
+  (let* ((m (vector-length p1))
+	 (n (vector-length p2))
+	 (mat (make-mixer (+ n m -2))))
+    ;; load matrix with n-1 rows of m's coeffs then m-1 rows of n's coeffs, return determinant
+    (do ((i 0 (1+ i)))
+	((= i (1- n)))
+      (do ((j 0 (1+ j)))
+	  ((= j m))
+	(mixer-set! mat i (+ i j) (vector-ref p1 (- m j 1)))))
+    (do ((i 0 (1+ i)))
+	((= i (1- m)))
+      (do ((j 0 (1+ j)))
+	  ((= j n))
+	(mixer-set! mat (+ i n -1) (+ i j) (vector-ref p2 (- n j 1)))))
+    (mixer-determinant mat)))
+
+(define (poly-resultant p1 p2) 
+  (poly-as-vector-resultant 
+   (if (vct? p1) (vct->vector p1) p1)
+   (if (vct? p2) (vct->vector p2) p2)))
+
+    
+(define (poly-as-vector-discriminant p1)
+  (poly-as-vector-resultant p1 (poly-as-vector-derivative p1)))
+
+(define (poly-discriminant p1)
+  (poly-as-vector-discriminant 
+   (if (vct? p1) (vct->vector p1) p1)))
+
+
+;;; (poly-as-vector-resultant (vector -1 0 1) (vector 1 -2 1))  0.0
+;;; (poly-as-vector-resultant (vector -1 0 2) (vector 1 -2 1))   1.0
+;;; (poly-as-vector-resultant (vector -1 0 1) (vector 1 1))      0.0
+;;; (poly-as-vector-resultant (vector -1 0 1) (vector 2 1))      3.0
+
+;;; (poly-as-vector-discriminant (vector -1 0 1)) -4.0
+;;; (poly-as-vector-discriminant (vector 1 -2 1)) 0.0
+
+;;; (poly-discriminant (poly-reduce (poly* (poly* (vct -1 1) (vct -1 1)) (vct 3 1)))) 0.0
+;;; (poly-discriminant (poly-reduce (poly* (poly* (poly* (vct -1 1) (vct -1 1)) (vct 3 1)) (vct 2 1)))) 0.0
+;;; (poly-discriminant (poly-reduce (poly* (poly* (poly* (vct 1 1) (vct -1 1)) (vct 3 1)) (vct 2 1)))) 2304
+;;; (poly-discriminant (poly-reduce (poly* (poly* (poly* (vct 1 1) (vct -1 1)) (vct 3 1)) (vct 3 1)))) 0.0
+
+;;; TODO: doc/test poly-resultant/discriminant
 
 
 (if (not (defined? 'pi))
@@ -481,3 +528,4 @@
 				      (/ a2 -3.0) 
 				      (* (- s1 s2) -0.5 (sqrt -3.0))))))))))
 |#
+

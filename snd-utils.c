@@ -437,6 +437,9 @@ void snd_exit(int val)
 #if HAVE_FAM
 #define DEBUGGING_FAM 0
 
+ /* TODO: fam crosstalk? -- if two Snd's running, there appears to be confusion in fam event delivery
+  */
+
 /* one confusing thing: if use deletes the file we're monitoring, apparently Linux doesn't
  *   actually delete it, though a directory monitor reports the deletion; the file itself
  *   hangs around, I guess because we have it open(?) -- can't decide how to deal with this.

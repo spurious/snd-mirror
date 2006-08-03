@@ -3,6 +3,7 @@
 <!-- TODO: these need work: edit123 infsnd rtex strad -->
 <!-- TODO: check pd-*.scm snd-hobbit.scm (rb/fs?) -->
 <!-- SOMEDAY: more mouseovers -->
+<!-- TODO: example of handling double-click -->
 
 
 <!-- documentation for some of the Scheme/Ruby/Forth code included with Snd -->
@@ -3510,7 +3511,8 @@ This function is a "virtual edit" (<a href="extsnd.html#ptreechannel">ptree-chan
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="exsoundinterp">sound-interp</a> <code>reader loc</code><br>
 <em class=emdef>make-sound-interp</em> <code>start :optional snd chn</code><br>
-<a class=def name="exenvsoundinterp">env-sound-interp</a> <code>envelope :optional (time-scale 1.0) snd chn</code>
+<a class=def name="exenvsoundinterp">env-sound-interp</a> <code>envelope :optional (time-scale 1.0) snd chn</code><br>
+<table border=0><tr><td colspan=2><a class=def name="granulatedsoundinterp">granulated-sound-interp</a> <code>envelope :optional (time-scale 1.0) (grain-length 0.10)</code></td></tr><tr><td width=180></td><td><code>(grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05)  snd chn</code></td></tr></table>
 </td></tr><tr><td></td><td>
 make-sound-interp returns an interpolating reader for <i>snd</i>'s channel <i>chn</i>.
 The interpolating reader reads a channel at an arbitary location,
@@ -3547,6 +3549,13 @@ And to go forward then backward, taking twice the original duration:
 <a href="extsnd.html#srcsound">src-sound</a> with an
 envelope could be used for this effect, but it is much more direct to apply the
 envelope to sound sample positions.  A similar function is <a href="#scratch">scratch</a> in clm-ins.scm.
+<br><br>
+granulated-sound-interp is similar to env-sound-interp, but uses granular synthesis rather than
+sampling rate conversion to recreate the sound, so the effect is one of changing tempo rather
+than changing speed (pitch).  Here we dwaddle for awhile, then race at the end to get the whole sound in:
+<pre>
+   (granulated-sound-interp '(0 0 1 .1 2 1) 1.0 0.2 '(0 0 1 1 2 0))
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -8784,7 +8793,7 @@ by calling the oscils and whatnot directly in the with-sound body:
 	     (set! x (+ x incr))
 	     (<a class=quiet href="clm.html#outa">outa</a> samp (* .1 sum) *output*))))))))
 </pre></td></tr></table>
-<img src="shepard.png" alt="shepard tone spectrum" vspace=10 hspace=20>
+<img src="shepard.png" alt="shepard tone spectrum" vspace=10 hspace=40>
 <br><br>
 <table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>other forms of with-sound</h4></td></tr></table>
 

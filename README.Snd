@@ -346,22 +346,50 @@ the LADSPA effects in Snd."
 TROUBLES:
 
 
----- audio: ----
+---- audio (a can of worms) ----
 
 In Linux, Snd sometimes can't seem to play or record when other
 applications are happy -- if this happens, please evaluate the function
-mus-audio-describe, and send me whatever it prints out.
+mus-audio-describe, and send me whatever it prints out.  But I've
+never yet suggested anything that worked, so ask someone else first.
+
 
 If you're running esd, you need to build Snd with the configuration
 switch --with-esd.  Otherwise, it's likely you'll get an error
 from the 'play' button complaining about data formats, probably
-that it can't play big-endian shorts.
+that it can't handle big-endian shorts.
+
 
 The Record dialog only works in Linux (OSS, perhaps ALSA), Sun (not x86),
-some SGI systems, and perhaps Mac OSX.
+some SGI systems, and perhaps Mac OSX.  In Linux, someone below the level
+of my code randomly switches input between the microphone and the line-in
+jack -- I don't know why or how to stop it!  If this is happening to you,
+the recorder will appear to stop working, then if you leave it and
+return, it will be happy again -- extremely annoying!
+
 
 In X86 Solaris, you may need to install Jurgen Keil's audio drivers.
-They can be found at http://www.tools.de/solaris.
+They can be found at http://www.tools.de/solaris.  Here are some
+suggestions from Russell Aspinwall:
+
+    Assuming you are using the Java Desktop System, then if there is sound 
+    you will find a speaker in the lower right hand corner, if there is a 
+    red line through it then it has not detected the sound card. 
+
+    To find the audio device , as root run 
+
+    # prtconf -pv > /tmp/prtconf.txt 
+
+    open prtconf.txt in text editor and search for "Audio Device", this will 
+    give the pci identifiers. grep /etc/driver_aliases for those pci 
+    identifiers and this will identify the Device Driver. 
+
+    # mixerctl 
+
+    should return [some description of the audio hardware]
+
+But I still have not managed to get output on my machine.  Apparently
+the audio card thinks it's the local network controller or something.
 
 
 ---- ALSA: ----

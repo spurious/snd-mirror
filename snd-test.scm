@@ -28799,6 +28799,22 @@ EDITS: 5
 	    (if (> (abs (- (* 2 oldlen) newlen)) 3)
 		(snd-display ";env-sound-interp: ~A ~A?" oldlen newlen))))
 	
+	(revert-sound obi)
+	(granulated-sound-interp '(0 0 1 .1 2 1) 1.0 0.2 '(0 0 1 1 2 0))
+	(if (not (= (edit-position obi 0) 1)) (snd-display ";granulated-sound-interp no-op 1?"))
+	(if (< (maxamp obi 0) .2) (snd-display ";granulated-sound-interp 1 maxamp: ~A" (maxamp obi 0)))
+	(if (> (abs (- (frames obi 0) 50828)) 1000) (snd-display ";granulated-sound-interp 1 frames: ~A" (frames obi 0)))
+	(revert-sound obi)
+	(granulated-sound-interp '(0 0 1 1) 2.0)
+	(if (not (= (edit-position obi 0) 1)) (snd-display ";granulated-sound-interp no-op 2?"))
+	(if (< (maxamp obi 0) .17) (snd-display ";granulated-sound-interp 2 maxamp: ~A" (maxamp obi 0)))
+	(if (> (abs (- (frames obi 0) 101656)) 1000) (snd-display ";granulated-sound-interp 2 frames: ~A" (frames obi 0)))
+	(revert-sound obi)
+	(granulated-sound-interp '(0 0 1 .1 2 1) 1.0 0.2 '(0 0 1 1 2 0) 0.02)
+	(if (not (= (edit-position obi 0) 1)) (snd-display ";granulated-sound-interp no-op 3?"))
+	(if (< (maxamp obi 0) .3) (snd-display ";granulated-sound-interp 3 maxamp: ~A" (maxamp obi 0)))
+	(if (> (abs (- (frames obi 0) 50828)) 1000) (snd-display ";granulated-sound-interp 3 frames: ~A" (frames obi 0)))
+
 	(close-sound obi)
 	)
 

@@ -88,8 +88,6 @@
  *                       carg[angle] creal cimag, complex double _Complex_I
  *            all arithmetic needs extra complex checks etc
  *
- * TODO: if (for example) int vector decl'd but vector has #f (or whatever) include that info in optimization complaint
- *          currently it just says it can't handle the vector, which is too vague
  * SOMEDAY: support for vector of def-clm-structs
  * SOMEDAY: the graphics funcs in snd-axis/snd-draw (x->position, draw-lines etc)
  */

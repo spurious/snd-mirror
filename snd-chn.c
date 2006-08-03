@@ -2344,7 +2344,7 @@ static bool make_spectrogram(chan_info *cp)
       /* experiments with lighting were a bust -- does not improve things (ditto fog, translucency, grid) 
 
          SOMEDAY: printing support for GL images.
-	          one kludgey possibility is xsnap -> pixmap file(xpm) -> a2ps
+	          gl2ps looks usable, but it would need a different call path than the current
 
 	 TODO: multichannel resize: chan is messed up until expose event; can't see why:
 	       it does not help to try to redisplay etc -- -sync (or XSync) helps, but there's still some sort

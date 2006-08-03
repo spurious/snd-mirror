@@ -497,6 +497,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+3-Aug:   granulated-sound-interp (examp.scm).\n\
+         poly-resultant and poly-discriminant (poly.scm).\n\
 1-Aug:   Snd 8.3.\n\
 31-Jul:  windowed-maxamp renamed moving-max, added moving-rms, moving-sum, moving-length (dsp.scm)\n\
            average renamed moving-average in clm.\n\

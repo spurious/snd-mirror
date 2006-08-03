@@ -2,15 +2,19 @@
 #include "clm2xen.h"
 
 /* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile/Gauche versions,
+ *
  *   In Scheme, delay is protected in clm2xen.c as %delay
+ *              filter is defined in srfi-1 so we need protection against that
+ *
  *   In Guile, frame? as %frame?
+ *
  *   In Ruby, rand is protected as kernel_rand.
+ *
  *   In Forth, Snd's exit is named snd-exit.
- *   In Gauche, random is implemented via mus-i|frandom (clm.c).
- *   In Scheme, filter is defined in srfi-1 so we need protection against that
  *
  *   In Gauche, apropos is defined in lib/gauche/interactive.scm
  *              optimizer needs local variable access [this is not currently possible -- perhaps in 1.0 says Shiro]
+ *              random is implemented via mus-i|frandom (clm.c).
  */
 
 
@@ -30,7 +34,9 @@
  * lush:        (CL)     compilation problem, serious name-space problems (not really an extension language)
  * mzscheme:    (Scheme) support semi-exists (I have the xen.h macros for it), but I refuse to touch it
  * ocaml:       (ML)     not an extension language, as far as I can tell
- * octave:      (Matlab) c++, probably do-able -- I'm looking into this currently [2.1.73|2.9.5 won't build -- useless bug response at octave]
+ * octave:      (Matlab) c++, probably do-able; 2.1.73|2.9.5|2.9.6 won't build -- useless bug response at octave
+ *                       (error looked like a messed up library load list, but I couldn't find the identifier in question)
+ *                       (bug-octave said "get a newer g++, but I'm running 4.1.0 which is newer than theirs)
  * pike:        (C)      not an extension language
  * python:      ()       looks like ruby to me -- why duplicate? (I have about 1/4 of xen.h for this)
  * rscheme:     (Scheme) serious name-space problems
@@ -39,17 +45,12 @@
  * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers
  */
 
-
-/* TODO in Gauche: stacktrace and errors->listener
- *       (current-load-history)
+/* TODO: (gauche)   stacktrace and errors->listener (current-load-history)
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
  * TODO: (gauche)   unwind-protects around scm_apply (snd-xen g_call)
  * TODO: (gauche)   memory trouble (double free -> segfault) [if all-args?] in snd-test 8
- *
- * TODO in Forth: prefs can't find extensions.fs? can't figure this one out -- data stack confusion?
+ * TODO: (forth)    prefs can't find extensions.fs? can't figure this one out -- data stack confusion?
  * TODO: (forth)    if segfault, infinite tight loop -- must kill from some other machine!
- *
- * TODO: fam crosstalk?
  *
  * SOMEDAY: change config.h to snd-config.h and clm-config.h (collisions in several cases like ecl)
  *         but if user is loading libsndlib, how to avoid collisions between its config.h and snd's?
