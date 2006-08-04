@@ -497,6 +497,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+4-Aug:   analog-filter.rb thanks to Mike.\n\
+         \"scheme\" instead of \"guile\" in various names in inf-snd.el (for gauche).\n\
 3-Aug:   granulated-sound-interp (examp.scm).\n\
          poly-resultant and poly-discriminant (poly.scm).\n\
 1-Aug:   Snd 8.3.\n\
@@ -511,8 +513,6 @@ void about_snd_help(void)
 3-July:  new CLM generator: move-sound.\n\
          locsig now returns a float, not a frame.\n\
          removed vct-map.\n\
-28-Jun:  moved rmsgain code to clm-ins.scm.\n\
-         new CLM generator: filtered-comb.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

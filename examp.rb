@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Mon Jul 31 12:26:32 CEST 2006
+# Changed: Fri Aug 04 01:50:27 CEST 2006
 
 # Commentary:
 #
@@ -99,7 +99,6 @@
 #  cdr
 #  step(n)
 #  apply(func, *rest, &body)
-#  remove_if(&body)
 #
 # class Vec < Array
 #  Vec[]
@@ -382,6 +381,7 @@
 #  sound_interp(func, loc)
 #  sound_via_sound(snd1, snd2)
 #  env_sound_interp(envelope, time_scale = 1.0, snd = false, chn = false)
+#  granulated_sound_interp(envelope, time_scale, grain_length, grain_envelope, output_hop, snd, chn)
 #  title_with_date
 #  filtered_env(en, snd = false, chn = false)
 #
@@ -1173,15 +1173,6 @@ a: 2
     end
     alias * ary_times
   end
-
-  # Returns all elements of self in a newly created array where block
-  # is true.
-  # [0, 1, 2].remove_if do |el| el > 0 end #=> [1, 2]
-  def remove_if
-    result = []
-    self.each do |x| yield(x) and result.push(x) end
-    result
-  end
 end
 
 # name Vector is in use (lib/ruby/1.9/matrix.rb)
@@ -1700,6 +1691,7 @@ class Musgen
     @frequency = 440.0
     @phase = 0.0
     @scaler = 1.0
+    @length = 0
     @data = nil
     @increment = 0
     @interp_type = -1
@@ -1708,10 +1700,11 @@ class Musgen
   attr_accessor :frequency
   attr_accessor :phase
   attr_accessor :scaler
-  attr_accessor :data
   attr_accessor :increment
-  attr_reader :interp_type
-  attr_reader :file_name
+  attr_reader   :length
+  attr_reader   :data
+  attr_reader   :interp_type
+  attr_reader   :file_name
   
   def inspect
     format("%s.new()", self.class)
@@ -2502,7 +2495,7 @@ class Snd
         $stdout.print(msg, "\n")
       end
     end
-
+    
     def warning(*args)
       if provided? :snd
         snd_warning(verbose_message_string($VERBOSE, nil, *args))
@@ -2624,7 +2617,7 @@ class Snd
   end
 end
 
-# nearly all are instance of StandardError
+# nearly all are instances of StandardError
 Snd_error_tags = [# clm2xen.c
                   :mus_error,
                   :arg_error,
@@ -4417,6 +4410,71 @@ reads snd's channel chn according to env and time-scale")
     File.unlink(tempfilename)
   end
 
+  def granulated_sound_interp(envelope,
+                              time_scale = 1.0,
+                              grain_length = 0.1,
+                              grain_envelope = [0, 0, 1, 1, 2, 1, 3, 0],
+                              output_hop = 0.05,
+                              snd = false,
+                              chn = false)
+    len = frames(snd, chn)
+    newlen = (time_scale * len).floor
+    read_env = make_env(envelope, :end, newlen, :scaler, len)
+    tempfilename = snd_tempnam
+    fil = mus_sound_open_output(tempfilename, srate(snd), 1, false, Mus_next,
+                                "granulated_sound_interp temp file")
+    grain_frames = (grain_length * srate).round
+    hop_frames = (output_hop * srate).round
+    num_readers = (grain_length / output_hop).round + 1
+    readers = make_array(num_readers, false)
+    grain_envs = make_array(num_readers) do |i| make_env(grain_envelope, :end, grain_frames) end
+    next_reader_starts_at = 0
+    next_reader = 0
+    bufsize = 8192
+    data = make_sound_data(1, bufsize)
+    data_ctr = 0
+    jitter = srate * 0.005
+    newlen.times do |i|
+      position_in_original = env(read_env)
+      if i >= next_reader_starts_at
+        readers[next_reader] =
+          make_sample_reader([0, (position_in_original + mus_random(jitter)).round].max)
+        grain_envs[next_reader].reset
+        next_reader += 1
+        if next_reader >= num_readers then next_reader = 0 end
+        next_reader_starts_at += hop_frames
+      end
+      sum = 0.0
+      readers.each_with_index do |rd, j|
+        if sample_reader?(rd)
+          sum += env(grain_envs[j]) * next_sample(rd)
+        end
+      end
+      sound_data_set!(data, 0, data_ctr, sum)
+      data_ctr += 1
+      if bufsize == data_ctr
+        mus_sound_write(fil, 0, bufsize - 1, 1, data)
+        data_ctr = 0
+      end
+    end
+    if data_ctr > 0
+      mus_sound_write(fil, 0, data_ctr - 1, 1, data)
+    end
+    mus_sound_close_output(fil, 4 * newlen)
+    set_samples(0, newlen, tempfilename, snd, chn, true,
+                format("%s(%s, %s, %s, %s, %s",
+                       get_func_name,
+                       envelope.inspect,
+                       time_scale,
+                       grain_length,
+                       grain_envelope.inspect,
+                       output_hop))
+    File.unlink(tempfilename)
+  end
+  # granulated_sound_interp([0, 0, 1, 0.1, 2, 1], 1.0, 0.2, [0, 0, 1, 1, 2, 0])
+  # granulated_sound_interp([0, 0, 1, 1], 2.0)
+  # granulated_sound_interp([0, 0, 1, 0.1, 2, 1], 1.0, 0.2, [0, 0, 1, 1, 2, 0], 0.02)
+  
   # add date and time to title bar
   # 
   # The window manager's property that holds the Snd window's title is

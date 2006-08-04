@@ -1,38 +1,37 @@
-;;; inf-snd.el -- Inferior Snd Process (Ruby/Guile/Forth)
+;;; inf-snd.el -- Inferior Snd Process (Ruby/Scheme/Forth)
 
 ;; Copyright (C) 2002--2006 Michael Scholz
 
 ;; Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Created: Wed Nov 27 20:52:54 CET 2002
-;; Changed: Sun Jan 15 12:10:40 CET 2006
-;; Keywords: processes, snd, ruby, guile, forth
+;; Changed: Thu Aug 03 23:42:21 CEST 2006
+;; Keywords: processes, snd, ruby, scheme, forth
 
 ;; This file is not part of GNU Emacs.
 
-;; This program is free software; you can redistribute it and/or
-;; modify it under the terms of the GNU General Public License as
-;; published by the Free Software Foundation; either version 2 of the
-;; License, or (at your option) any later version.
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
 
-;; This program is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program; if not, write to the Free Software
-;; Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-;; USA
+;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 ;;; Commentary:
 
 ;; This file defines a snd-in-a-buffer package built on top of
 ;; comint-mode.  It includes inferior mode for Snd-Ruby
-;; (inf-snd-ruby-mode), Snd-Guile (inf-snd-guile-mode) and Snd-Forth
+;; (inf-snd-ruby-mode), Snd-Scheme (inf-snd-scheme-mode) and Snd-Forth
 ;; (inf-snd-forth-mode), furthermore a Snd-Ruby mode (snd-ruby-mode),
-;; a Snd-Guile mode (snd-guile-mode) and a Snd-Forth mode
+;; a Snd-Scheme mode (snd-scheme-mode) and a Snd-Forth mode
 ;; (snd-forth-mode) for editing source files.  It is tested with
-;; Snd-Ruby, Snd-Guile and Snd-Forth 7.18 and GNU Emacs 21.2/22.0.50.
+;; Snd-Ruby, Snd-Scheme and Snd-Forth 8.4 and GNU Emacs 22.0.50.
 
 ;; Since this mode is built on top of the general command-interpreter-
 ;; in-a-buffer mode (comint-mode), it shares a common base
@@ -49,52 +48,53 @@
 ;; show the way.
 
 ;; There exist six main modes in this file: the three inferior
-;; Snd-process-modes (inf-snd-ruby-mode, inf-snd-guile-mode and
+;; Snd-process-modes (inf-snd-ruby-mode, inf-snd-scheme-mode and
 ;; inf-snd-forth-mode) and the replacements of ruby-mode
-;; (snd-ruby-mode), of scheme-mode (snd-guile-mode) and of gforth-mode
-;; (snd-forth-mode).
+;; (snd-ruby-mode), of scheme-mode (snd-scheme-mode) and of
+;; gforth-mode (snd-forth-mode).
 
 ;; Variables of the inferior Snd-process-modes
-;; inf-snd-ruby|guile|forth-mode (defaults):
+;; inf-snd-ruby|scheme|forth-mode (defaults):
 ;;
 ;; inf-snd-ruby-program-name   "snd-ruby"    Snd-Ruby program name
-;; inf-snd-guile-program-name  "snd-guile"   Snd-Guile program name
+;; inf-snd-scheme-program-name "snd-scheme"  Snd-Scheme program name
 ;; inf-snd-forth-program-name  "snd-forth"   Snd-Forth program name
-;; inf-snd-working-directory   "~/"          where Ruby, Guile or Forth scripts reside
+;; inf-snd-working-directory   "~/"          where Ruby, Scheme or Forth scripts reside
 ;; inf-snd-ruby-mode-hook      nil           to customize inf-snd-ruby-mode
-;; inf-snd-guile-mode-hook     nil           to customize inf-snd-guile-mode
+;; inf-snd-scheme-mode-hook    nil           to customize inf-snd-scheme-mode
 ;; inf-snd-forth-mode-hook     nil           to customize inf-snd-forth-mode
 ;; inf-snd-ruby-quit-hook      nil           to reset snd variables before exit
-;; inf-snd-guile-quit-hook     nil           to reset snd variables before exit
+;; inf-snd-scheme-quit-hook    nil           to reset snd variables before exit
 ;; inf-snd-forth-quit-hook     nil           to reset snd variables before exit
 ;; inf-snd-index-path          "~/"          path to snd-xref.c
 ;; inf-snd-prompt              ">"           listener prompt
 
-;; Variables of the editing modes snd-ruby|guile|forth-mode
+;; Variables of the editing modes snd-ruby|scheme|forth-mode
 ;; (defaults):
 ;;
 ;; snd-ruby-mode-hook          nil     	     to customize snd-ruby-mode
-;; snd-guile-mode-hook         nil     	     to customize snd-guile-mode
+;; snd-scheme-mode-hook        nil     	     to customize snd-scheme-mode
 ;; snd-forth-mode-hook         nil     	     to customize snd-forth-mode
 
 ;; You can start inf-snd-ruby-mode interactive either with prefix-key
 ;; (C-u M-x run-snd-ruby)--you will be ask for program name and
 ;; optional arguments--or direct (M-x run-snd-ruby).  In the latter
 ;; case, variable inf-snd-ruby-program-name should be set correctly.
-;; The same usage goes for inf-snd-guile-mode and inf-snd-forth-mode.
+;; The same usage goes for inf-snd-scheme-mode and inf-snd-forth-mode.
 
 ;; Example for your .emacs file:
 ;;
 ;; (autoload 'run-snd-ruby     "inf-snd" "Start inferior Snd-Ruby process" t)
-;; (autoload 'run-snd-guile    "inf-snd" "Start inferior Snd-Guile process" t)
+;; (autoload 'run-snd-scheme   "inf-snd" "Start inferior Snd-Scheme process" t)
 ;; (autoload 'run-snd-forth    "inf-snd" "Start inferior Snd-Forth process" t)
 ;; (autoload 'snd-ruby-mode    "inf-snd" "Load snd-ruby-mode." t)
-;; (autoload 'snd-guile-mode   "inf-snd" "Load snd-guile-mode." t)
+;; (autoload 'snd-scheme-mode  "inf-snd" "Load snd-scheme-mode." t)
 ;; (autoload 'snd-forth-mode   "inf-snd" "Load snd-forth-mode." t)
 ;;
 ;; ;; These variables should be set to your needs!
 ;; (setq inf-snd-ruby-program-name "snd-ruby -notebook")
-;; (setq inf-snd-guile-program-name "snd-guile -separate")
+;; (setq inf-snd-scheme-program-name "snd-gauche -separate")
+;; (setq inf-snd-scheme-program-name "snd-guile -notehook")
 ;; (setq inf-snd-forth-program-name "snd-forth")
 ;; (setq inf-snd-working-directory "~/Snd/")
 ;; (setq inf-snd-index-path "~/Snd/snd/")
@@ -121,7 +121,7 @@
 ;; 	    (define-key (current-local-map) "\C-cr" 'snd-send-region)
 ;; 	    (define-key (current-local-map) "\C-ce" 'snd-send-definition)))
 ;;
-;; (add-hook 'snd-guile-mode-hook
+;; (add-hook 'snd-scheme-mode-hook
 ;; 	  '(lambda ()
 ;;	    (define-key (current-local-map) "\C-co" 'snd-send-buffer)
 ;; 	    (define-key (current-local-map) "\C-cr" 'snd-send-region)
@@ -134,18 +134,18 @@
 ;; 	    (define-key (current-local-map) "\C-ce" 'snd-send-definition)))
 
 ;; You can change the mode in a source file by M-x snd-ruby-mode (or
-;; snd-guile-mode, snd-forth-mode).  To determine automatically which
+;; snd-scheme-mode, snd-forth-mode).  To determine automatically which
 ;; mode to set, you can decide to use special file-extensions.  One
 ;; may use file-extension `.rbs' for Snd-Ruby source files and `.cms'
-;; for Snd-Guile.
+;; for Snd-Scheme.
 ;;
 ;; (set-default 'auto-mode-alist
 ;; 	     (append '(("\\.rbs$" . snd-ruby-mode)
-;;                     ("\\.cms$" . snd-guile-mode))
+;;                     ("\\.cms$" . snd-scheme-mode))
 ;; 		     auto-mode-alist))
 ;;
 ;; Or you can use the local mode variable in source files, e.g. by
-;; `-*- snd-ruby -*-', `-*- snd-guile -*-' or `-*- snd-forth -*-' in
+;; `-*- snd-ruby -*-', `-*- snd-scheme -*-' or `-*- snd-forth -*-' in
 ;; first line.
 
 ;; Key bindings for inf-* and snd-*-modes
@@ -153,9 +153,9 @@
 ;; \e\TAB        snd-completion    symbol completion at point
 ;; C-h m     	 describe-mode	   describe current major mode
 
-;; Key binding of inf-snd-ruby|guile|forth-mode:
+;; Key binding of inf-snd-ruby|scheme|forth-mode:
 ;;
-;; C-c C-s   	 inf-snd-run-snd   (Snd-Ruby|Guile|Forth from a dead Snd process buffer)
+;; C-c C-s   	 inf-snd-run-snd   (Snd-Ruby|Scheme|Forth from a dead Snd process buffer)
 ;; M-C-l 	 inf-snd-load      load script in current working directory
 ;; C-c C-f   	 inf-snd-file      open view-files-dialog of Snd
 ;; M-C-p 	 inf-snd-play      play current sound file
@@ -165,7 +165,7 @@
 ;; C-c C-q   	 inf-snd-quit      send exit to Snd process
 ;; C-c C-k   	 inf-snd-kill      kill Snd process and buffer
 
-;; Key bindings of snd-ruby|guile|forth-mode editing source
+;; Key bindings of snd-ruby|scheme|forth-mode editing source
 ;; files:
 ;;
 ;; C-c C-s   	 snd-run-snd
@@ -193,9 +193,24 @@
 ;; C-c C-q   	 snd-quit    	   send exit to Snd process
 ;; C-c C-k   	 snd-kill    	   kill Snd process and buffer
 
+;;; News:
+;;
+;; All variables and functions containing the string `guile' are
+;; renamed to `scheme'.  It exists aliases for the following functions
+;; and variables:
+;;
+;; new name                     alias for backward compatibility
+;; 
+;; run-snd-scheme	        run-snd-guile	       
+;; snd-scheme-mode-hook	      	snd-guile-mode-hook	      
+;; snd-scheme-mode	      	snd-guile-mode	      
+;; inf-snd-scheme-mode	      	inf-snd-guile-mode	      
+;; inf-snd-scheme-quit-hook   	inf-snd-guile-quit-hook   
+;; inf-snd-scheme-program-name	inf-snd-guile-program-name
+
 ;;; Code:
 
-;;;; The inf-snd-ruby-mode, inf-snd-guile-mode, and inf-snd-forth-mode.
+;;;; The inf-snd-ruby-mode, inf-snd-scheme-mode, and inf-snd-forth-mode.
 
 (require 'comint)
 (require 'ruby-mode)
@@ -204,8 +219,8 @@
 (require 'cmuscheme)
 (require 'forth-mode "gforth")
 
-(defconst inf-snd-version "15-Jan-2006"
-  "Version of inf-snd.el.")
+(defconst inf-snd-version "04-Aug-2006"
+  "Version date of inf-snd.el.")
 
 ;; snd-ruby
 (defvar inf-snd-ruby-buffer "*Snd-Ruby*"
@@ -215,12 +230,12 @@
   "Inferior Snd-Ruby process buffer name.")
 
 (defvar inf-snd-ruby-mode-hook nil
-  "User hook variable of `inf-snd-ruby-mode'.
+  "*User hook variable of `inf-snd-ruby-mode'.
 Will be called after `comint-mode-hook' and before starting
 inferior Snd-Ruby process.")
 
 (defvar inf-snd-ruby-quit-hook nil
-  "User hook variable of `inf-snd-ruby-mode'.
+  "*User hook variable of `inf-snd-ruby-mode'.
 Will be called before finishing inferior Snd-Ruby process.")
 
 (defvar inf-snd-ruby-program-name "snd-ruby"
@@ -234,35 +249,41 @@ Will be called before finishing inferior Snd-Ruby process.")
   "Inferior Snd-Forth process buffer name.")
 
 (defvar inf-snd-forth-mode-hook nil
-  "User hook variable of `inf-snd-forth-mode'.
+  "*User hook variable of `inf-snd-forth-mode'.
 Will be called after `comint-mode-hook' and before starting
 inferior Snd-Forth process.")
 
 (defvar inf-snd-forth-quit-hook nil
-  "User hook variable of `inf-snd-forth-mode'.
+  "*User hook variable of `inf-snd-forth-mode'.
 Will be called before finishing inferior Snd-Forth process.")
 
 (defvar inf-snd-forth-program-name "snd-forth"
   "*User variable to set Snd-Forth-program name and optional arguments.")
 
-;; snd-guile
-(defvar inf-snd-guile-buffer "*Snd-Guile*"
-  "Inferior Snd-Guile process buffer.")
+;; snd-scheme
+(defvar inf-snd-scheme-buffer "*Snd-Scheme*"
+  "Inferior Snd-Scheme process buffer.")
 
-(defvar inf-snd-guile-buffer-name "Snd-Guile"
-  "Inferior Snd-Guile process buffer name.")
+(defvar inf-snd-scheme-buffer-name "Snd-Scheme"
+  "Inferior Snd-Scheme process buffer name.")
 
-(defvar inf-snd-guile-mode-hook nil
-  "User hook variable of `inf-snd-guile-mode'.
+(defvar inf-snd-scheme-mode-hook nil
+  "*User hook variable of `inf-snd-scheme-mode'.
 Will be called after `comint-mode-hook' and before starting
-inferior Snd-Guile process.")
+inferior Snd-Scheme process.")
 
-(defvar inf-snd-guile-quit-hook nil
-  "User hook variable of `inf-snd-guile-mode'.
-Will be called before finishing inferior Snd-Guile process.")
+(defvar inf-snd-scheme-quit-hook nil
+  "*User hook variable of `inf-snd-scheme-mode'.
+Will be called before finishing inferior Snd-Scheme process.")
 
-(defvar inf-snd-guile-program-name "snd-guile"
-  "*User variable to set Snd-Guile-program name and optional args.")
+(defvar inf-snd-scheme-program-name "snd-guile"
+  "*User variable to set Snd-Scheme-program name and optional args.")
+
+(if (fboundp 'defvaralias)
+    (progn
+      (defvaralias 'inf-snd-guile-mode-hook    'inf-snd-scheme-mode-hook)
+      (defvaralias 'inf-snd-guile-quit-hook    'inf-snd-scheme-quit-hook)
+      (defvaralias 'inf-snd-guile-program-name 'inf-snd-scheme-program-name)))
 
 ;; general
 (defvar snd-completions-buffer "*Completions*"
@@ -273,10 +294,10 @@ Will be called before finishing inferior Snd-Guile process.")
 Example: (setq inf-snd-prompt \"snd> \")")
 
 (defvar inf-snd-working-directory "~/"
-  "*User variable where Emacs will find the Ruby, Forth, or Guile scripts.")
+  "*User variable where Emacs will find the Ruby, Forth, or Scheme scripts.")
 
 (defvar inf-snd-kind nil
-  "Options are 'ruby, 'forth, or 'guile.
+  "Options are 'ruby, 'forth, or 'scheme.
 Needed to determine which extension language to use.  This variable is
 buffer-local.")
 
@@ -303,9 +324,9 @@ Lines with regexp will be prepended by ruby's comment sign and space '# '.")
 snd/snd-xref.c.  The user variable `inf-snd-index-path' should
 point to the correct path where snd-xref.c is located.")
 
-(defvar inf-snd-guile-keywords nil
+(defvar inf-snd-scheme-keywords nil
   "Snd keywords providing online help.
-\\<inf-snd-guile-mode-map> Will be used by
+\\<inf-snd-scheme-mode-map> Will be used by
 `inf-snd-help' (\\[inf-snd-help], \\[universal-argument]
 \\[inf-snd-help]) and `snd-help' (\\[snd-help],
 \\[universal-argument] \\[snd-help]), taken from
@@ -315,8 +336,8 @@ point to the correct path where snd-xref.c is located.")
 (defvar inf-snd-ruby-keyword-regexp "^  \"\\([A-Za-z0-9$_?!()]+?\\)\"[,}]+?"
   "*User variable to find Snd-Ruby's keywords in snd-xref.c.")
 
-(defvar inf-snd-guile-keyword-regexp "^  \"\\([-A-Za-z0-9*>?!()]+?\\)\"[,}]+?"
-  "*User variable to find Snd-Guile's and Snd-Forth's keywords in snd-xref.c.")
+(defvar inf-snd-scheme-keyword-regexp "^  \"\\([-A-Za-z0-9*>?!()]+?\\)\"[,}]+?"
+  "*User variable to find Snd-Scheme's and Snd-Forth's keywords in snd-xref.c.")
 
 (defun inf-snd-set-keywords ()
   "Set the keywords for `inf-snd-help'.
@@ -325,7 +346,7 @@ correct path of snd-xref.c to create valid keywords."
   (let ((fbuf (find-file-noselect (concat (expand-file-name inf-snd-index-path) "snd-xref.c")))
 	(regex (if (eq 'ruby inf-snd-kind)
 		   inf-snd-ruby-keyword-regexp
-		 inf-snd-guile-keyword-regexp))
+		 inf-snd-scheme-keyword-regexp))
 	(keys '()))
     (with-current-buffer fbuf
       (goto-char (point-min))
@@ -366,7 +387,7 @@ Repeating the command at that point scrolls the list."
 		      (forward-char 1))
 		    (point)))
 	     (pattern (buffer-substring-no-properties beg end))
-	     (key-list (if (eq 'ruby inf-snd-kind) inf-snd-ruby-keywords inf-snd-guile-keywords))
+	     (key-list (if (eq 'ruby inf-snd-kind) inf-snd-ruby-keywords inf-snd-scheme-keywords))
 	     (completion (try-completion pattern key-list)))
 	(cond ((eq completion t))
 	      ((null completion)
@@ -412,9 +433,9 @@ here or via hook variables in .emacs file."
 		:enable (not (inf-snd-proc-p))
 		:visible (eq 'forth inf-snd-kind)))
   (define-key (current-local-map) [menu-bar mode start-g]
-    '(menu-item "Start Snd-Guile Process" inf-snd-run-snd
+    '(menu-item "Start Snd-Scheme Process" inf-snd-run-snd
 		:enable (not (inf-snd-proc-p))
-		:visible (eq 'guile inf-snd-kind)))
+		:visible (eq 'scheme inf-snd-kind)))
   (define-key (current-local-map) [menu-bar mode sep-quit] '(menu-item "--"))
   (define-key (current-local-map) [menu-bar mode desc]
     '(menu-item "Describe Mode" describe-mode))
@@ -445,9 +466,9 @@ here or via hook variables in .emacs file."
 		:enable (inf-snd-proc-p)
 		:visible (eq 'forth inf-snd-kind)))
   (define-key (current-local-map) [menu-bar mode load-g]
-    '(menu-item "Load Guile Script ..." inf-snd-load
+    '(menu-item "Load Scheme Script ..." inf-snd-load
 		:enable (inf-snd-proc-p)
-		:visible (eq 'guile inf-snd-kind))))
+		:visible (eq 'scheme inf-snd-kind))))
 	  
 (defun inf-snd-send-string (str &optional no-strip-p)
   "Print STR in buffer and send it to the inferior Snd process.
@@ -459,14 +480,14 @@ non-nil, it won't translate.  See `inf-snd-load' for the latter case."
        (eq 'ruby inf-snd-kind)
        (while (string-match "-" str)
 	 (setq str (replace-match "_" t nil str))))
-  (if (eq 'guile inf-snd-kind)
+  (if (eq 'scheme inf-snd-kind)
       (setq str (concat "(" str ")")))
   (with-current-buffer (inf-snd-proc-buffer)
     (insert str)
     (comint-send-input)))
 
 (defun inf-snd-run-snd ()
-  "Start inferior Snd-Ruby, Snd-Forth, or Snd-Guile process.
+  "Start inferior Snd-Ruby, Snd-Forth, or Snd-Scheme process.
 Started from dead Snd process buffer."
   (interactive)
   (cond ((eq 'ruby inf-snd-kind)
@@ -474,7 +495,7 @@ Started from dead Snd process buffer."
 	((eq 'forth inf-snd-kind)
 	 (run-snd-forth inf-snd-forth-program-name))
 	(t
-	 (run-snd-guile inf-snd-guile-program-name))))
+	 (run-snd-scheme inf-snd-scheme-program-name))))
 
 (defun inf-snd-file ()
   "Open Snd's view-files-dialog widget."
@@ -482,7 +503,7 @@ Started from dead Snd process buffer."
   (inf-snd-send-string "view-files-dialog"))
 
 (defun inf-snd-load (file)
-  "Load the required Ruby, Forth, or Guile script.
+  "Load the required Ruby, Forth, or Scheme script.
 Asks for FILE interactively in minibuffer."
   (interactive "fLoad Snd Script: ")
   (unless (file-directory-p file)
@@ -503,14 +524,14 @@ Asks for FILE interactively in minibuffer."
 
 (defun inf-snd-help (&optional html-help)
   "Receive a string in minibuffer and show corresponding help.
-\\<inf-snd-ruby-mode-map>\\<inf-snd-forth-mode-map>\\<inf-snd-guile-mode-map>
+\\<inf-snd-ruby-mode-map>\\<inf-snd-forth-mode-map>\\<inf-snd-scheme-mode-map>
 This is done via Snd's function snd_help() or html() if HTML-HELP
 is non-nil, i.e. it's called by \\[universal-argument]
 \\[inf-snd-help], putting result at the end of the inferior Snd
 process buffer.  If point is near a function name in inferior Snd
 process buffer, that function will be used as default value in
 minibuffer; tab-completion is activated.  `inf-snd-ruby-keywords'
-and `inf-snd-guile-keywords' hold the help strings, the user
+and `inf-snd-scheme-keywords' hold the help strings, the user
 variable `inf-snd-index-path' should point to the correct path of
 snd-xref.c."
   (interactive "P")
@@ -521,7 +542,7 @@ snd-xref.c."
     (let ((str (completing-read prompt
 				(if (eq 'ruby inf-snd-kind)
 				    inf-snd-ruby-keywords
-				  inf-snd-guile-keywords)
+				  inf-snd-scheme-keywords)
 				nil nil nil nil default)))
       (unless (string= str "")
 	(unless html-help
@@ -559,7 +580,7 @@ snd-xref.c."
 	((eq 'forth inf-snd-kind)
 	 (run-hooks 'inf-snd-forth-quit-hook))
 	(t
-	 (run-hooks 'inf-snd-guile-quit-hook)))
+	 (run-hooks 'inf-snd-scheme-quit-hook)))
   (if (bufferp snd-completions-buffer)
       (kill-buffer snd-completions-buffer))
   (get-buffer-process (inf-snd-proc-buffer))
@@ -589,7 +610,7 @@ snd-xref.c."
 	((eq 'forth inf-snd-kind)
 	 inf-snd-forth-buffer)
 	(t
-	 inf-snd-guile-buffer)))
+	 inf-snd-scheme-buffer)))
 
 (defun inf-snd-proc-p ()
   "Return non-nil if process buffer is available."
@@ -614,49 +635,49 @@ Prepends matching lines with ruby's comment sign and space `# '.
 Showing a prompt is forced by run_emacs_eval_hook() in
 snd/examp.rb.  This function could be on the so called abnormal
 hook with one arg `comint-preoutput-filter-functions'."
-  (if (eq 'ruby inf-snd-kind)
-      (progn
-       (if (string-match "\\(nil\n$\\)" string)
-	   (setq string (replace-match "" t nil string 1)))
-       (while (string-match inf-snd-to-comment-regexp string)
-	 (setq string (replace-match "# \\1" t nil string 1)))))
+  (if (string-match "\\(^nil\n\\)" string)
+      (setq string (replace-match "" t nil string 1)))
+  ;; Drop trailing '\n' ("...snd(0)> \n" ==> "...snd(0)> ").
+  (if (string-match inf-snd-prompt string)
+      (setq string (substring string 0 (- (length string) 1))))
+  (while (string-match inf-snd-to-comment-regexp string)
+    (setq string (replace-match "# \\1" t nil string 1)))
   string)
   
 (defun inf-snd-comint-put-prompt-forth (string)
-  "Append `inf-snd-prompt' to STRING.
-Furthermore looks for `inf-snd-to-comment-regexp' in STRING in
-the current output.  Prepends matching lines with ruby's comment
-sign and space `# '.  This function could be on the so called
-abnormal hook with one arg `comint-preoutput-filter-functions'."
-  (if (eq 'forth inf-snd-kind)
-      (if (string-match "\\(nil\n\\)" string)
-	  (setq string (replace-match inf-snd-prompt t nil string 1))))
-  string)
-
-(defun inf-snd-comint-put-prompt-guile (string)
-  "Append `inf-snd-prompt' to STRING.
+  "If STRING contains a trailing nil, replace it by `inf-snd-prompt'.
 This function could be on the so called abnormal hook with one
 arg `comint-preoutput-filter-functions'."
-  (if (eq 'guile inf-snd-kind)
-      (concat string inf-snd-prompt)
-    string))
+  (if (string-match "\\(nil\n\\)" string)
+      (setq string (replace-match inf-snd-prompt t nil string 1)))
+  string)
 
-  (defun inf-snd-comint-snd-send (proc line)
+(defun inf-snd-comint-put-prompt-scheme (string)
+  "Appends `inf-snd-prompt' to STRING.
+This function could be on the so called abnormal hook with one
+arg `comint-preoutput-filter-functions'."
+  (if (string-match "^>$" string)	;snd-guile-nogui
+      (setq string "")
+    (if (string-match "\\(\n\\)" string)
+	(setq string (concat string inf-snd-prompt))))
+  string)
+
+(defun inf-snd-comint-snd-send (proc line)
   "Special function for sending input LINE to PROC.
 Variable `comint-input-sender' is set to this function.  Running
 Snd-Ruby it is necessary to load snd/examp.rb in your ~/.snd file
 which contains run_emacs_eval_hook(line).  Running Snd-Forth
-run-emacs-eval-hook is in FTH's C-core.  inf-snd.el uses this
+emacs-eval is hardcoded in snd/xen.c.  inf-snd.el uses this
 function to evaluate one line or multi-line input (Ruby only)."
   (if (= (length line) 0)
-      (if (eq 'guile inf-snd-kind)	;guile-1.7.x discards nil
+      (if (eq 'scheme inf-snd-kind)	;guile >= 1.7 discards nil
 	  (setq line "#f")
 	(setq line "nil")))
   (comint-send-string proc
 		      (cond ((eq 'ruby inf-snd-kind)
 			     (format "run_emacs_eval_hook(%%(%s))\n" line))
 			    ((eq 'forth inf-snd-kind)
-			     (format "%S run-emacs-eval-hook\n" (substring-no-properties line)))
+			     (format "%S emacs-eval\n" (substring-no-properties line)))
 			    (t
 			     (concat line "\n")))))
 
@@ -675,8 +696,7 @@ Argument STRING is the Snd command and optional arguments."
     (cond ((null where) (list string))
 	  ((not (= where 0))
 	   (cons (substring string 0 where)
-		 (inf-snd-args-to-list (substring string (+ 1 where)
-						 (length string)))))
+		 (inf-snd-args-to-list (substring string (+ 1 where) (length string)))))
 	  (t (let ((pos (string-match "[^ \t]" string)))
 	       (if (null pos)
 		   nil
@@ -688,7 +708,7 @@ Argument STRING is the Snd command and optional arguments."
 
 Snd is a sound editor created by Bill Schottstaedt
 \(bil@ccrma.Stanford.EDU).  You can find it on
-ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz.
+ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz.
 
 You can type in Ruby commands in inferior Snd process buffer which
 will be sent via `comint-send-string' to the inferior Snd process.
@@ -738,7 +758,7 @@ The following key bindings are defined:
 
 Snd is a sound editor created by Bill Schottstaedt
 \(bil@ccrma.Stanford.EDU).  You can find it on
-ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz.
+ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz.
 
 You can type in Forth commands in inferior Snd process buffer which
 will be sent via `comint-send-string' to the inferior Snd process.
@@ -774,47 +794,47 @@ The following key bindings are defined:
   (setq comint-prompt-regexp (concat "^\\(" inf-snd-prompt "\\)+"))
   (setq inf-snd-kind 'forth)
   (setq mode-line-process '(":%s"))
-  (unless inf-snd-guile-keywords
-    (setq inf-snd-guile-keywords (inf-snd-set-keywords)))
+  (unless inf-snd-scheme-keywords
+    (setq inf-snd-scheme-keywords (inf-snd-set-keywords)))
   (inf-snd-set-keys 'inf-snd-forth-mode inf-snd-forth-buffer-name)
   (pop-to-buffer inf-snd-forth-buffer)
   (goto-char (point-max))
   (run-hooks 'inf-snd-forth-mode-hook))
 
-(define-derived-mode inf-snd-guile-mode comint-mode inf-snd-guile-buffer-name
-  "Inferior mode running Snd-Guile, derived from `comint-mode'.
+(define-derived-mode inf-snd-scheme-mode comint-mode inf-snd-scheme-buffer-name
+  "Inferior mode running Snd-Scheme, derived from `comint-mode'.
 
 Snd is a sound editor created by Bill Schottstaedt
 \(bil@ccrma.Stanford.EDU).  You can find it on
-ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz.
+ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz.
 
-You can type in Guile commands in inferior Snd process buffer which
+You can type in Scheme commands in inferior Snd process buffer which
 will be sent via `comint-send-string' to the inferior Snd process.
 The return value will be shown in the process buffer, other output
 goes to the listener of Snd.
 
-You sould set variable `inf-snd-guile-program-name' and
+You sould set variable `inf-snd-scheme-program-name' and
 `inf-snd-working-directory' in your .emacs file to set the appropriate
-program name and optional arguments and to direct Snd to the Guile
+program name and optional arguments and to direct Snd to the Scheme
 scripts directory, you have.
 
 The hook variables `comint-mode-hook' and
-`inf-snd-guile-mode-hook' will be called in that special order
+`inf-snd-scheme-mode-hook' will be called in that special order
 after calling the inferior Snd process.  You can use them e.g. to
 set additional key bindings.  The hook variable
-`inf-snd-guile-quit-hook' will be called before finishing the
+`inf-snd-scheme-quit-hook' will be called before finishing the
 inferior Snd process.  You may use it for resetting Snd
 variables, e.g. the listener prompt.
 
-\\<inf-snd-guile-mode-map> Interactive start is possible either by
-\\[universal-argument] \\[run-snd-guile], you will be ask for the Snd
-program name, or by \\[run-snd-guile].  Emacs shows an additional menu
-entry ``Snd-Guile'' in the menu bar.
+\\<inf-snd-scheme-mode-map> Interactive start is possible either by
+\\[universal-argument] \\[run-snd-scheme], you will be ask for the Snd
+program name, or by \\[run-snd-scheme].  Emacs shows an additional menu
+entry ``Snd-Scheme'' in the menu bar.
 
 The following key bindings are defined:
-\\{inf-snd-guile-mode-map}"
+\\{inf-snd-scheme-mode-map}"
   (scheme-mode-variables)
-  (add-hook 'comint-preoutput-filter-functions 'inf-snd-comint-put-prompt-guile nil t)
+  (add-hook 'comint-preoutput-filter-functions 'inf-snd-comint-put-prompt-scheme nil t)
   (add-hook 'comint-input-filter-functions 'scheme-input-filter nil t)
   (setq comint-get-old-input (function scheme-get-old-input))
   (setq comint-input-sender (function inf-snd-comint-snd-send))
@@ -822,14 +842,16 @@ The following key bindings are defined:
   (make-local-variable 'inf-snd-prompt)
   (make-local-variable 'inf-snd-kind)
   (setq comint-prompt-regexp (concat "^\\(" inf-snd-prompt "\\)+"))
-  (setq inf-snd-kind 'guile)
+  (setq inf-snd-kind 'scheme)
   (setq mode-line-process '(":%s"))
-  (unless inf-snd-guile-keywords
-    (setq inf-snd-guile-keywords (inf-snd-set-keywords)))
-  (inf-snd-set-keys 'inf-snd-guile-mode inf-snd-guile-buffer-name)
-  (pop-to-buffer inf-snd-guile-buffer)
+  (unless inf-snd-scheme-keywords
+    (setq inf-snd-scheme-keywords (inf-snd-set-keywords)))
+  (inf-snd-set-keys 'inf-snd-scheme-mode inf-snd-scheme-buffer-name)
+  (pop-to-buffer inf-snd-scheme-buffer)
   (goto-char (point-max))
-  (run-hooks 'inf-snd-guile-mode-hook))
+  (run-hooks 'inf-snd-scheme-mode-hook))
+
+(defalias 'inf-snd-guile-mode 'inf-snd-scheme-mode)
 
 (defun run-snd-ruby (cmd)
   "Start inferior Snd-Ruby process.
@@ -858,21 +880,23 @@ called, one will be asked for program name to run."
     (inf-snd-forth-mode)
     (snd-send-invisible "nil")))
 
-(defun run-snd-guile (cmd)
-  "Start inferior Snd-Guile process.
+(defun run-snd-scheme (cmd)
+  "Start inferior Snd-Scheme process.
 CMD is used for determine which program to run.  If interactively
 called, one will be asked for program name to run."
   (interactive (list (if current-prefix-arg
- 			 (read-string "Run Snd Guile: " inf-snd-guile-program-name)
- 		       inf-snd-guile-program-name)))
-  (unless (comint-check-proc inf-snd-guile-buffer)
+ 			 (read-string "Run Snd Scheme: " inf-snd-scheme-program-name)
+ 		       inf-snd-scheme-program-name)))
+  (unless (comint-check-proc inf-snd-scheme-buffer)
     (let ((cmdlist (inf-snd-args-to-list cmd)))
-      (setq inf-snd-guile-program-name cmd)
-      (set-buffer (apply 'make-comint inf-snd-guile-buffer-name (car cmdlist) nil (cdr cmdlist))))
-    (inf-snd-guile-mode)
+      (setq inf-snd-scheme-program-name cmd)
+      (set-buffer (apply 'make-comint inf-snd-scheme-buffer-name (car cmdlist) nil (cdr cmdlist))))
+    (inf-snd-scheme-mode)
     (snd-send-invisible "#f")))
 
-;;;; The snd-ruby-, snd-guile-, and snd-forth-mode
+(defalias 'run-snd-guile 'run-snd-scheme)
+
+;;;; The snd-ruby-, snd-scheme-, and snd-forth-mode
 
 ;;; Commentary:
 
@@ -888,8 +912,8 @@ called, one will be asked for program name to run."
 (defvar snd-forth-buffer-name "Snd/Forth"
   "Buffer name of `snd-forth-mode'.")
 
-(defvar snd-guile-buffer-name "Snd/Guile"
-  "Buffer name of `snd-guile-mode'.")
+(defvar snd-scheme-buffer-name "Snd/Scheme"
+  "Buffer name of `snd-scheme-mode'.")
 
 (defvar snd-ruby-mode-hook nil
   "User hook variable.
@@ -897,27 +921,29 @@ Called after `ruby-mode-hook' and before starting inferior Snd
 process.")
 
 (defvar snd-forth-mode-hook nil
-  "User hook variable.
+  "*User hook variable.
 Called after `forth-mode-hook' and before starting inferior Snd
 process.")
 
-(defvar snd-guile-mode-hook nil
-  "User hook variable.
+(defvar snd-scheme-mode-hook nil
+  "*User hook variable.
 Called after `scheme-mode-hook' and before starting inferior Snd
 process.")
+
+(defalias 'snd-guile-mode-hook 'snd-scheme-mode-hook)
 
 (defvar snd-source-modes '(snd-ruby-mode)
   "Used to determine if a buffer contains Snd source code.
 If it's loaded into a buffer that is in one of these major modes, it's
 considered a Snd source file by `snd-load-file'.  Used by this command
 to determine defaults.  This variable is buffer-local in
-`snd-ruby-mode', `snd-forth-mode' and `snd-guile-mode'.")
+`snd-ruby-mode', `snd-forth-mode' and `snd-scheme-mode'.")
 
 (defvar snd-inf-kind 'ruby
-  "Options are 'ruby, 'forth, and 'guile.
+  "Options are 'ruby, 'forth, and 'scheme.
 Needed to determine which extension language should be used.
 This variable is buffer-local in `snd-ruby-mode',
-`snd-forth-mode', and `snd-guile-mode'.")
+`snd-forth-mode', and `snd-scheme-mode'.")
 
 (defvar snd-prev-l/c-dir/file nil
   "Cache the (directory . file) pair used in the last `snd-load-file'.
@@ -966,34 +992,36 @@ The current key bindings are:
   (make-local-variable 'snd-source-modes)
   (setq snd-inf-kind 'forth)
   (setq snd-source-modes '(snd-forth-mode))
-  (unless inf-snd-guile-keywords
-    (setq inf-snd-guile-keywords (inf-snd-set-keywords)))
+  (unless inf-snd-scheme-keywords
+    (setq inf-snd-scheme-keywords (inf-snd-set-keywords)))
   (snd-set-keys 'snd-forth-mode snd-forth-buffer-name)
   (run-hooks 'snd-forth-mode-hook))
 
-(define-derived-mode snd-guile-mode scheme-mode snd-guile-buffer-name
-  "Major mode for editing Snd-Guile code.
+(define-derived-mode snd-scheme-mode scheme-mode snd-scheme-buffer-name
+  "Major mode for editing Snd-Scheme code.
 
 Editing commands are similar to those of `scheme-mode'.
 
 In addition, you can start an inferior Snd process and some
 additional commands will be defined for evaluating expressions.
-A menu ``Snd/Guile'' appears in the menu bar.  Entries in this
+A menu ``Snd/Scheme'' appears in the menu bar.  Entries in this
 menu are disabled if no inferior Snd process exist.
 
 You can use variables `scheme-mode-hook' and
-`snd-guile-mode-hook', which will be called in that order.
+`snd-scheme-mode-hook', which will be called in that order.
 
 The current key bindings are:
-\\{snd-guile-mode-map}"
+\\{snd-scheme-mode-map}"
   (make-local-variable 'snd-inf-kind)
   (make-local-variable 'snd-source-modes)
-  (setq snd-inf-kind 'guile)
-  (setq snd-source-modes '(snd-guile-mode))
-  (unless inf-snd-guile-keywords
-    (setq inf-snd-guile-keywords (inf-snd-set-keywords)))
-  (snd-set-keys 'snd-guile-mode snd-guile-buffer-name)
-  (run-hooks 'snd-guile-mode-hook))
+  (setq snd-inf-kind 'scheme)
+  (setq snd-source-modes '(snd-scheme-mode))
+  (unless inf-snd-scheme-keywords
+    (setq inf-snd-scheme-keywords (inf-snd-set-keywords)))
+  (snd-set-keys 'snd-scheme-mode snd-scheme-buffer-name)
+  (run-hooks 'snd-scheme-mode-hook))
+
+(defalias 'snd-guile-mode 'snd-scheme-mode)
 
 (defun snd-send-region (start end)
   "Send the current region to the inferior Snd process.
@@ -1092,7 +1120,7 @@ Non-nil EOB-P positions cursor at end of buffer."
 
 (defun snd-run-snd ()
   "If inferior Snd process exists, switch to process buffer, else start Snd.
-Started from `snd-ruby-mode', `snd-forth-mode' or `snd-guile-mode'."
+Started from `snd-ruby-mode', `snd-forth-mode' or `snd-scheme-mode'."
   (interactive)
   (if (snd-proc-p)
       (progn
@@ -1104,7 +1132,7 @@ Started from `snd-ruby-mode', `snd-forth-mode' or `snd-guile-mode'."
 	  ((eq 'forth snd-inf-kind)
 	   (run-snd-forth inf-snd-forth-program-name))
 	  (t
-	   (run-snd-guile inf-snd-guile-program-name)))))
+	   (run-snd-scheme inf-snd-scheme-program-name)))))
 
 (defun snd-load-file-protected (filename)
   "Load a Ruby script FILENAME as an anonymous module into the inferior Snd process."
@@ -1123,7 +1151,7 @@ Started from `snd-ruby-mode', `snd-forth-mode' or `snd-guile-mode'."
   (setq snd-prev-l/c-dir/file (cons (file-name-directory filename)
 				     (file-name-nondirectory filename)))
   (if (eq 'forth snd-inf-kind)
-      (comint-send-string (snd-proc) (concat "listener-off include " filename " listener-on\n"))
+      (comint-send-string (snd-proc) (concat "include " filename "\n"))
     (comint-send-string (snd-proc) (concat "(load \"" filename"\"\)\n"))))
 
 (defun snd-save-state ()
@@ -1151,14 +1179,14 @@ Started from `snd-ruby-mode', `snd-forth-mode' or `snd-guile-mode'."
 
 (defun snd-help (&optional html-help)
   "Receive a string in minibuffer and show corresponding help.
-\\<inf-snd-ruby-mode-map>\\<inf-snd-forth-mode-map>\\<inf-snd-guile-mode-map>
+\\<inf-snd-ruby-mode-map>\\<inf-snd-forth-mode-map>\\<inf-snd-scheme-mode-map>
 This is done via Snd's function snd_help() or html() if HTML-HELP
 is non-nil, i.e. it's called by \\[universal-argument]
 \\[snd-help], putting result at the end of the inferior Snd
 process buffer.  If point is near a function name in inferior Snd
 process buffer, that function will be used as default value in
 minibuffer; tab-completion is activated.  `inf-snd-ruby-keywords'
-and `inf-snd-guile-keywords' hold the help strings, the user
+and `inf-snd-scheme-keywords' hold the help strings, the user
 variable `inf-snd-index-path' should point to the correct path of
 snd-xref.c."
   (interactive "P")
@@ -1193,7 +1221,7 @@ snd-xref.c."
 	((eq 'forth snd-inf-kind)
 	 inf-snd-forth-buffer)
 	(t
-	 inf-snd-guile-buffer)))
+	 inf-snd-scheme-buffer)))
 
 (defun snd-proc ()
   "Return the process buffer."
@@ -1204,11 +1232,11 @@ snd-xref.c."
 						 ((eq 'forth snd-inf-kind)
 						  'inf-snd-forth-mode)
 						 ('
-						  'inf-snd-guile-mode)))
+						  'inf-snd-scheme-mode)))
 				       (current-buffer)
 				     buf))))
     (or proc
-	(error "No current process.  See variable inf-snd-ruby|inf-snd-forth|guile-buffer"))))
+	(error "No current process.  See variable inf-snd-ruby|inf-snd-forth|scheme-buffer"))))
 
 (defun snd-proc-p ()
   "Return non-nil if no process buffer available."
@@ -1285,9 +1313,9 @@ here or via hook variables in .emacs file."
 		:enable (not (snd-proc-p))
 		:visible (eq 'forth snd-inf-kind)))
   (define-key (current-local-map) [menu-bar mode start-g]
-    '(menu-item "Start Snd-Guile Process" snd-run-snd
+    '(menu-item "Start Snd-Scheme Process" snd-run-snd
 		:enable (not (snd-proc-p))
-		:visible (eq 'guile snd-inf-kind)))
+		:visible (eq 'scheme snd-inf-kind)))
   (define-key (current-local-map) [menu-bar mode switch]
     '(menu-item "Switch to Snd Process" snd-switch-to-snd
 		:enable (snd-proc-p)))
@@ -1335,9 +1363,9 @@ here or via hook variables in .emacs file."
 		:enable (snd-proc-p)
 		:visible (eq 'forth snd-inf-kind)))
   (define-key (current-local-map) [menu-bar mode load-g]
-    '(menu-item "Load Guile Script ..." snd-load-file
+    '(menu-item "Load Scheme Script ..." snd-load-file
 		:enable (snd-proc-p)
-		:visible (eq 'guile snd-inf-kind))))
+		:visible (eq 'scheme snd-inf-kind))))
 
 (provide 'inf-snd)
 

@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Changed: Thu Sep 29 14:02:34 CEST 2005
+# Changed: Fri Aug 04 02:02:21 CEST 2006
 
 # Commentary:
 #
@@ -766,9 +766,7 @@ module Mixer_matrix
     end
     nmx
   end
-
   alias make_zero_mixer make_mixer
-
 end
 
 # mix.rb ends here

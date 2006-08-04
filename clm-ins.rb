@@ -1,11 +1,11 @@
 # clm-ins.rb -- CLM instruments translated to Snd/Ruby -*- snd-ruby -*-
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
-# Last: Fri May 20 03:35:43 CEST 2005
+# Created: Tue Sep 16 01:27:09 CEST 2003
+# Changed: Tue Aug 01 02:59:32 CEST 2006
 
 # Instruments work with
-#   with_sound (CLM, sample2file gens)
-#   with_snd   (Snd)
+#   with_sound (CLM (sample2file gens) and Snd)
 #   with_dac   (dac output, except at least for fullmix)
 #
 # Tested with Snd 7.10, and Ruby 1.6.6, 1.6.8, and 1.9.0.
@@ -13,24 +13,48 @@
 # pluck                  reson
 # vox                    cellon
 # fofins                 jl_reverb
-# bes_fm                 gran_synth
-# fm_trumpet             touch_tone
-# pqw_vox                spectra
-# stereo_flute           two_tab
-# fm_bell                lbj_piano
-# fm_insect              resflt
-# fm_drum                scratch
-# gong                   pins
-# attract                zc
-# pqw                    zn
-# tubebell               za
-# wurley                 exp_snd
-# rhodey                 expfil
-# hammondoid             graph_eq
-# metal                  anoi
-# drone                  fullmix
-# canter                 grani
-# nrev
+# fm_trumpet             gran_synth
+# pqw_vox                touch_tone
+# stereo_flute           spectra
+# fm_bell                two_tab
+# fm_insect              lbj_piano
+# fm_drum                resflt
+# gong                   scratch
+# attract                pins
+# pqw                    zc
+# tubebell               zn
+# wurley                 za
+# rhodey                 exp_snd
+# hammondoid             expfil
+# metal                  graph_eq
+# drone                  anoi
+# canter                 fullmix
+# nrev                   grani
+#
+#  class Ssb_fm < Musgen
+#   initialize(freq)
+#   inspect
+#   to_s
+#   run_func(val1, val2)
+#   ssb_fm(modsig)
+
+# bes_fm(start, dur, freq, amp, ratio, index)
+#
+# make_ssb_fm(freq)
+# ssb_fm?(obj)
+# ssb_fm(gen, modsig)
+#
+# class Fm2 < Musgen
+#  initialize(f1, f2, f3, f4, p1, p2, p3, p4)
+#  inspect
+#  to_s
+#  run_func(val1, val2)
+#  fm2(index)
+#
+# make_fm2(f1, f2, f3, f4, p1, p2, p3, p4)
+# fm2?(obj)
+# fm2(gen, index)
+
 
 # comments from clm-ins.scm
 
@@ -245,46 +269,6 @@ def fofins(start, dur, frq, amp, vib, f0, a0, f1, a1, f2, a2, ae = [0, 0, 25, 1,
   end
 end
 # with_sound() do fofins(0, 4, 270, 0.4, 0.001, 730, 0.6, 1090, 0.3, 2440, 0.1) end
-
-# BES-FM
-def j0(x)
-  if x.abs < 8.0
-    y = x * x
-    ans1 = 57568490574.0 + y *
-           (-13362590354.0 + y *
-                            (651619640.7 + y *
-                                          (-11214424.18 + y *
-                                                         (77392.33017 + y * -184.9052456))))
-    ans2 = 57568490411.0 + y *
-           (1029532985.0 + y * (9494680.718 + y * (59272.64853 + y * (267.8532712 + y))))
-    ans1 / ans2
-  else
-    ax = x.abs
-    z = 8.0 / ax
-    y = z * z
-    xx = ax - 0.785398164
-    ans1 = 1.0 + y *
-           (-0.1098628627e-2 + y *
-                           (0.2734510407e-4 + y * (-0.2073370639e-5 + y * 0.2093887211e-6)))
-    ans2 = -0.1562499995e-1 + y *
-           (0.1430488765e-3 + y * (-0.6911147651e-5 + y * (0.7621095161e-6 + y * -0.934945152e-7)))
-    sqrt(0.636619772 / ax) * cos(xx) * ans1 - z * sin(xx) * ans2
-  end
-end
-
-def bes_fm(start, dur, freq, amp, ratio, index)
-  car_ph = mod_ph = 0.0
-  car_incr = hz2radians(freq)
-  mod_incr = ratio.to_f * car_incr
-  ampenv = make_env(:envelope, [0, 0, 25, 1, 75, 1, 100, 0], :scaler, amp, :duration, dur)
-  run_instrument(start, dur) do
-    out_val = env(ampenv) * bes_j1(car_ph)
-    car_ph += car_incr + index.to_f * bes_j1(mod_ph)
-    mod_ph += mod_incr
-    out_val
-  end
-end
-# with_sound() do bes_fm(0, 0.5, 440, 5, 1, 8) end
 
 # FM TRUMPET
 #
@@ -2554,9 +2538,11 @@ def fullmix(in_file,
   else
     file = in_file
   end
-  if matrix
-    mx = make_mixer([in_chans, @channels].max)
-  end
+  mx = if matrix
+         make_mixer([in_chans, @channels].max)
+       else
+         make_scalar_mixer([in_chans, @channels].max, 1.0)
+       end
   if @ws_reverb and reverb_amount.positive?
     rev_mx = make_mixer(in_chans)
     in_chans.times do |chn|
@@ -2612,9 +2598,9 @@ class Snd_Instrument
       @ws_output = with_closed_sound(@ws_output) do |snd_name|
         mus_mix(snd_name, file, beg, samps, inloc, mx, envs)
       end
-      if rev_mx and revframe
+      if rev_mx
         @ws_reverb = with_closed_sound(@ws_reverb) do |snd_name|
-          mus_mix(snd_name, revframe, beg, samps, inloc, rev_mx, false)
+          mus_mix(snd_name, file, beg, samps, inloc, rev_mx, false)
         end
       end
     else
@@ -2664,9 +2650,9 @@ class CLM_Instrument
     beg = seconds2samples(start)
     samps = seconds2samples(dur)
     unless sr
-      mus_mix(@ws_output, make_file2sample(file), beg, samps, inloc, mx, envs)
-      if rev_mx and revframe
-        mus_mix(@ws_reverb, revframe, beg, samps, inloc, rev_mx, false)
+      mus_mix(@ws_output, file, beg, samps, inloc, mx, envs)
+      if rev_mx
+        mus_mix(@ws_reverb, file, beg, samps, inloc, rev_mx, false)
       end
     else
       inframe = make_frame(in_chans)
@@ -3073,5 +3059,109 @@ with_sound(:channels, 2, :reverb, :jl_reverb, :reverb_channels, 1) do
   grani(0.0, 2.0, 5.0, file, :grain_envelope, raised_cosine())
 end
 =end
+
+# BES-FM
+def bes_fm(start, dur, freq, amp, ratio, index)
+  car_ph = mod_ph = 0.0
+  car_incr = hz2radians(freq)
+  mod_incr = ratio.to_f * car_incr
+  ampenv = make_env(:envelope, [0, 0, 25, 1, 75, 1, 100, 0], :scaler, amp, :duration, dur)
+  run_instrument(start, dur) do
+    out_val = env(ampenv) * bes_j1(car_ph)
+    car_ph += car_incr + index.to_f * bes_j1(mod_ph)
+    mod_ph += mod_incr
+    out_val
+  end
+end
+# with_sound() do bes_fm(0, 0.5, 440, 5, 1, 8) end
+
+# SSB_FM
+class Ssb_fm < Musgen
+  def initialize(freq)
+    super()
+    @frequency = freq
+    @osc1 = make_oscil(freq, 0)
+    @osc2 = make_oscil(freq, HALF_PI)
+    @osc3 = make_oscil(0, 0)
+    @osc4 = make_oscil(0, HALF_PI)
+    @hilbert = make_hilbert_transform(40)
+    @delay = make_delay(40)
+  end
+
+  def inspect
+    format("%s.new(%s)", self.class, @frequency)
+  end
+
+  def to_s
+    format("#<%s freq: %s>", self.class, @frequency)
+  end
+
+  def run_func(val1 = 0.0, val2 = 0.0)
+    ssb_fm(val1)
+  end
+  
+  def ssb_fm(modsig)
+    am0 = oscil(@osc1)
+    am1 = oscil(@osc2)
+    car0 = oscil(@osc3, hilbert_transform(@hilbert, modsig))
+    car1 = oscil(@osc4, delay(@delay, modsig))
+    am0 * car0 + am1 * car1
+  end
+end
+
+def make_ssb_fm(freq = 440.0)
+  Ssb_fm.new(freq)
+end
+
+def ssb_fm?(obj)
+  obj.kind_of?(Ssb_fm)
+end
+
+def ssb_fm(gen, modsig = 0.0)
+  gen.ssb_fm(modsig)
+end
+
+# FM2
+class Fm2 < Musgen
+  def initialize(f1, f2, f3, f4, p1, p2, p3, p4)
+    super()
+    @osc1 = make_oscil(f1, p1)
+    @osc2 = make_oscil(f2, p2)
+    @osc3 = make_oscil(f3, p3)
+    @osc4 = make_oscil(f4, p4)
+  end
+
+  def inspect
+    format("%s.new(%s, %s, %s, %s, %s, %s, %s, %s)",
+           self.class, @f1, @f2, @f3, @f4, @p1, @p2, @p3, @p4)
+  end
+
+  def to_s
+    format("#<%s %1.3f, %1.3f, %1.3f, %1.3f, %1.3f, %1.3f, %1.3f, %1.3f>",
+           self.class, @f1, @f2, @f3, @f4, @p1, @p2, @p3, @p4)
+  end
+
+  def run_func(val1 = 0.0, val2 = 0.0)
+    fm2(val1)
+  end
+  
+  def fm2(index)
+    (oscil(@osc1, index * oscil(@osc2)) + oscil(@osc3, index * oscil(@osc4))) * 0.25
+  end
+end
+
+# make_fm2(1000, 100, 1000, 100, 0, 0, HALF_PI, HALF_PI)
+# make_fm2(1000, 100, 1000, 100, 0, 0, 0, HALF_PI)
+def make_fm2(f1, f2, f3, f4, p1, p2, p3, p4)
+  Fm2.new(f1, f2, f3, f4, p1, p2, p3, p4)
+end
+
+def fm2?(obj)
+  obj.kind_of?(Fm2)
+end
+
+def fm2(gen, index = 0.0)
+  gen.fm2(index)
+end
 
 # clm-ins.rb ends here

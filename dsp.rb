@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Sun Jul 30 23:30:26 CEST 2006
+# Changed: Thu Aug 03 01:03:18 CEST 2006
 
 # Commentary:
 #
@@ -88,7 +88,7 @@
 #  make_iir_band_stop_2(f1, f2)
 
 #  make_eliminate_hum(hum_freq = 60.0, hum_harmonics = 5, bandwidth = 10)
-#  eleminate_hum(gens, x0)
+#  eliminate_hum(gens, x0)
 #  make_peaking_2(f1, f2, m)
 #  cascade2canonical(a)
 
@@ -134,28 +134,6 @@
 #  ssb_bank(old_freq, new_freq, pairs, order, bw, beg, dur, snd, chn, edpos)
 #  ssb_bank_env(old_freq, new_freq, freq_env, pairs, order, bw, beg, dur, snd, chn, edpos)
 #
-#  class Ssb_fm < Musgen
-#   initialize(freq)
-#   inspect
-#   to_s
-#   run_func(val1, val2)
-#   ssb_fm(modsig)
-
-#  make_ssb_fm(freq)
-#  ssb_fm?(obj)
-#  ssb_fm(gen, modsig)
-#
-#  class Fm2 < Musgen
-#   initialize(f1, f2, f3, f4, p1, p2, p3, p4)
-#   inspect
-#   to_s
-#   run_func(val1, val2)
-#   fm2(index)
-#
-#  make_fm2(f1, f2, f3, f4, p1, p2, p3, p4)
-#  fm2?(obj)
-#  fm2(gen, index)
-#
 #  vct_polynomial(v, coeffs)
 #  channel_polynomial(coeffs, snd = false, chn = false)
 #  spectral_polynomial(coeffs, snd = false, chn = false)
@@ -181,6 +159,12 @@
 #   
 #  make_moving_max(size = 128)
 #  moving_max(gen, y)
+#  make_moving_sum(size = 128)
+#  moving_sum(gen, y)
+#  make_moving_rms(size = 128)
+#  moving_rms(gen, y)
+#  make_moving_length(size = 128)
+#  moving_length(gen, y)
 #  harmonicizer(freq, coeffs, pairs, order, bw, beg, dur, snd, chn, edpos)
 #  linear_src_channel(srinc, snd = false, chn = false)
 
@@ -255,19 +239,20 @@ using 'gamma' as the window parameter.")
     alpha = cosh(acosh(10.0 ** gamma) / n)
     den = 1.0 / cosh(n * acosh(alpha))
     freq = PI / n
-    vals = make_vct(n)
+    vals = make_array(n)
     w = make_array(n)
     pk = 0.0
     mult = -1.0
-    phase = -(PI / 2)
-    n.times do
+    phase = -HALF_PI
+    n.times do |i|
       vals[i] = mult * den * cos(n * acos(alpha * cos(phase)))
       mult *= -1.0
+      phase += freq
     end
     n.times do |i|
       sum = 0.0
       n.times do |j|
-        sum += vals[j] * exp((2.0 * Complex(0, 1) * PI * j * i) / n)
+        sum += vals[j] * exp((2.0 * Complex(0.0, 1.0) * PI * j * i) / n)
       end
       w[i] = sum.abs
       if w[i] > pk
@@ -554,6 +539,8 @@ tries to determine the current pitch: spot_freq(left_sample)")
       @amount = amount
       @speed = speed
       @randind = make_rand_interp(:frequency, speed, :amplitude, amount)
+      @data = @randind.data
+      @length = @randind.length
       len = random(3.0 * time * mus_srate()).floor
       @flanger = make_delay(:size, len, :max_size, (len + amount + 1).to_i)
     end
@@ -1133,7 +1120,7 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
     end
   end
 
-  def eleminate_hum(gens, x0)
+  def eliminate_hum(gens, x0)
     val = x0
     gens.each do |gen| val = filter(gen, val) end
     val
@@ -1155,22 +1142,23 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
   end
 
   # convert cascade coeffs to canonical form
-  # from Orfanidis "Introduction to Signal Processing"
-  def cascade2canonical(a)
-    conv = lambda do |m, h, l, x, y|
-      (l + m).times do |i|
-        y[i] = 0.0
-        ([0, -(i + 1 + l)].max..[i, m].min).each do |j|
-          y[i] += h[j] * x[i - j]
-        end
+  # from Orfanidis "Introduction to Signal Processing
+  def c2c_conv(m, h, l, x, y)
+    (l + m).times do |i|
+      y[i] = 0.0
+      ([0, i - (1 + l)].max..[i, m].min).each do |j|
+        y[i] += h[j] * x[i - j]
       end
     end
+  end
+
+  def cascade2canonical(a)
     k = a.length
     d = make_vct(2 * k + 1)
     a1 = make_vct(2 * k + 1)
     a1[0] = 1.0
     k.times do |i|
-      conv.call(2, a[i], 2 * i + 1, a1, d)
+      c2c_conv(2, a[i], 2 * i + 1, a1, d)
       (2 * i + 3).times do |j|
         a1[j] = d[j]
       end
@@ -1726,93 +1714,6 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
     end
   end
 
-  class Ssb_fm < Musgen
-    def initialize(freq)
-      super()
-      @frequency = freq
-      @osc1 = make_oscil(freq, 0)
-      @osc2 = make_oscil(freq, HALF_PI)
-      @osc3 = make_oscil(0, 0)
-      @osc4 = make_oscil(0, HALF_PI)
-      @hilbert = make_hilbert_transform(40)
-      @delay = make_delay(40)
-    end
-
-    def inspect
-      format("%s.new(%s)", self.class, @frequency)
-    end
-
-    def to_s
-      format("#<%s freq: %s>", self.class, @frequency)
-    end
-
-    def run_func(val1 = 0.0, val2 = 0.0)
-      ssb_fm(val1)
-    end
-    
-    def ssb_fm(modsig)
-      am0 = oscil(@osc1)
-      am1 = oscil(@osc2)
-      car0 = oscil(@osc3, hilbert_transform(@hilbert, modsig))
-      car1 = oscil(@osc4, delay(@delay, modsig))
-      am0 * car0 + am1 * car1
-    end
-  end
-
-  def make_ssb_fm(freq = 440.0)
-    Ssb_fm.new(freq)
-  end
-
-  def ssb_fm?(obj)
-    obj.kind_of?(Ssb_fm)
-  end
-  
-  def ssb_fm(gen, modsig = 0.0)
-    gen.ssb_fm(modsig)
-  end
-
-  class Fm2 < Musgen
-    def initialize(f1, f2, f3, f4, p1, p2, p3, p4)
-      super()
-      @osc1 = make_oscil(f1, p1)
-      @osc2 = make_oscil(f2, p2)
-      @osc3 = make_oscil(f3, p3)
-      @osc4 = make_oscil(f4, p4)
-    end
-
-    def inspect
-      format("%s.new(%s, %s, %s, %s, %s, %s, %s, %s)",
-             self.class, @f1, @f2, @f3, @f4, @p1, @p2, @p3, @p4)
-    end
-
-    def to_s
-      format("#<%s %1.3f, %1.3f, %1.3f, %1.3f, %1.3f, %1.3f, %1.3f, %1.3f>",
-             self.class, @f1, @f2, @f3, @f4, @p1, @p2, @p3, @p4)
-    end
-
-    def run_func(val1 = 0.0, val2 = 0.0)
-      fm2(val1)
-    end
-    
-    def fm2(index)
-      (oscil(@osc1, index * oscil(@osc2)) + oscil(@osc3, index * oscil(@osc4))) * 0.25
-    end
-  end
-  
-  # make_fm2(1000, 100, 1000, 100,  0, 0, HALF_PI, HALF_PI)
-  # make_fm2(1000, 100, 1000, 100,  0, 0, 0, HALF_PI)
-  def make_fm2(f1, f2, f3, f4, p1, p2, p3, p4)
-    Fm2.new(f1, f2, f3, f4, p1, p2, p3, p4)
-  end
-
-  def fm2?(obj)
-    obj.kind_of?(Fm2)
-  end
-  
-  def fm2(gen, index = 0.0)
-    gen.fm2(index)
-  end
-
   #vct|channel|spectral-polynomial
   def vct_polynomial(v, coeffs)
     new_v = Vct.new(v.length, coeffs.last)
@@ -2025,17 +1926,18 @@ tries to return an inverse filter to undo the effect of the FIR filter coeffs.")
   class Moving_max < Musgen
     def initialize(size = 128)
       super()
-      @size = size
+      @length = size
       @gen = make_delay(:size, size)
       @gen.scaler = 0.0
+      @data = @gen.data
     end
 
     def inspect
-      format("%s.new(%s)", self.class, @size)
+      format("%s.new(%s)", self.class, @length)
     end
 
     def to_s
-      format("#<%s size: %s, scaler: %s>", self.class, @size, @gen.scaler)
+      format("#<%s size: %s, scaler: %s>", self.class, @length, @gen.scaler)
     end
 
     def run_func(val1 = 0.0, val2 = 0.0)
@@ -2058,7 +1960,7 @@ tries to return an inverse filter to undo the effect of the FIR filter coeffs.")
   end
 
   add_help(:make_moving_max,
-           "make_moving_max(size = 128)  returns a moving_max generator.  \
+           "make_moving_max(size = 128)  returns a windowed-maxamp generator.  \
 The generator keeps a running window of the last 'size' inputs, \
 returning the maxamp in that window.")
   def make_moving_max(size = 128)
@@ -2074,6 +1976,62 @@ returns the maxamp in a running window on the last few inputs.")
   alias windowed_maxamp                 moving_max
   alias make_windowed_maxamp            make_moving_max
 
+  # moving-sum generator (the sum norm or 1-norm)
+  
+  add_help(:make_moving_sum,
+           "make_moving_sum([size=128])  returns a moving-sum generator.  \
+The generator keeps a running window of the last 'size' inputs, \
+returning the sum of the absolute values of the samples in that window.")
+  def make_moving_sum(size = 128)
+    gen = make_moving_average(size)
+    gen.increment = 1.0
+    gen
+  end
+
+  add_help(:moving_sum,
+           "moving_sum(gen, y)  \
+returns the sum of the absolute values in a moving window over the last few inputs.")
+  def moving_sum(gen, y)
+    moving_average(gen, y.abs)
+  end
+
+  # moving-rms generator
+
+  add_help(:make_moving_rms,
+           "make_moving_rms([size=128])  returns a moving-rms generator.  \
+The generator keeps a running window of the last 'size' inputs, \
+returning the rms of the samples in that window.")
+  def make_moving_rms(size = 128)
+    make_moving_average(size)
+  end
+
+  add_help(:moving_rms,
+           "moving_rms(gen, y)  \
+returns the rms of the values in a window over the last few inputs.")
+  def moving_rms(gen, y)
+    sqrt(moving_average(gen, y * y))
+  end
+
+  # moving-length generator (euclidean norm or 2-norm)
+
+  add_help(:make_moving_length,
+           "make_moving_length([size=128])  returns a moving-length generator.  \
+The generator keeps a running window of the last 'size' inputs, \
+returning the euclidean length of the vector in that window.")
+  def make_moving_length(size = 128)
+    gen = make_moving_average(size)
+    gen.increment = 1.0
+    gen
+  end
+
+  add_help(:moving_length,
+           "moving_length(gen, y)  \
+returns the length of the values in a window over the last few inputs.")
+  def moving_length(gen, y)
+    sqrt(moving_average(gen, y * y))
+  end
+
+  
   # harmonicizer (each harmonic is split into a set of harmonics via Chebyshev polynomials)
   # obviously very similar to ssb_bank above, but splits harmonics
   # individually, rather than pitch-shifting them

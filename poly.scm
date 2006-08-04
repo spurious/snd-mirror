@@ -1,6 +1,6 @@
 ;;; polynomial-related stuff
 ;;;
-;;; poly+ poly* poly/ poly-gcd poly-reduce poly-roots poly-derivative
+;;; poly+ poly* poly/ poly-gcd poly-reduce poly-roots poly-derivative poly-resultant poly-discriminant
 
 (provide 'snd-poly.scm)
 (if (not (provided? 'snd-mixer.scm)) (load-from-path "mixer.scm")) ; need matrix determinant for poly-resultant
@@ -158,12 +158,15 @@
 
 ;;; (poly-derivative (vct 0.5 1.0 2.0 4.0)) -> #<vct[len=3]: 1.000 4.000 12.000>
 
+;;; poly-antiderivative with random number as constant? or max of all coeffs? -- 0.0 seems like a bad idea -- maybe an optional arg 
+;;; then poly-integrate: (let ((integral (poly-antiderivative p1))) (- (poly-as-vector-eval integral end) (poly-as-vector-eval integral beg)))
+
 
 (define (poly-as-vector-resultant p1 p2)
   (let* ((m (vector-length p1))
 	 (n (vector-length p2))
 	 (mat (make-mixer (+ n m -2))))
-    ;; load matrix with n-1 rows of m's coeffs then m-1 rows of n's coeffs, return determinant
+    ;; load matrix with n-1 rows of m's coeffs then m-1 rows of n's coeffs (reversed in sense), return determinant
     (do ((i 0 (1+ i)))
 	((= i (1- n)))
       (do ((j 0 (1+ j)))
@@ -203,7 +206,6 @@
 ;;; (poly-discriminant (poly-reduce (poly* (poly* (poly* (vct 1 1) (vct -1 1)) (vct 3 1)) (vct 2 1)))) 2304
 ;;; (poly-discriminant (poly-reduce (poly* (poly* (poly* (vct 1 1) (vct -1 1)) (vct 3 1)) (vct 3 1)))) 0.0
 
-;;; TODO: doc/test poly-resultant/discriminant
 
 
 (if (not (defined? 'pi))
