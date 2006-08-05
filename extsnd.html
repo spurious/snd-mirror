@@ -7590,7 +7590,11 @@ reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotati
 <code><a class=def name="revertsound">revert-sound</a> (<i>snd</i>)</code>
 </td></tr>
 <tr><td></td><td>
-This reverts <i>snd</i> to its saved (unedited) state.
+This reverts <i>snd</i> to its saved (unedited) state.  A channel-specific version:
+<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
+(define* (revert-channel :optional snd chn)
+  (set! (edit-position snd chn) 0))
+</pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -9923,7 +9927,7 @@ In Forth:
 </td></tr>
 <tr><td></td><td>
 The current position in the edit history list; it can be set:  <code>(set! (edit-position) 0)</code> is equivalent
-to <code>(<a class=quiet href="#revertsound">revert-sound</a>)</code>.
+to <code>(<a class=quiet href="#revertsound">revert-sound</a>)</code> in a mono sound.
 See <a href="#makesamplereader">make-sample-reader</a>.
 </td></tr>
 <tr><td></td><td></td></tr>

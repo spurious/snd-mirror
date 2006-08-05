@@ -561,17 +561,76 @@ static bool append_key_help(const char *name, int key, int state, bool cx_extend
   return(first_time);
 }
 
+/* SOMEDAY: help examples in local language */
+
+
+/* ---------------- Find ---------------- */
+
 void find_help(void) 
 {
+  #if HAVE_SCHEME
+    #define basic_example "(lambda (y) (> y 0.1))"
+    #define H_find_channel S_find_channel
+    #define find_channel_example "        >(find-channel (lambda (y) (> y .1)))\n        (#t 4423)"
+    #define H_count_matches S_count_matches
+    #define count_matches_example "        >(count-matches (lambda (y) (> y .1)))\n        2851"
+    #define H_search_procedure S_search_procedure
+    #define search_procedure_example "        >(set! (search-procedure) (lambda (y) (> y .1)))"
+    #define H_find_sound S_find_sound
+  #endif
+  #if HAVE_RUBY
+    #define basic_example "lambda do |y| y > 0.1 end"
+    #define H_find_channel "find_channel"
+    #define find_channel_example "        >find_channel(lambda do |y| y > 0.1 end)\n       [true, 4423]"
+    #define H_count_matches "count_matches"
+    #define count_matches_example "        >count_matches(lambda do |y| y > 0.1 end)\n       2851"
+    #define H_search_procedure "search_procedure"
+    #define search_procedure_example "     >set_search_procedure(lambda do |y| y > 0.1 end)"
+    #define H_find_sound S_find_sound
+  #endif
+  #if HAVE_FORTH
+    #define basic_example "lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc"
+    #define find_channel_example "        >lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc find-channel\n        '( #t 4423 )"
+    #define H_find_channel S_find_channel
+    #define H_count_matches S_count_matches
+    #define count_matches_example "         >lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc count-matches\n         2851"
+    #define H_search_procedure S_search_procedure
+    #define search_procedure_example "       >lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc set-search-procedure"
+    #define H_find_sound S_find_sound
+  #endif
+
   snd_help_with_xrefs("Find", 
 #if HAVE_EXTENSION_LANGUAGE
 "Searches in Snd refer to the sound data, and are, in general, patterned after Emacs.  When you type \
 C-s or C-r, the minibuffer below the graph is activated and you are asked for the search expression. \
-The expression is a function that takes one argument, the current sample value, and returns #t when it finds a match. \
-To look for the next sample that is greater than .1, (lambda (y) (> y .1)).  The cursor then moves \
-to the next such sample, if any. Successive C-s's or C-r's repeat the search.\
+The expression is a function that takes one argument, the current sample value, and returns " PROC_TRUE " when it finds a match. \
+To look for the next sample that is greater than .1, " basic_example ".  The cursor then moves \
+to that sample, if any. Successive C-s's or C-r's continue the search starting from the next sample.\
+Normally, the search applies only to the current channel. To search all current files at once, use the Edit:Find dialog.\
 \n\n\
-Normally, the search applies only to the current channel. To search all current files at once, use the Edit:Find dialog.",
+The primary searching function is:\n\
+\n\
+   " H_find_channel " (proc :optional (sample 0) snd chn edpos)\n\
+	This function finds the sample that satisfies the function 'proc'. \n\
+        'sample' determines where to start the search. \n\
+" find_channel_example "\n\
+\n\
+Closely related is:\n\
+\n\
+    " H_count_matches " (proc :optional (sample 0) snd chn edpos)\n\
+	This returns how many samples satisfy the function 'proc'.\n\
+" count_matches_example "\n\
+\n\
+To find whether a given sound is currently open in Snd, use:\n\
+\n\
+    " H_find_sound " (filename :optional (nth 0))\n\
+	" H_find_sound " returns the index of 'filename' or " PROC_FALSE ".\n\
+\n\
+The current search procedure (for the Edit:Find dialog) is:\n\
+\n\
+    " H_search_procedure " (:optional snd)\n\
+" search_procedure_example "\n\
+",
 #else
 "Searches in Snd depend completely on the extension language.  Since none is loaded,\
 the searching mechanisms are disabled.",
@@ -584,13 +643,38 @@ the searching mechanisms are disabled.",
     append_key_help("C-s", snd_K_s, snd_ControlMask, false, true));
 }
 
+
+/* ---------------- Undo ---------------- */
+
 void undo_help(void) 
 {
+  #if HAVE_SCHEME
+    #define H_undo S_undo
+    #define H_redo S_redo
+    #define H_revert_sound S_revert_sound
+    #define H_edit_position S_edit_position
+    #define edit_position_example "(set! (edit-position) 0) ; revert channel"
+  #endif
+  #if HAVE_RUBY
+    #define H_undo "undo_edit"
+    #define H_redo "redo_edit"
+    #define H_revert_sound "revert_sound"
+    #define H_edit_position "edit_position"
+    #define edit_position_example "set_edit_position(0) # revert channel"
+  #endif
+  #if HAVE_FORTH
+    #define H_undo S_undo
+    #define H_redo S_redo
+    #define H_revert_sound S_revert_sound
+    #define H_edit_position S_edit_position
+    #define edit_position_example "0 set-edit-position \\ revert channel"
+  #endif
+
   snd_help_with_xrefs("Undo and Redo", 
 "Snd supports 'unlimited undo' in the sense that you can move back and forth in the list of edits without any \
-limit on how long that list can get.  The data displayed is always the edited form thereof.  Each editing operation \
+limit on how long that list can get.  Each editing operation \
 extends the current edit list; each undo backs up in that list, and each redo moves forward in the list of previously \
-un-done edits.  Besides the Edit and Popup menu options, and the " S_undo " and " S_redo " functions, \
+un-done edits.  Besides the Edit and Popup menu options, and the " H_undo " and " H_redo " functions, \
 there are these keyboard sequences: \
 \n\n\
   C-x r     redo last edit\n\
@@ -599,8 +683,25 @@ there are these keyboard sequences: \
   C-x C-u   undo last edit\n\
   C-_       undo last edit\n\
 \n\
-Revert is the same as undo all edits.\n\n\
-In the listener, C-M-g deletes all text, and C-_ deletes back to the previous command.",
+File:Revert is the same as undo all edits.\
+In the listener, C-M-g deletes all text, and C-_ deletes back to the previous command.\
+In the sound display, the number at the lower left shows the current edit position and the channel number.\
+The main functions that affect the edit position are:\n\
+\n\
+    " H_undo " (:optional (edits 1) snd chn)\n\
+	This undoes 'edits' edits in snd's channel chn.\n\
+\n\
+    " H_redo " (:optional (edits 1) snd chn)\n\
+	This re-activates 'edits' edits in snd's channel chn.\n\
+\n\
+    " H_revert_sound " (:optional snd)\n\
+	This reverts 'snd' to its saved (unedited) state.\n\
+\n\
+    " H_edit_position " (:optional snd chn)\n\
+	This is the current position in the edit history list.\n\
+        " edit_position_example "\n\
+",
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Undo"),
 		      snd_xref_urls("Undo"));
@@ -613,8 +714,11 @@ In the listener, C-M-g deletes all text, and C-_ deletes back to the previous co
 	    append_key_help("C-x r", snd_K_r, 0, true, true))))));
 }
 
+
+/* ---------------- Sync ---------------- */
+
 static char *sync_xrefs[4] = {
-  "sound sync field: {" S_sync "}",
+  "sound sync field: {" S_sync "}, {" S_sync_max "}",
   "mark sync field: {" S_mark_sync "}, {" S_mark_sync_max "}, {mark-sync-color}, {" S_syncd_marks "}",
   "mix sync (track) field: {" S_mix_track "}",
   NULL};
@@ -624,12 +728,15 @@ void sync_help(void)
   snd_help_with_xrefs("Sync", 
 "The sync button causes certain operations to apply to all channels or multiple sounds simultaneously. \
 For example, to get a multichannel selection, set the sync button, then define the selection (by dragging \
-the mouse) in one channel, and the parallel portions of the other channels will also be selected. \
+the mouse) in one channel, and the parallel portions of the other channels are also selected. \
 Marks and mixes can also be sync'd together.",
 		      WITH_WORD_WRAP,
 		      sync_xrefs,
 		      NULL);
 }
+
+
+/* ---------------- Debug ---------------- */
 
 static char *debug_xrefs[8] = {
   "C debugging: {gdb}",
@@ -651,6 +758,8 @@ static char *debug_urls[8] = {
   "extsnd.html#sndprint",
   NULL};
 
+/* show how to turn on debugging stuff in Guile etc */
+
 void debug_help(void)
 {
   snd_help_with_xrefs("Debugging", 
@@ -671,6 +780,9 @@ extsnd.html, or snd-debug.  For notelist debugging, see ws-backtrace.",
 		      debug_urls);
 }
 
+
+/* ---------------- Envelope ---------------- */
+
 void env_help(void) 
 {
   snd_help_with_xrefs("Envelope", 
@@ -690,6 +802,9 @@ applied to the entire file. \
   append_key_help("C-x a", snd_K_a, 0, true,
     append_key_help("C-x C-a", snd_K_s, snd_ControlMask, true, true));
 }
+
+
+/* ---------------- FFT ---------------- */
 
 void fft_help(void)
 {
@@ -732,6 +847,9 @@ variable " S_transform_normalization " to " S_dont_normalize ".",
  *  why not: copy save selections/regions graph choices
  *  dialog help is similarly sketchy
  */
+
+
+/* ---------------- Control Panel ---------------- */
 
 static char *control_xrefs[9] = {
   "various control panel variables: {Control panel}",
@@ -792,6 +910,9 @@ The keyboard commands associated with the control panel are: \
     append_key_help("C-x C-c", snd_K_c, snd_ControlMask, true, true));
 }
 
+
+/* ---------------- Marks ---------------- */
+
 void marks_help(void) 
 {
   snd_help_with_xrefs("Marks", 
@@ -827,6 +948,9 @@ than 0) will move together when one is moved, and so on.  The following keyboard
 	  append_key_help("C-m", snd_K_m, snd_ControlMask, false, true)))));
 }
 
+
+/* ---------------- Mixes ---------------- */
+
 void mix_help(void) 
 {
   snd_help_with_xrefs("Mixing", 
@@ -860,6 +984,9 @@ A set of associated mixes is called a 'track' in Snd, and there's a help menu it
     append_key_help("C-x C-q", snd_K_q, snd_ControlMask, true, true));
 }
 
+
+/* ---------------- Tracks ---------------- */
+
 void track_help(void) 
 {
   snd_help_with_xrefs("Tracks",
@@ -873,6 +1000,9 @@ of the given track, just as a mix would be.",
 		      snd_xrefs("Track"),
 		      snd_xref_urls("Track"));
 }
+
+
+/* ---------------- Recording ---------------- */
 
 static char *record_xrefs[4] = {
   "recorder variables: {" S_recorder_gain "}, etc",
@@ -924,6 +1054,9 @@ click the 'digital input' button; otherwise you'll get a stuttering effect becau
 		      record_xrefs,
 		      NULL);
 }
+
+
+/* ---------------- Headers etc ---------------- */
 
 static char *header_and_data_xrefs[10] = {
   "data format discussion: {" S_data_format "}",
@@ -985,6 +1118,9 @@ and that file is the one the editor sees from then on.",
 		      header_and_data_urls);
 }
 
+
+/* ---------------- Initialization File ---------------- */
+
 static char *init_file_xrefs[6] = {
   "{X resources}:  .Xdefaults settings",
   "{Invocation flags}", 
@@ -1019,6 +1155,9 @@ the gtk resource stuff in Snd.gtkrc.",
 		      init_file_xrefs,
 		      init_file_urls);
 }
+
+
+/* ---------------- Key Bindings ---------------- */
 
 static char *key_xrefs[4] = {
   "To change a key binding: {" S_bind_key "}",
@@ -1102,6 +1241,9 @@ void key_binding_help(void)
   snd_help_back_to_top();
 }
 
+
+/* ---------------- Play ---------------- */
+
 void play_help(void)
 {
   snd_help_with_xrefs("Play",
@@ -1126,6 +1268,9 @@ Except in the browsers, what is actually played depends on the control panel.",
   append_key_help("C-q", snd_K_q, snd_ControlMask, true, true);
 }
 
+
+/* ---------------- Reverb ---------------- */
+
 void reverb_help(void)
 {
   snd_help_with_xrefs("Reverb",
@@ -1136,6 +1281,8 @@ reverbs mentioned in the related topics list.",
 		      snd_xref_urls("Reverb"));
 }
 
+
+/* ---------------- Save ---------------- */
 void save_help(void)
 {
   snd_help_with_xrefs("Save",
@@ -1156,6 +1303,9 @@ If you want Snd to ask before overwriting a file in any case, set the variable "
       append_key_help("C-x C-s", snd_K_s, snd_ControlMask, true, true)));
 }
 
+
+/* ---------------- Filter ---------------- */
+
 void filter_help(void)
 {
   snd_help_with_xrefs("Filter",
@@ -1166,6 +1316,9 @@ see dsp.scm in particular.",
 		      snd_xref_urls("Filter"));
 }
 
+
+/* ---------------- Resample ---------------- */
+
 void resample_help(void)
 {
   snd_help_with_xrefs("Resample",
@@ -1174,6 +1327,9 @@ void resample_help(void)
 		      snd_xrefs("Resample"),
 		      snd_xref_urls("Resample"));
 }
+
+
+/* ---------------- Insert ---------------- */
 
 void insert_help(void)
 {
@@ -1189,6 +1345,9 @@ zero sample at the cursor",
       append_key_help("C-x C-i", snd_K_i, snd_ControlMask, true, true)));
 }
 
+
+/* ---------------- Delete ---------------- */
+
 void delete_help(void)
 {
   snd_help_with_xrefs("Delete",
@@ -1203,6 +1362,8 @@ void delete_help(void)
 
 
 /* -------- dialog help texts -------- */
+
+/* ---------------- Envelope Editor ---------------- */
 
 void envelope_editor_dialog_help(void)
 {
@@ -1253,6 +1414,9 @@ improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling r
   append_key_help("C-x C-a", snd_K_a, snd_ControlMask, true, true);
 }
 
+
+/* ---------------- Transform Options ---------------- */
+
 void transform_dialog_help(void)
 {
   snd_help_with_xrefs("Transform Options",
@@ -1290,6 +1454,9 @@ in linear terms.",
 		      snd_xref_urls("FFT"));
 }
 
+
+/* ---------------- Color Dialog ---------------- */
+
 static char *color_dialog_xrefs[9] = {
   "colormap variable: {colormap}",
   "colormap constants: rgb.scm",
@@ -1311,6 +1478,9 @@ and perhaps wavogram display. The cutoff scale refers to the minimum data value 
 		      NULL);
 }
 
+
+/* ---------------- Orientation Dialog ---------------- */
+
 static char *orientation_dialog_xrefs[4] = {
   "orientation variables: {" S_spectro_x_scale "}, {" S_spectro_x_angle "}, etc",
   "start orientation dialog: {" S_orientation_dialog "}",
@@ -1331,6 +1501,9 @@ spectrogram is drawn by openGL.",
 		      NULL);
 }
 
+
+/* ---------------- Region Dialog ---------------- */
+
 void region_dialog_help(void)
 {
   snd_help_with_xrefs("Region Browser",
@@ -1346,6 +1519,9 @@ the file, the region is updated to reflect any edits you made.",
 		      snd_xrefs("Region"),
 		      snd_xref_urls("Region"));
 }
+
+
+/* ---------------- Raw Sound Dialog ---------------- */
 
 static char *raw_xrefs[7] = {
   "specialize handing of raw sounds: {" S_open_raw_sound_hook "}",
@@ -1389,12 +1565,18 @@ To use the defaults, click the 'Reset' button.",
     }
 }
 
+
+/* ---------------- Completion Dialog ---------------- */
+
 void completion_dialog_help(void)
 {
   snd_help("completion",
 	   "These are the completions that Snd thinks might be likely. If you select one, it will be used to complete the current name.",
 	   WITH_WORD_WRAP);
 }
+
+
+/* ---------------- Save as Dialog ---------------- */
 
 void save_as_dialog_help(void)
 {
@@ -1415,6 +1597,9 @@ than 'Save'.",
 		      snd_xrefs("Save"),
 		      snd_xref_urls("Save"));
 }
+
+
+/* ---------------- Open File ---------------- */
 
 static char *open_file_xrefs[7] = {
   "open file: {" S_open_sound "}",
@@ -1447,6 +1632,9 @@ display possible matches.",
 		      NULL);
 }
 
+
+/* ---------------- Mix File ---------------- */
+
 void mix_file_dialog_help(void)
 {
   snd_help_with_xrefs("Mix File",
@@ -1457,6 +1645,9 @@ of the initial mix, use the View:Files dialog.  To edit the mix, use the View:Mi
 		      snd_xrefs("Mix"),
 		      snd_xref_urls("Mix"));
 }
+
+
+/* ---------------- Insert File ---------------- */
 
 void insert_file_dialog_help(void)
 {
@@ -1469,6 +1660,9 @@ of the insertion, use the View:Files dialog.",
 		      snd_xref_urls("Insert"));
 }
 
+
+/* ---------------- Find Dialog ---------------- */
+
 void find_dialog_help(void)
 {
   snd_help_with_xrefs("Global Find",
@@ -1479,6 +1673,9 @@ search is satisified.  For example, (lambda (n) (> n .1)) looks for the next sam
 		      snd_xrefs("Find"),
 		      snd_xref_urls("Find"));
 }
+
+
+/* ---------------- Mix Dialog ---------------- */
 
 void mix_dialog_help(void)
 {
@@ -1496,6 +1693,9 @@ mix amp env (if any) is drawn in blue.",
 		      snd_xref_urls("Mix"));
 }
 
+
+/* ---------------- Track Dialog ---------------- */
+
 void track_dialog_help(void)
 {
   snd_help_with_xrefs("Tracks",
@@ -1511,6 +1711,9 @@ mix amp env (if any) is drawn in blue.",
 		      snd_xrefs("Track"),
 		      snd_xref_urls("Track"));
 }
+
+
+/* ---------------- New File ---------------- */
 
 /* TODO: shouldn't the Ruby xrefs be in Ruby syntax? (would this mess up the indexing?) (word_wrap translates -- would need free) */
 
@@ -1535,6 +1738,9 @@ until you save the new sound.",
 		      new_file_xrefs,
 		      NULL);
 }
+
+
+/* ---------------- Edit Header ---------------- */
 
 static char *edit_header_xrefs[11] = {
   "change srate: {" S_src_channel "}",
@@ -1568,6 +1774,9 @@ or editing the header comments; anything else is obviously dangerous.",
 		      edit_header_urls);
 }
 
+
+/* ---------------- Print Dialog ---------------- */
+
 static char *print_xrefs[4] = {
   "default eps file name: {" S_eps_file "}",
   "eps overall size: {" S_eps_size "}",
@@ -1585,6 +1794,8 @@ but you can use Gimp or some such program to get a screenshot, and print that.",
 		      print_xrefs,
 		      NULL);
 }
+
+/* ---------------- View Files ---------------- */
 
 static char *view_files_xrefs[5] = {
   "place sound in view files list: {" S_add_file_to_view_files_list "}",
@@ -1611,6 +1822,9 @@ number of samples in the sound. The variable " S_view_files_sort " refers to thi
 		      view_files_xrefs,
 		      NULL);
 }
+
+
+/* ---------------- help dialog special cases ---------------- */
 
 static void copy_help(void)
 {

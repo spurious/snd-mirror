@@ -2,7 +2,7 @@
 
 #define HELP_ROWS 10
 #define HELP_XREFS 8
-#define HELP_COLUMNS 56
+#define HELP_COLUMNS 80
 /* these set the initial size of the help dialog text area */
 
 static Widget help_dialog = NULL;
