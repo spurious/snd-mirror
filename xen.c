@@ -549,6 +549,15 @@ bool xen_rb_defined_p(const char *name)
     }
 }
 
+long xen_rb_list_length(XEN obj) 
+{ 
+  if (XEN_LIST_P(obj)) 
+    return(RARRAY(obj)->len); 
+  if (obj == XEN_EMPTY_LIST) 
+    return(0); 
+  return(-1); 
+} 
+
 char *xen_version(void)
 {
   char *buf;

@@ -4,6 +4,7 @@
 
 /* 
  * SOMEDAY: bark scale as axis or color as above: Fletcher-Munson post-process fft data -- is there a hook that would allow this?
+ *            do this and the others (below) as lisp graph functions
  * SOMEDAY: user-addable graph-style? axis? (dB for example, or rms above)
  *          also affects cursor display, perhaps verbose cursor info display, peak-env graphing,
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
@@ -1774,6 +1775,12 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 
   if (cp->fft_log_frequency)
     {
+      /* here and elsewhere "log" could be trapped and user expression inserted to give fancy scales (Bark, Mel, etc)
+       *
+       *  perhaps add: fft_frequency_function, fft_magnitude_function
+       *    or replace fft_log* with these (defaults = log and in_dB?)
+       *    or do it in the lisp graph?
+       */
       fap_range = fap->x1 - fap->x0;
       if (fap->x0 > 1.0) minlx = log(fap->x0); else minlx = 0.0;
       maxlx = log(fap->x1);
@@ -1825,6 +1832,13 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	    {
 	      if (cp->fft_log_frequency) 
 		{
+		  /* Bark scale: (define (bark f) (* 21.4 (/ (log (+ (* 4.27 f) 1.0)) (log 10.0))))
+		   *   looks very much like log to me
+		   * critical band = 26.81 / (1 + 1960 / f) - 0.53
+		   * erb (equivalent rectangular bandwidth) = 11.17 ln[(f + 312) / (f + 14675)] + 43.0
+		   * mel = 1127 log(1 + (f / 700))
+		   * or musical octave based on log2
+		   */
 		  if (x > 1.0) curlx = log(x); else curlx = 0.0;
 		  logx = local_grf_x(fap->x0 + lscale * (curlx - minlx), fap);
 		}
@@ -3111,7 +3125,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	}
       if (with_lisp) 
 	{
-	  uap->y_offset += (height * (displays - 1)); 
+	  uap->y_offset += (height * (displays - 1));
 	  uap->graph_x0 = 0;
 	}
     }
@@ -6887,10 +6901,9 @@ If 'data' is a list of numbers, it is treated as an envelope."
   bool need_update = false;
   Float ymin, ymax, val;
   double nominal_x0, nominal_x1;
-  lisp_grf *old_lp = NULL;
-  Latus h = 0, w = 0, ww = 0;
-  Locus o = 0, gx0 = 0;
-  axis_info *uap = NULL;
+  Latus old_height = 0, old_width = 0, ww = 0;
+  Locus old_y_offset = 0, gx0 = 0;
+
   /* ldata can be a vct or a list of numbers or vcts */
   XEN_ASSERT_TYPE(((MUS_VCT_P(ldata)) || 
 		   ((XEN_LIST_P(ldata)) && (XEN_LIST_LENGTH(ldata) > 0) && 
@@ -6917,21 +6930,26 @@ If 'data' is a list of numbers, it is treated as an envelope."
   else graphs = XEN_LIST_LENGTH(ldata);
   if (graphs == 0) return(XEN_FALSE);
   lg = cp->lisp_info;
-  if ((lg) && (graphs != lg->graphs)) 
+
+  if (lg)
     {
-      old_lp = cp->lisp_info;
-      uap = old_lp->axis;
+      axis_info *uap = NULL;
+      uap = cp->lisp_info->axis;
       if (uap)
 	{
-	  h = uap->height;
-	  w = uap->width;
+	  old_height = uap->height;
+	  old_width = uap->width;
 	  ww = uap->window_width;
-	  o = uap->y_offset;
 	  gx0 = uap->graph_x0;
+	  old_y_offset = uap->y_offset;
 	}
-      free_lisp_info(cp);
-      cp->lisp_info = NULL;
+      if (graphs != lg->graphs)
+	{
+	  free_lisp_info(cp);
+	  cp->lisp_info = NULL;
+	}
     }
+
   if (!(cp->lisp_info))
     {
       lg = (lisp_grf *)CALLOC(graphs, sizeof(lisp_grf));
@@ -6998,14 +7016,16 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	}
     }
   lg->axis = make_axis_info(cp, nominal_x0, nominal_x1, ymin, ymax, label, nominal_x0, nominal_x1, ymin, ymax, lg->axis);
+  lg->axis->y_offset = old_y_offset;
+
   if (label) FREE(label);
   if (need_update)
     {
+      axis_info *uap = NULL;
       uap = lg->axis;
-      uap->height = h;
+      uap->height = old_height;
       uap->window_width = ww;
-      uap->y_offset = o;
-      uap->width = w;
+      uap->width = old_width;
       uap->graph_x0 = gx0;
     }
   cp->graph_lisp_p = true;

@@ -722,6 +722,17 @@ variable " S_transform_normalization " to " S_dont_normalize ".",
 		      snd_xref_urls("FFT"));
 }
 
+/* TODO: these help discussions also need the basic Snd functions listed (max-transform-peaks),
+ *        and the dialog should have a tooltip or something to tell the functional name of each field
+ *
+ *  bare bones help: Filter Resample Reverb Insert Delete
+ *  need examples: Key-Bindings Debugging
+ *  wierd: Sync (but not Unite?)
+ *  out of date: headers/data formats
+ *  why not: copy save selections/regions graph choices
+ *  dialog help is similarly sketchy
+ */
+
 static char *control_xrefs[9] = {
   "various control panel variables: {Control panel}",
   "amplitude: {" S_scale_by "}",

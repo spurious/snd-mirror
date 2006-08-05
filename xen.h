@@ -18,6 +18,7 @@
 
 /* HISTORY:
  *
+ *  7-Aug-06:  more careful list length handling in Ruby (from Mike).
  *  23-May-06: added xen_rb_repl_set_prompt to set (no-gui) Ruby repl prompt.
  *  12-May-06: changed HAVE_RATIOS to XEN_HAVE_RATIOS.
  *  17-Apr-06: removed XEN_MAKE_OBJECT.
@@ -765,7 +766,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_CDDR(a)                     XEN_CDR(XEN_CDR(a))
 
 #define XEN_LIST_P(Arg)                 (TYPE(Arg) == T_ARRAY)
-#define XEN_LIST_LENGTH(Arg)            RARRAY(Arg)->len
+#define XEN_LIST_LENGTH(Arg)            xen_rb_list_length(Arg) 
 #define XEN_EQ_P(a, b)                  ((a) == (b))
 #define XEN_EQV_P(a, b)                 ((a) == (b))
 #define XEN_EQUAL_P(a, b)               ((a) == (b))
@@ -1135,6 +1136,7 @@ char *xen_scheme_constant_to_ruby(const char *name);
 char *xen_scheme_procedure_to_ruby(const char *name);
 char *xen_scheme_global_variable_to_ruby(const char *name);
 bool xen_rb_defined_p(const char *name);
+long xen_rb_list_length(XEN obj); 
 void xen_rb_raise(XEN type, XEN info);
 XEN xen_rb_obj_as_string(XEN obj);
 XEN xen_rb_eval_string_with_error(char *str);

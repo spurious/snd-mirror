@@ -2,13 +2,18 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Apr 09 23:55:07 CEST 2005
-# Changed: Mon Jul 31 14:02:22 CEST 2006
+# Changed: Fri Aug 04 02:17:37 CEST 2006
 
 # Commentary: (see poly.scm)
 #
-# rational?(obj)
-#
-# class Poly
+# class Complex
+#  to_f
+#  to_f_or_c
+#  
+# class Numeric
+#  to_c
+#  
+# class Poly < Vec
 #  inspect
 #  to_poly
 #  reduce
@@ -16,12 +21,9 @@
 #  *(other)
 #  /(other)
 #  derivative
+#  resultant(other)
+#  discriminant
 #  gcd(other)
-#  linear_root(a, b)
-#  quadratic_root(a, b, c)
-#  cubic_root(a, b, c, d)
-#  quartic_root(a, b, c, d, e)
-#  nth_root(a, b, deg)
 #  roots
 #  eval(x)
 #
@@ -53,9 +55,9 @@
 #
 # Code:
 
-require "examp"
 require "complex"
-require "rational"
+require "examp"
+require "mix"
 
 class Complex
   attr_writer :real, :image
@@ -184,6 +186,38 @@ class Poly < Vec
   end
   # poly(0.5, 1.0, 2.0, 4.0).derivative ==> poly(1.0, 4.0, 12.0)
 
+  include Mixer_matrix
+  def resultant(other)
+    m = self.length
+    n = other.length
+    mat = make_mixer(n + m + -2)
+    (0...n - 1).each do |i|
+      m.times do |j|
+        mixer_set!(mat, i, i + j, self[m - j - 1])
+      end
+    end
+    (0...m - 1).each do |i|
+      n.times do |j|
+        mixer_set!(mat, i + n + -1, i + j, other[n - j - 1])
+      end
+    end
+    mixer_determinant(mat)
+  end
+  # poly(-1, 0, 1).resultant([1, -2, 1]) ==> 0.0
+  # poly(-1, 0, 2).resultant([1, -2, 1]) ==> 1.0
+  # poly(-1, 0, 1).resultant([1, 1])     ==> 0.0
+  # poly(-1, 0, 1).resultant([2, 1])     ==> 3.0
+
+  def discriminant
+    self.resultant(self.derivative)
+  end
+  # poly(-1, 0, 1).discriminant ==> -4.0
+  # poly(1, -2, 1).discriminant ==>  0.0
+  # (poly(-1, 1) * poly(-1, 1) * poly(3, 1)).reduce.discriminant              ==> 0.0
+  # (poly(-1, 1) * poly(-1, 1) * poly(3, 1) * poly(2, 1)).reduce.discriminant ==> 0.0
+  # (poly(1, 1) * poly(-1, 1) * poly(3, 1) * poly(2, 1)).reduce.discriminant  ==> 2304.0
+  # (poly(1, 1) * poly(-1, 1) * poly(3, 1) * poly(3, 1)).reduce.discriminant  ==> 0.0
+  
   def gcd(other)
     assert_type((array?(other) or vct?(other)), other, 0, "a poly, a vct or an array")
     if self.length < other.length
