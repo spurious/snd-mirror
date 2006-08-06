@@ -910,8 +910,8 @@ GtkWidget *add_menu(void)
   gtk_widget_show(help_find_menu);
   SG_SIGNAL_CONNECT(help_find_menu, "activate", help_find_callback, NULL);
 
-  help_sync_menu = gtk_menu_item_new_with_label(_("Sync"));
-  ml[h_sync_menu] = _("Sync");
+  help_sync_menu = gtk_menu_item_new_with_label(_("Sync and Unite"));
+  ml[h_sync_menu] = _("Sync and Unite");
   gtk_menu_shell_append(GTK_MENU_SHELL(help_cascade_menu), help_sync_menu);
   gtk_widget_show(help_sync_menu);
   SG_SIGNAL_CONNECT(help_sync_menu, "activate", help_sync_callback, NULL);

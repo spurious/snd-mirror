@@ -654,7 +654,7 @@ Widget add_menu(void)
   help_find_menu = XtCreateManagedWidget(_("Search"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_find_menu, XmNactivateCallback, help_find_callback, NULL);
 
-  help_sync_menu = XtCreateManagedWidget(_("Sync"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  help_sync_menu = XtCreateManagedWidget(_("Sync and Unite"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_sync_menu, XmNactivateCallback, help_sync_callback, NULL);
 
   help_sound_files_menu = XtCreateManagedWidget(_("Headers and Data"), xmPushButtonWidgetClass, help_menu, main_args, main_n);

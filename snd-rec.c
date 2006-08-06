@@ -1,6 +1,7 @@
 /* snd-xrec and snd-grec shared code */
 
 /* TODO: split out the Jack cases -- jack+recorder=bus error? */
+/* TODO: why can't amps be set at initialization time? */
 
 #include "snd.h"
 #include "snd-rec.h"

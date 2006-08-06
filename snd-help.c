@@ -9,6 +9,19 @@
 /* PERHAPS: in linux make --with-alsa the default
  */
 
+/* TODO: these help discussions also need the basic Snd functions listed (max-transform-peaks),
+ *        and the dialog should have a tooltip or something to tell the functional name of each field
+ *
+ *  bare bones help: Filter Resample Reverb Insert Delete
+ *  need examples: Key-Bindings Debugging
+ *  out of date: headers/data formats
+ *  why not (in menu, not just via matching): copy save selections/regions graph choices
+ *  dialog help is similarly sketchy
+ */
+
+
+
+
 static char **snd_xrefs(const char *topic);
 static char **snd_xref_urls(const char *topic);
 
@@ -561,7 +574,6 @@ static bool append_key_help(const char *name, int key, int state, bool cx_extend
   return(first_time);
 }
 
-/* SOMEDAY: help examples in local language */
 
 
 /* ---------------- Find ---------------- */
@@ -570,33 +582,21 @@ void find_help(void)
 {
   #if HAVE_SCHEME
     #define basic_example "(lambda (y) (> y 0.1))"
-    #define H_find_channel S_find_channel
-    #define find_channel_example "        >(find-channel (lambda (y) (> y .1)))\n        (#t 4423)"
-    #define H_count_matches S_count_matches
-    #define count_matches_example "        >(count-matches (lambda (y) (> y .1)))\n        2851"
-    #define H_search_procedure S_search_procedure
-    #define search_procedure_example "        >(set! (search-procedure) (lambda (y) (> y .1)))"
-    #define H_find_sound S_find_sound
+    #define find_channel_example "    >(find-channel (lambda (y) (> y .1)))\n    (#t 4423)"
+    #define count_matches_example "    >(count-matches (lambda (y) (> y .1)))\n    2851"
+    #define search_procedure_example "    >(set! (search-procedure) (lambda (y) (> y .1)))"
   #endif
   #if HAVE_RUBY
     #define basic_example "lambda do |y| y > 0.1 end"
-    #define H_find_channel "find_channel"
-    #define find_channel_example "        >find_channel(lambda do |y| y > 0.1 end)\n       [true, 4423]"
-    #define H_count_matches "count_matches"
-    #define count_matches_example "        >count_matches(lambda do |y| y > 0.1 end)\n       2851"
-    #define H_search_procedure "search_procedure"
-    #define search_procedure_example "     >set_search_procedure(lambda do |y| y > 0.1 end)"
-    #define H_find_sound S_find_sound
+    #define find_channel_example "    >find_channel(lambda do |y| y > 0.1 end)\n    [true, 4423]"
+    #define count_matches_example "    >count_matches(lambda do |y| y > 0.1 end)\n    2851"
+    #define search_procedure_example "    >set_search_procedure(lambda do |y| y > 0.1 end)"
   #endif
   #if HAVE_FORTH
     #define basic_example "lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc"
-    #define find_channel_example "        >lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc find-channel\n        '( #t 4423 )"
-    #define H_find_channel S_find_channel
-    #define H_count_matches S_count_matches
-    #define count_matches_example "         >lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc count-matches\n         2851"
-    #define H_search_procedure S_search_procedure
-    #define search_procedure_example "       >lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc set-search-procedure"
-    #define H_find_sound S_find_sound
+    #define find_channel_example "    >lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc find-channel\n    '( #t 4423 )"
+    #define count_matches_example "     >lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc count-matches\n     2851"
+    #define search_procedure_example "   >lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc set-search-procedure"
   #endif
 
   snd_help_with_xrefs("Find", 
@@ -610,25 +610,25 @@ Normally, the search applies only to the current channel. To search all current 
 \n\n\
 The primary searching function is:\n\
 \n\
-   " H_find_channel " (proc :optional (sample 0) snd chn edpos)\n\
-	This function finds the sample that satisfies the function 'proc'. \n\
-        'sample' determines where to start the search. \n\
+ " S_find_channel " (proc :optional (sample 0) snd chn edpos)\n\
+    This function finds the sample that satisfies the function 'proc'. \n\
+    'sample' determines where to start the search. \n\
 " find_channel_example "\n\
 \n\
 Closely related is:\n\
 \n\
-    " H_count_matches " (proc :optional (sample 0) snd chn edpos)\n\
-	This returns how many samples satisfy the function 'proc'.\n\
+  " S_count_matches " (proc :optional (sample 0) snd chn edpos)\n\
+    This returns how many samples satisfy the function 'proc'.\n\
 " count_matches_example "\n\
 \n\
 To find whether a given sound is currently open in Snd, use:\n\
 \n\
-    " H_find_sound " (filename :optional (nth 0))\n\
-	" H_find_sound " returns the index of 'filename' or " PROC_FALSE ".\n\
+  " S_find_sound " (filename :optional (nth 0))\n\
+    " S_find_sound " returns the index of 'filename' or " PROC_FALSE ".\n\
 \n\
 The current search procedure (for the Edit:Find dialog) is:\n\
 \n\
-    " H_search_procedure " (:optional snd)\n\
+  " S_search_procedure " (:optional snd)\n\
 " search_procedure_example "\n\
 ",
 #else
@@ -651,22 +651,16 @@ void undo_help(void)
   #if HAVE_SCHEME
     #define H_undo S_undo
     #define H_redo S_redo
-    #define H_revert_sound S_revert_sound
-    #define H_edit_position S_edit_position
     #define edit_position_example "(set! (edit-position) 0) ; revert channel"
   #endif
   #if HAVE_RUBY
     #define H_undo "undo_edit"
     #define H_redo "redo_edit"
-    #define H_revert_sound "revert_sound"
-    #define H_edit_position "edit_position"
     #define edit_position_example "set_edit_position(0) # revert channel"
   #endif
   #if HAVE_FORTH
     #define H_undo S_undo
     #define H_redo S_redo
-    #define H_revert_sound S_revert_sound
-    #define H_edit_position S_edit_position
     #define edit_position_example "0 set-edit-position \\ revert channel"
   #endif
 
@@ -688,18 +682,18 @@ In the listener, C-M-g deletes all text, and C-_ deletes back to the previous co
 In the sound display, the number at the lower left shows the current edit position and the channel number.\
 The main functions that affect the edit position are:\n\
 \n\
-    " H_undo " (:optional (edits 1) snd chn)\n\
-	This undoes 'edits' edits in snd's channel chn.\n\
+  " H_undo " (:optional (edits 1) snd chn)\n\
+    This undoes 'edits' edits in snd's channel chn.\n\
 \n\
-    " H_redo " (:optional (edits 1) snd chn)\n\
-	This re-activates 'edits' edits in snd's channel chn.\n\
+  " H_redo " (:optional (edits 1) snd chn)\n\
+    This re-activates 'edits' edits in snd's channel chn.\n\
 \n\
-    " H_revert_sound " (:optional snd)\n\
-	This reverts 'snd' to its saved (unedited) state.\n\
+  " S_revert_sound " (:optional snd)\n\
+    This reverts 'snd' to its saved (unedited) state.\n\
 \n\
-    " H_edit_position " (:optional snd chn)\n\
-	This is the current position in the edit history list.\n\
-        " edit_position_example "\n\
+  " S_edit_position " (:optional snd chn)\n\
+    This is the current position in the edit history list.\n\
+    " edit_position_example "\n\
 ",
 
 		      WITH_WORD_WRAP,
@@ -715,21 +709,51 @@ The main functions that affect the edit position are:\n\
 }
 
 
-/* ---------------- Sync ---------------- */
+/* ---------------- Sync and Unite ---------------- */
 
-static char *sync_xrefs[4] = {
+static char *sync_xrefs[5] = {
   "sound sync field: {" S_sync "}, {" S_sync_max "}",
   "mark sync field: {" S_mark_sync "}, {" S_mark_sync_max "}, {mark-sync-color}, {" S_syncd_marks "}",
   "mix sync (track) field: {" S_mix_track "}",
+  "channel display choice: {" S_channel_style "}",
   NULL};
 
 void sync_help(void) 
 {
+  #if HAVE_SCHEME
+    #define channel_style_example "(set! (channel-style snd) channels-combined)"
+    #define H_channels_separate S_channels_separate
+    #define H_channels_combined S_channels_combined
+    #define H_channels_superimposed S_channels_superimposed
+  #endif
+  #if HAVE_RUBY
+    #define channel_style_example "set_channel_style(Channels_combined, snd)"
+    #define H_channels_separate "Channels_separate"
+    #define H_channels_combined "Channels_combined"
+    #define H_channels_superimposed "Channels_superimposed"
+  #endif
+  #if HAVE_FORTH
+    #define channel_style_example "channels-combined set-channel-style"
+    #define H_channels_separate S_channels_separate
+    #define H_channels_combined S_channels_combined
+    #define H_channels_superimposed S_channels_superimposed
+  #endif
+
   snd_help_with_xrefs("Sync", 
 "The sync button causes certain operations to apply to all channels or multiple sounds simultaneously. \
 For example, to get a multichannel selection, set the sync button, then define the selection (by dragging \
 the mouse) in one channel, and the parallel portions of the other channels are also selected. \
-Marks and mixes can also be sync'd together.",
+Marks and mixes can also be sync'd together.\n\
+\n\
+Similarly, the unite button combines channels of a \
+multichannel sound into one display window.  control-click the unite button to have the channels \
+superimposed on each other. The function associated with this is:\n\
+\n\
+  " S_channel_style " (:optional snd)\n\
+    " S_channel_style " reflects the value of the 'unite' button in multichannel files.\n\
+    Possible values are " H_channels_separate ", " H_channels_combined ", and " H_channels_superimposed ".\n\
+    " channel_style_example "\n\
+",
 		      WITH_WORD_WRAP,
 		      sync_xrefs,
 		      NULL);
@@ -758,8 +782,6 @@ static char *debug_urls[8] = {
   "extsnd.html#sndprint",
   NULL};
 
-/* show how to turn on debugging stuff in Guile etc */
-
 void debug_help(void)
 {
   snd_help_with_xrefs("Debugging", 
@@ -785,18 +807,43 @@ extsnd.html, or snd-debug.  For notelist debugging, see ws-backtrace.",
 
 void env_help(void) 
 {
+  #if HAVE_SCHEME
+    #define envelope_example "'(0 0 1 1 2 0)"
+    #define env_sound_example "(env-sound '(0 0 1 1 2 0))"
+  #endif
+  #if HAVE_RUBY
+    #define envelope_example "[0.0, 0.0, 1.0, 1.0, 2.0, 0.0]"
+    #define env_sound_example "env_sound([0.0, 0.0, 1.0, 1.0, 2.0, 0.0])"
+  #endif
+  #if HAVE_FORTH
+    #define envelope_example "'( 0.0 0.0 1.0 1.0 2.0 0.0 )"
+    #define env_sound_example "'( 0.0 0.0 1.0 1.0 2.0 0.0 ) env-sound"
+  #endif
+
   snd_help_with_xrefs("Envelope", 
-"An envelope in Snd is a list (array in Ruby) of x y break-point pairs. The x axis range is arbitrary. To define a triangle curve: '(0 0 1 1 2 0). \
+"An envelope in Snd is a list (an array in Ruby) of x y break-point pairs. The x axis range is arbitrary. \
+To define a triangle curve: " envelope_example ".\
 There is no preset limit on the number of breakpoints. Use the envelope editor to draw envelopes with the mouse. \
 \n\n\
 To apply an envelope to a sound, use " S_env_sound " or the extended command C-x C-a.  If this command gets a numeric \
 argument, the envelope is applied from the cursor for that many samples. Otherwise, the envelope is \
 applied to the entire file. \
-\n\n\
+\n\
   C-x a     apply amplitude envelope to selection\n\
-  C-x C-a   apply amplitude envelope to channel",
+  C-x C-a   apply amplitude envelope to channel\n\
+\n\
+The primary enveloping functions are:\n\
+\n\
+ " S_env_sound " (envelope :optional (samp 0) samps (env-base 1.0) snd chn edpos)\n\
+    " S_env_sound " applies the amplitude envelope to snd's channel chn.\n\
+    " env_sound_example "\n\
+\n\
+ " S_env_channel " (clm-env-gen :optional beg dur snd chn edpos)\n\
+    This is the channel-specific version of " S_env_sound ".\n\
+",
+
 		      WITH_WORD_WRAP,
-		      snd_xrefs("Envelope"),
+		      snd_xrefs("Envelope"),           /* snd-xref.c */
 		      snd_xref_urls("Envelope"));
 
   append_key_help("C-x a", snd_K_a, 0, true,
@@ -808,6 +855,46 @@ applied to the entire file. \
 
 void fft_help(void)
 {
+  #if HAVE_SCHEME
+    #define transform_normalization_example "(set! (transform-normalization) dont-normalize)"
+    #define transform_size_example "(set! (transform-size) 512)"
+    #define transform_type_example "(set! (transform-type) autocorrelation)"
+    #define fft_window_example "(set! (fft-window) rectangular-window)"
+    #define transform_graph_example "(set! (transform-graph?) #t)"
+    #define transform_graph_type_example "(set! (transform-graph-type) graph-as-sonogram)"
+    #define transform_log_magnitude_example "(set! (transform-log-magnitude) #f)"
+    #define transform_types "fourier-transform wavelet-transform  haar-transform\n      autocorrelation   walsh-transform    cepstrum"
+    #define transform_graph_types "graph-once  graph-as-sonogram  graph-as-spectrogram"
+    #define transform_normalizations "dont-normalize normalize-by-channel normalize-by-sound normalize-globally"
+    #define fft_windows "      bartlett-window blackman2-window blackman3-window blackman4-window\n      cauchy-window connes-window dolph-chebyshev-window exponential-window\n      gaussian-window hamming-window hann-poisson-window hann-window\n      kaiser-window parzen-window poisson-window rectangular-window\n      riemann-window samaraki-window tukey-window ultraspherical-window\n      welch-window"
+  #endif
+  #if HAVE_RUBY
+    #define transform_normalization_example "set_transform_normalization(Dont_normalize)"
+    #define transform_size_example "set_transform_size(512)"
+    #define transform_type_example "set_transform_type(Autocorrelation)"
+    #define fft_window_example "set_fft_window(Rectangular_window)"
+    #define transform_graph_example "set_transform_graph?(#t)"
+    #define transform_graph_type_example "set_transform_graph_type(Graph_as_sonogram)"
+    #define transform_log_magnitude_example "set_transform_log_magnitude(#f)"
+    #define transform_types "Fourier_transform Wavelet_transform  Haar_transform\n      Autocorrelation   Walsh_transform    Cepstrum"
+    #define transform_graph_types "graph_once  graph_as_sonogram  graph_as_spectrogram"
+    #define transform_normalizations "Dont_normalize Normalize_by_channel Normalize_by_sound Normalize_globally"
+    #define fft_windows "      Bartlett_window Blackman2_window Blackman3_window Blackman4_window\n      Cauchy_window Connes_window Dolph_chebyshev_window Exponential_window\n      Gaussian_window Hamming_window Hann_poisson_window Hann_window\n      Kaiser_window Parzen_window Poisson_window Rectangular_window\n      Riemann_window Samaraki_window Tukey_window Ultraspherical_window\n      Welch_window"
+  #endif
+  #if HAVE_FORTH
+    #define transform_normalization_example "dont-normalize set-transform-normalization"
+    #define transform_size_example "512 set-transform-size"
+    #define transform_type_example "autocorrelation set-transform-type"
+    #define fft_window_example "rectangular-window set-fft-window"
+    #define transform_graph_example "#t set-transform-graph?"
+    #define transform_graph_type_example "graph-as-sonogram set-transform-graph-type"
+    #define transform_log_magnitude_example "#f set-transform-log-magnitude"
+    #define transform_types "fourier-transform wavelet-transform  haar-transform\n      autocorrelation   walsh-transform    cepstrum"
+    #define transform_graph_types "graph-once  graph-as-sonogram  graph-as-spectrogram"
+    #define transform_normalizations "dont-normalize normalize-by-channel normalize-by-sound normalize-globally"
+    #define fft_windows "      bartlett-window blackman2-window blackman3-window blackman4-window\n      cauchy-window connes-window dolph-chebyshev-window exponential-window\n      gaussian-window hamming-window hann-poisson-window hann-window\n      kaiser-window parzen-window poisson-window rectangular-window\n      riemann-window samaraki-window tukey-window ultraspherical-window\n      welch-window"
+  #endif
+
   snd_help_with_xrefs("FFT",
 "The FFT performs a projection of the time domain into the frequency domain. Good discussions of the Fourier Transform \
 and the trick used in the FFT itself can be found in many DSP books; those I know of include 'A Digital Signal Processing \
@@ -824,29 +911,64 @@ of Acoustics, Speech, and Signal Processing, Vol. ASSP-29, 1, February 1981. \
 \n\n\
 Nearly all the transform-related choices are set by the transform dialog launched from the Options \
 Menu Transform item. Most of this dialog should be self-explanatory.  Some of the windows take an \
-additional parameter sometimes known as alpha or beta.  This can be set by the scale next to the fft window graph in the \
+additional parameter sometimes known as alpha or beta.  This can be set by the scale(s) next to the fft window graph in the \
 transform dialog, or via " S_fft_window_alpha " and " S_fft_window_beta ". \
+\n\n\
+To change the defaults, you can set the various values in your initialization file (see examples below), \
+or use the Options:Preferences dialog's Transforms section.\
 \n\n\
 The FFT display is activated by setting the 'f' button on the channel's window.  It then updates \
 itself each time the time domain waveform moves or changes.  \
-The spectrum data is usually normalized to fit between 0.0 to 1.0; if you'd rather have un-normalized \
-data (the y-axis in this case changes to reflect the data values, to some extent), set the \
-variable " S_transform_normalization " to " S_dont_normalize ".",
+The FFT is taken from the start (the left edge) of the current window and is updated as the window bounds change. \
+The data is scaled to fit between 0.0 and 1.0 unless transform normalization is off. \
+The full frequency axis is normally displayed, but the axis is draggable -- put the mouse on the axis \
+and drag it either way to change the range (this is equivalent to changing the variable " S_spectro_cutoff "). \
+You can also click on any point in the fft to get the associated fft value at that point displayed; \
+if " S_with_verbose_cursor " is " PROC_TRUE ", you can drag the mouse through the fft display and \
+the description in the minibuffer will be constantly updated.  To change the fft size by powers of two, \
+you can use the keypad keys '*' and '/'.  There are also various keys bindings for the spectrogram \
+viewing angles and so on, but it's always easier to use the View:Orientation dialog's sliders. \
+\n\n\
+The main FFT-related functions are:\
+\n\n\
+  " S_transform_size " (:optional snd chn)\n\
+    the fft size (a power of 2): " transform_size_example "\n\
+\n\
+  " S_transform_type " (:optional snd chn)\n\
+    which transform is performed: " transform_type_example "\n\
+    the built-in transform choices are:\n\
+      " transform_types "\n\
+\n\
+  " S_transform_graph_type " (:optional snd chn)\n\
+    the display choice, one of: " transform_graph_types "\n\
+    " transform_graph_type_example "\n\
+\n\
+  " S_fft_window " (:optional snd chn)\n\
+    the fft data window: " fft_window_example "\n\
+    the windows are:\n\
+" fft_windows "\n\
+\n\
+  " S_show_transform_peaks " and " S_max_transform_peaks "\n\
+    these control the peak info display\n\
+\n\
+  " S_fft_log_magnitude " and " S_fft_log_frequency "\n\
+    these set whether the axes are linear or logarithmic\n\
+\n\
+  " S_transform_graph_p " (:optional snd chn)\n\
+    if " PROC_TRUE ", the fft graph is displayed: " transform_graph_example "\n\
+\n\
+  " S_transform_normalization " (:optional snd chn)\n\
+    how fft data is normalized.  " transform_normalization_example "\n\
+    the choices are:\n\
+    " transform_normalizations "\n\
+\n\
+  Other related functions: " S_zero_pad ", " S_wavelet_type ", " S_add_transform "\n\
+    " S_min_dB ", " S_snd_spectrum ", " S_show_selection_transform ".",
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("FFT"),
 		      snd_xref_urls("FFT"));
 }
-
-/* TODO: these help discussions also need the basic Snd functions listed (max-transform-peaks),
- *        and the dialog should have a tooltip or something to tell the functional name of each field
- *
- *  bare bones help: Filter Resample Reverb Insert Delete
- *  need examples: Key-Bindings Debugging
- *  wierd: Sync (but not Unite?)
- *  out of date: headers/data formats
- *  why not: copy save selections/regions graph choices
- *  dialog help is similarly sketchy
- */
 
 
 /* ---------------- Control Panel ---------------- */
@@ -864,6 +986,22 @@ static char *control_xrefs[9] = {
 
 void controls_help(void) 
 {
+  #if HAVE_SCHEME
+    #define amp_control_example "(set! (amp-control) 0.5)"
+    #define amp_control_bounds_example "(set! (amp-control-bounds) (list 0.0 20.0))"
+    #define speed_control_styles "speed-control-as-float speed-control-as-ratio speed-control-as-semitone"
+  #endif
+  #if HAVE_RUBY
+    #define amp_control_example "set_amp_control(0.5)"
+    #define amp_control_bounds_example "set_amp_control_bounds([0.0, 20.0])"
+    #define speed_control_styles "Speed_control_as_float Speed_control_as_ratio Speed_control_as_semitone"
+  #endif
+  #if HAVE_FORTH
+    #define amp_control_example "0.5 set-amp-control"
+    #define amp_control_bounds_example "'( 0.0 20.0 ) set-amp-control-bounds"
+    #define speed_control_styles "speed-control-as-float speed-control-as-ratio speed-control-as-semitone"
+  #endif
+
   snd_help_with_xrefs("The Control Panel", 
 "The control panel is the portion of each sound's pane beneath the channel graphs. \
 The controls are: amp, speed, expand, contrast, reverb, and filter. \
@@ -899,7 +1037,27 @@ is displayed in blue.  The filter is on only if the filter button is set. \
 The keyboard commands associated with the control panel are: \
 \n\n\
   C-x C-o   show control panel\n\
-  C-x C-c   hide control panel",
+  C-x C-c   hide control panel\n\
+\n\
+There are functions to get and set every aspect of the control panel -- far too many to list! \
+As an example of how they all work, to set the amplitude slider from a function: \n\
+\n\
+  " amp_control_example "\n\
+\n\
+To set its overall bounds:\n\
+\n\
+  " amp_control_bounds_example "\n\
+\n\
+The speed control can be interpreted as a float, a ratio, or a semitone. The choices are:\n\
+\n\
+    " speed_control_styles "\n\
+\n\
+To apply the current settings as an edit, call:\n\
+\n\
+  " S_apply_controls " (:optional snd (target 0) beg dur)\n\
+    where 'target' selects what gets edited: \n\
+      0 = sound, 1 = channel, 2 = selection.",
+
 		      WITH_WORD_WRAP,
 		      control_xrefs,
 		      NULL);
@@ -915,6 +1073,19 @@ The keyboard commands associated with the control panel are: \
 
 void marks_help(void) 
 {
+  #if HAVE_SCHEME
+    #define add_mark_example "(add-mark 1234)"
+    #define mark_name_example "(set! (mark-name 0) \"mark-0\")"
+  #endif
+  #if HAVE_RUBY
+    #define add_mark_example "add_mark(1234)"
+    #define mark_name_example "set_mark_name(0, \"mark-0\")"
+  #endif
+  #if HAVE_FORTH
+    #define add_mark_example "1234 add-mark"
+    #define mark_name_example "0 \"mark-0\" set-mark-name"
+  #endif
+
   snd_help_with_xrefs("Marks", 
 "A 'mark' marks a particular sample in a sound (not a position in that sound). \
 If we mark a sample, then delete 100 samples before it, the mark follows the sample, changing its current position \
@@ -936,7 +1107,24 @@ than 0) will move together when one is moved, and so on.  The following keyboard
   C-x /     place named mark at cursor\n\
   C-x C-m   add named mark\n\
   C-j       go to mark\n\
-  C-x j     go to named mark",
+  C-x j     go to named mark\n\
+\n\
+The main mark-related functions are:\n\
+\n\
+  " S_add_mark " (sample :optional snd chn)\n\
+   add a mark at sample 'sample': " add_mark_example "\n\
+\n\
+  " S_delete_mark " (mark-id) \n\
+    delete mark (the 'mark-id' is returned by " S_add_mark ")\n\
+\n\
+  " S_mark_sample " (mark-id): sample marked by the mark\n\
+  " S_mark_name " (mark-id): mark's name, if any\n\
+    " mark_name_example "\n\
+\n\
+Other such functions: " S_find_mark ", " S_mark_color ", " S_mark_tag_width ",\n\
+    " S_mark_tag_height ", " S_mark_sync ", " S_show_marks ", " S_save_marks ",\n\
+    " S_marks "\n",
+
 		      WITH_WORD_WRAP, 
 		      snd_xrefs("Mark"),
 		      snd_xref_urls("Mark"));
@@ -953,6 +1141,13 @@ than 0) will move together when one is moved, and so on.  The following keyboard
 
 void mix_help(void) 
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Mixing", 
 "Since mixing is the most common and most useful editing operation performed on \
 sounds, there is relatively elaborate support for it in Snd. To mix in a file, \
@@ -1012,6 +1207,13 @@ static char *record_xrefs[4] = {
 
 void recording_help(void) 
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Record", 
 "To make a recording, choose 'Record' from the File menu. A window opens with the various \
 recording controls.  The top three panes display the status of the input and output lines. If a \
@@ -1084,6 +1286,13 @@ static char *header_and_data_urls[10] = {
 
 void sound_files_help(void) 
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Headers and Data", 
 "Snd can handle the following file and data types: \
 \n\n\
@@ -1139,6 +1348,13 @@ static char *init_file_urls[6] = {
 
 void init_file_help(void) 
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Customization",
 #if HAVE_EXTENSION_LANGUAGE
 "Nearly everything in Snd can be set in an initialization file, loaded at any time from a saved-state file, specified \
@@ -1214,6 +1430,13 @@ static bool find_leftover_keys(int key, int state, bool cx, char *ignored, XEN f
 
 void key_binding_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   int i;
   snd_help_with_xrefs("Key bindings",
 		      "",
@@ -1246,6 +1469,13 @@ void key_binding_help(void)
 
 void play_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Play",
 "To play a sound, click the 'play' button.  If the sound has more channels than your DAC(s), Snd will (normally) try to mix the extra channels \
 into the available DAC outputs.  While it is playing, you can click the button again to stop it, or click some other \
@@ -1273,6 +1503,13 @@ Except in the browsers, what is actually played depends on the control panel.",
 
 void reverb_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Reverb",
 "The reverb in the control panel is a version of Michael McNabb's Nrev.  There are other \
 reverbs mentioned in the related topics list.",
@@ -1285,6 +1522,13 @@ reverbs mentioned in the related topics list.",
 /* ---------------- Save ---------------- */
 void save_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Save",
 "To save the current edited state of a file, use the Save option (to overwrite the old version of the \
 file), or Save as (to write to a new file, leaving the old file unchanged).  The equivalent keyboard \
@@ -1308,6 +1552,13 @@ If you want Snd to ask before overwriting a file in any case, set the variable "
 
 void filter_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Filter",
 "There is an FIR Filter in the control panel, and a variety of other filters scattered around; \
 see dsp.scm in particular.",
@@ -1321,6 +1572,13 @@ see dsp.scm in particular.",
 
 void resample_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Resample",
 "There is a sampling rate changer in the control panel; see the related topics list below.",
 		      WITH_WORD_WRAP,
@@ -1333,6 +1591,13 @@ void resample_help(void)
 
 void insert_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Insert",
 "To insert a file, use C-x C-i, and to insert the selection C-x i.  C-o inserts a \
 zero sample at the cursor",
@@ -1350,6 +1615,13 @@ zero sample at the cursor",
 
 void delete_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Delete",
 "To delete a sample, use C-d; to delete the selection, C-w",
 		      WITH_WORD_WRAP,
@@ -1367,6 +1639,13 @@ void delete_help(void)
 
 void envelope_editor_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Envelope Editor",
 "The Edit Envelope dialog (under the Edit menu) opens a window for viewing and editing envelopes. \
 The dialog has a display showing either the envelope currently being edited or \
@@ -1419,6 +1698,13 @@ improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling r
 
 void transform_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Transform Options",
 "This dialog presents the various transform (fft) related choices. \
 \n\n\
@@ -1470,6 +1756,13 @@ static char *color_dialog_xrefs[9] = {
 
 void color_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("View Color",
 "This dialog sets the colormap and associated variables used during sonogram, spectrogram,  \
 and perhaps wavogram display. The cutoff scale refers to the minimum data value to be displayed.",
@@ -1489,6 +1782,13 @@ static char *orientation_dialog_xrefs[4] = {
 
 void orientation_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("View Orientation",
 "This dialog sets the rotation and scaling variables used during sonogram, spectrogram, and wavogram display. \
 The 'angle' scalers change the viewing angle, the 'scale' scalers change the 'stretch' amount \
@@ -1506,6 +1806,13 @@ spectrogram is drawn by openGL.",
 
 void region_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Region Browser",
 "This is the 'region browser'.  The scrolled window contains the list of current regions \
 with a brief title to indicate the source thereof, and a button to play the region. \
@@ -1580,6 +1887,13 @@ void completion_dialog_help(void)
 
 void save_as_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Save As",
 "You can save the current state of a file with File:Save As, or the current selection with Edit:Save as. \
 The output header type, data format, sampling rate, and comment can also be set.  Setting the srate \
@@ -1613,6 +1927,13 @@ static char *open_file_xrefs[7] = {
 
 void open_file_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Open File",
 "The file selection dialog is slightly different from the Gtk or Motif default.  If you single click \
 in the directory list, that directory is immediately opened and displayed.  Also there are \
@@ -1637,6 +1958,13 @@ display possible matches.",
 
 void mix_file_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Mix File",
 "The file will be mixed (added into the selected sound) at the cursor. If you click the 'Sound Files Only' button, \
 only those files in the current directory that look vaguely like sound files will be displayed.  For more control \
@@ -1651,6 +1979,13 @@ of the initial mix, use the View:Files dialog.  To edit the mix, use the View:Mi
 
 void insert_file_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Insert File",
 "The file will be inserted (pasted into the selected file) at the cursor. If you click the 'Sound Files Only' button, \
 only those files in the current directory that look vaguely like sound files will be displayed.  For more control \
@@ -1665,6 +2000,13 @@ of the insertion, use the View:Files dialog.",
 
 void find_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Global Find",
 "This search travels through all the current channels in parallel until a match is found.  The find \
 expression is a function of one argument,  the current sample value.  It should return #t when the \
@@ -1679,6 +2021,13 @@ search is satisified.  For example, (lambda (n) (> n .1)) looks for the next sam
 
 void mix_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Mixes",
 "This dialog provides various commonly-used controls on the currently \
 chosen mix.  At the top are the mix id, begin and end times, \
@@ -1698,6 +2047,13 @@ mix amp env (if any) is drawn in blue.",
 
 void track_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Tracks",
 "This dialog provides various commonly-used controls on the currently \
 chosen track.  At the top are the track id, begin and end times, \
@@ -1726,6 +2082,13 @@ static char *new_file_xrefs[5] = {
 
 void new_file_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("New File",
 "This dialog sets the new file's output header type, data format, srate, chans, and comment. \
 The 'srate:' and 'channels:' labels are actually drop-down menus providing quick access to common choices. \
@@ -1765,6 +2128,13 @@ static char *edit_header_urls[11] = {
 
 void edit_header_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Edit Header",
 "This dialog edits the header of a sound file; no change is made to the actual sound data. \
 If you specify 'raw' as the type, any existing header is removed.  This dialog is aimed at adding or removing an entire header,  \
@@ -1785,6 +2155,13 @@ static char *print_xrefs[4] = {
 
 void print_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("File Print",
 "Print causes the currently active display to be either printed (via the lpr command) or saved as \
 an eps file.  In the latter case, the file name is set either by the dialog, or taken from the \
@@ -1806,6 +2183,13 @@ static char *view_files_xrefs[5] = {
 
 void view_files_dialog_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("File Browser",
 "The View:Files dialog provides a list of sounds and various things to do with them.\
 The play button plays the file. \
@@ -1837,6 +2221,13 @@ static void copy_help(void)
 
 static void region_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Region",
 "A region is a portion of the sound data. When a sound portion is selected, it is (by default) saved \
 as the new region; subsequent edits will not affect the region data. You can disable the region creation \
@@ -1957,6 +2348,13 @@ you can often get periods to line up vertically, making a pretty picture.",
 
 static void colors_help(void)
 {
+  #if HAVE_SCHEME
+  #endif
+  #if HAVE_RUBY
+  #endif
+  #if HAVE_FORTH
+  #endif
+
   snd_help_with_xrefs("Colors",
 "A color in Snd is an object with three fields representing the rgb (red green blue) settings \
 as numbers between 0.0 and 1.0. A color object is created via " S_make_color ":\n\

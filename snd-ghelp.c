@@ -21,7 +21,7 @@ static gint delete_help_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 }
 
 #define HELP_ROWS 12
-#define HELP_COLUMNS 80
+#define HELP_COLUMNS 72
 /* these set the initial size of the help dialog text area */
 
 static GtkWidget *help_text = NULL;

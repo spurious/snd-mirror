@@ -7593,7 +7593,7 @@ reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotati
 This reverts <i>snd</i> to its saved (unedited) state.  A channel-specific version:
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define* (revert-channel :optional snd chn)
-  (set! (edit-position snd chn) 0))
+  (set! (<a class=quiet href="#editposition">edit-position</a> snd chn) 0))
 </pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>

@@ -2,7 +2,7 @@
 
 #define HELP_ROWS 10
 #define HELP_XREFS 8
-#define HELP_COLUMNS 80
+#define HELP_COLUMNS 72
 /* these set the initial size of the help dialog text area */
 
 static Widget help_dialog = NULL;
@@ -473,7 +473,9 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNrenderTable, rs); n++;
 #endif
 
-  XtSetArg(args[n], XmNvisibleItemCount, HELP_XREFS); n++;
+  XtSetArg(args[n], XmNvisibleItemCount, HELP_XREFS); n++; /* appears to be a no-op */
+  XtSetArg(args[n], XmNheight, 150); n++;
+
   XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmAS_NEEDED); n++;
   related_items = XmCreateScrolledList(inner_holder, "help-list", args, n);
   XtManageChild(related_items);
