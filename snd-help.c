@@ -1142,10 +1142,22 @@ Other such functions: " S_find_mark ", " S_mark_color ", " S_mark_tag_width ",\n
 void mix_help(void) 
 {
   #if HAVE_SCHEME
+    #define mix_example "(mix \"oboe.snd\" 1234)"
+    #define mix_vct_example "(mix-vct (vct 0 .1 .2) 1234)"
+    #define mix_amp_example "(set! (mix-amp 0 0) .5)"
+    #define mix_amp_env_example "(set! (mix-amp-env 0 0) '(0 0 1 1))"
   #endif
   #if HAVE_RUBY
+    #define mix_example "mix(\"oboe.snd\", 1234)"
+    #define mix_vct_example "mix_vct(vct(0.0, 0.1, 0.2), 1234)"
+    #define mix_amp_example "set_mix_amp(0, 0, .5)"
+    #define mix_amp_env_example "set_mix_amp_env(0, 0, [0.0, 0.0, 1.0, 1.0])"
   #endif
   #if HAVE_FORTH
+    #define mix_example "\"oboe.snd\" 1234 mix"
+    #define mix_vct_example "0.0 0.1 0.2 vct 1234 mix-vct"
+    #define mix_amp_example "0 0 0.5 set-mix-amp"
+    #define mix_amp_env_example "0 0 '( 0.0 0.0 1.0 1.0 ) set-mix-amp-env"
   #endif
 
   snd_help_with_xrefs("Mixing", 
@@ -1170,7 +1182,45 @@ each input channel, and the amplitude envelopes. \
 \n\n\
 To move the cursor from one mix to the next, in the same manner as C-j moves through marks, use C-x C-j. \
 \n\n\
-A set of associated mixes is called a 'track' in Snd, and there's a help menu item for that subject.",
+A set of associated mixes is called a 'track' in Snd, and there's a help menu item for that subject.\n\
+\n\
+The main mix-related functions are:\n\
+\n\
+  " S_mix " (file :optional samp in-chan snd chn tags delete trk)\n\
+    mix file's channel in-chan starting at samp\n\
+    " mix_example "\n\
+\n\
+  " S_mix_selection " (:optional beg snd chn)\n\
+    mix (add) selection starting at beg\n\
+\n\
+  " S_mix_region " (:optional samp reg snd chn track)\n\
+    mix region reg at sample samp (default is cursor sample)\n\
+\n\
+  " S_mix_vct " (vct :optional beg snd chn with-mix-tags origin track)\n\
+    mix the contents of vct starting at beg\n\
+    " mix_vct_example "\n\
+\n\
+  " S_mix_amp " (mix :optional chan)\n\
+    amplitude of mix's channel chan:\n\
+    " mix_amp_example "\n\
+\n\
+  " S_mix_amp_env " (mix :optional chan)\n\
+    amplitude envelope of mix's channel chan:\n\
+    " mix_amp_env_example "\n\
+\n\
+  " S_mix_speed " (mix)\n\
+    speed (resampling ratio) of mix; 1.0 means no change;\n\
+      2.0 reads the mix data twice as fast\n\
+\n\
+  " S_mix_position " (mix)\n\
+    position (a sample number) of mix\n\
+\n\
+  " S_mix_frames " (mix)\n\
+    mix's length in samples\n\
+\n\
+Other such function include: " S_mix_waveform_height ", " S_with_mix_tags ", " S_mix_tag_width ",\n\
+    " S_mix_tag_height ", " S_mix_tag_y ", " S_play_mix ", " S_mixes ".",
+
 		      WITH_WORD_WRAP, 
 		      snd_xrefs("Mix"),
 		      snd_xref_urls("Mix"));
@@ -1184,13 +1234,69 @@ A set of associated mixes is called a 'track' in Snd, and there's a help menu it
 
 void track_help(void) 
 {
+  #if HAVE_SCHEME
+    #define make_track_example "(make-track 1 3) ; mixes 1 and 3 are in this track"
+    #define track_amp_env_example "(set! (track-amp-env 1) '(0 0 1 1))"
+    #define track_color_example "(set! (track-color 1) (make-color 0 0 1)) ; blue"
+  #endif
+  #if HAVE_RUBY
+    #define make_track_example "make_track(1, 3) # mixes 1 and 3 are in this track"
+    #define track_amp_env_example "set_track_amp_env(1, [0.0, 0.0, 1.0, 1.0])"
+    #define track_color_example "set_track_color(1, make_color(0.0, 0.0, 1.0)) # blue" 
+  #endif
+  #if HAVE_FORTH
+    #define make_track_example "1 3 make-track \\ mixes 1 and 3 are in this track"
+    #define track_amp_env_example "1 '( 0.0 0.0 1.0 1.0 ) set-track-amp-env"
+    #define track_color_example "1 0.0 0.0 1.0 make-color set-track-color \\ blue"
+  #endif
+
   snd_help_with_xrefs("Tracks",
-"A track is a list of mixes, each member mix having its track set to the track id.  The " S_make_track " \
-function takes the initial mixes, returning the track id (an integer).  The \
-track function returns the list of mixes that are members of the given track.  The rest of the track functions \
+"A track is a list of mixes, each constituent mix having its 'mix-track' field set to the track id.  The " S_make_track " \
+function takes the initial list of mix id's, returning the track id (an integer). \
+The rest of the track functions \
 take the track id as their initial argument.  A track has much the same structure as a mix: an amplitude, speed, \
-amplitude envelope, track, position, and so on.  If its track field is not 0, the entire track is a member \
-of the given track, just as a mix would be.",
+amplitude envelope, track, position, and so on.  If its own 'track-track' field is not 0, the entire track is a member \
+of the another (higher-level) track. Tracks provide a mechanism to group together related notes or mixes, \
+for panning, global envelopes, intra-voice tempo control, and so on. \
+\n\n\
+There is View:Tracks dialog to manipulate tracks from sliders and so on.  You can also use the \
+track-related functions, the more useful of which are: \n\
+\n\
+  " S_make_track " (mix-ids...)\n\
+    create a new track, returning its id:\n\
+    " make_track_example "\n\
+\n\
+  " S_play_track " (track-id :optional chn beg)\n\
+    play the given track.\n\
+\n\
+  " S_track_amp " (track-id)\n\
+    track overall amplitude.\n\
+\n\
+  " S_track_amp_env " (track-id)\n\
+    overall track amplitude envelope:\n\
+    " track_amp_env_example "\n\
+\n\
+  " S_track_color " (track-id)\n\
+    track waveform color:\n\
+    " track_color_example "\n\
+\n\
+  " S_track_position " (track-id)\n\
+    track position (begin of first mix) in samples\n\
+\n\
+  " S_track_frames " (track-id :optional chan)\n\
+    track length in samples\n\
+\n\
+  " S_track_speed " (track-id)\n\
+    track speed. This affects the resampling of each mix,\n\
+    not the speed at which the mixes occur (see track-tempo)\n\
+\n\
+  " S_track_tempo " (track-id)\n\
+    track tempo. This affects the spacing between mixes;\n\
+    a higher track-tempo corresponds to tighter spacing between mixes.\n\
+\n\
+Other track-related functions include: " S_track_track ", " S_track_chans ",\n\
+    " S_tracks ", " S_track_track ", " S_delete_track ", " S_copy_track ".",
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Track"),
 		      snd_xref_urls("Track"));
@@ -1207,13 +1313,6 @@ static char *record_xrefs[4] = {
 
 void recording_help(void) 
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("Record", 
 "To make a recording, choose 'Record' from the File menu. A window opens with the various \
 recording controls.  The top three panes display the status of the input and output lines. If a \
@@ -1286,13 +1385,6 @@ static char *header_and_data_urls[10] = {
 
 void sound_files_help(void) 
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("Headers and Data", 
 "Snd can handle the following file and data types: \
 \n\n\
@@ -1321,7 +1413,11 @@ The files can have any number of channels. Data can be either big or little endi
 The file types listed above as 'automatically translated' are \
 decoded upon being opened, translated to some format Snd can read and write, \
 and rewritten as a new file with an added (possibly redundant) extension .snd, \
-and that file is the one the editor sees from then on.",
+and that file is the one the editor sees from then on.\
+\n\n\
+" S_data_format " returns the current sound's data format, and " S_header_type " returns \
+its header type.",
+
 		      WITH_WORD_WRAP,
 		      header_and_data_xrefs,
 		      header_and_data_urls);
@@ -1348,20 +1444,15 @@ static char *init_file_urls[6] = {
 
 void init_file_help(void) 
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("Customization",
 #if HAVE_EXTENSION_LANGUAGE
 "Nearly everything in Snd can be set in an initialization file, loaded at any time from a saved-state file, specified \
 via inter-process communciation from any other program, invoked via M-x in the minibuffer, imbedded in a keyboard macro, or  \
 dealt with from the lisp listener panel. I've tried to bring out to lisp nearly every portion of Snd, \
 both the signal-processing functions, and much of the user interface. You can, for example, add your own menu choices, \
-editing operations, or graphing alternatives. These extensions can be loaded at any time.",
+editing operations, or graphing alternatives. These extensions can be loaded at any time.  One of the \
+easier ways to start an initialization file is to go to the Options:Preferences dialog, set the choices \
+you want, then save those choices.  The initialization file is just program text, so you can edit it and so on.",
 #else
 "Snd depends heavily on the extension language to provide much of its functionality.  Since none \
 is loaded, there's not much customization you can do.  Check out the X resource stuff in Snd.ad or \
@@ -1431,15 +1522,26 @@ static bool find_leftover_keys(int key, int state, bool cx, char *ignored, XEN f
 void key_binding_help(void)
 {
   #if HAVE_SCHEME
+    #define bind_key_example "(bind-key \"End\" 0\n      (lambda () \"view full sound\"\n        (set! (x-bounds) (list 0.0 (/ (frames) (srate))))))"
   #endif
   #if HAVE_RUBY
+    #define bind_key_example "bind_key(\"End\", 0,\n       lambda do ||\n         set_x_bounds([0.0, frames.to_f / srate.to_f])\n       end)"
   #endif
   #if HAVE_FORTH
+    #define bind_key_example "\"End\" 0 lambda: 0.0 #f #f #f frames #f srate f/ 2 >list set-x-bounds ; 0 make-proc bind-key"
   #endif
 
   int i;
   snd_help_with_xrefs("Key bindings",
-		      "",
+"Although Snd has a number of built-in key bindings (listed below), you can redefine \
+any key via:\n\
+\n\
+  " S_bind_key " (key state func :optional extended origin)\n\
+    this function causes 'key' (an integer or a key name) with \n\
+    modifiers 'state' (and preceding C-x if 'extended') to evaluate\n\
+    'func'.  For example, to set the End key to cause the full sound\n\
+    to be displayed:\n\n\
+    " bind_key_example "\n\n\nKey Bindings:\n",
 		      WITHOUT_WORD_WRAP,
 		      key_xrefs,
 		      NULL);
