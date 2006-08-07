@@ -13,8 +13,6 @@
  *        and the dialog should have a tooltip or something to tell the functional name of each field
  *
  *  bare bones help: Filter Resample Reverb Insert Delete
- *  need examples: Key-Bindings Debugging
- *  out of date: headers/data formats
  *  why not (in menu, not just via matching): copy save selections/regions graph choices
  *  dialog help is similarly sketchy
  */
@@ -1405,9 +1403,10 @@ void sound_files_help(void)
     Impulse tracker, Korg, Akai, Turtle Beach\n\
 \n\n\
   automatically translated to a readable format:\n\
-    IEEE text, Mus10, SAM 16-bit (modes 1 and 4), AVI\n\
-    NIST shortpack, HCOM, Intel, IBM, and Oki (Dialogic) ADPCM,\n\
-    G721, G723_24, G723_40, MIDI sample dump\n\
+    IEEE text, Mus10, SAM 16-bit (modes 1 and 4), AVI, \n\
+    NIST shortpack, HCOM, Intel, IBM, and Oki (Dialogic) ADPCM, \n\
+    G721, G723_24, G723_40, MIDI sample dump, Ogg, Speex, \n\
+    Flac, Midi, Mpeg, Shorten, Wavepack, tta (via external programs)\n\
 \n\n\
 The files can have any number of channels. Data can be either big or little endian. \
 The file types listed above as 'automatically translated' are \
@@ -1592,7 +1591,12 @@ hold down the control key when you click 'play', the cursor follows along as the
 \n\n\
 In a multichannel file, C-q plays all channels from the current channel's \
 cursor if the sync button is on, and otherwise plays only the current channel. \
-Except in the browsers, what is actually played depends on the control panel.",
+Except in the browsers, what is actually played depends on the control panel.\
+\n\n\
+The following functions are related to playing sounds:\n\
+\n\
+  " S_play " ()\
+",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Play"),
 		      snd_xref_urls("Play"));

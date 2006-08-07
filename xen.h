@@ -739,7 +739,6 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
   #define XEN_PROCEDURE_P(Arg)          ({ XEN _xen_h_10_ = Arg;       (XEN_BOUND_P(_xen_h_10_) && (rb_obj_is_kind_of(_xen_h_10_, rb_cProc))); })
   #define XEN_OFF_T_P(Arg)              ({ int _xen_h_11_ = TYPE(Arg); ((_xen_h_11_ == T_FIXNUM) || (_xen_h_11_ == T_BIGNUM)); })
   #define XEN_KEYWORD_P(Obj)            ({ XEN _xen_h_12_ = Obj;       (XEN_BOUND_P(_xen_h_12_) && SYMBOL_P(_xen_h_12_)); })
-  #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ({ XEN _xen_h_13_ = Arg; ((XEN_LIST_P(_xen_h_13_)) ? (Len = RARRAY(_xen_h_13_)->len) : (Len = 0)); })
 #else
   #define XEN_BOOLEAN_P(Arg)            (XEN_TRUE_P(Arg) || XEN_FALSE_P(Arg))
   #define XEN_NUMBER_P(Arg)             ((TYPE(Arg) == T_FLOAT) || (TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
@@ -747,26 +746,26 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
   #define XEN_PROCEDURE_P(Arg)          (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
   #define XEN_OFF_T_P(Arg)              ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
   #define XEN_KEYWORD_P(Obj)            (XEN_BOUND_P(Obj) && SYMBOL_P(Obj))
-  #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : (Len = 0))
 #endif
 
 /* ---- lists ---- */
 #define XEN_EMPTY_LIST                  Qnil
-#define XEN_NULL_P(a)                   (((a) == Qnil) || ((a) == INT2NUM(0)) || (XEN_LIST_P(a) && XEN_LIST_LENGTH(a) == 0))
+#define XEN_NULL_P(a)                   (XEN_LIST_LENGTH(a) == 0)
 
 #define XEN_CONS_P(Arg)                 (TYPE(Arg) == T_ARRAY)
 #define XEN_PAIR_P(Arg)                 (TYPE(Arg) == T_ARRAY)
 #define XEN_CONS(Arg1, Arg2)            xen_rb_cons(Arg1, Arg2)
 #define XEN_CONS_2(Arg1, Arg2, Arg3)    xen_rb_cons2(Arg1, Arg2, Arg3)
-#define XEN_CAR(a)                      rb_ary_entry(a, 0)
-#define XEN_CADR(a)                     rb_ary_entry(a, 1)
-#define XEN_CADDR(a)                    rb_ary_entry(a, 2)
-#define XEN_CADDDR(a)                   rb_ary_entry(a, 3)
+#define XEN_CAR(a)                      xen_rb_list_ref(a, 0)
+#define XEN_CADR(a)                     xen_rb_list_ref(a, 1)
+#define XEN_CADDR(a)                    xen_rb_list_ref(a, 2)
+#define XEN_CADDDR(a)                   xen_rb_list_ref(a, 3)
 #define XEN_CDR(a)                      xen_rb_cdr(a)
 #define XEN_CDDR(a)                     XEN_CDR(XEN_CDR(a))
 
-#define XEN_LIST_P(Arg)                 (TYPE(Arg) == T_ARRAY)
-#define XEN_LIST_LENGTH(Arg)            xen_rb_list_length(Arg) 
+#define XEN_LIST_P(Arg)                 ((Arg) == XEN_EMPTY_LIST || XEN_CONS_P(Arg))
+#define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = XEN_LIST_LENGTH(Arg)) >= 0)
+#define XEN_LIST_LENGTH(Arg)            xen_rb_list_length(Arg)
 #define XEN_EQ_P(a, b)                  ((a) == (b))
 #define XEN_EQV_P(a, b)                 ((a) == (b))
 #define XEN_EQUAL_P(a, b)               ((a) == (b))
@@ -784,8 +783,8 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #else
   #define XEN_COPY_ARG(Lst)             xen_rb_copy_list(Lst)
 #endif
-#define XEN_LIST_REF(Lst, Num)          rb_ary_entry(Lst, Num)
-#define XEN_LIST_SET(Lst, Num, Val)     rb_ary_store(Lst, Num, Val)
+#define XEN_LIST_REF(Lst, Num)          xen_rb_list_ref(Lst, Num)
+#define XEN_LIST_SET(Lst, Num, Val)     xen_rb_list_set(Lst, Num, Val)
 #define XEN_APPEND(X, Y)                rb_ary_concat(X, Y)
 #define XEN_LIST_REVERSE(Lst)           rb_ary_reverse(XEN_COPY_ARG(Lst))
 
@@ -847,24 +846,24 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_LOAD_FILE_WITH_PATH(a)      xen_rb_load_file_with_error(C_TO_XEN_STRING(a))
 
 /* ---- hooks ---- */
-#define XEN_HOOK_P(Arg)                 (xen_rb_is_hook_p(Arg) || XEN_PROCEDURE_P(Arg))
-#define XEN_HOOK_PROCEDURES(a)          ((xen_rb_is_hook_p(a)) ? xen_rb_hook_to_a(a) : ((XEN_NULL_P(a)) ? Qnil : XEN_LIST_1(a)))
-#define XEN_CLEAR_HOOK(a)               ((xen_rb_is_hook_p(a)) ? xen_rb_hook_reset_hook(a) : (a = Qnil))
-#define XEN_HOOKED(a)                   XEN_NOT_NULL_P(XEN_HOOK_PROCEDURES(a))
+#define XEN_HOOK_P(Arg)                 xen_rb_hook_p(Arg)
+#define XEN_HOOK_PROCEDURES(a)          xen_rb_hook_to_a(a)
+#define XEN_CLEAR_HOOK(a)               xen_rb_hook_reset_hook(a)
+#define XEN_HOOKED(a)                   (!xen_rb_hook_empty_p(a))
 #define XEN_DEFINE_HOOK(Name, Arity, Help) xen_rb_create_hook(Name, Arity, Help)
 #define XEN_DEFINE_SIMPLE_HOOK(Arity)   xen_rb_hook_c_new("simple_hook", Arity, NULL);
 
 /* ---- vectors ---- */
 #define XEN_VECTOR_P(Arg)               (TYPE(Arg) == T_ARRAY)
-#define XEN_VECTOR_LENGTH(Arg)          RARRAY(Arg)->len
-#define XEN_VECTOR_REF(Vect, Num)       rb_ary_entry(Vect, Num)
-#define XEN_VECTOR_SET(a, b, c)         rb_ary_store(a, b, c)
+#define XEN_VECTOR_LENGTH(Arg)          xen_rb_list_length(Arg)
+#define XEN_VECTOR_REF(Vect, Num)       xen_rb_list_ref(Vect, Num)
+#define XEN_VECTOR_SET(Vect, Num, Val)  xen_rb_list_set(Vect, Num, Val)
 #define XEN_MAKE_VECTOR(Num, Fill)      xen_rb_ary_new_with_initial_element(Num, Fill)
 #define XEN_VECTOR_TO_LIST(a)           a
 
 /* ---- symbols ---- */
 #define XEN_SYMBOL_P(Arg)               SYMBOL_P(Arg)
-#define XEN_SYMBOL_TO_C_STRING(a)       rb_id2name(SYM2ID(a))
+#define XEN_SYMBOL_TO_C_STRING(a)       ((char *)rb_id2name(SYM2ID(a)))
 #define C_STRING_TO_XEN_SYMBOL(a)       ID2SYM(rb_intern(a))
 #define XEN_STRING_TO_SYMBOL(Str)       C_STRING_TO_XEN_SYMBOL(XEN_TO_C_STRING(Str))
 #define XEN_SYMBOL_TO_STRING(Sym)       C_TO_XEN_STRING(XEN_SYMBOL_TO_C_STRING(Sym))
@@ -1136,7 +1135,9 @@ char *xen_scheme_constant_to_ruby(const char *name);
 char *xen_scheme_procedure_to_ruby(const char *name);
 char *xen_scheme_global_variable_to_ruby(const char *name);
 bool xen_rb_defined_p(const char *name);
-long xen_rb_list_length(XEN obj); 
+int xen_rb_list_length(XEN obj); 
+XEN xen_rb_list_ref(XEN obj, int index);
+XEN xen_rb_list_set(XEN obj, int index, XEN value);
 void xen_rb_raise(XEN type, XEN info);
 XEN xen_rb_obj_as_string(XEN obj);
 XEN xen_rb_eval_string_with_error(char *str);
@@ -1154,10 +1155,11 @@ char *xen_help(char *name);
 double xen_rb_to_c_double_or_else(XEN a, double b);
 int xen_rb_to_c_int_or_else(XEN a, int b);
 /* class Hook */
-VALUE xen_rb_is_hook_p(VALUE hook);
-VALUE xen_rb_hook_c_new(char *name, int arity, char *help);
-VALUE xen_rb_hook_reset_hook(VALUE hook);
-VALUE xen_rb_hook_to_a(VALUE hook);
+bool xen_rb_hook_p(XEN hook);
+bool xen_rb_hook_empty_p(XEN hook);
+XEN xen_rb_hook_c_new(char *name, int arity, char *help);
+XEN xen_rb_hook_reset_hook(XEN hook);
+XEN xen_rb_hook_to_a(XEN hook);
 void Init_Hook(void);
 XEN xen_rb_create_hook(char *name, int arity, char *help);
 
@@ -1287,7 +1289,7 @@ void xen_rb_repl_set_prompt(const char *prompt);
 /* === Vector (Array) === */
 #define XEN_MAKE_VECTOR(Num, Fill)      fth_make_array_with_init(Num, Fill)
 #define XEN_VECTOR_P(Arg)               FTH_ARRAY_P(Arg)
-#define XEN_VECTOR_LENGTH(Arg)          fth_array_length(Arg)
+#define XEN_VECTOR_LENGTH(Arg)          ((int)fth_array_length(Arg))
 #define XEN_VECTOR_TO_LIST(Vect)        fth_array_to_list(Vect)
 #define XEN_VECTOR_REF(Vect, Num)       fth_array_ref(Vect, Num)
 #define XEN_VECTOR_SET(Vect, Num, Val)  fth_array_set(Vect, Num, Val)
@@ -1302,8 +1304,8 @@ void xen_rb_repl_set_prompt(const char *prompt);
 #define XEN_LIST_REF(Lst, Num)          fth_list_ref(Lst, Num)
 #define XEN_LIST_SET(Lst, Num, Val)     fth_list_set(Lst, Num, Val)
 #define XEN_LIST_REVERSE(Lst)           fth_list_reverse(Lst)
-#define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = fth_list_length(Arg)) >= 0)
-#define XEN_LIST_LENGTH(Arg)            fth_list_length(Arg)
+#define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = XEN_LIST_LENGTH(Arg)) >= 0)
+#define XEN_LIST_LENGTH(Arg)            ((int)fth_list_length(Arg))
 #define XEN_LIST_1(a)                   FTH_LIST_1(a)
 #define XEN_LIST_2(a, b)                FTH_LIST_2(a, b)
 #define XEN_LIST_3(a, b, c)             FTH_LIST_3(a, b, c)

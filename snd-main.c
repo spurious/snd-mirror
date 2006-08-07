@@ -725,7 +725,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
 {
   XEN ignore_list;
   ignore_list = rb_ary_assoc(property_list, C_STRING_TO_XEN_SYMBOL("save_state_ignore"));
-  if (!(XEN_LIST_P(ignore_list)))
+  if (!(XEN_VECTOR_P(ignore_list)))
     {
       if (chan == -1)
 	fprintf(fd, "%sset_%s(%s, sfile)\n",
@@ -740,16 +740,25 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
     }
   else
     {
-      XEN new_properties = XEN_EMPTY_LIST;
+      XEN ignore_vec, new_properties = XEN_EMPTY_LIST;
       int i, property_len, gc_loc;
       gc_loc = snd_protect(new_properties);
       property_len = XEN_LIST_LENGTH(property_list);
-      for (i = 0; i < property_len; i++)
+      ignore_vec = XEN_VECTOR_REF(ignore_list, 1);
+      if (XEN_VECTOR_P(ignore_vec))
 	{
-	  XEN property;
-	  property = XEN_LIST_REF(property_list, i);
-	  if (XEN_FALSE_P(rb_ary_includes(XEN_VECTOR_REF(ignore_list, 1), XEN_CAR(property))))
-	    new_properties = XEN_CONS(property, new_properties);
+	  for (i = 0; i < property_len; i++)
+	    {
+	      XEN property;
+	      property = XEN_LIST_REF(property_list, i);
+	      if (XEN_FALSE_P(rb_ary_includes(ignore_vec, XEN_CAR(property))))
+		new_properties = XEN_CONS(property, new_properties);
+	    }
+	}
+      else
+	{
+	  for (i = 0; i < property_len; i++)
+	  new_properties = XEN_CONS(XEN_LIST_REF(property_list, i), new_properties);
 	}
       if (!(XEN_NULL_P(new_properties)))
 	{

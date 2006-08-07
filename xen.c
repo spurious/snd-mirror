@@ -311,9 +311,9 @@ XEN rb_documentation(XEN name)
 {
   XEN_ASSERT_TYPE((XEN_STRING_P(name) || XEN_SYMBOL_P(name)), name, XEN_ONLY_ARG, S_get_help, "a char* or symbol");
   if (XEN_SYMBOL_P(name))
-    return rb_property(XEN_SYMBOL_TO_STRING(name), XEN_DOCUMENTATION_SYMBOL);
+    return(rb_property(XEN_SYMBOL_TO_STRING(name), XEN_DOCUMENTATION_SYMBOL));
   else
-    return rb_property(name, XEN_DOCUMENTATION_SYMBOL);
+    return(rb_property(name, XEN_DOCUMENTATION_SYMBOL));
 }
 
 XEN rb_set_documentation(XEN name, XEN help)
@@ -324,13 +324,13 @@ XEN rb_set_documentation(XEN name, XEN help)
     rb_set_property(XEN_SYMBOL_TO_STRING(name), XEN_DOCUMENTATION_SYMBOL, help);
   else
     rb_set_property(name, XEN_DOCUMENTATION_SYMBOL, help);
-  return name;
+  return(name);
 }
 
 static XEN g_add_help(XEN name, XEN help)
 {
 #define H_add_help S_add_help"(name, help)  add help to topic or function name (String or Symbol)"
-  return rb_set_documentation(name, help);
+  return(rb_set_documentation(name, help));
 }
 
 static XEN g_get_help(XEN name)
@@ -338,9 +338,9 @@ static XEN g_get_help(XEN name)
 #define H_get_help S_get_help"([name=:"S_get_help"])  \
 return help associated with name (String or Symbol) or false"
   if (XEN_NOT_BOUND_P(name))
-    return C_TO_XEN_STRING(H_get_help);
+    return(C_TO_XEN_STRING(H_get_help));
   else
-    return rb_documentation(name);
+    return(rb_documentation(name));
 }
 
 void xen_initialize(void)
@@ -401,7 +401,13 @@ void xen_gc_mark(XEN val)
 
 XEN xen_rb_cdr(XEN val)
 {
-  rb_ary_delete_at(val, 0);
+  if (XEN_CONS_P(val))
+    {
+      XEN new_list;
+      new_list = XEN_COPY_ARG(val);
+      rb_ary_delete_at(new_list, 0);
+      return(new_list);
+    }
   return(val);
 }
 
@@ -409,7 +415,7 @@ XEN xen_rb_cons(XEN arg1, XEN arg2)
 {
   if (XEN_NULL_P(arg2))
     return(rb_ary_new3(1, arg1));
-  if (!(XEN_LIST_P(arg2)))
+  if (!(XEN_CONS_P(arg2)))
     return(rb_ary_new3(2, arg1, arg2));
   return(rb_ary_unshift(arg2, arg1)); /* arg2 assumed to be array here in Ruby */
 }
@@ -549,14 +555,30 @@ bool xen_rb_defined_p(const char *name)
     }
 }
 
-long xen_rb_list_length(XEN obj) 
+int xen_rb_list_length(XEN obj) 
 { 
-  if (XEN_LIST_P(obj)) 
-    return(RARRAY(obj)->len); 
+  if (XEN_VECTOR_P(obj)) 
+    return((int)RARRAY(obj)->len); 
   if (obj == XEN_EMPTY_LIST) 
     return(0); 
   return(-1); 
 } 
+
+/* XEN_CAR, XEN_CADR..., XEN_LIST_REF, XEN_VECTOR_REF */
+XEN xen_rb_list_ref(XEN obj, int index)
+{
+  if (XEN_VECTOR_P(obj))
+    return(rb_ary_entry(obj, (long)index));
+  return(XEN_EMPTY_LIST);
+}
+
+/* XEN_LIST_SET, XEN_VECTOR_SET */
+XEN xen_rb_list_set(XEN obj, int index, XEN value)
+{
+  if (XEN_VECTOR_P(obj))
+    rb_ary_store(obj, (long)index, value);
+  return(value);
+}
 
 char *xen_version(void)
 {
@@ -797,28 +819,35 @@ int xen_rb_to_c_int_or_else(XEN a, int b) {return(XEN_INTEGER_P(a) ? FIX2INT(a) 
 
 /* class Hook */
  
-static VALUE xen_rb_cHook;
+static XEN xen_rb_cHook;
 
-static VALUE hook_alloc(VALUE klass)
+static XEN hook_alloc(XEN klass)
 {
-  return Data_Wrap_Struct(klass, 0, 0, 0);
+  return(Data_Wrap_Struct(klass, 0, 0, 0));
 }
 
-VALUE xen_rb_is_hook_p(VALUE obj)
+#define XEN_CLASS_HOOK_P(Arg)              rb_obj_is_kind_of(Arg, xen_rb_cHook)
+
+bool xen_rb_hook_p(XEN obj)
 {
-  return rb_obj_is_kind_of(obj, xen_rb_cHook);
+  return(XEN_CLASS_HOOK_P(obj));
 }
 
-#define XEN_CLASS_HOOK_P(Arg)              xen_rb_is_hook_p(Arg)
+bool xen_rb_hook_empty_p(XEN obj)
+{
+  if (XEN_CLASS_HOOK_P(obj))
+    return(RARRAY(rb_iv_get(obj, "@procs"))->len == 0);
+  return(false);
+}
 
 /*
  * @name = "$name_of_hook"
  * @arity = arity of procedure(s),         default 0
  * @procs = [["named proc1", proc1], ...]
  */
-static VALUE xen_rb_hook_initialize(int argc, VALUE *argv, VALUE hook)
+static XEN xen_rb_hook_initialize(int argc, XEN *argv, XEN hook)
 {
-  VALUE name, arity, help;
+  XEN name, arity, help;
   rb_scan_args(argc, argv, "12", &name, &arity, &help);
   XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ARG_1, c__FUNCTION__, "a char* or symbol");
   if (XEN_SYMBOL_P(name))
@@ -827,32 +856,30 @@ static VALUE xen_rb_hook_initialize(int argc, VALUE *argv, VALUE hook)
     {
       XEN_ASSERT_TYPE(XEN_INTEGER_P(arity), arity, XEN_ARG_2, c__FUNCTION__, "an integer");
     }
-  else
-    arity = INT2NUM(0);
+  else arity = INT2NUM(0);
   if (help != Qnil)
     {
       XEN_ASSERT_TYPE(XEN_STRING_P(help), help, XEN_ARG_3, c__FUNCTION__, "a char*");
       XEN_SET_OBJECT_HELP(name, help);
     }
-  else
-    help = rb_str_new2("");
+  else help = rb_str_new2("");
   rb_iv_set(hook, "@name", name);
   rb_iv_set(hook, "@arity", arity);
   rb_iv_set(hook, "@procs", rb_ary_new());
-  return hook;
+  return(hook);
 }
 
 /*
- * To create variables of class Hook in C, see xen.h, XEN_DEFINE_HOOK
- * and XEN_DEFINE_SIMPLE_HOOK
+ * To create a simple hook in C, see xen.h, XEN_DEFINE_SIMPLE_HOOK.
+ * To create a global hook variables, see xen_rb_create_hook() below.
  */
-VALUE xen_rb_hook_c_new(char *name, int arity, char *help)
+XEN xen_rb_hook_c_new(char *name, int arity, char *help)
 {
-  VALUE args[3];
+  XEN args[3];
   args[0] = C_TO_XEN_STRING(name);
   args[1] = C_TO_XEN_INT(arity);
   args[2] = C_TO_XEN_STRING(help);
-  return xen_rb_hook_initialize(3, args, hook_alloc(xen_rb_cHook));
+  return(xen_rb_hook_initialize(3, args, hook_alloc(xen_rb_cHook)));
 }
 
 /*
@@ -882,73 +909,84 @@ bool xen_rb_arity_ok(int rargs, int args)
   if (OLD_RUBY_ARITY())
     {
       if ((rargs >= 2) || (rargs == 0))
-	return (rargs == args);
+	return(rargs == args);
       else if (rargs <= -2)
-	return (abs(rargs) <= args);
+	return(abs(rargs) <= args);
       else			/* rargs -1 remains (no 1 exists) */
-	return ((args == 1) || (args == 0) || (args == -1));
+	return((args == 1) || (args == 0) || (args == -1));
     }
   else /* NEW_RUBY_ARITY */
-    return ((rargs >= 0) ? (rargs == args) : (abs(rargs) <= args));
+    return((rargs >= 0) ? (rargs == args) : (abs(rargs) <= args));
 }
  
-static VALUE xen_rb_hook_add_hook(int argc, VALUE *argv, VALUE hook)
+static XEN xen_rb_hook_add_hook(int argc, XEN *argv, XEN hook)
 {
-  VALUE name, func;
-  int args = XEN_TO_C_INT(rb_iv_get(hook, "@arity"));
+  XEN name, func;
+  int args;
+  args = XEN_TO_C_INT(rb_iv_get(hook, "@arity"));
   rb_scan_args(argc, argv, "1&", &name, &func);
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, c__FUNCTION__, "a char*");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && xen_rb_arity_ok(XEN_TO_C_INT(XEN_ARITY(func)), args),
 		  func, XEN_ARG_2, c__FUNCTION__, "a procedure");
   rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, name, func));
-  return hook;
+  return(hook);
 }
 
-static VALUE xen_rb_hook_remove_hook(VALUE hook, VALUE name)
+static XEN xen_rb_hook_remove_hook(XEN hook, XEN name)
 {
-  VALUE ary = rb_iv_get(hook, "@procs");
-  return rb_ary_delete(ary, rb_ary_assoc(ary, name));
+  XEN ary;
+  ary = rb_iv_get(hook, "@procs");
+  return(rb_ary_delete(ary, rb_ary_assoc(ary, name)));
 }
 
-VALUE xen_rb_hook_reset_hook(VALUE hook)
+XEN xen_rb_hook_reset_hook(XEN hook)
 {
-  XEN_ASSERT_TYPE(XEN_CLASS_HOOK_P(hook), hook, XEN_ARG_1, c__FUNCTION__, "class Hook");
-  rb_ary_clear(rb_iv_get(hook, "@procs"));
-  return hook;
+  if (XEN_CLASS_HOOK_P(hook))
+    rb_ary_clear(rb_iv_get(hook, "@procs"));
+  return(hook);
 }
 
-static VALUE xen_rb_hook_names(VALUE hook)
+static XEN xen_rb_hook_names(XEN hook)
 {
-  VALUE ary = rb_obj_dup(rb_iv_get(hook, "@procs"));
-  if (RARRAY(ary)->len) {
-    VALUE ret = rb_ary_new();
-    while (RARRAY(ary)->len)
-      rb_ary_push(ret, rb_ary_entry(rb_ary_shift(ary), 0));
-    return ret;
-  }
-  else
-    return Qnil;
+  XEN ary, ret = Qnil;
+  long len;
+  ary = rb_iv_get(hook, "@procs");
+  len = RARRAY(ary)->len;
+  if (len > 0)
+    {
+      long i;
+      ret = rb_ary_new2(len);
+      for (i = 0; i < len; i++)
+	rb_ary_store(ret, i, XEN_VECTOR_REF(XEN_VECTOR_REF(ary, i), 0));
+    }
+  return(ret);
 }
 
-VALUE xen_rb_hook_to_a(VALUE hook)
+XEN xen_rb_hook_to_a(XEN hook)
 {
-  VALUE ary = rb_obj_dup(rb_iv_get(hook, "@procs"));
-  XEN_ASSERT_TYPE(XEN_CLASS_HOOK_P(hook), hook, XEN_ARG_1, c__FUNCTION__, "class Hook");
-  if (RARRAY(ary)->len) {
-    VALUE ret = rb_ary_new();
-    while (RARRAY(ary)->len)
-      rb_ary_push(ret, rb_ary_entry(rb_ary_shift(ary), 1));
-    return ret;
-  }
-  else
-    return Qnil;
+  XEN ret = Qnil;
+  if (XEN_CLASS_HOOK_P(hook))
+    {
+      XEN ary;
+      long len;
+      ary = rb_iv_get(hook, "@procs");
+      len = XEN_LIST_LENGTH(ary);
+      if (len > 0)
+	{
+	  long i;
+	  ret = rb_ary_new2(len);
+	  for (i = 0; i < len; i++)
+	    rb_ary_store(ret, i, XEN_VECTOR_REF(XEN_VECTOR_REF(ary, i), 1));
+	}
+    }
+  return(ret);
 }
 
-static VALUE xen_rb_hook_run_hook(VALUE hook)
+static XEN xen_rb_hook_run_hook(XEN hook)
 {
   if (RARRAY(rb_iv_get(hook, "@procs"))->len)
     rb_ary_each(xen_rb_hook_to_a(hook));
-  return hook;
+  return(hook);
 }
 
 /*
@@ -956,45 +994,48 @@ static VALUE xen_rb_hook_run_hook(VALUE hook)
  * $var_hook.run_hook { |prc| ret << prc.call(*args) } for collecting
  * results.
  */
-static VALUE xen_rb_hook_call(int argc, VALUE *argv, VALUE hook)
+static XEN xen_rb_hook_call(int argc, XEN *argv, XEN hook)
 {
-  long i;
-  VALUE result = Qnil, rest, procs = xen_rb_hook_to_a(hook);
+  XEN result = Qnil, rest, procs;
   rb_scan_args(argc, argv, "*", &rest);
+  procs = xen_rb_hook_to_a(hook);
   if (procs != Qnil)
-    for (i = 0; i < RARRAY(procs)->len; i++)
-      result = xen_rb_apply(rb_ary_entry(procs, i), rest);
-  return result;
+    {
+      long i;
+      for (i = 0; i < RARRAY(procs)->len; i++)
+	result = xen_rb_apply(rb_ary_entry(procs, i), rest);
+    }
+  return(result);
 }
 
-static VALUE xen_rb_hook_is_empty_p(VALUE hook)
+static XEN xen_rb_hook_is_empty_p(XEN hook)
 {
-  return C_TO_XEN_BOOLEAN(RARRAY(rb_iv_get(hook, "@procs"))->len == 0);
+  return(C_TO_XEN_BOOLEAN(RARRAY(rb_iv_get(hook, "@procs"))->len == 0));
+}
+ 
+static XEN xen_rb_hook_length(XEN hook)
+{
+  return(C_TO_XEN_INT(RARRAY(rb_iv_get(hook, "@procs"))->len));
 }
 
-static VALUE xen_rb_hook_length(VALUE hook)
+static XEN xen_rb_hook_name(XEN hook)
 {
-  return C_TO_XEN_INT(RARRAY(rb_iv_get(hook, "@procs"))->len);
+  return(rb_iv_get(hook, "@name"));
 }
 
-static VALUE xen_rb_hook_name(VALUE hook)
+static XEN xen_rb_hook_describe(XEN hook)
 {
-  return rb_iv_get(hook, "@name");
+  return(XEN_OBJECT_HELP(xen_rb_hook_name(hook)));
 }
 
-static VALUE xen_rb_hook_describe(VALUE hook)
+static XEN xen_rb_hook_arity(XEN hook)
 {
-  return XEN_OBJECT_HELP(xen_rb_hook_name(hook));
+  return(rb_iv_get(hook, "@arity"));
 }
 
-static VALUE xen_rb_hook_arity(VALUE hook)
+static XEN xen_rb_hook_inspect(XEN hook)
 {
-  return rb_iv_get(hook, "@arity");
-}
-
-static VALUE xen_rb_hook_inspect(VALUE hook)
-{
-  VALUE str = rb_str_new2("#<Hook name: ");
+  XEN str = rb_str_new2("#<Hook name: ");
   rb_str_append(str, rb_inspect(rb_iv_get(hook, "@name")));
   rb_str_cat2(str, ", arity: ");
   rb_str_append(str, rb_inspect(rb_iv_get(hook, "@arity")));
@@ -1003,7 +1044,7 @@ static VALUE xen_rb_hook_inspect(VALUE hook)
   rb_str_cat2(str, "]: ");
   rb_str_append(str, rb_inspect(xen_rb_hook_names(hook)));
   rb_str_cat2(str, ">");
-  return str;
+  return(str);
 }    
 
 /* bil -- added xen_rb_create_hook for XEN_DEFINE_HOOK in xen.h, 13-Jun-05 --
@@ -1043,37 +1084,33 @@ void snd_rb_raise(XEN type, XEN info); /* XEN_ERROR */
 static XEN xen_rb_make_hook(int argc, XEN *argv, XEN klass)
 {
   XEN hook, name;
-  if (argc > 0 && argc < 4) {
-    hook = xen_rb_hook_initialize(argc, argv, hook_alloc(xen_rb_cHook));
-    if (rb_block_given_p()) {
-      argv[0] = rb_str_new2("");
+  if (argc > 0 && argc < 4)
+    {
+      hook = xen_rb_hook_initialize(argc, argv, hook_alloc(xen_rb_cHook));
+      if (rb_block_given_p())
+	{
+	  argv[0] = rb_str_new2("");
+	  xen_rb_hook_add_hook(1, argv, hook);
+	}
+    }
+  else if (argc == 4 && rb_block_given_p())
+    {
+      hook = xen_rb_hook_initialize(3, argv, hook_alloc(xen_rb_cHook));
+      argv[0] = argv[3];
       xen_rb_hook_add_hook(1, argv, hook);
     }
-  }
-  else if (argc == 4 && rb_block_given_p()) {
-    hook = xen_rb_hook_initialize(3, argv, hook_alloc(xen_rb_cHook));
-    argv[0] = argv[3];
-    xen_rb_hook_add_hook(1, argv, hook);
-  }
-  else {
-    XEN args_msg = C_TO_XEN_STRING("make_hook(name, arity=0, help=\"\", hook_name=\"\", &func)");
-    XEN args_error = XEN_ERROR_TYPE("wrong-number-of-args");
-#if USE_SND
-    snd_rb_raise(args_error, XEN_LIST_1(args_msg));
-#else
-    XEN_ERROR(args_error, XEN_LIST_1(args_msg));
-#endif
-  }
+  else XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"),
+		 XEN_LIST_1(C_TO_XEN_STRING("make_hook(name, arity=0, help=\"\", hook_name=\"\", &func)")));
   name = xen_rb_hook_name(hook);
   if (RSTRING(name)->ptr[0] != '$')
     name = C_TO_XEN_STRING(xen_scheme_global_variable_to_ruby(RSTRING(name)->ptr));
   XEN_ASSERT_TYPE(RSTRING(name)->len >= 2, name, XEN_ARG_1, c__FUNCTION__, "a char*, len >= 2");
-  return rb_gv_set(RSTRING(name)->ptr, hook);
+  return(rb_gv_set(RSTRING(name)->ptr, hook));
 }
 
-static VALUE xen_rb_hook_p(VALUE klass, VALUE obj)
+static XEN xen_rb_is_hook_p(XEN klass, XEN obj)
 {
-  return rb_obj_is_kind_of(obj, xen_rb_cHook);
+  return(C_TO_XEN_BOOLEAN(XEN_CLASS_HOOK_P(obj)));
 }
 
 /*
@@ -1098,11 +1135,11 @@ static VALUE xen_rb_hook_p(VALUE klass, VALUE obj)
  */
 
 #if (!HAVE_RB_DEFINE_ALLOC_FUNC)
-static VALUE xen_rb_new(int argc, VALUE *argv, VALUE klass)
+static XEN xen_rb_new(int argc, XEN *argv, XEN klass)
 {
-  VALUE hook = hook_alloc(klass);
+  XEN hook = hook_alloc(klass);
   rb_obj_call_init(hook, argc, argv);
-  return hook;
+  return(hook);
 }
 #endif
 
@@ -1117,19 +1154,16 @@ XEN rb_property(XEN obj, XEN key)
 #define H_property S_property "(obj, key)  \
 if key exists, return obj's value (maybe nil) associated with key otherwise false"
   XEN props = XEN_FALSE;
-
-  XEN_ASSERT_TYPE((obj), obj, XEN_ARG_1, S_property, "an object of any kind");
-  XEN_ASSERT_TYPE((key), key, XEN_ARG_2, S_property, "an object of any kind");
   
   if (XEN_FALSE_P(rb_object_properties))
-    return XEN_FALSE;
+    return(XEN_FALSE);
 
   props = rb_hash_aref(rb_object_properties, obj);
 
   if (XEN_FALSE_P(props) || props == Qnil)
-    return XEN_FALSE;
+    return(XEN_FALSE);
   else
-    return rb_hash_aref(props, key);
+    return(rb_hash_aref(props, key));
 }
 
 XEN rb_set_property(XEN obj, XEN key, XEN value)
@@ -1137,10 +1171,6 @@ XEN rb_set_property(XEN obj, XEN key, XEN value)
 #define H_set_property S_set_property "(obj, key, value)  \
 set key-value pair for obj and return value"
   XEN props = XEN_FALSE;
-
-  XEN_ASSERT_TYPE((obj), obj, XEN_ARG_1, S_set_property, "an object of any kind");
-  XEN_ASSERT_TYPE((key), key, XEN_ARG_2, S_set_property, "an object of any kind");
-  XEN_ASSERT_TYPE((value), value, XEN_ARG_3, S_set_property, "an object of any kind");
 
   if (XEN_FALSE_P(rb_object_properties))
     {
@@ -1155,13 +1185,13 @@ set key-value pair for obj and return value"
   
   rb_hash_aset(props, key, value);
   rb_hash_aset(rb_object_properties, obj, props);
-  return value;
+  return(value);
 }
 
 XEN rb_properties(void)
 {
 #define H_properties S_properties "()  return all properties of rb_object_properties (a hash)"
-  return rb_object_properties;
+  return(rb_object_properties);
 }
 
 XEN_ARGIFY_1(g_get_help_w, g_get_help);
@@ -1205,7 +1235,7 @@ void Init_Hook(void)
   rb_define_method(xen_rb_cHook, "inspect", XEN_PROCEDURE_CAST xen_rb_hook_inspect, 0);
   
   rb_define_global_function("make_hook", XEN_PROCEDURE_CAST xen_rb_make_hook, -1);
-  rb_define_global_function("hook?", XEN_PROCEDURE_CAST xen_rb_hook_p, 1);
+  rb_define_global_function("hook?", XEN_PROCEDURE_CAST xen_rb_is_hook_p, 1);
 
   XEN_DEFINE_PROCEDURE(S_get_help,             g_get_help_w,             0, 1, 0, H_get_help);
   XEN_DEFINE_PROCEDURE(S_add_help,             g_add_help_w,             2, 0, 0, H_add_help);
@@ -1225,7 +1255,7 @@ void Init_Hook(void)
 
 char *xen_version(void)
 {
-  return fth_format("Fth: %s, Xen: " XEN_VERSION, FTH_VERSION);
+  return(fth_format("Fth: %s, Xen: " XEN_VERSION, FTH_VERSION));
 }
 
 void xen_gc_mark(XEN val)
@@ -1241,7 +1271,7 @@ void xen_gc_mark(XEN val)
  *  int main(int argc, char **argv)
  *  {
  *    xen_repl(argc, argv);
- *    return 0;
+ *    return(0);
  *  }
  *
  * linking requires xen.o and -lfth -lm
@@ -1325,34 +1355,19 @@ static void fth_emacs_eval(FTH line_in)
 
 off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 {
-  if (XEN_OFF_T_P(obj))
-#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
-    return(XEN_TO_C_LONG_LONG(obj));
-#else
-    return(XEN_TO_C_INT(obj));
-#endif
-  else
-    if (XEN_NUMBER_P(obj))
-      return((off_t)XEN_TO_C_DOUBLE(obj));
+  if (XEN_NUMBER_P(obj))
+    return(fth_long_long_ref(obj));
   return(fallback);
 }
 
 off_t xen_to_c_off_t(XEN obj)
 {
-#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
-  return(XEN_TO_C_LONG_LONG(obj));
-#else
-  return(XEN_TO_C_INT(obj));
-#endif
+  return(fth_long_long_ref(obj));
 }
 
-XEN c_to_xen_off_t(off_t val)
+XEN c_to_xen_off_t(off_t obj)
 {
-#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
-    return(C_TO_XEN_LONG_LONG(val));
-#else
-    return(C_TO_XEN_INT(val));
-#endif
+  return(fth_make_long_long(obj));
 }
 
 void xen_initialize(void)
