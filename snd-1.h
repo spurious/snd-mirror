@@ -704,6 +704,7 @@ void sound_not_current(snd_info *sp, void *ignore);
 void set_init_filename(const char *filename);
 void save_state(const char *save_state_name);
 void global_control_panel_state(void);
+void global_fft_state(void);
 int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool with_title, int args);
 
 void g_init_main(void);

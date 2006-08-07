@@ -12,9 +12,10 @@
 /* TODO: these help discussions also need the basic Snd functions listed (max-transform-peaks),
  *        and the dialog should have a tooltip or something to tell the functional name of each field
  *
- *  bare bones help: Filter Resample Reverb Insert Delete
  *  why not (in menu, not just via matching): copy save selections/regions graph choices
  *  dialog help is similarly sketchy
+ *
+ * would be nice to have help for the extension languages -- help scheme
  */
 
 
@@ -799,6 +800,7 @@ extsnd.html, or snd-debug.  For notelist debugging, see ws-backtrace.",
 		      debug_xrefs,
 		      debug_urls);
 }
+/* TODO: fix vardpy ref */
 
 
 /* ---------------- Envelope ---------------- */
@@ -960,12 +962,16 @@ The main FFT-related functions are:\
     the choices are:\n\
     " transform_normalizations "\n\
 \n\
+  " S_peaks " (:optional file snd chn) writes out current peak info as text\n\
+\n\
   Other related functions: " S_zero_pad ", " S_wavelet_type ", " S_add_transform "\n\
     " S_min_dB ", " S_snd_spectrum ", " S_show_selection_transform ".",
 
 		      WITH_WORD_WRAP,
 		      snd_xrefs("FFT"),
 		      snd_xref_urls("FFT"));
+
+  global_fft_state();
 }
 
 
@@ -1348,7 +1354,28 @@ the recorder, press the 'reset' button at the bottom of the window. \
 \n\n\
 Digital input is slightly tricky -- you need to set the sampling rate before you \
 click the 'digital input' button; otherwise you'll get a stuttering effect because the output \
-(monitor) rate doesn't match the input rate.",
+(monitor) rate doesn't match the input rate.\n\
+\n\
+The recorder-related functions are:\n\
+\n\
+    " S_recorder_autoload ": open recording automatically\n\
+    " S_recorder_buffer_size ": input buffer size\n\
+    " S_recorder_dialog ": start the recorder dialog\n\
+    " S_recorder_file ": output file name\n\
+    " S_recorder_file_hook ": hook for setting output file name\n\
+    " S_recorder_gain "(which-gain): input (sound card) gain\n\
+    " S_recorder_in_amp " (in-chan out-chan): input -> output gain\n\
+    " S_recorder_in_chans ": number of input chans\n\
+    " S_recorder_in_data_format ": incoming data format\n\
+    " S_recorder_in_device ": input device (mus-microphone)\n\
+    " S_recorder_max_duration ": maximum output file length (if set)\n\
+    " S_recorder_out_amp "(out-chan): output gain on out-chan\n\
+    " S_recorder_out_chans ": number of output chans\n\
+    " S_recorder_out_data_format ": output sound data format\n\
+    " S_recorder_out_header_type ": output sound header choice\n\
+    " S_recorder_srate ": sampling rate of recording\n\
+    " S_recorder_trigger ": amplitude at which to start recording (if set)\n",
+
 		      WITH_WORD_WRAP,
 		      record_xrefs,
 		      NULL);
@@ -1362,12 +1389,13 @@ static char *header_and_data_xrefs[10] = {
   "data format constants: {" S_mus_data_format_name "}",
   "header type discussion: {" S_header_type "}",
   "header type constants: {" S_mus_header_type_name "}",
-  "MPEG support: mpg in examp.scm",
-  "OGG support: read-ogg in examp.scm",
-  "Speex support: read-speex in examp.scm",
-  "Flac support: read-flac in examp.scm",
+  "MPEG support: mpg in examp." XEN_FILE_EXTENSION,
+  "OGG support: read-ogg in examp." XEN_FILE_EXTENSION,
+  "Speex support: read-speex in examp." XEN_FILE_EXTENSION,
+  "Flac support: read-flac in examp." XEN_FILE_EXTENSION,
   "{Sndlib}: underlying support",
   NULL};
+/* TODO: fix _ business for ruby (in funcs as well?) and extension throughout */
 
 static char *header_and_data_urls[10] = {
   "extsnd.html#snddataformat",
@@ -1571,10 +1599,22 @@ any key via:\n\
 void play_help(void)
 {
   #if HAVE_SCHEME
+    #define play_cursor_example "(play (cursor))"
+    #define play_file_example "(play \"oboe.snd\")"
+    #define play_previous_version_example "(play 0 #f #f #f #f (1- (edit-position)))"
+    #define H_cursor_line S_cursor_line
   #endif
   #if HAVE_RUBY
+    #define play_cursor_example "play(cursor())"
+    #define play_file_example "play(\"oboe.snd\")"
+    #define play_previous_version_example "play(0, false, false, false, false, edit_position() - 1)"
+    #define H_cursor_line "Cursor_line"
   #endif
   #if HAVE_FORTH
+    #define play_cursor_example "cursor play"
+    #define play_file_example "\"oboe.snd\" play"
+    #define play_previous_version_example "0 #f #f #f #f 0 0 edit-position 1- play"
+    #define H_cursor_line S_cursor_line
   #endif
 
   snd_help_with_xrefs("Play",
@@ -1595,8 +1635,27 @@ Except in the browsers, what is actually played depends on the control panel.\
 \n\n\
 The following functions are related to playing sounds:\n\
 \n\
-  " S_play " ()\
-",
+  " S_play " (:optional samp snd chn sync end edpos stop-proc out-chan)\n\
+    To play from the cursor: " play_cursor_example "\n\
+    To play a file: " play_file_example "\n\
+    To play the previous version of a sound: \n\
+      " play_previous_version_example "\n\
+\n\
+    To get a \"tracking cursor\" (a moving line that tries to follow along)\n\
+      set " S_with_tracking_cursor " to " PROC_TRUE ", and " S_tracking_cursor_style "\n\
+      to " H_cursor_line ".\n\
+\n\
+  " S_play_and_wait " (:optional samp snd chn sync end edpos stop-proc out-chan)\n\
+    a version of 'play' that does not return until the playing is complete.\n\
+\n\
+  " S_play_channel " (:optional beg dur snd chn edpos stop-proc out-chan)\n\
+  " S_play_mix " (mix :optional beg)\n\
+  " S_play_region " (:optional reg wait stop-func)\n\
+  " S_play_selection " (:optional wait pos stop-proc)\n\
+  " S_play_track " (track-id :optional chn beg)\n\
+\n\
+  " S_pausing ": set to " PROC_TRUE " to pause output\n",
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Play"),
 		      snd_xref_urls("Play"));
@@ -1610,40 +1669,74 @@ The following functions are related to playing sounds:\n\
 void reverb_help(void)
 {
   #if HAVE_SCHEME
+    #define reverb_control_length_bounds_example "(set! (reverb-control-length-bounds) (list 0.0 10.0))"
+    #define reverb_control_p_example "(set! (reverb-control?) #t)"
   #endif
   #if HAVE_RUBY
+    #define reverb_control_length_bounds_example "set_reverb_control_length_bounds([0.0, 10.0])"
+    #define reverb_control_p_example "set_reverb_control?(true)"
   #endif
   #if HAVE_FORTH
+    #define reverb_control_length_bounds_example "'( 0.0 10.0 ) set-reverb-control-length-bounds"
+    #define reverb_control_p_example "#t set-reverb-control?"
   #endif
 
   snd_help_with_xrefs("Reverb",
-"The reverb in the control panel is a version of Michael McNabb's Nrev.  There are other \
-reverbs mentioned in the related topics list.",
+"The reverb in the control panel is a version of Michael McNabb's Nrev (if it seems to be \
+non-functional, make sure the reverb button on the far right is clicked).  There are other \
+reverbs mentioned in the related topics list.  The control panel reverb functions are:\n\
+\n\
+  " S_reverb_control_decay " (:optional snd):\n\
+    length (in seconds) of the reverberation after the sound has finished\n\
+\n\
+  " S_reverb_control_feedback " (:optional snd):\n\
+    reverb feedback coefficient\n\
+\n\
+  " S_reverb_control_length " (:optional snd):\n\
+    reverb delay line length scaler. \n\
+    Longer reverb simulates a bigger hall.\n\
+\n\
+  " S_reverb_control_length_bounds " (:optional snd):\n\
+    reverb-control-length min and max amounts as a list\n\
+      " reverb_control_length_bounds_example "\n\
+\n\
+  " S_reverb_control_lowpass " (:optional snd):\n\
+    reverb low pass filter coefficient. (filter in feedback loop).\n\
+\n\
+  " S_reverb_control_p " (:optional snd):\n\
+    #t if the reverb button is set (i.e. the reverberator is active).\n\
+      " reverb_control_p_example "\n\
+\n\
+  " S_reverb_control_scale " (:optional snd):\n\
+    reverb amount (the amount of the direct signal sent to the reverb).\n\
+\n\
+  " S_reverb_control_scale_bounds " (:optional snd):\n\
+    reverb-control-scale min and max amounts as a list.\n\
+\n\
+The lowpass and feedback controls are accessible from the \"Hidden controls\" dialog \
+in snd-motif.scm and snd-gtk.scm.",
+
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Reverb"),
 		      snd_xref_urls("Reverb"));
 }
+/* TODO: fix file refs */
 
 
 /* ---------------- Save ---------------- */
 void save_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("Save",
-"To save the current edited state of a file, use the Save option (to overwrite the old version of the \
-file), or Save as (to write to a new file, leaving the old file unchanged).  The equivalent keyboard \
+"To save the current edited state of a file, use the File:Save option (to overwrite the old version of the \
+file), or File:Save as (to write to a new file, leaving the old file unchanged).  The equivalent keyboard \
 command is C-x C-s (save).  Other related keyboard commands are C-x w (save selection as file), and \
 C-x C-w (extract and save the current channel as a file). Normally, if the new file already exists, and it is \
-not currently being edited in Snd, it is silently overwritten.  If you try to overwrite a file, and \
+not currently being edited in Snd, it is silently overwritten. \
+If you try to overwrite a file, and \
 that file has active edits in a different Snd window, you'll be asked for confirmation. \
-If you want Snd to ask before overwriting a file in any case, set the variable " S_ask_before_overwrite " to \
-#t in your Snd initialization file.",
+If you want Snd to ask before overwriting a file in any case, set the variable " S_ask_before_overwrite " to " PROC_TRUE ".\n",
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Save"),
 		      snd_xref_urls("Save"));
@@ -1659,15 +1752,63 @@ If you want Snd to ask before overwriting a file in any case, set the variable "
 void filter_help(void)
 {
   #if HAVE_SCHEME
+    #define filter_sound_env_example "(filter-sound '(0 1 1 0) 1024)"
+    #define filter_sound_vct_example "(filter-sound (vct .1 .2 .3 .3 .2 .1) 6)"
+    #define filter_sound_clm_example "(filter-sound (make-filter 2 (vct 1 -1) (vct 0 -0.99)))"
   #endif
   #if HAVE_RUBY
+    #define filter_sound_env_example "filter_sound([0.0, 1.0, 1.0, 0.0], 1024)"
+    #define filter_sound_vct_example "filter_sound(vct(0.1, 0.2, 0.3, 0.3, 0.2, 0.1), 6)"
+    #define filter_sound_clm_example "filter_sound(make_filter(2, vct(1.0, -1.0), vct(0.0, -0.99)))"
   #endif
   #if HAVE_FORTH
+    #define filter_sound_env_example "'( 0.0 1.0 1.0 0.0 ) 1024 filter-sound"
+    #define filter_sound_vct_example "'( .1 .2 .3 .3 .2 .1 ) list->vct 6 filter-sound"
+    #define filter_sound_clm_example "2 '( 1 -1 ) list->vct '( 0.0 -0.99 ) list->vct make-filter filter-sound"
   #endif
 
   snd_help_with_xrefs("Filter",
 "There is an FIR Filter in the control panel, and a variety of other filters scattered around; \
-see dsp.scm in particular.",
+see clm.html, dsp." XEN_FILE_EXTENSION " and analog-filters." XEN_FILE_EXTENSION " in particular. The \
+built-in filtering functions include: \n\
+\n\
+  " S_filter_channel " (env :optional order beg dur snd chn edpos trunc origin)\n\
+    apply FIR filter to channel; 'env' is frequency response.\n\
+\n\
+  " S_filter_selection " (env :optional order truncate)\n\
+    apply FIR filter with frequency response 'env' to the selection.\n\
+\n\
+  " S_filter_sound " (env :optional order snd chn edpos origin)\n\
+    apply FIR filter with freq response, clm gen, or coeffs 'env'\n\
+\n\
+    " filter_sound_env_example "\n\
+    " filter_sound_vct_example "\n\
+    " filter_sound_clm_example "\n\
+\n\
+The control filter functions are:\n\
+\n\
+  " S_filter_control_coeffs " (:optional snd)\n\
+    filter coefficients (read-only currently)\n\
+\n\
+  " S_filter_control_envelope " (:optional snd)\n\
+    filter (frequency reponse) envelope\n\
+\n\
+  " S_filter_control_in_dB " (:optional snd)\n\
+    The filter dB button. If " PROC_TRUE ", the graph is displayed in dB.\n\
+\n\
+  " S_filter_control_in_hz " (:optional snd)\n\
+    If " PROC_TRUE ", the filter frequency response envelope x axis is in Hz,\n\
+    otherwise 0 to 1.0 (where 1.0 corresponds to srate/2).\n\
+\n\
+  " S_filter_control_order " (:optional snd)\n\
+    The filter order\n\
+\n\
+  " S_filter_control_p " (:optional snd)\n\
+    " PROC_TRUE " if the filter is active.\n\
+\n\
+  " S_filter_control_waveform_color "\n\
+    The filter frequency response waveform color.\n",
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Filter"),
 		      snd_xref_urls("Filter"));
@@ -1679,14 +1820,74 @@ see dsp.scm in particular.",
 void resample_help(void)
 {
   #if HAVE_SCHEME
+    #define src_number_example "(src-channel 2.0) ; go twice as fast"
+    #define src_env_example "(src-channel '(0 1 1 2))"
+    #define src_clm_example "(src-channel (make-env '(0 1 1 2) :end (frames)))"
+    #define H_speed_control_as_float S_speed_control_as_float
+    #define H_speed_control_as_ratio S_speed_control_as_ratio
+    #define H_speed_control_as_semitone S_speed_control_as_semitone
+    #define H_src_duration "src-duration"
   #endif
   #if HAVE_RUBY
+    #define src_number_example "src_channel(2.0) # go twice as fast"
+    #define src_env_example "src_channel([0.0, 1.0, 1.0, 2.0])"
+    #define src_clm_example "src_channel(make_env([0.0, 1.0, 1.0, 2.0], :end, frames()))"
+    #define H_speed_control_as_float "Speed_control_as_float"
+    #define H_speed_control_as_ratio "Speed_control_as_ratio"
+    #define H_speed_control_as_semitone "Speed_control_as_semitone"
+    #define H_src_duration "src_duration"
   #endif
   #if HAVE_FORTH
+    #define src_number_example "2.0 src-channel \\ go twice as fast"
+    #define src_env_example "'( 0.0 1.0 1.0 2.0 ) src-channel"
+    #define src_clm_example "'( 0.0 1.0 1.0 2.0 ) :end 0 0 -1 frames make-env src-channel"
+    #define H_speed_control_as_float S_speed_control_as_float
+    #define H_speed_control_as_ratio S_speed_control_as_ratio
+    #define H_speed_control_as_semitone S_speed_control_as_semitone
+    #define H_src_duration "src-duration"
   #endif
 
   snd_help_with_xrefs("Resample",
-"There is a sampling rate changer in the control panel; see the related topics list below.",
+"There is a sampling rate changer in the control panel; see also clm.html and examp." XEN_FILE_EXTENSION ". \
+The basic resampling functions are:\n\
+\n\
+  " S_src_channel " (num-or-env :optional beg dur snd chn edpos)\n\
+    resample (change the speed/pitch of) a channel.\n\
+    'num-or-env' can be the resampling ratio (higher=faster)\n\
+    an envelope, or a CLM env generator:\n\
+\n\
+      " src_number_example "\n\
+      " src_env_example "\n\
+      " src_clm_example "\n\
+\n\
+  In the envelope case, the function " H_src_duration " can help \n\
+  you predict the result's duration.\n\
+\n\
+  " S_src_selection " (num-or-env :optional base)\n\
+    apply sampling rate conversion to the selection\n\
+\n\
+  " S_src_sound " (num-or-env :optional base snd chn edpos)\n\
+    resample sound\n\
+\n\
+The control panel 'speed' functions are:\n\
+\n\
+  " S_speed_control " (:optional snd)\n\
+    current speed (sampling rate conversion factor)\n\
+\n\
+  " S_speed_control_bounds " (:optional snd)\n\
+    speed-control min and max amounts as a list.\n\
+    The default is (list 0.05 20.0). If no 'snd' argument\n\
+    is given, this affects Mix, Track, and View:Files dialogs.\n\
+\n\
+  " S_speed_control_style " (:optional snd)\n\
+    The speed control can be a float, (" H_speed_control_as_float "),\n\
+    a ratio of integers (" H_speed_control_as_ratio "), or a step \n\
+    in a (possibly microtonal) scale (" H_speed_control_as_semitone ")\n\
+\n\
+  " S_speed_control_tones " (:optional snd)\n\
+    number of tones per octave in the " H_speed_control_as_semitone "\n\
+    speed style (default: 12).",
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Resample"),
 		      snd_xref_urls("Resample"));
@@ -1697,16 +1898,35 @@ void resample_help(void)
 
 void insert_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("Insert",
 "To insert a file, use C-x C-i, and to insert the selection C-x i.  C-o inserts a \
-zero sample at the cursor",
+zero sample at the cursor.  There are also the File:Insert and Edit:Insert Selection \
+dialogs. The insertion-related functions are:\n\
+\n\
+  " S_pad_channel " (beg dur :optional snd chn edpos)\n\
+    insert 'dur' zeros at 'beg'\n\
+\n\
+  " S_insert_silence " (beg num :optional snd chn)\n\
+    insert 'num' zeros at 'beg'\n\
+\n\
+  " S_insert_region " (:optional beg reg snd chn)\n\
+    insert region 'reg' at sample 'beg'\n\
+\n\
+  " S_insert_selection " (:optional beg snd chn)\n\
+    insert selection starting at 'beg'\n\
+\n\
+  " S_insert_sample " (samp value :optional snd chn edpos)\n\
+    insert sample 'value' at sample 'samp'\n\
+\n\
+  " S_insert_samples " (samp samps data :optional snd chn pos del org)\n\
+    insert 'samps' samples of 'data' (normally a vct) starting at\n\
+    sample 'samp'.  'data' can also be a filename.\n\
+\n\
+  " S_insert_sound " (file :optional beg in-chan snd chn pos del)\n\
+    insert channel 'in-chan' of 'file' at sample 'beg' (cursor position\n\
+    by default).  If 'in-chan' is not given (or is " PROC_FALSE "), all\n\
+    channels are inserted.\n",
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Insert"),
 		      snd_xref_urls("Insert"));
@@ -1721,15 +1941,21 @@ zero sample at the cursor",
 
 void delete_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("Delete",
-"To delete a sample, use C-d; to delete the selection, C-w",
+"To delete a sample, use C-d; to delete the selection, C-w.  The main deletion-related \
+functions are:\n\
+\n\
+  " S_delete_sample " (samp :optional snd chn edpos)\n\
+    delete sample number 'samp'.\n\
+\n\
+  " S_delete_samples " (samp samps :optional snd chn edpos)\n\
+    delete 'samps' samples starting at 'samp'\n\
+\n\
+  " S_delete_selection " (): delete selected portions.\n\
+  " S_delete_mark " (id): delete mark 'id'\n\
+  " S_delete_mix " (id): delete mix 'id'\n\
+  " S_delete_track " (id): delete track 'id'\n",
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Delete"),
 		      snd_xref_urls("Delete"));
@@ -1851,7 +2077,7 @@ in linear terms.",
 
 static char *color_dialog_xrefs[9] = {
   "colormap variable: {colormap}",
-  "colormap constants: rgb.scm",
+  "colormap constants: rgb." XEN_FILE_EXTENSION,
   "colormap colors: {" S_colormap_ref "}",
   "color dialog variables: {" S_color_cutoff "}, {" S_color_inverted "}, {" S_color_scale "}",
   "specialize color dialog actions: {" S_color_hook "}",
@@ -2029,6 +2255,7 @@ static char *open_file_xrefs[7] = {
   "specialize file list: {install-searcher} in snd-motif.scm",
   "keep dialog active after opening: {keep-file-dialog-open-upon-ok} in snd-motif.scm",
   NULL};
+/* TODO: file ref */
 
 
 void open_file_dialog_help(void)
@@ -2472,7 +2699,7 @@ or in Ruby:\n\
 Blue = make_color(0.0, 0.0, 1.0)\n\
 \n\
 This declares the Scheme variable \"blue\" and gives it the value of the color whose rgb components \
-include only blue in full force. The X11 color names are defined in rgb.scm. The overall widget background color is " S_basic_color ".\n\
+include only blue in full force. The X11 color names are defined in rgb." XEN_FILE_EXTENSION ". The overall widget background color is " S_basic_color ".\n\
 \n\
 >(set! (basic-color) blue)  ; in Ruby: set_basic_color(Blue)\n\
 \n\
@@ -3151,7 +3378,7 @@ XEN g_snd_help(XEN text, int widget_wid)
 associated with its argument. (snd-help 'make-vct) for example, prints out a brief description of make-vct. \
 The argument can be a string, a symbol, or the object itself.  In some cases, only the symbol has the documentation. \
 In the help descriptions, optional arguments are in parens with the default value (if any) as the 2nd entry. \
-A ':' as the start of the argument name marks a CLM-style optional keyword argument.  If you load index.scm \
+A ':' as the start of the argument name marks a CLM-style optional keyword argument.  If you load index." XEN_FILE_EXTENSION " \
 the functions html and ? can be used in place of help to go to the HTML description, \
 and the location of the associated C code will be displayed, if it can be found. \
 If " S_help_hook " is not empty, it is invoked with the subject and the snd-help result \

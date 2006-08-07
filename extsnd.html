@@ -5985,7 +5985,7 @@ some other form, see cascade-&gt;canonical in dsp.scm, and the examples that fol
 <br>
 <A NAME="filtersinsnd">Filters</a> in Snd:<br>
 filter a sound: <a href="#filtersound">filter-sound</a>, <a href="#filterchannel">filter-channel</a>, and <a href="#clmchannel">clm-channel</a><br>
-CLM filter generators: <a href="clm.html#filters">filter, one-pole, formant, comb, notch, all-pass, etc</a>, many examples in examp.scm, new-effects.scm<br>
+CLM filter generators: <a href="clm.html#filters">filter, one-pole, formant, comb, notch, all-pass, etc</a><br>
 lowpass filter: make-lowpass in dsp.scm<br>
 highpass filter: make-highpass in dsp.scm<br>
 bandpass filter: make-bandpass in dsp.scm<br>
@@ -7765,8 +7765,14 @@ To start a parallel editing branch on a given file, you could:
 
 To define an explicit channel extraction function:<br>
 <pre>
-    (define (<a name="extractchannel">extract-channel</a> filename snd chn)
-      (<em class=red>save-sound-as</em> filename snd :channel chn))
+    Scheme:
+    (define (<a name="extractchannel">extract-channel</a> filename snd chn) (<em class=red>save-sound-as</em> filename snd :channel chn))
+
+    Ruby:
+    def extract_channel(filename, snd, chn) save_sound_as(filename, snd, :channel, chn) end
+
+    Forth:
+    : extract-channel { filename snd chn } filename snd :channel chn save-sound-as ;
 </pre>
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -10983,6 +10989,13 @@ This is the number of recorder input channels (default is 0 = ask the audio card
 <tr><td colspan=2 height=16></td></tr>
 
 
+<!-- recorder-in-data-format -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderindataformat">recorder-in-data-format</a> ()</code></td></tr>
+<tr><td></td><td>
+This is the incoming data format for the recorder. Its default is 16-bit linear.</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
 <!-- recorder-in-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderindevice">recorder-in-device</a> ()</code></td></tr>
 <tr><td></td><td>
@@ -10991,13 +11004,6 @@ This is the recorder input device.
     (set! (recorder-in-device) mus-audio-line-in)
 </pre>
 </td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- recorder-in-data-format -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="recorderindataformat">recorder-in-data-format</a> ()</code></td></tr>
-<tr><td></td><td>
-This is the incoming data format for the recorder. Its default is 16-bit linear.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 

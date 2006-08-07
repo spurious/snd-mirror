@@ -647,6 +647,7 @@ void save_options(FILE *fd)
     }
 }
 
+/* next two are for the help menu */
 void global_control_panel_state(void)
 {
   char *buf;
@@ -684,6 +685,36 @@ void global_control_panel_state(void)
   snd_help_back_to_top();
   FREE(buf);
 }
+
+void global_fft_state(void)
+{
+  char *buf;
+  snd_help_append("\n\nCurrent FFT defaults:\n\n");
+  buf = (char *)CALLOC(1024, sizeof(char));
+  mus_snprintf(buf, 1024, "fft size: %d\n    type: %s\n    window: %s (alpha: %.3f, beta: %.3f)\n",
+	       (int)transform_size(ss), 
+	       TO_VAR_NAME(transform_program_name(transform_type(ss))),
+	       TO_VAR_NAME(mus_fft_window_name(fft_window(ss))),
+	       fft_window_alpha(ss),
+	       fft_window_beta(ss));
+  snd_help_append(buf);
+  mus_snprintf(buf, 1024, "    graph-type: %s\n    show-peaks: %s (max: %d)\n    show-selection-fft: %s\n",
+	       transform_graph_type_name(transform_graph_type(ss)),
+	       b2s(show_transform_peaks(ss)),
+	       max_transform_peaks(ss),
+	       b2s(show_selection_transform(ss)));
+  snd_help_append(buf);
+  mus_snprintf(buf, 1024, "    log freq: %s (start: %.3f)\n    dB: %s, min-dB: %.3f\n    normalization: %s\n",
+	       b2s(fft_log_frequency(ss)),
+	       log_freq_start(ss),
+	       b2s(fft_log_magnitude(ss)),	       
+	       min_dB(ss),
+	       transform_normalization_name(transform_normalization(ss)));
+  snd_help_append(buf);
+  snd_help_back_to_top();
+  FREE(buf);
+}
+
 
 #if HAVE_SCHEME
 static void save_property_list(FILE *fd, XEN property_list, int chan)

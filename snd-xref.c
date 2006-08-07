@@ -4102,7 +4102,7 @@ static char *Envelopes_urls[] = {
 
 static char *Filters_xrefs[] = {
   "filter a sound: {filter-sound}, {filter-channel}, and {clm-channel}",
-  "CLM filter generators: {filter, one-pole, formant, comb, notch, all-pass, etc}, many examples in examp.scm, new-effects.scm",
+  "CLM filter generators: {filter, one-pole, formant, comb, notch, all-pass, etc}",
   "lowpass filter: make-lowpass in dsp.scm",
   "highpass filter: make-highpass in dsp.scm",
   "bandpass filter: make-bandpass in dsp.scm",
