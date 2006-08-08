@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Fri Aug 04 01:50:27 CEST 2006
+# Changed: Tue Aug 08 03:49:31 CEST 2006
 
 # Commentary:
 #
@@ -865,11 +865,7 @@ class Array
   # [0.0, 0.0, 0.5, 0.2, 1.0, 1.0].to_pairs --> [[0.0, 0.0], [0.5, 0.2], [1.0, 1.0]]
   def to_pairs
     ary = []
-    if self.length.even?
-      0.step(self.length - 1, 2) do |i|
-        ary.push([self[i], self[i + 1]])
-      end
-    end
+    self.step(2) do |a, b| ary.push([a, b]) end
     ary
   end
 
@@ -879,11 +875,7 @@ class Array
   #     1.0 1.0
   def each_pair
     ary = []
-    if self.length.even?
-      0.step(self.length - 1, 2) do |i|
-        ary.push(yield([self[i], self[i + 1]]))
-      end
-    end
+    self.step(2) do |a, b| ary.push(yield(a, b)) end
     ary
   end
 
@@ -1061,6 +1053,7 @@ class Array
 
   def step(n = 1)
     0.step(self.length - n, n) do |i| yield(*self[i, n]) end
+    self
   end
 
   add_help(:apply,
@@ -1148,7 +1141,7 @@ a: 2
     def ary_minus(other)
       case other
       when Numeric
-        self.offset(other)
+        self.offset(-other)
       when NilClass
         self
       else
@@ -2118,7 +2111,7 @@ def install_eval_hooks(file, retval, input, hook, &reset_cursor)
   eval_level = 0
   eval_line = ""
   prompt = Snd_prompt.new(eval_level)
-  reset_cursor and reset_cursor.call
+  reset_cursor.nil? or reset_cursor.call
   $exit_hook.add_hook!(file) do prompt.reset end
   hook.add_hook!(file) do |line|
     eval_line << line << "\n"
@@ -2127,7 +2120,6 @@ def install_eval_hooks(file, retval, input, hook, &reset_cursor)
       eval_level = 0
       eval_line = ""
     end
-    prompt.update(eval_level)
     if eval_level.zero?
       set_snd_input(input)
       begin
@@ -2138,7 +2130,8 @@ def install_eval_hooks(file, retval, input, hook, &reset_cursor)
         eval_line = ""
       end
     end
-    reset_cursor and reset_cursor.call
+    prompt.update(eval_level)
+    reset_cursor.nil? or reset_cursor.call
     retval
   end
 end
@@ -2154,10 +2147,7 @@ end
 # installs the read-hook
 def start_listener_eval(name = "(snd)")
   set_show_listener(true)
-  install_eval_hooks(name, true, :snd, $read_hook) do
-    reset_listener_cursor
-    clm_print("\n%s", listener_prompt)
-  end
+  install_eval_hooks(name, true, :snd, $read_hook)
 end
 
 def stop_emacs_eval(name = "(emacs)")

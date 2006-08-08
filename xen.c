@@ -833,12 +833,12 @@ bool xen_rb_hook_p(XEN obj)
   return(XEN_CLASS_HOOK_P(obj));
 }
 
-bool xen_rb_hook_empty_p(XEN obj)
-{
-  if (XEN_CLASS_HOOK_P(obj))
-    return(RARRAY(rb_iv_get(obj, "@procs"))->len == 0);
-  return(false);
-}
+bool xen_rb_hook_empty_p(XEN obj) 
+{ 
+ if (XEN_CLASS_HOOK_P(obj)) 
+   return(RARRAY(rb_iv_get(obj, "@procs"))->len == 0); 
+ return(true); 
+} 
 
 /*
  * @name = "$name_of_hook"

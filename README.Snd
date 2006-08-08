@@ -502,6 +502,10 @@ you can find where it occurs by:
     <now do whatever it takes to hit the warning>
   where
 
+In some cases, if you installed gtk from an RPM file, you
+also need to install gtk-devel.  Otherwise the configure
+process thinks you have an old, unusable version of gtk.
+
 
 ---- GSL: ----
 
@@ -602,6 +606,10 @@ add -lltdl to the library list.  If that doesn't fix it, add
 -lguile-ltdl -- this part of the CVS guile is in flux, so the load
 sequence is tricky.
 
+
+Finally, if you installed Guile from an RPM file, you may also need
+to install the guile-devel package.  Otherwise the configure process
+will say it can't find Guile (actually guile-config).
 
 
 ---- SGI/OpenGL ----

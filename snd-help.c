@@ -9,9 +9,7 @@
 /* PERHAPS: in linux make --with-alsa the default
  */
 
-/* TODO: these help discussions also need the basic Snd functions listed (max-transform-peaks),
- *        and the dialog should have a tooltip or something to tell the functional name of each field
- * TODO: shouldn't the Ruby xrefs be in Ruby syntax? (would this mess up the indexing?) (word_wrap translates -- would need free)
+/* TODO: shouldn't the Ruby xrefs be in Ruby syntax? (would this mess up the indexing?) (word_wrap translates -- would need free)
  *
  * would be nice to have help for the extension languages -- help scheme
  *   http://www.ccs.neu.edu/home/dorai/t-y-scheme/t-y-scheme.html

@@ -2,11 +2,11 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Dec 10 22:08:15 CET 2002
-# Last: Sat Oct 30 15:24:19 CEST 2004
+# Changed: Tue Aug 08 00:12:07 CEST 2006
 
 # Commentary:
 #
-# Tested with Snd 7.8, Motif 2.2.2, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 8.4, Motif 2.2.2, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # type nb = make_nb
 #      nb.help
@@ -50,8 +50,9 @@ nb.help                      # this help
 require "examp"
 require "hooks"
 with_silence do
-  unless defined? DBM.open
-    require "dbm"
+  # dbm replaced by gdbm (August 2006).
+  unless defined? GDBM.open
+    require "gdbm"
   end
 end
 
@@ -119,11 +120,11 @@ class NB
   end
   
   def name=(filename)
-    if filename and File.exist?(File.expand_path(filename))
+    if filename and File.exists?(File.expand_path(filename))
       @name = filename
       show_popup_info
     else
-      snd_warning(format("no such file: %s", filename.inspect))
+      Snd.warning("no such file: %s", filename.inspect)
     end
   end
   
@@ -135,12 +136,12 @@ class NB
 
   def with_dbm(&body)
     ret = nil
-    db = DBM.open(@nb_database)
+    db = GDBM.open(@nb_database)
     ret = body.call(db)
     db.close
     ret
   rescue
-    warn("%s#%s", self.class, get_func_name)
+    Snd.warning("%s#%s", self.class, get_func_name)
   end
 
   def prune_db
@@ -163,13 +164,13 @@ class NB
   end
   
   def unb
-    if @name and File.exist?(File.expand_path(@name))
+    if @name and File.exists?(File.expand_path(@name))
       with_dbm do |db|
         db.delete(@name)
       end
       show_popup_info
     else
-      snd_warning(format("no such file: %s", @name.inspect))
+      Snd.warning("no such file: %s", @name.inspect)
     end
   end
   
@@ -182,13 +183,13 @@ class NB
   end
 
   def nb
-    if @name and File.exist?(File.expand_path(@name))
+    if @name and File.exists?(File.expand_path(@name))
       with_dbm do |db|
         db[@name] = @notes
       end
       show_popup_info
     else
-      snd_warning(format("no such file: %s", @name.inspect))
+      Snd.warning("no such file: %s", @name.inspect)
     end
   end
 
@@ -334,7 +335,7 @@ the $nb_database entries of SND will be returned.")
   protected
   def post_edit
     if !@name and RWidget?(@message_widget)
-      @name = if File.exist?(file = current_label(@message_widget).split[0])
+      @name = if File.exists?(file = current_label(@message_widget).split[0])
                 file
               else
                 format("no such file: %s", file.inspect)
@@ -389,7 +390,7 @@ o Submit:    submits info from edit widget
 
   def post_popup?
     $mouse_enter_label_hook.member?(@db_hook_name) and
-      File.exist?(current_label(@message_widget).split[0])
+      File.exists?(current_label(@message_widget).split[0])
   end
 
   private

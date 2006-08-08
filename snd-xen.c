@@ -48,7 +48,7 @@
 /* TODO: (gauche)   stacktrace and errors->listener (current-load-history)
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
  * TODO: (gauche)   unwind-protects around scm_apply (snd-xen g_call)
- * TODO: (gauche)   memory trouble (double free -> segfault) [if all-args?] in snd-test 8
+ * TODO: (gauche)   memory trouble (double free -> segfault) [if all-args?] in snd-test 8 (gets "GC out of memory" so needs environ sets)
  * TODO: (forth)    prefs can't find extensions.fs? can't figure this one out -- data stack confusion?
  * TODO: (forth)    if segfault, infinite tight loop -- must kill from some other machine!
  *
