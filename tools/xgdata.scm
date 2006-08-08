@@ -5942,9 +5942,6 @@
 (CFNC-210 "void gtk_label_set_line_wrap_mode GtkLabel* label PangoWrapMode wrap_mode")
 (CFNC-210 "PangoWrapMode gtk_label_get_line_wrap_mode GtkLabel* label")
 
-;;; out 2.3 then back in at some point
-(CFNC-210 "void gtk_toolbar_set_icon_size GtkToolbar* toolbar GtkIconSize icon_size")
-
 ;;; printer stuff -- only include gtkprintoperation for now (it's in gtk.h)
 ;(CCAST-210 "GTK_PRINTER(obj)" "GtkPrinter")
 ;(CCHK-210 "GTK_IS_PRINTER(obj)" "GtkPrinter")

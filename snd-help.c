@@ -664,6 +664,7 @@ void undo_help(void)
   #endif
 
   snd_help_with_xrefs("Undo and Redo", 
+#if HAVE_EXTENSION_LANGUAGE
 "Snd supports 'unlimited undo' in the sense that you can move back and forth in the list of edits without any \
 limit on how long that list can get.  Each editing operation \
 extends the current edit list; each undo backs up in that list, and each redo moves forward in the list of previously \
@@ -694,6 +695,21 @@ The main functions that affect the edit position are:\n\
     This is the current position in the edit history list.\n\
     " edit_position_example "\n\
 ",
+#else
+"Snd supports 'unlimited undo' in the sense that you can move back and forth in the list of edits without any \
+limit on how long that list can get.  Each editing operation \
+extends the current edit list; each undo backs up in that list, and each redo moves forward in the list of previously \
+un-done edits.  Besides the Edit and Popup menu options,\
+there are these keyboard sequences: \
+\n\n\
+  C-x r     redo last edit\n\
+  C-x u     undo last edit\n\
+  C-x C-r   redo last edit\n\
+  C-x C-u   undo last edit\n\
+  C-_       undo last edit\n\
+\n\
+File:Revert is the same as undo all edits.",
+#endif
 
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Undo"),
@@ -739,6 +755,7 @@ void sync_help(void)
   #endif
 
   snd_help_with_xrefs("Sync", 
+#if HAVE_EXTENSION_LANGUAGE
 "The sync button causes certain operations to apply to all channels or multiple sounds simultaneously. \
 For example, to get a multichannel selection, set the sync button, then define the selection (by dragging \
 the mouse) in one channel, and the parallel portions of the other channels are also selected. \
@@ -753,6 +770,16 @@ superimposed on each other. The function associated with this is:\n\
     Possible values are " H_channels_separate ", " H_channels_combined ", and " H_channels_superimposed ".\n\
     " channel_style_example "\n\
 ",
+#else
+"The sync button causes certain operations to apply to all channels or multiple sounds simultaneously. \
+For example, to get a multichannel selection, set the sync button, then define the selection (by dragging \
+the mouse) in one channel, and the parallel portions of the other channels are also selected. \
+Marks and mixes can also be sync'd together.\n\
+\n\
+Similarly, the unite button combines channels of a \
+multichannel sound into one display window.  control-click the unite button to have the channels \
+superimposed on each other.",
+#endif
 		      WITH_WORD_WRAP,
 		      sync_xrefs,
 		      NULL);
@@ -821,6 +848,7 @@ void env_help(void)
   #endif
 
   snd_help_with_xrefs("Envelope", 
+#if HAVE_EXTENSION_LANGUAGE
 "An envelope in Snd is a list (an array in Ruby) of x y break-point pairs. The x axis range is arbitrary. \
 To define a triangle curve: " envelope_example ".\
 There is no preset limit on the number of breakpoints. Use the envelope editor to draw envelopes with the mouse. \
@@ -841,6 +869,9 @@ The primary enveloping functions are:\n\
  " S_env_channel " (clm-env-gen :optional beg dur snd chn edpos)\n\
     This is the channel-specific version of " S_env_sound ".\n\
 ",
+#else
+"It is hard to define or use an envelope if there's no extension language.",
+#endif
 
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Envelope"),           /* snd-xref.c */
@@ -896,6 +927,7 @@ void fft_help(void)
   #endif
 
   snd_help_with_xrefs("FFT",
+#if HAVE_EXTENSION_LANGUAGE
 "The FFT performs a projection of the time domain into the frequency domain. Good discussions of the Fourier Transform \
 and the trick used in the FFT itself can be found in many DSP books; those I know of include 'A Digital Signal Processing \
 Primer', Ken Steiglitz, or 'Numerical Recipes in C'. \
@@ -966,6 +998,23 @@ The main FFT-related functions are:\
 \n\
   Other related functions: " S_zero_pad ", " S_wavelet_type ", " S_add_transform "\n\
     " S_min_dB ", " S_snd_spectrum ", " S_show_selection_transform ".",
+#else
+"Nearly all the transform-related choices can be set in the transform dialog launched from the Options \
+Menu Transform item. Most of this dialog should be self-explanatory.  Some of the windows take an \
+additional parameter sometimes known as alpha or beta.  This can be set by the scale(s) next to the fft window graph in the \
+transform dialog. \
+\n\n\
+The FFT display is activated by setting the 'f' button on the channel's window.  It then updates \
+itself each time the time domain waveform moves or changes.  \
+The FFT is taken from the start (the left edge) of the current window and is updated as the window bounds change. \
+The data is scaled to fit between 0.0 and 1.0 unless transform normalization is off. \
+The full frequency axis is normally displayed, but the axis is draggable -- put the mouse on the axis \
+and drag it either way to change the range. \
+You can also click on any point in the fft to get the associated fft value at that point displayed. \
+To change the fft size by powers of two, \
+you can use the keypad keys '*' and '/'.  There are also various keys bindings for the spectrogram \
+viewing angles and so on, but it's always easier to use the View:Orientation dialog's sliders.",
+#endif
 
 		      WITH_WORD_WRAP,
 		      snd_xrefs("FFT"),
@@ -1007,6 +1056,7 @@ void controls_help(void)
   #endif
 
   snd_help_with_xrefs("The Control Panel", 
+#if HAVE_EXTENSION_LANGUAGE
 "The control panel is the portion of each sound's pane beneath the channel graphs. \
 The controls are: amp, speed, expand, contrast, reverb, and filter. \
 \n\n\
@@ -1061,6 +1111,38 @@ To apply the current settings as an edit, call:\n\
   " S_apply_controls " (:optional snd (target 0) beg dur)\n\
     where 'target' selects what gets edited: \n\
       0 = sound, 1 = channel, 2 = selection.",
+#else
+"The control panel is the portion of each sound's pane beneath the channel graphs. \
+The controls are: amp, speed, expand, contrast, reverb, and filter. \
+\n\n\
+'Speed' here refers to the rate at which the sound data is consumed during playback. \
+Another term might be 'srate'.  The arrow button on the right determines \
+the direction Snd moves through the data. The scroll bar position is normally interpreted \
+as a float between .05 and 20. \
+\n\n\
+'Expand' refers to granular synthesis used to change the tempo of events \
+in the sound without changing pitch.  Successive short slices of the file are overlapped with \
+the difference in size between the input and output hops (between successive slices) giving \
+the change in tempo.  This doesn't work in all files -- it sometimes sounds like execrable reverb \
+or is too buzzy -- but it certainly is more robust than the phase vocoder approach to the \
+same problem. The expander is on only if the expand button is set. \
+\n\n\
+The reverberator is a version of Michael McNabb's Nrev.  In addition to the controls \
+in the control pane, you can set the reverb feedback gain and the coefficient of the lowpass \
+filter in the allpass bank. The reverb is on only if the reverb button is set.  The reverb length \
+field takes effect only when the reverb is set up (when the DAC is started by clicking \
+'play' when nothing else is being played). \
+\n\n\
+'Contrast enhancement' is my name for a somewhat weird waveshaper or compander.  It \
+phase-modulates a sound, which can in some cases make it sound sharper or brighter. \
+For softer sounds, it causes only an amplitude change. \
+Contrast is on only if the contrast button is set. \
+\n\n\
+The filter is an arbitrary (even) order FIR filter specified by giving the frequency response \
+envelope and filter order in the text windows provided. \
+The envelope X axis goes from 0 to half the sampling rate. The actual frequency response (given the current filter order) \
+is displayed in blue.  The filter is on only if the filter button is set.",
+#endif
 
 		      WITH_WORD_WRAP,
 		      control_xrefs,
@@ -1091,6 +1173,7 @@ void marks_help(void)
   #endif
 
   snd_help_with_xrefs("Marks", 
+#if HAVE_EXTENSION_LANGUAGE
 "A 'mark' marks a particular sample in a sound (not a position in that sound). \
 If we mark a sample, then delete 100 samples before it, the mark follows the sample, changing its current position \
 in the data.  If we delete the sample, the mark is also deleted; a subsequent undo that returns the sample also \
@@ -1128,6 +1211,25 @@ The main mark-related functions are:\n\
 Other such functions: " S_find_mark ", " S_mark_color ", " S_mark_tag_width ",\n\
     " S_mark_tag_height ", " S_mark_sync ", " S_show_marks ", " S_save_marks ",\n\
     " S_marks "\n",
+#else
+"A 'mark' marks a particular sample in a sound (not a position in that sound). \
+If we mark a sample, then delete 100 samples before it, the mark follows the sample, changing its current position \
+in the data.  If we delete the sample, the mark is also deleted; a subsequent undo that returns the sample also \
+returns its associated mark.\
+\n\n\
+Once set, a mark can be moved by dragging the horizontal tab at the top.  Control-click of the tab followed by mouse \
+drag will drag the underlying data too, either inserting zeros or deleting data. \
+Click on the triangle at the bottom to play (or stop playing) from the mark; drag the \
+triangle to play following the mouse. \
+The following keyboard commands relate to marks: \
+\n\n\
+  C-m       place (or remove if argument negative) mark at cursor\n\
+  C-M       place syncd marks at all currently syncd chan cursors\n\
+  C-x /     place named mark at cursor\n\
+  C-x C-m   add named mark\n\
+  C-j       go to mark\n\
+  C-x j     go to named mark",
+#endif
 
 		      WITH_WORD_WRAP, 
 		      snd_xrefs("Mark"),
@@ -1165,6 +1267,7 @@ void mix_help(void)
   #endif
 
   snd_help_with_xrefs("Mixing", 
+#if HAVE_EXTENSION_LANGUAGE
 "Since mixing is the most common and most useful editing operation performed on \
 sounds, there is relatively elaborate support for it in Snd. To mix in a file, \
 use the File Mix menu option, the command C-x C-q, or one of the various \
@@ -1224,6 +1327,27 @@ The main mix-related functions are:\n\
 \n\
 Other such function include: " S_mix_waveform_height ", " S_with_mix_tags ", " S_mix_tag_width ",\n\
     " S_mix_tag_height ", " S_mix_tag_y ", " S_play_mix ", " S_mixes ".",
+#else
+"Since mixing is the most common and most useful editing operation performed on \
+sounds, there is relatively elaborate support for it in Snd. To mix in a file, \
+use the File Mix menu option, the command C-x C-q, or one of the various \
+mixing functions. Currently the only difference between the first two is that \
+the Mix menu option tries to take the current sync state into account, whereas \
+the C-x C-q command does not. To mix a selection, use C-x q. The mix starts at \
+the current cursor location. It is displayed as a separate waveform above \
+the main waveform with a red tag at the beginning.  You can drag the tag to \
+reposition the mix. \
+\n\n\
+The Mix dialog (under the View Menu) provides various \
+commonly-used controls on the currently chosen mix. At the top are the mix id, \
+name, begin and end times, track number, and a play button. Beneath that are \
+various sliders controlling the speed (sampling rate) of the mix, amplitude of \
+each input channel, and the amplitude envelopes. \
+\n\n\
+To move the cursor from one mix to the next, in the same manner as C-j moves through marks, use C-x C-j. \
+\n\n\
+A set of associated mixes is called a 'track' in Snd, and there's a help menu item for that subject.",
+#endif
 
 		      WITH_WORD_WRAP, 
 		      snd_xrefs("Mix"),
@@ -1255,6 +1379,7 @@ void track_help(void)
   #endif
 
   snd_help_with_xrefs("Tracks",
+#if HAVE_EXTENSION_LANGUAGE
 "A track is a list of mixes, each constituent mix having its 'mix-track' field set to the track id.  The " S_make_track " \
 function takes the initial list of mix id's, returning the track id (an integer). \
 The rest of the track functions \
@@ -1300,6 +1425,9 @@ track-related functions, the more useful of which are: \n\
 \n\
 Other track-related functions include: " S_track_track ", " S_track_chans ",\n\
     " S_tracks ", " S_track_track ", " S_delete_track ", " S_copy_track ".",
+#else
+"A track is a list of mixes, but I can't see how to use it when there's no extension language.",
+#endif
 
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Track"),
@@ -1318,6 +1446,7 @@ static char *record_xrefs[4] = {
 void recording_help(void) 
 {
   snd_help_with_xrefs("Record", 
+#if HAVE_EXTENSION_LANGUAGE
 "To make a recording, choose 'Record' from the File menu. A window opens with the various \
 recording controls.  The top three panes display the status of the input and output lines. If a \
 channel is active, its meter will glow yellow. If some signal clips during recording, \
@@ -1375,7 +1504,33 @@ The recorder-related functions are:\n\
     " S_recorder_out_header_type ": output sound header choice\n\
     " S_recorder_srate ": sampling rate of recording\n\
     " S_recorder_trigger ": amplitude at which to start recording (if set)\n",
-
+#else
+"To make a recording, choose 'Record' from the File menu. A window opens with the various \
+recording controls.  The top three panes display the status of the input and output lines. If a \
+channel is active, its meter will glow yellow. If some signal clips during recording, \
+the meter will flash red. The numbers below the channel buttons indicate the signal maximum \
+since it was last reset. The sliders underneath the meters scale the audio data in various ways \
+before it is mixed into the output. The vertical sliders on the right scale the line-in and \
+microphone signals before the meter, and the output signal before it gets to the speaker \
+(these are needed to avoid clipping on input,  and to set the 'monitor' volume of the output \
+independent of the output file volume). \
+\n\n\
+The fourth pane has information about the current output file (its name and so on), and \
+the layout of the window. The buttons on the right can be used to open and close panes \
+painlessly. If the button is not square (a diamond on the SGI), the underlying audio \
+hardware can't handle input from that device at the same time as it reads other 'radio' button \
+devices. So, in that case, opening the panel via the button also turns off the other incompatible \
+device. The fifth pane contains a history of whatever the recorder thought worth \
+reporting. The duration field gives the current output file's duration. The bottom row of \
+buttons dismiss the window, start recording, cancel the current take, and provide some \
+help. There's also a slider on the far right that controls the speaker output volume \
+(independent of the output file volume). \
+\n\n\
+To make a recording, choose the inputs and outputs you want; for example, to record channel \
+A from the microphone to channel A of the output file, click the Microphone panel's A button and \
+the Output panel's A button. Then when you're ready to go, click the Record button. Click it \
+again to finish the recording.",
+#endif
 		      WITH_WORD_WRAP,
 		      record_xrefs,
 		      NULL);
@@ -1560,6 +1715,7 @@ void key_binding_help(void)
 
   int i;
   snd_help_with_xrefs("Key bindings",
+#if HAVE_EXTENSION_LANGUAGE
 "Although Snd has a number of built-in key bindings (listed below), you can redefine \
 any key via:\n\
 \n\
@@ -1569,6 +1725,9 @@ any key via:\n\
     'func'.  For example, to set the End key to cause the full sound\n\
     to be displayed:\n\n\
     " bind_key_example "\n\n\nKey Bindings:\n",
+#else
+"If there's no extension language, you're stuck with the built-in key bindings:",
+#endif
 		      WITHOUT_WORD_WRAP,
 		      key_xrefs,
 		      NULL);
@@ -1618,6 +1777,7 @@ void play_help(void)
   #endif
 
   snd_help_with_xrefs("Play",
+#if HAVE_EXTENSION_LANGUAGE
 "To play a sound, click the 'play' button.  If the sound has more channels than your DAC(s), Snd will (normally) try to mix the extra channels \
 into the available DAC outputs.  While it is playing, you can click the button again to stop it, or click some other \
 file's 'play' button to mix it into the current set of sounds being played. To play from a particular point, set a mark \
@@ -1655,6 +1815,22 @@ The following functions are related to playing sounds:\n\
   " S_play_track " (track-id :optional chn beg)\n\
 \n\
   " S_pausing ": set to " PROC_TRUE " to pause output\n",
+#else
+"To play a sound, click the 'play' button.  If the sound has more channels than your DAC(s), Snd will (normally) try to mix the extra channels \
+into the available DAC outputs.  While it is playing, you can click the button again to stop it, or click some other \
+file's 'play' button to mix it into the current set of sounds being played. To play from a particular point, set a mark \
+there, then click its 'play triangle' (the triangular portion below the x axis).  (Use control-click here to play all channels \
+from the mark point). To play simultaneously from an arbitrary group of start points (possibly spread among many sounds), \
+set syncd marks at the start points, then click the play triangle of one of them. \
+\n\n\
+The Edit menu 'Play' option plays the current selection, if any.  The Popup menu's 'Play' option plays the \
+currently selected sound.  And the region and file browsers provide play buttons for each of the listed regions or files.  If you \
+hold down the control key when you click 'play', the cursor follows along as the sound is played.   \
+\n\n\
+In a multichannel file, C-q plays all channels from the current channel's \
+cursor if the sync button is on, and otherwise plays only the current channel. \
+Except in the browsers, what is actually played depends on the control panel.",
+#endif
 
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Play"),
@@ -1682,6 +1858,7 @@ void reverb_help(void)
   #endif
 
   snd_help_with_xrefs("Reverb",
+#if HAVE_EXTENSION_LANGUAGE
 "The reverb in the control panel is a version of Michael McNabb's Nrev (if it seems to be \
 non-functional, make sure the reverb button on the far right is clicked).  There are other \
 reverbs mentioned in the related topics list.  The control panel reverb functions are:\n\
@@ -1715,6 +1892,10 @@ reverbs mentioned in the related topics list.  The control panel reverb function
 \n\
 The lowpass and feedback controls are accessible from the \"Hidden controls\" dialog \
 in snd-motif.scm and snd-gtk.scm.",
+#else
+"The reverb in the control panel is a version of Michael McNabb's Nrev (if it seems to be \
+non-functional, make sure the reverb button on the far right is clicked).",
+#endif
 
 
 		      WITH_WORD_WRAP,
@@ -1768,7 +1949,8 @@ void filter_help(void)
   #endif
 
   snd_help_with_xrefs("Filter",
-"There is an FIR Filter in the control panel, and a variety of other filters scattered around; \
+#if HAVE_EXTENSION_LANGUAGE
+"There is an FIR Filter in the control panel, a filtering option in the envelope editor dialog, and a variety of other filters scattered around; \
 see clm.html, dsp." XEN_FILE_EXTENSION " and analog-filters." XEN_FILE_EXTENSION " in particular. The \
 built-in filtering functions include: \n\
 \n\
@@ -1808,6 +1990,9 @@ The control filter functions are:\n\
 \n\
   " S_filter_control_waveform_color "\n\
     The filter frequency response waveform color.\n",
+#else
+"There is an FIR Filter in the control panel, and a filtering option in the Edit envelope dialog.",
+#endif
 
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Filter"),
@@ -1848,7 +2033,9 @@ void resample_help(void)
   #endif
 
   snd_help_with_xrefs("Resample",
-"There is a sampling rate changer in the control panel; see also clm.html and examp." XEN_FILE_EXTENSION ". \
+#if HAVE_EXTENSION_LANGUAGE
+"There is a sampling rate changer in the control panel, and a resampling option in the envelope \
+editor dialog; see also clm.html and examp." XEN_FILE_EXTENSION ". \
 The basic resampling functions are:\n\
 \n\
   " S_src_channel " (num-or-env :optional beg dur snd chn edpos)\n\
@@ -1887,6 +2074,9 @@ The control panel 'speed' functions are:\n\
   " S_speed_control_tones " (:optional snd)\n\
     number of tones per octave in the " H_speed_control_as_semitone "\n\
     speed style (default: 12).",
+#else
+"There is a sampling rate changer in the control panel, and a resampling option in the Edit envelope dialog.",
+#endif
 
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Resample"),
@@ -1899,6 +2089,7 @@ The control panel 'speed' functions are:\n\
 void insert_help(void)
 {
   snd_help_with_xrefs("Insert",
+#if HAVE_EXTENSION_LANGUAGE
 "To insert a file, use C-x C-i, and to insert the selection C-x i.  C-o inserts a \
 zero sample at the cursor.  There are also the File:Insert and Edit:Insert Selection \
 dialogs. The insertion-related functions are:\n\
@@ -1926,6 +2117,10 @@ dialogs. The insertion-related functions are:\n\
     insert channel 'in-chan' of 'file' at sample 'beg' (cursor position\n\
     by default).  If 'in-chan' is not given (or is " PROC_FALSE "), all\n\
     channels are inserted.\n",
+#else
+"To insert a file, use C-x C-i, and to insert the selection C-x i.  C-o inserts a \
+zero sample at the cursor.  There are also the File:Insert and Edit:Insert Selection dialogs.",
+#endif
 
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Insert"),
@@ -1942,6 +2137,7 @@ dialogs. The insertion-related functions are:\n\
 void delete_help(void)
 {
   snd_help_with_xrefs("Delete",
+#if HAVE_EXTENSION_LANGUAGE
 "To delete a sample, use C-d; to delete the selection, C-w.  The main deletion-related \
 functions are:\n\
 \n\
@@ -1955,6 +2151,9 @@ functions are:\n\
   " S_delete_mark " (id): delete mark 'id'\n\
   " S_delete_mix " (id): delete mix 'id'\n\
   " S_delete_track " (id): delete track 'id'\n",
+#else
+"To delete a sample, use C-d; to delete the selection, C-w, or the Edit menu Delete Selection option.",
+#endif
 
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Delete"),
@@ -1972,10 +2171,24 @@ functions are:\n\
 void envelope_editor_dialog_help(void)
 {
   #if HAVE_SCHEME
+    #define define_envelope_name "defvar, define, or define-envelope"
+    #define ramp_envelope_example "'(0 0 1 1)"
+    #define define_envelope_example "  (defvar ramp '(0 0 1 1))\n  (define-envelope pyramid '(0 0 1 1 2 0))"
   #endif
   #if HAVE_RUBY
+    #define define_envelope_name "define_envelope"
+    #define ramp_envelope_example "[0.0, 0.0, 1.0, 1.0]"
+    #define define_envelope_example "  define_envelope(\"ramp\", [0.0, 0.0, 1.0, 1.0])\n  define_envelope(\"pyramid\", [0.0, 0.0, 1.0, 1.0, 2.0, 0.0])"
   #endif
   #if HAVE_FORTH
+    #define define_envelope_name "define-envelope"
+    #define ramp_envelope_example "'( 0.0 0.0 1.0 1.0 )"
+    #define define_envelope_example "  $\" ramp\" '( 0.0 0.0 1.0 1.0 ) define-envelope\n  $\" pyramid\" '( 0.0 0.0 1.0 1.0 2.0 0.0 ) define-envelope"
+  #endif
+  #if (!HAVE_EXTENSION_LANGUAGE)
+    #define define_envelope_name "<this is not an option>"
+    #define ramp_envelope_example "'(0 0 1 1)"
+    #define define_envelope_example "<this is not an option>"
   #endif
 
   snd_help_with_xrefs("Envelope Editor",
@@ -1984,13 +2197,10 @@ The dialog has a display showing either the envelope currently being edited or \
 a panorama of all currently loaded envelopes.  The current envelope can be edited with the mouse: click at some spot in the graph to place a \
 new breakpoint, drag an existing breakpoint to change its position, and click an existing breakpoint to delete it. \
 The Undo and Redo buttons can be used to move around in the list of envelope edits; the current state \
-of the envelope can be saved with the 'save' button, or printed with 'print'. Envelopes can be defined using defvar: \
-\n\n\
-  (defvar ramp '(0 0 1 1))\n\
-  (defvar pyramid '(0 0 1 1 2 0))\n\
-\n\n\
+of the envelope can be saved with the 'save' button, or printed with 'print'. Envelopes can be defined via " define_envelope_name ": \
+\n\n" define_envelope_example "\n\n\
 defines two envelopes that can be used in Snd wherever an envelope is needed (e.g. C-x C-a).  You can also define \
-a new envelope in the dialog's text field; '(0 0 1 1) followed by return creates a ramp as a new envelope. \
+a new envelope in the dialog's text field; " ramp_envelope_example " creates a ramp as a new envelope. \
 \n\n\
 In the overall view of envelopes, click an envelope, or click its name in the scrolled \
 list on the left to select it; click the selected envelope to load it into the editor portion, clearing out whatever \
@@ -2018,6 +2228,7 @@ the bottom sets the 'base' of the exponential curves, just as in CLM.  If the en
 is selected), the 'wave' button shows the actual frequency response of the filter that will be applied to the waveform \
 by the 'apply' buttons.  Increase the " S_enved_filter_order " to \
 improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling rate, labelled as 1.0.",
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Envelope"),
 		      snd_xref_urls("Envelope"));
@@ -2030,13 +2241,6 @@ improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling r
 
 void transform_dialog_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("Transform Options",
 "This dialog presents the various transform (fft) related choices. \
 \n\n\
@@ -2097,7 +2301,7 @@ void color_dialog_help(void)
 
   snd_help_with_xrefs("View Color",
 "This dialog sets the colormap and associated variables used during sonogram, spectrogram,  \
-and perhaps wavogram display. The cutoff scale refers to the minimum data value to be displayed.",
+and wavogram display. The cutoff scale refers to the minimum data value to be displayed.",
 		      WITH_WORD_WRAP,
 		      color_dialog_xrefs,
 		      NULL);

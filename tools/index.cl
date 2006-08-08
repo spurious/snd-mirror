@@ -10,6 +10,7 @@
 ;;; (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html") "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t)
 ;;;   use (make-index)
 
+;;; TODO: while making snd-xref.c (test.c), use XEN_FILE_EXTENSION, not scm, and somehow - to _ for ruby
 
 ;;; for snd.html table, see snd-index.cl (snd-index "test.html")
 

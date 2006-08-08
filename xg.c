@@ -27342,14 +27342,6 @@ static XEN gxg_gtk_label_get_line_wrap_mode(XEN label)
   XEN_ASSERT_TYPE(XEN_GtkLabel__P(label), label, 1, "gtk_label_get_line_wrap_mode", "GtkLabel*");
   return(C_TO_XEN_PangoWrapMode(gtk_label_get_line_wrap_mode(XEN_TO_C_GtkLabel_(label))));
 }
-static XEN gxg_gtk_toolbar_set_icon_size(XEN toolbar, XEN icon_size)
-{
-  #define H_gtk_toolbar_set_icon_size "void gtk_toolbar_set_icon_size(GtkToolbar* toolbar, GtkIconSize icon_size)"
-  XEN_ASSERT_TYPE(XEN_GtkToolbar__P(toolbar), toolbar, 1, "gtk_toolbar_set_icon_size", "GtkToolbar*");
-  XEN_ASSERT_TYPE(XEN_GtkIconSize_P(icon_size), icon_size, 2, "gtk_toolbar_set_icon_size", "GtkIconSize");
-  gtk_toolbar_set_icon_size(XEN_TO_C_GtkToolbar_(toolbar), XEN_TO_C_GtkIconSize(icon_size));
-  return(XEN_FALSE);
-}
 static XEN gxg_gtk_print_operation_get_type(void)
 {
   #define H_gtk_print_operation_get_type "GType gtk_print_operation_get_type( void)"
@@ -32913,7 +32905,6 @@ XEN_NARGIFY_1(gxg_gtk_tree_view_get_enable_tree_lines_w, gxg_gtk_tree_view_get_e
 XEN_NARGIFY_2(gxg_gtk_tree_view_set_enable_tree_lines_w, gxg_gtk_tree_view_set_enable_tree_lines)
 XEN_NARGIFY_2(gxg_gtk_label_set_line_wrap_mode_w, gxg_gtk_label_set_line_wrap_mode)
 XEN_NARGIFY_1(gxg_gtk_label_get_line_wrap_mode_w, gxg_gtk_label_get_line_wrap_mode)
-XEN_NARGIFY_2(gxg_gtk_toolbar_set_icon_size_w, gxg_gtk_toolbar_set_icon_size)
 XEN_NARGIFY_0(gxg_gtk_print_operation_get_type_w, gxg_gtk_print_operation_get_type)
 XEN_NARGIFY_0(gxg_gtk_print_operation_new_w, gxg_gtk_print_operation_new)
 XEN_NARGIFY_2(gxg_gtk_print_operation_set_default_page_setup_w, gxg_gtk_print_operation_set_default_page_setup)
@@ -36772,7 +36763,6 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_tree_view_set_enable_tree_lines_w gxg_gtk_tree_view_set_enable_tree_lines
 #define gxg_gtk_label_set_line_wrap_mode_w gxg_gtk_label_set_line_wrap_mode
 #define gxg_gtk_label_get_line_wrap_mode_w gxg_gtk_label_get_line_wrap_mode
-#define gxg_gtk_toolbar_set_icon_size_w gxg_gtk_toolbar_set_icon_size
 #define gxg_gtk_print_operation_get_type_w gxg_gtk_print_operation_get_type
 #define gxg_gtk_print_operation_new_w gxg_gtk_print_operation_new
 #define gxg_gtk_print_operation_set_default_page_setup_w gxg_gtk_print_operation_set_default_page_setup
@@ -40638,7 +40628,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tree_view_set_enable_tree_lines, gxg_gtk_tree_view_set_enable_tree_lines_w, 2, 0, 0, H_gtk_tree_view_set_enable_tree_lines);
   XG_DEFINE_PROCEDURE(gtk_label_set_line_wrap_mode, gxg_gtk_label_set_line_wrap_mode_w, 2, 0, 0, H_gtk_label_set_line_wrap_mode);
   XG_DEFINE_PROCEDURE(gtk_label_get_line_wrap_mode, gxg_gtk_label_get_line_wrap_mode_w, 1, 0, 0, H_gtk_label_get_line_wrap_mode);
-  XG_DEFINE_PROCEDURE(gtk_toolbar_set_icon_size, gxg_gtk_toolbar_set_icon_size_w, 2, 0, 0, H_gtk_toolbar_set_icon_size);
   XG_DEFINE_PROCEDURE(gtk_print_operation_get_type, gxg_gtk_print_operation_get_type_w, 0, 0, 0, H_gtk_print_operation_get_type);
   XG_DEFINE_PROCEDURE(gtk_print_operation_new, gxg_gtk_print_operation_new_w, 0, 0, 0, H_gtk_print_operation_new);
   XG_DEFINE_PROCEDURE(gtk_print_operation_set_default_page_setup, gxg_gtk_print_operation_set_default_page_setup_w, 2, 0, 0, H_gtk_print_operation_set_default_page_setup);
@@ -43097,7 +43086,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("03-Aug-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Aug-06"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();
