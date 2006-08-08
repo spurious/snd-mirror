@@ -27,7 +27,6 @@ static void file_print_callback_1(Widget w, XtPointer info, XtPointer context) {
 
 /* -------------------------------- EDIT MENU -------------------------------- */
 
-
 static void edit_mix_callback(Widget w, XtPointer info, XtPointer context) {add_selection_or_region(0, selected_channel());}
 static void edit_envelope_callback(Widget w, XtPointer info, XtPointer context) {create_envelope_editor();}
 static void edit_cut_callback(Widget w, XtPointer info, XtPointer context) {delete_selection(UPDATE_DISPLAY);}
@@ -145,7 +144,10 @@ static void options_preferences_callback(Widget w, XtPointer info, XtPointer con
 
 static void help_about_snd_callback(Widget w, XtPointer info, XtPointer context) {about_snd_help();}
 static void help_fft_callback (Widget w, XtPointer info, XtPointer context) {fft_help();}
+#if HAVE_EXTENSION_LANGUAGE
 static void help_find_callback (Widget w, XtPointer info, XtPointer context) {find_help();}
+static void help_init_file_callback (Widget w, XtPointer info, XtPointer context) {init_file_help();}
+#endif
 static void help_undo_callback (Widget w, XtPointer info, XtPointer context) {undo_help();}
 static void help_sync_callback (Widget w, XtPointer info, XtPointer context) {sync_help();}
 static void help_debug_callback (Widget w, XtPointer info, XtPointer context) {debug_help();}
@@ -155,7 +157,6 @@ static void help_marks_callback (Widget w, XtPointer info, XtPointer context) {m
 static void help_mix_callback (Widget w, XtPointer info, XtPointer context) {mix_help();}
 static void help_track_callback (Widget w, XtPointer info, XtPointer context) {track_help();}
 static void help_sound_files_callback (Widget w, XtPointer info, XtPointer context) {sound_files_help();}
-static void help_init_file_callback (Widget w, XtPointer info, XtPointer context) {init_file_help();}
 static void help_recording_callback (Widget w, XtPointer info, XtPointer context) {recording_help();}
 static void help_keys_callback (Widget w, XtPointer info, XtPointer context) {key_binding_help();}
 static void help_play_callback (Widget w, XtPointer info, XtPointer context) {play_help();}
@@ -165,6 +166,9 @@ static void help_reverb_callback (Widget w, XtPointer info, XtPointer context) {
 static void help_resample_callback (Widget w, XtPointer info, XtPointer context) {resample_help();}
 static void help_insert_callback (Widget w, XtPointer info, XtPointer context) {insert_help();}
 static void help_delete_callback (Widget w, XtPointer info, XtPointer context) {delete_help();}
+static void help_region_callback (Widget w, XtPointer info, XtPointer context) {region_help();}
+static void help_selection_callback (Widget w, XtPointer info, XtPointer context) {selection_help();}
+static void help_colors_callback (Widget w, XtPointer info, XtPointer context) {colors_help();}
 
 void check_menu_labels(int key, int state, bool extended)
 {
@@ -600,8 +604,10 @@ Widget add_menu(void)
   XtAddCallback(help_about_snd_menu, XmNactivateCallback, help_about_snd_callback, NULL);
   XtVaSetValues(help_about_snd_menu, XmNmnemonic, 'O', NULL);
 
+#if HAVE_EXTENSION_LANGUAGE
   help_init_file_menu = XtCreateManagedWidget(_("Customization"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_init_file_menu, XmNactivateCallback, help_init_file_callback, NULL);
+#endif
 
   help_controls_menu = XtCreateManagedWidget(_("Control Panel"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_controls_menu, XmNactivateCallback, help_controls_callback, NULL);
@@ -651,8 +657,10 @@ Widget add_menu(void)
   help_undo_menu = XtCreateManagedWidget(_("Undo and redo"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_undo_menu, XmNactivateCallback, help_undo_callback, NULL);
 
+#if HAVE_EXTENSION_LANGUAGE
   help_find_menu = XtCreateManagedWidget(_("Search"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_find_menu, XmNactivateCallback, help_find_callback, NULL);
+#endif
 
   help_sync_menu = XtCreateManagedWidget(_("Sync and Unite"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_sync_menu, XmNactivateCallback, help_sync_callback, NULL);
@@ -662,6 +670,15 @@ Widget add_menu(void)
 
   help_debug_menu = XtCreateManagedWidget(_("Debugging"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_debug_menu, XmNactivateCallback, help_debug_callback, NULL);
+
+  help_region_menu = XtCreateManagedWidget(_("Regions"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_region_menu, XmNactivateCallback, help_region_callback, NULL);
+
+  help_selection_menu = XtCreateManagedWidget(_("Selections"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_selection_menu, XmNactivateCallback, help_selection_callback, NULL);
+
+  help_colors_menu = XtCreateManagedWidget(_("Colors"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_colors_menu, XmNactivateCallback, help_colors_callback, NULL);
 
   XtVaSetValues(main_menu, XmNmenuHelpWidget, help_cascade_menu, NULL);
 

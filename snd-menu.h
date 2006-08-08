@@ -6,7 +6,7 @@ enum {m_menu,
           f_open_menu, f_close_menu, f_save_menu, f_save_as_menu, f_revert_menu, f_exit_menu, f_new_menu,
           f_view_menu, f_print_menu, f_mix_menu, f_insert_menu, f_update_menu, f_record_menu, f_sep_menu,
         e_menu, e_cascade_menu,
-      e_cut_menu, e_paste_menu, e_mix_menu, e_play_menu, e_save_as_menu, e_undo_menu,
+          e_cut_menu, e_paste_menu, e_mix_menu, e_play_menu, e_save_as_menu, e_undo_menu,
           e_redo_menu, e_find_menu, e_env_menu, e_header_menu, e_select_all_menu,
           e_select_sep_menu, e_edit_sep_menu,
         h_menu, h_cascade_menu,
@@ -14,7 +14,7 @@ enum {m_menu,
           h_env_menu, h_marks_menu, h_sound_files_menu, h_init_file_menu,
           h_mix_menu, h_track_menu, h_recording_menu, h_keys_menu, 
           h_play_menu, h_save_menu, h_resample_menu, h_filter_menu, h_insert_menu, 
-          h_delete_menu, h_reverb_menu, h_debug_menu,
+          h_delete_menu, h_reverb_menu, h_debug_menu, h_region_menu, h_selection_menu, h_colors_menu,
         o_menu, o_cascade_menu,
           o_transform_menu,
           o_focus_style_menu, o_focus_cascade_menu,
@@ -97,6 +97,9 @@ enum {m_menu,
 #define help_delete_menu (ss->sgx->mw[h_delete_menu])
 #define help_reverb_menu (ss->sgx->mw[h_reverb_menu])
 #define help_debug_menu (ss->sgx->mw[h_debug_menu])
+#define help_region_menu (ss->sgx->mw[h_region_menu])
+#define help_selection_menu (ss->sgx->mw[h_selection_menu])
+#define help_colors_menu (ss->sgx->mw[h_colors_menu])
 
 #define options_menu (ss->sgx->mw[o_menu])
 #define options_cascade_menu (ss->sgx->mw[o_cascade_menu])

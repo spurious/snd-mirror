@@ -11,14 +11,12 @@
 
 /* TODO: these help discussions also need the basic Snd functions listed (max-transform-peaks),
  *        and the dialog should have a tooltip or something to tell the functional name of each field
- *
- *  why not (in menu, not just via matching): copy save selections/regions graph choices
- *  dialog help is similarly sketchy
+ * TODO: shouldn't the Ruby xrefs be in Ruby syntax? (would this mess up the indexing?) (word_wrap translates -- would need free)
  *
  * would be nice to have help for the extension languages -- help scheme
+ *   http://www.ccs.neu.edu/home/dorai/t-y-scheme/t-y-scheme.html
+ *   http://www.cs.utexas.edu/users/wilson/schintro/schintro_toc.html
  */
-
-
 
 
 static char **snd_xrefs(const char *topic);
@@ -599,6 +597,7 @@ void find_help(void)
   #endif
 
   snd_help_with_xrefs("Find", 
+
 #if HAVE_EXTENSION_LANGUAGE
 "Searches in Snd refer to the sound data, and are, in general, patterned after Emacs.  When you type \
 C-s or C-r, the minibuffer below the graph is activated and you are asked for the search expression. \
@@ -630,6 +629,7 @@ The current search procedure (for the Edit:Find dialog) is:\n\
   " S_search_procedure " (:optional snd)\n\
 " search_procedure_example "\n\
 ",
+
 #else
 "Searches in Snd depend completely on the extension language.  Since none is loaded,\
 the searching mechanisms are disabled.",
@@ -664,6 +664,7 @@ void undo_help(void)
   #endif
 
   snd_help_with_xrefs("Undo and Redo", 
+
 #if HAVE_EXTENSION_LANGUAGE
 "Snd supports 'unlimited undo' in the sense that you can move back and forth in the list of edits without any \
 limit on how long that list can get.  Each editing operation \
@@ -695,6 +696,7 @@ The main functions that affect the edit position are:\n\
     This is the current position in the edit history list.\n\
     " edit_position_example "\n\
 ",
+
 #else
 "Snd supports 'unlimited undo' in the sense that you can move back and forth in the list of edits without any \
 limit on how long that list can get.  Each editing operation \
@@ -755,6 +757,7 @@ void sync_help(void)
   #endif
 
   snd_help_with_xrefs("Sync", 
+
 #if HAVE_EXTENSION_LANGUAGE
 "The sync button causes certain operations to apply to all channels or multiple sounds simultaneously. \
 For example, to get a multichannel selection, set the sync button, then define the selection (by dragging \
@@ -770,6 +773,7 @@ superimposed on each other. The function associated with this is:\n\
     Possible values are " H_channels_separate ", " H_channels_combined ", and " H_channels_superimposed ".\n\
     " channel_style_example "\n\
 ",
+
 #else
 "The sync button causes certain operations to apply to all channels or multiple sounds simultaneously. \
 For example, to get a multichannel selection, set the sync button, then define the selection (by dragging \
@@ -810,7 +814,19 @@ static char *debug_urls[8] = {
 
 void debug_help(void)
 {
+  #if HAVE_SCHEME
+    #define vardpy_reference "variable-display in snd-motif.scm"
+  #endif
+  #if HAVE_RUBY
+    #define vardpy_reference "variable_display in snd-xm.rb"
+  #endif
+  #if HAVE_FORTH
+    #define vardpy_reference "variable-display, which isn't written yet"
+  #endif
+
   snd_help_with_xrefs("Debugging", 
+
+#if HAVE_EXTENSION_LANGUAGE
 "There are several sets of debugging aids, each aimed at a different level of code. \
 C code is normally debugged with gdb.  If you hit a segfault in Snd, please tell me \
 about it!  If possible, run Snd in gdb and send me the stack trace: \n\n\
@@ -819,15 +835,24 @@ about it!  If possible, run Snd in gdb and send me the stack trace: \n\n\
   <get error to happen>\n\
   where\n\
 \n\
-See README.Snd for more about C-level troubles.  For CLM-based instruments, \
-variable-display in snd-motif.scm might help.  For debugging your own Scheme/Ruby/Forth \
+See README.Snd for more about C-level troubles.  For CLM-based instruments, " vardpy_reference " might \
+help.  For debugging your own Scheme/Ruby/Forth \
 code (or Snd's for that matter), see the \"Errors and Debugging\" section of \
 extsnd.html, or snd-debug.  For notelist debugging, see ws-backtrace.",
+#else
+"If you hit a segfault in Snd, please tell me \
+about it!  If possible, run Snd in gdb and send me the stack trace: \n\n\
+  gdb snd\n\
+  run\n\
+  <get error to happen>\n\
+  where\n\
+  <much info here that is useful to me>\n",
+#endif
+
 		      WITH_WORD_WRAP,
 		      debug_xrefs,
 		      debug_urls);
 }
-/* TODO: fix vardpy ref */
 
 
 /* ---------------- Envelope ---------------- */
@@ -848,6 +873,7 @@ void env_help(void)
   #endif
 
   snd_help_with_xrefs("Envelope", 
+
 #if HAVE_EXTENSION_LANGUAGE
 "An envelope in Snd is a list (an array in Ruby) of x y break-point pairs. The x axis range is arbitrary. \
 To define a triangle curve: " envelope_example ".\
@@ -869,6 +895,7 @@ The primary enveloping functions are:\n\
  " S_env_channel " (clm-env-gen :optional beg dur snd chn edpos)\n\
     This is the channel-specific version of " S_env_sound ".\n\
 ",
+
 #else
 "It is hard to define or use an envelope if there's no extension language.",
 #endif
@@ -927,6 +954,7 @@ void fft_help(void)
   #endif
 
   snd_help_with_xrefs("FFT",
+
 #if HAVE_EXTENSION_LANGUAGE
 "The FFT performs a projection of the time domain into the frequency domain. Good discussions of the Fourier Transform \
 and the trick used in the FFT itself can be found in many DSP books; those I know of include 'A Digital Signal Processing \
@@ -998,6 +1026,7 @@ The main FFT-related functions are:\
 \n\
   Other related functions: " S_zero_pad ", " S_wavelet_type ", " S_add_transform "\n\
     " S_min_dB ", " S_snd_spectrum ", " S_show_selection_transform ".",
+
 #else
 "Nearly all the transform-related choices can be set in the transform dialog launched from the Options \
 Menu Transform item. Most of this dialog should be self-explanatory.  Some of the windows take an \
@@ -1056,6 +1085,7 @@ void controls_help(void)
   #endif
 
   snd_help_with_xrefs("The Control Panel", 
+
 #if HAVE_EXTENSION_LANGUAGE
 "The control panel is the portion of each sound's pane beneath the channel graphs. \
 The controls are: amp, speed, expand, contrast, reverb, and filter. \
@@ -1111,6 +1141,7 @@ To apply the current settings as an edit, call:\n\
   " S_apply_controls " (:optional snd (target 0) beg dur)\n\
     where 'target' selects what gets edited: \n\
       0 = sound, 1 = channel, 2 = selection.",
+
 #else
 "The control panel is the portion of each sound's pane beneath the channel graphs. \
 The controls are: amp, speed, expand, contrast, reverb, and filter. \
@@ -1173,6 +1204,7 @@ void marks_help(void)
   #endif
 
   snd_help_with_xrefs("Marks", 
+
 #if HAVE_EXTENSION_LANGUAGE
 "A 'mark' marks a particular sample in a sound (not a position in that sound). \
 If we mark a sample, then delete 100 samples before it, the mark follows the sample, changing its current position \
@@ -1211,6 +1243,7 @@ The main mark-related functions are:\n\
 Other such functions: " S_find_mark ", " S_mark_color ", " S_mark_tag_width ",\n\
     " S_mark_tag_height ", " S_mark_sync ", " S_show_marks ", " S_save_marks ",\n\
     " S_marks "\n",
+
 #else
 "A 'mark' marks a particular sample in a sound (not a position in that sound). \
 If we mark a sample, then delete 100 samples before it, the mark follows the sample, changing its current position \
@@ -1267,6 +1300,7 @@ void mix_help(void)
   #endif
 
   snd_help_with_xrefs("Mixing", 
+
 #if HAVE_EXTENSION_LANGUAGE
 "Since mixing is the most common and most useful editing operation performed on \
 sounds, there is relatively elaborate support for it in Snd. To mix in a file, \
@@ -1327,6 +1361,7 @@ The main mix-related functions are:\n\
 \n\
 Other such function include: " S_mix_waveform_height ", " S_with_mix_tags ", " S_mix_tag_width ",\n\
     " S_mix_tag_height ", " S_mix_tag_y ", " S_play_mix ", " S_mixes ".",
+
 #else
 "Since mixing is the most common and most useful editing operation performed on \
 sounds, there is relatively elaborate support for it in Snd. To mix in a file, \
@@ -1379,6 +1414,7 @@ void track_help(void)
   #endif
 
   snd_help_with_xrefs("Tracks",
+
 #if HAVE_EXTENSION_LANGUAGE
 "A track is a list of mixes, each constituent mix having its 'mix-track' field set to the track id.  The " S_make_track " \
 function takes the initial list of mix id's, returning the track id (an integer). \
@@ -1425,6 +1461,7 @@ track-related functions, the more useful of which are: \n\
 \n\
 Other track-related functions include: " S_track_track ", " S_track_chans ",\n\
     " S_tracks ", " S_track_track ", " S_delete_track ", " S_copy_track ".",
+
 #else
 "A track is a list of mixes, but I can't see how to use it when there's no extension language.",
 #endif
@@ -1446,6 +1483,7 @@ static char *record_xrefs[4] = {
 void recording_help(void) 
 {
   snd_help_with_xrefs("Record", 
+
 #if HAVE_EXTENSION_LANGUAGE
 "To make a recording, choose 'Record' from the File menu. A window opens with the various \
 recording controls.  The top three panes display the status of the input and output lines. If a \
@@ -1504,6 +1542,7 @@ The recorder-related functions are:\n\
     " S_recorder_out_header_type ": output sound header choice\n\
     " S_recorder_srate ": sampling rate of recording\n\
     " S_recorder_trigger ": amplitude at which to start recording (if set)\n",
+
 #else
 "To make a recording, choose 'Record' from the File menu. A window opens with the various \
 recording controls.  The top three panes display the status of the input and output lines. If a \
@@ -1627,6 +1666,7 @@ static char *init_file_urls[6] = {
 void init_file_help(void) 
 {
   snd_help_with_xrefs("Customization",
+
 #if HAVE_EXTENSION_LANGUAGE
 "Nearly everything in Snd can be set in an initialization file, loaded at any time from a saved-state file, specified \
 via inter-process communciation from any other program, invoked via M-x in the minibuffer, imbedded in a keyboard macro, or  \
@@ -1635,6 +1675,7 @@ both the signal-processing functions, and much of the user interface. You can, f
 editing operations, or graphing alternatives. These extensions can be loaded at any time.  One of the \
 easier ways to start an initialization file is to go to the Options:Preferences dialog, set the choices \
 you want, then save those choices.  The initialization file is just program text, so you can edit it and so on.",
+
 #else
 "Snd depends heavily on the extension language to provide much of its functionality.  Since none \
 is loaded, there's not much customization you can do.  Check out the X resource stuff in Snd.ad or \
@@ -1715,6 +1756,7 @@ void key_binding_help(void)
 
   int i;
   snd_help_with_xrefs("Key bindings",
+
 #if HAVE_EXTENSION_LANGUAGE
 "Although Snd has a number of built-in key bindings (listed below), you can redefine \
 any key via:\n\
@@ -1725,6 +1767,7 @@ any key via:\n\
     'func'.  For example, to set the End key to cause the full sound\n\
     to be displayed:\n\n\
     " bind_key_example "\n\n\nKey Bindings:\n",
+
 #else
 "If there's no extension language, you're stuck with the built-in key bindings:",
 #endif
@@ -1777,6 +1820,7 @@ void play_help(void)
   #endif
 
   snd_help_with_xrefs("Play",
+
 #if HAVE_EXTENSION_LANGUAGE
 "To play a sound, click the 'play' button.  If the sound has more channels than your DAC(s), Snd will (normally) try to mix the extra channels \
 into the available DAC outputs.  While it is playing, you can click the button again to stop it, or click some other \
@@ -1815,6 +1859,7 @@ The following functions are related to playing sounds:\n\
   " S_play_track " (track-id :optional chn beg)\n\
 \n\
   " S_pausing ": set to " PROC_TRUE " to pause output\n",
+
 #else
 "To play a sound, click the 'play' button.  If the sound has more channels than your DAC(s), Snd will (normally) try to mix the extra channels \
 into the available DAC outputs.  While it is playing, you can click the button again to stop it, or click some other \
@@ -1858,6 +1903,7 @@ void reverb_help(void)
   #endif
 
   snd_help_with_xrefs("Reverb",
+
 #if HAVE_EXTENSION_LANGUAGE
 "The reverb in the control panel is a version of Michael McNabb's Nrev (if it seems to be \
 non-functional, make sure the reverb button on the far right is clicked).  There are other \
@@ -1892,6 +1938,7 @@ reverbs mentioned in the related topics list.  The control panel reverb function
 \n\
 The lowpass and feedback controls are accessible from the \"Hidden controls\" dialog \
 in snd-motif.scm and snd-gtk.scm.",
+
 #else
 "The reverb in the control panel is a version of Michael McNabb's Nrev (if it seems to be \
 non-functional, make sure the reverb button on the far right is clicked).",
@@ -1902,7 +1949,6 @@ non-functional, make sure the reverb button on the far right is clicked).",
 		      snd_xrefs("Reverb"),
 		      snd_xref_urls("Reverb"));
 }
-/* TODO: fix file refs */
 
 
 /* ---------------- Save ---------------- */
@@ -1949,6 +1995,7 @@ void filter_help(void)
   #endif
 
   snd_help_with_xrefs("Filter",
+
 #if HAVE_EXTENSION_LANGUAGE
 "There is an FIR Filter in the control panel, a filtering option in the envelope editor dialog, and a variety of other filters scattered around; \
 see clm.html, dsp." XEN_FILE_EXTENSION " and analog-filters." XEN_FILE_EXTENSION " in particular. The \
@@ -1990,6 +2037,7 @@ The control filter functions are:\n\
 \n\
   " S_filter_control_waveform_color "\n\
     The filter frequency response waveform color.\n",
+
 #else
 "There is an FIR Filter in the control panel, and a filtering option in the Edit envelope dialog.",
 #endif
@@ -2033,6 +2081,7 @@ void resample_help(void)
   #endif
 
   snd_help_with_xrefs("Resample",
+
 #if HAVE_EXTENSION_LANGUAGE
 "There is a sampling rate changer in the control panel, and a resampling option in the envelope \
 editor dialog; see also clm.html and examp." XEN_FILE_EXTENSION ". \
@@ -2074,6 +2123,7 @@ The control panel 'speed' functions are:\n\
   " S_speed_control_tones " (:optional snd)\n\
     number of tones per octave in the " H_speed_control_as_semitone "\n\
     speed style (default: 12).",
+
 #else
 "There is a sampling rate changer in the control panel, and a resampling option in the Edit envelope dialog.",
 #endif
@@ -2089,6 +2139,7 @@ The control panel 'speed' functions are:\n\
 void insert_help(void)
 {
   snd_help_with_xrefs("Insert",
+
 #if HAVE_EXTENSION_LANGUAGE
 "To insert a file, use C-x C-i, and to insert the selection C-x i.  C-o inserts a \
 zero sample at the cursor.  There are also the File:Insert and Edit:Insert Selection \
@@ -2117,6 +2168,7 @@ dialogs. The insertion-related functions are:\n\
     insert channel 'in-chan' of 'file' at sample 'beg' (cursor position\n\
     by default).  If 'in-chan' is not given (or is " PROC_FALSE "), all\n\
     channels are inserted.\n",
+
 #else
 "To insert a file, use C-x C-i, and to insert the selection C-x i.  C-o inserts a \
 zero sample at the cursor.  There are also the File:Insert and Edit:Insert Selection dialogs.",
@@ -2137,6 +2189,7 @@ zero sample at the cursor.  There are also the File:Insert and Edit:Insert Selec
 void delete_help(void)
 {
   snd_help_with_xrefs("Delete",
+
 #if HAVE_EXTENSION_LANGUAGE
 "To delete a sample, use C-d; to delete the selection, C-w.  The main deletion-related \
 functions are:\n\
@@ -2151,6 +2204,7 @@ functions are:\n\
   " S_delete_mark " (id): delete mark 'id'\n\
   " S_delete_mix " (id): delete mix 'id'\n\
   " S_delete_track " (id): delete track 'id'\n",
+
 #else
 "To delete a sample, use C-d; to delete the selection, C-w, or the Edit menu Delete Selection option.",
 #endif
@@ -2162,6 +2216,288 @@ functions are:\n\
   append_key_help("C-w", snd_K_w, snd_ControlMask, false,
     append_key_help("C-d", snd_K_d, snd_ControlMask, false, true));
 }
+
+
+/* ---------------- Regions ---------------- */
+
+void region_help(void)
+{
+  #if HAVE_SCHEME
+    #define region_to_vct_example "(region->vct 0 0 reg) ; len=0 => entire region"
+    #define save_region_example "(save-region reg :file \"reg0.snd\" :header-type mus-next)"
+  #endif
+  #if HAVE_RUBY
+    #define region_to_vct_example "region2vct(0, 0, reg) # len=0 => entire region"
+    #define save_region_example "save_region(reg, :file, \"reg0.snd\", :header_type, Mus_next)"
+  #endif
+  #if HAVE_FORTH
+    #define region_to_vct_example "0 0 reg region->vct \\ len=0 => entire region"
+    #define save_region_example "reg :file \"reg0.snd\" :header-type mus-next save-region"
+  #endif
+
+  snd_help_with_xrefs("Region",
+#if HAVE_EXTENSION_LANGUAGE
+"A region is a saved portion of the sound data. When a sound portion is selected, it is (by default) saved \
+as the new region; subsequent edits will not affect the region data. You can disable the region creation \
+by setting the variable " S_selection_creates_region " to #f (its default is #t which can slow down editing \
+of very large sounds). Regions can be defined by " S_make_region ", by dragging the mouse through a portion \
+of the data, or via the Select All menu option. If the mouse drags off the end of the graph, the x axis \
+moves, in a sense dragging the data along to try to keep up with the mouse; the further away the mouse \
+is from the display, the faster the axis moves. A region can also be defined with keyboard commands, \
+much as in Emacs. C-[space] starts the region definition and the various cursor moving commands \
+continue the definition.  As regions are defined, the new ones are pushed on a stack, and if enough regions already exist, \
+old ones are pushed off (and deleted) to make room. Each region has a unique id returned \
+by " S_make_region " and shown beside the region name in the Region Browser. \
+Most of the region arguments below default to the current region (the top of the regions stack). \
+The main region-related functions are:\n\
+\n\
+  " S_view_regions_dialog ": start the Region browser\n\
+  " S_save_region_dialog ": start the Save region dialog\n\
+\n\
+  " S_insert_region " (:optional beg reg snd chn)\n\
+    insert region 'reg' at sample 'beg'\n\
+\n\
+  " S_mix_region " (:optional samp reg snd chn track)\n\
+    mix in region 'reg' at sample 'samp' (defaults to the cursor sample)\n\
+\n\
+  " S_play_region " (:optional reg wait stop-func)\n\
+    play region\n\
+\n\
+  " S_save_region " (reg :optional-key :file :header-type :data-format :comment)\n\
+    save region 'reg' in 'file' in data format (default is mus-bshort),\n\
+    header type (default is mus-next), and comment. Return the output\n\
+    filename.\n\
+\n\
+      " save_region_example "\n\
+\n\
+  " S_region_to_vct " (:optional samp samps reg chn v)\n\
+    return a vct containing 'samps' samples starting at 'samp'\n\
+    in region 'reg's channel 'chn'. If 'v' (a vct) is provided,\n\
+    it is filled, rather than creating a new vct.\n\
+\n\
+      " region_to_vct_example "\n\
+\n\
+  " S_make_region " (:optional beg end snd chn)\n\
+    create a new region spanning samples 'beg' to 'end';\n\
+    return the new region's id.\n\
+\n\
+  " S_forget_region " (:optional reg): remove region from region list\n\
+\n\
+  " S_region_p " (reg): " PROC_TRUE " if 'reg' is a known region id\n\
+\n\
+  " S_regions ": list of currently active regions\n\
+\n\
+  " S_max_regions ": how big the region stack can get\n\
+\n\
+  " S_selection_creates_region ": does making a selection create a region\n\
+\n\
+  " S_region_chans " (:optional reg): region chans\n\
+  " S_region_frames " (:optional reg chan): region length\n\
+  " S_region_maxamp " (:optional reg): region maxamp\n\
+  " S_region_maxamp_position " (:optional reg): maxamp location (sample number)\n\
+  " S_region_position " (:optional reg chan): original begin time of region\n\
+  " S_region_sample " (:optional samp reg chan): sample value\n\
+  " S_region_srate " (:optional reg): original data's sampling rate\n",
+#else
+"A region is a portion of the sound data. When a sound portion is selected, it is (by default) saved \
+as the new region; subsequent edits will not affect the region data. \
+of very large sounds). Regions can be defined by dragging the mouse through a portion \
+of the data, or via the Select All menu option. If the mouse drags off the end of the graph, the x axis \
+moves, in a sense dragging the data along to try to keep up with the mouse; the further away the mouse \
+is from the display, the faster the axis moves. A region can also be defined with keyboard commands, \
+much as in Emacs. C-[space] starts the region definition and the various cursor moving commands \
+continue the definition.",
+#endif
+		      WITH_WORD_WRAP,
+		      snd_xrefs("Region"),
+		      snd_xref_urls("Region"));
+
+  append_key_help("C-[space]", snd_K_space, snd_ControlMask, false, true);
+}
+
+
+/* ---------------- Selections ---------------- */
+
+void selection_help(void)
+{
+  #if HAVE_SCHEME
+    #define env_selection_example "(env-selection '(0 0 1 1 2 0))"
+    #define save_selection_example "(save-selection \"sel.snd\" :channel 1)"
+    #define scale_selection_list_example "(scale-selection-by '(0.0 2.0))"
+    #define scale_selection_number_example "(scale-selection-by 2.0)"
+  #endif
+  #if HAVE_RUBY
+    #define env_selection_example "env_selection([0.0, 0.0, 1.0, 1.0, 2.0, 0.0])"
+    #define save_selection_example "save_selection(\"sel.snd\", :channel, 1)"
+    #define scale_selection_list_example "scale_selection_by([0.0, 2.0])"
+    #define scale_selection_number_example "scale_selection_by(2.0)"
+  #endif
+  #if HAVE_FORTH
+    #define env_selection_example "'( 0.0 0.0 1.0 1.0 2.0 0.0 ) env-selection"
+    #define save_selection_example "\"sel.snd\" :channel 1 save-selection"
+    #define scale_selection_list_example "'( 0.0 2.0 ) scale-selection-by"
+    #define scale_selection_number_example "2.0 scale-selection-by"
+  #endif
+
+  snd_help_with_xrefs("Selection",
+
+#if HAVE_EXTENSION_LANGUAGE
+"The selection is a high-lighted portion of the current sound. \
+You can create it by dragging the mouse through the data, or via various functions. \
+The primary selection-related functions are:\n\
+\n\
+  " S_convolve_selection_with " (file :optional amp)\n\
+    convolve the selected portion with 'file'\n\
+\n\
+  " S_delete_selection " (): delete the selected portion\n\
+\n\
+  " S_env_selection " (envelope :optional env-base)\n\
+    apply amplitude envelope to selected portion\n\
+\n\
+      " env_selection_example "\n\
+\n\
+  " S_filter_selection " (env :optional order truncate)\n\
+    apply an FIR filter with frequency response 'env' to the \n\
+    selection. env can be the filter coefficients themselves in\n\
+    a vct with at least 'order' elements, or a CLM filter\n\
+\n\
+  " S_insert_selection " (:optional beg snd chn)\n\
+    insert (a copy of) selection starting at 'beg'\n\
+\n\
+  " S_mix_selection " (:optional beg snd chn)\n\
+    mix (add) selection starting at 'beg'\n\
+\n\
+  " S_play_selection " (:optional wait pos stop-proc)\n\
+    play the selection\n\
+\n\
+  " S_reverse_selection "(): reverse selected portion\n\
+\n\
+  " S_save_selection " (:optional-key :file (:header-type mus-next)\n\
+                           :data-format :srate :comment :channel)\n\
+    save the selection in file. If channel is given, save\n\
+    only that channel.\n\
+\n\
+      " save_selection_example "\n\
+\n\
+  " S_scale_selection_by " (scalers)\n\
+    scale the selection by 'scalers' which can be either a float,\n\
+    a list of floats, or a vct. In a multichannel selection, each\n\
+    member of the vct or list is applied to the next channel in the\n\
+    selection. " scale_selection_list_example " scales the first\n\
+    channel by 0.0, the second (if any) by 2.0.\n\
+    " scale_selection_number_example " scales all channels by 2.0.\n\
+\n\
+  " S_scale_selection_to " (norms)\n\
+    normalize the selection to norms which can be either a float,\n\
+    a list of floats, or a vct.\n\
+\n\
+  " S_select_all " (:optional snd chn)\n\
+    select all samples\n\
+\n\
+  " S_smooth_selection "()\n\
+    apply a smoothing function to the selection. \n\
+    This produces a sinusoid between the end points.\n\
+\n\
+  " S_src_selection " (num-or-env :optional base)\n\
+    apply sampling rate conversion to the selection\n\
+\n\
+  " S_save_selection_dialog " (:optional managed)\n\
+    start the Save Selection dialog.\n\
+\n\
+  " S_selection_creates_region "\n\
+    if " PROC_TRUE ", a region is created whenever a selection is made.\n\
+\n\
+  " S_selection_chans ": chans in selection\n\
+  " S_selection_color ": color to highlight selection\n\
+  " S_selection_frames " (:optional snd chn): length of selection\n\
+  " S_selection_maxamp " (:optional snd chn): maxamp of selection\n\
+  " S_selection_maxamp_position " (:optional snd chn): sample number of maxamp\n\
+  " S_selection_member " (:optional snd chn): \n\
+    " PROC_TRUE " if snd's channel chn has selected data.\n\
+  " S_selection_p ": " PROC_TRUE " if there's a selection\n\
+  " S_selection_position " (:optional snd chn): \n\
+    sample number where selection starts\n\
+  " S_selection_srate ": nominal srate of selected portion.\n\
+\n\
+There are many more selection-oriented functions scattered around the various *." XEN_FILE_EXTENSION " files. \
+See the related topics list below.",
+
+#else
+"The selection is a high-lighted portion of the current sound. \
+You can create it by dragging the mouse.",
+#endif
+		      WITH_WORD_WRAP,
+		      snd_xrefs("Selection"),
+		      snd_xref_urls("Selection"));
+}
+
+
+/* ---------------- Colors ---------------- */
+
+void colors_help(void)
+{
+  #if HAVE_SCHEME
+    #define make_color_example "(define blue (make-color 0.0 0.0 1.0))"
+    #define set_basic_color_example "(set! (basic-color) blue)"
+  #endif
+  #if HAVE_RUBY
+    #define make_color_example "Blue = make_color(0.0, 0.0, 1.0)"
+    #define set_basic_color_example "set_basic_color(Blue)"
+  #endif
+  #if HAVE_FORTH
+    #define make_color_example ": blue 0 0 1 make-color ;"
+    #define set_basic_color_example "blue set-basic-color"
+  #endif
+
+  snd_help_with_xrefs("Colors",
+
+#if HAVE_EXTENSION_LANGUAGE
+"A color in Snd is an object with three fields representing the rgb (red green blue) settings \
+as numbers between 0.0 and 1.0. A color object is created via " S_make_color ":\n\
+  " make_color_example "\n\
+\n\
+This declares the variable \"blue\" and gives it the value of the color whose rgb components \
+include only blue in full force. The X11 color names are defined in rgb." XEN_FILE_EXTENSION ". The overall widget background color is " S_basic_color ".\n\
+\n\
+  " set_basic_color_example "\n\
+\n\
+The color variables are:\n\
+" S_basic_color ":  main Snd color.\n\
+" S_cursor_color ":  cursor color.\n\
+" S_data_color ":  color of data in unselected graph.\n\
+" S_doit_button_color ":  color of Ok and Apply buttons.\n\
+" S_doit_again_button_color ":  color of Undo&Apply buttons.\n\
+" S_enved_waveform_color ":  color of waveform displayed in envelope editor.\n\
+" S_filter_control_waveform_color ":  color of control panel filter waveform.\n\
+" S_graph_color ":  background color of unselected graph.\n\
+" S_help_button_color ":  color of Help buttons.\n\
+" S_highlight_color ":  highlighting color.\n\
+" S_listener_color ":  background color of lisp listener.\n\
+" S_listener_text_color ":  text color in lisp listener.\n\
+" S_mark_color ":  color of mark indicator.\n\
+" S_mix_color ":  color of mix waveforms.\n\
+" S_position_color ":  position slider color\n\
+" S_pushed_button_color ":  color of pushed button.\n\
+" S_quit_button_color ":  color of Dismiss and Cancel buttons.\n\
+" S_reset_button_color ":  color of Reset buttons.\n\
+" S_sash_color ":  color of paned window sashes.\n\
+" S_selected_data_color ":  color of data in currently selected graph.\n\
+" S_selected_graph_color ":  background color of currently selected graph.\n\
+" S_selection_color ":  color of selected portion of graph.\n\
+" S_text_focus_color ":  color of text field when it has focus.\n\
+" S_zoom_color ":  zoom slider color.\n\
+\n\
+The easiest way to try out other colors is to use the Options:Preferences dialog. \
+The sonogram colors can be set in the View:Colors dialog.",
+
+#else
+"To change the various Snd colors, use the Options:Preferences Dialog. The sonogram colors can be set in the View:Colors dialog.",
+#endif
+		      WITH_WORD_WRAP,
+		      snd_xrefs("Color"),
+		      snd_xref_urls("Color"));
+}
+
 
 
 /* -------- dialog help texts -------- */
@@ -2186,9 +2522,9 @@ void envelope_editor_dialog_help(void)
     #define define_envelope_example "  $\" ramp\" '( 0.0 0.0 1.0 1.0 ) define-envelope\n  $\" pyramid\" '( 0.0 0.0 1.0 1.0 2.0 0.0 ) define-envelope"
   #endif
   #if (!HAVE_EXTENSION_LANGUAGE)
-    #define define_envelope_name "<this is not an option>"
+    #define define_envelope_name "<needs extension language>"
     #define ramp_envelope_example "'(0 0 1 1)"
-    #define define_envelope_example "<this is not an option>"
+    #define define_envelope_example "<needs extension language>"
   #endif
 
   snd_help_with_xrefs("Envelope Editor",
@@ -2242,6 +2578,7 @@ improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling r
 void transform_dialog_help(void)
 {
   snd_help_with_xrefs("Transform Options",
+
 "This dialog presents the various transform (fft) related choices. \
 \n\n\
 On the upper left is a list of available transform types; next on the right is a list of fft sizes;  \
@@ -2292,16 +2629,16 @@ static char *color_dialog_xrefs[9] = {
 
 void color_dialog_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("View Color",
+
+#if HAVE_EXTENSION_LANGUAGE
+"This dialog sets the colormap and associated settings used during sonogram, spectrogram,  \
+and wavogram display. The cutoff scale refers to the minimum data value to be displayed. \
+You can add your own colormaps to the list via " S_add_colormap ", or delete one with " S_delete_colormap ".",
+#else
 "This dialog sets the colormap and associated variables used during sonogram, spectrogram,  \
 and wavogram display. The cutoff scale refers to the minimum data value to be displayed.",
+#endif
 		      WITH_WORD_WRAP,
 		      color_dialog_xrefs,
 		      NULL);
@@ -2318,18 +2655,12 @@ static char *orientation_dialog_xrefs[4] = {
 
 void orientation_dialog_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("View Orientation",
+
 "This dialog sets the rotation and scaling variables used during sonogram, spectrogram, and wavogram display. \
 The 'angle' scalers change the viewing angle, the 'scale' scalers change the 'stretch' amount \
-along a given axis, 'hop' refers to the density of trace (the jump in samples between successive \
-ffts), and 'percent of spectrum' is equivalent to dragging the fft frequency axis -- it changes \
+along a given axis, 'hop' refers to the density of the traces (the jump in samples between successive \
+ffts or time domain scans), and 'percent of spectrum' is equivalent to dragging the fft frequency axis -- it changes \
 the amount of the spectrum that is displayed.  If the 'use openGL' button is set, the \
 spectrogram is drawn by openGL.",
 		      WITH_WORD_WRAP,
@@ -2342,14 +2673,8 @@ spectrogram is drawn by openGL.",
 
 void region_dialog_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("Region Browser",
+
 "This is the 'region browser'.  The scrolled window contains the list of current regions \
 with a brief title to indicate the source thereof, and a button to play the region. \
 One channel of the currently selected region is displayed in the graph window.  The up and \
@@ -2423,14 +2748,8 @@ void completion_dialog_help(void)
 
 void save_as_dialog_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("Save As",
+
 "You can save the current state of a file with File:Save As, or the current selection with Edit:Save as. \
 The output header type, data format, sampling rate, and comment can also be set.  Setting the srate \
 does not affect the data -- it is just a number placed in the sound file header. \
@@ -2459,19 +2778,11 @@ static char *open_file_xrefs[7] = {
   "specialize file list: {install-searcher} in snd-motif.scm",
   "keep dialog active after opening: {keep-file-dialog-open-upon-ok} in snd-motif.scm",
   NULL};
-/* TODO: file ref */
-
 
 void open_file_dialog_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("Open File",
+
 "The file selection dialog is slightly different from the Gtk or Motif default.  If you single click \
 in the directory list, that directory is immediately opened and displayed.  Also there are \
 a variety of context-sensitive popup menus to handle special chores such as setting the \
@@ -2495,17 +2806,12 @@ display possible matches.",
 
 void mix_file_dialog_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("Mix File",
+
 "The file will be mixed (added into the selected sound) at the cursor. If you click the 'Sound Files Only' button, \
 only those files in the current directory that look vaguely like sound files will be displayed.  For more control \
 of the initial mix, use the View:Files dialog.  To edit the mix, use the View:Mixes dialog.",
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Mix"),
 		      snd_xref_urls("Mix"));
@@ -2516,17 +2822,12 @@ of the initial mix, use the View:Files dialog.  To edit the mix, use the View:Mi
 
 void insert_file_dialog_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("Insert File",
+
 "The file will be inserted (pasted into the selected file) at the cursor. If you click the 'Sound Files Only' button, \
 only those files in the current directory that look vaguely like sound files will be displayed.  For more control \
 of the insertion, use the View:Files dialog.",
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Insert"),
 		      snd_xref_urls("Insert"));
@@ -2538,16 +2839,34 @@ of the insertion, use the View:Files dialog.",
 void find_dialog_help(void)
 {
   #if HAVE_SCHEME
+    #define find_example "(lambda (n) (> n .1))"
+    #define zero_plus "zero+"
+    #define closure_example "  (define (zero+)\n  (let ((lastn 0.0))\n      (lambda (n)\n        (let ((rtn (and (< lastn 0.0) (>= n 0.0) -1)))\n          (set! lastn n)\n          rtn)))"
   #endif
   #if HAVE_RUBY
+    #define find_example "lambda do |y| y > 0.1 end"
+    #define zero_plus "zero_plus"
+    #define closure_example "def zero_plus\n  lastn = 0.0\n  lambda do |n|\n    rtn = lastn < 0.0 and n >= 0.0 and -1\n    lastn = n\n    rtn\n  end\nend"
   #endif
   #if HAVE_FORTH
+    #define find_example "lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc"
+    #define zero_plus "zero+"
+    #define closure_example "<TODO: Forth closure example>"
   #endif
 
   snd_help_with_xrefs("Global Find",
+
+#if HAVE_EXTENSION_LANGUAGE
 "This search travels through all the current channels in parallel until a match is found.  The find \
-expression is a function of one argument,  the current sample value.  It should return #t when the \
-search is satisified.  For example, (lambda (n) (> n .1)) looks for the next sample that is greater than .1.",
+expression is a function of one argument,  the current sample value.  It is evaluated on each sample, and should return #t when the \
+search is satisified.  For example, \n\n  " find_example "\n\nlooks for the next sample that is greater than .1. \
+If you need to compare the current sample with a previous one, use a 'closure' as in " zero_plus " in \
+examp." XEN_FILE_EXTENSION ": \n\n" closure_example "\n\nThere are several other \
+seach function examples in that file that search for peaks, clicks, or a particular pitch.",
+#else
+"This search mechanism is built on the extension language, which isn't available in this version of Snd.",
+#endif
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Find"),
 		      snd_xref_urls("Find"));
@@ -2558,22 +2877,22 @@ search is satisified.  For example, (lambda (n) (> n .1)) looks for the next sam
 
 void mix_dialog_help(void)
 {
-  #if HAVE_SCHEME
+  #if HAVE_EXTENSION_LANGUAGE
+    #define mix_dialog_mix_help "The function " S_mix_dialog_mix " gives (or sets) the currently displayed mix's id. "
+  #else
+    #define mix_dialog_mix_help ""
   #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("Mixes",
+
 "This dialog provides various commonly-used controls on the currently \
 chosen mix.  At the top are the mix id, begin and end times, \
-track number, and a play button.  Beneath that are various sliders \
+track number, and a play button.  " mix_dialog_mix_help "Beneath that are various sliders \
 controlling the speed (sampling rate) of the mix, and the amplitude of each \
 input channel; and finally, an envelope editor for the mix's (input) channels. \
 The current mix amp env is not actually changed until you click 'Apply Env'.\
 The editor envelope is drawn in black with dots whereas the current \
 mix amp env (if any) is drawn in blue.",
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Mix"),
 		      snd_xref_urls("Mix"));
@@ -2584,31 +2903,31 @@ mix amp env (if any) is drawn in blue.",
 
 void track_dialog_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
+  #if HAVE_EXTENSION_LANGUAGE
+    #define track_dialog_track_help "The function " S_track_dialog_track " gives (or sets) the currently displayed track's id. "
+  #else
+    #define track_dialog_track_help ""
   #endif
 
   snd_help_with_xrefs("Tracks",
+
 "This dialog provides various commonly-used controls on the currently \
 chosen track.  At the top are the track id, begin and end times, \
-track number, and a play button.  Beneath that are various sliders \
+track number, and a play button.  " track_dialog_track_help "Beneath that are various sliders \
 controlling the speed (sampling rate) and the amplitude of the track, \
 and an envelope editor for the track's overall amplitude envelope. \
 The current track's amp env is not actually changed until you click 'Apply Env'.\
 The editor envelope is drawn in black with dots whereas the current \
-mix amp env (if any) is drawn in blue.",
+mix amp env (if any) is drawn in blue. ",
+
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Track"),
 		      snd_xref_urls("Track"));
 }
 
 
-/* ---------------- New File ---------------- */
 
-/* TODO: shouldn't the Ruby xrefs be in Ruby syntax? (would this mess up the indexing?) (word_wrap translates -- would need free) */
+/* ---------------- New File ---------------- */
 
 static char *new_file_xrefs[5] = {
   "open a new sound: {" S_new_sound "}",
@@ -2619,21 +2938,23 @@ static char *new_file_xrefs[5] = {
 
 void new_file_dialog_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("New File",
+
+#if HAVE_EXTENSION_LANGUAGE
 "This dialog sets the new file's output header type, data format, srate, chans, and comment. \
 The 'srate:' and 'channels:' labels are actually drop-down menus providing quick access to common choices. \
 The default values for the fields can be set by clicking 'Reset'.  These values \
 are " S_default_output_chans ", " S_default_output_data_format ", " S_default_output_srate ", and " S_default_output_header_type ".  \
 The file name field can be set upon each invocation through " S_output_name_hook ", and the \
-comment field via " S_output_comment_hook ".  The actual new file representing the new sound is not written \
+comment field via " S_output_comment_hook ".  Click 'Ok' to open the new sound. The actual new file representing the new sound is not written \
 until you save the new sound.",
+#else
+"This dialog sets the new file's output header type, data format, srate, chans, and comment. \
+The 'srate:' and 'channels:' labels are actually drop-down menus providing quick access to common choices. \
+The default values for the fields can be set by clicking 'Reset'. Click 'Ok' to open the new sound. \
+The actual new file representing the new sound is not written \
+until you save the new sound.",
+#endif
 		      WITH_WORD_WRAP,
 		      new_file_xrefs,
 		      NULL);
@@ -2665,17 +2986,12 @@ static char *edit_header_urls[11] = {
 
 void edit_header_dialog_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("Edit Header",
+
 "This dialog edits the header of a sound file; no change is made to the actual sound data. \
 If you specify 'raw' as the type, any existing header is removed.  This dialog is aimed at adding or removing an entire header,  \
 or editing the header comments; anything else is obviously dangerous.",
+
 		      WITH_WORD_WRAP,
 		      edit_header_xrefs,
 		      edit_header_urls);
@@ -2692,18 +3008,27 @@ static char *print_xrefs[4] = {
 
 void print_dialog_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("File Print",
+
+#if HAVE_EXTENSION_LANGUAGE
 "Print causes the currently active display to be either printed (via the lpr command) or saved as \
 an eps file.  In the latter case, the file name is set either by the dialog, or taken from the \
-variable " S_eps_file " (normally snd.eps).  Currently the openGL graphics can't be printed by Snd, \
+variable " S_eps_file " (normally \"snd.eps\").  Currently the openGL graphics can't be printed by Snd, \
+but you can use Gimp or some such program to get a screenshot, and print that.  The functions \
+that refer to this dialog are:\n\
+\n\
+  " S_print_dialog " (:optional managed print): start the print dialog\n\
+  " S_eps_file ": eps file name (\"snd.eps\")\n\
+  " S_eps_bottom_margin ": bottom margin (0.0)\n\
+  " S_eps_left_margin ": left margin (0.0)\n\
+  " S_eps_size ": overall eps size scaler (1.0)\n\
+  " S_graph_to_ps " (:optional file): write current graph to eps file\n",
+#else
+"Print causes the currently active display to be either printed (via the lpr command) or saved as \
+an eps file.  Currently the openGL graphics can't be printed by Snd, \
 but you can use Gimp or some such program to get a screenshot, and print that.",
+#endif
+
 		      WITH_WORD_WRAP,
 		      print_xrefs,
 		      NULL);
@@ -2720,14 +3045,9 @@ static char *view_files_xrefs[5] = {
 
 void view_files_dialog_help(void)
 {
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
   snd_help_with_xrefs("File Browser",
+
+#if HAVE_EXTENSION_LANGUAGE
 "The View:Files dialog provides a list of sounds and various things to do with them.\
 The play button plays the file. \
 Double click a file name, and that file is opened in Snd.  You can also mix or insert the \
@@ -2738,7 +3058,25 @@ and " S_add_directory_to_view_files_list ". \
 \n\n\
 The 'sort' label on the right activates a menu of sorting choices; 'name' sorts the \
 files list alphabetically, 'date' sorts by date written, and 'size' sorts by the \
-number of samples in the sound. The variable " S_view_files_sort " refers to this menu.",
+number of samples in the sound. The variable " S_view_files_sort " refers to this menu. \
+The functions that refer to this dialog are: \n\
+\n\
+  " S_view_files_dialog " (:optional managed): start this dialog\n\
+  " S_add_directory_to_view_files_list "  (dir): add directory's files to list\n\
+  " S_add_file_to_view_files_list " (file): add file to list\n\
+  " S_view_files_files ": list of all files in dialog's file list\n\
+  " S_view_files_selected_files ": list of currently selected files\n\
+  " S_view_files_sort ": dialog's sort choice\n\
+  " S_view_files_amp ": dialog's amp slider value\n\
+  " S_view_files_amp_env ": dialog's amp env\n\
+  " S_view_files_speed ": dialog's speed value\n\
+  " S_view_files_speed_style ": dialog's speed style\n",
+#else
+"The View:Files dialog provides a list of sounds and various things to do with them.\
+The play button plays the file. \
+Double click a file name, and that file is opened in Snd.  You can also mix or insert the \
+selected file with amplitude envelopes and so on.",
+#endif
 		      WITH_WORD_WRAP,
 		      view_files_xrefs,
 		      NULL);
@@ -2750,46 +3088,10 @@ number of samples in the sound. The variable " S_view_files_sort " refers to thi
 static void copy_help(void)
 {
   snd_help_with_xrefs("Copy",
-		      "See also 'Save'",
+		      "The copying functions are listed in the 'related topics' section. See also 'Save'",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Copy"),
 		      snd_xref_urls("Copy"));
-}
-
-static void region_help(void)
-{
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
-  snd_help_with_xrefs("Region",
-"A region is a portion of the sound data. When a sound portion is selected, it is (by default) saved \
-as the new region; subsequent edits will not affect the region data. You can disable the region creation \
-by setting the variable " S_selection_creates_region " to #f (its default is #t which can slow down editing \
-of very large sounds). Regions can be defined by " S_make_region ", by dragging the mouse through a portion \
-of the data, or via the Select All menu option. If the mouse drags off the end of the graph, the x axis \
-moves, in a sense dragging the data along to try to keep up with the mouse; the further away the mouse \
-is from the display, the faster the axis moves. A region can also be defined with keyboard commands, \
-much as in Emacs. C-[space] starts the region definition and the various cursor moving commands \
-continue the definition.",
-		      WITH_WORD_WRAP,
-		      snd_xrefs("Region"),
-		      snd_xref_urls("Region"));
-
-  append_key_help("C-[space]", snd_K_space, snd_ControlMask, false, true);
-}
-
-static void selection_help(void)
-{
-  snd_help_with_xrefs("Selection",
-"The selection is a high-lighted portion of the current sound. \
-You can create it by dragging the mouse, or via various functions.",
-		      WITH_WORD_WRAP,
-		      snd_xrefs("Selection"),
-		      snd_xref_urls("Selection"));
 }
 
 static void cursor_help(void)
@@ -2806,7 +3108,7 @@ static void tracking_cursor_help(void)
 {
   snd_help_with_xrefs("Tracking cursor",
 "If you want the cursor to follow along more-or-less in time while \
-playing a sound, set " S_with_tracking_cursor " to #t. See also 'Cursor'",
+playing a sound, set " S_with_tracking_cursor " to " PROC_TRUE ". See also 'Cursor'",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Tracking cursor"),
 		      snd_xref_urls("Tracking cursor"));
@@ -2881,61 +3183,6 @@ you can often get periods to line up vertically, making a pretty picture.",
 		      WITH_WORD_WRAP,
 		      Wavogram_xrefs,
 		      Wavogram_urls);
-}
-
-static void colors_help(void)
-{
-  #if HAVE_SCHEME
-  #endif
-  #if HAVE_RUBY
-  #endif
-  #if HAVE_FORTH
-  #endif
-
-  snd_help_with_xrefs("Colors",
-"A color in Snd is an object with three fields representing the rgb (red green blue) settings \
-as numbers between 0.0 and 1.0. A color object is created via " S_make_color ":\n\
-\n\
->(define blue (make-color 0.0 0.0 1.0))\n\
-\n\
-or in Ruby:\n\
-\n\
-Blue = make_color(0.0, 0.0, 1.0)\n\
-\n\
-This declares the Scheme variable \"blue\" and gives it the value of the color whose rgb components \
-include only blue in full force. The X11 color names are defined in rgb." XEN_FILE_EXTENSION ". The overall widget background color is " S_basic_color ".\n\
-\n\
->(set! (basic-color) blue)  ; in Ruby: set_basic_color(Blue)\n\
-\n\
-The color variables are:\n\
-" S_basic_color ":  main Snd color.\n\
-" S_cursor_color ":  cursor color.\n\
-" S_data_color ":  color of data in unselected graph.\n\
-" S_doit_button_color ":  color of Ok and Apply buttons.\n\
-" S_doit_again_button_color ":  color of Undo&Apply buttons.\n\
-" S_enved_waveform_color ":  color of waveform displayed in envelope editor.\n\
-" S_filter_control_waveform_color ":  color of control panel filter waveform.\n\
-" S_graph_color ":  background color of unselected graph.\n\
-" S_help_button_color ":  color of Help buttons.\n\
-" S_highlight_color ":  highlighting color.\n\
-" S_listener_color ":  background color of lisp listener.\n\
-" S_listener_text_color ":  text color in lisp listener.\n\
-" S_mark_color ":  color of mark indicator.\n\
-" S_mix_color ":  color of mix waveforms.\n\
-" S_position_color ":  position slider color\n\
-" S_pushed_button_color ":  color of pushed button.\n\
-" S_quit_button_color ":  color of Dismiss and Cancel buttons.\n\
-" S_reset_button_color ":  color of Reset buttons.\n\
-" S_sash_color ":  color of paned window sashes.\n\
-" S_selected_data_color ":  color of data in currently selected graph.\n\
-" S_selected_graph_color ":  background color of currently selected graph.\n\
-" S_selection_color ":  color of selected portion of graph.\n\
-" S_text_focus_color ":  color of text field when it has focus.\n\
-" S_zoom_color ":  zoom slider color.\n\
-",
-		      WITH_WORD_WRAP,
-		      snd_xrefs("Colors"),
-		      snd_xref_urls("Colors"));
 }
 
 static void window_size_help(void)

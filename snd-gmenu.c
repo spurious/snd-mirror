@@ -141,7 +141,10 @@ static void options_preferences_callback(GtkWidget *w, gpointer info, gpointer D
 
 static void help_about_snd_callback(GtkWidget *w, gpointer info) {about_snd_help();}
 static void help_fft_callback (GtkWidget *w, gpointer info) {fft_help();}
+#if HAVE_EXTENSION_LANGUAGE
 static void help_find_callback (GtkWidget *w, gpointer info) {find_help();}
+static void help_init_file_callback (GtkWidget *w, gpointer info) {init_file_help();}
+#endif
 static void help_undo_callback (GtkWidget *w, gpointer info) {undo_help();}
 static void help_sync_callback (GtkWidget *w, gpointer info) {sync_help();}
 static void help_debug_callback (GtkWidget *w, gpointer info) {debug_help();}
@@ -151,7 +154,6 @@ static void help_marks_callback (GtkWidget *w, gpointer info) {marks_help();}
 static void help_mix_callback (GtkWidget *w, gpointer info) {mix_help();}
 static void help_track_callback (GtkWidget *w, gpointer info) {track_help();}
 static void help_sound_files_callback (GtkWidget *w, gpointer info) {sound_files_help();}
-static void help_init_file_callback (GtkWidget *w, gpointer info) {init_file_help();}
 static void help_recording_callback (GtkWidget *w, gpointer info) {recording_help();}
 static void help_keys_callback (GtkWidget *w, gpointer info) {key_binding_help();}
 static void help_play_callback (GtkWidget *w, gpointer info) {play_help();}
@@ -161,6 +163,9 @@ static void help_insert_callback (GtkWidget *w, gpointer info) {insert_help();}
 static void help_delete_callback (GtkWidget *w, gpointer info) {delete_help();}
 static void help_filter_callback (GtkWidget *w, gpointer info) {filter_help();}
 static void help_save_callback (GtkWidget *w, gpointer info) {save_help();}
+static void help_region_callback (GtkWidget *w, gpointer info) {region_help();}
+static void help_selection_callback (GtkWidget *w, gpointer info) {selection_help();}
+static void help_colors_callback (GtkWidget *w, gpointer info) {colors_help();}
 
 void check_menu_labels(int key, int state, bool extended) {}
 
@@ -802,11 +807,13 @@ GtkWidget *add_menu(void)
   gtk_widget_show(help_about_snd_menu);
   SG_SIGNAL_CONNECT(help_about_snd_menu, "activate", help_about_snd_callback, NULL);
 
+#if HAVE_EXTENSION_LANGUAGE
   help_init_file_menu = gtk_menu_item_new_with_label(_("Customization"));
   ml[h_init_file_menu] = _("Customization");
   gtk_menu_shell_append(GTK_MENU_SHELL(help_cascade_menu), help_init_file_menu);
   gtk_widget_show(help_init_file_menu);
   SG_SIGNAL_CONNECT(help_init_file_menu, "activate", help_init_file_callback, NULL);
+#endif
 
   help_controls_menu = gtk_menu_item_new_with_label(_("Control Panel"));
   ml[h_controls_menu] = _("Control Panel");
@@ -904,11 +911,13 @@ GtkWidget *add_menu(void)
   gtk_widget_show(help_undo_menu);
   SG_SIGNAL_CONNECT(help_undo_menu, "activate", help_undo_callback, NULL);
 
+#if HAVE_EXTENSION_LANGUAGE
   help_find_menu = gtk_menu_item_new_with_label(_("Search"));
   ml[h_find_menu] = _("Search");
   gtk_menu_shell_append(GTK_MENU_SHELL(help_cascade_menu), help_find_menu);
   gtk_widget_show(help_find_menu);
   SG_SIGNAL_CONNECT(help_find_menu, "activate", help_find_callback, NULL);
+#endif
 
   help_sync_menu = gtk_menu_item_new_with_label(_("Sync and Unite"));
   ml[h_sync_menu] = _("Sync and Unite");
@@ -927,6 +936,24 @@ GtkWidget *add_menu(void)
   gtk_menu_shell_append(GTK_MENU_SHELL(help_cascade_menu), help_debug_menu);
   gtk_widget_show(help_debug_menu);
   SG_SIGNAL_CONNECT(help_debug_menu, "activate", help_debug_callback, NULL);
+
+  help_region_menu = gtk_menu_item_new_with_label(_("Regions"));
+  ml[h_region_menu] = _("Regions");
+  gtk_menu_shell_append(GTK_MENU_SHELL(help_cascade_menu), help_region_menu);
+  gtk_widget_show(help_region_menu);
+  SG_SIGNAL_CONNECT(help_region_menu, "activate", help_region_callback, NULL);
+
+  help_selection_menu = gtk_menu_item_new_with_label(_("Selections"));
+  ml[h_selection_menu] = _("Selections");
+  gtk_menu_shell_append(GTK_MENU_SHELL(help_cascade_menu), help_selection_menu);
+  gtk_widget_show(help_selection_menu);
+  SG_SIGNAL_CONNECT(help_selection_menu, "activate", help_selection_callback, NULL);
+
+  help_colors_menu = gtk_menu_item_new_with_label(_("Colors"));
+  ml[h_colors_menu] = _("Colors");
+  gtk_menu_shell_append(GTK_MENU_SHELL(help_cascade_menu), help_colors_menu);
+  gtk_widget_show(help_colors_menu);
+  SG_SIGNAL_CONNECT(help_colors_menu, "activate", help_colors_callback, NULL);
 
   SG_SIGNAL_CONNECT(file_menu, "activate", file_menu_update_1, NULL);
   SG_SIGNAL_CONNECT(edit_menu, "activate", edit_menu_update_1, NULL);
