@@ -148,12 +148,7 @@ char *global_search(read_direction_t direction)
       if (ss->search_expr)
 	{
 	  /* search_expr can be null if user set search_proc directly */
-	  if (XEN_PROCEDURE_P(ss->search_proc))
-	    {
-	      snd_unprotect_at(ss->search_proc_loc);
-	      ss->search_proc_loc = NOT_A_GC_LOC;
-	      ss->search_proc = XEN_UNDEFINED;
-	    }
+	  clear_global_search_procedure();
 	  ss->search_proc = snd_catch_any(eval_str_wrapper, ss->search_expr, ss->search_expr);
 	  ss->search_proc_loc = snd_protect(ss->search_proc);
 	}
@@ -434,7 +429,7 @@ static void get_find_expression(snd_info *sp, int count)
   make_minibuffer_label(sp, "find:");
   sp->minibuffer_on = MINI_FIND;
   goto_minibuffer(sp);
-  sp->searching = count;
+  sp->search_count = count;
 }
 
 void cursor_search(chan_info *cp, int count)
@@ -446,32 +441,27 @@ void cursor_search(chan_info *cp, int count)
     display_minibuffer_error(sp, _("search already in progress"));
   else
     {
-      if (sp->searching)
+      if (sp->search_count != 0)
 	{
 	  off_t samp;
 	  if ((!(XEN_PROCEDURE_P(sp->search_proc))) && 
 	      (sp->search_tree == NULL)) 
 	    {
-	      sp->searching = 0;
+
+	      /* TODO: use global search proc if any, and clear before exit */
+
+	      sp->search_count = 0;
 	      clear_minibuffer_prompt(cp->sound);
 	      return; /* no search expr */
 	    }
 	  if (sp->search_expr)
 	    {
 	      /* see note above about closures */
-	      if (XEN_PROCEDURE_P(sp->search_proc))
-		{
-		  snd_unprotect_at(sp->search_proc_loc);
-		  sp->search_proc_loc = NOT_A_GC_LOC;
-		  sp->search_proc = XEN_UNDEFINED;
-		}
-	      if (sp->search_tree)
-		{
-		  free_ptree(sp->search_tree);
-		  sp->search_tree = NULL;
-		}
+	      clear_sound_search_procedure(sp, false);
+#if HAVE_GUILE
 	      if (optimization(ss) > 0)
 		sp->search_tree = form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(sp->search_expr));
+#endif
 	      if (sp->search_tree == NULL)
 		{
 		  redirect_errors_to(errors_to_minibuffer, (void *)sp);
@@ -490,7 +480,7 @@ void cursor_search(chan_info *cp, int count)
 	  if (find_eval_error_p)
 	    {
 	      find_eval_error_p = false;
-	      sp->searching = false;
+	      sp->search_count = 0;
 	    }
 	  else
 	    {
@@ -522,6 +512,43 @@ void cursor_search(chan_info *cp, int count)
     }
 }
 
+void clear_sound_search_procedure(snd_info *sp, bool clear_expr_too)
+{
+  if (XEN_PROCEDURE_P(sp->search_proc)) 
+    {
+      snd_unprotect_at(sp->search_proc_loc);
+      sp->search_proc_loc = NOT_A_GC_LOC;
+    }
+  sp->search_proc = XEN_UNDEFINED;
+  if (clear_expr_too)
+    {
+      if (sp->search_expr) FREE(sp->search_expr);
+      sp->search_expr = NULL;
+    }
+  if (sp->search_tree)
+    {
+      free_ptree(sp->search_tree);
+      sp->search_tree = NULL;
+    }
+}
+
+void clear_global_search_procedure(void)
+{
+  if (XEN_PROCEDURE_P(ss->search_proc)) 
+    {
+      snd_unprotect_at(ss->search_proc_loc);
+      ss->search_proc_loc = NOT_A_GC_LOC;
+    }
+  ss->search_proc = XEN_UNDEFINED;
+  if (ss->search_expr) FREE(ss->search_expr);
+  ss->search_expr = NULL;
+  if (ss->search_tree) 
+    {
+      free_ptree(ss->search_tree);
+      ss->search_tree = NULL;
+    }
+}
+
 static XEN g_search_procedure(XEN snd)
 {
   #define H_search_procedure "(" S_search_procedure " (snd #f)): global (if no 'snd' specified) or sound-local search function"
@@ -549,32 +576,21 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
       ASSERT_SOUND(S_setB S_search_procedure, snd, 1);
       XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) || XEN_FALSE_P(proc), proc, XEN_ARG_1, S_setB S_search_procedure, "a procedure or " PROC_FALSE);
       sp = get_sp(snd, NO_PLAYERS);
+
       if (sp)
 	{
 	  error = procedure_ok(proc, 1, S_setB S_search_procedure, "proc", 1);
 	  if (error == NULL)
 	    {
-	      if (XEN_PROCEDURE_P(sp->search_proc)) 
-		{
-		  snd_unprotect_at(sp->search_proc_loc);
-		  sp->search_proc_loc = NOT_A_GC_LOC;
-		}
-	      sp->search_proc = XEN_UNDEFINED;
-	      if (sp->search_expr) FREE(sp->search_expr);
-	      sp->search_expr = NULL;
-	      if (sp->search_tree)
-		{
-		  free_ptree(sp->search_tree);
-		  sp->search_tree = NULL;
-		}
+	      clear_sound_search_procedure(sp, true);
 	      if (XEN_PROCEDURE_P(proc))
 		{
+		  sp->search_proc = proc;
+		  sp->search_proc_loc = snd_protect(proc);
 #if HAVE_GUILE
 		  if (optimization(ss) > 0)
 		    sp->search_tree = form_to_ptree_1_b(XEN_LIST_2(XEN_PROCEDURE_SOURCE(proc), proc));
 #endif
-		  sp->search_proc = proc;
-		  sp->search_proc_loc = snd_protect(proc);
 		}
 	      return(proc);
 	    }
@@ -594,27 +610,15 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
       error = procedure_ok(snd, 1, S_setB S_search_procedure, "proc", 1);
       if (error == NULL)
 	{
-	  if (XEN_PROCEDURE_P(ss->search_proc)) 
-	    {
-	      snd_unprotect_at(ss->search_proc_loc);
-	      ss->search_proc_loc = NOT_A_GC_LOC;
-	    }
-	  ss->search_proc = XEN_UNDEFINED;
-	  if (ss->search_expr) FREE(ss->search_expr);
-	  ss->search_expr = NULL;
-	  if (ss->search_tree) 
-	    {
-	      free_ptree(ss->search_tree);
-	      ss->search_tree = NULL;
-	    }
+	  clear_global_search_procedure();
 	  if (XEN_PROCEDURE_P(snd))
 	    {
+	      ss->search_proc = snd;
+	      ss->search_proc_loc = snd_protect(snd);
 #if HAVE_GUILE
 	      if (optimization(ss) > 0)
 		ss->search_tree = form_to_ptree_1_b(XEN_LIST_2(XEN_PROCEDURE_SOURCE(snd), snd));
 #endif
-	      ss->search_proc = snd;
-	      ss->search_proc_loc = snd_protect(snd);
 	    }
 	}
       else 

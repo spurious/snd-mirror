@@ -540,13 +540,13 @@ void clear_minibuffer(snd_info *sp)
 {
   clear_minibuffer_prompt(sp);
   set_minibuffer_string(sp, NULL, true);
-  sp->searching = 0;
+  sp->search_count = 0;
   sp->marking = 0;
   sp->filing = NOT_FILING;
   sp->printing = NOT_PRINTING;
   sp->minibuffer_on = MINI_OFF;
   sp->loading = false;
-  sp->amping = 0;
+  sp->amp_count = 0;
   sp->macro_count = 0;
   sp->prompting = false;
 }
@@ -573,7 +573,7 @@ static void prompt(snd_info *sp, char *msg, char *preload)
 static void get_amp_expression(snd_info *sp, int count, bool over_selection) 
 {
   prompt(sp, _("env:"), NULL); 
-  sp->amping = count; 
+  sp->amp_count = count; 
   sp->selectioning = over_selection;
 }
 
@@ -643,7 +643,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
   /* sp->minibuffer_on = MINI_REPORT; */
 
 #if HAVE_EXTENSION_LANGUAGE
-  if (sp->searching)
+  if (sp->search_count != 0)
     {
       /* it's the search expr request */
       /* if not nil, replace previous */
@@ -658,14 +658,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	       *
 	       * if error in scheme, don't go ahead with the search!
 	       */
-	      if (sp->search_expr) FREE(sp->search_expr);
+	      clear_sound_search_procedure(sp, true);
 	      sp->search_expr = copy_string(str);
-	      if (XEN_PROCEDURE_P(sp->search_proc))
-		{
-		  snd_unprotect_at(sp->search_proc_loc);
-		  sp->search_proc_loc = NOT_A_GC_LOC;
-		}
-	      sp->search_proc = XEN_UNDEFINED;
 	      redirect_errors_to(errors_to_minibuffer, (void *)sp);
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
 	      if ((XEN_PROCEDURE_P(proc)) && /* redundant but avoids unwanted error message via snd_error */
@@ -681,7 +675,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	}
 
       if (active_chan)
-	cursor_search(active_chan, sp->searching);
+	cursor_search(active_chan, sp->search_count);
       return;
     }
 #endif
@@ -962,7 +956,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  sp->filing = NOT_FILING;
 	  return;
 	}
-      if (sp->amping)
+      if (sp->amp_count != 0)
 	{
 	  env *e;
 	  if (!active_chan) active_chan = sp->chans[0];
@@ -970,9 +964,9 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  e = string_to_env(str);
 	  if (e)
 	    {
-	      if (sp->amping != 1)
+	      if (sp->amp_count != 1)
 		apply_env(active_chan, e, CURSOR(active_chan), 
-			  sp->amping, sp->selectioning, NOT_FROM_ENVED,
+			  sp->amp_count, sp->selectioning, NOT_FROM_ENVED,
 			  (char *)((sp->selectioning) ? "C-x a" : "C-x C-a"), NULL,
 			  C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      else apply_env(active_chan, e, 0, CURRENT_SAMPLES(active_chan),
@@ -983,7 +977,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	    }
 	  redirect_errors_to(NULL, NULL);
 	  sp->selectioning = false;
-	  sp->amping = 0;
+	  sp->amp_count = 0;
 	  clear_minibuffer(sp);
 	  return;
 	}
@@ -2106,7 +2100,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	clear_minibuffer(sp);
       else 
 	if (!cursor_searching) 
-	  sp->searching = 0;
+	  sp->search_count = 0;
     }
 }
 

@@ -569,12 +569,12 @@ char *info_completer(char *text, void *data)
   if (sp)
     {
       char *new_text = NULL;
-      if (sp->searching) return(copy_string(text));      /* C-s or C-r so as above */
+      if (sp->search_count != 0) return(copy_string(text));      /* C-s or C-r so as above */
       if ((sp->marking) || (sp->finding_mark)) return(copy_string(text)); /* C-x C-m etc */
-      if (sp->printing) return(copy_string(text));       /* C-x C-d so anything is possible */
-      if (sp->amping) return(env_name_completer(text, NULL));
+      if (sp->printing) return(copy_string(text));               /* C-x C-d so anything is possible */
+      if (sp->amp_count != 0) return(env_name_completer(text, NULL));
       if (use_sound_filename_completer(sp->filing)) return(sound_filename_completer(text, NULL));
-      if (sp->loading) return(filename_completer(text, NULL)); /* C-x C-l */
+      if (sp->loading) return(filename_completer(text, NULL));   /* C-x C-l */
 
       new_text = command_completer(text, NULL);
       if (get_completion_matches() == 0)

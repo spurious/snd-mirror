@@ -65,19 +65,8 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
   str = XmTextGetString(edit_find_text);
   if ((str) && (*str))
     { 
-      if (ss->search_expr) FREE(ss->search_expr);
+      clear_global_search_procedure();
       ss->search_expr = copy_string(str);
-      if (XEN_PROCEDURE_P(ss->search_proc))
-	{
-	  snd_unprotect_at(ss->search_proc_loc);
-	  ss->search_proc_loc = NOT_A_GC_LOC;
-	}
-      ss->search_proc = XEN_UNDEFINED;
-      if (ss->search_tree)
-	{
-	  free_ptree(ss->search_tree);
-	  ss->search_tree = NULL;
-	}
       redirect_errors_to(errors_to_find_text, NULL);
       proc = snd_catch_any(eval_str_wrapper, str, str);
       redirect_errors_to(NULL, NULL);
@@ -85,8 +74,10 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	{
 	  ss->search_proc = proc;
 	  ss->search_proc_loc = snd_protect(proc);
+#if HAVE_GUILE
 	  if (optimization(ss) > 0)
 	    ss->search_tree = form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(str));
+#endif
 	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), str);
 	  set_label(edit_find_label, buf);

@@ -414,7 +414,7 @@ typedef struct snd_info {
   bool raw_prompt;
   char *search_expr;
   off_t marking;
-  int searching, amping;
+  int search_count, amp_count; /* search_count = number of times to search before return, amp_count = amp env samps if not 1 (= full dur) */
   sp_filing_t filing;
   char *filing_filename;
   bool prompting, loading, finding_mark, selectioning;
@@ -1636,6 +1636,8 @@ XEN g_free_track_sample_reader(XEN obj);
 
 char *global_search(read_direction_t direction);
 void cursor_search(chan_info *cp, int count);
+void clear_sound_search_procedure(snd_info *sp, bool clear_expr_too);
+void clear_global_search_procedure(void);
 
 void g_init_find(void);
 

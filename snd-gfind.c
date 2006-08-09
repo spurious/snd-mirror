@@ -69,18 +69,8 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
   if ((str) && (*str))
     {
       XEN proc;
+      clear_global_search_procedure();
       ss->search_expr = copy_string(str);
-      if (XEN_PROCEDURE_P(ss->search_proc)) 
-	{
-	  snd_unprotect_at(ss->search_proc_loc);
-	  ss->search_proc_loc = NOT_A_GC_LOC;
-	}
-      ss->search_proc = XEN_UNDEFINED;
-      if (ss->search_tree)
-	{
-	  free_ptree(ss->search_tree);
-	  ss->search_tree = NULL;
-	}
       redirect_errors_to(errors_to_find_text, NULL);
       proc = snd_catch_any(eval_str_wrapper, str, str);
       redirect_errors_to(NULL, NULL);

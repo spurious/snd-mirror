@@ -974,7 +974,19 @@ but as far as I
 know, no-one uses these as audio frequency tone generators -- who would want to
 listen to a square wave?  A more reasonable square-wave can be generated via
 tanh(n * sin(theta)), where "n" (a float) sets how squared-off it is.
+Even more amusing is this algorithm:
 </p>
+<pre>
+(define (cosc c theta) ; as c -&gt; 1.0, more of a square wave
+  (let* ((cs (cos theta))
+	 (cp1 (+ c 1.0))
+	 (cm1 (- c 1.0))
+	 (cm1c (expt cm1 cs))
+	 (cp1c (expt cp1 cs)))
+    (/ (- cp1c cm1c)
+       (+ cp1c cm1c))))
+</pre>
+<br>
 
 <table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>saw-tooth and friends' methods</center></td></tr>

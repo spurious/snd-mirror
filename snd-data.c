@@ -320,7 +320,7 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   sp->sync = DEFAULT_SYNC;
   sp->previous_sync = sp->sync;
   initialize_control_panel(sp);
-  sp->searching = 0;
+  sp->search_count = 0;
   sp->selectpos = -1;
   if (chans > 1)
     sp->channel_style = channel_style(ss);
@@ -395,7 +395,7 @@ void free_snd_info(snd_info *sp)
   sp->inuse = SOUND_IDLE;
   sp->playing_mark = NULL;
   sp->playing = 0;
-  sp->searching = 0;
+  sp->search_count = 0;
   sp->loading = false;
   sp->bomb_in_progress = false;
   sp->marking = 0;
@@ -407,20 +407,7 @@ void free_snd_info(snd_info *sp)
   sp->need_update = false;
   sp->file_unreadable = false;
   sp->minibuffer_on = MINI_OFF;
-  if (sp->search_expr) 
-    {
-      FREE(sp->search_expr); 
-      sp->search_expr = NULL;
-    }
-  if (sp->search_tree)
-    free_ptree(sp->search_tree);
-  sp->search_tree = NULL;
-  if (XEN_PROCEDURE_P(sp->search_proc))
-    {
-      snd_unprotect_at(sp->search_proc_loc);
-      sp->search_proc_loc = NOT_A_GC_LOC;
-    }
-  sp->search_proc = XEN_UNDEFINED;
+  clear_sound_search_procedure(sp, true);
   if (XEN_PROCEDURE_P(sp->prompt_callback))
     {
       snd_unprotect_at(sp->prompt_callback_loc);

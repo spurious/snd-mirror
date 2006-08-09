@@ -90,6 +90,8 @@
  *
  * SOMEDAY: support for vector of def-clm-structs
  * SOMEDAY: the graphics funcs in snd-axis/snd-draw (x->position, draw-lines etc)
+ *
+ * TODO: there's without_env in guile -- try that in gauche.
  */
 
 #include "snd.h"
