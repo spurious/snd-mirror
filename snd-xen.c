@@ -975,6 +975,13 @@ XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc)
 
 XEN eval_str_wrapper(void *data)
 {
+#if DEBUGGING
+  if (data == NULL)
+    {
+      fprintf(stderr, "null string passed to eval_str_wrapper");
+      abort();
+    }
+#endif
   return(XEN_EVAL_C_STRING((char *)data));
 }
 

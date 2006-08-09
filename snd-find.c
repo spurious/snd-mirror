@@ -148,7 +148,7 @@ char *global_search(read_direction_t direction)
       if (ss->search_expr)
 	{
 	  /* search_expr can be null if user set search_proc directly */
-	  clear_global_search_procedure();
+	  clear_global_search_procedure(false);
 	  ss->search_proc = snd_catch_any(eval_str_wrapper, ss->search_expr, ss->search_expr);
 	  ss->search_proc_loc = snd_protect(ss->search_proc);
 	}
@@ -532,7 +532,7 @@ void clear_sound_search_procedure(snd_info *sp, bool clear_expr_too)
     }
 }
 
-void clear_global_search_procedure(void)
+void clear_global_search_procedure(bool clear_expr_too)
 {
   if (XEN_PROCEDURE_P(ss->search_proc)) 
     {
@@ -540,8 +540,11 @@ void clear_global_search_procedure(void)
       ss->search_proc_loc = NOT_A_GC_LOC;
     }
   ss->search_proc = XEN_UNDEFINED;
-  if (ss->search_expr) FREE(ss->search_expr);
-  ss->search_expr = NULL;
+  if (clear_expr_too)
+    {
+      if (ss->search_expr) FREE(ss->search_expr);
+      ss->search_expr = NULL;
+    }
   if (ss->search_tree) 
     {
       free_ptree(ss->search_tree);
@@ -610,7 +613,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
       error = procedure_ok(snd, 1, S_setB S_search_procedure, "proc", 1);
       if (error == NULL)
 	{
-	  clear_global_search_procedure();
+	  clear_global_search_procedure(true);
 	  if (XEN_PROCEDURE_P(snd))
 	    {
 	      ss->search_proc = snd;

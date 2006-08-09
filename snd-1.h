@@ -1637,7 +1637,7 @@ XEN g_free_track_sample_reader(XEN obj);
 char *global_search(read_direction_t direction);
 void cursor_search(chan_info *cp, int count);
 void clear_sound_search_procedure(snd_info *sp, bool clear_expr_too);
-void clear_global_search_procedure(void);
+void clear_global_search_procedure(bool clear_expr_too);
 
 void g_init_find(void);
 

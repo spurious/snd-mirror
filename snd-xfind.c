@@ -65,7 +65,7 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
   str = XmTextGetString(edit_find_text);
   if ((str) && (*str))
     { 
-      clear_global_search_procedure();
+      clear_global_search_procedure(true);
       ss->search_expr = copy_string(str);
       redirect_errors_to(errors_to_find_text, NULL);
       proc = snd_catch_any(eval_str_wrapper, str, str);
