@@ -900,7 +900,7 @@ static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *f
   int i, loc;
   if (mem_size == 0)
     {
-      mem_size = 65536 * 4;
+      mem_size = 65536 * 8;
       pointers = (void **)calloc(mem_size, sizeof(void *));
       true_pointers = (void **)calloc(mem_size, sizeof(void *));
       sizes = (int *)calloc(mem_size, sizeof(int));
