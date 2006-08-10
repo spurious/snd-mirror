@@ -15,14 +15,15 @@
 (read-enable 'positions)
 
 (define ignore (list "gdk_pixmap_new" "gdk_pixmap_create_from_xpm" "gdk_pixmap_create_from_xpm_d"
-		     "gtk_notebook_append_page" "GTK_FILE_CHOOSER_DIALOG" "GTK_FILE_FILTER"
-		     "GTK_FILE_CHOOSER" "GTK_FILE_FILTER_FILENAME" "GTK_FILE_FILTER_DISPLAY_NAME"
-		     "GTK_FILE_CHOOSER_ACTION_OPEN" "GTK_FILE_CHOOSER_ACTION_SAVE" "gtk_file_chooser_dialog_new"
+		     "gtk_notebook_append_page" 
 		     "g_timeout_add_full" "g_timeout_add" "g_idle_add" "g_idle_add_full" "g_source_remove"
-		     "gtk_file_filter_new" "gtk_file_filter_set_name" "gtk_file_filter_add_pattern"
-		     "gtk_file_filter_add_custom" "gtk_file_chooser_set_select_multiple"
-		     "gtk_file_chooser_get_filename" "gtk_file_chooser_set_extra_widget"
-		     "gtk_file_chooser_add_filter" "gtk_file_chooser_set_filter"
+;		     "GTK_FILE_CHOOSER_DIALOG" "GTK_FILE_FILTER"
+;		     "GTK_FILE_CHOOSER" "GTK_FILE_FILTER_FILENAME" "GTK_FILE_FILTER_DISPLAY_NAME"
+;		     "GTK_FILE_CHOOSER_ACTION_OPEN" "GTK_FILE_CHOOSER_ACTION_SAVE" "gtk_file_chooser_dialog_new"
+;		     "gtk_file_filter_new" "gtk_file_filter_set_name" "gtk_file_filter_add_pattern"
+;		     "gtk_file_filter_add_custom" "gtk_file_chooser_set_select_multiple"
+;		     "gtk_file_chooser_get_filename" "gtk_file_chooser_set_extra_widget"
+;		     "gtk_file_chooser_add_filter" "gtk_file_chooser_set_filter"
 		     ))
 
 (define (shell cmd)
@@ -100,10 +101,13 @@
   (fgrep (cadr-str data) 273))
 
 (define* (CFNC-290 data #:optional spec)
-  (fgrep (cadr-str data) 273))
+  (fgrep (cadr-str data) 290))
 
 (define* (CFNC-22 data)
   (fgrep (cadr-str data) 22))
+
+(define* (CFNC-210 data :optional spec)
+  (fgrep (cadr-str data) 210))
 
 (define (CATOM name)
   #f)
@@ -121,10 +125,13 @@
   (fgrep name 273))
 
 (define (CSTR-290 name)
-  (fgrep name 273))
+  (fgrep name 290))
 
 (define (CSTR-29x name)
-  (fgrep name 273))
+  (fgrep name 291))
+
+(define (CSTR-210 name)
+  (fgrep name 210))
 
 (define (CDBL name)
   #f)
@@ -145,7 +152,7 @@
   (fgrep name 256))
 
 (define* (CLNG-290 name #:optional type spec-name)
-  (fgrep name 256))
+  (fgrep name 290))
 
 (define* (CINT name #:optional type)
   #f)
@@ -175,10 +182,13 @@
   (fgrep name 273))
 
 (define* (CINT-290 name #:optional type)
-  (fgrep name 273))
+  (fgrep name 290))
 
 (define* (CINT-29x name #:optional type)
-  (fgrep name 273))
+  (fgrep name 291))
+
+(define* (CINT-210 name #:optional type)
+  (fgrep name 210))
 
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
   #f)
@@ -199,7 +209,10 @@
   (fgrep (paren-str name) 256))
 
 (define (CCAST-290 name type)
-  (fgrep (paren-str name) 256))
+  (fgrep (paren-str name) 290))
+
+(define (CCAST-210 name type)
+  (fgrep (paren-str name) 210))
 
 (define (CCHK name type)
   #f)
@@ -220,7 +233,10 @@
   (fgrep (paren-str name) 256))
 
 (define (CCHK-290 name type)
-  (fgrep (paren-str name) 256))
+  (fgrep (paren-str name) 290))
+
+(define (CCHK-210 name type)
+  (fgrep (paren-str name) 216))
 
 (define (STRUCT data)
   #f)

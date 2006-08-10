@@ -50,6 +50,7 @@ typedef struct {
   int srate, in_format, output_data_format, out_chans, in_chans, buffer_size;
   bool triggered, triggering, autoload;
   Float **in_amps;                   /* overall_in_chans X out_chans */
+  bool **in_amp_preset;              /* don't overwrite this amp */
   Float *out_amps;                   /* out_chans (independent of file write: monitor vol) */
   int num_mixer_gains;
   bool monitoring;                   /* speakers active (monitor_fd open) */

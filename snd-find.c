@@ -447,9 +447,14 @@ void cursor_search(chan_info *cp, int count)
 	  if ((!(XEN_PROCEDURE_P(sp->search_proc))) && 
 	      (sp->search_tree == NULL)) 
 	    {
-
-	      /* TODO: use global search proc if any, and clear before exit */
-
+	      /* I decided not to check for a global search procedure; it's much harder
+	       *   to implement than it looks, and I'm not sure it would "do the right thing"
+	       *   anyway, if say the user types c-g to clear the current to ask for the next --
+	       *   a fall-back then would be annoying.  And then, in the global searcher (edit:find)
+	       *   to be consistent wouldn't we need a check for a local searcher?
+	       *
+	       * perhaps the right thing is to remove these procedures altogether
+	       */
 	      sp->search_count = 0;
 	      clear_minibuffer_prompt(cp->sound);
 	      return; /* no search expr */

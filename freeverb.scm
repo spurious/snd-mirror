@@ -29,7 +29,7 @@
 
 ;; For more information see clm-2/freeverb/index.html [MS]
 
-;;; changed to accomodate run and mono output, bill 11-Jun-06
+;;; changed to accommodate run and mono output, bill 11-Jun-06
 ;;;            use the filtered-comb gen, bill 29-Jun-06
 
 ;;; Code:

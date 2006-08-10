@@ -19,8 +19,6 @@
 </style>
 </head>
 
-<!-- TODO: see also tables with tooltip expls throughout -->
-
 
 <!-- 
      The index at the end is generated automatically by index.cl which notices all names, and
@@ -940,7 +938,7 @@ See also <a href="pqw.ins">pqw.ins</a> for phase quadrature waveshaping (single-
 
 <!-- ---------------------------------------- SAWTOOTH ETC ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>SAWTOOTH-WAVE, TRIANGLE-WAVE, PULSE-TRAIN, SQUARE-WAVE</h4></td></tr></table>
+<table width="70%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>SAWTOOTH-WAVE, TRIANGLE-WAVE, PULSE-TRAIN, SQUARE-WAVE</h4></td></tr></table>
 
 <pre>
   <a class=def name="make-triangle-wave">make-triangle-wave</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (frequency 440.0) (amplitude 1.0) (initial-phase pi)
@@ -977,8 +975,8 @@ tanh(n * sin(theta)), where "n" (a float) sets how squared-off it is.
 Even more amusing is this algorithm:
 </p>
 <pre>
-(define (cosc c theta) ; as c -&gt; 1.0, more of a square wave
-  (let* ((cs (cos theta))
+(define (cossq c theta)   ; as c -&gt; 1.0+, more of a square wave (try 1.00001)
+  (let* ((cs (cos theta)) ; (+ theta pi) if matching sin case (or (- ...))
 	 (cp1 (+ c 1.0))
 	 (cm1 (- c 1.0))
 	 (cm1c (expt cm1 cs))

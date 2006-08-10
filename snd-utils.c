@@ -734,7 +734,7 @@ static char *kmg (int num)
 }
 
 #define MEM_PAD_SIZE 32
-static int mem_size = 0;
+static int mem_size = 0, max_mem_size = 0;
 static int *sizes = NULL, *locations = NULL;
 static void **pointers = NULL, **true_pointers = NULL;
 static char **functions = NULL, **files = NULL;
@@ -897,10 +897,10 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
 
 static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *func, const char *file, int line)
 {
-  int i, loc;
+  int i, loc, temp;
   if (mem_size == 0)
     {
-      mem_size = 65536 * 8;
+      mem_size = 65536 * 16;
       pointers = (void **)calloc(mem_size, sizeof(void *));
       true_pointers = (void **)calloc(mem_size, sizeof(void *));
       sizes = (int *)calloc(mem_size, sizeof(int));
@@ -912,6 +912,8 @@ static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *f
   loc = freed[freed_out++];
   if (freed_out >= mem_size) freed_out = 0;
   if (freed_out == freed_in) fprintf(stderr, "ran out of space ");
+  temp = abs(freed_out - freed_in);
+  if (temp > max_mem_size) max_mem_size = temp;
 
   pointers[loc] = ptr;
   true_pointers[loc] = true_ptr;
@@ -1030,10 +1032,11 @@ static char *mem_stats(int ub)
 	    }
 	}
     }
-  mus_snprintf(result, PRINT_BUFFER_SIZE, "snd mem: %s (%s ptrs, max: %d), %d sounds, %d chans (%s, %d)\n",
+  mus_snprintf(result, PRINT_BUFFER_SIZE, "snd mem: %s (%s ptrs, size: %d, max: %d), %d sounds, %d chans (%s, %d)\n",
 	       ksum = kmg(sum),
 	       kptrs = kmg(ptrs),
 	       mem_size,
+	       max_mem_size,
 	       snds, chns,
 	       (chns > 0) ? (kpers = kmg(ub / chns)) : "", trees);
   if (ksum) free(ksum);

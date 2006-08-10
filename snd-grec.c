@@ -1601,9 +1601,14 @@ static int make_amp_sliders(recorder_info *rp, pane_t *p, bool input, int overal
 	  a->in = temp_in_chan + overall_input_ctr;
 	  a->device_in_chan = temp_in_chan;
 	  a->out = temp_out_chan;
-	  if (temp_in_chan == temp_out_chan)
-	    rp->in_amps[a->in][a->out] = 1.0;
-	  else rp->in_amps[a->in][a->out] = 0.0;
+
+	  if (!(rp->in_amp_preset[a->in][a->out]))
+	    {
+	      if (temp_in_chan == temp_out_chan)
+		rp->in_amps[a->in][a->out] = 1.0;
+	      else rp->in_amps[a->in][a->out] = 0.0;
+	    }
+
 	  AMP_rec_ins[a->in][a->out] = p->amps[i];
 	  temp_in_chan++;
 	  if (temp_in_chan >= p->in_chans)
@@ -1617,7 +1622,7 @@ static int make_amp_sliders(recorder_info *rp, pane_t *p, bool input, int overal
 	  a->type = OUTPUT_AMP;
 	  a->device_in_chan = 0;
 	  a->out = i;
-	  rp->out_amps[i] = 1.0;
+	  /* out_amps[i] set to 1.0 at initialization time */
 	  AMP_rec_outs[i] = a;
 	}
       if ((!input) || (p->active_sliders[in_chan][out_chan]))

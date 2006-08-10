@@ -4,7 +4,7 @@
 ;; revised 01/22/06
 ;; Bill Sack wsack@buffalo.edu
 
-;; revised slightly to accomodate the run macro, Bill 13-Jun-06
+;; revised slightly to accommodate the run macro, Bill 13-Jun-06
 
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 (if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))

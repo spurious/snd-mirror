@@ -375,13 +375,21 @@ static void init_recorder(void)
   rp->output_file_descriptor = -1;
 
   rp->out_amps = (Float *)CALLOC(MAX_OUT_CHANS, sizeof(Float));
+  for (i = 0; i < MAX_OUT_CHANS; i++) rp->out_amps[i] = 1.0;
+
   mixer_gains = (Float *)CALLOC(MAX_MIXER_GAINS, sizeof(Float));
+
   rp->in_amps = (Float **)CALLOC(MAX_IN_CHANS, sizeof(Float *));
   for (i = 0; i < MAX_IN_CHANS; i++) rp->in_amps[i] = (Float *)CALLOC(MAX_OUT_CHANS, sizeof(Float));
+
+  rp->in_amp_preset = (bool **)CALLOC(MAX_IN_CHANS, sizeof(bool *));
+  for (i = 0; i < MAX_IN_CHANS; i++) rp->in_amp_preset[i] = (bool *)CALLOC(MAX_OUT_CHANS, sizeof(bool));
+
   rp->chan_in_active = (bool *)CALLOC(MAX_IN_CHANS, sizeof(bool));
 #if DEBUGGING
   set_printable(0);
 #endif
+
   rp->chan_out_active = (bool *)CALLOC(MAX_OUT_CHANS, sizeof(bool));
 #if DEBUGGING
   set_printable(0);
@@ -1927,6 +1935,7 @@ static XEN g_set_recorder_in_amp (XEN in, XEN out, XEN amp)
       if ((gain >= amp_control_min(ss)) && (gain <= amp_control_max(ss)))
 	{
 	  rp->in_amps[in_ind][out_ind] = gain;
+	  rp->in_amp_preset[in_ind][out_ind] = true;
 	  reflect_recorder_in_amp(in_ind, 
 				  out_ind, 
 				  rp->in_amps[in_ind][out_ind]);

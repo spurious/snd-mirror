@@ -4,6 +4,7 @@ cp ~/dist/snd/snd.tar .
 tar xf snd.tar
 make clean
 
+# words I constantly missppelll
 fgrep decrip *.html
 fgrep accomoda *.html
 fgrep pysical *.html
@@ -140,7 +141,7 @@ rm -f config.cache
 echo ' '
 echo ' '
 echo ' CFLAGS="-Wall -Wextra" --with-gtk '
-./configure --quiet CFLAGS="-Wall" --with-gtk
+./configure --quiet CFLAGS="-Wall -Wextra" --with-gtk
 make
 echo ' '
 echo ' '
@@ -266,14 +267,14 @@ make
 ./snd -noinit --features "'clm 'snd-forth 'snd-nogui"
 make allclean
 
-echo ' '
-echo ' '
-echo ' --quiet --with-forth CC=g++ --disable-deprecated'
-./configure --quiet --with-forth CC=g++ --disable-deprecated
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-forth"
-make allclean
+# echo ' '
+# echo ' '
+# echo ' --quiet --with-forth CC=g++ --disable-deprecated'
+# ./configure --quiet --with-forth CC=g++ --disable-deprecated
+# make
+# ./snd --version
+# ./snd -noinit --features "'clm 'snd-forth"
+# make allclean
 
 
 

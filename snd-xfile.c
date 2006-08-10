@@ -4310,7 +4310,7 @@ static void raw_data_help_callback(Widget w, XtPointer context, XtPointer info)
   raw_data_dialog_help(rp->help);
 }
 
-static void make_raw_data_dialog(raw_info *rp, const char *filename, const char *title)
+static void make_raw_data_dialog(raw_info *rp, const char *title)
 {
   XmString xstr1, xstr2, xstr3, xstr4, titlestr;
   int n;
@@ -4421,7 +4421,7 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
   if (!title) 
     title = mus_format("no header found on %s\n", filename);
   if (!(rp->dialog))
-    make_raw_data_dialog(rp, filename, title);
+    make_raw_data_dialog(rp, title);
   else
     {
       XmString xstr4;
