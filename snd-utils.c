@@ -911,8 +911,9 @@ static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *f
 
   loc = freed[freed_out++];
   if (freed_out >= mem_size) freed_out = 0;
-  if (freed_out == freed_in) fprintf(stderr, "ran out of space ");
-  temp = abs(freed_out - freed_in);
+  temp = freed_out - freed_in;
+  if (temp == 0) fprintf(stderr, "ran out of space ");
+  if (temp < 0) temp += mem_size;
   if (temp > max_mem_size) max_mem_size = temp;
 
   pointers[loc] = ptr;

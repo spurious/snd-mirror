@@ -6,30 +6,30 @@
 ;;;  test 3: variables                          [1569]
 ;;;  test 4: sndlib                             [2225]
 ;;;  test 5: simple overall checks              [4392]
-;;;  test 6: vcts                               [11831]
-;;;  test 7: colors                             [12141]
-;;;  test 8: clm                                [12647]
-;;;  test 9: mix                                [21387]
-;;;  test 10: marks                             [24453]
-;;;  test 11: dialogs                           [25158]
-;;;  test 12: extensions                        [25457]
-;;;  test 13: menus, edit lists, hooks, etc     [25906]
-;;;  test 14: all together now                  [27346]
-;;;  test 15: chan-local vars                   [28418]
-;;;  test 16: regularized funcs                 [29697]
-;;;  test 17: dialogs and graphics              [34111]
-;;;  test 18: enved                             [34199]
-;;;  test 19: save and restore                  [34219]
-;;;  test 20: transforms                        [35846]
-;;;  test 21: new stuff                         [37595]
-;;;  test 22: run                               [38482]
-;;;  test 23: with-sound                        [43953]
-;;;  test 24: user-interface                    [45947]
-;;;  test 25: X/Xt/Xm                           [49562]
-;;;  test 26: Gtk                               [54147]
-;;;  test 27: GL                                [58220]
-;;;  test 28: errors                            [58344]
-;;;  test all done                              [60473]
+;;;  test 6: vcts                               [11851]
+;;;  test 7: colors                             [12161]
+;;;  test 8: clm                                [12667]
+;;;  test 9: mix                                [21548]
+;;;  test 10: marks                             [24614]
+;;;  test 11: dialogs                           [25319]
+;;;  test 12: extensions                        [25618]
+;;;  test 13: menus, edit lists, hooks, etc     [26067]
+;;;  test 14: all together now                  [27507]
+;;;  test 15: chan-local vars                   [28579]
+;;;  test 16: regularized funcs                 [29874]
+;;;  test 17: dialogs and graphics              [34288]
+;;;  test 18: enved                             [34376]
+;;;  test 19: save and restore                  [34396]
+;;;  test 20: transforms                        [36023]
+;;;  test 21: new stuff                         [37772]
+;;;  test 22: run                               [38659]
+;;;  test 23: with-sound                        [44130]
+;;;  test 24: user-interface                    [46124]
+;;;  test 25: X/Xt/Xm                           [49740]
+;;;  test 26: Gtk                               [54325]
+;;;  test 27: GL                                [58411]
+;;;  test 28: errors                            [58535]
+;;;  test all done                              [60664]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -13804,6 +13804,24 @@ EDITS: 5
 	(if (not (vequal lv7 (vct 0.000 -7.000 0.000 56.000 0.000 -112.000 0.000 64.000))) (snd-display ";partials->polynomial(8): ~A?" lv7))
 	(if (not (vequal lv8 (vct -1.000 0.000 24.000 0.000 -80.000 0.000 64.000 0.000))) (snd-display ";partials->polynomial(9): ~A?" lv8))
 	(if (not (vequal lv7 lv7a)) (snd-display ";partials->polynomial kind=1? ~A ~A" lv7 lv7a))
+
+	(if (fneq (polynomial lv7 1.0) (cosh (* 7 (acosh 1.0)))) 
+	    (snd-display ";ccosh cheb 7 1.0: ~A ~A" (polynomial lv7 1.0) (cosh (* 7 (acosh 1.0)))))
+	(if (fneq (polynomial lv7 1.0) (cos (* 7 (acos 1.0)))) 
+	    (snd-display ";cos cheb 7 1.0: ~A ~A" (polynomial lv7 1.0) (cos (* 7 (acos 1.0)))))
+	(if (fneq (polynomial lv8 1.0) (/ (sin (* 7 (acos 1.0))) (sin (acos 1.0))))
+	    (snd-display ";acos cheb 7 1.0: ~A ~A" (polynomial lv8 1.0) (/ (sin (* 7 (acos 1.0))) (sin (acos 1.0)))))
+	;; G&R 8.943 p 984 uses n+1 where we use n in Un? (our numbering keeps harmonics aligned between Tn and Un)
+
+	(do ((i 0 (1+ i)))
+	    ((+ i 10))
+	  (let ((val (mus-random 1.0)))
+	    (if (fneq (polynomial lv7 val) (cosh (* 7 (acosh val)))) 
+		(snd-display ";ccosh cheb 7 ~A: ~A ~A" val (polynomial lv7 val) (cosh (* 7 (acosh val)))))
+	    (if (fneq (polynomial lv7 val) (cos (* 7 (acos val)))) 
+		(snd-display ";cos cheb 7 ~A: ~A ~A" (polynomial lv7 val) (cos (* 7 (acos val)))))
+	    (if (fneq (polynomial lv8 val) (/ (sin (* 7 (acos val))) (sin (acos val))))
+		(snd-display ";acos cheb 7 ~A: ~A ~A" val (polynomial lv8 val) (/ (sin (* 7 (acos val))) (sin (acos val)))))))
 	)
       
       ;; check phase-quadrature cancellations
@@ -38949,8 +38967,12 @@ EDITS: 1
 	    (if (not (eq? bool-var #t)) (snd-display ";set! 2 bool-var: ~A" bool-var))
 	    
 	    (define (stst form result)
-	      (let ((val (run-eval form)))
-		(if (not (string=? val result)) (snd-display ";~A -> ~A (~A)" form val result))))
+	      (catch 'cannot-parse
+		     (lambda ()
+		       (let ((val (run-eval form)))
+			 (if (not (string=? val result)) (snd-display ";~A -> ~A (~A)" form val result))))
+		     (lambda args
+		       (snd-display ";stst ~A: unparsable" form))))
 	    
 	    (define (ststa form arg result)
 	      (let ((val (run-eval form arg)))
@@ -40859,6 +40881,8 @@ EDITS: 1
 	    (btst '(let ((sd (make-sound-data 2 3)) (sd1 (make-sound-data 2 4))) (equal? sd sd1)) #f)
 	    (btst '(let ((sd (make-sound-data 2 3)) (sd1 (make-sound-data 2 3))) (eq? sd sd1)) #f)
 	    
+	    (catch 'cannot-parse
+		   (lambda ()
 	    (let ((val (run-eval '(lambda ()
 				    (let ((our-val 0.0))
 				      (do ((i 0 (1+ i)))
@@ -40872,7 +40896,9 @@ EDITS: 1
 					  (sound-data-set! sd 0 1 .2)
 					  (set! our-val (+ our-val (vct-ref v 0) (sound-data-ref sd 0 1))))))))))
 	      (if (fneq val 9.6)
-		  (snd-display ";make-all val: ~A" val)))
+		  (snd-display ";make-all val: ~A" val))))
+	    (lambda args
+	      (snd-display ";can't parse sound-data example (format)")))
 
 	    (itst '(case 1 ((1) 4) ((2 3) 5)) 4)
 	    (stst '(case 2 ((1) "hi") ((2 3) "ho")) "ho")

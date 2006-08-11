@@ -1644,7 +1644,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #define XEN_ERROR_TYPE(Typ)                 C_STRING_TO_XEN_SYMBOL(Typ)
 #define XEN_ERROR(Type, Info)               Scm_Raise(XEN_CONS(Type, Info))
-#define XEN_THROW(Tag, Arg)                 Scm_Raise(XEN_CONS(Type, Arg))
+#define XEN_THROW(Tag, Arg)                 Scm_Raise(XEN_CONS(Tag, Arg))
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
   do {if (!(Assertion)) \

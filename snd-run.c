@@ -321,7 +321,9 @@ static void xen_symbol_name_set_value(const char *a, XEN b)
   if (obj)
     {
       SCM_GLOC_SET(obj, b);
+      return;
     }
+  fprintf(stderr, "can't find %s", a);
 }
 
 static XEN symbol_to_value(XEN code, XEN sym, bool *local)
@@ -339,6 +341,8 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
     {
       return(SCM_GLOC_GET(obj));
     }
+  fprintf(stderr, "can't find %s", XEN_AS_STRING(sym));
+  return(XEN_UNDEFINED);
 }
 
 static void symbol_set_value(XEN code, XEN sym, XEN new_val)
@@ -350,7 +354,9 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
   if (obj)
     {
       SCM_GLOC_SET(obj, new_val);
+      return;
     }
+  fprintf(stderr, "can't find %s", XEN_AS_STRING(sym));
 }
 #endif
 
@@ -9653,7 +9659,15 @@ static xen_value *cadadr_1(ptree *prog, xen_value **args, int num_args) {return(
 static xen_value *caddar_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CADDAR(get_lst(prog, args)), "caddar"));}
 static xen_value *cadddr_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CADDDR(get_lst(prog, args)), "cadddr"));}
 
+#if HAVE_GUILE
 static xen_value *cdr_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CDR(get_lst(prog, args)), "cdr"));}
+#else
+static xen_value *cdr_1(ptree *prog, xen_value **args, int num_args) 
+{
+  fprintf(stderr,"cdr ~A -> ~A\n", XEN_AS_STRING(get_lst(prog, args)), XEN_AS_STRING(XEN_CDR(get_lst(prog, args))));
+  return(unwrap_xen_object(prog, XEN_CDR(get_lst(prog, args)), "cdr"));
+}
+#endif
 
 static xen_value *list_length_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -10008,8 +10022,11 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
 	  XEN_SET_WALKER(format_var, 
 			 C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
 #else
+	  /*
 	  XEN_SET_WALKER((XEN)(C_STRING_TO_XEN_SYMBOL("format")),
 			 C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
+	  */
+	  return(run_warn("format not implemented"));
 #endif
 	}
 #if HAVE_GUILE
@@ -10984,7 +11001,11 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
 
 typedef enum {NO_PTREE_DISPLAY, STDERR_PTREE_DISPLAY, LISTENER_PTREE_DISPLAY, GCAT_PTREE_WITHOUT_DISPLAY} ptree_display_t;
 #ifndef DESCRIBE_PTREE_INIT
+#if HAVE_GUILE
   static ptree_display_t ptree_on = NO_PTREE_DISPLAY;
+#else
+  static ptree_display_t ptree_on = STDERR_PTREE_DISPLAY;
+#endif
 #else
   static ptree_display_t ptree_on = DESCRIBE_PTREE_INIT;
 #endif
@@ -11789,13 +11810,19 @@ static XEN g_run(XEN proc_and_code)
 {
   #define H_run "(" S_run " thunk): try to optimize the procedure passed as its argument, \
 then evaluate it; if the optimizer can't handle something in the procedure, it is passed \
-to Guile and is equivalent to (thunk)."
+to Scheme and is equivalent to (thunk)."
 
   XEN code;
   ptree *pt = NULL;
   code = XEN_CADR(proc_and_code);
+
+#if HAVE_GUILE
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ONLY_ARG, S_run, "a thunk");
   pt = form_to_ptree(proc_and_code);
+#else
+  pt = form_to_ptree(XEN_LIST_2(XEN_CAR(proc_and_code), XEN_FALSE));
+#endif
+
   if (pt)
     return(eval_ptree_to_xen(pt));
   return(XEN_CALL_0(code, S_run));

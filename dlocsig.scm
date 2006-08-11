@@ -604,9 +604,33 @@
 
 ;;; Generic path class
 
-;;; TODO: Gauche doesn't like the <path> class declaration ("bad slot specification")
+;;; Guile and Gauche have differing syntax for define-class and define-method
+;;;
+;;; order matters here!  Guile version must come first because Gauche evalutes
+;;;   the defmacros even if not (provided? 'snd-guile)!  Guile handles it correctly,
+;;;   so this way Guile ignores the trailing Gauche code, and Gauche defines 
+;;;   define-class twice. 
 
-(define-class <path> ()
+
+(if (provided? 'snd-guile)
+    (defmacro <define-class> (name classes . fields)
+      `(define-class ,name ,classes ,@fields)))
+
+(if (provided? 'snd-guile)
+    (defmacro <define-method> (name args . body)
+      `(define-method (,name ,@args) ,@body)))
+
+
+(if (provided? 'snd-gauche)
+    (defmacro <define-class> (name classes . fields)
+      `(define-class ,name ,classes ,fields)))
+
+(if (provided? 'snd-gauche)
+    (defmacro <define-method> (name . args)
+      `(define-method ,name ,@args)))
+
+
+(<define-class> <path> ()
   ;; rendered coordinates
   (rx :init-value '() :accessor rx)
   (ry :init-value '() :accessor ry)
@@ -619,21 +643,21 @@
   (tz :init-value '() :accessor tz)
   (tt :init-value '() :accessor tt))
 
-(define-method (describe (path <path>))
+(<define-method> describe ((path <path>))
   (format #f "<path>:~%  rx: ~A~%  ry: ~A~%  rz: ~A~%  rv: ~A~%  rt: ~A~%  tx: ~A~%  ty: ~A~%  tz: ~A~%  tt: ~A~%"
 	  (rx path) (ry path) (rz path) (rv path) (rt path) (tx path) (ty path) (tz path) (tt path)))
 
 ;;; Inquiries into the state of the path
 
-(define-method (not-rendered (path <path>))
+(<define-method> not-rendered ((path <path>))
   (null? (rx path)))
 
-(define-method (not-transformed (path <path>))
+(<define-method> not-transformed ((path <path>))
   (null? (tx path)))
 
 ;;; Reset any transformations on the originally rendered path
 
-(define-method (reset-transformation (path <path>))
+(<define-method> reset-transformation ((path <path>))
   (set! (tt path) '())
   (set! (tx path) '())
   (set! (ty path) '())
@@ -642,7 +666,7 @@
 
 ;;; Reset the rendered path (and any transformations)
 
-(define-method (reset-rendering (path <path>))
+(<define-method> reset-rendering ((path <path>))
   (set! (rt path) '())
   (set! (rv path) '())
   (set! (rx path) '())
@@ -652,22 +676,22 @@
 
 ;;; Return the best possible set of coordinates
 
-(define-method (path-x (path <path>))
+(<define-method> path-x ((path <path>))
   (or (list?? (tx path))
       (list?? (rx path))
       (rx (render-path path))))
 
-(define-method (path-y (path <path>))
+(<define-method> path-y ((path <path>))
   (or (list?? (ty path))
       (list?? (ry path))
       (ry (render-path path))))
 
-(define-method (path-z (path <path>))
+(<define-method> path-z ((path <path>))
   (or (list?? (tz path))
       (list?? (rz path))
       (rz (render-path path))))
 
-(define-method (path-time (path <path>))
+(<define-method> path-time ((path <path>))
   (or (list?? (tt path))
       (list?? (rt path))
       (rt (render-path path))))
@@ -683,7 +707,7 @@
 
 ;;; Path class for bezier rendered paths
 
-(define-class <bezier-path> (<path>) 
+(<define-class> <bezier-path> (<path>) 
   (path :init-value '() :init-keyword :path :accessor path)
   (3d :init-value #t :init-keyword :3d :accessor 3d)           ; it is parsed as a 3d or 2d path?
   (polar :init-value #f :init-keyword :polar :accessor polar)  ; by default a path is cartesian
@@ -697,7 +721,7 @@
   (error :init-value 0.01 :init-keyword :error :accessor error)
   (curvature :init-value #f :init-keyword :curvature :accessor curvature))
 
-(define-method (describe (path <bezier-path>))
+(<define-method> describe ((path <bezier-path>))
   (format #f "<bezier-path>:~%  rx: ~A~%  ry: ~A~%  rz: ~A~%  rv: ~A~%  rt: ~A~%  tx: ~A~%  ty: ~A~%  tz: ~A~%  tt: ~A~%  ~
                          x: ~A~%  y: ~A~%  z: ~A~%  v: ~A~%  bx: ~A~%  by: ~A~%  bz: ~A~%  error: ~A~%  curvature: ~A~%"
 	  (rx path) (ry path) (rz path) (rv path) (rt path) (tx path) (ty path) (tz path) (tt path)
@@ -706,14 +730,14 @@
 
 ;;; Path class for open bezier paths
 
-(define-class <open-bezier-path> (<bezier-path>)
+(<define-class> <open-bezier-path> (<bezier-path>)
   ;; bezier curve fitting control parameters
   (initial-direction :init-value '(0.0 0.0 0.0) :init-keyword :initial-direction :accessor initial-direction)
   (final-direction :init-value '(0.0 0.0 0.0) :init-keyword :final-direction :accessor final-direction))
 
 ;;; Path class for closed bezier paths
 
-(define-class <closed-bezier-path> (<bezier-path>) )
+(<define-class> <closed-bezier-path> (<bezier-path>) )
 
 ;;; Generic error when method passed illegal path
 
@@ -821,28 +845,28 @@
 
 ;;; Set a new cartesian set of points
 
-(define-method (set-path (path <bezier-path>) points)
+(<define-method> set-path ((path <bezier-path>) points)
   (set! (path path) points)
   (set! (polar path) #f)
   (xparse-path path))
 
 ;;; Set a new polar set of points
 
-(define-method (set-polar-path (path <bezier-path>) points)
+(<define-method> set-polar-path ((path <bezier-path>) points)
   (set! (path path) points)
   (set! (polar path) #t)
   (xparse-path path))
 
 ;;; Set a new path curvature
 
-(define-method (set-path-curvature (path <bezier-path>) curvature)
+(<define-method> set-path-curvature ((path <bezier-path>) curvature)
   (when curvature
     (set! (curvature path) curvature)
     (reset-fit path)))
 
 ;;; Set a new path rendering error bound
 
-(define-method (set-path-error (path <bezier-path>) error)
+(<define-method> set-path-error ((path <bezier-path>) error)
   (when error
     (set! (error path) error)
     (reset-rendering path)))
@@ -851,10 +875,10 @@
 ;;; Parse a path and transform it into cartesian coordinates
 ;;;
 
-(define-method (not-parsed (path <bezier-path>))
+(<define-method> not-parsed ((path <bezier-path>))
   (null? (x path)))
 
-(define-method (reset-parsing (path <bezier-path>))
+(<define-method> reset-parsing ((path <bezier-path>))
   (set! (x path) '())
   (set! (y path) '())
   (set! (z path) '())
@@ -999,7 +1023,7 @@
 	(list (reverse x) (reverse y) (make-list (length x) 0.0) (make-list (length x) #f))))))
 
 
-(define-method (xparse-path (xpath <bezier-path>)) ; goops won't accept the name "parse-path"???
+(<define-method> xparse-path ((xpath <bezier-path>)) ; goops won't accept the name "parse-path"???
   (let* ((polar (polar xpath))
 	 (points (path xpath))
 	 (3d (3d xpath)))
@@ -1137,7 +1161,7 @@
 ;;; Calculate bezier difference vectors for the given path
 ;;; (path-x (make-path '((-10 10)(0 5)(10 10))))
 
-(define-method (calculate-fit (path <closed-bezier-path>))
+(<define-method> calculate-fit ((path <closed-bezier-path>))
   (let* ((n (- (length (x path )) 1))
 	 (m (/ (- n (if (odd? n) 3 4)) 2))
 	 ;; data points P(i)
@@ -1165,8 +1189,8 @@
 	  (vector-set! (vector-ref d a) i 
 		     (+ (vector-ref (vector-ref d a) i)
 			(* (a k n)
-			   (- (xvector-ref (vector-ref p a) (+ i k))
-			      (xvector-ref (vector-ref p a) (- i k)))))))))
+			   (- (xvector-ref p a (+ i k))
+			      (xvector-ref p a (- i k)))))))))
     (if (curvature path)
 	(do ((i 0 (1+ i)))
 	    ((= i n))
@@ -1175,7 +1199,7 @@
 	  (vector-set! (vector-ref d 2) i (* (vector-ref (vector-ref d 2) i) curve))))
     (list (- n 1) p d)))
 
-(define-method (calculate-fit (path <open-bezier-path>))
+(<define-method> calculate-fit ((path <open-bezier-path>))
   (let* ((n (- (length (x path)) 1))
 	 (m (- n 1))
 	 ;; data points P(i)
@@ -1203,9 +1227,9 @@
     ;; forced initial direction
     (if (initial-direction path)
 	(begin
-	 (vector-set! (vector-ref d 0) 0 (car (initial-direction path)))
-	 (vector-set! (vector-ref d 1) 0 (cadr (initial-direction path)))
-	 (vector-set! (vector-ref d 2) 0) (third (initial-direction path)))
+	  (vector-set! (vector-ref d 0) 0 (car (initial-direction path)))
+	  (vector-set! (vector-ref d 1) 0 (cadr (initial-direction path)))
+	  (vector-set! (vector-ref d 2) 0 (third (initial-direction path))))
       (begin
 	(vector-set! (vector-ref d 0) 0 0.0)
 	(vector-set! (vector-ref d 1) 0 0.0)
@@ -1246,22 +1270,22 @@
 
 ;;; Calculate bezier control points for the given open path
 
-(define-method (not-fitted (path <bezier-path>))
+(<define-method> not-fitted ((path <bezier-path>))
   (null? (bx path)))
 
-(define-method (reset-fit (path <bezier-path>))
+(<define-method> reset-fit ((path <bezier-path>))
   (set! (bx path) '())
   (set! (by path) '())
   (set! (bz path) '())
   (reset-rendering path))
 
-(define-method (fit-path (path <bezier-path>))
+(<define-method> fit-path ((path <bezier-path>))
   (if (not-parsed path)
       (xparse-path path))
   (fit-path (make-path path))
   (reset-rendering path))
 
-(define-method (fit-path (path <open-bezier-path>))
+(<define-method> fit-path ((path <open-bezier-path>))
   (if (not-parsed path)
       (xparse-path path))
 
@@ -1339,7 +1363,7 @@
 
 ;;; Calculate bezier control points for the given closed path
 
-(define-method (fit-path (path <closed-bezier-path>))
+(<define-method> fit-path ((path <closed-bezier-path>))
   (if (not-parsed path)
       (xparse-path path))
 
@@ -1366,10 +1390,10 @@
 				 (+ (vector-ref (vector-ref p 2) i) (vector-ref (vector-ref d 2) i))
 				 (- (vector-ref (vector-ref p 2) (+ i 1)) (vector-ref (vector-ref d 2) (+ i 1)))
 				 (vector-ref (vector-ref p 2) (+ i 1))) zc)))
-	  (set! (bx path) (append (reverse xc (list (list (vector-ref (vector-ref p 0) n)
+	  (set! (bx path) (append (reverse xc) (list (list (vector-ref (vector-ref p 0) n)
 							  (+ (vector-ref (vector-ref p 0) n) (vector-ref (vector-ref d 0) n))
 							  (- (vector-ref (vector-ref p 0) 0) (vector-ref (vector-ref d 0) 0))
-							  (vector-ref (vector-ref p 0) 0))))))
+							  (vector-ref (vector-ref p 0) 0)))))
 	  (set! (by path) (append (reverse yc) (list (list (vector-ref (vector-ref p 1) n)
 							   (+ (vector-ref (vector-ref p 1) n) (vector-ref (vector-ref d 1) n))
 							   (- (vector-ref (vector-ref p 1) 0) (vector-ref (vector-ref d 1) 0))
@@ -1404,7 +1428,7 @@
 
 ;;; Transform a Bezier control point fit to a linear segment approximation
 
-(define-method (render-path (path <bezier-path>))
+(<define-method> render-path ((path <bezier-path>))
   (if (not-fitted path)
       (fit-path path))
   (let ((xrx '()) (xry '()) (xrz '()) (xrv '()))
@@ -1598,7 +1622,7 @@
 ;;;;;;;;;;;;;;;;;
 
 ;;; Generic literal path class
-(define-class <literal-path> (<path>)
+(<define-class> <literal-path> (<path>)
   (points :init-value '() :init-keyword :points :accessor literal-points) ; points 
   (3d :init-value #t :init-keyword :3d :accessor literal-3d)              ; it is parsed as a 3d or 2d path?
   (polar :init-value #f :init-keyword :polar :accessor literal-polar))    ; by default a path is cartesian
@@ -1619,7 +1643,7 @@
 
 ;;; Render a user-defined literal path from the data points
 
-(define-method (render-path (path <literal-path>))
+(<define-method> render-path ((path <literal-path>))
   ;; decode the points into coordinates
   (let* ((points (literal-points path))
 	 (3d (literal-3d path))
@@ -1712,7 +1736,7 @@
 ;;; Spirals
 ;;;;;;;;;;;
 
-(define-class <spiral-path> (<literal-path>)
+(<define-class> <spiral-path> (<literal-path>)
   (start-angle :init-value 0d0 :init-keyword :start-angle :accessor spiral-start-angle)                    ; start angle
   (total-angle :init-value #f :init-keyword :total-angle :accessor spiral-total-angle)                     ; total angle for the spiral
   (step-angle :init-value (/ dlocsig-one-turn 100) :init-keyword :step-angle :accessor spiral-step-angle)  ; step angle for rendering
@@ -1743,7 +1767,7 @@
 
 ;;; Render a spiral path from the object data
 
-(define-method (render-path (path <spiral-path>))
+(<define-method> render-path ((path <spiral-path>))
   (let* ((start (* (/ (spiral-start-angle path) dlocsig-one-turn) 2 pi))
 	 (total (if (spiral-total-angle path)
 		    (* (/ (spiral-total-angle path) dlocsig-one-turn) 2 pi)
@@ -1962,12 +1986,12 @@
 
 ;;; Scale a path
 
-(define-method (scale-path (path <path>) scaling)
+(<define-method> scale-path ((path <path>) scaling)
   (transform-path path :scaling scaling))
 
 ;;; Translate a path
 
-(define-method (translate-path (path <path>) translation)
+(<define-method> translate-path ((path <path>) translation)
   (transform-path path :translation translation))
 
 ;;; Rotate a path
@@ -2588,10 +2612,10 @@
 	    (begin
 	      ;; mono reverberation
 	      (vector-set! channel-rev-gains 0 (cons time (vector-ref channel-rev-gains 0)))
-	      (vector-set! channel-rev-gains 0 (if (>= dist inside-radius)
-						   (/ (expt dist reverb-power))
-						   (- 1.0 (expt (/ dist inside-radius) (/ inside-reverb-power))))
-			   (vector-ref channel-rev-gains 0)))
+	      (vector-set! channel-rev-gains 0 (cons (if (>= dist inside-radius)
+							 (/ (expt dist reverb-power))
+							 (- 1.0 (expt (/ dist inside-radius) (/ inside-reverb-power))))
+						     (vector-ref channel-rev-gains 0))))
 	    ;; multichannel reverb
 	    (do ((i 0 (1+ i)))
 		((= i rev-channels))

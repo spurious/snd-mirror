@@ -974,6 +974,7 @@ listen to a square wave?  A more reasonable square-wave can be generated via
 tanh(n * sin(theta)), where "n" (a float) sets how squared-off it is.
 Even more amusing is this algorithm:
 </p>
+<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (define (cossq c theta)   ; as c -&gt; 1.0+, more of a square wave (try 1.00001)
   (let* ((cs (cos theta)) ; (+ theta pi) if matching sin case (or (- ...))
@@ -983,7 +984,17 @@ Even more amusing is this algorithm:
 	 (cp1c (expt cp1 cs)))
     (/ (- cp1c cm1c)
        (+ cp1c cm1c))))
+
+(define (sinsq c theta) (cossq c (- theta (* 0.5 pi))))
+(define (sqsq c theta) (sinsq c (- (sinsq c theta)))) ; a sharper square wave
+
+(let ((angle 0.0))
+  (map-channel (lambda (y)
+                 (let ((val (* 0.5 (+ 1.0 (sqsq 1.001 angle))))) 
+                   (set! angle (+ angle .02)) 
+                   val))))
 </pre>
+</td></tr></table>
 <br>
 
 <table border align=left hspace=40 cellpadding=4>
