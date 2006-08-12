@@ -90,8 +90,6 @@
  *
  * SOMEDAY: support for vector of def-clm-structs
  * SOMEDAY: the graphics funcs in snd-axis/snd-draw (x->position, draw-lines etc)
- *
- * TODO: there's without_env in guile -- try that in gauche.
  */
 
 #include "snd.h"
@@ -106,7 +104,6 @@ static XEN optimization_hook;
 enum {RUN_UNSAFE, RUN_SAFE};
 static int run_safety = RUN_UNSAFE;
 
-/* WITH_RUN set only if HAVE_GUILE, and Guile version >= 1.5 or HAVE_GAUCHE (work stopped -- no local var access) */
 #if WITH_RUN
 
 #define Int off_t
@@ -323,7 +320,7 @@ static void xen_symbol_name_set_value(const char *a, XEN b)
       SCM_GLOC_SET(obj, b);
       return;
     }
-  fprintf(stderr, "can't find %s", a);
+  /* fprintf(stderr, "can't find %s", a); */
 }
 
 static XEN symbol_to_value(XEN code, XEN sym, bool *local)
@@ -341,7 +338,7 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
     {
       return(SCM_GLOC_GET(obj));
     }
-  fprintf(stderr, "can't find %s", XEN_AS_STRING(sym));
+  /* fprintf(stderr, "can't find %s", XEN_AS_STRING(sym)); */
   return(XEN_UNDEFINED);
 }
 
@@ -356,7 +353,7 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
       SCM_GLOC_SET(obj, new_val);
       return;
     }
-  fprintf(stderr, "can't find %s", XEN_AS_STRING(sym));
+  /* fprintf(stderr, "can't find %s", XEN_AS_STRING(sym)); */
 }
 #endif
 
@@ -8785,15 +8782,6 @@ static xen_value *clm_n(ptree *prog, xen_value **args, int num_args, xen_value *
 }
 
 /* ---------------- spectrum ---------------- */
-static char *descr_mus_spectrum_2v(int *args, ptree *pt) 
-{
-  return(mus_format("spectrum(" VCT_PT ", " VCT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2));
-}
-static void mus_spectrum_2v(int *args, ptree *pt) 
-{
-  mus_spectrum(VCT_ARG_1->data, VCT_ARG_2->data, NULL, VCT_ARG_1->length, 1);
-  VCT_RESULT = VCT_ARG_1;
-}
 static char *descr_mus_spectrum_3v(int *args, ptree *pt) 
 {
   return(mus_format("spectrum(" VCT_PT ", " VCT_PT ", " VCT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2, args[3], DESC_VCT_ARG_3));
@@ -8822,9 +8810,11 @@ static void mus_spectrum_4v(int *args, ptree *pt)
 }
 static xen_value *mus_spectrum_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2);
-  if (num_args == 2) return(package(prog, R_VCT, mus_spectrum_2v, descr_mus_spectrum_2v, args, 2));
+  if (run_safety == RUN_SAFE) 
+    {
+      temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
+      temp_package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2);
+    }
   if (num_args == 3) return(package(prog, R_VCT, mus_spectrum_3v, descr_mus_spectrum_3v, args, 3));
   return(package(prog, R_VCT, mus_spectrum_4v, descr_mus_spectrum_4v, args, 4));
 }
@@ -10156,11 +10146,11 @@ static xen_value *make_fft_window_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
+#define XEN_TO_ADDR_ERROR -1
+
 static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 {
-  /*
-  fprintf(stderr, "xen to addr: %s %d %d\n", XEN_AS_STRING(arg), type, addr);
-  */
+  /* fprintf(stderr, "xen to addr: %s %d (%s) %d\n", XEN_AS_STRING(arg), type, type_name(type), addr); */
   if ((xen_to_run_type(arg) != type) &&
       ((!(XEN_NUMBER_P(arg))) || ((type != R_FLOAT) && (type != R_INT))))
     {
@@ -10181,11 +10171,15 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 	    case R_INT_VECTOR: 
 	    case R_VCT_VECTOR:
 	    case R_CLM_VECTOR:   pt->vects[addr] = NULL;         break;
-	    default: XEN_WRONG_TYPE_ARG_ERROR("run", 0, arg, type_name(type)); break;
+	    default: 
+	      run_warn("run: xen_to_addr: %s %s", XEN_AS_STRING(arg), type_name(type)); 
+	      return(XEN_TO_ADDR_ERROR);
+	      break;
 	    }
 	  return(addr);
 	}
-      XEN_WRONG_TYPE_ARG_ERROR("run", 0, arg, type_name(type));
+      run_warn("run: xen_to_addr 2: %s %s", XEN_AS_STRING(arg), type_name(type));
+      return(XEN_TO_ADDR_ERROR);
     }
   switch (type)
     {
@@ -10381,7 +10375,13 @@ static int find_clm_var(ptree *prog, XEN lst, XEN lst_ref, int offset, int run_t
 	}
     }
   /* now set the (initial) value */
-  if (addr >= 0) xen_to_addr(prog, lst_ref, run_type, addr);
+  if (addr >= 0) 
+    {
+      int err;
+      err = xen_to_addr(prog, lst_ref, run_type, addr);
+      if (err == XEN_TO_ADDR_ERROR)
+	return(-1);
+    }
   return(addr);
 }
 
@@ -10403,13 +10403,11 @@ static void clm_struct_ref_r(int *args, ptree *pt)
   XEN lst;
   lst = pt->xens[args[1]];
   if ((XEN_BOUND_P(lst)) && (XEN_LIST_P(lst)))
-    {
-      xen_to_addr(pt, 
-		  XEN_LIST_REF(lst, 
-			       pt->ints[args[2]]), /* struct field offset into list */
-		  pt->ints[args[3]],               /* result type */
-		  args[0]);                    /* result address */
-    }
+    xen_to_addr(pt, 
+		XEN_LIST_REF(lst, 
+			     pt->ints[args[2]]), /* struct field offset into list */
+		pt->ints[args[3]],               /* result type */
+		args[0]);                        /* result address */
 }
 
 static char *descr_clm_struct_set_r(int *args, ptree *pt)
@@ -11000,15 +10998,13 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
 }
 
 typedef enum {NO_PTREE_DISPLAY, STDERR_PTREE_DISPLAY, LISTENER_PTREE_DISPLAY, GCAT_PTREE_WITHOUT_DISPLAY} ptree_display_t;
+
 #ifndef DESCRIBE_PTREE_INIT
-#if HAVE_GUILE
   static ptree_display_t ptree_on = NO_PTREE_DISPLAY;
-#else
-  static ptree_display_t ptree_on = STDERR_PTREE_DISPLAY;
-#endif
 #else
   static ptree_display_t ptree_on = DESCRIBE_PTREE_INIT;
 #endif
+
 static XEN g_show_ptree(XEN on)
 {
   ptree_on = (ptree_display_t)XEN_TO_C_INT(on);
@@ -11179,6 +11175,8 @@ static XEN eval_ptree_to_xen(ptree *pt)
    *   mus_error and a dynamic_wind -- the former isn't enough by itself because it doesn't
    *   fully unwind the stack, and the latter because the only leak case is through mus_error.
    */
+  /* fprintf(stderr,"result: %s\n", type_name(pt->result->type)); */
+
   switch (pt->result->type)
     {
     case R_FLOAT:   result = C_TO_XEN_DOUBLE(pt->dbls[pt->result->addr]);       break;
@@ -11561,7 +11559,7 @@ static void init_walkers(void)
   INIT_WALKER(S_rectangular_to_polar, make_walker(rectangular_to_polar_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_multiply_arrays, make_walker(multiply_arrays_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
   INIT_WALKER(S_mus_fft, make_walker(mus_fft_1, NULL, NULL, 2, 4, R_VCT, false, 4, R_VCT, R_VCT, R_INT, R_INT));
-  INIT_WALKER(S_spectrum, make_walker(mus_spectrum_1, NULL, NULL, 2, 4, R_VCT, false, 4, R_VCT, R_VCT, R_ANY, R_INT));
+  INIT_WALKER(S_spectrum, make_walker(mus_spectrum_1, NULL, NULL, 3, 4, R_VCT, false, 4, R_VCT, R_VCT, R_VCT, R_INT));
   INIT_WALKER(S_convolution, make_walker(convolution_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
   INIT_WALKER(S_formant_bank, make_walker(formant_bank_1,NULL, NULL, 3, 3, R_FLOAT, false, 2, R_VCT, R_CLM_VECTOR));
   INIT_WALKER(S_frame_add, make_walker(mus_frame_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_NUMBER_CLM, R_NUMBER_CLM, R_CLM));
@@ -11746,6 +11744,9 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 {
   ptree *pt;
   current_optimization = SOURCE_OK;
+
+  /* fprintf(stderr,"run-eval: %s: %s\n", XEN_AS_STRING(code), XEN_AS_STRING(arg)); */
+
   pt = make_ptree(8);
   pt->result = walk(pt, code, NEED_ANY_RESULT);
   if (pt->result)
@@ -11764,6 +11765,7 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
       if (pt->args)
 	{
 	  bool arity_err = false;
+	  int err = 0;
 	  if (pt->arity > 3)
 	    arity_err = true;
 	  else
@@ -11772,16 +11774,16 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 		{
 		  if (XEN_BOUND_P(arg))
 		    {
-		      xen_to_addr(pt, arg, pt->arg_types[0], pt->args[0]);
-		      if (pt->arity > 1)
+		      err = xen_to_addr(pt, arg, pt->arg_types[0], pt->args[0]);
+		      if ((err != XEN_TO_ADDR_ERROR) && (pt->arity > 1))
 			{
 			  if (XEN_BOUND_P(arg1))
 			    {
-			      xen_to_addr(pt, arg1, pt->arg_types[1], pt->args[1]);
-			      if (pt->arity > 2)
+			      err = xen_to_addr(pt, arg1, pt->arg_types[1], pt->args[1]);
+			      if ((err != XEN_TO_ADDR_ERROR) && (pt->arity > 2))
 				{
 				  if (XEN_BOUND_P(arg2))
-				    xen_to_addr(pt, arg2, pt->arg_types[2], pt->args[2]);
+				    err = xen_to_addr(pt, arg2, pt->arg_types[2], pt->args[2]);
 				  else arity_err = true;
 				}
 			    }
@@ -11790,6 +11792,11 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 		    }
 		  else arity_err = true;
 		}
+	    }
+	  if (err == XEN_TO_ADDR_ERROR)
+	    {
+	      free_ptree(pt); 
+	      return(XEN_FALSE); /* already warned, I think */
 	    }
 	  if (arity_err) 
 	    {
@@ -11801,8 +11808,9 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
       return(eval_ptree_to_xen(pt));
     }
   if (pt) free_ptree(pt);
-  XEN_ERROR(XEN_ERROR_TYPE("cannot-parse"),
-	    code);
+#if HAVE_GUILE
+  XEN_ERROR(XEN_ERROR_TYPE("cannot-parse"), code);
+#endif
   return(XEN_FALSE);
 }
 
@@ -11847,9 +11855,14 @@ Float evaluate_ptreec(struct ptree *pt, Float arg, vct *v, bool dir) {return(0.0
 static XEN g_optimization(void) {return(C_TO_XEN_INT(optimization(ss)));}
 static XEN g_set_optimization(XEN val) 
 {
-  #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 0 = off, max is 6)"
+  #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 0 = off, max is 6 in Guile, 4 in Gauche)"
+#if HAVE_GUILE
+  #define MAX_OPTIMIZATION 6
+#else
+  #define MAX_OPTIMIZATION 4
+#endif
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_optimization, "an integer");
-  set_optimization(XEN_TO_C_INT(val));
+  set_optimization(mus_iclamp(0, XEN_TO_C_INT(val), MAX_OPTIMIZATION));
   return(C_TO_XEN_INT(optimization(ss)));
 }
 

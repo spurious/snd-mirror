@@ -2703,7 +2703,7 @@ widget_t start_preferences_dialog(void)
 				show_listener_toggle);
     remember_pref(prf, reflect_show_listener, save_show_listener, NULL, clear_show_listener, revert_show_listener);
 
-#if HAVE_GUILE
+#if WITH_RUN
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     str = mus_format("%d", rts_optimization = optimization(ss));
     prf = prefs_row_with_number("optimization level", S_optimization,

@@ -1491,11 +1491,12 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_CDDR(a)                  SCM_CDDR(a)
 
 #define XEN_CONS_P(Arg)              SCM_PAIRP(Arg)
-#define XEN_PAIR_P(Arg)              SCM_PAIRP(Arg)
+#define XEN_PAIR_P(Arg)              ((SCM_PAIRP(Arg)) && (SCM_DOTTED_LIST_P(Arg)))
+/* probably not PAIRP since it seems to refer to any list or even #f!! */
 #define XEN_CONS(Arg1, Arg2)         Scm_Cons(Arg1, Arg2)
 #define XEN_CONS_2(Arg1, Arg2, Arg3) Scm_Cons(Arg1, Scm_Cons(Arg2, Arg3))
 
-#define XEN_LIST_P(Arg)              SCM_LISTP(Arg)
+#define XEN_LIST_P(Arg)              ((SCM_LISTP(Arg)) && (SCM_PROPER_LIST_P(Arg)))
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = ((int)Scm_Length(Arg))) >= 0)
 #define XEN_LIST_LENGTH(Arg)         Scm_Length(Arg)
 #define XEN_LIST_REF(Lst, Num)       Scm_ListRef(Lst, Num, XEN_FALSE)

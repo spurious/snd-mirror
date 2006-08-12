@@ -4267,6 +4267,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 		  if (XEN_LIST_P(code))
 		    fprintf(outp, ", code: %s", XEN_AS_STRING(code));
 #if HAVE_GUILE
+		  /* procedure source unimplemented in gauche */
 		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j)];
 		  if (XEN_PROCEDURE_P(code))
 		    fprintf(outp, ", init: %s", XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code)));
@@ -7766,7 +7767,6 @@ the edit lists '((global-pos data-num local-pos local-end scaler rmp0 rmp1 type)
   return(res);
 }
 
-#if HAVE_GUILE
 static XEN g_edit_fragment_type_name(XEN type)
 {
   int typ;
@@ -7776,7 +7776,7 @@ static XEN g_edit_fragment_type_name(XEN type)
     return(C_TO_XEN_STRING(type_info[typ].name));
   return(XEN_FALSE);
 }
-#endif
+
 
 
 /* ---------------- sample readers ---------------- */
@@ -9612,9 +9612,8 @@ void g_init_edits(void)
 
   XEN_DEFINE_PROCEDURE(S_save_edit_history,            g_save_edit_history_w,            1, 2, 0, H_save_edit_history);
   XEN_DEFINE_PROCEDURE(S_edit_fragment,                g_edit_fragment_w,                0, 3, 0, H_edit_fragment);
-#if HAVE_GUILE
   XEN_DEFINE_PROCEDURE("edit-fragment-type-name",      g_edit_fragment_type_name,        1, 0, 0, "internal testing function");
-#endif
+
   XEN_DEFINE_PROCEDURE(S_undo,                         g_undo_w,                         0, 3, 0, H_undo);
 #if HAVE_RUBY
   XEN_DEFINE_PROCEDURE("undo_edit",                    g_undo_w,                         0, 3, 0, H_undo);

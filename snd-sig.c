@@ -3787,7 +3787,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
   g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
   if (caller) {FREE(caller); caller = NULL;}
 #endif
-#if HAVE_SCHEME
+#if WITH_RUN
   ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos);
   if (XEN_PROCEDURE_P(init_func))
     {
@@ -3814,6 +3814,13 @@ the current sample, the vct returned by 'init-func', and the current read direct
   if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
   if (XEN_REQUIRED_ARGS_OK(proc, 1))
     pt = form_to_ptree_1_f(proc_and_list);
+  else
+    {
+      if ((!ptrees_present) && (XEN_REQUIRED_ARGS_OK(proc, 3)))
+	pt = form_to_ptree_3_f(proc_and_list); /* caller forgot init_func, but maybe it's ok anyway */
+                                               /* (ptree-channel (lambda (y data dir) (* y 2))) */
+                                               /* TODO: add to snd-test (and why is it needed in gauche?) */
+    }
   if (pt)
     {
       if (ptrees_present)

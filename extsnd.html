@@ -828,10 +828,10 @@ but I decided that was a worse kludge than log-freq-start).
 <td bgcolor="#f6f8ff"><code>0</code></td></tr>
 <tr><td></td><td colspan=2>If non-zero, try to optimize simple lambda forms passed to the searches and so forth.
 This depends partly on the optargs module (not available in the correct form before Guile 1.5),
-only applies to Guile (not Ruby, Gauche, or Forth), and is still experimental.
+only applies to Guile and Gauche (not Ruby or Forth), and is still experimental.
 The actual values of the optimization switch are:
 <pre>
-    0:  no use of parse trees at all (use the standard Guile parser/evaluator)
+    0:  no use of parse trees at all (use the standard Scheme parser/evaluator)
     1:  allow simple ops (if complex result possible, give up)
     2:  assume nothing will return a complex number
     3:  if undefined global variable encountered, try to determine eventual type from context
@@ -7618,7 +7618,7 @@ This returns the position (in samples) of right edge of time domain waveform.  S
 run is the Snd equivalent of the CL/CLM run macro.  You can wrap it around any numerically-intensive
 block of code, and the result will usually run 10 to 20 times faster.  In the context of with-sound, run is used
 to speed up instrument bodies.  My timing tests indicate that Snd+Run instruments are within a factor of two to four
-of the speed of CL+run+C in CLM.  Currently, only Guile supports this optimization.
+of the speed of CL+run+C in CLM.  Currently, only Guile and Gauche support this optimization.
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define (ws-sine freq)

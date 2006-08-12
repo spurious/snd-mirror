@@ -2099,12 +2099,26 @@ static XEN g_write_byte(XEN byte)
 #endif
 
 #if HAVE_GAUCHE
+static XEN g_eval_string(XEN str)
+{
+  char *cstr;
+  cstr = XEN_TO_C_STRING(str);
+  if (str)
+    {
+      fprintf(stderr,"eval[%d]: %s\n", snd_strlen(cstr), cstr);
+      return(XEN_EVAL_C_STRING(cstr));
+    }
+  return(XEN_FALSE);
+}
+XEN_NARGIFY_1(g_eval_string_w, g_eval_string)
+
 static XEN g_ftell(XEN fd)
 {
   return(C_TO_XEN_OFF_T(lseek(XEN_TO_C_INT(fd), 0, SEEK_CUR)));
 }
 XEN_NARGIFY_1(g_ftell_w, g_ftell)
 #endif
+
 
 void g_initialize_gh(void)
 {
@@ -2189,6 +2203,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
   XEN_DEFINE_CONSTANT("internal-time-units-per-second", 100, "clock speed");
   XEN_DEFINE_PROCEDURE("ftell", g_ftell_w, 1, 0, 0, "(ftell fd) -> lseek");
+  XEN_DEFINE_PROCEDURE("eval-string", g_eval_string, 1, 0, 0, "eval a string");
 #endif
 
 #if HAVE_SCHEME
@@ -2360,7 +2375,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                        (guard (err                                                                                  \
  	                        ((and (condition-has-type? err <error>)                                             \
 		                      (or (equal? tag #t)                                                           \
-		                          (member? tag (list 'wrong-number-of-args 'wrong-type-arg 'out-of-range))))\
+		                          (member tag (list 'wrong-number-of-args 'wrong-type-arg 'out-of-range)))) \
 	                         (let ((msg (slot-ref err 'message))                                                \
 		                       (translated-error (list err)))                                               \
 	                           (if (string? msg)                                                                \

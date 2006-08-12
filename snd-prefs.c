@@ -2215,7 +2215,7 @@ static void focus_follows_mouse_toggle(prefs_info *prf)
 }
 
 
-#if HAVE_GUILE
+#if WITH_RUN
 /* ---------------- optimization ---------------- */
 
 static int rts_optimization = DEFAULT_OPTIMIZATION;
@@ -3813,7 +3813,6 @@ static void clear_hidden_controls(prefs_info *prf) {SET_TOGGLE(prf->toggle, fals
 #endif
 
 
-/* STOPPED HERE */
 
 #if HAVE_GUILE
 /* ---------------- debugging aids ---------------- */

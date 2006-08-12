@@ -74,7 +74,7 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	{
 	  ss->search_proc = proc;
 	  ss->search_proc_loc = snd_protect(proc);
-#if HAVE_GUILE
+#if WITH_RUN
 	  if (optimization(ss) > 0)
 	    ss->search_tree = form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(str));
 #endif
