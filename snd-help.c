@@ -2,11 +2,13 @@
 #include "sndlib-strings.h"
 #include "clm-strings.h"
 
-/* TODO: audio setup help -- could check mutes/vols etc and report suspicious settings */
-/*       also the ALSA env vars, mus_audio_report etc */
-/*       also in special unsupported cases, like x86 solaris */
-/*       perhaps put bad vals in red? */
-/* PERHAPS: in linux make --with-alsa the default
+/* TODO: audio setup help -- could check mutes/vols etc and report suspicious settings
+ *       also the ALSA env vars, mus_audio_report etc
+ *       also in special unsupported cases, like x86 solaris
+ *       perhaps put bad vals in red? 
+ *
+ * PERHAPS: in linux make --with-alsa the default
+ * SOMEDAY: fix all the code examples in the help texts
  */
 
 /* TODO: shouldn't the Ruby xrefs be in Ruby syntax? (would this mess up the indexing?) (word_wrap translates -- would need free)
@@ -3823,9 +3825,22 @@ char *output_comment(file_info *hdr)
 
 XEN g_snd_help(XEN text, int widget_wid)
 {
+  #if HAVE_SCHEME
+    #define snd_help_example "(snd-help 'make-vct)"
+    #define snd_help_arg_type "can be a string, symbol, or in some cases, the object itself"
+  #endif
+  #if HAVE_RUBY
+    #define snd_help_example "snd_help(\"make_vct\")"
+    #define snd_help_arg_type "can be a string or a symbol"
+  #endif
+  #if HAVE_FORTH
+    #define snd_help_example "\"make-vct\" snd-help"
+    #define snd_help_arg_type "is a string"
+  #endif
+
   #define H_snd_help "(" S_snd_help " (arg 'snd-help) (formatted #t)): return the documentation \
-associated with its argument. (snd-help 'make-vct) for example, prints out a brief description of make-vct. \
-The argument can be a string, a symbol, or the object itself.  In some cases, only the symbol has the documentation. \
+associated with its argument. " snd_help_example " for example, prints out a brief description of make-vct. \
+The argument " snd_help_arg_type ". \
 In the help descriptions, optional arguments are in parens with the default value (if any) as the 2nd entry. \
 A ':' as the start of the argument name marks a CLM-style optional keyword argument.  If you load index." XEN_FILE_EXTENSION " \
 the functions html and ? can be used in place of help to go to the HTML description, \

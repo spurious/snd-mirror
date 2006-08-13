@@ -22,7 +22,7 @@ Snd change log
   25-May:    Walter Zorn's wz_tooltip.js to spruce up the documentation.
   7-May:     Snd 8.1.
   21-Apr:    many .fs files thanks to Mike Scholz (removed obsolete gfm directory).
-  15-Apr:    first portion of Gauche support.
+  15-Apr:    Gauche as extension language.
   12-Apr:    clm-load (ws.scm) for cm.
   31-Mar:    rt-player.scm (Kjetil).
   28-Mar:    Snd 8.0.
@@ -87,10 +87,10 @@ Snd change log
              view-files-select-hook return type no longer matters, and args are: dialog file-name.
              optional dialog arg to view-files-sort (local set).
              -init startup switch to set init filename as arg
-	     added snd-file.h
+	     snd-file.h
   8-Aug:     removed previous|view-files-sort-procedure.
-             added sort-files-by-name|size|date|entry.
-             added view-files-amp|speed|amp-env|speed-style|files|selected-files.
+             sort-files-by-name|size|date|entry.
+             view-files-amp|speed|amp-env|speed-style|files|selected-files.
              removed keep-mix-dialog-open-upon-ok from snd-motif.scm
              before-exit|close-hook.
   2-Aug:     sound-file-extensions as settable list.
@@ -149,7 +149,7 @@ Snd change log
              Ruby side of edit-list->function.
   24-Feb:    mix.rb thanks to Mike Scholz.
   22-Feb:    changed libxm to libxg in gtk case, also xm-version to xg-version
-               added --with-static-xg configure option
+               --with-static-xg configure option
   21-Feb:    removed snd_test.rb, replaced by snd-test.rb thanks to Mike Scholz!
 	     oo.scm and rt-compiler.scm thanks to Kjetil Matheussen!
   11-Feb:    Snd 7.10.
@@ -306,7 +306,7 @@ Snd change log
              mix-anchor -> mix-tag-position.
   4-Nov:     copy-mix, copy-track.
   31-Oct:    removed 'snd' arg to make-track-sample-reader.
-  30-Oct:    added Kjetil S. Matheussen's snd_conffile.scm.
+  30-Oct:    Kjetil S. Matheussen's snd_conffile.scm.
   27-Oct:    removed notion of a selected mix (selected-mix, selected-mix-color, select-mix, select-mix-hook).
              moved find-mix to mix.scm, changed mix-locked to mix-locked?
              renamed mix-dragged-hook to mix-release-hook.
@@ -370,7 +370,7 @@ Snd change log
   20-May:    make-variable-display in snd-motif.scm.
   16-May:    definstrument changes, clm-ins.scm.
   14-May:    optional begin-time arg to make-mix-sample-reader.
-  12-May:    removed --with-html and associated variables. added html-program.
+  12-May:    removed --with-html and associated variables. html-program.
   7-May:     or-hooks now run all functions on the hook list.
              mix-drag-hook.
   5-May:     after-save-state-hook.

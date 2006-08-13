@@ -2558,7 +2558,7 @@ to be played (via " S_start_playing ")."
     return(snd_no_such_sound_error(S_make_player, snd));
   cp = get_cp(snd, chn, S_make_player);
   if (cp == NULL) return(XEN_FALSE); /* won't happen */
-  new_sp = make_snd_info(NULL, "wrapper", true_sp->hdr, new_player_index(), true);
+  new_sp = make_snd_info(NULL, "make_player:wrapper", true_sp->hdr, new_player_index(), true);
   FREE(new_sp->sgx); /* no built-in GUI */
   new_sp->sgx = NULL;
   new_sp->chans[cp->chan] = cp;

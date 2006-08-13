@@ -2782,9 +2782,18 @@ generator) gen's radius and frequency"
 
 static XEN g_make_frame(XEN arglist)
 {
+  #if HAVE_SCHEME
+    #define make_frame_example "(" S_make_frame " 2 .1 .2)"
+  #endif
+  #if HAVE_RUBY
+    #define make_frame_example "make_frame(2, 0.1, 0.2)"
+  #endif
+  #if HAVE_FORTH
+    #define make_frame_example "2 0.1 0.2 make-frame"
+  #endif
+
   #define H_make_frame "(" S_make_frame " chans val0 val1 ...): return a new frame object \
-with chans samples, each sample set from the trailing arguments (defaulting to 0.0):\n\
-   (set! fr0 (" S_make_frame " 2 .1 .2))"
+with chans samples, each sample set from the trailing arguments (defaulting to 0.0):\n  " make_frame_example
 
   /* make_empty_frame from first of arglist, then if more args, load vals */
   mus_any *ge;
@@ -3120,9 +3129,18 @@ with 'chans' channels, and 'val' along the diagonal"
 
 static XEN g_make_mixer(XEN arglist)
 {
+  #if HAVE_SCHEME
+    #define make_mixer_example "(" S_make_mixer " 2 .5 .25 .125 1.0))"
+  #endif
+  #if HAVE_RUBY
+    #define make_mixer_example "make_mixer(2, 0.5, 0.25, 0.125, 1.0)"
+  #endif
+  #if HAVE_FORTH
+    #define make_mixer_example "2 0.5 0.25 0.125 1.0 make-mixer"
+  #endif
+
   #define H_make_mixer "(" S_make_mixer " chans val0 val1 ...) makes a new mixer object \
-with chans inputs and outputs, initializing the scalars from the rest of the arguments:\n\
-   (set! gen (" S_make_mixer " 2 .5 .25 .125 1.0))\n\
+with chans inputs and outputs, initializing the scalars from the rest of the arguments:\n  " make_mixer_example "\n\
    | .5    .25 |\n\
    | .125 1.0  |\n"
 
@@ -3299,9 +3317,18 @@ static Float *list_to_partials(XEN harms, int *npartials)
 
 static XEN g_make_waveshape(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
+  #if HAVE_SCHEME
+    #define make_waveshape_example "(" S_make_waveshape " :wave (" S_partials_to_waveshape " '(1 1.0)))"
+  #endif
+  #if HAVE_RUBY
+    #define make_waveshape_example "make_waveshape(:wave, partials2waveshape([1.0, 1.0]))"
+  #endif
+  #if HAVE_FORTH
+    #define make_waveshape_example "440.0 '( 1.0 1.0 ) make-waveshape"
+  #endif
+
   #define H_make_waveshape "(" S_make_waveshape " (:frequency 440.0) (:partials '(1 1)) (:size 512) :wave): \
-return a new waveshaping generator (essentially table-lookup driven by a sinewave)\n\
-   (" S_make_waveshape " :wave (" S_partials_to_waveshape " '(1 1.0)))\n\
+return a new waveshaping generator (essentially table-lookup driven by a sinewave)\n\  " make_waveshape_example "\n\
 is the same in effect as " S_make_oscil
 
   mus_any *ge;

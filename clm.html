@@ -1447,19 +1447,10 @@ Another instrument based on similar ideas is:</p>
 </td></tr></table>
 
 <p>which gives brass-like sounds!
-We can even get noise from a single call on "sin":
-</p>
-<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+We can also get all the period doublings and so on from sin:
 <pre>
-(define (make-sin-rand) 
-  (let ((x 1.0)) 
-    (lambda () 
-      (let ((nx (sin (* 100 pi x)))) ; lower "index" emphasizes high freqs
-        (set! x nx)                  ; feedback
-        nx))))
+  (let ((x 0.5)) (map-channel (lambda (y) (let ((val x)) (set! x (* 4 (sin (* pi x)))) val))))
 </pre>
-</td></tr></table>
-
 <br>
 
 
