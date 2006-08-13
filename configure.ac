@@ -1169,7 +1169,7 @@ if test "$with_gauche" = yes ; then
                  GUILE_LIBS="$GUILE_LIBS -lgauche"
                  LOCAL_LANGUAGE="Gauche"
 # someday perhaps we'll figure out how to get at local variables in Gauche...
-#        	 AC_DEFINE(WITH_RUN)
+        	 AC_DEFINE(WITH_RUN)
                 ],
 		[
              	 AC_MSG_WARN([We need Gauche 0.8.7 or later])

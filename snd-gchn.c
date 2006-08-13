@@ -549,6 +549,7 @@ static gboolean graph_button_release(GtkWidget *w, GdkEventButton *ev, gpointer 
 
 static gboolean graph_scroll(GtkWidget *w, GdkEventScroll *ev, gpointer data)
 {
+  /* TODO: is this the right thing?  (mouse scroll wheel change -- how to respond?) */
   graph_button_release_callback((chan_info *)data, (int)(ev->x), (int)(ev->y), ev->state, ev->direction + 4);
   return(false);
 }

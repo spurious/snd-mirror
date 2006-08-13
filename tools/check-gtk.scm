@@ -106,7 +106,7 @@
 (define* (CFNC-22 data)
   (fgrep (cadr-str data) 22))
 
-(define* (CFNC-210 data :optional spec)
+(define* (CFNC-210 data #:optional spec)
   (fgrep (cadr-str data) 210))
 
 (define (CATOM name)

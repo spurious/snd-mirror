@@ -17510,7 +17510,10 @@ _ACEOF
                  GUILE_LIBS="$GUILE_LIBS -lgauche"
                  LOCAL_LANGUAGE="Gauche"
 # someday perhaps we'll figure out how to get at local variables in Gauche...
-#        	 AC_DEFINE(WITH_RUN)
+        	 cat >>confdefs.h <<\_ACEOF
+#define WITH_RUN 1
+_ACEOF
+
 
 else
   echo "$as_me: failed program was:" >&5

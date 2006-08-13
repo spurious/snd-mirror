@@ -129,10 +129,10 @@ static void options_transform_callback(Widget w, XtPointer info, XtPointer conte
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_callback(Widget w, XtPointer info, XtPointer context) {save_options_from_menu();}
 #endif
-static void options_focus_right_callback(Widget w, XtPointer info, XtPointer Data) {set_zoom_focus_style(ZOOM_FOCUS_RIGHT);}
-static void options_focus_left_callback(Widget w, XtPointer info, XtPointer Data) {set_zoom_focus_style(ZOOM_FOCUS_LEFT);}
-static void options_focus_middle_callback(Widget w, XtPointer info, XtPointer Data) {set_zoom_focus_style(ZOOM_FOCUS_MIDDLE);}
-static void options_focus_active_callback(Widget w, XtPointer info, XtPointer Data) {set_zoom_focus_style(ZOOM_FOCUS_ACTIVE);}
+static void options_focus_right_callback(Widget w, XtPointer info, XtPointer context) {set_zoom_focus_style(ZOOM_FOCUS_RIGHT);}
+static void options_focus_left_callback(Widget w, XtPointer info, XtPointer context) {set_zoom_focus_style(ZOOM_FOCUS_LEFT);}
+static void options_focus_middle_callback(Widget w, XtPointer info, XtPointer context) {set_zoom_focus_style(ZOOM_FOCUS_MIDDLE);}
+static void options_focus_active_callback(Widget w, XtPointer info, XtPointer context) {set_zoom_focus_style(ZOOM_FOCUS_ACTIVE);}
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_state_callback(Widget w, XtPointer info, XtPointer context) {save_state_from_menu();}
 #endif
