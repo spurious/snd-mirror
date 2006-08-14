@@ -4079,11 +4079,20 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 
 static XEN g_scan_chan(XEN proc, XEN beg, XEN end, XEN snd, XEN chn, XEN edpos) 
 { 
+  #if HAVE_SCHEME
+    #define scan_chan_example "(scan-chan (lambda (y) (> y .1)))"
+  #endif
+  #if HAVE_RUBY
+    #define scan_chan_example "scan_chan(lambda do |y| y > 0.1 end)"
+  #endif
+  #if HAVE_FORTH
+    #define scan_chan_example "lambda: { y } y 0.1 f> if #t else #f then ; 1 make-proc scan-chan"
+  #endif
+
   #define H_scan_chan "(" S_scan_chan " func (start 0) (end len) (snd #f) (chn #f) (edpos #f)): \
 apply 'func' to samples in current channel (or the specified channel). \
 'func' is a function of one argument, the current sample. \
-if 'func' returns non-#f, the scan stops, and the value is returned to the caller with the sample number.\n\
-  (" S_scan_chan " (lambda (x) (> x .1)))"
+if 'func' returns non-#f, the scan stops, and the value is returned to the caller with the sample number.\n  " scan_chan_example
 
   ASSERT_CHANNEL(S_scan_chan, snd, chn, 4); 
   return(g_sp_scan(proc, beg, end, snd, chn, S_scan_chan, false, edpos, 6, XEN_FALSE));
@@ -4091,11 +4100,20 @@ if 'func' returns non-#f, the scan stops, and the value is returned to the calle
 
 static XEN g_scan_channel(XEN proc, XEN beg, XEN dur, XEN snd, XEN chn, XEN edpos) 
 { 
+  #if HAVE_SCHEME
+    #define scan_channel_example "(scan-channel (lambda (y) (> y .1)))"
+  #endif
+  #if HAVE_RUBY
+    #define scan_channel_example "scan_channel(lambda do |y| y > 0.1 end)"
+  #endif
+  #if HAVE_FORTH
+    #define scan_channel_example "lambda: { y } y 0.1 f> if #t else #f then ; 1 make-proc scan-channel"
+  #endif
+
   #define H_scan_channel "(" S_scan_channel " func (start 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
 apply func to samples in current channel (or the specified channel) \
 func is a function of one argument, the current sample. \
-if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
-  (" S_scan_channel " (lambda (x) (> x .1)))"
+if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n  " scan_channel_example
 
   ASSERT_CHANNEL(S_scan_channel, snd, chn, 4); 
   return(g_sp_scan(proc, beg, XEN_FALSE, snd, chn, S_scan_channel, false, edpos, 6, (XEN_BOUND_P(dur)) ? dur : XEN_FALSE));
@@ -4103,24 +4121,54 @@ if func returns non-#f, the scan stops, and the value is returned to the caller 
 
 static XEN g_map_chan(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos) 
 {
-#define H_map_chan "(" S_map_chan " func (start 0) (end len) (edname #f) (snd #f) (chn #f) (edpos #f)): \
-apply func to samples in current channel; edname is the edit history name for this editing operation.\n\
-  (" S_map_chan " abs)"
+  #if HAVE_SCHEME
+    #define map_chan_example "(map-chan (lambda (y) (* y 2.0)))"
+  #endif
+  #if HAVE_RUBY
+    #define map_chan_example "map_chan(lambda do |y| y * 2.0 end)"
+  #endif
+  #if HAVE_FORTH
+    #define map_chan_example "lambda: { y } y 2.0 f* ; 1 make-proc map-chan"
+  #endif
+
+  #define H_map_chan "(" S_map_chan " func (start 0) (end len) (edname #f) (snd #f) (chn #f) (edpos #f)): \
+apply func to samples in current channel; edname is the edit history name for this editing operation.\n  " map_chan_example
+
   return(g_map_chan_1(proc, s_beg, s_end, org, snd, chn, edpos, XEN_FALSE, S_map_chan));
 }
 
 static XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN org) 
 {
+  #if HAVE_SCHEME
+    #define map_channel_example "(map-channel (lambda (y) (* y 2.0)))"
+  #endif
+  #if HAVE_RUBY
+    #define map_channel_example "map_channel(lambda do |y| y * 2.0 end)"
+  #endif
+  #if HAVE_FORTH
+    #define map_channel_example "lambda: { y } y 2.0 f* ; 1 make-proc map-channel"
+  #endif
+
   #define H_map_channel "(" S_map_channel " func (start 0) (dur len) (snd #f) (chn #f) (edpos #f) (edname #f)): \
-apply func to samples in current channel; edname is the edit history name for this editing operation.\n\
-  (" S_map_channel " abs)"
+apply func to samples in current channel; edname is the edit history name for this editing operation.\n  " map_channel_example
+
   return(g_map_chan_1(proc, s_beg, XEN_FALSE, org, snd, chn, edpos, (XEN_BOUND_P(s_dur)) ? s_dur : XEN_FALSE, S_map_channel));
 }
 
 static XEN g_find_channel(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos)
 {
+  #if HAVE_SCHEME
+    #define find_channel_example "(find-channel (lambda (y) (> y .1)))"
+  #endif
+  #if HAVE_RUBY
+    #define find_channel_example "find_channel(lambda do |y| y > 0.1 end)"
+  #endif
+  #if HAVE_FORTH
+    #define find_channel_example "lambda: { y } y 0.1 f> if #t else #f then ; 1 make-proc find-channel"
+  #endif
+
   #define H_find_channel "(" S_find_channel " func (start-samp 0) (snd #f) (chn #f) (edpos #f)): apply func, a function of one argument, \
-the current sample, to each sample in snd's channel chn, starting at 'start-samp' until func returns something other than #f"
+the current sample, to each sample in snd's channel chn, starting at 'start-samp' until func returns something other than #f: \n  " find_channel_example
 
   /* no free here -- it's handled as ss->search_expr in snd-find.c */
   ASSERT_CHANNEL(S_find_channel, snd_n, chn_n, 3);
@@ -4129,8 +4177,18 @@ the current sample, to each sample in snd's channel chn, starting at 'start-samp
 
 static XEN g_count_matches(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos)
 {
+  #if HAVE_SCHEME
+    #define count_matches_example "(count-matches (lambda (y) (> y .1)))"
+  #endif
+  #if HAVE_RUBY
+    #define count_matches_example "count_matches(lambda do |y| y > 0.1 end)"
+  #endif
+  #if HAVE_FORTH
+    #define count_matches_example "lambda: { y } y 0.1 f> if #t else #f then ; 1 make-proc count-matches"
+  #endif
+
   #define H_count_matches "(" S_count_matches " func (start-samp 0) (snd #f) (chn #f) (edpos #f)): return how many \
-samples satisfy func (a function of one argument, the current sample, returning #t upon match)"
+samples satisfy func (a function of one argument, the current sample, returning #t upon match):\n  " count_matches_example
 
   ASSERT_CHANNEL(S_count_matches, snd_n, chn_n, 3);
   return(g_sp_scan(expr, sample, XEN_FALSE, snd_n, chn_n, S_count_matches, true, edpos, 5, XEN_FALSE));

@@ -664,10 +664,19 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
 
 static XEN g_make_fft_window(XEN type, XEN size, XEN ubeta, XEN ualpha)
 {
+  #if HAVE_SCHEME
+    #define make_window_example "(" S_make_fft_window " " S_hamming_window " 256)"
+  #endif
+  #if HAVE_RUBY
+    #define make_window_example "make_fft_window(Hamming_window, 256)"
+  #endif
+  #if HAVE_FORTH
+    #define make_window_example "hamming-window 256 make-fft-window"
+  #endif
+
   #define H_make_fft_window "(" S_make_fft_window " type size (beta 0.0) (alpha 0.0)): -> fft data window (a vct). \
 type is one of the sndlib fft window identifiers such as " S_kaiser_window ", beta \
-is the window family parameter, if any:\n\
-     (set! v1 (" S_make_fft_window " " S_hamming_window " 256))"
+is the window family parameter, if any:\n  " make_window_example
 
   Float beta = 0.0, alpha = 0.0;
   int n;
@@ -2160,11 +2169,20 @@ static XEN g_phase_partials_to_wave(XEN partials, XEN utable, XEN normalize)
   Float *partial_data, *wave;
   int len = 0, i;
 
+  #if HAVE_SCHEME
+    #define pp2w_example "(" S_make_table_lookup " 440.0 :wave (" S_phase_partials_to_wave " (list  1 .75 0.0  2 .25 (* 3.14159 .5))))"
+  #endif
+  #if HAVE_RUBY
+    #define pp2w_example "make_table_lookup(440.0, :wave, phase_partials2wave([1.0, 0.75, 0.0,  2.0, 0.25, 3.14159 * 0.5]))"
+  #endif
+  #if HAVE_FORTH
+    #define pp2w_example "440.0 0.0 '( 1.0 0.75 0.0 2.0 0.25 3.14159 0.5 f* ) #f #f phase-partials->wave make-table-lookup"
+  #endif
+
   #define H_phase_partials_to_wave "(" S_phase_partials_to_wave " partials (wave #f) (normalize #f)): \
 take a list of partials (harmonic number, amplitude, initial phase) and produce \
 a waveform for use in " S_table_lookup ".  If wave (a vct) is not given, \
-a new one is created.  If normalize is #t, the resulting waveform goes between -1.0 and 1.0.\n\
-  (set! gen (" S_make_table_lookup " 440.0 :wave (" S_phase_partials_to_wave " (list 1 .75 0.0 2 .25 (* pi .5)))))"
+a new one is created.  If normalize is #t, the resulting waveform goes between -1.0 and 1.0.\n  " pp2w_example
 
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(partials, len), partials, XEN_ARG_1, S_phase_partials_to_wave, "a list");
   XEN_ASSERT_TYPE(MUS_VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_phase_partials_to_wave, "a vct or #f");
@@ -3321,14 +3339,14 @@ static XEN g_make_waveshape(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XE
     #define make_waveshape_example "(" S_make_waveshape " :wave (" S_partials_to_waveshape " '(1 1.0)))"
   #endif
   #if HAVE_RUBY
-    #define make_waveshape_example "make_waveshape(:wave, partials2waveshape([1.0, 1.0]))"
+    #define make_waveshape_example "make_waveshape(:wave, partials2waveshape([1, 1.0]))"
   #endif
   #if HAVE_FORTH
-    #define make_waveshape_example "440.0 '( 1.0 1.0 ) make-waveshape"
+    #define make_waveshape_example "440.0 '( 1 1.0 ) make-waveshape"
   #endif
 
   #define H_make_waveshape "(" S_make_waveshape " (:frequency 440.0) (:partials '(1 1)) (:size 512) :wave): \
-return a new waveshaping generator (essentially table-lookup driven by a sinewave)\n\  " make_waveshape_example "\n\
+return a new waveshaping generator (essentially table-lookup driven by a sinewave)\n  " make_waveshape_example " \n\
 is the same in effect as " S_make_oscil
 
   mus_any *ge;
@@ -3416,10 +3434,20 @@ static XEN g_waveshape_p(XEN obj)
 
 static XEN g_partials_to_waveshape(XEN amps, XEN s_size)
 {
+  #if HAVE_SCHEME
+    #define p2w_example "(" S_partials_to_waveshape " '(2 1.0 3 .5))"
+  #endif
+  #if HAVE_RUBY
+    #define p2w_example "partials2waveshape([2, 1.0, 3, 0.5])"
+  #endif
+  #if HAVE_FORTH
+    #define p2w_example "'( 2 1.0 3 0.5 ) partials->waveshape"
+  #endif
+
   #define H_partials_to_waveshape "(" S_partials_to_waveshape " partials (resultant-table-size 512)): \
 produce a waveshaping lookup table (suitable for the " S_waveshape " generator) \
-that will produce the harmonic spectrum given by the partials argument. (" S_partials_to_waveshape " '(2 1 3 .5)) \
-returns partial 2 twice as loud as 3."
+that will produce the harmonic spectrum given by the partials argument. " p2w_example " returns \
+partial 2 twice as loud as 3."
 
   int npartials, size, len = 0;
   Float *partials, *wave;
@@ -3452,12 +3480,19 @@ returns partial 2 twice as loud as 3."
 
 static XEN g_partials_to_polynomial(XEN amps, XEN ukind)
 {
+  #if HAVE_SCHEME
+    #define p2p_example "(let ((v0 (partials->polynomial '(1 1.0 2 1.0)))\n        (os (make-oscil)))\n    (polynomial v0 (oscil os)))"
+  #endif
+  #if HAVE_RUBY
+    #define p2p_example "v0 = partials2polynomial([1, 1.0, 2, 1.0])\n  os = make_oscil()\n  polynomial(v0, oscil(os))"
+  #endif
+  #if HAVE_FORTH
+    #define p2p_example "'( 1 1.0 2 1.0 ) partials->polynomial value v0\n  make-oscil value os\n  v0 os 0.0 0.0 oscil polynomial"
+  #endif
+
   #define H_partials_to_polynomial "(" S_partials_to_polynomial " partials (kind " S_mus_chebyshev_first_kind ")): \
 produce a Chebyshev polynomial suitable for use with the " S_polynomial " generator \
-to create (via waveshaping) the harmonic spectrum described by the partials argument:\n\
-   (let ((v0 (" S_partials_to_polynomial " '(1 1 2 1)))\n\
-         (os (" S_make_oscil ")))\n\
-     (" S_polynomial " v0 (" S_oscil " os)))"
+to create (via waveshaping) the harmonic spectrum described by the partials argument:\n  " p2p_example
 
   int npartials, len = 0;
   mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
@@ -4152,11 +4187,20 @@ static XEN g_file_to_sample(XEN obj, XEN samp, XEN chan)
 
 static XEN g_make_sample_to_file(XEN name, XEN chans, XEN out_format, XEN out_type, XEN comment)
 {
+  #if HAVE_SCHEME
+    #define make_sample_to_file_example "(" S_make_sample_to_file " \"test.snd\" 2 mus-lshort mus-riff)"
+  #endif
+  #if HAVE_RUBY
+    #define make_sample_to_file_example "\"test.snd\" 2 Mus_lshort Mus_riff make_sample2file"
+  #endif
+  #if HAVE_FORTH
+    #define make_sample_to_file_example "\"test.snd\" 2 mus-lshort mus-riff make-sample->file"
+  #endif
+
   #define H_make_sample_to_file "(" S_make_sample_to_file " filename chans data-format header-type comment): \
 return an output generator writing the sound file 'filename' which is set up to have \
 'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter \
-should be sndlib identifiers:\n\
-   (" S_make_sample_to_file " \"test.snd\" 2  mus-lshort mus-riff)"
+should be sndlib identifiers:\n  " make_sample_to_file_example
 
   int df;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_sample_to_file, "a string");
@@ -4258,11 +4302,20 @@ static XEN g_file_to_frame(XEN obj, XEN samp, XEN outfr)
 
 static XEN g_make_frame_to_file(XEN name, XEN chans, XEN out_format, XEN out_type, XEN comment)
 {
+  #if HAVE_SCHEME
+    #define make_frame_to_file_example "(" S_make_frame_to_file " \"test.snd\" 2 mus-lshort mus-riff)"
+  #endif
+  #if HAVE_RUBY
+    #define make_frame_to_file_example "\"test.snd\" 2 Mus_lshort Mus_riff make_frame2file"
+  #endif
+  #if HAVE_FORTH
+    #define make_frame_to_file_example "\"test.snd\" 2 mus-lshort mus-riff make-frame->file"
+  #endif
+
   #define H_make_frame_to_file "(" S_make_frame_to_file " filename chans data-format header-type comment): \
 return an output generator writing the sound file 'filename' which is set up to have \
 'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter \
-should be sndlib identifiers:\n\
-   (" S_make_frame_to_file " \"test.snd\" 2 mus-lshort mus-riff)"
+should be sndlib identifiers:\n  " make_frame_to_file_example
 
   mus_any *fgen = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_frame_to_file, "a string");
@@ -5242,17 +5295,33 @@ static XEN g_phase_vocoder(XEN obj, XEN func, XEN analyze_func, XEN edit_func, X
 
 static XEN g_make_phase_vocoder(XEN arglist)
 {
+  #if HAVE_SCHEME
+    #define pv_example "(" S_make_phase_vocoder " #f 512 4 256 1.0 #f #f #f)"
+    #define pv_edit_example "(" S_make_phase_vocoder " #f 512 4 256 1.0\n\
+    (lambda (v infunc) (snd-print \"analyzing\") #t)\n\
+    (lambda (v) (snd-print \"editing\") #t)\n\
+    (lambda (v) (snd-print \"resynthesizing\") 0.0))"
+  #endif
+  #if HAVE_RUBY
+    #define pv_example "make_phase_vocoder(false, 512, 4, 256, 1.0, false, false, false)"
+    #define pv_edit_example "make_phase_vocoder(false, 512, 4, 256, 1.0,\n\
+        lambda do | v, infunc | snd_print(\"analyzing\"); true end,\n\
+        lambda do | v | snd_print(\"editing\"); true end,\n\
+        lambda do | v | snd_print(\"resynthesizing\"); 0.0 end)"
+  #endif
+  #if HAVE_FORTH
+    #define pv_example "#f 512 4 256 1.0 #f #f #f make-phase-vocoder"
+    #define pv_edit_example "#f 512 4 256 1.0 lambda: { y infunc } \"analyzing\" snd-print true ; 2 make-proc lambda: { v } \"editing\" snd-print true ; 1 make-proc lambda: { v } \"resynthesizing\" snd-print 0.0 ; 1 make-proc make-phase-vocoder"
+  #endif
+
   #define H_make_phase_vocoder "(" S_make_phase_vocoder " :input :fft-size :overlap :interp :pitch :analyze :edit :synthesize): \
 return a new phase-vocoder generator; input is the input function (it can be set at run-time), analyze, edit, \
 and synthesize are either #f or functions that replace the default innards of the generator, fft-size, overlap \
 and interp set the fftsize, the amount of overlap between ffts, and the time between new analysis calls. \
 'analyze', if given, takes 2 args, the generator and the input function; if it returns #t, the default analysis \
 code is also called.  'edit', if given, takes 1 arg, the generator; if it returns #t, the default edit code \
-is run.  'synthesize' is a function of 1 arg, the generator; it is called to get the current vocoder output. \
-\n(" S_make_phase_vocoder " #f 512 4 256 1.0 #f #f #f) \n\n(" S_make_phase_vocoder " #f 512 4 256 1.0 \n\
-  (lambda (v infunc) (set! incalls (+ incalls 1)) #t) \n\
-  (lambda (v) (set! editcalls (+ editcalls 1)) #t) \n\
-  (lambda (v) (set! outcalls (+ outcalls 1)) 0.0))) \n"
+is run.  'synthesize' is a function of 1 arg, the generator; it is called to get the current vocoder \
+output. \n\n  " pv_example "\n\n  " pv_edit_example
 
   XEN in_obj = XEN_UNDEFINED, edit_obj = XEN_UNDEFINED, synthesize_obj = XEN_UNDEFINED, analyze_obj = XEN_UNDEFINED;
   mus_xen *gn;

@@ -814,8 +814,17 @@ XEN xen_rb_str_new2(char *arg)
   return(rb_str_new2((arg) ? arg : ""));
 }
 
-double xen_rb_to_c_double_or_else(XEN a, double b) {return(XEN_NUMBER_P(a) ? NUM2DBL(a) : b);}
-int xen_rb_to_c_int_or_else(XEN a, int b) {return(XEN_INTEGER_P(a) ? FIX2INT(a) : b);}
+double xen_rb_to_c_double_or_else(XEN a, double b) 
+{
+  return(XEN_NUMBER_P(a) ? NUM2DBL(a) : b);
+}
+
+int xen_rb_to_c_int_or_else(XEN a, int b) 
+{
+  if (XEN_INTEGER_P(a)) return(FIX2INT(a));
+  if (XEN_NUMBER_P(a)) return((int)(NUM2DBL(a)));
+  return(b);
+}
 
 /* class Hook */
  
@@ -1420,7 +1429,7 @@ XEN c_to_xen_off_t(off_t val)
 
 int xen_to_c_int_or_else(XEN obj, int fallback)
 {
-  if (XEN_NUMBER_P(obj)) /* NEED CHECKS */
+  if (XEN_NUMBER_P(obj))
     return(XEN_TO_C_INT(obj));
   return(fallback);
 }

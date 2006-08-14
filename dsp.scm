@@ -1985,7 +1985,7 @@ a running window of the last 'size' inputs, returning the euclidean length of th
   (sqrt (moving-average gen (* y y))))
 
 #|
-;; perhaps also use moving-average gen to avoid amplifying noise-sections (or even squlech them)
+;; perhaps also use moving-rms gen to avoid amplifying noise-sections (or even squlech them)
 (define* (agc :optional (ramp-speed .001) (window-size 512))
   (let ((maxer (make-moving-max window-size))
 	(mult 1.0))

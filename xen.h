@@ -801,11 +801,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #endif
 #define C_TO_XEN_DOUBLE(a)              rb_float_new(a)
 #define XEN_TO_C_INT(a)                 rb_num2long(a)
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define XEN_TO_C_INT_OR_ELSE(a, b)    ({ XEN _xen_h_5_ = a; (XEN_INTEGER_P(_xen_h_5_) ? FIX2INT(_xen_h_5_) : b); })
-#else
-  #define XEN_TO_C_INT_OR_ELSE(a, b)    xen_rb_to_c_int_or_else(a, b)
-#endif
+#define XEN_TO_C_INT_OR_ELSE(a, b)      xen_rb_to_c_int_or_else(a, b)
 
 #define XEN_ULONG_P(Arg1)               XEN_INTEGER_P(Arg1)
 #define XEN_EXACT_P(Arg1)               XEN_INTEGER_P(Arg1)

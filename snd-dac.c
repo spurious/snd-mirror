@@ -2370,8 +2370,18 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 
 static XEN g_play(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos, XEN stop_proc, XEN out_chan) 
 {
+  #if HAVE_SCHEME
+    #define play_example "(play \"oboe.snd\")"
+  #endif
+  #if HAVE_RUBY
+    #define play_example "play(\"oboe.snd\")"
+  #endif
+  #if HAVE_FORTH
+    #define play_example "\"oboe.snd\" play"
+  #endif
+
   #define H_play "(" S_play " (start 0) (snd #f) (chn #f) (sync #f) (end #f) (pos -1) stop-proc out-chan): play snd or snd's channel chn starting at start. \
-'start' can also be a filename: (" S_play " \"oboe.snd\").  If 'sync' is true, all sounds syncd to snd are played. \
+'start' can also be a filename: " play_example ".  If 'sync' is true, all sounds syncd to snd are played. \
 If 'end' is not given, " S_play " plays to the end of the sound.  If 'pos' is -1 or not given, the current edit position is \
 played."
 
@@ -2415,9 +2425,19 @@ before returning."
 
 static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos, XEN stop_proc, XEN out_chan) 
 {
+  #if HAVE_SCHEME
+    #define play_and_wait_example "(play-and-wait \"oboe.snd\")"
+  #endif
+  #if HAVE_RUBY
+    #define play_and_wait_example "play_and_wait(\"oboe.snd\")"
+  #endif
+  #if HAVE_FORTH
+    #define play_and_wait_example "\"oboe.snd\" play-and-wait"
+  #endif
+
   #define H_play_and_wait "(" S_play_and_wait " (start 0) (snd #f) (chn #f) (syncd #f) (end #f) (pos -1) stop-proc out-chan): \
 play snd or snd's channel chn starting at start \
-and waiting for the play to complete before returning.  'start' can also be a filename: (" S_play_and_wait " \"oboe.snd\")"
+and waiting for the play to complete before returning.  'start' can also be a filename:\n  " play_and_wait_example
 
   return(g_play_1(samp_n, snd_n, chn_n, false, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play_and_wait, 6, stop_proc, out_chan));
 }

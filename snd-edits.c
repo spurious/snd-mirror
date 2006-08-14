@@ -9021,10 +9021,19 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
 
 static XEN g_insert_sound(XEN file, XEN ubeg, XEN file_chn, XEN snd_n, XEN chn_n, XEN edpos, XEN auto_delete)
 {
+  #if HAVE_SCHEME
+    #define insert_sound_example "(" S_insert_sound " \"oboe.snd\" 1000)"
+  #endif
+  #if HAVE_RUBY
+    #define insert_sound_example "insert_sound(\"oboe.snd\", 1000)"
+  #endif
+  #if HAVE_FORTH
+    #define insert_sound_example "\"oboe.snd\" 1000 insert-sound"
+  #endif
+
   #define H_insert_sound "(" S_insert_sound " file (beg 0) (file-chan 0) (snd #f) (chn #f) (edpos #f) (auto-delete #f)): \
-insert channel file-chan of file (or all chans if file-chan is not given) into snd's channel chn at beg or at the cursor position.\n\
-  (" S_insert_sound " \"oboe.snd\" 1000)\n\
-inserts all of oboe.snd starting at sample 1000."
+insert channel file-chan of file (or all chans if file-chan is not given) into snd's channel chn at beg or at the cursor \
+position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sample 1000."
 
   chan_info *cp;
   static char *filename = NULL;

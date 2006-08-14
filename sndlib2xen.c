@@ -1059,10 +1059,19 @@ static void audio_io_set_format(int line, int format)
 
 static XEN g_mus_audio_open_output(XEN dev, XEN srate, XEN chans, XEN format, XEN size)
 {
+  #if HAVE_SCHEME
+    #define audio_open_example "(" S_mus_audio_open_output " " S_mus_audio_default " 22050 1 " S_mus_lshort " 256)"
+  #endif
+  #if HAVE_RUBY
+    #define audio_open_example "mus_audio_open_output(Mus_audio_default, 22050, 1, Mus_lshort, 256)"
+  #endif
+  #if HAVE_FORTH
+    #define audio_open_example "mus-audio-default 22050 1 mus-lshort 256 mus-audio-open-output"
+  #endif
+
   #define H_mus_audio_open_output "(" S_mus_audio_open_output " device srate chans format bytes): \
 open the audio device ready for output at the given srate and so on; \
-return the audio line number:\n\
-  (set! line (" S_mus_audio_open_output " " S_mus_audio_default " 22050 1 " S_mus_lshort " 256)"
+return the audio line number:\n  " audio_open_example
 
   int line, idev, ifmt, isize, israte, ichans;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(dev), dev, XEN_ARG_1, S_mus_audio_open_output, "an integer");
@@ -1190,14 +1199,25 @@ from the audio line into sound-data sdata."
 
 static XEN g_mus_audio_mixer_read(XEN dev, XEN field, XEN chan, XEN vals)
 {
+#if HAVE_SCHEME
+  #define mixer_read_example "  (let ((vals (" S_make_vct " 32)))\n    (" S_mus_audio_mixer_read " " S_mus_audio_default " " S_mus_audio_format " 32 vals))\n"
+  #define mixer_read_vct_example "(" S_vct_ref " vals 0)"
+#endif
+#if HAVE_RUBY
+  #define mixer_read_example "  vals = make_vct(32)\n  mus_audio_mixer_read(Mus_audio_default, Mus_audio_format, 32, vals)\n"
+  #define mixer_read_vct_example "vals[0]"
+#endif
+#if HAVE_FORTH
+  #define mixer_read_example "  32 0.0 make-vct value vals\n  mus-audio-default mus-audio-format 32 vals mus-audio-mixer-read\n"
+  #define mixer_read_vct_example "vals 0 vct-ref"
+#endif
+
   #define H_mus_audio_mixer_read "(" S_mus_audio_mixer_read " device field channel vals): read some portion of the sound card mixer state.\
 The device is the nominal audio device, normally " S_mus_audio_default ". The field describes what info we are requesting: \
 to get the devices max available chans, the field would be " S_mus_audio_channel ". The channel arg, when relevant, specifies \
 which channel we want info on or the 'vals' vct length. \
-The requested info will be written into 'vals': \
-  (let ((vals (" S_make_vct " 32)))\n\
-    (" S_mus_audio_mixer_read " " S_mus_audio_default " " S_mus_audio_format " 32 vals))\n\
-sets (" S_vct_ref " vals 0) to the default device's desired audio sample data format."
+The requested info will be written into 'vals': \n\n" mixer_read_example " \n\
+sets " mixer_read_vct_example " to the default device's desired audio sample data format."
 
   int val, i, len;
   float *fvals;

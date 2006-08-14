@@ -261,7 +261,19 @@ static XEN vct_fill(XEN obj1, XEN obj2);
 
 static XEN g_make_vct(XEN len, XEN filler)
 {
-  #define H_make_vct "(" S_make_vct " len (initial-element 0)): returns a new vct of length len filled with initial-element"
+  #if HAVE_SCHEME
+    #define vct_make_example "(define v (make-vct 32 1.0))"
+  #endif
+  #if HAVE_RUBY
+    #define vct_make_example "v = make_vct(32, 1.0)"
+  #endif
+  #if HAVE_FORTH
+    #define vct_make_example "32 1.0 make-vct value v"
+  #endif
+
+  #define H_make_vct "(" S_make_vct " len (initial-element 0)): returns a new vct of length len filled with \
+initial-element: \n  " vct_make_example
+
   int size;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(len), len, XEN_ONLY_ARG, S_make_vct, "an integer");
   size = XEN_TO_C_INT(len);
@@ -464,8 +476,22 @@ static XEN vct_fill(XEN obj1, XEN obj2)
 
 static XEN vct_mapB(XEN obj, XEN proc)
 {
+  #if HAVE_SCHEME
+    #define vct_map_example "(vct-map! v (lambda () 3.0))"
+    #define vct_fill_example  "(vct-fill! v 3.0)"
+  #endif
+  #if HAVE_RUBY
+    #define vct_map_example "vct_map!(v, lambda do | | 3.0 end)"
+    #define vct_fill_example "vct_fill!(v, 3.0)"
+  #endif
+  #if HAVE_FORTH
+    #define vct_map_example "v lambda: ( -- val ) 3.0 ; 0 make-proc vct-map!"
+    #define vct_fill_example "v 3.0 vct-fill!"
+  #endif
+
   #define H_vct_mapB "(" S_vct_mapB " v proc): set each element of v to value of proc (a thunk): v[i] = (proc), returns \
-v. (" S_vct_mapB " v (lambda () 3.0)) is the same as (" S_vct_fillB " v 3.0)"
+v. " vct_map_example " is the same as " vct_fill_example
+
   int i;
   vct *v;
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
