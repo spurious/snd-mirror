@@ -33,7 +33,7 @@ enum {m_menu,
           v_x_axis_menu, v_x_axis_cascade_menu,
             v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu, v_x_axis_measures_menu, v_x_axis_clock_menu,
           v_axes_menu, v_axes_cascade_menu,
-            v_no_axes_menu, v_all_axes_menu, v_just_x_axis_menu, v_all_axes_unlabelled_menu, v_just_x_axis_unlabelled_menu,
+          v_no_axes_menu, v_all_axes_menu, v_just_x_axis_menu, v_all_axes_unlabelled_menu, v_just_x_axis_unlabelled_menu, v_bare_x_axis_menu,
       v_sep2_menu,
       NUM_MENU_WIDGETS
 };
@@ -155,6 +155,7 @@ enum {m_menu,
 #define view_just_x_axis_menu (ss->sgx->mw[v_just_x_axis_menu])
 #define view_all_axes_unlabelled_menu (ss->sgx->mw[v_all_axes_unlabelled_menu])
 #define view_just_x_axis_unlabelled_menu (ss->sgx->mw[v_just_x_axis_unlabelled_menu])
+#define view_bare_x_axis_menu (ss->sgx->mw[v_bare_x_axis_menu])
 #define view_sep2_menu (ss->sgx->mw[v_sep2_menu])
 
 enum {W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, 

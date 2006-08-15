@@ -119,6 +119,7 @@ static void view_all_axes_callback(Widget w, XtPointer info, XtPointer context) 
 static void view_just_x_axis_callback(Widget w, XtPointer info, XtPointer context) {set_show_axes(SHOW_X_AXIS);}
 static void view_all_axes_unlabelled_callback(Widget w, XtPointer info, XtPointer context) {set_show_axes(SHOW_ALL_AXES_UNLABELLED);}
 static void view_just_x_axis_unlabelled_callback(Widget w, XtPointer info, XtPointer context) {set_show_axes(SHOW_X_AXIS_UNLABELLED);}
+static void view_bare_x_axis_callback(Widget w, XtPointer info, XtPointer context) {set_show_axes(SHOW_BARE_X_AXIS);}
 
 
 
@@ -540,6 +541,10 @@ Widget add_menu(void)
   view_just_x_axis_unlabelled_menu = XtCreateManagedWidget(_("just x axis, no label"), xmPushButtonWidgetClass, view_axes_menu, main_args, main_n);
   XtAddCallback(view_just_x_axis_unlabelled_menu, XmNactivateCallback, view_just_x_axis_unlabelled_callback, NULL);  
   if (show_axes(ss) == SHOW_X_AXIS_UNLABELLED) set_sensitive(view_just_x_axis_unlabelled_menu, false);
+
+  view_bare_x_axis_menu = XtCreateManagedWidget(_("bare x axis"), xmPushButtonWidgetClass, view_axes_menu, main_args, main_n);
+  XtAddCallback(view_bare_x_axis_menu, XmNactivateCallback, view_bare_x_axis_callback, NULL);  
+  if (show_axes(ss) == SHOW_BARE_X_AXIS) set_sensitive(view_bare_x_axis_menu, false);
 
 
   /* OPTIONS MENU */

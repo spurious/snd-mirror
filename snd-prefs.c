@@ -3985,7 +3985,7 @@ static void remember_sound_state_2_choice(prefs_info *prf)
 
 static show_axes_t rts_show_axes = DEFAULT_SHOW_AXES;
 
-static const char *show_axes_choices[NUM_SHOW_AXES] = {"none", "X and Y", "just X", "X and Y unlabelled", "just X unlabelled"};
+static const char *show_axes_choices[NUM_SHOW_AXES] = {"none", "X and Y", "just X", "X and Y unlabelled", "just X unlabelled", "bare X"};
 
 static void reflect_show_axes(prefs_info *prf) {SET_TEXT(prf->text, (char *)show_axes_choices[(int)show_axes(ss)]);}
 static void revert_show_axes(prefs_info *prf) {in_set_show_axes(rts_show_axes);}

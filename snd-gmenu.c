@@ -116,6 +116,7 @@ static void view_all_axes_callback(GtkWidget *w, gpointer info) {set_show_axes(S
 static void view_just_x_axis_callback(GtkWidget *w, gpointer info) {set_show_axes(SHOW_X_AXIS);}
 static void view_all_axes_unlabelled_callback(GtkWidget *w, gpointer info) {set_show_axes(SHOW_ALL_AXES_UNLABELLED);}
 static void view_just_x_axis_unlabelled_callback(GtkWidget *w, gpointer info) {set_show_axes(SHOW_X_AXIS_UNLABELLED);}
+static void view_bare_x_axis_callback(GtkWidget *w, gpointer info) {set_show_axes(SHOW_BARE_X_AXIS);}
 
 
 /* -------------------------------- OPTIONS MENU -------------------------------- */
@@ -710,6 +711,12 @@ GtkWidget *add_menu(void)
   gtk_menu_shell_append(GTK_MENU_SHELL(view_axes_cascade_menu), view_just_x_axis_unlabelled_menu);
   gtk_widget_show(view_just_x_axis_unlabelled_menu);
   SG_SIGNAL_CONNECT(view_just_x_axis_unlabelled_menu, "activate", view_just_x_axis_unlabelled_callback, NULL);
+
+  view_bare_x_axis_menu = gtk_menu_item_new_with_label(_("bare x axis"));
+  ml[v_bare_x_axis_menu] = _("base x axis");
+  gtk_menu_shell_append(GTK_MENU_SHELL(view_axes_cascade_menu), view_bare_x_axis_menu);
+  gtk_widget_show(view_bare_x_axis_menu);
+  SG_SIGNAL_CONNECT(view_bare_x_axis_menu, "activate", view_bare_x_axis_callback, NULL);
 
 
 

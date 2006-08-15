@@ -48,6 +48,7 @@ static XEN key_press_hook;
 static XEN after_transform_hook;
 static XEN graph_hook;
 static XEN after_graph_hook;
+static XEN after_lisp_graph_hook;
 
 static void after_transform(chan_info *cp, Float scaler)
 {
@@ -2207,7 +2208,7 @@ void reset_spectro(void)
 
 static void display_channel_time_data(chan_info *cp);
 static void display_channel_lisp_data(chan_info *cp);
-static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first, with_grid_t grid, log_axis_t log_axes);
+static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first, with_grid_t grid, log_axis_t log_axes, show_axes_t axes);
 #define DONT_CLEAR_GRAPH false
 #define CLEAR_GRAPH true
 
@@ -2434,7 +2435,7 @@ static bool make_spectrogram(chan_info *cp)
 			 cp->axis->x0, cp->axis->x1,
 			 SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
 			 fap);
-	  make_axes(cp, fap, X_AXIS_IN_SECONDS, DONT_CLEAR_GRAPH, NO_GRID, WITH_LINEAR_AXES);
+	  make_axes(cp, fap, X_AXIS_IN_SECONDS, DONT_CLEAR_GRAPH, NO_GRID, WITH_LINEAR_AXES, cp->show_axes);
 	  fap->use_gl = false;
 #if USE_MOTIF
 	  if (ss->gl_has_double_buffer)
@@ -2792,6 +2793,7 @@ typedef struct lisp_grf {
   int graphs;
   axis_info *axis;
   int env_data;
+  show_axes_t show_axes;
 } lisp_grf;
 
 axis_info *lisp_info_axis(chan_info *cp) {return(cp->lisp_info->axis);}
@@ -2961,7 +2963,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
     }
 }
 
-static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first, with_grid_t grid, log_axis_t log_axes)
+static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first, with_grid_t grid, log_axis_t log_axes, show_axes_t axes)
 {
   snd_info *sp;
   axis_context *ax;
@@ -2976,10 +2978,15 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
   /* here is where the graph is cleared(!) -- only use of erase_rectangle */
   if (erase_first == CLEAR_GRAPH)
     erase_rectangle(cp, ap->ax, ap->graph_x0, ap->y_offset, ap->width, ap->height); 
-  make_axes_1(ap, x_style, SND_SRATE(sp), cp->show_axes, cp->printing,
+  make_axes_1(ap, 
+	      x_style, 
+	      SND_SRATE(sp), 
+	      axes, 
+	      cp->printing,
 	      (((sp->channel_style != CHANNELS_COMBINED) || 
 		(cp->show_axes == SHOW_ALL_AXES) || 
 		(cp->show_axes == SHOW_ALL_AXES_UNLABELLED) || 
+		(cp->show_axes == SHOW_BARE_X_AXIS) || 
 		(cp->chan == (sp->nchans - 1))) ? WITH_X_AXIS : NO_X_AXIS),
 	      grid, 
 	      log_axes,
@@ -3041,6 +3048,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	  /* this should only happen the first time such a graph is needed */
 	  cp->lisp_info = (lisp_grf *)CALLOC(1, sizeof(lisp_grf));
 	  up = cp->lisp_info;
+	  up->show_axes = cp->show_axes;
 	  up->axis = make_axis_info(cp, 0.0, 1.0, -1.0, 1.0, "dummy axis", 0.0, 1.0, -1.0, 1.0, NULL);
 	}
       if (up)
@@ -3127,7 +3135,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	  if (cp->time_graph_type == GRAPH_AS_WAVOGRAM)
 	    {
 	      if (ap->y_axis_y0 == ap->y_axis_y1) 
-		make_axes(cp, ap, cp->x_axis_style, DONT_CLEAR_GRAPH, cp->show_grid, WITH_LINEAR_AXES); /* first time needs setup */
+		make_axes(cp, ap, cp->x_axis_style, DONT_CLEAR_GRAPH, cp->show_grid, WITH_LINEAR_AXES, cp->show_axes); /* first time needs setup */
 	      ap->y0 = ap->x0;
 	      ap->y1 = ap->y0 + (Float)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(cp->wavo_hop) * SND_SRATE(sp));
 	      ap->x1 = ap->x0 + (double)(cp->wavo_trace) / (double)SND_SRATE(sp);
@@ -3140,7 +3148,8 @@ static void display_channel_data_with_size(chan_info *cp,
 		      cp->x_axis_style,
 		      (((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
 		      cp->show_grid,
-		      WITH_LINEAR_AXES);
+		      WITH_LINEAR_AXES,
+		      cp->show_axes);
 	  cp->cursor_visible = false;
 	  cp->selection_visible = false;
 	  points = make_graph(cp);
@@ -3164,7 +3173,8 @@ static void display_channel_data_with_size(chan_info *cp,
 		   (cp->transform_graph_type != GRAPH_AS_SPECTROGRAM)) ? WITH_GRID : NO_GRID,
 		  ((!(cp->fft_log_frequency)) || 
 		   (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)) ? WITH_LINEAR_AXES :
-		  ((cp->transform_graph_type == GRAPH_AS_SONOGRAM) ? WITH_LOG_Y_AXIS : WITH_LOG_X_AXIS));
+		  ((cp->transform_graph_type == GRAPH_AS_SONOGRAM) ? WITH_LOG_Y_AXIS : WITH_LOG_X_AXIS),
+		  cp->show_axes);
 	  
       if ((!with_time) || (just_fft))
 	{ /* make_graph does this -- sets losamp needed by fft to find its starting point */
@@ -3223,6 +3233,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	  ss->lisp_graph_hook_active = false;
 	  if (!(XEN_FALSE_P(pixel_list))) pixel_loc = snd_protect(pixel_list);
 	}
+
       if (up != cp->lisp_info)
 	up = cp->lisp_info;
       if (uap != up->axis)
@@ -3232,11 +3243,20 @@ static void display_channel_data_with_size(chan_info *cp,
 		X_AXIS_IN_SECONDS,
 		(((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
 		cp->show_grid,
-		WITH_LINEAR_AXES);
+		WITH_LINEAR_AXES,
+		up->show_axes);
+
       if (XEN_PROCEDURE_P(pixel_list))
 	XEN_CALL_0(pixel_list, S_lisp_graph);
       else make_lisp_graph(cp, pixel_list);
       if (!(XEN_FALSE_P(pixel_list))) snd_unprotect_at(pixel_loc);
+
+      if ((cp->hookable == WITH_HOOK) &&
+	  (XEN_HOOKED(after_lisp_graph_hook)))
+	run_hook(after_lisp_graph_hook,
+		 XEN_LIST_2(C_TO_XEN_INT(cp->sound->index),
+			    C_TO_XEN_INT(cp->chan)),
+		 S_after_lisp_graph_hook);
     }
   
   if ((!just_lisp) && (!just_fft))
@@ -6549,7 +6569,7 @@ static XEN g_show_axes(XEN snd, XEN chn)
 {
   #define H_show_axes "(" S_show_axes " (snd #f) (chn #f)) \
 If " S_show_all_axes ", display x and y axes; if " S_show_x_axis ", just one axis (the x axis) is displayed. \
-The other choices are " S_show_no_axes ", " S_show_all_axes_unlabelled ", and " S_show_x_axis_unlabelled "."
+The other choices are " S_show_no_axes ", " S_show_all_axes_unlabelled ", " S_show_x_axis_unlabelled ", and " S_show_bare_x_axis "."
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SHOW_AXES, S_show_axes));
@@ -6563,7 +6583,7 @@ static XEN g_set_show_axes(XEN on, XEN snd, XEN chn)
   val = (show_axes_t)XEN_TO_C_INT(on);
   if (val >= NUM_SHOW_AXES)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A, but must be " S_show_all_axes ", " S_show_x_axis ", " S_show_no_axes ", \
-" S_show_all_axes_unlabelled ", or " S_show_x_axis_unlabelled ".");
+" S_show_all_axes_unlabelled ", " S_show_x_axis_unlabelled ", or " S_show_bare_x_axis ".");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_SHOW_AXES, S_setB S_show_axes));
   set_show_axes(val);
@@ -6891,9 +6911,9 @@ static XEN g_y_bounds(XEN snd_n, XEN chn_n)
 		    C_TO_XEN_DOUBLE(cp->axis->y1)));
 }
 
-static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd_n, XEN chn_n, XEN force_display)
+static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd_n, XEN chn_n, XEN force_display, XEN show_axes)
 {
-  #define H_graph "(" S_graph " data (xlabel #f) (x0 0.0) (x1 1.0) (y0 #f) (y1 #f) (snd #f) (chn #f) (force-display #t)): \
+  #define H_graph "(" S_graph " data (xlabel #f) (x0 0.0) (x1 1.0) (y0 #f) (y1 #f) (snd #f) (chn #f) (force-display #t) show-axes): \
 displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list or a vct. \
 If 'data' is a list of numbers, it is treated as an envelope."
 
@@ -6914,9 +6934,18 @@ If 'data' is a list of numbers, it is treated as an envelope."
 		   ((XEN_LIST_P(ldata)) && (XEN_LIST_LENGTH(ldata) > 0) && 
 		    ((XEN_NUMBER_P(XEN_CAR(ldata))) || (MUS_VCT_P(XEN_CAR(ldata)))))),
 		  ldata, XEN_ARG_1, S_graph, "a vct or a list");
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(x0), x0, XEN_ARG_3, S_graph, "a number (x0)");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(x1), x1, XEN_ARG_4, S_graph, "a number (x1)");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(y0), y0, XEN_ARG_5, S_graph, "a number (y0)");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(y1), y1, XEN_ARG_6, S_graph, "a number (y1)");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(force_display), force_display, XEN_ARG_9, S_graph, "a boolean (force-display)");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(show_axes), show_axes, XEN_ARG_10, S_graph, "an integer (show-axes choice)");
+
   ASSERT_CHANNEL(S_graph, snd_n, chn_n, 7);
   cp = get_cp(snd_n, chn_n, S_graph);
   if (!cp) return(XEN_FALSE);
+
   ymin = 32768.0;
   ymax = -32768.0;
   if ((cp->sound_ctr == NOT_A_SOUND) || 
@@ -6964,9 +6993,20 @@ If 'data' is a list of numbers, it is treated as an envelope."
       lg->data = (Float **)CALLOC(graphs, sizeof(Float *));
       need_update = true;
     }
+  
+  cp->lisp_info->show_axes = cp->show_axes;
+  if (XEN_INTEGER_P(show_axes))
+    {
+      show_axes_t val;
+      val = (show_axes_t)XEN_TO_C_INT(show_axes);
+      if (val < NUM_SHOW_AXES)
+	cp->lisp_info->show_axes = val;
+    }
+
   if ((XEN_LIST_P_WITH_LENGTH(ldata, len)) &&
       (XEN_NUMBER_P(XEN_CAR(ldata))))
     {
+      /* just one graph to display */
       lg = cp->lisp_info;
       lg->env_data = 1;
       if (lg->len[0] != len)
@@ -7020,6 +7060,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	    }
 	}
     }
+
   lg->axis = make_axis_info(cp, nominal_x0, nominal_x1, ymin, ymax, label, nominal_x0, nominal_x1, ymin, ymax, lg->axis);
   lg->axis->y_offset = old_y_offset;
 
@@ -7041,7 +7082,11 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	update_graph(cp);
       else display_channel_lisp_data(cp);
     }
-  return(xen_return_first(XEN_FALSE, data, ldata, xlabel));
+  return(xen_return_first(XEN_FALSE, ldata, data, xlabel));
+  /* returning #f here because graph might be last thing in lisp-graph-hook, and we
+   *   don't want its return value mistaken for the "pixel_list" that that hook function
+   *   can return.
+   */
 }
 
 #if HAVE_GL
@@ -7232,7 +7277,7 @@ XEN_NARGIFY_1(g_variable_graph_p_w, g_variable_graph_p)
 XEN_ARGIFY_4(g_make_variable_graph_w, g_make_variable_graph)
 XEN_ARGIFY_2(g_channel_data_w, g_channel_data)
 
-XEN_ARGIFY_9(g_graph_w, g_graph)
+XEN_ARGIFY_10(g_graph_w, g_graph)
 XEN_ARGIFY_2(g_edits_w, g_edits)
 XEN_ARGIFY_3(g_peaks_w, g_peaks)
 XEN_ARGIFY_2(g_edit_hook_w, g_edit_hook)
@@ -7535,7 +7580,7 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE(S_make_variable_graph,     g_make_variable_graph_w,    1, 3, 0, H_make_variable_graph);
   XEN_DEFINE_PROCEDURE(S_channel_data,            g_channel_data_w,           1, 1, 0, H_channel_data);
 
-  XEN_DEFINE_PROCEDURE(S_graph,                   g_graph_w,                  1, 8, 0, H_graph);
+  XEN_DEFINE_PROCEDURE(S_graph,                   g_graph_w,                  1, 9, 0, H_graph);
   XEN_DEFINE_PROCEDURE(S_edits,                   g_edits_w,                  0, 2, 0, H_edits);
   XEN_DEFINE_PROCEDURE(S_peaks,                   g_peaks_w,                  0, 3, 0, H_peaks);
   XEN_DEFINE_PROCEDURE(S_edit_hook,               g_edit_hook_w,              0, 2, 0, H_edit_hook);
@@ -7785,12 +7830,14 @@ void g_init_chn(void)
   #define H_show_no_axes "The value for " S_show_axes " that causes neither the x or y axes to be displayed"
   #define H_show_x_axis "The value for " S_show_axes " that causes only the x axis to be displayed"
   #define H_show_x_axis_unlabelled "The value for " S_show_axes " that causes only the x axis to be displayed, but without any label"
+  #define H_show_bare_x_axis "The value for " S_show_axes " that causes x axis to be displayed without a label or tick marks"
 
   XEN_DEFINE_CONSTANT(S_show_all_axes,           SHOW_ALL_AXES,            H_show_all_axes);
   XEN_DEFINE_CONSTANT(S_show_all_axes_unlabelled,SHOW_ALL_AXES_UNLABELLED, H_show_all_axes_unlabelled);
   XEN_DEFINE_CONSTANT(S_show_no_axes,            SHOW_NO_AXES,             H_show_no_axes);
   XEN_DEFINE_CONSTANT(S_show_x_axis,             SHOW_X_AXIS,              H_show_x_axis);
   XEN_DEFINE_CONSTANT(S_show_x_axis_unlabelled,  SHOW_X_AXIS_UNLABELLED,   H_show_x_axis_unlabelled);
+  XEN_DEFINE_CONSTANT(S_show_bare_x_axis,        SHOW_BARE_X_AXIS,         H_show_bare_x_axis);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_axes, g_show_axes_w, H_show_axes,
 					    S_setB S_show_axes, g_set_show_axes_w, g_set_show_axes_reversed, 0, 2, 1, 2);
@@ -7830,6 +7877,7 @@ void g_init_chn(void)
 of pixels, these are used in order by the list of graphs (if any), rather than Snd's default set; \
 this makes it possible to use different colors for the various graphs. \
 If it returns a function (of no arguments), that function is called rather than the standard graph routine."
+  #define H_after_lisp_graph_hook S_after_lisp_graph_hook " (snd chn): called after a lisp graph is updated."
   #define H_mouse_press_hook S_mouse_press_hook " (snd chn button state x y): called upon mouse button press within the lisp graph."
   #define H_mouse_click_hook S_mouse_click_hook " (snd chn button state x y axis): called upon button click."
   #define H_mouse_drag_hook S_mouse_drag_hook " (snd chn button state x y): called upon mouse drag within the lisp graph."
@@ -7844,17 +7892,18 @@ graph. 'time' is the uninterpreted time at which the drag event was reported. 'i
 Snd takes no further action.  To set up to play, then interpret the motion yourself, return #f on the first call, \
 and #t thereafter."
   
-  after_transform_hook = XEN_DEFINE_HOOK(S_after_transform_hook, 3, H_after_transform_hook); /* args = sound channel scaler */
-  graph_hook =           XEN_DEFINE_HOOK(S_graph_hook, 4,           H_graph_hook);           /* args = sound channel y0 y1 */
-  after_graph_hook =     XEN_DEFINE_HOOK(S_after_graph_hook, 2,     H_after_graph_hook);     /* args = sound channel */
-  initial_graph_hook =   XEN_DEFINE_HOOK(S_initial_graph_hook, 3,   H_initial_graph_hook);   /* args = sound channel duration */
-  lisp_graph_hook =      XEN_DEFINE_HOOK(S_lisp_graph_hook, 2,      H_lisp_graph_hook);      /* args = sound channel */
-  mouse_press_hook =     XEN_DEFINE_HOOK(S_mouse_press_hook, 6,     H_mouse_press_hook);     /* args = sound channel button state x y */
-  mouse_click_hook =     XEN_DEFINE_HOOK(S_mouse_click_hook, 7,     H_mouse_click_hook);     /* args = sound channel button state x y axis */
-  mouse_drag_hook =      XEN_DEFINE_HOOK(S_mouse_drag_hook, 6,      H_mouse_drag_hook);      /* args = sound channel button state x y */
-  key_press_hook =       XEN_DEFINE_HOOK(S_key_press_hook, 4,       H_key_press_hook);       /* args = sound channel key state */
-  mark_click_hook =      XEN_DEFINE_HOOK(S_mark_click_hook, 1,      H_mark_click_hook);      /* arg = id */
-  mix_click_hook =       XEN_DEFINE_HOOK(S_mix_click_hook, 1,       H_mix_click_hook);       /* arg = id */
+  after_transform_hook =  XEN_DEFINE_HOOK(S_after_transform_hook, 3,  H_after_transform_hook); /* args = sound channel scaler */
+  graph_hook =            XEN_DEFINE_HOOK(S_graph_hook, 4,            H_graph_hook);           /* args = sound channel y0 y1 */
+  after_graph_hook =      XEN_DEFINE_HOOK(S_after_graph_hook, 2,      H_after_graph_hook);     /* args = sound channel */
+  after_lisp_graph_hook = XEN_DEFINE_HOOK(S_after_lisp_graph_hook, 2, H_after_lisp_graph_hook);  /* args = sound channel */
+  initial_graph_hook =    XEN_DEFINE_HOOK(S_initial_graph_hook, 3,    H_initial_graph_hook);   /* args = sound channel duration */
+  lisp_graph_hook =       XEN_DEFINE_HOOK(S_lisp_graph_hook, 2,       H_lisp_graph_hook);      /* args = sound channel */
+  mouse_press_hook =      XEN_DEFINE_HOOK(S_mouse_press_hook, 6,      H_mouse_press_hook);     /* args = sound channel button state x y */
+  mouse_click_hook =      XEN_DEFINE_HOOK(S_mouse_click_hook, 7,      H_mouse_click_hook);     /* args = sound channel button state x y axis */
+  mouse_drag_hook =       XEN_DEFINE_HOOK(S_mouse_drag_hook, 6,       H_mouse_drag_hook);      /* args = sound channel button state x y */
+  key_press_hook =        XEN_DEFINE_HOOK(S_key_press_hook, 4,        H_key_press_hook);       /* args = sound channel key state */
+  mark_click_hook =       XEN_DEFINE_HOOK(S_mark_click_hook, 1,       H_mark_click_hook);      /* arg = id */
+  mix_click_hook =        XEN_DEFINE_HOOK(S_mix_click_hook, 1,        H_mix_click_hook);       /* arg = id */
   mark_drag_triangle_hook = XEN_DEFINE_HOOK(S_mark_drag_triangle_hook, 4, H_mark_drag_triangle_hook); /* args = id x time dragged-before */
 
 #if DEBUGGING && HAVE_GUILE

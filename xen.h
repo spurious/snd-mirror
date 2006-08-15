@@ -521,6 +521,10 @@
   #define XEN_PROCEDURE_CAST
 #endif
 
+/* max all args is SCM_GSUBR_MAX (gsubr.h) in all versions if (SCM_GSUBR_MAX < req + opt + rst) error
+ *   apparently there is not limit in Ruby (passes an array)
+ */
+
 #if HAVE_SCM_C_DEFINE_GSUBR
   #define XEN_NEW_PROCEDURE(Name, Func, Req, Opt, Rst) scm_c_define_gsubr(Name, Req, Opt, Rst, XEN_PROCEDURE_CAST Func)
 #else
@@ -2075,6 +2079,8 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_ARG_7    7
 #define XEN_ARG_8    8
 #define XEN_ARG_9    9
+#define XEN_ARG_10   10
+/* 10 is the limit in Guile (SCM_GSUBR_MAX in gsubr.h), 10000 in Gauche (VM_STACK_SIZE in src/gauche/vm.h), not sure about Ruby or Forth */
 
 #define XEN_TO_C_OFF_T_OR_ELSE(a, b)  xen_to_c_off_t_or_else(a, b)
 #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)

@@ -589,6 +589,7 @@
 	'show-x-axis show-x-axis 2
 	'show-all-axes-unlabelled show-all-axes-unlabelled 3
 	'show-x-axis-unlabelled show-x-axis-unlabelled 4
+	'show-bare-x-axis show-bare-x-axis 5
 
 	;; sndlib constants
 	'mus-unsupported mus-unsupported 0
@@ -2161,7 +2162,7 @@
 			 'selection-changed-hook 'selection-chans 'selection-color 'selection-context 'selection-creates-region
 			 'selection-frames 'selection-maxamp 'selection-maxamp-position 'selection-member? 'selection-position
 			 'selection-srate 'selection? 'send-mozilla
-			 'short-file-name 'show-all-axes 'show-all-axes-unlabelled
+			 'short-file-name 'show-all-axes 'show-all-axes-unlabelled 'show-bare-x-axis
 			 'show-axes 'show-backtrace 'show-controls 'show-grid 'show-indices
 			 'show-listener 'show-marks 'show-mix-waveforms 'show-no-axes 'show-selection-transform
 			 'show-sonogram-cursor 'show-transform-peaks 'show-widget 'show-x-axis 'show-x-axis-unlabelled
@@ -28004,6 +28005,7 @@ EDITS: 5
 		      (set! (mix-locked? md) #t)
 		      (if (not (mix-locked? md)) (snd-display ";set-mix-locked?: ~A?" (mix-locked? md))))))
 	      (revert-sound zz)
+
 	      (let ((editctr (edit-position zz)))
 		(if (not (= (edit-position) 0)) (snd-display ";revert-sound edit-position: ~A" (edit-position)))
 		(as-one-edit 
@@ -28265,6 +28267,8 @@ EDITS: 5
 	    (map-chan (echo .5 .75) 0 60000)
 	    (reset-hook! after-transform-hook)
 	    (reset-hook! lisp-graph-hook)
+
+	    (snd-display ";try lisp hook ")
 	    (add-hook! lisp-graph-hook 
 		       (lambda (snd chn) 
 			 (if (> (random 1.0) .5) 

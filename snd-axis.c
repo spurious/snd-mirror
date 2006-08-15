@@ -566,11 +566,20 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 
   if (show_x_axis)
     {
-      if ((axes == SHOW_X_AXIS_UNLABELLED) || (axes == SHOW_ALL_AXES_UNLABELLED))
-	include_x_label = false;
-      else include_x_label = ((ap->xlabel) && ((height > 100) && (width > 100)));
-      include_x_tick_labels = ((height > 60) && (width > 100));
-      include_x_ticks = ((height > 40) && (width > 40));
+      if (axes == SHOW_BARE_X_AXIS)
+	{
+	  include_x_label = false;
+	  include_x_tick_labels = false;
+	  include_x_ticks = false;
+	}
+      else
+	{
+	  if ((axes == SHOW_X_AXIS_UNLABELLED) || (axes == SHOW_ALL_AXES_UNLABELLED))
+	    include_x_label = false;
+	  else include_x_label = ((ap->xlabel) && ((height > 100) && (width > 100)));
+	  include_x_tick_labels = ((height > 60) && (width > 100));
+	  include_x_ticks = ((height > 40) && (width > 40));
+	}
     }
   else
     {
@@ -610,8 +619,11 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       else x_label_height = label_height();
     }
   else
-    if (include_x_ticks) 
-      x_label_height = label_height();
+    {
+      if (include_x_ticks) 
+	x_label_height = label_height();
+      /* bare x axis case handled later */
+    }
 
   if (y_axis_linear)
     {
@@ -776,6 +788,11 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       ap->x_label_x = (curx + width - x_label_width) / 2;
       cury -= (x_label_height + inner_border_width);
     }
+  else
+    {
+      if (axes == SHOW_BARE_X_AXIS)
+	cury -= (label_height() + inner_border_width);
+    }
   ap->y_axis_y0 = cury;
   ap->y_axis_x0 = curx;
   ap->y_axis_x0 += ap->graph_x0;
@@ -837,7 +854,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       else 
 #endif
 	{
-      fill_rectangle(ax, ap->x_axis_x0, ap->x_axis_y0, (unsigned int)(ap->x_axis_x1 - ap->x_axis_x0), axis_thickness);
+	  fill_rectangle(ax, ap->x_axis_x0, ap->x_axis_y0, (unsigned int)(ap->x_axis_x1 - ap->x_axis_x0), axis_thickness);
 	}
     }
 
@@ -1339,7 +1356,7 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
   ap->ymin = ymin;
   ap->ymax = ymax;
   if ((xlabel) && 
-      ((!(ap->xlabel)) || (strcmp(xlabel, ap->xlabel) !=0)))
+      ((!(ap->xlabel)) || (strcmp(xlabel, ap->xlabel) != 0)))
     {
       /* this apparently should leave the default_xlabel and ylabels alone */
       if (ap->xlabel) FREE(ap->xlabel);

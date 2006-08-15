@@ -699,9 +699,9 @@ static XEN g_focus_widget(XEN wid)
 
 static XEN g_snd_gcs(void)
 {
-  #define H_snd_gcs "(" S_snd_gcs "): a list of Snd graphics contexts (list (0 basic) (1 selected_basic) (2 combined) \
-(3 cursor) (4 selected_cursor) (5 selection) (6 selected_selection) (7 erase) (8 selected_erase) (9 mark) (10 selected_mark) (11 mix) \
-(12 fltenv_basic) (13 fltenv_data))"
+  #define H_snd_gcs "(" S_snd_gcs "): a list of Snd graphics contexts (list (0 basic) (1 selected_basic) (2 combined) (3 \
+cursor) (4 selected_cursor) (5 selection) (6 selected_selection) (7 erase) (8 selected_erase) (9 mark) (10 selected_mark) (11 mix) (12 \
+fltenv_basic) (13 fltenv_data))"
 
   state_context *sx;
   sx = ss->sgx;
@@ -722,6 +722,57 @@ static XEN g_snd_gcs(void)
                         XEN_CONS(XEN_WRAP_GC(sx->fltenv_data_gc), 
 			 XEN_EMPTY_LIST)))))))))))))));
   return(XEN_EMPTY_LIST);
+}
+
+static XEN g_snd_color(XEN choice)
+{
+  #define H_snd_color "(" S_snd_color " num) -> color associated with 'num' -- see table of colors in snd-draw.c"
+  color_t col;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(choice), choice, XEN_ONLY_ARG, S_snd_color, "an integer");
+
+  switch (XEN_TO_C_INT(choice))
+    {
+    case 0: col = ss->sgx->white;                          break;
+    case 1: col = ss->sgx->black;                          break;
+    case 2: col = ss->sgx->red;                            break;
+    case 3: col = ss->sgx->yellow;                         break;
+    case 4: col = ss->sgx->green;                          break;
+    case 5: col = ss->sgx->light_blue;                     break;
+    case 6: col = ss->sgx->lighter_blue;                   break;
+
+    case 7: col = ss->sgx->data_color;                     break;
+    case 8: col = ss->sgx->selected_data_color;            break;
+    case 9: col = ss->sgx->mark_color;                     break;
+    case 10: col = ss->sgx->graph_color;                   break;
+    case 11: col = ss->sgx->selected_graph_color;          break;
+    case 12: col = ss->sgx->listener_color;                break;
+    case 13: col = ss->sgx->listener_text_color;           break;
+
+    case 14: col = ss->sgx->basic_color;                   break;
+    case 15: col = ss->sgx->selection_color;               break;
+    case 16: col = ss->sgx->zoom_color;                    break;
+    case 17: col = ss->sgx->position_color;                break;
+    case 18: col = ss->sgx->highlight_color;               break;
+    case 19: col = ss->sgx->enved_waveform_color;          break;
+    case 20: col = ss->sgx->cursor_color;                  break;
+
+    case 21: col = ss->sgx->text_focus_color;              break;
+    case 22: col = ss->sgx->filter_control_waveform_color; break;
+    case 23: col = ss->sgx->mix_color;                     break;
+    case 24: col = ss->sgx->pushed_button_color;           break;
+    case 25: col = ss->sgx->sash_color;                    break;
+
+    case 26: col = ss->sgx->help_button_color;             break;
+    case 27: col = ss->sgx->doit_button_color;             break;
+    case 28: col = ss->sgx->doit_again_button_color;       break;
+    case 29: col = ss->sgx->quit_button_color;             break;
+    case 30: col = ss->sgx->reset_button_color;            break;
+
+    case 31: col = ss->sgx->grid_color;                    break;
+    case 32: col = ss->sgx->selected_grid_color;           break;
+    default: col = ss->sgx->black;                         break;
+    }
+  return(XEN_WRAP_PIXEL(col));
 }
 
 #if HAVE_GL
@@ -1233,6 +1284,7 @@ XEN_ARGIFY_5(g_make_graph_data_w, g_make_graph_data)
 XEN_ARGIFY_7(g_graph_data_w, g_graph_data)
 XEN_VARGIFY(g_make_bezier_w, g_make_bezier)
 XEN_NARGIFY_0(g_snd_gcs_w, g_snd_gcs)
+XEN_NARGIFY_1(g_snd_color_w, g_snd_color)
 
 XEN_NARGIFY_0(g_selection_color_w, g_selection_color)
 XEN_NARGIFY_1(g_set_selection_color_w, g_set_selection_color)
@@ -1309,6 +1361,7 @@ XEN_NARGIFY_1(g_color_p_w, g_color_p)
 #define g_graph_data_w g_graph_data
 #define g_make_bezier_w g_make_bezier
 #define g_snd_gcs_w g_snd_gcs
+#define g_snd_color_w g_snd_color
 
 #define g_selection_color_w g_selection_color
 #define g_set_selection_color_w g_set_selection_color
@@ -1476,7 +1529,8 @@ void g_init_draw(void)
   /* ---------------- unstable ---------------- */
 
   XEN_DEFINE_PROCEDURE(S_make_bezier,     g_make_bezier_w, 0, 0, 1,     H_make_bezier);
-  XEN_DEFINE_PROCEDURE(S_snd_gcs,         g_snd_gcs_w, 0, 0, 0,         H_snd_gcs);
+  XEN_DEFINE_PROCEDURE(S_snd_gcs,         g_snd_gcs_w,     0, 0, 0,     H_snd_gcs);
+  XEN_DEFINE_PROCEDURE(S_snd_color,       g_snd_color_w,   1, 0, 0,     H_snd_color);
 
   #define H_new_widget_hook S_new_widget_hook " (widget): called each time a dialog or \
 a new set of channel or sound widgets is created."

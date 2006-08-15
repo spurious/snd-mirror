@@ -8739,7 +8739,7 @@ the new data's end."
   pos = to_c_edit_position(cp, edpos, caller, 9);
   beg = beg_to_sample(samp_0, caller);
   len = dur_to_samples(samps, beg, cp, pos, 2, caller);
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, 10, caller, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, XEN_ARG_10, caller, "a boolean");
   if (len == 0) return(XEN_FALSE);
   override = XEN_TRUE_P(truncate);
   if (XEN_STRING_P(vect))

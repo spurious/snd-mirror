@@ -6130,7 +6130,7 @@ free-player frees all resources associated with <i>player</i> and remove it from
 
 <!-- graph -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="graph">graph</a> (data <i>xlabel x0 x1 y0 y1 snd chn force-display</i>)</code>
+<code><a class=def name="graph">graph</a> (data <i>xlabel x0 x1 y0 y1 snd chn force-display show-axes-choice</i>)</code>
 </td></tr>
 <tr><td></td><td>
 This function displays a graph of <i>data</i> in a separate display per channel.  The x axis
@@ -8105,6 +8105,7 @@ If show-axes is <code>show-all-axes</code> (the default), both the x and y axes 
 just one (bottom) x axis is displayed, reducing screen clutter. 
 <code>show-no-axes</code> omits both x and y axes.  To remove the x axis label, use
 either <code>show-x-axis-unlabelled</code> or <code>show-all-axes-unlabelled</code>.
+To omit all the x axis labels and ticks (but include the y axis as usual) use <code>show-bare-x-axis</code>.
 This is the View:Axes choice.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -12227,7 +12228,7 @@ to put the date and time in the Snd title bar.
 
 <p><b>Axis placement</b> choice (<a href="#showaxes">show-axes</a>):</p>
 <pre>
-  show-all-axes  show-no-axes  show-x-axis  show-all-axes-unlabelled  show-x-axis-unlabelled
+  show-all-axes  show-no-axes  show-x-axis  show-all-axes-unlabelled  show-x-axis-unlabelled  show-bare-x-axis
 </pre>
 
 <p><b>Graph</b> id (for <a href="#y_to_position">y-&gt;position</a> etc):</p>

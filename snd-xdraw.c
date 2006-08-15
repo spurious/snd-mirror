@@ -30,7 +30,11 @@ void gtk_style_draw_string(axis_context *ax, int x0, int y0, const char *str, in
   /* now gv.font is the default font */
   if (fs) XFree(fs);
   fs = XQueryFont(MAIN_DISPLAY(ss), gv.font);
-  XDrawString(ax->dp, ax->wn, ax->gc, x0, y0 + fs->ascent, str, len);
+  if (fs)
+    XDrawString(ax->dp, ax->wn, ax->gc, x0, y0 + fs->ascent, str, len);
+  else XEN_ERROR(XEN_ERROR_TYPE("no-current-font"),
+		 XEN_LIST_2(C_TO_XEN_STRING(S_draw_string),
+			    C_TO_XEN_STRING(str)));
   /* XFreeFont here is trouble, but handling it as above seems ok -- Font.c in xlib does allocate new space */
 }
 

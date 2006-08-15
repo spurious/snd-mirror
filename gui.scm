@@ -89,6 +89,17 @@
 	 #f)))
 
 
+;; Copied from gtk-popup.scm
+(define* (c-g_signal_connect obj name func #:optional data)
+  (g_signal_connect_closure_by_id (GPOINTER obj)
+				  (g_signal_lookup name (G_OBJECT_TYPE (GTK_OBJECT obj)))
+				  0
+				  (g_cclosure_new func data #f)
+				  #f))
+
+
+
+
 (define-c <float> (c-scale ((<float> x)
 			    (<float> x1)
 			    (<float> x2)
@@ -359,6 +370,7 @@
 
 
 (define mouse-button-press-hook (<hook>))
+(define mouse-doubleclick-hook (<hook>))
 (define mouse-move-hook (<hook>))
 (define mouse-drag2-hook (<hook>))
 (define mouse-button-release-hook (<hook>))
@@ -421,24 +433,35 @@
 					   (focus-widget w)
 					   (set! ispressed #t)
 					   (set! ismoved #f)
-					   (if (and (not (eq? 'stop!
-							      (-> mouse-button-press-hook run
-								  snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e))
-								  (.button (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))
-						    (= (.button (GDK_EVENT_BUTTON e)) 3))
-					       (run-hook gtk-popup-hook w e i snd 0))))
+					   (let ((did-doubleclick? 'nope)
+						 (did-singleclick? 'nope))
+					     (if (= (.type (GDK_EVENT_BUTTON e)) GDK_2BUTTON_PRESS)
+						 (set! did-doubleclick? (-> mouse-doubleclick-hook run
+									    snd 
+									    (.x (GDK_EVENT_BUTTON e))
+									    (.y (GDK_EVENT_BUTTON e))
+									    (.state (GDK_EVENT_BUTTON e)))))
+					     (if (not (eq? 'stop! did-doubleclick?))
+						 (set! did-singleclick? (-> mouse-button-press-hook run
+									    snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e))
+									    (.button (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))
+					     
+					     (if (and (not (eq? 'stop! did-doubleclick?))
+						      (not (eq? 'stop! did-singleclick?))
+						      (= (.button (GDK_EVENT_BUTTON e)) 3))
+						 (run-hook gtk-popup-hook w e i snd 0)))))
 		     (c-g_signal_connect w "motion_notify_event"
-				       (lambda (w e i)
-					 (set! ismoved #t)
-					 ;;(c-display snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.button (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))
-					 (let ((args (if (.is_hint (GDK_EVENT_MOTION e))
-							 (let ((s (cdr (gdk_window_get_pointer (.window e)))))
-							   (list snd (car s) (cadr s) (.button (GDK_EVENT_BUTTON e)) (caddr s)))
-							 (list snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e))
-							       (.button (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))
-					   (if (and (not (eq? 'stop! (apply (<- mouse-move-hook run) args)))
-						    ispressed)
-					       (apply (<- mouse-drag2-hook run) args)))))
+					 (lambda (w e i)
+					   (set! ismoved #t)
+					   ;;(c-display snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.button (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))
+					   (let ((args (if (.is_hint (GDK_EVENT_MOTION e))
+							   (let ((s (cdr (gdk_window_get_pointer (.window e)))))
+							     (list snd (car s) (cadr s) (.button (GDK_EVENT_BUTTON e)) (caddr s)))
+							   (list snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e))
+								 (.button (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))
+					     (if (and (not (eq? 'stop! (apply (<- mouse-move-hook run) args)))
+						      ispressed)
+						 (apply (<- mouse-drag2-hook run) args)))))
 		     (c-g_signal_connect w "button_release_event"
 					 (lambda (w e i)
 					   (set! ispressed #f)
@@ -448,7 +471,7 @@
 					 (lambda (w e i)
 					   (set! ispressed #f)
 					   (-> mouse-scroll-hook run
-					       snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))
+					       snd (.direction (GDK_EVENT_SCROLL e)) (.x (GDK_EVENT_SCROLL e)) (.y (GDK_EVENT_SCROLL e)) (.state (GDK_EVENT_SCROLL e)))
 					   ))
 		     )))))
 
@@ -530,12 +553,12 @@
       (lambda (snd x y button stat)
 	(set! isdragged #t)))
   (-> mouse-scroll-hook add!
-      (lambda (snd orgx y stat)
+      (lambda (snd direction orgx y stat)
 	(c-get-mouse-info snd orgx y #t
 			  (lambda (ch x y)
 			    (focus-widget (c-editor-widget snd))
 			    (run-hook mouse-click-hook
-				      snd ch (+ stat 4) 0 orgx y time-graph)))))
+				      snd ch (+ direction 4) stat orgx y time-graph)))))
   (-> mouse-button-release-hook add!
       (lambda (snd orgx y button stat)
 	(if (not isdragged)
