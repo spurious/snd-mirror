@@ -8,7 +8,6 @@
  *       perhaps put bad vals in red? 
  *
  * PERHAPS: in linux make --with-alsa the default
- * SOMEDAY: fix all the code examples in the help texts
  */
 
 /* TODO: shouldn't the Ruby xrefs be in Ruby syntax? (would this mess up the indexing?) (word_wrap translates -- would need free)
@@ -507,6 +506,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+16-Aug:  display-bark-fft (dsp.scm).\n\
 4-Aug:   analog-filter.rb thanks to Mike.\n\
          \"scheme\" instead of \"guile\" in various names in inf-snd.el (for gauche).\n\
 3-Aug:   granulated-sound-interp (examp.scm).\n\
@@ -520,9 +520,6 @@ void about_snd_help(void)
 17-Jul:  merged new-icons.scm into new-buttons.scm and renamed the latter toolbar.scm.\n\
 12-Jul:  green.scm.\n\
 10-Jul:  dlocsig.scm.\n\
-3-July:  new CLM generator: move-sound.\n\
-         locsig now returns a float, not a frame.\n\
-         removed vct-map.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

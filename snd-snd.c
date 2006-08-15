@@ -3415,11 +3415,20 @@ You can subsequently make it writable by (set! (" S_read_only ") #f)."
 
 static XEN g_save_sound_as(XEN arglist)
 {
+  #if HAVE_SCHEME
+    #define save_as_example "(" S_save_sound_as " \"test.snd\" index " S_mus_next " " S_mus_bshort ")"
+  #endif
+  #if HAVE_RUBY
+    #define save_as_example "save_sound_as(\"test.snd\", index, Mus_next, Mus_bshort)"
+  #endif
+  #if HAVE_FORTH
+    #define save_as_example "\"test.snd\" index mus-next mus-bshort save-sound-as"
+  #endif
+
   #define H_save_sound_as "("  S_save_sound_as " :file :sound :header-type :data-format :srate :channel :edit-position :comment): \
 save sound in file using the indicated attributes.  If channel is specified, only that channel is saved (extracted). \
-Omitted arguments take their value from the sound being saved.\n\
-  (" S_save_sound_as " \"test.snd\" index " S_mus_next " " S_mus_bshort ")"
-
+Omitted arguments take their value from the sound being saved.\n  " save_as_example
+  
   snd_info *sp;
   file_info *hdr;
   int ht = -1, df = -1, sr = -1, chan = -1, edit_position = AT_CURRENT_EDIT_POSITION;
@@ -3547,10 +3556,19 @@ Omitted arguments take their value from the sound being saved.\n\
 
 static XEN g_new_sound(XEN arglist)
 {
+  #if HAVE_SCHEME
+    #define new_sound_example "(" S_new_sound " \"test.snd\" " S_mus_next " " S_mus_bshort " 22050 1 \"no comment\" 1000)"
+  #endif
+  #if HAVE_RUBY
+    #define new_sound_example "new_sound(\"test.snd\", Mus_next, Mus_bshort, 22050, 1, \"no comment\", 1000)"
+  #endif
+  #if HAVE_FORTH
+    #define new_sound_example "\"test.snd\" mus-next mus-bshort 22050 1 \"no comment\" 1000 new-sound"
+  #endif
+
   #define H_new_sound "(" S_new_sound " :file :header-type :data-format :srate :channels :comment :size): \
-create a new sound file with the indicated attributes; if any are omitted, the corresponding default-output variable is used. \
-The 'size' argument sets the number of samples (zeros) in the newly created sound. \n\
-  (" S_new_sound " \"test.snd\" " S_mus_next " " S_mus_bshort " 22050 1 \"no comment\" 22050)"
+creates a new sound file with the indicated attributes; if any are omitted, the corresponding default-output variable is used. \
+The 'size' argument sets the number of samples (zeros) in the newly created sound. \n  " new_sound_example
 
   snd_info *sp = NULL; 
   int ht, df, sr, ch, err;

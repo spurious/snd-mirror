@@ -2556,7 +2556,9 @@ edit-hook is called just before any attempt to edit the channel's data; if it re
 the edit is cancelled. So,
 </td></tr></table>
 <pre>
-            (add-hook! (edit-hook) (lambda () #t))
+             Scheme: (add-hook! (edit-hook snd chn) (lambda () #t))
+             Ruby:   edit_hook(snd, chn).add_hook!(\"stop-edit\") do | | true end
+             Forth:  snd chn edit-hook lambda: { } #t ; 0 make-proc add-hook!
 </pre>
 <table border=0><tr><td width=60><br></td><td>
 halts any attempt to edit the data; this is even more restrictive than setting the read-only

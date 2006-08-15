@@ -3,8 +3,6 @@
 #include "clm-strings.h"
 
 /* 
- * SOMEDAY: bark scale as axis or color as above: Fletcher-Munson post-process fft data -- is there a hook that would allow this?
- *            do this and the others (below) as lisp graph functions
  * SOMEDAY: user-addable graph-style? axis? (dB for example, or rms above)
  *          also affects cursor display, perhaps verbose cursor info display, peak-env graphing,
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
@@ -1775,12 +1773,6 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 
   if (cp->fft_log_frequency)
     {
-      /* here and elsewhere "log" could be trapped and user expression inserted to give fancy scales (Bark, Mel, etc)
-       *
-       *  perhaps add: fft_frequency_function, fft_magnitude_function
-       *    or replace fft_log* with these (defaults = log and in_dB?)
-       *    or do it in the lisp graph?
-       */
       fap_range = fap->x1 - fap->x0;
       if (fap->x0 > 1.0) minlx = log(fap->x0); else minlx = 0.0;
       maxlx = log(fap->x1);
@@ -1832,13 +1824,6 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	    {
 	      if (cp->fft_log_frequency) 
 		{
-		  /* Bark scale: (define (bark f) (* 21.4 (/ (log (+ (* 4.27 f) 1.0)) (log 10.0))))
-		   *   looks very much like log to me
-		   * critical band = 26.81 / (1 + 1960 / f) - 0.53
-		   * erb (equivalent rectangular bandwidth) = 11.17 ln[(f + 312) / (f + 14675)] + 43.0
-		   * mel = 1127 log(1 + (f / 700))
-		   * or musical octave based on log2
-		   */
 		  if (x > 1.0) curlx = log(x); else curlx = 0.0;
 		  logx = local_grf_x(fap->x0 + lscale * (curlx - minlx), fap);
 		}
@@ -2969,8 +2954,10 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 	  copy_context(cp); /* reset for axes etc */
 	  if (cp->printing) ps_reset_color();
 	}
+      /* I think this is a bad idea after all...
       if (cp->show_transform_peaks) 
 	display_peaks(cp, uap, up->data[0], 1, up->len[0] - 1, samples_per_pixel, false, 0.0);
+      */
     }
 }
 
@@ -5492,21 +5479,39 @@ WITH_THREE_SETTER_ARGS(g_set_ap_zy_reversed, g_set_ap_zy)
 
 static XEN g_edit_hook(XEN snd_n, XEN chn_n) 
 {
+  #if HAVE_SCHEME
+    #define edit_hook_example "(add-hook! (" S_edit_hook " snd chn) (lambda () (" S_snd_print " \";about to edit\") #f))"
+  #endif
+  #if HAVE_RUBY
+    #define edit_hook_example "edit_hook(snd, chn).add_hook!(\"hook-test\") do | | snd_print(\"about to edit\"); false end"
+  #endif
+  #if HAVE_FORTH
+    #define edit_hook_example "snd chn edit-hook lambda: { } \"about to edit\" snd-print #f ; 0 make-proc add-hook!"
+  #endif
+
   #define H_edit_hook "(" S_edit_hook " (snd #f) (chn #f)): snd's channel chn's " S_edit_hook ". \
 This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
 arguments. " S_edit_hook " is called just before any attempt to edit the channel's data; if it returns #t, \
-the edit is aborted. \n\
-  (add-hook! (" S_edit_hook " snd chn) (lambda () (" S_snd_print " \"about to edit\") #f))"
+the edit is aborted. \n  " edit_hook_example
 
   return(channel_get(snd_n, chn_n, CP_EDIT_HOOK, S_edit_hook));
 }
 
 static XEN g_after_edit_hook(XEN snd_n, XEN chn_n) 
 {
+  #if HAVE_SCHEME
+    #define after_edit_hook_example "(add-hook! (" S_after_edit_hook " snd chn) (lambda () (" S_snd_print " \";just edited\")))"
+  #endif
+  #if HAVE_RUBY
+    #define after_edit_hook_example "after_edit_hook(snd, chn).add_hook!(\"hook-test\") do | | snd_print(\"just edited\") end"
+  #endif
+  #if HAVE_FORTH
+    #define after_edit_hook_example "snd chn after-edit-hook lambda: { } \"just edited\" snd-print ; 0 make-proc add-hook!"
+  #endif
+
   #define H_after_edit_hook "(" S_after_edit_hook " (snd #f) (chn #f)): snd's channel chn's " S_after_edit_hook ". \
 This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
-arguments. " S_after_edit_hook " is called after an edit, but before " S_after_graph_hook ". \n\
-  (add-hook! (" S_after_edit_hook " snd chn) (lambda () (" S_snd_print " \"just edited\")))"
+arguments. " S_after_edit_hook " is called after an edit, but before " S_after_graph_hook ". \n  " after_edit_hook_example
 
   return(channel_get(snd_n, chn_n, CP_AFTER_EDIT_HOOK, S_after_edit_hook));
 }

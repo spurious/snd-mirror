@@ -11191,10 +11191,16 @@ static XEN eval_ptree_to_xen(ptree *pt)
     case R_CLM:     result = wrap_generator(pt, pt->result->addr);              break;
     case R_VCT:
       {
-	vct *v;
-	v = mus_vct_copy(pt->vcts[pt->result->addr]);
-	result = xen_make_vct(v->length, v->data);
-	FREE(v);
+	vct *v, *urv;
+	urv = pt->vcts[pt->result->addr];
+	/* this can be null: (let ((v1 (make-vct 32 1.0))) (run (lambda () (if (> (vct-ref v1 0) 2.0) (vct-scale! v1 0.5))))) */
+	if (urv)
+	  {
+	    v = mus_vct_copy(urv);
+	    result = xen_make_vct(v->length, v->data);
+	    FREE(v);
+	  }
+	/* else result is XEN_FALSE as initialized */
       }
       break;
     default:

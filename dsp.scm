@@ -2222,3 +2222,82 @@ and replaces it with the spectrum given in coeffs"
 	     (set! sum (+ sum (* (/ 1.0 (+ j 1)) (mfilter (vector-ref filters j) input)))))
 	   (outa i sum *output*)))))))
 |#
+
+
+
+;;; -------- spectrum displayed in various frequency scales
+
+(define* (display-bark-fft #:optional (snd 0) (chn 0))
+
+  (define (bark f) 
+    (let ((f2 (/ f 7500))) 
+      (+ (* 13.5 (atan (* .00076 f))) (* 3.5 (atan (* f2 f2))))))
+
+  (define (mel f) 
+    (* 1127 (log (+ 1.0 (/ f 700.0)))))
+
+  (define (erb f) 
+    (+ 43.0 (* 11.17 (log (/ (+ f 312) (+ f 14675))))))
+
+  (let* ((ls (left-sample))
+	 (rs (right-sample))
+	 (fftlen (inexact->exact (expt 2 (inexact->exact (ceiling (/ (log (1+ (- rs ls))) (log 2))))))))
+    (if (> fftlen 0)
+	(let* ((data (channel->vct ls fftlen snd chn))
+	       (sr (srate snd))
+	       (fft (snd-spectrum data (fft-window) fftlen #t 0.0 #f #t)) ; returns fftlen / 2 data points
+	       (mx (vct-peak fft))
+	       (data-len (vct-length fft))
+
+	       ;; bark settings
+	       (bark-low (floor (bark 20.0)))
+	       (bark-high (ceiling (bark (* 0.5 sr))))
+	       (bark-frqscl (/ data-len (- bark-high bark-low)))
+	       (bark-data (make-vct data-len))
+
+	       ;; mel settings
+	       (mel-low (floor (mel 20.0)))
+	       (mel-high (ceiling (mel (* 0.5 sr))))
+	       (mel-frqscl (/ data-len (- mel-high mel-low)))
+	       (mel-data (make-vct data-len))
+
+	       ;; erb settings
+	       (erb-low (floor (erb 20.0)))
+	       (erb-high (ceiling (erb (* 0.5 sr))))
+	       (erb-frqscl (/ data-len (- erb-high erb-low)))
+	       (erb-data (make-vct data-len)))
+
+;	  (run 
+;	   (lambda ()
+	     (do ((i 0 (1+ i)))
+		 ((= i data-len))
+	       (let* ((val (vct-ref fft i))
+		      (frq (* sr (/ i fftlen)))
+		      (bark-bin (inexact->exact (round (* bark-frqscl (- (bark frq) bark-low)))))
+		      (mel-bin (inexact->exact (round (* mel-frqscl (- (mel frq) mel-low)))))
+		      (erb-bin (inexact->exact (round (* erb-frqscl (- (erb frq) erb-low))))))
+		 (if (and (>= bark-bin 0)
+			  (< bark-bin data-len))
+		     (vct-set! bark-data bark-bin (+ val (vct-ref bark-data bark-bin))))
+		 (if (and (>= mel-bin 0)
+			  (< mel-bin data-len))
+		     (vct-set! mel-data mel-bin (+ val (vct-ref mel-data mel-bin))))
+		 (if (and (>= erb-bin 0)
+			  (< erb-bin data-len))
+		     (vct-set! erb-data erb-bin (+ val (vct-ref erb-data erb-bin))))))
+
+	     (let ((bmx (vct-peak bark-data))
+		   (mmx (vct-peak mel-data))
+		   (emx (vct-peak erb-data)))
+	       (if (> (abs (- mx bmx)) .01)
+		   (vct-scale! bark-data (/ mx bmx)))
+	       (if (> (abs (- mx mmx)) .01)
+		   (vct-scale! mel-data (/ mx mmx)))
+	       (if (> (abs (- mx emx)) .01)
+		   (vct-scale! erb-data (/ mx emx))))
+;))
+
+	  (graph (list bark-data mel-data erb-data) "fft" 20.0 (* 0.5 sr) 0.0 1.0 snd chn #f))
+	#f)))
+
+;; (add-hook! lisp-graph-hook display-bark-fft)

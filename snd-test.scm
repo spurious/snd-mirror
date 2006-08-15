@@ -40872,6 +40872,17 @@ EDITS: 1
       (btst '(let ((v0 (make-vct 4)) (v1 (make-vct 4))) (vct? (fft v0 v1 1))) #t)
       (btst '(let ((v0 (make-vct 4))) (vct? (clear-array v0))) #t)
       
+      (let ((v1 (make-vct 32 1.0)))
+	(run
+	 (lambda ()
+	   (if (> (vct-ref v1 0) 2.0)
+	       (vct-scale! v1 0.5)))))
+      (let ((g1 (make-oscil)))
+	(run
+	 (lambda ()
+	   (if (square-wave? g1)
+	       g1))))
+
       (btst '(let ((sd (make-sound-data 2 2))) (sound-data? sd)) #t)
       (btst '(sound-data? "hi") #f)
       (btst '(sound-data? (make-vct 3)) #f)

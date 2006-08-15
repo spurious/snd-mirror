@@ -2278,20 +2278,13 @@ static XEN g_save_macros(XEN file)
   return(file);
 }
 
+/* TODO: this doesn't display the full prompt */
+
 static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd_n, XEN raw)
 {
   #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg (callback #f) (snd #f) (raw #f)): post msg in snd's minibuffer \
 then when the user eventually responds, invoke the function callback, if any, with the response.  If 'raw' is #t, the response is \
-returned as a string; otherwise it is evaluated first as Scheme code.  For example, the following fragment asks for \
-a yes-or-no response, then takes some action:\n\n\
-  (define* (yes-or-no question action-if-yes action-if-no :optional snd)\n\
-    (" S_prompt_in_minibuffer " question\n\
-			  (lambda (response)\n\
-                            (" S_clear_minibuffer ")\n\
-			    (if (string=? response \"yes\")\n\
-			        (action-if-yes snd)\n\
-			        (action-if-no snd)))\n\
-			  snd #t))\n"
+returned as a string; otherwise it is evaluated first as Scheme code."
 
   snd_info *sp;
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_prompt_in_minibuffer, "a string");
