@@ -10,6 +10,7 @@
  * TODO: audio mixer settings dialog (needed especially in alsa!)
  *
  * PERHAPS: if marks, show ticks on x axis or some way to move to each easily (clickable box)
+ * PERHAPS: mouse scroll change == zoom in/out of graph, move scrolled windows?
  */
 
 

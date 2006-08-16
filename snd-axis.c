@@ -1195,143 +1195,140 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   /* All linear axis stuff has been taken care of. Check for log axes (assume fft context, not spectrogram so no GL) */
   /* x axis overall label has already gone out */
 
-  if ((!x_axis_linear) && (show_x_axis))
+  if ((!x_axis_linear) && 
+      (show_x_axis) && 
+      (include_x_ticks))
     {
       double min_freq, max_freq;
       Float minlx = 0.0, maxlx, fap_range, log_range, lscale = 1.0, curlx;
       Locus logx;
-      int y0, majy, miny;
-      if (include_x_ticks)
+      int y0, majy, miny, i;
+      char *label = NULL;
+      Float freq = 0.0, freq10 = 0.0;
+      /* get min (log-freq or spectro-start), max, add major ticks and brief labels, then if room add log-style minor ticks (100's, 1000's) */
+      y0 = ap->x_axis_y0;
+      majy = y0 + major_tick_length;
+      miny = y0 + minor_tick_length;
+      min_freq = ap->x0;
+      max_freq = ap->x1;
+      if (include_x_tick_labels)
+	set_numbers_font(ax, printing);
+      fap_range = max_freq - min_freq;
+      if (min_freq > 1.0) minlx = log(min_freq); else minlx = 0.0;
+      maxlx = log(max_freq);
+      log_range = (maxlx - minlx);
+      lscale = fap_range / log_range;
+      for (i = 0; i < 3; i++)
 	{
-	  int i;
-	  char *label = NULL;
-	  Float freq = 0.0, freq10 = 0.0;
-	  /* get min (log-freq or spectro-start), max, add major ticks and brief labels, then if room add log-style minor ticks (100's, 1000's) */
-	  y0 = ap->x_axis_y0;
-	  majy = y0 + major_tick_length;
-	  miny = y0 + minor_tick_length;
-	  min_freq = ap->x0;
-	  max_freq = ap->x1;
-	  if (include_x_tick_labels)
-	    set_numbers_font(ax, printing);
-	  fap_range = max_freq - min_freq;
-	  if (min_freq > 1.0) minlx = log(min_freq); else minlx = 0.0;
-	  maxlx = log(max_freq);
-	  log_range = (maxlx - minlx);
-	  lscale = fap_range / log_range;
-	  for (i = 0; i < 3; i++)
+	  switch (i)
 	    {
-	      switch (i)
+	    case 0:
+	      label = "100";
+	      freq = 100.0;
+	      break;
+	    case 1:
+	      label = "1000";
+	      freq = 1000.0;
+	      break;
+	    case 2:
+	      label = "10000";
+	      freq = 10000.0;
+	      break;
+	    }
+	  if ((min_freq <= freq) && (max_freq >= freq))
+	    {
+	      /* draw major tick at freq */
+	      freq10 = freq / 10.0;
+	      logx = grf_x(min_freq + lscale * (log(freq) - minlx), ap);
+	      draw_vertical_tick(logx, y0, majy, ap, ax, printing, include_grid);	      
+	      draw_log_tick_label(label, logx, x_label_width, right_border_width, ap, ax, printing);
+	      if (width > 200)
 		{
-		case 0:
-		  label = "100";
-		  freq = 100.0;
-		  break;
-		case 1:
-		  label = "1000";
-		  freq = 1000.0;
-		  break;
-		case 2:
-		  label = "10000";
-		  freq = 10000.0;
-		  break;
-		}
-	      if ((min_freq <= freq) && (max_freq >= freq))
-		{
-		  /* draw major tick at freq */
-		  freq10 = freq / 10.0;
-		  logx = grf_x(min_freq + lscale * (log(freq) - minlx), ap);
-		  draw_vertical_tick(logx, y0, majy, ap, ax, printing, include_grid);	      
-		  draw_log_tick_label(label, logx, x_label_width, right_border_width, ap, ax, printing);
-		  if (width > 200)
+		  curlx = snd_round(min_freq / freq10) * freq10;
+		  for (; curlx < freq; curlx += freq10)
 		    {
-		      curlx = snd_round(min_freq / freq10) * freq10;
-		      for (; curlx < freq; curlx += freq10)
-			{
-			  logx = grf_x(min_freq + lscale * (log(curlx) - minlx), ap);
-			  draw_vertical_tick(logx, y0, miny, ap, ax, printing, include_grid);	      
-			}
+		      logx = grf_x(min_freq + lscale * (log(curlx) - minlx), ap);
+		      draw_vertical_tick(logx, y0, miny, ap, ax, printing, include_grid);	      
 		    }
 		}
 	    }
 	}
     }
 
-  if ((!y_axis_linear) && (axes != SHOW_X_AXIS) && (axes != SHOW_X_AXIS_UNLABELLED))
+  if ((!y_axis_linear) && 
+      (axes != SHOW_X_AXIS) && 
+      (axes != SHOW_X_AXIS_UNLABELLED) &&
+      (include_y_ticks))
     {
       double min_freq, max_freq;
       Float minlx = 0.0, maxlx, fap_range, log_range, lscale = 1.0, curly;
       Locus logy;
-      int x0, majx, minx;
-      if (include_y_ticks)
+      int x0, majx, minx, i;
+      char *label = NULL;
+      Float freq = 0.0, freq10 = 0.0;
+      /* get min (log-freq or spectro-start), max, add major ticks and brief labels, then if room add log-style minor ticks (100's, 1000's) */
+      x0 = ap->y_axis_x0;
+      majx = x0 - major_tick_length;
+      minx = x0 - minor_tick_length;
+      min_freq = ap->y0;
+      max_freq = ap->y1;
+      if (include_y_tick_labels)
+	set_numbers_font(ax, printing);
+      fap_range = max_freq - min_freq;
+      if (min_freq > 1.0) minlx = log(min_freq); else minlx = 0.0;
+      maxlx = log(max_freq);
+      log_range = (maxlx - minlx);
+      lscale = fap_range / log_range;
+      for (i = 0; i < 3; i++)
 	{
-	  int i;
-	  char *label = NULL;
-	  Float freq = 0.0, freq10 = 0.0;
-	  /* get min (log-freq or spectro-start), max, add major ticks and brief labels, then if room add log-style minor ticks (100's, 1000's) */
-	  x0 = ap->y_axis_x0;
-	  majx = x0 - major_tick_length;
-	  minx = x0 - minor_tick_length;
-	  min_freq = ap->y0;
-	  max_freq = ap->y1;
-	  if (include_y_tick_labels)
-	    set_numbers_font(ax, printing);
-	  fap_range = max_freq - min_freq;
-	  if (min_freq > 1.0) minlx = log(min_freq); else minlx = 0.0;
-	  maxlx = log(max_freq);
-	  log_range = (maxlx - minlx);
-	  lscale = fap_range / log_range;
-	  for (i = 0; i < 3; i++)
+	  switch (i)
 	    {
-	      switch (i)
+	    case 0:
+	      label = "100";
+	      freq = 100.0;
+	      break;
+	    case 1:
+	      label = "1000";
+	      freq = 1000.0;
+	      break;
+	    case 2:
+	      label = "10000";
+	      freq = 10000.0;
+	      break;
+	    }
+	  if ((min_freq <= freq) && (max_freq >= freq))
+	    {
+	      /* draw major tick at freq */
+	      freq10 = freq / 10.0;
+	      logy = grf_y(min_freq + lscale * (log(freq) - minlx), ap);
+	      draw_horizontal_tick(majx, x0, logy, ap, ax, printing, include_grid);	      
+	      if (include_y_tick_labels)
 		{
-		case 0:
-		  label = "100";
-		  freq = 100.0;
-		  break;
-		case 1:
-		  label = "1000";
-		  freq = 1000.0;
-		  break;
-		case 2:
-		  label = "10000";
-		  freq = 10000.0;
-		  break;
-		}
-	      if ((min_freq <= freq) && (max_freq >= freq))
-		{
-		  /* draw major tick at freq */
-		  freq10 = freq / 10.0;
-		  logy = grf_y(min_freq + lscale * (log(freq) - minlx), ap);
-		  draw_horizontal_tick(majx, x0, logy, ap, ax, printing, include_grid);	      
-		  if (include_y_tick_labels)
-		    {
-		      int label_width;
-		      label_width = number_width(label);
-		      draw_string(ax,
-				  ap->y_axis_x0 - major_tick_length - label_width - inner_border_width,
+		  int label_width;
+		  label_width = number_width(label);
+		  draw_string(ax,
+			      ap->y_axis_x0 - major_tick_length - label_width - inner_border_width,
 #if USE_GTK
-				  (int)(logy - .5 * x_number_height),
+			      (int)(logy - .5 * x_number_height),
 #else
-				  (int)(logy + .25 * x_number_height),
+			      (int)(logy + .25 * x_number_height),
 #endif
-				  label,
-				  snd_strlen(label));
-		      
-		      if (printing) 
-			ps_draw_string(ap,
-				       ap->y_axis_x0 - major_tick_length - label_width - inner_border_width,
-				       (int)(logy + .25 * x_number_height),
-				       label);
-		    }
-		  if (height > 200)
+			      label,
+			      snd_strlen(label));
+		  
+		  if (printing) 
+		    ps_draw_string(ap,
+				   ap->y_axis_x0 - major_tick_length - label_width - inner_border_width,
+				   (int)(logy + .25 * x_number_height),
+				   label);
+		}
+	      if (height > 200)
+		{
+		  curly = snd_round(min_freq / freq10) * freq10;
+		  for (; curly < freq; curly += freq10)
 		    {
-		      curly = snd_round(min_freq / freq10) * freq10;
-		      for (; curly < freq; curly += freq10)
-			{
-			  logy = grf_y(min_freq + lscale * (log(curly) - minlx), ap);
-			  draw_horizontal_tick(minx, x0, logy, ap, ax, printing, include_grid);	      
-			}
+		      logy = grf_y(min_freq + lscale * (log(curly) - minlx), ap);
+		      draw_horizontal_tick(minx, x0, logy, ap, ax, printing, include_grid);	      
 		    }
 		}
 	    }
