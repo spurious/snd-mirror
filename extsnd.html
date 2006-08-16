@@ -1224,6 +1224,20 @@ being erased by Snd as it redraws graphs.
 <tr><td colspan=3 height=16></td></tr>
 
 
+<!-- after-lisp-graph-hook -->
+<tr><td colspan=3 bgcolor="#f6f8ff">
+<code><a class=def name="afterlispgraphhook">after-lisp-graph-hook</a> (snd chn)</code>
+</td></tr>
+<tr><td></td><td colspan=2>
+called after a "lisp" graph is updated or redisplayed.  The <a href="#lispgraphhook">lisp-graph-hook</a> functions
+are called before the actual graph is displayed, so if you want to add to a graph in some way, you need to
+use after-lisp-graph-hook.
+<a href="sndscm.html#displaybarkfft">display-bark-fft</a> in dsp.scm uses it to draw the x axis labels and
+ticks for various frequency scales.
+</td></tr>
+<tr><td colspan=3 height=16></td></tr>
+
+
 <!-- after-open-hook -->
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="afteropenhook">after-open-hook</a> (snd)</code>
@@ -13092,6 +13106,26 @@ This is the graphics context to use to draw a mark (XOR mode).
 <code><a class=def name="selectioncontext">selection-context</a></code></td></tr>
 <tr><td></td><td>
 This is the graphics context for XOR drawing in the selection color.</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+<!-- PERHAPS: document the actual indices in snd-color and snd-font? -->
+<!-- snd-color -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="sndcolor">snd-color</a> (choice)</code></td></tr>
+<tr><td></td><td>
+snd-color returns a Snd built-in color (as a Pixel/GdkPixel); it simplifies 
+code that wants to follow whatever the current Snd color choices are.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- snd-font -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="sndfont">snd-font</a> (choice)</code></td></tr>
+<tr><td></td><td>
+snd-font returns a Snd built-in font (as a raw pointer); it simplifies 
+code that wants to follow whatever the current Snd font choices are.
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 

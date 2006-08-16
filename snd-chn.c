@@ -8,6 +8,7 @@
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  * SOMEDAY: Edit:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
  * TODO: audio mixer settings dialog (needed especially in alsa!)
+ * TODO: why isn't the lisp graph being updated when the scrollers move (in multi-file multi-chan cases)?
  *
  * PERHAPS: if marks, show ticks on x axis or some way to move to each easily (clickable box)
  * PERHAPS: mouse scroll change == zoom in/out of graph, move scrolled windows?

@@ -2,6 +2,8 @@
 #include "sndlib-strings.h"
 #include "clm2xen.h"
 
+/* TODO: how could the bomb be displayed after "save"?? (new file, insert, save -> bomb?) */
+
 snd_info *get_sp(XEN x_snd_n, sp_sound_t accept_player)
 {
   /* if x_snd_n is a number, it is sp->index */

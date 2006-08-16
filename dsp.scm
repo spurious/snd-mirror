@@ -2227,21 +2227,12 @@ and replaces it with the spectrum given in coeffs"
 
 ;;; -------- spectrum displayed in various frequency scales
 
-(if (not (defined? 'load-font))
-    (define (load-font name)
-      (if (provided? 'xg)
-	  (pango_font_description_from_string name)
-	  (if (provided? 'xm)
-	      (let ((fs (XLoadQueryFont (XtDisplay (cadr (main-widgets))) name)))
-		(and (XFontStruct? fs) (.fid fs)))
-	      #f))))
-
 (define display-bark-fft
   ;; click in lisp-graph to change the tick placement choice
 
   (let ((bark-fft-size 0)
-	(bark-label-font (load-font (axis-label-font)))
-	(bark-numbers-font (load-font (tiny-font)))
+	(bark-label-font (snd-font 3))
+	(bark-numbers-font (snd-font 2))
 	(bark-tick-function 0))
 
     (define (bark f) 
@@ -2259,9 +2250,13 @@ and replaces it with the spectrum given in coeffs"
 	     (rs (right-sample))
 	     (fftlen (inexact->exact (expt 2 (inexact->exact (ceiling (/ (log (1+ (- rs ls))) (log 2))))))))
 	(if (> fftlen 0)
-	    (let ((data (channel->vct ls fftlen snd chn)))
+	    (let ((data (channel->vct ls fftlen snd chn))
+		  (normalized (not (= (transform-normalization snd chn) dont-normalize)))
+		  (linear #t))                               ; can't currently show lisp graph in dB
 	      (if (vct? data)
-		  (let ((fft (snd-spectrum data (fft-window) fftlen #t 0.0 #f #t))) ; returns fftlen / 2 data points
+		  (let ((fft (snd-spectrum data              ; returns fftlen / 2 data points
+					   (fft-window snd chn) fftlen linear 
+					   (fft-window-beta snd chn) #f normalized)))
 		    (if (vct? fft)
 			(let* ((sr (srate snd))
 			       (mx (vct-peak fft))
@@ -2306,19 +2301,25 @@ and replaces it with the spectrum given in coeffs"
 					  (< erb-bin data-len))
 				     (vct-set! erb-data erb-bin (+ val (vct-ref erb-data erb-bin))))))
 			     
-			     (let ((bmx (vct-peak bark-data))
-				   (mmx (vct-peak mel-data))
-				   (emx (vct-peak erb-data)))
-			       (if (> (abs (- mx bmx)) .01)
-				   (vct-scale! bark-data (/ mx bmx)))
-			       (if (> (abs (- mx mmx)) .01)
-				   (vct-scale! mel-data (/ mx mmx)))
-			       (if (> (abs (- mx emx)) .01)
-				   (vct-scale! erb-data (/ mx emx))))))
+			     (if normalized
+				 (let ((bmx (vct-peak bark-data))
+				       (mmx (vct-peak mel-data))
+				       (emx (vct-peak erb-data)))
+				   (if (> (abs (- mx bmx)) .01)
+				       (vct-scale! bark-data (/ mx bmx)))
+				   (if (> (abs (- mx mmx)) .01)
+				       (vct-scale! mel-data (/ mx mmx)))
+				   (if (> (abs (- mx emx)) .01)
+				       (vct-scale! erb-data (/ mx emx)))))))
 			  
-			  (graph (list bark-data mel-data erb-data) "ignored" 20.0 (* 0.5 sr) 0.0 1.0 snd chn #f show-bare-x-axis)))))))
+			  (graph (list bark-data mel-data erb-data) 
+				 "ignored" 
+				 20.0 (* 0.5 sr) 
+				 0.0 (if normalized 1.0 (* data-len (y-zoom-slider)))
+				 snd chn 
+				 #f show-bare-x-axis)))))))
 	
-	#f)) ; every invocation should return #f (not something that might look like a pixel list or override-graph thunk)
+	#f)) ; not pixel list or thunk
     
     (define (make-bark-labels snd chn)
       
@@ -2334,6 +2335,8 @@ and replaces it with the spectrum given in coeffs"
 	       (axis-y1 (list-ref axinfo 11))
 	       (label-height 15)
 	       (char-width 8) ; TODO: these should depend on the current font size
+
+	       (sr2 (* 0.5 (srate snd)))
 	       
 	       (minor-tick-len 6) ; TODO: dependent on overall size
 	       (major-tick-len 12)
@@ -2341,13 +2344,13 @@ and replaces it with the spectrum given in coeffs"
 	       (minor-y0 (+ axis-y1 minor-tick-len))
 	       (major-y0 (+ axis-y1 major-tick-len))
 	       
-	       (label-pos (inexact->exact (+ axis-x0 (* .45 (- axis-x1 axis-x0)))))
-	       )
+	       (label-pos (inexact->exact (+ axis-x0 (* .45 (- axis-x1 axis-x0))))))
 	  
 	  (define (scale-position scale f)
-	    (let* ((b20 (scale 20.0))
-		   (f1000 (+ axis-x0 (/ (* (- axis-x1 axis-x0) (- (scale f) b20)) (- (scale (* 0.5 (srate snd))) b20)))))
-	      (inexact->exact (round f1000))))
+	    (let ((b20 (scale 20.0)))
+	      (inexact->exact (round (+ axis-x0 
+					(/ (* (- axis-x1 axis-x0) (- (scale f) b20)) 
+					   (- (scale sr2) b20)))))))
 	  
 	  (define (bark-position f) (scale-position bark f))
 	  (define (mel-position f) (scale-position mel f))
@@ -2378,26 +2381,27 @@ and replaces it with the spectrum given in coeffs"
 		  ((= i 10000))
 		(let* ((i1000 (scale-position bark-function i)))
 		  (draw-line i1000 tick-y0 i1000 minor-y0 snd chn copy-context)))))
-	  
+
+	  ;; bark label/ticks
 	  (if (= bark-tick-function 0) (draw-bark-ticks bark-position))
 	  (if bark-label-font (set! (current-font snd chn copy-context) bark-label-font))
 	  (draw-string "bark," label-pos (+ axis-y1 label-height) snd chn copy-context)
 	  
+	  ;; mel label/ticks
 	  (set! (foreground-color snd chn copy-context) (snd-color 2))
 	  (if (= bark-tick-function 1) (draw-bark-ticks mel-position))
 	  (if bark-label-font (set! (current-font snd chn copy-context) bark-label-font))
 	  (draw-string "mel," (+ (* char-width 6) label-pos) (+ axis-y1 label-height) snd chn copy-context)
 	  
-	  
+	  ;; erb label/ticks
 	  (set! (foreground-color snd chn copy-context) (snd-color 4))
 	  (if (= bark-tick-function 2) (draw-bark-ticks erb-position))
 	  (if bark-label-font (set! (current-font snd chn copy-context) bark-label-font))
-	  (draw-string "erb" (+ (* char-width (+ 6 5)) label-pos) (+ axis-y1 label-height) snd chn copy-context)
-	  )
+	  (draw-string "erb" (+ (* char-width (+ 6 5)) label-pos) (+ axis-y1 label-height) snd chn copy-context))
 	
-	(set! (foreground-color snd chn copy-context) old-foreground-color)
-	))
+	(set! (foreground-color snd chn copy-context) old-foreground-color)))
     
+    ;; mouse click = move to next scale's ticks
     (define (choose-bark-ticks snd chn button state x y axis)
       (if (= axis lisp-graph)
 	  (begin
@@ -2406,6 +2410,7 @@ and replaces it with the spectrum given in coeffs"
 		(set! bark-tick-function 0))
 	    (update-lisp-graph))))
     
+    ;; user's view of display-bark-fft function
     (lambda* (:optional off)
       (if (not off)
 	  (begin
@@ -2418,7 +2423,10 @@ and replaces it with the spectrum given in coeffs"
 	    (remove-hook! lisp-graph-hook display-bark-fft-1)
 	    (remove-hook! after-lisp-graph-hook make-bark-labels)
 	    (remove-hook! mouse-click-hook choose-bark-ticks)
-	    (set! (lisp-graph?) #f))
-	  ))))
+	    (set! (lisp-graph?) #f))))))
 
 (define (undisplay-bark-fft) (display-bark-fft #t))
+
+
+
+

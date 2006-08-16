@@ -507,7 +507,7 @@ void about_snd_help(void)
 		"\nRecent changes include:\n\
 \n\
 16-Aug:  display-bark-fft (dsp.scm).\n\
-         after-lisp-graph-hook, snd-color.\n\
+         after-lisp-graph-hook, snd-color, snd-font, show-bare-x-axis.\n\
 4-Aug:   analog-filter.rb thanks to Mike.\n\
          \"scheme\" instead of \"guile\" in various names in inf-snd.el (for gauche).\n\
 3-Aug:   granulated-sound-interp (examp.scm).\n\

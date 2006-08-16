@@ -320,11 +320,10 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
   ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_setB S_current_font);
-  XEN_ASSERT_TYPE(XEN_LIST_P(id) || XEN_ULONG_P(id), id, XEN_ARG_1, S_setB S_current_font, "a wrapped object or a raw pointer"); 
-  if (XEN_LIST_P(id)) 
-    ax->current_font = (PangoFontDescription *)XEN_TO_C_ULONG(XEN_CADR(id)); 
-  else 
-    ax->current_font = (PangoFontDescription *)XEN_TO_C_ULONG(id); 
+  XEN_ASSERT_TYPE(XEN_LIST_P(id) || XEN_ULONG_P(id), id, XEN_ARG_1, S_setB S_current_font, "a wrapped object or a raw pointer");
+  if (XEN_LIST_P(id))
+    ax->current_font = (PangoFontDescription *)XEN_TO_C_ULONG(XEN_CADR(id));
+  else ax->current_font = (PangoFontDescription *)XEN_TO_C_ULONG(id); 
   return(id);
 }
 
@@ -774,6 +773,41 @@ static XEN g_snd_color(XEN choice)
     }
   return(XEN_WRAP_PIXEL(col));
 }
+
+static XEN g_snd_font(XEN choice)
+{
+#if USE_MOTIF
+  #define WRAP_FONT(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Font"), C_TO_XEN_ULONG((unsigned long)Value))
+#else
+  #define WRAP_FONT(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("PangoFontDescription_"), C_TO_XEN_ULONG((unsigned long)Value))
+#endif
+
+  #define H_snd_font "(" S_snd_font " num) -> font associated with 'num' -- see table of fonts in snd-draw.c"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(choice), choice, XEN_ONLY_ARG, S_snd_font, "an integer");
+
+  switch (XEN_TO_C_INT(choice))
+    {
+#if USE_MOTIF
+    case 0: return(WRAP_FONT(ss->sgx->peaks_fontstruct->fid));        break;
+    case 1: return(WRAP_FONT(ss->sgx->bold_peaks_fontstruct->fid));   break;
+    case 2: return(WRAP_FONT(ss->sgx->tiny_fontstruct->fid));         break;
+    case 3: return(WRAP_FONT(ss->sgx->axis_label_fontstruct->fid));   break;
+    case 4: return(WRAP_FONT(ss->sgx->axis_numbers_fontstruct->fid)); break;
+    case 5: return(WRAP_FONT(ss->sgx->listener_fontstruct->fid));     break;
+#endif
+#if USE_GTK
+    case 0: return(WRAP_FONT(ss->sgx->peaks_fnt));                    break;
+    case 1: return(WRAP_FONT(ss->sgx->bold_peaks_fnt));               break;
+    case 2: return(WRAP_FONT(ss->sgx->tiny_fnt));                     break;
+    case 3: return(WRAP_FONT(ss->sgx->axis_label_fnt));               break;
+    case 4: return(WRAP_FONT(ss->sgx->axis_numbers_fnt));             break;
+    case 5: return(WRAP_FONT(ss->sgx->listener_fnt));                 break;
+#endif
+    default: return(XEN_FALSE);                                       break;
+    }
+  return(XEN_FALSE);
+}
+
 
 #if HAVE_GL
 static Float gl_currents[6] = {DEFAULT_SPECTRO_X_ANGLE, DEFAULT_SPECTRO_Y_ANGLE, DEFAULT_SPECTRO_Z_ANGLE, 
@@ -1285,6 +1319,7 @@ XEN_ARGIFY_7(g_graph_data_w, g_graph_data)
 XEN_VARGIFY(g_make_bezier_w, g_make_bezier)
 XEN_NARGIFY_0(g_snd_gcs_w, g_snd_gcs)
 XEN_NARGIFY_1(g_snd_color_w, g_snd_color)
+XEN_NARGIFY_1(g_snd_font_w, g_snd_font)
 
 XEN_NARGIFY_0(g_selection_color_w, g_selection_color)
 XEN_NARGIFY_1(g_set_selection_color_w, g_set_selection_color)
@@ -1362,6 +1397,7 @@ XEN_NARGIFY_1(g_color_p_w, g_color_p)
 #define g_make_bezier_w g_make_bezier
 #define g_snd_gcs_w g_snd_gcs
 #define g_snd_color_w g_snd_color
+#define g_snd_font_w g_snd_font
 
 #define g_selection_color_w g_selection_color
 #define g_set_selection_color_w g_set_selection_color
@@ -1531,6 +1567,7 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE(S_make_bezier,     g_make_bezier_w, 0, 0, 1,     H_make_bezier);
   XEN_DEFINE_PROCEDURE(S_snd_gcs,         g_snd_gcs_w,     0, 0, 0,     H_snd_gcs);
   XEN_DEFINE_PROCEDURE(S_snd_color,       g_snd_color_w,   1, 0, 0,     H_snd_color);
+  XEN_DEFINE_PROCEDURE(S_snd_font,        g_snd_font_w,    1, 0, 0,     H_snd_font);
 
   #define H_new_widget_hook S_new_widget_hook " (widget): called each time a dialog or \
 a new set of channel or sound widgets is created."

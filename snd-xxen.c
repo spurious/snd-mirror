@@ -58,7 +58,7 @@ static XEN g_color_to_list(XEN obj)
 			  obj));
 }
 
-static XEN g_make_snd_color(XEN r, XEN g, XEN b)
+static XEN g_make_color(XEN r, XEN g, XEN b)
 {
   #define H_make_color "(" S_make_color " r g b): return a color object with the indicated rgb values"
   Colormap cmap;
@@ -171,13 +171,13 @@ static XEN g_set_graph_cursor(XEN curs)
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_2(g_in_w, g_in)
-XEN_NARGIFY_3(g_make_snd_color_w, g_make_snd_color)
+XEN_NARGIFY_3(g_make_color_w, g_make_color)
 XEN_NARGIFY_1(g_color_to_list_w, g_color_to_list)
 XEN_NARGIFY_0(g_graph_cursor_w, g_graph_cursor)
 XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
 #else
 #define g_in_w g_in
-#define g_make_snd_color_w g_make_snd_color
+#define g_make_color_w g_make_color
 #define g_color_to_list_w g_color_to_list
 #define g_graph_cursor_w g_graph_cursor
 #define g_set_graph_cursor_w g_set_graph_cursor
@@ -186,7 +186,7 @@ XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
 void g_init_gxen(void)
 {
   XEN_DEFINE_PROCEDURE(S_in,            g_in_w,             2, 0, 0, H_in);
-  XEN_DEFINE_PROCEDURE(S_make_color,    g_make_snd_color_w, 3, 0, 0, H_make_color);
+  XEN_DEFINE_PROCEDURE(S_make_color,    g_make_color_w,     3, 0, 0, H_make_color);
   XEN_DEFINE_PROCEDURE(S_color_to_list, g_color_to_list_w,  1, 0, 0, H_color_to_list);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,

@@ -1972,7 +1972,7 @@
 	    (names (list '*snd-opened-sound* 'abort 'add-clm-field 'add-clm-type 'add-colormap 
 			 'add-directory-to-view-files-list 'add-file-filter 'add-file-sorter 'add-file-to-view-files-list 'add-mark
 			 'add-player 'add-sound-file-extension 'add-to-main-menu 'add-to-menu
-			 'add-transform 'after-apply-controls-hook 'after-edit-hook 'after-graph-hook
+			 'add-transform 'after-apply-controls-hook 'after-edit-hook 'after-graph-hook 'after-lisp-graph-hook
 			 'after-open-hook 'after-save-as-hook 'after-save-state-hook 'after-transform-hook 'all-pass
 			 'all-pass? 'amp-control 'amp-control-bounds 'amplitude-modulate 'analyse-ladspa
 			 'apply-controls 'apply-ladspa 'array->file 'array-interp 'as-one-edit
@@ -2168,7 +2168,7 @@
 			 'show-sonogram-cursor 'show-transform-peaks 'show-widget 'show-x-axis 'show-x-axis-unlabelled
 			 'show-y-zero 'sinc-width 'sine-bank 'sine-summation 'sine-summation?
 			 'smooth-channel 'smooth-selection 'smooth-sound 'snd->sample 'snd->sample?
-			 'snd-error 'snd-error-hook 'snd-gcs 'snd-help
+			 'snd-error 'snd-error-hook 'snd-gcs 'snd-help 'snd-font 'snd-color
 			 'snd-print 'snd-simulate-keystroke 'snd-spectrum 'snd-tempnam 'snd-url
 			 'snd-urls 'snd-version 'snd-warning 'snd-warning-hook 'sound-data->sound-data
 			 'sound-data->vct 'sound-data-chans 'sound-data-length 'sound-data-maxamp 'sound-data-ref
@@ -25984,6 +25984,7 @@ EDITS: 5
   (reset-almost-all-hooks)
   
   (add-hook! after-graph-hook arg2) (carg2 after-graph-hook)
+  (add-hook! after-lisp-graph-hook arg2) (carg2 after-lisp-graph-hook)
   (add-hook! lisp-graph-hook arg2) (carg2 lisp-graph-hook)
   (add-hook! before-transform-hook arg2) (carg2 before-transform-hook)
   (add-hook! mix-release-hook arg2) (carg2 mix-release-hook)
@@ -34375,6 +34376,14 @@ EDITS: 1
 	  (show-widget (car (channel-widgets)))
 	  (close-sound ind1))
 	(close-sound ind))
+
+      (display-bark-fft)
+      (let ((ind (open-sound "oboe.snd")))
+	(set! (time-graph? ind 0) #f)
+	(update-lisp-graph)
+	(close-sound ind))
+      (undisplay-bark-fft)
+      
       (run-hook after-test-hook 17)
       ))
 
@@ -58802,7 +58811,7 @@ EDITS: 1
 		     polar->rectangular phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs phase-vocoder-outctr 
 		     phase-vocoder-phase-increments phase-vocoder-phases mus-generator?
 
-		     read-sample reset-listener-cursor goto-listener-end sample-reader-home selection-chans selection-srate snd-gcs
+		     read-sample reset-listener-cursor goto-listener-end sample-reader-home selection-chans selection-srate snd-gcs snd-font snd-color
 		     snd-warning sine-bank channel-data x-axis-label variable-graph? y-axis-label
 		     snd-url snd-urls tempo-control-bounds free-player
 		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
@@ -59666,6 +59675,7 @@ EDITS: 1
 		      (if (not (eq? tag 'wrong-type-arg))
 			  (snd-display ";hooks ~A: ~A" hook-name tag))))
 		  (list (list after-graph-hook 'after-graph-hook)
+			(list after-lisp-graph-hook 'after-lisp-graph-hook)
 			(list lisp-graph-hook 'lisp-graph-hook)
 			(list before-transform-hook 'before-transform-hook)
 			(list mix-release-hook 'mix-release-hook)

@@ -568,6 +568,7 @@
 #define S_snd_color                     "snd-color"
 #define S_snd_error                     "snd-error"
 #define S_snd_error_hook                "snd-error-hook"
+#define S_snd_font                      "snd-font"
 #define S_snd_gcs                       "snd-gcs"
 #define S_snd_help                      "snd-help"
 #if HAVE_RUBY

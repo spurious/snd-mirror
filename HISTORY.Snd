@@ -1,7 +1,7 @@
 Snd change log
 
   16-Aug:    display-bark-fft (dsp.scm).
-             after-lisp-graph-hook, snd-color.
+             after-lisp-graph-hook, snd-color, snd-font, show-bare-x-axis.
   4-Aug:     analog-filter.rb thanks to Mike.
              "scheme" instead of "guile" in various names in inf-snd.el (for gauche).
   3-Aug:     granulated-sound-interp (examp.scm).
