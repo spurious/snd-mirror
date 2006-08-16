@@ -9652,11 +9652,7 @@ static xen_value *cadddr_1(ptree *prog, xen_value **args, int num_args) {return(
 #if HAVE_GUILE
 static xen_value *cdr_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CDR(get_lst(prog, args)), "cdr"));}
 #else
-static xen_value *cdr_1(ptree *prog, xen_value **args, int num_args) 
-{
-  fprintf(stderr,"cdr ~A -> ~A\n", XEN_AS_STRING(get_lst(prog, args)), XEN_AS_STRING(XEN_CDR(get_lst(prog, args))));
-  return(unwrap_xen_object(prog, XEN_CDR(get_lst(prog, args)), "cdr"));
-}
+static xen_value *cdr_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CDR(get_lst(prog, args)), "cdr"));}
 #endif
 
 static xen_value *list_length_1(ptree *prog, xen_value **args, int num_args) 

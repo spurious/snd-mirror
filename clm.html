@@ -1448,6 +1448,7 @@ Another instrument based on similar ideas is:</p>
 
 <p>which gives brass-like sounds!
 We can also get all the period doublings and so on from sin:
+</p>
 <pre>
   (let ((x 0.5)) (map-channel (lambda (y) (let ((val x)) (set! x (* 4 (sin (* pi x)))) val))))
 </pre>

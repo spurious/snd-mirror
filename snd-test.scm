@@ -34377,13 +34377,6 @@ EDITS: 1
 	  (close-sound ind1))
 	(close-sound ind))
 
-      (display-bark-fft)
-      (let ((ind (open-sound "oboe.snd")))
-	(set! (time-graph? ind 0) #f)
-	(update-lisp-graph)
-	(close-sound ind))
-      (undisplay-bark-fft)
-      
       (run-hook after-test-hook 17)
       ))
 

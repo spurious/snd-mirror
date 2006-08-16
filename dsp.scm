@@ -2408,7 +2408,8 @@ and replaces it with the spectrum given in coeffs"
 	    (set! bark-tick-function (1+ bark-tick-function))
 	    (if (> bark-tick-function 2)
 		(set! bark-tick-function 0))
-	    (update-lisp-graph))))
+	    (if (not (null? (sounds)))
+		(update-lisp-graph)))))
     
     ;; user's view of display-bark-fft function
     (lambda* (:optional off)
@@ -2417,13 +2418,15 @@ and replaces it with the spectrum given in coeffs"
 	    (add-hook! lisp-graph-hook display-bark-fft-1)
 	    (add-hook! after-lisp-graph-hook make-bark-labels)
 	    (add-hook! mouse-click-hook choose-bark-ticks)
-	    (update-lisp-graph))
+	    (if (not (null? (sounds)))
+		(update-lisp-graph)))
 	  
 	  (begin
 	    (remove-hook! lisp-graph-hook display-bark-fft-1)
 	    (remove-hook! after-lisp-graph-hook make-bark-labels)
 	    (remove-hook! mouse-click-hook choose-bark-ticks)
-	    (set! (lisp-graph?) #f))))))
+	    (if (not (null? (sounds)))
+		(set! (lisp-graph?) #f)))))))
 
 (define (undisplay-bark-fft) (display-bark-fft #t))
 
