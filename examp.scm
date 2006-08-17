@@ -1556,7 +1556,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 
 ;;; here's a very similar function that uses granular synthesis to move at a varying tempo through a sound
 
-(define* (granulated-sound-interp envelope :optional (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05)  snd chn)
+(define* (granulated-sound-interp envelope :optional (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05) snd chn)
   ;; read sound following envelope (as in env-sound-interp), using grains to create re-tempo'd read
   (let* ((len (frames snd chn))
 	 (newlen (inexact->exact (floor (* time-scale len))))
@@ -1564,8 +1564,8 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 	 (tempfilename (snd-tempnam))
 	 (fil (mus-sound-open-output tempfilename (srate snd) 1 #f mus-next "env-sound-interp temp file"))
 	 ;; #f as data-format -> format compatible with sndlib (so no data translation is needed)
-	 (grain-frames (inexact->exact (round (* grain-length (srate)))))
-	 (hop-frames (inexact->exact (round (* output-hop (srate)))))
+	 (grain-frames (inexact->exact (round (* grain-length (srate snd)))))
+	 (hop-frames (inexact->exact (round (* output-hop (srate snd)))))
 	 (num-readers (1+ (inexact->exact (round (/ grain-length output-hop)))))
 	 (readers (make-vector num-readers #f))
 	 (grain-envs (make-vector num-readers #f))
@@ -1574,7 +1574,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 	 (bufsize 8192)
 	 (data (make-sound-data 1 bufsize))
 	 (data-ctr 0)
-	 (jitter (* (srate) .005)))
+	 (jitter (* (srate snd) .005)))
 
     (do ((i 0 (1+ i)))
 	((= i num-readers))
@@ -2261,7 +2261,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
        val))
    beg dur snd chn edpos #f
    (lambda (frag-beg frag-dur)
-     (let ((incr (/ (* 2 pi freq) (srate))))
+     (let ((incr (/ (* 2 pi freq) (srate snd))))
        (vct (fmod (* frag-beg incr) (* 2 pi)) incr)))
    (format #f "ring-modulate-channel ~A ~A ~A" freq beg dur)))
 

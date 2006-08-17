@@ -135,6 +135,7 @@ need a String or Symbol, not %s"
   end
   
   $after_graph_hook             = Hook.new("$after_graph_hook", 2)
+  $after_lisp_graph_hook        = Hook.new("$after_lisp_graph_hook", 2)
   $lisp_graph_hook              = Hook.new("$lisp_graph_hook", 2)
   $before_transform_hook        = Hook.new("$before_transform_hook", 2)
   $mix_release_hook             = Hook.new("$mix_release_hook", 2)
@@ -262,6 +263,7 @@ end
 
 if defined? $after_graph_hook
   Snd_hooks = [$after_graph_hook,
+               $after_lisp_graph_hook,
                $lisp_graph_hook,
                $before_transform_hook,
                $mix_release_hook,

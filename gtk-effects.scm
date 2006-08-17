@@ -518,7 +518,7 @@
 ;;;
 
 (define* (effects-echo input-samps-1 delay-time echo-amount :optional beg dur snd chn)
-  (let ((del (make-delay (inexact->exact (round (* delay-time (srate))))))
+  (let ((del (make-delay (inexact->exact (round (* delay-time (srate snd))))))
 	(samp 0)
 	(input-samps (or input-samps-1 dur (frames snd chn)))
 	(amp echo-amount))
@@ -532,7 +532,7 @@
 
 (define* (effects-flecho-1 scaler secs input-samps-1 :optional beg dur snd chn)
   (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
-	 (del (make-delay  (inexact->exact (round (* secs (srate))))))
+	 (del (make-delay  (inexact->exact (round (* secs (srate snd))))))
 	 (samp 0)
 	 (input-samps (or input-samps-1 dur (frames snd chn)))
 	 (amp scaler))
@@ -547,7 +547,7 @@
 (define* (effects-zecho-1 scaler secs frq amp-1 input-samps-1 :optional beg dur snd chn)
   (let* ((os (make-oscil frq))
 	 (amp amp-1)
-	 (len (round (inexact->exact (* secs (srate)))))
+	 (len (round (inexact->exact (* secs (srate snd)))))
 	 (del (make-delay len :max-size (+ len amp 1)))
 	 (samp 0)
 	 (input-samps (or input-samps-1 dur (frames snd chn)))
@@ -2111,7 +2111,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
     
 (define* (effects-flange amount speed time :optional beg dur snd chn)
   (let* ((ri (make-rand-interp :frequency speed :amplitude amount))
-	 (len (inexact->exact (round (* time (srate)))))
+	 (len (inexact->exact (round (* time (srate snd)))))
 	 (del (make-delay len :max-size (+ len amount 1))))
     (map-channel (lambda (inval)
 		   (* .75 (+ inval

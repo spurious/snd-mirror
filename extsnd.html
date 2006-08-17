@@ -12585,7 +12585,7 @@ The font variables are:
 <tr><td width=200><code><a class=def name="axislabelfont">axis-label-font</a></code></td><td>used in axis labels</td></tr>
 <tr><td><code><a class=def name="axisnumbersfont">axis-numbers-font</a></code></td><td>used in axis tick numbers</td></tr>
 <tr><td><code><a class=def name="boldpeaksfont">bold-peaks-font</a></code></td><td>used by fft peaks display</td></tr>
-<tr><td><code><a class=def name="peaksfont">peaks-font</a></code></td><td>used by ffy peaks display</td></tr>
+<tr><td><code><a class=def name="peaksfont">peaks-font</a></code></td><td>used by fft peaks display</td></tr>
 <tr><td><code><em class=emdef>listener-font</em></code></td><td>listener font</td></tr>
 <tr><td><code><a class=def name="tinyfont">tiny-font</a></code></td><td>smallest font used</td></tr>
 </table>
@@ -13109,13 +13109,27 @@ This is the graphics context to use to draw a mark (XOR mode).
 This is the graphics context for XOR drawing in the selection color.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
-<!-- PERHAPS: document the actual indices in snd-color and snd-font? -->
+
 <!-- snd-color -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sndcolor">snd-color</a> (choice)</code></td></tr>
 <tr><td></td><td>
 snd-color returns a Snd built-in color (as a Pixel/GdkPixel); it simplifies 
-code that wants to follow whatever the current Snd color choices are.
+code that wants to follow whatever the current Snd color choices are.  The choices are:
+<pre>
+    0: white                   12: listener-color                 24: pushed-button-color
+    1: black                   13: listener-text-color            25: sash-color
+    2: red                     14: basic-color                    26: help-button-color
+    3: yellow                  15: selection-color                27: doit-button-color
+    4: green                   16: zoom-color                     28: doit-again-button-color
+    5: light-blue              17: position-color                 29: quit-button-color
+    6: lighter-blue            18: highlight-color                30: reset-button-color
+    7: data-color              19: enved-waveform-color           31: grid-color
+    8: selected-data-color     20: cursor-color                   32: selected-grid-color
+    9: mark-color              21: text-focus-color
+    10: graph-color            22: filter-control-waveform-color
+    11: selected-graph-color   23: mix-color
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -13124,8 +13138,20 @@ code that wants to follow whatever the current Snd color choices are.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sndfont">snd-font</a> (choice)</code></td></tr>
 <tr><td></td><td>
-snd-font returns a Snd built-in font (as a raw pointer); it simplifies 
-code that wants to follow whatever the current Snd font choices are.
+snd-font returns a Snd built-in font (as a raw pointer, suitable for <a href="#currentfont">current-font</a> but not much else); it simplifies 
+code that wants to follow whatever the current Snd font choices are, but is really aimed at code that wants to use
+just built-in functions like <a href="#currentfont">current-font</a>, and not rely 
+on the <a href="grfsnd.html#sndwithmotif">xm</a> or <a href="grfsnd.html#sndwithgtk">xg</a> modules.
+The choices are:
+<pre>
+    0: <a class=quiet href="#peaksfont">peaks-font</a>
+    1: <a class=quiet href="#boldpeaksfont">bold-peaks-font</a>
+    2: <a class=quiet href="#tinyfont">tiny-font</a>
+    3: <a class=quiet href="#axislabelfont">axis-label-font</a>
+    4: <a class=quiet href="#axisnumbersfont">axis-numbers-font</a>
+    5: <a class=quiet href="#listenerfont">listener-font</a>
+</pre>
+See <a href="sndscm.html#displaybarkfft">display-bark-fft</a> in dsp.scm for an example.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 

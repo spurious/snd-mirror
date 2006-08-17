@@ -138,7 +138,7 @@
 	    (let* ((start (inexact->exact (vct-ref cross-samples i)))
 		   (autolen 0))
 	      (let* ((s0 start)
-		     (pow2 (inexact->exact (ceiling (/ (log (* extension (/ (srate) 40.0))) (log 2)))))
+		     (pow2 (inexact->exact (ceiling (/ (log (* extension (/ (srate snd) 40.0))) (log 2)))))
 		     (fftlen (inexact->exact (expt 2 pow2)))
 		     (len4 (/ fftlen 4))
 		     (data (make-vct fftlen))

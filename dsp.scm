@@ -2065,7 +2065,7 @@ and replaces it with the spectrum given in coeffs"
 	 (intrp 0.0)
 	 (sr srinc)
 	 (tempfile 
-	  (with-sound (:output (snd-tempnam) :srate (srate) :to-snd #f)
+	  (with-sound (:output (snd-tempnam) :srate (srate snd) :to-snd #f)
 	    (run (lambda ()
 		   (do ((samp 0 (1+ samp)))
 		       ((sample-reader-at-end? rd))
@@ -2231,8 +2231,6 @@ and replaces it with the spectrum given in coeffs"
   ;; click in lisp-graph to change the tick placement choice
 
   (let ((bark-fft-size 0)
-	(bark-label-font (snd-font 3))
-	(bark-numbers-font (snd-font 2))
 	(bark-tick-function 0))
 
     (define (bark f) 
@@ -2246,8 +2244,8 @@ and replaces it with the spectrum given in coeffs"
       (+ 43.0 (* 11.17 (log (/ (+ f 312) (+ f 14675))))))
     
     (define (display-bark-fft-1 snd chn)
-      (let* ((ls (left-sample))
-	     (rs (right-sample))
+      (let* ((ls (left-sample snd chn))
+	     (rs (right-sample snd chn))
 	     (fftlen (inexact->exact (expt 2 (inexact->exact (ceiling (/ (log (1+ (- rs ls))) (log 2))))))))
 	(if (> fftlen 0)
 	    (let ((data (channel->vct ls fftlen snd chn))
@@ -2315,7 +2313,7 @@ and replaces it with the spectrum given in coeffs"
 			  (graph (list bark-data mel-data erb-data) 
 				 "ignored" 
 				 20.0 (* 0.5 sr) 
-				 0.0 (if normalized 1.0 (* data-len (y-zoom-slider)))
+				 0.0 (if normalized 1.0 (* data-len (y-zoom-slider snd chn)))
 				 snd chn 
 				 #f show-bare-x-axis)))))))
 	
@@ -2334,16 +2332,17 @@ and replaces it with the spectrum given in coeffs"
 	       (axis-y0 (list-ref axinfo 13))
 	       (axis-y1 (list-ref axinfo 11))
 	       (label-height 15)
-	       (char-width 8) ; TODO: these should depend on the current font size
+	       (char-width 8)
 
 	       (sr2 (* 0.5 (srate snd)))
 	       
-	       (minor-tick-len 6) ; TODO: dependent on overall size
+	       (minor-tick-len 6)
 	       (major-tick-len 12)
 	       (tick-y0 axis-y1)
 	       (minor-y0 (+ axis-y1 minor-tick-len))
 	       (major-y0 (+ axis-y1 major-tick-len))
-	       
+	       (bark-label-font (snd-font 3))
+	       (bark-numbers-font (snd-font 2))
 	       (label-pos (inexact->exact (+ axis-x0 (* .45 (- axis-x1 axis-x0))))))
 	  
 	  (define (scale-position scale f)
@@ -2408,8 +2407,7 @@ and replaces it with the spectrum given in coeffs"
 	    (set! bark-tick-function (1+ bark-tick-function))
 	    (if (> bark-tick-function 2)
 		(set! bark-tick-function 0))
-	    (if (not (null? (sounds)))
-		(update-lisp-graph)))))
+	    (update-lisp-graph snd chn))))
     
     ;; user's view of display-bark-fft function
     (lambda* (:optional off)
@@ -2418,18 +2416,19 @@ and replaces it with the spectrum given in coeffs"
 	    (add-hook! lisp-graph-hook display-bark-fft-1)
 	    (add-hook! after-lisp-graph-hook make-bark-labels)
 	    (add-hook! mouse-click-hook choose-bark-ticks)
-	    (if (not (null? (sounds)))
-		(update-lisp-graph)))
-	  
+	    (for-each (lambda (snd)
+			(do ((c 0 (1+ c)))
+			    ((= c (chans snd)))
+			  (update-lisp-graph snd c)))
+		      (sounds)))
 	  (begin
 	    (remove-hook! lisp-graph-hook display-bark-fft-1)
 	    (remove-hook! after-lisp-graph-hook make-bark-labels)
 	    (remove-hook! mouse-click-hook choose-bark-ticks)
-	    (if (not (null? (sounds)))
-		(set! (lisp-graph?) #f)))))))
+	    (for-each (lambda (snd)
+			(do ((c 0 (1+ c)))
+			    ((= c (chans snd)))
+			  (set! (lisp-graph? snd c) #f)))
+		      (sounds)))))))
 
 (define (undisplay-bark-fft) (display-bark-fft #t))
-
-
-
-
