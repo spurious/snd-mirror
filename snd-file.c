@@ -1129,13 +1129,18 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	  return;
 	}
       /* else I don't know why I got this fam code, but fall through to the update case */
+
     case FAMCreated:
     case FAMMoved:
-      sp->file_unreadable = false;
-      sp->need_update = true;
-      if (auto_update(ss))
-	snd_update(sp);
-      else start_bomb(sp);
+      /* this can be delivered a bit late (and more than once for a given save), so don't set off the bomb icon unless the file is wrong */
+      if (sp->write_date != file_write_date(sp->filename))
+	{
+	  sp->file_unreadable = false;
+	  sp->need_update = true;
+	  if (auto_update(ss))
+	    snd_update(sp);
+	  else start_bomb(sp);
+	}
       break;
 
     default:

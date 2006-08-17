@@ -231,10 +231,19 @@ echo ' '
 ./snd --version
 ./snd -noinit --features "'clm"
 
+echo ' --without-guile --without-ruby g++ '
+./configure --quiet --without-guile --without-ruby CC=g++ CFLAGS="-Wall"
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -noinit --features ":clm :snd-ruby"
+make allclean
+
 echo ' '
 echo ' '
 echo ' --with-forth'
-./configure --with-forth
+./configure --quiet --with-forth
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-forth 'snd-motif"
@@ -281,7 +290,7 @@ make allclean
 echo ' '
 echo ' '
 echo ' --with-gauche'
-./configure --with-gauche
+./configure --quiet --with-gauche
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gauche 'snd-motif"

@@ -2278,13 +2278,23 @@ static XEN g_save_macros(XEN file)
   return(file);
 }
 
-/* TODO: this doesn't display the full prompt */
+/* TODO: this doesn't display the full prompt in motif */
 
 static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd_n, XEN raw)
 {
+  #if HAVE_SCHEME
+    #define prompt_example "(prompt-in-minibuffer \"what?\" (lambda (response) (snd-print response)))"
+  #endif
+  #if HAVE_RUBY
+    #define prompt_example "prompt_in_minibuffer(\"what?\", lambda do | response | snd_print(response) end)"
+  #endif
+  #if HAVE_FORTH
+    #define prompt_example "\"what?\" lambda: { response } response snd-print ; 1 make-proc prompt-in-minibuffer"
+  #endif
+
   #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg (callback #f) (snd #f) (raw #f)): post msg in snd's minibuffer \
 then when the user eventually responds, invoke the function callback, if any, with the response.  If 'raw' is #t, the response is \
-returned as a string; otherwise it is evaluated first as Scheme code."
+passed as a string to the prompt callback function; otherwise it is evaluated first as Scheme code.\n  " prompt_example
 
   snd_info *sp;
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_prompt_in_minibuffer, "a string");
@@ -2321,7 +2331,9 @@ returned as a string; otherwise it is evaluated first as Scheme code."
   make_minibuffer_label(sp, XEN_TO_C_STRING(msg));
   sp->minibuffer_on = MINI_USER;
   sp->prompting = true;
-  goto_minibuffer(sp);
+#if USE_MOTIF
+  goto_minibuffer(sp); /* in gtk this somehow calls activate in the text widget, clearing our prompt? */
+#endif
   return(callback);
 }
 

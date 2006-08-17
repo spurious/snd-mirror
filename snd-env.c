@@ -1552,12 +1552,11 @@ void add_or_edit_symbol(char *name, env *val)
   else XEN_DEFINE_VARIABLE(name, e, env_to_xen(val));
 #endif
 #if HAVE_FORTH || HAVE_GAUCHE
-  /* TODO: check gauche here */
   XEN e;
   if (!val) return;
   if (XEN_DEFINED_P(name))
     e = XEN_VARIABLE_SET(name, env_to_xen(val));
-  else XEN_DEFINE_VARIABLE(name, e, env_to_xen(val));
+  else XEN_DEFINE_VARIABLE(name, e, env_to_xen(val)); /* may need to click 'save' for this to take effect (Gauche) */
 #endif
 }
 

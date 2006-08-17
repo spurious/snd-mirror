@@ -2,8 +2,6 @@
 #include "sndlib-strings.h"
 #include "clm2xen.h"
 
-/* TODO: how could the bomb be displayed after "save"?? (new file, insert, save -> bomb?) */
-
 snd_info *get_sp(XEN x_snd_n, sp_sound_t accept_player)
 {
   /* if x_snd_n is a number, it is sp->index */
@@ -4201,6 +4199,7 @@ where each inner list entry can also be #f."
       ss->apply_choice = APPLY_TO_CHANNEL;
       sp->applying = true;
       ap = (apply_state *)make_apply_state(sp);
+#if HAVE_EXTENSION_LANGUAGE
 #if HAVE_FORTH
       if (!(XEN_NUMBER_P(dur)))
 	ap->origin = mus_format("%s " OFF_TD PROC_SEP PROC_FALSE " %s", 
@@ -4221,6 +4220,7 @@ where each inner list entry can also be #f."
 				   PROC_QUOTE,
 				   XEN_AS_STRING(settings), 
 				   apply_beg, apply_dur);
+#endif
 #endif
 #if HAVE_GUILE_DYNAMIC_WIND
       saved_settings->sp = sp;

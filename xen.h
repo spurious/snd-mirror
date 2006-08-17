@@ -1943,7 +1943,7 @@ bool xen_gauche_hook_p(XEN val);
 #define XEN_APPEND(X, Y) 0
 #define XEN_STRING_P(Arg) 0
 #define XEN_NAME_AS_C_STRING_TO_VALUE(a) 0
-#define XEN_TO_C_STRING(STR) NULL
+#define XEN_TO_C_STRING(STR) "(not a string)"
 #define C_TO_XEN_STRING(a) 0
 #define C_TO_XEN_STRINGN(Str, Len) 0
 #define C_STRING_TO_XEN_SYMBOL(a) 0
@@ -1967,7 +1967,7 @@ bool xen_gauche_hook_p(XEN val);
 #define C_STRING_TO_XEN_FORM(Str) 0
 #define XEN_EVAL_FORM(Form) 0
 #define XEN_EVAL_C_STRING(Arg) 0
-#define XEN_SYMBOL_TO_C_STRING(a) NULL
+#define XEN_SYMBOL_TO_C_STRING(a) "(not a symbol)"
 #define XEN_TO_STRING(Obj) "(unknown)"
 #define XEN_WRAP_C_POINTER(a) 0
 #define XEN_UNWRAP_C_POINTER(a) 0
