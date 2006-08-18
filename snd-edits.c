@@ -3537,9 +3537,9 @@ static void get_sf_closure(snd_fd *sf)
   if (XEN_PROCEDURE_P(proc))
     {
       sf->closure1 = XEN_CALL_2(proc,
-			       C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
-			       C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),
-			       S_ptree_channel " init func");
+				C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
+				C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),
+				S_ptree_channel " init func");
       if (XEN_BOUND_P(sf->closure1))
 	sf->protect1 = snd_protect(sf->closure1);
     }

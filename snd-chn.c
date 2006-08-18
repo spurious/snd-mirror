@@ -2832,15 +2832,18 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
   axis_info *uap = NULL;
   int i;
   axis_context *ax;
+
   sp = cp->sound;
   up = cp->lisp_info;
   if (up) uap = up->axis; else return;
   if ((!uap) || (!uap->graph_active) || (up->len == NULL) || (up->len[0] <= 0)) return;
+
   if (cp->printing) ps_allocate_grf_points();
   if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
     ax = combined_context(cp); 
   else ax = copy_context(cp);
   if (cp->printing) ps_fg(ax);
+
   if (up->env_data)
     {
       int x0, x1, y0, y1;
@@ -6954,11 +6957,13 @@ If 'data' is a list of numbers, it is treated as an envelope."
       (cp->sounds[cp->sound_ctr] == NULL) ||
       (cp->axis == NULL))
     return(XEN_FALSE);
+
   if (XEN_STRING_P(xlabel)) label = copy_string(XEN_TO_C_STRING(xlabel)); 
   if (XEN_NUMBER_P(x0)) nominal_x0 = XEN_TO_C_DOUBLE(x0); else nominal_x0 = 0.0;
   if (XEN_NUMBER_P(x1)) nominal_x1 = XEN_TO_C_DOUBLE(x1); else nominal_x1 = 1.0;
   if (XEN_NUMBER_P(y0)) ymin = XEN_TO_C_DOUBLE(y0);
   if (XEN_NUMBER_P(y1)) ymax = XEN_TO_C_DOUBLE(y1);
+
   if ((!(XEN_LIST_P(ldata))) || 
       (XEN_NUMBER_P(XEN_CAR(ldata))))
     graphs = 1; 

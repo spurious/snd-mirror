@@ -1,6 +1,6 @@
 <html>
 
-<!-- TODO: these need work: edit123 infsnd rtex strad -->
+<!-- TODO: these need work: edit123 rtex strad -->
 <!-- TODO: check pd-*.scm snd-hobbit.scm (rb/fs?) -->
 <!-- SOMEDAY: more mouseovers -->
 
@@ -4833,7 +4833,9 @@ The function that actually passes the url to the reader is <a href="extsnd.html#
 <A NAME="dotemacs"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>inf-snd.el, DotEmacs</h2></td></tr></table>
 
 <p>These two files provide support for Snd as an Emacs subjob.  inf-snd.el is by Michael Scholz,
-and DotEmacs is by Fernando Lopez-Lezcano. Both can be loaded in your ~/.emacs file.
+and DotEmacs is by Fernando Lopez-Lezcano. Both can be loaded in your ~/.emacs file (or ~/.xemacs/init.el if you're
+using xemacs).
+
 DotEmacs sets up "dialects" for various versions of Common Lisp and for Snd, then
 binds C-x C-l to run ACL.  This is intended for CCRMA'S 220 class, but it might
 be of interest to others.  Much fancier is inf-snd.el.  What follows is taken almost
@@ -4958,6 +4960,47 @@ C-u C-c C-i	 snd-help-html	   help on Snd-function (html)
 C-c C-q   	 snd-quit    	   send exit to Snd process
 C-c C-k   	 snd-kill    	   kill Snd process and buffer
 </pre>
+
+<p>If xemacs complains that comint-snapshot-last-prompt is not defined,
+get the latest comint.el; I had to go to the xemacs CVS site since
+Fedora Core 5's xemacs (21.4) had an obsolete copy.  Then scrounge
+around until you find xemacs-packages/xemacs-base/comint.el.
+Don't use the comint.el in the emacs package.  It's not a tragedy
+if this variable isn't defined -- you just don't get a prompt in
+the Snd Emacs window, but things still work.
+If either emacs or
+xemacs complains that it can't find gforth.el, you can find that
+file in the gforth package or site (or perhaps you can comment out
+the line (require 'forth-mode "gforth") in inf-snd.el).  Finally, if temporary-file-directory
+is undefined, you can set it alongside the rest of the variables.
+So, for example, I (Bill S) have the following in my ~/.xemacs/init.el:
+</p>
+<pre>
+(setq load-path
+      (append (list nil 
+		    "/home/bil/cl"
+                    "/home/bil/rpm"               ; comint.el (ignore emacs version)
+		    "/home/bil/test/gforth-0.6.2" ; gforth.el
+		    )
+	      load-path))
+
+(autoload 'run-snd-ruby     "inf-snd" "Start inferior Snd-Ruby process" t)
+(autoload 'run-snd-scheme   "inf-snd" "Start inferior Snd-Scheme process" t)
+(autoload 'run-snd-forth    "inf-snd" "Start inferior Snd-Forth process" t)
+(autoload 'snd-ruby-mode    "inf-snd" "Load snd-ruby-mode." t)
+(autoload 'snd-scheme-mode  "inf-snd" "Load snd-scheme-mode." t)
+(autoload 'snd-forth-mode   "inf-snd" "Load snd-forth-mode." t)
+
+(setq inf-snd-ruby-program-name "~/ruby-snd/snd") ; these are my local Snd's
+(setq inf-snd-scheme-program-name "~/cl/snd")
+(setq inf-snd-forth-program-name "~/forth-snd/snd")
+(setq inf-snd-working-directory "~/cl/")
+(setq inf-snd-index-path "~/cl/")
+(setq inf-snd-working-directory   "~/cl/")
+(setq inf-snd-index-path          "~/cl/")
+(setq temporary-file-directory    "~/zap/")
+</pre>
+
 <br>
 
 

@@ -2250,7 +2250,8 @@ and replaces it with the spectrum given in coeffs"
 	(if (> fftlen 0)
 	    (let ((data (channel->vct ls fftlen snd chn))
 		  (normalized (not (= (transform-normalization snd chn) dont-normalize)))
-		  (linear #t))                               ; can't currently show lisp graph in dB
+		  (linear #t))                               ; can't currently show lisp graph in dB 
+	      ;; snd-axis make_axes: WITH_LOG_Y_AXIS, but LINEAR currently in snd-chn.c 3250
 	      (if (vct? data)
 		  (let ((fft (snd-spectrum data              ; returns fftlen / 2 data points
 					   (fft-window snd chn) fftlen linear 

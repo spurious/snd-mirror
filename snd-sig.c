@@ -3819,7 +3819,6 @@ the current sample, the vct returned by 'init-func', and the current read direct
       if ((!ptrees_present) && (XEN_REQUIRED_ARGS_OK(proc, 3)))
 	pt = form_to_ptree_3_f(proc_and_list); /* caller forgot init_func, but maybe it's ok anyway */
                                                /* (ptree-channel (lambda (y data dir) (* y 2))) */
-                                               /* TODO: add to snd-test (and why is it needed in gauche?) */
     }
   if (pt)
     {
