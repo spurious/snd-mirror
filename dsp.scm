@@ -2321,7 +2321,6 @@ and replaces it with the spectrum given in coeffs"
 	#f)) ; not pixel list or thunk
     
     (define (make-bark-labels snd chn)
-      
       ;; at this point the x axis has no markings, but there is room for labels and ticks
       
       (let ((old-foreground-color (foreground-color snd chn copy-context)))
@@ -2334,9 +2333,7 @@ and replaces it with the spectrum given in coeffs"
 	       (axis-y1 (list-ref axinfo 11))
 	       (label-height 15)
 	       (char-width 8)
-
 	       (sr2 (* 0.5 (srate snd)))
-	       
 	       (minor-tick-len 6)
 	       (major-tick-len 12)
 	       (tick-y0 axis-y1)

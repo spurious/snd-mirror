@@ -94,7 +94,7 @@
 		(if (not (pvoc-in-data pv))
 		    (begin
 		      (set-pvoc-in-data pv (make-vct N))
-		      (vct-map! (pvoc-in-data pv) input))
+		      (vct-map! (pvoc-in-data pv) (lambda () (input)))) ; extra thunk wrapper is for Gauche
 		    (let ((indat (pvoc-in-data pv)))
 		      ;; extra loop here since I find the optimized case confusing (we could dispense with the data move)
 		      (vct-move! indat 0 D)
@@ -154,7 +154,7 @@
 ;;;   (let* ((ind (open-sound "oboe.snd"))
 ;;;	     (pv (make-pvocoder 256 4 64))
 ;;;	     (rd (make-sample-reader 0)))
-;;;	(map-channel (lambda (y) (pvocoder pv rd))))
+;;;	(map-channel (lambda (y) (pvocoder pv (lambda () (rd)))))
 
 
 #|

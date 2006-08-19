@@ -140,15 +140,17 @@ int mus_set_array_print_length(int val) {if (val >= 0) array_print_length = val;
 
 static char *float_array_to_string(Float *arr, int len, int loc)
 {
+  #define MAX_NUM_SIZE 32
   char *base, *str;
-  int i, lim, k, size = 128;
+  int i, lim, k, size = 256;
   if (arr == NULL) 
     {
       str = (char *)CALLOC(4, sizeof(char));
       sprintf(str, "nil");
       return(str);
     }
-  if ((array_print_length * 12) > size) size = array_print_length * 12;
+  lim = (array_print_length + 4) * MAX_NUM_SIZE; /* 4 for possible bounds below */
+  if (lim > size) size = lim;
   base = (char *)CALLOC(size, sizeof(char));
   str = (char *)CALLOC(STR_SIZE, sizeof(char));
   sprintf(base, "[");
@@ -159,7 +161,7 @@ static char *float_array_to_string(Float *arr, int len, int loc)
     {
       mus_snprintf(str, STR_SIZE, "%.3f ", arr[k]);
       strcat(base, str);
-      if ((int)(strlen(base) + 32) > size)
+      if ((int)(strlen(base) + MAX_NUM_SIZE) > size)
 	{
 	  base = (char *)REALLOC(base, size * 2 * sizeof(char));
 	  base[size] = 0;
@@ -224,21 +226,22 @@ static char *clm_array_to_string(mus_any **gens, int num_gens, char *name, char 
 
 static char *int_array_to_string(int *arr, int num_ints, char *name)
 {
+  #define MAX_INT_SIZE 32
   char *descr = NULL;
   if ((arr) && (num_ints > 0))
     {
       int i, len;
       char *intstr;
-      len = num_ints * 32 + 64;
+      len = num_ints * MAX_INT_SIZE + 64;
       descr = (char *)CALLOC(len, sizeof(char));
-      intstr = (char *)CALLOC(32, sizeof(char));
+      intstr = (char *)CALLOC(MAX_INT_SIZE, sizeof(char));
       mus_snprintf(descr, len, "%s[%d]: (", name, num_ints);      
       for (i = 0; i < num_ints - 1; i++)
 	{
-	  mus_snprintf(intstr, 32, "%d ", arr[i]);
+	  mus_snprintf(intstr, MAX_INT_SIZE, "%d ", arr[i]);
 	  strcat(descr, intstr);
 	}
-      mus_snprintf(intstr, 32, "%d)", arr[num_ints - 1]);
+      mus_snprintf(intstr, MAX_INT_SIZE, "%d)", arr[num_ints - 1]);
       strcat(descr, intstr);
       FREE(intstr);
     }

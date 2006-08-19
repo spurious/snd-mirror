@@ -633,6 +633,11 @@ colormap of the entire system is hijacked while Snd is running.
 
 ---- Mac OSX: ---- 
 
+Gtk is being ported to the Mac as a native (non-X11) library, so
+as soon as that is available to developers, I'll try to build Snd.
+Until then, you can use either Motif or Gtk running under X11.
+
+
 First, install the X11SDK and X11User packages.  The first is in one
 of the Installer directories, the second (in 10.4) is on the first
 install disk under System/Installation/Packages/X11User.pkg or some 

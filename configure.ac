@@ -1846,7 +1846,8 @@ if test "$PATH_WAVPACK" != "no" ; then
   fi
 fi
   
-
+# other decoders that I've looked at aren't acceptable in this context because they put various
+#   special restrictions on use, or hide source code, or are just nuts.
 
 
 

@@ -48,7 +48,6 @@
 /* TODO: (gauche)   stacktrace and errors->listener (current-load-history)
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
  * TODO: (gauche)   unwind-protects around scm_apply (snd-xen g_call)
- * TODO: (gauche)   memory trouble (double free -> segfault) [if all-args?] in snd-test 8 (gets "GC out of memory" so needs environ sets)
  * TODO: (forth)    prefs can't find extensions.fs? can't figure this one out -- data stack confusion?
  * TODO: (forth)    if segfault, infinite tight loop -- must kill from some other machine!
  *
@@ -2103,11 +2102,8 @@ static XEN g_eval_string(XEN str)
 {
   char *cstr;
   cstr = XEN_TO_C_STRING(str);
-  if (str)
-    {
-      fprintf(stderr,"eval[%d]: %s\n", snd_strlen(cstr), cstr);
-      return(XEN_EVAL_C_STRING(cstr));
-    }
+  if (cstr)
+    return(XEN_EVAL_C_STRING(cstr));
   return(XEN_FALSE);
 }
 XEN_NARGIFY_1(g_eval_string_w, g_eval_string)
@@ -2203,7 +2199,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
   XEN_DEFINE_CONSTANT("internal-time-units-per-second", 100, "clock speed");
   XEN_DEFINE_PROCEDURE("ftell", g_ftell_w, 1, 0, 0, "(ftell fd) -> lseek");
-  XEN_DEFINE_PROCEDURE("eval-string", g_eval_string, 1, 0, 0, "eval a string");
+  XEN_DEFINE_PROCEDURE("eval-string", g_eval_string_w, 1, 0, 0, "eval a string");
 #endif
 
 #if HAVE_SCHEME
