@@ -1,9 +1,9 @@
 \ -*- snd-forth -*-
 \ draw.fs -- draw.scm -> draw.fs
 
-\ Author: Michael Scholz <scholz-micha@gmx.de>
+\ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 23:36:09 CET 2005
-\ Changed: Thu Mar 02 11:27:13 CET 2006
+\ Changed: Sun Aug 20 00:58:23 CEST 2006
 
 \ Commentary:
 
@@ -27,7 +27,7 @@ hide
 : update-current-window-location ( snd -- #f )
   { snd }
   current-window-display-is-running if
-    snd channels 0 do
+    snd channels 0 ?do
       'inset-envelope snd i channel-property { vals }
       \ set edit-position to impossible value to force a re-read
       vals if vals 'edit-position -2 hash-set! then
@@ -209,7 +209,7 @@ hide
 
 : install-current-window-location ( snd -- )
   { snd }
-  snd channels 0 do
+  snd channels 0 ?do
     'inset-envelope snd i set-channel-property-save-state-ignore drop
     snd i undo-hook snd i undo-cb add-hook!
   loop
@@ -237,7 +237,7 @@ and where the current window fits in it."
     mouse-click-hook ['] click-current-window-location   remove-hook! drop
     update-hook      ['] update-current-window-location  remove-hook! drop
     sounds each { snd }
-      snd channels 0 do snd i undo-hook ['] undo-cb remove-hook! drop loop
+      snd channels 0 ?do snd i undo-hook ['] undo-cb remove-hook! drop loop
     end-each
   then
 ;

@@ -1,8 +1,8 @@
 \ dsp.fs -- dsp.scm|rb --> dsp.fs
 
-\ Author: Michael Scholz <scholz-micha@gmx.de>
+\ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Thu Mar 02 11:27:31 CET 2006
+\ Changed: Sun Aug 20 00:58:34 CEST 2006
 
 \ Commentary:
 
@@ -118,7 +118,7 @@ previous
   rl im rectangular->polar drop
   rl fftscale vct-scale! drop
   im 0 0.0 vct-set! drop
-  fftlen2 1 do
+  fftlen2 1 ?do
     im i  func  '( im i  object-ref )  run-proc  object-set!
     im i negate im i negate object-ref fnegate   object-set!	\ handles negative index
   loop

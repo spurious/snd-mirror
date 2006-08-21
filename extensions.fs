@@ -1,9 +1,9 @@
 \ -*- snd-forth -*-
 \ extensions.fs -- extensions.scm -> extensions.fs
 
-\ Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+\ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Thu Apr 13 17:01:32 CEST 2006
+\ Changed: Sun Aug 20 00:59:54 CEST 2006
 
 \ Commentary:
 

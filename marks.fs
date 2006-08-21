@@ -1,9 +1,9 @@
 \ -*- snd-forth -*-
 \ marks.fs -- marks.scm|rb -> marks.fs
 
-\ Author: Michael Scholz <scholz-micha@gmx.de>
+\ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Thu Mar 02 11:28:47 CET 2006
+\ Changed: Sun Aug 20 01:00:22 CEST 2006
 
 \ Commentary:
 \
@@ -82,7 +82,7 @@ Returns a description of the movements of mark ID over the channel's edit histor
       else
 	#f
       then
-      array-push to descr
+      array-push drop
     loop
     descr
   else

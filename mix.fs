@@ -1,9 +1,9 @@
 \ -*- snd-forth -*-
 \ mix.fs -- mix.scm -> mix.fs
 
-\ Translator: Michael Scholz <scholz-micha@gmx.de>
+\ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Thu Mar 02 11:28:56 CET 2006
+\ Changed: Sun Aug 20 01:00:35 CEST 2006
 
 \ Commentary:
 \
@@ -22,7 +22,7 @@
 \ snap-mix-to-beat     ( at-tag-position -- )
 \
 \ mix-properties       ( id -- props )
-\ set-mix-properties   (id val -- )
+\ set-mix-properties   ( id val -- )
 \ mix-property         ( key id -- val )
 \ set-mix-property     ( key val id -- )
 \ mix-name             ( id -- name )
@@ -313,7 +313,7 @@ hide
   { id }
   :zero id mix-property not if
     id mix-chans 1- 0.0 make-array map! id i mix-amp end-map :amps swap id set-mix-property
-    id mix-chans 0 do id i 0.0 set-mix-amp drop loop
+    id mix-chans 0 ?do id i 0.0 set-mix-amp drop loop
     :zero #t id set-mix-property
   else
     :amps id mix-property dup false? if drop #() then each id i rot set-mix-amp drop end-each
@@ -406,11 +406,11 @@ previous
 	:comment $" written by save-track" _ open-sound-file to fd
 	trk track-position { pos }
 	trk track-frames chans * 0 make-vct to v
-	chans 0 do
+	chans 0 ?do
 	  trk i track-frames { chan-len }
 	  trk i track-position pos - { chan-pos }
 	  trk i 0 make-track-sample-reader { reader }
-	  chan-len 0 do
+	  chan-len 0 ?do
 	    v i chans chan-pos j + * + reader read-track-sample vct-set! drop
 	  loop
 	loop
@@ -459,7 +459,7 @@ track-id '( 0.1 0.2 0.3 0.3 0.2 0.1 ) filter-track"
   trk track? if
     fir-filter-coeffs length { order }
     fir-filter-coeffs list->vct { fir-vct }
-    trk track-chans 0 do
+    trk track-chans 0 ?do
       trk i track-position { beg }
       trk i track-frames { dur }
       order fir-vct make-fir-filter { flt }
@@ -523,13 +523,13 @@ mix-click-hook ' mix-click-info 1 make-proc add-hook!"
     $"         track: %s\n" '( id mix-track ) string-format
     info-string swap << to info-string
   then
-  $"       scalers: %s\n" id mix-chans 0 do
+  $"       scalers: %s\n" id mix-chans 0 ?do
     id i mix-amp
   loop id mix-chans >list 1 >list string-format
   info-string swap << to info-string
   $"         speed: %.3f\n" '( id mix-speed ) string-format
   info-string swap << to info-string
-  $"          envs: %s\n" id mix-chans 0 do
+  $"          envs: %s\n" id mix-chans 0 ?do
     id i mix-amp-env
   loop id mix-chans >list 1 >list string-format
   info-string swap << to info-string

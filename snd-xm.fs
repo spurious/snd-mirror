@@ -1,9 +1,9 @@
 \ -*- snd-forth -*-
 \ snd-xm.fs -- snd-motif.scm|snd-xm.rb --> snd-xm.fs
 
-\ Author: Michael Scholz <scholz-micha@gmx.de>
+\ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Thu Mar 02 11:29:48 CET 2006
+\ Changed: Sun Aug 20 01:01:40 CEST 2006
 
 \ Commentary:
 \
@@ -68,7 +68,7 @@ require examp
 : black-pixel  ( -- pix ) current-screen FBlackPixelOfScreen ;
 : screen-depth ( -- n )   current-screen FDefaultDepthOfScreen ;
 
-\ --- apply func to every widget belonging to w (and w) ---
+\ --- apply func to every widget belonging to w ---
 
 : for-each-child { wid xt -- }
   doc" ( widget xt -- )  Applies XT to WIDGET and each of its children."
@@ -82,8 +82,7 @@ hide
 : children->array-xt ( ary -- xt; child self -- )
   lambda-create , latestxt
  does> ( child self -- )
-  { child self }
-  self @ child array-push self !
+  ( self ) @ swap ( child ) array-push drop
 ;
 set-current
 : children->array ( widget -- array )
@@ -106,15 +105,13 @@ Returns a widget named NAME, if one can be found in the widget hierarchy beneath
   end-each unless 'no-such-widget '( get-func-name name ) fth-throw then
 ;
 
-: widget-exists? ( widget name -- f )
-  { widget name }
-  #f widget children->array each { w } w FXtName name string= if not leave then end-each
+: widget-exists? { widget name -- f }
+  #f widget children->array each ( w ) FXtName name string= if not leave then end-each
 ;
 : main-widget-exists? ( name -- f ) main-widgets cadr swap widget-exists? ;
 
 hide
-: display-widget ( widget spaces -- )
-  { widget n }
+: display-widget { widget n -- }
   widget FXtName empty? if
     $" <unnamed>"
   else
@@ -161,30 +158,26 @@ previous
   
 \ --- add our own pane to the channel section ---
 
-: add-channel-pane ( snd chn name type args -- wid )
-  { snd chn name typ args }
+: add-channel-pane { snd chn name typ args -- wid }
   name typ snd chn channel-widgets 7 list-ref FXtParent FXtParent args undef FXtCreateManagedWidget
 ;
 
 \ --- add our own pane to the sound section (underneath the controls in this case) ---
 
-: add-sound-pane ( snd name type args -- wid )
-  { snd name typ args }
+: add-sound-pane { snd name typ args -- wid }
   name typ snd sound-widgets car args undef FXtCreateManagedWidget
 ;
 
 \ --- add our own pane to the overall Snd window (underneath the listener in this case) ---
 
-: add-main-pane ( name type args -- wid )
-  { name typ args }
+: add-main-pane { name typ args -- wid }
   main-widgets 5 list-ref dup unless drop main-widgets 3 list-ref then { parent }
   name typ parent args undef FXtCreateManagedWidget
 ;
 
 \ --- add a widget at the top of the listener ---
 
-: add-listener-pane ( name type args -- wid )
-  { name typ args }
+: add-listener-pane { name typ args -- wid }
   main-widgets cadr $" lisp-listener" find-child { listener }
   listener FXtParent { listener-scroll }
   listener-scroll FXtParent { listener-form }
@@ -228,8 +221,7 @@ hide
 #() value mark-list-lengths
 #() value mark-lists
 
-: find-mark-list ( snd chn dats -- lst )
-  { snd chn dats }
+: find-mark-list { snd chn dats -- lst }
   #f					\ flag
   dats each { dat }
     snd dat car  =
@@ -240,11 +232,8 @@ hide
     then
   end-each
 ;
-
 : mark-list-length ( snd chn -- len ) mark-list-lengths find-mark-list dup unless drop 0 then ;
-
-: set-mark-list-length ( snd chn len -- )
-  { snd chn len }
+: set-mark-list-length { snd chn len -- }
   mark-list-lengths each { dat }
     snd dat car  =
     chn dat cadr = && if
@@ -254,47 +243,26 @@ hide
   end-each
   mark-list-lengths '( snd chn len ) array-push drop
 ;
-
-: mark-list ( snd chn -- lst )
-  mark-lists find-mark-list dup if caddr else drop '() then
-;
-
-: set-mark-list ( snd chn lst -- )
-  { snd chn lst }
-  mark-lists '( snd chn lst ) array-push drop
-;
-
-: deactivate-channel ( snd chn -- )
-  { snd chn }
+: mark-list ( snd chn -- lst ) mark-lists find-mark-list dup if caddr else drop '() then ;
+: set-mark-list { snd chn lst -- } mark-lists '( snd chn lst ) array-push drop ;
+: deactivate-channel { snd chn -- }
   snd chn mark-list-length 0>
   snd chn mark-list FWidget? && if
     snd chn mark-list '( FXmNchildren 0 ) FXtVaGetValues cadr each FXtUnmanageChild drop end-each
   then
 ;
-
 : marks-focus-cb        ( w c i -- ) 2drop '( FXmNbackground white-pixel ) FXtVaSetValues drop ;
 : marks-losing-focus-cb ( w c i -- ) 2drop '( FXmNbackground basic-color ) FXtVaSetValues drop ;
-
-: marks-activate-cb ( w c i -- )
-  { w c info }
+: marks-activate-cb { w c info -- }
   w '( FXmNuserData 0 ) FXtVaGetValues cadr { id }
   w '( FXmNvalue 0 )    FXtVaGetValues cadr { txt }
   txt string? txt length 0> && if txt string->number else #f then { samp }
   samp if id samp set-mark-sample else id delete-mark then drop
   w '( FXmNbackground basic-color ) FXtVaSetValues drop
 ;
-
-: marks-enter-cb ( w c i f -- )
-  { w c i f }
-  mouse-enter-text-hook '( w ) run-hook drop
-;
-: marks-leave-cb ( w c i f -- )
-  { w c i f }
-  mouse-leave-text-hook '( w ) run-hook drop
-;
-
-: make-mark-list ( snd chn -- )
-  { snd chn }
+: marks-enter-cb { w c i f -- } mouse-enter-text-hook '( w ) run-hook drop ;
+: marks-leave-cb { w c i f -- } mouse-leave-text-hook '( w ) run-hook drop ;
+: make-mark-list { snd chn -- }
   snd chn mark-list-length { cur-len }
   snd chn deactivate-channel
   snd chn mark-list FWidget? unless
@@ -353,17 +321,8 @@ hide
   end-each
   #f
 ;
-
-: remark ( id snd chn reason -- )
-  { id snd chn reason }
-  snd chn make-mark-list
-;
-
-: unremark ( snd -- )
-  { snd }
-  snd channels 0 ?do snd i deactivate-channel loop
-;
-
+: remark { id snd chn reason -- } snd chn make-mark-list ;
+: unremark { snd -- } snd channels 0 ?do snd i deactivate-channel loop ;
 : marks-edit-cb ( snd chn -- proc; self -- )
   lambda-create , , latestxt 0 make-proc
  does> ( self -- )
@@ -372,19 +331,13 @@ hide
   self cell+ @ { snd }
   snd chn mark-list FWidget? if snd chn make-mark-list then
 ;
-
-: open-remarks ( snd -- )
-  { snd }
+: open-remarks { snd -- }
   snd channels 0 ?do
     snd i after-edit-hook snd i marks-edit-cb add-hook!
     snd i undo-hook       snd i marks-edit-cb add-hook!
   loop
 ;
-
-: marks-update-proc ( snd -- )
-  { snd }
-  snd channels 0 ?do snd i make-mark-list loop
-;
+: marks-update-proc { snd -- } snd channels 0 ?do snd i make-mark-list loop ;
 : marks-update-cb ( snd -- proc ) ['] marks-update-proc 1 make-proc ;
 set-current
 : add-mark-pane ( -- )
@@ -401,8 +354,7 @@ previous
 hide
 24.0 value smpte-frames-per-second
 
-: smpte-label ( samp sr -- str )
-  { samp sr }
+: smpte-label { samp sr -- str }
   samp sr f/ { secs }
   secs smpte-frames-per-second f* { frms }
   secs 60.0 f/ floor { mins }
@@ -479,12 +431,11 @@ previous
 hide
 #() value labelled-snds
 
-: kmg ( num -- str )
-  { num }
+: kmg { num -- str }
   num 0<= if
     $" disk full!" _
   else
-    nil { str }
+    "" { str }
     num 1024 > if
       num 1024 1024 * > if
 	$" space: %6.3fG" _ '( num 1024.0 1024.0 f* f/ ) string-format
@@ -498,13 +449,12 @@ hide
   then
 ;
 
-: show-label ( data id -- )
-  { data id }
+: show-label { data id -- }
   data car nil? unless
     data car   { snd }
     data cadr  { wid }
     data caddr { app }
-    snd sound? if wid  snd file-name disk-kspace kmg  change-label then
+    snd sound? if wid  snd file-name disk-kspace kmg change-label then
     app 10000 running-word ( recurse doesn't work here ) 2 make-proc data FXtAppAddTimeOut drop
   then
 ;

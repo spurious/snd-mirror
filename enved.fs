@@ -1,9 +1,9 @@
 \ -*- snd-forth -*-
 \ enved.fs -- enved object type
 
-\ Author: Michael Scholz <scholz-micha@gmx.de>
+\ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Nov 13 13:59:42 CET 2005
-\ Changed: Tue Apr 04 17:52:34 CEST 2006
+\ Changed: Sun Aug 20 00:59:25 CEST 2006
 
 \ Commentary:
 

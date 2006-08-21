@@ -1,8 +1,8 @@
 \ clm.fs -- clm related base words -*- snd-forth -*-
 
-\ Author: Michael Scholz <scholz-micha@gmx.de>
+\ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Sat Jun 24 19:58:05 CEST 2006
+\ Changed: Sun Aug 20 00:57:47 CEST 2006
 
 \ Commentary:
 \ 
@@ -21,6 +21,7 @@
 \
 \ make-default-comment ( -- str )
 \ times->samples       ( start dur -- len beg )
+\ normalize-partials   ( parts -- parts' )
 \ run                  ( start dur -- )
 \ run-instrument       ( start dur args -- )
 \ end-run              ( value -- )
@@ -52,7 +53,7 @@ dl-load sndlib Init_sndlib
   : open-sound   ( name -- snd )      drop #f ;
   : update-sound ( snd )              drop #f ;
   : find-sound   ( name nth -- snd ) 2drop #f ;
-  : channels     ( snd -- chns )      drop 0 ;
+  : channels     ( snd -- chns )      drop 0  ;
   : play         ( start snd chn syncd end pos stop-proc outchan -- f ) stack-reset #f ;
   ' play alias play-and-wait
 [then]
@@ -253,18 +254,30 @@ mus-audio-default value *clm-device*
   $" Written on %s by %s at %s using clm (fth) of %s" _
   '( date $" USER" getenv hostname fth-date ) string-format
 ;
-: times->samples ( start dur -- len beg )
-  { start dur }
+: times->samples { start dur -- len beg }
   start seconds->samples { beg }
   dur seconds->samples { len }
-  beg len + beg
+  beg len b+ beg
 ;
-: run ( start dur -- ) postpone times->samples postpone ?do ; immediate
+
+: normalize-partials { parts -- parts' }
+  0.0
+  parts length 1 ?do parts i object-ref fabs f+ 2 +loop
+  dup f0= if
+    $" all parts have 0.0 amplitude: %s" '( parts ) string-format warning
+    drop
+  else
+    1/f { scl }
+    parts length 1 ?do parts i scl object-set*! 2 +loop
+  then
+  parts
+;
 
 \ === With-Sound Run-Instrument ===
+: run ( start dur -- ) postpone times->samples postpone ?do ; immediate
+
 hide
-: (set-locsig) ( args -- )
-  { args }
+: (set-locsig) { args -- }
   args hash? unless #{} to args then
   save-stack { s }
   :degree   args :degree   hash-ref             0.0 ||
@@ -363,7 +376,7 @@ hide
 : .maxamps ( fname name srate -- )
   { fname name sr }
   fname mus-sound-maxamp { vals }
-  vals length 0 do
+  vals length 0 ?do
     $" \\ %*s %c: %.3f (near %.3f secs)\n"
     '( 6 name
        [char] A i 2/ +
@@ -419,8 +432,7 @@ previous
   dac-fd mus-audio-close drop
 ;
 
-: record-sound ( file dur -- )
-  { fname dur }
+: record-sound { fname dur -- }
   dur seconds->samples { frms }
   *clm-device* { device }
   *clm-rt-bufsize* frms min { bufsize }
@@ -528,6 +540,8 @@ hide
 ;
 set-current
 
+$" with-sound error" create-exception with-sound-error
+
 \ Usage: ' resflt-test with-sound
 \        ' resflt-test :play #f :channels 2 with-sound
 \        lambda: resflt-test ; :output "resflt.snd" with-sound
@@ -601,12 +615,11 @@ set-current
   then
   make-timer { tm }
   tm start-timer
-  body-xt #t nil fth-catch { ret }	\ #f or '( exception args ... )
-  ret list? if
+  body-xt #t nil fth-catch ?dup-if ( res )
     *output* mus-close drop
     *reverb* if *reverb* mus-close drop then
     ws-reset
-    ret object->string error exit
+    ( res ) 'with-sound-error get-func-name rot cadr 2 >list fth-throw
   then
   reverb-xt if
     *reverb* mus-close drop
@@ -615,12 +628,11 @@ set-current
     *reverb* file->sample? unless
       'forth-error '( get-func-name $" cannot open file->sample" _ rev-name ) fth-throw
     then
-    0.0 dur decay-time f+ reverb-data reverb-xt #t nil fth-catch to ret
-    ret list? if
+    0.0 dur decay-time f+ reverb-data reverb-xt #t nil fth-catch ?dup-if ( res )
       *reverb* mus-close drop
       *output* mus-close drop
       ws-reset
-      ret object->string error exit
+      ( res ) 'with-sound-error get-func-name rot cadr 2 >list fth-throw
     then
     *reverb* mus-close drop
   then

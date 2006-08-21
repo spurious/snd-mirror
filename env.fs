@@ -1,9 +1,9 @@
 \ -*- snd-forth -*-
 \ env.fs -- env.scm -> env.fs
 
-\ Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+\ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Thu Oct 27 04:51:42 CEST 2005
-\ Changed: Thu Mar 02 11:28:06 CET 2006
+\ Changed: Sun Aug 20 00:59:12 CEST 2006
 
 \ Commentary:
 \
@@ -120,7 +120,7 @@ Maps XT over the breakpoints in ENV1 and ENV2 returning a new envelope."
     else
       en1 xs (at0) { ee1 }
       en2 xs (at0) { ee2 }
-      xs array-uniq ['] fnumb-cmp array-sort! to xs
+      xs array-uniq! ['] fnumb-cmp array-sort! drop
       xs length 2* 0.0 make-array to en3
       xs each { x }
 	en3 i 2* x array-set!
@@ -153,12 +153,12 @@ Maps XT over the breakpoints in ENV1 and ENV2 returning a new envelope."
 
 : max-envelope { en -- r }
   doc" ( env -- r )  Returns max y value in ENV."
-  en 1 object-ref en length 1 do en i object-ref fmax 2 +loop
+  en 1 object-ref en length 1 ?do en i object-ref fmax 2 +loop
 ;
 
 : min-envelope { en -- r }
   doc" ( env -- r )  Returns min y value in ENV."
-  en 1 object-ref en length 1 do en i object-ref fmin 2 +loop
+  en 1 object-ref en length 1 ?do en i object-ref fmin 2 +loop
 ;
 
 : envelope-length ( env -- n )
@@ -193,7 +193,7 @@ ENV may be a list, a vct, or an array.\n\
   old-dec float? if
     old-dec old-att f= if old-dec 0.000001e last-x f* f+ to old-dec then
   then
-  len 1- 2 do
+  len 1- 2 ?do
     fn i object-ref { x1 }
     fn i 1+ object-ref { y1 }
     x0 old-att f<
@@ -248,7 +248,7 @@ ENV may be a list, a vct, or an array.\n\
   doc" ( env1 scaler -- env2 )  \
 Scales y axis values by SCALER.  ENV1 may be a list, a vct, or an array."
   en1 envelope-copy { en2 }
-  en2 length 1 do en2 i scl object-set*! 2 +loop
+  en2 length 1 ?do en2 i scl object-set*! 2 +loop
   en2
 ;
 

@@ -1,9 +1,9 @@
 \ -*- snd-forth -*-
 \ effects.fs -- effects.scm -> effects.fs
 
-\ Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+\ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Thu Mar 02 11:27:51 CET 2006
+\ Changed: Sun Aug 20 00:58:58 CEST 2006
 
 \ Commentary:
 \

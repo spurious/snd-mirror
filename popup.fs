@@ -1,9 +1,9 @@
 \ -*- snd-forth -*-
 \ popup.fs -- popup.scm|rb --> popup.fs
 
-\ Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+\ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Sun Mar 26 17:39:36 CEST 2006
+\ Changed: Sun Aug 20 01:00:59 CEST 2006
 
 \ Commentary:
 
@@ -399,7 +399,7 @@ hide
   -1.0 scale-selection-by drop
 ;
 
-lambda: ( -- menu )
+let: ( -- menu )
   #{ 'stopping #f 'stopping1 #f 'stop-widget #f 'stop-widget1 #f } { vars }
   stop-playing-selection-hook vars sel-stop-play-cb add-hook!
   $" selection-popup" main-widgets caddr
@@ -421,7 +421,7 @@ lambda: ( -- menu )
      #( $" Reverse"          _ #f         sel-rev          #f )
      #( $" Mix"              _ #f         sel-mix          #f )
      #( $" Invert"           _ #f         sel-invert       #f ) ) make-popup-menu
-; execute value selection-popup-menu
+;let value selection-popup-menu
 
 \ --- time domain popup ---
 
@@ -708,15 +708,15 @@ lambda: ( -- menu )
   lambda-create latestxt 3 make-proc
  does> ( w c i self -- )
   2drop 2drop
-  [char] j 4 graph-popup-snd graph-popup-chn key drop \ C-x C-j
+  [char] j 4 graph-popup-snd graph-popup-chn key drop \ C-j
 ;
 
 : plastmrk-cb ( -- proc; w c i self -- )
   lambda-create latestxt 3 make-proc
  does> ( w c i self -- )
   2drop 2drop
-  [char] - 4 graph-popup-snd graph-popup-chn key drop \ C-x C--
-  [char] j 4 graph-popup-snd graph-popup-chn key drop \ C-x C-j
+  [char] - 4 graph-popup-snd graph-popup-chn key drop \ C--
+  [char] j 4 graph-popup-snd graph-popup-chn key drop \ C-j
 ;
 
 : exit-cb ( -- proc; w c i self -- )
@@ -726,7 +726,7 @@ lambda: ( -- menu )
   0 snd-exit drop
 ;
 
-lambda: ( -- menu )
+let: ( -- menu )
   #{ 'stopping #f 'stop-widget #f } { vars }
   stop-playing-hook vars stop-playing-cb add-hook!
   $" graph-popup" main-widgets caddr
@@ -761,7 +761,7 @@ lambda: ( -- menu )
      #( $" To last mark"     _ #f         plastmrk-cb   #f )
      #( $" sep"                'separator #f            #f )
      #( $" Exit"             _ #f         exit-cb       #f ) ) make-popup-menu
-; execute value graph-popup-menu
+;let value graph-popup-menu
 
 : graph-popup-xt ( snd chn -- xt; widget self -- )
   lambda-create , , latestxt
@@ -1040,7 +1040,7 @@ lambda: ( lst -- )
   #t orientation-dialog drop
 ;
 
-lambda: ( -- menu )
+let: ( -- menu )
   $" fft-popup" main-widgets caddr
   #( #( $" Transform"        _ 'label     #f            #f )
      #( $" sep"                'separator #f            #f )
@@ -1055,7 +1055,7 @@ lambda: ( -- menu )
      #( $" Wavelet type"     _ 'cascade   typ-labs      typ-set )
      #( $" Color"            _ #f         fft-color     #f )
      #( $" Orientation"      _ #f         fft-orient    #f ) ) make-popup-menu
-; execute value fft-popup-menu
+;let value fft-popup-menu
 
 : fft-popup-xt ( snd chn -- xt; widget self -- )
   lambda-create , , latestxt
@@ -1176,7 +1176,7 @@ lambda: ( lst -- ) drop
   loop
 ;
 
-lambda: ( -- menu )
+let: ( -- menu )
   close-hook ['] edhist-close-hook-cb 1 make-proc add-hook!
   $" edhist-popup" main-widgets caddr
   #( #( $" Edits"   _ 'label     #f      	            #f )
@@ -1187,7 +1187,7 @@ lambda: ( -- menu )
      #( $" Clear"   _ #f         edhist-clear-edits   #f )
      #( $" sep"       'separator #f                   #f )
      #( $" Help"    _ #f         edhist-help-edits    #f ) ) make-popup-menu
-; execute value edit-history-menu
+;let value edit-history-menu
 
 : edhist-popup-xt ( snd chn -- xt; widget self -- )
   lambda-create , , latestxt
@@ -1308,7 +1308,7 @@ lambda: ( -- menu )
 
 : add-popup ( snd -- )
   { snd }
-  snd channels 0 do
+  snd channels 0 ?do
     popups '( snd i ) array-member? unless
       popups '( snd i ) array-push drop
       snd i channel-widgets 7 list-ref  ( chn-edhist )
@@ -1496,7 +1496,7 @@ lambda: ( us -- )
   then
 ;
 
-lambda: ( -- )
+let: ( -- )
   main-widgets 4 list-ref dup unless
     drop
     #t show-listener drop
@@ -1519,7 +1519,7 @@ lambda: ( -- )
      #( $" Exit"           _ #f         exit-cb                #f ) ) make-popup-menu { menu }
   parent FXmNpopupHandlerCallback menu listener-popup-cb undef FXtAddCallback drop
   menu
-; execute value listener-popup-menu
+;let value listener-popup-menu
 
 set-current
 

@@ -1,9 +1,9 @@
 \ -*- snd-forth -*-
 \ peak-env.fs -- peak-env.scm -> peak-env.fs
 
-\ Author: Michael Scholz <scholz-micha@gmx.de>
+\ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Wed Dec 21 17:37:13 CET 2005
-\ Changed: Tue Feb 21 01:24:01 CET 2006
+\ Changed: Sun Aug 20 01:00:48 CEST 2006
 
 \ Commentary:
 \ 
@@ -67,7 +67,7 @@ make-hash value saved-peak-info
 : peak-env-info-update-cb ( snd -- )
   { snd }
   save-peak-env-info? if
-    snd channels 0 do snd i peak-env-info-file-name mus-expand-filename file-delete loop
+    snd channels 0 ?do snd i peak-env-info-file-name mus-expand-filename file-delete loop
   then
 ;
 
@@ -79,7 +79,7 @@ make-hash value saved-peak-info
   save-peak-env-info?
   snd 0 0 peak-env-info length 0> && if
     #f { saved }
-    snd channels 0 do
+    snd channels 0 ?do
       snd i peak-env-info-file-name mus-expand-filename { peak-file }
       peak-file file-exists? not
       peak-file file-write-date

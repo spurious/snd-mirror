@@ -1,8 +1,8 @@
 \ rubber.fs -- rubber.scm --> rubber.fs
 
-\ Translator: Michael Scholz <scholz-micha@gmx.de>
+\ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Jan 06 05:32:57 CET 2006
-\ Changed: Thu Mar 02 11:29:26 CET 2006
+\ Changed: Sun Aug 20 01:01:31 CEST 2006
 
 \ Commentary:
 \

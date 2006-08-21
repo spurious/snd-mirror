@@ -1,9 +1,9 @@
 \ -*- snd-forth -*-
 \ xm-enved.fs -- xm-enved.scm -> xm-enved.fs
 
-\ Author: Michael Scholz <scholz-micha@gmx.de>
+\ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Tue Apr 04 18:37:01 CEST 2006
+\ Changed: Sun Aug 20 01:01:59 CEST 2006
 
 \ Commentary:
 
@@ -280,9 +280,8 @@ before-enved-hook lambda: ( gen pos x y reason -- f )
     drawer FXtDisplay { dpy }
     drawer FXtWindow { win }
     dpy win FXClearWindow drop
-    save-stack { s }
-    '( drawer gc gen xe-name@ gen xe-x0@ gen xe-x1@ gen xe-y0@ gen xe-y1@ ) draw-axes drop
-    s restore-stack
+    drawer gc gen xe-name@ gen xe-x0@ gen xe-x1@ gen xe-y0@ gen xe-y1@
+    x-axis-in-seconds show-all-axes draw-axes drop
     #f #f { lx ly }
     10 { mouse-d }
     5  { mouse-r }
@@ -304,7 +303,8 @@ before-enved-hook lambda: ( gen pos x y reason -- f )
   self @ { gen }
   gen xe-drawer@ { drawer }
   gen xe-gcs@ car { gc }
-  '( drawer gc gen xe-name@ gen xe-x0@ gen xe-x1@ gen xe-y0@ gen xe-y1@ ) draw-axes { lst }
+  drawer gc gen xe-name@ gen xe-x0@ gen xe-x1@ gen xe-y0@ gen xe-y1@
+  x-axis-in-seconds show-all-axes draw-axes { lst }
   lst car    gen xe-px0!
   lst cadr   gen xe-py0!
   lst caddr  gen xe-px1!
