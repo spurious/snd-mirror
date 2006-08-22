@@ -4324,13 +4324,25 @@ static XEN g_set_sound_file_extensions(XEN lst)
 
 static XEN g_file_write_date(XEN file)
 {
+  #if HAVE_GUILE
+    #define write_date_equivalent "Equivalent to Guile's (stat:mtime (stat file))"
+  #endif
+  #if HAVE_GAUCHE
+    #define write_date_equivalent "Equivalent to Gauche's file-mtime"
+  #endif
+  #if HAVE_RUBY
+    #define write_date_equivalent "Equivalent to Ruby's File.mtime(file)"
+  #endif
+  #if HAVE_FORTH
+    #define write_date_equivalent "Equivalent to Forth's file-mtime"
+  #endif
+
   #define S_file_write_date "file-write-date"
 #ifndef __GNUC__
   #define H_file_write_date "(" S_file_write_date " file): write date of file"
 #else
   #define H_file_write_date "(" S_file_write_date " file) -> write date in the same format as \
-current-time:\n(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (" S_file_write_date " \"oboe.snd\")))\n\
-Equivalent to Guile (stat:mtime (stat file))"
+current-time:\n(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (" S_file_write_date " \"oboe.snd\")))\n" write_date_equivalent
 #endif
 
   time_t date;

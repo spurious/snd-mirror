@@ -45367,6 +45367,7 @@ EDITS: 1
 			      '(0 0 .5 .5 3 .25 6 .1 10 .1 50 .1 60 .2 85 1 100 0))
 		  (simple-fof 9 4 135 .1 0.005 730 .6 1090 .3 2440 .1 '(0 0 40 0 75 .2 100 1) 
 			      '(0 0 1 3 3 1 6 .2 10 .1 50 .1 60 .2 85 1 100 0))
+		  (if (provided? 'snd-guile) (begin ; gauche can't handle readin as a func
 		  (simple-src-f 13  .45 1.0 2.0 "oboe.snd")
 		  (simple-rd 13.5 .45 .75 "oboe.snd")
 		  (simple-rd-start 13.65 .25 .75 "oboe.snd" 0 0)
@@ -45397,9 +45398,9 @@ EDITS: 1
 		  (simple-grn-f3 22 .45 1 2 "oboe.snd")
 		  (simple-grn-f4 22.5 .45 1 2 "oboe.snd")
 		  (simple-grn-f5 23 .45 1 2 "oboe.snd")
-		  (simple-multiarr 23.5 .5 440 .1))
+		  (simple-multiarr 23.5 .5 440 .1))))
 
-      (with-sound (:channels 4) (simple-dloc-4 0 2 440 .5))
+      (if (provided? 'snd-guile) (with-sound (:channels 4) (simple-dloc-4 0 2 440 .5)))
     
       (with-sound ()
 		  (or1) (or2) (or3) (or4)

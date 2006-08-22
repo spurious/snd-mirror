@@ -1691,7 +1691,11 @@ static XEN g_snd_stdin_test(XEN str)
 
 static XEN g_gc_off(void) 
 {
-  #define H_gc_off "(" S_gc_off ") turns off garbage collection (a no-op in Guile)"
+#if HAVE_GUILE
+  #define H_gc_off "(" S_gc_off ") is a no-op"
+#else
+  #define H_gc_off "(" S_gc_off ") turns off garbage collection"
+#endif
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
   rb_gc_disable();
 #endif
@@ -1706,7 +1710,11 @@ static XEN g_gc_off(void)
 
 static XEN g_gc_on(void) 
 {
-  #define H_gc_on "(" S_gc_on ") turns on garbage collection (a no-op in Guile)"
+#if HAVE_GUILE
+  #define H_gc_on "(" S_gc_on ") is a no-op"
+#else
+  #define H_gc_on "(" S_gc_on ") turns on garbage collection"
+#endif
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
   rb_gc_enable();
 #endif

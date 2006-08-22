@@ -289,6 +289,7 @@ Snd:
   http://www.justlinux.org
   http://www.linuxjournal.com/article.php?sid=7274
   http://cvs.freebsoft.org/repository/fvoxedit/
+  http://www.blastwave.org/packages/snd (Solaris package)
 
 Guile/Scheme:
   http://www.gnu.org/software/guile/guile.html
@@ -629,6 +630,15 @@ If the make process complains about lt_dlclose and friends, add -lltdl
 to the GUILE_LIBS list in makefile.  The --with-gl and --with-just-gl
 switches are not recommended on the Sun, though they work; the
 colormap of the entire system is hijacked while Snd is running.
+
+Perhaps simplest is to get the package through blastwave:
+
+    pkg-get -i snd
+
+http://www.blastwave.org/packages/snd 
+http://www.blastwave.org 
+http://www.blastwave.org/howto.html
+
 
 
 ---- Mac OSX: ---- 

@@ -3802,8 +3802,8 @@ static char *help_urls[HELP_NAMES_SIZE] = {
 
 static char *Copying_xrefs[] = {
   "copy file: in Scheme: copy-file, in Ruby: File.copy or File.syscopy",
-  "copy string: in Guile: string-copy",
-  "copy list: in Guile: list-copy or copy-tree",
+  "copy string: in Guile or Forth: string-copy",
+  "copy list: in Guile or Forth: list-copy or copy-tree",
   "copy vct: {vct-copy}, {vct->vector}",
   "copy mix: {copy-mix}, {mix->vct}",
   "copy track: {copy-track}, {track->vct}",
@@ -4041,7 +4041,7 @@ static char *Cursors_urls[] = {
   NULL};
 
 static char *Deletions_xrefs[] = {
-  "delete a file: use the Scheme function delete-file or Ruby's File.delete",
+  "delete a file: use the Scheme function delete-file, Ruby's File.delete, or Forth's file-delete",
   "delete a region: {forget-region}",
   "delete the currently selected samples: {delete-selection}",
   "delete the selection and smooth the splice: {delete-selection-and-smooth}",
@@ -4359,7 +4359,7 @@ static char *Reversing_xrefs[] = {
   "reverse via FFT: {silly-reverse}",
   "reverse order of channels: {reverse-channels}",
   "reverse a list: reverse and reverse!",
-  "reverse a string: in Guile: string-reverse, in Ruby: reverse",
+  "reverse a string: in Guile or Forth: string-reverse, in Ruby: reverse",
   "reverse vct: {vct-reverse!}",
   NULL};
 

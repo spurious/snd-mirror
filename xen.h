@@ -122,6 +122,7 @@
 #define XEN                          SCM
 #define XEN_FILE_EXTENSION           "scm"
 #define XEN_COMMENT_STRING           ";"
+#define XEN_LANGUAGE_NAME            "Guile"
 
 #define XEN_TRUE                     SCM_BOOL_T
 #define XEN_FALSE                    SCM_BOOL_F
@@ -724,6 +725,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN                             VALUE
 #define XEN_FILE_EXTENSION              "rb"
 #define XEN_COMMENT_STRING              "#"
+#define XEN_LANGUAGE_NAME               "Ruby"
 
 #define XEN_FALSE                       Qfalse
 #define XEN_TRUE                        Qtrue
@@ -1194,6 +1196,7 @@ void xen_rb_repl_set_prompt(const char *prompt);
 #define XEN                             FTH
 #define XEN_FILE_EXTENSION              FTH_FILE_EXTENSION
 #define XEN_COMMENT_STRING              "\\"
+#define XEN_LANGUAGE_NAME               "Forth"
 
 #define XEN_FALSE                       FTH_FALSE
 #define XEN_TRUE                        FTH_TRUE
@@ -1458,6 +1461,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_FILE_EXTENSION           "scm"
 #define XEN_COMMENT_STRING           ";"
 #define XEN_EMPTY_LIST               SCM_NIL
+#define XEN_LANGUAGE_NAME            "Gauche"
 
 #define XEN                          ScmObj
 #define XEN_TRUE                     SCM_TRUE
@@ -1665,6 +1669,16 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
                        XEN_LIST_1(Arg)))
 
 #define XEN_PROCEDURE_P(Arg)              SCM_PROCEDUREP(Arg)
+
+/* unfortunately, SCM_PROCEDUREP doesn't include applicable objects, so it's not like the Guile case.
+ *   we apparently have to use compute-applicable-method to find out whether an object
+ *   has a matching object-apply method, but in much of the xen code, once XEN_PROCEDURE_P returns true,
+ *   we assume we can check arity etc -- this is not pretty...  Here's a stab at the 1st level:
+ *     ((SCM_PROCEDUREP(Arg)) || ((SCM_GENERICP(Arg)) && (!(SCM_NULLP((ScmObj)(Scm_ComputeApplicableMethods(SCM_GENERIC(Arg), NULL, 0)))))))
+ *     then XEN_ARITY would be ((SCM_PROCEDUREP(Func)) ? <as is below> : -1) or something like that?
+ *   but this is Ugly. So we're stuck -- Gauche users will have to wrap applicable objects in thunks.
+ */
+
 #define XEN_PROCEDURE_HELP(Sym)           XEN_OBJECT_HELP(Sym)
 #define XEN_PROCEDURE_SOURCE_HELP(Name)   XEN_FALSE
 #define XEN_PROCEDURE_SOURCE(Func)        XEN_FALSE
@@ -1897,6 +1911,7 @@ bool xen_gauche_hook_p(XEN val);
 
 #define XEN int
 #define XEN_FILE_EXTENSION  "txt"
+#define XEN_LANGUAGE_NAME "What Language?"
 #define XEN_COMMENT_STRING  ";"
 #define XEN_FALSE 0
 #define XEN_TRUE 1

@@ -11,7 +11,7 @@
  *   the program counter (PC) and the termination flag (ALL_DONE). 
  *
  * Snd optimization flag determines how safe we try to be:
- *   0: no use of ptrees at all (fallback on Guile)
+ *   0: no use of ptrees at all (fallback on Scheme)
  *   1: allow simple ops (if complex result possible, give up)
  *   2: [currently non-functional] assume nothing will return a complex number (i.e. user says acos args are between -1 and 1 and so on)
  *   3: if undefined global variable encountered, try to determine eventual type from context;
@@ -74,9 +74,9 @@
  *      no map or for-each (these need lists)
  *
  * whenever the code-walker or tree initializer finds something it is unhappy about,
- *  it returns an error indication, and the caller should fallback on Guile's evaluator.
+ *  it returns an error indication, and the caller should fallback on Scheme's evaluator.
  *
- * so where does the speed-up come from? We're not getting/freeing any Guile memory so the gc is (well, almost) never
+ * so where does the speed-up come from? We're not getting/freeing any Scheme memory so the gc is (well, almost) never
  *   triggered, we're doing math ops direct, no function args are cons'd, no run-time types are checked, no values are boxed/unboxed,
  *   no symbols are looked-up in the current environment, wherever possible we pre-convert
  *   args to same type (i.e. int->float done just once, if possible)
@@ -11857,10 +11857,11 @@ Float evaluate_ptreec(struct ptree *pt, Float arg, vct *v, bool dir) {return(0.0
 static XEN g_optimization(void) {return(C_TO_XEN_INT(optimization(ss)));}
 static XEN g_set_optimization(XEN val) 
 {
-  #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 0 = off, max is 6 in Guile, 4 in Gauche)"
 #if HAVE_GUILE
+  #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 0 = off, max is 6)"
   #define MAX_OPTIMIZATION 6
 #else
+  #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 0 = off, max is 4)"
   #define MAX_OPTIMIZATION 4
 #endif
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_optimization, "an integer");

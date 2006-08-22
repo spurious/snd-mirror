@@ -6767,7 +6767,7 @@ static XEN g_channel_properties(XEN snd_n, XEN chn_n)
 {
   #define H_channel_properties "(" S_channel_properties " (snd #f) (chn #f)): \
 A property list associated with the given channel. It is set to '() at the time a sound is opened. \
-The accessor channel-property is provided in extensions.scm."
+The accessor channel-property is provided in extensions." XEN_FILE_EXTENSION "."
 
   return(channel_get(snd_n, chn_n, CP_PROPERTIES, S_channel_properties));
 }

@@ -4414,8 +4414,8 @@ static void help_load_path(prefs_info *prf)
 files found in the Snd tarball.  You can run Snd without \
 these files, but there's no reason to!  Just add the directory containing \
 them to the \"load-path\".  For example, if the Snd build directory was \"/home/bil/snd\", \
-add that string to the load paths given here.  Guile and Ruby search these \
-directories for any *.scm or *.rb files that they can't \
+add that string to the load paths given here.  " XEN_LANGUAGE_NAME " searches these \
+directories for any *." XEN_FILE_EXTENSION " files that it can't \
 find elsewhere.",
 	   WITH_WORD_WRAP);
 }

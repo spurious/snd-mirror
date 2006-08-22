@@ -1863,7 +1863,12 @@ widget_t start_preferences_dialog(void)
 		  clear_context_sensitive_popup, revert_context_sensitive_popup);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    prf = prefs_row_with_toggle("effects menu", "new-effects.scm",
+    prf = prefs_row_with_toggle("effects menu",
+#if HAVE_SCHEME
+				"new-effects.scm",
+#else
+				"effects." XEN_FILE_EXTENSION,
+#endif
 				(include_effects_menu = find_effects_menu()),
 				dpy_box, 
 				effects_menu_toggle);

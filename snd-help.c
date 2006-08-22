@@ -10,13 +10,6 @@
  * PERHAPS: in linux make --with-alsa the default
  */
 
-/* TODO: shouldn't the Ruby xrefs be in Ruby syntax? (would this mess up the indexing?) (word_wrap translates -- would need free)
- *
- * would be nice to have help for the extension languages -- help scheme
- *   http://www.ccs.neu.edu/home/dorai/t-y-scheme/t-y-scheme.html
- *   http://www.cs.utexas.edu/users/wilson/schintro/schintro_toc.html
- */
-
 
 static char **snd_xrefs(const char *topic);
 static char **snd_xref_urls(const char *topic);
@@ -1472,10 +1465,12 @@ Other track-related functions include: " S_track_track ", " S_track_chans ",\n\
 
 /* ---------------- Recording ---------------- */
 
-static char *record_xrefs[4] = {
+static char *record_xrefs[] = {
   "recorder variables: {" S_recorder_gain "}, etc",
   "low-level ADC input: {" S_mus_audio_open_input "}",
-  "process incoming sound: rtio.scm",
+#if (!HAVE_FORTH)
+  "process incoming sound: rtio." XEN_FILE_EXTENSION,
+#endif
   NULL};
 
 void recording_help(void) 
@@ -1587,7 +1582,6 @@ static char *header_and_data_xrefs[10] = {
   "Flac support: read-flac in examp." XEN_FILE_EXTENSION,
   "{Sndlib}: underlying support",
   NULL};
-/* TODO: fix _ business for ruby (in funcs as well?) and extension throughout */
 
 static char *header_and_data_urls[10] = {
   "extsnd.html#snddataformat",
@@ -1890,14 +1884,17 @@ void reverb_help(void)
   #if HAVE_SCHEME
     #define reverb_control_length_bounds_example "(set! (reverb-control-length-bounds) (list 0.0 10.0))"
     #define reverb_control_p_example "(set! (reverb-control?) #t)"
+    #define mention_hidden_controls "\nThe lowpass and feedback controls are accessible from the \"Hidden controls\" dialog in snd-motif.scm and snd-gtk.scm."
   #endif
   #if HAVE_RUBY
     #define reverb_control_length_bounds_example "set_reverb_control_length_bounds([0.0, 10.0])"
     #define reverb_control_p_example "set_reverb_control?(true)"
+    #define mention_hidden_controls ""
   #endif
   #if HAVE_FORTH
     #define reverb_control_length_bounds_example "'( 0.0 10.0 ) set-reverb-control-length-bounds"
     #define reverb_control_p_example "#t set-reverb-control?"
+    #define mention_hidden_controls ""
   #endif
 
   snd_help_with_xrefs("Reverb",
@@ -1932,10 +1929,7 @@ reverbs mentioned in the related topics list.  The control panel reverb function
     reverb amount (the amount of the direct signal sent to the reverb).\n\
 \n\
   " S_reverb_control_scale_bounds " (:optional snd):\n\
-    reverb-control-scale min and max amounts as a list.\n\
-\n\
-The lowpass and feedback controls are accessible from the \"Hidden controls\" dialog \
-in snd-motif.scm and snd-gtk.scm.",
+    reverb-control-scale min and max amounts as a list.\n" mention_hidden_controls "\n",
 
 #else
 "The reverb in the control panel is a version of Michael McNabb's Nrev (if it seems to be \
@@ -2768,13 +2762,15 @@ than 'Save'.",
 
 /* ---------------- Open File ---------------- */
 
-static char *open_file_xrefs[7] = {
+static char *open_file_xrefs[] = {
   "open file: {" S_open_sound "}",
   "add to sound file extension list (for '" S_just_sounds "'): {" S_add_sound_file_extension "}",
   "specialize open: {" S_open_hook "}, {" S_after_open_hook "}, etc",
   "start the file dialog: {" S_open_file_dialog "}",
+#if HAVE_SCHEME
   "specialize file list: {install-searcher} in snd-motif.scm",
   "keep dialog active after opening: {keep-file-dialog-open-upon-ok} in snd-motif.scm",
+#endif
   NULL};
 
 void open_file_dialog_help(void)

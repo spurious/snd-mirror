@@ -611,6 +611,7 @@
 ;;;   so this way Guile ignores the trailing Gauche code, and Gauche defines 
 ;;;   define-class twice. 
 
+(if (provided? 'snd-gauche) (define make-instance make))
 
 (if (provided? 'snd-guile)
     (defmacro <define-class> (name classes . fields)
