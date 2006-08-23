@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Sun Aug 20 01:00:59 CEST 2006
+\ Changed: Tue Aug 22 03:09:56 CEST 2006
 
 \ Commentary:
 
@@ -1504,8 +1504,8 @@ let: ( -- )
     main-widgets 4 list-ref
   then { parent }
   $" listener-popup" parent
-  #( #( $" Listener" 	   _ 'label     #f           	     #f )
-     #( $" sep"      	     'separator #f           	     #f )
+  #( #( $" Listener" 	   _ 'label     #f           	       #f )
+     #( $" sep"      	     'separator #f           	       #f )
      #( $" Play"     	   _ 'cascade   list-play-cb           identity-xt #t )
      #( $" Help"           _ #f         list-help-cb           #f )
      #( $" Open"     	   _ #f         popen-cb               #f )

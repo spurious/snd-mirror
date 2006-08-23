@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Sun Aug 20 00:57:25 CEST 2006
+\ Changed: Mon Aug 21 20:56:36 CEST 2006
 
 \ Commentary:
 \
@@ -240,7 +240,7 @@ instrument: fm-violin-fs ( start dur freq amp keyword-args -- )
   fm3-rat fm1-rat floor f- f0= &&
   fm3-rat fm3-rat floor f- f0= && { easy-case }
   easy-case modulate && 1.0 && fm1-index || { norm }
-  :frequency freq :initial-phase 0.0 make-oscil { carrier }
+  :frequency freq make-oscil { carrier }
   :envelope amp-env :scaler amp :duration dur :base base make-env { ampf }
   #f #f #f { fmosc1 fmosc2 fmosc3 }
   #f #f #f { indf1 indf2 indf3 }
@@ -252,11 +252,11 @@ instrument: fm-violin-fs ( start dur freq amp keyword-args -- )
 	 fm2-rat fm1-rat f/ floor f>s fm2-index
 	 fm3-rat fm1-rat f/ floor f>s fm3-index ) 1 partials->polynomial make-polyshape
     else
-      :frequency freq fm1-rat f* :initial-phase 0.0 make-oscil
+      :frequency freq fm1-rat f* make-oscil
     then to fmosc1
     easy-case unless
-      :frequency freq fm2-rat f* :initial-phase 0.0 make-oscil to fmosc2
-      :frequency freq fm3-rat f* :initial-phase 0.0 make-oscil to fmosc3
+      :frequency freq fm2-rat f* make-oscil to fmosc2
+      :frequency freq fm3-rat f* make-oscil to fmosc3
       :envelope fm1-env :scaler norm      :duration dur make-env to indf1
       :envelope fm2-env :scaler fm2-index :duration dur make-env to indf2
       :envelope fm3-env :scaler fm3-index :duration dur make-env to indf3

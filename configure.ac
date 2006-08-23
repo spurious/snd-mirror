@@ -1168,7 +1168,6 @@ if test "$with_gauche" = yes ; then
                  GUILE_LIBS=`$GAUCHE_CONFIG -L  | sed 's/\x27//g'`
                  GUILE_LIBS="$GUILE_LIBS -lgauche"
                  LOCAL_LANGUAGE="Gauche"
-# someday perhaps we'll figure out how to get at local variables in Gauche...
         	 AC_DEFINE(WITH_RUN)
                 ],
 		[

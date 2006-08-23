@@ -34,9 +34,8 @@
  * lush:        (CL)     compilation problem, serious name-space problems (not really an extension language)
  * mzscheme:    (Scheme) support semi-exists (I have the xen.h macros for it), but I refuse to touch it
  * ocaml:       (ML)     not an extension language, as far as I can tell
- * octave:      (Matlab) c++, probably do-able; 2.1.73|2.9.5|2.9.6 won't build -- useless bug response at octave
- *                       (error looked like a messed up library load list, but I couldn't find the identifier in question)
- *                       (bug-octave said "get a newer g++, but I'm running 4.1.0 which is newer than theirs)
+ * octave:      (Matlab) c++, probably do-able; standard linkage is through octave_value_list arg list.
+ *                       Sigh... I'll have to learn C++ to go very far with this.
  * pike:        (C)      not an extension language
  * python:      ()       looks like ruby to me -- why duplicate? (I have about 1/4 of xen.h for this)
  * rscheme:     (Scheme) serious name-space problems
