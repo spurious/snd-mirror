@@ -63,7 +63,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-modules        accommodate sndlib that was built with modules
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
-#   --with-x11            if gtk, this also includes X funcs from xm.c, otherwise a no-op or confusion
 #   --with-builtin-gtkrc  include built-in gtkrc fallbacks (default=yes)
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
@@ -969,6 +968,8 @@ else
       	if test "$with_static_xm" = yes ; then
           if test "$with_x11" = yes ; then
             GX_FILES="XMG_O_FILES"
+# PERHAPS: in some cases we also should include -lXext here, and presumably others, but this switch (with-x11) is obsolete
+#   config.h xg-x11.h xm.c xg.c (makexg.scm, xgdata.scm --> with-x11-*)
           else
             GX_FILES="XG_O_FILES"
           fi

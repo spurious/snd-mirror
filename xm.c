@@ -150,7 +150,7 @@
 #include <X11/extensions/shape.h>
 #endif
 
-/* compile-time flags are HAVE_XPM HAVE_MOTIF HAVE_XM_XP HAVE_GUILE|HAVE_RUBY XM_DISABLE_DEPRECATED WITH_EDITRES WITH_GTK_AND_X11 */
+/* compile-time flags are HAVE_XPM HAVE_MOTIF HAVE_XM_XP HAVE_GUILE|HAVE_RUBY XM_DISABLE_DEPRECATED WITH_EDITRES */
 
 /* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */
 

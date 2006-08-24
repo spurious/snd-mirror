@@ -12,6 +12,10 @@
    View:Files
 */
 
+/* TODO: if open dialog finds only one sound file (and just-sounds), or just one file and its a sound file,
+ *       select it
+ */
+
 /* ---------------- file selector replacement ---------------- */
 
 typedef struct fsb {

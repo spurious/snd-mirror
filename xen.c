@@ -601,6 +601,7 @@ char *xen_version(void)
 }
 
 #if HAVE_READLINE
+    /* TODO: figure out why we sometimes can't find readline's header files */
   #include <readline/readline.h>
   #include <readline/history.h>
 #endif

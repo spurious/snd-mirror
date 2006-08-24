@@ -2,7 +2,14 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* 
+/* TODO: when graph gets small, use tiny font before giving up labels altogether
+ * PERHAPS: can we change label font sizes/button sizes etc when dialog changes size?
+ *   a simple one to experiment with is the color dialog -- fonts there are not user-specified, everything is simple
+ *   and if there were room, we could display the color sequence
+ *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
+ *     but even so, we could (for example) hide the "help" button.
+ *   would need to get font family and reduce size etc
+ *
  * SOMEDAY: user-addable graph-style? axis? (dB for example, or rms above)
  *          also affects cursor display, perhaps verbose cursor info display, peak-env graphing,
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)

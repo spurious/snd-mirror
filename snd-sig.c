@@ -3740,7 +3740,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
   char *caller = NULL;
   off_t beg = 0, dur = 0;
   int pos;
-#if (!HAVE_RUBY && !HAVE_FORTH)
+#if WITH_RUN
   bool ptrees_present = false;
   struct ptree *pt = NULL;
 #endif
@@ -3782,12 +3782,13 @@ the current sample, the vct returned by 'init-func', and the current read direct
 			 s_beg));
   dur = dur_to_samples(s_dur, beg, cp, pos, 3, S_ptree_channel);
   if (dur <= 0) return(XEN_FALSE);
-#if HAVE_RUBY || HAVE_FORTH
+
+#if (!WITH_RUN)
   if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
   g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
   if (caller) {FREE(caller); caller = NULL;}
-#endif
-#if WITH_RUN
+#else
+
   ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos);
   if (XEN_PROCEDURE_P(init_func))
     {

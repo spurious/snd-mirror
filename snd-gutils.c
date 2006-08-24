@@ -592,6 +592,7 @@ void sg_make_resizable(GtkWidget *w)
 {
   if (GTK_IS_DIALOG(w))
     {
+      /* TODO: how to make a dialog genuinely resizable? */
       gtk_window_set_default_size(GTK_WINDOW(w), -1, -1);
       gtk_window_set_resizable(GTK_WINDOW(w), true);
     }

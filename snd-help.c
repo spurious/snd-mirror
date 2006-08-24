@@ -390,9 +390,6 @@ char *version_info(void)
   #endif
 #endif
 	  xm_version(), /* omitted if --version/--help because the init procs haven't run at that point */
-#if WITH_GTK_AND_X11
-	  " (with x11)",
-#endif
 #if HAVE_GL
 	  "\n    OpenGL", glx_version(),
 	  gl_version(),
