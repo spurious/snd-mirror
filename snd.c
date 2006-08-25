@@ -143,7 +143,6 @@ void snd_set_global_defaults(bool need_cleanup)
 {
   if (need_cleanup)
     {
-      if (ss->Vu_Font) {FREE(ss->Vu_Font); ss->Vu_Font = NULL;}
       if (ss->HTML_Program) {FREE(ss->HTML_Program); ss->HTML_Program = NULL;}
       if (ss->HTML_Dir) {FREE(ss->HTML_Dir); ss->HTML_Dir = NULL;}
       if (ss->Temp_Dir) {FREE(ss->Temp_Dir); ss->Temp_Dir = NULL;}
@@ -210,8 +209,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->cursor_proc = XEN_UNDEFINED;
   ss->cursor_proc_loc = NOT_A_GC_LOC;
   ss->Vu_Size = DEFAULT_VU_SIZE;
-  ss->Vu_Font_Size = DEFAULT_VU_FONT_SIZE;
-  if (DEFAULT_VU_FONT != (char *)NULL) ss->Vu_Font = copy_string(DEFAULT_VU_FONT); else ss->Vu_Font = NULL;
   ss->Selection_Creates_Region = DEFAULT_SELECTION_CREATES_REGION;
   ss->Transform_Normalization = DEFAULT_TRANSFORM_NORMALIZATION;
   ss->Zoom_Focus_Style = DEFAULT_ZOOM_FOCUS_STYLE;

@@ -1,7 +1,7 @@
 #!/usr/local/bin/guile -s
 !#
 
-;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c, xg-x11.h
+;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -13,16 +13,12 @@
 (read-enable 'positions)
 
 (define xg-file (open-output-file "xg.c"))
-(define xg-x11-file (open-output-file "xg-x11.h"))
 
 (define (hey . args)
   (display (apply format #f args) xg-file))
 
 (define (heyc arg)
   (display arg xg-file))
-
-(define (hey-x11 . args)
-  (display (apply format #f args) xg-x11-file))
 
 (define names '())
 (define types '())
@@ -1652,6 +1648,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     26-Aug:    removed --with-x11, WITH_GTK_AND_X11, xg-x11.h.~%")
 (hey " *     4-Aug:     added a form of g_object_get and gtk_settings_get_for_screen.~%")
 (hey " *     20-Jul:    added gtkprint stuff.~%")
 (hey " *     17-Jul:    added g_signal_connect and other related macros.~%")
@@ -2048,17 +2045,7 @@
 
 (hey "~%~%/* ---------------------------------------- callback handlers ---------------------------------------- */~%~%")
 
-(hey "#if WITH_GTK_AND_X11~%")
-(hey "  #include \"xg-x11.h\"~%")
-(hey "  #define gxg_static~%")
-(hey "#else~%")
-(hey "  #define gxg_static static~%")
-(hey "#endif~%~%")
-
-(hey-x11 "#ifndef XG_X11_H~%")
-(hey-x11 "#define XG_X11_H~%~%")
-(hey-x11 "/* functions shared by xg.c and xm.c if WITH_GTK_AND_X11 */~%")
-(hey-x11 "/* created automatically by makexg.scm */~%")
+(hey "#define gxg_static static~%")
 
 (let ((funcs-done '()))
   (let ((xc (lambda (func)
@@ -2774,12 +2761,7 @@
   ;; if 1 or 2 assert type, if and return,
   ;;   else if on each, assert 0 at end and xen false
   (hey "~%")
-  (if (or (member field with-x11-accessors)
-	  (member field with-x11-readers))
-      (begin
-	(hey "gxg_static XEN gxg_~A(XEN ptr)~%" field)
-	(hey-x11 "XEN gxg_~A(XEN ptr);~%" field))
-      (hey "static XEN gxg_~A(XEN ptr)~%" field))
+  (hey "static XEN gxg_~A(XEN ptr)~%" field)
   (hey "{~%")
   (let ((vals '()))
     (for-each
@@ -2824,11 +2806,7 @@
 
 (define (make-writer field)
   (hey "~%")
-  (if (member field with-x11-accessors)
-      (begin
-	(hey "gxg_static XEN gxg_set_~A(XEN ptr, XEN val)~%" field)
-	(hey-x11 "XEN gxg_set_~A(XEN ptr, XEN val);~%" field))
-      (hey "static XEN gxg_set_~A(XEN ptr, XEN val)~%" field))
+  (hey "static XEN gxg_set_~A(XEN ptr, XEN val)~%" field)
   (hey "{~%")
   (let ((vals '()))
     (for-each
@@ -2978,59 +2956,9 @@
 (if (not (null? checks-210)) (with-210 hey (lambda () (for-each ruby-check (reverse checks-210)))))
 
 
-(let ((in-x11 #f))
-  (for-each 
-   (lambda (field) 
-     (if (or (member field with-x11-accessors)
-	     (member field with-x11-readers))
-	 (if (not in-x11)
-	     (begin
-	       (hey "#if (!WITH_GTK_AND_X11)~%")
-	       (set! in-x11 #t)))
-	 (if in-x11
-	     (begin
-	       (hey "#endif~%")
-	       (set! in-x11 #f))))
-     (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field))
-   struct-fields)
-  (if in-x11
-      (hey "#endif~%")))
-
-(let ((in-x11 #f))
-  (for-each 
-   (lambda (field) 
-     (if (or (member field with-x11-accessors)
-	     (member field with-x11-readers))
-	 (if (not in-x11)
-	     (begin
-	       (hey "#if (!WITH_GTK_AND_X11)~%")
-	       (set! in-x11 #t)))
-	 (if in-x11
-	     (begin
-	       (hey "#endif~%")
-	       (set! in-x11 #f))))
-     (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) 
-   settable-struct-fields)
-  (if in-x11
-      (hey "#endif~%")))
-
-(let ((in-x11 #f))
-  (for-each 
-   (lambda (field) 
-     (if (or (member field with-x11-accessors)
-	     (member field with-x11-readers))
-	 (if (not in-x11)
-	     (begin
-	       (hey "#if (!WITH_GTK_AND_X11)~%")
-	       (set! in-x11 #t)))
-	 (if in-x11
-	     (begin
-	       (hey "#endif~%")
-	       (set! in-x11 #f))))
-     (hey "XEN_NARGIFY_2(gxg_set_~A_w, gxg_set_~A)~%" field field)) 
-   settable-struct-fields)
-  (if in-x11
-      (hey "#endif~%")))
+(for-each (lambda (field) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) struct-fields)
+(for-each (lambda (field) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) settable-struct-fields)
+(for-each (lambda (field) (hey "XEN_NARGIFY_2(gxg_set_~A_w, gxg_set_~A)~%" field field)) settable-struct-fields)
 
 (for-each (lambda (struct) 
 	    (let* ((s (find-struct struct)))
@@ -3085,59 +3013,9 @@
 (if (not (null? checks-290)) (with-290 hey (lambda () (for-each ruby-uncheck (reverse checks-290)))))
 (if (not (null? checks-210)) (with-210 hey (lambda () (for-each ruby-uncheck (reverse checks-210)))))
 
-(let ((in-x11 #f))
-  (for-each 
-   (lambda (field) 
-     (if (or (member field with-x11-accessors)
-	     (member field with-x11-readers))
-	 (if (not in-x11)
-	     (begin
-	       (hey "#if (!WITH_GTK_AND_X11)~%")
-	       (set! in-x11 #t)))
-	 (if in-x11
-	     (begin
-	       (hey "#endif~%")
-	       (set! in-x11 #f))))
-     (hey "#define gxg_~A_w gxg_~A~%" field field))
-   struct-fields)
-  (if in-x11
-      (hey "#endif~%")))
-
-(let ((in-x11 #f))
-  (for-each 
-   (lambda (field) 
-     (if (or (member field with-x11-accessors)
-	     (member field with-x11-readers))
-	 (if (not in-x11)
-	     (begin
-	       (hey "#if (!WITH_GTK_AND_X11)~%")
-	       (set! in-x11 #t)))
-	 (if in-x11
-	     (begin
-	       (hey "#endif~%")
-	       (set! in-x11 #f))))
-     (hey "#define gxg_~A_w gxg_~A~%" field field)) 
-   settable-struct-fields)
-  (if in-x11
-      (hey "#endif~%")))
-
-(let ((in-x11 #f))
-  (for-each 
-   (lambda (field) 
-     (if (or (member field with-x11-accessors)
-	     (member field with-x11-readers))
-	 (if (not in-x11)
-	     (begin
-	       (hey "#if (!WITH_GTK_AND_X11)~%")
-	       (set! in-x11 #t)))
-	 (if in-x11
-	     (begin
-	       (hey "#endif~%")
-	       (set! in-x11 #f))))
-     (hey "#define gxg_set_~A_w gxg_set_~A~%" field field)) 
-   settable-struct-fields)
-  (if in-x11
-      (hey "#endif~%")))
+(for-each (lambda (field) (hey "#define gxg_~A_w gxg_~A~%" field field)) struct-fields)
+(for-each (lambda (field) (hey "#define gxg_~A_w gxg_~A~%" field field)) settable-struct-fields)
+(for-each (lambda (field) (hey "#define gxg_set_~A_w gxg_set_~A~%" field field)) settable-struct-fields)
 
 (for-each (lambda (struct) 
 	    (let* ((s (find-struct struct)))
@@ -3235,44 +3113,10 @@
 (hey "static void define_structs(void)~%")
 (hey "{~%~%")
 
-(let ((in-x11 #f))
-  (for-each 
-   (lambda (field)
-     (if (or (member field with-x11-accessors)
-	     (member field with-x11-readers))
-	 (if (not in-x11)
-	     (begin
-	       (hey "#if (!WITH_GTK_AND_X11)~%")
-	       (set! in-x11 #t)))
-	 (if in-x11
-	     (begin
-	       (hey "#endif~%")
-	       (set! in-x11 #f))))
-     (hey "  XG_DEFINE_READER(~A, gxg_~A_w, 1, 0, 0);~%" field field))
-   struct-fields)
-  (if in-x11
-      (hey "#endif~%")))
+(for-each (lambda (field) (hey "  XG_DEFINE_READER(~A, gxg_~A_w, 1, 0, 0);~%" field field)) struct-fields)
+(for-each (lambda (field) (hey "  XG_DEFINE_ACCESSOR(~A, gxg_~A_w, gxg_set_~A_w, 1, 0, 2, 0);~%" field field field)) settable-struct-fields)
 
-(let ((in-x11 #f))
-  (for-each 
-   (lambda (field)
-     (if (or (member field with-x11-accessors)
-	     (member field with-x11-readers))
-	 (if (not in-x11)
-	     (begin
-	       (hey "#if (!WITH_GTK_AND_X11)~%")
-	       (set! in-x11 #t)))
-	 (if in-x11
-	     (begin
-	       (hey "#endif~%")
-	       (set! in-x11 #f))))
-     (hey "  XG_DEFINE_ACCESSOR(~A, gxg_~A_w, gxg_set_~A_w, 1, 0, 2, 0);~%" field field field))
-   settable-struct-fields)
-  (if in-x11
-      (hey "#endif~%")))
-
-(for-each 
- (lambda (struct)
+(for-each (lambda (struct)
    (let* ((s (find-struct struct)))
      (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, \"(~A~A) -> a new ~A struct\");~%" 
 	  struct 
@@ -3391,11 +3235,8 @@
 
 (hey "/* -------------------------------- initialization -------------------------------- */~%~%")
 (hey "static bool xg_already_inited = false;~%~%")
-(hey "#if WITH_GTK_AND_X11~%")
-(hey "  void Init_libx11(void); /* xm.c */ ~%")
-(hey "#endif~%~%")
-(hey " void Init_libxg(void);~%")
-(hey " void Init_libxg(void)~%")
+(hey "void Init_libxg(void);~%")
+(hey "void Init_libxg(void)~%")
 (hey "{~%")
 (hey "  if (!xg_already_inited)~%")
 (hey "    {~%")
@@ -3409,9 +3250,6 @@
 (hey "      XEN_YES_WE_HAVE(\"xg\");~%")
 (hey "      XEN_DEFINE(\"xg-version\", C_TO_XEN_STRING(\"~A\"));~%" (strftime "%d-%b-%y" (localtime (current-time))))
 (hey "      xg_already_inited = true;~%")
-(hey "#if WITH_GTK_AND_X11~%")
-(hey "      Init_libx11();~%")
-(hey "#endif~%~%")
 
 (hey "/* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */~%")
 (hey "#if HAVE_SCHEME~%")
@@ -3432,10 +3270,8 @@
 (hey "{~%")
 (hey "}~%")
 (hey "#endif~%") ; have_extension_language
-(hey-x11 "#endif~%")
 
 (close-output-port xg-file)
-(close-output-port xg-x11-file)
 
 ;(for-each
 ; (lambda (type)

@@ -1283,8 +1283,6 @@ def test00
             [:run_safety, 0],
             [:clm_table_size, 512],
             [:with_verbose_cursor, false],
-            [:vu_font, ""],
-            [:vu_font_size, 1.0],
             [:vu_size, 1.0],
             [:wavelet_type, 0],
             [:time_graph_type, Graph_once],
@@ -1502,8 +1500,6 @@ def test01
       [:run_safety, 0],
       [:clm_table_size, 512],
       [:with_verbose_cursor, false],
-      [:vu_font, ""],
-      [:vu_font_size, 1.0],
       [:vu_size, 1.0],
       [:wavelet_type, 0],
       [:time_graph_type, Graph_once],
@@ -2036,7 +2032,6 @@ def test03
       [:transform_type, 0, 1],
       [:with_verbose_cursor, false, true],
       [:vu_size, 1.0, 2.0],
-      [:vu_font_size, 1.0, 2.0],
       [:wavelet_type, 0, 1],
       [:time_graph?, false, true],
       [:time_graph_type, Graph_once, Graph_as_wavogram],
@@ -24793,15 +24788,8 @@ def test11
     unless string_equal_ignore_white_space(res = snd_help(:enved_base), "enved_base(): envelope editor exponential base value (1.0)")
       snd_display("snd_help :enved_base: %s", res)
     end
-    # unless string_equal_ignore_white_space(res = snd_help(:vu_font), "vu_font):(name, of, font, used, to, make, VU, meter, labels, (courier)")
-    unless string_equal_ignore_white_space(res = snd_help(:vu_font), "vu_font(): name of font used to make VU meter labels (courier)")
-      snd_display("snd_help :vu_font: %s", res)
-    end
     unless string_equal_ignore_white_space(res = snd_help("enved_base"), "enved_base(): envelope editor exponential base value (1.0)")
       snd_display("snd_help \"enved_base\": %s", res)
-    end
-    unless string_equal_ignore_white_space(res = snd_help("vu_font"), "vu_font(): name of font used to make VU meter labels (courier)")
-      snd_display("snd_help \"vu_font\": %s", res)
     end
     old_val = Hamming_window
     str1 = snd_help(:Hamming_window)
@@ -41153,7 +41141,7 @@ Procs =
    :transform_sample, :transform2vct, :transform_frames, :transform_type, :trap_segfault,
    :optimization, :unbind_key, :update_transform_graph, :update_time_graph,
    :update_lisp_graph, :update_sound, :run_safety, :clm_table_size, :vct2sound_file,
-   :with_verbose_cursor, :view_sound, :vu_font, :vu_font_size, :vu_size, :wavelet_type,
+   :with_verbose_cursor, :view_sound, :vu_size, :wavelet_type,
    :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :window_height, :window_width,
    :window_x, :window_y, :with_mix_tags, :with_relative_panes, :with_gl, :write_peak_env_info_file,
    :x_axis_style, :beats_per_measure, :beats_per_minute, :x_bounds, :x_position_slider,
@@ -41282,7 +41270,7 @@ Set_procs =
    :spectro_x_angle, :grid_density, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
    :spectro_z_angle, :spectro_z_scale, :speed_control, :speed_control_style, :speed_control_tones,
    :squelch_update, :sync, :sound_properties, :temp_dir, :text_focus_color, :tiny_font, :y_bounds,
-   :transform_type, :trap_segfault, :optimization, :with_verbose_cursor, :vu_font, :vu_font_size,
+   :transform_type, :trap_segfault, :optimization, :with_verbose_cursor, 
    :vu_size, :wavelet_type, :x_bounds, :time_graph?, :wavo_hop, :wavo_trace, :with_gl,
    :with_mix_tags, :x_axis_style, :beats_per_minute, :zero_pad, :zoom_color, :zoom_focus_style,
    :with_relative_panes, :window_x, :window_y, :window_width, :window_height, :mix_dialog_mix,
@@ -41847,7 +41835,7 @@ def test0128
     :selection_creates_region, :show_backtrace, :show_controls, :show_indices,
     :show_listener, :show_selection_transform, :sinc_width, :temp_dir,
     :text_focus_color, :tiny_font, :trap_segfault, :optimization, :unbind_key,
-    :with_verbose_cursor, :vu_font, :vu_font_size, :vu_size, :window_height,
+    :with_verbose_cursor, :vu_size, :window_height,
     :beats_per_measure, :window_width, :window_x, :window_y, :with_gl,
     :with_mix_tags, :x_axis_style, :beats_per_minute, :zoom_color, :mix_tag_height,
     :mix_tag_width, :with_relative_panes, :run_safety, :clm_table_size,

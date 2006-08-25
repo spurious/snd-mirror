@@ -12,3 +12,12 @@
 ;(define windowed-maxamp moving-max)
 ;(define make-windowed-maxamp make-moving-max)
 
+(define vu-font
+  (make-procedure-with-setter
+   (lambda () "not-a-font")
+   (lambda (val) "not-a-font")))
+
+(define vu-font-size
+  (make-procedure-with-setter
+   (lambda () 1.0)
+   (lambda (val) 1.0)))

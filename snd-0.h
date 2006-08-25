@@ -719,14 +719,6 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
   #define DEFAULT_LADSPA_DIR NULL
 #endif
 
-#define vu_font(ss) ss->Vu_Font
-#define set_vu_font(a) ss->Vu_Font = a
-#define DEFAULT_VU_FONT NULL
-
-#define vu_font_size(ss) ss->Vu_Font_Size
-#define set_vu_font_size(a) ss->Vu_Font_Size = a
-#define DEFAULT_VU_FONT_SIZE 1.0
-
 #define vu_size(ss) ss->Vu_Size
 #define set_vu_size(a) ss->Vu_Size = a
 #define DEFAULT_VU_SIZE 1.0

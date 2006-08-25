@@ -13,7 +13,6 @@ typedef struct {
   GdkPixmap *off_label;
   GdkPixmap *on_label;
   GdkPixmap *clip_label;
-  PangoFontDescription *label_font;
   Float size;
 } vu_label;
 
@@ -162,16 +161,6 @@ static gboolean recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gp
 
 
 /* -------------------------------- VU METER -------------------------------- */
-
-static void allocate_meter_2(GtkWidget *w, vu_label *vu)
-{
-  GdkDrawable *wn;
-  wn = w->window;
-  vu->off_label = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, offlabel_bits());
-  vu->on_label = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, onlabel_bits());
-  vu->clip_label = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, cliplabel_bits());
-}
-
 
 #define VU_OFF 0
 #define VU_ON 1
@@ -528,11 +517,8 @@ static vu_t *make_vu_meter(GtkWidget *meter, int light_x, int light_y, int cente
       vu_labels[current_vu_label] = (vu_label *)CALLOC(1, sizeof(vu_label));
       vl = vu_labels[current_vu_label];
       current_vu_label++;
-      vl->label_font = get_vu_font(size);
       vl->size = size;
-      if ((vl->size == 1.0) || (vl->size > 4.0) || (vl->size < .25))
-	allocate_meter_2(recorder, vl);
-      else allocate_meter_1(vl);
+      allocate_meter_1(vl);
     }
   vu->on_label = vl->on_label;
   vu->off_label = vl->off_label;

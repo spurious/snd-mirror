@@ -98,7 +98,6 @@ AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
 AC_ARG_WITH(modules,     [  --with-modules	  use if sndlib uses modules])
 AC_ARG_WITH(editres,     [  --with-editres	  include editres in xm])
 AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins, Linux only])
-AC_ARG_WITH(x11,	 [  --with-x11		  include X funcs from xm.c with xg.c -- for X hacks, don't use this switch!])
 AC_ARG_WITH(hobbit,      [  --with-hobbit 	  include hobbit-style function arity checking, default=no])
 AC_ARG_WITH(builtin-gtkrc,[  --with-builtin-gtkrc	  include built-in gtkrc fallbacks, default=yes])
 AC_ARG_WITH(midi,        [  --with-midi		  include sndlib midi module])
@@ -958,21 +957,12 @@ else
 	AC_CHECK_LIB(m, gtk_label_get_line_wrap_mode, [AC_DEFINE(HAVE_GTK_LABEL_GET_LINE_WRAP_MODE)], ,$GTK_LIBS)
 	# for 2.10.0
 
-        if test "$with_x11" = yes ; then
-	  AC_DEFINE(WITH_GTK_AND_X11)
-        fi
 	XLIBS=""
       	XFLAGS=""
       	AC_SUBST(XLIBS)
       	AC_SUBST(XFLAGS)
       	if test "$with_static_xm" = yes ; then
-          if test "$with_x11" = yes ; then
-            GX_FILES="XMG_O_FILES"
-# PERHAPS: in some cases we also should include -lXext here, and presumably others, but this switch (with-x11) is obsolete
-#   config.h xg-x11.h xm.c xg.c (makexg.scm, xgdata.scm --> with-x11-*)
-          else
-            GX_FILES="XG_O_FILES"
-          fi
+          GX_FILES="XG_O_FILES"
           AC_DEFINE(HAVE_STATIC_XM)
       	fi
      fi

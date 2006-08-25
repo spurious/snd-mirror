@@ -81,8 +81,6 @@ G_O_FILES = snd-gutils.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gdraw.o snd-gli
 
 XG_O_FILES = snd-gutils.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gdraw.o snd-glistener.o snd-gchn.o snd-gsnd.o snd-gregion.o snd-gdrop.o snd-gmain.o snd-gmix.o snd-grec.o snd-genv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-gfft.o snd-gprint.o snd-gfile.o snd-gxen.o snd-gprefs.o xg.o
 
-XMG_O_FILES = snd-gutils.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gdraw.o snd-glistener.o snd-gchn.o snd-gsnd.o snd-gregion.o snd-gdrop.o snd-gmain.o snd-gmix.o snd-grec.o snd-genv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-gfft.o snd-gprint.o snd-gfile.o snd-gxen.o snd-gprefs.o xm.o xg.o
-
 NO_GUI_O_FILES = snd-nogui.o
 GM_FILES = xm.o
 GM_SO_FILE = xm.so

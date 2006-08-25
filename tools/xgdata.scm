@@ -4468,22 +4468,6 @@
 (CCAST "GDK_EVENT_WINDOWSTATE(obj)" "GdkEventWindowState*")
 (CCAST "GDK_EVENT_DND(obj)" "GdkEventDND*")
 
-;;; ---------------- with-x11 name collisions
-
-(define with-x11-accessors (list "pixel" "red" "green" "blue" "flags" "x" "y" "width" "height" "x1" "y1" "x2" "y2" 
-				 "clip_mask" "clip_y_origin" "clip_x_origin" "graphics_exposures" "subwindow_mode" 
-				 "font" "ts_y_origin" "ts_x_origin" "stipple" "tile" "join_style" "cap_style" 
-				 "line_style" "line_width" "function" "name" "depth" "visual" 
-				 "format" "data" "property" "target" "requestor" "selection" "atom" "override_redirect" 
-				 "border_width" "parent" "count" "focus" "detail" "mode" "is_hint" "button" "keycode" 
-				 "state" "y_root" "x_root" "root" "time" "subwindow" "window" "send_event" "type" "colormap"))
-(define with-x11-readers (list "backing_store" "ascent" "descent" "red_mask" "green_mask" "blue_mask" "bits_per_rgb" 
-			       "colormap_size" "bits_per_pixel" "win_gravity" "event_mask" "cursor" "byte_order" 
-			       "min_height" "max_height" "min_width" "max_width" "height_inc" "width_inc"))
-
-
-;;; accessor xg: pixel red green blue
-
 
 
 ;;; -------- begin gtk 2.3 additions

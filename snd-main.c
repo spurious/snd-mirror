@@ -504,8 +504,6 @@ void save_options(FILE *fd)
   if (enved_clip_p(ss) != DEFAULT_ENVED_CLIP_P) pss_ss(fd, S_enved_clip_p, b2s(enved_clip_p(ss)));
   if (enved_style(ss) == ENVELOPE_EXPONENTIAL) pss_ss(fd, S_enved_style, TO_VAR_NAME(S_envelope_exponential));
 
-  if (vu_font(ss)) 
-    pss_sq(fd, S_vu_font, vu_font(ss));
   if ((!tiny_font(ss)) || (strcmp(tiny_font(ss), DEFAULT_TINY_FONT) != 0))
     pss_sq(fd, S_tiny_font, tiny_font(ss));
   if ((!peaks_font(ss)) || (strcmp(peaks_font(ss), DEFAULT_PEAKS_FONT) != 0))
@@ -558,7 +556,6 @@ void save_options(FILE *fd)
   if (fneq(spectro_cutoff(ss), DEFAULT_SPECTRO_CUTOFF)) pss_sf(fd, S_spectro_cutoff, spectro_cutoff(ss));
   if (fneq(spectro_start(ss), DEFAULT_SPECTRO_START)) pss_sf(fd, S_spectro_start, spectro_start(ss));
   if (fneq(vu_size(ss), DEFAULT_VU_SIZE)) pss_sf(fd, S_vu_size, vu_size(ss));
-  if (fneq(vu_font_size(ss), DEFAULT_VU_FONT_SIZE)) pss_sf(fd, S_vu_font_size, vu_font_size(ss));
   if (fneq(enved_base(ss), DEFAULT_ENVED_BASE)) pss_sf(fd, S_enved_base, enved_base(ss));
   if (fneq(enved_power(ss), DEFAULT_ENVED_POWER)) pss_sf(fd, S_enved_power, enved_power(ss));
   if (fneq(eps_bottom_margin(ss), DEFAULT_EPS_BOTTOM_MARGIN)) pss_sf(fd, S_eps_bottom_margin, eps_bottom_margin(ss));

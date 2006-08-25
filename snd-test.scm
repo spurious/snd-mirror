@@ -985,12 +985,6 @@
       (set! (with-verbose-cursor) (with-verbose-cursor))
       (if (not (equal? (with-verbose-cursor)  #f)) 
 	  (snd-display ";with-verbose-cursor set def: ~A" (with-verbose-cursor)))
-      (set! (vu-font) (vu-font))
-      (if (not (equal? (vu-font)  #f )) 
-	  (snd-display ";vu-font set def: ~A" (vu-font)))
-      (set! (vu-font-size) (vu-font-size))
-      (if (fneq (vu-font-size)  1.0 )
-	  (snd-display ";vu-font-size set def: ~A" (vu-font-size)))
       (set! (vu-size) (vu-size))
       (if (fneq (vu-size)  1.0 )
 	  (snd-display ";vu-size set def: ~A" (vu-size)))
@@ -1235,8 +1229,6 @@
 	'run-safety (run-safety) 0
 	'clm-table-size (clm-table-size) 512
 	'with-verbose-cursor (with-verbose-cursor) #f
-	'vu-font (vu-font) #f 
-	'vu-font-size (vu-font-size) 1.0 
 	'vu-size (vu-size) 1.0 
 	'wavelet-type (wavelet-type) 0 
 	'time-graph? (without-errors (time-graph?)) 'no-such-sound
@@ -1825,7 +1817,6 @@
 	  (list 'transform-type transform-type 0 1)
 	  (list 'with-verbose-cursor with-verbose-cursor #f #t)
 	  (list 'vu-size vu-size 1.0 2.0)
-	  (list 'vu-font-size vu-font-size 1.0 2.0)
 	  (list 'wavelet-type wavelet-type 0 1)
 	  (list 'time-graph? time-graph? #f #t)
 	  (list 'time-graph-type time-graph-type graph-once graph-as-wavogram)
@@ -1923,7 +1914,6 @@
       (if (not (equal? (window-y) 321))
 	  (snd-display ";window y: ~A /= 321?" (window-y)))
       (set! (window-y) 10) ; get it back out of harm's way
-      (set! (vu-font) "8x15")
       (set! (color-scale) 100.0)
       (if (fneq (color-scale) 100.0) (snd-display ";color-scale to 100: ~A" (color-scale)))
       
@@ -2203,7 +2193,7 @@
 			 'vector->vct 'view-files-amp 'view-files-amp-env
 			 'view-files-dialog 'view-files-files 'view-files-select-hook 'view-files-selected-files 'view-files-sort
 			 'view-files-speed 'view-files-speed-style 'view-mixes-dialog 'view-regions-dialog 'view-sound
-			 'view-tracks-dialog 'vu-font 'vu-font-size 'vu-size 'walsh-transform
+			 'view-tracks-dialog 'vu-size 'walsh-transform
 			 'wave-train 'wave-train? 'wavelet-transform 'wavelet-type 'waveshape
 			 'waveshape? 'wavo-hop 'wavo-trace 'welch-window 'widget-position
 			 'widget-size 'widget-text 'window-height 'window-property 'window-property-changed-hook
@@ -25433,16 +25423,10 @@ EDITS: 5
 	  (snd-display ";snd-help open-soud (misspelled on purpose) failed"))
       (if (not (string-equal-ignoring-white-space (snd-help enved-base) "(enved-base): envelope editor exponential base value (1.0)"))
 	  (snd-display ";snd-help enved-base: ~A?" (snd-help enved-base)))
-      (if (not (string-equal-ignoring-white-space (snd-help vu-font) "(vu-font): name of font used to make VU meter labels (courier)"))
-	  (snd-display ";snd-help vu-font: ~A?" (snd-help vu-font)))
       (if (not (string-equal-ignoring-white-space (snd-help 'enved-base) "(enved-base): envelope editor exponential base value (1.0)"))
 	  (snd-display ";snd-help 'enved-base: ~A?" (snd-help 'enved-base)))
-      (if (not (string-equal-ignoring-white-space (snd-help 'vu-font) "(vu-font): name of font used to make VU meter labels (courier)"))
-	  (snd-display ";snd-help 'vu-font: ~A?" (snd-help 'vu-font)))
       (if (not (string-equal-ignoring-white-space (snd-help "enved-base") "(enved-base): envelope editor exponential base value (1.0)"))
 	  (snd-display ";snd-help \"enved-base\": ~A?" (snd-help "enved-base")))
-      (if (not (string-equal-ignoring-white-space (snd-help "vu-font") "(vu-font): name of font used to make VU meter labels (courier)"))
-	  (snd-display ";snd-help \"vu-font\": ~A?" (snd-help "vu-font")))
       (let ((old-val hamming-window))
 	(let ((str1 (snd-help 'hamming-window))
 	      (str2 (snd-help "hamming-window")))
@@ -45400,7 +45384,8 @@ EDITS: 1
 		  (simple-grn-f5 23 .45 1 2 "oboe.snd")
 		  (simple-multiarr 23.5 .5 440 .1))))
 
-      (if (provided? 'snd-guile) (with-sound (:channels 4) (simple-dloc-4 0 2 440 .5)))
+      (if (provided? 'snd-guile) 
+	  (with-sound (:channels 4) (simple-dloc-4 0 2 440 .5)))
     
       (with-sound ()
 		  (or1) (or2) (or3) (or4)
@@ -45413,6 +45398,7 @@ EDITS: 1
 		  (sample-srl3 1.5 .2 .1 .5 880)
 		  (sample-grn2 1.75 .2 .1 .5 880)
 		  (sample-grn3 2 .45 1 1 "oboe.snd")
+		  (if (provided? 'snd-guile) (begin ; gauche can't handle readin as a func
 		  (sample-cnv 2.5 .45 1 1 "oboe.snd")
 		  (sample-cnv1 3.0 .45 1 1 "oboe.snd")
 		  (sample-pvoc1 3.5 .45 1 512 "oboe.snd")
@@ -45428,13 +45414,14 @@ EDITS: 1
 		  (sample-arrfile 6.75 .2 440 .15)
 		  (cndf-ins 7 .2 .1 20.0 4)
 		  (sample-pvoc5 7.25 .2 .1 256 "oboe.snd" 440.0)
-		  )
+		  )))
       (set! (run-safety) 0)
 
-      (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-e 0 2.3 -1 256 "oboe.snd")))
-	     (mx (mus-sound-maxamp outfile)))
-	(if (fneq (cadr mx) 0.0)
-	    (snd-display ";pvoc a-e: ~A" mx)))
+      (if (provided? 'snd-guile) 
+	  (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-e 0 2.3 -1 256 "oboe.snd")))
+		 (mx (mus-sound-maxamp outfile)))
+	    (if (fneq (cadr mx) 0.0)
+		(snd-display ";pvoc a-e: ~A" mx))))
 
       (let* ((file (with-sound (:clipped #f :data-format mus-bfloat :header-type mus-next)
 			       (fm-violin 0 .1 440 3.14159)))
@@ -58748,7 +58735,7 @@ EDITS: 1
 		     text-focus-color tiny-font track-sample-reader?  region-sample-reader? transform-dialog transform-sample
 		     transform->vct transform-frames transform-type trap-segfault optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound run-safety clm-table-size
-		     vct->sound-file with-verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
+		     vct->sound-file with-verbose-cursor view-sound vu-size wavelet-type
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style beats-per-measure
 		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-data-format->string
@@ -58879,7 +58866,7 @@ EDITS: 1
 			 show-y-zero show-grid show-sonogram-cursor sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle  grid-density
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 			 speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
-			 transform-type trap-segfault optimization with-verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
+			 transform-type trap-segfault optimization with-verbose-cursor vu-size wavelet-type x-bounds
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix track-dialog-track beats-per-measure
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
@@ -59652,7 +59639,7 @@ EDITS: 1
 			  selected-channel selected-data-color selected-graph-color 
 			  selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			  show-selection-transform sinc-width temp-dir text-focus-color tiny-font
-			  trap-segfault optimization unbind-key with-verbose-cursor vu-font vu-font-size vu-size window-height beats-per-measure
+			  trap-segfault optimization unbind-key with-verbose-cursor vu-size window-height beats-per-measure
 			  window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			  mix-tag-width with-relative-panes run-safety clm-table-size mark-tag-width mark-tag-height
 			  quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color

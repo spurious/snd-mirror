@@ -114,20 +114,6 @@ void finish_recording(recorder_info *rp);
   void set_line_source(bool in_digital);
 #endif
 
-#if USE_MOTIF
-  #define font_t XFontStruct
-  #define LOAD_FONT(Font) XLoadQueryFont(MAIN_DISPLAY(ss), Font)
-#else
-  #if USE_GTK
-    #define font_t PangoFontDescription
-    #define LOAD_FONT(Font) pango_font_description_from_string(Font)
-  #else
-    #define font_t int
-    #define LOAD_FONT(Font) NULL
-  #endif
-#endif
-
-font_t *get_vu_font(Float size);
 void close_recorder_audio(void);
 void fire_up_recorder(void);
 

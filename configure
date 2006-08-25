@@ -1351,7 +1351,6 @@ Optional Packages:
   --with-modules	  use if sndlib uses modules
   --with-editres	  include editres in xm
   --with-ladspa  	  include support for LADSPA plugins, Linux only
-  --with-x11		  include X funcs from xm.c with xg.c -- for X hacks, don't use this switch!
   --with-hobbit 	  include hobbit-style function arity checking, default=no
   --with-builtin-gtkrc	  include built-in gtkrc fallbacks, default=yes
   --with-midi		  include sndlib midi module
@@ -3698,7 +3697,6 @@ _ACEOF
 #   --with-modules        accommodate sndlib that was built with modules
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
-#   --with-x11            if gtk, this also includes X funcs from xm.c, otherwise a no-op or confusion
 #   --with-builtin-gtkrc  include built-in gtkrc fallbacks (default=yes)
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
@@ -3827,12 +3825,6 @@ fi
 # Check whether --with-ladspa was given.
 if test "${with_ladspa+set}" = set; then
   withval=$with_ladspa;
-fi
-
-
-# Check whether --with-x11 was given.
-if test "${with_x11+set}" = set; then
-  withval=$with_x11;
 fi
 
 
@@ -16573,22 +16565,12 @@ fi
 
 	# for 2.10.0
 
-        if test "$with_x11" = yes ; then
-	  cat >>confdefs.h <<\_ACEOF
-#define WITH_GTK_AND_X11 1
-_ACEOF
-
-        fi
 	XLIBS=""
       	XFLAGS=""
 
 
       	if test "$with_static_xm" = yes ; then
-          if test "$with_x11" = yes ; then
-            GX_FILES="XMG_O_FILES"
-          else
-            GX_FILES="XG_O_FILES"
-          fi
+          GX_FILES="XG_O_FILES"
           cat >>confdefs.h <<\_ACEOF
 #define HAVE_STATIC_XM 1
 _ACEOF
@@ -17509,7 +17491,6 @@ _ACEOF
                  GUILE_LIBS=`$GAUCHE_CONFIG -L  | sed 's/\x27//g'`
                  GUILE_LIBS="$GUILE_LIBS -lgauche"
                  LOCAL_LANGUAGE="Gauche"
-# someday perhaps we'll figure out how to get at local variables in Gauche...
         	 cat >>confdefs.h <<\_ACEOF
 #define WITH_RUN 1
 _ACEOF

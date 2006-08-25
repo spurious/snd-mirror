@@ -14,7 +14,6 @@ typedef struct {
   Pixmap off_label;
   Pixmap on_label;
   Pixmap clip_label;
-  XFontStruct *label_font;
   Float size;
 } vu_label;
 
@@ -257,44 +256,6 @@ void make_recorder_icons_transparent_again(Pixel new_color)
 
 /* -------------------------------- VU METER -------------------------------- */
 
-#if HAVE_XPM
-static int allocate_meter_2(Widget w, vu_label *vu)
-{
-  int off_err;
-  Pixmap shape;
-  Display *dp;
-  Drawable wn;
-  dp = XtDisplay(w);
-  wn = XtWindow(w);
-  off_err = XpmCreatePixmapFromData(dp, wn, offlabel_bits(), &(vu->off_label), &shape, NULL);   
-  if (off_err != XpmSuccess)
-    {
-      snd_warning("can't create VU meter's label: %s\n", XpmGetErrorString(off_err));
-      return(off_err);
-    }
-  else
-    {
-      off_err = XpmCreatePixmapFromData(dp, wn, onlabel_bits(), &(vu->on_label), &shape, NULL);     
-      if (off_err != XpmSuccess) 
-	{
-	  snd_warning("trouble with VU meter's 'on label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(off_err));
-	  vu->on_label = vu->off_label;
-	  vu->clip_label = vu->off_label;
-	}
-      else
-	{
-	  off_err = XpmCreatePixmapFromData(dp, wn, cliplabel_bits(), &(vu->clip_label), &shape, NULL); 
-	  if (off_err != XpmSuccess)
-	    {
-	      snd_warning("trouble with VU meter's 'clip label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(off_err));
-	      vu->clip_label = vu->off_label;
-	    }
-	}
-    }
-  return(XpmSuccess);
-}
-#endif
-
 #define VU_OFF 0
 #define VU_ON 1
 #define VU_CLIPPED 2
@@ -303,10 +264,7 @@ static int allocate_meter_2(Widget w, vu_label *vu)
 #define VU_NEEDLE_SPEED 0.25
 #define VU_BUBBLE_SPEED 0.025
 #define VU_BUBBLE_SIZE (15 * 64)
-
 #define VU_COLORS 11
-#define VU_NUMBERS 15
-/* these are for the highly optimized size = 1.0 case */
 
 static Pixel yellows[VU_COLORS];
 static Pixel reds[VU_COLORS];
@@ -329,8 +287,6 @@ static void allocate_meter_1(vu_label *vu)
   int x0, y0, x1, y1;
   Float rdeg;
   Float size;
-  Pixmap numbers[VU_NUMBERS];
-  int wids[VU_NUMBERS], hgts[VU_NUMBERS];
   int xs[5], ys[5];
 
   Float BAND_X;
@@ -367,24 +323,6 @@ static void allocate_meter_1(vu_label *vu)
 	  reds[i] = tmp_color.pixel;
 	}
     }
-  /* need two versions of these, one with white bg and black fg for "off" state, then... */
-  j = 0;
-  numbers[j] = rotate_text(recorder, "0.0", vu->label_font, -40.0, &wids[j], &hgts[j], yellows[9], red, draw_gc); j++;
-  numbers[j] = rotate_text(recorder, "0.25", vu->label_font, -25.0, &wids[j], &hgts[j], yellows[7], red, draw_gc); j++;
-  numbers[j] = rotate_text(recorder, "0.5", vu->label_font, 0.0, &wids[j], &hgts[j], yellows[7], red, draw_gc); j++;
-  numbers[j] = rotate_text(recorder, "0.75", vu->label_font, 23.0, &wids[j], &hgts[j], yellows[7], red, draw_gc); j++;
-  numbers[j] = rotate_text(recorder, "1.0", vu->label_font, 40.0, &wids[j], &hgts[j], yellows[9], red, draw_gc); j++;
-  numbers[j] = rotate_text(recorder, "0.0", vu->label_font, -40.0, &wids[j], &hgts[j], white, black, draw_gc); j++;
-  numbers[j] = rotate_text(recorder, "0.25", vu->label_font, -25.0, &wids[j], &hgts[j], white, black, draw_gc); j++;
-  numbers[j] = rotate_text(recorder, "0.5", vu->label_font, 0.0, &wids[j], &hgts[j], white, black, draw_gc); j++;
-  numbers[j] = rotate_text(recorder, "0.75", vu->label_font, 23.0, &wids[j], &hgts[j], white, black, draw_gc); j++;
-  numbers[j] = rotate_text(recorder, "1.0", vu->label_font, 40.0, &wids[j], &hgts[j], white, black, draw_gc); j++;
-  numbers[j] = rotate_text(recorder, "0.0", vu->label_font, -40.0, &wids[j], &hgts[j], reds[9], black, draw_gc); j++;
-  numbers[j] = rotate_text(recorder, "0.25", vu->label_font, -25.0, &wids[j], &hgts[j], reds[7], black, draw_gc); j++;
-  numbers[j] = rotate_text(recorder, "0.5", vu->label_font, 0.0, &wids[j], &hgts[j], reds[7], black, draw_gc); j++;
-  numbers[j] = rotate_text(recorder, "0.75", vu->label_font, 23.0, &wids[j], &hgts[j], reds[7], black, draw_gc); j++;
-  numbers[j] = rotate_text(recorder, "1.0", vu->label_font, 40.0, &wids[j], &hgts[j], reds[9], black, draw_gc); j++;
-      
   for (k = 0; k < 2; k++) 
     {
       band = 1;
@@ -478,39 +416,6 @@ static void allocate_meter_1(vu_label *vu)
 
   XSetForeground(dp, draw_gc, black);
 
-  /* draw the numbers */
-  xs[0] = (int)(((size >= 1.0) ? (size * 6) : (size * 4)));
-  ys[0] = (int)(((size >= 1.0) ? (size * (160 - 116)) : (size * (160 - 119))));
-  xs[1] = (int)(size * (120 - 71));
-  ys[1] = (int)(size * (160 - 147));
-  xs[2] = (int)(size * (120 - 11));
-  ys[2] = (int)(size * (160 - 153));
-  xs[3] = (int)(size * (120 + 42));
-  ys[3] = (int)(size * (160 - 145));
-  xs[4] = (int)(size * (120 + 88));
-  ys[4] = (int)(size * (160 - 116));
-
-  j = 0;
-  XCopyArea(dp, numbers[j], vu->on_label, draw_gc, 0, 0, wids[j], hgts[j], xs[0], ys[0]); j++;
-  XCopyArea(dp, numbers[j], vu->on_label, draw_gc, 0, 0, wids[j], hgts[j], xs[1], ys[1]); j++;
-  XCopyArea(dp, numbers[j], vu->on_label, draw_gc, 0, 0, wids[j], hgts[j], xs[2], ys[2]); j++;
-  XCopyArea(dp, numbers[j], vu->on_label, draw_gc, 0, 0, wids[j], hgts[j], xs[3], ys[3]); j++;
-  XCopyArea(dp, numbers[j], vu->on_label, draw_gc, 0, 0, wids[j], hgts[j], xs[4], ys[4]); j++;
-  
-  j = 5;
-  XCopyArea(dp, numbers[j], vu->off_label, draw_gc, 0, 0, wids[j], hgts[j], xs[0], ys[0]); j++;
-  XCopyArea(dp, numbers[j], vu->off_label, draw_gc, 0, 0, wids[j], hgts[j], xs[1], ys[1]); j++;
-  XCopyArea(dp, numbers[j], vu->off_label, draw_gc, 0, 0, wids[j], hgts[j], xs[2], ys[2]); j++;
-  XCopyArea(dp, numbers[j], vu->off_label, draw_gc, 0, 0, wids[j], hgts[j], xs[3], ys[3]); j++;
-  XCopyArea(dp, numbers[j], vu->off_label, draw_gc, 0, 0, wids[j], hgts[j], xs[4], ys[4]);
-
-  j = 10;
-  XCopyArea(dp, numbers[j], vu->clip_label, draw_gc, 0, 0, wids[j], hgts[j], xs[0], ys[0]); j++;
-  XCopyArea(dp, numbers[j], vu->clip_label, draw_gc, 0, 0, wids[j], hgts[j], xs[1], ys[1]); j++;
-  XCopyArea(dp, numbers[j], vu->clip_label, draw_gc, 0, 0, wids[j], hgts[j], xs[2], ys[2]); j++;
-  XCopyArea(dp, numbers[j], vu->clip_label, draw_gc, 0, 0, wids[j], hgts[j], xs[3], ys[3]); j++;
-  XCopyArea(dp, numbers[j], vu->clip_label, draw_gc, 0, 0, wids[j], hgts[j], xs[4], ys[4]);
-
   /* draw the arcs */
   xs[0] = 0;
   ys[0] = (int)(size * (160 - 120));
@@ -563,17 +468,7 @@ static void allocate_meter_1(vu_label *vu)
 	    XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
 	  }
     }
-  for (i = 0; i < VU_NUMBERS; i++) 
-    XFreePixmap(dp, numbers[i]);
 }
-
-#if 0
-  /* here's how the label xpm files were created */
-  /* the data was then transferred to this file and cleaned up by hand */
-  XpmWriteFileFromPixmap(dp, "onlabel.xpm", vu->on_label, NULL, NULL);  
-  XpmWriteFileFromPixmap(dp, "offlabel.xpm", vu->off_label, NULL, NULL);  
-  XpmWriteFileFromPixmap(dp, "cliplabel.xpm", vu->clip_label, NULL, NULL);
-#endif
 
 static void display_vu_meter(vu_t *vu)
 {
@@ -616,7 +511,8 @@ static void display_vu_meter(vu_t *vu)
     case VU_ON: label = vu->on_label; break;
     }
   if (label) 
-    XCopyArea(vu->dp, label, vu->wn, vu_gc, 0, 0, vu->center_x * 2, vu->center_y, 0, 0);
+    XCopyArea(vu->dp, label, vu->wn, vu_gc, 0, 0, vu->center_x * 2, vu->center_y, 0, -10);
+
   val = vu->current_val * VU_NEEDLE_SPEED + (vu->last_val * (1.0 - VU_NEEDLE_SPEED));
   vu->last_val = val;
   deg = -45.0 + val * 90.0;
@@ -627,9 +523,13 @@ static void display_vu_meter(vu_t *vu)
   ny0 = vu->light_y;
   nx1 = (int)(vu->center_x + 130 * size * sin(rdeg));
   ny1 = (int)(vu->center_y - 130 * size * cos(rdeg));
+
+  ny1 -= 10;
+
   XSetForeground(vu->dp, vu_gc, sx->black);
   XDrawLine(vu->dp, vu->wn, vu_gc, nx0, ny0, nx1, ny1);
 
+#if 0
   /* this shadow doesn't do much (and if +/-3 for depth, it looks kinda dumb) */
   if (deg != 0.0)
     {
@@ -644,6 +544,7 @@ static void display_vu_meter(vu_t *vu)
       else XDrawLine(vu->dp, vu->wn, vu_gc, nx0 + 1, ny0, nx1 + 1, ny1);
       XSetForeground(vu->dp, vu_gc, sx->black);
     }
+#endif
 
   if (vu->on_off != VU_OFF)
     {
@@ -657,8 +558,9 @@ static void display_vu_meter(vu_t *vu)
       else redy = VU_BUBBLE_SIZE;
       bub0 = (int)(size * 117);
       bub1 = (int)(size * 119);
+
       for (i = bub0, j = bub0 * 2; i <= bub1; i++, j += (int)(2 * size))
-	XDrawArc(vu->dp, vu->wn, vu_gc, vu->center_x - i, vu->center_y - i, j, j, 135 * 64 - redx, redy);
+	XDrawArc(vu->dp, vu->wn, vu_gc, vu->center_x - i, vu->center_y - i - 10, j, j, 135 * 64 - redx, redy);
       XSetForeground(vu->dp, vu_gc, sx->black);
     }
 }
@@ -673,9 +575,6 @@ static vu_t *make_vu_meter(Widget meter, int light_x, int light_y, int center_x,
   vu_t *vu;
   int i;
   vu_label *vl = NULL;
-#if HAVE_XPM  
-  int err = XpmSuccess;
-#endif
   vu = (vu_t *)CALLOC(1, sizeof(vu_t));
   vu->meter = meter;
   vu->size = size;
@@ -709,21 +608,8 @@ static vu_t *make_vu_meter(Widget meter, int light_x, int light_y, int center_x,
       vu_labels[current_vu_label] = (vu_label *)CALLOC(1, sizeof(vu_label));
       vl = vu_labels[current_vu_label];
       current_vu_label++;
-      vl->label_font = get_vu_font(size);
       vl->size = size;
-#if HAVE_XPM  
-      if ((vl->size == 1.0) || (vl->size > 4.0) || (vl->size < .25))
-	err = allocate_meter_2(recorder, vl);
-      else allocate_meter_1(vl);
-      if (err != XpmSuccess) 
-	{
-	  vl->on_label = 0; 
-	  vl->off_label = 0; 
-	  vl->clip_label = 0;
-	}
-#else
       allocate_meter_1(vl);
-#endif
     }
   vu->on_label = vl->on_label;
   vu->off_label = vl->off_label;
@@ -1040,12 +926,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 		{
 		  rp->monitor_port = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DAC_OUT,
 							   rp->srate, rp->hd_audio_out_chans, rp->output_data_format, rp->buffer_size);
-		  if (rp->monitor_port == -1)
-		    {
-		      record_report(messages, _("open output"), NULL);
-		      rp->monitoring = false;
-		    }
-		  else rp->monitoring = true;
+		  rp->monitoring = (rp->monitor_port != -1);
 		}
 	    }
 	  else 
@@ -2061,7 +1942,11 @@ static Widget make_vu_meters(pane_t *p, int vu_meters, Widget *frames, Widget in
       XtSetArg(args[n], XmNforeground, ss->sgx->black); n++;
       n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNwidth, 120 * 2 * meter_size); n++;
+#if 0
       XtSetArg(args[n], XmNheight, 100 * meter_size); n++;
+#else
+      XtSetArg(args[n], XmNheight, 80 * meter_size); n++;
+#endif
       XtSetArg(args[n], XmNallowResize, false); n++;
       meter = XtCreateManagedWidget("vu", xmDrawingAreaWidgetClass, frame, args, n);
       p->meters[i] = make_vu_meter(meter, 120, 100, 120, 160, meter_size);

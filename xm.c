@@ -5,10 +5,11 @@
 
 #include <config.h>
 
-#define XM_DATE "1-May-06"
+#define XM_DATE "26-Aug-06"
 
 /* HISTORY: 
  *
+ *   26-Aug:    removed WITH_GTK_AND_X11 switch.
  *   21-Apr:    Gauche additions.
  *   30-Jan:    removed XmMultiList.
  *   1-Jan-06:  XmNpopupEnabled resource type changed from boolean to int (enum) (Motif docs bug).
@@ -241,10 +242,6 @@
 #if HAVE_SCHEME || HAVE_FORTH
   #define XM_SET_FIELD_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
     XEN_ASSERT_TYPE(Assertion, Arg, Position, S_setB XM_FIELD_PREFIX Caller XM_POSTFIX, Correct_Type)
-#endif
-
-#if WITH_GTK_AND_X11
-  #include "xg-x11.h"
 #endif
 
 #define XtIsSubClass XtIsSubclass
@@ -18767,69 +18764,45 @@ static XEN gxm_set_pad(XEN ptr, XEN val)
 static XEN gxm_blue(XEN ptr)
 {
   if (XEN_XColor_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XColor(ptr))->blue)));
-#if WITH_GTK_AND_X11
-  return(gxg_blue(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "blue", "XColor");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_blue(XEN ptr, XEN val)
 {
   XM_SET_FIELD_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, "blue", "an integer");
   if (XEN_XColor_P(ptr)) (XEN_TO_C_XColor(ptr))->blue = XEN_TO_C_INT(val);
-#if WITH_GTK_AND_X11
-  else return(gxg_set_blue(ptr, val));
-#else
   else XM_SET_FIELD_ASSERT_TYPE(0, ptr, XEN_ARG_1, "blue", "XColor");
-#endif
   return(val);
 }
 
 static XEN gxm_green(XEN ptr)
 {
   if (XEN_XColor_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XColor(ptr))->green)));
-#if WITH_GTK_AND_X11
-  return(gxg_green(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "green", "XColor");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_green(XEN ptr, XEN val)
 {
   XM_SET_FIELD_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, "green", "an integer");
   if (XEN_XColor_P(ptr)) (XEN_TO_C_XColor(ptr))->green = XEN_TO_C_INT(val);
-#if WITH_GTK_AND_X11
-  else return(gxg_set_green(ptr, val));
-#else
   else XM_SET_FIELD_ASSERT_TYPE(0, ptr, XEN_ARG_1, "green", "XColor");
-#endif
   return(val);
 }
 
 static XEN gxm_red(XEN ptr)
 {
   if (XEN_XColor_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XColor(ptr))->red)));
-#if WITH_GTK_AND_X11
-  return(gxg_red(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "red", "XColor");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_red(XEN ptr, XEN val)
 {
   XM_SET_FIELD_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, "red", "an integer");
   if (XEN_XColor_P(ptr)) (XEN_TO_C_XColor(ptr))->red = XEN_TO_C_INT(val);
-#if WITH_GTK_AND_X11
-  else return(gxg_set_red(ptr, val));
-#else
   else XM_SET_FIELD_ASSERT_TYPE(0, ptr, XEN_ARG_1, "red", "XColor");
-#endif
   return(val);
 }
 
@@ -18925,12 +18898,8 @@ static XEN gxm_bitmap_unit(XEN ptr)
 static XEN gxm_byte_order(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XImage(ptr))->byte_order)));
-#if WITH_GTK_AND_X11
-  return(gxg_byte_order(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "byte_order", "XImage");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_xoffset(XEN ptr)
@@ -18991,23 +18960,15 @@ static XEN gxm_visual(XEN ptr)
 #if HAVE_XPM
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_Visual((Visual *)((XEN_TO_C_XpmAttributes(ptr))->visual)));
 #endif
-#if WITH_GTK_AND_X11
-  return(gxg_visual(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "visual", "a struct with a visual field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_cursor(XEN ptr)
 {
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_Cursor((Cursor)((XEN_TO_C_XSetWindowAttributes(ptr))->cursor)));
-#if WITH_GTK_AND_X11
-  return(gxg_cursor(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "cursor", "XSetWindowAttributes");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_cursor(XEN ptr, XEN val)
@@ -19029,12 +18990,8 @@ static XEN gxm_do_not_propagate_mask(XEN ptr)
 static XEN gxm_event_mask(XEN ptr)
 {
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XSetWindowAttributes(ptr))->event_mask)));
-#if WITH_GTK_AND_X11
-  return(gxg_event_mask(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "event_mask", "XSetWindowAttributes");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_event_mask(XEN ptr, XEN val)
@@ -19081,12 +19038,8 @@ static XEN gxm_win_gravity(XEN ptr)
 {
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowAttributes(ptr))->win_gravity)));
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XSetWindowAttributes(ptr))->win_gravity)));
-#if WITH_GTK_AND_X11
-  return(gxg_win_gravity(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "win_gravity", "a struct with a win_gravity field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_bit_gravity(XEN ptr)
@@ -19150,12 +19103,8 @@ static XEN gxm_background_pixmap(XEN ptr)
 static XEN gxm_bits_per_pixel(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XImage(ptr))->bits_per_pixel)));
-#if WITH_GTK_AND_X11
-  return(gxg_bits_per_pixel(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "bits_per_pixel", "XImage");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_visuals(XEN ptr)
@@ -19200,12 +19149,8 @@ static XEN gxm_depth(XEN ptr)
 #if HAVE_XPM
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->depth)));
 #endif
-#if WITH_GTK_AND_X11
-  return(gxg_depth(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "depth", "a struct with a depth field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_map_entries(XEN ptr)
@@ -19218,12 +19163,8 @@ static XEN gxm_bits_per_rgb(XEN ptr)
 {
   if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->bits_per_rgb)));
   if (XEN_Visual_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Visual(ptr))->bits_per_rgb)));
-#if WITH_GTK_AND_X11
-  return(gxg_bits_per_rgb(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "bits_per_rgb", "Visual or XVisualInfo");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_blue_mask(XEN ptr)
@@ -19231,12 +19172,8 @@ static XEN gxm_blue_mask(XEN ptr)
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XImage(ptr))->blue_mask)));
   if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->blue_mask)));
   if (XEN_Visual_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_Visual(ptr))->blue_mask)));
-#if WITH_GTK_AND_X11
-  return(gxg_blue_mask(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "blue_mask", "a struct with a blue_mask field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_green_mask(XEN ptr)
@@ -19244,12 +19181,8 @@ static XEN gxm_green_mask(XEN ptr)
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XImage(ptr))->green_mask)));
   if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->green_mask)));
   if (XEN_Visual_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_Visual(ptr))->green_mask)));
-#if WITH_GTK_AND_X11
-  return(gxg_green_mask(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "green_mask", "a struct with a green_mask field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_red_mask(XEN ptr)
@@ -19257,23 +19190,15 @@ static XEN gxm_red_mask(XEN ptr)
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XImage(ptr))->red_mask)));
   if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->red_mask)));
   if (XEN_Visual_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_Visual(ptr))->red_mask)));
-#if WITH_GTK_AND_X11
-  return(gxg_red_mask(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "red_mask", "a struct with a red_mask field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_colormap_size(XEN ptr)
 {
   if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->colormap_size)));
-#if WITH_GTK_AND_X11
-  return(gxg_colormap_size(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "colormap_size", "XVisualInfo*");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_class(XEN ptr)
@@ -19303,9 +19228,6 @@ static XEN gxm_set_pixel(XEN ptr, XEN val)
 #if HAVE_XPM
   else if (XEN_XpmColorSymbol_P(ptr)) (XEN_TO_C_XpmColorSymbol(ptr))->pixel = XEN_TO_C_Pixel(val);
 #endif
-#if WITH_GTK_AND_X11
-  else return(gxg_set_pixel(ptr, val));
-#endif
   return(val);
 }
 
@@ -19318,12 +19240,8 @@ static XEN gxm_pixel(XEN ptr)
 #if HAVE_XPM
   if (XEN_XpmColorSymbol_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XpmColorSymbol(ptr))->pixel)));
 #endif
-#if WITH_GTK_AND_X11
-  return(gxg_pixel(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "pixel", "a struct with a pixel field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_window_group(XEN ptr)
@@ -19433,67 +19351,43 @@ static XEN gxm_min_bounds(XEN ptr)
 static XEN gxm_min_height(XEN ptr)
 {
   if (XEN_XIconSize_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XIconSize(ptr))->min_height)));
-#if WITH_GTK_AND_X11
-  return(gxg_min_height(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "min_height", "XIconSize");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_min_width(XEN ptr)
 {
   if (XEN_XIconSize_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XIconSize(ptr))->min_width)));
-#if WITH_GTK_AND_X11
-  return(gxg_min_width(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "min_width", "XIconSize");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_max_height(XEN ptr)
 {
   if (XEN_XIconSize_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XIconSize(ptr))->max_height)));
-#if WITH_GTK_AND_X11
-  return(gxg_max_height(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "max_height", "XIconSize");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_max_width(XEN ptr)
 {
   if (XEN_XIconSize_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XIconSize(ptr))->max_width)));
-#if WITH_GTK_AND_X11
-  return(gxg_max_width(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "max_width", "XIconSize");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_height_inc(XEN ptr)
 {
   if (XEN_XIconSize_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XIconSize(ptr))->height_inc)));
-#if WITH_GTK_AND_X11
-  return(gxg_height_inc(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "height_inc", "XIconSize");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_width_inc(XEN ptr)
 {
   if (XEN_XIconSize_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XIconSize(ptr))->width_inc)));
-#if WITH_GTK_AND_X11
-  return(gxg_width_inc(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "width_inc", "XIconSize");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_properties(XEN ptr)
@@ -19539,12 +19433,8 @@ static XEN gxm_name(XEN ptr)
 #if HAVE_XPM
   if (XEN_XpmColorSymbol_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XpmColorSymbol(ptr))->name)));
 #endif
-#if WITH_GTK_AND_X11
-  return(gxg_name(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "name", "a struct with a name field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_attributes(XEN ptr)
@@ -19718,12 +19608,8 @@ static XEN gxm_colormap(XEN ptr)
 #if HAVE_XPM
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_Colormap((Colormap)((XEN_TO_C_XpmAttributes(ptr))->colormap)));
 #endif
-#if WITH_GTK_AND_X11
-  return(gxg_colormap(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "colormap", "a struct with a colormap field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_colormap(XEN ptr, XEN val)
@@ -19742,12 +19628,8 @@ static XEN gxm_property(XEN ptr)
 {
   if (XEN_XSelectionEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionEvent(ptr))->property)));
   if (XEN_XSelectionRequestEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionRequestEvent(ptr))->property)));
-#if WITH_GTK_AND_X11
-  return(gxg_property(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "property", "a struct with a property field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_property(XEN ptr, XEN val)
@@ -19768,12 +19650,8 @@ static XEN gxm_target(XEN ptr)
 #endif
   if (XEN_XSelectionEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionEvent(ptr))->target)));
   if (XEN_XSelectionRequestEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionRequestEvent(ptr))->target)));
-#if WITH_GTK_AND_X11
-  return(gxg_target(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "target", "a struct with a target field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_target(XEN ptr, XEN val)
@@ -19789,12 +19667,8 @@ static XEN gxm_requestor(XEN ptr)
 {
   if (XEN_XSelectionEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XSelectionEvent(ptr))->requestor)));
   if (XEN_XSelectionRequestEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XSelectionRequestEvent(ptr))->requestor)));
-#if WITH_GTK_AND_X11
-  return(gxg_requestor(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "requestor", "a struct with a requestor field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_requestor(XEN ptr, XEN val)
@@ -19831,12 +19705,8 @@ static XEN gxm_selection(XEN ptr)
   if (XEN_XSelectionEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionEvent(ptr))->selection)));
   if (XEN_XSelectionRequestEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionRequestEvent(ptr))->selection)));
   if (XEN_XSelectionClearEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionClearEvent(ptr))->selection)));
-#if WITH_GTK_AND_X11
-  return(gxg_selection(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "selection", "a struct with a selection field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_selection(XEN ptr, XEN val)
@@ -19852,12 +19722,8 @@ static XEN gxm_set_selection(XEN ptr, XEN val)
 static XEN gxm_atom(XEN ptr)
 {
   if (XEN_XPropertyEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XPropertyEvent(ptr))->atom)));
-#if WITH_GTK_AND_X11
-  return(gxg_atom(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "atom", "XPropertyEvent");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_atom(XEN ptr, XEN val)
@@ -19970,12 +19836,8 @@ static XEN gxm_override_redirect(XEN ptr)
   if (XEN_XReparentEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XReparentEvent(ptr))->override_redirect)));
   if (XEN_XMapEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XMapEvent(ptr))->override_redirect)));
   if (XEN_XCreateWindowEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XCreateWindowEvent(ptr))->override_redirect)));
-#if WITH_GTK_AND_X11
-  return(gxg_override_redirect(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "override_redirect", "a struct with an override_redirect field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_override_redirect(XEN ptr, XEN val)
@@ -20021,12 +19883,8 @@ static XEN gxm_parent(XEN ptr)
   if (XEN_XReparentEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XReparentEvent(ptr))->parent)));
   if (XEN_XMapRequestEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XMapRequestEvent(ptr))->parent)));
   if (XEN_XCreateWindowEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XCreateWindowEvent(ptr))->parent)));
-#if WITH_GTK_AND_X11
-  return(gxg_parent(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "parent", "a struct with a parent field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_parent(XEN ptr, XEN val)
@@ -20099,12 +19957,8 @@ static XEN gxm_count(XEN ptr)
   if (XEN_XMappingEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XMappingEvent(ptr))->count)));
   if (XEN_XGraphicsExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGraphicsExposeEvent(ptr))->count)));
   if (XEN_XExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XExposeEvent(ptr))->count)));
-#if WITH_GTK_AND_X11
-  return(gxg_count(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "count", "a struct with a count field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_count(XEN ptr, XEN val)
@@ -20146,12 +20000,8 @@ static XEN gxm_set_key_vector(XEN ptr, XEN val)
 static XEN gxm_focus(XEN ptr)
 {
   if (XEN_XCrossingEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XCrossingEvent(ptr))->focus)));
-#if WITH_GTK_AND_X11
-  return(gxg_focus(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "focus", "XCrossingEvent");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_focus(XEN ptr, XEN val)
@@ -20170,12 +20020,8 @@ static XEN gxm_detail(XEN ptr)
   if (XEN_XConfigureRequestEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XConfigureRequestEvent(ptr))->detail)));
   if (XEN_XFocusChangeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XFocusChangeEvent(ptr))->detail)));
   if (XEN_XCrossingEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XCrossingEvent(ptr))->detail)));
-#if WITH_GTK_AND_X11
-  return(gxg_detail(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "detail", "a struct with a detail field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_detail(XEN ptr, XEN val)
@@ -20192,12 +20038,8 @@ static XEN gxm_mode(XEN ptr)
 {
   if (XEN_XFocusChangeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XFocusChangeEvent(ptr))->mode)));
   if (XEN_XCrossingEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XCrossingEvent(ptr))->mode)));
-#if WITH_GTK_AND_X11
-  return(gxg_mode(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "mode", "a struct with a mode field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_mode(XEN ptr, XEN val)
@@ -20212,12 +20054,8 @@ static XEN gxm_set_mode(XEN ptr, XEN val)
 static XEN gxm_is_hint(XEN ptr)
 {
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_char((char)((XEN_TO_C_XMotionEvent(ptr))->is_hint)));
-#if WITH_GTK_AND_X11
-  return(gxg_is_hint(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "is_hint", "XMotionEvent");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_is_hint(XEN ptr, XEN val)
@@ -20231,12 +20069,8 @@ static XEN gxm_set_is_hint(XEN ptr, XEN val)
 static XEN gxm_button(XEN ptr)
 {
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XButtonEvent(ptr))->button)));
-#if WITH_GTK_AND_X11
-  return(gxg_button(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "button", "XButtonEvent");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_button(XEN ptr, XEN val)
@@ -20273,12 +20107,8 @@ static XEN gxm_set_same_screen(XEN ptr, XEN val)
 static XEN gxm_keycode(XEN ptr)
 {
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_KeyCode((XEN_TO_C_XKeyEvent(ptr))->keycode));
-#if WITH_GTK_AND_X11
-  return(gxg_keycode(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "keycode", "XKeyEvent");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_keycode(XEN ptr, XEN val)
@@ -20298,12 +20128,8 @@ static XEN gxm_state(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XMotionEvent(ptr))->state)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XButtonEvent(ptr))->state)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XKeyEvent(ptr))->state)));
-#if WITH_GTK_AND_X11
-  return(gxg_state(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "state", "a struct with a state field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_state(XEN ptr, XEN val)
@@ -20326,12 +20152,8 @@ static XEN gxm_y_root(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XMotionEvent(ptr))->y_root)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XButtonEvent(ptr))->y_root)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XKeyEvent(ptr))->y_root)));
-#if WITH_GTK_AND_X11
-  return(gxg_y_root(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "y_root", "a struct with a y_root field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_y_root(XEN ptr, XEN val)
@@ -20351,12 +20173,8 @@ static XEN gxm_x_root(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XMotionEvent(ptr))->x_root)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XButtonEvent(ptr))->x_root)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XKeyEvent(ptr))->x_root)));
-#if WITH_GTK_AND_X11
-  return(gxg_x_root(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "x_root", "a struct with an x_root field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_x_root(XEN ptr, XEN val)
@@ -20438,12 +20256,8 @@ static XEN gxm_y(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XMotionEvent(ptr))->y)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XButtonEvent(ptr))->y)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XKeyEvent(ptr))->y)));
-#if WITH_GTK_AND_X11
-  return(gxg_y(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "y", "a struct with a y field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_x(XEN ptr)
@@ -20472,12 +20286,8 @@ static XEN gxm_x(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XMotionEvent(ptr))->x)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XButtonEvent(ptr))->x)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XKeyEvent(ptr))->x)));
-#if WITH_GTK_AND_X11
-  return(gxg_x(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "x", "a struct with an x field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_time(XEN ptr)
@@ -20493,12 +20303,8 @@ static XEN gxm_time(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XMotionEvent(ptr))->time)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XButtonEvent(ptr))->time)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XKeyEvent(ptr))->time)));
-#if WITH_GTK_AND_X11
-  return(gxg_time(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "time", "a struct with a time field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_time(XEN ptr, XEN val)
@@ -20524,12 +20330,8 @@ static XEN gxm_subwindow(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XMotionEvent(ptr))->subwindow)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XButtonEvent(ptr))->subwindow)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XKeyEvent(ptr))->subwindow)));
-#if WITH_GTK_AND_X11
-  return(gxg_subwindow(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "subwindow", "a struct with a subwindow field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_subwindow(XEN ptr, XEN val)
@@ -20553,12 +20355,8 @@ static XEN gxm_window(XEN ptr)
   if (XEN_XmTopLevelLeaveCallbackStruct_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XmTopLevelLeaveCallbackStruct(ptr))->window)));
 #endif
   if (XEN_XEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XAnyEvent(ptr))->window)));
-#if WITH_GTK_AND_X11
-  return(gxg_window(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "window", "a struct with a window field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_window(XEN ptr, XEN val)
@@ -20572,12 +20370,8 @@ static XEN gxm_set_window(XEN ptr, XEN val)
 static XEN gxm_send_event(XEN ptr)
 {
   if (XEN_XEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XAnyEvent(ptr))->send_event)));
-#if WITH_GTK_AND_X11
-  return(gxg_send_event(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "send_event", "XEvent");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_send_event(XEN ptr, XEN val)
@@ -20608,12 +20402,8 @@ static XEN gxm_type(XEN ptr)
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XmConvertCallbackStruct(ptr))->type)));
 #endif
   if (XEN_XEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XAnyEvent(ptr))->type)));
-#if WITH_GTK_AND_X11
-  return(gxg_type(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "type", "a struct with a type field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_type(XEN ptr, XEN val)
@@ -20798,12 +20588,8 @@ static XEN gxm_height(XEN ptr)
   if (XEN_XpmImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->height)));
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->height)));
 #endif
-#if WITH_GTK_AND_X11
-  return(gxg_height(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "height", "a struct with a height field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_width(XEN ptr)
@@ -20825,12 +20611,8 @@ static XEN gxm_width(XEN ptr)
   if (XEN_XpmImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->width)));
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->width)));
 #endif
-#if WITH_GTK_AND_X11
-  return(gxg_width(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "width", "a struct with a width field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_root(XEN ptr)
@@ -20878,12 +20660,8 @@ static XEN gxm_set_display(XEN ptr, XEN val)
 static XEN gxm_function(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->function)));
-#if WITH_GTK_AND_X11
-  return(gxg_function(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "function", "XGCValues");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_function(XEN ptr, XEN val)
@@ -20940,12 +20718,8 @@ static XEN gxm_set_background(XEN ptr, XEN val)
 static XEN gxm_line_width(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->line_width)));
-#if WITH_GTK_AND_X11
-  return(gxg_line_width(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "line_width", "XGCValues");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_line_width(XEN ptr, XEN val)
@@ -20959,12 +20733,8 @@ static XEN gxm_set_line_width(XEN ptr, XEN val)
 static XEN gxm_line_style(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->line_style)));
-#if WITH_GTK_AND_X11
-  return(gxg_line_style(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "line_style", "XGCValues");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_line_style(XEN ptr, XEN val)
@@ -20978,12 +20748,8 @@ static XEN gxm_set_line_style(XEN ptr, XEN val)
 static XEN gxm_cap_style(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->cap_style)));
-#if WITH_GTK_AND_X11
-  return(gxg_cap_style(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "cap_style", "XGCValues");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_cap_style(XEN ptr, XEN val)
@@ -20997,12 +20763,8 @@ static XEN gxm_set_cap_style(XEN ptr, XEN val)
 static XEN gxm_join_style(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->join_style)));
-#if WITH_GTK_AND_X11
-  return(gxg_join_style(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "join_style", "XGCValues");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_join_style(XEN ptr, XEN val)
@@ -21058,12 +20820,8 @@ static XEN gxm_set_arc_mode(XEN ptr, XEN val)
 static XEN gxm_tile(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XGCValues(ptr))->tile)));
-#if WITH_GTK_AND_X11
-  return(gxg_tile(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "tile", "XGCValues");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_tile(XEN ptr, XEN val)
@@ -21077,12 +20835,8 @@ static XEN gxm_set_tile(XEN ptr, XEN val)
 static XEN gxm_stipple(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XGCValues(ptr))->stipple)));
-#if WITH_GTK_AND_X11
-  return(gxg_stipple(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "stipple", "XGCValues");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_stipple(XEN ptr, XEN val)
@@ -21096,12 +20850,8 @@ static XEN gxm_set_stipple(XEN ptr, XEN val)
 static XEN gxm_ts_x_origin(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->ts_x_origin)));
-#if WITH_GTK_AND_X11
-  return(gxg_ts_x_origin(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "ts_x_origin", "XGCValues");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_ts_x_origin(XEN ptr, XEN val)
@@ -21115,12 +20865,8 @@ static XEN gxm_set_ts_x_origin(XEN ptr, XEN val)
 static XEN gxm_ts_y_origin(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->ts_y_origin)));
-#if WITH_GTK_AND_X11
-  return(gxg_ts_y_origin(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "ts_y_origin", "XGCValues");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_ts_y_origin(XEN ptr, XEN val)
@@ -21151,12 +20897,8 @@ static XEN gxm_set_font(XEN ptr, XEN val)
 static XEN gxm_subwindow_mode(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->subwindow_mode)));
-#if WITH_GTK_AND_X11
-  return(gxg_subwindow_mode(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "subwindow_mode", "XGCValues");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_subwindow_mode(XEN ptr, XEN val)
@@ -21170,12 +20912,8 @@ static XEN gxm_set_subwindow_mode(XEN ptr, XEN val)
 static XEN gxm_graphics_exposures(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XGCValues(ptr))->graphics_exposures)));
-#if WITH_GTK_AND_X11
-  return(gxg_graphics_exposures(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "graphics_exposures", "XGCValues");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_graphics_exposures(XEN ptr, XEN val)
@@ -21189,12 +20927,8 @@ static XEN gxm_set_graphics_exposures(XEN ptr, XEN val)
 static XEN gxm_clip_x_origin(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->clip_x_origin)));
-#if WITH_GTK_AND_X11
-  return(gxg_clip_x_origin(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "clip_x_origin", "XGCValues");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_clip_x_origin(XEN ptr, XEN val)
@@ -21208,12 +20942,8 @@ static XEN gxm_set_clip_x_origin(XEN ptr, XEN val)
 static XEN gxm_clip_y_origin(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->clip_y_origin)));
-#if WITH_GTK_AND_X11
-  return(gxg_clip_y_origin(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "clip_y_origin", "XGCValues");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_clip_y_origin(XEN ptr, XEN val)
@@ -21227,12 +20957,8 @@ static XEN gxm_set_clip_y_origin(XEN ptr, XEN val)
 static XEN gxm_clip_mask(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XGCValues(ptr))->clip_mask)));
-#if WITH_GTK_AND_X11
-  return(gxg_clip_mask(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "clip_mask", "XGCValues");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_clip_mask(XEN ptr, XEN val)
@@ -30164,13 +29890,8 @@ static void define_Atoms(void)
 
 static bool xm_already_inited = false;
 
-#if WITH_GTK_AND_X11
- void Init_libx11(void);
- void Init_libx11(void)
-#else
- void Init_libxm(void);
- void Init_libxm(void)
-#endif
+void Init_libxm(void);
+void Init_libxm(void)
 {
   /* perhaps nicer here to check the features list for 'xm */
   if (!xm_already_inited)
@@ -30251,21 +29972,14 @@ static bool xm_already_inited = false;
       XEN_YES_WE_HAVE("Xp");
 #endif
       XEN_YES_WE_HAVE("xm");
-#if (!WITH_GTK_AND_X11)
       XEN_DEFINE("xm-version", C_TO_XEN_STRING(XM_DATE));
-#endif
       xm_already_inited = true;
     }
 }
 
 #else
-#if WITH_GTK_AND_X11
- void Init_libx11(void);
- void Init_libx11(void)
-#else
- void Init_libxm(void);
- void Init_libxm(void)
-#endif
+void Init_libxm(void);
+void Init_libxm(void)
 {
 }
 #endif

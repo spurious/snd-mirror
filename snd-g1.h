@@ -181,9 +181,6 @@ void g_init_gxutils(void);
 
 /* -------- snd-gxbitmaps.c -------- */
 
-char **onlabel_bits(void);
-char **offlabel_bits(void);
-char **cliplabel_bits(void);
 char **mini_bomb_bits(int n);
 char **mini_glass_bits(int n);
 char **mini_lock_bits(void);

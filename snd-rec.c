@@ -38,64 +38,6 @@
 
 static Cessator recorder_reader;
 
-font_t *get_vu_font(Float size)
-{
-  char font_name[LABEL_BUFFER_SIZE];
-  int font_size;
-  char *vu_font_name;
-  font_t *label_font;
-  font_size = (int)(size * 12 * vu_font_size(ss));
-  if (font_size < 5) font_size = 5;
-  vu_font_name = vu_font(ss);
-  if (!vu_font_name)
-    {
-      if (size < 0.75) 
-#ifndef MUS_SGI
-	vu_font_name = "fixed";
-#else
-        vu_font_name = "courier";
-#endif
-      else
-	{
-	  if (size < 1.25) 
-	    vu_font_name = "courier";
-	  else vu_font_name = "times";
-	}
-    }
-#if USE_GTK
-  label_font = LOAD_FONT(font_name);
-#else
-  mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
-	  vu_font_name,
-	  (font_size > 10) ? "bold" : "*",
-	  font_size);
-  
-  label_font = LOAD_FONT(font_name);
-  if (!(label_font))
-    {
-      mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-*-*-*-*-%d-*-*-*-*-*-*", vu_font_name, font_size);
-      label_font = LOAD_FONT(font_name);
-      if (!(label_font))
-	{
-	  mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-courier-*-*-*-*-%d-*-*-*-*-*-*", font_size);
-	  label_font = LOAD_FONT(font_name);
-	  while (!(label_font))
-	    {
-	      mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-*-*-*-*-*-%d-*-*-*-*-*-*", font_size);
-	      label_font = LOAD_FONT(font_name);
-	      font_size++;
-	      if (font_size > 60) 
-		{
-		  label_font = LOAD_FONT("-*-*-*-*-*-*-*-*-*-*-*-*-*");
-		  break;
-		}
-	    }
-	}
-    }
-#endif
-  return(label_font);
-}
-
 int recorder_columns(int vu_meters)
 {
   if ((vu_meters % 4) == 0)
@@ -887,11 +829,7 @@ void fire_up_recorder(void)
 			monitor_buf = (char *)CALLOC(rp->buffer_size * rp->hd_audio_out_chans * size, 1);
 		      rp->monitoring = true;
 		    }
-		  else
-		    {
-		      recorder_error(_("open output: "));
-		      rp->monitoring = false;
-		    }
+		  else rp->monitoring = false;
 		  break;
 		}
 	    }
@@ -930,12 +868,7 @@ void fire_up_recorder(void)
 	  return;
 	}
       rp->taking_input = true;
-      if (rp->monitor_port == -1)
-	{
-	  recorder_error(_("open output: "));
-	  rp->monitoring = false;
-	}
-      else rp->monitoring = true;
+      rp->monitoring = (rp->monitor_port != -1);
     }
   set_read_in_progress();
 }
@@ -1109,12 +1042,7 @@ void fire_up_recorder(void)
 					   rp->output_data_format,
 					   rp->buffer_size);
 #endif
-  if (rp->monitor_port == -1)
-    {
-      recorder_error(_("open output: "));
-      rp->monitoring = false;
-    }
-  else rp->monitoring = true;
+  rp->monitoring = (rp->monitor_port != -1);
   set_read_in_progress();
 }
 #endif
@@ -1973,28 +1901,6 @@ static XEN g_recorder_dialog(void)
   return(XEN_WRAP_WIDGET(w));
 }
 
-static XEN g_vu_font(void) {return(C_TO_XEN_STRING(vu_font(ss)));}
-static XEN g_set_vu_font(XEN val) 
-{
-  #define H_vu_font "(" S_vu_font "): name of font used to make VU meter labels (courier)"
-  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_vu_font, "a string"); 
-  if (vu_font(ss)) FREE(vu_font(ss));
-  if (XEN_FALSE_P(val))
-    set_vu_font(copy_string(DEFAULT_VU_FONT));
-  else set_vu_font(copy_string(XEN_TO_C_STRING(val)));
-  return(C_TO_XEN_STRING(vu_font(ss)));
-}
-
-static XEN g_vu_font_size(void) {return(C_TO_XEN_DOUBLE(vu_font_size(ss)));}
-static XEN g_set_vu_font_size(XEN val) 
-{
-  #define MAX_VU_FONT_SIZE 1000.0
-  #define H_vu_font_size "(" S_vu_font_size "): size of VU font meter labels (1.0)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_vu_font_size, "a number"); 
-  set_vu_font_size(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_VU_FONT_SIZE));
-  return(C_TO_XEN_DOUBLE(vu_font_size(ss)));
-}
-
 static XEN g_vu_size(void) {return(C_TO_XEN_DOUBLE(vu_size(ss)));}
 static XEN g_set_vu_size(XEN val) 
 {
@@ -2037,10 +1943,6 @@ XEN_NARGIFY_3(g_set_recorder_in_amp_w, g_set_recorder_in_amp)
 XEN_NARGIFY_1(g_recorder_out_amp_w, g_recorder_out_amp)
 XEN_NARGIFY_2(g_set_recorder_out_amp_w, g_set_recorder_out_amp)
 XEN_NARGIFY_0(g_recorder_dialog_w, g_recorder_dialog)
-XEN_NARGIFY_0(g_vu_font_w, g_vu_font)
-XEN_NARGIFY_1(g_set_vu_font_w, g_set_vu_font)
-XEN_NARGIFY_0(g_vu_font_size_w, g_vu_font_size)
-XEN_NARGIFY_1(g_set_vu_font_size_w, g_set_vu_font_size)
 XEN_NARGIFY_0(g_vu_size_w, g_vu_size)
 XEN_NARGIFY_1(g_set_vu_size_w, g_set_vu_size)
 #else
@@ -2075,10 +1977,6 @@ XEN_NARGIFY_1(g_set_vu_size_w, g_set_vu_size)
 #define g_recorder_out_amp_w g_recorder_out_amp
 #define g_set_recorder_out_amp_w g_set_recorder_out_amp
 #define g_recorder_dialog_w g_recorder_dialog
-#define g_vu_font_w g_vu_font
-#define g_set_vu_font_w g_set_vu_font
-#define g_vu_font_size_w g_vu_font_size
-#define g_set_vu_font_size_w g_set_vu_font_size
 #define g_vu_size_w g_vu_size
 #define g_set_vu_size_w g_set_vu_size
 #endif
@@ -2131,12 +2029,6 @@ void g_init_recorder(void)
 				   S_setB S_recorder_out_amp, g_set_recorder_out_amp_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_recorder_dialog, g_recorder_dialog_w, 0, 0, 0, H_recorder_dialog);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vu_font, g_vu_font_w, H_vu_font,
-				   S_setB S_vu_font, g_set_vu_font_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vu_font_size, g_vu_font_size_w, H_vu_font_size,
-				   S_setB S_vu_font_size, g_set_vu_font_size_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vu_size, g_vu_size_w, H_vu_size,
 				   S_setB S_vu_size, g_set_vu_size_w,  0, 0, 1, 0);
