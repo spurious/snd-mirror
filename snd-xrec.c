@@ -10,6 +10,10 @@
 #define SMALL_FONT_CUTOFF .85
 #define SMALLER_FONT_CUTOFF .7
 
+#define HEIGHT_OFFSET 16
+#define METER_HEIGHT 80
+#define METER_WIDTH 120
+
 typedef struct {
   Pixmap off_label;
   Pixmap on_label;
@@ -29,7 +33,6 @@ typedef struct {
   Float max_val;
   Float red_deg;
   Float size;
-  int light_x, light_y, center_x, center_y;
   Pixmap off_label;
   Pixmap on_label;
   Pixmap clip_label;
@@ -273,28 +276,16 @@ static int yellow_vals[] = {0, 16, 32, 64, 96, 128, 160, 175, 185, 200, 210, 220
 
 static void allocate_meter_1(vu_label *vu)
 {
-  /* called only if size not allocated yet and size = 1.0 not available as pre-made pixmap */
-  int scr;
   Display *dp;
   Drawable wn;
   Colormap cmap;
   XColor tmp_color;
-  int i, j, k;
+  int i, j, scr, width, wid2, height, top;
   Pixel white, black, red;
   unsigned int depth;
-  int band;
-  XPoint pts[16];
-  int x0, y0, x1, y1;
-  Float rdeg;
   Float size;
-  int xs[5], ys[5];
-
-  Float BAND_X;
-  Float BAND_Y;
 
   size = vu->size;
-  BAND_X = 2.75 * size;
-  BAND_Y = 3.25 * size;
   red = ss->sgx->red;
   dp = XtDisplay(recorder);
   wn = XtWindow(recorder);
@@ -303,6 +294,12 @@ static void allocate_meter_1(vu_label *vu)
   black = BlackPixel(dp, scr);
   white = WhitePixel(dp, scr);
   XtVaGetValues(recorder, XmNdepth, &depth, NULL);
+
+  width = (int)(size * METER_WIDTH * 2);
+  wid2 = (int)(size * METER_WIDTH);
+  height = (int)(size * METER_HEIGHT * 2);
+  top = (int)(size * 100);
+
   if (!vu_colors_allocated)
     {
       vu_colors_allocated = true;
@@ -323,165 +320,165 @@ static void allocate_meter_1(vu_label *vu)
 	  reds[i] = tmp_color.pixel;
 	}
     }
-  for (k = 0; k < 2; k++) 
-    {
-      band = 1;
-      if (k == 1)
-	{
-	  vu->clip_label = XCreatePixmap(dp, wn, 
-					 (unsigned int)(120 * 2 * size), 
-					 (unsigned int)(160 * size), 
-					 depth);
-	  XSetForeground(dp, draw_gc, reds[0]);	    
-	  XFillRectangle(dp, vu->clip_label, draw_gc, 0, 0, 
-			 (unsigned int)(120 * 2 * size), 
-			 (unsigned int)(160 * size));
-	}
-      else 
-	{
-	  vu->on_label = XCreatePixmap(dp, wn, 
-				       (unsigned int)(120 * 2 * size), 
-				       (unsigned int)(160 * size), 
-				       depth);
-	  XSetForeground(dp, draw_gc, yellows[2]);
-	  XFillRectangle(dp, vu->on_label, draw_gc, 0, 0, 
-			 (unsigned int)(120 * 2 * size), 
-			 (unsigned int)(160 * size));
-	}
-      /* initialize the sequence of nested polygons */
-      pts[0].x = (short)(120 * size - BAND_X);
-      pts[0].y = (short)(100 * size);
-      pts[1].x = pts[0].x;
-      pts[1].y = (short)(pts[0].y - BAND_Y + 1);
-      pts[2].x = pts[1].x + 1;
-      pts[2].y = pts[1].y - 1;
-      pts[3].x = (short)(pts[2].x + BAND_X * 2 - 2);
-      pts[3].y = pts[2].y;
-      pts[4].x = pts[3].x + 2;
-      pts[4].y = pts[3].y + 1;
-      pts[5].x = pts[4].x;
-      pts[5].y = pts[0].y;
-      pts[6].x = pts[0].x;
-      pts[6].y = pts[0].y;
-      if (k == 1)
-	XFillPolygon(dp, vu->clip_label, draw_gc, pts, 7, Convex, CoordModeOrigin);
-      else XFillPolygon(dp, vu->on_label, draw_gc, pts, 7, Convex, CoordModeOrigin);
 
-      for (i = 1; i < VU_COLORS; i++)
-	{
-	  band += i;
-	  if (k == 1) 
-	    XSetForeground(dp, draw_gc, reds[i]); 
-	  else 
-	    {
-	      if (i < 2) 
-		XSetForeground(dp, draw_gc, yellows[2]); 
-	      else XSetForeground(dp, draw_gc, yellows[i]);
-	    }
-	  pts[6].x = (short)(120 * size + band * BAND_X);
-	  pts[6].y = pts[5].y;
-	  pts[7].x = pts[6].x;
-	  pts[7].y = (short)(100 * size - band * (BAND_Y - 1));
-	  pts[8].x = (short)(120 * size + band * (BAND_X - 1));
-	  pts[8].y = (short)(100 * size - band * BAND_Y);
-	  pts[9].x = (short)(120 * size - band * (BAND_X - 1));
-	  pts[9].y = pts[8].y;
-	  pts[10].x = (short)(120 * size - band * BAND_X);
-	  pts[10].y = (short)(100 * size - band * (BAND_Y - 1));
-	  pts[11].x = pts[10].x;
-	  pts[11].y = pts[6].y;
-	  pts[12].x = pts[0].x;
-	  pts[12].y = pts[0].y;
-	  if (k == 1)
-	    XFillPolygon(dp, vu->clip_label, draw_gc, pts, 13, Complex, CoordModeOrigin);
-	  else XFillPolygon(dp, vu->on_label, draw_gc, pts, 13, Complex, CoordModeOrigin);
-	  for (j = 0; j < 6; j++) 
-	    { 
-	      /* set up initial portion of next polygon */
-	      pts[j].x = pts[j + 6].x;
-	      pts[j].y = pts[j + 6].y;
-	    }
-	}
-    }
+  {
+    XPoint pts[16];
+    int band, k;
+    Float BAND_X, BAND_Y;
 
-  vu->off_label = XCreatePixmap(dp, wn, 
-				(unsigned int)(120 * 2 * size), 
-				(unsigned int)(160 * size), 
-				depth);
-  /* not on, so just display a white background */
+    BAND_X = 2.75 * size;
+    BAND_Y = 3.25 * size;
+
+    for (k = 0; k < 2; k++) 
+      {
+	band = 1;
+	if (k == 1)
+	  {
+	    vu->clip_label = XCreatePixmap(dp, wn, width, height, depth);
+	    XSetForeground(dp, draw_gc, reds[0]);	    
+	    XFillRectangle(dp, vu->clip_label, draw_gc, 0, 0, width, height);
+	  }
+	else 
+	  {
+	    vu->on_label = XCreatePixmap(dp, wn, width, height, depth);
+	    XSetForeground(dp, draw_gc, yellows[2]);
+	    XFillRectangle(dp, vu->on_label, draw_gc, 0, 0, width, height);
+	  }
+	/* initialize the sequence of nested polygons */
+	pts[0].x = (short)(wid2 - BAND_X);
+	pts[0].y = (short)top;
+	pts[1].x = pts[0].x;
+	pts[1].y = (short)(pts[0].y - BAND_Y + 1);
+	pts[2].x = pts[1].x + 1;
+	pts[2].y = pts[1].y - 1;
+	pts[3].x = (short)(pts[2].x + BAND_X * 2 - 2);
+	pts[3].y = pts[2].y;
+	pts[4].x = pts[3].x + 2;
+	pts[4].y = pts[3].y + 1;
+	pts[5].x = pts[4].x;
+	pts[5].y = pts[0].y;
+	pts[6].x = pts[0].x;
+	pts[6].y = pts[0].y;
+	if (k == 1)
+	  XFillPolygon(dp, vu->clip_label, draw_gc, pts, 7, Convex, CoordModeOrigin);
+	else XFillPolygon(dp, vu->on_label, draw_gc, pts, 7, Convex, CoordModeOrigin);
+	
+	for (i = 1; i < VU_COLORS; i++)
+	  {
+	    band += i;
+	    if (k == 1) 
+	      XSetForeground(dp, draw_gc, reds[i]); 
+	    else 
+	      {
+		if (i < 2) 
+		  XSetForeground(dp, draw_gc, yellows[2]); 
+		else XSetForeground(dp, draw_gc, yellows[i]);
+	      }
+	    pts[6].x = (short)(wid2 + band * BAND_X);
+	    pts[6].y = pts[5].y;
+	    pts[7].x = pts[6].x;
+	    pts[7].y = (short)(top - band * (BAND_Y - 1));
+	    pts[8].x = (short)(wid2 + band * (BAND_X - 1));
+	    pts[8].y = (short)(top - band * BAND_Y);
+	    pts[9].x = (short)(wid2 - band * (BAND_X - 1));
+	    pts[9].y = pts[8].y;
+	    pts[10].x = (short)(wid2 - band * BAND_X);
+	    pts[10].y = (short)(top - band * (BAND_Y - 1));
+	    pts[11].x = pts[10].x;
+	    pts[11].y = pts[6].y;
+	    pts[12].x = pts[0].x;
+	    pts[12].y = pts[0].y;
+	    if (k == 1)
+	      XFillPolygon(dp, vu->clip_label, draw_gc, pts, 13, Complex, CoordModeOrigin);
+	    else XFillPolygon(dp, vu->on_label, draw_gc, pts, 13, Complex, CoordModeOrigin);
+	    for (j = 0; j < 6; j++) 
+	      { 
+		/* set up initial portion of next polygon */
+		pts[j].x = pts[j + 6].x;
+		pts[j].y = pts[j + 6].y;
+	      }
+	  }
+      }
+  }
+
+  /* create the 3 labels, draw arcs and ticks */
+  vu->off_label = XCreatePixmap(dp, wn, width, height, depth);
   XSetForeground(dp, draw_gc, white);
-  XFillRectangle(dp, vu->off_label, draw_gc, 0, 0, 
-		 (unsigned int)(120 * 2 * size), 
-		 (unsigned int)(160 * size));
-
+  XFillRectangle(dp, vu->off_label, draw_gc, 0, 0, width, height);
   XSetForeground(dp, draw_gc, black);
 
-  /* draw the arcs */
-  xs[0] = 0;
-  ys[0] = (int)(size * (160 - 120));
-  xs[1] = (int)size;
-  ys[1] = (int)(size * (160 - 120));
-  xs[2] = (int)size;
-  ys[2] = (int)(size * (160 - 119));
-  xs[3] = (int)(size * 4);
-  ys[3] = (int)(size * (160 - 116));
+  {
+    int ang0, ang1, major_tick, minor_tick;
+    Float sinr, cosr;
+    int x0, y0, x1, y1;
+    Float rdeg;
 
-  XDrawArc(dp, vu->on_label, draw_gc, xs[0], ys[0], (unsigned int)(size * (240)), (unsigned int)(size * (240)), 45 * 64, 90 * 64);
-  XDrawArc(dp, vu->on_label, draw_gc, xs[1], ys[1], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
-  XDrawArc(dp, vu->on_label, draw_gc, xs[2], ys[2], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
-  XDrawArc(dp, vu->on_label, draw_gc, xs[3], ys[3], (unsigned int)(size * (232)), (unsigned int)(size * (232)), 45 * 64, 90 * 64);
+    ang0 = 45 * 64;
+    ang1 = 90 * 64;
+    top = (int)(size * 40);
+    major_tick = (int)(width / 24);
+    minor_tick = (int)((width * 0.6) / 24);
 
-  XDrawArc(dp, vu->off_label, draw_gc, xs[0], ys[0], (unsigned int)(size * (240)), (unsigned int)(size * (240)), 45 * 64, 90 * 64);
-  XDrawArc(dp, vu->off_label, draw_gc, xs[1], ys[1], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
-  XDrawArc(dp, vu->off_label, draw_gc, xs[2], ys[2], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
-  XDrawArc(dp, vu->off_label, draw_gc, xs[3], ys[3], (unsigned int)(size * (232)), (unsigned int)(size * (232)), 45 * 64, 90 * 64);
+    /* x y = coords of upper left corner of the bounding rectangle, not the arc center! */
 
-  XDrawArc(dp, vu->clip_label, draw_gc, xs[0], ys[0], (unsigned int)(size * (240)), (unsigned int)(size * (240)), 45 * 64, 90 * 64);
-  XDrawArc(dp, vu->clip_label, draw_gc, xs[1], ys[1], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
-  XDrawArc(dp, vu->clip_label, draw_gc, xs[2], ys[2], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
-  XDrawArc(dp, vu->clip_label, draw_gc, xs[3], ys[3], (unsigned int)(size * (232)), (unsigned int)(size * (232)), 45 * 64, 90 * 64);
+    XDrawArc(dp, vu->on_label, draw_gc, 0, top, width, width, ang0, ang1);
+    XDrawArc(dp, vu->on_label, draw_gc, 1, top - 1, width - 2, width - 2, ang0, ang1);
+    XDrawArc(dp, vu->on_label, draw_gc, 2, top - 2, width - 4, width - 4, ang0, ang1);
+    XDrawArc(dp, vu->on_label, draw_gc, 4, top + 4, width - 8, width - 8, ang0, ang1);
 
-  /* draw the axis ticks */
-  for (i = 0; i < 5; i++)
-    {
-      rdeg = mus_degrees_to_radians(45 - i * 22.5);
-      x0 = (int)(120 * size * (1.0 + sin(rdeg)));
-      y0 = (int)(160 * size - 120 * size * cos(rdeg));
-      x1 = (int)(120 * size + 130 * size * sin(rdeg));
-      y1 = (int)(160 * size - 130 * size * cos(rdeg));
-      XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
-      XDrawLine(dp, vu->on_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
-      XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
-      XDrawLine(dp, vu->off_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
-      XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
-      XDrawLine(dp, vu->clip_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
-      if (i < 4)
-	for (j = 1; j < 6; j++)
-	  {
-	    rdeg = mus_degrees_to_radians(45 - i * 22.5 - j * (90.0 / 20.0));
-	    x0 = (int)(120 * size * (1.0 + sin(rdeg)));
-	    y0 = (int)(160 * size - 120 * size * cos(rdeg));
-	    x1 = (int)(120 * size + 126 * size * sin(rdeg));
-	    y1 = (int)(160 * size - 126 * size * cos(rdeg));
-	    XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
-	    XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
-	    XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
-	  }
-    }
+    XDrawArc(dp, vu->off_label, draw_gc, 0, top, width, width, ang0, ang1);
+    XDrawArc(dp, vu->off_label, draw_gc, 1, top - 1, width - 2, width - 2, ang0, ang1);
+    XDrawArc(dp, vu->off_label, draw_gc, 2, top - 2, width - 4, width - 4, ang0, ang1);
+    XDrawArc(dp, vu->off_label, draw_gc, 4, top + 4, width - 8, width - 8, ang0, ang1);
+
+    XDrawArc(dp, vu->clip_label, draw_gc, 0, top, width, width, ang0, ang1);
+    XDrawArc(dp, vu->clip_label, draw_gc, 1, top - 1, width - 2, width - 2, ang0, ang1);
+    XDrawArc(dp, vu->clip_label, draw_gc, 2, top - 2, width - 4, width - 4, ang0, ang1);
+    XDrawArc(dp, vu->clip_label, draw_gc, 4, top + 4, width - 8, width - 8, ang0, ang1);
+
+    /* draw the axis ticks */
+    for (i = 0; i < 5; i++)
+      {
+	rdeg = mus_degrees_to_radians(45 - i * 22.5);
+	sinr = sin(rdeg);
+	cosr = cos(rdeg);
+	x0 = wid2 + wid2 * sinr;
+	y0 = wid2 + top - wid2 * cosr;
+	x1 = wid2 + (wid2 + major_tick) * sinr;
+	y1 = wid2 + top - (wid2 + major_tick) * cosr;
+
+	XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
+	XDrawLine(dp, vu->on_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
+	XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
+	XDrawLine(dp, vu->off_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
+	XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
+	XDrawLine(dp, vu->clip_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
+
+	if (i < 4)
+	  for (j = 1; j < 6; j++)
+	    {
+	      rdeg = mus_degrees_to_radians(45 - i * 22.5 - j * (90.0 / 20.0));
+	      sinr = sin(rdeg);
+	      cosr = cos(rdeg);
+	      x0 = wid2 + wid2 * sinr;
+	      y0 = wid2 + top - wid2 * cosr;
+	      x1 = wid2 + (wid2 + minor_tick) * sinr;
+	      y1 = wid2 + top - (wid2 + minor_tick) * cosr;
+	      XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
+	      XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
+	      XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
+	    }
+      }
+  }
 }
 
 static void display_vu_meter(vu_t *vu)
 {
-  Float deg, rdeg, val;
-  int nx0, nx1, ny0, ny1, redx, redy, bub0, bub1, i, j;
   Pixmap label = 0;
-  Float size;
-  state_context *sx;
   recorder_info *rp;
   if (!vu) return;
   rp = get_recorder_info();
-  sx = ss->sgx;
-  size = vu->size;
+
   if (vu->current_val > CLIPPED_TRIGGER) 
     {
       if (vu->on_off == VU_ON) 
@@ -510,59 +507,63 @@ static void display_vu_meter(vu_t *vu)
       break;
     case VU_ON: label = vu->on_label; break;
     }
-  if (label) 
-    XCopyArea(vu->dp, label, vu->wn, vu_gc, 0, 0, vu->center_x * 2, vu->center_y, 0, -10);
 
-  val = vu->current_val * VU_NEEDLE_SPEED + (vu->last_val * (1.0 - VU_NEEDLE_SPEED));
-  vu->last_val = val;
-  deg = -45.0 + val * 90.0;
-  /* if (deg < -45.0) deg = -45.0; else if (deg > 45.0) deg = 45.0; */
-  rdeg = mus_degrees_to_radians(deg);
-  nx0 = vu->center_x - (int)((Float)(vu->center_y - vu->light_y) / tan(mus_degrees_to_radians(deg + 90)));
-  /* not sure this is needed -- see snd-motif.scm for simpler code */
-  ny0 = vu->light_y;
-  nx1 = (int)(vu->center_x + 130 * size * sin(rdeg));
-  ny1 = (int)(vu->center_y - 130 * size * cos(rdeg));
+  {
+    Float size, rdeg, val;
+    int redx, redy, height_offset;
+    state_context *sx;
+    int major_tick;
+    Float sinr, cosr;
+    int x0, y0, x1, y1;
+    int width, wid2, height, top;
 
-  ny1 -= 10;
+    size = vu->size;
+    sx = ss->sgx;
+    height_offset = (int)(HEIGHT_OFFSET * size);
+    width = (int)(size * METER_WIDTH * 2);
+    wid2 = (int)(size * METER_WIDTH);
+    height = (int)(size * METER_HEIGHT * 2);
+    top = (int)(size * 40);
+    major_tick = (int)(width / 24);
 
-  XSetForeground(vu->dp, vu_gc, sx->black);
-  XDrawLine(vu->dp, vu->wn, vu_gc, nx0, ny0, nx1, ny1);
+    if (label) 
+      XCopyArea(vu->dp, label, vu->wn, vu_gc, 0, 0, width, height, 0, -height_offset);
 
-#if 0
-  /* this shadow doesn't do much (and if +/-3 for depth, it looks kinda dumb) */
-  if (deg != 0.0)
-    {
-      if (vu->on_off == VU_OFF)
-	XSetForeground(vu->dp, vu_gc, sx->position_color);
-      else
-	if (vu->on_off == VU_CLIPPED)
-	  XSetForeground(vu->dp, vu_gc, sx->pushed_button_color);
-	else XSetForeground(vu->dp, vu_gc, sx->white);
-      if (deg < 0.0)
-	XDrawLine(vu->dp, vu->wn, vu_gc, nx0 - 1, ny0, nx1 - 1, ny1);
-      else XDrawLine(vu->dp, vu->wn, vu_gc, nx0 + 1, ny0, nx1 + 1, ny1);
-      XSetForeground(vu->dp, vu_gc, sx->black);
-    }
-#endif
+    val = vu->current_val * VU_NEEDLE_SPEED + (vu->last_val * (1.0 - VU_NEEDLE_SPEED));
+    vu->last_val = val;
+    rdeg = mus_degrees_to_radians(val * 90.0 - 45.0);
+    sinr = sin(rdeg);
+    cosr = cos(rdeg);
 
-  if (vu->on_off != VU_OFF)
-    {
-      if (vu->current_val > vu->red_deg) 
-	vu->red_deg = vu->current_val;
-      else vu->red_deg = vu->current_val * VU_BUBBLE_SPEED + (vu->red_deg * (1.0 - VU_BUBBLE_SPEED));
-      XSetForeground(vu->dp, vu_gc, sx->red);
-      redx = (int)(vu->red_deg * 90 * 64);
-      if (redx < (VU_BUBBLE_SIZE)) 
-	redy = redx; 
-      else redy = VU_BUBBLE_SIZE;
-      bub0 = (int)(size * 117);
-      bub1 = (int)(size * 119);
+    x0 = wid2;
+    y0 = height;
+    x1 = wid2 + (wid2 + major_tick) * sinr;
+    y1 = wid2 + top - height_offset - (wid2 + major_tick) * cosr;
 
-      for (i = bub0, j = bub0 * 2; i <= bub1; i++, j += (int)(2 * size))
-	XDrawArc(vu->dp, vu->wn, vu_gc, vu->center_x - i, vu->center_y - i - 10, j, j, 135 * 64 - redx, redy);
-      XSetForeground(vu->dp, vu_gc, sx->black);
-    }
+    XSetForeground(vu->dp, vu_gc, sx->black);
+    XDrawLine(vu->dp, vu->wn, vu_gc, x0, y0, x1, y1);
+
+    if (vu->on_off != VU_OFF)
+      {
+	XSetForeground(vu->dp, vu_gc, sx->red);
+
+	if (vu->current_val > vu->red_deg) 
+	  vu->red_deg = vu->current_val;
+	else vu->red_deg = vu->current_val * VU_BUBBLE_SPEED + (vu->red_deg * (1.0 - VU_BUBBLE_SPEED));
+
+	redx = (int)(vu->red_deg * 90 * 64);
+	if (redx < (VU_BUBBLE_SIZE)) 
+	  redy = redx; 
+	else redy = VU_BUBBLE_SIZE;
+
+	XDrawArc(vu->dp, vu->wn, vu_gc, 3, top + 0 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
+	XDrawArc(vu->dp, vu->wn, vu_gc, 3, top + 1 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
+	XDrawArc(vu->dp, vu->wn, vu_gc, 3, top + 2 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
+	XDrawArc(vu->dp, vu->wn, vu_gc, 3, top + 3 - height_offset, width - 6, width - 6, 135 * 64 - redx, redy);
+
+	XSetForeground(vu->dp, vu_gc, sx->black);
+      }
+  }
 }
 
 static void meter_display_callback(Widget w, XtPointer context, XtPointer info) 
@@ -570,7 +571,7 @@ static void meter_display_callback(Widget w, XtPointer context, XtPointer info)
   display_vu_meter((vu_t *)context);
 }
 
-static vu_t *make_vu_meter(Widget meter, int light_x, int light_y, int center_x, int center_y, Float size)
+static vu_t *make_vu_meter(Widget meter, Float size)
 {
   vu_t *vu;
   int i;
@@ -586,10 +587,6 @@ static vu_t *make_vu_meter(Widget meter, int light_x, int light_y, int center_x,
   vu->last_val = 0.0;
   vu->clipped = 0;
   vu->max_val = 0.0;
-  vu->light_x = (int)(light_x * size);
-  vu->light_y = (int)(light_y * size);
-  vu->center_x = (int)(center_x * size);
-  vu->center_y = (int)(center_y * size);
   for (i = 0; i < current_vu_label; i++)
     if (vu_labels[i]->size == size) 
       {
@@ -1034,6 +1031,8 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
 				WITH_HEADER_TYPE_FIELD, 
 				WITH_COMMENT_FIELD,
 				WITH_BUILTIN_HEADERS);
+  XtVaSetValues(recdat->comment_text, XmNcolumns, 30, NULL);
+
   recdat->dialog = recorder;
   XtVaGetValues(recdat->comment_text, XmNy, &pane_max, NULL);
 #if MUS_SGI
@@ -1942,14 +1941,10 @@ static Widget make_vu_meters(pane_t *p, int vu_meters, Widget *frames, Widget in
       XtSetArg(args[n], XmNforeground, ss->sgx->black); n++;
       n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNwidth, 120 * 2 * meter_size); n++;
-#if 0
-      XtSetArg(args[n], XmNheight, 100 * meter_size); n++;
-#else
-      XtSetArg(args[n], XmNheight, 80 * meter_size); n++;
-#endif
+      XtSetArg(args[n], XmNheight, METER_HEIGHT * meter_size); n++;
       XtSetArg(args[n], XmNallowResize, false); n++;
       meter = XtCreateManagedWidget("vu", xmDrawingAreaWidgetClass, frame, args, n);
-      p->meters[i] = make_vu_meter(meter, 120, 100, 120, 160, meter_size);
+      p->meters[i] = make_vu_meter(meter, meter_size);
       vu = p->meters[i];
 
       if (input)

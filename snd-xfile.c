@@ -2370,7 +2370,7 @@ file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, i
       samples_label = XtCreateManagedWidget(_("samples:"), xmLabelWidgetClass, form, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNcolumns, 16); n++;
+      XtSetArg(args[n], XmNcolumns, 8); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, samples_label); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -2437,7 +2437,7 @@ file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, i
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrows, 2); n++;
-      XtSetArg(args[n], XmNcolumns, 40); n++;
+      XtSetArg(args[n], XmNcolumns, 16); n++; /* this sets the lower size, so we don't want it too big */
       fdat->comment_text = make_text_widget("comment-text", parent, args, n);
     }
   else fdat->comment_text = NULL;

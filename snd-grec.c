@@ -9,6 +9,9 @@
 #define SMALLER_FONT "Monospace 8"
 #define SMALLER_FONT_CUTOFF .7
 
+#define HEIGHT_OFFSET 12
+#define METER_HEIGHT 80
+
 typedef struct {
   GdkPixmap *off_label;
   GdkPixmap *on_label;
@@ -185,7 +188,6 @@ static int yellow_vals[] = {0, 16, 32, 64, 96, 128, 160, 175, 185, 200, 210, 220
 
 static void allocate_meter_1(vu_label *vu)
 {
-  /* called only if size not allocated yet and size = 1.0 not available as pre-made pixmap */
   GdkDrawable *wn;
   GdkColormap *cmap;
   int i, j, k;
@@ -309,7 +311,7 @@ static void allocate_meter_1(vu_label *vu)
 
   vu->off_label = gdk_pixmap_new(wn, 
 				 (unsigned int)(CENTER_X * 2 * size), 
-				 (unsigned int)(CENTER_Y * size),
+				 (unsigned int)(CENTER_Y * size) - 40,
 				 -1);
   /* not on, so just display a white background */
   gdk_gc_set_foreground(draw_gc, white);
@@ -422,7 +424,7 @@ static void display_vu_meter(vu_t *vu)
       label = vu->on_label; 
       break;
     }
-  if (label) gdk_draw_drawable(vu->wn, vu_gc, label, 0, 0, 0, 0, vu->center_x * 2, vu->center_y);
+  if (label) gdk_draw_drawable(vu->wn, vu_gc, label, 0, 0, 0, -(HEIGHT_OFFSET * size), vu->center_x * 2, vu->center_y);
   val = vu->current_val * VU_NEEDLE_SPEED + (vu->last_val * (1.0 - VU_NEEDLE_SPEED));
   vu->last_val = val;
   deg = -45.0 + val * 90.0;
@@ -434,21 +436,6 @@ static void display_vu_meter(vu_t *vu)
   ny1 = (int)(vu->center_y - 130 * size * cos(rdeg));
   gdk_gc_set_foreground(vu_gc, sx->black);
   gdk_draw_line(vu->wn, vu_gc, nx0, ny0, nx1, ny1);
-
-  /* this shadow doesn't do much (and if +/-3 for depth, it looks kinda dumb) */
-  if (deg != 0.0)
-    {
-      if (vu->on_off == VU_OFF)
-	gdk_gc_set_foreground(vu_gc, sx->position_color);
-      else
-	if (vu->on_off == VU_CLIPPED)
-	  gdk_gc_set_foreground(vu_gc, sx->pushed_button_color);
-	else gdk_gc_set_foreground(vu_gc, sx->white);
-      if (deg < 0.0)
-	gdk_draw_line(vu->wn, vu_gc, nx0 - 1, ny0, nx1 - 1, ny1);
-      else gdk_draw_line(vu->wn, vu_gc, nx0 + 1, ny0, nx1 + 1, ny1);
-      gdk_gc_set_foreground(vu_gc, sx->black);
-    }
 
   if (vu->on_off != VU_OFF)
     {
@@ -464,7 +451,7 @@ static void display_vu_meter(vu_t *vu)
       bub0 = (int)(size * 117);
       bub1 = (int)(size * 119);
       for (i = bub0, j = bub0 * 2; i <= bub1; i++, j += (int)(2 * size))
-	gdk_draw_arc(vu->wn, vu_gc, false, vu->center_x - i, vu->center_y - i, j, j, 135 * 64 - redx, redy);
+	gdk_draw_arc(vu->wn, vu_gc, false, vu->center_x - i, vu->center_y - i - (HEIGHT_OFFSET * size), j, j, 135 * 64 - redx, redy);
       gdk_gc_set_foreground(vu_gc, sx->black);
     }
 }
@@ -1349,7 +1336,7 @@ static void make_vu_meters(pane_t *p, int vu_meters,
       gtk_container_set_border_width(GTK_CONTAINER(frame), 2);
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
       gtk_widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->black);
-      gtk_widget_set_size_request(frame, (int)(250 * meter_size), (int)(100 * meter_size));
+      gtk_widget_set_size_request(frame, (int)(250 * meter_size), (int)(METER_HEIGHT * meter_size));
       gtk_widget_show(frame);
 
       meter = gtk_drawing_area_new();
@@ -1368,6 +1355,7 @@ static void make_vu_meters(pane_t *p, int vu_meters,
       if ((i == (columns * (row + 1) - 1)) && 
 	  (vu_meters > (i + 1))) 
 	row++;
+
     }
   FREE(hboxes);
 }
