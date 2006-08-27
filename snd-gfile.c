@@ -2154,7 +2154,7 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   /* header type */
   if (with_header_type == WITH_HEADER_TYPE_FIELD)
     {
-      fdat->header_list = slist_new_with_title(_("header:"), form, headers, nheaders, BOX_PACK);
+      fdat->header_list = slist_new_with_title(_("header:"), form, headers, nheaders, BOX_PACK); /* BOX_PACK widget_add_t (snd-g0.h) */
       fdat->header_list->select_callback = update_header_type_list;
       fdat->header_list->select_callback_data = (void *)fdat;
       slist_select(fdat->header_list, fdat->header_pos);
@@ -2266,7 +2266,7 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       /* need a spacer to force the lists to have room */
       GtkWidget *spacer;
       spacer = gtk_vseparator_new();
-      gtk_box_pack_start(GTK_BOX(scbox), spacer, false, false, 40);
+      gtk_box_pack_start(GTK_BOX(scbox), spacer, false, false, 10);
       gtk_widget_show(spacer);
     }
 

@@ -1,19 +1,6 @@
 #include "snd.h"
 #include "snd-rec.h"
 
-#if HAVE_XPM
-  #include <X11/xpm.h>
-#endif
-
-#define SMALL_FONT "6x10"
-#define SMALLER_FONT "5x7"
-#define SMALL_FONT_CUTOFF .85
-#define SMALLER_FONT_CUTOFF .7
-
-#define HEIGHT_OFFSET 16
-#define METER_HEIGHT 80
-#define METER_WIDTH 120
-
 typedef struct {
   Pixmap off_label;
   Pixmap on_label;
@@ -259,6 +246,15 @@ void make_recorder_icons_transparent_again(Pixel new_color)
 
 /* -------------------------------- VU METER -------------------------------- */
 
+#define SMALL_FONT "6x10"
+#define SMALLER_FONT "5x7"
+#define SMALL_FONT_CUTOFF .85
+#define SMALLER_FONT_CUTOFF .7
+
+#define HEIGHT_OFFSET 16
+#define METER_HEIGHT 80
+#define METER_WIDTH 120
+
 #define VU_OFF 0
 #define VU_ON 1
 #define VU_CLIPPED 2
@@ -300,6 +296,7 @@ static void allocate_meter_1(vu_label *vu)
   height = (int)(size * METER_HEIGHT * 2);
   top = (int)(size * 100);
 
+  /* create the lit-from-below effect in yellow and red */
   if (!vu_colors_allocated)
     {
       vu_colors_allocated = true;
@@ -324,10 +321,10 @@ static void allocate_meter_1(vu_label *vu)
   {
     XPoint pts[16];
     int band, k;
-    Float BAND_X, BAND_Y;
+    Float band_x, band_y;
 
-    BAND_X = 2.75 * size;
-    BAND_Y = 3.25 * size;
+    band_x = 2.75 * size;
+    band_y = 3.25 * size;
 
     for (k = 0; k < 2; k++) 
       {
@@ -345,13 +342,13 @@ static void allocate_meter_1(vu_label *vu)
 	    XFillRectangle(dp, vu->on_label, draw_gc, 0, 0, width, height);
 	  }
 	/* initialize the sequence of nested polygons */
-	pts[0].x = (short)(wid2 - BAND_X);
+	pts[0].x = (short)(wid2 - band_x);
 	pts[0].y = (short)top;
 	pts[1].x = pts[0].x;
-	pts[1].y = (short)(pts[0].y - BAND_Y + 1);
+	pts[1].y = (short)(pts[0].y - band_y + 1);
 	pts[2].x = pts[1].x + 1;
 	pts[2].y = pts[1].y - 1;
-	pts[3].x = (short)(pts[2].x + BAND_X * 2 - 2);
+	pts[3].x = (short)(pts[2].x + band_x * 2 - 2);
 	pts[3].y = pts[2].y;
 	pts[4].x = pts[3].x + 2;
 	pts[4].y = pts[3].y + 1;
@@ -374,16 +371,16 @@ static void allocate_meter_1(vu_label *vu)
 		  XSetForeground(dp, draw_gc, yellows[2]); 
 		else XSetForeground(dp, draw_gc, yellows[i]);
 	      }
-	    pts[6].x = (short)(wid2 + band * BAND_X);
+	    pts[6].x = (short)(wid2 + band * band_x);
 	    pts[6].y = pts[5].y;
 	    pts[7].x = pts[6].x;
-	    pts[7].y = (short)(top - band * (BAND_Y - 1));
-	    pts[8].x = (short)(wid2 + band * (BAND_X - 1));
-	    pts[8].y = (short)(top - band * BAND_Y);
-	    pts[9].x = (short)(wid2 - band * (BAND_X - 1));
+	    pts[7].y = (short)(top - band * (band_y - 1));
+	    pts[8].x = (short)(wid2 + band * (band_x - 1));
+	    pts[8].y = (short)(top - band * band_y);
+	    pts[9].x = (short)(wid2 - band * (band_x - 1));
 	    pts[9].y = pts[8].y;
-	    pts[10].x = (short)(wid2 - band * BAND_X);
-	    pts[10].y = (short)(top - band * (BAND_Y - 1));
+	    pts[10].x = (short)(wid2 - band * band_x);
+	    pts[10].y = (short)(top - band * (band_y - 1));
 	    pts[11].x = pts[10].x;
 	    pts[11].y = pts[6].y;
 	    pts[12].x = pts[0].x;
@@ -476,6 +473,7 @@ static void display_vu_meter(vu_t *vu)
 {
   Pixmap label = 0;
   recorder_info *rp;
+
   if (!vu) return;
   rp = get_recorder_info();
 
@@ -1724,161 +1722,8 @@ static Widget make_button_matrix(recorder_info *rp, pane_t *p, char *name, Widge
   return(outer_frame);
 }
 
+
 /* -------- I/O pane -------- */
-
-/* these functions are used only by make_pane */
-static Position make_amp_sliders(recorder_info *rp, pane_t *p, Widget first_frame, bool input, int overall_input_ctr);
-static void make_reset_button(pane_t *p, Float meter_size, Widget button_box, Widget vu_vertical_sep);
-static Widget make_button_box(recorder_info *rp, pane_t *p, Float meter_size,
-			      bool input, int overall_input_ctr, int vu_meters, Widget vu_vertical_sep, Widget *frames);
-static void make_gain_separator(pane_t *p, int num_gains, int vu_meters, Widget last_slider);
-static Widget make_vertical_gain_sliders(recorder_info *rp, pane_t *p, 
-					 int num_gains, int gain_ctr, int *mixflds, bool input);
-static Widget make_vertical_gain_separator(pane_t *p, int vu_meters, Widget last_frame);
-static Widget make_vu_meters(pane_t *p, int vu_meters, Widget *frames, Widget in_last_frame, Widget in_left_frame,
-			   int overall_input_ctr, Float meter_size, bool input, Widget *out_frame);
-
-static pane_t *make_pane(recorder_info *rp, Widget paned_window, int device, int system)
-{
-  /* VU meters (frame, then drawing area widget) */
-  /* Linux OSS complication -- the top input panel also has all the "mixer" input volume controls and the output pane has the tone controls, if any */
-  int n, i, k;
-  Arg args[32];
-  pane_t *p;
-  Widget *frames = NULL;
-  Widget last_frame, vu_vertical_sep, last_slider = NULL, matrix_frame, button_box, left_frame;
-  Widget first_frame[1];
-  int vu_meters, true_inputs, num_gains;
-  bool input;
-  Position pane_max;
-  Float meter_size;
-  int mixflds[MAX_AUDIO_FIELD];
-  static int overall_input_ctr = 0;
-  static int gain_ctr = 0;
-
-  p = (pane_t *)CALLOC(1, sizeof(pane_t));
-  p->device = device;
-  p->system = system;
-  true_inputs = recorder_check_device(system, device, mixer_gains_posted, tone_controls_posted, mixflds, &num_gains, &input);
-
-  if (input) 
-    {
-      if ((rp->in_chans > 0) && (true_inputs > rp->in_chans)) vu_meters = rp->in_chans; else vu_meters = true_inputs;
-      p->in_chans = vu_meters;
-      p->out_chans = rp->out_chans;
-      /* this determines how many of the left-side buttons we get if chans > 4; if defaults to 2 (snd.c)
-       * but probably should look at the output device's out chans when we start the recorder for the
-       * first time, but not clobber user's setting (if any); perhaps if it's not the default, it can
-       * be reset?  And if more than (say) 100 buttons, use pull-down menus?
-       */
-    }
-  else 
-    {
-      vu_meters = true_inputs;
-      if (vu_meters < rp->out_chans) 
-	vu_meters = rp->out_chans;
-      else
-	{
-	  if ((rp->out_chans > 0) && (vu_meters > rp->out_chans))
-	    vu_meters = rp->out_chans;
-	}
-      p->out_chans = vu_meters;
-      if (num_gains > vu_meters) num_gains = vu_meters;
-      p->in_chans = 1;
-    }
-
-  p->meters = (vu_t **)CALLOC(vu_meters, sizeof(vu_t *));
-  p->meters_size = vu_meters;
-  p->active = (bool *)CALLOC(vu_meters, sizeof(bool));
-#if DEBUGGING
-  set_printable(0);
-#endif
-  p->active_size = vu_meters;
-  p->active_sliders = (bool **)CALLOC(p->in_chans, sizeof(bool *));
-  for (i = 0; i < p->in_chans; i++) 
-    {
-      p->active_sliders[i] = (bool *)CALLOC(p->out_chans, sizeof(bool));
-#if DEBUGGING
-      set_printable(0);
-#endif
-    }
-  frames = (Widget *)CALLOC(vu_meters, sizeof(Widget));
-
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-  n = attach_all_sides(args, n);
-  XtSetArg(args[n], XmNallowResize, true); n++;
-  p->pane = XtCreateManagedWidget("pane", xmFormWidgetClass, paned_window, args, n);
-  
-  last_frame = NULL;
-  left_frame = NULL;
-  meter_size = vu_size(ss);
-  if (vu_meters > 4) meter_size *= .6; else if (vu_meters > 2) meter_size *= .8;
-  if ((vu_meters % 5) == 0) meter_size *= 0.8;
-
-  if ((input) && ((p->in_chans * p->out_chans) > 8))
-    {
-      for (i = 0; i < p->in_chans; i++) 
-	for (k = 0; k < p->out_chans; k++) 
-	  if (i == k) 
-	    p->active_sliders[i][k] = true;
-
-      /* rather than default to posting 64 (or 256!) sliders, set up a channel matrix where desired sliders can be set */
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      matrix_frame = make_button_matrix(rp, p, "channel-matrix", p->pane, args, n, meter_size);
-      last_frame = matrix_frame;
-      left_frame = matrix_frame;
-    }
-  else 
-    {
-      for (i = 0; i < p->in_chans; i++) 
-	for (k = 0; k < p->out_chans; k++) 
-	  p->active_sliders[i][k] = true;
-    }
-
-  last_frame = make_vu_meters(p, vu_meters, frames, last_frame, left_frame, overall_input_ctr, meter_size, input, first_frame);
-  
-  /* if no audio (hardware) gains, we have the vu separator and the control buttons */
-  vu_vertical_sep = make_vertical_gain_separator(p, vu_meters, last_frame);
-  if (num_gains > 0)
-    {
-      last_slider = make_vertical_gain_sliders(rp, p, num_gains, gain_ctr, mixflds, input);
-      gain_ctr += num_gains;
-    }
-
-  /* separator between vertical sliders and buttons */
-  make_gain_separator(p, num_gains, vu_meters, last_slider);
-  
-  /* control buttons with label */
-  button_box = make_button_box(rp, p, meter_size, input, overall_input_ctr, vu_meters, vu_vertical_sep, frames);
-  if (frames) {FREE(frames); frames = NULL;}
-  make_reset_button(p, meter_size, button_box, vu_vertical_sep);
-  
-  /* now the amp sliders across the bottom of the pane, with 'mixer' info on the right */
-  pane_max = make_amp_sliders(rp, p, first_frame[0], input, overall_input_ctr);
-
-  p->in_chan_loc = overall_input_ctr;
-
-#if NEW_SGI_AL
-  if (p->device == MUS_AUDIO_MICROPHONE)
-    for (i = p->in_chan_loc, k = 0; k < p->in_chans; i++, k++) 
-      rp->input_channel_active[i] = true;
-#endif
-
-  if (input) overall_input_ctr += true_inputs; /* p->in_chans; */
-#if (HAVE_OSS || HAVE_ALSA)
-  p->pane_size = pane_max + 20;
-#else
-  p->pane_size = pane_max + 50;
-#endif
-
-  return(p);
-}
 
 static Widget make_vu_meters(pane_t *p, int vu_meters, Widget *frames, Widget in_last_frame, Widget in_left_frame,
 			   int overall_input_ctr, Float meter_size, bool input, Widget *out_frame)
@@ -2477,6 +2322,148 @@ static Position make_amp_sliders(recorder_info *rp, pane_t *p, Widget first_fram
 	}
     }
   return(pane_max);
+}
+
+static pane_t *make_pane(recorder_info *rp, Widget paned_window, int device, int system)
+{
+  /* VU meters (frame, then drawing area widget) */
+  /* Linux OSS complication -- the top input panel also has all the "mixer" input volume controls and the output pane has the tone controls, if any */
+  int n, i, k;
+  Arg args[32];
+  pane_t *p;
+  Widget *frames = NULL;
+  Widget last_frame, vu_vertical_sep, last_slider = NULL, matrix_frame, button_box, left_frame;
+  Widget first_frame[1];
+  int vu_meters, true_inputs, num_gains;
+  bool input;
+  Position pane_max;
+  Float meter_size;
+  int mixflds[MAX_AUDIO_FIELD];
+  static int overall_input_ctr = 0;
+  static int gain_ctr = 0;
+
+  p = (pane_t *)CALLOC(1, sizeof(pane_t));
+  p->device = device;
+  p->system = system;
+  true_inputs = recorder_check_device(system, device, mixer_gains_posted, tone_controls_posted, mixflds, &num_gains, &input);
+
+  if (input) 
+    {
+      if ((rp->in_chans > 0) && (true_inputs > rp->in_chans)) vu_meters = rp->in_chans; else vu_meters = true_inputs;
+      p->in_chans = vu_meters;
+      p->out_chans = rp->out_chans;
+      /* this determines how many of the left-side buttons we get if chans > 4; if defaults to 2 (snd.c)
+       * but probably should look at the output device's out chans when we start the recorder for the
+       * first time, but not clobber user's setting (if any); perhaps if it's not the default, it can
+       * be reset?  And if more than (say) 100 buttons, use pull-down menus?
+       */
+    }
+  else 
+    {
+      vu_meters = true_inputs;
+      if (vu_meters < rp->out_chans) 
+	vu_meters = rp->out_chans;
+      else
+	{
+	  if ((rp->out_chans > 0) && (vu_meters > rp->out_chans))
+	    vu_meters = rp->out_chans;
+	}
+      p->out_chans = vu_meters;
+      if (num_gains > vu_meters) num_gains = vu_meters;
+      p->in_chans = 1;
+    }
+
+  p->meters = (vu_t **)CALLOC(vu_meters, sizeof(vu_t *));
+  p->meters_size = vu_meters;
+  p->active = (bool *)CALLOC(vu_meters, sizeof(bool));
+#if DEBUGGING
+  set_printable(0);
+#endif
+  p->active_size = vu_meters;
+  p->active_sliders = (bool **)CALLOC(p->in_chans, sizeof(bool *));
+  for (i = 0; i < p->in_chans; i++) 
+    {
+      p->active_sliders[i] = (bool *)CALLOC(p->out_chans, sizeof(bool));
+#if DEBUGGING
+      set_printable(0);
+#endif
+    }
+  frames = (Widget *)CALLOC(vu_meters, sizeof(Widget));
+
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  n = attach_all_sides(args, n);
+  XtSetArg(args[n], XmNallowResize, true); n++;
+  p->pane = XtCreateManagedWidget("pane", xmFormWidgetClass, paned_window, args, n);
+  
+  last_frame = NULL;
+  left_frame = NULL;
+  meter_size = vu_size(ss);
+  if (vu_meters > 4) meter_size *= .6; else if (vu_meters > 2) meter_size *= .8;
+  if ((vu_meters % 5) == 0) meter_size *= 0.8;
+
+  if ((input) && ((p->in_chans * p->out_chans) > 8))
+    {
+      for (i = 0; i < p->in_chans; i++) 
+	for (k = 0; k < p->out_chans; k++) 
+	  if (i == k) 
+	    p->active_sliders[i][k] = true;
+
+      /* rather than default to posting 64 (or 256!) sliders, set up a channel matrix where desired sliders can be set */
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      matrix_frame = make_button_matrix(rp, p, "channel-matrix", p->pane, args, n, meter_size);
+      last_frame = matrix_frame;
+      left_frame = matrix_frame;
+    }
+  else 
+    {
+      for (i = 0; i < p->in_chans; i++) 
+	for (k = 0; k < p->out_chans; k++) 
+	  p->active_sliders[i][k] = true;
+    }
+
+  last_frame = make_vu_meters(p, vu_meters, frames, last_frame, left_frame, overall_input_ctr, meter_size, input, first_frame);
+  
+  /* if no audio (hardware) gains, we have the vu separator and the control buttons */
+  vu_vertical_sep = make_vertical_gain_separator(p, vu_meters, last_frame);
+  if (num_gains > 0)
+    {
+      last_slider = make_vertical_gain_sliders(rp, p, num_gains, gain_ctr, mixflds, input);
+      gain_ctr += num_gains;
+    }
+
+  /* separator between vertical sliders and buttons */
+  make_gain_separator(p, num_gains, vu_meters, last_slider);
+  
+  /* control buttons with label */
+  button_box = make_button_box(rp, p, meter_size, input, overall_input_ctr, vu_meters, vu_vertical_sep, frames);
+  if (frames) {FREE(frames); frames = NULL;}
+  make_reset_button(p, meter_size, button_box, vu_vertical_sep);
+  
+  /* now the amp sliders across the bottom of the pane, with 'mixer' info on the right */
+  pane_max = make_amp_sliders(rp, p, first_frame[0], input, overall_input_ctr);
+
+  p->in_chan_loc = overall_input_ctr;
+
+#if NEW_SGI_AL
+  if (p->device == MUS_AUDIO_MICROPHONE)
+    for (i = p->in_chan_loc, k = 0; k < p->in_chans; i++, k++) 
+      rp->input_channel_active[i] = true;
+#endif
+
+  if (input) overall_input_ctr += true_inputs; /* p->in_chans; */
+#if (HAVE_OSS || HAVE_ALSA)
+  p->pane_size = pane_max + 20;
+#else
+  p->pane_size = pane_max + 50;
+#endif
+
+  return(p);
 }
 
 void sensitize_control_buttons(void)

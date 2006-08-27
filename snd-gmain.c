@@ -723,16 +723,17 @@ style \"default\"\n\
   fg[PRELIGHT]    = { 1.0,  0.0,  0.0}\n\
 \n\
   GtkPaned::handle_size = 6\n\
-  GtkButton::default_border = { 0, 0, 0, 0 }\n\
-  GtkButton::default_outside_border = { 0, 0, 0, 0 }\n\
   xthickness = 1\n\
   ythickness = 1\n\
 }\n\
 \n\
 style \"default_button\" = \"default\"\n\
 {\n\
-#  bg[ACTIVE]   = { 0.79, 0.88, 1.0 }\n\
-#  bg[SELECTED] = { 0.79, 0.88, 1.0 }\n\
+  GtkButton::default_border = { 1, 0, 1, 0 }\n\
+  GtkButton::default_outside_border = { 1, 0, 1, 0 }\n\
+  GtkButton::inner_border = { 1, 0, 1, 0 }\n\
+  GtkButton::focus_line_width = 0\n\
+  GtkButton::focus_padding = 0\n\
 }\n\
 \n\
 style \"default_menu\" = \"default\"\n\
@@ -855,8 +856,9 @@ style \"white_button\" = \"default_button\"\n\
   bg[NORMAL] = { 1.0, 1.0, 1.0 }\n\
   bg[PRELIGHT] = { 0.94, 0.97, 1.0 }\n\
   fg[PRELIGHT] = { 0.0,  0.0,  0.0}\n\
-  GtkButton::default-border = { 0, 0, 0, 0 }\n\
+  GtkButton::default_border = { 0, 0, 0, 0 }\n\
   GtkButton::default_outside_border = { 0, 0, 0, 0 }\n\
+  GtkButton::inner_border = { 0, 0, 0, 0 }\n\
   GtkButton::focus_line_width = 0\n\
   GtkButton::focus_padding = 0\n\
   xthickness = 0\n\
@@ -870,6 +872,7 @@ style \"env_button\" = \"default_button\"\n\
   bg[INSENSITIVE] = { 0.94, 0.97, 1.0 }\n\
   GtkButton::default_border = { 0, 0, 0, 0 }\n\
   GtkButton::default_outside_border = { 0, 0, 0, 0 }\n\
+  GtkButton::inner_border = { 0, 0, 0, 0 }\n\
   GtkButton::focus_line_width = 0\n\
   GtkButton::focus_padding = 0\n\
   xthickness = 0\n\
@@ -885,6 +888,7 @@ style \"label_button\" = \"default_button\"\n\
 \n\
   GtkButton::default_border = { 0, 0, 0, 0 }\n\
   GtkButton::default_outside_border = { 0, 0, 0, 0 }\n\
+  GtkButton::inner_border = { 0, 0, 0, 0 }\n\
   GtkButton::focus_line_width = 0\n\
   GtkButton::focus_padding = 0\n\
   xthickness = 0\n\

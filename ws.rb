@@ -4,7 +4,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 08 17:05:03 CEST 2003
-# Changed: Sun Jul 30 16:36:52 CEST 2006
+# Changed: Tue Aug 22 01:36:15 CEST 2006
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -394,7 +394,7 @@ with_silence do
 end
 require "hooks"
 
-$clm_version            = "29-07-2006"
+$clm_version            = "22-08-2006"
 $output                 = nil
 $reverb                 = nil
 $clm_file_name          = "test.snd" unless defined? $clm_file_name
@@ -803,7 +803,7 @@ installs the @with_sound_note_hook and prints the line
            [:offset, 0.0],
            [:scaled_to, false],
            [:scaled_by, false])
-    ws = with_sound(:output, outfile,
+    ws = with_sound(:output, output,
                     :scaled_to, scaled_to,
                     :scaled_by, scaled_by,
                     :offset, offset,

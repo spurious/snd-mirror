@@ -1085,6 +1085,7 @@ def test00
               [:Show_x_axis, 2],
               [:Show_all_axes_unlabelled, 3],
               [:Show_x_axis_unlabelled, 4],
+              [:Show_bare_x_axis, 5],
               # sndlib constants
               [:Mus_unsupported, 0],
               [:Mus_next, 1],
@@ -1866,13 +1867,14 @@ def test003(lst, type = :normal)
     lst.each do |sym, initval, newval|
       next unless symbol?(sym)
       set_snd_func(sym, newval)
+      nowval = snd_func(sym)
       if float?(initval)
-        # fneq_err(a, b, 0.002) because of set_exapand_control 1.998400308 != 2.0
-        if fneq_err((nowval = snd_func(sym)), newval, 0.002)
+        # fneq_err(a, b, 0.002) because of set_expand_control 1.998400308 != 2.0
+        if fneq_err(nowval, newval, 0.002)
           snd_display("set_%s %s != %s?", sym, nowval, newval)
         end
       else
-        if (nowval = snd_func(sym)) != newval
+        if nowval != newval
           snd_display("set_%s %s != %s?", sym, nowval, newval)
         end
       end
@@ -11902,13 +11904,11 @@ def rough_spectrum(ind)
   end
 end
 
-def print_and_check(gen, name, desc, desc1 = "")
+def print_and_check(gen, name, desc)
   if gen.name != name then snd_display("mus_name %s: %s?", name, gen.name) end
   #  xen->sample: #<Proc:0x084bdd14@/usr/home/mike/Project/Sndtest/snd-test-new.rb:4470>
   if gen.name != "xen->sample"
-    if gen.to_s != desc and gen.to_s != desc1
-      snd_display("mus_describe %s: %s?", gen.name, gen)
-    end
+    if gen.to_s != desc then snd_display("mus_describe %s: %s?", gen.name, gen) end
   end
   egen = gen
   unless egen.eql?(gen) then snd_display("eql? %s: %s?", gen, egen) end
@@ -12098,6 +12098,33 @@ def test008
     vct(-1.0, 0.0, 24.0, 0.0, -80.0, 0.0, 64.0, 0.0)]].each_with_index do |args, i|
     vals, orig = args
     snd_display("partials2polynomial[%d]: %s?", i + 1, vals) unless vequal(vals, orig)
+  end
+  #
+  if defined? cosh
+    lv7 = partials2polynomial([7, 1])
+    lv8 = partials2polynomial([7, 1], Mus_chebyshev_second_kind)
+    #
+    if fneq(res1 = polynomial(lv7, 1.0), res2 = cosh(7.0 * acosh(1.0)))
+      snd_display("ccosh cheb 7 1.0: %s %s?", res1, res2)
+    end
+    if fneq(res1 = polynomial(lv7, 1.0), res2 = cos(7.0 * acos(1.0)))
+      snd_display("cos cheb 7 1.0: %s %s?", res1, res2)
+    end
+    if fneq(res1 = polynomial(lv8, 1.0), res2 = sin(7.0 * acos(1.0)) / sin(acos(1.0)))
+      snd_display("acos cheb 7 1.0: %s %s?", res1, res2)
+    end
+    10.times do
+      val = mus_random(1.0)
+      if fneq(res1 = polynomial(lv7, val), res2 = cosh(7.0 * acosh(val)))
+        snd_display("ccosh cheb 7 %s: %s %s?", val, res1, res2)
+      end
+      if fneq(res1 = polynomial(lv7, val), res2 = cos(7.0 * acos(val)))
+        snd_display("cos cheb 7 %s: %s %s?", val, res1, res2)
+      end
+      if fneq(res1 = polynomial(lv8, val), res2 = sin(7.0 * acos(val)) / sin(acos(val)))
+        snd_display("acos cheb 7 %s: %s %s?", val, res1, res2)
+      end
+    end
   end
   # 
   # check phase-quadrature cancellations
@@ -31526,7 +31553,6 @@ def test17
     $after_graph_hook.reset_hook!
     $lisp_graph_hook.reset_hook!
     #
-    $lisp_graph_hook.reset_hook!
     ind = open_sound("oboe.snd")
     set_time_graph?(false, ind, 0)
     graph([vct(0, 1, 2), vct(3, 2, 1), vct(1, 2, 3), vct(1, 1, 1), vct(0, 1, 0), vct(3, 1, 2)])
@@ -36260,6 +36286,20 @@ end
 def test0023
   set_mus_srate(22050)
   set_default_output_srate(22050)
+  [Mus_bshort, Mus_lshort, Mus_mulaw, Mus_alaw, Mus_byte, Mus_lfloat, Mus_bint,
+   Mus_lint, Mus_b24int, Mus_l24int, Mus_ubshort, Mus_ulshort, Mus_ubyte,
+   Mus_bfloat, Mus_bdouble, Mus_ldouble].eachd do |type|
+    int = find_sound(with_sound(:data_format, type) do
+                       fm_violin(0, 0.1, 440, 0.1)
+                       fm_violin(10, 0.1, 440, 0.1)
+                       fm_violin(100, 0.1, 440, 0.1)
+                       fm_violin(1000, 0.1, 440, 0.1)
+                     end)
+    mx = maxamp(ind)
+    if ffneq(mx, 0.1)
+      snd_display("max: %s, format: %s?", mx, mus_data_format2string(type))
+    end
+  end
   3.times do |i|
     with_sound(:srate, 22050) do fm_violin(0, 0.1, 110.0 * (1.0 + i), 0.1) end
     ind = find_sound("test.snd")
@@ -41215,7 +41255,7 @@ Procs =
    :phase_vocoder_amps, :phase_vocoder_freqs, :phase_vocoder_outctr,
    :phase_vocoder_phase_increments, :phase_vocoder_phases, :mus_generator?, :read_sample,
    :reset_listener_cursor, :goto_listener_end, :sample_reader_home, :selection_chans,
-   :selection_srate, :snd_gcs, :snd_warning, :sine_bank,
+   :selection_srate, :snd_gcs, :snd_font, :snd_color, :snd_warning, :sine_bank,
    :channel_data, :x_axis_label, :variable_graph?, :y_axis_label, :snd_url, :snd_urls,
    :tempo_control_bounds, :free_player, :quit_button_color, :help_button_color,
    :reset_button_color, :doit_button_color, :doit_again_button_color, :track, :tracks,
@@ -41270,7 +41310,7 @@ Set_procs =
    :spectro_x_angle, :grid_density, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
    :spectro_z_angle, :spectro_z_scale, :speed_control, :speed_control_style, :speed_control_tones,
    :squelch_update, :sync, :sound_properties, :temp_dir, :text_focus_color, :tiny_font, :y_bounds,
-   :transform_type, :trap_segfault, :optimization, :with_verbose_cursor, 
+   :transform_type, :trap_segfault, :optimization, :with_verbose_cursor,
    :vu_size, :wavelet_type, :x_bounds, :time_graph?, :wavo_hop, :wavo_trace, :with_gl,
    :with_mix_tags, :x_axis_style, :beats_per_minute, :zero_pad, :zoom_color, :zoom_focus_style,
    :with_relative_panes, :window_x, :window_y, :window_width, :window_height, :mix_dialog_mix,

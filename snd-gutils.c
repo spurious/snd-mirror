@@ -584,7 +584,7 @@ GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *paner
     gtk_container_add(GTK_CONTAINER(parent), sw);
   if (paner)
     gtk_paned_pack2(GTK_PANED(paner), sw, resize, true);
-  gtk_widget_show(sw);
+  if ((parent) || (paner)) gtk_widget_show(sw);
   return(new_text);
 }
 
