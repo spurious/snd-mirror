@@ -439,10 +439,10 @@ static void allocate_meter_1(vu_label *vu)
 	rdeg = mus_degrees_to_radians(45 - i * 22.5);
 	sinr = sin(rdeg);
 	cosr = cos(rdeg);
-	x0 = wid2 + wid2 * sinr;
-	y0 = wid2 + top - wid2 * cosr;
-	x1 = wid2 + (wid2 + major_tick) * sinr;
-	y1 = wid2 + top - (wid2 + major_tick) * cosr;
+	x0 = (int)(wid2 + wid2 * sinr);
+	y0 = (int)(wid2 + top - wid2 * cosr);
+	x1 = (int)(wid2 + (wid2 + major_tick) * sinr);
+	y1 = (int)(wid2 + top - (wid2 + major_tick) * cosr);
 
 	XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
 	XDrawLine(dp, vu->on_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
@@ -457,10 +457,10 @@ static void allocate_meter_1(vu_label *vu)
 	      rdeg = mus_degrees_to_radians(45 - i * 22.5 - j * (90.0 / 20.0));
 	      sinr = sin(rdeg);
 	      cosr = cos(rdeg);
-	      x0 = wid2 + wid2 * sinr;
-	      y0 = wid2 + top - wid2 * cosr;
-	      x1 = wid2 + (wid2 + minor_tick) * sinr;
-	      y1 = wid2 + top - (wid2 + minor_tick) * cosr;
+	      x0 = (int)(wid2 + wid2 * sinr);
+	      y0 = (int)(wid2 + top - wid2 * cosr);
+	      x1 = (int)(wid2 + (wid2 + minor_tick) * sinr);
+	      y1 = (int)(wid2 + top - (wid2 + minor_tick) * cosr);
 	      XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
 	      XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
 	      XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
@@ -535,8 +535,8 @@ static void display_vu_meter(vu_t *vu)
 
     x0 = wid2;
     y0 = height;
-    x1 = wid2 + (wid2 + major_tick) * sinr;
-    y1 = wid2 + top - height_offset - (wid2 + major_tick) * cosr;
+    x1 = (int)(wid2 + (wid2 + major_tick) * sinr);
+    y1 = (int)(wid2 + top - height_offset - (wid2 + major_tick) * cosr);
 
     XSetForeground(vu->dp, vu_gc, sx->black);
     XDrawLine(vu->dp, vu->wn, vu_gc, x0, y0, x1, y1);

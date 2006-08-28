@@ -61,22 +61,4 @@ XEN xen_make_vct_wrapper(int len, Float *data);
 
 #define XEN_TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #define MUS_VCT_P(arg) mus_vct_p(arg)
-
-#ifndef SNDLIB_DISABLE_DEPRECATED
-#define vct_init() mus_vct_init()
-#define vct_p(Obj) mus_vct_p(Obj)
-#define set_vct_print_length(Len) mus_vct_set_print_length(Len)
-#define vct_to_string(Vct) mus_vct_to_string(Vct)
-#define vct_to_readable_string(Vct) mus_vct_to_readable_string(Vct)
-#define vct_equalp(V1, V2) mus_vct_equalp(V1, V2)
-#define list_to_vct(Lst) xen_list_to_vct(Lst)
-#define TO_VCT(Obj) XEN_TO_VCT(Obj)
-#define VCT_P(Obj) MUS_VCT_P(Obj)
-#define c_make_vct(Len) mus_vct_make(Len)
-#define c_free_vct(Vct) mus_vct_free(Vct)
-#define c_vct_copy(Vct) mus_vct_copy(Vct)
-#define make_vct(Len, Data) xen_make_vct(Len, Data)
-#define make_vct_wrapper(Len, Data) xen_make_vct_wrapper(Len, Data)
-#endif
-
 #endif

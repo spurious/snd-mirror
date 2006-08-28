@@ -239,7 +239,7 @@ static void back_to_start(void)
     {
       int i;
       for (i = start_of_text; i >= 0; i--)
-	if (is_prompt(full_str, i, start_of_text))
+	if (is_prompt(full_str, i))
 	  {
 	    start_of_text = i + 1;
 	    break;
@@ -426,7 +426,7 @@ bool highlight_unbalanced_paren(void)
 	  ((str[pos - 2] != '\\') || (str[pos - 3] != '#')))
 	{
 	  int parens;
-	  parens = find_matching_paren(str, 2, pos - 1, listener_prompt(ss), &paren_pos);
+	  parens = find_matching_paren(str, 2, pos - 1, &paren_pos);
 	  if (parens == 0)
 	    {
 	      add_inverse(paren_pos);
@@ -481,7 +481,7 @@ static void check_parens(void)
       fstr = sg_get_text(listener_text, 0, current_position);
       if (fstr[current_position - 1] == ')')
 	{
-	  parens = find_matching_paren(fstr, 1, current_position - 1, listener_prompt(ss), &pos);
+	  parens = find_matching_paren(fstr, 1, current_position - 1, &pos);
 	  if (parens == 0)
 	    {
 	      add_underline(pos);

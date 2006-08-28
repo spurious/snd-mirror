@@ -18,7 +18,7 @@
   )
 */
 
-bool is_prompt(const char *str, int beg, int end)
+bool is_prompt(const char *str, int beg)
 {
   int i, j;
   for (i = beg, j = ss->listener_prompt_length - 1; (i >= 0) && (j >= 0); i--, j--)
@@ -48,14 +48,14 @@ bool within_prompt(const char *str, int beg, int end)
   return(false);
 }
 
-int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highlight_pos)
+int find_matching_paren(char *str, int parens, int pos, int *highlight_pos)
 {
   int i, j;
   bool quoting = false;
   int up_comment = -1;
   for (i = pos - 1; i > 0;)
     {
-      if (is_prompt(str, i, pos))
+      if (is_prompt(str, i))
 	break;
       if ((str[i] == '\"') && (str[i - 1] != '\\'))
 	quoting = !quoting;
@@ -264,7 +264,7 @@ void provide_listener_help(char *source)
       for (i = len - 1; i >= 0; i--)
 	{
 	  if ((source[i] == '(') || 
-	      (is_prompt(source, i, len)))
+	      (is_prompt(source, i)))
 	    {
 	      int j, start_of_name = -1;
 	      start_of_name = i + 1;
@@ -415,7 +415,7 @@ void command_return(widget_t w, int last_prompt)
   {
     int k, len, start, full_len;
     for (i = current_position - 1; i >= 0; i--)
-      if (is_prompt(full_str, i, current_position))
+      if (is_prompt(full_str, i))
 	{
 	  full_len = strlen(full_str);
 	  for (k = current_position - 1; k < full_len; k++)
@@ -471,7 +471,7 @@ void command_return(widget_t w, int last_prompt)
       if (last_position > end_of_text)
 	{
 	  for (i = current_position; i < last_position; i++)
-	    if (is_prompt(full_str, i + 1, current_position))
+	    if (is_prompt(full_str, i + 1))
 	      {
 		end_of_text = i - ss->listener_prompt_length + 1;
 		break;
@@ -480,7 +480,7 @@ void command_return(widget_t w, int last_prompt)
       if (start_of_text > 0)
 	{
 	  for (i = end_of_text; i >= 0; i--)
-	    if (is_prompt(full_str, i, end_of_text))
+	    if (is_prompt(full_str, i))
 	      {
 		start_of_text = i + 1;
 		break;

@@ -1,9 +1,7 @@
 #include "snd.h"
 #include "snd-rec.h"
 
-/* TODO  buttons that choose which devices to display are no-ops */
-/* TODO: rotate-text for numbers in grec vu meter labels (for non-default vu-size meters) */
-/* TODO: if screen is small, use smaller fonts and vu meters */
+/* SOMEDAY: if user resizes dialog, resize vu meters */
 
 typedef struct {
   GdkPixmap *off_label;
@@ -184,7 +182,7 @@ static void allocate_meter_1(vu_label *vu)
   GdkColormap *cmap;
   GdkColor *white, *black, *red;
   Float size;
-  int i, j, scr, width, wid2, height, top;
+  int i, j, width, wid2, height, top;
 
   cmap = gdk_colormap_get_system();
   red = ss->sgx->red;
@@ -341,10 +339,10 @@ static void allocate_meter_1(vu_label *vu)
 	rdeg = mus_degrees_to_radians(45 - i * 22.5);
 	sinr = sin(rdeg);
 	cosr = cos(rdeg);
-	x0 = wid2 + wid2 * sinr;
-	y0 = wid2 + top - wid2 * cosr;
-	x1 = wid2 + (wid2 + major_tick) * sinr;
-	y1 = wid2 + top - (wid2 + major_tick) * cosr;
+	x0 = (int)(wid2 + wid2 * sinr);
+	y0 = (int)(wid2 + top - wid2 * cosr);
+	x1 = (int)(wid2 + (wid2 + major_tick) * sinr);
+	y1 = (int)(wid2 + top - (wid2 + major_tick) * cosr);
 
 	gdk_draw_line(vu->on_label, draw_gc, x0, y0, x1, y1);
 	gdk_draw_line(vu->on_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
@@ -359,10 +357,10 @@ static void allocate_meter_1(vu_label *vu)
 	      rdeg = mus_degrees_to_radians(45 - i * 22.5 - j * (90.0 / 20.0));
 	      sinr = sin(rdeg);
 	      cosr = cos(rdeg);
-	      x0 = wid2 + wid2 * sinr;
-	      y0 = wid2 + top - wid2 * cosr;
-	      x1 = wid2 + (wid2 + minor_tick) * sinr;
-	      y1 = wid2 + top - (wid2 + minor_tick) * cosr;
+	      x0 = (int)(wid2 + wid2 * sinr);
+	      y0 = (int)(wid2 + top - wid2 * cosr);
+	      x1 = (int)(wid2 + (wid2 + minor_tick) * sinr);
+	      y1 = (int)(wid2 + top - (wid2 + minor_tick) * cosr);
 	      gdk_draw_line(vu->on_label, draw_gc, x0, y0, x1, y1);
 	      gdk_draw_line(vu->off_label, draw_gc, x0, y0, x1, y1);
 	      gdk_draw_line(vu->clip_label, draw_gc, x0, y0, x1, y1);
@@ -443,8 +441,8 @@ static void display_vu_meter(vu_t *vu)
 
     x0 = wid2;
     y0 = height;
-    x1 = wid2 + (wid2 + major_tick) * sinr;
-    y1 = wid2 + top - height_offset - (wid2 + major_tick) * cosr;
+    x1 = (int)(wid2 + (wid2 + major_tick) * sinr);
+    y1 = (int)(wid2 + top - height_offset - (wid2 + major_tick) * cosr);
 
     gdk_gc_set_foreground(vu_gc, sx->black);
     gdk_draw_line(vu->wn, vu_gc, x0, y0, x1, y1);
@@ -769,7 +767,7 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   int i;
   char *name;
   GtkWidget *file_label, *file_form, *duration_label, *rec_size_label, *ff_sep1, *ff_sep2, *ff_sep3, *autoload_file;
-  GtkWidget *left_form, *right_form, *filebox, *durbox, *triggerbox;
+  GtkWidget *left_form, *right_form, *filebox, *durbox, *triggerbox, *frame;
 #if MUS_SGI || MUS_SUN
   float val[1];
   int err;
@@ -878,7 +876,7 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   set_toggle_button(autoload_file, rp->autoload, false, NULL); 
 
   triggerbox = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(right_form), triggerbox, true, true, 0);
+  gtk_box_pack_start(GTK_BOX(right_form), triggerbox, true, true, 10);
   gtk_widget_show(triggerbox);
 
   trigger_label = gtk_label_new(_("trigger:"));
@@ -895,6 +893,11 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   SG_SIGNAL_CONNECT(trigger_adj, "value_changed", change_trigger_callback, NULL);
   gtk_widget_show(trigger_scale);
 
+  frame = gtk_frame_new(NULL);
+  gtk_box_pack_start(GTK_BOX(right_form), frame, true, true, 4);  
+  gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
+  gtk_widget_show(frame);
+  messages = make_scrolled_text(frame, true, NULL, false);
 }
 
 void reflect_recorder_duration(Float new_dur)
@@ -1922,15 +1925,10 @@ widget_t snd_record_file(void)
 	  all_panes[i] = make_pane(rp, rec_panes_box, device, system);
 	}
 
-      /* then make file_info_pane and messages at the bottom */
       file_info_pane = gtk_frame_new(NULL);
       gtk_box_pack_start(GTK_BOX(rec_panes_box), file_info_pane, false, false, 0);
       gtk_widget_show(file_info_pane);
       make_file_info_pane(rp, file_info_pane, rp->ordered_devices_size);
-
-      messages = make_scrolled_text(NULL, false, NULL, false);
-      gtk_box_pack_end(GTK_BOX(rec_panes_box), gtk_widget_get_parent(messages), true, true, 0);
-      gtk_widget_show(gtk_widget_get_parent(messages));
 
       set_dialog_widget(RECORDER_DIALOG, recorder);
       initialize_recorder(rp);

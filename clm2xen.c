@@ -4781,22 +4781,22 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
     }
 
   ref = XEN_LIST_REF(dloc_list, 7);
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(ref) && (XEN_VECTOR_LENGTH(ref) >= outchans), 
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(ref) && ((int)XEN_VECTOR_LENGTH(ref) >= outchans), 
 		  ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[7] (out delays): a vector of #f or delay gens");
   out_delays = xen_vector_to_mus_any_array(ref);
 
   ref = XEN_LIST_REF(dloc_list, 8);
-  XEN_ASSERT_TYPE(XEN_FALSE_P(ref) || (XEN_VECTOR_P(ref) && (XEN_VECTOR_LENGTH(ref) >= outchans)), 
+  XEN_ASSERT_TYPE(XEN_FALSE_P(ref) || (XEN_VECTOR_P(ref) && ((int)XEN_VECTOR_LENGTH(ref) >= outchans)), 
 		  ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[8] (out envs): #f or a vector of envs");
   out_envs = xen_vector_to_mus_any_array(ref);
 
   ref = XEN_LIST_REF(dloc_list, 9);
-  XEN_ASSERT_TYPE(XEN_FALSE_P(ref) || (XEN_VECTOR_P(ref) && (XEN_VECTOR_LENGTH(ref) >= revchans)), 
+  XEN_ASSERT_TYPE(XEN_FALSE_P(ref) || (XEN_VECTOR_P(ref) && ((int)XEN_VECTOR_LENGTH(ref) >= revchans)), 
 		  ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[9] (rev envs): #f or a vector of envs");
   rev_envs = xen_vector_to_mus_any_array(ref);
 
   ref = XEN_LIST_REF(dloc_list, 10);
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(ref) && (XEN_VECTOR_LENGTH(ref) >= outchans), 
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(ref) && ((int)XEN_VECTOR_LENGTH(ref) >= outchans), 
 		  ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[10] (out map): vector of ints");
   out_map = xen_vector_to_int_array(ref);
 

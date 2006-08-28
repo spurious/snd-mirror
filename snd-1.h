@@ -1496,12 +1496,12 @@ void set_printable(int val);
 
 void backup_listener_to_previous_command(void);
 void command_return(widget_t w, int last_prompt);
-bool is_prompt(const char *str, int beg, int end);
+bool is_prompt(const char *str, int beg);
 bool within_prompt(const char *str, int beg, int end);
 char *listener_prompt_with_cr(void);
 void set_listener_prompt(const char *new_prompt);
 int check_balance(char *expr, int start, int end, bool in_listener);
-int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highlight_pos);
+int find_matching_paren(char *str, int parens, int pos, int *highlight_pos);
 void provide_listener_help(char *source);
 bool listener_is_visible(void);
 void g_init_listener(void);

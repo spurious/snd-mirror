@@ -1071,7 +1071,7 @@ bool highlight_unbalanced_paren(void)
 	  ((str[pos - 2] != '\\') || (str[pos - 3] != '#')))
 	{
 	  int parens;
-	  parens = find_matching_paren(str, 2, pos - 1, listener_prompt(ss), &paren_pos);
+	  parens = find_matching_paren(str, 2, pos - 1, &paren_pos);
 	  if (parens == 0)
 	    {
 	      XmTextSetHighlight(listener_text, paren_pos, paren_pos + 1, XmHIGHLIGHT_SELECTED);
@@ -1110,7 +1110,7 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
 	  ((pos <= 1) || (str[pos - 1] != '\\') || (str[pos - 2] != '#')))
 	{
 	  int parens;
-	  parens = find_matching_paren(str, 1, pos, listener_prompt(ss), &last_highlight_position);
+	  parens = find_matching_paren(str, 1, pos, &last_highlight_position);
 	  if (parens == 0)
 	    XmTextSetHighlight(w, last_highlight_position, last_highlight_position + 1, XmHIGHLIGHT_SECONDARY_SELECTED);
 	}

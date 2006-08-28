@@ -672,11 +672,6 @@ void mus_clear_sinc_tables(void);
 void *mus_environ(mus_any *gen);
 void *mus_set_environ(mus_any *gen, void *e);
 
-#ifndef CLM_DISABLE_DEPRECATED
-#define mus_make_ppolar(Radius, Frequency) mus_make_two_pole_from_radius_and_frequency(Radius, Frequency)
-#define mus_make_zpolar(Radius, Frequency) mus_make_two_zero_from_radius_and_frequency(Radius, Frequency)
-#endif
-
 #ifdef __cplusplus
 }
 #endif
