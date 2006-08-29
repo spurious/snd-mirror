@@ -10,15 +10,12 @@
  *     but even so, we could (for example) hide the "help" button.
  *   would need to get font family and reduce size etc
  *
- * SOMEDAY: user-addable graph-style? axis? (dB for example, or rms above)
- *          also affects cursor display, perhaps verbose cursor info display, peak-env graphing,
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  * SOMEDAY: Edit:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
  * TODO: audio mixer settings dialog (needed especially in alsa!)
- *
  * PERHAPS: if marks, show ticks on x axis or some way to move to each easily (clickable box)
  * PERHAPS: mouse scroll change == zoom in/out of graph, move scrolled windows?
- * PERHAPS: smpte x axis?
+ * PERHAPS: smpte x axis as bare-x-axis example [user-drawn time graph axis labels and ticks]
  */
 
 

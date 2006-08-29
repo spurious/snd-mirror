@@ -4230,7 +4230,7 @@ bool mus_alsa_set_squelch_warning(bool val)
 
 /* TODO: perhaps mus_alsa_provide_interpolation? + autointerp at snd-dac level?
  * TODO: if user sets device, snd-dac should not ignore it and go searching for a better one (does this happen?)
- * TODO: why the blip in playback? play-sound function is ok in this regard
+ * TODO: why the blip in playback? play-sound function is ok in this regard (alsa's aplay has the same blip)
  * TODO: if user sets recorder-in-chans, we should just use it?
  * TODO: something is wrong in recorder if bufs set (error message makes no sense):
  * ;alsa_audio_open: default: cannot set buffer size to 3 periods of 1024 frames; 

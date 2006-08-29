@@ -391,14 +391,6 @@ void reload_number_font(void)
 }
 #endif
 
-#if USE_MOTIF
-  #define X_LABEL_Y_OFFSET 7
-  #define X_NUMBERS_OFFSET 2
-#else
-  #define X_LABEL_Y_OFFSET 0
-  #define X_NUMBERS_OFFSET -5
-#endif
-
 static void draw_horizontal_grid_line(int y, axis_info *ap, axis_context *ax)
 {
   color_t old_color;
@@ -421,8 +413,38 @@ static void draw_vertical_grid_line(int x, axis_info *ap, axis_context *ax)
   set_foreground_color(ax, old_color);
 }
 
-static void draw_label(const char *label, int x, int y, axis_info *ap, axis_context *ax, printing_t printing)
+static void draw_x_number(const char *label, int x, int y, int hgt, axis_info *ap, axis_context *ax, printing_t printing)
 {
+  /* from motif point of view, gtk is down by font height (ascent) in pixels */
+#if USE_MOTIF
+  y = y + hgt + 1;
+#else
+  y = y - 1;
+#endif
+  draw_string(ax, x, y, label, snd_strlen(label));
+  if (printing) 
+    ps_draw_string(ap, x, y, label);
+}
+
+static void draw_y_number(const char *label, int x, int y, int hgt, axis_info *ap, axis_context *ax, printing_t printing)
+{
+  /* from motif point of view, gtk is down by font height (ascent) in pixels */
+#if USE_MOTIF
+  y = y + (int)(hgt / 2);
+#else
+  y = y - (int)(hgt / 2);
+#endif
+  draw_string(ax, x, y, label, snd_strlen(label));
+  if (printing) 
+    ps_draw_string(ap, x, y, label);
+}
+
+static void draw_label(const char *label, int x, int y, int yoff, axis_info *ap, axis_context *ax, printing_t printing)
+{
+  /* from motif point of view, gtk is down by font height (ascent) in pixels */
+#if USE_GTK
+  y -= yoff;
+#endif
   draw_string(ax, x, y, label, snd_strlen(label));
   if (printing) 
     ps_draw_string(ap, x, y, label);
@@ -442,7 +464,7 @@ static void draw_horizontal_tick(int x0, int x1, int y, axis_info *ap, axis_cont
   if (include_grid) draw_horizontal_grid_line(y, ap, ax);
 }
 
-static void draw_log_tick_label(const char *label, int logx, int x_label_width, int right_border_width, axis_info *ap, axis_context *ax, printing_t printing)
+static void draw_log_tick_label(const char *label, int logx, int y, int hgt, int x_label_width, int right_border_width, axis_info *ap, axis_context *ax, printing_t printing)
 {
   /* is there room for a label? */
   /* the main label is at ap->x_label_x to that plus x_label_width */
@@ -455,7 +477,7 @@ static void draw_log_tick_label(const char *label, int logx, int x_label_width, 
     tx0 = (int)(logx - label_width + .75 * right_border_width);
   tx1 = tx0 + label_width;
   if ((lx0 > tx1) || (lx1 < tx0))
-    draw_label(label, tx0, ap->x_label_y + X_NUMBERS_OFFSET, ap, ax, printing);
+    draw_x_number(label, tx0, y, hgt, ap, ax, printing);
 }
 
 static void set_numbers_font(axis_context *ax, printing_t printing)
@@ -536,7 +558,11 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       return;
     }
   left_border_width = 10;
-  bottom_border_width = 14;
+#if USE_MOTIF
+  bottom_border_width = 10;
+#else
+  bottom_border_width = 4;
+#endif
   top_border_width = 10;
   right_border_width = 14;
   inner_border_width = 5;
@@ -777,10 +803,6 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       tdx->min_tick_len = minor_tick_length;
     }
 
-#if USE_GTK
-  cury -= 12;
-#endif
-
   if ((include_x_label) || (include_x_tick_labels))
     {
       ap->x_label_y = cury;
@@ -830,10 +852,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       else
 #endif
 	{
-      draw_string(ax, ap->x_label_x, ap->x_label_y + X_LABEL_Y_OFFSET, ap->xlabel, snd_strlen(ap->xlabel));
+	  draw_label(ap->xlabel, ap->x_label_x, ap->x_label_y + inner_border_width, x_label_height, ap, ax, printing);
 	}
-      if (printing) 
-	ps_draw_string(ap, ap->x_label_x, ap->x_label_y + X_LABEL_Y_OFFSET, ap->xlabel);
     }
 
   /* x axis */
@@ -921,37 +941,16 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       else
 #endif
 	{
-      draw_string(ax,
+	  /* y axis numbers */
+
+      draw_y_number(tdy->min_label,
 		  ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width,
-#if USE_GTK
-		  (int)(grf_y(tdy->mlo, ap) - .5 * x_number_height),
-#else
-		  (int)(grf_y(tdy->mlo, ap) + .25 * x_number_height),
-#endif
-		  tdy->min_label,
-		  strlen(tdy->min_label));
-
-      draw_string(ax,
+		  grf_y(tdy->mlo, ap), x_number_height,
+		  ap, ax, printing);
+      draw_y_number(tdy->max_label,
 		  ap->y_axis_x0 - tdy->maj_tick_len - tdy->max_label_width - inner_border_width,
-#if USE_GTK
-		  (int)(grf_y(tdy->mhi, ap) - .5 * x_number_height),
-#else
-		  (int)(grf_y(tdy->mhi, ap) + .5 * x_number_height),
-#endif
-		  tdy->max_label,
-		  strlen(tdy->max_label));
-	}
-      if (printing) 
-	{
-	  ps_draw_string(ap,
-		      ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width,
-		      (int)(grf_y(tdy->mlo, ap) + .25 * x_number_height),
-		      tdy->min_label);
-
-	  ps_draw_string(ap,
-		      ap->y_axis_x0 - tdy->maj_tick_len - tdy->max_label_width - inner_border_width,
-		      (int)(grf_y(tdy->mhi, ap) + .5 * x_number_height),
-		      tdy->max_label);
+		  grf_y(tdy->mhi, ap), x_number_height,
+		  ap, ax, printing);
 	}
     }
   if ((x_axis_linear) && (include_x_tick_labels))
@@ -977,7 +976,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  else
 #endif
 	    {
-          draw_label(tdx->min_label, tx0, ap->x_label_y + X_NUMBERS_OFFSET, ap, ax, printing);
+	      /* x axis min label */
+	      draw_x_number(tdx->min_label, tx0, ap->x_axis_y0 + major_tick_length, x_number_height, ap, ax, printing);
 	    }
 	}
       tx0 = (int)(tick_grf_x(tdx->mhi, ap, x_style, srate) - (.45 * tdx->max_label_width)); /* try centered label first */
@@ -998,7 +998,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  else
 #endif
 	    {
-          draw_label(tdx->max_label, tx0, ap->x_label_y + X_NUMBERS_OFFSET, ap, ax, printing);
+	      /* x axis max label */
+	      draw_x_number(tdx->max_label, tx0, ap->x_axis_y0 + major_tick_length, x_number_height, ap, ax, printing);
 	    }
 	}
     }
@@ -1240,7 +1241,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      freq10 = freq / 10.0;
 	      logx = grf_x(min_freq + lscale * (log(freq) - minlx), ap);
 	      draw_vertical_tick(logx, y0, majy, ap, ax, printing, include_grid);	      
-	      draw_log_tick_label(label, logx, x_label_width, right_border_width, ap, ax, printing);
+	      draw_log_tick_label(label, logx, ap->x_axis_y0 + major_tick_length, x_number_height, x_label_width, right_border_width, ap, ax, printing);
 	      if (width > 200)
 		{
 		  curlx = snd_round(min_freq / freq10) * freq10;
@@ -1305,21 +1306,11 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 		{
 		  int label_width;
 		  label_width = number_width(label);
-		  draw_string(ax,
+		  /* y axis number */
+		  draw_y_number(label,
 			      ap->y_axis_x0 - major_tick_length - label_width - inner_border_width,
-#if USE_GTK
-			      (int)(logy - .5 * x_number_height),
-#else
-			      (int)(logy + .25 * x_number_height),
-#endif
-			      label,
-			      snd_strlen(label));
-		  
-		  if (printing) 
-		    ps_draw_string(ap,
-				   ap->y_axis_x0 - major_tick_length - label_width - inner_border_width,
-				   (int)(logy + .25 * x_number_height),
-				   label);
+			      logy, x_number_height,
+			      ap, ax, printing);
 		}
 	      if (height > 200)
 		{

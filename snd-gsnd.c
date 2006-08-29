@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* show controls doesn't fully open the control panel, clobbering even the sash: unfixable.
- * TODO: controls have too much margin etc
- */
-
 enum {W_pane, W_pane_box, W_control_panel,
       W_name_form, W_name, W_name_event, W_name_pix, W_stop_pix, W_info_label, W_info,
       W_play, W_sync, W_unite,

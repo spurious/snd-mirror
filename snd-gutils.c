@@ -150,38 +150,34 @@ int number_width(const char *num)
 
 static int sg_font_width(PangoFontDescription *font)
 {
+  /* returns size in pixels */
   int wid = 0;
-  PangoLayout *layout = NULL;
+  double dpi;
   PangoContext *ctx;
+  PangoFontMetrics *m;
+  dpi = gdk_screen_get_resolution(gdk_display_get_default_screen(gdk_display_get_default())); /* pixels/inch */
   ctx = gdk_pango_context_get();
-  layout = pango_layout_new(ctx);
-  if (layout)
-    {
-      pango_layout_set_font_description(layout, font);
-      pango_layout_set_text(layout, "1", -1);
-      pango_layout_get_pixel_size(layout, &wid, NULL);
-      g_object_unref(G_OBJECT(layout));
-    }
+  m = pango_context_get_metrics(ctx, font, gtk_get_default_language()); /* returns size in pango-scaled points (1024/72 inch) */
+  wid = (int)((dpi / 72.0) * PANGO_PIXELS(pango_font_metrics_get_approximate_char_width(m)));
+  pango_font_metrics_unref(m);
   g_object_unref(ctx);
   return(wid);
 }
 
 static int sg_font_height(PangoFontDescription *font)
 {
-  int wid = 0;
-  PangoLayout *layout = NULL;
+  /* returns size in pixels */
+  int hgt = 0;
+  double dpi;
   PangoContext *ctx;
+  PangoFontMetrics *m;
+  dpi = gdk_screen_get_resolution(gdk_display_get_default_screen(gdk_display_get_default()));
   ctx = gdk_pango_context_get();
-  layout = pango_layout_new(ctx);
-  if (layout)
-    {
-      pango_layout_set_font_description(layout, font);
-      pango_layout_set_text(layout, "1", -1);
-      pango_layout_get_pixel_size(layout, NULL, &wid);
-      g_object_unref(G_OBJECT(layout));
-    }
+  m = pango_context_get_metrics(ctx, font, gtk_get_default_language());
+  hgt = (int)((dpi / 72.0) * PANGO_PIXELS(pango_font_metrics_get_ascent(m)));
+  pango_font_metrics_unref(m);
   g_object_unref(ctx);
-  return(wid);
+  return(hgt);
 }
 
 int number_height(void)
@@ -191,7 +187,7 @@ int number_height(void)
 
 int label_height(void)
 {
-  return(sg_font_width(AXIS_LABEL_FONT(ss)));
+  return(sg_font_height(AXIS_LABEL_FONT(ss)));
 }
 
 void clear_window(axis_context *ax)
