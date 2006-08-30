@@ -22,6 +22,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define widget_t GtkWidget*
 #define g_adj_t GtkObject*
 #define gc_t GdkGC*
+
 #define widget_is_active(Wid) GTK_WIDGET_VISIBLE(Wid)
 #define activate_widget(Wid) gtk_widget_show(Wid)
 #define deactivate_widget(Wid) gtk_widget_hide(Wid)

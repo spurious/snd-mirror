@@ -1,24 +1,5 @@
 #include "snd.h"
 
-/*
-  (CFNC "gint pango_font_description_get_size PangoFontDescription* desc")
-  (CFNC "PangoFontDescription* pango_font_description_copy PangoFontDescription* desc")
-  (CFNC "void pango_font_description_set_size PangoFontDescription* desc gint size")
-
-  so for temp choice, if default not right size, [check old temp/free], copy default, set size -- is this safe?
-  for "scalable fonts" it probably is -- how to tell whether we're using a bitmap font?
-
-*/
-#if 0
-PangoDescription *font_set_size(PangoFontDescription *font, int size)
-{
-  PangoFontDescription *fs = NULL;
-  fs = pango_font_description_copy(font);
-  pango_font_description_set_size(fs, (gint)size);
-  return(fs);
-}
-#endif
-
 bool set_tiny_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
@@ -146,13 +127,6 @@ int sg_text_width(const char *txt, PangoFontDescription *font)
   return(wid);
 }
 
-int label_width(const char *txt)
-{
-  if (txt)
-    return(sg_text_width(txt, AXIS_LABEL_FONT(ss)));
-  else return(0);
-}
-
 int mark_name_width(const char *txt)
 {
   if (txt)
@@ -160,10 +134,17 @@ int mark_name_width(const char *txt)
   return(0);
 }
 
-int number_width(const char *num)
+int label_width(const char *txt, bool use_tiny_font)
+{
+  if (txt)
+    return(sg_text_width(txt, (use_tiny_font) ? TINY_FONT(ss) : AXIS_LABEL_FONT(ss)));
+  else return(0);
+}
+
+int number_width(const char *num, bool use_tiny_font)
 {
   if (num)
-    return(sg_text_width(num, AXIS_NUMBERS_FONT(ss)));
+    return(sg_text_width(num, (use_tiny_font) ? TINY_FONT(ss) : AXIS_NUMBERS_FONT(ss)));
   return(0);
 }
 
@@ -209,14 +190,14 @@ static int sg_font_height(PangoFontDescription *font)
   return(hgt);
 }
 
-int number_height(void)
+int number_height(bool use_tiny_font)
 {
-  return(sg_font_height(AXIS_NUMBERS_FONT(ss)));
+  return(sg_font_height((use_tiny_font) ? TINY_FONT(ss) : AXIS_NUMBERS_FONT(ss)));
 }
 
-int label_height(void)
+int label_height(bool use_tiny_font)
 {
-  return(sg_font_height(AXIS_LABEL_FONT(ss)));
+  return(sg_font_height((use_tiny_font) ? TINY_FONT(ss) : AXIS_LABEL_FONT(ss)));
 }
 
 void clear_window(axis_context *ax)

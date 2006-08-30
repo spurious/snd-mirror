@@ -58,6 +58,7 @@ typedef enum {NOT_ACTIVATABLE, ACTIVATABLE, NOT_ACTIVATABLE_OR_FOCUSED, ACTIVATA
 #define widget_t Widget
 #define g_adj_t int
 #define gc_t GC
+
 #define widget_is_active(Wid) XtIsManaged(Wid)
 #define activate_widget(Wid) XtManageChild(Wid)
 #define deactivate_widget(Wid) XtUnmanageChild(Wid)

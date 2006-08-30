@@ -12,50 +12,6 @@
 #endif
 #endif
 
-/*
-  since it's way too hard to change just a font's size (given all the funny font names), perhaps
-  we should just fallback on tiny_font for the font_set_size business
-  or look at the name, if (say) nxn give up, else look at "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*" = 7th field
-  and try changing it? -- would need string manglers
-
-  would return null (in both cases) if failure
-  
-  and need loader in this case as well
-*/
-#if 0
-char *font_set_size(const char *font, int size)
-{
-  int i, len, dashes = 0;
-  if (font[0] != '-') return(NULL);
-  len = snd_strlen(font);
-  for (i = 0; i < len; i++)
-    {
-      if (font[i] == '-') dashes++;
-      if (dashes == 7)
-	{
-	  char *new_name = NULL;
-	  char num[6];
-	  int j, k, numlen;
-	  mus_snprintf(num, 6, "%d", size);
-	  new_name = (char *)CALLOC(len + 2, sizeof(char));
-	  for (j = 0; j <= i; j++)
-	    new_name[j] = font[j];
-	  numlen = snd_strlen(num);
-	  for (k = 0; k < numlen; k++)
-	    new_name[j + k] = num[k];
-	  for (k = j + 1; k < len; k++)
-	    if (font[k] == '-') break;
-	  j += numlen;
-	  for (; k < len; k++, j++)
-	    new_name[j] = font[k];
-	  return(new_name);
-	}
-    }
-  return(NULL);
-}
-#endif
-
-
 static XmRenderTable get_xm_font(XFontStruct *ignore, const char *font, char *tag)
 {
   XmRendition tmp;
@@ -178,13 +134,6 @@ bool set_axis_numbers_font(const char *font)
   return(false);
 }
 
-int label_width(const char *txt)
-{
-  if (txt)
-    return(XTextWidth(AXIS_LABEL_FONT(ss), txt, strlen(txt)));
-  else return(0);
-}
-
 int mark_name_width(const char *txt)
 {
   if (txt)
@@ -192,24 +141,35 @@ int mark_name_width(const char *txt)
   return(0);
 }
 
-int number_width(const char *num)
+int label_width(const char *txt, bool use_tiny_font)
+{
+  if (txt)
+    return(XTextWidth((use_tiny_font) ? TINY_FONT(ss) : AXIS_LABEL_FONT(ss), txt, strlen(txt)));
+  else return(0);
+}
+
+int number_width(const char *num, bool use_tiny_font)
 {
   if (num)
-    return(XTextWidth(AXIS_NUMBERS_FONT(ss), num, strlen(num)));
+    return(XTextWidth((use_tiny_font) ? TINY_FONT(ss) : AXIS_NUMBERS_FONT(ss), num, strlen(num)));
   return(0);
 }
 
-int number_height(void)
+int number_height(bool use_tiny_font)
 {
   XFontStruct *numbers_font;
-  numbers_font = AXIS_NUMBERS_FONT(ss);
-  return(numbers_font->ascent + numbers_font->descent);
+  if (use_tiny_font)
+    numbers_font = TINY_FONT(ss);
+  else numbers_font = AXIS_NUMBERS_FONT(ss);
+  return(numbers_font->ascent);
 }
 
-int label_height(void)
+int label_height(bool use_tiny_font)
 {
   XFontStruct *label_font;
-  label_font = AXIS_LABEL_FONT(ss);
+  if (use_tiny_font)
+    label_font = TINY_FONT(ss);
+  else label_font = AXIS_LABEL_FONT(ss);
   return(label_font->ascent + label_font->descent);
 }
 

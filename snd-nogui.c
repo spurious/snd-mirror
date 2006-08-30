@@ -103,10 +103,10 @@ bool set_peaks_font(const char *font) {if (ss->Peaks_Font) FREE(ss->Peaks_Font);
 bool set_bold_peaks_font(const char *font) {if (ss->Bold_Peaks_Font) FREE(ss->Bold_Peaks_Font); ss->Bold_Peaks_Font = copy_string(font); return(false);}
 bool set_axis_label_font(const char *font) {if (ss->Axis_Label_Font) FREE(ss->Axis_Label_Font); ss->Axis_Label_Font = copy_string(font); return(false);}
 bool set_axis_numbers_font(const char *font) {if (ss->Axis_Numbers_Font) FREE(ss->Axis_Numbers_Font); ss->Axis_Numbers_Font = copy_string(font); return(false);}
-int label_width(const char *txt) {return(0);}
-int number_width(const char *num) {return(0);}
-int number_height(void) {return(0);}
-int label_height(void) {return(0);}
+int label_width(const char *txt, bool use_tiny_font) {return(0);}
+int number_width(const char *num, bool use_tiny_font) {return(0);}
+int number_height(bool use_tiny_font) {return(0);}
+int label_height(bool use_tiny_font) {return(0);}
 int mark_name_width(const char *txt) {return(0);}
 void clear_window(axis_context *ax) {}
 void set_title(const char *title) {}

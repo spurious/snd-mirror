@@ -607,7 +607,7 @@
 ;;; Guile and Gauche have differing syntax for define-class and define-method
 ;;;
 ;;; order matters here!  Guile version must come first because Gauche evalutes
-;;;   the defmacros even if not (provided? 'snd-guile)!  Guile handles it correctly,
+;;;   the defmacros even if not (provided? 'snd-gauche)!  Guile handles it correctly,
 ;;;   so this way Guile ignores the trailing Gauche code, and Gauche defines 
 ;;;   define-class twice. 
 

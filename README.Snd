@@ -37,7 +37,7 @@ The configure program has several Snd-related arguments:
 
    --with-doubles            use doubles throughout (default is floats)
 
-   --with-float-samples      represent samples internally as floats (default: ints)
+   --with-float-samples      represent samples internally as floats (default=yes)
    --with-sample-width=N     use N bits of samples (default: 24). N = 32 or so is 
                                not recommended because it does not leave you any 
                                "head room" during mixes. N < 16 isn't supported.

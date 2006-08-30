@@ -464,14 +464,15 @@ static void draw_horizontal_tick(int x0, int x1, int y, axis_info *ap, axis_cont
   if (include_grid) draw_horizontal_grid_line(y, ap, ax);
 }
 
-static void draw_log_tick_label(const char *label, int logx, int y, int hgt, int x_label_width, int right_border_width, axis_info *ap, axis_context *ax, printing_t printing)
+static void draw_log_tick_label(const char *label, int logx, int y, int hgt, int x_label_width, int right_border_width, 
+				axis_info *ap, axis_context *ax, printing_t printing, bool use_tiny_font)
 {
   /* is there room for a label? */
   /* the main label is at ap->x_label_x to that plus x_label_width */
   int lx0, lx1, tx0, tx1, label_width;
   lx0 = ap->x_label_x;
   lx1 = lx0 + x_label_width;
-  label_width = number_width(label);
+  label_width = number_width(label, use_tiny_font);
   tx0 = (int)(logx - .45 * label_width);
   if ((tx0 + label_width) > ap->x_axis_x1)
     tx0 = (int)(logx - label_width + .75 * right_border_width);
@@ -480,31 +481,53 @@ static void draw_log_tick_label(const char *label, int logx, int y, int hgt, int
     draw_x_number(label, tx0, y, hgt, ap, ax, printing);
 }
 
-static void set_numbers_font(axis_context *ax, printing_t printing)
+static void use_tiny(axis_context *ax, printing_t printing)
 {
 #if USE_MOTIF
-  ax->current_font = ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid;
-  XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid);
+  ax->current_font = ((XFontStruct *)(TINY_FONT(ss)))->fid;
+  XSetFont(ax->dp, ax->gc, ((XFontStruct *)(TINY_FONT(ss)))->fid);
 #else
 #if USE_GTK
-  ax->current_font = AXIS_NUMBERS_FONT(ss);
+  ax->current_font = TINY_FONT(ss);
 #endif
 #endif
-  if (printing) ps_set_number_font();
+  if (printing) ps_set_tiny_numbers_font();
 }
 
-static void set_labels_font(axis_context *ax, printing_t printing)
+static void set_numbers_font(axis_context *ax, printing_t printing, bool use_tiny_font)
 {
+  if (use_tiny_font)
+    use_tiny(ax, printing);
+  else
+    {
 #if USE_MOTIF
-  ax->current_font = ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid;
-  XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid);
+      ax->current_font = ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid;
+      XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid);
+#else
+#if USE_GTK
+      ax->current_font = AXIS_NUMBERS_FONT(ss);
+#endif
+#endif
+      if (printing) ps_set_number_font();
+    }
+}
+
+static void set_labels_font(axis_context *ax, printing_t printing, bool use_tiny_font)
+{
+  if (use_tiny_font)
+    use_tiny(ax, printing);
+  else
+    {
+#if USE_MOTIF
+      ax->current_font = ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid;
+      XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid);
 #else
   #if USE_GTK
-  ax->current_font = AXIS_LABEL_FONT(ss);
+      ax->current_font = AXIS_LABEL_FONT(ss);
   #endif
 #endif
-  if (printing)
-    ps_set_label_font();
+      if (printing) ps_set_label_font();
+    }
 }
 
 
@@ -515,7 +538,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   Latus axis_thickness, left_border_width, bottom_border_width, top_border_width, right_border_width, inner_border_width;
   Latus major_tick_length, minor_tick_length, x_tick_spacing, y_tick_spacing;
   bool include_x_label, include_x_ticks, include_x_tick_labels, include_y_ticks, include_y_tick_labels, include_grid;
-  bool y_axis_linear = true, x_axis_linear = true;
+  bool y_axis_linear = true, x_axis_linear = true, use_tiny_font = false;
   Latus x_label_width, x_label_height, x_number_height;
   int num_ticks;
   tick_descriptor *tdx = NULL, *tdy = NULL;
@@ -530,7 +553,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   height = ap->height;
   ap->graph_active = ((width > 4) || (height > 10));
   include_grid = ((ap->cp) && (with_grid));
-
+  
   if ((axes == SHOW_NO_AXES) || (width < 40) || (height < 40) || (ap->xmax == 0.0))
     {
       /* leave it set up for bare graph */
@@ -589,7 +612,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   ymajorlen = (Float)(2 * major_tick_length) / (Float)width;
   yminorlen = (Float)(2 * minor_tick_length) / (Float)width;
 #endif
-
+  
   if (show_x_axis)
     {
       if (axes == SHOW_BARE_X_AXIS)
@@ -614,7 +637,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       include_x_ticks = false;
     }
   if (log_axes == WITH_LOG_X_AXIS) x_axis_linear = false;
-
+  
   if ((axes != SHOW_X_AXIS) && (axes != SHOW_X_AXIS_UNLABELLED))
     {
       include_y_tick_labels = ((width > 100) && (height > 60));
@@ -626,36 +649,34 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       include_y_ticks = false;
     }
   if (log_axes == WITH_LOG_Y_AXIS) y_axis_linear = false;
-
+  
   curx = left_border_width;
   cury = height - bottom_border_width;
-
-  /* here if fonts are too big, use font_set_size to try to find a smaller similar font, or go to tiny font both temporarily */
-  /* both number_height and label_height would need arg or perhaps actually change the font then swap */
-  /* 100 < width < 250, perhaps 100 < height < 150? */
-
-  x_number_height = number_height();
+  
+  use_tiny_font = ((width < 250) || (height < 140));
+  
+  x_number_height = number_height(use_tiny_font);
   x_label_height = 0;
   x_label_width = 0;
-
+  
   if (include_x_label)
     {
-      x_label_width = label_width(ap->xlabel);
+      x_label_width = label_width(ap->xlabel, use_tiny_font);
       if ((x_label_width + curx + right_border_width) > width)
 	{
 	  include_x_label = false;
 	  x_label_width = 0;
 	  x_label_height = 0;
 	}
-      else x_label_height = label_height();
+      else x_label_height = label_height(use_tiny_font);
     }
   else
     {
       if (include_x_ticks) 
-	x_label_height = label_height();
+	x_label_height = label_height(use_tiny_font);
       /* bare x axis case handled later */
     }
-
+  
   if (y_axis_linear)
     {
       if (include_y_ticks)
@@ -692,7 +713,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 		  tdy->min_label = NULL;
 		}
 	      tdy->min_label = prettyf(tdy->mlo, tdy->tens);
-	      tdy->min_label_width = number_width(tdy->min_label);
+	      tdy->min_label_width = number_width(tdy->min_label, use_tiny_font);
 	      
 	      if (tdy->max_label) 
 		{
@@ -700,7 +721,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 		  tdy->max_label = NULL;
 		}
 	      tdy->max_label = prettyf(tdy->mhi, tdy->tens);
-	      tdy->max_label_width = number_width(tdy->max_label);
+	      tdy->max_label_width = number_width(tdy->max_label, use_tiny_font);
 	      tick_label_width = tdy->min_label_width;
 	      if (tick_label_width < tdy->max_label_width) 
 		tick_label_width = tdy->max_label_width;
@@ -721,7 +742,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
     {
       /* log case */
       if (include_y_tick_labels)
-	curx += number_width("10000");
+	curx += number_width("10000", use_tiny_font);
       curx += major_tick_length;
     }
   
@@ -772,10 +793,10 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	  else tdx = describe_ticks(ap->x_ticks, ap->x0, ap->x1, num_ticks, grid_scale); 
 	  break;
-
+	  
 	  /* TODO: measure-positions or some such list + user interface support => interpolate unset measures */
 	  /*       e.g. grab measure number and drag it => drag (push) all others unset, click = set? */
-
+	  
 	case X_AXIS_AS_PERCENTAGE: 
 	  tdx = describe_ticks(ap->x_ticks, ap->x0 / ap->xmax, ap->x1 / ap->xmax, num_ticks, grid_scale); 
 	  break;
@@ -790,14 +811,14 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      tdx->min_label = NULL;
 	    }
 	  tdx->min_label = location_to_string(tdx->mlo, x_style, (ap->cp) ? (ap->cp->beats_per_measure) : 1, tdx->tens);
-	  tdx->min_label_width = number_width(tdx->min_label);
+	  tdx->min_label_width = number_width(tdx->min_label, use_tiny_font);
 	  if (tdx->max_label) 
 	    {
 	      FREE(tdx->max_label); 
 	      tdx->max_label = NULL;
 	    }
 	  tdx->max_label = location_to_string(tdx->mhi, x_style, (ap->cp) ? (ap->cp->beats_per_measure) : 1, tdx->tens);
-	  tdx->max_label_width = number_width(tdx->max_label);
+	  tdx->max_label_width = number_width(tdx->max_label, use_tiny_font);
 	  tick_label_width = tdx->min_label_width;
 	  if (tick_label_width < tdx->max_label_width) 
 	    tick_label_width = tdx->max_label_width;
@@ -807,7 +828,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       tdx->maj_tick_len = major_tick_length;
       tdx->min_tick_len = minor_tick_length;
     }
-
+  
   if ((include_x_label) || (include_x_tick_labels))
     {
       ap->x_label_y = cury;
@@ -817,7 +838,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   else
     {
       if (axes == SHOW_BARE_X_AXIS)
-	cury -= (label_height() + inner_border_width);
+	cury -= (label_height(false) + inner_border_width);
     }
   ap->y_axis_y0 = cury;
   ap->y_axis_x0 = curx;
@@ -839,11 +860,11 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   if (ap->use_gl) activate_gl_fonts();
   ap->used_gl = ap->use_gl;
 #endif
-
+  
   /* x axis label */
   if (include_x_label)
     {
-      set_labels_font(ax, printing);
+      set_labels_font(ax, printing, use_tiny_font);
 #if HAVE_GL
       if (ap->use_gl)
 	{
@@ -860,7 +881,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  draw_label(ap->xlabel, ap->x_label_x, ap->x_label_y + inner_border_width, x_label_height, ap, ax, printing);
 	}
     }
-
+  
   /* x axis */
   if (show_x_axis)
     {
@@ -881,7 +902,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  fill_rectangle(ax, ap->x_axis_x0, ap->x_axis_y0, (unsigned int)(ap->x_axis_x1 - ap->x_axis_x0), axis_thickness);
 	}
     }
-
+  
   /* y axis */
   if ((axes != SHOW_X_AXIS) && (axes != SHOW_X_AXIS_UNLABELLED))
     {
@@ -903,7 +924,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  if ((ap->cp) && (ap->ylabel) && (include_y_tick_labels))
 	    {
 	      int y_label_width = 0;
-	      y_label_width = label_width(ap->ylabel);
+	      y_label_width = label_width(ap->ylabel, use_tiny_font);
 	      if ((ap->y_axis_y0 - ap->y_axis_y1) > (y_label_width + 20))
 		draw_rotated_axis_label(ap->cp,	ax->gc, ap->ylabel, 
 					ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width,
@@ -913,7 +934,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  fill_rectangle(ax, ap->y_axis_x0, ap->y_axis_y1, axis_thickness, (unsigned int)(ap->y_axis_y0 - ap->y_axis_y1));
 	}
     }
-
+  
   if (printing) 
     {
       if (show_x_axis)
@@ -921,11 +942,11 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       if ((axes != SHOW_X_AXIS) && (axes != SHOW_X_AXIS_UNLABELLED))
 	ps_fill_rectangle(ap, ap->y_axis_x0, ap->y_axis_y1, axis_thickness, ap->y_axis_y0 - ap->y_axis_y1);
     }
-
+  
   /* linear axis ticks/labels */
   if ((include_y_tick_labels) || 
       (include_x_tick_labels))
-    set_numbers_font(ax, printing);
+    set_numbers_font(ax, printing, use_tiny_font);
   
   if ((y_axis_linear) && (include_y_tick_labels))
     {
@@ -937,7 +958,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  glRasterPos3f(xl, 0.0, (tdy->mlo - ap->y0) / (ap->y1 - ap->y0) - 0.51);
 	  glListBase(number_base);
 	  glCallLists(snd_strlen(tdy->min_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdy->min_label));
-
+	  
 	  xl = -0.5 - ythick - ((Float)(3 * tdy->maj_tick_len + tdy->max_label_width + inner_border_width) / (Float)width);
 	  glRasterPos3f(xl, 0.0, (tdy->mhi - ap->y0) / (ap->y1 - ap->y0) - 0.51);
 	  glListBase(number_base);
@@ -947,15 +968,15 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #endif
 	{
 	  /* y axis numbers */
-
-      draw_y_number(tdy->min_label,
-		  ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width,
-		  grf_y(tdy->mlo, ap), x_number_height,
-		  ap, ax, printing);
-      draw_y_number(tdy->max_label,
-		  ap->y_axis_x0 - tdy->maj_tick_len - tdy->max_label_width - inner_border_width,
-		  grf_y(tdy->mhi, ap), x_number_height,
-		  ap, ax, printing);
+	  
+	  draw_y_number(tdy->min_label,
+			ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width,
+			grf_y(tdy->mlo, ap), x_number_height,
+			ap, ax, printing);
+	  draw_y_number(tdy->max_label,
+			ap->y_axis_x0 - tdy->maj_tick_len - tdy->max_label_width - inner_border_width,
+			grf_y(tdy->mhi, ap), x_number_height,
+			ap, ax, printing);
 	}
     }
   if ((x_axis_linear) && (include_x_tick_labels))
@@ -1031,9 +1052,9 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       else
 #endif
 	{
-      draw_horizontal_tick(majx, x0, ty, ap, ax, printing, include_grid);
+	  draw_horizontal_tick(majx, x0, ty, ap, ax, printing, include_grid);
 	}
-
+      
       tens = 0.0;
       fy -= tdy->step;
       while (fy >= tdy->flo)
@@ -1059,7 +1080,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  else
 #endif
 	    {
-          draw_horizontal_tick(x, x0, ty, ap, ax, printing, include_grid);
+	      draw_horizontal_tick(x, x0, ty, ap, ax, printing, include_grid);
 	    }
 	  fy -= tdy->step;
 	}
@@ -1089,7 +1110,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  else
 #endif
 	    {
-          draw_horizontal_tick(x, x0, ty, ap, ax, printing, include_grid);
+	      draw_horizontal_tick(x, x0, ty, ap, ax, printing, include_grid);
 	    }
 	  fy += tdy->step;
 	}
@@ -1105,12 +1126,12 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       /* start at leftmost major tick and work toward y axis */
       fx = tdx->mlo;
       tx = tick_grf_x(fx, ap, x_style, srate);
-
+      
       if ((ap->cp) && 
 	  (x_style == X_AXIS_IN_MEASURES) &&
 	  ((tdx->tenstep * tdx->step) <= ((60.0 * ap->cp->beats_per_measure) / (Float)(ap->cp->beats_per_minute))))
 	major_tick_is_less_than_measure = true;
-
+      
 #if HAVE_GL
       if (ap->use_gl)
 	{
@@ -1196,10 +1217,10 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  fx += tdx->step;
 	}
     }
-
+  
   /* All linear axis stuff has been taken care of. Check for log axes (assume fft context, not spectrogram so no GL) */
   /* x axis overall label has already gone out */
-
+  
   if ((!x_axis_linear) && 
       (show_x_axis) && 
       (include_x_ticks))
@@ -1217,7 +1238,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       min_freq = ap->x0;
       max_freq = ap->x1;
       if (include_x_tick_labels)
-	set_numbers_font(ax, printing);
+	set_numbers_font(ax, printing, use_tiny_font);
       fap_range = max_freq - min_freq;
       if (min_freq > 1.0) minlx = log(min_freq); else minlx = 0.0;
       maxlx = log(max_freq);
@@ -1246,7 +1267,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      freq10 = freq / 10.0;
 	      logx = grf_x(min_freq + lscale * (log(freq) - minlx), ap);
 	      draw_vertical_tick(logx, y0, majy, ap, ax, printing, include_grid);	      
-	      draw_log_tick_label(label, logx, ap->x_axis_y0 + major_tick_length, x_number_height, x_label_width, right_border_width, ap, ax, printing);
+	      draw_log_tick_label(label, logx, ap->x_axis_y0 + major_tick_length, x_number_height, x_label_width, right_border_width, 
+				  ap, ax, printing, use_tiny_font);
 	      if (width > 200)
 		{
 		  curlx = snd_round(min_freq / freq10) * freq10;
@@ -1259,7 +1281,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	}
     }
-
+  
   if ((!y_axis_linear) && 
       (axes != SHOW_X_AXIS) && 
       (axes != SHOW_X_AXIS_UNLABELLED) &&
@@ -1278,7 +1300,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       min_freq = ap->y0;
       max_freq = ap->y1;
       if (include_y_tick_labels)
-	set_numbers_font(ax, printing);
+	set_numbers_font(ax, printing, use_tiny_font);
       fap_range = max_freq - min_freq;
       if (min_freq > 1.0) minlx = log(min_freq); else minlx = 0.0;
       maxlx = log(max_freq);
@@ -1310,12 +1332,12 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      if (include_y_tick_labels)
 		{
 		  int label_width;
-		  label_width = number_width(label);
+		  label_width = number_width(label, use_tiny_font);
 		  /* y axis number */
 		  draw_y_number(label,
-			      ap->y_axis_x0 - major_tick_length - label_width - inner_border_width,
-			      logy, x_number_height,
-			      ap, ax, printing);
+				ap->y_axis_x0 - major_tick_length - label_width - inner_border_width,
+				logy, x_number_height,
+				ap, ax, printing);
 		}
 	      if (height > 200)
 		{
@@ -1368,11 +1390,10 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
 
 #if (!USE_NO_GUI)
 
-#define TO_C_AXIS_INFO(Snd, Chn, Ap, Caller) \
-  get_ap(get_cp(Snd, Chn, Caller), \
+#define TO_C_AXIS_INFO(Snd, Chn, Ap, Caller)	\
+  get_ap(get_cp(Snd, Chn, Caller),				     \
          (axis_info_t)XEN_TO_C_INT_OR_ELSE(Ap, (int)TIME_AXIS_INFO), \
          Caller)
-
 
 static XEN g_x_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 {
@@ -1386,7 +1407,7 @@ static XEN g_x_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 
 static XEN g_y_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 {
-#define H_y_to_position "(" S_y_to_position " val (snd #f) (chn #f) (ax #f)): y pixel loc of val"
+  #define H_y_to_position "(" S_y_to_position " val (snd #f) (chn #f) (ax #f)): y pixel loc of val"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_y_to_position, "a number");
   ASSERT_CHANNEL(S_y_to_position, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_y_to_position, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
@@ -1426,34 +1447,34 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
   return(XEN_CONS(C_TO_XEN_OFF_T(ap->losamp),
 	  XEN_CONS(C_TO_XEN_OFF_T(ap->hisamp),
 	   XEN_CONS(C_TO_XEN_DOUBLE(ap->x0),
-            XEN_CONS(C_TO_XEN_DOUBLE(ap->y0),
-             XEN_CONS(C_TO_XEN_DOUBLE(ap->x1),
-              XEN_CONS(C_TO_XEN_DOUBLE(ap->y1),
-               XEN_CONS(C_TO_XEN_DOUBLE(ap->xmin),
-                XEN_CONS(C_TO_XEN_DOUBLE(ap->ymin),
-                 XEN_CONS(C_TO_XEN_DOUBLE(ap->xmax),
-                  XEN_CONS(C_TO_XEN_DOUBLE(ap->ymax),
-                   XEN_CONS(C_TO_XEN_INT(ap->x_axis_x0),
-                    XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
-                     XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),
+	    XEN_CONS(C_TO_XEN_DOUBLE(ap->y0),
+	     XEN_CONS(C_TO_XEN_DOUBLE(ap->x1),
+	      XEN_CONS(C_TO_XEN_DOUBLE(ap->y1),
+	       XEN_CONS(C_TO_XEN_DOUBLE(ap->xmin),
+		XEN_CONS(C_TO_XEN_DOUBLE(ap->ymin),
+		 XEN_CONS(C_TO_XEN_DOUBLE(ap->xmax),
+		  XEN_CONS(C_TO_XEN_DOUBLE(ap->ymax),
+		   XEN_CONS(C_TO_XEN_INT(ap->x_axis_x0),
+		    XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
+		     XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),
 		      XEN_CONS(C_TO_XEN_INT(ap->y_axis_y1),
-                       XEN_CONS(C_TO_XEN_INT(ap->y_offset),
+		       XEN_CONS(C_TO_XEN_INT(ap->y_offset),
 			XEN_CONS(C_TO_XEN_DOUBLE(ap->x_scale),
 			 XEN_CONS(C_TO_XEN_DOUBLE(ap->y_scale),
 			  XEN_CONS((ap->xlabel) ? C_TO_XEN_STRING(ap->xlabel) : XEN_FALSE,
 			   XEN_CONS((ap->ylabel) ? C_TO_XEN_STRING(ap->ylabel) : XEN_FALSE,
 			    XEN_CONS((ap->cp) ? C_TO_XEN_BOOLEAN(ap->cp->new_peaks) : XEN_FALSE,
-		             XEN_EMPTY_LIST)))))))))))))))))))));
+			     XEN_EMPTY_LIST)))))))))))))))))))));
 }
 
 /* this is intended for use with the xm package */
 
 #if USE_MOTIF
 #define XEN_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                        (strcmp("GC", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+			 (strcmp("GC", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #else
 #define XEN_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                        (strcmp("GdkGC_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+			 (strcmp("GdkGC_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #endif
 
 #define AXIS_STYLE_OK(Id) (((Id) >= 0) && ((Id) < NUM_X_AXIS_STYLES))
@@ -1464,7 +1485,7 @@ static XEN g_draw_axes(XEN args)
   #define H_draw_axes "(" S_draw_axes " wid gc label (x0 0.0) (x1 1.0) (y0 -1.0) (y1 1.0) (style " S_x_axis_in_seconds ") (axes " S_show_all_axes ")): \
 draws axes in the widget 'wid', using the graphics context 'gc', with the x-axis label 'label' \
 going from x0 to x1 (floats) along the x axis, y0 to y1 along the y axis, with " S_x_axis_style " \
-'style' (" S_x_axis_in_seconds " etc); the axes are actually displayed if 'axes' is " S_show_all_axes ".\
+'style' (" S_x_axis_in_seconds " etc); the axes are actually displayed if 'axes' is " S_show_all_axes ". \
 Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   XEN val, xwid, xgc, xx0, xx1, xy0, xy1, xstyle, xaxes;
 #if USE_MOTIF
@@ -1484,7 +1505,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   int len;
   len = XEN_LIST_LENGTH(args);
   XEN_ASSERT_TYPE((len >= 3) && (len < 10), args, XEN_ONLY_ARG, S_draw_axes, "3 required and 6 optional args");
-
+  
   xwid = XEN_LIST_REF(args, 0);
   XEN_ASSERT_TYPE(XEN_WIDGET_P(xwid), xwid, XEN_ARG_1, S_draw_axes, "widget");
   xgc = XEN_LIST_REF(args, 1);
@@ -1568,7 +1589,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   make_axes_1(ap, x_style, 1, axes, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
   val = XEN_CONS(C_TO_XEN_INT(ap->x_axis_x0),
 	 XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
-          XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),
+	  XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),
 	   XEN_CONS(C_TO_XEN_INT(ap->y_axis_y1),
 	    XEN_EMPTY_LIST))));
   free_axis_info(ap);
@@ -1611,11 +1632,11 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
 }
 
 WITH_FOUR_SETTER_ARGS(g_set_x_axis_label_reversed, g_set_x_axis_label)
-
+  
 /* TODO: how to implement rotate_text in OpenGL? */
 /*       Mesa/progs/xdemos/xuserotfont.c gets pixmap, then calls glBitmap: glBitmap(bitmapWidth, bitmapHeight, xOrig, yOrig, xStep, yStep, bm) */
 /*       then use that code in xrotfontdemo.c */
-
+  
 static XEN g_y_axis_label(XEN snd, XEN chn, XEN ax)
 {
   #define H_y_axis_label "(" S_y_axis_label " (snd #f) (chn #f) (ax #f)): current y axis label"
@@ -1642,7 +1663,7 @@ static XEN g_set_y_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
 }
 
 WITH_FOUR_SETTER_ARGS(g_set_y_axis_label_reversed, g_set_y_axis_label)
-
+  
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_4(g_x_to_position_w, g_x_to_position)
 XEN_ARGIFY_4(g_y_to_position_w, g_y_to_position)
@@ -1656,6 +1677,7 @@ XEN_ARGIFY_3(g_x_axis_label_w, g_x_axis_label)
 XEN_ARGIFY_4(g_set_x_axis_label_w, g_set_x_axis_label)
 XEN_ARGIFY_3(g_y_axis_label_w, g_y_axis_label)
 XEN_ARGIFY_4(g_set_y_axis_label_w, g_set_y_axis_label)
+
 #else
 #define g_x_to_position_w g_x_to_position
 #define g_y_to_position_w g_y_to_position
@@ -1667,9 +1689,9 @@ XEN_ARGIFY_4(g_set_y_axis_label_w, g_set_y_axis_label)
 #define g_set_x_axis_label_w g_set_x_axis_label
 #define g_y_axis_label_w g_y_axis_label
 #define g_set_y_axis_label_w g_set_y_axis_label
-
+  
 #endif
-
+  
 void g_init_axis(void)
 {
   XEN_DEFINE_PROCEDURE(S_x_to_position, g_x_to_position_w,   1, 3, 0, H_x_to_position);
@@ -1678,13 +1700,13 @@ void g_init_axis(void)
   XEN_DEFINE_PROCEDURE(S_position_to_y, g_position_to_y_w,   1, 3, 0, H_position_to_y);
   XEN_DEFINE_PROCEDURE(S_axis_info,     g_axis_info_w,       0, 3, 0, H_axis_info);
   XEN_DEFINE_PROCEDURE(S_draw_axes,     g_draw_axes_w,       0, 0, 1, H_draw_axes);
-
+  
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_axis_label, g_x_axis_label_w, H_x_axis_label,
 					    S_setB S_x_axis_label, g_set_x_axis_label_w, g_set_x_axis_label_reversed, 0, 3, 1, 3);
-
+  
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_y_axis_label, g_y_axis_label_w, H_y_axis_label,
 					    S_setB S_y_axis_label, g_set_y_axis_label_w, g_set_y_axis_label_reversed, 0, 3, 1, 3);
-
+  
   XEN_DEFINE_CONSTANT(S_time_graph,      TIME_AXIS_INFO,      "time domain graph axis info");
   XEN_DEFINE_CONSTANT(S_transform_graph, TRANSFORM_AXIS_INFO, "frequency domain graph axis info");
   XEN_DEFINE_CONSTANT(S_lisp_graph,      LISP_AXIS_INFO,      "lisp graph axis info");
