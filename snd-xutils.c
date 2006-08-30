@@ -12,6 +12,50 @@
 #endif
 #endif
 
+/*
+  since it's way too hard to change just a font's size (given all the funny font names), perhaps
+  we should just fallback on tiny_font for the font_set_size business
+  or look at the name, if (say) nxn give up, else look at "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*" = 7th field
+  and try changing it? -- would need string manglers
+
+  would return null (in both cases) if failure
+  
+  and need loader in this case as well
+*/
+#if 0
+char *font_set_size(const char *font, int size)
+{
+  int i, len, dashes = 0;
+  if (font[0] != '-') return(NULL);
+  len = snd_strlen(font);
+  for (i = 0; i < len; i++)
+    {
+      if (font[i] == '-') dashes++;
+      if (dashes == 7)
+	{
+	  char *new_name = NULL;
+	  char num[6];
+	  int j, k, numlen;
+	  mus_snprintf(num, 6, "%d", size);
+	  new_name = (char *)CALLOC(len + 2, sizeof(char));
+	  for (j = 0; j <= i; j++)
+	    new_name[j] = font[j];
+	  numlen = snd_strlen(num);
+	  for (k = 0; k < numlen; k++)
+	    new_name[j + k] = num[k];
+	  for (k = j + 1; k < len; k++)
+	    if (font[k] == '-') break;
+	  j += numlen;
+	  for (; k < len; k++, j++)
+	    new_name[j] = font[k];
+	  return(new_name);
+	}
+    }
+  return(NULL);
+}
+#endif
+
+
 static XmRenderTable get_xm_font(XFontStruct *ignore, const char *font, char *tag)
 {
   XmRendition tmp;

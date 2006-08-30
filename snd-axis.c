@@ -629,6 +629,11 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 
   curx = left_border_width;
   cury = height - bottom_border_width;
+
+  /* here if fonts are too big, use font_set_size to try to find a smaller similar font, or go to tiny font both temporarily */
+  /* both number_height and label_height would need arg or perhaps actually change the font then swap */
+  /* 100 < width < 250, perhaps 100 < height < 150? */
+
   x_number_height = number_height();
   x_label_height = 0;
   x_label_width = 0;

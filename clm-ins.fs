@@ -2,13 +2,13 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Mon Aug 21 20:56:36 CEST 2006
+\ Changed: Tue Aug 29 16:55:18 CEST 2006
 
 \ Commentary:
 \
-\ jc-reverb-fs ( start dur args -- )
+\ jc-reverb-fs ( keyword-args -- samps )
 \ violin       ( start dur freq amp keyword-args -- )
-\ fm-violin-fs ( start dur freq amp keyword-args -- )
+\ fm-violin-fs ( start dur freq amp keyword-args -- samps )
 \ 
 \ clm-ins.scm|rb instruments
 \ 
@@ -23,37 +23,35 @@
 require clm
 require env
 
-: get-list-args ( lst key def -- value )
-  { lst key def }
-  lst key list-index 1+ ?dup-if lst swap list-ref else def then
-;
+: reverb-dur ( rev -- dur ) mus-length samples->seconds *clm-decay-time* f+ ;
 
 \ clm/jcrev.ins
-instrument: jc-reverb-fs { start dur args -- }
-  doc" ( start dur args -- )  The Chowning reverb.\n\
+instrument: jc-reverb-fs ( keyword-args -- )
+  doc" ( keyword-args -- samps )  The Chowning reverb.\n\
 \\ keywords and default values:\n\
-\\ :volume   -- 1.0\n\
-\\ :delay1   -- 0.013\n\
-\\ :delay2   -- 0.011\n\
-\\ :delay3   -- 0.015\n\
-\\ :delay4   -- 0.017\n\
-\\ :low-pass -- #f\n\
-\\ :doubled  -- #f\n\
-\\ :amp-env  -- #f\n\
+\\ :volume     1.0\n\
+\\ :delay1     0.013\n\
+\\ :delay2     0.011\n\
+\\ :delay3     0.015\n\
+\\ :delay4     0.017\n\
+\\ :low-pass   #f\n\
+\\ :doubled    #f\n\
+\\ :amp-env    #f\n\
 0 1 440 0.2 ' fm-violin :reverb ' jc-reverb with-sound\n\
-0 1 440 0.2 ' fm-violin :reverb-data '( :low-pass #t ) :reverb ' jc-reverb :channels 2 with-sound"
-  args list? unless '() to args then
-  args :volume   1.0   get-list-args { volume }
-  args :delay1   0.013 get-list-args { delay1 }
-  args :delay2   0.011 get-list-args { delay2 }
-  args :delay3   0.015 get-list-args { delay3 }
-  args :delay4   0.017 get-list-args { delay4 }
-  args :low-pass #f    get-list-args { low-pass }
-  args :doubled  #f    get-list-args { doubled }
-  args :amp-env  #f    get-list-args { amp-env }
+0 1 440 0.2 ' fm-violin\n\
+  :reverb-data '( :low-pass #t ) :reverb ' jc-reverb :channels 2 with-sound"
+  :volume   1.0   get-args { volume }
+  :delay1   0.013 get-args { delay1 }
+  :delay2   0.011 get-args { delay2 }
+  :delay3   0.015 get-args { delay3 }
+  :delay4   0.017 get-args { delay4 }
+  :low-pass #f    get-args { low-pass }
+  :doubled  #f    get-args { doubled }
+  :amp-env  #f    get-args { amp-env }
   *output* mus-channels { chans }
   *reverb* mus-channels { rev-chans }
-  *verbose* if rev-chans chans get-func-name reverb-info then
+  *reverb* reverb-dur { dur }
+  *verbose* if get-func-name rev-chans chans reverb-info then
   :feedback -0.7 :feedforward 0.7 :size 1051 make-all-pass { allpass1 }
   :feedback -0.7 :feedforward 0.7 :size  337 make-all-pass { allpass2 }
   :feedback -0.7 :feedforward 0.7 :size  113 make-all-pass { allpass3 }
@@ -70,7 +68,7 @@ instrument: jc-reverb-fs { start dur args -- }
   amp-env if :envelope amp-env :scaler volume :duration dur make-env else #f then { env-a }
   doubled chan4 && if $" jc-reverb is not set up for doubled reverb in quad" _ error then
   0.0 0.0 { comb-sum comb-sum-1 }
-  start dur run
+  0.0 dur run
     0.0 rev-chans 0 ?do j i *reverb* in-any f+ loop { in-val }
     allpass3  allpass2  allpass1 in-val 0.0 all-pass  0.0 all-pass  0.0 all-pass { allpass-sum }
     comb-sum-1 { comb-sum-2 }
@@ -98,6 +96,7 @@ instrument: jc-reverb-fs { start dur args -- }
       i outdel4 all-sums 0.0 delay volume f* *output* outd drop
     then
   loop
+  dur seconds->samples
 ;instrument
 
 [undefined] jc-reverb [if] ' jc-reverb-fs alias jc-reverb [then]
@@ -106,12 +105,12 @@ instrument: jc-reverb-fs { start dur args -- }
 instrument: violin ( start dur freq amp keyword-args -- )
   doc" ( start dur freq amp keyword-args -- )  Violin example from snd/fm.html.\n\
 \\ keywords and default values\n\
-\\ :fm-index      -- 1.0\n\
-\\ :amp-env       -- '( 0 0 25 1 75 1 100 0 )\n\
-\\ :index-env     -- '( 0 1 25 0.4 75 0.6 100 0 )\n\
-\\ :degree        -- 90.0 random (locsig-degree)\n\
-\\ :distance      -- 1.0 (locsig-distance)\n\
-\\ :reverb-amount -- 0.01 (locsig-reverb-amount)\n\
+\\ :fm-index        1.0\n\
+\\ :amp-env         '( 0 0 25 1 75 1 100 0 )\n\
+\\ :index-env       '( 0 1 25 0.4 75 0.6 100 0 )\n\
+\\ :degree          90.0 random (locsig-degree)\n\
+\\ :distance        1.0 (locsig-distance)\n\
+\\ :reverb-amount   0.01 (locsig-reverb-amount)\n\
 0 3 440 0.5 :fm-index 0.5 ' violin with-sound"
   :fm-index      1.0                          get-args { fm-index }
   :amp-env       '( 0 0 25 1 75 1 100 0 )     get-args { amp-env }
@@ -154,37 +153,37 @@ event: violin-test ( keyword-args -- )
 ;event
 
 \ === FM-Violin (clm/v.ins, snd/v.scm|rb) ===
-instrument: fm-violin-fs ( start dur freq amp keyword-args -- )
-  doc" ( start dur freq amp keyword-args -- )  FM-Violin from clm/v.ins|snd/v.scm|rb.\n\
+instrument: fm-violin-fs ( start dur freq amp keyword-args -- samps )
+  doc" ( start dur freq amp keyword-args -- samps )  FM-Violin from clm/v.ins|snd/v.scm|rb.\n\
 \\ keywords and default values:\n\
-\\ :fm-index              	-- 1.0\n\
-\\ :amp-env               	-- '( 0 0 25 1 75 1 100 0 )\n\
-\\ :periodic-vibrato-rate 	-- 5.0\n\
-\\ :periodic-vibrato-amplitude -- 0.0025\n\
-\\ :random-vibrato-rate        -- 16.0\n\
-\\ :random-vibrato-amplitude   -- 0.005\n\
-\\ :noise-freq            	-- 1000.0\n\
-\\ :noise-amount          	-- 0.0\n\
-\\ :ind-noise-freq        	-- 10.0\n\
-\\ :ind-noise-amount      	-- 0.0\n\
-\\ :amp-noise-freq        	-- 20.0\n\
-\\ :amp-noise-amount      	-- 0.0\n\
-\\ :gliss-env             	-- '( 0 0 100 0 )\n\
-\\ :glissando-amount      	-- 0.0\n\
-\\ :fm1-env               	-- '( 0 1 25 0.4 75 0.6 100 0 )\n\
-\\ :fm2-env               	-- '( 0 1 25 0.4 75 0.6 100 0 )\n\
-\\ :fm3-env               	-- '( 0 1 25 0.4 75 0.6 100 0 )\n\
-\\ :fm1-rat               	-- 1.0\n\
-\\ :fm2-rat               	-- 3.0\n\
-\\ :fm3-rat               	-- 4.0\n\
-\\ :fm1-index             	-- 0.0\n\
-\\ :fm2-index             	-- 0.0\n\
-\\ :fm3-index             	-- 0.0\n\
-\\ :base                  	-- 1.0\n\
-\\ :degree                	-- 90.0 random\n\
-\\ :distance              	-- 1.0\n\
-\\ :reverb-amount         	-- 0.01\n\
-\\ :index-type            	-- 'violin (or 'cello)\n\
+\\ :fm-index              	 1.0\n\
+\\ :amp-env               	 '( 0 0 25 1 75 1 100 0 )\n\
+\\ :periodic-vibrato-rate 	 5.0\n\
+\\ :periodic-vibrato-amplitude   0.0025\n\
+\\ :random-vibrato-rate          16.0\n\
+\\ :random-vibrato-amplitude     0.005\n\
+\\ :noise-freq            	 1000.0\n\
+\\ :noise-amount          	 0.0\n\
+\\ :ind-noise-freq        	 10.0\n\
+\\ :ind-noise-amount      	 0.0\n\
+\\ :amp-noise-freq        	 20.0\n\
+\\ :amp-noise-amount      	 0.0\n\
+\\ :gliss-env             	 '( 0 0 100 0 )\n\
+\\ :glissando-amount      	 0.0\n\
+\\ :fm1-env               	 '( 0 1 25 0.4 75 0.6 100 0 )\n\
+\\ :fm2-env               	 '( 0 1 25 0.4 75 0.6 100 0 )\n\
+\\ :fm3-env               	 '( 0 1 25 0.4 75 0.6 100 0 )\n\
+\\ :fm1-rat               	 1.0\n\
+\\ :fm2-rat               	 3.0\n\
+\\ :fm3-rat               	 4.0\n\
+\\ :fm1-index             	 0.0\n\
+\\ :fm2-index             	 0.0\n\
+\\ :fm3-index             	 0.0\n\
+\\ :base                  	 1.0\n\
+\\ :degree                	 90.0 random\n\
+\\ :distance              	 1.0\n\
+\\ :reverb-amount         	 0.01\n\
+\\ :index-type            	 'violin ('cello or 'violin)\n\
 0 3 440 0.5 :fm-index 0.5 ' fm-violin with-sound"
   :fm-index                   1.0                          get-args { fm-index }
   :amp-env                    '( 0 0 25 1 75 1 100 0 )     get-args { amp-env }
@@ -313,6 +312,7 @@ instrument: fm-violin-fs ( start dur freq amp keyword-args -- )
       loc i  carrier vib 0.0 oscil  ampf env f*  amp-fuzz f*  locsig drop
     loop
   then
+  dur seconds->samples
 ;
 
 [undefined] fm-violin [if] ' fm-violin-fs alias fm-violin [then]
@@ -320,7 +320,7 @@ instrument: fm-violin-fs ( start dur freq amp keyword-args -- )
 event: fm-violin-test ( keyword-args -- )
   :beg 0 get-args { start }
   :dur 1 get-args { dur }
-  start dur 440 0.5 fm-violin-fs
+  start dur 440 0.5 fm-violin-fs drop
   dur wait
 ;event
 
@@ -542,19 +542,19 @@ event: vox-test ( keyword-args -- )
 instrument: fofins ( start dur keyword-args -- )
   doc" ( start dur keyword-args -- )\n\
 \\ keywords and default values\n\
-\\ :frequency -- 270\n\
-\\ :amplitude -- 0.2\n\
-\\ :vibrato   -- 0.001\n\
-\\ :f0        -- 730\n\
-\\ :a0        -- 0.6\n\
-\\ :f1        -- 1090\n\
-\\ :a1        -- 0.3\n\
-\\ :f2        -- 2440\n\
-\\ :a2        -- 0.1\n\
-\\ :vib-env   -- '( 0 1 100 1 )\n\
-\\ :amp-env   -- '( 0 0 25 1 75 1 100 0 )\n\
-\\ :degree    -- 90.0 random (locsig-degree)\n\
-\\ :distance  -- 1.0 (locsig-distance)\n\
+\\ :frequency   270\n\
+\\ :amplitude   0.2\n\
+\\ :vibrato     0.001\n\
+\\ :f0          730\n\
+\\ :a0          0.6\n\
+\\ :f1          1090\n\
+\\ :a1          0.3\n\
+\\ :f2          2440\n\
+\\ :a2          0.1\n\
+\\ :vib-env     '( 0 1 100 1 )\n\
+\\ :amp-env     '( 0 0 25 1 75 1 100 0 )\n\
+\\ :degree      90.0 random (locsig-degree)\n\
+\\ :distance    1.0 (locsig-distance)\n\
 0 1 ' fofins with-sound\n\n\
 '( 0 0 40 0 75 0.2 100 1 ) value ve\n\
 '( 0 0 0.5 1 3 0.5 10 0.2 20 0.1 50 0.1 60 0.2 85 1 100 0 ) value ae\n\
@@ -617,32 +617,32 @@ event: fofins-test ( keyword-args -- )
 instrument: fm-trumpet ( start dur keyword-args -- )
   doc" ( start dur keyword-args -- )\n\
 \\ keywords and default values\n\
-\\ :frq1     -- 250\n\
-\\ :frq2     -- 1500\n\
-\\ :amp1     -- 0.5\n\
-\\ :amp2     -- 0.1\n\
-\\ :ampatt1  -- 0.03\n\
-\\ :ampdec1  -- 0.35\n\
-\\ :ampatt2  -- 0.03\n\
-\\ :ampdec2  -- 0.3\n\
-\\ :modfrq1  -- 250\n\
-\\ :modind11 -- 0\n\
-\\ :modind12 -- 2.66\n\
-\\ :modfrq2  -- 250\n\
-\\ :modind21 -- 0\n\
-\\ :modind22 -- 1.8\n\
-\\ :rvibamp  -- 0.007\n\
-\\ :rvibfrq  -- 125\n\
-\\ :vibamp   -- 0.007\n\
-\\ :vibfrq   -- 7\n\
-\\ :vibatt   -- 0.6\n\
-\\ :vibdec   -- 0.2\n\
-\\ :frqskw   -- 0.03\n\
-\\ :frqatt   -- 0.06\n\
-\\ :ampenv1  -- '( 0 0 25 1 75 0.9 100 0 )\n\
-\\ :ampenv2  -- '( 0 0 25 1 75 0.9 100 0 )\n\
-\\ :indenv1  -- '( 0 0 25 1 75 0.9 100 0 )\n\
-\\ :indenv2  -- '( 0 0 25 1 75 0.9 100 0 )\n\
+\\ :frq1       250\n\
+\\ :frq2       1500\n\
+\\ :amp1       0.5\n\
+\\ :amp2       0.1\n\
+\\ :ampatt1    0.03\n\
+\\ :ampdec1    0.35\n\
+\\ :ampatt2    0.03\n\
+\\ :ampdec2    0.3\n\
+\\ :modfrq1    250\n\
+\\ :modind11   0\n\
+\\ :modind12   2.66\n\
+\\ :modfrq2    250\n\
+\\ :modind21   0\n\
+\\ :modind22   1.8\n\
+\\ :rvibamp    0.007\n\
+\\ :rvibfrq    125\n\
+\\ :vibamp     0.007\n\
+\\ :vibfrq     7\n\
+\\ :vibatt     0.6\n\
+\\ :vibdec     0.2\n\
+\\ :frqskw     0.03\n\
+\\ :frqatt     0.06\n\
+\\ :ampenv1    '( 0 0 25 1 75 0.9 100 0 )\n\
+\\ :ampenv2    '( 0 0 25 1 75 0.9 100 0 )\n\
+\\ :indenv1    '( 0 0 25 1 75 0.9 100 0 )\n\
+\\ :indenv2    '( 0 0 25 1 75 0.9 100 0 )\n\
 0 2 ' fm-trumpet with-sound"
   make-hash { args }
   :frq1     250    		       get-args { frq1 }

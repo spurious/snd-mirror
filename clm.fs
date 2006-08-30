@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Tue Aug 22 01:34:58 CEST 2006
+\ Changed: Tue Aug 29 17:15:34 CEST 2006
 
 \ Commentary:
 \ 
@@ -25,7 +25,7 @@
 \ run                  ( start dur -- )
 \ run-instrument       ( start dur args -- )
 \ end-run              ( value -- )
-\ reverb-info          ( in-chans out-chans rev-name -- )
+\ reverb-info          ( caller in-chans out-chans -- )
 \ instrument:          ( ?? -- )
 \ ;instrument          ( -- )
 \ event:               ( ?? -- )
@@ -228,7 +228,7 @@ $" test.reverb"   value *clm-reverb-file-name*
 'intern           value *clm-player*           
 #f                value *clm-comment*
 0.05  		  value *clm-reverb-amount*
-1.00  		  value *clm-decay-time*
+1.0               value *clm-decay-time*
 mus-lshort        value *clm-audio-format*
 mus-audio-default value *clm-device*
 1024 64 *         value *clm-file-buffer-size*
@@ -251,8 +251,9 @@ mus-audio-default value *clm-device*
 
 : make-default-comment ( -- str )
   $" Written on %s by %s at %s using clm (fth) of %s" _
-  '( date $" USER" getenv hostname fth-date ) string-format
+  '( date getlogin gethostname fth-date ) string-format
 ;
+
 : times->samples { start dur -- len beg }
   start seconds->samples { beg }
   dur seconds->samples { len }
@@ -315,8 +316,8 @@ set-current
 ; immediate
 previous
 
-: reverb-info { in-chans out-chans rev-name -- }
-  $" \\ %s on %d in and %d out channels\n" _ '( rev-name in-chans out-chans ) fth-print
+: reverb-info { caller in-chans out-chans -- }
+  $" \\ %s on %d in and %d out channels\n" _ '( caller in-chans out-chans ) fth-print
 ;
 
 \ === Helper functions for instruments ===
@@ -431,6 +432,7 @@ previous
   *clm-rt-bufsize* frms min { bufsize }
   *clm-channels* 2 min { chans }
   *clm-srate* { srate }
+  mus-srate { old-srate }
   srate set-mus-srate drop
   *clm-audio-format* { afmt }
   *clm-data-format* { dfmt }
@@ -461,6 +463,7 @@ previous
   bufsize +loop
   dac-fd mus-audio-close drop
   snd-fd frms chans * dfmt mus-bytes-per-sample * mus-sound-close-output drop
+  old-srate set-mus-srate drop
 ;
 
 \ === With-Sound Keywords ===
@@ -495,6 +498,15 @@ create-keyword device
 
 $" with-sound error" create-exception with-sound-error
 
+hide
+: finish-ws { old-output old-reverb old-decay-time old-srate -- }
+  old-output              to *output*
+  old-reverb              to *reverb*
+  old-decay-time          to *clm-decay-time*
+  old-srate set-mus-srate to *srate*
+;
+set-current
+
 \ Usage: ' resflt-test with-sound
 \        ' resflt-test :play #f :channels 2 with-sound
 \        lambda: resflt-test ; :output "resflt.snd" with-sound
@@ -527,38 +539,40 @@ $" with-sound error" create-exception with-sound-error
 ' resflt-test :play #f :channels 2 :srate 44100 with-sound"
   :play              *clm-play*             get-args { play }
   :statistics        *clm-statistics*       get-args { statistics }
-  :verbose           *clm-verbose*          get-args dup { verbose }     to *verbose*
+  :verbose           *clm-verbose*          get-args to *verbose*
   :continue-old-file #f                     get-args { continue-old-file }
   :delete-reverb     *clm-delete-reverb*    get-args { delete-reverb }
   :reverb            *clm-reverb*           get-args { reverb-xt }
   :reverb-data       *clm-reverb-data*      get-args { reverb-data }
-  :channels          *clm-channels*         get-args dup { chans }       to *channels*
+  :channels          *clm-channels*         get-args to *channels*
   :reverb-channels   *clm-reverb-channels*  get-args { rev-chans }
-  :srate             *clm-srate*            get-args dup { sr }          to *srate*
-  :rt-buffer-size    *clm-rt-bufsize*       get-args dup { rt-bufsize }  to *rt-bufsize*
-  :table-size        *clm-table-size*       get-args dup { table-size }  to *table-size*
-  :locsig-type       *clm-locsig-type*      get-args dup { locsig-type } to *locsig-type*
+  :srate             *clm-srate*            get-args to *srate*
+  :rt-buffer-size    *clm-rt-bufsize*       get-args to *rt-bufsize*
+  :table-size        *clm-table-size*       get-args to *table-size*
+  :locsig-type       *clm-locsig-type*      get-args to *locsig-type*
   :header-type       *clm-header-type*      get-args { header-type }
   :data-format       *clm-data-format*      get-args { data-format }
-  :notehook          *clm-notehook*         get-args dup { notehook }    to *notehook*
+  :notehook          *clm-notehook*         get-args to *notehook*
   :output            *clm-file-name*        get-args { fname }
   :reverb-file-name  *clm-reverb-file-name* get-args { rev-name }
   :player            *clm-player*           get-args { player }
   :comment           *clm-comment*          get-args { comm }
-  :reverb-amount     *clm-reverb-amount*    get-args dup { revamount }   to *reverb-amount*
+  :reverb-amount     *clm-reverb-amount*    get-args to *reverb-amount*
   :decay-time        *clm-decay-time*       get-args { decay-time }
-  :audio-format      *clm-audio-format*     get-args dup { audio-fmt }   to *audio-format*
+  :audio-format      *clm-audio-format*     get-args to *audio-format*
   { body-xt }
-  mus-srate { old-sr }
-  *srate* set-mus-srate drop
   *output* { old-output }
   *reverb* { old-revout }
+  *clm-decay-time* { old-decay-time }
+  decay-time to *clm-decay-time*
+  mus-srate { old-srate }
+  *srate* set-mus-srate drop
   comm unless make-default-comment to comm then
   $" with-sound: temporary reverb file" _ { rev-comment }
   continue-old-file if
     fname continue-sample->file
   else
-    fname chans data-format header-type comm make-sample->file
+    fname *channels* data-format header-type comm make-sample->file
   then to *output*
   *output* sample->file? unless
     'forth-error '( get-func-name $" cannot open sample->file" _ fname ) fth-throw
@@ -571,21 +585,11 @@ $" with-sound error" create-exception with-sound-error
   then
   make-timer { tm }
   tm start-timer
+  \ computing ws body
   body-xt #t nil fth-catch ?dup-if ( res )
     *output* mus-close drop
     *reverb* if *reverb* mus-close drop then
-    verbose     to *verbose*
-    chans       to *channels*
-    sr          to *srate*
-    rt-bufsize  to *rt-bufsize*
-    table-size  to *table-size*
-    locsig-type to *locsig-type*
-    notehook    to *notehook*
-    revamount   to *reverb-amount*
-    audio-fmt   to *audio-format*
-    old-output  to *output*
-    old-revout  to *reverb*
-    old-sr set-mus-srate drop
+    old-output old-revout old-decay-time old-srate finish-ws
     ( res ) 'with-sound-error get-func-name rot cadr 2 >list fth-throw
   then
   reverb-xt if
@@ -595,22 +599,11 @@ $" with-sound error" create-exception with-sound-error
     *reverb* file->sample? unless
       'forth-error '( get-func-name $" cannot open file->sample" _ rev-name ) fth-throw
     then
-    0.0 dur decay-time f+ reverb-data reverb-xt #t nil fth-catch ?dup-if ( res )
-      nip nip nip ( start dur data )
+    \ computing ws reverb; nip (after fth-catch) drops reverb xt's return value (samps)
+    reverb-data dup empty? unless each end-each then reverb-xt #t nil fth-catch nip ?dup-if ( res )
       *output* mus-close drop
       *reverb* mus-close drop
-      verbose     to *verbose*
-      chans       to *channels*
-      sr          to *srate*
-      rt-bufsize  to *rt-bufsize*
-      table-size  to *table-size*
-      locsig-type to *locsig-type*
-      notehook    to *notehook*
-      revamount   to *reverb-amount*
-      audio-fmt   to *audio-format*
-      old-output  to *output*
-      old-revout  to *reverb*
-      old-sr set-mus-srate drop
+      old-output old-revout old-decay-time old-srate finish-ws
       ( res ) 'with-sound-error get-func-name rot cadr 2 >list fth-throw
     then
     *reverb* mus-close drop
@@ -618,7 +611,7 @@ $" with-sound error" create-exception with-sound-error
   tm stop-timer
   *output* mus-close drop
   statistics if
-    fname reverb-xt if rev-name else #f then chans sr fname mus-sound-frames tm snd-info
+    fname reverb-xt if rev-name else #f then *channels* *srate* fname mus-sound-frames tm snd-info
   then
   delete-reverb if rev-name file-delete then
   'snd provided? if
@@ -648,19 +641,9 @@ $" with-sound error" create-exception with-sound-error
       then
     then
   then
-  verbose     to *verbose*
-  chans       to *channels*
-  sr          to *srate*
-  rt-bufsize  to *rt-bufsize*
-  table-size  to *table-size*
-  locsig-type to *locsig-type*
-  notehook    to *notehook*
-  revamount   to *reverb-amount*
-  audio-fmt   to *audio-format*
-  old-output  to *output*
-  old-revout  to *reverb*
-  old-sr set-mus-srate drop
+  old-output old-revout old-decay-time old-srate finish-ws
 ;
+previous
 
 : clm-load ( keyword-args fname -- )
   { fname }

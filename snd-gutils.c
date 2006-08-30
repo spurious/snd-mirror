@@ -1,5 +1,24 @@
 #include "snd.h"
 
+/*
+  (CFNC "gint pango_font_description_get_size PangoFontDescription* desc")
+  (CFNC "PangoFontDescription* pango_font_description_copy PangoFontDescription* desc")
+  (CFNC "void pango_font_description_set_size PangoFontDescription* desc gint size")
+
+  so for temp choice, if default not right size, [check old temp/free], copy default, set size -- is this safe?
+  for "scalable fonts" it probably is -- how to tell whether we're using a bitmap font?
+
+*/
+#if 0
+PangoDescription *font_set_size(PangoFontDescription *font, int size)
+{
+  PangoFontDescription *fs = NULL;
+  fs = pango_font_description_copy(font);
+  pango_font_description_set_size(fs, (gint)size);
+  return(fs);
+}
+#endif
+
 bool set_tiny_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
@@ -152,10 +171,14 @@ static int sg_font_width(PangoFontDescription *font)
 {
   /* returns size in pixels */
   int wid = 0;
-  double dpi;
+  double dpi = 96.0; /* see below */
   PangoContext *ctx;
   PangoFontMetrics *m;
+
+#if HAVE_GTK_LINK_BUTTON_NEW
   dpi = gdk_screen_get_resolution(gdk_display_get_default_screen(gdk_display_get_default())); /* pixels/inch */
+#endif
+
   ctx = gdk_pango_context_get();
   m = pango_context_get_metrics(ctx, font, gtk_get_default_language()); /* returns size in pango-scaled points (1024/72 inch) */
   wid = (int)((dpi / 72.0) * PANGO_PIXELS(pango_font_metrics_get_approximate_char_width(m)));
@@ -167,11 +190,17 @@ static int sg_font_width(PangoFontDescription *font)
 static int sg_font_height(PangoFontDescription *font)
 {
   /* returns size in pixels */
+  double dpi = 96.0; /* a plausible guess */
   int hgt = 0;
-  double dpi;
   PangoContext *ctx;
   PangoFontMetrics *m;
+
+#if HAVE_GTK_LINK_BUTTON_NEW
+  /* gtk 2.1: gdk_display_get_default, gdk_display_get_default_screen */
+  /* gtk 2.9: gdk_screen_get_resolution */
   dpi = gdk_screen_get_resolution(gdk_display_get_default_screen(gdk_display_get_default()));
+#endif
+
   ctx = gdk_pango_context_get();
   m = pango_context_get_metrics(ctx, font, gtk_get_default_language());
   hgt = (int)((dpi / 72.0) * PANGO_PIXELS(pango_font_metrics_get_ascent(m)));
