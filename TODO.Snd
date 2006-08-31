@@ -13,8 +13,6 @@ A graphic-EQ effect (effects.scm) -- this could use the CLM formant generator.
 
 A better pitch tracker than spot-freq in examp.scm.
 
-dB display in VU meters
-
 a path envelope editor dialog for dlocsig (as in dlocsig.rb)
 
 A CD building script.

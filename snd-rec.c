@@ -1911,6 +1911,15 @@ static XEN g_set_vu_size(XEN val)
   return(C_TO_XEN_DOUBLE(vu_size(ss)));
 }
 
+static XEN g_vu_in_dB(void) {return(C_TO_XEN_BOOLEAN(vu_in_dB(ss)));}
+static XEN g_set_vu_in_dB(XEN val) 
+{
+  #define H_vu_in_dB "(" S_vu_in_dB "): whether recorder VU meters use a dB scale"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_vu_in_dB, "a boolean"); 
+  set_vu_in_dB(XEN_TO_C_BOOLEAN(val));
+  return(val);
+}
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_recorder_autoload_w, g_recorder_autoload)
 XEN_NARGIFY_1(g_set_recorder_autoload_w, g_set_recorder_autoload)
@@ -1945,6 +1954,8 @@ XEN_NARGIFY_2(g_set_recorder_out_amp_w, g_set_recorder_out_amp)
 XEN_NARGIFY_0(g_recorder_dialog_w, g_recorder_dialog)
 XEN_NARGIFY_0(g_vu_size_w, g_vu_size)
 XEN_NARGIFY_1(g_set_vu_size_w, g_set_vu_size)
+XEN_NARGIFY_0(g_vu_in_dB_w, g_vu_in_dB)
+XEN_NARGIFY_1(g_set_vu_in_dB_w, g_set_vu_in_dB)
 #else
 #define g_recorder_autoload_w g_recorder_autoload
 #define g_set_recorder_autoload_w g_set_recorder_autoload
@@ -1979,6 +1990,8 @@ XEN_NARGIFY_1(g_set_vu_size_w, g_set_vu_size)
 #define g_recorder_dialog_w g_recorder_dialog
 #define g_vu_size_w g_vu_size
 #define g_set_vu_size_w g_set_vu_size
+#define g_vu_in_dB_w g_vu_in_dB
+#define g_set_vu_in_dB_w g_set_vu_in_dB
 #endif
 
 void g_init_recorder(void)
@@ -2032,6 +2045,8 @@ void g_init_recorder(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vu_size, g_vu_size_w, H_vu_size,
 				   S_setB S_vu_size, g_set_vu_size_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vu_in_dB, g_vu_in_dB_w, H_vu_in_dB,
+				   S_setB S_vu_in_dB, g_set_vu_in_dB_w,  0, 0, 1, 0);
 
 }
 

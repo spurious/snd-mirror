@@ -691,6 +691,7 @@
 #define S_view_regions_dialog           "view-regions-dialog"
 #define S_view_sound                    "view-sound"
 #define S_view_tracks_dialog            "view-tracks-dialog"
+#define S_vu_in_dB                      "vu-in-dB"
 #define S_vu_size                       "vu-size"
 #define S_walsh_transform               "walsh-transform"
 #define S_wavelet_transform             "wavelet-transform"

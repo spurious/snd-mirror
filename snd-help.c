@@ -496,7 +496,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-28-Aug:  removed vu-font and vu-font-size.\n\
+28-Aug:  removed vu-font and vu-font-size, added vu-in-dB.\n\
 16-Aug:  display-bark-fft (dsp.scm).\n\
          after-lisp-graph-hook, snd-color, snd-font, show-bare-x-axis.\n\
 4-Aug:   analog-filter.rb thanks to Mike.\n\
@@ -1503,7 +1503,7 @@ the Output panel's A button. Then when you're ready to go, click the Record butt
 again to finish the recording. \
 \n\n\
 If the record window's VU meters are too big (or too small) for your screen, you can fool around \
-with the variable " S_vu_size " which defaults to 1.0. \
+with the variable " S_vu_size " which defaults to 1.0. Set " S_vu_in_dB " to " PROC_TRUE " to get dB scaling. \
 \n\n\
 If you go to the main Snd window while the recorder is active and play a sound, the \
 recorder's audio lines are made inactive to try to reduce confusion.  To re-activate \

@@ -2,13 +2,6 @@
 #include "snd-rec.h"
 
 typedef struct {
-  Pixmap off_label;
-  Pixmap on_label;
-  Pixmap clip_label;
-  Float size;
-} vu_label;
-
-typedef struct {
   Widget meter;
   Widget max_button;
   Display *dp;
@@ -20,6 +13,7 @@ typedef struct {
   Float max_val;
   Float red_deg;
   Float size;
+  bool dB;
   Pixmap off_label;
   Pixmap on_label;
   Pixmap clip_label;
@@ -78,10 +72,6 @@ static int device_buttons_size = 0;
 static int mixer_gains_posted[MAX_SOUNDCARDS];
 static int tone_controls_posted[MAX_SOUNDCARDS];
 static xm_font_t small_fontlist;
-
-static vu_label **vu_labels = NULL;
-static int vu_labels_size = 0;
-static int current_vu_label = 0;
 
 static void record_report(Widget text, ...)
 {
@@ -270,7 +260,23 @@ static Pixel reds[VU_COLORS];
 static bool vu_colors_allocated = false;
 static int yellow_vals[] = {0, 16, 32, 64, 96, 128, 160, 175, 185, 200, 210, 220, 230, 240};
 
-static void allocate_meter_1(vu_label *vu)
+static Widget db_button;
+static void remake_all_vu_meters(void);
+
+void set_vu_in_dB(bool val)
+{
+  in_set_vu_in_dB(val);
+  XmToggleButtonSetState(db_button, (Boolean)val, false);
+  remake_all_vu_meters();
+}
+
+static void db_button_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  in_set_vu_in_dB(XmToggleButtonGetState(w));
+  remake_all_vu_meters();
+}
+
+static void allocate_meter(vu_t *vu)
 {
   Display *dp;
   Drawable wn;
@@ -434,38 +440,50 @@ static void allocate_meter_1(vu_label *vu)
     XDrawArc(dp, vu->clip_label, draw_gc, 4, top + 4, width - 8, width - 8, ang0, ang1);
 
     /* draw the axis ticks */
-    for (i = 0; i < 5; i++)
-      {
-	rdeg = mus_degrees_to_radians(45 - i * 22.5);
-	sinr = sin(rdeg);
-	cosr = cos(rdeg);
-	x0 = (int)(wid2 + wid2 * sinr);
-	y0 = (int)(wid2 + top - wid2 * cosr);
-	x1 = (int)(wid2 + (wid2 + major_tick) * sinr);
-	y1 = (int)(wid2 + top - (wid2 + major_tick) * cosr);
+    {
+      int major_ticks = 5, minor_ticks = 4;
+      Float major_deg, minor_deg;
+      if (vu_in_dB(ss))
+	{
+	  major_ticks = 7;
+	  minor_ticks = 1;
+	}
+      major_deg = 90.0 / (major_ticks - 1); /* 22.5 for linear (one is boundary) */
+      minor_deg = 90.0 / ((major_ticks - 1) * (minor_ticks + 1));
 
-	XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
-	XDrawLine(dp, vu->on_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
-	XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
-	XDrawLine(dp, vu->off_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
-	XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
-	XDrawLine(dp, vu->clip_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
-
-	if (i < 4)
-	  for (j = 1; j < 6; j++)
-	    {
-	      rdeg = mus_degrees_to_radians(45 - i * 22.5 - j * (90.0 / 20.0));
-	      sinr = sin(rdeg);
-	      cosr = cos(rdeg);
-	      x0 = (int)(wid2 + wid2 * sinr);
-	      y0 = (int)(wid2 + top - wid2 * cosr);
-	      x1 = (int)(wid2 + (wid2 + minor_tick) * sinr);
-	      y1 = (int)(wid2 + top - (wid2 + minor_tick) * cosr);
-	      XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
-	      XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
-	      XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
-	    }
-      }
+      for (i = 0; i < major_ticks; i++)
+	{
+	  rdeg = mus_degrees_to_radians(45.0 - (i * major_deg));
+	  sinr = sin(rdeg);
+	  cosr = cos(rdeg);
+	  x0 = (int)(wid2 + wid2 * sinr);
+	  y0 = (int)(wid2 + top - wid2 * cosr);
+	  x1 = (int)(wid2 + (wid2 + major_tick) * sinr);
+	  y1 = (int)(wid2 + top - (wid2 + major_tick) * cosr);
+	  
+	  XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
+	  XDrawLine(dp, vu->on_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
+	  XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
+	  XDrawLine(dp, vu->off_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
+	  XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
+	  XDrawLine(dp, vu->clip_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
+	  
+	  if (i < (major_ticks - 1))
+	    for (j = 1; j <= minor_ticks; j++)
+	      {
+		rdeg = mus_degrees_to_radians(45.0 - (i * major_deg) - (j * minor_deg));
+		sinr = sin(rdeg);
+		cosr = cos(rdeg);
+		x0 = (int)(wid2 + wid2 * sinr);
+		y0 = (int)(wid2 + top - wid2 * cosr);
+		x1 = (int)(wid2 + (wid2 + minor_tick) * sinr);
+		y1 = (int)(wid2 + top - (wid2 + minor_tick) * cosr);
+		XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
+		XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
+		XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
+	      }
+	}
+    }
   }
 }
 
@@ -564,6 +582,35 @@ static void display_vu_meter(vu_t *vu)
   }
 }
 
+static void remake_all_vu_meters(void)
+{
+  pane_t *p;
+  vu_t *vu;
+  recorder_info *rp;
+  int i, k;
+  rp = get_recorder_info();
+  for (i = 0; i < rp->ordered_devices_size; i++)
+    {
+      p = all_panes[i];
+      for (k = 0; k < p->meters_size; k++)
+	{
+	  vu = p->meters[k];
+	  if (vu->dB != vu_in_dB(ss))
+	    {
+	      Display *dp;
+	      dp = XtDisplay(recorder);
+	      vu->dB = vu_in_dB(ss);
+	      vu->max_val = 0.0; /* force button update */
+	      if (vu->on_label) {XFreePixmap(dp, vu->on_label); vu->on_label = None;}
+	      if (vu->off_label) {XFreePixmap(dp, vu->off_label); vu->off_label = None;}
+	      if (vu->clip_label) {XFreePixmap(dp, vu->clip_label); vu->clip_label = None;}
+	      allocate_meter(vu);
+	      display_vu_meter(vu);
+	    }
+	}
+    }
+}
+
 static void meter_display_callback(Widget w, XtPointer context, XtPointer info) 
 {
   display_vu_meter((vu_t *)context);
@@ -572,11 +619,8 @@ static void meter_display_callback(Widget w, XtPointer context, XtPointer info)
 static vu_t *make_vu_meter(Widget meter, Float size)
 {
   vu_t *vu;
-  int i;
-  vu_label *vl = NULL;
   vu = (vu_t *)CALLOC(1, sizeof(vu_t));
   vu->meter = meter;
-  vu->size = size;
   vu->dp = XtDisplay(meter);
   vu->wn = XtWindow(meter);
   vu->scr = DefaultScreen(vu->dp);
@@ -585,55 +629,32 @@ static vu_t *make_vu_meter(Widget meter, Float size)
   vu->last_val = 0.0;
   vu->clipped = 0;
   vu->max_val = 0.0;
-  for (i = 0; i < current_vu_label; i++)
-    if (vu_labels[i]->size == size) 
-      {
-	vl = vu_labels[i];
-	break;
-      }
-  if (vl == NULL)
-    {
-      if (current_vu_label >= vu_labels_size)
-	{
-	  vu_labels_size += 8;
-	  if (!vu_labels)
-	    vu_labels = (vu_label **)CALLOC(vu_labels_size, sizeof(vu_label *));
-	  else vu_labels = (vu_label **)REALLOC(vu_labels, vu_labels_size * sizeof(vu_label *));
-	}
-      vu_labels[current_vu_label] = (vu_label *)CALLOC(1, sizeof(vu_label));
-      vl = vu_labels[current_vu_label];
-      current_vu_label++;
-      vl->size = size;
-      allocate_meter_1(vl);
-    }
-  vu->on_label = vl->on_label;
-  vu->off_label = vl->off_label;
-  vu->clip_label = vl->clip_label;
+  vu->size = size;
+  vu->dB = vu_in_dB(ss);
+  allocate_meter(vu);
   return(vu);
 }
 
 static void set_vu_val (vu_t *vu, Float val) 
 {
+  Float dv = 0.0;
   if (!vu) return;
   vu->last_val = vu->current_val;
-#if 1
-  vu->current_val = val;
-#else
-  /* for dB values (since current_val is 0..1) 
-   *   vu-in-dB flag?
-   */
-  {
-    if (val <= ss->lin_dB)
-      vu->current_val = 0.0;
-    else vu->current_val = 1.0 - ((20.0 / ss->min_dB) * log10(val));
-  }
-#endif
+  if (!(vu_in_dB(ss)))
+    vu->current_val = val;
+  else
+    {
+      dv = in_dB(min_dB(ss), ss->lin_dB, val);
+      vu->current_val = 1.0 +  ((dv < -30.0) ? -30.0 : dv) / 30.0;
+    }
   display_vu_meter(vu);
   if (val > vu->max_val)
     {
       char buf[64];
       vu->max_val = val;
-      mus_snprintf(buf, 64, "%.3f", val);
+      if (!(vu_in_dB(ss)))
+	mus_snprintf(buf, 64, "%.3f", val);
+      else mus_snprintf(buf, 64, "%ddB", (int)dv);
       set_label(vu->max_button, buf);
     }
 }
@@ -1189,12 +1210,17 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
       XtAddCallback(device_buttons[i], XmNvalueChangedCallback, device_button_callback, (XtPointer)all_panes[i]);
       XmToggleButtonSetState(device_buttons[i], true, false); 
     }
+
   autoload_file = make_togglebutton_widget(_("Autoload Recording"), button_holder, args, init_n);
   device_buttons[ndevs] = autoload_file;
   /* we assume this is last in the device_buttons list in sensitize_control_buttons */
   rp->autoload_button = ndevs;
   XtAddCallback(autoload_file, XmNvalueChangedCallback, autoload_file_callback, NULL);
   XmToggleButtonSetState(autoload_file, (Boolean)(rp->autoload), false); 
+
+  db_button = make_togglebutton_widget(_("VU meters in dB"), button_holder, args, init_n);
+  XtAddCallback(db_button, XmNvalueChangedCallback, db_button_callback, NULL);
+  XmToggleButtonSetState(db_button, (Boolean)(vu_in_dB(ss)), false); 
 
   FREE(n1);
   FREE(n2);

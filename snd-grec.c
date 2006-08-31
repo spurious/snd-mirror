@@ -4,13 +4,6 @@
 /* SOMEDAY: if user resizes dialog, resize vu meters */
 
 typedef struct {
-  GdkPixmap *off_label;
-  GdkPixmap *on_label;
-  GdkPixmap *clip_label;
-  Float size;
-} vu_label;
-
-typedef struct {
   GtkWidget *meter;
   GdkDrawable *wn;
   int on_off;
@@ -18,6 +11,7 @@ typedef struct {
   Float current_val, last_val;
   Float red_deg;
   Float size;
+  bool dB;
   GdkPixmap *off_label;
   GdkPixmap *on_label;
   GdkPixmap *clip_label;
@@ -82,10 +76,6 @@ static int device_buttons_size = 0;
 static int mixer_gains_posted[MAX_SOUNDCARDS];
 static int tone_controls_posted[MAX_SOUNDCARDS];
 static PangoFontDescription *small_font;
-
-static vu_label **vu_labels = NULL;
-static int vu_labels_size = 0;
-static int current_vu_label = 0;
 
 static void record_report(GtkWidget *text, ...)
 {
@@ -176,7 +166,24 @@ static GdkColor *reds[VU_COLORS];
 static bool vu_colors_allocated = false;
 static int yellow_vals[] = {0, 16, 32, 64, 96, 128, 160, 175, 185, 200, 210, 220, 230, 240};
 
-static void allocate_meter_1(vu_label *vu)
+static GtkWidget *db_button = NULL;
+static void remake_all_vu_meters(void);
+
+void set_vu_in_dB(bool val)
+{
+  in_set_vu_in_dB(val);
+  set_toggle_button(db_button, val, false, NULL);   
+  remake_all_vu_meters();
+  /* TODO: reflect meter labels, also db vals for gtk */
+}
+
+static void db_button_callback(GtkWidget *w, gpointer context) 
+{
+  in_set_vu_in_dB(GTK_TOGGLE_BUTTON(w)->active);
+  remake_all_vu_meters();
+}
+
+static void allocate_meter(vu_t *vu)
 {
   GdkDrawable *wn;
   GdkColormap *cmap;
@@ -230,13 +237,15 @@ static void allocate_meter_1(vu_label *vu)
 	band = 1;
 	if (k == 1)
 	  {
-	    vu->clip_label = gdk_pixmap_new(wn, width, height, -1);
+	    if (!(vu->clip_label))
+	      vu->clip_label = gdk_pixmap_new(wn, width, height, -1);
 	    gdk_gc_set_foreground(draw_gc, reds[0]);	    
 	    gdk_draw_rectangle(vu->clip_label, draw_gc, true, 0, 0, width, height);
 	  }
 	else 
 	  {
-	    vu->on_label = gdk_pixmap_new(wn, width, height, -1);
+	    if (!(vu->on_label))
+	      vu->on_label = gdk_pixmap_new(wn, width, height, -1);
 	    gdk_gc_set_foreground(draw_gc, yellows[2]);
 	    gdk_draw_rectangle(vu->on_label, draw_gc, true, 0, 0, width, height);
 	  }
@@ -298,7 +307,8 @@ static void allocate_meter_1(vu_label *vu)
   }
 
   /* create the 3 labels, draw arcs and ticks */
-  vu->off_label = gdk_pixmap_new(wn, width, height, -1);
+  if (!(vu->off_label))
+    vu->off_label = gdk_pixmap_new(wn, width, height, -1);
   /* not on, so just display a white background */
   gdk_gc_set_foreground(draw_gc, white);
   gdk_draw_rectangle(vu->off_label, draw_gc, true, 0, 0, width, height);
@@ -334,38 +344,50 @@ static void allocate_meter_1(vu_label *vu)
     gdk_draw_arc(vu->clip_label, draw_gc, false, 4, top + 4, width - 8, width - 8, ang0, ang1);
 
     /* draw the axis ticks */
-    for (i = 0; i < 5; i++)
-      {
-	rdeg = mus_degrees_to_radians(45 - i * 22.5);
-	sinr = sin(rdeg);
-	cosr = cos(rdeg);
-	x0 = (int)(wid2 + wid2 * sinr);
-	y0 = (int)(wid2 + top - wid2 * cosr);
-	x1 = (int)(wid2 + (wid2 + major_tick) * sinr);
-	y1 = (int)(wid2 + top - (wid2 + major_tick) * cosr);
+    {
+      int major_ticks = 5, minor_ticks = 4;
+      Float major_deg, minor_deg;
+      if (vu_in_dB(ss))
+	{
+	  major_ticks = 7;
+	  minor_ticks = 1;
+	}
+      major_deg = 90.0 / (major_ticks - 1); /* 22.5 for linear (one is boundary) */
+      minor_deg = 90.0 / ((major_ticks - 1) * (minor_ticks + 1));
 
-	gdk_draw_line(vu->on_label, draw_gc, x0, y0, x1, y1);
-	gdk_draw_line(vu->on_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
-	gdk_draw_line(vu->off_label, draw_gc, x0, y0, x1, y1);
-	gdk_draw_line(vu->off_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
-	gdk_draw_line(vu->clip_label, draw_gc, x0, y0, x1, y1);
-	gdk_draw_line(vu->clip_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
-
-	if (i < 4)
-	  for (j = 1; j < 6; j++)
-	    {
-	      rdeg = mus_degrees_to_radians(45 - i * 22.5 - j * (90.0 / 20.0));
-	      sinr = sin(rdeg);
-	      cosr = cos(rdeg);
-	      x0 = (int)(wid2 + wid2 * sinr);
-	      y0 = (int)(wid2 + top - wid2 * cosr);
-	      x1 = (int)(wid2 + (wid2 + minor_tick) * sinr);
-	      y1 = (int)(wid2 + top - (wid2 + minor_tick) * cosr);
-	      gdk_draw_line(vu->on_label, draw_gc, x0, y0, x1, y1);
-	      gdk_draw_line(vu->off_label, draw_gc, x0, y0, x1, y1);
-	      gdk_draw_line(vu->clip_label, draw_gc, x0, y0, x1, y1);
+      for (i = 0; i < major_ticks; i++)
+	{
+	  rdeg = mus_degrees_to_radians(45.0 - (i * major_deg));
+	  sinr = sin(rdeg);
+	  cosr = cos(rdeg);
+	  x0 = (int)(wid2 + wid2 * sinr);
+	  y0 = (int)(wid2 + top - wid2 * cosr);
+	  x1 = (int)(wid2 + (wid2 + major_tick) * sinr);
+	  y1 = (int)(wid2 + top - (wid2 + major_tick) * cosr);
+	  
+	  gdk_draw_line(vu->on_label, draw_gc, x0, y0, x1, y1);
+	  gdk_draw_line(vu->on_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
+	  gdk_draw_line(vu->off_label, draw_gc, x0, y0, x1, y1);
+	  gdk_draw_line(vu->off_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
+	  gdk_draw_line(vu->clip_label, draw_gc, x0, y0, x1, y1);
+	  gdk_draw_line(vu->clip_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
+	  
+	  if (i < (major_ticks - 1))
+	    for (j = 1; j <= minor_ticks; j++)
+	      {
+		rdeg = mus_degrees_to_radians(45.0 - (i * major_deg) - (j * minor_deg));
+		sinr = sin(rdeg);
+		cosr = cos(rdeg);
+		x0 = (int)(wid2 + wid2 * sinr);
+		y0 = (int)(wid2 + top - wid2 * cosr);
+		x1 = (int)(wid2 + (wid2 + minor_tick) * sinr);
+		y1 = (int)(wid2 + top - (wid2 + minor_tick) * cosr);
+		gdk_draw_line(vu->on_label, draw_gc, x0, y0, x1, y1);
+		gdk_draw_line(vu->off_label, draw_gc, x0, y0, x1, y1);
+		gdk_draw_line(vu->clip_label, draw_gc, x0, y0, x1, y1);
 	    }
-      }
+	}
+    }
   }
 }
 
@@ -469,6 +491,34 @@ static void display_vu_meter(vu_t *vu)
   }
 }
 
+static void remake_all_vu_meters(void)
+{
+  pane_t *p;
+  vu_t *vu;
+  recorder_info *rp;
+  int i, k;
+  rp = get_recorder_info();
+  for (i = 0; i < rp->ordered_devices_size; i++)
+    {
+      p = all_panes[i];
+      for (k = 0; k < p->meters_size; k++)
+	{
+	  vu = p->meters[k];
+	  if (vu->dB != vu_in_dB(ss))
+	    {
+	      vu->dB = vu_in_dB(ss);
+#if 0
+	      if (vu->on_label) {XFreePixmap(dp, vu->on_label); vu->on_label = None;}
+	      if (vu->off_label) {XFreePixmap(dp, vu->off_label); vu->off_label = None;}
+	      if (vu->clip_label) {XFreePixmap(dp, vu->clip_label); vu->clip_label = None;}
+#endif
+	      allocate_meter(vu);
+	      display_vu_meter(vu);
+	    }
+	}
+    }
+}
+
 static gboolean meter_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   display_vu_meter((vu_t *)data);
@@ -485,7 +535,6 @@ static vu_t *make_vu_meter(GtkWidget *meter, Float size)
 {
   vu_t *vu;
   int i;
-  vu_label *vl = NULL;
   vu = (vu_t *)CALLOC(1, sizeof(vu_t));
   vu->meter = meter;
   vu->size = size;
@@ -494,30 +543,8 @@ static vu_t *make_vu_meter(GtkWidget *meter, Float size)
   vu->current_val = 0.0;
   vu->last_val = 0.0;
   vu->clipped = 0;
-  for (i = 0; i < current_vu_label; i++)
-    if (vu_labels[i]->size == size)
-      {
-	vl = vu_labels[i];
-	break;
-      }
-  if (vl == NULL)
-    {
-      if (current_vu_label >= vu_labels_size)
-	{
-	  vu_labels_size += 8;
-	  if (!vu_labels)
-	    vu_labels = (vu_label **)CALLOC(vu_labels_size, sizeof(vu_label *));
-	  else vu_labels = (vu_label **)REALLOC(vu_labels, vu_labels_size * sizeof(vu_label *));
-	}
-      vu_labels[current_vu_label] = (vu_label *)CALLOC(1, sizeof(vu_label));
-      vl = vu_labels[current_vu_label];
-      current_vu_label++;
-      vl->size = size;
-      allocate_meter_1(vl);
-    }
-  vu->on_label = vl->on_label;
-  vu->off_label = vl->off_label;
-  vu->clip_label = vl->clip_label;
+  vu->dB = vu_in_dB(ss);
+  allocate_meter(vu);
   return(vu);
 }
 
@@ -525,7 +552,14 @@ static void set_vu_val (vu_t *vu, Float val)
 {
   if (!vu) return;
   vu->last_val = vu->current_val;
-  vu->current_val = val;
+  if (!(vu_in_dB(ss)))
+    vu->current_val = val;
+  else
+    {
+      Float dv;
+      dv = in_dB(min_dB(ss), ss->lin_dB, val);
+      vu->current_val = 1.0 +  ((dv < -30.0) ? -30.0 : dv) / 30.0;
+    }
   display_vu_meter(vu);
 }
 
@@ -874,6 +908,12 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   rp->autoload_button = ndevs;
   SG_SIGNAL_CONNECT(autoload_file, "toggled", autoload_file_callback, NULL);
   set_toggle_button(autoload_file, rp->autoload, false, NULL); 
+
+  db_button = gtk_check_button_new_with_label(_("VU meters in dB"));
+  gtk_box_pack_start(GTK_BOX(right_form), db_button, false, false, 0);
+  gtk_widget_show(db_button);
+  SG_SIGNAL_CONNECT(db_button, "toggled", db_button_callback, NULL);
+  set_toggle_button(db_button, vu_in_dB(ss), false, NULL); 
 
   triggerbox = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(right_form), triggerbox, true, true, 10);

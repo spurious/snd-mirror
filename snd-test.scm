@@ -988,6 +988,9 @@
       (set! (vu-size) (vu-size))
       (if (fneq (vu-size)  1.0 )
 	  (snd-display ";vu-size set def: ~A" (vu-size)))
+      (set! (vu-in-dB) (vu-in-dB))
+      (if (vu-in-dB)
+	  (snd-display ";vu-in-dB set def: ~A" (vu-in-dB)))
       (set! (wavelet-type) (wavelet-type))
       (if (not (equal? (wavelet-type)  0 )) 
 	  (snd-display ";wavelet-type set def: ~A" (wavelet-type)))
@@ -1230,6 +1233,7 @@
 	'clm-table-size (clm-table-size) 512
 	'with-verbose-cursor (with-verbose-cursor) #f
 	'vu-size (vu-size) 1.0 
+	'vu-in-dB (vu-in-dB) #f
 	'wavelet-type (wavelet-type) 0 
 	'time-graph? (without-errors (time-graph?)) 'no-such-sound
 	'time-graph-type (time-graph-type) graph-once
@@ -1817,6 +1821,7 @@
 	  (list 'transform-type transform-type 0 1)
 	  (list 'with-verbose-cursor with-verbose-cursor #f #t)
 	  (list 'vu-size vu-size 1.0 2.0)
+	  (list 'vu-in-dB vu-in-dB #f #t)
 	  (list 'wavelet-type wavelet-type 0 1)
 	  (list 'time-graph? time-graph? #f #t)
 	  (list 'time-graph-type time-graph-type graph-once graph-as-wavogram)
@@ -2193,7 +2198,7 @@
 			 'vector->vct 'view-files-amp 'view-files-amp-env
 			 'view-files-dialog 'view-files-files 'view-files-select-hook 'view-files-selected-files 'view-files-sort
 			 'view-files-speed 'view-files-speed-style 'view-mixes-dialog 'view-regions-dialog 'view-sound
-			 'view-tracks-dialog 'vu-size 'walsh-transform
+			 'view-tracks-dialog 'vu-size 'vu-in-dB 'walsh-transform
 			 'wave-train 'wave-train? 'wavelet-transform 'wavelet-type 'waveshape
 			 'waveshape? 'wavo-hop 'wavo-trace 'welch-window 'widget-position
 			 'widget-size 'widget-text 'window-height 'window-property 'window-property-changed-hook
@@ -58735,7 +58740,7 @@ EDITS: 1
 		     text-focus-color tiny-font track-sample-reader?  region-sample-reader? transform-dialog transform-sample
 		     transform->vct transform-frames transform-type trap-segfault optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound run-safety clm-table-size
-		     vct->sound-file with-verbose-cursor view-sound vu-size wavelet-type
+		     vct->sound-file with-verbose-cursor view-sound vu-size vu-in-dB wavelet-type
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style beats-per-measure
 		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-data-format->string
@@ -58866,7 +58871,7 @@ EDITS: 1
 			 show-y-zero show-grid show-sonogram-cursor sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle  grid-density
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 			 speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
-			 transform-type trap-segfault optimization with-verbose-cursor vu-size wavelet-type x-bounds
+			 transform-type trap-segfault optimization with-verbose-cursor vu-size vu-in-dB wavelet-type x-bounds
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix track-dialog-track beats-per-measure
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
@@ -59639,7 +59644,7 @@ EDITS: 1
 			  selected-channel selected-data-color selected-graph-color 
 			  selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			  show-selection-transform sinc-width temp-dir text-focus-color tiny-font
-			  trap-segfault optimization unbind-key with-verbose-cursor vu-size window-height beats-per-measure
+			  trap-segfault optimization unbind-key with-verbose-cursor vu-size vu-in-dB window-height beats-per-measure
 			  window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			  mix-tag-width with-relative-panes run-safety clm-table-size mark-tag-width mark-tag-height
 			  quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color

@@ -33,6 +33,7 @@ char *recorder_device_name(int dev);
 char *recorder_system_and_device_name(int sys, int dev);
 bool recorder_input_device(int dev);
 bool recorder_output_device(int dev);
+void set_vu_in_dB(bool val);
 
 #if (HAVE_OSS || HAVE_ALSA)
   char *recorder_field_abbreviation(int fld);

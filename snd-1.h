@@ -535,7 +535,7 @@ typedef struct snd_state {
   Float Reverb_Control_Length_Min, Reverb_Control_Length_Max;
   int Filter_Control_Order, Cursor_Location_Offset;
   Float Tempo_Control_Min, Tempo_Control_Max, Min_dB;
-  bool Show_Controls;
+  bool Show_Controls, Vu_In_dB;
   tracking_cursor_t With_Tracking_Cursor;
   XEN cursor_proc;
   int cursor_proc_loc, listener_prompt_length;

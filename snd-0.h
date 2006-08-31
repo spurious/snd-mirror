@@ -722,6 +722,10 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define set_vu_size(a) ss->Vu_Size = a
 #define DEFAULT_VU_SIZE 1.0
 
+#define vu_in_dB(ss) ss->Vu_In_dB
+#define in_set_vu_in_dB(a) ss->Vu_In_dB = a
+#define DEFAULT_VU_IN_DB FALSE
+
 #define wavelet_type(ss) ss->Wavelet_Type
 #define in_set_wavelet_type(a) ss->Wavelet_Type = a
 #define DEFAULT_WAVELET_TYPE 0
