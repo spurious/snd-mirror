@@ -3,7 +3,7 @@
 
 #define MUS_VERSION 3
 #define MUS_REVISION 26
-#define MUS_DATE "30-July-06"
+#define MUS_DATE "31-Aug-06"
 
 /*
  * 30-July:    renamed average to moving_average.

@@ -620,18 +620,12 @@ static void set_vu_val (vu_t *vu, Float val)
   vu->current_val = val;
 #else
   /* for dB values (since current_val is 0..1) 
-   * (val <= lin_dB) ? min_dB : (20.0 * (log10(val))) -> -60..1
-   * 1 - logval/min_dB
-   *
-   * but we also need to label the VU ticks in dB (and prehaps keep maxval in dB?)
+   *   vu-in-dB flag?
    */
   {
-    #define min_dB -60.0
-    Float lin_dB;
-    lin_dB = .001;
-    if (val <= lin_dB)
+    if (val <= ss->lin_dB)
       vu->current_val = 0.0;
-    else vu->current_val = 1.0 - ((20.0 / min_dB) * log10(val));
+    else vu->current_val = 1.0 - ((20.0 / ss->min_dB) * log10(val));
   }
 #endif
   display_vu_meter(vu);

@@ -457,49 +457,41 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(buttons), normal_fft_button, false, false, 0);
       gtk_widget_show(normal_fft_button);
       SG_SIGNAL_CONNECT(normal_fft_button, "clicked", normal_fft_callback, NULL);
-      /* gtk_widget_set_size_request(GTK_WIDGET(normal_fft_button), BUTTON_WIDTH, BUTTON_HEIGHT); */
 
       sono_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), _("sonogram"));
       gtk_box_pack_start(GTK_BOX(buttons), sono_button, false, false, 0);
       gtk_widget_show(sono_button);
       SG_SIGNAL_CONNECT(sono_button, "clicked", sonogram_callback, NULL);
-      /* gtk_widget_set_size_request(GTK_WIDGET(sono_button), BUTTON_WIDTH, BUTTON_HEIGHT); */
 
       spectro_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), _("spectrogram"));
       gtk_box_pack_start(GTK_BOX(buttons), spectro_button, false, false, 0);
       gtk_widget_show(spectro_button);
       SG_SIGNAL_CONNECT(spectro_button, "clicked", spectrogram_callback, NULL);
-      /* gtk_widget_set_size_request(GTK_WIDGET(spectro_button), BUTTON_WIDTH, BUTTON_HEIGHT); */
       
       peaks_button = gtk_check_button_new_with_label(_("peaks"));
       gtk_box_pack_start(GTK_BOX(buttons), peaks_button, false, false, 0);
       gtk_widget_show(peaks_button);
       SG_SIGNAL_CONNECT(peaks_button, "toggled", peaks_callback, NULL);
-      /* gtk_widget_set_size_request(GTK_WIDGET(peaks_button), BUTTON_WIDTH, BUTTON_HEIGHT); */
  
       db_button = gtk_check_button_new_with_label(_("dB"));
       gtk_box_pack_start(GTK_BOX(buttons), db_button, false, false, 0);
       gtk_widget_show(db_button);
       SG_SIGNAL_CONNECT(db_button, "toggled", db_callback, NULL);
-      /* gtk_widget_set_size_request(GTK_WIDGET(db_button), BUTTON_WIDTH, BUTTON_HEIGHT); */
  
       logfreq_button = gtk_check_button_new_with_label(_("log freq"));
       gtk_box_pack_start(GTK_BOX(buttons), logfreq_button, false, false, 0);
       gtk_widget_show(logfreq_button);
       SG_SIGNAL_CONNECT(logfreq_button, "toggled", logfreq_callback, NULL);
-      /* gtk_widget_set_size_request(GTK_WIDGET(logfreq_button), BUTTON_WIDTH, BUTTON_HEIGHT); */
 
       normalize_button = gtk_check_button_new_with_label(_("normalize"));
       gtk_box_pack_start(GTK_BOX(buttons), normalize_button, false, false, 0);
       gtk_widget_show(normalize_button);
       SG_SIGNAL_CONNECT(normalize_button, "toggled", normalize_callback, NULL);
-      /* gtk_widget_set_size_request(GTK_WIDGET(normalize_button), BUTTON_WIDTH, BUTTON_HEIGHT); */
 
       selection_button = gtk_check_button_new_with_label(_("selection"));
       gtk_box_pack_start(GTK_BOX(buttons), selection_button, false, false, 0);
       gtk_widget_show(selection_button);
       SG_SIGNAL_CONNECT(selection_button, "toggled", selection_callback, NULL);
-      /* gtk_widget_set_size_request(GTK_WIDGET(selection_button), BUTTON_WIDTH, BUTTON_HEIGHT); */
 
       {
 	GtkWidget *pk_lab, *db_lab, *lf_lab;

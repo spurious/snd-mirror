@@ -106,10 +106,12 @@ bool snd_feq(Float val1, Float val2)
   return(false);
 }
 
-Float in_dB(Float min_dB, Float lin_dB, Float py)
+#if !(defined(__GNUC__) && (!(defined(__cplusplus))))
+Float in_dB(Float min_dB, Float lin_dB, Float val)
 {
-  return((py <= lin_dB) ? min_dB : (20.0 * log10(py)));
+  return((val <= lin_dB) ? min_dB : (20.0 * log10(val)));
 }
+#endif
 
 #if DEBUGGING
 char *copy_string_1(const char *str, const char *func, const char *file, int line)
@@ -440,7 +442,7 @@ void snd_exit(int val)
  /* TODO: fam crosstalk? -- if two Snd's running, there appears to be confusion in fam event delivery
   */
 
-/* one confusing thing: if use deletes the file we're monitoring, apparently Linux doesn't
+/* one confusing thing: if user deletes the file we're monitoring, apparently Linux doesn't
  *   actually delete it, though a directory monitor reports the deletion; the file itself
  *   hangs around, I guess because we have it open(?) -- can't decide how to deal with this.
  *
@@ -705,6 +707,7 @@ fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp)
 }
 
 
+/* ---------------- memory tracking etc ---------------- */
 #if DEBUGGING
 
 /* mtrace-style malloc hooks are not very useful here since I don't care
@@ -1147,6 +1150,7 @@ void stop_timing(void) {fprintf(stderr, "time: %d ",(int)((clock() - start) * 10
 
 #endif
 
+
 #if HAVE_SCHEME
 #define S_file_to_string "file->string"
 static XEN g_file_to_string(XEN name)
@@ -1161,6 +1165,7 @@ static XEN g_file_to_string(XEN name)
 }
 #endif
 
+
 #if DEBUGGING
 static XEN g_mem_report(void) 
 {
@@ -1168,6 +1173,7 @@ static XEN g_mem_report(void)
   return(XEN_FALSE);
 }
 #endif
+
 
 #ifdef XEN_ARGIFY_1
 #if DEBUGGING

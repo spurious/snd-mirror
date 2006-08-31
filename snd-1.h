@@ -1438,13 +1438,20 @@ int snd_int_pow2(int n);
 int snd_to_int_pow2(int n);
 int snd_int_log2(int n);
 bool snd_feq(Float val1, Float val2);
-Float in_dB(Float min_dB, Float lin_dB, Float py);
+
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define in_dB(Min_Db, Lin_Db, Val)  ({ Float _snd_1_h_1 = Val; (_snd_1_h_1 <= Lin_Db) ? Min_Db : (20.0 * log10(_snd_1_h_1)); })
+#else
+  Float in_dB(Float min_dB, Float lin_dB, Float val);
+#endif
+
 #if DEBUGGING
 #define copy_string(Str) copy_string_1(Str, __FUNCTION__, __FILE__, __LINE__)
 char *copy_string_1(const char *str, const char *func, const char *file, int line);
 #else
 char *copy_string(const char *str);
 #endif
+
 int snd_strlen(const char *str);
 char *snd_strcat(char *errmsg, const char *str, int *err_size);
 char *snd_local_time(void);
@@ -1456,6 +1463,7 @@ char *just_filename(char *name);
 char *just_directory(const char *name);
 bool directory_exists(char *name);
 char *file_to_string(const char *filename);
+
 #ifdef __GNUC__
   char *vstr(const char *format, va_list ap)  __attribute__ ((format (printf, 1, 0)));
   char *snd_strftime(const char *format, time_t date) __attribute__ ((format (strftime, 1, 0)));
@@ -1463,6 +1471,7 @@ char *file_to_string(const char *filename);
   char *vstr(const char *format, va_list ap);
   char *snd_strftime(const char *format, time_t date);
 #endif
+
 disk_space_t disk_space_p(off_t bytes, const char *filename);
 const char *short_data_format_name(int sndlib_format, const char *filename);
 char *prettyf(double num, int tens);

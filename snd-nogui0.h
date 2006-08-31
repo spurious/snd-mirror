@@ -64,7 +64,7 @@ typedef struct {
   int current_type, current_format, formats, header_pos, format_pos, scanf_widget, error_widget;
 } file_data;
 
-typedef enum {NOT_A_SCANF_WIDGET, SRATE_WIDGET, CHANS_WIDGET, DATA_LOCATION_WIDGET, SAMPLES_WIDGET} scanf_widget_t;
+typedef enum {NOT_A_SCANF_WIDGET} scanf_widget_t;
 
 typedef struct {
   int data_color, selected_data_color, mix_color, basic_color, grid_color, selected_grid_color;

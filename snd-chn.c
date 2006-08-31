@@ -2,8 +2,7 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* TODO: when graph gets small, use tiny font before giving up labels altogether
- * PERHAPS: can we change label font sizes/button sizes etc when dialog changes size?
+/* PERHAPS: can we change label font sizes/button sizes etc when dialog changes size?
  *   a simple one to experiment with is the color dialog -- fonts there are not user-specified, everything is simple
  *   and if there were room, we could display the color sequence
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
@@ -13,8 +12,7 @@
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  * SOMEDAY: Edit:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
  * TODO: audio mixer settings dialog (needed especially in alsa!)
- * PERHAPS: if marks, show ticks on x axis or some way to move to each easily (clickable box)
- * PERHAPS: mouse scroll change == zoom in/out of graph, move scrolled windows?
+ * PERHAPS: example of mouse scroll change == zoom in/out of graph, move scrolled windows?
  * PERHAPS: smpte x axis as bare-x-axis example [user-drawn time graph axis labels and ticks]
  */
 

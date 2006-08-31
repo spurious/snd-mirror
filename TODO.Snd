@@ -5,16 +5,15 @@ marked with "SOMEDAY".  Things I'm dithering about are marked "PERHAPS".
 
 
 More translations! (See po/snd.pot for the list of translatable
-    strings, and po/de.po for an example).
+    strings, and po/de.po for an example).  Does it make sense
+    to think about unicode?
 
 A graphic-EQ effect (effects.scm) -- this could use the CLM formant generator. 
     A CLM version (non-graphical) is in clm-ins.scm.
 
 A better pitch tracker than spot-freq in examp.scm.
 
-dB display in VU meters (in the record dialog -- the dB value is ready
-    to go, but the VU labels need different numbers).  A nicer VU meter 
-    background (perhaps from OpenGL?).
+dB display in VU meters
 
 a path envelope editor dialog for dlocsig (as in dlocsig.rb)
 
@@ -23,11 +22,6 @@ A CD building script.
 "waterfall" spectrum display in oscope.scm.
 
 A robust noise reduction technique.
-
-A Qt version of Snd?  An OSX-native version?  (These
-    are large projects -- say 6 months of tedious typing;
-    Qt requires C++, I think, and Cocoa may require Objective-C -- 
-    major drawbacks).
 
 Physical model of a thunder machine.
 
