@@ -1023,7 +1023,7 @@ XM_TYPE_1(GtkUnit, GtkUnit)
 #define XEN_TO_C_GtkPrintStatus(Arg) (GtkPrintStatus)(XEN_TO_C_INT(Arg))
 #define XEN_GtkPrintStatus_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_1(GtkPageSetupDoneFunc, GtkPageSetupDoneFunc)
-XM_TYPE_PTR(GtkSettings_, GtkSettings*)
+XM_TYPE_PTR_2(GtkSettings_, GtkSettings*)
 #endif
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
@@ -40781,7 +40781,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints_w, 1, 0, 0, H_vector2GdkPoints);
   XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);
-  XG_DEFINE_PROCEDURE(g_object_get, xg_object_get, 3, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(g_object_get, xg_object_get_w, 3, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_IS_COLORMAP, gxg_GDK_IS_COLORMAP_w, 1, 0, 0, "(GDK_IS_COLORMAP obj) -> #t if obj is a GDK_IS_COLORMAP");
   XG_DEFINE_PROCEDURE(GDK_IS_DRAG_CONTEXT, gxg_GDK_IS_DRAG_CONTEXT_w, 1, 0, 0, "(GDK_IS_DRAG_CONTEXT obj) -> #t if obj is a GDK_IS_DRAG_CONTEXT");
   XG_DEFINE_PROCEDURE(GDK_IS_DRAWABLE, gxg_GDK_IS_DRAWABLE_w, 1, 0, 0, "(GDK_IS_DRAWABLE obj) -> #t if obj is a GDK_IS_DRAWABLE");
@@ -42941,7 +42941,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("25-Aug-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("01-Sep-06"));
       xg_already_inited = true;
 /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
 #if HAVE_SCHEME

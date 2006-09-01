@@ -24,7 +24,7 @@
 (use-modules (ice-9 debug))
 (use-modules (ice-9 rdelim))
 
-(provide 'snd-snd_conffile.scm)
+(provide 'snd-snd_frg.scm)
 
 
 (set! (show-backtrace) #t)

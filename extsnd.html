@@ -372,7 +372,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#dlocsigdoc">dlocsig</a></td>         <td>CLM's dlocsig in Ruby (Michael Scholz)</td></tr>
 <tr><td bgcolor="#f6f8ff"><a href="sndscm.html#drawdoc">draw</a></td>              <td bgcolor="#f6f8ff">graphics additions</td></tr>
 <tr><td><a href="sndscm.html#dspdoc">dsp</a></td>        <td>DSP-related functions (FFTs, filters, etc)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a href="sndscm.html#dotsnd">edit123.scm, snd_conffile.scm</a></td><td bgcolor="#f6f8ff">~/.snd examples (Tom Roth, Kjetil S. Matheussen)</td></tr>
+<tr><td bgcolor="#f6f8ff"><a href="sndscm.html#dotsnd">edit123.scm, snd_conffile.scm, snd_frg.scm</a></td><td bgcolor="#f6f8ff">~/.snd examples (Tom Roth, Kjetil S. Matheussen, Olivier Doare)</td></tr>
 <tr><td><a href="sndscm.html#envdoc">env</a></td>        <td>envelope functions</td></tr>
 <tr><td bgcolor="#f6f8ff"><a href="sndscm.html#enveddoc">enved</a></td>            <td bgcolor="#f6f8ff">envelope editor in lisp graph section</td></tr>
 <tr><td><a href="sndscm.html#extensionsdoc">extensions</a></td><td>properties, envelopes, stereo-&gt;mono, etc</td></tr>
@@ -11351,11 +11351,12 @@ This creates and activates the View:Tracks dialog, returning the dialog widget.<
 
 
 <!-- vu-in-dB -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vuindb">vu-in_dB</a> ()</code></td></tr>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vuindb">vu-in-dB</a> ()</code></td></tr>
 <tr><td></td><td>
 This controls whether the recorder VU meters use a dB scale (the default is #f = linear).  There is
 apparently a "British Standard" for these silly things, which only goes to show that some people have no
 sense of humor.
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
@@ -11693,7 +11694,7 @@ in either Motif or Gtk:
 		   #f #f)
    #f))
 </pre></td></tr></table>
-See edit123.scm and snd_conffile.scm for many more examples of bind-key.
+See edit123.scm, snd_conffile.scm, and snd_frg.scm for many more examples of bind-key.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 

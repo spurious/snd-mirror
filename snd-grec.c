@@ -2,6 +2,8 @@
 #include "snd-rec.h"
 
 /* SOMEDAY: if user resizes dialog, resize vu meters */
+/* TODO: if user changes vu-size after meters created, make sure the pixmaps are big enough */
+/* TODO: write max amps to meters (click in meter to clear) */
 
 typedef struct {
   GtkWidget *meter;
@@ -172,9 +174,11 @@ static void remake_all_vu_meters(void);
 void set_vu_in_dB(bool val)
 {
   in_set_vu_in_dB(val);
-  set_toggle_button(db_button, val, false, NULL);   
-  remake_all_vu_meters();
-  /* TODO: reflect meter labels, also db vals for gtk */
+  if (db_button)
+    {
+      set_toggle_button(db_button, val, false, NULL);   
+      remake_all_vu_meters();
+    }
 }
 
 static void db_button_callback(GtkWidget *w, gpointer context) 
@@ -534,7 +538,6 @@ static gboolean meter_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpoin
 static vu_t *make_vu_meter(GtkWidget *meter, Float size)
 {
   vu_t *vu;
-  int i;
   vu = (vu_t *)CALLOC(1, sizeof(vu_t));
   vu->meter = meter;
   vu->size = size;

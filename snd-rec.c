@@ -1916,7 +1916,9 @@ static XEN g_set_vu_in_dB(XEN val)
 {
   #define H_vu_in_dB "(" S_vu_in_dB "): whether recorder VU meters use a dB scale"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_vu_in_dB, "a boolean"); 
-  set_vu_in_dB(XEN_TO_C_BOOLEAN(val));
+#if USE_GTK || USE_MOTIF
+  set_vu_in_dB(XEN_TO_C_BOOLEAN(val)); /* declared in snd-rec.h but defined ins snd-g|xrec.c */
+#endif
   return(val);
 }
 

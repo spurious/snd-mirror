@@ -177,7 +177,7 @@
 	"GdkOverlapType" "GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "gint16" "gint8" "gshort" "guint8" "lambda" 
 
-	"time_t" "GtkWindowGroup*" 
+	"time_t" "GtkWindowGroup*" "GtkSettings*"
 	))
 
 (define no-xen-to-c 
@@ -191,7 +191,7 @@
 	"GdkOverlapType" "GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "etc" "gint16" "gshort"
 
-	"GtkWindowGroup*" "time_t" 
+	"GtkWindowGroup*" "time_t" "GtkSettings*"
 	))
 
 (define (cadr-str data)
@@ -3089,7 +3089,7 @@
 (hey "  XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints_w, 1, 0, 0, H_vector2GdkPoints);~%")
 (hey "  XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);~%")
 (hey "  XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);~%")
-(hey "  XG_DEFINE_PROCEDURE(g_object_get, xg_object_get, 3, 0, 0, NULL);~%")
+(hey "  XG_DEFINE_PROCEDURE(g_object_get, xg_object_get_w, 3, 0, 0, NULL);~%")
 
 (define (check-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) -> #t if obj is a ~A\");~%" 

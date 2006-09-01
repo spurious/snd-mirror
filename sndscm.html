@@ -78,7 +78,7 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 <tr><td><a href="#dlocsigdoc">dlocsig</a></td><td>moving sounds (Michael Scholz)</td></tr>
 <tr><td bgcolor="#f6f8ff"><a href="#drawdoc">draw</a></td>  <td bgcolor="#f6f8ff">graphics additions</td></tr>
 <tr><td><a href="#dspdoc">dsp</a></td>                      <td>various DSP-related procedures</td></tr>
-<tr><td bgcolor="#f6f8ff"><a href="#dotsnd">edit123.scm, snd_conffile.scm</a></td><td bgcolor="#f6f8ff">.snd examples (Tom Roth, Kjetil S. Matheussen)</td></tr>
+<tr><td bgcolor="#f6f8ff"><a href="#dotsnd">edit123.scm, snd_conffile.scm, snd_frg.scm</a></td><td bgcolor="#f6f8ff">.snd examples (Tom Roth, Kjetil S. Matheussen, Olivier Doare)</td></tr>
 <tr><td><a href="#envdoc">env</a></td>                      <td>envelope functions</td></tr>
 <tr><td bgcolor="#f6f8ff"><a href="#enveddoc">enved</a></td><td bgcolor="#f6f8ff">envelope editor</td></tr>
 <tr><td><a href="#exampdoc">examp</a></td><td>many examples</td></tr>
@@ -2534,12 +2534,30 @@ then <code>(testunif 1.0 0.1 0.0)</code>.  There's also a dialog to experiment w
 
 <br>
 <br>
-<A NAME="dotsnd"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>edit123.scm, snd_conffile.scm</h2></td></tr></table>
+<A NAME="dotsnd"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>edit123.scm, snd_conffile.scm, snd_frg.scm</h2></td></tr></table>
 
-<p>These two files are examples of Snd customization files, suitable for inclusion in ~/.snd.
-edit123.scm is by Tom Roth, and snd_conffile.scm is by Kjetil S. Matheussen.
+<p>These files are examples of Snd customization files, suitable for inclusion in ~/.snd.
+edit123.scm is by Tom Roth, snd_conffile.scm is by Kjetil S. Matheussen, and
+snd_frg.scm is by Olivier Doare.
 There are other examples in <a href="grfsnd.html#sndinitfile">Snd init file</a>.
+Olivier Doare describes snd_frg.scm:
+<blockquote>
+<pre>
+[It] tries to emulate the workflow i had with Sound Forge: 
+
+Main features are: 
+
+- mouse wheel zooming (+ctrl to zoom vertically) 
+- up/down arrows to zoom (+ctrl to zoom vertically) 
+- left/right key to move one pixel (or one sample at high zoom ratios) (+ctrl to extend selection) 
+- double click between marks to select range 
+- m to make a mark (named mark is now done with M) 
+- ctrl-x , ctrl-c , ctrl-v , ctrl-b to cut, copy, paste, mix. 
+- many other shortcuts
+</pre>
+</blockquote>
 </p>
+<br>
 
 
 <A NAME="envdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>env</h2></td></tr></table>

@@ -53,10 +53,11 @@ The configure program has several Snd-related arguments:
 
    --with-static-xm          include the xm module (rather than loading it dynamically)
 			       this option affects xm.c for Motif, xg.c for Gtk.
-                               You'll need this (or need to make xm and load xm.so
+                               You'll need this (or need to "make xm" and load xm.so
                                at runtime) if you want to use Dave Phillips'
                                extensions described in the tutorial.
-     --with-static-xg        same as above, but refers to the gtk xg module.      
+     --with-static-xg        same as above, but refers to the gtk xg module.    
+                               To build xg.so separately, use "make xg".  
          
    --with-static-gsl         try to load GSL statically
                                GSL is loaded in any case, if it is available, and the
@@ -221,7 +222,8 @@ Plus many other contributions from
   Tom Roth,
   Fabio Furlanete,
   Rick Taube,
-  Anders Vinjar.
+  Anders Vinjar,
+  Olivier Doare.
 
 
 In terms of number of lines, the languages used in Snd/Sndlib are:

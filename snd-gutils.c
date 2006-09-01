@@ -148,6 +148,7 @@ int number_width(const char *num, bool use_tiny_font)
   return(0);
 }
 
+#if 0
 static int sg_font_width(PangoFontDescription *font)
 {
   /* returns size in pixels */
@@ -167,6 +168,7 @@ static int sg_font_width(PangoFontDescription *font)
   g_object_unref(ctx);
   return(wid);
 }
+#endif
 
 static int sg_font_height(PangoFontDescription *font)
 {
