@@ -1,32 +1,32 @@
-#! /usr/bin/env fth --no-init-file --verbose --script
+#! /usr/bin/env fth --no-init-file --die-on-signal --script
 \ agn.fth -- Bill Schottstaedt's agn.cl (see clm-2/clm-example.clm and clm-2/bess5.cl)
 
 \ Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 \ Created: Wed Dec 15 23:30:43 CET 2004
-\ Changed: Wed May 03 15:09:17 CEST 2006
+\ Changed: Wed Aug 30 22:16:18 CEST 2006
 
 \ This file is part of Sndins.
 \
 \ Type do-agn
 \ or start the script in a shell.
 
-require clm
-require env
 dl-load sndlib Init_sndlib
 dl-load sndins Init_sndins
+require clm
+require env
 
-*argc* 0> [if] *argv* array-shift [else] $" agn.fsm" [then] value agn-test-file
+*argv* object-empty? [if] $" agn.fsm" [else] *argv* 0 array-ref [then] value agn-test-file
 60.0 value agn-time
 
-#t   	    	     to *clm-play*
-#t   	    	     to *clm-statistics*
-#t   	    	     to *clm-verbose*
-44100  	    	     to *clm-srate*
-2      	    	     to *clm-channels*
-' freeverb 	     to *clm-reverb*
-'( :room-decay 0.8 ) to *clm-reverb-data*
-2           	     to *clm-reverb-channels*
-#t          	     to *clm-delete-reverb*
+#t   	    	 to *clm-play*
+#t   	    	 to *clm-statistics*
+#t   	    	 to *clm-verbose*
+44100  	    	 to *clm-srate*
+2      	    	 to *clm-channels*
+' jc-reverb 	 to *clm-reverb*
+'( :volume 0.8 ) to *clm-reverb-data*
+2           	 to *clm-reverb-channels*
+#t          	 to *clm-delete-reverb*
 
 : rbell ( x -- r ) 100 f* '( 0 0 10 0.25 90 1 100 1 ) 1.0 envelope-interp ;
 : tune ( x -- r )
@@ -90,7 +90,8 @@ dl-load sndins Init_sndins
 	base 0.1 f* { revamt }
 	10.0 beg beg floor f- f* floor f>s { winnum }
 	0.00001 freq 2.0 flogn 4.0 f- 4.0 f** f* { ranamt }
-	io $" %f %f %f %f :fm-index %f :amp-env %s :reverb-amount %f :noise-amount %f fm-violin\n"
+	io
+	$" %f %f %f %f :fm-index %f :amp-env %s :reverb-amount %f :noise-amount %f fm-violin drop\n"
 	'( beg dur freq amp ind wins winnum array-ref revamt ranamt ) io-write-format
 	cellctr 1+ to cellctr
 	cellctr cellsiz cellbeg + > if

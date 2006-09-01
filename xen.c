@@ -1066,7 +1066,7 @@ XEN xen_rb_create_hook(char *name, int arity, char *help)
   XEN var, hook_name;
   var = xen_rb_hook_c_new(xen_scheme_global_variable_to_ruby(name), arity, help);
   hook_name = xen_rb_hook_name(var);
-  rb_gv_set(RSTRING(hook_name)->ptr, var);  
+  rb_gv_set(XEN_TO_C_STRING(hook_name), var);   
   return(var);
 }
 
@@ -1090,6 +1090,12 @@ XEN xen_rb_create_hook(char *name, int arity, char *help)
 void snd_rb_raise(XEN type, XEN info); /* XEN_ERROR */
 #endif
 
+#ifndef RSTRING_LEN 
+  #define RB_STR_LEN(str)                RSTRING(str)->len 
+#else 
+  #define RB_STR_LEN(str)                RSTRING_LEN(str) 
+#endif 
+
 static XEN xen_rb_make_hook(int argc, XEN *argv, XEN klass)
 {
   XEN hook, name;
@@ -1111,10 +1117,10 @@ static XEN xen_rb_make_hook(int argc, XEN *argv, XEN klass)
   else XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"),
 		 XEN_LIST_1(C_TO_XEN_STRING("make_hook(name, arity=0, help=\"\", hook_name=\"\", &func)")));
   name = xen_rb_hook_name(hook);
-  if (RSTRING(name)->ptr[0] != '$')
-    name = C_TO_XEN_STRING(xen_scheme_global_variable_to_ruby(RSTRING(name)->ptr));
-  XEN_ASSERT_TYPE(RSTRING(name)->len >= 2, name, XEN_ARG_1, c__FUNCTION__, "a char*, len >= 2");
-  return(rb_gv_set(RSTRING(name)->ptr, hook));
+  if (XEN_TO_C_CHAR(name) != '$') 
+    name = C_TO_XEN_STRING(xen_scheme_global_variable_to_ruby(XEN_TO_C_STRING(name))); 
+  XEN_ASSERT_TYPE(RB_STR_LEN(name) >= 2, name, XEN_ARG_1, c__FUNCTION__, "a char*, len >= 2"); 
+  return(rb_gv_set(XEN_TO_C_STRING(name), hook)); 
 }
 
 static XEN xen_rb_is_hook_p(XEN klass, XEN obj)

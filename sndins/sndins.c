@@ -4,7 +4,7 @@
  *
  * Author: Michael Scholz <scholz-micha@gmx.de>
  * Created: Sat Jun 07 02:24:46 CEST 2003
- * Changed: Wed May 17 09:35:04 CEST 2006
+ * Changed: Thu Aug 31 22:31:32 CEST 2006
  *
  * This file is part of Sndins.
  *
@@ -31,7 +31,6 @@
  * mus_any *mus_make_fcomb(Float scaler, int size, Float a0, Float a1);
  * int mus_fcomb_p(mus_any *ptr);
  * Float mus_fcomb(mus_any *ptr, Float input, Float ignored);
- * Float mus_fcomb_1(mus_any *ptr, Float input);
  *
  * off_t ins_fm_violin(Float start, Float dur, [...]);
  * off_t ins_jc_reverb(Float start, Float dur, [...]);
@@ -55,20 +54,29 @@
 #endif
 #include <stdarg.h>
 
-#include "_sndlib.h"
-#include "clm.h"
+#if HAVE_GUILE
+# if (HAVE_SCM_NUM2INT || HAVE_SCM_C_MAKE_RECTANGULAR)
+#  include <libguile.h>
+/* libguile/evalext.h: #if (SCM_ENABLE_DEPRECATED == 1) */
+#  ifndef scm_definedp
+#   define scm_definedp scm_defined_p
+#  endif
+# endif
+#endif
+
 #include "xen.h"
-#include "sndlib2xen.h"
+#include "clm.h"
+#include "vct.h"
 #include "clm2xen.h"
 #include "sndins.h"
 
-#define SNDINS_NO_MEMORY XEN_ERROR_TYPE("sndins-no-memory-error")
-#define SNDINS_MISC      XEN_ERROR_TYPE("sndins-misc-error")
+#define INS_NO_MEMORY XEN_ERROR_TYPE("sndins-no-memory-error")
+#define INS_MISC      XEN_ERROR_TYPE("sndins-misc-error")
 
-#define SNDINS_ERROR(error, caller, msg) \
+#define INS_ERROR(error, caller, msg) \
   XEN_ERROR(error, XEN_LIST_2(C_TO_XEN_STRING(caller), C_TO_XEN_STRING(msg)))
-#define SNDINS_MISC_ERROR(caller, msg)      SNDINS_ERROR(SNDINS_MISC, caller, msg)
-#define SNDINS_NO_MEMORY_ERROR(caller, msg) SNDINS_ERROR(SNDINS_NO_MEMORY, caller, msg)
+#define INS_MISC_ERROR(caller, msg)      INS_ERROR(INS_MISC, caller, msg)
+#define INS_NO_MEMORY_ERROR(caller, msg) INS_ERROR(INS_NO_MEMORY, caller, msg)
 
 enum {C_startime, C_duration, C_frequency, C_amplitude, C_amp_env, C_fm_index, C_reverb_amount,
       C_degree, C_distance, C_periodic_vibrato_rate, C_periodic_vibrato_amplitude,
@@ -85,7 +93,7 @@ enum {C_startime, C_duration, C_frequency, C_amplitude, C_amp_env, C_fm_index, C
       C_scaler, C_size, C_a0, C_a1,
       NKEYS};
 
-static const char *keywords[NKEYS] =
+static char *keywords[NKEYS] =
   {SC_startime, SC_duration, SC_frequency, SC_amplitude, SC_amp_env, SC_fm_index, SC_reverb_amount,
    SC_degree, SC_distance, SC_periodic_vibrato_rate, SC_periodic_vibrato_amplitude,
    SC_random_vibrato_rate, SC_random_vibrato_amplitude, SC_noise_freq, SC_noise_amount,
@@ -102,62 +110,78 @@ static const char *keywords[NKEYS] =
 
 static XEN allkeys[NKEYS];
 
-/* clm2xen.c */
-static XEN_OBJECT_TYPE mus_xen_tag;
-#define MUS_XEN_P(obj) (XEN_OBJECT_TYPE_P(obj, mus_xen_tag))
-
 static void
 init_keywords(void)
 {
   int i;
 
-  for (i = 0; i < NKEYS; i++) allkeys[i] = XEN_MAKE_KEYWORD((char *)(keywords[i]));
+  for (i = 0; i < NKEYS; i++) allkeys[i] = XEN_MAKE_KEYWORD(keywords[i]);
 }
 
-enum {SX_OUTPUT, SX_REVERB};
+#if HAVE_RUBY
+# define INS_OUTPUT           "output"
+# define INS_REVERB           "reverb"
+# define INS_VERBOSE          "clm_verbose"
+# define INS_LOCSIG_TYPE      "clm_locsig_type"
+# define INS_DECAY_TIME       "clm_decay_time"
+#else
+# define INS_OUTPUT           "*output*"
+# define INS_REVERB           "*reverb*"
+# define INS_VERBOSE          "*clm-verbose*"
+# define INS_LOCSIG_TYPE      "*clm-locsig-type*"
+# define INS_DECAY_TIME       "*clm-decay-time*"
+#endif
 
 static mus_any *
-get_global_output(int kind)
+get_global_mus_gen(const char *name)
 {
-  mus_any *out = NULL;
-
-  switch (kind)
+  if (XEN_DEFINED_P(name))
     {
-    case SX_OUTPUT:
-#if HAVE_RUBY
-      if (!(XEN_NULL_P(rb_gv_get("$output")) || XEN_FALSE_P(rb_gv_get("$output"))))
-	out = XEN_TO_MUS_ANY(rb_gv_get("$output"));
-#else
-      if (!(XEN_FALSE_P(XEN_NAME_AS_C_STRING_TO_VALUE("*output*"))))
-	out = XEN_TO_MUS_ANY(XEN_NAME_AS_C_STRING_TO_VALUE("*output*"));
-#endif
-      break;
-    case SX_REVERB:
-#if HAVE_RUBY
-      if (!(XEN_NULL_P(rb_gv_get("$reverb")) || XEN_FALSE_P(rb_gv_get("$reverb"))))
-	out = XEN_TO_MUS_ANY(rb_gv_get("$reverb"));
-#else
-      if (!(XEN_FALSE_P(XEN_NAME_AS_C_STRING_TO_VALUE("*reverb*"))))
-	out = XEN_TO_MUS_ANY(XEN_NAME_AS_C_STRING_TO_VALUE("*reverb*"));
-#endif
-      break;
+      XEN value = XEN_NAME_AS_C_STRING_TO_VALUE(name);
+
+      if (mus_xen_p(value))
+	return XEN_TO_MUS_ANY(value);
     }
-  return out;
+  return NULL;
 }
 
 static bool
-get_global_verbose(const char *caller)
+get_global_boolean(const char *name, bool def)
 {
-  bool verbose = false;
+  if (XEN_DEFINED_P(name))
+    {
+      XEN value = XEN_NAME_AS_C_STRING_TO_VALUE(name);
 
-#if HAVE_RUBY
-  if (XEN_BOOLEAN_P(rb_gv_get("$clm_verbose")))
-    verbose = XEN_TO_C_BOOLEAN(rb_gv_get("$clm_verbose"));
-#else
-  if (XEN_BOOLEAN_P(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-verbose*")))
-    verbose = XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-verbose*"));
-#endif
-  return verbose;
+      if (XEN_BOOLEAN_P(value))
+	return XEN_TO_C_BOOLEAN(value);
+    }
+  return def;
+}
+
+static int
+get_global_int(const char *name, int def)
+{
+  if (XEN_DEFINED_P(name))
+    {
+      XEN value = XEN_NAME_AS_C_STRING_TO_VALUE(name);
+
+      if (XEN_NUMBER_P(value))
+	return XEN_TO_C_INT(value);
+    }
+  return def;
+}
+
+static Float
+get_global_float(const char *name, Float def)
+{
+  if (XEN_DEFINED_P(name))
+    {
+      XEN value = XEN_NAME_AS_C_STRING_TO_VALUE(name);
+
+      if (XEN_NUMBER_P(value))
+	return XEN_TO_C_DOUBLE(value);
+    }
+  return def;
 }
 
 /*
@@ -175,24 +199,10 @@ xen_list2array(XEN list)
 
   if (len == 0) return NULL;
   if (!(flist = (Float *)malloc(len * sizeof(Float))))
-    SNDINS_NO_MEMORY_ERROR(c__FUNCTION__, "cannot allocate memory");
+    INS_NO_MEMORY_ERROR(c__FUNCTION__, "cannot allocate memory");
   for (i = 0, lst = XEN_COPY_ARG(list); i < len; i++, lst = XEN_CDR(lst))
     flist[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
   return flist;
-}
-
-static vct *
-xen_list2vct(XEN list)
-{
-  int i = 0;
-  int len = XEN_LIST_LENGTH(list);
-  vct *v = c_make_vct(len);
-  XEN lst;
-
-  if (len == 0) return NULL;
-  for (i = 0, lst = XEN_COPY_ARG(list); i < len; i++, lst = XEN_CDR(lst))
-    v->data[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
-  return v;
 }
 
 /*
@@ -210,7 +220,7 @@ xen_list2iarray(XEN list)
 
   if (len == 0) return NULL;
   if (!(ilist = (int *)malloc(len * sizeof(int))))
-    SNDINS_NO_MEMORY_ERROR(c__FUNCTION__, "cannot allocate memory");
+    INS_NO_MEMORY_ERROR(c__FUNCTION__, "cannot allocate memory");
   for (i = 0, lst = XEN_COPY_ARG(list); i < len; i++, lst = XEN_CDR(lst))
     ilist[i] = XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0);
   return ilist;
@@ -229,7 +239,7 @@ array2array(Float *list, int len)
 
   if (len == 0) return NULL;
   if (!(flist = (Float *)malloc(len * sizeof(Float))))
-    SNDINS_NO_MEMORY_ERROR(c__FUNCTION__, "cannot allocate memory");
+    INS_NO_MEMORY_ERROR(c__FUNCTION__, "cannot allocate memory");
   for (i = 0; i < len; i++) flist[i] = (Float)list[i];
   return flist;
 }
@@ -238,7 +248,7 @@ vct *
 array2vct(Float *list, int len)
 {
   int i = 0;
-  vct *v = c_make_vct(len);
+  vct *v = mus_vct_make(len);
 
   for (i = 0; i < len; i++) v->data[i] = (Float)list[i];
   return v;
@@ -257,7 +267,7 @@ int_array2array(int *list, int len)
 
   if (len == 0) return NULL;
   if (!(ilist = (int *)malloc(len * sizeof(int))))
-    SNDINS_NO_MEMORY_ERROR(c__FUNCTION__, "cannot allocate memory");
+    INS_NO_MEMORY_ERROR(c__FUNCTION__, "cannot allocate memory");
   for (i = 0; i < len; i++) ilist[i] = (int)list[i];
   return ilist;
 }
@@ -282,23 +292,37 @@ array_equal_p(Float *env1, int len1, Float *env2, int len2)
  * To print a message in the listener or emacs buffer.
  */
 
+#if HAVE_SCHEME
+# define INS_COMMENT_STRING ";;"
+#else
+# define INS_COMMENT_STRING XEN_COMMENT_STRING
+#endif
+
 static int
-message(const char *fmt, ...)
+ins_message(const char *fmt, ...)
 {
-  int result = 0;
+  int result;
   int len = strlen(fmt) + 100;
-  char *str = NULL;
   va_list ap;
+  char *str = (char *)malloc(len * sizeof(char));
   
-  if (!(str = (char *)malloc(len * sizeof(char))))
-    SNDINS_NO_MEMORY_ERROR(c__FUNCTION__, "cannot allocate memory");
+  if (!str)
+    INS_NO_MEMORY_ERROR(c__FUNCTION__, "cannot allocate memory");
+
   va_start(ap, fmt);
   result = vsnprintf(str, len, fmt, ap);
   va_end(ap);
-  if (getenv("EMACS"))
-    fprintf(stdout, XEN_COMMENT_STRING " %s", str);
+
+  if (XEN_PROVIDED_P("snd") && !XEN_PROVIDED_P("snd-nogui"))
+    {
+      mus_print(INS_COMMENT_STRING " %s", str);
+
+      if (getenv("EMACS"))
+	fprintf(stdout, INS_COMMENT_STRING " %s", str);
+    }
   else
-    mus_print(str);
+    fprintf(stdout, INS_COMMENT_STRING " %s", str);
+
   free(str);
   return result;
 }
@@ -367,7 +391,8 @@ typedef struct {
   mus_any_class *core;
   int loc, size;
   Float *line;
-  Float xscl, a0, a1, x1;
+  Float xs[3];			/* a0, a1 (mus_xcoeff(gen, idx)) */
+  Float xscl, x1;
 } fcomb;
 
 /* each CLM-in-C generator has mus_any_class *core as the first thing in its structure.
@@ -400,9 +425,11 @@ describe_fcomb(mus_any *ptr)
     {
       if (mus_fcomb_p(ptr))
 	{
-	  mus_snprintf(desc, 1024, "fcomb: scaler: %.3f, a0: %.3f, a1: %.3f, line[%d]: %s", 
-		       gen->xscl, gen->a0, gen->a1, gen->size,
-		       s = format_array(gen->line, gen->size));
+	  char *s = format_array(gen->line, gen->size);
+	  
+	  mus_snprintf(desc, 1024,
+		       "fcomb: scaler: %.3f, a0: %.3f, a1: %.3f, x1: %.3f, line[%d]: %s", 
+		       gen->xscl, gen->xs[0], gen->xs[1], gen->x1, gen->size, s);
 	  free(s);
 	}
       else
@@ -414,7 +441,14 @@ describe_fcomb(mus_any *ptr)
 static bool
 fcomb_equalp(mus_any *p1, mus_any *p2)
 {
-  return (p1 == p2);
+  fcomb *g1 = (fcomb *)p1;
+  fcomb *g2 = (fcomb *)p2;
+  
+  return (p1 == p2 ||
+	  ((g1->core->type == g2->core->type) &&
+	   (g1->xs[0] == g2->xs[0]) &&
+	   (g1->xs[1] == g2->xs[1]) &&
+	   (g1->x1 == g2->x1)));
 }
 
 static off_t
@@ -442,6 +476,31 @@ set_fcomb_scaler(mus_any *ptr, Float val)
   return val;
 }
 
+static Float
+fcomb_xcoeff(mus_any *ptr, int index)
+{
+  return ((fcomb *)ptr)->xs[index];
+}
+
+static Float
+set_fcomb_xcoeff(mus_any *ptr, int index, Float val)
+{
+  ((fcomb *)ptr)->xs[index] = val;
+  return val;
+}
+
+static Float *
+fcomb_xcoeffs(mus_any *ptr)
+{
+  return ((fcomb *)ptr)->xs;
+}
+
+static void
+fcomb_reset(mus_any *ptr)
+{
+  ((fcomb *)ptr)->x1 = 0.0;
+}
+
 static int
 free_fcomb(mus_any *uptr) 
 {
@@ -449,9 +508,9 @@ free_fcomb(mus_any *uptr)
     
   if (ptr)
     {
-      if (ptr->line)
-	free(ptr->line);
-      free(ptr); 
+      if (ptr->line) free(ptr->line);
+      ptr->line = NULL;
+      free(ptr);
     }
   return 0;
 }
@@ -460,24 +519,19 @@ free_fcomb(mus_any *uptr)
    the extra "ignored" argument is for the run method */
 
 Float
-mus_fcomb(mus_any *ptr, Float input, Float ignored) 
+mus_fcomb(mus_any *ptr, Float input, Float ignored __attribute__ ((unused)))
 {
   fcomb *gen = (fcomb *)ptr;
   Float tap_result, filter_result;
     
   tap_result = gen->line[gen->loc];
-  filter_result = (gen->a0 * tap_result) + (gen->a1 * gen->x1);
+  filter_result = (gen->xs[0] * tap_result) + (gen->xs[1] * gen->x1);
   gen->x1 = tap_result;
   gen->line[gen->loc] = input + filter_result * gen->xscl;
   gen->loc++;
   if (gen->loc >= gen->size)
     gen->loc = 0;
   return tap_result;
-}
-Float
-mus_fcomb_1(mus_any *ptr, Float input)
-{
-  return mus_fcomb(ptr, input, 0.0);
 }
 
 /* this is our core class descriptor */
@@ -492,19 +546,24 @@ static mus_any_class FCOMB_CLASS = {
   0,                 /* mus_set_data: not implemented for fcomb */
   &fcomb_length,     /* mus_length: delay line length */
   0,                 /* mus_set_length: not implemented for fcomb */
-  0,0,               /* mus_frequency, mus_set_frequency */
-  0,0,               /* mus_phase, mus_set_phase */
+  0, 0,              /* mus_frequency, mus_set_frequency */
+  0, 0,              /* mus_phase, mus_set_phase */
   &fcomb_scaler,     /* mus_scaler: the feedback term */
   &set_fcomb_scaler, /* mus_set_scaler */
   0, 0,
   &mus_fcomb,        /* mus_run: the run-time fcomb function, MUS_RUN(gen) for speed */
   MUS_NOT_SPECIAL,   /* type extension */
-  NULL,                     
-  0,
-  0, 0, 0, 0, 0, 0, 
+  NULL, 0,
+  0, 0,
+  0, 0, 
+  &fcomb_xcoeff, &set_fcomb_xcoeff,
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0
+  0, 0,
+  &fcomb_xcoeffs,
+  0, 0,
+  &fcomb_reset,
+  0
 };
 
 /* now a function to make a new generator */
@@ -516,7 +575,7 @@ mus_make_fcomb(Float scaler, int size, Float a0, Float a1)
 
   gen = (fcomb *)calloc(1, sizeof(fcomb));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_fcomb!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "cannot allocate struct for mus_make_fcomb!");
   else
     {
       gen->core = &FCOMB_CLASS;
@@ -528,13 +587,13 @@ mus_make_fcomb(Float scaler, int size, Float a0, Float a1)
       gen->loc = 0;
       gen->xscl = scaler;
       gen->x1 = 0.0;
-      gen->a0 = a0;
-      gen->a1 = a1;
+      gen->xs[0] = a0;
+      gen->xs[1] = a1;
       gen->size = size;
       gen->line = (Float *)calloc(size, sizeof(Float));
       if (gen->line == NULL) 
 	mus_error(MUS_MEMORY_ALLOCATION_FAILED, 
-		  "can't allocate %d bytes for fcomb delay line in mus_make_fcomb!",
+		  "cannot allocate %d bytes for fcomb delay line in mus_make_fcomb!",
 		  (int)(size * sizeof(Float)));
     }
   return (mus_any *)gen;
@@ -545,15 +604,22 @@ mus_make_fcomb(Float scaler, int size, Float a0, Float a1)
    in Snd's case, it's actually not needed because the generator is
    only called from C */
 
+#define h_make_fcomb_args "\
+ :scaler 1.0\n\
+ :size   1\n\
+ :a0     0.0\n\
+ :a1     0.0\n\
+Returns a new fcomb generator."
+
 #if HAVE_RUBY
 # define S_make_fcomb "make_fcomb"
-# define H_make_fcomb S_make_fcomb "(:scaler, 0.0, :size, 1, :a0, 0.0, :a1, 0.0): new fcomb gen"
+# define H_make_fcomb S_make_fcomb "(*args)\n" h_make_fcomb_args
 #else
 # define S_make_fcomb "make-fcomb"
 # if HAVE_FORTH
-#  define H_make_fcomb S_make_fcomb " ( :scaler 0.0 :size 1 :a0 0.0 :a1 0.0 -- gen ): new fcomb gen"
+#  define H_make_fcomb S_make_fcomb " ( args -- gen )\n" h_make_fcomb_args
 # else
-#  define H_make_fcomb "(" S_make_fcomb " (:scaler 0.0) (:size 1) (:a0 0.0) (:a1 0.0)): new fcomb gen"
+#  define H_make_fcomb "(" S_make_fcomb " . args)\n" h_make_fcomb_args
 # endif
 #endif
 
@@ -563,8 +629,8 @@ static XEN
 c_make_fcomb(XEN args)
 {
 #define FCOMB_LAST_KEY 4
-  int i, keyn, argn = 0, vals = 0, last_key = 4, lst_len = XEN_LIST_LENGTH(args), size = 1;
-  Float scaler = 0.0, a0 = 0.0, a1 = 0.0;
+  int i, keyn, argn = 0, vals = 0, lst_len = XEN_LIST_LENGTH(args), size = 1;
+  Float scaler = 1.0, a0 = 0.0, a1 = 0.0;
   XEN kargs[FCOMB_LAST_KEY * 2], keys[FCOMB_LAST_KEY];
   int orig_arg[FCOMB_LAST_KEY] = {0};
   mus_xen *gn = NULL;
@@ -595,51 +661,54 @@ c_make_fcomb(XEN args)
     }
 
   if (!(gn = (mus_xen *)calloc(1, sizeof(mus_xen))))
-    SNDINS_NO_MEMORY_ERROR(c__FUNCTION__, "cannot allocate memory");
+    INS_NO_MEMORY_ERROR(c__FUNCTION__, "cannot allocate memory");
 
   gn->gen = mus_make_fcomb(scaler, size, a0, a1);
-  gn->nvcts = 0;
-  gn->vcts = NULL;
-  return mus_xen_to_object(gn);
+  gn->nvcts = 1;
+  gn->vcts = (XEN *)malloc(1 * sizeof(XEN));
+  gn->dont_free_gen = true;
+  return mus_xen_to_object_with_vct(gn, xen_make_vct(size, ((fcomb *)gn->gen)->line));
 }
 
+#define XEN_FCOMB_P(obj)      (mus_xen_p(obj) && mus_fcomb_p(XEN_TO_MUS_ANY(obj)))
+
 #define S_fcomb_p "fcomb?"
+#define h_fcomb_p_doc "Returns #t if GEN is an fcomb generator, otherwise #f."
+
 #if HAVE_RUBY
-# define H_fcomb_p S_fcomb_p "(gen): true if gen is an fcomb generator"
+# define H_fcomb_p S_fcomb_p "(gen)  " h_fcomb_p_doc
 #else
 # if HAVE_FORTH
-#  define H_fcomb_p S_fcomb_p " ( gen -- f ): #t if gen is an fcomb generator"
+#  define H_fcomb_p S_fcomb_p " ( gen -- f )  " h_fcomb_p_doc
 # else
-#  define H_fcomb_p "(" S_fcomb_p " gen): #t if gen is an fcomb generator"
+#  define H_fcomb_p "(" S_fcomb_p " gen)  " h_fcomb_p_doc
 # endif
 #endif
 
 static XEN
 c_fcomb_p(XEN gen)
 {
-  return C_TO_XEN_BOOLEAN((mus_xen_p(gen)) && (mus_fcomb_p(XEN_TO_MUS_ANY(gen))));
+  return C_TO_XEN_BOOLEAN(XEN_FCOMB_P(gen));
 }
 
 #define S_fcomb "fcomb"
+#define h_fcomb_doc "Returns result of running fcomb generator."
+
 #if HAVE_RUBY
-# define H_fcomb S_fcomb "(gen[, input=0.0]): returns result of running fcomb gen"
+# define H_fcomb S_fcomb "(gen[, input=0.0])  " h_fcomb_doc
 #else
 # if HAVE_FORTH
-#  define H_fcomb S_fcomb " ( gen input=0.0 -- res ): returns result of running fcomb gen"
+#  define H_fcomb S_fcomb " ( gen input=0.0 -- res )  " h_fcomb_doc
 # else
-#  define H_fcomb "(" S_fcomb " gen (input 0.0)): returns result of running fcomb gen"
+#  define H_fcomb "(" S_fcomb " gen (input 0.0))  " h_fcomb_doc
 # endif
 #endif
 
 static XEN
 c_fcomb(XEN gen, XEN input)
 {
-  XEN_ASSERT_TYPE((mus_xen_p(gen)) && (mus_fcomb_p(XEN_TO_MUS_ANY(gen))),
-		  gen, XEN_ARG_1, S_fcomb, "a fcomb");
-  if (XEN_BOUND_P(input))
-    XEN_ASSERT_TYPE(XEN_NUMBER_P(input), input, XEN_ARG_2, S_fcomb, "a number");
-  return C_TO_XEN_DOUBLE(mus_fcomb(XEN_TO_MUS_ANY(gen),
-				   XEN_TO_C_DOUBLE_OR_ELSE(input, 0.0), 0.0));
+  XEN_ASSERT_TYPE(XEN_FCOMB_P(gen), gen, XEN_ARG_1, S_fcomb, "an fcomb");
+  return C_TO_XEN_DOUBLE(mus_fcomb(XEN_TO_MUS_ANY(gen), XEN_TO_C_DOUBLE_OR_ELSE(input, 0.0), 0.0));
 }
 /* sndscm.html */
 
@@ -651,23 +720,50 @@ c_fcomb(XEN gen, XEN input)
 # define S_fm_violin "fm-violin"
 # define S_jc_reverb "jc-reverb"
 #endif
-#define S_nrev "nrev"
-#define S_freeverb "freeverb"
+#define S_nrev       "nrev"
+#define S_freeverb   "freeverb"
 
 off_t
-ins_fm_violin(Float start, Float dur, Float freq, Float amp, Float fm_index,
-	      Float *amp_env, int amp_len,
-	      Float periodic_vibrato_rate, Float periodic_vibrato_amp,
-	      Float random_vibrato_rate, Float random_vibrato_amp,
-	      Float noise_freq, Float noise_amount,
-	      Float ind_noise_freq, Float ind_noise_amount,
-	      Float amp_noise_freq, Float amp_noise_amount,
-	      Float *gliss_env, int gliss_len, Float gliss_amount,
-	      Float *fm1_env, int fm1_len, Float *fm2_env, int fm2_len, Float *fm3_env, int fm3_len,
-	      Float fm1_rat, Float fm2_rat, Float fm3_rat,
-	      Float fm1_index, Float fm2_index, Float fm3_index,
-	      Float base, Float degree, Float distance, Float reverb_amount,
-	      int index_type, bool no_waveshaping, mus_any *out, mus_any *rev,
+ins_fm_violin(Float start,
+	      Float dur,
+	      Float freq,
+	      Float amp,
+	      Float fm_index,
+	      Float *amp_env,
+	      int amp_len,
+	      Float periodic_vibrato_rate,
+	      Float periodic_vibrato_amp,
+	      Float random_vibrato_rate,
+	      Float random_vibrato_amp,
+	      Float noise_freq,
+	      Float noise_amount,
+	      Float ind_noise_freq,
+	      Float ind_noise_amount,
+	      Float amp_noise_freq,
+	      Float amp_noise_amount,
+	      Float *gliss_env,
+	      int gliss_len,
+	      Float gliss_amount,
+	      Float *fm1_env,
+	      int fm1_len,
+	      Float *fm2_env,
+	      int fm2_len,
+	      Float *fm3_env,
+	      int fm3_len,
+	      Float fm1_rat,
+	      Float fm2_rat,
+	      Float fm3_rat,
+	      Float fm1_index,
+	      Float fm2_index,
+	      Float fm3_index,
+	      Float base,
+	      Float degree,
+	      Float distance,
+	      Float reverb_amount,
+	      bool index_type,
+	      bool no_waveshaping,
+	      mus_any *out,
+	      mus_any *rev,
 	      mus_interp_t mode)
 {
   off_t i, beg, len;
@@ -688,6 +784,7 @@ ins_fm_violin(Float start, Float dur, Float freq, Float amp, Float fm_index,
   maxdev = frq_scl * fm_index;
   logfrq = log(freq);
   sqrtfrq = sqrt(freq);
+  vln = index_type;		/* true: violin, false: cello */
 
   if (fm1_index != 0.0)
     index1 = fm1_index;
@@ -786,13 +883,15 @@ ins_fm_violin(Float start, Float dur, Float freq, Float amp, Float fm_index,
       if (ind_noi) ind_fuzz = 1.0 + mus_rand_interp(ind_noi, 0.0);
       if (amp_noi) amp_fuzz = 1.0 + mus_rand_interp(amp_noi, 0.0);
       if (modulate)
-	if (easy_case)
-	  mod = mus_env(indf1) * mus_polyshape_2(fmosc1, vib);
-	else
-	  mod =
-	    mus_env(indf1) * mus_oscil_1(fmosc1, fuzz + fm1_rat * vib) + 
-	    mus_env(indf2) * mus_oscil_1(fmosc2, fuzz + fm2_rat * vib) + 
-	    mus_env(indf3) * mus_oscil_1(fmosc3, fuzz + fm3_rat * vib);
+	{
+	  if (easy_case)
+	    mod = mus_env(indf1) * mus_polyshape_2(fmosc1, vib);
+	  else
+	    mod =
+	      mus_env(indf1) * mus_oscil_1(fmosc1, fuzz + fm1_rat * vib) + 
+	      mus_env(indf2) * mus_oscil_1(fmosc2, fuzz + fm2_rat * vib) + 
+	      mus_env(indf3) * mus_oscil_1(fmosc3, fuzz + fm3_rat * vib);
+	}
       mus_locsig(loc, i, mus_env(ampf) * amp_fuzz * mus_oscil_1(carrier, vib + ind_fuzz * mod));
     }
 
@@ -816,14 +915,24 @@ ins_fm_violin(Float start, Float dur, Float freq, Float amp, Float fm_index,
 }
 
 off_t
-ins_jc_reverb(Float start, Float dur, Float volume, bool low_pass, bool doubled,
-	      Float delay1, Float delay2, Float delay3, Float delay4,
-	      Float *amp_env, int amp_len, mus_any *out, mus_any *rev)
+ins_jc_reverb(Float start,
+	      Float dur,
+	      Float volume,
+	      bool low_pass,
+	      bool doubled,
+	      Float delay1,
+	      Float delay2,
+	      Float delay3,
+	      Float delay4,
+	      Float *amp_env,
+	      int amp_len,
+	      mus_any *out,
+	      mus_any *rev)
 {
   off_t i, beg, len;
   int del_len = 0, chans = 0, rev_chans = 0;
   bool chan2 = false, chan4 = false;
-  Float delA = 0.0, delB = 0.0, vol = 0.0;
+  Float delA = 0.0, delB = 0.0;
   Float allpass_sum = 0.0, comb_sum = 0.0, comb_sum_1 = 0.0, comb_sum_2 = 0.0, all_sums = 0.0;
   mus_any *allpass1 = NULL, *allpass2 = NULL, *allpass3 = NULL;
   mus_any *comb1 = NULL, *comb2 = NULL, *comb3 = NULL, *comb4 = NULL;
@@ -875,7 +984,7 @@ ins_jc_reverb(Float start, Float dur, Float volume, bool low_pass, bool doubled,
     env_a = mus_make_env(amp_env, amp_len / 2, volume, 0.0, 1.0, dur, 0, 0, NULL);
 
   if (doubled && chan4)
-    SNDINS_MISC_ERROR(S_jc_reverb, "is not set up for doubled reverb in quad");
+    INS_MISC_ERROR(S_jc_reverb, "is not set up for doubled reverb in quad");
 
   for (i = beg; i < len; i++)
     {
@@ -934,12 +1043,20 @@ ins_jc_reverb(Float start, Float dur, Float volume, bool low_pass, bool doubled,
 }
 
 off_t
-ins_nrev(Float start, Float dur, Float reverb_factor, Float lp_coeff, Float lp_out_coeff,
-	 Float output_scale, Float volume, Float *amp_env, int amp_len,
-	 mus_any *out, mus_any *rev)
+ins_nrev(Float start,
+	 Float dur,
+	 Float reverb_factor,
+	 Float lp_coeff,
+	 Float lp_out_coeff,
+	 Float output_scale,
+	 Float volume,
+	 Float *amp_env,
+	 int amp_len,
+	 mus_any *out,
+	 mus_any *rev)
 {
   off_t i, beg, len;
-  int chans = 0, rev_chans = 0, val = 0, env_len = 2;
+  int chans = 0, rev_chans = 0, val = 0;
   int dly_len[15] = {1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 53, 43, 37, 29, 19};
   Float srscale = mus_srate() / 25641.0;
   Float sample_a = 0.0, sample_b = 0.0, sample_c = 0.0, sample_d = 0.0;
@@ -1073,11 +1190,24 @@ ins_nrev(Float start, Float dur, Float reverb_factor, Float lp_coeff, Float lp_o
 }
 
 off_t
-ins_freeverb(Float start, Float dur, Float room_decay, Float damping, Float global,
-	     Float predelay, Float output_gain, Float scale_room_decay,
-	     Float offset_room_decay, Float scale_damping, Float stereo_spread,
-	     int *combtuning, int comb_len, int *allpasstuning, int all_len,
-	     mus_any *output_mixer, mus_any *out, mus_any *rev)
+ins_freeverb(Float start,
+	     Float dur,
+	     Float room_decay,
+	     Float damping,
+	     Float global,
+	     Float predelay,
+	     Float output_gain,
+	     Float scale_room_decay,
+	     Float offset_room_decay,
+	     Float scale_damping,
+	     Float stereo_spread,
+	     int *combtuning,
+	     int comb_len,
+	     int *allpasstuning,
+	     int all_len,
+	     mus_any *output_mixer,
+	     mus_any *out,
+	     mus_any *rev)
 {
   off_t i, beg, len;
   int out_chans = 0, in_chans = 0;
@@ -1094,7 +1224,7 @@ ins_freeverb(Float start, Float dur, Float room_decay, Float damping, Float glob
   out_chans = mus_channels(out);
   in_chans = mus_channels(rev);
   if (in_chans > 1 && in_chans != out_chans)
-    SNDINS_MISC_ERROR(S_freeverb, "input must be mono or in channels must equal out channels");
+    INS_MISC_ERROR(S_freeverb, "input must be mono or in channels must equal out channels");
   out_buf = mus_make_empty_frame(out_chans);
   f_out = mus_make_empty_frame(out_chans);
   f_in = mus_make_empty_frame(in_chans);
@@ -1169,7 +1299,7 @@ ins_freeverb(Float start, Float dur, Float room_decay, Float damping, Float glob
 	      for (k = 0; k < comb_len; k++)
 		mus_frame_set(f_out, j,
 			      mus_frame_ref(f_out, j) +
-			      mus_fcomb_1(combs[j][k], mus_frame_ref(f_in, j)));
+			      mus_fcomb(combs[j][k], mus_frame_ref(f_in, j), 0.0));
 	    }
 	else
 	  {
@@ -1180,7 +1310,7 @@ ins_freeverb(Float start, Float dur, Float room_decay, Float damping, Float glob
 		for (k = 0; k < comb_len; k++)
 		  mus_frame_set(f_out, j,
 				mus_frame_ref(f_out, j) +
-				mus_fcomb_1(combs[j][k], mus_frame_ref(f_in, 0)));
+				mus_fcomb(combs[j][k], mus_frame_ref(f_in, 0), 0.0));
 	      }
 	  }
 	for (j = 0; j < out_chans; j++)
@@ -1215,132 +1345,65 @@ ins_freeverb(Float start, Float dur, Float room_decay, Float damping, Float glob
   return i;
 }
 
+#define h_fm_violin_args "\
+ :startime                      0.0\n\
+ :duration                      1.0\n\
+ :frequency                     440.0\n\
+ :amplitude                     0.5\n\
+ :fm-index                      1.0\n\
+ :amp-env                       '( 0 0 25 1 75 1 100 0 )\n\
+ :periodic-vibrato-rate         5.0\n\
+ :periodic-vibrato-amplitude    0.0025\n\
+ :random-vibrato-rate           16.0\n\
+ :random-vibrato-amplitude      0.005\n\
+ :noise-freq         		1000.0\n\
+ :noise-amount       		0.0\n\
+ :ind-noise-freq     		10.0\n\
+ :ind-noise-amount   		0.0\n\
+ :amp-noise-freq     		20.0\n\
+ :amp-noise-amount   		0.0\n\
+ :gliss-env          		'( 0 0 100 0 )\n\
+ :glissando-amount   		0.0\n\
+ :fm1-env      			'( 0 1 25 0.4 75 0.6 100 0 )\n\
+ :fm2-env      			'( 0 1 25 0.4 75 0.6 100 0 )\n\
+ :fm3-env      			'( 0 1 25 0.4 75 0.6 100 0 )\n\
+ :fm1-rat      			1.0\n\
+ :fm2-rat      			3.0\n\
+ :fm3-rat      			4.0\n\
+ :fm1-index    			#f\n\
+ :fm2-index    			#f\n\
+ :fm3-index    			#f\n\
+ :base                          1.0\n\
+ :degree                        0.0\n\
+ :distance                      1.0\n\
+ :reverb-amount                 0.01\n\
+ :index-type                    'violin ('cello or 'violin)\n\
+ :no-waveshaping                #f"
+
 #if HAVE_RUBY
-# define H_fm_violin S_fm_violin "(\
-:startime, 0.0,\
- :duration, 1.0,\
- :frequency, 440.0,\
- :amplitude, 0.5,\
- :fm_index, 1.0,\
- :amp_env, [0, 0, 25, 1, 75, 1, 100, 0],\
- :periodic_vibrato_rate, 5.0,\
- :periodic_vibrato_amplitude, 0.0025,\
- :random_vibrato_rate, 16.0,\
- :random_vibrato_amplitude, 0.005,\
- :noise_freq, 1000.0,\
- :noise_amount, 0.0,\
- :ind_noise_freq, 10.0,\
- :ind_noise_amount, 0.0,\
- :amp_noise_freq, 20.0,\
- :amp_noise_amount, 0.0,\
- :gliss_env, [0, 0, 100, 0],\
- :glissando_amount, 0.0,\
- :fm1_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0],\
- :fm2_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0],\
- :fm3_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0],\
- :fm1_rat, 1.0,\
- :fm2_rat, 3.0,\
- :fm3_rat, 4.0,\
- :fm1_index, false,\
- :fm2_index, false,\
- :fm3_index, false,\
- :base, 1.0,\
- :degree, 0.0,\
- :distance, 1.0,\
- :reverb_amount, 0.01,\
- :index_type, 1 [0 = cello, 1 = violin],\
- :no_waveshaping, false)\n\
- require 'ws'\n\
- require 'sndins'\n\
- with_sound(:play, 1, :statistics, true, :reverb, :jc_reverb) do\n\
-   fm_violin(0, 1, 440, 0.7, :fm_index, 1.3)\n\
- end"
+# define H_fm_violin S_fm_violin "(*args)\n" h_fm_violin_args "\n\
+require 'ws'\n\
+require 'sndins'\n\
+with_sound(:reverb, :jc_reverb, :reverb_data, [:volume, 0.8]) do\n\
+  fm_violin(0, 1, 440, 0.2, :fm_index, 1.3)\n\
+end"
 #else  /* !HAVE_RUBY */
 # if HAVE_FORTH
-#  define H_fm_violin S_fm_violin " (\
- :startime 0.0\
- :duration 1.0\
- :frequency 440.0\
- :amplitude 0.5\
- :fm-index 1.0\
- :amp-env '( 0 0 25 1 75 1 100 0)\
- :periodic-vibrato-rate 5.0\
- :periodic-vibrato-amplitude 0.0025\
- :random-vibrato-rate 16.0\
- :random-vibrato-amplitude 0.005\
- :noise-freq 1000.0\
- :noise-amount 0.0\
- :ind-noise-freq 10.0\
- :ind-noise-amount 0.0\
- :amp-noise-freq 20.0\
- :amp-noise-amount 0.0\
- :gliss-env '( 0 0 100 0 )\
- :glissando-amount 0.0\
- :fm1-env '( 0 1 25 0.4 75 0.6 100 0 )\
- :fm2-env '( 0 1 25 0.4 75 0.6 100 0 )\
- :fm3-env '( 0 1 25 0.4 75 0.6 100 0 )\
- :fm1-rat 1.0\
- :fm2-rat 3.0\
- :fm3-rat 4.0\
- :fm1-index #f\
- :fm2-index #f\
- :fm3-index #f\
- :base 1.0\
- :degree 0.0\
- :distance 1.0\
- :reverb-amount 0.01\
- :index-type 'violin ('cello or 'violin)\
- :no-waveshaping #f -- )\n\
- require clm\n\
- dl-load sndins Init_sndins\n\
- 0 1 440 0.7 :fm-index 1.3 ' fm-violin :play #t :statistics #t :reverb ' jc-reverb with-sound"
+#  define H_fm_violin S_fm_violin " ( args -- samps )\n" h_fm_violin_args "\n\
+require clm\n\
+dl-load sndins Init_sndins\n\
+0 1 440 0.2 :fm-index 1.3 ' fm-violin\n\
+  :reverb ' jc-reverb :reverb-data '( :volume 0.8 ) with-sound"
 # else	/* !HAVE_FORTH */
-#  define H_fm_violin "(" S_fm_violin "\
- (:startime 0.0)\
- (:duration 1.0)\
- (:frequency 440.0)\
- (:amplitude 0.5)\
- (:fm-index 1.0)\
- (:amp-env '(0 0 25 1 75 1 100 0))\
- (:periodic-vibrato-rate 5.0)\
- (:periodic-vibrato-amplitude 0.0025)\
- (:random-vibrato-rate 16.0)\
- (:random-vibrato-amplitude 0.005)\
- (:noise-freq 1000.0)\
- (:noise-amount 0.0)\
- (:ind-noise-freq 10.0)\
- (:ind-noise-amount 0.0)\
- (:amp-noise-freq 20.0)\
- (:amp-noise-amount 0.0)\
- (:gliss-env '(0 0 100 0))\
- (:glissando-amount 0.0)\
- (:fm1-env '(0 1 25 0.4 75 0.6 100 0))\
- (:fm2-env '(0 1 25 0.4 75 0.6 100 0))\
- (:fm3-env '(0 1 25 0.4 75 0.6 100 0))\
- (:fm1-rat 1.0)\
- (:fm2-rat 3.0)\
- (:fm3-rat 4.0)\
- (:fm1-index #f)\
- (:fm2-index #f)\
- (:fm3-index #f)\
- (:base 1.0)\
- (:degree 0.0)\
- (:distance 1.0)\
- (:reverb-amount 0.01)\
- (:index-type 1 [0 = cello, 1 = violin])\
- (:no-waveshaping #f))\n\
+#  define H_fm_violin "(" S_fm_violin " . args)\n" h_fm_violin_args "\n\
  (load-from-path \"ws\")\n\
  (load-extension \"libsndins\" \"Init_sndins\")\n\
- (with-sound (:play #t :statistics #t :reverb jc-reverb)\n\
-   (fm-violin 0 1 440 0.7 :fm-index 1.3))"
+ (with-sound (:reverb jc-reverb :reverb-data '(:volume 0.8))\n\
+   (fm-violin 0 1 440 0.2 :fm-index 1.3))"
 # endif /* !HAVE_FORTH */
 #endif	/* !HAVE_RUBY */
 
-#if HAVE_FORTH
-static void
-#else
 static XEN
-#endif
 c_fm_violin(XEN args)
 {
 #define V_LAST_KEY 33
@@ -1350,7 +1413,7 @@ c_fm_violin(XEN args)
   int vals = 0, lst_len = XEN_LIST_LENGTH(args);
   int mode = MUS_INTERP_LINEAR;
   int amp_len = 8, gls_len = 4, fm1_len = 8, fm2_len = 8, fm3_len = 8;
-  bool index_type = true, no_waveshaping = false;
+  bool index_type = (bool)XEN_V_INS_VIOLIN, no_waveshaping = false;
   bool amp_del = false, gls_del = false, fm1_del = false, fm2_del = false, fm3_del = false;
   Float start = 0.0, dur = 1.0, freq = 440.0, amp = 0.5, fm_index = 1.0;
   Float tamp_env[8] = {0.0, 0.0, 25.0, 1.0, 75.0, 1.0, 100.0, 0.0};
@@ -1365,12 +1428,11 @@ c_fm_violin(XEN args)
   Float fm1_index = 0.0, fm2_index = 0.0, fm3_index = 0.0, base = 1.0;
   Float degree = 0.0, distance = 1.0, reverb_amount = 0.01;
   Float *amp_env = NULL, *gliss_env = NULL, *fm1_env = NULL, *fm2_env = NULL, *fm3_env = NULL;
-  vct *tmp_env = NULL;
   mus_any *out = NULL, *rev = NULL;
   XEN kargs[V_LAST_KEY * 2], keys[V_LAST_KEY];
   int orig_arg[V_LAST_KEY] = {0};
   int i = 0;
-
+  
   keys[i++] = allkeys[C_startime];
   keys[i++] = allkeys[C_duration];
   keys[i++] = allkeys[C_frequency];
@@ -1412,10 +1474,10 @@ c_fm_violin(XEN args)
   if (vals > 0)
     {
       i = 0;
-      start = mus_optkey_to_float(keys[i], S_fm_violin, orig_arg[i], start); i++;
-      dur = mus_optkey_to_float(keys[i], S_fm_violin, orig_arg[i], dur); i++;
-      freq = mus_optkey_to_float(keys[i], S_fm_violin, orig_arg[i], freq); i++;
-      amp = mus_optkey_to_float(keys[i], S_fm_violin, orig_arg[i], amp); i++;
+      start    = mus_optkey_to_float(keys[i], S_fm_violin, orig_arg[i], start); i++;
+      dur      = mus_optkey_to_float(keys[i], S_fm_violin, orig_arg[i], dur); i++;
+      freq     = mus_optkey_to_float(keys[i], S_fm_violin, orig_arg[i], freq); i++;
+      amp      = mus_optkey_to_float(keys[i], S_fm_violin, orig_arg[i], amp); i++;
       fm_index = mus_optkey_to_float(keys[i], S_fm_violin, orig_arg[i], fm_index); i++;
       if (!(XEN_KEYWORD_P(keys[i])))
 	{
@@ -1497,8 +1559,6 @@ c_fm_violin(XEN args)
 	    }
 	  else if (XEN_INTEGER_P(keys[i]))
 	    index_type = XEN_TO_C_INT(keys[i]);
-	  else
-	    index_type = XEN_V_INS_VIOLIN;
 	}
       i++;
       if (!(XEN_KEYWORD_P(keys[i])))
@@ -1534,18 +1594,11 @@ c_fm_violin(XEN args)
       fm3_del = true;
     }
 
-  if (!mus_output_p(out = get_global_output(SX_OUTPUT)))
-    SNDINS_MISC_ERROR(S_fm_violin, "needs an output generator");
-  rev = get_global_output(SX_REVERB);
+  if (!mus_output_p(out = get_global_mus_gen(INS_OUTPUT)))
+    INS_MISC_ERROR(S_fm_violin, "needs an output generator");
 
-#if HAVE_RUBY
-  if (XEN_INTEGER_P(rb_gv_get("$clm_locsig_type")))
-    mode = XEN_TO_C_INT(rb_gv_get("$clm_locsig_type"));
-#else
-  if (XEN_INTEGER_P(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-locsig-type*")))
-    mode = XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-locsig-type*"));
-#endif
-
+  rev = get_global_mus_gen(INS_REVERB);
+  mode = get_global_int(INS_LOCSIG_TYPE, MUS_INTERP_LINEAR);
   result = ins_fm_violin(start, dur, freq, amp, fm_index,
 			 amp_env, amp_len,
 			 periodic_vibrato_rate, periodic_vibrato_amp,
@@ -1554,94 +1607,76 @@ c_fm_violin(XEN args)
 			 ind_noise_freq, ind_noise_amount,
 			 amp_noise_freq, amp_noise_amount,
 			 gliss_env, gls_len, gliss_amount,
-			 fm1_env, fm1_len, fm2_env, fm2_len, fm3_env, fm3_len,
-			 fm1_rat, fm2_rat, fm3_rat, fm1_index, fm2_index, fm3_index,
-			 base, degree, distance, reverb_amount,
-			 index_type, no_waveshaping, out, rev, mode);
+			 fm1_env, fm1_len,
+			 fm2_env, fm2_len,
+			 fm3_env, fm3_len,
+			 fm1_rat, fm2_rat, fm3_rat,
+			 fm1_index, fm2_index, fm3_index,
+			 base, degree, distance,
+			 reverb_amount, index_type, no_waveshaping,
+			 out, rev, mode);
 
   if (amp_del) free(amp_env);
   if (gls_del) free(gliss_env);
   if (fm1_del) free(fm1_env);
   if (fm2_del) free(fm2_env);
   if (fm3_del) free(fm3_env);
-#if !HAVE_FORTH
   return C_TO_XEN_INT(result);
-#endif
 }
 
+#define INS_REVERB_MSG(caller, in_chans, out_chans)				\
+  ins_message("%s on %d in and %d out channels\n", caller, in_chans, out_chans)
+
+#define INS_REVERB_DUR(rev) \
+  (mus_samples_to_seconds(mus_length(rev)) + get_global_float(INS_DECAY_TIME, 1.0))
+
+#define h_jc_reverb_args "\
+ :volume     1.0\n\
+ :delay1     0.013\n\
+ :delay2     0.011\n\
+ :delay3     0.015\n\
+ :delay4     0.017\n\
+ :low-pass   #f\n\
+ :doubled    #f\n\
+ :amp-env    #f"
+
 #if HAVE_RUBY
-# define H_jc_reverb S_jc_reverb "(\
-:startime, 0.0,\
- :duration, 0.0,\
- :low_pass, false,\
- :volume, 1.0,\
- :doubled, false,\
- :delay1, 0.013,\
- :delay2, 0.011,\
- :delay3, 0.015,\
- :delay4, 0.017,\
- :amp_env, false)\n\
- require 'ws'\n\
- require 'sndins'\n\
- with_sound(:play, 1, :statistics, true, :reverb, :jc_reverb) do\n\
-   fm_violin(0, 1, 440, 0.7, :fm_index, 1.3)\n\
- end"
+# define H_jc_reverb S_jc_reverb "(*args)\n" h_jc_reverb_args "\n\
+require 'ws'\n\
+require 'sndins'\n\
+with_sound(:reverb, :jc_reverb, :reverb_data, [:volume, 0.8]) do\n\
+  fm_violin(0, 1, 440, 0.2, :fm_index, 1.3)\n\
+end"
 #else  /* !HAVE_RUBY */
 # if HAVE_FORTH
-#  define H_jc_reverb S_jc_reverb " (\
- :startime 0.0\
- :duration 0.0\
- :low-pass #f\
- :volume 1.0\
- :doubled #f\
- :delay1 0.013\
- :delay2 0.011\
- :delay3 0.015\
- :delay4 0.017\
- :amp-env #f -- )\n\
- require clm\n\
- dl-load sndins Init_sndins\n\
- 0 1 440 0.7 :fm-index 1.3 ' fm-violin :play #t :statistics #t :reverb ' jc-reverb with-sound"
+#  define H_jc_reverb S_jc_reverb " ( args -- samps )\n" h_jc_reverb_args "\n\
+require clm\n\
+dl-load sndins Init_sndins\n\
+0 1 440 0.2 :fm-index 1.3 ' fm-violin\n\
+  :reverb ' jc-reverb :reverb-data '( :volume 0.8 ) with-sound"
 # else	/* !HAVE_FORTH */
-#  define H_jc_reverb "(" S_jc_reverb "\
- (:startime 0.0)\
- (:duration 0.0)\
- (:low-pass #f)\
- (:volume 1.0)\
- (:doubled #f)\
- (:delay1 0.013)\
- (:delay2 0.011)\
- (:delay3 0.015)\
- (:delay4 0.017)\
- (:amp-env #f))\n\
+#  define H_jc_reverb "(" S_jc_reverb " . args)\n" h_jc_reverb_args "\n\
  (load-from-path \"ws\")\n\
  (load-extension \"libsndins\" \"Init_sndins\")\n\
- (with-sound (:play #t :statistics #t :reverb jc-reverb)\n\
-   (fm-violin 0 1 440 0.7 :fm-index 1.3))"
+ (with-sound (:reverb jc-reverb :reverb-data '(:volume 0.8))\n\
+   (fm-violin 0 1 440 0.2 :fm-index 1.3))"
 # endif /* !HAVE_FORTH */
 #endif	/* !HAVE_RUBY */
 
-#if HAVE_FORTH
-static void
-#else
 static XEN
-#endif
 c_jc_reverb(XEN args)
 {
-#define JC_LAST_KEY 10
+#define JC_LAST_KEY 8
   off_t result;
   int vals = 0, lst_len = XEN_LIST_LENGTH(args), amp_len = 0;
   bool low_pass = false, doubled = false;
   Float volume = 1.0, delay1 = 0.013, delay2 = 0.011, delay3 = 0.015, delay4 = 0.017;
-  Float start = 0.0, dur = 0.0, *amp_env = NULL;
-  vct *tmp_env = NULL;
+  Float *amp_env = NULL;
   mus_any *out = NULL, *rev = NULL;
   int orig_arg[JC_LAST_KEY] = {0};
   XEN kargs[JC_LAST_KEY * 2], keys[JC_LAST_KEY];
   int i = 0;
   
-  keys[i++] = allkeys[C_startime];
-  keys[i++] = allkeys[C_duration];
   keys[i++] = allkeys[C_low_pass];
   keys[i++] = allkeys[C_volume];
   keys[i++] = allkeys[C_doubled];
@@ -1658,8 +1693,6 @@ c_jc_reverb(XEN args)
   if (vals > 0)
     {
       i = 0;
-      start = mus_optkey_to_float(keys[i], S_jc_reverb, orig_arg[i], start); i++;
-      dur = mus_optkey_to_float(keys[i], S_jc_reverb, orig_arg[i], dur); i++;
       if (!(XEN_KEYWORD_P(keys[i])))
 	{
 	  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(keys[i]), keys[i], orig_arg[i], S_jc_reverb, "a bool");
@@ -1685,92 +1718,69 @@ c_jc_reverb(XEN args)
 	}
     }
 
-  if (!mus_output_p(out = get_global_output(SX_OUTPUT)))
-    SNDINS_MISC_ERROR(S_jc_reverb, "needs an output generator");
+  if (!mus_output_p(out = get_global_mus_gen(INS_OUTPUT)))
+    INS_MISC_ERROR(S_jc_reverb, "needs an output generator");
 
-  if (!mus_input_p(rev = get_global_output(SX_REVERB)))
-    SNDINS_MISC_ERROR(S_jc_reverb, "needs an input (reverb) generator");
+  if (!mus_input_p(rev = get_global_mus_gen(INS_REVERB)))
+    INS_MISC_ERROR(S_jc_reverb, "needs an input (reverb) generator");
 
-  if (get_global_verbose(S_jc_reverb))
-    message("%s on %d in and %d out channels\n", S_jc_reverb, mus_channels(rev), mus_channels(out));
+  if (get_global_boolean(INS_VERBOSE, false))
+    INS_REVERB_MSG(S_jc_reverb, mus_channels(rev), mus_channels(out));
 
-  result = ins_jc_reverb(start, dur, volume, low_pass, doubled,
+  result = ins_jc_reverb(0.0, INS_REVERB_DUR(rev),
+			 volume, low_pass, doubled,
 			 delay1, delay2, delay3, delay4,
 			 amp_env, amp_len, out, rev);
-#if !HAVE_FORTH
   return C_TO_XEN_INT(result);
-#endif
 }
 
+#define h_nrev_args "\
+ :reverb-factor   1.09\n\
+ :lp-coeff        0.7\n\
+ :lp-out-coeff    0.85\n\
+ :output-scale    1.0\n\
+ :amp-env         '( 0 1 1 1 )\n\
+ :volume          1.0"
+
 #if HAVE_RUBY
-# define H_nrev S_nrev "(\
-:startime, 0.0,\
- :duration, 0.0,\
- :reverb_factor, 1.09\
- :lp_coeff, 0.7\
- :lp_out_coeff, 0.85\
- :output_scale, 1.0\
- :amp_env, [0, 1, 1, 1]\
- :volume, 1.0)\n\
- require 'ws'\n\
- require 'sndins'\n\
- with_sound(:play, 1, :statistics, true, :reverb, :nrev) do\n\
-   fm_violin(0, 1, 440, 0.7, :fm_index, 1.3)\n\
- end"
+# define H_nrev S_nrev "(*args)\n" h_nrev_args "\n\
+require 'ws'\n\
+require 'sndins'\n\
+with_sound(:reverb, :nrev, :reverb_data, [:lp_coeff, 0.6]) do\n\
+  fm_violin(0, 1, 440, 0.7, :fm_index, 1.3)\n\
+end"
 #else  /* !HAVE_RUBY */
 #if HAVE_FORTH
-#  define H_nrev S_nrev " (\
- :startime 0.0\
- :duration 0.0\
- :reverb-factor 1.09\
- :lp-coeff 0.7\
- :lp-out-coeff 0.85\
- :output-scale 1.0\
- :amp-env '( 0 1 1 1 )\
- :volume 1.0 -- )\n\
- require clm\n\
- dl-load sndins Init_sndins\n\
- 0 1 440 0.7 :fm-index 1.3 ' fm-violin :play #t :statistics #t :reverb ' nrev with-sound"
+#  define H_nrev S_nrev " ( args -- samps )\n" h_nrev_args "\n\
+require clm\n\
+dl-load sndins Init_sndins\n\
+0 1 440 0.7 :fm-index 1.3 ' fm-violin\n\
+  :reverb ' nrev :reverb-data '( :lp-coeff 0.6 ) with-sound"
 # else	/* !HAVE_FORTH */
-#  define H_nrev "(" S_nrev "\
- (:startime 0.0)\
- (:duration 0.0)\
- (:reverb-factor 1.09)\
- (:lp-coeff 0.7)\
- (:lp-out-coeff 0.85)\
- (:output-scale 1.0)\
- (:amp-env '(0 1 1 1))\
- (:volume 1.0))\n\
+#  define H_nrev "(" S_nrev " . args)\n" h_nrev_args "\n\
  (load-from-path \"ws\")\n\
  (load-extension \"libsndins\" \"Init_sndins\")\n\
- (with-sound (:play #t :statistics #t :reverb nrev)\n\
+ (with-sound (:reverb nrev :reverb-data '(:lp-coeff 0.6))\n\
    (fm-violin 0 1 440 0.7 :fm-index 1.3))"
 # endif /* !HAVE_FORTH */
 #endif	/* !HAVE_RUBY */
 
-#if HAVE_FORTH
-static void
-#else
 static XEN
-#endif
 c_nrev(XEN args)
 {
-#define N_LAST_KEY 8
+#define N_LAST_KEY 6
   off_t result;
   int vals = 0, lst_len = XEN_LIST_LENGTH(args), amp_len = 4;
   bool amp_del = false;
-  Float start = 0.0, dur = 0.0, lp_coeff = 0.7, lp_out_coeff = 0.85;
+  Float lp_coeff = 0.7, lp_out_coeff = 0.85;
   Float output_scale = 1.0, reverb_factor = 1.09, volume = 1.0;
   Float tamp_env[4] = {0, 1, 1, 1};
   Float *amp_env = NULL;
-  vct *tmp_env = NULL;
   mus_any *out = NULL, *rev = NULL;
   int orig_arg[N_LAST_KEY] = {0};
   XEN kargs[N_LAST_KEY * 2], keys[N_LAST_KEY];
   int i = 0;
 
-  keys[i++] = allkeys[C_startime];
-  keys[i++] = allkeys[C_duration];
   keys[i++] = allkeys[C_reverb_factor];
   keys[i++] = allkeys[C_lp_coeff];
   keys[i++] = allkeys[C_lp_out_coeff];
@@ -1785,8 +1795,6 @@ c_nrev(XEN args)
   if (vals > 0)
     {
       i = 0;
-      start = mus_optkey_to_float(keys[i], S_nrev, orig_arg[i], start); i++;
-      dur = mus_optkey_to_float(keys[i], S_nrev, orig_arg[i], dur); i++;
       reverb_factor = mus_optkey_to_float(keys[i], S_nrev, orig_arg[i], reverb_factor); i++;
       lp_coeff = mus_optkey_to_float(keys[i], S_nrev, orig_arg[i], lp_coeff); i++;
       lp_out_coeff = mus_optkey_to_float(keys[i], S_nrev, orig_arg[i], lp_out_coeff); i++;
@@ -1806,96 +1814,64 @@ c_nrev(XEN args)
       amp_env = array2array(tamp_env, 4);
       amp_del = true;
     }
-  if (!mus_output_p(out = get_global_output(SX_OUTPUT)))
-    SNDINS_MISC_ERROR(S_nrev, "needs an output generator");
+  if (!mus_output_p(out = get_global_mus_gen(INS_OUTPUT)))
+    INS_MISC_ERROR(S_nrev, "needs an output generator");
 
-  if (!mus_input_p(rev = get_global_output(SX_REVERB)))
-    SNDINS_MISC_ERROR(S_nrev, "needs an input (reverb) generator");
+  if (!mus_input_p(rev = get_global_mus_gen(INS_REVERB)))
+    INS_MISC_ERROR(S_nrev, "needs an input (reverb) generator");
 
-  if (get_global_verbose(S_nrev))
-    message("%s on %d in and %d out channels\n", S_nrev, mus_channels(rev), mus_channels(out));
+  if (get_global_boolean(INS_VERBOSE, false))
+    INS_REVERB_MSG(S_nrev, mus_channels(rev), mus_channels(out));
 
-  result = ins_nrev(start, dur, reverb_factor, lp_coeff, lp_out_coeff,
+  result = ins_nrev(0.0, INS_REVERB_DUR(rev),
+		    reverb_factor, lp_coeff, lp_out_coeff,
 		    output_scale, volume, amp_env, amp_len, out, rev);
 
   if (amp_del) free(amp_env);
-#if !HAVE_FORTH
   return C_TO_XEN_INT(result);
-#endif
 }
 
+#define h_freeverb_args "\
+ :room-decay          0.5\n\
+ :damping             0.5\n\
+ :global              0.3\n\
+ :predelay            0.03\n\
+ :output-gain         1.0\n\
+ :output-mixer        #f\n\
+ :scale-room-decay    0.28\n\
+ :offset-room-decay   0.7\n\
+ :combtuning          '( 1116 1188 1277 1356 1422 1491 1557 1617 )\n\
+ :allpasstuning       '( 556 441 341 225 )\n\
+ :scale-damping       0.4\n\
+ :stereo-spread       23.0"
+
 #if HAVE_RUBY
-# define H_freeverb S_freeverb "(\
-:startime, 0.0,\
- :duration, 0.0,\
- :room_decay, 0.5,\
- :damping, 0.5,\
- :global, 0.3,\
- :predelay, 0.03,\
- :output_gain, 1.0,\
- :output_mixer, nil,\
- :scale_room_decay, 0.28,\
- :offset_room_decay, 0.7,\
- :combtuning, [1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617],\
- :allpasstuning, [556, 441, 341, 225],\
- :scale_damping, 0.4,\
- :stereo_spread, 23.0)\n\
- require 'ws'\n\
- require 'sndins'\n\
- with_sound(:play, 1, :statistics, true, :reverb, :freeverb) do\n\
-   fm_violin(0, 1, 440, 0.7, :fm_index, 1.3)\n\
- end"
+# define H_freeverb S_freeverb "(*args)\n" h_freeverb_args "\n\
+require 'ws'\n\
+require 'sndins'\n\
+with_sound(:reverb, :freeverb, :reverb_data, [:room_decay, 0.8]) do\n\
+  fm_violin(0, 1, 440, 0.7)\n\
+end"
 #else  /* !HAVE_RUBY */
 #if HAVE_FORTH
-#  define H_freeverb S_freeverb " (\
- :startime 0.0\
- :duration 0.0\
- :room-decay 0.5\
- :damping 0.5\
- :global 0.3\
- :predelay 0.03\
- :output-gain 1.0\
- :output-mixer #f\
- :scale-room-decay 0.28\
- :offset-room-decay 0.7\
- :combtuning '( 1116 1188 1277 1356 1422 1491 1557 1617 )\
- :allpasstuning '( 556 441 341 225 )\
- :scale-damping 0.4\
- :stereo-spread 23.0 -- )\n\
- require clm\n\
- dl-load sndins Init_sndins\n\
- 0 1 440 0.7 :fm-index 1.3 ' fm-violin :play #t :statistics #t :reverb ' freeverb with-sound"
+#  define H_freeverb S_freeverb " ( args -- samps )\n" h_freeverb_args "\n\
+require clm\n\
+dl-load sndins Init_sndins\n\
+0 1 440 0.7 ' fm-violin :reverb ' freeverb\n\
+  :reverb-data '( :room-decay 0.8 ) with-sound"
 # else	/* !HAVE_FORTH */
-#  define H_freeverb "(" S_freeverb "\
- (:startime 0.0)\
- (:duration 0.0)\
- (:room-decay 0.5)\
- (:damping 0.5)\
- (:global 0.3)\
- (:predelay 0.03)\
- (:output-gain 1.0)\
- (:output-mixer #f)\
- (:scale-room-decay 0.28)\
- (:offset-room-decay 0.7)\
- (:combtuning '(1116 1188 1277 1356 1422 1491 1557 1617))\
- (:allpasstuning '(556 441 341 225))\
- (:scale-damping 0.4)\
- (:stereo-spread 23.0))\n\
+#  define H_freeverb "(" S_freeverb " . args)\n" h_freeverb_args "\n\
  (load-from-path \"ws\")\n\
  (load-extension \"libsndins\" \"Init_sndins\")\n\
- (with-sound (:play #t :statistics #t :reverb freeverb)\n\
-   (fm-violin 0 1 440 0.7 :fm-index 1.3))"
+ (with-sound (:reverb freeverb :reverb-data '(:room-decay 0.8))\n\
+   (fm-violin 0 1 440 0.7))"
 # endif /* !HAVE_FORTH */
 #endif	/* !HAVE_RUBY */
 
-#if HAVE_FORTH
-static void
-#else
 static XEN
-#endif
 c_freeverb(XEN args)
 {
-#define F_LAST_KEY 14
+#define F_LAST_KEY 12
   off_t result;
   int vals = 0, lst_len = XEN_LIST_LENGTH(args);
   int numcombs = 8, numallpasses = 4;
@@ -1903,7 +1879,7 @@ c_freeverb(XEN args)
   int tallpass[4] = {556, 441, 341, 225};
   int *combtuning = NULL, *allpasstuning = NULL;
   bool comb_del = false, allpass_del = false;
-  Float start = 0.0, dur = 0.0, room_decay = 0.5, global = 0.3, damping = 0.5;
+  Float room_decay = 0.5, global = 0.3, damping = 0.5;
   Float predelay = 0.03, output_gain = 1.0, scale_room_decay = 0.28;
   Float offset_room_decay = 0.7, scale_damping = 0.4, stereo_spread = 23.0;
   mus_any *output_mixer = NULL, *out = NULL, *rev = NULL;
@@ -1911,8 +1887,6 @@ c_freeverb(XEN args)
   XEN kargs[F_LAST_KEY * 2], keys[F_LAST_KEY];
   int i = 0;
 
-  keys[i++] = allkeys[C_startime];
-  keys[i++] = allkeys[C_duration];
   keys[i++] = allkeys[C_room_decay];
   keys[i++] = allkeys[C_damping];
   keys[i++] = allkeys[C_global];
@@ -1933,14 +1907,12 @@ c_freeverb(XEN args)
   if (vals > 0)
     {
       i = 0;
-      start = mus_optkey_to_float(keys[i], S_freeverb, orig_arg[i], start); i++;
-      dur = mus_optkey_to_float(keys[i], S_freeverb, orig_arg[i], dur); i++;
-      room_decay = mus_optkey_to_float(keys[i], S_freeverb, orig_arg[i], room_decay); i++;
-      damping = mus_optkey_to_float(keys[i], S_freeverb, orig_arg[i], damping); i++;
-      global = mus_optkey_to_float(keys[i], S_freeverb, orig_arg[i], global); i++;
-      predelay = mus_optkey_to_float(keys[i], S_freeverb, orig_arg[i], predelay); i++;
-      output_gain = mus_optkey_to_float(keys[i], S_freeverb, orig_arg[i], output_gain); i++;
-      output_mixer = mus_optkey_to_mus_any(keys[i], S_freeverb, orig_arg[i], output_mixer); i++;
+      room_decay       = mus_optkey_to_float(keys[i], S_freeverb, orig_arg[i], room_decay); i++;
+      damping          = mus_optkey_to_float(keys[i], S_freeverb, orig_arg[i], damping); i++;
+      global           = mus_optkey_to_float(keys[i], S_freeverb, orig_arg[i], global); i++;
+      predelay         = mus_optkey_to_float(keys[i], S_freeverb, orig_arg[i], predelay); i++;
+      output_gain      = mus_optkey_to_float(keys[i], S_freeverb, orig_arg[i], output_gain); i++;
+      output_mixer     = mus_optkey_to_mus_any(keys[i], S_freeverb, orig_arg[i], output_mixer); i++;
       scale_room_decay = mus_optkey_to_float(keys[i], S_freeverb, orig_arg[i],
 					     scale_room_decay); i++;
       offset_room_decay = mus_optkey_to_float(keys[i], S_freeverb, orig_arg[i],
@@ -1974,16 +1946,17 @@ c_freeverb(XEN args)
       allpass_del = true;
     }
 
-  if (!mus_output_p(out = get_global_output(SX_OUTPUT)))
-    SNDINS_MISC_ERROR(S_freeverb, "needs an output generator");
+  if (!mus_output_p(out = get_global_mus_gen(INS_OUTPUT)))
+    INS_MISC_ERROR(S_freeverb, "needs an output generator");
 
-  if (!mus_input_p(rev = get_global_output(SX_REVERB)))
-    SNDINS_MISC_ERROR(S_freeverb, "needs an input (reverb) generator");
+  if (!mus_input_p(rev = get_global_mus_gen(INS_REVERB)))
+    INS_MISC_ERROR(S_freeverb, "needs an input (reverb) generator");
 
-  if (get_global_verbose(S_freeverb))
-    message("%s on %d in and %d out channels\n", S_freeverb, mus_channels(rev), mus_channels(out));
+  if (get_global_boolean(INS_VERBOSE, false))
+    INS_REVERB_MSG(S_freeverb, mus_channels(rev), mus_channels(out));
 
-  result = ins_freeverb(start, dur, room_decay, damping, global,
+  result = ins_freeverb(0.0, INS_REVERB_DUR(rev),
+			room_decay, damping, global,
 			predelay, output_gain, scale_room_decay,
 			offset_room_decay, scale_damping, stereo_spread,
 			combtuning, numcombs, allpasstuning, numallpasses,
@@ -1991,27 +1964,25 @@ c_freeverb(XEN args)
 
   if (comb_del) free(combtuning);
   if (allpass_del) free(allpasstuning);
-#if !HAVE_FORTH
   return C_TO_XEN_INT(result);
-#endif
 }
 
 #ifdef XEN_ARGIFY_1
-XEN_VARGIFY(x_make_fcomb, c_make_fcomb);
-XEN_ARGIFY_2(x_fcomb, c_fcomb);
-XEN_NARGIFY_1(x_fcomb_p, c_fcomb_p);
-XEN_VARGIFY(x_fm_violin, c_fm_violin);
-XEN_VARGIFY(x_jc_reverb, c_jc_reverb);
-XEN_VARGIFY(x_nrev, c_nrev);
-XEN_VARGIFY(x_freeverb, c_freeverb);
+XEN_VARGIFY(x_make_fcomb, c_make_fcomb)
+XEN_ARGIFY_2(x_fcomb,     c_fcomb)
+XEN_NARGIFY_1(x_fcomb_p,  c_fcomb_p)
+XEN_VARGIFY(x_fm_violin,  c_fm_violin)
+XEN_VARGIFY(x_jc_reverb,  c_jc_reverb)
+XEN_VARGIFY(x_nrev,       c_nrev)
+XEN_VARGIFY(x_freeverb,   c_freeverb)
 #else
-# define x_make_fcomb c_make_fcomb
-# define x_fcomb c_fcomb
-# define x_fcomb_p c_fcomb_p
-# define x_fm_violin c_fm_violin
-# define x_jc_reverb c_jc_reverb
-# define x_nrev c_nrev
-# define x_freeverb c_freeverb
+# define x_make_fcomb     c_make_fcomb
+# define x_fcomb          c_fcomb
+# define x_fcomb_p        c_fcomb_p
+# define x_fm_violin      c_fm_violin
+# define x_jc_reverb      c_jc_reverb
+# define x_nrev           c_nrev
+# define x_freeverb       c_freeverb
 #endif
 
 void
@@ -2021,18 +1992,10 @@ Init_sndins(void)
   XEN_DEFINE_PROCEDURE(S_make_fcomb, x_make_fcomb, 0, 0, 1, H_make_fcomb);
   XEN_DEFINE_PROCEDURE(S_fcomb,      x_fcomb,      1, 1, 0, H_fcomb);
   XEN_DEFINE_PROCEDURE(S_fcomb_p,    x_fcomb_p,    1, 0, 0, H_fcomb_p);
-#if HAVE_FORTH
-  /* Instruments shouldn't leave values on stack, that's why those void procs. */
-  fth_define_void_procedure(S_fm_violin, x_fm_violin, 0, 0, 1, H_fm_violin);
-  fth_define_void_procedure(S_jc_reverb, x_jc_reverb, 0, 0, 1, H_jc_reverb);
-  fth_define_void_procedure(S_nrev,      x_nrev,      0, 0, 1, H_nrev);
-  fth_define_void_procedure(S_freeverb,  x_freeverb,  0, 0, 1, H_freeverb);
-#else
   XEN_DEFINE_PROCEDURE(S_fm_violin,  x_fm_violin,  0, 0, 1, H_fm_violin);
   XEN_DEFINE_PROCEDURE(S_jc_reverb,  x_jc_reverb,  0, 0, 1, H_jc_reverb);
   XEN_DEFINE_PROCEDURE(S_nrev,       x_nrev,       0, 0, 1, H_nrev);
   XEN_DEFINE_PROCEDURE(S_freeverb,   x_freeverb,   0, 0, 1, H_freeverb);
-#endif
   XEN_YES_WE_HAVE("sndins");
 }
 

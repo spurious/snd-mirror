@@ -4,7 +4,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Fri Oct 18 11:29:08 CEST 2002
-# Changed: Wed May 03 19:26:18 CEST 2006
+# Changed: Wed Aug 30 22:20:15 CEST 2006
 
 # This file is part of Sndins.
 
@@ -18,9 +18,10 @@
 
 # Code:
 
+require "sndlib"
+require "sndins"
 require "examp"
 require "ws"
-require "sndins"
 
 $clm_file_name = "test-ins-r.snd"
 $clm_play = true
@@ -28,8 +29,6 @@ $clm_statistics = true
 $clm_verbose = true
 $clm_srate = 22050
 $clm_channels = 2
-$clm_reverb = :freeverb
-$clm_reverb_data = [:room_decay, 0.8]
 $clm_reverb_channels = 2
 $clm_delete_reverb = true
 
@@ -157,7 +156,7 @@ def violin_new(beg, dur, freq, amp, *args)
 end
 
 def short_example
-  with_sound do
+  with_sound(:reverb, :nrev, :reverb_data, [:lp_coeff, 0.6]) do
     violin_new(0, 8.53, 993.323, 0.03,
                :fm_index, 0.75, :reverb_amount, 0.2, :amp_env, [0, 0, 221, 1, 240, 0])
     violin_new(5, 4.53, 993.323 * 5.0 / 6.0, 0.02,
@@ -177,10 +176,11 @@ def long_example
   i = 0
   st = my_times
   trace_var(:$t) do |t|
-    i += 1
-    message("%2d: score %3d utime %8.3f", i, t, my_times.utime - st.utime) if $show
+    if $show
+      message("%2d: score %3d   utime %7.3f", i += 1, t, my_times.utime - st.utime)
+    end
   end
-  with_sound do
+  with_sound(:reverb, :freeverb, :reverb_data, [:room_decay, 0.8]) do
     tap = [0, 0, 1, 1, 99, 1, 100, 0]
     metalamp = [0, 0, 0.5000, 1, 5, 1, 10, 0.5000, 15, 0.2500, 35, 0.1, 100, 0]
     whoosh = [0, 0, 75, 0.1, 90, 0.3, 97, 0.6, 100, 1]

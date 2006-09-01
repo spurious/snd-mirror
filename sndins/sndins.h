@@ -4,7 +4,7 @@
  *
  * Author: Michael Scholz <scholz-micha@gmx.de>
  * Created: Sat Jun 07 02:24:52 CEST 2003
- * Changed: Mon May 01 15:05:59 CEST 2006
+ * Changed: Wed Aug 30 23:32:02 CEST 2006
  * 
  * This file is part of Sndins.
  *
@@ -28,6 +28,20 @@
 
 #ifndef _SNDINS_H_
 #define _SNDINS_H_
+
+#ifndef XEN_PROVIDED_P
+# if HAVE_SCHEME
+#  define XEN_PROVIDED_P(feature)					\
+  XEN_TO_C_BOOLEAN(XEN_MEMBER(C_STRING_TO_XEN_SYMBOL(feature),		\
+			      XEN_NAME_AS_C_STRING_TO_VALUE("*features*")))
+# elif HAVE_RUBY
+#  define XEN_PROVIDED_P(feature)       XEN_TO_C_BOOLEAN(rb_provided(feature))
+# elif HAVE_FORTH
+#  define XEN_PROVIDED_P(feature)       fth_provided_p(feature)
+# else
+#  define XEN_PROVIDED_P(feature)       false
+# endif
+#endif
 
 #define SC_startime  	 	       	"startime"
 #define SC_duration  	 	       	"duration"
@@ -143,38 +157,93 @@
 
 __BEGIN_DECLS
 
-mus_any *mus_make_fcomb(Float scaler, int size, Float a0, Float a1);
-int mus_fcomb_p(mus_any *ptr);
-Float mus_fcomb(mus_any *ptr, Float input, Float ignored);
-Float mus_fcomb_1(mus_any *ptr, Float input);
+mus_any *mus_make_fcomb   (Float scaler, int size, Float a0, Float a1);
+int     mus_fcomb_p       (mus_any *ptr);
+Float   mus_fcomb         (mus_any *ptr, Float input, Float ignored);
 
-off_t ins_fm_violin(Float start, Float dur, Float freq, Float amp, Float fm_index,
-		    Float *amp_env, int amp_len,
-		    Float periodic_vibrato_rate, Float periodic_vibrato_amp,
-		    Float random_vibrato_rate, Float random_vibrato_amp,
-		    Float noise_freq, Float noise_amount,
-		    Float ind_noise_freq, Float ind_noise_amount,
-		    Float amp_noise_freq, Float amp_noise_amount,
-		    Float *gliss_env, int gliss_len, Float gliss_amount,
-		    Float *fm1_env, int fm1_len,
-		    Float *fm2_env, int fm2_len,
-		    Float *fm3_env, int fm3_len,
-		    Float fm1_rat, Float fm2_rat, Float fm3_rat,
-		    Float fm1_index, Float fm2_index, Float fm3_index,
-		    Float base, Float degree, Float distance,
-		    Float reverb_amount, int index_type, bool no_waveshaping,
-		    mus_any *out, mus_any *rev, mus_interp_t mode);
-off_t ins_jc_reverb(Float start, Float dur, Float volume, bool low_pass, bool doubled,
-		    Float delay1, Float delay2, Float delay3, Float delay4,
-		    Float *amp_env, int amp_len, mus_any *out, mus_any *rev);
-off_t ins_nrev(Float start, Float dur, Float reverb_factor, Float lp_coeff,
-	       Float lp_out_coeff, Float output_scale, Float volume,
-	       Float *amp_env, int amp_len, mus_any *out, mus_any *rev);
-off_t ins_freeverb(Float start, Float dur, Float room_decay, Float damping, Float global,
-		   Float predelay, Float output_gain, Float scale_room_decay,
-		   Float offset_room_decay, Float scale_damping, Float stereo_spread,
-		   int *combtuning, int comb_len, int *allpasstuning, int all_len,
-		   mus_any *output_mixer, mus_any *out, mus_any *rev);
+off_t   ins_fm_violin     (Float start,
+			   Float dur,
+			   Float freq,
+			   Float amp,
+			   Float fm_index,
+			   Float *amp_env,
+			   int amp_len,
+			   Float periodic_vibrato_rate,
+			   Float periodic_vibrato_amp,
+			   Float random_vibrato_rate,
+			   Float random_vibrato_amp,
+			   Float noise_freq,
+			   Float noise_amount,
+			   Float ind_noise_freq,
+			   Float ind_noise_amount,
+			   Float amp_noise_freq,
+			   Float amp_noise_amount,
+			   Float *gliss_env,
+			   int gliss_len,
+			   Float gliss_amount,
+			   Float *fm1_env,
+			   int fm1_len,
+			   Float *fm2_env,
+			   int fm2_len,
+			   Float *fm3_env,
+			   int fm3_len,
+			   Float fm1_rat,
+			   Float fm2_rat,
+			   Float fm3_rat,
+			   Float fm1_index,
+			   Float fm2_index,
+			   Float fm3_index,
+			   Float base,
+			   Float degree,
+			   Float distance,
+			   Float reverb_amount,
+			   bool index_type,
+			   bool no_waveshaping,
+			   mus_any *out,
+			   mus_any *rev,
+			   mus_interp_t mode);
+off_t   ins_jc_reverb     (Float start,
+			   Float dur,
+			   Float volume,
+			   bool low_pass,
+			   bool doubled,
+			   Float delay1,
+			   Float delay2,
+			   Float delay3,
+			   Float delay4,
+			   Float *amp_env,
+			   int amp_len,
+			   mus_any *out,
+			   mus_any *rev);
+off_t   ins_nrev          (Float start,
+			   Float dur,
+			   Float reverb_factor,
+			   Float lp_coeff,
+			   Float lp_out_coeff,
+			   Float output_scale,
+			   Float volume,
+			   Float *amp_env,
+			   int amp_len,
+			   mus_any *out,
+			   mus_any *rev);
+off_t   ins_freeverb      (Float start,
+			   Float dur,
+			   Float room_decay,
+			   Float damping,
+			   Float global,
+			   Float predelay,
+			   Float output_gain,
+			   Float scale_room_decay,
+			   Float offset_room_decay,
+			   Float scale_damping,
+			   Float stereo_spread,
+			   int *combtuning,
+			   int comb_len,
+			   int *allpasstuning,
+			   int all_len,
+			   mus_any *output_mixer,
+			   mus_any *out,
+			   mus_any *rev);
 
 void Init_sndins(void);
 

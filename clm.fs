@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Tue Aug 29 17:15:34 CEST 2006
+\ Changed: Wed Aug 30 20:30:54 CEST 2006
 
 \ Commentary:
 \ 
@@ -250,8 +250,7 @@ mus-audio-default value *clm-device*
 *clm-notehook*      value *notehook*
 
 : make-default-comment ( -- str )
-  $" Written on %s by %s at %s using clm (fth) of %s" _
-  '( date getlogin gethostname fth-date ) string-format
+  $" Written %s by %s at %s using clm (fth) of %s" _ '( date getlogin gethostname fth-date ) format
 ;
 
 : times->samples { start dur -- len beg }

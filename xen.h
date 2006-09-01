@@ -18,6 +18,7 @@
 
 /* HISTORY:
  *
+ *  1-Sep-06:  string changes for Ruby (from Mike).
  *  7-Aug-06:  more careful list length handling in Ruby (from Mike).
  *  23-May-06: added xen_rb_repl_set_prompt to set (no-gui) Ruby repl prompt.
  *  12-May-06: changed HAVE_RATIOS to XEN_HAVE_RATIOS.
@@ -833,10 +834,14 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_STRING_P(Arg)               (TYPE(Arg) == T_STRING)
 #define C_TO_XEN_STRING(a)              xen_rb_str_new2((char *)a)
 #define C_TO_XEN_STRINGN(a, len)        rb_str_new((char *)a, len)
-#define XEN_TO_C_STRING(Str)            RSTRING(Str)->ptr
+#ifndef RSTRING_PTR 
+  #define XEN_TO_C_STRING(Str)          RSTRING(Str)->ptr 
+#else 
+  #define XEN_TO_C_STRING(Str)          RSTRING_PTR(Str) 
+#endif 
 
 #define XEN_CHAR_P(Arg)                 XEN_STRING_P(Arg)
-#define XEN_TO_C_CHAR(Arg)              RSTRING(Arg)->ptr[0]
+#define XEN_TO_C_CHAR(Arg)              XEN_TO_C_STRING(Arg)[0] 
 #define C_TO_XEN_CHAR(Arg)              rb_str_new((char *)(&(Arg)), 1)
 
 #define XEN_NAME_AS_C_STRING_TO_VALUE(a) rb_gv_get(xen_scheme_global_variable_to_ruby(a))

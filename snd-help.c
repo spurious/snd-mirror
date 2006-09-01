@@ -496,6 +496,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+1-Sep:   snd_frg.scm thanks to Olivier Doare.\n\
 28-Aug:  removed vu-font and vu-font-size, added vu-in-dB.\n\
 16-Aug:  display-bark-fft (dsp.scm).\n\
          after-lisp-graph-hook, snd-color, snd-font, show-bare-x-axis.\n\
@@ -507,11 +508,6 @@ void about_snd_help(void)
 31-Jul:  windowed-maxamp renamed moving-max, added moving-rms, moving-sum, moving-length (dsp.scm)\n\
            average renamed moving-average in clm.\n\
          overlay-rms-env in draw.scm.\n\
-28-Jul:  snd8.scm, removed make-ppolar|zpolar (use make-two-pole|zero).\n\
-27-Jul:  mfilter in dsp.scm.\n\
-17-Jul:  merged new-icons.scm into new-buttons.scm and renamed the latter toolbar.scm.\n\
-12-Jul:  green.scm.\n\
-10-Jul:  dlocsig.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Tue Aug 29 16:55:18 CEST 2006
+\ Changed: Wed Aug 30 19:16:11 CEST 2006
 
 \ Commentary:
 \
@@ -50,7 +50,7 @@ instrument: jc-reverb-fs ( keyword-args -- )
   :amp-env  #f    get-args { amp-env }
   *output* mus-channels { chans }
   *reverb* mus-channels { rev-chans }
-  *reverb* reverb-dur { dur }
+  *reverb* reverb-dur *clm-decay-time* f+ { dur }
   *verbose* if get-func-name rev-chans chans reverb-info then
   :feedback -0.7 :feedforward 0.7 :size 1051 make-all-pass { allpass1 }
   :feedback -0.7 :feedforward 0.7 :size  337 make-all-pass { allpass2 }

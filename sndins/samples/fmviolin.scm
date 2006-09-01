@@ -58,18 +58,16 @@
 
 (define (snd-msg frm . args)
   (let ((str (apply format (append (list #f frm) args))))
-    (if (and (defined? 'open-sound)
-	     (not (getenv "EMACS")))
-	(snd-print str)
-	(display str))))
+    (if (string? (getenv "EMACS"))
+	(display str))
+    (snd-print str)))
 
 (define (current-score-time time)
-  (set! time (- time 24))
   (set! counter (+ counter 1))
   (if show
-      (snd-msg ";; ~2D: score ~3D utime ~8,3F~%"
+      (snd-msg ";; ~2D: score ~3D utime ~7,3F~%"
 	       counter
-	       (inexact->exact time)
+	       (- time 24)
 	       (/ (- (get-internal-real-time) start-time) 100.0))))
 
 (definstrument (violin-new beg dur freq amp :key
@@ -87,7 +85,7 @@
 	       :amp-env amp-env)))
 
 (define (short-example)
-  (with-sound ()
+  (with-sound (:reverb nrev :reverb-data '(:lp-coeff 0.6))
 	      (violin-new 0 8.53 993.323 .03 :fm-index .75
 			  :reverb-amount .20 :amp-env (list 0 0 221.00 1 240.00 0))
 	      (violin-new 5 4.53 (* 5/6 993.323) .02 :fm-index
@@ -303,7 +301,7 @@
 
 (define (long-example)
   (set! start-time (get-internal-real-time))
-  (with-sound ()
+  (with-sound (:reverb freeverb :reverb-data '(:room-decay 0.8))
 	      (set! fm-violin-glissando-amount 0.0)
 	      (set! fm-violin-reverb-amount .1)
 	      (set! fm-violin-amp-env metalamp)

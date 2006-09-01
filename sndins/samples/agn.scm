@@ -1,8 +1,9 @@
+;; -*- snd-scheme -*-
 ;;; agn.scm -- Bill Schottstaedt's agn.cl (see clm-2/clm-example.clm and clm-2/bess5.cl)
 
 ;; Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Created: Tue Jun 24 19:05:06 CEST 2003
-;; Changed: Wed May 03 22:27:57 CEST 2006
+;; Changed: Wed Aug 30 22:14:56 CEST 2006
 
 ;; This file is part of Sndins.
 
@@ -45,8 +46,8 @@
 (define *clm-verbose* #t)
 (define *clm-srate* 44100)
 (define *clm-channels* 2)
-(define *clm-reverb* freeverb)
-(define *clm-reverb-data* '(:room-decay 0.8))
+(define *clm-reverb* jc-reverb)
+(define *clm-reverb-data* '(:volume 0.8))
 (define *clm-reverb-channels* 2)
 (define *clm-delete-reverb* #t)
 
@@ -68,10 +69,9 @@
 
 (define (snd-msg frm . args)
   (let ((str (apply format (append (list #f frm) args))))
-    (if (and (provided? 'snd)
-	     (not (getenv "EMACS")))
-	(snd-print str)
-	(display str))))
+    (if (string? (getenv "EMACS"))
+	(display str))
+    (snd-print str)))
 
 (define lim 256)
 (define time 60)

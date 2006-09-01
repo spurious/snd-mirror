@@ -1,9 +1,9 @@
-#! /usr/bin/env fth --no-init-file --verbose --script
+#! /usr/bin/env fth --no-init-file --script
 \ fmviolin.fth -- CLM fmviolin.clm -*- snd-forth -*-
 
 \ Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 \ Created: Mon Dec 06 17:23:22 CET 2004
-\ Changed: Wed May 03 18:52:55 CEST 2006
+\ Changed: Wed Aug 30 22:38:27 CEST 2006
 
 \ Commentary:
 
@@ -15,9 +15,9 @@
 
 \ Code:
 
-require clm
 dl-load sndlib Init_sndlib
 dl-load sndins Init_sndins
+require clm
 
 $" test-ins-f.snd"   to *clm-file-name*
 #t   	    	     to *clm-play*
@@ -25,8 +25,6 @@ $" test-ins-f.snd"   to *clm-file-name*
 #t   	    	     to *clm-verbose*
 22050  	    	     to *clm-srate*
 2      	    	     to *clm-channels*
-' freeverb 	     to *clm-reverb*
-'( :room-decay 0.8 ) to *clm-reverb-data*
 2           	     to *clm-reverb-channels*
 #t          	     to *clm-delete-reverb*
 
@@ -148,7 +146,7 @@ $" test-ins-f.snd"   to *clm-file-name*
   :degree                     degree
   :distance                   distance
   :reverb-amount              revamount
-  :index-type                 index-type   fm-violin
+  :index-type                 index-type   fm-violin drop
 ;
 
 : vln-one-sin ( start dur freq amp keyword-args -- )
@@ -189,7 +187,7 @@ $" test-ins-f.snd"   to *clm-file-name*
     amp					\ amp
     :fm-index      fm-index 1.0 random 0.75 f+ f*
     :amp-env       amp-env
-    :reverb-amount rev-amt fm-violin
+    :reverb-amount rev-amt fm-violin drop
   loop
 ;
 
@@ -204,15 +202,13 @@ event: fth-short-example ( -- )
   5 4.53 5/6 993.323 f* 0.02 :fm-index 0.55 :reverb-amount 0.2 :amp-env amp-env violin-new
 ;event
 
-0  value *test-counter*
-#f value *test-timer*
+0  value *counter*
+#f value *timer*
 
-: test-info ( time -- )
-  { cur-time }
-  *test-counter* 1+ to *test-counter*
-  *test-timer* stop-timer
-  $" \\ %02d: score %3d utime %8.3f\n"
-  '( *test-counter* cur-time f>s *test-timer* user-time@ ) fth-print
+: test-info { ctime -- }
+  *counter* 1+ to *counter*
+  *timer* stop-timer
+  $" \\ %02d: score %3d   utime %7.3f\n" '( *counter* ctime *timer* user-time@ ) fth-print
 ;
 
 event: fth-long-example ( -- )
@@ -222,8 +218,8 @@ event: fth-long-example ( -- )
   '( 0 0 50 1 100 0 )                            { mamp }
   '( 0 0 65 1 100 0 )                            { n-amp }
   0 { beg }
-  0 to *test-counter*
-  make-timer to *test-timer*
+  0 to *counter*
+  make-timer to *timer*
 
   beg test-info
 
@@ -245,7 +241,7 @@ event: fth-long-example ( -- )
   beg 0.0040 f+ 0.8  24.4994 0.16   :fm-index 1.7348 vln-one-sin
   beg 0.0043 f+ 4    24.4994 0.3    :fm-index 2.0886 vln-one-sin
 
-  beg 6 f+ dup to beg test-info
+  beg 6 + dup to beg test-info
 
   \ 2, score 6
   2.718 to fmv-fm1-rat
@@ -263,7 +259,7 @@ event: fth-long-example ( -- )
   beg 0.0040 f+ 0.8  32.7025 0.16   :fm-index 1.8092 vln-one-sin
   beg 0.0043 f+ 2    32.7025 0.2600 :fm-index 1.6198 vln-one-sin
 
-  beg 6 f+ dup to beg test-info
+  beg 6 + dup to beg test-info
 
   \ 3, score 12
   0.2   to fmv-reverb-amount
@@ -276,7 +272,7 @@ event: fth-long-example ( -- )
   beg 0.0033 f+ 2    65.4050 0.3  :fm-index 2.4540 vln-one-sin
   beg 0.0043 f+ 4    65.4050 0.16 :fm-index 2.2909 vln-one-sin
 
-  beg 6 f+ dup to beg test-info
+  beg 6 + dup to beg test-info
 
   \ 4, score 18
   0.1 to fmv-reverb-amount
@@ -288,7 +284,7 @@ event: fth-long-example ( -- )
   beg 0.0033 f+ 2    4.0878 0.3  :fm-index 1.9693 vln-one-sin
   beg 0.0043 f+ 4    4.0878 0.16 :fm-index 2.2534 vln-one-sin
 
-  beg 6 f+ dup to beg test-info
+  beg 6 + dup to beg test-info
 
   \ 5, score 24
   restore-fm-violin-defaults
@@ -344,14 +340,12 @@ event: fth-long-example ( -- )
   beg 0.0800 f+ 6  196.9950 0.15 :fm-index 1.8511 :reverb-amount 0.1 :amp-env tap vln-one-sin-ran
   beg 0.0800 f+ 6 1047.4800 0.15 :fm-index 2.2148 :reverb-amount 0.1 :amp-env tap vln-one-sin-ran
   beg 0.0800 f+ 6  831.6200 0.15 :fm-index 1.9913 :reverb-amount 0.1 :amp-env tap vln-one-sin-ran
-  \ FIXME
-  \ beg 0.0800 f+ 6 2793.8400 0.15 :fm-index 2.2607 :reverb-amount 0.1 :amp-env tap vln-one-sin-ran
   beg 0.2700 f+ 6  784.9800 0.16 :fm-index 2.0693 :reverb-amount 0.1 :amp-env tap vln-one-sin-ran
   beg 0.2700 f+ 6   64.4050 0.16 :fm-index 1.6920 :reverb-amount 0.1 :amp-env tap vln-one-sin-ran
   beg 0.2700 f+ 6  208.6550 0.16 :fm-index 2.2597 :reverb-amount 0.1 :amp-env tap vln-one-sin-ran
   beg 0.2700 f+ 6   43.6538 0.16 :fm-index 2.2522 :reverb-amount 0.1 :amp-env tap vln-one-sin-ran
 
-  beg 12 f+ dup to beg test-info
+  beg 12 + dup to beg test-info
 
   \ 6, score 36
   restore-fm-violin-defaults
@@ -388,7 +382,7 @@ event: fth-long-example ( -- )
   beg 0.0650 f+ 4    97.9975 0.06 :fm-index 2.4616 :reverb-amount 0.1
   :amp-env tap :noise-amount 0.0010 vln-one-sin-ran
 
-  beg 7 f+ dup to beg test-info
+  beg 7 + dup to beg test-info
 
   \ 7, score 43
   beg 0.0000 f+ 1.8 261.6200 0.16 :fm-index 2.2576 :reverb-amount 0.0286
@@ -424,7 +418,7 @@ event: fth-long-example ( -- )
   beg 0.0650 f+ 4    65.4050 0.06 :fm-index 2.0207 :reverb-amount 0.1
   :amp-env tap :noise-amount 0.0010 vln-one-sin-ran
 
-  beg 6 f+ dup to beg test-info
+  beg 6 + dup to beg test-info
 
   \ 8, score 49
   beg 0.0100 f+ 0.9  3135.9200 0.16 :fm-index 2.1204 :reverb-amount 0.0024
@@ -460,7 +454,7 @@ event: fth-long-example ( -- )
   beg 0.080 f+ 1  784.980 0.16 :reverb-amount 0.01 :amp-env tap :noise-amount 0.004 vln-one-sin-ran
   beg 0.085 f+ 2  391.990 0.16 :reverb-amount 0.01 :amp-env tap :noise-amount 0.004 vln-one-sin-ran
 
-  beg 6 f+ dup to beg test-info
+  beg 6 + dup to beg test-info
 
   \ 9, score 55
   beg 0.0100 f+ 0.9  97.9975 0.1 :fm-index 2.0885 :reverb-amount 0.0031
@@ -520,7 +514,7 @@ event: fth-long-example ( -- )
   beg 0.095 f+ 5 12.2497 0.1 :fm-index 2.3224 :reverb-amount 0.1 :amp-env tap
   :noise-amount 0.004 vln-one-sin-ran
 
-  beg 6 f+ dup to beg test-info
+  beg 6 + dup to beg test-info
 
   \ 10, score 61
   beg 0.2100 f+ 0.9 123.4725 0.1 :reverb-amount 0.0031
@@ -568,7 +562,7 @@ event: fth-long-example ( -- )
   beg 0.281 f+ 1 31.8681 0.1 :reverb-amount 0.1 :amp-env tap :noise-amount 0.004 vln-one-sin-ran
   beg 0.286 f+ 2 15.4341 0.1 :reverb-amount 0.1 :amp-env tap :noise-amount 0.004 vln-one-sin-ran
 
-  beg 8 f+ dup to beg test-info
+  beg 8 + dup to beg test-info
 
   \ 11, score 69
   '( 0 0 1 1 100 0 ) { yup }
@@ -605,7 +599,7 @@ event: fth-long-example ( -- )
   beg 0.080 f+ 1  561.6022 0.16 :reverb-amount 0.01 :amp-env yup :noise-amount 0.004 vln-one-sin-ran
   beg 0.085 f+ 1  319.5325 0.16 :reverb-amount 0.01 :amp-env yup :noise-amount 0.004 vln-one-sin-ran
 
-  beg 3 f+ dup to beg test-info
+  beg 3 + dup to beg test-info
 
   \ 12, score 72
   beg 0.0100 f+ 0.9 3135.9200 0.16 :fm-index 1.6329 :reverb-amount 0.0031
@@ -669,7 +663,7 @@ event: fth-long-example ( -- )
   :amp-env '( 0 0 0.3333 1 4.3603 0.6 9.3939 0.3 24.4950 0.1 100.0 0 )
   :noise-amount 0.0100 vln-one-sin-ran
 
-  beg 3 f+ dup to beg test-info
+  beg 3 + dup to beg test-info
 
   \ 13, score 75
   0    to fmv-reverb-amount
@@ -735,7 +729,7 @@ event: fth-long-example ( -- )
   :amp-env '( 0 0 0.3333 1 4.3603 0.6 9.3939 0.3 24.4950 0.1 100.0 0 )
   vln-one-sin-ran
 
-  beg 3 f+ dup to beg test-info
+  beg 3 + dup to beg test-info
 
   \ 14, score 78
   restore-fm-violin-defaults
@@ -757,7 +751,7 @@ event: fth-long-example ( -- )
   beg 0.2625 f+ 2   130.8100 0.16 :fm-index 2.1416 vln-one-sin
   beg 0.2633 f+ 2   130.5488 0.16 :fm-index 2.0883 vln-one-sin
 
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 15, score 82
   '( 0 0 0.5 1 5 1 10 0.5 15 0.25 35 0.1 100 0 ) to fmv-amp-env
@@ -788,7 +782,7 @@ event: fth-long-example ( -- )
   beg 0.2648 f+ 8     21.3532 0.16 :fm-index 1.7955 vln-one-sin-ran
   beg 0.2648 f+ 8     17.0826 0.16 :fm-index 2.0866 vln-one-sin-ran
 
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 16, score 86
   0.001 to fmv-reverb-amount
@@ -824,7 +818,7 @@ event: fth-long-example ( -- )
   beg 0.2630 f+ 4    523.2400 0.16 :fm-index 2.3302 vln-one-sin-ran
   beg 0.2630 f+ 4    523.2400 0.16 :fm-index 2.4949 vln-one-sin-ran
 
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 17, score 90
   3.414 to fmv-fm1-rat
@@ -858,7 +852,7 @@ event: fth-long-example ( -- )
   beg 0.2630 f+ 4   261.6200 0.16 :fm-index 1.9459 vln-one-sin-ran
   beg 0.2630 f+ 4   261.6200 0.16 :fm-index 1.5782 vln-one-sin-ran
   
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 18, score 94
   3.414 to fmv-fm1-rat
@@ -892,7 +886,7 @@ event: fth-long-example ( -- )
   beg 0.2630 f+ 4   1046.4800 0.1  :fm-index 2.2490 vln-one-sin-ran
   beg 0.2630 f+ 4   1046.4800 0.1  :fm-index 2.4081 vln-one-sin-ran
   
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 19, score 98
   0.01 to fmv-reverb-amount
@@ -924,7 +918,7 @@ event: fth-long-example ( -- )
   beg 0.2630 f+ 4    523.2400 0.16 :fm-index 2.2086 vln-one-sin-ran
   beg 0.2630 f+ 4    523.2400 0.16 :fm-index 2.3130 vln-one-sin-ran
   
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 20, score 102
   0.0001 to fmv-noise-amount
@@ -953,7 +947,7 @@ event: fth-long-example ( -- )
   beg 0.2643 f+ 2   520.6316 0.16 :fm-index 1.9788 vln-one-sin-ran
   beg 0.2643 f+ 2   520.1115 0.16 :fm-index 1.6770 vln-one-sin-ran
   
-  beg 8 f+ dup to beg test-info
+  beg 8 + dup to beg test-info
 
   \ 21, score 110
   0.004 to fmv-noise-amount
@@ -985,7 +979,7 @@ event: fth-long-example ( -- )
   beg 0.2643 f+ 2    520.6316 0.16 :fm-index 1.7817 vln-one-sin-ran
   beg 0.2643 f+ 2    520.1115 0.16 :fm-index 2.0283 vln-one-sin-ran
   
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 22, score 114
   0.1   to fmv-reverb-amount
@@ -1021,7 +1015,7 @@ event: fth-long-example ( -- )
   beg 0.2643 f+ 4    65.4050 0.16 :fm-index 2.4247 vln-one-sin-ran
   beg 0.2643 f+ 4    65.4050 0.16 :fm-index 2.0419 vln-one-sin-ran
   
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 23, score 118
   2.718 to fmv-fm1-rat
@@ -1055,7 +1049,7 @@ event: fth-long-example ( -- )
   beg 0.2643 f+ 4    32.7025 0.16 :fm-index 1.8785 vln-one-sin-ran
   beg 0.2643 f+ 4    32.7025 0.16 :fm-index 2.4573 vln-one-sin-ran
   
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 24, score 122
   2.718 to fmv-fm1-rat
@@ -1089,7 +1083,7 @@ event: fth-long-example ( -- )
   beg 0.2643 f+ 4    8.1756 0.16 :fm-index 1.6908 vln-one-sin-ran
   beg 0.2643 f+ 4    8.1756 0.16 :fm-index 2.4103 vln-one-sin-ran
   
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 25, score 126
   beg 0.2600 f+ 1.6 11.1107 0.16 :fm-index 1.6371 vln-one-sin-ran
@@ -1120,7 +1114,7 @@ event: fth-long-example ( -- )
   beg 0.2643 f+ 4    4.0878 0.16 :fm-index 2.3083 vln-one-sin-ran
   beg 0.2643 f+ 4    4.0878 0.16 :fm-index 2.2215 vln-one-sin-ran
   
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 26, score 130
   beg 0.2600 f+ 1.6  66.5893 0.16 :fm-index 1.7041 vln-one-sin-ran
@@ -1151,7 +1145,7 @@ event: fth-long-example ( -- )
   beg 0.2643 f+ 4    24.6221 0.16 :fm-index 2.3154 vln-one-sin-ran
   beg 0.2643 f+ 4    24.6467 0.16 :fm-index 1.9240 vln-one-sin-ran
   
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 27, score 134
   6.718 to fmv-fm1-rat
@@ -1185,7 +1179,7 @@ event: fth-long-example ( -- )
   beg 0.2643 f+ 4    24.4994 0.16 :fm-index 2.2052 vln-one-sin-ran
   beg 0.2643 f+ 4    24.4994 0.16 :fm-index 2.0102 vln-one-sin-ran
   
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 28, score 138
   restore-fm-violin-defaults
@@ -1207,7 +1201,7 @@ event: fth-long-example ( -- )
   beg 0.2635 f+ 0.3  522.1951 0.16 :fm-index 1.9441 vln-one-sin
   beg 0.2643 f+ 0.4  520.6316 0.16 :fm-index 2.4656 vln-one-sin
   
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 29, score 142
   restore-fm-violin-defaults
@@ -1232,7 +1226,7 @@ event: fth-long-example ( -- )
   beg 0.1240 f+ 0.5 1041.2630 0.16 :fm-index 3 :reverb-amount 0
   :amp-env metalamp :fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180 vln-one-sin
 
-  beg 2 f+ dup to beg test-info
+  beg 2 + dup to beg test-info
 
   \ 30, score 144
   '( 0 0 20 0.5000 40 0.1 60 0.2 80 1 100 0 ) { z1amp }
@@ -1244,7 +1238,7 @@ event: fth-long-example ( -- )
   :amp-env z1amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.5050 f+ 2.4900  859.5863 0.0083 :fm-index 0.5890 :reverb-amount 0.1
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.0590 f+ 1.0550 1758.0816 0.0053 :fm-index 1.8640 :reverb-amount 0.1
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.0930 f+ 1.8580  229.0566 0.0110 :fm-index 1.9690 :reverb-amount 0.1
@@ -1259,14 +1253,14 @@ event: fth-long-example ( -- )
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.8480 f+ 3.0510  859.7203 0.0083 :fm-index 1.6080 :reverb-amount 0.1
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.4880 f+ 3.2350  231.9431 0.0110 :fm-index 0.9690 :reverb-amount 0.1
   :amp-env z1amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.5610 f+ 3.2810  475.2009 0.0083 :fm-index 0.3740 :reverb-amount 0.1
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.7970 f+ 2.8400  988.8375 0.0053 :fm-index 0.4200 :reverb-amount 0.1
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.0620 f+ 1.0210  411.7247 0.0110 :fm-index 0.1370 :reverb-amount 0.1
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.2130 f+ 1.1610  848.5959 0.0083 :fm-index 1.3120 :reverb-amount 0.1
@@ -1283,7 +1277,7 @@ event: fth-long-example ( -- )
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.7890 f+ 3.1560  475.7231 0.0083 :fm-index 0.7370 :reverb-amount 0.1
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.1540 f+ 2.1290  976.0237 0.0053 :fm-index 1.2690 :reverb-amount 0.1
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.4890 f+ 3.3650  390.0525 0.0110 :fm-index 1.4580 :reverb-amount 0.1
@@ -1294,12 +1288,12 @@ event: fth-long-example ( -- )
   :amp-env z1amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.9440 f+ 3.1560  229.0528 0.0110 :fm-index 1.8300 :reverb-amount 0.1
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.3930 f+ 1.1100  473.7225 0.0083 :fm-index 1.6260 :reverb-amount 0.1
   :amp-env z1amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.6970 f+ 1.6170  988.7953 0.0053 :fm-index 0.4230 :reverb-amount 0.1
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.0620 f+ 1.3190  390.9769 0.0110 :fm-index 0.4100 :reverb-amount 0.1
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.0840 f+ 3.3660  804.6413 0.0083 :fm-index 1.8760 :reverb-amount 0.1
@@ -1318,7 +1312,7 @@ event: fth-long-example ( -- )
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.9640 f+ 3.3230  416.3916 0.0099 :fm-index 0.6290 :reverb-amount 0.1
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.1320 f+ 1.7050 1637.2303 0.0049 :fm-index 1.0570 :reverb-amount 0.1
   :amp-env z1amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.15   f+ 3.1250 1762.4906 0.0049 :fm-index 1.3170 :reverb-amount 0.1
@@ -1331,7 +1325,7 @@ event: fth-long-example ( -- )
   :amp-env z1amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.9730 f+ 0.5990  848.1253 0.0077 :fm-index 1.9380 :reverb-amount 0.1
   :amp-env z1amp :noise-amount 0.0050 vln-one-sin-ran
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.0880 f+ 3.3360  229.9144 0.0099 :fm-index 1.3930 :reverb-amount 0.1
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
   beg 0.1170 f+ 1.1300  984.0816 0.0049 :fm-index 0.3560 :reverb-amount 0.1
@@ -1347,7 +1341,7 @@ event: fth-long-example ( -- )
   beg 0.8320 f+ 0.7260  857.2875 0.0077 :fm-index 0.7520 :reverb-amount 0.1
   :amp-env z2amp :noise-amount 0.0050 vln-one-sin-ran
 
-  beg 4 f+ dup to beg test-info
+  beg 4 + dup to beg test-info
 
   \ 31, score 156
   '( 0 1 20 0 100 0 ) { indfunc }
@@ -1357,27 +1351,27 @@ event: fth-long-example ( -- )
   restore-fm-violin-defaults
   beg 0.2600 f+ 0.0500 80 0.8 :fm-index 5 :reverb-amount 0
   :amp-env ampfunc1 :fm1-env indfunc2 vln-one-sin
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.2610 f+ 0.2 80 0.8 :fm-index 4 :reverb-amount 0
   :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875 vln-one-sin
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.2600 f+ 0.05 80 0.8 :fm-index 5 :reverb-amount 0
   :amp-env ampfunc1 :fm1-env indfunc2 vln-one-sin
   beg 0.2620 f+ 0.2  80 0.8 :fm-index 5 :reverb-amount 0
   :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875 vln-one-sin
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.2600 f+ 0.0500 80 0.8 :fm-index 6 :reverb-amount 0
   :amp-env ampfunc1 :fm1-env indfunc2  vln-one-sin
   beg 0.2630 f+ 0.2 80 0.8 :fm-index 6 :reverb-amount 0
   :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875 vln-one-sin
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.2600 f+ 0.0500 80 0.3 :fm-index 4 :reverb-amount 0
   :amp-env ampfunc1 :fm1-env indfunc2 vln-one-sin 
   beg 0.2620 f+ 0.1 160 0.3 :fm-index 4 :reverb-amount 0
   :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875 vln-one-sin
   beg 0.2620 f+ 0.2500 80 0.8 :fm-index 4 :reverb-amount 0
   :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875 vln-one-sin
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.2600 f+ 0.0500 80 0.5000 :fm-index 4 :reverb-amount 0
   :amp-env ampfunc1 :fm1-env indfunc2 vln-one-sin
   beg 0.2610 f+ 0.1 210 0.3 :fm-index 4 :reverb-amount 0
@@ -1386,7 +1380,7 @@ event: fth-long-example ( -- )
   :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875 vln-one-sin
   beg 0.2630 f+ 0.2500 320 0.1 :fm-index 2 :reverb-amount 0
   :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875 vln-one-sin
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.2600 f+ 0.0500 80 0.8 :fm-index 4 :reverb-amount 0
   :amp-env ampfunc1 :fm1-env indfunc2 vln-one-sin 
   beg 0.2610 f+ 0.1 210 0.1 :fm-index 2 :reverb-amount 0
@@ -1395,7 +1389,7 @@ event: fth-long-example ( -- )
   :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875 vln-one-sin
   beg 0.2630 f+ 0.2500 320 0.3 :reverb-amount 0
   :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875  vln-one-sin
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.2600 f+ 0.0500 80 0.8 :fm-index 2 :reverb-amount 0
   :amp-env ampfunc1 :fm1-env indfunc2 vln-one-sin
   beg 0.2610 f+ 0.1 210 0.1 :fm-index 2 :reverb-amount 0
@@ -1405,7 +1399,7 @@ event: fth-long-example ( -- )
   beg 0.2630 f+ 0.2500 320 0.3 :reverb-amount 0
   :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875 vln-one-sin
 
-  beg 1 f+ dup to beg test-info
+  beg 1 + dup to beg test-info
 
   \ 32, score 164
   0     to fmv-glissando-amount
@@ -1438,7 +1432,7 @@ event: fth-long-example ( -- )
   beg 0.2628 f+ 4   44.4427 0.01 :fm-index 2.4860 :reverb-amount 0.1
   :amp-env n-amp :fm1-env n-amp vln-one-sin-ran
 
-  beg 8 f+ dup to beg test-info
+  beg 8 + dup to beg test-info
 
   \ 33, score 172
   restore-fm-violin-defaults
@@ -1457,7 +1451,7 @@ event: fth-long-example ( -- )
   beg 0.2643 f+ 4    32.7025 0.05 :fm-index 1.7578 :reverb-amount 0.2
   :amp-env mamp :fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180 vln-one-sin
 
-  beg 8 f+ dup to beg test-info
+  beg 8 + dup to beg test-info
 
   \ 34, score 180
   beg 0.2600 f+ 6.6830  244.8160 0.0060 :fm-index 2   :reverb-amount 0.2
@@ -1475,7 +1469,7 @@ event: fth-long-example ( -- )
   beg 0.7040 f+ 7.2080  655.5670 0.0040 :fm-index 2   :reverb-amount 0.2
   :noise-amount 0.0040 vln-one-sin-ran
 
-  beg 9 f+ dup to beg test-info
+  beg 9 + dup to beg test-info
 
   \ 35, score 189
   '( 0 0 15 1 100 0 ) { updown }
@@ -1499,7 +1493,7 @@ event: fth-long-example ( -- )
   beg 0.9810 f+ 3.5670  123.4710 0.0420 :fm-index 0.2330
   :amp-env '( 0 0 2.8035 1 3.7847 0.7 4.2052 1.0 97.1965 0.8095 100 0 )
   vln-one-sin-exp
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.1280 f+ 1.0450  246.9420 0.0170 :fm-index 1.2050
   :amp-env '( 0 0 9.5694 1 12.9187 0.7 14.3541 1 90.4306 0.5294 100 0 )
   vln-one-sin-exp
@@ -1518,25 +1512,25 @@ event: fth-long-example ( -- )
   beg 0.9060 f+ 8.8360 1172.5830 0.0180 :fm-index 1.1350
   :amp-env '( 0 0 1.1317 1 1.5278 0.7 1.6976 1 98.8683 0.5556 100 0 )
   vln-one-sin-exp
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.1510 f+ 4.9320 374.1370 0.0170 :fm-index 0.1800
   :amp-env '( 0 0 2.0276 1 2.7372 0.7 3.0414 1 97.9724 0.5294 100 0 )
   vln-one-sin-exp
   beg 0.2720 f+ 2.3250 369.9940 0.0170 :fm-index 1.1030
   :amp-env '( 0 0 4.3011 1 5.8065 0.7 6.4516 1 95.6989 0.5294 100 0 )
   vln-one-sin-exp
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.6960 f+ 3.5540 366.3330 0.0310 :fm-index 1.0480
   :amp-env '( 0 0 2.8137 1 3.7985 0.7 4.2206 1 97.1863 0.7419 100 0 )
   vln-one-sin-exp
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.7240 f+ 0.6040 246.9420 0.0170 :fm-index 1.2050
   :amp-env '( 0 0 16.5563 1 22.351 0.7 24.8344 1 83.4437 0.5294 100 0 )
   vln-one-sin-exp
   beg 0.9420 f+ 2.5010 123.4710 0.0330 :fm-index 0.2330
   :amp-env '( 0 0 3.9984 1 5.3978 0.7 5.9976 1 96.0016 0.7576 100 0 )
   vln-one-sin-exp
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.0340 f+ 2.3860 246.9420 0.0170 :fm-index 0.0020
   :amp-env '( 0 0 4.1911 1 5.6580 0.7 6.2867 1 95.8089 0.5294 100 0 )
   vln-one-sin-exp
@@ -1549,7 +1543,7 @@ event: fth-long-example ( -- )
   beg 0.9830 f+ 2.9860 123.4710 0.0380 :fm-index 0.2330
   :amp-env '( 0 0 3.3490 1 4.5211 0.7 5.0234 1 96.6510 0.7895 100 0 )
   vln-one-sin-exp
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.4910 f+ 0.6110 123.9770 0.0170 :fm-index 0.7550
   :amp-env '( 0 0 16.3666 1 22.0949 0.7 24.55 1 83.6334 0.5294 100 0 )
   vln-one-sin-exp
@@ -1565,7 +1559,7 @@ event: fth-long-example ( -- )
   beg 0.9380 f+ 0.6520 122.2995 0.0170 :fm-index 1.8380
   :amp-env '( 0 0 15.3374 1 20.706 0.7 23.0061 1 84.6626 0.5294 100 0 )
   vln-one-sin-exp
-  beg 1 f+ to beg 
+  beg 1 + to beg 
   beg 0.2350 f+ 3.7250 586.2915 0.0180 :fm-index 1.1350
   :amp-env '( 0 0 2.6846 1 3.6242 0.7 4.0268 1 97.3154 0.5556 100 0 )
   vln-one-sin-exp
@@ -1602,7 +1596,7 @@ event: fth-long-example ( -- )
   beg 0.5570 f+ 18.322 1251.5960 0.020 :fm-index 0.2990
   :amp-env '( 0 0 0.5458 1.000 0.7368 0.7 0.8187 1 99.4542 0.6 100 0 )
   vln-one-sin-exp
-  beg 1 f+ to beg
+  beg 1 + to beg
   beg 0.1060 f+ 1.9900 183.1665 0.0230 :fm-index 1.0480
   :amp-env '( 0 0 5.0251 1.0 6.7839 0.7 7.5377 1 94.9749 0.6522 100 0 )
   vln-one-sin-exp
@@ -1612,7 +1606,7 @@ event: fth-long-example ( -- )
   beg 0.6370 f+ 1.3090 183.1665 0.0310 :fm-index 1.0480
   :amp-env '( 0 0 7.6394 1 10.3132 0.7 11.4591 1 92.3606 0.7419 100 0 )
   vln-one-sin-exp
-  beg 1 f+ to beg 
+  beg 1 + to beg 
   beg 0.0330 f+ 1.1590 183.1665 0.0250 :fm-index 1.0480
   :amp-env '( 0 0 8.6281 1 11.6480 0.7 12.9422 1 91.3719 0.6800 100 0 )
   vln-one-sin-exp
@@ -1634,7 +1628,7 @@ event: fth-long-example ( -- )
   beg 0.2600 f+ 12.8770   30.8681 0.0170 :fm-index 1.5 :amp-env updown vln-one-sin
   beg 0.2600 f+ 11.8770   15.4341 0.0170 :fm-index 1.5 :amp-env updown vln-one-sin
 
-  beg 19 f+ dup to beg test-info
+  beg 19 + dup to beg test-info
 
   \ 36, score 217
   restore-fm-violin-defaults
@@ -1647,7 +1641,7 @@ event: fth-long-example ( -- )
   beg 0.2680 f+ 1.5660 110 0.4500 :fm-index 1.2 :reverb-amount 0.0013
   :amp-env '( 0 0 0.1916 1.0 4.2242 0.6 9.2651 0.3 24.3876 0.1 100 0 ) cel-one-sum
 
-  beg 3 f+ dup to beg test-info
+  beg 3 + dup to beg test-info
 
   \ 37, score 220
   beg 0.8600 f+ 0.9    733.3330 0.1875 :fm-index 0.2 :distance 1.0 :reverb-amount 0.0012
@@ -1674,9 +1668,13 @@ event: fth-long-example ( -- )
   :amp-env '( 0 0 1.3333 1 5.3199 0.6 10.3030 0.3 25.2525 0.1 100 0 ) vln-one-sin
 ;event
 
-: long-example ( -- )  ['] fth-long-example  with-sound ;
-: short-example ( -- ) ['] fth-short-example with-sound ;
+: long-example  ( -- )
+  ['] fth-long-example  :reverb ['] freeverb :reverb-data '( :room-decay 0.8 ) with-sound
+;
+: short-example ( -- )
+  ['] fth-short-example :reverb ['] nrev     :reverb-data '( :lp-coeff   0.6 ) with-sound
+;
 
-*argc* 0= [if] long-example [else] short-example [then]
+'snd provided? [unless] *argc* 0= [if] long-example [else] short-example [then] [then]
 
 \ fmviolin.fth ends here

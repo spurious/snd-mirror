@@ -4,25 +4,26 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat May 24 20:35:03 CEST 2003
-# Changed: Wed May 03 14:24:31 CEST 2006
+# Changed: Wed Aug 30 22:15:28 CEST 2006
 
 # This file is part of Sndins.
 
 # Type do_agn
 # or start the script in a shell.
 
+require "sndlib"
+require "sndins"
 require "examp"
 require "ws"
 require "env"
-require "sndins"
 
 $clm_play            = true
 $clm_statistics      = true
 $clm_verbose         = true
 $clm_srate           = 44100
 $clm_channels        = 2
-$clm_reverb          = :freeverb
-$clm_reverb_data     = [:room_decay, 0.8]
+$clm_reverb          = :jc_reverb
+$clm_reverb_data     = [:volume, 0.8]
 $clm_reverb_channels = 2
 $clm_delete_reverb   = true
 
@@ -113,7 +114,7 @@ def do_agn(file = "agn.rbm")
   sndfile = File.basename(file, ".*") + ".snd"
   message("Writing %s", file.inspect)
   Agn.new.agn(file)
-  clm_load(file, :output, sndfile)
+  clm_load(file, :clm, true, :output, sndfile)
 end
 
 do_agn((ARGV[0] or "agn.rbm")) unless provided? :snd

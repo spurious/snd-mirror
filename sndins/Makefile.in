@@ -12,21 +12,15 @@ mkinstalldirs   = $(SHELL) $(top_srcdir)/mkinstalldirs
 
 CC              = @CC@
 DEFS            = @DEFS@
-CFLAGS          = @CFLAGS@ -fPIC
-LDFLAGS         = @LDFLAGS@
-LIBS            = @LIBS@
-XEN_CFLAGS      = @GUILE_CFLAGS@
-XEN_LIBS        = @GUILE_LIBS@
-GSL_FLAGS       = @GSL_CFLAGS@
-GSL_LIBS        = @GSL_LIBS@
+CFLAGS          = -I$(top_builddir) @CFLAGS@ @GUILE_CFLAGS@ @GSL_CFLAGS@ -I$(top_srcdir) -fPIC
+LDFLAGS         = @LDSO_FLAGS@ @LDFLAGS@
+LIBS            = @LIBS@ @GUILE_LIBS@ @GSL_LIBS@
 
 INSTALL         = @INSTALL@
 SO_INSTALL      = @SO_INSTALL@
 SO_LD           = @SO_LD@
 A_LD            = ar
 A_LD_FLAGS      = cr
-LD_FLAGS        = @LD_FLAGS@
-LDSO_FLAGS      = @LDSO_FLAGS@
 
 OBJS            = sndins.o $(top_builddir)/sndlib.a
 SO_TARGET       = libsndins.so
@@ -34,10 +28,10 @@ A_TARGET        = libsndins.a
 LIB_TARGET      = sndins.so
 
 .c.o:
-	$(CC) -c $(DEFS) $(CFLAGS) $(XEN_CFLAGS) $(GSL_FLAGS) -I$(top_builddir) -I$(top_srcdir) $<
+	$(CC) -c $(DEFS) $(CFLAGS) $<
 
 sndins: $(OBJS)
-	$(SO_LD) $(LDSO_FLAGS) $(LDFLAGS) -o $(SO_TARGET) $(OBJS) $(XEN_LIBS) $(GSL_LIBS) $(LIBS)
+	$(SO_LD) $(LDFLAGS) -o $(SO_TARGET) $(OBJS) $(LIBS)
 	$(A_LD)  $(A_LD_FLAGS) $(A_TARGET) $(OBJS)
 	ranlib $(A_TARGET)
 	cp $(SO_TARGET) $(LIB_TARGET)
@@ -46,6 +40,7 @@ install: sndins
 	$(mkinstalldirs) $(libdir)
 	$(mkinstalldirs) $(includedir)
 	$(INSTALL) $(A_TARGET) $(libdir)/$(A_TARGET)
+	ranlib $(libdir)/$(A_TARGET)
 	$(SO_INSTALL) $(SO_TARGET) $(libdir)/$(SO_TARGET)
 
 uninstall:
