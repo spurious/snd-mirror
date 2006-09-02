@@ -851,6 +851,12 @@ style \"reset\" = \"default_button\"\n\
 \n\
 widget \"*.reset_button\" style \"reset\"\n\
 widget \"*.the_unpane\" style \"default\"\n\
+style \"recorder\" = \"default\"\n\
+{\n\
+  xthickness = 8\n\
+  ythickness = 8\n\
+}\n\
+widget \"*.record_frame\" style \"recorder\"\n\
 style \"white_button\" = \"default_button\"\n\
 {\n\
   bg[NORMAL] = { 1.0, 1.0, 1.0 }\n\

@@ -2,17 +2,17 @@
 #include "snd-rec.h"
 
 /* SOMEDAY: if user resizes dialog, resize vu meters */
-/* TODO: if user changes vu-size after meters created, make sure the pixmaps are big enough */
-/* TODO: write max amps to meters (click in meter to clear) */
+/* TODO: if user changes vu-size after meters created, make sure the pixmaps are big enough (this is probably safe now because the size can't change) */
 
 typedef struct {
-  GtkWidget *meter;
+  GtkWidget *meter, *label;
   GdkDrawable *wn;
   int on_off;
   int clipped;
   Float current_val, last_val;
   Float red_deg;
   Float size;
+  Float max_val;
   bool dB;
   GdkPixmap *off_label;
   GdkPixmap *on_label;
@@ -77,7 +77,7 @@ static int device_buttons_size = 0;
 #endif
 static int mixer_gains_posted[MAX_SOUNDCARDS];
 static int tone_controls_posted[MAX_SOUNDCARDS];
-static PangoFontDescription *small_font;
+static PangoFontDescription *small_font, *mid_font, *large_font;
 
 static void record_report(GtkWidget *text, ...)
 {
@@ -145,12 +145,13 @@ static gboolean recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gp
 
 /* -------------------------------- VU METER -------------------------------- */
 
-#define SMALL_FONT "Monospace 10"
-#define SMALLER_FONT "Monospace 8"
-#define SMALLER_FONT_CUTOFF .7
+#define SMALL_FONT "Monospace 8"
+#define MID_FONT "Monospace 10"
+#define LARGE_FONT "Monospace 12"
 
 #define HEIGHT_OFFSET 16
 #define METER_HEIGHT 80
+#define METER_TOP 32
 #define METER_WIDTH 120
 
 #define VU_OFF 0
@@ -185,6 +186,20 @@ static void db_button_callback(GtkWidget *w, gpointer context)
 {
   in_set_vu_in_dB(GTK_TOGGLE_BUTTON(w)->active);
   remake_all_vu_meters();
+}
+
+static void set_vu_max_label(vu_t *vu)
+{
+  char buf[64];
+  if (!(vu_in_dB(ss)))
+    mus_snprintf(buf, 64, "%.3f", vu->max_val);
+  else 
+    {
+      Float dv = 0.0;
+      dv = in_dB(min_dB(ss), ss->lin_dB, vu->max_val);
+      mus_snprintf(buf, 64, "%ddB", (int)dv);
+    }
+  gtk_label_set_text(GTK_LABEL(vu->label), buf);
 }
 
 static void allocate_meter(vu_t *vu)
@@ -326,7 +341,7 @@ static void allocate_meter(vu_t *vu)
 
     ang0 = 45 * 64;
     ang1 = 90 * 64;
-    top = (int)(size * 40);
+    top = (int)(size * METER_TOP);
     major_tick = (int)(width / 24);
     minor_tick = (int)((width * 0.6) / 24);
 
@@ -454,7 +469,7 @@ static void display_vu_meter(vu_t *vu)
     width = (int)(size * METER_WIDTH * 2);
     wid2 = (int)(size * METER_WIDTH);
     height = (int)(size * METER_HEIGHT * 2);
-    top = (int)(size * 40);
+    top = (int)(size * METER_TOP);
     major_tick = (int)(width / 24);
 
     if (label) gdk_draw_drawable(vu->wn, vu_gc, label, 0, 0, 0, -height_offset, width, height);
@@ -511,6 +526,7 @@ static void remake_all_vu_meters(void)
 	  if (vu->dB != vu_in_dB(ss))
 	    {
 	      vu->dB = vu_in_dB(ss);
+	      vu->max_val = 0.0; /* force button update */
 #if 0
 	      if (vu->on_label) {XFreePixmap(dp, vu->on_label); vu->on_label = None;}
 	      if (vu->off_label) {XFreePixmap(dp, vu->off_label); vu->off_label = None;}
@@ -535,23 +551,25 @@ static gboolean meter_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpoin
   return(false);
 }
 
-static vu_t *make_vu_meter(GtkWidget *meter, Float size)
+static vu_t *make_vu_meter(GtkWidget *meter, GtkWidget *label, Float size)
 {
   vu_t *vu;
   vu = (vu_t *)CALLOC(1, sizeof(vu_t));
   vu->meter = meter;
+  vu->label = label;
   vu->size = size;
   vu->wn = meter->window;
   vu->on_off = VU_OFF;
   vu->current_val = 0.0;
   vu->last_val = 0.0;
+  vu->max_val = 0.0;
   vu->clipped = 0;
   vu->dB = vu_in_dB(ss);
   allocate_meter(vu);
   return(vu);
 }
 
-static void set_vu_val (vu_t *vu, Float val) 
+static void set_vu_val(vu_t *vu, Float val) 
 {
   if (!vu) return;
   vu->last_val = vu->current_val;
@@ -559,11 +577,16 @@ static void set_vu_val (vu_t *vu, Float val)
     vu->current_val = val;
   else
     {
-      Float dv;
+      Float dv = 0.0;
       dv = in_dB(min_dB(ss), ss->lin_dB, val);
       vu->current_val = 1.0 +  ((dv < -30.0) ? -30.0 : dv) / 30.0;
     }
   display_vu_meter(vu);
+  if (val > vu->max_val)
+    {
+      vu->max_val = val;
+      set_vu_max_label(vu);
+    }
 }
 
 void recorder_set_vu_in_val(int chan, mus_sample_t val) {set_vu_val(rec_in_VU[chan], MUS_SAMPLE_TO_FLOAT(val));}
@@ -804,7 +827,7 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   int i;
   char *name;
   GtkWidget *file_label, *file_form, *duration_label, *rec_size_label, *ff_sep1, *ff_sep2, *ff_sep3, *autoload_file;
-  GtkWidget *left_form, *right_form, *filebox, *durbox, *triggerbox, *frame;
+  GtkWidget *left_form, *right_form, *durbox, *triggerbox, *frame;
 #if MUS_SGI || MUS_SUN
   float val[1];
   int err;
@@ -821,28 +844,21 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   gtk_widget_show(left_form);
 
   ff_sep1 = gtk_vseparator_new();
-  gtk_box_pack_start(GTK_BOX(file_form), ff_sep1, false, false, 2);
+  gtk_box_pack_start(GTK_BOX(file_form), ff_sep1, false, false, 10);
   gtk_widget_show(ff_sep1);
 
   right_form = gtk_vbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(file_form), right_form, true, true, 0);
   gtk_widget_show(right_form);
 
-  filebox = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(left_form), filebox, true, true, 0);
-  gtk_widget_show(filebox);
 
-  file_label = gtk_label_new(_("file:"));
-  gtk_box_pack_start(GTK_BOX(filebox), file_label, false, false, 0);
+  file_label = snd_gtk_highlight_label_new(_("output file:"));
+  gtk_box_pack_start(GTK_BOX(left_form), file_label, false, false, 0);
   gtk_widget_show(file_label);
 
-  file_text = snd_entry_new(filebox, WITH_WHITE_BACKGROUND);
+  file_text = snd_entry_new(left_form, WITH_WHITE_BACKGROUND);
   if (rp->output_file)
     gtk_entry_set_text(GTK_ENTRY(file_text), rp->output_file);
-
-  ff_sep3 = gtk_hseparator_new();
-  gtk_box_pack_start(GTK_BOX(left_form), ff_sep3, false, false, 8);
-  gtk_widget_show(ff_sep3);
 
 
   recdat = make_file_data_panel(left_form, "data-form", 
@@ -976,7 +992,15 @@ void unlock_recording_audio(void)
 
 static void vu_reset_callback(GtkWidget *w, gpointer context) 
 {
-  /* set current maxes to 0.0 */
+  int i;
+  pane_t *p = (pane_t *)context;
+  for (i = 0; i < p->meters_size; i++)
+    {
+      vu_t *vu;
+      vu = p->meters[i];
+      vu->max_val = 0.0;
+      set_vu_max_label(vu);
+    }
 }
 
 static void meter_button_callback(GtkWidget *w, gpointer context) 
@@ -1230,22 +1254,39 @@ static void make_vu_meters(pane_t *p, int vu_meters,
   row = 0;
   for (i = 0; i < vu_meters; i++)
     {
-      GtkWidget *frame, *meter;
+      GtkWidget *frame, *label, *meter;
       vu_t *vu;
+
+      label = gtk_label_new("0.000");
+      if (vu_size(ss) <= 1.0)
+	gtk_widget_modify_font(label, small_font);
+      else
+	{
+	  if (vu_size(ss) <= 1.5)
+	    gtk_widget_modify_font(label, mid_font);
+	  else gtk_widget_modify_font(label, large_font);
+	}
+
       frame = gtk_frame_new(NULL);
+      gtk_widget_set_name(frame, "record_frame");
+
       gtk_box_pack_start(GTK_BOX(hboxes[row]), frame, false, false, 0);
       gtk_container_set_border_width(GTK_CONTAINER(frame), 2);
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
       gtk_widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->black);
-      gtk_widget_set_size_request(frame, (int)(METER_WIDTH * 2 * meter_size), (int)(METER_HEIGHT * meter_size));
+      gtk_widget_set_size_request(frame, (int)(METER_WIDTH * 2 * meter_size), (int)(METER_HEIGHT * meter_size) + 12); /* 12 for meter frame */
+      gtk_frame_set_label_widget(GTK_FRAME(frame), label);
+      gtk_frame_set_label_align(GTK_FRAME(frame), 0.0, 1.0);
+      gtk_widget_show(label);
       gtk_widget_show(frame);
 
       meter = gtk_drawing_area_new();
       gtk_container_add(GTK_CONTAINER(frame), meter);
       gtk_widget_show(meter);
 
-      p->meters[i] = make_vu_meter(meter, meter_size);
+      p->meters[i] = make_vu_meter(meter, label, meter_size);
       vu = p->meters[i];
+      vu->max_val = 0.0;
       if (input)
 	rec_in_VU[overall_input_ctr + i] = vu;
       else rec_out_VU[i] = vu;
@@ -1539,6 +1580,19 @@ static void reset_record_callback(GtkWidget *w, gpointer context)
     }
   else                            /* reset or restart */
     { 
+      pane_t *p;
+      vu_t *vu;
+      int i, k;
+      for (i = 0; i < rp->ordered_devices_size; i++)
+	{
+	  p = all_panes[i];
+	  for (k = 0; k < p->meters_size; k++)
+	    {
+	      vu = p->meters[k];
+	      vu->max_val = 0.0;
+	      set_vu_max_label(vu);
+	    }
+	}
       /* now if dac turned us off, turn everything back on */
       if (!(rp->taking_input))            /* restart */
 	{
@@ -1791,7 +1845,7 @@ static pane_t *make_pane(recorder_info *rp, GtkWidget *paned_window, int device,
 
   /* paned_window is a vbox = stack of panes, each pane is hbox = meters, sliders | gains */
   p->pane = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(paned_window), p->pane, false, false, 6); /* between-pane spacing */
+  gtk_box_pack_start(GTK_BOX(paned_window), p->pane, false, false, 4); /* between-pane spacing */
   gtk_widget_show(p->pane);
 
   meter_size = vu_size(ss);
@@ -1902,13 +1956,17 @@ widget_t snd_record_file(void)
       for (i = 0; i < rp->possible_input_chans; i++) 
 	AMP_rec_ins[i] = (amp_t **)CALLOC(MAX_OUT_CHANS, sizeof(amp_t *));
       AMP_rec_outs = (amp_t **)CALLOC(MAX_OUT_CHANS, sizeof(amp_t *));
-      small_font = pango_font_description_from_string((vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
+
+      /* for max label above VU meters */
+      small_font = pango_font_description_from_string(SMALL_FONT);
+      mid_font = pango_font_description_from_string(MID_FONT);
+      large_font = pango_font_description_from_string(LARGE_FONT);
 
       recorder = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(recorder, "delete_event", recorder_delete, NULL);
       gtk_window_set_title(GTK_WINDOW(recorder), _("Record"));
       sg_make_resizable(recorder);
-      gtk_container_set_border_width (GTK_CONTAINER(recorder), 10);
+      gtk_container_set_border_width (GTK_CONTAINER(recorder), 6); /* includes top border */
       gtk_widget_realize(recorder);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
@@ -1940,6 +1998,7 @@ widget_t snd_record_file(void)
       SG_SIGNAL_CONNECT(help_button, "clicked", help_record_callback, NULL);
       SG_SIGNAL_CONNECT(reset_button, "clicked", reset_record_callback, NULL);
       SG_SIGNAL_CONNECT(record_button, "clicked", record_button_callback, NULL);
+
       gtk_widget_show(dismiss_button);
       gtk_widget_show(reset_button);
       gtk_widget_show(record_button);
@@ -1969,6 +2028,9 @@ widget_t snd_record_file(void)
 	}
 
       file_info_pane = gtk_frame_new(NULL);
+      gtk_widget_set_name(file_info_pane, "record_frame");
+      gtk_frame_set_shadow_type(GTK_FRAME(file_info_pane), GTK_SHADOW_ETCHED_IN);
+      gtk_widget_modify_bg(file_info_pane, GTK_STATE_NORMAL, ss->sgx->zoom_color);
       gtk_box_pack_start(GTK_BOX(rec_panes_box), file_info_pane, false, false, 0);
       gtk_widget_show(file_info_pane);
       make_file_info_pane(rp, file_info_pane, rp->ordered_devices_size);

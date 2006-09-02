@@ -243,6 +243,7 @@ void make_recorder_icons_transparent_again(Pixel new_color)
 
 #define HEIGHT_OFFSET 16
 #define METER_HEIGHT 80
+#define METER_TOP 38
 #define METER_WIDTH 120
 
 #define VU_OFF 0
@@ -260,14 +261,17 @@ static Pixel reds[VU_COLORS];
 static bool vu_colors_allocated = false;
 static int yellow_vals[] = {0, 16, 32, 64, 96, 128, 160, 175, 185, 200, 210, 220, 230, 240};
 
-static Widget db_button;
+static Widget db_button = NULL;
 static void remake_all_vu_meters(void);
 
 void set_vu_in_dB(bool val)
 {
   in_set_vu_in_dB(val);
-  XmToggleButtonSetState(db_button, (Boolean)val, false);
-  remake_all_vu_meters();
+  if (db_button)
+    {
+      XmToggleButtonSetState(db_button, (Boolean)val, false);
+      remake_all_vu_meters();
+    }
 }
 
 static void db_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -418,7 +422,7 @@ static void allocate_meter(vu_t *vu)
 
     ang0 = 45 * 64;
     ang1 = 90 * 64;
-    top = (int)(size * 40);
+    top = (int)(size * METER_TOP);
     major_tick = (int)(width / 24);
     minor_tick = (int)((width * 0.6) / 24);
 
@@ -539,7 +543,7 @@ static void display_vu_meter(vu_t *vu)
     width = (int)(size * METER_WIDTH * 2);
     wid2 = (int)(size * METER_WIDTH);
     height = (int)(size * METER_HEIGHT * 2);
-    top = (int)(size * 40);
+    top = (int)(size * METER_TOP);
     major_tick = (int)(width / 24);
 
     if (label) 
