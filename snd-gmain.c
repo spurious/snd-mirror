@@ -776,7 +776,11 @@ style \"default_slider\" = \"default\"\n\
   GtkRange::slider_width = 13\n\
   GtkRange::stepper_size = 10\n\
 }\n\
-\n\
+style \"default_frame\" = \"default\"\n\
+{\n\
+  xthickness = 4\n\
+  ythickness = 4\n\
+}\n\
 class \"GtkWidget\" style \"default\"\n\
 class \"GtkButton\" style \"default_button\"\n\
 class \"GtkMenu\" style \"default_menu\"\n\
@@ -785,6 +789,7 @@ class \"GtkEntry\" style \"default_entry\"\n\
 class \"GtkTextView\" style \"default_text\"\n\
 class \"GtkPaned\" style \"default_pane\"\n\
 class \"GtkRange\" style \"default_slider\"\n\
+class \"GtkFrame\" style \"default_frame\"\n\
 \n\
 style \"zoom_slider\" = \"default_slider\"\n\
 {\n\

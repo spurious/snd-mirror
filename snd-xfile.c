@@ -5842,7 +5842,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      amp_label = make_pushbutton_widget ("amp-label", leftform, args, n);
+      amp_label = make_pushbutton_widget("amp-label", leftform, args, n);
       XtAddCallback(amp_label, XmNactivateCallback, vf_amp_click_callback, (XtPointer)vdat);
       XmStringFree(s1);
 
@@ -5860,7 +5860,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       /* XtSetArg(args[n], XmNmarginRight, 3); n++; */
-      vdat->amp_number = XtCreateManagedWidget ("amp-number", xmLabelWidgetClass, leftform, args, n);
+      vdat->amp_number = XtCreateManagedWidget("amp-number", xmLabelWidgetClass, leftform, args, n);
       XmStringFree(s1);
 
       n = 0;      
@@ -5895,7 +5895,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      speed_label = make_pushbutton_widget ("speed-label", leftform, args, n);
+      speed_label = make_pushbutton_widget("speed-label", leftform, args, n);
       XtAddCallback(speed_label, XmNactivateCallback, vf_speed_click_callback, (XtPointer)vdat);
       XmStringFree(s1);
 
@@ -5916,7 +5916,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      vdat->speed_number = make_pushbutton_widget ("speed-number", leftform, args, n);
+      vdat->speed_number = make_pushbutton_widget("speed-number", leftform, args, n);
       XtAddCallback(vdat->speed_number, XmNactivateCallback, speed_label_click_callback, (XtPointer)vdat);
       XmStringFree(s1);
 

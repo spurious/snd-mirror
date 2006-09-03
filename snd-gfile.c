@@ -12,10 +12,6 @@
    View:Files
 */
 
-/* TODO: if open dialog finds only one sound file (and just-sounds), or just one file and its a sound file,
- *       select it
- */
-
 /* ---------------- file selector replacement ---------------- */
 
 typedef struct fsb {
@@ -1157,7 +1153,7 @@ static void open_innards(GtkWidget *vbox, void *data)
   fd->frame = gtk_frame_new(NULL);
   gtk_frame_set_shadow_type(GTK_FRAME(fd->frame), GTK_SHADOW_ETCHED_IN);
   gtk_container_set_border_width(GTK_CONTAINER(fd->frame), 1);
-  gtk_widget_modify_bg(fd->frame, GTK_STATE_NORMAL, ss->sgx->black);
+  gtk_widget_modify_bg(fd->frame, GTK_STATE_NORMAL, ss->sgx->zoom_color);
   gtk_box_pack_start(GTK_BOX(center_info), fd->frame, false, false, 10);
 
   fd->vbox = gtk_vbox_new(false, 0);
@@ -5092,7 +5088,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	frame = gtk_frame_new(NULL);
 	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
 	gtk_container_set_border_width(GTK_CONTAINER(frame), 3);
-	gtk_widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->black);
+	gtk_widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->zoom_color);
 	gtk_widget_show(frame);
 	gtk_box_pack_start(GTK_BOX(leftform), frame, false, false, 0);
 	

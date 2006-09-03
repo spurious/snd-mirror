@@ -826,7 +826,7 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
 {
   int i;
   char *name;
-  GtkWidget *file_label, *file_form, *duration_label, *rec_size_label, *ff_sep1, *ff_sep2, *ff_sep3, *autoload_file;
+  GtkWidget *file_label, *file_form, *duration_label, *rec_size_label, *ff_sep1, *ff_sep2, *autoload_file;
   GtkWidget *left_form, *right_form, *durbox, *triggerbox, *frame;
 #if MUS_SGI || MUS_SUN
   float val[1];

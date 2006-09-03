@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: name box pane handling is not intuitive -- if show-controls #f, the sash is not functional
- */
-
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif
@@ -13,7 +10,7 @@
 
 enum {W_pane,
       W_name_form, W_amp_form,
-      W_amp, W_amp_label, W_amp_number, W_amp_separator,
+      W_amp, W_amp_label, W_amp_number, 
       W_speed, W_speed_label, W_speed_number, W_speed_arrow,
       W_expand, W_expand_label, W_expand_number, W_expand_button,
       W_contrast, W_contrast_label, W_contrast_number, W_contrast_button,
@@ -36,7 +33,6 @@ Widget w_snd_pane(snd_info *sp)   {return(sp->sgx->snd_widgets[W_pane]);}
 
 #define SND_PANE(Sp)             Sp->sgx->snd_widgets[W_pane]
 #define SND_NAME(Sp)             Sp->sgx->snd_widgets[W_name]
-#define SND_NAME_SEPARATOR(Sp)   Sp->sgx->snd_widgets[W_amp_separator]
 
 #define NAME_BOX(Sp)             Sp->sgx->snd_widgets[W_name_form]
 #define NAME_ICON(Sp)            Sp->sgx->snd_widgets[W_name_icon]
@@ -187,15 +183,14 @@ void make_minibuffer_label(snd_info *sp , char *str)
   if ((sp->sgx) && (MINIBUFFER_LABEL(sp)))
     {
       XmString s1;
+      /* there seems to be no way to get this label to reflect its string width -- 
+       *    I have tried everything imaginable with no luck
+       */
       s1 = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
-      XtUnmanageChild(MINIBUFFER_LABEL(sp));
-      XtUnmanageChild(MINIBUFFER_TEXT(sp));
       XtVaSetValues(MINIBUFFER_LABEL(sp), 
 		    XmNlabelString, s1, 
 		    NULL);
       XmStringFree(s1);
-      XtManageChild(MINIBUFFER_LABEL(sp));
-      XtManageChild(MINIBUFFER_TEXT(sp));
     }
 }
 
@@ -1144,7 +1139,7 @@ static void minibuffer_click_callback(Widget w, XtPointer context, XtPointer inf
  * if all other apply buttons are locked out (and play).
  */
 
-/* TODO: relative panes needs to notice overall window resize, and perhaps control panel sash motion */
+/* relative panes needs to notice overall window resize, but there's no way to do so in Motif, as far as I can tell */
 
 #if WITH_RELATIVE_PANES
 /* It would be nice if we could set a paned window to keep its children relative
@@ -1317,6 +1312,7 @@ static void remember_sash(Widget w)
 
 static void add_watchers(Widget w)
 {
+  /* if relative panes, add sash watchers to the outer paned window sashes (SOUND_PANE(ss)) */
   unsigned int i;
   CompositeWidget cw = (CompositeWidget)w;
   for (i = 0; i < cw->composite.num_children; i++) /* only outermost sashes count here */
@@ -1331,6 +1327,7 @@ static void add_watchers(Widget w)
 }
 
 #endif
+
 
 static bool cant_write(char *name)
 {
@@ -1760,7 +1757,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      NAME_LABEL(sp) = XtCreateManagedWidget ("snd-name", xmPushButtonWidgetClass, NAME_BOX(sp), args, n);
+      NAME_LABEL(sp) = XtCreateManagedWidget("snd-name", xmPushButtonWidgetClass, NAME_BOX(sp), args, n);
       XtAddEventHandler(NAME_LABEL(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(NAME_LABEL(sp), XmNactivateCallback, name_click_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -1785,7 +1782,6 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 	}
 #endif
       NAME_ICON(sp) = XtCreateManagedWidget("", xmLabelWidgetClass, NAME_BOX(sp), args, n);
-
 
       n = 0;      
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1817,7 +1813,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNleftWidget, STOP_ICON(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
-      MINIBUFFER_LABEL(sp) = XtCreateManagedWidget ("snd-info-label", xmLabelWidgetClass, NAME_BOX(sp), args, n);
+      MINIBUFFER_LABEL(sp) = XtCreateManagedWidget("snd-info-label", xmLabelWidgetClass, NAME_BOX(sp), args, n);
       XmStringFree(s1);
 
       n = 0;
@@ -1909,12 +1905,11 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       /* ---------------- control panel ---------------- */
       n = 0;      
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, SND_NAME_SEPARATOR(sp)); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      CONTROLS(sp) = XtCreateManagedWidget ("snd-amp", xmFormWidgetClass, SND_PANE(sp), args, n);
+      CONTROLS(sp) = XtCreateManagedWidget("snd-amp", xmFormWidgetClass, SND_PANE(sp), args, n);
       XtAddEventHandler(CONTROLS(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;      
@@ -1932,7 +1927,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      AMP_BUTTON(sp) = make_pushbutton_widget ("amp-label", CONTROLS(sp), args, n);
+      AMP_BUTTON(sp) = make_pushbutton_widget("amp-label", CONTROLS(sp), args, n);
       XtAddEventHandler(AMP_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(AMP_BUTTON(sp), XmNactivateCallback, amp_click_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -1951,7 +1946,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       XtSetArg(args[n], XmNmarginRight, 3); n++;
-      AMP_LABEL(sp) = XtCreateManagedWidget ("amp-number", xmLabelWidgetClass, CONTROLS(sp), args, n);
+      AMP_LABEL(sp) = XtCreateManagedWidget("amp-number", xmLabelWidgetClass, CONTROLS(sp), args, n);
       XmStringFree(s1);
 
       n = 0;      
@@ -1987,7 +1982,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      SPEED_BUTTON(sp) = make_pushbutton_widget ("speed-label", CONTROLS(sp), args, n);
+      SPEED_BUTTON(sp) = make_pushbutton_widget("speed-label", CONTROLS(sp), args, n);
       XtAddEventHandler(SPEED_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(SPEED_BUTTON(sp), XmNactivateCallback, speed_click_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2009,7 +2004,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      SPEED_LABEL(sp) = make_pushbutton_widget ("speed-number", CONTROLS(sp), args, n);
+      SPEED_LABEL(sp) = make_pushbutton_widget("speed-number", CONTROLS(sp), args, n);
       XtAddEventHandler(SPEED_LABEL(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(SPEED_LABEL(sp), XmNactivateCallback, speed_label_click_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2080,7 +2075,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      EXPAND_LEFT_BUTTON(sp) = make_pushbutton_widget ("expand-label", CONTROLS(sp), args, n);
+      EXPAND_LEFT_BUTTON(sp) = make_pushbutton_widget("expand-label", CONTROLS(sp), args, n);
       XtAddEventHandler(EXPAND_LEFT_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(EXPAND_LEFT_BUTTON(sp), XmNactivateCallback, expand_click_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2099,7 +2094,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       XtSetArg(args[n], XmNmarginRight, 3); n++;
-      EXPAND_LABEL(sp) = XtCreateManagedWidget ("expand-number", xmLabelWidgetClass, CONTROLS(sp), args, n);
+      EXPAND_LABEL(sp) = XtCreateManagedWidget("expand-number", xmLabelWidgetClass, CONTROLS(sp), args, n);
       XmStringFree(s1);
 
       n = 0;
@@ -2159,7 +2154,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      CONTRAST_LEFT_BUTTON(sp) = make_pushbutton_widget ("contrast-label", CONTROLS(sp), args, n);
+      CONTRAST_LEFT_BUTTON(sp) = make_pushbutton_widget("contrast-label", CONTROLS(sp), args, n);
       XtAddEventHandler(CONTRAST_LEFT_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(CONTRAST_LEFT_BUTTON(sp), XmNactivateCallback, contrast_click_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2178,7 +2173,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       XtSetArg(args[n], XmNmarginRight, 3); n++;
-      CONTRAST_LABEL(sp) = XtCreateManagedWidget ("contrast-number", xmLabelWidgetClass, CONTROLS(sp), args, n);
+      CONTRAST_LABEL(sp) = XtCreateManagedWidget("contrast-number", xmLabelWidgetClass, CONTROLS(sp), args, n);
       XmStringFree(s1);
       
       n = 0;
@@ -2238,7 +2233,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      REVSCL_BUTTON(sp) = make_pushbutton_widget ("revscl-label", CONTROLS(sp), args, n);
+      REVSCL_BUTTON(sp) = make_pushbutton_widget("revscl-label", CONTROLS(sp), args, n);
       XtAddEventHandler(REVSCL_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(REVSCL_BUTTON(sp), XmNactivateCallback, revscl_click_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2257,7 +2252,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       XtSetArg(args[n], XmNmarginRight, 3); n++;
-      REVSCL_LABEL(sp) = XtCreateManagedWidget ("revscl-number", xmLabelWidgetClass, CONTROLS(sp), args, n);
+      REVSCL_LABEL(sp) = XtCreateManagedWidget("revscl-number", xmLabelWidgetClass, CONTROLS(sp), args, n);
       XmStringFree(s1);
       
       n = 0;
@@ -2379,9 +2374,9 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
 #ifdef MUS_SGI
-      FILTER_LABEL(sp) = XtCreateManagedWidget ("filter-label", xmPushButtonWidgetClass, CONTROLS(sp), args, n);
+      FILTER_LABEL(sp) = XtCreateManagedWidget("filter-label", xmPushButtonWidgetClass, CONTROLS(sp), args, n);
 #else
-      FILTER_LABEL(sp) = XtCreateManagedWidget ("filter-label", xmLabelWidgetClass, CONTROLS(sp), args, n);
+      FILTER_LABEL(sp) = XtCreateManagedWidget("filter-label", xmLabelWidgetClass, CONTROLS(sp), args, n);
 #endif
       XmStringFree(s1);
 
@@ -2635,6 +2630,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 		    NULL);
       if (nchans > 1) equalize_all_panes();
     }
+
   after_open(sp->index);
   if (free_filename) FREE(filename);
   return(sp);

@@ -2278,7 +2278,7 @@ static XEN g_save_macros(XEN file)
   return(file);
 }
 
-/* TODO: this doesn't display the full prompt in motif */
+/* this doesn't display the full prompt in motif, but I can't find any way to fix it */
 
 static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd_n, XEN raw)
 {

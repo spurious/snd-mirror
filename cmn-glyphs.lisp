@@ -23,9 +23,7 @@
 (defun draw-treble-clef (score &optional style)
   (if (music-font score)
       (g-mustext score #o46 0 -.25)
-    (let ((x-output (eq (output-type score) :X)))
-      ;; in the X case, we need to split this up (fill unhappy)
-      (declare (ignore x-output))
+    (progn
       (comment score "treble clef")
       (moveto score 0.490 -0.258)
       (curveto score 0.516 -0.430 0.546 -0.672 0.298 -0.590)
@@ -250,7 +248,10 @@
 
 (defun draw-trill-sections (score count &optional style)
   (comment score (format nil "~D trill sections" count))
-  (loop for i from 0 below count and x0 from 0.0 by 0.385 do
+  (do ((i 0 (1+ i))
+       (x0 0.0 (+ x0 0.385)))
+      ((= i count))
+    ;;(loop for i from 0 below count and x0 from 0.0 by 0.385 do
     (moveto score (+ x0 -0.045) 0.053)
     (lineto score (+ x0 -0.045) 0.075)
     (curveto score (+ x0 -0.028) 0.099 (+ x0 0.058) 0.171 (+ x0 0.113) 0.158)
@@ -286,7 +287,10 @@
 
 (defun draw-arpeggios (score count &optional style)
   (comment score (format nil "~D arpeggios" count))
-  (loop for i from 0 below count and y0 from 0.0 by 0.52 do
+  (do ((i 0 (1+ i))
+       (y0 0.0 (+ y0 0.52)))
+      ((= i count))
+    ;; (loop for i from 0 below count and y0 from 0.0 by 0.52 do
     (moveto score 0.005 (+ y0 0.147))
     (curveto score -0.004 (+ y0 0.115) 0.042 (+ y0 0.046) 0.047 (+ y0 0.039))
     (curveto score 0.049 (+ y0 0.034) 0.068 (+ y0 0.005) 0.071 (+ y0 0.005))
@@ -1441,14 +1445,14 @@
 (defun draw-half-note (score &optional style)
   (if (music-font score)
       (g-mustext score #o372 0 0.0)
-    (progn
+    (let ((xoff -.006))
       (comment score "half note")
-      (moveto score 0.020 -0.101)
-      (curveto score -0.063 0.037 0.185 0.197 0.268 0.107)
-      (curveto score 0.379 -0.010 0.137 -0.193 0.021 -0.101)
-      (moveto score 0.043 -0.082)
-      (curveto score 0.015 -0.007 0.207 0.125 0.239 0.087)
-      (curveto score 0.291 0.027 0.097 -0.139 0.043 -0.082)
+      (moveto score (+ xoff 0.020) -0.101)
+      (curveto score (+ xoff -0.063) 0.037 (+ xoff 0.185) 0.197 (+ xoff 0.268) 0.107)
+      (curveto score (+ xoff 0.379) -0.010 (+ xoff 0.137) -0.193 (+ xoff 0.021) -0.101)
+      (moveto score (+ xoff 0.043) -0.082)
+      (curveto score (+ xoff 0.015) -0.007 (+ xoff 0.207) 0.125 (+ xoff 0.239) 0.087)
+      (curveto score (+ xoff 0.291) 0.027 (+ xoff 0.097) -0.139 (+ xoff 0.043) -0.082)
       (if (not style) (fill-in score :even-odd t) (draw score style)))))
 
 (defvar half-note-bounds '(0.000 -0.131 0.291 0.134))

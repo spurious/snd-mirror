@@ -923,7 +923,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      baseLabel = make_pushbutton_widget (_("exp:"), mainform, args, n);
+      baseLabel = make_pushbutton_widget(_("exp:"), mainform, args, n);
       XtAddCallback(baseLabel, XmNactivateCallback, base_click_callback, NULL);
 
       n = 0;
@@ -938,7 +938,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       /*      XtSetArg(args[n], XmNrecomputeSize, false); n++; */
       XtSetArg(args[n], XmNlabelString, s1); n++;
-      baseValue = XtCreateManagedWidget ("base-label", xmLabelWidgetClass, mainform, args, n);
+      baseValue = XtCreateManagedWidget("base-label", xmLabelWidgetClass, mainform, args, n);
       XmStringFree(s1);
 
       /* -------- filter order -------- */

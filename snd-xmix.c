@@ -815,7 +815,7 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      w_speed_number = make_pushbutton_widget ("mix-speed-number", mainform, args, n);
+      w_speed_number = make_pushbutton_widget("mix-speed-number", mainform, args, n);
       XtAddCallback(w_speed_number, XmNactivateCallback, speed_label_click_callback, NULL);
       XmStringFree(s1);
 
@@ -1941,7 +1941,7 @@ Widget make_track_dialog(void)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      w_track_speed_number = make_pushbutton_widget ("track-speed-number", mainform, args, n);
+      w_track_speed_number = make_pushbutton_widget("track-speed-number", mainform, args, n);
       XtAddCallback(w_track_speed_number, XmNactivateCallback, track_speed_label_click_callback, NULL);
       XmStringFree(s1);
 
