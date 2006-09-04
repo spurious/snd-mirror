@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: dragged mix doesn't erase index correctly, and index is in xor'd color
- */
-
 /* ---------------- mix dialog ---------------- */
 
 static GtkWidget *mix_dialog = NULL;

@@ -2204,19 +2204,34 @@ static void draw_mix_tag(mix_info *md)
   char lab[16];
   if ((md->x == md->tagx) && (md->y == md->tagy)) return; 
   cp = md->cp;
+
+  /* draw the mix tag */
   width = mix_tag_width(ss);
   height = mix_tag_height(ss);
-  ax = mark_context(cp);
+  ax = mark_context(cp); /* mark_gc snd-gmain 247 XOR, in gtk xor does not work for text */
   if (md->tagx > 0)
     fill_rectangle(ax, md->tagx - width, md->tagy - height / 2, width, height); /* erase old */
   fill_rectangle(ax, md->x - width, md->y - height / 2, width, height);         /* draw new */
+
+  /* redraw the mix id underneath the tag */
   set_tiny_numbers_font(cp);
   if (cp->printing) ps_set_tiny_numbers_font();
   mus_snprintf(lab, 16, "%d", md->id);
   if (md->tagx > 0)
-    draw_string(ax, md->tagx - width, md->tagy + height + STRING_Y_OFFSET, lab, strlen(lab));
+    {
+#if USE_GTK
+      ax = erase_context(cp);
+      fill_rectangle(ax, md->tagx - width, md->tagy + height + STRING_Y_OFFSET, width, height);
+#else
+      draw_string(ax, md->tagx - width, md->tagy + height + STRING_Y_OFFSET, lab, strlen(lab));
+#endif
+    }
+#if USE_GTK
+  ax = copy_context(cp);
+#endif
   draw_string(ax, md->x - width, md->y + height + STRING_Y_OFFSET, lab, strlen(lab));
   if (cp->printing) ps_draw_string(cp->axis, md->x - width, md->y + height + STRING_Y_OFFSET, lab);
+
   md->tagx = md->x;
   md->tagy = md->y;
 }

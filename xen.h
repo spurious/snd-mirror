@@ -18,7 +18,7 @@
 
 /* HISTORY:
  *
- *  1-Sep-06:  string changes for Ruby (from Mike).
+ *  1-Sep-06:  string and array changes for Ruby (from Mike).
  *  7-Aug-06:  more careful list length handling in Ruby (from Mike).
  *  23-May-06: added xen_rb_repl_set_prompt to set (no-gui) Ruby repl prompt.
  *  12-May-06: changed HAVE_RATIOS to XEN_HAVE_RATIOS.

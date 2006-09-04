@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Wed Aug 30 20:30:54 CEST 2006
+\ Changed: Sat Sep 02 04:09:43 CEST 2006
 
 \ Commentary:
 \ 
@@ -250,7 +250,11 @@ mus-audio-default value *clm-device*
 *clm-notehook*      value *notehook*
 
 : make-default-comment ( -- str )
-  $" Written %s by %s at %s using clm (fth) of %s" _ '( date getlogin gethostname fth-date ) format
+  $" Written %s by %s at %s using clm (fth) of %s" _
+  '( $" %a %d-%b-%y %H:%M %Z" time-count strftime
+     getlogin
+     gethostname
+     fth-date ) format
 ;
 
 : times->samples { start dur -- len beg }
@@ -441,7 +445,7 @@ previous
   vals each drop mus-audio-mixer mus-audio-reclev i vals mus-audio-mixer-write drop end-each
   vals 0.75 vct-fill! drop
   vals each drop device  mus-audio-amp i vals mus-audio-mixer-write drop end-each
-  $" written by %s at %s" _ '( get-func-name date ) string-format { descr }
+  $" written %s by %s" _ '( date get-func-name ) string-format { descr }
   fname srate chans dfmt htype descr mus-sound-open-output { snd-fd }
   snd-fd 0< if 'forth-error '( get-func-name $" cannot open %s" _ fname ) fth-throw then
   device srate chans 2 min afmt bufsize mus-audio-open-input { dac-fd }

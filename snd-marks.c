@@ -8,8 +8,6 @@
  * "current" can change at any time.
  */
 
-/* TODO: mark name is in xor'd color in gtk */
-
 typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
 
 static XEN mark_drag_hook;
@@ -203,7 +201,6 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
   int len, top, cx, y0, y1;
   axis_context *ax;
   if (!(cp->graph_time_p)) return;
-  ax = mark_context(cp);
   if (XEN_HOOKED(draw_mark_hook))
     {
       XEN res = XEN_FALSE;
@@ -221,6 +218,11 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
   y0 = ap->y_axis_y0;
   if (mp->name) top += 10;
   cx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), ap);
+#if USE_MOTIF
+  ax = mark_context(cp);
+#else
+  ax = copy_context(cp);
+#endif
   if (mp->name)
     {
 #if USE_MOTIF
@@ -232,8 +234,23 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
   #endif
 #endif
       len = mark_name_width(mp->name);
+#if USE_GTK
+      if (!show) /* erase mark */
+	{
+	  ax = erase_context(cp);
+	  fill_rectangle(ax, (int)(cx - 0.5 * len), top - 13, len + 1, 12); /* this should dependent on TINY_FONT height */
+	}
+      else
+	{
+	  draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
+	}
+#else
       draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
+#endif
     }
+#if USE_GTK
+  ax = mark_context(cp);
+#endif
   fill_rectangle(ax,
 		 cx - mark_tag_width(ss), top,
 		 2 * mark_tag_width(ss), mark_tag_height(ss));

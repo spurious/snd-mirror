@@ -555,10 +555,18 @@ bool xen_rb_defined_p(const char *name)
     }
 }
 
+#ifndef RARRAY_PTR 
+  #define RB_ARRAY_PTR(Ary) RARRAY(Ary)->ptr 
+  #define RB_ARRAY_LEN(Ary) RARRAY(Ary)->len 
+#else 
+  #define RB_ARRAY_PTR(Ary) RARRAY_PTR(Ary) 
+  #define RB_ARRAY_LEN(Ary) RARRAY_LEN(Ary) 
+#endif 
+ 
 int xen_rb_list_length(XEN obj) 
 { 
   if (XEN_VECTOR_P(obj)) 
-    return((int)RARRAY(obj)->len); 
+     return((int)RB_ARRAY_LEN(obj)); 
   if (obj == XEN_EMPTY_LIST) 
     return(0); 
   return(-1); 
@@ -795,18 +803,18 @@ XEN xen_rb_funcall_0(XEN func)
 }
 
 #if (!HAVE_RB_ARY_DUP)
-XEN xen_rb_copy_list(XEN val)
-{
-  /* if this is considered bad form, we could fall back on flatten (rb_ary_dup?) */
-  long len, i;
-  VALUE collect;
-  len = RARRAY(val)->len;
-  collect = rb_ary_new2(len);
+XEN xen_rb_copy_list(XEN val) 
+{ 
+  /* if this is considered bad form, we could fall back on flatten (rb_ary_dup?) */ 
+  long len, i; 
+  VALUE collect; 
+  len = RB_ARRAY_LEN(val); 
+  collect = rb_ary_new2(len); 
   for (i = 0; i < len; i++) 
-    RARRAY(collect)->ptr[i] = RARRAY(val)->ptr[i];
-  RARRAY(collect)->len = len;
-  return(collect);
-}
+    RB_ARRAY_PTR(collect)[i] = RB_ARRAY_PTR(val)[i]; 
+  RB_ARRAY_LEN(collect) = len; 
+  return(collect); 
+} 
 #endif
 
 XEN xen_rb_str_new2(char *arg)
@@ -844,9 +852,9 @@ bool xen_rb_hook_p(XEN obj)
 
 bool xen_rb_hook_empty_p(XEN obj) 
 { 
- if (XEN_CLASS_HOOK_P(obj)) 
-   return(RARRAY(rb_iv_get(obj, "@procs"))->len == 0); 
- return(true); 
+  if (XEN_CLASS_HOOK_P(obj)) 
+    return(RB_ARRAY_LEN(rb_iv_get(obj, "@procs")) == 0); 
+  return(true); 
 } 
 
 /*
@@ -960,7 +968,7 @@ static XEN xen_rb_hook_names(XEN hook)
   XEN ary, ret = Qnil;
   long len;
   ary = rb_iv_get(hook, "@procs");
-  len = RARRAY(ary)->len;
+  len = RB_ARRAY_LEN(ary); 
   if (len > 0)
     {
       long i;
@@ -993,7 +1001,7 @@ XEN xen_rb_hook_to_a(XEN hook)
 
 static XEN xen_rb_hook_run_hook(XEN hook)
 {
-  if (RARRAY(rb_iv_get(hook, "@procs"))->len)
+  if (RB_ARRAY_LEN(rb_iv_get(hook, "@procs"))) 
     rb_ary_each(xen_rb_hook_to_a(hook));
   return(hook);
 }
@@ -1011,7 +1019,7 @@ static XEN xen_rb_hook_call(int argc, XEN *argv, XEN hook)
   if (procs != Qnil)
     {
       long i;
-      for (i = 0; i < RARRAY(procs)->len; i++)
+      for (i = 0; i < RB_ARRAY_LEN(procs); i++) 
 	result = xen_rb_apply(rb_ary_entry(procs, i), rest);
     }
   return(result);
@@ -1019,12 +1027,12 @@ static XEN xen_rb_hook_call(int argc, XEN *argv, XEN hook)
 
 static XEN xen_rb_hook_is_empty_p(XEN hook)
 {
-  return(C_TO_XEN_BOOLEAN(RARRAY(rb_iv_get(hook, "@procs"))->len == 0));
+  return(C_TO_XEN_BOOLEAN(RB_ARRAY_LEN(rb_iv_get(hook, "@procs")) == 0)); 
 }
  
 static XEN xen_rb_hook_length(XEN hook)
 {
-  return(C_TO_XEN_INT(RARRAY(rb_iv_get(hook, "@procs"))->len));
+  return(C_TO_XEN_INT(RB_ARRAY_LEN(rb_iv_get(hook, "@procs")))); 
 }
 
 static XEN xen_rb_hook_name(XEN hook)

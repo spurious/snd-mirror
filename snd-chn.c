@@ -4504,13 +4504,13 @@ axis_context *set_context(chan_info *cp, chan_gc_t gc)
   return(ax);
 }
 
-axis_context *copy_context (chan_info *cp)                  {return(set_context(cp, CHAN_GC));}
-axis_context *erase_context (chan_info *cp)                 {return(set_context(cp, CHAN_IGC));}
-axis_context *selection_context (chan_info *cp)             {return(set_context(cp, CHAN_SELGC));}
-static axis_context *cursor_context (chan_info *cp)         {return(set_context(cp, CHAN_CGC));}
-axis_context *mark_context (chan_info *cp)                  {return(set_context(cp, CHAN_MGC));}
-axis_context *mix_waveform_context (chan_info *cp)          {return(set_context(cp, CHAN_MXGC));}
-static axis_context *combined_context (chan_info *cp)       {return(set_context(cp, CHAN_TMPGC));}
+axis_context *copy_context(chan_info *cp)            {return(set_context(cp, CHAN_GC));}
+axis_context *erase_context(chan_info *cp)           {return(set_context(cp, CHAN_IGC));}
+axis_context *selection_context(chan_info *cp)       {return(set_context(cp, CHAN_SELGC));}
+static axis_context *cursor_context(chan_info *cp)   {return(set_context(cp, CHAN_CGC));}
+axis_context *mark_context(chan_info *cp)            {return(set_context(cp, CHAN_MGC));}
+axis_context *mix_waveform_context(chan_info *cp)    {return(set_context(cp, CHAN_MXGC));}
+static axis_context *combined_context(chan_info *cp) {return(set_context(cp, CHAN_TMPGC));}
 
 typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP_P, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,
 	      CP_EDIT_CTR, CP_CURSOR_STYLE, CP_EDIT_HOOK, CP_UNDO_HOOK, CP_AFTER_EDIT_HOOK,
