@@ -418,9 +418,12 @@ returning you to the true top-level."
        (set! *clm-file-name* old-file-name)
        val)))
 
-(defmacro clm-load (file . args)
-  `(with-sound-helper (lambda () (load ,file)) ,@args))
+;(defmacro clm-load (file . args)
+;  `(with-sound-helper (lambda () (load ,file)) ,@args))
+; cm wants this to be a function so that it can use apply
 
+(define (clm-load file . args) 
+  (apply with-sound-helper (lambda () (load file)) args))
 
 
 ;;; -------- def-clm-struct --------

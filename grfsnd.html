@@ -1287,20 +1287,18 @@ Test 23 in snd-test.scm has a with-sound that includes most of these instruments
 </td></tr></table>
 <br><br>
 
-<!-- TODO: update the CM docs to reflect new version -->
-<!-- see test/cm-2.8.0/etc/examples/fm.ins -->
-
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithcm">Snd and Common Music</a></h3></td></tr></table>
 
-<p>You can load Common Music into Snd, but the connection to
-Snd's definstrument macro is not yet as tight as it is in the Common Lisp
-CLM:
+<p>You can load Common Music into Snd.  The only real "gotcha" is that Snd's
+ws.scm has to be loaded before cm's clm2.scm.  I load ws.scm in my init file,
+but in the following example, I'll start -noinit, and load it explicitly.
 </p>
-<pre>
-&gt; <em class=typing>(load "/home/bil/test/cm-2.8.0/src/cm.scm")</em>
-<em class=listener>#&lt;unspecified&gt;</em>
+
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 &gt; <em class=typing>(load "ws.scm")</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt; <em class=typing>(load "/home/bil/test/cm/src/cm.scm")</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt; <em class=typing>(definstrument (simp beg dur freq amp)
    (let* ((o (make-oscil freq))
@@ -1311,22 +1309,24 @@ CLM:
          (do ((i st (1+ i)))
              ((= i nd))
            (outa i (* amp (oscil o)) *output*))))))</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-&gt; <em class=typing>(formals-&gt;defobject '(simp beg dur freq amp))</em>
-<em class=listener>(defobject simp () ((beg #:accessor object-time) dur freq amp) (#:parameters beg dur freq amp))</em>
-&gt; <em class=typing>(defobject simp () ((beg #:accessor object-time) dur freq amp) (#:parameters beg dur freq amp))</em>
 <em class=listener>#&lt;values ()&gt;</em>
+</pre></td></tr></table>
+
+<p>
+If the result of the definstrument call is <code>#&lt;unspecified&gt;</code> then cm's definstrument-hook isn't loaded into Snd's definstrument;
+you'll get some complaint that there is no class named "simp" if you go on anyway.
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 &gt; <em class=typing>(define (random-fn n) (process repeat n output (new simp :beg (now) :dur .1 :freq (between 220 880) :amp .1) wait .25))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt; <em class=typing>(events (random-fn 10) "test.clm" 0 :output "test.snd")</em>
 <em class=listener>"test.clm"</em>
-&gt; <em class=typing>(define hi (init-with-sound :output "test.snd"))</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-&gt; <em class=typing>(load "test.clm")</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-&gt; <em class=typing>(finish-with-sound hi)</em>
-<em class=listener>"test.snd"</em>
-</pre>
+</pre></td></tr></table>
+
+<p>and the result ("test.snd") is opened in Snd.
+</p>
+
 
 <br><br>
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithpd">Snd and Pd</a></h3></td></tr></table>
