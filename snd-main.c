@@ -1418,6 +1418,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 			(strcmp(file_extension(argname), "cl") == 0) ||
 			(strcmp(file_extension(argname), "lisp") == 0) ||
 			(strcmp(file_extension(argname), "rb") == 0) ||
+			(strcmp(file_extension(argname), "fs") == 0) ||
  			(strcmp(file_extension(argname), "fth") == 0)))) /* HAVE_FORTH */
 		    {
 		      if ((strcmp("-l", argname) == 0) || 
