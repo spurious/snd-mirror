@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Sun Aug 20 01:00:22 CEST 2006
+\ Changed: Mon Sep 04 17:16:05 CEST 2006
 
 \ Commentary:
 \
@@ -158,8 +158,8 @@ previous
 : mark-click-info { id -- #t }
   doc" ( id -- #t )  A mark-click-hook function that describes a mark and its properties.\n\
 mark-click-hook ' mark-click-info 1 make-proc add-hook!"
-  id mark-name if $"  (\"%s\")" '( id mark-name ) string-format else "" then { mname }
-  $"     mark id: %d%s\n"       '( id mname )     string-format { info-string }
+  id mark-name if $"  (%S)" '( id mark-name ) string-format else "" then { mname }
+  $"     mark id: %d%s\n"   '( id mname )     string-format { info-string }
   $"      sample: %d (%.3f secs)\n"
   '( id undef mark-sample
      dup id mark-home car srate f/ ) string-format info-string swap << to info-string

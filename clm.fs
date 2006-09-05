@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Sat Sep 02 04:09:43 CEST 2006
+\ Changed: Mon Sep 04 17:13:30 CEST 2006
 
 \ Commentary:
 \ 
@@ -540,7 +540,7 @@ set-current
 :device            *clm-device*           mus-audio-default\n\
 ' resflt-test with-sound\n\
 ' resflt-test :play #f :channels 2 :srate 44100 with-sound"
-  :play              *clm-play*             get-args { play }
+  :play              *clm-play*             get-args { ply }
   :statistics        *clm-statistics*       get-args { statistics }
   :verbose           *clm-verbose*          get-args to *verbose*
   :continue-old-file #f                     get-args { continue-old-file }
@@ -564,6 +564,7 @@ set-current
   :decay-time        *clm-decay-time*       get-args { decay-time }
   :audio-format      *clm-audio-format*     get-args to *audio-format*
   { body-xt }
+  reverb-xt unless #f to rev-name then
   *output* { old-output }
   *reverb* { old-revout }
   *clm-decay-time* { old-decay-time }
@@ -588,52 +589,45 @@ set-current
   then
   make-timer { tm }
   tm start-timer
-  \ computing ws body
-  body-xt #t nil fth-catch ?dup-if ( res )
+  \ compute ws body
+  '( depth ) .debug
+  body-xt #t nil fth-catch ?dup-if { res }
     *output* mus-close drop
     *reverb* if *reverb* mus-close drop then
     old-output old-revout old-decay-time old-srate finish-ws
-    ( res ) 'with-sound-error get-func-name rot cadr 2 >list fth-throw
+    'with-sound-error get-func-name res cadr 2 >list fth-throw
   then
   reverb-xt if
     *reverb* mus-close drop
-    rev-name mus-sound-duration { dur }
     rev-name make-file->sample to *reverb*
     *reverb* file->sample? unless
       'forth-error '( get-func-name $" cannot open file->sample" _ rev-name ) fth-throw
     then
-    \ computing ws reverb; nip (after fth-catch) drops reverb xt's return value (samps)
-    reverb-data dup empty? unless each end-each then reverb-xt #t nil fth-catch nip ?dup-if ( res )
+    \ compute ws reverb; nip (after fth-catch) drops reverb xt's return value (samps)
+    reverb-data dup empty? unless each end-each then reverb-xt #t nil fth-catch nip ?dup-if { res }
       *output* mus-close drop
       *reverb* mus-close drop
       old-output old-revout old-decay-time old-srate finish-ws
-      ( res ) 'with-sound-error get-func-name rot cadr 2 >list fth-throw
+      'with-sound-error get-func-name res cadr 2 >list fth-throw
     then
     *reverb* mus-close drop
   then
   tm stop-timer
   *output* mus-close drop
-  statistics if
-    fname reverb-xt if rev-name else #f then *channels* *srate* fname mus-sound-frames tm snd-info
-  then
-  delete-reverb if rev-name file-delete then
+  statistics if fname rev-name *channels* *srate* fname mus-sound-frames tm snd-info then
+  delete-reverb rev-name && if rev-name file-delete then
   'snd provided? if
     fname find-file to fname
     fname 0 find-sound { snd }
-    snd sound? if
+    snd sound? 'snd-nogui provided? not && if
       snd update-sound
-      'snd-nogui provided? if
-	drop
-      else
-	\ update-sound returns a value for every channel (?)
-	channels 0 ?do drop loop
-      then
+      channels 0 ?do drop loop
     else
       fname open-sound to snd
     then
-    play if 0 snd #f #f #f -1 undef undef play-and-wait drop then
+    ply if fname play-and-wait drop then
   else
-    play if
+    ply if
       player 'intern = if
 	*clm-verbose* { old-verbose }
 	#f to *clm-verbose*
@@ -652,7 +646,7 @@ previous
   { fname }
   fname file-exists? if
     :verbose *clm-verbose* get-args to *verbose*
-    *verbose* if $" \\ loading \"%s\"\n" _ '( fname ) fth-print then
+    *verbose* if $" \\ loading %S\n" _ '( fname ) fth-print then
     fname ['] file-eval :verbose *verbose* with-sound
   else
     'no-such-file '( get-func-name fname ) fth-throw
@@ -703,7 +697,7 @@ lambda: ( -- )\n\
     :verbose #f
     :statistics #f
     :continue-old-file #f
-    :comment $" '( %s \"%s\" )" '( args body-str ) string-format
+    :comment $" '( %s %S )" '( args body-str ) string-format
     args each end-each mix-file clm-load
   then
   *output* snd-file beg seconds->samples mus-mix drop

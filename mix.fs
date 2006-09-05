@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Sun Aug 20 01:00:35 CEST 2006
+\ Changed: Mon Sep 04 17:15:45 CEST 2006
 
 \ Commentary:
 \
@@ -509,8 +509,8 @@ Returns the value associated with KEY in the given track's property list, or #f.
   doc" ( id -- #t )  A mix-click-hook function that describes a mix and its properties.\n\
 mix-click-hook ' mix-click-info 1 make-proc add-hook!"
   id mix-home car { mid }
-  id mix-name if $"  (\"%s\")" '( id mix-name ) string-format else "" then { mname }
-  $"        mix id: %d%s\n"    '( id mname )    string-format { info-string }
+  id mix-name if $"  (%S)"  '( id mix-name ) string-format else "" then { mname }
+  $"        mix id: %d%s\n" '( id mname )    string-format { info-string }
   $"      position: %d (%.3f secs)\n" '( id mix-position dup mid srate f/ ) string-format
   info-string swap << to info-string
   $"        length: %d (%.3f secs)\n" '( id mix-frames dup mid srate f/ )   string-format

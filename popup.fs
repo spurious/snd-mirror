@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Tue Aug 22 03:09:56 CEST 2006
+\ Changed: Mon Sep 04 17:16:59 CEST 2006
 
 \ Commentary:
 
@@ -644,7 +644,7 @@ let: ( -- menu )
   string-format str swap << to str
   $"   maxamp: %s\n"       '( snd #t #f maxamp )   string-format str swap << to str
   snd comment empty? unless
-    $"  comment: \"%s\"\n" '( snd comment )        string-format str swap << to str
+    $"  comment: %S\n" '( snd comment )            string-format str swap << to str
   then
   snd file-name mus-sound-loop-info { loops }
   loops null? unless
@@ -1460,7 +1460,7 @@ lambda: ( us -- )
     name $" Help" _ string= if
       listener-selection { subject }
       subject if
-	w $" Help on \"%s\"" _ '( subject ) string-format change-label
+	w $" Help on %S" _ '( subject ) string-format change-label
 	w FXtManageChild drop
       else
 	w FXtUnmanageChild drop

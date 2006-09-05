@@ -48,7 +48,6 @@
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
  * TODO: (gauche)   unwind-protects around scm_apply (snd-xen g_call)
  * TODO: (forth)    prefs can't find extensions.fs? can't figure this one out -- data stack confusion?
- * TODO: (forth)    if segfault, infinite tight loop -- must kill from some other machine!
  *
  * SOMEDAY: change config.h to snd-config.h and clm-config.h (collisions in several cases like ecl)
  *         but if user is loading libsndlib, how to avoid collisions between its config.h and snd's?
@@ -72,7 +71,7 @@
  *        xm.c:#include <config.h>
  *
  * SOMEDAY: vct -> mus_vct (struct name), also all sound_data stuff (sndlib2xen.h -- remove this entirely?), Init_sndlib: clm2xen.c -- ruby requirement?
- * SOMEDAY: clean up the CVS sndins directory
+ * SOMEDAY: clean up the CVS outer sndins directory
  */
 
 /* -------- protect XEN vars from GC -------- */

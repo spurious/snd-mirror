@@ -42910,7 +42910,7 @@ EDITS: 1
       
       (if (provided? 'snd-guile) 
 	  (begin
-	    ;; SOMEDAY: when Gauche can handle locals and procedure source, add this block back in
+	    ;; when Gauche can handle locals and procedure source, add this block back in
 	    
 	    (define (efunc-1 arg) (+ arg 1))
 	    (define (efunc-2 arg) (not arg))

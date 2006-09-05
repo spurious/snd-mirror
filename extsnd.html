@@ -6053,7 +6053,11 @@ In the find dialog and in C-s or C-r searches, if the value returned is an integ
 
 &gt;<em class=typing>(find-channel (lambda (y) (and (&gt; y .1) 'a-big-sample)))</em>
 <em class=listener>(a-big-sample 4423)</em> ; if optimization is on, this will be (#t 4423)
+
+&gt;<em class=typing>lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc find-channel</em>
+<em class=listener>'( #t 4423 )</em>
 </pre>
+
 
 <!-- INDEX searchexamples:Searching -->
 <A NAME="searchexamples"></a>

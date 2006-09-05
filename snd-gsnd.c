@@ -113,8 +113,6 @@ static void watch_minibuffer(GtkWidget *w, gpointer context)
   clear_minibuffer_error((snd_info *)context);
 }
 
-/* TODO: entry here so multi-lines not displayed correctly */
-
 void clear_minibuffer_error(snd_info *sp)
 {
   gtk_widget_hide(ERROR_INFO_FRAME(sp));
@@ -128,11 +126,22 @@ void clear_minibuffer_error(snd_info *sp)
 
 void display_minibuffer_error(snd_info *sp, const char *str) 
 {
-  gtk_entry_set_text(GTK_ENTRY(ERROR_INFO(sp)), str);
+  char *s1 = NULL; /* change cr to space (cr is printed as a funny box in gtk) */
+  int len, i;
+  len = snd_strlen(str);
+  if (len > 0)
+    {
+      s1 = copy_string(str);
+      for (i = 0; i < len; i++)
+	if (s1[i] == '\n')
+	  s1[i] = ' ';
+    }
+  gtk_entry_set_text(GTK_ENTRY(ERROR_INFO(sp)), s1);
   gtk_widget_show(ERROR_INFO(sp));
   gtk_widget_show(ERROR_INFO_FRAME(sp));
   if (!(sp->sgx->minibuffer_watcher))
     sp->sgx->minibuffer_watcher = SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "changed", watch_minibuffer, (gpointer)sp);
+  if (s1) FREE(s1);
 }
 
 
