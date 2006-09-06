@@ -5381,7 +5381,7 @@ static void vf_amp_env_resize(Widget w, XtPointer context, XtPointer info)
 			 0, 0,
 			 widget_width(w), widget_height(w), 
 			 NOT_PRINTING);
-  /* SOMEDAY: it might be nice to show the sound data in the background, but there are
+  /* it might be nice to show the sound data in the background, but there are
    *   complications involving multichannel and multiselection cases, also
    *   how to get the "peak-func" and how to call g_channel_amp_envs.
    * Too many problems...

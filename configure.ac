@@ -258,7 +258,7 @@ AC_C_BIGENDIAN( [AC_DEFINE(MUS_LITTLE_ENDIAN, 0)
                     else
                       AC_DEFINE(MUS_OUT_FORMAT, MUS_BFLOAT)
                     fi
-                  else
+                 else
                    AC_DEFINE(MUS_OUT_FORMAT, MUS_BINT)
  		 fi
  		],
@@ -277,7 +277,7 @@ AC_C_BIGENDIAN( [AC_DEFINE(MUS_LITTLE_ENDIAN, 0)
                     else
                       AC_DEFINE(MUS_OUT_FORMAT, MUS_LFLOAT)
                     fi
-                  else
+                 else
                    AC_DEFINE(MUS_OUT_FORMAT, MUS_LINT)
  		 fi
 		])
