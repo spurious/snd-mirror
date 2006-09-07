@@ -496,6 +496,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+6-Sep:   def-optkey-instrument.\n\
 1-Sep:   snd_frg.scm thanks to Olivier Doare.\n\
 28-Aug:  removed vu-font and vu-font-size, added vu-in-dB.\n\
 16-Aug:  display-bark-fft (dsp.scm).\n\

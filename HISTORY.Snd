@@ -1,5 +1,6 @@
 Snd change log
 
+  6-Sep:     def-optkey-instrument.
   1-Sep:     snd_frg.scm thanks to Olivier Doare.
   28-Aug:    removed vu-font and vu-font-size, added vu-in-dB.
   16-Aug:    display-bark-fft (dsp.scm).

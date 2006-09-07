@@ -45,8 +45,10 @@
 #if USE_SND && MUS_MAC_OSX && USE_MOTIF
   #undef USE_MOTIF
   #define USE_NO_GUI 1
-  /* Xt's Boolean collides with MacTypes.h Boolean, but we want snd.h for other stuff,
-   *   so, if Motif is in use, don't load its headers at this time
+  /* Xt's Boolean (/usr/include/X11/Intrinsic.h = char) collides with MacTypes.h Boolean, (actually,
+   *   unsigned char in /Developer/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks/CoreFoundation.framework/Versions/A/Headers/CFBase.h)
+   *   but we want snd.h for other stuff, so, if Motif is in use, don't load its headers at this time
+   *   perhaps we could use the -funsigned-char switch in gcc
    */
 #endif
 

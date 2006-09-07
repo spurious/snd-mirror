@@ -71,7 +71,6 @@
  *        xm.c:#include <config.h>
  *
  * SOMEDAY: vct -> mus_vct (struct name), also all sound_data stuff (sndlib2xen.h -- remove this entirely?), Init_sndlib: clm2xen.c -- ruby requirement?
- * SOMEDAY: clean up the CVS outer sndins directory
  */
 
 /* -------- protect XEN vars from GC -------- */

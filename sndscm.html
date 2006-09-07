@@ -3,9 +3,7 @@
 <!-- TODO: these need work: edit123 rtex strad -->
 <!-- TODO: check pd-*.scm snd-hobbit.scm (rb/fs?) -->
 <!-- TODO: gauche-*.scm and init file example -->
-<!-- TODO: sndins directory docs? tools? -->
-<!-- TODO: example of definstrument wrapped in def-opt-key-fun -->
-
+<!-- TODO: sndins directory docs [sndins/README]? tools? -->
 
 <!-- documentation for some of the Scheme/Ruby/Forth code included with Snd -->
 <head>
@@ -8965,6 +8963,23 @@ should run within a factor of four of the fastest CL-based CLM, even though the
 latter is going through the C intermediate file and the (very good) C compiler!  
 </p>
 
+<p>In scheme, you can also use <a name="defoptkeyinstrument">def-optkey-instrument</a>
+which is a combination of definstrument and <a href="clm.html#def-optkey-fun">def-optkey-fun</a>:
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+(def-optkey-instrument (simp beg dur (frequency 440.0) (amplitude 0.1))
+  (let* ((os (make-oscil frequency)))
+    (run (lambda ()
+      (do ((i 0 (1+ i))) ((= i dur))
+	(outa (+ i beg) (* amplitude (oscil os)) *output*))))))
+
+(with-sound () 
+  (simp 0 10000) 
+  (simp 10000 10000 550.0 :amplitude 0.1) 
+  (simp 20000 10000 :amplitude 0.2))
+</pre></td></tr></table>
+
 <p>with-sound returns the output file name. If a previous file of the same name
 is currently open in Snd, it is closed before the new version is opened.
 To display the entire sound automatically (independent of <a href="extsnd.html#afteropenhook">after-open-hook</a>),
@@ -9028,6 +9043,8 @@ by calling the oscils and whatnot directly in the with-sound body:
 	     (<a class=quiet href="clm.html#outa">outa</a> samp (* .1 sum) *output*))))))))
 </pre></td></tr></table>
 <img src="shepard.png" alt="shepard tone spectrum" vspace=10 hspace=40>
+
+
 <br><br>
 <table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>other forms of with-sound</h4></td></tr></table>
 

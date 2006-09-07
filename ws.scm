@@ -836,6 +836,27 @@ returning you to the true top-level."
 							     (set! na (cdr na))))))))))
 				   (apply ,key-name allargs)))))))))))))
 
+(defmacro def-optkey-instrument (args . body)
+  (let* ((name (car args))
+	 (targs (cdr args))
+	 (utargs (let ((arg-names '()))
+		   (for-each
+		    (lambda (a)
+		      (if (not (keyword? a))
+			  (if (symbol? a)
+			      (set! arg-names (cons a arg-names))
+			      (set! arg-names (cons (car a) arg-names)))))
+		    targs)
+		   (reverse arg-names))))
+  `(begin 
+     (def-optkey-fun (,name ,@targs)
+       (if *clm-notehook*
+	   (*clm-notehook* (symbol->string ',name) ,@utargs))
+       ((lambda () ; for inner defines, if any
+	  ,@body)))
+     ,@(if *definstrument-hook*
+           (list (*definstrument-hook* name targs))
+           (list)))))
 
 ;;; SOMEDAY: support for ws->snd tracks/mixes (by insname? or as one file per name?)
 ;;; TODO: auto track placement

@@ -44444,6 +44444,12 @@ EDITS: 1
     (if (> unhappy 0)
 	(snd-print (format #f "~A: unhappiest: ~A ~A~%" name unhappiestseg unhappiest)))))
 
+(def-optkey-instrument (defopt-simp beg dur (frequency 440.0) (amplitude 0.1))
+  (let* ((os (make-oscil frequency)))
+    (run (lambda ()
+      (do ((i 0 (1+ i))) ((= i dur))
+	(outa (+ i beg) (* amplitude (oscil os)) *output*))))))
+
 
 (if (and (provided? 'run) (or full-test (= snd-test 23) (and keep-going (<= snd-test 23))))
     (begin
@@ -44931,7 +44937,9 @@ EDITS: 1
 	      (snd-display ";fm-violin with-sound: ~A ~A" (channel->vct 45 10) (channel->vct 210 10)))
 	  (play-and-wait ind)
 	  (close-sound ind))
-	
+
+	(with-sound (:play #f) (defopt-simp 0 10000) (simp 10000 10000 550.0 0.1) (simp 20000 10000 :amplitude .2))
+
 	(with-sound (:channels 2 :statistics #t)
 		    (fullmix "pistol.snd")
 		    (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
