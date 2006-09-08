@@ -775,7 +775,10 @@ void snd_doit(int argc, char **argv)
     ss->startup_title = copy_string(app_title); 
   else ss->startup_title = copy_string("snd");
 
-  set_sound_style((sound_style_t)snd_rs.horizontal_panes);
+  if ((snd_rs.horizontal_panes >= (int)SOUNDS_VERTICAL) &&
+      (snd_rs.horizontal_panes <= (int)SOUNDS_IN_SEPARATE_WINDOWS))
+    set_sound_style((sound_style_t)snd_rs.horizontal_panes);
+
   set_init_filename(snd_rs.init_file_name); 
 
   for (i = 1; i < argc; i++)
@@ -818,9 +821,7 @@ void snd_doit(int argc, char **argv)
   ss->batch_mode = batch;
   if (batch) XtSetMappedWhenManaged(shell, 0);
   set_html_dir(copy_string(snd_rs.html_dir));
-#ifndef S_SPLINT_S
   set_auto_resize(snd_rs.auto_resize);
-#endif
   ss->zoom_slider_width = snd_rs.zoom_slider_width;
   ss->position_slider_width = snd_rs.position_slider_width;
   ss->channel_sash_indent = snd_rs.channel_sash_indent;
@@ -967,7 +968,10 @@ void snd_doit(int argc, char **argv)
   ss->orig_tiny_font = copy_string(tiny_font(ss));
 
   XtVaSetValues(shell, XmNbackground, sx->basic_color, NULL);
-  set_color_map(snd_rs.spectrogram_color);
+
+  if (is_colormap(snd_rs.spectrogram_color))
+    set_color_map(snd_rs.spectrogram_color);
+  else set_color_map(DEFAULT_COLOR_MAP);
 
 #ifndef SND_AS_WIDGET
   n = 0;
@@ -1115,7 +1119,7 @@ void snd_doit(int argc, char **argv)
   gv.foreground = sx->filter_control_waveform_color;
   sx->fltenv_data_gc = XCreateGC(dpy, wn, GCBackground | GCForeground | GCFunction, &gv);
 
-  initialize_colormap();
+  initialize_colormap(); /* X11 not ours */
   make_icons_transparent(snd_rs.basic_color);
 
   BACKGROUND_ADD(startup_funcs, NULL);

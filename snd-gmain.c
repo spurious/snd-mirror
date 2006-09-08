@@ -28,12 +28,6 @@
 #define PUSHED_BUTTON_COLOR  "lightsteelblue1"
 #define SASH_COLOR           "lightgreen"
 
-#if HAVE_GL
-  #define DEFAULT_SPECTROGRAM_COLOR DEFAULT_COLOR_MAP
-#else
-  #define DEFAULT_SPECTROGRAM_COLOR 0
-#endif
-
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 10
 
@@ -688,7 +682,7 @@ void snd_doit(int argc, char **argv)
   ss->orig_listener_font = copy_string(listener_font(ss));
   ss->orig_tiny_font = copy_string(tiny_font(ss));
 
-  set_color_map(DEFAULT_SPECTROGRAM_COLOR);
+  set_color_map(DEFAULT_COLOR_MAP);
 
   str = mus_expand_filename("~/.gtkrc-2.0");
   if (mus_file_probe(str))

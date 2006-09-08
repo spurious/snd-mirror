@@ -44938,7 +44938,7 @@ EDITS: 1
 	  (play-and-wait ind)
 	  (close-sound ind))
 
-	(with-sound (:play #f) (defopt-simp 0 10000) (simp 10000 10000 550.0 0.1) (simp 20000 10000 :amplitude .2))
+	(with-sound (:play #f) (defopt-simp 0 10000) (defopt-simp 10000 10000 550.0 0.1) (defopt-simp 20000 10000 :amplitude .2))
 
 	(with-sound (:channels 2 :statistics #t)
 		    (fullmix "pistol.snd")

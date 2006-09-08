@@ -1083,7 +1083,7 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
   
   prf->text = gtk_combo_box_entry_new_text();
   for (i = 0; i < num_values; i++)
-    gtk_combo_box_append_text(GTK_COMBO_BOX(prf->text), values[i]);
+    gtk_combo_box_append_text(GTK_COMBO_BOX(prf->text), (values[i]) ? values[i] : " ");
   sg_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), value);
   gtk_box_pack_start(GTK_BOX(hb), prf->text, false, false, 4);
   gtk_widget_show(prf->text);

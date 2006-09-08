@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Mon Sep 04 17:13:30 CEST 2006
+\ Changed: Wed Sep 06 22:37:39 CEST 2006
 
 \ Commentary:
 \ 
@@ -590,7 +590,6 @@ set-current
   make-timer { tm }
   tm start-timer
   \ compute ws body
-  '( depth ) .debug
   body-xt #t nil fth-catch ?dup-if { res }
     *output* mus-close drop
     *reverb* if *reverb* mus-close drop then

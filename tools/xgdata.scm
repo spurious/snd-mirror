@@ -6041,7 +6041,7 @@
 ;(CFNC-210 "void gtk_printer_option_widget_set_source GtkPrinterOptionWidget* setting GtkPrinterOption* source")
 ;(CFNC-210 "gboolean gtk_printer_option_widget_has_external_label GtkPrinterOptionWidget* setting")
 ;(CFNC-210 "GtkWidget* gtk_printer_option_widget_get_external_label GtkPrinterOptionWidget* setting")
-;(CFNC-210 "char* gtk_printer_option_widget_get_value GtkPrinterOptionWidget* setting")
+;(CFNC-210 "gchar* gtk_printer_option_widget_get_value GtkPrinterOptionWidget* setting") ; const return
 ;(CFNC-210 "GType gtk_print_job_get_type void")
 ;(CFNC-210 "GtkPrintJob* gtk_print_job_new gchar* title GtkPrinter* printer GtkPrintSettings* settings GtkPageSetup* page_setup")
 ;(CFNC-210 "GtkPrintSettings* gtk_print_job_get_settings GtkPrintJob* job")

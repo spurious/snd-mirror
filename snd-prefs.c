@@ -13,6 +13,9 @@
   #define LANG_NAME "source"
 #endif
 
+/* TODO: show true load-path value, set it in .prefs before any load-from-path, make sure it is set!
+ */
+
 
 static void int_to_textfield(widget_t w, int val)
 {
@@ -4262,9 +4265,14 @@ static char *colormap_completer(char *text, void *data)
 }
 
 static void reflect_colormap(prefs_info *prf) {SET_TEXT(prf->text, colormap_name(color_map(ss)));}
-static void revert_colormap(prefs_info *prf) {in_set_color_map(rts_colormap);}
 static void clear_colormap(prefs_info *prf) {in_set_color_map(DEFAULT_COLOR_MAP);}
 static void save_colormap(prefs_info *prf, FILE *ignore) {rts_colormap = color_map(ss);}
+
+static void revert_colormap(prefs_info *prf) 
+{
+  if (!(is_colormap(rts_colormap))) rts_colormap = DEFAULT_COLOR_MAP;
+  in_set_color_map(rts_colormap);
+}
 
 static void colormap_from_text(prefs_info *prf)
 {
@@ -4287,7 +4295,7 @@ static void colormap_from_text(prefs_info *prf)
 		curpos = i;
 		break;
 	      }
-	  if (curpos >= 0)
+	  if (is_colormap(curpos))
 	    in_set_color_map(curpos);
 	  else post_prefs_error("unknown colormap", (void *)prf);
 	}
