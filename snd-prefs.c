@@ -156,6 +156,61 @@ static void save_prefs(const char *filename, char *load_path_name)
     {
       if (load_path_name)
 	{
+	  /* this needs to be set even if a later init file adds to it; we need a true
+	   *   load-path before loading (e.g.) extensions.scm, but this can be called
+	   *   repeatedly, and across executions, so we don't want to fill up the list
+	   *   with repetitions; also the dialog needs to display the true current
+	   *   value, so we need that info from each language, then a way to merge it
+	   *   with the dialog values.  Much messier than I thought it would be.
+	   *
+	   * Guile: %load-path, a list of dirs, can use member to search (see snd-xen.c) or scm_sys_search_load_path
+	   * Gauche: *load-path*, (%add-load-path "/home/bil/cl") Scm_GetLoadPath?
+	   * Ruby: $LOAD_PATH (also known as $:), an array
+	   * Forth: *load-path*, add-load-path, an array, (void fth_add_load_path(const char *path))
+	   *
+	   * The startup (language default) path needs to be saved at startup,
+	   *   then display the current value in the dialog, and when saving prefs,
+	   *   make a statement that will restore the local choices.
+	   *
+	   * adding to load path:
+	   *                        (from snd-main.c)
+	   * #if HAVE_RUBY
+	   *   extern VALUE rb_load_path;
+	   *   rb_ary_unshift(rb_load_path, rb_str_new2(auto_open_file_names[auto_open_ctr]));
+	   * see code at end of snd-xen.c
+	   * #endif
+	   * #if HAVE_SCHEME
+	   *   char buf[256];
+	   *   sprintf(buf, "(set! %%load-path (cons \"%s\" %%load-path))", auto_open_file_names[auto_open_ctr]);
+	   *   XEN_EVAL_C_STRING(buf);
+	   * #endif
+	   * #if HAVE_FORTH
+	   *   fth_add_load_path(auto_open_file_names[auto_open_ctr]);
+	   * #endif
+	   * #if HAVE_GAUCHE
+	   *   Scm_AddLoadPath(auto_open_file_names[auto_open_ctr], false);
+	   * #endif
+	   *
+	   * set path (see below line 44nn):
+	   *
+	   * #if HAVE_RUBY
+	   *   extern VALUE rb_load_path;
+	   *   rb_ary_unshift(rb_load_path, rb_str_new2(str));
+	   * #endif
+	   * #if HAVE_GUILE
+	   *   buf = mus_format("(set! %%load-path (cons \"%s\" %%load-path))", str);
+	   *   XEN_EVAL_C_STRING(buf);
+	   * #endif
+	   * #if HAVE_FORTH
+	   *   fth_add_load_path(str);
+	   * #endif
+	   * #if HAVE_GAUCHE
+	   *   Scm_AddLoadPath(str, false);
+	   * #endif
+	   *
+	   * find_sources below is being used (somehow) to get the current load-path entry that points to extensions.*
+	   *
+	   */
 #if HAVE_GUILE
 	  fprintf(fd, "(set! %%load-path (cons \"%s\" %%load-path))\n", load_path_name);
 #endif

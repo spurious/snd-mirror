@@ -175,6 +175,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Color_Cutoff = DEFAULT_COLOR_CUTOFF;
   ss->Color_Scale = DEFAULT_COLOR_SCALE;
   ss->Color_Inverted = DEFAULT_COLOR_INVERTED;
+  ss->Color_Map = DEFAULT_COLOR_MAP;
   ss->Zero_Pad = DEFAULT_ZERO_PAD;
   ss->Ask_Before_Overwrite = DEFAULT_ASK_BEFORE_OVERWRITE;
   ss->X_Axis_Style = DEFAULT_X_AXIS_STYLE;

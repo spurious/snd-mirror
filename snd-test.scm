@@ -35,6 +35,12 @@
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
 
+;;; SOMEDAY: 1: play-mix, make-bezier, all the ladspa stuff, most dialogs, pausing, ssb-bank, continue-frame->file, listener-selection
+;;;          2: recorder-in-device, track-dialog-track, many colors (sets=29 but gets=2), save-macros, sync-max, expand_vector(?), mark-sync-max
+;;;          3: env-channel-with-base, window-x|y, sound-file-extensions
+;;;          4: play-track, players, mus-clipping, mus-prescaler
+;;;          5: mus-rand-seed, mix-tag-xy, selection-srate
+
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
@@ -58780,6 +58786,7 @@ EDITS: 1
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 		     make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-ssb-am make-table-lookup make-triangle-wave
 		     make-two-pole make-two-zero make-wave-train make-waveshape mixer* mixer-ref mixer-set! mixer? mixer+
+		     move-sound make-move-sound move-sound?
 		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape polyshape?
 		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
@@ -59162,7 +59169,7 @@ EDITS: 1
 				  (if tag
 				      (snd-display ";?proc ~A: ~A" n tag))))
 			      (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frame? file->sample? snd->sample?
-				    filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? mus-input? 
+				    filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
 				    mus-output? notch? one-pole? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 				    sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? sum-of-sines? table-lookup? 
 				    triangle-wave? two-pole? two-zero? wave-train? waveshape? color? mix-sample-reader? moving-average? ssb-am?
@@ -59179,7 +59186,7 @@ EDITS: 1
 		      (if tag
 			  (snd-display ";oscil?proc ~A: ~A" n tag))))
 		  (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frame? file->sample? snd->sample?
-			filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? mus-input? 
+			filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
 			mus-output? notch? one-pole? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? sum-of-sines? table-lookup? 
 			triangle-wave? two-pole? two-zero? wave-train? waveshape? sound? color? mix-sample-reader? moving-average? ssb-am?

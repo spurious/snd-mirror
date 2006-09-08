@@ -682,8 +682,6 @@ void snd_doit(int argc, char **argv)
   ss->orig_listener_font = copy_string(listener_font(ss));
   ss->orig_tiny_font = copy_string(tiny_font(ss));
 
-  set_color_map(DEFAULT_COLOR_MAP);
-
   str = mus_expand_filename("~/.gtkrc-2.0");
   if (mus_file_probe(str))
     gtk_rc_parse(str);

@@ -1,5 +1,6 @@
 ! Snd app-defaults -- these defaults are already taken care of in Snd,
 !   so this file is redundant unless something is changed.
+!   Actually, since I forget this file even exists, it's best not to use it.
 !   The .Xdefaults form would prefix each of these with "snd":
 !      snd*initFile: hiho
 !
@@ -35,15 +36,14 @@
 *markcolor:            red
 *sashcolor:            lightgreen
 *pushedbuttoncolor:    lightsteelblue1
-*helpbuttoncolor:      lightsteelblue2
-*quitbuttoncolor:      indianred2
-*resetbuttoncolor:     goldenrod1
-*doitbuttoncolor:      palegreen2
-*doitagainbuttoncolor: darkolivegreen1
+*helpbuttoncolor:      ivory1
+*quitbuttoncolor:      ivory1
+*resetbuttoncolor:     ivory1
+*doitbuttoncolor:      ivory1
+*doitagainbuttoncolor: ivory1
 *axisLabelFont:        -*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1
 *axisNumbersFont:      -*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1
 *initFile:             ~/.snd
-*spectrogramColor:     -1
 *autoResize:           1
 *horizontalPanes:      0
 *zoomSliderWidth:      10
