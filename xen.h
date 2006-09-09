@@ -13,11 +13,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 3
-#define XEN_VERSION "2.3"
+#define XEN_MINOR_VERSION 4
+#define XEN_VERSION "2.4"
 
 /* HISTORY:
  *
+ *  9-Sep-06:  XEN_LOAD_PATH and XEN_ADD_TO_LOAD_PATH
  *  1-Sep-06:  string and array changes for Ruby (from Mike).
  *  7-Aug-06:  more careful list length handling in Ruby (from Mike).
  *  23-May-06: added xen_rb_repl_set_prompt to set (no-gui) Ruby repl prompt.
@@ -667,6 +668,8 @@
   #define XEN_LOAD_FILE(File)           scm_primitive_load(C_TO_XEN_STRING(File))
   #define XEN_LOAD_FILE_WITH_PATH(File) scm_primitive_load_path(C_TO_XEN_STRING(File))
 #endif
+#define XEN_LOAD_PATH XEN_NAME_AS_C_STRING_TO_VALUE("%load-path")
+#define XEN_ADD_TO_LOAD_PATH(Path) xen_guile_add_to_load_path(Path)
 
 #define XEN_PUTS(Str, Port)           scm_puts(Str, Port)
 #define XEN_DISPLAY(Val, Port)        scm_display(Val, Port)
@@ -684,6 +687,7 @@ double xen_to_c_double(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
 int xen_to_c_int(XEN a);
 bool xen_integer_p(XEN a);
+XEN xen_guile_add_to_load_path(char *path);
 #if XEN_DEBUGGING && HAVE_SCM_C_DEFINE_GSUBR
 XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int opt, int rst);
 #endif
@@ -851,6 +855,8 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_TO_STRING(Obj)              xen_rb_obj_as_string(Obj)
 #define XEN_LOAD_FILE(a)                xen_rb_load_file_with_error(C_TO_XEN_STRING(a))
 #define XEN_LOAD_FILE_WITH_PATH(a)      xen_rb_load_file_with_error(C_TO_XEN_STRING(a))
+#define XEN_LOAD_PATH                   XEN_NAME_AS_C_STRING_TO_VALUE("$LOAD_PATH")
+#define XEN_ADD_TO_LOAD_PATH(Path)      xen_rb_add_to_load_path(Path)
 
 /* ---- hooks ---- */
 #define XEN_HOOK_P(Arg)                 xen_rb_hook_p(Arg)
@@ -1179,6 +1185,7 @@ XEN rb_documentation(XEN name);
 XEN rb_set_documentation(XEN name, XEN help);
 bool xen_rb_arity_ok(int rargs, int args);
 void xen_rb_repl_set_prompt(const char *prompt);
+XEN xen_rb_add_to_load_path(char *path);
 #endif
 /* end HAVE_RUBY */
 
@@ -1293,6 +1300,8 @@ void xen_rb_repl_set_prompt(const char *prompt);
 #define C_STRING_TO_XEN_FORM(str)       XEN_EVAL_C_STRING(str)
 #define XEN_LOAD_FILE(a)                fth_load_file(a)
 #define XEN_LOAD_FILE_WITH_PATH(a)      fth_load_file(a)
+#define XEN_LOAD_PATH                   XEN_NAME_AS_C_STRING_TO_VALUE("*load-path*")
+#define XEN_ADD_TO_LOAD_PATH(Path)      fth_add_load_path(Path)
 
 /* === Vector (Array) === */
 #define XEN_MAKE_VECTOR(Num, Fill)      fth_make_array_with_init(Num, Fill)
@@ -1641,6 +1650,9 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_PROTECT_FROM_GC(Obj)      xen_gauche_permanent_object(Obj)
 #define XEN_LOAD_FILE(File)           xen_gauche_load_file(File)
 #define XEN_LOAD_FILE_WITH_PATH(File) Scm_VMLoad(SCM_STRING(C_TO_XEN_STRING(File)), XEN_FALSE, XEN_FALSE, 0)
+#define XEN_LOAD_PATH                 Scm_GetLoadPath()
+#define XEN_ADD_TO_LOAD_PATH(Path)    Scm_AddLoadPath(Path, false)
+/* TODO: check whether gauche addloadpath is push or pushnew */
 
 #define XEN_DEFINE(Name, Value)       SCM_DEFINE(Scm_UserModule(), Name, Value)
 
@@ -2052,6 +2064,8 @@ bool xen_gauche_hook_p(XEN val);
 #define XEN_PROTECT_FROM_GC(a) 0
 #define XEN_LOAD_FILE(a) 0
 #define XEN_LOAD_FILE_WITH_PATH(a) 0
+#define XEN_LOAD_PATH XEN_FALSE
+#define XEN_ADD_TO_LOAD_PATH(Path) XEN_FALSE
 #define XEN_ERROR_TYPE(Typ) XEN_FALSE
 #define XEN_ERROR(Type, Info) fprintf(stderr, "error")
 #define XEN_THROW(Type, Info) fprintf(stderr, "error")

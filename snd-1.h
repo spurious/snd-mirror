@@ -1000,7 +1000,7 @@ XEN snd_no_such_file_error(const char *caller, XEN filename);
 XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn);
 XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc);
 XEN snd_no_active_selection_error(const char *caller);
-void g_initialize_gh(void);
+void g_xen_initialize(void);
 XEN eval_str_wrapper(void *data);
 XEN eval_form_wrapper(void *data);
 XEN string_to_form(void *data);

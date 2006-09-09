@@ -117,22 +117,7 @@ static void initialize_load_path(void)
 	}
       for (i = curdir - 1; i >= 0; i--)
 	{
-#if HAVE_RUBY
-	  extern VALUE rb_load_path;
-	  rb_ary_unshift(rb_load_path, rb_str_new2(dirnames[i]));
-#endif
-#if HAVE_GUILE
-	  char *buf;
-	  buf = mus_format("(set! %%load-path (cons \"%s\" %%load-path))", dirnames[i]);
-	  XEN_EVAL_C_STRING(buf);
-	  FREE(buf);
-#endif
-#if HAVE_FORTH
-	  fth_add_load_path(dirnames[i]);
-#endif
-#if HAVE_GAUCHE
-	  Scm_AddLoadPath(dirnames[i], false);
-#endif
+	  XEN_ADD_TO_LOAD_PATH(dirnames[i]);
 	  FREE(dirnames[i]);
 	}
       FREE(dirnames);
@@ -432,7 +417,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 #else
   ss->catch_exists = 0;
 #endif
-  g_initialize_gh();
+  g_xen_initialize();
   ss->search_proc = XEN_UNDEFINED;
   ss->search_expr = NULL;
   ss->search_tree = NULL;

@@ -251,6 +251,26 @@ XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int op
 }
 #endif
 
+XEN xen_guile_add_to_load_path(char *path)
+{
+  char *buf = NULL;
+  int len;
+  XEN result = XEN_FALSE;
+  if (path)
+    {
+      len = (strlen(path) * 2) + 256;
+      buf = (char *)calloc(len, sizeof(char));
+#if HAVE_SNPRINTF
+      snprintf(buf, len, "(if (not (member \"%s\" %%load-path)) (set! %%load-path (cons \"%s\" %%load-path)))", path, path);
+#else
+      sprintf(buf, "(if (not (member \"%s\" %%load-path)) (set! %%load-path (cons \"%s\" %%load-path)))", path, path);
+#endif 
+      result = XEN_EVAL_C_STRING(buf);
+      free(buf);
+    }
+  return(result);
+}
+
 #if HAVE_SCM_C_MAKE_RECTANGULAR
 static char **xen_temp_strings = NULL;
 static int xen_temp_strings_ctr = 0;
@@ -716,6 +736,14 @@ XEN xen_rb_load_file_with_error(XEN file)
       return(XEN_TO_STRING(ruby_errinfo));
     }
   return(XEN_TRUE);
+}
+
+XEN xen_rb_add_to_load_path(char *path)
+{
+  extern VALUE rb_load_path;
+  /* TODO: check that it's not already there: $LOAD_PATH.include? path -> false */
+  rb_ary_unshift(rb_load_path, rb_str_new2(path));
+  return(XEN_FALSE);
 }
 
 static char *lstbuf = NULL;

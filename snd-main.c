@@ -1482,21 +1482,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 				    snd_error_without_format(_("-I but no path?"));
 				  else 
 				    {
-#if HAVE_RUBY
-				      extern VALUE rb_load_path; /* prepend -I as they appear (kinda unintuitive) */
-				      rb_ary_unshift(rb_load_path, rb_str_new2(auto_open_file_names[auto_open_ctr]));
-#endif
-#if HAVE_SCHEME
-				      char buf[256];
-				      sprintf(buf, "(set! %%load-path (cons \"%s\" %%load-path))", auto_open_file_names[auto_open_ctr]);
-				      XEN_EVAL_C_STRING(buf);
-#endif
-#if HAVE_FORTH
-				      fth_add_load_path(auto_open_file_names[auto_open_ctr]);
-#endif
-#if HAVE_GAUCHE
-				      Scm_AddLoadPath(auto_open_file_names[auto_open_ctr], false);
-#endif
+				      XEN_ADD_TO_LOAD_PATH(auto_open_file_names[auto_open_ctr]);
 				    }
 				}
 			      else

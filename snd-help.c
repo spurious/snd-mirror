@@ -3352,31 +3352,27 @@ static char *snd_finder(const char *name, bool got_help)
   bool is_defined = false;
   int a_def = 0, dir_len = 0, i;
   XEN dirs = XEN_EMPTY_LIST;
+  dirs = XEN_LOAD_PATH;
 
 #if HAVE_GUILE || (!HAVE_EXTENSION_LANGUAGE)
   #define NUM_DEFINES 5
   #define TRAILER " "
   char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(defmacro ", "(defmacro* "};
-  dirs = XEN_EVAL_C_STRING("%load-path");
 #endif
 #if HAVE_GAUCHE
   #define NUM_DEFINES 5
   #define TRAILER " "
   char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(defmacro ", "(defmacro* "};
-  dirs = Scm_GetLoadPath();
 #endif
 #if HAVE_RUBY
   #define NUM_DEFINES 2
   #define TRAILER ""
   char *defines[NUM_DEFINES] = {"def ", "class "};
-  extern VALUE rb_load_path;
-  dirs = rb_load_path;
 #endif
 #if HAVE_FORTH
   #define NUM_DEFINES 3
   #define TRAILER ""
   char *defines[NUM_DEFINES] = {": ", "instrument: ", "event: "};
-  dirs = XEN_VARIABLE_REF("*load-path*");
 #endif
 
   is_defined = XEN_DEFINED_P(name);

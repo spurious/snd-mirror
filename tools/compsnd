@@ -64,6 +64,10 @@ sed config.h -e 's/#define HAVE_STRCASECMP 1/#define HAVE_STRCASECMP 0/' > tmp
 mv tmp config.h
 make
 
+sed config.h -e 's/#define HAVE_SNPRINTF 1/#define HAVE_SNPRINTF 0/' > tmp
+mv tmp config.h
+make
+
 make clmclean
 make sndinfo
 make audinfo

@@ -158,7 +158,7 @@ typedef enum {IO_NO_ERROR, IO_SAVE_HOOK_CANCELLATION, IO_BAD_CHANNEL, IO_CANT_RE
                                (Err != IO_NO_CHANGES))
 
 #if DEBUGGING
-#define ASSERT_IO_ERROR(Err, Location) if (Err >= IO_ERROR_NUM) {fprintf(stderr, "%s: bogus io error: %d\n", Location, Err); abort();}
+  #define ASSERT_IO_ERROR(Err, Location) if (Err >= IO_ERROR_NUM) {fprintf(stderr, "%s: bogus io error: %d\n", Location, Err); abort();}
 #else
   #define ASSERT_IO_ERROR(Err, Location)
 #endif

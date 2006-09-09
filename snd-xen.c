@@ -2122,7 +2122,7 @@ XEN_NARGIFY_1(g_ftell_w, g_ftell)
 #endif
 
 
-void g_initialize_gh(void)
+void g_xen_initialize(void)
 {
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe, g_mus_audio_describe_w, 0, 0, 0, H_mus_audio_describe);
   XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function");
@@ -2301,6 +2301,8 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_ladspa_to_snd();
 #endif
 
+  XEN_ADD_TO_LOAD_PATH(mus_getcwd());
+
 #if HAVE_GUILE
   {
     /* Gauche and CL use '#| |#' for block comments, so implement them in Guile */
@@ -2321,7 +2323,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
   XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
-  XEN_EVAL_C_STRING("(set! %load-path (cons \".\" %load-path))");
   XEN_EVAL_C_STRING("(set! %load-hook \
                        (lambda (filename)\
                          (if %load-verbosely\
@@ -2338,10 +2339,14 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                                      (let ((new-path (substring curfile 0 last-slash)))\
                                        (if (and (not (member new-path %load-path))\
                                                 (not (string=? (substring curfile (max 0 (- last-slash 5)) last-slash) \"ice-9\")))\
-	                                   (set! %load-path (cons new-path %load-path))))))))");
-  /* the "ice-9" business is to keep us from loading ice-9/debug.scm when we intend our own debug.scm */
-  /* load-from-path can still be fooled, but the user will have to work at it. */
-  /* If you load Guile's debug.scm by mistake (set! %load-verbosely #t) to see Snd's names get clobbered! */
+	                                   (set! %load-path (append %load-path (list new-path)))))))))");
+  /* the "ice-9" business is to keep us from loading ice-9/debug.scm when we intend our own debug.scm.
+   *   load-from-path can still be fooled, but the user will have to work at it.
+   *   If you load Guile's debug.scm by mistake (set! %load-verbosely #t) to see Snd's names get clobbered!
+   * 
+   * one gotcha here is that when an initialization file is loaded, and we're using cons to reset the load-path,
+   *   the user's home directory gets placed on the load list, pushing the cwd to second; hence append above
+   */
 #endif
 
 #if HAVE_GAUCHE
@@ -2412,8 +2417,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
   /* Gauche doesn't handle documentation strings correctly */
   XEN_EVAL_C_STRING("(defmacro define+ (args . body) `(define ,args ,@(cdr body)))"); /* strip out documentation string if embedded defines */
-
-  Scm_AddLoadPath(mus_getcwd(), false);
 #endif
 
 #if HAVE_RUBY
@@ -2488,7 +2491,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   #ifdef RUBY_SEARCH_PATH
     {
       /* this code stolen from ruby.c */
-      extern VALUE rb_load_path;
       char *str, *buf;
       int i, j = 0, len;
       str = RUBY_SEARCH_PATH;
@@ -2500,7 +2502,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 	    buf[j] = 0;
 	    if (j > 0)
 	      {
-		rb_ary_push(rb_load_path, rb_str_new2(buf));
+		XEN_ADD_TO_LOAD_PATH(buf);
 	      }
 	    j = 0;
 	  }
@@ -2508,7 +2510,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
       if (j > 0)
 	{
 	  buf[j] = 0;
-	  rb_ary_push(rb_load_path, rb_str_new2(buf));
+	  XEN_ADD_TO_LOAD_PATH(buf);
 	}
       FREE(buf);
     }
