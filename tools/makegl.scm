@@ -456,7 +456,7 @@
 (load "gldata.scm")
 
 ;;; ---------------------------------------- write output file ----------------------------------------
-(hey "/* gl.c: Guile and Ruby bindings for GL, GLU~%")
+(hey "/* gl.c: Guile, Gauche, Ruby, and Forth bindings for GL, GLU~%")
 (hey " *   generated automatically from makegl.scm and gldata.scm~%")
 (hey " *   needs xen.h~%")
 (hey " *~%")

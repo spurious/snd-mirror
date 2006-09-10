@@ -19,8 +19,10 @@
        clm instruments? -- surely user should learn about the listener...
 */
 
+/* TODO: prefs_helping seems to be broken (no tooltips) */
 
-static Widget preferences_dialog = NULL;
+
+static Widget preferences_dialog = NULL, load_path_text_widget = NULL;
 static bool prefs_helping = false, prefs_unsaved = false;
 static char *prefs_saved_filename = NULL;
 static char *include_load_path = NULL;
@@ -1624,7 +1626,7 @@ static void preferences_save_callback(Widget w, XtPointer context, XtPointer inf
   clear_prefs_dialog_error();
   redirect_snd_error_to(post_prefs_dialog_error, NULL);
   redirect_snd_warning_to(post_prefs_dialog_error, NULL);
-  save_prefs(save_options_in_prefs(), include_load_path);
+  save_prefs(save_options_in_prefs());
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
 }
@@ -1889,6 +1891,7 @@ widget_t start_preferences_dialog(void)
 			      load_path_text);
     remember_pref(prf, reflect_load_path, NULL, help_load_path, clear_load_path, revert_load_path);
     if (rts_load_path == NULL) red_text(prf);
+    load_path_text_widget = prf->text;
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("display only sound files in various file lists", S_just_sounds,

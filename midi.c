@@ -668,7 +668,7 @@ char *mus_midi_describe(void) {return(NULL);}            /* result should be fre
 
 
 /* ---------------- XEN ---------------- */
-/* tie foregoing into Xen (Guile or Ruby) */
+/* tie foregoing into Xen */
 
 #if HAVE_EXTENSION_LANGUAGE
 

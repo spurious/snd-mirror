@@ -1,4 +1,4 @@
-/* xm.c: Guile/Ruby bindings for X/Xt/Xpm/Xm/Xp/Xext
+/* xm.c: Guile/Gauche/Ruby/Forth bindings for X/Xt/Xpm/Xm/Xp/Xext
  *   needs xen.h
  *   for tests and examples see snd-motif.scm, bess.scm|rb, and snd-test.scm
  */

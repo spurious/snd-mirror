@@ -1598,7 +1598,7 @@
 
 
 ;;; ---------------------------------------- write output files ----------------------------------------
-(hey "/* xg.c: Guile and Ruby bindings for gdk/gtk/pango, some of glib~%")
+(hey "/* xg.c: Guile, Gauche, Ruby, and Forth bindings for gdk/gtk/pango, some of glib~%")
 (hey " *   this file generated automatically from makexg.scm and xgdata.scm~%")
 (hey " *   needs xen.h~%")
 (hey " *~%")

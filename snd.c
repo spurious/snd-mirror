@@ -424,7 +424,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   mus_error_set_handler(mus_error_to_snd);
   mus_print_set_handler(mus_print_to_snd);
 
-  initialize_load_path();
+  initialize_load_path(); /* merge SND_PATH entries into the load-path */
 
 #ifdef SND_AS_PD_EXTERNAL
   return;

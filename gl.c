@@ -1,4 +1,4 @@
-/* gl.c: Guile and Ruby bindings for GL, GLU
+/* gl.c: Guile, Gauche, Ruby, and Forth bindings for GL, GLU
  *   generated automatically from makegl.scm and gldata.scm
  *   needs xen.h
  *
@@ -5969,7 +5969,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       XEN_YES_WE_HAVE("gl");
-      XEN_DEFINE("gl-version", C_TO_XEN_STRING("29-Mar-06"));
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("09-Sep-06"));
       gl_already_inited = true;
     }
 }

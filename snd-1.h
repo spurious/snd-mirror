@@ -1780,6 +1780,5 @@ Float evaluate_ptreec(struct ptree *pt, Float arg, vct *v, bool dir);
 #if HAVE_LADSPA
 void g_ladspa_to_snd(void);
 #endif
-
 #endif
 

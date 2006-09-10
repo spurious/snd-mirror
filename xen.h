@@ -668,8 +668,8 @@
   #define XEN_LOAD_FILE(File)           scm_primitive_load(C_TO_XEN_STRING(File))
   #define XEN_LOAD_FILE_WITH_PATH(File) scm_primitive_load_path(C_TO_XEN_STRING(File))
 #endif
-#define XEN_LOAD_PATH XEN_NAME_AS_C_STRING_TO_VALUE("%load-path")
-#define XEN_ADD_TO_LOAD_PATH(Path) xen_guile_add_to_load_path(Path)
+#define XEN_LOAD_PATH                 XEN_EVAL_C_STRING("%load-path")
+#define XEN_ADD_TO_LOAD_PATH(Path)    xen_guile_add_to_load_path(Path)
 
 #define XEN_PUTS(Str, Port)           scm_puts(Str, Port)
 #define XEN_DISPLAY(Val, Port)        scm_display(Val, Port)

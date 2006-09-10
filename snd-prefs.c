@@ -13,9 +13,10 @@
   #define LANG_NAME "source"
 #endif
 
-/* TODO: show true load-path value, set it in .prefs before any load-from-path, make sure it is set!
- */
 /* TODO: many keybindings don't have a Forth version? and yet they're included in the dialog
+ * TODO: Ruby names are sometimes "-" not "_"? (make-current-window-display, show-listener) 
+ * TODO: Forth: no channel-property??
+ * TODO: Forth: set-speed-control-style: wrong type arg 1, #t -> #t show-listener needs "drop"
  */
 
 
@@ -146,64 +147,131 @@ static void preferences_revert_or_clear(bool revert)
   prefs_set_dialog_title(NULL);
 }
 
-static void save_prefs(const char *filename, char *load_path_name)
+static bool local_access(char *dir)
+{
+  int err;
+  char *temp;
+  temp = shorter_tempnam(dir, "snd_");
+  err = mus_file_create(temp);
+  if (err != -1)
+    {
+      snd_close(err, temp);
+      snd_remove(temp, IGNORE_CACHE);
+    }
+  FREE(temp);
+  return(err != -1);
+}
+
+static bool string_member_p(char *val, char **lst, int len)
 {
   int i;
+  if ((len == 0) || (!lst) || (!val)) return(false);
+  for (i = 0; i < len; i++)
+    if ((lst[i]) &&
+	(strcmp(val, lst[i]) == 0))
+      return(true);
+  return(false);
+}
+
+static char **load_path_to_string_array(int *len)
+{
+  char **cdirs = NULL;
+  int dir_len = 0, i, j = 0;
+  XEN dirs;
+  dirs = XEN_LOAD_PATH; /* in Guile, if this is the %load-path symbol value, the list gets mangled?? (so use eval string) */
+  dir_len = XEN_LIST_LENGTH(dirs);
+  if (dir_len > 0)
+    {
+      cdirs = (char **)CALLOC(dir_len, sizeof(char *));
+      for (i = 0; i < dir_len; i++)
+	{
+	  char *path;
+	  path = XEN_TO_C_STRING(XEN_LIST_REF(dirs, i));
+	  if ((path) && (!(string_member_p(path, cdirs, j))))   /* try to remove duplicates */
+	    cdirs[j++] = copy_string(path);
+	}
+    }
+  (*len) = j;
+  return(cdirs);
+}
+
+static void add_local_load_path(FILE *fd, char *path)
+{
+#if HAVE_GUILE
+  fprintf(fd, "(if (not (member \"%s\" %%load-path)) (set! %%load-path (cons \"%s\" %%load-path)))\n", path, path);
+#endif
+#if HAVE_RUBY
+  fprintf(fd, "if (not $LOAD_PATH.include?(\"%s\")) then $LOAD_PATH.push(\"%s\") end\n", path, path);
+#endif
+#if HAVE_FORTH
+  /* this already checks */
+  fprintf(fd, "$\" %s\" add-load-path\n", path);
+#endif
+#if HAVE_GAUCHE
+  fprintf(fd, "(if (not (member \"%s\" *load-path*)) (%%add-load-path \"%s\"))\n", path, path);
+  /* can't use add-load-path here because it is executed no matter what! */
+#endif
+}
+
+static void save_prefs(const char *filename)
+{
   char *fullname;
   FILE *fd;
   if (!filename) return; /* error earlier */
   fullname = mus_expand_filename(filename);
   fd = FOPEN(fullname, "a");
+
+  fprintf(fd, "\n%s from the Preferences Dialog\n", XEN_COMMENT_STRING);
+
   if (fd)
     {
-      if (load_path_name)
+      char **current_dirs = NULL;
+      int i, current_dirs_len = 0;
+      char *unchecked_load_path = NULL;
+
+      /* LOAD_PATH has the current load-path list,
+       *   GET_TEXT(load_path_text_widget) has the current text (independent of activation)
+       *   include_load_path has whatever the last <cr> set it to.
+       *
+       * load_path_to_string_array can turn the LOAD_PATH into a char** array.
+       *
+       * load-path this needs to be set even if a later init file adds to it; we need a true
+       *   load-path before loading (e.g.) extensions.scm, but this can be called
+       *   repeatedly, and across executions, so we don't want to fill up the list
+       *   with repetitions,
+       *
+       * find_sources below is being used to get the current load-path entry that points to extensions.*
+       */
+
+      current_dirs = load_path_to_string_array(&current_dirs_len);
+      if (current_dirs)
+	for (i = current_dirs_len - 1; i >= 0; i--) /* consing on front, so keep original order of paths */
+	  add_local_load_path(fd, current_dirs[i]); /* don't try to be smart about startup paths -- just include everybody */
+
+      if ((include_load_path) &&
+	  (!(string_member_p(include_load_path, current_dirs, current_dirs_len))))
+	add_local_load_path(fd, include_load_path);
+
+      if (load_path_text_widget)
 	{
-	  /* this needs to be set even if a later init file adds to it; we need a true
-	   *   load-path before loading (e.g.) extensions.scm, but this can be called
-	   *   repeatedly, and across executions, so we don't want to fill up the list
-	   *   with repetitions; also the dialog needs to display the true current
-	   *   value, so we need that info from each language, then a way to merge it
-	   *   with the dialog values.  Much messier than I thought it would be.
-	   *
-	   * make sure include_load_path has a value even if only "."
-	   *
-	   *
-	   * Guile: %load-path, a list of dirs, can use member to search (see snd-xen.c) or scm_sys_search_load_path
-	   * Gauche: *load-path*, (%add-load-path "/home/bil/cl") Scm_GetLoadPath?
-	   * Ruby: $LOAD_PATH (also known as $:), an array
-	   * Forth: *load-path*, add-load-path, an array, (void fth_add_load_path(const char *path))
-	   *
-	   * The startup (language default) path needs to be saved at startup,
-	   *   then display the current value in the dialog, and when saving prefs,
-	   *   make a statement that will restore the local choices.
-	   *
-	   * find_sources below is being used to get the current load-path entry that points to extensions.*
-	   *
-	   * perhaps in prefs, display entire path
-	   *                   even if no cr, get value, write in .snd_prefs at start using pushnew equivalent
-	   *         use these new macros in snd-main, snd-xen, snd-prefs, wherever else
-	   *
-	   * #define XEN_LOAD_PATH XEN_NAME_AS_C_STRING_TO_VALUE("*load-path*") etc -> XEN value
-	   * #define XEN_ADD_TO_LOAD_PATH(Path)
-	   */
-#if HAVE_GUILE
-	  /* (if (not (member \"%s\" %%load-path)) ...) */
-	  fprintf(fd, "(set! %%load-path (cons \"%s\" %%load-path))\n", load_path_name);
-#endif
-#if HAVE_RUBY
-	  /* doesn't this put the new path at the end? */
-	  /* $LOAD_PATH.include? "/home/bil/clm" -> false */
-	  fprintf(fd, "$:.push(\"%s\")\n", load_path_name);
-#endif
-#if HAVE_FORTH
-	  /* this already checks, name is *load-path* -- an array I think */
-	  fprintf(fd, "$\" %s\" add-load-path\n", load_path_name);
-#endif
-#if HAVE_GAUCHE
-	  /* (if (not (member \"%s\" *load-path*)) ...) */
-	  fprintf(fd, "(add-load-path \"%s\")\n", load_path_name); /* variable is *load-path* */
-#endif
+	  unchecked_load_path = GET_TEXT(load_path_text_widget);
+	  if ((unchecked_load_path) &&                                                          /* text widget has an entry */
+	      (local_access(unchecked_load_path)) &&                                            /* it's a legit path */
+	      (!(string_member_p(unchecked_load_path, current_dirs, current_dirs_len))) &&        /* it's not in LOAD_PATH */
+	      ((!include_load_path) || (strcmp(unchecked_load_path, include_load_path) != 0)))  /* it's not already included above */
+	    add_local_load_path(fd, unchecked_load_path);
+	  if (unchecked_load_path) FREE_TEXT(unchecked_load_path); /* a no-op in gtk */
 	}
+
+      if (current_dirs)
+	{
+	  for (i = 0; i < current_dirs_len; i++)
+	    if (current_dirs[i]) FREE(current_dirs[i]);
+	  FREE(current_dirs);
+	  current_dirs = NULL;
+	}
+
+      /* now finally the load path is set up, so we can call (load-from-path...) if we need to */
       for (i = 0; i < prefs_top; i++)
 	{
 	  prefs_info *prf;
@@ -298,21 +366,6 @@ static void prefs_help(prefs_info *prf)
 	    }
 	}
     }
-}
-
-static bool local_access(char *dir)
-{
-  int err;
-  char *temp;
-  temp = shorter_tempnam(dir, "snd_");
-  err = mus_file_create(temp);
-  if (err != -1)
-    {
-      snd_close(err, temp);
-      snd_remove(temp, IGNORE_CACHE);
-    }
-  FREE(temp);
-  return(err != -1);
 }
 
 #if HAVE_RUBY
@@ -4453,11 +4506,10 @@ static char *rts_load_path = NULL;
 static void help_load_path(prefs_info *prf)
 {
   snd_help("load paths",
-	   "Much of Snd's functionality is loaded as needed from the Scheme or Ruby \
+	   "Much of Snd's functionality is loaded as needed from the Scheme, Ruby, or Forth \
 files found in the Snd tarball.  You can run Snd without \
 these files, but there's no reason to!  Just add the directory containing \
-them to the \"load-path\".  For example, if the Snd build directory was \"/home/bil/snd\", \
-add that string to the load paths given here.  " XEN_LANGUAGE_NAME " searches these \
+them to the \"load-path\".  " XEN_LANGUAGE_NAME " searches these \
 directories for any *." XEN_FILE_EXTENSION " files that it can't \
 find elsewhere.",
 	   WITH_WORD_WRAP);
@@ -4546,6 +4598,7 @@ static void load_path_text(prefs_info *prf)
     }
   if (str) FREE_TEXT(str);
 }
+
 
 
 /* ---------------- initial bounds ---------------- */

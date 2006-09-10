@@ -3352,7 +3352,6 @@ static char *snd_finder(const char *name, bool got_help)
   bool is_defined = false;
   int a_def = 0, dir_len = 0, i;
   XEN dirs = XEN_EMPTY_LIST;
-  dirs = XEN_LOAD_PATH;
 
 #if HAVE_GUILE || (!HAVE_EXTENSION_LANGUAGE)
   #define NUM_DEFINES 5
@@ -3378,6 +3377,7 @@ static char *snd_finder(const char *name, bool got_help)
   is_defined = XEN_DEFINED_P(name);
   url = snd_url(name);
   tempnam = snd_tempnam();
+  dirs = XEN_LOAD_PATH;
   dir_len = XEN_LIST_LENGTH(dirs);
 
   for (i = 0; (!fgrep) && (i < dir_len); i++)

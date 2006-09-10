@@ -1,4 +1,4 @@
-/* xg.c: Guile and Ruby bindings for gdk/gtk/pango, some of glib
+/* xg.c: Guile, Gauche, Ruby, and Forth bindings for gdk/gtk/pango, some of glib
  *   this file generated automatically from makexg.scm and xgdata.scm
  *   needs xen.h
  *
@@ -42941,7 +42941,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("01-Sep-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("09-Sep-06"));
       xg_already_inited = true;
 /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
 #if HAVE_SCHEME
