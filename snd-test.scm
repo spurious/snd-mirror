@@ -40,12 +40,14 @@
 ;;;          3: env-channel-with-base, window-x|y, sound-file-extensions
 ;;;          4: play-track, players, mus-clipping, mus-prescaler
 ;;;          5: mus-rand-seed, mix-tag-xy, selection-srate
+;;; TODO: at various points, start prefs, save, reload, check (as in current save-state tests), remove prefs output
+
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #f) ; huge arg testing
+(define all-args #t) ; huge arg testing
 
 (if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (snd-display ";both switches are on?"))
 
@@ -20229,7 +20231,8 @@ EDITS: 5
 	      (begin
 		(set! (view-files-files (view-files-dialog #f)) '())
 		(if (not (null? (view-files-files (view-files-dialog #f))))
-		    (snd-display ";set vf files list null: ~A" (view-files-files (view-files-dialog #f))))))))
+		    (snd-display ";set vf files list null: ~A" (view-files-files (view-files-dialog #f)))))))
+	)
 
       ;; granulate with jitter=0, small hop (comb filter effect)
       (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 :size 10000)))
@@ -26331,7 +26334,8 @@ EDITS: 5
       (close-sound fd)
       
       (set! fd (open-sound "obtest.snd"))
-      (if (defined? 'window-property)
+      (if (and (defined? 'window-property)
+	       (not (provided? 'snd-nogui)))
 	  (begin
 	    (let ((names (short-file-name #t)))
 	      (if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #t))
@@ -54352,7 +54356,7 @@ EDITS: 1
 
 ;;; ---------------- test 26: Gtk --------------------
 
-(if (or full-test (= snd-test 26) (and keep-going (<= snd-qtest 26)))
+(if (or full-test (= snd-test 26) (and keep-going (<= snd-test 26)))
     (begin
       (run-hook before-test-hook 26)
       (if (and (provided? 'snd-gtk)

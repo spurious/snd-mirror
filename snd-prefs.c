@@ -13,8 +13,7 @@
   #define LANG_NAME "source"
 #endif
 
-/* TODO: many keybindings don't have a Forth version? and yet they're included in the dialog
- * TODO: Ruby names are sometimes "-" not "_"? (make-current-window-display, show-listener) 
+/* TODO: Forth: many keybindings don't have a Forth version? and yet they're included in the dialog
  * TODO: Forth: no channel-property??
  * TODO: Forth: set-speed-control-style: wrong type arg 1, #t -> #t show-listener needs "drop"
  */
@@ -221,7 +220,7 @@ static void save_prefs(const char *filename)
   fullname = mus_expand_filename(filename);
   fd = FOPEN(fullname, "a");
 
-  fprintf(fd, "\n%s from the Preferences Dialog\n", XEN_COMMENT_STRING);
+  fprintf(fd, "\n");
 
   if (fd)
     {
@@ -235,8 +234,8 @@ static void save_prefs(const char *filename)
        *
        * load_path_to_string_array can turn the LOAD_PATH into a char** array.
        *
-       * load-path this needs to be set even if a later init file adds to it; we need a true
-       *   load-path before loading (e.g.) extensions.scm, but this can be called
+       * load-path needs to be set even if a later init file adds to it; we need a true
+       *   load-path before loading extensions.scm, but this can be called
        *   repeatedly, and across executions, so we don't want to fill up the list
        *   with repetitions,
        *
@@ -499,7 +498,7 @@ static void prefs_function_save_0(FILE *fd, const char *name, const char *file)
 #endif
 #if HAVE_RUBY
   char *str;
-  str = no_stars(name);
+  str = TO_PROC_NAME(name);
   if (file)
     fprintf(fd, "require \"%s\"\n", file);
   fprintf(fd, "%s()\n", str);
@@ -508,7 +507,7 @@ static void prefs_function_save_0(FILE *fd, const char *name, const char *file)
 #if HAVE_FORTH
   if (file)
     fprintf(fd, "require %s\n", file);
-  fprintf(fd, "%s\n", name);
+  fprintf(fd, "%s\n", name); /* drop?? */
 #endif
 }
 
@@ -521,7 +520,7 @@ static void prefs_function_save_1(FILE *fd, const char *name, const char *file, 
 #endif
 #if HAVE_RUBY
   char *str;
-  str = no_stars(name);
+  str = TO_PROC_NAME(name);
   if (file)
     fprintf(fd, "require \"%s\"\n", file);
   fprintf(fd, "%s(%s)\n", str, XEN_AS_STRING(val));
@@ -530,7 +529,7 @@ static void prefs_function_save_1(FILE *fd, const char *name, const char *file, 
 #if HAVE_FORTH
   if (file)
     fprintf(fd, "require %s\n", file);
-  fprintf(fd, "%s %s\n", XEN_AS_STRING(val), name);
+  fprintf(fd, "%s %s drop\n", XEN_AS_STRING(val), name);
 #endif
 }
 

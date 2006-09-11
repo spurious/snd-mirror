@@ -1,5 +1,6 @@
 Snd change log
 
+  12-Sep:    Snd 8.4.
   6-Sep:     def-optkey-instrument.
   1-Sep:     snd_frg.scm thanks to Olivier Doare.
   28-Aug:    removed vu-font and vu-font-size, added vu-in-dB.

@@ -1,46 +1,29 @@
-Snd 8.3
+Snd 8.4
 
-CLM generators: 
-  added filtered-comb ("fcomb" for freeverb)
-  added move-sound (runtime portion of dlocsig)
-  renamed average generator to moving-average
-  renamed windowed-maxamp to moving-max (dsp.scm)
-  added moving-rms, moving-sum, moving-length (dsp.scm)
-     overlay-rms-env (draw.scm) uses moving-rms
-     Perhaps these should be built-in CLM generators.
-  mfilter (dsp.scm) -- Mathews/Smith high-Q filter 
-    (similar to formant; another version is maxf.scm/ins)
-  removed make-ppolar|zpolar (use make-two-pole|zero)
-  moved ssb-fm and rmsgain.scm code to clm-ins.scm (removed rmgain.scm)
-  locsig now returns a float (not a frame)
+many ruby, forth, and sndins-related improvements from Mike including new file analog-filter.rb.
+  "scheme" instead of "guile" in various names in inf-snd.el (for gauche)
 
-dlocsig.scm (translation to Scheme of Fernando's dlocsig.lisp)
-  in CL-CLM, dlocsig.lisp and move-sound.ins now use the move-sound generator.
-  mix-move-sound (extsnd.html)
+improvements in strad.ins and bandedwg.ins from Juan Reyes
 
-green.scm (bounded brownian noise, from CLM's green.cl)
+snd_frg.scm thanks to Olivier Doare
 
-snd8.scm (backwards compatibility stuff for snd 8)
+I was mainly fixing bugs -- my TODO list has only 97 entries!!
 
-shepard-tone (sndscm.html)
-agc (dsp.scm)
-with-full-sound (ws.scm)
-def-clm-float-struct (CL-CLM only)
-fir+comb (clm.html)
-removed vct-map
+granulated-sound-interp (examp.scm)
 
-g_signal_connect and other such macros, and gtk_print_operation* to xg.c
+display-bark-fft (dsp.scm) -- spectral display using bark, erb, and mel scales
 
-merged new-icons.scm into new-buttons.scm and renamed the latter toolbar.scm
-  toolbar.scm also works in gtk
+def-optkey-instrument (ws.scm)
 
-*.fs updates and other improvements from Mike Scholz
+new optional argument to graph -- lisp graph axis choice
+new axis choice --show-bare-x-axis
+snd-color
+snd-font
+after-lisp-graph-hook
+removed vu-font and vu-size, added vu-in-dB
+removed spectrogramColor X resource
 
+checked: ruby 1.8.5, sbcl 0.9.15|16, gtk 2.10.2|3, fth 0.10.22
 
-checked: gtk 2.9.4, 2.10.0|1, autoconf 2.60, fth 0.10.0|2, sbcl 0.9.14, fftw 3.1.2,
-    clisp 2.39
-
-
-Thanks: Michael Klingbeil, Kjetil Matheussen, Mike Scholz, Oded Ben-Tal,
-    Russell Aspinwall, Anders Vinjar
-
+Thanks: Mike Scholz, Anders Vinjar, Kjetil Matheussen, Bill Sack, Pam & Harold Norris,
+    Juan Reyes, Daniel Stahl, Michael Edwards, Carlos Pita

@@ -496,6 +496,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+12-Sep:  Snd 8.4\n\
 6-Sep:   def-optkey-instrument.\n\
 1-Sep:   snd_frg.scm thanks to Olivier Doare.\n\
 28-Aug:  removed vu-font and vu-font-size, added vu-in-dB.\n\
@@ -505,10 +506,6 @@ void about_snd_help(void)
          \"scheme\" instead of \"guile\" in various names in inf-snd.el (for gauche).\n\
 3-Aug:   granulated-sound-interp (examp.scm).\n\
          poly-resultant and poly-discriminant (poly.scm).\n\
-1-Aug:   Snd 8.3.\n\
-31-Jul:  windowed-maxamp renamed moving-max, added moving-rms, moving-sum, moving-length (dsp.scm)\n\
-           average renamed moving-average in clm.\n\
-         overlay-rms-env in draw.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

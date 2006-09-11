@@ -721,6 +721,7 @@ void display_filter_env(snd_info *sp)
   int height, width;
   Widget drawer;
   env_editor *edp;
+  if (!(snd_ok(sp))) return; /* autotest close + lagging X updates */
   edp = sp->sgx->flt;
   drawer = FILTER_GRAPH(sp);
   height = widget_height(drawer);
