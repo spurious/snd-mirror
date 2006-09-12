@@ -5473,9 +5473,11 @@ static void white_mouse_enter_text_callback(Widget w, XtPointer context, XEvent 
 static void view_files_reset_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
+  env *e;
   vf_set_amp(vdat, 1.0);
   vf_set_speed(vdat, 1.0);
-  vf_set_amp_env(vdat, default_env(1.0, 1.0));
+  vf_set_amp_env(vdat, e = default_env(1.0, 1.0)); /* vf_set_amp_env copies the envelope */
+  free_env(e);
   sort_vf(vdat, view_files_sort(ss));
 }
 

@@ -5278,7 +5278,11 @@ static XEN g_set_cursor_style(XEN on, XEN snd_n, XEN chn_n)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on) || XEN_PROCEDURE_P(on), on, XEN_ARG_1, S_setB S_cursor_style, "an integer or a function");
   if (XEN_INTEGER_P(on))
     {
-      val = (cursor_style_t)XEN_TO_C_INT(on);
+      int choice;
+      choice = XEN_TO_C_INT(on);
+      if (choice < 0)
+	XEN_OUT_OF_RANGE_ERROR(S_setB S_cursor_style, 1, on, "~A, but must be >= 0");
+      val = (cursor_style_t)choice;
       if (val > CURSOR_LINE)
 	XEN_OUT_OF_RANGE_ERROR(S_setB S_cursor_style, 1, on, "~A, but must be " S_cursor_cross " or " S_cursor_line ", or a procedure");
     }
@@ -5325,9 +5329,13 @@ Possible values are " S_cursor_cross " (default), and " S_cursor_line "."
 
 static XEN g_set_tracking_cursor_style(XEN on, XEN snd_n, XEN chn_n) 
 {
+  int in_val;
   cursor_style_t val = CURSOR_CROSS;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_tracking_cursor_style, "an integer");
-  val = (cursor_style_t)XEN_TO_C_INT(on);
+  in_val = XEN_TO_C_INT(on);
+  if (in_val < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_tracking_cursor_style, 1, on, "~A, but must be >= 0");
+  val = (cursor_style_t)in_val;
   if (val > CURSOR_LINE)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_tracking_cursor_style, 1, on, "~A, but must be " S_cursor_cross " or " S_cursor_line);
   if (XEN_BOUND_P(snd_n))
@@ -6234,9 +6242,13 @@ choices are: " S_rectangular_window ", " S_hann_window ", " S_welch_window ", " 
 
 static XEN g_set_fft_window(XEN val, XEN snd, XEN chn)
 {
+  int in_win;
   mus_fft_window_t win;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_fft_window, "an integer"); 
-  win = (mus_fft_window_t)XEN_TO_C_INT(val);
+  in_win = XEN_TO_C_INT(val);
+  if (in_win < 0) /* stupid C++ */
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window, 1, val, "~A: fft data window must be >= 0");
+  win = (mus_fft_window_t)in_win;
   if (!(MUS_FFT_WINDOW_OK(win)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window, 1, val, "~A: unknown fft data window");
   if (XEN_BOUND_P(snd))
@@ -6509,9 +6521,13 @@ void set_x_axis_style(x_axis_style_t val)
 
 static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)
 {
+  int in_val;
   x_axis_style_t val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_x_axis_style, "an integer"); 
-  val = (x_axis_style_t)XEN_TO_C_INT(style);
+  in_val = XEN_TO_C_INT(style);
+  if (in_val < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, "~A, but must be >= 0");
+  val = (x_axis_style_t)in_val;
   if (val >= NUM_X_AXIS_STYLES)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, 
 	"~A, but must be " S_x_axis_in_seconds ", " S_x_axis_in_samples ", " S_x_axis_as_percentage ", " S_x_axis_in_beats ", " S_x_axis_in_measures ", or " S_x_axis_as_clock ".");
@@ -6585,9 +6601,13 @@ The other choices are " S_show_no_axes ", " S_show_all_axes_unlabelled ", " S_sh
 
 static XEN g_set_show_axes(XEN on, XEN snd, XEN chn)
 {
+  int in_val;
   show_axes_t val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_show_axes, "an integer");
-  val = (show_axes_t)XEN_TO_C_INT(on);
+  in_val = XEN_TO_C_INT(on);
+  if (in_val < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A, but must be >= 0");
+  val = (show_axes_t)in_val;
   if (val >= NUM_SHOW_AXES)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A, but must be " S_show_all_axes ", " S_show_x_axis ", " S_show_no_axes ", \
 " S_show_all_axes_unlabelled ", " S_show_x_axis_unlabelled ", or " S_show_bare_x_axis ".");
@@ -7230,7 +7250,7 @@ static XEN g_set_zoom_focus_style(XEN focus)
   #define H_zoom_focus_style "(" S_zoom_focus_style "): one of " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle \
 ", or " S_zoom_focus_active ". This determines what zooming centers on (default: " S_zoom_focus_active ").  It can also \
 be a function of 6 args (snd chan zx x0 x1 range) that returns the new window left edge as a float."
-  zoom_focus_t choice;
+
   XEN_ASSERT_TYPE((XEN_INTEGER_P(focus)) || (XEN_PROCEDURE_P(focus)), focus, XEN_ONLY_ARG, S_setB S_zoom_focus_style, "an integer or a function");
   if ((XEN_PROCEDURE_P(focus)) && (!(procedure_arity_ok(focus, 6))))
     return(snd_bad_arity_error(S_setB S_zoom_focus_style, 
@@ -7243,10 +7263,14 @@ be a function of 6 args (snd chan zx x0 x1 range) that returns the new window le
     }
   if (XEN_INTEGER_P(focus))
     {
-      choice = (zoom_focus_t)XEN_TO_C_INT(focus);
+      int in_choice;
+      zoom_focus_t choice;
+      in_choice = XEN_TO_C_INT(focus);
+      if (in_choice < 0)
+	XEN_OUT_OF_RANGE_ERROR(S_setB S_zoom_focus_style, 1, focus, "~A, but must be >= 0");
+      choice = (zoom_focus_t)in_choice;
       if (choice > ZOOM_FOCUS_MIDDLE)
-	XEN_OUT_OF_RANGE_ERROR(S_setB S_zoom_focus_style, 
-			       1, focus, 
+	XEN_OUT_OF_RANGE_ERROR(S_setB S_zoom_focus_style, 1, focus, 
 			       "~A, but must be " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle ", or " S_zoom_focus_active);
       set_zoom_focus_style(choice);
       return(C_TO_XEN_INT((int)zoom_focus_style(ss)));

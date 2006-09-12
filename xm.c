@@ -19207,8 +19207,8 @@ static XEN gxm_class(XEN ptr)
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowAttributes(ptr))->class)));
   if (XEN_Visual_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Visual(ptr))->class)));
   if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->class)));
-#endif
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "class", "a struct with a class field");
+#endif
   return(XEN_FALSE);
 }
 
@@ -19593,9 +19593,8 @@ static XEN gxm_set_new(XEN ptr, XEN val)
   XM_SET_FIELD_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ARG_2, "new", "a boolean");
 #ifndef __cplusplus
   if (XEN_XColormapEvent_P(ptr)) (XEN_TO_C_XColormapEvent(ptr))->new = XEN_TO_C_BOOLEAN(val);
-  else 
+  else XM_SET_FIELD_ASSERT_TYPE(0, ptr, XEN_ARG_1, "new", "XColormapEvent");
 #endif
-    XM_SET_FIELD_ASSERT_TYPE(0, ptr, XEN_ARG_1, "new", "XColormapEvent");
   return(val);
 }
 

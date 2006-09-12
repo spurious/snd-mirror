@@ -4846,9 +4846,11 @@ static gboolean vf_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev, 
 static void view_files_reset_callback(GtkWidget *w, gpointer context) 
 {
   view_files_info *vdat = (view_files_info *)context;
+  env *e;
   vf_set_amp(vdat, 1.0);
   vf_set_speed(vdat, 1.0);
-  vf_set_amp_env(vdat, default_env(1.0, 1.0));
+  vf_set_amp_env(vdat, e = default_env(1.0, 1.0));
+  free_env(e);
   sort_vf(vdat, view_files_sort(ss));
 }
 

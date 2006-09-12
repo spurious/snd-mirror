@@ -2949,13 +2949,17 @@ void set_channel_style(channel_style_t val)
 static XEN g_set_channel_style(XEN style, XEN snd) 
 {
   snd_info *sp;
+  int in_style;
   channel_style_t new_style = CHANNELS_SEPARATE;
   #define H_channel_style "(" S_channel_style " (snd #f)): how multichannel sounds lay out the channels. \
 The default is " S_channels_combined "; other values are " S_channels_separate " and " S_channels_superimposed ". \
 As a global (if the 'snd' arg is omitted), it is the default setting for each sound's 'unite' button."
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_channel_style, "an integer or boolean"); 
-  new_style = (channel_style_t)XEN_TO_C_INT(style);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_channel_style, "an integer"); 
+  in_style = XEN_TO_C_INT(style);
+  if (in_style < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_channel_style, 1, style, "~A, but must be >= 0");
+  new_style = (channel_style_t)in_style;
   if (new_style >= NUM_CHANNEL_STYLES)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_channel_style, 1, style, "~A, but must be " S_channels_separate ", " S_channels_combined ", or " S_channels_superimposed);
   if (XEN_NOT_BOUND_P(snd))
@@ -3660,12 +3664,15 @@ choice: " S_speed_control_as_float ", " S_speed_control_as_ratio ", or " S_speed
 
 static XEN g_set_speed_control_style(XEN speed, XEN snd) 
 {
+  int in_spd;
   speed_style_t spd;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(speed), speed, XEN_ARG_1, S_setB S_speed_control_style, "an integer"); 
-  spd = (speed_style_t)XEN_TO_C_INT(speed);
+  in_spd = XEN_TO_C_INT(speed);
+  if (in_spd < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_style, 1, speed, "~A, but must be >= 0");
+  spd = (speed_style_t)in_spd;
   if (spd >= NUM_SPEED_CONTROL_STYLES)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_style, 
-			   1, speed, 
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_style, 1, speed, 
 			   "~A, but must be " S_speed_control_as_float ", " S_speed_control_as_ratio ", or " S_speed_control_as_semitone);
   return(sound_set_global(snd, speed, SP_SPEED_STYLE, S_setB S_speed_control_style));
 }

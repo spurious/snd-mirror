@@ -6763,7 +6763,7 @@ void mus_clear_sinc_tables(void)
 
 static Float *init_sinc_table(int width)
 {
-  int i, size, loc;
+  int i, size, padded_size, loc;
   Float sinc_freq, win_freq, sinc_phase, win_phase;
   for (i = 0; i < sincs; i++)
     if (sinc_widths[i] == width)
@@ -6797,13 +6797,14 @@ static Float *init_sinc_table(int width)
 	  sincs += 8;
 	}
     }
-  sinc_tables[loc] = (Float *)clm_calloc(width * SRC_SINC_DENSITY + 2, sizeof(Float), "sinc table");
   sinc_widths[loc] = width;
   size = width * SRC_SINC_DENSITY;
+  padded_size = size + 4;
   sinc_freq = M_PI / (Float)SRC_SINC_DENSITY;
   win_freq = M_PI / (Float)size;
+  sinc_tables[loc] = (Float *)clm_calloc(padded_size, sizeof(Float), "sinc table");
   sinc_tables[loc][0] = 1.0;
-  for (i = 1, sinc_phase = sinc_freq, win_phase = win_freq; i < size; i++, sinc_phase += sinc_freq, win_phase += win_freq)
+  for (i = 1, sinc_phase = sinc_freq, win_phase = win_freq; i < padded_size; i++, sinc_phase += sinc_freq, win_phase += win_freq)
     sinc_tables[loc][i] = sin(sinc_phase) * (0.5 + 0.5 * cos(win_phase)) / sinc_phase;
   return(sinc_tables[loc]);
 }

@@ -1715,13 +1715,17 @@ be " S_envelope_linear ", or " S_envelope_exponential
 static XEN g_enved_target(void) {return(C_TO_XEN_INT((int)enved_target(ss)));}
 static XEN g_set_enved_target(XEN val) 
 {
-  enved_target_t n; 
+  enved_target_t n;
+  int in_n;
 
   #define H_enved_target "(" S_enved_target "): where (amplitude, frequency, etc) the envelope is applied in the envelope editor; \
 choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_target, "an integer"); 
-  n = (enved_target_t)XEN_TO_C_INT(val);
+  in_n = XEN_TO_C_INT(val);
+  if (in_n < 0) /* weird -- C++ needs this extra layer */
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, "~A, but must be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
+  n = (enved_target_t)in_n;
   if (n > ENVED_SRATE)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, "~A, but must be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
   set_enved_target(n); 

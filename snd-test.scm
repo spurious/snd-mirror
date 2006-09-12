@@ -35,6 +35,7 @@
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
 
+
 ;;; SOMEDAY: 1: play-mix, make-bezier, all the ladspa stuff, most dialogs, pausing, ssb-bank, continue-frame->file, listener-selection
 ;;;          2: recorder-in-device, track-dialog-track, many colors (sets=29 but gets=2), save-macros, sync-max, expand_vector(?), mark-sync-max
 ;;;          3: env-channel-with-base, window-x|y, sound-file-extensions
@@ -47,7 +48,7 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #t) ; huge arg testing
+(define all-args #f) ; huge arg testing
 
 (if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (snd-display ";both switches are on?"))
 
@@ -43981,23 +43982,26 @@ EDITS: 1
 				       (sample-reader? r1))))))
 		  (if (not val) (snd-display ";outer or rd: ~A" val))))
 	      
-	      (let* ((mx (mix-vct (make-vct 10 .1) 100))
-		     (trk (make-track))
-		     (sd (make-sound-data 2 3))
-		     (mxr (make-mix-sample-reader mx)))
-		(set! (mix-track mx) trk)
-		(let ((trkr (make-track-sample-reader trk)))
-		  (let ((val (run (lambda ()
-				    (or mx mxr trkr)))))
-		    (if (not val) (snd-display ";outer or mx: ~A" val)))
+	      (catch 'no-such-mix
+		     (lambda ()
+		       (let* ((mx (mix-vct (make-vct 10 .1) 100))
+			      (trk (make-track))
+			      (sd (make-sound-data 2 3))
+			      (mxr (make-mix-sample-reader mx)))
+			 (set! (mix-track mx) trk)
+			 (let ((trkr (make-track-sample-reader trk)))
+			   (let ((val (run (lambda ()
+					     (or mx mxr trkr)))))
+			     (if (not val) (snd-display ";outer or mx: ~A" val)))
 		  
-		  (let ((val (run (lambda ()
-				    (and sd (not mx) (not mxr))))))
-		    (if val (snd-display ";outer and sd: ~A" val)))
+			   (let ((val (run (lambda ()
+					     (and sd (not mx) (not mxr))))))
+			     (if val (snd-display ";outer and sd: ~A" val)))
 		  
-		  (let ((val (run (lambda ()
-				    (or (not sd) (not trkr))))))
-		    (if val (snd-display ";outer or sd: ~A" val)))))
+			   (let ((val (run (lambda ()
+					     (or (not sd) (not trkr))))))
+			     (if val (snd-display ";outer or sd: ~A" val))))))
+		     (lambda args args))
 	      (close-sound snd))
 	    
 	    (let ((val (run-eval '(let ((str1 "hiho")
@@ -50704,7 +50708,10 @@ EDITS: 1
 		      (snd-display ";XGetVisualInfo: ~A" vis))
 		  (if (not (= (.depth (car vis)) 24)) (snd-display ";depth vis: ~A" (.depth (car vis))))
 		  (if (not (= (.screen (car vis)) 0)) (snd-display ";screen vis: ~A" (.screen (car vis))))
-		  (if (not (= (.class (car vis)) TrueColor)) (snd-display ";class vis: ~A (~A)" (.class (car vis)) TrueColor))
+		  (catch #t ; in c++ no class field
+			 (lambda ()
+			   (if (not (= (.class (car vis)) TrueColor)) (snd-display ";class vis: ~A (~A)" (.class (car vis)) TrueColor)))
+			 (lambda args args))
 		  (if (not (= (.colormap_size (car vis)) 256)) (snd-display ";colormap_size vis: ~A" (.colormap_size (car vis))))
 		  (if (and (not (XVisualInfo? (XMatchVisualInfo dpy 0 24 TrueColor)))
 			   (not (XVisualInfo? (XMatchVisualInfo dpy 0 16 TrueColor))))
@@ -58102,7 +58109,8 @@ EDITS: 1
 	      gtk_tree_drag_dest_row_drop_possible gtk_tree_drag_source_drag_data_delete 
 	      gtk_tree_drag_source_drag_data_get gtk_tree_drag_source_get_type gtk_tree_drag_source_row_draggable
 	      gtk_tree_get_row_drag_data gtk_tree_iter_copy gtk_tree_iter_free gtk_tree_iter_get_type gtk_tree_model_filter_clear_cache
-	      gtk_tree_model_filter_convert_child_iter_to_iter gtk_tree_model_filter_convert_child_path_to_path 
+;	      gtk_tree_model_filter_convert_child_iter_to_iter 
+	      gtk_tree_model_filter_convert_child_path_to_path 
 	      gtk_tree_model_filter_convert_iter_to_child_iter gtk_tree_model_filter_convert_path_to_child_path gtk_tree_model_filter_get_model
 	      gtk_tree_model_filter_get_type gtk_tree_model_filter_new 
 	      gtk_tree_model_filter_refilter gtk_tree_model_filter_set_visible_column gtk_tree_model_foreach

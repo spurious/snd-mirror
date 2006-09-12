@@ -7,8 +7,6 @@ improvements in strad.ins and bandedwg.ins from Juan Reyes
 
 snd_frg.scm thanks to Olivier Doare
 
-I was mainly fixing bugs -- my TODO list has only 97 entries!!
-
 granulated-sound-interp (examp.scm)
 
 display-bark-fft (dsp.scm) -- spectral display using bark, erb, and mel scales
