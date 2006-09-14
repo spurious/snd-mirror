@@ -21,7 +21,7 @@ const char *io_error_name(io_error_t err)
 
 /* these are needed as C ints below */
 #ifndef MUS_DEBUGGING
-  #define DEBUGGING 0
+  #define MUS_DEBUGGING 0
 #endif
 #ifndef USE_NO_GUI
   #define USE_NO_GUI 0
