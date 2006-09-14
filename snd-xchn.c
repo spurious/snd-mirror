@@ -487,7 +487,7 @@ static void graph_button_release(Widget w, XtPointer context, XEvent *event, Boo
 static void graph_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 { /* mouse drag */
   XMotionEvent *ev = (XMotionEvent *)event;
-#if DEBUGGING
+#if MUS_DEBUGGING
   if (ev->send_event)
     /* in this case, we're being driven by scheme-generated fake X events (event.scm) */
     graph_button_motion_callback((chan_info *)context, ev->x_root, ev->y_root, ev->time);
@@ -1145,7 +1145,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
     hide_gz_scrollbars(sp); /* default is on in this case */  
   cax = cx->ax;
   cax->wn = XtWindow(cw[W_graph]);
-#if DEBUGGING
+#if MUS_DEBUGGING
   if (!(cax->wn)) {fprintf(stderr, "graph widget %p's window is null?", cw[W_graph]); abort();}
 #endif
   cax->dp = XtDisplay(cw[W_graph]);

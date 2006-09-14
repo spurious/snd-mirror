@@ -205,8 +205,8 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Region_Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Enved_Filter_Order = DEFAULT_ENVED_FILTER_ORDER;
   ss->Verbose_Cursor = DEFAULT_VERBOSE_CURSOR;
-  if (DEFAULT_TEMP_DIR != (char *)NULL) ss->Temp_Dir = copy_string(DEFAULT_TEMP_DIR); else ss->Temp_Dir = NULL;
-  if (DEFAULT_SAVE_DIR != (char *)NULL) ss->Save_Dir = copy_string(DEFAULT_SAVE_DIR); else ss->Save_Dir = NULL;
+  if (MUS_DEFAULT_TEMP_DIR != (char *)NULL) ss->Temp_Dir = copy_string(MUS_DEFAULT_TEMP_DIR); else ss->Temp_Dir = NULL;
+  if (MUS_DEFAULT_SAVE_DIR != (char *)NULL) ss->Save_Dir = copy_string(MUS_DEFAULT_SAVE_DIR); else ss->Save_Dir = NULL;
   if (DEFAULT_LADSPA_DIR != (char *)NULL) ss->Ladspa_Dir = copy_string(DEFAULT_LADSPA_DIR); else ss->Ladspa_Dir = NULL;
   if (DEFAULT_EPS_FILE != (char *)NULL) ss->Eps_File = copy_string(DEFAULT_EPS_FILE); else ss->Eps_File = NULL;
   ss->Eps_Bottom_Margin = DEFAULT_EPS_BOTTOM_MARGIN;
@@ -377,7 +377,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
   initialize_format_lists();
   snd_set_global_defaults(false);
-#if DEBUGGING
+#if MUS_DEBUGGING
   ss->Trap_Segfault = false;
 #else
   ss->Trap_Segfault = DEFAULT_TRAP_SEGFAULT;

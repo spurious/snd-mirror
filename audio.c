@@ -167,7 +167,7 @@ int device_gains(int dev);
 int device_channels(int dev)
 {
   float val[4];
-#if USE_SND && DEBUGGING
+#if USE_SND && MUS_DEBUGGING
   XEN res;
   res = XEN_EVAL_C_STRING("(if (defined? 'debugging-device-channels) debugging-device-channels 0)");
   if (XEN_INTEGER_P(res))
@@ -1305,16 +1305,16 @@ static void describe_audio_state_1(void)
 /* the system version of the soundcard header file may have no relation to the current OSS actually loaded */
 /* sys/soundcard.h is usually just a pointer to linux/soundcard.h */
 
-#if (USR_LIB_OSS)
+#if (MUS_HAVE_USR_LIB_OSS)
   #include "/usr/lib/oss/include/sys/soundcard.h"
 #else
-  #if (USR_LOCAL_LIB_OSS)
+  #if (MUS_HAVE_USR_LOCAL_LIB_OSS)
     #include "/usr/local/lib/oss/include/sys/soundcard.h"
   #else
-    #if (OPT_OSS)
+    #if (MUS_HAVE_OPT_OSS)
       #include "/opt/oss/include/sys/soundcard.h"
     #else
-      #if (VAR_LIB_OSS)
+      #if (MUS_HAVE_VAR_LIB_OSS)
         #include "/var/lib/oss/include/sys/soundcard.h"
       #else
         #if defined(HAVE_SYS_SOUNDCARD_H) || defined(MUS_LINUX)
@@ -3925,7 +3925,7 @@ static void alsa_mus_oss_set_buffers (int num, int size)
 {
   fragments = num; 
   fragment_size = size; 
-#if DEBUGGING
+#if MUS_DEBUGGING
   mus_print("set_oss_buffers: %d fragments or size %d", num, size);
 #endif
 }
@@ -4706,7 +4706,7 @@ static int alsa_mus_audio_write(int id, char *buf, int bytes)
   snd_pcm_sframes_t status;
   ssize_t frames;
   frames = snd_pcm_bytes_to_frames(handles[id], bytes);
-#if DEBUGGING
+#if MUS_DEBUGGING
   if ((frames <= 0) || (frames > bytes))
     {
       /* pcm->frame_bits not correct? */
@@ -4742,7 +4742,7 @@ static int alsa_mus_audio_read(int id, char *buf, int bytes)
   snd_pcm_sframes_t status;
   ssize_t frames;
   frames = snd_pcm_bytes_to_frames(handles[id], bytes);
-#if DEBUGGING
+#if MUS_DEBUGGING
   if ((frames <= 0) || (frames > bytes))
     {
       mus_print("audio read %d frames (%d bytes)?", frames, bytes);

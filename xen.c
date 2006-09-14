@@ -276,7 +276,7 @@ static char **xen_temp_strings = NULL;
 static int xen_temp_strings_ctr = 0;
 #define XEN_TEMP_STRINGS_SIZE 512
 
-#if DEBUGGING
+#if XEN_DEBUGGING
 static char **stored_strings = NULL;
 static int stored_strings_ctr = 0;
 #endif
@@ -285,7 +285,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str)
 {
   char *result;
   if (XEN_FALSE_P(str)) return(NULL);
-#if DEBUGGING
+#if XEN_DEBUGGING
   XEN_ASSERT_TYPE(XEN_STRING_P(str), str, 0, "xen->c-string", "a string");
 #endif
     
@@ -294,7 +294,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str)
   else
     {
       if (xen_temp_strings[xen_temp_strings_ctr]) 
-#if DEBUGGING
+#if XEN_DEBUGGING
 	{
 	  int i, len;
 	  char *str;

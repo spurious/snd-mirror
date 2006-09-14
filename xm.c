@@ -174,7 +174,7 @@
     #define PROC_FALSE "#f"
   #endif
   #define NOT_A_GC_LOC -1
-  #if DEBUGGING
+  #if MUS_DEBUGGING
     void set_printable(int val);
   #endif
 #endif
@@ -9479,7 +9479,7 @@ static XEN gxm_XSetPointerMapping(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XSetPointerMapping", "int");
   if (XEN_INTEGER_P(arg3)) len = XEN_TO_C_INT(arg3); else len = XEN_LIST_LENGTH(arg2);
   map = (unsigned char *)CALLOC(len, sizeof(unsigned char));
-#if DEBUGGING
+#if MUS_DEBUGGING
   set_printable(0);
 #endif
   for (i = 0; i < len; i++)
@@ -10717,7 +10717,7 @@ static XEN gxm_XGetPointerMapping(XEN arg1, XEN ignore, XEN arg3)
   len = XEN_TO_C_INT(arg3);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XGetPointerMapping", "positive integer");
   map = (unsigned char *)CALLOC(len, sizeof(unsigned char));
-#if DEBUGGING
+#if MUS_DEBUGGING
   set_printable(0);
 #endif
   rtn = XGetPointerMapping(XEN_TO_C_Display(arg1), map, len);
@@ -27094,7 +27094,7 @@ static xm_resource_t resource_type(char *name)
   /* unfortunately, we have names like 100DPIString in the newer Motif widgets... */
   if ((ind < 0) || (ind >= LINKS_SIZE))
     {
-#if DEBUGGING
+#if MUS_DEBUGGING
       fprintf(stderr, "link %d for %s?\n", ind, name);
       abort();
 #endif
@@ -27977,7 +27977,7 @@ static void define_strings(void)
     for (i = 0; i < hd_ctr; i++)
       {
 	n = (int)(xm_hash[i]->name[0]) - 97; /* (char->integer #\a) */
-#if DEBUGGING
+#if MUS_DEBUGGING
 	if ((n < 0) || (n >= LINKS_SIZE)) 
 	  {
 	    fprintf(stderr, "index %s at %d\n", xm_hash[i]->name, n);

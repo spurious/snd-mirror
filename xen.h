@@ -1195,7 +1195,11 @@ XEN xen_rb_add_to_load_path(char *path);
 
 #if HAVE_FORTH
 
+#define LOCAL_SIZEOF_OFF_T SIZEOF_OFF_T
+#undef SIZEOF_OFF_T
 #include <fth.h>
+#undef SIZEOF_OFF_T
+#define SIZEOF_OFF_T LOCAL_SIZEOF_OFF_T
 
 #if USE_SND
 # undef gettext_noop

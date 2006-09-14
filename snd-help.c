@@ -3719,9 +3719,9 @@ static char *html_directory(void)
       FREE(hd);
       if (happy) return(copy_string(html_dir(ss)));
     }
-#ifdef DEFAULT_DOC_DIR
-  if (mus_file_probe(DEFAULT_DOC_DIR "/snd.html"))
-    return(copy_string(DEFAULT_DOC_DIR "/snd.html"));
+#ifdef MUS_DEFAULT_DOC_DIR
+  if (mus_file_probe(MUS_DEFAULT_DOC_DIR "/snd.html"))
+    return(copy_string(MUS_DEFAULT_DOC_DIR "/snd.html"));
 #endif
   for (i = 0; i < DOC_DIRECTORIES; i++)
     if (mus_file_probe(doc_files[i])) return(copy_string(doc_directories[i]));

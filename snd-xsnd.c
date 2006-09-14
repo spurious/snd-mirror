@@ -3093,7 +3093,7 @@ widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter
 	           XEN_EMPTY_LIST)))))))))));
 }
 
-#if DEBUGGING && HAVE_GUILE && WITH_RELATIVE_PANES
+#if MUS_DEBUGGING && HAVE_GUILE && WITH_RELATIVE_PANES
 static XEN g_sash(void)
 {
   int i;
@@ -3130,7 +3130,7 @@ static XEN g_watch_sash(void)
 void g_init_gxsnd(void)
 {
   XEN_DEFINE_PROCEDURE(S_sound_widgets,  g_sound_widgets_w,  0, 1, 0, H_sound_widgets);
-#if DEBUGGING && HAVE_GUILE && WITH_RELATIVE_PANES
+#if MUS_DEBUGGING && HAVE_GUILE && WITH_RELATIVE_PANES
   XEN_DEFINE_PROCEDURE("top-sash", g_sash, 0, 0, 0, "autotest func");
   XEN_DEFINE_PROCEDURE("watch-sash", g_watch_sash, 0, 0, 0, "autotest func");
 #endif

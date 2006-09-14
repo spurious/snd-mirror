@@ -108,7 +108,7 @@ int sg_text_width(const char *txt, PangoFontDescription *font)
   if (snd_strlen(txt) == 0) return(0);
   if (!(g_utf8_validate(txt, -1, NULL)))
     {
-#if DEBUGGING
+#if MUS_DEBUGGING
       fprintf(stderr,"text width: invalid UTF-8: %s\n", txt);
       abort();
 #endif

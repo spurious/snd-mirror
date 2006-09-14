@@ -446,7 +446,7 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
   fd = io_fds[tfd];
   fd->data_format = format;
   fd->bytes_per_sample = size;
-#if DEBUGGING
+#if MUS_DEBUGGING
   if (size != mus_bytes_per_sample(format))
     fprintf(stderr, "format trouble in mus_file_open_descriptors: %d != %d\n", size, mus_bytes_per_sample(format));
 #endif
@@ -1465,7 +1465,7 @@ char *mus_format(const char *format, ...)
   vsprintf(buf, format, ap);
 #endif
   va_end(ap);
-#if DEBUGGING
+#if MUS_DEBUGGING
   rtn = copy_string(buf);
 #else
   rtn = strdup(buf);

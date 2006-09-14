@@ -155,7 +155,7 @@ static gboolean who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 #if HAVE_SETJMP_H
 #include <setjmp.h>
 
-#if TRAP_SEGFAULT
+#if MUS_TRAP_SEGFAULT
 /* stolen from scwm.c */
 static sigjmp_buf envHandleEventsLoop;
 
@@ -424,7 +424,7 @@ static Cessate startup_funcs(gpointer context)
 #endif
       break;
     case 4: 
-#if TRAP_SEGFAULT
+#if MUS_TRAP_SEGFAULT
       if (trap_segfault(ss)) signal(SIGSEGV, segv);
 #endif
       if ((ss->sounds) &&
@@ -995,7 +995,7 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n\
   BACKGROUND_ADD(startup_funcs, NULL);
 
 #if HAVE_SETJMP_H
-#if TRAP_SEGFAULT
+#if MUS_TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
       if (!(ss->exiting))

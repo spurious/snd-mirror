@@ -19,8 +19,6 @@
        clm instruments? -- surely user should learn about the listener...
 */
 
-/* TODO: prefs_helping seems to be broken (no tooltips) */
-
 
 static Widget preferences_dialog = NULL, load_path_text_widget = NULL;
 static bool prefs_helping = false, prefs_unsaved = false;

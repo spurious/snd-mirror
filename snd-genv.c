@@ -1216,7 +1216,7 @@ static XEN g_set_enved_filter(XEN type)
   return(type);
 }
 
-#if DEBUGGING
+#if MUS_DEBUGGING
 static XEN g_enved_dialog_widgets(void)
 {
   if (enved_dialog)
@@ -1274,7 +1274,7 @@ XEN_NARGIFY_0(g_enved_filter_w, g_enved_filter)
 XEN_NARGIFY_1(g_set_enved_filter_w, g_set_enved_filter)
 XEN_NARGIFY_0(g_enved_envelope_w, g_enved_envelope)
 XEN_NARGIFY_1(g_set_enved_envelope_w, g_set_enved_envelope)
-#if DEBUGGING
+#if MUS_DEBUGGING
 XEN_NARGIFY_0(g_enved_dialog_widgets_w, g_enved_dialog_widgets)
 XEN_NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
 #endif
@@ -1283,7 +1283,7 @@ XEN_NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
 #define g_set_enved_filter_w g_set_enved_filter
 #define g_enved_envelope_w g_enved_envelope
 #define g_set_enved_envelope_w g_set_enved_envelope
-#if DEBUGGING
+#if MUS_DEBUGGING
 #define g_enved_dialog_widgets_w g_enved_dialog_widgets
 #define g_enved_axis_info_w g_enved_axis_info
 #endif
@@ -1296,7 +1296,7 @@ void g_init_gxenv(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
 				   S_setB S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0);
 
-#if DEBUGGING
+#if MUS_DEBUGGING
   XEN_DEFINE_PROCEDURE("enved-dialog-widgets", g_enved_dialog_widgets_w, 0, 0, 0, "");
   XEN_DEFINE_PROCEDURE("enved-axis-info",  g_enved_axis_info_w, 0, 0, 0, "");
 #endif

@@ -18,7 +18,7 @@ new axis choice --show-bare-x-axis
 snd-color
 snd-font
 after-lisp-graph-hook
-removed vu-font and vu-size, added vu-in-dB
+removed vu-font and vu-font-size, added vu-in-dB
 removed spectrogramColor X resource
 
 checked: ruby 1.8.5, sbcl 0.9.15|16, gtk 2.10.2|3, fth 0.10.22

@@ -1527,7 +1527,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
       io_error_t io_err = IO_NO_ERROR;
       disk_space_t no_space;
       ofile = snd_tempnam();
-#if DEBUGGING
+#if MUS_DEBUGGING
       {
 	char *info;
 	info = mus_format("%s: (remix_file " OFF_TD ", " OFF_TD ", %s, id %d, delete: %d, track: %d)",
@@ -7026,7 +7026,7 @@ int make_track(int *mixes, int len)
 		      old_tracks_size = 4;
 		      old_tracks = (int *)CALLOC(old_tracks_size, sizeof(int));
 		      old_tracks_got_env = (bool *)CALLOC(old_tracks_size, sizeof(bool));
-#if DEBUGGING
+#if MUS_DEBUGGING
 		      set_printable(0);
 #endif
 		      old_tracks_beg = (off_t *)CALLOC(old_tracks_size, sizeof(off_t));

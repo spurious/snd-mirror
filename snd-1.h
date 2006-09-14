@@ -623,7 +623,7 @@ snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr);
 snd_data *make_snd_data_buffer_for_simple_channel(int len);
 int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err);
 io_error_t close_temp_file(const char *filename, int ofd, int type, off_t bytes);
-#if DEBUGGING
+#if MUS_DEBUGGING
   void mem_report(void);
 #endif
 
@@ -1016,7 +1016,7 @@ XEN g_c_make_sample_reader(snd_fd *fd);
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn);
 bool procedure_ok_with_error(XEN proc, int req_args, const char *caller, const char *arg_name, int argn);
 bool procedure_arity_ok(XEN proc, int args);
-#if DEBUGGING
+#if MUS_DEBUGGING
   int snd_protect_1(XEN obj, const char *caller);
   #define snd_protect(Obj) snd_protect_1(Obj, c__FUNCTION__)
 #else
@@ -1364,7 +1364,7 @@ int add_sp_watcher(snd_info *sp, sp_watcher_t type, void (*watcher)(struct snd_i
 void remove_sp_watcher(snd_info *sp, int loc);
 void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reason);
 
-#if DEBUGGING
+#if MUS_DEBUGGING
 void clear_listener_strings(void);
 #endif
 
@@ -1445,7 +1445,7 @@ bool snd_feq(Float val1, Float val2);
   Float in_dB(Float min_dB, Float lin_dB, Float val);
 #endif
 
-#if DEBUGGING
+#if MUS_DEBUGGING
 #define copy_string(Str) copy_string_1(Str, __FUNCTION__, __FILE__, __LINE__)
 char *copy_string_1(const char *str, const char *func, const char *file, int line);
 #else
@@ -1490,11 +1490,11 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp);
 fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp);
 char *fam_event_name(int code);
 
-#if DEBUGGING
+#if MUS_DEBUGGING
 void set_printable(int val);
 #endif
 
-#if DEBUGGING && HAVE_CLOCK
+#if MUS_DEBUGGING && HAVE_CLOCK
   void start_timing(void);
   void stop_timing(void);
 #endif

@@ -81,7 +81,7 @@ static int gc_protection_size = 0;
 static int gc_last_cleared = NOT_A_GC_LOC;
 static int gc_last_set = NOT_A_GC_LOC;
 
-#if DEBUGGING
+#if MUS_DEBUGGING
 static char **snd_protect_callers = NULL; /* static char* const *callers? no thanks... */
 static int cur_gc_index = 0, max_gc_index = 0;
 void dump_protection(FILE *Fp);
@@ -119,7 +119,7 @@ void dump_protection(FILE *Fp)
 }
 #endif
 
-#if DEBUGGING
+#if MUS_DEBUGGING
 int snd_protect_1(XEN obj, const char *caller)
 #else
 int snd_protect(XEN obj)
@@ -127,7 +127,7 @@ int snd_protect(XEN obj)
 {
   int i, old_size;
   XEN tmp;
-#if DEBUGGING
+#if MUS_DEBUGGING
   cur_gc_index++;
   if (cur_gc_index > max_gc_index) max_gc_index = cur_gc_index;
 #endif
@@ -138,7 +138,7 @@ int snd_protect(XEN obj)
       XEN_PROTECT_FROM_GC(gc_protection);
       XEN_VECTOR_SET(gc_protection, 0, obj);
       gc_last_set = 0;
-#if DEBUGGING
+#if MUS_DEBUGGING
       snd_protect_callers = (char **)calloc(gc_protection_size, sizeof(char *));
       snd_protect_callers[0] = (char *)caller;
 #endif
@@ -150,7 +150,7 @@ int snd_protect(XEN obj)
 	{
 	  /* we hit this branch about 2/3 of the time */
 	  XEN_VECTOR_SET(gc_protection, gc_last_cleared, obj);
-#if DEBUGGING
+#if MUS_DEBUGGING
 	  snd_protect_callers[gc_last_cleared] = (char *)caller;
 #endif
 	  gc_last_set = gc_last_cleared;
@@ -162,7 +162,7 @@ int snd_protect(XEN obj)
 	if (XEN_EQ_P(XEN_VECTOR_REF(gc_protection, i), DEFAULT_GC_VALUE))
 	  {
 	    XEN_VECTOR_SET(gc_protection, i, obj);
-#if DEBUGGING
+#if MUS_DEBUGGING
 	    snd_protect_callers[i] = (char *)caller;
 #endif
 	    gc_last_set = i;
@@ -173,7 +173,7 @@ int snd_protect(XEN obj)
 	  {
 	    /* here we average 3 checks before a hit, so this isn't as bad as it looks */
 	    XEN_VECTOR_SET(gc_protection, i, obj);
-#if DEBUGGING
+#if MUS_DEBUGGING
 	    snd_protect_callers[i] = (char *)caller;
 #endif
 	    gc_last_set = i;
@@ -196,7 +196,7 @@ int snd_protect(XEN obj)
 #if HAVE_RUBY || HAVE_FORTH
       XEN_UNPROTECT_FROM_GC(tmp);
 #endif
-#if DEBUGGING
+#if MUS_DEBUGGING
       snd_protect_callers = (char **)realloc(snd_protect_callers, gc_protection_size * sizeof(char *));
       snd_protect_callers[old_size] = (char *)caller;
 #endif
@@ -207,7 +207,7 @@ int snd_protect(XEN obj)
 
 void snd_unprotect_at(int loc)
 {
-#if DEBUGGING
+#if MUS_DEBUGGING
   cur_gc_index--;
 #endif
   if (loc >= 0)
@@ -369,8 +369,8 @@ static XEN snd_format_if_needed(XEN args)
 
 /* ---------------- GUILE error handler ---------------- */
 
-#ifndef DEBUGGING
-  #define DEBUGGING 0
+#ifndef MUS_DEBUGGING
+  #define MUS_DEBUGGING 0
 #endif
 
 #if HAVE_GUILE
@@ -393,7 +393,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   port_gc_loc = snd_protect(port);
   XEN_PUTS("\n", port);
 
-  if ((DEBUGGING) || (ss->batch_mode))
+  if ((MUS_DEBUGGING) || (ss->batch_mode))
     {
       /* force out an error before possible backtrace call */
       XEN lport;
@@ -972,7 +972,7 @@ XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc)
 
 XEN eval_str_wrapper(void *data)
 {
-#if DEBUGGING
+#if MUS_DEBUGGING
   if (data == NULL)
     {
       fprintf(stderr, "null string passed to eval_str_wrapper");
@@ -1665,7 +1665,7 @@ static XEN g_snd_global_state(void)
   return(XEN_WRAP_C_POINTER(ss));
 }
 
-#if DEBUGGING
+#if MUS_DEBUGGING
 static XEN g_snd_sound_pointer(XEN snd)
 {
   /* (XtCallCallbacks (cadr (sound-widgets 0)) XmNactivateCallback (snd-sound-pointer 0)) */
@@ -1854,7 +1854,7 @@ static XEN g_gsl_ellipj(XEN u, XEN m)
 		    C_TO_XEN_DOUBLE(dn)));
 }
 
-#if DEBUGGING && HAVE_GUILE
+#if MUS_DEBUGGING && HAVE_GUILE
 /* use gsl gegenbauer to check our function */
 #include <gsl/gsl_sf_gegenbauer.h>
 static XEN g_gsl_gegenbauer(XEN n, XEN lambda, XEN x)
@@ -1990,7 +1990,7 @@ XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
 XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 
-#if DEBUGGING
+#if MUS_DEBUGGING
   XEN_NARGIFY_1(g_snd_sound_pointer_w, g_snd_sound_pointer)
 #endif
 #if (!HAVE_GAUCHE)
@@ -2045,7 +2045,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #define g_little_endian_w g_little_endian
 #define g_snd_global_state_w g_snd_global_state
 #define g_mus_audio_describe_w g_mus_audio_describe
-#if DEBUGGING
+#if MUS_DEBUGGING
   #define g_snd_sound_pointer_w g_snd_sound_pointer
 #endif
 #if (!HAVE_GAUCHE)
@@ -2088,7 +2088,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
  void Init_libgl(void);
 #endif
 
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
 void g_init_xmix(void);
 #endif
 
@@ -2127,7 +2127,7 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe, g_mus_audio_describe_w, 0, 0, 0, H_mus_audio_describe);
   XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function");
 
-#if DEBUGGING
+#if MUS_DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
 
 #if HAVE_GUILE
@@ -2190,7 +2190,7 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
   XEN_DEFINE_PROCEDURE("gsl-dht",    g_gsl_dht_w,    4, 0, 0, H_gsl_dht);
 
-#if DEBUGGING && HAVE_GUILE
+#if MUS_DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("gsl-gegenbauer",  g_gsl_gegenbauer,  3, 0, 0, "internal test func");
 #endif
 
@@ -2286,7 +2286,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
   g_init_run();
 
-#if DEBUGGING && HAVE_SCHEME  && USE_MOTIF
+#if MUS_DEBUGGING && HAVE_SCHEME  && USE_MOTIF
   g_init_xmix();
 #endif
 
@@ -2449,7 +2449,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   Init_libgl();
 #endif
 
-#if DEBUGGING
+#if MUS_DEBUGGING
   XEN_YES_WE_HAVE("snd-debug");
 #endif
 

@@ -1280,7 +1280,7 @@ static void temp_dir_text(prefs_info *prf)
   char *str = NULL, *dir = NULL;
   str = GET_TEXT(prf->text);
   if ((!str) || (!(*str))) 
-    dir = DEFAULT_TEMP_DIR;
+    dir = MUS_DEFAULT_TEMP_DIR;
   else dir = str;
   if (local_access(dir))
     {
@@ -1331,7 +1331,7 @@ static void save_dir_text(prefs_info *prf)
   char *str = NULL, *dir = NULL;
   str = GET_TEXT(prf->text);
   if ((!str) || (!(*str))) 
-    dir = DEFAULT_SAVE_DIR;
+    dir = MUS_DEFAULT_SAVE_DIR;
   else dir = str;
   if (local_access(dir))
     {

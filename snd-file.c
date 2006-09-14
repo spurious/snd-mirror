@@ -1436,7 +1436,7 @@ void snd_close_file(snd_info *sp)
   call_ss_watchers(SS_FILE_OPEN_WATCHER, SS_FILE_CLOSED);
   if (chosen_sp)
     {
-#if DEBUGGING
+#if MUS_DEBUGGING
       if (!(snd_ok(chosen_sp))) {fprintf(stderr, "bad select at close"); abort();}
 #endif
       select_channel(chosen_sp, 0);
@@ -1542,11 +1542,11 @@ void *make_axes_data(snd_info *sp)
   sa->fields = 8;
   sa->axis_data = (double *)CALLOC(sa->fields * sa->chans, sizeof(double));
   sa->fftp = (bool *)CALLOC(sa->chans, sizeof(bool));
-#if DEBUGGING
+#if MUS_DEBUGGING
   set_printable(0);
 #endif
   sa->wavep = (bool *)CALLOC(sa->chans, sizeof(bool));
-#if DEBUGGING
+#if MUS_DEBUGGING
   set_printable(0);
 #endif
   for (i = 0; i < sa->chans; i++)

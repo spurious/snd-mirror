@@ -438,16 +438,16 @@ char *mus_midi_describe(void)
 
 #include <sys/ioctl.h>
 
-#if (USR_LIB_OSS)
+#if (MUS_HAVE_USR_LIB_OSS)
   #include "/usr/lib/oss/include/sys/soundcard.h"
 #else
-  #if (USR_LOCAL_LIB_OSS)
+  #if (MUS_HAVE_USR_LOCAL_LIB_OSS)
     #include "/usr/local/lib/oss/include/sys/soundcard.h"
   #else
-    #if (OPT_OSS)
+    #if (MUS_HAVE_OPT_OSS)
       #include "/opt/oss/include/sys/soundcard.h"
     #else
-      #if (VAR_LIB_OSS)
+      #if (MUS_HAVE_VAR_LIB_OSS)
         #include "/var/lib/oss/include/sys/soundcard.h"
       #else
         #if defined(HAVE_SYS_SOUNDCARD_H) || defined(MUS_LINUX)
@@ -562,7 +562,7 @@ static MIDIClientRef us = NULL;
 static MIDIPortRef inp = NULL, outp = NULL;
 static int reader = 0, writer = 0;
 static unsigned char *buffer = NULL;
-#if DEBUGGING
+#if MUS_DEBUGGING
   void set_printable(int val);
 #endif
 
@@ -571,7 +571,7 @@ static void init_midi(void)
   if (buffer == NULL)
     {
       buffer = (unsigned char *)CALLOC(BUFFER_SIZE, sizeof(unsigned char));
-#if DEBUGGING
+#if MUS_DEBUGGING
       set_printable(0);
 #endif
       reader = 0;
@@ -713,7 +713,7 @@ static XEN g_mus_midi_read(XEN line, XEN bytes) /* returns list of midi bytes */
   XEN_ASSERT_TYPE(XEN_INTEGER_P(bytes), bytes, XEN_ARG_2, S_mus_midi_read, "an integer");
   len = XEN_TO_C_INT(bytes);
   buf = (unsigned char *)CALLOC(len, sizeof(unsigned char));
-#if DEBUGGING
+#if MUS_DEBUGGING
   set_printable(0);  /* why does this line trigger a warning in the forth version? */
 #endif
   err = mus_midi_read(XEN_TO_C_INT(line), buf, len);

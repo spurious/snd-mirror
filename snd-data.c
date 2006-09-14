@@ -954,7 +954,7 @@ void display_info(snd_info *sp)
     }
 }
 
-#if DEBUGGING && HAVE_GUILE
+#if MUS_DEBUGGING && HAVE_GUILE
 static XEN g_display_info(void)
 {
   display_info(selected_sound());
@@ -972,7 +972,7 @@ Its arguments are the sound index and the channel number."
   select_sound_hook = XEN_DEFINE_HOOK(S_select_sound_hook, 1, H_select_sound_hook);       /* arg = sound index */
   select_channel_hook = XEN_DEFINE_HOOK(S_select_channel_hook, 2, H_select_channel_hook); /* args = sound index, channel */
 
-#if DEBUGGING && HAVE_GUILE
+#if MUS_DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("popup-display-info", g_display_info, 0, 0, 0, "internal test function");
 #endif
 }

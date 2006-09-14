@@ -3395,7 +3395,7 @@ static bool RAMP_OP(int type)
   return(type_info[type].xramps + type_info[type].ramps > 0);
 }
 
-#if DEBUGGING && 0
+#if MUS_DEBUGGING && 0
 static int hit_entry[NUM_OPS];
 static void init_hit_entries(void)
 {
@@ -3648,7 +3648,7 @@ static void choose_accessor(snd_fd *sf)
       sf->zero = ZERO_OP(typ);
       sf->xramp2 = (type_info[typ].xramps == 2);
     }
-#if DEBUGGING
+#if MUS_DEBUGGING
   if ((typ != ED_SIMPLE) && ((type_info[typ].next == NULL) || (type_info[typ].previous == NULL)))
     {
       fprintf(stderr,"got %s null accessor\n", type_info[typ].name);
@@ -4153,7 +4153,7 @@ static void choose_accessor(snd_fd *sf)
 	}
       break;
     default:
-#if DEBUGGING
+#if MUS_DEBUGGING
       fprintf(stderr, "choose accessor: %d %s?\n", typ, (typ < NUM_OPS) ? type_info[typ].name : "unknown");
 #endif
       break;
@@ -6521,7 +6521,7 @@ static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg
 	}
     }
   
-#if DEBUGGING
+#if MUS_DEBUGGING
   if (FRAGMENT_TYPE(new_ed, i) == -1)
     {
       fprintf(stderr, "%s -> ??\n", type_info[typ].name);
@@ -9677,7 +9677,7 @@ keep track of which files are in a given saved state batch, and a way to rename 
 
   SND_TO_SAMPLE = mus_make_class_tag();
 
-#if DEBUGGING && 0
+#if MUS_DEBUGGING && 0
   /* consistency checks for the accessor state table */
   init_hit_entries();
   check_type_info_entry(ED_SIMPLE, 0, 0, 0, false);

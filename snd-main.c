@@ -44,7 +44,7 @@ bool snd_exit_cleanly(bool force_exit)
   cleanup_region_temp_files();
   cleanup_recording();
   forget_temps();
-#if DEBUGGING
+#if MUS_DEBUGGING
   clear_listener_strings();
   mem_report();
 #endif
@@ -1577,7 +1577,7 @@ static XEN g_temp_dir(void) {return(C_TO_XEN_STRING(temp_dir(ss)));}
 static XEN g_set_temp_dir(XEN val) 
 {
   #define H_temp_dir "(" S_temp_dir "): name of directory for temp files (or " PROC_FALSE "=null)"
-  char *dir = DEFAULT_TEMP_DIR;
+  char *dir = MUS_DEFAULT_TEMP_DIR;
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_temp_dir, "a string or " PROC_FALSE "=default (null)"); 
   if (XEN_STRING_P(val)) dir = XEN_TO_C_STRING(val);
   if (snd_access(dir, S_temp_dir))
@@ -1616,7 +1616,7 @@ static XEN g_save_dir(void) {return(C_TO_XEN_STRING(save_dir(ss)));}
 static XEN g_set_save_dir(XEN val) 
 {
   #define H_save_dir "(" S_save_dir "): name of directory for saved state data (or " PROC_FALSE "=null)"
-  char *dir = DEFAULT_SAVE_DIR;
+  char *dir = MUS_DEFAULT_SAVE_DIR;
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_save_dir, "a string or " PROC_FALSE "=default (null)"); 
   if (XEN_STRING_P(val)) dir = XEN_TO_C_STRING(val);
   if (snd_access(dir, S_save_dir))

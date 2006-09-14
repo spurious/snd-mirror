@@ -22,11 +22,12 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 {
   PangoLayout *layout = NULL;
   PangoContext *ctx;
+
   if ((ax->wn == NULL) || (ax->current_font == NULL)) return;
   if ((!str) || (!(*str))) return;
   if (!(g_utf8_validate(str, -1, NULL)))
     {
-#if DEBUGGING
+#if MUS_DEBUGGING
       fprintf(stderr,"invalid UTF-8: %s\n", str);
       abort();
 #endif
@@ -88,7 +89,7 @@ void draw_polygon(axis_context *ax, int points, ...)
 void draw_lines (axis_context *ax, GdkPoint *points, int num)
 {
   if (num == 0) return;
-#if DEBUGGING
+#if MUS_DEBUGGING
   if (!GDK_IS_DRAWABLE(ax->wn)) abort();
 #endif
   gdk_draw_lines(ax->wn, ax->gc, points, num);

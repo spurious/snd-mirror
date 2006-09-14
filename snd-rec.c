@@ -327,12 +327,12 @@ static void init_recorder(void)
   for (i = 0; i < MAX_IN_CHANS; i++) rp->in_amp_preset[i] = (bool *)CALLOC(MAX_OUT_CHANS, sizeof(bool));
 
   rp->chan_in_active = (bool *)CALLOC(MAX_IN_CHANS, sizeof(bool));
-#if DEBUGGING
+#if MUS_DEBUGGING
   set_printable(0);
 #endif
 
   rp->chan_out_active = (bool *)CALLOC(MAX_OUT_CHANS, sizeof(bool));
-#if DEBUGGING
+#if MUS_DEBUGGING
   set_printable(0);
 #endif
 }
@@ -1515,7 +1515,7 @@ static Cessate run_adc(Indicium ignore)
 {
   Cessate val;
   val = read_adc();
-#if DEBUGGING
+#if MUS_DEBUGGING
   if (!(with_background_processes(ss))) val = BACKGROUND_QUIT;
 #endif
   if (val == BACKGROUND_QUIT)
@@ -1528,7 +1528,7 @@ static Cessate run_adc(Indicium ignore)
 
 void set_read_in_progress (void)
 {
-#if DEBUGGING
+#if MUS_DEBUGGING
   if (with_background_processes(ss))
 #endif
     recorder_reader = BACKGROUND_ADD(run_adc, NULL);

@@ -1,6 +1,8 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 8.4, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz)
+# TODO: change names to use MUS_ prefix throughout
+
+AC_INIT(snd, 8.5, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz)
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
@@ -19,7 +21,7 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=snd
-VERSION=8.4
+VERSION=8.5
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -165,17 +167,17 @@ fi
 
 AC_ARG_WITH(temp-dir,
 	[  --with-temp-dir	  directory to use for temp files],
-	    AC_DEFINE_UNQUOTED(DEFAULT_TEMP_DIR, "${withval}")
+	    AC_DEFINE_UNQUOTED(MUS_DEFAULT_TEMP_DIR, "${withval}")
 	)
 
 AC_ARG_WITH(save-dir,
 	[  --with-save-dir	  directory to use for saved-state files],
-	    AC_DEFINE_UNQUOTED(DEFAULT_SAVE_DIR, "${withval}")
+	    AC_DEFINE_UNQUOTED(MUS_DEFAULT_SAVE_DIR, "${withval}")
 	)
 
 AC_ARG_WITH(doc-dir,
 	[  --with-doc-dir	  directory to search for documentation],
-	    AC_DEFINE_UNQUOTED(DEFAULT_DOC_DIR, "${withval}")
+	    AC_DEFINE_UNQUOTED(MUS_DEFAULT_DOC_DIR, "${withval}")
 	)
 
 AC_ARG_WITH(snd-as-widget,
@@ -226,10 +228,10 @@ AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
 				       ])
 # this still screws up in netBSD!
 
-AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
-AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
-AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
-AC_CHECK_HEADER(/var/lib/oss/include/sys/soundcard.h,[AC_DEFINE(VAR_LIB_OSS)])
+AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(MUS_HAVE_USR_LOCAL_LIB_OSS)])
+AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(MUS_HAVE_USR_LIB_OSS)])
+AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(MUS_HAVE_OPT_OSS)])
+AC_CHECK_HEADER(/var/lib/oss/include/sys/soundcard.h,[AC_DEFINE(MUS_HAVE_VAR_LIB_OSS)])
 AC_CHECK_HEADER(sys/sam9407.h,[AC_DEFINE(HAVE_SAM_9407)])
 AC_CHECK_HEADER(gnu/libc-version.h,[AC_DEFINE(HAVE_GNU_LIBC_VERSION_H)])
 AC_CHECK_HEADER(alsa/asoundlib.h,[AC_DEFINE(HAVE_ALSA_ASOUNDLIB_H)])
@@ -1913,7 +1915,7 @@ if test "$enable_snd_debug" != yes ; then
                                   [sigjmp_buf hi; sigsetjmp(hi,1)])],
                  trap_segfault=yes)
   if test $trap_segfault = yes; then
-    AC_DEFINE(TRAP_SEGFAULT,1)
+    AC_DEFINE(MUS_TRAP_SEGFAULT,1)
   fi
   AC_MSG_RESULT($trap_segfault)
 fi

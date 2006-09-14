@@ -222,7 +222,7 @@ static void reposition_file_buffers(snd_data *sd, off_t index)
     }
 }
 
-#if DEBUGGING
+#if MUS_DEBUGGING
 static int ios_size = 0;
 static snd_io **ios = NULL;
 static void add_io(snd_io *p)
@@ -299,7 +299,7 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggest
       (bufsize > chansize)) 
     bufsize = chansize + 1;
   io = (snd_io *)CALLOC(1, sizeof(snd_io)); /* only creation point */
-#if DEBUGGING
+#if MUS_DEBUGGING
   add_io(io);
   if (hdr->chans <= chan) /* eventual memerr */
     {
@@ -374,7 +374,7 @@ static void close_temp_files(chan_info *cp, void *closed)
 	      (sd->io) && 
 	      (sd->open == FD_OPEN))
 	    {
-#if DEBUGGING
+#if MUS_DEBUGGING
 	      int fd;
 	      fd = sd->io->fd;
 	      sd->open = FD_CLOSED;
@@ -406,7 +406,7 @@ static int too_many_files_cleanup(void)
     rtn = -1;
   else rtn = (*closed);
   FREE(closed);
-#if DEBUGGING
+#if MUS_DEBUGGING
   fprintf(stderr, "too many files open, recovered %d\n", (rtn < 0) ? 0 : rtn);
 #endif
   return(rtn);
@@ -421,7 +421,7 @@ int snd_open_read(const char *arg)
       fd = too_many_files_cleanup();
       if (fd != -1) 
 	fd = OPEN(arg, O_RDONLY, 0);
-#if DEBUGGING
+#if MUS_DEBUGGING
       else mem_report();
 #endif
       if (fd == -1) 
@@ -481,7 +481,7 @@ io_error_t sndlib_error_to_snd(int sndlib_err)
       case MUS_INTERRUPTED:              return(IO_INTERRUPTED);
       case MUS_CANT_CLOSE_FILE:          return(IO_CANT_CLOSE_FILE);
       }
-#if DEBUGGING
+#if MUS_DEBUGGING
   fprintf(stderr, "sndlib_error_to_snd: %d (%s)\n", sndlib_err, mus_error_type_to_string(sndlib_err));
   abort();
 #endif
@@ -599,7 +599,7 @@ static void forget_temp(const char *filename, int chan)
 	    }
 	}
     }
-#if DEBUGGING
+#if MUS_DEBUGGING
   fprintf(stderr,"can't forget %s!\n", filename);
 #endif
 }
@@ -738,7 +738,7 @@ snd_data *free_snd_data(snd_data *sd)
 	  if (sd->io)
 	    {
 	      int i, chans;
-#if DEBUGGING
+#if MUS_DEBUGGING
 	      {
 		int fd;
 		fd = sd->io->fd;
@@ -755,7 +755,7 @@ snd_data *free_snd_data(snd_data *sd)
 		if (sd->io->arrays[i]) 
 		  FREE(sd->io->arrays[i]);
 	      FREE(sd->io->arrays);
-#if DEBUGGING
+#if MUS_DEBUGGING
 	      remove_io(sd->io);
 #endif
 	      FREE(sd->io);

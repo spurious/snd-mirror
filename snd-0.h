@@ -27,12 +27,12 @@
   #define FAMConnection void*
 #endif
 
-#define NO_SUCH_TRACK        XEN_ERROR_TYPE("no-such-track")
-#define NO_SUCH_ENVELOPE     XEN_ERROR_TYPE("no-such-envelope")
-#define NO_SUCH_SAMPLE       XEN_ERROR_TYPE("no-such-sample")
-#define NO_SUCH_EDIT         XEN_ERROR_TYPE("no-such-edit")
-#define CANNOT_SAVE          XEN_ERROR_TYPE("cannot-save")
-#define CANT_UPDATE_FILE     XEN_ERROR_TYPE("cant-update-file")
+#define NO_SUCH_TRACK    XEN_ERROR_TYPE("no-such-track")
+#define NO_SUCH_ENVELOPE XEN_ERROR_TYPE("no-such-envelope")
+#define NO_SUCH_SAMPLE   XEN_ERROR_TYPE("no-such-sample")
+#define NO_SUCH_EDIT     XEN_ERROR_TYPE("no-such-edit")
+#define CANNOT_SAVE      XEN_ERROR_TYPE("cannot-save")
+#define CANT_UPDATE_FILE XEN_ERROR_TYPE("cant-update-file")
 
 #ifndef Float
   #define Float float
@@ -46,7 +46,7 @@
 #endif
 
 #ifndef STRFTIME_FORMAT
-#define STRFTIME_FORMAT "%a %d-%b-%Y %H:%M %Z"
+  #define STRFTIME_FORMAT "%a %d-%b-%Y %H:%M %Z"
 #endif
 
 #if HAVE_STRCASECMP
@@ -83,8 +83,6 @@
 
 #define AMP_ENV_CUTOFF 50000
 
-typedef enum {SOUND_SAVE_AS, SELECTION_SAVE_AS, REGION_SAVE_AS} save_dialog_t;
-
 #define DEFAULT_OUTPUT_CHANS 1
 #define DEFAULT_OUTPUT_SRATE 22050
 #define DEFAULT_OUTPUT_HEADER_TYPE MUS_NEXT
@@ -109,17 +107,17 @@ typedef enum {SOUND_SAVE_AS, SELECTION_SAVE_AS, REGION_SAVE_AS} save_dialog_t;
 #define MIX_FILE_NO_SP -3
 #define MIX_FILE_NO_TEMP_FILE -4
 
+#ifndef POPUP_BUTTON
+  #define POPUP_BUTTON 3
+#endif
+
+typedef enum {SOUND_SAVE_AS, SELECTION_SAVE_AS, REGION_SAVE_AS} save_dialog_t;
 typedef enum {NOT_IN_BACKGROUND, IN_BACKGROUND} play_process_t;
 typedef enum {WITHOUT_VIRTUAL_CHANNELS, WITH_VIRTUAL_CHANNELS} virtual_channels_t;
 typedef enum {WITH_FW_BUTTONS, WITH_ARROWS} fw_button_t;
 typedef enum {WITHOUT_HOOK, WITH_HOOK} with_hook_t;
 typedef enum {WITHOUT_WORD_WRAP, WITH_WORD_WRAP} with_word_wrap_t;
 typedef enum {DRAG_ENTER, DRAG_LEAVE, DRAG_MOTION} drag_style_t;
-
-#ifndef POPUP_BUTTON
-  #define POPUP_BUTTON 3
-#endif
-
 typedef enum {ENVED_AMPLITUDE, ENVED_SPECTRUM, ENVED_SRATE} enved_target_t;
 typedef enum {ENVELOPE_LINEAR, ENVELOPE_EXPONENTIAL} env_type_t;
 typedef enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS, NUM_GRAPH_STYLES} graph_style_t;
@@ -157,7 +155,7 @@ typedef enum {IO_NO_ERROR, IO_SAVE_HOOK_CANCELLATION, IO_BAD_CHANNEL, IO_CANT_RE
                                (Err != IO_NEED_WRITE_CONFIRMATION) && \
                                (Err != IO_NO_CHANGES))
 
-#if DEBUGGING
+#if MUS_DEBUGGING
   #define ASSERT_IO_ERROR(Err, Location) if (Err >= IO_ERROR_NUM) {fprintf(stderr, "%s: bogus io error: %d\n", Location, Err); abort();}
 #else
   #define ASSERT_IO_ERROR(Err, Location)
@@ -286,7 +284,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 	      FROM_OPEN_RAW_SOUND, FROM_VIEW_SOUND, FROM_NEW_SOUND, FROM_RAW_DATA_DIALOG, FROM_MIX_DIALOG,
               FROM_INSERT_DIALOG, FROM_VIEW_FILES_MIX_DIALOG, FROM_VIEW_FILES_INSERT_DIALOG} open_requestor_t;
 
-#if DEBUGGING
+#if MUS_DEBUGGING
 #define PRINT_NOT 0
 #define PRINT_CHAR 1
 #define PRINT_CLM 2
@@ -702,14 +700,14 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define temp_dir(ss) ss->Temp_Dir
 #define set_temp_dir(a) ss->Temp_Dir = a
-#ifndef DEFAULT_TEMP_DIR
-  #define DEFAULT_TEMP_DIR NULL
+#ifndef MUS_DEFAULT_TEMP_DIR
+  #define MUS_DEFAULT_TEMP_DIR NULL
 #endif
 
 #define save_dir(ss) ss->Save_Dir
 #define set_save_dir(a) ss->Save_Dir = a
-#ifndef DEFAULT_SAVE_DIR
-  #define DEFAULT_SAVE_DIR NULL
+#ifndef MUS_DEFAULT_SAVE_DIR
+  #define MUS_DEFAULT_SAVE_DIR NULL
 #endif
 
 #define ladspa_dir(ss) ss->Ladspa_Dir

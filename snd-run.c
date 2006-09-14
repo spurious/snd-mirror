@@ -8924,7 +8924,7 @@ static int grn_edit(void *arg)
   ptree *pt, *outer;
   pt = gn->edit_ptree;
   outer = pt->outer_tree;
-#if DEBUGGING
+#if MUS_DEBUGGING
   if (outer->clms_size <= pt->args[0])
     {
       fprintf(stderr,"outer: %p[%d] (%d)\n", outer->clms, pt->args[0], outer->clms_size);
@@ -9020,7 +9020,7 @@ static bool pv_analyze(void *arg, Float (*input)(void *arg1, int direction))
   ptree *pt, *outer;
   pt = gn->analyze_ptree;
   outer = pt->outer_tree;
-#if DEBUGGING
+#if MUS_DEBUGGING
   if (outer->clms_size <= pt->args[0])
     {
       fprintf(stderr,"analyze outer: %p[%d] (%d)\n", outer->clms, pt->args[0], outer->clms_size);
@@ -9039,7 +9039,7 @@ static Float pv_synthesize(void *arg)
   ptree *pt, *outer;
   pt = gn->synthesize_ptree;
   outer = pt->outer_tree;
-#if DEBUGGING
+#if MUS_DEBUGGING
   if (outer->clms_size <= pt->args[0])
     {
       fprintf(stderr,"synthesize outer: %p[%d] (%d)\n", outer->clms, pt->args[0], outer->clms_size);

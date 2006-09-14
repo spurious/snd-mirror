@@ -1468,7 +1468,7 @@ static void g_new_sound_hook(const char *filename)
 }
 
 
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
 static XEN g_mus_header_original_format_name(XEN format, XEN type)
 {
   return(C_TO_XEN_STRING(mus_header_original_format_name(XEN_TO_C_INT(format), XEN_TO_C_INT(type))));
@@ -1577,7 +1577,7 @@ XEN_NARGIFY_1(g_mus_alsa_set_squelch_warning_w, g_mus_alsa_set_squelch_warning)
 #if HAVE_OSS
   XEN_NARGIFY_0(g_mus_audio_reinitialize_w, g_mus_audio_reinitialize)
 #endif
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
   XEN_NARGIFY_2(g_mus_header_original_format_name_w, g_mus_header_original_format_name)
 #endif
 #if HAVE_GAUCHE
@@ -1674,7 +1674,7 @@ XEN_NARGIFY_2(g_sound_data_equalp_w, equalp_sound_data)
 #if HAVE_OSS
   #define g_mus_audio_reinitialize_w g_mus_audio_reinitialize
 #endif
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
 #define g_mus_header_original_format_name_w g_mus_header_original_format_name
 #endif
 #endif
@@ -2028,7 +2028,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_audio_reinitialize,   g_mus_audio_reinitialize_w, 0, 0, 0,  H_mus_audio_reinitialize);
 #endif
 
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("mus-header-original-format-name", g_mus_header_original_format_name_w, 2, 0, 0, "internal testing function");
 #endif
 

@@ -219,7 +219,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 
 /* keep this list in sync with mus_error_names in sound.c and snd-test.scm|rb */
 
-#if DEBUGGING
+#if MUS_DEBUGGING
   #define CALLOC(a, b)  mem_calloc((a), (b), c__FUNCTION__, __FILE__, __LINE__)
   #define MALLOC(a)     mem_malloc((a), c__FUNCTION__, __FILE__, __LINE__)
 #ifndef __cplusplus
@@ -580,7 +580,7 @@ char *mus_midi_describe(void);
 #endif
 
 
-#if DEBUGGING
+#if MUS_DEBUGGING
   /* snd-utils.c (only used in conjunction with Snd's memory tracking functions) */
   void *mem_calloc(int len, int size, const char *func, const char *file, int line);
   void *mem_malloc(int len, const char *func, const char *file, int line);

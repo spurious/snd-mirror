@@ -804,7 +804,7 @@ static void deferred_region_to_temp_file(region *r)
     {
       off_t max_position = 0;
       io_error_t io_err = IO_NO_ERROR;
-#if DEBUGGING
+#if MUS_DEBUGGING
       char *regstr;
       regstr = mus_format("region %d (%s: %s %s), from %s[%d]",
 			  r->id, r->name, r->start, r->end,

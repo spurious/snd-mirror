@@ -13,7 +13,6 @@
  * SOMEDAY: Edit:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
  * TODO: audio mixer settings dialog (needed especially in alsa!)
  * PERHAPS: example of mouse scroll change == zoom in/out of graph, move scrolled windows?
- * PERHAPS: smpte x axis as bare-x-axis example [user-drawn time graph axis labels and ticks]
  */
 
 
@@ -2449,7 +2448,7 @@ static bool make_spectrogram(chan_info *cp)
 	  GL_SWAP_BUFFERS(cp);
 	  gdk_gl_drawable_wait_gl(gtk_widget_get_gl_drawable(channel_graph(cp)));
 #endif
-#if DEBUGGING && HAVE_GLU
+#if MUS_DEBUGGING && HAVE_GLU
 	  {
 	    GLenum errcode;
 	    errcode = glGetError();
@@ -7294,7 +7293,7 @@ static XEN g_set_with_gl(XEN val)
 }
 
 
-#if DEBUGGING && HAVE_GUILE
+#if MUS_DEBUGGING && HAVE_GUILE
 static XEN g_edit_hook_checked(XEN snd, XEN chn) 
 {
   chan_info *cp;
@@ -7939,7 +7938,7 @@ and #t thereafter."
   mix_click_hook =        XEN_DEFINE_HOOK(S_mix_click_hook, 1,        H_mix_click_hook);       /* arg = id */
   mark_drag_triangle_hook = XEN_DEFINE_HOOK(S_mark_drag_triangle_hook, 4, H_mark_drag_triangle_hook); /* args = id x time dragged-before */
 
-#if DEBUGGING && HAVE_GUILE
+#if MUS_DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("edit-hook-checked", g_edit_hook_checked, 2, 0, 0, "internal debugging func");
 #endif
 }

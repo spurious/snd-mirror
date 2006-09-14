@@ -12,7 +12,7 @@ const char *io_error_name(io_error_t err)
 {
   if (err < IO_ERROR_NUM)
     return(io_error_names[(int)err]);
-#if DEBUGGING
+#if MUS_DEBUGGING
   fprintf(stderr, "unknown io_error: %d\n", err);
   abort();
 #endif
@@ -20,7 +20,7 @@ const char *io_error_name(io_error_t err)
 }
 
 /* these are needed as C ints below */
-#ifndef DEBUGGING
+#ifndef MUS_DEBUGGING
   #define DEBUGGING 0
 #endif
 #ifndef USE_NO_GUI
@@ -87,7 +87,7 @@ static void snd_error_1(const char *msg, bool with_redirection_and_hook)
 #else
   if ((ss) && (ss->sgx))
     {
-      if ((DEBUGGING) || (ss->batch_mode))
+      if ((MUS_DEBUGGING) || (ss->batch_mode))
 	fprintf(stderr, msg);
 #ifdef SND_AS_WIDGET
       if (snd_error_display) 
@@ -155,7 +155,7 @@ static void snd_warning_1(const char *msg)
 	}
     }
   else fprintf(stderr, msg);
-#if DEBUGGING
+#if MUS_DEBUGGING
   fprintf(stderr, msg);
 #endif
 }

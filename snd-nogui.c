@@ -319,7 +319,7 @@ static bool noglob = false, noinit = false, nostdin = false;
 #if HAVE_SETJMP_H
 #include <setjmp.h>
 
-#if TRAP_SEGFAULT
+#if MUS_TRAP_SEGFAULT
 /* stolen from scwm.c */
 static sigjmp_buf envHandleEventsLoop;
 
@@ -720,14 +720,14 @@ void snd_doit(int argc, char **argv)
   if (argc > 1) auto_open_file_names = (char **)(argv + 1);
   while (auto_open_ctr < auto_open_files)
     auto_open_ctr = handle_next_startup_arg(auto_open_ctr, auto_open_file_names, false, auto_open_files);
-#if TRAP_SEGFAULT
+#if MUS_TRAP_SEGFAULT
   if (trap_segfault(ss)) signal(SIGSEGV, segv);
 #endif
   if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse == SOUND_NORMAL))
     select_channel(ss->sounds[0], 0);
 
 #if HAVE_SETJMP_H
-#if TRAP_SEGFAULT
+#if MUS_TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
       if (!(ss->exiting))

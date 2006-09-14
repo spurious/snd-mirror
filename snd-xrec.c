@@ -2400,7 +2400,7 @@ static pane_t *make_pane(recorder_info *rp, Widget paned_window, int device, int
   p->meters = (vu_t **)CALLOC(vu_meters, sizeof(vu_t *));
   p->meters_size = vu_meters;
   p->active = (bool *)CALLOC(vu_meters, sizeof(bool));
-#if DEBUGGING
+#if MUS_DEBUGGING
   set_printable(0);
 #endif
   p->active_size = vu_meters;
@@ -2408,7 +2408,7 @@ static pane_t *make_pane(recorder_info *rp, Widget paned_window, int device, int
   for (i = 0; i < p->in_chans; i++) 
     {
       p->active_sliders[i] = (bool *)CALLOC(p->out_chans, sizeof(bool));
-#if DEBUGGING
+#if MUS_DEBUGGING
       set_printable(0);
 #endif
     }

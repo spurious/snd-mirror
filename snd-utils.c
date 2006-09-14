@@ -113,7 +113,7 @@ Float in_dB(Float min_dB, Float lin_dB, Float val)
 }
 #endif
 
-#if DEBUGGING
+#if MUS_DEBUGGING
 char *copy_string_1(const char *str, const char *func, const char *file, int line)
 {
   char *newstr = NULL;
@@ -389,7 +389,7 @@ static char *get_tmpdir(void)
   char *tmpdir = NULL;
   int len;
   tmpdir = copy_string(getenv("TMPDIR"));
-  if ((tmpdir == NULL) && (DEFAULT_TEMP_DIR)) tmpdir = copy_string(DEFAULT_TEMP_DIR);
+  if ((tmpdir == NULL) && (MUS_DEFAULT_TEMP_DIR)) tmpdir = copy_string(MUS_DEFAULT_TEMP_DIR);
 #ifdef P_tmpdir
   if (tmpdir == NULL) tmpdir = copy_string(P_tmpdir); /* /usr/include/stdio.h */
 #else
@@ -437,7 +437,7 @@ void snd_exit(int val)
 
 /* ---------------- file alteration monitor (fam or gamin) ---------------- */
 #if HAVE_FAM
-#define DEBUGGING_FAM 0
+#define MUS_DEBUGGING_FAM 0
 
  /* TODO: fam crosstalk? -- if two Snd's running, there appears to be confusion in fam event delivery
   */
@@ -498,7 +498,7 @@ static void fam_check(void)
 		      fprintf(stderr, "no fam user data!");
 		    else 
 		      {
-#if DEBUGGING_FAM
+#if MUS_DEBUGGING_FAM
 			fprintf(stderr, "fam %s: %d (%s): %p\n", fe.filename, fe.code, fam_event_name(fe.code), fp);
 #endif
 			(*(fp->action))(fp, &fe);
@@ -592,7 +592,7 @@ fam_info *fam_monitor_file(const char *filename,
   rp = fam_monitor();
   if (rp)
     {
-#if DEBUGGING_FAM
+#if MUS_DEBUGGING_FAM
       fprintf(stderr, "monitor %s\n", filename);
 #endif
       fp = make_fam_info(rp, data, action);
@@ -648,7 +648,7 @@ fam_info *fam_monitor_directory(const char *dir_name,
 fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
 {
   int err;
-#if DEBUGGING_FAM
+#if MUS_DEBUGGING_FAM
   fprintf(stderr, "unmonitor %s: %p %p\n", filename, fp, fp->rp);
 #endif
   if (fp)
@@ -708,7 +708,7 @@ fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp)
 
 
 /* ---------------- memory tracking etc ---------------- */
-#if DEBUGGING
+#if MUS_DEBUGGING
 
 /* mtrace-style malloc hooks are not very useful here since I don't care
  * about X allocations (of which there are millions), and I need readable
@@ -1138,7 +1138,7 @@ void mem_report(void)
 
 #endif
 
-#if (DEBUGGING) && (HAVE_CLOCK)
+#if (MUS_DEBUGGING) && (HAVE_CLOCK)
 
 #if HAVE_SYS_TIME_H
   #include <sys/time.h>
@@ -1166,7 +1166,7 @@ static XEN g_file_to_string(XEN name)
 #endif
 
 
-#if DEBUGGING
+#if MUS_DEBUGGING
 static XEN g_mem_report(void) 
 {
   mem_report(); 
@@ -1176,14 +1176,14 @@ static XEN g_mem_report(void)
 
 
 #ifdef XEN_ARGIFY_1
-#if DEBUGGING
+#if MUS_DEBUGGING
   XEN_NARGIFY_0(g_mem_report_w, g_mem_report)
 #endif
 #if HAVE_SCHEME
   XEN_NARGIFY_1(g_file_to_string_w, g_file_to_string)
 #endif
 #else
-#if DEBUGGING
+#if MUS_DEBUGGING
   #define g_mem_report_w g_mem_report
 #endif
 #if HAVE_SCHEME
@@ -1199,7 +1199,7 @@ void g_init_utils(void)
   XEN_DEFINE_PROCEDURE(S_file_to_string, g_file_to_string_w, 1, 0, 0, "file contents as string");
 #endif
 
-#if DEBUGGING
+#if MUS_DEBUGGING
   XEN_DEFINE_PROCEDURE("mem-report",   g_mem_report_w, 0, 0, 0, "(mem-report) writes memory usage stats to memlog");
 #endif
 }

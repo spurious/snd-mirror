@@ -52,7 +52,7 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 	  lseek(chan, mus_header_data_location(), SEEK_SET);
 	  size = chans * mus_samples_to_bytes(data_format, samples);
 	  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
-#if DEBUGGING
+#if MUS_DEBUGGING
 	  set_printable(0);
 #endif
 	  write(chan, buf, size);
@@ -1552,7 +1552,7 @@ static void clear_strings(snd_info *sp, mini_history_t which)
 
 void clear_mini_strings(snd_info *sp) {clear_strings(sp, MINIBUFFER);}
 void clear_filter_strings(snd_info *sp) {clear_strings(sp, FILTER_TEXT);}
-#if DEBUGGING
+#if MUS_DEBUGGING
 void clear_listener_strings(void) {clear_strings(NULL, LISTENER_TEXT);}
 #endif
 
@@ -2638,10 +2638,11 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
       break;
     case SP_FILTER_ENVELOPE:
       {
-	env *e;
+	env *e = NULL;
 	if (sp->filter_control_envelope) 
 	  sp->filter_control_envelope = free_env(sp->filter_control_envelope);  /* set to null in case get_env throws error */
-	e = get_env(val, caller); /* has some error checks -- val must be list */
+	if (!(XEN_FALSE_P(val)))
+	  e = get_env(val, caller); /* has some error checks -- val must be list, but we can be #f -- see "get" case above: null env (nogui) -> #f */
 	if (e)
 	  {
 	    for (i = 0; i < e->pts; i++)
@@ -3641,7 +3642,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   lseek(chan, mus_header_data_location(), SEEK_SET);
   size = ch * mus_samples_to_bytes(df, len);
   buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
-#if DEBUGGING
+#if MUS_DEBUGGING
   set_printable(0);
 #endif
   write(chan, buf, size);

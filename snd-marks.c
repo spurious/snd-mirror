@@ -1855,7 +1855,7 @@ static XEN snd_no_such_mark_error(const char *caller, XEN id)
   return(XEN_FALSE);
 }
 
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
 /* too hard to do this via mouse events in snd-test, so do it by hand here */
 static XEN g_test_control_drag_mark(XEN snd, XEN chn, XEN mid)
 {
@@ -2471,7 +2471,7 @@ XEN_NARGIFY_1(g_set_mark_tag_height_w, g_set_mark_tag_height)
 XEN_ARGIFY_4(g_find_mark_w, g_find_mark)
 XEN_ARGIFY_2(g_save_marks_w, g_save_marks)
 XEN_NARGIFY_1(g_mark_p_w, g_mark_p)
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
   XEN_NARGIFY_3(g_test_control_drag_mark_w, g_test_control_drag_mark)
 #endif
 #else
@@ -2496,7 +2496,7 @@ XEN_NARGIFY_1(g_mark_p_w, g_mark_p)
 #define g_find_mark_w g_find_mark
 #define g_save_marks_w g_save_marks
 #define g_mark_p_w g_mark_p
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
   #define g_test_control_drag_mark_w g_test_control_drag_mark
 #endif
 #endif
@@ -2542,7 +2542,7 @@ If the hook returns #t, the mark is not drawn."
 
   draw_mark_hook = XEN_DEFINE_HOOK(S_draw_mark_hook, 1, H_draw_mark_hook);  /* arg = mark-id */
 
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("internal-test-control-drag-mark", g_test_control_drag_mark_w, 3, 0, 0, "internal testing func");
 #endif
 }

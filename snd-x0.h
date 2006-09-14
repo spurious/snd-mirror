@@ -49,7 +49,7 @@ typedef enum {NOT_ACTIVATABLE, ACTIVATABLE, NOT_ACTIVATABLE_OR_FOCUSED, ACTIVATA
 /* #define BACKGROUND_ADD(func, data) XtAppAddWorkProc(MAIN_APP(ss), func, (XtPointer)data) */
 #define BACKGROUND_ADD(func, data) add_work_proc(func, (XtPointer)data)
 
-#if DEBUGGING
+#if MUS_DEBUGGING
   #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr, "%s:[%s %d] %s is wrong type", c__FUNCTION__, __FILE__, __LINE__, XtName(Wid))
 #else
   #define ASSERT_WIDGET_TYPE(Cond, Wid)

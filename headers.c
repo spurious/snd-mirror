@@ -123,7 +123,7 @@ int mus_header_initialize (void)
     {
       hdrbuf_is_inited = true;
       hdrbuf = (unsigned char *)CALLOC(HDRBUFSIZ, sizeof(unsigned char));
-#if DEBUGGING
+#if MUS_DEBUGGING
       set_printable(0);
 #endif
       aux_comment_start = (off_t *)CALLOC(AUX_COMMENTS, sizeof(off_t));

@@ -316,7 +316,7 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 #if HAVE_SETJMP_H
 #include <setjmp.h>
 
-#if TRAP_SEGFAULT
+#if MUS_TRAP_SEGFAULT
 /* stolen from scwm.c */
 static sigjmp_buf envHandleEventsLoop;
 
@@ -333,7 +333,7 @@ RETSIGTYPE top_level_catch(int ignore)
   longjmp(top_level_jump, 1);
 }
 
-#if DEBUGGING
+#if MUS_DEBUGGING
 static void trap_xt_error(String message)
 {
   fprintf(stderr, message);
@@ -459,7 +459,7 @@ static Cessate startup_funcs(XtPointer context)
 			auto_update_check, 
 			NULL);
 #endif
-#if TRAP_SEGFAULT
+#if MUS_TRAP_SEGFAULT
       if (trap_segfault(ss)) signal(SIGSEGV, segv);
 #endif
       if ((ss->sounds) &&
@@ -529,7 +529,7 @@ static void SetupIcon(Widget shell)
 #ifndef SND_AS_WIDGET
 static void muffle_warning(char *name, char *type, char *klass, char *defaultp, char **params, unsigned int *num_params)
 {
-#if DEBUGGING
+#if MUS_DEBUGGING
   int i;
   fprintf(stderr, "Xt warning: %s, %s: %s", type, name, defaultp);
   if (num_params) /* can be null! */
@@ -1125,7 +1125,7 @@ void snd_doit(int argc, char **argv)
    */
 
 #if HAVE_SETJMP_H
-#if TRAP_SEGFAULT
+#if MUS_TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
       if (!(ss->exiting))
@@ -1143,7 +1143,7 @@ void snd_doit(int argc, char **argv)
 	snd_error_without_format(_("Caught top level error (will try to continue):\n"));
       else ss->jump_ok = false;
     }
-#if DEBUGGING
+#if MUS_DEBUGGING
   XtAppSetErrorHandler(MAIN_APP(ss), trap_xt_error);
 #endif
 #endif

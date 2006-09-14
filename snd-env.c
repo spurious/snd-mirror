@@ -223,7 +223,7 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
   return(normalize_x_axis(local_e));
 }
 
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
 static XEN g_window_env(XEN e, XEN b1, XEN d1, XEN b2, XEN d2, XEN maxx)
 {
   XEN res;
@@ -285,7 +285,7 @@ env *multiply_envs(env *e1, env *e2, Float maxx)
   return(e);
 }
 
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
 static XEN g_multiply_envs(XEN e1, XEN e2, XEN maxx)
 {
   XEN res;
@@ -313,7 +313,7 @@ env *invert_env(env *e)
   return(new_e);
 }
 
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
 static XEN g_invert_env(XEN e)
 {
   env *temp1, *temp2;
@@ -1787,7 +1787,7 @@ XEN_NARGIFY_1(g_set_enved_filter_order_w, g_set_enved_filter_order)
 XEN_NARGIFY_0(g_enved_dialog_w, g_enved_dialog)
 XEN_ARGIFY_1(g_save_envelopes_w, g_save_envelopes)
 XEN_ARGIFY_3(g_define_envelope_w, g_define_envelope)
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
   XEN_ARGIFY_6(g_window_env_w, g_window_env)
   XEN_NARGIFY_1(g_invert_env_w, g_invert_env)
   XEN_NARGIFY_3(g_multiply_envs_w, g_multiply_envs)
@@ -1812,7 +1812,7 @@ XEN_ARGIFY_3(g_define_envelope_w, g_define_envelope)
 #define g_enved_dialog_w g_enved_dialog
 #define g_save_envelopes_w g_save_envelopes
 #define g_define_envelope_w g_define_envelope
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
   #define g_window_env_w g_window_env
   #define g_invert_env_w g_invert_env
   #define g_multiply_envs_w g_multiply_envs
@@ -1915,7 +1915,7 @@ stretch-envelope from env.fth: \n\
   ss->enved->in_dB = DEFAULT_ENVED_IN_DB;
   ss->enved->clip_p = DEFAULT_ENVED_CLIP_P;
 
-#if DEBUGGING && HAVE_SCHEME
+#if MUS_DEBUGGING && HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("window-env", g_window_env_w, 5, 1, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE("multiply-envs", g_multiply_envs_w, 3, 0, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE("invert-env", g_invert_env_w, 1, 0, 0, "internal testing function");
