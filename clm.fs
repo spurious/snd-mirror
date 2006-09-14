@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Wed Sep 06 22:37:39 CEST 2006
+\ Changed: Tue Sep 12 03:11:25 CEST 2006
 
 \ Commentary:
 \ 
@@ -101,7 +101,6 @@ previous
 : interval->hertz ( n -- r ) { n } 2.0 12.0 n 3.0 f+ f+ 12.0 f/ f** lowest-freq f* ;
 : keynum->hertz   ( n -- r ) { n } 2.0 n 3.0 f+ 12.0 f/ f** lowest-freq f* ;
 : hertz->keynum   ( r -- n ) lowest-freq f/ 2.0 flogn 12.0 f* 3.0 f- f>s ;
-: f,              ( r -- ) here 1 floats allot f! ;
 
 hide
 : pitch ( interval octave "name" --; self -- freq )

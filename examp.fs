@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sun Aug 20 00:59:41 CEST 2006
+\ Changed: Wed Sep 13 03:42:31 CEST 2006
 
 \ Commentary:
 
@@ -300,7 +300,7 @@ previous
   selection? if
     selection-position #f #f 1 #f make-sample-reader { rd }
     selection-frames { len }
-    0.0 ( sum ) len 0 ?do rd next-sample fdup f* f+ ( sum += ... ) loop
+    0.0 ( sum ) len 0 ?do rd next-sample dup f* f+ ( sum += ... ) loop
     len f/ fsqrt
   else
     'no-active-selection '( get-func-name ) fth-throw

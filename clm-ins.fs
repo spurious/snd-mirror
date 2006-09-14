@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Wed Aug 30 19:16:11 CEST 2006
+\ Changed: Tue Sep 12 03:12:42 CEST 2006
 
 \ Commentary:
 \
@@ -803,7 +803,7 @@ instrument: pqw-vox ( start dur freq spacing-freq amp ampfun freqfun freqscl pho
       pv sin-evens @ vals 0 vct-ref 0.0 oscil yfax f*
       pv cos-evens @ vals 0 vct-ref 0.0 oscil fax f* f- vals 2 vct-ref f*
       pv sin-odds @  vals 1 vct-ref 0.0 oscil yfax f*
-      pv cos-odds @  vals 1 vct-ref 0.0 oscil fax f* f- vals 3 vct-ref f* f+ pv amps f@ f* f+
+      pv cos-odds @  vals 1 vct-ref 0.0 oscil fax f* f- vals 3 vct-ref f* f+ pv amps @ f* f+
     end-each
     ampf env f*
   end-run

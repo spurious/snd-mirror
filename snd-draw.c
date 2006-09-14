@@ -203,6 +203,8 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 
 static XEN g_make_bezier(XEN args1)
 {
+  /* used in musglyphs.rb -- not currently used anywhere else */
+
   #define S_make_bezier "make-bezier"
   #define H_make_bezier "(" S_make_bezier " x0 y0 x1 y1 x2 y2 x3 y3 n): return a vector of points corresponding to the bezier curve \
 defined by the 4 controlling points x0..y3; 'n' is how many points to return"

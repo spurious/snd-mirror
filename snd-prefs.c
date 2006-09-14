@@ -15,7 +15,6 @@
 
 /* TODO: Forth: many keybindings don't have a Forth version? and yet they're included in the dialog
  * TODO: Forth: no channel-property??
- * TODO: Forth: set-speed-control-style: wrong type arg 1, #t -> #t show-listener needs "drop"
  */
 
 
@@ -672,11 +671,7 @@ static void save_show_listener(prefs_info *prf, FILE *fd)
 {
   rts_show_listener = prefs_show_listener;
   if (GET_TOGGLE(prf->toggle))
-#if (!HAVE_FORTH)
-    prefs_function_save_0(fd, "show-listener", NULL);
-#else
     prefs_function_save_1(fd, "show-listener", NULL, XEN_TRUE);
-#endif
 }
 
 static void revert_show_listener(prefs_info *prf)
