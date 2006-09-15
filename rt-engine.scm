@@ -832,8 +832,9 @@ procfuncs=sorted
   <char-*> allocplace
   <char-*> allocplace_end
 
+  ;; Time must be unsigned! (wrap-around)
   <int> time
-  <int> time_before
+  <int> time_before ;; What is this?
   <float> samplerate
   <float> res
   <char-*> error
@@ -1003,13 +1004,13 @@ procfuncs=sorted
 	 
 	 (<void> rt_insert_procfunc (lambda ((<struct-RT_Engine-*> engine)
 					     (<struct-RT_Event-*> event))
-				      ;;(printf (string "Putting before\\n"))
+				      ;;(printf (string "Putting first\\n"))
 				      (let* ((toinsert <struct-RT_Procfunc-*> event->arg))
 					;;(fprintf stderr (string "inserting: %u, visitors:%d\\n") event toinsert->visitors)
-					(rt_insert_procfunc_do engine toinsert 1))))
+					(rt_insert_procfunc_do engine toinsert 0))))
 	 (<void> rt_append_procfunc (lambda ((<struct-RT_Engine-*> engine)
 					     (<struct-RT_Event-*> event))
-				      ;;(printf (string "Putting after\\n"))
+				      ;;(printf (string "Putting last\\n"))
 				      (let* ((toinsert <struct-RT_Procfunc-*> event->arg))
 					;;(fprintf stderr (string "inserting: %u, visitors:%d\\n") event toinsert->visitors)
 					(rt_insert_procfunc_do engine toinsert 1))))
@@ -1233,10 +1234,11 @@ procfuncs=sorted
 												      max_cycle_usage)))
 							  engine->num_max_cpu_interrupts++))
 						    (let* ((procfunc <struct-RT_Procfunc-*> engine->procfuncs))
+						      (set! engine->time time)
 						      (while (!= NULL procfunc)
 							     (let* ((callback <Callback> procfunc->func)
 								    (next <struct-RT_Procfunc-*> procfunc->next))
-							       (set! engine->time time)
+
 							       
 							       ;; Run a <realtime> instance function.
 							       (if (!= engine->skip_this_procfunc_next_cycle procfunc)

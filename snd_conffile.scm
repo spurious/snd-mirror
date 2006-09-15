@@ -4,7 +4,6 @@
 ;; Should work for gtk and perhaps motif.
 
 
-
 (define (atleast1.6.4?)	 	
    (let ((version (map string->number (string-split (version) #\.))))	 	
      (or (> (car version) 1)	 	
@@ -37,6 +36,48 @@
       (debug-set! depth 50)))
 
 
+(define c-initializing
+  (let ((num 30))
+    (lambda ()
+      (gtk_window_set_title (GTK_WINDOW (cadr (main-widgets))) (string-append "Initializing: " (number->string num)))
+      (while (= 1 (gtk_events_pending))
+	     (gtk_main_iteration))
+      (set! num (1- num)))))
+
+(c-initializing)
+(define c-old-load-from-path load-from-path)
+(define (load-from-path filename)
+  (c-old-load-from-path filename)
+  (c-initializing))
+
+			 
+(define (c-for init pred least add proc)
+  (do ((n init (+ n add)))
+      ((not (pred n least)))
+    (proc n)))
+
+(set! (window-height) 600)
+(while (= 1 (gtk_events_pending))
+       (gtk_main_iteration))
+(set! (window-width) 800)
+(while (= 1 (gtk_events_pending))
+       (gtk_main_iteration))
+
+(set! (show-listener) #t)
+(while (= 1 (gtk_events_pending))
+       (gtk_main_iteration))
+
+;(gtk_paned_set_position (GTK_PANED (list-ref (main-widgets) 3)) 100)
+;(while (= 1 (gtk_events_pending))
+;       (gtk_main_iteration))
+
+
+#!
+
+(set! (show-listener) #f)
+(gtk_main_iteration_do #f)
+!#
+
 
 ;;##############################################################
 ;; c-define is used instead of define when theres a variable the
@@ -57,7 +98,6 @@
 (add-hook! print-hook
   (lambda (msg)
     (display msg)
-    (newline)
     #f))
   
 
@@ -65,7 +105,6 @@
   (lambda (msg) 
     (display "snd-error!")(newline)
     (display msg)
-    (newline)
     #f))
 
 ;;##############################################################
@@ -93,7 +132,6 @@
 
 
 
-
 ;;##############################################################
 ;; Load various files
 ;;##############################################################
@@ -111,6 +149,8 @@
 (if (not use-gtk)
     (c-display "Motif is currently not much supported in snd_conffile.scm."
 	       "You should compile up Snd using the --with-gtk and --with-static-xm configure options."))
+
+
 
 
 (c-load-from-path rgb)
@@ -138,14 +178,18 @@
 (c-define c-default-output-srate 44100)
 (set! (default-output-srate) c-default-output-srate)
 
-(c-define c-default-output-type mus-riff)
-(set! (default-output-type) c-default-output-type)
+(if (defined? 'c-default-output-type)
+    (c-display "Warning: c-default-output-type replaced with c-default-output-header-type"))
+(c-define c-default-output-header-type mus-riff)
+(set! (default-output-header-type) c-default-output-header-type)
 
 (c-define c-default-output-chans 2)
 (set! (default-output-chans) c-default-output-chans)
 
-(c-define c-default-output-format mus-lfloat)
-(set! (default-output-format) c-default-output-format)
+(if (defined? 'c-default-output-format)
+    (c-display "Warning: c-default-output-format replaced with c-default-output-data-format"))
+(c-define c-default-output-data-format mus-lfloat)
+(set! (default-output-data-format) c-default-output-data-format)
 
 (c-define c-show-backtrace #t)
 (set! (show-backtrace) c-show-backtrace)
@@ -160,7 +204,7 @@
 (set! (selection-creates-region) #f)
 
 ;; Less than 64 seems to be very unreliable.
-(c-define *c-minimum-dac-size* 1024)
+(c-define *c-minimum-dac-size* 2048)
 (if (< (dac-size) *c-minimum-dac-size*)
     (set! (dac-size) *c-minimum-dac-size*))
 
@@ -185,6 +229,52 @@
 (c-define *c-cursormovetime-updown* 10)
 (c-define *c-cursormovetime-pageupdown* 50)
 
+
+
+(c-define *c-show-sonogram-cursor* #t)
+(set! (show-sonogram-cursor) *c-show-sonogram-cursor*)
+
+#!
+;; Workaround for transform-hook bug
+(add-hook! before-transform-hook
+	   (lambda (snd chn)
+	     (if (show-sonogram-cursor)
+		 (set! (show-sonogram-cursor) #f))))
+
+(add-hook! after-transform-hook
+	   (lambda (snd chn scaler)
+	     (c-display "scaler" scaler)
+	     (if (not (eq? (show-sonogram-cursor) *c-show-sonogram-cursor*))
+		 (set! (show-sonogram-cursor) *c-show-sonogram-cursor*))))
+!#
+
+
+(c-define *c-show-transform-peaks* #t)
+(set! (show-transform-peaks) *c-show-transform-peaks*)
+
+(c-define *c-transform-graph-type* graph-as-sonogram)
+(set! (transform-graph-type) *c-transform-graph-type*)
+
+(c-define *c-fft-log-magnitude* #t)
+(set! (fft-log-magnitude) *c-fft-log-magnitude*)
+
+(c-define *c-color-inverted* #f)
+(set! (color-inverted) *c-color-inverted*)
+
+(c-define *c-color-scale* 0.5)
+(set! (color-scale) *c-color-scale*)
+
+(c-define *c-color-cutoff* 0.0)
+(set! (color-cutoff) *c-color-cutoff*)
+
+(c-define *c-colormap* 4)
+(set! (colormap) *c-colormap*)
+
+(c-define *c-transform-size* 1024)
+(set! (transform-size) *c-transform-size*)
+
+
+
 ;; Hopefully this will change.
 (define c-setting-cursor-color-cause-redraw #t)
 
@@ -193,6 +283,11 @@
 
 
 (define *c-is-starting-up* #t)
+
+
+;; We need our own after-open-hook, because its too complicated to ensure
+;; that the c-snd-putgetdata hook is run first.
+(define *c-after-open-hook* (<hook>))
 
 
 ;;##############################################################
@@ -245,6 +340,12 @@
 							 ""
 							 "Show selection:"
 							 "      s"
+							 ""
+							 "Show/hide controls:"
+							 "      c"
+							 ""
+							 "Show/hide listener:"
+							 "      l"
 							 ""
 							 "Undo:"
 							 "      <Ctrl>+_"
@@ -622,6 +723,7 @@
     (set! (cursor-follows-play) #f)
     (my-stop-playing)
     (set! (cursor) (if pos (c-integer pos) startplaypos))
+    (c-show-times (cursor) #t)
     (set! (cursor-follows-play) #t))
 
   (def-method (pause)
@@ -727,6 +829,8 @@ Doesnt work any more.
 		(if (c-selection?)
 		    (-> (c-p) play-selection)
 		    (-> (c-p) play #f)))))
+
+	     
 #!
 (-> (c-p) stop)
 (-> (c-p) play #f)
@@ -882,7 +986,17 @@ Does not work.
 	    (set! (show-controls)
 		  (if (show-controls)
 		      #f
-		      #t))))
+		      #t))
+	    (focus-widget (c-editor-widget (c-selected-sound)))))
+
+;; Let "l" turn on/off listener
+(bind-key (char->integer #\l) 0
+	  (lambda ()
+	    (set! (show-listener)
+		  (if (show-listener #f)
+		      #f
+		      #t))
+	    (focus-widget (c-editor-widget (c-selected-sound)))))
 
 #!
 (add-hook! key-press-hook 
@@ -1064,6 +1178,7 @@ Does not work.
 	  'allways-stop!)))
 
   (define (mouse-motion-callback snd ch x y button state)
+    (-> (c-p snd) selection-is-changed)
     (let ((samp (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
       (if about-to-move
 	  (c-set-selection! snd ch samp (+ samp (about-to-move 1)) dassync)
@@ -1222,6 +1337,7 @@ Does not work.
 
 (bind-key (char->integer #\w) 4
 	  c-cut)
+
 
 
 
@@ -1581,7 +1697,8 @@ Does not work.
 (define (c-envfunc1)
   (lambda ()
     (c-apply-envelope (c-selected-sound))))
-(define (c-envfunc3 snd)
+(define (c-envfunc-hook snd)
+  (c-display "c-envfunc3 c-snd" snd)
   (c-make-envelope snd)
   #f)
 
@@ -1595,7 +1712,7 @@ Does not work.
 		    (c-make-envelope snd))
 		  (sounds))
 	(bind-key (char->integer #\v) 0 c-envfunc1)
-	(add-hook! after-open-hook c-envfunc3))))
+	(-> *c-after-open-hook* add! c-envfunc-hook))))
 
 (define (c-disable-envelope)
   (if *c-envelope-enabled*
@@ -1614,7 +1731,7 @@ Does not work.
 				  (-> nodeline delete!)))))))
 		  (sounds))
 	(c-redraw)
-	(remove-hook! after-open-hook c-envfunc3))))
+	(-> *c-after-open-hook* remove! c-envfunc-hook))))
 
 (add-hook! after-open-hook
 	   (lambda (snd)
@@ -1679,7 +1796,7 @@ Does not work.
 (define *c-control-hook* (<hook>))
 (define *c-controls-on-off-hook* (<hook>))
 
-;; All checkbuttons in the control-panel.
+;; All checkbuttons in the control-panel and the channel widgets.
 (add-hook! after-open-hook
 	   (lambda (snd)
 	     (let ((ws '()))
@@ -1694,7 +1811,7 @@ Does not work.
 						  (string=? "Apply" (gtk_button_get_label (GTK_BUTTON w))))
 					     (begin
 					       (c-remove-handler w "clicked")
-					       (c-g_signal_connect w "clicked"
+					       (g_signal_connect w "clicked"
 								   (lambda (w c)
 								     (if (selection-member? snd)
 									 (apply-controls snd 2)
@@ -1702,7 +1819,7 @@ Does not work.
 								     (focus-widget (c-editor-widget snd))
 								     #t)))
 					     (if (GTK_IS_CHECK_BUTTON w)						 
-						 (c-g_signal_connect w "button_release_event"
+						 (g_signal_connect w "button_release_event"
 								     (lambda (w e i)
 								       (-> (c-p snd) dosomepause (lambda ()
 												   (gtk_button_released (GTK_BUTTON w))
@@ -1712,12 +1829,18 @@ Does not work.
 					 (if (and (GTK_IS_SCROLLBAR w)
 						  (GTK_IS_RANGE w))
 					     (let ((adj (gtk_range_get_adjustment (GTK_RANGE w))))
-					       (c-g_signal_connect adj "value_changed"
+					       (g_signal_connect adj "value_changed"
 								   (lambda (w d)
 								     (-> *c-control-hook* run)))))
 					 
 					 (if (GTK_IS_CONTAINER w)
 					     (fixit w)))))))
+	       (c-for-each-channel2 snd
+				    (lambda (ch)
+				      (for-each (lambda (w)
+						  (if (GTK_IS_CONTAINER w)
+						      (fixit w)))
+						(channel-widgets snd ch))))
 	       (fixit (caddr (sound-widgets snd))))))
 
 
@@ -1770,6 +1893,7 @@ Does not work.
 
 
 
+
 ;;##############################################################
 ;; Buffer-menu
 ;;##############################################################
@@ -1791,6 +1915,7 @@ Does not work.
 
 ;; For gtk, the -notebook switch doesn't seem to work very well.
 ;; For motif, the -notebook switch doesn't seem to work very well either.
+
 (if (or (not use-gtk)
 	(not (string=? "GtkNotebook" (gtk_widget_get_name (list-ref (main-widgets) 5)))))
 
@@ -1961,6 +2086,7 @@ Does not work.
     (c-load-from-path ladspa))
 
 
+
 ;; Stores the peak information for sounds in the ~/peaks/ directory. Seems to work correctly. I have tried
 ;; to fool it in many ways, but it seems to be very intelligent. Extremely nice.
 ;; The point is to decrease the loading time.
@@ -2059,6 +2185,23 @@ Does not work.
 		 
 
 
+;;##############################################################
+;; Load rt-player. Takes some time.
+;;##############################################################
+
+(eval-c (string-append "-I" snd-header-files-path)
+	"#include <_sndlib.h>"
+	(proto->public "int mus_audio_api(void)")
+	(variables->public
+	 (<int> JACK_API ALSA_API OSS_API)))
+
+(if (= (mus_audio_api) (JACK_API))
+    (load-from-path "rt-player.scm"))
+
+
+
+
+
 
 ;;##############################################################
 ;; Store and restore list of used sound-files
@@ -2091,31 +2234,15 @@ Does not work.
 			     #f))
 			
 
-
 (add-hook! after-open-hook
 	   (lambda (snd)
 	     (hash-set! c-snd-putgetdata snd (make-hash-table 16))
+	     (-> *c-after-open-hook* run snd)
 	     #f))
 
 
 ;; Load GTK mnemonics code from Maxim Krikun.
 (load-from-path "kmenu.scm")
-
-
-
-;;##############################################################
-;; Load rt-player. Takes some time.
-;;##############################################################
-
-(eval-c (string-append "-I" snd-header-files-path)
-	"#include <_sndlib.h>"
-	(proto->public "int mus_audio_api(void)")
-	(variables->public
-	 (<int> JACK_API ALSA_API OSS_API)))
-
-(if (= (mus_audio_api) (JACK_API))
-    (load-from-path "rt-player.scm"))
-
 
 
 
@@ -2195,17 +2322,43 @@ Does not work.
 		     (dotheretry))))))
   
 
-
-
+(set! load-from-path c-old-load-from-path)
 
 
 (set! *c-is-starting-up* #f)
 
 
-(newline)
-(c-display "#:snd_conffile.scm loaded."
-	   (if (not (provided? 'snd-rt-player.scm))
+
+;(define dhg
+;  (lambda (snd)
+;    (if (show-controls)
+;	(gtk_paned_set_position (GTK_PANED (car (sound-widgets snd))) (c-integer (max 100 (min (- (window-height) 400) (* (window-height) 0.5))))))
+;    (if (show-listener)
+;	(gtk_paned_set_position (GTK_PANED (list-ref (main-widgets) 3)) (c-integer (* (window-height) 0.75))))))
+;
+;(add-hook! graph-hook (lambda x (dhg (car x))))
+
+(c-display)
+(c-display "#:snd_conffile.scm loaded.")
+(c-display (if (not (provided? 'snd-rt-player.scm))
 	       "SND is currently not using jack, so the RT-Player is not initialized."
-	       "The RT-Player is currently configured only to run when not using LADSPA or the Expand, Contrast, Reverb or Filter control."))
+	       "The RT-Player is currently configured only to run when not using\n LADSPA or the Expand, Contrast, Reverb or Filter control."))
 
 
+
+;(set! (show-listener) #f)
+
+(gtk_window_set_title (GTK_WINDOW (cadr (main-widgets))) "Snd")
+
+(while (= 1 (gtk_events_pending))
+       (gtk_main_iteration))
+
+
+
+
+
+
+
+
+
+ 

@@ -1,6 +1,6 @@
 (use-modules (ice-9 format) (ice-9 optargs))
 
-(if (not (provided? 'snd-effects-utils.scm)) (load-from-path "effects-utils.scm")) ; make-effects-dialog
+(if (and (not (provided? 'snd-gtk)) (not (provided? 'snd-effects-utils.scm))) (load-from-path "effects-utils.scm")) ; make-effects-dialog
 (if (not (provided? 'snd-examp.scm)) (load-from-path "examp.scm")) ; squelch-vowels
 
 (provide 'snd-fft-menu.scm)

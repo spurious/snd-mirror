@@ -84,12 +84,12 @@ and run simple lisp[4] functions.
 	 (<SCM> gakk2 (lambda ((<SCM> sym) (<SCM> toplevel))
 			(return (scm_sym2var sym toplevel SCM_BOOL_F))))
 	 (<SCM> gakk3 (lambda ((<SCM> scm))
-			(return (MAKE_POINTER (TO_VCT scm)))))
+			(return (MAKE_POINTER (XEN_TO_VCT scm)))))
 	 (run-now
 	  (scm_c_define_gsubr (string "rt-set-float!") 2 0 0 rt_set_float)
 	  (scm_c_define_gsubr (string "XEN_TO_MUS_ANY") 1 0 0 gakk)
 	  (scm_c_define_gsubr (string "SCM_SMOB_DATA") 1 0 0 gakk15)
-	  (scm_c_define_gsubr (string "TO_VCT") 1 0 0 gakk3)
+	  (scm_c_define_gsubr (string "XEN_TO_VCT") 1 0 0 gakk3)
 	  (scm_c_define_gsubr (string "c-global-symbol") 2 0 0 gakk2)))
 
 
@@ -101,9 +101,9 @@ and run simple lisp[4] functions.
 					  (define (findit env)
 					    (call-with-current-continuation
 					     (lambda (return)
-					       (c-display "env" env)
+					       ;;(c-display "env" env)
 					       (cond ((not (list? env)) (return #f))
-						     ((= 1 (length env)) (return (let ((varname2 ',varname))
+						     ((= 1 (length env)) (return (let ((varname2 ,varname))
 										   `(c-global-symbol ,varname2 ,(car env)))))
 						     ;;((= 1 (length env)) (return `(c-global-symbol 'ai2 (standard-interface-eval-closure (current-module)))))
 						     ((= 1 (length env)) (return (car env)))
@@ -111,11 +111,11 @@ and run simple lisp[4] functions.
 						      (let ((names (car (car env)))
 							    (vals (cdr (car env))))
 							(if (not (list? names))
-							    (if (eq? ',varname names)
+							    (if (eq? ,varname names)
 								(return vals))
 							    (for-each (lambda (name val)
-									(if (eq? ',varname name)
-									    (return ,val)))
+									(if (eq? ,varname name)
+									    (return val)))
 								      names
 								      vals)))
 						      (findit (cdr env)))))))
@@ -129,8 +129,8 @@ and run simple lisp[4] functions.
 					     
 #!
 (define ai2 90.0)
-(let ((ai 50))
-  (c-get-cell-address ai2))
+(let ((ai9 50))
+  (c-get-cell-address ai9))
 (c-global-symbol 'ai2 (interaction-environment))
 (c-global-symbol 'ai2 (standard-interface-eval-closure (current-module)))
 (c-global-symbol 'ai2 (standard-interface-eval-closure (current-module))))))
@@ -723,15 +723,16 @@ and run simple lisp[4] functions.
 				       (append letbody
 					       (list (list '_rt_ret type funccall))))
 			      ,@(if (eq? '<void> type)
-				    (append funccall
-					    (map (lambda (letb)
-						   `(set! ,(caddr letb) ,(car letb)))
-						 letbody))
+				    (cons funccall
+					  (map (lambda (letb)
+						 `(set! ,(caddr letb) ,(car letb)))
+					       letbody))
 				    (append (map (lambda (letb)
 						   `(set! ,(caddr letb) ,(car letb)))
 						 letbody)
 					    (list '_rt_ret)))))
 
+	    
 	    (if (< (length globvars-here) 5)  ;; Performance is dependent on this number. Perhaps 5 is a good value. Haven't done any benchmark.
 	 	`(lambda ,vars                ;; It should be set quite high, because of larger amount of code, and branching, in the second version.
 		   ,capspart)                 ;; On the other hand, stacking up these variables are probably usually unnecesarry (but has to be done),
@@ -2846,7 +2847,7 @@ and run simple lisp[4] functions.
   (<rt-type> '<float> rt-number-2-rt? 'rt_scm_to_float #:transformfunc rt-number-2-rt) ;;  #:subtype-of <double>)
   (<rt-type> '<int> rt-number-2-rt? 'rt_scm_to_int #:transformfunc rt-number-2-rt)   ;;  #:subtype-of <float>)
   (<rt-type> '<char-*> string? 'rt_scm_to_error) ;; Function does not exist
-  (<rt-type> '<vct-*> vct? 'rt_scm_to_vct #:transformfunc TO_VCT)
+  (<rt-type> '<vct-*> vct? 'rt_scm_to_vct #:transformfunc XEN_TO_VCT)
   ;;(<rt-type> '<vector> vector? #f #:c-type '<SCM>) 
 ;;  (<rt-type> '<mus_any-*> c-nevercalled-true? 'rt-mus-any?/mus_xen_p)
   (<rt-type> '<mus_any-*> c-nevercalled-true? 'rt_scm_to_mus_any)
@@ -4141,13 +4142,16 @@ and run simple lisp[4] functions.
 	 (set! n (1- n)))
   (car das-list))
   
-;; For large n's, this one is a cache-killer, I guess.
+
+
 (define-rt-macro (list-ref das-list n)
   (define (help n)
     (if (= 0 n)
 	das-list
 	`(cdr ,(help (1- n)))))
-  (if (number? n)
+  (if (and (number? n)
+	   (< number 8)
+	   (>= number 0))
       `(car ,(help n))
       `(rt_list_ref ,das-list ,n)))
 
@@ -4282,7 +4286,7 @@ and run simple lisp[4] functions.
 
 (define rt-clm-generators '((all-pass     (input (pm 0)))
 			    (asymmetric-fm (index (fm 0)))
-			    (average      (input))
+			    (moving-average      (input))
 			    (comb         (input (pm 0)))
 			    (convolve     (input-function)) ;; redefined later
 			    (delay        (input (pm 0)))
@@ -5325,6 +5329,12 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 		  (number? (cadr seq))))
 	   #f)
 
+;;(define-c-macro (rt-get-framenum)
+;;  "rt_globals->framenum")
+;;(<rt-func> 'rt-get-framenum '<int> '() #:is-immediate #t)
+;;(define-rt-macro (first-frame?)
+;;  `(= 0 (rt-get-framenum)))
+
 (define-c-macro (rt-get-exact-time)
   "(rt_globals->time+rt_globals->framenum)")
 (<rt-func> 'rt-get-exact-time '<int> '() #:is-immediate #t)
@@ -5344,16 +5354,13 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 (<rt-func> 'rt-midi-is-read! '<void> '() #:is-immediate #t)
 
 (define-rt-macro (receive-midi func)
-  (let ((func (if (and (list? func)
-		       (eq? 'lambda (car func)))
-		  `(lambda ,(cadr func)
-		     (declare (<int> ,@(cadr func)))
-		     ,@(cddr func))
-		  func)))
-    `(if (not (rt-midi-read))
-	 (begin
-	   (rt_receive_midi (rt-get-time) *rt-midi* ,func)
-	   (rt-midi-is-read!)))))
+  `(if (not (rt-midi-read))
+       (begin
+	 (rt_receive_midi (rt-get-time) *rt-midi* (lambda ,(cadr func)
+						    (declare (<int> ,@(cadr func)))
+						    ,@(c-butlast (cddr func))
+						    (the <void> ,(last (cddr func)))))
+	 (rt-midi-is-read!))))
 
 
 ;; Logic partly taken from pd by Miller Puckette.
@@ -5724,7 +5731,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 					  ison)))
 		       (filter-org (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
 				   (-> ladspa controlin_port_nums))))
-
+    
     (-> dialog show)
     dialog))
     
@@ -5744,7 +5751,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 		    (-> ladspa controlin_port_nums))
 	  (c-display ")")))))
 
-	 
+
 (define (make-ladspa libname pluginname)
   (let* ((descriptor #f)
 	 (ladspa #f)
@@ -5753,7 +5760,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	 (input-audios '())
 	 (output-audios '())
 	 (smob #f))
-
+    
     (define (get-hint portnum)
       (car (list-ref (.PortRangeHints descriptor) portnum)))
     
@@ -5777,16 +5784,16 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 		 4                                   ;The value Ardour use.
 		 1)
 	     (caddr (list-ref (.PortRangeHints descriptor) portnum)))))
-
+    
     
     (set! descriptor (ladspa-descriptor libname pluginname))
     (if (not descriptor)
 	(throw (symbol-append 'ladspa-plugin-not-found- (string->symbol libname) '- (string->symbol pluginname))))
     
     (set! ladspa (<mus_rt_ladspa> #:descriptor (list "A_POINTER" (cadr descriptor))))
-		  
+    
     (-> ladspa handle (list "A_POINTER" (cadr (ladspa-instantiate descriptor (c-integer (mus-srate))))))
-        
+    
     (c-for-each (lambda (n x)
 		      (if (> (logand x LADSPA_PORT_CONTROL) 0)
 			  (if (> (logand x LADSPA_PORT_INPUT) 0)
@@ -5795,8 +5802,8 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 			  (if (> (logand x LADSPA_PORT_INPUT) 0)
 			      (set! input-audios (append input-audios (list n)))
 			      (set! output-audios (append output-audios (list n))))))
-		    (.PortDescriptors descriptor))
-
+		(.PortDescriptors descriptor))
+    
     (-> ladspa controlin_port_nums input-controls)
     (-> ladspa controlout_port_nums output-controls)
     (-> ladspa audioin_port_nums input-audios)
@@ -5806,14 +5813,14 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
     (-> ladspa num_controls_out (length output-controls))
     (-> ladspa num_audio_outs (length output-audios))
     (-> ladspa num_audio_ins (length input-audios))
-
+    
     (let ((output (make-vct (-> ladspa num_audio_outs))))
       (-> ladspa scm_output output)
-      (-> ladspa output (TO_VCT output)))
-
+      (-> ladspa output (XEN_TO_VCT output)))
+    
     (-> ladspa controls_maxs (map get-hi input-controls))
     (-> ladspa controls_mins (map get-lo input-controls))
-
+    
     (-> ladspa controls_defaults (map (lambda (x)
 					(let ((hint (car (x 1)))
 					      (lo (cadr (x 1)))
@@ -5860,7 +5867,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 ;; SCM->ladspa converter
 (rt-ec-function <struct-mus_rt_readin-*> rt_scm_to_rt_ladspa
-	     (lambda (,rt-globalvardecl (<SCM> name))
+		(lambda (,rt-globalvardecl (<SCM> name))
 	       (<SCM> ladspa (SCM_CAR (SCM_CDR name)))
 	       ,(if (rt-is-safety?)
 		    `(if (not (SCM_SMOB_PREDICATE rt_ladspa_tag ladspa))
@@ -5885,18 +5892,18 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 ;; The ladspa-run function, ladspa-run calls rt_ladspa_run which replace data in the vct.
 ;; (Yes, some kind of general buffer mechanism should be implemented. This is inefficient.)
 (rt-ec-function <vct-*> rt_ladspa_run
-	     (lambda ((<struct-mus_rt_ladspa-*> ladspa)
-		      (<vct-*> input))
-	       (let* ((minin <int> (MIN ladspa->num_audio_ins input->length)))
-		 (for-each 0 minin
-			   (lambda (n)
-			     (set! ladspa->ins[n][0] input->data[n])))
-		 (ladspa->descriptor->run ladspa->handle 1)
-		 (for-each 0 ladspa->num_audio_outs
-			   (lambda (n)
-			     (set! ladspa->output->data[n] ladspa->outs[n][0])))
-
-		 (return ladspa->output))))
+		(lambda ((<struct-mus_rt_ladspa-*> ladspa)
+			 (<vct-*> input))
+		  (let* ((minin <int> (MIN ladspa->num_audio_ins input->length)))
+		    (for-each 0 minin
+			      (lambda (n)
+				(set! ladspa->ins[n][0] input->data[n])))
+		    (ladspa->descriptor->run ladspa->handle 1)
+		    (for-each 0 ladspa->num_audio_outs
+			      (lambda (n)
+				(set! ladspa->output->data[n] ladspa->outs[n][0])))
+		    
+		    (return ladspa->output))))
 
 (<rt-func> 'rt_ladspa_run '<vct-*> '(<ladspa> <vct-*>))
 
@@ -6101,11 +6108,12 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 (define rt-rb-write 1)
 (define rt-rb-unread 2)
 (define rt-rb-isrunning 3)
+(define rt-rb-header-size 4)
 
 (define rt-running-ringbuffers '())
 
 (define (make-ringbuffer size)
-  (let ((ret (make-vct (+ 1 rt-rb-unread size))))
+  (let ((ret (make-vct (+ rt-rb-header-size size))))
     ret))
 
 (define* (ringbuffer-get rb func #:optional (interval 2))
@@ -6113,18 +6121,31 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 		 (if (= 0 (vct-ref rb rt-rb-isrunning))
 		     (begin
 		       (set! rt-running-ringbuffers (remove (lambda (x) (eq? x rb)) rt-running-ringbuffers)))
-		      (begin
-			(while (> (c-integer (vct-ref rb rt-rb-unread)) 0)
-			       (let ((read-pos (c-integer (vct-ref rb rt-rb-read))))
-				 (func (vct-ref rb (+ 4 read-pos)))
-				 (vct-set! rb rt-rb-read (if (>= read-pos (- (vct-length rb) 6))
-							     0
-							     (1+ read-pos))))
-			       (vct-set! rb rt-rb-unread (1- (vct-ref rb rt-rb-unread))))
-			(in interval ai))))))
+		     (begin
+		       (while (> (c-integer (vct-ref rb rt-rb-unread)) 0)
+			      (let ((read-pos (c-integer (vct-ref rb rt-rb-read))))
+				(func (vct-ref rb (+ rt-rb-header-size read-pos)))
+				(vct-set! rb rt-rb-read (if (>= read-pos (- (vct-length rb) rt-rb-header-size 1))
+							    0
+							    (1+ read-pos))))
+			      (vct-set! rb rt-rb-unread (1- (vct-ref rb rt-rb-unread))))
+		       (in interval ai))))))
     (vct-set! rb rt-rb-isrunning 1)
     (set! rt-running-ringbuffers (cons rb rt-running-ringbuffers))
     (ai)))
+
+(define-rt (get-ringbuffer rb bufferempty)
+  ;;(vct-set! rb ,rt-rb-isrunning 1)
+  (let ((unread (the <int> (vct-ref rb ,rt-rb-unread))))
+    (if (> unread 0)
+	(let* ((read-pos (the <int> (vct-ref rb ,rt-rb-read)))
+	       (ret (vct-ref rb (+ ,rt-rb-header-size read-pos))))
+	  (vct-set! rb ,rt-rb-read (if (>= read-pos (- (vct-length rb) ,rt-rb-header-size 1))
+				       0
+				       (1+ read-pos)))
+	  (vct-set! rb ,rt-rb-unread (1- unread))
+	  ret)
+	bufferempty)))
 
 (define (ringbuffer-stop rb)
   (vct-set! rb rt-rb-isrunning 0))
@@ -6134,22 +6155,28 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
   (for-each ringbuffer-stop rt-running-ringbuffers))
 
 (define-rt (put-ringbuffer rb val)
-  (if (= 0 (vct-ref rb ,rt-rb-isrunning))
-      #t
-      (if (>= (vct-ref rb ,rt-rb-unread) (- (vct-length rb) 6))
-	  (begin
-	    (printf "Ringbuffer full\\n")
-	    #f)
-	  (let ((write-pos (vct-ref rb ,rt-rb-write)))
-	    (declare (<int> write-pos))
-	    (vct-set! rb (+ write-pos 4) val)
-	    (vct-set! rb ,rt-rb-write (if (>= write-pos (- (vct-length rb) 6))
-					  0
-					  (1+ write-pos)))
-	    (vct-set! rb ,rt-rb-unread (1+ (vct-ref rb ,rt-rb-unread)))
-	    #t))))
-	
-
+  ;;  (if (= 0 (vct-ref rb ,rt-rb-isrunning))
+  ;;    #t
+  (let ((write-pos (vct-ref rb ,rt-rb-write))
+	(unread (vct-ref rb ,rt-rb-unread)))
+    (declare (<int> write-pos unread))
+    (if (>= unread (- (vct-length rb) ,rt-rb-header-size))
+	(begin
+	  (printf "Ringbuffer full\\n")
+	  #f)
+	(begin
+	  (vct-set! rb (+ write-pos ,rt-rb-header-size) val)
+	  (vct-set! rb ,rt-rb-write (if (>= write-pos (- (vct-length rb) ,rt-rb-header-size 1))
+					0
+					(1+ write-pos)))
+	  (vct-set! rb ,rt-rb-unread (1+ unread))
+	  #t))))
+  
+  
+(define-rt (clear-ringbuffer rb)
+  (vct-set! rb ,rt-rb-unread 0)
+  (vct-set! rb ,rt-rb-read 0)
+  (vct-set! rb ,rt-rb-write 0))
 
 
 #!
@@ -6305,7 +6332,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	 `(rt_read_bus_vct ,bus))
 	((= 1 (length rest))
 	 `(rt_read_bus ,bus ,(car rest)))
-	((not (rt-immediate? bus9))
+	((not (rt-immediate? bus))
 	 (let ((das-bus (rt-gensym)))
 	   `(let ((,das-bus ,bus))
 	      (read-bus ,das-bus ,@rest))))
@@ -6376,11 +6403,11 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 (rt-ec-function <vct-*> rt_scm_to_vct (lambda (,rt-globalvardecl (<SCM> name))
 				     ,(if (rt-is-safety?)
 					  `(if (vct_p name)
-					       (return (TO_VCT name))
+					       (return (XEN_TO_VCT name))
 					       (begin
 						 (rt_error rt_globals (string "Variable is not a VCT."))
 						 (return NULL)))
-					  `(return (TO_VCT name)))))
+					  `(return (XEN_TO_VCT name)))))
 (<rt-func> 'rt_scm_to_vct '<vct-*> '(<SCM>) #:needs-rt-globals #t)
 
 
@@ -7501,9 +7528,9 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 
 (define-macro (<rt-play> . rest)
-  `(rt-play-macro play (<rt> ,(last rest)) ,(butlast rest 1)))
+  `(rt-play-macro play (<rt> ,(last rest)) ,(c-butlast rest)))
 (define-macro (<rt-play-abs> . rest)
-  `(rt-play-macro play-abs (<rt> ,(last rest)) ,(butlast rest 1)))
+  `(rt-play-macro play-abs (<rt> ,(last rest)) ,(c-butlast rest)))
 
 
 (define-macro (definstrument def . body)
@@ -7531,11 +7558,11 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	    
 	    ((eq? '<rt-play> (car term))
 	     (let ((func (add-rt-func (last term))))
-	       `(rt-play-macro play ((caddr ,func)) ,(cdr (butlast term 1)))))
+	       `(rt-play-macro play ((caddr ,func)) ,(cdr (c-butlast term)))))
 	    
 	    ((eq? '<rt-play-abs> (car term))
 	     (let ((func (add-rt-func (last term))))
-	       `(rt-play-macro play-abs ((caddr ,func)) ,(cdr (butlast term 1)))))
+	       `(rt-play-macro play-abs ((caddr ,func)) ,(cdr (c-butlast term)))))
 	    
 	    (else
 	     (map find-rt term))))
