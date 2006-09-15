@@ -134,7 +134,7 @@ Version info:
 The customization/extension languages are either Guile, Gauche, Ruby, or Forth.
 
 Much of Snd's functionality is loaded as needed from the Scheme, Ruby, or Forth
-files found in the tarball (*.scm, *.rb, and *.fth).  You can run Snd without 
+files found in the tarball (*.scm, *.rb, and *.fs).  You can run Snd without 
 these files, but there's no reason to!  Just add the directory containing
 those files to the "load-path".  In Guile,
 
@@ -144,16 +144,11 @@ those files to the "load-path".  In Guile,
 to find a file to load.  Here I've added "/home/bil/cl" so that Snd
 can find its sources no matter what directory I run it in.  If you 
 create a file named ~/.snd_guile and put such a line in it, you'll
-never have to think about it again.  
+never have to think about it again.  In the other languages:
 
-In Ruby, you can use the RUBYLIB (or SND_PATH) environment variable,
-or add the directory to the $LOAD_PATH variable (also known as "$:"):
-
-  $: << "/home/bil/cl"
-
-or perhaps better:
-
-  $:.push("/home/bil/cl")
+Ruby:   $LOAD_PATH.push("/home/bil/cl")
+Gauche: (add-to-load-path "/home/bil/cl")
+Forth:  "/home/bil/cl" add-load-path
 
 
 ----------------------------------------------------------------

@@ -2368,6 +2368,11 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define strftime sys-strftime)");
   XEN_EVAL_C_STRING("(define shell sys-system)");
 
+  /* add-load-path in Gauche is a spooky special case that is executed no matter what, and
+   *   Shiro says I shouldn't use the underlying function %add-load-path; here is his suggestion:
+   */
+  XEN_EVAL_C_STRING("(define-macro (add-to-load-path path) (when (not (member path *load-path*)) `(add-load-path ,path)))");
+
   XEN_EVAL_C_STRING("(define (list-set! lis pos val)\
                        (set-car! (list-tail lis pos) val)\
                        val)");

@@ -1385,14 +1385,7 @@ XEN xen_rb_add_to_load_path(char *path);
 /* === Define === */
 #define XEN_DEFINE(name, Value)                fth_define(name, Value)
 #define XEN_DEFINE_CONSTANT(name, Value, help) fth_define_constant(name, Value, help)
-
-#define XEN_DEFINE_VARIABLE(Name, Var, Value) \
-  { \
-    Var = Value; \
-    fth_define_variable(Name, Value, NULL); \
-  }
-/* #define XEN_DEFINE_VARIABLE(name, Var, Value)  (Var = fth_define_variable(name, Value, NULL); */
-
+#define XEN_DEFINE_VARIABLE(name, Var, Value)  (Var = fth_define_variable(name, Value, NULL))
 #define XEN_VARIABLE_SET(name, Value)          fth_variable_set((char *)(name), Value)
 #define XEN_VARIABLE_REF(name)                 fth_variable_ref((char *)(name))
 #define XEN_NAME_AS_C_STRING_TO_VARIABLE(name) fth_word_ref((char *)(name))

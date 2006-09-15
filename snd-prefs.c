@@ -13,8 +13,9 @@
   #define LANG_NAME "source"
 #endif
 
-/* TODO: Forth: many keybindings don't have a Forth version? and yet they're included in the dialog
+/* TODO: Forth: many keybindings don't have a Forth version? and yet they're included in the dialog (also need testing)
  * TODO: Forth: no channel-property??
+ * TODO: the 'required files need fixups, especially snd-motif -- see add_mark_pane 
  */
 
 
@@ -203,11 +204,10 @@ static void add_local_load_path(FILE *fd, char *path)
 #endif
 #if HAVE_FORTH
   /* this already checks */
-  fprintf(fd, "$\" %s\" add-load-path\n", path);
+  fprintf(fd, "$\" %s\" add-load-path drop\n", path);
 #endif
 #if HAVE_GAUCHE
-  fprintf(fd, "(if (not (member \"%s\" *load-path*)) (%%add-load-path \"%s\"))\n", path, path);
-  /* can't use add-load-path here because it is executed no matter what! */
+  fprintf(fd, "(add-to-load-path \"%s\")\n", path); /* see snd-xen.c */
 #endif
 }
 
@@ -1769,7 +1769,9 @@ static void min_dB_text(prefs_info *prf)
     {
       float value = 0.0;
       sscanf(str, "%f", &value);
-      set_min_db(value); /* snd-chn.c -- redisplays */
+      if (value < 0.0)
+	set_min_db(value); /* snd-chn.c -- redisplays */
+      else SET_TEXT(prf->text, "must be < 0.0");
       FREE_TEXT(str);
     }
 }
@@ -1922,6 +1924,8 @@ static void sync2_choice(prefs_info *prf)
   SET_TOGGLE(prf->toggle, false);
   set_sync_choice(prefs_sync_choice, "extensions");
 }
+
+/* check: global-sync-choice extensions.scm extensions.rb extensions.fs */
 
 
 /* ---------------- mark-tag size ---------------- */
@@ -2200,6 +2204,8 @@ static void unsaved_edits_toggle(prefs_info *prf)
   set_unsaved_edits(GET_TOGGLE(prf->toggle), "extensions");
 }
 
+/* check: check-for-unsaved-edits extensions.scm extensions.rb extensions.fs */
+
 
 
 /* ---------------- current-window-display ---------------- */
@@ -2253,6 +2259,9 @@ static void reflect_current_window_display(prefs_info *prf)
   SET_TOGGLE(prf->toggle, prefs_current_window_display);
 }
 
+/* check: make-current-window-display draw.scm draw.rb draw.fs */
+
+
 
 /* ---------------- focus-follows-mouse ---------------- */
 
@@ -2298,6 +2307,9 @@ static void focus_follows_mouse_toggle(prefs_info *prf)
 {
   set_focus_follows_mouse(GET_TOGGLE(prf->toggle), NULL);
 }
+
+/* check: focus-follows-mouse extensions.scm extensions.rb extensions.fs */
+
 
 
 #if WITH_RUN
@@ -3406,6 +3418,8 @@ new sounds, then edit them in Snd, include with-sound.",
 	   WITH_WORD_WRAP);
 }
 
+/* check: with-sound ws.scm ws.rb clm.fs */
+
 
 /* ---------------- clm file name ---------------- */
 
@@ -3581,6 +3595,8 @@ static void reflect_context_sensitive_popup(prefs_info *prf) {}
 static void revert_context_sensitive_popup(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_context_sensitive_popup);}
 static void clear_context_sensitive_popup(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 
+/* check: edhist-help-edits popup.scm|gtk-popup.scm popup.rb popup.fs */
+
 
 /* ---------------- effects menu ---------------- */
 
@@ -3628,6 +3644,8 @@ static void effects_menu_toggle(prefs_info *prf)
 static void reflect_effects_menu(prefs_info *prf) {}
 static void revert_effects_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_effects_menu);}
 static void clear_effects_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+
+/* check: effects-menu new-effects.scm|gtk-effects.scm effects.rb effects.fs */
 
 
 #if HAVE_SCHEME
@@ -3805,6 +3823,8 @@ static void reflect_reopen_menu(prefs_info *prf) {}
 static void revert_reopen_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_reopen_menu);}
 static void clear_reopen_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 
+/* check: with-reopen-menu extensions */
+
 
 #if USE_MOTIF
 /* ---------------- mark-pane ---------------- */
@@ -3824,12 +3844,22 @@ static bool find_mark_pane(void)
 	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-mark-pane")));
 }
 
+#if HAVE_SCHEME
+  #if USE_MOTIF
+    #define MARK_PANE_SOURCE "snd-motif"
+  #else
+    #define MARK_PANE_SOURCE "snd-gtk"
+  #endif
+#else
+    #define MARK_PANE_SOURCE "snd-xm"
+#endif
+
 static void mark_pane_toggle(prefs_info *prf)
 {
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(find_mark_pane())))
     {
-      xen_load_file_with_path_and_extension("snd-motif");
+      xen_load_file_with_path_and_extension(MARK_PANE_SOURCE);
       prefs_function_call_0("add-mark-pane");
     }
 }
@@ -3838,7 +3868,7 @@ static void save_mark_pane(prefs_info *prf, FILE *fd)
 {
   include_mark_pane = GET_TOGGLE(prf->toggle);
   if (include_mark_pane)
-    prefs_function_save_0(fd, "add-mark-pane", "snd-motif");
+    prefs_function_save_0(fd, "add-mark-pane", MARK_PANE_SOURCE);
 }
 
 static void reflect_mark_pane(prefs_info *prf) {}
@@ -3966,22 +3996,21 @@ static void reflect_smpte(prefs_info *prf) {}
 static void revert_smpte(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_smpte);}
 static void clear_smpte(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 
+#if HAVE_SCHEME
+  #if USE_MOTIF
+    #define SMPTE_SOURCE "snd-motif"
+  #else
+    #define SMPTE_SOURCE "snd-gtk"
+  #endif
+#else
+    #define SMPTE_SOURCE "snd-xm"
+#endif
+
 static void smpte_toggle(prefs_info *prf)
 {
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(find_smpte())))
-    {
-#if HAVE_SCHEME
-#if USE_MOTIF
-      xen_load_file_with_path_and_extension("snd-motif");
-#else
-      xen_load_file_with_path_and_extension("snd-gtk");
-#endif
-#endif
-#if HAVE_FORTH || HAVE_RUBY
-      xen_load_file_with_path_and_extension("snd-xm");
-#endif
-    }
+    xen_load_file_with_path_and_extension(SMPTE_SOURCE);
   if (find_smpte())
     prefs_function_call_1("show-smpte-label", C_TO_XEN_BOOLEAN(GET_TOGGLE(prf->toggle)));
 }
@@ -4001,7 +4030,7 @@ static void save_smpte(prefs_info *prf, FILE *fd)
 #endif
 #if HAVE_FORTH
   fprintf(fd, "require snd-xm\n");
-  fprintf(fd, "#t show-smpte-label\n");
+  fprintf(fd, "#t show-smpte-label drop\n");
 #endif
     }
 }
@@ -4802,6 +4831,7 @@ static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
+  /* TODO: Forth play key-bind */
   return(NULL);
 }
 
@@ -4856,6 +4886,7 @@ static char *make_show_all_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
+  /* TODO: Forth show all key-bind */
   return(NULL);
 }
 
@@ -4910,6 +4941,7 @@ static char *make_select_all_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
+  /* TODO: Forth select all key-bind */
   return(NULL);
 }
 
@@ -4953,6 +4985,12 @@ static char *make_revert_binding(char *key, bool ctrl, bool meta, bool cx)
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
+#endif
+#if HAVE_FORTH
+  return(mus_format("%s %d lambda: { } revert-sound ; 0 make-proc %s bind-key\n",
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
 #endif
   return(NULL);
 }
@@ -4998,6 +5036,12 @@ static char *make_exit_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
+#if HAVE_FORTH
+  return(mus_format("%s %d lambda: { } snd-exit ; 0 make-proc %s bind-key\n",
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
   return(NULL);
 }
 
@@ -5042,6 +5086,7 @@ static char *make_goto_maxamp_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
+  /* TODO: Forth goto maxamp key-bind */
   return(NULL);
 }
 
@@ -5086,6 +5131,7 @@ static char *make_show_selection_binding(char *key, bool ctrl, bool meta, bool c
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
+  /* TODO: Forth show selection key-bind */
   return(NULL);
 }
 
