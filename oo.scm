@@ -109,6 +109,12 @@
 
 (define <-> string-append)
 
+(define (sublist l start end)
+  (take (drop l start) (- end start)))
+
+;;(sublist '(0 1 2 3 4 5 6 7 8 9) 2 5)
+
+
 (define (c-atleast1.7?)
   (or (>= (string->number (major-version)) 2)
       (and (string=? "1" (major-version))
@@ -155,13 +161,40 @@
 			    (set! n (1+ n)))
 			  lists))))
 
+
+;; !!!!!!!
 (define (c-display . args)
+  ;(if (not (show-listener))
+  ;    (set! (show-listener) #t))
+  ;(gtk_paned_set_position (GTK_PANED (list-ref (main-widgets) 3)) (c-integer (* (window-height) 0.75)))
+  (set! (show-listener) #t)
   (c-for-each (lambda (n arg)
 		(if (> n 0)
-		    (display " "))
-		(display arg))
+		    (snd-print " "))
+		(if (show-listener #f)
+		    (snd-print arg)))
 	      args)
-  (newline))
+  (snd-print #\newline)
+  (while (= 1 (gtk_events_pending))
+	 (gtk_main_iteration)))
+
+;  (gtk_main_iteration_do #f))
+
+;(define (print . args)
+;  (display (car args))
+;  (for-each (lambda (x) (display " ")(display x)) (cdr args))
+;  (newline))
+
+(define (print . args)
+  (define result #f)
+  (if (pair? args)
+      (begin
+	(write (car args))
+	(for-each (lambda (x) (display #\ )(write x)) (cdr args))
+	(set! result (car (reverse args)))))
+  (newline)
+  result)
+
 
 
 
