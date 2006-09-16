@@ -320,7 +320,7 @@ int mus_sound_forget(const char *name)
     }
   else
     {
-      short_name = mus_expand_filename((char *)name);
+      short_name = mus_expand_filename(name);
       free_name = true;
     }
   previous_sf = NULL;

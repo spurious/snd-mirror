@@ -1342,6 +1342,9 @@ char *mus_getcwd(void)
 char *mus_expand_filename(const char *filename)
 {
   /* fill out under-specified library pathnames etc */
+#if defined(MUS_WINDOZE) && (!(defined(__CYGWIN__)))
+  return(strdup(filename));
+#else
   char *file_name_buf = NULL;
   char *tok = NULL, *orig = NULL;
   int i, j = 0, len = 0;
@@ -1435,6 +1438,7 @@ char *mus_expand_filename(const char *filename)
   }
   free(orig);
   return(file_name_buf);
+#endif
 }
 
 

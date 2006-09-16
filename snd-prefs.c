@@ -14,7 +14,6 @@
 #endif
 
 /* TODO: Forth: many keybindings don't have a Forth version? and yet they're included in the dialog (also need testing)
- * TODO: Forth: no channel-property??
  * TODO: the 'required files need fixups, especially snd-motif -- see add_mark_pane 
  */
 
@@ -4540,45 +4539,91 @@ find elsewhere.",
 
 static char *find_sources(void) /* returns full filename if found else null */
 {
-  XEN file;
+  char *file = NULL;
+  #define BASE_FILE "extensions." XEN_FILE_EXTENSION
+
 #if HAVE_GUILE
-  #define BASE_FILE "extensions.scm"
-  file = scm_sys_search_load_path(C_TO_XEN_STRING(BASE_FILE));
+  {
+    XEN xfile;
+    xfile = scm_sys_search_load_path(C_TO_XEN_STRING(BASE_FILE));
+    if (XEN_STRING_P(xfile))
+      file = copy_string(XEN_TO_C_STRING(xfile));
+  }
 #endif
-#if HAVE_GAUCHE 
-  #define BASE_FILE "extensions.scm"
-  file = C_TO_XEN_STRING("extensions.scm");
+
+#if HAVE_GAUCHE
+  /* mimic Forth code below -- get *load-path* value and run through it */
+  {
+      int i, len, base_len;
+      XEN load_path;
+      load_path = XEN_LOAD_PATH;
+      len = XEN_LIST_LENGTH(load_path);
+      base_len = strlen(BASE_FILE);
+      for (i = 0; i < len; i++)
+	{
+	  char *fname, *path;
+	  int flen;
+	  path = XEN_TO_C_STRING(XEN_LIST_REF(load_path, i));
+	  flen = base_len + 32 + strlen(path);
+	  fname = (char *)CALLOC(flen, sizeof(char));
+	  snprintf(fname, flen, "%s/%s", path, BASE_FILE);
+	  if (mus_file_probe(fname)) 
+	    {
+	      file = fname;
+	      break;
+	    }
+	  FREE(fname);
+	}
+    }
 #endif
+
 #if HAVE_RUBY
-  #define BASE_FILE "extensions.rb"
-#if RB_FIND_FILE_TAKES_VALUE
-  file = rb_find_file(C_TO_XEN_STRING(BASE_FILE));
-#else
-  file = C_TO_XEN_STRING(rb_find_file(BASE_FILE));
+  #if RB_FIND_FILE_TAKES_VALUE
+  {
+    XEN xfile;
+    xfile = rb_find_file(C_TO_XEN_STRING(BASE_FILE));
+    if (XEN_STRING_P(xfile))
+      file = mus_expand_filename(XEN_TO_C_STRING(xfile));
+  }
+  #else
+    file = mus_expand_filename(rb_find_file(BASE_FILE));
+  #endif
 #endif
-#endif
+
 #if HAVE_FORTH
-  #define BASE_FILE "extensions.fs"
-  file = fth_find_file(C_TO_XEN_STRING(BASE_FILE));
-#endif
-#ifndef BASE_FILE
-  #define BASE_FILE "extensions.scm"
-#endif
-  if (XEN_STRING_P(file))
     {
-      char *str;
+      /* taken from fth/src/misc.c -- fth_find_file looks for an already-loaded file */
+      int i, len, base_len;
+      XEN load_path;
+      load_path = XEN_LOAD_PATH;
+      len = fth_array_length(load_path);
+      base_len = strlen(BASE_FILE);
+      for (i = 0; i < len; i++)
+	{
+	  char *fname, *path;
+	  int flen;
+	  path = fth_string_ref(fth_array_ref(load_path, i));
+	  flen = base_len + 32 + strlen(path);
+	  fname = (char *)CALLOC(flen, sizeof(char));
+	  snprintf(fname, flen, "%s/%s", path, BASE_FILE);
+	  if (mus_file_probe(fname)) 
+	    {
+	      file = fname;
+	      break;
+	    }
+	  FREE(fname);
+	}
+    }
+#endif
+
+  if (file)
+    {
       int len, exts_len;
-#if HAVE_GUILE || HAVE_FORTH
-      str = copy_string(XEN_TO_C_STRING(file));
-#endif
-#if HAVE_RUBY || HAVE_GAUCHE
-      str = mus_expand_filename(XEN_TO_C_STRING(file));
-#endif
-      len = snd_strlen(str);
+      len = snd_strlen(file);
       exts_len = strlen(BASE_FILE);
       if (len > exts_len)
-	str[len - exts_len - 1] = '\0';
-      return(str);
+	file[len - exts_len - 1] = '\0';
+      return(file);
     }
   return(NULL);
 }

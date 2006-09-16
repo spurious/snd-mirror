@@ -14,6 +14,7 @@
 
 require clm
 require examp
+require extensions \ need channel-property
 
 \ --- inset overall waveform; if click, move to that location ---
 

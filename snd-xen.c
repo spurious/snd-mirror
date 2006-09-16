@@ -47,7 +47,8 @@
 /* TODO: (gauche)   stacktrace and errors->listener (current-load-history)
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
  * TODO: (gauche)   unwind-protects around scm_apply (snd-xen g_call)
- * TODO: (forth)    prefs can't find extensions.fs? can't figure this one out -- data stack confusion?
+ * TODO: (gauche)   does "not applicable (#t)" means stack overflow?  how to fix this?
+ * TODO: (scheme)   r6rs changes, in particular ->exact
  *
  * SOMEDAY: change config.h to snd-config.h and clm-config.h (collisions in several cases like ecl)
  *         but if user is loading libsndlib, how to avoid collisions between its config.h and snd's?
