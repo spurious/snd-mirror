@@ -90,6 +90,9 @@
  *
  * SOMEDAY: support for vector of def-clm-structs
  * SOMEDAY: the graphics funcs in snd-axis/snd-draw (x->position, draw-lines etc)
+ *
+ * TODO: do (or parallel_bind) var that's initialized to int, then treated as float truncates
+ *       so (do ((i 0 (+ i 0.5)))...) i is always 0
  */
 
 #include "snd.h"
@@ -103,6 +106,8 @@ static XEN optimization_hook;
 #define S_run_safety "run-safety"
 enum {RUN_UNSAFE, RUN_SAFE};
 static int run_safety = RUN_UNSAFE;
+
+/* #define DESCRIBE_PTREE 1 */
 
 #if WITH_RUN
 
@@ -6644,6 +6649,7 @@ static xen_value *channels_1(ptree *pt, xen_value **args, int num_args)
 static void c_g_p(int *args, ptree *pt) 
 {
   /* explicit check here speeds this up by about a factor of 3! but it's still slow */
+  /*   does this have to be in a graph? C-g in the listener seems to have no effect */
 #if USE_GTK
   if (gtk_events_pending())
 #else
@@ -11003,6 +11009,11 @@ typedef enum {NO_PTREE_DISPLAY, STDERR_PTREE_DISPLAY, LISTENER_PTREE_DISPLAY, GC
 
 static XEN g_show_ptree(XEN on)
 {
+  #define S_show_ptree "show-ptree"
+  #define H_show_ptree "(show-ptree arg): if arg is not 0, the optimizer's parse tree is displayed. \
+arg = 1 sends it to stderr, 2 to the listener, 3 is for gcat's use.  To get output, compile snd-run.c \
+with the DESCRIBE_PTREE flag set."
+
   ptree_on = (ptree_display_t)XEN_TO_C_INT(on);
   return(on);
 }
@@ -11909,13 +11920,14 @@ XEN_ARGIFY_4(g_run_eval_w, g_run_eval)
 void g_init_run(void)
 {
 #if WITH_RUN
-  XEN_DEFINE_PROCEDURE("run-internal", g_run_w, 1, 0, 0, "run macro testing...");
+  XEN_DEFINE_PROCEDURE("run-internal",  g_run_w,           1, 0, 0, "run macro testing...");
   XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(run-internal (list ',thunk ,thunk)))");
   XEN_SET_DOCUMENTATION(S_run, H_run);
-  XEN_DEFINE_PROCEDURE("run-eval", g_run_eval_w, 1, 3, 0, "run macro testing...");
+  XEN_DEFINE_PROCEDURE("run-eval",      g_run_eval_w,      1, 3, 0, "run macro testing...");
   XEN_DEFINE_PROCEDURE(S_add_clm_field, g_add_clm_field_w, 2, 1, 0, H_add_clm_field);
-  XEN_DEFINE_PROCEDURE(S_add_clm_type, g_add_clm_type_w, 1, 0, 0, H_add_clm_type);
-  XEN_DEFINE_PROCEDURE("show-ptree", g_show_ptree_w, 1, 0, 0, "internal debugging stuff");
+  XEN_DEFINE_PROCEDURE(S_add_clm_type,  g_add_clm_type_w,  1, 0, 0, H_add_clm_type);
+  XEN_DEFINE_PROCEDURE(S_show_ptree,    g_show_ptree_w,    1, 0, 0, H_show_ptree);
+		       
   XEN_YES_WE_HAVE("run");
 #if HAVE_GAUCHE
   walker_hash_table = Scm_MakeHashTableSimple(SCM_HASH_EQ, 1024);

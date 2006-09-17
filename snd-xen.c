@@ -48,7 +48,7 @@
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
  * TODO: (gauche)   unwind-protects around scm_apply (snd-xen g_call)
  * TODO: (gauche)   does "not applicable (#t)" means stack overflow?  how to fix this?
- * TODO: (scheme)   r6rs changes, in particular ->exact
+ * TODO: (scheme)   r6rs changes, in particular ->exact (filter is another)
  *
  * SOMEDAY: change config.h to snd-config.h and clm-config.h (collisions in several cases like ecl)
  *         but if user is loading libsndlib, how to avoid collisions between its config.h and snd's?

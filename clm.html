@@ -4429,7 +4429,7 @@ current dynamic value of that variable is *&lt;var&gt;*.
 <tr><td><a class=def Name="*clm-data-format*">*clm-data-format*</a></td><td>default output sound file data format</td></tr>
 <tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-date*">*clm-date*</a></td><td bgcolor="#f6f8ff">creation date of the current version</td></tr>
 <tr><td><a class=def Name="*clm-delete-reverb*">*clm-delete-reverb*</a></td><td>should with-sound delete the temporary reverb output (default nil)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-file-buffer-size*">*clm-file-buffer-size*</a></td><td bgcolor="#f6f8ff">IO buffer sizes </td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-file-buffer-size*">*clm-file-buffer-size*</a></td><td bgcolor="#f6f8ff">IO buffer sizes (in samples)</td></tr>
 <tr><td><a class=def Name="*clm-file-name*">*clm-file-name*</a></td><td>default sound file name</td></tr>
 <tr><td bgcolor="#f6f8ff"><a class=def Name="*clm-header-type*">*clm-header-type*</a></td><td bgcolor="#f6f8ff">default output sound file header type</td></tr>
 <tr><td><a class=def Name="*clm-init*">*clm-init*</a></td><td>name of site-specific initializations (see <a href="#clm-init.lisp">clm-init.lisp</a>)</td></tr>
@@ -4612,6 +4612,9 @@ statement that will send its output to the lisp listener, use the function mus_e
 of 0; next run the C compiler and loader, making a new instrument object file, start gdb with lisp, run
 lisp loading clm, load your instrument, and run it.  This is incredibly tedious!
 </p>
+
+<!-- TODO: add windows debugging info -->
+
 <br>
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndcommunication">CLM and Snd</a></h3></td></tr></table>

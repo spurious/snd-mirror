@@ -13,10 +13,6 @@
   #define LANG_NAME "source"
 #endif
 
-/* TODO: Forth: many keybindings don't have a Forth version? and yet they're included in the dialog (also need testing)
- * TODO: the 'required files need fixups, especially snd-motif -- see add_mark_pane 
- */
-
 
 static void int_to_textfield(widget_t w, int val)
 {
@@ -203,7 +199,7 @@ static void add_local_load_path(FILE *fd, char *path)
 #endif
 #if HAVE_FORTH
   /* this already checks */
-  fprintf(fd, "$\" %s\" add-load-path drop\n", path);
+  fprintf(fd, "$\" %s\" add-load-path\n", path); /* no drop here */
 #endif
 #if HAVE_GAUCHE
   fprintf(fd, "(add-to-load-path \"%s\")\n", path); /* see snd-xen.c */
@@ -309,10 +305,18 @@ static char *possibly_quote(char *key)
     if (!(isspace(key[i])))
       {
 	if ((j == 0) && (isalpha(key[i])))
+#if HAVE_FORTH
+	  { key_buf[j++] = '$'; key_buf[j++] = '\"'; key_buf[j++] = ' '; }
+#else
 	  key_buf[j++] = '\"';
+#endif
 	key_buf[j++] = key[i];
       }
+#if HAVE_FORTH
+  if ((key_buf[0] == '$') && (key_buf[j - 1] != '\"'))
+#else
   if ((key_buf[0] == '\"') && (key_buf[j - 1] != '\"'))
+#endif
     key_buf[j++] = '\"';
   key_buf[j++] = '\0';
 #if 0
@@ -1924,7 +1928,6 @@ static void sync2_choice(prefs_info *prf)
   set_sync_choice(prefs_sync_choice, "extensions");
 }
 
-/* check: global-sync-choice extensions.scm extensions.rb extensions.fs */
 
 
 /* ---------------- mark-tag size ---------------- */
@@ -2203,8 +2206,6 @@ static void unsaved_edits_toggle(prefs_info *prf)
   set_unsaved_edits(GET_TOGGLE(prf->toggle), "extensions");
 }
 
-/* check: check-for-unsaved-edits extensions.scm extensions.rb extensions.fs */
-
 
 
 /* ---------------- current-window-display ---------------- */
@@ -2258,8 +2259,6 @@ static void reflect_current_window_display(prefs_info *prf)
   SET_TOGGLE(prf->toggle, prefs_current_window_display);
 }
 
-/* check: make-current-window-display draw.scm draw.rb draw.fs */
-
 
 
 /* ---------------- focus-follows-mouse ---------------- */
@@ -2306,8 +2305,6 @@ static void focus_follows_mouse_toggle(prefs_info *prf)
 {
   set_focus_follows_mouse(GET_TOGGLE(prf->toggle), NULL);
 }
-
-/* check: focus-follows-mouse extensions.scm extensions.rb extensions.fs */
 
 
 
@@ -3417,7 +3414,6 @@ new sounds, then edit them in Snd, include with-sound.",
 	   WITH_WORD_WRAP);
 }
 
-/* check: with-sound ws.scm ws.rb clm.fs */
 
 
 /* ---------------- clm file name ---------------- */
@@ -3594,7 +3590,6 @@ static void reflect_context_sensitive_popup(prefs_info *prf) {}
 static void revert_context_sensitive_popup(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_context_sensitive_popup);}
 static void clear_context_sensitive_popup(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 
-/* check: edhist-help-edits popup.scm|gtk-popup.scm popup.rb popup.fs */
 
 
 /* ---------------- effects menu ---------------- */
@@ -3644,7 +3639,6 @@ static void reflect_effects_menu(prefs_info *prf) {}
 static void revert_effects_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_effects_menu);}
 static void clear_effects_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 
-/* check: effects-menu new-effects.scm|gtk-effects.scm effects.rb effects.fs */
 
 
 #if HAVE_SCHEME
@@ -3822,7 +3816,6 @@ static void reflect_reopen_menu(prefs_info *prf) {}
 static void revert_reopen_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_reopen_menu);}
 static void clear_reopen_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 
-/* check: with-reopen-menu extensions */
 
 
 #if USE_MOTIF
@@ -4029,7 +4022,7 @@ static void save_smpte(prefs_info *prf, FILE *fd)
 #endif
 #if HAVE_FORTH
   fprintf(fd, "require snd-xm\n");
-  fprintf(fd, "#t show-smpte-label drop\n");
+  fprintf(fd, "\\ #t show-smpte-label drop\n"); /* TODO: this is causing a segfault, but seems to work in .snd_forth */
 #endif
     }
 }
@@ -4527,14 +4520,29 @@ static char *rts_load_path = NULL;
 
 static void help_load_path(prefs_info *prf)
 {
-  snd_help("load paths",
-	   "Much of Snd's functionality is loaded as needed from the Scheme, Ruby, or Forth \
+  char *hlp;
+  hlp = mus_format("Much of Snd's functionality is loaded as needed from the Scheme, Ruby, or Forth \
 files found in the Snd tarball.  You can run Snd without \
 these files, but there's no reason to!  Just add the directory containing \
-them to the \"load-path\".  " XEN_LANGUAGE_NAME " searches these \
+them to the load path variable%s.  " XEN_LANGUAGE_NAME " searches these \
 directories for any *." XEN_FILE_EXTENSION " files that it can't \
-find elsewhere.",
-	   WITH_WORD_WRAP);
+find elsewhere.  The current load path list is: \n\n%s\n",
+#if HAVE_GUILE
+		   ", %load-path",
+#else
+#if HAVE_RUBY
+		   ", $LOAD_PATH",
+#else
+#if HAVE_FORTH || HAVE_GAUCHE
+		   ", *load-path*",
+#else
+		   "",
+#endif
+#endif
+#endif
+		   XEN_AS_STRING(XEN_LOAD_PATH));
+  snd_help("load paths", hlp, 	   WITH_WORD_WRAP);
+  FREE(hlp);
 }
 
 static char *find_sources(void) /* returns full filename if found else null */
@@ -4876,7 +4884,12 @@ static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
-  /* TODO: Forth play key-bind */
+#if HAVE_FORTH
+  return(mus_format("%s %d lambda: { } #f set-pausing drop cursor play drop ; 0 make-proc %s bind-key drop\n",
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
   return(NULL);
 }
 
@@ -5032,7 +5045,7 @@ static char *make_revert_binding(char *key, bool ctrl, bool meta, bool cx)
 		    (cx) ? "true" : "false"));
 #endif
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: { } revert-sound ; 0 make-proc %s bind-key\n",
+  return(mus_format("%s %d lambda: { } revert-sound ; 0 make-proc %s bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -5082,7 +5095,7 @@ static char *make_exit_binding(char *key, bool ctrl, bool meta, bool cx)
 		    (cx) ? "true" : "false"));
 #endif
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: { } snd-exit ; 0 make-proc %s bind-key\n",
+  return(mus_format("%s %d lambda: { } snd-exit ; 0 make-proc %s bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -5131,7 +5144,12 @@ static char *make_goto_maxamp_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
-  /* TODO: Forth goto maxamp key-bind */
+#if HAVE_FORTH
+  return(mus_format("%s %d lambda: { } #f #f #f maxamp-position #f #f #f set-cursor ; 0 make-proc %s bind-key drop\n",
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
   return(NULL);
 }
 
