@@ -1655,8 +1655,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_LOAD_FILE(File)           xen_gauche_load_file(File)
 #define XEN_LOAD_FILE_WITH_PATH(File) Scm_VMLoad(SCM_STRING(C_TO_XEN_STRING(File)), XEN_FALSE, XEN_FALSE, 0)
 #define XEN_LOAD_PATH                 Scm_GetLoadPath()
-#define XEN_ADD_TO_LOAD_PATH(Path)    Scm_AddLoadPath(Path, false)
-/* TODO: check whether gauche addloadpath is push or pushnew */
+#define XEN_ADD_TO_LOAD_PATH(Path)    xen_gauche_add_to_load_path(Path)
 
 #define XEN_DEFINE(Name, Value)       SCM_DEFINE(Scm_UserModule(), Name, Value)
 
@@ -1903,6 +1902,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 void xen_gauche_list_set_x(XEN Lst, int Loc, XEN Val);
 XEN xen_gauche_load_file(char *file);
+XEN xen_gauche_add_to_load_path(char *path);
 XEN xen_gauche_object_to_string(XEN obj);
 void xen_gauche_permanent_object(XEN obj);
 double xen_to_c_double(XEN a);

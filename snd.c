@@ -1,7 +1,6 @@
 /* Sound display/edit/etc
  *
- * a re-implementation in summer 1996 of my much-missed dpysnd -- the Foonly/SAIL/E/Mus10/Grnlib sound editor from ca 1983.
- * with much help from Douglas Young's "The X Window System, Programming and Applications with Xt" Prentice-Hall 1994.
+ * originally intended as a re-implementation of my much-missed dpysnd -- the Foonly/SAIL/E/Mus10/Grnlib sound editor from ca 1983.
  */
 
 #include "snd.h"

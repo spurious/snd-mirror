@@ -741,8 +741,10 @@ XEN xen_rb_load_file_with_error(XEN file)
 XEN xen_rb_add_to_load_path(char *path)
 {
   extern VALUE rb_load_path;
-  /* TODO: check that it's not already there: $LOAD_PATH.include? path -> false */
-  rb_ary_unshift(rb_load_path, rb_str_new2(path));
+  XEN rpath;
+  rpath = rb_str_new2(path);
+  if (XEN_FALSE_P(rb_ary_includes(rb_load_path, rpath)))
+    rb_ary_unshift(rb_load_path, rpath);
   return(XEN_FALSE);
 }
 
@@ -1647,6 +1649,12 @@ XEN xen_gauche_load_file(char *file)
   Scm_Load(file, 0); /* returns an int, but we want (XEN) error indication */
   /* flags is or of SCM_LOAD_QUIET_NOFILE SCM_LOAD_IGNORE_CODING */
   return(XEN_FALSE);
+}
+
+XEN xen_gauche_add_to_load_path(char *path)
+{
+  if (XEN_FALSE_P(Scm_Member(C_TO_XEN_STRING(path), XEN_LOAD_PATH, SCM_CMP_EQUAL))) /* scheme spec says eq? and eqv? of strings is unspecified */
+    Scm_AddLoadPath(path, false);
 }
 
 XEN xen_gauche_object_to_string(XEN obj)

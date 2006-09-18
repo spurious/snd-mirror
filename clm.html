@@ -4572,14 +4572,13 @@ Here's another instrument that implements legato between notes by using the prev
 <p>CLM provides several built-in data display and instrument debugging aids.
 But debugging an instrument is still too much pain.  I suggest that you
 develop the algorithm in Snd/Scheme where there are elaborate and
-robust debugging tools.  In Common Lisp you're lucky if the damned
-debuggers don't simply segfault, and there's no hope that they'll tell
-you anything useful.
+robust debugging tools. 
 </p>
 
 <p>The optimize safety option can be used to check for array index and null
 generator problems (these will be reported as bus errors and segmentation
-faults).
+faults).  <code>(pushnew :debug *features*)</code> before loading CLM to see what it
+is sending to the C compiler.
 </p>
 <br>
 
@@ -4610,10 +4609,26 @@ the instrument to find out what the C compilation sequence is on your machine; n
 you like to the instrument C code (produced by the run macro, named clm_INSNAME.c); to add a print
 statement that will send its output to the lisp listener, use the function mus_error with a first argument
 of 0; next run the C compiler and loader, making a new instrument object file, start gdb with lisp, run
-lisp loading clm, load your instrument, and run it.  This is incredibly tedious!
+lisp loading clm, load your instrument, and run it.
 </p>
 
-<!-- TODO: add windows debugging info -->
+<p>In Windows using ACL, you can get into the debugger via:
+</p>
+<pre>
+  c:\program files\acl80\mlisp.exe -! -I mlisp.dxl 
+</pre>
+<p>or some facsimile thereof.  When you hit a segfault, get a call stack (stack trace).
+I don't know how to print out function arguments in this case.
+In ACL, you can maximize the lisp-level information at an error with:
+</p>
+<pre>
+  :zoom :all t :verbose t :count t
+</pre>
+
+<p>ffi-test.lisp has a bunch of FFI calls outside the with-sound/definstrument context.
+The base CLM test suite is clm-test.lisp, but it's more of a "regression" test -- I run
+it in the various lisps whenever I make some code change.
+</p>
 
 <br>
 

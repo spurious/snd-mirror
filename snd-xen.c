@@ -1,7 +1,7 @@
 #include "snd.h"
 #include "clm2xen.h"
 
-/* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile/Gauche versions,
+/* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile/Gauche versions, (filter is another such collision)
  *
  *   In Scheme, delay is protected in clm2xen.c as %delay
  *              filter is defined in srfi-1 so we need protection against that
@@ -47,9 +47,13 @@
 /* TODO: (gauche)   stacktrace and errors->listener (current-load-history)
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
  * TODO: (gauche)   unwind-protects around scm_apply (snd-xen g_call)
- * TODO: (gauche)   does "not applicable (#t)" means stack overflow?  how to fix this?
- * TODO: (scheme)   r6rs changes, in particular ->exact (filter is another)
+ * TODO: (gauche)   what does "not applicable (#t)" mean?  seems to be tail-recursion confusion
+ *                  changing one #t to #f fixed it??
+ *    (let* ((topics (find-child (preferences-dialog) "pref-scroller")))
+ *      (for-each-child topics
+ *        (lambda (w) (if (XmIsToggleButton w) (XmToggleButtonSetState w #t #t)))))
  *
+ * SOMEDAY: (scheme)   r6rs changes, in particular ->exact (filter is another)
  * SOMEDAY: change config.h to snd-config.h and clm-config.h (collisions in several cases like ecl)
  *         but if user is loading libsndlib, how to avoid collisions between its config.h and snd's?
  *
@@ -2307,6 +2311,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #if HAVE_GUILE
   {
     /* Gauche and CL use '#| |#' for block comments, so implement them in Guile */
+    /*   this is in R6RS, so presumably Guile will eventually implement them itself */
     XEN proc;
     proc = XEN_NEW_PROCEDURE("%skip-comment%", g_skip_block_comment, 2, 0, 0);
     scm_read_hash_extend(C_TO_XEN_CHAR('|'), proc);
@@ -2423,6 +2428,15 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
   /* Gauche doesn't handle documentation strings correctly */
   XEN_EVAL_C_STRING("(defmacro define+ (args . body) `(define ,args ,@(cdr body)))"); /* strip out documentation string if embedded defines */
+#endif
+
+#if HAVE_GUILE || HAVE_GAUCHE
+  /* R6RS change: define ->inexact and ->exact if not already defined */
+  if (!(XEN_DEFINED_P("->exact")))
+    {
+      XEN_EVAL_C_STRING("(define ->inexact exact->inexact)");
+      XEN_EVAL_C_STRING("(define ->exact inexact->exact)");
+    }
 #endif
 
 #if HAVE_RUBY

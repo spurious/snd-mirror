@@ -4944,7 +4944,12 @@ static char *make_show_all_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
-  /* TODO: Forth show all key-bind */
+#if HAVE_FORTH
+  return(mus_format("%s %d lambda: { } #f sync sync-max 1+ #f set-sync drop '( 0.0 #f #f #f frames #f srate f/ ) #f #f set-x-bounds drop #f set-sync ; 0 make-proc %s bind-key drop\n",
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
   return(NULL);
 }
 
@@ -4999,7 +5004,12 @@ static char *make_select_all_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
-  /* TODO: Forth select all key-bind */
+#if HAVE_FORTH
+  return(mus_format("%s %d lambda: { } #f sync sync-max 1+ #f set-sync drop #f #f select-all drop #f set-sync ; 0 make-proc %s bind-key drop\n",
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
   return(NULL);
 }
 
