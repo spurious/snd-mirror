@@ -2078,14 +2078,32 @@ See the current-window-location procedures in draw.scm.  Here's a simpler exampl
 	(<a class=quiet href="#updatetimegraph">update-time-graph</a>)
 	#t)
       #f))
-
 (add-hook! <em class=red>mouse-click-hook</em> click-to-center)
 
 ;;; this example disables button 2 -&gt; insert selection
-(add-hook! mouse-click-hook
+(add-hook! <em class=red>mouse-click-hook</em>
   (lambda (snd chn button state x y axis)
     (and (= axis <a class=quiet href="#y_to_position">time-graph</a>) (= button 2))))
+</pre></td></tr></table>
+
+The mouse scroll wheel is sometimes reported as buttons 4 and 5; in the next example,
+turning the wheel zooms the graph in or out:
+
+<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
+(add-hook! <em class=red>mouse-click-hook</em>
+  (lambda (snd chn button state x y axis)
+    (if (and (= axis time-graph)
+	     (or (= button 4) (= button 5))) ; mouse scroll wheel
+	(let ((midpoint (* 0.5 (apply + (x-bounds))))
+	      (dur (/ (frames) (srate)))
+	      (range (if (= button 4)
+			 (* -0.25 (apply - (x-bounds))) ; zoom in
+			 (abs (apply - (x-bounds))))))  ; zoom out
+	  (set! (x-bounds) (list (max 0.0 (- midpoint range))
+				 (min dur (+ midpoint range))))))
+    #f))
 </pre></td></tr></table></td></tr>
+
 <tr><td colspan=3 height=16></td></tr>
 
 
@@ -3417,6 +3435,9 @@ number of bytes in each sample of <i>data-format</i>.
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musclipping">mus-clipping</a> ()</code></td></tr>
 <tr><td></td><td>The default low-level clipping choice while accessing sound data.
 The default is #f which makes clipping very obvious (it will cause wrap-around).
+If you're using the standard Snd file accessors, you probably want to use <a href="#clipping">clipping</a>, not this function.
+This function refers to <a href="#mussoundopenoutput">mus-sound-open-output</a> and friends; the file-local version
+is <a href="#musfileclipping">mus-file-clipping</a> -- surely we could make this more confusing!
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -5966,7 +5987,7 @@ peak amp follower: <a href="sndscm.html#movingmax">moving-max</a><br>
 
 <!-- env-channel-with-base -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="envchannelwithbase">env-channel-with-base</a> (clm-env-gen <i>base beg dur snd chn edpos</i>)</code>
+<code><a class=def name="envchannelwithbase">env-channel-with-base</a> (envelope-or-env-gen <i>base beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
 env-channel-with-base is a slight variation on env-channel.  There are times when it's a bother

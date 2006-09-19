@@ -12,7 +12,6 @@
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  * SOMEDAY: Edit:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
  * TODO: audio mixer settings dialog (needed especially in alsa!)
- * PERHAPS: example of mouse scroll change == zoom in/out of graph, move scrolled windows?
  */
 
 

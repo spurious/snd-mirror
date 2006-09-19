@@ -1,45 +1,45 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [487]
-;;;  test 1: defaults                           [1062]
-;;;  test 2: headers                            [1265]
-;;;  test 3: variables                          [1569]
-;;;  test 4: sndlib                             [2225]
-;;;  test 5: simple overall checks              [4392]
-;;;  test 6: vcts                               [11851]
-;;;  test 7: colors                             [12161]
-;;;  test 8: clm                                [12667]
-;;;  test 9: mix                                [21548]
-;;;  test 10: marks                             [24614]
-;;;  test 11: dialogs                           [25319]
-;;;  test 12: extensions                        [25618]
-;;;  test 13: menus, edit lists, hooks, etc     [26067]
-;;;  test 14: all together now                  [27507]
-;;;  test 15: chan-local vars                   [28579]
-;;;  test 16: regularized funcs                 [29874]
-;;;  test 17: dialogs and graphics              [34288]
-;;;  test 18: enved                             [34376]
-;;;  test 19: save and restore                  [34396]
-;;;  test 20: transforms                        [36023]
-;;;  test 21: new stuff                         [37772]
-;;;  test 22: run                               [38659]
-;;;  test 23: with-sound                        [44130]
-;;;  test 24: user-interface                    [46124]
-;;;  test 25: X/Xt/Xm                           [49740]
-;;;  test 26: Gtk                               [54325]
-;;;  test 27: GL                                [58411]
-;;;  test 28: errors                            [58535]
-;;;  test all done                              [60664]
+;;;  test 0: constants                          [497]
+;;;  test 1: defaults                           [1070]
+;;;  test 2: headers                            [1272]
+;;;  test 3: variables                          [1576]
+;;;  test 4: sndlib                             [2231]
+;;;  test 5: simple overall checks              [4493]
+;;;  test 6: vcts                               [11952]
+;;;  test 7: colors                             [12262]
+;;;  test 8: clm                                [12768]
+;;;  test 9: mix                                [21650]
+;;;  test 10: marks                             [24719]
+;;;  test 11: dialogs                           [25427]
+;;;  test 12: extensions                        [25720]
+;;;  test 13: menus, edit lists, hooks, etc     [26170]
+;;;  test 14: all together now                  [27611]
+;;;  test 15: chan-local vars                   [28686]
+;;;  test 16: regularized funcs                 [29981]
+;;;  test 17: dialogs and graphics              [34395]
+;;;  test 18: enved                             [34484]
+;;;  test 19: save and restore                  [34504]
+;;;  test 20: transforms                        [36131]
+;;;  test 21: new stuff                         [37880]
+;;;  test 22: run                               [38813]
+;;;  test 23: with-sound                        [44300]
+;;;  test 24: user-interface                    [46309]
+;;;  test 25: X/Xt/Xm                           [49923]
+;;;  test 26: Gtk                               [54511]
+;;;  test 27: GL                                [58598]
+;;;  test 28: errors                            [58722]
+;;;  test all done                              [60853]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
 
 
-;;; SOMEDAY: 1: play-mix, make-bezier, all the ladspa stuff, most dialogs, pausing, ssb-bank, continue-frame->file, listener-selection
-;;;          2: recorder-in-device, track-dialog-track, many colors (sets=29 but gets=2), save-macros, sync-max, expand_vector(?), mark-sync-max
-;;;          3: env-channel-with-base, window-x|y, sound-file-extensions
-;;;          4: play-track, players, mus-clipping, mus-prescaler
+;;; SOMEDAY: 1: make-bezier, all the ladspa stuff, most dialogs, pausing, ssb-bank, listener-selection
+;;;          2: recorder-in-device, track-dialog-track, many colors (sets=29 but gets=2), save-macros
+;;;          3: window-x|y, sound-file-extensions
+;;;          4: play-track, players, mus-prescaler
 ;;;          5: mus-rand-seed, mix-tag-xy, selection-srate
 
 
@@ -49,7 +49,7 @@
 (define keep-going #f)
 (define all-args #f) ; huge arg testing
 
-(if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (snd-display ";both switches are on?"))
+(if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (display ";both switches are on?"))
 
 (if (provided? 'snd-gauche)
     (begin
@@ -3470,8 +3470,103 @@
 		(delete-file "test.snd")
 		(set! (clipping) #f))
 	      (close-sound ind))
-	    
 	    (delete-file "fmv.snd")
+
+	    (set! (clipping) #f)
+	    (let ((snd (new-sound "test.snd" :data-format mus-lshort)))
+	      (pad-channel 0 10)
+	      (set! (sample 1) 1.0)
+	      (set! (sample 2) -1.0)
+	      (set! (sample 3) 0.9999)
+	      (set! (sample 4) 2.0)
+	      (set! (sample 5) -2.0)
+	      (set! (sample 6) 1.3)
+	      (set! (sample 7) -1.3)
+	      (set! (sample 8) 1.8)
+	      (set! (sample 9) -1.8)
+	      (save-sound snd)
+	      (close-sound snd))
+	    (let ((snd (open-sound "test.snd")))
+	      (let ((data (channel->vct 0 10)))
+		(if (not (vequal data (vct 0.000 1.000 -1.000 1.000 -1.000 -1.000 -1.000 -1.000 -1.000 -1.000)))
+		    (snd-display ";unclipped: ~A" data)))
+	      (close-sound snd))
+	    (mus-sound-forget "test.snd")
+	    
+	    (set! (clipping) #t)
+	    (let ((snd (new-sound "test.snd" :data-format mus-lshort)))
+	      (pad-channel 0 10)
+	      (set! (sample 1) 1.0)
+	      (set! (sample 2) -1.0)
+	      (set! (sample 3) 0.9999)
+	      (set! (sample 4) 2.0)
+	      (set! (sample 5) -2.0)
+	      (set! (sample 6) 1.3)
+	      (set! (sample 7) -1.3)
+	      (set! (sample 8) 1.8)
+	      (set! (sample 9) -1.8)
+	      (save-sound snd)
+	      (close-sound snd))
+	    (let ((snd (open-sound "test.snd")))
+	      (let ((data (channel->vct 0 10)))
+		(if (not (vequal data (vct 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000)))
+		    (snd-display ";clipped: ~A" data)))
+	      (close-sound snd))
+	    
+	    (let* ((data (vct 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8))
+		   (sdata (vct->sound-data data))
+		   (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
+	      (set! (mus-file-clipping snd) #f)
+	      (mus-sound-write snd 0 10 1 sdata)
+	      (mus-sound-close-output snd 40))
+	    
+	    (let ((snd (open-sound "test.snd")))
+	      (let ((data (channel->vct 0 10)))
+		(if (not (vequal data (vct 0.000 -1.000 -1.000 1.000 -1.000 -1.000 -1.000 -1.000 -1.000 -1.000)))
+		    (snd-display ";unclipped: ~A" data)))
+	      (close-sound snd))
+	    (mus-sound-forget "test.snd")
+	    
+	    (let* ((data (vct 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8))
+		   (sdata (vct->sound-data data))
+		   (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
+	      (set! (mus-file-clipping snd) #t)
+	      (mus-sound-write snd 0 10 1 sdata)
+	      (mus-sound-close-output snd 40))
+	    
+	    (let ((snd (open-sound "test.snd")))
+	      (let ((data (channel->vct 0 10)))
+		(if (not (vequal data (vct 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000)))
+		    (snd-display ";clipped: ~A" data)))
+	      (close-sound snd))
+
+	    (set! (mus-clipping) #f)
+	    (let* ((data (vct 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8))
+		   (sdata (vct->sound-data data))
+		   (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
+	      (mus-sound-write snd 0 10 1 sdata)
+	      (mus-sound-close-output snd 40))
+	    
+	    (let ((snd (open-sound "test.snd")))
+	      (let ((data (channel->vct 0 10)))
+		(if (not (vequal data (vct 0.000 -1.000 -1.000 1.000 -1.000 -1.000 -1.000 -1.000 -1.000 -1.000)))
+		    (snd-display ";unclipped: ~A" data)))
+	      (close-sound snd))
+	    (mus-sound-forget "test.snd")
+	    
+	    (set! (mus-clipping) #t)
+	    (let* ((data (vct 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8))
+		   (sdata (vct->sound-data data))
+		   (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
+	      (mus-sound-write snd 0 10 1 sdata)
+	      (mus-sound-close-output snd 40))
+	    
+	    (let ((snd (open-sound "test.snd")))
+	      (let ((data (channel->vct 0 10)))
+		(if (not (vequal data (vct 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000)))
+		    (snd-display ";clipped: ~A" data)))
+	      (close-sound snd))
+
 	    (let ((com "this is a comment which we'll repeat enough times to trigger an internal loop"))
 	      (do ((i 0 (1+ i)))
 		  ((= i 3))
@@ -21624,7 +21719,10 @@ EDITS: 5
 	      (if (not (= spdstyle (speed-control-style))) (snd-display ";mix-speed-style: ~A ~A" spdstyle (speed-control-style)))
 	      (catch 'mus-error
 		     (lambda () (play-mix mix-id))
-		     (lambda args (snd-display ";can't play mix")))
+		     (lambda args (snd-display ";can't play mix: ~A" args)))
+	      (catch 'mus-error
+		     (lambda () (play-mix mix-id 1000))
+		     (lambda args (snd-display ";can't play mix from 1000: ~A" args)))
 	      (let ((tag (catch #t
 				(lambda () (set! (mix-track mix-id) -1))
 				(lambda args (car args)))))
@@ -24991,6 +25089,9 @@ EDITS: 5
 		 (samp2 8345)
 		 (m1 (add-mark samp1 ind 0))
 		 (m2 (add-mark samp2)))
+	    (set! (mark-sync m1) 123)
+	    (set! (mark-sync m2) 100)
+	    (if (not (= (mark-sync-max) 123)) (snd-display ";mark-sync-max: ~A" (mark-sync-max)))
 	    (src-sound -1)
 	    (if (not (= (mark-sample m1) 39788))
 		(snd-display ";src -1 m1 -> ~A" (mark-sample m1)))
@@ -38446,6 +38547,52 @@ EDITS: 1
 		    (lambda args #f)))
 	   sf-dir))
 
+      (let ((snd (new-sound "test.snd")))
+	(pad-channel 0 20)
+	(map-channel (lambda (y) 1.0))
+	(env-channel-with-base '(0 0 1 1) 1.0)
+	(let ((data (channel->vct 0 20)))
+	  (if (not (vequal data (vct 0.0 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95)))
+	      (snd-display ";env-chan 1.0: ~A" data)))
+	(undo)
+	(env-channel-with-base '(0 0 1 1 2 1 3 0) 0.0)
+	(let ((data (channel->vct 0 20)))
+	  (if (not (vequal data (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0)))
+	      (snd-display ";env-chan 0.0: ~A" data)))
+	(undo)
+	(env-channel-with-base '(0 0 1 1) 100.0)
+	(let ((data (channel->vct 0 20)))
+	  (if (not (vequal data (vct 0.0 0.003 0.006 0.010 0.015 0.022 0.030 0.041 0.054 0.070 0.091 0.117 0.150 0.191 0.244 0.309 0.392 0.496 0.627 0.792)))
+	      (snd-display ";env-chan 100.0: ~A" data)))
+	(undo)
+	(env-channel-with-base '(0 0 1 1) 0.01)
+	(let ((data (channel->vct 0 20)))
+	  (if (not (vequal data (vct 0.0 0.208 0.373 0.504 0.608 0.691 0.756 0.809 0.850 0.883 0.909 0.930 0.946 0.959 0.970 0.978 0.985 0.990 0.994 0.997)))
+	      (snd-display ";env-chan 0.01: ~A" data)))
+	(undo)
+	
+	(env-channel-with-base '(0 0 1 1) 1.0 5 10)
+	(let ((data (channel->vct 0 20)))
+	  (if (not (vequal data (vct 1.0 1.0 1.0 1.0 1.0 0.0 0.111 0.222 0.333 0.444 0.556 0.667 0.778 0.889 1.0 1.0 1.0 1.0 1.0 1.0)))
+	      (snd-display ";env-chan 1.0 seg: ~A" data)))
+	(undo)
+	(env-channel-with-base '(0 0 1 1 2 1 3 0) 0.0 5 10)
+	(let ((data (channel->vct 0 20)))
+	  (if (not (vequal data (vct 1.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0)))
+	      (snd-display ";env-chan 0.0 seg: ~A" data)))
+	(undo)
+	(env-channel-with-base '(0 0 1 1) 100.0 5 10)
+	(let ((data (channel->vct 0 20)))
+	  (if (not (vequal data (vct 1.0 1.0 1.0 1.0 1.0 0.0 0.007 0.018 0.037 0.068 0.120 0.208 0.353 0.595 1.0 1.0 1.0 1.0 1.0 1.0)))
+	      (snd-display ";env-chan 100.0 seg: ~A" data)))
+	(undo)
+	(env-channel-with-base '(0 0 1 1) 0.01 5 10)
+	(let ((data (channel->vct 0 20)))
+	  (if (not (vequal data (vct 1.0 1.0 1.0 1.0 1.0 0.0 0.405 0.647 0.792 0.880 0.932 0.963 0.982 0.993 1.0 1.0 1.0 1.0 1.0 1.0)))
+	      (snd-display ";env-chan 0.01 seg: ~A" data)))
+	(undo)
+	(close-sound snd))
+      
       (let ((ind1 (open-sound "now.snd"))
 	    (ind2 (open-sound "oboe.snd")))
 	(let ((val (channel-mean ind1 0)))
