@@ -2,9 +2,6 @@
 #include "snd-menu.h"
 #include <X11/cursorfont.h>
 
-/* SOMEDAY: the button backgrounds remain in the original highlight color? but the widget (if it is one) is not the child of any obvious widget
- */
-
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
 
 /* -------------------------------- FILE MENU -------------------------------- */
@@ -1011,3 +1008,6 @@ void g_init_gxmenu(void)
 {
   XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
 }
+
+/* Motif bug: the button backgrounds remain in the original highlight color? but the widget (if it is one) is not the child of any obvious widget
+ */

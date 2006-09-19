@@ -41,7 +41,6 @@
 ;;;          3: env-channel-with-base, window-x|y, sound-file-extensions
 ;;;          4: play-track, players, mus-clipping, mus-prescaler
 ;;;          5: mus-rand-seed, mix-tag-xy, selection-srate
-;;; TODO: at various points, start prefs, save, reload, check (as in current save-state tests), remove prefs output
 
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
@@ -40262,6 +40261,9 @@ EDITS: 1
       (btst '(let ((a 0)) (do ((i 0 (1+ i)) (j 3)) ((= i 3)) (set! a (1+ a)))) #f)
       (btst '(let ((a 0)) (do ((i 0 (1+ i)) (j 3)) ((= i 3)) (set! a (1+ a)))) #f)
       (itst '(let ((a 0)) (do ((i 0 (1+ i)) (j 3)) ((= i 3) j) (set! a (1+ a)))) 3)
+
+      (etst '(do ((i 0 (+ i 0.5)) (j 0 (1+ j))) ((>= j 3)) (display i)))
+
       (itst '(let ((a 32)) (let ((a 3)) (set! a 4)) a) 32)
       
       (set! int-var 32)
@@ -42912,8 +42914,8 @@ EDITS: 1
 		     (snd-warning "snd-warning test...")
 		     (report-in-minibuffer "report-in-minibuffer test..." ind)
 		     (display hi) (display '(1 2)) (display '(1 . 2)) (display :hiho) (display 'asdf)
-					;(call/cc (lambda (hiho) (if #f (hiho) (display hiho))))
-					;TODO: why is this unhappy in Gauche?
+		     (call/cc (lambda (hiho) (if #f (hiho) (display hiho))))
+		     (call-with-current-continuation (lambda (hiho) (if #f (hiho) (display hiho))))
 		     (display svar)
 		     (display #\newline) (display "---------------------------------------------------------------") (display #\newline)
 		     )))

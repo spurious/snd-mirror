@@ -3806,10 +3806,6 @@ mus_any *mus_make_formant(Float radius, Float frequency, Float gain)
 
 /* ---------------- filter ---------------- */
 
-/* PERHAPS: cascade_to_canonical (currently it takes a list of vcts -- would need to be something like:
-            vct* cascade_to_canonical(num coeffs, ...) where the ... is a list of vct*s.
-*/
-
 typedef struct {
   mus_any_class *core;
   int order, allocated_size;

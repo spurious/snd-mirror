@@ -2151,9 +2151,9 @@ and replaces it with the spectrum given in coeffs"
 	  (vector-set! factorials n (* n (factorial (1- n)))))
       (vector-ref factorials n))))
 
-(define (binomial n m)
-  (/ (factorial m)
-     (* (factorial n) (factorial (- m n)))))
+(define (binomial n m) ; "n-choose-m" might be a better name
+  (/ (factorial n)
+     (* (factorial m) (factorial (- n m)))))
 |#
 
 

@@ -80,6 +80,8 @@
  *   triggered, we're doing math ops direct, no function args are cons'd, no run-time types are checked, no values are boxed/unboxed,
  *   no symbols are looked-up in the current environment, wherever possible we pre-convert
  *   args to same type (i.e. int->float done just once, if possible)
+ *
+ * (add-hook! optimization-hook (lambda (n) (snd-display "opt: ~A~%" n)))
  */
 
 /* PERHAPS: complex number support for run
@@ -91,8 +93,6 @@
  * SOMEDAY: support for vector of def-clm-structs
  * SOMEDAY: the graphics funcs in snd-axis/snd-draw (x->position, draw-lines etc)
  *
- * TODO: do (or parallel_bind) var that's initialized to int, then treated as float truncates
- *       so (do ((i 0 (+ i 0.5)))...) i is always 0
  */
 
 #include "snd.h"
@@ -3259,6 +3259,19 @@ static bool tree_member(XEN varlst, XEN expr)
   return(tree_member(varlst, XEN_CDR(expr)));
 }
 
+static xen_value *do_warn_of_type_trouble(int var_type, int expr_type, XEN form)
+{
+  /* 
+   * do (or parallel_bind) var that's initialized to int, then treated as float truncates
+   *       so (do ((i 0 (+ i 0.5)))...) i is always 0
+   *          (run (lambda () (do ((i 0 (+ i 0.5)) (j 0 (1+ j))) ((>= j 3)) (display i)))) -> 000
+   */
+  return(run_warn("do variable init and step types differ: %s, init = %s, step = %s",
+		  XEN_AS_STRING(form),
+		  type_name(var_type),
+		  type_name(expr_type)));
+}
+
 static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   /* (do ([(var val [up])...]) (test [res ...]) [exp ...]): (do () (#t))  */
@@ -3362,9 +3375,23 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 		  FREE(jump_to_result);
 		  return(NULL);
 		}
+
 	      if (sequential)
 		{
 		  vr = find_var_in_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)));
+
+		  if (vr->v->type != expr->type)
+		    {
+		      if (exprs) 
+			{
+			  int k;
+			  for (k = 0; k < i; k++) if (exprs[k]) FREE(exprs[k]);
+			  FREE(exprs);
+			}
+		      FREE(jump_to_result);
+		      return(do_warn_of_type_trouble(vr->v->type, expr->type, var));
+		    }
+
 		  if (((expr->type == R_FLOAT) || (expr->type == R_INT)) &&
 		      (XEN_LIST_P(XEN_CADDR(var))) && /* otherwise no intermediate was generated */
 		      (prog->triple_ctr > 0))
@@ -3377,7 +3404,7 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 			addrs[0] = vr->v->addr; /* redirect the store to us */
 		      else set_var(prog, vr->v, expr);
 		    }
-		  else set_var(prog, vr->v, expr);
+		  else set_var(prog, vr->v, expr); 
 		}
 	      else 
 		{
@@ -3389,6 +3416,10 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 		      xen_value *temp;
 		      vr = find_var_in_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CADDR(var)));
 		      temp = add_empty_var_to_ptree(prog, vr->v->type);
+
+		      if (temp->type != expr->type) /* mem leak here -- at least jump_to_result needs to be freed */
+			return(do_warn_of_type_trouble(temp->type, expr->type, var));
+
 		      set_var(prog, temp, expr);
 		      FREE(expr);
 		      expr = NULL;
@@ -3406,6 +3437,10 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 	      {
 		var = XEN_CAR(vars);
 		vr = find_var_in_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)));
+
+		if (vr->v->type != exprs[i]->type) /* mem leak here -- at least jump_to_result needs to be freed */
+		  return(do_warn_of_type_trouble(vr->v->type, exprs[i]->type, var));
+
 		set_var(prog, vr->v, exprs[i]);
 		FREE(exprs[i]);
 	      }
@@ -9654,12 +9689,7 @@ static xen_value *cadaar_1(ptree *prog, xen_value **args, int num_args) {return(
 static xen_value *cadadr_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CADADR(get_lst(prog, args)), "cadadr"));}
 static xen_value *caddar_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CADDAR(get_lst(prog, args)), "caddar"));}
 static xen_value *cadddr_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CADDDR(get_lst(prog, args)), "cadddr"));}
-
-#if HAVE_GUILE
 static xen_value *cdr_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CDR(get_lst(prog, args)), "cdr"));}
-#else
-static xen_value *cdr_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CDR(get_lst(prog, args)), "cdr"));}
-#endif
 
 static xen_value *list_length_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -11221,10 +11251,10 @@ static XEN eval_ptree_to_xen(ptree *pt)
 
 static void init_walkers(void)
 {
-#define INIT_WALKER(Name, Val) XEN_SET_WALKER((XEN)(C_STRING_TO_XEN_SYMBOL(Name)), C_TO_XEN_ULONG(Val))
+  #define INIT_WALKER(Name, Val) XEN_SET_WALKER((XEN)(C_STRING_TO_XEN_SYMBOL(Name)), C_TO_XEN_ULONG(Val))
 
   XEN declare;
-#if (!HAVE_GUILE_CALL_CC)
+#if (HAVE_GUILE) && (!HAVE_GUILE_CALL_CC)
   XEN call_cc;
   XEN_DEFINE_VARIABLE("call/cc", call_cc, XEN_FALSE);
 #endif
