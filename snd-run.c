@@ -91,8 +91,6 @@
  *            all arithmetic needs extra complex checks etc
  *
  * SOMEDAY: support for vector of def-clm-structs
- * SOMEDAY: the graphics funcs in snd-axis/snd-draw (x->position, draw-lines etc)
- *
  */
 
 #include "snd.h"

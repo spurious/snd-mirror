@@ -36,13 +36,6 @@
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
 
 
-;;; SOMEDAY: 1: make-bezier, all the ladspa stuff, most dialogs, pausing, ssb-bank, listener-selection
-;;;          2: recorder-in-device, track-dialog-track, many colors (sets=29 but gets=2), save-macros
-;;;          3: window-x|y, sound-file-extensions
-;;;          4: play-track, players, mus-prescaler
-;;;          5: mus-rand-seed, mix-tag-xy, selection-srate
-
-
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)

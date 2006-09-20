@@ -520,6 +520,16 @@ Normally, the initialization file also adds the Snd sources directory to the loa
 the introduction to Snd.html).  For more temporary situations, you can use the environment variable SND_PATH.
 It is a colon-separated list of directories that will be added to the load path when Snd starts.
 </p>
+
+<p>In Gauche, before loading any of the Snd *.scm files, you need to load gauche-optargs.scm and
+gauche-format.scm:
+</p>
+<pre>
+    (if (not (provided? 'gauche-optargs.scm)) (load "gauche-optargs.scm"))
+    (if (not (provided? 'gauche-format.scm)) (load "gauche-format.scm"))
+</pre>
+
+
 <br>
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndresources">Snd resources</a></h3></td></tr></table>
 
@@ -1366,6 +1376,7 @@ Here are brief descriptions of the functions:
 </pre>
 <br>
 <img src="stochastic.png" alt="snd with pd">
+
 
 <br><br><br>
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithmotif">Snd and Motif</a></h3></td></tr></table>

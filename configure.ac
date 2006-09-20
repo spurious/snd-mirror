@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-# TODO: change names to use MUS_ prefix throughout
+# TODO: change names to use MUS_ prefix throughout (remember libxm/sndlib/clm/clm-config.windoze)
 
 AC_INIT(snd, 8.5, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-8.tar.gz)
 

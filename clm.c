@@ -6461,7 +6461,6 @@ void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
 /* ---------------- move-sound ---------------- */
 
 /* TODO: move-sound rb: update dlocsig.rb (787, l788)
- * TODO: move-sound cl: figure out the gc problem (and move-sound?)
  */
 
 typedef struct {
