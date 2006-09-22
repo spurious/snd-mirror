@@ -8,13 +8,69 @@
  * "current" can change at any time.
  */
 
-typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
-
-static XEN mark_drag_hook;
-static XEN mark_hook; /* add, delete, move */
-
 #define MARK_ID_MASK   0x0fffffff
 #define MARK_VISIBLE   0x10000000
+
+static int sync_max = 0;
+static int mark_id_counter = 0;
+
+static int mark_sync(mark *m) 
+{
+  return(m->sync);
+}
+
+int mark_id(mark *m) 
+{
+  return(m->id & MARK_ID_MASK);
+}
+
+int mark_sync_max(void) 
+{
+  return(sync_max);
+}
+
+void set_mark_sync(mark *m, int val) 
+{
+  m->sync = (unsigned int)val; 
+  if (val > sync_max) 
+    sync_max = val; 
+}
+
+/* TODO: make sure id is ok if in restore-marks, and make sure id_counter is set */
+/* TODO: during restore-marks, all colliding id's and sync's must be re-mapped */
+
+static mark *make_mark_1(off_t samp, const char *name, int id, unsigned int sc)
+{
+  mark *mp;
+  mp = (mark *)CALLOC(1, sizeof(mark));
+  if (name) mp->name = copy_string(name); else mp->name = NULL;
+  mp->samp = samp;
+  mp->id = id;
+  set_mark_sync(mp, sc);
+  return(mp);
+}
+
+static mark *make_mark(off_t samp, const char *name) 
+{
+  return(make_mark_1(samp, name, mark_id_counter++, 0));
+}
+
+static mark *copy_mark(mark *m) 
+{
+  return(make_mark_1(m->samp, m->name, mark_id(m), m->sync));
+}
+
+static mark *free_mark (mark *mp)
+{
+  if (mp)
+    {
+      if (mp->name) FREE(mp->name);
+      FREE(mp);
+    }
+  return(NULL);
+}
+
+typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
 
 static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, read_direction_t direction)
 {
@@ -52,51 +108,11 @@ static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, read_di
   return(NULL);
 }
 
-static mark *make_mark_1(off_t samp, const char *name, int id, unsigned int sc)
-{
-  mark *mp;
-  mp = (mark *)CALLOC(1, sizeof(mark));
-  if (name) mp->name = copy_string(name); else mp->name = NULL;
-  mp->samp = samp;
-  mp->id = id;
-  mp->sync = sc;
-  return(mp);
-}
-
-static int mark_id_counter = 0;
-
-static mark *make_mark(off_t samp, const char *name) {return(make_mark_1(samp, name, mark_id_counter++, 0));}
-
-static mark *copy_mark(mark *m) {return(make_mark_1(m->samp, m->name, mark_id(m), m->sync));}
-
-int mark_id(mark *m) {return(m->id & MARK_ID_MASK);}
-
-static int mark_sync(mark *m) {return(m->sync);}
-
-static int sync_max = 0;
-
-int mark_sync_max(void) {return(sync_max);}
-
-void set_mark_sync(mark *m, int val) 
-{
-  m->sync = (unsigned int)val; 
-  if (val > sync_max) 
-    sync_max = val; 
-}
-
-static mark *free_mark (mark *mp)
-{
-  if (mp)
-    {
-      if (mp->name) FREE(mp->name);
-      FREE(mp);
-    }
-  return(NULL);
-}
-
 static mark *find_mark_id_1(chan_info *cp, mark *mp, void *uid)
 {
-  if (mark_id(mp) == (*((int *)uid))) return(mp); else return(NULL);
+  if (mark_id(mp) == (*((int *)uid))) 
+    return(mp); 
+  return(NULL);
 }
 
 static mark *find_mark_from_id(int id, chan_info **cps, int pos)
@@ -155,7 +171,9 @@ static mark *find_named_mark(chan_info *cp, const char *name)
 
 static mark *find_previous_mark_1(chan_info *cp, mark *mp, void *m)
 {
-  if (mp->samp < (*((off_t *)m))) return(mp); else return(NULL);
+  if (mp->samp < (*((off_t *)m))) 
+    return(mp); 
+  return(NULL);
 }
 
 static mark *find_previous_mark(off_t current_sample, chan_info *cp)
@@ -165,7 +183,9 @@ static mark *find_previous_mark(off_t current_sample, chan_info *cp)
 
 static mark *find_next_mark_1(chan_info *cp, mark *mp, void *m)
 {
-  if (mp->samp > (*((off_t *)m))) return(mp); else return(NULL);
+  if (mp->samp > (*((off_t *)m))) 
+    return(mp); 
+  return(NULL);
 }
 
 static mark *find_next_mark(off_t current_sample, chan_info *cp)
@@ -185,9 +205,9 @@ void marks_off(chan_info *cp)
 }
 
 
-#define PLAY_ARROW_SIZE 10
-
 static XEN draw_mark_hook;
+
+#define PLAY_ARROW_SIZE 10
 
 #if USE_MOTIF
   #define STRING_Y_OFFSET 6
@@ -357,6 +377,9 @@ mark *hit_triangle(chan_info *cp, int x, int y)
   return(NULL);
 }
 
+
+static XEN mark_drag_hook;
+static XEN mark_hook; /* add, delete, move */
 
 static bool watching_mouse = false; /* this is tracking axis moves */
 static int last_mouse_x = 0;
@@ -740,6 +763,9 @@ void collapse_marks (snd_info *sp)
     }
 }
 
+
+/* save and restore across update-sound */
+
 typedef struct {
   mark **marks;
   int ctr;
@@ -815,6 +841,7 @@ void sound_restore_marks(snd_info *sp, void *mrk)
       FREE(mrks);
     }
 }
+
 
 static mark *find_nth_mark(chan_info *cp, int count)
 {
@@ -1069,6 +1096,7 @@ void save_mark_list(FILE *fd, chan_info *cp)
       for (i = 0; i < cp->marks_size; i++)
 	if (cp->marks[i])
 	  true_marks_size = i + 1;
+
 #if HAVE_SCHEME
       fprintf(fd, "      (%s %d sfile %d '(", S_restore_marks, true_marks_size, cp->chan);
       for (i = 0; i < true_marks_size; i++)
@@ -1094,6 +1122,7 @@ void save_mark_list(FILE *fd, chan_info *cp)
 	}
       fprintf(fd, "))\n");
 #endif
+
 #if HAVE_RUBY
       {
 	bool need_comma = false, need_cr = false;
@@ -1127,6 +1156,7 @@ void save_mark_list(FILE *fd, chan_info *cp)
 	fprintf(fd, "])\n");
       }
 #endif
+
 #if HAVE_FORTH
       fprintf(fd, "      %d sfile %d '( ", true_marks_size, cp->chan);
       for (i = 0; i < true_marks_size; i++)
@@ -2396,7 +2426,8 @@ static bool find_any_marks (chan_info *cp, void *ignore)
 
 static XEN g_save_marks(XEN snd_n, XEN filename)
 {
-  #define H_save_marks "(" S_save_marks " (snd #f) (filename \"<snd-file-name>.marks\")): save snd's marks in filename"
+  #define H_save_marks "(" S_save_marks " (snd #f) (filename \"<snd-file-name>.marks\")): save snd's marks in filename. \
+The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that file."
   snd_info *sp;
   XEN res = XEN_FALSE;
   ASSERT_SOUND(S_save_marks, snd_n, 1);
@@ -2437,10 +2468,10 @@ static XEN g_save_marks(XEN snd_n, XEN filename)
 	}
       else
 	{
-	  open_save_sound_block(sp, fd, false);
+	  open_save_sound_block(sp, fd, false); /* find-sound or open it with enclosing let */
 	  for (i = 0; i < sp->nchans; i++)
 	    save_mark_list(fd, sp->chans[i]);
-	  close_save_sound_block(fd);
+	  close_save_sound_block(fd);           /* close the let form */
 	  snd_fclose(fd, newname);
 	  res = C_TO_XEN_STRING(newname);
 	}

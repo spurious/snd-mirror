@@ -439,9 +439,6 @@ void snd_exit(int val)
 #if HAVE_FAM
 #define MUS_DEBUGGING_FAM 0
 
- /* TODO: fam crosstalk? -- if two Snd's running, there appears to be confusion in fam event delivery
-  */
-
 /* one confusing thing: if user deletes the file we're monitoring, apparently Linux doesn't
  *   actually delete it, though a directory monitor reports the deletion; the file itself
  *   hangs around, I guess because we have it open(?) -- can't decide how to deal with this.
@@ -807,10 +804,9 @@ static void fdescribe_pointer(FILE *fp, void *p)
   int loc;
   char *p3 = (char *)p;
   loc = (*((int *)(p3 - 4)));
-  fprintf(fp, "%s[%d]:%s, len:%d%s%s", 
-	  files[loc], lines[loc], functions[loc], sizes[loc],
-	  (printable[loc] == PRINT_CHAR) ? ", " : "",
-	  (printable[loc] == PRINT_CHAR) ? ((char *)p) : "");
+  fprintf(fp, "%s[%d]:%s, len:%d", files[loc], lines[loc], functions[loc], sizes[loc]);
+  if (printable[loc] == PRINT_CHAR)
+    fprintf(fp, ": %s", p3);
 }
 
 static void describe_pointer(void *p)

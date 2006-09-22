@@ -713,8 +713,13 @@ int main(int argc, char **argv)
 		      }
 		  }
 	      }
-	      if (nfiles < 2) 
-		fprintf(FD, "\n----------------------------------------");
+	      if ((nfiles < 2) &&
+		  (qs[i]->calls > 1) &&
+		  (islower(qs[i]->name[0])) &&
+		  (strncmp(qs[i]->name, "snd_K", 5) != 0) &&
+		  (strncmp(qs[i]->name, "mus_", 4) != 0) &&
+		  (strncmp(qs[i]->name, "ps_", 3) != 0))
+		fprintf(FD, "\n----------------- (static?) -----------------------");
 	      else fprintf(FD, "\n----------------");
 	    }
 	}

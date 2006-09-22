@@ -8943,7 +8943,7 @@ opened (corresponding to CLM's *reverb*).  So the cooperating instrument code is
 (definstrument (ins args)
   (let ...
     (ws-interrupt?) ; see below
-    (run                             ; run is optional, but speeds up computation by a lot
+    (run                             ; run is optional, but speeds up computation
       (lambda ()
         (do ((i start (1+ i)))
             ((= i end))
@@ -9156,7 +9156,7 @@ The <b>ws-go</b> 'returned-value' is the value to return from the original call 
 
 <p>
 <b>definstrument</b> and <b>def-clm-struct</b> make sound-producing functions compatible with with-sound.
-See clm.html for documentation.  <!-- SOMEDAY: finish the ws docs -->
+See clm.html for documentation. 
 </p>
 
 <p>Toward the end of ws.scm is an example, <b>with-marked-sound</b>, that is just

@@ -365,8 +365,6 @@
 (add-hook! before-test-hook (lambda (n)
 			      (dismiss-all-dialogs)
 			      (set! test-number n)
-;			      (if (and (> n 0) (number? (vector-ref timings (- n 1))))
-;				  (vector-set! timings (- n 1) (hundred (- (real-time) (vector-ref timings (- n 1))))))
 			      (vector-set! timings n (real-time))
 			      (snd-display ";test ~D" n)
 			      (gc)(gc)
@@ -394,11 +392,15 @@
 (add-hook! after-test-hook
 	   (lambda (n)
 	     (clear-save-state-files)
+	     (clear-listener)
 	     (gc)(gc)
 	     (if (not (null? (sounds)))
 		 (begin
 		   (snd-display ";end test ~D: open sounds: ~A" n (map short-file-name (sounds)))
 		   (for-each close-sound (sounds))))
+	     (if (and (defined? 'mem-report)
+		      (> tests 1))
+		 (mem-report))
 	     (if (number? (vector-ref timings n))
 		 (vector-set! timings n (hundred (- (real-time) (vector-ref timings n)))))))
 
@@ -3505,12 +3507,12 @@
 		(if (not (vequal data (vct 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000)))
 		    (snd-display ";clipped: ~A" data)))
 	      (close-sound snd))
-	    
+
 	    (let* ((data (vct 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8))
 		   (sdata (vct->sound-data data))
 		   (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
 	      (set! (mus-file-clipping snd) #f)
-	      (mus-sound-write snd 0 10 1 sdata)
+	      (mus-sound-write snd 0 9 1 sdata)
 	      (mus-sound-close-output snd 40))
 	    
 	    (let ((snd (open-sound "test.snd")))
@@ -3524,7 +3526,7 @@
 		   (sdata (vct->sound-data data))
 		   (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
 	      (set! (mus-file-clipping snd) #t)
-	      (mus-sound-write snd 0 10 1 sdata)
+	      (mus-sound-write snd 0 9 1 sdata)
 	      (mus-sound-close-output snd 40))
 	    
 	    (let ((snd (open-sound "test.snd")))
@@ -3537,7 +3539,7 @@
 	    (let* ((data (vct 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8))
 		   (sdata (vct->sound-data data))
 		   (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
-	      (mus-sound-write snd 0 10 1 sdata)
+	      (mus-sound-write snd 0 9 1 sdata)
 	      (mus-sound-close-output snd 40))
 	    
 	    (let ((snd (open-sound "test.snd")))
@@ -3551,7 +3553,7 @@
 	    (let* ((data (vct 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8))
 		   (sdata (vct->sound-data data))
 		   (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
-	      (mus-sound-write snd 0 10 1 sdata)
+	      (mus-sound-write snd 0 9 1 sdata)
 	      (mus-sound-close-output snd 40))
 	    
 	    (let ((snd (open-sound "test.snd")))
@@ -3559,6 +3561,24 @@
 		(if (not (vequal data (vct 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000)))
 		    (snd-display ";clipped: ~A" data)))
 	      (close-sound snd))
+
+	    (set! (mus-clipping) #t)
+	    (let* ((data (vct 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8))
+		   (sdata (vct->sound-data data))
+		   (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
+	      (let ((tag (catch #t
+				(lambda () (mus-sound-write snd 0 10 1 sdata))
+				(lambda args args))))
+		(if (or (not (list? tag)) (not (eq? (car tag) 'out-of-range))) (snd-display ";mus-sound-write too many bytes: ~A" tag)))
+	      (let ((tag (catch #t
+				(lambda () (mus-sound-read snd 0 10 1 sdata))
+				(lambda args args))))
+		(if (or (not (list? tag)) (not (eq? (car tag) 'out-of-range))) (snd-display ";mus-sound-read too many bytes: ~A" tag)))
+	      (mus-sound-close-output snd 0))
+	    (delete-file "test.snd")
+	    (mus-sound-forget "test.snd")
+	    (set! (mus-clipping) #f) ; this is the default
+	    (set! (clipping) #f)
 
 	    (let ((com "this is a comment which we'll repeat enough times to trigger an internal loop"))
 	      (do ((i 0 (1+ i)))
@@ -8150,19 +8170,22 @@ EDITS: 5
 		    (snd-display ";make-graph-data 50: ~A ~A" (vct-ref data 50) (sample 50))))))
 	(set! (x-bounds) (list 0.0 0.1))
 	(update-transform-graph)
-	(if (not (string=? (x-axis-label index 0 transform-graph) "frequency")) 
-	    (snd-display ";def fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
-	(set! (x-axis-label index 0 transform-graph) "fourier")
-	(if (not (string=? (x-axis-label index 0 transform-graph) "fourier")) 
-	    (snd-display ";fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
-	(set! (x-axis-label) "hiho")
+	(catch 'no-such-axis
+	       (lambda ()
+		 (if (not (string=? (x-axis-label index 0 transform-graph) "frequency")) 
+		     (snd-display ";def fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
+		 (set! (x-axis-label index 0 transform-graph) "fourier")
+		 (if (not (string=? (x-axis-label index 0 transform-graph) "fourier")) 
+		     (snd-display ";fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
+		 (set! (x-axis-label) "hiho")
 
-	(set! (y-axis-label index 0 transform-graph) "spectra")
-	(let ((val (y-axis-label index 0 transform-graph)))
-	  (if (or (not (string? val))
-		  (not (string=? val "spectra")))
-	    (snd-display ";fft y-axis-label: ~A" val)))
-	(set! (y-axis-label) "hiho")
+		 (set! (y-axis-label index 0 transform-graph) "spectra")
+		 (let ((val (y-axis-label index 0 transform-graph)))
+		   (if (or (not (string? val))
+			   (not (string=? val "spectra")))
+		       (snd-display ";fft y-axis-label: ~A" val)))
+		 (set! (y-axis-label) "hiho"))
+	       (lambda args (snd-display ";transform axis not displayed?")))
 
 	(if (and (number? (transform-frames))
 		 (= (transform-frames) 0))
@@ -8754,7 +8777,9 @@ EDITS: 5
 		((= i 128))
 	      (vct-set! v1 i (vct-ref v0 i)))
 	    (vct->samples 0 128 v1 index 0))
-	  (select-all) 
+	  (select-all)
+	  (if (mus-clipping) (set! (mus-clipping) #f))
+	  (if (clipping) (set! (clipping) #f))
 	  (convolve-selection-with "fmv5.snd" .5) 
 	  (set! v0 (samples->vct 0 128 index 0 v0))
 	  (if (fneq (sample 66) -.5) (snd-display ";convolve-selection-with: ~A ~A ~A?" (vct-ref v0 66) (sample 66) v0))
@@ -32170,6 +32195,8 @@ EDITS: 3
 	  
 	  (close-sound ind))
 	
+	(if (mus-clipping) (set! (mus-clipping) #f))
+	(if (clipping) (set! (clipping) #f))
 	(let ((ind (new-sound "fmv.snd" mus-next mus-bfloat 22050 1 "edit trees"))
 	      (vals (make-vct 100)))
 	  (select-sound ind)

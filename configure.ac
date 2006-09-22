@@ -1897,7 +1897,7 @@ fi
 AC_ARG_ENABLE(snd-debug,
   [  --enable-snd-debug      include internal Snd debugging functions],
   if test "$enable_snd_debug" = yes ; then
-    AC_DEFINE(DEBUGGING)
+    AC_DEFINE(MUS_DEBUGGING)
     RANDOM_FEATURES="$RANDOM_FEATURES debugging"
     VL_PROG_CC_WARNINGS()
   fi)
@@ -2064,6 +2064,7 @@ fi
 
 if test "$with_profiling" = yes; then
   CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities -pg"
+  RANDOM_FEATURES="$RANDOM_FEATURES profiling"
 fi
 
 

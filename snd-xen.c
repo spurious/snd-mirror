@@ -1261,21 +1261,25 @@ void snd_load_init_file(bool no_global, bool no_init)
   #define SND_PREFS "~/.snd_prefs_guile"
   #define SND_INIT "~/.snd_guile"
 #endif
+
 #if HAVE_GAUCHE
   #define SND_EXT_CONF "/etc/snd_gauche.conf"
   #define SND_PREFS "~/.snd_prefs_gauche"
   #define SND_INIT "~/.snd_gauche"
 #endif
+
 #if HAVE_RUBY
   #define SND_EXT_CONF "/etc/snd_ruby.conf"
   #define SND_PREFS "~/.snd_prefs_ruby"
   #define SND_INIT "~/.snd_ruby"
 #endif
+
 #if HAVE_FORTH
   #define SND_EXT_CONF "/etc/snd_forth.conf"
   #define SND_PREFS "~/.snd_prefs_forth"
   #define SND_INIT "~/.snd_forth"
 #endif
+
   #define SND_CONF "/etc/snd.conf"
   redirect_snd_print_to(string_to_stdout, NULL);
   redirect_errors_to(string_to_stderr_and_listener, NULL);
@@ -1408,6 +1412,7 @@ static void fth_local_print(ficlVm *vm, char *msg)
 static void (*old_print_hook)(ficlVm *vm, char *msg);
 #endif
 
+
 void check_features_list(char *features)
 {
   /* check for list of features, report any missing, exit (for compsnd) */
@@ -1421,6 +1426,7 @@ void check_features_list(char *features)
                                         (display (format #f \"~%%no ~A!~%%~%%\" f)))) \
                                   (list %s))", features));
 #endif
+
 #if HAVE_RUBY
   /* provided? is defined in examp.rb */
   XEN_EVAL_C_STRING(mus_format("[%s].each do |f|\n\
@@ -1429,6 +1435,7 @@ void check_features_list(char *features)
                                   end\n\
                                 end\n", features));
 #endif
+
 #if HAVE_GAUCHE
   XEN_EVAL_C_STRING(mus_format("(for-each \
                                   (lambda (f)	\
@@ -1436,6 +1443,7 @@ void check_features_list(char *features)
                                         (display (string-append (string #\\newline) \"no \" (symbol->string f) \"!\" (string #\\newline))))) \
                                   (list %s))", features));
 #endif
+
 #if HAVE_FORTH
   old_print_hook = fth_print_hook;
   fth_print_hook = fth_local_print;
@@ -1699,12 +1707,15 @@ static XEN g_gc_off(void)
 #else
   #define H_gc_off "(" S_gc_off ") turns off garbage collection"
 #endif
+
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
   rb_gc_disable();
 #endif
+
 #if HAVE_FORTH
   fth_gc_off();
 #endif
+
 #if HAVE_GAUCHE
   GC_disable();
 #endif
@@ -1718,12 +1729,15 @@ static XEN g_gc_on(void)
 #else
   #define H_gc_on "(" S_gc_on ") turns on garbage collection"
 #endif
+
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
   rb_gc_enable();
 #endif
+
 #if HAVE_FORTH
   fth_gc_on();
 #endif
+
 #if HAVE_GAUCHE
   GC_enable();
 #endif
@@ -2417,7 +2431,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (1+ val) (+ val 1))");
   
   /* these are for compatibility with Guile (rather than add hundreds of "if provided?" checks) */
-  XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)"); /* SOMEDAY search list for format (etc) and load */
+  XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
   XEN_EVAL_C_STRING("(define (debug-enable . args) #f)");
   XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
   XEN_EVAL_C_STRING("(define (debug-set! . args) #f)");
@@ -2430,6 +2444,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(defmacro define+ (args . body) `(define ,args ,@(cdr body)))"); /* strip out documentation string if embedded defines */
 #endif
 
+#if 0
 #if HAVE_GUILE || HAVE_GAUCHE
   /* R6RS change: define ->inexact and ->exact if not already defined */
   if (!(XEN_DEFINED_P("->exact")))
@@ -2437,6 +2452,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
       XEN_EVAL_C_STRING("(define ->inexact exact->inexact)");
       XEN_EVAL_C_STRING("(define ->exact inexact->exact)");
     }
+#endif
 #endif
 
 #if HAVE_RUBY

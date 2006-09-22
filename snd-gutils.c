@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: find the gtk memory leak! */
+
 bool set_tiny_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
@@ -751,6 +753,9 @@ GtkWidget *sg_button_new_from_stock_with_label(const char *text, gchar *stock_id
 
 /* ---------------- scrolled list replacement ---------------- */
 
+static int slist_row(GtkWidget *item);
+static void slist_set_row(GtkWidget *item, int row);
+
 static void slist_item_clicked(GtkWidget *w, gpointer gp)
 {
   slist *lst = (slist *)gp;
@@ -880,14 +885,14 @@ void slist_clear(slist *lst)
   lst->selected_item = SLIST_NO_ITEM_SELECTED;
 }
 
-int slist_row(GtkWidget *item)
+static int slist_row(GtkWidget *item)
 {
   gpointer gdata;
   gdata = g_object_get_data(G_OBJECT(item), "slist-row");
   return(((int *)gdata)[0]);
 }
 
-void slist_set_row(GtkWidget *item, int row)
+static void slist_set_row(GtkWidget *item, int row)
 {
   int *gdata;
   gdata = (int *)MALLOC(sizeof(int));

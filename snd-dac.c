@@ -1186,9 +1186,6 @@ static int choose_dac_op (dac_info *dp, snd_info *sp)
 static int cursor_time;
 /* can't move cursor on each dac buffer -- causes clicks */
 
-/* SOMEDAY: fix these names: dac-combines-channels [play-all-channels?], dac-hook dac-size stop-dac-hook
- */
-
 static bool dac_pausing = false;
 void toggle_dac_pausing(void) {dac_pausing = (!dac_pausing); play_button_pause(dac_pausing);} /* only below and snd-kbd.c */
 bool play_in_progress(void) {return(play_list_members > 0);}

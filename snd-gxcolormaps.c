@@ -503,24 +503,6 @@ static Float **make_rainbow_colormap(int size, XEN ignored)
   return(rgb);
 }
 
-int skew_color(Float x)
-{
-  Float base, val;
-  int pos;
-  if (x < color_cutoff(ss)) return(NO_COLOR);
-  if (color_inverted(ss))   
-    val = 1.0 - x;
-  else val = x;
-  base = color_scale(ss);
-  if ((base > 0.0) && (base != 1.0))
-    val = (pow(base, val) - 1.0) / (base - 1.0);
-  pos = (int)(val * color_map_size(ss));
-  if (pos > color_map_size(ss)) return(color_map_size(ss) - 1);
-  if (pos > 0)
-    return(pos - 1);
-  return(0);
-}
-
 static XEN g_colormap_ref(XEN map, XEN pos)
 {
   int index;
@@ -616,13 +598,15 @@ static XEN g_delete_colormap(XEN index)
   return(index);
 }
 
+#include "clm2xen.h"
+
 static XEN g_add_colormap(XEN name, XEN func)
 {
   int index;
   #define H_add_colormap "(" S_add_colormap " name func) adds the colormap created by func to the colormap table, \
 returning the new index."
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_colormap, "a string"); 
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func), func, XEN_ARG_2, S_add_colormap, "a function of 2 args");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && (!mus_xen_p(func)), func, XEN_ARG_2, S_add_colormap, "a function of 2 args");
   if (!(procedure_arity_ok(func, 1)))
     return(snd_bad_arity_error(S_add_colormap, 
 			       C_TO_XEN_STRING("func should take 1 arg"), 

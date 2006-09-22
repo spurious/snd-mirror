@@ -410,7 +410,7 @@ static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan)
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) (list %f %f))\n", white_space, name, chan, val1, val2);}
 #endif
 
-void save_options(FILE *fd)
+static void save_options(FILE *fd)
 {
   char *locale = NULL;
 

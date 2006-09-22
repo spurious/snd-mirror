@@ -130,28 +130,29 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <li><a href="extsnd.html#extsndcontents">Customization and Extension</a>
   <li><a href="extsnd.html#etc">Snd Programming</a>
     <ul>
+
     <li><a href="extsnd.html#behavior">Customizing Snd's behavior</a>
       <ul>
       <li><a href="extsnd.html#sndglobalvars">Global variables</a>
-      <li><a href="extsnd.html#sndhooks">Hooks</a>
+      <li><a href="extsnd.html#sndhooks" onmouseover="return escape('callbacks')">Hooks</a>
       </ul>
     <li><a href="extsnd.html#sndobjects">Snd's objects</a>
       <ul>
-      <li><a href="extsnd.html#Vcts">Vcts</a>
-      <li><a href="extsnd.html#samplereaders">Sample-readers</a>
-      <li><a href="extsnd.html#sndsounddata">Sound-data</a>
-      <li><a href="extsnd.html#extsndlib">Sndlib</a>
-      <li><a href="extsnd.html#sndmarks">Marks</a>
-      <li><a href="extsnd.html#sndmixes">Mixes and Tracks</a>
-      <li><a href="extsnd.html#sndregions">Regions and Selections</a>
-      <li><a href="extsnd.html#sndsounds">Sounds and Channels</a>
+      <li><a href="extsnd.html#Vcts" onmouseover="this.T_WIDTH=100; return escape('real arrays')">Vcts</a>
+      <li><a href="extsnd.html#sndsounddata" onmouseover="return escape('arrays of vcts for multichannel data')">Sound-data</a>
+      <li><a href="extsnd.html#extsndlib" onmouseover="return escape('the underlying library that handles sound data and files')">Sndlib</a>
+      <li><a href="extsnd.html#samplereaders" onmouseover="this.T_WIDTH=200; return escape('sound data iterators')">Sample-readers</a>
+      <li><a href="extsnd.html#sndmarks" onmouseover="return escape('location markers in sound data')">Marks</a>
+      <li><a href="extsnd.html#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes and Tracks</a>
+      <li><a href="extsnd.html#sndregions" onmouseover="return escape('selected or saved portions of sound data')">Regions and Selections</a>
+      <li><a href="extsnd.html#sndsounds" onmouseover="return escape('editing functions, per-channel display decisions, etc')">Sounds and channels</a>
         <ul>
-        <li><a href="extsnd.html#customcontrols">The Control Panel</a>
-        <li><a href="extsnd.html#editlists">Edit Lists</a>
-      </ul>
-      <li><a href="extsnd.html#sndtransforms">Transforms</a>
-      <li><a href="extsnd.html#snddialogs">Dialogs and Other Widgets</a>
-      <li><a href="extsnd.html#sndmisc">Miscellaneous functions</a>
+          <li><a href="extsnd.html#customcontrols" onmouseover="return escape('a set of common sound effects below the main graph')">the control panel</a>
+          <li><a href="extsnd.html#editlists" onmouseover="this.T_WIDTH=200; return escape('current edit sequence')">edit lists</a>
+        </ul>
+      <li><a href="extsnd.html#sndtransforms" onmouseover="return escape('Fourier transform, wavelets, autocorelation, etc')">Transforms</a>
+      <li><a href="extsnd.html#snddialogs" onmouseover="return escape('customizing the built-in dialogs, etc')">Dialogs and Other Widgets</a>
+      <li><a href="extsnd.html#sndmisc" onmouseover="return escape('bind-key, exit, etc')">Miscellaneous functions</a>
       <li><a href="extsnd.html#sndconstants">Constants</a>
       <li><a href="extsnd.html#snderrors">Errors and Debugging</a>
       </ul>
@@ -159,39 +160,42 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
       <ul>
       <li><a href="extsnd.html#colors">Colors</a>
       <li><a href="extsnd.html#fonts">Fonts</a>
-      <li><a href="extsnd.html#graphics">Graphics</a>
+      <li><a href="extsnd.html#graphics" onmouseover="return escape('write your own sound display functions or customize Snd\'s')">Graphics</a>
       </ul>
+
     </ul>
 </ul></small>
 </td><td><small>
   <ul>
+
   <li><a href="grfsnd.html#startup">Snd Startup</a>
     <ul>
-    <li><a href="grfsnd.html#sndswitches">Snd invocation flags</a>
-    <li><a href="grfsnd.html#sndinitfile">The initialization file</a>
-    <li><a href="grfsnd.html#sndresources">Snd resources</a>
-    <li><a href="grfsnd.html#sndconfigurationswitches">Configuration choices</a>
-    <li><a href="grfsnd.html#sndenvvars">Environment variables</a>
+    <li><a href="grfsnd.html#sndswitches" onmouseover="return escape('startup switches such as -l and -p')">Snd invocation flags</a>
+    <li><a href="grfsnd.html#sndinitfile" onmouseover="return escape('~/.snd, ~/.snd_guile, ~/.snd_prefs_guile, etc')">The initialization file</a>
+    <li><a href="grfsnd.html#sndresources" onmouseover="return escape('X resources: Xdefaults, gtkrc')">Snd resources</a>
+    <li><a href="grfsnd.html#sndconfigurationswitches" onmouseover="return escape('this refers to the configure script that prepares a makefile to build Snd from its sources')">Configuration choices</a>
+    <li><a href="grfsnd.html#sndenvvars" onmouseover="return escape('mostly related to audio hardware choices')">Environment variables</a>
     </ul>
   <li><a href="grfsnd.html#snddynamic">Runtime modules and external programs</a>
     <ul>
-    <li><a href="grfsnd.html#emacssnd">Snd as an Emacs subjob</a>
-    <li><a href="grfsnd.html#dynamic">Dynamically loaded modules</a>
-    <li><a href="grfsnd.html#programs">External Programs</a>
-    <li><a href="grfsnd.html#sndaswidget">Snd as a Widget</a>
-    <li><a href="grfsnd.html#sndwithclm">Snd and CLM</a>
-    <li><a href="grfsnd.html#sndwithcm">Snd and Common Music</a>
-    <li><a href="grfsnd.html#sndwithpd">Snd and Pd</a>
-    <li><a href="grfsnd.html#sndwithmotif">Snd and Motif</a>
-    <li><a href="grfsnd.html#sndwithgtk">Snd and Gtk</a>
-    <li><a href="grfsnd.html#sndwithnogui">Snd with no GUI and scripting</a>
-    <li><a href="grfsnd.html#sndandruby">Snd with Ruby</a>
-    <li><a href="grfsnd.html#sndandforth">Snd with Forth</a>
-    <li><a href="grfsnd.html#sndandladspa">Snd and LADSPA plugins</a>
-    <li><a href="grfsnd.html#sndandalsa">Snd and ALSA</a>
-    <li><a href="grfsnd.html#sndandx">Driving Snd remotely</a>
-    <li><a href="grfsnd.html#sndandgl">Snd and OpenGL</a>
+    <li><a href="grfsnd.html#emacssnd" onmouseover="return escape('Use Emacs as the listener')">Snd as an Emacs subjob</a>
+    <li><a href="grfsnd.html#dynamic" onmouseover="return escape('Load your own C code into Snd')">Dynamically loaded modules</a>
+    <li><a href="grfsnd.html#programs" onmouseover="return escape('Use independent programs to perform editing operations')">External Programs</a>
+    <li><a href="grfsnd.html#sndaswidget" onmouseover="return escape('Embed Snd in some other program')">Snd as a Widget</a>
+    <li><a href="grfsnd.html#sndwithclm" onmouseover="return escape('CLM is built into Snd')">Snd and CLM</a>
+    <li><a href="grfsnd.html#sndwithcm" onmouseover="return escape('CM is Rick Taube\'s composition environment')">Snd and Common Music</a>
+    <li><a href="grfsnd.html#sndwithpd" onmouseover="return escape('PD is Miller Puckette\'s synthesis and composition program')">Snd and Pd</a>
+    <li><a href="grfsnd.html#sndwithmotif" onmouseover="return escape('Motif extensions from xm.c')">Snd and Motif</a>
+    <li><a href="grfsnd.html#sndwithgtk" onmouseover="return escape('Gtk extensions from xg.c')">Snd and Gtk</a>
+    <li><a href="grfsnd.html#sndwithnogui">Snd with no GUI and as script engine</a>
+    <li><a href="grfsnd.html#sndandruby" onmouseover="return escape('Ruby is a scripting/extension language somewhat like Python')">Snd with Ruby</a>
+    <li><a href="grfsnd.html#sndandforth" onmouseover="return escape('Forth is a postfix extension language')">Snd with Forth</a>
+    <li><a href="grfsnd.html#sndandladspa" onmouseover="return escape('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
+    <li><a href="grfsnd.html#sndandalsa" onmouseover="return escape('This is the new Linux audio library')">Snd and ALSA</a>
+    <li><a href="grfsnd.html#sndandx" onmouseover="return escape('other programs can control Snd through window properties')">Driving Snd remotely</a>
+    <li><a href="grfsnd.html#sndandgl" onmouseover="return escape('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
     </ul>
+
   <li><a href="sndscm.html#introduction">Scheme, Ruby, and Forth</a>
   <li><a href="index.html">Overall Index</a>
   </ul></small>

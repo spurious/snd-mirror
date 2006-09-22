@@ -23044,7 +23044,7 @@ fi
 if test "${enable_snd_debug+set}" = set; then
   enableval=$enable_snd_debug; if test "$enable_snd_debug" = yes ; then
     cat >>confdefs.h <<\_ACEOF
-#define DEBUGGING 1
+#define MUS_DEBUGGING 1
 _ACEOF
 
     RANDOM_FEATURES="$RANDOM_FEATURES debugging"
@@ -23225,7 +23225,7 @@ rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
   if test $trap_segfault = yes; then
     cat >>confdefs.h <<\_ACEOF
-#define TRAP_SEGFAULT 1
+#define MUS_TRAP_SEGFAULT 1
 _ACEOF
 
   fi
@@ -25635,6 +25635,7 @@ fi
 
 if test "$with_profiling" = yes; then
   CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities -pg"
+  RANDOM_FEATURES="$RANDOM_FEATURES profiling"
 fi
 
 

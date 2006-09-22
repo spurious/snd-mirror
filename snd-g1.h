@@ -206,7 +206,6 @@ char *colormap_name(int n);
 bool is_colormap(int n);
 int num_colormaps(void);
 void get_current_color(int colormap, int n, unsigned short *r, unsigned short *g, unsigned short *b);
-int skew_color(Float x);
 void g_init_gxcolormaps(void);
 
 
@@ -342,8 +341,6 @@ slist *slist_new_with_title_and_table_data(const char *title,
 					   int t1, int t2, int t3, int t4);
 slist *slist_new(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned);
 slist *slist_new_with_title(const char *title, GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned);
-int slist_row(GtkWidget *item);
-void slist_set_row(GtkWidget *item, int row);
 void slist_clear(slist *lst);
 void slist_append(slist *lst, const char *name);
 void slist_moveto(slist *lst, int row);

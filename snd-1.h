@@ -697,7 +697,6 @@ void g_init_menu(void);
 int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason, int list_loc), void *context);
 /* bool remove_ss_watcher(int loc); */
 void call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason);
-void save_options(FILE *fd);
 char *save_options_in_prefs(void);
 void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth);
 void close_save_sound_block(FILE *fd);

@@ -12,14 +12,6 @@
    View:Files
 */
 
-
-/* PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? or reflect in panel?
- * TODO: what if running src, uses its check-event to open raw data -- where is control?
- *          -> src is interrupted apparently and file open completes
- *       or similarly, stops at "ok", starts src, clicks ok?
- * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
- */
-
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
 #define MSG_BOX(Dialog, Child) XmMessageBoxGetChild(Dialog, Child)
 

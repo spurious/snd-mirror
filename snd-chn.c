@@ -1942,9 +1942,23 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
   if (with_hook == WITH_HOOK) after_transform(cp, scale);
 }
 
-#if USE_NO_GUI
-static int skew_color(Float x) {return(0);}
-#endif
+static int skew_color(Float x)
+{
+  Float base, val;
+  int pos;
+  if (x < color_cutoff(ss)) return(NO_COLOR);
+  if (color_inverted(ss))   
+    val = 1.0 - x;
+  else val = x;
+  base = color_scale(ss);
+  if ((base > 0.0) && (base != 1.0))
+    val = (pow(base, val) - 1.0) / (base - 1.0);
+  pos = (int)(val * color_map_size(ss));
+  if (pos > color_map_size(ss)) return(color_map_size(ss) - 1);
+  if (pos > 0)
+    return(pos - 1);
+  return(0);
+}
 
 static void make_sonogram(chan_info *cp)
 { 

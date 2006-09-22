@@ -91,6 +91,11 @@
  *            all arithmetic needs extra complex checks etc
  *
  * SOMEDAY: support for vector of def-clm-structs
+ *            the struct variable value is a list '(TYPE fields...) as '(hiho 3 32)
+ *            we have the currently known clm types so we could check each list in the vector 
+ *               (all the same type, and a known type)
+ *               would need clm-struct-vector (lists) -- see l1990 for clm-vector
+ *               XEN * field in vect struct (l450)
  */
 
 #include "snd.h"
@@ -360,14 +365,15 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 }
 #endif
 
+
 enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR, 
       R_SYMBOL, R_KEYWORD, R_FUNCTION, R_GOTO, R_VCT, 
       R_READER, R_MIX_READER, R_TRACK_READER, R_SOUND_DATA,
-      R_CLM, R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR, 
+      R_CLM, R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_STRUCT_VECTOR, R_CLM_VECTOR, 
       R_NUMBER, R_CONS, R_VECTOR, R_XEN, R_NUMBER_CLM, R_NUMBER_VCT, R_ANY}; /* last 7 for walker arg checks */
 
 
-#define BUILT_IN_TYPES 29
+#define BUILT_IN_TYPES 30
 static int last_type = R_ANY;
 static int type_names_size = BUILT_IN_TYPES;
 static char **type_names = NULL;
@@ -375,7 +381,7 @@ static char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "float", 
 						 "symbol", "keyword", "function", "continuation", "vct", 
 						 "sample-reader", "mix-sample-reader", "track-sample-reader",
 						 "sound-data", "clm", 
-						 "float-vector", "int-vector", "vct-vector", "clm-vector", 
+						 "float-vector", "int-vector", "vct-vector", "clm-struct-vector", "clm-vector", 
 						 "number", "cons", "vector", "xen", "number or clm", "number or vct", "any"};
 static void init_type_names(void)
 {
@@ -384,7 +390,9 @@ static void init_type_names(void)
   for (i = 0; i < BUILT_IN_TYPES; i++)
     type_names[i] = basic_type_names[i];
 }
+
 static char* type_name(int id) {if ((id >= R_UNSPECIFIED) && (id <= last_type)) return(type_names[id]); return("unknown");}
+
 static int add_new_type(const char *new_type)
 {
   if (last_type == (type_names_size - 1))
@@ -398,6 +406,7 @@ static int add_new_type(const char *new_type)
   type_names[last_type] = copy_string(new_type);
   return(last_type);
 }
+
 static int name_to_type(const char *name)
 {
   int i;
@@ -442,6 +451,7 @@ typedef struct {
     Int *ints;
     mus_any **gens;
     vct **vcts;
+    XEN *structs;
   } data;
 } vect;
 
@@ -882,7 +892,8 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
       else return(copy_string("internal lambda?"));
       break;
     case R_INT_VECTOR:  
-    case R_VCT_VECTOR:  
+    case R_VCT_VECTOR:
+    case R_CLM_STRUCT_VECTOR:
     case R_CLM_VECTOR:  return(mus_format("vect " PTR_PT , addr, pt->vects[addr])); break;
     case R_UNSPECIFIED: return(copy_string("#<unspecified>")); break;
     default:
@@ -1073,9 +1084,10 @@ static void free_vect(vect *v, int type)
     {
       switch (type)
 	{
-	case R_INT_VECTOR: if (v->data.ints) FREE(v->data.ints); break;
-	case R_CLM_VECTOR: if (v->data.gens) FREE(v->data.gens); break;
-	case R_VCT_VECTOR: if (v->data.vcts) FREE(v->data.vcts); break;
+	case R_INT_VECTOR:        if (v->data.ints) FREE(v->data.ints); break;
+	case R_CLM_VECTOR:        if (v->data.gens) FREE(v->data.gens); break;
+	case R_VCT_VECTOR:        if (v->data.vcts) FREE(v->data.vcts); break;
+	case R_CLM_STRUCT_VECTOR: if (v->data.structs) FREE(v->data.structs); break;
 	}
       FREE(v);
     }
@@ -1317,6 +1329,9 @@ void free_ptree(struct ptree *pt)
 			      free_vect(pt->vects[v->addr], v->type); 
 			      pt->vects[v->addr] = NULL;   
 			    }
+			  break;
+			case R_CLM_STRUCT_VECTOR:
+			  /* TODO: structs free */
 			  break;
 			case R_STRING:
 			  /* I don' think this currently can happen */
@@ -1761,6 +1776,7 @@ static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
     case R_PAIR:         return(make_xen_value(type, add_xen_to_ptree(prog, XEN_UNDEFINED), R_VARIABLE)); 
       /* "undefined" for later check in walk for lists as args to embedded funcs */
       break;
+    case R_CLM_STRUCT_VECTOR:
     case R_CLM_VECTOR:
     case R_INT_VECTOR:
     case R_VCT_VECTOR:   return(make_xen_value(type, add_vect_to_ptree(prog, NULL), R_VARIABLE));           break;
@@ -1782,6 +1798,7 @@ static xen_value *transfer_value(ptree *prog, xen_value *v)
     case R_STRING: 
       return(make_xen_value(v->type, add_string_to_ptree(prog, copy_string(prog->strs[v->addr])), R_VARIABLE)); 
       break;
+    case R_CLM_STRUCT_VECTOR:
     case R_CLM_VECTOR:
     case R_INT_VECTOR:
     case R_VCT_VECTOR:
@@ -1942,9 +1959,12 @@ static vect *read_vector(XEN vector, int type)
 {
   switch (type)
     {
-    case R_INT_VECTOR: return(read_int_vector(vector)); 
-    case R_CLM_VECTOR: return(read_clm_vector(vector)); 
-    case R_VCT_VECTOR: return(read_vct_vector(vector)); 
+    case R_INT_VECTOR: return(read_int_vector(vector)); break;
+    case R_CLM_VECTOR: return(read_clm_vector(vector)); break;
+    case R_VCT_VECTOR: return(read_vct_vector(vector)); break;
+    case R_CLM_STRUCT_VECTOR:
+      /* TODO: read clm struct vector */
+      break;
     }
   return(NULL);
 }
@@ -1983,6 +2003,7 @@ static int xen_to_run_type(XEN val)
 				else
 				  if (MUS_VCT_P(val0)) return(R_VCT_VECTOR); else
 				    if ((mus_xen_p(val0)) || (XEN_BOOLEAN_P(val0))) return(R_CLM_VECTOR);
+				/* TODO: recognize clm struct vector */
 			      }
 			    else
 			      /* order matters here (list is subset of pair) */
@@ -2059,6 +2080,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
 	if (v) add_obj_to_gcs(prog, R_FLOAT_VECTOR, v->addr);
       }
       break;
+    case R_CLM_STRUCT_VECTOR:
     case R_VCT_VECTOR:
     case R_CLM_VECTOR:
     case R_INT_VECTOR: 
@@ -2544,7 +2566,7 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
 #endif
       /* case R_SOUND_DATA: free_sound_data in sndlib2xen.c and sound_data_dup in the RUBY section */
       /* case R_READER: case R_MIX_READER: case R_TRACK_READER: free for each + copy_reader? */
-      /* case R_FLOAT_VECTOR: case R_INT_VECTOR: case R_VCT_VECTOR: case R_CLM_VECTOR: need free/copy */
+      /* case R_FLOAT_VECTOR: case R_INT_VECTOR: case R_VCT_VECTOR: case R_CLM_STRUCT_VECTOR: case R_CLM_VECTOR: need free/copy */
     }
   /* this is not necessarily an error as long as we don't actually allow
    *   explicit set! of the unhandled types -- a let binding simply
@@ -4022,6 +4044,9 @@ static char *descr_add_f3(int *args, ptree *pt) {return(describe_dbl_args("+", 3
 static void add_f4(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2 + FLOAT_ARG_3 + FLOAT_ARG_4);}
 static char *descr_add_f4(int *args, ptree *pt) {return(describe_dbl_args("+", 4, args, pt->dbls, 1));}
 
+static void add_f5(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2 + FLOAT_ARG_3 + FLOAT_ARG_4 + FLOAT_ARG_5);}
+static char *descr_add_f5(int *args, ptree *pt) {return(describe_dbl_args("+", 5, args, pt->dbls, 1));}
+
 static void add_fn(int *args, ptree *pt) 
 {
   int i, n;
@@ -4089,6 +4114,7 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
       if (num_args == 2) return(package(prog, R_FLOAT, add_f2, descr_add_f2, args, num_args));
       if (num_args == 3) return(package(prog, R_FLOAT, add_f3, descr_add_f3, args, num_args));
       if (num_args == 4) return(package(prog, R_FLOAT, add_f4, descr_add_f4, args, num_args));
+      if (num_args == 5) return(package(prog, R_FLOAT, add_f5, descr_add_f5, args, num_args));
       return(package_n(prog, R_FLOAT, add_fn, descr_add_fn, args, num_args));
     }
   if (num_args == 2) return(package(prog, R_INT, add_i2, descr_add_i2, args, num_args));
@@ -5917,6 +5943,7 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     case R_GOTO:       return(package(pt, R_BOOL, display_con, descr_display_con, args, 1));   break;
     case R_FUNCTION:   return(package(pt, R_BOOL, display_func, descr_display_func, args, 1)); break;
     case R_CLM_VECTOR: return(package(pt, R_BOOL, display_clm_vect, descr_display_vect, args, 1)); break;
+      /* TODO: package clm struct vector */
     case R_VCT_VECTOR: return(package(pt, R_BOOL, display_vct_vect, descr_display_vect, args, 1)); break;
     case R_INT_VECTOR: return(package(pt, R_BOOL, display_int_vect, descr_display_vect, args, 1)); break;
     default:
@@ -6250,6 +6277,7 @@ static void funcall_nf(int *args, ptree *pt)
       case R_CLM: 
  	pt->clms[func->args[i]] = pt->clms[args[i + 2]]; 
  	break;
+      case R_CLM_STRUCT_VECTOR:
       case R_CLM_VECTOR: 
       case R_INT_VECTOR: 
       case R_VCT_VECTOR: 
@@ -6305,6 +6333,7 @@ static void funcall_nf(int *args, ptree *pt)
     case R_CLM:   
       CLM_RESULT = pt->clms[fres->addr];   
       break;
+    case R_CLM_STRUCT_VECTOR:
     case R_CLM_VECTOR:   
     case R_INT_VECTOR:   
     case R_VCT_VECTOR:   
@@ -7048,6 +7077,7 @@ static xen_value *vector_length_1(ptree *prog, xen_value **args, int num_args)
     case R_FLOAT_VECTOR: return(package(prog, R_INT, vector_length_f, descr_vector_length_f, args, 1));
     case R_INT_VECTOR: return(package(prog, R_INT, vector_length_i, descr_vector_length, args, 1));
     case R_CLM_VECTOR: return(package(prog, R_INT, vector_length_c, descr_vector_length, args, 1));
+      /* TODO: vector-ref of clm struct vector */
     case R_VCT_VECTOR: return(package(prog, R_INT, vector_length_v, descr_vector_length, args, 1));
     }
   return(NULL);
@@ -7082,6 +7112,7 @@ static xen_value *vector_ref_1(ptree *prog, xen_value **args, int num_args)
     case R_INT_VECTOR: return(package(prog, R_INT, vector_ref_i, descr_vector_ref_i, args, 2)); break;
     case R_VCT_VECTOR: return(package(prog, R_VCT, vector_ref_v, descr_vector_ref_v, args, 2)); break;
     case R_CLM_VECTOR: return(package(prog, R_CLM, vector_ref_c, descr_vector_ref_c, args, 2)); break;
+      /* TODO: vector-ref-1 of clm struct vector */
     }
   return(NULL);
 }
@@ -7131,6 +7162,7 @@ static xen_value *vector_set_1(ptree *prog, xen_value **args, int num_args)
       if (args[3]->type != R_CLM) return(run_warn("wrong new val type for clm vector set"));
       return(package(prog, R_CLM, vector_set_c, descr_vector_set_c, args, 3)); 
       break;
+      /* TODO: vector-set of clm struct vector */
     }
   return(NULL);
 }
@@ -7189,6 +7221,7 @@ static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
       if (args[2]->type != R_CLM) return(run_warn("wrong new val type for clm vector fill"));
       return(package(prog, R_BOOL, vector_fill_c, descr_vector_fill_c, args, 2)); 
       break;
+      /* TODO: vector-fill of clm struct vector */
     }
   return(NULL);
 }
@@ -9636,7 +9669,8 @@ static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin,
 	  return(v);
 	}
       break;
-    case R_INT_VECTOR: 
+    case R_INT_VECTOR:
+    case R_CLM_STRUCT_VECTOR:
     case R_CLM_VECTOR:
     case R_VCT_VECTOR:
       if (constant)
@@ -10200,6 +10234,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 	    case R_TRACK_READER: pt->track_readers[addr] = NULL; break;
 	    case R_INT_VECTOR: 
 	    case R_VCT_VECTOR:
+	    case R_CLM_STRUCT_VECTOR:
 	    case R_CLM_VECTOR:   pt->vects[addr] = NULL;         break;
 	    default: 
 	      run_warn("run: xen_to_addr: %s %s", XEN_AS_STRING(arg), type_name(type)); 
@@ -10234,6 +10269,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
       break;
     case R_INT_VECTOR: 
     case R_VCT_VECTOR:
+    case R_CLM_STRUCT_VECTOR:
     case R_CLM_VECTOR:
       pt->vects[addr] = read_vector(arg, type);
       add_obj_to_gcs(pt, type, addr);
