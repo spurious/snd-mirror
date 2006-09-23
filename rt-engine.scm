@@ -61,6 +61,9 @@ http://www.notam02.no/arkiv/doc/snd-rt/
 (if (not (defined? '*rt-num-output-ports*))
     (primitive-eval '(define *rt-num-output-ports* 8)))
 
+(if (not (defined? '*rt-jackname-prefix*))
+    (primitive-eval `(define *rt-jackname-prefix* "snd-rt")))
+
 (define rt-max-cpu-usage 80)
 
 (define *out-bus* #f)
@@ -391,7 +394,8 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 		 (for-each (lambda (postfix)
 			     (set! client (jack_client_new (<-> name postfix)))
 			     (if client
-				 (got-it)))
+				 (begin
+				   (got-it))))
 			   '("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15"))))
 	      
 	      (if (not client)
@@ -531,7 +535,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
 (def-class (<jack-rt-driver> num-inputs num-outputs rt_callback rt_arg #:key (autoconnect #t))
 
-  (Super (<jack> "snd-rt"
+  (Super (<jack> *rt-jackname-prefix*
 		 (jack_rt_process)
 		 (<Jack_Arg> #:rt_callback rt_callback #:rt_arg rt_arg)
 		 num-inputs
@@ -590,6 +594,9 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
       (set! this #f))
 
   )
+
+
+
 
 #!
 
@@ -1470,6 +1477,7 @@ procfuncs=sorted
       (set! *out-bus* (-> new-engine out-bus))
       (set! *in-bus* (-> new-engine in-bus))
       (set! *rt-engine* new-engine)
+      (set! *rt-jack-engine* new-engine)
       (-> *rt-engine* start))))
 
 (define (rte-silence!)

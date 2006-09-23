@@ -74,9 +74,13 @@
 (provide 'snd-oo.scm)
 
 (use-modules (ice-9 optargs)
-	     (ice-9 format)
-	     (srfi srfi-1))
+	     (ice-9 format))
+;	     (srfi srfi-1))
 ;;	     (srfi srfi-26))
+
+(if (not srfi-loaded)
+    (use-modules (srfi srfi-1)))
+(set! srfi-loaded #t)
 
 
 (define-macro (c-load-from-path filename)
@@ -168,13 +172,13 @@
   ;    (set! (show-listener) #t))
   ;(gtk_paned_set_position (GTK_PANED (list-ref (main-widgets) 3)) (c-integer (* (window-height) 0.75)))
   (set! (show-listener) #t)
-  (c-for-each (lambda (n arg)
-		(if (> n 0)
-		    (snd-print " "))
-		(if (show-listener #f)
-		    (snd-print arg)))
-	      args)
-  (snd-print #\newline)
+  (let ((printfunc (if (show-listener #f) snd-print display)))
+    (c-for-each (lambda (n arg)
+		  (if (> n 0)
+		      (printfunc " "))
+		  (printfunc arg))
+		args)
+    (printfunc #\newline))
   (while (= 1 (gtk_events_pending))
 	 (gtk_main_iteration)))
 

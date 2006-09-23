@@ -42,7 +42,11 @@ and run simple lisp[4] functions.
 
 (provide 'snd-rt-compiler.scm)
 
-(use-modules (srfi srfi-1))
+;;(use-modules (srfi srfi-1))
+
+(if (not srfi-loaded)
+    (use-modules (srfi srfi-1)))
+(set! srfi-loaded #t)
 
 
 ;;; Implementation detail: map must run its arguments in order. There must be no
@@ -162,6 +166,9 @@ and run simple lisp[4] functions.
 
 (if (not (defined? '*use-alsa-midi*))
     (define-toplevel '*use-alsa-midi* #t))
+
+(if (not (defined? '*rt-midi-alsaname*))
+    (define-toplevel '*rt-midi-alsaname* "rt-midi"))
 
 (define rt-defining-macros-clears-cache #t)
 (define rt-verbose #f)
@@ -5312,7 +5319,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 
 (if *use-alsa-midi*
-    (set! *rt-midi* (create_alsa_seq "rt-midi" 1)))
+    (set! *rt-midi* (create_alsa_seq *rt-midi-alsaname* 1)))
 
 
 (<rt-func> 'rt_receive_midi '<void> '(<int>
@@ -5523,7 +5530,10 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
   <vct-*> output
   
   <SCM> scm_output
-  <SCM> scm_descriptor)
+  <SCM> scm_descriptor
+  <SCM> scm_handle
+  <SCM> scm_ladspa
+  )
 
 
 (eval-c (<-> "-I" snd-header-files-path " ")
@@ -5590,12 +5600,17 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 				    (ladspa->descriptor->activate ladspa->handle))
 				
 				(SCM_NEWSMOB scmret rt_ladspa_tag ladspa)
+				(set! ladspa->scm_ladspa scmret)
+
 				(return scmret))))
 	 
 	(<SCM> mark_rt_ladspa (lambda ((<SCM> rt_ladspa_smob))
 				(let* ((rt_ladspa <struct-mus_rt_ladspa-*> (cast <void-*> (SCM_SMOB_DATA rt_ladspa_smob))))
+				  ;;(fprintf stderr (string "scm_output: %p, scm_descriptor: %p\\n") rt_ladspa->scm_output rt_ladspa->scm_descriptor)
 				  (scm_gc_mark rt_ladspa->scm_output)
-				  (return rt_ladspa->scm_descriptor))))
+				  (scm_gc_mark rt_ladspa->scm_descriptor)
+				  (scm_gc_mark rt_ladspa->scm_handle)
+				  (return rt_ladspa->scm_ladspa))))
 	
 	(<size_t> free_rt_ladspa (lambda ((<SCM> rt_ladspa_smob))
 				   (let* ((ladspa <struct-mus_rt_ladspa-*> (cast <void-*> (SCM_SMOB_DATA rt_ladspa_smob))))
@@ -5792,7 +5807,9 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
     
     (set! ladspa (<mus_rt_ladspa> #:descriptor (list "A_POINTER" (cadr descriptor))))
     
-    (-> ladspa handle (list "A_POINTER" (cadr (ladspa-instantiate descriptor (c-integer (mus-srate))))))
+    (let ((handle (ladspa-instantiate descriptor (c-integer (mus-srate)))))
+      (-> ladspa handle (list "A_POINTER" (cadr handle)))
+      (-> ladspa scm_handle handle))
     
     (c-for-each (lambda (n x)
 		      (if (> (logand x LADSPA_PORT_CONTROL) 0)
@@ -5817,7 +5834,9 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
     (let ((output (make-vct (-> ladspa num_audio_outs))))
       (-> ladspa scm_output output)
       (-> ladspa output (XEN_TO_VCT output)))
-    
+
+    (-> ladspa scm_descriptor descriptor)
+
     (-> ladspa controls_maxs (map get-hi input-controls))
     (-> ladspa controls_mins (map get-lo input-controls))
     

@@ -2,7 +2,8 @@
 ;; -Kjetil S. Matheussen.
 
 ;; Should work for gtk and perhaps motif.
-
+(define srfi-loaded #f)
+(define common-list-loaded #f)
 
 (define (atleast1.6.4?)	 	
    (let ((version (map string->number (string-split (version) #\.))))	 	
@@ -64,6 +65,11 @@
        (gtk_main_iteration))
 
 (set! (show-listener) #t)
+(while (= 1 (gtk_events_pending))
+       (gtk_main_iteration))
+
+
+(set! (window-width) 800)
 (while (= 1 (gtk_events_pending))
        (gtk_main_iteration))
 
@@ -1391,8 +1397,8 @@ Does not work.
 
 ;; Show cursor and selection position in minutes, seconds and 1/10th seconds.
 ;; This function is often called when playing, so I have tried as much as possible to avoid triggering a garbage collection.
-;; (without very much (if any) success by the way). Would be extremely nice if Guile could collect garbage in a seperate thread.
-;; No, the garbage collector can't just be turned off while playing. I have tried many times,
+;; (without very much (if any) success by the way).
+;; The garbage collector can't just be turned off while playing either. I have tried many times,
 ;; but theres a huge chance everything goes bananas because of a swapping hell that is eventually
 ;; going to happen. Its a scary amount of memory that is allocated by guile just doing small things.
 
@@ -1426,10 +1432,9 @@ Does not work.
 		     (not (= x (car dim))))
 		 (begin
 		   (set! old-color (foreground-color))
-		   (set! height (cadr (widget-size sound-widget)))
-		   (set! y (+ (- (* fontheight level) (* 1.5 fontheight))
-			      (- (/ (- height fontheight) 2) fontheight)))
-		   
+		   (set! y (+ (list-ref (axis-info (c-selected-sound) 0) 11)
+			      2
+			      (* fontheight level)))
 		   (if (car dim)
 		       (begin
 			 (set! (foreground-color) *c-backgroundcolor*)
@@ -1849,36 +1854,40 @@ Does not work.
 ;; dac-size slider in the control-panel
 ;;##############################################################
 
-(add-hook! after-open-hook
-	   (lambda (snd)
-	     (let ((control-panel (list-ref (sound-widgets snd) 2))
-		   (iswaiting #f)
-		   (must-wait-more #f))
-	       (define (waitfunc)
-		 (in 50
-		     (lambda ()
-		       (if must-wait-more
-			   (begin
-			     (set! must-wait-more #f)
-			     (waitfunc))
-			   (begin
-			     (-> (c-p snd) continue)
-			     (set! iswaiting #f))))))
-	       (c-put snd 'dac-slider
-		      (<slider> control-panel "dac-size" 1 (dac-size) 8192
-				(lambda (val)
-				  (let ((isplaying (c-playing)))
-				    (if isplaying
-					(-> (c-p snd) pause))
-				    (set! (dac-size) (c-integer val))
-				    (focus-widget (c-editor-widget snd))
-				    (if isplaying
-					(if iswaiting
-					    (set! must-wait-more #t)
-					    (begin
-					      (set! iswaiting #t)
-					      (waitfunc))))))
-				1)))))
+(add-to-menu 3 "Set dac size"
+	     (lambda ()
+	       (letrec ((d (<dialog> "Set dac size" #f
+				     "Close" (lambda () (-> d hide))))
+			(snd (c-selected-sound))
+			(must-wait-more #f)
+			(iswaiting #f))
+		 (define (waitfunc)
+		   (in 50
+		       (lambda ()
+			 (if must-wait-more
+			     (begin
+			       (set! must-wait-more #f)
+			       (waitfunc))
+			     (begin
+			       (-> (c-p snd) continue)
+			       (set! iswaiting #f))))))
+		 (<slider> d "dac-size" 1 (dac-size) 8192
+			   (lambda (val)
+			     (let ((isplaying (c-playing)))
+			       (if isplaying
+				   (-> (c-p snd) pause))
+			       (set! (dac-size) (c-integer val))
+			       (focus-widget (c-editor-widget snd))
+			       (if isplaying
+				   (if iswaiting
+				       (set! must-wait-more #t)
+				       (begin
+					 (set! iswaiting #t)
+					 (waitfunc))))))
+			   1)
+		 (-> d show)
+		 (gtk_window_resize (GTK_WINDOW (-> d dialog)) (window-width) (cadr (widget-size (-> d dialog)))))
+	       ))
 
 #!
 (set! (verbose-cursor) #t)
@@ -1886,10 +1895,6 @@ Does not work.
 (cursor-update-interval)
 (set! (tracking-cursor-style 0 0) 1)
 !#
-
-(add-hook! close-hook
-	   (lambda (snd)
-	     (-> (c-get snd 'dac-slider) delete!)))
 
 
 
@@ -2189,6 +2194,7 @@ Does not work.
 ;; Load rt-player. Takes some time.
 ;;##############################################################
 
+
 (eval-c (string-append "-I" snd-header-files-path)
 	"#include <_sndlib.h>"
 	(proto->public "int mus_audio_api(void)")
@@ -2338,6 +2344,17 @@ Does not work.
 ;
 ;(add-hook! graph-hook (lambda x (dhg (car x))))
 
+
+(if #f
+    (begin
+      (c-display "ai")
+      (while (= 1 (gtk_events_pending))
+	     (gtk_main_iteration))
+      
+      (if (= (mus_audio_api) (JACK_API))
+	  (load-from-path "rt-player.scm"))))
+
+
 (c-display)
 (c-display "#:snd_conffile.scm loaded.")
 (c-display (if (not (provided? 'snd-rt-player.scm))
@@ -2346,18 +2363,15 @@ Does not work.
 
 
 
-;(set! (show-listener) #f)
+(set! (show-listener) #f)
 
-(gtk_window_set_title (GTK_WINDOW (cadr (main-widgets))) "Snd")
+;;(gtk_window_set_title (GTK_WINDOW (cadr (main-widgets))) "Snd")
 
 (while (= 1 (gtk_events_pending))
        (gtk_main_iteration))
 
 
-
-
-
-
+(focus-widget (c-editor-widget (c-selected-sound)))
 
 
 
