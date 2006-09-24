@@ -1248,6 +1248,7 @@ static void recolor_everything(widget_t w, void *ptr)
 #if USE_GTK
   if (GTK_IS_WIDGET(w)) 
     {
+      /* apparently there is a huge memory leak here */
       gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (GdkColor *)ptr);
       if (GTK_IS_CONTAINER(w))
 	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything, (gpointer)ptr);

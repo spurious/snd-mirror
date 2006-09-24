@@ -227,6 +227,7 @@ typedef struct {
   off_t samp;
   char *name;
   unsigned int id, sync;
+  bool visible;
 } mark;
 
 typedef struct {
@@ -699,7 +700,7 @@ int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason
 void call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason);
 char *save_options_in_prefs(void);
 void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth);
-void close_save_sound_block(FILE *fd);
+void close_save_sound_block(FILE *fd, bool need_f);
 bool snd_exit_cleanly(bool force_exit);
 void sound_not_current(snd_info *sp, void *ignore);
 void set_init_filename(const char *filename);
@@ -787,7 +788,6 @@ void g_init_print(void);
 
 /* -------- snd-marks.c -------- */
 
-int mark_id(mark *m);
 int mark_sync_max(void);
 void set_mark_sync(mark *m, int val);
 void marks_off(chan_info *cp);

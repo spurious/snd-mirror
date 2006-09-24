@@ -6587,7 +6587,7 @@ static void add_mark_i(int *args, ptree *pt)
     {
       mark *m = NULL;
       m = add_mark(INT_ARG_1, NULL, cp);
-      if (m) INT_RESULT = mark_id(m);
+      if (m) INT_RESULT = m->id;
     }
 }
 

@@ -921,14 +921,15 @@ void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth)
 #endif
 }
 
-void close_save_sound_block(FILE *fd)
+void close_save_sound_block(FILE *fd, bool need_f)
 {
 #if HAVE_RUBY
   fprintf(fd, "end\n");
 #endif
 #if HAVE_SCHEME
-  if (!b_ok) fprintf(fd, "      #f\n"); /* avoid empty begin if no field was output */
-  fprintf(fd, "      )))\n");
+  if (need_f)
+    fprintf(fd, "      #f)))\n"); /* avoid empty begin if no field was output */
+  else fprintf(fd, "      )))\n");
 #endif
 #if HAVE_FORTH
   fprintf(fd, "\n");
@@ -1126,7 +1127,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
 #endif
 	}
     }
-  close_save_sound_block(fd);
+  close_save_sound_block(fd, !b_ok);
 }
 
 static XEN after_save_state_hook;
@@ -1419,7 +1420,8 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 			(strcmp(file_extension(argname), "lisp") == 0) ||
 			(strcmp(file_extension(argname), "rb") == 0) ||
 			(strcmp(file_extension(argname), "fs") == 0) ||
- 			(strcmp(file_extension(argname), "fth") == 0)))) /* HAVE_FORTH */
+ 			(strcmp(file_extension(argname), "fth") == 0) ||
+ 			(strcmp(file_extension(argname), "marks") == 0)))) /* from save-marks */
 		    {
 		      if ((strcmp("-l", argname) == 0) || 
 			  (strcmp("-load", argname) == 0) ||

@@ -8,21 +8,8 @@
  * "current" can change at any time.
  */
 
-#define MARK_ID_MASK   0x0fffffff
-#define MARK_VISIBLE   0x10000000
-
 static int sync_max = 0;
 static int mark_id_counter = 0;
-
-static int mark_sync(mark *m) 
-{
-  return(m->sync);
-}
-
-int mark_id(mark *m) 
-{
-  return(m->id & MARK_ID_MASK);
-}
 
 int mark_sync_max(void) 
 {
@@ -35,9 +22,6 @@ void set_mark_sync(mark *m, int val)
   if (val > sync_max) 
     sync_max = val; 
 }
-
-/* TODO: make sure id is ok if in restore-marks, and make sure id_counter is set */
-/* TODO: during restore-marks, all colliding id's and sync's must be re-mapped */
 
 static mark *make_mark_1(off_t samp, const char *name, int id, unsigned int sc)
 {
@@ -57,7 +41,7 @@ static mark *make_mark(off_t samp, const char *name)
 
 static mark *copy_mark(mark *m) 
 {
-  return(make_mark_1(m->samp, m->name, mark_id(m), m->sync));
+  return(make_mark_1(m->samp, m->name, m->id, m->sync));
 }
 
 static mark *free_mark (mark *mp)
@@ -110,7 +94,7 @@ static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, read_di
 
 static mark *find_mark_id_1(chan_info *cp, mark *mp, void *uid)
 {
-  if (mark_id(mp) == (*((int *)uid))) 
+  if (mp->id == (*((int *)uid)))
     return(mp); 
   return(NULL);
 }
@@ -195,7 +179,7 @@ static mark *find_next_mark(off_t current_sample, chan_info *cp)
 
 static mark* marks_off_1(chan_info *cp, mark *mp, void *ignore)
 {
-  mp->id &= (~MARK_VISIBLE);
+  mp->visible = false;
   return(NULL);
 }
 
@@ -225,11 +209,11 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
     {
       XEN res = XEN_FALSE;
       res = run_progn_hook(draw_mark_hook,
-			   XEN_LIST_1(C_TO_XEN_INT(mark_id(mp))),
+			   XEN_LIST_1(C_TO_XEN_INT(mp->id)),
 			   S_draw_mark_hook);
       if (XEN_TRUE_P(res))
 	{
-	  if (show) mp->id |= MARK_VISIBLE; else mp->id &= (~MARK_VISIBLE);
+	  mp->visible = show;
 	  return;
 	}
     }
@@ -281,7 +265,7 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
 	       cx,                   y0 + 2 * PLAY_ARROW_SIZE,
 	       cx,                   y0);
 
-  if (show) mp->id |= MARK_VISIBLE; else mp->id &= (~MARK_VISIBLE);
+  mp->visible = show;
 }
 
 static void draw_play_triangle(chan_info *cp, Locus x)
@@ -297,12 +281,12 @@ static void draw_play_triangle(chan_info *cp, Locus x)
 
 static void draw_mark(chan_info *cp, axis_info *ap, mark *mp)
 {
-  if (!(mp->id & MARK_VISIBLE)) draw_mark_1(cp, ap, mp, true);
+  if (!(mp->visible)) draw_mark_1(cp, ap, mp, true);
 }
 
 static void erase_mark(chan_info *cp, axis_info *ap, mark *mp)
 {
-  if (mp->id & MARK_VISIBLE) draw_mark_1(cp, ap, mp, false);
+  if (mp->visible) draw_mark_1(cp, ap, mp, false);
 }
 
 
@@ -447,7 +431,7 @@ static bool move_mark_1(chan_info *cp, mark *mp, int x)
   if (mp->samp > samps) mp->samp = samps;
   if (XEN_HOOKED(mark_drag_hook))
     run_hook(mark_drag_hook,
-	     XEN_LIST_1(C_TO_XEN_INT(mark_id(mp))),
+	     XEN_LIST_1(C_TO_XEN_INT(mp->id)),
 	     S_mark_drag_hook);
   return(redraw);
 }
@@ -548,7 +532,7 @@ mark *add_mark(off_t samp, const char *name, chan_info *cp)
     {
       if (mps[0]) free_mark(mps[0]);
       mps[0] = make_mark(samp, name);
-      run_mark_hook(cp, mark_id(mps[0]), MARK_ADD);
+      run_mark_hook(cp, mps[0]->id, MARK_ADD);
       return(mps[0]);
     }
   else
@@ -564,14 +548,14 @@ mark *add_mark(off_t samp, const char *name, chan_info *cp)
 	      for (j = med; j > i; j--)
 		mps[j] = mps[j - 1];
 	      mps[i] = make_mark(samp, name);
-	      run_mark_hook(cp, mark_id(mps[i]), MARK_ADD);
+	      run_mark_hook(cp, mps[i]->id, MARK_ADD);
 	      return(mps[i]);
 	    }
 	}
       /* insert at end */
       if (mps[med]) free_mark(mps[med]);
       mps[med] = make_mark(samp, name);
-      run_mark_hook(cp, mark_id(mps[med]), MARK_ADD);
+      run_mark_hook(cp, mps[med]->id, MARK_ADD);
       return(mps[med]);
     }
 }
@@ -598,7 +582,7 @@ bool delete_mark_samp(off_t samp, chan_info *cp)
 		  int id = -1;
 		  ap = cp->axis;
 		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, ap, mp); 
-		  id = mark_id(mp);
+		  id = mp->id;
 		  free_mark(mp);
 		  mps[i] = NULL;
 		  if (i < edm)
@@ -633,7 +617,7 @@ static bool delete_mark_id(int id, chan_info *cp)
 	    {
 	      mark *mp;
 	      mp = mps[i];
-	      if (mark_id(mp) == id)
+	      if (mp->id == id)
 		{
 		  axis_info *ap;
 		  ap = cp->axis;
@@ -1082,109 +1066,6 @@ bool mark_define_region(chan_info *cp, int count)
   return(false);
 }
 
-void save_mark_list(FILE *fd, chan_info *cp)
-{
-  /* assumes we're calling from the edit history list maker in snd-edits.c */
-  /* as with edit-tree, graft these lists onto the end of the current mark list */
-  /*   if none, pad out to current cp->edit_ctr? */
-  /*   since the edits ripple the marks, we'll have to assume we're called later and hope */
-  if (cp->marks)
-    {
-      int i, j, marks, true_marks_size = 0;
-      mark **mps;
-      mark *m;
-      for (i = 0; i < cp->marks_size; i++)
-	if (cp->marks[i])
-	  true_marks_size = i + 1;
-
-#if HAVE_SCHEME
-      fprintf(fd, "      (%s %d sfile %d '(", S_restore_marks, true_marks_size, cp->chan);
-      for (i = 0; i < true_marks_size; i++)
-	{
-	  fprintf(fd, "\n        (%d %d (", cp->mark_size[i], cp->mark_ctr[i]);
-	  mps = cp->marks[i];
-	  if (mps)
-	    {
-	      marks = cp->mark_ctr[i];
-	      for (j = 0; j <= marks; j++)
-		{
-		  m = mps[j];
-		  if (m)
-		    {
-		      if (m->name)
-			fprintf(fd, "(\"%s\" " OFF_TD " %d %d) ", m->name, m->samp, mark_id(m), mark_sync(m));
-		      else fprintf(fd, "(#f " OFF_TD " %d %d) ", m->samp, mark_id(m), mark_sync(m));
-		    }
-		  else fprintf(fd, "(#f #f #f #f) ");
-		}
-	    }
-	  fprintf(fd, "))");
-	}
-      fprintf(fd, "))\n");
-#endif
-
-#if HAVE_RUBY
-      {
-	bool need_comma = false, need_cr = false;
-	fprintf(fd, "      %s(%d, sfile, %d, [\n      ", xen_scheme_procedure_to_ruby(S_restore_marks), true_marks_size, cp->chan);
-	for (i = 0; i < true_marks_size; i++)
-	  {
-	    if (need_cr) fprintf(fd, ",\n      ");
-	    fprintf(fd, "[%d, %d, [", cp->mark_size[i], cp->mark_ctr[i]);
-	    mps = cp->marks[i];
-	    if (mps)
-	      {
-		marks = cp->mark_ctr[i];
-		for (j = 0; j <= marks; j++)
-		  {
-		    m = mps[j];
-		    if (need_comma) fprintf(fd, ", ");
-		    if (m)
-		      {
-			if (m->name)
-			  fprintf(fd, "[\"%s\", " OFF_TD ", %d, %d]", m->name, m->samp, mark_id(m), mark_sync(m));
-			else fprintf(fd, "[false, " OFF_TD ", %d, %d]", m->samp, mark_id(m), mark_sync(m));
-		      }
- 		    else fprintf(fd, "[false, false, false, false]");
-		    need_comma = true;
-		  }
-		need_comma = false;
-	      }
-	    fprintf(fd, "]]");
-	    need_cr = true;
-	  }
-	fprintf(fd, "])\n");
-      }
-#endif
-
-#if HAVE_FORTH
-      fprintf(fd, "      %d sfile %d '( ", true_marks_size, cp->chan);
-      for (i = 0; i < true_marks_size; i++)
-	{
-	  fprintf(fd, "\n        '( %d %d '( ", cp->mark_size[i], cp->mark_ctr[i]);
-	  mps = cp->marks[i];
-	  if (mps)
-	    {
-	      marks = cp->mark_ctr[i];
-	      for (j = 0; j <= marks; j++)
-		{
-		  m = mps[j];
-		  if (m)
-		    {
-		      if (m->name)
-			fprintf(fd, "'( $\" %s\" " OFF_TD " %d %d ) ", m->name, m->samp, mark_id(m), mark_sync(m));
-		      else fprintf(fd, "'( #f " OFF_TD " %d %d ) ", m->samp, mark_id(m), mark_sync(m));
-		    }
-		  else fprintf(fd, "'( #f #f #f #f ) ");
-		}
-	    }
-	  fprintf(fd, ") ) ");
-	}
-      fprintf(fd, ") %s drop\n", S_restore_marks);
-#endif
-    }
-}
-
 static mark *reverse_mark_1(chan_info *cp, mark *mp, void *um)
 {
   mark *m = (mark *)um;
@@ -1606,7 +1487,7 @@ static void edit_dragged_mark(chan_info *cp, mark *m, off_t initial_sample)
   mark_final_sample = m->samp;
   num = mark_final_sample - initial_sample;
   m->samp = initial_sample;
-  id = mark_id(m);
+  id = m->id;
   if (num > 0)
     extend_with_zeros(cp, initial_sample, num, cp->edit_ctr);
       /* at this point, old mark pointer is irrelevant (it lives in the previous edit history list) */
@@ -1634,7 +1515,7 @@ void finish_moving_mark(chan_info *cp, mark *m) /* button release called from sn
       int i;
       if (XEN_HOOKED(mark_hook))
 	for (i = 0; i < mark_sd->mark_ctr; i++)
-	  run_mark_hook(mark_sd->chans[i], mark_id(mark_sd->marks[i]), MARK_RELEASE);
+	  run_mark_hook(mark_sd->chans[i], mark_sd->marks[i]->id, MARK_RELEASE);
       if (mark_control_clicked)
 	{
 	  for (i = mark_sd->mark_ctr - 1; i >= 0; i--)
@@ -1660,7 +1541,7 @@ void finish_moving_mark(chan_info *cp, mark *m) /* button release called from sn
     }
   else 
     {
-      run_mark_hook(cp, mark_id(m), MARK_RELEASE);
+      run_mark_hook(cp, m->id, MARK_RELEASE);
       if (mark_control_clicked) 
 	{
 	  edit_dragged_mark(cp, m, mark_initial_sample);
@@ -1920,91 +1801,6 @@ static XEN g_test_control_drag_mark(XEN snd, XEN chn, XEN mid)
 #endif
 
 
-static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
-{
-  XEN lst, olst;
-  chan_info *cp;
-  snd_info *sp;
-  int i, list_size;
-  ASSERT_CHANNEL(S_restore_marks, snd, chn, 2);
-  sp = get_sp(snd, NO_PLAYERS);
-  if (sp == NULL) 
-    return(snd_no_such_sound_error(S_restore_marks, snd));
-  cp = get_cp(snd, chn, S_restore_marks);
-  if (!cp) return(XEN_FALSE);
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_1, S_restore_marks, "an integer");
-  XEN_ASSERT_TYPE(XEN_LIST_P(marklist), marklist, XEN_ARG_4, S_restore_marks, "a list");
-  if (cp->marks)
-    {
-      snd_error(S_restore_marks ": %s already has marks!", sp->short_filename);
-      free_mark_list(cp, 0);
-    }
-  cp->marks_size = XEN_TO_C_INT(size);
-  if (cp->marks_size == 0) return(XEN_FALSE);
-  if (cp->marks_size < 0)
-    {
-      cp->marks_size = 0;
-      XEN_ERROR(CANNOT_SAVE,
-		XEN_LIST_3(C_TO_XEN_STRING(S_restore_marks),
-			   C_TO_XEN_STRING("restore ~A marks?"),
-			   size));
-    }
-  cp->marks = (mark ***)CALLOC(cp->marks_size, sizeof(mark **));
-  cp->mark_size = (int *)CALLOC(cp->marks_size, sizeof(int));
-  cp->mark_ctr = (int *)CALLOC(cp->marks_size, sizeof(int));
-  for (i = 0; i < cp->marks_size; i++) cp->mark_ctr[i] = -1;
-  list_size = XEN_LIST_LENGTH(marklist);
-  for (i = 0, olst = XEN_COPY_ARG(marklist); i < list_size; i++, olst = XEN_CDR(olst))
-    {
-      lst = XEN_CAR(olst);
-      if (!(XEN_LIST_P(lst)))
-	snd_error_without_format(S_restore_marks ": mark list messed up");
-      else
-	{
-	  cp->mark_size[i] = XEN_TO_C_INT(XEN_CAR(lst));
-	  cp->mark_ctr[i] = XEN_TO_C_INT(XEN_CADR(lst));
-	  if (cp->mark_size[i] > 0)
-	    {
-	      XEN mlst, molst;
-	      int j, in_size;
-	      mlst = XEN_CADDR(lst);
-	      cp->marks[i] = (mark **)CALLOC(cp->mark_size[i], sizeof(mark *));
-	      in_size = XEN_LIST_LENGTH(mlst);
-	      for (j = 0, molst = XEN_COPY_ARG(mlst); j < in_size; j++, molst = XEN_CDR(molst))
-		{
-		  XEN el;
-		  el = XEN_CAR(molst);
-		  if (!(XEN_LIST_P(el))) 
-		    snd_error_without_format(S_restore_marks ": saved mark data is not a list?? ");
-		  else
-		    {
-		      XEN sm;
-		      sm = XEN_CADR(el);
-		      if (XEN_NOT_FALSE_P(sm))
-			{
-			  int id;
-			  unsigned int sync;
-			  char *str;
-			  XEN nm;
-			  nm = XEN_CAR(el);
-			  if (XEN_NOT_FALSE_P(nm))
-			    str = XEN_TO_C_STRING(nm);
-			  else str = NULL;
-			  id = XEN_TO_C_INT(XEN_CADDR(el));
-			  if (XEN_LIST_LENGTH(el) > 3)
-			    sync = XEN_TO_C_INT(XEN_CADDDR(el));
-			  else sync = 0;
-			  cp->marks[i][j] = make_mark_1(XEN_TO_C_OFF_T(sm), str, id, sync);
-			  if (id > mark_id_counter) mark_id_counter = id;
-			}
-		    }
-		}
-	    }
-	}
-    }
-  return(marklist);
-}
-
 typedef enum {MARK_SAMPLE, MARK_NAME, MARK_SYNC, MARK_HOME} mark_field_t;
 
 static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, const char *caller)
@@ -2022,7 +1818,7 @@ static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, const char *caller)
       return(C_TO_XEN_OFF_T(m->samp)); 
       break;
     case MARK_SYNC:   
-      return(C_TO_XEN_INT(mark_sync(m))); 
+      return(C_TO_XEN_INT(m->sync)); 
       break;
     case MARK_NAME:   
       if (m->name) 
@@ -2051,7 +1847,7 @@ static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, const char *caller)
 			   XEN_TO_C_OFF_T_OR_ELSE(val, 0),
 			   CURRENT_SAMPLES(cp[0]));
       sort_marks(cp[0]); /* update and re-sort current mark list */
-      run_mark_hook(cp[0], mark_id(m), MARK_MOVE);
+      run_mark_hook(cp[0], m->id, MARK_MOVE);
       update_graph(cp[0]);
       break;
     case MARK_SYNC: 
@@ -2101,7 +1897,7 @@ off_t r_mark_sync(int n)
 {
   mark *m;
   m = find_mark_from_id(n, NULL, AT_CURRENT_EDIT_POSITION);
-  if (m) return(mark_sync(m));
+  if (m) return(m->sync);
   return(-1);
 }
 
@@ -2201,39 +1997,51 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
 	    if ((mps[i]) && 
 		(mps[i]->name) && 
 		(strcmp(name, mps[i]->name) == 0))
-	      return(C_TO_XEN_INT(mark_id(mps[i])));
+	      return(C_TO_XEN_INT(mps[i]->id));
 	}
       else
 	{
 	  for (i = 0; i <= cp->mark_ctr[pos]; i++)
 	    if ((mps[i]) && 
 		(mps[i]->samp == samp)) 
-	      return(C_TO_XEN_INT(mark_id(mps[i])));
+	      return(C_TO_XEN_INT(mps[i]->id));
 	}
     }
   return(XEN_FALSE);
 }
 
-static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n) 
+static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync) 
 {
-  #define H_add_mark "(" S_add_mark " samp (snd #f) (chn #f)): add a mark at sample samp returning the mark id."
+  #define H_add_mark "(" S_add_mark " samp (snd #f) (chn #f) name (sync 0)): add a mark at sample samp returning the mark id."
   mark *m = NULL;
   chan_info *cp;
   off_t loc;
+  int msync = 0;
+  char *mname = NULL;
+
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_add_mark, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name) || XEN_FALSE_P(name), name, XEN_ARG_4, S_add_mark, "a string or #f");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sync), sync, XEN_ARG_5, S_add_mark, "an integer");
   ASSERT_CHANNEL(S_add_mark, snd_n, chn_n, 2);
+
   cp = get_cp(snd_n, chn_n, S_add_mark);
   if (!cp) return(XEN_FALSE);
+
   loc = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
   if ((loc < 0) || (loc >= CURRENT_SAMPLES(cp)))
     XEN_ERROR(NO_SUCH_SAMPLE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_add_mark),
 			 samp_n));
-  m = add_mark(loc, NULL, cp);
+
+  if (XEN_STRING_P(name)) mname = XEN_TO_C_STRING(name);
+  if (XEN_INTEGER_P(sync)) msync = XEN_TO_C_INT(sync);
+
+  m = add_mark(loc, mname, cp);
   if (m)
     {
+      if (msync != 0) set_mark_sync(m, msync);
       update_graph(cp);
-      return(C_TO_XEN_INT(mark_id(m)));
+      return(C_TO_XEN_INT(m->id));
     }
   return(XEN_FALSE);
 }
@@ -2284,7 +2092,7 @@ static int *syncd_marks(int sync)
   for_each_normal_chan_1(gather_chan_syncd_marks, (void *)sd);
   ids = (int *)CALLOC(1 + sd->mark_ctr, sizeof(int));
   ids[0] = sd->mark_ctr;
-  for (i = 0; i < sd->mark_ctr; i++) ids[i + 1] = mark_id(sd->marks[i]);
+  for (i = 0; i < sd->mark_ctr; i++) ids[i + 1] = sd->marks[i]->id;
   free_syncdata(sd);
   return(ids);
 }
@@ -2342,7 +2150,7 @@ static int *channel_marks(chan_info *cp, int pos)
 	  ids = (int *)CALLOC(marks + 2, sizeof(int)); /* 1 for size, 1 because mark_ctr is current count */
 	  ids[0] = marks + 1;
 	  for (i = 0; i <= marks; i++) 
-	    ids[i + 1] = mark_id(mps[i]);
+	    ids[i + 1] = mps[i]->id;
 	}
     }
   return(ids);
@@ -2417,12 +2225,148 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
   return(res1);
 }
 
-static bool find_any_marks (chan_info *cp, void *ignore)
+
+/* ---------------- saved marks ----------------
+ *
+ * upon restoration, pre-existing marks can collide both in mark-id and mark-sync
+ *   with the saved marks, so these need to be fixed-up as they are encountered.
+ *   Also mark-sync-max needs to reflect the newly chosen sync values.
+ *
+ * We used to try to save the entire mark history, but I can't see how that can work
+ *   in general -- the save-marks output can be loaded at any time, so we can't
+ *   rely on anything in regard to the edit history.
+ */
+
+static bool find_any_marks(chan_info *cp, void *ignore)
 {
-  if (cp->marks) 
-    return(cp->mark_ctr[cp->edit_ctr] >= 0); /* initialized to -1 -- 0 is first mark */
-  return(false);
+  return((cp->marks) && (cp->mark_ctr[cp->edit_ctr] >= 0)); /* initialized to -1 -- 0 is first mark */
 }
+
+typedef struct {
+  FILE *fd;
+  int size;
+  int *syncs;
+} save_mark_info;
+
+#define SYNC_BASE "_sync_"
+#define SYNC_NAME_SIZE 32
+
+static char *mark_sync_name(int cur_sync)
+{
+  char *result;
+  result = (char *)CALLOC(SYNC_NAME_SIZE, sizeof(char));
+  mus_snprintf(result, SYNC_NAME_SIZE, "%s%d", SYNC_BASE, cur_sync);
+  return(result);
+}
+
+static char *map_mark_sync(chan_info *cp, mark *m, save_mark_info *sv)
+{
+  /* if sync 0 just return "0",  else if already in syncs array, use _sync_n_ as name,
+   *   else open a let, declared _sync_n_ with new safe value,
+   *   add current int value to syncs array (can't assume unshared here will not collide later)
+   */
+
+  int i, cur_sync;
+  cur_sync = m->sync;
+  if (cur_sync == 0)
+    return(copy_string("0"));
+
+  if (sv->size > 0)
+    for (i = 0; i < sv->size; i++)
+      if (cur_sync == sv->syncs[i])
+	return(mark_sync_name(cur_sync));
+
+  /* add sync to current set (protect against later collisions, take current shared-syncs into account) */
+  if (sv->size == 0)
+    sv->syncs = (int *)CALLOC(1, sizeof(int));
+  else sv->syncs = (int *)REALLOC(sv->syncs, (sv->size + 1) * sizeof(int));
+  sv->syncs[sv->size++] = cur_sync;
+
+  fprintf(sv->fd, "      ");
+  for (i = 0; i < sv->size - 1; i++) fprintf(sv->fd, "  "); /* previous lets */
+
+#if HAVE_SCHEME
+  fprintf(sv->fd, "(let ((%s%d (1+ (mark-sync-max))))\n", SYNC_BASE, cur_sync);
+#endif
+
+#if HAVE_RUBY
+  fprintf(sv->fd, "begin\n        %s%d = mark_sync_max + 1\n", SYNC_BASE, cur_sync);
+#endif
+
+#if HAVE_FORTH
+  fprintf(sv->fd, "mark-sync-max 1 + value %s%d\n", SYNC_BASE, cur_sync);
+#endif
+
+  return(mark_sync_name(cur_sync));
+}
+
+static mark *save_mark(chan_info *cp, mark *m, void *info)
+{
+  /* we're called within "sound_block" where "sfile" = current sound index */
+
+  save_mark_info *sv = (save_mark_info *)info;
+  char *mapped_sync;
+  int i;
+
+  mapped_sync = map_mark_sync(cp, m, sv);
+
+  fprintf(sv->fd, "      ");
+  for (i = 0; i < sv->size; i++) fprintf(sv->fd, "  "); /* lets */
+
+#if HAVE_SCHEME
+  if (m->name)
+    fprintf(sv->fd, "(add-mark " OFF_TD " sfile %d \"%s\" %s)\n", m->samp, cp->chan, m->name, mapped_sync);
+  else fprintf(sv->fd, "(add-mark " OFF_TD " sfile %d #f %s)\n", m->samp, cp->chan, mapped_sync);
+#endif
+
+#if HAVE_RUBY
+  if (m->name)
+    fprintf(sv->fd, "add_mark(" OFF_TD ", sfile, %d, \"%s\", %s)\n", m->samp, cp->chan, m->name, mapped_sync);
+  else fprintf(sv->fd, "add_mark(" OFF_TD ", sfile, %d, false, %s)\n", m->samp, cp->chan, mapped_sync);
+#endif
+
+#if HAVE_FORTH
+  if (m->name)
+    fprintf(sv->fd, OFF_TD " sfile %d $\" %s\" %s add-mark drop\n", m->samp, cp->chan, m->name, mapped_sync);
+  else fprintf(sv->fd, OFF_TD " sfile %d #f %s add-mark drop\n", m->samp, cp->chan, mapped_sync);
+#endif
+
+  FREE(mapped_sync);
+  return(NULL); /* returning a mark here breaks out of the map mark loop */
+}
+
+void save_mark_list(FILE *fd, chan_info *cp)
+{
+  /* used in save-marks (below) and the edit history stuff in snd-edits.c
+   *   changed incompatibly 23-Sep-06 -- restore-marks is now a no-op, and
+   *   no attempt is made to save the entire mark history.
+   */
+
+  save_mark_info *sv;
+  if (!(find_any_marks(cp, NULL))) return;
+  sv = (save_mark_info *)CALLOC(1, sizeof(save_mark_info));
+  sv->fd = fd;
+  sv->size = 0;
+  sv->syncs = NULL;
+  map_over_marks(cp, save_mark, (void *)sv, READ_FORWARD);
+  if (sv->size > 0)
+    {
+      int i;
+      fprintf(fd, "      ");
+
+#if HAVE_SCHEME
+      for (i = 0; i < sv->size; i++) fprintf(fd, ")");
+#endif
+
+#if HAVE_RUBY
+      for (i = 0; i < sv->size; i++) fprintf(fd, "end\n");
+#endif
+
+      fprintf(fd, "\n");
+    }
+  if (sv->syncs) FREE(sv->syncs);
+  FREE(sv);
+}  
 
 static XEN g_save_marks(XEN snd_n, XEN filename)
 {
@@ -2468,10 +2412,13 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
 	}
       else
 	{
+#if HAVE_FORTH
+	  fprintf(fd, "#f value sfile\n");
+#endif
 	  open_save_sound_block(sp, fd, false); /* find-sound or open it with enclosing let */
 	  for (i = 0; i < sp->nchans; i++)
 	    save_mark_list(fd, sp->chans[i]);
-	  close_save_sound_block(fd);           /* close the let form */
+	  close_save_sound_block(fd, false);           /* close the let form */
 	  snd_fclose(fd, newname);
 	  res = C_TO_XEN_STRING(newname);
 	}
@@ -2479,6 +2426,13 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
     }
   return(res);
 }
+
+static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
+{
+  /* this exists so that old saved-state files will still load.  It is obviously now a no-op */
+  return(XEN_FALSE);
+}
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_mark_sample_w, g_mark_sample)
@@ -2491,7 +2445,7 @@ XEN_NARGIFY_4(g_restore_marks_w, g_restore_marks)
 XEN_NARGIFY_0(g_mark_sync_max_w, g_mark_sync_max)
 XEN_ARGIFY_1(g_mark_home_w, g_mark_home)
 XEN_ARGIFY_3(g_marks_w, g_marks)
-XEN_ARGIFY_3(g_add_mark_w, g_add_mark)
+XEN_ARGIFY_5(g_add_mark_w, g_add_mark)
 XEN_ARGIFY_1(g_delete_mark_w, g_delete_mark)
 XEN_ARGIFY_2(g_delete_marks_w, g_delete_marks)
 XEN_NARGIFY_1(g_syncd_marks_w, g_syncd_marks)
@@ -2554,7 +2508,7 @@ void g_init_marks(void)
   XEN_DEFINE_PROCEDURE(S_mark_sync_max, g_mark_sync_max_w, 0, 0, 0, H_mark_sync_max);
   XEN_DEFINE_PROCEDURE(S_mark_home,     g_mark_home_w,     0, 1, 0, H_mark_home);
   XEN_DEFINE_PROCEDURE(S_marks,         g_marks_w,         0, 3, 0, H_marks);
-  XEN_DEFINE_PROCEDURE(S_add_mark,      g_add_mark_w,      0, 3, 0, H_add_mark);
+  XEN_DEFINE_PROCEDURE(S_add_mark,      g_add_mark_w,      0, 5, 0, H_add_mark);
   XEN_DEFINE_PROCEDURE(S_delete_mark,   g_delete_mark_w,   0, 1, 0, H_delete_mark);
   XEN_DEFINE_PROCEDURE(S_delete_marks,  g_delete_marks_w,  0, 2, 0, H_delete_marks);
   XEN_DEFINE_PROCEDURE(S_syncd_marks,   g_syncd_marks_w,   1, 0, 0, H_syncd_marks);

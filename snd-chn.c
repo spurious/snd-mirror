@@ -4191,11 +4191,11 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			  XEN res = XEN_FALSE;
 			  if (XEN_HOOKED(mark_click_hook))
 			    res = run_progn_hook(mark_click_hook,
-						 XEN_LIST_1(C_TO_XEN_INT(mark_id(mouse_mark))),
+						 XEN_LIST_1(C_TO_XEN_INT(mouse_mark->id)),
 						 S_mark_click_hook);
 			  if (!(XEN_TRUE_P(res)))
 			    report_in_minibuffer(sp, _("mark %d at sample " OFF_TD), 
-						 mark_id(mouse_mark), 
+						 mouse_mark->id, 
 						 mouse_mark->samp);
 			}
 		      else
@@ -4314,7 +4314,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
 	  XEN drag_res = XEN_FALSE;
 	  if (XEN_HOOKED(mark_drag_triangle_hook))
 	    drag_res = run_progn_hook(mark_drag_triangle_hook,
-				      XEN_LIST_4(C_TO_XEN_INT(mark_id(play_mark)),
+				      XEN_LIST_4(C_TO_XEN_INT(play_mark->id),
 						 C_TO_XEN_INT(x),
 						 C_TO_XEN_INT((int)time),
 						 C_TO_XEN_BOOLEAN(dragged)),

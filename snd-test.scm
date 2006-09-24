@@ -25438,6 +25438,58 @@ EDITS: 5
 		(close-sound ind)))
 	  
 	  ))
+
+      (let ((ind (open-sound "oboe.snd")))
+	(add-mark 123)
+	(add-mark 234 ind 0 "hiho" 1)
+	(add-mark 345 ind 0 #f 1)
+	(add-mark 456 ind 0 "a mark" 2)
+	(add-mark 567 ind 0 #f 1)
+	(save-marks ind "oboe.marks")
+	(close-sound ind)
+	(set! ind (open-sound "oboe.snd"))
+	(add-mark 1 ind 0 "new mark" 1)
+	(load "oboe.marks")
+	(let ((m (find-mark 123 ind 0)))
+	  (if (not (mark? m)) 
+	      (snd-display ";save marks missed 123?")
+	      (begin
+		(if (not (= (string-length (mark-name m)) 0)) (snd-display ";saved mark 123 name: ~A" (mark-name m)))
+		(if (not (= (mark-sync m) 0)) (snd-display ";saved mark 123 sync: ~A" (mark-sync m))))))
+	(let ((m1-sync 0))
+	  (let ((m (find-mark 234 ind 0)))
+	    (if (not (mark? m)) 
+		(snd-display ";save marks missed 234?")
+		(begin
+		  (if (not (string=? (mark-name m) "hiho")) (snd-display ";saved mark 234 name: ~A" (mark-name m)))
+		  (if (or (= (mark-sync m) 0) (= (mark-sync m) 1)) (snd-display ";saved mark 234 sync: ~A" (mark-sync m)))
+		  (set! m1-sync (mark-sync m)))))
+	  (let ((m (find-mark 345 ind 0)))
+	    (if (not (mark? m)) 
+		(snd-display ";save marks missed 345?")
+		(begin
+		  (if (not (= (string-length (mark-name m)) 0)) (snd-display ";saved mark 345 name: ~A" (mark-name m)))
+		  (if (not (= (mark-sync m) m1-sync)) (snd-display ";saved mark 345 sync: ~A ~A" (mark-sync m) m1-sync)))))
+	  (let ((m (find-mark 567 ind 0)))
+	    (if (not (mark? m)) 
+		(snd-display ";save marks missed 567?")
+		(begin
+		  (if (not (= (string-length (mark-name m)) 0)) (snd-display ";saved mark 567 name: ~A" (mark-name m)))
+		  (if (not (= (mark-sync m) m1-sync)) (snd-display ";saved mark 567 sync: ~A ~A" (mark-sync m) m1-sync)))))
+	  (let ((m (find-mark 456 ind 0)))
+	    (if (not (mark? m)) 
+		(snd-display ";save marks missed 456?")
+		(begin
+		  (if (not (string=? (mark-name m) "a mark")) (snd-display ";saved mark 456 name: ~A" (mark-name m)))
+		  (if (or (= (mark-sync m) m1-sync) 
+			  (= (mark-sync m) 0)
+			  (= (mark-sync m) 1))
+		      (snd-display ";saved mark 456 sync: ~A ~A" (mark-sync m) m1-sync)))))
+	  )
+	(delete-file "oboe.marks")
+	(close-sound ind))
+      
+      
       (run-hook after-test-hook 10)
       ))
 

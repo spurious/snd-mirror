@@ -495,16 +495,14 @@
 	  (set! str 
 		(string-append str 
 			       (format #f
-				       "  (set! m (add-mark ~A #f ~D))~%" 
+				       "  (set! m (add-mark ~A #f ~D ~A ~D))~%" 
 				       (mark-sample m)
-				       chan)))
-	  (if (and (string? (mark-name m))
-		   (> (string-length (mark-name m)) 0))
-	      (set! str 
-		    (string-append str 
-				   (format #f
-					   "  (set! (mark-name m) ~S)~%"
-					   (mark-name m)))))
+				       chan
+				       (if (and (string? (mark-name m))
+						(> (string-length (mark-name m)) 0))
+					   (format #f "~S" (mark-name m))
+					   #f)
+				       (mark-sync m))))
 	  (if (not (null? (mark-properties m)))
 	      (set! str
 		    (string-append str 
