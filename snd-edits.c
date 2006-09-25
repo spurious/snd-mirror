@@ -4900,7 +4900,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 	    edits - cp->edit_ctr,
 	    cp->chan);
 #endif
-  save_mark_list(fd, cp);
+    save_mark_list(fd, cp, false); /* false -> save just the current channel's marks */
 }
 
 static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)

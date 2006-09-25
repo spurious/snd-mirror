@@ -810,7 +810,7 @@ void display_channel_marks(chan_info *cp);
 void release_pending_marks(chan_info *cp, int edit_ctr);
 void ripple_marks(chan_info *cp, off_t beg, off_t change);
 bool mark_define_region(chan_info *cp, int count);
-void save_mark_list(FILE *fd, chan_info *cp);
+void save_mark_list(FILE *fd, chan_info *cp, bool all_chans);
 void reverse_marks(chan_info *cp, off_t beg, off_t dur);
 void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off_t beg, bool over_selection);
 void reset_marks(chan_info *cp, int cur_marks, off_t *samps, off_t end, off_t extension, bool over_selection);

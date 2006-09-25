@@ -2142,7 +2142,7 @@
 			 'region->vct 'region-chans 'region-frames 'region-graph-style 'region-maxamp
 			 'region-maxamp-position 'region-position 'region-sample 'region-sample-reader? 'region-srate
 			 'region? 'regions 'remove-from-menu 'report-in-minibuffer 'reset-button-color
-			 'reset-controls 'reset-listener-cursor 'restore-controls 'restore-marks 'restore-region
+			 'reset-controls 'reset-listener-cursor 'restore-controls 'restore-region
 			 'reverb-control-decay 'reverb-control-feedback 'reverb-control-length 'reverb-control-length-bounds 'reverb-control-lowpass
 			 'reverb-control-scale 'reverb-control-scale-bounds 'reverb-control? 'reverse-channel 'reverse-selection
 			 'reverse-sound 'revert-sound 'riemann-window 'right-sample 'ring-modulate
@@ -25052,7 +25052,7 @@ EDITS: 5
 				    (samp2 (mark-sample (caar m2))))
 				(if (or (not (= samp1 123))
 					(not (= samp2 321)))
-				    (snd-display ";save-marks via save-state posiitons: ~A ~A" samp1 samp2))))))
+				    (snd-display ";save-marks via save-state positions: ~A ~A" samp1 samp2))))))
 		    (if (sound? s1) (close-sound s1))
 		    (if (sound? s2) (close-sound s2)))
 		  (let ((fd (open-sound "pistol.snd")))
@@ -25063,10 +25063,8 @@ EDITS: 5
 		  (let ((fd (open-sound "oboe.snd")))
 		    (load "oboe.marks")
 		    (let ((mlst (marks fd 0)))
-		      (if (not (= (length mlst) 2)) (snd-display ";restore-marks: ~A?" mlst))
-		      (if (or (not (= (mark-sample (car mlst)) 123))
-			      (not (= (mark-sample (cadr mlst)) 12345)))
-			  (snd-display ";restored-marks: ~D ~D?" (mark-sample (car mlst)) (mark-sample (cadr mlst)))))
+		      (if (not (= (length mlst) 4)) 
+			  (snd-display ";restore oboe.marks: ~A, marks: ~A" (file->string "oboe.marks") (marks fd 0))))
 		    (close-sound fd))
 		  (let ((fd (open-sound "oboe.snd")))
 		    (let ((m1 (add-mark 1000)))
@@ -25487,8 +25485,72 @@ EDITS: 5
 		      (snd-display ";saved mark 456 sync: ~A ~A" (mark-sync m) m1-sync)))))
 	  )
 	(delete-file "oboe.marks")
+
+	(let ((ind1 (open-sound "2a.snd")))
+	  (add-mark 1 ind1 0)
+	  (add-mark 2 ind1 1)
+	  (add-mark 3 ind1 0 "hi3")
+	  (add-mark 6 ind1 1 "hi6")
+	  (add-mark 4 ind1 0 #f 4)
+	  (add-mark 8 ind1 1 #f 5)
+	  (add-mark 5 ind1 0 #f 9)
+	  (add-mark 10 ind1 1 #f 9)
+	  (add-mark 20 ind1 0 #f 12)
+	  (add-mark 40 ind1 1 #f 12)
+	  (add-mark 60 ind1 1 #f 12)
+	  (save-marks ind1 "test.marks")
+	  (close-sound ind)
+	  (close-sound ind1))
+	
+	(set! ind (open-sound "2a.snd"))
+	(load "test.marks")
+	
+	(let ((m1 (find-mark 1 ind 0))
+	      (m2 (find-mark 2 ind 1)))
+	  (if (or (not (mark? m1)) (not (mark? m2))) 
+	      (snd-display ";save-marks 2a 1,2: ~A ~A" m1 m2)
+	      (if (or (not (= (mark-sync m1) 0)) (not (= (mark-sync m2) 0)))
+		  (snd-display ";save-marks 2a 1,2 syncs: ~A ~A" (mark-sync m1) (mark-sync m2)))))
+	(let ((m1 (find-mark 5 ind 0))
+	      (m2 (find-mark 10 ind 1)))
+	  (if (or (not (mark? m1)) (not (mark? m2))) 
+	      (snd-display ";save-marks 2a 5,10: ~A ~A" m1 m2)
+	      (if (or (= (mark-sync m1) 0)
+		      (not (= (mark-sync m1) (mark-sync m2))))
+		  (snd-display ";save-marks 2a 5,10 syncs: ~A ~A" (mark-sync m1) (mark-sync m2)))))
+	(let ((m1 (find-mark 4 ind 0))
+	      (m2 (find-mark 8 ind 1))
+	      (m3 (find-mark 5 ind 0)))
+	  (if (or (not (mark? m1)) (not (mark? m2))) 
+	      (snd-display ";save-marks 2a 4,8: ~A ~A" m1 m2)
+	      (if (or (= (mark-sync m1) 0)
+		      (= (mark-sync m2) 0)
+		      (= (mark-sync m1) (mark-sync m2))
+		      (= (mark-sync m1) (mark-sync m3)))
+		  (snd-display ";save-marks 2a 4,8 syncs: ~A ~A ~A" (mark-sync m1) (mark-sync m2) (mark-sync m3)))))
+	(let ((m1 (find-mark 3 ind 0))
+	      (m2 (find-mark 6 ind 1)))
+	  (if (or (not (mark? m1)) (not (mark? m2))) 
+	      (snd-display ";save-marks 2a 3,6: ~A ~A" m1 m2)
+	      (begin
+		(if (or (not (= (mark-sync m1) 0)) (not (= (mark-sync m2) 0)))
+		    (snd-display ";save-marks 2a 3,6 syncs: ~A ~A" (mark-sync m1) (mark-sync m2)))
+		(if (not (string=? (mark-name m1) "hi3")) (snd-display ";save-marks 2a 3 name: ~A" (mark-name m1)))
+		(if (not (string=? (mark-name m2) "hi6")) (snd-display ";save-marks 2a 6 name: ~A" (mark-name m2))))))
+	(let ((m1 (find-mark 4 ind 0))
+	      (m2 (find-mark 5 ind 0))
+	      (m3 (find-mark 20 ind 0))
+	      (m4 (find-mark 40 ind 1))
+	      (m5 (find-mark 60 ind 1)))
+	  (if (or (not (mark? m3)) (not (mark? m4)) (not (mark? m5)))
+	      (snd-display ";save-marks 2a 20...: ~A ~A ~A" m3 m4 m5)
+	      (if (or (= (mark-sync m3) 0)
+		      (= (mark-sync m1) (mark-sync m3))
+		      (= (mark-sync m2) (mark-sync m3))
+		      (not (= (mark-sync m3) (mark-sync m4) (mark-sync m5))))
+		  (snd-display ";save-marks 2a 10... syncs: ~A ~A ~A" (mark-sync m3) (mark-sync m4) (mark-sync m5)))))
+	(delete-file "test.marks")
 	(close-sound ind))
-      
       
       (run-hook after-test-hook 10)
       ))
@@ -58965,7 +59027,7 @@ EDITS: 1
 		     region-graph-style region-frames region-position region-maxamp region-maxamp-position 
 		     selection-maxamp selection-maxamp-position region-sample region->vct clear-minibuffer
 		     region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
-		     restore-marks restore-region reverb-control-decay reverb-control-feedback recorder-in-chans
+		     restore-region reverb-control-decay reverb-control-feedback recorder-in-chans
 		     reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
 		     reverse-selection revert-sound right-sample sample sample-reader-at-end?  sample-reader? samples sample-reader-position
 		     samples->sound-data sash-color save-controls ladspa-dir save-dir save-edit-history save-envelopes
@@ -60008,7 +60070,6 @@ EDITS: 1
 	      (check-error-tag 'no-such-file (lambda () (close-sound-file 23213 3))) ; not 23!!
 	      (check-error-tag 'bad-header (lambda () (mus-sound-maxamp (string-append sf-dir "bad_chans.snd"))))
 	      (check-error-tag 'bad-header (lambda () (set! (mus-sound-maxamp (string-append sf-dir "bad_chans.snd")) '(0.0 0.0))))
-	      (check-error-tag 'no-such-sound (lambda () (restore-marks 123 123 123 '())))
 	      (check-error-tag 'mus-error (lambda () (play (string-append sf-dir "midi60.mid"))))
 	      (check-error-tag 'mus-error (lambda () (make-iir-filter :order 32 :ycoeffs (make-vct 4))))
 	      (check-error-tag 'mus-error (lambda () (make-iir-filter :coeffs (make-vct 4) :ycoeffs (make-vct 4))))

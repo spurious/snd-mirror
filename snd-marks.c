@@ -2262,7 +2262,7 @@ static char *mark_sync_name(int cur_sync)
 static char *map_mark_sync(chan_info *cp, mark *m, save_mark_info *sv)
 {
   /* if sync 0 just return "0",  else if already in syncs array, use _sync_n_ as name,
-   *   else open a let, declared _sync_n_ with new safe value,
+   *   else open a let, declare _sync_n_ with new safe value,
    *   add current int value to syncs array (can't assume unshared here will not collide later)
    */
 
@@ -2282,8 +2282,10 @@ static char *map_mark_sync(chan_info *cp, mark *m, save_mark_info *sv)
   else sv->syncs = (int *)REALLOC(sv->syncs, (sv->size + 1) * sizeof(int));
   sv->syncs[sv->size++] = cur_sync;
 
+#if (!HAVE_FORTH)
   fprintf(sv->fd, "      ");
   for (i = 0; i < sv->size - 1; i++) fprintf(sv->fd, "  "); /* previous lets */
+#endif
 
 #if HAVE_SCHEME
   fprintf(sv->fd, "(let ((%s%d (1+ (mark-sync-max))))\n", SYNC_BASE, cur_sync);
@@ -2335,20 +2337,27 @@ static mark *save_mark(chan_info *cp, mark *m, void *info)
   return(NULL); /* returning a mark here breaks out of the map mark loop */
 }
 
-void save_mark_list(FILE *fd, chan_info *cp)
+void save_mark_list(FILE *fd, chan_info *cp, bool all_chans)
 {
   /* used in save-marks (below) and the edit history stuff in snd-edits.c
-   *   changed incompatibly 23-Sep-06 -- restore-marks is now a no-op, and
-   *   no attempt is made to save the entire mark history.
+   *   changed 23-Sep-06 -- restore-marks is now a no-op, and no attempt is made to save the entire mark history.
    */
 
   save_mark_info *sv;
-  if (!(find_any_marks(cp, NULL))) return;
+  if ((!all_chans) && (!(find_any_marks(cp, NULL)))) return; /* in the sound (all_chans) case, this has been checked already */
   sv = (save_mark_info *)CALLOC(1, sizeof(save_mark_info));
   sv->fd = fd;
   sv->size = 0;
   sv->syncs = NULL;
-  map_over_marks(cp, save_mark, (void *)sv, READ_FORWARD);
+  if (all_chans)
+    {
+      int i;
+      snd_info *sp;
+      sp = cp->sound;
+      for (i = 0; i < sp->nchans; i++)
+	map_over_marks(sp->chans[i], save_mark, (void *)sv, READ_FORWARD);
+    }
+  else map_over_marks(cp, save_mark, (void *)sv, READ_FORWARD);
   if (sv->size > 0)
     {
       int i;
@@ -2415,10 +2424,9 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
 #if HAVE_FORTH
 	  fprintf(fd, "#f value sfile\n");
 #endif
-	  open_save_sound_block(sp, fd, false); /* find-sound or open it with enclosing let */
-	  for (i = 0; i < sp->nchans; i++)
-	    save_mark_list(fd, sp->chans[i]);
-	  close_save_sound_block(fd, false);           /* close the let form */
+	  open_save_sound_block(sp, fd, false);   /* find-sound or open it with enclosing let */
+	  save_mark_list(fd, sp->chans[0], true); /* true -> save all chans, matching cross-channel syncs */
+	  close_save_sound_block(fd, false);      /* close the let form */
 	  snd_fclose(fd, newname);
 	  res = C_TO_XEN_STRING(newname);
 	}
@@ -2504,7 +2512,6 @@ void g_init_marks(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_name, g_mark_name_w, H_mark_name,
 				   S_setB S_mark_name, g_set_mark_name_w, 0, 1, 2, 0);
 
-  XEN_DEFINE_PROCEDURE(S_restore_marks, g_restore_marks_w, 4, 0, 0, "internal func used in save-state, restores marks");
   XEN_DEFINE_PROCEDURE(S_mark_sync_max, g_mark_sync_max_w, 0, 0, 0, H_mark_sync_max);
   XEN_DEFINE_PROCEDURE(S_mark_home,     g_mark_home_w,     0, 1, 0, H_mark_home);
   XEN_DEFINE_PROCEDURE(S_marks,         g_marks_w,         0, 3, 0, H_marks);
@@ -2530,6 +2537,9 @@ If the hook returns #t, the mark is not drawn."
 #if MUS_DEBUGGING && HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("internal-test-control-drag-mark", g_test_control_drag_mark_w, 3, 0, 0, "internal testing func");
 #endif
+
+  /* obsolete */
+  XEN_DEFINE_PROCEDURE(S_restore_marks, g_restore_marks_w, 4, 0, 0, "no-op for backwards compatibility");
 }
 
 
