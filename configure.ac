@@ -299,7 +299,7 @@ AC_CHECK_FUNCS(vsnprintf snprintf strftime memmove strdup lstat fileno strcasecm
 
 AC_LIB_PROG_LD
 AC_PROG_FGREP
-AC_DEFINE_UNQUOTED(FGREP_PROG, "$ac_cv_prog_fgrep")
+AC_DEFINE_UNQUOTED(FGREP_PROG, "$FGREP")
 
 AC_MSG_CHECKING(for __func__)
 AC_LINK_IFELSE(

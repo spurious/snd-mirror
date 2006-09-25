@@ -90,12 +90,8 @@
  *                       carg[angle] creal cimag, complex double _Complex_I
  *            all arithmetic needs extra complex checks etc
  *
- * SOMEDAY: support for vector of def-clm-structs
- *            the struct variable value is a list '(TYPE fields...) as '(hiho 3 32)
- *            we have the currently known clm types so we could check each list in the vector 
- *               (all the same type, and a known type)
- *               would need clm-struct-vector (lists) -- see l1990 for clm-vector
- *               XEN * field in vect struct (l450)
+ * SOMEDAY: completion of support for vector of def-clm-structs
+ *            see comment about lists below ca line 10931
  */
 
 #include "snd.h"
@@ -10932,7 +10928,10 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	if (strcmp(funcname, clm_struct_names[k]) == 0)
 	  return(clean_up(clm_struct_ref(prog, args[1], k, NULL), args, num_args));
 
-      /* TODO: make this a run-time check -- can be a vector reference now as well as a list constant */
+      /* TODO: make this a run-time check -- can be a vector reference now as well as a list constant
+       *    but this a lot harder than it looks -- currently all list ops are either "compile-time" on
+       *    a list-assumed-constant, or use scm_apply and fallback on scheme. 
+       */
       for (k = 0; k < clm_types_top; k++)
 	if (strcmp(funcname, clm_qtypes[k]) == 0)
 	  return(clean_up(make_xen_value(R_BOOL, 

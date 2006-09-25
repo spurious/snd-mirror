@@ -1,5 +1,6 @@
 Snd change log
 
+  26-Sep:    save-marks changed to keep matching sync values, add-marks takes name and sync args.
   12-Sep:    Snd 8.4.
   6-Sep:     def-optkey-instrument.
   1-Sep:     snd_frg.scm thanks to Olivier Doare.

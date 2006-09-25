@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: find the gtk memory leak! */
-
 bool set_tiny_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
@@ -285,6 +283,8 @@ void check_for_event(void)
    *   ==22804==    by 0x461DAE4: g_main_context_iteration (gmain.c:2736)
    *   ==22804==    by 0x424A383: gtk_main_iteration (gtkmain.c:1084)
    *   ==22804==    by 0x81D6507: check_for_event (snd-gutils.c:272)
+   *
+   * this happens (to the same extent) even in shorter cases
    */
 
   int i = 0;

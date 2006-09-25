@@ -496,6 +496,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+26-Sep:  save-marks changed to keep matching sync values, add-marks takes name and sync args.\n\
 12-Sep:  Snd 8.4\n\
 6-Sep:   def-optkey-instrument.\n\
 1-Sep:   snd_frg.scm thanks to Olivier Doare.\n\
@@ -3349,6 +3350,8 @@ static char *snd_finder(const char *name, bool got_help)
   bool is_defined = false;
   int a_def = 0, dir_len = 0, i;
   XEN dirs = XEN_EMPTY_LIST;
+
+  if (snd_strlen(FGREP_PROG) == 0) return(NULL); /* configure didn't find a plausible fgrep */
 
 #if HAVE_GUILE || (!HAVE_EXTENSION_LANGUAGE)
   #define NUM_DEFINES 5

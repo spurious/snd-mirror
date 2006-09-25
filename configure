@@ -10274,7 +10274,7 @@ echo "${ECHO_T}$ac_cv_path_FGREP" >&6; }
 
 
 cat >>confdefs.h <<_ACEOF
-#define FGREP_PROG "$ac_cv_prog_fgrep"
+#define FGREP_PROG "$FGREP"
 _ACEOF
 
 
