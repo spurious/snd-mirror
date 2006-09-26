@@ -54,28 +54,6 @@
  *        (lambda (w) (if (XmIsToggleButton w) (XmToggleButtonSetState w #t #t)))))
  *
  * SOMEDAY: (scheme)   r6rs changes, in particular ->exact (filter is another)
- * SOMEDAY: change config.h to snd-config.h and clm-config.h (collisions in several cases like ecl)
- *         but if user is loading libsndlib, how to avoid collisions between its config.h and snd's?
- *
- *        cmus.h:#include <config.h> -- clm configure also uses all of the sndlib files, so this can't be changed to clm-config
- *        snd.h:#include <config.h>
- *        _sndlib.h:#include <config.h>
- *
- *        audio.c:#include <config.h>
- *        clm2xen.c:#include <config.h>
- *        clm.c:#include <config.h>
- *        gl.c:#include <config.h>
- *        headers.c:#include <config.h>
- *        io.c:#include <config.h>
- *        midi.c:#include <config.h>
- *        sndlib2xen.c:#include <config.h>
- *        sound.c:#include <config.h>
- *        vct.c:#include <config.h>
- *        xen.c:#include <config.h>
- *        xg.c:#include <config.h>
- *        xm.c:#include <config.h>
- *
- * SOMEDAY: vct -> mus_vct (struct name), also all sound_data stuff (sndlib2xen.h -- remove this entirely?), Init_sndlib: clm2xen.c -- ruby requirement?
  */
 
 /* -------- protect XEN vars from GC -------- */

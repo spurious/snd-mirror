@@ -66,7 +66,7 @@ and run simple lisp[4] functions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (eval-c  (string-append "-I" snd-header-files-path)
-	 "#include <config.h>"
+	 "#include <mus-config.h>"
 	 "#include <clm.h>"
 	 "#include <xen.h>"
 	 "#include <clm2xen.h>"
@@ -4706,7 +4706,7 @@ and run simple lisp[4] functions.
 
 
 (eval-c (string-append "-I" snd-header-files-path " " (string #\`) "pkg-config --libs sndfile" (string #\`) )
-	"#include <config.h>"
+	"#include <mus-config.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
 	"#include <clm2xen.h>"
@@ -5537,7 +5537,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 
 (eval-c (<-> "-I" snd-header-files-path " ")
-	"#include <config.h>"
+	"#include <mus-config.h>"
 	"#include <ladspa.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
@@ -5972,7 +5972,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 (define *rt-rb-overlap* 10) ;; 10% overlap
 
 (eval-c (<-> "-I" snd-header-files-path " -ffast-math ")
-	"#include <config.h>"
+	"#include <mus-config.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
 	"#include <vct.h>"
@@ -7421,7 +7421,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	  
 	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -ffast-math ") ;; "-ffast-math") ;; " -Werror "
 						#f
-						"#include <config.h>"
+						"#include <mus-config.h>"
 						"#include <math.h>"
 						"#include <clm.h>"
 						"#include <xen.h>"

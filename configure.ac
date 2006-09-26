@@ -6,7 +6,7 @@ AC_INIT(snd, 8.5, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
-AC_CONFIG_HEADERS(config.h sndlib.h)
+AC_CONFIG_HEADERS(mus-config.h sndlib.h)
 AC_CONFIG_FILES(makefile po/Makefile.in )
 AC_PROG_CC
 AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER! (is this the case in 2.60?)
@@ -599,7 +599,7 @@ else
 
     if test "$with_editres" = yes ; then
 	AC_CHECK_LIB(Xmu, _XEditResCheckMessages, 
-			[AC_DEFINE(WITH_EDITRES)
+			[AC_DEFINE(MUS_WITH_EDITRES)
 	                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES editres"
 			 X_PRE_LIBS="$X_PRE_LIBS -lXmu"
    		         TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu"

@@ -6,7 +6,7 @@
  *   a factor of 2.
  */
 
-#include <config.h>
+#include <mus-config.h>
 
 #if USE_SND
   #include "snd.h"
@@ -92,7 +92,9 @@ int mus_make_class_tag(void) {return(mus_class_tag++);}
 
 static Float sampling_rate = MUS_DEFAULT_SAMPLING_RATE;
 static Float w_rate = (TWO_PI / MUS_DEFAULT_SAMPLING_RATE);
+
 static int array_print_length = MUS_DEFAULT_ARRAY_PRINT_LENGTH;
+
 static int clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
 int mus_file_buffer_size(void) {return(clm_file_buffer_size);}
 int mus_set_file_buffer_size(int size) {clm_file_buffer_size = size; return(size);}
@@ -566,6 +568,7 @@ off_t mus_location(mus_any *gen)
 /* ---------------- AM etc ---------------- */
 
 Float mus_ring_modulate(Float sig1, Float sig2) {return(sig1 * sig2);}
+
 Float mus_amplitude_modulate(Float carrier, Float sig1, Float sig2) {return(sig1 * (carrier + sig2));}
 
 Float mus_contrast_enhancement(Float sig, Float index) {return(sin((sig * M_PI_2) + (index * sin(sig * TWO_PI))));}

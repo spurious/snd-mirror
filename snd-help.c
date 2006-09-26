@@ -497,6 +497,7 @@ void about_snd_help(void)
 		"\nRecent changes include:\n\
 \n\
 26-Sep:  save-marks changed to keep matching sync values, add-marks takes name and sync args.\n\
+         moved config.h.in to mus-config.h.in\n\
 12-Sep:  Snd 8.4\n\
 6-Sep:   def-optkey-instrument.\n\
 1-Sep:   snd_frg.scm thanks to Olivier Doare.\n\

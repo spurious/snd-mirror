@@ -480,7 +480,7 @@
 (hey " *     20-May-02: initial version.~%")
 (hey " */~%~%")
 
-(hey "#include <config.h>~%~%")
+(hey "#include <mus-config.h>~%~%")
 
 (hey "#if HAVE_EXTENSION_LANGUAGE~%")
 (hey "#if USE_GTK~%")

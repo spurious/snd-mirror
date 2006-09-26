@@ -15,7 +15,7 @@
  * currently OSX, ALSA, SGI (both libraries), OSS
  */
 
-#include <config.h>
+#include <mus-config.h>
 
 #include <stdio.h>
 #if HAVE_FCNTL_H

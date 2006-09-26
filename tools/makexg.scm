@@ -1694,7 +1694,7 @@
 (hey " *     11-Feb-02: initial version.~%")
 (hey " */~%~%")
 
-(hey "#include <config.h>~%~%")
+(hey "#include <mus-config.h>~%~%")
 
 (hey "#if HAVE_EXTENSION_LANGUAGE~%~%")
 

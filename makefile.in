@@ -62,8 +62,8 @@ VPATH = @srcdir@
 
 mkinstalldirs = $(SHELL) $(srcdir)/mkinstalldirs
 
-SNDLIB_HEADERS = config.h sndlib.h _sndlib.h sndlib-strings.h clm.h vct.h sndlib2xen.h clm2xen.h xen.h clm-strings.h
-SND_HEADERS = config.h sndlib.h _sndlib.h clm.h snd.h snd-0.h snd-1.h snd-strings.h snd-rec.h xen.h snd-menu.h snd-file.h
+SNDLIB_HEADERS = mus-config.h sndlib.h _sndlib.h sndlib-strings.h clm.h vct.h sndlib2xen.h clm2xen.h xen.h clm-strings.h
+SND_HEADERS = mus-config.h sndlib.h _sndlib.h clm.h snd.h snd-0.h snd-1.h snd-strings.h snd-rec.h xen.h snd-menu.h snd-file.h
 SND_X_HEADERS = snd-x0.h snd-x1.h
 SND_G_HEADERS = snd-g0.h snd-g1.h
 SNDLIB_O_FILES = headers.o audio.o io.o sound.o clm.o xen.o vct.o sndlib2xen.o clm2xen.o
@@ -138,7 +138,7 @@ clean:
 	rm -f snd sndplay audinfo sndrecord sndinfo
 
 distclean: clean
-	rm -f config.h config.log config.status makefile
+	rm -f mus-config.h config.log config.status makefile
 
 clmclean:
 	rm io.o headers.o audio.o sound.o clm.o

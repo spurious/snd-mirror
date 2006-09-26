@@ -1,6 +1,6 @@
 /* sound.c */
 
-#include <config.h>
+#include <mus-config.h>
 
 #if USE_SND
   #include "snd.h"

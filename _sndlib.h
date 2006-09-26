@@ -5,7 +5,7 @@
 #define SNDLIB_REVISION 0
 #define SNDLIB_DATE "28-Mar-06"
 
-#include <config.h>
+#include <mus-config.h>
 
 #if HAVE_UNISTD_H && (!(defined(_MSC_VER)))
   #include <unistd.h>

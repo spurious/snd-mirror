@@ -225,7 +225,7 @@ int main(int argc, char **argv)
   add_header("snd-nogui1.h");
   add_header("snd-rec.h");
   add_header("xen.h");
-  add_header("config.h.in");
+  add_header("mus-config.h.in");
   add_header("libclm.def");
   add_header("snd-menu.h");
   add_header("snd-file.h");
@@ -611,7 +611,7 @@ int main(int argc, char **argv)
 	  /* try to get rid of a bunch of annoying false positives */
 	  if ((qs[i]->calls == 0) &&
 	      ((strcmp(qs[i]->hname, "xen.h") == 0) || 
-	       (strcmp(qs[i]->hname, "config.h.in") == 0) ||
+	       (strcmp(qs[i]->hname, "mus-config.h.in") == 0) ||
 	       (qs[i]->name[strlen(qs[i]->name) - 2] == '_') &&
 	       ((qs[i]->name[strlen(qs[i]->name) - 1] == 't') || (qs[i]->name[strlen(qs[i]->name) - 1] == 'H'))))
 	    {

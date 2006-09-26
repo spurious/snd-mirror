@@ -1937,7 +1937,7 @@ IFS=$ac_save_IFS
 case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
-ac_config_headers="$ac_config_headers config.h sndlib.h"
+ac_config_headers="$ac_config_headers mus-config.h sndlib.h"
 
 ac_config_files="$ac_config_files makefile po/Makefile.in"
 
@@ -13375,7 +13375,7 @@ fi
 echo "${ECHO_T}$ac_cv_lib_Xmu__XEditResCheckMessages" >&6; }
 if test $ac_cv_lib_Xmu__XEditResCheckMessages = yes; then
   cat >>confdefs.h <<\_ACEOF
-#define WITH_EDITRES 1
+#define MUS_WITH_EDITRES 1
 _ACEOF
 
 	                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES editres"
@@ -26227,7 +26227,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
+    "mus-config.h") CONFIG_HEADERS="$CONFIG_HEADERS mus-config.h" ;;
     "sndlib.h") CONFIG_HEADERS="$CONFIG_HEADERS sndlib.h" ;;
     "makefile") CONFIG_FILES="$CONFIG_FILES makefile" ;;
     "po/Makefile.in") CONFIG_FILES="$CONFIG_FILES po/Makefile.in" ;;

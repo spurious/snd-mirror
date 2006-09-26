@@ -36956,7 +36956,7 @@ EDITS: 1
       
       (run-hook before-test-hook 20)
 
-      (if (defined? 'bes-j0) ; dependent on config.h HAVE_SPECIAL_FUNCTIONS
+      (if (defined? 'bes-j0) ; dependent on mus-config.h HAVE_SPECIAL_FUNCTIONS
 	  (begin
 	    (test-j0)
 	    (test-j1)

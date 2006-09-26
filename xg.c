@@ -91,7 +91,7 @@
  *     11-Feb-02: initial version.
  */
 
-#include <config.h>
+#include <mus-config.h>
 
 #if HAVE_EXTENSION_LANGUAGE
 
@@ -42941,7 +42941,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("09-Sep-06"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("26-Sep-06"));
       xg_already_inited = true;
 /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
 #if HAVE_SCHEME

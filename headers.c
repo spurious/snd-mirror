@@ -67,7 +67,7 @@
  * ivc format appears to have 16 bytes of header (-1 5 0 0 0 0 -> mulaw) followed by mulaw or alaw data
  */
 
-#include <config.h>
+#include <mus-config.h>
 
 #if USE_SND
   #include "snd.h"

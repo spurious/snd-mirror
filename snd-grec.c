@@ -1,7 +1,6 @@
 #include "snd.h"
 #include "snd-rec.h"
 
-/* SOMEDAY: if user resizes dialog, resize vu meters */
 /* TODO: if user changes vu-size after meters created, make sure the pixmaps are big enough (this is probably safe now because the size can't change) */
 
 typedef struct {

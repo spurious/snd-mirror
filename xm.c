@@ -3,7 +3,7 @@
  *   for tests and examples see snd-motif.scm, bess.scm|rb, and snd-test.scm
  */
 
-#include <config.h>
+#include <mus-config.h>
 
 #define XM_DATE "26-Aug-06"
 
@@ -77,7 +77,7 @@
  *   15-Oct:    XtGetResourceList.
  *   11-Oct:    xm-ruby XM_DEFINE* cleaned up (thanks to Michael Scholz).
  *              removed all (ignored) XrmOptionDesc args (XtAppInitialize etc).
- *   8-Oct:     added WITH_EDITRES to include _XEditResCheckMessages.
+ *   8-Oct:     added [MUS_]WITH_EDITRES to include _XEditResCheckMessages.
  *   1-Oct:     some int args are now KeyCodes (Modifiermap stuff).
  *   23-Sep:    X ScreenSaver constants omitted earlier.
  *   18-Sep:    properties XFontStruct field now returns list of all properties.
@@ -151,7 +151,7 @@
 #include <X11/extensions/shape.h>
 #endif
 
-/* compile-time flags are HAVE_XPM HAVE_MOTIF HAVE_XM_XP HAVE_GUILE|HAVE_RUBY XM_DISABLE_DEPRECATED WITH_EDITRES */
+/* compile-time flags are HAVE_XPM HAVE_MOTIF HAVE_XM_XP HAVE_GUILE|HAVE_RUBY XM_DISABLE_DEPRECATED MUS_WITH_EDITRES */
 
 /* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */
 
@@ -210,7 +210,7 @@
 #if HAVE_XmCreateColorSelector
   #include <Xm/ColorS.h>
 #endif
-#if WITH_EDITRES
+#if MUS_WITH_EDITRES
   #include <X11/Xmu/Editres.h>
 #endif
 
@@ -18545,7 +18545,7 @@ static XEN gxm_set_npixels(XEN ptr, XEN val)
 #endif
 /* HAVE_XPM */
 
-#if WITH_EDITRES
+#if MUS_WITH_EDITRES
 static XEN gxm_XEditResCheckMessages(XEN widget, XEN data, XEN event, XEN cont)
 {
   Boolean flag;
@@ -23138,7 +23138,7 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(XEN_XpmImage_p_w, XEN_XpmImage_p)
   XEN_NARGIFY_1(XEN_XpmColorSymbol_p_w, XEN_XpmColorSymbol_p)
 #endif
-#if WITH_EDITRES
+#if MUS_WITH_EDITRES
   XEN_NARGIFY_4(gxm_XEditResCheckMessages_w, gxm_XEditResCheckMessages)
 #endif
 
@@ -24895,7 +24895,7 @@ static XEN gxm_page_number(XEN ptr)
   #define XEN_XpmImage_p_w XEN_XpmImage_p
   #define XEN_XpmColorSymbol_p_w XEN_XpmColorSymbol_p
 #endif
-#if WITH_EDITRES
+#if MUS_WITH_EDITRES
   #define gxm_XEditResCheckMessages_w gxm_XEditResCheckMessages
 #endif
 
@@ -26740,7 +26740,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE("->Atoms", c_to_xen_atoms_w, 2, 0, 0, H_to_Atoms);
   XEN_DEFINE_PROCEDURE("->XRectangles", c_to_xen_xrectangles_w, 2, 0, 0, H_to_XRectangles);
 #endif
-#if WITH_EDITRES
+#if MUS_WITH_EDITRES
   XM_DEFINE_PROCEDURE(_XEditResCheckMessages, gxm_XEditResCheckMessages_w, 4, 0, 0, NULL);
 #endif
 

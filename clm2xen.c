@@ -5,7 +5,7 @@
  *    perhaps a mus module, giving mus:sound-srate in xen, mus:sound-srate in clm, mus_sound_srate in C?
  */
 
-#include <config.h>
+#include <mus-config.h>
 
 #if USE_SND
   #include "snd.h"

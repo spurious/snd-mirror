@@ -226,7 +226,7 @@ typedef struct {
 typedef struct {
   off_t samp;
   char *name;
-  unsigned int id, sync;
+  int id, sync;
   bool visible;
 } mark;
 

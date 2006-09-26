@@ -45,7 +45,7 @@
  * the Snd package; others can be found in the CLM package (clm2xen.c).
  */
 
-#include <config.h>
+#include <mus-config.h>
 
 #if USE_SND
   #include "snd.h"

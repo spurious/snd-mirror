@@ -112,7 +112,7 @@ rt-player.scm
 
 
 (eval-c (<-> "-I" snd-header-files-path)
-	"#include <config.h>"
+	"#include <mus-config.h>"
 	"#include <xen.h>"
 	"#include <vct.h>"
 	

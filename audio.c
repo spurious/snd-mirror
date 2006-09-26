@@ -40,7 +40,7 @@
  *   cases, I'll use mus_print, not mus_error.
  */
 
-#include <config.h>
+#include <mus-config.h>
 
 #if USE_SND && MUS_MAC_OSX && USE_MOTIF
   #undef USE_MOTIF

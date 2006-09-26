@@ -126,16 +126,16 @@ static void options_transform_callback(GtkWidget *w, gpointer info) {fire_up_tra
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_callback(GtkWidget *w, gpointer info) {save_options_from_menu();}
 #endif
-static void options_focus_right_callback(GtkWidget *w, gpointer info, gpointer Data) {set_zoom_focus_style(ZOOM_FOCUS_RIGHT);}
-static void options_focus_left_callback(GtkWidget *w, gpointer info, gpointer Data) {set_zoom_focus_style(ZOOM_FOCUS_LEFT);}
-static void options_focus_middle_callback(GtkWidget *w, gpointer info, gpointer Data) {set_zoom_focus_style(ZOOM_FOCUS_MIDDLE);}
-static void options_focus_active_callback(GtkWidget *w, gpointer info, gpointer Data) {set_zoom_focus_style(ZOOM_FOCUS_ACTIVE);}
+static void options_focus_right_callback(GtkWidget *w, gpointer info, gpointer data) {set_zoom_focus_style(ZOOM_FOCUS_RIGHT);}
+static void options_focus_left_callback(GtkWidget *w, gpointer info, gpointer data) {set_zoom_focus_style(ZOOM_FOCUS_LEFT);}
+static void options_focus_middle_callback(GtkWidget *w, gpointer info, gpointer data) {set_zoom_focus_style(ZOOM_FOCUS_MIDDLE);}
+static void options_focus_active_callback(GtkWidget *w, gpointer info, gpointer data) {set_zoom_focus_style(ZOOM_FOCUS_ACTIVE);}
 
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_state_callback(GtkWidget *w, gpointer info) {save_state_from_menu();}
 #endif
 
-static void options_preferences_callback(GtkWidget *w, gpointer info, gpointer Data) {start_preferences_dialog();}
+static void options_preferences_callback(GtkWidget *w, gpointer info, gpointer data) {start_preferences_dialog();}
 
 
 /* -------------------------------- HELP MENU -------------------------------- */
