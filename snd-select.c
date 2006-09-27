@@ -631,6 +631,7 @@ int make_region_from_selection(void)
   bool happy = false;
   sync_info *si;
   if (!(selection_is_active())) return(-1);
+  if (max_regions(ss) == 0) return(-1);
   si = selection_sync();
   ends = (off_t *)CALLOC(si->chans, sizeof(off_t));
   for (i = 0; i < si->chans; i++) 
@@ -905,7 +906,7 @@ static XEN g_delete_selection(void)
 
 static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 {
-  #define H_insert_selection "(" S_insert_selection " (beg 0) (snd #f) (chn #f)): insert the currently selected portion starting at beg"
+  #define H_insert_selection "(" S_insert_selection " (beg 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ")): insert the currently selected portion starting at beg"
   if (selection_is_active())
     {
       chan_info *cp;
@@ -934,7 +935,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 
 static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
 {
-  #define H_mix_selection "(" S_mix_selection " (beg 0) (snd #f) (chn #f)): mix the currently selected portion starting at beg"
+  #define H_mix_selection "(" S_mix_selection " (beg 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ")): mix the currently selected portion starting at beg"
   if (selection_is_active())
     {
       chan_info *cp;
@@ -963,13 +964,13 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
 
 static XEN g_selection_p(void)
 {
-  #define H_selection_p "(" S_selection_p "): #t if selection is currently active, visible, etc"
+  #define H_selection_p "(" S_selection_p "): " PROC_TRUE " if selection is currently active, visible, etc"
   return(C_TO_XEN_BOOLEAN(selection_is_active()));
 }
 
 static XEN g_selection_position(XEN snd, XEN chn)
 {
-  #define H_selection_position "(" S_selection_position " (snd #f) (chn #f)): selection start samp"
+  #define H_selection_position "(" S_selection_position " (snd " PROC_FALSE ") (chn " PROC_FALSE ")): selection start samp"
   if (selection_is_active())
     {
       if (XEN_NOT_BOUND_P(snd))
@@ -1025,7 +1026,7 @@ WITH_THREE_SETTER_ARGS(g_set_selection_position_reversed, g_set_selection_positi
 
 static XEN g_selection_frames(XEN snd, XEN chn)
 {
-  #define H_selection_frames "(" S_selection_frames " (snd #f) (chn #f)): selection length"
+  #define H_selection_frames "(" S_selection_frames " (snd " PROC_FALSE ") (chn " PROC_FALSE ")): selection length"
   if (selection_is_active())
     {
       if (XEN_NOT_BOUND_P(snd))
@@ -1083,7 +1084,7 @@ WITH_THREE_SETTER_ARGS(g_set_selection_frames_reversed, g_set_selection_frames)
 
 static XEN g_selection_member(XEN snd, XEN chn)
 {
-  #define H_selection_member "(" S_selection_member " (snd #f) (chn #f)): #t if snd's channel chn is a member of the current selection"
+  #define H_selection_member "(" S_selection_member " (snd " PROC_FALSE ") (chn " PROC_FALSE ")): " PROC_TRUE " if snd's channel chn is a member of the current selection"
   chan_info *cp;
   ASSERT_CHANNEL(S_selection_member, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_member);
@@ -1121,8 +1122,8 @@ WITH_THREE_SETTER_ARGS(g_set_selection_member_reversed, g_set_selection_member)
 
 static XEN g_select_all(XEN snd_n, XEN chn_n)
 {
-  #define H_select_all "(" S_select_all " (snd #f) (chn #f)): make a new selection containing all of snd's channel chn. \
-If sync is set, all chans are included.  The new region id is returned (if " S_selection_creates_region " is #t)."
+  #define H_select_all "(" S_select_all " (snd " PROC_FALSE ") (chn " PROC_FALSE ")): make a new selection containing all of snd's channel chn. \
+If sync is set, all chans are included.  The new region id is returned (if " S_selection_creates_region " is " PROC_TRUE ")."
   chan_info *cp;
   int id;
   ASSERT_CHANNEL(S_select_all, snd_n, chn_n, 1);
@@ -1225,7 +1226,7 @@ static XEN g_selection_srate(void)
 
 static XEN g_selection_maxamp(XEN snd, XEN chn)
 {
-  #define H_selection_maxamp "(" S_selection_maxamp " (snd #f) (chn #f)): selection maxamp in given channel"
+  #define H_selection_maxamp "(" S_selection_maxamp " (snd " PROC_FALSE ") (chn " PROC_FALSE ")): selection maxamp in given channel"
   chan_info *cp;
   ASSERT_CHANNEL(S_selection_maxamp, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_maxamp);
@@ -1235,7 +1236,7 @@ static XEN g_selection_maxamp(XEN snd, XEN chn)
 
 static XEN g_selection_maxamp_position(XEN snd, XEN chn)
 {
-  #define H_selection_maxamp_position "(" S_selection_maxamp_position " (snd #f) (chn #f)): location of selection maxamp (0 = start of selection)"
+  #define H_selection_maxamp_position "(" S_selection_maxamp_position " (snd " PROC_FALSE ") (chn " PROC_FALSE ")): location of selection maxamp (0 = start of selection)"
   chan_info *cp;
   ASSERT_CHANNEL(S_selection_maxamp_position, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_maxamp_position);

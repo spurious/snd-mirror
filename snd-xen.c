@@ -47,14 +47,9 @@
 /* TODO: (gauche)   stacktrace and errors->listener (current-load-history)
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
  * TODO: (gauche)   unwind-protects around scm_apply (snd-xen g_call)
- * TODO: (gauche)   what does "not applicable (#t)" mean?  seems to be tail-recursion confusion
- *                  changing one #t to #f fixed it??
- *    (let* ((topics (find-child (preferences-dialog) "pref-scroller")))
- *      (for-each-child topics
- *        (lambda (w) (if (XmIsToggleButton w) (XmToggleButtonSetState w #t #t)))))
- *
  * SOMEDAY: (scheme)   r6rs changes, in particular ->exact (filter is another)
  */
+
 
 /* -------- protect XEN vars from GC -------- */
 
@@ -2163,7 +2158,7 @@ void g_xen_initialize(void)
   gc_protection = XEN_FALSE;
 
   XEN_DEFINE_PROCEDURE(S_snd_print,             g_snd_print_w,             1, 0, 0, H_snd_print);
-  XEN_DEFINE_PROCEDURE("little-endian?",        g_little_endian_w,         0, 0, 0, "return #t if host is little endian");
+  XEN_DEFINE_PROCEDURE("little-endian?",        g_little_endian_w,         0, 0, 0, "return " PROC_TRUE " if host is little endian");
 
 #if (!HAVE_GAUCHE)
   XEN_DEFINE_PROCEDURE("fmod",                  g_fmod_w,                  2, 0, 0, "C's fmod");

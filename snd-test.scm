@@ -49870,7 +49870,7 @@ EDITS: 1
 					    (XmTextFieldSetString w "1")
 					    (XtCallCallbacks w XmNactivateCallback #f))
 					  (if (XmIsToggleButton w)
-					      (XmToggleButtonSetValue w XmSET #t)
+					      (XmToggleButtonSetValue w XmSET #f) ; #t here = segfault in 64 case
 					      (if (XmIsPushButton w)
 						  (if (XtIsSensitive w)
 						      (click-button w #t 0))

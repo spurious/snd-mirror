@@ -1025,7 +1025,7 @@ void ripple_marks(chan_info *cp, off_t beg, off_t change)
 
 bool mark_define_region(chan_info *cp, int count)
 {
-  if (cp)
+  if ((cp) && (max_regions(ss) > 0))
     {
       if (cp->marks)
 	{
@@ -1870,7 +1870,7 @@ static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, const char *caller)
 
 static XEN g_mark_p(XEN id_n)
 {
-  #define H_mark_p "(" S_mark_p " id): #t if mark is active"
+  #define H_mark_p "(" S_mark_p " id): " PROC_TRUE " if mark is active"
   if (XEN_INTEGER_P(id_n))
     return(C_TO_XEN_BOOLEAN(find_mark_from_id(XEN_TO_C_INT(id_n), NULL, AT_CURRENT_EDIT_POSITION)));
   return(XEN_FALSE);
@@ -1913,7 +1913,7 @@ char *r_mark_name(int n)
 
 static XEN g_mark_sample(XEN mark_n, XEN pos_n) 
 {
-  #define H_mark_sample "(" S_mark_sample " (id #f) (pos #f)): mark's location (sample number) at edit history pos"
+  #define H_mark_sample "(" S_mark_sample " (id " PROC_FALSE ") (pos " PROC_FALSE ")): mark's location (sample number) at edit history pos"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, S_mark_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pos_n), pos_n, XEN_ARG_2, S_mark_sample, "an integer");
   return(mark_get(mark_n, MARK_SAMPLE, pos_n, S_mark_sample));
@@ -1942,7 +1942,7 @@ static XEN g_set_mark_sync(XEN mark_n, XEN sync_n)
 
 static XEN g_mark_name(XEN mark_n) 
 {
-  #define H_mark_name "(" S_mark_name " id (snd #f) (chn #f)): mark's name"
+  #define H_mark_name "(" S_mark_name " id (snd " PROC_FALSE ") (chn " PROC_FALSE ")): mark's name"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_name, "an integer");
   return(mark_get(mark_n, MARK_NAME, XEN_UNDEFINED, S_mark_name));
 }
@@ -1969,7 +1969,7 @@ static XEN g_mark_home(XEN mark_n)
 
 static XEN g_find_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos) 
 {
-  #define H_find_mark "(" S_find_mark " samp-or-name (snd #f) (chn #f) (edpos #f)): \
+  #define H_find_mark "(" S_find_mark " samp-or-name (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): \
 find the mark in snd's channel chn at samp (if a number) or with the given name (if a string); return the mark id or " PROC_FALSE " if no mark found."
 
   mark **mps;
@@ -2012,7 +2012,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
 
 static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync) 
 {
-  #define H_add_mark "(" S_add_mark " samp (snd #f) (chn #f) name (sync 0)): add a mark at sample samp returning the mark id."
+  #define H_add_mark "(" S_add_mark " samp (snd " PROC_FALSE ") (chn " PROC_FALSE ") name (sync 0)): add a mark at sample samp returning the mark id."
   mark *m = NULL;
   chan_info *cp;
   off_t loc;
@@ -2020,7 +2020,7 @@ static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync)
   char *mname = NULL;
 
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_add_mark, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name) || XEN_FALSE_P(name), name, XEN_ARG_4, S_add_mark, "a string or #f");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name) || XEN_FALSE_P(name), name, XEN_ARG_4, S_add_mark, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sync), sync, XEN_ARG_5, S_add_mark, "an integer");
   ASSERT_CHANNEL(S_add_mark, snd_n, chn_n, 2);
 
@@ -2065,7 +2065,7 @@ static XEN g_delete_mark(XEN id_n)
 
 static XEN g_delete_marks(XEN snd_n, XEN chn_n) 
 {
-  #define H_delete_marks "(" S_delete_marks " (snd #f) (chn #f)): delete all marks in snd's channel chn"
+  #define H_delete_marks "(" S_delete_marks " (snd " PROC_FALSE ") (chn " PROC_FALSE ")): delete all marks in snd's channel chn"
   chan_info *cp;
   ASSERT_CHANNEL(S_delete_marks, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_delete_marks);
@@ -2158,7 +2158,7 @@ static int *channel_marks(chan_info *cp, int pos)
 
 static XEN g_marks(XEN snd_n, XEN chn_n, XEN pos_n) 
 {
-  #define H_marks "(" S_marks " (snd) (chn) (edpos #f)): list of marks (ids) in snd/chn at edit history position pos. \
+  #define H_marks "(" S_marks " (snd) (chn) (edpos " PROC_FALSE ")): list of marks (ids) in snd/chn at edit history position pos. \
 mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neither given: (((id ...) ...) ...)."
   chan_info *cp;
   snd_info *sp;
@@ -2379,7 +2379,7 @@ void save_mark_list(FILE *fd, chan_info *cp, bool all_chans)
 
 static XEN g_save_marks(XEN snd_n, XEN filename)
 {
-  #define H_save_marks "(" S_save_marks " (snd #f) (filename \"<snd-file-name>.marks\")): save snd's marks in filename. \
+  #define H_save_marks "(" S_save_marks " (snd " PROC_FALSE ") (filename \"<snd-file-name>.marks\")): save snd's marks in filename. \
 The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that file."
   snd_info *sp;
   XEN res = XEN_FALSE;
@@ -2530,7 +2530,7 @@ void g_init_marks(void)
 				   S_setB S_mark_tag_height, g_set_mark_tag_height_w, 0, 0, 1, 0);
 
   #define H_draw_mark_hook S_draw_mark_hook " (mark-id): called before a mark is drawn (in XOR mode). \
-If the hook returns #t, the mark is not drawn."
+If the hook returns " PROC_TRUE ", the mark is not drawn."
 
   draw_mark_hook = XEN_DEFINE_HOOK(S_draw_mark_hook, 1, H_draw_mark_hook);  /* arg = mark-id */
 

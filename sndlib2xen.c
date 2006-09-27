@@ -9,9 +9,11 @@
   #define LABEL_BUFFER_SIZE 64
   #if HAVE_RUBY
     #define PROC_FALSE "false"
+    #define PROC_TRUE "true"
   #endif
   #if HAVE_SCHEME || HAVE_FORTH
     #define PROC_FALSE "#f"
+    #define PROC_TRUE "#t"
   #endif
 #endif
 
@@ -444,7 +446,7 @@ static XEN g_mus_alsa_set_squelch_warning(XEN val)
 
 static XEN g_mus_sound_maxamp_exists(XEN file)
 {
-  #define H_mus_sound_maxamp_exists "(" S_mus_sound_maxamp_exists " filename): #t if sound's maxamp data is available \
+  #define H_mus_sound_maxamp_exists "(" S_mus_sound_maxamp_exists " filename): " PROC_TRUE " if sound's maxamp data is available \
 in the sound cache; if it isn't, a call on " S_mus_sound_maxamp " has to open and read the data to get the maxamp."
   bool val;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp_exists, "a string");
@@ -887,7 +889,7 @@ static XEN g_mus_sound_open_output(XEN file, XEN srate, XEN chans, XEN data_form
   #define H_mus_sound_open_output "(" S_mus_sound_open_output " filename srate chans data-format header-type (comment \"\")): \
 open filename for (low-level) sound output with the given srate and so on; return the file descriptor (an integer). \
 The file size is normally set later via " S_mus_sound_close_output ". srate is an integer, comment is a string, \
-data-format is a sndlib format indicator such as " S_mus_bshort ", if #f if defaults to a format compatible with sndlib, \
+data-format is a sndlib format indicator such as " S_mus_bshort ", if " PROC_FALSE " if defaults to a format compatible with sndlib, \
 header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently only writes 5 or so header types."
 
   int fd = -1, df;

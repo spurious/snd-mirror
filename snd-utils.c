@@ -1047,6 +1047,7 @@ static char *mem_stats(int ub)
 
 void dump_protection(FILE *Fp);
 void io_fds_in_use(int *open, int *closed, int *top);
+char *describe_region(void *ur);
 
 void mem_report(void)
 {
@@ -1109,6 +1110,9 @@ void mem_report(void)
 			break;
 		      case PRINT_CLM:
 			fprintf(Fp, "[%p: %s] ", pointers[j], mus_describe((mus_any *)(pointers[j])));
+			break;
+		      case PRINT_REGION:
+			fprintf(Fp, "[%p: %s] ", pointers[j], describe_region(pointers[j]));
 			break;
 		      }
 		  }

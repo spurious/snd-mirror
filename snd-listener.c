@@ -635,7 +635,7 @@ static XEN g_clear_listener(void)
 
 static XEN g_show_listener(XEN val) 
 {
-  #define H_show_listener "(" S_show_listener " (open #t)): if 'open' opens the lisp listener; returns whether the listener is visible."
+  #define H_show_listener "(" S_show_listener " (open " PROC_TRUE ")): if 'open' opens the lisp listener; returns whether the listener is visible."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_show_listener, "a boolean");
   if ((XEN_NOT_BOUND_P(val)) || (!(XEN_FALSE_P(val)))) /* explicit #f arg turns off listener creation/display */
     handle_listener(true); 
@@ -752,7 +752,7 @@ void g_init_listener(void)
 
 #if HAVE_SCHEME
   #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
-If it returns #t, Snd assumes you've dealt the text yourself, and does not try to evaluate it. \n\
+If it returns " PROC_TRUE ", Snd assumes you've dealt the text yourself, and does not try to evaluate it. \n\
 (define (read-listener-line prompt) \n\
   (let ((res #f)) \n\
     (add-hook! " S_read_hook " (lambda (str) (set! res str) #t)) \n\

@@ -577,7 +577,7 @@ static XEN g_colormap_name(XEN index)
 
 static XEN g_colormap_p(XEN index)
 {
-  #define H_colormap_p "(" S_colormap_p " index) -> #t if index represents a usable colormap."
+  #define H_colormap_p "(" S_colormap_p " index) -> " PROC_TRUE " if index represents a usable colormap."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ONLY_ARG, S_colormap_p, "an integer"); 
   return(C_TO_XEN_BOOLEAN(is_colormap(XEN_TO_C_INT(index))));
 }

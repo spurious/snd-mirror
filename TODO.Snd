@@ -35,6 +35,6 @@ Should the Scheme/Ruby files be gettext-ized?  Here's a Guile example:
     (format #t (_ "This program is running as process number ~D.") (getpid))
     (newline)
 
-Key bindings to mimic other editors.
+Key bindings to mimic other editors (along the lines of snd_frg.scm)
 
 

@@ -49,7 +49,7 @@ axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
 
 static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
 {
-  #define H_draw_line "(" S_draw_line " x0 y0 x1 y1 (snd #f) (chn #f) (ax #f)): draw a line"
+  #define H_draw_line "(" S_draw_line " x0 y0 x1 y1 (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): draw a line"
 
   ASSERT_CHANNEL(S_draw_line, snd, chn, 5);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_draw_line, "a number");
@@ -66,7 +66,7 @@ static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
 
 static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax)
 {
-  #define H_draw_dot "(" S_draw_dot " x0 y0 size (snd #f) (chn #f) (ax #f)): draw a dot"
+  #define H_draw_dot "(" S_draw_dot " x0 y0 size (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): draw a dot"
  
   ASSERT_CHANNEL(S_draw_dot, snd, chn, 4);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_draw_dot, "a number");
@@ -81,7 +81,7 @@ static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax)
 
 static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN chn, XEN ax)
 {
-  #define H_fill_rectangle "(" S_fill_rectangle " x0 y0 width height (snd #f) (chn #f) (ax #f)): draw a filled rectangle"
+  #define H_fill_rectangle "(" S_fill_rectangle " x0 y0 width height (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): draw a filled rectangle"
 
   ASSERT_CHANNEL(S_fill_rectangle, snd, chn, 5);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_fill_rectangle, "a number");
@@ -98,7 +98,7 @@ static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN 
 
 static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
 {
-  #define H_draw_string "(" S_draw_string " text x0 y0 (snd #f) (chn #f) (ax #f)): draw a string"
+  #define H_draw_string "(" S_draw_string " text x0 y0 (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): draw a string"
   
   char *tmp = NULL;
   ASSERT_CHANNEL(S_draw_string, snd, chn, 4);
@@ -148,7 +148,7 @@ static point_t *TO_C_POINTS(XEN pts, const char *caller)
 static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
 {
   /* pts should be a vector of integers as (x y) pairs */
-  #define H_draw_lines "(" S_draw_lines " lines (snd #f) (chn #f) (ax #f)): draw a vector of lines"
+  #define H_draw_lines "(" S_draw_lines " lines (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): draw a vector of lines"
 
   point_t *pack_pts;
   axis_context *ax1;
@@ -166,7 +166,7 @@ static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
 static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
 {
   /* pts should be a vector of integers as (x y) pairs */
-  #define H_draw_dots "(" S_draw_dots " positions dot-size (snd #f) (chn #f) (ax #f)): draw a vector of dots"
+  #define H_draw_dots "(" S_draw_dots " positions dot-size (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): draw a vector of dots"
  
   point_t *pack_pts;
   axis_context *ax1;
@@ -184,7 +184,7 @@ static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
 
 static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 { 
-  #define H_fill_polygon "(" S_fill_polygon " points (snd #f) (chn #f) (ax #f)): draw a filled polygon"
+  #define H_fill_polygon "(" S_fill_polygon " points (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): draw a filled polygon"
 
   point_t *pack_pts;
   axis_context *ax;
@@ -244,7 +244,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
 
 static XEN g_foreground_color(XEN snd, XEN chn, XEN xax)
 {
-  #define H_foreground_color "(" S_foreground_color " (snd #f) (chn #f) (ax #f)): current drawing color"
+  #define H_foreground_color "(" S_foreground_color " (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): current drawing color"
   chan_info *cp;
   axis_context *ax;
   ASSERT_CHANNEL(S_foreground_color, snd, chn, 1);
@@ -292,7 +292,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 
 static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 {
-  #define H_current_font "(" S_current_font " (snd #f) (chn #f) (ax #f)): current font id"
+  #define H_current_font "(" S_current_font " (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): current font id"
   axis_context *ax;
   chan_info *cp;
   ASSERT_CHANNEL(S_current_font, snd, chn, 1);
@@ -331,7 +331,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 
 static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 {
-  #define H_current_font "(" S_current_font " (snd #f) (chn #f) (ax #f)): current font id"
+  #define H_current_font "(" S_current_font " (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): current font id"
   axis_context *ax;
   ASSERT_CHANNEL(S_current_font, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_3, S_current_font, "an integer");
@@ -346,7 +346,7 @@ WITH_FOUR_SETTER_ARGS(g_set_current_font_reversed, g_set_current_font)
 
 static XEN g_make_graph_data(XEN snd, XEN chn, XEN edpos, XEN lo, XEN hi)
 {
-  #define H_make_graph_data "(" S_make_graph_data " (snd #f) (chn #f) (edpos #f) (low #f) (high #f)): \
+  #define H_make_graph_data "(" S_make_graph_data " (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ") (low " PROC_FALSE ") (high " PROC_FALSE ")): \
 return either a vct (if the graph has one trace), or a list of two vcts (the two sides of the envelope graph). \
 'edpos' defaults to the " S_current_edit_position ", 'low' defaults to the current window left sample, and \
 'high' defaults to the current rightmost sample. (" S_graph_data " (" S_make_graph_data ")) reimplements the time domain graph."
@@ -365,7 +365,7 @@ return either a vct (if the graph has one trace), or a list of two vcts (the two
 
 static XEN g_graph_data(XEN data, XEN snd, XEN chn, XEN ax, XEN lo, XEN hi, XEN style)
 {
-  #define H_graph_data "(" S_graph_data " data (snd #f) (chn #f) (context #f) (low #f) (high #f) (graph-style #f)): \
+  #define H_graph_data "(" S_graph_data " data (snd " PROC_FALSE ") (chn " PROC_FALSE ") (context " PROC_FALSE ") (low " PROC_FALSE ") (high " PROC_FALSE ") (graph-style " PROC_FALSE ")): \
 display 'data' in the time domain graph of snd's channel chn using the graphics context context (normally " S_copy_context "), placing the \
 data in the recipient's graph between points low and high in the drawing mode graphic-style."
 
@@ -442,8 +442,8 @@ static void check_dialog_widget_table(void)
 
 static XEN g_dialog_widgets(void)
 {
-  #define H_dialog_widgets "(" S_dialog_widgets "): dialog widgets (each #f if not yet created): (list \
- (0 " S_color_dialog ") (1 " S_orientation_dialog ") (2 " S_enved_dialog ") (3 #f) (4 #f) (5 " S_transform_dialog ") \
+  #define H_dialog_widgets "(" S_dialog_widgets "): dialog widgets (each " PROC_FALSE " if not yet created): (list \
+ (0 " S_color_dialog ") (1 " S_orientation_dialog ") (2 " S_enved_dialog ") (3 " PROC_FALSE ") (4 " PROC_FALSE ") (5 " S_transform_dialog ") \
  (6 " S_open_file_dialog ") (7 " S_save_sound_dialog ") (8 " S_view_files_dialog ") (9 raw data dialog) (10 new file dialog) \
  (11 " S_mix_file_dialog ") (12 " S_edit_header_dialog ") (13 " S_find_dialog ") (14 " S_help_dialog ") (15 listener completion) \
  (16 " S_view_mixes_dialog ") (17 " S_print_dialog ") (18 " S_recorder_dialog ") (19 " S_view_regions_dialog ") \
@@ -853,7 +853,7 @@ void sgl_set_currents(void)
 
 static XEN g_color_p(XEN obj) 
 {
-  #define H_color_p "(" S_color_p " obj): #t if obj is a color"
+  #define H_color_p "(" S_color_p " obj): " PROC_TRUE " if obj is a color"
   return(C_TO_XEN_BOOLEAN(XEN_PIXEL_P(obj)));
 }
 

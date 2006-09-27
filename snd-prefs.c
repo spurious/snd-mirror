@@ -4844,16 +4844,19 @@ static void clear_key(prefs_info *prf, const char *name)
 {
   key_info *ki;
   ki = find_prefs_key_binding(name);
-  if ((ki) && (ki->key))
+  if (ki)
     {
-      int state = 0;
-      if (ki->c) state |= 4;
-      if (ki->m) state |= 8;
+      if (ki->key)
+	{
+	  int state = 0;
+	  if (ki->c) state |= 4;
+	  if (ki->m) state |= 8;
 #if USE_MOTIF
-      set_keymap_entry((int)XStringToKeysym(ki->key), state, 0, XEN_UNDEFINED, ki->x, name, name);
+	  set_keymap_entry((int)XStringToKeysym(ki->key), state, 0, XEN_UNDEFINED, ki->x, name, name);
 #else
-      set_keymap_entry((int)gdk_keyval_from_name(ki->key), state, 0, XEN_UNDEFINED, ki->x, name, name);
+	  set_keymap_entry((int)gdk_keyval_from_name(ki->key), state, 0, XEN_UNDEFINED, ki->x, name, name);
 #endif
+	}
       FREE(ki);
     }
 }
@@ -5205,6 +5208,8 @@ static char *make_show_selection_binding(char *key, bool ctrl, bool meta, bool c
 		    (cx) ? "true" : "false"));
 #endif
   /* TODO: Forth show selection key-bind */
+  /*       sounds each { s } s sync new-sync > if s sync 1+ to new-sync then end-each
+   */
   return(NULL);
 }
 

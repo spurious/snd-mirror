@@ -1348,7 +1348,7 @@ XEN_NARGIFY_0(g_menu_widgets_w, g_menu_widgets)
 void g_init_gxmenu(void)
 {
   #define H_gtk_popup_hook "gtk-popup-hook (widget event data snd chn): called upon middle button click. \
-If it returns other than #t, the normal Snd popup menu is posted."
+If it returns other than " PROC_TRUE ", the normal Snd popup menu is posted."
 
   gtk_popup_hook = XEN_DEFINE_HOOK("gtk-popup-hook", 5, H_gtk_popup_hook);
   XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);

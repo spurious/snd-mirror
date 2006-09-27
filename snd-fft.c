@@ -1784,7 +1784,7 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
 
 static XEN g_transform_frames(XEN snd, XEN chn)
 {
-  #define H_transform_frames "(" S_transform_frames " (snd #f) (chn #f)): \
+  #define H_transform_frames "(" S_transform_frames " (snd " PROC_FALSE ") (chn " PROC_FALSE ")): \
 return a description of transform graph data in snd's channel chn, based on " S_transform_graph_type ".\
 If there is no transform graph, return 0; if " S_graph_once ", return " S_transform_size ",\
 and otherwise return a list (total-size active-bins active-slices)"
@@ -1807,7 +1807,7 @@ and otherwise return a list (total-size active-bins active-slices)"
 
 static XEN g_transform_sample(XEN bin, XEN slice, XEN snd_n, XEN chn_n)
 {
-  #define H_transform_sample "(" S_transform_sample " (bin 0) (slice 0) (snd #f) (chn #f)): \
+  #define H_transform_sample "(" S_transform_sample " (bin 0) (slice 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ")): \
 return the current transform sample at bin and slice in snd channel chn (assuming sonogram or spectrogram)"
 
   chan_info *cp;
@@ -1865,7 +1865,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 
 static XEN g_transform_to_vct(XEN snd_n, XEN chn_n, XEN v)
 {
-  #define H_transform_to_vct "(" S_transform_to_vct " (snd #f) (chn #f) (obj #f)): \
+  #define H_transform_to_vct "(" S_transform_to_vct " (snd " PROC_FALSE ") (chn " PROC_FALSE ") (obj " PROC_FALSE ")): \
 return a vct (obj if it's passed), with the current transform data from snd's channel chn"
 
   chan_info *cp;
@@ -1980,7 +1980,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 
 static XEN g_transform_p(XEN type)
 {
-  #define H_transform_p "(" S_transform_p " type): #t if 'type' is a legit transform type."
+  #define H_transform_p "(" S_transform_p " type): " PROC_TRUE " if 'type' is a legit transform type."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ONLY_ARG, S_transform_p, "an integer");
   return(C_TO_XEN_BOOLEAN(transform_p(XEN_TO_C_INT(type))));
 }
@@ -2057,7 +2057,7 @@ static XEN g_set_log_freq_start(XEN val)
 static XEN g_show_selection_transform(void) {return(C_TO_XEN_BOOLEAN(show_selection_transform(ss)));}
 static XEN g_set_show_selection_transform(XEN val) 
 {
-  #define H_show_selection_transform "(" S_show_selection_transform "): #t if transform display reflects selection, not time-domain window"
+  #define H_show_selection_transform "(" S_show_selection_transform "): " PROC_TRUE " if transform display reflects selection, not time-domain window"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_selection_transform, "a boolean");
   set_show_selection_transform(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(show_selection_transform(ss)));

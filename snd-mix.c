@@ -3896,7 +3896,7 @@ static XEN g_mix_chans(XEN n)
 
 static XEN g_mix_p(XEN n) 
 {
-  #define H_mix_p "(" S_mix_p " id): #t if mix is active and accessible"
+  #define H_mix_p "(" S_mix_p " id): " PROC_TRUE " if mix is active and accessible"
   if (XEN_INTEGER_P(n))
     return(C_TO_XEN_BOOLEAN(mix_ok(XEN_TO_C_INT_OR_ELSE(n, 0))));
   return(XEN_FALSE);
@@ -3915,7 +3915,7 @@ static XEN g_mix_frames(XEN n)
 
 static XEN g_mix_locked(XEN n) 
 {
-  #define H_mix_locked_p "(" S_mix_locked_p " id): #t if mix cannot be moved (due to subsequent edits overlapping it)"
+  #define H_mix_locked_p "(" S_mix_locked_p " id): " PROC_TRUE " if mix cannot be moved (due to subsequent edits overlapping it)"
   mix_info *md;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_mix_locked_p, "an integer");
   md = md_from_id(XEN_TO_C_INT(n));
@@ -3926,7 +3926,7 @@ static XEN g_mix_locked(XEN n)
 
 static XEN g_mix_inverted(XEN n) 
 {
-  #define H_mix_inverted_p "(" S_mix_inverted_p " id): #t if mix should invert track amp-env values (for panning)"
+  #define H_mix_inverted_p "(" S_mix_inverted_p " id): " PROC_TRUE " if mix should invert track amp-env values (for panning)"
   mix_info *md;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_mix_inverted_p, "an integer");
   md = md_from_id(XEN_TO_C_INT(n));
@@ -4416,10 +4416,10 @@ static XEN g_set_mix_tag_height(XEN val)
 
 static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN tag, XEN auto_delete, XEN track_id)
 {
-  #define H_mix "(" S_mix " file (chn-start 0) (file-chan 0) (snd #f) (chn #f) (with-tag " S_with_mix_tags ") (auto-delete #f) (track-id 0)): \
+  #define H_mix "(" S_mix " file (chn-start 0) (file-chan 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (with-tag " S_with_mix_tags ") (auto-delete " PROC_FALSE ") (track-id 0)): \
 mix file channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chn-start \
-is omitted), returning the new mix's id.  if with-tag is #f, the data is mixed (no draggable tag is created). \
-If file_chn is omitted or #t, file's channels are mixed until snd runs out of channels. \
+is omitted), returning the new mix's id.  if with-tag is " PROC_FALSE ", the data is mixed (no draggable tag is created). \
+If file_chn is omitted or " PROC_TRUE ", file's channels are mixed until snd runs out of channels. \
 track-id is the track value for each newly created mix."
 
   chan_info *cp = NULL;
@@ -4556,7 +4556,7 @@ struct mix_fd *get_mf(XEN obj) {if (MIX_SAMPLE_READER_P(obj)) return(TO_MIX_SAMP
 
 static XEN g_mf_p(XEN obj) 
 {
-  #define H_mf_p "(" S_mix_sample_reader_p " obj): #t if obj is a mix-sample-reader"
+  #define H_mf_p "(" S_mix_sample_reader_p " obj): " PROC_TRUE " if obj is a mix-sample-reader"
   return(C_TO_XEN_BOOLEAN(mf_p(obj)));
 }
 
@@ -4758,7 +4758,7 @@ static XEN g_play_mix(XEN num, XEN beg)
 
 static XEN g_mix_vct(XEN obj, XEN beg, XEN snd, XEN chn, XEN with_tag, XEN origin, XEN track_id)
 {
-  #define H_mix_vct "(" S_mix_vct " data (beg 0) (snd #f) (chn #f) (with-tag " S_with_mix_tags ") (origin #f) (track-id 0)): \
+  #define H_mix_vct "(" S_mix_vct " data (beg 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (with-tag " S_with_mix_tags ") (origin " PROC_FALSE ") (track-id 0)): \
 mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
 
   vct *v;
@@ -4879,7 +4879,7 @@ static XEN g_mix_color(XEN mix_id)
 static XEN g_with_mix_tags(void) {return(C_TO_XEN_BOOLEAN(with_mix_tags(ss)));}
 static XEN g_set_with_mix_tags(XEN val) 
 {
-  #define H_with_mix_tags "(" S_with_mix_tags "): #t if Snd should display mixed portions with a draggable tag"
+  #define H_with_mix_tags "(" S_with_mix_tags "): " PROC_TRUE " if Snd should display mixed portions with a draggable tag"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_mix_tags, "a boolean");
   set_with_mix_tags(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(with_mix_tags(ss)));
@@ -5051,7 +5051,7 @@ void g_init_mix(void)
 				   S_setB S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 1, 0);
 
   #define H_mix_release_hook S_mix_release_hook " (mix-id samps): called after the mouse has dragged a mix to some new position. \
-'samps' = samples moved in the course of the drag. If it returns #t, the actual remix is the hook's responsibility."
+'samps' = samples moved in the course of the drag. If it returns " PROC_TRUE ", the actual remix is the hook's responsibility."
 
   mix_release_hook = XEN_DEFINE_HOOK(S_mix_release_hook, 2, H_mix_release_hook);
 
@@ -6883,7 +6883,7 @@ static int xen_to_c_track(XEN id, const char *origin)
 
 static XEN g_track_p(XEN id)
 {
-  #define H_track_p "(" S_track_p " id) -> #t if id refers to an active track"
+  #define H_track_p "(" S_track_p " id) -> " PROC_TRUE " if id refers to an active track"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ONLY_ARG, S_track_p, "an integer");
   return(C_TO_XEN_BOOLEAN(track_p(XEN_TO_C_INT(id))));
 }
@@ -8019,7 +8019,7 @@ void track_dialog_play(int track_id)
 
 static XEN g_play_track(XEN id, XEN chn, XEN beg)
 {
-  #define H_play_track "(" S_play_track " track (chn #f) (beg 0)): play track. If 'chn' is #t, \
+  #define H_play_track "(" S_play_track " track (chn " PROC_FALSE ") (beg 0)): play track. If 'chn' is " PROC_TRUE ", \
 play all the mixes in the track, even if in different channels.  'beg' is where to start playing within the track."
   int track_id;
   off_t samp;
@@ -8044,7 +8044,7 @@ struct track_fd *get_tf(XEN obj) {if (TRACK_SAMPLE_READER_P(obj)) return(TO_TRAC
 
 static XEN g_tf_p(XEN obj) 
 {
-  #define H_tf_p "(" S_track_sample_reader_p " obj): #t if obj is a track-sample-reader"
+  #define H_tf_p "(" S_track_sample_reader_p " obj): " PROC_TRUE " if obj is a track-sample-reader"
   return(C_TO_XEN_BOOLEAN(tf_p(obj)));
 }
 
@@ -8120,7 +8120,7 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(track_fd, free_tf, tf_free)
 
 static XEN g_make_track_sample_reader(XEN id, XEN chn, XEN beg)
 {
-  #define H_make_track_sample_reader "(" S_make_track_sample_reader " track (chn #f) (beg 0)): \
+  #define H_make_track_sample_reader "(" S_make_track_sample_reader " track (chn " PROC_FALSE ") (beg 0)): \
 return a reader ready to access track's data associated with track's channel chn, starting in the track from beg"
 
   track_fd *tf = NULL;

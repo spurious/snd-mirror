@@ -1552,7 +1552,7 @@ bool rec_set_autoload(bool val)
 static XEN g_recorder_autoload(void) {return(C_TO_XEN_BOOLEAN(rec_autoload()));}
 static XEN g_set_recorder_autoload(XEN val) 
 {
-  #define H_recorder_autoload "(" S_recorder_autoload "): #t if newly recorded sound should be loaded into Snd automatically"
+  #define H_recorder_autoload "(" S_recorder_autoload "): " PROC_TRUE " if newly recorded sound should be loaded into Snd automatically"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_autoload, "a boolean");
   return(C_TO_XEN_BOOLEAN(rec_set_autoload(XEN_TO_C_BOOLEAN(val))));
 }

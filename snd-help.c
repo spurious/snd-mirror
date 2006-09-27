@@ -2224,7 +2224,7 @@ void region_help(void)
 #if HAVE_EXTENSION_LANGUAGE
 "A region is a saved portion of the sound data. When a sound portion is selected, it is (by default) saved \
 as the new region; subsequent edits will not affect the region data. You can disable the region creation \
-by setting the variable " S_selection_creates_region " to #f (its default is #t which can slow down editing \
+by setting the variable " S_selection_creates_region " to " PROC_FALSE " (its default is " PROC_TRUE " which can slow down editing \
 of very large sounds). Regions can be defined by " S_make_region ", by dragging the mouse through a portion \
 of the data, or via the Select All menu option. If the mouse drags off the end of the graph, the x axis \
 moves, in a sense dragging the data along to try to keep up with the mouse; the further away the mouse \
@@ -2741,7 +2741,7 @@ does not affect the data -- it is just a number placed in the sound file header.
 If a file by the chosen name already exists \
 it is overwritten, unless that file is already open in Snd and has edits.  In that case,  \
 you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
-option, set the variable " S_ask_before_overwrite " to #t. \
+option, set the variable " S_ask_before_overwrite " to " PROC_TRUE ". \
 If you give the current file name to Save As,  \
 any current edits will be saved and the current version in Snd will be updated (that is, in this \
 case, the edit tree is not preserved).  To save (extract) just one channel of a multichannel file, \
@@ -2845,7 +2845,7 @@ void find_dialog_help(void)
 
 #if HAVE_EXTENSION_LANGUAGE
 "This search travels through all the current channels in parallel until a match is found.  The find \
-expression is a function of one argument,  the current sample value.  It is evaluated on each sample, and should return #t when the \
+expression is a function of one argument,  the current sample value.  It is evaluated on each sample, and should return " PROC_TRUE " when the \
 search is satisified.  For example, \n\n  " find_example "\n\nlooks for the next sample that is greater than .1. \
 If you need to compare the current sample with a previous one, use a 'closure' as in " zero_plus " in \
 examp." XEN_FILE_EXTENSION ": \n\n" closure_example "\n\nThere are several other \
@@ -3823,7 +3823,7 @@ XEN g_snd_help(XEN text, int widget_wid)
     #define snd_help_arg_type "is a string"
   #endif
 
-  #define H_snd_help "(" S_snd_help " (arg 'snd-help) (formatted #t)): return the documentation \
+  #define H_snd_help "(" S_snd_help " (arg 'snd-help) (formatted " PROC_TRUE ")): return the documentation \
 associated with its argument. " snd_help_example " for example, prints out a brief description of make-vct. \
 The argument " snd_help_arg_type ". \
 In the help descriptions, optional arguments are in parens with the default value (if any) as the 2nd entry. \

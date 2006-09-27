@@ -52,6 +52,21 @@ typedef struct region {
   off_t *begs, *lens;
 } region;
 
+#if MUS_DEBUGGING
+char *describe_region(void *ur);
+char *describe_region(void *ur)
+{
+  region *r = (region *)ur;
+  return(mus_format("region %d %s [%s%s]: %d " OFF_TD " %d %.4f \"%s\" \"%s\" \"%s\"\n",
+		    r->id, 
+		    (r->use_temp_file == REGION_FILE) ? "stored" : "deferred",
+		    (region_ok(r->id)) ? "!" : "?",
+		    r->filename,
+		    r->chans, r->frames, r->srate, r->maxamp, 
+		    r->name, r->start, r->end));
+}
+#endif
+
 static void deferred_region_to_temp_file(region *r);
 
 static void free_region(region *r, int complete)
@@ -60,15 +75,15 @@ static void free_region(region *r, int complete)
   if (r)
     {
       release_region_readers(r->id);
-      if ((complete == COMPLETE_DELETION) && (r->editor_copy))
-	{
-	  snd_info *sp;
-	  sp = r->editor_copy; 
-	  sp->edited_region = NULL;
-	  r->editor_copy = NULL;
-	}
       if (complete == COMPLETE_DELETION)
 	{
+	  if (r->editor_copy)
+	    {
+	      snd_info *sp;
+	      sp = r->editor_copy; 
+	      sp->edited_region = NULL;
+	      r->editor_copy = NULL;
+	    }
 	  if (r->name) FREE(r->name);
 	  if (r->start) FREE(r->start);
 	  if (r->end) FREE(r->end);
@@ -660,6 +675,13 @@ int define_region(sync_info *si, off_t *ends)
   snd_info *sp0;
   region *r;
   deferred_region *drp;
+#if MUS_DEBUGGING
+  if (max_regions(ss) == 0)
+    {
+      fprintf(stderr, "attempt to create a region but max=0?");
+      return(INVALID_REGION);
+    }
+#endif
   len = 0;
   for (i = 0; i < si->chans; i++)
     if (len < (ends[i] - si->begs[i]))
@@ -667,6 +689,9 @@ int define_region(sync_info *si, off_t *ends)
   len += 1;
   if (len <= 0) return(INVALID_REGION);
   r = (region *)CALLOC(1, sizeof(region));
+#if MUS_DEBUGGING
+  set_printable(PRINT_REGION);
+#endif
   r->id = region_id_ctr++;
   cp0 = si->cps[0];
   sp0 = cp0->sound;
@@ -898,7 +923,7 @@ void sequester_deferred_regions(chan_info *cp, int edit_top)
     }
 }
 
-snd_fd *init_region_read (off_t beg, int n, int chan, read_direction_t direction)
+snd_fd *init_region_read(off_t beg, int n, int chan, read_direction_t direction)
 {
   /* conjure up a reasonable looking ed list and sound list */
   region *r;
@@ -1245,7 +1270,7 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
 
 static XEN g_insert_region(XEN samp_n, XEN reg_n, XEN snd_n, XEN chn_n) /* opt reg_n */
 {
-  #define H_insert_region "("  S_insert_region " (start-samp 0) (region-id 0) (snd #f) (chn #f)): \
+  #define H_insert_region "("  S_insert_region " (start-samp 0) (region-id 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ")): \
 insert region data into snd's channel chn starting at start-samp"
 
   chan_info *cp;
@@ -1291,7 +1316,7 @@ static XEN g_set_max_regions(XEN n)
 
 static XEN g_region_p(XEN n)
 {
-  #define H_region_p "(" S_region_p " reg): #t if region is active"
+  #define H_region_p "(" S_region_p " reg): " PROC_TRUE " if region is active"
   if (XEN_REGION_P(n))
     return(C_TO_XEN_BOOLEAN(region_ok(XEN_REGION_TO_C_INT(n))));
   return(XEN_FALSE);
@@ -1390,7 +1415,7 @@ static XEN g_forget_region(XEN n)
 
 static XEN g_play_region(XEN n, XEN wait, XEN stop_proc) 
 {
-  #define H_play_region "(" S_play_region " (reg 0) (wait #f) stop-proc): play region reg; if wait is #t, play to end before returning"
+  #define H_play_region "(" S_play_region " (reg 0) (wait " PROC_FALSE ") stop-proc): play region reg; if wait is " PROC_TRUE ", play to end before returning"
   int rg;
   bool wt = false;
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_play_region, "a region id");
@@ -1422,8 +1447,8 @@ static XEN g_regions(void)
 
 static XEN g_make_region(XEN beg, XEN end, XEN snd_n, XEN chn_n)
 {
-  #define H_make_region "(" S_make_region " (beg) (end) (snd #f) (chn #f)): make a new region between beg and end in snd, returning its id. \
-If chn is #t, all chans are included, taking the snd sync field into account if it's not 0.  If no args are passed, the current \
+  #define H_make_region "(" S_make_region " (beg) (end) (snd " PROC_FALSE ") (chn " PROC_FALSE ")): make a new region between beg and end in snd, returning its id. \
+If chn is " PROC_TRUE ", all chans are included, taking the snd sync field into account if it's not 0.  If no args are passed, the current \
 selection is used."
   int id = INVALID_REGION, old_sync, i;
   if (max_regions(ss) <= 0) return(XEN_FALSE);
@@ -1562,7 +1587,7 @@ using data format (default depends on machine byte order), header type (" S_mus_
 
 static XEN g_mix_region(XEN chn_samp_n, XEN reg_n, XEN snd_n, XEN chn_n, XEN tid)
 {
-  #define H_mix_region "(" S_mix_region " (chn-samp 0) (region 0) (snd #f) (chn #f) (track 0)): \
+  #define H_mix_region "(" S_mix_region " (chn-samp 0) (region 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (track 0)): \
 mix region into snd's channel chn starting at chn-samp; return new mix id."
 
   chan_info *cp;
@@ -1616,7 +1641,7 @@ static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
 
 static XEN g_region_to_vct(XEN beg_n, XEN num, XEN reg_n, XEN chn_n, XEN v)
 {
-  #define H_region_to_vct "(" S_region_to_vct " (beg 0) (samps reglen) (region 0) (chan 0) (v #f)): \
+  #define H_region_to_vct "(" S_region_to_vct " (beg 0) (samps reglen) (region 0) (chan 0) (v " PROC_FALSE ")): \
 write region's samples starting at beg for samps in channel chan to vct v; return v (or create a new one)"
 
   Float *data;

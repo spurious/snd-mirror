@@ -4353,7 +4353,7 @@ current-time:\n(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (" S_file_write_dat
 
 static XEN g_sound_loop_info(XEN snd)
 {
-  #define H_sound_loop_info "(" S_sound_loop_info " (snd #f)): return the sound's loop points as a \
+  #define H_sound_loop_info "(" S_sound_loop_info " (snd " PROC_FALSE ")): return the sound's loop points as a \
 list: (sustain-start sustain-end release-start release-end baseNote detune)"
   int *res;
   snd_info *sp;
@@ -4509,7 +4509,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 static XEN g_soundfont_info(XEN snd)
 {
   /* return all soundfont descriptors as list of lists: ((name start loopstart loopend)) */
-  #define H_soundfont_info "(" S_soundfont_info " (snd #f)): list of lists describing snd as a soundfont. \
+  #define H_soundfont_info "(" S_soundfont_info " (snd " PROC_FALSE ")): list of lists describing snd as a soundfont. \
 each inner list has the form: (name start loopstart loopend)"
 
   XEN inlist = XEN_EMPTY_LIST, outlist = XEN_EMPTY_LIST;
@@ -4572,7 +4572,7 @@ static XEN g_disk_kspace(XEN name)
 static XEN g_open_file_dialog(XEN managed)
 {
   widget_t w;
-  #define H_open_file_dialog "(" S_open_file_dialog " (managed #t)): create the file dialog if needed and display it if 'managed'"
+  #define H_open_file_dialog "(" S_open_file_dialog " (managed " PROC_TRUE ")): create the file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_open_file_dialog, "a boolean");
   w = make_open_file_dialog(false, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
   return(XEN_WRAP_WIDGET(w));
@@ -4581,7 +4581,7 @@ static XEN g_open_file_dialog(XEN managed)
 static XEN g_mix_file_dialog(XEN managed)
 {
   widget_t w;
-  #define H_mix_file_dialog "(" S_mix_file_dialog " (managed #t)): create the mix file dialog if needed and display it if 'managed'"
+  #define H_mix_file_dialog "(" S_mix_file_dialog " (managed " PROC_TRUE ")): create the mix file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_mix_file_dialog, "a boolean");
   w = make_mix_file_dialog((XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
   return(XEN_WRAP_WIDGET(w));
@@ -4590,7 +4590,7 @@ static XEN g_mix_file_dialog(XEN managed)
 static XEN g_insert_file_dialog(XEN managed)
 {
   widget_t w;
-  #define H_insert_file_dialog "(" S_insert_file_dialog " (managed #t)): create the insert file dialog if needed and display it if 'managed'"
+  #define H_insert_file_dialog "(" S_insert_file_dialog " (managed " PROC_TRUE ")): create the insert file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_insert_file_dialog, "a boolean");
   w = make_insert_file_dialog((XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
   return(XEN_WRAP_WIDGET(w));
@@ -4796,7 +4796,7 @@ static XEN g_delete_file_sorter(XEN index)
 
 static XEN g_sound_file_p(XEN name)
 {
-  #define H_sound_file_p "(" S_sound_file_p " name) -> #t if name has a known sound file extension"
+  #define H_sound_file_p "(" S_sound_file_p " name) -> " PROC_TRUE " if name has a known sound file extension"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_sound_file_p, "a filename");   
   return(C_TO_XEN_BOOLEAN(sound_file_p(XEN_TO_C_STRING(name))));
 }
@@ -4815,7 +4815,7 @@ static XEN g_snd_tempnam(void)
 static XEN g_auto_update(void) {return(C_TO_XEN_BOOLEAN(auto_update(ss)));}
 static XEN g_set_auto_update(XEN val) 
 {
-  #define H_auto_update "(" S_auto_update "): #t if Snd should automatically update a file if it changes unexpectedly (default: #f). \
+  #define H_auto_update "(" S_auto_update "): " PROC_TRUE " if Snd should automatically update a file if it changes unexpectedly (default: " PROC_FALSE "). \
 The number of seconds between update checks is set by " S_auto_update_interval "."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_auto_update, "a boolean");
   set_auto_update(XEN_TO_C_BOOLEAN(val)); 
@@ -4827,7 +4827,7 @@ static XEN g_set_auto_update_interval(XEN val)
 {
   Float ctime, old_time;
   #define H_auto_update_interval "(" S_auto_update_interval "): time (seconds) between background checks for changed file on disk (default: 60). \
-This value only matters if " S_auto_update " is #t"
+This value only matters if " S_auto_update " is " PROC_TRUE
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_auto_update_interval, "a number"); 
   ctime = XEN_TO_C_DOUBLE(val);
   if ((ctime < 0.0) || (ctime > (24 * 3600)))
@@ -4894,8 +4894,8 @@ are available, but not all are compatible with all header types"
 static XEN g_clipping(void) {return(C_TO_XEN_BOOLEAN(clipping(ss)));}
 static XEN g_set_clipping(XEN val) 
 {
-  #define H_clipping "(" S_clipping "): #t if Snd should clip output values to the current \
-output data format's maximum. The default (#f) allows them to wrap-around which makes a very loud click"
+  #define H_clipping "(" S_clipping "): " PROC_TRUE " if Snd should clip output values to the current \
+output data format's maximum. The default (" PROC_FALSE ") allows them to wrap-around which makes a very loud click"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_clipping, "a boolean");
   set_clipping(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(clipping(ss)));
@@ -4904,8 +4904,8 @@ output data format's maximum. The default (#f) allows them to wrap-around which 
 static XEN g_ask_before_overwrite(void) {return(C_TO_XEN_BOOLEAN(ask_before_overwrite(ss)));}
 static XEN g_set_ask_before_overwrite(XEN val) 
 {
-  #define H_ask_before_overwrite "(" S_ask_before_overwrite "): #t if you want Snd to ask before overwriting a file. \
-If #f, any existing file of the same name will be overwritten without warning when you save a sound."
+  #define H_ask_before_overwrite "(" S_ask_before_overwrite "): " PROC_TRUE " if you want Snd to ask before overwriting a file. \
+If " PROC_FALSE ", any existing file of the same name will be overwritten without warning when you save a sound."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_ask_before_overwrite, "a boolean");
   set_ask_before_overwrite(XEN_TO_C_BOOLEAN(val)); 
   return(C_TO_XEN_BOOLEAN(ask_before_overwrite(ss)));
@@ -5076,15 +5076,15 @@ void g_init_file(void)
 				   S_setB S_view_files_sort, g_set_view_files_sort_w,  0, 1, 1, 1);
 
   #define H_open_hook S_open_hook " (filename): called each time a file is opened (before the actual open). \
-If it returns #t, the file is not opened."
+If it returns " PROC_TRUE ", the file is not opened."
 
   #define H_before_close_hook S_before_close_hook " (snd): called each time a file is closed (before the close). \
-If it returns #t, the file is not closed."
+If it returns " PROC_TRUE ", the file is not closed."
 
   #define H_close_hook S_close_hook " (snd): called each time a file is closed (before the close)."
 
   #define H_bad_header_hook S_bad_header_hook " (filename): called if a file has some bogus-looking header. \
-Return #t to give up on that file."
+Return " PROC_TRUE " to give up on that file."
 
   #define H_after_save_as_hook S_after_save_as_hook " (saved-sound-index save-as-full-filename from-save-as-dialog): called \
 upon File:Save as or " S_save_sound_as " completion."
@@ -5169,7 +5169,7 @@ be omitted (location defaults to 0, and length defaults to the file length in by
 
   #define H_update_hook S_update_hook " (snd): called just before " S_update_sound " is called. \
 The update process can  be triggered by a variety of situations, not just by " S_update_sound ". \
-The hook is passed the sound's index.  If it returns #t, the update is cancelled (this is not \
+The hook is passed the sound's index.  If it returns " PROC_TRUE ", the update is cancelled (this is not \
 recommended!); if it returns a procedure of one argument, that procedure is called upon \
 completion of the update operation; its argument is the (possibly different) sound index. \
 Snd tries to maintain the index across the update, but if you change the number of channels \
@@ -5178,7 +5178,7 @@ the newly updated sound may have a different index."
   update_hook = XEN_DEFINE_HOOK(S_update_hook, 1, H_update_hook);            /* arg = sound index */
 
   #define H_view_files_select_hook S_view_files_select_hook "(filename): called when a file is selected in the \
-files list of the View Files dialog.  If it returns #t, the default action, opening the file, is omitted."
+files list of the View Files dialog.  If it returns " PROC_TRUE ", the default action, opening the file, is omitted."
 
   view_files_select_hook = XEN_DEFINE_HOOK(S_view_files_select_hook, 2, H_view_files_select_hook); /* args = dialog, filename */
 

@@ -1735,7 +1735,7 @@ choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
 static XEN g_enved_wave_p(void) {return(C_TO_XEN_BOOLEAN(enved_wave_p(ss)));}
 static XEN g_set_enved_wave_p(XEN val) 
 {
-  #define H_enved_wave_p "(" S_enved_wave_p "): #t if the envelope editor is displaying the waveform to be edited"
+  #define H_enved_wave_p "(" S_enved_wave_p "): " PROC_TRUE " if the envelope editor is displaying the waveform to be edited"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_enved_wave_p, "a boolean");
   set_enved_wave_p(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(enved_wave_p(ss)));
@@ -1744,7 +1744,7 @@ static XEN g_set_enved_wave_p(XEN val)
 static XEN g_enved_in_dB(void) {return(C_TO_XEN_BOOLEAN(enved_in_dB(ss)));}
 static XEN g_set_enved_in_dB(XEN val) 
 {
-  #define H_enved_in_dB "(" S_enved_in_dB "): #t if the envelope editor is using dB"
+  #define H_enved_in_dB "(" S_enved_in_dB "): " PROC_TRUE " if the envelope editor is using dB"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_enved_in_dB, "a boolean");
   set_enved_in_dB(XEN_TO_C_BOOLEAN(val)); 
   return(C_TO_XEN_BOOLEAN(enved_in_dB(ss)));

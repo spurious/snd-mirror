@@ -1839,7 +1839,7 @@ This pertains to the M-p and M-n commands."
 static XEN g_auto_resize(void) {return(C_TO_XEN_BOOLEAN(auto_resize(ss)));}
 static XEN g_set_auto_resize(XEN val) 
 {
-  #define H_auto_resize "(" S_auto_resize "): #t if Snd can change its main window size as it pleases (default: #t)"
+  #define H_auto_resize "(" S_auto_resize "): " PROC_TRUE " if Snd can change its main window size as it pleases (default: " PROC_TRUE ")"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_auto_resize, "a boolean");
   set_auto_resize(XEN_TO_C_BOOLEAN(val)); 
 #if USE_MOTIF
@@ -1883,9 +1883,9 @@ static XEN g_set_color_scale(XEN val)
 static XEN g_selection_creates_region(void) {return(C_TO_XEN_BOOLEAN(selection_creates_region(ss)));}
 static XEN g_set_selection_creates_region(XEN val) 
 {
-  #define H_selection_creates_region "(" S_selection_creates_region "): #t if a region should be created each time a selection is made. \
-The default is currently #t, but that may change.  If you're dealing with large selections, and have no need of \
-regions (saved selections), you can speed up many operations by setting this flag to #f"
+  #define H_selection_creates_region "(" S_selection_creates_region "): " PROC_TRUE " if a region should be created each time a selection is made. \
+The default is currently " PROC_TRUE ", but that may change.  If you're dealing with large selections, and have no need of \
+regions (saved selections), you can speed up many operations by setting this flag to " PROC_FALSE
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_selection_creates_region, "a boolean");
   set_selection_creates_region(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(selection_creates_region(ss)));
@@ -1908,7 +1908,7 @@ static XEN g_set_print_length(XEN val)
 static XEN g_show_indices(void) {return(C_TO_XEN_BOOLEAN(show_indices(ss)));}
 static XEN g_set_show_indices(XEN val) 
 {
-  #define H_show_indices "(" S_show_indices "): #t if sound name should be preceded by its index in the sound display."
+  #define H_show_indices "(" S_show_indices "): " PROC_TRUE " if sound name should be preceded by its index in the sound display."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_indices, "a boolean");
   set_show_indices(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(show_indices(ss)));
@@ -1917,7 +1917,7 @@ static XEN g_set_show_indices(XEN val)
 static XEN g_show_backtrace(void) {return(C_TO_XEN_BOOLEAN(show_backtrace(ss)));}
 static XEN g_set_show_backtrace(XEN val) 
 {
-  #define H_show_backtrace "(" S_show_backtrace "): #t to show backtrace automatically upon error"
+  #define H_show_backtrace "(" S_show_backtrace "): " PROC_TRUE " to show backtrace automatically upon error"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_backtrace, "a boolean");
   set_show_backtrace(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(show_backtrace(ss)));
@@ -1926,7 +1926,7 @@ static XEN g_set_show_backtrace(XEN val)
 static XEN g_trap_segfault(void) {return(C_TO_XEN_BOOLEAN(trap_segfault(ss)));}
 static XEN g_set_trap_segfault(XEN val) 
 {
-  #define H_trap_segfault "(" S_trap_segfault "): #t if Snd should try to trap (and whine about) segfaults"
+  #define H_trap_segfault "(" S_trap_segfault "): " PROC_TRUE " if Snd should try to trap (and whine about) segfaults"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_trap_segfault, "a boolean");
   set_trap_segfault(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(trap_segfault(ss)));
@@ -1935,7 +1935,7 @@ static XEN g_set_trap_segfault(XEN val)
 static XEN g_with_relative_panes(void) {return(C_TO_XEN_BOOLEAN(with_relative_panes(ss)));}
 static XEN g_set_with_relative_panes(XEN val) 
 {
-  #define H_with_relative_panes "(" S_with_relative_panes "): #t if multichannel sounds should try to maintain relative pane sizes"
+  #define H_with_relative_panes "(" S_with_relative_panes "): " PROC_TRUE " if multichannel sounds should try to maintain relative pane sizes"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_relative_panes, "a boolean");
   set_with_relative_panes(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(with_relative_panes(ss)));
@@ -1944,7 +1944,7 @@ static XEN g_set_with_relative_panes(XEN val)
 static XEN g_with_background_processes(void) {return(C_TO_XEN_BOOLEAN(with_background_processes(ss)));}
 static XEN g_set_with_background_processes(XEN val) 
 {
-  #define H_with_background_processes "(" S_with_background_processes "): #t if Snd should use background (idle time) processing"
+  #define H_with_background_processes "(" S_with_background_processes "): " PROC_TRUE " if Snd should use background (idle time) processing"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_background_processes, "a boolean");
   set_with_background_processes(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(with_background_processes(ss)));
@@ -1968,7 +1968,7 @@ static XEN g_color_dialog(XEN managed)
 static XEN g_orientation_dialog(XEN managed) 
 {
   widget_t w;
-  #define H_orientation_dialog "(" S_orientation_dialog " (managed #t)): start the Orientation dialog"
+  #define H_orientation_dialog "(" S_orientation_dialog " (managed " PROC_TRUE ")): start the Orientation dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_orientation_dialog, "a boolean");
   w = start_orientation_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
@@ -1977,7 +1977,7 @@ static XEN g_orientation_dialog(XEN managed)
 static XEN g_transform_dialog(XEN managed) 
 {
   widget_t w;
-  #define H_transform_dialog "(" S_transform_dialog " (managed #t)): start the Transforms dialog"
+  #define H_transform_dialog "(" S_transform_dialog " (managed " PROC_TRUE ")): start the Transforms dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_transform_dialog, "a boolean");
   w = fire_up_transform_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
@@ -2010,7 +2010,7 @@ static XEN g_abort(void)
 
 static XEN g_abortq(void)
 {
-  #define H_abortQ "(" S_c_g "): allow pending user interface events to occur, returning #t if C-g was typed"
+  #define H_abortQ "(" S_c_g "): allow pending user interface events to occur, returning " PROC_TRUE " if C-g was typed"
   check_for_event();
   if (ss->stopped_explicitly)
     {
@@ -2023,7 +2023,7 @@ static XEN g_abortq(void)
 
 static XEN g_samples_to_sound_data(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN sdobj, XEN edpos, XEN sdchan)
 {
-  #define H_samples_to_sound_data "(" S_samples_to_sound_data " (start-samp 0) (samps len) (snd #f) (chn #f) (sdobj #f) (edpos #f) (sdobj-chan 0)): \
+  #define H_samples_to_sound_data "(" S_samples_to_sound_data " (start-samp 0) (samps len) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (sdobj " PROC_FALSE ") (edpos " PROC_FALSE ") (sdobj-chan 0)): \
 return a sound-data object (sdobj if given) containing snd channel chn's data starting at start-samp for samps, \
 reading edit version edpos"
 
@@ -2259,11 +2259,11 @@ void g_init_main(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_ladspa_dir, g_ladspa_dir_w, H_ladspa_dir,
 				   S_setB S_ladspa_dir, g_set_ladspa_dir_w,  0, 0, 1, 0);
 
-  #define H_start_hook S_start_hook " (filename): called upon start-up. If it returns #t, snd exits immediately."
+  #define H_start_hook S_start_hook " (filename): called upon start-up. If it returns " PROC_TRUE ", snd exits immediately."
   start_hook = XEN_DEFINE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
 
   #define H_before_exit_hook S_before_exit_hook " (): called upon exit. \
-If it returns #t, Snd does not exit.  This can be used to check for unsaved edits."
+If it returns " PROC_TRUE ", Snd does not exit.  This can be used to check for unsaved edits."
 
   before_exit_hook = XEN_DEFINE_HOOK(S_before_exit_hook, 0, H_before_exit_hook);
 
@@ -2276,7 +2276,7 @@ filename is the save state file."
   after_save_state_hook = XEN_DEFINE_HOOK(S_after_save_state_hook, 1, H_after_save_state_hook);
 
   #define H_before_save_state_hook S_before_save_state_hook " (filename): called before Snd state is saved. If \
-the hook functions return #t, the save state process opens 'filename' for appending, rather than truncating."
+the hook functions return " PROC_TRUE ", the save state process opens 'filename' for appending, rather than truncating."
   before_save_state_hook = XEN_DEFINE_HOOK(S_before_save_state_hook, 1, H_before_save_state_hook);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_script_arg, g_script_arg_w, H_script_arg, S_setB S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);

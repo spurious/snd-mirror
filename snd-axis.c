@@ -1397,7 +1397,7 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
 
 static XEN g_x_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 {
-  #define H_x_to_position "(" S_x_to_position " val (snd #f) (chn #f) (ax #f)): x pixel loc of val"
+  #define H_x_to_position "(" S_x_to_position " val (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): x pixel loc of val"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_x_to_position, "a number");
   ASSERT_CHANNEL(S_x_to_position, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_x_to_position, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
@@ -1407,7 +1407,7 @@ static XEN g_x_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 
 static XEN g_y_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 {
-  #define H_y_to_position "(" S_y_to_position " val (snd #f) (chn #f) (ax #f)): y pixel loc of val"
+  #define H_y_to_position "(" S_y_to_position " val (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): y pixel loc of val"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_y_to_position, "a number");
   ASSERT_CHANNEL(S_y_to_position, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_y_to_position, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
@@ -1417,7 +1417,7 @@ static XEN g_y_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 
 static XEN g_position_to_x(XEN val, XEN snd, XEN chn, XEN ap)
 {
-  #define H_position_to_x "(" S_position_to_x " val (snd #f) (chn #f) (ax #f)): x axis value corresponding to pixel val"
+  #define H_position_to_x "(" S_position_to_x " val (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): x axis value corresponding to pixel val"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_position_to_x, "an integer");
   ASSERT_CHANNEL(S_position_to_x, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_position_to_x, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
@@ -1427,7 +1427,7 @@ static XEN g_position_to_x(XEN val, XEN snd, XEN chn, XEN ap)
 
 static XEN g_position_to_y(XEN val, XEN snd, XEN chn, XEN ap)
 {
-  #define H_position_to_y "(" S_position_to_y " val (snd #f) (chn #f) (ax #f)): y axis value corresponding to pixel val"
+  #define H_position_to_y "(" S_position_to_y " val (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): y axis value corresponding to pixel val"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_position_to_y, "an integer");
   ASSERT_CHANNEL(S_position_to_y, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_position_to_y, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
@@ -1437,7 +1437,7 @@ static XEN g_position_to_y(XEN val, XEN snd, XEN chn, XEN ap)
 
 static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 {
-  #define H_axis_info "(" S_axis_info " (snd #f) (chn #f) (grf #f)): info about axis: (list losamp hisamp \
+  #define H_axis_info "(" S_axis_info " (snd " PROC_FALSE ") (chn " PROC_FALSE ") (grf " PROC_FALSE ")): info about axis: (list losamp hisamp \
 x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale yscale xlabel ylabel new-peaks)"
   axis_info *ap;
   ASSERT_CHANNEL(S_axis_info, snd, chn, 1);
@@ -1598,7 +1598,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 
 static XEN g_x_axis_label(XEN snd, XEN chn, XEN ax)
 {
-  #define H_x_axis_label "(" S_x_axis_label " (snd #f) (chn #f) (ax #f)): current x axis label"
+  #define H_x_axis_label "(" S_x_axis_label " (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): current x axis label"
   axis_info *ap;
   ASSERT_CHANNEL(S_x_axis_label, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_3, S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
@@ -1639,7 +1639,7 @@ WITH_FOUR_SETTER_ARGS(g_set_x_axis_label_reversed, g_set_x_axis_label)
   
 static XEN g_y_axis_label(XEN snd, XEN chn, XEN ax)
 {
-  #define H_y_axis_label "(" S_y_axis_label " (snd #f) (chn #f) (ax #f)): current y axis label"
+  #define H_y_axis_label "(" S_y_axis_label " (snd " PROC_FALSE ") (chn " PROC_FALSE ") (ax " PROC_FALSE ")): current y axis label"
   axis_info *ap;
   ASSERT_CHANNEL(S_y_axis_label, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_3, S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);

@@ -559,7 +559,7 @@ void clear_global_search_procedure(bool clear_expr_too)
 
 static XEN g_search_procedure(XEN snd)
 {
-  #define H_search_procedure "(" S_search_procedure " (snd #f)): global (if no 'snd' specified) or sound-local search function"
+  #define H_search_procedure "(" S_search_procedure " (snd " PROC_FALSE ")): global (if no 'snd' specified) or sound-local search function"
   if (XEN_BOUND_P(snd))
     {
       snd_info *sp;
