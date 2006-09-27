@@ -53,17 +53,17 @@ typedef struct region {
 } region;
 
 #if MUS_DEBUGGING
-char *describe_region(void *ur);
-char *describe_region(void *ur)
+void describe_region(FILE *fd, void *ur);
+void describe_region(FILE *fd, void *ur)
 {
   region *r = (region *)ur;
-  return(mus_format("region %d %s [%s%s]: %d " OFF_TD " %d %.4f \"%s\" \"%s\" \"%s\"\n",
-		    r->id, 
-		    (r->use_temp_file == REGION_FILE) ? "stored" : "deferred",
-		    (region_ok(r->id)) ? "!" : "?",
-		    r->filename,
-		    r->chans, r->frames, r->srate, r->maxamp, 
-		    r->name, r->start, r->end));
+  fprintf(fd, "region %d %s%s [%s]: %d " OFF_TD " %d %.4f \"%s\" \"%s\" \"%s\"",
+	  r->id,
+	  (r->use_temp_file == REGION_FILE) ? "stored" : "deferred",
+	  (region_ok(r->id)) ? "!" : "?",
+	  r->filename,
+	  r->chans, r->frames, r->srate, r->maxamp, 
+	  r->name, r->start, r->end);
 }
 #endif
 
@@ -117,32 +117,30 @@ static void free_region(region *r, int complete)
 }
 
 static region **regions = NULL;
-static int regions_size = 0;
+static int regions_size = 0, regions_allocated_size = 0;
 
 void allocate_regions(int numreg)
 {
   int i;
-  if (numreg > regions_size)
+  if (numreg > regions_allocated_size)
     {
       if (regions)
 	{
 	  regions = (region **)REALLOC(regions, numreg * sizeof(region *));
-	  for (i = regions_size; i < numreg; i++) regions[i] = NULL;
+	  for (i = regions_allocated_size; i < numreg; i++) regions[i] = NULL;
 	}
-      else regions = (region **)CALLOC(numreg, sizeof(region *));
+      else regions = (region **)CALLOC(numreg, sizeof(region *)); 
+      regions_allocated_size = numreg;
     }
-  else
+  if (regions_size > numreg)
     {
-      if (regions_size > numreg)
-	{
-	  for (i = numreg; i < regions_size; i++)
-	    if (regions[i])
-	      {
-		free_region(regions[i], COMPLETE_DELETION);
- 		regions[i] = NULL;
-	      }
-	  if (region_browser_is_active()) update_region_browser(true);
-	}
+      for (i = numreg; i < regions_size; i++)
+	if (regions[i])
+	  {
+	    free_region(regions[i], COMPLETE_DELETION);
+	    regions[i] = NULL;
+	  }
+      if (region_browser_is_active()) update_region_browser(true);
     }
   regions_size = numreg;
 }
@@ -364,9 +362,7 @@ static int check_regions(void)
   int act;
   act = first_region_active();
   if (act == NO_REGIONS) 
-    {
-      reflect_no_regions_in_region_browser();
-    }
+    reflect_no_regions_in_region_browser();
   return(act);
 }
 
@@ -675,13 +671,6 @@ int define_region(sync_info *si, off_t *ends)
   snd_info *sp0;
   region *r;
   deferred_region *drp;
-#if MUS_DEBUGGING
-  if (max_regions(ss) == 0)
-    {
-      fprintf(stderr, "attempt to create a region but max=0?");
-      return(INVALID_REGION);
-    }
-#endif
   len = 0;
   for (i = 0; i < si->chans; i++)
     if (len < (ends[i] - si->begs[i]))

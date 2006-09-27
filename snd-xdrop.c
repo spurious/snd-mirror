@@ -204,7 +204,6 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 
 static void handle_drop(Widget w, XtPointer context, XtPointer info) 
 {
-  /* this is called (see add_drop) when a drop occurs */
   XmDropProcCallbackStruct *cb = (XmDropProcCallbackStruct *)info;
   Arg args[12];
   int n, i, num_targets, k;
@@ -323,14 +322,6 @@ void add_drag_and_drop(Widget w,
   XmDropSiteRegister(w, args, n);
   add_drop_watcher(w, drop_watcher, drag_watcher, context);
 }
-
-void add_drop(Widget w, 
-	      void (*drop_watcher)(Widget w, const char *message, Position x, Position y, void *data), 
-	      void *context)
-{
-  add_drag_and_drop(w, drop_watcher, NULL, context);
-}
-
 
 void g_init_gxdrop(void)
 {

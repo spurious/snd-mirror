@@ -2,12 +2,9 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* PERHAPS: can we change label font sizes/button sizes etc when dialog changes size?
- *   a simple one to experiment with is the color dialog -- fonts there are not user-specified, everything is simple
- *   and if there were room, we could display the color sequence
+/* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
+ *   but there's no way to trap the outer resizing event and
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
- *     but even so, we could (for example) hide the "help" button.
- *   would need to get font family and reduce size etc
  *
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  * SOMEDAY: Edit:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc

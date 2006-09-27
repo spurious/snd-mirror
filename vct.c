@@ -72,6 +72,16 @@
   #define REALLOC(a, b) realloc(a, b)
 #endif
 
+#ifndef PROC_FALSE
+  #if HAVE_RUBY
+    #define PROC_FALSE "false"
+    #define PROC_TRUE "true"
+  #else
+    #define PROC_FALSE "#f"
+    #define PROC_TRUE  "#t"
+  #endif
+#endif
+
 #if USE_SND
   #define VCT_PRINT_LENGTH DEFAULT_PRINT_LENGTH
 #else
@@ -302,8 +312,8 @@ static XEN copy_vct(XEN obj)
 
 static XEN vct_move(XEN obj, XEN newi, XEN oldi, XEN backwards)
 {
-  #define H_vct_moveB "(" S_vct_moveB " obj new old (backwards #f)): moves vct obj data from old to new: v[new++] = v[old++], or \
-v[new--] = v[old--] if backwards is #t"
+  #define H_vct_moveB "(" S_vct_moveB " obj new old (backwards " PROC_FALSE ")): moves vct obj data from old to new: v[new++] = v[old++], or \
+v[new--] = v[old--] if backwards is " PROC_FALSE "."
   vct *v;
   int i, j, ni, nj;
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_moveB, "a vct");
@@ -542,7 +552,7 @@ static XEN vct_peak(XEN obj)
 
 static XEN vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
 {
-  #define H_vct_subseq "(" S_vct_subseq " v start (end len) (vnew #f)): v[start..end], placed in vnew if given or new vct"
+  #define H_vct_subseq "(" S_vct_subseq " v start (end len) (vnew " PROC_FALSE ")): v[start..end], placed in vnew if given or new vct"
   vct *vold, *vnew;
   XEN res;
   int i, old_len, new_len, j, istart, iend;

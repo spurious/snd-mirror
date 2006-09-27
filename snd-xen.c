@@ -23,7 +23,7 @@
  * chicken:     (Scheme) looks clean, but no vararg functions, no bignums, gc protection looks iffy, not clear
  *                         how to call C function from Scheme.
  * ecl:         (CL)     do-able; will require that all direct refs be through xen.c (can't include its header files!)
- *                         it also requires config.h, and uses the field "complex" which confuses C.
+ *                         it also uses the field "complex" which confuses C.
  * eel:         (C)      a commercial product
  * elastic:     (C)      looks dead (no change since 2001), like Lua in calling sequences
  * elk:         (Scheme) looks dead (no change since 1996) and has very severe name-space problems
