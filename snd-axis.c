@@ -916,6 +916,11 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  glVertex3f(-0.501, 0.0, 0.50);
 	  glVertex3f(-0.501 - ythick, 0.0, 0.50);
 	  glEnd();
+
+	  /* draw rotated text here doesn't look very good -- the code in Mesa/progs/xdemos/xrotfontdemo.c uses
+	   *   Mesa/progs/xdemos/xuserotfont.c which first sets up a bitmap very much like rotate_text in snd-xutils.c
+	   *   then code much like the x axis label drawer above.
+	   */
 	}
       else
 #endif
@@ -1632,10 +1637,6 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
 }
 
 WITH_FOUR_SETTER_ARGS(g_set_x_axis_label_reversed, g_set_x_axis_label)
-  
-/* TODO: how to implement rotate_text in OpenGL? */
-/*       Mesa/progs/xdemos/xuserotfont.c gets pixmap, then calls glBitmap: glBitmap(bitmapWidth, bitmapHeight, xOrig, yOrig, xStep, yStep, bm) */
-/*       then use that code in xrotfontdemo.c */
   
 static XEN g_y_axis_label(XEN snd, XEN chn, XEN ax)
 {

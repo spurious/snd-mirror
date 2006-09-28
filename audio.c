@@ -1294,8 +1294,6 @@ static void describe_audio_state_1(void)
 
 /* ------------------------------- OSS ----------------------------------------- */
 
-/* TODO: check out emi 26, if it's supported */
-
 #if (HAVE_OSS || HAVE_ALSA || HAVE_JACK)
 /* actually it's not impossible that someday we'll have ALSA but not OSS... */
 #define AUDIO_OK

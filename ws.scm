@@ -857,6 +857,3 @@ returning you to the true top-level."
      ,@(if *definstrument-hook*
            (list (*definstrument-hook* name targs))
            (list)))))
-
-;;; SOMEDAY: support for ws->snd tracks/mixes (by insname? or as one file per name?)
-;;; TODO: auto track placement

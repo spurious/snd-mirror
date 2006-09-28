@@ -4779,7 +4779,41 @@ various other dialogs for track operations: mix-menu.scm and track-colors.scm<br
 </small></blockquote>
 </td></tr></TABLE>
 <br>
-<br>
+
+<p>It's possible to use the track and mix functions with with-temp-sound and definstrument.
+I haven't found a way yet to automate the process, but here's an example, using the
+fm-violin (v.scm), dividing the notes in a note list between two multi-channel tracks:
+</p>
+<table border=0 cellpadding=5 vspace=10 hspace=20><tr><td bgcolor="#fafafa"><pre>
+(let* ((track-1 (<a class=quiet href="#maketrack">make-track</a>))
+       (track-1-y 20)
+       (track-2 (<a class=quiet href="#maketrack">make-track</a>))
+       (track-2-y 50)
+       (ind (<a class=quiet href="#newsound">new-sound</a> "test.snd" :channels 2)))
+
+  (define (violin-1 start . args)
+    (let* ((tmp (<em class=red>with-temp-sound</em> (:channels 2) (apply <a class=quiet href="sndscm.html#vdoc">fm-violin</a> (append (list 0) args))))
+	   (id (<em class=red>mix</em> tmp (<a class=quiet href="clm.html#seconds-&gt;samples">seconds-&gt;samples</a> start) #t #f #f #t #t track-1)))
+      (set! (<a class=quiet href="#mixtagy">mix-tag-y</a> id) track-1-y)
+      (set! (<a class=quiet href="#mixtagy">mix-tag-y</a> (1+ id)) track-1-y)
+      id))
+
+  (define (violin-2 start . args)
+    (let* ((tmp (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> (:channels 2) (apply <a class=quiet href="sndscm.html#vdoc">fm-violin</a> (append (list 0) args))))
+	   (id (<a class=quiet href="#mix">mix</a> tmp (<a class=quiet href="clm.html#seconds-&gt;samples">seconds-&gt;samples</a> start) #t #f #f #t #t track-2)))
+      (set! (<a class=quiet href="#mixtagy">mix-tag-y</a> id) track-2-y)
+      (set! (<a class=quiet href="#mixtagy">mix-tag-y</a> (1+ id)) track-2-y)
+      id))
+
+  (set! (<a class=quiet href="#trackcolor">track-color</a> track-1) (<a class=quiet href="#makecolor">make-color</a> 0 .5 .1))
+  (set! (<a class=quiet href="#trackcolor">track-color</a> track-2) (<a class=quiet href="#makecolor">make-color</a> .5 .1 0))
+
+  (violin-1 0 .1 440 .1 :degree 45)
+  (violin-2 .1 .2 660 .1 :degree 0)
+  (violin-1 .2 .1 440 .1 :degree 90)
+  (violin-2 .4 .2 660 .1 :degree 60))
+</pre></td></tr></table>
+<br><br>
 
 <table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndregions">Regions and Selections</a></h3></td></tr></table>
 
