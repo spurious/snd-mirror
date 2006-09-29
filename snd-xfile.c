@@ -856,18 +856,18 @@ typedef struct file_dialog_info {
   file_popup_info *fpop;
 } file_dialog_info;
 
-static void open_file_help_callback (Widget w, XtPointer context, XtPointer info) 
+static void open_file_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   open_file_dialog_help();
 }
 
-static void file_cancel_callback (Widget w, XtPointer context, XtPointer info) 
+static void file_cancel_callback(Widget w, XtPointer context, XtPointer info) 
 {
   file_dialog_stop_playing((dialog_play_info *)context);
   XtUnmanageChild (w);
 }
 
-static void file_wm_delete_callback (Widget w, XtPointer context, XtPointer info) 
+static void file_wm_delete_callback(Widget w, XtPointer context, XtPointer info) 
 {
   file_dialog_stop_playing((dialog_play_info *)context);
 }
@@ -1521,7 +1521,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
   
-static void mix_file_help_callback (Widget w, XtPointer context, XtPointer info) 
+static void mix_file_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   mix_file_dialog_help();
 }
@@ -1622,7 +1622,7 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
   
-static void insert_file_help_callback (Widget w, XtPointer context, XtPointer info) 
+static void insert_file_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   insert_file_dialog_help();
 }

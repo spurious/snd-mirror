@@ -26,7 +26,7 @@ static void print_cancel_callback(Widget w, XtPointer context, XtPointer info)
   /* else it's the <cr> from the text widget probably */
 }
 
-static int lpr (char *name)
+static int lpr(char *name)
 {
   /* make some desultory effort to print the file */
   mus_snprintf(print_string, PRINT_BUFFER_SIZE, "lpr %s", name);

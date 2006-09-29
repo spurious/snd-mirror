@@ -947,7 +947,7 @@ static bool default_envelope_p(env *e)
 	 (e->data[3] == 1.0));
 }
 
-static void save_sound_state (snd_info *sp, void *ptr) 
+static void save_sound_state(snd_info *sp, void *ptr) 
 {
   /* called only after the global settings have been established, so here we can't use the DEFAULT_* macros that are ambiguous */
   int chan;

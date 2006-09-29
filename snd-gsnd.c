@@ -910,7 +910,7 @@ static Float revscl_to_scroll(Float minval, Float val, Float maxval)
   return(0.9 * (pow(val, 0.333) - pow(minval, 0.333)) / (pow(maxval, 0.333) - pow(minval, 0.333)));
 }
 
-static Float cube (Float a) {return(a*a*a);}
+static Float cube(Float a) {return(a*a*a);}
 
 static Float scroll_to_revscl(snd_info *sp, Float val)
 {

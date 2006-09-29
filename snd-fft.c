@@ -1624,7 +1624,7 @@ void set_spectro_cutoff_and_redisplay(Float val)
   for_each_chan(sono_update);
 }
 
-static void spectral_multiply (Float* rl1, Float* rl2, int n)
+static void spectral_multiply(Float* rl1, Float* rl2, int n)
 {
   int j, n2;
   Float invn;

@@ -22,11 +22,11 @@ widget_t post_it(const char *subject, const char *str) {fprintf(stdout, str); re
 void save_post_it_dialog_state(FILE *fd) {}
 void reflect_just_sounds(void) {}
 void save_file_dialog_state(FILE *fd) {}
-void draw_line (axis_context *ax, int x0, int y0, int x1, int y1) {}
-void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height) {}
+void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) {}
+void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height) {}
 void fill_polygon(axis_context *ax, int points, ...) {}
 void draw_polygon(axis_context *ax, int points, ...) {}
-void draw_string (axis_context *ax, int x0, int y0, const char *str, int len) {}
+void draw_string(axis_context *ax, int x0, int y0, const char *str, int len) {}
 void draw_arc(axis_context *ax, int x, int y, int size) {}
 void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax) {}
 void set_grf_point(Locus xi, int j, Locus yi) {}
@@ -34,7 +34,7 @@ void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float
 void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style) {}
 void mix_save_graph(mix_context *ms, int j) {}
 void save_colors(FILE *Fp) {}
-void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width, int height) {}
+void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height) {}
 void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int j) {}
 void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int j) {}
 void setup_axis_context(chan_info *cp, axis_context *ax) {}
@@ -200,12 +200,12 @@ void set_enved_revert_sensitive(bool val) {}
 void set_enved_undo_sensitive(bool val) {}
 void set_enved_save_sensitive(bool val) {}
 void set_enved_show_sensitive(bool val) {}
-void make_scrolled_env_list (void) {}
+void make_scrolled_env_list(void) {}
 void enved_reflect_amp_env_completion(snd_info *sp) {}
 void new_active_channel_alert(void) {}
 void env_redisplay(void) {}
 void env_redisplay_with_print(void) {}
-int create_envelope_editor (void) {return(0);}
+int create_envelope_editor(void) {return(0);}
 void set_enved_clip_p(bool val) {}
 void reflect_enved_style(void) {}
 void set_enved_base(Float val) {}
@@ -278,7 +278,7 @@ widget_t start_preferences_dialog(void) {return(NULL_WIDGET);}
 
 void auto_update_restart(void) {}
 
-snd_info *add_sound_window (char *filename, bool read_only, file_info *hdr)
+snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 {
   snd_info *sp;
   int snd_slot, nchans, i;

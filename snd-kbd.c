@@ -32,21 +32,21 @@ static void allocate_macro_cmds(void)
     }
 }
 
-static void start_defining_macro (void)
+static void start_defining_macro(void)
 {
   macro_size = 0;
   defining_macro = true;
   if ((!macro_cmds) || (macro_size == macro_cmd_size)) allocate_macro_cmds();
 }
 
-static void stop_defining_macro (void)
+static void stop_defining_macro(void)
 {
   /* the last C-x ) went into the macro before we noticed it should not have */
   macro_size -= 2;
   defining_macro = false;
 }
 
-static void execute_last_macro (chan_info *cp, int count)
+static void execute_last_macro(chan_info *cp, int count)
 {
   int i, j;
   if ((macro_cmds) && (macro_size > 0))
@@ -57,7 +57,7 @@ static void execute_last_macro (chan_info *cp, int count)
 			 macro_cmds[i]->state);
 }
 
-static void continue_macro (int keysym, int state)
+static void continue_macro(int keysym, int state)
 {
   if (!(macro_cmds[macro_size])) macro_cmds[macro_size] = (macro_cmd *)CALLOC(1, sizeof(macro_cmd));
   macro_cmds[macro_size]->keysym = keysym;
@@ -1098,9 +1098,9 @@ static void window_frames_selection(chan_info *cp)
     }
 }
 
-static chan_info *goto_next_graph (chan_info *cp, int count);
+static chan_info *goto_next_graph(chan_info *cp, int count);
 
-static chan_info *goto_previous_graph (chan_info *cp, int count)
+static chan_info *goto_previous_graph(chan_info *cp, int count)
 {
   snd_info *sp;
   chan_info *ncp, *vcp;
@@ -1156,7 +1156,7 @@ static chan_info *goto_previous_graph (chan_info *cp, int count)
   return(ncp);
 }
 
-static chan_info *goto_next_graph (chan_info *cp, int count)
+static chan_info *goto_next_graph(chan_info *cp, int count)
 {
   snd_info *sp;
   chan_info *ncp, *vcp;
@@ -1277,7 +1277,7 @@ static off_t get_count(char *number_buffer, int number_ctr, bool dot_seen, chan_
 
 #define NUMBER_BUFFER_SIZE 12
 
-static Float state_amount (int state)
+static Float state_amount(int state)
 {
   Float amount;
   amount = 1.0;

@@ -117,7 +117,7 @@ void mus_reset_headers_c(void)
   markers = 0;
 }
 
-int mus_header_initialize (void)
+int mus_header_initialize(void)
 {
   if (!hdrbuf_is_inited)
     {
@@ -286,22 +286,22 @@ static off_t true_file_length = 0, data_size = 0;
 static int base_detune = 0, base_note = 0;
 static bool little_endian = false;
 
-off_t mus_header_samples (void) {return(data_size);}
-off_t mus_header_data_location (void) {return(data_location);}
-int mus_header_chans (void) {return(chans);}
-int mus_header_srate (void) {return(srate);}
-int mus_header_type (void) {return(header_type);}
-int mus_header_format (void) {return(data_format);}
-off_t mus_header_comment_start (void) {return(comment_start);}
-off_t mus_header_comment_end (void) {return(comment_end);}
-off_t mus_header_aux_comment_start (int n) {if (aux_comment_start) return(aux_comment_start[n]); else return(-1);}
-off_t mus_header_aux_comment_end (int n) {if (aux_comment_end) return(aux_comment_end[n]); else return(-1);}
-int mus_header_type_specifier (void) {return(type_specifier);}
-int mus_header_bits_per_sample (void) {return(bits_per_sample);}
-int mus_header_fact_samples (void) {return(fact_samples);}
-int mus_header_block_align (void) {return(block_align);}
-off_t mus_header_true_length (void) {return(true_file_length);}
-int mus_header_original_format (void) {return(original_data_format);}
+off_t mus_header_samples(void) {return(data_size);}
+off_t mus_header_data_location(void) {return(data_location);}
+int mus_header_chans(void) {return(chans);}
+int mus_header_srate(void) {return(srate);}
+int mus_header_type(void) {return(header_type);}
+int mus_header_format(void) {return(data_format);}
+off_t mus_header_comment_start(void) {return(comment_start);}
+off_t mus_header_comment_end(void) {return(comment_end);}
+off_t mus_header_aux_comment_start(int n) {if (aux_comment_start) return(aux_comment_start[n]); else return(-1);}
+off_t mus_header_aux_comment_end(int n) {if (aux_comment_end) return(aux_comment_end[n]); else return(-1);}
+int mus_header_type_specifier(void) {return(type_specifier);}
+int mus_header_bits_per_sample(void) {return(bits_per_sample);}
+int mus_header_fact_samples(void) {return(fact_samples);}
+int mus_header_block_align(void) {return(block_align);}
+off_t mus_header_true_length(void) {return(true_file_length);}
+int mus_header_original_format(void) {return(original_data_format);}
 int mus_header_loop_mode(int which) {if (loop_modes) return(loop_modes[which]); else return(-1);}
 int mus_header_loop_start(int which) {if (loop_starts) return(loop_starts[which]); else return(-1);}
 int mus_header_loop_end(int which) {if (loop_ends) return(loop_ends[which]); else return(-1);}
@@ -734,7 +734,7 @@ static void write_next_comment(int fd, const char *comment, int len, int loc)
     }
 }
 
-int mus_header_write_next_header (int chan, int wsrate, int wchans, int loc, int siz, int format, const char *comment, int len)
+int mus_header_write_next_header(int chan, int wsrate, int wchans, int loc, int siz, int format, const char *comment, int len)
 {
   int i, j;
   write_four_chars((unsigned char *)hdrbuf, I_DSND); /* ".snd" */
@@ -2171,7 +2171,7 @@ static int read_soundfont_header(const char *filename, int chan)
 
 #define MAX_FIELD_LENGTH 80
 
-static int decode_nist_value (char *str, int base, int end)
+static int decode_nist_value(char *str, int base, int end)
 {
   /* can be -i -r or -snnn where nnn = ascii rep of integer = len of string (!) */
   /* we'll deal only with integer fields (and well-behaved string fields) */
@@ -5756,7 +5756,7 @@ bool mus_header_no_header(const char *filename)
   return(!ok);
 }
 
-void mus_header_set_aiff_loop_info (int *data)
+void mus_header_set_aiff_loop_info(int *data)
 {
   /* include modes */
   if (data)

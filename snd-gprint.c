@@ -60,7 +60,7 @@ static void report_in_error_info(const char *msg, void *ignore)
     }
 }
 
-static int lpr (char *name)
+static int lpr(char *name)
 {
   /* make some desultory effort to print the file */
   mus_snprintf(print_string, PRINT_BUFFER_SIZE, "lpr %s", name);

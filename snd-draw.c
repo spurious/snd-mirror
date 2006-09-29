@@ -866,7 +866,7 @@ Float check_color_range(const char *caller, XEN val)
   return(rf);
 }
 
-static XEN g_set_cursor_color (XEN color) 
+static XEN g_set_cursor_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_cursor_color, "a color"); 
   color_cursor(XEN_UNWRAP_PIXEL(color));
@@ -906,7 +906,7 @@ void set_highlight_color(color_t color)
 #endif
 }
 
-static XEN g_set_highlight_color (XEN color) 
+static XEN g_set_highlight_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_highlight_color, "a color"); 
   set_highlight_color(XEN_UNWRAP_PIXEL(color));
@@ -919,7 +919,7 @@ static XEN g_highlight_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->highlight_color));
 }
 
-static XEN g_set_mark_color (XEN color) 
+static XEN g_set_mark_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_mark_color, "a color"); 
   color_marks(XEN_UNWRAP_PIXEL(color));
@@ -939,7 +939,7 @@ void set_zoom_color(color_t color)
   color_chan_components(ss->sgx->zoom_color, COLOR_ZOOM);
 }
 
-static XEN g_set_zoom_color (XEN color) 
+static XEN g_set_zoom_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_zoom_color, "a color"); 
   set_zoom_color(XEN_UNWRAP_PIXEL(color)); 
@@ -958,7 +958,7 @@ void set_position_color(color_t color)
   color_chan_components(ss->sgx->position_color, COLOR_POSITION);
 }
 
-static XEN g_set_position_color (XEN color) 
+static XEN g_set_position_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_position_color, "a color"); 
   set_position_color(XEN_UNWRAP_PIXEL(color)); 
@@ -971,7 +971,7 @@ static XEN g_position_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->position_color));
 }
 
-static XEN g_set_listener_color (XEN color) 
+static XEN g_set_listener_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_listener_color, "a color"); 
   color_listener(XEN_UNWRAP_PIXEL(color));
@@ -984,7 +984,7 @@ static XEN g_listener_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->listener_color));
 }
 
-static XEN g_set_listener_text_color (XEN color) 
+static XEN g_set_listener_text_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_listener_text_color, "a color"); 
   color_listener_text(XEN_UNWRAP_PIXEL(color));
@@ -997,7 +997,7 @@ static XEN g_listener_text_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->listener_text_color));
 }
 
-static XEN g_set_enved_waveform_color (XEN color) 
+static XEN g_set_enved_waveform_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_enved_waveform_color, "a color"); 
   color_enved_waveform(XEN_UNWRAP_PIXEL(color));
@@ -1010,7 +1010,7 @@ static XEN g_enved_waveform_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->enved_waveform_color));
 }
 
-static XEN g_set_filter_control_waveform_color (XEN color) 
+static XEN g_set_filter_control_waveform_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_filter_control_waveform_color, "a color");
   color_filter_waveform(XEN_UNWRAP_PIXEL(color));
@@ -1023,7 +1023,7 @@ static XEN g_filter_control_waveform_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->filter_control_waveform_color));
 }
 
-static XEN g_set_selection_color (XEN color) 
+static XEN g_set_selection_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_selection_color, "a color"); 
   color_selection(XEN_UNWRAP_PIXEL(color));
@@ -1037,7 +1037,7 @@ static XEN g_selection_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->selection_color));
 }
 
-static XEN g_set_text_focus_color (XEN color) 
+static XEN g_set_text_focus_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_text_focus_color, "a color"); 
   ss->sgx->text_focus_color = XEN_UNWRAP_PIXEL(color);

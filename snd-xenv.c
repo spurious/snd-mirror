@@ -69,7 +69,7 @@ void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, 
   display_env(e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, printing);
 }
 
-static void reflect_segment_state (void)
+static void reflect_segment_state(void)
 {
   if (enved_dialog)
     {
@@ -615,7 +615,7 @@ static void redo_button_pressed(Widget w, XtPointer context, XtPointer info)
   env_redisplay();
 }
 
-static void reflect_apply_state (void)
+static void reflect_apply_state(void)
 {
   set_label(nameL, _(env_names[enved_target(ss)]));
   XmChangeColor(ampB, (enved_target(ss) == ENVED_AMPLITUDE) ? ((Pixel)ss->sgx->yellow) : ((Pixel)ss->sgx->highlight_color));

@@ -178,7 +178,7 @@ void clear_window(axis_context *ax)
   if (ax) XClearWindow(ax->dp, ax->wn);
 }
 
-void map_over_children (Widget w, void (*func)(Widget, void *), void *userptr)
+void map_over_children(Widget w, void (*func)(Widget, void *), void *userptr)
 {
   /* apply func to each child in entire tree beneath top widget */
   /* taken from Douglas Young, "Motif Debugging and Performance Tuning" Prentice-Hall 1995 */

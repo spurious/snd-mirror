@@ -1558,7 +1558,7 @@ static Widget make_inner_label(const char *label, Widget parent, Widget top_widg
 
 /* ---------------- base buttons ---------------- */
 
-static void wm_delete_callback (Widget w, XtPointer context, XtPointer info) 
+static void wm_delete_callback(Widget w, XtPointer context, XtPointer info) 
 {
   clear_prefs_dialog_error();
   prefs_helping = false;

@@ -42,7 +42,7 @@ bool channel_graph_is_visible(chan_info *cp)
 #define EDIT_HISTORY_LIST(Cp) (Cp->cgx)->chan_widgets[W_edhist]
 
 static Float sqr(Float a) {return(a * a);}
-static Float cube (Float a) {return(a * a * a);}
+static Float cube(Float a) {return(a * a * a);}
 
 static Float get_scrollbar(Widget w, int val, int scrollbar_max)
 {

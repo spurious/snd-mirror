@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: is there an auto-delete mixup in 4-4 chan mixes? */
-
 typedef struct {
   int chans;
   Float *scalers;
@@ -4850,7 +4848,7 @@ void color_mixes(color_t color)
   for_each_normal_chan(update_graph);
 }
 
-static XEN g_set_mix_color (XEN arg1, XEN arg2)
+static XEN g_set_mix_color(XEN arg1, XEN arg2)
 {
   XEN color; 
   XEN mix_id = XEN_UNDEFINED;

@@ -639,7 +639,7 @@ static vu_t *make_vu_meter(Widget meter, Float size)
   return(vu);
 }
 
-static void set_vu_val (vu_t *vu, Float val) 
+static void set_vu_val(vu_t *vu, Float val) 
 {
   Float dv = 0.0;
   if (!vu) return;

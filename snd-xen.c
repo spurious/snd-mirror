@@ -564,15 +564,15 @@ void snd_rb_raise(XEN tag, XEN throw_args)
  */
 
 #if HAVE_GUILE
-static XEN snd_internal_stack_catch (XEN tag,
-				     XEN_CATCH_BODY_TYPE body,
-				     void *body_data,
+static XEN snd_internal_stack_catch(XEN tag,
+				    XEN_CATCH_BODY_TYPE body,
+				    void *body_data,
 #if HAVE_SCM_T_CATCH_BODY
-				     scm_t_catch_handler handler,
+				    scm_t_catch_handler handler,
 #else
-				     scm_catch_handler_t handler,
+				    scm_catch_handler_t handler,
 #endif
-				     void *handler_data)
+				    void *handler_data)
 { /* declaration from libguile/throw */
   XEN result;
   if (ss->catch_exists < 0) ss->catch_exists = 0;
@@ -1548,7 +1548,7 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
   return(xen_return_first(XEN_FALSE, args));
 }
 
-XEN run_or_hook (XEN hook, XEN args, const char *caller)
+XEN run_or_hook(XEN hook, XEN args, const char *caller)
 {
   XEN result = XEN_FALSE; /* (or): #f */
   XEN hook_result = XEN_FALSE;

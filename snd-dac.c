@@ -135,7 +135,7 @@ static Float expand(dac_info *dp, Float sr, Float ex)
    samples each delay needs to be expanded by and so on -- more complexity than it's worth!
 */
 
-static int prime (int num)
+static int prime(int num)
 {
   if (num == 2) return(1);
   if ((num % 2) == 1)
@@ -1165,7 +1165,7 @@ void play_selection(play_process_t background)
 #define JUST_SPEED 2
 #define ALL_CHANGES 3
 
-static int choose_dac_op (dac_info *dp, snd_info *sp)
+static int choose_dac_op(dac_info *dp, snd_info *sp)
 {
   if (!sp) return(NO_CHANGE);
   if ((dp->expanding) || (dp->filtering) || (dp->reverbing) || (sp->contrast_control_p)) 
@@ -2001,7 +2001,7 @@ static bool start_audio_output_1(void)
 }
 #else /* not ALSA or OSS */
 
-static bool start_audio_output_1 (void)
+static bool start_audio_output_1(void)
 {
   int err;
   int i;

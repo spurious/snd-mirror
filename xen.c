@@ -1655,6 +1655,7 @@ XEN xen_gauche_add_to_load_path(char *path)
 {
   if (XEN_FALSE_P(Scm_Member(C_TO_XEN_STRING(path), XEN_LOAD_PATH, SCM_CMP_EQUAL))) /* scheme spec says eq? and eqv? of strings is unspecified */
     Scm_AddLoadPath(path, false);
+  return(XEN_FALSE);
 }
 
 XEN xen_gauche_object_to_string(XEN obj)

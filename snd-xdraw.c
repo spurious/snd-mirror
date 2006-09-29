@@ -74,13 +74,13 @@ void draw_polygon(axis_context *ax, int points, ...)
   FREE(pts);
 }
 
-void draw_lines (axis_context *ax, XPoint *points, int num)
+void draw_lines(axis_context *ax, XPoint *points, int num)
 {
   if (num == 0) return;
   XDrawLines(ax->dp, ax->wn, ax->gc, points, num, CoordModeOrigin);
 }
 
-void draw_points (axis_context *ax, XPoint *points, int num, int size)
+void draw_points(axis_context *ax, XPoint *points, int num, int size)
 {
   if (num == 0) return;
   if (size == 1)
@@ -106,7 +106,7 @@ void draw_points (axis_context *ax, XPoint *points, int num, int size)
     }
 }
 
-static void draw_point (Display *dp, Drawable wn, GC gc, XPoint point, int size)
+static void draw_point(Display *dp, Drawable wn, GC gc, XPoint point, int size)
 {
   if (size == 1)
     XDrawPoint(dp, wn, gc, point.x, point.y);
@@ -129,7 +129,7 @@ void draw_arc(axis_context *ax, int x, int y, int size)
 
 static XPoint polypts[4];
 
-static void fill_polygons (axis_context *ax, XPoint *points, int num, Locus y0)
+static void fill_polygons(axis_context *ax, XPoint *points, int num, Locus y0)
 {
   int i;
   for (i = 1; i < num; i++)

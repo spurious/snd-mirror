@@ -86,7 +86,7 @@ void draw_polygon(axis_context *ax, int points, ...)
   FREE(pts);
 }
 
-void draw_lines (axis_context *ax, GdkPoint *points, int num)
+void draw_lines(axis_context *ax, GdkPoint *points, int num)
 {
   if (num == 0) return;
 #if MUS_DEBUGGING
@@ -95,7 +95,7 @@ void draw_lines (axis_context *ax, GdkPoint *points, int num)
   gdk_draw_lines(ax->wn, ax->gc, points, num);
 }
 
-void draw_points (axis_context *ax, GdkPoint *points, int num, int size)
+void draw_points(axis_context *ax, GdkPoint *points, int num, int size)
 {
   if (num == 0) return;
   if (size == 1)
@@ -109,7 +109,7 @@ void draw_points (axis_context *ax, GdkPoint *points, int num, int size)
     }
 }
 
-static void draw_point (GdkDrawable *wn, GdkGC *gc, GdkPoint point, int size)
+static void draw_point(GdkDrawable *wn, GdkGC *gc, GdkPoint point, int size)
 {
   if (size == 1)
     gdk_draw_point(wn, gc, point.x, point.y);

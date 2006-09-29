@@ -13,7 +13,7 @@ typedef struct
 
 #define MANY_PASSES 10000
 
-static void prepare_global_search (chan_info *cp, void *g0)
+static void prepare_global_search(chan_info *cp, void *g0)
 {
   gfd *g = (gfd *)g0;
   off_t this_dur;
@@ -37,7 +37,7 @@ static void prepare_global_search (chan_info *cp, void *g0)
 #define KEEP_SEARCHING false
 #define STOP_SEARCHING true
 
-static bool run_global_search (gfd *g)
+static bool run_global_search(gfd *g)
 {
   if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
     {

@@ -218,7 +218,7 @@ static void textfield_no_color_unfocus_callback(Widget w, XtPointer context, XtP
 static bool actions_loaded = false;
 #define CONTROL_KEY 4
 
-static void No_op (Widget w, XEvent *ev, char **str, Cardinal *num) 
+static void No_op(Widget w, XEvent *ev, char **str, Cardinal *num) 
 {
   /* return does not cause widget activation in many textfield cases -- it is a true no-op */
 }

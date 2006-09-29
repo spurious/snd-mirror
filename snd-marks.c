@@ -18,12 +18,12 @@ int mark_sync_max(void)
 
 void set_mark_sync(mark *m, int val) 
 {
-  m->sync = (unsigned int)val; 
+  m->sync = val; 
   if (val > sync_max) 
     sync_max = val; 
 }
 
-static mark *make_mark_1(off_t samp, const char *name, int id, unsigned int sc)
+static mark *make_mark_1(off_t samp, const char *name, int id, int sc)
 {
   mark *mp;
   mp = (mark *)CALLOC(1, sizeof(mark));
@@ -44,7 +44,7 @@ static mark *copy_mark(mark *m)
   return(make_mark_1(m->samp, m->name, m->id, m->sync));
 }
 
-static mark *free_mark (mark *mp)
+static mark *free_mark(mark *mp)
 {
   if (mp)
     {
@@ -717,7 +717,7 @@ void backup_mark_list(chan_info *cp, int cur)
     }
 }
 
-void collapse_marks (snd_info *sp)
+void collapse_marks(snd_info *sp)
 {
   /* in all channels, move current edit_ctr mark list to 0, freeing all the rest */
   int i;
@@ -1284,7 +1284,7 @@ static void add_syncd_mark(syncdata *sd, mark *mp, chan_info *cp)
 static mark *gather_local_syncd_marks(chan_info *cp, mark *mp, void *usd)
 {
   syncdata *sd = (syncdata *)usd;
-  if ((unsigned int)(sd->sync) == mp->sync)
+  if (sd->sync == mp->sync)
     add_syncd_mark(sd, mp, cp);
   return(NULL);
 }
@@ -2360,7 +2360,9 @@ void save_mark_list(FILE *fd, chan_info *cp, bool all_chans)
   else map_over_marks(cp, save_mark, (void *)sv, READ_FORWARD);
   if (sv->size > 0)
     {
+#if HAVE_SCHEME || HAVE_RUBY
       int i;
+#endif
       fprintf(fd, "      ");
 
 #if HAVE_SCHEME

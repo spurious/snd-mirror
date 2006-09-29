@@ -518,7 +518,7 @@ char *region_description(int rg)
   return(NULL);
 }
 
-void free_region_state (region_state *r)
+void free_region_state(region_state *r)
 {
   if (r)
     {
@@ -1522,7 +1522,7 @@ static void save_region_to_xen_error(const char *msg, void *data)
 		       C_TO_XEN_STRING(msg)));
 }
 
-static XEN g_save_region (XEN n, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static XEN g_save_region(XEN n, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
   #define H_save_region "(" S_save_region " region :file :header-type :data-format :comment): save region in file \
 using data format (default depends on machine byte order), header type (" S_mus_next "), and comment"

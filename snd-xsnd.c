@@ -555,7 +555,7 @@ static int revscl_to_scroll(Float minval, Float val, Float maxval)
   return(snd_round(0.9 * SCROLLBAR_MAX * (pow(val, 0.333) - pow(minval, 0.333)) / (pow(maxval, 0.333) - pow(minval, 0.333))));
 }
 
-static Float cube (Float a) {return(a*a*a);}
+static Float cube(Float a) {return(a*a*a);}
 
 static int scroll_to_revscl(snd_info *sp, int val)
 {

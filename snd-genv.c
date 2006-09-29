@@ -70,7 +70,7 @@ void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, 
   display_env(e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, printing);
 }
 
-static void reflect_segment_state (void);
+static void reflect_segment_state(void);
 
 static void prepare_env_edit(env *new_env)
 {
@@ -91,7 +91,7 @@ void set_enved_undo_sensitive(bool val) {set_sensitive(undoB, val);}
 void set_enved_save_sensitive(bool val) {set_sensitive(saveB, val);}
 void set_enved_show_sensitive(bool val) {set_sensitive(showB, val);}
 
-void make_scrolled_env_list (void)
+void make_scrolled_env_list(void)
 {
   int n, size;
   size = enved_all_envs_top();
@@ -347,7 +347,7 @@ static void undo_and_apply_enved_callback(GtkWidget *w, gpointer context)
   last_active_channel = active_channel;
 }
 
-static void reflect_segment_state (void)
+static void reflect_segment_state(void)
 {
   if (enved_dialog)
     {
@@ -570,7 +570,7 @@ static void redo_button_pressed(GtkWidget *w, gpointer context)
   env_redisplay();
 }
 
-static void reflect_apply_state (void)
+static void reflect_apply_state(void)
 {
   gtk_label_set_text(GTK_LABEL(nameL), _(env_names[enved_target(ss)]));
   gtk_widget_modify_bg(ampB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_AMPLITUDE) ? ss->sgx->yellow : ss->sgx->lighter_blue);
@@ -770,7 +770,7 @@ static void fir_button_pressed(GtkWidget *w, gpointer context)
 static void enved_selection_watcher(selection_watcher_reason_t reason, void *data);
 #define BB_MARGIN 3
 
-GtkWidget *create_envelope_editor (void)
+GtkWidget *create_envelope_editor(void)
 {
   if (!enved_dialog)
     {

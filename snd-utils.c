@@ -466,6 +466,13 @@ char *fam_event_name(int code)
   return("unknown");
 }
 
+static const char *fam_error_to_string(int err)
+{
+  if (err > 0)
+    return(FamErrlist[err]); /* not sure this actually does anything anymore */
+  return("0");
+}
+
 static void fam_check(void)
 {
   FAMEvent fe; 
@@ -473,7 +480,7 @@ static void fam_check(void)
   while (FAMPending(ss->fam_connection) > 0)
     {
       if (FAMNextEvent(ss->fam_connection, &fe) < 0) 
-	snd_error("fam error: %d\n", FAMErrno);
+	snd_error("fam error: %s\n", fam_error_to_string(FAMErrno));
       else
 	{
 	  if (!(ss->checking_explicitly)) 
@@ -545,7 +552,7 @@ static FAMRequest *fam_monitor(void)
 	  if (err < 0)
 	    {
 	      fam_already_warned = true;
-	      snd_error("can't start file alteration monitor: %d\n", FAMErrno);
+	      snd_warning("can't start file alteration monitor: %s\n", fam_error_to_string(FAMErrno));
 	      ss->fam_ok = false;
 	      return(NULL);
 	    }
@@ -596,7 +603,7 @@ fam_info *fam_monitor_file(const char *filename,
       err = FAMMonitorFile(ss->fam_connection, filename, rp, (void *)fp);
       if (err < 0)
 	{
-	  snd_error("can't monitor %s: %d (free %p %p)\n", filename, FAMErrno, fp, rp);
+	  snd_warning("can't monitor %s: %s (free %p %p)\n", filename, fam_error_to_string(FAMErrno), fp, rp);
 	  FREE(rp);
 	  rp = NULL;
 	  FREE(fp);
@@ -607,7 +614,7 @@ fam_info *fam_monitor_file(const char *filename,
   else 
     {
       if (!fam_already_warned)
-	snd_error("can't get fam request for %s: %d\n", filename, FAMErrno);
+	snd_warning("can't get fam request for %s: %s\n", filename, fam_error_to_string(FAMErrno));
     }
   return(NULL);
 }
@@ -626,7 +633,7 @@ fam_info *fam_monitor_directory(const char *dir_name,
       err = FAMMonitorDirectory(ss->fam_connection, dir_name, rp, (void *)fp);
       if (err < 0)
 	{
-	  snd_error("can't monitor %s: %d\n", dir_name, FAMErrno);
+	  snd_warning("can't monitor %s: %s\n", dir_name, fam_error_to_string(FAMErrno));
 	  FREE(rp);
 	  rp = NULL;
 	  FREE(fp);
@@ -637,7 +644,7 @@ fam_info *fam_monitor_directory(const char *dir_name,
   else 
     {
       if (!fam_already_warned)
-	snd_error("can't get fam request for %s: %d\n", dir_name, FAMErrno);
+	snd_warning("can't get fam request for %s: %s\n", dir_name, fam_error_to_string(FAMErrno));
     }
   return(NULL);
 }
@@ -654,7 +661,7 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
 	{
 	  err = FAMCancelMonitor(ss->fam_connection, fp->rp);
 	  if (err < 0)
-	    snd_error("can't unmonitor %s: %d\n", filename, FAMErrno);
+	    snd_warning("can't unmonitor %s: %s\n", filename, fam_error_to_string(FAMErrno));
 	  FREE(fp->rp);
 	  /* /usr/include/fam.h implies that cancel frees this, but valgrind seems to disagree */
 	  /* as far as I can see, gamin (libgamin/gam_api.c) does not free it */
@@ -714,7 +721,7 @@ fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp)
  * MALLOC, REALLOC, and FREE.
  */
 
-static char *kmg (int num)
+static char *kmg(int num)
 {
   /* return number 0..1024, then in terms of K, M, G */
   char *str;

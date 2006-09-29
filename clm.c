@@ -1577,7 +1577,7 @@ static mus_any_class TABLE_LOOKUP_CLASS = {
   0
 };
 
-mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table_size, mus_interp_t type)
+mus_any *mus_make_table_lookup(Float freq, Float phase, Float *table, int table_size, mus_interp_t type)
 {
   tbl *gen;
   gen = (tbl *)clm_calloc(1, sizeof(tbl), S_make_table_lookup);
@@ -2502,7 +2502,7 @@ Float mus_notch_1(mus_any *ptr, Float input)
 
 bool mus_notch_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_NOTCH));}
 
-mus_any *mus_make_notch (Float scaler, int size, Float *line, int line_size, mus_interp_t type)
+mus_any *mus_make_notch(Float scaler, int size, Float *line, int line_size, mus_interp_t type)
 {
   dly *gen;
   gen = (dly *)mus_make_delay(size, line, line_size, type);
@@ -2580,7 +2580,7 @@ static mus_any_class ALL_PASS_CLASS = {
   0
 };
 
-mus_any *mus_make_all_pass (Float backward, Float forward, int size, Float *line, int line_size, mus_interp_t type)
+mus_any *mus_make_all_pass(Float backward, Float forward, int size, Float *line, int line_size, mus_interp_t type)
 {
   dly *gen;
   gen = (dly *)mus_make_delay(size, line, line_size, type);
@@ -7931,7 +7931,7 @@ Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
   return(rdat);
 }
 
-Float *mus_convolution (Float* rl1, Float* rl2, int n)
+Float *mus_convolution(Float* rl1, Float* rl2, int n)
 {
   /* convolves two real arrays.                                           */
   /* rl1 and rl2 are assumed to be set up correctly for the convolution   */

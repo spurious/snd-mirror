@@ -141,32 +141,32 @@ static void options_preferences_callback(Widget w, XtPointer info, XtPointer con
 /* -------------------------------- HELP MENU -------------------------------- */
 
 static void help_about_snd_callback(Widget w, XtPointer info, XtPointer context) {about_snd_help();}
-static void help_fft_callback (Widget w, XtPointer info, XtPointer context) {fft_help();}
+static void help_fft_callback(Widget w, XtPointer info, XtPointer context) {fft_help();}
 #if HAVE_EXTENSION_LANGUAGE
-static void help_find_callback (Widget w, XtPointer info, XtPointer context) {find_help();}
-static void help_init_file_callback (Widget w, XtPointer info, XtPointer context) {init_file_help();}
+static void help_find_callback(Widget w, XtPointer info, XtPointer context) {find_help();}
+static void help_init_file_callback(Widget w, XtPointer info, XtPointer context) {init_file_help();}
 #endif
-static void help_undo_callback (Widget w, XtPointer info, XtPointer context) {undo_help();}
-static void help_sync_callback (Widget w, XtPointer info, XtPointer context) {sync_help();}
-static void help_debug_callback (Widget w, XtPointer info, XtPointer context) {debug_help();}
-static void help_controls_callback (Widget w, XtPointer info, XtPointer context) {controls_help();}
-static void help_env_callback (Widget w, XtPointer info, XtPointer context) {env_help();}
-static void help_marks_callback (Widget w, XtPointer info, XtPointer context) {marks_help();}
-static void help_mix_callback (Widget w, XtPointer info, XtPointer context) {mix_help();}
-static void help_track_callback (Widget w, XtPointer info, XtPointer context) {track_help();}
-static void help_sound_files_callback (Widget w, XtPointer info, XtPointer context) {sound_files_help();}
-static void help_recording_callback (Widget w, XtPointer info, XtPointer context) {recording_help();}
-static void help_keys_callback (Widget w, XtPointer info, XtPointer context) {key_binding_help();}
-static void help_play_callback (Widget w, XtPointer info, XtPointer context) {play_help();}
-static void help_filter_callback (Widget w, XtPointer info, XtPointer context) {filter_help();}
-static void help_save_callback (Widget w, XtPointer info, XtPointer context) {save_help();}
-static void help_reverb_callback (Widget w, XtPointer info, XtPointer context) {reverb_help();}
-static void help_resample_callback (Widget w, XtPointer info, XtPointer context) {resample_help();}
-static void help_insert_callback (Widget w, XtPointer info, XtPointer context) {insert_help();}
-static void help_delete_callback (Widget w, XtPointer info, XtPointer context) {delete_help();}
-static void help_region_callback (Widget w, XtPointer info, XtPointer context) {region_help();}
-static void help_selection_callback (Widget w, XtPointer info, XtPointer context) {selection_help();}
-static void help_colors_callback (Widget w, XtPointer info, XtPointer context) {colors_help();}
+static void help_undo_callback(Widget w, XtPointer info, XtPointer context) {undo_help();}
+static void help_sync_callback(Widget w, XtPointer info, XtPointer context) {sync_help();}
+static void help_debug_callback(Widget w, XtPointer info, XtPointer context) {debug_help();}
+static void help_controls_callback(Widget w, XtPointer info, XtPointer context) {controls_help();}
+static void help_env_callback(Widget w, XtPointer info, XtPointer context) {env_help();}
+static void help_marks_callback(Widget w, XtPointer info, XtPointer context) {marks_help();}
+static void help_mix_callback(Widget w, XtPointer info, XtPointer context) {mix_help();}
+static void help_track_callback(Widget w, XtPointer info, XtPointer context) {track_help();}
+static void help_sound_files_callback(Widget w, XtPointer info, XtPointer context) {sound_files_help();}
+static void help_recording_callback(Widget w, XtPointer info, XtPointer context) {recording_help();}
+static void help_keys_callback(Widget w, XtPointer info, XtPointer context) {key_binding_help();}
+static void help_play_callback(Widget w, XtPointer info, XtPointer context) {play_help();}
+static void help_filter_callback(Widget w, XtPointer info, XtPointer context) {filter_help();}
+static void help_save_callback(Widget w, XtPointer info, XtPointer context) {save_help();}
+static void help_reverb_callback(Widget w, XtPointer info, XtPointer context) {reverb_help();}
+static void help_resample_callback(Widget w, XtPointer info, XtPointer context) {resample_help();}
+static void help_insert_callback(Widget w, XtPointer info, XtPointer context) {insert_help();}
+static void help_delete_callback(Widget w, XtPointer info, XtPointer context) {delete_help();}
+static void help_region_callback(Widget w, XtPointer info, XtPointer context) {region_help();}
+static void help_selection_callback(Widget w, XtPointer info, XtPointer context) {selection_help();}
+static void help_colors_callback(Widget w, XtPointer info, XtPointer context) {colors_help();}
 
 void check_menu_labels(int key, int state, bool extended)
 {

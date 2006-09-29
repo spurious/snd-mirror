@@ -688,7 +688,7 @@ char **help_name_to_xrefs(const char *name);
 
 /* -------- snd-menu.c -------- */
 
-void reflect_file_revert_in_label (snd_info *sp);
+void reflect_file_revert_in_label(snd_info *sp);
 void set_menu_label(widget_t w, const char *label);
 void g_init_menu(void);
 
@@ -770,10 +770,10 @@ void ps_draw_sono_rectangle(axis_info *ap, int color, Float x, Float y, Float wi
 void ps_reset_color(void);
 void ps_bg(axis_info *ap, axis_context *ax);
 void ps_fg(axis_context *ax);
-void ps_draw_line (axis_info *ap, int x0, int y0, int x1, int y1);
+void ps_draw_line(axis_info *ap, int x0, int y0, int x1, int y1);
 void ps_draw_spectro_line(axis_info *ap, int color, Float x0, Float y0, Float x1, Float y1);
-void ps_fill_rectangle (axis_info *ap, int x0, int y0, int width, int height);
-void ps_draw_string (axis_info *ap, int x0, int y0, const char *str);
+void ps_fill_rectangle(axis_info *ap, int x0, int y0, int width, int height);
+void ps_draw_string(axis_info *ap, int x0, int y0, const char *str);
 void ps_set_number_font(void);
 void ps_set_label_font(void);
 void ps_set_bold_peak_numbers_font(void);
@@ -801,7 +801,7 @@ void finish_moving_mark(chan_info *cp, mark *m);
 mark *add_mark(off_t samp, const char *name, chan_info *cp);
 bool delete_mark_samp(off_t samp, chan_info *cp);
 void free_mark_list(chan_info *cp, int ignore);
-void collapse_marks (snd_info *sp);
+void collapse_marks(snd_info *sp);
 bool goto_mark(chan_info *cp, int count);
 void goto_named_mark(chan_info *cp, const char *name);
 mark *active_mark(chan_info *cp);
@@ -832,30 +832,30 @@ snd_info *make_basic_snd_info(int chans);
 void initialize_control_panel(snd_info *sp);
 void free_snd_info(snd_info *sp);
 snd_info *completely_free_snd_info(snd_info *sp);
-bool map_over_chans (bool (*func)(chan_info *, void *), void *userptr);
+bool map_over_chans(bool (*func)(chan_info *, void *), void *userptr);
 void for_each_chan(void (*func)(chan_info *));
 void for_each_chan_1(void (*func)(chan_info *, void *), void *userptr);
 void for_each_normal_chan(void (*func)(chan_info *));
 void for_each_normal_chan_1(void (*func)(chan_info *, void *), void *userptr);
-bool map_over_sound_chans (snd_info *sp, bool (*func)(chan_info *, void *), void *userptr);
+bool map_over_sound_chans(snd_info *sp, bool (*func)(chan_info *, void *), void *userptr);
 void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *));
 void for_each_sound(void (*func)(snd_info *, void *), void *userptr);
 bool map_over_separate_chans(bool (*func)(chan_info *, void *), void *userptr);
-bool snd_ok (snd_info *sp);
-int active_channels (virtual_channels_t count_virtual_channels);
-int find_free_sound_slot (int desired_chans);
-int find_free_sound_slot_for_channel_display (void);
+bool snd_ok(snd_info *sp);
+int active_channels(virtual_channels_t count_virtual_channels);
+int find_free_sound_slot(int desired_chans);
+int find_free_sound_slot_for_channel_display(void);
 snd_info *selected_sound(void);
 chan_info *selected_channel(void);
 chan_info *color_selected_channel(snd_info *sp);
-snd_info *any_selected_sound (void);
+snd_info *any_selected_sound(void);
 chan_info *any_selected_channel(snd_info *sp);
 void select_channel(snd_info *sp, int chan);
 chan_info *current_channel(void);
-sync_info *free_sync_info (sync_info *si);
+sync_info *free_sync_info(sync_info *si);
 sync_info *snd_sync(int sync);
 sync_info *sync_to_chan(chan_info *cp);
-sync_info *make_simple_sync (chan_info *cp, off_t beg);
+sync_info *make_simple_sync(chan_info *cp, off_t beg);
 snd_info *find_sound(const char *name, int nth);
 void display_info(snd_info *sp);
 
@@ -876,7 +876,7 @@ char *edit_to_string(chan_info *cp, int edit);
 void free_edit_list(chan_info *cp);
 void backup_edit_list(chan_info *cp);
 void as_one_edit(chan_info *cp, int one_edit, const char *one_edit_origin);
-void free_sound_list (chan_info *cp);
+void free_sound_list(chan_info *cp);
 void free_ptree_list(chan_info *cp);
 void release_dangling_readers(chan_info *cp, int edit_ctr);
 void after_edit(chan_info *cp);
@@ -959,7 +959,7 @@ fft_info *free_fft_info(fft_info *fp);
 void free_sonogram_fft_state(void *ptr);
 bool fft_window_beta_in_use(mus_fft_window_t win);
 bool fft_window_alpha_in_use(mus_fft_window_t win);
-void free_sono_info (chan_info *cp);
+void free_sono_info(chan_info *cp);
 void sono_update(chan_info *cp);
 void set_spectro_cutoff_and_redisplay(Float val);
 void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
@@ -1023,8 +1023,8 @@ bool procedure_arity_ok(XEN proc, int args);
 #endif
 void snd_unprotect_at(int loc);
 XEN snd_protected_at(int loc);
-XEN run_or_hook (XEN hook, XEN args, const char *caller);
-XEN run_progn_hook (XEN hook, XEN args, const char *caller);
+XEN run_or_hook(XEN hook, XEN args, const char *caller);
+XEN run_progn_hook(XEN hook, XEN args, const char *caller);
 XEN run_hook(XEN hook, XEN args, const char *caller);
 bool listener_print_p(const char *msg);
 void check_features_list(char *features);
@@ -1102,12 +1102,12 @@ int region_list_position_to_id(int n);
 int region_id_to_list_position(int id);
 file_info *fixup_region_data(chan_info *cp, int chan, int n);
 region_state *region_report(void);
-void free_region_state (region_state *r);
+void free_region_state(region_state *r);
 int remove_region_from_list(int pos);
 io_error_t paste_region(int n, chan_info *cp);
 io_error_t add_region(int n, chan_info *cp);
 int define_region(sync_info *si, off_t *ends);
-snd_fd *init_region_read (off_t beg, int n, int chan, read_direction_t direction);
+snd_fd *init_region_read(off_t beg, int n, int chan, read_direction_t direction);
 void cleanup_region_temp_files(void);
 int snd_regions(void);
 void save_regions(FILE *fd);
@@ -1168,7 +1168,7 @@ void free_enved_spectra(chan_info *cp);
 void release_dangling_enved_spectra(chan_info *cp, int edpt);
 void reflect_enved_spectra_change(chan_info *cp);
 
-XEN env_to_xen (env *e);
+XEN env_to_xen(env *e);
 env *xen_to_env(XEN res);
 env *get_env(XEN e, const char *origin);
 void g_init_env(void);
@@ -1220,8 +1220,8 @@ void free_lisp_info(chan_info *cp);
 void zx_incremented(chan_info *cp, double amount);
 kbd_cursor_t cursor_decision(chan_info *cp);
 void reset_x_display(chan_info *cp, double sx, double zx);
-void set_x_axis_x0x1 (chan_info *cp, double x0, double x1);
-void cursor_move (chan_info *cp, off_t samps);
+void set_x_axis_x0x1(chan_info *cp, double x0, double x1);
+void cursor_move(chan_info *cp, off_t samps);
 void cursor_moveto_without_verbosity(chan_info *cp, off_t samp);
 void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t window_size);
 void set_wavo_trace(int uval);
@@ -1251,11 +1251,11 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed);
 void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t graphed);
 void set_x_bounds(axis_info *ap);
 void set_show_axes(show_axes_t val);
-void display_channel_data (chan_info *cp);
-void display_channel_fft_data (chan_info *cp);
+void display_channel_data(chan_info *cp);
+void display_channel_fft_data(chan_info *cp);
 void show_cursor_info(chan_info *cp);
 void apply_x_axis_change(axis_info *ap, chan_info *cp);
-void apply_y_axis_change (axis_info *ap, chan_info *cp);
+void apply_y_axis_change(axis_info *ap, chan_info *cp);
 void sx_incremented(chan_info *cp, double amount);
 int move_axis(chan_info *cp, axis_info *ap, int x);
 void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1);
@@ -1269,7 +1269,7 @@ void edit_history_select(chan_info *cp, int row);
 int make_graph(chan_info *cp);
 int make_background_graph(chan_info *cp, int srate, bool *two_sided);
 void reset_spectro(void);
-void cursor_moveto (chan_info *cp, off_t samp);
+void cursor_moveto(chan_info *cp, off_t samp);
 chan_info *which_channel(snd_info *sp, int y);
 
 void g_init_chn(void);
@@ -1280,12 +1280,12 @@ void fftb(chan_info *cp, bool on);
 void waveb(chan_info *cp, bool on);
 void f_button_callback(chan_info *cp, bool on, bool with_control);
 void w_button_callback(chan_info *cp, bool on, bool with_control);
-axis_context *set_context (chan_info *cp, chan_gc_t gc);
-axis_context *copy_context (chan_info *cp);
-axis_context *erase_context (chan_info *cp);
-axis_context *selection_context (chan_info *cp);
-axis_context *mark_context (chan_info *cp);
-axis_context *mix_waveform_context (chan_info *cp);
+axis_context *set_context(chan_info *cp, chan_gc_t gc);
+axis_context *copy_context(chan_info *cp);
+axis_context *erase_context(chan_info *cp);
+axis_context *selection_context(chan_info *cp);
+axis_context *mark_context(chan_info *cp);
+axis_context *mix_waveform_context(chan_info *cp);
 void calculate_fft(chan_info *cp);
 void set_min_db(Float db);
 void set_x_axis_style(x_axis_style_t val);
@@ -1310,9 +1310,9 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #define ungrf_x(AP, X) (((X) - (AP)->x_base) / (AP)->x_scale)
 #define ungrf_y(AP, Y) (((Y) - (AP)->y_base) / (AP)->y_scale)
 
-axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, Float ymax, 
-			   char *xlabel, double x0, double x1, Float y0, Float y1,
-			   axis_info *old_ap);
+axis_info *make_axis_info(chan_info *cp, double xmin, double xmax, Float ymin, Float ymax, 
+			  char *xlabel, double x0, double x1, Float y0, Float y1,
+			  axis_info *old_ap);
 
 #if (!USE_NO_GUI)
   void g_init_axis(void);
@@ -1391,7 +1391,7 @@ void set_channel_style(channel_style_t val);
 void *free_axes_data(void *sa);
 void *make_axes_data(snd_info *sp);
 void restore_axes_data(snd_info *sp, void *sa, Float new_duration, bool need_edit_history_update);
-off_t disk_kspace (const char *filename);
+off_t disk_kspace(const char *filename);
 time_t file_write_date(const char *filename);
 bool link_p(const char *filename);
 bool directory_p(const char *filename);
@@ -1710,7 +1710,7 @@ char *key_binding_description(int key, int state, bool cx_extended);
 char *make_key_name(char *buf, int buf_size, int key, int state, bool extended);
 void map_over_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo, XEN xf));
 key_info *find_prefs_key_binding(const char *prefs_name);
-void keyboard_command (chan_info *cp, int keysym, int state);
+void keyboard_command(chan_info *cp, int keysym, int state);
 void control_g(snd_info *sp);
 void g_init_kbd(void);
 

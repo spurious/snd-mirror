@@ -102,7 +102,7 @@ static bool selection_is_visible(chan_info *cp)
 	 (ap->hisamp > ed->selection_beg));
 }
 
-bool selection_is_visible_in_channel (chan_info *cp)
+bool selection_is_visible_in_channel(chan_info *cp)
 {
   return((cp_has_selection(cp, NULL)) && 
 	 (selection_is_visible(cp)));

@@ -64,7 +64,7 @@ static void release_pending_sounds(chan_info *cp, int edit_ctr)
 #define EDIT_ALLOC_SIZE 32
 /* EDIT_ALLOC_SIZE is the allocation amount (pointers) each time cp->sounds is (re)allocated */
 
-static void prepare_sound_list (chan_info *cp)
+static void prepare_sound_list(chan_info *cp)
 {
   cp->sound_ctr++;
   /* this is the only place the sound set is incremented */
@@ -787,7 +787,7 @@ static Float previous_xramp_ramp2_to_float(snd_fd *sf) {return(previous_ramp2_to
 static Float next_xramp_ramp3_to_float(snd_fd *sf) {return(next_ramp3_to_float(sf) * next_xramp_to_float(sf));}
 static Float previous_xramp_ramp3_to_float(snd_fd *sf) {return(previous_ramp3_to_float(sf) * previous_xramp_to_float(sf));}
 
-static mus_sample_t previous_sound (snd_fd *sf);
+static mus_sample_t previous_sound(snd_fd *sf);
 static Float previous_sound_as_float(snd_fd *sf);
 static mus_sample_t next_sound(snd_fd *sf);
 static Float next_sound_as_float(snd_fd *sf);
@@ -6987,7 +6987,7 @@ Float chn_sample(off_t samp, chan_info *cp, int pos)
   return(val);
 }
 
-static void previous_sound_1 (snd_fd *sf) 
+static void previous_sound_1(snd_fd *sf) 
 {
   off_t ind0, ind1, indx;
   bool at_start;

@@ -39,7 +39,7 @@ static GtkObject *zy_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_
 static GtkObject *zx_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_zx_adj]);}
 
 static Float sqr(Float a) {return(a * a);}
-static Float cube (Float a) {return(a * a * a);}
+static Float cube(Float a) {return(a * a * a);}
 
 bool channel_graph_is_visible(chan_info *cp)
 {

@@ -1498,7 +1498,7 @@ int recorder_get_devices(recorder_info *rp, int *outs)
   return(input_devices);
 }
 
-void cleanup_recording (void)
+void cleanup_recording(void)
 {
   if (!rp) return;
   if (rp->taking_input) close_recorder_audio();
@@ -1526,7 +1526,7 @@ static Cessate run_adc(Indicium ignore)
   return(val);
 }
 
-void set_read_in_progress (void)
+void set_read_in_progress(void)
 {
 #if MUS_DEBUGGING
   if (with_background_processes(ss))
@@ -1786,7 +1786,7 @@ static XEN g_set_recorder_max_duration(XEN val)
   return(C_TO_XEN_DOUBLE(rp->max_duration));
 }
 
-static XEN g_recorder_gain (XEN num) 
+static XEN g_recorder_gain(XEN num) 
 {
   #define H_recorder_gain "(" S_recorder_gain " gain): recorder input (soundcard) gain"
   int g;
@@ -1798,7 +1798,7 @@ static XEN g_recorder_gain (XEN num)
   return(C_TO_XEN_DOUBLE(0.0));
 }
 
-static XEN g_recorder_in_amp (XEN in, XEN out) 
+static XEN g_recorder_in_amp(XEN in, XEN out) 
 {
   #define H_recorder_in_amp "(" S_recorder_in_amp " in out): recorder scaler on input to output"
   int ic, oc;
@@ -1813,7 +1813,7 @@ static XEN g_recorder_in_amp (XEN in, XEN out)
   return(C_TO_XEN_DOUBLE(0.0));
 }
 
-static XEN g_recorder_out_amp (XEN num) 
+static XEN g_recorder_out_amp(XEN num) 
 {
   #define H_recorder_out_amp "(" S_recorder_out_amp " out): recorder output scaler"
   int oc;
@@ -1825,7 +1825,7 @@ static XEN g_recorder_out_amp (XEN num)
   return(C_TO_XEN_DOUBLE(0.0));
 }
 
-static XEN g_set_recorder_gain (XEN num, XEN amp) 
+static XEN g_set_recorder_gain(XEN num, XEN amp) 
 {
   int ind;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_1, S_setB S_recorder_gain, "an integer");
@@ -1845,7 +1845,7 @@ static XEN g_set_recorder_gain (XEN num, XEN amp)
   return(amp);
 }
 
-static XEN g_set_recorder_in_amp (XEN in, XEN out, XEN amp) 
+static XEN g_set_recorder_in_amp(XEN in, XEN out, XEN amp) 
 {
   int in_ind, out_ind;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(in), in, XEN_ARG_1, S_setB S_recorder_in_amp, "an integer");
@@ -1871,7 +1871,7 @@ static XEN g_set_recorder_in_amp (XEN in, XEN out, XEN amp)
   return(amp);
 }
 
-static XEN g_set_recorder_out_amp (XEN num, XEN amp) 
+static XEN g_set_recorder_out_amp(XEN num, XEN amp) 
 {
   int ind;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_1, S_setB S_recorder_out_amp, "an integer");

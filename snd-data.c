@@ -706,7 +706,7 @@ snd_info *selected_sound(void)
   return(NULL);
 }
 
-snd_info *any_selected_sound (void)
+snd_info *any_selected_sound(void)
 {
   snd_info *sp;
   sp = selected_sound();

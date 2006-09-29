@@ -1187,7 +1187,7 @@ static XEN g_mus_audio_close(XEN line)
   return(C_TO_XEN_INT(res));
 }
 
-static XEN g_mus_audio_systems (void) 
+static XEN g_mus_audio_systems(void) 
 {
   #define H_mus_audio_systems "(" S_mus_audio_systems "): number of audio systems; normally each sound card is a separate 'system'"
   return(C_TO_XEN_INT(mus_audio_systems()));

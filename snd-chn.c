@@ -754,7 +754,7 @@ void set_x_bounds(axis_info *ap)
   ap->changed = true;
 }
 
-void apply_y_axis_change (axis_info *ap, chan_info *cp)
+void apply_y_axis_change(axis_info *ap, chan_info *cp)
 {
   snd_info *sp;
   set_y_bounds(ap);
@@ -786,7 +786,7 @@ void apply_y_axis_change (axis_info *ap, chan_info *cp)
     }
 }
 
-void set_x_axis_x0x1 (chan_info *cp, double x0, double x1) 
+void set_x_axis_x0x1(chan_info *cp, double x0, double x1) 
 {
   axis_info *ap;
   ap = cp->axis;

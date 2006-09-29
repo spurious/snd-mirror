@@ -522,7 +522,7 @@ char *mus_file_fd_name(int tfd)
   return(fd->name);
 }
 
-int mus_file_set_chans (int tfd, int chans)
+int mus_file_set_chans(int tfd, int chans)
 {
   io_fd *fd;
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);

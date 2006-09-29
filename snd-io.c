@@ -141,7 +141,7 @@ io_error_t copy_file(const char *oldname, const char *newname)
 
 /* file buffers (i.e. a sliding window on a given file's data) */
 
-static void c_io_bufclr (snd_io *io, int beg)
+static void c_io_bufclr(snd_io *io, int beg)
 {
   int k, end;
   end = io->bufsize;

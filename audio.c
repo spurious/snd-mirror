@@ -327,7 +327,7 @@ static void end_sgi_print(void)
 
 #ifdef AL_RESOURCE
 
-static int check_queue_size (int size, int chans) 
+static int check_queue_size(int size, int chans) 
 {
   if (size > chans * 1024)
     return(size);
@@ -347,7 +347,7 @@ static int check_queue_size (int size, int chans)
 #define MONO_QUEUE_MAX_CHOICE 131072
 /* if these limits are not followed, the damned thing dumps core and dies */
 
-static int check_queue_size (int size, int chans)
+static int check_queue_size(int size, int chans)
 {
   if ((chans == 1) && (size > MONO_QUEUE_MAX_SIZE)) return(MONO_QUEUE_MAX_CHOICE);
   if ((chans == 1) && (size < MONO_QUEUE_MIN_SIZE)) return(MONO_QUEUE_MIN_CHOICE);
@@ -356,7 +356,7 @@ static int check_queue_size (int size, int chans)
   return(size);
 }
 
-static void check_quad (int device, int channels)
+static void check_quad(int device, int channels)
 {
   long sr[2];
   /* if quad, make sure we are set up for it, else make sure we aren't (perhaps the latter is unnecessary) */
@@ -2869,7 +2869,7 @@ static char *device_type(int i)
   return("unknown");
 }
 
-static void yes_no (int condition)
+static void yes_no(int condition)
 {
   if (condition)  
     pprint("   yes    ");
@@ -3919,7 +3919,7 @@ static int alsa_trace = 0;
 static int fragment_size = 512; 
 static int fragments = 4;
 
-static void alsa_mus_oss_set_buffers (int num, int size) 
+static void alsa_mus_oss_set_buffers(int num, int size) 
 {
   fragments = num; 
   fragment_size = size; 
@@ -9786,7 +9786,7 @@ void mus_audio_describe(void)
 }
 
 /* for CLM */
-void mus_reset_audio_c (void)
+void mus_reset_audio_c(void)
 {
   audio_initialized = false;
   save_it = NULL;

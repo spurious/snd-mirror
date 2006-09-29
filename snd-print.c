@@ -370,7 +370,7 @@ void ps_fg(axis_context *ax)
 }
 
 /* the rest are in real coordinates except upsidedown from PS point of view */
-void ps_draw_line (axis_info *ap, int x0, int y0, int x1, int y1) 
+void ps_draw_line(axis_info *ap, int x0, int y0, int x1, int y1) 
 {
   int py0, py1, px0, px1;
   px0 = x0 + bx0;
@@ -399,7 +399,7 @@ void ps_draw_spectro_line(axis_info *ap, int color, Float x0, Float y0, Float x1
   ps_draw_line(ap, (int)x0, (int)y0, (int)x1, (int)y1);
 }
 
-void ps_fill_rectangle (axis_info *ap, int x0, int y0, int width, int height) 
+void ps_fill_rectangle(axis_info *ap, int x0, int y0, int width, int height) 
 {
   int py0, py1, px0, px1;
   px0 = x0 + bx0;
@@ -414,7 +414,7 @@ void ps_fill_rectangle (axis_info *ap, int x0, int y0, int width, int height)
   ps_write(pbuf);
 }
 
-void ps_draw_string (axis_info *ap, int x0, int y0, const char *str) 
+void ps_draw_string(axis_info *ap, int x0, int y0, const char *str) 
 {
   int px0, py0;
   px0 = x0 + bx0;

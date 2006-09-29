@@ -22,7 +22,7 @@
 
 #if (!USE_STATVFS)
 #if USE_STATFS
-off_t disk_kspace (const char *filename)
+off_t disk_kspace(const char *filename)
 {
   struct statfs buf;
   int err;
@@ -687,7 +687,7 @@ typedef struct {
   int *sounds;
 } active_sound_list;
 
-static void add_sound_to_active_list (snd_info *sp, void *sptr1)
+static void add_sound_to_active_list(snd_info *sp, void *sptr1)
 {
   active_sound_list *sptr = (active_sound_list *)sptr1;
   sptr->names[sptr->active_sounds] = sp->filename;
