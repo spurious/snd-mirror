@@ -378,6 +378,7 @@
 	    (set! smpte-font-name (axis-numbers-font))
 	    (if layout
 		(begin
+		  ;; should we call g_utf8_validate first here?
 		  (pango_layout_set_font_description layout fs)
 		  (pango_layout_set_text layout text -1)
 		  (let ((wid (pango_layout_get_pixel_size layout #f)))

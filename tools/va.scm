@@ -227,4 +227,25 @@
   "snd-grec.c" "snd-genv.c" "snd-gxutils.c" "snd-gxbitmaps.c" "snd-gxcolormaps.c" "snd-gfft.c" "snd-gprint.c" 
   "snd-gfile.c" "snd-gxen.c" "snd-gprefs.c" "xg.c" "gl.c" "snd-nogui.c")
 )
+
+;;; similarly look for \n... (... with help strings causing confusion
+(for-each-file 
+ (lambda (line file count)
+   (let ((len (string-length line)))
+     (if (char-alphabetic? (string-ref line 0))
+	 (let ((last-char (string-ref line 0))
+	       (ok #f))
+	   (do ((i 1 (1+ i)))
+	       ((or ok (= i len)))
+	     (let ((this-char (string-ref line i)))
+	       (if (and (char=? last-char #\space)
+			(char=? this-char #\())
+		   (begin
+		     (display (format #f "~A[~A]: ~A~%" file count line))
+		     (set! ok #t)))
+	       (if (char=? last-char #\()
+		   (set! ok #t))
+	       (set! last-char this-char)))))))
+ (list ...))
+
 !#

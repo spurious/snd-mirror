@@ -36,7 +36,7 @@
 #if HAVE_FAM_H
   #include <fam.h>
 #endif
-#if WITH_THREADS && HAVE_PTHREAD_H
+#if MUS_WITH_THREADS && HAVE_PTHREAD_H
   #include <pthread.h>
 #endif
 

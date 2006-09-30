@@ -123,7 +123,7 @@
 #undef HAVE_FAM_NO_EXISTS
 #undef MUS_GAMIN_VERSION
 
-#undef WITH_THREADS
+#undef MUS_WITH_THREADS
 
 #undef HAVE_GL
 #undef JUST_GL

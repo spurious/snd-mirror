@@ -2562,7 +2562,7 @@
 		 ))) ; 'begin
        (if (eq? spec 'free)
 	   (hey "   rtn = C_TO_XEN_~A(result);~%   g_free(result);~%   return(rtn);~%  }~%" (no-stars return-type)))
-       (hey "}~%")
+       (hey "}~%~%")
        ))))
 
 (for-each handle-func (reverse funcs))
@@ -3111,7 +3111,7 @@
 
 
 (hey "static void define_structs(void)~%")
-(hey "{~%~%")
+(hey "{~%")
 
 (for-each (lambda (field) (hey "  XG_DEFINE_READER(~A, gxg_~A_w, 1, 0, 0);~%" field field)) struct-fields)
 (for-each (lambda (field) (hey "  XG_DEFINE_ACCESSOR(~A, gxg_~A_w, gxg_set_~A_w, 1, 0, 2, 0);~%" field field field)) settable-struct-fields)
@@ -3133,7 +3133,7 @@
 
 (hey "/* ---------------------------------------- constants ---------------------------------------- */~%~%")
 (hey "static void define_integers(void)~%")
-(hey "{~%~%")
+(hey "{~%")
 (hey "  #define DEFINE_INTEGER(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))~%")
 (hey "  #define DEFINE_ULONG(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))~%")
 (hey "~%")
@@ -3187,7 +3187,7 @@
 (hey "}~%~%")
 
 (hey "static void define_doubles(void)~%")
-(hey "{~%~%")
+(hey "{~%")
 (hey "  #define DEFINE_DOUBLE(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))~%")
 (hey "~%")
 

@@ -320,7 +320,7 @@ AC_ARG_ENABLE(threads,
   [
   if test "$enable_threads" = yes ; then
     if test "$ac_cv_header_pthread_h" = yes ; then
-      AC_DEFINE(WITH_THREADS)
+      AC_DEFINE(MUS_WITH_THREADS)
       CFLAGS="$CFLAGS -D_REENTRANT"
       LIBS="$LIBS -lpthread"
       RANDOM_FEATURES="$RANDOM_FEATURES threads"

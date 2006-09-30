@@ -10398,7 +10398,7 @@ if test "${enable_threads+set}" = set; then
   if test "$enable_threads" = yes ; then
     if test "$ac_cv_header_pthread_h" = yes ; then
       cat >>confdefs.h <<\_ACEOF
-#define WITH_THREADS 1
+#define MUS_WITH_THREADS 1
 _ACEOF
 
       CFLAGS="$CFLAGS -D_REENTRANT"

@@ -428,7 +428,7 @@ char *version_info(void)
 	  "\n    with fam",
   #endif
 #endif
-#if WITH_THREADS
+#if MUS_WITH_THREADS
 	  "\n    with threads",
 #endif
 #if SND_AS_WIDGET

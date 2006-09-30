@@ -276,7 +276,6 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 #endif
   if (!(ss->stopped_explicitly))
     {
-      /* SOMEDAY: convolve could probably be threaded */
       for (ip = 0; ip < si->chans; ip++)
 	{
 	  char *ofile, *saved_chan_file;
@@ -1130,7 +1129,6 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 
   if (!(ss->stopped_explicitly))
     {
-      /* SOMEDAY: src could probably be threaded */
       for (i = 0; i < si->chans; i++)
 	{
 	  off_t dur;
@@ -1500,7 +1498,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
 }
 #endif
 
-#if WITH_THREADS
+#if MUS_WITH_THREADS
 static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t beg, off_t dur, 
 			   const char *origin, bool truncate, enved_progress_t from_enved,
 			   bool over_selection, mus_any *gen, Float *precalculated_coeffs);
@@ -2133,7 +2131,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
       /* for each decide whether a file or internal array is needed, scale, update edit tree */
       if (!(ss->stopped_explicitly))
 	{
-#if WITH_THREADS
+#if MUS_WITH_THREADS
 	  int retcode;
 	  pthread_t *threads = NULL;
 	  pfilter_direct_args_t **args = NULL;
@@ -2157,7 +2155,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 		  sfs[i] = free_snd_fd(sfs[i]);
 		  continue;
 		}
-#if WITH_THREADS
+#if MUS_WITH_THREADS
 	      if (si->chans > 1)
 		{
 		  args[i] = make_pfilter_direct_arg(cp, order, e, sfs[i], si->begs[i], dur,
@@ -2183,7 +2181,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 		  break;
 		}
 	    }
-#if WITH_THREADS
+#if MUS_WITH_THREADS
 	    }
 	  if (si->chans > 1)
 	    {
@@ -5613,4 +5611,6 @@ void g_init_sig(void)
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
 }
 
+
+/* convolve and src could be threaded but the readers must not call the gc etc -- too tricky */
 
