@@ -45,7 +45,6 @@ void edit_menu_update(void)
 
   /* is there an active selection? */
   set_sensitive(edit_cut_menu, selection_p);
-  set_sensitive(edit_paste_menu, selection_p);
   set_sensitive(edit_play_menu, selection_p);
   set_sensitive(edit_mix_menu, selection_p);
   set_sensitive(edit_save_as_menu, selection_p);
@@ -57,7 +56,7 @@ void edit_menu_update(void)
   set_sensitive(edit_redo_menu, redoable_edit_p);
 
   /* does paste make any sense? */
-  set_sensitive(edit_paste_menu, selection_p || region_p);  
+  set_sensitive(edit_paste_menu, (file_p) && (selection_p || region_p));  
  
   /* make sure edit-header menu option label correctly reflects current selected sound header type */
   if (any_sp)

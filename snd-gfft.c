@@ -127,6 +127,12 @@ static void chans_transform_size(chan_info *cp, void *ptr)
     cp->fft->size = size;
 }
 
+/* gtk_frame_set_label actually creates a new label widget! */
+
+static void sg_frame_set_label(GtkFrame *frame, const char* text)
+{
+  gtk_button_set_label(GTK_BUTTON(gtk_frame_get_label_widget(frame)), text);
+}
 
 static void size_browse_callback(const char *name, int row, void *data)
 {
@@ -137,8 +143,8 @@ static void size_browse_callback(const char *name, int row, void *data)
   for_each_chan_1(chans_transform_size, (void *)(&size));
   for_each_chan(calculate_fft);
   if (graph_frame) 
-    gtk_frame_set_label(GTK_FRAME(graph_frame), 
-			FFT_WINDOWS[(int)fft_window(ss)]);
+    sg_frame_set_label(GTK_FRAME(graph_frame), 
+		       FFT_WINDOWS[(int)fft_window(ss)]);
   get_fft_window_data();
   graph_redisplay();
 }
@@ -159,8 +165,8 @@ static void window_browse_callback(const char *name, int row, void *data)
   in_set_fft_window((mus_fft_window_t)row);
   for_each_chan(calculate_fft);
   if (graph_frame) 
-    gtk_frame_set_label(GTK_FRAME(graph_frame), 
-			FFT_WINDOWS[(int)fft_window(ss)]);
+    sg_frame_set_label(GTK_FRAME(graph_frame), 
+		       FFT_WINDOWS[(int)fft_window(ss)]);
   get_fft_window_data();
   graph_redisplay();
 }
@@ -445,13 +451,19 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       size_list->select_callback = size_browse_callback;
 
       /* DISPLAY */
-      display_frame = gtk_frame_new(_("display"));
+      display_frame = gtk_frame_new(NULL);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), display_frame, 2, 3, 0, 4);
-      gtk_frame_set_label_align(GTK_FRAME(display_frame), 0.5, 0.0);
       gtk_frame_set_shadow_type(GTK_FRAME(display_frame), GTK_SHADOW_ETCHED_IN);
 
       buttons = gtk_vbox_new(false, 0);
       gtk_container_add(GTK_CONTAINER(display_frame), buttons);
+
+      {
+	GtkWidget *label;
+	label = snd_gtk_highlight_label_new("display");
+	gtk_box_pack_start(GTK_BOX(buttons), label, false, false, 0);
+	gtk_widget_show(label);
+      }
 
       normal_fft_button = gtk_radio_button_new_with_label(NULL, _("single transform"));
       gtk_box_pack_start(GTK_BOX(buttons), normal_fft_button, false, false, 0);
@@ -583,10 +595,18 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
 
       /* GRAPH */
-      graph_frame = gtk_frame_new(FFT_WINDOWS[(int)fft_window(ss)]);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 2, 3, 4, 6);
-      gtk_frame_set_label_align(GTK_FRAME(graph_frame), 0.5, 0.0);
-      gtk_frame_set_shadow_type(GTK_FRAME(graph_frame), GTK_SHADOW_ETCHED_IN);
+      {
+	GtkWidget *label;
+	label = snd_gtk_highlight_label_new(FFT_WINDOWS[(int)fft_window(ss)]);
+
+	graph_frame = gtk_frame_new(NULL);
+	gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 2, 3, 4, 6);
+	gtk_frame_set_label_align(GTK_FRAME(graph_frame), 0.5, 0.0);
+	gtk_frame_set_shadow_type(GTK_FRAME(graph_frame), GTK_SHADOW_ETCHED_IN);
+
+	gtk_frame_set_label_widget(GTK_FRAME(graph_frame), label);
+	gtk_widget_show(label);
+      }
 
       graph_drawer = gtk_drawing_area_new();
       gtk_container_add(GTK_CONTAINER(graph_frame), graph_drawer);
@@ -717,8 +737,8 @@ void set_fft_window(mus_fft_window_t val)
       slist_select(window_list, (int)val);
       slist_moveto(window_list, (int)val);
       if (graph_frame) 
-	gtk_frame_set_label(GTK_FRAME(graph_frame),
-			    FFT_WINDOWS[val]);
+	sg_frame_set_label(GTK_FRAME(graph_frame),
+			   FFT_WINDOWS[val]);
       get_fft_window_data();
       graph_redisplay();
     }

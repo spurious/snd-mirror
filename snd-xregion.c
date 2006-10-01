@@ -194,8 +194,6 @@ void delete_region_and_update_browser(int pos)
     }
 }
 
-/* PERHAPS: all these callbacks ideally should report errors and so on */
-
 static void region_unlist_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if (current_region != -1)
@@ -305,6 +303,17 @@ static void region_edit_callback(Widget w, XtPointer context, XtPointer info)
 {
   if (current_region != -1) 
     region_edit(current_region);
+}
+
+static void reflect_file_in_region_browser(ss_watcher_reason_t reason, int loc)
+{
+  if (region_dialog)
+    {
+      bool file_p;
+      file_p = (any_selected_sound());
+      set_sensitive(mix_button, file_p);
+      set_sensitive(insert_button, file_p);
+    }
 }
 
 char *regrow_get_label(void *ur)
@@ -636,6 +645,7 @@ static void make_region_dialog(void)
   make_region_labels(rsp->hdr);
   highlight_region();
   region_update_graph(cp);
+  add_ss_watcher(SS_FILE_OPEN_WATCHER, reflect_file_in_region_browser, NULL);
   set_dialog_widget(REGION_DIALOG, region_dialog);
 }
 

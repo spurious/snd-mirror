@@ -558,7 +558,7 @@ static XEN g_graph_to_ps(XEN filename)
 {
   #define H_graph_to_ps "(" S_graph_to_ps " (filename eps-file)): write the current Snd displays to an EPS file"
 
-  char *error,*file;
+  char *error, *file;
   if (XEN_STRING_P(filename))
     file = XEN_TO_C_STRING(filename);
   else file = eps_file(ss);
@@ -575,6 +575,50 @@ static XEN g_graph_to_ps(XEN filename)
     }
   return(xen_return_first(C_TO_XEN_STRING(file), filename));
 }
+
+
+/* ---------------- gl -> ps ---------------- */
+#if HAVE_GL && HAVE_GL2PS
+
+/* HAVE_GL2PS is not currently set by configure -- this is an experiment */
+
+/* SOMEDAY: decide how to handle gl2ps (lots of available output formats here) -- with-gl2ps configure switch? + arg for output format */
+
+#include "gl2ps.h"
+static XEN g_gl_graph_to_ps(XEN filename)
+{
+  char *file;
+  if (XEN_STRING_P(filename))
+    file = XEN_TO_C_STRING(filename);
+  else file = eps_file(ss);
+
+  {
+    FILE *fp;
+    int state = GL2PS_OVERFLOW, buffsize = 0;
+
+    fp = fopen(file, "wb");
+    while (state == GL2PS_OVERFLOW)
+      {
+	buffsize += 1024 * 1024;
+	gl2psBeginPage("test", "Snd", NULL, GL2PS_EPS, GL2PS_SIMPLE_SORT, 
+		       GL2PS_DRAW_BACKGROUND | GL2PS_USE_CURRENT_VIEWPORT, 
+		       GL_RGBA, 0, NULL, 0, 0, 0, buffsize, fp, file);
+
+	/* this just shows the spectrogram of the current channel -- not sure how far to carry this.
+	 *   To get gl2ps loaded, compile it, and add gl2ps.o to the GL_FILES variable in makefile
+	 */
+
+	display_channel_fft_data(current_channel());
+
+	state = gl2psEndPage();
+      }
+    fclose(fp);
+  }
+  return(XEN_FALSE);
+}
+#endif
+/* -------------------------------- */
+
 
 static XEN g_eps_file(void) {return(C_TO_XEN_STRING(eps_file(ss)));}
 static XEN g_set_eps_file(XEN val) 
@@ -617,6 +661,9 @@ static XEN g_set_eps_size(XEN val)
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_graph_to_ps_w, g_graph_to_ps)
+#if HAVE_GL && HAVE_GL2PS
+  XEN_ARGIFY_1(g_gl_graph_to_ps_w, g_gl_graph_to_ps)
+#endif
 XEN_NARGIFY_0(g_eps_file_w, g_eps_file)
 XEN_NARGIFY_1(g_set_eps_file_w, g_set_eps_file)
 XEN_NARGIFY_0(g_eps_left_margin_w, g_eps_left_margin)
@@ -627,6 +674,9 @@ XEN_NARGIFY_0(g_eps_bottom_margin_w, g_eps_bottom_margin)
 XEN_NARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
 #else
 #define g_graph_to_ps_w g_graph_to_ps
+#if HAVE_GL && HAVE_GL2PS
+  #define g_gl_graph_to_ps_w g_gl_graph_to_ps
+#endif
 #define g_eps_file_w g_eps_file
 #define g_set_eps_file_w g_set_eps_file
 #define g_eps_left_margin_w g_eps_left_margin
@@ -640,6 +690,9 @@ XEN_NARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
 void g_init_print(void)
 {
   XEN_DEFINE_PROCEDURE(S_graph_to_ps, g_graph_to_ps_w, 0, 1, 0, H_graph_to_ps);
+#if HAVE_GL && HAVE_GL2PS
+  XEN_DEFINE_PROCEDURE("gl-graph->ps", g_gl_graph_to_ps_w, 0, 1, 0, "send opengl graph to ps");
+#endif
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_file, g_eps_file_w, H_eps_file,
 				   S_setB S_eps_file, g_set_eps_file_w,  0, 0, 1, 0);

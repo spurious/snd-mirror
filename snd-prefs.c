@@ -4049,7 +4049,19 @@ static void save_smpte(prefs_info *prf, FILE *fd)
 #endif
 #if HAVE_FORTH
   fprintf(fd, "require snd-xm\n");
-  fprintf(fd, "\\ #t show-smpte-label drop\n"); /* TODO: this is causing a segfault, but seems to work in .snd_forth */
+  fprintf(fd, "\\ #t show-smpte-label drop\n"); 
+
+  /* TODO: this is causing a segfault (first call works, 2nd=segfault):
+   *
+   * Program received signal SIGSEGV, Segmentation fault.
+   * 0x400880ec in ficlVmInnerLoop (vm=0x9a30dc0, fw=0x88) at vm.c:427
+   * 427               frame = (returnTop--)->p;
+   * 
+   * returnTop = (ficlCell * volatile) 0xfffffffc
+   * frame = (ficlCell * volatile) 0x0
+   * instruction = ficlInstructionUnlinkParen
+   */
+
 #endif
     }
 }
