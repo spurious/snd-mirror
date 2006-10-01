@@ -1,19 +1,5 @@
 /* this file included as text in snd-g|xprefs.c */
 
-#if HAVE_SCHEME
-  #define LANG_NAME "scheme"
-#endif
-#if HAVE_RUBY
-  #define LANG_NAME "ruby"
-#endif
-#if HAVE_FORTH
-  #define LANG_NAME "forth"
-#endif
-#ifndef LANG_NAME
-  #define LANG_NAME "source"
-#endif
-
-
 static void int_to_textfield(widget_t w, int val)
 {
   char *str;
@@ -39,6 +25,25 @@ static void float_1_to_textfield(widget_t w, Float val)
   mus_snprintf(str, 12, "%.1f", val);
   SET_TEXT(w, str);
   FREE(str);
+}
+
+static TIMEOUT_TYPE unpost_any_error(TIMEOUT_ARGS)
+{
+  prefs_info *prf = (prefs_info *)context;
+  prf->got_error = false;
+  black_text(prf);
+  set_label(prf->label, prf->saved_label);
+  if (prf->reflect_func) (*(prf->reflect_func))(prf);
+  TIMEOUT_RESULT
+}
+
+static void any_error_to_text(const char *msg, void *data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  prf->got_error = true;
+  red_text(prf);
+  set_label(prf->label, msg);
+  TIMEOUT(unpost_any_error);
 }
 
 
@@ -1568,13 +1573,15 @@ static void max_peaks_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int value = 0;
-      sscanf(str, "%d", &value);
-      if (value >= 0)
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      value = string_to_int(str, 0, "max peaks");
+      redirect_errors_to(NULL, NULL);
+      if (!(prf->got_error))
 	in_set_max_transform_peaks(value);
-      else int_to_textfield(prf->text, max_transform_peaks(ss));
       FREE_TEXT(str);
     }
 }
+
 
 
 /* ---------------- show-mix-waveforms ---------------- */
@@ -1612,10 +1619,11 @@ static void mix_waveform_height_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int value = 0;
-      sscanf(str, "%d", &value);
-      if (value >= 0)
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      value = string_to_int(str, 0, "mix waveform height");
+      redirect_errors_to(NULL, NULL);
+      if (!(prf->got_error))
 	in_set_mix_waveform_height(value);
-      else int_to_textfield(prf->text, mix_waveform_height(ss));
       FREE_TEXT(str);
     }
 }
@@ -1656,10 +1664,11 @@ static void max_regions_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int value = 0;
-      sscanf(str, "%d", &value);
-      if (value >= 0)
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      value = string_to_int(str, 0, "max regions");
+      redirect_errors_to(NULL, NULL);
+      if (!(prf->got_error))
 	in_set_max_regions(value);
-      else int_to_textfield(prf->text, max_regions(ss));
       FREE_TEXT(str);
     }
 }
@@ -1679,10 +1688,11 @@ static void sinc_width_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int value = 0;
-      sscanf(str, "%d", &value);
-      if (value >= 0)
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      value = string_to_int(str, 0, "sinc width");
+      redirect_errors_to(NULL, NULL);
+      if (!(prf->got_error))
 	set_sinc_width(value);
-      else int_to_textfield(prf->text, sinc_width(ss));
       FREE_TEXT(str);
     }
 }
@@ -1702,10 +1712,15 @@ static void print_length_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int value = 0;
-      sscanf(str, "%d", &value);
-      set_print_length(value);
-      mus_vct_set_print_length(value);
-      /* the clm array print length variable will be taken care of when ww.scm is loaded in the new context */
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      value = string_to_int(str, 0, "print length");
+      redirect_errors_to(NULL, NULL);
+      if (!(prf->got_error))
+	{
+	  set_print_length(value);
+	  mus_vct_set_print_length(value);
+	  /* the clm array print length variable will be taken care of when ww.scm is loaded in the new context */
+	}
       FREE_TEXT(str);
     }
 }
@@ -1725,10 +1740,11 @@ static void dac_size_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int value = 0;
-      sscanf(str, "%d", &value);
-      if (value > 0)
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      value = string_to_int(str, 0, "dac size");
+      redirect_errors_to(NULL, NULL);
+      if (!(prf->got_error))
 	set_dac_size(value);
-      else int_to_textfield(prf->text, dac_size(ss));
       FREE_TEXT(str);
     }
 }
@@ -1748,10 +1764,11 @@ static void recorder_buffer_size_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int value = 0;
-      sscanf(str, "%d", &value);
-      if (value > 0)
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      value = string_to_int(str, 0, "recorder buffer size");
+      redirect_errors_to(NULL, NULL);
+      if (!(prf->got_error))
 	rec_set_buffer_size(value);
-      else int_to_textfield(prf->text, rec_buffer_size());
       FREE_TEXT(str);
     }
 }
@@ -1771,10 +1788,11 @@ static void min_dB_text(prefs_info *prf)
   if ((str) && (*str))
     {
       float value = 0.0;
-      sscanf(str, "%f", &value);
-      if (value < 0.0)
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      value = (float)string_to_Float(str, -100000.0, "min dB");
+      redirect_errors_to(NULL, NULL);
+      if ((!(prf->got_error)) && (value < 0.0))
 	set_min_db(value); /* snd-chn.c -- redisplays */
-      else SET_TEXT(prf->text, "must be < 0.0");
       FREE_TEXT(str);
     }
 }
@@ -1800,14 +1818,14 @@ static void fft_window_beta_text_callback(prefs_info *prf)
   if ((str) && (*str))
     {
       float value = 0.0;
-      sscanf(str, "%f", &value);
-      if ((value >= 0.0) &&
-	  (value <= prf->scale_max))
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      value = (float)string_to_Float(str, 0.0, "fft beta");
+      redirect_errors_to(NULL, NULL);
+      if ((!(prf->got_error)) && (value <= prf->scale_max))
 	{
 	  in_set_fft_window_beta(value);
 	  SET_SCALE(value / prf->scale_max);
 	}
-      else SET_TEXT(prf->text, "must be >= 0.0");
       FREE_TEXT(str);
     }
 }
@@ -1834,14 +1852,14 @@ static void grid_density_text_callback(prefs_info *prf)
   if ((str) && (*str))
     {
       float value = 0.0;
-      sscanf(str, "%f", &value);
-      if ((value >= 0.0) &&
-	  (value <= prf->scale_max))
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      value = (float)string_to_Float(str, 0.0, "grid density");
+      redirect_errors_to(NULL, NULL);
+      if ((!(prf->got_error)) && (value <= prf->scale_max))
 	{
 	  in_set_grid_density(value);
 	  SET_SCALE(value / prf->scale_max);
 	}
-      else SET_TEXT(prf->text, "must be >= 0.0");
       FREE_TEXT(str);
     }
 }
@@ -2602,16 +2620,21 @@ static void cursor_location_text(prefs_info *prf)
   if ((str) && (*str))
     {
       float interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
-      sscanf(str, "%f", &interval);
-      if (interval >= 0.0)
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      interval = (float)string_to_Float(str, 0.0, "cursor offset");
+      redirect_errors_to(NULL, NULL);
+      if (!(prf->got_error))
 	set_cursor_update_interval(interval);
       FREE_TEXT(str);
       str = GET_TEXT(prf->rtxt);
       if ((str) && (*str))
 	{
 	  int loc = DEFAULT_CURSOR_LOCATION_OFFSET;
-	  sscanf(str, "%d", &loc);
-	  set_cursor_location_offset(loc);
+	  redirect_errors_to(any_error_to_text, (void *)prf);
+	  loc = string_to_int(str, 0, "cursor offset");
+	  redirect_errors_to(NULL, NULL);
+	  if (!(prf->got_error))
+	    set_cursor_location_offset(loc);
 	  FREE_TEXT(str);
 	}
     }
@@ -3044,10 +3067,11 @@ static void raw_chans_choice(prefs_info *prf)
     {
       int srate = 0, chans = 0, format = 0;
       mus_header_raw_defaults(&srate, &chans, &format);
-      sscanf(str, "%d", &chans);
-      if (chans > 0)
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      chans = string_to_int(str, 1, "raw chans");
+      redirect_errors_to(NULL, NULL);
+      if (!(prf->got_error))
 	mus_header_set_raw_defaults(srate, chans, format);
-      else reflect_raw_chans(prf);
       FREE_TEXT(str);
     }
 }
@@ -3082,10 +3106,11 @@ static void raw_srate_choice(prefs_info *prf)
     {
       int srate = 0, chans = 0, format = 0;
       mus_header_raw_defaults(&srate, &chans, &format);
-      sscanf(str, "%d", &srate);
-      if (srate > 0)
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      srate = string_to_int(str, 1, "raw srate");
+      redirect_errors_to(NULL, NULL);
+      if (!(prf->got_error))
 	mus_header_set_raw_defaults(srate, chans, format);
-      else reflect_raw_srate(prf);
       FREE_TEXT(str);
     }
 }
@@ -3498,10 +3523,11 @@ static void clm_sizes_text(prefs_info *prf)
     {
       int size = 0;
       rts_with_sound = true;
-      sscanf(str, "%d", &size);
-      if (size > 0)
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      size = string_to_int(str, 1, "table size");
+      redirect_errors_to(NULL, NULL);
+      if (!(prf->got_error))
 	rts_clm_table_size = size;
-      else int_to_textfield(prf->text, rts_clm_table_size);
       FREE_TEXT(str);
     }
   str = GET_TEXT(prf->rtxt);
@@ -3509,10 +3535,11 @@ static void clm_sizes_text(prefs_info *prf)
     {
       int size = 0;
       rts_with_sound = true;
-      sscanf(str, "%d", &size);
-      if (size > 0)
+      redirect_errors_to(any_error_to_text, (void *)prf);
+      size = string_to_int(str, 1, "file buffer size");
+      redirect_errors_to(NULL, NULL);
+      if (!(prf->got_error))
 	rts_clm_file_buffer_size = size;
-      else int_to_textfield(prf->rtxt, rts_clm_file_buffer_size);
       FREE_TEXT(str);
     }
 }

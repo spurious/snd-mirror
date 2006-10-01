@@ -10,7 +10,7 @@ static char *include_load_path = NULL;
 #define HELP_WAIT_TIME ((guint32)500)
 #define POWER_WAIT_TIME ((guint32)100)
 #define POWER_INITIAL_WAIT_TIME ((guint32)500)
-#define ERROR_WAIT_TIME ((guint32)1000)
+#define ERROR_WAIT_TIME ((guint32)5000)
 
 #define STARTUP_WIDTH 925
 #define STARTUP_HEIGHT 800
@@ -22,7 +22,7 @@ typedef struct prefs_info {
   GtkWidget **radio_buttons;
   bool got_error;
   guint help_id, power_id, erase_id;
-  const char *var_name;
+  const char *var_name, *saved_label;
   const char **values;
   int num_values, num_buttons;
   Float scale_max;
@@ -73,6 +73,7 @@ static void post_prefs_error(const char *msg, void *data);
 #define SET_SENSITIVE(Wid, Val)   gtk_widget_set_sensitive(Wid, Val)
 #define black_text(Prf)
 #define red_text(Prf)
+/* gdk_gc_set_foreground(Prf->label->style->black_gc, ss->sgx->red) no effect? */
 
 static void set_radio_button(prefs_info *prf, int which)
 {
@@ -216,6 +217,7 @@ static GtkWidget *make_row_label(prefs_info *prf, const char *label, GtkWidget *
   gtk_size_group_add_widget(label_group, w);
   gtk_container_add(GTK_CONTAINER(ev), w);
   gtk_widget_show(w);
+  prf->saved_label = label;
 
   SG_SIGNAL_CONNECT(ev, "button_press_event", prefs_help_click_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
@@ -1161,21 +1163,37 @@ static void prefs_color_callback(GtkWidget *w, gpointer context)
   reflect_color((prefs_info *)context);
 }
 
+static gint unpost_color_error(gpointer data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  prf->got_error = false;
+  gtk_label_set_text(GTK_LABEL(prf->label), prf->saved_label);
+  reflect_color(prf);
+  return(0);
+}
+
+static void errors_to_color_text(const char *msg, void *data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  prf->got_error = true;
+  gtk_label_set_text(GTK_LABEL(prf->label), msg);
+  TIMEOUT(unpost_color_error);
+}
+
 static void prefs_r_callback(GtkWidget *w, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
   char *str;
   float r = 0.0;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
-  sscanf(str, "%f", &r);
-  if ((r >= 0.0) &&
-      (r <= 1.0))
+  redirect_errors_to(errors_to_color_text, context);
+  r = (float)string_to_Float(str, 0.0, "red amount");
+  redirect_errors_to(NULL, NULL);
+  if (!(prf->got_error))
     {
-      gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->radj), r);
+      gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->radj), (float)mus_fclamp(0.0, r, 1.0));
       reflect_color(prf);
     }
-  else sg_entry_set_text(GTK_ENTRY(w), "err");
-
 }
 
 static void prefs_g_callback(GtkWidget *w, gpointer context)
@@ -1184,15 +1202,14 @@ static void prefs_g_callback(GtkWidget *w, gpointer context)
   char *str;
   float r = 0.0;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
-  sscanf(str, "%f", &r);
-  if ((r >= 0.0) &&
-      (r <= 1.0))
+  redirect_errors_to(errors_to_color_text, context);
+  r = (float)string_to_Float(str, 0.0, "green amount");
+  redirect_errors_to(NULL, NULL);
+  if (!(prf->got_error))
     {
-      gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->gadj), r);
+      gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->gadj), (float)mus_fclamp(0.0, r, 1.0));
       reflect_color(prf);
     }
-  else sg_entry_set_text(GTK_ENTRY(w), "err");
-
 }
 
 static void prefs_b_callback(GtkWidget *w, gpointer context)
@@ -1201,15 +1218,14 @@ static void prefs_b_callback(GtkWidget *w, gpointer context)
   char *str;
   float r = 0.0;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
-  sscanf(str, "%f", &r);
-  if ((r >= 0.0) &&
-      (r <= 1.0))
+  redirect_errors_to(errors_to_color_text, context);
+  r = (float)string_to_Float(str, 0.0, "blue amount");
+  redirect_errors_to(NULL, NULL);
+  if (!(prf->got_error))
     {
-      gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->badj), r);
+      gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->badj), (float)mus_fclamp(0.0, r, 1.0));
       reflect_color(prf);
     }
-  else sg_entry_set_text(GTK_ENTRY(w), "err");
-
 }
 
 static void prefs_call_color_func_callback(GtkWidget *w, gpointer context)
@@ -1712,7 +1728,7 @@ widget_t start_preferences_dialog(void)
     file_label = make_inner_label("  file options", dpy_box);
 
     rts_load_path = find_sources();
-    prf = prefs_row_with_text("directory containing Snd's " LANG_NAME " files", "load path", 
+    prf = prefs_row_with_text("directory containing Snd's " XEN_LANGUAGE_NAME " files", "load path", 
 			      rts_load_path,
 			      dpy_box,
 			      load_path_text);

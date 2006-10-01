@@ -123,20 +123,33 @@
 	  (define rootwin (GTK_WINDOW (list-ref (main-widgets) 1))) 
 	  (define agroup (gtk_accel_group_new))
 	  (define (set-accel widget gdk_key gdk_mod)
-	    (gtk_widget_add_accelerator (GTK_WIDGET widget) "activate" agroup 
-					gdk_key gdk_mod GTK_ACCEL_VISIBLE))
-	  (gtk_window_add_accel_group rootwin agroup)
+	    (if widget
+		(begin
+		  (gtk_widget_add_accelerator (GTK_WIDGET widget) "activate" agroup 
+					      gdk_key gdk_mod GTK_ACCEL_VISIBLE)
+		  (gtk_window_add_accel_group rootwin agroup))))
 	  set-accel))
+
+      (if (not (procedure? (key-binding #\o 4)))
+	  (setaccel! (find-menu-rec '("File" "Open"))     GDK_O GDK_CONTROL_MASK))
+
+      (if (not (procedure? (key-binding #\w 4)))
+	  (setaccel! (find-menu-rec '("File" "Close"))    GDK_W GDK_CONTROL_MASK))
+      (if (not (procedure? (key-binding #\s 4)))
+	  (setaccel! (find-menu-rec '("File" "Save"))     GDK_S GDK_CONTROL_MASK))
       
-      (setaccel! (find-menu-rec '("File" "Open"))     GDK_O GDK_CONTROL_MASK)
-      (setaccel! (find-menu-rec '("File" "Close"))    GDK_W GDK_CONTROL_MASK)
-      (setaccel! (find-menu-rec '("File" "Save"))     GDK_S GDK_CONTROL_MASK)
       ;;(setaccel! (find-menu-rec '("File" "Save as"))  GDK_S (+ GDK_CONTROL_MASK GDK_SHIFT_MASK))
-      (setaccel! (find-menu-rec '("File" "New"))      GDK_N GDK_CONTROL_MASK)
+      (if (not (procedure? (key-binding #\n 4)))
+	  (setaccel! (find-menu-rec '("File" "New"))      GDK_N GDK_CONTROL_MASK))
       
-      (setaccel! (find-menu-rec '("Edit" "Undo"))       GDK_Z GDK_CONTROL_MASK)
-      (setaccel! (find-menu-rec '("Edit" "Redo"))       GDK_Z (+ GDK_CONTROL_MASK GDK_SHIFT_MASK))
-      (setaccel! (find-menu-rec '("Edit" "Select all")) GDK_A GDK_CONTROL_MASK)
+      (if (not (procedure? (key-binding #\z 4)))
+	  (setaccel! (find-menu-rec '("Edit" "Undo"))       GDK_Z GDK_CONTROL_MASK))
+
+      (if (not (procedure? (key-binding #\z 5)))
+	  (setaccel! (find-menu-rec '("Edit" "Redo"))       GDK_Z (+ GDK_CONTROL_MASK GDK_SHIFT_MASK)))
+      
+      (if (not (procedure? (key-binding #\a 4)))
+	  (setaccel! (find-menu-rec '("Edit" "Select all")) GDK_A GDK_CONTROL_MASK))
       )
     )
 )

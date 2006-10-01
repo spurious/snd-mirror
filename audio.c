@@ -9258,13 +9258,12 @@ int mus_audio_write(int line, char *buf, int bytes)
   int b = 0;
   b = write(line, buf, bytes);
   usleep(10000);
-  if (b != bytes)
+  if ((b != bytes) && (b > 0)) /* b <= 0 presumably some sort of error, and we want to avoid infinite recursion below */
     {
       /* hangs at close if we don't handle this somehow */
       if ((cur_chans == 1) || (cur_srate == 22050))
 	sleep(1);
       else usleep(10000);
-      if (b < 0) b = 0;
       mus_audio_write(line, (char *)(buf + b), bytes - b);
     }
   return(MUS_NO_ERROR);

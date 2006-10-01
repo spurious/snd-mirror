@@ -4,16 +4,12 @@
 /* preferences dialog; layout design taken from webmail
  */
 
-/* SOMEDAY: completions and sscanf->string_to_* for better checks (xmnmessage?)
-
-     should the exit key work in the listener as well? -- how to handle C-x cmds in xttranslation tables?
+/* should the exit key work in the listener as well? -- how to handle C-x cmds in xttranslation tables?
 
    abandoned:
        preset packages: dlp, ksm
        emacs setup
          how to tie into emacs?
-       sound file extensions (text + some display of current set)
-         will need same gui for load path, perhaps for vf dirs: drop down scrolled list?
        audio mixer settings? -> volume in some mode (snd6.scm has OSS version)
          "startup dac volume" -- but this will be confusing since we don't notice mute settings etc
        clm instruments? -- surely user should learn about the listener...
@@ -39,7 +35,7 @@ static char *include_load_path = NULL;
 #define HELP_WAIT_TIME 500
 #define POWER_WAIT_TIME 100
 #define POWER_INITIAL_WAIT_TIME 500
-#define ERROR_WAIT_TIME 1000
+#define ERROR_WAIT_TIME 5000
 
 #define STARTUP_WIDTH 925
 #define STARTUP_HEIGHT 800
@@ -50,7 +46,7 @@ typedef struct prefs_info {
   Widget *radio_buttons;
   bool got_error;
   XtIntervalId help_id, power_id;
-  const char *var_name;
+  const char *var_name, *saved_label;
   const char **values;
   int num_values, num_buttons;
   Float scale_max;
@@ -129,6 +125,7 @@ static int which_radio_button(prefs_info *prf)
   XtVaGetValues(prf->radio_button, XmNuserData, &which, NULL);
   return(which);
 }
+
 
 #include "snd-prefs.c"
 
@@ -224,6 +221,7 @@ static Widget make_row_label(prefs_info *prf, const char *label, Widget box, Wid
   XtSetArg(args[n], XmNrightPosition, MID_POSITION); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
   w = XtCreateManagedWidget(label, xmLabelWidgetClass, box, args, n);
+  prf->saved_label = label;
 
   XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
   XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
@@ -1251,20 +1249,38 @@ static void prefs_color_callback(Widget w, XtPointer context, XtPointer info)
   reflect_color((prefs_info *)context);
 }
 
+static void unpost_color_error(XtPointer data, XtIntervalId *id)
+{
+  prefs_info *prf = (prefs_info *)data;
+  reflect_color(prf);
+  prf->got_error = false;
+  black_text(prf);
+  set_label(prf->label, prf->saved_label);
+}
+
+static void errors_to_color_text(const char *msg, void *data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  prf->got_error = true;
+  red_text(prf);
+  set_label(prf->label, msg);
+  XtAppAddTimeOut(MAIN_APP(ss),
+		  ERROR_WAIT_TIME,
+		  (XtTimerCallbackProc)unpost_color_error,
+		  data);
+}
+
 static void prefs_r_callback(Widget w, XtPointer context, XtPointer info)
 {
   prefs_info *prf = (prefs_info *)context;
   char *str;
   float r = 0.0;
   str = XmTextFieldGetString(w);
-  sscanf(str, "%f", &r);
-  if ((r >= 0.0) &&
-      (r <= 1.0))
-    {
-      XmScaleSetValue(prf->rscl, (int)(100 * r));
-      reflect_color(prf);
-    }
-  else XmTextFieldSetString(w, "err");
+  redirect_errors_to(errors_to_color_text, (void *)prf);
+  r = (float)string_to_Float(str, 0.0, "red amount");
+  redirect_errors_to(NULL, NULL);
+  XmScaleSetValue(prf->rscl, mus_iclamp(0, (int)(100 * r), 100));
+  if (!(prf->got_error)) reflect_color(prf);
   if (str) XtFree(str);
 }
 
@@ -1274,14 +1290,11 @@ static void prefs_g_callback(Widget w, XtPointer context, XtPointer info)
   char *str;
   float r = 0.0;
   str = XmTextFieldGetString(w);
-  sscanf(str, "%f", &r);
-  if ((r >= 0.0) &&
-      (r <= 1.0))
-    {
-      XmScaleSetValue(prf->gscl, (int)(100 * r));
-      reflect_color(prf);
-    }
-  else XmTextFieldSetString(w, "err");
+  redirect_errors_to(errors_to_color_text, (void *)prf);
+  r = (float)string_to_Float(str, 0.0, "green amount");
+  redirect_errors_to(NULL, NULL);
+  XmScaleSetValue(prf->gscl, mus_iclamp(0, (int)(100 * r), 100));
+  if (!(prf->got_error)) reflect_color(prf);
   if (str) XtFree(str);
 }
 
@@ -1291,14 +1304,11 @@ static void prefs_b_callback(Widget w, XtPointer context, XtPointer info)
   char *str;
   float r = 0.0;
   str = XmTextFieldGetString(w);
-  sscanf(str, "%f", &r);
-  if ((r >= 0.0) &&
-      (r <= 1.0))
-    {
-      XmScaleSetValue(prf->bscl, (int)(100 * r));
-      reflect_color(prf);
-    }
-  else XmTextFieldSetString(w, "err");
+  redirect_errors_to(errors_to_color_text, (void *)prf);
+  r = (float)string_to_Float(str, 0.0, "blue amount");
+  redirect_errors_to(NULL, NULL);
+  XmScaleSetValue(prf->bscl, mus_iclamp(0, (int)(100 * r), 100));
+  if (!(prf->got_error)) reflect_color(prf);
   if (str) XtFree(str);
 }
 
@@ -1883,7 +1893,7 @@ widget_t start_preferences_dialog(void)
     file_label = make_inner_label("  file options", dpy_box, current_sep);
 
     rts_load_path = find_sources();
-    prf = prefs_row_with_text("directory containing Snd's " LANG_NAME " files", "load path", 
+    prf = prefs_row_with_text("directory containing Snd's " XEN_LANGUAGE_NAME " files", "load path", 
 			      rts_load_path,
 			      dpy_box, file_label,
 			      load_path_text);
