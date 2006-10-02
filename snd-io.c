@@ -265,7 +265,6 @@ static void remove_io(snd_io *p)
       }
 }
 
-/* TODO: track down the netBSD open fd problem -- tie io_fds_in_use into guile */
 void io_fds_in_use(int *open, int *closed, int *top);
 void io_fds_in_use(int *open, int *closed, int *top)
 {

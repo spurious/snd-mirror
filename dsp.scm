@@ -1587,8 +1587,6 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
       (let* ((aff (* i old-freq))
 	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
 	(vector-set! ssbs (1- i) (make-ssb-am (* i factor old-freq)))
-	;; TODO: the ssb-am order should be larger for low freqs
-	;;       simple experiments indicate we should use ssb-am order around the filter center period (i.e. (/ srate aff)), or maybe use old-freq throughout
 	(vector-set! bands (1- i) (make-bandpass (hz->2pi (- aff bwf)) 
 						 (hz->2pi (+ aff bwf)) 
 						 order))))
