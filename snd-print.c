@@ -557,11 +557,14 @@ void print_enved(const char *output, int y0)
 static XEN g_graph_to_ps(XEN filename)
 {
   #define H_graph_to_ps "(" S_graph_to_ps " (filename eps-file)): write the current Snd displays to an EPS file"
-
   char *error, *file;
+
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ONLY_ARG, S_graph_to_ps, "a string (filename)");
+
   if (XEN_STRING_P(filename))
     file = XEN_TO_C_STRING(filename);
   else file = eps_file(ss);
+
   error = snd_print_or_error(file);
   if (error)
     {
@@ -578,45 +581,98 @@ static XEN g_graph_to_ps(XEN filename)
 
 
 /* ---------------- gl -> ps ---------------- */
-#if HAVE_GL && HAVE_GL2PS
+#if HAVE_GL && MUS_WITH_GL2PS
 
-/* HAVE_GL2PS is not currently set by configure -- this is an experiment */
-
-/* SOMEDAY: decide how to handle gl2ps (lots of available output formats here) -- with-gl2ps configure switch? + arg for output format */
+/* TODO test/cvs+dist */
 
 #include "gl2ps.h"
-static XEN g_gl_graph_to_ps(XEN filename)
+
+#define S_gl_graph_to_ps "gl-graph->ps"
+
+#define NUM_GL2PS_TYPES 6
+static int gl2ps_types[NUM_GL2PS_TYPES] = {GL2PS_EPS, GL2PS_PS, GL2PS_PDF, GL2PS_TEX, GL2PS_SVG, GL2PS_PGF};
+
+static XEN g_gl_graph_to_ps(XEN filename, XEN output_type, XEN snd, XEN chn)
 {
+  #define H_gl_graph_to_ps "(" S_gl_graph_to_ps " filename (type 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ")) produces a postscript output file from \
+OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
+
   char *file;
+  FILE *fp;
+  chan_info *cp;
+  int state = GL2PS_OVERFLOW, buffsize = 1024 * 1024, type = 0;
+
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ARG_1, S_gl_graph_to_ps, "a string (filename)");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(output_type), output_type, XEN_ARG_2, S_gl_graph_to_ps, "an integer, 0=eps");
+
+  ASSERT_CHANNEL(S_gl_graph_to_ps, snd, chn, 3);
+  cp = get_cp(snd, chn, S_gl_graph_to_ps);
+  if (!cp) return(XEN_FALSE);
+
   if (XEN_STRING_P(filename))
     file = XEN_TO_C_STRING(filename);
   else file = eps_file(ss);
 
-  {
-    FILE *fp;
-    int state = GL2PS_OVERFLOW, buffsize = 0;
+  if (XEN_INTEGER_P(output_type))
+    type = XEN_TO_C_INT(output_type);
+  if ((type < 0) || (type >= NUM_GL2PS_TYPES))
+    XEN_OUT_OF_RANGE_ERROR(S_gl_graph_to_ps, XEN_ARG_2, output_type, "must be between 0 and 5");
 
-    fp = fopen(file, "wb");
-    while (state == GL2PS_OVERFLOW)
-      {
-	buffsize += 1024 * 1024;
-	gl2psBeginPage("test", "Snd", NULL, GL2PS_EPS, GL2PS_SIMPLE_SORT, 
-		       GL2PS_DRAW_BACKGROUND | GL2PS_USE_CURRENT_VIEWPORT, 
-		       GL_RGBA, 0, NULL, 0, 0, 0, buffsize, fp, file);
+#if HAVE_SETLOCALE
+  char *old_locale = NULL;
+  old_locale = copy_string(setlocale(LC_NUMERIC, "C"));
+#endif
+  
+  fp = fopen(file, "wb");
 
-	/* this just shows the spectrogram of the current channel -- not sure how far to carry this.
-	 *   To get gl2ps loaded, compile it, and add gl2ps.o to the GL_FILES variable in makefile
-	 */
+  while (state == GL2PS_OVERFLOW)
+    {
+      GLint err;
+      buffsize += 1024 * 1024;
+      err = gl2psBeginPage(cp->sound->short_filename, "Snd", NULL, 
+			   gl2ps_types[type],
+			   GL2PS_BSP_SORT,
+			   GL2PS_DRAW_BACKGROUND | GL2PS_USE_CURRENT_VIEWPORT | GL2PS_OCCLUSION_CULL, /* perhaps also GL2PS_NO_BLENDING */
+			   GL_RGBA, 0, NULL, 0, 0, 0, buffsize, fp, file);
+      if (err != GL2PS_SUCCESS) 
+	{
+	  /* if an error occurs, gl2ps itself insists on printing something -- this needs to be fixed! */
+	  state = (int)err;
+	}
+      else
+	{
+	  ss->gl_printing = true;
+	  display_channel_fft_data(cp);
+	  ss->gl_printing = false;
 
-	display_channel_fft_data(current_channel());
+	  state = gl2psEndPage();
+	}
+    }
+  fclose(fp);
+#if HAVE_SETLOCALE
+  setlocale(LC_NUMERIC, old_locale);
+  if (old_locale) FREE(old_locale);
+#endif
+  
+  return(xen_return_first(C_TO_XEN_STRING(file), filename));
+}
+  
+char *gl2ps_version(void);
+char *gl2ps_version(void)
+{
+  char *buf;
+  buf = (char *)CALLOC(128, sizeof(char));
+  snprintf(buf, 128, "gl2ps %d.%d.%d", GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION, GL2PS_PATCH_VERSION);
+  return(buf);
+}
 
-	state = gl2psEndPage();
-      }
-    fclose(fp);
-  }
-  return(XEN_FALSE);
+void gl2ps_text(const char *msg);
+void gl2ps_text(const char *msg)
+{
+  gl2psText(msg, "Times-Roman", 20);
 }
 #endif
+
 /* -------------------------------- */
 
 
@@ -661,7 +717,7 @@ static XEN g_set_eps_size(XEN val)
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_graph_to_ps_w, g_graph_to_ps)
-#if HAVE_GL && HAVE_GL2PS
+#if HAVE_GL && MUS_WITH_GL2PS
   XEN_ARGIFY_1(g_gl_graph_to_ps_w, g_gl_graph_to_ps)
 #endif
 XEN_NARGIFY_0(g_eps_file_w, g_eps_file)
@@ -674,7 +730,7 @@ XEN_NARGIFY_0(g_eps_bottom_margin_w, g_eps_bottom_margin)
 XEN_NARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
 #else
 #define g_graph_to_ps_w g_graph_to_ps
-#if HAVE_GL && HAVE_GL2PS
+#if HAVE_GL && MUS_WITH_GL2PS
   #define g_gl_graph_to_ps_w g_gl_graph_to_ps
 #endif
 #define g_eps_file_w g_eps_file
@@ -690,8 +746,8 @@ XEN_NARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
 void g_init_print(void)
 {
   XEN_DEFINE_PROCEDURE(S_graph_to_ps, g_graph_to_ps_w, 0, 1, 0, H_graph_to_ps);
-#if HAVE_GL && HAVE_GL2PS
-  XEN_DEFINE_PROCEDURE("gl-graph->ps", g_gl_graph_to_ps_w, 0, 1, 0, "send opengl graph to ps");
+#if HAVE_GL && MUS_WITH_GL2PS
+  XEN_DEFINE_PROCEDURE("gl-graph->ps", g_gl_graph_to_ps_w, 0, 4, 0, H_gl_graph_to_ps);
 #endif
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_file, g_eps_file_w, H_eps_file,
@@ -705,4 +761,8 @@ void g_init_print(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_size, g_eps_size_w, H_eps_size,
 				   S_setB S_eps_size, g_set_eps_size_w,  0, 0, 1, 0);
+
+#if HAVE_GL && MUS_WITH_GL2PS
+  XEN_YES_WE_HAVE("gl2ps");
+#endif
 }

@@ -565,6 +565,9 @@ typedef struct snd_state {
   void *snd_print_data;
   ss_watcher **watchers;
   int watchers_size;
+#if HAVE_GL && MUS_WITH_GL2PS
+  bool gl_printing;
+#endif
 } snd_state;
 
 extern snd_state *ss;

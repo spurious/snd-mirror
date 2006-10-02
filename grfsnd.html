@@ -744,6 +744,7 @@ latter are (configure --help):
 <tr><td></td><td>--with-static-xg</td><td>include the xg module at build time; this is easier than trying to dynamically load xg.so</td></tr>
 <tr><td></td><td>--with-gl</td><td>include OpenGL support (spectrogram, etc)</td></tr>
 <tr><td></td><td>--with-just-gl</td><td>include OpenGL support, but omit the GL/Guile/Gauche/Ruby/Forth bindings</td></tr>
+<tr><td></td><td>--with-gl2ps</td><td>include gl2ps (GL to Postscript code)</td></tr>
 <tr><td></td><td>--with-editres</td><td>include editres in xm (default: no)</td></tr>
 <tr><td></td><td>--with-xpm</td><td>use xpm, default: yes</td></tr>
 <tr><td></td><td>--with-xp</td><td>use xp, default: no; this is the Xprint library which is not tied into Snd at all</td></tr>
@@ -2400,7 +2401,8 @@ program:
   (glFlush))
 </pre></td></tr></table>
 <br>
-<p>See snd-gl.scm.
+<p>See snd-gl.scm.  To turn these graphs into Postscript files, include the --with-gl2ps switch
+at configuration time, and use the <a href="extsnd.html#glgraph2ps">gl-graph-&gt;ps</a> function.
 </p>
 <br>
 <table border hspace=20>

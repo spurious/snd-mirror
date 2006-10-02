@@ -416,6 +416,9 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 #else
   ss->catch_exists = 0;
 #endif
+#if HAVE_GL && MUS_WITH_GL2PS
+  ss->gl_printing = false;
+#endif
   g_xen_initialize();
   ss->search_proc = XEN_UNDEFINED;
   ss->search_expr = NULL;

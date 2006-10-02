@@ -1346,6 +1346,7 @@ Optional Packages:
   --with-gauche           use Gauche
   --with-gl		  include OpenGL support
   --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings
+  --with-gl2ps		  include gl2ps
   --with-motif	  	  use libXm to build Snd
   --with-static-motif	  use libXm.a to build Snd
   --with-modules	  use if sndlib uses modules
@@ -3694,6 +3695,7 @@ _ACEOF
 #   --with-doc-dir        directory to search for documentation
 #   --with-gl             include OpenGL support (default=no)
 #   --with-just-gl        include OpenGL support but omit the Guile bindings (gl.o) (default=no)
+#   --with-gl2ps          include gl2ps
 #   --with-modules        accommodate sndlib that was built with modules
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
@@ -3795,6 +3797,12 @@ fi
 # Check whether --with-just-gl was given.
 if test "${with_just_gl+set}" = set; then
   withval=$with_just_gl;
+fi
+
+
+# Check whether --with-gl2ps was given.
+if test "${with_gl2ps+set}" = set; then
+  withval=$with_gl2ps;
 fi
 
 
@@ -16827,6 +16835,12 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
             CFLAGS="$OLD_CFLAGS"
             { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
+            if test "$with_gl2ps" = yes ; then
+              cat >>confdefs.h <<\_ACEOF
+#define MUS_WITH_GL2PS 1
+_ACEOF
+
+            fi
 
 else
   echo "$as_me: failed program was:" >&5
@@ -17180,7 +17194,11 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  GL_FILES="gl.o"
+  if test "$with_gl2ps" = yes ; then
+         GL_FILES="gl.o gl2ps.o"
+       else
+         GL_FILES="gl.o"
+       fi
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5

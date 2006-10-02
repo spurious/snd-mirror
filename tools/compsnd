@@ -393,13 +393,13 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
-echo ' CFLAGS="-Wall"  --without-float-samples --without-ladspa --with-gl --with-modules --without-gsl --without-xpm '
-./configure --quiet CFLAGS="-Wall"  --without-float-samples --without-ladspa --with-gl --with-modules --without-gsl --without-xpm
+echo ' CFLAGS="-Wall"  --without-float-samples --without-ladspa --with-gl --with-gl2ps --with-modules --without-gsl --without-xpm '
+./configure --quiet CFLAGS="-Wall"  --without-float-samples --without-ladspa --with-gl --with-gl2ps --with-modules --without-gsl --without-xpm
 make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features "'clm 'gl"
+./snd -noinit --features "'clm 'gl 'gl2ps"
 make clmclean
 
 echo ' '
@@ -548,13 +548,13 @@ make allclean
 rm -f snd
 rm -f config.cache
 
-echo ' CFLAGS="-Wall" --enable-snd-debug --with-gtk --with-gsl --with-gl '
-./configure --quiet CFLAGS="-Wall -DXEN_DEBUGGING" --enable-snd-debug --with-gtk --with-gsl --with-gl
+echo ' CFLAGS="-Wall" --enable-snd-debug --with-gtk --with-gsl --with-gl --with-gl2ps '
+./configure --quiet CFLAGS="-Wall -DXEN_DEBUGGING" --enable-snd-debug --with-gtk --with-gsl --with-gl --with-gl2ps
 make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'gsl 'gl 'snd-debug 'snd-guile"
+./snd -noinit --features "'clm 'snd-gtk 'gsl 'gl 'snd-debug 'snd-guile 'gl2ps"
 
 echo ' '
 echo ' '
@@ -841,6 +841,15 @@ echo ' --without-guile --without-ruby --with-static-xm --with-gl --quiet'
 make
 ./snd --version
 ./snd -noinit --features "'clm 'xm"
+make allclean
+echo ' '
+echo ' '
+
+echo ' --with-static-xm --with-just-gl --quiet --with-gl2ps '
+./configure --with-static-xm --with-just-gl --quiet --with-gl2ps
+make
+./snd --version
+./snd -noinit --features "'clm 'xm 'gl2ps"
 make allclean
 echo ' '
 echo ' '

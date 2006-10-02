@@ -62,6 +62,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-doc-dir        directory to search for documentation
 #   --with-gl             include OpenGL support (default=no)
 #   --with-just-gl        include OpenGL support but omit the Guile bindings (gl.o) (default=no)
+#   --with-gl2ps          include gl2ps
 #   --with-modules        accommodate sndlib that was built with modules
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
@@ -95,6 +96,7 @@ AC_ARG_WITH(guile,       [  --with-guile	  	  use Guile])
 AC_ARG_WITH(gauche,      [  --with-gauche           use Gauche])
 AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support])
 AC_ARG_WITH(just-gl,     [  --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings])
+AC_ARG_WITH(gl2ps,       [  --with-gl2ps		  include gl2ps])
 AC_ARG_WITH(motif,	 [  --with-motif	  	  use libXm to build Snd])
 AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
 AC_ARG_WITH(modules,     [  --with-modules	  use if sndlib uses modules])
@@ -1012,6 +1014,9 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
             GL_FLAGS="-I/usr/X11R6/include"
             CFLAGS="$OLD_CFLAGS"
             AC_MSG_RESULT(yes)
+            if test "$with_gl2ps" = yes ; then
+              AC_DEFINE(MUS_WITH_GL2PS)
+            fi
            ],
          [AC_MSG_WARN(can't find GL headers)])])
 
@@ -1057,7 +1062,11 @@ if test "$have_gl" = yes ; then
     AC_COMPILE_IFELSE(
       [AC_LANG_PROGRAM([#include <GL/gl.h>], 
                        [int i; i = GL_TEXTURE_BINDING_3D])],
-      [GL_FILES="gl.o"],
+      [if test "$with_gl2ps" = yes ; then
+         GL_FILES="gl.o gl2ps.o"
+       else
+         GL_FILES="gl.o"
+       fi],
       [AC_DEFINE(JUST_GL)])
   fi   
   case "$host" in

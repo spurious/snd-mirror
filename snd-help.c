@@ -248,12 +248,16 @@ static char *gl_version(void)
     {
       char *version = NULL;
       version = (char *)CALLOC(32, sizeof(char));
-      mus_snprintf(version, 32, " (snd gl module: %s)", XEN_TO_C_STRING(gl_val));
+      mus_snprintf(version, 32, " (snd gl: %s)", XEN_TO_C_STRING(gl_val));
       if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
       return(version);
     }
   return("");
 }
+
+#if MUS_WITH_GL2PS
+  char *gl2ps_version(void); /* snd-print.c */
+#endif
 
 #if USE_GTK
   #include <X11/Xlib.h>
@@ -329,6 +333,9 @@ static char *glx_version(void)
 char *version_info(void)
 {
   char *result, *xversion = NULL, *consistent = NULL;
+#if HAVE_GL && MUS_WITH_GL2PS
+  char *gl2ps_name = NULL;
+#endif
   snd_itoa_ctr = 0;
   xversion = xen_version();
   consistent = sndlib_consistency_check();
@@ -401,6 +408,9 @@ char *version_info(void)
 	  snd_itoa(GTKGLEXT_MICRO_VERSION),
     #endif
   #endif
+  #if MUS_WITH_GL2PS
+          ", ", gl2ps_name = gl2ps_version(),
+  #endif
 #endif
 #if (!USE_MOTIF) && (!USE_GTK)
 	  _("\n    without any graphics system"),
@@ -468,6 +478,9 @@ char *version_info(void)
   free_snd_itoa();
   if (xversion) free(xversion); /* calloc in xen.c */
   if (consistent) FREE(consistent);
+#if HAVE_GL && MUS_WITH_GL2PS
+  if (gl2ps_name) FREE(gl2ps_name);
+#endif
   return(result);
 }
 
@@ -496,6 +509,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+2-Oct:   gl2ps support, gl-graph->ps function, --with-gl2ps switch, gl2ps.[ch].\n\
 26-Sep:  save-marks changed to keep matching sync values, add-marks takes name and sync args.\n\
          moved config.h.in to mus-config.h.in\n\
 12-Sep:  Snd 8.4\n\
@@ -504,10 +518,6 @@ void about_snd_help(void)
 28-Aug:  removed vu-font and vu-font-size, added vu-in-dB.\n\
 16-Aug:  display-bark-fft (dsp.scm).\n\
          after-lisp-graph-hook, snd-color, snd-font, show-bare-x-axis.\n\
-4-Aug:   analog-filter.rb thanks to Mike.\n\
-         \"scheme\" instead of \"guile\" in various names in inf-snd.el (for gauche).\n\
-3-Aug:   granulated-sound-interp (examp.scm).\n\
-         poly-resultant and poly-discriminant (poly.scm).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

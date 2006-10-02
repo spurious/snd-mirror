@@ -49,6 +49,8 @@ The configure program has several Snd-related arguments:
                                --with-just-gl will give you the GL spectrograms
                                without any extras.
 
+     --with-gl2ps            include gl2ps (postscript output from OpenGL graphics)
+
    --with-ladspa             include LADSPA plugin support (default: yes in Linux)
 
    --with-static-xm          include the xm module (rather than loading it dynamically)
@@ -110,7 +112,7 @@ language, however, there's nothing it can do.
 
 Here at CCRMA, we use this configure invocation:
 
-  ./configure --with-alsa --with-temp-dir=/zap --with-static-xm --with-gl
+  ./configure --with-jack --with-temp-dir=/zap --with-static-xm --with-gl --with-gl2ps
 
 but I'd recommend --with-just-gl elsewhere (the various GL implementations
 are different enough that gl.c can be a pain to build).
@@ -315,6 +317,7 @@ Gtk+:
 OpenGL:
   http://www.mesa3d.org/
   http://mesa3d.sourceforge.net/
+  http://www.geuz.org/gl2ps/
 
 Linux audio:
   http://linux-sound.org

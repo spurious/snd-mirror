@@ -10905,6 +10905,19 @@ This gives <i>widget</i> "focus" -- it becomes the active widget, receiving keys
 <tr><td colspan=2 height=16></td></tr>
 
 
+<!-- gl-graph->ps -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="gl_graph_to_ps">gl-graph-&gt;ps</a> (<i>file (type 0) snd chn</i>)</code></td></tr>
+<tr><td></td><td>
+This creates a Postscript picture of the current openGL display in snd's channel chn (a spectrogram).
+<i>file</i> defaults to <a href="#epsfile">eps-file</a>.
+<i>type</i> can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, or 5: pgf.
+This function is available only if OpenGL and gl2ps have been loaded (via the --with-gl and
+--with-gl2ps configuration switches).
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
 <!-- goto-listener-end -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="gotolistenerend">goto-listener-end</a></code></td></tr>

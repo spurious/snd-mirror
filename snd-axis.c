@@ -320,6 +320,9 @@ static Locus tick_grf_x(double val, axis_info *ap, x_axis_style_t style, int sra
 }
 
 #if HAVE_GL
+  #if MUS_WITH_GL2PS
+    void gl2ps_text(const char *msg);
+  #endif
 static bool gl_fonts_activated = false;
 static int label_base, number_base;
 static void activate_gl_fonts(void)
@@ -873,6 +876,9 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  glColor3f(0.0, 0.0, 0.0);
 	  glRasterPos3f(-0.1, 0.0, yl);
 	  glListBase(label_base);
+  #if MUS_WITH_GL2PS
+	  if (ss->gl_printing) gl2ps_text(ap->xlabel);
+  #endif
 	  glCallLists(snd_strlen(ap->xlabel), GL_UNSIGNED_BYTE, (GLubyte *)(ap->xlabel));
 	}
       else
@@ -962,11 +968,17 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  xl = -0.5 - ythick - ((Float)(3 * tdy->maj_tick_len + tdy->min_label_width + inner_border_width) / (Float)width);
 	  glRasterPos3f(xl, 0.0, (tdy->mlo - ap->y0) / (ap->y1 - ap->y0) - 0.51);
 	  glListBase(number_base);
+  #if MUS_WITH_GL2PS
+	  if (ss->gl_printing) gl2ps_text(tdy->min_label);
+  #endif
 	  glCallLists(snd_strlen(tdy->min_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdy->min_label));
 	  
 	  xl = -0.5 - ythick - ((Float)(3 * tdy->maj_tick_len + tdy->max_label_width + inner_border_width) / (Float)width);
 	  glRasterPos3f(xl, 0.0, (tdy->mhi - ap->y0) / (ap->y1 - ap->y0) - 0.51);
 	  glListBase(number_base);
+  #if MUS_WITH_GL2PS
+	  if (ss->gl_printing) gl2ps_text(tdy->max_label);
+  #endif
 	  glCallLists(snd_strlen(tdy->max_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdy->max_label));
 	}
       else
@@ -1002,6 +1014,9 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      yl = -0.5 - xthick - ((Float)(3 * major_tick_length + x_number_height + inner_border_width) / (Float)height);
 	      glRasterPos3f((tdx->mlo - ap->x0) / (ap->x1 - ap->x0) - 0.53, 0.0, yl);
 	      glListBase(number_base);
+  #if MUS_WITH_GL2PS
+	      if (ss->gl_printing) gl2ps_text(tdx->min_label);
+  #endif
 	      glCallLists(snd_strlen(tdx->min_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdx->min_label));
 	    }
 	  else
@@ -1024,6 +1039,9 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      yl = -0.5 - xthick - ((Float)(3 * major_tick_length + x_number_height + inner_border_width) / (Float)height);
 	      glRasterPos3f((tdx->mhi - ap->x0) / (ap->x1 - ap->x0) - 0.53, 0.0, yl);
 	      glListBase(number_base);
+  #if MUS_WITH_GL2PS
+	      if (ss->gl_printing) gl2ps_text(tdx->max_label);
+  #endif
 	      glCallLists(snd_strlen(tdx->max_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdx->max_label));
 	    }
 	  else
