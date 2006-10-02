@@ -17196,6 +17196,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (exit $ac_status); }; }; then
   if test "$with_gl2ps" = yes ; then
          GL_FILES="gl.o gl2ps.o"
+         RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
        else
          GL_FILES="gl.o"
        fi

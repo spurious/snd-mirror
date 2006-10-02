@@ -1064,6 +1064,7 @@ if test "$have_gl" = yes ; then
                        [int i; i = GL_TEXTURE_BINDING_3D])],
       [if test "$with_gl2ps" = yes ; then
          GL_FILES="gl.o gl2ps.o"
+         RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
        else
          GL_FILES="gl.o"
        fi],

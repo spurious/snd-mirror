@@ -581,13 +581,11 @@ static XEN g_graph_to_ps(XEN filename)
 
 
 /* ---------------- gl -> ps ---------------- */
+#define S_gl_graph_to_ps "gl-graph->ps"
+
 #if HAVE_GL && MUS_WITH_GL2PS
 
-/* TODO test/cvs+dist */
-
 #include "gl2ps.h"
-
-#define S_gl_graph_to_ps "gl-graph->ps"
 
 #define NUM_GL2PS_TYPES 6
 static int gl2ps_types[NUM_GL2PS_TYPES] = {GL2PS_EPS, GL2PS_PS, GL2PS_PDF, GL2PS_TEX, GL2PS_SVG, GL2PS_PGF};
@@ -671,6 +669,12 @@ void gl2ps_text(const char *msg)
 {
   gl2psText(msg, "Times-Roman", 20);
 }
+#else
+static XEN g_gl_graph_to_ps(XEN filename, XEN output_type, XEN snd, XEN chn)
+{
+  #define H_gl_graph_to_ps "a no-op in this version of Snd"
+  return(XEN_FALSE);
+}
 #endif
 
 /* -------------------------------- */
@@ -717,9 +721,7 @@ static XEN g_set_eps_size(XEN val)
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_graph_to_ps_w, g_graph_to_ps)
-#if HAVE_GL && MUS_WITH_GL2PS
-  XEN_ARGIFY_1(g_gl_graph_to_ps_w, g_gl_graph_to_ps)
-#endif
+XEN_ARGIFY_1(g_gl_graph_to_ps_w, g_gl_graph_to_ps)
 XEN_NARGIFY_0(g_eps_file_w, g_eps_file)
 XEN_NARGIFY_1(g_set_eps_file_w, g_set_eps_file)
 XEN_NARGIFY_0(g_eps_left_margin_w, g_eps_left_margin)
@@ -730,9 +732,7 @@ XEN_NARGIFY_0(g_eps_bottom_margin_w, g_eps_bottom_margin)
 XEN_NARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
 #else
 #define g_graph_to_ps_w g_graph_to_ps
-#if HAVE_GL && MUS_WITH_GL2PS
-  #define g_gl_graph_to_ps_w g_gl_graph_to_ps
-#endif
+#define g_gl_graph_to_ps_w g_gl_graph_to_ps
 #define g_eps_file_w g_eps_file
 #define g_set_eps_file_w g_set_eps_file
 #define g_eps_left_margin_w g_eps_left_margin
@@ -746,9 +746,7 @@ XEN_NARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
 void g_init_print(void)
 {
   XEN_DEFINE_PROCEDURE(S_graph_to_ps, g_graph_to_ps_w, 0, 1, 0, H_graph_to_ps);
-#if HAVE_GL && MUS_WITH_GL2PS
-  XEN_DEFINE_PROCEDURE("gl-graph->ps", g_gl_graph_to_ps_w, 0, 4, 0, H_gl_graph_to_ps);
-#endif
+  XEN_DEFINE_PROCEDURE(S_gl_graph_to_ps, g_gl_graph_to_ps_w, 0, 4, 0, H_gl_graph_to_ps);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_file, g_eps_file_w, H_eps_file,
 				   S_setB S_eps_file, g_set_eps_file_w,  0, 0, 1, 0);

@@ -2379,7 +2379,11 @@ static bool make_spectrogram(chan_info *cp)
 	      (!gl_warned_already))
 	    {
 	      gl_warned_already = true;
-	      snd_warning(_("can't print openGL graphics yet"));
+#if HAVE_GL && MUS_WITH_GL2PS
+	      snd_warning("use gl-graph->ps to print openGL graphs");
+#else
+	      snd_warning(_("we need openGL and gl2ps to print openGL graphs");
+#endif
 	    }
 #if USE_MOTIF
 	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);

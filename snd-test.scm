@@ -2029,7 +2029,7 @@
 			 'frame->frame 'frame->list 'frame->sample 'frame-ref 'frame-set!
 			 'frame? 'frames 'free-player
 			 'free-sample-reader 'free-track 'gaussian-window 'gc-off 'gc-on
-			 'glSpectrogram 'goto-listener-end 'granulate 'granulate?
+			 'gl-graph->ps 'glSpectrogram 'goto-listener-end 'granulate 'granulate?
 			 'graph 'graph->ps 'graph-as-sonogram 'graph-as-spectrogram 'graph-as-wavogram
 			 'graph-color 'graph-cursor 'graph-data 'graph-dots 'graph-dots-and-lines
 			 'graph-filled 'graph-hook 'graph-lines 'graph-lollipops 'graph-once
@@ -59004,7 +59004,7 @@ EDITS: 1
 		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find-channel
 		     find-mark find-sound finish-progress-report foreground-color insert-file-dialog
 		     frames free-sample-reader graph transform? delete-transform
-		     graph-color graph-cursor graph-data graph->ps graph-style lisp-graph?  graphs-horizontal header-type
+		     graph-color graph-cursor graph-data graph->ps gl-graph->ps graph-style lisp-graph?  graphs-horizontal header-type
 		     help-dialog info-dialog highlight-color in insert-region insert-sample insert-samples
 		     insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
 		     left-sample listener-color listener-font listener-prompt listener-selection listener-text-color
