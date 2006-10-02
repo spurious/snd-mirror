@@ -669,10 +669,12 @@ void gl2ps_text(const char *msg)
 {
   gl2psText(msg, "Times-Roman", 20);
 }
+
 #else
+
 static XEN g_gl_graph_to_ps(XEN filename, XEN output_type, XEN snd, XEN chn)
 {
-  #define H_gl_graph_to_ps "a no-op in this version of Snd"
+  #define H_gl_graph_to_ps "gl-graph->ps is a no-op in this version of Snd"
   return(XEN_FALSE);
 }
 #endif
@@ -721,7 +723,7 @@ static XEN g_set_eps_size(XEN val)
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_graph_to_ps_w, g_graph_to_ps)
-XEN_ARGIFY_1(g_gl_graph_to_ps_w, g_gl_graph_to_ps)
+XEN_ARGIFY_4(g_gl_graph_to_ps_w, g_gl_graph_to_ps)
 XEN_NARGIFY_0(g_eps_file_w, g_eps_file)
 XEN_NARGIFY_1(g_set_eps_file_w, g_set_eps_file)
 XEN_NARGIFY_0(g_eps_left_margin_w, g_eps_left_margin)

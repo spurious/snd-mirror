@@ -562,18 +562,12 @@ static MIDIClientRef us = NULL;
 static MIDIPortRef inp = NULL, outp = NULL;
 static int reader = 0, writer = 0;
 static unsigned char *buffer = NULL;
-#if MUS_DEBUGGING
-  void set_printable(int val);
-#endif
 
 static void init_midi(void)
 {
   if (buffer == NULL)
     {
       buffer = (unsigned char *)CALLOC(BUFFER_SIZE, sizeof(unsigned char));
-#if MUS_DEBUGGING
-      set_printable(0);
-#endif
       reader = 0;
       writer = 0;
     }
@@ -713,9 +707,6 @@ static XEN g_mus_midi_read(XEN line, XEN bytes) /* returns list of midi bytes */
   XEN_ASSERT_TYPE(XEN_INTEGER_P(bytes), bytes, XEN_ARG_2, S_mus_midi_read, "an integer");
   len = XEN_TO_C_INT(bytes);
   buf = (unsigned char *)CALLOC(len, sizeof(unsigned char));
-#if MUS_DEBUGGING
-  set_printable(0);  /* why does this line trigger a warning in the forth version? */
-#endif
   err = mus_midi_read(XEN_TO_C_INT(line), buf, len);
   if (err == -1)
     {
