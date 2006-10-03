@@ -16835,12 +16835,6 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
             CFLAGS="$OLD_CFLAGS"
             { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
-            if test "$with_gl2ps" = yes ; then
-              cat >>confdefs.h <<\_ACEOF
-#define MUS_WITH_GL2PS 1
-_ACEOF
-
-            fi
 
 else
   echo "$as_me: failed program was:" >&5
@@ -17139,6 +17133,14 @@ if test "$have_gl" = yes ; then
 _ACEOF
 
   OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES openGL"
+  if test "$with_gl2ps" = yes ; then
+    cat >>confdefs.h <<\_ACEOF
+#define MUS_WITH_GL2PS 1
+_ACEOF
+
+    RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
+    GL_FILES="gl2ps.o"
+  fi
   if test "$with_just_gl" = yes ; then
     cat >>confdefs.h <<\_ACEOF
 #define JUST_GL 1
@@ -17194,12 +17196,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  if test "$with_gl2ps" = yes ; then
-         GL_FILES="gl.o gl2ps.o"
-         RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
-       else
-         GL_FILES="gl.o"
-       fi
+  GL_FILES="$GL_FILES gl.o"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5

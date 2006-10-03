@@ -6,8 +6,6 @@
  *       also the ALSA env vars, mus_audio_report etc
  *       also in special unsupported cases, like x86 solaris
  *       perhaps put bad vals in red? 
- *
- * PERHAPS: in linux make --with-alsa the default
  */
 
 

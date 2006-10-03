@@ -126,16 +126,23 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
   #define point_t GdkPoint
 #endif
 
-static point_t *TO_C_POINTS(XEN pts, const char *caller)
+static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
 {
-  int i, j, len;
+  int i, j, vlen = 0, len = 0;
   point_t *pack_pts;
-  len = XEN_VECTOR_LENGTH(pts) / 2;
-  if (len <= 0) 
+  vlen = XEN_VECTOR_LENGTH(pts);
+  if (vlen & 1)
+    XEN_ERROR(XEN_ERROR_TYPE("bad-length"),
+	      XEN_LIST_3(C_TO_XEN_STRING(caller),
+			 C_TO_XEN_STRING("length of vector of points (~A) must be even"),
+			 C_TO_XEN_INT(vlen)));
+  if (vlen <= 0) 
     XEN_ERROR(NO_DATA,
 	      XEN_LIST_3(C_TO_XEN_STRING(caller), 
 			 C_TO_XEN_STRING("empty vector?"), 
 			 pts));
+  len = vlen / 2;
+  (*vector_len) = len;
   pack_pts = (point_t *)CALLOC(len, sizeof(point_t));
   for (i = 0, j = 0; i < len; i++, j += 2)
     {
@@ -152,13 +159,12 @@ static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
 
   point_t *pack_pts;
   axis_context *ax1;
+  int vlen = 0;
   ASSERT_CHANNEL(S_draw_lines, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_draw_lines, "a vector");
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines);
-  pack_pts = TO_C_POINTS(pts, S_draw_lines);
-  draw_lines(ax1,
-	     pack_pts, 
-	     XEN_VECTOR_LENGTH(pts) / 2);
+  pack_pts = vector_to_points(pts, S_draw_lines, &vlen);
+  draw_lines(ax1, pack_pts, vlen);
   FREE(pack_pts);
   return(pts);
 }
@@ -170,13 +176,14 @@ static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
  
   point_t *pack_pts;
   axis_context *ax1;
+  int vlen = 0;
   ASSERT_CHANNEL(S_draw_dots, snd, chn, 3);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_draw_dots, "a vector");
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dots);
-  pack_pts = TO_C_POINTS(pts, S_draw_dots);
+  pack_pts = vector_to_points(pts, S_draw_dots, &vlen);
   draw_points(ax1,
 	      pack_pts, 
-	      XEN_VECTOR_LENGTH(pts) / 2,
+	      vlen,
 	      XEN_TO_C_INT_OR_ELSE(size, 1));
   FREE(pack_pts);
   return(pts);
@@ -188,14 +195,15 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 
   point_t *pack_pts;
   axis_context *ax;
+  int vlen = 0;
   ASSERT_CHANNEL(S_fill_polygon, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_fill_polygon, "a vector");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_fill_polygon);
-  pack_pts = TO_C_POINTS(pts, S_fill_polygon);
+  pack_pts = vector_to_points(pts, S_fill_polygon, &vlen);
 #if USE_MOTIF
-  XFillPolygon(ax->dp, ax->wn, ax->gc, pack_pts, XEN_VECTOR_LENGTH(pts) / 2, Complex, CoordModeOrigin);
+  XFillPolygon(ax->dp, ax->wn, ax->gc, pack_pts, vlen, Complex, CoordModeOrigin);
 #else
-  gdk_draw_polygon(ax->wn, ax->gc, true, pack_pts, XEN_VECTOR_LENGTH(pts) / 2);
+  gdk_draw_polygon(ax->wn, ax->gc, true, pack_pts, vlen);
 #endif
   FREE(pack_pts);
   return(pts);

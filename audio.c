@@ -5021,8 +5021,6 @@ static void alsa_describe_audio_state_1(void)
  * record case improved after perusal of Snack 1.6/src/jkAudio_sun.c
  */
 
-/* SOMEDAY: opteron audio appears to be broken -- I tried installing Jurgen Keil's drivers, but they made no difference */
-
 /* apparently input other than 8000 is 16-bit, 8000 is (?) mulaw */
 
 #if (defined(MUS_SUN) || defined(MUS_OPENBSD)) && (!(defined(AUDIO_OK)))

@@ -2,8 +2,6 @@
 
 /* create Postscript version of graph */
 
-/* SOMEDAY: how to include lisp-graph/user-graphics in the printing sequence? */
-
 static char *pbuf = NULL;
 static int bbx = 0, bby = 0, bx0 = 0, by0 = 0;
 static int ps_fd;

@@ -1014,9 +1014,6 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
             GL_FLAGS="-I/usr/X11R6/include"
             CFLAGS="$OLD_CFLAGS"
             AC_MSG_RESULT(yes)
-            if test "$with_gl2ps" = yes ; then
-              AC_DEFINE(MUS_WITH_GL2PS)
-            fi
            ],
          [AC_MSG_WARN(can't find GL headers)])])
 
@@ -1056,18 +1053,18 @@ fi
 if test "$have_gl" = yes ; then
   AC_DEFINE(HAVE_GL)
   OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES openGL"
+  if test "$with_gl2ps" = yes ; then
+    AC_DEFINE(MUS_WITH_GL2PS)
+    RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
+    GL_FILES="gl2ps.o"
+  fi
   if test "$with_just_gl" = yes ; then
     AC_DEFINE(JUST_GL)
   else
     AC_COMPILE_IFELSE(
       [AC_LANG_PROGRAM([#include <GL/gl.h>], 
                        [int i; i = GL_TEXTURE_BINDING_3D])],
-      [if test "$with_gl2ps" = yes ; then
-         GL_FILES="gl.o gl2ps.o"
-         RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
-       else
-         GL_FILES="gl.o"
-       fi],
+      [GL_FILES="$GL_FILES gl.o"],
       [AC_DEFINE(JUST_GL)])
   fi   
   case "$host" in

@@ -60184,6 +60184,7 @@ EDITS: 1
 		(check-error-tag 'wrong-type-arg (lambda () (play-selection 0 0)))
 		(check-error-tag 'wrong-type-arg (lambda () (play-selection 0 (lambda (a b) #f))))
 		(check-error-tag 'no-data (lambda () (draw-lines '#())))
+		(check-error-tag 'bad-length (lambda () (draw-lines '#(1 2 3))))
 		(check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 0 1 1) :end 10))))
 		(check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 1 1 0) :end 10))))
 		(check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 1 1 -1) :end 10))))
