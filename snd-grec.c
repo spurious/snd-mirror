@@ -1,7 +1,9 @@
 #include "snd.h"
 #include "snd-rec.h"
 
-/* TODO: if user changes vu-size after meters created, make sure the pixmaps are big enough (this is probably safe now because the size can't change) */
+/* if user changes vu-size after meters created, we need to make sure the pixmaps are big enough 
+ *   (this is probably safe for now because the size can't change) 
+ */
 
 typedef struct {
   GtkWidget *meter, *label;

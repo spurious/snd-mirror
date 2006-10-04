@@ -1,6 +1,8 @@
 (use-modules (ice-9 format))
 (provide 'snd-marks-menu.scm)
 
+;;; TODO: add gtk dialog support
+
 (if (not (defined? 'add-sliders)) (load-from-path "effects-utils.scm"))
 (if (not (defined? 'mark-sync-color)) (load-from-path "snd-motif.scm"))
 (if (not (defined? 'mark-loops)) (load-from-path "examp.scm"))

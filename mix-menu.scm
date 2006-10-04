@@ -1,6 +1,8 @@
 (use-modules (ice-9 format))
 (provide 'snd-mix-menu.scm)
 
+;;; TODO: add gtk dialog support
+
 (if (not (provided? 'snd-mix.scm)) (load-from-path "mix.scm"))
 (if (not (defined? 'add-sliders)) (load-from-path "effects-utils.scm"))
 

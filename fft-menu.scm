@@ -1,6 +1,12 @@
 (use-modules (ice-9 format) (ice-9 optargs))
 
-(if (and (not (provided? 'snd-gtk)) (not (provided? 'snd-effects-utils.scm))) (load-from-path "effects-utils.scm")) ; make-effects-dialog
+(if (provided? 'xm)
+    (if (not (provided? 'snd-effects-utils.scm))
+	(load-from-path "effects-utils.scm"))) ; make-effect-dialog
+(if (provided? 'xg)
+    (if (not (provided? 'snd-gtk-effects.scm))
+	(load-from-path "gtk-effects.scm")))
+
 (if (not (provided? 'snd-examp.scm)) (load-from-path "examp.scm")) ; squelch-vowels
 
 (provide 'snd-fft-menu.scm)
@@ -27,7 +33,7 @@
 (define (cp-fft-edit)
   (fft-edit fft-edit-low-frequency fft-edit-high-frequency))
 
-(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
+(if (or (provided? 'xg) (provided? 'xm)) ; if xm/xg module is loaded, popup a dialog here
     (begin
 
       (define (post-fft-edit-dialog)
@@ -90,7 +96,7 @@
 (define (cp-fft-squelch)
  (fft-squelch fft-squelch-amount))
 
-(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
+(if (or (provided? 'xg) (provided? 'xm)) ; if xm module is loaded, popup a dialog here
     (begin
 
       (define (post-fft-squelch-dialog)

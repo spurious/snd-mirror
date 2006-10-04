@@ -48,6 +48,8 @@
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
  * TODO: (gauche)   unwind-protects around scm_apply (snd-xen g_call)
  * SOMEDAY: (scheme)   r6rs changes, in particular ->exact (filter is another)
+ *
+ * TODO: (guile) if snd-error during load, either nothing reported (init time) or just 'snd-error 
  */
 
 
