@@ -54647,6 +54647,36 @@ EDITS: 1
 
 ;;; ---------------- test 26: Gtk --------------------
 
+#|
+;;; until cairo connection, this is useless
+(if (and (provided? 'snd-gtk)
+	 (provided? 'xg))
+(define (gtk-print-test)
+  (let* ((operation (gtk_print_operation_new)))
+
+    (g_signal_connect operation "begin-print" (lambda (op context user-data)
+						(let ((height (gtk_print_context_get_height (GTK_PRINT_CONTEXT context))))
+						  (display (format #f "begin height: ~A" height))
+						  (gtk_print_operation_set_n_pages (GTK_PRINT_OPERATION op) 1)))
+		      #f)
+
+    (g_signal_connect operation "draw-page" (lambda (op context page user-data)
+					      ;; cairo is necessary to get output
+					      #f)
+		      #f)
+
+    (g_signal_connect operation "end-print" (lambda (op context user-data)
+					      (display (format #f "all done")))
+		      #f)
+    
+    (let ((error (gtk_print_operation_run operation GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG (GTK_WINDOW (cadr (main-widgets))))))
+      (display error)
+      )
+
+    (g_object_unref (GPOINTER operation))))
+)
+|#
+
 (if (or full-test (= snd-test 26) (and keep-going (<= snd-test 26)))
     (begin
       (run-hook before-test-hook 26)

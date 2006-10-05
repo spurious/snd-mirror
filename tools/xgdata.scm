@@ -5926,30 +5926,34 @@
 (CFNC-210 "void gtk_label_set_line_wrap_mode GtkLabel* label PangoWrapMode wrap_mode")
 (CFNC-210 "PangoWrapMode gtk_label_get_line_wrap_mode GtkLabel* label")
 
+#!
 ;;; printer stuff -- only include gtkprintoperation for now (it's in gtk.h)
-;(CCAST-210 "GTK_PRINTER(obj)" "GtkPrinter")
-;(CCHK-210 "GTK_IS_PRINTER(obj)" "GtkPrinter")
 
-;(CCAST-210 "GTK_PRINTER_OPTION_WIDGET(obj)" "GtkPrinterOptionWidget")
-;(CCHK-210 "GTK_IS_PRINTER_OPTION_WIDGET(obj)" "GtkPrinterOptionWidget")
+;;; this is all useless until I get cairo tied into xen.
 
-;(CCAST-210 "GTK_PRINT_CONTEXT(obj)" "GtkPrintContext")
-;(CCHK-210 "GTK_IS_PRINT_CONTEXT(obj)" "GtkPrintContext")
+;(CCAST-210 "GTK_PRINTER(obj)" "GtkPrinter*")
+;(CCHK-210 "GTK_IS_PRINTER(obj)" "GtkPrinter*")
 
-;(CCAST-210 "GTK_PRINT_JOB(obj)" "GtkPrintJob")
-;(CCHK-210 "GTK_IS_PRINT_JOB(obj)" "GtkPrintJob")
+;(CCAST-210 "GTK_PRINTER_OPTION_WIDGET(obj)" "GtkPrinterOptionWidget*")
+;(CCHK-210 "GTK_IS_PRINTER_OPTION_WIDGET(obj)" "GtkPrinterOptionWidget*")
 
-(CCAST-210 "GTK_PRINT_OPERATION(obj)" "GtkPrintOperation")
-(CCHK-210 "GTK_IS_PRINT_OPERATION(obj)" "GtkPrintOperation")
+(CCAST-210 "GTK_PRINT_CONTEXT(obj)" "GtkPrintContext*")
+(CCHK-210 "GTK_IS_PRINT_CONTEXT(obj)" "GtkPrintContext*")
 
-;(CCAST-210 "GTK_PRINT_OPERATION_PREVIEW(obj)" "GtkPrintOperationPreview")
-;(CCHK-210 "GTK_IS_PRINT_OPERATION_PREVIEW(obj)" "GtkPrintOperationPreview")
+;(CCAST-210 "GTK_PRINT_JOB(obj)" "GtkPrintJob*")
+;(CCHK-210 "GTK_IS_PRINT_JOB(obj)" "GtkPrintJob*")
 
-;(CCAST-210 "GTK_PRINT_SETTINGS(obj)" "GtkPrintSettings")
-;(CCHK-210 "GTK_IS_PRINT_SETTINGS(obj)" "GtkPrintSettings")
+(CCAST-210 "GTK_PRINT_OPERATION(obj)" "GtkPrintOperation*")
+(CCHK-210 "GTK_IS_PRINT_OPERATION(obj)" "GtkPrintOperation*")
 
-;(CCAST-210 "GTK_PRINT_UNIX_DIALOG(obj)" "GtkPrintUnixDialog")
-;(CCHK-210 "GTK_IS_PRINT_UNIX_DIALOG(obj)" "GtkPrintUnixDialog")
+;(CCAST-210 "GTK_PRINT_OPERATION_PREVIEW(obj)" "GtkPrintOperationPreview*")
+;(CCHK-210 "GTK_IS_PRINT_OPERATION_PREVIEW(obj)" "GtkPrintOperationPreview*")
+
+;(CCAST-210 "GTK_PRINT_SETTINGS(obj)" "GtkPrintSettings*")
+;(CCHK-210 "GTK_IS_PRINT_SETTINGS(obj)" "GtkPrintSettings*")
+
+;(CCAST-210 "GTK_PRINT_UNIX_DIALOG(obj)" "GtkPrintUnixDialog*")
+;(CCHK-210 "GTK_IS_PRINT_UNIX_DIALOG(obj)" "GtkPrintUnixDialog*")
 
 ;(CINT-210 "GTK_PRINT_CAPABILITY_PAGE_SET" "GtkPrintCapabilities")
 ;(CINT-210 "GTK_PRINT_CAPABILITY_COPIES" "GtkPrintCapabilities")
@@ -6025,16 +6029,16 @@
 ;(CFNC-210 "gboolean gtk_printer_accepts_ps GtkPrinter* printer")
 ;(CFNC-210 "gint gtk_printer_compare GtkPrinter* a GtkPrinter* b")
 ;(CFNC-210 "void gtk_enumerate_printers GtkPrinterFunc func gpointer data GDestroyNotify destroy gboolean wait")
-;(CFNC-210 "GType gtk_print_context_get_type void")
+(CFNC-210 "GType gtk_print_context_get_type void")
 ;(CFNC-210 "cairo_t* gtk_print_context_get_cairo_context GtkPrintContext* context")
 ;(CFNC-210 "GtkPageSetup* gtk_print_context_get_page_setup GtkPrintContext* context")
-;(CFNC-210 "gdouble gtk_print_context_get_width GtkPrintContext* context")
-;(CFNC-210 "gdouble gtk_print_context_get_height GtkPrintContext* context")
-;(CFNC-210 "gdouble gtk_print_context_get_dpi_x GtkPrintContext* context")
-;(CFNC-210 "gdouble gtk_print_context_get_dpi_y GtkPrintContext* context")
+(CFNC-210 "gdouble gtk_print_context_get_width GtkPrintContext* context")
+(CFNC-210 "gdouble gtk_print_context_get_height GtkPrintContext* context")
+(CFNC-210 "gdouble gtk_print_context_get_dpi_x GtkPrintContext* context")
+(CFNC-210 "gdouble gtk_print_context_get_dpi_y GtkPrintContext* context")
 ;(CFNC-210 "PangoFontMap* gtk_print_context_get_pango_fontmap GtkPrintContext* context")
-;(CFNC-210 "PangoContext* gtk_print_context_create_pango_context GtkPrintContext* context")
-;(CFNC-210 "PangoLayout* gtk_print_context_create_pango_layout GtkPrintContext* context")
+(CFNC-210 "PangoContext* gtk_print_context_create_pango_context GtkPrintContext* context")
+(CFNC-210 "PangoLayout* gtk_print_context_create_pango_layout GtkPrintContext* context")
 ;(CFNC-210 "void gtk_print_context_set_cairo_context GtkPrintContext* context cairo_t* cr double dpi_x double dpi_y")
 ;(CFNC-210 "GType gtk_printer_option_widget_get_type void")
 ;(CFNC-210 "GtkWidget* gtk_printer_option_widget_new GtkPrinterOption* source")
@@ -6156,6 +6160,7 @@
 ;(CFNC-210 "GtkPrinter* gtk_print_unix_dialog_get_selected_printer GtkPrintUnixDialog* dialog")
 ;(CFNC-210 "void gtk_print_unix_dialog_add_custom_tab GtkPrintUnixDialog* dialog GtkWidget* child GtkWidget* tab_label")
 ;(CFNC-210 "void gtk_print_unix_dialog_set_manual_capabilities GtkPrintUnixDialog* dialog GtkPrintCapabilities capabilities")
+!#
 
 
 (CFNC-210 "GtkSettings* gtk_settings_get_for_screen GdkScreen* screen")

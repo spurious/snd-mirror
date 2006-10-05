@@ -552,7 +552,7 @@
 			      (parse-args "GtkClipboard* clipboard lambda_data func_data" 'callback)
 			      'permanent)
 
-			; GCallback 'lambda can be whatever is indicated by caller (2 or 3 args)
+			; GCallback 'lambda can be whatever is indicated by caller (2 or more args)
 			))
 
 (define callbacks-23 (list
@@ -1848,7 +1848,7 @@
 (with-290 hey (lambda () (for-each callback-p callbacks-290)))
 
 (hey "#define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)~%")
-(hey "#define XEN_GCallback_P(Arg) XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS_OK(Arg, 2)) || (XEN_REQUIRED_ARGS_OK(Arg, 3)))~%")
+(hey "#define XEN_GCallback_P(Arg) (XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS_OK(Arg, 2)) || (XEN_REQUIRED_ARGS_OK(Arg, 3)) || (XEN_REQUIRED_ARGS_OK(Arg, 4))))~%")
 
 (define (xen-callback func)
   (hey "#define XEN_TO_C_~A(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_~A~%"
@@ -1861,7 +1861,9 @@
 (with-256 hey (lambda () (for-each xen-callback callbacks-256)))
 (with-290 hey (lambda () (for-each xen-callback callbacks-290)))
 
+;;; (hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 4)) ? (GCallback)gxg_func4 : ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2))~%")
 (hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)~%")
+
 (hey "#define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr~%")
 (hey "#define XEN_lambda_data_P(Arg) 1~%")
 
@@ -2135,7 +2137,7 @@
 			 (hey "  #else~%")
 			 (hey "  return((~A)0);~%" (no-stars type))))
 		   (hey "  #endif~%")))
-	     (hey "}~%")))))))
+	     (hey "}~%~%")))))))
     (for-each xc callbacks)
     (with-23 hey (lambda () (for-each xc callbacks-23)))
     (with-250 hey (lambda () (for-each xc callbacks-250)))
@@ -2150,7 +2152,17 @@
 (hey "                          C_TO_XEN_GdkEventAny_(ev),~%")
 (hey "                          XEN_CADR((XEN)data),~%")
 (hey "                          c__FUNCTION__)));~%")
-(hey "}~%~%")
+(hey "}~%")
+
+;;; (hey "~%static gboolean gxg_func4(GtkPrintOperation *op, GtkPrintContext *context, gint page_nr, gpointer data)~%")
+;;; (hey "{~%")
+;;; (hey "  return(XEN_TO_C_BOOLEAN(XEN_CALL_4(XEN_CAR((XEN)data),~%")
+;;; (hey "                          C_TO_XEN_GtkPrintOperation_(op),~%")
+;;; (hey "                          C_TO_XEN_GtkPrintContext_(context),~%")
+;;; (hey "                          C_TO_XEN_INT(page_nr),~%")
+;;; (hey "                          XEN_CADR((XEN)data),~%")
+;;; (hey "                          c__FUNCTION__)));~%")
+;;; (hey "}~%~%")
 
 (hey "~%~%/* ---------------------------------------- functions ---------------------------------------- */~%~%")
 

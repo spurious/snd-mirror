@@ -134,6 +134,7 @@
 #define S_delete_selection              "delete-selection"
 #define S_delete_track                  "delete-track"
 #define S_delete_transform              "delete-transform"
+#define S_delete_watcher                "delete-watcher"
 #define S_dialog_widgets                "dialog-widgets"
 #define S_display_edits                 "display-edits"
 #define S_doit_again_button_color       "doit-again-button-color"

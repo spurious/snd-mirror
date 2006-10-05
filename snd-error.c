@@ -211,6 +211,7 @@ void snd_error_without_format(const char *msg)
 
 static XEN g_snd_error(XEN msg)
 {
+  /* this throws a 'snd-error error; it does not call snd_error_1 or friends above */
   #define H_snd_error "(" S_snd_error " str): throws a 'snd-error error"
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_error, "a string");
 

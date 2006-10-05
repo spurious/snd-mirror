@@ -1974,8 +1974,6 @@ void menu_reset_controls(snd_info *sp)
 
 /* -------- sp watcher lists -------- */
 
-/* TODO: does mark pane track mark position correctly? */
-
 #define SP_WATCHER_SIZE_INCREMENT 2
 
 int add_sp_watcher(snd_info *sp, sp_watcher_t type, void (*watcher)(struct snd_info *sp, sp_watcher_reason_t reason, int list_loc), void *context)
@@ -5339,7 +5337,7 @@ void g_init_snd(void)
   #define H_name_click_hook S_name_click_hook " (snd): called when sound name clicked. \
 If it returns " PROC_TRUE ", the usual informative minibuffer babbling is squelched."
 
-  #define H_after_apply_controls_hook S_after_apply_controls_hook " (snd): called when apply-controls finishes."
+  #define H_after_apply_controls_hook S_after_apply_controls_hook " (snd): called when " S_apply_controls " finishes."
 
   name_click_hook =  XEN_DEFINE_HOOK(S_name_click_hook,   1, H_name_click_hook);       /* args = snd-index */
   after_apply_controls_hook = XEN_DEFINE_HOOK(S_after_apply_controls_hook,  1, H_after_apply_controls_hook);      /* args = snd-index */

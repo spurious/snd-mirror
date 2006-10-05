@@ -48,8 +48,6 @@
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
  * TODO: (gauche)   unwind-protects around scm_apply (snd-xen g_call)
  * SOMEDAY: (scheme)   r6rs changes, in particular ->exact (filter is another)
- *
- * TODO: (guile) if snd-error during load, either nothing reported (init time) or just 'snd-error 
  */
 
 
@@ -362,6 +360,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   XEN stack = XEN_FALSE;
   char *name_buf = NULL, *tag_name = NULL;
   bool need_comma = false;
+
   if (XEN_SYMBOL_P(tag)) tag_name = XEN_SYMBOL_TO_C_STRING(tag);
   if ((tag_name) && (strcmp(tag_name, "snd-top-level") == 0))
     return(throw_args); /* not an error -- just a way to exit the current context */
@@ -474,21 +473,23 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   XEN_FLUSH_PORT(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
   name_buf = copy_string(XEN_TO_C_STRING(XEN_PORT_TO_STRING(port)));
 
-  if ((!tag_name) || (strcmp(tag_name, "snd-error") != 0)) /* otherwise an explicit snd-error call which has run the hook already */
-    {
-      if (!(run_snd_error_hook(name_buf)))
-	{
-	  if (ss->xen_error_handler)
-	    call_xen_error_handler(name_buf);
-	  else
-	    {
-	      listener_append_and_prompt(name_buf);
-	      if (!(listener_is_visible()))
-		snd_error_without_redirection_or_hook(name_buf);
-	      /* we're in xen_error from the redirection point of view and we already checked snd-error-hook */
-	    }
-	}
-    }
+  {
+    bool show_error = true;
+    if ((!tag_name) || (strcmp(tag_name, "snd-error") != 0)) /* otherwise an explicit snd-error call which has run the hook already */
+      show_error = (!(run_snd_error_hook(name_buf)));
+    if (show_error)
+      {
+	if (ss->xen_error_handler)
+	  call_xen_error_handler(name_buf);
+	else
+	  {
+	    listener_append_and_prompt(name_buf);
+	    if (!(listener_is_visible()))
+	      snd_error_without_redirection_or_hook(name_buf);
+	    /* we're in xen_error from the redirection point of view and we already checked snd-error-hook */
+	  }
+      }
+  }
   snd_unprotect_at(port_gc_loc);
   if (name_buf) FREE(name_buf);
   check_for_event();

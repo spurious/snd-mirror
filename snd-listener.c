@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: in quoted string in parens in motif backspace at col 0 doesn't move up */
+
 /* check_balance originally from scwm-0.9/utilities/scwmrepl/scwmrepl.c, 
  *   revised by bil 9-Oct-02:
  *   original did not handle #\) (and many others) correctly or #()

@@ -73,7 +73,10 @@ void sound_not_current(snd_info *sp, void *ignore)
 
 /* -------- ss watcher lists -------- */
 
-/* TODO: add-watcher in xen + dialog use (add-selection-watcher also?) */
+/* PERHAPS: add-watcher in xen + dialog use -- these are using hooks currently 
+ *   :sound :selection :file (directory) -- ss_watcher, selection_watcher, fam
+ *   return id for delete-watcher
+ */
 
 #define SS_WATCHER_SIZE_INCREMENT 2
 
@@ -2035,13 +2038,24 @@ reading edit version edpos"
   (let ((rd (make-sample-reader beg snd chn 1 pos)))
     (if (sample-reader? rd)
 	(let* ((nd (or num (frames snd chn)))
-	       (len (1+ (- nd beg)))
-	       (new-obj (or obj (make-sound-data 1 len))))
-	  (do ((i 0 (1+ i)))
-	      ((= i len))
-	    (sound-data-set! new-obj sd-chan i (rd)))
-	  new-obj)
+	       (len (- nd beg)))
+	  (if (> len 0)
+	      (let ((new-obj (or (and (sound-data? obj) obj)
+				 (make-sound-data 1 len))))
+		(if (< (sound-data-length new-obj) len)
+		    (set! len (sound-data-length new-obj)))
+		(do ((i 0 (1+ i)))
+		    ((= i len))
+		  (sound-data-set! new-obj sd-chan i (rd)))
+		new-obj)
+	      #f))
 	#f)))
+
+(define* (samples->sound-data-2 :optional (beg 0) (num #f) (snd #f) (chn #f) (obj #f) (pos #f) (sd-chan 0))
+  (vct->sound-data 
+   (channel->vct beg num snd chn pos) 
+   (or obj (make-sound-data 1 (or num (frames snd chn)))) 
+   sd-chan))
 #endif
 
   chan_info *cp;
