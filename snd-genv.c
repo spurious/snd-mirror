@@ -767,6 +767,19 @@ static void fir_button_pressed(GtkWidget *w, gpointer context)
   if (enved_wave_p(ss)) env_redisplay();
 }
 
+static void reflect_sound_state(void)
+{
+  bool file_p;
+  file_p = (bool)(any_selected_sound());
+  set_sensitive(applyB, file_p);
+  set_sensitive(apply2B, file_p);
+}
+
+static void reflect_file_in_enved(ss_watcher_reason_t reason, void *ignore)
+{
+  if (enved_dialog) reflect_sound_state();
+}
+
 static void enved_selection_watcher(selection_watcher_reason_t reason, void *data);
 #define BB_MARGIN 3
 
@@ -1075,8 +1088,10 @@ GtkWidget *create_envelope_editor(void)
 
       reflect_apply_state();
       reflect_segment_state();
-      set_dialog_widget(ENVED_DIALOG, enved_dialog);
+      reflect_sound_state();
 
+      set_dialog_widget(ENVED_DIALOG, enved_dialog);
+      add_ss_watcher(SS_FILE_OPEN_WATCHER, reflect_file_in_enved, NULL);
       add_selection_watcher(enved_selection_watcher, NULL);
     }
   else raise_dialog(enved_dialog);

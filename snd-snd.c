@@ -1974,6 +1974,8 @@ void menu_reset_controls(snd_info *sp)
 
 /* -------- sp watcher lists -------- */
 
+/* TODO: does mark pane track mark position correctly? */
+
 #define SP_WATCHER_SIZE_INCREMENT 2
 
 int add_sp_watcher(snd_info *sp, sp_watcher_t type, void (*watcher)(struct snd_info *sp, sp_watcher_reason_t reason, int list_loc), void *context)

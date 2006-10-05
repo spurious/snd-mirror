@@ -13,6 +13,7 @@
 #define S_add_to_main_menu              "add-to-main-menu"
 #define S_add_to_menu                   "add-to-menu"
 #define S_add_transform                 "add-transform"
+#define S_add_watcher                   "add-watcher"
 #define S_after_apply_controls_hook     "after-apply-controls-hook"
 #define S_after_edit_hook               "after-edit-hook"
 #define S_after_graph_hook              "after-graph-hook"

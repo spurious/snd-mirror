@@ -73,9 +73,11 @@ void sound_not_current(snd_info *sp, void *ignore)
 
 /* -------- ss watcher lists -------- */
 
+/* TODO: add-watcher in xen + dialog use (add-selection-watcher also?) */
+
 #define SS_WATCHER_SIZE_INCREMENT 2
 
-int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason, int loc), void *context)
+int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason, void *data), void *context)
 {
   int loc = -1;
   if (!(ss->watchers))
@@ -118,7 +120,7 @@ void call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason)
 	if ((ss->watchers[i]) &&
 	    ((type == SS_ANY_WATCHER) ||
 	     (ss->watchers[i]->type == type)))
-	  (*(ss->watchers[i]->watcher))(reason, i);
+	  (*(ss->watchers[i]->watcher))(reason, ss->watchers[i]->context);
     }
 }
 
@@ -2026,6 +2028,21 @@ static XEN g_samples_to_sound_data(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, 
   #define H_samples_to_sound_data "(" S_samples_to_sound_data " (start-samp 0) (samps len) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (sdobj " PROC_FALSE ") (edpos " PROC_FALSE ") (sdobj-chan 0)): \
 return a sound-data object (sdobj if given) containing snd channel chn's data starting at start-samp for samps, \
 reading edit version edpos"
+
+#if 0
+  /* this should be moved to scheme (etc), or snd-edits.c (it doesn't belong in this file!): */
+(define* (samples->sound-data-1 :optional (beg 0) (num #f) (snd #f) (chn #f) (obj #f) (pos #f) (sd-chan 0))
+  (let ((rd (make-sample-reader beg snd chn 1 pos)))
+    (if (sample-reader? rd)
+	(let* ((nd (or num (frames snd chn)))
+	       (len (1+ (- nd beg)))
+	       (new-obj (or obj (make-sound-data 1 len))))
+	  (do ((i 0 (1+ i)))
+	      ((= i len))
+	    (sound-data-set! new-obj sd-chan i (rd)))
+	  new-obj)
+	#f)))
+#endif
 
   chan_info *cp;
   XEN newsd = XEN_FALSE;

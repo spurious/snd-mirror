@@ -2620,12 +2620,9 @@ static void view_files_clear_selected_files(view_files_info *vdat);
 static int view_files_add_selected_file(view_files_info *vdat, vf_row *r);
 static int view_files_find_row(view_files_info *vdat, const char *name);
 
-static void vf_open_file_watcher(ss_watcher_reason_t reason, int loc)
+static void vf_open_file_watcher(ss_watcher_reason_t reason, void *context)
 {
-  ss_watcher *data;
-  view_files_info *vdat;
-  data = ss->watchers[loc];
-  vdat = (view_files_info *)(data->context);
+  view_files_info *vdat = (view_files_info *)context;
   if ((vdat->dialog) &&
       (widget_is_active(vdat->dialog)))
     {

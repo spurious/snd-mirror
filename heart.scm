@@ -2,7 +2,7 @@
 (if (not (defined? 'read-line)) (use-modules (ice-9 rdelim)))
 
 ;;; use with-sound to write the data to a sound file
-(load "ws.scm")
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 ;;; turn off clipping (the numbers will be between 70 and 150)
 (set! (mus-clipping) #f)

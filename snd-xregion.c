@@ -302,7 +302,7 @@ static void region_edit_callback(Widget w, XtPointer context, XtPointer info)
     region_edit(current_region);
 }
 
-static void reflect_file_in_region_browser(ss_watcher_reason_t reason, int loc)
+static void reflect_file_in_region_browser(ss_watcher_reason_t reason, void *ignore)
 {
   if (region_dialog)
     {

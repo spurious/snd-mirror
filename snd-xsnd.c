@@ -1311,7 +1311,7 @@ static void remember_sash(Widget w)
   XtAddCallback(w, XmNcallback, watch_sash, NULL);
 }
 
-static void add_watchers(Widget w)
+static void add_sash_watchers(Widget w)
 {
   /* if relative panes, add sash watchers to the outer paned window sashes (SOUND_PANE(ss)) */
   unsigned int i;
@@ -2558,7 +2558,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 
 #if WITH_RELATIVE_PANES
       if (sound_style(ss) == SOUNDS_VERTICAL)
-	add_watchers(SOUND_PANE(ss)); /* add in any case since we might later change the sense of with_relative_panes */
+	add_sash_watchers(SOUND_PANE(ss)); /* add in any case since we might later change the sense of with_relative_panes */
 #endif
 
     } /* new sound ss */

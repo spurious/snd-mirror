@@ -449,7 +449,7 @@ typedef struct snd_info {
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
 
 typedef struct {
-  void (*watcher)(ss_watcher_reason_t reason, int list_loc);
+  void (*watcher)(ss_watcher_reason_t reason, void *data);
   void *context;
   int loc;
   ss_watcher_t type;
@@ -698,7 +698,7 @@ void g_init_menu(void);
 
 /* -------- snd-main.c -------- */
 
-int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason, int list_loc), void *context);
+int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason, void *data), void *context);
 /* bool remove_ss_watcher(int loc); */
 void call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason);
 char *save_options_in_prefs(void);

@@ -1526,12 +1526,9 @@ static void mix_file_help_callback(Widget w, XtPointer context, XtPointer info)
   mix_file_dialog_help();
 }
 
-static void file_open_file_watcher(ss_watcher_reason_t reason, int loc)
+static void file_open_file_watcher(ss_watcher_reason_t reason, void *data)
 {
-  ss_watcher *data;
-  file_dialog_info *fdat;
-  data = ss->watchers[loc];
-  fdat = (file_dialog_info *)(data->context);
+  file_dialog_info *fdat = (file_dialog_info *)data;
   if ((fdat->dialog) &&
       (XtIsManaged(fdat->dialog)))
     set_sensitive(FSB_BOX(fdat->dialog, XmDIALOG_OK_BUTTON), (bool)any_selected_sound());

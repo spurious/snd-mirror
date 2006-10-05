@@ -324,7 +324,7 @@ static gboolean region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gp
   return(false);
 }
 
-static void reflect_file_in_region_browser(ss_watcher_reason_t reason, int loc)
+static void reflect_file_in_region_browser(ss_watcher_reason_t reason, void *ignore)
 {
   if (region_dialog)
     {
