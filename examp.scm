@@ -55,6 +55,7 @@
 ;;; scramble-channels -- reorder chans
 ;;; scramble-channel -- randomly reorder segments within a sound
 ;;; reverse-by-blocks and reverse-within-blocks -- reorder or reverse blocks within a channel
+;;; sound segmentation
 
 (use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs) (ice-9 common-list))
 
@@ -2400,3 +2401,104 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	(reverse-channel 0 #f snd chn))))
 
   
+;;; -------- sound segmentation
+;;;
+;;; this code was used to return note on and off points for the Iowa Musical Instrument Sound library
+;;;   the main function takes the top level directory of the sounds, and returns (eventually) a text
+;;;   file containing the start times (in samples) and durations of all the notes (each sound file in
+;;;   this library can have about 12 notes).
+
+(define* (sounds->segment-data main-dir #:optional (output-file "sounds.data"))
+
+  (define (lower-case-and-no-spaces name)
+    (let* ((new-name (string-downcase name))
+	   (len (string-length new-name)))
+      (do ((i 0 (1+ i)))
+	  ((= i len) new-name)
+	(if (char=? (string-ref new-name i) #\space)
+	    (string-set! new-name i #\-)))))
+
+  (define (directory->list dir)
+    (let ((dport (opendir dir)))
+      (let loop ((entry (readdir dport))
+		 (files '()))
+	(if (not (eof-object? entry))
+	    (loop (readdir dport) (cons entry files))
+	    (begin
+	      (closedir dport)
+	      (reverse! files))))))
+
+  (define (segment-sound ind)
+    (let* ((beg 0)
+	   (end (frames))
+	   (reader (make-sample-reader 0))
+	   (avg (make-moving-average :size 128))
+	   (lavg (make-moving-average :size 2048)) ; to distinguish between slow pulse train (low horn) and actual silence
+	   (segments (make-vct 100))
+	   (segctr 0)
+	   (possible-end 0)
+	   (in-sound #f))
+      (run 
+       (lambda () ; this block is where 99% of the time goes, so optimize it
+	 (do ((i 0 (1+ i)))
+	     ((= i end))
+	   (let* ((samp (abs (next-sample reader)))
+		  (val (moving-average avg samp))
+		  (lval (moving-average lavg samp)))
+	     (if in-sound
+		 (if (< val .001)
+		     (begin
+		       (set! possible-end i)
+		       (if (< lval .001)
+			   (begin
+			     (vct-set! segments segctr (+ possible-end 128))
+			     (set! segctr (1+ segctr))
+			     (set! in-sound #f)))))
+		 (if (> val .01)
+		     (begin
+		       (vct-set! segments segctr (- i 128))
+		       (set! segctr (1+ segctr))
+		       (set! in-sound #t))))))))
+      (free-sample-reader reader)
+      (if in-sound
+	  (begin
+	    (vct-set! segments segctr end)
+	    (list (1+ segctr) segments))
+	  (list segctr segments))))
+
+  (call-with-output-file
+      output-file
+    (lambda (fd)
+      (let ((old-fam (with-file-monitor))) ; no need to monitor these guys
+	(set! (with-file-monitor) #f)
+	(format fd ";;; sound data from ~S" main-dir)
+	(for-each
+	 (lambda (dir)
+	   (if (not (char=? (string-ref dir 0) #\.))
+	       (let ((ins-name (lower-case-and-no-spaces dir)))
+		 (format fd "~%~%;;; ---------------- ~A ----------------" dir)
+		 (for-each
+		  (lambda (sound)
+		    (let* ((ind (open-sound (string-append main-dir dir "/" sound)))
+			   (boundary-data (segment-sound ind))
+			   (boundaries (cadr boundary-data))
+			   (segments (car boundary-data)))
+		      (format fd "~%~%;;;    ~A" sound)
+		      (format fd "~%(~A ~S" ins-name (string-append dir "/" sound))
+		      (do ((seg 0 (1+ seg))
+			   (bnd 0 (+ bnd 2)))
+			  ((>= bnd segments))
+			(let* ((segbeg (inexact->exact (vct-ref boundaries bnd)))
+			       (segdur (inexact->exact (- (vct-ref boundaries (1+ bnd)) segbeg))))
+			  (format fd " (~A ~A ~A)" segbeg segdur (vct-peak (channel->vct segbeg segdur ind 0)))))
+		      (format fd ")")
+		      (close-sound ind)
+		      (mus-sound-forget (string-append main-dir dir "/" sound))))
+		  (sound-files-in-directory (string-append main-dir dir))))))
+	 (directory->list main-dir))
+	(set! (with-file-monitor) old-fam)))))
+
+;;; (sounds->segment-data "/home/bil/test/iowa/sounds/" "iowa.data")
+
+;;; TODO: document this in sndscm.html + xrefs + perhaps a general index/help entry for segmentation?
+;;; TODO: do the reverse side (use the marks to make a mellotron)

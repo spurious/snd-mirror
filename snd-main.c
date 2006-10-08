@@ -442,6 +442,7 @@ static void save_options(FILE *fd)
   if (transform_normalization(ss) != DEFAULT_TRANSFORM_NORMALIZATION) pss_ss(fd, S_transform_normalization, transform_normalization_name(transform_normalization(ss)));
   if (optimization(ss) != DEFAULT_OPTIMIZATION) pss_sd(fd, S_optimization, optimization(ss));
   if (trap_segfault(ss) != DEFAULT_TRAP_SEGFAULT) pss_ss(fd, S_trap_segfault, b2s(trap_segfault(ss)));
+  if (with_file_monitor(ss) != DEFAULT_WITH_FILE_MONITOR) pss_ss(fd, S_with_file_monitor, b2s(with_file_monitor(ss)));
   if (just_sounds(ss) != DEFAULT_JUST_SOUNDS) pss_ss(fd, S_just_sounds, b2s(just_sounds(ss)));
   if (show_selection_transform(ss) != DEFAULT_SHOW_SELECTION_TRANSFORM) pss_ss(fd, S_show_selection_transform, b2s(show_selection_transform(ss)));
   if (with_gl(ss) != DEFAULT_WITH_GL) pss_ss(fd, S_with_gl, b2s(with_gl(ss)));
@@ -1955,6 +1956,15 @@ static XEN g_set_with_background_processes(XEN val)
   return(C_TO_XEN_BOOLEAN(with_background_processes(ss)));
 }
 
+static XEN g_with_file_monitor(void) {return(C_TO_XEN_BOOLEAN(with_file_monitor(ss)));}
+static XEN g_set_with_file_monitor(XEN val) 
+{
+  #define H_with_file_monitor "(" S_with_file_monitor "): " PROC_TRUE " if the file alteration monitor is active"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_file_monitor, "a boolean");
+  set_with_file_monitor(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(with_file_monitor(ss)));
+}
+
 static XEN g_snd_version(void) 
 {
   #define H_snd_version "(" S_snd_version "): current Snd version (a string)"
@@ -2170,6 +2180,8 @@ XEN_NARGIFY_0(g_with_relative_panes_w, g_with_relative_panes)
 XEN_NARGIFY_1(g_set_with_relative_panes_w, g_set_with_relative_panes)
 XEN_NARGIFY_0(g_with_background_processes_w, g_with_background_processes)
 XEN_NARGIFY_1(g_set_with_background_processes_w, g_set_with_background_processes)
+XEN_NARGIFY_0(g_with_file_monitor_w, g_with_file_monitor)
+XEN_NARGIFY_1(g_set_with_file_monitor_w, g_set_with_file_monitor)
 XEN_NARGIFY_0(g_tiny_font_w, g_tiny_font)
 XEN_NARGIFY_1(g_set_tiny_font_w, g_set_tiny_font)
 XEN_NARGIFY_0(g_peaks_font_w, g_peaks_font)
@@ -2243,6 +2255,8 @@ XEN_ARGIFY_7(g_samples_to_sound_data_w, g_samples_to_sound_data)
 #define g_set_with_relative_panes_w g_set_with_relative_panes
 #define g_with_background_processes_w g_with_background_processes
 #define g_set_with_background_processes_w g_set_with_background_processes
+#define g_with_file_monitor_w g_with_file_monitor
+#define g_set_with_file_monitor_w g_set_with_file_monitor
 #define g_tiny_font_w g_tiny_font
 #define g_set_tiny_font_w g_set_tiny_font
 #define g_peaks_font_w g_peaks_font
@@ -2366,6 +2380,9 @@ the hook functions return " PROC_TRUE ", the save state process opens 'filename'
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_background_processes, g_with_background_processes_w, H_with_background_processes,
 				   S_setB S_with_background_processes, g_set_with_background_processes_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_file_monitor, g_with_file_monitor_w, H_with_file_monitor,
+				   S_setB S_with_file_monitor, g_set_with_file_monitor_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_tiny_font, g_tiny_font_w, H_tiny_font,
 				   S_setB S_tiny_font, g_set_tiny_font_w,  0, 0, 1, 0);

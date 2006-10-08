@@ -1185,6 +1185,16 @@ This is (usually) the same as
 <tr><td colspan=3 height=16></td></tr>
 
 
+<!-- with-file-monitor -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="withfilemonitor">with-file-monitor</a></code></td>
+<td bgcolor="#f6f8ff"><code>#t</code></td></tr>
+<tr><td></td><td colspan=2>If #t (the default), the file alteration monitor is active.  There are still bugs
+in this library that can cause Snd to hang -- I haven't tracked down what the problem is yet; in the meantime,
+set this switch to #f to disable the monitor.
+</td></tr>
+<tr><td colspan=3 height=16></td></tr>
+
+
 <!-- with-relative-panes -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="withrelativepanes">with-relative-panes</a></code></td>
 <td bgcolor="#f6f8ff"><code>#t</code></td></tr>
@@ -3810,9 +3820,12 @@ and read-track-sample.
 
 <!-- free-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="freesamplereader">free-sample-reader</a> (obj)</code></td></tr>
-<tr><td></td><td>release sample-reader <i>obj</i> (any kind of reader).  You never need to call this
+<tr><td></td><td>release sample-reader <i>obj</i> (any kind of reader).  In most cases, you don't need to call this
 function because the garbage collector handles the sample-reader object, but it doesn't hurt anything (but don't try to use a sample-reader
-after you've freed it!).</td></tr>
+after you've freed it!).  If you're using zillions of sample-readers in an optimized (run-based) loop that
+doesn't trigger garbage collection, freeing the sample readers explicitly (with this function) will reduce
+demands on memory.
+</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- make-mix-sample-reader -->

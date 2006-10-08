@@ -47,7 +47,6 @@
 /* TODO: (gauche)   stacktrace and errors->listener (current-load-history)
  * TODO: (gauche)   error in find lambda -> exit (need better error protection)
  * TODO: (gauche)   unwind-protects around scm_apply (snd-xen g_call)
- * SOMEDAY: (scheme)   r6rs changes, in particular ->exact (filter is another)
  */
 
 

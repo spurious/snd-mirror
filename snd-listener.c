@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: in quoted string in parens in motif backspace at col 0 doesn't move up */
-
 /* check_balance originally from scwm-0.9/utilities/scwmrepl/scwmrepl.c, 
  *   revised by bil 9-Oct-02:
  *   original did not handle #\) (and many others) correctly or #()
@@ -36,6 +34,7 @@ bool within_prompt(const char *str, int beg, int end)
 {
   /* search backwards up to prompt length for cr (or 0), check for prompt */
   int i, lim;
+  if ((beg + 1 == end) && (str[beg] == '\n')) return(false); /* end-of-page cr within double quotes probably */
   lim = beg - ss->listener_prompt_length;
   if (lim < 0) return(true);
   for (i = beg; i >= lim; i--)

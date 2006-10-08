@@ -12273,6 +12273,11 @@ EDITS: 5
 	    (if (not (vequal v0 (vct .1 .1 .3 .3 .3)))
 		(snd-display ";vct-add + offset: ~A" v0)))
 	  ))
+
+      (if (and all-args
+	       (file-exists? "/home/bil/test/iowa/sounds/Cello/Cello.pizz.pp.sulC.C2B2.aiff"))
+	  (sounds->segment-data "/home/bil/test/iowa/sounds/" "test.data"))
+
       (run-hook after-test-hook 6)
       ))
 

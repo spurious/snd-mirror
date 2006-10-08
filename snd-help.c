@@ -507,6 +507,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+9-Oct:   with-file-monitor.\n\
 2-Oct:   gl2ps support, gl-graph->ps function, --with-gl2ps switch, gl2ps.[ch].\n\
 26-Sep:  save-marks changed to keep matching sync values, add-marks takes name and sync args.\n\
          moved config.h.in to mus-config.h.in\n\

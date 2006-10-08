@@ -710,6 +710,7 @@
 #define S_window_x                      "window-x"
 #define S_window_y                      "window-y"
 #define S_with_background_processes     "with-background-processes"
+#define S_with_file_monitor             "with-file-monitor"
 #define S_with_gl                       "with-gl"
 #define S_with_mix_tags                 "with-mix-tags"
 #define S_with_relative_panes           "with-relative-panes"

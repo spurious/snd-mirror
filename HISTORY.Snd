@@ -1,5 +1,6 @@
 Snd change log
 
+  9-Oct:     with-file-monitor.
   2-Oct:     gl2ps support, gl-graph->ps function, --with-gl2ps switch, gl2ps.[ch].
   26-Sep:    save-marks changed to keep matching sync values, add-marks takes name and sync args.
              moved config.h to mus-config.h.

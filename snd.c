@@ -186,6 +186,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->With_Relative_Panes = DEFAULT_WITH_RELATIVE_PANES;
   ss->With_GL = DEFAULT_WITH_GL;
   ss->With_Background_Processes = DEFAULT_WITH_BACKGROUND_PROCESSES;
+  ss->With_File_Monitor = DEFAULT_WITH_FILE_MONITOR;
   ss->Dot_Size = DEFAULT_DOT_SIZE;
   ss->Grid_Density = DEFAULT_GRID_DENSITY;
   ss->Cursor_Size = DEFAULT_CURSOR_SIZE;
@@ -348,11 +349,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->startup_errors = NULL;
   mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
 
-#if HAVE_RUBY
-  ruby_init();
-#endif
-
-#if HAVE_FORTH || HAVE_GAUCHE
+#if HAVE_FORTH || HAVE_GAUCHE || HAVE_RUBY
   xen_initialize();
 #endif
 

@@ -762,6 +762,10 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define set_with_background_processes(a) ss->With_Background_Processes = a
 #define DEFAULT_WITH_BACKGROUND_PROCESSES true
 
+#define with_file_monitor(ss) ss->With_File_Monitor
+#define set_with_file_monitor(a) ss->With_File_Monitor = a
+#define DEFAULT_WITH_FILE_MONITOR true
+
 #define wavo_hop(ss) ss->Wavo_Hop
 #define in_set_wavo_hop(a) ss->Wavo_Hop = a
 #define DEFAULT_WAVO_HOP 3

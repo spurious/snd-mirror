@@ -52,9 +52,13 @@ int snd_int_log2(int n)
   return(0);
 }
 
-/* PERHAPS: off_t power-of-2 stuff for huge fft's etc: convolution_filter in snd-sig.c, make_fft_state in snd-fft.c */
+/* PERHAPS: off_t power-of-2 stuff for huge fft's etc: convolution_filter in snd-sig.c, make_fft_state in snd-fft.c 
+ *   perhaps set the stage via fft_size_t == int for now?
+ */
 #if 0
-/* can't use this table currently because gcc complains about "integer constant is too large for 'long' type" */
+/* can't use this table currently because gcc complains about "integer constant is too large for 'long' type" 
+ *    would it work to do the *2 loading at init time?
+ */
 #define O_POW2_SIZE 63
 /* i.e. ends at 2^62 */
 static off_t opow2s[O_POW2_SIZE] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 
@@ -593,6 +597,7 @@ fam_info *fam_monitor_file(const char *filename,
   fam_info *fp = NULL;
   FAMRequest *rp = NULL;
   int err;
+  if (!(with_file_monitor(ss))) return(NULL);
   rp = fam_monitor();
   if (rp)
     {
@@ -626,6 +631,7 @@ fam_info *fam_monitor_directory(const char *dir_name,
   fam_info *fp = NULL;
   FAMRequest *rp = NULL;
   int err;
+  if (!(with_file_monitor(ss))) return(NULL);
   rp = fam_monitor();
   if (rp)
     {
@@ -652,11 +658,11 @@ fam_info *fam_monitor_directory(const char *dir_name,
 fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
 {
   int err;
-#if MUS_DEBUGGING_FAM
-  fprintf(stderr, "unmonitor %s: %p %p\n", filename, fp, fp->rp);
-#endif
   if (fp)
     {
+#if MUS_DEBUGGING_FAM
+      fprintf(stderr, "unmonitor %s: %p %p\n", filename, fp, fp->rp);
+#endif
       if (fp->rp)
 	{
 	  err = FAMCancelMonitor(ss->fam_connection, fp->rp);
@@ -683,14 +689,14 @@ fam_info *fam_monitor_file(const char *filename,
 			   void *data, 
 			   void (*action)(struct fam_info *fp, FAMEvent *fe))
 {
-  return((fam_info *)calloc(1, sizeof(fam_info)));
+  return(NULL);
 }
 
 fam_info *fam_monitor_directory(const char *dir_name,
 				void *data, 
 				void (*action)(struct fam_info *fp, FAMEvent *fe))
 {
-  return((fam_info *)calloc(1, sizeof(fam_info)));
+  return(NULL);
 }
 
 fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)

@@ -517,7 +517,7 @@ typedef struct snd_state {
   bool Dac_Combines_Channels, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
   Float Enved_Base, Enved_Power, Auto_Update_Interval;
-  bool Enved_Wave_p, Graphs_Horizontal, With_Background_Processes;
+  bool Enved_Wave_p, Graphs_Horizontal, With_Background_Processes, With_File_Monitor;
   env_type_t Enved_Style;
   int Graph_Cursor, Mix_Tag_Width, Mix_Tag_Height, Mark_Tag_Height, Mark_Tag_Width, Minibuffer_History_Length;
   enved_target_t Enved_Target;
