@@ -4182,6 +4182,21 @@ To return to the standard display behaviour:
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+
+<!-- sounds->segment-data -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def NAME="soundstosegmentdata">sounds-&gt;segment-data</A> <code>main-dir (output-file "sounds.data")</code>
+</td></tr><tr><td></td><td>
+This function takes a directory name, and runs through all the sounds in the embedded
+directories, returning a text file with segment start and end times, and segment maxamps.
+<pre>
+    (sounds-&gt;segment-data "/home/bil/test/iowa/sounds/" "iowa.data")
+</pre>
+It was written to find the note boundaries in the Iowa musical instrument sound library.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+
 <!-- sort-samples -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>sort-samples</em> <code>bins</code>

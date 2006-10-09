@@ -976,6 +976,9 @@
       (set! (trap-segfault) (trap-segfault))
       (if (not (equal? (trap-segfault)  #f)) 
 	  (snd-display ";trap-segfault set def: ~A" (trap-segfault)))
+      (set! (with-file-monitor) (with-file-monitor))
+      (if (not (equal? (with-file-monitor)  #f)) 
+	  (snd-display ";with-file-monitor set def: ~A" (with-file-monitor)))
       (set! (optimization) (optimization))
       (if (not (equal? (optimization) 0)) 
 	  (snd-display ";optimization set def: ~A" (optimization)))
@@ -1325,7 +1328,8 @@
 					  (if (not (equal? (cadr lst) (list-ref testf 7))) 
 					      (snd-display ";~A: loop end: ~A" (cadr lst) (list-ref testf 7))))
 					(if (not (null? lst))
-					    (snd-display ";~A thinks it has loop info: ~A" file lst)))))
+					    (snd-display ";~A thinks it has loop info: ~A" file lst))))
+				  (mus-sound-forget file))
 				(snd-display ";~A missing?" file))
 			    (test-headers (cdr base-files))))))))
 	  (run-hook before-test-hook 2)
@@ -2205,7 +2209,7 @@
 			 'wave-train 'wave-train? 'wavelet-transform 'wavelet-type 'waveshape
 			 'waveshape? 'wavo-hop 'wavo-trace 'welch-window 'widget-position
 			 'widget-size 'widget-text 'window-height 'window-property 'window-property-changed-hook
-			 'window-width 'window-x 'window-y 'with-background-processes 'with-gl
+			 'window-width 'window-x 'window-y 'with-background-processes 'with-file-monitor 'with-gl
 			 'with-mix-tags 'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor 'write-peak-env-info-file
 			 'x->position 'x-axis-as-clock 'x-axis-as-percentage 'x-axis-in-beats 'x-axis-in-measures
 			 'x-axis-in-samples 'x-axis-in-seconds 'x-axis-label 'x-axis-style 'x-bounds
@@ -12276,7 +12280,7 @@ EDITS: 5
 
       (if (and all-args
 	       (file-exists? "/home/bil/test/iowa/sounds/Cello/Cello.pizz.pp.sulC.C2B2.aiff"))
-	  (sounds->segment-data "/home/bil/test/iowa/sounds/" "test.data"))
+	  (sounds->segment-data "/home/bil/test/iowa/sounds/" "iowa-test.data"))
 
       (run-hook after-test-hook 6)
       ))
@@ -25846,6 +25850,7 @@ EDITS: 5
       #f))
 
 (define sf-dir-len (if sf-dir-files (length sf-dir-files) 0))
+
 (define buffer-menu #f)
 
 (define (remove-if p l)
@@ -26303,6 +26308,11 @@ EDITS: 5
 	 (snd-display ";~A not empty?" n)))
    (snd-hooks))
   )
+
+
+(if sf-dir-files
+    (for-each (lambda (n) (mus-sound-forget (string-append sf-dir n))) sf-dir-files))
+
 
 ;;; ---------------- test 13: menus, edit lists, hooks, etc ----------------
 
@@ -38683,7 +38693,8 @@ EDITS: 1
 			  (snd-display ";~A is pretty long! ~A" 
 				       n 
 				       (mus-sound-duration (string-append sf-dir n)))))
-		    (lambda args #f)))
+		    (lambda args #f))
+	     (mus-sound-forget (string-append sf-dir n)))
 	   sf-dir))
 
       (let ((snd (new-sound "test.snd")))
@@ -59083,7 +59094,7 @@ EDITS: 1
 		     ;start-playing 
 		     start-progress-report stop-player stop-playing swap-channels syncd-marks sync sync-max sound-properties temp-dir
 		     text-focus-color tiny-font track-sample-reader?  region-sample-reader? transform-dialog transform-sample
-		     transform->vct transform-frames transform-type trap-segfault optimization unbind-key undo
+		     transform->vct transform-frames transform-type trap-segfault with-file-monitor optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound run-safety clm-table-size
 		     vct->sound-file with-verbose-cursor view-sound vu-size vu-in-dB wavelet-type
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
@@ -59217,7 +59228,7 @@ EDITS: 1
 			 show-y-zero show-grid show-sonogram-cursor sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle  grid-density
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 			 speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
-			 transform-type trap-segfault optimization with-verbose-cursor vu-size vu-in-dB wavelet-type x-bounds
+			 transform-type trap-segfault with-file-monitor optimization with-verbose-cursor vu-size vu-in-dB wavelet-type x-bounds
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix track-dialog-track beats-per-measure
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
@@ -59990,7 +60001,7 @@ EDITS: 1
 			  selected-channel selected-data-color selected-graph-color 
 			  selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			  show-selection-transform sinc-width temp-dir text-focus-color tiny-font
-			  trap-segfault optimization unbind-key with-verbose-cursor vu-size vu-in-dB window-height beats-per-measure
+			  trap-segfault with-file-monitor optimization unbind-key with-verbose-cursor vu-size vu-in-dB window-height beats-per-measure
 			  window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			  mix-tag-width with-relative-panes run-safety clm-table-size mark-tag-width mark-tag-height
 			  quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color

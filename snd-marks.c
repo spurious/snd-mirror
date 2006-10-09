@@ -2541,7 +2541,7 @@ If the hook returns " PROC_TRUE ", the mark is not drawn."
 #endif
 
   /* obsolete */
-  XEN_DEFINE_PROCEDURE(S_restore_marks, g_restore_marks_w, 4, 0, 0, "no-op for backwards compatibility");
+  XEN_DEFINE_PROCEDURE("restore-marks", g_restore_marks_w, 4, 0, 0, "no-op for backwards compatibility");
 }
 
 

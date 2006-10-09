@@ -2408,6 +2408,9 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 ;;;   file containing the start times (in samples) and durations of all the notes (each sound file in
 ;;;   this library can have about 12 notes).
 
+;;; TODO: xrefs + perhaps a general index/help entry for segmentation?
+;;; TODO: do the reverse side (use the marks to make a mellotron)
+
 (define* (sounds->segment-data main-dir #:optional (output-file "sounds.data"))
 
   (define (lower-case-and-no-spaces name)
@@ -2428,7 +2431,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	      (closedir dport)
 	      (reverse! files))))))
 
-  (define (segment-sound ind)
+  (define (segment-sound ind high low)
     (let* ((beg 0)
 	   (end (frames))
 	   (reader (make-sample-reader 0))
@@ -2446,15 +2449,15 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 		  (val (moving-average avg samp))
 		  (lval (moving-average lavg samp)))
 	     (if in-sound
-		 (if (< val .001)
+		 (if (< val low)
 		     (begin
 		       (set! possible-end i)
-		       (if (< lval .001)
+		       (if (< lval low)
 			   (begin
 			     (vct-set! segments segctr (+ possible-end 128))
 			     (set! segctr (1+ segctr))
 			     (set! in-sound #f)))))
-		 (if (> val .01)
+		 (if (> val high)
 		     (begin
 		       (vct-set! segments segctr (- i 128))
 		       (set! segctr (1+ segctr))
@@ -2466,39 +2469,47 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	    (list (1+ segctr) segments))
 	  (list segctr segments))))
 
+  (define* (do-one-directory fd dir-name ins-name :optional (high .01) (low .001))
+    (display (format #f "~A ~%" dir-name))
+    (for-each
+     (lambda (sound)
+       (let* ((ind (view-sound (string-append dir-name "/" sound)))
+	      (boundary-data (segment-sound ind high low))
+	      (boundaries (cadr boundary-data))
+	      (segments (car boundary-data)))
+	 (format fd "~%~%;;;    ~A" sound)
+	 (format fd "~%(~A ~S" ins-name (string-append dir-name "/" sound))
+	 (do ((bnd 0 (+ bnd 2)))
+	     ((>= bnd segments))
+	   (let* ((segbeg (inexact->exact (vct-ref boundaries bnd)))
+		  (segdur (inexact->exact (- (vct-ref boundaries (1+ bnd)) segbeg))))
+	     (format fd " (~A ~A ~A)" segbeg segdur (vct-peak (channel->vct segbeg segdur ind 0)))))
+	 (format fd ")")
+	 (close-sound ind)
+	 (mus-sound-forget (string-append dir-name "/" sound))))
+     (sound-files-in-directory dir-name)))
+
   (call-with-output-file
       output-file
     (lambda (fd)
-      (let ((old-fam (with-file-monitor))) ; no need to monitor these guys
-	(set! (with-file-monitor) #f)
+      (let ((old-fam (with-file-monitor))) 
+	(set! (with-file-monitor) #f) ; no need to monitor these guys
 	(format fd ";;; sound data from ~S" main-dir)
+	(if (not (char=? (string-ref main-dir (1- (string-length main-dir))) #\/))
+	    (set! main-dir (string-append main-dir "/")))
 	(for-each
 	 (lambda (dir)
 	   (if (not (char=? (string-ref dir 0) #\.))
 	       (let ((ins-name (lower-case-and-no-spaces dir)))
 		 (format fd "~%~%;;; ---------------- ~A ----------------" dir)
-		 (for-each
-		  (lambda (sound)
-		    (let* ((ind (open-sound (string-append main-dir dir "/" sound)))
-			   (boundary-data (segment-sound ind))
-			   (boundaries (cadr boundary-data))
-			   (segments (car boundary-data)))
-		      (format fd "~%~%;;;    ~A" sound)
-		      (format fd "~%(~A ~S" ins-name (string-append dir "/" sound))
-		      (do ((seg 0 (1+ seg))
-			   (bnd 0 (+ bnd 2)))
-			  ((>= bnd segments))
-			(let* ((segbeg (inexact->exact (vct-ref boundaries bnd)))
-			       (segdur (inexact->exact (- (vct-ref boundaries (1+ bnd)) segbeg))))
-			  (format fd " (~A ~A ~A)" segbeg segdur (vct-peak (channel->vct segbeg segdur ind 0)))))
-		      (format fd ")")
-		      (close-sound ind)
-		      (mus-sound-forget (string-append main-dir dir "/" sound))))
-		  (sound-files-in-directory (string-append main-dir dir))))))
+		 (if (string=? dir "Piano")
+		     (for-each
+		      (lambda (inner-dir)
+			(if (not (char=? (string-ref inner-dir 0) #\.))
+			    (do-one-directory fd (string-append main-dir dir "/" inner-dir) ins-name .001 .0001))) ; pp piano notes are .01 maxamp and short
+		      (directory->list (string-append main-dir dir)))
+		     (do-one-directory fd (string-append main-dir dir) ins-name)))))
 	 (directory->list main-dir))
 	(set! (with-file-monitor) old-fam)))))
 
 ;;; (sounds->segment-data "/home/bil/test/iowa/sounds/" "iowa.data")
-
-;;; TODO: document this in sndscm.html + xrefs + perhaps a general index/help entry for segmentation?
-;;; TODO: do the reverse side (use the marks to make a mellotron)

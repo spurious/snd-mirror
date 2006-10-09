@@ -469,7 +469,6 @@
 #define S_reset_controls                "reset-controls"
 #define S_reset_listener_cursor         "reset-listener-cursor"
 #define S_restore_controls              "restore-controls"
-#define S_restore_marks                 "restore-marks"
 #define S_restore_region                "restore-region"
 #define S_reverb_control_decay          "reverb-control-decay"
 #define S_reverb_control_feedback       "reverb-control-feedback"
