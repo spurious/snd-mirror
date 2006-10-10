@@ -1131,6 +1131,13 @@ void mem_report(void)
 		      case PRINT_SYNC:
 			fprintf(Fp, "[%p: ", pointers[j]); describe_sync(Fp, pointers[j]); fprintf(Fp, "]\n  ");
 			break;
+		      case PRINT_SND_FD:
+			{
+			  snd_fd *sf = (snd_fd *)(pointers[j]);
+			  fprintf(Fp, "[%p, loc: %d, beg: " OFF_TD ", eof: %d, sp: %p]\n  ",
+				  sf, sf->dangling_loc, sf->initial_samp, (int)(sf->at_eof), sf->local_sp);
+			}
+			break;
 		      }
 		  }
 	      fprintf(Fp, "\n");

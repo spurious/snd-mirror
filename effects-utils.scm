@@ -54,6 +54,7 @@
 	((car effects))
 	(update-label (cdr effects)))))
 
+(define effect-dialogs '())
 
 (define (make-effect-dialog label ok-callback help-callback reset-callback)
   ;; make a standard dialog
@@ -77,7 +78,7 @@
        (XtVaSetValues
 	 (XmMessageBoxGetChild new-dialog button)
 	 (list XmNarmColor   (pushed-button-color)
-		XmNbackground color)))
+	       XmNbackground color)))
      (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
      (list (help-button-color) (quit-button-color) (doit-button-color)))
     
@@ -97,6 +98,9 @@
     (XmStringFree xok)
     (XmStringFree xdismiss)
     (XmStringFree titlestr)
+;    (if (null? effect-dialogs)
+; TODO: add watchers to sensitize doit buttons
+;    (set! effect-dialogs (cons new-dialog effect-dialogs))
     new-dialog))
 
 
