@@ -2431,10 +2431,21 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	      (closedir dport)
 	      (reverse! files))))))
 
-  (define (segment-sound ind high low)
+  (define (segment-maxamp name beg dur)
+    (let ((mx 0.0)
+	  (rd (make-sample-reader beg name)))
+      (run
+       (lambda ()
+	 (do ((i 0 (1+ i)))
+	     ((= i dur))
+	   (set! mx (max mx (abs (next-sample rd)))))))
+      (free-sample-reader rd)
+      mx))
+
+  (define (segment-sound name high low)
     (let* ((beg 0)
-	   (end (frames))
-	   (reader (make-sample-reader 0))
+	   (end (mus-sound-frames name))
+	   (reader (make-sample-reader 0 name))    ; no need to open the sound and display it
 	   (avg (make-moving-average :size 128))
 	   (lavg (make-moving-average :size 2048)) ; to distinguish between slow pulse train (low horn) and actual silence
 	   (segments (make-vct 100))
@@ -2442,7 +2453,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	   (possible-end 0)
 	   (in-sound #f))
       (run 
-       (lambda () ; this block is where 99% of the time goes, so optimize it
+       (lambda ()                                  ; this block is where 99% of the time goes
 	 (do ((i 0 (1+ i)))
 	     ((= i end))
 	   (let* ((samp (abs (next-sample reader)))
@@ -2470,11 +2481,11 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	  (list segctr segments))))
 
   (define* (do-one-directory fd dir-name ins-name :optional (high .01) (low .001))
-    (display (format #f "~A ~%" dir-name))
+    (snd-print (format #f ";~A~%" dir-name))
     (for-each
      (lambda (sound)
-       (let* ((ind (view-sound (string-append dir-name "/" sound)))
-	      (boundary-data (segment-sound ind high low))
+       (let* ((sound-name (string-append dir-name "/" sound))
+	      (boundary-data (segment-sound sound-name high low))
 	      (boundaries (cadr boundary-data))
 	      (segments (car boundary-data)))
 	 (format fd "~%~%;;;    ~A" sound)
@@ -2483,9 +2494,8 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	     ((>= bnd segments))
 	   (let* ((segbeg (inexact->exact (vct-ref boundaries bnd)))
 		  (segdur (inexact->exact (- (vct-ref boundaries (1+ bnd)) segbeg))))
-	     (format fd " (~A ~A ~A)" segbeg segdur (vct-peak (channel->vct segbeg segdur ind 0)))))
+	     (format fd " (~A ~A ~A)" segbeg segdur (segment-maxamp sound-name segbeg segdur))))
 	 (format fd ")")
-	 (close-sound ind)
 	 (mus-sound-forget (string-append dir-name "/" sound))))
      (sound-files-in-directory dir-name)))
 

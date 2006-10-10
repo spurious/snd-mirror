@@ -1380,6 +1380,8 @@ void snd_close_file(snd_info *sp)
 	     XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 	     S_close_hook);
 
+  check_for_event(); /* an experiment -- event queue seems to be glomming up when lots of fast open/close */
+
   sp->file_watcher = fam_unmonitor_file(sp->filename, sp->file_watcher);
 
   /* exit does not go through this function to clean up temps -- see snd_exit_cleanly in snd-main.c */

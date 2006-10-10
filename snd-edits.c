@@ -6866,6 +6866,9 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   curlen = cp->samples[edit_position];
   /* snd_fd allocated only here */
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd)); /* only creation point */
+#if MUS_DEBUGGING
+  set_printable(PRINT_SND_FD);
+#endif
   sf->closure1 = XEN_UNDEFINED;
   sf->closure2 = XEN_UNDEFINED;
   sf->closure3 = XEN_UNDEFINED;
