@@ -38,7 +38,8 @@
 ;;; create-audit-dialog
 
 (use-modules (ice-9 common-list) (ice-9 format))
-(provide 'snd-snd-motif.scm)
+
+(if (not (provided? 'snd-motif)) (snd-error "snd-motif.scm is Motif-specific"))
 
 (if (not (defined? 'find-if))
     (define (find-if pred l)
@@ -51,6 +52,8 @@
       (if (string? hxm)
 	  (snd-error (format #f "snd-motif.scm needs the xm module: ~A" hxm))
 	  (dlinit hxm "Init_libxm"))))
+
+(provide 'snd-snd-motif.scm)
 
 (if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
 (if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))

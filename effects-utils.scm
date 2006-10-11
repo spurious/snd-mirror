@@ -1,6 +1,8 @@
 (use-modules (ice-9 format))
 (provide 'snd-effects-utils.scm)
 
+(if (not (provided? 'snd-motif)) (snd-error "effects-utils.scm is Motif-specific"))
+
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
@@ -101,6 +103,9 @@
 ;    (if (null? effect-dialogs)
 ; TODO: add watchers to sensitize doit buttons
 ;    (set! effect-dialogs (cons new-dialog effect-dialogs))
+;  remove selection-changed-hook (rb, fs as well as scm)
+;  check all current close-hooks open-hooks? etc
+;  doc/test/msg 
     new-dialog))
 
 

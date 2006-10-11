@@ -1,12 +1,14 @@
 ;;; event.scm: user-interface auto-test functions (see snd-test.scm)
 
-(provide 'snd-event.scm)
+(if (not (provided? 'snd-motif)) (snd-error "event.scm is Motif-specific"))
 
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
 	  (snd-error (format #f "event.scm needs the xm module: ~A" hxm))
 	  (dlinit hxm "Init_libxm"))))
+
+(provide 'snd-event.scm)
 
 
 (define key-event

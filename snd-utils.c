@@ -538,6 +538,9 @@ static fam_info *make_fam_info(FAMRequest *rp, void *data, void (*action)(struct
 {
   fam_info *fp;
   fp = (fam_info *)CALLOC(1, sizeof(fam_info));
+#if MUS_DEBUGGING
+  set_printable(PRINT_FAM_INFO);
+#endif
   fp->data = data;
   fp->action = action;
   fp->rp = rp;
@@ -605,6 +608,9 @@ fam_info *fam_monitor_file(const char *filename,
       fprintf(stderr, "monitor %s\n", filename);
 #endif
       fp = make_fam_info(rp, data, action);
+#if MUS_DEBUGGING
+      fp->filename = copy_string(filename);
+#endif
       err = FAMMonitorFile(ss->fam_connection, filename, rp, (void *)fp);
       if (err < 0)
 	{
@@ -636,6 +642,9 @@ fam_info *fam_monitor_directory(const char *dir_name,
   if (rp)
     {
       fp = make_fam_info(rp, data, action);
+#if MUS_DEBUGGING
+      fp->filename = copy_string(dir_name);
+#endif
       err = FAMMonitorDirectory(ss->fam_connection, dir_name, rp, (void *)fp);
       if (err < 0)
 	{
@@ -662,6 +671,9 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
     {
 #if MUS_DEBUGGING_FAM
       fprintf(stderr, "unmonitor %s: %p %p\n", filename, fp, fp->rp);
+#endif
+#if MUS_DEBUGGING
+      if (fp->filename) {FREE(fp->filename); fp->filename = NULL;}
 #endif
       if (fp->rp)
 	{
@@ -1136,6 +1148,12 @@ void mem_report(void)
 			  snd_fd *sf = (snd_fd *)(pointers[j]);
 			  fprintf(Fp, "[%p, loc: %d, beg: " OFF_TD ", eof: %d, sp: %p]\n  ",
 				  sf, sf->dangling_loc, sf->initial_samp, (int)(sf->at_eof), sf->local_sp);
+			}
+			break;
+		      case PRINT_FAM_INFO:
+			{
+			  fam_info *fp = (fam_info *)(pointers[j]);
+			  fprintf(Fp, "[%p, %s, rp: %p, data: %p]\n  ", fp, fp->filename, fp->rp, fp->data);
 			}
 			break;
 		      }

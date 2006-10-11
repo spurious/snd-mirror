@@ -1,13 +1,16 @@
 ;;; translation of new-effects.scm to gtk/xg
 
 (use-modules (ice-9 format) (ice-9 common-list))
-(provide 'snd-gtk-effects.scm)
  
 (if (not (provided? 'xg))
     (let ((hxm (dlopen "xg.so")))
       (if (string? hxm)
 	  (snd-error (format #f "gtk-effects.scm needs the xg module: ~A" hxm))
 	  (dlinit hxm "Init_libxg"))))
+
+(if (not (provided? 'snd-gtk)) (snd-error "gtk-effects.scm is Gtk-specific"))
+
+(provide 'snd-gtk-effects.scm)
 
 (define pi 3.141592653589793)
 

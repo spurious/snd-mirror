@@ -1,11 +1,14 @@
 (use-modules (ice-9 format) (ice-9 common-list))
-(provide 'snd-new-effects.scm)
+
+(if (not (provided? 'snd-motif)) (snd-error "new-effects.scm is Motif-specific"))
 
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
 	  (snd-error (format #f "new-effects.scm needs the xm module: ~A" hxm))
 	  (dlinit hxm "Init_libxm"))))
+
+(provide 'snd-new-effects.scm)
 
 (define pi 3.141592653589793)
 (if (not (provided? 'snd-effects-utils.scm)) (load-from-path "effects-utils.scm"))

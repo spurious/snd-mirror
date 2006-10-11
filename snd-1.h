@@ -240,6 +240,9 @@ typedef struct fam_info {
   FAMRequest *rp;
   void (*action)(struct fam_info *fp, FAMEvent *fe);
   void *data;
+#if MUS_DEBUGGING
+  char *filename;
+#endif
 } fam_info;
 
 typedef struct env_editor {

@@ -1,10 +1,6 @@
 (use-modules (ice-9 format) (ice-9 optargs))
 
 ;;; TODO: all the doit buttons need to watch for sounds (or selection if effects dialog and selection is chosen)
-;;; TODO: gtk side of all special menus needs lambda (w data) change throughout
-;;;   should these be savable?
-;;; marks-menu.scm
-;;; add to snd-test, msg
 
 (if (provided? 'xm)
     (if (not (provided? 'snd-effects-utils.scm))

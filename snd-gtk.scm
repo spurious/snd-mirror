@@ -22,7 +22,8 @@
 ;;; add-main-menu-mnemonics
 
 (use-modules (ice-9 format) (ice-9 common-list))
-(provide 'snd-snd-gtk.scm)
+
+(if (not (provided? 'snd-gtk)) (snd-error "snd-gtk.scm is Gtk-specific"))
 
 (if (not (defined? 'find-if))
     (define (find-if pred l)
@@ -35,6 +36,8 @@
       (if (string? hxm)
 	  (snd-error (format #f "snd-gtk.scm needs the xg module: ~A" hxm))
 	  (dlinit hxm "Init_libxg"))))
+
+(provide 'snd-snd-gtk.scm)
 
 (if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
 (if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))

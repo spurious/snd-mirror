@@ -16,7 +16,9 @@ rt-player.scm
 (if (not (defined? '*rt-reader-buffer-time*))
     (define-toplevel '*rt-reader-buffer-time* 5)) ;; Number of seconds to buffer.
 
-(define *rt-use-rt-player* #t)
+(if (not (defined? '*rt-use-rt-player*))
+    (define-toplevel '*rt-use-rt-player* #t))
+
 
 
 
@@ -68,7 +70,7 @@ rt-player.scm
 
 (define rb2-num-dropouts (make-var 0))
 
-(define-rt (read-rb2 rb2)
+(define-rt (read-rb2 rb2 debug-rb)
   (let* ((read-pos-var (the <vct-*> (vector-ref rb2 2)))
 	 (read-pos (read-var read-pos-var))
 	 (size (read-var (vector-ref rb2 3)))
@@ -78,16 +80,19 @@ rt-player.scm
 	(let ((ringbuffer (vector-ref rb2 5)))
 	  (if (= (read-var (vector-ref rb2 6)) curr-ringbuffer-num)
 	      (begin
-		(printf "RT-PLAYER: Error, can not read from disk fast enough.\\n");; Set the variable *rt-reader-buffer-time* higher.\\n"))
+		(put-ringbuffer debug-rb 1)
+		;;(printf "RT-PLAYER: Error, can not read from disk fast enough.\\n");; Set the variable *rt-reader-buffer-time* higher.\\n"))
 		(write-var rb2-num-dropouts (1+ (read-var rb2-num-dropouts)))
 		(if (> (read-var rb2-num-dropouts) 3)
 		    (begin
-		      (printf "RT-PLAYER: Unable too read from disk fast enough. Stopping player.\\n")
+		      (put-ringbuffer debug-rb 2)
+		      ;;(printf "RT-PLAYER: Unable too read from disk fast enough. Stopping player.\\n")
 		      (remove-me))
 		    (if (and (< (- (read-var rt-snd-cursorupdate-inc) (read-var rt-snd-cursorupdate-dropout-num)) 4)
 			     (> (get-time) (+ (read-var rt-snd-cursorupdate-lasttime) 5)))
 			(begin
-			  (printf "RT-PLAYER: Too much cpu time spent. Stopping player. (2)\\n")
+			  (put-ringbuffer debug-rb 3)
+			  ;;(printf "RT-PLAYER: Too much cpu time spent. Stopping player. (2)\\n")
 			  (remove-me)))))
 	      (if (> (read-var rb2-num-dropouts) 0)
 		  (write-var rb2-num-dropouts (1- (read-var rb2-num-dropouts)))))
@@ -221,6 +226,7 @@ rt-player.scm
   (define rb2s #f)
   (define vcts #f)
   (define size #f)
+  (define debug-print-rb (make-ringbuffer 64))
   (define is-running (vct 0))
   (define sound-src-ratio #f)
   (define speed-gens #f)
@@ -282,7 +288,7 @@ rt-player.scm
 							 (if dont-read-anymore
 							     0.0
 							     (let ((ret (if fromdisk
-									    (read-rb2 (vector-ref rb2s i))
+									    (read-rb2 (vector-ref rb2s i) debug-print-rb)
 									    (vct-ref (vector-ref vcts i) (- (read-position i) start)))))
 							       (changeposition i)
 							       ret))))
@@ -320,12 +326,22 @@ rt-player.scm
 		   (if (= type diskplaytype)
 		       (diskplay)
 		       (master-out))))))
+
+  (ringbuffer-get debug-print-rb
+		  (let ((num 0))
+		    (lambda (error-type)
+		      (cond ((= 1 error-type) (c-display "RT-PLAYER: Error, can not read from disk fast enough. (" num ")") (set! num (1+ num)))
+			    ((= 2 error-type) (c-display "RT-PLAYER: Unable too read from disk fast enough. Stopping player."))
+			    ((= 3 error-type) (c-display "RT-PLAYER: Too much cpu time spent. Stopping player. (2)")))))
+		  500)
+		    
   (if (not snd)
       (get-playfunc masterouttype 'last #f)
       (let ()
 	(define (cleanup-func rt)
 	  (lambda ()
 	    (-> rt stop)
+	    (ringbuffer-stop debug-print-rb)
 	    (if rb2s
 		(for-each (lambda (rb2)
 			    (free-rb2 rb2))

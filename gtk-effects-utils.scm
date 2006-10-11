@@ -1,5 +1,4 @@
 (use-modules (ice-9 format))
-(provide 'snd-gtk-effects-utils.scm)
 
 (if (not (provided? 'xg))
     (let ((hxm (dlopen "xg.so")))
@@ -7,6 +6,9 @@
 	  (snd-error (format #f "gtk-effects.scm needs the xg module: ~A" hxm))
 	  (dlinit hxm "Init_libxg"))))
 
+(if (not (provided? 'snd-gtk)) (snd-error "gtk-effects-utils.scm is Gtk-specific"))
+
+(provide 'snd-gtk-effects-utils.scm)
 
 (define (all-chans)
   (let ((sndlist '())

@@ -5770,10 +5770,12 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 (define (make-ladspa libname pluginname)
   (let* ((descriptor #f)
 	 (ladspa #f)
+	 (handle #f)
 	 (input-controls '())
 	 (output-controls '())
 	 (input-audios '())
 	 (output-audios '())
+	 (output-vct #f)
 	 (smob #f))
     
     (define (get-hint portnum)
@@ -5807,9 +5809,9 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
     
     (set! ladspa (<mus_rt_ladspa> #:descriptor (list "A_POINTER" (cadr descriptor))))
     
-    (let ((handle (ladspa-instantiate descriptor (c-integer (mus-srate)))))
-      (-> ladspa handle (list "A_POINTER" (cadr handle)))
-      (-> ladspa scm_handle handle))
+    (set! handle (ladspa-instantiate descriptor (c-integer (mus-srate))))
+    (-> ladspa handle (list "A_POINTER" (cadr handle)))
+    (-> ladspa scm_handle handle)
     
     (c-for-each (lambda (n x)
 		      (if (> (logand x LADSPA_PORT_CONTROL) 0)
@@ -5831,9 +5833,9 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
     (-> ladspa num_audio_outs (length output-audios))
     (-> ladspa num_audio_ins (length input-audios))
     
-    (let ((output (make-vct (-> ladspa num_audio_outs))))
-      (-> ladspa scm_output output)
-      (-> ladspa output (XEN_TO_VCT output)))
+    (set! output-vct (make-vct (-> ladspa num_audio_outs)))
+    (-> ladspa scm_output output-vct)
+    (-> ladspa output (XEN_TO_VCT output-vct))
 
     (-> ladspa scm_descriptor descriptor)
 
@@ -5881,7 +5883,8 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	  smob
 	  descriptor
 	  libname
-	  pluginname)))
+	  pluginname
+	  )))
 
 
 ;; SCM->ladspa converter
