@@ -110,8 +110,6 @@
 		   (set! pix (.pixel col)))))
       pix)))
 
-(define selection-buttons '())
-
 (define (add-target mainform target-callback truncate-callback)
   ;; add a set of 3 radio buttons at the bottom of the main section for choice between sound, selection, between-marks
   ;;   target-callback should take one arg, a symbol: 'sound, 'selection, 'marks, and apply the effect accordingly (upon "DoIt")
@@ -132,18 +130,12 @@
 		      XmNisHomogeneous    #t))))
     (for-each
      (lambda (name type on)
-       (let ((button (XtCreateManagedWidget name xmToggleButtonWidgetClass rc
-					    (list XmNbackground       (basic-color)
-						  XmNset              on
-						  XmNselectColor      (yellow-pixel)
-						  XmNindicatorType    XmONE_OF_MANY_ROUND
-						  XmNarmCallback      (list (lambda (w c i) (target-callback type)) #f)))))
-	 (if (eq? type 'selection)
-	     (begin
-	       (set! selection-buttons (cons button selection-buttons))
-	       (if (not (selection?))
-		   (XtSetSensitive button #f))))
-	 button))
+       (XtCreateManagedWidget name xmToggleButtonWidgetClass rc
+			      (list XmNbackground       (basic-color)
+				    XmNset              on
+				    XmNselectColor      (yellow-pixel)
+				    XmNindicatorType    XmONE_OF_MANY_ROUND
+				    XmNarmCallback      (list (lambda (w c i) (target-callback type)) #f))))
      (list "entire sound" "selection" "between marks")
      (list 'sound 'selection 'marks)
      (list #t #f #f))
@@ -156,14 +148,6 @@
 		      XmNselectColor      (yellow-pixel)))))
 	  (XtAddCallback trbutton XmNvalueChangedCallback (lambda (w c i) (truncate-callback (.set i)))) ))
     rc))
-
-(if (null? selection-buttons)
-    (add-hook! selection-changed-hook
-	       (lambda ()
-		 (let ((on (selection?)))
-		   (for-each (lambda (button)
-			       (XtSetSensitive button on))
-			     selection-buttons)))))
 
 (define (effect-frames target)
   (if (eq? target 'sound)
@@ -838,7 +822,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		       (post-band-pass-dialog)))
       
       (set! filter-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "Band-pass filter (~,2F ~1,2D" band-pass-freq band-pass-bw)))
+				     (let ((new-label (format #f "Band-pass filter (~,2F ~D" band-pass-freq band-pass-bw)))
 				       (change-label child new-label)))
 				   filter-menu-list))))
   
@@ -899,7 +883,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		       (post-notch-dialog)))
       
       (set! filter-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "Band-reject filter (~,2F ~1,2D)" notch-freq notch-bw)))
+				     (let ((new-label (format #f "Band-reject filter (~,2F ~D)" notch-freq notch-bw)))
 				       (change-label child new-label)))
 				   filter-menu-list))))
   
@@ -1069,7 +1053,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		       (post-comb-dialog)))
       
       (set! filter-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "Comb filter (~1,2F ~1,2D)" comb-scaler comb-size)))
+				     (let ((new-label (format #f "Comb filter (~1,2F ~D)" comb-scaler comb-size)))
 				       (change-label child new-label)))
 				   filter-menu-list))))
   
@@ -1125,7 +1109,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		     (set! new-comb-chord-scaler initial-new-comb-chord-scaler)
 		     (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (floor (* new-comb-chord-scaler 100)))))
 		     (set! new-comb-chord-size initial-new-comb-chord-size)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (floor (* new-comb-chord-size 1)))))
+		     (XtSetValues (list-ref sliders 1) (list XmNvalue new-comb-chord-size))
 		     (set! new-comb-chord-amp initial-new-comb-chord-amp)
 		     (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (floor (* new-comb-chord-amp 100)))))
 		     (set! new-comb-chord-interval-one initial-new-comb-chord-interval-one)
@@ -1140,7 +1124,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 					   100)
 				     (list "chord size" 0 initial-new-comb-chord-size 100
 					   (lambda (w context info)
-					     (set! new-comb-chord-size (/ (.value info) 1)))
+					     (set! new-comb-chord-size (.value info)))
 					   1)
 				     (list "amplitude" 0.0 initial-new-comb-chord-amp 1.0
 					   (lambda (w context info)
@@ -1165,7 +1149,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		       (post-new-comb-chord-dialog)))
       
       (set! filter-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "Comb chord filter (~1,2F ~1,2D ~1,2F ~1,2F ~1,2F)"  
+				     (let ((new-label (format #f "Comb chord filter (~1,2F ~D ~1,2F ~1,2F ~1,2F)"  
 							      new-comb-chord-scaler new-comb-chord-size new-comb-chord-amp 
 							      new-comb-chord-interval-one new-comb-chord-interval-two)))           
 				       (change-label child new-label)))
@@ -1302,12 +1286,12 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 				  "Move the slider to change the saturation scaling factor."))
 		   (lambda (w c i)
 		     (set! adsat-size initial-adsat-size)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* adsat-size 1))))))))
+		     (XtSetValues (car sliders) (list XmNvalue adsat-size)))))
 	    (set! sliders
 		  (add-sliders adsat-dialog
 			       (list (list "adaptive saturation size" 0 initial-adsat-size 10
 					   (lambda (w context info)
-					     (set! adsat-size (/ (.value info) 1)))
+					     (set! adsat-size (.value info)))
 					   1))))
 	    (add-target (XtParent (car sliders)) (lambda (target) (set! adsat-target target)) #f)))
       
@@ -1320,7 +1304,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 		       (post-adsat-dialog)))
       
       (set! freq-menu-list (cons (lambda ()
-				   (let ((new-label (format #f "Adaptive saturation (~1,2D)" adsat-size)))
+				   (let ((new-label (format #f "Adaptive saturation (~D)" adsat-size)))
 				     (change-label child new-label)))
 				 freq-menu-list))))
   
@@ -1739,9 +1723,9 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		   (lambda (w c i)
 		     (set! rm-frequency initial-rm-frequency)
 		     (set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* rm-frequency 1)))))
+		     (XtSetValues (car sliders) (list XmNvalue rm-frequency))
 		     (set! rm-radians initial-rm-radians)
-		     (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (floor (* rm-radians 1))))))))
+		     (XtSetValues (cadr sliders) (list XmNvalue rm-radians)))))
 	    
 	    (set! sliders
 		  (add-sliders rm-dialog
@@ -1781,7 +1765,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		       (post-rm-dialog)))
       
       (set! mod-menu-list (cons (lambda ()
-				  (let ((new-label (format #f "Ring modulation (~1,2D ~1,2D)"
+				  (let ((new-label (format #f "Ring modulation (~D ~D)"
 							   rm-frequency rm-radians)))
 				    (change-label child new-label)))
 				mod-menu-list))))
@@ -2020,20 +2004,20 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 				  "Very simple convolution. Move the sliders to set the numbers of the soundfiles to be convolved and the amount for the amplitude scaler. Output will be scaled to floating-point values, resulting in very large (but not clipped) amplitudes. Use the Normalize amplitude effect to rescale the output. The convolution data file typically defines a natural reverberation source, and the output from this effect can provide very striking reverb effects. You can find convolution data files on sites listed at http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 		   (lambda (w c i)
 		     (set! convolve-sound-one initial-convolve-sound-one)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (floor (* convolve-sound-one 1)))))
+		     (XtSetValues (list-ref sliders 0) (list XmNvalue convolve-sound-one))
 		     (set! convolve-sound-two initial-convolve-sound-two)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (floor (* convolve-sound-two 1)))))
+		     (XtSetValues (list-ref sliders 1) (list XmNvalue convolve-sound-two))
 		     (set! convolve-amp initial-convolve-amp)
 		     (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (floor (* convolve-amp 100))))))))
 	    (set! sliders
 		  (add-sliders convolve-dialog
 			       (list (list "impulse response file" 0 initial-convolve-sound-one 24
 					   (lambda (w context info)
-					     (set! convolve-sound-one (/ (.value info) 1)))
+					     (set! convolve-sound-one (.value info)))
 					   1)
 				     (list "sound file" 0 initial-convolve-sound-two 24
 					   (lambda (w context info)
-					     (set! convolve-sound-two (/ (.value info) 1)))
+					     (set! convolve-sound-two (.value info)))
 					   1)
 				     (list "amplitude" 0.0 initial-convolve-amp 0.10
 					   (lambda (w context info)
@@ -2048,7 +2032,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		       (post-convolve-dialog)))
       
       (set! reverb-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "Convolution (~1,2D ~1,2D ~1,2F)" 
+				     (let ((new-label (format #f "Convolution (~D ~D ~1,2F)" 
 							      convolve-sound-one convolve-sound-two convolve-amp)))
 				       (change-label child new-label)))
 				   reverb-menu-list))))
@@ -2216,24 +2200,24 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 				  "Mixes mono sound into stereo sound field."))
 		   (lambda (w c i)
 		     (set! mono-snd initial-mono-snd)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (floor (* mono-snd 1)))))
+		     (XtSetValues (list-ref sliders 0) (list XmNvalue mono-snd))
 		     (set! stereo-snd initial-stereo-snd)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (floor (* stereo-snd 1)))))
+		     (XtSetValues (list-ref sliders 1) (list XmNvalue stereo-snd))
 		     (set! pan-pos initial-pan-pos)
-		     (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (floor (* pan-pos 1))))))))
+		     (XtSetValues (list-ref sliders 2) (list XmNvalue pan-pos)))))
 	    (set! sliders
 		  (add-sliders place-sound-dialog
 			       (list (list "mono sound" 0 initial-mono-snd 50
 					   (lambda (w context info)
-					     (set! mono-snd (/ (.value info) 1)))
+					     (set! mono-snd (.value info)))
 					   1)
 				     (list "stereo sound" 0 initial-stereo-snd 50
 					   (lambda (w context info)
-					     (set! stereo-snd (/ (.value info) 1)))
+					     (set! stereo-snd (.value info)))
 					   1)
 				     (list "pan position" 0 initial-pan-pos 90
 					   (lambda (w context info)
-					     (set! pan-pos (/ (.value info) 1)))
+					     (set! pan-pos (.value info)))
 					   1))))
 	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 					    (list XmNheight              200
@@ -2263,7 +2247,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		       (post-place-sound-dialog)))
       
       (set! misc-menu-list (cons (lambda ()
-				   (let ((new-label (format #f "Place sound (~1,2D ~1,2D ~1,2D)" 
+				   (let ((new-label (format #f "Place sound (~D ~D ~D)" 
 							    mono-snd stereo-snd pan-pos)))
 				     (change-label child new-label)))
 				 misc-menu-list))))
@@ -2408,7 +2392,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 the synthesis amplitude, the FFT size, and the radius value."))
 		   (lambda (w c i)
 		     (set! cross-synth-sound initial-cross-synth-sound)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (floor (* cross-synth-sound 1)))))
+		     (XtSetValues (list-ref sliders 0) (list XmNvalue cross-synth-sound))
 		     (set! cross-synth-amp initial-cross-synth-amp)
 		     (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (floor (* cross-synth-amp 100)))))
 		     (set! cross-synth-fft-size initial-cross-synth-fft-size)
@@ -2421,7 +2405,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		  (add-sliders cross-synth-dialog
 			       (list (list "input sound" 0 initial-cross-synth-sound 20
 					   (lambda (w context info)
-					     (set! cross-synth-sound (/ (.value info) 1)))
+					     (set! cross-synth-sound (.value info)))
 					   1)
 				     (list "amplitude" 0.0 initial-cross-synth-amp 1.0
 					   (lambda (w context info)
@@ -2533,7 +2517,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		       (post-cross-synth-dialog)))
       
       (set! misc-menu-list (cons (lambda ()
-				   (let ((new-label (format #f "Cross synthesis (~1,2D ~1,2F ~1,2D ~1,2F)" 
+				   (let ((new-label (format #f "Cross synthesis (~D ~1,2F ~D ~1,2F)" 
 							    cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius)))
 				     (change-label child new-label)))
 				 misc-menu-list))))

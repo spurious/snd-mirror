@@ -2,7 +2,14 @@
 
 (provide 'snd-special-menu.scm)
 
-(if (not (defined? 'add-sliders)) (load-from-path "effects-utils.scm"))
+(if (provided? 'xm)
+    (if (not (provided? 'snd-effects-utils.scm))
+	(load-from-path "effects-utils.scm")))
+
+(if (provided? 'xg)
+    (if (not (provided? 'snd-gtk-effects-utils.scm))
+	(load-from-path "gtk-effects-utils.scm")))
+
 (if (not (provided? 'snd-edit-menu.scm)) (load-from-path "edit-menu.scm"))
 (if (not (defined? 'start-enveloping)) (load-from-path "enved.scm"))
 (if (not (defined? 'explode-sf2)) (load-from-path "examp.scm"))
@@ -31,15 +38,16 @@
   (lambda ()
     (select-file
       (lambda (filename)
-;        (shell (format #f "timidity -Ow -c /home/dlphilp/timidity-sf2.cfg -EFchorus=0 ~a" filename)))
-;      "Select MIDI file" "/home/dlphilp/midfiles/" "*.mid" "Converts MIDI file to WAV using TiMidity. Output will be named after the original MIDI file.")))
         (shell (format #f "timidity -Ow ~a" filename)))
-      "Select MIDI file" "." "*.mid" "Converts MIDI file to WAV using TiMidity. Output will be named after the original MIDI file, i.e., foo.mid converts to foo.wav. You must have TiMidity and a patch set installed for this function to work. See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more details.")))
+      "Select MIDI file" "." "*.mid" "Converts MIDI file to WAV using TiMidity. \
+Output will be named after the original MIDI file, i.e., foo.mid converts to foo.wav. \
+You must have TiMidity and a patch set installed for this function to work. \
+See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more details.")))
 
 (add-to-menu special-menu #f #f)
 
 
-;;; -------- Record input channel
+;;; -------- Record input channel (Motif only)
 ;;;
 
 (define record-input-channel 4)
@@ -53,7 +61,7 @@
 (define (cp-record-input)
   (set! (recorder-in-device) record-input-channel)) 
 
-(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
+(if (provided? 'xm)
     (begin
 
       (define (post-record-input-dialog)
@@ -121,7 +129,7 @@
     (set! record-input-menu-label (add-to-menu special-menu record-input-label cp-record-input)))
 
 (set! special-list (cons (lambda ()
-                           (let ((new-label (format #f "Record input channel (~1,2D)"
+                           (let ((new-label (format #f "Record input channel (~D)"
                                                 record-input-channel)))
                              (if record-input-menu-label (change-label record-input-menu-label new-label))
                              (set! record-input-label new-label)))
@@ -152,8 +160,6 @@
 			 (noenv!)
 			 (yesenv!)))))
 
-;(add-to-menu special-menu "Start enveloping" (lambda () (start-enveloping)))
-;(add-to-menu special-menu "Stop enveloping" (lambda () (stop-enveloping)))
 
 
 ;;; -------- Play panned
@@ -167,29 +173,52 @@
 (define (cp-play-panned)
   (play-panned play-panned-file))
 
-(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
+(if (or (provided? 'xm)
+	(provided? 'xg))
     (begin
 
       (define (post-play-panned-dialog)
-        (if (not (Widget? play-panned-dialog))
-            ;; if play-panned-dialog doesn't exist, create it
+        (if (not play-panned-dialog)
             (let ((initial-play-panned-file 1)
                   (sliders '()))
+
               (set! play-panned-dialog
-                    (make-effect-dialog play-panned-label
-                                        (lambda (w context info) (cp-play-panned))
-                                        (lambda (w context info)
-                                          (help-dialog "Play panned"
-                                                       "Move the slider to select the file to play with panning envelope."))
-                                        (lambda (w c i)
-                                          (set! play-panned-file initial-play-panned-file)
-                                          (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* play-panned-file 1)))))))
+                    (make-effect-dialog 
+		     play-panned-label
+		     
+		     (if (provided? 'snd-gtk)
+			 (lambda (w context) (cp-play-panned))
+			 (lambda (w context info) (cp-play-panned)))
+
+		     (if (provided? 'snd-gtk)
+			 (lambda (w context)
+			   (help-dialog "Play panned"
+					"Move the slider to select the file to play with panning envelope."))
+			 (lambda (w context info)
+			   (help-dialog "Play panned"
+					"Move the slider to select the file to play with panning envelope.")))
+
+		     (if (provided? 'snd-gtk)
+			 (lambda (w data)
+			   (set! play-panned-file initial-play-panned-file)
+			   (set! (.value (GTK_ADJUSTMENT (car sliders))) play-panned-file)
+			   (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders))))
+			 (lambda (w c i)
+			   (set! play-panned-file initial-play-panned-file)
+			   (XtSetValues (car sliders) (list XmNvalue play-panned-file))))))
+
               (set! sliders
-                    (add-sliders play-panned-dialog
-                                 (list (list "soundfile number" 0 initial-play-panned-file 25
-                                             (lambda (w context info)
-                                               (set! play-panned-file (/ (.value info) 1)))
-                                             1))))))
+                    (add-sliders 
+		     play-panned-dialog
+		     (list (list "soundfile number" 0 initial-play-panned-file 25
+				 
+				 (if (provided? 'snd-gtk)
+				     (lambda (w context)
+				       (set! play-panned-file (.value (GTK_ADJUSTMENT w))))
+				     (lambda (w context info)
+				       (set! play-panned-file (.value info))))
+				 1))))))
+
         (activate-dialog play-panned-dialog))
 
       (set! play-panned-menu-label (add-to-menu special-menu "Play panned" (lambda () (post-play-panned-dialog)))))
@@ -197,13 +226,14 @@
     (set! play-panned-menu-label (add-to-menu special-menu play-panned-label cp-play-panned)))
 
 (set! special-list (cons (lambda ()
-                           (let ((new-label (format #f "Play panned (~1,2D)"  play-panned-file)))
+                           (let ((new-label (format #f "Play panned (~D)"  play-panned-file)))
                              (if play-panned-menu-label (change-label play-panned-menu-label new-label))
                              (set! play-panned-label new-label)))
                          special-list))
 
 
 (add-to-menu special-menu #f #f)
+
 
 ;;; -------- Save as MP3
 ;;;
@@ -217,29 +247,54 @@
   (save-sound-as "tmp.wav" save-as-mp3-wav-file-number mus-riff)
   (system (format #f "bladeenc tmp.wav tmp-~D.mp3" save-as-mp3-wav-file-number)))
 
-(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
+(if (or (provided? 'xm)
+	(provided? 'xg))
     (begin
 
       (define (post-save-as-mp3-dialog)
-        (if (not (Widget? save-as-mp3-dialog))
-            ;; if save-as-mp3-dialog doesn't exist, create it
+        (if (not save-as-mp3-dialog)
+
             (let ((initial-save-as-mp3-wav-file-number 0)
                   (sliders '()))
               (set! save-as-mp3-dialog
-                    (make-effect-dialog save-as-mp3-label
-                                        (lambda (w context info) (cp-save-as-mp3))
-                                        (lambda (w context info)
-                                          (help-dialog "Save as MP3"
-                                                       "Move the slider to select the file to save as an MP3. The new MP3 will be named tmp-N.mp3 by default.  Bladeenc is currently the only supported encoder. Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc."))
-                                        (lambda (w c i)
-                                          (set! save-as-mp3-wav-file-number initial-save-as-mp3-wav-file-number)
-                                          (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* save-as-mp3-wav-file-number 1)))))))
+                    (make-effect-dialog 
+		     save-as-mp3-label
+
+		     (if (provided? 'snd-gtk)
+			 (lambda (w context) (cp-save-as-mp3))
+			 (lambda (w context info) (cp-save-as-mp3)))
+
+		     (if (provided? 'snd-gtk)
+			 (lambda (w context)
+			   (help-dialog "Save as MP3"
+					"Move the slider to select the file to save as an MP3. \
+The new MP3 will be named tmp-N.mp3 by default.  Bladeenc is currently the only supported encoder. \
+Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc."))
+			 (lambda (w context info)
+			   (help-dialog "Save as MP3"
+					"Move the slider to select the file to save as an MP3. \
+The new MP3 will be named tmp-N.mp3 by default.  Bladeenc is currently the only supported encoder. \
+Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc.")))
+
+		     (if (provided? 'snd-gtk)
+			 (lambda (w data)
+			   (set! save-as-mp3-wav-file-number initial-save-as-mp3-wav-file-number)
+			   (set! (.value (GTK_ADJUSTMENT (car sliders))) save-as-mp3-wav-file-number)
+			   (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders))))
+			 (lambda (w c i)
+			   (set! save-as-mp3-wav-file-number initial-save-as-mp3-wav-file-number)
+			   (XtSetValues (car sliders) (list XmNvalue save-as-mp3-wav-file-number))))))
+
               (set! sliders
-                    (add-sliders save-as-mp3-dialog
-                                 (list (list "soundfile number" 0 initial-save-as-mp3-wav-file-number 250
-                                             (lambda (w context info)
-                                               (set! save-as-mp3-wav-file-number (/ (.value info) 1)))
-                                             1))))))
+                    (add-sliders
+		     save-as-mp3-dialog
+		     (list (list "soundfile number" 0 initial-save-as-mp3-wav-file-number 250
+				 (if (provided? 'snd-gtk)
+				     (lambda (w data)
+				       (set! save-as-mp3-wav-file-number (.value (GTK_ADJUSTMENT w))))
+				     (lambda (w context info)
+				       (set! save-as-mp3-wav-file-number (.value info))))
+				 1))))))
         (activate-dialog save-as-mp3-dialog))
 
       (set! save-as-mp3-menu-label (add-to-menu special-menu "Save as MP3" (lambda () (post-save-as-mp3-dialog)))))
@@ -247,7 +302,7 @@
     (set! save-as-mp3-menu-label (add-to-menu special-menu save-as-mp3-label cp-save-as-mp3)))
 
 (set! special-list (cons (lambda ()
-                           (let ((new-label (format #f "Save as MP3 (~1,2D)"  save-as-mp3-wav-file-number)))
+                           (let ((new-label (format #f "Save as MP3 (~D)"  save-as-mp3-wav-file-number)))
                              (if save-as-mp3-menu-label (change-label save-as-mp3-menu-label new-label))
                              (set! save-as-mp3-label new-label)))
                          special-list))
@@ -266,29 +321,55 @@
   (save-sound-as "tmp.wav" save-as-ogg-wav-file-number mus-riff)
   (system (format #f "oggenc tmp.wav -o tmp-~D.ogg" save-as-ogg-wav-file-number)))
 
-(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
+(if (or (provided? 'xm)
+	(provided? 'xg))
     (begin
 
       (define (post-save-as-ogg-dialog)
-        (if (not (Widget? save-as-ogg-dialog))
-            ;; if save-as-ogg-dialog doesn't exist, create it
+        (if (not save-as-ogg-dialog)
+
             (let ((initial-save-as-ogg-wav-file-number 0)
                   (sliders '()))
+
               (set! save-as-ogg-dialog
-                    (make-effect-dialog save-as-ogg-label
-                                        (lambda (w context info) (cp-save-as-ogg))
-                                        (lambda (w context info)
-                                          (help-dialog "Save as Ogg file"
-                                                       "Move the slider to select the file to save as an Ogg file. The new file will be named tmp-N.ogg by default. Oggenc is currently the only supported Ogg encoder. Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vorbis project."))
-                                        (lambda (w c i)
-                                          (set! save-as-ogg-wav-file-number initial-save-as-ogg-wav-file-number)
-                                          (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* save-as-ogg-wav-file-number 1)))))))
+                    (make-effect-dialog 
+		     save-as-ogg-label
+
+		     (if (provided? 'snd-gtk)
+			 (lambda (w context) (cp-save-as-ogg))
+			 (lambda (w context info) (cp-save-as-ogg)))
+
+		     (if (provided? 'snd-gtk)
+			 (lambda (w context)
+			   (help-dialog "Save as Ogg file"
+					"Move the slider to select the file to save as an Ogg file. \
+The new file will be named tmp-N.ogg by default. Oggenc is currently the only supported Ogg encoder. \
+Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vorbis project."))
+			 (lambda (w context info)
+			   (help-dialog "Save as Ogg file"
+					"Move the slider to select the file to save as an Ogg file. \
+The new file will be named tmp-N.ogg by default. Oggenc is currently the only supported Ogg encoder. \
+Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vorbis project.")))
+
+		     (if (provided? 'snd-gtk)
+			 (lambda (w data)
+			   (set! save-as-ogg-wav-file-number initial-save-as-ogg-wav-file-number)
+			   (set! (.value (GTK_ADJUSTMENT (car sliders))) save-as-ogg-wav-file-number)
+			   (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders))))
+			 (lambda (w c i)
+			   (set! save-as-ogg-wav-file-number initial-save-as-ogg-wav-file-number)
+			   (XtSetValues (car sliders) (list XmNvalue save-as-ogg-wav-file-number))))))
+
               (set! sliders
-                    (add-sliders save-as-ogg-dialog
-                                 (list (list "soundfile number" 0 initial-save-as-ogg-wav-file-number 250
-                                             (lambda (w context info)
-                                               (set! save-as-ogg-wav-file-number (/ (.value info) 1)))
-                                             1))))))
+                    (add-sliders 
+		     save-as-ogg-dialog
+		     (list (list "soundfile number" 0 initial-save-as-ogg-wav-file-number 250
+				 (if (provided? 'snd-gtk)
+				     (lambda (w data)
+				       (set! save-as-ogg-wav-file-number (.value (GTK_ADJUSTMENT w))))
+				     (lambda (w context info)
+				       (set! save-as-ogg-wav-file-number (.value info))))
+				 1))))))
         (activate-dialog save-as-ogg-dialog))
 
       (set! save-as-ogg-menu-label (add-to-menu special-menu "Save as Ogg file" (lambda () (post-save-as-ogg-dialog)))))
@@ -296,7 +377,7 @@
     (set! save-as-ogg-menu-label (add-to-menu special-menu save-as-ogg-label cp-save-as-ogg)))
 
 (set! special-list (cons (lambda ()
-                           (let ((new-label (format #f "Save as Ogg file (~1,2D)"  save-as-ogg-wav-file-number)))
+                           (let ((new-label (format #f "Save as Ogg file (~D)"  save-as-ogg-wav-file-number)))
                              (if save-as-ogg-menu-label (change-label save-as-ogg-menu-label new-label))
                              (set! save-as-ogg-label new-label)))
                          special-list))

@@ -1,6 +1,6 @@
 Snd change log
 
-  11-Oct:    gtk-effects-utils.scm and gtk support for fft-menu.scm.
+  11-Oct:    gtk-effects-utils.scm and gtk support for *-menu.scm.
   9-Oct:     with-file-monitor.
   2-Oct:     gl2ps support, gl-graph->ps function, --with-gl2ps switch, gl2ps.[ch].
   26-Sep:    save-marks changed to keep matching sync values, add-marks takes name and sync args.

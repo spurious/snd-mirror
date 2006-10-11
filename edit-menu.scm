@@ -5,10 +5,9 @@
 (use-modules (ice-9 format))
 (provide 'snd-edit-menu.scm)
 
-(if (and (not (provided? 'snd-gtk))
-	 (provided? 'xm)
-	 (not (provided? 'snd-effects-utils.scm)))
-    (load-from-path "effects-utils.scm"))
+(if (provided? 'xm)
+    (if (not (provided? 'snd-effects-utils.scm))
+	(load-from-path "effects-utils.scm"))) ; make-effect-dialog
 
 (define edit-menu 1)
 

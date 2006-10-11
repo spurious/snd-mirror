@@ -1,9 +1,10 @@
 (use-modules (ice-9 format) (ice-9 optargs))
 
-;;; TODO: all the doit buttons need to watch for sounds
+;;; TODO: all the doit buttons need to watch for sounds (or selection if effects dialog and selection is chosen)
 ;;; TODO: gtk side of all special menus needs lambda (w data) change throughout
-;;; edit-menu.scm  marks-menu.scm  mix-menu.scm  special-menu.scm
-;;;  are there more??  edit-menu.scm needs cascade equivalent (add to snd-test, check docs, msg)
+;;;   should these be savable?
+;;; marks-menu.scm
+;;; add to snd-test, msg
 
 (if (provided? 'xm)
     (if (not (provided? 'snd-effects-utils.scm))
@@ -105,7 +106,7 @@ removes all energy below the low frequency and above the high frequency, then co
     (set! fft-edit-menu-label (add-to-menu fft-menu fft-edit-label cp-fft-edit)))
 
 (set! fft-list (cons (lambda ()
-		       (let ((new-label (format #f "FFT notch filter (~1,2D ~1,2D)" fft-edit-low-frequency fft-edit-high-frequency)))
+		       (let ((new-label (format #f "FFT notch filter (~D ~D)" fft-edit-low-frequency fft-edit-high-frequency)))
 			 (if fft-edit-menu-label (change-label fft-edit-menu-label new-label))
 			 (set! fft-edit-label new-label)))
 		     fft-list))
@@ -123,7 +124,8 @@ removes all energy below the low frequency and above the high frequency, then co
 (define (cp-fft-squelch)
   (fft-squelch fft-squelch-amount))
 
-(if (or (provided? 'xg) (provided? 'xm))
+(if (or (provided? 'xg) 
+	(provided? 'xm))
     (begin
       
       (define (post-fft-squelch-dialog)
