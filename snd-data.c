@@ -754,6 +754,7 @@ static void select_sound(snd_info *sp)
       new_active_channel_alert();
     }
   sp->selectpos = current_selectpos++;
+  run_watchers();
 }
 
 chan_info *color_selected_channel(snd_info *sp)

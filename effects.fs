@@ -419,14 +419,14 @@ $" yellow" color->pixel yellow-pixel
   rc
 ;
 
-selection-buttons empty? [if]
-  selection-changed-hook
-  lambda: ( -- f )
-    selection? { on }
-    selection-buttons each ( but ) on FXtSetSensitive drop end-each
-    #f
-  ; 0 make-proc add-hook!
-[then]
+\ selection-buttons empty? [if]
+\  selection-changed-hook
+\  lambda: ( -- f )
+\    selection? { on }
+\    selection-buttons each ( but ) on FXtSetSensitive drop end-each
+\    #f
+\  ; 0 make-proc add-hook!
+\ [then]
 
 : help-cb ( label message -- xt; w c i self -- )
   lambda-create , , latestxt

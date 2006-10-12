@@ -1058,6 +1058,7 @@ void clear_stdin(void);
 #if HAVE_RUBY
   void snd_rb_raise(XEN type, XEN info);
 #endif
+void run_watchers(void);
 
 
 /* -------- snd-select.c -------- */

@@ -89,6 +89,7 @@
  *            complex.h: ccos csin ctan cacos casin catan ccosh csinh ctanh cacosh casinh catanh cexp clog cabs cpow csqrt
  *                       carg[angle] creal cimag, complex double _Complex_I
  *            all arithmetic needs extra complex checks etc
+ *            also each function needs a check in configure (see fth)
  *
  * SOMEDAY: completion of support for vector of def-clm-structs
  *            see comment about lists below ca line 10931

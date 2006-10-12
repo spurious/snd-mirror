@@ -73,11 +73,6 @@ void sound_not_current(snd_info *sp, void *ignore)
 
 /* -------- ss watcher lists -------- */
 
-/* PERHAPS: add-watcher in xen + dialog use -- these are using hooks currently 
- *   :sound :selection :file (directory) -- ss_watcher, selection_watcher, fam
- *   return id for delete-watcher
- */
-
 #define SS_WATCHER_SIZE_INCREMENT 2
 
 int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason, void *data), void *context)
@@ -125,6 +120,7 @@ void call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason)
 	     (ss->watchers[i]->type == type)))
 	  (*(ss->watchers[i]->watcher))(reason, ss->watchers[i]->context);
     }
+  run_watchers();
 }
 
 

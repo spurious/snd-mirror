@@ -2034,6 +2034,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 	     (sp->watchers[i]->type == type)))
 	  (*(sp->watchers[i]->watcher))(sp, reason, i);
     }
+  run_watchers();
 }
 
 

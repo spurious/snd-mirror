@@ -529,7 +529,6 @@
 #define S_selected_data_color           "selected-data-color"
 #define S_selected_graph_color          "selected-graph-color"
 #define S_selected_sound                "selected-sound"
-#define S_selection_changed_hook        "selection-changed-hook"
 #define S_selection_chans               "selection-chans"
 #define S_selection_color               "selection-color"
 #define S_selection_context             "selection-context"

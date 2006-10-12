@@ -54,11 +54,11 @@ require "hooks"
 
 $effects_menu = false           # for prefs
 
-unless $selection_changed_hook.member?("selection-buttons-effects-hook")
-  $selection_changed_hook.add_hook!("selection-buttons-effects-hook") do | |
-    flag = selection?
-    $selection_buttons.each do |w| set_sensitive(w, flag) end
-  end
+# unless $selection_changed_hook.member?("selection-buttons-effects-hook")
+#  $selection_changed_hook.add_hook!("selection-buttons-effects-hook") do | |
+#    flag = selection?
+#    $selection_buttons.each do |w| set_sensitive(w, flag) end
+#  end
   
   mark_hook_proc = lambda do
     flag = marks?

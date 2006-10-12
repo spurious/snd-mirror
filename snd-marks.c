@@ -493,6 +493,7 @@ static void run_mark_hook(chan_info *cp, int id, mark_hook_reason_t reason)
 			C_TO_XEN_INT(cp->chan),
 			C_TO_XEN_INT((int)reason)),
 	     S_mark_hook);
+  run_watchers();
 }
 
 static void allocate_marks(chan_info *cp, int edit_ctr)

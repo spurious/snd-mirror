@@ -66,19 +66,22 @@ See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more 
 
       (define (post-record-input-dialog)
         (if (not (Widget? record-input-dialog))
-            ;; if record-input-dialog doesn't exist, create it
             (let ((initial-record-input-channel 4))
+
               (set! record-input-dialog
-                    (make-effect-dialog record-input-label
-                                        (lambda (w context info) (cp-record-input))
-                                        (lambda (w context info)
-                                          (help-dialog "Record input channel Help"
+                    (make-effect-dialog 
+		     record-input-label
+
+		     (lambda (w context info) (cp-record-input))
+
+		     (lambda (w context info)
+		       (help-dialog "Record input channel Help"
 "Select the appropriate radio button to set the record input channel. Note that if you are using the ALSA drivers you may need to set the record channel from your system mixer (e.g. aumix) as well."))
-                                        (lambda (w c i)
-                                          (set! record-input-channel initial-record-input-channel)
-					  (if radio-buttons-yes
-					      (XtSetValues record-input-default-widget (list XmNselectedPosition 1))
-					      (XmToggleButtonSetState record-input-default-widget #t #t)))))
+		     (lambda (w c i)
+		       (set! record-input-channel initial-record-input-channel)
+		       (if radio-buttons-yes
+			   (XtSetValues record-input-default-widget (list XmNselectedPosition 1))
+			   (XmToggleButtonSetState record-input-default-widget #t #t)))))
 
 	      (if radio-buttons-yes
 		  (let* ((s1 (XmStringCreateLocalized "Record input channel"))

@@ -1974,7 +1974,7 @@
 	    (names (list '*snd-opened-sound* 'abort 'add-clm-field 'add-clm-type 'add-colormap 
 			 'add-directory-to-view-files-list 'add-file-filter 'add-file-sorter 'add-file-to-view-files-list 'add-mark
 			 'add-player 'add-sound-file-extension 'add-to-main-menu 'add-to-menu
-			 'add-transform 'after-apply-controls-hook 'after-edit-hook 'after-graph-hook 'after-lisp-graph-hook
+			 'add-transform 'add-watcher 'after-apply-controls-hook 'after-edit-hook 'after-graph-hook 'after-lisp-graph-hook
 			 'after-open-hook 'after-save-as-hook 'after-save-state-hook 'after-transform-hook 'all-pass
 			 'all-pass? 'amp-control 'amp-control-bounds 'amplitude-modulate 'analyse-ladspa
 			 'apply-controls 'apply-ladspa 'array->file 'array-interp 'as-one-edit
@@ -2005,7 +2005,7 @@
 			 'default-output-header-type 'default-output-srate 'define-envelope 'degrees->radians 'delay
 			 'delay-tick 'delay? 'delete-colormap 'delete-file-filter 'delete-file-sorter
 			 'delete-mark 'delete-marks 'delete-mix 'delete-sample 'delete-samples
-			 'delete-selection 'delete-track 'delete-transform 'dialog-widgets 'disk-kspace
+			 'delete-selection 'delete-track 'delete-transform 'delete-watcher 'dialog-widgets 'disk-kspace
 			 'display-edits 'doit-again-button-color 'doit-button-color 'dolph-chebyshev-window 'dont-normalize
 			 'dot-product 'dot-size 'draw-axes 'draw-dot 'draw-dots
 			 'draw-line 'draw-lines 'draw-mark-hook 'draw-string 'drop-hook
@@ -2161,7 +2161,7 @@
 			 'scan-chan 'scan-channel 'script-arg 'script-args 'search-procedure
 			 'seconds->samples 'select-all 'select-channel 'select-channel-hook 'select-sound
 			 'select-sound-hook 'selected-channel 'selected-data-color 'selected-graph-color 'selected-sound
-			 'selection-changed-hook 'selection-chans 'selection-color 'selection-context 'selection-creates-region
+			 'selection-chans 'selection-color 'selection-context 'selection-creates-region
 			 'selection-frames 'selection-maxamp 'selection-maxamp-position 'selection-member? 'selection-position
 			 'selection-srate 'selection? 'send-mozilla
 			 'short-file-name 'show-all-axes 'show-all-axes-unlabelled 'show-bare-x-axis
@@ -26281,7 +26281,6 @@ EDITS: 5
   (add-hook! color-hook arg0) (carg0 color-hook)
   (add-hook! orientation-hook arg0) (carg0 orientation-hook)
   (add-hook! start-playing-selection-hook arg0) (carg0 start-playing-selection-hook)
-  (add-hook! selection-changed-hook arg0) (carg0 selection-changed-hook)
   
   (add-hook! during-open-hook arg3) (carg3 during-open-hook)
   (add-hook! after-transform-hook arg3) (carg3 after-transform-hook)
@@ -26985,7 +26984,6 @@ EDITS: 5
 	    (cl #f)
 	    (ig #f)
 	    (scl #f)
-	    (sel #f)
 	    (other #f))
 	(add-hook! open-hook 
 		   (lambda (filename)
@@ -27009,7 +27007,6 @@ EDITS: 5
 			 (snd-display ";initial-graph-hook (channel): ~A not 0?" chn))
 		     (set! ig #t)
 		     #f))
-	(add-hook! selection-changed-hook (lambda () (set! sel #t)))
 	
 	(set! ind (open-sound "oboe.snd"))
 	
@@ -27018,14 +27015,11 @@ EDITS: 5
 	(if (not ig) (snd-display ";initial-graph-hook not called?"))
 	(if (not (number? aop)) (snd-display ";after-open-hook not called?"))
 	(if (not (= aop ind)) (snd-display ";after-open-hook ~A but ind: ~A?" aop ind))
-	(if sel (snd-display ";selection-changed-hook called for no reason?"))
 	(select-all)
-	(if (not sel) (snd-display ";selection-changed-hook not called?"))
 	(reset-hook! open-hook)
 	(reset-hook! during-open-hook)
 	(reset-hook! after-open-hook)
 	(reset-hook! initial-graph-hook)
-	(reset-hook! selection-changed-hook)
 	
 	(add-hook! open-hook (lambda (filename) #t))
 	(let ((pistol (open-sound "pistol.snd")))
@@ -59049,7 +59043,7 @@ EDITS: 1
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
 		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find-channel
 		     find-mark find-sound finish-progress-report foreground-color insert-file-dialog
-		     frames free-sample-reader graph transform? delete-transform
+		     frames free-sample-reader graph transform? delete-transform add-watcher delete-watcher
 		     graph-color graph-cursor graph-data graph->ps gl-graph->ps graph-style lisp-graph?  graphs-horizontal header-type
 		     help-dialog info-dialog highlight-color in insert-region insert-sample insert-samples
 		     insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
@@ -60091,8 +60085,7 @@ EDITS: 1
 			(list stop-playing-selection-hook 'stop-playing-selection-hook)
 			(list color-hook 'color-hook)
 			(list orientation-hook 'orientation-hook)
-			(list start-playing-selection-hook 'start-playing-selection-hook)
-			(list selection-changed-hook 'selection-changed-hook)))
+			(list start-playing-selection-hook 'start-playing-selection-hook)))
 	
 	(if (= test-28 0) 
 	    (begin

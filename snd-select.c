@@ -66,11 +66,10 @@ void call_selection_watchers(selection_watcher_reason_t reason)
 	if (selection_watchers[i])
 	  (*(selection_watchers[i]->watcher))(reason, selection_watchers[i]->context);
     }
+  run_watchers();
 }
 
 
-
-static XEN selection_changed_hook;
 
 static bool cp_has_selection(chan_info *cp, void *ignore)
 {
@@ -266,7 +265,6 @@ bool delete_selection(cut_selection_regraph_t regraph)
       for_each_normal_chan(cp_delete_selection);
       if (regraph == UPDATE_DISPLAY) for_each_normal_chan(update_graph);
       call_selection_watchers(SELECTION_INACTIVE);
-      if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
       return(true);
     }
   return(false);
@@ -286,7 +284,6 @@ void deactivate_selection(void)
   for_each_normal_chan(cp_deactivate_selection);
   for_each_normal_chan(update_graph);
   call_selection_watchers(SELECTION_INACTIVE);
-  if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
   if (selection_creation_chans) 
     selection_creation_chans = free_sync_info(selection_creation_chans);
 }
@@ -308,7 +305,6 @@ void reactivate_selection(chan_info *cp, off_t beg, off_t end)
   ed->selection_maxamp = -1.0;
   ed->selection_maxamp_position = -1;
   call_selection_watchers(SELECTION_ACTIVE);
-  if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
 }
 
 static void update_selection(chan_info *cp, off_t newend)
@@ -546,10 +542,6 @@ void finish_selection_creation(void)
       if (selection_creates_region(ss)) 
 	make_region_from_selection();
       call_selection_watchers(SELECTION_ACTIVE);
-      if (XEN_HOOKED(selection_changed_hook)) 
-	run_hook(selection_changed_hook, 
-		 XEN_EMPTY_LIST, 
-		 S_selection_changed_hook);
       selection_creation_chans = free_sync_info(selection_creation_chans);      
     }
 }
@@ -1113,7 +1105,6 @@ static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
       call_selection_watchers(SELECTION_CHANGED);
       if (selection_is_active())
 	redraw_selection();
-      if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
     }
   return(on);
 }
@@ -1306,9 +1297,4 @@ void g_init_selection(void)
   XEN_DEFINE_PROCEDURE(S_mix_selection,    g_mix_selection_w,    0, 3, 0, H_mix_selection);
   XEN_DEFINE_PROCEDURE(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all);
   XEN_DEFINE_PROCEDURE(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection);
-
-  #define H_selection_changed_hook S_selection_changed_hook " (): called whenever some portion of sound is \
-either selected or unselected"
-
-  selection_changed_hook = XEN_DEFINE_HOOK(S_selection_changed_hook, 0, H_selection_changed_hook); /* no args */
 }

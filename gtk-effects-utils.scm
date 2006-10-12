@@ -1,4 +1,4 @@
-(use-modules (ice-9 format))
+(use-modules (ice-9 format) (ice-9 optargs))
 
 (if (not (provided? 'xg))
     (let ((hxm (dlopen "xg.so")))
@@ -27,7 +27,15 @@
 	((car effects))
 	(update-label (cdr effects)))))
 
-(define (make-effect-dialog label ok-callback help-callback reset-callback)
+(define (effect-target-ok target)
+  (if (eq? target 'sound) 
+      (not (null? (sounds)))
+      (if (eq? target 'selection) 
+	  (selection?)
+	  (and (selected-sound)
+	       (>= (length (marks (selected-sound) (selected-channel))) 2)))))
+
+(define* (make-effect-dialog label ok-callback help-callback reset-callback :optional target-ok-callback)
   ;; make a standard dialog
   ;; callbacks take 2 args: widget data
   (let* ((dismiss-button (gtk_button_new_with_label "Dismiss"))
@@ -64,6 +72,16 @@
     (g_signal_connect help-button "clicked" help-callback #f)
     (gtk_widget_show help-button)
     ;; build rest in (.vbox (GTK_DIALOG new-dialog))
+
+    (if target-ok-callback
+	(begin
+	  (gtk_widget_set_sensitive ok-button (target-ok-callback))
+	  (add-watcher (lambda () (gtk_widget_set_sensitive ok-button (target-ok-callback)))))
+	(begin
+	  (gtk_widget_set_sensitive ok-button (not (null? (sounds))))
+	  (add-watcher (lambda () (gtk_widget_set_sensitive ok-button (not (null? (sounds))))))))
+
+    (g_object_set_data (G_OBJECT new-dialog) "ok-button" (GPOINTER ok-button))
     new-dialog))
 
 (define (change-label w new-label)

@@ -5,13 +5,7 @@
 (use-modules (ice-9 format))
 (provide 'snd-edit-menu.scm)
 
-(if (provided? 'xm)
-    (if (not (provided? 'snd-effects-utils.scm))
-	(load-from-path "effects-utils.scm"))) ; make-effect-dialog
-
 (define edit-menu 1)
-
-;(add-to-menu edit-menu #f #f)
 
 
 ;;; -------- selection -> new file

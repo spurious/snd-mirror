@@ -1,4 +1,5 @@
-(use-modules (ice-9 format))
+(use-modules (ice-9 format) (ice-9 optargs))
+
 (provide 'snd-effects-utils.scm)
 
 (if (not (provided? 'snd-motif)) (snd-error "effects-utils.scm is Motif-specific"))
@@ -56,9 +57,15 @@
 	((car effects))
 	(update-label (cdr effects)))))
 
-(define effect-dialogs '())
+(define (effect-target-ok target)
+  (if (eq? target 'sound) 
+      (not (null? (sounds)))
+      (if (eq? target 'selection) 
+	  (selection?)
+	  (and (selected-sound)
+	       (>= (length (marks (selected-sound) (selected-channel))) 2)))))
 
-(define (make-effect-dialog label ok-callback help-callback reset-callback)
+(define* (make-effect-dialog label ok-callback help-callback reset-callback :optional target-ok-callback)
   ;; make a standard dialog
   (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
 	 (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
@@ -100,12 +107,15 @@
     (XmStringFree xok)
     (XmStringFree xdismiss)
     (XmStringFree titlestr)
-;    (if (null? effect-dialogs)
-; TODO: add watchers to sensitize doit buttons
-;    (set! effect-dialogs (cons new-dialog effect-dialogs))
-;  remove selection-changed-hook (rb, fs as well as scm)
-;  check all current close-hooks open-hooks? etc
-;  doc/test/msg 
+
+    (if target-ok-callback
+	(begin
+	  (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (target-ok-callback))
+	  (add-watcher (lambda () (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (target-ok-callback)))))
+	(begin
+	  (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (not (null? (sounds))))
+	  (add-watcher (lambda () (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (not (null? (sounds))))))))
+
     new-dialog))
 
 

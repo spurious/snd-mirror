@@ -488,6 +488,7 @@ void about_snd_help(void)
 #if HAVE_GUILE || HAVE_FORTH
   char *files = NULL;
 #endif
+
 #if HAVE_GAUCHE
   features = word_wrap(xen_gauche_features(), 400);
 #endif
@@ -503,21 +504,19 @@ void about_snd_help(void)
   files = word_wrap(XEN_AS_STRING(XEN_VARIABLE_REF("*loaded-files*")), 400);
 #endif
   info = version_info();
+
   main_snd_help("Snd is a sound editor.",
 		info,
 		"\nRecent changes include:\n\
 \n\
+16-Oct:  add-watcher, delete-watcher.\n\
+12-Oct:  removed selection-changed-hook (use simpler watcher mechanism instead).\n\
 11-Oct:  gtk-effects-utils.scm and gtk support for *-menu.scm.\n\
 9-Oct:   with-file-monitor.\n\
 2-Oct:   gl2ps support, gl-graph->ps function, --with-gl2ps switch, gl2ps.[ch].\n\
 26-Sep:  save-marks changed to keep matching sync values, add-marks takes name and sync args.\n\
          moved config.h.in to mus-config.h.in\n\
 12-Sep:  Snd 8.4\n\
-6-Sep:   def-optkey-instrument.\n\
-1-Sep:   snd_frg.scm thanks to Olivier Doare.\n\
-28-Aug:  removed vu-font and vu-font-size, added vu-in-dB.\n\
-16-Aug:  display-bark-fft (dsp.scm).\n\
-         after-lisp-graph-hook, snd-color, snd-font, show-bare-x-axis.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
@@ -538,6 +537,7 @@ void about_snd_help(void)
 #endif
 	    "Please send bug reports or suggestions to bil@ccrma.stanford.edu.",
 NULL);
+
   if (info) FREE(info);
   if (features) FREE(features);
 #if HAVE_GUILE || HAVE_FORTH

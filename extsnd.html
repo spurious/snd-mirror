@@ -2579,16 +2579,6 @@ called when a sound is selected. The argument is the about-to-be-selected sound'
 <tr><td colspan=3 height=16></td></tr>
 
 
-<!-- selection-changed-hook -->
-<tr><td colspan=3 bgcolor="#f6f8ff">
-<code><a class=def name="selectionchangedhook">selection-changed-hook</a> ()</code>
-</td></tr>
-<tr><td></td><td colspan=2>
-called when a portion of the sound data is selected or deselected.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
-
-
 <!-- snd-error-hook -->
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="snderrorhook">snd-error-hook</a> (error-message)</code> [<b>or</b>]
@@ -5266,7 +5256,6 @@ append selection: <a href="sndscm.html#menusdoc">append-selection</a><br>
 write selection to a file: <a href="sndscm.html#menusdoc">selection-&gt;new</a><br>
 notch filter selection: <a href="sndscm.html#notchselection">notch-selection</a><br>
 undo select-all.: <a href="sndscm.html#menusdoc">deselect-all</a><br>
-hook called when selection created or deleted.: <a href="#selectionchangedhook">selection-changed-hook</a><br>
 <br>
 </blockquote></small>
 </td></tr></TABLE>
@@ -11669,6 +11658,19 @@ use <a href="#cgp">C-g</a>.
 <tr><td colspan=2 height=16></td></tr>
 
 
+<!-- add-watcher -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="addwatcher">add-watcher</a> (func)</code></td></tr>
+<tr><td width=60><br>
+</td><td>
+add-watcher adds 'func' (a function of no arguments) to the watcher list, and 
+returns its id (an integer, used by <a href="#deletewatcher">delete-watcher</a>).  Each watcher function is called whenever the current selection
+changes, a sound is opened or closed or set read-only, a sound is selected, or a mark is changed.  There are examples in
+effects-utils.scm.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
 <!-- bind-key -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="bindkey">bind-key</a> (key state func <i>extended origin</i>) </code></td></tr>
@@ -12015,6 +12017,16 @@ See examp.scm and play.scm for other examples.
 <code><a class=def name="cgx">c-g!</a> ()</code></td></tr>
 <tr><td></td><td>
 This simulates typing C-g.  It is intended for use with <a href="#bindkey">bind-key</a> to remap C-g.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- delete-watcher -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="deletewatcher">delete-watcher</a> (id)</code></td></tr>
+<tr><td width=60><br>
+</td><td>
+delete-watcher removes from the watcher list the function associated with id.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 

@@ -1969,15 +1969,94 @@ static XEN g_skip_block_comment(XEN ch, XEN port)
 }
 #endif
 
+
+/* -------- watchers -------- */
+
+#define NOT_A_WATCHER -1
+#define INITIAL_WATCHERS_SIZE 8
+#define WATCHERS_SIZE_INCREMENT 8
+static int *watchers = NULL;
+static int watchers_size = 0;
+
+static XEN g_delete_watcher(XEN id)
+{
+  int w;
+  #define H_delete_watcher "(" S_delete_watcher " id) removes the watcher associated with the integer 'id'"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ONLY_ARG, S_delete_watcher, "an integer");
+
+  w = XEN_TO_C_INT(id);
+  if ((w >= 0) && 
+      (w < watchers_size) &&
+      (watchers[w] != NOT_A_WATCHER))
+    {
+      snd_unprotect_at(watchers[w]);
+      watchers[w] = NOT_A_WATCHER;
+    }
+  return(id);
+}
+
+void run_watchers(void)
+{
+  if (watchers)
+    {
+      int i;
+      for (i = 0; i < watchers_size; i++)
+	if (watchers[i] != NOT_A_WATCHER)
+	  XEN_CALL_0(snd_protected_at(watchers[i]), S_add_watcher);
+    }
+}
+
+static XEN g_add_watcher(XEN func)
+{
+  int i, floc = 0;
+  #define H_add_watcher "(" S_add_watcher " func) adds 'func' (a function of no arguments) to the watcher list, and \
+returns its id (an integer, used by " S_delete_watcher "). "
+
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && XEN_REQUIRED_ARGS_OK(func, 0), func, XEN_ONLY_ARG, S_add_watcher, "a function of no args");
+
+  if (watchers_size == 0)
+    {
+      watchers_size = INITIAL_WATCHERS_SIZE;
+      watchers = (int *)CALLOC(watchers_size, sizeof(int));
+      for (i = 0; i < watchers_size; i++) watchers[i] = NOT_A_WATCHER;
+    }
+  else
+    {
+      floc = -1;
+      for (i = 0; i < watchers_size; i++)
+	if (watchers[i] == NOT_A_WATCHER)
+	  {
+	    floc = i;
+	    break;
+	  }
+      if (floc == -1)
+	{
+	  floc = watchers_size;
+	  watchers_size += WATCHERS_SIZE_INCREMENT;
+	  watchers = (int *)REALLOC(watchers, watchers_size * sizeof(int));
+	  for (i = floc; i < watchers_size; i++) watchers[i] = NOT_A_WATCHER;
+	}
+    }
+
+  watchers[floc] = snd_protect(func);
+  return(C_TO_XEN_INT(floc));
+}
+
+/* TODO: test watchers (add/delete sound/read/select/mark)/ doc example / fs / rb / mark highlight?
+ * PERHAPS: equivalent of backgrounds in gtk?
+ */
+
+
+
 #ifdef XEN_ARGIFY_1
 #if HAVE_SCHEME && HAVE_DLFCN_H
-XEN_NARGIFY_1(g_dlopen_w, g_dlopen)
-XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
-XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
-XEN_NARGIFY_2(g_dlinit_w, g_dlinit)
+  XEN_NARGIFY_1(g_dlopen_w, g_dlopen)
+  XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
+  XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
+  XEN_NARGIFY_2(g_dlinit_w, g_dlinit)
 #endif
 #if HAVE_SCHEME && (!HAVE_SCM_CONTINUATION_P)
-XEN_NARGIFY_1(g_continuation_p_w, g_continuation_p)
+  XEN_NARGIFY_1(g_continuation_p_w, g_continuation_p)
 #endif
 XEN_NARGIFY_1(g_snd_print_w, g_snd_print)
 XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
@@ -1995,15 +2074,15 @@ XEN_NARGIFY_0(g_gc_off_w, g_gc_off)
 XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 
 #if HAVE_SPECIAL_FUNCTIONS
-XEN_NARGIFY_1(g_j0_w, g_j0)
-XEN_NARGIFY_1(g_j1_w, g_j1)
-XEN_NARGIFY_2(g_jn_w, g_jn)
-XEN_NARGIFY_1(g_y0_w, g_y0)
-XEN_NARGIFY_1(g_y1_w, g_y1)
-XEN_NARGIFY_2(g_yn_w, g_yn)
-XEN_NARGIFY_1(g_erf_w, g_erf)
-XEN_NARGIFY_1(g_erfc_w, g_erfc)
-XEN_NARGIFY_1(g_lgamma_w, g_lgamma)
+  XEN_NARGIFY_1(g_j0_w, g_j0)
+  XEN_NARGIFY_1(g_j1_w, g_j1)
+  XEN_NARGIFY_2(g_jn_w, g_jn)
+  XEN_NARGIFY_1(g_y0_w, g_y0)
+  XEN_NARGIFY_1(g_y1_w, g_y1)
+  XEN_NARGIFY_2(g_yn_w, g_yn)
+  XEN_NARGIFY_1(g_erf_w, g_erf)
+  XEN_NARGIFY_1(g_erfc_w, g_erfc)
+  XEN_NARGIFY_1(g_lgamma_w, g_lgamma)
 #endif
 
 XEN_NARGIFY_1(g_i0_w, g_i0)
@@ -2013,9 +2092,9 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
   XEN_NARGIFY_4(g_gsl_dht_w, g_gsl_dht)
 
-#if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
-  XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
-#endif
+  #if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
+    XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
+  #endif
 #endif
 
 #if HAVE_GAUCHE
@@ -2023,17 +2102,20 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #endif
 
+XEN_NARGIFY_1(g_delete_watcher_w, g_delete_watcher)
+XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
+
 #else
 /* not argify */
 
 #if HAVE_SCHEME && HAVE_DLFCN_H
-#define g_dlopen_w g_dlopen
-#define g_dlclose_w g_dlclose
-#define g_dlerror_w g_dlerror
-#define g_dlinit_w g_dlinit
+  #define g_dlopen_w g_dlopen
+  #define g_dlclose_w g_dlclose
+  #define g_dlerror_w g_dlerror
+  #define g_dlinit_w g_dlinit
 #endif
 #if HAVE_SCHEME && (!HAVE_SCM_CONTINUATION_P)
-#define g_continuation_p_w g_continuation_p
+  #define g_continuation_p_w g_continuation_p
 #endif
 #define g_snd_print_w g_snd_print
 #define g_little_endian_w g_little_endian
@@ -2048,25 +2130,27 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #define g_gc_off_w g_gc_off
 #define g_gc_on_w g_gc_on
 #if HAVE_SPECIAL_FUNCTIONS
-#define g_j0_w g_j0
-#define g_j1_w g_j1
-#define g_jn_w g_jn
-#define g_y0_w g_y0
-#define g_y1_w g_y1
-#define g_yn_w g_yn
-#define g_erf_w g_erf
-#define g_erfc_w g_erfc
-#define g_lgamma_w g_lgamma
+  #define g_j0_w g_j0
+  #define g_j1_w g_j1
+  #define g_jn_w g_jn
+  #define g_y0_w g_y0
+  #define g_y1_w g_y1
+  #define g_yn_w g_yn
+  #define g_erf_w g_erf
+  #define g_erfc_w g_erfc
+  #define g_lgamma_w g_lgamma
 #endif
 #define g_i0_w g_i0
 #if HAVE_GSL
-#define g_gsl_ellipk_w g_gsl_ellipk
-#define g_gsl_ellipj_w g_gsl_ellipj
-#define g_gsl_dht_w g_gsl_dht
-#if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
-#define g_gsl_roots_w g_gsl_roots
+  #define g_gsl_ellipk_w g_gsl_ellipk
+  #define g_gsl_ellipj_w g_gsl_ellipj
+  #define g_gsl_dht_w g_gsl_dht
+  #if HAVE_COMPLEX_TRIG && (!HAVE_RUBY) && HAVE_SCM_MAKE_COMPLEX
+    #define g_gsl_roots_w g_gsl_roots
+  #endif
 #endif
-#endif
+#define g_delete_watcher_w g_delete_watcher
+#define g_add_watcher_w g_add_watcher
 #endif
 
 
@@ -2201,6 +2285,9 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("ftell", g_ftell_w, 1, 0, 0, "(ftell fd) -> lseek");
   XEN_DEFINE_PROCEDURE("eval-string", g_eval_string_w, 1, 0, 0, "eval a string");
 #endif
+
+  XEN_DEFINE_PROCEDURE(S_delete_watcher, g_delete_watcher_w, 1, 0, 0, H_delete_watcher);
+  XEN_DEFINE_PROCEDURE(S_add_watcher,    g_add_watcher_w,    1, 0, 0, H_add_watcher);
 
 #if HAVE_SCHEME
   #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
