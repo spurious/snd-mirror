@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Tue Sep 12 03:11:25 CEST 2006
+\ Changed: Wed Oct 11 23:07:19 CEST 2006
 
 \ Commentary:
 \ 
@@ -250,7 +250,7 @@ mus-audio-default value *clm-device*
 
 : make-default-comment ( -- str )
   $" Written %s by %s at %s using clm (fth) of %s" _
-  '( $" %a %d-%b-%y %H:%M %Z" time-count strftime
+  '( $" %a %d-%b-%y %H:%M %Z" current-time strftime
      getlogin
      gethostname
      fth-date ) format

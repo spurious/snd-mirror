@@ -52,9 +52,6 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 	  lseek(chan, mus_header_data_location(), SEEK_SET);
 	  size = chans * mus_samples_to_bytes(data_format, samples);
 	  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
-#if MUS_DEBUGGING
-	  set_printable(0);
-#endif
 	  write(chan, buf, size);
 	  snd_close(chan, newname);
 	  FREE(buf);
@@ -3652,9 +3649,6 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   lseek(chan, mus_header_data_location(), SEEK_SET);
   size = ch * mus_samples_to_bytes(df, len);
   buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
-#if MUS_DEBUGGING
-  set_printable(0);
-#endif
   write(chan, buf, size);
   snd_close(chan, str);
   FREE(buf);

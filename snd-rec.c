@@ -327,14 +327,7 @@ static void init_recorder(void)
   for (i = 0; i < MAX_IN_CHANS; i++) rp->in_amp_preset[i] = (bool *)CALLOC(MAX_OUT_CHANS, sizeof(bool));
 
   rp->chan_in_active = (bool *)CALLOC(MAX_IN_CHANS, sizeof(bool));
-#if MUS_DEBUGGING
-  set_printable(0);
-#endif
-
   rp->chan_out_active = (bool *)CALLOC(MAX_OUT_CHANS, sizeof(bool));
-#if MUS_DEBUGGING
-  set_printable(0);
-#endif
 }
 
 recorder_info *get_recorder_info(void) 

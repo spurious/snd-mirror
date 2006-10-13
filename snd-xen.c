@@ -2042,8 +2042,8 @@ returns its id (an integer, used by " S_delete_watcher "). "
   return(C_TO_XEN_INT(floc));
 }
 
-/* TODO: test watchers (add/delete sound/read/select/mark)/ doc example / fs / rb / mark highlight?
- * PERHAPS: equivalent of backgrounds in gtk?
+/* TODO: watcher fs / rb
+ * TODO: current-window-display in fs loses last portion of graph?
  */
 
 
@@ -2382,7 +2382,12 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_ladspa_to_snd();
 #endif
 
-  XEN_ADD_TO_LOAD_PATH(mus_getcwd());
+  {
+    char *pwd;
+    pwd = mus_getcwd();
+    XEN_ADD_TO_LOAD_PATH(pwd);
+    FREE(pwd);
+  }
 
 #if HAVE_GUILE
   {

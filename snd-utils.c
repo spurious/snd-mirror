@@ -971,7 +971,6 @@ void *mem_calloc(int len, int size, const char *func, const char *file, int line
   ptr = (char *)(true_ptr + MEM_PAD_SIZE);
   if (ptr == NULL) {fprintf(stderr,"calloc->null"); abort();}
   remember_pointer((void *)ptr, (void *)true_ptr, len * size, func, file, line);
-  if (size == 1) set_printable(PRINT_CHAR);
   return((void *)ptr);
 }
 

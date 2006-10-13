@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
 ;;;  test 0: constants                          [492]
-;;;  test 1: defaults                           [1065]
-;;;  test 2: headers                            [1267]
-;;;  test 3: variables                          [1571]
-;;;  test 4: sndlib                             [2226]
-;;;  test 5: simple overall checks              [4506]
-;;;  test 6: vcts                               [11970]
-;;;  test 7: colors                             [12280]
-;;;  test 8: clm                                [12786]
-;;;  test 9: mix                                [21668]
-;;;  test 10: marks                             [24737]
-;;;  test 11: dialogs                           [25559]
-;;;  test 12: extensions                        [25852]
-;;;  test 13: menus, edit lists, hooks, etc     [26302]
-;;;  test 14: all together now                  [27743]
-;;;  test 15: chan-local vars                   [28818]
-;;;  test 16: regularized funcs                 [30113]
-;;;  test 17: dialogs and graphics              [34529]
-;;;  test 18: enved                             [34618]
-;;;  test 19: save and restore                  [34638]
-;;;  test 20: transforms                        [36265]
-;;;  test 21: new stuff                         [38014]
-;;;  test 22: run                               [38947]
-;;;  test 23: with-sound                        [44434]
-;;;  test 24: user-interface                    [46443]
-;;;  test 25: X/Xt/Xm                           [50057]
-;;;  test 26: Gtk                               [54645]
-;;;  test 27: GL                                [58732]
-;;;  test 28: errors                            [58856]
-;;;  test all done                              [60986]
+;;;  test 1: defaults                           [1068]
+;;;  test 2: headers                            [1270]
+;;;  test 3: variables                          [1575]
+;;;  test 4: sndlib                             [2230]
+;;;  test 5: simple overall checks              [4510]
+;;;  test 6: vcts                               [11974]
+;;;  test 7: colors                             [12289]
+;;;  test 8: clm                                [12795]
+;;;  test 9: mix                                [21677]
+;;;  test 10: marks                             [24746]
+;;;  test 11: dialogs                           [25568]
+;;;  test 12: extensions                        [25862]
+;;;  test 13: menus, edit lists, hooks, etc     [26316]
+;;;  test 14: all together now                  [27854]
+;;;  test 15: chan-local vars                   [28929]
+;;;  test 16: regularized funcs                 [30224]
+;;;  test 17: dialogs and graphics              [34640]
+;;;  test 18: enved                             [34729]
+;;;  test 19: save and restore                  [34749]
+;;;  test 20: transforms                        [36376]
+;;;  test 21: new stuff                         [38125]
+;;;  test 22: run                               [39062]
+;;;  test 23: with-sound                        [44549]
+;;;  test 24: user-interface                    [46558]
+;;;  test 25: X/Xt/Xm                           [50172]
+;;;  test 26: Gtk                               [54760]
+;;;  test 27: GL                                [58877]
+;;;  test 28: errors                            [59001]
+;;;  test all done                              [61131]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -27680,6 +27680,108 @@ EDITS: 5
 	  (close-sound ind))
 	(reset-hook! before-save-as-hook)
 	(reset-hook! after-save-as-hook))
+
+      (let* ((sound-changed #f)
+	     (read-only-changed #f)
+	     (marks-changed #f)
+	     (selection-changed #f)
+	     (sound-selection-changed #f)
+	     (cur-sounds (sounds))
+	     (cur-marks (marks))
+	     (cur-read-only (map read-only (sounds)))
+	     (cur-selection (selection?))
+	     (cur-selected-sound (selected-sound))
+	     (cur-selected-channel (and cur-selected-sound (selected-channel)))
+	     (called #f))
+	(let ((w1 (add-watcher (lambda ()
+				 (set! called #t)
+				 (if (not (equal? (sounds) cur-sounds))
+				     (begin
+				       (set! sound-changed #t)
+				       (set! cur-sounds (sounds))))
+				 (if (not (equal? cur-selection (selection?)))
+				     (begin
+				       (set! selection-changed #t)
+				       (set! cur-selection (selection?))))
+				 (if (not (equal? cur-marks (marks)))
+				     (begin
+				       (set! marks-changed #t)
+				       (set! cur-marks (marks))))
+				 (let ((rdonly (map read-only (sounds))))
+				   (if (not (equal? cur-read-only rdonly))
+				       (begin
+					 (set! read-only-changed #t)
+					 (set! cur-read-only rdonly))))
+				 (if (or (not (equal? cur-selected-sound (selected-sound)))
+					 (not (equal? cur-selected-channel (and cur-selected-sound (selected-channel)))))
+				     (begin
+				       (set! sound-selection-changed #t)
+				       (set! cur-selected-sound (selected-sound))
+				       (set! cur-selected-channel (and cur-selected-sound (selected-channel)))))))))
+	  (let ((ind (open-sound "oboe.snd")))
+	    (if (not sound-changed)
+		(snd-display ";watcher missed sound open? ")
+		(set! sound-changed #f))
+	    
+	    (set! (read-only ind) #t)
+	    (if (not read-only-changed)
+		(snd-display ";watcher missed read-only? ")
+		(set! read-only-changed #f))
+	    
+	    (let ((m1 (add-mark 123 ind 0)))
+	      (if (not marks-changed)
+		  (snd-display ";watcher missed add mark? ")
+		  (set! marks-changed #f))
+	      
+	      (set! called #f) ; too hard to track mark samples here
+	      (set! (mark-sample m1) 321)
+	      (if (not called)
+		  (snd-display ";watcher missed move mark? ")
+		  (set! marks-changed #f))
+	      
+	      (delete-mark m1)
+	      (if (not marks-changed)
+		  (snd-display ";watcher missed delete mark? ")
+		  (set! marks-changed #f)))
+	    
+	    (let ((ind1 (open-sound "2.snd")))
+	      (if (not sound-changed)
+		  (snd-display ";watcher missed 2 sound open? ")
+		  (set! sound-changed #f))
+	      
+	      (select-sound ind)
+	      (if (not sound-selection-changed)
+		  (snd-display ";watcher missed select sound?")
+		  (set! sound-selection-changed #f))
+	      (select-sound ind1)
+	      (if (not sound-selection-changed)
+		  (snd-display ";watcher missed select sound 1?")
+		  (set! sound-selection-changed #f))
+	      (select-channel 1)
+	      (if (not sound-selection-changed)
+		  (snd-display ";watcher missed select channel?")
+		  (set! sound-selection-changed #f))
+	      
+	      (close-sound ind1)
+	      (if (not sound-changed)
+		  (snd-display ";watcher missed 2 sound close? ")
+		  (set! sound-changed #f)))
+	    
+	    (select-all ind)
+	    (if (not selection-changed)
+		(snd-display ";watcher missed selection")
+		(set! selection-changed #f))
+	    
+	    (set! (selection-member? ind 0) #f)
+	    (if (not selection-changed)
+		(snd-display ";watcher missed selection change")
+		(set! selection-changed #f))
+	    
+	    (set! sound-changed #f)
+	    (delete-watcher w1)
+	    (close-sound ind)
+	    (if sound-changed
+		(snd-display ";deleted watcher runs anyway?")))))
       
       (run-hook after-test-hook 13)
       ))

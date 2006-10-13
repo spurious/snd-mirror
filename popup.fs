@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Mon Sep 04 17:16:59 CEST 2006
+\ Changed: Wed Oct 11 23:08:05 CEST 2006
 
 \ Commentary:
 
@@ -24,8 +24,7 @@
 
 \ Code:
 
-require clm
-require examp
+require extensions
 require snd-xm
 
 \ for prefs

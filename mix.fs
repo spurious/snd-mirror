@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Mon Sep 04 17:15:45 CEST 2006
+\ Changed: Wed Oct 11 23:07:49 CEST 2006
 
 \ Commentary:
 \
@@ -23,8 +23,8 @@
 \
 \ mix-properties       ( id -- props )
 \ set-mix-properties   ( id val -- )
-\ mix-property         ( key id -- val )
-\ set-mix-property     ( key val id -- )
+\ mix-property         ( id key -- val )
+\ set-mix-property     ( id key val -- )
 \ mix-name             ( id -- name )
 \ set-mix-name         ( id name -- )
 \ mix-name->id         ( name -- id )
@@ -41,8 +41,8 @@
 \
 \ track-properties     ( id -- props )
 \ set-track-properties ( id val -- )
-\ track-property       ( key id -- val )
-\ set-track-property   ( key val id -- )
+\ track-property       ( id key -- val )
+\ set-track-property   ( id key val -- )
 \ mix-click-info       ( -- proc; id self -- #t )
 
 \ Code:
@@ -266,8 +266,8 @@ previous
 : mix-properties     ( id -- props ) object-id 'mix-property property-ref ;
 : set-mix-properties ( id val -- )   swap object-id 'mix-property rot property-set! ;
 
-: mix-property { key id -- val }
-  doc" ( key id -- val )  \
+: mix-property { id key -- val }
+  doc" ( id key -- val )  \
 Returns the value associated with KEY in the given mix's property list, or #f."
   id mix? if
     id mix-properties dup hash? if key hash-ref else drop #f then
@@ -276,8 +276,8 @@ Returns the value associated with KEY in the given mix's property list, or #f."
   then
 ;
 
-: set-mix-property { key val id -- }
-  doc" ( key val id -- )  Sets the value VAL to KEY in the given mix's property list."
+: set-mix-property { id key val -- }
+  doc" ( id key val -- )  Sets the value VAL to KEY in the given mix's property list."
   id mix? if
     id mix-properties { props }
     props hash? if
@@ -292,8 +292,8 @@ Returns the value associated with KEY in the given mix's property list, or #f."
   then
 ;
 
-: mix-name     ( id -- name ) :name swap mix-property ;
-: set-mix-name ( id name -- ) :name swap rot set-mix-property ;
+: mix-name     ( id -- name ) :name mix-property ;
+: set-mix-name ( id name -- ) :name swap set-mix-property ;
 
 hide
 : mix-name->id-xt ( name --; id self -- nothing or id )
@@ -311,13 +311,13 @@ previous
 hide
 : mix-click-sets-amp-cb ( id -- #t )
   { id }
-  :zero id mix-property not if
-    id mix-chans 1- 0.0 make-array map! id i mix-amp end-map :amps swap id set-mix-property
+  id :zero mix-property not if
+    id mix-chans 1- 0.0 make-array map! id i mix-amp end-map :amps swap id -rot set-mix-property
     id mix-chans 0 ?do id i 0.0 set-mix-amp drop loop
-    :zero #t id set-mix-property
+    id :zero #t set-mix-property
   else
-    :amps id mix-property dup false? if drop #() then each id i rot set-mix-amp drop end-each
-    :zero #f id set-mix-property
+    id :amps mix-property dup false? if drop #() then each id i rot set-mix-amp drop end-each
+    id :zero #f set-mix-property
   then
   #t
 ;
@@ -477,8 +477,8 @@ previous
 : track-properties     ( id -- props ) object-id 'track-property property-ref ;
 : set-track-properties ( id val -- )   swap object-id 'track-property rot property-set! ;
 
-: track-property { key id -- val }
-  doc" ( key id -- val )  \
+: track-property { id key -- val }
+  doc" ( id key -- val )  \
 Returns the value associated with KEY in the given track's property list, or #f."
   id track? if
     id track-properties dup hash? if key hash-ref else drop #f then
@@ -487,8 +487,8 @@ Returns the value associated with KEY in the given track's property list, or #f.
   then
 ;
 
-: set-track-property { key val id -- }
-  doc" ( key val id -- )  Sets the value VAL to KEY in the given track's property list."
+: set-track-property { id key val -- }
+  doc" ( id key val -- )  Sets the value VAL to KEY in the given track's property list."
   id track? if
     id track-properties { props }
     props hash? if

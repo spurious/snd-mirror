@@ -11665,8 +11665,16 @@ use <a href="#cgp">C-g</a>.
 </td><td>
 add-watcher adds 'func' (a function of no arguments) to the watcher list, and 
 returns its id (an integer, used by <a href="#deletewatcher">delete-watcher</a>).  Each watcher function is called whenever the current selection
-changes, a sound is opened or closed or set read-only, a sound is selected, or a mark is changed.  There are examples in
-effects-utils.scm.
+changes, a sound is opened or closed or set read-only, a sound is selected, or a mark is changed.  
+effects-utils.scm (and the gtk version in gtk-effects-utils.scm) use this to make sure the
+"DoIt" button is sensitive only when it can actually do something.  In the simplest case, this
+is:
+<pre>
+    Motif: (add-watcher (lambda () 
+                          (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (not (null? (sounds))))))
+    Gtk:   (add-watcher (lambda () 
+                          (gtk_widget_set_sensitive ok-button (not (null? (sounds))))))))
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 

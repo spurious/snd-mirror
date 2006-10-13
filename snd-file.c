@@ -1544,13 +1544,7 @@ void *make_axes_data(snd_info *sp)
   sa->fields = 8;
   sa->axis_data = (double *)CALLOC(sa->fields * sa->chans, sizeof(double));
   sa->fftp = (bool *)CALLOC(sa->chans, sizeof(bool));
-#if MUS_DEBUGGING
-  set_printable(0);
-#endif
   sa->wavep = (bool *)CALLOC(sa->chans, sizeof(bool));
-#if MUS_DEBUGGING
-  set_printable(0);
-#endif
   for (i = 0; i < sa->chans; i++)
     {
       chan_info *cp;

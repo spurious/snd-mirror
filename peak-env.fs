@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Wed Dec 21 17:37:13 CET 2005
-\ Changed: Sun Aug 20 01:00:48 CEST 2006
+\ Changed: Wed Oct 11 23:07:56 CEST 2006
 
 \ Commentary:
 \ 
@@ -16,7 +16,6 @@
 [then]
 
 require clm
-require examp
 
 #t value save-peak-env-info?
 $" ~/peaks" value save-peak-env-info-directory

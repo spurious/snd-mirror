@@ -533,6 +533,8 @@ gauche-format.scm:
 <br>
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndresources">Snd resources</a></h3></td></tr></table>
 
+<table width="50%" border=0 vspace=10><tr><td bgcolor="lightgreen" valign="middle"><h4>Motif</h4></td></tr></table>
+
 <p>In the Motif version, there are a few X-style resources (for use in your ~/.Xdefaults file) that Snd looks for (see Snd.ad); each has
 a built-in default value, so you can ignore this entirely, and use the extension language initialization file to choose new values.
 I may remove all this stuff eventually (it was always a bad idea).
@@ -689,6 +691,9 @@ is equivalent to the -h flag; if 1, sounds are layed out
 horizontally rather than vertically;  if 2, you get a notebook
 widget holding the sounds.
 </p>
+
+<table width="50%" border=0 vspace=20><tr><td bgcolor="lightgreen" valign="middle"><h4>Gtk</h4></td></tr></table>
+
 <p>In Gtk, the various default colors and fonts are set via the "gtkrc"
 file.  If you are using some global "theme", you probably have ~/.gtkrc-2.0.
 Snd looks for this file first.  If it isn't found, Snd looks on the
@@ -706,7 +711,21 @@ is to change the "default" or "default_menu" styles in Snd.gtkrc:
       ....
     }
 </pre>
-<p>Frank Barknecht made a more elaborate example using the Xfce-b5 theme:</p>
+<p>To get the "brushed metal" look, for example, put the line:
+</p>
+<pre>
+pixmap_path "/usr/share/themes/BrushedMetalClean/gtk"
+</pre>
+<p>at the start of Snd.gtkrc, then add these lines:
+</p>
+<pre>
+  bg_pixmap[NORMAL]      = "bc.xpm"
+  bg_pixmap[PRELIGHT]    = "bc-light.xpm"
+  bg_pixmap[ACTIVE]      = "bc-dark.xpm"
+  bg_pixmap[INSENSITIVE] = "bc.xpm"
+</pre>
+<p>to the "default" section (the first style).
+Frank Barknecht made a more elaborate example using the Xfce-b5 theme:</p>
 <img src="snd-gtkrc.png" alt="Snd with Xfce-b5 theme">
 
 <br>

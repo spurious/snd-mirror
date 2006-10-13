@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 23:36:09 CET 2005
-\ Changed: Sun Aug 20 00:58:23 CEST 2006
+\ Changed: Wed Oct 11 23:07:27 CEST 2006
 
 \ Commentary:
 
@@ -12,9 +12,7 @@
 
 \ Code:
 
-require clm
-require examp
-require extensions \ need channel-property
+require extensions
 
 \ --- inset overall waveform; if click, move to that location ---
 

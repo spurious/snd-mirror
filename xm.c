@@ -174,9 +174,6 @@
     #define PROC_FALSE "#f"
   #endif
   #define NOT_A_GC_LOC -1
-  #if MUS_DEBUGGING
-    void set_printable(int val);
-  #endif
 #endif
 
 #ifndef CALLOC
@@ -9479,9 +9476,6 @@ static XEN gxm_XSetPointerMapping(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XSetPointerMapping", "int");
   if (XEN_INTEGER_P(arg3)) len = XEN_TO_C_INT(arg3); else len = XEN_LIST_LENGTH(arg2);
   map = (unsigned char *)CALLOC(len, sizeof(unsigned char));
-#if MUS_DEBUGGING
-  set_printable(0);
-#endif
   for (i = 0; i < len; i++)
     map[i] = (unsigned char)XEN_TO_C_INT(XEN_LIST_REF(arg2, i));
   rtn = XSetPointerMapping(XEN_TO_C_Display(arg1), map, len);
@@ -10717,9 +10711,6 @@ static XEN gxm_XGetPointerMapping(XEN arg1, XEN ignore, XEN arg3)
   len = XEN_TO_C_INT(arg3);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XGetPointerMapping", "positive integer");
   map = (unsigned char *)CALLOC(len, sizeof(unsigned char));
-#if MUS_DEBUGGING
-  set_printable(0);
-#endif
   rtn = XGetPointerMapping(XEN_TO_C_Display(arg1), map, len);
   if (len > rtn) len = rtn;
   loc = xm_protect(lst);
