@@ -230,6 +230,7 @@
 #define S_free_track                    "free-track"
 #define S_gc_off                        "gc-off"
 #define S_gc_on                         "gc-on"
+#define S_gl_graph_to_ps                "gl-graph->ps"
 #define S_goto_listener_end             "goto-listener-end"
 #define S_graph                         "graph"
 #define S_graph_as_sonogram             "graph-as-sonogram"

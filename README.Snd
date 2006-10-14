@@ -16,90 +16,104 @@ To build Snd, get the sources from
   make
   make install
 
+
 The configure program has several Snd-related arguments:
 
-   --with-motif              use Motif (the default)
-     --with-static-motif     same, but load Motif statically (for RPM)
-     --with-motif-prefix     set Motif location (will append lib and include)
+   Extension language:
 
-   --with-gtk                use Gtk+
-     --with-builtin-gtkrc    include built-in gtkrc fallbacks (default=yes)
+     --with-ruby               use Ruby as the extension language
+       --with-ruby-prefix      set location of Ruby
+  
+     --with-guile              use Guile, not Ruby (the default); the path to guile-config
+                                 can be set via GUILE_CONFIG_path (see examples below).
+  
+     --with-forth              use Forth (FTH) as the extension language.
+  
+     --with-gauche             use Gauche (Scheme) as the extension language.
 
-   --with-no-gui             make Snd without any graphics support
+     To build Snd without any extension language, use --without-guile --without-ruby
+  
 
-   --with-alsa               use ALSA if possible (default is OSS in Linux)
-     --with-static-alsa      use ALSA statically loaded (for RPM generation)
+   Graphics:
 
-   --with-esd                use the enlightened sound daemon, if possible
+     --with-motif              use Motif (the default)
+       --with-static-motif     same, but load Motif statically (for RPM)
+       --with-motif-prefix     set Motif location (will append lib and include)
+  
+     --with-gtk                use Gtk+
+       --with-builtin-gtkrc    include built-in gtkrc fallbacks (default=yes)
+  
+     --with-no-gui             make Snd without any graphics support
+  
+     --with-gl                 include support for OpenGL (default: no)
+       --with-just-gl          same but omit Guile bindings in gl.c (default: no)
+                                 The gl module is only useful if you want to write
+                                 Scheme code to add your own OpenGL graphics to Snd.
+                                 --with-just-gl will give you the GL spectrograms
+                                 without any extras.
+  
+       --with-gl2ps            include gl2ps (postscript output from OpenGL graphics)
+  
+     --with-static-xm          include the xm module (rather than loading it dynamically)
+  			       this option affects xm.c for Motif, xg.c for Gtk.
+                                 You'll need this (or need to "make xm" and load xm.so
+                                 at runtime) if you want to use Dave Phillips'
+                                 extensions described in the tutorial.
+       --with-static-xg        same as above, but refers to the gtk xg module.    
+                                 To build xg.so separately, use "make xg".  
+           
+   Audio:
 
-   --with-jack               use the Jack library (can be used in conjunction
-                               with --with-alsa)
+     --with-alsa               use ALSA if possible (default is OSS in Linux)
+       --with-static-alsa      use ALSA statically loaded (for RPM generation)
+  
+     --with-esd                use the enlightened sound daemon, if possible
+  
+     --with-jack               use the Jack library (can be used in conjunction
+                                 with --with-alsa)
+  
 
-   --with-doubles            use doubles throughout (default is floats)
+   Numerics:
 
-   --with-float-samples      represent samples internally as floats (default=yes)
-   --with-sample-width=N     use N bits of samples (default: 24). N = 32 or so is 
-                               not recommended because it does not leave you any 
-                               "head room" during mixes. N < 16 isn't supported.
+     --with-doubles            use doubles throughout (default is floats)
 
-   --with-gl                 include support for OpenGL (default: no)
-     --with-just-gl          same but omit Guile bindings in gl.c (default: no)
-                               The gl module is only useful if you want to write
-                               Scheme code to add your own OpenGL graphics to Snd.
-                               --with-just-gl will give you the GL spectrograms
-                               without any extras.
+     --with-float-samples      represent samples internally as floats (default=yes)
+     --with-sample-width=N     use N bits of samples (default: 24). N = 32 or so is 
+                                 not recommended because it does not leave you any 
+                                 "head room" during mixes. N < 16 isn't supported.
 
-     --with-gl2ps            include gl2ps (postscript output from OpenGL graphics)
 
-   --with-ladspa             include LADSPA plugin support (default: yes in Linux)
+   Other options:
 
-   --with-static-xm          include the xm module (rather than loading it dynamically)
-			       this option affects xm.c for Motif, xg.c for Gtk.
-                               You'll need this (or need to "make xm" and load xm.so
-                               at runtime) if you want to use Dave Phillips'
-                               extensions described in the tutorial.
-     --with-static-xg        same as above, but refers to the gtk xg module.    
-                               To build xg.so separately, use "make xg".  
-         
-   --with-static-gsl         try to load GSL statically
-                               GSL is loaded in any case, if it is available, and the
-			       ISO C99 complex trig support is not available.
-                               This affects only the Dolph-Chebyshev window.  FFT's 
-                               are currently handled by FFTW, if it is available, otherwise
-                               by built-in code.
+     --with-ladspa             include LADSPA plugin support (default: yes in Linux)
+  
+     --with-static-gsl         try to load GSL statically
+                                 GSL is loaded in any case, if it is available, and the
+  			         ISO C99 complex trig support is not available.
+                                 This affects only the Dolph-Chebyshev window.  FFT's 
+                                 are currently handled by FFTW, if it is available, otherwise
+                                 by built-in code.
+  
+     --with-snd-as-widget      make Snd a loadable widget, not a standalone program
+     --with-snd-as-pd-external make Snd a loadable pd external, not a standalone program
+     --with-hobbit             include hobbit-style function arity checking
 
-   --with-snd-as-widget      make Snd a loadable widget, not a standalone program
-   --with-snd-as-pd-external make Snd a loadable pd external, not a standalone program
+     --with-temp-dir           directory to use for temp files (default: ".")
+     --with-save-dir           directory to use for saved-state files (default: ".")
+     --with-doc-dir            directory to search for documentation
 
-   --with-ruby               use Ruby as the extension language
-     --with-ruby-prefix      set location of Ruby
+     --with-shared-sndlib      try to use libsndlib.so (default: no).  The path to
+                                 sndlib-config can be specified via SNDLIB_CONFIG_path.
+  			         Normally, sndlib is built into Snd at compile time.
+       --with-midi             include sndlib midi module (default: no)
 
-   --with-guile              use Guile, not Ruby (the default); the path to guile-config
-                               can be set via GUILE_CONFIG_path (see examples below).
+     --disable-nls             the gettext (internationalization) support is on
+                                 by default; this turns it off.
 
-   --with-forth              use Forth (FTH) as the extension language.
+     --without-gsl, --without-fftw 
+                               these turn off the default inclusion of FFTW and the
+                                 possible inclusion of GSL.
 
-   --with-gauche             use Gauche (Scheme) as the extension language.
-
-			     To build Snd without any extension language, use --without-guile
-
-     --with-hobbit           include hobbit-style function arity checking
-
-   --with-temp-dir           directory to use for temp files (default: ".")
-   --with-save-dir           directory to use for saved-state files (default: ".")
-   --with-doc-dir            directory to search for documentation
-
-   --with-shared-sndlib      try to use libsndlib.so (default: no).  The path to
-                               sndlib-config can be specified via SNDLIB_CONFIG_path.
-			       Normally, sndlib is built into Snd at compile time.
-     --with-midi             include sndlib midi module (default: no)
-
-   --disable-nls             the gettext (internationalization) support is on
-                               by default; this turns it off.
-
-   --without-gsl, --without-fftw 
-                             these turn off the default inclusion of FFTW and the
-                               possible inclusion of GSL.
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files mus-config.h, config.log, and makefile,
@@ -201,19 +215,19 @@ Bill Schottstaedt
 Michael Scholz
 Kjetil S. Matheussen
 
-Dave Phillips: the tutorial, new-effects.scm, and many other files.
+Dave Phillips:          the tutorial, new-effects.scm, and many other files.
 Fernando Lopez-Lezcano: the current ALSA support.
-Richard W.E. Furse: the original LADSPA support.
-Nick Bailey: the ESD support.
+Richard W.E. Furse:     the original LADSPA support.
+Nick Bailey:            the ESD support.
 Volker Kuhlmann and Seppo Ingalsuo: the Solaris port.
-Seppo Ingalsuo: the HPUX port.
-Juan Reyes: the DEC Alpha port.
+Seppo Ingalsuo:         the HPUX port.
+Juan Reyes:             the DEC Alpha port.
 Guenter Geiger and Stefan Schwandter: the Linux Alpha port.
-Paul Davis: the original ALSA support.
-Gerd Rausch: the Sam 9407 support.
-Steven Schultz: the BSD port.
+Paul Davis:             the original ALSA support.
+Gerd Rausch:            the Sam 9407 support.
+Steven Schultz:         the BSD port.
 Ludger Brummer and Charles Nichols: the Mac-OSX port.
-Thomas Klausner: the NetBSD port.
+Thomas Klausner:        the NetBSD port.
 Plus many other contributions from
   Fernando Lopez-Lezcano, 
   Tom Roth,

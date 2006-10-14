@@ -579,7 +579,6 @@ static XEN g_graph_to_ps(XEN filename)
 
 
 /* ---------------- gl -> ps ---------------- */
-#define S_gl_graph_to_ps "gl-graph->ps"
 
 #if HAVE_GL && MUS_WITH_GL2PS
 
@@ -598,6 +597,10 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
   chan_info *cp;
   int state = GL2PS_OVERFLOW, buffsize = 1024 * 1024, type = 0;
 
+#if HAVE_SETLOCALE
+  char *old_locale = NULL;
+#endif
+
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ARG_1, S_gl_graph_to_ps, "a string (filename)");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(output_type), output_type, XEN_ARG_2, S_gl_graph_to_ps, "an integer, 0=eps");
 
@@ -615,7 +618,6 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
     XEN_OUT_OF_RANGE_ERROR(S_gl_graph_to_ps, XEN_ARG_2, output_type, "must be between 0 and 5");
 
 #if HAVE_SETLOCALE
-  char *old_locale = NULL;
   old_locale = copy_string(setlocale(LC_NUMERIC, "C"));
 #endif
   

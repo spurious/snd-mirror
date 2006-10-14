@@ -3362,8 +3362,6 @@ static char *snd_finder(const char *name, bool got_help)
   int a_def = 0, dir_len = 0, i;
   XEN dirs = XEN_EMPTY_LIST;
 
-  if (snd_strlen(FGREP_PROG) == 0) return(NULL); /* configure didn't find a plausible fgrep */
-
 #if HAVE_GUILE || (!HAVE_EXTENSION_LANGUAGE)
   #define NUM_DEFINES 5
   #define TRAILER " "
@@ -3384,6 +3382,8 @@ static char *snd_finder(const char *name, bool got_help)
   #define TRAILER ""
   char *defines[NUM_DEFINES] = {": ", "instrument: ", "event: "};
 #endif
+
+  if (snd_strlen(FGREP_PROG) == 0) return(NULL); /* configure didn't find a plausible fgrep */
 
   is_defined = XEN_DEFINED_P(name);
   url = snd_url(name);
