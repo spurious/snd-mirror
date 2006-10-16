@@ -329,7 +329,7 @@ static void reflect_file_in_region_browser(ss_watcher_reason_t reason, void *ign
   if (region_dialog)
     {
       bool file_p;
-      file_p = (any_selected_sound());
+      file_p = (bool)(any_selected_sound());
       set_sensitive(mix_button, file_p);
       set_sensitive(insert_button, file_p);
     }

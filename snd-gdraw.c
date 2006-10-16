@@ -438,10 +438,13 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
 /* colormaps */
 /* should I use the RGB stuff in gdk rather than colormaps? */
 
+#define BLACK_AND_WHITE_COLORMAP 0
+/* defined as enum member in snd-gxcolormaps.c */
+
 static int sono_bins = 0; /* total_bins */
-static GdkColor **grays = NULL;
-static int grays_size = 0;
-static int grays_allocated = -1; /* colormap index */
+static GdkColor **current_colors = NULL;
+static int current_colors_size = 0;
+static int current_colormap = BLACK_AND_WHITE_COLORMAP;
 static GdkRectangle **sono_data = NULL;
 static int sono_colors = 0; /* colormap_size */
 static GdkGC *colormap_GC;
@@ -449,23 +452,23 @@ static GdkGC *colormap_GC;
 void check_colormap_sizes(int size)
 {
   int i, old_size;
-  if (grays_size > 0)
+  if (current_colors_size > 0)
     {
-      if ((grays) && (grays_size < size))
+      if ((current_colors) && (current_colors_size < size))
 	{
-	  old_size = grays_size;
-	  grays_size = size;
-	  if (grays_allocated != -1) 
+	  old_size = current_colors_size;
+	  current_colors_size = size;
+	  if (current_colormap != BLACK_AND_WHITE_COLORMAP) 
 	    {
 	      for (i = 0; i < old_size; i++) 
 		{
-		  gdk_color_free(grays[i]);
-		  grays[i] = NULL;
+		  gdk_color_free(current_colors[i]);
+		  current_colors[i] = NULL;
 		}
-	      grays_allocated = -1;
+	      current_colormap = BLACK_AND_WHITE_COLORMAP;
 	    }
-	  FREE(grays);
-	  grays = (GdkColor **)CALLOC(grays_size, sizeof(GdkColor *));
+	  FREE(current_colors);
+	  current_colors = (GdkColor **)CALLOC(current_colors_size, sizeof(GdkColor *));
 	}
     }
   if ((sono_data) && (sono_colors < size) && (sono_bins > 0))
@@ -486,14 +489,14 @@ void initialize_colormap(void)
   gdk_gc_set_foreground(sx->basic_gc, sx->data_color);
   sono_colors = color_map_size(ss);
   sono_data = (GdkRectangle **)CALLOC(sono_colors, sizeof(GdkRectangle *));
-  grays_size = color_map_size(ss);
-  grays = (GdkColor **)CALLOC(grays_size, sizeof(GdkColor *));
+  current_colors_size = color_map_size(ss);
+  current_colors = (GdkColor **)CALLOC(current_colors_size, sizeof(GdkColor *));
 }
 
 void draw_sono_rectangles(axis_context *ax, int color, int jmax)
 {
   int i;
-  gdk_gc_set_foreground(colormap_GC, grays[color]);
+  gdk_gc_set_foreground(colormap_GC, current_colors[color]);
   for (i = 0; i < jmax; i++)
     gdk_draw_rectangle(ax->wn, colormap_GC, true, 
 		       sono_data[color][i].x, 
@@ -504,7 +507,7 @@ void draw_sono_rectangles(axis_context *ax, int color, int jmax)
 
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1)
 {
-  gdk_gc_set_foreground(colormap_GC, grays[color]);
+  gdk_gc_set_foreground(colormap_GC, current_colors[color]);
   gdk_draw_line(ax->wn, colormap_GC, x0, y0, x1, y1);
 }
 
@@ -535,22 +538,22 @@ void allocate_sono_rects(int size)
 
 void allocate_color_map(int colormap)
 {
-  if (grays_allocated != colormap)
+  if (current_colormap != colormap)
     {
       int i;
       GdkColormap *cmap;
       GdkColor tmp_color;
       cmap = gdk_colormap_get_system();
-      if (grays_allocated != -1) 
-	for (i = 0; i < grays_size; i++) 
-	  gdk_color_free(grays[i]);
-      for (i = 0; i < grays_size; i++)
+      if (current_colormap != BLACK_AND_WHITE_COLORMAP) 
+	for (i = 0; i < current_colors_size; i++) 
+	  gdk_color_free(current_colors[i]);
+      for (i = 0; i < current_colors_size; i++)
 	{
 	  get_current_color(colormap, i, &(tmp_color.red), &(tmp_color.green), &tmp_color.blue);
-	  grays[i] = gdk_color_copy(&tmp_color);
-	  gdk_rgb_find_color(cmap, grays[i]);
+	  current_colors[i] = gdk_color_copy(&tmp_color);
+	  gdk_rgb_find_color(cmap, current_colors[i]);
 	}
-      grays_allocated = colormap;
+      current_colormap = colormap;
     }
 }
 
@@ -800,7 +803,7 @@ static void start_view_color_dialog(bool managed)
 
       gtk_widget_show(outer_table);
       set_dialog_widget(COLOR_DIALOG, ccd->dialog);
-      if (color_map(ss) != 0) slist_select(ccd->list, color_map(ss));
+      if (color_map(ss) != BLACK_AND_WHITE_COLORMAP) slist_select(ccd->list, color_map(ss));
     }
   else raise_dialog(ccd->dialog);
   if (managed) gtk_widget_show(ccd->dialog);

@@ -90,7 +90,7 @@ static void create_completions_dialog(char *title)
   Arg args[20];
   int n;
   XmString titlestr;
-  titlestr = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
+  titlestr = XmStringCreateLocalized(title);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -143,7 +143,7 @@ void snd_completion_help(int matches, char **buffer)
   else create_completions_dialog(_("Completions"));
   match = (XmString *)CALLOC(matches, sizeof(XmString));
   for (i = 0; i < matches; i++) 
-    match[i] = XmStringCreate(buffer[i], XmFONTLIST_DEFAULT_TAG);
+    match[i] = XmStringCreateLocalized(buffer[i]);
   XtVaSetValues(completions_list, 
 		XmNitems, match, 
 		XmNitemCount, matches, 

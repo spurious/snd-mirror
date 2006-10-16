@@ -100,13 +100,13 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
   if (str) XtFree(str);
   if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
     {
-      s1 = XmStringCreate(_("Stop"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("Stop"));
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
       XmStringFree(s1);
       redirect_xen_error_to(stop_search_if_error, NULL);
       str = global_search(direction);
       redirect_xen_error_to(NULL, NULL);
-      s1 = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("Dismiss"));
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
       XmStringFree(s1);
       if ((str) && (*str)) set_label(edit_find_label, str);
@@ -148,9 +148,9 @@ static void make_edit_find_dialog(bool managed)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      xmstr1 = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
-      xmstr3 = XmStringCreate(_("Previous"), XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate(_("Find"), XmFONTLIST_DEFAULT_TAG);
+      xmstr1 = XmStringCreateLocalized(_("Dismiss"));
+      xmstr3 = XmStringCreateLocalized(_("Previous"));
+      titlestr = XmStringCreateLocalized(_("Find"));
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
       XtSetArg(args[n], XmNcancelLabelString, xmstr3); n++;
       XtSetArg(args[n], XmNautoUnmanage, false); n++;

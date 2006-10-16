@@ -3075,7 +3075,7 @@ void view_files_reflect_sort_items(void)
 	{
 #if USE_MOTIF
 	  XmString s1;
-	  s1 = XmStringCreate(XEN_TO_C_STRING(XEN_CAR(ref)), XmFONTLIST_DEFAULT_TAG);
+	  s1 = XmStringCreateLocalized(XEN_TO_C_STRING(XEN_CAR(ref)));
 	  for (k = 0; k < view_files_info_size; k++)
 	    if ((view_files_infos[k]) &&
 		(view_files_infos[k]->dialog))

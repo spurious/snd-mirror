@@ -522,10 +522,10 @@ Widget fire_up_transform_dialog(bool managed)
 	    size_pos = i + 1;
 	    break;
 	  }
-      xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
-      xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
-      xtitle = XmStringCreate(_("Transform Options"), XmFONTLIST_DEFAULT_TAG);
-      xorient = XmStringCreate(_("Orientation"), XmFONTLIST_DEFAULT_TAG);
+      xdismiss = XmStringCreateLocalized(_("Dismiss")); /* needed by template dialog */
+      xhelp = XmStringCreateLocalized(_("Help"));
+      xtitle = XmStringCreateLocalized(_("Transform Options"));
+      xorient = XmStringCreateLocalized(_("Orientation"));
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -674,7 +674,7 @@ Widget fire_up_transform_dialog(bool managed)
       size_list = XmCreateScrolledList(size_form, "size-list", args, n);
       XtVaSetValues(size_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
       for (i = 0; i < NUM_TRANSFORM_SIZES; i++) 
-	sizes[i] = XmStringCreate(TRANSFORM_SIZES[i], XmFONTLIST_DEFAULT_TAG);
+	sizes[i] = XmStringCreateLocalized(TRANSFORM_SIZES[i]);
       XtVaSetValues(size_list, 
 		    XmNitems, sizes, 
 		    XmNitemCount, NUM_TRANSFORM_SIZES, 
@@ -715,7 +715,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreate(_("single transform"), XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreateLocalized(_("single transform"));
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -731,7 +731,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreate(_("sonogram"), XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreateLocalized(_("sonogram"));
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -747,7 +747,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreate(_("spectrogram"), XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreateLocalized(_("spectrogram"));
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -763,7 +763,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreate(_("peaks"), XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreateLocalized(_("peaks"));
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 67); n++;
@@ -802,7 +802,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreate(_("dB"), XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreateLocalized(_("dB"));
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 67); n++;
@@ -841,7 +841,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreate(_("log freq"), XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreateLocalized(_("log freq"));
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 67); n++;
@@ -880,7 +880,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreate(_("normalize"), XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreateLocalized(_("normalize"));
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -895,7 +895,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreate(_("selection"), XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreateLocalized(_("selection"));
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -946,7 +946,7 @@ Widget fire_up_transform_dialog(bool managed)
       wavelet_list = XmCreateScrolledList(wavelet_form, "wavelet-list", args, n);
       XtVaSetValues(wavelet_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
       for (i = 0; i < NUM_WAVELETS; i++) 
-	wavelets[i] = XmStringCreate(wavelet_name(i), XmFONTLIST_DEFAULT_TAG);
+	wavelets[i] = XmStringCreateLocalized(wavelet_name(i));
       XtVaSetValues(wavelet_list, 
 		    XmNitems, wavelets, 
 		    XmNitemCount, NUM_WAVELETS, 
@@ -984,7 +984,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNshowValue, true); n++;
+      XtSetArg(args[n], XmNshowValue, XmNEAR_SLIDER); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
       XtSetArg(args[n], XmNmaximum, 1000); n++;
       XtSetArg(args[n], XmNvalue, (int)(FFT_WINDOW_ALPHA_SCALER * fft_window_alpha(ss))); n++;
@@ -1000,7 +1000,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNbottomWidget, window_alpha_scale); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNshowValue, true); n++;
+      XtSetArg(args[n], XmNshowValue, XmNEAR_SLIDER); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
       XtSetArg(args[n], XmNvalue, 100 * fft_window_beta(ss)); n++;
       XtSetArg(args[n], XmNdragCallback, n3 = make_callback_list(beta_callback, NULL)); n++;
@@ -1028,7 +1028,7 @@ Widget fire_up_transform_dialog(bool managed)
       window_list = XmCreateScrolledList(window_form, "window-list", args, n);
       XtVaSetValues(window_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
       for (i = 0; i < MUS_NUM_WINDOWS; i++)
-	windows[i] = XmStringCreate(FFT_WINDOWS[i], XmFONTLIST_DEFAULT_TAG);
+	windows[i] = XmStringCreateLocalized(FFT_WINDOWS[i]);
 
       XtVaSetValues(window_list, 
 		    XmNitems, windows, 
@@ -1324,7 +1324,7 @@ void make_transform_type_list(void)
 	if (transform_p(i))
 	  {
 	    set_transform_position(i, j);
-	    types[j++] = XmStringCreate(transform_name(i), XmFONTLIST_DEFAULT_TAG); 
+	    types[j++] = XmStringCreateLocalized(transform_name(i)); 
 	  }
       XtVaSetValues(type_list, 
 		    XmNitems, types, 

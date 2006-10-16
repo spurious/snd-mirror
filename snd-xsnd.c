@@ -186,7 +186,7 @@ void make_minibuffer_label(snd_info *sp , char *str)
       /* there seems to be no way to get this label to reflect its string width -- 
        *    I have tried everything imaginable with no luck
        */
-      s1 = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(str);
       XtVaSetValues(MINIBUFFER_LABEL(sp), 
 		    XmNlabelString, s1, 
 		    NULL);
@@ -289,9 +289,9 @@ XmString initial_speed_label(speed_style_t style)
   /* used also in snd-xmix.c */
   switch (style)
     {
-    case SPEED_CONTROL_AS_RATIO:    return(XmStringCreate("  1/1", XmFONTLIST_DEFAULT_TAG)); break;
-    case SPEED_CONTROL_AS_SEMITONE: return(XmStringCreate("    0", XmFONTLIST_DEFAULT_TAG)); break;
-    default:                        return(XmStringCreate(" 1.00", XmFONTLIST_DEFAULT_TAG)); break;
+    case SPEED_CONTROL_AS_RATIO:    return(XmStringCreateLocalized("  1/1")); break;
+    case SPEED_CONTROL_AS_SEMITONE: return(XmStringCreateLocalized("    0")); break;
+    default:                        return(XmStringCreateLocalized(" 1.00")); break;
     }
 }
 
@@ -1747,7 +1747,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtAddEventHandler(NAME_BOX(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;      
-      s1 = XmStringCreate(shortname_indexed(sp), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(shortname_indexed(sp));
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -1805,7 +1805,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtAddCallback(STOP_ICON(sp), XmNactivateCallback, stop_sign_click_callback, (XtPointer)sp);
 
       n = 0;
-      s1 = XmStringCreate("     ", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized("     ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -1842,7 +1842,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       /* in Motif 2.2 this sets up a tooltip:
-	XtSetArg(args[n], XmNtoolTipString, XmStringCreate("play this sound", XmFONTLIST_DEFAULT_TAG)); n++;
+	XtSetArg(args[n], XmNtoolTipString, XmStringCreateLocalized("play this sound")); n++;
       */
       XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
       PLAY_BUTTON(sp) = make_togglebutton_widget(_("play"), NAME_BOX(sp), args, n);
@@ -1915,7 +1915,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 
       n = 0;      
       /* AMP */
-      s1 = XmStringCreate(_("amp:"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("amp:"));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -1934,7 +1934,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreate("1.0   ", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized("1.0   ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -1969,7 +1969,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 
       n = 0;
       /* SPEED */
-      s1 = XmStringCreate(_("speed:"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("speed:"));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2062,7 +2062,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 
       n = 0;
       /* EXPAND */
-      s1 = XmStringCreate(_("expand:"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("expand:"));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2082,7 +2082,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XmStringFree(s1);
       
       n = 0;
-      s1 = XmStringCreate("1.0   ", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized("1.0   ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2099,7 +2099,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreate("", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized("");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
@@ -2141,7 +2141,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 
       /* CONTRAST */
       n = 0;
-      s1 = XmStringCreate(_("contrast:"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("contrast:"));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2161,7 +2161,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XmStringFree(s1);
       
       n = 0;
-      s1 = XmStringCreate("1.0   ", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized("1.0   ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2178,7 +2178,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XmStringFree(s1);
       
       n = 0;
-      s1 = XmStringCreate("", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized("");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
@@ -2220,7 +2220,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       /* REVERB */
       /* REVSCL */
       n = 0;
-      s1 = XmStringCreate(_("reverb:"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("reverb:"));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2240,7 +2240,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XmStringFree(s1);
       
       n = 0;
-      s1 = XmStringCreate("0.0     ", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized("0.0     ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2277,7 +2277,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 
       /* REVOFF */
       n = 0;
-      s1 = XmStringCreate("", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized("");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, REVSCL_BUTTON(sp)); n++;
@@ -2301,7 +2301,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 
       /* REVLEN */
       n = 0;
-      s1 = XmStringCreate(_("len:"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("len:"));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2322,7 +2322,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreate("1.0 ", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized("1.0 ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2360,7 +2360,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 
       /* FILTER */
       n = 0;
-      s1 = XmStringCreate(_("filter:"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("filter:"));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2436,7 +2436,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtAddCallback(FILTER_ORDER_UP(sp), XmNactivateCallback, filter_order_up_callback, (XtPointer)sp);
 
       n = 0;
-      s1 = XmStringCreate("", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized("");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, REVERB_BUTTON(sp)); n++;
@@ -2456,7 +2456,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreate(_("hz"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("hz"));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, FILTER_BUTTON(sp)); n++;
@@ -2474,7 +2474,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreate(_("dB"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("dB"));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, FILTER_HZ_BUTTON(sp)); n++;

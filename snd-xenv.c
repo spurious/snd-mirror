@@ -861,11 +861,11 @@ Widget create_envelope_editor(void)
       char str[LABEL_BUFFER_SIZE];
 
       /* -------- DIALOG -------- */
-      xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
-      xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate(_("Edit Envelope"), XmFONTLIST_DEFAULT_TAG);
-      xapply = XmStringCreate(_("Apply"), XmFONTLIST_DEFAULT_TAG);
-      /* xreset = XmStringCreate(_("Reset"), XmFONTLIST_DEFAULT_TAG); */
+      xdismiss = XmStringCreateLocalized(_("Dismiss"));
+      xhelp = XmStringCreateLocalized(_("Help"));
+      titlestr = XmStringCreateLocalized(_("Edit Envelope"));
+      xapply = XmStringCreateLocalized(_("Apply"));
+      /* xreset = XmStringCreateLocalized(_("Reset")); */
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -941,7 +941,7 @@ Widget create_envelope_editor(void)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      s1 = XmStringCreate("1.000", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized("1.000");
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, baseLabel); n++;
@@ -1024,7 +1024,7 @@ Widget create_envelope_editor(void)
 
       /* -------- AMP ENV NAME -------- */
       n = 0;
-      s1 = XmStringCreate(_("amp env:"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("amp env:"));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;

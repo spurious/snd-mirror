@@ -607,10 +607,10 @@ Widget make_mix_dialog(void)
       char amplab[LABEL_BUFFER_SIZE];
 
       mix_dialog_id = any_mix_id();
-      xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
-      xapply = XmStringCreate(_("Apply Env"), XmFONTLIST_DEFAULT_TAG);
-      xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
-      xtitle = XmStringCreate(_("Mixes"), XmFONTLIST_DEFAULT_TAG);
+      xdismiss = XmStringCreateLocalized(_("Dismiss"));
+      xapply = XmStringCreateLocalized(_("Apply Env"));
+      xhelp = XmStringCreateLocalized(_("Help"));
+      xtitle = XmStringCreateLocalized(_("Mixes"));
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -783,7 +783,7 @@ Widget make_mix_dialog(void)
 
       /* SPEED */
       n = 0;
-      s1 = XmStringCreate(_("speed:"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("speed:"));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -851,7 +851,7 @@ Widget make_mix_dialog(void)
 	{
 	  n = 0;
 	  mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp %d:"), i);
-	  s1 = XmStringCreate(amplab, XmFONTLIST_DEFAULT_TAG);
+	  s1 = XmStringCreateLocalized(amplab);
 	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
 	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -870,7 +870,7 @@ Widget make_mix_dialog(void)
 	  XmStringFree(s1);
 
 	  n = 0;
-	  s1 = XmStringCreate("1.00", XmFONTLIST_DEFAULT_TAG);
+	  s1 = XmStringCreateLocalized("1.00");
 	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
 	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1091,7 +1091,7 @@ static void update_mix_dialog(int mix_id)
 	      if ((i == 0) && (chans == 1))
 		mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp:"));
 	      else mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp %d:"), i);
-	      s1 = XmStringCreate(amplab, XmFONTLIST_DEFAULT_TAG);
+	      s1 = XmStringCreateLocalized(amplab);
 	      XtVaSetValues(w_amp_labels[i], XmNlabelString, s1, NULL);
 	      XmStringFree(s1);
 	      if (mix_ok_and_unlocked(mix_dialog_id))
@@ -1723,10 +1723,10 @@ Widget make_track_dialog(void)
       XGCValues v;
 
       track_dialog_id = any_track_id();
-      xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
-      xapply = XmStringCreate(_("Apply Env"), XmFONTLIST_DEFAULT_TAG);
-      xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
-      xtitle = XmStringCreate(_("Tracks"), XmFONTLIST_DEFAULT_TAG);
+      xdismiss = XmStringCreateLocalized(_("Dismiss"));
+      xapply = XmStringCreateLocalized(_("Apply Env"));
+      xhelp = XmStringCreateLocalized(_("Help"));
+      xtitle = XmStringCreateLocalized(_("Tracks"));
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1909,7 +1909,7 @@ Widget make_track_dialog(void)
 
       /* SPEED */
       n = 0;
-      s1 = XmStringCreate(_("speed:"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("speed:"));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1967,7 +1967,7 @@ Widget make_track_dialog(void)
 
       /* TEMPO */
       n = 0;
-      s1 = XmStringCreate(_("tempo:"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("tempo:"));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1985,7 +1985,7 @@ Widget make_track_dialog(void)
       XmStringFree(s1);
       
       n = 0;
-      s1 = XmStringCreate("1.00", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized("1.00");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2019,7 +2019,7 @@ Widget make_track_dialog(void)
 
       /* AMP */
       n = 0;
-      s1 = XmStringCreate(_("amp:"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("amp:"));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2037,7 +2037,7 @@ Widget make_track_dialog(void)
       XmStringFree(s1);
       
       n = 0;
-      s1 = XmStringCreate("1.00", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized("1.00");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;

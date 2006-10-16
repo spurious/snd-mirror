@@ -796,7 +796,7 @@ static void make_trigger_label(Float val)
       char *buf;
       buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
       mus_snprintf(buf, LABEL_BUFFER_SIZE, _("trigger: %.3f"), val);
-      s1 = XmStringCreate(buf, XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(buf);
       FREE(buf);
       XtVaSetValues(trigger_label, XmNlabelString, s1, NULL);
       XmStringFree(s1);
@@ -814,7 +814,7 @@ static void internal_trigger_set(Float val)
   if (!(rp->recording)) /* else wait for current session to end (via click) */
     {
       XmString s1;
-      s1 = XmStringCreate((char *)((rp->triggering) ? _("Triggered Record") : _("Record")), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized((char *)((rp->triggering) ? _("Triggered Record") : _("Record")));
       XtVaSetValues(record_button, XmNlabelString, s1, NULL);
       XmStringFree(s1);
     }
@@ -1255,7 +1255,7 @@ void unlock_recording_audio(void)
       set_sensitive(record_button, true);
       set_sensitive(reset_button, true);
       XmProcessTraversal(reset_button, XmTRAVERSE_CURRENT);
-      s1 = XmStringCreate(_("Restart"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("Restart"));
       XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
       XmStringFree(s1);
     }
@@ -1377,7 +1377,7 @@ static Widget make_recorder_slider(pane_t *p, amp_t *a, Widget last_slider, bool
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
   mus_snprintf(numbuf, 6, "%.2f", global_amp(a));
-  s1 = XmStringCreate(numbuf, XmFONTLIST_DEFAULT_TAG);
+  s1 = XmStringCreateLocalized(numbuf);
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, a->label); n++;
@@ -2006,7 +2006,7 @@ static Widget make_vertical_gain_sliders(recorder_info *rp, pane_t *p, int num_g
       XtSetArg(args[n], XmNwidth, 15); n++;
 
       XtSetArg(args[n], XmNvalue, (int)(vol * 100)); n++;
-      XtSetArg(args[n], XmNshowValue, false); n++;
+      XtSetArg(args[n], XmNshowValue, XmNONE); n++;
       wd->wg = XtCreateManagedWidget(_("mon"), xmScaleWidgetClass, p->pane, args, n);
       last_slider = wd->wg;
       XtAddCallback(last_slider, XmNvalueChangedCallback, volume_callback, wd);
@@ -2232,7 +2232,7 @@ static void make_reset_button(pane_t *p, Float meter_size, Widget button_box, Wi
 
   if (meter_size < SMALL_FONT_CUTOFF)
     labelstr = XmStringCreate(_("Reset"), "small_font");
-  else labelstr = XmStringCreate(_("Reset"), XmFONTLIST_DEFAULT_TAG);
+  else labelstr = XmStringCreateLocalized(_("Reset"));
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
   XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
@@ -2517,10 +2517,10 @@ static void reset_record_callback(Widget w, XtPointer context, XtPointer info)
       rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
       XmChangeColor(record_button, (Pixel)ss->sgx->doit_button_color);
-      s1 = XmStringCreate(_("Reset"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("Reset"));
       XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
       XmStringFree(s1);
-      s1 = XmStringCreate((char *)((rp->triggering) ? _("Triggered Record") : _("Record")), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized((char *)((rp->triggering) ? _("Triggered Record") : _("Record")));
       XtVaSetValues(record_button, XmNlabelString, s1, NULL);
       XmStringFree(s1);
       if (mus_file_close(rp->output_file_descriptor) != 0)
@@ -2552,7 +2552,7 @@ static void reset_record_callback(Widget w, XtPointer context, XtPointer info)
       if (!(rp->taking_input))            /* restart */
 	{
 	  fire_up_recorder();
-	  s1 = XmStringCreate(_("Reset"), XmFONTLIST_DEFAULT_TAG);
+	  s1 = XmStringCreateLocalized(_("Reset"));
 	  XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
 	  XmStringFree(s1);
 	}
@@ -2585,10 +2585,10 @@ void finish_recording(recorder_info *rp)
   if (rp->output_file_descriptor < 0) return;
   sensitize_control_buttons();
   XmChangeColor(record_button, (Pixel)ss->sgx->doit_button_color);
-  s1 = XmStringCreate(_("Reset"), XmFONTLIST_DEFAULT_TAG);
+  s1 = XmStringCreateLocalized(_("Reset"));
   XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
   XmStringFree(s1);
-  s2 = XmStringCreate((char *)((rp->triggering) ? _("Triggered Record") : _("Record")), XmFONTLIST_DEFAULT_TAG);
+  s2 = XmStringCreateLocalized((char *)((rp->triggering) ? _("Triggered Record") : _("Record")));
   XtVaSetValues(record_button, XmNlabelString, s2, NULL);
   XmStringFree(s2);
   if (mus_file_close(rp->output_file_descriptor) != 0)
@@ -2758,10 +2758,10 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
 	}
 
       XmChangeColor(w, (Pixel)ss->sgx->red);
-      s1 = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(_("Cancel"));
       XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
       XmStringFree(s1);
-      s2 = XmStringCreate(_("Done"), XmFONTLIST_DEFAULT_TAG);
+      s2 = XmStringCreateLocalized(_("Done"));
       XtVaSetValues(record_button, XmNlabelString, s2, NULL);
       XmStringFree(s2);
       
@@ -2838,10 +2838,10 @@ widget_t snd_record_file(void)
 	rend = XmRenditionCreate(MAIN_SHELL(ss), "small_font", args, n);
 	small_fontlist = XmRenderTableAddRenditions(NULL, &rend, 1, XmMERGE_NEW);
       }
-      xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
-      xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
-      xreset = XmStringCreate(_("Reset"), XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate(_("Record"), XmFONTLIST_DEFAULT_TAG);
+      xdismiss = XmStringCreateLocalized(_("Dismiss"));
+      xhelp = XmStringCreateLocalized(_("Help"));
+      xreset = XmStringCreateLocalized(_("Reset"));
+      titlestr = XmStringCreateLocalized(_("Record"));
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

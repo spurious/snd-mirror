@@ -325,9 +325,9 @@ static void create_help_monolog(void)
   Widget holder, xref_label; /* documentation says this isn't needed, but it is */
   Widget frame, label, inner_holder, sep, parent;
   XmRenderTable rs = NULL;
-  titlestr = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
-  forward = XmStringCreate(_("Forward"), XmFONTLIST_DEFAULT_TAG);
-  dismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
+  titlestr = XmStringCreateLocalized(_("Help"));
+  forward = XmStringCreateLocalized(_("Forward"));
+  dismiss = XmStringCreateLocalized(_("Dismiss"));
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -510,7 +510,7 @@ int help_text_width(const char *txt, int start, int end)
       XtVaGetValues(help_text, XmNfontList, &fonts, NULL);
       msg = (char *)CALLOC(end - start + 1, sizeof(char));
       for (i = start, j = 0; i < end; i++, j++) msg[j] = txt[i];
-      s1 = XmStringCreate(msg, XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreateLocalized(msg);
       text_wid = XmStringWidth(fonts, s1);
       XmStringFree(s1);
       FREE(msg);
@@ -529,7 +529,7 @@ Widget snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_
   if (!(help_dialog)) 
     create_help_monolog(); 
   else raise_dialog(help_dialog);
-  xstr1 = XmStringCreate((char *)subject, XmFONTLIST_DEFAULT_TAG);
+  xstr1 = XmStringCreateLocalized((char *)subject);
   XtVaSetValues(help_dialog, XmNmessageString, xstr1, NULL);
   original_help_text = (char *)helpstr;
   if (with_wrap == WITH_WORD_WRAP)

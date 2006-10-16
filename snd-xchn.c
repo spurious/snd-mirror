@@ -568,13 +568,13 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
 	  ncp = sp->chans[k];
 	  ncp->edhist_base = ed;
 	  sprintf(title, "chan %d: %s", k + 1, sp->filename);
-	  edits[ed++] = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
+	  edits[ed++] = XmStringCreateLocalized(title);
 	  eds = ncp->edit_ctr;
 	  while ((eds < (ncp->edit_size - 1)) && (ncp->edits[eds + 1])) eds++;
 	  for (i = 1; i <= eds; i++) 
-	    edits[ed++] = XmStringCreate(edit_to_string(ncp, i), XmFONTLIST_DEFAULT_TAG);
+	    edits[ed++] = XmStringCreateLocalized(edit_to_string(ncp, i));
 	  if (k < sp->nchans - 1)
-	    edits[ed++] = XmStringCreate("______________________________", XmFONTLIST_DEFAULT_TAG);
+	    edits[ed++] = XmStringCreateLocalized("______________________________");
 	}
       FREE(title);
       XtVaSetValues(lst, 
@@ -593,9 +593,9 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
       eds = cp->edit_ctr;
       while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
       edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
-      edits[0] = XmStringCreate(sp->filename, XmFONTLIST_DEFAULT_TAG);
+      edits[0] = XmStringCreateLocalized(sp->filename);
       for (i = 1; i <= eds; i++) 
-	edits[i] = XmStringCreate(edit_to_string(cp, i), XmFONTLIST_DEFAULT_TAG);
+	edits[i] = XmStringCreateLocalized(edit_to_string(cp, i));
       XtVaSetValues(lst, 
 		    XmNitems, edits, 
 		    XmNitemCount, eds + 1, 
@@ -670,16 +670,16 @@ void reflect_edit_history_change(chan_info *cp)
 	      if (items > eds )
 		XmListDeleteItemsPos(lst, cp->edit_size, eds + 1); 
 	      /* cp->edit_size is too large, but the manual says this is the way to delete to the end */
-	      edit = XmStringCreate(edit_to_string(cp, eds), XmFONTLIST_DEFAULT_TAG);
+	      edit = XmStringCreateLocalized(edit_to_string(cp, eds));
 	      XmListAddItemUnselected(lst, edit, eds + 1);
 	      XmStringFree(edit);
 	    }
 	  else
 	    {
 	      edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
-	      edits[0] = XmStringCreate(sp->filename, XmFONTLIST_DEFAULT_TAG);
+	      edits[0] = XmStringCreateLocalized(sp->filename);
 	      for (i = 1; i <= eds; i++) 
-		edits[i] = XmStringCreate(edit_to_string(cp, i), XmFONTLIST_DEFAULT_TAG);
+		edits[i] = XmStringCreateLocalized(edit_to_string(cp, i));
 	      XtVaSetValues(lst, 
 			    XmNitems, edits, 
 			    XmNitemCount, eds + 1, 

@@ -2408,7 +2408,6 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 ;;;   file containing the start times (in samples) and durations of all the notes (each sound file in
 ;;;   this library can have about 12 notes).
 
-;;; TODO: xrefs + perhaps a general index/help entry for segmentation?
 ;;; TODO: do the reverse side (use the marks to make a mellotron)
 
 (define* (sounds->segment-data main-dir #:optional (output-file "sounds.data"))

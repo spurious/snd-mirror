@@ -60,7 +60,7 @@ static void report_in_error_info(const char *msg, void *ignore)
   XmString s1;
   if ((!msg) || (!(*msg))) return;
   print_error = true;
-  s1 = XmStringCreate((char *)msg, XmFONTLIST_DEFAULT_TAG);
+  s1 = XmStringCreateLocalized((char *)msg);
   XtVaSetValues(error_info, XmNlabelString, s1, NULL);
   if (!(XtIsManaged(error_info_box)))
     {
@@ -102,10 +102,10 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
       clear_print_error();
       if (ss->print_choice == PRINT_SND)
 	{
-	  plab = XmStringCreate(_("Stop"), XmFONTLIST_DEFAULT_TAG);
+	  plab = XmStringCreateLocalized(_("Stop"));
 	  nsp = any_selected_sound();
 	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("printing %s"), nsp->short_filename);
-	  slab = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
+	  slab = XmStringCreateLocalized(print_string);
 	  XtVaSetValues(print_dialog, 
 			XmNokLabelString, plab, 
 			XmNmessageString, slab, 
@@ -163,9 +163,9 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
   printing = NOT_PRINTING;
   if (ss->print_choice == PRINT_SND)
     {
-      plab = XmStringCreate(_("Print"), XmFONTLIST_DEFAULT_TAG);
+      plab = XmStringCreateLocalized(_("Print"));
       mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("print %s"), nsp->short_filename);
-      slab = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
+      slab = XmStringCreateLocalized(print_string);
       XtVaSetValues(print_dialog, 
 		    XmNokLabelString, plab, 
 		    XmNmessageString, slab, 
@@ -189,10 +189,10 @@ static void start_print_dialog(XmString xmstr4, bool managed)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      xmstr1 = XmStringCreate(_("Print"), XmFONTLIST_DEFAULT_TAG);  /* "ok" here is confusing -- might mean, ok I'm done */
-      xmstr2 = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
-      xmstr3 = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate(_("Print"), XmFONTLIST_DEFAULT_TAG);
+      xmstr1 = XmStringCreateLocalized(_("Print"));  /* "ok" here is confusing -- might mean, ok I'm done */
+      xmstr2 = XmStringCreateLocalized(_("Help"));
+      xmstr3 = XmStringCreateLocalized(_("Dismiss"));
+      titlestr = XmStringCreateLocalized(_("Print"));
 
       XtSetArg(args[n], XmNmessageString, xmstr4); n++;
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
@@ -295,7 +295,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer)
 {
   XmString xmstr4;
-  xmstr4 = XmStringCreate("print", XmFONTLIST_DEFAULT_TAG);
+  xmstr4 = XmStringCreateLocalized("print");
   start_print_dialog(xmstr4, managed);
   XmStringFree(xmstr4);
   XmToggleButtonSetState(print_eps_or_lpr, direct_to_printer, false);
@@ -311,9 +311,9 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       nsp = any_selected_sound();
       if (!nsp) return;
       mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("print %s"), nsp->short_filename);
-      xmstr4 = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
+      xmstr4 = XmStringCreateLocalized(print_string);
     }
-  else xmstr4 = XmStringCreate(_("print env"), XmFONTLIST_DEFAULT_TAG);
+  else xmstr4 = XmStringCreateLocalized(_("print env"));
   start_print_dialog(xmstr4, true);
   XmStringFree(xmstr4);
 }

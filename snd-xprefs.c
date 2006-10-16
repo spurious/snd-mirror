@@ -177,7 +177,7 @@ static bool prefs_dialog_error_is_posted = false;
 static void post_prefs_dialog_error(const char *message, void *data)
 {
   XmString title;
-  title = XmStringCreate((char *)message, XmFONTLIST_DEFAULT_TAG);
+  title = XmStringCreateLocalized((char *)message);
   XtVaSetValues(preferences_dialog, 
 		XmNmessageString, title, 
 		NULL);
@@ -322,7 +322,7 @@ static Widget make_row_help(prefs_info *prf, const char *label, Widget box, Widg
   spacer = XtCreateManagedWidget("spacer", xmSeparatorWidgetClass, box, args, n);
 
   n = 0;
-  s1 = XmStringCreate((char *)label, XmFONTLIST_DEFAULT_TAG);
+  s1 = XmStringCreateLocalized((char *)label);
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
@@ -1611,7 +1611,7 @@ static void prefs_set_dialog_title(const char *filename)
 		     prefs_saved_filename);
   else str = mus_format("Preferences%s",
 			(prefs_unsaved) ? "*" : "");
-  title = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
+  title = XmStringCreateLocalized(str);
   FREE(str);
   XtVaSetValues(preferences_dialog, 
 		XmNdialogTitle, title, 
@@ -1695,12 +1695,12 @@ widget_t start_preferences_dialog(void)
     XmString title, help, revert, clear, save, dismiss;
     Widget revert_button, clear_button;
 
-    title = XmStringCreate(_("Preferences"), XmFONTLIST_DEFAULT_TAG);
-    help = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
-    revert = XmStringCreate(_("Revert"), XmFONTLIST_DEFAULT_TAG);
-    clear = XmStringCreate(_("Clear"), XmFONTLIST_DEFAULT_TAG);
-    save = XmStringCreate(_("Save"), XmFONTLIST_DEFAULT_TAG);
-    dismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
+    title = XmStringCreateLocalized(_("Preferences"));
+    help = XmStringCreateLocalized(_("Help"));
+    revert = XmStringCreateLocalized(_("Revert"));
+    clear = XmStringCreateLocalized(_("Clear"));
+    save = XmStringCreateLocalized(_("Save"));
+    dismiss = XmStringCreateLocalized(_("Dismiss"));
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

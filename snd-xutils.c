@@ -244,7 +244,7 @@ void set_main_color_of_widget(Widget w, void *userptr)
 void set_label(Widget label, const char *str)
 {
   XmString s1;
-  s1 = XmStringCreate((char *)str, XmFONTLIST_DEFAULT_TAG);
+  s1 = XmStringCreateLocalized((char *)str);
   XtVaSetValues(label, XmNlabelString, s1, NULL);
   XmStringFree(s1);
 }

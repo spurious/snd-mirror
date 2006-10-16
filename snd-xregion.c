@@ -343,7 +343,7 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   XmString s1;
   XtCallbackList n1, n3;
 
-  s1 = XmStringCreate("", XmFONTLIST_DEFAULT_TAG);
+  s1 = XmStringCreateLocalized("");
   r = (regrow *)CALLOC(1, sizeof(regrow));
 
   n = 0;
@@ -404,10 +404,10 @@ static void make_region_dialog(void)
   regrow *r;
   chan_info *cp;
 
-  xok = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
-  xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
-  xinsert = XmStringCreate(_("Insert"), XmFONTLIST_DEFAULT_TAG);
-  titlestr = XmStringCreate(_("Regions"), XmFONTLIST_DEFAULT_TAG);
+  xok = XmStringCreateLocalized(_("Dismiss"));
+  xhelp = XmStringCreateLocalized(_("Help"));
+  xinsert = XmStringCreateLocalized(_("Insert"));
+  titlestr = XmStringCreateLocalized(_("Regions"));
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
