@@ -92,18 +92,22 @@ static void start_completion_dialog(int num_items, char **items)
 }
 
 
-void save_listener_text(FILE *fp)
+int save_listener_text(FILE *fp)
 {
+  /* return -1 if fwrite error */
   if (listener_text)
     {
       char *str = NULL;
       str = sg_get_text(listener_text, 0, -1);
       if (str)
 	{
-	  fwrite((void *)str, sizeof(char), snd_strlen(str), fp);
+	  size_t bytes;
+	  bytes = fwrite((void *)str, sizeof(char), snd_strlen(str), fp);
 	  g_free(str);
+	  if (bytes == 0) return(-1);
 	}
     }
+  return(0);
 }
 
 void append_listener_text(int end, const char *msg)

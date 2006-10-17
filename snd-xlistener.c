@@ -587,18 +587,22 @@ static void Listener_Meta_N(Widget w, XEvent *event, char **str, Cardinal *num)
   restore_listener_string(false);
 }
 
-void save_listener_text(FILE *fp)
+int save_listener_text(FILE *fp)
 {
+  /* return -1 if fwrite problem */
   if (listener_text)
     {
       char *str = NULL;
       str = XmTextGetString(listener_text);
       if (str)
 	{
-	  fwrite((void *)str, sizeof(char), snd_strlen(str), fp);
+	  size_t bytes;
+	  bytes = fwrite((void *)str, sizeof(char), snd_strlen(str), fp);
 	  XtFree(str);
+	  if (bytes == 0) return(-1);
 	}
     }
+  return(0);
 }
 
 static void Listener_help(Widget w, XEvent *event, char **str, Cardinal *num) 

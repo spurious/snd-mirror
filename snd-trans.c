@@ -491,7 +491,7 @@ static int read_mus10(const char *oldname, const char *newname, char *hdr)
 
 static int read_hcom(const char *oldname, const char *newname, char *hdr)
 {
-  short **d;
+  short **d = NULL;
   int osp, isp;
   int dc, di, bits, outp, totalin;
   bool happy;
@@ -499,6 +499,7 @@ static int read_hcom(const char *oldname, const char *newname, char *hdr)
   int i, sample, size, datum, count, err = MUS_NO_ERROR;
   unsigned char *buf = NULL;
   int fd = -1, fs = -1;
+  size_t bytes;
   STARTUP(oldname, newname, TRANS_BUF_SIZE, unsigned char);
   if (snd_checked_write(fs, (unsigned char *)hdr, 28, newname) == MUS_ERROR)
     {
@@ -506,12 +507,21 @@ static int read_hcom(const char *oldname, const char *newname, char *hdr)
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
   lseek(fd, 132, SEEK_SET);
-  read(fd, buf, 18);  /* count sum type div size */
-  count = mus_char_to_bint((unsigned char *)buf) - 1;
-  dc = mus_char_to_bint((unsigned char *)(buf + 8));
-  size = mus_char_to_bshort((unsigned char *)(buf + 16));
-  d = (short **)CALLOC(size, sizeof(short *));
-  read(fd, buf, size * 4 + 2); /* 2 for pad byte + first sample */
+  bytes = read(fd, buf, 18);  /* count sum type div size */
+  if (bytes != 0)
+    {
+      count = mus_char_to_bint((unsigned char *)buf) - 1;
+      dc = mus_char_to_bint((unsigned char *)(buf + 8));
+      size = mus_char_to_bshort((unsigned char *)(buf + 16));
+      d = (short **)CALLOC(size, sizeof(short *));
+      bytes = read(fd, buf, size * 4 + 2); /* 2 for pad byte + first sample */
+    }
+  if (bytes == 0)
+    {
+      if (d) FREE(d);
+      CLEANUP(oldname, newname);
+      RETURN_MUS_WRITE_ERROR(oldname, newname); /* read actually, but it's a generic message */
+    }
   osp = 0;
   for (i = 0; i < size; i++) 
     {
@@ -1308,6 +1318,7 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
   off_t loc;
   unsigned char code;
   short *buf = NULL;
+  size_t bytes;
   struct g72x_state state;
   g72x_init_state(&state);
   chans = mus_sound_chans(oldname);
@@ -1340,7 +1351,14 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
       snd_fclose(fd, oldname); 
       RETURN_MUS_ALLOC_ERROR(oldname, TRANS_BUF_SIZE, "buf");
     }
-  fread(buf, 1, loc, fd);
+  bytes = fread(buf, 1, loc, fd);
+  if (bytes == 0)
+    {
+      snd_close(fs, newname); 
+      snd_fclose(fd, oldname); 
+      FREE(buf); 
+      RETURN_MUS_WRITE_ERROR(oldname, newname);
+    }
   switch (which_g)
     {
     case 0: /* G721 */ dec_bits = 4; break;

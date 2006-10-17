@@ -295,9 +295,12 @@ char *file_to_string(const char *filename)
   size = ftell(file);
   if (size > 0)
     {
+      size_t bytes;
       rewind(file);
       content = (char *)CALLOC(size + 1, sizeof(char));
-      fread(content, sizeof(char), size, file);
+      bytes = fread(content, sizeof(char), size, file);
+      if (bytes == 0)
+	fprintf(stderr, "file->string read error");
     }
   fclose(file);
   return(content);

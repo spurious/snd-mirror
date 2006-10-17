@@ -46,15 +46,21 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 	{
 	  int chan;
 	  off_t size;
-	  unsigned char* buf;
+	  size_t bytes;
 	  /* send out the initial samples */
 	  chan = snd_reopen_write(newname);
 	  lseek(chan, mus_header_data_location(), SEEK_SET);
 	  size = chans * mus_samples_to_bytes(data_format, samples);
-	  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
-	  write(chan, buf, size);
+	  if (size > 0)
+	    {
+	      unsigned char* buf = NULL;
+	      buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
+	      bytes = write(chan, buf, size);
+	      if (bytes == 0)
+		fprintf(stderr, "%s: write error", newname);
+	      FREE(buf);
+	    }
 	  snd_close(chan, newname);
-	  FREE(buf);
 	  ss->open_requestor = FROM_NEW_FILE_DIALOG;
 	  return(sound_is_silence(snd_open_file(newname, FILE_READ_WRITE)));
 	}
@@ -3649,7 +3655,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   lseek(chan, mus_header_data_location(), SEEK_SET);
   size = ch * mus_samples_to_bytes(df, len);
   buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
-  write(chan, buf, size);
+  if (write(chan, buf, size) == 0) fprintf(stderr, "new-sound %s write error", str);
   snd_close(chan, str);
   FREE(buf);
   ss->open_requestor = FROM_NEW_SOUND;
@@ -4399,10 +4405,14 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   ibuf[4] = ep->top_bin;
   mbuf[0] = ep->fmin;
   mbuf[1] = ep->fmax;
-  write(fd, (char *)ibuf, (PEAK_ENV_INTS * sizeof(int)));
-  write(fd, (char *)mbuf, (PEAK_ENV_SAMPS * sizeof(mus_sample_t)));
-  write(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(mus_sample_t)));
-  write(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(mus_sample_t)));
+  {
+    size_t bytes;
+    bytes = write(fd, (char *)ibuf, (PEAK_ENV_INTS * sizeof(int)));
+    if (bytes != 0) bytes = write(fd, (char *)mbuf, (PEAK_ENV_SAMPS * sizeof(mus_sample_t)));
+    if (bytes != 0) bytes = write(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(mus_sample_t)));
+    if (bytes != 0) bytes = write(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(mus_sample_t)));
+    if (bytes == 0) fprintf(stderr, "write error in " S_write_peak_env_info_file);
+  }
   snd_close(fd, fullname);
   return(name);
 }
@@ -4459,13 +4469,13 @@ static env_info *get_peak_env_info(const char *fullname, peak_env_error_t *error
   ep->samps_per_bin = ibuf[2];
   ep->bin = ibuf[3];
   ep->top_bin = ibuf[4];
-  read(fd, (char *)mbuf, (PEAK_ENV_SAMPS * sizeof(mus_sample_t)));
+  if (read(fd, (char *)mbuf, (PEAK_ENV_SAMPS * sizeof(mus_sample_t))) == 0) fprintf(stderr, "%s: read error", fullname);
   ep->fmin = mbuf[0];
   ep->fmax = mbuf[1];
   ep->data_min = (mus_sample_t *)MALLOC(ep->amp_env_size * sizeof(mus_sample_t));
   ep->data_max = (mus_sample_t *)MALLOC(ep->amp_env_size * sizeof(mus_sample_t));
-  read(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(mus_sample_t)));
-  read(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(mus_sample_t)));
+  if (read(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(mus_sample_t))) == 0) fprintf(stderr, "%s: read error", fullname);
+  if (read(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(mus_sample_t))) == 0) fprintf(stderr, "%s: read error", fullname);
   snd_close(fd, fullname);
   return(ep);
 }
@@ -5029,7 +5039,7 @@ static XEN g_vct_to_sound_file(XEN g_fd, XEN obj, XEN g_nums)
       vals = (float *)MALLOC(nums * sizeof(float));
       for (i = 0; i < nums; i++)
 	vals[i] = (float)(v->data[i]);
-      write(fd, (char *)vals, nums * sizeof(float));
+      if (write(fd, (char *)vals, nums * sizeof(float)) == 0) fprintf(stderr, "%s: write error", S_vct_to_sound_file);
       FREE(vals);
     }
   return(xen_return_first(C_TO_XEN_INT(nums >> 2), obj));

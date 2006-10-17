@@ -9,6 +9,7 @@
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  * SOMEDAY: Edit:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
  * TODO: audio mixer settings dialog (needed especially in alsa!)
+ * SOMEDAY: logfreq in spectrogram?  this also requires that describe_fft_point know about the change
  */
 
 
@@ -1619,8 +1620,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 {
   int num_peaks, row, col, tens, i, acol, acols;
   bool with_amps;
-  Float amp0, px;
-  char *fstr;
+  Float amp0;
   axis_context *ax;
   fft_peak *peak_freqs = NULL;
   fft_peak *peak_amps = NULL;
@@ -1678,6 +1678,8 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	{
 	  if (peak_freqs[i].amp >= amp0)
 	    {
+	      char *fstr;
+	      Float px;
 	      px = peak_freqs[i].freq;
 	      fstr = prettyf(px * scaler, tens);
 	      draw_string(ax, col, row, fstr, strlen(fstr));
@@ -1706,6 +1708,8 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
     {
       if (peak_freqs[i].amp < amp0)
 	{
+	  Float px;
+	  char *fstr;
 	  px = peak_freqs[i].freq;
 	  fstr = prettyf(px * scaler, tens);
 	  draw_string(ax, col, row, fstr, strlen(fstr));
@@ -1743,8 +1747,8 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
   Float samples_per_pixel, xf, ina, ymax;
   Locus logx, logy;
   Float pslogx, pslogy;
-  Float saved_data = 0.0, max_data;
-  Float minlx = 0.0, maxlx, curlx = 0.0, fap_range, log_range, lscale = 1.0;
+  Float saved_data = 0.0;
+  Float minlx = 0.0, curlx = 0.0, fap_range, log_range, lscale = 1.0;
 
   sp = cp->sound;
   fp = cp->fft;
@@ -1752,6 +1756,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
   if (!fap->graph_active) return;
   data = fp->data;
   /* these lo..hi values are just for upcoming loops -- not axis info */
+
   if (cp->transform_type == FOURIER)
     {
       hisamp = (int)(fp->current_size * cp->spectro_cutoff / 2);
@@ -1768,6 +1773,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
       incr = 1.0;
     }
   if ((losamp < 0) || (losamp >= hisamp)) return;
+
   /* no scaling etc here!! see snd_display_fft in snd-fft.c */
   scale = fp->scale;
   if (cp->printing) ps_allocate_grf_points();
@@ -1776,11 +1782,13 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 
   if (cp->fft_log_frequency)
     {
+      Float maxlx, max_data;
       fap_range = fap->x1 - fap->x0;
       if (fap->x0 > 1.0) minlx = log(fap->x0); else minlx = 0.0;
       maxlx = log(fap->x1);
       log_range = (maxlx - minlx);
       lscale = fap_range / log_range;
+      /* I think this block is getting the max of all the DC to losamp freqs to represent the 0th point of the graph?? */
       max_data = data[0];
       if ((spectro_start(ss) == 0.0) && (losamp > 0))
 	{
@@ -2241,6 +2249,29 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 #endif
 
 #if HAVE_GL
+
+static void set_up_for_gl(chan_info *cp)
+{
+#if USE_MOTIF
+  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
+#else
+  GL_MAKE_CURRENT(cp);
+  gdk_gl_drawable_wait_gdk(gtk_widget_get_gl_drawable(channel_graph(cp)));
+#endif
+}
+
+static void gl_display(chan_info *cp)
+{
+#if USE_MOTIF
+  if (ss->gl_has_double_buffer)
+    glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
+  else glFlush();
+#else
+  GL_SWAP_BUFFERS(cp);
+  gdk_gl_drawable_wait_gl(gtk_widget_get_gl_drawable(channel_graph(cp)));
+#endif
+}
+
 static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool use_dB, Float min_dB,
 			   unsigned short br, unsigned short bg, unsigned short bb)
 {
@@ -2394,12 +2425,7 @@ static bool make_spectrogram(chan_info *cp)
 	  snd_warning("we need openGL and gl2ps to print openGL graphs");
 #endif
 	}
-#if USE_MOTIF
-      glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
-#else
-      GL_MAKE_CURRENT(cp);
-      gdk_gl_drawable_wait_gdk(gtk_widget_get_gl_drawable(channel_graph(cp)));
-#endif
+      set_up_for_gl(cp);
       if (cp->gl_fft_list == NO_LIST) 
 	cp->gl_fft_list = (int)glGenLists(1);
       else
@@ -2460,27 +2486,14 @@ static bool make_spectrogram(chan_info *cp)
 		     fap);
       make_axes(cp, fap, X_AXIS_IN_SECONDS, DONT_CLEAR_GRAPH, NO_GRID, WITH_LINEAR_AXES, cp->show_axes);
       fap->use_gl = false;
-#if USE_MOTIF
-      if (ss->gl_has_double_buffer)
-	glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
-      else glFlush();
-#else
-      GL_SWAP_BUFFERS(cp);
-      gdk_gl_drawable_wait_gl(gtk_widget_get_gl_drawable(channel_graph(cp)));
-#endif
-#if MUS_DEBUGGING && HAVE_GLU
-      {
-	GLenum errcode;
-	errcode = glGetError();
-	if (errcode != GL_NO_ERROR)
-	  fprintf(stderr, "spectro GL: %s\n", gluErrorString(errcode));
-      }
-#endif
+      gl_display(cp);
+
       /* a kludge to get the normal graph drawn (again...) */
       if (cp->graph_time_p)
 	display_channel_time_data(cp); 
       if (cp->graph_lisp_p)
 	display_channel_lisp_data(cp); 
+
 #if USE_MOTIF
       return(XtAppPending(MAIN_APP(ss)) == 0); /* return true if there are no pending events to force current buffer to be displayed */
 #else
@@ -2638,12 +2651,7 @@ static void make_wavogram(chan_info *cp)
 	      if (js[i][j] < 0) js[i][j] = 0;
 	    }
 	}
-#if USE_MOTIF
-      glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
-#else
-      GL_MAKE_CURRENT(cp);
-      gdk_gl_drawable_wait_gdk(gtk_widget_get_gl_drawable(channel_graph(cp)));
-#endif
+      set_up_for_gl(cp);
       glEnable(GL_DEPTH_TEST);
       glDepthFunc(GL_LEQUAL); 
       glClearDepth(1.0);
@@ -2684,15 +2692,8 @@ static void make_wavogram(chan_info *cp)
 		      
 	    glEnd();
 	  }
-#if USE_MOTIF
-      if (ss->gl_has_double_buffer)
-	glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
-      else glFlush();
-#else
-      GL_SWAP_BUFFERS(cp);
-      gdk_gl_drawable_wait_gl(gtk_widget_get_gl_drawable(channel_graph(cp)));
-#endif
-      /* (set! (time-graph-type) graph-time-as-wavogram) */
+      gl_display(cp);
+
       for (i = 0; i < lines; i++) 
 	{
 	  FREE(samps[i]);

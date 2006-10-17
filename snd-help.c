@@ -2657,7 +2657,8 @@ The 'angle' scalers change the viewing angle, the 'scale' scalers change the 'st
 along a given axis, 'hop' refers to the density of the traces (the jump in samples between successive \
 ffts or time domain scans), and 'percent of spectrum' is equivalent to dragging the fft frequency axis -- it changes \
 the amount of the spectrum that is displayed.  If the 'use openGL' button is set, the \
-spectrogram is drawn by openGL.",
+spectrogram is drawn by openGL.  In the spectrogram, 'x' refers to the time axis, \
+'y' to the amplitude axis, and 'z' to the frequency axis.",
 		      WITH_WORD_WRAP,
 		      orientation_dialog_xrefs,
 		      NULL);
@@ -3399,6 +3400,7 @@ static char *snd_finder(const char *name, bool got_help)
 
       for (a_def = 0; (!fgrep) && (a_def < NUM_DEFINES); a_def++)
 	{
+	  int err;
 #if (!MUS_SUN)
 	  /* Gnu fgrep: -s switch to fgrep = "silent", I guess (--no-messages) [OSX uses Gnu fgrep] */
 	  /* configure script looks for grep -F or fgrep, setting FGREP_PROG (fgrep is supposedly obsolete) */
@@ -3411,9 +3413,10 @@ static char *snd_finder(const char *name, bool got_help)
 			       name,
 			       path,
 			       tempnam);
-	  system(command);
+	  err = system(command);
 	  FREE(command);
-	  fgrep = file_to_string(tempnam);
+          if (err != -1)
+	    fgrep = file_to_string(tempnam);
 	}
     }
   snd_remove(tempnam, IGNORE_CACHE);
@@ -3762,8 +3765,11 @@ void url_to_html_viewer(char *url)
 	    }
 	  else
 	    {
+	      int err;
 	      sprintf(path, "%s file:%s/%s", program, dir_path, url);
-	      system(path);
+	      err = system(path);
+	      if (err == -1)
+		fprintf(stderr, "can't start %s?", program);
 	    }
 	  FREE(path);
 	}

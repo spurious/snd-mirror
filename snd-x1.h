@@ -75,7 +75,7 @@ void add_completer_to_textfield(Widget w, int completer);
 void snd_completion_help(int matches, char **buffer);
 void listener_delete_text(int new_end);
 void listener_append_and_prompt(const char *msg);
-void save_listener_text(FILE *fp);
+int save_listener_text(FILE *fp);
 void append_listener_text(int end, const char *msg);
 void goto_listener(void);
 void color_listener(Pixel pix);

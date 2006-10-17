@@ -1470,6 +1470,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
 	  Float *sndrdat;
 	  Float scale;
 	  int k;
+	  size_t bytes;
 	  sndrdat = (Float *)CALLOC(fsize, sizeof(Float));
 	  for (k = 0; k < dur; k++) 
 	    sndrdat[k] = (Float)(read_sample_to_float(sf));
@@ -1478,9 +1479,11 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
 	  for (k = 0; k < fsize; k++)
 	    sndrdat[k] *= (scale * fltdat[k]);         /* fltdat is already reflected around midpoint */
 	  mus_fftw(sndrdat, fsize, -1);
-	  write(ofd, sndrdat, fsize * sizeof(Float));
+	  bytes = write(ofd, sndrdat, fsize * sizeof(Float));
 	  close_temp_file(ofile, ofd, hdr->type, fsize * sizeof(Float));
-	  file_change_samples(beg, dur + order, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
+	  if (bytes != 0)
+	    file_change_samples(beg, dur + order, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
+	  else string_to_minibuffer(sp, _("can't write data?"));
 	  FREE(sndrdat);
 	}
       else 

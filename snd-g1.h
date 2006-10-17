@@ -74,7 +74,7 @@ bool listener_exists(void);
 int listener_height(void);
 int listener_width(void);
 void goto_listener(void);
-void save_listener_text(FILE *fp);
+int save_listener_text(FILE *fp);
 void listener_delete_text(int new_end);
 void append_listener_text(int end, const char *msg);
 void listener_append(const char *msg);

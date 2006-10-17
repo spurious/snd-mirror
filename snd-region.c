@@ -793,10 +793,14 @@ static void deferred_region_to_temp_file(region *r)
 	      buffer = (char *)CALLOC(MAX_BUFFER_SIZE, sizeof(char));
 	      for (j = 0; j < data_size; j += MAX_BUFFER_SIZE)
 		{
+		  size_t n;
 		  bytes = data_size - j;
 		  if (bytes > MAX_BUFFER_SIZE) bytes = MAX_BUFFER_SIZE;
-		  read(fdi, buffer, bytes);
-		  write(fdo, buffer, bytes);
+		  n = read(fdi, buffer, bytes);
+		  if (n != 0)
+		    n = write(fdo, buffer, bytes);
+		  if (n == 0)
+		    fprintf(stderr, "IO error while writing region temp file");
 		}
 	      FREE(buffer);
 	      snd_close(fdi, sp0->filename);

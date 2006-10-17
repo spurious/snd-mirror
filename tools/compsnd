@@ -81,7 +81,7 @@ make allclean
 echo ' '
 echo ' '
 echo ' CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin -Wdeclaration-after-statement -Wmissing-field-initializers'
-./configure --quiet CFLAGS="-Wall -Wextra" GUILE_CONFIG_path=/home/bil/test/bin
+./configure --quiet CFLAGS="-Wall -Wextra -D_FORTIFY_SOURCE" GUILE_CONFIG_path=/home/bil/test/bin
 make
 make xm
 ./snd --version
@@ -488,7 +488,7 @@ echo ' '
 ./snd -noinit --features "'clm 'snd-gtk 'xg"
 make allclean
 echo ' CFLAGS="-Wall -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED" --with-gtk --with-static-xm --with-x11 '
-./configure --quiet --disable-deprecated CFLAGS="-Wall" --with-gtk --with-static-xm --with-x11
+./configure --quiet --disable-deprecated CFLAGS="-Wall -D_FORTIFY_SOURCE" --with-gtk --with-static-xm --with-x11
 make
 echo ' '
 echo ' '
@@ -621,7 +621,7 @@ echo ' '
 make allclean
 
 echo ' CFLAGS="-Wall -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED" --with-ruby --with-static-xm --with-gtk --with-x11 --with-gl '
-./configure --quiet --disable-deprecated CFLAGS="-Wall" --with-ruby --with-static-xm --with-gtk --with-x11 --with-gl
+./configure --quiet --disable-deprecated CFLAGS="-Wall -D_FORTIFY_SOURCE" --with-ruby --with-static-xm --with-gtk --with-x11 --with-gl
 make
 echo ' '
 echo ' '

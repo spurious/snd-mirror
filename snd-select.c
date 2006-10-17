@@ -796,10 +796,14 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	      buffer = (char *)CALLOC(MAX_BUFFER_SIZE, sizeof(char));
 	      for (j = 0; j < num; j += MAX_BUFFER_SIZE)
 		{
+		  size_t n;
 		  bytes = num - j;
 		  if (bytes > MAX_BUFFER_SIZE) bytes = MAX_BUFFER_SIZE;
-		  read(fdi, buffer, bytes);
-		  write(ofd, buffer, bytes);
+		  n = read(fdi, buffer, bytes);
+		  if (n != 0)
+		    n = write(ofd, buffer, bytes);
+		  if (n == 0)
+		    fprintf(stderr, "IO error while saving selection");
 		}
 	      FREE(buffer);
 	      snd_close(fdi, sp->filename);

@@ -684,15 +684,17 @@ char *mus_sound_comment(const char *name)
   if (len > 0)
     {
       /* open and get the comment */
+      size_t bytes;
       fd = mus_file_open_read(name);
       if (fd == -1) return(NULL);
       lseek(fd, start, SEEK_SET);
       sc = (char *)CALLOC(len + 1, sizeof(char));
-      read(fd, sc, len);
+      bytes = read(fd, sc, len);
       CLOSE(fd, name);
       if (((mus_sound_header_type(name) == MUS_AIFF) || 
 	   (mus_sound_header_type(name) == MUS_AIFC)) &&
-	  (sf->aux_comment_start))
+	  (sf->aux_comment_start) &&
+	  (bytes != 0))
 	{
 	  auxcom = mus_header_aiff_aux_comment(name, 
 					       sf->aux_comment_start, 

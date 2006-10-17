@@ -7674,6 +7674,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   bool include_source = true;
   off_t len;
   XEN res;
+  size_t bytes;
   ASSERT_CHANNEL(S_display_edits, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(with_source), with_source, XEN_ARG_4, S_display_edits, "boolean");
   cp = get_cp(snd, chn, S_display_edits);
@@ -7704,11 +7705,13 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   len = lseek(fd, 0L, SEEK_END);
   buf = (char *)CALLOC(len + 1, sizeof(char));
   lseek(fd, 0L, SEEK_SET);
-  read(fd, buf, len);
+  bytes = read(fd, buf, len);
   snd_close(fd, name);
   snd_remove(name, IGNORE_CACHE);
   if (name) FREE(name);
-  res = C_TO_XEN_STRING(buf);
+  if (bytes != 0)
+    res = C_TO_XEN_STRING(buf);
+  else res = C_STRING_TO_XEN_SYMBOL("read-error");
   FREE(buf);
   return(res);
 }

@@ -2278,8 +2278,11 @@ void snd_encode(int type, const char *input_filename, const char *output_filenam
     }
   if (command)
     {
-      system(command);
+      int err;
+      err = system(command);
       FREE(command);
+      if (err == -1)
+	fprintf(stderr, "%s failed?", command);
     }
 }
 
@@ -2343,8 +2346,11 @@ int snd_decode(int type, const char *input_filename, const char *output_filename
     }
   if (command)
     {
-      system(command);
+      int err;
+      err = system(command);
       FREE(command);
+      if (err == -1)
+	fprintf(stderr, "%s failed?", command);
     }
   return(err);
 }

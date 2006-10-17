@@ -65,7 +65,7 @@ void reflect_log_freq_start_in_transform_dialog(void) {}
 void reflect_min_db_in_transform_dialog(void) {}
 void listener_append_and_prompt(const char *msg) {fprintf(stderr, "%s", msg);}
 void goto_listener(void) {}
-void save_listener_text(FILE *fp) {}
+int save_listener_text(FILE *fp) {return(0);}
 void append_listener_text(int end, const char *msg) {}
 void listener_delete_text(int new_end) {}
 void listener_append(const char *msg) {fprintf(stderr, "%s", msg);}
