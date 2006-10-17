@@ -496,7 +496,8 @@ void initialize_colormap(void)
 void draw_sono_rectangles(axis_context *ax, int color, int jmax)
 {
   int i;
-  gdk_gc_set_foreground(colormap_GC, current_colors[color]);
+  if (current_colors[color])
+    gdk_gc_set_foreground(colormap_GC, current_colors[color]);
   for (i = 0; i < jmax; i++)
     gdk_draw_rectangle(ax->wn, colormap_GC, true, 
 		       sono_data[color][i].x, 

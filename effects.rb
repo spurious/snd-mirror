@@ -59,20 +59,20 @@ $effects_menu = false           # for prefs
 #    flag = selection?
 #    $selection_buttons.each do |w| set_sensitive(w, flag) end
 #  end
-  
-  mark_hook_proc = lambda do
-    flag = marks?
-    $mark_buttons.each do |w| set_sensitive(w, flag) end
-  end
-  
-  $mark_hook.add_hook!("mark-buttons-effects-hook") do |id, snd, chn, reason|
-    mark_hook_proc.call
-  end
-
-  $after_graph_hook.add_hook!("mark-buttons-effects-hook") do |snd, chn|
-    mark_hook_proc.call
-  end
-end
+#  
+#  mark_hook_proc = lambda do
+#    flag = marks?
+#    $mark_buttons.each do |w| set_sensitive(w, flag) end
+#  end
+#  
+#  $mark_hook.add_hook!("mark-buttons-effects-hook") do |id, snd, chn, reason|
+#    mark_hook_proc.call
+#  end
+#
+#  $after_graph_hook.add_hook!("mark-buttons-effects-hook") do |snd, chn|
+#    mark_hook_proc.call
+#  end
+#end
 
 module Effects
   def plausible_mark_samples

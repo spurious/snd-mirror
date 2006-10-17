@@ -739,7 +739,9 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define C_TO_XEN_BOOLEAN(a)             ((a) ? Qtrue : Qfalse)
 #define XEN_TO_C_BOOLEAN(a)             (!(XEN_FALSE_P(a)))
 
+/* #define XEN_UNDEFINED                   Qundef */
 #define XEN_UNDEFINED                   ID2SYM(rb_intern("undefined"))
+
 #define XEN_BOUND_P(Arg)                ((Arg) != XEN_UNDEFINED)
 #define XEN_NOT_BOUND_P(Arg)            ((Arg) == XEN_UNDEFINED)
 
@@ -1261,7 +1263,7 @@ XEN xen_rb_add_to_load_path(char *path);
 #define XEN_TO_C_DOUBLE_OR_ELSE(a, b)   fth_float_ref_or_else(a, b)
 
 #if HAVE_SCM_MAKE_COMPLEX || HAVE_SCM_C_MAKE_RECTANGULAR
-# define XEN_COMPLEX_P(Arg)             FTH_COMPLEX_P(Arg)
+# define XEN_COMPLEX_P(Arg)             FTH_NUMBER_P(Arg) 
 # define C_TO_XEN_COMPLEX(a)            fth_make_complex(a)
 # define XEN_TO_C_COMPLEX(a)            fth_complex_ref(a)
 #else
