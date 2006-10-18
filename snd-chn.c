@@ -2,6 +2,10 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
+
+#define LOG_FREQ_SPECTROGRAM MUS_DEBUGGING
+
+
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
@@ -1760,7 +1764,8 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
   if (cp->transform_type == FOURIER)
     {
       hisamp = (int)(fp->current_size * cp->spectro_cutoff / 2);
-      if ((cp->fft_log_frequency) && ((SND_SRATE(sp) * 0.5 * cp->spectro_start) < log_freq_start(ss)))
+      if ((cp->fft_log_frequency) && 
+	  ((SND_SRATE(sp) * 0.5 * cp->spectro_start) < log_freq_start(ss)))
 	losamp = (int)(ceil(fp->current_size * log_freq_start(ss) / (Float)SND_SRATE(sp)));
       else losamp = (int)(fp->current_size * cp->spectro_start / 2);
       incr = (Float)SND_SRATE(sp) / (Float)(fp->current_size);
@@ -2506,7 +2511,7 @@ static bool make_spectrogram(chan_info *cp)
   old_with_gl = with_gl(ss);
   if (old_with_gl) set_with_gl(false); /* needed to fixup spectro angles/scales etc */
   if (cp->printing) ps_allocate_grf_points();
-  scl = si->scale; /* unnormalized fft doesn't make much sense here (just washes out the graph) */
+  scl = si->scale;                     /* unnormalized fft doesn't make much sense here (just washes out the graph) */
   fp = cp->fft;
   fap = fp->axis;
   bins = (int)(si->target_bins * cp->spectro_cutoff);
@@ -2516,18 +2521,19 @@ static bool make_spectrogram(chan_info *cp)
   yincr = fheight / (Float)si->active_slices;
   x0 = (fap->x_axis_x0 + fap->x_axis_x1) * 0.5;
   y0 = (fap->y_axis_y0 + fap->y_axis_y1) * 0.5;
+
   if (!(cp->fft_log_magnitude))
     zscl = -(cp->spectro_z_scale * fheight / scl);
   else zscl = -(cp->spectro_z_scale * fheight);
   rotate_matrix(cp->spectro_x_angle, cp->spectro_y_angle, cp->spectro_z_angle,
 		cp->spectro_x_scale, cp->spectro_y_scale, zscl,
 		matrix);
+
   ax = copy_context(cp);
-  /* PERHAPS: saved pix for spectrogram (needs angles/scalers saved as well as bounds) */
-  
   if (color_map(ss) != BLACK_AND_WHITE_COLORMAP)
     allocate_color_map(color_map(ss));
   ss->stopped_explicitly = false;
+
   for (slice = 0, xoff = fap->x_axis_x0, yoff = fap->y_axis_y0; 
        slice < si->active_slices; 
        slice++, yoff += yincr)
@@ -2548,7 +2554,29 @@ static bool make_spectrogram(chan_info *cp)
       
       for (i = 0; i < bins; i++, x += xincr)
 	{
+#if LOG_FREQ_SPECTROGRAM
+
+	  /* need log_freq_start -- it should already be in fap->x0, but it isn't; snd-fft has the axis bounds settings  */
+
+	  Float logx;
+	  if (cp->fft_log_frequency) 
+	    {
+	      Float minlx, curlx, maxlx, lscale, fap_range, log_range, fx;
+	      fap_range = fap->x1 - fap->x0;
+	      if (fap->x0 > 1.0) minlx = log(fap->x0); else minlx = 0.0;
+	      maxlx = log(fap->x1);
+	      log_range = (maxlx - minlx);
+	      lscale = 1.0 / log_range;
+	      fx = fap->x0 +  fap_range * i  / bins;
+	      if (fx > 1.0) curlx = log(fx); else curlx = 0.0;
+	      logx = fap->x_axis_x0 + (fap->x_axis_x1 - fap->x_axis_x0) * (curlx - minlx) * lscale;
+	    }
+	  else logx = x;
+
+	  xyz[0] = logx - x0; 
+#else
 	  xyz[0] = x - x0; 
+#endif
 	  xyz[1] = y - y0;
 	  binval = fdata[i] / scl;
 	  if (!(cp->fft_log_magnitude)) 		  
@@ -2564,8 +2592,7 @@ static bool make_spectrogram(chan_info *cp)
 	  
 	  if (color_map(ss) == BLACK_AND_WHITE_COLORMAP)
 	    {
-	      set_grf_point((Locus)(xval + x0), i, 
-			    (Locus)(yval + y0));
+	      set_grf_point((Locus)(xval + x0), i, (Locus)(yval + y0));
 	      if (cp->printing) 
 		ps_set_grf_point(ungrf_x(fap, (int)(xval + x0)), i, 
 				 ungrf_y(fap, (int)(yval + y0)));
@@ -3167,9 +3194,14 @@ static void display_channel_data_with_size(chan_info *cp,
 		    (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
 		  ((cp->show_grid) && 
 		   (cp->transform_graph_type != GRAPH_AS_SPECTROGRAM)) ? WITH_GRID : NO_GRID,
+#if LOG_FREQ_SPECTROGRAM
+		  (!(cp->fft_log_frequency)) ? WITH_LINEAR_AXES :
+		   ((cp->transform_graph_type == GRAPH_AS_SONOGRAM) ? WITH_LOG_Y_AXIS : WITH_LOG_X_AXIS),
+#else
 		  ((!(cp->fft_log_frequency)) || 
 		   (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)) ? WITH_LINEAR_AXES :
 		  ((cp->transform_graph_type == GRAPH_AS_SONOGRAM) ? WITH_LOG_Y_AXIS : WITH_LOG_X_AXIS),
+#endif
 		  cp->show_axes);
 	  
       if ((!with_time) || (just_fft))
