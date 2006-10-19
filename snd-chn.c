@@ -2,10 +2,6 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-
-#define LOG_FREQ_SPECTROGRAM MUS_DEBUGGING
-
-
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
@@ -13,7 +9,7 @@
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  * SOMEDAY: Edit:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
  * TODO: audio mixer settings dialog (needed especially in alsa!)
- * SOMEDAY: logfreq in spectrogram?  this also requires that describe_fft_point know about the change
+ * SOMEDAY: describe_fft_point doesn't work in spectrograms
  */
 
 
@@ -2253,6 +2249,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
                               else glFlush()
 #endif
 
+
 #if HAVE_GL
 
 static void set_up_for_gl(chan_info *cp)
@@ -2374,12 +2371,129 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool us
 
 static bool gl_warned_already = false;
 
+static bool make_gl_spectrogram(chan_info *cp)
+{
+  sono_info *si;
+  axis_info *fap;
+  snd_info *sp;
+
+  unsigned short br = 65535, bg = 65535, bb = 65535;
+#if USE_MOTIF
+  Colormap cmap;
+  XColor tmp_color;
+  Display *dpy;
+#else
+  GdkColor *tmp_color;
 #endif
+
+  si = cp->sonogram_data;
+  sp = cp->sound;
+
+  /* experiments with lighting were a bust -- does not improve things (ditto fog, translucency, grid) 
+   *     
+   *  TODO: multichannel resize: chan is messed up until expose event; can't see why:
+   *  it does not help to try to redisplay etc -- -sync (or XSync) helps, but there's still some sort
+   *  of timing problem.  Even forcing an expose event (XmRedisplayWidget) doesn't help!  Same problem
+   *  exists in gtk.
+   *  
+   *  same thing: when multichannel + multisound, 2nd chans sometimes not redisplayed
+   */
+  
+  fap = cp->fft->axis; 
+  if ((cp->printing) &&
+      (!gl_warned_already))
+    {
+      gl_warned_already = true;
+#if MUS_WITH_GL2PS
+      snd_warning("use gl-graph->ps to print openGL graphs");
+#else
+      snd_warning("we need openGL and gl2ps to print openGL graphs");
+#endif
+    }
+  set_up_for_gl(cp);
+  if (cp->gl_fft_list == NO_LIST) 
+    cp->gl_fft_list = (int)glGenLists(1);
+  else
+    {
+      if (cp->fft_changed == FFT_CHANGED)
+	{
+	  glDeleteLists((GLuint)(cp->gl_fft_list), 1);
+	  cp->gl_fft_list = (int)glGenLists(1);
+	}
+    }
+  glEnable(GL_DEPTH_TEST);
+  glShadeModel(GL_SMOOTH);
+  glClearDepth(1.0);
+#if USE_MOTIF
+  /* get the background color */
+  dpy = XtDisplay(MAIN_SHELL(ss));
+  cmap = DefaultColormap(dpy, DefaultScreen(dpy));
+  tmp_color.flags = DoRed | DoGreen | DoBlue;
+  if (cp == selected_channel())
+    tmp_color.pixel = ss->sgx->selected_graph_color;
+  else tmp_color.pixel = ss->sgx->graph_color;
+  XQueryColor(dpy, cmap, &tmp_color);
+  br = tmp_color.red;
+  bg = tmp_color.green;
+  bb = tmp_color.blue;
+  glClearColor((float)(tmp_color.red) / 65535.0,
+	       (float)(tmp_color.green) / 65535.0,
+	       (float)(tmp_color.blue) / 65535.0,
+	       0.0);
+#else
+  if (cp == selected_channel())
+    tmp_color = ss->sgx->selected_graph_color;
+  else tmp_color = ss->sgx->graph_color;
+  glClearColor((float)(tmp_color->red) / 65535.0,
+	       (float)(tmp_color->green) / 65535.0,
+	       (float)(tmp_color->blue) / 65535.0,
+	       0.0);
+#endif
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  if (cp->fft_changed == FFT_CHANGED)
+    gl_spectrogram(si, cp->gl_fft_list, cp->spectro_cutoff, cp->fft_log_magnitude, cp->min_dB, br, bg, bb);
+  glViewport(fap->graph_x0, 0, fap->width, fap->height);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  /* glOrtho(-1.0, 1.0, -1.0, 1.0, 1.0, -1.0); */ /* this appears to be the default */
+  glRotatef(cp->spectro_x_angle, 1.0, 0.0, 0.0);
+  glRotatef(cp->spectro_y_angle, 0.0, 1.0, 0.0);
+  glRotatef(cp->spectro_z_angle, 0.0, 0.0, 1.0);
+  glScalef(cp->spectro_x_scale, cp->spectro_y_scale, cp->spectro_z_scale);
+  glCallList((GLuint)(cp->gl_fft_list));
+  fap->use_gl = true;
+
+  /* TODO: need log_freq check for gl axes (snd-fft.c) */
+  make_axis_info(cp,
+		 cp->axis->x0, cp->axis->x1,
+		 SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
+		 _("time"),
+		 cp->axis->x0, cp->axis->x1,
+		 SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
+		 fap);
+  make_axes(cp, fap, X_AXIS_IN_SECONDS, DONT_CLEAR_GRAPH, NO_GRID, WITH_LINEAR_AXES, cp->show_axes);
+  fap->use_gl = false;
+  gl_display(cp);
+  
+  /* a kludge to get the normal graph drawn (again...) */
+  if (cp->graph_time_p)
+    display_channel_time_data(cp); 
+  if (cp->graph_lisp_p)
+    display_channel_lisp_data(cp); 
+  
+#if USE_MOTIF
+  return(XtAppPending(MAIN_APP(ss)) == 0); /* return true if there are no pending events to force current buffer to be displayed */
+#else
+  return(true);
+#endif
+}
+#endif
+/* HAVE_GL */
+
 
 static bool make_spectrogram(chan_info *cp)
 {
   sono_info *si;
-  fft_info *fp;
   axis_info *fap;
   axis_context *ax;
   Float *fdata;
@@ -2391,129 +2505,26 @@ static bool make_spectrogram(chan_info *cp)
   bool old_with_gl = false;
   snd_info *sp;
 
+  Float minlx = 0.0, lscale = 0.0, fap_incr = 0.0;
+
   if (chan_fft_in_progress(cp)) return(false);
   si = cp->sonogram_data;
   if ((!si) || (si->scale <= 0.0)) return(false);
   sp = cp->sound;
 
 #if HAVE_GL
-  /* experiments with lighting were a bust -- does not improve things (ditto fog, translucency, grid) 
-     
-  TODO: multichannel resize: chan is messed up until expose event; can't see why:
-  it does not help to try to redisplay etc -- -sync (or XSync) helps, but there's still some sort
-  of timing problem.  Even forcing an expose event (XmRedisplayWidget) doesn't help!  Same problem
-  exists in gtk.
-  
-  same thing: when multichannel + multisound, 2nd chans sometimes not redisplayed
-  */
-  if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
+  if (((sp->nchans == 1) || 
+       (sp->channel_style == CHANNELS_SEPARATE)) &&
       (color_map(ss) != BLACK_AND_WHITE_COLORMAP) &&
       (with_gl(ss)))
-    {
-      unsigned short br = 65535, bg = 65535, bb = 65535;
-#if USE_MOTIF
-      Colormap cmap;
-      XColor tmp_color;
-      Display *dpy;
-#else
-      GdkColor *tmp_color;
+    return(make_gl_spectrogram(cp));
 #endif
-      fp = cp->fft;
-      fap = fp->axis; 
-      if ((cp->printing) &&
-	  (!gl_warned_already))
-	{
-	  gl_warned_already = true;
-#if HAVE_GL && MUS_WITH_GL2PS
-	  snd_warning("use gl-graph->ps to print openGL graphs");
-#else
-	  snd_warning("we need openGL and gl2ps to print openGL graphs");
-#endif
-	}
-      set_up_for_gl(cp);
-      if (cp->gl_fft_list == NO_LIST) 
-	cp->gl_fft_list = (int)glGenLists(1);
-      else
-	{
-	  if (cp->fft_changed == FFT_CHANGED)
-	    {
-	      glDeleteLists((GLuint)(cp->gl_fft_list), 1);
-	      cp->gl_fft_list = (int)glGenLists(1);
-	    }
-	}
-      glEnable(GL_DEPTH_TEST);
-      glShadeModel(GL_SMOOTH);
-      glClearDepth(1.0);
-#if USE_MOTIF
-      /* get the background color */
-      dpy = XtDisplay(MAIN_SHELL(ss));
-      cmap = DefaultColormap(dpy, DefaultScreen(dpy));
-      tmp_color.flags = DoRed | DoGreen | DoBlue;
-      if (cp == selected_channel())
-	tmp_color.pixel = ss->sgx->selected_graph_color;
-      else tmp_color.pixel = ss->sgx->graph_color;
-      XQueryColor(dpy, cmap, &tmp_color);
-      br = tmp_color.red;
-      bg = tmp_color.green;
-      bb = tmp_color.blue;
-      glClearColor((float)(tmp_color.red) / 65535.0,
-		   (float)(tmp_color.green) / 65535.0,
-		   (float)(tmp_color.blue) / 65535.0,
-		   0.0);
-#else
-      if (cp == selected_channel())
-	tmp_color = ss->sgx->selected_graph_color;
-      else tmp_color = ss->sgx->graph_color;
-      glClearColor((float)(tmp_color->red) / 65535.0,
-		   (float)(tmp_color->green) / 65535.0,
-		   (float)(tmp_color->blue) / 65535.0,
-		   0.0);
-#endif
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      if (cp->fft_changed == FFT_CHANGED)
-	gl_spectrogram(si, cp->gl_fft_list, cp->spectro_cutoff, cp->fft_log_magnitude, cp->min_dB, br, bg, bb);
-      glViewport(fap->graph_x0, 0, fap->width, fap->height);
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      /* glOrtho(-1.0, 1.0, -1.0, 1.0, 1.0, -1.0); */ /* this appears to be the default */
-      glRotatef(cp->spectro_x_angle, 1.0, 0.0, 0.0);
-      glRotatef(cp->spectro_y_angle, 0.0, 1.0, 0.0);
-      glRotatef(cp->spectro_z_angle, 0.0, 0.0, 1.0);
-      glScalef(cp->spectro_x_scale, cp->spectro_y_scale, cp->spectro_z_scale);
-      glCallList((GLuint)(cp->gl_fft_list));
-      fap->use_gl = true;
-      make_axis_info(cp,
-		     cp->axis->x0, cp->axis->x1,
-		     SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
-		     _("time"),
-		     cp->axis->x0, cp->axis->x1,
-		     SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
-		     fap);
-      make_axes(cp, fap, X_AXIS_IN_SECONDS, DONT_CLEAR_GRAPH, NO_GRID, WITH_LINEAR_AXES, cp->show_axes);
-      fap->use_gl = false;
-      gl_display(cp);
-
-      /* a kludge to get the normal graph drawn (again...) */
-      if (cp->graph_time_p)
-	display_channel_time_data(cp); 
-      if (cp->graph_lisp_p)
-	display_channel_lisp_data(cp); 
-
-#if USE_MOTIF
-      return(XtAppPending(MAIN_APP(ss)) == 0); /* return true if there are no pending events to force current buffer to be displayed */
-#else
-      return(true);
-#endif
-    }
-#endif
-  /* end GL case */
   
   old_with_gl = with_gl(ss);
   if (old_with_gl) set_with_gl(false); /* needed to fixup spectro angles/scales etc */
   if (cp->printing) ps_allocate_grf_points();
   scl = si->scale;                     /* unnormalized fft doesn't make much sense here (just washes out the graph) */
-  fp = cp->fft;
-  fap = fp->axis;
+  fap = cp->fft->axis;
   bins = (int)(si->target_bins * cp->spectro_cutoff);
   fwidth = (fap->x_axis_x1 - fap->x_axis_x0);
   fheight = (fap->y_axis_y1 - fap->y_axis_y0); /* negative! */
@@ -2528,6 +2539,13 @@ static bool make_spectrogram(chan_info *cp)
   rotate_matrix(cp->spectro_x_angle, cp->spectro_y_angle, cp->spectro_z_angle,
 		cp->spectro_x_scale, cp->spectro_y_scale, zscl,
 		matrix);
+
+  if (cp->fft_log_frequency) 
+    {
+      fap_incr = (fap->x1 - fap->x0) / bins;
+      if (fap->x0 > 1.0) minlx = log(fap->x0); else minlx = 0.0;
+      lscale = (fap->x_axis_x1 - fap->x_axis_x0) / (log(fap->x1) - minlx);
+    }
 
   ax = copy_context(cp);
   if (color_map(ss) != BLACK_AND_WHITE_COLORMAP)
@@ -2554,29 +2572,18 @@ static bool make_spectrogram(chan_info *cp)
       
       for (i = 0; i < bins; i++, x += xincr)
 	{
-#if LOG_FREQ_SPECTROGRAM
-
-	  /* need log_freq_start -- it should already be in fap->x0, but it isn't; snd-fft has the axis bounds settings  */
 
 	  Float logx;
 	  if (cp->fft_log_frequency) 
 	    {
-	      Float minlx, curlx, maxlx, lscale, fap_range, log_range, fx;
-	      fap_range = fap->x1 - fap->x0;
-	      if (fap->x0 > 1.0) minlx = log(fap->x0); else minlx = 0.0;
-	      maxlx = log(fap->x1);
-	      log_range = (maxlx - minlx);
-	      lscale = 1.0 / log_range;
-	      fx = fap->x0 +  fap_range * i  / bins;
+	      Float fx, curlx;
+	      fx = fap->x0 +  fap_incr * i;
 	      if (fx > 1.0) curlx = log(fx); else curlx = 0.0;
-	      logx = fap->x_axis_x0 + (fap->x_axis_x1 - fap->x_axis_x0) * (curlx - minlx) * lscale;
+	      logx = fap->x_axis_x0 + (curlx - minlx) * lscale;
 	    }
 	  else logx = x;
 
 	  xyz[0] = logx - x0; 
-#else
-	  xyz[0] = x - x0; 
-#endif
 	  xyz[1] = y - y0;
 	  binval = fdata[i] / scl;
 	  if (!(cp->fft_log_magnitude)) 		  
@@ -3194,14 +3201,8 @@ static void display_channel_data_with_size(chan_info *cp,
 		    (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
 		  ((cp->show_grid) && 
 		   (cp->transform_graph_type != GRAPH_AS_SPECTROGRAM)) ? WITH_GRID : NO_GRID,
-#if LOG_FREQ_SPECTROGRAM
 		  (!(cp->fft_log_frequency)) ? WITH_LINEAR_AXES :
 		   ((cp->transform_graph_type == GRAPH_AS_SONOGRAM) ? WITH_LOG_Y_AXIS : WITH_LOG_X_AXIS),
-#else
-		  ((!(cp->fft_log_frequency)) || 
-		   (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)) ? WITH_LINEAR_AXES :
-		  ((cp->transform_graph_type == GRAPH_AS_SONOGRAM) ? WITH_LOG_Y_AXIS : WITH_LOG_X_AXIS),
-#endif
 		  cp->show_axes);
 	  
       if ((!with_time) || (just_fft))

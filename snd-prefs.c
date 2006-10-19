@@ -258,7 +258,7 @@ static void save_prefs(const char *filename)
 	      (!(string_member_p(unchecked_load_path, current_dirs, current_dirs_len))) &&        /* it's not in LOAD_PATH */
 	      ((!include_load_path) || (strcmp(unchecked_load_path, include_load_path) != 0)))  /* it's not already included above */
 	    add_local_load_path(fd, unchecked_load_path);
-	  if (unchecked_load_path) FREE_TEXT(unchecked_load_path); /* a no-op in gtk */
+	  if (unchecked_load_path) {FREE_TEXT(unchecked_load_path);} /* a no-op in gtk */
 	}
 
       if (current_dirs)
@@ -1021,7 +1021,7 @@ static void axis_label_font_text(prefs_info *prf)
       SET_TEXT(prf->text, "can't find that font");
       TIMEOUT(axis_label_font_error_erase_func);
     }
-  if (str) FREE_TEXT(str);
+  if (str) {FREE_TEXT(str);}
 }
 
 /* ---------------- axis-numbers-font ---------------- */
@@ -1059,7 +1059,7 @@ static void axis_numbers_font_text(prefs_info *prf)
       SET_TEXT(prf->text, "can't find that font");
       TIMEOUT(axis_numbers_font_error_erase_func);
     }
-  if (str) FREE_TEXT(str);
+  if (str) {FREE_TEXT(str);}
 }
 
 /* ---------------- peaks-font ---------------- */
@@ -1097,7 +1097,7 @@ static void peaks_font_text(prefs_info *prf)
       SET_TEXT(prf->text, "can't find that font");
       TIMEOUT(peaks_font_error_erase_func);
     }
-  if (str) FREE_TEXT(str);
+  if (str) {FREE_TEXT(str);}
 }
 
 /* ---------------- bold-peaks-font ---------------- */
@@ -1135,7 +1135,7 @@ static void bold_peaks_font_text(prefs_info *prf)
       SET_TEXT(prf->text, "can't find that font");
       TIMEOUT(bold_peaks_font_error_erase_func);
     }
-  if (str) FREE_TEXT(str);
+  if (str) {FREE_TEXT(str);}
 }
 
 /* ---------------- tiny-font ---------------- */
@@ -1173,7 +1173,7 @@ static void tiny_font_text(prefs_info *prf)
       SET_TEXT(prf->text, "can't find that font");
       TIMEOUT(tiny_font_error_erase_func);
     }
-  if (str) FREE_TEXT(str);
+  if (str) {FREE_TEXT(str);}
 }
 
 
@@ -1212,7 +1212,7 @@ static void listener_font_text(prefs_info *prf)
       SET_TEXT(prf->text, "can't find that font");
       TIMEOUT(listener_font_error_erase_func);
     }
-  if (str) FREE_TEXT(str);
+  if (str) {FREE_TEXT(str);}
 }
 
 
@@ -1246,7 +1246,7 @@ static void save_state_file_text(prefs_info *prf)
   else file = str;
   if (save_state_file(ss)) FREE(save_state_file(ss));
   in_set_save_state_file(copy_string(file));
-  if (str) FREE_TEXT(str);
+  if (str) {FREE_TEXT(str);}
 }
 
 
@@ -4711,7 +4711,7 @@ static void load_path_text(prefs_info *prf)
       include_load_path = copy_string(str);
       XEN_ADD_TO_LOAD_PATH(include_load_path);
     }
-  if (str) FREE_TEXT(str);
+  if (str) {FREE_TEXT(str);}
 }
 
 

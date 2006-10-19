@@ -1,27 +1,36 @@
-Snd 8.4
+Snd 8.5
 
-many ruby, forth, and sndins-related improvements from Mike including new file analog-filter.rb.
-  "scheme" instead of "guile" in various names in inf-snd.el (for gauche)
+many improvements thanks to Kjetil and Mike.
 
-improvements in strad.ins and bandedwg.ins from Juan Reyes
+gl2ps support, gl-graph->ps function, --with-gl2ps switch, gl2ps.[ch]
 
-snd_frg.scm thanks to Olivier Doare
+added gtk-effects-utils.scm, gtk support for *-menu.scm.
 
-granulated-sound-interp (examp.scm)
+finally implemented the log-frequency display in non-GL spectrograms.
 
-display-bark-fft (dsp.scm) -- spectral display using bark, erb, and mel scales
+save-marks changed to keep matching sync values
+add-mark now takes new optional trailing args: name and sync
 
-def-optkey-instrument (ws.scm)
+removed the gtk_print stuff from xg.c since it's all useless without
+  support for the cairo graphics functions and the pango functions
+  that access them.
 
-new optional argument to graph -- lisp graph axis choice
-new axis choice --show-bare-x-axis
-snd-color
-snd-font
-after-lisp-graph-hook
-removed vu-font and vu-font-size, added vu-in-dB
-removed spectrogramColor X resource
+sounds->segment-data (examp.scm) -- returns segment start/dur/maxamp data for collections
+  of sounds.
 
-checked: ruby 1.8.5, sbcl 0.9.15|16, gtk 2.10.2|3, fth 0.10.22
+with-file-monitor -- can be set to #f to turn off the FAM process stuff.
 
-Thanks: Mike Scholz, Anders Vinjar, Kjetil Matheussen, Bill Sack, Pam & Harold Norris,
-    Juan Reyes, Daniel Stahl, Michael Edwards, Carlos Pita
+add-watcher and delete-watcher -- this is a simpler (and less accident-prone)
+  hook to catch any change to the sound list, the current selection, or the mark list; 
+  it is intended to replace the multi-hook kludges currently used to set dialog button
+  sensitivity, for example.  Since each watcher is identified by a unique integer,
+  local (unnamed) functions can easily be deleted and so on.
+
+  removed selection-changed-hook (use simpler watcher mechanism instead).
+
+in cmn, thickness message now affects bars locally.  Added *double-barline-thickness*.
+
+checked: gtk-2.10.4|5|6, sbcl 0.9.17, clisp 2.40|1.
+
+Thanks: Michael Edwards, Mike Scholz, Kjetil Matheussen, Carlos Pita,
+    Carsten Heinrigs, Dragan Novetski, Jacek M. Holeczek, David O'Toole

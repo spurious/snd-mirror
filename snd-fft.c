@@ -704,18 +704,10 @@ static void make_sonogram_axes(chan_info *cp)
       ap = cp->axis;
       if (cp->transform_type == FOURIER)
 	{
-	  if (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)
-	    {
-	      max_freq = cp->spectro_cutoff * (Float)SND_SRATE(cp->sound) * 0.5;
-	      min_freq = cp->spectro_start * (Float)SND_SRATE(cp->sound) * 0.5;
-	    }
-	  else 
-	    {
-	      max_freq = cp->spectro_cutoff * (Float)SND_SRATE(cp->sound) * 0.5;
-	      if ((cp->fft_log_frequency) && ((SND_SRATE(cp->sound) * 0.5 * cp->spectro_start) < log_freq_start(ss)))
-		min_freq = log_freq_start(ss);
-	      else min_freq = cp->spectro_start * (Float)SND_SRATE(cp->sound) * 0.5;
-	    }
+	  max_freq = cp->spectro_cutoff * (Float)SND_SRATE(cp->sound) * 0.5;
+	  if ((cp->fft_log_frequency) && ((SND_SRATE(cp->sound) * 0.5 * cp->spectro_start) < log_freq_start(ss)))
+	    min_freq = log_freq_start(ss);
+	  else min_freq = cp->spectro_start * (Float)SND_SRATE(cp->sound) * 0.5;
 	}
       else 
 	{
