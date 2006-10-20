@@ -2410,7 +2410,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 
 ;;; TODO: do the reverse side (use the marks to make a mellotron)
 
-(define* (sounds->segment-data main-dir #:optional (output-file "sounds.data"))
+(define* (sounds->segment-data main-dir :optional (output-file "sounds.data"))
 
   (define (lower-case-and-no-spaces name)
     (let* ((new-name (string-downcase name))

@@ -5,7 +5,7 @@
  */
 void snd_remove(const char *name, cache_remove_t forget)
 {
-  int err = 0;
+  int err;
   if (forget == REMOVE_FROM_CACHE) mus_sound_forget(name); /* no error here if not in sound tables */
   ss->local_errno = 0;
   err = remove(name);
@@ -15,20 +15,30 @@ void snd_remove(const char *name, cache_remove_t forget)
 
 void snd_close(int fd, const char *name)
 {
-  int err;
-  ss->local_errno = 0;
-  err = close(fd);
-  if (err != 0)
-    snd_warning("close %s: %s", name, snd_io_strerror());
+  if (fd < 0)
+    snd_warning("close %s, fd: %d", name, fd);
+  else
+    {
+      int err;
+      ss->local_errno = 0;
+      err = close(fd);
+      if (err != 0)
+	snd_warning("close %s: %s", name, snd_io_strerror());
+    }
 }
 
 void snd_fclose(FILE *fd, const char *name)
 {
-  int err;
-  ss->local_errno = 0;
-  err = fclose(fd);
-  if (err != 0)
-    snd_warning("fclose %s: %s", name, snd_io_strerror());
+  if (!fd)
+    snd_warning("fclose %s, fd null!", name);
+  else
+    {
+      int err;
+      ss->local_errno = 0;
+      err = fclose(fd);
+      if (err != 0)
+	snd_warning("fclose %s: %s", name, snd_io_strerror());
+    }
 }
 
 

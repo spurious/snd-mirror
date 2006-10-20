@@ -107,7 +107,7 @@ static off_t file_bytes(const char *filename)
   chan = mus_file_open_read(filename);
   if (chan == -1) return(0);
   bytes = lseek(chan, 0L, SEEK_END);
-  CLOSE(chan, filename);
+  snd_close(chan, filename);
   return(bytes);
 #endif
 }

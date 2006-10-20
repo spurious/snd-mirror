@@ -8542,6 +8542,7 @@ static char *descr_sample_to_frame_2(int *args, ptree *pt)
 		     args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], FLOAT_ARG_2));
 }
 static void sample_to_frame_2(int *args, ptree *pt) {CLM_RESULT = mus_sample_to_frame(CLM_ARG_1, FLOAT_ARG_2, CLM_RESULT);}
+/* there may be a memory leak here -- how does the possibly new frame get gc'd? */
 static char *descr_sample_to_frame_3(int *args, ptree *pt) 
 {
   return(mus_format( CLM_PT " = sample->frame(" CLM_PT ", " FLT_PT ", " CLM_PT ")", 
@@ -10097,7 +10098,15 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
       /* define a walker for format */
       if (!format_walk_property_set)
 	{
-	  format_walk_property_set = true; /* odd -- why is this being called more than once? */
+	  format_walk_property_set = true; 
+	  /* odd -- why is this being called more than once? -- profiling says it gets hit once,
+	   *   but valgrind says 
+	   *       29,064 (26,656 direct, 2,408 indirect) bytes in 476 blocks are definitely lost in loss record 521 of 547"
+	   *       ==22922==    at 0x4905859: malloc (vg_replace_malloc.c:149)
+	   *       ==22922==    by 0x56BDC9: make_walker (snd-run.c:10035)
+	   *       ==22922==    by 0x5A2195: set_up_format (snd-run.c:10102)
+	   *   surely valgrind is confused?
+	   */
 #if HAVE_GUILE
 	  XEN_SET_WALKER(format_var, 
 			 C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));

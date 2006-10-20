@@ -597,10 +597,14 @@ int mus_file_close(int fd)
   int close_result = 0;
   if ((io_fds == NULL) || (fd >= io_fd_size) || (fd < 0) || (io_fds[fd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fdp = io_fds[fd];
+#if USE_SND
+  CLOSE(fd, fdp->name);
+#else
+  close_result = close(fd);
+#endif
   if (fdp->name) {FREE(fdp->name); fdp->name = NULL;}
   FREE(fdp);
   io_fds[fd] = NULL;
-  close_result = close(fd);
   if (close_result < 0)
     return(MUS_CANT_CLOSE_FILE);
   return(MUS_NO_ERROR);
