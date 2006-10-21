@@ -1,5 +1,6 @@
 Snd change log
 
+  23-Oct:    Snd 8.5.
   16-Oct:    add-watcher, delete-watcher.
   12-Oct:    removed selection-changed-hook (use simpler watcher mechanism instead).
   11-Oct:    gtk-effects-utils.scm and gtk support for *-menu.scm.

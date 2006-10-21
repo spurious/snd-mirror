@@ -509,6 +509,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+23-Oct:  Snd 8.5.\n\
 16-Oct:  add-watcher, delete-watcher.\n\
 12-Oct:  removed selection-changed-hook (use simpler watcher mechanism instead).\n\
 11-Oct:  gtk-effects-utils.scm and gtk support for *-menu.scm.\n\
@@ -516,7 +517,6 @@ void about_snd_help(void)
 2-Oct:   gl2ps support, gl-graph->ps function, --with-gl2ps switch, gl2ps.[ch].\n\
 26-Sep:  save-marks changed to keep matching sync values, add-marks takes name and sync args.\n\
          moved config.h.in to mus-config.h.in\n\
-12-Sep:  Snd 8.4\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
