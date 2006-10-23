@@ -14022,13 +14022,16 @@ EDITS: 5
 	  (do ((i 0 (1+ i)))
 	      ((= i 8)) ;should all be 1.0 (impulse in)
 	    (if (fneq (vct-ref v0 i) (vct-ref v1 i))
-		(snd-display ";spectra not equal: ~A ~A" v0 v1))))
+		(snd-display ";spectra not equal 1: ~A ~A" v0 v1))))
+	(vct-scale! idat 0.0)
+	(vct-scale! rdat 0.0)
+	(vct-set! rdat 0 1.0)
 	(let ((v0 (spectrum rdat idat (make-fft-window rectangular-window 17) 1)) ;rectangular here to avoid clobbering 0-th data point
 	      (v1 (snd-spectrum vdat rectangular-window 16 #t)))
 	  (do ((i 0 (1+ i)))
 	      ((= i 8)) ;should all be 1.0 (impulse in)
 	    (if (fneq (vct-ref v0 i) (vct-ref v1 i))
-		(snd-display ";spectra not equal: ~A ~A" v0 v1))))
+		(snd-display ";spectra not equal 0: ~A ~A" v0 v1))))
 	(let ((var (catch #t (lambda () (spectrum rdat idat #f -1)) (lambda args args))))
 	  (if (or (vct? var) 
 		  (not (eq? (car var) 'out-of-range)))
@@ -37244,9 +37247,12 @@ EDITS: 1
 
 	    (for-each 
 	     (lambda (size)
-	       (set! d0 (make-vct size))
-	       (vct-set! d0 0 1.0)
-	       (set! d1 (snd-spectrum d0 rectangular-window size))
+	       (let ((dcopy #f))
+		 (set! d0 (make-vct size))
+		 (vct-set! d0 0 1.0)
+		 (set! dcopy (vct-copy d0))
+		 (set! d1 (snd-spectrum d0 rectangular-window size))
+		 (if (not (vequal d0 dcopy)) (snd-display ";snd-spectrum not in-place? ~A ~A" d0 dcopy)))
 	       (let ((happy #t))
 		 (do ((i 0 (1+ i)))
 		     ((or (not happy) (= i (/ size 2))))
@@ -37255,6 +37261,7 @@ EDITS: 1
 			 (snd-display ";snd-spectrum (1.0) [~D: ~D]: ~A?" i size (vct-ref d1 i))
 			 (set! happy #f)))))
 	       
+	       (set! d0 (make-vct size 1.0))
 	       (set! d1 (snd-spectrum d0 rectangular-window))
 	       (if (fneq (vct-ref d1 0) 1.0)
 		   (snd-display ";snd-spectrum back (1.0 ~D): ~A?" size (vct-ref d1 0)))
@@ -37266,6 +37273,8 @@ EDITS: 1
 			 (snd-display ";snd-spectrum (0.0) [~D: ~D]: ~A?" i size (vct-ref d1 i))
 			 (set! happy #f)))))
 	       
+	       (set! d0 (make-vct size))
+	       (vct-set! d0 0 1.0)
 	       (set! d1 (snd-spectrum d0 rectangular-window size #f)) ; dB (0.0 = max)
 	       (let ((happy #t))
 		 (do ((i 0 (1+ i)))
@@ -37273,7 +37282,81 @@ EDITS: 1
 		   (if (fneq (vct-ref d1 i) 0.0)
 		       (begin
 			 (snd-display ";snd-spectrum dB (0.0) [~D: ~D]: ~A?" i size (vct-ref d1 i))
-			 (set! happy #f))))))
+			 (set! happy #f)))))
+
+	       (set! d0 (make-vct size 1.0))
+	       (set! d1 (snd-spectrum d0 rectangular-window size #f))
+	       (if (fneq (vct-ref d1 0) 0.0)
+		   (snd-display ";snd-spectrum dB back (0.0 ~D): ~A?" size (vct-ref d1 0)))
+	       (let ((happy #t))
+		 (do ((i 1 (1+ i)))
+		     ((or (not happy) (= i (/ size 2))))
+		   (if (fneq (vct-ref d1 i) -90.0) ; currently ignores min-dB (snd-sig.c 5023)
+		       (begin
+			 (snd-display ";snd-spectrum dB (1.0) [~D: ~D]: ~A?" i size (vct-ref d1 i))
+			 (set! happy #f)))))
+
+	       (let ((dcopy #f))
+		 (set! d0 (make-vct size))
+		 (vct-set! d0 0 1.0)
+		 (set! dcopy (vct-copy d0))
+		 (set! d1 (snd-spectrum d0 rectangular-window size #t 1.0 #t)) ; in-place 
+		 (if (vequal d0 dcopy) (snd-display ";snd-spectrum in-place? ~A ~A" d0 dcopy))
+		 (if (not (vequal d0 d1)) (snd-display ";snd-spectrum returns in-place? ~A ~A" d0 d1)))
+	       (let ((happy #t))
+		 (do ((i 0 (1+ i)))
+		     ((or (not happy) (= i (/ size 2))))
+		   (if (fneq (vct-ref d1 i) 1.0)
+		       (begin
+			 (snd-display ";snd-spectrum (1.0 #t) [~D: ~D]: ~A?" i size (vct-ref d1 i))
+			 (set! happy #f)))))
+
+	       (let ((dcopy #f))
+		 (set! d0 (make-vct size))
+		 (vct-set! d0 0 1.0)
+		 (set! dcopy (vct-copy d0))
+		 (set! d1 (snd-spectrum d0 rectangular-window size #f 1.0 #t)) ; in-place dB
+		 (if (vequal d0 dcopy) (snd-display ";snd-spectrum dB in-place? ~A ~A" d0 dcopy))
+		 (if (not (vequal d0 d1)) (snd-display ";snd-spectrum dB returns in-place? ~A ~A" d0 d1)))
+	       (let ((happy #t))
+		 (do ((i 0 (1+ i)))
+		     ((or (not happy) (= i (/ size 2))))
+		   (if (fneq (vct-ref d1 i) 0.0)
+		       (begin
+			 (snd-display ";snd-spectrum dB (1.0 #t) [~D: ~D]: ~A?" i size (vct-ref d1 i))
+			 (set! happy #f)))))
+
+	       (set! d0 (make-vct size 1.0))
+	       (set! d1 (snd-spectrum d0 rectangular-window size #t 0.0 #f #f)) ; linear (in-place) not normalized
+	       (if (fneq (vct-ref d1 0) size) (snd-display ";snd-spectrum no norm 0: ~A" d1))
+	       (let ((happy #t))
+		 (do ((i 1 (1+ i)))
+		     ((or (not happy) (= i (/ size 2))))
+		   (if (fneq (vct-ref d1 i) 0.0)
+		       (begin
+			 (snd-display ";snd-spectrum no norm (0.0) [~D: ~D]: ~A?" i size (vct-ref d1 i))
+			 (set! happy #f)))))
+
+	       (set! d0 (make-vct size 1.0))
+	       (set! d1 (snd-spectrum d0 blackman2-window size))
+	       (if (and (not (vequal d1 (vct 1.000 0.721 0.293 0.091)))
+			(not (vequal d1 (vct 1.000 0.647 0.173 0.037 0.024 0.016 0.011 0.005))))
+		   (snd-display ";blackman2 snd-spectrum: ~A~%" d1))
+
+	       (set! d0 (make-vct size 1.0))
+	       (set! d1 (snd-spectrum d0 gaussian-window size #t 0.5))
+	       (if (and (not (vequal d1 (vct 1.000 0.900 0.646 0.328)))
+			(not (vequal d1 (vct 1.000 0.870 0.585 0.329 0.177 0.101 0.059 0.028))))
+		   (snd-display ";gaussian 0.5 snd-spectrum: ~A~%" d1))
+
+	       (set! d0 (make-vct size 1.0))
+	       (set! d1 (snd-spectrum d0 gaussian-window size #t 0.85))
+	       (if (and (not (vequal d1 (vct 1.000 0.924 0.707 0.383)))
+			(not (vequal d1 (vct 1.000 0.964 0.865 0.725 0.566 0.409 0.263 0.128))))
+		   (snd-display ";gaussian 0.85 snd-spectrum: ~A~%" d1))
+
+	       )
+
 	     (list 8 16))
 	    
 	    (for-each
@@ -47825,6 +47908,7 @@ EDITS: 1
 		    (snd-display ";C-x k -> ~A: ~A?" (sounds) (map short-file-name (sounds)))
 		    (if (not (string=? (short-file-name (car (sounds))) "pistol.snd"))
 			(snd-display ";backgraph + kill: ~A?" (short-file-name (car (sounds))))))
+		(if (null? (sounds)) (open-sound "pistol.snd"))
 
 		(set! swids (sound-widgets))
 		(set! name-button (list-ref swids 1))

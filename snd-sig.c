@@ -4916,14 +4916,14 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
 
 static XEN g_snd_spectrum(XEN data, XEN win, XEN len, XEN linear_or_dB, XEN beta, XEN in_place, XEN normalized)
 {
-  #define H_snd_spectrum "(" S_snd_spectrum " data (window " S_rectangular_window ") (len data-len) (linear-or-dB linear) (beta 0.0) (in-place " PROC_FALSE ") (normalized " PROC_TRUE ")): \
-magnitude spectrum of data (a vct), in data if in-place, using fft-window win and fft length len"
+  #define H_snd_spectrum "(" S_snd_spectrum " data (window " S_rectangular_window ") (len data-len) (linear " PROC_TRUE ") (beta 0.0) (in-place " PROC_FALSE ") (normalized " PROC_TRUE ")): \
+magnitude spectrum of data (a vct), in data if in-place, using fft-window win and fft length len."
 
-  bool linear = false, in_data = false, normed = true;
+  bool linear = true, in_data = false, normed = true;
   int i, j, n, n2;
   mus_fft_window_t wtype;
   Float maxa, lowest, b = 0.0;
-  Float *idat, *rdat, *window;
+  Float *rdat;
   vct *v;
   XEN_ASSERT_TYPE((MUS_VCT_P(data)), data, XEN_ARG_1, S_snd_spectrum, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(win), win, XEN_ARG_2, S_snd_spectrum, "an integer");
@@ -4932,50 +4932,67 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beta), beta, XEN_ARG_5, S_snd_spectrum, "a number");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(in_place), in_place, XEN_ARG_6, S_snd_spectrum, "a boolean");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalized), normalized, XEN_ARG_7, S_snd_spectrum, "a boolean");
+
   v = XEN_TO_VCT(data);
-  rdat = v->data;
   n = XEN_TO_C_INT_OR_ELSE(len, v->length);
   if (n <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 3, len, "length ~A <= 0?");
   if (n > v->length) n = v->length;
-  if (XEN_NOT_FALSE_P(linear_or_dB)) linear = true;
-  if (XEN_TRUE_P(in_place)) in_data = true;
-  if (XEN_FALSE_P(normalized)) normed = false;
+
+  if (XEN_BOOLEAN_P(linear_or_dB)) linear = XEN_TO_C_BOOLEAN(linear_or_dB);
+  if (XEN_BOOLEAN_P(in_place)) in_data = XEN_TO_C_BOOLEAN(in_place);
+  if (XEN_BOOLEAN_P(normalized)) normed = XEN_TO_C_BOOLEAN(normalized);
+
   wtype = (mus_fft_window_t)XEN_TO_C_INT_OR_ELSE(win, MUS_RECTANGULAR_WINDOW);
   if (!(MUS_FFT_WINDOW_OK(wtype)))
     XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 2, win, "~A: unknown fft window");
   if (XEN_NUMBER_P(beta)) b = XEN_TO_C_DOUBLE(beta);
   if (b < 0.0) b = 0.0; else if (b > 1.0) b = 1.0;
-  idat = (Float *)CALLOC(n, sizeof(Float));
-  window = (Float *)CALLOC(n, sizeof(Float));
-  mus_make_fft_window_with_window(wtype, n, b * fft_beta_max(wtype), 0.0, window);
-  for (i = 0; i < n; i++) rdat[i] *= window[i];
-  FREE(window);
-  n2 = n / 2;
+
+  if (!in_data)
+    {
+      rdat = (Float *)MALLOC(n * sizeof(Float));
+      if (n < v->length)
+	for (i = 0; i < n; i++) rdat[i] = v->data[i];
+      else memcpy((void *)rdat, (void *)(v->data), v->length * sizeof(Float));
+    }
+  else rdat = v->data;
+
+  if (wtype != MUS_RECTANGULAR_WINDOW)
+    {
+      Float *window;
+      window = (Float *)CALLOC(n, sizeof(Float));
+      mus_make_fft_window_with_window(wtype, n, b * fft_beta_max(wtype), 0.0, window);
+      for (i = 0; i < n; i++) rdat[i] *= window[i];
+      FREE(window);
+    }
+    
+    n2 = n / 2;
 #if HAVE_FFTW || HAVE_FFTW3
-  mus_fftw(rdat, n, 1);
-  rdat[0] *= rdat[0];
-  rdat[n2] *= rdat[n2];
-  for (i = 1, j = n - 1; i < n2; i++, j--)
-    {
-      rdat[i] = rdat[i] * rdat[i] + rdat[j] * rdat[j];
-      rdat[j] = rdat[i];
-    }
+    mus_fftw(rdat, n, 1);
+    rdat[0] *= rdat[0];
+    rdat[n2] *= rdat[n2];
+    for (i = 1, j = n - 1; i < n2; i++, j--)
+      {
+	rdat[i] = rdat[i] * rdat[i] + rdat[j] * rdat[j];
+	rdat[j] = rdat[i];
+      }
 #else
-  mus_fft(rdat, idat, n, 1);
-  rdat[0] *= rdat[0];
-  rdat[n2] *= rdat[n2];
-  for (i = 1, j = n - 1; i < n2; i++, j--)
-    {
-      rdat[i] = rdat[i] * rdat[i] + idat[i] * idat[i];
-      rdat[j] = rdat[i];
-    }
+  {
+    Float *idat;
+    idat = (Float *)CALLOC(n, sizeof(Float));
+    mus_fft(rdat, idat, n, 1);
+    rdat[0] *= rdat[0];
+    rdat[n2] *= rdat[n2];
+    for (i = 1, j = n - 1; i < n2; i++, j--)
+      {
+	rdat[i] = rdat[i] * rdat[i] + idat[i] * idat[i];
+	rdat[j] = rdat[i];
+      }
+    FREE(idat);
+  }
 #endif
-  if (in_data) 
-    {
-      FREE(idat);
-      idat = rdat;
-    }
+
   lowest = 0.000001;
   maxa = 0.0;
   n = n / 2;
@@ -4984,11 +5001,11 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
       Float val;
       val = rdat[i];
       if (val < lowest)
-	idat[i] = 0.0;
+	rdat[i] = 0.0;
       else 
 	{
-	  idat[i] = sqrt(val);
-	  if (idat[i] > maxa) maxa = idat[i];
+	  rdat[i] = sqrt(val);
+	  if (rdat[i] > maxa) maxa = rdat[i];
 	}
     }
   if (maxa > 0.0)
@@ -5001,20 +5018,20 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
 	  Float todb;
 	  todb = 20.0 / log(10.0);
 	  for (i = 0; i < n; i++) 
-	    if (idat[i] > 0.0)
-	      idat[i] = todb * log(idat[i] * maxa);
-	    else idat[i] = -90.0; /* min_dB(ss)? or could channel case be less? */
+	    if (rdat[i] > 0.0)
+	      rdat[i] = todb * log(rdat[i] * maxa);
+	    else rdat[i] = -90.0; /* min_dB(ss)? or could channel case be less? */
 	}
       else 
 	{
 	  if (normed)
 	    for (i = 0; i < n; i++) 
-	      idat[i] *= maxa;
+	      rdat[i] *= maxa;
 	}
     }
   if (in_data)
     return(data);
-  return(xen_return_first(xen_make_vct(n, idat), data, win));
+  return(xen_return_first(xen_make_vct(n, rdat), data, win)); /* xen_make_vct uses the data array directly (frees upon gc) */
 }
 
 static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, const char *caller)

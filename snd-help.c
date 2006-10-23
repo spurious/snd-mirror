@@ -509,6 +509,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+24-Oct:  filter-fft in examp.scm.\n\
 23-Oct:  Snd 8.5.\n\
 16-Oct:  add-watcher, delete-watcher.\n\
 12-Oct:  removed selection-changed-hook (use simpler watcher mechanism instead).\n\

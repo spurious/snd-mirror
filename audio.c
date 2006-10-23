@@ -4228,20 +4228,6 @@ bool mus_alsa_set_squelch_warning(bool val)
 
 
 
-/* TODO: perhaps mus_alsa_provide_interpolation? + autointerp at snd-dac level?
- * TODO: if user sets device, snd-dac should not ignore it and go searching for a better one (does this happen?)
- * TODO: why the blip in playback? play-sound function is ok in this regard (alsa's aplay has the same blip)
- * TODO: if user sets recorder-in-chans, we should just use it?
- * TODO: something is wrong in recorder if bufs set (error message makes no sense):
- *         ;alsa_audio_open: default: cannot set buffer size to 3 periods of 1024 frames; 
- *          total requested buffer size is 3072 frames, minimum allowed is 4, maximum is 733007751
- * TODO: split playback and capture -- do these need initialization at all?
- */
-
-
-/* ---------------- */
-
-
 
 /* return the name of a given system */
 
@@ -6842,9 +6828,6 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
  *   and to a much lesser extent, coreaudio.pdf and the HAL/Daisy examples.
  */
 
-/* TODO: make bigger buffers work right -- is it possible to set the audio device buffer size?
- */
-
 #ifdef MUS_MAC_OSX
 #define AUDIO_OK 1
 
@@ -7245,7 +7228,11 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
       sizeof_format = sizeof(AudioStreamBasicDescription);
       err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
 
-      /* TODO: this error is bogus in some cases -- other audio systems just ignore it */
+      /* this error is bogus in some cases -- other audio systems just ignore it,
+       *   but in my case (a standard MacIntel with no special audio hardware), if I leave
+       *   this block out, the sound is played back at the wrong rate, and the volume
+       *   of outa is set to 0.0?? 
+       */
 
       if (err != noErr)
 	{
@@ -7273,12 +7260,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 		    {
 		      /* no luck -- get current DAC settings at least */
 		      sizeof_format = sizeof(AudioStreamBasicDescription);
-		      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
-		      if (err != noErr)
-			{
-			  fprintf(stderr,"can't get?: %s ", osx_error(err));
-			  return(MUS_ERROR);
-			}
+		      AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
 		    }
 		}
 	    }
@@ -7286,7 +7268,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 	    {
 	      /* nothing matches? -- get current DAC settings */
 	      sizeof_format = sizeof(AudioStreamBasicDescription);
-	      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
+	      AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
 	    }
 	}
     }

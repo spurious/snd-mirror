@@ -6195,3 +6195,5 @@
 ;(CFNC-210 "gpointer g_value_get_pointer GValue* value" 'const)
 ;(CFNC-210 "gchar* g_value_get_string GValue* value" 'const)
 
+;;; pango 1-15.0
+;;; (CINT-2108 "PANGO_FONT_MASK_GRAVITY")

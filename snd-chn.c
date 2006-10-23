@@ -10,6 +10,7 @@
  * SOMEDAY: Edit:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
  * TODO: audio mixer settings dialog (needed especially in alsa!)
  * SOMEDAY: describe_fft_point doesn't work in spectrograms
+ *             is time:x freq:z val:y in rotation matrix? would need inverted-matrix * vector, then current graph-once code
  */
 
 
@@ -3746,9 +3747,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
     }
   if (cp->graph_transform_p)
     {
-      fft_info *fp;
-      fp = cp->fft;
-      ap = fp->axis;
+      ap = cp->fft->axis;
       /* look first for on-axis (axis drag) mouse */
 #if HAVE_GL
       if ((cp->transform_graph_type == GRAPH_AS_SPECTROGRAM) && (ap->used_gl))
@@ -3795,22 +3794,22 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
   int ind, time;
   fp = cp->fft;
   ap = fp->axis;
-  if (x < ap->x_axis_x0) x = ap->x_axis_x0; else if (x > ap->x_axis_x1) x = ap->x_axis_x1;
-  if (ap->x_axis_x1 == ap->x_axis_x0) return(copy_string("?"));
+
+  if ((ap->x_axis_x1 == ap->x_axis_x0) || (ap->y_axis_y1 == ap->y_axis_y0))
+    return(copy_string("?"));
+
+  x = mus_fclamp(ap->x_axis_x0, x, ap->x_axis_x1);
   xf = ap->x0 + (ap->x1 - ap->x0) * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0);
-  if (cp->transform_graph_type == GRAPH_ONCE)                          /* fp->data[bins] */
+
+  if (cp->transform_graph_type == GRAPH_ONCE)
     {
       if (cp->transform_type == FOURIER)
 	{
 	  if (cp->fft_log_frequency)
 	    {
-	      Float minlx = 0.0, maxlx, ap_range, log_range, lscale = 1.0;
-	      ap_range = ap->x1 - ap->x0;
+	      Float minlx = 0.0;
 	      if (ap->x0 > 1.0) minlx = log(ap->x0); else minlx = 0.0;
-	      maxlx = log(ap->x1);
-	      log_range = (maxlx - minlx);
-	      lscale = ap_range / log_range;
-	      xf = exp((xf - ap->x0) / lscale + minlx);
+	      xf = exp(minlx + ((xf - ap->x0) * (log(ap->x1) - minlx) / (ap->x1 - ap->x0)));
 	      ind = (int)((fp->current_size * xf) / (Float)SND_SRATE(cp->sound));
 	    }
 	  else ind = (int)((fp->current_size * xf) / (Float)SND_SRATE(cp->sound));
@@ -3826,23 +3825,19 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
     }
   else 
     {
-      if (cp->transform_graph_type == GRAPH_AS_SONOGRAM) 	  /* si->data[slices][bins] */
+      if (cp->transform_graph_type == GRAPH_AS_SONOGRAM)
 	{
-	  if (y < ap->y_axis_y1) y = ap->y_axis_y1; else if (y > ap->y_axis_y0) y = ap->y_axis_y0;
-	  if (ap->y_axis_y1 == ap->y_axis_y0) return(copy_string("?"));
+	  y = mus_fclamp(ap->y_axis_y1, y, ap->y_axis_y0);
 	  yf = ap->y0 + (ap->y1 - ap->y0) * (Float)(y - ap->y_axis_y0) / (Float)(ap->y_axis_y1 - ap->y_axis_y0);
+
 	  si = cp->sonogram_data;
 	  if (cp->transform_type == FOURIER)
 	    {
 	      if (cp->fft_log_frequency)
 		{
-		  Float minlx = 0.0, maxlx, ap_range, log_range, lscale = 1.0;
-		  ap_range = ap->y1 - ap->y0;
+		  Float minlx = 0.0;
 		  if (ap->y0 > 1.0) minlx = log(ap->y0); else minlx = 0.0;
-		  maxlx = log(ap->y1);
-		  log_range = (maxlx - minlx);
-		  lscale = ap_range / log_range;
-		  yf = exp((yf - ap->y0) / lscale + minlx);
+		  yf = exp(minlx + ((yf - ap->y0) * (log(ap->y1) - minlx) / (ap->y1 - ap->y0)));
 		  ind = (int)((fp->current_size * yf) / (Float)SND_SRATE(cp->sound));
 		}
 	      else ind = (int)((fp->current_size * yf) / (Float)SND_SRATE(cp->sound));
@@ -4008,9 +4003,7 @@ chan_info *which_channel(snd_info *sp, int y)
 static Float fft_axis_extent(chan_info *cp)
 {
   axis_info *ap;
-  fft_info *fp;
-  fp = cp->fft;
-  ap = fp->axis;
+  ap = cp->fft->axis;
   if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
     return((Float)(ap->x_axis_x1 - ap->x_axis_x0));
   else return((Float)(ap->y_axis_y0 - ap->y_axis_y1));

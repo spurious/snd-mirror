@@ -937,6 +937,39 @@ spectral envelopes) following interp (an env between 0 and 1)"
 		     (* pan (vct-ref data2 i))))))
     (vct->channel new-data 0 (1- len) snd chn #f (format #f "fft-env-interp '~A '~A '~A" env1 env2 interp))))
 
+
+(define* (filter-fft flt :optional snd chn)
+  (let* ((sr (srate snd))
+	 (len (frames snd chn))
+	 (mx (maxamp snd chn))
+	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
+	 (fsize2 (/ fsize 2))
+	 (rdata (channel->vct 0 fsize snd chn))
+	 (idata (make-vct fsize))
+	 (spect (snd-spectrum rdata rectangular-window fsize #t 1.0 #f #f))) ; not in-place!
+    (fft rdata idata 1)
+    (flt (vct-ref spect 0))
+    (do ((i 1 (1+ i))
+	 (j (- fsize 1) (1- j)))
+	((= i fsize2))
+      (let* ((orig (vct-ref spect i))
+	     (cur (flt orig)))
+	(if (not (= orig 0.0))
+	    (let ((scl (/ cur orig)))
+	      (vct-set! rdata i (* scl (vct-ref rdata i)))
+	      (vct-set! idata i (* scl (vct-ref idata i)))
+	      (vct-set! rdata j (* scl (vct-ref rdata j)))
+	      (vct-set! idata j (* scl (vct-ref idata j)))))))
+    (fft rdata idata -1)
+    (let ((pk (vct-peak rdata)))
+      (vct->channel (vct-scale! rdata (/ mx pk)) 0 (1- len) snd chn #f (format #f "filter-fft ~A" flt)))))
+
+;; (let ((op (make-one-zero .5 .5))) (filter-fft op)) ; a sort of reverb(!)
+;; (let ((op (make-one-pole .05 .95))) (filter-fft op)) ; same, echoes
+;; (filter-fft (lambda (y) (if (< (abs y) 10) 0.0 y)))
+;; (filter-fft (lambda (y) (if (< (abs y) 40) 0.0 y)))
+
+
 (define* (fft-smoother cutoff start samps :optional snd chn)
   "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a 
 section: (vct->channel (fft-smoother .1 (cursor) 400 0 0) (cursor) 400)"
