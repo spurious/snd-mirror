@@ -578,10 +578,17 @@
       (let ((val (/ (sin (* 0.5 (+ n 1) angle)) (* 2 (sin (* 0.5 angle))))))
 	(* 2 (/ (* val val) (+ n 1))))))
 
+;;; (let ((angle 0.0)) (map-channel (lambda (y) (let ((val (fejer-sum angle 3))) (set! angle (+ angle .1)) (* .1 val)))))
+
+
 (define (legendre-sum angle n)
   ;; from Andrews, Askey, Roy "Special Functions" p 314
-  (let* ((val (/ (sin (* angle (+ n 0.5))) (sin (* 0.5 angle)))))
-    (* val val)))
+  (if (= angle 0.0)
+      1.0                ; 0.0 / 0.0 ?
+      (let* ((val (/ (sin (* angle (+ n 0.5))) (sin (* 0.5 angle)))))
+	(* val val))))
+
+;;; (let ((angle 0.0)) (map-channel (lambda (y) (let ((val (legendre-sum angle 3))) (set! angle (+ angle .1)) (* .1 val)))))
 
 
 ;;; -------- variations on sum-of-cosines
@@ -639,11 +646,16 @@
 	       (s3 (* a (sin (+ x fi)))))
 	  (/ (+ (sin fi) (- s3) (- s2) s1) s4)))))
 
+;;; (let ((angle 0.0)) (map-channel (lambda (y) (let ((val (band-limited-sawtooth angle 0.5 8 .2))) (set! angle (+ angle .2)) val))))
+
 
 ;;; square-wave in the same mold
 
 (define (band-limited-square-wave theta n) ; n sets how squared-off it is, theta is instantaneous phase
   (tanh (* n (sin theta))))
+
+;;; (let ((angle 0.0)) (map-channel (lambda (y) (let ((val (band-limited-square-wave angle 10))) (set! angle (+ angle .2)) val))))
+
 
 
 ;;; -------- brighten-slightly

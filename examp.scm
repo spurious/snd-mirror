@@ -938,7 +938,10 @@ spectral envelopes) following interp (an env between 0 and 1)"
     (vct->channel new-data 0 (1- len) snd chn #f (format #f "fft-env-interp '~A '~A '~A" env1 env2 interp))))
 
 
-(define* (filter-fft flt :optional snd chn)
+(define* (filter-fft flt :optional (normalize #t) snd chn)
+  "(filter-fft flt normalize snd chn) gets the spectrum of all the data in the given channel, \
+applies the function 'flt' to it, then inverse ffts.  'flt' should take one argument, the \
+current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is like fft-squelch."
   (let* ((sr (srate snd))
 	 (len (frames snd chn))
 	 (mx (maxamp snd chn))
@@ -946,7 +949,7 @@ spectral envelopes) following interp (an env between 0 and 1)"
 	 (fsize2 (/ fsize 2))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
-	 (spect (snd-spectrum rdata rectangular-window fsize #t 1.0 #f #f))) ; not in-place!
+	 (spect (snd-spectrum rdata rectangular-window fsize #t 1.0 #f normalize))) ; not in-place!
     (fft rdata idata 1)
     (flt (vct-ref spect 0))
     (do ((i 1 (1+ i))
@@ -954,27 +957,66 @@ spectral envelopes) following interp (an env between 0 and 1)"
 	((= i fsize2))
       (let* ((orig (vct-ref spect i))
 	     (cur (flt orig)))
-	(if (not (= orig 0.0))
+	(if (>  (abs orig) .000001)
 	    (let ((scl (/ cur orig)))
 	      (vct-set! rdata i (* scl (vct-ref rdata i)))
 	      (vct-set! idata i (* scl (vct-ref idata i)))
 	      (vct-set! rdata j (* scl (vct-ref rdata j)))
-	      (vct-set! idata j (* scl (vct-ref idata j)))))))
+	      (vct-set! idata j (* scl (vct-ref idata j))))
+	    (if (> (abs cur) .000001)
+		(let ((scl (/ cur (sqrt 2.0))))
+		  (vct-set! rdata i scl)
+		  (vct-set! idata i scl)
+		  (vct-set! rdata j scl)
+		  (vct-set! idata j (- scl)))))))
     (fft rdata idata -1)
-    (let ((pk (vct-peak rdata)))
-      (vct->channel (vct-scale! rdata (/ mx pk)) 0 (1- len) snd chn #f (format #f "filter-fft ~A" flt)))))
+    (if (not (= mx 0.0))
+	(let ((pk (vct-peak rdata)))
+	  (vct->channel (vct-scale! rdata (/ mx pk)) 0 (1- len) snd chn #f (format #f "filter-fft ~A" flt)))
+	(vct->channel rdata 0 (1- len) snd chn #f (format #f "filter-fft ~A" flt)))))
 
-;; (let ((op (make-one-zero .5 .5))) (filter-fft op)) ; a sort of reverb(!)
-;; (let ((op (make-one-pole .05 .95))) (filter-fft op)) ; same, echoes
-;; (filter-fft (lambda (y) (if (< (abs y) 10) 0.0 y)))
-;; (filter-fft (lambda (y) (if (< (abs y) 40) 0.0 y)))
+;; (let ((op (make-one-zero .5 .5))) (filter-fft op))
+;; (let ((op (make-one-pole .05 .95))) (filter-fft op))
+;; (filter-fft (lambda (y) (if (< y .1) 0.0 y)))
+;; (let ((rd (make-sample-reader 0 0 0 1 0))) (scale-by 0) (filter-fft (lambda (y) (rd)))) ; treat original sound as spectrum
+;; (filter-fft contrast-enhancement)
+;; (filter-fft (lambda (y) (* y y y))) ; extreme low pass
+
+#|
+;;; save this example -- find a better use for it someday and add to docs
+(let* ((ind (or (find-sound "now.snd")
+		(open-sound "now.snd")))
+       (mixers (make-vector 8))
+       (mx (maxamp ind 0)))
+  (do ((i 1 (1+ i))
+       (lo 0.0 (+ lo .1)))
+      ((= i 8))
+    (filter-fft (lambda (y) (contrast-enhancement y (+ 1.0 (* lo 30.0)))) #t ind 0 0))
+  (do ((i 0 (1+ i))
+       (lo 0.0 (+ lo .12)))
+      ((= i 8))
+    (env-sound (list 0 0 lo 1 1 0) 0 #f 32.0 ind 0 (1+ i))
+    (vector-set! mixers i (make-sample-reader 0 ind 0 1 (edit-position ind 0))))
+  (scale-by 0.0)
+  (map-channel
+   (lambda (y)
+     (let ((sum 0.0))
+       (do ((i 0 (1+ i)))
+	   ((= i 8) sum)
+	 (set! sum (+ sum (read-sample (vector-ref mixers i))))))))
+  (do ((i 0 (1+ i)))
+      ((= i 8))
+    (free-sample-reader (vector-ref mixers i)))
+  (scale-to mx))
+|#
+
 
 
 (define* (fft-smoother cutoff start samps :optional snd chn)
   "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a 
-section: (vct->channel (fft-smoother .1 (cursor) 400 0 0) (cursor) 400)"
+section: (vct->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"
   (let* ((fftpts (inexact->exact (expt 2 (inexact->exact (ceiling (/ (log (1+ samps)) (log 2.0)))))))
-	 (rl (channel->vct start samps snd chn rl))
+	 (rl (channel->vct start fftpts snd chn))
 	 (im (make-vct fftpts))
 	 (top (inexact->exact (floor (* fftpts cutoff)))))
     (let* ((old0 (vct-ref rl 0))

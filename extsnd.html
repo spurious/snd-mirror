@@ -10497,7 +10497,8 @@ Waterfall real-time spectrograph: <a href="sndscm.html#startwaterfall">start-wat
 Simple rt spectrum: <a href="sndscm.html#exshowinputfft">show-input-fft</a>, <a href="sndscm.html#exshowdraggableinputfft">show-draggable-input-fft</a><br>
 More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fourier-transform</a>, <a href="sndscm.html#ztransform">z-transform</a> in dsp.scm<br>
 3D (single) fft display: <a href="sndscm.html#complexify">complexify</a><br>
-bark, mel ,erb scale display: <a href="sndscm.html#displaybarkfft">display-bark-fft</a><br>
+bark, mel, erb scale display: <a href="sndscm.html#displaybarkfft">display-bark-fft</a><br>
+apply function to spectrum, inverse fft: <a href="sndscm.html#filterfft">filter-fft</a><br>
 </blockquote></small>
 </td></tr></TABLE>
 
@@ -11673,7 +11674,7 @@ is:
     Motif: (add-watcher (lambda () 
                           (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (not (null? (sounds))))))
     Gtk:   (add-watcher (lambda () 
-                          (gtk_widget_set_sensitive ok-button (not (null? (sounds))))))))
+                          (gtk_widget_set_sensitive ok-button (not (null? (sounds))))))
 </pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>

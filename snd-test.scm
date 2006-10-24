@@ -35,6 +35,55 @@
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
 
+;;; TODO: these should be tested (or checked in some way):
+;;;        agc
+;;;        any-random
+;;;        bumpy
+;;;        channel-lp-inf
+;;;        directory->list
+;;;        display-colored-samples
+;;;        display-samples-in-color
+;;;        eval-header
+;;;        explode-sf2
+;;;        fdelay make-fdelay
+;;;        fft-env-data
+;;;        file->vct
+;;;        fit-selection-between-marks
+;;;        gaussian-distribution
+;;;        hilbert-transform-via-fft
+;;;        linear-src-channel
+;;;        make-current-window-display
+;;;        make-fm2
+;;;        make-ramp
+;;;        make-transposer (transposer)
+;;;        marks->string
+;;;        normalize-envelope
+;;;        overlay-sounds
+;;;        pareto-distribution
+;;;        periodogram
+;;;        powenv-channel
+;;;        read-ascii
+;;;        repitch-sound
+;;;        replace-with-selection
+;;;        retime-sound
+;;;        rms-envelope
+;;;        samples-via-colormap
+;;;        save-mark-properties
+;;;        scramble-channels
+;;;        smart-line-cursor
+;;;        sound->amp-env
+;;;        sound-via-sound
+;;;        stereo->mono
+;;;        stretch-sound-via-dft
+;;;        test-power-env
+;;;        transposed-echo
+;;;        tree-for-each
+;;;        uncolor-samples
+;;;        vibro
+;;;        zoom-spectrum
+;;; differentiator correlate superimpose-ffts find-click search-for-click zero+ next-peak mono->stereo
+;;; show-selection cross-fade dissolve-fade brownian-noise reset-all-hooks html ? start-sync stop-sync 
+;;; report-mark-names deselect-all mix-click-info(?) poly-resultant window-samples maxfilter(?)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -4678,6 +4727,35 @@
 
 (define (region2vct r c len)
   (region->vct 0 len r c))
+
+;;; extensions.scm (commented out)
+(define* (delay-channel amount :optional (beg 0) dur snd chn edpos)
+  (let ((dly amount)
+	(cur-edpos (if (or (not edpos)
+			   (= edpos current-edit-position))
+		       (edit-position snd chn)
+		       edpos)))
+    (ptree-channel (lambda (y data dir)
+		     (declare (y real) (data vct) (dir boolean))
+		     (let* ((pos (inexact->exact (floor (vct-ref data 0))))
+			    (len (inexact->exact (floor (vct-ref data 1))))
+			    (val (vct-ref data (+ pos 2))))
+		       (vct-set! data (+ pos 2) y)
+		       (set! pos (1+ pos))
+		       (if (>= pos len) (vct-set! data 0 0) (vct-set! data 0 pos))
+		       val))
+		   beg dur snd chn edpos #f
+		   (lambda (fpos fdur)
+		     (let ((data (make-vct (+ dly 2))))
+		       (vct-set! data 0 0.0)
+		       (vct-set! data 1 dly)
+		       (if (= fpos 0)
+			   data
+			   (let* ((reader (make-sample-reader (1- fpos) snd chn -1 cur-edpos)))
+			     (do ((i (1- dly) (1- i)))
+				 ((< i 0))
+			       (vct-set! data (+ i 2) (reader)))
+			     data)))))))
 
 (define old-opt-val (optimization))
 
@@ -11963,8 +12041,14 @@ EDITS: 5
 	    (if (or (not (= (edit-position ind0 0) 1))
 		    (not (= (edit-position ind1 0) 5)))
 		(snd-display ";sync field over selection: ~A ~A" (edit-position ind0 0) (edit-position ind1 0)))
-	    (close-sound ind0)
-	    (close-sound ind1))
+
+	    (close-sound ind1)
+	    (revert-sound ind0)
+	    (let ((val (sample 1990)))
+	      (delay-channel 10)
+	      (if (fneq (sample 2000) val) (snd-display ";delay-channel: ~A ~A" val (sample 2000))))
+	    (close-sound ind0))
+
 	  ))
       (clear-save-state-files)
       )
@@ -13887,6 +13971,141 @@ EDITS: 5
   (if (and (fneq (mus-phase gen) -2.0)
 	   (fneq (mus-phase gen) (- (* 2 3.14159265) 2.0)))
       (snd-display ";phase: ~A freq: ~A" (mus-phase gen))))
+
+;;; from mixer.scm (commented out)
+(define (frame-cross m1 m2)
+  (if (or (not (= (mus-length m1) 3))
+	  (not (= (mus-length m2) 3)))
+      (snd-print "cross product only in 3 dimensions")
+      (make-frame 3 
+		  (- (* (frame-ref m1 1) (frame-ref m2 2)) 
+		     (* (frame-ref m1 2) (frame-ref m2 1)))
+		  (- (* (frame-ref m1 2) (frame-ref m2 0)) 
+		     (* (frame-ref m1 0) (frame-ref m2 2)))
+		  (- (* (frame-ref m1 0) (frame-ref m2 1)) 
+		     (* (frame-ref m1 1) (frame-ref m2 0))))))
+
+(define (frame-normalize f)
+  (let ((mag (sqrt (dot-product (mus-data f) (mus-data f)))))
+    (if (> mag 0.0)
+	(frame* f (/ 1.0 mag))
+	f)))
+
+
+;;; from dsp.scm (commented out)
+(define* (repitch-sound old-freq new-freq)
+  (ssb-bank old-freq new-freq 10))
+
+(define* (retime-sound new-time)
+  (let* ((old-time (/ (frames) (srate)))
+	 (factor (/ new-time old-time)))
+    (ssb-bank 557 (* 557 factor) 10)
+    (src-sound (/ 1.0 factor))))
+
+
+;; echoes with each echo at a new pitch via ssb-am etc
+
+(define* (make-transposer old-freq new-freq pairs :optional (order 40) (bw 50.0))
+  (let* ((ssbs (make-vector pairs))
+	 (bands (make-vector pairs))
+	 (factor (/ (- new-freq old-freq) old-freq)))
+    (do ((i 1 (1+ i)))
+	((> i pairs))
+      (let* ((aff (* i old-freq))
+	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
+	(vector-set! ssbs (1- i) (make-ssb-am (* i factor old-freq)))
+	(vector-set! bands (1- i) (make-bandpass (hz->radians (- aff bwf)) 
+						 (hz->radians (+ aff bwf)) 
+						 order))))
+    (list ssbs bands)))
+
+(define (transpose transposer input)
+  (let* ((sum 0.0)
+	 (ssbs (car transposer))
+	 (bands (cadr transposer))
+	 (pairs (vector-length ssbs)))
+    (do ((i 0 (1+ i)))
+	((= i pairs) sum)
+      (set! sum (+ sum (ssb-am (vector-ref ssbs i) 
+			       (bandpass (vector-ref bands i) 
+					 input)))))))
+
+(define (fdelay gen input)
+  (gen input))	
+
+(define (make-fdelay len pitch scaler)
+  (let ((dly (make-delay len))
+        (ssb (make-transposer 440.0 (* 440.0 pitch) 10)))
+    (lambda (input)
+      (delay dly (+ input (* scaler (transpose ssb (tap dly))))))))
+
+
+(define (transposed-echo pitch scaler secs)
+  (let ((del (make-fdelay (inexact->exact (round (* secs (srate)))) pitch scaler)))
+    (map-channel (lambda (y) (fdelay del y)))))
+
+(define (bumpy)
+  (let* ((x 0.0) 
+	 (xi (/ 1.0 (frames)))
+	 (start 0)
+	 (end 1)
+	 (scl (exp (/ 4.0 (- end start))))) ; normalize it
+    (map-channel (lambda (y) 
+		   (let ((val (if (and (>= x start)
+				       (<= x end))
+				  (* (exp (/ -1.0 (- x start))) 
+				     (exp (/ -1.0 (- end x))))
+				  0.0)))
+		     (set! x (+ x xi))
+		     (* scl val))))))
+
+(define* (sound->amp-env :optional snd chn)
+  (let ((hlb (make-hilbert-transform 40))
+	(d (make-delay 40)))
+    (map-channel
+     (lambda (y)
+       (let ((hy (hilbert-transform hlb y))
+	     (dy (delay d y)))
+	 (sqrt (+ (* hy hy) (* dy dy)))))
+     0 #f snd chn #f "sound->amp-env")))
+
+(define* (hilbert-transform-via-fft :optional snd chn)
+  ;; same as FIR version but use FFT and change phases by hand
+  (let* ((size (frames snd chn))
+	 (len (expt 2 (inexact->exact (ceiling (/ (log size) (log 2.0))))))
+	 (rl (make-vct len))
+	 (im (make-vct len))
+	 (rd (make-sample-reader 0 snd chn)))
+    (do ((i 0 (1+ i)))
+	((= i size))
+      (vct-set! rl i (rd)))
+    (mus-fft rl im len)
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (let* ((c (make-rectangular (vct-ref rl i) (vct-ref im i)))
+	     (ph (angle c))
+	     (mag (magnitude c)))
+	(if (< i (/ len 2))
+	    (set! ph (+ ph (* 0.5 pi)))
+	    (set! ph (- ph (* 0.5 pi))))
+	(set! c (make-polar mag ph))
+	(vct-set! rl i (real-part c))
+	(vct-set! im i (imag-part c))))
+    (mus-fft rl im len -1)
+    (vct-scale! rl (/ 1.0 len))
+    (vct->channel rl 0 len snd chn #f "hilbert-transform-via-fft")))
+
+(define* (agc :optional (ramp-speed .001) (window-size 512))
+  (let ((maxer (make-moving-max window-size))
+	(mult 1.0))
+    (map-channel
+     (lambda (y)
+       (let* ((curmax (moving-max maxer y))
+	      (diff (- 0.5 (* mult curmax)))
+	      (this-incr (* diff ramp-speed)))
+	 (set! mult (+ mult this-incr))
+	 (* y mult))))))
+
 
 (if (or full-test (= snd-test 8) (and keep-going (<= snd-test 8)))
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
@@ -15863,6 +16082,60 @@ EDITS: 5
 	    (if (not (vequal vals (vct 0.229 0.224 0.218 0.211 0.203 0.195 0.187 0.178 0.169 0.160)))
 		(snd-display ";cosine-summation: ~A" vals)))
 	  (undo))
+
+	(let ((gen (make-kosine-summation 100.0)))
+	  (map-channel (lambda (y) (* .2 (kosine-summation gen 0.5 1.0))))
+	  (let ((vals (channel->vct 280 10)))
+	    (if (not (vequal vals (vct 0.194 0.191 0.188 0.184 0.180 0.175 0.170 0.166 0.160 0.155)))
+		(snd-display ";kosine-summation 1: ~A" vals)))
+	  (undo))
+	(let ((gen (make-kosine-summation 100.0)))
+	  (map-channel (lambda (y) (* .2 (kosine-summation gen 0.5 3.0))))
+	  (let ((vals (channel->vct 280 10)))
+	    (if (not (vequal vals (vct 0.182 0.174 0.165 0.155 0.145 0.134 0.124 0.113 0.103 0.094)))
+		(snd-display ";kosine-summation 3: ~A" vals)))
+	  (undo))
+
+	(let ((angle 0.0)) 
+	  (map-channel (lambda (y) 
+			 (let ((val (fejer-sum angle 3))) 
+			   (set! angle (+ angle .1)) 
+			   (* .1 val)))))
+	(let ((vals (channel->vct 0 20)))
+	  (if (not (vequal vals (vct 0.1 0.198 0.19 0.178 0.163 0.145 0.124 0.103 0.082 0.063 0.045 0.03 0.018 0.009 0.003 0.001 0.0 0.001 0.004 0.007)))
+	      (snd-display ";fejer-sum: ~A" vals)))
+	(undo)
+
+	(let ((angle 0.0)) 
+	  (map-channel (lambda (y) 
+			 (let ((val (legendre-sum angle 3))) 
+			   (set! angle (+ angle .1)) 
+			   (* .1 val)))))
+	(let ((vals (channel->vct 0 20)))
+	  (if (not (vequal vals (vct 0.1 4.707 4.164 3.369 2.46 1.582 0.853 0.346 0.074 0.0 0.054 0.155 0.238 0.266 0.233 0.159 0.077 0.019 0.0 0.019)))
+	      (snd-display ";legendre-sum: ~A" vals)))
+	(undo)
+
+	(let ((angle 0.0)) 
+	  (map-channel (lambda (y) 
+			 (let ((val (band-limited-sawtooth angle 0.5 8 .2))) 
+			   (set! angle (+ angle .2)) 
+			   val))))
+	(let ((vals (channel->vct 10 10)))
+	  (if (not (vequal vals (vct -0.118 -0.073 -0.035 0.012 0.062 0.106 0.142 0.185 0.237 0.288)))
+	      (snd-display ";band-limited-sawtooth: ~A" vals)))
+	(undo)
+
+	(let ((angle 0.0)) 
+	  (map-channel (lambda (y) 
+			 (let ((val (band-limited-square-wave angle 10))) 
+			   (set! angle (+ angle .2)) 
+			   val))))
+	(let ((vals (channel->vct 10 10)))
+	  (if (not (vequal vals (vct 1.000 1.000 1.000 1.000 0.998 0.888 -0.525 -0.988 -1.000 -1.000)))
+	      (snd-display ";band-limited-square-wave: ~A" vals)))
+	(undo)
+
 	(let ((angle 0.0)) 
 	  (map-channel (lambda (y) (let ((val (sum-of-n-sines angle 3))) (set! angle (+ angle .1)) (* .1 val))))
 	  (let ((vals (channel->vct 260 10)))
@@ -16085,6 +16358,14 @@ EDITS: 5
 		  (begin
 		    (snd-display ";f-filter ~A -> ~A ~A" i val1 val2)
 		    (set! happy #f)))))))
+
+      (let ((gen (make-spencer-filter)))
+	(if (not (fir-filter? gen)) 
+	    (snd-display ";make-spencer-filter returns ~A?" gen)
+	    (begin
+	      (if (not (= (mus-order gen) 15)) (snd-display ";make-spencer-filter order ~A?" (mus-order gen)))
+	      (if (not (vequal (mus-xcoeffs gen) (vct -0.009 -0.019 -0.016 0.009 0.066 0.144 0.209 0.231 0.209 0.144 0.066 0.009 -0.016 -0.019 -0.009)))
+		  (snd-display ";make-spencer-filter coeffs: ~A" (mus-xcoeffs gen))))))
 
       (let ((gen (make-iir-filter 3 (list->vct '(.5 .25 .125))))
 	    (v0 (make-vct 10))
@@ -17310,6 +17591,8 @@ EDITS: 5
 			 (mixer* (make-mixer 3 2 3 5 7 11 13 17 19 23) (mixer-inverse (make-mixer 3 2 3 5 7 11 13 17 19 23)))))
 	(if (invert-matrix (make-mixer 3 1 2 3 4 5 6 7 8 9))
 	    (snd-display ";invert-matrix missed singular case? ~A" (invert-matrix (make-mixer 3 1 2 3 4 5 6 7 8 9))))
+	(if (fneq (mixer-trace (make-mixer 3 1 0 0 0 2 0 0 0 3)) 6.0)
+	    (snd-display ";mixer-trace (6): ~A" (mixer-trace (make-mixer 3 1 0 0 0 2 0 0 0 3))))
 	
 	(if (not (mixer-diagonal? (make-scalar-mixer 2 2.0))) (snd-display ";mixer-diagonal 1"))
 	(if (not (mixer-diagonal? (make-mixer 3 1 0 0 0 1 0 0 0 1))) (snd-display ";mixer-diagonal 2"))
@@ -17442,8 +17725,16 @@ EDITS: 5
 	(let ((val (mixer-solve (make-mixer 2 10 100000 1 1) (make-frame 2 100000 2))))
 	  (if (not (frame-equal? val (make-frame 2 1.000 1.000)))
 	      (snd-display ";mixer-solve G10: ~A" val)))
-	)
       
+	(let ((val (frame-cross (make-frame 3 0 0 1) (make-frame 3 0 -1 0))))
+	  (if (not (frame-equal? val (make-frame 3 1.000 0.000 0.000)))
+	      (snd-display ";frame-cross: ~A" val)))
+
+	(let ((val (frame-normalize (make-frame 3 4 3 0))))
+	  (if (not (frame-equal? val (make-frame 3 0.800 0.600 0.000)))
+	      (snd-display ";frame-normalize: ~A" val)))
+	)
+
       (let ((gen (make-fft-window hamming-window 16)))
 	(if (not (vequal gen (vct 0.080 0.115 0.215 0.364 0.540 0.716 0.865 1.000 1.000 0.865 0.716 0.540 0.364 0.215 0.115 0.080)))
 	    (snd-display ";hamming window: ~A" gen)))
@@ -36007,6 +36298,10 @@ EDITS: 1
 	    (func ind 0)
 	    (if (fneq mx (maxamp)) (snd-display ";edit-list->function 19 re-filter: ~A ~A" mx (maxamp))))
 	  (revert-sound)
+
+	  (let ((op (make-one-zero .5 .5))) (filter-fft op))
+	  (vct->channel (fft-smoother .1 (cursor) 400) (cursor) 400)
+	  (revert-sound)
 	  
 	  ;; ---- *.scm
 	  (if (or (not (list? (procedure-source (lambda () (+ 1 2)))))
@@ -44664,6 +44959,7 @@ EDITS: 1
 (if (not (provided? 'snd-grani.scm)) (load "grani.scm"))
 (if (not (provided? 'snd-dlocsig.scm)) (load "dlocsig.scm"))
 (if (not (provided? 'snd-green.scm)) (load "green.scm"))
+(if (not (provided? 'snd-sndwarp.scm)) (load "sndwarp.scm"))
 
 (define old-opt-23 (optimization))
 (set! (optimization) max-optimization)
@@ -45440,6 +45736,8 @@ EDITS: 1
 		    (fir+comb 22 2 1000 .0005 400)
 		    (fir+comb 24 2 3000 .001 300)
 		    (fir+comb 26 2 3000 .0005 1000)
+
+		    (sndwarp 28 1.0 "pistol.snd")
 		    
 		    (graphEq "oboe.snd")
 		    )
@@ -59364,30 +59662,7 @@ EDITS: 1
 		     lock-track make-fir-coeffs make-identity-mixer mus-interp-type mus-run phase-vocoder
 		     player-home redo-edit undo-edit widget-position widget-size 
 		     (if (defined? 'window-property) window-property identity)
-		     focus-widget ;edit-fragment-type-name
-
-		     ;;add-amp-controls analyse-ladspa any-env-channel append-sound apply-ladspa 
-		     ;;backward-graph backward-mark backward-mix channel-envelope channel-property
-		     ;;channel-sync channels-equal? channels=? clone-sound-as color-samples
-		     ;;compand-channel concatenate-envelopes contrast-channel cross-synthesis
-		     ;;define-selection-via-marks delete-selection-and-smooth describe-mark
-		     ;;dither-channel env-expt-channel env-sound-interp envelope-interp enveloped-mix
-		     ;;eval-between-marks eval-over-selection every-sample? explode-sf2 extract-channel
-		     ;;extract-channels fft-edit fft-squelch filter-track find-dialog find-mix
-		     ;;forward-graph forward-mark forward-mix fractional-fourier-transform ;hide-widget
-		     ;;insert-channel ladspa-descriptor list-ladspa main-menu make-bandpass make-bandstop
-		     ;;make-biquad make-differentiator make-highpass make-hilbert-transform make-lowpass
-		     ;;make-selection mark-explode mark-loops mark-name->id mark-property match-sound-files
-		     ;;max-envelope mix->vct mix-channel mix-property mono->stereo moog-filter mpg
-		     ;;normalized-mix notch-channel notch-out-rumble-and-hiss notch-selection notch-sound
-		     ;;offset-channel pad-marks pan-mix power-env read-region-sample redo-channel reverse-channels
-		     ;;reverse-envelope reverse-track rotate-channel scale-envelope selection-members
-		     ;;sine-env-channel sine-ramp snap-mark-to-beat snap-mix-to-beat snd-apropos snd-help
-		     ;;snd-trace sound-interp sound-property superimpose-ffts swap-selection-channels
-		     ;;track->vct track-chans track-property transpose-track undo-channel vct-map!
-		     ;;voiced->unvoiced window-samples with-background-processes with-mix
-		     ;;z-transform zip-sound zipper 
-
+		     focus-widget 
 		     ))
       
       (define set-procs (list 

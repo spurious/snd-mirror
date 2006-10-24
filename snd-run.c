@@ -3641,7 +3641,6 @@ static xen_value *generalized_set_form(ptree *prog, XEN form)
   XEN settee, setval;
   XEN in_settee;
   xen_value *in_v0 = NULL, *in_v1 = NULL, *in_v2 = NULL, *v = NULL;
-  /* fprintf(stderr,"set: %s\n", XEN_AS_STRING(form)); */
   settee = XEN_CADR(form);
   setval = XEN_CADDR(form);
   if ((XEN_LIST_P(settee)) && (XEN_SYMBOL_P(XEN_CAR(settee))) && (XEN_LIST_LENGTH(settee) <= 4))
@@ -10996,6 +10995,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
     {
       int type;
       type = xen_to_run_type(form);
+      /* fprintf(stderr,"look for %s (%s)\n", XEN_AS_STRING(form), type_name(type)); */
       switch (type)
 	{
 	case R_INT:     return(make_xen_value(R_INT, add_int_to_ptree(prog, R_XEN_TO_C_INT(form)), R_CONSTANT)); break;

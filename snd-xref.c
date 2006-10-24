@@ -4570,7 +4570,8 @@ static char *FFTs_xrefs[] = {
   "Simple rt spectrum: {show-input-fft}, {show-draggable-input-fft}",
   "More transforms: {fractional-fourier-transform}, {z-transform} in dsp.scm",
   "3D (single) fft display: {complexify}",
-  "bark, mel ,erb scale display: {display-bark-fft}",
+  "bark, mel, erb scale display: {display-bark-fft}",
+  "apply function to spectrum, inverse fft: {filter-fft}",
   NULL};
 
 static char *FFTs_urls[] = {
@@ -4599,6 +4600,7 @@ static char *FFTs_urls[] = {
   "sndscm.html#fractionalfouriertransform",
   "sndscm.html#complexify",
   "sndscm.html#displaybarkfft",
+  "sndscm.html#filterfft",
   NULL};
 
 static char *Colors_xrefs[] = {

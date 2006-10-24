@@ -3205,6 +3205,26 @@ This is sometimes useful for noise-reduction.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- filter-fft -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<A class=def NAME="filterfft">filter-fft</a> <code>func :optional (normalize #t) snd chn</code>
+</td></tr><tr><td></td><td>
+This a sort of generalization of the preceding functions.  It gets the spectrum of all the data in the given channel,
+applies the function 'func' to it, then inverse ffts.  'func' should take one argument, the
+current spectrum value.
+<pre>
+    (let ((op (make-one-zero .5 .5))) (filter-fft op))
+    (let ((op (make-one-pole .05 .95))) (filter-fft op))
+    (filter-fft (lambda (y) (if (&lt; y .1) 0.0 y))) ; like fft-squelch
+    (let ((rd (make-sample-reader 0 0 0 1 0))) 
+      (scale-by 0) 
+      (filter-fft (lambda (y) (rd))))             ; treat sound as spectrum
+    (filter-fft contrast-enhancement)
+    (filter-fft (lambda (y) (* y y y)))           ; extreme low pass
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- squelch-vowels -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="squelchvowels">squelch-vowels</a> <code>:optional snd chn</code>
