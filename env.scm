@@ -505,4 +505,9 @@ repetition to be in reverse."
 
 
 (define* (normalize-envelope env :optional (new-max 1.0))
-  (scale-envelope env (/ new-max (max-envelope env))))
+  (define (abs-max-envelope-1 e mx)
+    (if (null? e)
+	mx
+	(abs-max-envelope-1 (cddr e) (max mx (abs (cadr e))))))
+  (let ((peak (abs-max-envelope-1 (cddr env) (abs (cadr env)))))
+    (scale-envelope env (/ new-max peak))))

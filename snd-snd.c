@@ -3597,7 +3597,6 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len;
-  unsigned char* buf;
   keys[0] = kw_file;
   keys[1] = kw_header_type;
   keys[2] = kw_data_format;
@@ -3654,10 +3653,14 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   chan = snd_reopen_write(str);
   lseek(chan, mus_header_data_location(), SEEK_SET);
   size = ch * mus_samples_to_bytes(df, len);
-  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
-  if (write(chan, buf, size) == 0) fprintf(stderr, "new-sound %s write error", str);
+  if (size > 0)
+    {
+      unsigned char* buf;
+      buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
+      if (write(chan, buf, size) != size) fprintf(stderr, "new-sound %s write error", str);
+      FREE(buf);
+    }
   snd_close(chan, str);
-  FREE(buf);
   ss->open_requestor = FROM_NEW_SOUND;
   sp = sound_is_silence(snd_open_file(str, FILE_READ_WRITE));
   if (str) FREE(str);

@@ -3397,6 +3397,9 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, caller, 7);
   beg = beg_to_sample(s_beg, caller);
+
+  /* TODO: if past beg, pad to that point, then call map-channel passing in 0's */
+
   if (beg > cp->samples[pos])
     XEN_ERROR(NO_SUCH_SAMPLE,
 	      XEN_LIST_2(C_TO_XEN_STRING(caller),

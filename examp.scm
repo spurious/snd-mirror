@@ -540,7 +540,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (define* (read-ascii in-filename :optional (out-filename "test.snd") (out-type mus-next) (out-format mus-bshort) (out-srate 44100))
   (let* ((in-fd (open-input-file in-filename))
-	 (out-fd (new-sound out-filename out-type out-format out-srate 1 (format #f "created by read-asc: ~A" in-filename)))
+	 (out-fd (new-sound out-filename out-type out-format out-srate 1 (format #f "created by read-ascii: ~A" in-filename)))
 	 (bufsize 512)
 	 (data (make-vct bufsize))
 	 (loc 0)
@@ -1957,6 +1957,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
   "(zero+) finds the next positive-going zero crossing (if searching forward) (for use with C-s)"
   (let ((lastn 0.0))
     (lambda (n)
+      (declare (n float))
       (let ((rtn (and (< lastn 0.0)
 		      (>= n 0.0)
 		      -1)))

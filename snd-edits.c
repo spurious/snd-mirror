@@ -7947,6 +7947,8 @@ static XEN g_sample_reader_at_end(XEN obj)
   return(XEN_FALSE);
 }
 
+/* PERHAPS: can sample-reader-position be settable? */
+
 static XEN g_sample_reader_position(XEN obj) 
 {
   #define H_sample_reader_position "(" S_sample_reader_position " obj): current (sample-wise) location of sample-reader"
