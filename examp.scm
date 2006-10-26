@@ -216,7 +216,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; correlation of channels in a stereo sound
 
 (define (correlate snd chn y0 y1)
-  "(correlate snd chn y0 y1) returns the correlation of snd's 2 channels (intended for use with graph-hook)"
+  "(correlate snd chn y0 y1) returns the correlation of snd's 2 channels (intended for use with graph-hook).  y0 and y1 are ignored."
   (if (and (= (channels snd) 2)
 	   (> (frames snd 0) 1)
 	   (> (frames snd 1) 1))
@@ -2348,26 +2348,36 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 ;;; -------- re-order channels 
 
 (define (scramble-channels . new-order)
-  ;; (scramble-channels 3 2 0 1)
-  (let ((len (length new-order)))
-    (letrec ((swap-once 
-	      (lambda (current desired n)
-		(if (not (= n len))
-		    (let ((cur-orig (car (list-ref current n))) ; car = original channel number, cadr = its current channel
-			  (cur-cur (cdr (list-ref current n)))
-			  (dst (list-ref desired n)))
-		      (if (not (= cur-orig dst))
-			  (begin
-			    (swap-channels #f cur-cur #f dst)
-			    (set-car! (list-ref current dst) cur-orig)))
-		      (swap-once current desired (1+ n)))))))
-      (swap-once (let ((lst '()))
-		   (do ((i 0 (1+ i)))
-		       ((= i len) (reverse lst))
-		     (set! lst (cons (cons i i) lst))))
-		 new-order 
-		 0))))
+  ;; (scramble-channels 3 2 0 1) means chan 3 goes to 0, etc
+  
+  (define (find-chan chans chan len)
+    (let ((pos #f))
+      (do ((i 0 (1+ i)))
+	  ((or pos (= i len)) pos)
+	(if (= (vector-ref chans i) chan)
+	    (set! pos i)))))
 
+  (define (scramble-channels-1 cur-chans end-chans chans loc)
+    (if (> chans loc)
+	(let* ((end-chan (vector-ref end-chans loc)) ; we want this channel at loc
+	       (cur-chan (vector-ref cur-chans loc)) ; this (original) channel is currently at loc
+	       (end-loc (find-chan cur-chans end-chan chans))) ; where is end-chan currently?
+	  ;; end-chan goes in cur-chan's slot
+	  (if (not (= cur-chan end-chan))
+	      (begin
+		(swap-channels #f end-loc #f loc)
+		(vector-set! cur-chans end-loc cur-chan)
+		(vector-set! cur-chans loc end-chan)))
+	  (scramble-channels-1 cur-chans end-chans chans (1+ loc)))))
+
+  (let ((len (length new-order)))
+    (if (> len 1)
+	(let ((end-chans (list->vector new-order))
+	      (cur-chans (make-vector len)))
+	  (do ((i 0 (1+ i)))
+	      ((= i len))
+	    (vector-set! cur-chans i i))
+	  (scramble-channels-1 cur-chans end-chans len 0)))))
 
 (define (scramble-channel silence-1)
   ;; (scramble-channel .01)

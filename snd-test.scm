@@ -38,43 +38,33 @@
 ;;; TODO: these should be tested (or checked in some way):
 ;;;        agc
 ;;;        brownian-noise
-;;;        correlate (examp.scm stereo sound)
 ;;;        cross-fade 
-;;;        deselect-all
 ;;;        directory->list
 ;;;        display-colored-samples
 ;;;        display-samples-in-color
 ;;;        dissolve-fade 
 ;;;        explode-sf2
 ;;;        fdelay make-fdelay
-;;;        fft-env-data
-;;;        fit-selection-between-marks
-;;;        hilbert-transform-via-fft
+;;;        fit-selection-between-marks (marks.scm)
 ;;;        make-ramp
 ;;;        make-transposer (transposer)
-;;;        mono->stereo
 ;;;        overlay-sounds
 ;;;        periodogram
-;;;        powenv-channel
 ;;;        read-ascii (sf1/caruso.asc)
 ;;;        repitch-sound
-;;;        replace-with-selection
 ;;;        retime-sound
-;;;        rms-envelope
 ;;;        samples-via-colormap
-;;;        save-mark-properties
-;;;        scramble-channels
-;;;        show-selection 
-;;;        smart-line-cursor
-;;;        sound->amp-env (dsp.scm and below)
-;;;        stereo->mono
+;;;        save-mark-properties [this is intended for after-save-state-hook]
+;;;        show-selection (extensions.scm) [sets x-bounds if selection]
+;;;        smart-line-cursor [not testable, run and stop?]
+;;;        sound->amp-env (dsp.scm and below) [kinda dumb -- maybe omit]
 ;;;        stretch-sound-via-dft ; fix this! adds beat 
 ;;;        test-power-env (clm23.scm)
 ;;;        transposed-echo
 ;;;        tree-for-each
 ;;;        uncolor-samples
-;;;        vibro
-;;;        zoom-spectrum
+;;;        vibro (examp.scm (define (vibro speed depth) -- map-channel func))
+;;;        zoom-spectrum (examp.scm) [intended as graph-hook func]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -21590,7 +21580,7 @@ EDITS: 5
 		      ((or (not happy) (= i len)))
 		    (let ((val0 (preader))
 			  (val1 (reader)))
-		      (if (fneq val0 val1)
+		      (if (ffneq val0 val1)
 			  (begin
 			    (snd-display ";convolve-with amps at: ~A: ~A ~A" i val0 val1)
 			    (set! happy #f))))))))
@@ -36464,6 +36454,121 @@ EDITS: 1
 	  (vct->channel (fft-smoother .1 (cursor) 400) (cursor) 400)
 	  (revert-sound)
 	  
+	  (let ((ind (new-sound :size 32)))
+	    (let ((ang 0.0)) 
+	      (map-channel (lambda (y) 
+			     (let ((val (+ (* .5 (sin ang)) (* .5 (sin (* ang 4)))))) 
+			       (set! ang (+ ang (/ (* 2 pi) 16.0))) 
+			       val))))
+	    (let ((vals (fft-env-data '(0 0 .3 0 .4 1 1 1))))
+	      (vct->channel vals)
+	      (if (not (vequal vals (vct -0.000 0.500 0.000 -0.500 0.000 0.500 0.000 -0.500 0.000 0.500 -0.000 
+					 -0.500 -0.000 0.500 -0.000 -0.500 -0.000 0.500 0.000 -0.500 0.000 0.500 
+					 0.000 -0.500 0.000 0.500 -0.000 -0.500 -0.000 0.500 -0.000 -0.500)))
+		  (snd-display ";fft-env-data: ~A" vals)))
+	    (hilbert-transform-via-fft)
+	    (let ((vals (channel->vct)))
+	      (if (not (vequal vals (vct -0.500 -0.000 0.500 -0.000 -0.500 0.000 0.500 0.000 -0.500 0.000 0.500 
+					 0.000 -0.500 -0.000 0.500 -0.000 -0.500 -0.000 0.500 -0.000 -0.500 0.000 
+					 0.500 0.000 -0.500 0.000 0.500 0.000 -0.500 -0.000 0.500 -0.000)))
+		  (snd-display ";hilbert via dft: ~A" vals)))
+	    (revert-sound ind)
+	    (map-channel (lambda (y) 1.0))
+
+	    (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))
+	    (let ((vals (channel->vct)))
+	      (if (not (vequal vals (vct 0.000 0.107 0.206 0.298 0.384 0.463 0.536 0.605 0.668 0.727 0.781 0.832 0.879 
+					 0.922 0.963 1.000 1.000 0.787 0.618 0.484 0.377 0.293 0.226 0.173 0.130 0.097 
+					 0.070 0.049 0.032 0.019 0.008 0.000)))
+		  (snd-display ";powenv-channel: ~A" vals)))
+	    (undo)
+	    (revert-sound ind)
+	    (map-channel (lambda (y) 1.0))
+	    (env-sound '(0 0 1 1))
+	    (make-selection 0 7)
+	    (replace-with-selection)
+	    (let ((vals (channel->vct)))
+	      (if (not (vequal vals (vct 0.000 0.032 0.065 0.097 0.129 0.161 0.194 0.226 0.258 0.290 0.000 0.032 0.065 
+					 0.097 0.129 0.161 0.194 0.226 0.581 0.613 0.645 0.677 0.710 0.742 0.774 0.806 
+					 0.839 0.871 0.903 0.935 0.968 1.000)))
+		  (snd-display ";replace-with-selection: ~A" vals)))
+	    (close-sound ind))
+
+	  (let ((vals (apply vct (rms-envelope "oboe.snd" :rfreq 4))))
+	    (if (not (vequal vals (vct 0.0 0.0430 0.25 0.0642 0.5 0.0695 0.75 0.0722 1.0 0.0738 1.25 0.0713 
+				       1.5 0.065 1.75 0.0439 2.0 0.01275 2.25 0.0)))
+		(snd-display ";rms-envelope: ~A" vals)))
+
+	  (let ((ind (open-sound "2a.snd")))
+	    (add-hook! graph-hook correlate)
+	    (update-time-graph)
+	    (reset-hook! graph-hook)
+	    (stereo->mono ind "hi1.snd" "hi2.snd")
+	    (let ((hi1 (find-sound "hi1.snd"))
+		  (hi2 (find-sound "hi2.snd")))
+	      (if (or (not hi1) (not hi2) (not (= (chans hi1) 1)) (not (= (chans hi2) 1)))
+		  (snd-display ";stereo->mono: ~A ~A" (map file-name (sounds)) (map chans (sounds)))
+		  (let ((dist1 (channel-distance ind 0 hi1 0))
+			(dist2 (channel-distance ind 1 hi2 0)))
+		    (if (or (fneq dist1 0.0) (fneq dist2 0.0))
+			(snd-display ";stereo->mono distances: ~A ~A" dist1 dist2))
+		    (mono->stereo "ho2.snd" hi1 0 hi2 0)
+		    (let ((ho2 (find-sound "ho2.snd")))
+		      (if (or (not ho2) (not (= (chans ho2) 2)))
+			  (snd-display ";mono->stereo: ~A" (map file-name (sounds)))
+			  (let ((dist1 (channel-distance ho2 0 ind 0))
+				(dist2 (channel-distance ho2 1 ind 1)))
+			    (if (or (fneq dist1 0.0) (fneq dist2 0.0))
+				(snd-display ";stereo->mono->stereo distances: ~A ~A" dist1 dist2))))
+		      (close-sound ho2))))
+	      (close-sound hi1)
+	      (close-sound hi2))
+	    (close-sound ind))
+
+	  (let ((ind (new-sound :channels 4 :size 32)))
+	    (set! (sample 0 ind 0) 0.5)
+	    (set! (sample 10 ind 1) 0.25)
+	    (set! (sample 20 ind 2) 0.125)
+	    (set! (sample 30 ind 3) 0.0625)
+	    (scramble-channels 3 2 0 1)                ; 3->0, 2->1, 0->2 1->3
+	    (if (or (fneq (sample 0 ind 2) .5)         ; chan 0 is 2 after swaps
+		    (fneq (sample 10 ind 3) .25)
+		    (fneq (sample 20 ind 1) .125)
+		    (fneq (sample 30 ind 0) .0625))
+		(snd-display ";scramble-channels: ~A ~A ~A ~A (~A ~A ~A ~A)" 
+			     (sample 0 ind 2) (sample 10 ind 3) (sample 20 ind 1) (sample 30 ind 2)
+			     (sample 0 ind 0) (sample 10 ind 1) (sample 20 ind 2) (sample 30 ind 3)))
+	    (do ((i 0 (1+ i))) ((= i 4)) (set! (edit-position ind i) 1))
+	    (scramble-channels 3 0 1 2)
+	    (if (or (fneq (sample 0 ind 1) .5)
+		    (fneq (sample 10 ind 2) .25)
+		    (fneq (sample 20 ind 3) .125)
+		    (fneq (sample 30 ind 0) .0625))
+		(snd-display ";scramble-channels (1): ~A ~A ~A ~A (~A ~A ~A ~A)" 
+			     (sample 0 ind 1) (sample 10 ind 2) (sample 20 ind 3) (sample 30 ind 0)
+			     (sample 0 ind 0) (sample 10 ind 1) (sample 20 ind 2) (sample 30 ind 3)))
+	    (do ((i 0 (1+ i))) ((= i 4)) (set! (edit-position ind i) 1))
+	    (scramble-channels 0 1 3 2)
+	    (if (or (fneq (sample 0 ind 0) .5)
+		    (fneq (sample 10 ind 1) .25)
+		    (fneq (sample 20 ind 3) .125)
+		    (fneq (sample 30 ind 2) .0625))
+		(snd-display ";scramble-channels (2): ~A ~A ~A ~A (~A ~A ~A ~A)" 
+			     (sample 0 ind 0) (sample 10 ind 1) (sample 20 ind 3) (sample 30 ind 2)
+			     (sample 0 ind 0) (sample 10 ind 1) (sample 20 ind 2) (sample 30 ind 3)))
+	    (do ((i 0 (1+ i))) ((= i 4)) (set! (edit-position ind i) 1))
+	    (scramble-channels 1 2 3 0)
+	    (if (or (fneq (sample 0 ind 3) .5)
+		    (fneq (sample 10 ind 0) .25)
+		    (fneq (sample 20 ind 1) .125)
+		    (fneq (sample 30 ind 2) .0625))
+		(snd-display ";scramble-channels (3): ~A ~A ~A ~A (~A ~A ~A ~A)" 
+			     (sample 0 ind 3) (sample 10 ind 0) (sample 20 ind 1) (sample 30 ind 2)
+			     (sample 0 ind 0) (sample 10 ind 1) (sample 20 ind 2) (sample 30 ind 3)))
+	    (do ((i 0 (1+ i))) ((= i 4)) (set! (edit-position ind i) 1))
+	    (close-sound ind))
+
+
 	  ;; ---- *.scm
 	  (if (or (not (list? (procedure-source (lambda () (+ 1 2)))))
 		  (eq? (car (procedure-source (lambda () (+ 1 2)))) '%internal-eval))
@@ -61700,7 +61805,6 @@ EDITS: 1
 
 (set! (print-length) 64)
 (display (format "~%;times: ~A~%;total: ~A~%" timings (inexact->exact (round (- (real-time) overall-start-time)))))
-
 
 ;25-Oct-06: times: #(17 16 35 28 962 5859 532 69 10024 1859 370 431 449 773 629 1203 2685 136 120 2032 1007 623 4278 6824 4054 946 201 0 4919) 519
 
