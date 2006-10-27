@@ -2715,7 +2715,7 @@ Reverb-feedback sets the scaler on the feedback.
 	((spectrum)
 	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane
 					     (list XmNpaneMinimum 100)))
-		(snd (make-variable-graph form variable-name 2048 (mus-srate))))
+		(snd (make-variable-graph form variable-name 2048 (inexact->exact (mus-srate)))))
 	   (set! (time-graph? snd 0) #f)
 	   (set! (transform-graph? snd 0) #t)
 	   (set! (x-axis-label snd 0 transform-graph) (string-append variable-name ": frequency"))

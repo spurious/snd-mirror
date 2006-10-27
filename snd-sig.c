@@ -3393,18 +3393,13 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   ASSERT_SAMPLE_TYPE(caller, s_end, XEN_ARG_3);
   ASSERT_SAMPLE_TYPE(caller, s_dur, XEN_ARG_3);
   ASSERT_CHANNEL(caller, snd, chn, 5); 
+
   cp = get_cp(snd, chn, caller);
   if (!cp) return(XEN_FALSE);
+  if (!(editable_p(cp))) return(XEN_FALSE);
+
   pos = to_c_edit_position(cp, edpos, caller, 7);
   beg = beg_to_sample(s_beg, caller);
-
-  /* TODO: if past beg, pad to that point, then call map-channel passing in 0's */
-
-  if (beg > cp->samples[pos])
-    XEN_ERROR(NO_SUCH_SAMPLE,
-	      XEN_LIST_2(C_TO_XEN_STRING(caller),
-			 s_beg));
-  if (!(editable_p(cp))) return(XEN_FALSE);
   if (XEN_FALSE_P(s_dur))
     end = end_to_sample(s_end, cp, pos, caller);
   else dur = dur_to_samples(s_dur, beg, cp, pos, 8, caller);
@@ -3431,6 +3426,13 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	  FREE(errmsg);
 	  cp->edit_hook_checked = false;
 	  return(snd_bad_arity_error(caller, errstr, proc));
+	}
+
+      /* added 27-Oct-06 -- can't see why map-channel should be that different from insert-samples et al */
+      if (beg > cp->samples[pos])
+	{
+	  if (!(extend_with_zeros(cp, cp->samples[pos], beg - cp->samples[pos] + 1, pos))) return(XEN_FALSE);
+	  pos = cp->edit_ctr;
 	}
 
       if (optimization(ss) > 0)
@@ -3791,12 +3793,13 @@ the current sample, the vct returned by 'init-func', and the current read direct
 				      C_TO_XEN_INT(cp->edit_ctr))));
     }
   beg = beg_to_sample(s_beg, S_ptree_channel);
-  if (beg > cp->samples[pos])
-    XEN_ERROR(NO_SUCH_SAMPLE,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_ptree_channel),
-			 s_beg));
   dur = dur_to_samples(s_dur, beg, cp, pos, 3, S_ptree_channel);
   if (dur <= 0) return(XEN_FALSE);
+  if ((beg + dur) > cp->samples[pos])
+    {
+      if (!(extend_with_zeros(cp, cp->samples[pos], beg + dur - cp->samples[pos], pos))) return(XEN_FALSE);
+      pos = cp->edit_ctr;
+    }
 
 #if (!WITH_RUN)
   if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
@@ -3976,10 +3979,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, caller, arg_pos);
   beg = beg_to_sample(s_beg, caller);
-  if (beg > cp->samples[pos])
-    XEN_ERROR(NO_SUCH_SAMPLE,
-	      XEN_LIST_2(C_TO_XEN_STRING(caller),
-			 s_beg));
+  if (beg > cp->samples[pos]) return(XEN_FALSE);
   if (XEN_FALSE_P(s_dur))
     end = end_to_sample(s_end, cp, pos, caller);
   else dur = dur_to_samples(s_dur, beg, cp, pos, 3, caller);

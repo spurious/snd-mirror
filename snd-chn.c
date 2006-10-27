@@ -7216,7 +7216,7 @@ to a standard Snd channel graph placed in the widget 'container'."
   XEN_ASSERT_TYPE(XEN_WIDGET_P(container), container, XEN_ARG_1, S_make_variable_graph, "a widget");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, XEN_ARG_2, S_make_variable_graph, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(length), length, XEN_ARG_3, S_make_variable_graph, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(srate), srate, XEN_ARG_4, S_make_variable_graph, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(srate), srate, XEN_ARG_4, S_make_variable_graph, "an integer");
   rate = XEN_TO_C_INT_OR_ELSE(srate, (int)mus_srate());
   initial_length = XEN_TO_C_INT_OR_ELSE(length, 8192);
   sp = make_simple_channel_display(rate, initial_length, WITH_FW_BUTTONS, graph_style(ss), 

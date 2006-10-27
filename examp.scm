@@ -2509,7 +2509,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	    (string-set! new-name i #\-)))))
 
   (define (directory->list dir)
-    (let ((dport (opendir dir)))
+    (let ((dport (opendir dir)))                ; no opendir in Gauche -- not sure how to handle this
       (let loop ((entry (readdir dport))
 		 (files '()))
 	(if (not (eof-object? entry))

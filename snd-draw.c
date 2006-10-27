@@ -382,16 +382,17 @@ data in the recipient's graph between points low and high in the drawing mode gr
   ASSERT_CHANNEL(S_graph_data, snd, chn, 2);
   cp = get_cp(snd, chn, S_graph_data);
   if (!cp) return(XEN_FALSE);
+  if (XEN_FALSE_P(data)) return(XEN_FALSE);
   XEN_ASSERT_TYPE((XEN_LIST_P(data) && 
 		   (XEN_LIST_LENGTH(data) == 2) &&
 		   (MUS_VCT_P(XEN_CAR(data))) &&
 		   (MUS_VCT_P(XEN_CADR(data)))) || 
 		  MUS_VCT_P(data), 
 		  data, XEN_ARG_1, S_graph_data, "a list of 2 vcts or vct");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_graph_data, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(lo), lo, XEN_ARG_5, S_graph_data, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(hi), hi, XEN_ARG_6, S_graph_data, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(style), style, XEN_ARG_7, S_graph_data, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(ax), ax, XEN_ARG_4, S_graph_data, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(lo) || XEN_FALSE_P(lo) || XEN_NOT_BOUND_P(lo), lo, XEN_ARG_5, S_graph_data, "a sample number");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(hi) || XEN_FALSE_P(hi) || XEN_NOT_BOUND_P(hi), hi, XEN_ARG_6, S_graph_data, "a sample number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(style), style, XEN_ARG_7, S_graph_data, "an integer");
   if (XEN_LIST_P(data))
     {
       v0 = xen_to_vct(XEN_CAR(data));
