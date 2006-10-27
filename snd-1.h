@@ -876,6 +876,7 @@ ed_list *initial_ed_list(off_t beg, off_t end);
 snd_info *sound_is_silence(snd_info *sp);
 off_t edit_changes_begin_at(chan_info *cp, int edpos);
 off_t edit_changes_end_at(chan_info *cp, int edpos);
+bool has_unsaved_edits(snd_info *sp);
 char *run_save_state_hook(char *filename);
 void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook);
 char *edit_to_string(chan_info *cp, int edit);

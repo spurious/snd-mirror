@@ -837,7 +837,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_TO_C_LONG_LONG(a)           NUM2OFFT(a)
 
 /* ---- strings ---- */
-#define XEN_STRING_P(Arg)               (TYPE(Arg) == T_STRING)
+#define XEN_STRING_P(Arg)               ((TYPE(Arg) == T_STRING) && (!SYMBOL_P(Arg)))
 #define C_TO_XEN_STRING(a)              xen_rb_str_new2((char *)a)
 #define C_TO_XEN_STRINGN(a, len)        rb_str_new((char *)a, len)
 #ifndef RSTRING_PTR 

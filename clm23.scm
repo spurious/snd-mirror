@@ -987,18 +987,6 @@
 		      (sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2)))) 
 	   0 *output*))))))
 
-(define (test-power-env dur env)
-  (let* ((pe (make-power-env :envelope env :duration dur :scaler .5))
-	 (envs (first pe))
-	 (total-envs (second pe))
-	 (current-env (third pe))
-	 (current-pass (fourth pe))
-	 (end (inexact->exact (floor (* dur (mus-srate))))))
-    (run
-     (lambda ()
-       (do ((i 0 (1+ i))) ((= i end))
-	 (out-any i (power-env envs total-envs current-env current-pass) 0 *output*))))))
-
 (define (sample-mxf beg dur freq amp)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))

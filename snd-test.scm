@@ -1,70 +1,40 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [537]
-;;;  test 1: defaults                           [1113]
-;;;  test 2: headers                            [1315]
-;;;  test 3: variables                          [1620]
-;;;  test 4: sndlib                             [2275]
-;;;  test 5: simple overall checks              [4556]
-;;;  test 6: vcts                               [12055]
-;;;  test 7: colors                             [12370]
-;;;  test 8: clm                                [12876]
-;;;  test 9: mix                                [22030]
-;;;  test 10: marks                             [25138]
-;;;  test 11: dialogs                           [25988]
-;;;  test 12: extensions                        [26282]
-;;;  test 13: menus, edit lists, hooks, etc     [26736]
-;;;  test 14: all together now                  [28274]
-;;;  test 15: chan-local vars                   [29349]
-;;;  test 16: regularized funcs                 [30648]
-;;;  test 17: dialogs and graphics              [35064]
-;;;  test 18: enved                             [35153]
-;;;  test 19: save and restore                  [35173]
-;;;  test 20: transforms                        [36804]
-;;;  test 21: new stuff                         [38633]
-;;;  test 22: run                               [39570]
-;;;  test 23: with-sound                        [45057]
-;;;  test 24: user-interface                    [47069]
-;;;  test 25: X/Xt/Xm                           [50685]
-;;;  test 26: Gtk                               [55273]
-;;;  test 27: GL                                [59390]
-;;;  test 28: errors                            [59514]
-;;;  test all done                              [61621]
+;;;  test 0: constants                          [492]
+;;;  test 1: defaults                           [1068]
+;;;  test 2: headers                            [1270]
+;;;  test 3: variables                          [1575]
+;;;  test 4: sndlib                             [2230]
+;;;  test 5: simple overall checks              [4546]
+;;;  test 6: vcts                               [12042]
+;;;  test 7: colors                             [12357]
+;;;  test 8: clm                                [12863]
+;;;  test 9: mix                                [22020]
+;;;  test 10: marks                             [25128]
+;;;  test 11: dialogs                           [25978]
+;;;  test 12: extensions                        [26272]
+;;;  test 13: menus, edit lists, hooks, etc     [26726]
+;;;  test 14: all together now                  [28273]
+;;;  test 15: chan-local vars                   [29348]
+;;;  test 16: regularized funcs                 [30675]
+;;;  test 17: dialogs and graphics              [35091]
+;;;  test 18: enved                             [35180]
+;;;  test 19: save and restore                  [35200]
+;;;  test 20: transforms                        [37010]
+;;;  test 21: new stuff                         [38843]
+;;;  test 22: run                               [39811]
+;;;  test 23: with-sound                        [45298]
+;;;  test 24: user-interface                    [47314]
+;;;  test 25: X/Xt/Xm                           [50930]
+;;;  test 26: Gtk                               [55518]
+;;;  test 27: GL                                [59635]
+;;;  test 28: errors                            [59759]
+;;;  test all done                              [61866]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
 
-;;; TODO: these should be tested (or checked in some way):
-;;;        agc
-;;;        brownian-noise
-;;;        cross-fade 
-;;;        directory->list
-;;;        display-colored-samples
-;;;        display-samples-in-color
-;;;        dissolve-fade 
-;;;        explode-sf2
-;;;        fdelay make-fdelay
-;;;        fit-selection-between-marks (marks.scm)
-;;;        make-ramp
-;;;        make-transposer (transposer)
-;;;        overlay-sounds
-;;;        periodogram
-;;;        read-ascii (sf1/caruso.asc)
-;;;        repitch-sound
-;;;        retime-sound
-;;;        samples-via-colormap
-;;;        save-mark-properties [this is intended for after-save-state-hook]
-;;;        show-selection (extensions.scm) [sets x-bounds if selection]
-;;;        smart-line-cursor [not testable, run and stop?]
-;;;        sound->amp-env (dsp.scm and below) [kinda dumb -- maybe omit]
-;;;        stretch-sound-via-dft ; fix this! adds beat 
-;;;        test-power-env (clm23.scm)
-;;;        transposed-echo
-;;;        tree-for-each
-;;;        uncolor-samples
-;;;        vibro (examp.scm (define (vibro speed depth) -- map-channel func))
-;;;        zoom-spectrum (examp.scm) [intended as graph-hook func]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -174,7 +144,7 @@
 	     (copy-file (string-append home-dir "/cl/" file) (string-append (getcwd) "/" file)))))
      (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd"
 	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd" "zero.snd"
-	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm" "mb.snd" "funcs.cl")))
+	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm" "mb.snd" "funcs.cl" "trumpet.snd")))
 
 
 
@@ -2258,6 +2228,11 @@
       ))
 
 ;;; ---------------- test 4: sndlib ----------------
+
+(if (or (not (provided? 'snd-examp.scm))
+	(and (defined? 'ramp) ; why this? protection against funcs?
+	     (list? ramp)))
+    (load "examp.scm"))
 
 (define play-sound-1
   (lambda (file)
@@ -4507,6 +4482,20 @@
 	    (begin
 	      (snd-display ";new-sound :size -1: ~A" tag)
 	      (if (not (null? (sounds))) (for-each close-sound (sounds))))))
+
+      (let ((ind (read-ascii (string-append sf-dir "caruso.asc"))))
+	(if (not (sound? ind)) 
+	    (snd-display ";read-ascii can't find ~A (~A)" (string-append sf-dir "caruso.asc") (map file-name (sounds)))
+	    (begin
+	      (if (fneq (maxamp ind 0) 0.723) (snd-display ";read-ascii maxamp: ~A" (maxamp ind 0)))
+	      (if (not (= (frames ind 0) 50000)) (snd-display ";read-ascii frames: ~A" (frames ind 0)))
+	      (if (not (= (srate ind) 44100)) (snd-display ";read-ascii srate: ~A" (srate ind)))
+	      (set! (srate ind) 8000)
+	      (if (or (not (= (frames ind 0) 50000))
+		      (fneq (maxamp ind 0) .723))
+		  (snd-display ";set srate clobbered new sound: ~A ~A (~A)" (frames ind 0) (maxamp ind 0) (srate ind)))
+
+	      (close-sound ind))))
       
       (if (provided? 'alsa)
 	  (let ((defdev (mus-alsa-device))
@@ -4626,10 +4615,6 @@
     (revert-sound ind1)))
 
 (if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
-(if (or (not (provided? 'snd-examp.scm))
-	(and (defined? 'ramp)
-	     (list? ramp)))
-    (load "examp.scm"))
 (if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
 (if (not (provided? 'snd-pvoc.scm)) (load "pvoc.scm"))
 (if (and with-gui (not (provided? 'snd-edit-menu.scm))) (load "edit-menu.scm"))
@@ -4755,6 +4740,7 @@
 			     data)))))))
 
 (define old-opt-val (optimization))
+
 
 (if (or full-test (= snd-test 5) (and keep-going (<= snd-test 5)))
     (begin
@@ -21570,7 +21556,7 @@ EDITS: 5
 	  (convolve-with "oboe.snd" #f)
 	  (let ((scl (maxamp)))
 	    (convolve-with "oboe.snd" scl index 0 0)
-	    (if (ffneq (maxamp) scl) 
+	    (if (fffneq (maxamp) scl) 
 		(snd-display ";convolve-with amps: ~A ~A" (maxamp) scl)
 		(let ((preader (make-sample-reader 0 index 0 1 1))
 		      (reader (make-sample-reader 0))
@@ -21580,10 +21566,13 @@ EDITS: 5
 		      ((or (not happy) (= i len)))
 		    (let ((val0 (preader))
 			  (val1 (reader)))
-		      (if (ffneq val0 val1)
+		      (if (fffneq val0 val1)
 			  (begin
 			    (snd-display ";convolve-with amps at: ~A: ~A ~A" i val0 val1)
 			    (set! happy #f))))))))
+	  (revert-sound index)
+	  (agc)
+	  (if (fneq (maxamp index 0) 1.29) (snd-display ";agc: ~A" (maxamp index 0)))
 	  (close-sound index)
 	  (let ((reader (make-sample-reader 0 "pistol.snd")))
 	    (do ((i 0 (1+ i)))
@@ -35210,6 +35199,8 @@ EDITS: 1
 
 ;;; ---------------- test 19: save and restore ----------------
 
+(if (not (provided? 'snd-fade.scm)) (load "fade.scm"))
+
 (define sfile 0)
 (define after-save-state-hook-var 0)
 
@@ -36455,6 +36446,7 @@ EDITS: 1
 	  (revert-sound)
 	  
 	  (let ((ind (new-sound :size 32)))
+	    (select-sound ind)
 	    (let ((ang 0.0)) 
 	      (map-channel (lambda (y) 
 			     (let ((val (+ (* .5 (sin ang)) (* .5 (sin (* ang 4)))))) 
@@ -36485,13 +36477,49 @@ EDITS: 1
 	    (revert-sound ind)
 	    (map-channel (lambda (y) 1.0))
 	    (env-sound '(0 0 1 1))
-	    (make-selection 0 7)
+	    (set! (cursor ind 0) 10)
+	    (make-selection 0 7 ind 0)
+	    (if (not (selection?))
+		(snd-display ";make-selection failed??")
+		(begin
+		  (replace-with-selection)
+		  (let ((vals (channel->vct)))
+		    (if (not (vequal vals (vct 0.000 0.032 0.065 0.097 0.129 0.161 0.194 0.226 0.258 0.290 0.000 0.032 0.065 
+					       0.097 0.129 0.161 0.194 0.226 0.581 0.613 0.645 0.677 0.710 0.742 0.774 0.806 
+					       0.839 0.871 0.903 0.935 0.968 1.000)))
+			(snd-display ";replace-with-selection: ~A" vals)))))
+	    (set! (cursor ind 0) 2)
 	    (replace-with-selection)
 	    (let ((vals (channel->vct)))
-	      (if (not (vequal vals (vct 0.000 0.032 0.065 0.097 0.129 0.161 0.194 0.226 0.258 0.290 0.000 0.032 0.065 
+	      (if (not (vequal vals (vct 0.000 0.032 0.000 0.032 0.065 0.097 0.129 0.161 0.194 0.226 0.000 0.032 0.065 
 					 0.097 0.129 0.161 0.194 0.226 0.581 0.613 0.645 0.677 0.710 0.742 0.774 0.806 
 					 0.839 0.871 0.903 0.935 0.968 1.000)))
-		  (snd-display ";replace-with-selection: ~A" vals)))
+			(snd-display ";replace-with-selection (at 2): ~A" vals)))
+	    (revert-sound ind)
+	    (map-channel (lambda (y) 1.0))
+	    (env-sound '(0 0 1 1))
+	    (let ((m1 (add-mark 10))
+		  (m2 (add-mark 20)))
+	      (make-selection 0 9)
+	      (fit-selection-between-marks m1 m2)
+	      (let ((vals (channel->vct))) 
+		(if (not (vequal vals (vct 0.000 0.032 0.065 0.097 0.129 0.161 0.194 0.226 0.258 0.290 0.323 0.387 0.452 
+					   0.516 0.581 0.645 0.710 0.774 0.839 0.903 0.645 0.677 0.710 0.742 0.774 0.806 
+					   0.839 0.871 0.903 0.935 0.968 1.000)))
+		    (snd-display ";fit-selection-between-marks: ~A" vals))))
+	    (revert-sound ind)
+	    (map-channel (lambda (y) 1.0))
+	    (let ((ramper (make-ramp 10)))
+	      (map-channel (lambda (y) (ramp ramper y)))
+	      (let ((vals (channel->vct 0 20)))
+		(if (not (vequal vals (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000 
+					   1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000)))
+		    (snd-display ";make-ramp: ~A" vals))))
+	    (revert-sound ind)
+	    (vct->channel (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
+	    (if (fneq (maxamp) .142) (snd-display ";cross fade maxamp: ~A" (maxamp)))
+	    (revert-sound)
+	    (vct->channel (dissolve-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 512 2 2 #f))
 	    (close-sound ind))
 
 	  (let ((vals (apply vct (rms-envelope "oboe.snd" :rfreq 4))))
@@ -36524,6 +36552,31 @@ EDITS: 1
 	      (close-sound hi1)
 	      (close-sound hi2))
 	    (close-sound ind))
+
+	  (let ((ind (new-sound :size 1000)))
+	    (map-channel (lambda (y) 0.5))
+	    (map-channel (vibro 1000.0 .5))
+	    (let ((vals (channel->vct 0 20)))
+	      (if (not (vequal vals (vct 0.375 0.410 0.442 0.469 0.489 0.499 0.499 0.489 0.470 0.443 0.411 0.376 
+					 0.341 0.308 0.281 0.262 0.251 0.251 0.261 0.280)))
+		  (snd-display ";no vibro? ~A" vals)))
+	    (close-sound ind))
+
+	  (let ((ind (open-sound "pistol.snd")))
+	    (transposed-echo 1.1 .95 .25)
+	    (play-and-wait)
+	    (set! (channel-property 'colored-samples ind 0) (list (list (cursor-color) 0 100)))
+	    (add-hook! after-graph-hook display-samples-in-color)
+	    (update-time-graph)
+	    (repitch-sound 220.0 440.0)
+	    (uncolor-samples)
+	    (retime-sound 1.0)
+	    (close-sound ind))
+	  (remove-hook! after-graph-hook display-samples-in-color)
+	  
+	  (let ((val 0)) 
+	    (tree-for-each (lambda (n) (set! val (+ val n))) (list (list 1 0) (list 2) 3))
+	    (if (not (= val 6)) (snd-display ";tree-for-each: ~A" val)))
 
 	  (let ((ind (new-sound :channels 4 :size 32)))
 	    (set! (sample 0 ind 0) 0.5)
@@ -38775,6 +38828,10 @@ EDITS: 1
 				      (set! mxdiff diff)) 
 				  #f))) 
 		(if (> mxdiff .003) (snd-display ";automorph rotation: ~A" mxdiff)))
+
+	      (revert-sound ind)
+	      (periodogram 256)
+	      (if (not (lisp-graph? ind)) (snd-display ";periodogram not graphed?"))
 	      (close-sound ind))
 
 	    ))
@@ -38867,6 +38924,16 @@ EDITS: 1
             (draw-string "hiho" (+ pos 5) 24)
 	    (set! (foreground-color) old-color))))))
 
+(define (directory->list dir)
+  (let ((dport (opendir dir)))
+    (let loop ((entry (readdir dport))
+	       (files '()))
+      (if (not (eof-object? entry))
+	  (loop (readdir dport) (cons entry files))
+	  (begin
+	    (closedir dport)
+	    (reverse! files))))))
+
 (if (or full-test (= snd-test 21) (and keep-going (<= snd-test 21)))
     (begin
       (run-hook before-test-hook 21)
@@ -38911,7 +38978,24 @@ EDITS: 1
 	  (update-time-graph)
 	  (if (provided? 'xm) (show-disk-space ind1))
 	  (update-time-graph)
+	  (revert-sound ind1)
+	  (make-selection 10000 20000 ind1 0)
+	  (if (not (selection?))
+	      (snd-display ";make-selection for show failed?")
+	      (begin
+		(show-selection)
+		(let ((vals (x-bounds ind1 0)))
+		  (if (or (fneq (car vals) (/ 10000.0 (srate ind1)))
+			  (fneq (cadr vals) (/ 20000.0 (srate ind1))))
+		      (snd-display ";show-selection: ~A (~A)" vals (list (/ 10000.0 (srate ind1)) (/ 20000.0 (srate ind1))))))))
+	  (add-hook! graph-hook zoom-spectrum)
+	  (set! (transform-graph? ind1 0) #t)
+	  (let ((ind3 (open-sound "pistol.snd")))
+	    (overlay-sounds ind2 ind1 ind3)
+	    (close-sound ind3))
+	  (samples-via-colormap ind1 0)
 	  (close-sound ind1)
+	  (remove-hook! graph-hook zoom-spectrum)
 	  (close-sound ind2)))
 
       (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 :size 50)))
@@ -39715,6 +39799,10 @@ EDITS: 1
 			      ))
 	  ))
 	(close-sound ind))
+
+      (let ((files (directory->list "tools/")))
+	(if (not (member "makegl.scm" files))
+	    (snd-display ";directory->list: ~A" files)))
       
       (run-hook after-test-hook 21)
       ))
@@ -47210,6 +47298,10 @@ EDITS: 1
 		      ind 3 "dlocsig 15 3")
       ); end dlocsig tests
 
+      (let ((gr (make-green-noise)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (brownian-noise gr)))
       
       (if (not (null? (sounds))) (for-each close-sound (sounds)))
       
@@ -61807,6 +61899,7 @@ EDITS: 1
 (display (format "~%;times: ~A~%;total: ~A~%" timings (inexact->exact (round (- (real-time) overall-start-time)))))
 
 ;25-Oct-06: times: #(17 16 35 28 962 5859 532 69 10024 1859 370 431 449 773 629 1203 2685 136 120 2032 1007 623 4278 6824 4054 946 201 0 4919) 519
+;26-Oct-06: times: #(17 16 41 28 957 45742 57537 75 73344 2049 527 1140 631 1007 22926 1323 13424 271 252 2068 1282 952 6571 6898 3836 4682 303 0 567452) 8165
 
 (let ((best-times #(17 16 35 28 962 5859 532 69 10024 1859 370 431 449 773 629 1203 2685 136 120 2032 1007 623 4278 6824 4054 946 201 0 4919)))
   (do ((i 0 (1+ i)))

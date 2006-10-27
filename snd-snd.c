@@ -2397,7 +2397,16 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
 	    XEN_OUT_OF_RANGE_ERROR(S_setB S_srate, 1, val, "~A: impossible srate");
 	  mus_sound_set_srate(sp->filename, ival);
 	  sp->hdr->srate = ival;
-	  snd_update_within_xen(sp, caller); 
+	  /* if there are pending edits, we certainly don't want to flush them in this case! */
+	  if (!(has_unsaved_edits(sp)))
+	    snd_update_within_xen(sp, caller); 
+	  else 
+	    {
+	      /* reset x axis bounds */
+	      int i;
+	      for (i = 0; i < sp->nchans; i++)
+		set_x_axis_x0x1(sp->chans[i], 0.0, (double)(sp->chans[i]->samples[sp->chans[i]->edit_ctr]) / (double)ival);
+	    }
 	}
       break;
     case SP_NCHANS: 

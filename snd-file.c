@@ -2367,16 +2367,10 @@ static bool check_for_same_name(snd_info *sp1, void *ur_info)
       (sp1 != info->current_sp) &&
       (strcmp(sp1->filename, info->filename) == 0))
     {
-      int i;
-      for (i = 0; i < sp1->nchans; i++) 
+      if (has_unsaved_edits(sp1))
 	{
-	  chan_info *cp;
-	  cp = sp1->chans[i];
-	  if (cp->edit_ctr > 0)
-	    {
-	      info->parlous_sp = sp1;
-	      return(true);
-	    }
+	  info->parlous_sp = sp1;
+	  return(true);
 	}
     }
   return(false);

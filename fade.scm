@@ -101,6 +101,7 @@
        (* amp val)))))
 
 ;;; (vct->channel (cross-fade 0 .1 1 0 1 .01 .01 0 .1 256 2))
+;;; (vct->channel (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
 ;;;
 ;;; these fades seem more successful to me when done relatively quickly (the opposite of the dissolve below
 ;;; which is best if done as slowly as possible).  I like the sweep up best -- a sort of "evaporation" effect.

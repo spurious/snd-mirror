@@ -7484,10 +7484,18 @@ io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos)
   return(err);
 }
 
+bool has_unsaved_edits(snd_info *sp)
+{
+  int i;
+  for (i = 0; i < sp->nchans; i++)
+    if (sp->chans[i]->edit_ctr > 0)
+      return(true);
+  return(false);
+}
+
 static io_error_t save_edits_1(snd_info *sp, bool ask)
 {
   int i;
-  bool need_save = false;
   io_error_t err;
   time_t current_write_date;
 
@@ -7496,17 +7504,7 @@ static io_error_t save_edits_1(snd_info *sp, bool ask)
   if ((sp->user_read_only) || (sp->file_read_only))
     return(IO_WRITE_PROTECTED);
 
-  for (i = 0; i < sp->nchans; i++)
-    {
-      chan_info *cp;
-      cp = sp->chans[i];
-      if (cp->edit_ctr > 0) 
-	{
-	  need_save = true;
-	  break;
-	}
-    }
-  if (!need_save) return(IO_NO_CHANGES);
+  if (!(has_unsaved_edits(sp))) return(IO_NO_CHANGES);
 
   /* check for change to file while we were editing it */
   current_write_date = file_write_date(sp->filename);

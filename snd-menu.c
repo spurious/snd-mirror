@@ -1,11 +1,6 @@
 #include "snd.h"
 #include "snd-menu.h"
 
-static bool find_any_edits(chan_info *cp, void *ignore)
-{
-  return(cp->edit_ctr > 0);
-}
-
 #if (!USE_NO_GUI)
 void edit_menu_update(void)
 {
@@ -130,7 +125,7 @@ void file_menu_update(void)
   any_sp = any_selected_sound();
   if (any_sp)
     {
-      edits_p = map_over_sound_chans(any_sp, find_any_edits, NULL);
+      edits_p = has_unsaved_edits(any_sp);
       file_p = true;
     }
 
@@ -197,7 +192,7 @@ void reflect_file_revert_in_label(snd_info *sp)
   if (sp->sgx)
     {
       bool editing;
-      editing = map_over_sound_chans(sp, find_any_edits, NULL);
+      editing = has_unsaved_edits(sp);
       if (!editing)
 	set_sound_pane_file_label(sp, shortname_indexed(sp));
     }

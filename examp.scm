@@ -561,7 +561,8 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	       (loop (read in-fd)))))
        (if (> loc 0)
 	   (vct->channel data frame loc out-fd 0))))
-    (close-input-port in-fd)))
+    (close-input-port in-fd)
+    out-fd))
 
 
 
@@ -2083,8 +2084,9 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
   "(replace-with-selection) replaces the samples from the cursor with the current selection"
   (let ((beg (cursor))
 	(len (selection-frames)))
-    (delete-samples beg len)
-    (insert-selection beg)))
+    (insert-selection beg) ; put in the selection before deletion, since delete-samples can deactivate the selection
+    (delete-samples (+ beg len) len)))
+
 
 
 ;;; -------- explode-sf2
