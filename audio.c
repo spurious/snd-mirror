@@ -8200,8 +8200,9 @@ static void sndjack_write(sample_t **buf,int nframes,int latencyframes,int chs){
 
   for(i=0;i<nframes;i++){
     while(
-	  sj_unread==sj_buffersize
-	  || sj_unread >= SJ_MAX(sj_jackbuffersize*2, latencyframes)
+	  sj_status==SJ_RUNNING
+	  && (sj_unread==sj_buffersize
+	      || sj_unread >= SJ_MAX(sj_jackbuffersize*2, latencyframes))
 	  )
       {
 	jack_mus_watchdog_counter++;

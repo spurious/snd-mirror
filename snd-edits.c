@@ -7495,7 +7495,6 @@ bool has_unsaved_edits(snd_info *sp)
 
 static io_error_t save_edits_1(snd_info *sp, bool ask)
 {
-  int i;
   io_error_t err;
   time_t current_write_date;
 
