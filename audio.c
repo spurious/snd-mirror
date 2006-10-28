@@ -8009,27 +8009,27 @@ static jack_client_t *sndjack_client = NULL;
 static int sndjack_num_read_channels_allocated=0;
 static int sndjack_num_read_channels_inuse=0;
 static struct SndjackChannel *sndjack_read_channels=NULL;
-static pthread_cond_t sndjack_read_cond={{0}};
-static pthread_mutex_t sndjack_read_mutex={0};
-static int sj_r_buffersize;
-static int sj_r_writeplace;
-static int sj_r_readplace;
-static int sj_r_unread;
+static pthread_cond_t sndjack_read_cond= PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t sndjack_read_mutex= PTHREAD_MUTEX_INITIALIZER;
+static int sj_r_buffersize=0;
+static int sj_r_writeplace=0;
+static int sj_r_readplace=0;
+static int sj_r_unread=0;
 static int sj_r_xrun=0;
 static int sj_r_totalxrun=0;
 
 /*************************/
 /* Variables for writing */
 /*************************/
-static pthread_cond_t sndjack_cond={{0}};
-static pthread_mutex_t sndjack_mutex={0};
+static pthread_cond_t sndjack_cond= PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t sndjack_mutex=  PTHREAD_MUTEX_INITIALIZER;
 
 enum{SJ_STOPPED,SJ_RUNNING,SJ_ABOUTTOSTOP};
 
 // Variables for the ringbuffer:
-static  int sj_writeplace;
-static  int sj_readplace;
-static  int sj_unread;
+static  int sj_writeplace=0;
+static  int sj_readplace=0;
+static  int sj_unread=0;
 static  int sj_buffersize;
 static int sj_jackbuffersize; // number of frames sent to sndjack_process.
 static int sj_totalxrun=0;
@@ -8216,7 +8216,10 @@ static void sndjack_write(sample_t **buf,int nframes,int latencyframes,int chs){
     if(sj_writeplace==sj_buffersize)
       sj_writeplace=0;
   }
-  sj_status=SJ_RUNNING;
+
+  if(sj_status==SJ_STOPPED)
+    if(sj_unread>=sj_jackbuffersize)
+      sj_status=SJ_RUNNING;
 }
  
 static int sndjack_buffersizecallback(jack_nframes_t nframes, void *arg){
@@ -8333,7 +8336,6 @@ static int sndjack_init(void){
   {
     const char **outportnames=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsInput);
     for(ch=0;outportnames && outportnames[ch]!=NULL && ch<numch;ch++){
-      char temp[500];
       if (
 	  jack_connect(
 		       sndjack_client,
@@ -8350,7 +8352,6 @@ static int sndjack_init(void){
   {    
     const char **inportnames=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsOutput);
     for(ch=0;inportnames && inportnames[ch]!=NULL && ch<numch;ch++){
-    char temp[500];
     if (
 	jack_connect(
 		     sndjack_client,
@@ -8365,7 +8366,7 @@ static int sndjack_init(void){
   }
   return 0;
   
- failed_connect:
+  // failed_connect:
  failed_activate:
   jack_deactivate(sndjack_client);
   
@@ -8453,11 +8454,27 @@ static int jack_mus_audio_initialize(void) {
 
   audio_initialized = true;
 
+#if 0  
+
   /* Locking all future memory shouldn't be that necessary, and might even freeze the machine in certain situations. */
   /* So remove MCL_FUTURE from the mlockall call. (No. We can't do that. It can screw up code using the realtime extension. -Kjetil.*/
-  //munlockall();
+  munlockall();
   //mlockall(MCL_CURRENT);
   
+  // Instead we just do this: (which is not enough, but maybe better than nothing)
+  {
+    mlock(sndjack_channels,sizeof(struct SndjackChannel)*sndjack_num_channels_allocated);
+    mlock(sndjack_read_channels,sizeof(struct SndjackChannel)*sndjack_num_read_channels_allocated);
+
+    for(ch=0;ch<numch;ch++){
+      mlock(sndjack_channels[ch].buffer,sizeof(sample_t)*SNDJACK_BUFFERSIZE);
+    }
+    for(ch=0;ch<sndjack_num_read_channels_allocated;ch++){
+      mlock(sndjack_read_channels[ch].buffer,sizeof(sample_t)*SNDJACK_BUFFERSIZE);
+    }
+  }
+#endif
+
   return MUS_NO_ERROR;
 }
 
@@ -8563,6 +8580,11 @@ int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int si
   }
 
   while(sj_status!=SJ_STOPPED) usleep(5);
+
+  sj_unread=0;
+  sj_writeplace=0;
+  sj_readplace=0;
+
 
   if(srate!=jack_get_sample_rate(sndjack_client)){
     int lokke;
