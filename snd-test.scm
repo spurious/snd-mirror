@@ -4470,11 +4470,15 @@
       (let ((ind (new-sound :size 0)))
 	(if (not (= (frames ind) 0)) (snd-display ";new-sound :size 0 -> ~A frames" (frames ind)))
 	(if (fneq (sample 0) 0.0) (snd-display ";new-sound :size 0 sample 0: ~A" (sample 0)))
-	(close-sound ind))
+	(let ((new-file-name (file-name ind)))
+	  (close-sound ind)
+	  (if (file-exists? new-file-name) (delete-file new-file-name))))
       (let ((ind (new-sound :size 1)))
 	(if (not (= (frames ind) 1)) (snd-display ";new-sound :size 1 -> ~A frames" (frames ind)))
 	(if (fneq (sample 0) 0.0) (snd-display ";new-sound :size 1 sample 0: ~A" (sample 0)))
-	(close-sound ind))
+	(let ((new-file-name (file-name ind)))
+	  (close-sound ind)
+	  (if (file-exists? new-file-name) (delete-file new-file-name))))
       (let ((tag (catch #t
 			(lambda () (new-sound :size -1))
 			(lambda args (car args)))))
@@ -18118,7 +18122,9 @@ EDITS: 5
 	(if (fneq (maxamp) .0013)
 	    (snd-display ";differentiator: ~A" (maxamp)))
 	(undo)
-	(close-sound ind))
+	(let ((new-file-name (file-name ind)))
+	  (close-sound ind)
+	  (if (file-exists? new-file-name) (delete-file new-file-name))))
       
       (let ((gen (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1))))
 	    (gen1 (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1) (make-vct 512))))
@@ -18616,7 +18622,9 @@ EDITS: 5
 	(ptree-channel (lambda (y) 1.0) 20 10)
 	(if (not (= (frames) 30)) (snd-display ";ptree-channel 20 10: ~A" (frames)))
 	(if (> (edit-position ind 0) 2) (snd-display ";ptree-channel pad edits (3): ~A" (edit-position ind 0)))
-	(close-sound ind))
+	(let ((new-file-name (file-name ind)))
+	  (close-sound ind)
+	  (if (file-exists? new-file-name) (delete-file new-file-name))))
 
       (let ((ind (new-sound :size 1000)))
 	(let* ((table (vct 0.0 .1 .2 .3 .4 .5 .6))
@@ -19361,7 +19369,9 @@ EDITS: 5
 	  (map-channel (lambda (y) (any-random 1.0 g))))
 	(let ((g (pareto-distribution 1.0))) 
 	  (map-channel (lambda (y) (any-random 1.0 g))))
-	(close-sound ind))
+	(let ((new-file-name (file-name ind)))
+	  (close-sound ind)
+	  (if (file-exists? new-file-name) (delete-file new-file-name))))
 
       (let ((v1 (inverse-integrate '(-1 1 1 1))))
 	(if (fneq (vct-ref v1 4) -0.984)
@@ -25978,7 +25988,9 @@ EDITS: 5
 	
 	(add-hook! output-comment-hook (lambda (str) (marks->string (selected-sound))))
 	(save-sound-as "tst.snd")
-	(close-sound ind)
+	(let ((new-file-name (file-name ind)))
+	  (close-sound ind)
+	  (if (file-exists? new-file-name) (delete-file new-file-name)))
 	(set! ind (open-sound "tst.snd"))
 	(reset-hook! output-comment-hook)
 
@@ -29708,7 +29720,9 @@ EDITS: 5
 	(let ((vals (channel->vct 0 20 ind1)))
 	  (if (not (vequal vals (vct 0.95 0.90 0.85 0.80 0.75 0.70 0.65 0.60 0.55 0.50 0.45 0.40 0.35 0.30 0.25 0.20 0.15 0.10 0.05 0.00)))
 	      (snd-display ";sound-via-sound: ~A" vals)))
-	(close-sound ind2)
+	(let ((new-file-name (file-name ind2)))
+	  (close-sound ind2)
+	  (if (file-exists? new-file-name) (delete-file new-file-name)))
 	(revert-sound ind1)
 	(let ((val -.5)) (map-channel (lambda (y) (set! val (+ val .05)) val)))
 	(let ((val (scan-channel (zero+))))
@@ -29725,7 +29739,9 @@ EDITS: 5
 		  (not (equal? val (list -1 9))))
 	      (snd-display ";search-for-click: ~A" val)))
 	(if (not (= (find-click 0) 8)) (snd-display ";find-click: ~A" (find-click 0)))
-	(close-sound ind1))
+	(let ((new-file-name (file-name ind1)))
+	  (close-sound ind1)
+	  (if (file-exists? new-file-name) (delete-file new-file-name))))
       
       (let* ((id (open-sound "oboe.snd"))
 	     (fr (frames id 0))
@@ -36549,7 +36565,9 @@ EDITS: 1
 	    (if (fneq (maxamp) .142) (snd-display ";cross fade maxamp: ~A" (maxamp)))
 	    (revert-sound)
 	    (vct->channel (dissolve-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 512 2 2 #f))
-	    (close-sound ind))
+	    (let ((new-file-name (file-name ind)))
+	      (close-sound ind)
+	      (if (file-exists? new-file-name) (delete-file new-file-name))))
 
 	  (let ((vals (apply vct (rms-envelope "oboe.snd" :rfreq 4))))
 	    (if (not (vequal vals (vct 0.0 0.0430 0.25 0.0642 0.5 0.0695 0.75 0.0722 1.0 0.0738 1.25 0.0713 
@@ -36589,7 +36607,9 @@ EDITS: 1
 	      (if (not (vequal vals (vct 0.375 0.410 0.442 0.469 0.489 0.499 0.499 0.489 0.470 0.443 0.411 0.376 
 					 0.341 0.308 0.281 0.262 0.251 0.251 0.261 0.280)))
 		  (snd-display ";no vibro? ~A" vals)))
-	    (close-sound ind))
+	    (let ((new-file-name (file-name ind)))
+	      (close-sound ind)
+	      (if (file-exists? new-file-name) (delete-file new-file-name))))
 
 	  (let ((ind (open-sound "pistol.snd")))
 	    (transposed-echo 1.1 .95 .25)
@@ -36648,7 +36668,27 @@ EDITS: 1
 			     (sample 0 ind 3) (sample 10 ind 0) (sample 20 ind 1) (sample 30 ind 2)
 			     (sample 0 ind 0) (sample 10 ind 1) (sample 20 ind 2) (sample 30 ind 3)))
 	    (do ((i 0 (1+ i))) ((= i 4)) (set! (edit-position ind i) 1))
-	    (close-sound ind))
+	    (let ((new-file-name (file-name ind)))
+	      (close-sound ind)
+	      (if (file-exists? new-file-name) (delete-file new-file-name))))
+
+	  (let ((ind (new-sound :channels 8 :size 10)))
+	    (do ((i 0 (1+ i))) ((= i 8)) (set! (sample i ind i) .5))
+	    (scramble-channels 1 2 3 4 7 6 5 0)
+	    (if (or (fneq (sample 1 ind 0) .5)
+		    (fneq (sample 2 ind 1) .5)
+		    (fneq (sample 3 ind 2) .5)
+		    (fneq (sample 4 ind 3) .5)
+		    (fneq (sample 7 ind 4) .5)
+		    (fneq (sample 6 ind 5) .5)
+		    (fneq (sample 5 ind 6) .5)
+		    (fneq (sample 0 ind 7) .5))
+		(snd-display ";scramble-channels 8 ways: ~A"
+			     (list (sample 1 ind 0) (sample 2 ind 1) (sample 3 ind 2) (sample 4 ind 3)
+				   (sample 7 ind 4) (sample 6 ind 5) (sample 5 ind 6) (sample 0 ind 7))))
+	    (let ((new-file-name (file-name ind)))
+	      (close-sound ind)
+	      (if (file-exists? new-file-name) (delete-file new-file-name))))
 
 
 	  ;; ---- *.scm
@@ -61104,8 +61144,6 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (filter-sound vct-3 32)))
 		(check-error-tag 'out-of-range (lambda () (filter-sound '(0 0 1 1) 0)))
 		(check-error-tag 'no-such-sound (lambda () (swap-channels ind 0 12345 0)))
-		(check-error-tag 'no-such-sample (lambda () (scan-channel (lambda (n) #f) (* (frames) 2))))
-		(check-error-tag 'no-such-sample (lambda () (map-channel (lambda (n) #f) (* (frames) 2))))
 		(check-error-tag 'no-such-sample (lambda () (mix-vct (vct 0.1 0.2 0.3) -1 ind 0 #t)))
 		(check-error-tag 'out-of-range (lambda () (snd-spectrum (make-vct 8) 0 -123)))
 		(check-error-tag 'out-of-range (lambda () (snd-spectrum (make-vct 8) 0 0)))
@@ -61185,7 +61223,6 @@ EDITS: 1
 		(check-error-tag 'no-such-direction (lambda () (make-sample-reader 0 ind 0 -2)))
 		(check-error-tag 'no-data (lambda () (scale-by '())))
 		(check-error-tag 'no-data (lambda () (scale-to '())))
-		(check-error-tag 'no-such-sample (lambda () (ptree-channel (lambda (y) (+ y .1)) 1234567)))
 		(check-error-tag 'bad-arity (lambda () (prompt-in-minibuffer "hi" (lambda (x y) (+ x y)))))
 		(check-error-tag 'no-such-sample (lambda () (set! (selection-position ind 0) -999)))
 		(check-error-tag 'wrong-type-arg (lambda () (set! (selection-frames ind 0) -999)))
@@ -62075,4 +62112,10 @@ EDITS: 1
     (system "cp memlog memlog.full"))
 
 (if with-exit (exit))
+
+
+;;; currently not called: 
+;;;    overlay-rms-env smart-line-cursor asyfmI power-env window-rms title-with-date
+;;;    explode-sf2 green-noise(?) html ? poly-resultant stretch-sound-via-dft(broken)
+;;;    sound->amp-env window-samples mark-explode maxfilter play-sound 
 
