@@ -87,6 +87,9 @@
 #define DEFAULT_OUTPUT_SRATE 22050
 #define DEFAULT_OUTPUT_HEADER_TYPE MUS_NEXT
 #define DEFAULT_OUTPUT_DATA_FORMAT MUS_BSHORT
+/* mus-next is probably best here since intermediate/temp files can be any length (> 2^32 bytes)
+ *   and the next header-specified size, although 32 bits, is explicitly "advisory".
+ */
 
 #define NO_COMPLETER -1
 #define NO_SELECTION -1

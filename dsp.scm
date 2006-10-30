@@ -524,7 +524,7 @@
 	 (index (asyfm-index gen))
 	 (modphase (* ratio phase))
 	 (result (* (exp (- (* 0.5 index (+ r r1) (cos modphase))
-			    (* 0.5 (log (bess-i0 (* index (+ r r1)))))))
+			    (* 0.5 (log (bes-i0 (* index (+ r r1)))))))
 		    (sin (+ phase (* 0.5 index (- r r1) (sin modphase)))))))
     (set! (asyfm-phase gen) (+ phase input freq))
     result))

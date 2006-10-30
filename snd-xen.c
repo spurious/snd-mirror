@@ -41,7 +41,7 @@
  * rscheme:     (Scheme) serious name-space problems
  * s-lang:      (C)      probably doable -- would need to wrap everything in my own struct, and 7 args max is too few.
  * squirrel:    ()       c++, like lua in call sequence
- * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers
+ * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers (checked 0.80)
  */
 
 /* TODO: (gauche)   stacktrace and errors->listener (current-load-history)

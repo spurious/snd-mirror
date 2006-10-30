@@ -14046,16 +14046,6 @@ EDITS: 5
 		     (set! x (+ x xi))
 		     (* scl val))))))
 
-(define* (sound->amp-env :optional snd chn)
-  (let ((hlb (make-hilbert-transform 40))
-	(d (make-delay 40)))
-    (map-channel
-     (lambda (y)
-       (let ((hy (hilbert-transform hlb y))
-	     (dy (delay d y)))
-	 (sqrt (+ (* hy hy) (* dy dy)))))
-     0 #f snd chn #f "sound->amp-env")))
-
 (define* (hilbert-transform-via-fft :optional snd chn)
   ;; same as FIR version but use FFT and change phases by hand
   (let* ((size (frames snd chn))
@@ -16263,7 +16253,10 @@ EDITS: 5
 	      ((= i 256))
 	    (if (< (abs (- 1.0 (vct-ref vct0 i))) .01) (set! s1-loc i)))
 	  (if (not (= s2-loc s1-loc)) (snd-print (format #f "asymmetric-fm set r in place peaks: ~A ~A" s1-loc s2-loc)))))
-      
+
+      (let ((gen (make-asyfm :frequency 2000 :ratio .1))) 
+	(asyfm-I gen 0.0))
+
       (let ((gen (make-fir-filter 3 (list->vct '(.5 .25 .125))))
 	    (v0 (make-vct 10))
 	    (gen1 (make-fir-filter 3 (list->vct '(.5 .25 .125))))
@@ -18121,7 +18114,18 @@ EDITS: 5
 			 (differentiator hp y))))
 	(if (fneq (maxamp) .0013)
 	    (snd-display ";differentiator: ~A" (maxamp)))
-	(undo)
+	(revert-sound ind)
+	(let ((val (window-rms)))
+	  (if (fneq val 0.0) (snd-display ";window-rms empty: ~A" val))
+	  (set! (sample 10) 1.0)
+	  (set! val (window-rms))
+	  (if (fneq val .218) (snd-display ";window-rms 1: ~A" val))
+	  (let ((vals (window-samples)))
+	    (if (or (not (vct? vals))
+		    (not (= (vct-length vals) 21))
+		    (fneq (vct-ref vals 10) 1.0))
+		(snd-display ";window-samples: ~A" vals))))
+	(revert-sound ind)
 	(let ((new-file-name (file-name ind)))
 	  (close-sound ind)
 	  (if (file-exists? new-file-name) (delete-file new-file-name))))
@@ -26011,6 +26015,37 @@ EDITS: 5
 	(mus-sound-forget "tst.snd")
 	(delete-file "tst.snd"))
 	
+      ;; mark-explode
+      (let ((ind (new-sound :size 31))
+	    (ctr -1))
+	(map-channel (lambda (y) (set! ctr (1+ ctr)) (if (< ctr 10) .1 (if (< ctr 20) .4 .8))))
+	(add-mark 10)
+	(add-mark 20)
+	(add-mark 30)
+	(mark-explode)
+	(if (file-exists? "mark-0.snd")
+	    (let ((ind1 (open-sound "mark-0.snd")))
+	      (if (not (= (frames ind1 0) 10)) (snd-display ";mark-0 frames: ~A" (frames ind1 0)))
+	      (if (not (vequal (channel->vct) (make-vct 10 .1))) (snd-display ";mark-0 vals: ~A" (channel->vct)))
+	      (close-sound ind1)
+	      (delete-file "mark-0.snd"))
+	    (snd-display ";mark-explode did not write mark-0.snd?"))
+	(if (file-exists? "mark-1.snd")
+	    (let ((ind1 (open-sound "mark-1.snd")))
+	      (if (not (= (frames ind1 0) 10)) (snd-display ";mark-1 frames: ~A" (frames ind1 0)))
+	      (if (not (vequal (channel->vct) (make-vct 10 .4))) (snd-display ";mark-1 vals: ~A" (channel->vct)))
+	      (close-sound ind1)
+	      (delete-file "mark-1.snd"))
+	    (snd-display ";mark-explode did not write mark-1.snd?"))
+	(if (file-exists? "mark-2.snd")
+	    (let ((ind1 (open-sound "mark-2.snd")))
+	      (if (not (= (frames ind1 0) 10)) (snd-display ";mark-2 frames: ~A" (frames ind1 0)))
+	      (if (not (vequal (channel->vct) (make-vct 10 .8))) (snd-display ";mark-2 vals: ~A" (channel->vct)))
+	      (close-sound ind1)
+	      (delete-file "mark-2.snd"))
+	    (snd-display ";mark-explode did not write mark-2.snd?"))
+	(if (file-exists? "mark-3.snd") (snd-display ";mark-explode wrote too many files?"))
+	(close-sound ind))
       
       (run-hook after-test-hook 10)
       ))
@@ -27036,6 +27071,8 @@ EDITS: 5
 	       (not (provided? 'snd-nogui)))
 	  (begin
 	    (let ((names (short-file-name #t)))
+	      (set! retitle-time 0)
+	      (title-with-date)
 	      (if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #t))
 	      (set! (window-property "SND_VERSION" "WM_NAME")
 		    (format #f "snd (~A)~A"
@@ -39066,6 +39103,31 @@ EDITS: 1
 	  (close-sound ind1)
 	  (remove-hook! graph-hook zoom-spectrum)
 	  (close-sound ind2)))
+      
+      (let ((ind (new-sound :size 33 :srate 22050)))
+	(map-channel (lambda (y) 1.0))
+	(let ((pe (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1) :duration (/ 34.0 22050.0))))
+	  (map-channel (lambda (y) (* y (power-env pe))))
+	  (if (not (vequal (channel->vct) 
+			   (vct 0.000 0.008 0.017 0.030 0.044 0.063 0.086 0.115 0.150 0.194 0.249 
+				0.317 0.402 0.507 0.637 0.799 1.000 0.992 0.983 0.971 0.956 0.937 
+				0.914 0.885 0.850 0.806 0.751 0.683 0.598 0.493 0.363 0.201 0.000)))
+	      (snd-display ";power-env: ~A" (channel->vct))))
+	(let ((pe (make-power-env '(0 0 1.0  1 1 0.0  2 0 1  3 0 1) :duration (/ 34.0 22050.0))))
+	  (map-channel (lambda (y) (* y (power-env pe))))
+	  (if (not (vequal (channel->vct) 
+			   (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000 
+				1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 0.000 0.000 
+				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";power-env 0 and 1: ~A" (channel->vct))))
+	(let ((pe (make-power-env '(0 0 .01 1 1 1) :duration (/ 34.0 22050.0))))
+	  (map-channel (lambda (y) (* y (power-env pe))))
+	  (if (not (vequal (channel->vct) 
+			   (vct 0.000 0.132 0.246 0.346 0.432 0.507 0.573 0.630 0.679 0.722 0.760 
+				0.792 0.821 0.845 0.867 0.886 0.902 0.916 0.928 0.939 0.948 0.956 
+				0.963 0.969 0.975 0.979 0.983 0.987 0.990 0.992 0.995 0.997 0.998)))
+	      (snd-display ";power-env .01: ~A" (channel->vct))))
+	(close-sound ind))
 
       (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 :size 50)))
 	(set! (sample 3) 1.0)
@@ -62112,10 +62174,3 @@ EDITS: 1
     (system "cp memlog memlog.full"))
 
 (if with-exit (exit))
-
-
-;;; currently not called: 
-;;;    overlay-rms-env smart-line-cursor asyfmI power-env window-rms title-with-date
-;;;    explode-sf2 green-noise(?) html ? poly-resultant stretch-sound-via-dft(broken)
-;;;    sound->amp-env window-samples mark-explode maxfilter play-sound 
-

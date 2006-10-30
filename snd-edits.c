@@ -500,7 +500,7 @@ typedef struct ed_fragment {
 #define ED_PTREE2_DUR(Ed)       (Ed)->ptree_dur2
 #define ED_PTREE3_DUR(Ed)       (Ed)->ptree_dur3
 #define ED_LENGTH(Ed)           (ED_LOCAL_END(Ed) - ED_LOCAL_POSITION(Ed) + 1)
-#define READER_LENGTH(Sf)           (READER_LOCAL_END(Sf) - READER_LOCAL_POSITION(Sf) + 1)
+#define READER_LENGTH(Sf)       (READER_LOCAL_END(Sf) - READER_LOCAL_POSITION(Sf) + 1)
 #endif
 #define ED_PTREE_POSITION(Ed)   (Ed)->ptree_pos
 #define ED_PTREE2_POSITION(Ed)  (Ed)->ptree_pos2
@@ -6900,9 +6900,9 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 	  sf->cb = FRAGMENT(ed, i - 1);  /* so back up one */
 	  sf->cbi = i - 1;
 	  sf->frag_pos = samp - READER_GLOBAL_POSITION(sf);
-	  ind0 = READER_LOCAL_POSITION(sf);
+	  ind0 = READER_LOCAL_POSITION(sf);                   /* cb->beg */
 	  indx = READER_LOCAL_POSITION(sf) + sf->frag_pos;
-	  ind1 = READER_LOCAL_END(sf);
+	  ind1 = READER_LOCAL_END(sf);                        /* cb->end */
 	  sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
 	  if (ZERO_OP(READER_TYPE(sf)))
 	    {
@@ -7944,7 +7944,13 @@ static XEN g_sample_reader_at_end(XEN obj)
   return(XEN_FALSE);
 }
 
-/* PERHAPS: can sample-reader-position be settable? */
+/* can sample-reader-position be settable? 
+ *   this requires that we find the fragment that holds the new position (as at the start of init_sample_read_any_with_bufsize 6892)
+ *   set the fragment bounds (ind0, ind1), call file_buffers_forward|backward
+ *   also check for reader_at_end complications, etc
+ *   so, it's simpler and just as fast to require that the user make a new reader or use random access (channel->vct)
+ *   (the only thing we avoid is choose_accessor)
+ */
 
 static XEN g_sample_reader_position(XEN obj) 
 {
