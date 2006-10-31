@@ -3645,8 +3645,9 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
   bool temp_file;
   char *filename = NULL;
   off_t kp;
+  int loc = NOT_A_GC_LOC;
   mus_sample_t *data = NULL;
-  XEN res = XEN_FALSE, v;
+  XEN res = XEN_FALSE, v = XEN_FALSE;
   if (!(editable_p(cp))) return(XEN_FALSE);
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf == NULL) 
@@ -3654,20 +3655,22 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
       cp->edit_hook_checked = false;
       return(XEN_TRUE);
     }
+  if (XEN_PROCEDURE_P(init_func))
+    {
+      v = XEN_CALL_2(init_func,
+		     C_TO_XEN_OFF_T(0),
+		     C_TO_XEN_OFF_T(num),
+		     origin);
+      loc = snd_protect(v);
+    }
   temp_file = (num > MAX_BUFFER_SIZE);
   if (temp_file)
     {
       mus_any *outgen = NULL;
       filename = snd_tempnam();
       outgen = mus_make_sample_to_file_with_comment(filename, 1, MUS_OUT_FORMAT, MUS_NEXT, origin);
-      if (XEN_PROCEDURE_P(init_func))
+      if (XEN_REQUIRED_ARGS_OK(proc, 3))
 	{
-	  int loc;
-	  v = XEN_CALL_2(init_func,
-		     C_TO_XEN_OFF_T(0),
-		     C_TO_XEN_OFF_T(num),
-		     origin);
-	  loc = snd_protect(v);
 	  for (kp = 0; kp < num; kp++)
 	    {
 	      res = XEN_CALL_3(proc, 
@@ -3677,7 +3680,6 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 			       origin);
 	      MUS_OUTA_1(kp, XEN_TO_C_DOUBLE(res), outgen);
 	    }
-	  snd_unprotect_at(loc);
 	}
       else
 	{
@@ -3694,14 +3696,8 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
   else
     {
       data = (mus_sample_t *)CALLOC(num, sizeof(mus_sample_t)); 
-      if (XEN_PROCEDURE_P(init_func))
+      if (XEN_REQUIRED_ARGS_OK(proc, 3))
 	{
-	  int loc;
-	  v = XEN_CALL_2(init_func,
-		     C_TO_XEN_OFF_T(0),
-		     C_TO_XEN_OFF_T(num),
-		     origin);
-	  loc = snd_protect(v);
 	  for (kp = 0; kp < num; kp++)
 	    {
 	      res = XEN_CALL_3(proc, 
@@ -3711,7 +3707,6 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 			       origin);
 	      data[kp] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(res));
 	    }
-	  snd_unprotect_at(loc);
 	}
       else
 	{
@@ -3735,6 +3730,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
       change_samples(beg, num, data, cp, LOCK_MIXES, origin, cp->edit_ctr);
       FREE(data);
     }
+  if (loc != NOT_A_GC_LOC) snd_unprotect_at(loc);
   update_graph(cp); 
   cp->edit_hook_checked = false;
   return(proc);

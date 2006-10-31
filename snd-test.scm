@@ -1,40 +1,39 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [492]
-;;;  test 1: defaults                           [1068]
-;;;  test 2: headers                            [1270]
-;;;  test 3: variables                          [1575]
-;;;  test 4: sndlib                             [2230]
-;;;  test 5: simple overall checks              [4546]
-;;;  test 6: vcts                               [12042]
-;;;  test 7: colors                             [12357]
-;;;  test 8: clm                                [12863]
-;;;  test 9: mix                                [22020]
-;;;  test 10: marks                             [25128]
-;;;  test 11: dialogs                           [25978]
-;;;  test 12: extensions                        [26272]
-;;;  test 13: menus, edit lists, hooks, etc     [26726]
-;;;  test 14: all together now                  [28273]
-;;;  test 15: chan-local vars                   [29348]
-;;;  test 16: regularized funcs                 [30675]
-;;;  test 17: dialogs and graphics              [35091]
-;;;  test 18: enved                             [35180]
-;;;  test 19: save and restore                  [35200]
-;;;  test 20: transforms                        [37010]
-;;;  test 21: new stuff                         [38843]
-;;;  test 22: run                               [39811]
-;;;  test 23: with-sound                        [45298]
-;;;  test 24: user-interface                    [47314]
-;;;  test 25: X/Xt/Xm                           [50930]
-;;;  test 26: Gtk                               [55518]
-;;;  test 27: GL                                [59635]
-;;;  test 28: errors                            [59759]
-;;;  test all done                              [61866]
+;;;  test 0: constants                          [491]
+;;;  test 1: defaults                           [1067]
+;;;  test 2: headers                            [1269]
+;;;  test 3: variables                          [1574]
+;;;  test 4: sndlib                             [2229]
+;;;  test 5: simple overall checks              [4549]
+;;;  test 6: vcts                               [12045]
+;;;  test 7: colors                             [12360]
+;;;  test 8: clm                                [12866]
+;;;  test 9: mix                                [22059]
+;;;  test 10: marks                             [25167]
+;;;  test 11: dialogs                           [26055]
+;;;  test 12: extensions                        [26349]
+;;;  test 13: menus, edit lists, hooks, etc     [26803]
+;;;  test 14: all together now                  [28352]
+;;;  test 15: chan-local vars                   [29427]
+;;;  test 16: regularized funcs                 [30758]
+;;;  test 17: dialogs and graphics              [35174]
+;;;  test 18: enved                             [35263]
+;;;  test 19: save and restore                  [35283]
+;;;  test 20: transforms                        [37117]
+;;;  test 21: new stuff                         [38950]
+;;;  test 22: run                               [39948]
+;;;  test 23: with-sound                        [45435]
+;;;  test 24: user-interface                    [47451]
+;;;  test 25: X/Xt/Xm                           [51067]
+;;;  test 26: Gtk                               [55655]
+;;;  test 27: GL                                [59772]
+;;;  test 28: errors                            [59896]
+;;;  test all done                              [62000]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
-
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -26045,7 +26044,9 @@ EDITS: 5
 	      (delete-file "mark-2.snd"))
 	    (snd-display ";mark-explode did not write mark-2.snd?"))
 	(if (file-exists? "mark-3.snd") (snd-display ";mark-explode wrote too many files?"))
-	(close-sound ind))
+	(let ((name (file-name ind)))
+	  (close-sound ind)
+	  (if (file-exists? name) (delete-file name))))
       
       (run-hook after-test-hook 10)
       ))
@@ -39113,6 +39114,7 @@ EDITS: 1
 				0.317 0.402 0.507 0.637 0.799 1.000 0.992 0.983 0.971 0.956 0.937 
 				0.914 0.885 0.850 0.806 0.751 0.683 0.598 0.493 0.363 0.201 0.000)))
 	      (snd-display ";power-env: ~A" (channel->vct))))
+	(map-channel (lambda (y) 1.0))
 	(let ((pe (make-power-env '(0 0 1.0  1 1 0.0  2 0 1  3 0 1) :duration (/ 34.0 22050.0))))
 	  (map-channel (lambda (y) (* y (power-env pe))))
 	  (if (not (vequal (channel->vct) 
@@ -39120,6 +39122,7 @@ EDITS: 1
 				1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 0.000 0.000 
 				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
 	      (snd-display ";power-env 0 and 1: ~A" (channel->vct))))
+	(map-channel (lambda (y) 1.0))
 	(let ((pe (make-power-env '(0 0 .01 1 1 1) :duration (/ 34.0 22050.0))))
 	  (map-channel (lambda (y) (* y (power-env pe))))
 	  (if (not (vequal (channel->vct) 
@@ -39127,7 +39130,9 @@ EDITS: 1
 				0.792 0.821 0.845 0.867 0.886 0.902 0.916 0.928 0.939 0.948 0.956 
 				0.963 0.969 0.975 0.979 0.983 0.987 0.990 0.992 0.995 0.997 0.998)))
 	      (snd-display ";power-env .01: ~A" (channel->vct))))
-	(close-sound ind))
+	(let ((name (file-name ind)))
+	  (close-sound ind)
+	  (if (file-exists? name) (delete-file name))))
 
       (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 :size 50)))
 	(set! (sample 3) 1.0)
@@ -48048,12 +48053,12 @@ EDITS: 1
 		    (close-sound ind))
 		  (select-sound ind)
 		  (select-channel 0)
-		  
+		  (take-keyboard-focus cwid)
 		  (set! (cursor) 5000)
 		  (let ((fr (frames)))
 		    (key-event cwid (char->integer #\o) 4) (force-event)
 		    (if (not (equal? (edits) '(3 0)))
-			(snd-display ";C-o (edits) -> ~A?" (edits))
+			(snd-display ";C-o (edits) -> ~A (~A)?" (edits) (key-binding #\c 4))
 			(if (not (equal? (edit-fragment 3) (list "pad-channel" "zero" 5000 1)))
 			    (snd-display ";C-o (edit) -> ~A?" (edit-fragment 3))))
 		    (if (fneq (sample (cursor)) 0.0)
@@ -48703,7 +48708,7 @@ EDITS: 1
 		(set! minibuffer (list-ref swids 3))
 		(set! play-button (list-ref swids 4))
 		(set! cwid (car (channel-widgets)))
-
+		(take-keyboard-focus minibuffer)
 		(key-event minibuffer (char->integer #\x) 4) (force-event)
 		(key-event minibuffer (char->integer #\f) 4) (force-event)
 		(focus-widget minibuffer)

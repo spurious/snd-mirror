@@ -813,9 +813,12 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
   axis_context *cax;
   state_context *sx;
   bool make_widgets;
+
+  /* if ((main) && ((!(XmIsForm(main))) || (!(XtWindow(main))))) return(-1); */ /* new gcc complains about the XmIsForm for some reason */
+  if ((main) && (!(XtWindow(main)))) return(-1); /* can this happen? */
+
   make_widgets = ((sp->chans[channel]) == NULL);
   sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp);
-  if ((main) && ((!(XmIsForm(main))) || (!(XtWindow(main))))) return(-1);
   cp = sp->chans[channel];
   cx = cp->cgx;
   if (cx->chan_widgets == NULL) 
@@ -1116,8 +1119,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  FREE(n12);
 	  FREE(n13);
 	  FREE(n14);
-
-	  n = 0;
 	}
       else
 	{
@@ -1127,27 +1128,32 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       run_new_widget_hook(cw[W_main_window]);
       /* also position of current graph in overall sound as window */
 
-    } /* alloc new chan */
+    } /* end alloc new chan */
+
   else
-    { /* re-manage currently inactive chan */
+
+    { 
+      /* re-manage currently inactive chan */
       XtVaSetValues(cw[W_main_window], XmNpaneMinimum, chan_y, NULL);
-      if (cw[W_edhist]) XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, 1, NULL);
-      if ((sp->channel_style != CHANNELS_COMBINED) || (channel == 0))
+      if (cw[W_edhist]) 
+	XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, 1, NULL);
+      if ((sp->channel_style != CHANNELS_COMBINED) || 
+	  (channel == 0))
 	for (i = 0; i < NUM_CHAN_WIDGETS - 1; i++)
-	  if (cw[i])
-	    if  (!XtIsManaged(cw[i])) 
-	      XtManageChild(cw[i]);
+	  if ((cw[i]) && (!XtIsManaged(cw[i])))
+	    XtManageChild(cw[i]);
       recolor_graph(cp, false); /* in case selection color left over from previous use */
     }
+
   if (cw[W_edhist]) 
     XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, LOTSA_PIXELS, NULL);
-  if ((need_extra_scrollbars) && (sp->channel_style != CHANNELS_COMBINED)) 
+
+  if ((need_extra_scrollbars) && 
+      (sp->channel_style != CHANNELS_COMBINED)) 
     hide_gz_scrollbars(sp); /* default is on in this case */  
+
   cax = cx->ax;
   cax->wn = XtWindow(cw[W_graph]);
-#if MUS_DEBUGGING
-  if (!(cax->wn)) {fprintf(stderr, "graph widget %p's window is null?", cw[W_graph]); abort();}
-#endif
   cax->dp = XtDisplay(cw[W_graph]);
   cax->gc = sx->basic_gc;
   return(0);

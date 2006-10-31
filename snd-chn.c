@@ -7,7 +7,6 @@
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
  *
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
- * SOMEDAY: Edit:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
  * TODO: audio mixer settings dialog (needed especially in alsa!)
  * SOMEDAY: describe_fft_point doesn't work in spectrograms
  *             is time:x freq:z val:y in rotation matrix? would need inverted-matrix * vector, then current graph-once code
@@ -2406,7 +2405,7 @@ static bool make_gl_spectrogram(chan_info *cp)
     {
       gl_warned_already = true;
 #if MUS_WITH_GL2PS
-      snd_warning("use gl-graph->ps to print openGL graphs");
+      snd_warning("use " S_gl_graph_to_ps " to print openGL graphs");
 #else
       snd_warning("we need openGL and gl2ps to print openGL graphs");
 #endif

@@ -11,7 +11,7 @@
 ;;; src-duration (see src-channel in extsnd.html)
 
 (define (src-duration e)
-  "(src-duration envelope) returns the new duration of a sound after using 'envelope' for time-varying sampling-rate conversion ."
+  "(src-duration envelope) returns the new duration of a sound after using 'envelope' for time-varying sampling-rate conversion"
   (let* ((len (length e))
 	 (ex0 (car e))
 	 (ex1 (list-ref e (- len 2)))

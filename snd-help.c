@@ -3010,18 +3010,17 @@ void print_dialog_help(void)
   snd_help_with_xrefs("File Print",
 
 #if HAVE_EXTENSION_LANGUAGE
-"Print causes the currently active display to be either printed (via the lpr command) or saved as \
-an eps file.  In the latter case, the file name is set either by the dialog, or taken from the \
-variable " S_eps_file " (normally \"snd.eps\").  Currently the openGL graphics can't be printed by Snd, \
-but you can use Gimp or some such program to get a screenshot, and print that.  The functions \
-that refer to this dialog are:\n\
+"Print causes the currently active graph(s) to be printed (via the lpr command) or saved as \
+a Postscript file.  In the latter case, the file name is set either by the dialog, or taken from the \
+variable " S_eps_file " (normally \"snd.eps\").  The functions that refer to this dialog are:\n\
 \n\
   " S_print_dialog " (:optional managed print): start the print dialog\n\
   " S_eps_file ": eps file name (\"snd.eps\")\n\
   " S_eps_bottom_margin ": bottom margin (0.0)\n\
   " S_eps_left_margin ": left margin (0.0)\n\
   " S_eps_size ": overall eps size scaler (1.0)\n\
-  " S_graph_to_ps " (:optional file): write current graph to eps file\n",
+  " S_graph_to_ps " (:optional file): write current graph to eps file\n\n\
+For openGL graphics, use " S_gl_graph_to_ps ".\n",
 #else
 "Print causes the currently active display to be either printed (via the lpr command) or saved as \
 an eps file.  Currently the openGL graphics can't be printed by Snd, \
@@ -3097,7 +3096,7 @@ static void cursor_help(void)
 {
   snd_help_with_xrefs("Cursor",
 "A big '+' marks the current sample.  This is Snd's cursor, and the \
-various Emacs cursor moving commands apply to it.  See also 'Tracking cursor'",
+various cursor moving commands apply to it.  See also 'Tracking cursor'",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Cursor"),
 		      snd_xref_urls("Cursor"));

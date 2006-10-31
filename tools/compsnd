@@ -17,6 +17,7 @@ fgrep -e "the the " *.c
 fgrep -e "the the " *.html
 fgrep udpate *.c
 fgrep "if DEBUGGING" *.c
+fgrep "(DEBUGGING)" *.c
 fgrep udpate *.html
 fgrep udpate *.scm
 fgrep ";;" *.[ch]

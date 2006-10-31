@@ -685,7 +685,6 @@ void draw_rotated_axis_label(chan_info *cp, GC gc, const char *text, int x0, int
 void ensure_list_row_visible(widget_t list, int pos)
 {
   int top, visible, num_rows;
-  ASSERT_WIDGET_TYPE(XmIsList(list), list);
   if (pos >= 0)
     {
       XtVaGetValues(list,
@@ -710,8 +709,7 @@ void ensure_list_row_visible(widget_t list, int pos)
 void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
 {
   int visible_size, minimum, maximum, value, size, new_value, increment, page_increment;
-  widget_t scrollbar, work_window;
-  ASSERT_WIDGET_TYPE(XmIsScrolledWindow(list), list);
+  Widget scrollbar, work_window;
   XtVaGetValues(list, 
 		XmNverticalScrollBar, &scrollbar, 
 		XmNworkWindow, &work_window,
