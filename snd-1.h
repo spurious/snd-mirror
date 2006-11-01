@@ -1645,6 +1645,9 @@ XEN g_track_sample_reader_at_end_p(XEN obj);
 XEN g_track_sample_reader_position(XEN obj);
 XEN g_free_track_sample_reader(XEN obj);
 
+int track_name_to_id(const char *name);
+int mix_name_to_id(const char *name);
+
 
 
 /* -------- snd-find.c -------- */

@@ -9072,7 +9072,7 @@ EDITS: 5
 	      (if (fneq (sample 900) (* 2 val))
 		  (snd-display ";mix-selection val: ~A ~A" (* 2 val) (sample 900)))
 	      (if (not (= (frames obind) (+ frs 1000)))
-		  (snd-display ";mix-selection: ~A?" (frames obind)))))
+		  (snd-display ";mix-selection len: ~A?" (frames obind)))))
 	  (close-sound obind))
 	
 	(let* ((ind (open-sound "2.snd"))
@@ -23204,7 +23204,6 @@ EDITS: 5
 	  (if (not (= (mix-tag-y mix1) 6)) (snd-display ";mix-tag-y chain test 0: ~A" (mix-tag-y mix1)))
 	  (undo)
 	  (if (not (= (mix-tag-position mix1) pos0)) (snd-display ";mix-tag-position chain test 1: ~A ~A" pos0 (mix-tag-position mix1)))
-	  (if (not (= (mix-tag-y mix1) y0)) (snd-display ";mix-tag-y chain test 1: ~A ~A" y0 (mix-tag-y mix1)))
 	  (redo)
 	  (if (not (= (mix-tag-position mix1) 3)) (snd-display ";mix-tag-position chain test 2: ~A" (mix-tag-position mix1)))
 	  (if (not (= (mix-tag-y mix1) 6)) (snd-display ";mix-tag-y chain test 2: ~A" (mix-tag-y mix1)))
@@ -24396,36 +24395,32 @@ EDITS: 5
 								     0.250 0.303 0.360 0.422 0.490 0.562 0.640 0.722 0.810 0.903))))
 		    (snd-display ";embedded track amp-env(t->e) 2mix 3: ~A" (channel->vct 20 20 ind 0)))
 
-		(let* ((edpos (edit-position ind 0))
-		       (track3 (make-track mix1 mix2)))
-
+		(let* ((track3 (make-track mix1 mix2)))
 		  (if (or (not (equal? (track track3) (list mix1 mix2)))
 			  (not (equal? (track track1) '()))
 			  (not (equal? (track track2) '())))
 		      (snd-display ";make track overrides: ~A ~A ~A" (track track1) (track track2) (track track3)))
 		  (if (not (vequal (channel->vct 20 20 ind 0) (make-vct 20 1.0)))
 		      (snd-display ";make-track overrides vals: ~A" (channel->vct 20 20 ind 0)))
-		  (set! (edit-position ind 0) edpos)
 		  (let ((track4 (make-track mix2)))
 		    (if (or (not (equal? (track track4) (list mix2)))
-			    (not (equal? (track track1) (list mix1)))
-			    (not (equal? (track track2) (list mix1)))
-			    (not (equal? (track track3) '())))
-		      (snd-display ";make track again overrides: ~A ~A ~A ~A" (track track1) (track track2) (track track3) (track track4)))
-		    (if (not (vequal (channel->vct 20 20 ind 0) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 
-								     1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000)))
-			(snd-display ";make-track again overrides vals: ~A" (channel->vct 20 20 ind 0)))
-		    (if (file-exists? "s61.scm") (delete-file "s61.scm"))
-		    (save-state "s61.scm")
-		    (close-sound ind)
-		    (load "s61.scm")
-		    ;; this currently screws up when there's a track amp-env and a mix-track change resets the env bounds
-		    (set! ind (find-sound "test.snd"))
-		    (if (not (sound? ind))
-			(snd-display ";can't restore test.snd: ~A?" (sounds))
-			(if (not (vequal (channel->vct 20 20 ind 0) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 
-								     1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000)))
-			    (snd-display ";track save/restore: ~A" (channel->vct 20 20 ind 0))))
+			    (not (equal? (track track1) '()))
+			    (not (equal? (track track2) '()))
+			    (not (equal? (track track3) (list mix1))))
+		      (snd-display ";make track again overrides: ~A ~A ~A ~A (~A ~A)" 
+				   (track track1) (track track2) (track track3) (track track4)
+				   mix1 mix2))
+		    (let ((curvals (channel->vct 20 20 ind 0)))
+		      (if (file-exists? "s61.scm") (delete-file "s61.scm"))
+		      (save-state "s61.scm")
+		      (close-sound ind)
+		      (load "s61.scm")
+		      ;; this currently screws up when there's a track amp-env and a mix-track change resets the env bounds
+		      (set! ind (find-sound "test.snd"))
+		      (if (not (sound? ind))
+			  (snd-display ";can't restore test.snd: ~A?" (sounds))
+			  (if (not (vequal (channel->vct 20 20 ind 0) curvals))
+			      (snd-display ";track save/restore: ~A, was ~A [~A]" (channel->vct 20 20 ind 0) curvals (clipping)))))
 		    ))
 
 	      (if (sound? ind) (close-sound ind)))))
@@ -24916,8 +24911,8 @@ EDITS: 5
 			      (fneq rd2v rd22v)
 			      (fneq rd2v (vct-ref v1 i)))
 			  (begin
-			    (snd-display ";copy region sample reader vals at ~A: ~A ~A ~A ~A ~A"
-					 i rd1v rd11v rd2v rd22v (vct-ref v1 i))
+			    (snd-display ";copy region sample reader vals at ~A: ~A ~A ~A ~A ~A [~A]"
+					 i rd1v rd11v rd2v rd22v (vct-ref v1 i) (clipping))
 			    (set! happy #f))))))
 		(free-sample-reader rd1)
 		(free-sample-reader rd11))))
@@ -25083,6 +25078,22 @@ EDITS: 5
 	(close-sound ind)
 	(close-sound selind))
       
+      (let* ((ind (new-sound :size 30))
+	     (t1 (make-track))
+	     (m1 (let ((id (mix (with-temp-sound () (fm-violin 0 .1 440 .1)) 0 0 ind 0 #t #t t1)))
+		   (set! (mix-tag-y id) 10)
+		   id))
+	     (m2 (let ((id (mix (with-temp-sound () (fm-violin 0 .1 440 .1)) 10 0 ind 0 #t #t t1)))
+		   (set! (mix-tag-y id) 10)
+		   id)))
+	(if (not (equal? (track t1) (list m1 m2))) 
+	    (snd-display ";make-track m1,2: ~A ~A" (track t1) (list m1 m2)))
+	(if (not (equal? (map mix-tag-y (track t1)) (list 10 10))) 
+	    (snd-display ";make track tag-y: ~A ~A (10 10)" (mix-tag-y m1) (mix-tag-y m2))) 
+	(let ((name (file-name ind)))
+	  (close-sound ind)
+	  (if (file-exists? name) (delete-file name))))
+
       (run-hook after-test-hook 9)
       ))
 
@@ -30521,7 +30532,7 @@ EDITS: 5
 		(snd-display ";mix-region mix-home ~A (~A 0)?" (mix-home reg-mix-id) ind))
 	    (let ((sel-mix-id (mix-selection 2500 ind 0)))
 	      (if (not (= (selection-frames) (mix-frames sel-mix-id)))
-		  (snd-display ";mix-selection: ~A != ~A?" (selection-frames) (mix-frames sel-mix-id)))
+		  (snd-display ";mix-selection frames: ~A != ~A?" (selection-frames) (mix-frames sel-mix-id)))
 	      (if (> (abs (- (* 2 (mix-frames reg-mix-id)) (mix-frames sel-mix-id))) 3)
 		  (snd-display ";mix selection and region: ~A ~A (~A ~A)?" 
 			       (mix-frames reg-mix-id) (mix-frames sel-mix-id) (region-frames id) (selection-frames)))
@@ -30676,11 +30687,10 @@ EDITS: 5
 	    (snd-display ";envelope exp 2: ~A" val)))
       
       (let ((ind (new-sound "fmv.snd"))
-	    (v (make-vct 20)))
-	(vct-fill! v 1.0)
+	    (v (make-vct 20 1.0)))
 	(vct->channel v)
-	(set! (selection-position ind 0) 5)
-	(set! (selection-frames) 5)
+	(if (selection?) (set! (selection-member? #t) #f))
+	(make-selection 5 9 ind 0)
 	(scale-selection-to 0.5)
 	(insert-selection 15 ind)
 	(if (not (= (frames ind) 25)) (snd-display ";insert-selection 5: ~A" (frames ind)))
@@ -30688,9 +30698,9 @@ EDITS: 5
 						  1.0 1.0 1.0 1.0 1.0 0.5 0.5 0.5 0.5 0.5
 						  1.0 1.0 1.0 1.0 1.0)))
 	    (snd-display ";insert-selection: ~A" (channel->vct 0 25)))
-	(mix-selection 1)
-	(if (not (vequal (channel->vct 0 10) (vct 1.0 1.5 1.5 1.5 1.5 1.0 0.5 0.5 0.5 0.5)))
-	    (snd-display ";mix-selection: ~A" (channel->vct 0 10)))
+	(mix-selection 1 ind 0)
+	(if (not (vequal (channel->vct 0 10 ind 0) (vct 1.0 1.5 1.5 1.5 1.5 1.0 0.5 0.5 0.5 0.5)))
+	    (snd-display ";mix-selection vals: ~A" (channel->vct 0 10 ind 0)))
 	(close-sound ind))
       
       (let ((ind (new-sound "fmv.snd"))
@@ -46796,6 +46806,8 @@ EDITS: 1
 	(if (or (fneq (car (x-bounds ind 0)) 1.0)
 		(fneq (cadr (x-bounds ind 0)) 2.0))
 	    (snd-display ";update ws bounds: ~A" (x-bounds ind)))
+
+	(if (not (= (->sample 1.0) (srate))) (snd-display ";1.0->sample: ~A" (->sample 1.0)))
 	(close-sound ind)
 
 	(set! file (with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1 :reverb-amount .1)))
@@ -47439,7 +47451,20 @@ EDITS: 1
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (brownian-noise gr)))
-      
+
+      (let ((a4 (->frequency 'a4))
+	    (a440 (->frequency 440.0))
+	    (cs5 (->frequency 'cs5))
+	    (df3 (->frequency 'df3))
+	    (c1 (->frequency 'cn1))
+	    (b8 (->frequency 'b8)))
+	(if (fneq a4 440.0) (snd-display ";a4->frequency: ~A" a4))
+	(if (fneq a440 440.0) (snd-display ";a440->frequency: ~A" a440))
+	(if (fneq cs5 554.365) (snd-display ";cs5->frequency: ~A" cs5))
+	(if (fneq df3 138.591) (snd-display ";df3->frequency: ~A" df3))
+	(if (fneq c1 32.703) (snd-display ";c1->frequency: ~A" c1))
+	(if (fneq b8 7902.132) (snd-display ";b8->frequency: ~A" b8)))
+
       (if (not (null? (sounds))) (for-each close-sound (sounds)))
       
       (run-hook after-test-hook 23)
@@ -62046,7 +62071,9 @@ EDITS: 1
   (display (format #f ";ratios: ("))
   (do ((i 0 (1+ i)))
       ((= i (vector-length timings)))
-    (display (format #f "~1,1F " (vector-ref best-times i))))
+    (if (< (vector-ref best-times i) 10.0)
+	(display (format #f "~1,1F " (vector-ref best-times i)))
+	(display (format #f "(test ~D:) ~1,1F " i (vector-ref best-times i)))))
   (display (format #f ")~%~%")))
 
 

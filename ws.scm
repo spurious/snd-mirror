@@ -857,3 +857,36 @@ returning you to the true top-level."
      ,@(if *definstrument-hook*
            (list (*definstrument-hook* name targs))
            (list)))))
+
+
+(define ->frequency
+  (let ((main-pitch (/ 440.0 (expt 2.0 (/ 57 12)))) ; a4 = 440Hz is pitch 57 in our numbering
+	(last-octave 0))                            ; octave number can be omitted
+    (lambda (pitch)                                 ; pitch can be pitch name or actual frequency
+      (if (symbol? pitch)
+	  (let* ((name (string-downcase (symbol->string pitch)))
+		 (base-char (string-ref name 0))
+		 (sign-char (and (> (string-length name) 1)
+				 (not (char-numeric? (string-ref name 1)))
+				 (not (char=? (string-ref name 1) #\n))
+				 (string-ref name 1)))
+		 (octave-char (if (and (> (string-length name) 1)
+				       (char-numeric? (string-ref name 1))) 
+				  (string-ref name 1)
+				  (if (and (> (string-length name) 2) 
+					   (char-numeric? (string-ref name 2)))
+				      (string-ref name 2)
+				      #f)))
+		 (base (modulo (+ 5 (- (char->integer base-char) (char->integer #\a))) 7)) ; c-based (diatonic) octaves
+		 (sign (if (not sign-char) 0 (if (char=? sign-char #\f) -1 1)))
+		 (octave (if octave-char (- (char->integer octave-char) (char->integer #\0)) last-octave))
+		 (pitch (+ sign (* 12 octave) (case base ((0) 0) ((1) 2) ((2) 4) ((3) 5) ((4) 7) ((5) 9) ((6) 11)))))
+	    (set! last-octave octave)
+	    (* main-pitch (expt 2.0 (/ pitch 12))))
+	  pitch))))
+
+(define (->sample beg)
+  "(->sample time-in-seconds) -> time-in-samples"
+  (inexact->exact (round (* (if (not (null? (sounds))) (srate) (mus-srate)) beg))))
+
+

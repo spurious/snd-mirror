@@ -1,5 +1,6 @@
 Snd change log
 
+  1-Nov:     ->frequency, ->samples (ws.scm).  mix-name, track-name.
   24-Oct:    filter-fft in examp.scm.
   23-Oct:    Snd 8.5.
   16-Oct:    add-watcher, delete-watcher.
