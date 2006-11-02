@@ -22142,6 +22142,8 @@ EDITS: 5
 	      (if (or (not (string? (mix-name mix-id)))
 		      (not (string=? (mix-name mix-id) "test-mix")))
 		  (snd-display ";mix-name set: ~A" (mix-name mix-id)))
+	      (let ((id (mix-name->id "test-mix")))
+		(if (not (= id mix-id)) (snd-display ";mix-name->id: ~A ~A" id mix-id)))
 	      (set! (mix-name mix-id) "test-mix-again") ; make sure previous name is freed
 	      (if (or (not (string? (mix-name mix-id)))
 		      (not (string=? (mix-name mix-id) "test-mix-again")))
@@ -22241,6 +22243,8 @@ EDITS: 5
 	    (if (or (not (string? (track-name trk)))
 		    (not (string=? (track-name trk) "test-track")))
 		(snd-display ";track-name set: ~A" (track-name trk)))
+	    (let ((id (track-name->id "test-track")))
+	      (if (not (= id trk)) (snd-display ";track-name->id: ~A ~A" id trk)))
 	    (set! (track-name trk) "test-track-again") ; make sure previous name is freed
 	    (if (or (not (string? (track-name trk)))
 		    (not (string=? (track-name trk) "test-track-again")))
@@ -60588,7 +60592,7 @@ EDITS: 1
 			(if (not (eq? tag 'no-such-track))
 			    (snd-display ";set track ~A: ~A" n tag))))
 		    (list track-amp track-name track-position track-speed track-speed-style track-tempo track-amp-env track-track track-color)
-		    (list 1.0 0 1.0 speed-control-as-float 1.0 '(0 0 1 1) (1- trk) (make-color-with-catch 1 0 0))))
+		    (list 1.0 "hiho" 0 1.0 speed-control-as-float 1.0 '(0 0 1 1) (1- trk) (make-color-with-catch 1 0 0))))
 	
 	(for-each (lambda (arg)
 		    (let ((ctr 0))

@@ -528,3 +528,37 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
 			     (format #f "~%  properties: '~A" props)
 			     ""))))
   #t)
+
+
+;;; -------- mix-name->id and track-name->id 
+
+(define (mix-name->id name)
+  "(mix-name->id name) returns the mix id associated with 'name'"
+  (call-with-current-continuation
+   (lambda (return)
+     (for-each
+      (lambda (snd)
+	(do ((chn 0 (1+ chn)))
+	    ((= chn (channels snd)))
+	  (for-each
+	   (lambda (m)
+	     (if (and (string? (mix-name m))
+		      (string=? (mix-name m) name))
+		 (return m)))
+	   (mixes snd chn))))
+      (sounds))
+     'no-such-mix)))
+
+(define (track-name->id name)
+  "(track-name->id name) returns the track id associated with 'name'"
+  (call-with-current-continuation
+   (lambda (return)
+     (for-each
+      (lambda (trk)
+	(if (and (string? (track-name trk))
+		 (string=? (track-name trk) name))
+	    (return trk)))
+      (tracks))
+     'no-such-track)))
+
+

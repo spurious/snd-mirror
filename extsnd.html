@@ -4498,18 +4498,17 @@ feedback:
    ;; set up the violin track
    (for-each (lambda (id) (set! (<a class=quiet href="#mixtagy"">mix-tag-y</a> id) 10)) violins)
    (let ((trk (apply <a class=quiet href="#maketrack">make-track</a> (reverse violins))))
-     (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 0 1))       ; violins are blue
+     (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 1 0))       ; violins are green
      (set! (<a class=quiet href="#trackname">track-name</a> trk) "violin"))
 
    ;; set up the cello track
    (for-each (lambda (id) (set! (<a class=quiet href="#mixtagy">mix-tag-y</a> id) 40)) cellos)
    (let ((trk (apply <a class=quiet href="#maketrack">make-track</a> (reverse cellos))))
-     (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 1 0))       ; cellos are green
+     (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 0 1))       ; cellos are blue
      (set! (<a class=quiet href="#trackname">track-name</a> trk) "cello"))
-
-   )) ; close as-one-edit
-
-;;; load this into Snd, open the control panel, turn on the reverb ...
+                                                       ; forget the reverb
+                                                       ; and you'll be blue too
+   ))
 </pre></td></tr></table>
 <img src="mixname.png" alt="mix name example">
 </td></tr>
