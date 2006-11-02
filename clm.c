@@ -6035,8 +6035,9 @@ int mus_close_file(mus_any *ptr)
 
 Float mus_out_any(off_t samp, Float val, int chan, mus_any *IO)
 {
-  if (IO) return(mus_sample_to_file(IO, samp, chan, val));
-  return(0.0);
+  if (IO) 
+    return(mus_sample_to_file(IO, samp, chan, val));
+  return(val);
 }
 
 

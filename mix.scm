@@ -495,9 +495,11 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
 (define (mix-click-info n)
   "(mix-click-info n) is a mix-click-hook function that describes a mix and its properties"
   (help-dialog "Mix Help"
-	       (format #f "Mix ~D:~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)
+	       (format #f "Mix ~A:~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)
 ~%  in: ~A[~D]~A~A~A~%  scalers: ~A~%  speed: ~A~%  envs: ~{~A~^~%    ~}~A~A"
-		       n 
+		       (if (mix-name n)
+			   (format #f "~S (~D)" (mix-name n) n)
+			   (format #f "~D" n))
 		       (mix-position n)
 		       (exact->inexact (/ (mix-position n) (srate (car (mix-home n)))))
 		       (mix-frames n)

@@ -1,9 +1,9 @@
 #include "snd.h"
 
-/* TODO: track name displayed in track dialog (same for mix => ins+beg+pitch or base file etc): track-name, mix-name
- *         save state, report, dialog, track-tag-y
- *         doc/test track|mix-name
- *         need good tests of mix and track save-restore in general
+/* TODO: track name displayed in track dialog (same for mix => ins+beg+pitch or base file etc)
+ * TODO: mix/track name in save state, dialog
+ * TODO: track-tag-y 
+ * TODO: need good tests of mix and track save-restore in general
  * TODO: notebook style access to other tracks (next and previous by number are not very intuitive)
  * PERHAPS: undo&apply for track / mix env?, multiple mix/track dialogs, tempo curves in dialog?
  */
@@ -2229,7 +2229,8 @@ static void draw_mix_tag(mix_info *md)
   chan_info *cp;
   int width, height;
   axis_context *ax;
-  char lab[16];
+  char* lab = NULL;
+
   if ((md->x == md->tagx) && (md->y == md->tagy)) return; 
   cp = md->cp;
 
@@ -2244,7 +2245,14 @@ static void draw_mix_tag(mix_info *md)
   /* redraw the mix id underneath the tag */
   set_tiny_numbers_font(cp);
   if (cp->printing) ps_set_tiny_numbers_font();
-  mus_snprintf(lab, 16, "%d", md->id);
+
+  if (md->name)
+    lab = copy_string(md->name);
+  else
+    {
+      lab = (char *)CALLOC(16, sizeof(char));
+      mus_snprintf(lab, 16, "%d", md->id);
+    }
   if (md->tagx > 0)
     {
 #if USE_GTK
@@ -2259,6 +2267,7 @@ static void draw_mix_tag(mix_info *md)
 #endif
   draw_string(ax, md->x - width, md->y + height + STRING_Y_OFFSET, lab, strlen(lab));
   if (cp->printing) ps_draw_string(cp->axis, md->x - width, md->y + height + STRING_Y_OFFSET, lab);
+  if (lab) {FREE(lab); lab = NULL;}
 
   md->tagx = md->x;
   md->tagy = md->y;
