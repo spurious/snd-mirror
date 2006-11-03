@@ -23191,9 +23191,6 @@ EDITS: 5
 	  (set! (mix-tag-y mix1) 6)
 	  (if (not (= (mix-tag-position mix1) 3)) (snd-display ";mix-tag-position chain test 0: ~A" (mix-tag-position mix1)))
 	  (if (not (= (mix-tag-y mix1) 6)) (snd-display ";mix-tag-y chain test 0: ~A" (mix-tag-y mix1)))
-	  (undo)
-	  (if (not (= (mix-tag-position mix1) pos0)) (snd-display ";mix-tag-position chain test 1: ~A" (mix-tag-position mix1)))
-	  (if (not (= (mix-tag-y mix1) y0)) (snd-display ";mix-tag-y chain test 1: ~A" (mix-tag-y mix1)))
 	  (close-sound ind)))
 
       (let* ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "copy-mix tests" 300))
@@ -23227,10 +23224,13 @@ EDITS: 5
 	  (if (not (= (mix-tag-position mix1) 3)) (snd-display ";mix-tag-position chain test 0: ~A" (mix-tag-position mix1)))
 	  (if (not (= (mix-tag-y mix1) 6)) (snd-display ";mix-tag-y chain test 0: ~A" (mix-tag-y mix1)))
 	  (undo)
-	  (if (not (= (mix-tag-position mix1) pos0)) (snd-display ";mix-tag-position chain test 1: ~A ~A" pos0 (mix-tag-position mix1)))
-	  (redo)
 	  (if (not (= (mix-tag-position mix1) 3)) (snd-display ";mix-tag-position chain test 2: ~A" (mix-tag-position mix1)))
 	  (if (not (= (mix-tag-y mix1) 6)) (snd-display ";mix-tag-y chain test 2: ~A" (mix-tag-y mix1)))
+
+	  (set! (track-tag-y track1) 123)
+	  (if (not (= (track-tag-y track1) 123)) (snd-display ";set track tag-y: ~A" (track-tag-y track1)))
+	  (if (not (= (track-tag-y track2) 0)) (snd-display ";track tag-y default: ~A" (track-tag-y track2)))
+
 	  (close-sound ind)))
 
       (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "copy-track tests" 300)))
@@ -60877,7 +60877,7 @@ EDITS: 1
 				      (n vct-5))
 				    (lambda args (car args)))))
 			(if (not (eq? tag 'wrong-type-arg))
-			    (snd-display ";~D: mix procs ~A: ~A" ctr n tag))
+			    (snd-display ";[0] ~D: mix procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
 		    (list mix-amp mix-amp-env mix-tag-position mix-chans mix-track mix-frames mix-locked? mix-inverted?
 			  mix-name mix-position mix-home mix-speed mix-speed-style mix-tag-y))) 
@@ -60890,7 +60890,7 @@ EDITS: 1
 				      (n 1234))
 				    (lambda args (car args)))))
 			(if (not (eq? tag 'no-such-mix))
-			    (snd-display ";~D: mix procs ~A: ~A" ctr n tag))
+			    (snd-display ";[1] ~D: mix procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
 		    (list mix-amp mix-tag-position mix-chans mix-track mix-frames mix-locked? mix-inverted?
 			  mix-name mix-position mix-home mix-speed mix-speed-style mix-tag-y)))
@@ -60902,8 +60902,9 @@ EDITS: 1
 				    (lambda ()
 				      (set! (n 1234) vct-5))
 				    (lambda args (car args)))))
-			(if (not (eq? tag 'wrong-type-arg))
-			    (snd-display ";~D: mix procs ~A: ~A" ctr n tag))
+			(if (and (not (eq? tag 'wrong-type-arg))
+				 (not (eq? tag 'no-such-mix))) ; if id checked first
+			    (snd-display ";[2] ~D: mix procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
 		    (list mix-tag-position mix-chans mix-track mix-locked? mix-inverted?
 			  mix-name mix-position mix-home mix-speed mix-speed-style mix-tag-y))) 
@@ -60918,7 +60919,7 @@ EDITS: 1
 				      (set! (n id) vct-5))
 				    (lambda args (car args)))))
 			(if (not (eq? tag 'wrong-type-arg))
-			    (snd-display ";~D: mix procs ~A: ~A" ctr n tag))
+			    (snd-display ";[3] ~D: mix procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
 		    (list mix-tag-position mix-chans mix-track mix-locked? mix-inverted?
 			  mix-name mix-position mix-home mix-speed mix-speed-style mix-tag-y))
@@ -62081,11 +62082,10 @@ EDITS: 1
 (set! (print-length) 64)
 (display (format "~%;times: ~A~%;total: ~A~%" timings (inexact->exact (round (- (real-time) overall-start-time)))))
 
-;27-Oct-06: times: #(17 16 40 28 999 5797 533 68 9781 1826 369 450 449 777 524 1061 2626 132 120 2754 773 610 4234 6627 3616 881 189 0 4179) 503
+;2-Nov-06:  #(17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975) 492
+;26-Oct-06: #(17 16 41 28 957 45742 57537 75 73344 2049 527 1140 631 1007 22926 1323 13424 271 252 2068 1282 952 6571 6898 3836 4682 303 0 567452) 8165
 
-;26-Oct-06: times: #(17 16 41 28 957 45742 57537 75 73344 2049 527 1140 631 1007 22926 1323 13424 271 252 2068 1282 952 6571 6898 3836 4682 303 0 567452) 8165
-
-(let ((best-times #(17 16 40 28 999 5797 533 68 9781 1826 369 450 449 777 524 1061 2626 132 120 2754 773 610 4234 6627 3616 881 189 0 4179)))
+(let ((best-times #(17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975)))
   (do ((i 0 (1+ i)))
       ((= i (vector-length timings)))
     (if (and (> (vector-ref timings i) 0)

@@ -1,5 +1,15 @@
 #include "snd.h"
 
+/* TODO: need more room for track/mix names, mix lists in track dialog are ids now 
+ *          (track_dialog_track_info in snd-mix.c is the mix list)
+ *          and the entries in that list should be mouse-sensitive
+ */
+
+
+#define NAME_COLUMNS 8
+#define DIALOG_WIDTH 600
+#define DIALOG_HEIGHT 350
+
 /* ---------------- mix dialog ---------------- */
 
 static Widget mix_dialog = NULL;
@@ -325,6 +335,20 @@ static void errors_to_mix_text(const char *msg, void *data)
 		  NULL);
 }
 
+static void widget_track_to_text(Widget w, int trk)
+{
+  if (track_name(trk))
+    XmTextFieldSetString(w, track_name(trk));
+  else widget_int_to_text(w, trk);
+}
+
+static void widget_mix_to_text(Widget w, int id)
+{
+  if (mix_name(id))
+    XmTextFieldSetString(w, mix_name(id));
+  else widget_int_to_text(w, id);
+}
+
 static void track_activated(void)
 {
   char *val;
@@ -334,12 +358,17 @@ static void track_activated(void)
   if (val)
     {
       int trk;
-      redirect_errors_to(errors_to_mix_text, NULL);
-      trk = string_to_int(val, 0, "track");
-      redirect_errors_to(NULL, NULL);
+      /* look for a track name first, then a number */
+      trk = track_name_to_id(val);
+      if (trk < 0)
+	{
+	  redirect_errors_to(errors_to_mix_text, NULL);
+	  trk = string_to_int(val, 0, "track");
+	  redirect_errors_to(NULL, NULL);
+	}
       if (trk >= 0)
 	mix_dialog_set_mix_track(mix_dialog_id, trk);
-      else widget_int_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
+      else widget_track_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
       XtFree(val);
     }
 }
@@ -366,9 +395,14 @@ static void id_activated(void)
   if (val)
     {
       int id;
-      redirect_errors_to(errors_to_mix_text, NULL);
-      id = string_to_int(val, 0, "id");
-      redirect_errors_to(NULL, NULL);
+      /* look for a mix name first, then a number */
+      id = mix_name_to_id(val);
+      if (id < 0)
+	{
+	  redirect_errors_to(errors_to_mix_text, NULL);
+	  id = string_to_int(val, 0, "id");
+	  redirect_errors_to(NULL, NULL);
+	}
       if (mix_ok_and_unlocked(id))
 	{
 	  mix_dialog_id = id;
@@ -622,6 +656,7 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
+      XtSetArg(args[n], XmNwidth, DIALOG_WIDTH); n++;
       mix_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Mixes"), args, n);
 
       n = 0;
@@ -693,7 +728,7 @@ Widget make_mix_dialog(void)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNresizeWidth, false); n++;
-      XtSetArg(args[n], XmNcolumns, 3); n++;
+      XtSetArg(args[n], XmNcolumns, NAME_COLUMNS); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       w_id = make_textfield_widget("mix-id", mix_row, args, n, ACTIVATABLE, NO_COMPLETER);
       XtAddCallback(w_id, XmNlosingFocusCallback, id_check_callback, NULL);
@@ -745,7 +780,7 @@ Widget make_mix_dialog(void)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNresizeWidth, false); n++;
-      XtSetArg(args[n], XmNcolumns, 3); n++;
+      XtSetArg(args[n], XmNcolumns, NAME_COLUMNS); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       w_track = make_textfield_widget("mix-track", track_row, args, n, ACTIVATABLE, NO_COMPLETER);
       XtAddCallback(w_track, XmNlosingFocusCallback, track_check_callback, NULL);
@@ -1049,13 +1084,16 @@ static void update_mix_dialog(int mix_id)
 	  chan_info *cp = NULL;
 	  off_t beg, len;
 	  char lab[LABEL_BUFFER_SIZE];
+
 	  cp = mix_dialog_mix_channel(mix_dialog_id);
 	  val = mix_dialog_mix_speed(mix_dialog_id);
 	  XtVaSetValues(w_speed, XmNvalue, speed_to_scroll(speed_control_min(ss), val, speed_control_max(ss)), NULL);
 	  speed_changed(val, lab, mix_speed_style(mix_dialog_id), speed_control_tones(ss), 6);
 	  set_label(w_speed_number, lab);
-	  widget_int_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
-	  widget_int_to_text(w_id, mix_dialog_id);
+
+	  widget_track_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
+	  widget_mix_to_text(w_id, mix_dialog_id);
+
 	  beg = mix_dialog_mix_position(mix_dialog_id);
 	  len = mix_frames(mix_dialog_id);
 	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f%s",
@@ -1063,6 +1101,7 @@ static void update_mix_dialog(int mix_id)
 		       (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)),
 		       (mix_ok_and_unlocked(mix_dialog_id)) ? "" : " (locked)");
 	  XmTextSetString(w_beg, lab);
+
 	  chans = mix_dialog_mix_input_chans(mix_dialog_id);
 	  if (chans == 0) return;
 	  if (chans > 8) chans = 8; 
@@ -1448,20 +1487,24 @@ static void track_track_activated(void)
   if (val)
     {
       int id;
-      redirect_errors_to(errors_to_track_text, NULL);
-      id = string_to_int(val, 0, "track");
-      redirect_errors_to(NULL, NULL);
+      id = track_name_to_id(val);
+      if (id < 0)
+	{
+	  redirect_errors_to(errors_to_track_text, NULL);
+	  id = string_to_int(val, 0, "track");
+	  redirect_errors_to(NULL, NULL);
+	}
       if (id >= 0)
 	{
 	  if ((id == track_dialog_id) ||
 	      (!(set_track_track(track_dialog_id, id))))
 	    {
 	      errors_to_track_text(_("circular track chain"), NULL);
-	      widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
+	      widget_track_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
 	    }
 	  else update_track_dialog(id);
 	}
-      else widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
+      else widget_track_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
       XtFree(val);
     }
 }
@@ -1487,9 +1530,13 @@ static void track_id_activated(void)
   if (val)
     {
       int id;
-      redirect_errors_to(errors_to_track_text, NULL);
-      id = string_to_int(val, 0, "track");
-      redirect_errors_to(NULL, NULL);
+      id = track_name_to_id(val);
+      if (id < 0)
+	{
+	  redirect_errors_to(errors_to_track_text, NULL);
+	  id = string_to_int(val, 0, "track");
+	  redirect_errors_to(NULL, NULL);
+	}
       if (id >= 0)
 	{
 	  if (track_p(id))
@@ -1738,7 +1785,8 @@ Widget make_track_dialog(void)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      XtSetArg(args[n], XmNheight, 300); n++;
+      XtSetArg(args[n], XmNwidth, DIALOG_WIDTH); n++;
+      XtSetArg(args[n], XmNheight, DIALOG_HEIGHT); n++;
       track_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Tracks"), args, n);
 
       n = 0;
@@ -1812,7 +1860,7 @@ Widget make_track_dialog(void)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNresizeWidth, false); n++;
-      XtSetArg(args[n], XmNcolumns, 3); n++;
+      XtSetArg(args[n], XmNcolumns, NAME_COLUMNS); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       w_track_id = make_textfield_widget("track-id", track_row, args, n, ACTIVATABLE, NO_COMPLETER);
       XtAddCallback(w_track_id, XmNlosingFocusCallback, track_id_check_callback, NULL);
@@ -1863,7 +1911,7 @@ Widget make_track_dialog(void)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNresizeWidth, false); n++;
-      XtSetArg(args[n], XmNcolumns, 3); n++;
+      XtSetArg(args[n], XmNcolumns, NAME_COLUMNS); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       w_track_track = make_textfield_widget("track-track", track_track_row, args, n, ACTIVATABLE, NO_COMPLETER);
       XtAddCallback(w_track_track, XmNlosingFocusCallback, track_track_check_callback, NULL);
@@ -2206,8 +2254,8 @@ static void update_track_dialog(int track_id)
 	  XtVaSetValues(w_track_speed, XmNvalue, speed_to_scroll(speed_control_min(ss), val, speed_control_max(ss)), NULL);
 	  speed_changed(val, lab, track_speed_style(track_dialog_id), speed_control_tones(ss), 6);
 	  set_label(w_track_speed_number, lab);
-	  widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
-	  widget_int_to_text(w_track_id, track_dialog_id);
+	  widget_track_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
+	  widget_track_to_text(w_track_id, track_dialog_id);
 	  val = track_dialog_track_tempo(track_dialog_id);
 	  XtVaSetValues(w_track_tempo, XmNvalue, tempo_to_scroll(tempo_control_min(ss), val, tempo_control_max(ss)), NULL);
 	  mus_snprintf(lab, 5, "%.2f", val);

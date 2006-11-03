@@ -509,7 +509,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-1-Nov:   ->frequency, ->samples (ws.scm), track-name, mix-name.\n\
+3-Nov:   mix-name->id, track-name->id (mix.scm).\n\
+1-Nov:   ->frequency, ->samples (ws.scm), track-name, mix-name, track-tag-y.\n\
 24-Oct:  filter-fft in examp.scm.\n\
 23-Oct:  Snd 8.5.\n\
 16-Oct:  add-watcher, delete-watcher.\n\
@@ -517,8 +518,6 @@ void about_snd_help(void)
 11-Oct:  gtk-effects-utils.scm and gtk support for *-menu.scm.\n\
 9-Oct:   with-file-monitor.\n\
 2-Oct:   gl2ps support, gl-graph->ps function, --with-gl2ps switch, gl2ps.[ch].\n\
-26-Sep:  save-marks changed to keep matching sync values, add-marks takes name and sync args.\n\
-         moved config.h.in to mus-config.h.in\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

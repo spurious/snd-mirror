@@ -366,9 +366,14 @@ static void id_activated(GtkWidget *w, gpointer context)
   if (val)
     {
       int id;
-      redirect_errors_to(errors_to_mix_text, NULL);
-      id = string_to_int(val, 0, "id");
-      redirect_errors_to(NULL, NULL);
+      /* look for a mix name first, then a number */
+      id = mix_name_to_id(val);
+      if (id < 0)
+	{
+	  redirect_errors_to(errors_to_mix_text, NULL);
+	  id = string_to_int(val, 0, "id");
+	  redirect_errors_to(NULL, NULL);
+	}
       if (mix_ok_and_unlocked(id)) 
 	{
 	  mix_dialog_id = id;
@@ -411,6 +416,21 @@ static void beg_activated(GtkWidget *w, gpointer context)
     }
 }
 
+static void widget_track_to_text(GtkWidget *w, int trk)
+{
+  if (track_name(trk))
+    gtk_entry_set_text(GTK_ENTRY(w), track_name(trk));
+  else widget_int_to_text(w, trk);
+}
+
+static void widget_mix_to_track(GtkWidget *w, int id)
+{
+  if (mix_name(id))
+    gtk_entry_set_text(GTK_ENTRY(w), mix_name(id));
+  else widget_int_to_text(w, id);
+}
+
+
 static bool track_changed = false;
 
 static void mix_track_activated(GtkWidget *w, gpointer context) 
@@ -421,12 +441,17 @@ static void mix_track_activated(GtkWidget *w, gpointer context)
   if (val)
     {
       int trk;
-      redirect_errors_to(errors_to_mix_text, NULL);
-      trk = string_to_int(val, 0, "track");
-      redirect_errors_to(NULL, NULL);
+      /* look for a track name first, then a number */
+      trk = track_name_to_id(val);
+      if (trk < 0)
+	{
+	  redirect_errors_to(errors_to_mix_text, NULL);
+	  trk = string_to_int(val, 0, "track");
+	  redirect_errors_to(NULL, NULL);
+	}
       if (trk >= 0)
 	mix_dialog_set_mix_track(mix_dialog_id, trk);
-      else widget_int_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
+      else widget_track_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
     }
 }
 
@@ -927,8 +952,10 @@ static void update_mix_dialog(int mix_id)
 	  cp = mix_dialog_mix_channel(mix_dialog_id);
 	  val = mix_dialog_mix_speed(mix_dialog_id);
 	  reflect_mix_speed(val);
-	  widget_int_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
-	  widget_int_to_text(w_id, mix_dialog_id);
+
+	  widget_track_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
+	  widget_mix_to_track(w_id, mix_dialog_id);
+
 	  beg = mix_dialog_mix_position(mix_dialog_id);
 	  len = mix_frames(mix_dialog_id);
 	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f%s",
@@ -936,6 +963,7 @@ static void update_mix_dialog(int mix_id)
 		       (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)),
 		       (mix_ok_and_unlocked(mix_dialog_id)) ? "" : " (locked)");
 	  gtk_entry_set_text(GTK_ENTRY(w_beg), lab);
+
 	  chans = mix_dialog_mix_input_chans(mix_dialog_id);
 	  if (chans > 8) chans = 8;
 	  set_sensitive(apply_button, true);
@@ -1341,9 +1369,13 @@ static void track_id_activated(GtkWidget *w, gpointer context)
   if (val)
     {
       int id;
-      redirect_errors_to(errors_to_track_text, NULL);
-      id = string_to_int(val, 0, "track");
-      redirect_errors_to(NULL, NULL);
+      id = track_name_to_id(val);
+      if (id < 0)
+	{
+	  redirect_errors_to(errors_to_track_text, NULL);
+	  id = string_to_int(val, 0, "track");
+	  redirect_errors_to(NULL, NULL);
+	}
       if (id >= 0)
 	{
 	  if (track_p(id))
@@ -1432,21 +1464,24 @@ static void track_track_activated(GtkWidget *w, gpointer context)
   if (val)
     {
       int id;
-
-      redirect_errors_to(errors_to_track_text, NULL);
-      id = string_to_int(val, 0, "track");
-      redirect_errors_to(NULL, NULL);
+      id = track_name_to_id(val);
+      if (id < 0)
+	{
+	  redirect_errors_to(errors_to_track_text, NULL);
+	  id = string_to_int(val, 0, "track");
+	  redirect_errors_to(NULL, NULL);
+	}
       if (id >= 0)
 	{
 	  if ((id == track_dialog_id) ||
 	      (!(set_track_track(track_dialog_id, id))))
 	    {
 	      errors_to_track_text(_("circular track chain"), NULL);
-	      widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
+	      widget_track_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
 	    }
 	  else update_track_dialog(id);
 	}
-      else widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
+      else widget_track_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
     }
 }
 
@@ -1873,8 +1908,8 @@ static void update_track_dialog(int track_id)
 	  cp = track_channel(track_id, 0);
 	  val = track_dialog_track_speed(track_id);
 	  reflect_track_speed(val);
-	  widget_int_to_text(w_track_track, track_dialog_track_track(track_id));
-	  widget_int_to_text(w_track_id, track_id);
+	  widget_track_to_text(w_track_track, track_dialog_track_track(track_id));
+	  widget_track_to_text(w_track_id, track_id);
 	  if (cp)
 	    {
 	      beg = track_position(track_id, -1);

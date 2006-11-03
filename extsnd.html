@@ -4435,7 +4435,8 @@ that has actively mixed data, the associated mix tag goes away until you undo th
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixname">mix-name</a> (mix)</code></td></tr>
 <tr><td></td><td>
 mix's name.  If a mix has a name, it is displayed below the mix waveform (rather than showing the
-almost useless mix id number).  Here's an example that uses the mix name to provide some pitch
+almost useless mix id number).  See also <a href="sndscm.html#mixname_to_id">mix-name-&gt;id</a>.
+Here's an example that uses the mix name to provide some pitch
 feedback:
 
 <table border=0 cellpadding=5 vspace=5><tr><td bgcolor="#fafafa"><pre>
@@ -4495,17 +4496,17 @@ feedback:
    (violin 9 3 'd4 .2)
    (cello 9 3 'b2 .2)
 
-   ;; set up the violin track
-   (for-each (lambda (id) (set! (<a class=quiet href="#mixtagy"">mix-tag-y</a> id) 10)) violins)
-   (let ((trk (apply <a class=quiet href="#maketrack">make-track</a> (reverse violins))))
-     (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 1 0))       ; violins are green
-     (set! (<a class=quiet href="#trackname">track-name</a> trk) "violin"))
-
    ;; set up the cello track
    (for-each (lambda (id) (set! (<a class=quiet href="#mixtagy">mix-tag-y</a> id) 40)) cellos)
    (let ((trk (apply <a class=quiet href="#maketrack">make-track</a> (reverse cellos))))
-     (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 0 1))       ; cellos are blue
+     (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 1 0))       ; cellos are green
      (set! (<a class=quiet href="#trackname">track-name</a> trk) "cello"))
+
+   ;; set up the violin track
+   (for-each (lambda (id) (set! (<a class=quiet href="#mixtagy"">mix-tag-y</a> id) 10)) violins)
+   (let ((trk (apply <a class=quiet href="#maketrack">make-track</a> (reverse violins))))
+     (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 0 1))       ; violins are blue
+     (set! (<a class=quiet href="#trackname">track-name</a> trk) "violin"))
                                                        ; forget the reverb
                                                        ; and you'll be blue too
    ))
@@ -4570,8 +4571,6 @@ See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 <!-- mix-tag-y -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagy">mix-tag-y</a> (mix)</code></td></tr>
 <tr><td></td><td>tag y offset in graph of <i>mix</i> (default 0).  The x offset of the tag is determined by <a href="#mixtagposition">mix-tag-position</a>.
-To place all the mixes in track 1 at the same height above the waveform: 
-<code>(for-each (lambda (n) (set! (mix-tag-y n) 20)) (<a class=quiet href="#track">track</a> 1))</code>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -4797,7 +4796,8 @@ of the tag).
 <!-- track-name -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackname">track-name</a> (track-id)</code></td></tr>
 <tr><td></td><td>
-track's name.
+track's name.  See also <a href="sndscm.html#trackname_to_id">track-name-&gt;id</a>, and the example
+under <a href="#mixname_to_id">mix-name-&gt;id</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -4835,6 +4835,13 @@ which the mixes occur (the latter is controlled by <a href="#tracktempo">track-t
 <!-- track-speed-style -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackspeedstyle">track-speed-style</a> (track-id)</code></td></tr>
 <tr><td></td><td>speed-style choice of <i>track-id</i>; default follows <a href="#speedstyle">speed-control-style</a>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+<!-- track-tag-y -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracktagy">track-tag-y</a> (track-id)</code></td></tr>
+<tr><td></td><td>
+track waveform position in pixels from the top of the graph.  This overrides <a href="#mixtagy">mix-tag-y</a> if both are non-zero.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 

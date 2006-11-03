@@ -5084,7 +5084,8 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
  		      /* save data in temp file, use insert-samples with file name */
  		      char *ofile;
  		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME, false);
- 		      function = mus_format("%s %s(" OFF_TD ", " OFF_TD ", \"%s\", snd, chn)", function, TO_PROC_NAME(S_insert_samples), ed->beg, ed->len, ofile);
+ 		      function = mus_format("%s %s(" OFF_TD ", " OFF_TD ", \"%s\", snd, chn)", 
+					    function, TO_PROC_NAME(S_insert_samples), ed->beg, ed->len, ofile);
  		      FREE(ofile);
  		    }
  		  else function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
@@ -5096,7 +5097,8 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
  		      /* save data in temp file, use set-samples with file name */
  		      char *ofile;
  		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME, false);
- 		      function = mus_format("%s set_samples(" OFF_TD ", " OFF_TD ", \"%s\", snd, chn)", function, ed->beg, ed->len, ofile);
+ 		      function = mus_format("%s set_samples(" OFF_TD ", " OFF_TD ", \"%s\", snd, chn)", 
+					    function, ed->beg, ed->len, ofile);
  		      FREE(ofile);
  		    }
  		  else if ((ed->origin) &&
