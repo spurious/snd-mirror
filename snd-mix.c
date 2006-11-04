@@ -1,14 +1,12 @@
 #include "snd.h"
 
-/* TODO: mix/track name/tag-y(?)/tag-position(?) in save state
- * TODO: need good tests of mix and track save-restore in general
+/* TODO: need good tests of mix and track save-restore in general
  * TODO: notebook style access to other tracks (next and previous by number are not very intuitive) -- pulldown menu of names?
  * PERHAPS: undo&apply for track / mix env?, multiple mix/track dialogs, tempo curves in dialog?
  * PERHAPS: mix-hover-hook mark-hover-hook cursor-hover-hook selection-hover-hook
  * PERHAPS: mus_outa -> vct (mus_any* vct array) + resizing, also affects locsig
  * PERHAPS: scales (just) in ->frequency
  * PERHAPS: forget-empty-tracks -- they glom up the track dialog, or "clear empty tracks" button in dialog, or "forget" button -> free_track
- * TODO: redisplay dialog value labels right away (currently they're blank until remix!)
  */
 
 typedef struct {
@@ -23,7 +21,7 @@ typedef struct {               /* save one mix state */
   int chans;                   /* size of arrays in this struct */
   int edit_ctr;                /* cp edit_ctr at time of creation of this struct */
   int track;
-  off_t beg, end, orig, len;  /* samp positions in output (orig = where edit tree thinks it is) */
+  off_t beg, end, orig, len;   /* samp positions in output (orig = where edit tree thinks it is) */
   bool locked, inverted;
   Float *scalers;
   Float speed;
@@ -69,7 +67,7 @@ typedef struct mix_fd {
   off_t *samples;
   mus_sample_t **idata;
   int samps_per_bin, dangling_loc;
-  env_info **eps; /* new envs created via env_on_env */
+  env_info **eps;                      /* new envs created via env_on_env */
   Float *scalers;
 } mix_fd;
 
@@ -4155,12 +4153,15 @@ static XEN g_set_mix_name(XEN n, XEN val)
 {
   mix_info *md;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_name, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ARG_2, S_setB S_mix_name, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ARG_2, S_setB S_mix_name, "a string");
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error(S_setB S_mix_name, n));
   if (md->name) FREE(md->name);
-  md->name = copy_string(XEN_TO_C_STRING(val));
+  if (XEN_STRING_P(val))
+    md->name = copy_string(XEN_TO_C_STRING(val));
+  else md->name = NULL;
+  update_graph(md->cp);
   return(val);
 }
 
@@ -7325,9 +7326,11 @@ static XEN g_set_track_name(XEN id, XEN val)
 {
   int track_id;
   track_id = xen_to_c_track(id, S_setB S_track_name);
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ARG_2, S_setB S_track_name, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ARG_2, S_setB S_track_name, "a string");
   if (tracks[track_id]->name) FREE(tracks[track_id]->name);
-  tracks[track_id]->name = copy_string(XEN_TO_C_STRING(val));
+  if (XEN_STRING_P(val))
+    tracks[track_id]->name = copy_string(XEN_TO_C_STRING(val));
+  else tracks[track_id]->name = NULL;
   return(val);
 }
 

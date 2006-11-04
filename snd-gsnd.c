@@ -1318,6 +1318,8 @@ static gboolean stop_sign_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 
 /* -------- SOUND PANE -------- */
 
+#define BUTTON_SPACE 6
+
 static bool currently_showing_controls = false;
 
 snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
@@ -1470,19 +1472,19 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       /* now fill from other end */
       
       PLAY_BUTTON(sp) = gtk_check_button_new_with_label(_("play"));
-      gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), PLAY_BUTTON(sp), false, false, 0);
+      gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), PLAY_BUTTON(sp), false, false, BUTTON_SPACE); /* need space here or "play" hits window edge */
       SG_SIGNAL_CONNECT(PLAY_BUTTON(sp), "button_press_event", play_button_callback, sp);
       SG_SIGNAL_CONNECT(PLAY_BUTTON(sp), "toggled", play_button_click_callback, sp);
       gtk_widget_show(PLAY_BUTTON(sp));
       
       SYNC_BUTTON(sp) = gtk_check_button_new_with_label(_("sync"));
-      gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), SYNC_BUTTON(sp), false, false, 0);
+      gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), SYNC_BUTTON(sp), false, false, BUTTON_SPACE);
       SG_SIGNAL_CONNECT(SYNC_BUTTON(sp), "button_press_event", sync_button_callback, sp);
       SG_SIGNAL_CONNECT(SYNC_BUTTON(sp), "toggled", sync_button_click, sp);
       gtk_widget_show(SYNC_BUTTON(sp));
       
       UNITE_BUTTON(sp) = gtk_check_button_new_with_label(_("unite"));
-      gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), UNITE_BUTTON(sp), false, false, 0);
+      gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), UNITE_BUTTON(sp), false, false, BUTTON_SPACE);
       SG_SIGNAL_CONNECT(UNITE_BUTTON(sp), "button_press_event", unite_button_callback, sp);
       SG_SIGNAL_CONNECT(UNITE_BUTTON(sp), "toggled", unite_button_click, sp);
       gtk_widget_show(UNITE_BUTTON(sp));
@@ -1601,7 +1603,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       gtk_widget_show(EXPAND_SCROLLBAR(sp));
       
       EXPAND_RIGHT_BUTTON(sp) = gtk_check_button_new();
-      gtk_box_pack_start(GTK_BOX(EXPAND_HBOX(sp)), EXPAND_RIGHT_BUTTON(sp), false, false, 0);
+      gtk_box_pack_start(GTK_BOX(EXPAND_HBOX(sp)), EXPAND_RIGHT_BUTTON(sp), false, false, 3);
       SG_SIGNAL_CONNECT(EXPAND_RIGHT_BUTTON(sp), "clicked", expand_button_callback, sp);
       gtk_widget_show(EXPAND_RIGHT_BUTTON(sp));
       
@@ -1634,7 +1636,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       gtk_widget_show(CONTRAST_SCROLLBAR(sp));
       
       CONTRAST_RIGHT_BUTTON(sp) = gtk_check_button_new();
-      gtk_box_pack_start(GTK_BOX(CONTRAST_HBOX(sp)), CONTRAST_RIGHT_BUTTON(sp), false, false, 0);
+      gtk_box_pack_start(GTK_BOX(CONTRAST_HBOX(sp)), CONTRAST_RIGHT_BUTTON(sp), false, false, 3);
       SG_SIGNAL_CONNECT(CONTRAST_RIGHT_BUTTON(sp), "clicked", contrast_button_callback, sp);
       gtk_widget_show(CONTRAST_RIGHT_BUTTON(sp));
       
@@ -1690,7 +1692,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       gtk_widget_show(REVLEN_SCROLLBAR(sp));
       
       REVERB_RIGHT_BUTTON(sp) = gtk_check_button_new();
-      gtk_box_pack_start(GTK_BOX(REVERB_HBOX(sp)), REVERB_RIGHT_BUTTON(sp), false, false, 0);
+      gtk_box_pack_start(GTK_BOX(REVERB_HBOX(sp)), REVERB_RIGHT_BUTTON(sp), false, false, 3);
       SG_SIGNAL_CONNECT(REVERB_RIGHT_BUTTON(sp), "clicked", reverb_button_callback, sp);
       gtk_widget_show(REVERB_RIGHT_BUTTON(sp));
       
@@ -1729,7 +1731,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       gtk_widget_show(FILTER_DB_BUTTON(sp));
       
       FILTER_RIGHT_BUTTON(sp) = gtk_check_button_new();
-      gtk_box_pack_start(GTK_BOX(FILTER_HBOX(sp)), FILTER_RIGHT_BUTTON(sp), false, false, 0);
+      gtk_box_pack_start(GTK_BOX(FILTER_HBOX(sp)), FILTER_RIGHT_BUTTON(sp), false, false, 3);
       SG_SIGNAL_CONNECT(FILTER_RIGHT_BUTTON(sp), "clicked", filter_button_callback, sp);
       gtk_widget_show(FILTER_RIGHT_BUTTON(sp));
       

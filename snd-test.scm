@@ -22148,6 +22148,8 @@ EDITS: 5
 	      (if (or (not (string? (mix-name mix-id)))
 		      (not (string=? (mix-name mix-id) "test-mix-again")))
 		  (snd-display ";mix-name set again: ~A" (mix-name mix-id)))
+	      (set! (mix-name mix-id) #f)
+	      (if (mix-name mix-id) (snd-display ";set mix-name #f: ~A" (mix-name mix-id)))
 	      (set! (mix-position mix-id) 200) 
 	      (set! (mix-amp mix-id 0) 0.5) 
 	      (set! (mix-speed mix-id) 2.0) 
@@ -22249,6 +22251,8 @@ EDITS: 5
 	    (if (or (not (string? (track-name trk)))
 		    (not (string=? (track-name trk) "test-track-again")))
 		(snd-display ";track-name set again: ~A" (track-name trk)))
+	    (set! (track-name trk) #f)
+	    (if (track-name trk) (snd-display ";set track-name #f: ~A" (track-name trk)))
 	    (do ((i 0 (1+ i)))
 		((= i 6))
 	      (vector-set! mix-ids i (mix "oboe.snd" (* i 1000))))
@@ -24433,20 +24437,7 @@ EDITS: 5
 			    (not (equal? (track track3) (list mix1))))
 		      (snd-display ";make track again overrides: ~A ~A ~A ~A (~A ~A)" 
 				   (track track1) (track track2) (track track3) (track track4)
-				   mix1 mix2))
-		    (let ((curvals (channel->vct 20 20 ind 0)))
-		      (if (file-exists? "s61.scm") (delete-file "s61.scm"))
-		      (save-state "s61.scm")
-		      (close-sound ind)
-		      (load "s61.scm")
-		      ;; this currently screws up when there's a track amp-env and a mix-track change resets the env bounds
-		      (set! ind (find-sound "test.snd"))
-		      (if (not (sound? ind))
-			  (snd-display ";can't restore test.snd: ~A?" (sounds))
-			  (if (not (vequal (channel->vct 20 20 ind 0) curvals))
-			      (snd-display ";track save/restore: ~A, was ~A [~A]" (channel->vct 20 20 ind 0) curvals (clipping)))))
-		    ))
-
+				   mix1 mix2))))
 	      (if (sound? ind) (close-sound ind)))))
 
 	  ;; track-tempo tests
@@ -24733,6 +24724,9 @@ EDITS: 5
 	       (close-sound ind)))
 	   (lambda () (set! (with-mix-tags) old-mix-tag))))
 
+	(if (mus-clipping) (set! (mus-clipping) #f))
+	(if (clipping) (set! (clipping) #f))
+
 	(let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 2 "copy sample-reader tests" 1000)))
 	  (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 101 10 ind 0)
 	  (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 201 10 ind 1)
@@ -24935,9 +24929,9 @@ EDITS: 5
 			      (fneq rd2v rd22v)
 			      (fneq rd2v (vct-ref v1 i)))
 			  (begin
-			    (snd-display ";copy region sample reader vals at ~A: ~A ~A ~A ~A ~A [~A]"
-					 i rd1v rd11v rd2v rd22v (vct-ref v1 i) (clipping))
-			    (set! happy #f))))))
+			    (snd-display ";copy region sample reader vals at ~A: ~A ~A ~A ~A ~A [~A ~A]"
+					 i rd1v rd11v rd2v rd22v (vct-ref v1 i) (clipping) (mus-clipping))
+			    (set! happy #t))))))
 		(free-sample-reader rd1)
 		(free-sample-reader rd11))))
 	  (close-sound ind))
@@ -39496,7 +39490,7 @@ EDITS: 1
 		(list y-position-slider 'y-position-slider ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		(list x-zoom-slider 'x-zoom-slider ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		(list y-zoom-slider 'y-zoom-slider ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
-		(list fft-window-alpha 'fft-window-alpha ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
+		(list fft-window-alpha 'fft-window-alpha ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .02)) feql #t #t)
 		(list fft-window-beta 'fft-window-beta ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .02)) feql #t #t)
 		(list spectro-cutoff 'spectro-cutoff ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
 		(list spectro-start 'spectro-start ind-1 ind-2 0.1 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)

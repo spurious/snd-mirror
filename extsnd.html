@@ -4471,30 +4471,17 @@ feedback:
 
 (<a class=quiet href="#asoneedit">as-one-edit
 </a> (lambda ()                              ; play a familiar tune...
-   (violin 0 1 'e4 .2)
-   (violin 1 1.5 'g4 .2)
-   (violin 2.5 .5 'g3 .2)
+   (violin 0 1 'e4 .2)  (violin 1 1.5 'g4 .2)  (violin 2.5 .5 'g3 .2)
+   (cello  0 1 'c3 .2)  (cello  1 1.5 'e3 .2)  (cello  2.5 .5 'g2 .2)
 
-   (cello 0 1 'c3 .2)
-   (cello 1 1.5 'e3 .2)
-   (cello 2.5 .5 'g2 .2)
-
-   ;; ----
    (violin 3 3 'f4 .2)
-   (cello 3 3 'd3 .2)
+   (cello  3 3 'd3 .2)
 
-   ;; ----
-   (violin 6 1 'e4 .2)
-   (violin 7 1 'g3 .2)
-   (violin 8 1 'e4 .2)
-  
-   (cello 6 1 'c3 .2)
-   (cello 7 1 'g2 .2)
-   (cello 8 1 'c3 .2)
+   (violin 6 1 'e4 .2)  (violin 7 1 'g3 .2)   (violin 8 1 'e4 .2)
+   (cello  6 1 'c3 .2)  (cello  7 1 'g2 .2)   (cello  8 1 'c3 .2)
 
-   ;; ----
    (violin 9 3 'd4 .2)
-   (cello 9 3 'b2 .2)
+   (cello  9 3 'b2 .2)
 
    ;; set up the cello track
    (for-each (lambda (id) (set! (<a class=quiet href="#mixtagy">mix-tag-y</a> id) 40)) cellos)
