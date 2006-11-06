@@ -451,6 +451,14 @@ On recording, here's a note from Fernando from cmdist:
 There's also a discussion of RME cards in the cmdist archives.
 
 
+An addendum: in my system, I have a wretched sound card in my machine,
+and an EMI 2|6 connected to a USB connector.  So the EMI device is "hw:1"
+in Alsa terms, and since I never want to use the internal sound card,
+I have this line in my ~/.cshrc file:
+
+setenv MUS_ALSA_DEVICE "hw:1"
+
+
 
 ---- colors: ----
 

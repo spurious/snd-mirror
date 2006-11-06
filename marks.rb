@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Mar 23 02:08:47 CET 2005
-# Changed: Sat Sep 24 17:17:37 CEST 2005
+# Changed: Tue Oct 17 21:40:44 CEST 2006
 
 # Commentary:
 #
@@ -39,8 +39,8 @@
 #
 #  mark_properties(id)
 #  set_mark_properties(id, new_val)
-#  mark_property(key, id)
-#  set_mark_property(key, val, id)
+#  mark_property(id, key)
+#  set_mark_property(id, key, val)
 #  save_mark_properties
 #  mark_click_info(id)
 #  eval_header(sndf)
@@ -310,8 +310,8 @@ plays the portion between the marks (searching for plausible default marks)")
   def report_mark_names
     $start_playing_hook.add_hook!("marks.rb") do |snd|
       rp = Mark_report.new(snd)
-      $stop_playing_hook.add_hook!("report-mark-names-stop-playing") do |snd|
-        rp.report_mark_names_stop_playing_hook(snd)
+      $stop_playing_hook.add_hook!("report-mark-names-stop-playing") do |s|
+        rp.report_mark_names_stop_playing_hook(s)
       end
       $play_hook.add_hook!("report-mark-names-play") do |samps|
         rp.report_mark_names_play_hook(samps)
@@ -474,17 +474,17 @@ splits a sound into a bunch of sounds based on mark placements")
   end
 
   add_help(:mark_property,
-           "mark_property(key, id) \
+           "mark_property(id, key) \
 returns the value associated with 'key' in the given mark's property list, or false")
-  def mark_property(key, id)
+  def mark_property(id, key)
     Snd.raise(:no_such_mark, id) unless mark?(id)
     hash?(h = mark_properties(id)) and h[key]
   end
 
   add_help(:set_mark_property,
-           "set_mark_property(key, val, id) \
+           "set_mark_property(id, key, val) \
 sets the value 'val' to 'key' in the given mark's property list")
-  def set_mark_property(key, val, id)
+  def set_mark_property(id, key, val)
     Snd.raise(:no_such_mark, id) unless mark?(id)
     unless hash?(h = mark_properties(id)) and h.store(key, val)
       $all_mark_properties.push(id)
@@ -563,34 +563,28 @@ is a $mark_click_hook function that describes a mark and its properties")
   # this code saves mark info in the sound file header, and reads it
   # back in when the sound is later reopened
 
-  def eval_header(sndf)
-    string?(str = comment(sndf)) and Snd.catch do eval(str) end.first
-  end
-
   def marks2string(sndf)
-    str = "require \"marks.rb\"\n"
-    (marks(sndf) or []).each do |chan_marks|
+    str = "require \"marks\"\n"
+    (marks(sndf) or []).each_with_index do |chan_marks, chn|
       (chan_marks or []).each do |m|
-        if mark?(m)
-          snd, chn = mark_home(m)
-          str += format("if sound?(snd = find_sound(%s))\n", file_name(snd).inspect)
-          str += format("  if mark?(m = (find_mark(%d, snd, %d) or add_mark(%d, snd, %d)))\n",
-                        mark_sample(m), chn, mark_sample(m), chn)
-          if string?(mstr = mark_name(m)) and mstr.length > 0
-            str += format("    set_mark_name(m, %s)\n", mstr.inspect)
-          end
-          if props = mark_properties(m)
-            str += format("    set_mark_properties(m, %s)\n", props.inspect)
-          end
-          str += "  end\n"
-          str += "end\n"
+        str += format("m = add_mark(%s, false, %d, %s, %d)\n",
+                      mark_sample(m),
+                      chn,
+                      mark_name(m).null? ? false : mark_name(m),
+                      mark_sync(m))
+        if props = mark_properties(m)
+          str += format("set_mark_properties(m, %s)\n", props.inspect)
         end
       end
     end
     str
   end
-  # $output_comment_hook.add_hook!("marks2string") do |str| marks2string(selected_sound) end
-  # $after_open_hook.add_hook!("marks2string") do |snd| eval_header(snd) end
+  # $output_comment_hook.add_hook!("marks2string") do |str| marks2string(selected_sound()) end
+  # $after_open_hook.add_hook!("marks2string") do |snd|
+  #   if string?(str = comment(snd))
+  #     Snd.catch do eval(str, TOPLEVEL_BINDING, "(eval-header)", 1) end.first
+  #   end
+  # end
 end
 
 include Mark

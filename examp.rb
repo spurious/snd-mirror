@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Tue Aug 08 03:49:31 CEST 2006
+# Changed: Thu Nov 02 22:15:58 CET 2006
 
 # Commentary:
 #
@@ -557,8 +557,9 @@ def get_func_name(n = 1)
 end
 
 def assert_type(condition, obj, pos, msg)
-  condition or raise(TypeError, format("%s: wrong type arg %d, %s, wanted %s",
-                                       get_func_name(2), pos, obj.inspect, msg))
+  condition or Kernel.raise(TypeError,
+                            format("%s: wrong type arg %d, %s, wanted %s",
+                                   get_func_name(2), pos, obj.inspect, msg))
 end
 
 def identity(arg)
@@ -754,7 +755,8 @@ if $DEBUG and RUBY_VERSION < "1.8.0"
         self.class.class_eval do define_method(id, lambda do self.to_s end) end
         id.id2name
       else
-        raise(NameError, format("[version %s] undefined method `%s'", RUBY_VERSION, id.id2name))
+        Kernel.raise(NameError,
+                     format("[version %s] undefined method `%s'", RUBY_VERSION, id.id2name))
       end
     end
   end
@@ -1742,11 +1744,11 @@ end
 class Integer
   def even?
     self.modulo(2) == 0
-  end
+  end unless defined? 1.even?
 
   def odd?
     self.modulo(2) != 0
-  end
+  end unless defined? 1.odd?
   
   def prime?
     (self == 2) or
@@ -1824,7 +1826,7 @@ module Enumerable
       end
     end
     res
-  end unless vct(0).respond_to?(:zip)
+  end unless [].respond_to?(:zip)
 end
 
 def as_one_edit_rb(*origin, &body)
@@ -1926,13 +1928,13 @@ Proc#inspect must return #<Proc:0x01234567@xxx:x> not only %s!",
       body = ""
       blck = i = 0
       first_line = true
-      File.foreach(file) do |line|
+      File.foreach(file) do |ln|
         i += 1
         next if i < lineno
-        body << line
+        body << ln
         if first_line
-          if (line.scan(/\s*do\b|\{/).length - line.scan(/\s*end\b|\}/).length).zero? and
-              (line.scan(/\(/).length - line.scan(/\)/).length).zero?
+          if (ln.scan(/\s*do\b|\{/).length - ln.scan(/\s*end\b|\}/).length).zero? and
+              (ln.scan(/\(/).length - ln.scan(/\)/).length).zero?
             break
           else
             first_line = false
@@ -1940,8 +1942,8 @@ Proc#inspect must return #<Proc:0x01234567@xxx:x> not only %s!",
             next
           end
         end
-        next if /\s*\S+\s*(if|unless|while|until)+/ =~ line
-        break if (blck += Snd_eval.count_level(line)).zero?
+        next if /\s*\S+\s*(if|unless|while|until)+/ =~ ln
+        break if (blck += Snd_eval.count_level(ln)).zero?
         break if blck.negative?
       end
     end
@@ -2216,9 +2218,9 @@ def display_all_variables(name = nil)
     [name]
   else
     (property(:debug, :names) or [])
-  end.each do |name|
-    debug_binding(name).each do |bind|
-      Snd.message("=== %s ===", name)
+  end.each do |nm|
+    debug_binding(nm).each do |bind|
+      Snd.message("=== %s ===", nm)
       Snd.message()
       eval("local_variables", bind).each do |var|
         Snd.message("%s = %s", var, eval(var, bind).inspect)
@@ -2254,7 +2256,7 @@ def let(*args, &prc)
   # See ruby/ChangeLog: Tue Jul 18 16:52:29 2006  Yukihiro Matsumoto  <matz@ruby-lang.org>
   prc.call(*args)
 rescue Interrupt, ScriptError, NameError, StandardError
-  raise
+  Kernel.raise
 ensure
   @locals = locals
   locals.each_key do |name| eval("#{name} = @locals[#{name.inspect}]", prc) end
@@ -2344,13 +2346,17 @@ end
 
 def verbose_message_string(stack_p, remark, *args)
   fmt_remark = format("\n%s", remark)
-  # args.to_a.car = remark.to_s + args.to_a.car.to_s
   args.to_a.car = String(args.to_a.car)
   str = if args.length < 2
-          format(args.car)
+          args.car
         else
           format(*args)
-        end.split(/\n/).join(fmt_remark)
+        end
+  str = if str.split(/\n/).length > 1
+          str.split(/\n/).join(fmt_remark)
+        else
+          format("%s%s", remark, args.car)
+        end
   if $!
     str += format("[%s] %s (%s)", rb_error_to_mus_tag.inspect, snd_error_to_message, $!.class)
     if stack_p then str += format("\n%s%s", remark, $!.backtrace.join(fmt_remark)) end
@@ -2393,22 +2399,29 @@ def clm_message(*args)
         else
           format(*args)
         end
-  if provided? :snd and (not ENV["EMACS"] or provided? :snd_nogui)
+  if provided?(:snd) and !provided?(:snd_nogui)
     clm_print("\n%s", msg)
-    nil
+    if ENV["EMACS"]
+      $stdout.print(msg, "\n")
+    else
+      nil
+    end
   else
-    print(msg, "\n")
+    $stdout.print(msg, "\n")
   end
 end
 
 # like clm_print(*args), in emacs it prepends msg with a comment sign
 
-if ENV["EMACS"]
-  def message(*args)
-    clm_message(verbose_message_string(false, "# ", format(*args)))
-  end
-else
-  alias message clm_message
+def message(*args)
+  msg = if args.null?
+          ""
+        elsif args.length == 1
+          String(args.car)
+        else
+          format(*args)
+        end
+  clm_message(verbose_message_string(false, "# ", msg))
 end
 
 # debug(var1, var2) --> #<DEBUG: ClassName: value1, ClassName: value2>
@@ -2471,7 +2484,14 @@ class Snd
     end
 
     def message(*args)
-      Snd.display(verbose_message_string(false, "# ", *args))
+      msg = if args.null?
+              ""
+            elsif args.length == 1
+              String(args.car)
+            else
+              format(*args)
+            end
+      clm_message(verbose_message_string(false, "# ", msg))
     end
 
     def display(*args)
@@ -2578,7 +2598,7 @@ class Snd
           [mus_tag, snd_error_to_message]
         end
       else
-        raise
+        Kernel.raise
       end
     ensure
       $DEBUG = old_debug
@@ -2627,6 +2647,7 @@ Snd_error_tags = [# clm2xen.c
                   :no_such_widget,
                   :no_such_graphics_context,
                   :no_such_axis,
+                  :bad_length,
                   # snd-edits.c
                   :no_such_direction,
                   :no_such_region,
@@ -2653,16 +2674,17 @@ Snd_error_tags = [# clm2xen.c
                   :io_error,
                   # snd-print.c
                   :cannot_print,
-                  # snd-run.c/xen.c|h
+                  # snd-run.c
                   :wrong_number_of_args,
                   :cannot_parse,
-                  :out_of_range,
                   # snd-snd.c
                   :no_such_sound,
                   :not_a_sound_file,
                   :cannot_apply_controls,
                   :bad_size,
                   :snd_internal_error,
+                  # snd-xdraw.c
+                  :no_current_font,
                   # snd-xen.c
                   :no_active_selection,
                   :bad_arity,
@@ -2679,6 +2701,7 @@ Snd_error_tags = [# clm2xen.c
                   :no_data,
                   :bad_header,
                   # xen.h
+                  :out_of_range,
                   :wrong_type_arg]              # TypeError
 
 def rb_error_to_mus_tag
@@ -2691,8 +2714,11 @@ def rb_error_to_mus_tag
     # insert_region: No_such_region: 1004
     # case 3 (mus_error)
     # mus_ycoeff__invalid_index_123__order___3?: Mus_error
+    # can't translate /usr/gnu/sound/sf1/oboe.g721 to /usr/gnu/sound/sf1/oboe.g721.snd:
+    #   : Mus_error>
   when "StandardError"
-    err = $!.message.split(/\n/).first.downcase.split(/:/).map do |e| e.strip.chomp(">") end
+    # err = $!.message.split(/\n/).first.downcase.split(/:/).map do |e| e.strip.chomp(">") end
+    err = $!.message.delete("\n").downcase.split(/:/).compact.map do |e| e.strip.chomp(">") end
     Snd_error_tags.detect do |tag| err.member?(tag.to_s) end or :standard_error
   when "RangeError"
     :out_of_range
@@ -3016,7 +3042,7 @@ module Examp
   add_help(:selection_rms, "selection_rms() -> rms of selection data using sample readers")
   def selection_rms
     if selection?
-      reader = make_sample_reader(selection_position)
+      reader = make_sample_reader(selection_position, false, false)
       len = selection_frames
       sum = 0.0
       len.times do
@@ -3243,7 +3269,7 @@ end")
 looks for successive samples that sum to less than 'limit', moving the cursor if successful")
   def locate_zero(limit)
     start = cursor
-    sf = make_sample_reader(start)
+    sf = make_sample_reader(start, false, false)
     val0 = sf.call.abs
     val1 = sf.call.abs
     n = start
@@ -3600,15 +3626,15 @@ and 90 is all in channel 1.")
     len = frames(mono_snd)
     if number?(pan_env)
       pos = pan_env / 90.0
-      rd0 = make_sample_reader(0, mono_snd)
-      rd1 = make_sample_reader(0, mono_snd)
+      rd0 = make_sample_reader(0, mono_snd, false)
+      rd1 = make_sample_reader(0, mono_snd, false)
       map_channel(lambda do |y| y + pos * read_sample(rd1) end, 0, len, stereo_snd, 1)
       map_channel(lambda do |y| y + (1.0 - pos) * read_sample(rd0) end, 0, len, stereo_snd, 0)
     else
       e0 = make_env(:envelope, pan_env, :end, len - 1)
       e1 = make_env(:envelope, pan_env, :end, len - 1)
-      rd0 = make_sample_reader(0, mono_snd)
-      rd1 = make_sample_reader(0, mono_snd)
+      rd0 = make_sample_reader(0, mono_snd, false)
+      rd1 = make_sample_reader(0, mono_snd, false)
       map_channel(lambda do |y| y + env(e1) * read_sample(rd1) end, 0, len, stereo_snd, 1)
       map_channel(lambda do |y| y + (1.0 - env(e0)) * read_sample(rd0) end, 0, len, stereo_snd, 0)
     end
@@ -4081,9 +4107,9 @@ at a new pitch but at the original tempo.  It returns a function for map_chan.")
     inctr = 0
     lambda do |inval|
       src(sr, 0.0, lambda do |dir|
-            granulate(gr, lambda do |dir|
+            granulate(gr, lambda do |dr|
                         val = v[inctr]
-                        inctr += dir
+                        inctr += dr
                         if inctr >= vsize
                           vbeg += inctr
                           inctr = 0
@@ -4260,7 +4286,7 @@ convolves snd0 and snd1, scaling by amp, returns new max amp: cnvtest(0, 1, 0.1)
     flt_len = frames(snd0)
     total_len = flt_len + frames(snd1)
     cnv = make_convolve(:filter, channel2vct(0, flt_len, snd0))
-    sf = make_sample_reader(0, snd1)
+    sf = make_sample_reader(0, snd1, false)
     out_data = make_vct!(total_len) do convolve(cnv, lambda do |dir| next_sample(sf) end) end
     free_sample_reader(sf)
     vct_scale!(out_data, amp)
@@ -4428,7 +4454,7 @@ reads snd's channel chn according to env and time-scale")
       position_in_original = env(read_env)
       if i >= next_reader_starts_at
         readers[next_reader] =
-          make_sample_reader([0, (position_in_original + mus_random(jitter)).round].max)
+          make_sample_reader([0, (position_in_original + mus_random(jitter)).round].max, false)
         grain_envs[next_reader].reset
         next_reader += 1
         if next_reader >= num_readers then next_reader = 0 end
@@ -4677,7 +4703,7 @@ end")
 
   add_help(:find_click, "find_click(loc) finds the next click starting at 'loc'")
   def find_click(loc)
-    reader = make_sample_reader(loc)
+    reader = make_sample_reader(loc, false, false)
     samp0 = samp1 = samp2 = 0.0
     samps = make_vct(10)
     len = frames()
@@ -5070,7 +5096,7 @@ turns the currently selected soundfont file into a bunch of files of the form sa
     init_angle = y1 > y0 ? PI : 0.0
     off = 0.5 * (y0 + y1)
     scale = 0.5 * (y1 - y0).abs
-    data = vct(0.0, 0.0, init_angle, off, scale)
+    data1 = vct(0.0, 0.0, init_angle, off, scale)
     ptree_channel(lambda { |y, data, forward|
                     angle = data[0]
                     incr = data[1]
@@ -5084,9 +5110,9 @@ turns the currently selected soundfont file into a bunch of files of the form sa
                   }, beg, dur, snd, chn, edpos, true,
                   lambda { |frag_beg, frag_dur|
                     incr = PI / frag_dur
-                    data[1] = incr
-                    data[0] = frag_beg * incr
-                    data
+                    data1[1] = incr
+                    data1[0] = frag_beg * incr
+                    data1
                   }, format("%s(%s, %s", get_func_name, beg, dur))
   end
 

@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Sat Jul 29 09:48:48 CEST 2006
+# Changed: Thu Oct 19 23:27:34 CEST 2006
 
 # Commentary:
 #
@@ -435,13 +435,13 @@ If it returns non-nil or non-false, the menu will be posted.")
                                                             RxmPushButtonWidgetClass,
                                                             @menu, @args)
                              RXtAddCallback(child, RXmNactivateCallback,
-                                            lambda do |w, c, i|
+                                            lambda do |ww, cc, ii|
                                               if @target == :edhist
                                                 body.call(selected_sound,
                                                           selected_channel,
-                                                          RXtVaGetValues(w, [RXmNuserData, 0]).cadr)
+                                                          RXtVaGetValues(ww,[RXmNuserData, 0]).cadr)
                                               else
-                                                body.call(find_sound(current_label(w)))
+                                                body.call(find_sound(current_label(ww)))
                                               end
                                             end)
                              RXtVaSetValues(child, [RXmNuserData, @children.length])
@@ -490,11 +490,11 @@ If it returns non-nil or non-false, the menu will be posted.")
             (clen...slen).each do |numb|
               child = Rgtk_menu_item_new_with_label(numb.to_s)
               Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), child)
-              add_callback(child, "activate") do |w, d|
+              add_callback(child, "activate") do |ww, d|
                 if @target == :edhist
                   body.call(selected_sound, selected_channel, clen) # @children.length before push
                 else
-                  body.call(find_sound(current_label(w)))
+                  body.call(find_sound(current_label(ww)))
                 end
               end
               @children.push(child)
@@ -623,9 +623,9 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
     entry("Zero") do |snd, chn, w| scale_selection_by(0.0) end
     entry("Crop") do |snd, chn, w|
       sndlist = []
-      Snd.sounds.each do |snd|
-        channels(snd).times do |i|
-          sndlist.push([snd, i]) if selection_member?(snd, i)
+      Snd.sounds.each do |s|
+        channels(s).times do |i|
+          sndlist.push([s, i]) if selection_member?(s, i)
         end
       end
       sndlist.each do |selection|
@@ -655,11 +655,11 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
       open_sound(new_file_name)
     end
     entry("Snap marks") do |snd, chn, w|
-      selection_members.each do |snd, chn|
-        pos = selection_position(snd, chn)
-        len = selection_frames(snd, chn) - 1
-        add_mark(pos, snd, chn)
-        add_mark(pos + len, snd, chn)
+      selection_members.each do |s, c|
+        pos = selection_position(s, c)
+        len = selection_frames(s, c) - 1
+        add_mark(pos, s, c)
+        add_mark(pos + len, s, c)
       end
     end
     entry("Selection Info") do |snd, chn, w|
@@ -1102,8 +1102,8 @@ all saved edit lists.",
   if provided? :xm
     make_snd_popup("Listener",
                    :target, :widget,
-                   :parent, if widget?(w = main_widgets[Listener_pane])
-                              w
+                   :parent, if widget?(ww = main_widgets[Listener_pane])
+                              ww
                             else
                               show_listener
                               set_show_listener(false)
@@ -1172,17 +1172,17 @@ all saved edit lists.",
             cas.each do |wid| hide_widget(wid) end
           end
         end
-        each_entry do |w|
-          if widget?(w)
-            case name = widget_name(w)
+        each_entry do |w1|
+          if widget?(w1)
+            case name = widget_name(w1)
             when "Equalize panes"
-              Snd.sounds.length > 1 ? show_widget(w) : hide_widget(w)
+              Snd.sounds.length > 1 ? show_widget(w1) : hide_widget(w1)
             when "Help"
               if subject = listener_selection
-                change_label(w, format("Help on %s", subject.inspect))
-                show_widget(w)
+                change_label(w1, format("Help on %s", subject.inspect))
+                show_widget(w1)
               else
-                hide_widget(w)
+                hide_widget(w1)
               end
             end
           end

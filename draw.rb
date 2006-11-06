@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 05 00:17:04 CEST 2005
-# Changed: Sat Nov 19 16:39:52 CET 2005
+# Changed: Thu Oct 19 23:30:53 CEST 2006
 
 # Commentary:
 #
@@ -23,7 +23,7 @@
 #  make_current_window_display
 #  close_current_window_display
 #  
-#  smart_line_cursor(snd, chn, ax)
+#  smart_line_cursor(snd, chn, tracking)
 #  click_for_listener_help(pos)
 #  
 
@@ -79,8 +79,8 @@ displays samples from beg for dur in color whenever they\'re in the current view
 causes samples from beg to beg+dur to be displayed in color")
   def color_samples(color, beg = 0, dur = false, snd = Snd.snd, chn = Snd.chn)
     unless $after_graph_hook.member?("display-samples-in-color")
-      $after_graph_hook.add_hook!("display-samples-in-color") do |snd, chn|
-        display_samples_in_color(snd, chn)
+      $after_graph_hook.add_hook!("display-samples-in-color") do |s, c|
+        display_samples_in_color(s, c)
       end
     end
     unless dur then dur = frames(snd, chn) - beg end
@@ -131,9 +131,9 @@ overlays onto its first argument all subsequent arguments: overlay_sounds(1, 0, 
     base = rest.shift
     $after_graph_hook.add_hook!(get_func_name) do |snd, chn|
       if sound?(base) and snd == base
-        rest.each do |snd|
-          if sound?(snd) and channels(snd) > chn and channels(base) > chn
-            graph_data(make_graph_data(snd, chn), base, chn, Copy_context, -1, -1, Graph_dots)
+        rest.each do |s|
+          if sound?(s) and channels(s) > chn and channels(base) > chn
+            graph_data(make_graph_data(s, chn), base, chn, Copy_context, -1, -1, Graph_dots)
           end
         end
       end
@@ -271,14 +271,14 @@ displays time domain graph using current colormap (just an example of colormap-r
             data1 = ((not vct?(data)) and make_array(data_len * 2))
             j = 0
             xj = x_offset
-            data_len.times do |i|
+            data_len.times do |ii|
               data0[j] = xj.round
               if data1
-                data0[j + 1] = (y_offset - data.cadr[i] * Float(data_scaler)).round
+                data0[j + 1] = (y_offset - data.cadr[ii] * Float(data_scaler)).round
                 data1[j] = xj.floor
-                data1[j + 1] = (y_offset - data.car[i] * Float(data_scaler)).round
+                data1[j + 1] = (y_offset - data.car[ii] * Float(data_scaler)).round
               else
-                data0[j + 1] = (y_offset - data[i] * Float(data_scaler)).round
+                data0[j + 1] = (y_offset - data[ii] * Float(data_scaler)).round
               end
               j += 2
               xj += xstep
@@ -400,12 +400,12 @@ Display in upper right corner the overall current sound and where the current wi
   end
 
   add_help(:smart_line_cursor,
-           "smart_line_cursor(snd, chn, ax)  \
+           "smart_line_cursor(snd, chn, tracking)  \
 is a cursor_style function that tries not to overwrite the thumbnail graph \
 in the upper right corner.")
-  def smart_line_cursor(snd, chn, ax)
+  def smart_line_cursor(snd, chn, tracking = false)
     x, y = cursor_position
-    x0, y0, x1, y1 = axis_info(snd, chn, ax)[10, 4]
+    x0, y0, x1, y1 = axis_info(snd, chn, Time_graph)[10, 4]
     inset_x0 = x1 * (1.0 - Inset_width)
     inset_y0 = (y1 - 10.0) + (Inset_height * (y0 - y1))
     if x > (inset_x0 - 5)

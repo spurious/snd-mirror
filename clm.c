@@ -6,6 +6,10 @@
  *   a factor of 2.
  */
 
+/* PERHAPS: mus_outa -> vct (mus_any* vct array) + resizing, also affects locsig (could be optimized in run)
+ */
+
+
 #include <mus-config.h>
 
 #if USE_SND

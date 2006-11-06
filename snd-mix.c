@@ -1,12 +1,9 @@
 #include "snd.h"
 
-/* TODO: need good tests of mix and track save-restore in general
- * TODO: notebook style access to other tracks (next and previous by number are not very intuitive) -- pulldown menu of names?
+/* TODO: notebook style access to other tracks (next and previous by number are not very intuitive) -- pulldown menu of names?
  * PERHAPS: undo&apply for track / mix env?, multiple mix/track dialogs, tempo curves in dialog?
  * PERHAPS: mix-hover-hook mark-hover-hook cursor-hover-hook selection-hover-hook
- * PERHAPS: mus_outa -> vct (mus_any* vct array) + resizing, also affects locsig
- * PERHAPS: scales (just) in ->frequency
- * PERHAPS: forget-empty-tracks -- they glom up the track dialog, or "clear empty tracks" button in dialog, or "forget" button -> free_track
+ * PERHAPS: "forget" button -> free_track
  */
 
 typedef struct {

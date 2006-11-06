@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Sep 20 23:24:17 CEST 2003
-# Changed: Fri Jul 28 19:44:51 CEST 2006
+# Changed: Thu Oct 26 02:59:09 CEST 2006
 
 # Commentary:
 #
@@ -526,7 +526,9 @@ REFLECTED causes every other repetition to be in reverse.")
   end
 
   def normalize_envelope(en, new_max = 1.0)
-    scale_envelope(en, new_max / max_envelope(en))
+    mx = en[1].abs.to_f
+    1.step(en.length - 1, 2) do |i| mx = [mx, en[i].abs].max.to_f end
+    scale_envelope(en, new_max / mx)
   end
   
   def x_norm(en, xmax)
@@ -569,15 +571,15 @@ REFLECTED causes every other repetition to be in reverse.")
     interpolate = lambda do |xl, yl, xh, yh, xi|
       yl + (xi - xl) * ((yh - yl) / (xh - xl))
     end
-    exp_seg = lambda do |xl, yle, xh, yhe, yl, yh, error|
+    exp_seg = lambda do |xl, yle, xh, yhe, yl, yh, err|
       xint = (xl + xh) / 2.0
       yint = interpolate.call(xl, yl, xh, yh, xint)
       yinte = interpolate.call(xl, yle, xh, yhe, xint)
       yexp = base ** yint
-      yerr = base ** (yint + error) - yexp
+      yerr = base ** (yint + err) - yexp
       if (yexp - yinte).abs > yerr and ((ycutoff and yinte > ycutoff) or true)
-        xi, yi = exp_seg.call(xl, yle, xint, yexp, yl, yint, error)
-        xj, yj = exp_seg.call(xint, yexp, xh, yhe, yint, yh, error)
+        xi, yi = exp_seg.call(xl, yle, xint, yexp, yl, yint, err)
+        xj, yj = exp_seg.call(xint, yexp, xh, yhe, yint, yh, err)
         [xi + [xint] + xj, yi + [yexp] + yj]
       else
         [[], []]
@@ -596,9 +598,9 @@ REFLECTED causes every other repetition to be in reverse.")
       xs, ys = exp_seg.call(x, base ** yscl, nx, base ** nyscl, yscl, nyscl, error)
       unless xs.empty?
         ys_scaled = vct_scale!(list2vct(ys), out_scaler)
-        xs.each_with_index do |xx, i|
+        xs.each_with_index do |xx, ii|
           result.push(xx)
-          result.push(ys_scaled[i])
+          result.push(ys_scaled[ii])
         end
       end
     end

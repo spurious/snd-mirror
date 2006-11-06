@@ -1,13 +1,14 @@
 # v.rb -*- snd-ruby -*-
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
-# Last: Mon Mar 28 19:35:42 CEST 2005
+# Created: Wed Nov 20 02:24:34 CET 2002
+# Changed: Wed Aug 30 19:19:05 CEST 2006
 
 # Comment:
 #
 # class Instrument
 #   fm_violin_rb(start, dur, freq, amp, *args)
-#   jc_reverb_rb(start, dur, *args)
+#   jc_reverb_rb(*args)
 #
 # make_fm_violin(start, dur, freq, amp, *args)
 #
@@ -19,66 +20,72 @@ require "ws"
 class Instrument
   add_help(:fm_violin_rb,
            "fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.5[, *args]]]]])
- :fm_index,              1.0
- :amp_env,               [0, 0, 25, 1, 75, 1, 100, 0]
- :periodic_vibrato_rate, 5.0
- :random_vibrato_rate,   16.0
- :periodic_vibrato_amp,  0.0025
- :random_vibrato_amp,    0.005
- :noise_amount,          0.0
- :noise_freq,            1000.0
- :ind_noise_freq,        10.0
- :ind_noise_amount,      0.0
- :amp_noise_freq,        20.0
- :amp_noise_amount,      0.0
- :gliss_env,             [0, 0, 100, 0]
- :gliss_amount,          0.0
- :fm1_env,               [0, 1, 25, 0.4, 75, 0.6, 100, 0]
- :fm2_env,               [0, 1, 25, 0.4, 75, 0.6, 100, 0]
- :fm3_env,               [0, 1, 25, 0.4, 75, 0.6, 100, 0]
- :fm1_rat,               1.0
- :fm2_rat,               3.0
- :fm3_rat,               4.0
- :fm1_index,             false
- :fm2_index,             false
- :fm3_index,             false
- :base,                  1.0
- :index_type,            :violin
- :reverb_amount,         0.01
- :degree,                kernel_rand(90.0)
- :distance,              1.0
+ :fm_index              = 1.0
+ :amp_env               = [0, 0, 25, 1, 75, 1, 100, 0]
+ :periodic_vibrato_rate = 5.0
+ :random_vibrato_rate   = 16.0
+ :periodic_vibrato_amp  = 0.0025
+ :random_vibrato_amp    = 0.005
+ :noise_amount          = 0.0
+ :noise_freq            = 1000.0
+ :ind_noise_freq        = 10.0
+ :ind_noise_amount      = 0.0
+ :amp_noise_freq        = 20.0
+ :amp_noise_amount      = 0.0
+ :gliss_env             = [0, 0, 100, 0]
+ :gliss_amount          = 0.0
+ :fm1_env               = [0, 1, 25, 0.4, 75, 0.6, 100, 0]
+ :fm2_env               = [0, 1, 25, 0.4, 75, 0.6, 100, 0]
+ :fm3_env               = [0, 1, 25, 0.4, 75, 0.6, 100, 0]
+ :fm1_rat               = 1.0
+ :fm2_rat               = 3.0
+ :fm3_rat               = 4.0
+ :fm1_index             = false
+ :fm2_index             = false
+ :fm3_index             = false
+ :base                  = 1.0
+ :index_type            = :violin
+ :reverb_amount         = 0.01
+ :degree                = kernel_rand(90.0)
+ :distance              = 1.0
    Ruby: fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0)
   Guile: (fm-violin 0 1 440 0.1 :fm-index 2.0)
 Example: with_sound do fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0) end")
   def fm_violin_rb(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.5, *args)
-    fm_index              = get_args(args, :fm_index, 1.0)
-    amp_env               = get_args(args, :amp_env, [0, 0, 25, 1, 75, 1, 100, 0])
-    periodic_vibrato_rate = get_args(args, :periodic_vibrato_rate, 5.0)
-    random_vibrato_rate   = get_args(args, :random_vibrato_rate, 16.0)
-    periodic_vibrato_amp  = get_args(args, :periodic_vibrato_amp, 0.0025)
-    random_vibrato_amp    = get_args(args, :random_vibrato_amp, 0.005)
-    noise_amount          = get_args(args, :noise_amount, 0.0)
-    noise_freq            = get_args(args, :noise_freq, 1000.0)
-    ind_noise_freq        = get_args(args, :ind_noise_freq, 10.0)
-    ind_noise_amount      = get_args(args, :ind_noise_amount, 0.0)
-    amp_noise_freq        = get_args(args, :amp_noise_freq, 20.0)
-    amp_noise_amount      = get_args(args, :amp_noise_amount, 0.0)
-    gliss_env             = get_args(args, :gliss_env, [0, 0, 100, 0])
-    gliss_amount          = get_args(args, :gliss_amount, 0.0)
-    fm1_env               = get_args(args, :fm1_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
-    fm2_env               = get_args(args, :fm2_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
-    fm3_env               = get_args(args, :fm3_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
-    fm1_rat               = get_args(args, :fm1_rat, 1.0)
-    fm2_rat               = get_args(args, :fm2_rat, 3.0)
-    fm3_rat               = get_args(args, :fm3_rat, 4.0)
-    fm1_index             = get_args(args, :fm1_index, false)
-    fm2_index             = get_args(args, :fm2_index, false)
-    fm3_index             = get_args(args, :fm3_index, false)
-    base                  = get_args(args, :base, 1.0)
-    index_type            = get_args(args, :index_type, :violin)
-    rev_amount            = get_args(args, :reverb_amount, 0.01)
-    degree                = get_args(args, :degree, kernel_rand(90.0))
-    distance              = get_args(args, :distance, 1.0)
+    fm_index, amp_env, periodic_vibrato_rate, random_vibrato_rate = nil
+    periodic_vibrato_amp, random_vibrato_amp, noise_amount, noise_freq = nil
+    ind_noise_freq, ind_noise_amount, amp_noise_freq, amp_noise_amount = nil
+    gliss_env, gliss_amount, fm1_env, fm2_env, fm3_env, fm1_rat, fm2_rat, fm3_rat = nil
+    fm1_index, fm2_index, fm3_index, base, index_type, reverb_amount, degree, distance = nil
+    optkey(args, binding,
+           [:fm_index, 1.0],
+           [:amp_env, [0, 0, 25, 1, 75, 1, 100, 0]],
+           [:periodic_vibrato_rate, 5.0],
+           [:random_vibrato_rate, 16.0],
+           [:periodic_vibrato_amp, 0.0025],
+           [:random_vibrato_amp, 0.005],
+           [:noise_amount, 0.0],
+           [:noise_freq, 1000.0],
+           [:ind_noise_freq, 10.0],
+           [:ind_noise_amount, 0.0],
+           [:amp_noise_freq, 20.0],
+           [:amp_noise_amount, 0.0],
+           [:gliss_env, [0, 0, 100, 0]],
+           [:gliss_amount, 0.0],
+           [:fm1_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]],
+           [:fm2_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]],
+           [:fm3_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]],
+           [:fm1_rat, 1.0],
+           [:fm2_rat, 3.0],
+           [:fm3_rat, 4.0],
+           [:fm1_index, false],
+           [:fm2_index, false],
+           [:fm3_index, false],
+           [:base, 1.0],
+           [:index_type, :violin],
+           [:reverb_amount, 0.01],
+           [:degree, kernel_rand(90.0)],
+           [:distance, 1.0])
     frq_scl = hz2radians(freq)
     modulate = fm_index.nonzero?
     maxdev = frq_scl * fm_index
@@ -125,7 +132,10 @@ Example: with_sound do fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0) end")
                  make_rand_interp(amp_noise_freq, amp_noise_amount))
     fuzz = modulation = 0.0
     ind_fuzz = amp_fuzz = 1.0
-    run_instrument(start, dur, :reverb_amount, rev_amount, :degree, degree, :distance, distance) do
+    run_instrument(start, dur,
+                   :reverb_amount, reverb_amount,
+                   :degree, degree,
+                   :distance, distance) do
       fuzz = rand(fm_noi) if noise_amount.nonzero?
       vib = env(frqf) + triangle_wave(pervib) + rand_interp(ranvib)
       ind_fuzz = 1.0 + rand_interp(ind_noi) if ind_noi
@@ -144,25 +154,27 @@ Example: with_sound do fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0) end")
   end
 
   add_help(:jc_reverb_rb,
-           "jc_reverb_rb(start, dur, *args) \
- :low_pass = false
+           "jc_reverb_rb(*args) \
  :volume   = 1.0
- :amp_env  = false
  :delay1   = 0.013
  :delay2   = 0.011
  :delay3   = 0.015
  :delay4   = 0.017
+ :low_pass = false
  :double   = false
+ :amp_env  = false
 Chowning reverb")
-  def jc_reverb_rb(start, dur, *args)
-    low_pass = get_args(args, :low_pass, false)
-    volume   = get_args(args, :volume, 1.0)
-    amp_env  = get_args(args, :amp_env, false)
-    delay1   = get_args(args, :delay1, 0.013)
-    delay2   = get_args(args, :delay2, 0.011)
-    delay3   = get_args(args, :delay3, 0.015)
-    delay4   = get_args(args, :delay4, 0.017)
-    double   = get_args(args, :double, false)
+  def jc_reverb_rb(*args)
+    low_pass, volume, amp_env, delay1, delay2, delay3, delay4, double = nil
+    optkey(args, binding,
+           [:volume, 1.0],
+           [:delay1, 0.013],
+           [:delay2, 0.011],
+           [:delay3, 0.015],
+           [:delay4, 0.017],
+           [:low_pass, false],
+           [:double, false],
+           [:amp_env, false])
     chan2 = (@channels > 1)
     chan4 = (@channels == 4)
     if double and chan4
@@ -179,10 +191,15 @@ Chowning reverb")
     outdel2 = (chan2 ? make_delay((delay2 * @srate).round) : false)
     outdel3 = ((chan4 or double) ? make_delay((delay3 * @srate).round) : false)
     outdel4 = ((chan4 or (double and chan2)) ? make_delay((delay4 * @srate).round) : false)
-    envA = (amp_env ? make_env(:envelope, amp_env, :scaler, volume, :duration, dur) : false)
+    envA = if amp_env
+             dur = samples2seconds(ws_duration(@reverb_file_name)) + @decay_time
+             make_env(:envelope, amp_env, :scaler, volume, :duration, dur)
+           else
+             false
+           end
     comb_sum_1 = comb_sum = 0.0
     reverb_frame = make_frame(@channels)
-    run_reverb(start, dur) do |ho, i|
+    run_reverb() do |ho, i|
       allpass_sum = all_pass(allpass3, all_pass(allpass2, all_pass(allpass1, ho)))
       comb_sum_2, comb_sum_1 = comb_sum_1, comb_sum
       comb_sum = (comb(comb1, allpass_sum) + comb(comb2, allpass_sum) + \
@@ -239,35 +256,40 @@ vct2channel(v, 0, 22050, ins, 0)
 fmv2 = make_fm_violin(0, 1, 440, 0.5, :thunk?, false)
 map_channel(fmv2, 0, 22050, ins, 1)")
 def make_fm_violin(start, dur, freq, amp, *args)
-  thunk_p               = get_args(args, :thunk?, false)
-  fm_index              = get_args(args, :fm_index, 1.0)
-  amp_env               = get_args(args, :amp_env, [0, 0, 25, 1, 75, 1, 100, 0])
-  periodic_vibrato_rate = get_args(args, :periodic_vibrato_rate, 5.0)
-  random_vibrato_rate   = get_args(args, :random_vibrato_rate, 16.0)
-  periodic_vibrato_amp  = get_args(args, :periodic_vibrato_amp, 0.0025)
-  random_vibrato_amp    = get_args(args, :random_vibrato_amp, 0.005)
-  noise_amount          = get_args(args, :noise_amount, 0.0)
-  noise_freq            = get_args(args, :noise_freq, 1000.0)
-  ind_noise_freq        = get_args(args, :ind_noise_freq, 10.0)
-  ind_noise_amount      = get_args(args, :ind_noise_amount, 0.0)
-  amp_noise_freq        = get_args(args, :amp_noise_freq, 20.0)
-  amp_noise_amount      = get_args(args, :amp_noise_amount, 0.0)
-  gliss_env             = get_args(args, :gliss_env, [0, 0, 100, 0])
-  gliss_amount          = get_args(args, :gliss_amount, 0.0)
-  fm1_env               = get_args(args, :fm1_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
-  fm2_env               = get_args(args, :fm2_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
-  fm3_env               = get_args(args, :fm3_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
-  fm1_rat               = get_args(args, :fm1_rat, 1.0)
-  fm2_rat               = get_args(args, :fm2_rat, 3.0)
-  fm3_rat               = get_args(args, :fm3_rat, 4.0)
-  fm1_index             = get_args(args, :fm1_index, false)
-  fm2_index             = get_args(args, :fm2_index, false)
-  fm3_index             = get_args(args, :fm3_index, false)
-  base                  = get_args(args, :base, 1.0)
-  reverb_amount         = get_args(args, :reverb_amount, 0.01)
-  degree                = get_args(args, :degree, false)
-  degrees               = get_args(args, :degrees, false)
-  distance              = get_args(args, :distance, 1.0)
+    fm_index, amp_env, periodic_vibrato_rate, random_vibrato_rate = nil
+    periodic_vibrato_amp, random_vibrato_amp, noise_amount, noise_freq = nil
+    ind_noise_freq, ind_noise_amount, amp_noise_freq, amp_noise_amount = nil
+    gliss_env, gliss_amount, fm1_env, fm2_env, fm3_env, fm1_rat, fm2_rat, fm3_rat = nil
+    fm1_index, fm2_index, fm3_index, base, index_type, reverb_amount, degree, distance = nil
+    optkey(args, binding,
+           [:fm_index, 1.0],
+           [:amp_env, [0, 0, 25, 1, 75, 1, 100, 0]],
+           [:periodic_vibrato_rate, 5.0],
+           [:random_vibrato_rate, 16.0],
+           [:periodic_vibrato_amp, 0.0025],
+           [:random_vibrato_amp, 0.005],
+           [:noise_amount, 0.0],
+           [:noise_freq, 1000.0],
+           [:ind_noise_freq, 10.0],
+           [:ind_noise_amount, 0.0],
+           [:amp_noise_freq, 20.0],
+           [:amp_noise_amount, 0.0],
+           [:gliss_env, [0, 0, 100, 0]],
+           [:gliss_amount, 0.0],
+           [:fm1_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]],
+           [:fm2_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]],
+           [:fm3_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]],
+           [:fm1_rat, 1.0],
+           [:fm2_rat, 3.0],
+           [:fm3_rat, 4.0],
+           [:fm1_index, false],
+           [:fm2_index, false],
+           [:fm3_index, false],
+           [:base, 1.0],
+           [:index_type, :violin],
+           [:reverb_amount, 0.01],
+           [:degree, kernel_rand(90.0)],
+           [:distance, 1.0])
   frq_scl = hz2radians(freq)
   modulate = fm_index.nonzero?
   maxdev = frq_scl * fm_index
@@ -330,7 +352,7 @@ def make_fm_violin(start, dur, freq, amp, *args)
     end
     env(ampf) * amp_fuzz * oscil(carrier, vib + ind_fuzz * modulation)
   end
-  if thunk_p
+  if get_args(args, :thunk?, false)
     # returns a thunk for vct_map!()
     lambda do | | fnc.call(0) end
   else

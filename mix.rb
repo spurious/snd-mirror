@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Changed: Fri Aug 04 02:02:21 CEST 2006
+# Changed: Fri Nov 03 22:29:23 CET 2006
 
 # Commentary:
 #
@@ -23,10 +23,10 @@
 #
 #  mix_properties(id)
 #  set_mix_properties(id, new_val)
-#  mix_property(key, id)
-#  set_mix_property(key, val, id)
-#  mix_name(id)
-#  set_mix_name(id, name)
+#  remove_mix_properties(id)
+#  mix_property(id, key)
+#  set_mix_property(id, key, val)
+#  remove_mix_property(id, key)
 #  mix_name2id(name)
 #  mix_click_sets_amp
 #
@@ -41,8 +41,11 @@
 #
 #  track_properties(id)
 #  set_track_properties(id, new_val)
-#  track_property(key, id)
-#  set_track_property(key, val, id)
+#  remove_track_properties(id)
+#  track_property(id, key)
+#  set_track_property(id, key, val)
+#  remove_track_property(id, key)
+#  track_name2id(name)
 #  mix_click_info(id)
 #
 # module Mixer_matrix (see mixer.scm)
@@ -302,17 +305,17 @@ reset $mix_release_hook to cancel")
   end
 
   add_help(:mix_property,
-           "mix_property(key, id) \
+           "mix_property(id, key) \
 returns the value associated with 'key' in the given mix's property list, or false")
-  def mix_property(key, id)
+  def mix_property(id, key)
     Snd.raise(:no_such_mix, id) unless mix?(id)
     hash?(h = mix_properties(id)) and h[key]
   end
 
   add_help(:set_mix_property,
-           "set_mix_property(key, val, id) \
+           "set_mix_property(id, key, val) \
 sets the value 'val' to 'key' in the given mix's property list")
-  def set_mix_property(key, val, id)
+  def set_mix_property(id, key, val)
     Snd.raise(:no_such_mix, id) unless mix?(id)
     unless hash?(h = mix_properties(id)) and h.store(key, val)
       $all_mix_properties.push(id)
@@ -321,9 +324,9 @@ sets the value 'val' to 'key' in the given mix's property list")
   end
 
   add_help(:remove_mix_property,
-           "remove_mix_property(key, id) \
+           "remove_mix_property(id, key) \
 removes the key-value pair in the given mix's property list")
-  def remove_mix_property(key, id)
+  def remove_mix_property(id, key)
     Snd.raise(:no_such_mix, id) unless mix?(id)
     if hash?(h = mix_properties(id))
       h.delete(key)
@@ -338,28 +341,33 @@ removes the key-value pair in the given mix's property list")
   end
 =end
 
-  def mix_name(id)
-    mix_property(:name, id)
-  end
-
-  def set_mix_name(id, name)
-    set_mix_property(:name, name, id)
-  end
-
+  add_help(:mix_name2id,
+           "mix_name2id(name)  returns the mix id associated with NAME")
   def mix_name2id(name)
-    (mixes or []).detect do |mx| mix_name(mx) == name end or Snd.raise(:no_such_mix, name)
+    callcc do |ret|
+      Snd.sounds.each do |snd|
+        channels(snd).times do |chn|
+          mixes(snd, chn).each do |m|
+            if mix_name(m) == name
+              ret.call(m)
+            end
+          end
+        end
+      end
+      :no_such_mix
+    end
   end
 
   def mix_click_sets_amp
     $mix_click_hook.add_hook!(get_func_name) do |id|
-      unless mix_property(:zero, id)
+      unless mix_property(id, :zero)
         amps = (0...mix_chans(id)).map do |i| mix_amp(id, i) end
-        set_mix_property(:amps, amps, id)
+        set_mix_property(id, :amps, amps)
         mix_chans(id).times do |i| set_mix_amp(id, i, 0.0) end
-        set_mix_property(:zero, true, id)
+        set_mix_property(id, :zero, true)
       else
-        (mix_property(:amps, id) or []).each_with_index do |amp, i| set_mix_amp(id, i, amp) end
-        set_mix_property(:zero, false, id)
+        (mix_property(id, :amps) or []).each_with_index do |amp, i| set_mix_amp(id, i, amp) end
+        set_mix_property(id, :zero, false)
       end
       true
     end
@@ -509,17 +517,17 @@ filters track data using FIR filter coeffs: filter_track(track-id, [0.1, 0.2, 0.
   end
 
   add_help(:track_property,
-           "track_property(key, id) \
+           "track_property(id, key) \
 returns the value associated with 'key' in the given track's property list, or false")
-  def track_property(key, id)
+  def track_property(id, key)
     Snd.raise(:no_such_track, id) unless track?(id)
     hash?(h = track_properties(id)) and h[key]
   end
 
   add_help(:set_track_property,
-           "set_track_property(key, val, id) \
+           "set_track_property(id, key, val) \
 sets the value 'val' to 'key' in the given track's property list")
-  def set_track_property(key, val, id)
+  def set_track_property(id, key, val)
     Snd.raise(:no_such_track, id) unless track?(id)
     unless hash?(h = track_properties(id)) and h.store(key, val)
       $all_track_properties.push(id)
@@ -528,14 +536,27 @@ sets the value 'val' to 'key' in the given track's property list")
   end
 
   add_help(:remove_track_property,
-           "remove_track_property(key, id) \
+           "remove_track_property(id, key) \
 removes the key-value pair in the given track's property list")
-  def remove_track_property(key, id)
+  def remove_track_property(id, key)
     Snd.raise(:no_such_track, id) unless track?(id)
     if hash?(h = track_properties(id))
       h.delete(key)
     else
       $all_track_properties.delete(id)
+    end
+  end
+
+  add_help(:track_name2id,
+           "track_name2id(name)  returns the track id associated with NAME")
+  def track_name2id(name)
+    callcc do |ret|
+      Snd.tracks.each do |trk|
+        if track_name(trk) == name
+          ret.call(trk)
+        end
+      end
+      :no_such_track
     end
   end
   
@@ -594,7 +615,9 @@ include Mix
 # 
 # === MIXER.SCM ===
 # 
-require "matrix"
+with_silence do
+  require "matrix"
+end
 
 class Matrix
   with_silence do
@@ -760,7 +783,7 @@ module Mixer_matrix
     len = mx.length
     nmx = make_mixer(len)
     len.times do |i|
-      len.times do |i|
+      len.times do |j|
         mixer_set!(nmx, i, j, mixer_ref(mx, i, j))
       end
     end

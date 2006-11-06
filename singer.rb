@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Apr 23 13:07:53 CEST 2005
-# Last: Mon Apr 25 04:23:53 CEST 2005
+# Changed: Sat Oct 14 02:37:59 CEST 2006
 
 # Commentary:
 #
@@ -67,13 +67,13 @@ def singer(start, amp, data)
   shps.each_with_index do |shp, i|
     shp[1..-1].each_with_index do |val, j| shape_data[j + i] = val end
   end
-  i = 0
+  ii = 0
   glts.each do |glt|
-    glot_datai[i] = 0.0
-    glot_datai[i + 1] = glt[0]
-    glot_datar[i] = glt[1]
-    glot_datar[i + 1] = glt[2]
-    i += 2
+    glot_datai[ii] = 0.0
+    glot_datai[ii + 1] = glt[0]
+    glot_datar[ii] = glt[1]
+    glot_datar[ii + 1] = glt[2]
+    ii += 2
   end
   table_size = 1000                               # size of glottis wave-table
   noseposition = 3
@@ -189,10 +189,10 @@ def singer(start, amp, data)
         last_sfd = 0
       else
         new_sfd = last_sfd + tractlength + 8
-        k = new_sfd
+        kk = new_sfd
         last_sfd.upto(new_sfd - 1) do |j|
-          if (shape_data[j] - shape_data[k]).abs > 0.001 then new_tract = 1 end
-          k += 1
+          if (shape_data[j] - shape_data[kk]).abs > 0.001 then new_tract = 1 end
+          kk += 1
         end
         last_sfd = new_sfd
       end
@@ -204,8 +204,8 @@ def singer(start, amp, data)
       next_offset = change_times[offset + 1].to_i
     end
     if new_tract.nonzero?
-      j = last_sfd - 1
-      target_radii.map! do |val| shape_data[j += 1] end
+      jj = last_sfd - 1
+      target_radii.map! do |val| shape_data[jj += 1] end
       if first_tract == 1
         radii.map_with_index! do |val, j| target_radii[j] end
       end

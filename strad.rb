@@ -7,7 +7,8 @@
 # CLM version by Juan Reyes
 #
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Sun Mar 13 14:55:49 CET 2005
+# Created: Sun Mar 16 02:46:52 CET 2003
+# Changed: Sat Oct 14 02:31:40 CEST 2006
 
 require "examp"
 require "ws"
@@ -40,15 +41,17 @@ add_help(:bow, "bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
         :dist    0.0025
         :reverb  0.005")
 def bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
-  bufsize  = get_args(args, :bufsize, 2205)
-  fb       = get_args(args, :fb, 0.2)
-  vb       = get_args(args, :vb, 0.05)
-  bp       = get_args(args, :bp, 0.08)
-  inharm   = get_args(args, :inharm, 0.1)
-  ampenv   = get_args(args, :ampenv, [0, 0, 20, 1, 48, 1, 92, 0, 100, 0])
-  degree   = get_args(args, :degree, 45)
-  dist     = get_args(args, :dist, 0.0025)
-  reverb   = get_args(args, :reverb, 0.005)
+  bufsize, fb, vb, bp, inharm, ampenv, degree, dist, reverb = nil
+  optkey(args, binding,
+         [:bufsize, 2205],
+         [:fb, 0.2],
+         [:vb, 0.05],
+         [:bp, 0.08],
+         [:inharm, 0.1],
+         [:ampenv, [0, 0, 20, 1, 48, 1, 92, 0, 100, 0]],
+         [:degree, 45],
+         [:dist, 0.0025],
+         [:reverb, 0.005])
   beg, len = times2samples(start, dur)
   ampf     = make_env(:envelope, ampenv, :scaler, amp, :start, beg, :end, len)
   dcblocker  = DCBlock.new
@@ -87,7 +90,7 @@ def bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
   a2nt = 3.2555068e-001
   # initializations for the filters
   xm1bt = xm2bt = xm1nt = xm2nt = ym1bt = ym2bt = ym1nt = ym2nt = xm1b = xm2b = ym1b = ym2b = 0.0
-  xm1n = xm2n = ym1n = ym2n = ynb = ynbt = ynn = ynnt = ya1nb = ynba1 = y1nb = vh = 0.0
+  xm1n = xm2n = ym1n = ym2n = ynb = ynbt = ynn = ynnt = ya1nb = ynba1 = y1nb = 0.0
   # friedlander friction inits
   aa = bb1 = cc1 = delta1 = bb2 = cc2 = delta2 = v = v1 = v2 = rhs = lhs = vtemp = f = 0.0
   string_impedance = 0.55
@@ -253,10 +256,10 @@ def bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
                                ((vinutt[indexrt] * alphart * (alphart - 1)) / 2.0)
     # biquad filters
     bowfilt.call(inharm)
-    vh = ynn + y1nb + ynnt + ynbt
+    vh1 = ynn + y1nb + ynnt + ynbt
     # now solve set of simultaneous equations for v and f
-    friedlander.call(vh)
-    f = zslope * (v - vh)
+    friedlander.call(vh1)
+    f = zslope * (v - vh1)
     xnnt = ynbt + (f / (2.0 * string_impedancet))
     xnbt = ynnt + (f / (2.0 * string_impedancet))
     updl = (i + posl + bufsize) % bufsize

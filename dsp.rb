@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Thu Aug 03 01:03:18 CEST 2006
+# Changed: Wed Nov 01 14:36:21 CET 2006
 
 # Commentary:
 #
@@ -701,7 +701,7 @@ calls fft, sets all phases to 0, and un-ffts")
       r1 = 1.0 / @r
       modphase = @ratio * @phase
       result = exp((0.5 * @index * (@r + r1) * cos(modphase)) -
-                     (0.5 * log(bess_i0(@index * (@r + r1))))) *
+                     (0.5 * log(bes_i0(@index * (@r + r1))))) *
         sin(@phase + 0.5 * @index * (@r - r1) * sin(modphase))
       @phase += input + @frequency
       result
@@ -1410,7 +1410,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
     incr = hz2radians(freq)
     sw = 0.0
     cw = 0.0
-    reader = make_sample_reader(beg)
+    reader = make_sample_reader(beg, false, false, 1, false)
     dur.times do |i|
       samp = next_sample(reader)
       sw += samp * sin(i * incr)

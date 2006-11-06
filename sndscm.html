@@ -8244,7 +8244,7 @@ It implements a physical model of a bowed string with stiffness.
 
 <!-- main-index |vdoc:fm-violin -->
 
-<p>The fm violin was my favorite instrument while working in the 70's and 80's,
+<p>The <A NAME="fmviolin">fm violin</A> was my favorite instrument while working in the 70's and 80's,
 primarily on the Samson box.  It was developed in Mus10 (ca 1977) based on ideas of John Chowning.
 </p>
 <pre>
@@ -9409,7 +9409,9 @@ and returns either the number or the frequency associated with that pitch:
     <em class=listener>&gt;</em> <em class=typing>(-&gt;frequency 'cs5)</em>
     <em class=listener>554.365261953744</em>
 </pre>
-<p><b>-&gt;sample</b> returns a sample number given a time in seconds:
+<p>It's optional second argument can be #t to get integer ratios, rather than
+the default equal temperment.
+<b>-&gt;sample</b> returns a sample number given a time in seconds:
 </p>
 <pre>
     <em class=listener>&gt;</em> <em class=typing>(-&gt;sample 1.0)</em>

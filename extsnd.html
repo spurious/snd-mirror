@@ -1366,7 +1366,8 @@ useful hook-related functions.
 <p>
 In the following list of hooks, the arguments after the hook name refer to the arguments to the functions invoked by
 the hook.  That is, <code>after-apply-controls-hook (snd)</code> means that the functions on the
-after-apply-controls-hook list each take one argument, a sound index.  If the argument list is followed by some
+<a class=quiet href="#afterapplycontrolshook">after-apply-controls-hook</a> list each take one argument, a sound index.  
+If the argument list is followed by some
 indication such as "[or]", that means the various hook function values are or-d together.
 </p>
 
@@ -2852,9 +2853,9 @@ By defining a new vector type, named vct, and providing a package
 of old-style array-processing calls upon that type, we can speed up many
 operations by a factor of 30 -- enough of a difference to warrant
 the added complexity.  
-make-vct creates a new vct object.  It is freed by the
+<a class=quiet href="#makevct">make-vct</a> creates a new vct object.  It is freed by the
 garbage collector when it can't be referenced any further.  To get 
-an element of a vct, use vct-ref; similarly vct-set!
+an element of a vct, use <a class=quiet href="#vctref">vct-ref</a>; similarly <a class=quiet href="#vctset">vct-set!</a>
 sets an element.
 Once created, a vct can be passed to a variety of built-in
 functions:</p>
@@ -3771,29 +3772,32 @@ which can sometimes require that it open, read, and close a sound file.
 The result is that sample can bring your code
 to a grinding halt.  There are two alternatives, leaving aside the scanning
 and mapping functions mentioned below.  One involves keeping the buffer of
-data around explicitly (channel-&gt;vct), and the other involves the
+data around explicitly (<a class=quiet href="#channel_to_vct">channel-&gt;vct</a>), and the other involves the
 use of a special object known as a sample-reader.  The sample-reader
 returns the next sample in its sound each time it is called; this kind
 of access is sometimes called an "enumerator" (Ruby) or perhaps "iterator" (Gtk+).
-The buffer approach (channel-&gt;vct in <a href="grfsnd.html#expsrc">expsrc</a>)
+The buffer approach (<a class=quiet href="#channel_to_vct">channel-&gt;vct</a> in <a href="grfsnd.html#expsrc">expsrc</a>)
 is better if you're jumping around in the data, the sample-by-sample approach if you're treating
 the data as a sequence of samples.
 To get a sample reader,
-you create a reader (via make-sample-reader) giving it the start position, the sound and channel
-to read, and the initial read direction, then get data via read-sample (which remembers the
-read direction passed to make-sample-reader), or next-sample (read forward) and
-previous-sample (read backward); when done, you can close the reader with free-sample-reader, 
-but it's not necessary; the
-garbage collector will take care of it if you forget.
+you create a reader (via <a class=quiet href="#makesamplereader">make-sample-reader</a>) giving it the start position, the sound and channel
+to read, and the initial read direction, then get data via <a class=quiet href="#readsample">read-sample</a> (which remembers the
+read direction passed to <a class=quiet href="#makesamplereader">make-sample-reader</a>), 
+or <a class=quiet href="#nextsample">next-sample</a> (read forward) and
+<a class=quiet href="#previoussample">previous-sample</a> (read backward); 
+when done, you can close the reader with <a class=quiet href="#freesamplereader">free-sample-reader</a>, 
+but it's usually not necessary; the
+garbage collector will take care of it if you forget (but, sigh, the GC can be dilatory at times).
 </p>
 
 <p>There is a similar set of functions giving access to the mix data.
-make-mix-sample-reader returns a mix reader for the desired mix,
-mix-sample-reader? returns #t if its argument in a mix sample reader,
-and read-mix-sample returns the next sample (before it is mixed into
+<a class=quiet href="#makemixsamplereader">make-mix-sample-reader</a> returns a mix reader for the desired mix,
+<a class=quiet href="#mixsamplereaderQ">mix-sample-reader?</a> returns #t if its argument in a mix sample reader,
+and <a class=quiet href="#readmixsample">read-mix-sample</a> returns the next sample (before it is mixed into
 the output).
-Mixes can be collected into tracks, so there are also make-track-sample-reader, track-sample-reader?,
-and read-track-sample.
+Mixes can be collected into tracks, so there are also <a class=quiet href="#maketracksamplereader">make-track-sample-reader</a>, 
+<a class=quiet href="#tracksamplereaderQ">track-sample-reader?</a>,
+and <a class=quiet href="#readtracksample">read-track-sample</a>.
 </p>
 
 <!-- -------------------------------- SAMPLE-READER TABLE -------------------------------- -->
@@ -3917,7 +3921,7 @@ can read external sounds without going to the trouble of loading them into Snd.
 
 <!-- read-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readsample">read-sample</a> (obj)</code></td></tr>
-<tr><td></td><td>return next sample (reading in the direction set by make-sample-reader) from sample-reader <i>obj</i>.</td></tr>
+<tr><td></td><td>return next sample (reading in the direction set by <a class=quiet href="#makesamplereader">make-sample-reader</a>) from sample-reader <i>obj</i>.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- read-track-sample -->
@@ -4005,8 +4009,10 @@ If *reverb* is a snd-&gt;sample generator, for example,
 <A NAME="markstuff"></a>
 
 <p>A mark is an object that refers to a particular sample.
-Each mark has an associated sample number (mark-sample), name (mark-name), sync value (mark-sync), and
-a globally unique id number (returned by find-mark or add-mark).  See <a href="snd.html#marks">Marks</a> in snd.html
+Each mark has an associated sample number (<a class=quiet href="#marksample">mark-sample</a>), 
+name (<a class=quiet href="#markname">mark-name</a>), sync value (<a class=quiet href="#marksync">mark-sync</a>), and
+a globally unique id number (returned by <a class=quiet href="#findmark">find-mark</a> or <a class=quiet href="#addmark">add-mark</a>).  
+See <a href="snd.html#marks">Marks</a> in snd.html
 for an overview and key bindings associated with marks.
 </p>
 
@@ -4450,17 +4456,17 @@ feedback:
 (define cellos '())
 
 (define (violin beg dur freq amp)
-  (let ((id (mix (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> ()                         ; write instrument output to temp sound
-   	           (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 dur (-&gt;frequency freq) amp)) ; our favorite FM instrument
-		 (-&gt;sample beg) 0 #f #f                      ; mix into the current sound
-		 #t #t)))                                    ; with tag and auto-delete
-    (if (symbol? freq)                                       ; set mix name to reflect pitch
+  (let ((id (mix (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> ()                            ; write instrument output to temp sound
+   	           (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 dur (-&gt;frequency freq #t) amp)) ; our favorite FM instrument
+		 (-&gt;sample beg) 0 #f #f                         ; mix into the current sound
+		 #t #t)))                                       ; with tag and auto-delete
+    (if (symbol? freq)                                          ; set mix name to reflect pitch
 	(set! (<em class=red>mix-name</em> id) (symbol-&gt;string freq)))
-    (set! violins (cons id violins))))                       ; save list of violin mixes
+    (set! violins (cons id violins))))                          ; save list of violin mixes
 
-(define (cello beg dur freq amp)                             ; similar to violin, but for cello notes
+(define (cello beg dur freq amp)                                ; similar to violin, but for cello notes
   (let ((id (mix (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> () 
-		   (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 dur (-&gt;frequency freq) amp :fm-index 1.5))
+		   (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 dur (-&gt;frequency freq #t) amp :fm-index 1.5))
 	    (-&gt;sample beg) 0 #f #f 
 	    #t #t)))
     (if (symbol? freq)
@@ -4469,8 +4475,8 @@ feedback:
 
 (<a class=quiet href="#newsound">new-sound</a> "test.snd" :channels 1)       ; open a new sound in Snd
 
-(<a class=quiet href="#asoneedit">as-one-edit
-</a> (lambda ()                              ; play a familiar tune...
+(<a class=quiet href="#asoneedit">as-one-edit</a>
+  (lambda ()                              ; play a familiar tune...
    (violin 0 1 'e4 .2)  (violin 1 1.5 'g4 .2)  (violin 2.5 .5 'g3 .2)
    (cello  0 1 'c3 .2)  (cello  1 1.5 'e3 .2)  (cello  2.5 .5 'g2 .2)
 
@@ -4483,17 +4489,19 @@ feedback:
    (violin 9 3 'd4 .2)
    (cello  9 3 'b2 .2)
 
-   ;; set up the cello track
-   (for-each (lambda (id) (set! (<a class=quiet href="#mixtagy">mix-tag-y</a> id) 40)) cellos)
-   (let ((trk (apply <a class=quiet href="#maketrack">make-track</a> (reverse cellos))))
-     (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 1 0))       ; cellos are green
-     (set! (<a class=quiet href="#trackname">track-name</a> trk) "cello"))
+   (let ((overall-trk (make-track))) ; for global amplitude envelopes, transpositions etc
 
-   ;; set up the violin track
-   (for-each (lambda (id) (set! (<a class=quiet href="#mixtagy"">mix-tag-y</a> id) 10)) violins)
-   (let ((trk (apply <a class=quiet href="#maketrack">make-track</a> (reverse violins))))
-     (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 0 1))       ; violins are blue
-     (set! (<a class=quiet href="#trackname">track-name</a> trk) "violin"))
+     (let ((trk (apply <a class=quiet href="#maketrack">make-track</a> (reverse cellos))))
+       (set! (<a class=quiet href="#tracktagy">track-tag-y</a> trk) 40)
+       (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 1 0))     ; cellos are green
+       (set! (<a class=quiet href="#trackname">track-name</a> trk) "cello")
+       (set! (<a class=quiet href="#tracktrack">track-track</a> trk) overall-trk))
+
+     (let ((trk (apply <a class=quiet href="#maketrack">make-track</a> (reverse violins))))
+       (set! (<a class=quiet href="#tracktagy">track-tag-y</a> trk) 10)
+       (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 0 1))     ; violins are blue
+       (set! (<a class=quiet href="#trackname">track-name</a> trk) "violin")
+       (set! (<a class=quiet href="#tracktrack">track-track</a> trk) overall-trk)))
                                                        ; forget the reverb
                                                        ; and you'll be blue too
    ))
@@ -4784,7 +4792,7 @@ of the tag).
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackname">track-name</a> (track-id)</code></td></tr>
 <tr><td></td><td>
 track's name.  See also <a href="sndscm.html#trackname_to_id">track-name-&gt;id</a>, and the example
-under <a href="#mixname_to_id">mix-name-&gt;id</a>.
+under <a href="sndscm.html#mixname_to_id">mix-name-&gt;id</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -5426,7 +5434,7 @@ The following substitutions can be made:
 <a href="grfsnd.html#applyladspa">apply-ladspa</a> reader dat dur origin              <a href="grfsnd.html#ladspachannel">ladspa-channel</a> dat beg dur s c e
 </small>
 </pre>
-<p><small>Another case that might deserve "regularization" is make-sample-reader which confusingly interpolates
+<p><small>Another case that might deserve "regularization" is <a class=quiet href="#makesamplereader">make-sample-reader</a> which confusingly interpolates
 the direction argument between the channel and edit-position:
 </small></p>
 <pre><small>   (define* (read-channel #:optional (beg 0) snd chn edpos (direction 1))

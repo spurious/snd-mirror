@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Sep 16 01:27:09 CEST 2003
-# Changed: Tue Aug 01 02:59:32 CEST 2006
+# Changed: Thu Oct 26 23:26:20 CEST 2006
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
@@ -63,7 +63,9 @@ require "ws"
 require "spectr"
 require "env"
 include Math
-require "matrix"
+with_silence do
+  require "matrix"
+end
 
 def normalize_partials(partials)
   sum = 0.0
@@ -920,7 +922,7 @@ end
 # reverb_factor controls the length of the decay -- it should not exceed (/ 1.0 .823)
 # lp_coeff controls the strength of the low pass filter inserted in the feedback loop
 # volume can be used to boost the reverb output
-def nrev_rb(start, dur, *args)
+def nrev_rb(*args)
   reverb_factor, lp_coeff, volume = nil
   optkey(args, binding,
          [:reverb_factor, 1.09],
@@ -958,7 +960,7 @@ def nrev_rb(start, dur, *args)
   allpass7 = (chan4 ? make_all_pass(-0.7, 0.7, dly_len[13]) : nil)
   allpass8 = (chan4 ? make_all_pass(-0.7, 0.7, dly_len[14]) : nil)
   reverb_frame = make_frame(@channels)
-  run_reverb(start, dur) do |val, i|
+  run_reverb() do |val, i|
     rev = volume * val
     outrev = all_pass(allpass4,
                       one_pole(low,
@@ -1158,7 +1160,7 @@ end
 =end
 
 # JL-REVERB
-def jl_reverb(start, dur, *args)
+def jl_reverb(*args)
   allpass1 = make_all_pass(-0.7, 0.7, 2111)
   allpass2 = make_all_pass(-0.7, 0.7,  673)
   allpass3 = make_all_pass(-0.7, 0.7,  223)
@@ -1169,7 +1171,7 @@ def jl_reverb(start, dur, *args)
   outdel1 = make_delay((0.013 * @srate).round)
   outdel2 = (@channels > 1 ? make_delay((0.011 * @srate).round) : false)
   reverb_frame = make_frame(@channels)
-  run_reverb(start, dur) do |ho, i|
+  run_reverb() do |ho, i|
     allpass_sum = all_pass(allpass3, all_pass(allpass2, all_pass(allpass1, ho)))
     comb_sum = (comb(comb1, allpass_sum) + comb(comb2, allpass_sum) + \
                 comb(comb3, allpass_sum) + comb(comb4, allpass_sum))

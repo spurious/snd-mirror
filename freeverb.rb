@@ -1,7 +1,8 @@
 # freeverb.rb -- CLM -> Snd/Ruby translation of freeverb.ins
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Wed Mar 23 23:08:12 CET 2005
+# Created: Tue Apr 08 03:53:20 CEST 2003
+# Changed: Wed Aug 30 19:28:06 CEST 2006
 
 # Original notes of Fernando Lopez-Lezcano
 
@@ -68,7 +69,7 @@ unless provided? :sndins
   end
 end
 
-add_help(:freeverb_rb, "freeverb_rb(start, dur, *args)
+add_help(:freeverb_rb, "freeverb_rb(*args)
         :room_decay,        0.5,
         :damping,           0.5,
         :global,            0.3,
@@ -83,19 +84,22 @@ add_help(:freeverb_rb, "freeverb_rb(start, dur, *args)
         :stereo_spread,     23,
 with_sound(:reverb, :freeverb_rb) do fm_violin_rb(0, 1, 440, 0.3) end
 This is the Ruby version of freeverb.  For a faster one see sndins.so.")
-def freeverb_rb(start = 0, dur = 1, *args)
-  room_decay        = get_args(args, :room_decay, 0.5)
-  damping           = get_args(args, :damping, 0.5)
-  global            = get_args(args, :global, 0.3)
-  predelay          = get_args(args, :predelay, 0.03)
-  output_gain       = get_args(args, :output_gain, 1.0)
-  output_mixer      = get_args(args, :output_mixer, nil)
-  scale_room_decay  = get_args(args, :scale_room_decay, 0.28)
-  offset_room_decay = get_args(args, :offset_room_decay, 0.7)
-  combtuning        = get_args(args, :combtuning, [1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617])
-  allpasstuning     = get_args(args, :allpasstuning, [556, 441, 341, 225])
-  scale_damping     = get_args(args, :scale_damping, 0.4)
-  stereo_spread     = get_args(args, :stereo_spread, 23)
+def freeverb_rb(*args)
+  room_decay, damping, global, predelay, output_gain, output_mixer = nil
+  scale_room_decay, offset_room_decay, combtuning, allpasstuning, scale_damping, stereo_spread = nil
+  optkey(args, binding,
+         [:room_decay, 0.5],
+         [:damping, 0.5],
+         [:global, 0.3],
+         [:predelay, 0.03],
+         [:output_gain, 1.0],
+         [:output_mixer, nil],
+         [:scale_room_decay, 0.28],
+         [:offset_room_decay, 0.7],
+         [:combtuning, [1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617]],
+         [:allpasstuning, [556, 441, 341, 225]],
+         [:scale_damping, 0.4],
+         [:stereo_spread, 23])
   out_mix = (mixer?(output_mixer) ? output_mixer : make_mixer(@channels))
   out_buf = make_frame(@channels)
   out_gain = output_gain
@@ -162,7 +166,7 @@ def freeverb_rb(start = 0, dur = 1, *args)
       allpasses[c][i] = make_all_pass(:size, l, :feedforward, -1, :feedback, 0.5)
     end
   end
-  run_reverb(start, dur, :frames) do |f_in, i|
+  run_reverb(:frames) do |f_in, i|
     if @reverb_channels > 1
       @channels.times do |c|
         frame_set!(f_in, c, delay(predelays[c], frame_ref(f_in, c)))

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Changed: Fri Jul 28 20:49:14 CEST 2006
+# Changed: Thu Oct 19 23:32:09 CEST 2006
 
 # Commentary:
 #
@@ -54,25 +54,20 @@ require "hooks"
 
 $effects_menu = false           # for prefs
 
-# unless $selection_changed_hook.member?("selection-buttons-effects-hook")
-#  $selection_changed_hook.add_hook!("selection-buttons-effects-hook") do | |
-#    flag = selection?
-#    $selection_buttons.each do |w| set_sensitive(w, flag) end
-#  end
-#  
-#  mark_hook_proc = lambda do
-#    flag = marks?
-#    $mark_buttons.each do |w| set_sensitive(w, flag) end
-#  end
-#  
-#  $mark_hook.add_hook!("mark-buttons-effects-hook") do |id, snd, chn, reason|
-#    mark_hook_proc.call
-#  end
-#
-#  $after_graph_hook.add_hook!("mark-buttons-effects-hook") do |snd, chn|
-#    mark_hook_proc.call
-#  end
-#end
+unless $mark_hook.member?("mark-buttons-effects-hook")
+  mark_hook_proc = lambda do
+    flag = marks?
+    $mark_buttons.each do |w| set_sensitive(w, flag) end
+  end
+  
+  $mark_hook.add_hook!("mark-buttons-effects-hook") do |id, snd, chn, reason|
+    mark_hook_proc.call
+  end
+
+  $after_graph_hook.add_hook!("mark-buttons-effects-hook") do |snd, chn|
+    mark_hook_proc.call
+  end
+end
 
 module Effects
   def plausible_mark_samples
@@ -1260,11 +1255,11 @@ Move the sliders to set the filter cutoff frequency and resonance.",
             vals = make_vct(@size)
             lambda do |val|
               if n == @size
-                @size.times do |i|
-                  if vals[i] >= 0.0
-                    vals[i] = mx
+                @size.times do |ii|
+                  if vals[ii] >= 0.0
+                    vals[ii] = mx
                   else
-                    vals[i] = mn
+                    vals[ii] = mn
                   end
                 end
                 n, mx, mn = 0, 0.0, 0.0

@@ -36665,6 +36665,9 @@ EDITS: 1
 	      (close-sound hi1)
 	      (close-sound hi2))
 	    (close-sound ind))
+	  (if (file-exists? "hi1.snd") (delete-file "hi1.snd"))
+	  (if (file-exists? "hi2.snd") (delete-file "hi2.snd"))
+	  (if (file-exists? "ho2.snd") (delete-file "ho2.snd"))
 
 	  (let ((ind (new-sound :size 1000)))
 	    (map-channel (lambda (y) 0.5))
@@ -60871,7 +60874,7 @@ EDITS: 1
 				      (n vct-5))
 				    (lambda args (car args)))))
 			(if (not (eq? tag 'wrong-type-arg))
-			    (snd-display ";[0] ~D: mix procs ~A: ~A" ctr n tag))
+			    (snd-display ";[0] ~D: mix procs ~A: ~A (~A)" ctr n tag vct-5))
 			(set! ctr (+ ctr 1))))
 		    (list mix-amp mix-amp-env mix-tag-position mix-chans mix-track mix-frames mix-locked? mix-inverted?
 			  mix-name mix-position mix-home mix-speed mix-speed-style mix-tag-y))) 
@@ -60913,7 +60916,7 @@ EDITS: 1
 				      (set! (n id) vct-5))
 				    (lambda args (car args)))))
 			(if (not (eq? tag 'wrong-type-arg))
-			    (snd-display ";[3] ~D: mix procs ~A: ~A" ctr n tag))
+			    (snd-display ";[3] ~D: mix procs ~A: ~A (~A)" ctr n tag vct-5))
 			(set! ctr (+ ctr 1))))
 		    (list mix-tag-position mix-chans mix-track mix-locked? mix-inverted?
 			  mix-name mix-position mix-home mix-speed mix-speed-style mix-tag-y))
@@ -62077,7 +62080,7 @@ EDITS: 1
 (display (format "~%;times: ~A~%;total: ~A~%" timings (inexact->exact (round (- (real-time) overall-start-time)))))
 
 ;2-Nov-06:  #(17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975) 492
-;26-Oct-06: #(17 16 41 28 957 45742 57537 75 73344 2049 527 1140 631 1007 22926 1323 13424 271 252 2068 1282 952 6571 6898 3836 4682 303 0 567452) 8165
+;4-Nov-06:  #(17 16 35 28 973 45681 55948 73 81440 1941 483 1132 560 946 954 1185 13741 247 230 2714 1221 851 6188 6163 3885 4413 278 0 539195) 7717
 
 (let ((best-times #(17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975)))
   (do ((i 0 (1+ i)))

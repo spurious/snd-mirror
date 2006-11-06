@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Thu Mar 02 22:46:40 CET 2006
+# Changed: Tue Oct 17 21:37:55 CEST 2006
 
 # Commentary:
 # 
@@ -267,9 +267,9 @@ applies map_chan with proc to all channels in parallel" )
     chans = all_chans
     chan_num = chans.first.length
     maxlen = 0
-    Snd.sounds.each do |snd|
-      channels(snd).times do |chn|
-        maxlen = [maxlen, frames(snd, chn)].max
+    Snd.sounds.each do |s|
+      channels(s).times do |chn|
+        maxlen = [maxlen, frames(s, chn)].max
       end
     end
     len = integer?(fin) ? ([fin, maxlen].min - beg) : (maxlen - beg)
@@ -585,9 +585,9 @@ sets selection from mono files (from external program)")
       else
         sorted_mk = mk.sort do |a, b|
           if mark_sample(a) < mark_sample(b)
-            -1
-          elsif mark_sample(a) > mark_sample(b)
             1
+          elsif mark_sample(a) > mark_sample(b)
+            -1
           else
             0
           end
@@ -885,14 +885,14 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
         Snd.display("==> channel %d has no channel-properties <==", chn)
       end
     else
-      channels(snd).times do |chn|
-        if props = channel_properties(snd, chn)
-          Snd.display("==> channel %d <==", chn)
+      channels(snd).times do |cn|
+        if props = channel_properties(snd, cn)
+          Snd.display("==> channel %d <==", cn)
           props.each do |k, v|
             Snd.display("%s --> %s", k, v.inspect)
           end
         else
-          Snd.display("==> channel %d has no channel-properties <==", chn)
+          Snd.display("==> channel %d has no channel-properties <==", cn)
         end
       end
     end
@@ -1392,8 +1392,8 @@ If CHECK is false, the hooks are removed.")
         eds = edits(snd, chn)
         if eds.car > 0
           yes_or_no?(format("%s[%d] has unsaved edits.  Close anyway? ", short_file_name(snd), chn),
-                     lambda do |snd| revert_sound(snd); (exiting and exit(0)) end,
-                     lambda do |snd| false end,
+                     lambda do |s| revert_sound(s); (exiting and exit(0)) end,
+                     lambda do |s| false end,
                      snd)
           flag = false
         end
@@ -1892,8 +1892,8 @@ applies contrast enhancement to the sound" )
     $prefs_initial_beg = beg
     $prefs_initial_dur = dur
     $prefs_show_full_duration = full
-    $initial_graph_hook.add_hook!(Prefs_initial_bounds_hook_name) do |snd, chn, dur|
-      [$prefs_initial_beg, $prefs_show_full_duration ? dur : [$prefs_initial_dur, dur].min]
+    $initial_graph_hook.add_hook!(Prefs_initial_bounds_hook_name) do |snd, chn, dr|
+      [$prefs_initial_beg, $prefs_show_full_duration ? dur : [$prefs_initial_dur, dr].min]
     end
   end
 

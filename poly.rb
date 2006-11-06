@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Apr 09 23:55:07 CEST 2005
-# Changed: Fri Aug 04 02:17:37 CEST 2006
+# Changed: Tue Oct 17 21:32:15 CEST 2006
 
 # Commentary: (see poly.scm)
 #
@@ -90,8 +90,10 @@ class Poly < Vec
   
   def reduce
     if self.last.zero?
-      i = 0
-      (self.length - 1).downto(0) do |i| break if self[i].nonzero? end
+      i = self.length - 1
+      while self[i].zero? and i > 0
+        i -= 1
+      end
       self[0, i + 1]
     else
       self
