@@ -2795,6 +2795,24 @@ widget_t snd_record_file(void)
 
   if (!recorder)
     {
+      input_devices = recorder_get_devices(rp, &output_devices);
+      if (input_devices == -1) return(NULL);
+      if (input_devices == 0)
+	{
+	  snd_warning("can't find any input devices!");
+	  return(NULL);
+	}
+
+      recorder_characterize_devices(input_devices + 1, output_devices);
+      if (rp->possible_input_chans <= 0)
+	{
+	  snd_warning("odd: found %d input device%s, but then %d input channels\n", 
+		      input_devices, 
+		      (input_devices != 1) ? "s" : "",
+		      rp->possible_input_chans);
+	  return(NULL);
+	}
+
       sx = ss->sgx;
       wn = XtWindow(MAIN_PANE(ss));
       v.background = sx->basic_color;
@@ -2804,16 +2822,12 @@ widget_t snd_record_file(void)
       v.foreground = sx->black;
       vu_gc = XCreateGC(MAIN_DISPLAY(ss), wn, GCForeground | GCBackground, &v);
 
-      input_devices = recorder_get_devices(rp, &output_devices);
-      if (input_devices == -1) return(NULL);
-
       all_panes = (pane_t **)CALLOC(input_devices + 1, sizeof(pane_t *));
       device_buttons_size = input_devices + 2; /* inputs, one output, autoload_file */
       device_buttons = (Widget *)CALLOC(device_buttons_size, sizeof(Widget));
-      gain_sliders = (Wdesc **)CALLOC(rp->num_mixer_gains, sizeof(Wdesc *));
+      if (rp->num_mixer_gains > 0)
+	gain_sliders = (Wdesc **)CALLOC(rp->num_mixer_gains, sizeof(Wdesc *));
       /* out_file_pane will be the bottom (output) audio pane, not the file info pane */
-
-      recorder_characterize_devices(input_devices + 1, output_devices);
 
       rec_in_VU = (vu_t **)CALLOC(rp->possible_input_chans, sizeof(vu_t *));
       rec_out_VU = (vu_t **)CALLOC(MAX_OUT_CHANS, sizeof(vu_t *));

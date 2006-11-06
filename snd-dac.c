@@ -1772,6 +1772,8 @@ static bool start_audio_output_1(void)
   int alloc_devs = 0;
   int alloc_chans = 0;
   int oss_available_chans = 2;
+
+  /* -------------------- ALSA not OSS -------------------- */
   if (mus_audio_api() == ALSA_API) 
     {
       scan_audio_devices();
@@ -1823,7 +1825,7 @@ static bool start_audio_output_1(void)
 		  alloc_chans += alsa_available_chans[0];
 		}
 	    }
-	} 
+	}
       else 
 	{
 	  /* first device on first card is the one */
@@ -1910,16 +1912,25 @@ static bool start_audio_output_1(void)
     } 
   else 
     {
+
+      /* -------------------- OSS not ALSA -------------------- */
       /* api == OSS_API */
       if (snd_dacp->channels > 2)
 	{
 	  err = mus_audio_mixer_read(audio_output_device(ss), MUS_AUDIO_CHANNEL, 0, val);
-	  if (err != MUS_ERROR) oss_available_chans = (int)(val[0]);
+	  if (err != MUS_ERROR) 
+	    {
+	      int chans;
+	      chans = (int)(val[0]);
+	      if (chans > 0)
+		oss_available_chans = chans;
+	      else snd_warning("open audio output got %d chans?\n", chans);
+	    }
 	}
       for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
       /* see if we can play 16 bit output */
       snd_dacp->out_format = mus_audio_compatible_format(audio_output_device(ss));
-  #ifndef PPC
+#ifndef PPC
       /* check for chans > def chans, open 2 cards if available */
       if ((oss_available_chans < snd_dacp->channels) && (snd_dacp->channels == 4))
 	{
@@ -1962,9 +1973,10 @@ static bool start_audio_output_1(void)
 	    }
 	  else oss_available_chans = 4;
 	}
-  #endif
-      if (oss_available_chans < snd_dacp->channels) 
-	{
+#endif
+      if ((oss_available_chans < snd_dacp->channels) &&
+          (oss_available_chans > 0))
+ 	{
 	  if (dac_combines_channels(ss)) 
 	    snd_warning(_("folding %d chans into %d "), 
 			snd_dacp->channels, oss_available_chans);
@@ -2045,19 +2057,26 @@ static bool start_audio_output_1(void)
   /* but there's still trouble -- on opteron solaris 10, the only playable srate is 48000, but the mixer lies about it! */
   /*   I can't see what to do in this case */
 #endif
-
+  if (available_chans <= 0)
+    {
+      snd_warning("no available channels??");
+      return(false);
+    }
   if (available_chans < snd_dacp->channels) 
     {
       if (dac_combines_channels(ss)) 
 	snd_warning(_("folding %d chans into %d "), 
-		    snd_dacp->channels, available_chans);
+		    snd_dacp->channels, 
+		    available_chans);
       snd_dacp->channels = available_chans;
     }
   set_dac_print();
   if (dev_fd[0] == MUS_ERROR)
     dev_fd[0] = mus_audio_open_output(audio_output_device(ss), 
-				      snd_dacp->srate, snd_dacp->channels, 
-				      snd_dacp->out_format, dac_size(ss));
+				      snd_dacp->srate, 
+				      snd_dacp->channels, 
+				      snd_dacp->out_format, 
+				      dac_size(ss));
   unset_dac_print();
   if (dev_fd[0] == MUS_ERROR)
     {

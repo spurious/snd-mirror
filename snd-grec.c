@@ -1921,6 +1921,24 @@ widget_t snd_record_file(void)
       state_context *sx;
       GtkWidget *rec_panes_box, *help_button, *dismiss_button;
 
+      input_devices = recorder_get_devices(rp, &output_devices);
+      if (input_devices == -1) return(NULL);
+      if (input_devices == 0)
+	{
+	  snd_warning("can't find any input devices!");
+	  return(0);
+	}
+
+      recorder_characterize_devices(input_devices + 1, output_devices);
+      if (rp->possible_input_chans <= 0)
+	{
+	  snd_warning("odd: found %d input device%s, but then %d input channels\n", 
+		      input_devices, 
+		      (input_devices != 1) ? "s" : "",
+		      rp->possible_input_chans);
+	  return(NULL);
+	}
+
       sx = ss->sgx;
       wn = MAIN_WINDOW(ss);
       draw_gc = gdk_gc_new(wn);
@@ -1932,15 +1950,12 @@ widget_t snd_record_file(void)
       gdk_gc_set_foreground(vu_gc, sx->black);
       gdk_gc_set_function(vu_gc, GDK_COPY);
 
-      input_devices = recorder_get_devices(rp, &output_devices);
-      if (input_devices == -1) return(NULL);
       all_panes = (pane_t **)CALLOC(input_devices + 1, sizeof(pane_t *));
       device_buttons_size = input_devices + 2; /* inputs, one output, autoload_file */
       device_buttons = (GtkWidget **)CALLOC(device_buttons_size, sizeof(GtkWidget *));
-      gain_sliders = (Wdesc **)CALLOC(rp->num_mixer_gains, sizeof(Wdesc *));
+      if (rp->num_mixer_gains > 0)
+	gain_sliders = (Wdesc **)CALLOC(rp->num_mixer_gains, sizeof(Wdesc *));
       /* out_file_pane will be the bottom (output) audio pane, not the file info pane */
-
-      recorder_characterize_devices(input_devices + 1, output_devices);
 
       rec_in_VU = (vu_t **)CALLOC(rp->possible_input_chans, sizeof(vu_t *));
       rec_out_VU = (vu_t **)CALLOC(MAX_OUT_CHANS, sizeof(vu_t *));

@@ -458,6 +458,16 @@ I have this line in my ~/.cshrc file:
 
 setenv MUS_ALSA_DEVICE "hw:1"
 
+But this number seems to be set randomly at boot time!  And sometimes, Alsa
+in its infinite wisdom mutes the playback device. So, now I
+have these lines executing at startup:
+
+amixer sset PCM,0 80% unmute
+amixer sset Mic,0 80%
+
+If you use 100% (meaning, give me full amplitude output), it's the same
+as 0!! 
+
 
 
 ---- colors: ----

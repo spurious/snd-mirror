@@ -509,7 +509,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-3-Nov:   mix-name->id, track-name->id (mix.scm).\n\
+3-Nov:   mix-name->id, track-name->id (mix.scm, mix.rb).\n\
 1-Nov:   ->frequency, ->samples (ws.scm), track-name, mix-name, track-tag-y.\n\
 24-Oct:  filter-fft in examp.scm.\n\
 23-Oct:  Snd 8.5.\n\

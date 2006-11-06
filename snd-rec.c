@@ -1459,8 +1459,8 @@ int recorder_get_devices(recorder_info *rp, int *outs)
 				 audval);
       if (err != MUS_NO_ERROR) 
 	{
-	  snd_error("%s[%d] %s", 
-		    __FILE__, __LINE__, c__FUNCTION__);
+	  /* Apparently we're assuming that audio.c prints the actual error message somewhere via mus_print? */
+	  snd_error("%s[%d] %s", __FILE__, __LINE__, c__FUNCTION__);
 	  return(-1);
 	}
       cur_devices = (int)(audval[0]);

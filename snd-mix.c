@@ -4,6 +4,13 @@
  * PERHAPS: undo&apply for track / mix env?, multiple mix/track dialogs, tempo curves in dialog?
  * PERHAPS: mix-hover-hook mark-hover-hook cursor-hover-hook selection-hover-hook
  * PERHAPS: "forget" button -> free_track
+ *
+ * this is too slow to be usable if more than 100 or so mixes are in use.
+ *   remix_file is probably the main culprit -- perhaps we can use the
+ *   virtual edit (mix-reader) mechanism, so there's no actual add or subtract,
+ *   no new temp files, just an array of readers dealt with in the edit fragment
+ *   system -- we'd need init_mix_read + ways to see within fragments + reverse read(gah!!)
+ *   
  */
 
 typedef struct {
@@ -1548,9 +1555,10 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   mmin = MUS_SAMPLE_MAX;
 
   /*
-  fprintf(stderr, "remix %d: beg: " OFF_TD ", end: " OFF_TD ", old: " OFF_TD " to " OFF_TD ", new: " OFF_TD " to " OFF_TD "\n",
-	  md->id, beg, end, old_beg, old_end, new_beg, new_end);
+  fprintf(stderr, "remix file %s %d: beg: " OFF_TD ", end: " OFF_TD ", old: " OFF_TD " to " OFF_TD ", new: " OFF_TD " to " OFF_TD "\n",
+	  origin, md->id, beg, end, old_beg, old_end, new_beg, new_end);
   */
+
   use_temp_file = (num >= MAX_BUFFER_SIZE);
   if (use_temp_file)
     {
@@ -1669,6 +1677,12 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	      if (use_temp_file) err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
 	      j = 0;
 	      if (err == -1) break;
+	      check_for_event();
+	      if (ss->stopped_explicitly) 
+		{
+		  err = -1;
+		  break;
+		}
 	    }
 	  if (sub->calc == C_STRAIGHT_SOUND) 
 	    mval = read_sample(cur) - read_sample(sfb);
@@ -1691,6 +1705,12 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 		  if (use_temp_file) err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
 		  j = 0;
 		  if (err == -1) break;
+		  check_for_event();
+		  if (ss->stopped_explicitly) 
+		    {
+		      err = -1;
+		      break;
+		    }
 		}
 	      if (add->calc == C_STRAIGHT_SOUND)
 		mval = read_sample(cur) + read_sample(afb);
@@ -1714,6 +1734,12 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 		      if (use_temp_file) err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
 		      j = 0;
 		      if (err == -1) break;
+		      check_for_event();
+		      if (ss->stopped_explicitly) 
+			{
+			  err = -1;
+			  break;
+			}
 		    }
 		  mval = read_sample(cur);
 		  if ((i >= old_beg) && (i <= old_end))
@@ -1735,6 +1761,12 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 		      if (use_temp_file) err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
 		      j = 0;
 		      if (err == -1) break;
+		      check_for_event();
+		      if (ss->stopped_explicitly) 
+			{
+			  err = -1;
+			  break;
+			}
 		    }
 		  val = read_sample_to_float(cur);
 		  if ((i >= old_beg) && (i <= old_end))
@@ -1753,18 +1785,24 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   add = free_mix_fd(add);
   sub = free_mix_fd(sub);
 
-  if (use_temp_file)
+  if (err != -1)
     {
-      if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
-      close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->format));
-      free_file_info(ohdr);
-      file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr);
+      if (use_temp_file)
+	{
+	  if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
+	  close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->format));
+	  free_file_info(ohdr);
+	  file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr);
+	}
+      else change_samples(beg, num, data[0], cp, DONT_LOCK_MIXES, origin, cp->edit_ctr);
     }
-  else change_samples(beg, num, data[0], cp, DONT_LOCK_MIXES, origin, cp->edit_ctr);
   FREE(data[0]);
   FREE(data);
   cp->edit_hook_checked = false;
   if (ofile) FREE(ofile);
+
+  if (err == -1) return;
+
  REMIX_END:
   extend_mix_state_list(md);
   cs = copy_mix_state(cs);
@@ -5106,13 +5144,24 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_delete_mix,             g_delete_mix_w,             1, 0, 0, H_delete_mix);
   XEN_DEFINE_PROCEDURE(S_mix_frames,             g_mix_frames_w,             1, 0, 0, H_mix_frames);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_position, g_mix_position_w, H_mix_position, S_setB S_mix_position, g_set_mix_position_w, 1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_locked_p, g_mix_locked_w, H_mix_locked_p, S_setB S_mix_locked_p, g_set_mix_locked_w, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE(S_mix_tag_xy,             g_mix_tag_xy_w,             1, 0, 0, H_mix_tag_xy);
+  XEN_DEFINE_PROCEDURE(S_mix_chans,              g_mix_chans_w,              1, 0, 0, H_mix_chans);
+  XEN_DEFINE_PROCEDURE(S_mix_p,                  g_mix_p_w,                  1, 0, 0, H_mix_p);
+  XEN_DEFINE_PROCEDURE(S_mix_home,               g_mix_home_w,               1, 0, 0, H_mix_home);
+  XEN_DEFINE_PROCEDURE(S_mixes,                  g_mixes_w,                  0, 2, 0, H_mixes);
+  XEN_DEFINE_PROCEDURE(S_mix,                    g_mix_w,                    1, 7, 0, H_mix);
+  XEN_DEFINE_PROCEDURE(S_mix_vct,                g_mix_vct_w,                1, 6, 0, H_mix_vct);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_position,   g_mix_position_w, H_mix_position,   S_setB S_mix_position,   g_set_mix_position_w, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_locked_p,   g_mix_locked_w,   H_mix_locked_p,   S_setB S_mix_locked_p,   g_set_mix_locked_w,   1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_inverted_p, g_mix_inverted_w, H_mix_inverted_p, S_setB S_mix_inverted_p, g_set_mix_inverted_w, 1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_track, g_mix_track_w, H_mix_track, S_setB S_mix_track, g_set_mix_track_w, 1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_name, g_mix_name_w, H_mix_name, S_setB S_mix_name, g_set_mix_name_w, 1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_y, g_mix_tag_y_w, H_mix_tag_y, S_setB S_mix_tag_y, g_set_mix_tag_y_w, 1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed, g_mix_speed_w, H_mix_speed, S_setB S_mix_speed, g_set_mix_speed_w, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_track,      g_mix_track_w,    H_mix_track,      S_setB S_mix_track,      g_set_mix_track_w,    1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_name,       g_mix_name_w,     H_mix_name,       S_setB S_mix_name,       g_set_mix_name_w,     1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_y,      g_mix_tag_y_w,    H_mix_tag_y,      S_setB S_mix_tag_y,      g_set_mix_tag_y_w,    1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed,      g_mix_speed_w,    H_mix_speed,      S_setB S_mix_speed,      g_set_mix_speed_w,    1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_color,      g_mix_color_w,    H_mix_color,      S_setB S_mix_color,      g_set_mix_color_w,    0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp,        g_mix_amp_w,      H_mix_amp,        S_setB S_mix_amp,        g_set_mix_amp_w,      1, 1, 2, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env,    g_mix_amp_env_w,  H_mix_amp_env,    S_setB S_mix_amp_env,    g_set_mix_amp_env_w,  1, 1, 2, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed_style, g_mix_speed_style_w, H_mix_speed_style, 
 				   S_setB S_mix_speed_style, g_set_mix_speed_style_w, 1, 0, 2, 0);
@@ -5123,28 +5172,11 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_waveform_height, g_mix_waveform_height_w, H_mix_waveform_height,
 				   S_setB S_mix_waveform_height, g_set_mix_waveform_height_w, 0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_width, g_mix_tag_width_w, H_mix_tag_width,
-				   S_setB S_mix_tag_width, g_set_mix_tag_width_w, 0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_height, g_mix_tag_height_w, H_mix_tag_height,
-				   S_setB S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_color, g_mix_color_w, H_mix_color,
-				   S_setB S_mix_color, g_set_mix_color_w,  0, 1, 1, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp, g_mix_amp_w, H_mix_amp, S_setB S_mix_amp, g_set_mix_amp_w, 1, 1, 2, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env, g_mix_amp_env_w, H_mix_amp_env, S_setB S_mix_amp_env, g_set_mix_amp_env_w, 1, 1, 2, 1);
-
-  XEN_DEFINE_PROCEDURE(S_mix_tag_xy,   g_mix_tag_xy_w,   1, 0, 0, H_mix_tag_xy);
-  XEN_DEFINE_PROCEDURE(S_mix_chans,    g_mix_chans_w,    1, 0, 0, H_mix_chans);
-  XEN_DEFINE_PROCEDURE(S_mix_p,        g_mix_p_w,        1, 0, 0, H_mix_p);
-  XEN_DEFINE_PROCEDURE(S_mix_home,     g_mix_home_w,     1, 0, 0, H_mix_home);
-  XEN_DEFINE_PROCEDURE(S_mixes,        g_mixes_w,        0, 2, 0, H_mixes);
-  XEN_DEFINE_PROCEDURE(S_mix,          g_mix_w,          1, 7, 0, H_mix);
-  XEN_DEFINE_PROCEDURE(S_mix_vct,      g_mix_vct_w,      1, 6, 0, H_mix_vct);
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,
 				   S_setB S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_width,  g_mix_tag_width_w,  H_mix_tag_width,  S_setB S_mix_tag_width,  g_set_mix_tag_width_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_height, g_mix_tag_height_w, H_mix_tag_height, S_setB S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
 
   #define H_mix_release_hook S_mix_release_hook " (mix-id samps): called after the mouse has dragged a mix to some new position. \
 'samps' = samples moved in the course of the drag. If it returns " PROC_TRUE ", the actual remix is the hook's responsibility."
@@ -5904,6 +5936,11 @@ void set_track_position(int id, off_t pos)
 {
   off_t curpos;
   curpos = track_position(id, -1);
+  
+  /*
+  fprintf(stderr,"set track position %d\n", id);
+  */
+
   if ((track_p(id)) && (curpos != pos))
     {
       track_position_t *val;

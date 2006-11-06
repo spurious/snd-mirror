@@ -14440,7 +14440,7 @@ EDITS: 5
 	    (let ((diff (abs (- (cos x) (new-cos x)))))
 	      (if (> diff err)
 		  (set! err diff))))
-	  (if (> err 1.0e-7) (snd-display ";new-cos poly err: ~A" err))))
+	  (if (> err 1.1e-7) (snd-display ";new-cos poly err: ~A" err))))
 
       (let ((val (poly+ (vct .1 .2 .3) (vct 0.0 1.0 2.0 3.0 4.0))))
 	(if (not (vequal val (vct 0.100 1.200 2.300 3.000 4.000))) (snd-display ";poly+ 1: ~A" val)))
@@ -59983,7 +59983,7 @@ EDITS: 1
 	   (/ 7000.0 cur-srate) 1.0 
 	   (/ 8000.0 cur-srate) 0.0   ; end passband (40..4000)
 	   1.0 0.0)                   ; get rid of some of the hiss
-     ;; since I'm the minimum band is 10 Hz here, 
+     ;; since the minimum band is 10 Hz here, 
      ;;   cur-srate/10 rounded up to next power of 2 seems a safe filter size
      ;;   filter-sound will actually use overlap-add convolution in this case
      (expt 2 (inexact->exact (ceiling (/ (log (/ cur-srate 10.0)) (log 2.0)))))
@@ -60867,17 +60867,19 @@ EDITS: 1
 	  (close-sound index))
 	
 	(let ((ctr 0))
-	  (for-each (lambda (n)
+	  (for-each (lambda (n b)
 		      (let ((tag
 			     (catch #t
 				    (lambda ()
 				      (n vct-5))
 				    (lambda args (car args)))))
 			(if (not (eq? tag 'wrong-type-arg))
-			    (snd-display ";[0] ~D: mix procs ~A: ~A (~A)" ctr n tag vct-5))
+			    (snd-display ";[0] ~D: mix procs ~A: ~A (~A)" ctr b tag vct-5))
 			(set! ctr (+ ctr 1))))
 		    (list mix-amp mix-amp-env mix-tag-position mix-chans mix-track mix-frames mix-locked? mix-inverted?
-			  mix-name mix-position mix-home mix-speed mix-speed-style mix-tag-y))) 
+			  mix-name mix-position mix-home mix-speed mix-speed-style mix-tag-y)
+		    (list 'mix-amp 'mix-amp-env 'mix-tag-position 'mix-chans 'mix-track 'mix-frames 'mix-locked? 'mix-inverted?
+			  'mix-name 'mix-position 'mix-home 'mix-speed 'mix-speed-style 'mix-tag-y)))
 	
 	(let ((ctr 0))
 	  (for-each (lambda (n)
@@ -60909,17 +60911,19 @@ EDITS: 1
 	(let* ((ctr 0)
 	       (index (open-sound "oboe.snd"))
 	       (id (mix-sound "oboe.snd" 10)))
-	  (for-each (lambda (n)
+	  (for-each (lambda (n b)
 		      (let ((tag
 			     (catch #t
 				    (lambda ()
 				      (set! (n id) vct-5))
 				    (lambda args (car args)))))
 			(if (not (eq? tag 'wrong-type-arg))
-			    (snd-display ";[3] ~D: mix procs ~A: ~A (~A)" ctr n tag vct-5))
+			    (snd-display ";[3] ~D: mix procs ~A: ~A (~A)" ctr b tag vct-5))
 			(set! ctr (+ ctr 1))))
 		    (list mix-tag-position mix-chans mix-track mix-locked? mix-inverted?
-			  mix-name mix-position mix-home mix-speed mix-speed-style mix-tag-y))
+			  mix-name mix-position mix-home mix-speed mix-speed-style mix-tag-y)
+		    (list 'mix-tag-position 'mix-chans 'mix-track 'mix-locked? 'mix-inverted?
+			  'mix-name 'mix-position 'mix-home 'mix-speed 'mix-speed-style 'mix-tag-y))
 	  (close-sound index))
 	
 	(let ((ctr 0))
