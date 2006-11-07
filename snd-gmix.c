@@ -1030,7 +1030,7 @@ static gboolean track_speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpo
   track_speed_pressed = false;
   track_dialog_slider_dragging = false;
   if (!(track_p(track_dialog_id))) return(false);
-  track_dialog_set_speed(track_dialog_id, 1.0, track_dialog_slider_dragging);
+  track_dialog_set_speed(track_dialog_id, 1.0);
   reflect_track_speed(1.0);
   return(false);
 }
@@ -1064,8 +1064,7 @@ static gboolean track_speed_release_callback(GtkWidget *w, GdkEventButton *ev, g
   track_dialog_slider_dragging = false;
   if (!(track_p(track_dialog_id))) return(false);
   track_dialog_set_speed(track_dialog_id, 
-			 set_speed_label(w_track_speed_number, scrollbar_to_speed(GTK_ADJUSTMENT(w_track_speed_adj)->value)), 
-			 false);
+			 set_speed_label(w_track_speed_number, scrollbar_to_speed(GTK_ADJUSTMENT(w_track_speed_adj)->value)));
   return(false);
 }
 
@@ -1172,7 +1171,7 @@ static void reflect_track_amp(Float val)
 static void change_track_amp(Float val)
 {
   reflect_track_amp(val);
-  track_dialog_set_amp(track_dialog_id, val, track_dialog_slider_dragging);
+  track_dialog_set_amp(track_dialog_id, val);
 }
 
 static gboolean track_amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)

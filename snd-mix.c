@@ -1553,12 +1553,10 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   miny = ap->ymin;
   mmax = MUS_SAMPLE_MIN;
   mmin = MUS_SAMPLE_MAX;
-
   /*
   fprintf(stderr, "remix file %s %d: beg: " OFF_TD ", end: " OFF_TD ", old: " OFF_TD " to " OFF_TD ", new: " OFF_TD " to " OFF_TD "\n",
 	  origin, md->id, beg, end, old_beg, old_end, new_beg, new_end);
   */
-
   use_temp_file = (num >= MAX_BUFFER_SIZE);
   if (use_temp_file)
     {
@@ -5936,11 +5934,6 @@ void set_track_position(int id, off_t pos)
 {
   off_t curpos;
   curpos = track_position(id, -1);
-  
-  /*
-  fprintf(stderr,"set track position %d\n", id);
-  */
-
   if ((track_p(id)) && (curpos != pos))
     {
       track_position_t *val;
@@ -6551,6 +6544,7 @@ static track_graph_t *track_save_graph(mix_info *orig_md, int track_id)
       tg->edpos = (int *)CALLOC(trk->cps_ctr, sizeof(int));
       for (i = 0; i < trk->cps_ctr; i++)
 	tg->edpos[i] = trk->cps[i]->edit_ctr + 1;
+
 #if HAVE_FORTH
       origin = mus_format("%d " OFF_TD " set-%s",
 			  track_id, track_orig, S_track_position);
@@ -6558,6 +6552,7 @@ static track_graph_t *track_save_graph(mix_info *orig_md, int track_id)
       origin = mus_format(PROC_SET_TRACK OFF_TD PROC_CLOSE, 
 			  TO_PROC_NAME(S_track_position), track_id, track_orig);
 #endif
+
       for (i = 0; i < trk->lst_ctr; i++)
 	{
 	  int k;
@@ -6569,6 +6564,7 @@ static track_graph_t *track_save_graph(mix_info *orig_md, int track_id)
 	  remix_file(md, origin, false);
 	}
       FREE(origin);
+
       for (i = 0; i < trk->lst_ctr; i++)
 	{
 	  int pts = 0;
@@ -6611,7 +6607,7 @@ static void move_track(int track_id, track_graph_t *data)
       if (i == data->orig)
 	md->x = data->x;
       else md->x = data->xs[i] + diff;
-      move_mix(md);
+      draw_mix_tag(md);
     }
   free_track_mix_list(trk);
 }
@@ -6661,6 +6657,7 @@ static void finish_dragging_track(int track_id, track_graph_t *data)
     {
       chan_info *cp;
       cp = trk->cps[i];
+      
       while (cp->edit_ctr > data->edpos[i]) backup_edit_list(cp);
       backup_mix_list(cp, data->edpos[i]);
     }
@@ -6878,34 +6875,12 @@ void track_dialog_start_slider_drag(int track_id)
   track_drag_data = track_save_graph(NULL, track_id);
 }
 
-static void temporary_track_speed(mix_info *md, void *ptr)
+void track_dialog_set_speed(int track_id, Float val) 
 {
-  mix_state *cs;
-  mix_track_state *ms;
-  cs = md->active_mix_state;
-  ms = cs->as_built;
-  erase_mix_waveform(md);
-  ms->speed = cs->speed * gather_track_speed(cs->track);
-  cs->len = (off_t)(ceil(md->in_samps / ms->speed));
-  ms->len = cs->len;
-  draw_mix_waveform(md);
-  make_temporary_graph(md->cp, md, cs);
-}
-
-void track_dialog_set_speed(int track_id, Float val, bool dragging) 
-{
-  if (!dragging)
-    {
-      if (track_slider_drag_in_progress)
-	track_finish_drag(track_id, val, DRAG_SPEED);
-      else set_track_speed(track_id, val);
-    }
-  else
-    {
-      set_active_track_speed(track_id, val);
-      map_over_track_mixes(track_id, temporary_track_speed, NULL);
-    }
-  track_slider_drag_in_progress = dragging;
+  if (track_slider_drag_in_progress)
+    track_finish_drag(track_id, val, DRAG_SPEED);
+  else set_track_speed(track_id, val);
+  track_slider_drag_in_progress = false;
 }
 
 
@@ -6921,7 +6896,9 @@ static void temporary_track_tempo(mix_info *md, void *ptr)
       cs->beg = tt->beg + (off_t)((cs->orig - tt->beg) * tt->tempo_mult);  
       draw_mix_waveform(md);
     }
+  /*
   make_temporary_graph(md->cp, md, cs);
+  */
 }
 
 void track_dialog_set_tempo(int track_id, Float val, bool dragging) 
@@ -6944,37 +6921,12 @@ void track_dialog_set_tempo(int track_id, Float val, bool dragging)
   track_slider_drag_in_progress = dragging;
 }
 
-
-static void temporary_track_amp(mix_info *md, void *ptr)
+void track_dialog_set_amp(int track_id, Float val)
 {
-  mix_state *cs;
-  mix_track_state *ms;
-  int i;
-  Float local_amp; /* might be embedded tracks so we have to put off the track amp until the specific mix */
-  cs = md->active_mix_state;
-  ms = cs->as_built;
-  erase_mix_waveform(md);
-  local_amp = gather_track_amp(cs);
-  for (i = 0; i < ms->chans; i++)
-    ms->scalers[i] = cs->scalers[i] * local_amp;
-  draw_mix_waveform(md);
-  make_temporary_graph(md->cp, md, cs);
-}
-
-void track_dialog_set_amp(int track_id, Float val, bool dragging)
-{
-  if (!dragging)
-    {
-      if (track_slider_drag_in_progress)
-	track_finish_drag(track_id, val, DRAG_AMP);
-      else set_track_amp(track_id, val);
-    }
-  else
-    {
-      set_active_track_amp(track_id, val);
-      map_over_track_mixes(track_id, temporary_track_amp, NULL);
-    }
-  track_slider_drag_in_progress = dragging;
+  if (track_slider_drag_in_progress)
+    track_finish_drag(track_id, val, DRAG_AMP);
+  else set_track_amp(track_id, val);
+  track_slider_drag_in_progress = false;
 }
 
 void track_dialog_set_amp_env(int id, env *e)

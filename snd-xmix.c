@@ -1174,8 +1174,7 @@ static void track_speed_click_callback(Widget w, XtPointer context, XtPointer in
 				       sfs,
 				       track_speed_style(track_dialog_id),
 				       speed_control_tones(ss),
-				       6),
-			 track_dialog_slider_dragging);
+				       6));
   set_label(w_track_speed_number, sfs);
   XtVaSetValues(w_track_speed, XmNvalue, speed_to_scrollbar(speed_control_min(ss), 1.0, speed_control_max(ss)), NULL);
 }
@@ -1212,9 +1211,7 @@ static void track_speed_valuechanged_callback(Widget w, XtPointer context, XtPoi
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (!(track_p(track_dialog_id))) return;
   track_dialog_slider_dragging = false;
-  track_dialog_set_speed(track_dialog_id, 
-			 set_speed_label(w_track_speed_number, cb->value),
-			 false);
+  track_dialog_set_speed(track_dialog_id, set_speed_label(w_track_speed_number, cb->value));
 }
 
 
@@ -1300,7 +1297,7 @@ static void track_amp_click_callback(Widget w, XtPointer context, XtPointer info
 {
   if (!(track_p(track_dialog_id))) return;
   change_track_amp_label(track_dialog_id, 1.0);
-  track_dialog_set_amp(track_dialog_id, 1.0, track_dialog_slider_dragging);
+  track_dialog_set_amp(track_dialog_id, 1.0);
   XtVaSetValues(w_track_amp, XmNvalue, amp_to_scroll(amp_control_min(ss), 1.0, amp_control_max(ss)), NULL);
 }
 
@@ -1321,7 +1318,7 @@ static void track_amp_valuechanged_callback(Widget w, XtPointer context, XtPoint
   track_dialog_slider_dragging = false;
   val = scrollbar_to_amp(ival);
   change_track_amp_label(track_dialog_id, val);
-  track_dialog_set_amp(track_dialog_id, val, track_dialog_slider_dragging);
+  track_dialog_set_amp(track_dialog_id, val);
 }
 
 static int track_amp_to_scroll(Float amp)
