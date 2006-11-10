@@ -15,6 +15,9 @@
 #undef MUS_OUT_FORMAT
 #undef Float
 
+#include <stdio.h>
+/* need FILE */
+
 #include <time.h>
 /* time_t used by mus_sound_write_date */
 #include <sys/types.h>

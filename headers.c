@@ -1650,7 +1650,7 @@ static int write_riff_header(int chan, int wsrate, int wchans, int siz, int form
 	extra = (4 - (len % 4));
     }
   write_four_chars((unsigned char *)hdrbuf, I_RIFF);
-  mus_lint_to_char((unsigned char *)(hdrbuf + 4), len + 36 + siz + lenhdr + extra);
+  mus_lint_to_char((unsigned char *)(hdrbuf + 4), len + 36 + siz + lenhdr + extra); /* 36 = "RIFF" + size(4) + "WAVE" + "fmt " + size(4) + 16 for data */
   write_four_chars((unsigned char *)(hdrbuf + 8), I_WAVE);
   write_four_chars((unsigned char *)(hdrbuf + 12), I_fmt_);
   mus_lint_to_char((unsigned char *)(hdrbuf + 16), 24 - 8);

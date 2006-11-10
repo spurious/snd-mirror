@@ -4657,10 +4657,15 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_GRAPHS_HORIZONTAL:       return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));                  break;
 	    case CP_CURSOR_POSITION:         return(XEN_LIST_2(C_TO_XEN_INT(cp->cx), C_TO_XEN_INT(cp->cy)));   break;
 	    case CP_EDPOS_FRAMES:            return(C_TO_XEN_OFF_T(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
-	    case CP_UPDATE_TIME:             
+	    case CP_UPDATE_TIME:
 #if USE_GTK
-	      if (!(cp->cgx->ax->wn)) fixup_cp_cgx_ax_wn(cp);
+	      if (!(cgx->ax->wn)) fixup_cp_cgx_ax_wn(cp);
 #endif
+	      /* any display-oriented background process must 1st be run to completion
+	       *       display checks for waiting process and does not update display if one found!
+	       */
+	      finish_amp_env(cp);
+	      cp->waiting_to_make_graph = false;
 	      display_channel_time_data(cp);
 	      break;
 	    case CP_UPDATE_LISP:

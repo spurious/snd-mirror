@@ -860,7 +860,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
       if ((pt->mix_readers) && (pt->mix_readers[addr]))
 	{
 	  char *buf = NULL, *vstr = NULL;
-	  vstr = run_mix_reader_to_string(pt->mix_readers[addr]);
+	  vstr = run_mix_sample_reader_to_string(pt->mix_readers[addr]);
 	  buf = mus_format("mf%d(%s)", addr, vstr);
 	  if (vstr) FREE(vstr);
 	  return(buf);
@@ -871,7 +871,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
       if ((pt->track_readers) && (pt->track_readers[addr]))
 	{
 	  char *buf = NULL, *vstr = NULL;
-	  vstr = run_track_reader_to_string(pt->track_readers[addr]);
+	  vstr = run_track_sample_reader_to_string(pt->track_readers[addr]);
 	  buf = mus_format("tf%d(%s)", addr, vstr);
 	  if (vstr) FREE(vstr);
 	  return(buf);
@@ -1285,7 +1285,7 @@ void free_ptree(struct ptree *pt)
 			      for (k = 0; k < pt->track_reader_ctr; k++)
 				if ((k != v->addr) && (pt->track_readers[k] == pt->track_readers[v->addr]))
 				  pt->track_readers[k] = NULL;
-			      run_free_track_fd(pt->track_readers[v->addr]); 
+			      run_free_track_sample_reader(pt->track_readers[v->addr]); 
 			      pt->track_readers[v->addr] = NULL;   
 			    }
 			  break;
@@ -5887,9 +5887,9 @@ static void display_vct_vect(int *args, ptree *pt)
 
 static void display_rd(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = sf_to_string(READER_ARG_1)); FREE(buf);}
 static char *descr_display_rd(int *args, ptree *pt) {return(mus_format("display(" RD_PT ")", args[1], DESC_READER_ARG_1));}
-static void display_mf(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = run_mix_reader_to_string(MIX_READER_ARG_1)); FREE(buf);}
+static void display_mf(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = run_mix_sample_reader_to_string(MIX_READER_ARG_1)); FREE(buf);}
 static char *descr_display_mf(int *args, ptree *pt) {return(mus_format("display(" MF_PT ")", args[1], DESC_MIX_READER_ARG_1));}
-static void display_tf(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = run_track_reader_to_string(TRACK_READER_ARG_1)); FREE(buf);}
+static void display_tf(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = run_track_sample_reader_to_string(TRACK_READER_ARG_1)); FREE(buf);}
 static char *descr_display_tf(int *args, ptree *pt) {return(mus_format("display(" TF_PT ")", args[1], DESC_TRACK_READER_ARG_1));}
 static void display_sd(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = sound_data_to_string(SOUND_DATA_ARG_1)); FREE(buf);}
 static char *descr_display_sd(int *args, ptree *pt) {return(mus_format("display(" SD_PT ")", args[1], DESC_SOUND_DATA_ARG_1));}

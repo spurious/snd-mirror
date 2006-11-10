@@ -329,6 +329,19 @@ static bool tick_amp_env(chan_info *cp, env_state *es)
     }
 }
 
+void finish_amp_env(chan_info *cp)
+{
+  chan_context *cgx;
+  cgx = cp->cgx;
+  if ((cgx->amp_env_in_progress) && 
+      (cgx->amp_env_state))
+    {
+      while (!(tick_amp_env(cp, cgx->amp_env_state))); /* finish peak-env scan */
+      enved_reflect_amp_env_completion(cp->sound);
+      free_env_state(cp);
+    }
+}
+
 Cessate get_amp_env(Indicium ptr)
 {
   /* calculate the amp env of channel */
@@ -410,9 +423,7 @@ bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool s
   if ((finish_env) && (cgx->amp_env_in_progress) && (cgx->amp_env_state))
     {
       /* caller wants data, but a read is in progress -- finish it as quickly as possible */
-      while (!(tick_amp_env(cp, cgx->amp_env_state)));
-      enved_reflect_amp_env_completion(cp->sound);
-      free_env_state(cp);
+      finish_amp_env(cp);
       if (cp->waiting_to_make_graph) 
 	{
 	  cp->waiting_to_make_graph = false;
@@ -746,13 +757,13 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Fl
 env_info *env_on_env(env *e, chan_info *cp)
 {
   env_info *ep;
-  mus_any *me;
   ep = amp_env_copy(cp, false, 0);
-  me = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, ep->amp_env_size - 1, NULL);
   if (ep)
     {
       int i;
       Float val;
+      mus_any *me;
+      me = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, ep->amp_env_size - 1, NULL);
       for (i = 0; i < ep->amp_env_size; i++) 
 	{
 	  val = mus_env(me);
@@ -767,8 +778,8 @@ env_info *env_on_env(env *e, chan_info *cp)
 	      ep->data_max[i] = (mus_sample_t)(ep->data_min[i] * val);
 	    }
 	}
+      mus_free(me);
     }
-  mus_free(me);
   return(ep);
 }
 

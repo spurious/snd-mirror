@@ -58,6 +58,7 @@
 ;;; sound segmentation
 
 (use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs) (ice-9 common-list))
+(if (provided? 'snd-gauche) (use srfi-13)) ; string-downcase
 
 (provide 'snd-examp.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))

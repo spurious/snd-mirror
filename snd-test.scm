@@ -9,27 +9,27 @@
 ;;;  test 6: vcts                               [12045]
 ;;;  test 7: colors                             [12360]
 ;;;  test 8: clm                                [12866]
-;;;  test 9: mix                                [22059]
-;;;  test 10: marks                             [25167]
-;;;  test 11: dialogs                           [26055]
-;;;  test 12: extensions                        [26349]
-;;;  test 13: menus, edit lists, hooks, etc     [26803]
-;;;  test 14: all together now                  [28352]
-;;;  test 15: chan-local vars                   [29427]
-;;;  test 16: regularized funcs                 [30758]
-;;;  test 17: dialogs and graphics              [35174]
-;;;  test 18: enved                             [35263]
-;;;  test 19: save and restore                  [35283]
-;;;  test 20: transforms                        [37117]
-;;;  test 21: new stuff                         [38950]
-;;;  test 22: run                               [39948]
-;;;  test 23: with-sound                        [45435]
-;;;  test 24: user-interface                    [47451]
-;;;  test 25: X/Xt/Xm                           [51067]
-;;;  test 26: Gtk                               [55655]
-;;;  test 27: GL                                [59772]
-;;;  test 28: errors                            [59896]
-;;;  test all done                              [62000]
+;;;  test 9: mix                                [22058]
+;;;  test 10: marks                             [25591]
+;;;  test 11: dialogs                           [26479]
+;;;  test 12: extensions                        [26773]
+;;;  test 13: menus, edit lists, hooks, etc     [27227]
+;;;  test 14: all together now                  [28776]
+;;;  test 15: chan-local vars                   [29851]
+;;;  test 16: regularized funcs                 [31181]
+;;;  test 17: dialogs and graphics              [35597]
+;;;  test 18: enved                             [35686]
+;;;  test 19: save and restore                  [35706]
+;;;  test 20: transforms                        [37543]
+;;;  test 21: new stuff                         [39376]
+;;;  test 22: run                               [40374]
+;;;  test 23: with-sound                        [45861]
+;;;  test 24: user-interface                    [47891]
+;;;  test 25: X/Xt/Xm                           [51507]
+;;;  test 26: Gtk                               [56095]
+;;;  test 27: GL                                [60212]
+;;;  test 28: errors                            [60336]
+;;;  test all done                              [62445]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -39,7 +39,7 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #f) ; huge arg testing
+(define all-args #f) ; extended testing
 
 (if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (display ";both switches are on?"))
 
@@ -47,6 +47,7 @@
     (begin
       (if (not (provided? 'gauche-optargs.scm)) (load "gauche-optargs.scm"))
       (if (not (provided? 'gauche-format.scm)) (load "gauche-format.scm"))
+      (use srfi-13) ; string-downcase
 
       (define (run thunk) (thunk))
       (define O_RDWR 2)
@@ -4757,6 +4758,9 @@
 
       ;; basic edit tree cases
       (let ((ind (new-sound "test.snd")))
+	(if (not (= (redo) 0)) (snd-display ";redo with no ops: ~A" (redo)))
+	(if (not (= (undo) 0)) (snd-display ";undo with no ops: ~A" (undo)))
+
 	(if (not (string-=? (display-edits) (string-append "
 EDITS: 0
 
@@ -8120,6 +8124,8 @@ EDITS: 5
       (set! (optimization) old-opt-val)
       
       (let ((ind (open-sound "oboe.snd")))
+	(if (not (= (redo 1 ind 0) 0)) (snd-display ";open redo with no ops: ~A" (redo)))
+	(if (not (= (undo 1 ind 0) 0)) (snd-display ";open undo with no ops: ~A" (undo)))
 	(set! (cursor) 1000)
 	(delete-sample 321)
 	(if (not (= (cursor) 999)) (snd-display ";delete-sample before cursor: ~A" (cursor)))
@@ -13715,13 +13721,13 @@ EDITS: 5
 	     '(1 .5  2 1  3 .5  4 .1  5 .01))))
 
 
-;;; -------- fm-violin
+;;; -------- fm-violin->vct
 ;;;
 ;;; here we're using the keyword stuff in guile/ice-9/optargs.scm
 ;;; CLM version is v.ins, C version is in sndlib.html
 ;;; a version treating the entire violin as a generator is in fmv.scm.
 
-(define fm-violin 
+(define fm-violin->vct
   (lambda* (startime dur frequency amplitude :key
 		     (fm-index 1.0)
 		     (amp-env '(0 0  25 1  75 1  100 0))
@@ -13825,7 +13831,6 @@ EDITS: 5
 		   (mix-vct (vct-scale! out-data (locsig-ref loc 0)) beg #f 0 #f))
 		 (mix-vct out-data beg #f 0 #f)))))
 
-; (fm-violin 0 1 440 .1 :fm-index 2.0)
 (define (fltit)
   "(fltit) returns a time-varying filter: (map-chan (fltit))"
   (let* ((coeffs (list .1 .2 .3 .4 .4 .3 .2 .1))
@@ -21079,7 +21084,7 @@ EDITS: 5
 	    (set! *output* #f)))
 
       (let ((nind (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "this is a comment")))
-	(time (fm-violin 0 1 440 .1))
+	(time (fm-violin->vct 0 1 440 .1))
 	(play-and-wait 0 nind)
 	(save-sound nind)
 	(if (not (sound? nind)) (snd-display ";save sound clobbered ~A?" nind))
@@ -22057,6 +22062,307 @@ EDITS: 5
 
 
 ;;; ---------------- test 9: mix ----------------
+
+(if (not (provided? 'snd-v.scm)) (load "v.scm"))
+
+(define (make-waltz)
+
+  (let ((oldie (find-sound "test.snd")))
+    (if (sound? oldie)
+	(close-sound oldie)))
+
+  (let ((violins '())
+	(cellos '())
+	(index (new-sound "test.snd" :channels 1)))
+
+    (define (violin beg dur freq amp)
+      (let ((id (mix (with-temp-sound () 
+		       (fm-violin 0 dur (->frequency freq #t) amp))
+		     (->sample beg) 0 index 0  ; start, file in-chan, sound, channel
+		     #t #t)))                  ; with tag and auto-delete
+	(if (symbol? freq)
+	    (set! (mix-name id) (symbol->string freq)))
+	(set! violins (cons id violins))))
+
+    (define (cello beg dur freq amp)
+      (let ((id (mix (with-temp-sound () 
+		       (fm-violin 0 dur (->frequency freq #t) amp :fm-index 1.5))
+		     (->sample beg) 0 index 0
+		     #t #t)))  ; with tag and auto-delete
+	(if (symbol? freq)
+	    (set! (mix-name id) (symbol->string freq)))
+	(set! cellos (cons id cellos))))
+
+    (as-one-edit
+     (lambda ()
+       (violin 0 1 'e4 .2)  (violin 1 1.5 'g4 .2)  (violin 2.5 .5 'g3 .2)
+       (cello  0 1 'c3 .2)  (cello  1 1.5 'e3 .2)  (cello  2.5 .5 'g2 .2)
+       
+       (violin 3 3 'f4 .2)
+       (cello  3 3 'd3 .2)
+       
+       (violin 6 1 'e4 .2)   (violin 7 1 'g3 .2)   (violin 8 1 'e4 .2)
+       (cello  6 1 'c3 .2)   (cello  7 1 'g2 .2)   (cello  8 1 'c3 .2)
+       
+       (violin 9 3 'd4 .2)
+       (cello  9 3 'b2 .2)
+
+       (violin 12 1 'f4 .2)  (violin 13 1.5 'a4 .2)  (violin 14.5 .5 'g3 .2)
+       (cello  12 1 'd3 .2)  (cello  13 1.5 'f3 .2)  (cello  14.5 .5 'g2 .2)
+       
+       (violin 15 3 'g4 .2)
+       (cello  15 3 'e3 .2)
+       
+       (violin 18 1 'f4 .2)  (violin 19 1 'g3 .2)  (violin 20 1 'f4 .2)
+       (cello  18 1 'd3 .2)  (cello  19 1 'g2 .2)  (cello  20 1 'd3 .2)
+       
+       (violin 21 3 'e4 .2)
+       (cello  21 3 'c3 .2)
+
+       (let ((overall-trk (make-track)))
+       
+	 (let ((trk (apply make-track (reverse violins))))
+	   (set! (track-tag-y trk) 10)
+	   (set! (track-color trk) (make-color 0 0 1))
+	   (set! (track-name trk) "violin")
+	   (set! (track-track trk) overall-trk))
+       
+	 (let ((trk (apply make-track (reverse cellos))))
+	   (set! (track-tag-y trk) 40)
+	   (set! (track-color trk) (make-color 0 1 0))
+	   (set! (track-name trk) "cello")
+	   (set! (track-track trk) overall-trk))
+       
+       index)))))
+
+(define (make-bagatelle)
+
+  (define (seg data)			; SEG functions expected data in (y x) pairs.
+    (let ((unseg '())
+	  (len (length data)))
+      (do ((i 0 (+ i 2)))
+	  ((>= i len))
+	(let ((x (list-ref data (1+ i)))
+	      (y (list-ref data i)))
+	  (set! unseg (cons x unseg))
+	  (set! unseg (cons y unseg))))
+      (reverse unseg)))
+
+  (let ((oldie (find-sound "test.snd")))
+    (if (sound? oldie)
+	(close-sound oldie)))
+
+  (let* ((soprano '())
+	 (alto '())
+	 (tenor '())
+	 (bass '())
+
+	 (ind (new-sound "test.snd" :channels 1))
+
+	 (f1 (seg '(0 0 1 25 1 75 0 100)))
+	 (f5 (seg '(-1 0 .25 10 0 20 0 100)))
+	 (grc1 (seg '(1 0 .5 10 0 20 0 50 0 100)))
+	 (grc2 (seg '(0 0 1 10 0 20 0 50 0 100)))
+	 (grc3 (seg '(.5 0 1 10 0 20 0 50 0 100)))
+	 (grc4 (seg '(1 0 0 10 1 20 0 30 1 40 0 50 1 60 0 70 1 80 0 90 1 100)))
+	 (grc5 (seg '(1 0 .5 10  1 20  0 30  1 40  .5 50  1 60  0 70  1 80  .5 90  1 100)))
+	 (grc6 (seg '(1 0  .5 10  0 20  -.5 30  -1 40  -.5 50  0 60  .5 70  1 80  .5 90  0 100)))
+	 (f6 (seg '(1 1  .5 10  .75 50  .4 75  .6 90  0 100)))
+	 (f7 (seg '(0 1  .5 10  .25 25  .75 50  .5 75  1 90  0 100)))
+	 (f2 (seg '(0 1  .5 10  .4 90  0 100)))
+	 (f3 (seg '(1 0  .5 10  .75 90 0 100)))
+	 (ramp (seg '(0 0 1 2.5  1 7.5  0 10  1 12.5  1 17.5  0 20  1 22.5  1 27.5  0 30  1 32.5  1 37.5
+			0 40  1 42.5  1 47.5  0 50  1 52.5  1 57.5  0 60  1 62.5  1 67.5  0 70  1 72.5  1 77.5
+			0 80  1 82.5  1 87.5  0 90  1 92.5  1 97.5  0 100)))
+	 (str (seg '(1 1  1 100))))
+
+    (define (mix-fmsimp beg dur freq amp ampfunc freqfunc rat1 indx1 rat2 indx2 ignored)
+      (let* ((freq1 (if (> freq (/ (mus-srate) 8)) (/ freq 8) freq))
+	     (amp1 (* amp .175)))
+	(let ((id (mix (with-temp-sound () 
+					(fm-violin 0 dur freq1 amp1
+						   :fm1-rat (* 1.002 rat1)
+						   :fm1-index (* .5 rat1 indx1 (hz->radians freq))
+						   :fm1-env f6
+						   :fm2-rat (* 1.003 rat2)
+						   :fm2-index (* .5 indx2 rat2 (hz->radians freq))
+						   :fm2-env f7
+						   :fm3-index 0.0
+						   :reverb-amount 1.0
+						   :amp-env ampfunc))
+		       (->sample beg) 0 ind 0 #t #t)))  ; with tag and auto-delete
+	  (set! (mix-name id) (number->string (inexact->exact (floor freq))))
+	  (if (> freq 700) (set! soprano (cons id soprano))
+	      (if (> freq 500) (set! alto (cons id alto))
+		  (if (> freq 300) (set! tenor (cons id tenor))
+		      (set! bass (cons id bass))))))))
+
+    (as-one-edit
+     (lambda ()
+       (mix-fmsimp   .000  2.488  659.255   .500  f1  f5  5.000  1.260  2.000   .501   .000 )
+       (mix-fmsimp   .750  1.988  654.084   .167  f1  f5  3.000  1.260  1.000   .710   .000 )
+       (mix-fmsimp  1.000  2.738  880.000   .500  f1  f5  5.000  1.260  1.000   .140   .001 )
+       (mix-fmsimp  2.000  2.488  880.000   .500  f1  f5  1.000  1.671  2.000   .745   .001 )
+       (mix-fmsimp  2.750  1.969  871.429   .495  f1  f5  5.000  1.312  1.000   .447   .001 )
+       (mix-fmsimp  3.000  2.750  493.883   .100  f1  f5  1.000  1.260  2.000  1.069   .002 )
+       (mix-fmsimp  4.000  2.488  654.568   .500  f1  f5  3.000  1.671  5.000   .793   .002 )
+       (mix-fmsimp  4.750  1.988  590.042   .241  f1  f5  2.000  1.671  5.000  1.046   .002 )
+       (mix-fmsimp  5.000  2.238  551.574   .500  f1  f5  4.000  1.671  1.000   .073   .003 )
+       (mix-fmsimp  5.500  2.238  664.174   .504  f1  f5  3.000  1.671  4.000   .791   .003 )
+       (mix-fmsimp  6.000  1.988  659.255   .400  f1  f5  2.000  1.671  2.000   .955   .003 )
+       (mix-fmsimp  6.250  2.738  880.000   .400  f1  f5  5.000  1.260  5.000   .645   .003 )
+       (mix-fmsimp  7.250  2.505  885.724   .336  f1  f5  5.000  1.260  4.000   .302   .004 )
+       (mix-fmsimp  8.000  1.988  880.000   .500  f1  f5  3.000  1.260  2.000   .672   .004 )
+       (mix-fmsimp  8.250  2.738  493.883   .100  f1  f5  4.000  1.671  1.000   .013   .004 )
+       (mix-fmsimp  9.250  2.488  659.255   .250  f1  f5  3.000  1.671  3.000  1.167   .005 )
+       (mix-fmsimp  10.000  1.988  587.330   .240  f1  f5  2.000  1.314  5.000   .423   .005 )
+       (mix-fmsimp  10.250  2.238  554.365   .500  f1  f5  1.000  1.671  2.000   .078   .005 )
+       (mix-fmsimp  10.750  2.238  659.255   .500  f1  f5  1.000  1.260  5.000   .797   .005 )
+       (mix-fmsimp  11.250  1.988  651.332   .400  f1  f5  5.000  1.671  1.000   .883   .006 )
+       (mix-fmsimp  11.500  1.926  878.372   .200  f1  f5  1.000  1.434  4.000   .322   .006 )
+       (mix-fmsimp  11.688  2.497  880.000   .335  f1  f5  2.000  1.671  4.000   .879   .006 )
+       (mix-fmsimp  12.438  2.006  887.764   .288  f1  f5  1.000  1.671  4.000   .652   .006 )
+       (mix-fmsimp  12.688  2.738  493.883   .100  f1  f5  1.000  1.671  4.000   .521   .006 )
+       (mix-fmsimp  13.688  2.488  659.255   .250  f1  f5  2.000  1.671  2.000  1.247   .007 )
+       (mix-fmsimp  14.438  1.988  587.330   .240  f1  f5  1.000  1.260  2.000  1.182   .007 )
+       (mix-fmsimp  14.688  2.238  547.848   .494  f1  f5  4.000  1.671  2.000   .432   .007 )
+       (mix-fmsimp  15.188  3.238  867.651   .500  f1  f5  4.000  1.671  1.000   .571   .008 )
+       (mix-fmsimp  16.688  2.238  659.255   .400  f1  f5  4.000  1.671  4.000   .477   .008 )
+       (mix-fmsimp  17.188  1.988  652.468   .495  f1  f5  3.000  1.671  2.000   .438   .009 )
+       (mix-fmsimp  17.438  1.926  880.000   .200  f1  f5  2.000  1.671  4.000  1.107   .009 )
+       (mix-fmsimp  17.625  2.523  880.000   .500  f1  f5  5.000  1.671  1.000   .830   .009 )
+       (mix-fmsimp  18.375  1.988  880.000   .400  f1  f5  4.000  1.671  3.000   .186   .009 )
+       (mix-fmsimp  18.625  2.738  493.883   .100  f1  f5  1.000  1.260  5.000   .407   .009 )
+       (mix-fmsimp  19.625  2.488  657.231   .166  f1  f5  5.000  1.260  2.000   .389   .010 )
+       (mix-fmsimp  20.375  1.976  587.330   .238  f1  f5  2.000  1.671  1.000   .712   .010 )
+       (mix-fmsimp  20.625  2.238  554.365   .500  f1  f5  3.000  1.260  5.000   .171   .010 )
+       (mix-fmsimp  21.125  3.238  880.000   .500  f1  f5  4.000  1.671  1.000   .507   .011 )
+       (mix-fmsimp  22.625  2.238  650.838   .395  f1  f5  3.000  1.671  4.000   .160   .011 )
+       (mix-fmsimp  23.125  1.978  659.255   .497  f1  f5  1.000  1.671  1.000   .867   .012 )
+       (mix-fmsimp  23.375  1.926  885.243   .333  f1  f5  2.000  1.412  4.000   .811   .012 )
+       (mix-fmsimp  23.563  2.488  880.000   .500  f1  f5  4.000  1.671  3.000   .439   .012 )
+       (mix-fmsimp  24.313  1.995  882.799   .401  f1  f5  1.000  1.671  4.000  1.089   .012 )
+       (mix-fmsimp  24.563  2.730  246.942   .100  f1  f5  2.000  1.671  1.000   .092   .012 )
+       (mix-fmsimp  25.563  2.488  329.628   .167  f1  f5  2.000  1.671  2.000  1.149   .012 )
+       (mix-fmsimp  26.313  2.007  587.330   .242  f1  f5  3.000  1.671  3.000   .472   .011 )
+       (mix-fmsimp  26.563  2.238  548.468   .495  f1  f5  2.000  1.671  1.000   .259   .011 )
+       (mix-fmsimp  27.063  3.238  439.221   .500  f1  f5  3.000  1.260  3.000  1.014   .011 )
+       (mix-fmsimp  28.563  2.493  441.603   .401  f1  f5  3.000  1.671  5.000   .056   .010 )
+       (mix-fmsimp  29.313  2.220  659.255   .500  f1  f5  3.000  1.260  3.000  1.108   .010 )
+       (mix-fmsimp  29.813  1.960  329.628   .500  f1  f5  1.000  1.671  1.000   .944   .010 )
+       (mix-fmsimp  30.063  1.894  440.000   .333  f1  f5  1.000  1.260  4.000   .602   .009 )
+       (mix-fmsimp  30.250  2.453  443.160   .400  f1  f5  1.000  1.260  3.000   .750   .009 )
+       (mix-fmsimp  31.000  1.938  441.168   .333  f1  f5  5.000  1.671  3.000   .522   .009 )
+       (mix-fmsimp  31.250  2.684  246.942   .100  f1  f5  5.000  1.654  1.000  1.020   .009 )
+       (mix-fmsimp  32.250  2.415  325.263   .167  f1  f5  4.000  1.671  3.000   .014   .008 )
+       (mix-fmsimp  33.000  1.901  587.330   .240  f1  f5  4.000  1.671  5.000  1.106   .008 )
+       (mix-fmsimp  33.250  2.149  554.936   .501  f1  f5  2.000  1.260  2.000  1.159   .008 )
+       (mix-fmsimp  33.750  3.137  440.000   .500  f1  f5  2.000  1.671  1.000   .647   .008 )
+       (mix-fmsimp  35.250  2.359  440.000   .400  f1  f5  5.000  1.671  4.000  1.149   .007 )
+       (mix-fmsimp  36.000  2.101  661.109   .501  f1  f5  4.000  1.377  2.000  1.121   .006 )
+       (mix-fmsimp  36.500  1.836  329.628   .500  f1  f5  2.000  1.671  4.000  1.459   .006 )
+       (mix-fmsimp  36.750  1.768  440.000   .250  f1  f5  5.000  1.671  5.000   .601   .006 )
+       (mix-fmsimp  36.938  2.327  442.815   .400  f1  f5  2.000  1.671  3.000   .354   .006 )
+       (mix-fmsimp  37.688  1.813  440.000   .400  f1  f5  4.000  1.671  2.000   .205   .006 )
+       (mix-fmsimp  37.938  2.559  246.712   .100  f1  f5  4.000  1.671  2.000  1.044   .006 )
+       (mix-fmsimp  38.938  2.290  329.628   .167  f1  f5  1.000  1.260  2.000  1.316   .005 )
+       (mix-fmsimp  39.688  1.781  587.330   .240  f1  f5  1.000  1.671  3.000   .524   .005 )
+       (mix-fmsimp  39.938  2.021  554.365   .500  f1  f5  1.000  1.671  2.000   .522   .005 )
+       (mix-fmsimp  40.438  2.998  438.022   .498  f1  f5  3.000  1.260  4.000   .264   .004 )
+       (mix-fmsimp  41.938  2.253  443.810   .403  f1  f5  1.000  1.671  4.000  1.157   .004 )
+       (mix-fmsimp  42.688  1.720  414.691   .319  f1  f5  4.000  1.671  1.000   .612   .003 )
+       (mix-fmsimp  42.938  1.965  659.255   .500  f1  f5  2.000  1.671  2.000   .559   .003 )
+       (mix-fmsimp  43.438  1.690  329.628   .496  f1  f5  5.000  1.671  2.000  1.457   .003 )
+       (mix-fmsimp  43.688  1.630  440.000   .249  f1  f5  2.000  1.671  5.000   .505   .003 )
+       (mix-fmsimp  43.875  2.197  440.000   .400  f1  f5  3.000  1.260  3.000   .843   .003 )
+       (mix-fmsimp  44.625  1.678  440.000   .332  f1  f5  2.000  1.671  5.000  1.165   .002 )
+       (mix-fmsimp  44.875  2.405  246.942   .100  f1  f5  4.000  1.671  3.000   .105   .002 )
+       (mix-fmsimp  45.875  2.160  332.580   .168  f1  f5  1.000  1.260  5.000  1.107   .002 )
+       (mix-fmsimp  46.625  1.646  583.584   .238  f1  f5  4.000  1.673  5.000   .201   .001 )
+       (mix-fmsimp  46.875  1.891  553.184   .492  f1  f5  1.000  1.304  2.000  1.230   .001 )
+       (mix-fmsimp  47.375  2.882  438.012   .489  f1  f5  5.000  1.737  4.000   .024   .001 )
+       (mix-fmsimp  48.875  2.104  440.000   .487  f1  f5  2.000  1.770  2.000   .308   .000 )
+       (mix-fmsimp  49.625  1.590  414.068   .319  f1  f5  4.000  1.866  3.000   .415   .001 )
+       (mix-fmsimp  49.875  1.835  659.255   .467  f1  f5  1.000  1.914  3.000   .477   .001 )
+       (mix-fmsimp  50.375  1.592  333.127   .470  f1  f5  5.000  1.930  2.000   .230   .001 )
+       (mix-fmsimp  50.625  1.509  440.000   .250  f1  f5  5.000  1.963  1.000   .829   .001 )
+       (mix-fmsimp  50.813  2.068  440.000   .400  f1  f5  3.000  1.979  1.000  1.450   .001 )
+       (mix-fmsimp  51.563  1.536  434.964   .330  f1  f5  4.000  1.991  2.000   .308   .002 )
+       (mix-fmsimp  51.813  2.299  246.942   .088  f1  f5  4.000  1.581  5.000  1.149   .002 )
+       (mix-fmsimp  52.813  2.030  329.628   .167  f1  f5  5.000  1.916  5.000  1.234   .002 )
+       (mix-fmsimp  53.563  1.524  590.360   .241  f1  f5  4.000  2.119  4.000   .374   .003 )
+       (mix-fmsimp  53.813  1.761  554.365   .433  f1  f5  3.000  2.168  3.000   .269   .003 )
+       (mix-fmsimp  54.313  2.720  434.908   .425  f1  f5  3.000  2.184  1.000  1.209   .003 )
+       (mix-fmsimp  55.813  1.966  440.000   .426  f1  f5  4.000  2.196  2.000  1.493   .004 )
+       (mix-fmsimp  56.563  1.446  415.305   .316  f1  f5  4.000  2.312  1.000   .753   .004 )
+       (mix-fmsimp  56.813  2.205  369.994   .406  f1  f5  2.000  2.361  1.000   .292   .004 )
+       (mix-fmsimp  57.813  1.668  329.628   .400  f1  f5  4.000  2.377  1.000   .179   .005 )
+       (mix-fmsimp  58.313  1.422  329.628   .394  f1  f5  4.000  2.441  3.000  1.117   .005 )
+       (mix-fmsimp  58.563  1.360  435.856   .250  f1  f5  1.000  1.960  5.000   .811   .005 )
+       (mix-fmsimp  58.750  1.919  440.000   .389  f1  f5  2.000  2.489  3.000   .242   .005 )
+       (mix-fmsimp  59.500  1.405  439.947   .387  f1  f5  3.000  2.501  4.000  1.265   .006 )
+       (mix-fmsimp  59.750  2.173  249.594   .073  f1  f5  2.000  2.550  2.000   .351   .006 )
+       (mix-fmsimp  60.750  1.881  329.628   .200  f1  f5  2.000  2.566  2.000  1.431   .006 )
+       (mix-fmsimp  61.500  1.367  293.665   .240  f1  f5  1.000  2.096  1.000  1.378   .007 )
+       (mix-fmsimp  61.750  1.613  554.365   .363  f1  f5  1.000  2.678  1.000   .201   .007 )
+       (mix-fmsimp  62.250  2.603  433.901   .356  f1  f5  2.000  2.694  5.000   .950   .007 )
+       (mix-fmsimp  63.750  1.809  440.000   .354  f1  f5  4.000  2.727  4.000   .459   .008 )
+       (mix-fmsimp  64.500  1.314  415.305   .320  f1  f5  3.000  2.265  1.000  1.059   .008 )
+       (mix-fmsimp  64.750  2.057  374.139   .341  f1  f5  2.000  2.307  3.000   .054   .008 )
+       (mix-fmsimp  65.750  1.538  329.628   .335  f1  f5  4.000  2.887  3.000  1.281   .009 )
+       (mix-fmsimp  66.250  1.278  329.628   .326  f1  f5  3.000  2.952  4.000   .363   .009 )
+       (mix-fmsimp  66.500  1.211  440.000   .322  f1  f5  5.000  2.405  4.000   .361   .009 )
+       (mix-fmsimp  66.688  1.769  440.000   .319  f1  f5  4.000  2.419  3.000   .190   .009 )
+       (mix-fmsimp  67.438  1.256  437.237   .316  f1  f5  1.000  2.430  2.000  1.121   .010 )
+       (mix-fmsimp  67.688  1.979  246.942   .056  f1  f5  2.000  2.472  4.000  1.172   .010 )
+       (mix-fmsimp  68.688  1.736  330.174   .250  f1  f5  4.000  2.486  3.000   .893   .010 )
+       (mix-fmsimp  69.438  1.213  292.204   .238  f1  f5  5.000  2.732  1.000  1.265   .011 )
+       (mix-fmsimp  69.688  1.462  553.724   .294  f1  f5  3.000  3.189  3.000   .427   .011 )
+       (mix-fmsimp  70.188  2.455  440.000   .292  f1  f5  2.000  2.598  5.000   .489   .011 )
+       (mix-fmsimp  71.688  1.654  440.000   .284  f1  f5  5.000  3.237  2.000  1.299   .012 )
+       (mix-fmsimp  72.438  1.175  415.305   .277  f1  f5  3.000  2.995  4.000   .916   .012 )
+       (mix-fmsimp  72.688  1.933  369.994   .271  f1  f5  1.000  3.382  1.000   .886   .012 )
+       (mix-fmsimp  73.688  1.639  440.000   .046  f1  f5  4.000  3.398  5.000   .993   .012 )
+       (mix-fmsimp  74.438  15.942  329.628   .257  f1  f5  1.000  2.822  1.000   .402   .011 )
+       (mix-fmsimp  74.938  (- 45.394 20)  329.628   .249  f1  f5  1.000  2.864  2.000  1.093   .011 )
+       (mix-fmsimp  75.438  (- 45.063 20)  440.000   .246  f1  f5  3.000  3.543  2.000   .978   .011 )
+       (mix-fmsimp  75.625  (- 45.335 20)  444.508   .244  f1  f5  2.000  2.920  4.000   .563   .011 )
+       (mix-fmsimp  76.375  (- 44.125 20)  445.106   .240  f1  f5  3.000  2.931  2.000   .768   .010 )
+       (mix-fmsimp  76.625  (- 43.875 20)  248.294   .038  f1  f5  2.000  2.973  2.000   .155   .010 )
+       (mix-fmsimp  77.625  (- 43.455 20)  334.084   .234  f1  f5  3.000  2.987  4.000   .047   .010 )
+       (mix-fmsimp  78.375  (- 41.938 20)  292.359   .222  f1  f5  3.000  3.521  5.000  1.140   .009 )
+       (mix-fmsimp  78.625  (- 41.605 20)  554.365   .215  f1  f5  2.000  3.085  4.000   .595   .009 )
+       (mix-fmsimp  79.125  (- 41.769 20)  440.000   .214  f1  f5  3.000  3.780  3.000   .541   .009 )
+       (mix-fmsimp  80.625  (- 39.875 20)  440.000   .200  f1  f5  3.000  3.812  2.000  1.111   .008 )
+       (mix-fmsimp  91.130  (- 29.335 20)  415.305   .111  f1  f5  3.000  3.759  2.000   .490   .003 )
+
+       (let ((overall-trk (make-track)))
+       
+	 (let ((trk (apply make-track (reverse soprano))))
+	   (set! (track-tag-y trk) 10)
+	   (set! (track-color trk) (make-color 0 0 1))
+	   (set! (track-name trk) "soprano")
+	   (set! (track-track trk) overall-trk))
+       
+	 (let ((trk (apply make-track (reverse alto))))
+	   (set! (track-tag-y trk) 40)
+	   (set! (track-color trk) (make-color 0 1 0))
+	   (set! (track-name trk) "alto")
+	   (set! (track-track trk) overall-trk))
+
+	 (let ((trk (apply make-track (reverse tenor))))
+	   (set! (track-tag-y trk) 70)
+	   (set! (track-color trk) (make-color 1 1 1))
+	   (set! (track-name trk) "tenor")
+	   (set! (track-track trk) overall-trk))
+
+	 (let ((trk (apply make-track (reverse bass))))
+	   (set! (track-tag-y trk) 110)
+	   (set! (track-color trk) (make-color 0 0 0))
+	   (set! (track-name trk) "bass")
+	   (set! (track-track trk) overall-trk)))
+
+       ind))))
 
 (define (track-end id) (+ (track-position id) (track-frames id) -1))
 
@@ -25112,6 +25418,101 @@ EDITS: 5
 	  (close-sound ind)
 	  (if (file-exists? name) (delete-file name))))
 
+      ;; bigger track tests
+      (let* ((ind (make-waltz))
+	     (violin-track (track-name->id "violin"))
+	     (cello-track (track-name->id "cello"))
+	     (global-track (and (track? violin-track) (track-track violin-track)))
+	     (tlist (list violin-track cello-track global-track)))
+	(if (not (sound? ind))
+	    (snd-display ";make-waltz no output?")
+	    (if (or (not (track? global-track)) (not (track? cello-track)))
+		(snd-display ";waltz tracks: ~A" tlist)
+		(let ((mx (maxamp ind 0)))
+		  (if (or (not (= (track-position violin-track) 0))
+			  (not (= (track-position cello-track) 0))
+			  (not (= (track-position global-track) 0)))
+		      (snd-display ";waltz track positions: ~A" (map track-position tlist)))
+		  (if (not (apply = (map track-frames tlist)))
+		      (snd-display ";waltz frames: ~A" (map track-frames tlist)))
+		  (if (not (apply = (map track-chans tlist)))
+		      (snd-display ";waltz chans: ~A" (map track-chans tlist)))
+		  
+		  (let ((vt (make-track-sample-reader violin-track 0 10000))
+			(ct (make-track-sample-reader cello-track 0 10000))
+			(gt (make-track-sample-reader global-track 0 10000)))
+		    (let ((vals (channel->vct 10000 10))
+			  (vvals (make-vct 10))
+			  (cvals (make-vct 10))
+			  (gvals (make-vct 10)))
+		      (do ((i 0 (1+ i)))
+			  ((= i 10))
+			(vct-set! vvals i (read-track-sample vt))
+			(vct-set! cvals i (read-track-sample ct))
+			(vct-set! gvals i (read-track-sample gt)))
+		      (free-sample-reader vt)
+		      (free-sample-reader ct)
+		      (free-sample-reader gt)
+		      (if (not (vequal gvals vals)) (snd-display ";waltz 0 gvals: ~A ~A" vals gvals))
+		      (do ((i 0 (1+ i)))
+			  ((= i 10))
+			(vct-set! vals i (+ (vct-ref vvals i) (vct-ref cvals i))))
+		      (if (not (vequal gvals vals)) (snd-display ";waltz 0 gvals from mix: ~A ~A [~A ~A]" vals gvals vvals cvals))))
+		  
+		  (set! (track-amp global-track) 2.0)
+		  
+		  (let ((nmx (maxamp ind 0)))
+		    (if (fneq nmx (* 2.0 mx)) (snd-display ";waltz amp 2.0: ~A -> ~A" mx nmx))
+		    (set! (track-position violin-track) 1000)
+		    (if (or (not (= (track-position violin-track) 1000))
+			    (not (= (track-position cello-track) 0))
+			    (not (= (track-position global-track) 0)))
+			(snd-display ";waltz track positions after move: ~A" (map track-position tlist)))
+		    (set! (track-position cello-track) 500)
+		    (if (or (not (= (track-position violin-track) 1000))
+			    (not (= (track-position cello-track) 500))
+			    (not (= (track-position global-track) 500)))
+			(snd-display ";waltz track positions after 2nd move: ~A" (map track-position tlist)))
+		    
+		    (let ((vt (make-track-sample-reader violin-track 0 9000))
+			  (ct (make-track-sample-reader cello-track 0 9500))
+			  (gt (make-track-sample-reader global-track 0 9500)))
+		      (let ((vals (channel->vct 10000 10))
+			    (vvals (make-vct 10))
+			    (cvals (make-vct 10))
+			    (gvals (make-vct 10)))
+			(do ((i 0 (1+ i)))
+			    ((= i 10))
+			  (vct-set! vvals i (read-track-sample vt))
+			  (vct-set! cvals i (read-track-sample ct))
+			  (vct-set! gvals i (read-track-sample gt)))
+			(free-sample-reader vt)
+			(free-sample-reader ct)
+			(free-sample-reader gt)
+			(if (not (vequal gvals vals)) (snd-display ";waltz 2 gvals: ~A ~A" vals gvals))
+			(do ((i 0 (1+ i)))
+			    ((= i 10))
+			  (vct-set! vals i (+ (vct-ref vvals i) (vct-ref cvals i))))
+			(if (not (vequal gvals vals)) (snd-display ";waltz 2 gvals from mix: ~A ~A [~A ~A]" vals gvals vvals cvals))))
+		    
+		    (let ((fr (track-frames cello-track)))
+		      (set! (track-speed cello-track) 2.0)
+		      (if (= fr (track-frames cello-track))
+			  (snd-display ";waltz cello speed 2.0 frames: ~A ~A" fr (track-frames cello-track))))
+		    
+		    (set! (track-amp-env global-track) '(0 0 1 .1 2 0))
+		    (let ((nmx (maxamp ind 0)))
+		      (if (fneq nmx .078) (snd-display ";waltz amp-env maxamp: ~A (~A)" nmx mx)))
+
+		    (close-sound ind))))))
+
+      (if all-args
+	  (let ((ind (make-bagatelle)))
+	    
+	    ;; TODO bag1 tests
+
+	    (close-sound ind)))
+      
       (run-hook after-test-hook 9)
       ))
 
@@ -45466,7 +45867,6 @@ EDITS: 1
 ;;; ---------------- test 23: with-sound ----------------
 
 (if (not (provided? 'snd-prc95.scm)) (load "prc95.scm"))
-(if (not (provided? 'snd-v.scm)) (load "v.scm"))
 (if (not (provided? 'snd-jcrev.scm)) (load "jcrev.scm")) ; redefines jc-reverb (different from examp.scm version used above)
 (if (not (provided? 'snd-maraca.scm)) (load "maraca.scm"))
 (if (not (provided? 'snd-singer.scm)) (load "singer.scm"))

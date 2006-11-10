@@ -6077,6 +6077,7 @@ bool file_mix_change_samples(off_t beg, off_t num, const char *tempfile, chan_in
 	ed->edit_type = CHANGE_EDIT;
 	ed->sound_location = ED_SOUND(cb);
       }
+
       if (!with_mix)
 	{
 	  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
@@ -7549,6 +7550,7 @@ void revert_edits(chan_info *cp)
   reflect_edit_counter_change(cp);
   reflect_sample_change_in_axis(cp);
   call_selection_watchers(SELECTION_IN_DOUBT);
+  if (cp->have_mixes) sync_mixes_with_edits(cp);
   update_track_lists(cp, old_ctr - 1);
   update_graph(cp);
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
@@ -7557,9 +7559,11 @@ void revert_edits(chan_info *cp)
     run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
 }
 
-void undo_edit(chan_info *cp, int count)
+bool undo_edit(chan_info *cp, int count)
 {
-  if ((cp) && (cp->edit_ctr > 0) && (count != 0))
+  if ((cp) && 
+      (cp->edit_ctr > 0) && 
+      (count != 0))
     {
       snd_info *sp;
       sp = cp->sound;
@@ -7573,28 +7577,32 @@ void undo_edit(chan_info *cp, int count)
 	  reflect_file_revert_in_label(sp);
 	}
       call_selection_watchers(SELECTION_IN_DOUBT);
+      if (cp->have_mixes) sync_mixes_with_edits(cp);
       update_track_lists(cp, 0);
       update_graph(cp);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       reflect_enved_spectra_change(cp);
       if ((XEN_HOOK_P(cp->undo_hook)) && (XEN_HOOKED(cp->undo_hook)))
 	run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
+      return(true);
     }
+  return(false);
 }
 
-void undo_edit_with_sync(chan_info *cp, int count)
+bool undo_edit_with_sync(chan_info *cp, int count)
 {
   /* there is a problem with syncd undo: if the syncd edit decided one portion
    *   was a no-op (scale by 1.0 etc), but not another, a subsequent undo with
    *   sync can end up in a state different from where it started.
    */
-  if (count == 0) return;
+  if (count == 0) return(false);
   if (count < 0)
-    redo_edit_with_sync(cp, -count);
+    return(redo_edit_with_sync(cp, -count));
   else
     {
       if (cp)
 	{
+	  bool something_changed = false;
 	  snd_info *sp;
 	  sync_info *si = NULL;
 	  sp = cp->sound;
@@ -7602,48 +7610,64 @@ void undo_edit_with_sync(chan_info *cp, int count)
 	  if (si)
 	    {
 	      int i;
-	      for (i = 0; i < si->chans; i++) undo_edit(si->cps[i], count);
+	      for (i = 0; i < si->chans; i++) 
+		if (undo_edit(si->cps[i], count))
+		  something_changed = true;
 	      si = free_sync_info(si);
+	      return(something_changed);
 	    }
-	  else undo_edit(cp, count);
+	  else return(undo_edit(cp, count));
 	}
     }
+  return(false);
 }
 
-void redo_edit(chan_info *cp, int count)
+bool redo_edit(chan_info *cp, int count)
 {
+  /* returns true if an edit history change occurred */
   if ((cp) && (count != 0))
     {
+      int old_edit_ctr;
+      old_edit_ctr = cp->edit_ctr;
       cp->edit_ctr += count;
       if (cp->edit_ctr >= cp->edit_size) cp->edit_ctr = cp->edit_size - 1;
       while (!(cp->edits[cp->edit_ctr]))
 	cp->edit_ctr--;
-      if (cp->edit_ctr != 0) /* possibly a sync'd redo to chan that has no edits */
+      if ((cp->edit_ctr != 0) &&          /* possibly a sync'd redo to chan that has no edits */
+	  (cp->edit_ctr != old_edit_ctr)) /* or attempt to redo when nothing to redo */
 	{
 	  clear_transform_edit_ctrs(cp);
 	  reflect_file_change_in_label(cp);
 	  reflect_edit_counter_change(cp);
 	  reflect_sample_change_in_axis(cp);
 	  call_selection_watchers(SELECTION_IN_DOUBT);
+	  if (cp->have_mixes) sync_mixes_with_edits(cp); 
+	  /* update_graph also checks this, but it may not get run for various reasons,
+	   *   and the mix states have to be up-to-date to avoid being optimized out
+	   *   when, for example, set-mix-amp undo set again
+	   */
 	  update_track_lists(cp, 0);
 	  update_graph(cp);
 	  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
 	  reflect_enved_spectra_change(cp);
+	  if ((XEN_HOOK_P(cp->undo_hook)) && (XEN_HOOKED(cp->undo_hook)))
+	    run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
+	  return(true);
 	}
-      if ((XEN_HOOK_P(cp->undo_hook)) && (XEN_HOOKED(cp->undo_hook)))
-	run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
     }
+  return(false);
 }
 
-void redo_edit_with_sync(chan_info *cp, int count)
+bool redo_edit_with_sync(chan_info *cp, int count)
 {
-  if (count == 0) return;
+  if (count == 0) return(false);
   if (count < 0)
-    undo_edit_with_sync(cp, -count);
+    return(undo_edit_with_sync(cp, -count));
   else
     {
       if (cp)
 	{
+	  bool something_changed = false;
 	  snd_info *sp;
 	  sync_info *si = NULL;
 	  sp = cp->sound;
@@ -7651,12 +7675,16 @@ void redo_edit_with_sync(chan_info *cp, int count)
 	  if (si)
 	    {
 	      int i;
-	      for (i = 0; i < si->chans; i++) redo_edit(si->cps[i], count);
+	      for (i = 0; i < si->chans; i++) 
+		if (redo_edit(si->cps[i], count))
+		  something_changed = true;
 	      si = free_sync_info(si);
+	      return(something_changed);
 	    }
-	  else redo_edit(cp, count);
+	  else return(redo_edit(cp, count));
 	}
     }
+  return(false);
 }
 
 
@@ -8291,11 +8319,15 @@ static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
     {
       num = XEN_TO_C_INT(ed_n);
       if ((num != 0) && (num < 1000000000) && (num > -1000000000))
-	undo_edit_with_sync(cp, num);
-      return(C_TO_XEN_INT(num));
+	{
+	  if (undo_edit_with_sync(cp, num))
+	    return(C_TO_XEN_INT(num));
+	}
+      return(XEN_ZERO);
     }
-  undo_edit_with_sync(cp, 1);
-  return(C_TO_XEN_INT(1));
+  if (undo_edit_with_sync(cp, 1))
+    return(C_TO_XEN_INT(1));
+  return(XEN_ZERO);
 }
 
 static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
@@ -8311,11 +8343,15 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
     {
       num = XEN_TO_C_INT(ed_n);
       if ((num != 0) && (num < 1000000000) && (num > -1000000000))
-	redo_edit_with_sync(cp, num);
-      return(C_TO_XEN_INT(num));
+	{
+	  if (redo_edit_with_sync(cp, num))
+	    return(C_TO_XEN_INT(num));
+	}
+      return(XEN_ZERO);
     }
-  redo_edit_with_sync(cp, 1);
-  return(C_TO_XEN_INT(1));
+  if (redo_edit_with_sync(cp, 1))
+    return(C_TO_XEN_INT(1));
+  return(XEN_ZERO);
 }
 
 void as_one_edit(chan_info *cp, int one_edit, const char *one_edit_origin) /* origin copied here */
