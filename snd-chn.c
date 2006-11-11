@@ -4659,7 +4659,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_EDPOS_FRAMES:            return(C_TO_XEN_OFF_T(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
 	    case CP_UPDATE_TIME:
 #if USE_GTK
-	      if (!(cgx->ax->wn)) fixup_cp_cgx_ax_wn(cp);
+	      if (!(cp->cgx->ax->wn)) fixup_cp_cgx_ax_wn(cp);
 #endif
 	      /* any display-oriented background process must 1st be run to completion
 	       *       display checks for waiting process and does not update display if one found!
