@@ -3797,7 +3797,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
   if ((ap->x_axis_x1 == ap->x_axis_x0) || (ap->y_axis_y1 == ap->y_axis_y0))
     return(copy_string("?"));
 
-  x = mus_fclamp(ap->x_axis_x0, x, ap->x_axis_x1);
+  x = mus_iclamp(ap->x_axis_x0, x, ap->x_axis_x1);
   xf = ap->x0 + (ap->x1 - ap->x0) * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0);
 
   if (cp->transform_graph_type == GRAPH_ONCE)
@@ -3826,7 +3826,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
     {
       if (cp->transform_graph_type == GRAPH_AS_SONOGRAM)
 	{
-	  y = mus_fclamp(ap->y_axis_y1, y, ap->y_axis_y0);
+	  y = mus_iclamp(ap->y_axis_y1, y, ap->y_axis_y0);
 	  yf = ap->y0 + (ap->y1 - ap->y0) * (Float)(y - ap->y_axis_y0) / (Float)(ap->y_axis_y1 - ap->y_axis_y0);
 
 	  si = cp->sonogram_data;

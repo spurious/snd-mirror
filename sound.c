@@ -100,7 +100,7 @@ void mus_print(const char *format, ...)
     }
 }
 
-static const char *mus_initial_error_names[] = {
+static const char *mus_initial_error_names[MUS_INITIAL_ERROR_TAG] = {
   "no error", "no frequency method", "no phase method", "null gen arg to method", "no length method",
   "no free method", "no describe method", "no data method", "no scaler method",
   "memory allocation failed", "unstable two pole error",
@@ -121,7 +121,7 @@ static const char *mus_initial_error_names[] = {
 
   "no channels method", "no hop method", "no width method", "no file-name method", "no ramp method", "no run method",
   "no increment method", "no offset method",
-  "no xcoeff method", "no ycoeff method", "no xcoeffs method", "no ycoeffs method", 
+  "no xcoeff method", "no ycoeff method", "no xcoeffs method", "no ycoeffs method", "no reset", "bad size"
 };
 
 static char **mus_error_names = NULL;

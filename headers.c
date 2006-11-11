@@ -67,6 +67,11 @@
  * ivc format appears to have 16 bytes of header (-1 5 0 0 0 0 -> mulaw) followed by mulaw or alaw data
  */
 
+/* many headers have 32-bit ints for size/offset fields which I think are assumed by
+ *  most programs to be signed -- I could take a chance and make them unsigned, giving
+ *  us files up to 2^32 bytes, but it seems to be asking for trouble.
+ */
+
 #include <mus-config.h>
 
 #if USE_SND
@@ -96,6 +101,10 @@
 #include "sndlib-strings.h"
 
 static bool hdrbuf_is_inited = false;
+
+#include <limits.h>
+#define BIGGEST_4_BYTE_SIGNED_INT   LONG_MAX
+#define BIGGEST_4_BYTE_UNSIGNED_INT ULONG_MAX
 
 #define HDRBUFSIZ 256
 static unsigned char *hdrbuf;
@@ -620,9 +629,9 @@ static int read_next_header(const char *filename, int chan)
 {
   int maybe_bicsf, err = MUS_NO_ERROR, i;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
-  data_location = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
+  data_location = mus_char_to_ubint((unsigned char *)(hdrbuf + 4));
   if (data_location < 24) return(mus_error(MUS_HEADER_READ_FAILED, "%s: data location: " OFF_TD "?", filename, data_location));
-  data_size = mus_char_to_bint((unsigned char *)(hdrbuf + 8));
+  data_size = mus_char_to_ubint((unsigned char *)(hdrbuf + 8)); /* changed to unsigned 11-Nov-06 */
   /* can be bogus -- fixup if possible */
   true_file_length = SEEK_FILE_LENGTH(chan);
   if ((data_size <= 24) || (data_size > true_file_length))
@@ -920,7 +929,7 @@ static int read_aiff_header(const char *filename, int chan, int overall_offset)
   chans = 0;
   happy = true;
   true_file_length = SEEK_FILE_LENGTH(chan);
-  update_form_size = mus_char_to_bint((unsigned char *)(hdrbuf + 4 + overall_offset)); /* should be file-size-8 unless there are multiple forms */
+  update_form_size = mus_char_to_ubint((unsigned char *)(hdrbuf + 4 + overall_offset)); /* should be file-size-8 unless there are multiple forms */
   while (happy)
     {
       offset += chunkloc;
@@ -5114,23 +5123,40 @@ mus_header_write_hook_t *mus_header_write_set_hook(mus_header_write_hook_t *new_
 int mus_header_write(const char *name, int type, int in_srate, int in_chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len)
 {
   /* the "loc" arg is a mistake -- just always set it to 0 */
+  /* no mus_error calls within any of the write functions */
+
   int chan, err = MUS_NO_ERROR;
   off_t siz;
+
   chan = mus_file_create(name);
   if (chan == -1) 
     return(mus_error(MUS_CANT_OPEN_FILE, "can't write %s: %s", name, STRERROR(errno)));
+
   if (mus_header_write_hook)
     (*mus_header_write_hook)(name);
+
   siz = mus_samples_to_bytes(format, size_in_samples);
-  /* no mus_error calls within any of the write functions */
   switch (type)
     {
-    case MUS_NEXT: err = mus_header_write_next_header(chan, in_srate, in_chans, loc, siz, format, comment, len); break;
-    case MUS_AIFC: err = write_aif_header(chan, in_srate, in_chans, siz, format, comment, len, true); break;
-    case MUS_AIFF: err = write_aif_header(chan, in_srate, in_chans, siz, format, comment, len, false); break;
-    case MUS_RIFF: err = write_riff_header(chan, in_srate, in_chans, siz, format, comment, len); break;
+    case MUS_RAW: case MUS_IRCAM: case MUS_NEXT:
+      break;
+    default:
+      if (siz > BIGGEST_4_BYTE_SIGNED_INT)
+	{
+	  err = MUS_BAD_SIZE;
+	  siz = BIGGEST_4_BYTE_SIGNED_INT;
+	}
+      break;
+    }
+
+  switch (type)
+    {
+    case MUS_NEXT:  err = mus_header_write_next_header(chan, in_srate, in_chans, loc, siz, format, comment, len); break;
+    case MUS_AIFC:  err = write_aif_header(chan, in_srate, in_chans, siz, format, comment, len, true); break;
+    case MUS_AIFF:  err = write_aif_header(chan, in_srate, in_chans, siz, format, comment, len, false); break;
+    case MUS_RIFF:  err = write_riff_header(chan, in_srate, in_chans, siz, format, comment, len); break;
     case MUS_IRCAM: err = write_ircam_header(chan, in_srate, in_chans, format, comment, len); break;
-    case MUS_NIST: err = write_nist_header(chan, in_srate, in_chans, siz, format); break;
+    case MUS_NIST:  err = write_nist_header(chan, in_srate, in_chans, siz, format); break;
     case MUS_RAW: 
       data_location = 0; 
       data_size = mus_bytes_to_samples(format, siz);
@@ -5144,6 +5170,7 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
       return(mus_error(MUS_UNSUPPORTED_HEADER_TYPE,  "can't write %s header for %s", mus_header_type_name(type), name));
       break;
     }
+
   CLOSE(chan, name);
   return(err);
 }
@@ -5155,6 +5182,9 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
    *   header change data size?  Means saving the relevant data, and exporting it
    *  from headers.c. Can we guarantee consistency here?
    */
+
+  /* off_t size is actually not (yet) handled correctly by any of the sndlib-writable headers */
+
   int chan, err = MUS_NO_ERROR;
   switch (type)
     {
@@ -5168,13 +5198,22 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
       break;
     }
   if (err == MUS_ERROR) return(err);
+
   chan = mus_file_reopen_write(filename);
   if (chan == -1) return(mus_error(MUS_HEADER_WRITE_FAILED, "%s: %s", filename, STRERROR(errno)));
+
+  if (size < 0) return(mus_error(MUS_BAD_SIZE, "%s: change size to " OFF_TD "?", filename, size));
+
   switch (type)
     {
     case MUS_NEXT: 
+      if (size > BIGGEST_4_BYTE_UNSIGNED_INT)
+	{
+	  err = MUS_BAD_SIZE;
+	  size = BIGGEST_4_BYTE_UNSIGNED_INT;
+	}
       lseek(chan, 8L, SEEK_SET);
-      mus_bint_to_char((unsigned char *)(hdrbuf + 0), (int)size);
+      mus_bint_to_char((unsigned char *)(hdrbuf + 0), (unsigned int)size);
       CHK_WRITE(chan, hdrbuf, 4);
       break;
     case MUS_AIFC: 
@@ -5188,6 +5227,13 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
        */
 
       /* read sets current update_form_size, data_size, data_format, update_frames_location, update_ssnd_location */
+
+      if (size > BIGGEST_4_BYTE_SIGNED_INT)
+	{
+	  err = MUS_BAD_SIZE;
+	  mus_print("%s size: " OFF_TD " is too large for %s headers", filename, size, mus_header_type_name(type));
+	  size = BIGGEST_4_BYTE_SIGNED_INT;
+	}
 
       lseek(chan, 4L, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, (int)size + update_form_size - mus_samples_to_bytes(data_format, data_size));
@@ -5204,6 +5250,13 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
 
       /* read sets current update_form_size, data_format, data_size, update_ssnd_location */
 
+      if (size > BIGGEST_4_BYTE_SIGNED_INT)
+	{
+	  err = MUS_BAD_SIZE;
+	  mus_print("%s size: " OFF_TD " is too large for %s headers", filename, size, mus_header_type_name(type));
+	  size = BIGGEST_4_BYTE_SIGNED_INT;
+	}
+
       lseek(chan, 4L, SEEK_SET);
       mus_lint_to_char((unsigned char *)hdrbuf, (int)size + update_form_size - mus_samples_to_bytes(data_format, data_size)); 
       CHK_WRITE(chan, hdrbuf, 4);
@@ -5218,6 +5271,13 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
     case MUS_NIST: 
 
       /* read sets current srate, chans, data_format */
+
+      if (size > BIGGEST_4_BYTE_SIGNED_INT)
+	{
+	  err = MUS_BAD_SIZE;
+	  mus_print("%s size: " OFF_TD " is too large for %s headers", filename, size, mus_header_type_name(type));
+	  size = BIGGEST_4_BYTE_SIGNED_INT;
+	}
 
       lseek(chan, 0L, SEEK_SET);
       write_nist_header(chan, mus_header_srate(), mus_header_chans(), size, mus_header_format());

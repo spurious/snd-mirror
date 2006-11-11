@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [491]
-;;;  test 1: defaults                           [1067]
-;;;  test 2: headers                            [1269]
-;;;  test 3: variables                          [1574]
-;;;  test 4: sndlib                             [2229]
-;;;  test 5: simple overall checks              [4549]
-;;;  test 6: vcts                               [12045]
-;;;  test 7: colors                             [12360]
-;;;  test 8: clm                                [12866]
-;;;  test 9: mix                                [22058]
-;;;  test 10: marks                             [25591]
-;;;  test 11: dialogs                           [26479]
-;;;  test 12: extensions                        [26773]
-;;;  test 13: menus, edit lists, hooks, etc     [27227]
-;;;  test 14: all together now                  [28776]
-;;;  test 15: chan-local vars                   [29851]
-;;;  test 16: regularized funcs                 [31181]
-;;;  test 17: dialogs and graphics              [35597]
-;;;  test 18: enved                             [35686]
-;;;  test 19: save and restore                  [35706]
-;;;  test 20: transforms                        [37543]
-;;;  test 21: new stuff                         [39376]
-;;;  test 22: run                               [40374]
-;;;  test 23: with-sound                        [45861]
-;;;  test 24: user-interface                    [47891]
-;;;  test 25: X/Xt/Xm                           [51507]
-;;;  test 26: Gtk                               [56095]
-;;;  test 27: GL                                [60212]
-;;;  test 28: errors                            [60336]
-;;;  test all done                              [62445]
+;;;  test 0: constants                          [492]
+;;;  test 1: defaults                           [1068]
+;;;  test 2: headers                            [1270]
+;;;  test 3: variables                          [1575]
+;;;  test 4: sndlib                             [2230]
+;;;  test 5: simple overall checks              [4552]
+;;;  test 6: vcts                               [12053]
+;;;  test 7: colors                             [12368]
+;;;  test 8: clm                                [12874]
+;;;  test 9: mix                                [22066]
+;;;  test 10: marks                             [25723]
+;;;  test 11: dialogs                           [26611]
+;;;  test 12: extensions                        [26905]
+;;;  test 13: menus, edit lists, hooks, etc     [27359]
+;;;  test 14: all together now                  [28908]
+;;;  test 15: chan-local vars                   [29983]
+;;;  test 16: regularized funcs                 [31313]
+;;;  test 17: dialogs and graphics              [35729]
+;;;  test 18: enved                             [35818]
+;;;  test 19: save and restore                  [35838]
+;;;  test 20: transforms                        [37675]
+;;;  test 21: new stuff                         [39508]
+;;;  test 22: run                               [40506]
+;;;  test 23: with-sound                        [45993]
+;;;  test 24: user-interface                    [48023]
+;;;  test 25: X/Xt/Xm                           [51639]
+;;;  test 26: Gtk                               [56227]
+;;;  test 27: GL                                [60344]
+;;;  test 28: errors                            [60468]
+;;;  test all done                              [62577]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -3703,11 +3703,13 @@
 			    "midi open error" "midi read error" "midi write error" "midi close error" "midi init error" "midi misc error"
 			    "no channels method" "no hop method" "no width method" "no file-name method" "no ramp method" "no run method"
 			    "no increment method" "no offset method"
-			    "no xcoeff method" "no ycoeff method" "no xcoeffs method" "no ycoeffs method" "can't translate"
+			    "no xcoeff method" "no ycoeff method" "no xcoeffs method" "no ycoeffs method" "no reset" "bad size"
+			    "can't translate"
 			    )))
-	    (let ((happy #t))
+	    (let ((happy #t)
+		  (len (length errs)))
 	      (do ((i 0 (1+ i)))
-		  ((or (not happy) (= i 66)))
+		  ((or (not happy) (= i len)))
 		(if (not (string-=? (list-ref errs i) (mus-error-type->string i)))
 		    (begin
 		      (snd-display ";mus-error-type->string ~D: ~A ~A" i (list-ref errs i) (mus-error-type->string i))
@@ -22136,6 +22138,7 @@ EDITS: 5
        index)))))
 
 (define (make-bagatelle)
+  ;; Columbia, Gem of the Ocean
 
   (define (seg data)			; SEG functions expected data in (y x) pairs.
     (let ((unseg '())
@@ -25423,7 +25426,9 @@ EDITS: 5
 	     (violin-track (track-name->id "violin"))
 	     (cello-track (track-name->id "cello"))
 	     (global-track (and (track? violin-track) (track-track violin-track)))
-	     (tlist (list violin-track cello-track global-track)))
+	     (tlist (list violin-track cello-track global-track))
+	     (fmix (car (track violin-track))))
+	
 	(if (not (sound? ind))
 	    (snd-display ";make-waltz no output?")
 	    (if (or (not (track? global-track)) (not (track? cello-track)))
@@ -25437,6 +25442,20 @@ EDITS: 5
 		      (snd-display ";waltz frames: ~A" (map track-frames tlist)))
 		  (if (not (apply = (map track-chans tlist)))
 		      (snd-display ";waltz chans: ~A" (map track-chans tlist)))
+		  
+		  (let ((old-amp (mix-amp fmix))
+			(old-ed (edit-position ind 0)))
+		    (set! (mix-amp fmix) .1)
+		    (if (fneq (mix-amp fmix) .1) (snd-display ";mix-amp (.1 ~A): ~A" old-amp (mix-amp fmix)))
+		    (undo 1) ; back to 1
+		    (if (fneq (mix-amp fmix) old-amp) (snd-display ";undo mix-amp (.1 ~A): ~A" old-amp (mix-amp fmix)))
+		    (redo 1) ; .1
+		    (if (fneq (mix-amp fmix) .1) (snd-display ";redo mix-amp (.1 ~A): ~A" old-amp (mix-amp fmix)))
+		    (undo 1) ; back to 1
+		    (set! (mix-amp fmix) 1.0) ; a no-op presumably
+		    (if (fneq (mix-amp fmix) 1.0) (snd-display ";reset mix-amp (~A): ~A" old-amp (mix-amp fmix)))
+		    (if (not (= (edit-position ind 0) old-ed))
+			(snd-display "mix amp no-op edpos: ~A from ~A" (edit-position ind 0) old-ed)))
 		  
 		  (let ((vt (make-track-sample-reader violin-track 0 10000))
 			(ct (make-track-sample-reader cello-track 0 10000))
@@ -25500,19 +25519,126 @@ EDITS: 5
 		      (if (= fr (track-frames cello-track))
 			  (snd-display ";waltz cello speed 2.0 frames: ~A ~A" fr (track-frames cello-track))))
 		    
+		    (if (not (null? (track-amp-env global-track)))
+			(snd-display ";waltz track-amp-env: ~A" (track-amp-env global-track)))
+		    
+		    (set! mx (maxamp ind 0))
+		    
 		    (set! (track-amp-env global-track) '(0 0 1 .1 2 0))
 		    (let ((nmx (maxamp ind 0)))
-		      (if (fneq nmx .078) (snd-display ";waltz amp-env maxamp: ~A (~A)" nmx mx)))
-
+		      (if (ffneq nmx .08) (snd-display ";waltz amp-env maxamp: ~A (~A)" nmx mx)))
+		    
+		    (undo 1 ind 0)
+		    (if (not (null? (track-amp-env global-track)))
+			(snd-display ";waltz track-amp-env 1: ~A" (track-amp-env global-track)))
+		    
+		    (set! (track-amp-env global-track) '(0 0 1 .1 2 0))
+		    (let ((nmx (maxamp ind 0)))
+		      (if (ffneq nmx .08) (snd-display ";waltz amp-env maxamp 1: ~A (~A)" nmx mx)))
+		    
+		    (undo 1 ind 0)
+		    (set! (track-amp global-track) .1) ; was 2 above
+		    (let ((nmx (maxamp ind 0)))
+		      (if (fneq nmx .04) (snd-display ";waltz amp maxamp: ~A (~A)" nmx mx)))
+		    
+		    (undo 1 ind 0)
+		    (set! (track-amp global-track) .1)
+		    (let ((nmx (maxamp ind 0)))
+		      (if (fneq nmx .04) (snd-display ";waltz amp maxamp 1: ~A (~A)" nmx mx)))
+		    
+		    (undo 1 ind 0)                      ; back to 2
+		    (set! (track-speed global-track) 2.0)
+		    (let ((nmx (maxamp ind 0)))
+		      (if (ffneq nmx .80) (snd-display ";waltz speed maxamp: ~A (~A)" nmx mx)))
+		    
+		    (undo 1 ind 0)
+		    (set! (track-speed global-track) 2.0)
+		    (let ((nmx (maxamp ind 0)))
+		      (if (ffneq nmx .80) (snd-display ";waltz speed maxamp 1: ~A (~A)" nmx mx)))
+		    
+		    (undo 5)
+		    
+		    (set! (track-position global-track) 2000)
+		    (undo 1 ind 0)
+		    (set! (track-position global-track) 2000)
+		    (let ((nmx (maxamp ind 0)))
+		      (if (fneq nmx .4) (snd-display ";waltz backup maxamp: ~A (~A)" nmx mx)))
+		    (if (not (= (track-position global-track) 2000))
+			(snd-display ";backup track-position 2000: ~A" (track-position global-track)))
 		    (close-sound ind))))))
-
-      (if all-args
-	  (let ((ind (make-bagatelle)))
-	    
-	    ;; TODO bag1 tests
-
-	    (close-sound ind)))
       
+      (if all-args
+	  (let* ((ind (make-bagatelle))
+		 (soprano-track (track-name->id "soprano"))
+		 (alto-track (track-name->id "alto"))
+		 (tenor-track (track-name->id "tenor"))
+		 (bass-track (track-name->id "bass"))
+		 (global-track (and (track? soprano-track) (track-track soprano-track)))
+		 (tlist (list global-track soprano-track alto-track tenor-track bass-track)))
+	    
+	    (if (not (sound? ind))
+		(snd-display ";make-bagatelle no output?")
+		(begin
+		  (if (or (not (track? global-track)) (not (track? bass-track)))
+		      (snd-display ";bagatelle tracks: ~A" tlist)
+		      (begin
+			(set! (track-amp soprano-track) 0.5)
+			(set! (track-amp alto-track) 0.25)
+			
+			(let ((mx (maxamp ind 0)))
+			  (set! (track-amp tenor-track) 0.125)
+			  (set! (track-amp bass-track) 0.75)
+			  
+			  (if (fneq (track-amp soprano-track) 0.5) (snd-display ";sop track-amp: ~A" (track-amp soprano-track)))
+			  (if (fneq (track-amp alto-track) 0.25) (snd-display ";alt track-amp: ~A" (track-amp alto-track)))
+			  (if (fneq (track-amp tenor-track) 0.125) (snd-display ";ten track-amp: ~A" (track-amp tenor-track)))
+			  (if (fneq (track-amp bass-track) 0.75) (snd-display ";bas track-amp: ~A" (track-amp bass-track)))
+			  (let ((mx1 (maxamp ind 0)))
+			    (undo 2)
+			    
+			    (if (fneq (track-amp soprano-track) 0.5) (snd-display ";un sop track-amp: ~A" (track-amp soprano-track)))
+			    (if (fneq (track-amp alto-track) 0.25) (snd-display ";un alt track-amp: ~A" (track-amp alto-track)))
+			    (if (fneq (track-amp tenor-track) 1.0) (snd-display ";un ten track-amp: ~A" (track-amp tenor-track)))
+			    (if (fneq (track-amp bass-track) 1.0) (snd-display ";un bas track-amp: ~A" (track-amp bass-track)))
+			    (if (fneq (maxamp ind 0) mx) (snd-display ";undo track-amp max: ~A ~A" mx (maxamp ind 0)))
+			    
+			    (redo 2)
+			    
+			    (if (fneq (track-amp soprano-track) 0.5) (snd-display ";re sop track-amp: ~A" (track-amp soprano-track)))
+			    (if (fneq (track-amp alto-track) 0.25) (snd-display ";re alt track-amp: ~A" (track-amp alto-track)))
+			    (if (fneq (track-amp tenor-track) 0.125) (snd-display ";re ten track-amp: ~A" (track-amp tenor-track)))
+			    (if (fneq (track-amp bass-track) 0.75) (snd-display ";re bas track-amp: ~A" (track-amp bass-track)))
+			    (if (fneq (maxamp ind 0) mx1) (snd-display ";redo track-amp max: ~A ~A" mx1 (maxamp ind 0)))))
+			
+			(let ((curmax (maxamp ind 0)))
+			  (set! (track-amp global-track) 2.0)
+			  (if (fneq (maxamp ind 0) (* 2 curmax)) (snd-display ";global set amp bag1: ~A ~A" (maxamp ind 0) curmax))
+			  (for-each (lambda (trk) (set! (track-track trk) 0)) tlist)
+			  (if (fneq curmax (maxamp ind 0)) (snd-display ";untrack bag1 amps: ~A ~A" (maxamp ind 0) curmax))
+			  (for-each (lambda (trk) (set! (track-track trk) global-track)) (cdr tlist))
+			  (let ((tag (catch #t
+					    (lambda () (set! (track-track global-track) global-track))
+					    (lambda args (car args)))))
+			    (if (or (= (track-track global-track) global-track)
+				    (not (eq? tag 'out-of-range)))
+				(snd-display ";bag1 bad set track-track: ~A ~A ~A" tag global-track (track-track global-track)))))
+			(for-each (lambda (trk) (set! (track-amp trk) 1.0)) tlist)
+			
+			(let ((positions (map track-position tlist)))
+			  (set! (track-position global-track) 100)
+			  (for-each 
+			   (lambda (trk pos) 
+			     (if (not (= (track-position trk) (+ 100 pos)))
+				 (snd-display ";bag1 global pos to 100: ~A old: ~A, new: ~A" (track-name trk) pos (track-position trk))))
+			   tlist positions))
+			(let ((mxval (vct-peak (channel->vct 0 100))))
+			  (if (fneq mxval 0.0) (snd-display ";bag1 move to 100 peak: ~A" mxval)))
+			
+			))
+		  (close-sound ind)))))
+	  
+      ;; TODO: try the next stage above bag1... (bag1 has 137 notes)
+    
       (run-hook after-test-hook 9)
       ))
 
@@ -31118,7 +31244,7 @@ EDITS: 5
 						  1.0 1.0 1.0 1.0 1.0)))
 	    (snd-display ";insert-selection: ~A" (channel->vct 0 25)))
 	(mix-selection 1 ind 0)
-	(if (not (vequal (channel->vct 0 10 ind 0) (vct 1.0 1.5 1.5 1.5 1.5 1.0 0.5 0.5 0.5 0.5)))
+	(if (not (vequal (channel->vct 0 10 ind 0) (vct 1.000 1.000 1.000 1.000 1.000 1.000 0.500 0.500 0.500 0.500)))
 	    (snd-display ";mix-selection vals: ~A" (channel->vct 0 10 ind 0)))
 	(close-sound ind))
       
@@ -62483,10 +62609,10 @@ EDITS: 1
 (set! (print-length) 64)
 (display (format "~%;times: ~A~%;total: ~A~%" timings (inexact->exact (round (- (real-time) overall-start-time)))))
 
-;2-Nov-06:  #(17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975) 492
-;4-Nov-06:  #(17 16 35 28 973 45681 55948 73 81440 1941 483 1132 560 946 954 1185 13741 247 230 2714 1221 851 6188 6163 3885 4413 278 0 539195) 7717
+;2-Nov-06:  (17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975) 492
+;4-Nov-06:  (17 16 35 28 973 45681 55948 73 81440 1941 483 1132 560 946 954 1185 13741 247 230 2714 1221 851 6188 6163 3885 4413 278 0 539195) 7717
 
-(let ((best-times #(17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975)))
+(let ((best-times '#(17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975)))
   (do ((i 0 (1+ i)))
       ((= i (vector-length timings)))
     (if (and (> (vector-ref timings i) 0)
