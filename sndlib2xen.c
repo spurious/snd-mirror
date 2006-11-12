@@ -1893,6 +1893,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_CONSTANT(S_mus_unsupported, MUS_UNSUPPORTED, "unsupported header id");
   XEN_DEFINE_CONSTANT(S_mus_next,        MUS_NEXT,        "NeXT (Sun) sound header id");
   XEN_DEFINE_CONSTANT(S_mus_aifc,        MUS_AIFC,        "AIFC sound header id");
+  XEN_DEFINE_CONSTANT(S_mus_rf64,        MUS_RF64,        "RF64 sound header id");
   XEN_DEFINE_CONSTANT(S_mus_riff,        MUS_RIFF,        "RIFF (MS wave) sound header id");
   XEN_DEFINE_CONSTANT(S_mus_nist,        MUS_NIST,        "NIST (Sphere) sound header id");
   XEN_DEFINE_CONSTANT(S_mus_raw,         MUS_RAW,         "raw (headerless) sound header id");
@@ -2193,6 +2194,7 @@ void mus_sndlib_xen_initialize(void)
 	       S_mus_oss_set_buffers,
 	       S_mus_out_format,
 	       S_mus_raw,
+	       S_mus_rf64,
 	       S_mus_riff,
 	       S_mus_sound_chans,
 	       S_mus_sound_close_input,

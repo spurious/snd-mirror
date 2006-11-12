@@ -509,6 +509,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+13-Nov:  RF64 headers.\n\
 3-Nov:   mix-name->id, track-name->id (mix.scm, mix.rb).\n\
 1-Nov:   ->frequency, ->samples (ws.scm), track-name, mix-name, track-tag-y.\n\
 24-Oct:  filter-fft in examp.scm.\n\
@@ -516,8 +517,6 @@ void about_snd_help(void)
 16-Oct:  add-watcher, delete-watcher.\n\
 12-Oct:  removed selection-changed-hook (use simpler watcher mechanism instead).\n\
 11-Oct:  gtk-effects-utils.scm and gtk support for *-menu.scm.\n\
-9-Oct:   with-file-monitor.\n\
-2-Oct:   gl2ps support, gl-graph->ps function, --with-gl2ps switch, gl2ps.[ch].\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
@@ -1608,6 +1607,7 @@ void sound_files_help(void)
     NeXT/Sun/DEC/AFsp\n\
     AIFF/AIFC\n\
     RIFF (Microsoft wave)\n\
+    RF64\n\
     IRCAM (old style)\n\
     NIST-sphere\n\
     no header ('raw')\n\

@@ -189,7 +189,7 @@ to be <i>srate</i>, number of channels to <i>chans</i>, data format
 to <i>data_format</i> (see sndlib.h for these types: MUS_BSHORT,
 means 16-bit 2's complement big endian fractions),
 header type to <i>header_type</i> (AIFF for example; the available
-writable header types are MUS_AIFC (or AIFF), MUS_RIFF ('wave'),
+writable header types are MUS_AIFC (or AIFF), MUS_RIFF ('wave'), MUS_RF64,
 MUS_NEXT, MUS_NIST, and MUS_IRCAM), and comment (if any) to
 <i>comment</i>.  The header is not considered complete without
 an indication of the data size, but since this is rarely known
@@ -929,6 +929,7 @@ of Snd and CLM, both of which are freely available.
     NeXT/Sun/DEC/AFsp
     AIFF/AIFC
     RIFF (Microsoft wave)
+    RF64
     IRCAM (old style)
     NIST-sphere
     no header ("raw")
@@ -1070,7 +1071,7 @@ examples in Snd's <a href="sndscm.html#exampdoc">examp.scm</a>.  Most of these a
 constants and functions described above into Scheme. 
 </p>
 <pre>
-  mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff mus-bicsf mus-soundfont mus-voc mus-svx
+  mus-next mus-aifc mus-rf64 mus-riff mus-nist mus-raw mus-ircam mus-aiff mus-bicsf mus-soundfont mus-voc mus-svx
 
   mus-bshort mus-lshort mus-mulaw mus-alaw mus-byte mus-ubyte mus-bfloat
   mus-lfloat mus-bint mus-lint mus-b24int mus-l24int mus-bdouble mus-ldouble

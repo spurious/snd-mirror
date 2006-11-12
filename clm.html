@@ -4807,7 +4807,7 @@ and make sure the control panel is open:
 <!-- INDEX header-types:Data formats  -->
 <!-- INDEX header-types:Headers  -->
 
-<p>CLM can write NeXT/Sun, AIFF/AIFC, RIFF ("wave"), raw (no header), NIST-sphere, and "old-style" IRCAM headers.
+<p>CLM can write NeXT/Sun, AIFF/AIFC, RIFF ("wave"), RF64, raw (no header), NIST-sphere, and "old-style" IRCAM headers.
 The default choice is set by <a href="#*clm-header-type*">*clm-header-type*</a>
 set in <a href="defaults.lisp">defaults.lisp</a>. The output data format is normally
 16-bit signed (2's complement) integer; the default is set by 
@@ -4822,6 +4822,7 @@ data formats.</p>
     NeXT/Sun/DEC/AFsp
     AIFF/AIFC
     RIFF (Microsoft wave)
+    RF64
     IRCAM (old style)
     NIST-sphere
     no header ("raw")
@@ -4856,7 +4857,7 @@ the keyword :header-type, and the data type with the :data-format keyword.</p>
 
 <p>The CLM names for the output header types, as used with the :header-type argument to with-sound, are
 <a name="mus-aiff">mus-aiff</a>, <a name="mus-aifc">mus-aifc</a>, <a name="mus-next">mus-next</a>, 
-<a name="mus-riff">mus-riff</a>, and <a name="mus-ircam">mus-ircam</a>.
+<a name="mus-riff">mus-riff</a>, <a name="mus-rf64">mus-rf64</a>, and <a name="mus-ircam">mus-ircam</a>.
 The data-formats
 that are exported from the clm package are <a name="mus-bshort">mus-bshort</a>, mus-lshort, mus-bint, mus-lint,
 mus-bfloat, mus-lfloat, mus-mulaw, mus-alaw, mus-byte, mus-ubyte, mus-b24int, mus-l24int, mus-bdouble,

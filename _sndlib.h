@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 20
-#define SNDLIB_REVISION 0
-#define SNDLIB_DATE "28-Mar-06"
+#define SNDLIB_REVISION 2
+#define SNDLIB_DATE "13-Nov-06"
 
 #include <mus-config.h>
 
@@ -130,7 +130,7 @@ enum {MUS_UNSUPPORTED, MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_BICSF, MUS_NIST, MUS_IN
       MUS_COVOX, MUS_AVI, MUS_OMF, MUS_QUICKTIME, MUS_ASF, MUS_YAMAHA_SY99, MUS_KURZWEIL_2000,
       MUS_AIFF, MUS_PAF, MUS_CSL, MUS_FILE_SAMP, MUS_PVF, MUS_SOUNDFORGE, MUS_TWINVQ, MUS_AKAI4,
       MUS_IMPULSETRACKER, MUS_KORG, MUS_NVF, MUS_MAUI, MUS_SDIF, MUS_OGG, MUS_FLAC, MUS_SPEEX, MUS_MPEG,
-      MUS_SHORTEN, MUS_TTA, MUS_WAVPACK,
+      MUS_SHORTEN, MUS_TTA, MUS_WAVPACK, MUS_RF64,
       MUS_NUM_HEADER_TYPES};
 
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
@@ -477,6 +477,7 @@ void mus_bint_to_char(unsigned char *j, int x);
 int mus_char_to_bint(const unsigned char *inp);
 void mus_lint_to_char(unsigned char *j, int x);
 int mus_char_to_lint(const unsigned char *inp);
+int mus_char_to_loff_t(const unsigned char *inp);
 int mus_char_to_uninterpreted_int(const unsigned char *inp);
 void mus_bfloat_to_char(unsigned char *j, float x);
 float mus_char_to_bfloat(const unsigned char *inp);
@@ -494,6 +495,7 @@ double mus_char_to_ldouble(const unsigned char *inp);
 double mus_char_to_bdouble(const unsigned char *inp);
 void mus_bdouble_to_char(unsigned char *j, double x);
 void mus_ldouble_to_char(unsigned char *j, double x);
+void mus_loff_t_to_char(unsigned char *j, off_t x);
 unsigned int mus_char_to_ubint(const unsigned char *inp);
 unsigned int mus_char_to_ulint(const unsigned char *inp);
 

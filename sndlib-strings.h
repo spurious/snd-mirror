@@ -100,6 +100,7 @@
 #define S_mus_out_format                "mus-out-format"
 #define S_mus_prescaler                 "mus-prescaler"
 #define S_mus_raw                       "mus-raw"
+#define S_mus_rf64                      "mus-rf64"
 #define S_mus_riff                      "mus-riff"
 #define S_mus_sound_chans               "mus-sound-chans"
 #define S_mus_sound_close_input         "mus-sound-close-input"
