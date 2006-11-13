@@ -8,7 +8,7 @@
  * Guile:     covers 1.3.4 to present (1.8.0)
  * Ruby:      covers 1.6 to present (1.9)
  * Forth:     covers all
- * Gauche:    covers 0.8.7
+ * Gauche:    covers 0.8.7 and 0.8.8
  * None:      covers all known versions of None
  */
 

@@ -2832,9 +2832,9 @@ static int output_chans[NUM_OUTPUT_CHAN_CHOICES] = {1, 2, 4, 8};
 static const char *output_srate_choices[NUM_OUTPUT_SRATE_CHOICES] = {"8000", "22050", "44100", "48000"};
 static int output_srates[NUM_OUTPUT_SRATE_CHOICES] = {8000, 22050, 44100, 48000};
 
-#define NUM_OUTPUT_TYPE_CHOICES 5
-static const char *output_type_choices[NUM_OUTPUT_TYPE_CHOICES] = {"aifc", "wave", "next/sun", "nist", "aiff"};
-static int output_types[NUM_OUTPUT_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_NIST, MUS_AIFF};
+#define NUM_OUTPUT_TYPE_CHOICES 6
+static const char *output_type_choices[NUM_OUTPUT_TYPE_CHOICES] = {"aifc", "wave", "next/sun", "rf64", "nist", "aiff"};
+static int output_types[NUM_OUTPUT_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_RF64, MUS_NIST, MUS_AIFF};
 
 #define NUM_OUTPUT_FORMAT_CHOICES 4
 static const char *output_format_choices[NUM_OUTPUT_FORMAT_CHOICES] = {"short", "int", "float", "double"};
@@ -2874,6 +2874,7 @@ static int header_to_data(int ht, int frm)
 	case MUS_BFLOAT: case MUS_BDOUBLE: return(MUS_BINT); break;
 	}
       break;
+    case MUS_RF64:
     case MUS_RIFF:
       switch (frm)
 	{
@@ -2931,10 +2932,11 @@ static void reflect_default_output_header_type(prefs_info *prf)
   switch (default_output_header_type(ss))
     {
     case MUS_AIFC: which = 0; break;
-    case MUS_AIFF: which = 4; break;
+    case MUS_AIFF: which = 5; break;
     case MUS_RIFF: which = 1; break;
+    case MUS_RF64: which = 3; break;
     case MUS_NEXT: which = 2; break;
-    case MUS_NIST: which = 3; break;
+    case MUS_NIST: which = 4; break;
     }
   set_radio_button(prf, which);
 }
@@ -3219,9 +3221,9 @@ static int recorder_chans[NUM_RECORDER_OUT_CHANS_CHOICES] = {1, 2, 4, 8};
 static const char *recorder_srate_choices[NUM_RECORDER_SRATE_CHOICES] = {"8000", "22050", "44100", "48000", "96000"};
 static int recorder_srates[NUM_RECORDER_SRATE_CHOICES] = {8000, 22050, 44100, 48000, 96000};
 
-#define NUM_RECORDER_OUT_TYPE_CHOICES 5
-static const char *recorder_out_type_choices[NUM_RECORDER_OUT_TYPE_CHOICES] = {"aifc", "wave", "next/sun", "nist", "aiff"};
-static int recorder_types[NUM_RECORDER_OUT_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_NIST, MUS_AIFF};
+#define NUM_RECORDER_OUT_TYPE_CHOICES 6
+static const char *recorder_out_type_choices[NUM_RECORDER_OUT_TYPE_CHOICES] = {"aifc", "wave", "next/sun", "rf64", "nist", "aiff"};
+static int recorder_types[NUM_RECORDER_OUT_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_RF64, MUS_NIST, MUS_AIFF};
 
 #define NUM_RECORDER_OUT_FORMAT_CHOICES 4
 static const char *recorder_out_format_choices[NUM_RECORDER_OUT_FORMAT_CHOICES] = {"short", "int", "float", "double"};
@@ -3278,10 +3280,11 @@ static void reflect_recorder_output_header_type(prefs_info *prf)
   switch (rec_output_header_type())
     {
     case MUS_AIFC: which = 0; break;
-    case MUS_AIFF: which = 4; break;
+    case MUS_AIFF: which = 5; break;
     case MUS_RIFF: which = 1; break;
+    case MUS_RF64: which = 3; break;
     case MUS_NEXT: which = 2; break;
-    case MUS_NIST: which = 3; break;
+    case MUS_NIST: which = 4; break;
     }
   if (which != -1)
     set_radio_button(prf, which);

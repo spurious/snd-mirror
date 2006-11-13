@@ -599,14 +599,15 @@
 	'mus-next mus-next 1
 	'mus-aifc mus-aifc 2
 	'mus-riff mus-riff 3
-	'mus-nist mus-nist 5
-	'mus-raw mus-raw 11
-	'mus-ircam mus-ircam 14
-	'mus-aiff mus-aiff 48
-	'mus-bicsf mus-bicsf 4
-	'mus-voc mus-voc 9
-	'mus-svx mus-svx 8
-	'mus-soundfont mus-soundfont 25
+	'mus-nist mus-nist 6
+	'mus-raw mus-raw 12
+	'mus-ircam mus-ircam 15
+	'mus-aiff mus-aiff 49
+	'mus-bicsf mus-bicsf 5
+	'mus-voc mus-voc 10
+	'mus-svx mus-svx 9
+	'mus-soundfont mus-soundfont 26
+	'mus-rf64 mus-rf64 4
 
 	'mus-interp-none mus-interp-none 0
 	'mus-interp-linear mus-interp-linear 1
@@ -1468,6 +1469,7 @@
 	    (list "oboe.paf" 1 22050 2.305125 "Ensoniq Paris" "big endian short (16 bits)")
 	    (list "oboe.pf1" 1 22050 2.305125 "Ensoniq Paris" "little endian short (16 bits)")
 	    (list "oboe.smp" 1 22050 2.305125 "snack SMP" "little endian short (16 bits)")
+	    (list "oboe.rf64" 1 22050 2.305125 "EBU RF64" "little endian short (16 bits)")
 	    (list "oboe.nsp" 1 22050 2.305125 "CSL" "little endian short (16 bits)")
 	    (list "oboe.nvf" 1 8000 6.353500 "Creative NVF" "unknown")
 	    (list "oboe-ulaw.voc" 1 22050 2.305669 "VOC" "mulaw (8 bits)")
@@ -3703,7 +3705,7 @@
 			    "midi open error" "midi read error" "midi write error" "midi close error" "midi init error" "midi misc error"
 			    "no channels method" "no hop method" "no width method" "no file-name method" "no ramp method" "no run method"
 			    "no increment method" "no offset method"
-			    "no xcoeff method" "no ycoeff method" "no xcoeffs method" "no ycoeffs method" "no reset" "bad size"
+			    "no xcoeff method" "no ycoeff method" "no xcoeffs method" "no ycoeffs method" "no reset" "bad size" "can't convert"
 			    "can't translate"
 			    )))
 	    (let ((happy #t)

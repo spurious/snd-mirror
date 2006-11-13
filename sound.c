@@ -121,7 +121,7 @@ static const char *mus_initial_error_names[MUS_INITIAL_ERROR_TAG] = {
 
   "no channels method", "no hop method", "no width method", "no file-name method", "no ramp method", "no run method",
   "no increment method", "no offset method",
-  "no xcoeff method", "no ycoeff method", "no xcoeffs method", "no ycoeffs method", "no reset", "bad size"
+  "no xcoeff method", "no ycoeff method", "no xcoeffs method", "no ycoeffs method", "no reset", "bad size", "can't convert"
 };
 
 static char **mus_error_names = NULL;
@@ -488,6 +488,7 @@ static sound_file *fill_sf_record(const char *name, sound_file *sf)
   sf->comment_end = mus_header_comment_end();
   if (((sf->header_type == MUS_AIFC) || 
        (sf->header_type == MUS_AIFF) || 
+       (sf->header_type == MUS_RF64) || 
        (sf->header_type == MUS_RIFF)) &&
       (mus_header_aux_comment_start(0) != 0))
 
@@ -667,7 +668,8 @@ char *mus_sound_comment(const char *name)
     {
       if (sf->aux_comment_start)
 	{
-	  if (mus_sound_header_type(name) == MUS_RIFF) 
+	  if ((mus_sound_header_type(name) == MUS_RIFF) ||
+	      (mus_sound_header_type(name) == MUS_RF64))
 	    return(mus_header_riff_aux_comment(name, 
 					       sf->aux_comment_start, 
 					       sf->aux_comment_end));

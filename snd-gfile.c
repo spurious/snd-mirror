@@ -3430,6 +3430,7 @@ static char *new_file_dialog_filename(int header_type)
     {
     case MUS_AIFC: extension = "aiff"; break;
     case MUS_AIFF: extension = "aiff"; break;
+    case MUS_RF64: extension = "wav";  break;
     case MUS_RIFF: extension = "wav";  break;
     default:       extension = "snd";  break;
     }

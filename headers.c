@@ -278,6 +278,7 @@ static const unsigned char I_TTA1[4] = {'T','T','A','1'};  /* ttaenc */
 static const unsigned char I_wvpk[4] = {'w','v','p','k'};  /* wavpack */
 static const unsigned char I_RF64[4] = {'R','F','6','4'};  /* EBU RF64 */
 static const unsigned char I_JUNK[4] = {'J','U','N','K'};  /* EBU RF64 */
+static const unsigned char I_ds64[4] = {'d','s','6','4'};  /* EBU RF64 */
 
 
 #define I_IRCAM_VAX  0x0001a364
@@ -899,7 +900,7 @@ static void double_to_ieee_80(double val, unsigned char *p)
 }
 
 
-static off_t update_form_size, update_frames_location, update_ssnd_location;
+static off_t update_form_size, update_frames_location, update_ssnd_location, update_rf64_location;
 
 static int seek_and_read(int fd, unsigned char *buf, off_t offset, int nbytes)
 {
@@ -1564,6 +1565,59 @@ static void read_riff_fmt_chunk(unsigned char *hdrbuf, bool little)
   data_format = wave_to_sndlib_format(original_data_format, bits_per_sample, little);
 }
 
+static int write_riff_fmt_chunk(int fd, unsigned char *hdrbuf, int format, int wsrate, int wchans)
+{
+  int err = MUS_NO_ERROR;
+  write_four_chars((unsigned char *)hdrbuf, I_fmt_);
+  mus_lint_to_char((unsigned char *)(hdrbuf + 4), 16);
+  switch (format)
+    {
+    case MUS_MULAW: 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 7); 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 8); 
+      break;
+    case MUS_ALAW: 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 6); 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 8); 
+      break;
+    case MUS_UBYTE: 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 1); 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 8); 
+      break;
+    case MUS_LSHORT: 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 1); 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 16); 
+      break;
+    case MUS_L24INT: 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 1); 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 24); 
+      break;
+    case MUS_LINT: 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 1); 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 32); 
+      break;
+    case MUS_LFLOAT: 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 3); 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 32); 
+      break;
+    case MUS_LDOUBLE: 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 3); 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 64); 
+      break;
+    default: 
+      /* don't call mus_error directly -- we need to close the file first in mus_write_header */
+      err = MUS_UNSUPPORTED_DATA_FORMAT;
+      break;
+    }
+  mus_lshort_to_char((unsigned char *)(hdrbuf + 10), (short)wchans);
+  mus_lint_to_char((unsigned char *)(hdrbuf + 12), wsrate);
+  mus_lint_to_char((unsigned char *)(hdrbuf + 16), wsrate * wchans * mus_bytes_per_sample(format)); /* added chans 10-Mar-99 */
+  mus_lshort_to_char((unsigned char *)(hdrbuf + 20), (short)(wchans * mus_bytes_per_sample(format)));
+  /* 22 short written above = bits/sample */
+  CHK_WRITE(fd, hdrbuf, 24);
+  return(err);
+}
+
 static int read_riff_header(const char *filename, int fd)
 {
   /* we know we have checked for RIFF xxxx WAVE when we arrive here */
@@ -1658,122 +1712,72 @@ static int read_riff_header(const char *filename, int fd)
   return(MUS_NO_ERROR);
 }
 
+static void write_riff_clm_comment(int fd, const char *comment, int len, int extra)
+{
+  int i = 0, j;
+  write_four_chars((unsigned char *)hdrbuf, I_clm_);
+  mus_lint_to_char((unsigned char *)(hdrbuf + 4), len + extra);
+  i = 8;
+  for (j = 0; j < len; j++)
+    {
+      if (i == HDRBUFSIZ)
+	{
+	  CHK_WRITE(fd, hdrbuf, HDRBUFSIZ);
+	  i = 0;
+	}
+      hdrbuf[i++] = comment[j];
+    }
+  if (extra != 0)
+    {
+      if ((i + extra) > HDRBUFSIZ)
+	{
+	  CHK_WRITE(fd, hdrbuf, i);
+	  i = 0;
+	}
+      for (j = 0; j < extra; j++)
+	hdrbuf[i++] = 0;
+    }
+  if (i > 0)
+    {
+      CHK_WRITE(fd, hdrbuf, i);
+    }
+}
+
 static int write_riff_header(int fd, int wsrate, int wchans, int siz, int format, const char *comment, int len)
 {
-  int i, j, lenhdr, extra, err = MUS_NO_ERROR;
-  off_t offset, curend;
-  lenhdr = 0;
-  extra = 0;
+  int j, extra = 0, err = MUS_NO_ERROR;
+
+  data_location = 36 + 36 + 8;
   if (len != 0) 
     {
-      lenhdr = 12;
       if ((len % 4) != 0)
 	extra = (4 - (len % 4));
+      data_location += (8 + len + extra); 
     }
+  /* 36 = "RIFF" + size(4) + "WAVE" + "fmt " + size(4) + 16 for data */
+  /*   2nd 36 is for "JUNK" chunk, 8 is data chunk header */
 
   write_four_chars((unsigned char *)hdrbuf, I_RIFF);
-  mus_lint_to_char((unsigned char *)(hdrbuf + 4), len + 36 + 36 + siz + lenhdr + extra); 
-  /* 36 = "RIFF" + size(4) + "WAVE" + "fmt " + size(4) + 16 for data + "JUNK" chunk = 36 */
+  mus_lint_to_char((unsigned char *)(hdrbuf + 4), data_location + siz);
   write_four_chars((unsigned char *)(hdrbuf + 8), I_WAVE);
-
-  /* fmt chunk */
-  write_four_chars((unsigned char *)(hdrbuf + 12), I_fmt_);
-  mus_lint_to_char((unsigned char *)(hdrbuf + 16), 24 - 8);
-  switch (format)
-    {
-    case MUS_MULAW: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 20), 7); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 34), 8); 
-      break;
-    case MUS_ALAW: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 20), 6); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 34), 8); 
-      break;
-    case MUS_UBYTE: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 20), 1); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 34), 8); 
-      break;
-    case MUS_LSHORT: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 20), 1); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 34), 16); 
-      break;
-    case MUS_L24INT: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 20), 1); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 34), 24); 
-      break;
-    case MUS_LINT: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 20), 1); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 34), 32); 
-      break;
-    case MUS_LFLOAT: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 20), 3); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 34), 32); 
-      break;
-    case MUS_LDOUBLE: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 20), 3); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 34), 64); 
-      break;
-    default: 
-      /* don't call mus_error directly -- we need to close the file first in mus_write_header */
-      err = MUS_UNSUPPORTED_DATA_FORMAT;
-      break;
-    }
-  mus_lshort_to_char((unsigned char *)(hdrbuf + 22), (short)wchans);
-  mus_lint_to_char((unsigned char *)(hdrbuf + 24), wsrate);
-  mus_lint_to_char((unsigned char *)(hdrbuf + 28), wsrate * wchans * mus_bytes_per_sample(format)); /* added chans 10-Mar-99 */
-  mus_lshort_to_char((unsigned char *)(hdrbuf + 32), (short)(wchans * mus_bytes_per_sample(format)));
-
-  /* include possible clm (comment) chunk */
-  offset = 36;
-  i = 36;
-  curend = 0;
-  if (len != 0)
-    {
-      offset += len + 12;
-      write_four_chars((unsigned char *)(hdrbuf + 36), I_clm_);
-      mus_lint_to_char((unsigned char *)(hdrbuf + 40), len + extra);
-      i = 44;
-      for (j = 0; j < len; j++)
-	{
-	  if (i == HDRBUFSIZ)
-	    {
-	      curend += HDRBUFSIZ;
-	      CHK_WRITE(fd, hdrbuf, HDRBUFSIZ);
-	      i = 0;
-	    }
-	  hdrbuf[i] = comment[j];
-	  i++;
-	}
-      if (extra != 0)
-	{
-	  if ((i + extra) > HDRBUFSIZ)
-	    {
-	      curend += i;
-	      CHK_WRITE(fd, hdrbuf, i);
-	      i = 0;
-	    }
-	  for (j = 0; j < extra; j++)
-	    {
-	      hdrbuf[i] = 0;
-	      i++;
-	    }
-	}
-    }
-  curend += i;
-  CHK_WRITE(fd, hdrbuf, i);
+  CHK_WRITE(fd, hdrbuf, 12);
 
   /* add JUNK chunk for possible change to RF64 during write */
   write_four_chars((unsigned char *)hdrbuf, I_JUNK);
   mus_lint_to_char((unsigned char *)(hdrbuf + 4), 28);
   for (j = 8; j < 36; j++) hdrbuf[j] = 0;
-  i = 36;
-  curend += i;
-  CHK_WRITE(fd, hdrbuf, i);
+  CHK_WRITE(fd, hdrbuf, 36);
+
+  /* fmt chunk */
+  err = write_riff_fmt_chunk(fd, hdrbuf, format, wsrate, wchans);
+
+  /* include possible clm (comment) chunk */
+  if (len > 0)
+    write_riff_clm_comment(fd, comment, len, extra);
 
   /* start the data chunk */
   write_four_chars((unsigned char *)hdrbuf, I_data);
   mus_lint_to_char((unsigned char *)(hdrbuf + 4), siz);
-  data_location = 8 + curend;
   CHK_WRITE(fd, hdrbuf, 8);
   return(err);
 }
@@ -1825,11 +1829,6 @@ char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends)
 
 
 /* soundforge -- just a quick hack until I get better documentation */
-static long little_long_long(unsigned char *buf)
-{
-  return(mus_char_to_lint((unsigned char *)(buf)));
-}
-
 static int read_soundforge_header(const char *filename, int fd)
 {
   /* like RIFF but lowercase and 64-bit vals */
@@ -1844,13 +1843,13 @@ static int read_soundforge_header(const char *filename, int fd)
   bits_per_sample = 0;
   for (i = 0; i < AUX_COMMENTS; i++) aux_comment_start[i] = 0;
   true_file_length = SEEK_FILE_LENGTH(fd);
-  update_form_size = little_long_long((unsigned char *)(hdrbuf + 4 * 2));
+  update_form_size = mus_char_to_loff_t((unsigned char *)(hdrbuf + 4 * 2));
   while (true)
     {
       offset += chunkloc;
       if (offset >= true_file_length) break;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 64) <= 0) break;
-      chunksize = little_long_long((unsigned char *)(hdrbuf + 16));
+      chunksize = mus_char_to_loff_t((unsigned char *)(hdrbuf + 16));
       if ((chunksize == 0) && /* can be empty data chunk? */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
 	break;
@@ -1918,20 +1917,174 @@ static int read_soundforge_header(const char *filename, int fd)
 static int read_rf64_header(const char *filename, int fd)
 {
   /* we've checked RF64 xxxx WAVE before getting here */
+  /* this is very similar (identical) to RIFF for the most part, but I decided it was cleanest to copy the code */
 
-  
+  int chunksize, chunkloc, i;
+  bool got_fmt = false, got_ds64 = false;
+  off_t offset;
+  little_endian = true;
+  type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8));
+  chunkloc = 12;
+  offset = 0;
+  data_format = MUS_UNKNOWN;
+  srate = 0;
+  chans = 0;
+  fact_samples = 0;
+  bits_per_sample = 0;
+  for (i = 0; i < AUX_COMMENTS; i++) aux_comment_start[i] = 0;
+  true_file_length = SEEK_FILE_LENGTH(fd);
+  update_form_size = -1;                                                          /* at hdrbuf+4 -> 0xFFFFFFFF */
 
+  while (true)
+    {
+      offset += chunkloc;
+      if (offset >= true_file_length) break;
+      if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 64) <= 0) break;
+      chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
+      if ((chunksize == 0) &&                                                      /* can be empty data chunk */
+	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
+	break;
+
+      if (match_four_chars((unsigned char *)hdrbuf, I_ds64))
+	{
+	  /* RIFF form size | data size | fact samples */
+	  update_form_size = mus_char_to_loff_t((unsigned char *)(hdrbuf + 8));
+	  data_size = mus_char_to_loff_t((unsigned char *)(hdrbuf + 16));
+	  fact_samples = mus_char_to_loff_t((unsigned char *)(hdrbuf + 24));
+	  update_rf64_location = offset + 8;
+	  got_ds64 = true;
+	  /* ignore "table" for now */
+	}
+      else
+	{
+	  if (match_four_chars((unsigned char *)hdrbuf, I_fmt_))
+	    {
+	      got_fmt = true;
+	      update_frames_location = 12 + offset;
+	      read_riff_fmt_chunk(hdrbuf, true);
+	    }
+	  else
+	    {
+	      if ((match_four_chars((unsigned char *)hdrbuf, I_data)) && (data_location == 0))
+		{
+		  update_ssnd_location = offset + 4;
+		  data_location = offset + 8;
+		  /* chunksize (at hdrbuf + 4) here is -1 */
+		  chunksize = data_size;
+		  if (chunksize <= 0) break; /* argh -- we need the ds64 chunk before this chunk */
+		}
+	      else
+		{
+		  /* ignore possible fact, inst chunks */
+		  if (match_four_chars((unsigned char *)hdrbuf, I_clm_))
+		    {
+		      comment_start = offset + 8;
+		      comment_end = comment_start + chunksize - 1; /* end of comment not start of next chunk */
+		    }
+		  else
+		    {
+		      if ((match_four_chars((unsigned char *)hdrbuf, I_LIST)) &&
+			  (match_four_chars((unsigned char *)(hdrbuf + 8), I_INFO)))
+			{
+			  aux_comment_start[0] = offset + 8;
+			  aux_comment_end[0] = offset + 8 + chunksize - 1;
+			}
+		    }
+		}
+	    }
+	}
+      chunkloc = (8 + chunksize);
+      if (chunksize & 1) chunkloc++; /* extra null appended to odd-length chunks */
+    }
+  if (!got_fmt)
+    return(mus_error(MUS_HEADER_READ_FAILED, "%s: no fmt chunk?", filename));
+  if (!got_ds64)
+    return(mus_error(MUS_HEADER_READ_FAILED, "%s: no ds64 chunk?", filename));
+  if (data_location == 0)
+    return(mus_error(MUS_HEADER_READ_FAILED, "%s: no data chunk?", filename));
+  if (data_size > true_file_length)
+    {
+      data_size = true_file_length - data_location;
+      if (data_size < 0) return(mus_error(MUS_HEADER_READ_FAILED, "%s: data_size = " OFF_TD "?", filename, data_size));
+    }
+  data_size = mus_bytes_to_samples(data_format, data_size);
   return(MUS_NO_ERROR);
 }
 
-
-static int write_rf64_header(int fd, int wsrate, int wchans, int siz, int format, const char *comment, int len)
+static int write_rf64_header(int fd, int wsrate, int wchans, off_t size, int format, const char *comment, int len)
 {
+  int extra = 0, err = MUS_NO_ERROR;
+  data_location = 36 + 36 + 8;
+  if (len != 0) 
+    {
+      if ((len % 4) != 0)
+	extra = (4 - (len % 4));
+      data_location += (8 + len + extra); 
+    }
 
+  write_four_chars((unsigned char *)hdrbuf, I_RF64);
+  mus_lint_to_char((unsigned char *)(hdrbuf + 4), -1);
+  write_four_chars((unsigned char *)(hdrbuf + 8), I_WAVE);
+  CHK_WRITE(fd, hdrbuf, 12);
 
-  return(MUS_NO_ERROR);
+  /* ds64 chunk */
+  write_four_chars((unsigned char *)hdrbuf, I_ds64);
+  mus_lint_to_char((unsigned char *)(hdrbuf + 4), 28);
+  mus_loff_t_to_char((unsigned char *)(hdrbuf + 8), data_location + size);
+  mus_loff_t_to_char((unsigned char *)(hdrbuf + 16), size);
+  mus_loff_t_to_char((unsigned char *)(hdrbuf + 24), size);
+  CHK_WRITE(fd, hdrbuf, 36);
+
+  err = write_riff_fmt_chunk(fd, hdrbuf, format, wsrate, wchans);
+
+  if (len > 0)
+    write_riff_clm_comment(fd, comment, len, extra);
+
+  write_four_chars((unsigned char *)hdrbuf, I_data);
+  mus_lint_to_char((unsigned char *)(hdrbuf + 4), -1);
+  CHK_WRITE(fd, hdrbuf, 8);
+  return(err);
 }
 
+/* TODO: doc test riff->rf64 bwf-read (scm) */
+
+static int mus_header_convert_riff_to_rf64(const char *filename, off_t size)
+{
+  int err = MUS_NO_ERROR, fd;
+  update_rf64_location = -1;
+  update_ssnd_location = 0;
+  /* mus_header_change_type copies the entire file, which is probably a bad idea in this case */
+
+  err = mus_header_read(filename);
+  if (err != MUS_NO_ERROR) return(err);
+  if ((update_ssnd_location == 0) ||
+      (update_rf64_location <= 0))  /* "JUNK" chunk has to be there already for this to work */
+    return(MUS_CANT_CONVERT);
+
+  fd = mus_file_reopen_write(filename);
+  if (fd == -1) return(false);
+
+  /* change overall type to rf64 and set size to RIFF -1 */
+  write_four_chars((unsigned char *)hdrbuf, I_RF64);
+  mus_lint_to_char((unsigned char *)(hdrbuf + 4), -1);
+  CHK_WRITE(fd, hdrbuf, 8);
+
+  /* set data chunk's size to -1 */
+  lseek(fd, update_ssnd_location, SEEK_SET);
+  mus_lint_to_char((unsigned char *)(hdrbuf + 4), -1);
+  CHK_WRITE(fd, hdrbuf, 4);
+
+  /* convert the "JUNK" chunk to be a "ds64" chunk */
+  write_four_chars((unsigned char *)hdrbuf, I_ds64);
+  mus_lint_to_char((unsigned char *)(hdrbuf + 4), 28);
+  mus_loff_t_to_char((unsigned char *)(hdrbuf + 8), data_location + size);
+  mus_loff_t_to_char((unsigned char *)(hdrbuf + 16), size);
+  mus_loff_t_to_char((unsigned char *)(hdrbuf + 24), size);
+  CHK_WRITE(fd, hdrbuf, 36);
+
+  CLOSE(fd, filename);
+  return(true);
+}
 
 
 /* ------------------------------------ AVI ------------------------------------
@@ -4809,7 +4962,7 @@ static int mus_header_read_1(const char *filename, int fd)
 	}
       return(mus_error(MUS_HEADER_READ_FAILED, "%s: unrecognized \"RIFF\" (i.e. 'wave') header", filename));
     }
-  if (match_four_chars((unsigned char *)(hdrbuf + 8), I_RF64))
+  if (match_four_chars((unsigned char *)hdrbuf, I_RF64))
     { 
       header_type = MUS_RF64;
       if (bytes < 28) 
@@ -5265,8 +5418,6 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
    *  from headers.c. Can we guarantee consistency here?
    */
 
-  /* TODO: if RIFF and size > signed int max, switch to RF64 */
-
   int fd, err = MUS_NO_ERROR;
   switch (type)
     {
@@ -5299,6 +5450,7 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
       mus_bint_to_char((unsigned char *)(hdrbuf + 0), (unsigned int)size);
       CHK_WRITE(fd, hdrbuf, 4);
       break;
+
     case MUS_AIFC: 
     case MUS_AIFF: 
       /* we apparently have to make sure the form size and the data size are correct 
@@ -5308,16 +5460,13 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
        * an unexpected hassle for CLM is that we can open/close the output file many times if running mix,
        * so we have to update the various size fields taking into account the old size 
        */
-
       /* read sets current update_form_size, data_size, data_format, update_frames_location, update_ssnd_location */
-
       if (size > BIGGEST_4_BYTE_SIGNED_INT)
 	{
 	  err = MUS_BAD_SIZE;
 	  mus_print("%s size: " OFF_TD " is too large for %s headers", filename, size, mus_header_type_name(type));
 	  size = BIGGEST_4_BYTE_SIGNED_INT;
 	}
-
       lseek(fd, 4L, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, (int)size + update_form_size - mus_samples_to_bytes(data_format, data_size));
       /* cancel old data_size from previous possible write */
@@ -5329,18 +5478,11 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
       mus_bint_to_char((unsigned char *)hdrbuf, (int)size + 8);
       CHK_WRITE(fd, hdrbuf, 4);
       break;
+
     case MUS_RIFF: 
-
       /* read sets current update_form_size, data_format, data_size, update_ssnd_location */
-
       if (size > BIGGEST_4_BYTE_SIGNED_INT)
-	{
-	  /* TODO: changed to RF64 */
-	  err = MUS_BAD_SIZE;
-	  mus_print("%s size: " OFF_TD " is too large for %s headers", filename, size, mus_header_type_name(type));
-	  size = BIGGEST_4_BYTE_SIGNED_INT;
-	}
-
+	return(mus_header_convert_riff_to_rf64(filename, size));
       lseek(fd, 4L, SEEK_SET);
       mus_lint_to_char((unsigned char *)hdrbuf, (int)size + update_form_size - mus_samples_to_bytes(data_format, data_size)); 
       CHK_WRITE(fd, hdrbuf, 4);
@@ -5348,29 +5490,40 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
       mus_lint_to_char((unsigned char *)hdrbuf, (int)size);
       CHK_WRITE(fd, hdrbuf, 4);
       break;
+
+    case MUS_RF64:
+      /* read sets current update_form_size, data_format, data_size, update_ssnd_location, update_rf64_location */
+      /* assume here that this really is an rf64 file (i.e. -1 for form size and data chunk size */
+      lseek(fd, update_rf64_location, SEEK_SET);
+      mus_loff_t_to_char((unsigned char *)hdrbuf, data_location + size);
+      mus_loff_t_to_char((unsigned char *)(hdrbuf + 8), size);
+      mus_loff_t_to_char((unsigned char *)(hdrbuf + 16), size);
+      CHK_WRITE(fd, hdrbuf, 24);
+      break;
+
     case MUS_IRCAM: 
     case MUS_RAW:
       /* size is implicit in file size */
       break;
+
     case MUS_NIST: 
-
       /* read sets current srate, chans, data_format */
-
       if (size > BIGGEST_4_BYTE_SIGNED_INT)
 	{
 	  err = MUS_BAD_SIZE;
 	  mus_print("%s size: " OFF_TD " is too large for %s headers", filename, size, mus_header_type_name(type));
 	  size = BIGGEST_4_BYTE_SIGNED_INT;
 	}
-
       lseek(fd, 0L, SEEK_SET);
       write_nist_header(fd, mus_header_srate(), mus_header_chans(), size, mus_header_format());
       break;
+
     default:
       CLOSE(fd, filename);
       return(mus_error(MUS_UNSUPPORTED_HEADER_TYPE, "mus_header_change_data_size: can't update %s headers", mus_header_type_name(type)));
       break;
     }
+
   CLOSE(fd, filename);
   return(err);
 }
@@ -5422,6 +5575,7 @@ int mus_header_change_chans(const char *filename, int type, int new_chans)
       CHK_WRITE(fd, hdrbuf, 6);
       break;
     case MUS_RIFF:
+    case MUS_RF64:
       lseek(fd, update_frames_location - 2, SEEK_SET);
       if (little_endian)
 	mus_lshort_to_char((unsigned char *)hdrbuf, new_chans);
@@ -5477,6 +5631,7 @@ int mus_header_change_srate(const char *filename, int type, int new_srate)
       CHK_WRITE(fd, hdrbuf, 10);
       break;
     case MUS_RIFF:
+    case MUS_RF64:
       lseek(fd, update_frames_location, SEEK_SET);
       if (little_endian)
 	mus_lint_to_char((unsigned char *)hdrbuf, new_srate);
@@ -5501,6 +5656,11 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 	  off_t loc, len = 0;
 	  char *buf = NULL;
 	  char *new_file, *comment = NULL;
+
+	  if ((header_type == MUS_RIFF) && 
+	      (new_type == MUS_RF64))
+	    return(mus_header_convert_riff_to_rf64(filename, data_size));
+
 	  new_file = (char *)CALLOC(strlen(filename) + 5, sizeof(char));
 	  sprintf(new_file, "%s.tmp", filename);
 	  loc = mus_header_data_location();
@@ -5546,6 +5706,7 @@ int mus_header_change_format(const char *filename, int type, int new_format)
     case MUS_AIFC:
     case MUS_NIST:
     case MUS_RIFF:
+    case MUS_RF64:
       err = mus_header_read(filename);
       break;
     default:
@@ -5591,6 +5752,7 @@ int mus_header_change_format(const char *filename, int type, int new_format)
 	}
       break;
     case MUS_RIFF:
+    case MUS_RF64:
       lseek(fd, update_frames_location + 24, SEEK_SET);
       if (little_endian)
 	mus_lshort_to_char((unsigned char *)hdrbuf, sndlib_format_to_aiff_bits(new_format));
