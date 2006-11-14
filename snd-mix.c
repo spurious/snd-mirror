@@ -11,6 +11,8 @@
  * PERHAPS: multiple mix/track dialogs
  * PERHAPS: mix pane sort of like current mark pane?
  * PERHAPS: quick access + edit of underlying mix data, ripple and update if saved (like region edit)
+ *          also double click in edit history => go to that temp file?
+ * PERHAPS: a way to restrict the tag+wave stuff to top level tracks or leave out wave if > 50 displayed?
  */
 
 typedef struct {

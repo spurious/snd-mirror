@@ -1169,6 +1169,9 @@ if test "$with_gauche" = yes ; then
                  GUILE_LIBS="$GUILE_LIBS -lgauche"
                  LOCAL_LANGUAGE="Gauche"
         	 AC_DEFINE(WITH_RUN)
+
+	         # 0.8.8
+                 AC_CHECK_LIB(gauche, Scm_EvalRec, [AC_DEFINE(HAVE_SCM_EVALREC)])
                 ],
 		[
              	 AC_MSG_WARN([We need Gauche 0.8.7 or later])

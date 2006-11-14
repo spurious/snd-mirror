@@ -927,7 +927,7 @@ static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *f
   int i, loc, temp;
   if (mem_size == 0)
     {
-      mem_size = 65536 * 16;
+      mem_size = 65536 * 128;
       pointers = (void **)calloc(mem_size, sizeof(void *));
       true_pointers = (void **)calloc(mem_size, sizeof(void *));
       sizes = (int *)calloc(mem_size, sizeof(int));
@@ -1077,31 +1077,50 @@ void io_fds_in_use(int *open, int *closed, int *top);
 void describe_region(FILE *fd, void *ur);
 void describe_sync(FILE *fp, void *ptr);
 
+typedef struct {int sum, ptrs, loc, refsize; int *refs;} sumloc;
+
+static int sloc_bigger(const void *a, const void *b)
+{
+  sumloc d1 = *(sumloc *)a;
+  sumloc d2 = *(sumloc *)b;
+  return(d1.sum < d2.sum);
+}
+
 void mem_report(void)
 {
-  int loc, i, j, sum, ptr = 0;
-  int *sums, *ptrs;
+  int loc, i, j;
+  sumloc *slocs;
   FILE *Fp;
   if (ss->search_tree)
     {
       free_ptree(ss->search_tree);
       ss->search_tree = NULL;
     }
-  sums = (int *)calloc(mem_location + 1, sizeof(int));
-  ptrs = (int *)calloc(mem_location + 1, sizeof(int));
-  for (loc = 0; loc <= mem_location; loc++)
-    {
-      sum = 0;
-      ptr = 0;
-      for (i = 0; i < mem_size; i++)
-	if ((pointers[i]) && (locations[i] == loc))
+  slocs = (sumloc *)calloc(mem_location + 1, sizeof(sumloc));
+
+  for (i = 0; i < mem_size; i++)
+    if (pointers[i])
+      {
+	loc = locations[i];
+	slocs[loc].sum += sizes[i];
+	if (slocs[loc].refs == NULL)
 	  {
-	    sum += sizes[i];
-	    ptr++;
+	    slocs[loc].refs = (int *)calloc(1, sizeof(int));
+	    slocs[loc].refsize = 1;
 	  }
-      sums[loc] = sum;
-      ptrs[loc] = ptr;
-    }
+	else
+	  {
+	    if (slocs[loc].refsize == slocs[loc].ptrs)
+	      {
+		slocs[loc].refsize *= 2;
+		slocs[loc].refs = (int *)realloc(slocs[loc].refs, sizeof(int) * slocs[loc].refsize);
+	      }
+	  }
+	slocs[loc].refs[slocs[loc].ptrs] = i;
+	slocs[loc].ptrs++;
+	slocs[loc].loc = loc; /* save for sort */
+      }
+
   Fp = fopen("memlog", "w");
   if (Fp == NULL) return;
 
@@ -1112,54 +1131,54 @@ void mem_report(void)
     free(str);
   }
 
+  qsort((void *)slocs, mem_location + 1, sizeof(sumloc), sloc_bigger);
+
   for (i = 0; i <= mem_location; i++)
     {
-      sum = 0;
-      for (loc = 0; loc <= mem_location; loc++)
-	if (sums[loc] > sum)
-	  {
-	    ptr = loc;
-	    sum = sums[loc];
-	  }
+      int sum, ptrs;
+      sum = slocs[i].sum;
+      ptrs = slocs[i].ptrs;
+      loc = slocs[i].loc;
+
       if (sum > 0)
 	{
-	  fprintf(Fp, "%s[%d]:%s:  %d (%d)\n", files[ptr], lines[ptr], functions[ptr], sums[ptr], ptrs[ptr]);
-	  sums[ptr] = 0;
-	  if (printable[ptr] > 0)
+	  fprintf(Fp, "%s[%d]:%s:  %d (%d)\n", files[loc], lines[loc], functions[loc], sum, ptrs);
+	  if (printable[loc] > 0)
 	    {
 	      fprintf(Fp, "        ");
-	      for (j = 0; j < mem_size; j++)
-		if ((locations[j] == ptr) && (pointers[j]))
-		  {
-		    switch (printable[ptr])
+	      for (j = 0; j < ptrs; j++)
+		{
+		  int orig_i;
+		  orig_i = slocs[i].refs[j];
+		  switch (printable[loc])
+		    {
+		    case PRINT_CHAR:
+		      fprintf(Fp, "[%s] ", (char *)(pointers[orig_i]));
+		      break;
+		    case PRINT_CLM:
+		      fprintf(Fp, "[%p: %s]\n   ", pointers[orig_i], mus_describe((mus_any *)(pointers[orig_i])));
+		      break;
+		    case PRINT_REGION:
+		      fprintf(Fp, "[%p: ", pointers[orig_i]); describe_region(Fp, pointers[orig_i]); fprintf(Fp, "]\n  ");
+		      break;
+		    case PRINT_SYNC:
+		      fprintf(Fp, "[%p: ", pointers[orig_i]); describe_sync(Fp, pointers[orig_i]); fprintf(Fp, "]\n  ");
+		      break;
+		    case PRINT_SND_FD:
 		      {
-		      case PRINT_CHAR:
-			fprintf(Fp, "[%s] ", (char *)(pointers[j]));
-			break;
-		      case PRINT_CLM:
-			fprintf(Fp, "[%p: %s]\n   ", pointers[j], mus_describe((mus_any *)(pointers[j])));
-			break;
-		      case PRINT_REGION:
-			fprintf(Fp, "[%p: ", pointers[j]); describe_region(Fp, pointers[j]); fprintf(Fp, "]\n  ");
-			break;
-		      case PRINT_SYNC:
-			fprintf(Fp, "[%p: ", pointers[j]); describe_sync(Fp, pointers[j]); fprintf(Fp, "]\n  ");
-			break;
-		      case PRINT_SND_FD:
-			{
-			  snd_fd *sf = (snd_fd *)(pointers[j]);
-			  fprintf(Fp, "[%p, loc: %d, beg: " OFF_TD ", eof: %d, sp: %p]\n  ",
-				  sf, sf->dangling_loc, sf->initial_samp, (int)(sf->at_eof), sf->local_sp);
-			}
-			break;
-		      case PRINT_FAM_INFO:
-			{
-			  fam_info *fp = (fam_info *)(pointers[j]);
-			  fprintf(Fp, "[%p, %s, rp: %p, data: %p]\n  ", fp, fp->filename, fp->rp, fp->data);
-			}
-			break;
+			snd_fd *sf = (snd_fd *)(pointers[orig_i]);
+			fprintf(Fp, "[%p, loc: %d, beg: " OFF_TD ", eof: %d, sp: %p]\n  ",
+				sf, sf->dangling_loc, sf->initial_samp, (int)(sf->at_eof), sf->local_sp);
 		      }
-		  }
+		      break;
+		    case PRINT_FAM_INFO:
+		      {
+			fam_info *fp = (fam_info *)(pointers[orig_i]);
+			fprintf(Fp, "[%p, %s, rp: %p, data: %p]\n  ", fp, fp->filename, fp->rp, fp->data);
+		      }
+		      break;
+		    }
+		}
 	      fprintf(Fp, "\n");
 	    }
 	}
@@ -1175,8 +1194,9 @@ void mem_report(void)
   fprintf(Fp, "\n\n");
   save_listener_text(Fp);
   dump_protection(Fp);
-  free(sums);
-  free(ptrs);
+  for (i = 0; i <= mem_location; i++)
+    if (slocs[i].refs) free(slocs[i].refs);
+  free(slocs);
   fclose(Fp);
 }
 

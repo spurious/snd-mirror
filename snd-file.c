@@ -536,6 +536,7 @@ void init_sound_file_extensions(void)
   add_sound_file_extension("voc");
   add_sound_file_extension("wve");
   add_sound_file_extension("sf2");
+  add_sound_file_extension("rf64");
 #if HAVE_OGG
   add_sound_file_extension("ogg");
 #endif

@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
 ;;;  test 0: constants                          [492]
-;;;  test 1: defaults                           [1068]
-;;;  test 2: headers                            [1270]
-;;;  test 3: variables                          [1575]
-;;;  test 4: sndlib                             [2230]
-;;;  test 5: simple overall checks              [4552]
-;;;  test 6: vcts                               [12053]
-;;;  test 7: colors                             [12368]
-;;;  test 8: clm                                [12874]
-;;;  test 9: mix                                [22066]
-;;;  test 10: marks                             [25723]
-;;;  test 11: dialogs                           [26611]
-;;;  test 12: extensions                        [26905]
-;;;  test 13: menus, edit lists, hooks, etc     [27359]
-;;;  test 14: all together now                  [28908]
-;;;  test 15: chan-local vars                   [29983]
-;;;  test 16: regularized funcs                 [31313]
-;;;  test 17: dialogs and graphics              [35729]
-;;;  test 18: enved                             [35818]
-;;;  test 19: save and restore                  [35838]
-;;;  test 20: transforms                        [37675]
-;;;  test 21: new stuff                         [39508]
-;;;  test 22: run                               [40506]
-;;;  test 23: with-sound                        [45993]
-;;;  test 24: user-interface                    [48023]
-;;;  test 25: X/Xt/Xm                           [51639]
-;;;  test 26: Gtk                               [56227]
-;;;  test 27: GL                                [60344]
-;;;  test 28: errors                            [60468]
-;;;  test all done                              [62577]
+;;;  test 1: defaults                           [1069]
+;;;  test 2: headers                            [1271]
+;;;  test 3: variables                          [1577]
+;;;  test 4: sndlib                             [2232]
+;;;  test 5: simple overall checks              [4632]
+;;;  test 6: vcts                               [12133]
+;;;  test 7: colors                             [12448]
+;;;  test 8: clm                                [12954]
+;;;  test 9: mix                                [22146]
+;;;  test 10: marks                             [25803]
+;;;  test 11: dialogs                           [26691]
+;;;  test 12: extensions                        [26985]
+;;;  test 13: menus, edit lists, hooks, etc     [27439]
+;;;  test 14: all together now                  [28988]
+;;;  test 15: chan-local vars                   [30063]
+;;;  test 16: regularized funcs                 [31393]
+;;;  test 17: dialogs and graphics              [35809]
+;;;  test 18: enved                             [35898]
+;;;  test 19: save and restore                  [35918]
+;;;  test 20: transforms                        [37755]
+;;;  test 21: new stuff                         [39588]
+;;;  test 22: run                               [40586]
+;;;  test 23: with-sound                        [46073]
+;;;  test 24: user-interface                    [48103]
+;;;  test 25: X/Xt/Xm                           [51719]
+;;;  test 26: Gtk                               [56307]
+;;;  test 27: GL                                [60424]
+;;;  test 28: errors                            [60548]
+;;;  test all done                              [62657]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -1469,7 +1469,7 @@
 	    (list "oboe.paf" 1 22050 2.305125 "Ensoniq Paris" "big endian short (16 bits)")
 	    (list "oboe.pf1" 1 22050 2.305125 "Ensoniq Paris" "little endian short (16 bits)")
 	    (list "oboe.smp" 1 22050 2.305125 "snack SMP" "little endian short (16 bits)")
-	    (list "oboe.rf64" 1 22050 2.305125 "EBU RF64" "little endian short (16 bits)")
+	    (list "oboe.rf64" 1 22050 2.305125 "rf64" "little endian short (16 bits)")
 	    (list "oboe.nsp" 1 22050 2.305125 "CSL" "little endian short (16 bits)")
 	    (list "oboe.nvf" 1 8000 6.353500 "Creative NVF" "unknown")
 	    (list "oboe-ulaw.voc" 1 22050 2.305669 "VOC" "mulaw (8 bits)")
@@ -3752,10 +3752,88 @@
 	    (set! (mus-sound-header-type "oboe.snd") cur-type)
 	    (set! (mus-sound-data-format "oboe.snd") cur-format))
 	  
+	  (let ((ind (open-sound "oboe.snd")))
+	    (save-sound-as "test.wave" ind mus-riff)
+	    (save-sound-as "test.rf64" ind mus-rf64)
+	    (save-sound-as "test.aifc" ind mus-aifc)
+	    (close-sound ind)
+	    
+	    (for-each
+	     (lambda (file)
+	       (let ((cur-srate (mus-sound-srate file))
+		     (cur-chans (mus-sound-chans file))
+		     (cur-format (mus-sound-data-format file))
+		     (cur-type (mus-sound-header-type file))
+		     (cur-loc (mus-sound-data-location file))
+		     (cur-samps (mus-sound-samples file)))
+		 (set! (mus-sound-srate file) (* cur-srate 2))
+		 (if (not (= (* cur-srate 2) (mus-sound-srate file))) 
+		     (snd-display ";~A: set mus-sound-srate: ~A -> ~A" file cur-srate (mus-sound-srate file)))
+		 (set! (mus-sound-samples file) (* cur-samps 2))
+		 (if (not (= (* cur-samps 2) (mus-sound-samples file))) 
+		     (snd-display ";~A: set mus-sound-samples: ~A -> ~A" file cur-samps (mus-sound-samples file)))
+		 (set! (mus-sound-chans file) (* cur-chans 2))
+		 (if (not (= (* cur-chans 2) (mus-sound-chans file))) 
+		     (snd-display ";~A: set mus-sound-chans: ~A -> ~A" file cur-chans (mus-sound-chans file)))
+		 (set! (mus-sound-data-location file) (* cur-loc 2))
+		 (if (not (= (* cur-loc 2) (mus-sound-data-location file))) 
+		     (snd-display ";~A: set mus-sound-data-location: ~A -> ~A" file cur-loc (mus-sound-data-location file)))
+		 (set! (mus-sound-header-type file) mus-nist)
+		 (if (not (= mus-nist (mus-sound-header-type file))) 
+		     (snd-display ";~A: set mus-sound-header-type: ~A -> ~A" file cur-type (mus-sound-header-type file)))
+		 (set! (mus-sound-data-format file) mus-lintn)
+		 (if (not (= mus-lintn (mus-sound-data-format file))) 
+		     (snd-display ";~A: set mus-sound-data-format: ~A -> ~A" file cur-format (mus-sound-data-format file)))
+		 (set! (mus-sound-srate file) cur-srate)
+		 (set! (mus-sound-samples file) cur-samps)
+		 (set! (mus-sound-chans file) cur-chans)
+		 (set! (mus-sound-data-location file) cur-loc)
+		 (set! (mus-sound-header-type file) cur-type)
+		 (set! (mus-sound-data-format file) cur-format)))
+	     (list "test.wave" "test.rf64" "test.aifc"))
+	    
+	    (for-each 
+	     (lambda (file)
+	       (let ((ind (open-sound file)))
+		 (let ((cur-srate (srate ind))
+		       (cur-chans (chans ind))
+		       (cur-format (data-format ind))
+		       (cur-type (header-type ind))
+		       (cur-loc (data-location ind))
+		       (cur-samps (frames ind)))
+		   (set! (srate ind) (* cur-srate 2))
+		   (if (not (= (* cur-srate 2) (srate ind))) 
+		       (snd-display ";~A: set srate: ~A -> ~A" file cur-srate (srate ind)))
+		   (set! (frames ind) (* cur-samps 2))
+		   (if (not (= (* cur-samps 2) (frames ind))) 
+		       (snd-display ";~A: set frames: ~A -> ~A" file cur-samps (frames ind)))
+		   (set! (chans ind) (* cur-chans 2))
+		   (if (not (= (* cur-chans 2) (chans ind))) 
+		       (snd-display ";~A: set chans: ~A -> ~A" file cur-chans (chans ind)))
+		   (set! (data-location ind) (* cur-loc 2))
+		   (if (not (= (* cur-loc 2) (data-location ind))) 
+		       (snd-display ";~A: set data-location: ~A -> ~A" file cur-loc (data-location ind)))
+		   (set! (header-type ind) mus-nist)
+		   (if (not (= mus-nist (header-type ind))) 
+		       (snd-display ";~A: set header-type: ~A -> ~A" file cur-type (header-type ind)))
+		   (set! (data-format ind) mus-lintn)
+		   (if (not (= mus-lintn (data-format ind))) 
+		       (snd-display ";~A: set data-format: ~A -> ~A" file cur-format (data-format ind)))
+		   (set! (srate ind) cur-srate)
+		   (set! (frames ind) cur-samps)
+		   (set! (chans ind) cur-chans)
+		   (set! (data-location ind) cur-loc)
+		   (set! (header-type ind) cur-type)
+		   (set! (data-format ind) cur-format))
+		 (close-sound ind))
+	       (if (file-exists? file)
+		   (delete-file file)))
+	     (list "test.wave" "test.rf64" "test.aifc")))
+	  
 ;	  (with-sound (:output big-file-name :srate 44100 :play #f)
 ;	    (do ((i 0 (1+ i))) ((= i 72000))
 ;	      (fm-violin i .1 440 (+ .01 (* (/ i 72000.0) .9)))))
-
+	  
 	  (if with-big-file
 	      (let ((probable-frames (inexact->exact (floor (* 44100 71999.1))))) ; silence as last .9 secs, so it probably wasn't written
 		(if (not (= (mus-sound-samples big-file-name) 3175160310))
@@ -46392,6 +46470,16 @@ EDITS: 1
 		  (not (= (mus-sound-srate "test1.snd") 48000)))
 	      (snd-display ";with-sound srate (48000, r): ~A (~A, ~A)" (srate ind) (mus-srate) (mus-sound-srate "test1.snd")))
 	  (if (not (= (header-type ind) mus-riff)) (snd-display ";with-sound type (~A, r): ~A" mus-riff (header-type ind)))
+	  (if (not (= (chans ind) 2)) (snd-display ";with-sound chans (2, r): ~A" (chans ind)))
+	  (close-sound ind)
+	  (delete-file "test1.snd"))
+	
+	(with-sound (:srate 48000 :channels 2 :header-type mus-rf64 :data-format mus-lshort :output "test1.snd") (fm-violin 0 .1 440 .1))
+	(let ((ind (find-sound "test1.snd")))
+	  (if (or (not (= (srate ind) 48000))
+		  (not (= (mus-sound-srate "test1.snd") 48000)))
+	      (snd-display ";with-sound srate (48000, r): ~A (~A, ~A)" (srate ind) (mus-srate) (mus-sound-srate "test1.snd")))
+	  (if (not (= (header-type ind) mus-rf64)) (snd-display ";with-sound type (~A, r): ~A" mus-rf64 (header-type ind)))
 	  (if (not (= (chans ind) 2)) (snd-display ";with-sound chans (2, r): ~A" (chans ind)))
 	  (close-sound ind)
 	  (delete-file "test1.snd"))

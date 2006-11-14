@@ -804,8 +804,8 @@ or a save dialog is opened.
 <tr><td></td><td colspan=2>The default header type when a new file is created, 
 or a save dialog is opened. (<code>mus-next</code> stands for the NeXT/Sun sound file header).
 The available output header-types are:
-<pre onmouseover="return escape('mus-riff is our name for Microsoft wav, mus-nist refers to NIST-SPHERE files, mus-next and mus-sun are the same, mus-aiff is the obsolete predecessor to mus-aifc, mus-bicsf and mus-ircam are extensions of mus-next headers, mus-raw means &quot;headerless&quot;, mus-soundfont refers to Emu\'s extension of mus-riff files, mus-voc refers to Creative Voice File, and mus-svx refers to 8SVX headers.  Many other headers are supported read-only.')">
-    mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff mus-soundfont mus-bicsf mus-voc mus-svx
+<pre onmouseover="return escape('mus-riff is our name for Microsoft wav, mus-rf64 is EBU's 64-bit RIFF-replacement header, mus-nist refers to NIST-SPHERE files, mus-next and mus-sun are the same, mus-aiff is the obsolete predecessor to mus-aifc, mus-bicsf and mus-ircam are extensions of mus-next headers, mus-raw means &quot;headerless&quot;, mus-soundfont refers to Emu\'s extension of mus-riff files, mus-voc refers to Creative Voice File, and mus-svx refers to 8SVX headers.  Many other headers are supported read-only.')">
+    mus-next mus-aifc mus-riff mus-rf64 mus-nist mus-raw mus-ircam mus-aiff mus-soundfont mus-bicsf mus-voc mus-svx
 </pre>
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
@@ -3517,7 +3517,7 @@ set:
 <tr><td></td><td>convert <i>type</i>, an integer, to a string, e.g. "AIFF".  Some of the sndlib header types are:</td></tr>
 <tr><td></td><td><pre>
 
-    mus-next  mus-aifc  mus-riff  mus-nist  mus-raw  mus-ircam  mus-aiff 
+    mus-next  mus-aifc  mus-riff  mus-rf64 mus-nist  mus-raw  mus-ircam  mus-aiff 
     mus-bicsf mus-soundfont mus-voc mus-svx mus-unsupported
 </pre></td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -6549,6 +6549,7 @@ in; if greater than 1.0, fewer ticks are displayed.  This mainly affects the gri
 This returns the header type (e.g. <code>mus-aiff</code>) of the file that underlies <i>snd</i>.  
 Snd can read about 60 header types, and write 7 or so.
 "aiff" and "aifc" come from Apple, "riff" is the Microsoft "wave" header,
+"rf64" is the European Broadcast Union's 64-bit RIFF replacement,
 "nist" comes from the NIST-Sphere package, "next" or "sun" is the Next/Sun
 (".au") header, "ircam" is IRCAM's extension of the Next header, and "raw"
 means the sound file has no header.  If you change the header type to "raw",
@@ -6556,7 +6557,7 @@ any existing header is removed.
 Each header type has its own peculiarities; if in doubt, use <code>mus-next</code> because it is simple,
 and can handle any data format that Snd can write (whereas each of the others is restricted in this regard).
 The writable header types are <code>mus-next</code>, <code>mus-nist</code>, 
-<code>mus-aiff</code> (obsolete, rarely needed), <code>mus-aifc</code>, <code>mus-riff</code>,
+<code>mus-aiff</code> (obsolete, rarely needed), <code>mus-aifc</code>, <code>mus-riff</code>, <code>mus-rf64</code>
 <code>mus-ircam</code>, and <code>mus-raw</code> (no header).  For technical descriptions of the headers,
 see headers.c; for actual sound files, see sf.tar.gz at ccrma-ftp.
 <br><br>
@@ -7032,7 +7033,7 @@ related settings. Data formats are (b=big-endian, l=little, u=unsigned):
 </pre>
 Header-types are:
 <pre>
-    mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff mus-soundfont mus-bicsf mus-voc mus-svx
+    mus-next mus-aifc mus-riff mus-rf64 mus-nist mus-raw mus-ircam mus-aiff mus-soundfont mus-bicsf mus-voc mus-svx
 </pre>
 To be informed whenever a new sound is created, use <a href="#newsoundhook">new-sound-hook</a> (see ws.scm).
 </td></tr>
@@ -10692,7 +10693,7 @@ to longer:
 <code><a class=def name="addsoundfileextension">add-sound-file-extension</a> (ext)</code></td></tr>
 <tr><td></td><td>
 This adds <i>ext</i> to the list of (case sensitive) sound file extensions used by <a href="#soundfilesindirectory">sound-files-in-directory</a>.
-The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2").
+The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2" "rf64").
 To add "ogg" as a recognized extension:
 <pre>
      (add-sound-file-extension "ogg")
@@ -11491,7 +11492,7 @@ This is the list of sound file extensions used by the "just-sounds" buttons and
 <a href="#soundfilesindirectory">sound-files-in-directory</a> to try to recognize
 sound files.  It is settable: a list of extensions as strings:
 <pre>
-    (set! (sound-file-extensions) (list "snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2"))
+    (set! (sound-file-extensions) (list "snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2" "rf64"))
 </pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -12509,7 +12510,7 @@ to put the date and time in the Snd title bar.
 
 <p><b>Sndlib</b> (see <a href="sndlib.html#sndlibguile">sndlib.html</a> for a complete list):</p>
 <pre>
-  mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff
+  mus-next mus-aifc mus-riff mus-rf64 mus-nist mus-raw mus-ircam mus-aiff
   mus-bicsf mus-soundfont mus-voc mus-svx
 
   mus-bshort  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat

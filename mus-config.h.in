@@ -204,6 +204,8 @@
 #undef WITH_HOBBIT
 #undef WITH_MODULES
 
+#undef HAVE_SCM_EVALREC
+
 #undef WITH_RUN
 #undef WITH_RELATIVE_PANES
 #undef WITH_MIDI

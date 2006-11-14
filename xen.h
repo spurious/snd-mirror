@@ -13,11 +13,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 4
-#define XEN_VERSION "2.4"
+#define XEN_MINOR_VERSION 5
+#define XEN_VERSION "2.5"
 
 /* HISTORY:
  *
+ *  14-Nov-06: check for Scm_EvalRec (Gauche 0.8.8).
  *  9-Sep-06:  XEN_LOAD_PATH and XEN_ADD_TO_LOAD_PATH
  *  1-Sep-06:  string and array changes for Ruby (from Mike).
  *  7-Aug-06:  more careful list length handling in Ruby (from Mike).

@@ -1710,7 +1710,11 @@ XEN xen_gauche_eval_c_string(char *arg)
   XEN result = XEN_FALSE;
   SCM_UNWIND_PROTECT 
     {
+#if (!HAVE_SCM_EVALREC)
       result = Scm_EvalCString(arg, SCM_OBJ(Scm_UserModule()));
+#else
+      result = Scm_EvalRec(Scm_ReadFromCString(arg), SCM_OBJ(Scm_UserModule()));
+#endif
     }
   SCM_WHEN_ERROR 
     {

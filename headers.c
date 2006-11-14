@@ -30,6 +30,7 @@
  *      NeXT/Sun/DEC/AFsp
  *      AIFF/AIFC
  *      RIFF (microsoft wave)
+ *      RF64 (EBU)
  *      IRCAM (old style)
  *      NIST-sphere
  *      no header
@@ -38,7 +39,7 @@
  *      8SVX (IFF), EBICSF, INRS, ESPS, SPPACK, ADC (OGI), AVR, VOC, CSL, snack "SMP", PVF,
  *      Sound Tools, Turtle Beach SMP, SoundFont 2.0, Sound Designer I, PSION alaw, MAUD, 
  *      Gravis Ultrasound, Comdisco SPW, Goldwave sample, OMF, NVF,
- *      Sonic Foundry, SBStudio II, Delusion digital, Digiplayer ST3, Farandole Composer WaveSample,
+ *      Sonic Foundry (w64), SBStudio II, Delusion digital, Digiplayer ST3, Farandole Composer WaveSample,
  *      Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85 and SY99 (buggy), Yamaha TX16W, 
  *      Covox v8, AVI, Kurzweil 2000, Paris Ensoniq, Impulse tracker, Korg, Akai type 4, Maui,
  *
@@ -1493,8 +1494,9 @@ char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
  * other (currently ignored) chunks are wavl = waveform data, fact, cues of some sort, slnt = silence,
  *     plst = playlist, adtl = associated data list, labl = cue label, note = cue comments,
  *     ltxt = text associated with data segment (cue), file, DISP = displayable object,
- *     JUNK = outdated info, PAD = padding, etc
+ *     JUNK = EBU placeholder -- see below, PAD = padding, etc
  * fact chunk generally has number of samples (used in compressed files)
+ * bext chunk has comments -- perhaps add these to the info/list list?  I need an example! -- is the chunk id "bext"?
  */
 
 static int wave_to_sndlib_format(int osf, int bps, bool little)
@@ -1828,7 +1830,11 @@ char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends)
 }
 
 
-/* soundforge -- just a quick hack until I get better documentation */
+/* ------------------------------------ W64 ------------------------------------
+ *
+ * soundforge -- just a quick hack until I get better documentation 
+ */
+
 static int read_soundforge_header(const char *filename, int fd)
 {
   /* like RIFF but lowercase and 64-bit vals */
@@ -2033,6 +2039,7 @@ static int write_rf64_header(int fd, int wsrate, int wchans, off_t size, int for
   mus_loff_t_to_char((unsigned char *)(hdrbuf + 8), data_location + size);
   mus_loff_t_to_char((unsigned char *)(hdrbuf + 16), size);
   mus_loff_t_to_char((unsigned char *)(hdrbuf + 24), size);
+  mus_lint_to_char((unsigned char *)(hdrbuf + 32), 0); /* "table size" */
   CHK_WRITE(fd, hdrbuf, 36);
 
   err = write_riff_fmt_chunk(fd, hdrbuf, format, wsrate, wchans);
@@ -2045,8 +2052,6 @@ static int write_rf64_header(int fd, int wsrate, int wchans, off_t size, int for
   CHK_WRITE(fd, hdrbuf, 8);
   return(err);
 }
-
-/* TODO: doc test riff->rf64 bwf-read (scm) */
 
 static int mus_header_convert_riff_to_rf64(const char *filename, off_t size)
 {
@@ -2433,6 +2438,7 @@ static int decode_nist_value(char *str, int base, int end)
   value[j] = 0;
   if (value[0] =='s') return(MUS_NIST_SHORTPACK);
   sscanf(value, "%d", &i);
+  /* what is the correct way to use off_ts here for the sample count? */
   return(i);
 }
 
@@ -2550,16 +2556,17 @@ static int read_nist_header(const char *filename, int fd)
   return(MUS_NO_ERROR);
 }
 
-static int write_nist_header(int fd, int wsrate, int wchans, int siz, int format)
+static int write_nist_header(int fd, int wsrate, int wchans, off_t size, int format)
 {
   char *header;
   int datum;
   datum = mus_bytes_per_sample(format);
   header = (char *)CALLOC(1024, sizeof(char));
-  sprintf(header, "NIST_1A\n   1024\nchannel_count -i %d\nsample_rate -i %d\nsample_n_bytes -i %d\nsample_byte_format -s2 %s\nsample_sig_bits -i %d\nsample_count -i %d\nend_head\n",
+  sprintf(header, "NIST_1A\n   1024\nchannel_count -i %d\nsample_rate -i %d\nsample_n_bytes -i %d\nsample_byte_format -s2 %s\nsample_sig_bits -i %d\nsample_count -i " OFF_TD "\nend_head\n",
 	  wchans, wsrate, datum,
 	  ((format == MUS_BSHORT) || (format == MUS_B24INT) || (format == MUS_BINT)) ? "10" : "01",
-	  datum * 8, siz / datum);
+	  datum * 8, 
+	  size / datum);
   CHK_WRITE(fd, (unsigned char *)header, 1024);
   data_location = 1024;
   FREE(header);
@@ -5379,8 +5386,11 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
   switch (type)
     {
     case MUS_NEXT:  err = mus_header_write_next_header(fd, in_srate, in_chans, loc, siz, format, comment, len); break;
-    case MUS_AIFC:  err = write_aif_header(fd, in_srate, in_chans, siz, format, comment, len, true); break;
-    case MUS_AIFF:  err = write_aif_header(fd, in_srate, in_chans, siz, format, comment, len, false); break;
+    case MUS_AIFC:  err = write_aif_header(fd, in_srate, in_chans, siz, format, comment, len, true);            break;
+    case MUS_AIFF:  err = write_aif_header(fd, in_srate, in_chans, siz, format, comment, len, false);           break;
+    case MUS_RF64:  err = write_rf64_header(fd, in_srate, in_chans, siz, format, comment, len);                 break;
+    case MUS_IRCAM: err = write_ircam_header(fd, in_srate, in_chans, format, comment, len);                     break;
+    case MUS_NIST:  err = write_nist_header(fd, in_srate, in_chans, siz, format);                               break;
     case MUS_RIFF:  
       err = write_riff_header(fd, in_srate, in_chans, siz, format, comment, len); 
       if (err != MUS_NO_ERROR)
@@ -5389,9 +5399,6 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
 	  return(mus_error(err,  "can't write %s header for %s", mus_header_type_name(type), name));
 	}
       break;
-    case MUS_RF64:  err = write_rf64_header(fd, in_srate, in_chans, siz, format, comment, len); break;
-    case MUS_IRCAM: err = write_ircam_header(fd, in_srate, in_chans, format, comment, len); break;
-    case MUS_NIST:  err = write_nist_header(fd, in_srate, in_chans, siz, format); break;
     case MUS_RAW: 
       data_location = 0; 
       data_size = mus_bytes_to_samples(format, siz);
