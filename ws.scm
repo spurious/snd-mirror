@@ -147,6 +147,10 @@ returning you to the true top-level."
 ;;; ws-interrupt? checks for C-g within with-sound, setting up continuation etc
 ;;; this goes anywhere in the instrument (and any number of times), 
 ;;;    but not in the run macro body (run doesn't (yet?) handle code this complex)
+
+(if (provided? 'snd-gauche)
+    (define (make-stack . args) #f))
+
 (defmacro ws-interrupt? ()
   ;; using defmacro, not define, so that we can more easily find the instrument (as a procedure)
   ;;   for ws-locals above -- some sort of procedure property is probably better

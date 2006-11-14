@@ -3,16 +3,15 @@
 /* TODO: notebook style access to other tracks (next and previous by number are not very intuitive) -- pulldown menu of names?
  * PERHAPS: undo&apply for track / mix env?, multiple mix/track dialogs, tempo curves in dialog?
  * PERHAPS: mix-hover-hook mark-hover-hook cursor-hover-hook selection-hover-hook
- * PERHAPS: "forget" button -> free_track
+ * PERHAPS: "forget" button -> free_track (forget all?)
  *
  * SOMEDAY: currently, if track, drag mix does not move axes
- * TODO: check the multichannel sync'd mixes (channels=2 in tmp150)
  * PERHAPS: add user funcs/envs to mix/track dialogs
  * PERHAPS: multiple mix/track dialogs
  * PERHAPS: mix pane sort of like current mark pane?
  * PERHAPS: quick access + edit of underlying mix data, ripple and update if saved (like region edit)
  *          also double click in edit history => go to that temp file?
- * PERHAPS: a way to restrict the tag+wave stuff to top level tracks or leave out wave if > 50 displayed?
+ * PERHAPS: some way to tie multichannel mixes together without the track appearing in the track dialog
  */
 
 typedef struct {

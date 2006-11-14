@@ -29,7 +29,8 @@
 ;;;  test 26: Gtk                               [56307]
 ;;;  test 27: GL                                [60424]
 ;;;  test 28: errors                            [60548]
-;;;  test all done                              [62657]
+;;;  test 29: cm                                [62657]
+;;;  test all done                              [62708]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -67,7 +68,7 @@
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (define full-test (< snd-test 0))
-(define total-tests 28)
+(define total-tests 29)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
 (define test-number -1)
 
@@ -14078,7 +14079,7 @@ EDITS: 5
 
 ;; echoes with each echo at a new pitch via ssb-am etc
 
-(define* (make-transposer old-freq new-freq pairs :optional (order 40) (bw 50.0))
+(define* (make-ssb-transposer old-freq new-freq pairs :optional (order 40) (bw 50.0))
   (let* ((ssbs (make-vector pairs))
 	 (bands (make-vector pairs))
 	 (factor (/ (- new-freq old-freq) old-freq)))
@@ -14092,7 +14093,7 @@ EDITS: 5
 						 order))))
     (list ssbs bands)))
 
-(define (transpose transposer input)
+(define (ssb-transpose transposer input)
   (let* ((sum 0.0)
 	 (ssbs (car transposer))
 	 (bands (cadr transposer))
@@ -14108,9 +14109,9 @@ EDITS: 5
 
 (define (make-fdelay len pitch scaler)
   (let ((dly (make-delay len))
-        (ssb (make-transposer 440.0 (* 440.0 pitch) 10)))
+        (ssb (make-ssb-transposer 440.0 (* 440.0 pitch) 10)))
     (lambda (input)
-      (delay dly (+ input (* scaler (transpose ssb (tap dly))))))))
+      (delay dly (+ input (* scaler (ssb-transpose ssb (tap dly))))))))
 
 
 (define (transposed-echo pitch scaler secs)
@@ -25717,8 +25718,6 @@ EDITS: 5
 			))
 		  (close-sound ind)))))
 	  
-      ;; TODO: try the next stage above bag1... (bag1 has 137 notes)
-    
       (run-hook after-test-hook 9)
       ))
 
@@ -51054,10 +51053,10 @@ EDITS: 1
 		      (if (= type mus-next) 1
 			  (if (= type mus-aifc) 2
 			      (if (= type mus-riff) 3
-				  (if (= type mus-raw) 4
-				      (if (= type mus-aiff) 5
-					  (if (= type mus-ircam) 6
-					      7)))))))
+				  (if (= type mus-raw) 5
+				      (if (= type mus-aiff) 6
+					  (if (= type mus-ircam) 7
+					      8)))))))
 		    
 		    (define (format->pos type format)
 		      (let ((next-formats (list mus-bshort mus-mulaw mus-byte mus-bfloat mus-bint mus-alaw mus-b24int mus-bdouble))
@@ -62664,6 +62663,48 @@ EDITS: 1
 (set! sound-data-23 #f)
 
 
+;;; ---------------- test 29: Common Music ----------------
+
+;; this forces us to do a two-step test:
+;;    goops-error: (#f define-class: Only allowed at top level () ())
+
+(define cm-ok #f)
+
+(if (or full-test (= snd-test 29) (and keep-going (<= snd-test 29)))
+    (let ((cmsrc (string-append home-dir "/test/cm/src/cm.scm")))
+      (run-hook before-test-hook 29)
+      (if (file-exists? cmsrc)
+	  (begin
+	    (load cmsrc)
+	    (set! cm-ok #t)))))
+
+(definstrument (cm-simp beg dur freq amp)
+  (let* ((o (make-oscil freq))
+	 (st (inexact->exact (* beg (mus-srate))))
+	 (nd (+ st (inexact->exact (* dur (mus-srate))))))
+    (run
+     (lambda ()
+       (do ((i st (1+ i)))
+	   ((= i nd))
+	 (outa i (* amp (oscil o)) *output*))))))
+
+(define (random-fn n)
+  (process repeat n output (new cm-simp :beg (now) :dur .1 :freq (between 220 880) :amp .1) wait .25))
+
+(if cm-ok
+    (begin
+      (events (random-fn 10) (string-append home-dir "/cl/test.clm") 0 :output "test.snd")
+
+      (let ((ind (find-sound "test.snd")))
+	(if (not (sound? ind)) 
+	    (snd-display ";no result from cm?")
+	    (close-sound ind)))
+
+      (run-hook after-test-hook 29)))
+
+
+
+
 ;;; ---------------- test all done
 
 (let ((regs (regions)))
@@ -62699,10 +62740,10 @@ EDITS: 1
 (set! (print-length) 64)
 (display (format "~%;times: ~A~%;total: ~A~%" timings (inexact->exact (round (- (real-time) overall-start-time)))))
 
-;2-Nov-06:  (17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975) 492
-;4-Nov-06:  (17 16 35 28 973 45681 55948 73 81440 1941 483 1132 560 946 954 1185 13741 247 230 2714 1221 851 6188 6163 3885 4413 278 0 539195) 7717
+;2-Nov-06:  (17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975 0) 492
+;4-Nov-06:  (17 16 35 28 973 45681 55948 73 81440 1941 483 1132 560 946 954 1185 13741 247 230 2714 1221 851 6188 6163 3885 4413 278 0 539195 0) 7717
 
-(let ((best-times '#(17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975)))
+(let ((best-times '#(17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975 354)))
   (do ((i 0 (1+ i)))
       ((= i (vector-length timings)))
     (if (and (> (vector-ref timings i) 0)

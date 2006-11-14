@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Wed Oct 11 23:07:19 CEST 2006
+\ Changed: Sat Nov 11 03:33:31 CET 2006
 
 \ Commentary:
 \ 
@@ -42,8 +42,6 @@
 \ sound-let            ( ws-xt-lst body-xt -- )
 
 \ Code:
-
-$" snd-fth" textdomain drop
 
 dl-load sndlib Init_sndlib
 
