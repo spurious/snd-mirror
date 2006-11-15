@@ -1430,6 +1430,7 @@ char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
   return(sc);
 }
 
+
 /* ------------------------------------ RIFF (wave) ------------------------------------
  *
  * see ftp.microsoft.com:/SoftLib/MSLFILES/MDRK.EXE (also MMSYSTEM.H and MMREG.H)
@@ -4884,7 +4885,7 @@ static int mus_header_read_1(const char *filename, int fd)
   bytes = read(fd, hdrbuf, INITIAL_READ_SIZE);
   /* if it's a 0 length file we need to get out */
   if (bytes < 0) 
-    return(mus_error(MUS_HEADER_READ_FAILED,	"%s: %s", filename, (errno) ? STRERROR(errno) : "bytes read < 0?"));
+    return(mus_error(MUS_HEADER_READ_FAILED, "%s: %s", filename, (errno) ? STRERROR(errno) : "bytes read < 0?"));
   if (bytes == 0) 
     {
       header_type = MUS_RAW;

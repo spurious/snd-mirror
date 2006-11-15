@@ -25536,7 +25536,7 @@ EDITS: 5
 		    (set! (mix-amp fmix) 1.0) ; a no-op presumably
 		    (if (fneq (mix-amp fmix) 1.0) (snd-display ";reset mix-amp (~A): ~A" old-amp (mix-amp fmix)))
 		    (if (not (= (edit-position ind 0) old-ed))
-			(snd-display "mix amp no-op edpos: ~A from ~A" (edit-position ind 0) old-ed)))
+			(snd-display ";mix amp no-op edpos: ~A from ~A" (edit-position ind 0) old-ed)))
 		  
 		  (let ((vt (make-track-sample-reader violin-track 0 10000))
 			(ct (make-track-sample-reader cello-track 0 10000))

@@ -4456,7 +4456,7 @@ feedback:
 (define cellos '())
 
 (define (violin beg dur freq amp)
-  (let ((id (mix (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> ()                            ; write instrument output to temp sound
+  (let ((id (<a class=quiet href="#mix">mix</a> (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> ()                            ; write instrument output to temp sound
    	           (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 dur (-&gt;frequency freq #t) amp)) ; our favorite FM instrument
 		 (-&gt;sample beg) 0 #f #f                         ; mix into the current sound
 		 #t #t)))                                       ; with tag and auto-delete
@@ -4465,7 +4465,7 @@ feedback:
     (set! violins (cons id violins))))                          ; save list of violin mixes
 
 (define (cello beg dur freq amp)                                ; similar to violin, but for cello notes
-  (let ((id (mix (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> () 
+  (let ((id (<a class=quiet href="#mix">mix</a> (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> () 
 		   (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 dur (-&gt;frequency freq #t) amp :fm-index 1.5))
 	    (-&gt;sample beg) 0 #f #f 
 	    #t #t)))
@@ -4489,7 +4489,7 @@ feedback:
    (violin 9 3 'd4 .2)
    (cello  9 3 'b2 .2)
 
-   (let ((overall-trk (make-track))) ; for global amplitude envelopes, transpositions etc
+   (let ((overall-trk (<a class=quiet href="#maketrack">make-track)))</a> ; for global amplitude envelopes, transpositions etc
 
      (let ((trk (apply <a class=quiet href="#maketrack">make-track</a> (reverse cellos))))
        (set! (<a class=quiet href="#tracktagy">track-tag-y</a> trk) 40)
@@ -4501,12 +4501,38 @@ feedback:
        (set! (<a class=quiet href="#tracktagy">track-tag-y</a> trk) 10)
        (set! (<a class=quiet href="#trackcolor">track-color</a> trk) (<a class=quiet href="#makecolor">make-color</a> 0 0 1))     ; violins are blue
        (set! (<a class=quiet href="#trackname">track-name</a> trk) "violin")
-       (set! (<a class=quiet href="#tracktrack">track-track</a> trk) overall-trk)))
+       (set! (<a class=quiet href="#tracktrack">track-track</a> trk) overall-trk)))))
                                                        ; forget the reverb
                                                        ; and you'll be blue too
-   ))
 </pre></td></tr></table>
-<img src="mixname.png" alt="mix name example">
+<img src="mixname.png" alt="mix name example" vspace=10>
+<p>
+But in more complex cases, using a mix per note fills the screen with mix tags; it's probably cleaner
+to use multiple output files, collecting related notes in one file, then mixing these at the end:
+</p>
+<table border=0 cellpadding=5 vspace=5><tr><td bgcolor="#fafafa"><pre>
+;; open two output files, one for the violin notes, the other for the cellos
+;;   then mix them into "test.snd"
+
+(let ((violins (<a class=quiet href="clm.html#make-sample-&gt;file">make-sample-&gt;file</a> "violins.snd" 1 mus-lfloat mus-next))
+      (cellos (<a class=quiet href="clm.html#make-sample-&gt;file">make-sample-&gt;file</a> "cellos.snd" 1 mus-lfloat mus-next)))
+
+  (define (violin beg dur freq amp)
+    (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> (:continue-old-file #t :output "violins.snd") 
+      (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> beg dur (-&gt;frequency freq #t) amp)))
+
+  (define (cello beg dur freq amp)
+    (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> (:continue-old-file #t :output "cellos.snd") 
+      (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> beg dur (-&gt;frequency freq #t) amp :fm-index 1.5)))
+
+  (violin 0 1 'e4 .2)  (violin 1 1.5 'g4 .2)   (violin 2.5 .5 'g3 .2)
+  (cello  0 1 'c3 .2)  (cello  1 1.5 'e3 .2)  (cello  2.5 .5 'g2 .2)
+  ;; etc
+
+  (let ((index (<a class=quiet href="#newsound">new-sound</a> "test.snd" :channels 1))) ; our overall output file
+    (<a class=quiet href="#mix">mix</a> "violins.snd")
+    (<a class=quiet href="#mix">mix</a> "cellos.snd")))
+</pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2 height=32></td></tr>
 

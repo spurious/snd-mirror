@@ -1680,7 +1680,7 @@ bool rec_set_autoload(bool val);
 int rec_buffer_size(void);
 int rec_set_buffer_size(int size);
 char *rec_filename(void);
-char *rec_set_filename(const char *filename);
+void rec_set_filename(const char *filename);
 int rec_output_chans(void);
 void rec_set_output_chans(int chans);
 int rec_output_data_format(void);

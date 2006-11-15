@@ -1583,14 +1583,13 @@ char *rec_filename(void)
   return(rp->output_file);
 }
 
-char *rec_set_filename(const char *filename)
+void rec_set_filename(const char *filename)
 {
   init_recorder();
   if (rp->output_file) FREE(rp->output_file);
   if (filename)
     rp->output_file = copy_string(filename);
   else rp->output_file = NULL;
-  return(rp->output_file);
 }
 
 static XEN g_recorder_file(void) {return(C_TO_XEN_STRING(rec_filename()));}
