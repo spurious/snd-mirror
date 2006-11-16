@@ -2302,13 +2302,13 @@ shell:
 </p>
 <pre>
     setenv MUS_ALSA_DEVICE "hw:0"   ; tcsh
-    MUS_ALSA_DEVICE=hw:0            ; bash
+    MUS_ALSA_DEVICE="hw:0"          ; bash
 </pre>
 <p>
 or run Snd with a temporary setting:
 </p>
 <pre>
-    MUS_ALSA_DEVICE=plughw:0 snd somefile.wav
+    MUS_ALSA_DEVICE="plughw:0" snd somefile.wav
 </pre>
 <p>
 The parallel variables (for ~/.snd and friends, or at any time in the listener), are:

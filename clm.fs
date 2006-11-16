@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Sat Nov 11 03:33:31 CET 2006
+\ Changed: Wed Nov 15 03:45:06 CET 2006
 
 \ Commentary:
 \ 
@@ -88,7 +88,7 @@ hide
 set-current
 : now@   ( -- secs ) *clm-current-time* ;
 : now!   ( secs -- ) to *clm-current-time* ;
-: wait   ( secs -- ) now@ f+ now! ;
+: step   ( secs -- ) now@ f+ now! ;
 : tempo@ ( -- secs ) *clm-tempo* ;
 : tempo! ( secs -- ) to *clm-tempo* ;
 previous

@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Sun Aug 20 00:58:58 CEST 2006
+\ Changed: Wed Nov 15 04:25:11 CET 2006
 
 \ Commentary:
 \
@@ -419,15 +419,6 @@ $" yellow" color->pixel yellow-pixel
   rc
 ;
 
-\ selection-buttons empty? [if]
-\  selection-changed-hook
-\  lambda: ( -- f )
-\    selection? { on }
-\    selection-buttons each ( but ) on FXtSetSensitive drop end-each
-\    #f
-\  ; 0 make-proc add-hook!
-\ [then]
-
 : help-cb ( label message -- xt; w c i self -- )
   lambda-create , , latestxt
  does> ( w c i self -- )
@@ -605,8 +596,8 @@ set-current
 : delay-time! ( del gen -- ) effects-delay ! ;
 : amount@     ( gen -- amt ) effects-amount @ ;
 : amount!     ( amt gen -- ) effects-amount ! ;
-: envelope@   ( gen -- env ) effects-envelope @ ;
-: envelope!   ( env gen -- ) effects-envelope ! ;
+: envel@   ( gen -- env ) effects-envelope @ ;
+: envel!   ( env gen -- ) effects-envelope ! ;
 : size@       ( gen -- siz ) effects-size @ ;
 : size!       ( siz gen -- ) effects-size ! ;
 
@@ -663,10 +654,10 @@ hide
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
-  gen envelope@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if
+  gen envel@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if
     #f
   else
-    gen envelope@ xe-envelope gen amount@ scale-envelope
+    gen envel@ xe-envelope gen amount@ scale-envelope
   then { with-env }
   gen target@ 'sound equal? if
     with-env list? if
@@ -706,7 +697,7 @@ hide
   { w c info self }
   self @ { gen }
   self cell+ @ ( init ) gen amount!
-  gen envelope@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
+  gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : gain-slider-cb ( gen -- xt; w c i self -- )
@@ -741,7 +732,7 @@ hide
     fr
     '( 0.0 1.0 1.0 1.0 ) ( envelope )
     '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
-    '( FXmNheight 200 ) make-xenved gen envelope!
+    '( FXmNheight 200 ) make-xenved gen envel!
     fr
     '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
@@ -753,7 +744,7 @@ set-current
 : make-gain-dialog ( name -- xt1 xt2; child self -- xt; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   1.0 gen amount!
-  #f  gen envelope!
+  #f  gen envel!
   gen post-gain-dialog ( xt1 )
   lambda-create gen ,
   latestxt             ( xt2 )
@@ -2406,7 +2397,7 @@ hide
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
-  gen envelope@ xe-envelope gen scaler@ scale-envelope { en }
+  gen envel@ xe-envelope gen scaler@ scale-envelope { en }
   gen target@ 'sound equal? if
     en 1.0 #f #f #f src-sound drop
   else
@@ -2436,7 +2427,7 @@ hide
   { w c info self }
   self @ { gen }
   self cell+ @ ( init ) gen scaler!
-  gen envelope@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
+  gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
   gen sliders@ 0 array-ref '( FXmNvalue gen scaler@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : src-timevar-slider-cb ( gen -- xt; w c i self -- )
@@ -2471,7 +2462,7 @@ hide
     fr
     '( 0.0 1.0 1.0 1.0 ) ( envelope )
     '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
-    '( FXmNheight 200 ) make-xenved gen envelope!
+    '( FXmNheight 200 ) make-xenved gen envel!
     fr
     '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
@@ -2483,7 +2474,7 @@ set-current
 : make-src-timevar-dialog ( name -- xt1 xt2; child self -- xt; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   1.0 gen scaler!
-  #f  gen envelope!
+  #f  gen envel!
   gen post-src-timevar-dialog ( xt1 )
   lambda-create gen ,
   latestxt             ( xt2 )
@@ -2557,10 +2548,10 @@ hide
   { samps self }
   self @ { gen }
   gen amount@ make-oscil { os }
-  gen envelope@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if
+  gen envel@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if
     #f
   else
-    :envelope gen envelope@ xe-envelope :end gen target@ effect-frames 1- make-env
+    :envelope gen envel@ xe-envelope :end gen target@ effect-frames 1- make-env
   then { e }
   e if os e effects-am-env-cb else os effects-am-cb then
 ;
@@ -2571,7 +2562,7 @@ hide
   self @ { gen }
   $" effects-am"
   $" %s %s" '( gen amount@
-  gen envelope@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if #f else gen envelope@ xe-envelope then )
+  gen envel@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if #f else gen envel@ xe-envelope then )
   string-format
 ;
 : am-ok-cb ( gen -- xt; w c i self -- )
@@ -2592,7 +2583,7 @@ hide
   { w c info self }
   self @ { gen }
   self cell+ @ ( init ) gen amount!
-  gen envelope@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
+  gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@ f>s ) FXtVaSetValues drop
 ;
 : am-slider-cb ( gen -- xt; w c i self -- )
@@ -2627,7 +2618,7 @@ hide
     fr
     '( 0.0 1.0 1.0 1.0 ) ( envelope )
     '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
-    '( FXmNheight 200 ) make-xenved gen envelope!
+    '( FXmNheight 200 ) make-xenved gen envel!
     fr
     '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
@@ -2639,7 +2630,7 @@ set-current
 : make-am-effect-dialog ( name -- xt1 xt2; child self -- xt; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   100.0 gen amount!
-  #f  gen envelope!
+  #f  gen envel!
   gen post-am-effect-dialog ( xt1 )
   lambda-create gen ,
   latestxt             ( xt2 )
@@ -2662,10 +2653,10 @@ hide
   { samps self }
   self @ { gen }
   gen frequency@ make-oscil { os }
-  gen envelope@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if
+  gen envel@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if
     #f
   else
-    :envelope gen envelope@ xe-envelope :end gen target@ effect-frames 1- make-env
+    :envelope gen envel@ xe-envelope :end gen target@ effect-frames 1- make-env
   then { e }
   e if os e effects-rm-env-cb else os effects-rm-cb then
 ;
@@ -2676,7 +2667,7 @@ hide
   self @ { gen }
   $" effects-rm"
   $" %s %s" '( gen frequency@
-  gen envelope@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if #f else gen envelope@ xe-envelope then )
+  gen envel@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if #f else gen envel@ xe-envelope then )
   string-format
 ;
 : rm-ok-cb ( gen -- xt; w c i self -- )
@@ -2698,7 +2689,7 @@ hide
   self @ { gen }
   self 1 cells + @ ( init-freq )    gen frequency!
   self 2 cells + @ ( init-radians ) gen scaler!
-  gen envelope@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
+  gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
   gen sliders@ 0 array-ref '( FXmNvalue gen frequency@ f>s ) FXtVaSetValues drop
   gen sliders@ 1 array-ref '( FXmNvalue gen scaler@    f>s ) FXtVaSetValues drop
 ;
@@ -2742,7 +2733,7 @@ hide
     fr
     '( 0.0 1.0 1.0 1.0 ) ( envelope )
     '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
-    '( FXmNheight 200 ) make-xenved gen envelope!
+    '( FXmNheight 200 ) make-xenved gen envel!
     fr
     '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
@@ -2755,7 +2746,7 @@ set-current
   ( name ) effects-base% %alloc make-base-effects { gen }
   100.0 gen frequency!
   100.0 gen scaler!
-  #f    gen envelope!
+  #f    gen envel!
   gen post-rm-effect-dialog ( xt1 )
   lambda-create gen ,
   latestxt             ( xt2 )
@@ -3388,7 +3379,7 @@ end-struct effects-place-sound%
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
-  gen envelope@ xe-envelope { e }
+  gen envel@ xe-envelope { e }
   e '( 0.0 1.0 1.0 1.0 ) equal? if
     gen mono-snd@ gen stereo-snd@ gen pan-pos@ place-sound drop
   else
@@ -3404,7 +3395,7 @@ end-struct effects-place-sound%
   self 1 cells + @ ( init-mono )   gen mono-snd!
   self 2 cells + @ ( init-stereo ) gen stereo-snd!
   self 3 cells + @ ( init-pos )    gen pan-pos!
-  gen envelope@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
+  gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
   gen sliders@ 0 array-ref '( FXmNvalue gen mono-snd@   ) FXtVaSetValues drop
   gen sliders@ 1 array-ref '( FXmNvalue gen stereo-snd@ ) FXtVaSetValues drop
   gen sliders@ 2 array-ref '( FXmNvalue gen pan-pos@    ) FXtVaSetValues drop
@@ -3453,7 +3444,7 @@ end-struct effects-place-sound%
     $" panning" fr
     '( 0.0 1.0 1.0 1.0 ) ( envelope )
     '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
-    '( FXmNheight 200 ) make-xenved gen envelope!
+    '( FXmNheight 200 ) make-xenved gen envel!
   else
     gen dialog@ activate-dialog
   then

@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Wed Oct 11 23:07:49 CEST 2006
+\ Changed: Wed Nov 15 04:21:07 CET 2006
 
 \ Commentary:
 \
@@ -25,8 +25,6 @@
 \ set-mix-properties   ( id val -- )
 \ mix-property         ( id key -- val )
 \ set-mix-property     ( id key val -- )
-\ mix-name             ( id -- name )
-\ set-mix-name         ( id name -- )
 \ mix-name->id         ( name -- id )
 \ mix-click-sets-amp   ( -- )
 \
@@ -291,9 +289,6 @@ Returns the value associated with KEY in the given mix's property list, or #f."
     'no-such-mix '( get-func-name id ) fth-throw
   then
 ;
-
-: mix-name     ( id -- name ) :name mix-property ;
-: set-mix-name ( id name -- ) :name swap set-mix-property ;
 
 hide
 : mix-name->id-xt ( name --; id self -- nothing or id )

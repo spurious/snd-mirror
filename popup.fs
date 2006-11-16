@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Wed Oct 11 23:08:05 CEST 2006
+\ Changed: Wed Nov 15 04:29:27 CET 2006
 
 \ Commentary:
 
@@ -1329,14 +1329,12 @@ set-current
 previous
 
 hide
-
-: change-color-xt ( col -- xt; w self -- )
+: change-color-col-xt ( col -- xt; w self -- )
   lambda-create , latestxt
  does> ( w self -- )
   { w self }
   w self @ FXmChangeColor drop
 ;
-
 set-current
 
 : change-menu-color { menu new-color -- }
@@ -1361,7 +1359,7 @@ NEW-COLOR can be the color name, an xm Pixel, a snd color, or a list of rgb valu
       new-color each end-each make-color
     then
   then ( color-pixel )
-  menu swap change-color-xt for-each-child
+  menu swap change-color-col-xt for-each-child
 ;
 
 : change-selection-popup-color ( new-color -- )

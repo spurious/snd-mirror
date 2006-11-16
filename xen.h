@@ -1302,7 +1302,7 @@ XEN xen_rb_add_to_load_path(char *path);
 #define XEN_MAKE_KEYWORD(arg)           fth_keyword(arg)
 #define XEN_KEYWORD_EQ_P(K1, K2)        XEN_EQ_P(K1, K2)
 
-#define XEN_EVAL_C_STRING(arg)          fth_eval(arg, c__FUNCTION__, __FILE__, __LINE__)
+#define XEN_EVAL_C_STRING(arg)          fth_eval(arg) 
 #define XEN_EVAL_FORM(Form)             XEN_EVAL_C_STRING(XEN_TO_C_STRING(Form))
 #define C_STRING_TO_XEN_FORM(str)       XEN_EVAL_C_STRING(str)
 #define XEN_LOAD_FILE(a)                fth_load_file(a)

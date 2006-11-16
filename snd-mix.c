@@ -6,6 +6,7 @@
  *         this is complicated by the use of xor/selected graph bg color -- why not use direct graphics here?
  * PERHAPS: undo&apply for track / mix env?, multiple mix/track dialogs, tempo curves in dialog?
  * PERHAPS: mix-hover-hook mark-hover-hook cursor-hover-hook selection-hover-hook
+ *            or graph-hover-hook + index to say what the cursor is pointing at
  * PERHAPS: "forget" button -> free_track (forget all?)
  * SOMEDAY: currently, if track, drag mix does not move axes
  * PERHAPS: add user funcs/envs to mix/track dialogs
@@ -5176,16 +5177,18 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_mix,                    g_mix_w,                    1, 7, 0, H_mix);
   XEN_DEFINE_PROCEDURE(S_mix_vct,                g_mix_vct_w,                1, 6, 0, H_mix_vct);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_position,   g_mix_position_w, H_mix_position,   S_setB S_mix_position,   g_set_mix_position_w, 1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_locked_p,   g_mix_locked_w,   H_mix_locked_p,   S_setB S_mix_locked_p,   g_set_mix_locked_w,   1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_inverted_p, g_mix_inverted_w, H_mix_inverted_p, S_setB S_mix_inverted_p, g_set_mix_inverted_w, 1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_track,      g_mix_track_w,    H_mix_track,      S_setB S_mix_track,      g_set_mix_track_w,    1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_name,       g_mix_name_w,     H_mix_name,       S_setB S_mix_name,       g_set_mix_name_w,     1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_y,      g_mix_tag_y_w,    H_mix_tag_y,      S_setB S_mix_tag_y,      g_set_mix_tag_y_w,    1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed,      g_mix_speed_w,    H_mix_speed,      S_setB S_mix_speed,      g_set_mix_speed_w,    1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_color,      g_mix_color_w,    H_mix_color,      S_setB S_mix_color,      g_set_mix_color_w,    0, 1, 1, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp,        g_mix_amp_w,      H_mix_amp,        S_setB S_mix_amp,        g_set_mix_amp_w,      1, 1, 2, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env,    g_mix_amp_env_w,  H_mix_amp_env,    S_setB S_mix_amp_env,    g_set_mix_amp_env_w,  1, 1, 2, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_position,   g_mix_position_w,   H_mix_position,   S_setB S_mix_position,   g_set_mix_position_w,   1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_locked_p,   g_mix_locked_w,     H_mix_locked_p,   S_setB S_mix_locked_p,   g_set_mix_locked_w,     1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_inverted_p, g_mix_inverted_w,   H_mix_inverted_p, S_setB S_mix_inverted_p, g_set_mix_inverted_w,   1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_track,      g_mix_track_w,      H_mix_track,      S_setB S_mix_track,      g_set_mix_track_w,      1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_name,       g_mix_name_w,       H_mix_name,       S_setB S_mix_name,       g_set_mix_name_w,       1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_y,      g_mix_tag_y_w,      H_mix_tag_y,      S_setB S_mix_tag_y,      g_set_mix_tag_y_w,      1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed,      g_mix_speed_w,      H_mix_speed,      S_setB S_mix_speed,      g_set_mix_speed_w,      1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_color,      g_mix_color_w,      H_mix_color,      S_setB S_mix_color,      g_set_mix_color_w,      0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp,        g_mix_amp_w,        H_mix_amp,        S_setB S_mix_amp,        g_set_mix_amp_w,        1, 1, 2, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env,    g_mix_amp_env_w,    H_mix_amp_env,    S_setB S_mix_amp_env,    g_set_mix_amp_env_w,    1, 1, 2, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_width,  g_mix_tag_width_w,  H_mix_tag_width,  S_setB S_mix_tag_width,  g_set_mix_tag_width_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_height, g_mix_tag_height_w, H_mix_tag_height, S_setB S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed_style, g_mix_speed_style_w, H_mix_speed_style, 
 				   S_setB S_mix_speed_style, g_set_mix_speed_style_w, 1, 0, 2, 0);
@@ -5198,9 +5201,6 @@ void g_init_mix(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,
 				   S_setB S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_width,  g_mix_tag_width_w,  H_mix_tag_width,  S_setB S_mix_tag_width,  g_set_mix_tag_width_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_height, g_mix_tag_height_w, H_mix_tag_height, S_setB S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
 
   #define H_mix_release_hook S_mix_release_hook " (mix-id samps): called after the mouse has dragged a mix to some new position. \
 'samps' = samples moved in the course of the drag. If it returns " PROC_TRUE ", the actual remix is the hook's responsibility."
@@ -8688,6 +8688,18 @@ void g_init_track(void)
   XEN_DEFINE_PROCEDURE(S_track_sample_reader_p,    g_tf_p_w,                     1, 0, 0, H_tf_p);
   XEN_DEFINE_PROCEDURE(S_play_track,               g_play_track_w,               1, 2, 0, H_play_track);
   XEN_DEFINE_PROCEDURE(S_free_track,               g_free_track_w,               1, 0, 0, H_free_track);
+  XEN_DEFINE_PROCEDURE(S_track_frames,             g_track_frames_w,             1, 1, 0, H_track_frames);
+  XEN_DEFINE_PROCEDURE(S_delete_track,             g_delete_track_w,             1, 0, 0, H_delete_track);
+  XEN_DEFINE_PROCEDURE(S_lock_track,               g_lock_track_w,               1, 0, 0, H_lock_track);
+  XEN_DEFINE_PROCEDURE(S_track,                    g_track_w,                    1, 1, 0, H_track);
+  XEN_DEFINE_PROCEDURE(S_tracks,                   g_tracks_w,                   0, 0, 0, H_tracks);
+  XEN_DEFINE_PROCEDURE(S_make_track,               g_make_track_w,               0, 0, 1, H_make_track);  
+  XEN_DEFINE_PROCEDURE(S_track_p,                  g_track_p_w,                  1, 0, 0, H_track_p);
+  XEN_DEFINE_PROCEDURE(S_track_chans,              g_track_chans_w,              1, 0, 0, H_track_chans);
+  XEN_DEFINE_PROCEDURE(S_copy_mix,                 g_copy_mix_w,                 1, 1, 0, H_copy_mix);
+  XEN_DEFINE_PROCEDURE(S_copy_track,               g_copy_track_w,               1, 1, 0, H_copy_track);
+  XEN_DEFINE_PROCEDURE(S_view_mixes_dialog,        g_view_mixes_dialog_w,        0, 0, 0, H_view_mixes_dialog);
+  XEN_DEFINE_PROCEDURE(S_view_tracks_dialog,       g_view_tracks_dialog_w,       0, 0, 0, H_view_tracks_dialog);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_color,    g_track_color_w,    H_track_color,    S_setB S_track_color,    g_set_track_color_w,    1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_name,     g_track_name_w,     H_track_name,     S_setB S_track_name,     g_set_track_name_w,     1, 0, 2, 0);
@@ -8702,22 +8714,9 @@ void g_init_track(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_speed_style, g_track_speed_style_w, H_track_speed_style, 
 				   S_setB S_track_speed_style, g_set_track_speed_style_w, 1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE(S_track_frames, g_track_frames_w, 1, 1, 0, H_track_frames);
-  XEN_DEFINE_PROCEDURE(S_delete_track, g_delete_track_w, 1, 0, 0, H_delete_track);
-  XEN_DEFINE_PROCEDURE(S_lock_track,   g_lock_track_w,   1, 0, 0, H_lock_track);
-  XEN_DEFINE_PROCEDURE(S_track,        g_track_w,        1, 1, 0, H_track);
-  XEN_DEFINE_PROCEDURE(S_tracks,       g_tracks_w,       0, 0, 0, H_tracks);
-  XEN_DEFINE_PROCEDURE(S_make_track,   g_make_track_w,   0, 0, 1, H_make_track);  
-  XEN_DEFINE_PROCEDURE(S_track_p,      g_track_p_w,      1, 0, 0, H_track_p);
-  XEN_DEFINE_PROCEDURE(S_track_chans,  g_track_chans_w,  1, 0, 0, H_track_chans);
-  XEN_DEFINE_PROCEDURE(S_copy_mix,     g_copy_mix_w,     1, 1, 0, H_copy_mix);
-  XEN_DEFINE_PROCEDURE(S_copy_track,   g_copy_track_w,   1, 1, 0, H_copy_track);
-
-  XEN_DEFINE_PROCEDURE(S_view_mixes_dialog,  g_view_mixes_dialog_w,  0, 0, 0, H_view_mixes_dialog);
-  XEN_DEFINE_PROCEDURE(S_view_tracks_dialog, g_view_tracks_dialog_w, 0, 0, 0, H_view_tracks_dialog);
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_dialog_mix, g_mix_dialog_mix_w, H_mix_dialog_mix, 
 				   S_setB S_mix_dialog_mix, g_set_mix_dialog_mix_w, 0, 0, 1, 0);
+
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_dialog_track, g_track_dialog_track_w, H_track_dialog_track, 
 				   S_setB S_track_dialog_track, g_set_track_dialog_track_w, 0, 0, 1, 0);
 

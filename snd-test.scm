@@ -644,6 +644,7 @@
 	'mus-lfloat-unscaled mus-lfloat-unscaled 20
 	'mus-bdouble-unscaled mus-bdouble-unscaled 21
 	'mus-ldouble-unscaled mus-ldouble-unscaled 22
+
 	'mus-audio-default mus-audio-default 0
 	'mus-audio-duplex-default mus-audio-duplex-default 1
 	'mus-audio-line-out mus-audio-line-out 4
@@ -39947,6 +39948,7 @@ EDITS: 1
       (set! (speed-control-tones) 12)
       (set! (wavelet-type) 0)
       (set! (spectro-start) 0.0)
+      (set! (spectro-hop) 4)
       
       (letrec ((test-sound-func-1
 		(lambda (func name ind-1 ind-2 new-val eq-func leq-func settable channel global)
@@ -40057,7 +40059,8 @@ EDITS: 1
 			(if (not (eq-func old-2-0 (car old-2-all))) (snd-display ";~A channel-func old 2/#t: ~A ~A" name old-2-0 old-2-all))
 			(if (not (eq-func old-2-1 (cadr old-2-all))) (snd-display ";~A channel-func old 2-2/#t: ~A ~A" name old-2-1 old-2-all))
 			(if (not (leq-func old-1-all (list old-1-0))) (snd-display ";~A channel-func #t list: ~A ~A" name old-1-all old-1-0))
-			(if (not (leq-func old-2-all (list old-2-0 old-2-1))) (snd-display ";~A channel-func (2) #t list: ~A ~A ~A" name old-2-all old-2-0 old-2-1))
+			(if (not (leq-func old-2-all (list old-2-0 old-2-1))) 
+			    (snd-display ";~A channel-func (2) #t list: ~A ~A ~A" name old-2-all old-2-0 old-2-1))
 			(if (not (and (or (leq-func (car old-all-all) old-1-all)
 					  (leq-func (car old-all-all) old-2-all))
 				      (or (leq-func (cadr old-all-all) old-1-all)
@@ -62885,6 +62888,7 @@ EDITS: 1
   "accelmap"
   ".snd-remember-sound"
   "test.clm"
+  "hiho.scm"
 
   (string-append sf-dir "mus10.snd.snd")
   (string-append sf-dir "ieee-text-16.snd.snd")
@@ -62910,6 +62914,13 @@ EDITS: 1
       (system (string-append "rm ../peaks/_home_bil_cl_test*"))
       (system (string-append "rm ../peaks/_home_bil_cl_tmp*"))
       (system (string-append "rm ../peaks/_home_bil_cl_hiho*"))
+      (system (string-append "rm ../peaks/_home_bil_test_*"))
+      (system (string-append "rm ../peaks/_home_bil_sf1_*"))
+      (system (string-append "rm ../peaks/_home_bil_clm_*"))
+      (system (string-append "rm ../peaks/_home_bil_gauche-snd_*"))
+      (system (string-append "rm ../peaks/_home_bil_forth-snd_*"))
+      (system (string-append "rm ../peaks/_home_bil_ruby-snd_*"))
+      (system (string-append "rm ../peaks/_home_bil_gtk-snd_*"))
       (system (string-append "rm ../peaks/_home_bil_cl_new*"))))
 
 (mus-sound-prune)

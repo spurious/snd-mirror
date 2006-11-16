@@ -1049,7 +1049,7 @@ void mus_vct_init(void)
   fth_set_object_apply(vct_tag, XEN_PROCEDURE_CAST vct_ref, 1, 0, 0);
   FTH_PRIM(FTH_FICL_DICT(), ">vct",   ficl_values_to_vct, h_values_to_vct);
   FTH_PRIM(FTH_FICL_DICT(), "vct(",   ficl_begin_vct,     h_begin_vct);
-  fth_catch_eval("start-prefixes : vct( vct( ; end-prefixes", c__FUNCTION__);
+  XEN_EVAL_C_STRING("start-prefixes : vct( vct( ; end-prefixes"); 
 #endif
 
 #if HAVE_RUBY

@@ -4531,7 +4531,10 @@ to use multiple output files, collecting related notes in one file, then mixing 
 
   (let ((index (<a class=quiet href="#newsound">new-sound</a> "test.snd" :channels 1))) ; our overall output file
     (<a class=quiet href="#mix">mix</a> "violins.snd")
-    (<a class=quiet href="#mix">mix</a> "cellos.snd")))
+    (<a class=quiet href="#mix">mix</a> "cellos.snd"))
+
+    (<a class=quiet href="clm.html#mus-close">mus-close</a> violins)
+    (<a class=quiet href="clm.html#mus-close">mus-close</a> cellos))
 </pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2 height=32></td></tr>
@@ -5922,8 +5925,8 @@ replaces the normal "+" cursor with an "x":
          (x (car point))
          (y (cadr point))
          (size (inexact-&gt;exact (/ (<em class=red>cursor-size</em>) 2))))
-    (draw-line (- x size) (- y size) (+ x size) (+ y size) snd chn <em class=red>cursor-context</em>)    
-    (draw-line (- x size) (+ y size) (+ x size) (- y size) snd chn <em class=red>cursor-context</em>)))
+    (<a class=quiet href="#drawline">draw-line</a> (- x size) (- y size) (+ x size) (+ y size) snd chn <em class=red>cursor-context</em>)    
+    (<a class=quiet href="#drawline">draw-line</a> (- x size) (+ y size) (+ x size) (- y size) snd chn <em class=red>cursor-context</em>)))
 
 (set! (<em class=red>cursor-style</em>) x-cursor)
 </pre></td></tr></table>
@@ -7157,10 +7160,10 @@ then call <a href="#play">play</a> (via a key binding perhaps), the sound remain
 cancel the current pause and restart with the new play command:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(bind-key (char-&gt;integer #\p) 0
+(<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\p) 0
   (lambda ()
-    (if (<em class=red>pausing</em>) (stop-playing))
-    (play)))
+    (if (<em class=red>pausing</em>) (<a class=quiet href="#stopplaying">stop-playing</a>))
+    (<a class=quiet href="#play">play</a>)))
 </pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>

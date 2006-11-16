@@ -1974,7 +1974,7 @@ static char *help_names[HELP_NAMES_SIZE] = {
   "mus_ramp",
   "mus_random",
   "mus_reset",
-  "mus_rf64",
+  "Mus_rf64",
   "Mus_riff",
   "mus_run",
   "mus_scaler",

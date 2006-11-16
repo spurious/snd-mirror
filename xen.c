@@ -1385,7 +1385,7 @@ static void fth_emacs_eval(FTH line_in)
   fth_listener_p = false;
   fth_new_eval = false;
 
-  if ((status = fth_catch_eval(fth_string_ref(line_in), RUNNING_WORD())) == FTH_BYE)
+  if ((status = fth_catch_eval(fth_string_ref(line_in))) == FTH_BYE) 
     fth_exit(EXIT_SUCCESS);
   else
     {
