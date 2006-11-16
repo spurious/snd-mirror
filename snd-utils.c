@@ -1102,18 +1102,23 @@ void mem_report(void)
     if (pointers[i])
       {
 	loc = locations[i];
-	slocs[loc].sum += sizes[i];
-	if (slocs[loc].refs == NULL)
-	  {
-	    slocs[loc].refs = (int *)calloc(1, sizeof(int));
-	    slocs[loc].refsize = 1;
-	  }
+	if ((loc < 0) || (loc > mem_location))
+	  fprintf(stderr, "locations[%d] == %d??", i, loc);
 	else
 	  {
-	    if (slocs[loc].refsize == slocs[loc].ptrs)
+	    slocs[loc].sum += sizes[i];
+	    if (slocs[loc].refs == NULL)
 	      {
-		slocs[loc].refsize *= 2;
-		slocs[loc].refs = (int *)realloc(slocs[loc].refs, sizeof(int) * slocs[loc].refsize);
+		slocs[loc].refs = (int *)calloc(1, sizeof(int));
+		slocs[loc].refsize = 1;
+	      }
+	    else
+	      {
+		if (slocs[loc].refsize == slocs[loc].ptrs)
+		  {
+		    slocs[loc].refsize *= 2;
+		    slocs[loc].refs = (int *)realloc(slocs[loc].refs, sizeof(int) * slocs[loc].refsize);
+		  }
 	      }
 	  }
 	slocs[loc].refs[slocs[loc].ptrs] = i;
@@ -1142,44 +1147,53 @@ void mem_report(void)
 
       if (sum > 0)
 	{
-	  fprintf(Fp, "%s[%d]:%s:  %d (%d)\n", files[loc], lines[loc], functions[loc], sum, ptrs);
-	  if (printable[loc] > 0)
+	  if ((loc < 0) || (loc > mem_location))
 	    {
-	      fprintf(Fp, "        ");
-	      for (j = 0; j < ptrs; j++)
+	      fprintf(Fp, "impossible loc %d:  %d (%d)\n", loc, sum, ptrs);
+	    }
+	  else
+	    {
+	      fprintf(Fp, "%s[%d]:%s:  %d (%d)\n", files[loc], lines[loc], functions[loc], sum, ptrs);
+	      if (printable[loc] > 0)
 		{
-		  int orig_i;
-		  orig_i = slocs[i].refs[j];
-		  switch (printable[loc])
+		  fprintf(Fp, "        ");
+		  for (j = 0; j < ptrs; j++)
 		    {
-		    case PRINT_CHAR:
-		      fprintf(Fp, "[%s] ", (char *)(pointers[orig_i]));
-		      break;
-		    case PRINT_CLM:
-		      fprintf(Fp, "[%p: %s]\n   ", pointers[orig_i], mus_describe((mus_any *)(pointers[orig_i])));
-		      break;
-		    case PRINT_REGION:
-		      fprintf(Fp, "[%p: ", pointers[orig_i]); describe_region(Fp, pointers[orig_i]); fprintf(Fp, "]\n  ");
-		      break;
-		    case PRINT_SYNC:
-		      fprintf(Fp, "[%p: ", pointers[orig_i]); describe_sync(Fp, pointers[orig_i]); fprintf(Fp, "]\n  ");
-		      break;
-		    case PRINT_SND_FD:
-		      {
-			snd_fd *sf = (snd_fd *)(pointers[orig_i]);
-			fprintf(Fp, "[%p, loc: %d, beg: " OFF_TD ", eof: %d, sp: %p]\n  ",
-				sf, sf->dangling_loc, sf->initial_samp, (int)(sf->at_eof), sf->local_sp);
-		      }
-		      break;
-		    case PRINT_FAM_INFO:
-		      {
-			fam_info *fp = (fam_info *)(pointers[orig_i]);
-			fprintf(Fp, "[%p, %s, rp: %p, data: %p]\n  ", fp, fp->filename, fp->rp, fp->data);
-		      }
-		      break;
+		      int orig_i;
+		      orig_i = slocs[i].refs[j];
+		      switch (printable[loc])
+			{
+			case PRINT_CHAR:
+			  fprintf(Fp, "[%s] ", (char *)(pointers[orig_i]));
+			  break;
+			case PRINT_CLM:
+			  /* don't call mus_describe here!  It can call either free or calloc, and thereby screw up everything else */
+			  fprintf(Fp, "[%p: %s]\n   ", pointers[orig_i], mus_name((mus_any *)(pointers[orig_i])));
+			  break;
+			case PRINT_REGION:
+			  fprintf(Fp, "[%p: ", pointers[orig_i]); describe_region(Fp, pointers[orig_i]); fprintf(Fp, "]\n  ");
+			  break;
+			case PRINT_SYNC:
+			  fprintf(Fp, "[%p: ", pointers[orig_i]); describe_sync(Fp, pointers[orig_i]); fprintf(Fp, "]\n  ");
+			  break;
+			case PRINT_SND_FD:
+			  {
+			    snd_fd *sf = (snd_fd *)(pointers[orig_i]);
+			    fprintf(Fp, "[%p, loc: %d, beg: " OFF_TD ", eof: %d, sp: %p]\n  ",
+				    sf, sf->dangling_loc, sf->initial_samp, (int)(sf->at_eof), sf->local_sp);
+			  }
+			  break;
+			case PRINT_FAM_INFO:
+			  {
+			    fam_info *fp = (fam_info *)(pointers[orig_i]);
+			    fprintf(Fp, "[%p, %s, rp: %p, data: %p]\n  ", fp, fp->filename, fp->rp, fp->data);
+			  }
+			  break;
+			}
+		      /* other printable cases that would be nice: snd_info chn_info io_fd env_state ladspa sound_data mix|track */
 		    }
+		  fprintf(Fp, "\n\n");
 		}
-	      fprintf(Fp, "\n");
 	    }
 	}
     }
@@ -1195,7 +1209,7 @@ void mem_report(void)
   save_listener_text(Fp);
   dump_protection(Fp);
   for (i = 0; i <= mem_location; i++)
-    if (slocs[i].refs) free(slocs[i].refs);
+    if ((slocs[i].refs) && (slocs[i].refsize > 0)) free(slocs[i].refs);
   free(slocs);
   fclose(Fp);
 }

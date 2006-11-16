@@ -2402,6 +2402,9 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
 	{
 	  len = strlen(sp->filename);
 	  newname = (char *)CALLOC(len + 7, sizeof(char));
+#if MUS_DEBUGGING
+	  set_printable(PRINT_CHAR);
+#endif
 	  strcpy(newname, sp->filename);
 	  for (i = len - 1; i > 0; i--) 
 	    if (newname[i] == '.') 

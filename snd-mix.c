@@ -1,10 +1,12 @@
 #include "snd.h"
 
 /* TODO: notebook style access to other tracks (next and previous by number are not very intuitive) -- pulldown menu of names?
+ * TODO: put mix tag in mix-color (draw_mix_tag) (set track color maps onto mix color md->wg->color)
+ *         set for mix waveform via set_mix_waveform_context:   set_foreground_color(ax, md->wg->color)
+ *         this is complicated by the use of xor/selected graph bg color -- why not use direct graphics here?
  * PERHAPS: undo&apply for track / mix env?, multiple mix/track dialogs, tempo curves in dialog?
  * PERHAPS: mix-hover-hook mark-hover-hook cursor-hover-hook selection-hover-hook
  * PERHAPS: "forget" button -> free_track (forget all?)
- *
  * SOMEDAY: currently, if track, drag mix does not move axes
  * PERHAPS: add user funcs/envs to mix/track dialogs
  * PERHAPS: multiple mix/track dialogs
@@ -12,6 +14,10 @@
  * PERHAPS: quick access + edit of underlying mix data, ripple and update if saved (like region edit)
  *          also double click in edit history => go to that temp file?
  * PERHAPS: some way to tie multichannel mixes together without the track appearing in the track dialog
+ *          mix-sync field?  or a button: ignore local tracks
+ *
+ * oops: I just noticed that make-mix-sample-reader is reversed if compared with make-sample-reader
+ *         (make-mix-sample-reader id beg) but (make-sample-reader beg id)
  */
 
 typedef struct {

@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [492]
-;;;  test 1: defaults                           [1069]
-;;;  test 2: headers                            [1271]
-;;;  test 3: variables                          [1577]
-;;;  test 4: sndlib                             [2232]
-;;;  test 5: simple overall checks              [4632]
-;;;  test 6: vcts                               [12133]
-;;;  test 7: colors                             [12448]
-;;;  test 8: clm                                [12954]
-;;;  test 9: mix                                [22146]
-;;;  test 10: marks                             [25803]
-;;;  test 11: dialogs                           [26691]
-;;;  test 12: extensions                        [26985]
-;;;  test 13: menus, edit lists, hooks, etc     [27439]
-;;;  test 14: all together now                  [28988]
-;;;  test 15: chan-local vars                   [30063]
-;;;  test 16: regularized funcs                 [31393]
-;;;  test 17: dialogs and graphics              [35809]
-;;;  test 18: enved                             [35898]
-;;;  test 19: save and restore                  [35918]
-;;;  test 20: transforms                        [37755]
-;;;  test 21: new stuff                         [39588]
-;;;  test 22: run                               [40586]
-;;;  test 23: with-sound                        [46073]
-;;;  test 24: user-interface                    [48103]
-;;;  test 25: X/Xt/Xm                           [51719]
-;;;  test 26: Gtk                               [56307]
-;;;  test 27: GL                                [60424]
-;;;  test 28: errors                            [60548]
-;;;  test 29: cm                                [62657]
+;;;  test 0: constants                          [493]
+;;;  test 1: defaults                           [1070]
+;;;  test 2: headers                            [1272]
+;;;  test 3: variables                          [1578]
+;;;  test 4: sndlib                             [2233]
+;;;  test 5: simple overall checks              [4633]
+;;;  test 6: vcts                               [12134]
+;;;  test 7: colors                             [12449]
+;;;  test 8: clm                                [12955]
+;;;  test 9: mix                                [22147]
+;;;  test 10: marks                             [25802]
+;;;  test 11: dialogs                           [26690]
+;;;  test 12: extensions                        [26984]
+;;;  test 13: menus, edit lists, hooks, etc     [27438]
+;;;  test 14: all together now                  [28987]
+;;;  test 15: chan-local vars                   [30062]
+;;;  test 16: regularized funcs                 [31392]
+;;;  test 17: dialogs and graphics              [35808]
+;;;  test 18: enved                             [35897]
+;;;  test 19: save and restore                  [35917]
+;;;  test 20: transforms                        [37754]
+;;;  test 21: new stuff                         [39587]
+;;;  test 22: run                               [40585]
+;;;  test 23: with-sound                        [46072]
+;;;  test 24: user-interface                    [48112]
+;;;  test 25: X/Xt/Xm                           [51728]
+;;;  test 26: Gtk                               [56316]
+;;;  test 27: GL                                [60433]
+;;;  test 28: errors                            [60557]
+;;;  test 29: Common Music                      [62666]
 ;;;  test all done                              [62708]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
@@ -48101,6 +48101,47 @@ EDITS: 1
 	(if (fneq c1 32.703) (snd-display ";c1->frequency: ~A" c1))
 	(if (fneq b8 7902.132) (snd-display ";b8->frequency: ~A" b8)))
 
+      (let ((violins (make-sample->file "violins.snd" 1 mus-lfloat mus-next))
+	    (cellos (make-sample->file "cellos.snd" 1 mus-lfloat mus-next)))
+	
+	(define (violin beg dur freq amp)
+	  (with-temp-sound (:continue-old-file #t :output "violins.snd") 
+			   (fm-violin beg dur (->frequency freq #t) amp)))
+	
+	(define (cello beg dur freq amp)
+	  (with-temp-sound (:continue-old-file #t :output "cellos.snd") 
+			   (fm-violin beg dur (->frequency freq #t) amp :fm-index 1.5)))
+	
+	(violin 0 1 'e4 .2)  (violin 1 1.5 'g4 .2)   (violin 2.5 .5 'g3 .2)
+	(cello  0 1 'c3 .2)  (cello  1 1.5 'e3 .2)  (cello  2.5 .5 'g2 .2)
+	
+	(let* ((index (new-sound "test.snd" :channels 1)) ; our overall output file
+	       (vs (mix "violins.snd"))
+	       (cs (mix "cellos.snd")))
+	  
+	  (mus-close violins)
+	  (mus-close cellos)
+	  
+	  (let ((vsr (make-mix-sample-reader vs))
+		(csr (make-mix-sample-reader cs))
+		(fsr (make-sample-reader 0 index)))
+	    
+	    (do ((i 0 (1+ i)))
+		((= i 1000))
+	      (let ((v (vsr))
+		    (c (csr))
+		    (f (fsr)))
+		(if (fneq f (+ c v))
+		    (snd-display ";multi temp output: ~A != ~A + ~A" f v c))))
+	    
+	    (free-sample-reader vsr)
+	    (free-sample-reader csr)
+	    (free-sample-reader fsr))
+	  
+	  (close-sound index)
+	  (if (file-exists? "violins.snd") (delete-file "violins.snd"))  
+	  (if (file-exists? "cellos.snd") (delete-file "cellos.snd"))))
+
       (if (not (null? (sounds))) (for-each close-sound (sounds)))
       
       (run-hook after-test-hook 23)
@@ -62843,6 +62884,7 @@ EDITS: 1
   "gtk-errors"
   "accelmap"
   ".snd-remember-sound"
+  "test.clm"
 
   (string-append sf-dir "mus10.snd.snd")
   (string-append sf-dir "ieee-text-16.snd.snd")

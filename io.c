@@ -480,6 +480,9 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
   if (name)
     {
       fd->name = (char *)CALLOC(strlen(name) + 1, sizeof(char));
+#if MUS_DEBUGGING
+      set_printable(PRINT_CHAR);
+#endif
       strcpy(fd->name, name);
     }
   return(MUS_NO_ERROR);

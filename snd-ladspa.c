@@ -99,6 +99,9 @@ static char *packLADSPAFilename(const char * pcFilename) {
       pcEnd -= 3;
 
   pcPackedFilename = (char *)MALLOC(pcEnd - pcStart + 1);
+#if MUS_DEBUGGING
+  set_printable(PRINT_CHAR);
+#endif
   memcpy(pcPackedFilename, pcStart, pcEnd - pcStart);
   pcPackedFilename[pcEnd - pcStart] = '\0';
 
@@ -204,6 +207,9 @@ static void loadLADSPADirectory(const char *pcDirectory) {
     pcFilename = (char *)MALLOC(lDirLength
 				+ strlen(psDirectoryEntry->d_name)
 				+ 1 + iNeedSlash);
+#if MUS_DEBUGGING
+    set_printable(PRINT_CHAR);
+#endif
     strcpy(pcFilename, pcDirectory);
     if (iNeedSlash)
       strcat(pcFilename, "/");

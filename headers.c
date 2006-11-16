@@ -102,50 +102,9 @@
 #include "_sndlib.h"
 #include "sndlib-strings.h"
 
-static bool hdrbuf_is_inited = false;
-
 #include <limits.h>
 #define BIGGEST_4_BYTE_SIGNED_INT   LONG_MAX
 #define BIGGEST_4_BYTE_UNSIGNED_INT ULONG_MAX
-
-#define HDRBUFSIZ 256
-static unsigned char *hdrbuf;
-#define INITIAL_READ_SIZE 32
-
-/* AIFF files can have any number of ANNO chunks, so we'll grab at least 4 of them */
-#define AUX_COMMENTS 4
-static off_t *aux_comment_start = NULL, *aux_comment_end = NULL;
-
-#define LOOPS 2
-static int *loop_modes = NULL, *loop_starts = NULL, *loop_ends = NULL;
-static int markers = 0;
-static int *marker_ids = NULL, *marker_positions = NULL;
-
-/* for CLM */
-void mus_reset_headers_c(void) 
-{
-  hdrbuf_is_inited = false; 
-  markers = 0;
-}
-
-int mus_header_initialize(void)
-{
-  if (!hdrbuf_is_inited)
-    {
-      hdrbuf_is_inited = true;
-      hdrbuf = (unsigned char *)CALLOC(HDRBUFSIZ, sizeof(unsigned char));
-      aux_comment_start = (off_t *)CALLOC(AUX_COMMENTS, sizeof(off_t));
-      aux_comment_end = (off_t *)CALLOC(AUX_COMMENTS, sizeof(off_t));
-      loop_modes = (int *)CALLOC(LOOPS, sizeof(int));
-      loop_starts = (int *)CALLOC(LOOPS, sizeof(int));
-      loop_ends = (int *)CALLOC(LOOPS, sizeof(int));
-      if ((hdrbuf == NULL) || (aux_comment_start == NULL) || (aux_comment_end == NULL) ||
-	  (loop_modes == NULL) || (loop_starts == NULL) || (loop_ends == NULL))
-	return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, "mus_header_initialize: buffer allocation failed"));
-    }
-  return(MUS_NO_ERROR);
-}
-
 
 static const unsigned char I_DSND[4] = {'.','s','n','d'};  /* NeXT/Sun/Dec/SGI/AFsp first word */
 static const unsigned char I_FORM[4] = {'F','O','R','M'};  /* AIFF first word */
@@ -281,6 +240,46 @@ static const unsigned char I_RF64[4] = {'R','F','6','4'};  /* EBU RF64 */
 static const unsigned char I_JUNK[4] = {'J','U','N','K'};  /* EBU RF64 */
 static const unsigned char I_ds64[4] = {'d','s','6','4'};  /* EBU RF64 */
 
+
+#define HDRBUFSIZ 256
+static unsigned char *hdrbuf;
+#define INITIAL_READ_SIZE 32
+
+/* AIFF files can have any number of ANNO chunks, so we'll grab at least 4 of them */
+#define AUX_COMMENTS 4
+static off_t *aux_comment_start = NULL, *aux_comment_end = NULL;
+
+#define LOOPS 2
+static int *loop_modes = NULL, *loop_starts = NULL, *loop_ends = NULL;
+static int markers = 0;
+static int *marker_ids = NULL, *marker_positions = NULL;
+
+static bool hdrbuf_is_inited = false;
+
+/* for CLM */
+void mus_reset_headers_c(void) 
+{
+  hdrbuf_is_inited = false; 
+  markers = 0;
+}
+
+int mus_header_initialize(void)
+{
+  if (!hdrbuf_is_inited)
+    {
+      hdrbuf_is_inited = true;
+      hdrbuf = (unsigned char *)CALLOC(HDRBUFSIZ, sizeof(unsigned char));
+      aux_comment_start = (off_t *)CALLOC(AUX_COMMENTS, sizeof(off_t));
+      aux_comment_end = (off_t *)CALLOC(AUX_COMMENTS, sizeof(off_t));
+      loop_modes = (int *)CALLOC(LOOPS, sizeof(int));
+      loop_starts = (int *)CALLOC(LOOPS, sizeof(int));
+      loop_ends = (int *)CALLOC(LOOPS, sizeof(int));
+      if ((hdrbuf == NULL) || (aux_comment_start == NULL) || (aux_comment_end == NULL) ||
+	  (loop_modes == NULL) || (loop_starts == NULL) || (loop_ends == NULL))
+	return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, "mus_header_initialize: buffer allocation failed"));
+    }
+  return(MUS_NO_ERROR);
+}
 
 #define I_IRCAM_VAX  0x0001a364
 #define I_IRCAM_SUN  0x0002a364
@@ -920,24 +919,108 @@ static int read_aiff_marker(int m, unsigned char *buf)
   return(psize+6);
 }
 
+static void read_aif_mark_chunk(int fd, unsigned char *buf, off_t offset)
+{
+  int num_marks, m, moff, msize;
+  /* unsigned short #marks, each mark: id pos name (pstring damn it) */
+  num_marks = mus_char_to_ubshort((unsigned char *)(buf + 8));
+  if (num_marks > markers)
+    {
+      if (markers > 0)
+	{
+	  if (marker_ids) FREE(marker_ids); 
+	  if (marker_positions) FREE(marker_positions);
+	}
+      markers = num_marks;
+      marker_ids = (int *)CALLOC(markers, sizeof(int));
+      marker_positions = (int *)CALLOC(markers, sizeof(int));
+    }
+  moff = 10;
+  for (m = 0; m < num_marks; m++)
+    {
+      if (seek_and_read(fd, (unsigned char *)buf, offset + moff, 8) > 0)
+	{
+	  msize = read_aiff_marker(m, (unsigned char *)buf);
+	  moff += msize;
+	}
+    }
+}
+
+static void read_aif_inst_chunk(unsigned char *buf)
+{
+  base_note = buf[8];
+  base_detune = buf[9];
+  loop_modes[0] = mus_char_to_bshort((unsigned char *)(buf + 16));
+  loop_starts[0] = mus_char_to_bshort((unsigned char *)(buf + 18));
+  loop_ends[0] = mus_char_to_bshort((unsigned char *)(buf + 20));
+  loop_modes[1] = mus_char_to_bshort((unsigned char *)(buf + 22));
+  loop_starts[1] = mus_char_to_bshort((unsigned char *)(buf + 24));
+  loop_ends[1] = mus_char_to_bshort((unsigned char *)(buf + 26));
+  /* these are mark numbers */
+}
+
+static void read_aif_aux_comment(unsigned char *buf, off_t offset, int chunksize)
+{
+  int i, j = 0;
+  for (i = 0; i < AUX_COMMENTS; i++) 
+    if (aux_comment_start[i] == 0) 
+      {
+	j = i; 
+	break;
+      }
+  if (j >= AUX_COMMENTS) 
+    {
+      mus_print("read_aiff_header: ran out of auxiliary comment space");
+      j = 0;
+    }
+  aux_comment_start[j] = offset + 8;
+  if (match_four_chars((unsigned char *)buf, I_COMT)) 
+    aux_comment_start[j] += 8; /* skip time stamp and markerId (not ID, I assume!) */
+  aux_comment_end[j] = offset + 7 + chunksize;
+}
+
+static void read_aif_appl_chunk(unsigned char *buf, off_t offset, int chunksize)
+{
+  if (match_four_chars((unsigned char *)(buf + 8), I_MUS_))
+    {
+      /* my own chunk has the arbitrary length comment I use (actually the ASCII    */
+      /* representation of a lisp program evaluated in the CLM package) to handle mix et al. */
+      /* It is nothing more than the actual string -- remember to pad to even length here. */
+      comment_start = offset + 12;
+      comment_end = comment_start + chunksize - 5;
+    }
+  else 
+    {
+      if ((match_four_chars((unsigned char *)(buf + 8), I_SU7M)) ||
+	  (match_four_chars((unsigned char *)(buf + 8), I_SU7R)))
+	{
+	  mus_print("this is an SU700 ssp file?");
+	  data_location = 512;
+	  chans = 1;
+	  /* actually SU7M and SU7R point to 2 chan data as separate chunks */
+	}
+    }
+}
+
 static int read_aiff_header(const char *filename, int fd, int overall_offset)
 {
   /* we know we have checked for FORM xxxx AIFF|AIFC when we arrive here */
   /* as far as I can tell, the COMM block has the header data we seek, and the SSND block has the sound data */
-  int chunksize, chunkloc, i, j, ssnd_bytes = 0;
+  int chunksize, chunkloc, i, ssnd_bytes = 0;
   bool happy, got_comm = false;
-  off_t offset;
+  off_t offset = 0;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8 + overall_offset));
   update_ssnd_location = 0;
+
   chunkloc = 12 + overall_offset;
-  offset = 0;
   for (i = 0; i < AUX_COMMENTS; i++) aux_comment_start[i] = 0;
   data_format = MUS_BSHORT;
   srate = 0;
   chans = 0;
   happy = true;
   true_file_length = SEEK_FILE_LENGTH(fd);
-  update_form_size = mus_char_to_ubint((unsigned char *)(hdrbuf + 4 + overall_offset)); /* should be file-size-8 unless there are multiple forms */
+  update_form_size = mus_char_to_ubint((unsigned char *)(hdrbuf + 4 + overall_offset)); /* should be file-size - 8 unless there are multiple forms */
+
   while (happy)
     {
       offset += chunkloc;
@@ -950,11 +1033,14 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 	    }
 	  return(mus_error(MUS_HEADER_READ_FAILED, "%s, aiff header: chunks confused at " OFF_TD , filename, offset));
 	}
+
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
       if ((chunksize == 0) && /* can be empty data chunk */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
 	break;
+
       /* fprintf(stderr,"chunk: %c%c%c%c for %d\n", hdrbuf[0], hdrbuf[1], hdrbuf[2], hdrbuf[3], chunksize); */
+
       if (match_four_chars((unsigned char *)hdrbuf, I_COMM))
 	{
 	  int frames;
@@ -1087,90 +1173,19 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 		  (match_four_chars((unsigned char *)hdrbuf, I_COMT)) ||
 		  (match_four_chars((unsigned char *)hdrbuf, I_NAME)) ||
 		  (match_four_chars((unsigned char *)hdrbuf, I_AUTH)))
-		{
-		  j = 0;
-		  for (i = 0; i < AUX_COMMENTS; i++) 
-		    if (aux_comment_start[i] == 0) 
-		      {
-			j = i; 
-			break;
-		      }
-		  if (j >= AUX_COMMENTS) 
-		    {
-		      mus_print("read_aiff_header: ran out of auxiliary comment space");
-		      j = 0;
-		    }
-		  aux_comment_start[j] = offset + 8;
-		  if (match_four_chars((unsigned char *)hdrbuf, I_COMT)) 
-		    aux_comment_start[j] += 8; /* skip time stamp and markerId (not ID, I assume!) */
-		  aux_comment_end[j] = offset + 7 + chunksize;
-		}
+		read_aif_aux_comment(hdrbuf, offset, chunksize);
 	      else
 		{
 		  if (match_four_chars((unsigned char *)hdrbuf, I_APPL))
-		    {
-		      if (match_four_chars((unsigned char *)(hdrbuf + 8), I_MUS_))
-			{
-			  /* my own chunk has the arbitrary length comment I use (actually the ASCII    */
-			  /* representation of a lisp program evaluated in the CLM package) to handle mix et al. */
-			  /* It is nothing more than the actual string -- remember to pad to even length here. */
-			  comment_start = offset + 12;
-			  comment_end = comment_start + chunksize - 5;
-			}
-		      else 
-			{
-			  if ((match_four_chars((unsigned char *)(hdrbuf + 8), I_SU7M)) ||
-			      (match_four_chars((unsigned char *)(hdrbuf + 8), I_SU7R)))
-			    {
-			      mus_print("this is an SU700 ssp file?");
-			      data_location = 512;
-			      chans = 1;
-			      /* actually SU7M and SU7R point to 2 chan data as separate chunks */
-			    }
-			}
-		    }
+		    read_aif_appl_chunk(hdrbuf, offset, chunksize);
 		  else
 		    {
 		      if (match_four_chars((unsigned char *)hdrbuf, I_INST))
-			{
-			  base_note = hdrbuf[8];
-			  base_detune = hdrbuf[9];
-			  loop_modes[0] = mus_char_to_bshort((unsigned char *)(hdrbuf + 16));
-			  loop_starts[0] = mus_char_to_bshort((unsigned char *)(hdrbuf + 18));
-			  loop_ends[0] = mus_char_to_bshort((unsigned char *)(hdrbuf + 20));
-			  loop_modes[1] = mus_char_to_bshort((unsigned char *)(hdrbuf + 22));
-			  loop_starts[1] = mus_char_to_bshort((unsigned char *)(hdrbuf + 24));
-			  loop_ends[1] = mus_char_to_bshort((unsigned char *)(hdrbuf + 26));
-			  /* these are mark numbers */
-			}
+			read_aif_inst_chunk(hdrbuf);
 		      else
 			{
 			  if (match_four_chars((unsigned char *)hdrbuf, I_MARK))
-			    {
-			      int num_marks, m, moff, msize;
-			      /* unsigned short #marks, each mark: id pos name (pstring damn it) */
-			      num_marks = mus_char_to_ubshort((unsigned char *)(hdrbuf + 8));
-			      if (num_marks > markers)
-				{
-				  if (markers > 0)
-				    {
-				      if (marker_ids) FREE(marker_ids); 
-				      if (marker_positions) FREE(marker_positions);
-				    }
-				  markers = num_marks;
-				  marker_ids = (int *)CALLOC(markers, sizeof(int));
-				  marker_positions = (int *)CALLOC(markers, sizeof(int));
-				}
-			      moff = 10;
-			      for (m = 0; m < num_marks; m++)
-				{
-				  if (seek_and_read(fd, (unsigned char *)hdrbuf, offset + moff, 8) > 0)
-				    {
-				      msize = read_aiff_marker(m, (unsigned char *)hdrbuf);
-				      moff += msize;
-				    }
-				}
-			    }
+			    read_aif_mark_chunk(fd, hdrbuf, offset);
 			}
 		    }
 		}
@@ -1232,7 +1247,8 @@ static int write_aif_header(int fd, int wsrate, int wchans, int siz, int format,
   /* we write the simplest possible AIFC header: AIFC | COMM | APPL-MUS_ if needed | SSND eof. */
   /* the assumption being that we're going to be appending sound data once the header is out   */
   /* INST and MARK chunks added Jul-95 for various programs that expect them (MixView).        */
-  int i, j, lenhdr, lenloop, curend, extra; /* set aifc to 0 to get old-style AIFF header */
+  /* set aifc_header to false to get old-style AIFF header */
+  int i, j, lenhdr, lenloop, curend, extra;         
   char *str;
   lenhdr = 0;
   extra = 0;
@@ -1624,15 +1640,13 @@ static int write_riff_fmt_chunk(int fd, unsigned char *hdrbuf, int format, int w
 static int read_riff_header(const char *filename, int fd)
 {
   /* we know we have checked for RIFF xxxx WAVE when we arrive here */
-  int chunksize, chunkloc, i;
-  bool little, got_fmt = false;
-  off_t offset;
-  little = true;
+  int chunksize, chunkloc = 12, i;
+  bool little = true, got_fmt = false;
+  off_t offset = 0;
+
   if (match_four_chars((unsigned char *)hdrbuf, I_RIFX)) little = false; /* big-endian data in this case, but I've never seen one */
   little_endian = little;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8));
-  chunkloc = 12;
-  offset = 0;
   data_format = MUS_UNKNOWN;
   srate = 0;
   chans = 0;
@@ -1641,6 +1655,7 @@ static int read_riff_header(const char *filename, int fd)
   for (i = 0; i < AUX_COMMENTS; i++) aux_comment_start[i] = 0;
   true_file_length = SEEK_FILE_LENGTH(fd);
   update_form_size = big_or_little_endian_int((unsigned char *)(hdrbuf + 4), little);
+
   while (true)
     {
       offset += chunkloc;

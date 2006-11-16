@@ -371,6 +371,9 @@ static void load_dir(DIR *dpos, dir_info *dp, bool (*filter)(const char *filenam
 	path_max = 1024;
     }
   fullname = (char *)CALLOC(path_max, sizeof(char));
+#if MUS_DEBUGGING
+  set_printable(PRINT_CHAR);
+#endif
   strcpy(fullname, dp->dir_name);
   fullname_start = strlen(dp->dir_name);
   while ((dirp = readdir(dpos)) != NULL)
@@ -427,6 +430,9 @@ dir_info *find_directories_in_dir(const char *name)
 	  int len;
 	  len = snd_strlen(name) + snd_strlen(PARENT_DIRECTORY) + 2;  /* PARENT_DIRECTORY = ".." (snd-file.h) */
 	  fullname = (char *)CALLOC(len, sizeof(char));
+#if MUS_DEBUGGING
+	  set_printable(PRINT_CHAR);
+#endif
 	  strcpy(fullname, name);
 	  strcat(fullname, PARENT_DIRECTORY);
 	  add_filename_to_dir_info(dp, PARENT_DIRECTORY, fullname); /* always back pointer */
