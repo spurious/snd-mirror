@@ -6,7 +6,11 @@
  *   a factor of 2.
  */
 
-/* PERHAPS: mus_outa -> vct (mus_any* vct array) + resizing, also affects locsig (could be optimized in run)
+/* TODO: mus_outa -> vct, also affects locsig (what about move-sound?) make-locsig [clm2xen + run]
+ *   doc/test/fix ins/ with-sound :output as vct/sound-data (returning obj)
+ *   with-sound :output arg, *output* settings
+ *   lisp (CL level is already no-op), run.lisp 5271 goes to mus_out_any
+ * TODO: need mus-* gen func arg checks in snd-test (mus-channels) [sd vct too]
  */
 
 

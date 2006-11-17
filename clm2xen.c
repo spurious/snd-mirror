@@ -4081,10 +4081,18 @@ static XEN g_frame_to_file_p(XEN obj)
 
 static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
-  XEN_ASSERT_TYPE((MUS_XEN_P(inp)) && (mus_input_p(XEN_TO_MUS_ANY(inp))), inp, XEN_ARG_3, caller, "an input gen");
-  return(C_TO_XEN_DOUBLE(mus_in_any(XEN_TO_C_OFF_T_OR_ELSE(frame, 0), XEN_TO_C_INT(chan), (mus_any *)XEN_TO_MUS_ANY(inp))));
+  if (MUS_XEN_P(inp))
+    {
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
+      XEN_ASSERT_TYPE(mus_input_p(XEN_TO_MUS_ANY(inp)), inp, XEN_ARG_3, caller, "an input gen");
+      return(C_TO_XEN_DOUBLE(mus_in_any(XEN_TO_C_OFF_T_OR_ELSE(frame, 0), XEN_TO_C_INT(chan), (mus_any *)XEN_TO_MUS_ANY(inp))));
+    }
+  if (MUS_VCT_P(inp))
+    return(g_vct_ref(inp, frame));
+  if (sound_data_p(inp))
+    return(g_sound_data_ref(inp, frame, chan));
+  return(XEN_ZERO);
 }
 
 static XEN g_in_any(XEN frame, XEN chan, XEN inp) 
@@ -4107,14 +4115,22 @@ static XEN g_inb(XEN frame, XEN inp)
 
 static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN outp)
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, caller, "a number");
-  XEN_ASSERT_TYPE((MUS_XEN_P(outp)) && (mus_output_p(XEN_TO_MUS_ANY(outp))), outp, XEN_ARG_4, caller, "an output gen");
-  return(C_TO_XEN_DOUBLE(mus_out_any(XEN_TO_C_OFF_T_OR_ELSE(frame, 0),
-				     XEN_TO_C_DOUBLE(val),
-				     XEN_TO_C_INT(chan),
-				     (mus_any *)XEN_TO_MUS_ANY(outp))));
+  if (MUS_XEN_P(outp))
+    {
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, caller, "a number");
+      XEN_ASSERT_TYPE(mus_output_p(XEN_TO_MUS_ANY(outp)), outp, XEN_ARG_4, caller, "an output gen");
+      return(C_TO_XEN_DOUBLE(mus_out_any(XEN_TO_C_OFF_T_OR_ELSE(frame, 0),
+					 XEN_TO_C_DOUBLE(val),
+					 XEN_TO_C_INT(chan),
+					 (mus_any *)XEN_TO_MUS_ANY(outp))));
+    }
+  if (MUS_VCT_P(outp))
+    return(g_vct_set(outp, frame, val));
+  if (sound_data_p(outp))
+    return(g_sound_data_set(outp, frame, chan, val));
+  return(val);
 }
 
 static XEN g_out_any(XEN frame, XEN val, XEN chan, XEN outp)
@@ -4675,8 +4691,14 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 static XEN g_mus_channels(XEN obj)
 {
   #define H_mus_channels "(" S_mus_channels " gen): gen's " S_mus_channels " field, if any"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_channels, "a generator");
-  return(C_TO_XEN_INT(mus_channels(XEN_TO_MUS_ANY(obj))));
+  if (MUS_XEN_P(obj))
+    return(C_TO_XEN_INT(mus_channels(XEN_TO_MUS_ANY(obj))));
+  if (MUS_VCT_P(obj))
+    return(C_TO_XEN_INT(1));
+  if (sound_data_p(obj))
+    return(C_TO_XEN_INT(((sound_data *)XEN_OBJECT_REF(obj))->chans));
+  XEN_ASSERT_TYPE(false, obj, XEN_ONLY_ARG, S_mus_channels, "an output generator, vct, or sound-data object");
+  return(XEN_FALSE); /* make compiler happy */
 }
 
 static XEN g_move_locsig(XEN obj, XEN degree, XEN distance)

@@ -660,7 +660,7 @@ static XEN g_make_sound_data(XEN chans, XEN frames)
 			 
 }
 
-static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
+XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
 {
   #define H_sound_data_ref "(" S_sound_data_ref " sd chan i): sample in channel chan at location i of sound-data sd: sd[chan][i]"
   sound_data *v;
@@ -725,7 +725,7 @@ static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
 }
 #endif
 
-static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
+XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
 {
   #define H_sound_data_setB "(" S_sound_data_setB " sd chan i val): set sound-data sd's i-th element in channel chan to val: sd[chan][i] = val"
   sound_data *v;

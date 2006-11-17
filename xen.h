@@ -7,14 +7,14 @@
  *
  * Guile:     covers 1.3.4 to present (1.8.0)
  * Ruby:      covers 1.6 to present (1.9)
- * Forth:     covers all
+ * Forth:     covers 1.0
  * Gauche:    covers 0.8.7 and 0.8.8
  * None:      covers all known versions of None
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 5
-#define XEN_VERSION "2.5"
+#define XEN_MINOR_VERSION 6
+#define XEN_VERSION "2.6"
 
 /* HISTORY:
  *

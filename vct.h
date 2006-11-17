@@ -59,6 +59,9 @@ vct *xen_to_vct(XEN arg);
 XEN xen_make_vct(int len, Float *data);
 XEN xen_make_vct_wrapper(int len, Float *data);
 
+XEN g_vct_ref(XEN obj, XEN pos);
+XEN g_vct_set(XEN obj, XEN pos, XEN val);
+
 #define XEN_TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #define MUS_VCT_P(arg) mus_vct_p(arg)
 #endif

@@ -25,4 +25,6 @@ sound_data *c_make_sound_data(int chans, int frames);
 XEN make_sound_data(int chans, int frames);
 void mus_sndlib_xen_initialize (void);
 XEN wrap_sound_data(int chans, int frames, mus_sample_t **data);
+XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num);
+XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val);
 #endif
