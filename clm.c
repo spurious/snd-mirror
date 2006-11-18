@@ -6,11 +6,11 @@
  *   a factor of 2.
  */
 
-/* TODO: mus_outa -> vct, also affects locsig (what about move-sound?) make-locsig [clm2xen + run]
- *   doc/test/fix ins/ with-sound :output as vct/sound-data (returning obj)
+/* PERHAPS: generic move-sound?
+ * TODO: fix ins/ with-sound :output as vct/sound-data (returning obj) {vct-map!}
  *   with-sound :output arg, *output* settings
  *   lisp (CL level is already no-op), run.lisp 5271 goes to mus_out_any
- * TODO: need mus-* gen func arg checks in snd-test (mus-channels) [sd vct too]
+ * TODO: need mus-* gen func arg checks in snd-test (mus-channels) [sd vct too], *reverb* via :revout
  */
 
 
@@ -6149,6 +6149,7 @@ typedef struct {
   int chans, rev_chans;
   mus_interp_t type;
   Float reverb;
+  void *closure;
 } locs;
 
 static bool locsig_equalp(mus_any *p1, mus_any *p2) 
@@ -6237,6 +6238,12 @@ static off_t locsig_length(mus_any *ptr) {return(((locs *)ptr)->chans);}
 static Float *locsig_data(mus_any *ptr) {return(((locs *)ptr)->outn);}
 static int locsig_channels(mus_any *ptr) {return(((locs *)ptr)->chans);}
 static Float *locsig_xcoeffs(mus_any *ptr) {return(((locs *)ptr)->revn);}
+
+mus_any *mus_locsig_outf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->outf));}
+mus_any *mus_locsig_revf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->revf));}
+
+void *mus_locsig_closure(mus_any *ptr) {return(((locs *)ptr)->closure);}
+static void *locsig_set_closure(mus_any *ptr, void *e) {((locs *)ptr)->closure = e; return(e);}
 
 static void locsig_reset(mus_any *ptr)
 {
@@ -6336,7 +6343,7 @@ static mus_any_class LOCSIG_CLASS = {
   0, 0,
   &run_locsig,
   MUS_OUTPUT,
-  NULL,
+  &mus_locsig_closure,
   &locsig_channels,
   0, 0, 0, 0,
   &locsig_xcoeff, &locsig_set_xcoeff, 
@@ -6345,7 +6352,7 @@ static mus_any_class LOCSIG_CLASS = {
   0, 0, 
   &locsig_xcoeffs, 0, 0,
   &locsig_reset,
-  0
+  &locsig_set_closure
 };
 
 bool mus_locsig_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_LOCSIG));}
@@ -6452,6 +6459,17 @@ Float mus_locsig(mus_any *ptr, off_t loc, Float val)
     mus_frame_to_file(gen->revn_writer, loc, (mus_any *)(gen->revf));
   if (gen->outn_writer)
     mus_frame_to_file(gen->outn_writer, loc, (mus_any *)(gen->outf));
+  return(val);
+}
+
+Float mus_locsig_0(mus_any *ptr, off_t loc, Float val)
+{
+  locs *gen = (locs *)ptr;
+  int i;
+  for (i = 0; i < gen->chans; i++)
+    (gen->outf)->vals[i] = val * gen->outn[i];
+  for (i = 0; i < gen->rev_chans; i++)
+    (gen->revf)->vals[i] = val * gen->revn[i];
   return(val);
 }
 

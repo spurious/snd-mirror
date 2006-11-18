@@ -33,6 +33,7 @@ char *mus_optkey_to_string(XEN key, const char *caller, int n, char *def);
 vct *mus_optkey_to_vct(XEN key, const char *caller, int n, vct *def);
 XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int required_args, const char *err);
 mus_xen *mus_any_to_mus_xen(mus_any *ge);
+Float mus_locsig_to_vct_or_sound_data(mus_xen *ms, mus_any *loc_gen, off_t pos, Float fval);
 
 void Init_sndlib(void);
 

@@ -2686,7 +2686,7 @@ you can use <b>mus-close</b>, but it's also called automatically during garbage 
 </pre>
 <p><b>out-any</b> adds <i>data</i> into <i>o-stream</i> at sample
 position <i>loc</i>.  <i>O-stream</i> defaults to the current output
-file (it is an frame-file instance, not a file name).  The reverb stream, if any,
+file (it is a frame-&gt;file instance, not a file name).  The reverb stream, if any,
 is named *reverb*; the direct output is *output*.
 You can output anywhere at any time, but because of the way data is buffered internally, your
 instrument will run much faster if it does sequential output.
@@ -2694,6 +2694,7 @@ instrument will run much faster if it does sequential output.
 
 <p>Many of the CLM examples and instruments use <b>outa</b> and <b>outb</b>.
 These are macros equivalent to <code>(out-any loc data 0 *output*)</code> etc.
+Outside Common Lisp, the <i>stream</i> argument can be a vct or a sound-data object, as well as a frame-&gt;file generator.
 </p>
 <br>
 
@@ -2708,6 +2709,7 @@ See the digital zipper instrument <a href="zipper.ins">zipper.ins</a>.
 
 <p>Many of the CLM examples and instruments use <b>ina</b> and <b>inb</b>.
 These are macros equivalent to <code>(in-any loc 0 stream)</code>.
+Outside Common Lisp, the <i>stream</i> argument can be a vct or a sound-data object, as well as a file-&gt;frame generator.
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
@@ -2778,7 +2780,7 @@ readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.in
 <br>
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4>LOCSIG (sound placement)</h4></td></tr></table>
 <pre>
- <a class=def name="make-locsig">make-locsig</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (degree 0.0) (distance 1.0) reverb channels type
+ <a class=def name="make-locsig">make-locsig</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (degree 0.0) (distance 1.0) (reverb 0.0) channels output revout (type *clm-locsig-type*)
  <a class=def name="locsig">locsig</a> loc i in-sig
  <a class=def name="locsig?">locsig?</a> loc
  <a class=def name="locsig-ref">locsig-ref</a> loc chan
@@ -2810,6 +2812,7 @@ be greater than or equal to 1.0.
 This parameter can be set globally via <b>*clm-locsig-type*</b>.  The mus-interp-sinusoidal
 case uses sin and cos to set the respective channel amplitudes (this is reported to
 help with the "hole-in-the-middle" problem).
+Outside Common Lisp, the <i>output</i> argument can be a vct or a sound-data object, as well as a frame-&gt;file generator.
 </p>
 <p>Locsig is a
 kludge, but then so is any pretence of placement when you're piping the signal

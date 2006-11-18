@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 26
-#define MUS_DATE "31-Aug-06"
+#define MUS_REVISION 27
+#define MUS_DATE "20-Nov-06"
 
 /*
+ * 20-Nov:     mus_locsig_0.
  * 30-July:    renamed average to moving_average.
  * 28-July:    renamed make_ppolar and make_zpolar to make_two_pole|zero_from_radius_and_frequency.
  *             added mus_scaler and mus_frequency methods for two_pole and two_zero.
@@ -582,6 +583,7 @@ mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, in
 mus_any *mus_continue_frame_to_file(const char *filename);
 
 Float mus_locsig(mus_any *ptr, off_t loc, Float val);
+Float mus_locsig_0(mus_any *ptr, off_t loc, Float val);
 mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_any *output, mus_any *revput, mus_interp_t type);
 bool mus_locsig_p(mus_any *ptr);
 int mus_channels(mus_any *ptr);
@@ -591,6 +593,9 @@ Float mus_locsig_reverb_ref(mus_any *ptr, int chan);
 Float mus_locsig_reverb_set(mus_any *ptr, int chan, Float val);
 void mus_move_locsig(mus_any *ptr, Float degree, Float distance);
 void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_interp_t type);
+mus_any *mus_locsig_outf(mus_any *ptr);
+mus_any *mus_locsig_revf(mus_any *ptr);
+  void *mus_locsig_closure(mus_any *ptr);
 
 bool mus_move_sound_p(mus_any *ptr);
 Float mus_move_sound(mus_any *ptr, off_t loc, Float val);

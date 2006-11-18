@@ -1,5 +1,6 @@
 Snd change log
 
+  20-Nov:    generic out-any, in-any, locsig.
   13-Nov:    RF64 headers.
   3-Nov:     mix-name->id, track-name->id (mix.scm, mix.rb).
   1-Nov:     ->frequency, ->samples (ws.scm).  mix-name, track-name, track-tag-y.

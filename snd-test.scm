@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
 ;;;  test 0: constants                          [493]
-;;;  test 1: defaults                           [1070]
-;;;  test 2: headers                            [1272]
-;;;  test 3: variables                          [1578]
-;;;  test 4: sndlib                             [2233]
-;;;  test 5: simple overall checks              [4633]
-;;;  test 6: vcts                               [12134]
-;;;  test 7: colors                             [12449]
-;;;  test 8: clm                                [12955]
-;;;  test 9: mix                                [22147]
-;;;  test 10: marks                             [25802]
-;;;  test 11: dialogs                           [26690]
-;;;  test 12: extensions                        [26984]
-;;;  test 13: menus, edit lists, hooks, etc     [27438]
-;;;  test 14: all together now                  [28987]
-;;;  test 15: chan-local vars                   [30062]
-;;;  test 16: regularized funcs                 [31392]
-;;;  test 17: dialogs and graphics              [35808]
-;;;  test 18: enved                             [35897]
-;;;  test 19: save and restore                  [35917]
-;;;  test 20: transforms                        [37754]
-;;;  test 21: new stuff                         [39587]
-;;;  test 22: run                               [40585]
-;;;  test 23: with-sound                        [46072]
-;;;  test 24: user-interface                    [48112]
-;;;  test 25: X/Xt/Xm                           [51728]
-;;;  test 26: Gtk                               [56316]
-;;;  test 27: GL                                [60433]
-;;;  test 28: errors                            [60557]
-;;;  test 29: Common Music                      [62666]
-;;;  test all done                              [62708]
+;;;  test 1: defaults                           [1071]
+;;;  test 2: headers                            [1273]
+;;;  test 3: variables                          [1579]
+;;;  test 4: sndlib                             [2234]
+;;;  test 5: simple overall checks              [4634]
+;;;  test 6: vcts                               [12135]
+;;;  test 7: colors                             [12450]
+;;;  test 8: clm                                [12956]
+;;;  test 9: mix                                [22203]
+;;;  test 10: marks                             [25858]
+;;;  test 11: dialogs                           [26746]
+;;;  test 12: extensions                        [27040]
+;;;  test 13: menus, edit lists, hooks, etc     [27494]
+;;;  test 14: all together now                  [29043]
+;;;  test 15: chan-local vars                   [30118]
+;;;  test 16: regularized funcs                 [31448]
+;;;  test 17: dialogs and graphics              [35864]
+;;;  test 18: enved                             [35953]
+;;;  test 19: save and restore                  [35973]
+;;;  test 20: transforms                        [37810]
+;;;  test 21: new stuff                         [39643]
+;;;  test 22: run                               [40643]
+;;;  test 23: with-sound                        [46301]
+;;;  test 24: user-interface                    [48382]
+;;;  test 25: X/Xt/Xm                           [51998]
+;;;  test 26: Gtk                               [56586]
+;;;  test 27: GL                                [60703]
+;;;  test 28: errors                            [60827]
+;;;  test 29: Common Music                      [62936]
+;;;  test all done                              [62978]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -13811,109 +13811,19 @@ EDITS: 5
 ;;; CLM version is v.ins, C version is in sndlib.html
 ;;; a version treating the entire violin as a generator is in fmv.scm.
 
-(define fm-violin->vct
-  (lambda* (startime dur frequency amplitude :key
-		     (fm-index 1.0)
-		     (amp-env '(0 0  25 1  75 1  100 0))
-		     (periodic-vibrato-rate 5.0) 
-		     (random-vibrato-rate 16.0)
-		     (periodic-vibrato-amplitude 0.0025) 
-		     (random-vibrato-amplitude 0.005)
-		     (noise-amount 0.0) 
-		     (noise-freq 1000.0)
-		     (ind-noise-freq 10.0) 
-		     (ind-noise-amount 0.0)
-		     (amp-noise-freq 20.0) 
-		     (amp-noise-amount 0.0)
-		     (gliss-env '(0 0  100 0)) 
-		     (glissando-amount 0.0) 
-		     (fm1-env '(0 1  25 .4  75 .6  100 0))  
-		     (fm2-env '(0 1  25 .4  75 .6  100 0)) 
-		     (fm3-env '(0 1  25 .4  75 .6  100 0))
-		     (fm1-rat 1.0) 
-		     (fm2-rat 3.0)	 
-		     (fm3-rat 4.0)                    
-		     (fm1-index #f) 
-		     (fm2-index #f) 
-		     (fm3-index #f)
-		     (base 1.0)
-		     (reverb-amount 0.01)
-		     (degree #f) (distance 1.0) (degrees #f)
-		     :allow-other-keys)
-	   (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
-		  (len (inexact->exact (floor (* dur (mus-srate)))))
-		  (end (+ beg len))
-		  (frq-scl (hz->radians frequency))
-		  (modulate (not (zero? fm-index)))
-		  (maxdev (* frq-scl fm-index))
-		  (logfreq (log frequency))
-		  (sqrtfreq (sqrt frequency))
-		  (index1 (or fm1-index (min pi (* maxdev (/ 5.0 logfreq)))))
-		  (index2 (or fm2-index (min pi (* maxdev 3.0 (/ (- 8.5 logfreq) (+ 3.0 (* frequency .001)))))))
-		  (index3 (or fm3-index (min pi (* maxdev (/ 4.0 sqrtfreq)))))
-		  (easy-case (and (zero? noise-amount)
-				  (equal? fm1-env fm2-env)
-				  (equal? fm1-env fm3-env)
-				  (= fm1-rat (floor fm1-rat))
-				  (= fm2-rat (floor fm2-rat))
-				  (= fm3-rat (floor fm3-rat))))
-		  (norm (or (and easy-case modulate 1.0) index1))
-		  (carrier (make-oscil frequency))
-		  (fmosc1  (if modulate 
-			       (if easy-case 
-				   (make-polyshape :frequency (* fm1-rat frequency) 
-						   :coeffs (partials->polynomial (list (inexact->exact fm1-rat) index1
-										       (inexact->exact (floor (/ fm2-rat fm1-rat))) index2
-										       (inexact->exact (floor (/ fm3-rat fm1-rat))) index3)))
-				   (make-oscil (* fm1-rat frequency)))
-			       #f))
-		  (fmosc2  (and modulate (or easy-case (make-oscil (* fm2-rat frequency)))))
-		  (fmosc3  (and modulate (or easy-case (make-oscil (* fm3-rat frequency)))))
-		  (ampf  (make-env amp-env :scaler amplitude :base base :duration dur))
-		  (indf1 (and modulate (make-env fm1-env norm :duration dur)))
-		  (indf2 (and modulate (or easy-case (make-env fm2-env index2 :duration dur))))
-		  (indf3 (and modulate (or easy-case (make-env fm3-env index3 :duration dur))))
-		  (frqf (make-env gliss-env (* glissando-amount frq-scl) :duration dur))
-		  (pervib (make-triangle-wave periodic-vibrato-rate (* periodic-vibrato-amplitude frq-scl)))
-		  (ranvib (make-rand-interp random-vibrato-rate (* random-vibrato-amplitude frq-scl)))
-		  (fm-noi (and (not (= 0.0 noise-amount))
-			       (make-rand noise-freq (* pi noise-amount))))
-		  (ind-noi (and (not (= 0.0 ind-noise-amount)) 
-				(not (= 0.0 ind-noise-freq))
-				(make-rand-interp ind-noise-freq ind-noise-amount)))
-		  (amp-noi (and (not (= 0.0 amp-noise-amount)) 
-				(not (= 0.0 amp-noise-freq))
-				(make-rand-interp amp-noise-freq amp-noise-amount)))
-		  (vib 0.0) 
-		  (modulation 0.0)
-		  (loc (make-locsig :channels (channels) :degree (or degree degrees (random 90.0)) :reverb reverb-amount :distance distance))
-		  (fuzz 0.0)
-		  (ind-fuzz 1.0)
-		  (amp-fuzz 1.0)
-		  (out-data (make-vct len)))
-	     (vct-map! out-data
-		       (lambda ()
-			 (if (not (= 0.0 noise-amount))
-			     (set! fuzz (rand fm-noi)))
-			 (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-			 (if ind-noi (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
-			 (if amp-noi (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
-			 (if modulate
-			     (if easy-case
-				 (set! modulation
-				       (* (env indf1) 
-					  (polyshape fmosc1 1.0 vib)))
-				 (set! modulation
-				       (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-					  (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-					  (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-			 (* (env ampf) amp-fuzz
-			    (oscil carrier (+ vib (* ind-fuzz modulation))))))
-	     (if (= (channels) 2)
-		 (let ((bsamps (vct-copy out-data)))
-		   (mix-vct (vct-scale! bsamps (locsig-ref loc 1)) beg #f 1 #f)
-		   (mix-vct (vct-scale! out-data (locsig-ref loc 0)) beg #f 0 #f))
-		 (mix-vct out-data beg #f 0 #f)))))
+(if (not (provided? 'snd-v.scm)) (load "v.scm"))
+
+(define (fm-violin->vct . args)
+  (let* ((beg (inexact->exact (floor (* (car args) (srate)))))
+	 (len (inexact->exact (floor (* (cadr args) (srate)))))
+	 (out-data (make-sound-data (channels) len))
+	 (old-output *output*))
+    (set! *output* out-data)
+    (apply fm-violin (append (list 0) (cdr args)))
+    (set! *output* old-output)
+    (do ((i 0 (1+ i)))
+	((= i (channels)))
+      (mix-vct (sound-data->vct out-data i) beg))))
 
 (define (fltit)
   "(fltit) returns a time-varying filter: (map-chan (fltit))"
@@ -19028,6 +18938,71 @@ EDITS: 5
 	(if (or (fneq val6 .065) (fneq val7 .65)) (snd-display ";outab: ~A ~A?" val6 val7))
 	(if (or (fneq val8 .075) (fneq val9 .75)) (snd-display ";out-any: ~A ~A?" val8 val9)))
       
+      (let ((gen (make-vct 10)))
+	(do ((i 0 (1+ i))
+	     (x 0.0 (+ x 0.1)))
+	    ((= i 10))
+	  (outa i x gen))
+	(if (not (vequal gen (vct 0 .1 .2 .3 .4 .5 .6 .7 .8 .9)))
+	    (snd-display ";outa->vct ramp: ~A" gen))
+	(do ((i 0 (1+ i))
+	     (x 0.0 (+ x 0.1)))
+	    ((= i 10))
+	  (outa i x gen))
+	(if (not (vequal gen (vct-scale! (vct 0 .1 .2 .3 .4 .5 .6 .7 .8 .9) 2.0)))
+	    (snd-display ";outa->vct ramp 2: ~A" gen))
+	(if (not (= (mus-channels gen) 1)) (snd-display ";mus-channels vct: ~A" (mus-channels gen))))
+      
+      (let ((gen (make-sound-data 4 100)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (outa i .1 gen)
+	  (outb i .2 gen)
+	  (outc i .3 gen)
+	  (outd i .4 gen))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (outa i .01 gen)
+	  (outb i .02 gen)
+	  (outc i .03 gen)
+	  (outd i .04 gen))
+	(mus-close gen) ; should be a no-op
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (if (or (fneq (ina i gen) .11)
+		  (fneq (inb i gen) .22)
+		  (fneq (in-any i 2 gen) .33)
+		  (fneq (in-any i 3 gen) .44))
+	      (snd-display ";4-chan sd out/in[~A]: ~A ~A ~A ~A?" i (ina i gen) (inb i gen) (in-any i 2 gen) (in-any i 3 gen))))  
+	(if (not (= (mus-channels gen) 4)) (snd-display ";mus-channels sd 4: ~A" (mus-channels gen))))
+      
+      (let ((gen (make-sound-data 4 100)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (out-any i .1 0 gen)
+	  (out-any i .2 1 gen)
+	  (out-any i .3 2 gen)
+	  (out-any i .4 3 gen))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (out-any i .01 0 gen)
+	  (out-any i .02 1 gen)
+	  (out-any i .03 2 gen)
+	  (out-any i .04 3 gen))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (if (or (fneq (in-any i 0 gen) .11)
+		  (fneq (in-any i 1 gen) .22)
+		  (fneq (in-any i 2 gen) .33)
+		  (fneq (in-any i 3 gen) .44))
+	      (snd-display ";4-chan sd out/in-any[~A]: ~A ~A ~A ~A?" i (in-any i 0 gen) (in-any i 1 gen) (in-any i 2 gen) (in-any i 3 gen)))))
+      
+      (let ((gen (make-oscil 440.0)))
+	(let ((tag (catch #t (lambda () (outa 0 .1 gen)) (lambda args (car args)))))
+	  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";outa -> oscil: ~A" tag)))
+	(let ((val (catch #t (lambda () (outa 0 .1 #f)) (lambda args (car args)))))
+	  (if (or (not (number? val)) (fneq val .1)) (snd-display ";outa -> #f: ~A" val))))
+      
       (let ((gen (make-sample->file "fmv.snd" 4 mus-lshort mus-riff)))
 	(print-and-check gen 
 			 "sample->file"
@@ -20004,6 +19979,89 @@ EDITS: 5
 	    (list mus-interp-linear mus-interp-sinusoidal))
 	   (if revfile (mus-close revfile))))
        (list 0 1 2 4))
+      
+      (set! (locsig-type) mus-interp-linear)
+      (let* ((outp (make-sound-data 1 10))
+	     (gen (make-locsig 0.0 :output outp)))
+	(if (not (= (mus-channels gen) 1)) (snd-display ";make-locsig->sd chans (1): ~A" (mus-channels gen)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (locsig gen i 1.0))
+	(if (not (vequal (sound-data->vct outp 0) (make-vct 10 1.0)))
+	    (snd-display ";locsig->sd chan 0: ~A" (sound-data->vct outp 0))))
+      
+      (let* ((outp (make-sound-data 2 10))
+	     (gen (make-locsig 0.0 :output outp)))
+	(if (not (= (mus-channels gen) 2)) (snd-display ";make-locsig->sd chans: ~A" (mus-channels gen)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (locsig gen i 1.0))
+	(if (not (vequal (sound-data->vct outp 0) (make-vct 10 1.0)))
+	    (snd-display ";locsig->sd chan 0: ~A" (sound-data->vct outp 0)))
+	(if (not (vequal (sound-data->vct outp 1) (make-vct 10 0.0)))
+	    (snd-display ";locsig->sd chan 1: ~A" (sound-data->vct outp 1))))
+      
+      (let* ((outp (make-sound-data 2 10))
+	     (gen (make-locsig 45.0 :output outp)))
+	(if (not (= (mus-channels gen) 2)) (snd-display ";make-locsig->sd chans: ~A" (mus-channels gen)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (locsig gen i 1.0))
+	(if (not (vequal (sound-data->vct outp 0) (make-vct 10 0.5)))
+	    (snd-display ";locsig->sd chan 0 (0.5): ~A (~A)" (sound-data->vct outp 0) gen))
+	(if (not (vequal (sound-data->vct outp 1) (make-vct 10 0.5)))
+	    (snd-display ";locsig->sd chan 1 (0.5): ~A" (sound-data->vct outp 1)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (locsig gen i 0.5))
+	(if (not (vequal (sound-data->vct outp 0) (make-vct 10 0.75)))
+	    (snd-display ";locsig->sd chan 0 (0.75) (~A): ~A" (sound-data->vct outp 0) gen))
+	(if (not (vequal (sound-data->vct outp 1) (make-vct 10 0.75)))
+	    (snd-display ";locsig->sd chan 1 (0.75): ~A" (sound-data->vct outp 1))))
+      
+      (let* ((outp (make-vct 10))
+	     (gen (make-locsig 0.0 :output outp)))
+	(if (not (= (mus-channels gen) 1)) (snd-display ";make-locsig->vct chans: ~A" (mus-channels gen)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (locsig gen i 1.0))
+	(if (not (vequal outp (make-vct 10 1.0)))
+	    (snd-display ";locsig->vct chan 0: ~A" outp))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (locsig gen i 0.5))
+	(if (not (vequal outp (make-vct 10 1.5)))
+	    (snd-display ";locsig->vct chan 0: ~A" outp)))
+      
+      (let* ((outp (make-vct 10))
+	     (gen (make-locsig 45.0 :channels 2 :output outp)))
+	(if (not (= (mus-channels gen) 2)) (snd-display ";make-locsig->vct chans (2): ~A" (mus-channels gen)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (locsig gen i 1.0))
+	(if (not (vequal outp (make-vct 10 0.5)))
+	    (snd-display ";locsig(2)->vct chan 0: ~A" outp))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (locsig gen i 0.5))
+	(if (not (vequal outp (make-vct 10 0.75)))
+	    (snd-display ";locsig(2)->vct chan 0: ~A" outp)))
+      
+      (let* ((outp (make-sound-data 4 10))
+	     (gen (make-locsig 135.0 :output outp)))
+	(if (not (= (mus-channels gen) 4)) (snd-display ";make-locsig->sd chans (4): ~A" (mus-channels gen)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (locsig gen i 1.0))
+	(if (not (vequal (sound-data->vct outp 0) (make-vct 10 0.0)))
+	    (snd-display ";locsig(4)->sd chan 0 (0.5): ~A" (sound-data->vct outp 0)))
+	(if (not (vequal (sound-data->vct outp 1) (make-vct 10 0.5)))
+	    (snd-display ";locsig(4)->sd chan 1 (0.5) (~A): ~A" (sound-data->vct outp 1) gen))
+	(if (not (vequal (sound-data->vct outp 2) (make-vct 10 0.5)))
+	    (snd-display ";locsig(4)->sd chan 2 (0.5): ~A" (sound-data->vct outp 2)))
+	(if (not (vequal (sound-data->vct outp 3) (make-vct 10 0.0)))
+	    (snd-display ";locsig(4)->sd chan 3 (0.5): ~A" (sound-data->vct outp 3))))
+      
       
       (set! (mus-array-print-length) 8)
       (let* ((outf1 (make-frame->file "fmv.snd" 1 mus-bshort mus-next))
@@ -22146,8 +22204,6 @@ EDITS: 5
 
 
 ;;; ---------------- test 9: mix ----------------
-
-(if (not (provided? 'snd-v.scm)) (load "v.scm"))
 
 (define (make-waltz)
 
@@ -44156,6 +44212,106 @@ EDITS: 1
 	(if (fneq (locsig-reverb-ref loc 0) .123) (snd-display ";run set loc rev 0: ~A" (locsig-reverb-ref loc 0)))
 	(mus-close rev))
       
+      (let* ((outp (make-sound-data 1 10))
+	     (gen (make-locsig 0.0 :output outp)))
+	(if (not (= (mus-channels gen) 1)) (snd-display ";(opt)make-locsig->sd chans (1): ~A" (mus-channels gen)))
+	(run 
+	 (lambda ()
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (locsig gen i 1.0))))
+	(if (not (vequal (sound-data->vct outp 0) (make-vct 10 1.0)))
+	    (snd-display ";(opt)locsig->sd chan 0: ~A" (sound-data->vct outp 0))))
+      
+      (let* ((outp (make-sound-data 2 10))
+	     (gen (make-locsig 0.0 :output outp)))
+	(if (not (= (mus-channels gen) 2)) (snd-display ";(opt)make-locsig->sd chans: ~A" (mus-channels gen)))
+	(run
+	 (lambda ()
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (locsig gen i 1.0))))
+	(if (not (vequal (sound-data->vct outp 0) (make-vct 10 1.0)))
+	    (snd-display ";(opt)locsig->sd chan 0: ~A" (sound-data->vct outp 0)))
+	(if (not (vequal (sound-data->vct outp 1) (make-vct 10 0.0)))
+	    (snd-display ";(opt)locsig->sd chan 1: ~A" (sound-data->vct outp 1))))
+      
+      (let* ((outp (make-sound-data 2 10))
+	     (gen (make-locsig 45.0 :output outp)))
+	(if (not (= (mus-channels gen) 2)) (snd-display ";(opt)make-locsig->sd chans: ~A" (mus-channels gen)))
+	(run
+	 (lambda ()
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (locsig gen i 1.0))))
+	(if (not (vequal (sound-data->vct outp 0) (make-vct 10 0.5)))
+	    (snd-display ";(opt)locsig->sd chan 0 (0.5): ~A" (sound-data->vct outp 0)))
+	(if (not (vequal (sound-data->vct outp 1) (make-vct 10 0.5)))
+	    (snd-display ";(opt)locsig->sd chan 1 (0.5): ~A" (sound-data->vct outp 1)))
+	(run
+	 (lambda ()
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (locsig gen i 0.5))))
+	(if (not (vequal (sound-data->vct outp 0) (make-vct 10 0.75)))
+	    (snd-display ";(opt)locsig->sd chan 0 (0.75): ~A" (sound-data->vct outp 0)))
+	(if (not (vequal (sound-data->vct outp 1) (make-vct 10 0.75)))
+	    (snd-display ";(opt)locsig->sd chan 1 (0.75): ~A" (sound-data->vct outp 1))))
+      
+      (let* ((outp (make-vct 10))
+	     (gen (make-locsig 0.0 :output outp)))
+	(if (not (= (mus-channels gen) 1)) (snd-display ";(opt)make-locsig->vct chans: ~A" (mus-channels gen)))
+	(run
+	 (lambda ()
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (locsig gen i 1.0))))
+	(if (not (vequal outp (make-vct 10 1.0)))
+	    (snd-display ";(opt)locsig->vct chan 0: ~A" outp))
+	(run
+	 (lambda ()
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (locsig gen i 0.5))))
+	(if (not (vequal outp (make-vct 10 1.5)))
+	    (snd-display ";(opt)locsig->vct chan 0: ~A" outp)))
+      
+      (let* ((outp (make-vct 10))
+	     (gen (make-locsig 45.0 :channels 2 :output outp)))
+	(if (not (= (mus-channels gen) 2)) (snd-display ";(opt)make-locsig->vct chans (2): ~A" (mus-channels gen)))
+	(run
+	 (lambda ()
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (locsig gen i 1.0))))
+	(if (not (vequal outp (make-vct 10 0.5)))
+	    (snd-display ";(opt)locsig(2)->vct chan 0: ~A" outp))
+	(run
+	 (lambda ()
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (locsig gen i 0.5))))
+	(if (not (vequal outp (make-vct 10 0.75)))
+	    (snd-display ";(opt)locsig(2)->vct chan 0: ~A" outp)))
+      
+      (let* ((outp (make-sound-data 4 10))
+	     (gen (make-locsig 135.0 :output outp)))
+	(if (not (= (mus-channels gen) 4)) (snd-display ";(opt)make-locsig->sd chans (4): ~A" (mus-channels gen)))
+	(run
+	 (lambda ()
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (locsig gen i 1.0))))
+	(if (not (vequal (sound-data->vct outp 0) (make-vct 10 0.0)))
+	    (snd-display ";(opt)locsig(4)->sd chan 0 (0.5): ~A" (sound-data->vct outp 0)))
+	(if (not (vequal (sound-data->vct outp 1) (make-vct 10 0.5)))
+	    (snd-display ";(opt)locsig(4)->sd chan 1 (0.5): ~A" (sound-data->vct outp 1)))
+	(if (not (vequal (sound-data->vct outp 2) (make-vct 10 0.5)))
+	    (snd-display ";(opt)locsig(4)->sd chan 2 (0.5): ~A" (sound-data->vct outp 2)))
+	(if (not (vequal (sound-data->vct outp 3) (make-vct 10 0.0)))
+	    (snd-display ";(opt)locsig(4)->sd chan 3 (0.5): ~A" (sound-data->vct outp 3))))
+      
+      
       (let ((fr (make-frame 2 1.5 0.5))
 	    (mx (make-mixer 2 0.1 0.2 0.3 0.4))
 	    (vs (make-vct 6))
@@ -44539,6 +44695,77 @@ EDITS: 1
 	(if (not sq) (snd-display ";run mus-output?"))
 	(catch #t (lambda () (vct-map! v (lambda () (sample->file gen)))) (lambda args args))
 	(catch #t (lambda () (vct-map! v (lambda () (sample->file gen 0 0 .1 .2)))) (lambda args args)))
+      
+      (let ((gen (make-vct 10))
+	    (chans 0))
+	(run 
+	 (lambda ()
+	   (set! chans (mus-channels gen))
+	   (do ((i 0 (1+ i))
+		(x 0.0 (+ x 0.1)))
+	       ((= i 10))
+	     (outa i x gen))))
+	(if (not (vequal gen (vct 0 .1 .2 .3 .4 .5 .6 .7 .8 .9)))
+	    (snd-display ";outa->vct opt ramp: ~A" gen))
+	(if (not (= chans 1)) (snd-display ";mus-channels vct opt: ~A" chans))
+	(run 
+	 (lambda ()
+	   (do ((i 0 (1+ i))
+		(x 0.0 (+ x 0.1)))
+	       ((= i 10))
+	     (outa i x gen))))
+	(if (not (vequal gen (vct-scale! (vct 0 .1 .2 .3 .4 .5 .6 .7 .8 .9) 2.0)))
+	    (snd-display ";outa->vct opt ramp 2: ~A" gen)))
+      
+      (let ((gen (make-sound-data 4 100))
+	    (chans 0))
+	(run 
+	 (lambda ()
+	   (set! chans (mus-channels gen))
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (outa i .1 gen)
+	     (outb i .2 gen)
+	     (outc i .3 gen)
+	     (outd i .4 gen))
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (outa i .01 gen)
+	     (outb i .02 gen)
+	     (outc i .03 gen)
+	     (outd i .04 gen))
+	   (mus-close gen)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (if (or (fneq (ina i gen) .11)
+		  (fneq (inb i gen) .22)
+		  (fneq (in-any i 2 gen) .33)
+		  (fneq (in-any i 3 gen) .44))
+	      (snd-display ";4-chan sd opt out/in[~A]: ~A ~A ~A ~A?" i (ina i gen) (inb i gen) (in-any i 2 gen) (in-any i 3 gen))))
+	(if (not (= chans 4)) (snd-display ";mus-channels sd 4 opt: ~A" chans)))
+      
+      (let ((gen (make-sound-data 4 100)))
+	(run 
+	 (lambda ()
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (out-any i .1 0 gen)
+	     (out-any i .2 1 gen)
+	     (out-any i .3 2 gen)
+	     (out-any i .4 3 gen))
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (out-any i .01 0 gen)
+	     (out-any i .02 1 gen)
+	     (out-any i .03 2 gen)
+	     (out-any i .04 3 gen))))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (if (or (fneq (in-any i 0 gen) .11)
+		  (fneq (in-any i 1 gen) .22)
+		  (fneq (in-any i 2 gen) .33)
+		  (fneq (in-any i 3 gen) .44))
+	      (snd-display ";4-chan sd out/in-any[~A]: ~A ~A ~A ~A?" i (in-any i 0 gen) (in-any i 1 gen) (in-any i 2 gen) (in-any i 3 gen)))))
       
       (let* ((gen (make-file->sample "fmv.snd"))
 	     (vals (make-vct 10))
