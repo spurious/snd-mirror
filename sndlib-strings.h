@@ -145,6 +145,7 @@
 #define S_sound_data_maxamp             "sound-data-maxamp"
 #define S_sound_data_p                  "sound-data?"
 #define S_sound_data_ref                "sound-data-ref"
+#define S_sound_data_scaleB             "sound-data-scale!"
 #define S_sound_data_setB               "sound-data-set!"
 #define S_vct_to_sound_data             "vct->sound-data"
 

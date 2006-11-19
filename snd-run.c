@@ -7654,6 +7654,8 @@ static xen_value *sound_data_length_1(ptree *prog, xen_value **args, int num_arg
   return(package(prog, R_INT, sound_data_length_i, descr_sound_data_length_i, args, 1));
 }
 
+/* TODO: sound-data-scale! */
+
 static void sound_data_chans_i(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->chans;}
 static char *descr_sound_data_chans_i(int *args, ptree *pt) 
 {

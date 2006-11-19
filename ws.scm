@@ -272,18 +272,20 @@ returning you to the true top-level."
        (set! (mus-srate) srate))
 
      (lambda ()
-       (if continue-old-file
-	   (begin
-	     (set! *output* (continue-sample->file output-1))
-	     (set! (mus-srate) (mus-sound-srate output-1))
-	     (if reverb (set! *reverb* (continue-sample->file revfile)))
-	     (let ((ind (find-sound output-1)))
-	       (if ind (close-sound ind))))
-	   (begin
-	     (if (file-exists? output-1) (delete-file output-1))
-	     (if (and reverb (file-exists? revfile)) (delete-file revfile))
-	     (set! *output* (make-sample->file output-1 channels data-format header-type comment))
-	     (if reverb (set! *reverb* (make-sample->file revfile reverb-channels data-format header-type)))))
+       (if (string? output-1)
+	   (if continue-old-file
+	       (begin
+		 (set! *output* (continue-sample->file output-1))
+		 (set! (mus-srate) (mus-sound-srate output-1))
+		 (if reverb (set! *reverb* (continue-sample->file revfile)))
+		 (let ((ind (find-sound output-1)))
+		   (if ind (close-sound ind))))
+	       (begin
+		 (if (file-exists? output-1) (delete-file output-1))
+		 (if (and reverb (file-exists? revfile)) (delete-file revfile))
+		 (set! *output* (make-sample->file output-1 channels data-format header-type comment))
+		 (if reverb (set! *reverb* (make-sample->file revfile reverb-channels data-format header-type)))))
+	   (set! *output* output-1))
        (let ((start (if statistics (get-internal-real-time)))
 	     (flush-reverb #f)
 	     (cycles 0)
@@ -344,7 +346,8 @@ returning you to the true top-level."
 	       (cur-sync #f))
 	   (if statistics
 	       (set! cycles (exact->inexact (/ (- (get-internal-real-time) start) internal-time-units-per-second))))
-	   (if to-snd
+	   (if (and to-snd
+		    (string? output-1))
 	       (let* ((cur (find-sound output-1)))
 		 (set! cur-sync (and cur (sync cur)))
 		 (if cur 
@@ -357,9 +360,20 @@ returning you to the true top-level."
 	   (if statistics
 	       ((if to-snd snd-print display)
 		(format #f "~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
-			      output-1
-			      (if (or scaled-to scaled-by) " (before scaling)" "")
-			      (if to-snd (maxamp snd-output #t) (mus-sound-maxamp output-1))
+			      (if (string? output-1) output-1
+				  (if (vct? output-1) "vct" 
+				      "sound-data"))
+			      (if (or scaled-to scaled-by) 
+				  " (before scaling)" 
+				  "")
+			      (if (string? output-1)
+				  (if to-snd 
+				      (maxamp snd-output #t) 
+				      (mus-sound-maxamp output-1))
+				  (if (vct? output-1)
+				      (list (vct-peak output-1))
+				      (sound-data-maxamp output-1)))
+			      ;; TODO: *reverb* as vct/sd
 			      (if revmax 
 				  (format #f "  rev max: ~,4F~%" (if (list? revmax) 
 								     (cadr revmax) 
@@ -367,21 +381,32 @@ returning you to the true top-level."
 				  "")
 			      cycles)))
 	   (if (or scaled-to scaled-by)
-	       (let ((scale-output (or snd-output (open-sound output-1))))
-		 (if scaled-to
-		     (scale-to scaled-to scale-output)
-		     (if scaled-by
-			 (scale-by scaled-by scale-output)))
-		 (save-sound scale-output)
-		 (if (not to-snd) 
-		     (close-sound scale-output))))
-	   (if play 
+	       (if (string? output-1)
+		   (let ((scale-output (or snd-output (open-sound output-1))))
+		     (if scaled-to
+			 (scale-to scaled-to scale-output)
+			 (if scaled-by
+			     (scale-by scaled-by scale-output)))
+		     (save-sound scale-output)
+		     (if (not to-snd) 
+			 (close-sound scale-output)))
+		   (if (vct? output-1)
+		       (if scaled-to
+			   (vct-scale! output-1 (/ scaled-to (vct-peak output-1)))
+			   (vct-scale! output-1 scaled-by))
+		       ;; TODO: if this stays, doc/test [also with-sound change] [test/run opt] [test all stats cases also]
+		       (if scaled-to
+			   (sound-data-scale! output-1 (/ scaled-to (apply max (sound-data-maxamp output-1))))
+			   (sound-data-scale! output-1 scaled-by)))))
+	   (if (and play 
+		    (string? output-1))
 	       (if to-snd
 		   (if *clm-player*
 		       (*clm-player* snd-output)
 		       (play-and-wait 0 snd-output))
 		   (play output-1)))
-	   (if to-snd
+	   (if (and to-snd
+		    (string? output-1))
 	       (begin
 		(update-time-graph snd-output)
 		(if (number? cur-sync) (set! (sync snd-output) cur-sync)))))
@@ -596,6 +621,7 @@ returning you to the true top-level."
 			   (if scaled-by
 			       (scale-by scaled-by snd-output)))
 		       (save-sound snd-output)))
+		 ;; TODO: finish-with-sound scaling of vct/sd
 	      (if play (play-and-wait 0 snd-output))
 	      (update-time-graph snd-output)))
 	(set! (mus-srate) old-srate)

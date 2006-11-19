@@ -2178,7 +2178,7 @@
 			 'snd-print 'snd-simulate-keystroke 'snd-spectrum 'snd-tempnam 'snd-url
 			 'snd-urls 'snd-version 'snd-warning 'snd-warning-hook 'sound-data->sound-data
 			 'sound-data->vct 'sound-data-chans 'sound-data-length 'sound-data-maxamp 'sound-data-ref
-			 'sound-data-set! 'sound-data? 'sound-file-extensions 'sound-file? 'sound-files-in-directory
+			 'sound-data-set! 'sound-data-scale! 'sound-data? 'sound-file-extensions 'sound-file? 'sound-files-in-directory
 			 'sound-loop-info 'sound-properties 'sound-widgets 'sound? 'soundfont-info
 			 'sounds 'spectro-cutoff 'spectro-hop 'spectro-start 'spectro-x-angle
 			 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
@@ -3201,6 +3201,15 @@
 	    (mus-sound-read fd 0 10 1 sdata)
 	    (if (fneq (sound-data-ref sdata 0 0) .2) (snd-display ";2 mus-sound-seek: ~A?" (sound-data-ref sdata 0 0)))
 	    (mus-sound-close-input fd))
+
+	  (let ((sd (make-sound-data 2 10)))
+	    (vct->sound-data (make-vct 10 .25) sd 0)  
+	    (vct->sound-data (make-vct 10 .5) sd 1)
+	    (sound-data-scale! sd 2.0)
+	    (if (not (vequal (sound-data->vct sd 0) (make-vct 10 .5)))
+		(snd-display ";sound-data-scale! chan 0: ~A" (sound-data->vct sd 0)))
+	    (if (not (vequal (sound-data->vct sd 1) (make-vct 10 1.0)))
+		(snd-display ";sound-data-scale! chan 1: ~A" (sound-data->vct sd 1))))
 	  
 	  (let ((var (catch #t (lambda () (mus-sound-open-output "fmv.snd" 22050 -1 mus-bshort mus-aiff "no comment")) (lambda args args))))
 	    (if (not (eq? (car var) 'out-of-range))
@@ -48372,6 +48381,76 @@ EDITS: 1
 	  (if (file-exists? "violins.snd") (delete-file "violins.snd"))  
 	  (if (file-exists? "cellos.snd") (delete-file "cellos.snd"))))
 
+      (let ((oldopt (optimization)))
+	(set! (optimization) 6)
+	(let ((v1 (with-sound (:output (make-vct 2210)) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	  (if (fneq (vct-peak v1) .1) (snd-display ";with-sound -> vct fm-violin maxamp (opt): ~A" (vct-peak v1)))
+	  (set! (optimization) 0)
+	  (let ((v2 (with-sound (:output (make-vct 2210)) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	    (if (fneq (vct-peak v2) .1) (snd-display ";with-sound -> vct fm-violin maxamp: ~A" (vct-peak v2)))
+	    (if (not (vequal v1 v2)) (snd-display ";with-sound -> vct v1 v2 not equal?"))
+	    (set! (optimization) 6)
+	    (sound-let ((tmp () (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)))
+		       (let ((v3 (make-vct 2210)))
+			 (file->array tmp 0 0 2205 v3)
+			 (if (not (vequal v1 v3)) (snd-display ";with-sound -> vct v1 v3 not equal?"))))
+	    (vct-scale! v1 0.0)
+	    (with-sound (:output v1)
+			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)
+			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
+	    (if (fneq (vct-peak v1) .2) (snd-display ";with-sound -> vct fm-violin maxamp (opt 2): ~A" (vct-peak v1))))))
+      
+      (define (sd-equal v0 v1)
+	(and v0 v1
+	     (sound-data? v0) (sound-data? v1)
+	     (= (sound-data-chans v0) (sound-data-chans v1))
+	     (= (sound-data-length v0) (sound-data-length v1))
+	     (let ((mx 0.0))
+	       (do ((i 0 (1+ i)))
+		   ((= i (sound-data-chans v0)))
+		 (do ((j 0 (1+ j)))
+		     ((= j (sound-data-length v0)))
+		   (let ((val (abs (- (sound-data-ref v0 i j) (sound-data-ref v1 i j)))))
+		     (if (> val mx) (set! mx val)))))
+	       (< mx .001))))
+      
+      (let ((oldopt (optimization)))
+	(set! (optimization) 6)
+	(let ((v1 (with-sound (:output (make-sound-data 1 2210)) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	  (if (fneq (car (sound-data-maxamp v1)) .1) (snd-display ";with-sound -> sound-data fm-violin maxamp (opt): ~A" (sound-data-maxamp v1)))
+	  (set! (optimization) 0)
+	  (let ((v2 (with-sound (:output (make-sound-data 1 2210)) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	    (if (fneq (car (sound-data-maxamp v2)) .1) (snd-display ";with-sound -> sound-data fm-violin maxamp: ~A" (sound-data-maxamp v2)))
+	    (if (not (sd-equal v1 v2)) (snd-display ";with-sound -> sound-data v1 v2 not equal?"))
+	    (set! (optimization) 6)
+	    (sound-data-scale! v1 0.0)
+	    (with-sound (:output v1)
+			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)
+			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
+	    (if (fneq (car (sound-data-maxamp v1)) .2) (snd-display ";with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
+      
+      (let ((oldopt (optimization)))
+	(set! (locsig-type) mus-interp-linear)
+	(set! (optimization) 6)
+	(let ((v1 (with-sound (:output (make-sound-data 2 2210))
+			      (if (not (= (mus-channels *output*) 2)) (snd-display ";with-sound *output* chans: ~A" (mus-channels *output*)))
+			      (fm-violin 0 .1 440 .1 :degree 45 :random-vibrato-amplitude 0.0))))
+	  (if (fneq (car (sound-data-maxamp v1)) .05) (snd-display ";with-sound -> sound-data fm-violin maxamp (1 opt): ~A" (sound-data-maxamp v1)))
+	  (if (fneq (cadr (sound-data-maxamp v1)) .05) (snd-display ";with-sound -> sound-data fm-violin maxamp (2 opt): ~A" (sound-data-maxamp v1)))
+	  (set! (optimization) 0)
+	  (let ((v2 (with-sound (:output (make-sound-data 2 2210)) 
+				(fm-violin 0 .1 440 .1 :degree 45 :random-vibrato-amplitude 0.0))))
+	    (if (fneq (car (sound-data-maxamp v2)) .05) (snd-display ";with-sound -> sound-data fm-violin maxamp (2): ~A" (sound-data-maxamp v2)))
+	    (if (fneq (cadr (sound-data-maxamp v2)) .05) (snd-display ";with-sound -> sound-data fm-violin maxamp (2 2): ~A" (sound-data-maxamp v2)))
+	    (if (not (sd-equal v1 v2)) (snd-display ";with-sound (2 chans) -> sound-data v1 v2 not equal?"))
+	    (set! (optimization) 6)
+	    (sound-data-scale! v1 0.0)
+	    (with-sound (:output v1)
+			(fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
+			(fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0))
+	    (if (fneq (car (sound-data-maxamp v1)) .2) (snd-display ";with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
+
+
       (if (not (null? (sounds))) (for-each close-sound (sounds)))
       
       (run-hook after-test-hook 23)
@@ -61036,7 +61115,7 @@ EDITS: 1
 		     ;mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write
 		     ;mus-sound-seek-frame 
 		     mus-file-prescaler mus-prescaler mus-clipping mus-file-clipping mus-header-raw-defaults moving-average moving-average? make-moving-average
-		     mus-expand-filename make-sound-data sound-data-ref sound-data-set!  sound-data? sound-data-length
+		     mus-expand-filename make-sound-data sound-data-ref sound-data-set! sound-data-scale! sound-data? sound-data-length
 		     sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm? sound-data->sound-data
 		     clear-array comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
