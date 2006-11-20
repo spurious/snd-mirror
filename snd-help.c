@@ -509,13 +509,14 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+21-Nov:  sound-data-scale! and sound-data-fill! with vct/sound-data with-sound output.\n\
+         mus-float-equal-fudge-factor\n\
 20-Nov:  generic out-any, in-any, locsig.\n\
 13-Nov:  RF64 headers.\n\
 3-Nov:   mix-name->id, track-name->id (mix.scm, mix.rb).\n\
 1-Nov:   ->frequency, ->samples (ws.scm), track-name, mix-name, track-tag-y.\n\
 24-Oct:  filter-fft in examp.scm.\n\
 23-Oct:  Snd 8.5.\n\
-16-Oct:  add-watcher, delete-watcher.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

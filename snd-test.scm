@@ -260,14 +260,18 @@
 	    (fveql a (cdr b) (+ i 1))))))
 
 (define (vequal v0 v1)
-  (and v0 v1
-       (vct? v0) (vct? v1)
-       (<= (vct-peak (vct-subtract! (vct-copy v0) v1)) .001)))
+  (let ((old-fudge (mus-float-equal-fudge-factor)))
+    (set! (mus-float-equal-fudge-factor) .001)
+    (let ((result (equal? v0 v1)))
+    (set! (mus-float-equal-fudge-factor) old-fudge)
+    result)))
 
 (define (vvequal v0 v1)
-  (and v0 v1
-       (vct? v0) (vct? v1)
-       (<= (vct-peak (vct-subtract! (vct-copy v0) v1)) .00002)))
+  (let ((old-fudge (mus-float-equal-fudge-factor)))
+    (set! (mus-float-equal-fudge-factor) .00002)
+    (let ((result (equal? v0 v1)))
+    (set! (mus-float-equal-fudge-factor) old-fudge)
+    result)))
 
 (define* (my-substring str start :optional end)
   (substring str start (or end (string-length str))))
@@ -2178,7 +2182,8 @@
 			 'snd-print 'snd-simulate-keystroke 'snd-spectrum 'snd-tempnam 'snd-url
 			 'snd-urls 'snd-version 'snd-warning 'snd-warning-hook 'sound-data->sound-data
 			 'sound-data->vct 'sound-data-chans 'sound-data-length 'sound-data-maxamp 'sound-data-ref
-			 'sound-data-set! 'sound-data-scale! 'sound-data? 'sound-file-extensions 'sound-file? 'sound-files-in-directory
+			 'sound-data-set! 'sound-data-scale! 'sound-data-fill! 'sound-data? 
+			 'sound-file-extensions 'sound-file? 'sound-files-in-directory
 			 'sound-loop-info 'sound-properties 'sound-widgets 'sound? 'soundfont-info
 			 'sounds 'spectro-cutoff 'spectro-hop 'spectro-start 'spectro-x-angle
 			 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
@@ -3210,6 +3215,13 @@
 		(snd-display ";sound-data-scale! chan 0: ~A" (sound-data->vct sd 0)))
 	    (if (not (vequal (sound-data->vct sd 1) (make-vct 10 1.0)))
 		(snd-display ";sound-data-scale! chan 1: ~A" (sound-data->vct sd 1))))
+	  
+	  (let ((sd (make-sound-data 2 10)))
+	    (sound-data-fill! sd 2.0)
+	    (if (not (vequal (sound-data->vct sd 0) (make-vct 10 2.0)))
+		(snd-display ";sound-data-fill! chan 0: ~A" (sound-data->vct sd 0)))
+	    (if (not (vequal (sound-data->vct sd 1) (make-vct 10 2.0)))
+		(snd-display ";sound-data-fill! chan 1: ~A" (sound-data->vct sd 1))))
 	  
 	  (let ((var (catch #t (lambda () (mus-sound-open-output "fmv.snd" 22050 -1 mus-bshort mus-aiff "no comment")) (lambda args args))))
 	    (if (not (eq? (car var) 'out-of-range))
@@ -13020,9 +13032,9 @@ EDITS: 5
       (let ((vals (butterworth-prototype i)))
 	(if (not (vequal (cadr vals) (list-ref poles k)))
 	    (snd-display ";butterworth prototype poles ~A: ~A (~A)" i (cadr vals) (list-ref poles k)))
-	(let ((zeros (make-vct (* (1- i) 3))))
+	(let ((zeros (make-vct (* (+ k 1) 3))))
 	  (do ((j 2 (+ j 3)))
-	      ((>= j (* (1- i) 3)))
+	      ((>= j (* (+ k 1) 3)))
 	    (vct-set! zeros j 1.0))
 	  (if (not (vequal (car vals) zeros))
 	      (snd-display ";butterworth prototype zeros ~A: ~A (~A)" i (car vals) zeros)))))
@@ -21392,7 +21404,16 @@ EDITS: 5
 	    (vct-fill! v0 0.2)
 	    (array->file "fmv2.snd" v0 12 22050 2)
 	    (file->array "fmv2.snd" 0 0 12 v0)
-	    (if (not (vequal v0 (make-vct 12 0.2))) (snd-display ";array->file (0.2) -> ~A" v0))
+	    (if (not (vequal v0 (make-vct 12 0.2)))
+		(let ((rd0 (make-sample-reader 0 "fmv2.snd" 0))
+		      (rd1 (make-sample-reader 0 "fmv2.snd" 1))
+		      (vals '()))
+		  (do ((i 0 (1+ i)))
+		      ((= i 12))
+		    (set! vals (cons (list (list (rd0) (rd1))) vals)))
+		  (free-sample-reader rd0)
+		  (free-sample-reader rd1)
+		  (snd-display ";array->file (0.2) -> ~A [~A]" v0 (reverse vals))))
 	    (vct-fill! v0 0.3)
 	    (array->file "fmv3.snd" v0 12 22050 4)
 	    (do ((i 0 (1+ i))) ((= i 12)) (vct-set! v0 i (* i .01)))
@@ -24784,17 +24805,17 @@ EDITS: 5
 	      (set! (mix-amp-env mix1 0) '(0 0 1 1))
 	      (if (or (not (vequal (mix->vct mix1) (track->vct track1)))
 		      (not (vequal (mix->vct mix1) (track->vct track2)))
-		      (not (vequal (track->vct track2) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 1.0))))
+		      (not (vequal (track->vct track2) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810))))
 		  (snd-display ";embedded track amp-env(t->e) 2: ~A ~A ~A" (track->vct track1) (track->vct track2) (mix->vct mix1)))
 	      (set! (track-amp-env track2) '(0 0 1 1))
 	      (if (or (not (vequal (mix->vct mix1) (track->vct track1)))
 		      (not (vequal (mix->vct mix1) (track->vct track2)))
-		      (not (vequal (track->vct track2) (vct 0.000 0.001 0.008 0.027 0.064 0.125 0.216 0.343 0.512 0.729 1.0))))
+		      (not (vequal (track->vct track2) (vct 0.000 0.001 0.008 0.027 0.064 0.125 0.216 0.343 0.512 0.729))))
 		  (snd-display ";embedded track amp-env(t->e) 3: ~A ~A ~A" (track->vct track1) (track->vct track2) (mix->vct mix1)))
 	      (set! (mix-amp-env mix1 0) #f)
 	      (if (or (not (vequal (mix->vct mix1) (track->vct track1)))
 		      (not (vequal (mix->vct mix1) (track->vct track2)))
-		      (not (vequal (track->vct track2) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 1.0))))
+		      (not (vequal (track->vct track2) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810))))
 		  (snd-display ";embedded track amp-env(t->e) 4: ~A ~A ~A" (track->vct track1) (track->vct track2) (mix->vct mix1)))
 	      (set! (track-amp-env track1) #f)
 	      (if (or (not (vequal (mix->vct mix1) (track->vct track1)))
@@ -38874,25 +38895,25 @@ EDITS: 1
 	    (let ((rl (make-vct 16 0.0)))
 	      (vct-set! rl 0 1.0)
 	      (autocorrelate rl)
-	      (if (not (vequal rl (vct 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0)))
+	      (if (not (vequal rl (vct 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)))
 		  (snd-display ";autocorrelate 1: ~A" rl)))
 	    
 	    (let ((rl (make-vct 16 0.0)))
 	      (vct-set! rl 0 1.0)
 	      (vct-set! rl 1 -1.0)
 	      (autocorrelate rl)
-	      (if (not (vequal rl (vct 2 -1 0 0 0 0 0 0 0 0 0 0 0 0 0)))
+	      (if (not (vequal rl (vct 2 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0)))
 		  (snd-display ";autocorrelate 1 -1: ~A" rl)))
 
 	    (let ((rl (make-vct 16 0.0)))
 	      (vct-set! rl 0 1.0)
 	      (vct-set! rl 4 -1.0)
 	      (autocorrelate rl)
-	      (if (not (vequal rl (vct 2 0 0 0 -1 0 0 0 0 0 0 0 0 0 0)))
+	      (if (not (vequal rl (vct 2 0 0 0 -1 0 0 0 0 0 0 0 0 0 0 0)))
 		  (snd-display ";autocorrelate 1 0 0 0 -1: ~A" rl)))
 
-	    (let ((rl (make-vct 16))
-		  (rl1 (make-vct 16)))
+	    (let ((rl (make-vct 17))
+		  (rl1 (make-vct 17)))
 	      (do ((i 0 (1+ i)))
 		  ((= i 8))
 		(vct-set! rl i (- 8.0 i))
@@ -38902,8 +38923,8 @@ EDITS: 1
 		(if (not (vequal rl1 nr))
 		    (snd-display ";autocorrelate/corr (ramp): ~A ~A" rl1 nr))))
 
-	    (let ((rl (make-vct 16))
-		  (rl1 (make-vct 16)))
+	    (let ((rl (make-vct 17))
+		  (rl1 (make-vct 17)))
 	      (do ((i 0 (1+ i)))
 		  ((= i 8))
 		(vct-set! rl i (- 1.0 (random 2.0)))
@@ -48394,25 +48415,18 @@ EDITS: 1
 		       (let ((v3 (make-vct 2210)))
 			 (file->array tmp 0 0 2205 v3)
 			 (if (not (vequal v1 v3)) (snd-display ";with-sound -> vct v1 v3 not equal?"))))
-	    (vct-scale! v1 0.0)
+	    ;(vct-scale! v1 0.0)
 	    (with-sound (:output v1)
 			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)
 			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
 	    (if (fneq (vct-peak v1) .2) (snd-display ";with-sound -> vct fm-violin maxamp (opt 2): ~A" (vct-peak v1))))))
       
       (define (sd-equal v0 v1)
-	(and v0 v1
-	     (sound-data? v0) (sound-data? v1)
-	     (= (sound-data-chans v0) (sound-data-chans v1))
-	     (= (sound-data-length v0) (sound-data-length v1))
-	     (let ((mx 0.0))
-	       (do ((i 0 (1+ i)))
-		   ((= i (sound-data-chans v0)))
-		 (do ((j 0 (1+ j)))
-		     ((= j (sound-data-length v0)))
-		   (let ((val (abs (- (sound-data-ref v0 i j) (sound-data-ref v1 i j)))))
-		     (if (> val mx) (set! mx val)))))
-	       (< mx .001))))
+	(let ((old-fudge (mus-float-equal-fudge-factor)))
+	  (set! (mus-float-equal-fudge-factor) .001)
+	  (let ((result (equal? v0 v1)))
+	    (set! (mus-float-equal-fudge-factor) old-fudge)
+	    result)))
       
       (let ((oldopt (optimization)))
 	(set! (optimization) 6)
@@ -48423,7 +48437,7 @@ EDITS: 1
 	    (if (fneq (car (sound-data-maxamp v2)) .1) (snd-display ";with-sound -> sound-data fm-violin maxamp: ~A" (sound-data-maxamp v2)))
 	    (if (not (sd-equal v1 v2)) (snd-display ";with-sound -> sound-data v1 v2 not equal?"))
 	    (set! (optimization) 6)
-	    (sound-data-scale! v1 0.0)
+	    ;(sound-data-scale! v1 0.0)
 	    (with-sound (:output v1)
 			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)
 			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
@@ -48444,7 +48458,7 @@ EDITS: 1
 	    (if (fneq (cadr (sound-data-maxamp v2)) .05) (snd-display ";with-sound -> sound-data fm-violin maxamp (2 2): ~A" (sound-data-maxamp v2)))
 	    (if (not (sd-equal v1 v2)) (snd-display ";with-sound (2 chans) -> sound-data v1 v2 not equal?"))
 	    (set! (optimization) 6)
-	    (sound-data-scale! v1 0.0)
+	    ;(sound-data-scale! v1 0.0)
 	    (with-sound (:output v1)
 			(fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
 			(fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0))
@@ -61114,8 +61128,10 @@ EDITS: 1
 		     ;mus-sound-open-input mus-sound-open-output
 		     ;mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write
 		     ;mus-sound-seek-frame 
-		     mus-file-prescaler mus-prescaler mus-clipping mus-file-clipping mus-header-raw-defaults moving-average moving-average? make-moving-average
-		     mus-expand-filename make-sound-data sound-data-ref sound-data-set! sound-data-scale! sound-data? sound-data-length
+		     mus-file-prescaler mus-prescaler mus-clipping mus-file-clipping mus-header-raw-defaults 
+		     moving-average moving-average? make-moving-average
+		     mus-expand-filename 
+		     make-sound-data sound-data-ref sound-data-set! sound-data-scale! sound-data-fill! sound-data? sound-data-length
 		     sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm? sound-data->sound-data
 		     clear-array comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians

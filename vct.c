@@ -200,13 +200,11 @@ static XEN g_vct_to_readable_string(XEN obj)
 
 bool mus_vct_equalp(vct *v1, vct *v2)
 {
-  int i;
-  if (v1->length != v2->length) 
-    return(false);
-  for (i = 0; i < v1->length; i++)
-    if (v1->data[i] != v2->data[i])
-      return(false);
-  return(true);
+  if (v1 == v2) return(true);
+  return((v1->length == v2->length) &&
+	 (mus_arrays_are_equal(v1->data, v2->data, 
+			       mus_float_equal_fudge_factor(),
+			       v1->length)));
 }
 
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, mus_vct_to_string)
@@ -452,7 +450,13 @@ static XEN g_vct_scale(XEN obj1, XEN obj2)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_scaleB, "a number");
   v1 = XEN_TO_VCT(obj1);
   scl = XEN_TO_C_DOUBLE(obj2);
-  for (i = 0; i < v1->length; i++) v1->data[i] *= scl;
+  if (scl == 0.0)
+    mus_clear_array(v1->data, v1->length);
+  else
+    {
+      if (scl != 1.0)
+	for (i = 0; i < v1->length; i++) v1->data[i] *= scl;
+    }
   return(xen_return_first(obj1, obj2));
 }
 
@@ -466,7 +470,8 @@ static XEN g_vct_offset(XEN obj1, XEN obj2)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_offsetB, "a number");
   v1 = XEN_TO_VCT(obj1);
   scl = XEN_TO_C_DOUBLE(obj2);
-  for (i = 0; i < v1->length; i++) v1->data[i] += scl;
+  if (scl != 0.0)
+    for (i = 0; i < v1->length; i++) v1->data[i] += scl;
   return(xen_return_first(obj1, obj2));
 }
 
@@ -480,7 +485,9 @@ static XEN g_vct_fill(XEN obj1, XEN obj2)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_fillB, "a number");
   v1 = XEN_TO_VCT(obj1);
   scl = XEN_TO_C_DOUBLE(obj2);
-  for (i = 0; i < v1->length; i++) v1->data[i] = scl;
+  if (scl == 0.0)
+    mus_clear_array(v1->data, v1->length);
+  else for (i = 0; i < v1->length; i++) v1->data[i] = scl;
   return(xen_return_first(obj1, obj2));
 }
 

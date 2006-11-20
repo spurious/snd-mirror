@@ -2039,7 +2039,7 @@ return a sound-data object (sdobj if given) containing snd channel chn's data st
 reading edit version edpos"
 
 #if 0
-  /* this should be moved to scheme (etc), or snd-edits.c (it doesn't belong in this file!): */
+  /* SOMEDAY: this should be moved to scheme (etc samples2sound_data used in play.rb), or snd-edits.c (it doesn't belong in this file!): */
 (define* (samples->sound-data-1 :optional (beg 0) (num #f) (snd #f) (chn #f) (obj #f) (pos #f) (sd-chan 0))
   (let ((rd (make-sample-reader beg snd chn 1 pos)))
     (if (sample-reader? rd)
@@ -2107,7 +2107,7 @@ reading edit version edpos"
 	  if (sf)
 	    {
 	      for (i = 0; i < len; i++) 
-		sd->data[chn][i] = read_sample(sf);
+		sd->data[chn][i] = read_sample_to_float(sf);
 	      sf = free_snd_fd(sf);
 	    }
 	}

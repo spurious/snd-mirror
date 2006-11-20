@@ -141,6 +141,7 @@
 #define S_new_sound_hook                "new-sound-hook"
 #define S_sound_data_to_vct             "sound-data->vct"
 #define S_sound_data_chans              "sound-data-chans"
+#define S_sound_data_fillB              "sound-data-fill!"
 #define S_sound_data_length             "sound-data-length"
 #define S_sound_data_maxamp             "sound-data-maxamp"
 #define S_sound_data_p                  "sound-data?"

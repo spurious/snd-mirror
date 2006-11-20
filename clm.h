@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 27
-#define MUS_DATE "20-Nov-06"
+#define MUS_REVISION 28
+#define MUS_DATE "21-Nov-06"
 
 /*
+ * 21-Nov:     mus_float_equal_fudge_factor, mus_arrays_are_equal.
  * 20-Nov:     mus_locsig_0.
  * 30-July:    renamed average to moving_average.
  * 28-July:    renamed make_ppolar and make_zpolar to make_two_pole|zero_from_radius_and_frequency.
@@ -288,6 +289,9 @@ off_t mus_seconds_to_samples(Float secs);
 Float mus_samples_to_seconds(off_t samps);
 int mus_array_print_length(void);
 int mus_set_array_print_length(int val);
+Float mus_float_equal_fudge_factor(void);
+Float mus_set_float_equal_fudge_factor(Float val);
+
 Float mus_sine_bank(Float *amps, Float *phases, int size);
 
 Float mus_ring_modulate(Float s1, Float s2);
@@ -298,6 +302,7 @@ Float mus_dot_product(Float *data1, Float *data2, int size);
 complex double mus_edot_product(complex double freq, complex double *data, int size);
 #endif
 void mus_clear_array(Float *arr, int size);
+bool mus_arrays_are_equal(Float *arr1, Float *arr2, Float fudge, int len);
 Float mus_polynomial(Float *coeffs, Float x, int ncoeffs);
 void mus_multiply_arrays(Float *data, Float *window, int len);
 void mus_rectangular_to_polar(Float *rl, Float *im, int size);

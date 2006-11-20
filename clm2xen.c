@@ -438,6 +438,18 @@ static XEN g_mus_set_srate(XEN val)
   return(C_TO_XEN_DOUBLE(mus_set_srate(sr)));
 }
 
+static XEN g_mus_float_equal_fudge_factor(void) 
+{
+  #define H_mus_float_equal_fudge_factor "(" S_mus_float_equal_fudge_factor "): floating point equality fudge factor"
+  return(C_TO_XEN_DOUBLE(mus_float_equal_fudge_factor()));
+}
+
+static XEN g_mus_set_float_equal_fudge_factor(XEN val) 
+{
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_float_equal_fudge_factor, "a number");
+  return(C_TO_XEN_DOUBLE(mus_set_float_equal_fudge_factor(XEN_TO_C_DOUBLE(val))));
+}
+
 static XEN g_mus_array_print_length(void) 
 {
   #define H_mus_array_print_length "(" S_mus_array_print_length "): current clm array print length (default is 8).  This \
@@ -4129,7 +4141,7 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
 					 XEN_TO_C_INT(chan),
 					 (mus_any *)XEN_TO_MUS_ANY(outp))));
     }
-  /* adds to exisitng! */
+  /* adds to existing! */
   pos = XEN_TO_C_OFF_T(frame);
   inv = XEN_TO_C_DOUBLE(val);
   if (MUS_VCT_P(outp))
@@ -4613,7 +4625,7 @@ Float mus_locsig_to_vct_or_sound_data(mus_xen *ms, mus_any *loc_gen, off_t pos, 
 	  sd = (sound_data *)XEN_OBJECT_REF(ms->vcts[G_LOCSIG_OUT]);
 	  fr = mus_locsig_outf(loc_gen);
 	  for (i = 0; i < sd->chans; i++)
-	    sd->data[i][pos] += MUS_DOUBLE_TO_SAMPLE(mus_frame_ref(fr, i));
+	    sd->data[i][pos] += mus_frame_ref(fr, i);
 	}
     }
   if (XEN_BOUND_P(ms->vcts[G_LOCSIG_REVOUT]))
@@ -4634,7 +4646,7 @@ Float mus_locsig_to_vct_or_sound_data(mus_xen *ms, mus_any *loc_gen, off_t pos, 
 	      sd = (sound_data *)XEN_OBJECT_REF(ms->vcts[G_LOCSIG_REVOUT]);
 	      fr = mus_locsig_revf(loc_gen);
 	      for (i = 0; i < sd->chans; i++)
-		sd->data[i][pos] += MUS_DOUBLE_TO_SAMPLE(mus_frame_ref(fr, i));
+		sd->data[i][pos] += mus_frame_ref(fr, i);
 	    }
 	}
     }
@@ -5880,6 +5892,8 @@ static XEN g_ssb_bank(XEN ssbs, XEN filters, XEN inval, XEN size)
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_mus_srate_w, g_mus_srate)
 XEN_NARGIFY_1(g_mus_set_srate_w, g_mus_set_srate)
+XEN_NARGIFY_0(g_mus_float_equal_fudge_factor_w, g_mus_float_equal_fudge_factor)
+XEN_NARGIFY_1(g_mus_set_float_equal_fudge_factor_w, g_mus_set_float_equal_fudge_factor)
 XEN_NARGIFY_0(g_mus_array_print_length_w, g_mus_array_print_length)
 XEN_NARGIFY_1(g_mus_set_array_print_length_w, g_mus_set_array_print_length)
 XEN_NARGIFY_1(g_radians_to_hz_w, g_radians_to_hz)
@@ -6144,6 +6158,8 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #else
 #define g_mus_srate_w g_mus_srate
 #define g_mus_set_srate_w g_mus_set_srate
+#define g_mus_float_equal_fudge_factor_w g_mus_float_equal_fudge_factor
+#define g_mus_set_float_equal_fudge_factor_w g_mus_set_float_equal_fudge_factor
 #define g_mus_array_print_length_w g_mus_array_print_length
 #define g_mus_set_array_print_length_w g_mus_set_array_print_length
 #define g_radians_to_hz_w g_radians_to_hz
@@ -6496,6 +6512,8 @@ void mus_xen_init(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_srate, g_mus_srate_w, H_mus_srate,
 				   S_setB S_mus_srate, g_mus_set_srate_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_float_equal_fudge_factor, g_mus_float_equal_fudge_factor_w, H_mus_float_equal_fudge_factor,
+				   S_setB S_mus_float_equal_fudge_factor, g_mus_set_float_equal_fudge_factor_w, 0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_array_print_length, g_mus_array_print_length_w, H_mus_array_print_length,
 				   S_setB S_mus_array_print_length, g_mus_set_array_print_length_w, 0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_clm_table_size, g_clm_table_size_w, H_clm_table_size,
@@ -7063,6 +7081,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mus_fft,
 	       S_mus_file_buffer_size,
 	       S_mus_file_name,
+	       S_mus_float_equal_fudge_factor,
 	       S_mus_formant_radius,
 	       S_mus_frequency,
 	       S_mus_generator_p,

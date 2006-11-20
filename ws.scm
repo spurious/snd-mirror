@@ -234,7 +234,7 @@ returning you to the true top-level."
 				  (comment #f)
 				  (verbose *clm-verbose*)
 				  (reverb *clm-reverb*)
-				  (revfile "test.rev")
+				  (revfile "test.rev")           ; TODO: reverb-output arg
 				  (reverb-data *clm-reverb-data*)
 				  (reverb-channels *clm-reverb-channels*)
 				  (continue-old-file #f)
@@ -252,7 +252,10 @@ returning you to the true top-level."
 	(old-notehook *clm-notehook*)
 	(old-verbose *clm-verbose*)
 	(old-auto-update-interval (auto-update-interval))
-	(output-1 output)) ; protect during nesting
+	(output-1 output)                    ; protect during nesting
+	(output-to-file (string? output))
+	(reverb-1 revfile)
+	(reverb-to-file (and reverb (string? revfile))))
     (dynamic-wind 
 
      (lambda () 
@@ -272,20 +275,40 @@ returning you to the true top-level."
        (set! (mus-srate) srate))
 
      (lambda ()
-       (if (string? output-1)
+       (if output-to-file
 	   (if continue-old-file
 	       (begin
 		 (set! *output* (continue-sample->file output-1))
 		 (set! (mus-srate) (mus-sound-srate output-1))
-		 (if reverb (set! *reverb* (continue-sample->file revfile)))
 		 (let ((ind (find-sound output-1)))
-		   (if ind (close-sound ind))))
+		   (if ind 
+		       (close-sound ind))))
 	       (begin
-		 (if (file-exists? output-1) (delete-file output-1))
-		 (if (and reverb (file-exists? revfile)) (delete-file revfile))
-		 (set! *output* (make-sample->file output-1 channels data-format header-type comment))
-		 (if reverb (set! *reverb* (make-sample->file revfile reverb-channels data-format header-type)))))
-	   (set! *output* output-1))
+		 (if (file-exists? output-1) 
+		     (delete-file output-1))
+		 (set! *output* (make-sample->file output-1 channels data-format header-type comment))))
+	   (begin
+	     (if (not continue-old-file)
+		 (if (vct? output-1)
+		     (vct-fill! output-1 0.0)
+		     (sound-data-fill! output-1 0.0)))
+	     (set! *output* output-1)))
+
+       (if reverb
+	   (if reverb-to-file
+	       (if continue-old-file
+		   (set! *reverb* (continue-sample->file reverb-1))
+		   (begin
+		     (if (file-exists? reverb-1) 
+			 (delete-file reverb-1))
+		     (set! *reverb* (make-sample->file reverb-1 reverb-channels data-format header-type))))
+	       (begin
+		 (if (not continue-old-file)
+		     (if (vct? reverb-1)
+			 (vct-fill! reverb-1 0.0)
+			 (sound-data-fill! reverb-1 0.0)))
+		 (set! *reverb* reverb-1))))
+
        (let ((start (if statistics (get-internal-real-time)))
 	     (flush-reverb #f)
 	     (cycles 0)
@@ -333,21 +356,30 @@ returning you to the true top-level."
 		  (snd-print (format #f "with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))
 		  (set! flush-reverb #t)))
 		  
-	 (if (and reverb (not flush-reverb))
+	 (if (and reverb 
+		  (not flush-reverb))
 	     (begin
 	       (mus-close *reverb*)
-	       (if statistics (set! revmax (mus-sound-maxamp revfile)))
-	       (set! *reverb* (make-file->sample revfile))
+	       (if statistics 
+		   (if reverb-to-file
+		       (set! revmax (cadr (mus-sound-maxamp reverb-1)))
+		       (if (vct? reverb-1)
+			   (set! revmax (vct-peak reverb-1))
+			   (set! revmax (apply max (sound-data-maxamp reverb-1))))))
+	       (if reverb-to-file
+		   (set! *reverb* (make-file->sample reverb-1)))
 	       (apply reverb reverb-data)
 	       (mus-close *reverb*)
-	       (if *clm-delete-reverb* (delete-file revfile))))
+	       (if (and reverb-to-file *clm-delete-reverb*)
+		   (delete-file reverb-1))))
+
 	 (mus-close *output*)
 	 (let ((snd-output #f)
 	       (cur-sync #f))
 	   (if statistics
 	       (set! cycles (exact->inexact (/ (- (get-internal-real-time) start) internal-time-units-per-second))))
-	   (if (and to-snd
-		    (string? output-1))
+
+	   (if (and to-snd output-to-file)
 	       (let* ((cur (find-sound output-1)))
 		 (set! cur-sync (and cur (sync cur)))
 		 (if cur 
@@ -357,31 +389,29 @@ returning you to the true top-level."
 			 ;; open-sound here would either ask for raw settings or use possibly irrelevant defaults
 			 (set! snd-output (open-sound output-1))))
 		 (set! (sync snd-output) #t)))
+
 	   (if statistics
 	       ((if to-snd snd-print display)
 		(format #f "~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
-			      (if (string? output-1) output-1
+			      (if output-to-file
+				  output-1
 				  (if (vct? output-1) "vct" 
 				      "sound-data"))
 			      (if (or scaled-to scaled-by) 
 				  " (before scaling)" 
 				  "")
-			      (if (string? output-1)
+			      (if output-to-file
 				  (if to-snd 
 				      (maxamp snd-output #t) 
 				      (mus-sound-maxamp output-1))
 				  (if (vct? output-1)
 				      (list (vct-peak output-1))
 				      (sound-data-maxamp output-1)))
-			      ;; TODO: *reverb* as vct/sd
-			      (if revmax 
-				  (format #f "  rev max: ~,4F~%" (if (list? revmax) 
-								     (cadr revmax) 
-								     revmax)) 
-				  "")
+			      (if revmax (format #f "  rev max: ~,4F~%" revmax) "")
 			      cycles)))
+
 	   (if (or scaled-to scaled-by)
-	       (if (string? output-1)
+	       (if output-to-file
 		   (let ((scale-output (or snd-output (open-sound output-1))))
 		     (if scaled-to
 			 (scale-to scaled-to scale-output)
@@ -394,19 +424,19 @@ returning you to the true top-level."
 		       (if scaled-to
 			   (vct-scale! output-1 (/ scaled-to (vct-peak output-1)))
 			   (vct-scale! output-1 scaled-by))
-		       ;; TODO: if this stays, doc/test [also with-sound change] [test/run opt] [test all stats cases also]
+		       ;; TODO: test run opt [test all stats cases also]
 		       (if scaled-to
 			   (sound-data-scale! output-1 (/ scaled-to (apply max (sound-data-maxamp output-1))))
 			   (sound-data-scale! output-1 scaled-by)))))
-	   (if (and play 
-		    (string? output-1))
+
+	   (if (and play output-to-file)
 	       (if to-snd
 		   (if *clm-player*
 		       (*clm-player* snd-output)
 		       (play-and-wait 0 snd-output))
 		   (play output-1)))
-	   (if (and to-snd
-		    (string? output-1))
+
+	   (if (and to-snd output-to-file)
 	       (begin
 		(update-time-graph snd-output)
 		(if (number? cur-sync) (set! (sync snd-output) cur-sync)))))

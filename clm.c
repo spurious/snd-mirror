@@ -12,6 +12,8 @@
  *   with-sound :output arg, *output* settings
  *   lisp (CL level is already no-op), run.lisp 5271 goes to mus_out_any
  * TODO: need mus-* gen func arg checks in snd-test (mus-channels) [sd vct too], *reverb* via :revout
+ * TODO: all the equalp funcs that check floats should go through some max diff version instead -- see snd_feq in snd-utils
+ *       does this number have a standard name elsewhere? clm-float-equal-fudge-factor|allowance
  */
 
 
@@ -96,21 +98,53 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
 
 static char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
 
+
 static int mus_class_tag = MUS_INITIAL_GEN_TAG;
 int mus_make_class_tag(void) {return(mus_class_tag++);}
+
 
 static Float sampling_rate = MUS_DEFAULT_SAMPLING_RATE;
 static Float w_rate = (TWO_PI / MUS_DEFAULT_SAMPLING_RATE);
 
+
+/* TODO: doc test fudge and prev returns */
+
+static Float float_equal_fudge_factor = 0.0000001;
+Float mus_float_equal_fudge_factor(void) {return(float_equal_fudge_factor);}
+Float mus_set_float_equal_fudge_factor(Float val) 
+{
+  Float prev; 
+  prev = float_equal_fudge_factor; 
+  float_equal_fudge_factor = val; 
+  return(prev);
+}
+
+
 static int array_print_length = MUS_DEFAULT_ARRAY_PRINT_LENGTH;
+int mus_array_print_length(void) {return(array_print_length);}
+int mus_set_array_print_length(int val) 
+{
+  int prev; 
+  prev = array_print_length; 
+  if (val >= 0) array_print_length = val; 
+  return(prev);
+}
+
 
 static int clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
 int mus_file_buffer_size(void) {return(clm_file_buffer_size);}
-int mus_set_file_buffer_size(int size) {clm_file_buffer_size = size; return(size);}
+int mus_set_file_buffer_size(int size) 
+{
+  int prev; 
+  prev = clm_file_buffer_size; 
+  clm_file_buffer_size = size; 
+  return(prev);
+}
 
 #define DESCRIBE_BUFFER_SIZE 2048
 static char describe_buffer[DESCRIBE_BUFFER_SIZE];
 #define STR_SIZE 128
+
 
 #define clm_calloc(Num, Size, What) CALLOC(Num, Size)
 
@@ -131,6 +165,7 @@ char *mus_name(mus_any *ptr)
   return(ptr->core->name);
 }
 
+
 Float mus_radians_to_hz(Float rads) {return(rads / w_rate);}
 Float mus_hz_to_radians(Float hz) {return(hz * w_rate);}
 
@@ -141,13 +176,21 @@ Float mus_db_to_linear(Float x) {return(pow(10.0, x / 20.0));}
 Float mus_linear_to_db(Float x) {if (x > 0.0) return(20.0 * log10(x)); return(-100.0);}
 
 Float mus_srate(void) {return(sampling_rate);}
-Float mus_set_srate(Float val) {if (val > 0.0) sampling_rate = val; w_rate = (TWO_PI / sampling_rate); return(sampling_rate);}
+Float mus_set_srate(Float val) 
+{
+  Float prev; 
+  prev = sampling_rate; 
+  if (val > 0.0)
+    {
+      sampling_rate = val; 
+      w_rate = (TWO_PI / sampling_rate); 
+    }
+  return(prev);
+}
 
 off_t mus_seconds_to_samples(Float secs) {return((off_t)(secs * sampling_rate));}
 Float mus_samples_to_seconds(off_t samps) {return((Float)((double)samps / (double)sampling_rate));}
 
-int mus_array_print_length(void) {return(array_print_length);}
-int mus_set_array_print_length(int val) {if (val >= 0) array_print_length = val; return(array_print_length);}
 
 static char *float_array_to_string(Float *arr, int len, int loc)
 {
@@ -583,6 +626,30 @@ Float mus_amplitude_modulate(Float carrier, Float sig1, Float sig2) {return(sig1
 Float mus_contrast_enhancement(Float sig, Float index) {return(sin((sig * M_PI_2) + (index * sin(sig * TWO_PI))));}
 
 void mus_clear_array(Float *arr, int size) {memset((void *)arr, 0, size * sizeof(Float));}
+
+bool mus_arrays_are_equal(Float *arr1, Float *arr2, Float fudge, int len)
+{
+  int i;
+  if (fudge == 0.0)
+    {
+      for (i = 0; i < len; i++)
+	if (arr1[i] != arr2[i])
+	  return(false);
+    }
+  else
+    {
+      for (i = 0; i < len; i++)
+	if (fabs(arr1[i] - arr2[i]) > fudge)
+	  return(false);
+    }
+  return(true);
+}
+
+static bool clm_arrays_are_equal(Float *arr1, Float *arr2, int len)
+{
+  return(mus_arrays_are_equal(arr1, arr2, float_equal_fudge_factor, len));
+}
+
 
 Float mus_dot_product(Float *data1, Float *data2, int size)
 {
@@ -1520,24 +1587,17 @@ static char *describe_table_lookup(mus_any *ptr)
 
 static bool table_lookup_equalp(mus_any *p1, mus_any *p2)
 {
-  int i;
   tbl *t1 = (tbl *)p1;
   tbl *t2 = (tbl *)p2;
   if (p1 == p2) return(true);
-  if ((t1) && (t2) &&
-      (t1->core->type == t2->core->type) &&
-      (t1->table_size == t2->table_size) &&
-      (t1->freq == t2->freq) &&
-      (t1->phase == t2->phase) &&
-      (t1->type == t2->type) &&
-      (t1->internal_mag == t2->internal_mag))
-    {
-      for (i = 0; i < t1->table_size; i++)
-	if (t1->table[i] != t2->table[i])
-	  return(false);
-      return(true);
-    }
-  return(false);
+  return((t1) && (t2) &&
+	 (t1->core->type == t2->core->type) &&
+	 (t1->table_size == t2->table_size) &&
+	 (t1->freq == t2->freq) &&
+	 (t1->phase == t2->phase) &&
+	 (t1->type == t2->type) &&
+	 (t1->internal_mag == t2->internal_mag) &&
+	 (clm_arrays_are_equal(t1->table, t2->table, t1->table_size)));
 }
 
 static int free_table_lookup(mus_any *ptr) 
@@ -1651,22 +1711,15 @@ static void ws_reset(mus_any *ptr)
 
 static bool ws_equalp(mus_any *p1, mus_any *p2)
 {
-  int i;
   ws *w1 = (ws *)p1;
   ws *w2 = (ws *)p2;
   if (p1 == p2) return(true);
-  if ((w1) && (w2) &&
-      (w1->core->type == w2->core->type) &&
-      (mus_equalp(w1->o, w2->o)) &&
-      (w1->table_size == w2->table_size) &&
-      (w1->offset == w2->offset))
-    {
-      for (i = 0; i < w1->table_size; i++)
-	if (w1->table[i] != w2->table[i])
-	  return(false);
-      return(true);
-    }
-  return(false);
+  return((w1) && (w2) &&
+	 (w1->core->type == w2->core->type) &&
+	 (mus_equalp(w1->o, w2->o)) &&
+	 (w1->table_size == w2->table_size) &&
+	 (w1->offset == w2->offset) &&
+	 (clm_arrays_are_equal(w1->table, w2->table, w1->table_size)));
 }
 
 static Float *set_ws_data(mus_any *ptr, Float *val) 
@@ -1978,28 +2031,19 @@ static Float *wt_set_data(mus_any *ptr, Float *data) {((wt *)ptr)->wave = data; 
 
 static bool wt_equalp(mus_any *p1, mus_any *p2)
 {
-  int i;
   wt *w1 = (wt *)p1;
   wt *w2 = (wt *)p2;
   if (p1 == p2) return(true);
-  if ((w1) && (w2) &&
-      (w1->core->type == w2->core->type) &&
-      (w1->freq == w2->freq) &&
-      (w1->phase == w2->phase) &&
-      (w1->interp_type == w2->interp_type) &&
-      (w1->wave_size == w2->wave_size) &&
-      (w1->out_data_size == w2->out_data_size) &&
-      (w1->out_pos == w2->out_pos))
-    {
-      for (i = 0; i < w1->wave_size; i++)
-	if (w1->wave[i] != w2->wave[i])
-	  return(false);
-      for (i = 0; i < w1->out_data_size; i++)
-	if (w1->out_data[i] != w2->out_data[i])
-	  return(false);
-      return(true);
-    }
-  return(false);
+  return((w1) && (w2) &&
+	 (w1->core->type == w2->core->type) &&
+	 (w1->freq == w2->freq) &&
+	 (w1->phase == w2->phase) &&
+	 (w1->interp_type == w2->interp_type) &&
+	 (w1->wave_size == w2->wave_size) &&
+	 (w1->out_data_size == w2->out_data_size) &&
+	 (w1->out_pos == w2->out_pos) &&
+	 (clm_arrays_are_equal(w1->wave, w2->wave, w1->wave_size)) &&
+	 (clm_arrays_are_equal(w1->out_data, w2->out_data, w1->out_data_size)));
 }
 
 static char *describe_wt(mus_any *ptr)
@@ -2241,28 +2285,21 @@ static char *describe_delay(mus_any *ptr)
 
 static bool delay_equalp(mus_any *p1, mus_any *p2)
 {
-  int i;
   dly *d1 = (dly *)p1;
   dly *d2 = (dly *)p2;
   if (p1 == p2) return(true);
-  if ((d1) && (d2) &&
-      (d1->core->type == d2->core->type) &&
-      (d1->size == d2->size) &&
-      (d1->loc == d2->loc) &&
-      (d1->zdly == d2->zdly) &&
-      (d1->zloc == d2->zloc) &&
-      (d1->zsize == d2->zsize) &&
-      (d1->xscl == d2->xscl) &&
-      (d1->yscl == d2->yscl) &&
-      (d1->yn1 == d2->yn1) &&
-      (d1->type == d2->type))
-    {
-      for (i = 0; i < d1->size; i++)
-	if (d1->line[i] != d2->line[i])
-	  return(false);
-      return(true);
-    }
-  return(false);
+  return((d1) && (d2) &&
+	 (d1->core->type == d2->core->type) &&
+	 (d1->size == d2->size) &&
+	 (d1->loc == d2->loc) &&
+	 (d1->zdly == d2->zdly) &&
+	 (d1->zloc == d2->zloc) &&
+	 (d1->zsize == d2->zsize) &&
+	 (d1->xscl == d2->xscl) &&
+	 (d1->yscl == d2->yscl) &&
+	 (d1->yn1 == d2->yn1) &&
+	 (d1->type == d2->type) &&
+	 (clm_arrays_are_equal(d1->line, d2->line, d1->size)));
 }
 
 static off_t delay_length(mus_any *ptr) 
@@ -4003,25 +4040,16 @@ static int free_filter(mus_any *ptr)
 
 static bool filter_equalp(mus_any *p1, mus_any *p2) 
 {
-  if (((p1->core)->type == (p2->core)->type) &&
-      ((mus_filter_p(p1)) || (mus_fir_filter_p(p1)) || (mus_iir_filter_p(p1))))
-    {
-      flt *f1, *f2;
-      f1 = (flt *)p1;
-      f2 = (flt *)p2;
-      if (f1->order == f2->order)
-	{
-	  int i;
-	  for (i = 0; i < f1->order; i++)
-	    {
-	      if ((f1->x) && (f2->x) && (f1->x[i] != f2->x[i])) return(false);
-	      if ((f1->y) && (f2->y) && (f1->y[i] != f2->y[i])) return(false);
-	      if (f1->state[i] != f2->state[i]) return(false);
-	    }
-	  return(true);
-	}
-    }
-  return(false);
+  flt *f1, *f2;
+  f1 = (flt *)p1;
+  f2 = (flt *)p2;
+  if (p1 == p2) return(true);
+  return(((p1->core)->type == (p2->core)->type) &&
+	 ((mus_filter_p(p1)) || (mus_fir_filter_p(p1)) || (mus_iir_filter_p(p1))) &&
+	 (f1->order == f2->order) &&
+	 ((!(f1->x)) || (!(f2->x)) || (clm_arrays_are_equal(f1->x, f2->x, f1->order))) &&
+	 ((!(f1->y)) || (!(f2->y)) || (clm_arrays_are_equal(f1->y, f2->y, f1->order))) &&
+	 (clm_arrays_are_equal(f1->state, f2->state, f1->order)));
 }
 
 static char *describe_filter(mus_any *ptr)
@@ -4404,33 +4432,26 @@ static Float *fixup_exp_env(seg *e, Float *data, int pts, Float offset, Float sc
 
 static bool env_equalp(mus_any *p1, mus_any *p2)
 {
-  int i;
   seg *e1 = (seg *)p1;
   seg *e2 = (seg *)p2;
   if (p1 == p2) return(true);
-  if ((e1) && (e2) &&
-      (e1->core->type == e2->core->type) &&
-      (e1->pass == e2->pass) &&
-      (e1->end == e2->end) &&
-      (e1->style == e2->style) &&
-      (e1->index == e2->index) &&
-      (e1->size == e2->size) &&
+  return((e1) && (e2) &&
+	 (e1->core->type == e2->core->type) &&
+	 (e1->pass == e2->pass) &&
+	 (e1->end == e2->end) &&
+	 (e1->style == e2->style) &&
+	 (e1->index == e2->index) &&
+	 (e1->size == e2->size) &&
 
-      (e1->rate == e2->rate) &&
-      (e1->base == e2->base) &&
-      (e1->power == e2->power) &&
-      (e1->current_value == e2->current_value) &&
-      (e1->scaler == e2->scaler) &&
-      (e1->offset == e2->offset) &&
-      (e1->init_y == e2->init_y) &&
-      (e1->init_power == e2->init_power))
-    {
-      for (i = 0; i < e1->size * 2; i++)
-	if (e1->original_data[i] != e2->original_data[i])
-	  return(false);
-      return(true);
-    }
-  return(false);
+	 (e1->rate == e2->rate) &&
+	 (e1->base == e2->base) &&
+	 (e1->power == e2->power) &&
+	 (e1->current_value == e2->current_value) &&
+	 (e1->scaler == e2->scaler) &&
+	 (e1->offset == e2->offset) &&
+	 (e1->init_y == e2->init_y) &&
+	 (e1->init_power == e2->init_power) &&
+	 (clm_arrays_are_equal(e1->original_data, e2->original_data, e1->size * 2)));
 }
 
 static char *describe_env(mus_any *ptr)
@@ -4691,17 +4712,12 @@ bool mus_frame_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_FRAME));
 static bool equalp_frame(mus_any *p1, mus_any *p2)
 {
   mus_frame *g1, *g2;
-  int i;
   if (p1 == p2) return(true);
   g1 = (mus_frame *)p1;
   g2 = (mus_frame *)p2;
-  if (((g1->core)->type != (g2->core)->type) ||
-      (g1->chans != g2->chans))
-    return(false);
-  for (i = 0; i < g1->chans; i++)
-    if (fabs(g1->vals[i] - g2->vals[i]) > .0000001)
-      return(false);
-  return(true);
+  return(((g1->core)->type == (g2->core)->type) &&
+	 (g1->chans == g2->chans) &&
+	 (clm_arrays_are_equal(g1->vals, g2->vals, g1->chans)));
 }
 
 static Float run_frame(mus_any *ptr, Float arg1, Float arg2) {return(mus_frame_ref(ptr, (int)arg1));}
@@ -4940,19 +4956,18 @@ bool mus_mixer_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_MIXER));
 
 static bool equalp_mixer(mus_any *p1, mus_any *p2)
 {
+  int i;
   mus_mixer *g1, *g2;
-  int i, j;
   if (p1 == p2) return(true);
-  if ((p1 == NULL) || (p2 == NULL)) return(false);
+  if ((p1 == NULL) || (p2 == NULL)) return(false); /* is this needed? */
   g1 = (mus_mixer *)p1;
   g2 = (mus_mixer *)p2;
   if (((g1->core)->type != (g2->core)->type) ||
       (g1->chans != g2->chans))
     return(false);
   for (i = 0; i < g1->chans; i++)
-    for (j = 0; j < g1->chans; j++)
-      if (fabs(g1->vals[i][j] - g2->vals[i][j]) > .0000001)
-	return(false);
+    if (!(clm_arrays_are_equal(g1->vals[i], g2->vals[i], g1->chans)))
+      return(false);
   return(true);
 }
 
@@ -6158,25 +6173,12 @@ static bool locsig_equalp(mus_any *p1, mus_any *p2)
   locs *g1 = (locs *)p1;
   locs *g2 = (locs *)p2;
   if (p1 == p2) return(true);
-  if ((g1) && (g2) &&
-      (g1->core->type == g2->core->type) &&
-      (g1->chans == g2->chans))
-    {
-      int i;
-      for (i = 0; i < g1->chans; i++) 
-	if (g1->outn[i] != g2->outn[i]) 
-	  return(false);
-      if (g1->revn)
-	{
-	  if (!(g2->revn)) return(false);
-	  if (g1->revn[0] != g2->revn[0]) return(false);
-	}
-      else 
-	if (g2->revn) 
-	  return(false);
-      return(true);
-    }
-  return(false);
+  return((g1) && (g2) &&
+	 (g1->core->type == g2->core->type) &&
+	 (g1->chans == g2->chans) &&
+	 (clm_arrays_are_equal(g1->outn, g2->outn, g1->chans)) &&
+	 (((bool)(g1->revn)) == ((bool)(g2->revn))) &&
+	 ((!(g1->revn)) || (clm_arrays_are_equal(g1->revn, g2->revn, g1->rev_chans))));
 }
 
 static char *describe_locsig(mus_any *ptr)

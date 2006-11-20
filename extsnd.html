@@ -3202,8 +3202,8 @@ additional methods: map, each, &lt;=&gt;, etc.  See vct.c and the Ruby documenta
 <table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounddata">Sound-data</a></h3></td></tr></table>
 
 <p>Another sound data object is the sound-data array used in Sndlib.  It is essentially an array of vcts, each
-vct representing one channel's data.  (This is a low-level optimization, probably a bad idea --
-I may remove the whole section someday).  As with vcts, sound-data objects partake in the Enumerable and Comparable
+vct representing one channel's data.  
+As with vcts, sound-data objects partake in the Enumerable and Comparable
 classes in Ruby.
 </p>
 
@@ -3238,6 +3238,10 @@ classes in Ruby.
 
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatachans">sound-data-chans</a> (obj)</code></td></tr>
 <tr><td></td><td>number of channels of data in <i>obj</i></td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatafill">sound-data-fill!</a> (obj value)</code></td></tr>
+<tr><td></td><td>set each sample in <i>obj</i> to <i>value</i></td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatascale">sound-data-scale!</a> (obj scaler)</code></td></tr>
