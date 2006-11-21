@@ -352,7 +352,7 @@ static XEN g_vct_length(XEN obj)
   return(C_TO_XEN_INT(v->length));
 }
 
-XEN g_vct_ref(XEN obj, XEN pos)
+static XEN g_vct_ref(XEN obj, XEN pos)
 {
   #define H_vct_ref "(" S_vct_ref " v n): element n of vct v, v[n]"
   vct *v;
@@ -368,7 +368,7 @@ XEN g_vct_ref(XEN obj, XEN pos)
   return(C_TO_XEN_DOUBLE(v->data[loc]));
 }
 
-XEN g_vct_set(XEN obj, XEN pos, XEN val)
+static XEN g_vct_set(XEN obj, XEN pos, XEN val)
 {
   #define H_vct_setB "(" S_vct_setB " v n val): sets element of vct v to val, v[n] = val"
   vct *v;

@@ -7654,8 +7654,6 @@ static xen_value *sound_data_length_1(ptree *prog, xen_value **args, int num_arg
   return(package(prog, R_INT, sound_data_length_i, descr_sound_data_length_i, args, 1));
 }
 
-/* TODO: sound-data-scale! */
-
 static void sound_data_chans_i(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->chans;}
 static char *descr_sound_data_chans_i(int *args, ptree *pt) 
 {
@@ -7746,6 +7744,45 @@ static xen_value *make_sound_data_1(ptree *prog, xen_value **args, int num_args)
   return(args[0]);
 }
 
+static void sound_data_scale_f(int *args, ptree *pt) {SOUND_DATA_RESULT = sound_data_scale(SOUND_DATA_ARG_1, FLOAT_ARG_2);}
+static char *descr_sound_data_scale_f(int *args, ptree *pt) 
+{
+  return(mus_format( SD_PT " = sound_data_scale(" SD_PT ", " FLT_PT ")", 
+		     args[0], DESC_SOUND_DATA_RESULT, args[1], SOUND_DATA_ARG_1, args[2], FLOAT_ARG_2));
+}
+static xen_value *sound_data_scale_1(ptree *prog, xen_value **args, int num_args)
+{
+  xen_value *temp;
+  if (args[2]->type == R_INT)
+    {
+      temp = args[2];
+      args[2] = convert_int_to_dbl(prog, args[2]);
+      FREE(temp);
+    }
+  if (run_safety == RUN_SAFE) 
+    temp_package(prog, R_BOOL, sound_data_check_1, descr_sound_data_check_1, args, 1);
+  return(package(prog, R_SOUND_DATA, sound_data_scale_f, descr_sound_data_scale_f, args, 2));
+}
+
+static void sound_data_fill_f(int *args, ptree *pt) {SOUND_DATA_RESULT = sound_data_fill(SOUND_DATA_ARG_1, FLOAT_ARG_2);}
+static char *descr_sound_data_fill_f(int *args, ptree *pt) 
+{
+  return(mus_format( SD_PT " = sound_data_fill(" SD_PT ", " FLT_PT ")",
+		     args[0], DESC_SOUND_DATA_RESULT, args[1], SOUND_DATA_ARG_1, args[2], FLOAT_ARG_2));
+}
+static xen_value *sound_data_fill_1(ptree *prog, xen_value **args, int num_args)
+{
+  xen_value *temp;
+  if (args[2]->type == R_INT)
+    {
+      temp = args[2];
+      args[2] = convert_int_to_dbl(prog, args[2]);
+      FREE(temp);
+    }
+  if (run_safety == RUN_SAFE) 
+    temp_package(prog, R_BOOL, sound_data_check_1, descr_sound_data_check_1, args, 1);
+  return(package(prog, R_SOUND_DATA, sound_data_fill_f, descr_sound_data_fill_f, args, 2));
+}
 
 
 
@@ -8453,12 +8490,14 @@ static void locsig_3(int *args, ptree *pt)
    *   so, we have to use the environ (closure) setting to decide what to do.
    */
   mus_xen *gn;
-  gn = mus_locsig_closure(CLM_ARG_1); /* skip the gen check in mus_environ */
+  gn = (mus_xen *)mus_locsig_closure(CLM_ARG_1); /* skip the gen check in mus_environ */
   if (!gn)
     FLOAT_RESULT = mus_locsig(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
   else
     {
-      mus_locsig_0(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+      mus_locsig(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+      /* was _0 */
+
       /* now parcel out results based on gn->vcts state and mus_locsig_outf|revf */
       FLOAT_RESULT = mus_locsig_to_vct_or_sound_data(gn, CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
     }
@@ -8680,8 +8719,64 @@ static xen_value *file_to_frame_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- out-any ---------------- */
 
-static void out_vct_3(int *args, ptree *pt) {VCT_ARG_3->data[INT_ARG_1] += FLOAT_ARG_2; FLOAT_RESULT = FLOAT_ARG_2;}
+static void outa_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 0, CLM_ARG_3);}
+static void outb_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 1, CLM_ARG_3);}
+static void outc_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 2, CLM_ARG_3);}
+static void outd_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 3, CLM_ARG_3);}
+static void out_any_4(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, INT_ARG_3, CLM_ARG_4);} 
+
 static void out_f_3(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2;}
+static void out_any_f_4(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2;}
+
+static void out_vct_3(int *args, ptree *pt) 
+{
+  if (INT_ARG_1 < VCT_ARG_3->length)
+    VCT_ARG_3->data[INT_ARG_1] += FLOAT_ARG_2; 
+  FLOAT_RESULT = FLOAT_ARG_2;
+}
+
+static void out_any_vct_4(int *args, ptree *pt) 
+{
+  if (INT_ARG_1 < VCT_ARG_4->length)
+    VCT_ARG_4->data[INT_ARG_1] += FLOAT_ARG_2; 
+  FLOAT_RESULT = FLOAT_ARG_2;
+}
+
+static void outa_sound_data_3(int *args, ptree *pt) 
+{
+  if (INT_ARG_1 < SOUND_DATA_ARG_3->length)
+    SOUND_DATA_ARG_3->data[0][INT_ARG_1] += FLOAT_ARG_2; 
+  FLOAT_RESULT = FLOAT_ARG_2;
+}
+
+static void outb_sound_data_3(int *args, ptree *pt) 
+{
+  if ((INT_ARG_1 < SOUND_DATA_ARG_3->length) && (SOUND_DATA_ARG_3->chans > 1))
+    SOUND_DATA_ARG_3->data[1][INT_ARG_1] += FLOAT_ARG_2; 
+  FLOAT_RESULT = FLOAT_ARG_2;
+}
+
+static void outc_sound_data_3(int *args, ptree *pt) 
+{
+  if ((INT_ARG_1 < SOUND_DATA_ARG_3->length) && (SOUND_DATA_ARG_3->chans > 2))
+    SOUND_DATA_ARG_3->data[2][INT_ARG_1] += FLOAT_ARG_2; 
+  FLOAT_RESULT = FLOAT_ARG_2;
+}
+
+static void outd_sound_data_3(int *args, ptree *pt) 
+{  
+  if ((INT_ARG_1 < SOUND_DATA_ARG_3->length) && (SOUND_DATA_ARG_3->chans > 3))
+    SOUND_DATA_ARG_3->data[3][INT_ARG_1] += FLOAT_ARG_2; 
+  FLOAT_RESULT = FLOAT_ARG_2;
+}
+
+static void out_any_sound_data_4(int *args, ptree *pt) 
+{
+  if ((INT_ARG_1 < SOUND_DATA_ARG_4->length) && (SOUND_DATA_ARG_4->chans > INT_ARG_3))
+    SOUND_DATA_ARG_4->data[INT_ARG_3][INT_ARG_1] += FLOAT_ARG_2; 
+  FLOAT_RESULT = FLOAT_ARG_2;
+}
+
 
 static char *descr_out_f_3(int *args, ptree *pt)
 {
@@ -8706,9 +8801,6 @@ static char *descr_outa_sound_data_3(int *args, ptree *pt)
 		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_SOUND_DATA_ARG_3));
 }
 
-static void outa_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 0, CLM_ARG_3);}
-static void outa_sound_data_3(int *args, ptree *pt) {SOUND_DATA_ARG_3->data[0][INT_ARG_1] += FLOAT_ARG_2; FLOAT_RESULT = FLOAT_ARG_2;}
-
 static xen_value *outa_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
@@ -8732,9 +8824,6 @@ static char *descr_outb_sound_data_3(int *args, ptree *pt)
 		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_SOUND_DATA_ARG_3));
 }
 
-static void outb_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 1, CLM_ARG_3);}
-static void outb_sound_data_3(int *args, ptree *pt) {SOUND_DATA_ARG_3->data[1][INT_ARG_1] += FLOAT_ARG_2; FLOAT_RESULT = FLOAT_ARG_2;}
-
 static xen_value *outb_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
@@ -8756,9 +8845,6 @@ static char *descr_outc_sound_data_3(int *args, ptree *pt)
 		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_SOUND_DATA_ARG_3));
 }
 
-static void outc_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 2, CLM_ARG_3);}
-static void outc_sound_data_3(int *args, ptree *pt) {SOUND_DATA_ARG_3->data[2][INT_ARG_1] += FLOAT_ARG_2; FLOAT_RESULT = FLOAT_ARG_2;}
-
 static xen_value *outc_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
@@ -8779,9 +8865,6 @@ static char *descr_outd_sound_data_3(int *args, ptree *pt)
   return(mus_format( FLT_PT " = " S_outd "(" INT_PT ", " FLT_PT ", " SD_PT ")",
 		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_SOUND_DATA_ARG_3));
 }
-
-static void outd_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 3, CLM_ARG_3);}
-static void outd_sound_data_3(int *args, ptree *pt) {SOUND_DATA_ARG_3->data[3][INT_ARG_1] += FLOAT_ARG_2; FLOAT_RESULT = FLOAT_ARG_2;}
 
 static xen_value *outd_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -8816,15 +8899,6 @@ static char *descr_out_any_f_4(int *args, ptree *pt)
 		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], INT_ARG_3));
 }
 
-static void out_any_4(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, INT_ARG_3, CLM_ARG_4);} 
-static void out_any_vct_4(int *args, ptree *pt) {VCT_ARG_4->data[INT_ARG_1] += FLOAT_ARG_2; FLOAT_RESULT = FLOAT_ARG_2;}
-static void out_any_f_4(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2;}
-static void out_any_sound_data_4(int *args, ptree *pt) 
-{
-  SOUND_DATA_ARG_4->data[INT_ARG_3][INT_ARG_1] += FLOAT_ARG_2; 
-  FLOAT_RESULT = FLOAT_ARG_2;
-}
-
 static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[4]->type == R_CLM)
@@ -8839,8 +8913,49 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- in-any ---------------- */
 
-static void in_vct_2(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_2->data[INT_ARG_1];}
+static void ina_2(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, 0, CLM_ARG_2);}
+static void inb_2(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, 1, CLM_ARG_2);}
+static void in_any_3(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, INT_ARG_2, CLM_ARG_3);}
+
 static void in_f_2(int *args, ptree *pt) {FLOAT_RESULT = 0.0;}
+static void in_any_f_3(int *args, ptree *pt) {FLOAT_RESULT = 0.0;}
+
+static void in_vct_2(int *args, ptree *pt) 
+{
+  if (VCT_ARG_2->length > INT_ARG_1)
+    FLOAT_RESULT = VCT_ARG_2->data[INT_ARG_1];
+  else FLOAT_RESULT = 0.0;
+}
+
+static void in_any_vct_3(int *args, ptree *pt) 
+{
+  if (VCT_ARG_3->length > INT_ARG_1)
+    FLOAT_RESULT = VCT_ARG_3->data[INT_ARG_1];
+  else FLOAT_RESULT = 0.0;
+}
+
+static void ina_sound_data_2(int *args, ptree *pt) 
+{
+  if (SOUND_DATA_ARG_2->length > INT_ARG_1)
+    FLOAT_RESULT = SOUND_DATA_ARG_2->data[0][INT_ARG_1];
+  else FLOAT_RESULT = 0.0;
+}
+
+static void inb_sound_data_2(int *args, ptree *pt) 
+{
+  if ((SOUND_DATA_ARG_2->length > INT_ARG_1) && (SOUND_DATA_ARG_2->chans > 1))
+    FLOAT_RESULT = SOUND_DATA_ARG_2->data[1][INT_ARG_1];
+  else FLOAT_RESULT = 0.0;
+}
+
+static void in_any_sound_data_3(int *args, ptree *pt) 
+{
+  if ((SOUND_DATA_ARG_3->length > INT_ARG_2) && (SOUND_DATA_ARG_3->chans > INT_ARG_1))
+    FLOAT_RESULT = SOUND_DATA_ARG_3->data[INT_ARG_1][INT_ARG_2];
+  else FLOAT_RESULT = 0.0;
+}
+
+
 
 static char *descr_ina_2(int *args, ptree *pt)
 {
@@ -8861,9 +8976,6 @@ static char *descr_ina_sound_data_2(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = " S_ina "(" INT_PT ", " SD_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], DESC_SOUND_DATA_ARG_2));
 }
-
-static void ina_2(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, 0, CLM_ARG_2);}
-static void ina_sound_data_2(int *args, ptree *pt) {FLOAT_RESULT = SOUND_DATA_ARG_2->data[0][INT_ARG_1];}
 
 static xen_value *ina_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -8890,9 +9002,6 @@ static char *descr_inb_sound_data_2(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = " S_inb "(" INT_PT ", " SD_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], DESC_SOUND_DATA_ARG_2));
 }
-
-static void inb_2(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, 1, CLM_ARG_2);}
-static void inb_sound_data_2(int *args, ptree *pt) {FLOAT_RESULT = SOUND_DATA_ARG_2->data[1][INT_ARG_1];}
 
 static xen_value *inb_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -8925,11 +9034,6 @@ static char *descr_in_any_f_3(int *args, ptree *pt)
 {
   return(mus_format( FLT_PT " = " S_in_any "(" INT_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
-
-static void in_any_3(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, INT_ARG_2, CLM_ARG_3);}
-static void in_any_vct_3(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_3->data[INT_ARG_1];}
-static void in_any_f_3(int *args, ptree *pt) {FLOAT_RESULT = 0.0;}
-static void in_any_sound_data_3(int *args, ptree *pt) {FLOAT_RESULT = SOUND_DATA_ARG_3->data[INT_ARG_1][INT_ARG_2];}
 
 static xen_value *in_any_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -12045,6 +12149,8 @@ static void init_walkers(void)
   INIT_WALKER(S_sound_data_ref, make_walker(sound_data_ref_1, NULL, sound_data_set_1, 3, 3, R_FLOAT, false, 3, R_SOUND_DATA, R_INT, R_INT));
   INIT_WALKER(S_sound_data_setB, make_walker(sound_data_set_2, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_SOUND_DATA, R_INT, R_INT, R_NUMBER));
   INIT_WALKER(S_make_sound_data, make_walker(make_sound_data_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_INT, R_INT));
+  INIT_WALKER(S_sound_data_scaleB, make_walker(sound_data_scale_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_SOUND_DATA, R_NUMBER));
+  INIT_WALKER(S_sound_data_fillB, make_walker(sound_data_fill_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_SOUND_DATA, R_NUMBER));
 
   /* -------- snd funcs */
   INIT_WALKER(S_next_sample, make_walker(next_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));

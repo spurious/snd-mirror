@@ -565,8 +565,6 @@ char *sound_data_to_string(sound_data *v)
 
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(sound_data, print_sound_data, sound_data_to_string)
 
-/* TODO: vequal sd-equal could use built in funcs if the error allowed were settable */
-
 bool sound_data_equalp(sound_data *v1, sound_data *v2)
 {
   if (v1 == v2) return(true);
@@ -663,7 +661,7 @@ static XEN g_make_sound_data(XEN chans, XEN frames)
 			 
 }
 
-XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
+static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
 {
   #define H_sound_data_ref "(" S_sound_data_ref " sd chan i): sample in channel chan at location i of sound-data sd: sd[chan][i]"
   sound_data *v;
@@ -728,7 +726,7 @@ static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
 }
 #endif
 
-XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
+static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
 {
   #define H_sound_data_setB "(" S_sound_data_setB " sd chan i val): set sound-data sd's i-th element in channel chan to val: sd[chan][i] = val"
   sound_data *v;
@@ -758,16 +756,9 @@ XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
   return(val);
 }
 
-static XEN g_sound_data_scaleB(XEN sdobj, XEN scl)
+sound_data *sound_data_scale(sound_data *sd, Float scaler)
 {
-  #define H_sound_data_scaleB "(" S_sound_data_scaleB " sd scl): scales (multiplies) sound-data sd's data by scl"
-  sound_data *sd;
   int i, chn;
-  Float scaler;
-  XEN_ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, XEN_ARG_1, S_sound_data_scaleB, "a sound-data object");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(scl), scl, XEN_ARG_2, S_sound_data_scaleB, "a number");
-  sd = (sound_data *)XEN_OBJECT_REF(sdobj);
-  scaler = XEN_TO_C_DOUBLE(scl);
   if (scaler == 0.0)
     {
       for (chn = 0; chn < sd->chans; chn++)
@@ -780,19 +771,21 @@ static XEN g_sound_data_scaleB(XEN sdobj, XEN scl)
 	  for (i = 0; i < sd->length; i++) 
 	    sd->data[chn][i] *= scaler;
     }
+  return(sd);
+}
+
+static XEN g_sound_data_scaleB(XEN sdobj, XEN scl)
+{
+  #define H_sound_data_scaleB "(" S_sound_data_scaleB " sd scl): scales (multiplies) sound-data sd's data by scl"
+  XEN_ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, XEN_ARG_1, S_sound_data_scaleB, "a sound-data object");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(scl), scl, XEN_ARG_2, S_sound_data_scaleB, "a number");
+  sound_data_scale((sound_data *)XEN_OBJECT_REF(sdobj), XEN_TO_C_DOUBLE(scl));
   return(sdobj);
 }
 
-static XEN g_sound_data_fillB(XEN sdobj, XEN scl)
+sound_data *sound_data_fill(sound_data *sd, Float scaler)
 {
-  #define H_sound_data_fillB "(" S_sound_data_fillB " sd value): fills the sound-data object sd with value"
-  sound_data *sd;
   int i, chn;
-  Float scaler;
-  XEN_ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, XEN_ARG_1, S_sound_data_fillB, "a sound-data object");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(scl), scl, XEN_ARG_2, S_sound_data_fillB, "a number");
-  sd = (sound_data *)XEN_OBJECT_REF(sdobj);
-  scaler = XEN_TO_C_DOUBLE(scl);
   if (scaler == 0.0)
     {
       for (chn = 0; chn < sd->chans; chn++)
@@ -804,6 +797,15 @@ static XEN g_sound_data_fillB(XEN sdobj, XEN scl)
 	for (i = 0; i < sd->length; i++) 
 	  sd->data[chn][i] = scaler;
     }
+  return(sd);
+}
+
+static XEN g_sound_data_fillB(XEN sdobj, XEN scl)
+{
+  #define H_sound_data_fillB "(" S_sound_data_fillB " sd value): fills the sound-data object sd with value"
+  XEN_ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, XEN_ARG_1, S_sound_data_fillB, "a sound-data object");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(scl), scl, XEN_ARG_2, S_sound_data_fillB, "a number");
+  sound_data_fill((sound_data *)XEN_OBJECT_REF(sdobj), XEN_TO_C_DOUBLE(scl));
   return(sdobj);
 }
 
@@ -1538,7 +1540,6 @@ static XEN g_mus_error_type_to_string(XEN err)
 }
 
 /* TODO: array<->file should be changed to vct/sd and at least the chans arg removed */
-/* TODO: look for memcpy sd choices */
 /* TODO: deprecate/remove vct-map! -- put in snd8.snd */
 
 static XEN g_array_to_file(XEN filename, XEN data, XEN len, XEN srate, XEN channels)

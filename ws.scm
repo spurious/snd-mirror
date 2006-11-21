@@ -357,7 +357,7 @@ returning you to the true top-level."
 		  (set! flush-reverb #t)))
 		  
 	 (if (and reverb 
-		  (not flush-reverb))
+		  (not flush-reverb)) ; i.e. not interrupted by error and trying to jump out
 	     (begin
 	       (mus-close *reverb*)
 	       (if statistics 
@@ -391,7 +391,11 @@ returning you to the true top-level."
 		 (set! (sync snd-output) #t)))
 
 	   (if statistics
-	       ((if to-snd snd-print display)
+	       ((if (procedure? statistics) ; :statistics (lambda (str) (snd-print str)) -- intended for auto test suite
+		    statistics 
+		    (if to-snd 
+			snd-print 
+			display))
 		(format #f "~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
 			      (if output-to-file
 				  output-1
@@ -424,7 +428,6 @@ returning you to the true top-level."
 		       (if scaled-to
 			   (vct-scale! output-1 (/ scaled-to (vct-peak output-1)))
 			   (vct-scale! output-1 scaled-by))
-		       ;; TODO: test run opt [test all stats cases also]
 		       (if scaled-to
 			   (sound-data-scale! output-1 (/ scaled-to (apply max (sound-data-maxamp output-1))))
 			   (sound-data-scale! output-1 scaled-by)))))
@@ -821,12 +824,14 @@ returning you to the true top-level."
 			       (let ((new-sound 
 				      (apply with-sound-helper 
 					     (lambda () ,@body) 
-					     (append (list :output (string-append chkpt-file "." (with-mix-file-extension *clm-file-name* "snd")))
-						     (list :comment (format #f "(begin~%;; written ~A (Snd: ~A)~%(list ~S ~S))~%"
-									    (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))
-									    (snd-version)
-									    option-str
-									    call-str))
+					     (append (list :output 
+							   (string-append chkpt-file "." (with-mix-file-extension *clm-file-name* "snd")))
+						     (list :comment 
+							   (format #f "(begin~%;; written ~A (Snd: ~A)~%(list ~S ~S))~%"
+								   (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))
+								   (snd-version)
+								   option-str
+								   call-str))
 						     (if (and (> (mus-channels *output*) 1)
 							      (not (member :channels ',options)))
 							 (list :channels (mus-channels *output*))

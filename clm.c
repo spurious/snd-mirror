@@ -9,11 +9,8 @@
 /* PERHAPS: generic move-sound?
  * TODO: fix ins/ with-sound :output as vct/sound-data (returning obj) {vct-map! examp extensions fade noise pvoc}
  *   (this makes it easy to test individual instruments -- clm23?)
- *   with-sound :output arg, *output* settings
  *   lisp (CL level is already no-op), run.lisp 5271 goes to mus_out_any
- * TODO: need mus-* gen func arg checks in snd-test (mus-channels) [sd vct too], *reverb* via :revout
- * TODO: all the equalp funcs that check floats should go through some max diff version instead -- see snd_feq in snd-utils
- *       does this number have a standard name elsewhere? clm-float-equal-fudge-factor|allowance
+ * TODO: need mus-* gen func arg checks in snd-test (mus-channels)
  */
 
 
@@ -6414,7 +6411,10 @@ void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_inte
     }
 }
 
-mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_any *output, mus_any *revput, mus_interp_t type)
+mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, 
+			 int chans, mus_any *output,     /* direct signal output */
+			 int rev_chans, mus_any *revput,  /* reverb output */
+			 mus_interp_t type)
 {
   locs *gen;
   Float dist;
@@ -6426,27 +6426,29 @@ mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, 
   gen = (locs *)clm_calloc(1, sizeof(locs), S_make_locsig);
   gen->core = &LOCSIG_CLASS;
   gen->outf = (mus_frame *)mus_make_empty_frame(chans);
-  gen->chans = chans;
+
   gen->type = type;
   gen->reverb = reverb;
   if (distance > 1.0)
     dist = 1.0 / distance;
   else dist = 1.0;
-  if (output) gen->outn_writer = output;
-  if (revput) 
+
+  if (mus_output_p(output)) 
+    gen->outn_writer = output;
+  gen->chans = chans;
+  gen->outn = (Float *)clm_calloc(gen->chans, sizeof(Float), "locsig frame");
+  mus_fill_locsig(gen->outn, gen->chans, degree, dist, type);
+
+  if (mus_output_p(revput))
+    gen->revn_writer = revput;
+  gen->rev_chans = rev_chans;
+  if (gen->rev_chans > 0)
     {
-      gen->revn_writer = revput;
-      gen->rev_chans = mus_channels(revput);
-      if (gen->rev_chans > 0)
-	{
-	  gen->revn = (Float *)clm_calloc(gen->rev_chans, sizeof(Float), "locsig reverb frame");
-	  gen->revf = (mus_frame *)mus_make_empty_frame(gen->rev_chans);
-	  mus_fill_locsig(gen->revn, gen->rev_chans, degree, (reverb * sqrt(dist)), type);
-	}
+      gen->revn = (Float *)clm_calloc(gen->rev_chans, sizeof(Float), "locsig reverb frame");
+      gen->revf = (mus_frame *)mus_make_empty_frame(gen->rev_chans);
+      mus_fill_locsig(gen->revn, gen->rev_chans, degree, (reverb * sqrt(dist)), type);
     }
-  else gen->rev_chans = 0;
-  gen->outn = (Float *)clm_calloc(chans, sizeof(Float), "locsig frame");
-  mus_fill_locsig(gen->outn, chans, degree, dist, type);
+
   return((mus_any *)gen);
 }
 
@@ -6462,17 +6464,6 @@ Float mus_locsig(mus_any *ptr, off_t loc, Float val)
     mus_frame_to_file(gen->revn_writer, loc, (mus_any *)(gen->revf));
   if (gen->outn_writer)
     mus_frame_to_file(gen->outn_writer, loc, (mus_any *)(gen->outf));
-  return(val);
-}
-
-Float mus_locsig_0(mus_any *ptr, off_t loc, Float val)
-{
-  locs *gen = (locs *)ptr;
-  int i;
-  for (i = 0; i < gen->chans; i++)
-    (gen->outf)->vals[i] = val * gen->outn[i];
-  for (i = 0; i < gen->rev_chans; i++)
-    (gen->revf)->vals[i] = val * gen->revn[i];
   return(val);
 }
 

@@ -1,40 +1,42 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [493]
-;;;  test 1: defaults                           [1071]
-;;;  test 2: headers                            [1273]
-;;;  test 3: variables                          [1579]
-;;;  test 4: sndlib                             [2234]
-;;;  test 5: simple overall checks              [4634]
-;;;  test 6: vcts                               [12135]
-;;;  test 7: colors                             [12450]
-;;;  test 8: clm                                [12956]
-;;;  test 9: mix                                [22203]
-;;;  test 10: marks                             [25858]
-;;;  test 11: dialogs                           [26746]
-;;;  test 12: extensions                        [27040]
-;;;  test 13: menus, edit lists, hooks, etc     [27494]
-;;;  test 14: all together now                  [29043]
-;;;  test 15: chan-local vars                   [30118]
-;;;  test 16: regularized funcs                 [31448]
-;;;  test 17: dialogs and graphics              [35864]
-;;;  test 18: enved                             [35953]
-;;;  test 19: save and restore                  [35973]
-;;;  test 20: transforms                        [37810]
-;;;  test 21: new stuff                         [39643]
-;;;  test 22: run                               [40643]
-;;;  test 23: with-sound                        [46301]
-;;;  test 24: user-interface                    [48382]
-;;;  test 25: X/Xt/Xm                           [51998]
-;;;  test 26: Gtk                               [56586]
-;;;  test 27: GL                                [60703]
-;;;  test 28: errors                            [60827]
-;;;  test 29: Common Music                      [62936]
-;;;  test all done                              [62978]
+;;;  test 0: constants                          [497]
+;;;  test 1: defaults                           [1075]
+;;;  test 2: headers                            [1277]
+;;;  test 3: variables                          [1583]
+;;;  test 4: sndlib                             [2239]
+;;;  test 5: simple overall checks              [4655]
+;;;  test 6: vcts                               [12156]
+;;;  test 7: colors                             [12471]
+;;;  test 8: clm                                [12977]
+;;;  test 9: mix                                [22236]
+;;;  test 10: marks                             [25884]
+;;;  test 11: dialogs                           [26772]
+;;;  test 12: extensions                        [27066]
+;;;  test 13: menus, edit lists, hooks, etc     [27520]
+;;;  test 14: all together now                  [29069]
+;;;  test 15: chan-local vars                   [30144]
+;;;  test 16: regularized funcs                 [31474]
+;;;  test 17: dialogs and graphics              [35890]
+;;;  test 18: enved                             [35979]
+;;;  test 19: save and restore                  [35999]
+;;;  test 20: transforms                        [37836]
+;;;  test 21: new stuff                         [39669]
+;;;  test 22: run                               [40669]
+;;;  test 23: with-sound                        [46327]
+;;;  test 24: user-interface                    [48468]
+;;;  test 25: X/Xt/Xm                           [52084]
+;;;  test 26: Gtk                               [56672]
+;;;  test 27: GL                                [60789]
+;;;  test 28: errors                            [60913]
+;;;  test 29: Common Music                      [63024]
+;;;  test all done                              [63066]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
+
+;;; TODO: there are no direct tests of channel-data!
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -273,6 +275,13 @@
     (set! (mus-float-equal-fudge-factor) old-fudge)
     result)))
 
+(define (sd-equal v0 v1)
+  (let ((old-fudge (mus-float-equal-fudge-factor)))
+    (set! (mus-float-equal-fudge-factor) .001)
+    (let ((result (equal? v0 v1)))
+      (set! (mus-float-equal-fudge-factor) old-fudge)
+      result)))
+      
 (define* (my-substring str start :optional end)
   (substring str start (or end (string-length str))))
 
@@ -2089,7 +2098,7 @@
 			 'mouse-leave-listener-hook 'mouse-leave-text-hook 'mouse-press-hook 'move-locsig 'multiply-arrays
 			 'mus-aifc 'mus-aiff 'mus-alaw 'mus-alsa-buffer-size 'mus-alsa-buffers
 			 'mus-alsa-capture-device 'mus-alsa-device 'mus-alsa-playback-device 'mus-alsa-squelch-warning 'mus-apply
-			 'mus-array-print-length 'mus-audio-adat-in 'mus-audio-adat-out 'mus-audio-aes-in 'mus-audio-aes-out
+			 'mus-array-print-length 'mus-float-equal-fudge-factor 'mus-audio-adat-in 'mus-audio-adat-out 'mus-audio-aes-in 'mus-audio-aes-out
 			 'mus-audio-amp 'mus-audio-aux-input 'mus-audio-aux-output 'mus-audio-bass 'mus-audio-cd
 			 'mus-audio-channel 'mus-audio-close 'mus-audio-dac-filter 'mus-audio-dac-out 'mus-audio-default
 			 'mus-audio-describe 'mus-audio-digital-in 'mus-audio-digital-out 'mus-audio-direction 'mus-audio-duplex-default
@@ -14127,6 +14136,15 @@ EDITS: 5
       (set! (mus-array-print-length) 32)
       (if (not (= (mus-array-print-length) 32)) (snd-display ";set mus-array-print-length: ~D?" (mus-array-print-length)))
       (set! (mus-array-print-length) 8)
+
+      (let ((fudge (mus-float-equal-fudge-factor)))
+	(if (> (abs (- (mus-float-equal-fudge-factor) 0.0000001)) 0.00000001)
+	    (snd-display ";mus-float-equal-fudge-factor: ~A?" (mus-float-equal-fudge-factor)))
+	(set! (mus-float-equal-fudge-factor) .1)
+	(if (fneq (mus-float-equal-fudge-factor) .1) 
+	    (snd-display ";set mus-float-equal-fudge-factor: ~A?" (mus-float-equal-fudge-factor)))
+	(set! (mus-float-equal-fudge-factor) fudge))
+
       (if (fneq (mus-srate) 22050.0) (snd-display ";mus-srate: ~F?" (mus-srate)))
       (if (fneq (hz->radians 1.0) 2.84951704088598e-4) (snd-display ";hz->radians: ~F?" (hz->radians 1.0)))
       (if (fneq (radians->hz 2.84951704088598e-4) 1.0) (snd-display ";radians->hz: ~F?" (radians->hz 2.84951704088598e-4)))
@@ -21844,12 +21862,12 @@ EDITS: 5
 			    0.0 0.0))
 	    (generic-procs (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels mus-cosines mus-data
 				 mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
-				 mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
+				 mus-location mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
 				 mus-ycoeffs))
 	    (generic-names (list 'mus-a0 'mus-a1 'mus-a2 'mus-b1 'mus-b2 'mus-channel 
 				 'mus-channels 'mus-cosines 'mus-data
 				 'mus-feedback 'mus-feedforward 'mus-formant-radius 'mus-frequency 'mus-hop 'mus-increment 'mus-length
-				 'mus-location 'mus-mix 'mus-order 'mus-phase 'mus-ramp 'mus-random 'mus-run 'mus-scaler 'mus-xcoeffs
+				 'mus-location 'mus-order 'mus-phase 'mus-ramp 'mus-random 'mus-run 'mus-scaler 'mus-xcoeffs
 				 'mus-ycoeffs)))
 	(for-each
 	 (lambda (make runp ques arg name)
@@ -21861,6 +21879,21 @@ EDITS: 5
 		   (snd-display ";~A: ~A ~A ~A: ~A" name runp gen arg tag)))
 	     (for-each
 	      (lambda (func genname)
+		(let ((tag (catch #t (lambda () (func #f)) (lambda args (car args)))))
+		  (if (not (eq? tag 'wrong-type-arg))
+		      (snd-display ";generic func with #f: (~A #f) -> ~A" genname tag)))
+		(let ((g1 (make-oscil))
+		      (g2 (make-one-pole .1 .9)))
+		  (let ((tag (catch #t (lambda () (func g1)) (lambda args (car args)))))
+		    (if (and (symbol? tag)
+			     (not (eq? tag 'wrong-type-arg))
+			     (not (eq? tag 'mus-error)))
+			(snd-display ";generic ~A of oscil: ~A" genname tag)))
+		  (let ((tag (catch #t (lambda () (func g2)) (lambda args (car args)))))
+		    (if (and (symbol? tag)
+			     (not (eq? tag 'wrong-type-arg))
+			     (not (eq? tag 'mus-error)))
+			(snd-display ";generic ~A of delay: ~A" genname tag))))
 		(let ((tag (catch #t (lambda () (func gen)) (lambda args (car args)))))
 		  (if (and (not (symbol? tag))
 			   (procedure-with-setter? func)
@@ -24835,11 +24868,6 @@ EDITS: 5
 			(not (vequal (channel->vct 20 20 ind 0) (vct 0.000 0.056 0.111 0.167 0.222 0.278 0.333 0.389 0.444 0.500 
 								     0.500 0.556 0.611 0.667 0.722 0.778 0.833 0.889 0.944 1.000))))
 		    (snd-display ";embedded track 2mix ampenv: ~A" (channel->vct 20 20 ind 0)))
-		(set! (mix-track mix2) track2)
-		(if (or (not (vequal (track->vct track1) (track->vct track2)))
-			(not (vequal (channel->vct 20 20 ind 0) (vct 0.000 0.056 0.111 0.167 0.222 0.278 0.333 0.389 0.444 0.500 
-								     0.500 0.556 0.611 0.667 0.722 0.778 0.833 0.889 0.944 1.000))))
-		    (snd-display ";embedded track 2mix ampenv (2): ~A" (channel->vct 20 20 ind 0)))
 		(set! (mix-track mix2) track1)
 		(if (or (not (equal? (track track1) (track track2)))
 			(not (equal? (track track1) (list mix1 mix2))))
@@ -38912,24 +38940,24 @@ EDITS: 1
 	      (if (not (vequal rl (vct 2 0 0 0 -1 0 0 0 0 0 0 0 0 0 0 0)))
 		  (snd-display ";autocorrelate 1 0 0 0 -1: ~A" rl)))
 
-	    (let ((rl (make-vct 17))
-		  (rl1 (make-vct 17)))
+	    (let ((rl (make-vct 16))
+		  (rl1 (make-vct 16)))
 	      (do ((i 0 (1+ i)))
 		  ((= i 8))
 		(vct-set! rl i (- 8.0 i))
 		(vct-set! rl1 i (vct-ref rl i)))
-	      (let ((nr (corr rl rl 16 16)))
+	      (let ((nr (vct-subseq (corr rl rl 16 16) 0 15)))
 		(autocorrelate rl1)
 		(if (not (vequal rl1 nr))
 		    (snd-display ";autocorrelate/corr (ramp): ~A ~A" rl1 nr))))
 
-	    (let ((rl (make-vct 17))
-		  (rl1 (make-vct 17)))
+	    (let ((rl (make-vct 16))
+		  (rl1 (make-vct 16)))
 	      (do ((i 0 (1+ i)))
 		  ((= i 8))
 		(vct-set! rl i (- 1.0 (random 2.0)))
 		(vct-set! rl1 i (vct-ref rl i)))
-	      (let ((nr (corr rl rl 16 16)))
+	      (let ((nr (vct-subseq (corr rl rl 16 16) 0 15)))
 		(autocorrelate rl1)
 		(if (not (vequal rl1 nr))
 		    (snd-display ";autocorrelate/corr: ~A ~A" rl1 nr))))
@@ -46309,6 +46337,26 @@ EDITS: 1
 			 (if (not g1) (clm-print ";lambda sound-data #f args 4"))) 
 		      #f (make-sound-data 3 3))
 	    
+	    (let ((sd (make-sound-data 2 10)))
+	      (vct->sound-data (make-vct 10 .25) sd 0)  
+	      (vct->sound-data (make-vct 10 .5) sd 1)
+	      (run 
+	       (lambda ()
+		 (sound-data-scale! sd 2.0)))
+	      (if (not (vequal (sound-data->vct sd 0) (make-vct 10 .5)))
+		  (snd-display ";opt sound-data-scale! chan 0: ~A" (sound-data->vct sd 0)))
+	      (if (not (vequal (sound-data->vct sd 1) (make-vct 10 1.0)))
+		  (snd-display ";opt sound-data-scale! chan 1: ~A" (sound-data->vct sd 1))))
+	    
+	    (let ((sd (make-sound-data 2 10)))
+	      (run
+	       (lambda ()
+		 (sound-data-fill! sd 2.0)))
+	      (if (not (vequal (sound-data->vct sd 0) (make-vct 10 2.0)))
+		  (snd-display ";opt sound-data-fill! chan 0: ~A" (sound-data->vct sd 0)))
+	      (if (not (vequal (sound-data->vct sd 1) (make-vct 10 2.0)))
+		  (snd-display ";opt sound-data-fill! chan 1: ~A" (sound-data->vct sd 1))))
+
 	    (run (lambda ()
 		   (do ((i 0 (1+ i)))
 		       ((= i 8))
@@ -48415,18 +48463,10 @@ EDITS: 1
 		       (let ((v3 (make-vct 2210)))
 			 (file->array tmp 0 0 2205 v3)
 			 (if (not (vequal v1 v3)) (snd-display ";with-sound -> vct v1 v3 not equal?"))))
-	    ;(vct-scale! v1 0.0)
 	    (with-sound (:output v1)
 			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)
 			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
 	    (if (fneq (vct-peak v1) .2) (snd-display ";with-sound -> vct fm-violin maxamp (opt 2): ~A" (vct-peak v1))))))
-      
-      (define (sd-equal v0 v1)
-	(let ((old-fudge (mus-float-equal-fudge-factor)))
-	  (set! (mus-float-equal-fudge-factor) .001)
-	  (let ((result (equal? v0 v1)))
-	    (set! (mus-float-equal-fudge-factor) old-fudge)
-	    result)))
       
       (let ((oldopt (optimization)))
 	(set! (optimization) 6)
@@ -48437,7 +48477,6 @@ EDITS: 1
 	    (if (fneq (car (sound-data-maxamp v2)) .1) (snd-display ";with-sound -> sound-data fm-violin maxamp: ~A" (sound-data-maxamp v2)))
 	    (if (not (sd-equal v1 v2)) (snd-display ";with-sound -> sound-data v1 v2 not equal?"))
 	    (set! (optimization) 6)
-	    ;(sound-data-scale! v1 0.0)
 	    (with-sound (:output v1)
 			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)
 			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
@@ -48458,13 +48497,252 @@ EDITS: 1
 	    (if (fneq (cadr (sound-data-maxamp v2)) .05) (snd-display ";with-sound -> sound-data fm-violin maxamp (2 2): ~A" (sound-data-maxamp v2)))
 	    (if (not (sd-equal v1 v2)) (snd-display ";with-sound (2 chans) -> sound-data v1 v2 not equal?"))
 	    (set! (optimization) 6)
-	    ;(sound-data-scale! v1 0.0)
 	    (with-sound (:output v1)
 			(fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
 			(fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0))
 	    (if (fneq (car (sound-data-maxamp v1)) .2) (snd-display ";with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
 
+      (let ((oldopt (optimization)))
+	(set! (optimization) 6)
+	(let ((v1 (with-sound (:output (make-vct 2210) :scaled-to .3) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	  (if (fneq (vct-peak v1) .3) 
+	      (snd-display ";with-sound -> vct fm-violin maxamp (opt, scaled-to): ~A" (vct-peak v1)))
+	  (set! (optimization) 0)
+	  (let ((v2 (with-sound (:output (make-vct 2210) :scaled-to .3) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	    (if (fneq (vct-peak v2) .3) 
+		(snd-display ";with-sound -> vct fm-violin maxamp scaled-to: ~A" (vct-peak v2)))
+	    (if (not (vequal v1 v2)) (snd-display ";with-sound (scaled-to) -> vct v1 v2 not equal?"))
+	    (set! (optimization) 6)
+	    (with-sound (:output v1 :scaled-by 2.0)
+			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)
+			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
+	    (if (fneq (vct-peak v1) .4) (snd-display ";with-sound -> vct fm-violin maxamp (opt 2 scaled-by): ~A" (vct-peak v1))))))
+      
+      (let ((oldopt (optimization)))
+	(set! (optimization) 6)
+	(let ((v1 (with-sound (:output (make-sound-data 1 2210) :scaled-to .5) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	  (if (fneq (car (sound-data-maxamp v1)) .5) 
+	      (snd-display ";with-sound -> sound-data fm-violin maxamp (opt, scaled-to): ~A" (sound-data-maxamp v1)))
+	  (set! (optimization) 0)
+	  (let ((v2 (with-sound (:output (make-sound-data 1 2210) :scaled-to .5) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	    (if (fneq (car (sound-data-maxamp v2)) .5) 
+		(snd-display ";with-sound -> sound-data fm-violin maxamp scaled-to: ~A" (sound-data-maxamp v2)))
+	    (if (not (sd-equal v1 v2)) (snd-display ";with-sound scaled-to -> sound-data v1 v2 not equal?"))
+	    (set! (optimization) 6)
+	    (with-sound (:output v1 :scaled-by 0.5)
+			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)
+			(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
+	    (if (fneq (car (sound-data-maxamp v1)) .1) 
+		(snd-display ";with-sound -> sound-data fm-violin maxamp (opt 2 scaled-by): ~A" (sound-data-maxamp v1))))))
 
+      (let ((stats-string ""))
+	(let ((v1 (with-sound (:output (make-vct 2210) :statistics (lambda (str) (set! stats-string str)))
+			      (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	  (if (and (not (string=? stats-string "vct:\n  maxamp: 0.1000\n  compute time: 0.000\n"))
+		   (not (string=? stats-string "vct:\n  maxamp: 0.1000\n  compute time: 0.010\n")))
+	      (snd-display ";with-sound to vct stats: [~A]" stats-string)))
+
+	(let ((v1 (with-sound (:output (make-sound-data 1 2210) :scaled-to .5 :statistics (lambda (str) (set! stats-string str)))
+			      (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	  (if (and (not (string=? stats-string "sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.000\n"))
+		   (not (string=? stats-string "sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.010\n")))
+	      (snd-display ";with-sound to sound-data stats: [~A]" stats-string)))
+
+	(let ((v1 (with-sound (:output (make-vct 2210) :channels 4 :statistics (lambda (str) (set! stats-string str)))
+			      (fm-violin 0 .1 440 .1 :degree 45 :random-vibrato-amplitude 0.0))))
+	  (if (and (not (string=? stats-string "vct:\n  maxamp: 0.1000\n  compute time: 0.000\n"))
+		   (not (string=? stats-string "vct:\n  maxamp: 0.1000\n  compute time: 0.010\n")))
+	      (snd-display ";with-sound to vct stats 4: [~A]" stats-string)))
+	
+	(let ((v1 (with-sound (:output (make-sound-data 4 2210) :channels 4 :statistics (lambda (str) (set! stats-string str)))
+			      (fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
+			      (fm-violin 0 .1 440 .2 :degree 90 :random-vibrato-amplitude 0.0)
+			      (fm-violin 0 .1 440 .3 :degree 180 :random-vibrato-amplitude 0.0)
+			      (fm-violin 0 .1 440 .4 :degree 270 :random-vibrato-amplitude 0.0))))
+	  (if (and (not (string=? stats-string "sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.000\n"))
+		   (not (string=? stats-string "sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.010\n")))
+	      (snd-display ";with-sound to sound-data stats 4: [~A]" stats-string)))
+	)
+      
+      (for-each
+       (lambda (n)
+	 (set! (optimization) n)
+	 
+	 ;; testing overwrites here -- just hope we don't crash...
+	 (let ((v1 (with-sound (:output (make-vct 20) :channels 1)
+			       (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	   (if (fneq (vct-ref v1 0) 0.0) (snd-display "overwrite vct with-sound: ~A (~A)" (vct-ref v1 0) (vct-peak v1))))
+	 
+	 (let ((v1 (with-sound (:output (make-vct 20) :channels 4)
+			       (fm-violin 0 .1 440 .1 :degree 45 :random-vibrato-amplitude 0.0))))
+	   (if (fneq (vct-ref v1 0) 0.0) (snd-display "overwrite vct with-sound (4): ~A (~A)" (vct-ref v1 0) (vct-peak v1))))
+	 
+	 (let ((v1 (with-sound (:output (make-sound-data 4 20) :channels 4)
+			       (fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
+			       (fm-violin 0 .1 440 .2 :degree 90 :random-vibrato-amplitude 0.0)
+			       (fm-violin 0 .1 440 .3 :degree 180 :random-vibrato-amplitude 0.0)
+			       (fm-violin 0 .1 440 .4 :degree 270 :random-vibrato-amplitude 0.0))))
+	   (do ((i 0 (1+ i))) ((= i 4))
+	     (if (fneq (sound-data-ref v1 i 0) 0.0) (snd-display "overwrite sd ~D with-sound: ~A" i (sound-data-ref v1 i 0)))))
+	 
+	 (let ((v1 (with-sound (:output (make-sound-data 2 20) :channels 4)
+			       (fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
+			       (fm-violin 0 .1 440 .2 :degree 90 :random-vibrato-amplitude 0.0)
+			       (fm-violin 0 .1 440 .3 :degree 180 :random-vibrato-amplitude 0.0)
+			       (fm-violin 0 .1 440 .4 :degree 270 :random-vibrato-amplitude 0.0))))
+	   (do ((i 0 (1+ i))) ((= i 2))
+	     (if (fneq (sound-data-ref v1 i 0) 0.0) (snd-display "overwrite sd (2) ~D with-sound: ~A" i (sound-data-ref v1 i 0)))))
+	 
+	 (let ((v1 (with-sound (:output (make-sound-data 4 20) :channels 1)
+			       (fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
+			       (fm-violin 0 .1 440 .2 :degree 90 :random-vibrato-amplitude 0.0)
+			       (fm-violin 0 .1 440 .3 :degree 180 :random-vibrato-amplitude 0.0)
+			       (fm-violin 0 .1 440 .4 :degree 270 :random-vibrato-amplitude 0.0))))
+	   (do ((i 0 (1+ i))) ((= i 4))
+	     (if (fneq (sound-data-ref v1 i 0) 0.0) (snd-display "overwrite sd (4) ~D with-sound: ~A" i (sound-data-ref v1 i 0)))))
+	 )
+       (list 0 3 6))
+
+      ;; reverb cases parallel to above
+      (let ((oldopt (optimization)))
+	(set! (optimization) 6)
+	(let ((v1 (with-sound (:output (make-vct 44100) :reverb jc-reverb)
+			      (if (not (= (mus-length *output*) 44100)) (snd-display ";ws mus-length vct: ~A" (mus-length *output*)))
+			      (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0 :reverb-amount 0.9)))
+	      (v4 (with-sound (:output (make-vct 44100)) 
+			      (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	  (if (vequal v1 v4) (snd-display ";reverb output not written to vct?"))
+	  (if (< (vct-peak v1) .3)
+	      (snd-display ";rev with-sound -> vct fm-violin maxamp (opt): ~A" (vct-peak v1)))
+	  (set! (optimization) 0)
+	  (let ((v2 (with-sound (:output (make-vct 44100) :reverb jc-reverb) (fm-violin 0 .1 440 .1 :reverb-amount 0.9))))
+	    (if (< (vct-peak v2) .3) 
+		(snd-display ";rev with-sound -> vct fm-violin maxamp: ~A" (vct-peak v2)))
+	    (set! (optimization) 6)
+	    (with-sound (:output v1 :channels 1 :reverb jc-reverb)
+			(fm-violin 0 .1 440 .1 :reverb-amount 0.9)
+			(fm-violin 0 .1 440 .1 :reverb-amount 0.9))
+	    (if (< (vct-peak v1) .3) 
+		(snd-display ";rev with-sound -> vct fm-violin maxamp (opt 2): ~A" (vct-peak v1))))))
+      
+      (let ((oldopt (optimization)))
+	(set! (optimization) 6)
+	(let ((v1 (with-sound (:output (make-sound-data 1 44100) :reverb jc-reverb) 
+			      (if (not (= (mus-length *output*) 44100)) (snd-display ";ws mus-length sd: ~A" (mus-length *output*)))
+			      (fm-violin 0 .1 440 .1 :reverb-amount 0.9 :random-vibrato-amplitude 0.0)))
+	      (v4 (with-sound (:output (make-sound-data 1 44100)) 
+			      (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	  (if (sd-equal v1 v4) (snd-display ";reverb output not written to sd?"))
+	  (if (< (car (sound-data-maxamp v1)) .3) 
+	      (snd-display ";rev with-sound -> sound-data fm-violin maxamp (opt): ~A" (sound-data-maxamp v1)))
+	  (set! (optimization) 0)
+	  (let ((v2 (with-sound (:output (make-sound-data 1 44100) :reverb jc-reverb) (fm-violin 0 .1 440 .1 :reverb-amount 0.9))))
+	    (if (< (car (sound-data-maxamp v2)) .3) 
+		(snd-display ";rev with-sound -> sound-data fm-violin maxamp: ~A" (sound-data-maxamp v2)))
+	    (set! (optimization) 6)
+	    (with-sound (:output v1 :reverb jc-reverb)
+			(fm-violin 0 .1 440 .1 :reverb-amount 0.9)
+			(fm-violin 0 .1 440 .1 :reverb-amount 0.9))
+	    (if (< (car (sound-data-maxamp v1)) .6) 
+		(snd-display ";with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
+      
+      (let ((oldopt (optimization)))
+	(set! (locsig-type) mus-interp-linear)
+	(set! (optimization) 6)
+	(let ((v1 (with-sound (:output (make-sound-data 2 44100) :reverb jc-reverb)
+			      (if (not (= (mus-channels *output*) 2)) 
+				  (snd-display ";rev with-sound *output* chans: ~A" (mus-channels *output*)))
+			      (fm-violin 0 .1 440 .1 :degree 45 :reverb-amount 0.9))))
+	  (if (< (car (sound-data-maxamp v1)) .3) 
+	      (snd-display ";rev with-sound -> sound-data fm-violin maxamp (1 opt): ~A" (sound-data-maxamp v1)))
+	  (if (< (cadr (sound-data-maxamp v1)) .3) 
+	      (snd-display ";rev with-sound -> sound-data fm-violin maxamp (2 opt): ~A" (sound-data-maxamp v1)))
+	  (set! (optimization) 0)
+	  (let ((v2 (with-sound (:output (make-sound-data 2 44100) :reverb jc-reverb) 
+				(fm-violin 0 .1 440 .1 :degree 45 :reverb-amount 0.9))))
+	    (if (< (car (sound-data-maxamp v2)) .3) 
+		(snd-display ";rev with-sound -> sound-data fm-violin maxamp (2): ~A" (sound-data-maxamp v2)))
+	    (if (< (cadr (sound-data-maxamp v2)) .3) 
+		(snd-display ";rev with-sound -> sound-data fm-violin maxamp (2 2): ~A" (sound-data-maxamp v2)))
+	    (set! (optimization) 6)
+	    (with-sound (:output v1 :reverb jc-reverb)
+			(fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9)
+			(fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9))
+	    (if (< (car (sound-data-maxamp v1)) .6) 
+		(snd-display ";rev with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
+
+
+      (let ((oldopt (optimization)))
+	(set! (optimization) 6)
+	(let ((v1 (with-sound (:output (make-vct 44100) :revfile (make-vct 44100) :reverb jc-reverb)
+			      (if (not (= (mus-length *output*) 44100)) (snd-display ";1 ws mus-length vct: ~A" (mus-length *output*)))
+			      (if (not (= (mus-length *reverb*) 44100)) (snd-display ";1 ws mus-length vct rev: ~A" (mus-length *reverb*)))
+			      (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0 :reverb-amount 0.9)))
+	      (v4 (with-sound (:output (make-vct 44100)) 
+			      (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	  (if (vequal v1 v4) (snd-display ";1 reverb output not written to vct?"))
+	  (if (< (vct-peak v1) .3)
+	      (snd-display ";1 rev with-sound -> vct fm-violin maxamp (opt): ~A" (vct-peak v1)))
+	  (set! (optimization) 0)
+	  (let ((v2 (with-sound (:output (make-vct 44100) :revfile (make-vct 44100) :reverb jc-reverb) 
+				(fm-violin 0 .1 440 .1 :reverb-amount 0.9))))
+	    (if (< (vct-peak v2) .3) 
+		(snd-display ";1 rev with-sound -> vct fm-violin maxamp: ~A" (vct-peak v2)))
+	    (set! (optimization) 6)
+	    (with-sound (:output v1 :revfile v2 :channels 1 :reverb jc-reverb)
+			(fm-violin 0 .1 440 .1 :reverb-amount 0.9)
+			(fm-violin 0 .1 440 .1 :reverb-amount 0.9))
+	    (if (< (vct-peak v1) .3) 
+		(snd-display ";1 rev with-sound -> vct fm-violin maxamp (opt 2): ~A" (vct-peak v1))))))
+      
+      (let ((oldopt (optimization)))
+	(set! (optimization) 6)
+	(let ((v1 (with-sound (:output (make-sound-data 1 44100) :revfile (make-sound-data 1 44100) :reverb jc-reverb) 
+			      (if (not (= (mus-length *output*) 44100)) (snd-display ";ws mus-length sd: ~A" (mus-length *output*)))
+			      (fm-violin 0 .1 440 .1 :reverb-amount 0.9 :random-vibrato-amplitude 0.0)))
+	      (v4 (with-sound (:output (make-sound-data 1 44100)) 
+			      (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	  (if (sd-equal v1 v4) (snd-display ";2 reverb output not written to sd?"))
+	  (if (< (car (sound-data-maxamp v1)) .3) 
+	      (snd-display ";2 rev with-sound -> sound-data fm-violin maxamp (opt): ~A" (sound-data-maxamp v1)))
+	  (set! (optimization) 0)
+	  (let ((v2 (with-sound (:output (make-sound-data 1 44100) :revfile (make-sound-data 1 44100) :reverb jc-reverb) 
+				(fm-violin 0 .1 440 .1 :reverb-amount 0.9))))
+	    (if (< (car (sound-data-maxamp v2)) .3) 
+		(snd-display ";2 rev with-sound -> sound-data fm-violin maxamp: ~A" (sound-data-maxamp v2)))
+	    (set! (optimization) 6)
+	    (with-sound (:output v1 :revfile v2 :reverb jc-reverb)
+			(fm-violin 0 .1 440 .1 :reverb-amount 0.9)
+			(fm-violin 0 .1 440 .1 :reverb-amount 0.9))
+	    (if (< (car (sound-data-maxamp v1)) .6) 
+		(snd-display ";2 with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
+      
+      (let ((oldopt (optimization)))
+	(set! (locsig-type) mus-interp-linear)
+	(set! (optimization) 6)
+	(let ((v1 (with-sound (:output (make-sound-data 2 44100) :revfile (make-sound-data 1 44100) :reverb jc-reverb)
+			      (if (not (= (mus-channels *output*) 2)) 
+				  (snd-display ";3 rev with-sound *output* chans: ~A" (mus-channels *output*)))
+			      (fm-violin 0 .1 440 .1 :degree 45 :reverb-amount 0.9))))
+	  (if (< (car (sound-data-maxamp v1)) .3) 
+	      (snd-display ";3 rev with-sound -> sound-data fm-violin maxamp (1 opt): ~A" (sound-data-maxamp v1)))
+	  (if (< (cadr (sound-data-maxamp v1)) .3) 
+	      (snd-display "3 ;rev with-sound -> sound-data fm-violin maxamp (2 opt): ~A" (sound-data-maxamp v1)))
+	  (set! (optimization) 0)
+	  (let ((v2 (with-sound (:output (make-sound-data 2 44100) :revfile (make-sound-data 1 44100) :reverb jc-reverb) 
+				(fm-violin 0 .1 440 .1 :degree 45 :reverb-amount 0.9))))
+	    (if (< (car (sound-data-maxamp v2)) .3) 
+		(snd-display ";3 rev with-sound -> sound-data fm-violin maxamp (2): ~A" (sound-data-maxamp v2)))
+	    (if (< (cadr (sound-data-maxamp v2)) .3) 
+		(snd-display ";3 rev with-sound -> sound-data fm-violin maxamp (2 2): ~A" (sound-data-maxamp v2)))
+	    (set! (optimization) 6)
+	    (with-sound (:output v1 :revfile v2 :reverb jc-reverb)
+			(fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9)
+			(fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9))
+	    (if (< (car (sound-data-maxamp v1)) .6) 
+		(snd-display ";3 rev with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
+
+      
       (if (not (null? (sounds))) (for-each close-sound (sounds)))
       
       (run-hook after-test-hook 23)
@@ -61146,7 +61424,7 @@ EDITS: 1
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 		     make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-ssb-am make-table-lookup make-triangle-wave
 		     make-two-pole make-two-zero make-wave-train make-waveshape mixer* mixer-ref mixer-set! mixer? mixer+
-		     move-sound make-move-sound move-sound?
+		     move-sound make-move-sound move-sound? mus-float-equal-fudge-factor
 		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape polyshape?
 		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
@@ -61230,7 +61508,7 @@ EDITS: 1
 			 minibuffer-history-length read-only right-sample sample samples selected-channel colormap-size colormap?
 			 selected-sound selection-position selection-frames selection-member? sound-loop-info
 			 srate time-graph-type x-position-slider x-zoom-slider tempo-control-bounds
-			 y-position-slider y-zoom-slider sound-data-ref mus-array-print-length 
+			 y-position-slider y-zoom-slider sound-data-ref mus-array-print-length mus-float-equal-fudge-factor
 			 mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 filter-control-coeffs locsig-type mus-file-buffer-size 

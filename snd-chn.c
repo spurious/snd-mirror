@@ -1348,7 +1348,8 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 	  if ((ap->hisamp - ap->losamp) > (CURRENT_SAMPLES(cp) / 4))
 	    {                                /* we're trying to view a large portion of the (large) sound */
 	      cgx = cp->cgx;
-	      if (cgx->amp_env_in_progress)
+	      if ((cgx->amp_env_in_progress) &&
+		  (cp->amp_envs))            /* updated sound but bg process not killed yet?? */
 		{                            /* but the amp-env background process is still working on it */
 		  env_info *ep;
 		  ep = cp->amp_envs[cp->edit_ctr];
@@ -7188,7 +7189,11 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
   ASSERT_CHANNEL(S_channel_data, snd, chn, 1);
   cp = get_cp(snd, chn, S_channel_data);
   if ((cp) && (cp->sound) && (cp->sound->inuse == SOUND_WRAPPER))
+#if SNDLIB_USE_FLOATS
     return(wrap_sound_data(1, cp->samples[0], &(cp->sounds[0]->buffered_data)));
+#else
+  /* TODO: int version of channel-data */
+#endif
   return(XEN_FALSE);
 }
 

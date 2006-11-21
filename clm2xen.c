@@ -1151,8 +1151,15 @@ static XEN g_mus_run(XEN gen, XEN arg1, XEN arg2)
 static XEN g_mus_length(XEN gen) 
 {
   #define H_mus_length "(" S_mus_length " gen): gen's length, if any"
-  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_length, "a generator");
-  return(C_TO_XEN_OFF_T(mus_length(XEN_TO_MUS_ANY(gen))));
+  if (MUS_XEN_P(gen))
+    return(C_TO_XEN_OFF_T(mus_length(XEN_TO_MUS_ANY(gen))));
+  if (MUS_VCT_P(gen))
+    return(C_TO_XEN_INT(((vct *)XEN_OBJECT_REF(gen))->length));
+  if (sound_data_p(gen))
+    return(C_TO_XEN_INT(((sound_data *)XEN_OBJECT_REF(gen))->length));
+
+  XEN_ASSERT_TYPE(false, gen, XEN_ONLY_ARG, S_mus_length, "a generator, vct, or sound-data object");
+  return(XEN_FALSE); /* make compiler happy */
 }
 
 static XEN g_mus_set_length(XEN gen, XEN val) 
@@ -4093,18 +4100,33 @@ static XEN g_frame_to_file_p(XEN obj)
 
 static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
 {
+  off_t pos;
+  int in_chan;
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
+  pos = XEN_TO_C_OFF_T(frame);
+  in_chan = XEN_TO_C_INT(chan);
   if (MUS_XEN_P(inp))
     {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
       XEN_ASSERT_TYPE(mus_input_p(XEN_TO_MUS_ANY(inp)), inp, XEN_ARG_3, caller, "an input gen");
-      return(C_TO_XEN_DOUBLE(mus_in_any(XEN_TO_C_OFF_T_OR_ELSE(frame, 0), XEN_TO_C_INT(chan), (mus_any *)XEN_TO_MUS_ANY(inp))));
+      return(C_TO_XEN_DOUBLE(mus_in_any(pos, in_chan, (mus_any *)XEN_TO_MUS_ANY(inp))));
     }
   if (MUS_VCT_P(inp))
-    return(g_vct_ref(inp, frame));
+    {
+      vct *v;
+      v = XEN_TO_VCT(inp);
+      if (pos < v->length)
+	return(C_TO_XEN_DOUBLE(v->data[pos]));
+      return(C_TO_XEN_DOUBLE(0.0));
+    }
   if (sound_data_p(inp))
-    return(g_sound_data_ref(inp, chan, frame));
-  return(XEN_ZERO);
+    {
+      sound_data *sd;
+      sd = (sound_data *)XEN_OBJECT_REF(inp);
+      if ((in_chan < sd->chans) && (pos < sd->length))
+	return(C_TO_XEN_DOUBLE(sd->data[in_chan][pos]));
+    }
+  return(C_TO_XEN_DOUBLE(0.0));
 }
 
 static XEN g_in_any(XEN frame, XEN chan, XEN inp) 
@@ -4612,7 +4634,8 @@ Float mus_locsig_to_vct_or_sound_data(mus_xen *ms, mus_any *loc_gen, off_t pos, 
     {
       vct *v;
       v = xen_to_vct(ms->vcts[G_LOCSIG_OUT]);
-      v->data[pos] += mus_frame_ref(mus_locsig_outf(loc_gen), 0);
+      if (pos < v->length)
+	v->data[pos] += mus_frame_ref(mus_locsig_outf(loc_gen), 0);
     }
   else 
     {
@@ -4623,9 +4646,13 @@ Float mus_locsig_to_vct_or_sound_data(mus_xen *ms, mus_any *loc_gen, off_t pos, 
 	  mus_any *fr;
 	  int i;
 	  sd = (sound_data *)XEN_OBJECT_REF(ms->vcts[G_LOCSIG_OUT]);
-	  fr = mus_locsig_outf(loc_gen);
-	  for (i = 0; i < sd->chans; i++)
-	    sd->data[i][pos] += mus_frame_ref(fr, i);
+	  if (pos < sd->length)
+	    {
+	      fr = mus_locsig_outf(loc_gen);
+	      if (fr)
+		for (i = 0; i < sd->chans; i++)
+		  sd->data[i][pos] += mus_frame_ref(fr, i);
+	    }
 	}
     }
   if (XEN_BOUND_P(ms->vcts[G_LOCSIG_REVOUT]))
@@ -4634,7 +4661,8 @@ Float mus_locsig_to_vct_or_sound_data(mus_xen *ms, mus_any *loc_gen, off_t pos, 
 	{
 	  vct *v;
 	  v = xen_to_vct(ms->vcts[G_LOCSIG_REVOUT]);
-	  v->data[pos] += mus_frame_ref(mus_locsig_revf(loc_gen), 0);
+	  if (pos < v->length)
+	    v->data[pos] += mus_frame_ref(mus_locsig_revf(loc_gen), 0);
 	}
       else 
 	{
@@ -4644,9 +4672,13 @@ Float mus_locsig_to_vct_or_sound_data(mus_xen *ms, mus_any *loc_gen, off_t pos, 
 	      int i;
 	      mus_any *fr;
 	      sd = (sound_data *)XEN_OBJECT_REF(ms->vcts[G_LOCSIG_REVOUT]);
-	      fr = mus_locsig_revf(loc_gen);
-	      for (i = 0; i < sd->chans; i++)
-		sd->data[i][pos] += mus_frame_ref(fr, i);
+	      if (pos < sd->length)
+		{
+		  fr = mus_locsig_revf(loc_gen);
+		  if (fr)
+		    for (i = 0; i < sd->chans; i++)
+		      sd->data[i][pos] += mus_frame_ref(fr, i);
+		}
 	    }
 	}
     }
@@ -4660,17 +4692,17 @@ static XEN g_locsig(XEN xobj, XEN xpos, XEN xval)
   mus_xen *ms;
   off_t pos;
   Float fval;
+
   XEN_ASSERT_TYPE(MUS_XEN_P(xobj), xobj, XEN_ARG_1, S_locsig, "a locsig gen");
   ms = XEN_TO_MUS_XEN(xobj);
   loc_gen = (mus_any *)(ms->gen);
   XEN_ASSERT_TYPE(mus_locsig_p(loc_gen), xobj, XEN_ARG_1, S_locsig, "a locsig gen");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(xpos), xpos, XEN_ARG_2, S_locsig, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(xval), xval, XEN_ARG_3, S_locsig, "a number");
+
   pos = XEN_TO_C_OFF_T_OR_ELSE(xpos, 0);
   fval = XEN_TO_C_DOUBLE(xval);
-
   mus_locsig(loc_gen, pos, fval);
-
   /* now check for vct/sound-data special cases */
   if (ms->nvcts == 4) mus_locsig_to_vct_or_sound_data(ms, loc_gen, pos, fval);
 
@@ -4707,7 +4739,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   XEN keys[7];
   XEN ov = XEN_UNDEFINED, rv = XEN_UNDEFINED;
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
-  int vals, i, arglist_len, out_chans = 1;
+  int vals, i, arglist_len, out_chans = 1, rev_chans = 0;
   mus_interp_t type;
   Float degree = 0.0, distance = 1.0, reverb = 0.0;
   type = clm_locsig_type;
@@ -4757,12 +4789,26 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
       if (!(XEN_KEYWORD_P(keys[4]))) 
 	{
 	  if ((MUS_XEN_P(keys[4])) && (mus_output_p(XEN_TO_MUS_ANY(keys[4]))))
-	    revp = (mus_any *)XEN_TO_MUS_ANY(keys[4]);
+	    {
+	      revp = (mus_any *)XEN_TO_MUS_ANY(keys[4]);
+	      rev_chans = mus_channels((mus_any *)revp);
+	    }
 	  else
 	    {
-	      if ((MUS_VCT_P(keys[4])) || (sound_data_p(keys[4])))
-		rv = keys[4];
-	      else XEN_ASSERT_TYPE(XEN_FALSE_P(keys[4]), keys[4], orig_arg[4], S_make_locsig, "a reverb output gen");
+	      if (MUS_VCT_P(keys[4]))
+		{
+		  rv = keys[4];
+		  rev_chans = 1;
+		}
+	      else
+		{
+		  if (sound_data_p(keys[4]))
+		    {
+		      rv = keys[4];
+		      rev_chans = ((sound_data *)XEN_OBJECT_REF(rv))->chans;
+		    }
+		  else XEN_ASSERT_TYPE(XEN_FALSE_P(keys[4]), keys[4], orig_arg[4], S_make_locsig, "a reverb output gen");
+		}
 	    }
 	}
       out_chans = mus_optkey_to_int(keys[5], S_make_locsig, orig_arg[5], out_chans);
@@ -4774,7 +4820,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
       if ((type != MUS_INTERP_LINEAR) && (type != MUS_INTERP_SINUSOIDAL))
 	XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[6], keys[6], "type ~A must be " S_mus_interp_linear " or " S_mus_interp_sinusoidal ".");
     }
-  ge = mus_make_locsig(degree, distance, reverb, out_chans, outp, revp, type);
+  ge = mus_make_locsig(degree, distance, reverb, out_chans, outp, rev_chans, revp, type);
   if (ge)
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
@@ -4786,8 +4832,8 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
       if (out_chans > 0)
 	gn->vcts[G_LOCSIG_DATA] = xen_make_vct_wrapper(out_chans, mus_data((mus_any *)ge));
       else gn->vcts[G_LOCSIG_DATA] = XEN_UNDEFINED;
-      if ((revp) && (mus_channels(revp) > 0))
-	gn->vcts[G_LOCSIG_REVDATA] = xen_make_vct_wrapper(mus_channels(revp), mus_xcoeffs((mus_any *)ge));
+      if (rev_chans > 0)
+	gn->vcts[G_LOCSIG_REVDATA] = xen_make_vct_wrapper(rev_chans, mus_xcoeffs((mus_any *)ge));
       else gn->vcts[G_LOCSIG_REVDATA] = XEN_UNDEFINED;
       if (gn->nvcts == 4)
 	{
