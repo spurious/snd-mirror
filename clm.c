@@ -104,8 +104,6 @@ static Float sampling_rate = MUS_DEFAULT_SAMPLING_RATE;
 static Float w_rate = (TWO_PI / MUS_DEFAULT_SAMPLING_RATE);
 
 
-/* TODO: doc test fudge and prev returns */
-
 static Float float_equal_fudge_factor = 0.0000001;
 Float mus_float_equal_fudge_factor(void) {return(float_equal_fudge_factor);}
 Float mus_set_float_equal_fudge_factor(Float val) 
@@ -5453,7 +5451,11 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
    * return Float at samp (frame) 
    */
   rdin *gen = (rdin *)ptr;
-  if ((samp < 0) || (samp >= gen->file_end)) return(0.0);
+  if ((samp < 0) || 
+      (samp >= gen->file_end) ||
+      (chan >= gen->chans))
+    return(0.0);
+
   if ((samp > gen->data_end) || 
       (samp < gen->data_start))
     {

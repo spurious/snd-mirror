@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [497]
-;;;  test 1: defaults                           [1075]
-;;;  test 2: headers                            [1277]
-;;;  test 3: variables                          [1583]
-;;;  test 4: sndlib                             [2239]
-;;;  test 5: simple overall checks              [4655]
-;;;  test 6: vcts                               [12156]
-;;;  test 7: colors                             [12471]
-;;;  test 8: clm                                [12977]
-;;;  test 9: mix                                [22236]
-;;;  test 10: marks                             [25884]
-;;;  test 11: dialogs                           [26772]
-;;;  test 12: extensions                        [27066]
-;;;  test 13: menus, edit lists, hooks, etc     [27520]
-;;;  test 14: all together now                  [29069]
-;;;  test 15: chan-local vars                   [30144]
-;;;  test 16: regularized funcs                 [31474]
-;;;  test 17: dialogs and graphics              [35890]
-;;;  test 18: enved                             [35979]
-;;;  test 19: save and restore                  [35999]
-;;;  test 20: transforms                        [37836]
-;;;  test 21: new stuff                         [39669]
-;;;  test 22: run                               [40669]
-;;;  test 23: with-sound                        [46327]
-;;;  test 24: user-interface                    [48468]
-;;;  test 25: X/Xt/Xm                           [52084]
-;;;  test 26: Gtk                               [56672]
-;;;  test 27: GL                                [60789]
-;;;  test 28: errors                            [60913]
-;;;  test 29: Common Music                      [63024]
-;;;  test all done                              [63066]
+;;;  test 0: constants                          [506]
+;;;  test 1: defaults                           [1084]
+;;;  test 2: headers                            [1286]
+;;;  test 3: variables                          [1592]
+;;;  test 4: sndlib                             [2248]
+;;;  test 5: simple overall checks              [4664]
+;;;  test 6: vcts                               [12165]
+;;;  test 7: colors                             [12480]
+;;;  test 8: clm                                [12986]
+;;;  test 9: mix                                [22269]
+;;;  test 10: marks                             [25917]
+;;;  test 11: dialogs                           [26805]
+;;;  test 12: extensions                        [27099]
+;;;  test 13: menus, edit lists, hooks, etc     [27553]
+;;;  test 14: all together now                  [29102]
+;;;  test 15: chan-local vars                   [30177]
+;;;  test 16: regularized funcs                 [31507]
+;;;  test 17: dialogs and graphics              [35923]
+;;;  test 18: enved                             [36012]
+;;;  test 19: save and restore                  [36032]
+;;;  test 20: transforms                        [37869]
+;;;  test 21: new stuff                         [39702]
+;;;  test 22: run                               [40702]
+;;;  test 23: with-sound                        [46380]
+;;;  test 24: user-interface                    [48754]
+;;;  test 25: X/Xt/Xm                           [52370]
+;;;  test 26: Gtk                               [56958]
+;;;  test 27: GL                                [61075]
+;;;  test 28: errors                            [61199]
+;;;  test 29: Common Music                      [63310]
+;;;  test all done                              [63352]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -48742,11 +48742,78 @@ EDITS: 1
 	    (if (< (car (sound-data-maxamp v1)) .6) 
 		(snd-display ";3 rev with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
 
+
+      (let ((oldopt (optimization)))
+	(for-each
+	 (lambda (n)
+	   (set! (optimization) n)
+	   (let ((v1 (with-sound (:output (make-vct 44100))
+				 (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0)))
+		 (v2 (with-sound (:output (make-vct 400))
+				 (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0)))
+		 (v3 (with-sound (:output (make-vct 400))
+				 (simple-outn 0 .1 440 0.0 .5 0.0 0.0 0.0 0.0)))
+		 (v4 (with-sound (:output (make-vct 44100) :reverb jc-reverb)
+				 (simple-outn 0 .1 440 0.2 0.0 0.0 0.0 0.05 0.0)))
+		 (v5 (with-sound (:output (make-vct 44100) :reverb simple-in-rev :reverb-data '(0.0 1.0 1.0 0.0))
+				 (simple-outn 0 .1 440 0.0 0.0 0.0 0.0 0.5 0.0)))
+		 (v6 (with-sound (:output (make-vct 400))
+				 (simple-outn 0 .1 440 0.5 0.0 0.0 0.0 0.0 0.0)
+				 (simple-outn 0 .1 440 0.2 0.0 0.0 0.0 0.0 0.0)))
+		 (sd1 (with-sound (:output (make-sound-data 1 44100))
+				  (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0)))
+		 (sd2 (with-sound (:output (make-sound-data 4 44100))
+				  (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0)))
+		 (sd3 (with-sound (:output (make-sound-data 2 44100))
+				  (simple-outn 0 .1 440 0.0 0.0 .3 .4 0.0 0.0)))
+		 (sd4 (with-sound (:output (make-sound-data 4 44100) :reverb simple-in-rev :reverb-channels 2 :reverb-data '(0.0 1.0 1.0 1.0))
+				  (simple-outn 0 .1 440 0.0 0.0 0.0 0.0 0.5 0.25)))
+		 (sd5 (with-sound (:output (make-sound-data 4 44100) :reverb simple-in-rev :reverb-channels 1 :reverb-data '(0.0 1.0 1.0 1.0))
+				  (simple-outn 0 .1 440 0.0 0.0 0.0 0.0 0.5 0.25)))
+		 (sd6 (with-sound (:output (make-sound-data 4 44100))
+				  (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0)
+				  (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0))))
+	     (if (fneq (vct-peak v1) 0.1) (snd-display ";outa tests 1 ~A: ~A" n (vct-peak v1)))
+	     (if (fneq (vct-peak v2) 0.1) (snd-display ";outa tests 2 ~A: ~A" n (vct-peak v2)))
+	     (if (fneq (vct-peak v3) 0.0) (snd-display ";outa tests 3 ~A: ~A" n (vct-peak v3)))
+	     (if (< (vct-peak v4) 0.2) (snd-display ";outa tests 4 ~A: ~A" n (vct-peak v4)))
+	     (if (fneq (vct-peak v5) 0.5) (snd-display ";outa tests 5 ~A: ~A" n (vct-peak v5)))
+	     (if (fneq (vct-peak v6) 0.7) (snd-display ";outa tests 11 ~A: ~A" n (vct-peak v6)))
+	     
+	     (let ((mx1 (sound-data-maxamp sd1)))
+	       (if (not (feql mx1 (list .1))) (snd-display ";outa tests 6 ~A: ~A" n mx1)))	  
+	     (let ((mx2 (sound-data-maxamp sd2)))
+	       (if (not (feql mx2 (list .1 .2 .3 .4))) (snd-display ";outa tests 7 ~A: ~A" n mx2)))
+	     (let ((mx3 (sound-data-maxamp sd3)))
+	       (if (not (feql mx3 (list 0.0 0.0))) (snd-display ";outa tests 8 ~A: ~A" n mx3)))
+	     (let ((mx4 (sound-data-maxamp sd4)))
+	       (if (not (feql mx4 (list 0.5 0.25 0.0 0.0))) (snd-display ";outa tests 9 ~A: ~A" n mx4)))
+	     (let ((mx5 (sound-data-maxamp sd5)))
+	       (if (not (feql mx5 (list 0.5 0.0 0.0 0.0))) (snd-display ";outa tests 10 ~A: ~A" n mx5)))
+	     (let ((mx6 (sound-data-maxamp sd6)))
+	       (if (not (feql mx6 (list .2 .4 .6 .8))) (snd-display ";outa tests 12 ~A: ~A" n mx6)))
+	     
+	     (with-sound (:output v1 :continue-old-file #t)
+			 (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0))
+	     (if (fneq (vct-peak v1) 0.2) (snd-display ";outa tests 13 ~A: ~A" n (vct-peak v1)))
+	     
+	     (with-sound (:output sd2 :continue-old-file #t)
+			 (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0))
+	     (let ((mx7 (sound-data-maxamp sd2)))
+	       (if (not (feql mx7 (list .2 .4 .6 .8))) (snd-display ";outa tests 14 ~A: ~A" n mx7)))))
+	 (list 0 6))
+	(set! (optimization) oldopt))
+      
+      
+      ;; TODO: test nested vct/sd/file choices 
+      ;; TODO: output->file but reverb->vct/sd?
+      ;; TODO: test clm23 ins etc explicitly
       
       (if (not (null? (sounds))) (for-each close-sound (sounds)))
       
       (run-hook after-test-hook 23)
       ))
+
 (set! (optimization) old-opt-23)
 
 

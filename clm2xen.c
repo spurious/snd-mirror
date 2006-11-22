@@ -4166,12 +4166,16 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
   /* adds to existing! */
   pos = XEN_TO_C_OFF_T(frame);
   inv = XEN_TO_C_DOUBLE(val);
+  chn = XEN_TO_C_INT(chan);
   if (MUS_VCT_P(outp))
     {
-      vct *v;
-      v = xen_to_vct(outp);
-      if (pos < v->length)
-	v->data[pos] += inv;
+      if (chn == 0)
+	{
+	  vct *v;
+	  v = xen_to_vct(outp);
+	  if (pos < v->length)
+	    v->data[pos] += inv;
+	}
     }
   else
     {
@@ -4179,7 +4183,6 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
 	{
 	  sound_data *sd;
 	  sd = (sound_data *)XEN_OBJECT_REF(outp);
-	  chn = XEN_TO_C_INT(chan);
 	  if ((chn < sd->chans) &&
 	      (pos < sd->length))
 	    sd->data[chn][pos] += inv;

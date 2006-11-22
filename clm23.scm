@@ -59,6 +59,21 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (oscil os)) 0 *output*))))))
 
+(define (simple-outn beg dur freq ampa ampb ampc ampd reva revb)
+  (let* ((os (make-oscil freq))
+	 (start (inexact->exact (floor (* beg (mus-srate)))))
+	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (let ((val (oscil os)))
+	   (if (> ampa 0.0) (outa i (* ampa val) *output*))
+	   (if (> ampb 0.0) (outb i (* ampb val) *output*))
+	   (if (> ampc 0.0) (outc i (* ampc val) *output*))
+	   (if (> ampd 0.0) (outd i (* ampd val) *output*))
+	   (if (> reva 0.0) (outa i (* reva val) *reverb*))
+	   (if (> revb 0.0) (outb i (* revb val) *reverb*))))))))
+
 (define (simple-ssb beg dur freq amp)
   (let* ((os (make-ssb-am freq))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
@@ -637,6 +652,15 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (in-any ctr 0 fil)) 0 *output*)
 	 (set! ctr (+ ctr 1)))))))
+
+(define (simple-in-rev beg dur ampa ampb)
+  (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
+	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (if (> ampa 0.0) (outa i (* ampa (ina i *reverb*)) *output*))
+	 (if (> ampb 0.0) (outb i (* ampb (inb i *reverb*)) *output*)))))))
 
 (define (simple-f2s beg dur amp file)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))

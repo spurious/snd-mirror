@@ -1925,7 +1925,7 @@ static XEN sound_data_chans(XEN obj)
   return(C_TO_XEN_INT(sd->chans));
 }
 
-static XEN sound_data_fill(XEN obj, XEN val)
+static XEN g_rb_sound_data_fill(XEN obj, XEN val)
 {
   sound_data *sd;
   Float filler;
@@ -1998,18 +1998,18 @@ void mus_sndlib_xen_initialize(void)
   Init_Hook();
   rb_include_module(sound_data_tag, rb_mComparable);
   rb_include_module(sound_data_tag, rb_mEnumerable);
-  rb_define_method(sound_data_tag, "to_s",   XEN_PROCEDURE_CAST print_sound_data,   0);
-  rb_define_method(sound_data_tag, "eql?",   XEN_PROCEDURE_CAST equalp_sound_data,  1);
-  rb_define_method(sound_data_tag, "==",     XEN_PROCEDURE_CAST equalp_sound_data,  1);
-  rb_define_method(sound_data_tag, "each",   XEN_PROCEDURE_CAST sound_data_each,    0);
-  rb_define_method(sound_data_tag, "<=>",    XEN_PROCEDURE_CAST sound_data_compare, 1);
-  rb_define_method(sound_data_tag, "[]",     XEN_PROCEDURE_CAST g_sound_data_ref,   2);
-  rb_define_method(sound_data_tag, "[]=",    XEN_PROCEDURE_CAST g_sound_data_set,   3);
-  rb_define_method(sound_data_tag, "length", XEN_PROCEDURE_CAST sound_data_size,    0);
-  rb_define_method(sound_data_tag, "size",   XEN_PROCEDURE_CAST sound_data_size,    0);
-  rb_define_method(sound_data_tag, "fill",   XEN_PROCEDURE_CAST sound_data_fill,    1);
-  rb_define_method(sound_data_tag, "dup",    XEN_PROCEDURE_CAST sound_data_dup,     0);
-  rb_define_method(sound_data_tag, "chans",  XEN_PROCEDURE_CAST sound_data_chans,   0);
+  rb_define_method(sound_data_tag, "to_s",   XEN_PROCEDURE_CAST print_sound_data,     0);
+  rb_define_method(sound_data_tag, "eql?",   XEN_PROCEDURE_CAST equalp_sound_data,    1);
+  rb_define_method(sound_data_tag, "==",     XEN_PROCEDURE_CAST equalp_sound_data,    1);
+  rb_define_method(sound_data_tag, "each",   XEN_PROCEDURE_CAST sound_data_each,      0);
+  rb_define_method(sound_data_tag, "<=>",    XEN_PROCEDURE_CAST sound_data_compare,   1);
+  rb_define_method(sound_data_tag, "[]",     XEN_PROCEDURE_CAST g_sound_data_ref,     2);
+  rb_define_method(sound_data_tag, "[]=",    XEN_PROCEDURE_CAST g_sound_data_set,     3);
+  rb_define_method(sound_data_tag, "length", XEN_PROCEDURE_CAST sound_data_size,      0);
+  rb_define_method(sound_data_tag, "size",   XEN_PROCEDURE_CAST sound_data_size,      0);
+  rb_define_method(sound_data_tag, "fill",   XEN_PROCEDURE_CAST g_rb_sound_data_fill, 1);
+  rb_define_method(sound_data_tag, "dup",    XEN_PROCEDURE_CAST sound_data_dup,       0);
+  rb_define_method(sound_data_tag, "chans",  XEN_PROCEDURE_CAST sound_data_chans,     0);
   rb_define_singleton_method(sound_data_tag, "new", XEN_PROCEDURE_CAST g_rb_make_sound_data, 2);
 #endif
 
