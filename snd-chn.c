@@ -7183,7 +7183,7 @@ data and passes it to openGL.  See snd-gl.scm for an example."
 
 static XEN g_channel_data(XEN snd, XEN chn)
 {
-  #define H_channel_data "(" S_channel_data " snd (chn 0)) returns the in-core samples associated with the \
+  #define H_channel_data "(" S_channel_data " snd chn) returns the in-core samples associated with the \
 given channel.  Currently, this must be a channel (sound) created by " S_make_variable_graph "."
   chan_info *cp;
   ASSERT_CHANNEL(S_channel_data, snd, chn, 1);
@@ -7193,6 +7193,10 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
     return(wrap_sound_data(1, cp->samples[0], &(cp->sounds[0]->buffered_data)));
 #else
   {
+    /* actually this can't work.  We expect that anything we write to the channel data (sound-data) object
+     *   will be displayed in the associated variable graph, but in the int mus_sample_t case, the two
+     *   arrays are separate.
+     */
     XEN result;
     sound_data *sd;
     int i, loc;
@@ -7646,7 +7650,7 @@ void g_init_chn(void)
 
   XEN_DEFINE_PROCEDURE(S_variable_graph_p,        g_variable_graph_p_w,       1, 0, 0, H_variable_graph_p);
   XEN_DEFINE_PROCEDURE(S_make_variable_graph,     g_make_variable_graph_w,    1, 3, 0, H_make_variable_graph);
-  XEN_DEFINE_PROCEDURE(S_channel_data,            g_channel_data_w,           1, 1, 0, H_channel_data);
+  XEN_DEFINE_PROCEDURE(S_channel_data,            g_channel_data_w,           0, 2, 0, H_channel_data);
 
   XEN_DEFINE_PROCEDURE(S_graph,                   g_graph_w,                  1, 9, 0, H_graph);
   XEN_DEFINE_PROCEDURE(S_edits,                   g_edits_w,                  0, 2, 0, H_edits);

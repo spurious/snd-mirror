@@ -7,10 +7,8 @@
  */
 
 /* PERHAPS: generic move-sound?
- * TODO: fix ins/ with-sound :output as vct/sound-data (returning obj) {vct-map! examp extensions fade noise pvoc}
- *   (this makes it easy to test individual instruments -- clm23?)
+ * TODO: fix ins -- vct-map! examp extensions fade noise pvoc}
  *   lisp (CL level is already no-op), run.lisp 5271 goes to mus_out_any
- * TODO: need mus-* gen func arg checks in snd-test (mus-channels)
  */
 
 

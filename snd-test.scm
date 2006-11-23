@@ -1,42 +1,41 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [506]
-;;;  test 1: defaults                           [1084]
-;;;  test 2: headers                            [1286]
-;;;  test 3: variables                          [1592]
-;;;  test 4: sndlib                             [2248]
-;;;  test 5: simple overall checks              [4664]
-;;;  test 6: vcts                               [12165]
-;;;  test 7: colors                             [12480]
-;;;  test 8: clm                                [12986]
-;;;  test 9: mix                                [22269]
-;;;  test 10: marks                             [25917]
-;;;  test 11: dialogs                           [26805]
-;;;  test 12: extensions                        [27099]
-;;;  test 13: menus, edit lists, hooks, etc     [27553]
-;;;  test 14: all together now                  [29102]
-;;;  test 15: chan-local vars                   [30177]
-;;;  test 16: regularized funcs                 [31507]
-;;;  test 17: dialogs and graphics              [35923]
-;;;  test 18: enved                             [36012]
-;;;  test 19: save and restore                  [36032]
-;;;  test 20: transforms                        [37869]
-;;;  test 21: new stuff                         [39702]
-;;;  test 22: run                               [40702]
-;;;  test 23: with-sound                        [46380]
-;;;  test 24: user-interface                    [48754]
-;;;  test 25: X/Xt/Xm                           [52370]
-;;;  test 26: Gtk                               [56958]
-;;;  test 27: GL                                [61075]
-;;;  test 28: errors                            [61199]
-;;;  test 29: Common Music                      [63310]
-;;;  test all done                              [63352]
+;;;  test 0: constants                          [504]
+;;;  test 1: defaults                           [1082]
+;;;  test 2: headers                            [1284]
+;;;  test 3: variables                          [1590]
+;;;  test 4: sndlib                             [2246]
+;;;  test 5: simple overall checks              [4662]
+;;;  test 6: vcts                               [12163]
+;;;  test 7: colors                             [12478]
+;;;  test 8: clm                                [12984]
+;;;  test 9: mix                                [22267]
+;;;  test 10: marks                             [25915]
+;;;  test 11: dialogs                           [26803]
+;;;  test 12: extensions                        [27097]
+;;;  test 13: menus, edit lists, hooks, etc     [27551]
+;;;  test 14: all together now                  [29100]
+;;;  test 15: chan-local vars                   [30175]
+;;;  test 16: regularized funcs                 [31505]
+;;;  test 17: dialogs and graphics              [35921]
+;;;  test 18: enved                             [36010]
+;;;  test 19: save and restore                  [36030]
+;;;  test 20: transforms                        [37867]
+;;;  test 21: new stuff                         [39700]
+;;;  test 22: run                               [40700]
+;;;  test 23: with-sound                        [46378]
+;;;  test 24: user-interface                    [48835]
+;;;  test 25: X/Xt/Xm                           [52451]
+;;;  test 26: Gtk                               [57039]
+;;;  test 27: GL                                [61156]
+;;;  test 28: errors                            [61280]
+;;;  test 29: Common Music                      [63391]
+;;;  test all done                              [63433]
+;;;  test the end                               [63626]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
-
-;;; TODO: there are no direct tests of channel-data!
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -12132,6 +12131,14 @@ EDITS: 5
 
 	  (let ((ind0 (open-sound "oboe.snd"))
 		(ind1 (open-sound "pistol.snd")))
+
+	    (let ((clip (channel-clipped? ind0 0)))
+	      (if clip (snd-display ";channel-clipped? oboe.snd -> ~A" clip)))
+	    (scale-to 1.5 ind0 0)
+	    (let ((clip (channel-clipped? ind0 0)))
+	      (if (not (equal? clip (list #t 4503))) (snd-display ";channel-clipped after scale: ~A" clip)))
+	    (revert-sound ind0)
+
 	    (ramp-channel 0.0 1.0 0 #f ind1 0)
 	    (ramp-channel 0.0 1.0 0 #f ind1 0)
 	    (ramp-channel 0.0 1.0 0 #f ind1 0)
@@ -48571,11 +48578,11 @@ EDITS: 1
 	 ;; testing overwrites here -- just hope we don't crash...
 	 (let ((v1 (with-sound (:output (make-vct 20) :channels 1)
 			       (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
-	   (if (fneq (vct-ref v1 0) 0.0) (snd-display "overwrite vct with-sound: ~A (~A)" (vct-ref v1 0) (vct-peak v1))))
+	   (if (fneq (vct-ref v1 0) 0.0) (snd-display ";overwrite vct with-sound: ~A (~A)" (vct-ref v1 0) (vct-peak v1))))
 	 
 	 (let ((v1 (with-sound (:output (make-vct 20) :channels 4)
 			       (fm-violin 0 .1 440 .1 :degree 45 :random-vibrato-amplitude 0.0))))
-	   (if (fneq (vct-ref v1 0) 0.0) (snd-display "overwrite vct with-sound (4): ~A (~A)" (vct-ref v1 0) (vct-peak v1))))
+	   (if (fneq (vct-ref v1 0) 0.0) (snd-display ";overwrite vct with-sound (4): ~A (~A)" (vct-ref v1 0) (vct-peak v1))))
 	 
 	 (let ((v1 (with-sound (:output (make-sound-data 4 20) :channels 4)
 			       (fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
@@ -48583,7 +48590,7 @@ EDITS: 1
 			       (fm-violin 0 .1 440 .3 :degree 180 :random-vibrato-amplitude 0.0)
 			       (fm-violin 0 .1 440 .4 :degree 270 :random-vibrato-amplitude 0.0))))
 	   (do ((i 0 (1+ i))) ((= i 4))
-	     (if (fneq (sound-data-ref v1 i 0) 0.0) (snd-display "overwrite sd ~D with-sound: ~A" i (sound-data-ref v1 i 0)))))
+	     (if (fneq (sound-data-ref v1 i 0) 0.0) (snd-display ";overwrite sd ~D with-sound: ~A" i (sound-data-ref v1 i 0)))))
 	 
 	 (let ((v1 (with-sound (:output (make-sound-data 2 20) :channels 4)
 			       (fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
@@ -48591,7 +48598,7 @@ EDITS: 1
 			       (fm-violin 0 .1 440 .3 :degree 180 :random-vibrato-amplitude 0.0)
 			       (fm-violin 0 .1 440 .4 :degree 270 :random-vibrato-amplitude 0.0))))
 	   (do ((i 0 (1+ i))) ((= i 2))
-	     (if (fneq (sound-data-ref v1 i 0) 0.0) (snd-display "overwrite sd (2) ~D with-sound: ~A" i (sound-data-ref v1 i 0)))))
+	     (if (fneq (sound-data-ref v1 i 0) 0.0) (snd-display ";overwrite sd (2) ~D with-sound: ~A" i (sound-data-ref v1 i 0)))))
 	 
 	 (let ((v1 (with-sound (:output (make-sound-data 4 20) :channels 1)
 			       (fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
@@ -48599,7 +48606,7 @@ EDITS: 1
 			       (fm-violin 0 .1 440 .3 :degree 180 :random-vibrato-amplitude 0.0)
 			       (fm-violin 0 .1 440 .4 :degree 270 :random-vibrato-amplitude 0.0))))
 	   (do ((i 0 (1+ i))) ((= i 4))
-	     (if (fneq (sound-data-ref v1 i 0) 0.0) (snd-display "overwrite sd (4) ~D with-sound: ~A" i (sound-data-ref v1 i 0)))))
+	     (if (fneq (sound-data-ref v1 i 0) 0.0) (snd-display ";overwrite sd (4) ~D with-sound: ~A" i (sound-data-ref v1 i 0)))))
 	 )
        (list 0 3 6))
 
@@ -48727,7 +48734,7 @@ EDITS: 1
 	  (if (< (car (sound-data-maxamp v1)) .3) 
 	      (snd-display ";3 rev with-sound -> sound-data fm-violin maxamp (1 opt): ~A" (sound-data-maxamp v1)))
 	  (if (< (cadr (sound-data-maxamp v1)) .3) 
-	      (snd-display "3 ;rev with-sound -> sound-data fm-violin maxamp (2 opt): ~A" (sound-data-maxamp v1)))
+	      (snd-display ";3 rev with-sound -> sound-data fm-violin maxamp (2 opt): ~A" (sound-data-maxamp v1)))
 	  (set! (optimization) 0)
 	  (let ((v2 (with-sound (:output (make-sound-data 2 44100) :revfile (make-sound-data 1 44100) :reverb jc-reverb) 
 				(fm-violin 0 .1 440 .1 :degree 45 :reverb-amount 0.9))))
@@ -48804,11 +48811,48 @@ EDITS: 1
 	 (list 0 6))
 	(set! (optimization) oldopt))
       
-      
-      ;; TODO: test nested vct/sd/file choices 
-      ;; TODO: output->file but reverb->vct/sd?
-      ;; TODO: test clm23 ins etc explicitly
-      
+      (let* ((file (with-sound ()
+		      (fm-violin 0 .1 880 .1 :random-vibrato-amplitude 0.0)
+		      (let ((v1 (with-temp-sound (:output (make-vct 2210))
+				  (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)))
+			    (sd1 (with-temp-sound (:output (make-sound-data 1 2210))
+				  (fm-violin 0 .1 660 .1 :random-vibrato-amplitude 0.0))))
+			(do ((i 0 (1+ i)))
+			    ((= i 2205))
+			  (outa i (+ (vct-ref v1 i) (sound-data-ref sd1 0 i)) *output*)))
+		      (fm-violin 0 .1 220.0 .1 :random-vibrato-amplitude 0.0)))
+	     (ind (find-sound file)))
+	(if (not (sound? ind))
+	    (snd-display ";can't find mixed with-sound output")
+	    (let ((mx (maxamp ind 0)))
+	      (if (< mx .375) (snd-display ";mixed with-sound max: ~A" mx))
+	      (if (not (vequal (channel->vct 1000 10) (vct -0.064 0.025 0.094 0.139 0.167 0.189 0.215 0.238 0.243 0.224)))
+		  (snd-display ";mixed with-sound: ~A" (channel->vct 1000 10)))
+	      (close-sound ind))))
+
+      (let* ((file (with-sound ()
+		     (fm-violin 0 .1 880 .1 :random-vibrato-amplitude 0.0)
+		     (sound-let ((v1 (:output (make-vct 2210))
+				     (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
+				 (sd1 (:output (make-sound-data 1 2210))
+				      (fm-violin 0 .1 660 .1 :random-vibrato-amplitude 0.0))
+				 (fs1 ()
+				      (fm-violin 0 .1 110 .1 :random-vibrato-amplitude 0.0)))
+			(mus-mix *output* fs1)
+			(do ((i 0 (1+ i)))
+			    ((= i 2205))
+			  (outa i (+ (vct-ref v1 i) (sound-data-ref sd1 0 i)) *output*)))
+		     (fm-violin 0 .1 220.0 .1 :random-vibrato-amplitude 0.0)))
+	     (ind (find-sound file)))
+	(if (not (sound? ind))
+	    (snd-display ";can't find mixed with-sound sound-let output")
+	    (let ((mx (maxamp ind 0)))
+	      (if (< mx .375) (snd-display ";mixed with-sound max: ~A" mx))
+	      (if (not (vequal (channel->vct 1000 10) (vct -0.071 0.022 0.095 0.143 0.174 0.199 0.227 0.251 0.257 0.239)))
+		  (snd-display ";mixed with-sound via sound-let: ~A" (channel->vct 1000 10)))
+	      (close-sound ind))))
+
+
       (if (not (null? (sounds))) (for-each close-sound (sounds)))
       
       (run-hook after-test-hook 23)
@@ -63391,8 +63435,8 @@ EDITS: 1
 
 (definstrument (cm-simp beg dur freq amp)
   (let* ((o (make-oscil freq))
-	 (st (inexact->exact (* beg (mus-srate))))
-	 (nd (+ st (inexact->exact (* dur (mus-srate))))))
+	 (st (inexact->exact (round (* beg (mus-srate)))))
+	 (nd (+ st (inexact->exact (round (* dur (mus-srate)))))))
     (run
      (lambda ()
        (do ((i st (1+ i)))
@@ -63410,6 +63454,14 @@ EDITS: 1
 	(if (not (sound? ind)) 
 	    (snd-display ";no result from cm?")
 	    (close-sound ind)))
+
+      (let ((v1 (make-vct 22050)))
+	(events (random-fn 10) (string-append home-dir "/cl/test.clm") 0 :output v1)
+	(if (fneq (vct-peak v1) 0.1) (snd-display ";cm -> vct: ~A" (vct-peak v1))))
+
+      (let ((s1 (make-sound-data 1 22050)))
+	(events (random-fn 10) (string-append home-dir "/cl/test.clm") 0 :output s1)
+	(if (fneq (car (sound-data-maxamp s1)) 0.1) (snd-display ";cm -> sd: ~A" (sound-data-maxamp s1))))
 
       (run-hook after-test-hook 29)))
 
@@ -63608,3 +63660,5 @@ EDITS: 1
     (system "cp memlog memlog.full"))
 
 (if with-exit (exit))
+
+;;; ---------------- test the end

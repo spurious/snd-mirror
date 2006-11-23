@@ -5637,7 +5637,8 @@ this function to draw the little thumbnail graph for each sound icon.
 channel-data provides very low-level access to the data currently in the given channel's sample buffers.
 It is used by the <a href="sndscm.html#variabledisplay">variable-display</a> mechanism to show graphs
 of variable values (normally in an instrument).  channel-data only works with sound indices returned
-by make-variable-display.  See make-variable-display in snd-motif.scm.
+by make-variable-display, and only in a float-sample version of Snd (i.e. not one that was built with
+the configure argument --without-float-samples).  See make-variable-display in snd-motif.scm.  
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -6025,7 +6026,7 @@ The default output (<a class=quiet href="#newsound">new-sound</a>,
 <code><a class=def name="datalocation">data-location</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-This gievs the location (in bytes) of the sound samples in the file represented by <i>snd</i>.  In a raw (headerless) file,
+This gives the location (in bytes) of the sound samples in the file represented by <i>snd</i>.  In a raw (headerless) file,
 this is 0, but normally the data comes after some portion of the header.  
 To get the data-location of some sound file, use <a href="#mussounddatalocation">mus-sound-data-location</a>.
 If you set this field (you don't want to do this -- it is a law of nature that you will forget the original setting!), the underlying file is immediately rewritten.

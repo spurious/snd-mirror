@@ -234,7 +234,7 @@ returning you to the true top-level."
 				  (comment #f)
 				  (verbose *clm-verbose*)
 				  (reverb *clm-reverb*)
-				  (revfile "test.rev")           ; TODO: reverb-output arg
+				  (revfile "test.rev")
 				  (reverb-data *clm-reverb-data*)
 				  (reverb-channels *clm-reverb-channels*)
 				  (continue-old-file #f)
@@ -281,7 +281,7 @@ returning you to the true top-level."
 		 (set! *output* (continue-sample->file output-1))
 		 (set! (mus-srate) (mus-sound-srate output-1))
 		 (let ((ind (find-sound output-1)))
-		   (if ind 
+		   (if (sound? ind)
 		       (close-sound ind))))
 	       (begin
 		 (if (file-exists? output-1) 
@@ -549,7 +549,8 @@ returning you to the true top-level."
      (begin
        (reset-hook! new-sound-hook)
        (add-hook! new-sound-hook (lambda (file)       ; save current sound-let temp file list
-				   (set! temp-files (cons file temp-files))))
+				   (if (string? file) ; try to ignore vcts and sound-data objects
+				       (set! temp-files (cons file temp-files)))))
        (let ((val (let ,(map (lambda (arg) 
 			       (if (> (length arg) 2)
 				                      ; if with-sound, embed with-temp-sound
@@ -558,7 +559,8 @@ returning you to the true top-level."
 			     snds)
 		    ,@body)))                         ; sound-let body
 	 (for-each (lambda (file)                     ; clean up all local temps
-		     (if (file-exists? file)
+		     (if (and (string? file)          ; is it a file? (might be a vct or sound-data object)
+			      (file-exists? file))
 			 (delete-file file)))
 		   temp-files)
 	 (reset-hook! new-sound-hook)                 ; restore old new-sound-hook (should this happen before ,@body?)
@@ -579,7 +581,7 @@ returning you to the true top-level."
 	  (header-type *clm-header-type*)
 	  (data-format *clm-data-format*)
 	  (comment #f)
-	  ;(verbose *clm-verbose*)
+	  ;(verbose *clm-verbose*) ; why is this commented out?
 	  (reverb *clm-reverb*)
 	  (revfile "test.rev")
 	  (reverb-data *clm-reverb-data*)
@@ -591,19 +593,45 @@ returning you to the true top-level."
 	  (to-snd *to-snd*)
 	  (scaled-by #f))
   (let ((old-srate (mus-srate))
-	(start (if statistics (get-internal-real-time))))
-    (if continue-old-file
-	(begin
-	  (set! *output* (continue-sample->file output))
-	  (set! (mus-srate) (mus-sound-srate output))
-	  (if reverb (set! *reverb* (continue-sample->file revfile)))
-	  (let ((ind (find-sound output)))
-	    (if ind (close-sound ind))))
-	(begin
-	  (if (file-exists? output) (delete-file output))
-	  (if (and reverb (file-exists? revfile)) (delete-file revfile))
-	  (set! *output* (make-sample->file output channels data-format header-type comment))
-	  (if reverb (set! *reverb* (make-sample->file revfile reverb-channels data-format header-type)))))
+	(start (if statistics (get-internal-real-time)))
+	(output-to-file (string? output))
+	(reverb-to-file (and reverb (string? revfile))))
+
+
+       (if output-to-file
+	   (if continue-old-file
+	       (begin
+		 (set! *output* (continue-sample->file output))
+		 (set! (mus-srate) (mus-sound-srate output))
+		 (let ((ind (find-sound output)))
+		   (if (sound? ind)
+		       (close-sound ind))))
+	       (begin
+		 (if (file-exists? output) 
+		     (delete-file output))
+		 (set! *output* (make-sample->file output channels data-format header-type comment))))
+	   (begin
+	     (if (not continue-old-file)
+		 (if (vct? output)
+		     (vct-fill! output 0.0)
+		     (sound-data-fill! output 0.0)))
+	     (set! *output* output)))
+
+       (if reverb
+	   (if reverb-to-file
+	       (if continue-old-file
+		   (set! *reverb* (continue-sample->file revfile))
+		   (begin
+		     (if (file-exists? revfile) 
+			 (delete-file revfile))
+		     (set! *reverb* (make-sample->file revfile reverb-channels data-format header-type))))
+	       (begin
+		 (if (not continue-old-file)
+		     (if (vct? revfile)
+			 (vct-fill! revfile 0.0)
+			 (sound-data-fill! revfile 0.0)))
+		 (set! *reverb* revfile))))
+
     (list 'with-sound-data
 	  output
 	  reverb
@@ -629,16 +657,20 @@ returning you to the true top-level."
 	    (scaled-by (list-ref wsd 8))
 	    (play (list-ref wsd 9))
 	    (reverb-data (list-ref wsd 10)))
+
 	(if reverb
 	    (begin
 	      (mus-close *reverb*)
-	      (set! *reverb* (make-file->sample revfile))
+	      (if (string? revfile)
+		  (set! *reverb* (make-file->sample revfile))
+		  (set! *reverb* revfile))
 	      (apply reverb reverb-data)
 	      (mus-close *reverb*)))
 	(mus-close *output*)
+
 	(if statistics
 	    (set! cycles (/ (- (get-internal-real-time) start) 100)))
-	(if to-snd
+	(if (and to-snd (string? output))
 	    (let ((snd-output (open-sound output)))
 	      (set! (sync snd-output) #t)
 	      (if statistics
@@ -654,13 +686,13 @@ returning you to the true top-level."
 			   (if scaled-by
 			       (scale-by scaled-by snd-output)))
 		       (save-sound snd-output)))
-		 ;; TODO: finish-with-sound scaling of vct/sd
 	      (if play (play-and-wait 0 snd-output))
 	      (update-time-graph snd-output)))
 	(set! (mus-srate) old-srate)
 	output)
       (throw 'wrong-type-arg
 	     (list "finish-with-sound" wsd))))
+
 
 (define wsdat-play ; for cm
   (make-procedure-with-setter

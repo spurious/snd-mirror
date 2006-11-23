@@ -2608,9 +2608,10 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 ;;; (sounds->segment-data "/home/bil/test/iowa/sounds/" "iowa.data")
 
 
-;;; TODO: doc/test channel-clipped?
+;;; -------- channel-clipped?
 
 (define* (channel-clipped? :optional snd chn)
+  "(channel-clipped? snd chn) returns #t and a sample number if it finds clipping"
   (let ((last-y 0.0))
     (scan-channel 
      (lambda (y)
