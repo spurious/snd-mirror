@@ -492,7 +492,6 @@
 #define S_sample_reader_p               "sample-reader?"
 #define S_sample_reader_position        "sample-reader-position"
 #define S_samples                       "samples"
-#define S_samples_to_sound_data         "samples->sound-data"
 #define S_sash_color                    "sash-color"
 #define S_save_controls                 "save-controls"
 #define S_save_dir                      "save-dir"

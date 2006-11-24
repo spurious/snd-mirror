@@ -2032,98 +2032,6 @@ static XEN g_abortq(void)
 }
 
 
-static XEN g_samples_to_sound_data(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN sdobj, XEN edpos, XEN sdchan)
-{
-  #define H_samples_to_sound_data "(" S_samples_to_sound_data " (start-samp 0) (samps len) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (sdobj " PROC_FALSE ") (edpos " PROC_FALSE ") (sdobj-chan 0)): \
-return a sound-data object (sdobj if given) containing snd channel chn's data starting at start-samp for samps, \
-reading edit version edpos"
-
-#if 0
-  /* SOMEDAY: this should be moved to scheme (etc samples2sound_data used in play.rb), or snd-edits.c (it doesn't belong in this file!): */
-(define* (samples->sound-data-1 :optional (beg 0) (num #f) (snd #f) (chn #f) (obj #f) (pos #f) (sd-chan 0))
-  (let ((rd (make-sample-reader beg snd chn 1 pos)))
-    (if (sample-reader? rd)
-	(let* ((nd (or num (frames snd chn)))
-	       (len (- nd beg)))
-	  (if (> len 0)
-	      (let ((new-obj (or (and (sound-data? obj) obj)
-				 (make-sound-data 1 len))))
-		(if (< (sound-data-length new-obj) len)
-		    (set! len (sound-data-length new-obj)))
-		(do ((i 0 (1+ i)))
-		    ((= i len))
-		  (sound-data-set! new-obj sd-chan i (rd)))
-		new-obj)
-	      #f))
-	#f)))
-
-(define* (samples->sound-data-2 :optional (beg 0) (num #f) (snd #f) (chn #f) (obj #f) (pos #f) (sd-chan 0))
-  (vct->sound-data 
-   (channel->vct beg num snd chn pos) 
-   (or obj (make-sound-data 1 (or num (frames snd chn)))) 
-   sd-chan))
-#endif
-
-  chan_info *cp;
-  XEN newsd = XEN_FALSE;
-  int i, len, pos, maxlen = 0, loc = NOT_A_GC_LOC;
-  off_t beg;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, S_samples_to_sound_data, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, S_samples_to_sound_data, "a number");
-  ASSERT_CHANNEL(S_samples_to_sound_data, snd_n, chn_n, 3);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sdchan), sdchan, XEN_ARG_7, S_samples_to_sound_data, "an integer");
-  cp = get_cp(snd_n, chn_n, S_samples_to_sound_data);
-  pos = to_c_edit_position(cp, edpos, S_samples_to_sound_data, 6);
-  beg = beg_to_sample(samp_0, S_samples_to_sound_data);
-  maxlen = (int)(cp->samples[pos] - beg);
-  len = XEN_TO_C_INT_OR_ELSE(samps, maxlen);
-  if (len > maxlen) len = maxlen;
-  if (len > 0)
-    {
-      int chn = 0;
-      sound_data *sd;
-      chn = XEN_TO_C_INT_OR_ELSE(sdchan, 0);
-      if (chn < 0)
-	XEN_OUT_OF_RANGE_ERROR(S_samples_to_sound_data, 7, sdchan, "sound-data channel ~A < 0?");
-      if (sound_data_p(sdobj))
-	sd = (sound_data *)XEN_OBJECT_REF(sdobj);
-      else
-	{
-	  newsd = make_sound_data(chn + 1, len);
-	  loc = snd_protect(newsd);
-	  sd = (sound_data *)XEN_OBJECT_REF(newsd);
-	  if ((sd->data == NULL) || (sd->data[chn] == NULL))
-	    {
-	      XEN_ERROR(XEN_ERROR_TYPE("memory-error"),
-			XEN_LIST_2(C_TO_XEN_STRING(S_samples_to_sound_data), 
-				   C_TO_XEN_STRING("can't allocate memory for sound_data!")));
-	    }
-	}
-      if (chn < sd->chans)
-	{
-	  snd_fd *sf;
-	  if (len > sd->length) len = sd->length;
-	  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
-	  if (sf)
-	    {
-	      for (i = 0; i < len; i++) 
-		sd->data[chn][i] = read_sample_to_float(sf);
-	      sf = free_snd_fd(sf);
-	    }
-	}
-      else 
-	{
-	  if (loc != NOT_A_GC_LOC) snd_unprotect_at(loc);
-	  XEN_OUT_OF_RANGE_ERROR(S_samples_to_sound_data, 7, sdchan, "sound-data channel ~A > available chans");
-	}
-    }
-  if (loc != NOT_A_GC_LOC) snd_unprotect_at(loc);
-  if (XEN_NOT_FALSE_P(newsd))
-    return(newsd);
-  return(sdobj);
-}
-
-
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_save_state_file_w, g_save_state_file)
 XEN_NARGIFY_1(g_set_save_state_file_w, g_set_save_state_file)
@@ -2198,7 +2106,6 @@ XEN_ARGIFY_2(g_print_dialog_w, g_print_dialog)
 XEN_NARGIFY_0(g_preferences_dialog_w, g_preferences_dialog)
 XEN_NARGIFY_0(g_abort_w, g_abort)
 XEN_NARGIFY_0(g_abortq_w, g_abortq)
-XEN_ARGIFY_7(g_samples_to_sound_data_w, g_samples_to_sound_data)
 #else
 #define g_save_state_file_w g_save_state_file
 #define g_set_save_state_file_w g_set_save_state_file
@@ -2273,7 +2180,6 @@ XEN_ARGIFY_7(g_samples_to_sound_data_w, g_samples_to_sound_data)
 #define g_preferences_dialog_w g_preferences_dialog
 #define g_abort_w g_abort
 #define g_abortq_w g_abortq
-#define g_samples_to_sound_data_w g_samples_to_sound_data
 #endif
 
 void g_init_main(void)
@@ -2409,5 +2315,4 @@ the hook functions return " PROC_TRUE ", the save state process opens 'filename'
   XEN_DEFINE_PROCEDURE(S_preferences_dialog,    g_preferences_dialog_w,    0, 0, 0, H_preferences_dialog);
   XEN_DEFINE_PROCEDURE(S_abort,                 g_abort_w,                 0, 0, 0, H_abort);
   XEN_DEFINE_PROCEDURE(S_c_g,                   g_abortq_w,                0, 0, 0, H_abortQ);
-  XEN_DEFINE_PROCEDURE(S_samples_to_sound_data, g_samples_to_sound_data_w, 0, 7, 0, H_samples_to_sound_data);
 }

@@ -40,8 +40,8 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #f)
-(define all-args #f) ; extended testing
+(define keep-going #t)
+(define all-args #t) ; extended testing
 
 (if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (display ";both switches are on?"))
 
@@ -494,7 +494,7 @@
 	  (if (not (provided? 'snd-gtk-popup.scm)) (load "gtk-popup.scm")))))
 
 (if (not (provided? 'snd-snd7.scm)) (load "snd7.scm")) ; forward-graph
-(if (not (provided? 'snd-snd8.scm)) (load "snd8.scm")) ; make-ppolar|zpolar
+(if (not (provided? 'snd-snd8.scm)) (load "snd8.scm")) ; make-ppolar|zpolar, samples->sound-data
 
 ;(define widvardpy (make-variable-display "do-loop" "i*2" 'graph))
 
@@ -1122,45 +1122,46 @@
 	'amp-control-bounds (cadr (amp-control-bounds)) 8.0
 	'ask-before-overwrite (ask-before-overwrite) #f 
 	'audio-output-device (audio-output-device) 0
+	'audio-output-device (audio-output-device) 0 
 	'auto-resize (auto-resize) #t 
 	'auto-update (auto-update) #f
+	'auto-update-interval (auto-update-interval) 60.0 
+	'beats-per-measure (beats-per-measure) 4
+	'beats-per-minute (beats-per-minute) 60.0
 	'channel-style (channel-style) 1
+	'clipping (clipping) #f 
+	'clm-table-size (clm-table-size) 512
 	'color-cutoff (color-cutoff) 0.003 
 	'color-inverted (color-inverted) #t
 	'color-scale (color-scale) 1.0 
 	'colormap (colormap) good-colormap
 	'contrast-control (without-errors (contrast-control)) 'no-such-sound
-	'contrast-control-bounds (cadr (contrast-control-bounds)) 10.0
 	'contrast-control-amp (contrast-control-amp) 1.0
+	'contrast-control-bounds (cadr (contrast-control-bounds)) 10.0
 	'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
-	'auto-update-interval (auto-update-interval) 60.0 
-	'cursor-update-interval (cursor-update-interval) 0.05
 	'cursor-location-offset (cursor-location-offset) 0
-	'with-tracking-cursor (with-tracking-cursor) #f
 	'cursor-size (cursor-size) 15
 	'cursor-style (cursor-style) cursor-cross
-	'tracking-cursor-style (tracking-cursor-style) cursor-cross
+	'cursor-update-interval (cursor-update-interval) 0.05
 	'dac-combines-channels (dac-combines-channels) #t
 	'dac-size (dac-size) 256 
-	'minibuffer-history-length (minibuffer-history-length) 8
-	'clipping (clipping) #f 
 	'default-output-chans (default-output-chans) 1 
 	'default-output-data-format (default-output-data-format) mus-bshort
-	'default-output-srate (default-output-srate) 22050 
 	'default-output-header-type (default-output-header-type) mus-next
+	'default-output-srate (default-output-srate) 22050 
 	'dot-size (dot-size) 1 
 	'enved-base (enved-base) 1.0 
 	'enved-clip? (enved-clip?) #f 
-	'enved-filter-order (enved-filter-order) 40
+	'enved-envelope (enved-envelope) '()
 	'enved-filter (enved-filter) #t
+	'enved-filter-order (enved-filter-order) 40
 	'enved-in-dB (enved-in-dB) #f 
-	'enved-style (enved-style) envelope-linear
 	'enved-power (enved-power) 3.0
+	'enved-style (enved-style) envelope-linear
 	'enved-target (enved-target) 0 
 	'enved-wave? (enved-wave?) #f 
-	'enved-envelope (enved-envelope) '()
-	'eps-file (eps-file) "snd.eps" 
 	'eps-bottom-margin (eps-bottom-margin) 0.0
+	'eps-file (eps-file) "snd.eps" 
 	'eps-left-margin (eps-left-margin) 0.0
 	'eps-size (eps-size) 1.0
 	'expand-control (without-errors (expand-control)) 'no-such-sound
@@ -1170,45 +1171,50 @@
 	'expand-control-length (expand-control-length) 0.15
 	'expand-control-ramp (expand-control-ramp) 0.4
 	'expand-control? (without-errors (expand-control?)) 'no-such-sound
-	'fft-window-alpha (fft-window-alpha) 0.0 
-	'fft-window-beta (fft-window-beta) 0.0 
 	'fft-log-frequency (fft-log-frequency) #f 
 	'fft-log-magnitude (fft-log-magnitude) #f 
-	'transform-size (transform-size) 512
-	'transform-graph-type (transform-graph-type) 0
 	'fft-window (fft-window) 6 
-	'transform-graph? (without-errors (transform-graph?)) 'no-such-sound
-	'filter-control-in-dB (filter-control-in-dB) #f
+	'fft-window-alpha (fft-window-alpha) 0.0 
+	'fft-window-beta (fft-window-beta) 0.0 
 	'filter-control-coeffs (without-errors (filter-control-coeffs)) 'no-such-sound
 	'filter-control-envelope (without-errors (filter-control-envelope)) 'no-such-sound
+	'filter-control-in-dB (filter-control-in-dB) #f
 	'filter-control-in-hz (filter-control-in-hz) #f
 	'filter-control-order (filter-control-order) 20
 	'filter-control? (without-errors (filter-control?)) 'no-such-sound
 	'graph-cursor (graph-cursor) 34
 	'graph-style (graph-style) graph-lines
+	'graphs-horizontal (graphs-horizontal) #t
+	'grid-density (grid-density) 1.0
 	'html-dir (html-dir) "."
 	'html-program (html-program) "mozilla"
-	'lisp-graph? (without-errors (lisp-graph?)) 'no-such-sound
-	'graphs-horizontal (graphs-horizontal) #t
 	'just-sounds (just-sounds) #f
+	'ladspa-dir (ladspa-dir) #f 
+	'lisp-graph? (without-errors (lisp-graph?)) 'no-such-sound
 	'listener-prompt (listener-prompt) ">" 
-	'max-transform-peaks (max-transform-peaks) 100
+	'log-freq-start (log-freq-start) 32.0	
+	'mark-tag-height (mark-tag-height) 4
+	'mark-tag-width (mark-tag-width) 10
 	'max-regions (max-regions) 16 
+	'max-transform-peaks (max-transform-peaks) 100
 	'min-dB (min-dB) -60.0 
+	'minibuffer-history-length (minibuffer-history-length) 8
+	'mix-tag-height (mix-tag-height) 14
+	'mix-tag-width (mix-tag-width) 6
+	'mix-waveform-height (mix-waveform-height) 20 
+	'mus-array-print-length (mus-array-print-length) 8
 	'mus-clipping (mus-clipping) #f
+	'mus-float-equal-fudge-factor (mus-float-equal-fudge-factor) .0000001
 	'mus-prescaler (mus-prescaler) 1.0
-	'log-freq-start (log-freq-start) 32.0
-	'selection-creates-region (selection-creates-region) #t 
-	'transform-normalization (transform-normalization) normalize-by-channel
-	'view-files-sort (view-files-sort) 0 
+	'optimization (optimization) 0
 	'print-length (print-length) 12 
 	'read-only (without-errors (read-only)) 'no-such-sound
 	'recorder-autoload (recorder-autoload) #f
 	'recorder-buffer-size (recorder-buffer-size) 4096 
 	'recorder-file (recorder-file) "test.snd"
+	'recorder-in-chans (recorder-in-chans) 0
 	'recorder-max-duration (recorder-max-duration) 1000000.0
 	'recorder-out-chans (recorder-out-chans) 2 
-	'recorder-in-chans (recorder-in-chans) 0
 	'recorder-srate (recorder-srate) 22050 
 	'recorder-trigger (recorder-trigger) 0.0
 	'region-graph-style (region-graph-style) graph-lines
@@ -1219,19 +1225,20 @@
 	'reverb-control-scale (without-errors (reverb-control-scale)) 'no-such-sound
 	'reverb-control-scale-bounds (cadr (reverb-control-scale-bounds)) 4.0
 	'reverb-control? (without-errors (reverb-control?)) 'no-such-sound
+	'run-safety (run-safety) 0
 	'save-state-file (save-state-file) "saved-snd.scm" 
+	'selection-creates-region (selection-creates-region) #t 
 	'show-axes (show-axes) 1
-	'show-transform-peaks (show-transform-peaks) #f 
-	'show-indices (show-indices) #f
 	'show-backtrace (show-backtrace) #f
+	'show-controls (show-controls) #f
+	'show-grid (show-grid) #f 
+	'show-indices (show-indices) #f
 	'show-marks (show-marks) #t 
 	'show-mix-waveforms (show-mix-waveforms) #t
 	'show-selection-transform (show-selection-transform) #f 
-	'show-y-zero (show-y-zero) #f 
-	'show-grid (show-grid) #f 
-	'grid-density (grid-density) 1.0
 	'show-sonogram-cursor (show-sonogram-cursor) #f 
-	'show-controls (show-controls) #f
+	'show-transform-peaks (show-transform-peaks) #f 
+	'show-y-zero (show-y-zero) #f 
 	'sinc-width (sinc-width) 10 
 	'spectro-cutoff (spectro-cutoff) 1.0
 	'spectro-hop (spectro-hop) 4 
@@ -1246,34 +1253,29 @@
 	'speed-control-bounds (cadr (speed-control-bounds)) 20.0
 	'sync (without-errors (sync)) 'no-such-sound
 	'temp-dir (temp-dir) #f 
-	'ladspa-dir (ladspa-dir) #f 
-	'tiny-font (tiny-font) (if (provided? 'snd-motif) "6x12" "Monospace 8")
-	'transform-type (transform-type) 0 
-	'optimization (optimization) 0
-	'run-safety (run-safety) 0
-	'clm-table-size (clm-table-size) 512
-	'with-verbose-cursor (with-verbose-cursor) #f
-	'vu-size (vu-size) 1.0 
-	'vu-in-dB (vu-in-dB) #f
-	'wavelet-type (wavelet-type) 0 
-	'time-graph? (without-errors (time-graph?)) 'no-such-sound
 	'time-graph-type (time-graph-type) graph-once
+	'time-graph? (without-errors (time-graph?)) 'no-such-sound
+	'tiny-font (tiny-font) (if (provided? 'snd-motif) "6x12" "Monospace 8")
+	'tracking-cursor-style (tracking-cursor-style) cursor-cross
+	'transform-graph-type (transform-graph-type) 0
+	'transform-graph? (without-errors (transform-graph?)) 'no-such-sound
+	'transform-normalization (transform-normalization) normalize-by-channel
+	'transform-size (transform-size) 512
+	'transform-type (transform-type) 0 
+	'view-files-sort (view-files-sort) 0
+	'view-files-sort (view-files-sort) 0 
+	'vu-in-dB (vu-in-dB) #f
+	'vu-size (vu-size) 1.0 
+	'wavelet-type (wavelet-type) 0 
 	'wavo-hop (wavo-hop) 3 
 	'wavo-trace (wavo-trace) 64 
-	'x-axis-style (x-axis-style) 0 
-	'beats-per-minute (beats-per-minute) 60.0
-	'beats-per-measure (beats-per-measure) 4
-	'zero-pad (zero-pad) 0
-	'zoom-focus-style (zoom-focus-style) 2 
-	'mix-waveform-height (mix-waveform-height) 20 
-	'mix-tag-width (mix-tag-width) 6
-	'mix-tag-height (mix-tag-height) 14
-	'mark-tag-width (mark-tag-width) 10
-	'mark-tag-height (mark-tag-height) 4
 	'with-mix-tags (with-mix-tags) #t
 	'with-relative-panes (with-relative-panes) #t
-	'audio-output-device (audio-output-device) 0 
-	'view-files-sort (view-files-sort) 0
+	'with-tracking-cursor (with-tracking-cursor) #f
+	'with-verbose-cursor (with-verbose-cursor) #f
+	'x-axis-style (x-axis-style) 0 
+	'zero-pad (zero-pad) 0
+	'zoom-focus-style (zoom-focus-style) 2 
 	))
       (if (not *snd-remember-paths*) (snd-display ";*snd-remember-paths*?"))
       (if *snd-opened-sound* (snd-display ";*snd-opened-sound*: ~A" *snd-opened-sound*))
@@ -2168,7 +2170,7 @@
 			 'reverse-sound 'revert-sound 'riemann-window 'right-sample 'ring-modulate
 			 'run 'run-safety 'samaraki-window 'sample 'sample->file
 			 'sample->file? 'sample->frame 'sample-reader-at-end? 'sample-reader-home 'sample-reader-position
-			 'sample-reader? 'samples 'samples->seconds 'samples->sound-data 'sash-color
+			 'sample-reader? 'samples 'samples->seconds 'sash-color
 			 'save-controls 'save-dir 'save-edit-history 'save-envelopes 'save-hook
 			 'save-listener 'save-macros 'save-marks 'save-region 'save-region-dialog
 			 'save-selection 'save-selection-dialog 'save-sound 'save-sound-as 'save-sound-dialog
@@ -13842,25 +13844,7 @@ EDITS: 5
 	     '(1 .5  2 1  3 .5  4 .1  5 .01))))
 
 
-;;; -------- fm-violin->vct
-;;;
-;;; here we're using the keyword stuff in guile/ice-9/optargs.scm
-;;; CLM version is v.ins, C version is in sndlib.html
-;;; a version treating the entire violin as a generator is in fmv.scm.
-
 (if (not (provided? 'snd-v.scm)) (load "v.scm"))
-
-(define (fm-violin->vct . args)
-  (let* ((beg (inexact->exact (floor (* (car args) (srate)))))
-	 (len (inexact->exact (floor (* (cadr args) (srate)))))
-	 (out-data (make-sound-data (channels) len))
-	 (old-output *output*))
-    (set! *output* out-data)
-    (apply fm-violin (append (list 0) (cdr args)))
-    (set! *output* old-output)
-    (do ((i 0 (1+ i)))
-	((= i (channels)))
-      (mix-vct (sound-data->vct out-data i) beg))))
 
 (define (fltit)
   "(fltit) returns a time-varying filter: (map-chan (fltit))"
@@ -21272,7 +21256,7 @@ EDITS: 5
 	    (set! *output* #f)))
 
       (let ((nind (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "this is a comment")))
-	(time (fm-violin->vct 0 1 440 .1))
+	(time (mix-vct (with-temp-sound (:output (make-vct 22050)) (fm-violin 0 1 440 .1)) 0 nind 0))
 	(play-and-wait 0 nind)
 	(save-sound nind)
 	(if (not (sound? nind)) (snd-display ";save sound clobbered ~A?" nind))
@@ -21427,18 +21411,8 @@ EDITS: 5
 	    (vct-fill! v0 0.1)
 	    (array->file "fmv1.snd" v0 12 22050 1)
 	    (vct-fill! v0 0.2)
-	    (array->file "fmv2.snd" v0 12 22050 2)
-	    (file->array "fmv2.snd" 0 0 12 v0)
-	    (if (not (vequal v0 (make-vct 12 0.2)))
-		(let ((rd0 (make-sample-reader 0 "fmv2.snd" 0))
-		      (rd1 (make-sample-reader 0 "fmv2.snd" 1))
-		      (vals '()))
-		  (do ((i 0 (1+ i)))
-		      ((= i 12))
-		    (set! vals (cons (list (list (rd0) (rd1))) vals)))
-		  (free-sample-reader rd0)
-		  (free-sample-reader rd1)
-		  (snd-display ";array->file (0.2) -> ~A [~A]" v0 (reverse vals))))
+	    (array->file "fmv2.snd" v0 12 22050 2) ; who knows what this intends...
+	    (file->array "fmv2.snd" 0 0 12 v0)     ; check deleted here because multichannel array->file is a mistake
 	    (vct-fill! v0 0.3)
 	    (array->file "fmv3.snd" v0 12 22050 4)
 	    (do ((i 0 (1+ i))) ((= i 12)) (vct-set! v0 i (* i .01)))
@@ -40731,101 +40705,6 @@ EDITS: 1
    (lambda ()
      (make-filtered-comb scl size :filter (make-one-zero .4 .6)))))
 
-(define fm-violin-opt
-  (lambda* (startime dur frequency amplitude :key
-		     (fm-index 1.0)
-		     (amp-env '(0 0  25 1  75 1  100 0))
-		     (periodic-vibrato-rate 5.0) 
-		     (random-vibrato-rate 16.0)
-		     (periodic-vibrato-amplitude 0.0025) 
-		     (random-vibrato-amplitude 0.005)
-		     (noise-amount 0.0) 
-		     (noise-freq 1000.0)
-		     (ind-noise-freq 10.0) 
-		     (ind-noise-amount 0.0)
-		     (amp-noise-freq 20.0) 
-		     (amp-noise-amount 0.0)
-		     (gliss-env '(0 0  100 0)) 
-		     (glissando-amount 0.0) 
-		     (fm1-env '(0 1  25 .4  75 .6  100 0))  
-		     (fm2-env '(0 1  25 .4  75 .6  100 0)) 
-		     (fm3-env '(0 1  25 .4  75 .6  100 0))
-		     (fm1-rat 1.0) 
-		     (fm2-rat 3.0)	 
-		     (fm3-rat 4.0)                    
-		     (fm1-index #f) 
-		     (fm2-index #f) 
-		     (fm3-index #f)
-		     (degree 0)
-		     (distance 1.0)
-		     (reverb-amount 0.01)
-		     (base 1.0)
-		     :allow-other-keys)
-	   (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
-		  (len (inexact->exact (floor (* dur (mus-srate)))))
-		  (end (+ beg len))
-		  (frq-scl (hz->radians frequency))
-		  (maxdev (* frq-scl fm-index))
-		  (logfreq (log frequency))
-		  (sqrtfreq (sqrt frequency))
-		  (index1 (or fm1-index (min pi (* maxdev (/ 5.0 logfreq)))))
-		  (index2 (or fm2-index (min pi (* maxdev 3.0 (/ (- 8.5 logfreq) (+ 3.0 (* frequency .001)))))))
-		  (index3 (or fm3-index (min pi (* maxdev (/ 4.0 sqrtfreq)))))
-		  (easy-case (and (zero? noise-amount)
-				  (equal? fm1-env fm2-env)
-				  (equal? fm1-env fm3-env)
-				  (= fm1-rat (floor fm1-rat))
-				  (= fm2-rat (floor fm2-rat))
-				  (= fm3-rat (floor fm3-rat))))
-		  (coeffs (and easy-case
-			       (partials->polynomial
-				(list (inexact->exact fm1-rat) index1
-				      (inexact->exact (floor (/ fm2-rat fm1-rat))) index2
-				      (inexact->exact (floor (/ fm3-rat fm1-rat))) index3))))
-		  (norm (if easy-case 1.0 index1))
-		  (carrier (make-oscil frequency))
-		  (fmosc1 (make-oscil (* fm1-rat frequency)))
-		  (fmosc2 (if easy-case #f (make-oscil (* fm2-rat frequency))))
-		  (fmosc3 (if easy-case #f (make-oscil (* fm3-rat frequency))))
-		  (ampf  (make-env amp-env :scaler amplitude :base base :duration dur))
-		  (indf1 (make-env fm1-env norm :duration dur))
-		  (indf2 (if easy-case #f (make-env fm2-env index2 :duration dur)))
-		  (indf3 (if easy-case #f (make-env fm3-env index3 :duration dur)))
-		  (frqf (make-env gliss-env (* glissando-amount frq-scl) :duration dur))
-		  (pervib (make-triangle-wave periodic-vibrato-rate (* periodic-vibrato-amplitude frq-scl)))
-		  (ranvib (make-rand-interp random-vibrato-rate (* random-vibrato-amplitude frq-scl)))
-		  (fm-noi (if (not (= 0.0 noise-amount))
-			      (make-rand noise-freq (* pi noise-amount))
-			      #f))
-		  (ind-noi (if (and (not (= 0.0 ind-noise-amount)) (not (= 0.0 ind-noise-freq)))
-			       (make-rand-interp ind-noise-freq ind-noise-amount)
-			       #f))
-		  (amp-noi (if (and (not (= 0.0 amp-noise-amount)) (not (= 0.0 amp-noise-freq)))
-			       (make-rand-interp amp-noise-freq amp-noise-amount)
-			       #f))
-					;(locs (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
-		  (data (make-vct (1+ (- end beg)))))
-	     (if (or (not easy-case) ind-noi amp-noi (> noise-amount 0.0))
-		 (vct-map! data
-			   (lambda () 
-			     (let* ((fuzz (if (> noise-amount 0.0) (rand fm-noi) 0.0))
-				    (ind-fuzz (if ind-noi (+ 1.0 (rand-interp ind-noi)) 1.0))
-				    (amp-fuzz (if amp-noi (+ 1.0 (rand-interp amp-noi)) 1.0))
-				    (vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-				    (modulation (if easy-case
-						    (* (env indf1) 
-						       (polynomial coeffs (oscil fmosc1 vib)))
-						    (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-						       (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-						       (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-			       (* (env ampf) amp-fuzz
-				  (oscil carrier (+ vib (* ind-fuzz modulation)))))))
-		 (vct-map! data
-			   (lambda () 
-			     (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-				    (modulation (* (env indf1) (polynomial coeffs (oscil fmosc1 vib)))))
-			       (* (env ampf) (oscil carrier (+ vib modulation))))))))))
-
 (definstrument (test-set-gens)
   (let ((cs (make-sum-of-cosines 5 440.0))
 	(ss (make-sum-of-sines 5 440.0))
@@ -45072,9 +44951,9 @@ EDITS: 1
 	    (t1 0)
 	    (ts '()))
 	(set! (optimization) 0) 
-	(set! t0 (time-it (fm-violin-opt 0 5 440 .1)))
+	(set! t0 (time-it (with-temp-sound (:output (make-vct (inexact->exact (round (* 5 (mus-srate)))))) (fm-violin 0 5 440 .1))))
 	(set! (optimization) max-optimization) 
-	(set! t1 (time-it (fm-violin-opt 0 5 440 .1)))
+	(set! t1 (time-it (with-temp-sound (:output (make-vct (inexact->exact (round (* 5 (mus-srate)))))) (fm-violin 0 5 440 .1))))
 	(set! ts (cons (list "fm vln " (hundred t0) (hundred t1) (inexact->exact (round (safe-divide t0 t1)))) ts))
 	
 	(let ((ind (open-sound "1.snd"))
@@ -46070,7 +45949,6 @@ EDITS: 1
 	      (if (not (equal? val 'mus-error)) (snd-display ";run-safety #f osc: ~A" val)))
 	    (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((os (make-oscil)) (ts (make-table-lookup))) (oscil ts))))) (lambda args (car args)))))
 	      (if (not (equal? val 'mus-error)) (snd-display ";run-safety tbl osc: ~A" val)))
-	    (fm-violin-opt 0 .01 440 .1)
 	    (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((v (make-vct 1))) (vct-ref v 2))))) (lambda args (car args)))))
 	      (if (not (equal? val 'mus-error)) (snd-display ";run-safety vct 2: ~A" val)))
 	    (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((v (make-vct 1))) (vct-ref v 1))))) (lambda args (car args)))))
@@ -61486,7 +61364,7 @@ EDITS: 1
 		     restore-region reverb-control-decay reverb-control-feedback recorder-in-chans
 		     reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
 		     reverse-selection revert-sound right-sample sample sample-reader-at-end?  sample-reader? samples sample-reader-position
-		     samples->sound-data sash-color save-controls ladspa-dir save-dir save-edit-history save-envelopes
+		     sash-color save-controls ladspa-dir save-dir save-edit-history save-envelopes
 		     save-listener save-marks save-region save-selection save-sound save-sound-as
 		     save-state save-state-file scale-by scale-selection-by scale-selection-to scale-to
 		     scan-chan search-procedure select-all select-channel select-sound
@@ -62094,7 +61972,7 @@ EDITS: 1
 			  time-graph-style lisp-graph-style transform-graph-style
 			  left-sample make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region
 			  transform-normalization peak-env-info peaks play play-and-wait position->x position->y reverse-sound
-			  revert-sound right-sample sample samples->sound-data save-sound save-sound-as scan-chan
+			  revert-sound right-sample sample save-sound save-sound-as scan-chan
 			  select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor
 			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle  grid-density
 			  spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-sample
@@ -62121,7 +61999,7 @@ EDITS: 1
 			  time-graph-style lisp-graph-style transform-graph-style
 			  make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region transform-normalization
 			  peak-env-info peaks play play-and-wait position->x position->y reverse-sound right-sample sample
-			  samples->sound-data save-sound-as scan-chan show-axes show-transform-peaks show-marks
+			  save-sound-as scan-chan show-axes show-transform-peaks show-marks
 			  show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
 			  spectro-cutoff spectro-hop spectro-start spectro-x-angle
 			  spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
@@ -62148,7 +62026,7 @@ EDITS: 1
 			  time-graph-style lisp-graph-style transform-graph-style
 			  make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization peak-env-info play
 			  play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample
-			  samples->sound-data save-sound scale-by scale-to show-axes show-transform-peaks
+			  save-sound scale-by scale-to show-axes show-transform-peaks
 			  show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
 			  spectro-cutoff spectro-hop spectro-start spectro-x-angle
 			  spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
@@ -62574,7 +62452,6 @@ EDITS: 1
 		(check-error-tag 'wrong-type-arg (lambda () (read-only (list ind))))
 		(check-error-tag 'wrong-type-arg (lambda () (frames ind (list 0))))
 		(check-error-tag 'wrong-type-arg (lambda () (smooth-sound 0 -10)))
-		(check-error-tag 'out-of-range (lambda () (let ((hi (make-sound-data 1 10))) (samples->sound-data 0 8 #f #f hi #f 2))))
 		(check-error-tag 'cannot-save (lambda () (write-peak-env-info-file ind 0 "/baddy/hi")))
 		(check-error-tag 'bad-arity (lambda () (ptree-channel (lambda (a b c) #f) 0 10 #f #f #f #f (lambda (a) #f))))
 		(check-error-tag 'bad-arity (lambda () (ptree-channel (lambda (a) #f) 0 10 #f #f #f #f (lambda (a b) #f))))
@@ -62734,8 +62611,6 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (set! (graph-style ind 0) -123)))
 		(check-error-tag 'out-of-range (lambda () (env-sound '(0 0 1 1) 0 #f -1.5)))
 		(check-error-tag 'out-of-range (lambda () (xramp-channel 0.0 1.0 -1.6)))
-		(check-error-tag 'no-such-sample (lambda () (samples->sound-data -1)))
-		(check-error-tag 'out-of-range (lambda () (samples->sound-data 0 2 ind 0 (make-sound-data 1 4) 0 -1)))
 		(check-error-tag 'wrong-type-arg (lambda () (set! (samples 0 2) -1)))
 		(check-error-tag 'wrong-type-arg (lambda () (left-sample (list 0))))
 		(check-error-tag 'wrong-type-arg (lambda () (amp-control (list 0))))
@@ -63418,6 +63293,10 @@ EDITS: 1
 (set! vector-0 #f)
 (set! vct-3 #f)
 (set! sound-data-23 #f)
+
+
+(set! (mus-srate) 500)
+(set! *clm-srate* 500)
 
 
 ;;; ---------------- test 29: Common Music ----------------

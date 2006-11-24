@@ -15,6 +15,8 @@
 (use-modules (ice-9 format) (ice-9 optargs))
 (provide 'snd-play.scm)
 
+(if (not (provided? 'snd-snd8.scm)) (load-from-path "snd8.scm")) ; samples->sound-data
+
 (define* (open-play-output :optional out-chans out-srate out-format out-bufsize)
   ;; returns (list audio-fd chans frames)
   (let* ((outchans (or out-chans 1))

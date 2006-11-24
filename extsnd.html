@@ -8062,17 +8062,6 @@ This is settable (as is <a href="#sample">sample</a>) -- see <a href="#setsample
 <tr><td colspan=2 height=18></td></tr>
 
 
-<!-- samples->sound-data -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="samples2sounddata">samples-&gt;sound-data</a> (<i>samp samps snd chn sdobj edpos sdchan</i>)</code>
-</td></tr>
-<tr><td></td><td>
-This is similar to <a href="#channel_to_vct">channel-&gt;vct</a>, but it fills a <a href="#sndsounddata">sound-data</a> object.
-See play.scm.
-</td></tr>
-<tr><td colspan=2 height=18></td></tr>
-
-
 <!-- save-sound -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="savesound">save-sound</a> (<em class=narg>snd</em>)</code>
@@ -8190,12 +8179,6 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 
 (<a class=quiet href="#ptreechannel">ptree-channel</a> (lambda (y data forward) (data y)) 0 (<a class=quiet href="#frames">frames</a>) 0 0 #f #t
 	       (lambda (pos dur) (lambda (y) (* 2.0 y))))
-
-(let ((sd (<a class=quiet href="#samples2sounddata">samples-&gt;sound-data</a>)))
-  (do ((i 0 (1+ i))) 
-      ((= i (<a class=quiet href="#frames">frames</a>)))
-    (<a class=quiet href="#sounddataset">sound-data-set!</a> sd 0 i (* 2.0 (<a class=quiet href="#sounddataref">sound-data-ref</a> sd 0 i))))
-  (set! (<a class=quiet href="#samples">samples</a> 0 (<a class=quiet href="#frames">frames</a>)) (<a class=quiet href="#sounddata2vct">sound-data-&gt;vct</a> sd)))
 
 (let ((flt (<a class=quiet href="#makevct">make-vct</a> 8)))
   (<a class=quiet href="#vctset">vct-set!</a> flt 0 2.0)

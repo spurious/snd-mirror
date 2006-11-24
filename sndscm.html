@@ -7205,7 +7205,7 @@ that were removed from or renamed in earlier versions of Snd (in Ruby, look in e
 <em class=emdef>append-to-minibuffer</em> (msg <i>snd</i>)
 </td></tr>
 <tr><td></td><td>
-appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
+appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer. (snd6.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -7216,6 +7216,7 @@ appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
 </td></tr>
 <tr><td></td><td>
 move the selected channel back (up or left) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
+(snd7.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -7223,7 +7224,7 @@ move the selected channel back (up or left) <i>count</i> graphs (C-x C-o), retur
 <!-- backward-mark -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>backward-mark</em> (<i>count snd chn</i>)</td></tr>
-<tr><td></td><td>move the cursor back <i>count</i> marks (C-j), returning mark id, or #f if none.
+<tr><td></td><td>move the cursor back <i>count</i> marks (C-j), returning mark id, or #f if none. (snd7.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -7231,17 +7232,7 @@ move the selected channel back (up or left) <i>count</i> graphs (C-x C-o), retur
 <!-- backward-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>backward-mix</em> (<i>count snd chn</i>)</td></tr>
-<tr><td width=50><br></td><td>move the cursor back <i>count</i> mix tags (C-x C-j), returning the mix id.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- backward-sample -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>backward-sample</em> (<i>count snd chn</i>)
-</td></tr>
-<tr><td></td><td>
-move back <i>count</i> samples (C-b), return new cursor position.
+<tr><td width=50><br></td><td>move the cursor back <i>count</i> mix tags (C-x C-j), returning the mix id. (snd7.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -7251,7 +7242,7 @@ move back <i>count</i> samples (C-b), return new cursor position.
 <em class=emdef>clear-audio-inputs</em> ()
 </td></tr>
 <tr><td></td><td>
-try to reduce soundcard noise by turning off various inputs (OSS only).
+try to reduce soundcard noise by turning off various inputs (OSS only). (snd6.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -7260,6 +7251,7 @@ try to reduce soundcard noise by turning off various inputs (OSS only).
 <tr><td colspan=2 bgcolor="#f6f8ff"><a class=def name="emacsstylesaveas">emacs-style-save-as</a>
 </td></tr>
 <tr><td></td><td colspan=2>After File:Save-as dialog option, should Snd remain with the current file (#f) or go to the new file (#t).
+(snd7.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -7270,6 +7262,7 @@ try to reduce soundcard noise by turning off various inputs (OSS only).
 </td></tr>
 <tr><td></td><td>
 move the selected channel forward (down or right) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
+(snd7.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -7277,7 +7270,7 @@ move the selected channel forward (down or right) <i>count</i> graphs (C-x C-o),
 <!-- forward-mark -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>forward-mark</em> (<i>count snd chn</i>)</td></tr>
-<tr><td></td><td>move the cursor forward <i>count</i> marks (C-j), returning mark id, or #f if none.
+<tr><td></td><td>move the cursor forward <i>count</i> marks (C-j), returning mark id, or #f if none. (snd7.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -7285,17 +7278,18 @@ move the selected channel forward (down or right) <i>count</i> graphs (C-x C-o),
 <!-- forward-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>forward-mix</em> (<i>count snd chn</i>)</td></tr>
-<tr><td></td><td>move the cursor forward <i>count</i> mix tags (C-x C-j), returning the mix id.
+<tr><td></td><td>move the cursor forward <i>count</i> mix tags (C-x C-j), returning the mix id. (snd7.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
-<!-- forward-sample -->
+<!-- samples->sound-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>forward-sample</em> (<i>count snd chn</i>)
+<em class=emdef>samples-&gt;sound-data</em> (<i>samp samps snd chn sdobj edpos sdchan</i>)
 </td></tr>
 <tr><td></td><td>
-move forward <i>count</i> samples (C-f), return new cursor position.
+This is similar to <a href="extsnd.html#channel_to_vct">channel-&gt;vct</a>, but it fills a <a href="extsnd.html#sndsounddata">sound-data</a> object.
+(snd8.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -7306,7 +7300,7 @@ move forward <i>count</i> samples (C-f), return new cursor position.
 </td></tr>
 <tr><td></td><td>
 return vct struct with the data specified.
-Use <a href="extsnd.html#channel_to_vct">channel-&gt;vct</a> instead.
+Use <a href="extsnd.html#channel_to_vct">channel-&gt;vct</a> instead. (snd7.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -7319,6 +7313,7 @@ Use <a href="extsnd.html#channel_to_vct">channel-&gt;vct</a> instead.
 scales the samples in the given channel between beg and beg + num by scaler.  If the channel argument is omitted,
 <b>scale-sound-by</b> scales the entire sound.  <i>beg</i> defaults to 0; <i>num</i> defaults to the length of the channel.
 <i>snd</i> defaults to the selected sound, and <i>chn</i> to the selected channel.  Unlike scale-by, this ignores the <a class=quiet href="extsnd.html#sync">sync</a> setting.
+(snd7.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -7331,15 +7326,7 @@ scales the samples in the given channel between beg and beg + num by scaler.  If
 normalizes the samples in the given channel between beg and beg + num to norm.  If the channel argument is omitted,
 <b>scale-sound-to</b> normalizes the entire sound.  <i>beg</i> defaults to 0; <i>num</i> defaults to the length of the channel.
 <i>snd</i> defaults to the selected sound, and <i>chn</i> to the selected channel.  Unlike scale-to, this ignores the <a class=quiet href="extsnd.html#sync">sync</a> setting.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- vct->do! -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><em class=emdef>vct-do!</em> (vobj proc)
-</td></tr>
-<tr><td></td><td>
-<code>vobj[i] = (proc i)</code>.  <i>proc</i>'s argument is the loop index.
+(snd7.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -7349,26 +7336,9 @@ normalizes the samples in the given channel between beg and beg + num to norm.  
 </td></tr>
 <tr><td></td><td>A synonym for <a href="extsnd.html#setsamples">set-samples</a>, but you can also pass just a vct as the first argument, or a start
 sample and a vct as the second argument.  Use <a href="extsnd.html#vct_to_channel">vct-&gt;channel</a> instead.
+(snd7.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
-
-
-<!-- vcts->do! -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><em class=emdef>vcts-do!</em> (vobj ... proc)
-</td></tr>
-<tr><td></td><td>
-<code>vobj[vi][i] = (list-ref (proc num i) vi)</code>.  <i>proc</i>'s arguments are the number of vcts
-awaiting values and the loop index.  It should return a list of values.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- vcts->map! -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><em class=emdef>vcts-map!</em> (vobj ... proc)
-</td></tr>
-<tr><td></td><td>
-<code>vobj[vi][i] = (list-ref (proc num) vi)</code>.
-</td></tr>
 
 </table>
 

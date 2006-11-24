@@ -1539,13 +1539,20 @@ static XEN g_mus_error_type_to_string(XEN err)
   return(C_TO_XEN_STRING((char *)mus_error_type_to_string(XEN_TO_C_INT(err))));
 }
 
-/* TODO: array<->file should be changed to vct/sd and at least the chans arg removed */
+/* PERHAPS: vct<->file sound-data<->file sound-data<->channel(s?) -- could be incorporated in samples function
+ *              file->vct examp.scm
+ */
 
 static XEN g_array_to_file(XEN filename, XEN data, XEN len, XEN srate, XEN channels)
 {
   #define H_array_to_file "(" S_array_to_file " filename data len srate channels): write 'data', \
 a vct of interleaved samples, to the sound file 'filename' set up to have the given \
 srate and channels.  'len' samples are written."
+
+  /* this exists for compatibility with the Common Lisp version of CLM. Ideally, we'd get rid
+   *   of it and provide vct<->file and sound-data<->file instead so that the channels aren't
+   *   handled through interleaving.  But that means extensive changes to the Lisp code...
+   */
 
   int olen, samps;
   vct *v;

@@ -3483,7 +3483,7 @@ static char *help_urls[HELP_NAMES_SIZE] = {
   "extsnd.html#samplereaderQ",
   "extsnd.html#samples",
   "clm.html#samples-&gt;seconds",
-  "extsnd.html#samples2sounddata",
+  "sndscm.html#samples2sounddata",
   "extsnd.html#sashcolor",
   "extsnd.html#savecontrols",
   "extsnd.html#savedir",
