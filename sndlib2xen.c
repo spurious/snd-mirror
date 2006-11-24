@@ -1540,7 +1540,6 @@ static XEN g_mus_error_type_to_string(XEN err)
 }
 
 /* TODO: array<->file should be changed to vct/sd and at least the chans arg removed */
-/* TODO: deprecate/remove vct-map! -- put in snd8.snd */
 
 static XEN g_array_to_file(XEN filename, XEN data, XEN len, XEN srate, XEN channels)
 {

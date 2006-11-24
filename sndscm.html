@@ -3986,7 +3986,7 @@ we can get the sound and channel values from these lists.
 
 <!-- channel-clipped? -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="channelclipped">channel-clipped?</A>
+<A class=def NAME="channelclipped">channel-clipped?</A> <code>:optional snd chn</code>
 </td></tr><tr><td></td><td>
 channel-clipped? returns #t and a sample number if it finds clipping in the given channel.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -4753,11 +4753,9 @@ set up; <i>fwidth</i> is the formant resonance width control; <i>ramp-beg</i> an
 <i>ramp-dur</i> set the start point and length of the sweep; <i>bank-dur</i>
 controls how much time is spent in the formant bank before starting or after ending
 the ramp.
-For some reason, when I translated
-cross-fade from CLM, I turned it into a function, rather than an instrument, so
-the fade results are returned in a vct.
 </p>
 <pre>
+    (with-sound () (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
     (<a class=quiet href="extsnd.html#vct_to_channel">vct-&gt;channel</a> (cross-fade 0 1.5 1.0 0 1 0.5 .5 0 1.0 256 2))
 </pre>
 <p>
@@ -4776,6 +4774,7 @@ and a suitably noisy original, strange pitches emerge and submerge.  <i>fsize</i
 <i>lo</i> and <i>hi</i> set the portion of the formant bank that is active during the dissolve.
 </p>
 <pre>
+    (with-sound () (dissolve-fade 0 1 1.0 "oboe.snd" "trumpet.snd" 256 2 0 128))
     (<a class=quiet href="extsnd.html#vct_to_channel">vct-&gt;channel</a> (dissolve-fade 0 2 1 0 1 1024 2 2 #f))
 </pre>
 

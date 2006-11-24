@@ -2,6 +2,7 @@ Snd change log
 
   21-Nov:    sound-data-scale! and sound-data-fill! with vct/sound-data with-sound output.
              mus-float-equal-fudge-factor
+             fade.scm instruments changed to use outa rather than vct-map!
   20-Nov:    generic out-any, in-any, locsig.
   13-Nov:    RF64 headers.
   3-Nov:     mix-name->id, track-name->id (mix.scm, mix.rb).

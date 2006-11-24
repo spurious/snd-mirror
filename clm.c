@@ -7,8 +7,6 @@
  */
 
 /* PERHAPS: generic move-sound?
- * TODO: fix ins -- vct-map! examp extensions fade noise pvoc}
- *   lisp (CL level is already no-op), run.lisp 5271 goes to mus_out_any
  */
 
 

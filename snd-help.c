@@ -511,6 +511,7 @@ void about_snd_help(void)
 \n\
 21-Nov:  sound-data-scale! and sound-data-fill! with vct/sound-data with-sound output.\n\
          mus-float-equal-fudge-factor\n\
+         fade.scm instruments changed to use outa rather than vct-map!\n\
 20-Nov:  generic out-any, in-any, locsig.\n\
 13-Nov:  RF64 headers.\n\
 3-Nov:   mix-name->id, track-name->id (mix.scm, mix.rb).\n\

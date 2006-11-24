@@ -37355,10 +37355,10 @@ EDITS: 1
 					   1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000)))
 		    (snd-display ";make-ramp: ~A" vals))))
 	    (revert-sound ind)
-	    (vct->channel (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
+	    (vct->channel (with-sound (:output (make-vct 44100)) (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2)))
 	    (if (fneq (maxamp) .142) (snd-display ";cross fade maxamp: ~A" (maxamp)))
 	    (revert-sound)
-	    (vct->channel (dissolve-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 512 2 2 #f))
+	    (vct->channel (with-sound (:output (make-vct 44100)) (dissolve-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 512 2 2 #f)))
 	    (let ((new-file-name (file-name ind)))
 	      (close-sound ind)
 	      (if (file-exists? new-file-name) (delete-file new-file-name))))
@@ -40070,6 +40070,8 @@ EDITS: 1
       (set! (wavelet-type) 0)
       (set! (spectro-start) 0.0)
       (set! (spectro-hop) 4)
+      (set! (fft-window-alpha) 0.0)
+      (set! (fft-window-beta) 0.0)
       
       (letrec ((test-sound-func-1
 		(lambda (func name ind-1 ind-2 new-val eq-func leq-func settable channel global)
