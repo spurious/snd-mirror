@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Wed Nov 15 03:45:06 CET 2006
+\ Changed: Fri Nov 24 01:25:20 CET 2006
 
 \ Commentary:
 \ 
@@ -254,13 +254,15 @@ mus-audio-default value *clm-device*
      fth-date ) format
 ;
 
-: times->samples { start dur -- len beg }
+: times->samples ( start dur -- len beg )
+  { start dur }
   start seconds->samples { beg }
   dur seconds->samples { len }
   beg len b+ beg
 ;
 
-: normalize-partials { parts -- parts' }
+: normalize-partials ( parts -- parts' )
+  { parts }
   0.0
   parts length 1 ?do parts i object-ref fabs f+ 2 +loop
   dup f0= if
@@ -591,7 +593,7 @@ set-current
     *output* mus-close drop
     *reverb* if *reverb* mus-close drop then
     old-output old-revout old-decay-time old-srate finish-ws
-    'with-sound-error get-func-name res cadr 2 >list fth-throw
+    #f #f #f fth-raise			\ re-raises the last (catched) exception again
   then
   reverb-xt if
     *reverb* mus-close drop
@@ -599,12 +601,13 @@ set-current
     *reverb* file->sample? unless
       'forth-error '( get-func-name $" cannot open file->sample" _ rev-name ) fth-throw
     then
-    \ compute ws reverb; nip (after fth-catch) drops reverb xt's return value (samps)
-    reverb-data dup empty? unless each end-each then reverb-xt #t nil fth-catch nip ?dup-if { res }
+    \ compute ws reverb
+    reverb-data empty? unless reverb-data each end-each then \ push reverb arguments on stack
+    reverb-xt #t nil fth-catch ?dup-if { res }
       *output* mus-close drop
       *reverb* mus-close drop
       old-output old-revout old-decay-time old-srate finish-ws
-      'with-sound-error get-func-name res cadr 2 >list fth-throw
+      #f #f #f fth-raise		\ re-raises the last (catched) exception again
     then
     *reverb* mus-close drop
   then

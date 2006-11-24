@@ -2,16 +2,21 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Sun Aug 20 00:58:34 CEST 2006
+\ Changed: Sun Nov 19 03:46:44 CET 2006
 
 \ Commentary:
 
+\ src-duration            ( en -- dur )
+\ dolph                   ( n gamma -- im )
+\ dolph-1                 ( n gamma -- im )
+\ down-oct                ( n snd chn -- vct )
+\ stretch-sound-via-dft   ( factor snd chn -- )
+\ 
 \ adsat                   ( size beg dur snd chn -- res )
 \ spike                   ( snd chn -- res )
 \
 \ zero-phase              ( snd chn -- vct )
 \ rotate-phase            ( func snd chn -- vct)
-\ down-oct                ( n snd chn -- vct )
 \ 
 \ butter                  ( gen sig -- res )
 \ make-butter-high-pass   ( freq -- flt )
@@ -25,7 +30,130 @@
 require clm
 require examp
 
-\ ---  "adaptive saturation" -- an effect from sed_sed@my-dejanews.com ---
+\ --- src-duration (see src-channel in extsnd.html) ---
+
+: src-duration { en -- dur }
+  doc" ( envelope -- dur )  \
+Returns the new duration of a sound after using ENVELOPE for time-varying sampling-rate conversion."
+  en  0 object-ref { ex0 }
+  en -2 object-ref { ex1 }
+  ex1 ex0 f- { all-x }
+  0.0 ( dur )
+  en object-length 3 - 0 ?do
+    en i     object-ref { x0 }
+    en i 1 + object-ref { xy0 }
+    en i 2 + object-ref { x1 }
+    en i 3 + object-ref { xy1 }
+    xy0 f0= if 1.0 else xy0 1/f then { y0 }
+    xy1 f0= if 1.0 else xy1 1/f then { y1 }
+    xy0 xy1 f- fabs 0.0001 f< if
+      x1 x0 f- all-x f/ y0 f*
+    else
+      y1 fln y0 fln f-  xy0 xy1 f-  f/  x1 x0 f-  all-x  f/  f*
+    then ( area ) fabs ( dur ) f+
+  2 +loop
+  ( dur )
+;
+
+\ --- Dolph-Chebyshev window ---
+
+\ formula taken from Richard Lyons, "Understanding DSP"
+\ see clm.c for C version (using either GSL's or GCC's complex trig functions)
+
+: dolph { n gamma -- im }
+  doc" ( n gamma -- im )  \
+Produces a Dolph-Chebyshev FFT data window of N points using GAMMA as the window parameter."
+  10.0 gamma f** cacosh n c/ ccosh { alpha }
+  alpha cacosh n c* ccosh 1/c { den }
+  n 0.0 make-vct { rl }
+  n 0.0 make-vct { im }
+  pi n f/ { freq }
+  0.0 { phase }
+  n 0 ?do
+    phase ccos alpha c* cacos n c* ccos den c* { val }
+    rl i  val real-ref vct-set! drop
+    im i  val imag-ref vct-set! drop
+    phase freq f+ to phase
+  loop
+  rl im -1 fft ( rl ) dup vct-peak 1/f vct-scale! ( rl ) n 2/ cycle-start!
+  n 0 ?do im i  rl cycle-ref  vct-set! drop loop
+  im
+;
+
+\ this version taken from Julius Smith's "Spectral Audio..." with
+\ three changes it does the DFT by hand, and is independent of
+\ anything from Snd (fft, vcts etc)
+
+: dolph-1 ( n gamma -- im )
+  { n gamma }
+  10.0 gamma f** cacosh n c/ ccosh { alpha }
+  alpha cacosh n c* ccosh 1/c { den }
+  pi n f/ { freq }
+  half-pi fnegate { phase }
+  -1.0 { mult }
+  n undef make-array map!
+    phase ccos alpha c* cacos n c* ccos den c* mult c* ( val )
+    mult fnegate to mult
+    phase freq f+ to phase
+  end-map { vals }
+  \ now take the DFT
+  0.0 { pk }
+  n undef make-array map!
+    0.0 ( sum )
+    vals each ( val ) 2.0 0+1.0i c*  pi j i * f*  c*  n c/ cexp c* c+ end-each
+    ( sum ) cabs dup pk fmax to pk ( sum )
+  end-map ( w ) map! *key* pk f/ end-map ( w )
+;
+
+\ --- move sound down by n (a power of 2) ---
+
+: down-oct { n snd chn -- v }
+  doc" ( n snd chn -- vct )  Moves a sound down by power of 2 n."
+  snd chn #f frames { len }
+  2.0  len fln 2.0 fln f/ fceil ( pow2 )  f** f>s { fftlen }
+  fftlen 1/f { fftscale }
+  0 fftlen snd chn #f channel->vct { rl1 }
+  fftlen 0.0 make-vct { im1 }
+  rl1 im1 1 fft drop
+  rl1 fftscale vct-scale! drop
+  im1 fftscale vct-scale! drop
+  fftlen n * 0.0 make-vct { rl2 }
+  fftlen n * 0.0 make-vct { im2 }
+  fftlen 1- { kdx }
+  fftlen n * 1- { jdx }
+  fftlen 2/ 0 ?do
+    rl2 i    rl1 i   vct-ref  vct-set! drop
+    rl2 jdx  rl1 kdx vct-ref  vct-set! drop
+    im2 i    im1 i   vct-ref  vct-set! drop
+    im2 jdx  im1 kdx vct-ref  vct-set! drop
+    jdx 1- to jdx
+    kdx 1- to kdx
+  loop
+  rl2 im2 -1 fft
+  rl2 0 n len * snd chn #f $" %s %s" '( n get-func-name ) string-format vct->channel
+;
+
+: stretch-sound-via-dft ( factor snd chn -- )
+  { factor snd chn }
+  snd chn #f frames { n }
+  n f2/ floor f>s { n2 }
+  n factor f* fround f>s { out-n }
+  0 n snd chn #f channel->vct { in-data }
+  out-n 0.0 make-array { fr }
+  two-pi n f/ { freq }
+  n 0 ?do
+    i n2 < if
+      fr i                 freq 0.0-1.0i c* i c* in-data edot-product  array-set!
+    else
+      fr out-n n - 1- i +  freq 0.0-1.0i c* i c* in-data edot-product  array-set!
+    then
+  loop
+  two-pi out-n f/ { freq }
+  out-n 0.0 make-vct map! freq 0.0+1.0i c* i c* fr edot-product n c/ real-ref end-map ( out-data )
+  0 out-n snd chn #f $" %s %s" '( factor get-func-name ) string-format vct->channel drop
+;
+
+\ --- "adaptive saturation" -- an effect from sed_sed@my-dejanews.com ---
 
 hide
 : adsat-cb ( mn mx n vals -- proc; inval self -- res )
@@ -132,34 +260,6 @@ previous
 \ lambda: { x } pi random ; 1 make-proc #f #f rotate-phase \ randomizes phases
 \ lambda: { x } x ;         1 make-proc #f #f rotate-phase \ returns original
 \ lambda: { x } x fnegate ; 1 make-proc #f #f rotate-phase \ reverses original
-
-\ --- move sound down by n (a power of 2) ---
-
-: down-oct { n snd chn -- v }
-  doc" ( n snd chn -- vct )  Moves a sound down by power of 2 n."
-  snd chn #f frames { len }
-  2.0  len fln 2.0 fln f/ fceil ( pow2 )  f** f>s { fftlen }
-  fftlen 1/f { fftscale }
-  0 fftlen snd chn #f channel->vct { rl1 }
-  fftlen 0.0 make-vct { im1 }
-  rl1 im1 1 fft drop
-  rl1 fftscale vct-scale! drop
-  im1 fftscale vct-scale! drop
-  fftlen n * 0.0 make-vct { rl2 }
-  fftlen n * 0.0 make-vct { im2 }
-  fftlen 1- { kdx }
-  fftlen n * 1- { jdx }
-  fftlen 2/ 0 ?do
-    rl2 i    rl1 i   vct-ref  vct-set! drop
-    rl2 jdx  rl1 kdx vct-ref  vct-set! drop
-    im2 i    im1 i   vct-ref  vct-set! drop
-    im2 jdx  im1 kdx vct-ref  vct-set! drop
-    jdx 1- to jdx
-    kdx 1- to kdx
-  loop
-  rl2 im2 -1 fft
-  rl2 0 n len * snd chn #f $" %s %s" '( n get-func-name ) string-format vct->channel
-;
 
 \ --- Butterworth filters (see also further below -- make-butter-lp et al) ---
 \ 
