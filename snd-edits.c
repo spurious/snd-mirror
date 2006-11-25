@@ -8909,8 +8909,8 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edp
   Float *fvals;
   off_t i, len, beg;
   int pos, num_to_read = MIX_FILE_BUFFER_SIZE;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, caller, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, caller, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0) || XEN_FALSE_P(samp_0), samp_0, XEN_ARG_1, caller, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps) || XEN_FALSE_P(samps), samps, XEN_ARG_2, caller, "a number");
   ASSERT_CHANNEL(caller, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, caller);
   if (!cp) return(XEN_FALSE);

@@ -1539,8 +1539,10 @@ static XEN g_mus_error_type_to_string(XEN err)
   return(C_TO_XEN_STRING((char *)mus_error_type_to_string(XEN_TO_C_INT(err))));
 }
 
-/* PERHAPS: vct<->file sound-data<->file sound-data<->channel(s?) -- could be incorporated in samples function
+/* PERHAPS: vct<->file sound-data<->file sound-data<->channel(s?) -- could be incorporated in samples function (insert|change-samples)
  *              file->vct examp.scm
+ *              mix-sound-data  (region|transform|sound->sound-data)
+ *              sound-data->sound-file|string  mix|track->sound-data
  */
 
 static XEN g_array_to_file(XEN filename, XEN data, XEN len, XEN srate, XEN channels)

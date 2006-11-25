@@ -1,37 +1,37 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [504]
-;;;  test 1: defaults                           [1082]
-;;;  test 2: headers                            [1284]
-;;;  test 3: variables                          [1590]
-;;;  test 4: sndlib                             [2246]
-;;;  test 5: simple overall checks              [4662]
-;;;  test 6: vcts                               [12163]
-;;;  test 7: colors                             [12478]
-;;;  test 8: clm                                [12984]
-;;;  test 9: mix                                [22267]
-;;;  test 10: marks                             [25915]
-;;;  test 11: dialogs                           [26803]
-;;;  test 12: extensions                        [27097]
-;;;  test 13: menus, edit lists, hooks, etc     [27551]
-;;;  test 14: all together now                  [29100]
-;;;  test 15: chan-local vars                   [30175]
-;;;  test 16: regularized funcs                 [31505]
-;;;  test 17: dialogs and graphics              [35921]
-;;;  test 18: enved                             [36010]
-;;;  test 19: save and restore                  [36030]
-;;;  test 20: transforms                        [37867]
-;;;  test 21: new stuff                         [39700]
-;;;  test 22: run                               [40700]
-;;;  test 23: with-sound                        [46378]
-;;;  test 24: user-interface                    [48835]
-;;;  test 25: X/Xt/Xm                           [52451]
-;;;  test 26: Gtk                               [57039]
-;;;  test 27: GL                                [61156]
-;;;  test 28: errors                            [61280]
-;;;  test 29: Common Music                      [63391]
-;;;  test all done                              [63433]
-;;;  test the end                               [63626]
+;;;  test 0: constants                          [505]
+;;;  test 1: defaults                           [1083]
+;;;  test 2: headers                            [1287]
+;;;  test 3: variables                          [1593]
+;;;  test 4: sndlib                             [2249]
+;;;  test 5: simple overall checks              [4665]
+;;;  test 6: vcts                               [12174]
+;;;  test 7: colors                             [12489]
+;;;  test 8: clm                                [12995]
+;;;  test 9: mix                                [22274]
+;;;  test 10: marks                             [25922]
+;;;  test 11: dialogs                           [26810]
+;;;  test 12: extensions                        [27104]
+;;;  test 13: menus, edit lists, hooks, etc     [27558]
+;;;  test 14: all together now                  [29107]
+;;;  test 15: chan-local vars                   [30182]
+;;;  test 16: regularized funcs                 [31512]
+;;;  test 17: dialogs and graphics              [35928]
+;;;  test 18: enved                             [36017]
+;;;  test 19: save and restore                  [36037]
+;;;  test 20: transforms                        [37874]
+;;;  test 21: new stuff                         [39707]
+;;;  test 22: run                               [40709]
+;;;  test 23: with-sound                        [46291]
+;;;  test 24: user-interface                    [48769]
+;;;  test 25: X/Xt/Xm                           [52385]
+;;;  test 26: Gtk                               [56973]
+;;;  test 27: GL                                [61090]
+;;;  test 28: errors                            [61214]
+;;;  test 29: Common Music                      [63326]
+;;;  test all done                              [63376]
+;;;  test the end                               [63569]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -40,8 +40,8 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #t)
-(define all-args #t) ; extended testing
+(define keep-going #f)
+(define all-args #f) ; extended testing
 
 (if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (display ";both switches are on?"))
 
@@ -13911,12 +13911,13 @@ EDITS: 5
 	(vct-set! spect i sum)))
     (vct-scale! spect (/ 1.0 mx))))
 
-(define* (print-and-check gen name desc :optional (desc1 ""))
+(define* (print-and-check gen name desc :optional (desc1 "") (desc2 ""))
   (gc)
   (if (not (string=? (mus-name gen) name))
       (snd-display ";mus-name ~A: ~A?" name (mus-name gen)))
   (if (and (not (string=? (mus-describe gen) desc))
-	   (not (string=? (mus-describe gen) desc1)))
+	   (not (string=? (mus-describe gen) desc1))
+	   (not (string=? (mus-describe gen) desc2)))
       (snd-display ";mus-describe ~A: ~A?" (mus-name gen) (mus-describe gen)))
   (let ((egen gen))
     (if (not (equal? egen gen))
@@ -21703,7 +21704,8 @@ EDITS: 5
 	(print-and-check gen 
 			 "ssb-am"
 			 "ssb-am: shift: up, sin/cos: 439.999975 Hz (0.000000 radians), order: 41"
-			 "ssb-am: shift: up, sin/cos: 440.000000 Hz (0.000000 radians), order: 41")
+			 "ssb-am: shift: up, sin/cos: 440.000000 Hz (0.000000 radians), order: 41"
+			 "ssb-am: shift: up, sin/cos: 439.999969 Hz (0.000000 radians), order: 41")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (ssb-am gen 0.0)))
@@ -21990,6 +21992,36 @@ EDITS: 5
 			  12345678901234567890 (log0) (nan)))))
 	       make-procs run-procs)
 	      
+	      (let ((new-wave (make-vct 1)))
+		(for-each 
+		 (lambda (g g1)
+		   (let ((gen (g :wave new-wave)))
+		     (g1 gen 1.0)))
+		 (list make-waveshape make-table-lookup)
+		 (list waveshape table-lookup)))
+
+	      (let ((old-srate (mus-srate))
+		    (old-clm-srate *clm-srate*))
+		(for-each
+		 (lambda (n)
+		   (set! (mus-srate) n)
+		   (set! *clm-srate* n)
+		   (for-each 
+		    (lambda (g name)
+		      (let ((tag (catch #t (lambda () (g :frequency 440.0)) (lambda args (car args)))))
+			(if (not (eq? tag 'out-of-range))
+			    (snd-display ";srate ~A: ~A -> ~A" n name tag))))
+		    (list make-oscil make-asymmetric-fm make-sine-summation make-sum-of-cosines make-sum-of-sines
+			  make-triangle-wave make-square-wave make-pulse-train make-sawtooth-wave
+			  make-rand make-rand-interp)
+		    (list 'oscil 'asymmetric-fm 'sine-summation 'sum-of-cosines 'sum-of-sines
+			  'triangle-wave 'square-wave 'pusle-train 'sawtooth-wave
+			  'rand 'rand-interp)))
+		 (list 100 1))
+
+		(set! (mus-srate) old-srate)
+		(set! *clm-srate* old-clm-srate))
+
 	      (let ((random-args (list 
 				  (expt 2.0 21.5) (expt 2.0 -18.0) 12345678901234567890
 				  1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .1 .2 .3)  '#(0 1) 3/4 (sqrt -1.0) (make-delay 32)
@@ -63295,8 +63327,8 @@ EDITS: 1
 (set! sound-data-23 #f)
 
 
-(set! (mus-srate) 500)
-(set! *clm-srate* 500)
+(set! (mus-srate) 22050)
+(set! *clm-srate* 22050)
 
 
 ;;; ---------------- test 29: Common Music ----------------

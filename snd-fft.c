@@ -1167,12 +1167,6 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
   return(fs);
 }
 
-static int last_size = 0, last_zero = 0;
-static mus_fft_window_t last_wintype = MUS_RECTANGULAR_WINDOW;
-static Float last_beta = 0.0;
-static Float last_alpha = 0.0;
-static Float *last_window = NULL;
-
 static fft_info *make_fft_info(int size, mus_fft_window_t window, Float alpha, Float beta)
 {
   fft_info *fp;
@@ -1234,6 +1228,11 @@ static void one_fft(fft_state *fs)
       fs->data = fp->data;
       if (fs->window == NULL)
 	{
+	  static int last_size = 0, last_zero = 0;
+	  static mus_fft_window_t last_wintype = MUS_RECTANGULAR_WINDOW;
+	  static Float last_beta = 0.0;
+	  static Float last_alpha = 0.0;
+	  static Float *last_window = NULL;
 	  fs->window = (Float *)CALLOC(fs->size, sizeof(Float));
 	  if ((fs->wintype != last_wintype) ||
 	      (fs->size != last_size) ||
@@ -1393,7 +1392,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
   if (cp->fft_changed != FFT_CHANGE_LOCKED)
     cp->fft_changed = FFT_UNCHANGED;
   else cp->fft_changed = FFT_CHANGED;
-  if ((!(cp->graph_transform_p)) || (cp->transform_size <= 1)) return(SONO_QUIT);
+  if ((!(cp->graph_transform_p)) || (cp->transform_size <= 2)) return(SONO_QUIT);
   ap = cp->axis;
   sg->slice = SONO_INIT;
   sg->outer = 0;

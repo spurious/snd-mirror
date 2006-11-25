@@ -23,7 +23,7 @@
    (lambda (val) 1.0)))
 
 
-;;; TODO: retest, rb/fs changes
+;;; TODO: sample->sound-data rb/fs changes
 
 (define* (samples->sound-data :optional (beg 0) (num #f) (snd #f) (chn #f) (obj #f) (pos #f) (sd-chan 0))
   (vct->sound-data 
