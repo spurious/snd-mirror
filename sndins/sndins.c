@@ -4,7 +4,7 @@
  *
  * Author: Michael Scholz <scholz-micha@gmx.de>
  * Created: Sat Jun 07 02:24:46 CEST 2003
- * Changed: Thu Aug 31 22:31:32 CEST 2006
+ * Changed: Thu Nov 23 02:48:27 CET 2006
  *
  * This file is part of Sndins.
  *
@@ -43,7 +43,7 @@
  */
 
 #if HAVE_CONFIG_H
-# include <config.h>
+# include <mus-config.h>
 #endif
 #include <stddef.h>
 #include <stdio.h>
@@ -767,6 +767,7 @@ ins_fm_violin(Float start,
 	      mus_interp_t mode)
 {
   off_t i, beg, len;
+  int out_chans = 1, rev_chans = 0;
   bool vln = true, easy_case = false, modulate = false;
   Float frq_scl = 0.0, maxdev = 0.0, index1 = 0.0, index2 = 0.0, index3 = 0.0, vib = 0.0;
   Float logfrq = 0.0, sqrtfrq = 0.0, norm = 0.0, mod = 0.0;
@@ -874,7 +875,12 @@ ins_fm_violin(Float start,
   if (degree == 0.0)
     degree = mus_random(90.0);
 
-  loc = mus_make_locsig(degree, distance, reverb_amount, mus_channels(out), out, rev, mode);
+  if (out)
+    out_chans = mus_channels(out);
+  if (rev)
+    rev_chans = mus_channels(rev);
+  
+  loc = mus_make_locsig(degree, distance, reverb_amount, out_chans, out, rev_chans, rev, mode);
 
   for (i = beg; i < len; i++)
     {
@@ -1389,7 +1395,7 @@ with_sound(:reverb, :jc_reverb, :reverb_data, [:volume, 0.8]) do\n\
 end"
 #else  /* !HAVE_RUBY */
 # if HAVE_FORTH
-#  define H_fm_violin S_fm_violin " ( args -- samps )\n" h_fm_violin_args "\n\
+#  define H_fm_violin S_fm_violin " ( args -- )\n" h_fm_violin_args "\n\
 require clm\n\
 dl-load sndins Init_sndins\n\
 0 1 440 0.2 :fm-index 1.3 ' fm-violin\n\
@@ -1403,7 +1409,11 @@ dl-load sndins Init_sndins\n\
 # endif /* !HAVE_FORTH */
 #endif	/* !HAVE_RUBY */
 
+#if HAVE_FORTH
+static void
+#else
 static XEN
+#endif
 c_fm_violin(XEN args)
 {
 #define V_LAST_KEY 33
@@ -1621,7 +1631,9 @@ c_fm_violin(XEN args)
   if (fm1_del) free(fm1_env);
   if (fm2_del) free(fm2_env);
   if (fm3_del) free(fm3_env);
+#if !HAVE_FORTH
   return C_TO_XEN_INT(result);
+#endif
 }
 
 #define INS_REVERB_MSG(caller, in_chans, out_chans)				\
@@ -1649,7 +1661,7 @@ with_sound(:reverb, :jc_reverb, :reverb_data, [:volume, 0.8]) do\n\
 end"
 #else  /* !HAVE_RUBY */
 # if HAVE_FORTH
-#  define H_jc_reverb S_jc_reverb " ( args -- samps )\n" h_jc_reverb_args "\n\
+#  define H_jc_reverb S_jc_reverb " ( args -- )\n" h_jc_reverb_args "\n\
 require clm\n\
 dl-load sndins Init_sndins\n\
 0 1 440 0.2 :fm-index 1.3 ' fm-violin\n\
@@ -1663,7 +1675,11 @@ dl-load sndins Init_sndins\n\
 # endif /* !HAVE_FORTH */
 #endif	/* !HAVE_RUBY */
 
+#if HAVE_FORTH
+static void
+#else
 static XEN
+#endif
 c_jc_reverb(XEN args)
 {
 #define JC_LAST_KEY 8
@@ -1731,7 +1747,9 @@ c_jc_reverb(XEN args)
 			 volume, low_pass, doubled,
 			 delay1, delay2, delay3, delay4,
 			 amp_env, amp_len, out, rev);
+#if !HAVE_FORTH
   return C_TO_XEN_INT(result);
+#endif
 }
 
 #define h_nrev_args "\
@@ -1751,7 +1769,7 @@ with_sound(:reverb, :nrev, :reverb_data, [:lp_coeff, 0.6]) do\n\
 end"
 #else  /* !HAVE_RUBY */
 #if HAVE_FORTH
-#  define H_nrev S_nrev " ( args -- samps )\n" h_nrev_args "\n\
+#  define H_nrev S_nrev " ( args -- )\n" h_nrev_args "\n\
 require clm\n\
 dl-load sndins Init_sndins\n\
 0 1 440 0.7 :fm-index 1.3 ' fm-violin\n\
@@ -1765,7 +1783,11 @@ dl-load sndins Init_sndins\n\
 # endif /* !HAVE_FORTH */
 #endif	/* !HAVE_RUBY */
 
+#if HAVE_FORTH
+static void
+#else
 static XEN
+#endif
 c_nrev(XEN args)
 {
 #define N_LAST_KEY 6
@@ -1828,7 +1850,9 @@ c_nrev(XEN args)
 		    output_scale, volume, amp_env, amp_len, out, rev);
 
   if (amp_del) free(amp_env);
+#if !HAVE_FORTH
   return C_TO_XEN_INT(result);
+#endif
 }
 
 #define h_freeverb_args "\
@@ -1854,7 +1878,7 @@ with_sound(:reverb, :freeverb, :reverb_data, [:room_decay, 0.8]) do\n\
 end"
 #else  /* !HAVE_RUBY */
 #if HAVE_FORTH
-#  define H_freeverb S_freeverb " ( args -- samps )\n" h_freeverb_args "\n\
+#  define H_freeverb S_freeverb " ( args -- )\n" h_freeverb_args "\n\
 require clm\n\
 dl-load sndins Init_sndins\n\
 0 1 440 0.7 ' fm-violin :reverb ' freeverb\n\
@@ -1868,7 +1892,11 @@ dl-load sndins Init_sndins\n\
 # endif /* !HAVE_FORTH */
 #endif	/* !HAVE_RUBY */
 
+#if HAVE_FORTH
+static void
+#else
 static XEN
+#endif
 c_freeverb(XEN args)
 {
 #define F_LAST_KEY 12
@@ -1964,7 +1992,9 @@ c_freeverb(XEN args)
 
   if (comb_del) free(combtuning);
   if (allpass_del) free(allpasstuning);
+#if !HAVE_FORTH
   return C_TO_XEN_INT(result);
+#endif
 }
 
 #ifdef XEN_ARGIFY_1
@@ -1992,10 +2022,17 @@ Init_sndins(void)
   XEN_DEFINE_PROCEDURE(S_make_fcomb, x_make_fcomb, 0, 0, 1, H_make_fcomb);
   XEN_DEFINE_PROCEDURE(S_fcomb,      x_fcomb,      1, 1, 0, H_fcomb);
   XEN_DEFINE_PROCEDURE(S_fcomb_p,    x_fcomb_p,    1, 0, 0, H_fcomb_p);
+#if HAVE_FORTH
+  fth_define_void_procedure(S_fm_violin, x_fm_violin, 0, 0, 1, H_fm_violin);
+  fth_define_void_procedure(S_jc_reverb, x_jc_reverb, 0, 0, 1, H_jc_reverb);
+  fth_define_void_procedure(S_nrev,      x_nrev,      0, 0, 1, H_nrev);
+  fth_define_void_procedure(S_freeverb,  x_freeverb,  0, 0, 1, H_freeverb);
+#else
   XEN_DEFINE_PROCEDURE(S_fm_violin,  x_fm_violin,  0, 0, 1, H_fm_violin);
   XEN_DEFINE_PROCEDURE(S_jc_reverb,  x_jc_reverb,  0, 0, 1, H_jc_reverb);
   XEN_DEFINE_PROCEDURE(S_nrev,       x_nrev,       0, 0, 1, H_nrev);
   XEN_DEFINE_PROCEDURE(S_freeverb,   x_freeverb,   0, 0, 1, H_freeverb);
+#endif
   XEN_YES_WE_HAVE("sndins");
 }
 
