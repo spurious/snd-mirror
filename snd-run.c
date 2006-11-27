@@ -6584,8 +6584,13 @@ static void add_mark_i(int *args, ptree *pt)
   if (cp) 
     {
       mark *m = NULL;
-      m = add_mark(INT_ARG_1, NULL, cp);
-      if (m) INT_RESULT = m->id;
+      INT_RESULT = -1;
+      if ((INT_ARG_1 >= 0) && 
+	  (INT_ARG_1 < CURRENT_SAMPLES(cp)))
+	{
+	  m = add_mark(INT_ARG_1, NULL, cp);
+	  if (m) INT_RESULT = m->id;
+	}
     }
 }
 
@@ -8496,10 +8501,8 @@ static void locsig_3(int *args, ptree *pt)
   else
     {
       mus_locsig(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
-      /* was _0 */
-
       /* now parcel out results based on gn->vcts state and mus_locsig_outf|revf */
-      FLOAT_RESULT = mus_locsig_to_vct_or_sound_data(gn, CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+      FLOAT_RESULT = mus_locsig_or_move_sound_to_vct_or_sound_data(gn, CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3, true);
     }
 }
 
@@ -8511,20 +8514,28 @@ static xen_value *locsig_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- move_sound ---------------- */
+
 static char *descr_move_sound_3(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = move_sound((" CLM_PT ", " INT_PT ", " FLT_PT ")", 
 		    args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
+
 static void move_sound_3(int *args, ptree *pt) 
 {
-  FLOAT_RESULT = mus_move_sound(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+  mus_xen *gn;
+  gn = (mus_xen *)mus_move_sound_closure(CLM_ARG_1); /* skip the gen check in mus_environ */
+  if (!gn)
+    FLOAT_RESULT = mus_move_sound(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+  else
+    {
+      mus_move_sound(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+      FLOAT_RESULT = mus_locsig_or_move_sound_to_vct_or_sound_data(gn, CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3, false);
+    }
 }
+
 static xen_value *move_sound_1(ptree *prog, xen_value **args, int num_args) 
 {
-
-  /* PERHAPS: generalized output here? */
-
   if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, move_sound_check, descr_move_sound_check, args, 1);
   return(package(prog, R_FLOAT, move_sound_3, descr_move_sound_3, args, 3));
 }

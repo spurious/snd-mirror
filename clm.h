@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 29
-#define MUS_DATE "22-Nov-06"
+#define MUS_REVISION 30
+#define MUS_DATE "27-Nov-06"
 
 /*
+ * 27-Nov:     move-sound array access parallel to locsig.
  * 22-Nov:     had to add non-backwards-compatible reverb chans arg to mus_make_locsig.
  * 21-Nov:     mus_float_equal_fudge_factor, mus_arrays_are_equal.
  * 30-July:    renamed average to moving_average.
@@ -607,6 +608,9 @@ mus_any *mus_make_move_sound(off_t start, off_t end, int out_channels, int rev_c
 			     mus_any *doppler_delay, mus_any *doppler_env, mus_any *rev_env,
 			     mus_any **out_delays, mus_any **out_envs, mus_any **rev_envs,
 			     int *out_map, mus_any *output, mus_any *revput, bool free_arrays, bool free_gens);
+mus_any *mus_move_sound_outf(mus_any *ptr);
+mus_any *mus_move_sound_revf(mus_any *ptr);
+void *mus_move_sound_closure(mus_any *ptr);
 
 mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int width, void *closure);
 Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int direction));

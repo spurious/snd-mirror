@@ -6,10 +6,6 @@
  *   a factor of 2.
  */
 
-/* PERHAPS: generic move-sound?
- */
-
-
 #include <mus-config.h>
 
 #if USE_SND
@@ -6237,10 +6233,10 @@ static Float *locsig_data(mus_any *ptr) {return(((locs *)ptr)->outn);}
 static int locsig_channels(mus_any *ptr) {return(((locs *)ptr)->chans);}
 static Float *locsig_xcoeffs(mus_any *ptr) {return(((locs *)ptr)->revn);}
 
-mus_any *mus_locsig_outf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->outf));}
+mus_any *mus_locsig_outf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->outf));}  /* clm2xen.c */
 mus_any *mus_locsig_revf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->revf));}
 
-void *mus_locsig_closure(mus_any *ptr) {return(((locs *)ptr)->closure);}
+void *mus_locsig_closure(mus_any *ptr) {return(((locs *)ptr)->closure);}            /* snd-run.c */
 static void *locsig_set_closure(mus_any *ptr, void *e) {((locs *)ptr)->closure = e; return(e);}
 
 static void locsig_reset(mus_any *ptr)
@@ -6496,6 +6492,7 @@ typedef struct {
   mus_any **out_delays, **out_envs, **rev_envs;
   int *out_map;
   bool free_arrays, free_gens;
+  void *closure;
 } dloc;
 
 static bool move_sound_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
@@ -6503,13 +6500,20 @@ static int move_sound_channels(mus_any *ptr) {return(((dloc *)ptr)->out_channels
 static off_t move_sound_length(mus_any *ptr) {return(((dloc *)ptr)->out_channels);} /* need both because return types differ */
 static void move_sound_reset(mus_any *ptr) {}
 
+mus_any *mus_move_sound_outf(mus_any *ptr) {return((mus_any *)(((dloc *)ptr)->outf));}
+mus_any *mus_move_sound_revf(mus_any *ptr) {return((mus_any *)(((dloc *)ptr)->revf));}
+
+void *mus_move_sound_closure(mus_any *ptr) {return(((dloc *)ptr)->closure);}
+static void *move_sound_set_closure(mus_any *ptr, void *e) {((dloc *)ptr)->closure = e; return(e);}
+
+
 static char *describe_move_sound(mus_any *ptr)
 {
   dloc *gen = (dloc *)ptr;
-  char *dopdly, *dopenv, *revenv;
-  char *outdlys, *outenvs, *revenvs = NULL;
-  char *outmap;
-  char *starts;
+  char *dopdly = NULL, *dopenv = NULL, *revenv = NULL;
+  char *outdlys = NULL, *outenvs = NULL, *revenvs = NULL;
+  char *outmap = NULL;
+  char *starts = NULL;
   static char *allstr = NULL;
   int len;
 
@@ -6656,7 +6660,7 @@ static mus_any_class MOVE_SOUND_CLASS = {
   0, 0,
   &run_move_sound,
   MUS_OUTPUT,
-  NULL,
+  &mus_move_sound_closure,
   &move_sound_channels,
   0, 0, 0, 0,
   0, 0,
@@ -6665,7 +6669,7 @@ static mus_any_class MOVE_SOUND_CLASS = {
   0, 0, 
   0, 0, 0,
   &move_sound_reset,
-  0
+  &move_sound_set_closure
 };
 
 mus_any *mus_make_move_sound(off_t start, off_t end, int out_channels, int rev_channels,
@@ -6689,6 +6693,7 @@ mus_any *mus_make_move_sound(off_t start, off_t end, int out_channels, int rev_c
   gen->start = start;
   gen->end = end;
   gen->out_channels = out_channels;
+  gen->rev_channels = rev_channels;
   gen->doppler_delay = doppler_delay;
   gen->doppler_env = doppler_env;
   gen->rev_env = rev_env;
@@ -6702,19 +6707,14 @@ mus_any *mus_make_move_sound(off_t start, off_t end, int out_channels, int rev_c
   gen->free_arrays = free_arrays;
 
   gen->outf = (mus_frame *)mus_make_empty_frame(out_channels);
-  if (output) gen->outn_writer = output;
+  if (mus_output_p(output)) 
+    gen->outn_writer = output;
 
-  if ((revput) && (rev_channels > 0))
+  if (rev_channels > 0)
     {
-      gen->revn_writer = revput;
+      if (mus_output_p(revput))
+	gen->revn_writer = revput;
       gen->revf = (mus_frame *)mus_make_empty_frame(rev_channels);
-      gen->rev_channels = rev_channels;
-    }
-  else
-    {
-      gen->revn_writer = NULL;
-      gen->rev_channels = 0;
-      gen->revf = NULL;
     }
 
   return((mus_any *)gen);

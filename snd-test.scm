@@ -19834,6 +19834,12 @@ EDITS: 5
       (print-and-check (make-locsig -40 :channels 2)
 		       "locsig"
 		       "locsig: chans 2, outn: [0.000 1.000], interp: linear")
+      (print-and-check (make-locsig 160 :channels 4 :output (make-sound-data 4 10))
+		       "locsig"
+		       "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
+      (print-and-check (make-locsig 0 :channels 1 :output (make-vct 10))
+		       "locsig"
+		       "locsig: chans 1, outn: [1.000], interp: linear")
       (letrec ((locsig-data
 		(lambda (gen)
 		  (let* ((chans (mus-channels gen))
@@ -20229,6 +20235,50 @@ EDITS: 5
 	(if (file-exists? "fmv1.snd") (delete-file "fmv1.snd"))
 	(if (file-exists? "fmv2.snd") (delete-file "fmv2.snd"))
 	(mus-sound-prune))
+
+      (let* ((vo (make-vct 1000))
+	     (gen1 (make-move-sound (list 0 1000 1 0
+					  (make-delay 32) 
+					  (make-env '(0 0 1 1) :end 1000) 
+					  (make-env '(0 0 1 1) :end 1000)
+					  (vector (make-delay 32)) 
+					  (vector (make-env '(0 0 1 1) :end 1000)) 
+					  #f
+					  (vector 0 1))
+				    vo))
+	     (start -1))
+	(do ((i 0 (1+ i)))
+	    ((= i 1000))
+	  (move-sound gen1 i 0.5)
+	  (if (and (< start 0)
+		   (fneq (vct-ref vo i) 0.0))
+	      (set! start i)))
+	(if (not (= start 64))
+	    (snd-display ";move-sound vct output start: ~A" start))
+	(if (fneq (vct-peak vo) 0.484)
+	    (snd-display ";move-sound vct output: ~A" (vct-peak vo))))
+      
+      (let* ((vo (make-sound-data 1 1000))
+	     (gen1 (make-move-sound (list 0 1000 1 0
+					  (make-delay 32) 
+					  (make-env '(0 0 1 1) :end 1000) 
+					  (make-env '(0 0 1 1) :end 1000)
+					  (vector (make-delay 32)) 
+					  (vector (make-env '(0 0 1 1) :end 1000)) 
+					  #f
+					  (vector 0 1))
+				    vo))
+	     (start -1))
+	(do ((i 0 (1+ i)))
+	    ((= i 1000))
+	  (move-sound gen1 i 0.5)
+	  (if (and (< start 0)
+		   (fneq (sound-data-ref vo 0 i) 0.0))
+	      (set! start i)))
+	(if (not (= start 64))
+	    (snd-display ";move-sound sd output start: ~A" start))
+	(if (fneq (apply max (sound-data-maxamp vo)) 0.484)
+	    (snd-display ";move-sound sd output: ~A" (sound-data-maxamp vo))))
       
       
       (let ((gen (make-src :srate 2.0))

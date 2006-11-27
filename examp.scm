@@ -2620,3 +2620,33 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	 (set! last-y y)
 	 result))
      0 #f snd chn)))
+
+#|
+(define* (mark-clipping)
+  (let ((snd (or (selected-sound) 
+		 (and (not (null? (sounds))) 
+		      (car (sounds))))))
+    (if (sound? snd)
+	(do ((chn 0 (1+ chn)))
+	    ((= chn (chans snd)))
+	  (let ((last-y 0.0)
+		(marked #f)
+		(samp 0))
+	    (scan-channel 
+	     (lambda (y)
+	       (let ((clipping (and (>= (abs y) 0.9999)
+				    (>= last-y 0.9999))))
+		 (set! last-y (abs y))
+		 (if (and clipping (not marked))
+		     (begin
+		       (add-mark (1- samp) snd chn)
+		       (set! marked #t))
+		     (if marked
+			 (set! marked (or (> (abs y) 0.9999)
+					  (> last-y 0.9999)))))
+		 (set! samp (1+ samp))
+		 #f)))
+	    (update-time-graph snd chn))))))
+
+(add-to-menu 2 "Show Clipping" (lambda () (mark-clipping)))
+|#

@@ -186,7 +186,7 @@ returning you to the true top-level."
 
 (define *to-snd* #t)
 
-(define *reverb* #f) ; these are sample->file (outa) gens
+(define *reverb* #f) ; these are sample->file (outa) gens, vcts, or sound-data objects
 (define *output* #f)
 (define *clm-delete-reverb* #f) ; should with-sound clean up reverb stream
 
