@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Thu Nov 02 22:15:58 CET 2006
+# Changed: Mon Nov 27 04:45:38 CET 2006
 
 # Commentary:
 #
@@ -124,7 +124,7 @@
 #
 # class Vct
 #  Vct[]
-#  to_sound_data(chn, chns)
+#  to_sound_data(sd, chn)
 #  to_vct
 #  to_vector
 #  apply(func, *rest, &body)
@@ -148,13 +148,14 @@
 # class SoundData
 #  to_vct(chn)
 #  to_a
-#  inspect
 #  length
+#  scale!(scl)
+#  fill!(val)
 #  each(chn)
 #  each_with_index(chn)
 #  map(chn)
 #  map!(chn)
-#  maxamp(chn)
+#  peak
 #
 # mus_a0(gen)
 # set_mus_a0(gen, val)
@@ -317,7 +318,7 @@
 #  zoom_fft(snd, chn, y0, y1)
 #  superimpose_ffts(snd, chn, y0, y1)
 #  locate_zero(limit)
-#  shell(*cmd)
+#  shell(cmd, *rest)
 #
 #  mpg(mpgfile, rawfile)
 #  read_ogg(filename)
@@ -435,6 +436,8 @@
 #
 #  reverse_by_blocks(block_len, snd, chn)
 #  reverse_within_blocks(block_len, snd, chn)
+#  sound2segment_data(main_dir, output_file)
+#  channel_clipped?(snd, chn)
 #  
 # class Moog_filter < Musgen (moog.scm)
 #   initialize(freq, q)
@@ -605,6 +608,17 @@ if provided? :snd
   alias average                         moving_average
   alias average?                        moving_average?
   # *windowed_maxamp -> dsp.rb
+  def samples2sound_data(beg = 0,
+                         num = false,
+                         snd = false,
+                         chn = false,
+                         obj = false,
+                         pos = false,
+                         sd_chan = 0)
+    len = (num or frames(snd, chn))
+    gen = (obj or make_sound_data(1, len))
+    vct2sound_data(channel2vct(beg, len, snd, chn, pos), gen, sd_chan)
+  end
 end
 
 # enum("foo", :bar, "FOO_BAR")
@@ -1297,21 +1311,12 @@ class Vct
   def self.[](*ary)
     self.new(ary.length) do |i| ary[i] end
   end
-
-  # inspect in base classes like Array or Hash use elements' inspect
-  # to show them or write them down.  Vct's to_str seems to be the
-  # best candidate for Vct's inspect.
-  alias vct_inspect inspect
-  alias inspect to_str
   
-  def to_sound_data(chn = 0, sd = 1)
-    assert_type(integer?(chn), chn, 0, "an integer (channel)")
-    assert_type((sound_data?(sd) or integer?(sd)), sd, 1, "a SoundData object or an integer")
-    case sd
-    when Integer
-      vct2sound_data(self, SoundData.new(sd, self.length), chn)
-    when SoundData
+  def to_sound_data(sd = nil, chn = 0)
+    if sound_data?(sd)
       vct2sound_data(self, sd, chn)
+    else
+      vct2sound_data(self)
     end
   end
 
@@ -1489,17 +1494,12 @@ end
 
 class SoundData
   def to_vct(chn = 0)
-    sound_data2vct(self, chn, Vct.new(self.length))
+    sound_data2vct(self, chn)
   end
   
   # returns an array of sd.chans vcts
   def to_a
-    make_array(self.chans) do |chn| sound_data2vct(self, chn, Vct.new(self.length)) end
-  end
-
-  alias sd_inspect inspect
-  def inspect
-    format("%s(%s)", self.class, self.to_a.to_s)
+    sound_data2vector(self)
   end
 
   alias sd_length length
@@ -1507,12 +1507,20 @@ class SoundData
     self.size / self.chans
   end
 
+  def scale!(scl)
+    sound_data_scale!(self, scl)
+  end
+
+  def fill!(val)
+    sound_data_fill!(self, val)
+  end
+  
   alias sd_each each
   def each(chn = nil)
     if chn
       self.length.times do |i| yield(self[chn, i]) end
     else
-      sd_each do |val| yield(val) end
+      self.sd_each do |val| yield(val) end
     end
   end
 
@@ -1551,17 +1559,8 @@ class SoundData
     self
   end
 
-  def maxamp(chn = 0)
-    case chn
-    when TrueClass
-      sound_data_maxamp(self)
-    when FalseClass
-      sound_data_maxamp(self)[Snd.chn]
-    when Numeric
-      sound_data_maxamp(self)[chn]
-    else
-      nil
-    end
+  def peak
+    sound_data_maxamp(self).to_vct.peak
   end
 end
 
@@ -2303,7 +2302,7 @@ end
 
 add_help(:times2samples,
          "times2samples(start, dur) \
-START and DUR are in seconds; returns array [beg, len] in samples")
+START and DUR are in seconds; returns array [beg, end] in samples.")
 def times2samples(start, dur)
   beg = seconds2samples(start)
   [beg, beg + seconds2samples(dur)]
@@ -3287,12 +3286,12 @@ looks for successive samples that sum to less than 'limit', moving the cursor if
   # or to play a sound whenever a file is closed:
   #   $close-hook.add_hook!() do |snd| shell("sndplay wood16.wav"); false end
 
-  add_help(:shell, "shell(*cmd) \
+  add_help(:shell, "shell(cmd, *rest) \
 sends 'cmd' to a shell (executes it as a shell command) and returns the result string.")
-  def shell(*cmd)
+  def shell(cmd, *rest)
     str = ""
-    if string?(cmd.first) and (not cmd.first.empty?)
-      IO.popen(format(*cmd).split, "r") do |f| str = f.readlines.join end
+    unless cmd.null?
+      IO.popen(format(cmd, *rest), "r") do |f| str = f.readlines.join end
     end
     str
   end
@@ -5256,6 +5255,106 @@ divide sound into blocks, recombine in order, but each block internally reversed
     else
       reverse_channel(0, false, snd, chn)
     end
+  end
+
+  def segment_maxamp(name, beg, dur)
+    mx = 0.0
+    rd = make_sample_reader(beg, name)
+    dur.times do mx = [mx, next_sample(rd).abs].max end
+    free_sample_reader(rd)
+    mx
+  end
+
+  def segment_sound(name, high, low)
+    len = mus_sound_frames(name)
+    reader = make_sample_reader(0, name)
+    avg = make_moving_average(:size, 128)
+    lavg = make_moving_average(:size, 2048)
+    segments = Vct.new(100)
+    segctr = 0
+    possible_end = 0
+    in_sound = false
+    len.times do |i|
+      samp = next_sample(reader).abs
+      val = moving_average(avg, samp)
+      lval = moving_average(lavg, samp)
+      if in_sound
+        if val < low
+          possible_end = i
+          if lval < low
+            segments[segctr] = possible_end + 128
+            segctr += 1
+            in_sound = false
+          end
+        else
+          if val > high
+            segments[segctr] = i - 128
+            segctr += 1
+            in_sound = true
+          end
+        end
+      end
+    end
+    free_sample_reader(reader)
+    if in_sound
+      segments[segctr] = len
+      [segctr + 1, segments]
+    else
+      [segctr, segments]
+    end
+  end
+
+  def do_one_directory(fd, dir_name, ins_name, high = 0.01, low = 0.001)
+    snd_print("# #{dir_name}")
+    sound_files_in_directory(dir_name).each do |sound|
+      sound_name = dir_name + "/" + sound
+      boundary_data = segment_sound(sound_name, high, low)
+      segments, boundaries = boundary_data
+      fd.printf("\n\n#    ", sound)
+      fd.printf("(%s %s", ins_name, sound_name.inspect)
+      0.step(segments, 2) do |bnd|
+        segbeg = boundaries[bnd].to_i
+        segbeg = boundaries[bnd + 1].to_i
+        fd.printf("(%s %s %s)", segbeg, segdur, segment_maxamp(sound_name, segbeg, segdur))
+        fd.printf(")")
+      end
+      mus_sound_forget(sound_name)
+    end
+  end
+  
+  def sound2segment_data(main_dir, output_file = "sounds.data")
+    File.open(output_file, "w") do |fd|
+      old_fam = with_file_monitor
+      set_with_file_monitor(false)
+      fd.printf("# sound data from %s", main_dir.inspect)
+      if main_dir[-1] != "/" then main_dir += "/" end
+      Dir[main_dir].each do |dir|
+        ins_name = dir.downcase.tr(" ", "")
+        fd.printf("\n\n# ---------------- %s ----------------", dir)
+        if dir == "Piano"
+          Dir[main_dir + dir].each do |inner_dir|
+            do_one_directory(fd, main_dir + dir + "/" + inner_dir, ins_name, 0.001, 0.0001)
+          end
+        else
+          do_one_directory(fd, main_dir + dir, ins_name)
+        end
+      end
+      set_with_file_monitor(old_fam)
+    end
+  end
+  # sounds2segment_data(ENV['HOME'] + "/.snd.d/iowa/sounds/", "iowa.data")
+
+  add_help(:channel_clipped?,
+           "channel_clipped?(snd=false, chn=false)  \
+returns true and a sample number if it finds clipping.")
+  def channel_clipped?(snd = false, chn = false)
+    last_y = 0.0
+    scan_channel(lambda do |y|
+                   result = (y.abs >= 0.9999 and last_y.abs >= 0.9999)
+                   last_y = y
+                   result
+                 end,
+                 0, false, snd, chn)
   end
 end
 

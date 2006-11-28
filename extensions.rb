@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Tue Oct 17 21:37:55 CEST 2006
+# Changed: Sun Nov 26 16:43:53 CET 2006
 
 # Commentary:
 # 
@@ -1059,8 +1059,8 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
       if reject = sound_property(:save_state_ignore, snd)
         props.reject! do |k, v| reject.member?(k) end
       end
-      res = format("let(find_sound(%s)) do |snd|\n", snd_name.inspect)
-      res += format("  set_sound_properties(%s, snd)\n", props.inspect)
+      res = format("let(find_sound(%s)) do |snd_s|\n", snd_name.inspect)
+      res += format("  set_sound_properties(%s, snd_s)\n", props.inspect)
       channels(snd).times do |chn|
         @channel_funcs.each do |prop|
           set_channel_property(prop, snd_func(prop, snd, chn), snd, chn)
@@ -1069,8 +1069,8 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
         if reject = channel_property(:save_state_ignore, snd, chn)
           props.reject! do |k, v| reject.member?(k) end
         end
-        res += format("  if channels(snd) > %d\n", chn)
-        res += format("    set_channel_properties(%s, snd, %d)\n", props.inspect, chn)
+        res += format("  if channels(snd_s) > %d\n", chn)
+        res += format("    set_channel_properties(%s, snd_s, %d)\n", props.inspect, chn)
         res += "  end\n"
       end
       res += "end\n"

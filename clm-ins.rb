@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Sep 16 01:27:09 CEST 2003
-# Changed: Thu Oct 26 23:26:20 CEST 2006
+# Changed: Mon Nov 27 23:43:39 CET 2006
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
@@ -2597,11 +2597,11 @@ class Snd_Instrument
     beg = seconds2samples(start)
     samps = seconds2samples(dur)
     unless sr
-      @ws_output = with_closed_sound(@ws_output) do |snd_name|
+      @out_snd = with_closed_sound(@out_snd) do |snd_name|
         mus_mix(snd_name, file, beg, samps, inloc, mx, envs)
       end
       if rev_mx
-        @ws_reverb = with_closed_sound(@ws_reverb) do |snd_name|
+        @rev_snd = with_closed_sound(@rev_snd) do |snd_name|
           mus_mix(snd_name, file, beg, samps, inloc, rev_mx, false)
         end
       end
@@ -2632,13 +2632,12 @@ class Snd_Instrument
           frame2sound_data!(rev_data, i, frame2frame(inframe, rev_mx, revframe))
         end
       end
-      v = make_vct(samps)
       @channels.times do |chn|
-        mix_vct(sound_data2vct(out_data, chn, v), beg, @ws_output, chn, false)
+        mix_vct(out_data.to_vct(chn), beg, @out_snd, chn, false)
       end
       if rev_mx
         @reverb_channels.times do |chn|
-          mix_vct(sound_data2vct(rev_data, chn, v), beg, @ws_reverb, chn, false)
+          mix_vct(rev_data.to_vct(chn), beg, @rev_snd, chn, false)
         end
       end
     end

@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Nov 20 02:24:34 CET 2002
-# Changed: Wed Aug 30 19:19:05 CEST 2006
+# Changed: Mon Nov 27 18:13:03 CET 2006
 
 # Comment:
 #
@@ -192,8 +192,9 @@ Chowning reverb")
     outdel3 = ((chan4 or double) ? make_delay((delay3 * @srate).round) : false)
     outdel4 = ((chan4 or (double and chan2)) ? make_delay((delay4 * @srate).round) : false)
     envA = if amp_env
-             dur = samples2seconds(ws_duration(@reverb_file_name)) + @decay_time
-             make_env(:envelope, amp_env, :scaler, volume, :duration, dur)
+             make_env(:envelope, amp_env,
+                      :scaler, volume,
+                      :duration, ws_duration(@revfile) + @decay_time)
            else
              false
            end

@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Changed: Thu Aug 17 01:30:52 CEST 2006
+# Changed: Mon Nov 27 15:36:01 CET 2006
 
 # Commentary:
 #
@@ -191,7 +191,6 @@ need a String or Symbol, not %s"
   $bad_header_hook              = Hook.new("$bad_header_hook", 1)
   $save_state_hook              = Hook.new("$save_state_hook", 1)
   $new_sound_hook               = Hook.new("$new_sound_hook", 1)
-  $color_hook                   = Hook.new("$color_hook", 0)
   $orientation_hook             = Hook.new("$orientation_hook", 0)
   $listener_click_hook          = Hook.new("$listener_click_hook", 1)
   $mix_click_hook               = Hook.new("$mix_click_hook", 1)
@@ -208,6 +207,7 @@ need a String or Symbol, not %s"
   $after_save_as_hook           = Hook.new("$after_save_as_hook", 3)
   $before_save_as_hook          = Hook.new("$before_save_as_hook", 7)
   # unless --with-no-gui
+  $color_hook                   = Hook.new("$color_hook", 0)
   $recorder_file_hook           = Hook.new("$recorder_file_hook", 1)
   # if --with-gtk
   $gtk_popup_hook               = Hook.new("$gtk_popup_hook", 5)
@@ -318,7 +318,6 @@ if defined? $after_graph_hook
                $bad_header_hook,
                $save_state_hook,
                $new_sound_hook,
-               $color_hook,
                $orientation_hook,
                $listener_click_hook,
                $mix_click_hook,
@@ -336,19 +335,20 @@ if defined? $after_graph_hook
                $before_close_hook]
 
   unless provided? :snd_nogui
+    Snd_hooks.push($color_hook)
     Snd_hooks.push($recorder_file_hook)
   end
   if provided? :snd_gtk
-    Snd_hooks.push $gtk_popup_hook
+    Snd_hooks.push($gtk_popup_hook)
   end
   
   def reset_all_hooks
     Snd_hooks.each do |h| h.kind_of?(Hook) and h.reset_hook! end
     Snd.sounds.each do |snd|
       channels(snd).times do |chn|
-        edit_hook(snd, chn).reset_hook! if hook?(edit_hook(snd, chn))
-        after_edit_hook(snd, chn).reset_hook! if hook?(after_edit_hook(snd, chn))
-        undo_hook(snd, chn).reset_hook! if hook?(undo_hook(snd, chn))
+        (h = edit_hook(snd, chn)).kind_of?(Hook)       and h.reset_hook!
+        (h = after_edit_hook(snd, chn)).kind_of?(Hook) and h.reset_hook!
+        (h = undo_hook(snd, chn)).kind_of?(Hook)       and h.reset_hook!
       end
     end
   end

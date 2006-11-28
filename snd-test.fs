@@ -2,16 +2,18 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Sun Aug 27 05:20:26 CEST 2006
+\ Changed: Sun Nov 12 00:56:21 CET 2006
 
 \ Commentary:
 \
 \ snd-forth -noinit -load snd-test.fs
 \
 \ test -1: general
+\ test 10: marks
 \ 
 \ Code:
 
+#t to *fth-verbose*
 #t value stack-verbose
 
 require clm
@@ -19,8 +21,7 @@ require examp
 require hooks
 require env
 require mix
-
-char c 4 #t unbind-key drop
+require marks
 
 save-dir $" /zap/snd" || value original-save-dir
 temp-dir $" /zap/tmp" || value original-temp-dir
@@ -33,50 +34,39 @@ $" HOME" getenv          value home-dir
 $" /home/bil/sf1/" 	 value sf-dir
 #t  		   	 value with-exit
 
-: snd-display ( fmt args-lst -- )
-  { fmt args-lst }
-  ." \ " fmt args-lst fth-print cr
-  $" \\ " fmt $+ $" \n" $+ args-lst string-format 1 >list .stderr
-;
+'snd-nogui provided? [if]
+  #t set-with-mix-tags drop
+  : hide-widget ( wid -- wid ) ;
+  : snd-display { fmt args -- }
+    $" \\ " fmt $+ $" \n" $+ args string-format .stdout
+  ;
+[else]
+  : snd-display { fmt args -- }
+    $" \\ " fmt $+ $" \n" $+ args string-format { msg }
+    msg .string
+    msg .stdout
+  ;
+[then]
 
 hide
-: print-stack ( fmt args-lst -- )
-  { fmt args-lst }
-  $" #<stack" fmt $+ $" >" $+ args-lst snd-display
+: print-stack { fmt args -- }
+  $" \\ #<stack" fmt $+ $" >\n" $+ args string-format .stderr
 ;
 set-current
 
 : show-stack ( ?? -- ?? )
   save-stack { s }
   $"  depth: %d" '( s length ) print-stack
-  s each { obj } $" [%d]: %s" '( i obj ) print-stack end-each
+  s each { obj } $" [%d]: %S" '( i obj ) print-stack end-each
   s restore-stack
 ;
 previous
-
-\ -2 value test-number
-\ 
-\ script-arg positive? [if]
-\   /^-l.*/ script-args script-arg 1 - list-ref regexp-match [if]
-\     $" script-args[%d]: %s %s"
-\     '( script-arg 1 -
-\        script-args script-arg 1 - list-ref
-\        script-args ) snd-display
-\   [then]
-\   /snd-test/ script-args script-arg list-ref regexp-match [if]
-\     $" script-args[%d]: %s %s"
-\     '( script-arg
-\        script-args script-arg list-ref
-\        script-args ) snd-display
-\   [then]
-\   script-args script-arg list-ref string->number dup number? [if] to test-number [else] drop [then]
-\ [then]
 
 : fneq-err ( r1 r2 err -- f ) -rot f- fabs f<= ;
 : cneq-err ( c1 c2 err -- f )
   { c1 c2 err }
   c1 real-ref  c2 real-ref  err fneq-err
-  c1 image-ref c2 image-ref err fneq-err and
+  c1 image-ref c2 image-ref err fneq-err or
 ;
 : fneq ( a b -- f ) 0.001 fneq-err ;
 : cneq ( a b -- f ) 0.001 cneq-err ;
@@ -151,12 +141,26 @@ previous
   then
 ;
 
-: start-snd-test ( date -- )
-  { date }
+: start-snd-test ( -- )
   $" .sndtest-forth-rc" load-init-file
-  $" === Snd version: %s" '( snd-version ) snd-display
-  $" === Fth version: %s\n\\ " '( fth-date ) snd-display
-  $" %s\n\\ " '( date ) snd-display
+  'snd-motif provided? if
+    $" snd-motif"
+  else
+    'snd-gtk provided? if
+      $" snd-gtk"
+    else
+      'snd-nogui provided? if
+	$" snd-nogui"
+      else
+	$" snd-unknown"
+      then
+    then
+  then { kind }
+  $" === Snd version: %s (%s)" '( snd-version kind ) snd-display
+  $" === Fth version: %s" '( fth-version ) snd-display
+  "" '() snd-display
+  $" %s" '( date ) snd-display
+  "" '() snd-display
 ;
 
 : finish-snd-test ( -- )
@@ -167,10 +171,12 @@ previous
   #( original-save-dir original-temp-dir $" /tmp" ) { paths }
   paths each { path }
     path file-directory? if
-      $" echo %s/snd_*" '( path ) string-format shell { str }
-      str length 0> if str $"  \n" string-split else #() then { files }
-      files length file-count + to file-count
-      files each ( file ) file-delete end-each
+      path file-dir each { file }
+	/snd_/ file regexp-match if
+	  file file-delete
+	  file-count 1+ to file-count
+	then
+      end-each
     then
   end-each
   "" '() snd-display
@@ -232,68 +238,80 @@ previous
 ;
 
 #() value timer-values
+#() value test-numbers
 
 : run-fth-test ( xt -- )
   { xt }
   xt xt->name { name }
-  $" test %s" '( name ) snd-display
-  #f set-show-backtrace drop
-  make-timer { tm }
-  tm start-timer
-  xt #t nil fth-catch ?dup-if ( res ) cadr '() snd-display then
-  tm stop-timer
-  stack-reset
-  timer-values '( name tm ) array-push drop
-  sounds if
-    $" open sounds: %s" '( #t short-file-name ) snd-display
-    sounds each ( snd ) close-sound drop end-each
+  test-numbers name 4 6 string-substring string->number array-member? if
+    name '() snd-display
+    #f set-show-backtrace drop
+    make-timer { tm }
+    tm start-timer
+    xt #t nil fth-catch ?dup-if ( res ) cadr '() snd-display then
+    tm stop-timer
+    stack-reset
+    timer-values '( name tm ) array-push drop
+    sounds if
+      $" open sounds: %s" '( #t short-file-name ) snd-display
+      sounds each ( snd ) close-sound drop end-each
+    then
+    $" %s done\n\\ " '( name ) snd-display
   then
-  $" test %s done\n\\ " '( name ) snd-display
 ;
 
 : fth-test-timer-inspect ( name tm -- )
   { name tm }
-  $" %s: %s" '( name tm ) snd-display
+  $" %8s: %s" '( name tm ) snd-display
 ;
 
 'complex provided? [if]
   : complex-test ( -- )
     \ edot-product (test008)
-    1 1.0 make-vct { vals }
-    0+0i vals edot-product dup 1.0 cneq if $" edot 1.0: %s?" swap 1 >list snd-display else drop then
-    vals 0 0.0 vct-set! drop
-    0+0i vals edot-product dup 0.0 cneq if $" edot 0.0: %s?" swap 1 >list snd-display else drop then
-    #( 1.0 ) to vals
-    0+0i vals edot-product dup 1.0 cneq if $" edot 1.0: %s?" swap 1 >list snd-display else drop then
-    vals 0 0+0i array-set!
-    0+0i vals edot-product dup 0.0 cneq if $" edot i: %s?"   swap 1 >list snd-display else drop then
-    4 1.0 make-vct to vals
-    0.25 two-pi f* >c vals edot-product
+    0.0 vct( 1.0 ) edot-product dup 1.0 fneq if
+      1 >list $" edot 1.0: %s?" swap snd-display
+    else
+      drop
+    then
+    0.0 vct( 0.0 ) edot-product dup 0.0 fneq if
+      1 >list $" edot 0.0: %s?" swap snd-display
+    else
+      drop
+    then
+    0.0 #( 1.0 ) edot-product dup 1.0 fneq if
+      1 >list $" edot 1.0: %s?" swap snd-display
+    else
+      drop
+    then
+    0.0 #( 0+1i ) edot-product dup 0+1i cneq if
+      1 >list $" edot i: %s?" swap snd-display
+    else
+      drop
+    then
+    0.25 two-pi f* vct( 1.0 1.0 1.0 1.0 ) edot-product
     0.00 two-pi f* fexp
     0.25 two-pi f* fexp f+
     0.50 two-pi f* fexp f+
-    0.75 two-pi f* fexp f+ over over cneq if
-      $" edot 4 i: %s %s?" 2 >list snd-display
+    0.75 two-pi f* fexp f+ over over fneq if
+      2 >list $" edot 4: %s %s?" swap snd-display
     else
       2drop
     then
-    #( 1.0 2.0 3.0 4.0 ) to vals
-    0.25 two-pi f* 0+0i c* >c vals edot-product
-    0.00 two-pi f* 0+0i c* cexp 1.0 c* 
-    0.25 two-pi f* 0+0i c* cexp 2.0 c* c+
-    0.50 two-pi f* 0+0i c* cexp 3.0 c* c+
-    0.75 two-pi f* 0+0i c* cexp 4.0 c* c+ over over cneq if
-      $" edot 4 -i: %s %s?" 2 >list snd-display
+    0.25 two-pi f* 0-1i c* #( 1.0 2.0 3.0 4.0 ) edot-product
+    0.00 two-pi f* 0-1i c* cexp 1 c* 
+    0.25 two-pi f* 0-1i c* cexp 2 c* c+
+    0.50 two-pi f* 0-1i c* cexp 3 c* c+
+    0.75 two-pi f* 0-1i c* cexp 4 c* c+ over over cneq if
+      2 >list $" edot 4 -i: %s %s?" swap snd-display
     else
       2drop
     then
-    #( 0.0 1+0i c+ 1.0 1+0i c+ 2.0 1+0i c+ 3.0 1+0i c+ ) to vals
-    0.25 two-pi f* 0-1i c* vals edot-product
-    0.00 two-pi f* 0-1i c* cexp 1+0i c* 
-    0.25 two-pi f* 0-1i c* cexp 2+0i c* c+
-    0.50 two-pi f* 0-1i c* cexp 3+0i c* c+
-    0.75 two-pi f* 0-1i c* cexp 4+0i c* c+ over over cneq if
-      $" edot 4 -i * i: %s %s?" 2 >list snd-display
+    0.25 two-pi f* 0-1i c* #( 1+1i 2+1i 3+1i 4+1i ) edot-product
+    0.00 two-pi f* 0-1i c* cexp 1+1i c* 
+    0.25 two-pi f* 0-1i c* cexp 2+1i c* c+
+    0.50 two-pi f* 0-1i c* cexp 3+1i c* c+
+    0.75 two-pi f* 0-1i c* cexp 4+1i c* c+ over over cneq if
+      2 >list $" edot 4 -i * i: %s %s?" swap snd-display
     else
       2drop
     then
@@ -372,7 +390,7 @@ previous
   then
 ;
 
-: test0-1 ( -- )
+: test-1 ( -- )
   \ hooks
   open-hook reset-hook!
   open-hook my-test1-proc add-hook!
@@ -400,9 +418,11 @@ previous
   \ set window
   window-x { x }			\ set to 600, x says 606
   window-y { y }			\ set to  10, y says 35
-  x 600 6 + <> if $" window-x[600]: %s?" '( x ) snd-display then
-  y 10 25 + <> if $" window-y[10]: %s?"  '( y ) snd-display then
-  .stack 
+  'snd-motif provided? if
+    x 600 6 + <> if $" window-x[600]: %s?" '( x ) snd-display then
+    y 10 25 + <> if $" window-y[10]: %s?"  '( y ) snd-display then
+  then
+  .stack
   \ bind-key
   ['] C-xC-c 0 make-proc { prc }
   [char] c 4 #t key-binding { old-prc }
@@ -493,7 +513,7 @@ previous
   0 new-index 0 find-mix to res
   res if $" found non-existent mix: %s?" '( res ) snd-display then
   $" pistol.snd" 100 mix { mix-id }
-  mix-id mix? unless $" %s not mix?" '() snd-display then
+  mix-id mix? unless $" %s not mix?" '( mix-id ) snd-display then
   view-files-dialog { wid }
   mix-id mix-position { pos }
   mix-id mix-frames { len }
@@ -689,10 +709,10 @@ previous
   \
   $" oboe.snd" 100 mix to mix-id
   40 set-mix-waveform-height drop
-  'hiho 123 mix-id set-mix-property
-  'hiho mix-id mix-property to res
+  mix-id 'hiho 123 set-mix-property
+  mix-id 'hiho mix-property to res
   res 123 <> if $" mix-property: %s?" '( res ) snd-display then
-  'not-here mix-id mix-property to res
+  mix-id 'not-here mix-property to res
   res if $" mix-property not-here: %s?" '( res ) snd-display then
   #f #f update-time-graph drop
   20 set-mix-waveform-height drop
@@ -884,25 +904,108 @@ previous
   .stack
 ;
 
-'snd-nogui provided? [if] #t set-with-mix-tag drop [then]
-default-file-buffer-size set-mus-file-buffer-size drop
-#f set-with-background-processes drop
-600 set-window-x drop
-10  set-window-y drop
-#t show-listener drop
-date start-snd-test
-make-timer value test-tm
-stack-reset
+: test10 ( -- )
+  $" oboe.snd" open-sound { ind }
+  123 add-mark drop
+  234 ind 0 $" hiho"   1 add-mark drop
+  345 ind 0 #f         1 add-mark drop
+  456 ind 0 $" a mark" 2 add-mark drop
+  567 ind 0 #f         1 add-mark drop
+  ind $" oboe.marks" save-marks drop
+  ind close-sound drop
+  $" oboe.snd" open-sound to ind
+  1 ind 0 $" new mark" 1 add-mark drop
+  $" oboe.marks" file-eval
+  123 ind 0 find-mark { m }
+  m mark? if
+    m mark-name length zero? unless
+      $" saved mark 123 name: %S?" '( m mark-name ) snd-display
+    then
+    m mark-sync zero? unless
+      $" saved mark 123 sync: %S?" '( m mark-sync ) snd-display
+    then
+  else
+    $" saved marks missed 123: %S?" '( m ) snd-display
+  then
+  234 ind 0 find-mark to m
+  m mark? if
+    m mark-name $" hiho" string<> if
+      $" saved mark 234 name: %S?" '( m mark-name ) snd-display
+    then
+    m mark-sync { m2sync }
+    m2sync 0= m2sync 1 = or if
+      $" saved mark 234 sync: %S?" '( m mark-sync ) snd-display
+    then
+    m mark-sync
+  else
+    $" saved marks missed 234: %S?" '( m ) snd-display
+    0
+  then { m1-sync }
+  345 ind 0 find-mark to m
+  m mark? if
+    m mark-name length zero? unless
+      $" saved mark 345 name: %S?" '( m mark-name ) snd-display
+    then
+    m mark-sync m1-sync <> if
+      $" saved mark 345 sync: %S %S?" '( m mark-sync m1-sync ) snd-display
+    then
+  else
+    $" saved marks missed 345: %S?" '( m ) snd-display
+  then
+  456 ind 0 find-mark to m
+  m mark? if
+    m mark-name $" a mark" string<> if
+      $" saved mark 456 name: %S?" '( m mark-name ) snd-display
+    then
+    m mark-sync { m4sync }
+    m4sync m1-sync = m4sync 0= or m4sync 1 = or if
+      $" saved mark 456 sync: %S %S?" '( m mark-sync m1-sync ) snd-display
+    then
+  else
+    $" saved marks missed 456: %S?" '( m ) snd-display
+  then
+  567 ind 0 find-mark to m
+  m mark? if
+    m mark-name length zero? unless
+      $" saved mark 567 name: %S?" '( m mark-name ) snd-display
+    then
+    m mark-sync m1-sync <> if
+      $" saved mark 567 sync: %S %S?" '( m mark-sync m1-sync ) snd-display
+    then
+  else
+    $" saved marks missed 567: %S?" '( m ) snd-display
+  then
+  ind close-sound drop
+;
 
-test-tm start-timer
-' test0-1 run-fth-test
-test-tm stop-timer
-
-$" all done!\n\\ " '() snd-display
-depth 0> [if] show-stack [then]
-timer-values [each] ( lst ) dup car swap cadr fth-test-timer-inspect [end-each]
-$" summary" test-tm fth-test-timer-inspect
-finish-snd-test
-with-exit [if] bye [then]
+let: ( -- )
+  default-file-buffer-size set-mus-file-buffer-size drop
+  #f set-with-background-processes drop
+  600 set-window-x drop
+  10  set-window-y drop
+  #t show-listener drop
+  script-arg positive? if
+    script-args length script-arg 1+ ?do
+      script-args i list-ref string->number test-numbers swap array-push drop
+    loop
+  then
+  test-numbers empty? if
+    29 -1 do test-numbers i array-push drop loop
+  then
+  start-snd-test
+  make-timer { tm }
+  stack-reset
+  tm start-timer
+  ['] test-1 run-fth-test
+  ['] test10 run-fth-test
+  tm stop-timer
+  $" all done!" '() snd-display
+  "" '() snd-display
+  depth 0> if show-stack then
+  timer-values each ( lst ) dup car swap cadr fth-test-timer-inspect end-each
+  $" summary" tm fth-test-timer-inspect
+  finish-snd-test
+  with-exit if bye then
+;let
 
 \ snd-test.fs ends here

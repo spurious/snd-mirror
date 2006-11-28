@@ -9,29 +9,29 @@
 ;;;  test 6: vcts                               [12174]
 ;;;  test 7: colors                             [12489]
 ;;;  test 8: clm                                [12995]
-;;;  test 9: mix                                [22274]
-;;;  test 10: marks                             [25922]
-;;;  test 11: dialogs                           [26810]
-;;;  test 12: extensions                        [27104]
-;;;  test 13: menus, edit lists, hooks, etc     [27558]
-;;;  test 14: all together now                  [29107]
-;;;  test 15: chan-local vars                   [30182]
-;;;  test 16: regularized funcs                 [31512]
-;;;  test 17: dialogs and graphics              [35928]
-;;;  test 18: enved                             [36017]
-;;;  test 19: save and restore                  [36037]
-;;;  test 20: transforms                        [37874]
-;;;  test 21: new stuff                         [39707]
-;;;  test 22: run                               [40709]
-;;;  test 23: with-sound                        [46291]
-;;;  test 24: user-interface                    [48769]
-;;;  test 25: X/Xt/Xm                           [52385]
-;;;  test 26: Gtk                               [56973]
-;;;  test 27: GL                                [61090]
-;;;  test 28: errors                            [61214]
-;;;  test 29: Common Music                      [63326]
-;;;  test all done                              [63376]
-;;;  test the end                               [63569]
+;;;  test 9: mix                                [22378]
+;;;  test 10: marks                             [26026]
+;;;  test 11: dialogs                           [26914]
+;;;  test 12: extensions                        [27208]
+;;;  test 13: menus, edit lists, hooks, etc     [27662]
+;;;  test 14: all together now                  [29211]
+;;;  test 15: chan-local vars                   [30286]
+;;;  test 16: regularized funcs                 [31616]
+;;;  test 17: dialogs and graphics              [36032]
+;;;  test 18: enved                             [36121]
+;;;  test 19: save and restore                  [36141]
+;;;  test 20: transforms                        [37978]
+;;;  test 21: new stuff                         [39811]
+;;;  test 22: run                               [40813]
+;;;  test 23: with-sound                        [46395]
+;;;  test 24: user-interface                    [48873]
+;;;  test 25: X/Xt/Xm                           [52489]
+;;;  test 26: Gtk                               [57077]
+;;;  test 27: GL                                [61194]
+;;;  test 28: errors                            [61318]
+;;;  test 29: Common Music                      [63430]
+;;;  test all done                              [63480]
+;;;  test the end                               [63673]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -20279,6 +20279,52 @@ EDITS: 5
 	    (snd-display ";move-sound sd output start: ~A" start))
 	(if (fneq (apply max (sound-data-maxamp vo)) 0.484)
 	    (snd-display ";move-sound sd output: ~A" (sound-data-maxamp vo))))
+      
+      (let* ((vo (make-vct 1000))
+	     (gen1 (make-move-sound (list 0 1000 1 0
+					  (make-delay 32) 
+					  (make-env '(0 0 1 1) :end 1000) 
+					  (make-env '(0 0 1 1) :end 1000)
+					  (vector (make-delay 32)) 
+					  (vector (make-env '(0 0 1 1) :end 1000)) 
+					  #f
+					  (vector 0 1))
+				    vo))
+	     (start -1))
+	(run (lambda ()
+	       (do ((i 0 (1+ i)))
+		   ((= i 1000))
+		 (move-sound gen1 i 0.5)
+		 (if (and (< start 0)
+			  (> (abs (vct-ref vo i)) 0.001))
+		     (set! start i)))))
+	(if (not (= start 64))
+	    (snd-display ";move-sound opt vct output start: ~A" start))
+	(if (fneq (vct-peak vo) 0.484)
+	    (snd-display ";move-sound opt vct output: ~A" (vct-peak vo))))
+      
+      (let* ((vo (make-sound-data 1 1000))
+	     (gen1 (make-move-sound (list 0 1000 1 0
+					  (make-delay 32) 
+					  (make-env '(0 0 1 1) :end 1000) 
+					  (make-env '(0 0 1 1) :end 1000)
+					  (vector (make-delay 32)) 
+					  (vector (make-env '(0 0 1 1) :end 1000)) 
+					  #f
+					  (vector 0 1))
+				    vo))
+	     (start -1))
+	(run (lambda ()
+	       (do ((i 0 (1+ i)))
+		   ((= i 1000))
+		 (move-sound gen1 i 0.5)
+		 (if (and (< start 0)
+			  (> (abs (sound-data-ref vo 0 i)) 0.001))
+		     (set! start i)))))
+	(if (not (= start 64))
+	    (snd-display ";move-sound opt sd output start: ~A" start))
+	(if (fneq (apply max (sound-data-maxamp vo)) 0.484)
+	    (snd-display ";move-sound opt sd output: ~A" (sound-data-maxamp vo))))
       
       
       (let ((gen (make-src :srate 2.0))
@@ -52507,7 +52553,9 @@ EDITS: 1
 (define (XM_PARSE_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
 
 (if (and (or full-test (= snd-test 25) (and keep-going (<= snd-test 25)))
-	 (or (not (defined? 'host-name)) (not (string=? (host-name) "fatty2"))))
+	 (or (not (defined? 'host-name)) 
+	     (and (not (string=? (host-name) "fatty2"))
+		  (not (string=? (host-name) "sun2")))))
     (begin
       (run-hook before-test-hook 25)
       (if (and (provided? 'snd-motif) 

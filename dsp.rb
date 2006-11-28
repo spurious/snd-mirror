@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Wed Nov 01 14:36:21 CET 2006
+# Changed: Tue Nov 07 00:07:35 CET 2006
 
 # Commentary:
 #
@@ -167,6 +167,23 @@
 #  moving_length(gen, y)
 #  harmonicizer(freq, coeffs, pairs, order, bw, beg, dur, snd, chn, edpos)
 #  linear_src_channel(srinc, snd = false, chn = false)
+#
+#  class Mfilter < Musgen
+#   initialize(decay, freq)
+#   inspect
+#   to_s
+#   mfilter(x_input, y_input)
+#
+#  make_mfilter(*args)
+#  mfilter(m, x_input, y_input)
+#
+#  class Display_bark_fft
+#   display_bark_fft(snd, chn)
+#   mark_bark_labels(snd, chn)
+#   choose_bark_ticks(snd, chn, button, state, x, y, axis)
+#
+#  display_bark_fft(off)
+#  undisplay_bark_fft
 
 # Code:
 
@@ -1882,6 +1899,7 @@ tries to return an inverse filter to undo the effect of the FIR filter coeffs.")
 
   class Volterra_filter < Musgen
     def initialize(acoeffs, bcoeffs)
+      super()
       @as = acoeffs
       @bs = bcoeffs
       @xs = Vct.new([acoeffs.length, bcoeffs.length].max)
@@ -2112,8 +2130,286 @@ performs sampling rate conversion using linear interpolation.")
     end.output
     len = mus_sound_frames(tempfile)
     set_samples(0, len - 1, tempfile, snd, chn, true, "%s(%s", get_func_name, srinc, 0, false, true)
+    # first true=truncate to new length, false=at current edpos, true=auto delete temp file
   end
-  # first true=truncate to new length, false=at current edpos, true=auto delete temp file
+
+  # Mathews/Smith High-Q filter as described in http://ccrma.stanford.edu/~jos/smac03maxjos/
+
+  class Mfilter < Musgen
+    def initialize(decay, freq)
+      super()
+      @decay = decay.to_f
+      @frequency = freq.to_f
+      @eps = 2.0 * sin((PI * freq) / mus_srate())
+      @xn = @yn = 0.0
+    end
+    attr_accessor :decay, :eps
+
+    def inspect
+      format("%s.new(%0.3f, %0.3f)", self.class, @decay, @frequency)
+    end
+
+    def to_s
+      format("#<%s decay: %0.3f, frequency: %0.3f>", self.class, @decay, @frequency)
+    end
+    
+    def mfilter(x_input = 0.0, y_input = 0.0)
+      @xn = x_input + @decay * (@xn - @eps * @yn)
+      @yn = y_input + @decay * (@eps * @xn + @yn)
+    end
+  end
+
+  def make_mfilter(*args)
+    Mfilter.new(get_args(args, :decay, 0.99), get_args(args, :frequency, 1000.0))
+  end
+
+  def mfilter(m, x_input = 0.0, y_input = 0.0)
+    m.mfilter(x_input, y_input)
+  end
+=begin
+  with_sound(:clm, true) do
+    rd = make_sample_reader(0, "now.snd")
+    m = make_mfilter
+    10000.times do |i| outa(i, mfilter(m, 0.1 * rd.call), $output) end
+  end
+=end
+  #
+  # sweep center freq:
+=begin
+  with_sound(:clm, true) do
+    rd = make_sample_reader(0, "oboe.snd")
+    m = make_mfilter(:decay, 0.99, :frequency, 1000)
+    e = make_env([0, 100, 1, 2000], :end, 10000)
+    10000.times do |i|
+      outa(i, mfilter(m, 0.1 * rd.call), $output)
+      m.eps = 2.0 * sind((PI * env(e)) / mus_srate())
+    end
+  end
+=end
+  #
+  # harmonics:
+=begin
+  with_sound(:clm, true, :statistics, true) do
+    noi = make_rand(10000)
+    filters = make_array(9) do make_mfilter(:decay, 0.999, :frequency, 400.0 * (i + 1)) end
+    10000.times do |i|
+      sum = 0.0
+      input = 0.01 * rand(noi)
+      filters.each do |f| sum += (1.0 / (j + 1)) * mfilter(f, input) end
+      outa(i, sum $output)
+    end
+  end
+=end
+  
+  #
+  # spectrum displayed in various frequency scales
+  #
+  class Display_bark_fft
+    # click in lisp-graph to change the tick placement choice
+    def initialize
+      @bark_fft_size = 0
+      @bark_tick_function = 0
+    end
+    attr_reader :bark_tick_function
+
+    def display_bark_fft(snd, chn)
+      ls = left_sample(snd, chn)
+      rs = right_sample(snd, chn)
+      if (fftlen = (2 ** (log((rs - ls) + 1.0) / log(2.0)).ceil.to_i).to_i) > 0
+        data = channel2vct(ls, fftlen, snd, chn)
+        normalized = (transform_normalization(snd, chn) != Dont_normalize)
+        linear = true
+        if vct?(data)
+          fft = snd_spectrum(data,
+                             fft_window(snd, chn), fftlen, linear,
+                             fft_window_beta(snd, chn), false, normalized)
+          if vct?(fft)
+            sr = srate(snd)
+            mx = fft.peak
+            data_len = fft.length
+
+            # bark settings
+            bark_low    = bark(20.0).floor
+            bark_high   = bark(0.5 * sr).ceil
+            bark_frqscl = data_len / (bark_high - bark_low)
+            bark_data   = Vct.new(data_len)
+
+            # mel settings
+            mel_low     = mel(20.0).floor
+            mel_high    = mel(0.5 * sr).ceil
+            mel_frqscl  = data_len / (mel_high - mel_low)
+            mel_data    = Vct.new(data_len)
+
+            # erb settings
+            erb_low     = erb(20.0).floor
+            erb_high    = erb(0.5 * sr).ceil
+            erb_frqscl  = data_len / (erb_high - erb_low)
+            erb_data    = Vct.new(data_len)
+
+            @bark_fft_size = fftlen
+            fftlenf = fftlen.to_f
+
+            fft.each_with_index do |val, i|
+              frq = sr * (i / fftlenf)
+              bark_bin = (bark_frqscl * (bark(frq) - bark_low)).round
+              mel_bin  = (mel_frqscl  * (mel(frq)  -  mel_low)).round
+              erb_bin  = (erb_frqscl  * (erb(frq)  -  erb_low)).round
+              if bark_bin.between?(0, data_len - 1) then bark_data[bark_bin] += val end
+              if  mel_bin.between?(0, data_len - 1) then mel_data[mel_bin]   += val end
+              if  erb_bin.between?(0, data_len - 1) then erb_data[erb_bin]   += val end
+            end
+
+            if normalized
+              bmx = bark_data.peak
+              mmx = mel_data.peak
+              emx = erb_data.peak
+              if (mx - bmx).abs > 0.01 then bark_data.scale!(mx / bmx) end
+              if (mx - mmx).abs > 0.01 then mel_data.scale!(mx / mmx)  end
+              if (mx - emx).abs > 0.01 then erb_data.scale!(mx / emx)  end
+            end
+            graph([bark_data, mel_data, erb_data],
+                  "ignored",
+                  20.0, 0.5 * sr,
+                  0.0, (normalized ? 1.0 : data_len * y_zoom_slider(snd, chn)),
+                  snd, chn,
+                  false, Show_bare_x_axis)
+          end
+        end
+      end
+      false
+    end
+
+    def mark_bark_labels(snd, chn)
+      # at this point the x axis has no markings, but there is room for labels and ticks
+      old_foreground_color = foreground_color(snd, chn, Copy_context)
+      # assume at start the foreground color is correct
+      axinfo = axis_info(snd, chn, Lisp_graph)
+      axis_x0 = axinfo[10]
+      axis_x1 = axinfo[12]
+      axis_y0 = axinfo[13]
+      axis_y1 = axinfo[11]
+      label_height = 15
+      char_width = 8
+      sr2 = 0.5 * srate(snd)
+      minor_tick_len = 6
+      major_tick_len = 12
+      tick_y0 = axis_y1
+      minor_y0 = axis_y1 + minor_tick_len
+      major_y0 = axis_y1 + major_tick_len
+      label_pos = (axis_x0 + 0.45 * (axis_x1 - axis_x0)).to_i
+      bark_label_font = snd_font(3)
+      bark_numbers_font = snd_font(2)
+      scale_position = lambda do |scale, f|
+        b20 = scale.call(20.0)
+        (axis_x0 +
+         ((axis_x1 - axis_x0) * (scale.call(f) - b20)) /
+         (scale.call(sr2) - b20)).round
+      end
+      bark_position = lambda do |f| scale_position.call(method(:bark).to_proc, f) end
+      mel_position  = lambda do |f| scale_position.call(method(:mel).to_proc, f)  end
+      erb_position  = lambda do |f| scale_position.call(method(:erb).to_proc, f)  end
+      draw_bark_ticks = lambda do |bark_function|
+        if bark_numbers_font then set_current_font(bark_numbers_font, snd, chn, Copy_context) end
+        draw_line(axis_x0, tick_y0, axis_x0, major_y0, snd, chn, Copy_context)
+        i1000  = scale_position.call(bark_function,  1000.0)
+        i10000 = scale_position.call(bark_function, 10000.0)
+        draw_line( i1000, tick_y0,  i1000, major_y0, snd, chn, Copy_context)
+        draw_line(i10000, tick_y0, i10000, major_y0, snd, chn, Copy_context)
+        draw_string(   "20",        axis_x0, major_y0, snd, chn, Copy_context)
+        draw_string( "1000",  i1000 - 3 * 4, major_y0, snd, chn, Copy_context)
+        draw_string("10000", i10000 - 6 * 4, major_y0, snd, chn, Copy_context)
+        draw_string("fft size: #{@bark_fft_size}", axis_x0 + 10, axis_y0, snd, chn, Copy_context)
+        100.step(1000, 100) do |i|
+          i100 = scale_position.call(bark_function, i)
+          draw_line(i100, tick_y0, i100, minor_y0, snd, chn, Copy_context)
+        end
+        2000.step(10000, 1000) do |i|
+          i1000 = scale_position.call(bark_function, i)
+          draw_line(i1000, tick_y0, i1000, minor_y0, snd, chn, Copy_context)
+        end
+      end
+
+      # bark label/ticks
+      if self.bark_tick_function.zero?
+        draw_bark_ticks.call(bark_position)
+      end
+      if bark_label_font then set_current_font(bark_label_font, snd, chn, Copy_context) end
+      draw_string("bark,", label_pos, axis_y1 + label_height, snd, chn, Copy_context)
+
+      # mel label/ticks
+      set_foreground_color(snd_color(2), snd, chn, Copy_context)
+      if self.bark_tick_function == 1
+        draw_bark_ticks.call(mel_position)
+      end
+      if bark_label_font then set_current_font(bark_label_font, snd, chn, Copy_context) end
+      draw_string("mel,", char_width * 6 + label_pos, axis_y1 + label_height,
+                  snd, chn, Copy_context)
+
+      # erb label/ticks
+      set_foreground_color(snd_color(4), snd, chn, Copy_context)
+      if self.bark_tick_function == 2
+        draw_bark_ticks.call(erb_position)
+      end
+      if bark_label_font then set_current_font(bark_label_font, snd, chn, Copy_context) end
+      draw_string("erb", char_width * (6 + 5) + label_pos, axis_y1 + label_height,
+                  snd, chn, Copy_context)
+
+      set_foreground_color(old_foreground_color, snd, chn, Copy_context)
+    end
+    
+    # mouse click = move to next scale's ticks
+    def choose_bark_ticks(snd, chn, button, state, x, y, axis)
+      if axis == Lisp_graph
+        @bark_tick_function += 1
+        if @bark_tick_function > 2 then @bark_tick_function = 0 end
+        update_lisp_graph(snd, chn)
+      end
+    end
+
+    private
+    def bark(f)
+      f2 = f / 7500.0
+      13.5 * atan(0.00076 * f) + (3.5 * atan(f2 * f2))
+    end
+
+    def mel(f)
+      1127.0 * log(1.0 + f / 700.0)
+    end
+
+    def erb(f)
+      43.0 + 11.17 * log((f + 312.0) / (f + 14675.0))
+    end
+  end
+  # user's view of display-bark-fft function
+  def display_bark_fft(off = false)
+    if off.kind_of?(FalseClass)
+      db = Display_bark_fft.new
+      $lisp_graph_hook.add_hook!("display-bark-fft") do |snd, chn|
+        db.display_bark_fft(snd, chn)
+      end
+      $after_lisp_graph_hook.add_hook!("make-bark-label") do |snd, chn|
+        db.mark_bark_labels(snd, chn)
+      end
+      $mouse_click_hook.add_hook!("choose-bark-ticks") do |snd, chn, button, state, x, y, axis|
+        db.choose_bark_ticks(snd, chn, button, state, x, y, axis)
+      end
+      Snd.sounds.each do |snd|
+        channels(snd).times do |chn| update_lisp_graph(snd, chn) end
+      end
+    else
+      $lisp_graph_hook.remove_hook!("display-bark-fft")
+      $after_lisp_graph_hook.remove_hook!("make-bark-label")
+      $mouse_click_hook.remove_hook!("choose-bark-ticks")
+      Snd.sounds.each do |snd|
+        channels(snd).times do |chn| set_lisp_graph?(false, snd, chn) end
+      end
+    end
+    off
+  end
+
+  def undisplay_bark_fft
+    display_bark_fft(true)
+  end
 end
 
 include Dsp
