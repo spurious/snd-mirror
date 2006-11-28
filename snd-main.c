@@ -1412,6 +1412,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		}
 	      else
 		{
+		  /* TODO: if (say) ruby, look first for *.rb etc */
 		  if ((strcmp("-l", argname) == 0) ||
 		      (strcmp("-load", argname) == 0) ||
 		      (strcmp("-b", argname) == 0) ||

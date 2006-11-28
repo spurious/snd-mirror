@@ -1,36 +1,42 @@
-Snd 8.5
+Snd 8.6
 
-many improvements thanks to Kjetil and Mike.
+many improvements from Mike.
 
-gl2ps support, gl-graph->ps function, --with-gl2ps switch, gl2ps.[ch]
+mix/track mechanism sped up by about a factor of 100, so its possible
+  to have thousands of each (but the screeen gets very cluttered).
 
-added gtk-effects-utils.scm, gtk support for *-menu.scm.
+  added mix-name, track-name, track-tag-y, mix-name->id, and track-name->id
+  to help navigate in these situations.
 
-finally implemented the log-frequency display in non-GL spectrograms.
 
-save-marks changed to keep matching sync values
-add-mark now takes new optional trailing args: name and sync
+out-any, in-any, locsig, move-sound, and friends can now handle vct and sound-data objects
+  as the "stream" argument.  In with-sound, this is the *output* variable or :output 
+  argument which then applies to all notes. So, with-sound can be used in a zillion new ways:
 
-removed the gtk_print stuff from xg.c since it's all useless without
-  support for the cairo graphics functions and the pango functions
-  that access them.
+     (vct-scale! (with-temp-sound (:output (make-vct 2210)) (fm-violin 0 .1 440 .1)) 2.0)
 
-sounds->segment-data (examp.scm) -- returns segment start/dur/maxamp data for collections
-  of sounds.
+  This extension caused changes in sound-data object handling:
+    sound-data-scale! (for with-sound writing to a sound-data object and with the
+      :scaled-to or :scaled-by arguments)
+    sound-data-fill! (also for with-sound if not :continue-old-file)
 
-with-file-monitor -- can be set to #f to turn off the FAM process stuff.
+  fade.scm instruments changed to use outa rather than vct-map!
+  moved samples->sound-data to snd8.scm.
+  Mike provided sndins support for this change.
 
-add-watcher and delete-watcher -- this is a simpler (and less accident-prone)
-  hook to catch any change to the sound list, the current selection, or the mark list; 
-  it is intended to replace the multi-hook kludges currently used to set dialog button
-  sensitivity, for example.  Since each watcher is identified by a unique integer,
-  local (unnamed) functions can easily be deleted and so on.
 
-  removed selection-changed-hook (use simpler watcher mechanism instead).
+rf64 headers and mutable riff for very large output files.
 
-in cmn, thickness message now affects bars locally.  Added *double-barline-thickness*.
+mus-float-equal-fudge-factor (mainly for reasonable generator equal? checks)
 
-checked: gtk-2.10.4|5|6, sbcl 0.9.17, clisp 2.40|1.
+->frequency, ->samples (ws.scm) for things like (violin 0 .1 'e4).
 
-Thanks: Michael Edwards, Mike Scholz, Kjetil Matheussen, Carlos Pita,
-    Carsten Heinrigs, Dragan Novetski, Jacek M. Holeczek, David O'Toole
+channel-clipped? in examp.scm
+
+filter-fft in examp.scm.
+
+checked: Fedora Core 6, sbcl 0.9.18, fth 1.0.0, Gauche 0.8.8, autoconf 2.61
+
+Thanks: Jacek M. Holeczek, Rick Taube, Mike Scholz, Kjetil Matheussen, Julius Smith,
+    Joseph Anderson, SamButcha
+

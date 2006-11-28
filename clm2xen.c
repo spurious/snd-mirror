@@ -5,6 +5,8 @@
  *    perhaps a mus module, giving mus:sound-srate in xen, mus:sound-srate in clm, mus_sound_srate in C?
  */
 
+/* PERHAPS: vct|sound-data<->frame */
+
 #include <mus-config.h>
 
 #if USE_SND
@@ -2965,7 +2967,7 @@ static XEN g_frame_ref(XEN uf1, XEN uchan)
   return(C_TO_XEN_DOUBLE(mus_frame_ref((mus_any *)XEN_TO_MUS_ANY(uf1), XEN_TO_C_INT(uchan))));
 }
 
-static XEN g_set_frame_ref(XEN uf1, XEN uchan, XEN val)
+static XEN g_frame_set(XEN uf1, XEN uchan, XEN val)
 {
   #define H_frame_set "(" S_frame_set " f chan val) sets frame f's chan-th sample to val: f[chan] = val"
   XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_frame_p(XEN_TO_MUS_ANY(uf1))), uf1, XEN_ARG_1, S_frame_set, "a frame");
@@ -2995,7 +2997,7 @@ static XEN g_mixer_ref(XEN uf1, XEN in, XEN out)
 				       XEN_TO_C_INT(out))));
 }
 
-static XEN g_set_mixer_ref(XEN uf1, XEN in, XEN out, XEN val)
+static XEN g_mixer_set(XEN uf1, XEN in, XEN out, XEN val)
 {
   #define H_mixer_set "(" S_mixer_set " m in out val): set m[in, out] = val"
   XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf1))), uf1, XEN_ARG_1, S_mixer_set, "a mixer");
@@ -6142,14 +6144,14 @@ XEN_NARGIFY_1(g_frame_p_w, g_frame_p)
 XEN_ARGIFY_3(g_frame_add_w, g_frame_add)
 XEN_ARGIFY_3(g_frame_multiply_w, g_frame_multiply)
 XEN_NARGIFY_2(g_frame_ref_w, g_frame_ref)
-XEN_NARGIFY_3(g_set_frame_ref_w, g_set_frame_ref)
+XEN_NARGIFY_3(g_frame_set_w, g_frame_set)
 XEN_VARGIFY(g_make_mixer_w, g_make_mixer)
 XEN_NARGIFY_1(g_mixer_p_w, g_mixer_p)
 XEN_ARGIFY_3(g_mixer_multiply_w, g_mixer_multiply)
 XEN_ARGIFY_3(g_mixer_add_w, g_mixer_add)
 XEN_NARGIFY_2(g_make_scalar_mixer_w, g_make_scalar_mixer)
 XEN_NARGIFY_3(g_mixer_ref_w, g_mixer_ref)
-XEN_NARGIFY_4(g_set_mixer_ref_w, g_set_mixer_ref)
+XEN_NARGIFY_4(g_mixer_set_w, g_mixer_set)
 XEN_NARGIFY_2(g_frame_to_sample_w, g_frame_to_sample)
 XEN_NARGIFY_1(g_frame_to_list_w, g_frame_to_list)
 XEN_ARGIFY_3(g_frame_to_frame_w, g_frame_to_frame)
@@ -6408,14 +6410,14 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_frame_add_w g_frame_add
 #define g_frame_multiply_w g_frame_multiply
 #define g_frame_ref_w g_frame_ref
-#define g_set_frame_ref_w g_set_frame_ref
+#define g_frame_set_w g_frame_set
 #define g_make_mixer_w g_make_mixer
 #define g_mixer_p_w g_mixer_p
 #define g_mixer_multiply_w g_mixer_multiply
 #define g_mixer_add_w g_mixer_add
 #define g_make_scalar_mixer_w g_make_scalar_mixer
 #define g_mixer_ref_w g_mixer_ref
-#define g_set_mixer_ref_w g_set_mixer_ref
+#define g_mixer_set_w g_mixer_set
 #define g_frame_to_sample_w g_frame_to_sample
 #define g_frame_to_list_w g_frame_to_list
 #define g_frame_to_frame_w g_frame_to_frame
@@ -6853,12 +6855,12 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_frame_add,      g_frame_add_w,      2, 1, 0, H_frame_add);
   XEN_DEFINE_PROCEDURE(S_frame_multiply, g_frame_multiply_w, 2, 1, 0, H_frame_multiply);
 #if HAVE_SCHEME || HAVE_FORTH
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_frame_ref, g_frame_ref_w, H_frame_ref, S_setB S_frame_ref, g_set_frame_ref_w,  2, 0, 3, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_frame_ref, g_frame_ref_w, H_frame_ref, S_setB S_frame_ref, g_frame_set_w,  2, 0, 3, 0);
 #endif
 #if HAVE_RUBY
-  XEN_DEFINE_PROCEDURE(S_frame_ref,      g_frame_ref_w,      2, 0, 0, H_frame_ref);
+  XEN_DEFINE_PROCEDURE(S_frame_ref,      g_frame_ref_w,  2, 0, 0, H_frame_ref);
 #endif
-  XEN_DEFINE_PROCEDURE(S_frame_set,      g_set_frame_ref_w,  3, 0, 0, H_frame_set);
+  XEN_DEFINE_PROCEDURE(S_frame_set,      g_frame_set_w,  3, 0, 0, H_frame_set);
 
 
   XEN_DEFINE_PROCEDURE(S_make_mixer,        g_make_mixer_w,        0, 0, 1, H_make_mixer);
@@ -6867,12 +6869,12 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mixer_add,         g_mixer_add_w,         2, 1, 0, H_mixer_add);
   XEN_DEFINE_PROCEDURE(S_make_scalar_mixer, g_make_scalar_mixer_w, 2, 0, 0, H_make_scalar_mixer);
 #if HAVE_SCHEME || HAVE_FORTH
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref, g_mixer_ref_w, H_mixer_ref, S_setB S_mixer_ref, g_set_mixer_ref_w,  3, 0, 4, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref, g_mixer_ref_w, H_mixer_ref, S_setB S_mixer_ref, g_mixer_set_w,  3, 0, 4, 0);
 #endif
 #if HAVE_RUBY
   XEN_DEFINE_PROCEDURE(S_mixer_ref,         g_mixer_ref_w,         3, 0, 0, H_mixer_ref);
 #endif
-  XEN_DEFINE_PROCEDURE(S_mixer_set,         g_set_mixer_ref_w,     4, 0, 0, H_mixer_set);
+  XEN_DEFINE_PROCEDURE(S_mixer_set,         g_mixer_set_w,         4, 0, 0, H_mixer_set);
   XEN_DEFINE_PROCEDURE(S_frame_to_sample,   g_frame_to_sample_w,   2, 0, 0, H_frame_to_sample);
   XEN_DEFINE_PROCEDURE(S_frame_to_list,     g_frame_to_list_w,     1, 0, 0, H_frame_to_list);
   XEN_DEFINE_PROCEDURE(S_frame_to_frame,    g_frame_to_frame_w,    2, 1, 0, H_frame_to_frame);

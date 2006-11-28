@@ -4807,6 +4807,15 @@ static void release_dangling_mix_readers(mix_info *md)
       if ((fd) && 
 	  (fd->md == md))
 	{
+#if MUS_DEBUGGING
+	  if ((!md) || (!(mix_ok(md->id))) || 
+	      (fd->calc < 0) || (fd->calc > C_SPEED_ENV_PEAK) ||
+	      (fd->dangling_loc < 0))
+	    {
+	      fprintf(stderr, "possible forgotten mix_fd at %d (%d): %p %p %d %d %d\n", 
+		      i, md->id, md, fd, mix_ok(md->id), fd->calc, fd->dangling_loc);
+	    }
+#endif
 	  fd->calc = C_ZERO_SOUND;
 	  fd->md = NULL;
 	  fd->dangling_loc = -1;

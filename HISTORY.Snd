@@ -1,5 +1,6 @@
 Snd change log
 
+  29-Nov:    Snd 8.6.
   21-Nov:    sound-data-scale! and sound-data-fill! with vct/sound-data with-sound output.
              mus-float-equal-fudge-factor
              fade.scm instruments changed to use outa rather than vct-map!
