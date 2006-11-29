@@ -212,12 +212,7 @@ static mix_state *copy_mix_state(mix_state *cs)
   else ncs->amp_envs = NULL;
   ncs->len = cs->len;
   if (ncs->as_built)
-    {
-#if MUS_DEBUGGING
-      fprintf(stderr, "ncs as built is %p??", ncs->as_built);
-#endif
-      ncs->as_built = free_mix_track_state(ncs->as_built);
-    }
+    ncs->as_built = free_mix_track_state(ncs->as_built);
   if (cs->as_built)
     ncs->as_built = copy_mix_track_state(cs->as_built);
   return(ncs);
@@ -759,11 +754,13 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
 	  break;
 	}
     }
-  if (mf->calc == C_ZERO_SOUND) return(mf);
+  if (mf->calc == C_ZERO_SOUND) 
+    return(mf);
   if (!(md->add_snd)) 
     {
       md->add_snd = make_mix_readable(md);
-      if (!(md->add_snd)) return(NULL);
+      if (!(md->add_snd)) 
+	return(NULL);
     }
   add_sp = md->add_snd;
   if (type == MIX_INPUT_SOUND)
@@ -942,8 +939,11 @@ static mix_fd *init_mix_input_amp_env_read(mix_info *md, bool hi)
   return(mf);
 }
 
+static void unlist_mix_reader(mix_fd *fd);
+
 static mix_fd *free_mix_fd_almost(mix_fd *mf)
 {
+  unlist_mix_reader(mf);
   if (mf)
     {
       int i;
@@ -4742,7 +4742,7 @@ char *run_mix_sample_reader_to_string(struct mix_fd *ptr) {return(mf_to_string(p
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(mix_fd, print_mf, mf_to_string)
 
 static mix_fd **dangling_mix_readers = NULL;
-static int dangling_mix_reader_size = 0;
+static int dangling_mix_reader_size = 0, dangling_top = -1;
 #define DANGLING_MIX_READER_INCREMENT 16
 
 static void list_mix_reader(mix_fd *fd)
@@ -4771,6 +4771,7 @@ static void list_mix_reader(mix_fd *fd)
 	  for (i = loc; i < dangling_mix_reader_size; i++) dangling_mix_readers[i] = NULL;
 	}
     }
+  if (loc > dangling_top) dangling_top = loc;
   fd->dangling_loc = loc;
   dangling_mix_readers[loc] = fd;
 }
@@ -4780,6 +4781,10 @@ static void unlist_mix_reader(mix_fd *fd)
   if ((fd) && (fd->dangling_loc >= 0))
     {
       dangling_mix_readers[fd->dangling_loc] = NULL;
+      if (fd->dangling_loc == dangling_top)
+	while ((dangling_top >= 0) && 
+	       (!(dangling_mix_readers[dangling_top]))) 
+	  dangling_top--;
       fd->dangling_loc = -1;
     }
 }
@@ -4787,10 +4792,7 @@ static void unlist_mix_reader(mix_fd *fd)
 static void mf_free(mix_fd *fd)
 {
   if (fd) 
-    {
-      unlist_mix_reader(fd);
-      free_mix_fd(fd); 
-    }
+    free_mix_fd(fd); 
 }
 
 void run_free_mix_fd(struct mix_fd *ptr) {mf_free(ptr);}
@@ -4800,28 +4802,22 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(mix_fd, free_mf, mf_free)
 static void release_dangling_mix_readers(mix_info *md)
 {
   int i;
-  for (i = 0; i < dangling_mix_reader_size; i++)
+  for (i = 0; i <= dangling_top; i++)
     {
       mix_fd *fd;
       fd = dangling_mix_readers[i];
       if ((fd) && 
 	  (fd->md == md))
 	{
-#if MUS_DEBUGGING
-	  if ((!md) || (!(mix_ok(md->id))) || 
-	      (fd->calc < 0) || (fd->calc > C_SPEED_ENV_PEAK) ||
-	      (fd->dangling_loc < 0))
-	    {
-	      fprintf(stderr, "possible forgotten mix_fd at %d (%d): %p %p %d %d %d\n", 
-		      i, md->id, md, fd, mix_ok(md->id), fd->calc, fd->dangling_loc);
-	    }
-#endif
 	  fd->calc = C_ZERO_SOUND;
 	  fd->md = NULL;
 	  fd->dangling_loc = -1;
 	  dangling_mix_readers[i] = NULL;
 	}
     }
+  while ((dangling_top >= 0) && 
+	 (!(dangling_mix_readers[dangling_top]))) 
+    dangling_top--;
 }
 
 static XEN g_make_mix_sample_reader(XEN mix_id, XEN ubeg)
@@ -8101,13 +8097,9 @@ static track_fd *init_track_sample_reader(int track_num, int chan, off_t beg, bo
 
 		  if (fd->fds[mix])
 		    list_mix_reader(fd->fds[mix]); /* was in g_make... */
-
 		  mix++;
 		}
 	    }
-#if MUS_DEBUGGING
-	  if (mix != mixes) fprintf(stderr, "init_track_sample_reader: %d %d?\n", mix, mixes);
-#endif
 	}
     }
   free_track_mix_list(trk);
@@ -8158,10 +8150,7 @@ static Float next_track_sample(track_fd *fd)
 		sum += next_mix_sample(fd->fds[i]);
 		fd->len[i]--;
 		if (fd->len[i] <= 0) 
-		  {
-		    unlist_mix_reader(fd->fds[i]);
-		    fd->fds[i] = free_mix_fd(fd->fds[i]);
-		  }
+		  fd->fds[i] = free_mix_fd(fd->fds[i]);
 		else eof = false;
 	      }
 	    else 
