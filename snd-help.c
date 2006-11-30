@@ -314,12 +314,9 @@ static char *glx_version(void)
 #else
   if (gdk_gl_query_extension() != 0)
     {
-      const GLubyte *glstring;
-      glstring = glGetString(GL_VERSION); /* might exist, if user has run a GL spectrogram or something */
+      /* can't get GL_VERSION here -- segfaults in FC6 x86_64 */
       gdk_gl_query_version(&major, &minor);
-      mus_snprintf(version, VERSION_SIZE, " %s%sGtkGL version: %d.%d", 
-		   (glstring) ? (char *)glstring : "", (glstring) ? ", " : "",
-		   major, minor);
+      mus_snprintf(version, VERSION_SIZE, " GtkGL version: %d.%d", major, minor);
     }
   else mus_snprintf(version, VERSION_SIZE, " gtkGL not supported?");
 #endif
@@ -509,6 +506,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+1-Dec:   scan-sound in examp.scm\n\
 29-Nov:  Snd 8.6.\n\
 21-Nov:  sound-data-scale! and sound-data-fill! with vct/sound-data with-sound output.\n\
          mus-float-equal-fudge-factor\n\

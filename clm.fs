@@ -2,9 +2,12 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Mon Nov 27 19:42:48 CET 2006
+\ Changed: Thu Nov 30 01:13:54 CET 2006
 
 \ Commentary:
+\
+\ clm-print            ( fmt args -- )
+\ clm-message          ( fmt args -- )
 \ 
 \ tempnam              ( -- name )
 \ 
@@ -43,14 +46,34 @@
 
 \ Code:
 
+\ defined in snd/snd-xen.c
+[undefined] clm-print [if] ' fth-print alias clm-print [then]
+
+[undefined] clm-message [if]
+  'snd provided? not 'snd-nogui provided? || [if]
+    \ Prints to stdout through snd-print.
+    : clm-message ( fmt args -- ) $" \\ " rot ( fmt ) $+ $" \n" $+ swap ( args ) clm-print ;
+  [else]
+    \ Prints to Snd's listener (snd-print) and to stdout if $EMACS is
+    \ set or $TERM matches /^xterm/.
+    : clm-message ( fmt args -- )
+      $" \n\\ " rot ( fmt ) $+ swap ( args ) string-format { msg }
+      msg '() clm-print
+      $" EMACS" getenv
+      /^xterm/ $" TERM" getenv 1 >string re= || if msg .stdout then
+    ;
+  [then]
+[then]
+
 dl-load sndlib Init_sndlib
 
 'snd provided? [unless]
   : sound?       ( snd -- f )         drop #f ;
   : open-sound   ( name -- snd )      drop #f ;
-  : close-sound  ( snd -- f )         drop #f ;
-  : update-sound ( snd )              drop #f ;
   : find-sound   ( name nth -- snd ) 2drop #f ;
+  : update-sound ( snd )              drop #f ;
+  : save-sound   ( snd -- f )         drop #f ;
+  : close-sound  ( snd -- f )         drop #f ;
   : channels     ( snd -- chns )      drop 0  ;
   : play         ( start snd chn syncd end pos stop-proc outchan -- f ) stack-reset #f ;
   ' play alias play-and-wait
@@ -68,16 +91,16 @@ uses /tmp as temporary path and produces something like:\n\
 [...]"
   1 *fth-file-number* +!
   $" %s/fth-%d-%d.snd"
-  $" TMP" getenv dup empty? if
+  $" TMP" getenv dup unless
     drop
-    $" TEMP" getenv dup empty? if
+    $" TEMP" getenv dup unless
       drop
-      $" TMPDIR" getenv dup empty? if
+      $" TMPDIR" getenv dup unless
 	drop
 	$" /tmp"
       then
     then
-  then getpid *fth-file-number* @ 3 >list string-format
+  then ( tmp ) getpid *fth-file-number* @  3 >list string-format
 ;
 previous
 
@@ -252,7 +275,7 @@ mus-audio-default value *clm-device*
   '( $" %a %d-%b-%y %H:%M %Z" current-time strftime
      getlogin
      gethostname
-     fth-date ) format
+     fth-date ) string-format
 ;
 
 : times->samples ( start dur -- len beg )
@@ -319,15 +342,17 @@ set-current
 ; immediate
 previous
 
-: reverb-info { caller in-chans out-chans -- }
-  $" \\ %s on %d in and %d out channels\n" _ '( caller in-chans out-chans ) fth-print
+: reverb-info ( caller in-chans out-chans -- )
+  { caller in-chans out-chans }
+  $" %s on %d in and %d out channels" _ '( caller in-chans out-chans ) clm-message
 ;
 
 \ === Helper functions for instruments ===
 hide
 : ins-info ( ins-name -- ) *notehook* if *notehook* execute else drop then ;
 : event-info ( ev-name -- )
-  *verbose* if ." \    event: " .string cr else drop then
+  { ev-name }
+  *verbose* if $" \tevent: %s" '( ev-name ) clm-message then
 ;
 set-current
 : instrument: ( ?? -- )
@@ -372,26 +397,42 @@ previous
 ;
 
 hide
-: .maxamps { fname name sr -- }
+: .maxamps ( fname name sr -- )
+  { fname name sr }
   fname mus-sound-maxamp { vals }
   vals length 0 ?do
-    $" \\ %*s %c: %.3f (near %.3f secs)\n"
+    $" %*s %c: %.3f (near %.3f secs)"
     '( 6 name
        [char] A i 2/ +
        vals i 1+ list-ref
-       vals i list-ref sr f/ ) fth-print
+       vals i list-ref sr f/ ) clm-message
   2 +loop
+;
+: .timer ( obj -- )
+  { obj }
+  $" %*s: %.3f  (utime %.3f, stime %.3f)"
+  '( 8 $" real" obj real-time@ obj user-time@ obj system-time@ ) clm-message
+;
+: .timer-ratio ( srate frames obj -- )
+  { sr frms obj }
+  frms 0> if
+    sr frms f/ { m }
+    $" %*s: %.2f  (uratio %.2f)"
+    '( 8 $" ratio" obj real-time@ m f* obj user-time@ m f* ) clm-message
+  else
+    $" %*s: no ratio" '( 8 $" ratio" ) clm-message
+  then
 ;
 set-current
 
 : snd-info { output revfile chans sr frms tm -- }
   output mus-sound-duration { dur }
-  $" \\ filename: %S\n"                '( output )       fth-print
-  $" \\    chans: %d, srate: %d\n"     '( chans sr f>s ) fth-print
-  $" \\   format: %s [%s]\n"
+  $" filename: %S"                '( output )       clm-message
+  $"    chans: %d, srate: %d"     '( chans sr f>s ) clm-message
+  $"   format: %s [%s]"
   '( output mus-sound-data-format mus-data-format-name
-     output mus-sound-header-type mus-header-type-name ) fth-print
-  $" \\   length: %.3f  (%d frames)\n" '( dur frms )     fth-print
+     output mus-sound-header-type mus-header-type-name ) clm-message
+  $"   length: %.3f  (%d frames)" '( dur frms )     clm-message
   tm timer? if
     tm .timer
     sr frms tm .timer-ratio
@@ -399,7 +440,7 @@ set-current
   output $" maxamp" sr .maxamps
   revfile ?dup-if $" revamp" sr .maxamps then
   output mus-sound-comment { comm }
-  comm empty? unless $" \\  comment: %s\n" '( comm ) fth-print then
+  comm empty? unless $"  comment: %s" '( comm ) clm-message then
 ;
 previous
 
@@ -451,13 +492,13 @@ previous
   device sr chans 2 min afmt bufsize mus-audio-open-input { dac-fd }
   dac-fd 0< if 'forth-error '( get-func-name $" cannot open dac" _ ) fth-throw then
   *clm-verbose* if
-    $" \\ filename: %s\n"                '( fname )                     fth-print
-    $" \\   device: %d\n"                '( device )                    fth-print
-    $" \\    chans: %d, srate: %d\n"     '( chans sr )                  fth-print
-    $" \\ r format: %s\n"                '( afmt mus-data-format-name ) fth-print
-    $" \\ w format: %s [%s]\n" '( dfmt mus-data-format-name htype mus-header-type-name ) fth-print
-    $" \\   length: %.3f  (%d frames)\n" '( dur frms )                  fth-print
-    $" \\  comment: %s\n"                '( descr )                     fth-print
+    $" filename: %s"                '( fname )                     clm-message
+    $"   device: %d"                '( device )                    clm-message
+    $"    chans: %d, srate: %d"     '( chans sr )                  clm-message
+    $" r format: %s"                '( afmt mus-data-format-name ) clm-message
+    $" w format: %s [%s]" '( dfmt mus-data-format-name htype mus-header-type-name ) clm-message
+    $"   length: %.3f  (%d frames)" '( dur frms )                  clm-message
+    $"  comment: %s"                '( descr )                     clm-message
   then
   frms 0 ?do
     i bufsize + frms > if frms i - to bufsize then
@@ -633,7 +674,7 @@ set-current
     snd sound? 'snd-nogui provided? not && if
       snd update-sound channels 0 ?do drop loop
     else
-      fname open-sound to snd
+      snd update-sound drop
     then
     play-it if fname play-and-wait drop then
   else
@@ -644,7 +685,7 @@ set-current
 	output play-sound
 	old-verbose to *clm-verbose*
       else
-	$" %s %s" '( player output ) string-format shell drop
+	$" %s %s" '( player output ) string-format file-shell drop
       then
     then
   then
@@ -656,7 +697,7 @@ previous
   { output }
   output file-exists? if
     :verbose *clm-verbose* get-args to *verbose*
-    *verbose* if $" \\ loading %S\n" _ '( output ) fth-print then
+    *verbose* if $" loading %S" _ '( output ) clm-message then
     output ['] file-eval :verbose *verbose* with-sound
   else
     'no-such-file '( get-func-name output ) fth-throw

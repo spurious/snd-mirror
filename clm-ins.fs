@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Fri Nov 24 01:32:51 CET 2006
+\ Changed: Tue Nov 28 20:05:04 CET 2006
 
 \ Commentary:
 \
@@ -146,10 +146,10 @@ instrument: violin ( start dur freq amp keyword-args -- )
   5.0 freq flog f/ maxdev f* { index1 }
   8.5 freq flog f- 3.0 freq 1000.0 f/ f+ f/ maxdev 3.0 f* f* { index2 }
   4.0 freq fsqrt f/ maxdev f* { index3 }
-  :frequency freq :initial-phase 0.0 make-oscil { carrier }
-  :frequency freq :initial-phase 0.0 make-oscil { fmosc1 }
-  :frequency freq 3.0 f* :initial-phase 0.0 make-oscil { fmosc2 }
-  :frequency freq 4.0 f* :initial-phase 0.0 make-oscil { fmosc3 }
+  :frequency freq 	 make-oscil { carrier }
+  :frequency freq 	 make-oscil { fmosc1 }
+  :frequency freq 3.0 f* make-oscil { fmosc2 }
+  :frequency freq 4.0 f* make-oscil { fmosc3 }
   :envelope amp-env   :scaler amp    :duration dur make-env { ampf }
   :envelope index-env :scaler index1 :duration dur make-env { indf1 }
   :envelope index-env :scaler index2 :duration dur make-env { indf2 }
@@ -206,7 +206,7 @@ instrument: fm-violin-fs ( start dur freq amp keyword-args -- )
 \\ :distance              	 1.0\n\
 \\ :reverb-amount         	 0.01\n\
 \\ :index-type            	 'violin ('cello or 'violin)\n\
-0 3 440 0.5 :fm-index 0.5 ' fm-violin with-sound"
+0 3 440 0.5 :fm-index 0.5 ' fm-violin-fs with-sound"
   :fm-index                   1.0                          get-args { fm-index }
   :amp-env                    '( 0 0 25 1 75 1 100 0 )     get-args { amp-env }
   :periodic-vibrato-rate      5.0         		   get-args { pvrate }
@@ -297,42 +297,36 @@ instrument: fm-violin-fs ( start dur freq amp keyword-args -- )
     :frequency amp-noise-freq :amplitude amp-noise-amount make-rand-interp to amp-noi
   then
   0.0 0.0 1.0 1.0 { vib fuzz ind-fuzz amp-fuzz }
-  :degree degree :distance distance :reverb reverb-amount :output *output* :revout *reverb*
-  :channels *channels* :type *locsig-type* make-locsig { loc }
   modulate if
     easy-case if
-      start dur run
+      start dur #{ :degree degree :distance distance :reverb reverb-amount } run-instrument
 	fm-noi if fm-noi 0.0 rand to fuzz then
 	frqf env  pervib 0.0 triangle-wave f+  ranvib 0.0 rand-interp f+ to vib
 	ind-noi if ind-noi 0.0 rand-interp 1.0 f+ to ind-fuzz then
 	amp-noi if amp-noi 0.0 rand-interp 1.0 f+ to amp-fuzz then
-	loc i
-	carrier  fmosc1 1.0 vib polyshape  ind-fuzz f* vib f+  0.0  oscil
-	ampf env f*  amp-fuzz f*  locsig drop
-      loop
+	carrier  fmosc1 1.0 vib polyshape  ind-fuzz f* vib f+  0.0  oscil ampf env f*  amp-fuzz f*
+      end-run
     else
-      start dur run
+      start dur #{ :degree degree :distance distance :reverb reverb-amount } run-instrument
 	fm-noi if fm-noi 0.0 rand to fuzz then
 	frqf env  pervib 0.0 triangle-wave f+  ranvib 0.0 rand-interp f+ to vib
 	ind-noi if ind-noi 0.0 rand-interp 1.0 f+ to ind-fuzz then
 	amp-noi if amp-noi 0.0 rand-interp 1.0 f+ to amp-fuzz then
-	loc i
 	carrier ( gen )
 	fmosc1 fm1-rat vib f* fuzz f+ 0.0 oscil  indf1 env f*
 	fmosc2 fm2-rat vib f* fuzz f+ 0.0 oscil  indf2 env f* f+
 	fmosc3 fm3-rat vib f* fuzz f+ 0.0 oscil  indf3 env f* f+ ind-fuzz f* vib f+ ( fm )
-	0.0 ( pm ) oscil
-	ampf env f*  amp-fuzz f*  locsig drop
-      loop
+	0.0 ( pm ) oscil ampf env f*  amp-fuzz f*
+      end-run
     then
   else
-    start dur run
+    start dur #{ :degree degree :distance distance :reverb reverb-amount } run-instrument
       fm-noi if fm-noi 0.0 rand to fuzz then
       frqf env  pervib 0.0 triangle-wave f+  ranvib 0.0 rand-interp f+ to vib
       ind-noi if ind-noi 0.0 rand-interp 1.0 f+ to ind-fuzz then
       amp-noi if amp-noi 0.0 rand-interp 1.0 f+ to amp-fuzz then
-      loc i  carrier vib 0.0 oscil  ampf env f*  amp-fuzz f*  locsig drop
-    loop
+      carrier vib 0.0 oscil  ampf env f*  amp-fuzz f*
+    end-run
   then
 ;
 
@@ -341,7 +335,7 @@ instrument: fm-violin-fs ( start dur freq amp keyword-args -- )
 event: fm-violin-test ( keyword-args -- )
   :beg 0 get-args { start }
   :dur 1 get-args { dur }
-  start dur 440 0.5 fm-violin-fs drop
+  start dur 440 0.5 fm-violin-fs
   dur step
 ;event
 

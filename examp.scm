@@ -2650,3 +2650,45 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 
 (add-to-menu 2 "Show Clipping" (lambda () (mark-clipping)))
 |#
+
+
+;;; -------- scan-sound
+
+;;; TODO: doc/test scan-sound
+
+(define* (scan-sound func :optional (beg 0) dur snd)
+  (let ((index (or snd (selected-sound) (car (sounds)))))
+    (if (sound? index)
+	(let ((chns (chans index)))
+	  (if (= chns 1)
+	      (scan-channel (lambda (y) (func y 0)) beg dur index 0)
+	      (let* ((len (frames index))
+		     (end (if dur (min len (+ beg dur)) len)))
+		(let ((readers (make-vector chns)))
+		  (do ((chn 0 (1+ chn)))
+		      ((= chn chns))
+		    (vector-set! readers chn (make-sample-reader beg index chn)))
+		  (let ((result #f))
+		    (do ((i beg (1+ i)))
+			((or result (= i end)) result)
+		      (let ((local-result #t))
+			(do ((chn 0 (1+ chn)))
+			    ((= chn chns))        ; run all readers to keep all going in parallel
+			  (set! local-result (and (func (read-sample (vector-ref readers chn)) chn)
+						  local-result)))
+			(if local-result
+			    (set! result (list #t i))))))))))
+	(throw 'no-such-sound (list "scan-sound" snd)))))
+
+;;; (scan-sound (lambda (y c) (> y .03)))
+#|
+;;; look for simultaneous zero crossing:
+
+(let ((last-vals (make-vct (chans (or (selected-sound) (car (sounds)))))))
+  (scan-sound
+   (lambda (y c)
+     (let ((last-y (vct-ref last-vals c)))
+       (vct-set! last-vals c y)
+       (< (* y last-y) 0.0))))) ; signs differ so we must have crossed 0
+|#
+

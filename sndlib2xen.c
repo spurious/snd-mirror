@@ -1543,6 +1543,9 @@ static XEN g_mus_error_type_to_string(XEN err)
  *              file->vct examp.scm
  *              mix-sound-data  (region|transform|sound->sound-data)
  *              sound-data->sound-file|string  mix|track->sound-data
+ *  actually, almost anywhere a vct now represents samples, we could allow sound-data:
+ *    dot-product?? array<->file??  sound-data*|+ <->vector graph-data|graph
+ *    rtn obj in map??
  */
 
 static XEN g_array_to_file(XEN filename, XEN data, XEN len, XEN srate, XEN channels)

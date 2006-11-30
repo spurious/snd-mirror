@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Aug 18 16:57:43 CEST 2006
-\ Changed: Sun Aug 20 01:01:13 CEST 2006
+\ Changed: Tue Nov 28 14:25:26 CET 2006
 
 \ Commentary:
 \
@@ -135,48 +135,48 @@
 0.96 0.87 0.70 make-color constant wheat
 0.95 0.64 0.37 make-color constant sandy-brown
 \ tan collides with Scheme built-in -- tawny suggested by Dave Phillips
-0.00 0.00 0.00 make-color constant tawny
-0.00 0.00 0.00 make-color constant chocolate
-0.00 0.00 0.00 make-color constant firebrick
-0.00 0.00 0.00 make-color constant brown
-0.00 0.00 0.00 make-color constant dark-salmon
-0.00 0.00 0.00 make-color constant salmon
-0.00 0.00 0.00 make-color constant light-salmon
-0.00 0.00 0.00 make-color constant orange
-0.00 0.00 0.00 make-color constant dark-orange
-0.00 0.00 0.00 make-color constant coral
-0.00 0.00 0.00 make-color constant light-coral
-0.00 0.00 0.00 make-color constant tomato
-0.00 0.00 0.00 make-color constant orange-red
-0.00 0.00 0.00 make-color constant red
-0.00 0.00 0.00 make-color constant hot-pink
-0.00 0.00 0.00 make-color constant deep-pink
-0.00 0.00 0.00 make-color constant pink
-0.00 0.00 0.00 make-color constant light-pink
-0.00 0.00 0.00 make-color constant pale-violet-red
-0.00 0.00 0.00 make-color constant maroon
-0.00 0.00 0.00 make-color constant medium-violet-red
-0.00 0.00 0.00 make-color constant violet-red
-0.00 0.00 0.00 make-color constant magenta
-0.00 0.00 0.00 make-color constant violet
-0.00 0.00 0.00 make-color constant plum
-0.00 0.00 0.00 make-color constant orchid
-0.00 0.00 0.00 make-color constant medium-orchid
-0.00 0.00 0.00 make-color constant dark-orchid
-0.00 0.00 0.00 make-color constant dark-violet
-0.00 0.00 0.00 make-color constant blue-violet
-0.00 0.00 0.00 make-color constant purple
-0.00 0.00 0.00 make-color constant medium-purple
-0.00 0.00 0.00 make-color constant thistle
-0.00 0.00 0.00 make-color constant snow1
-0.00 0.00 0.00 make-color constant snow2
-0.00 0.00 0.00 make-color constant snow3
-0.00 0.00 0.00 make-color constant snow4
-0.00 0.00 0.00 make-color constant seashell1
-0.00 0.00 0.00 make-color constant seashell2
-0.00 0.00 0.00 make-color constant seashell3
-0.00 0.00 0.00 make-color constant seashell4
-0.00 0.00 0.00 make-color constant antiquewhite1
+0.82 0.70 0.55 make-color constant tawny
+0.82 0.41 0.12 make-color constant chocolate
+0.70 0.13 0.13 make-color constant firebrick
+0.64 0.16 0.16 make-color constant brown
+0.91 0.59 0.48 make-color constant dark-salmon
+0.98 0.50 0.45 make-color constant salmon
+1.00 0.62 0.48 make-color constant light-salmon
+1.00 0.64 0.00 make-color constant orange
+1.00 0.55 0.00 make-color constant dark-orange
+1.00 0.50 0.31 make-color constant coral
+0.94 0.50 0.50 make-color constant light-coral
+1.00 0.39 0.28 make-color constant tomato
+1.00 0.27 0.00 make-color constant orange-red
+1.00 0.00 0.00 make-color constant red
+1.00 0.41 0.70 make-color constant hot-pink
+1.00 0.08 0.57 make-color constant deep-pink
+1.00 0.75 0.79 make-color constant pink
+1.00 0.71 0.75 make-color constant light-pink
+0.86 0.44 0.57 make-color constant pale-violet-red
+0.69 0.19 0.37 make-color constant maroon
+0.78 0.08 0.52 make-color constant medium-violet-red
+0.81 0.12 0.56 make-color constant violet-red
+1.00 0.00 1.00 make-color constant magenta
+0.93 0.51 0.93 make-color constant violet
+0.86 0.62 0.86 make-color constant plum
+0.85 0.44 0.84 make-color constant orchid
+0.73 0.33 0.82 make-color constant medium-orchid
+0.60 0.20 0.80 make-color constant dark-orchid
+0.58 0.00 0.82 make-color constant dark-violet
+0.54 0.17 0.88 make-color constant blue-violet
+0.62 0.12 0.94 make-color constant purple
+0.57 0.44 0.86 make-color constant medium-purple
+0.84 0.75 0.84 make-color constant thistle
+1.00 0.98 0.98 make-color constant snow1
+0.93 0.91 0.91 make-color constant snow2
+0.80 0.79 0.79 make-color constant snow3
+0.54 0.54 0.54 make-color constant snow4
+1.00 0.96 0.93 make-color constant seashell1
+0.93 0.89 0.87 make-color constant seashell2
+0.80 0.77 0.75 make-color constant seashell3
+0.54 0.52 0.51 make-color constant seashell4
+1.00 0.93 0.86 make-color constant antiquewhite1
 0.93 0.87 0.80 make-color constant antiquewhite2
 0.80 0.75 0.69 make-color constant antiquewhite3
 0.54 0.51 0.47 make-color constant antiquewhite4
