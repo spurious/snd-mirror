@@ -6425,6 +6425,7 @@ find silence: <a href="#mapsilence">map-silence</a>, scramble-channel in examp.s
 find zero crossing: <a href="#newcp">find-zero</a><br>
 find any difference between two chans: <a href="sndscm.html#channelsequal">channels-equal</a><br>
 see also <a href="#countmatches">count-matches</a> and <a href="#scanchannel">scan-channel</a><br>
+search a multichannel sound: <a href="sndscm.html#scansound">scan-sound</a><br>
 find a widget: find-child in snd-motif.scm<br>
 add C-s and C-r to the listener key bindings: add-find-to-listener in snd-motif.scm<br>
 Scheme find: find-if<br>
@@ -8280,7 +8281,9 @@ In this case, we found such a sample at position 4423.<br>
 &gt;<em class=typing>(every-sample? (lambda (y) (&lt; y .5)))</em>
 <em class=listener>#t</em>
 </pre>
-
+To scan all the channels of a multichannel sound in parallel, see
+<a href="sndscm.html#scansound">scan-sound</a>.
+<br><br>
 In scan-chan, scan-channel, find, and count-matches (all the same underlying procedure), an attempt to jump back
 into a previous call will not work.  That is,
 
@@ -8402,7 +8405,7 @@ unless <i>auto-delete</i> is #t.  (If you write a temporary sound
 as an edit, it can be non-obvious when it is safe to delete that
 file; <i>auto-delete</i> set to #t asks Snd to handle cleanup).
 <br><br>
-The form (set! (<a class=quiet href="#samples">samples</a> samp samps <i>snd chn trunc edname infile-chan</i>) data) can also be used.
+The form (set! (<a class=quiet href="#samples">samples</a> samp samps <i>snd chn trunc edname infile-chan edpos auto-delete</i>) data) can also be used.
 <i>env-sound-interp</i> in examp.scm has an example of the file version, using
 sound-data objects and mus-sound-write to create a temporary file, but
 it's probably simpler to use <a href="clm.html#with-sound">with-sound</a> (see also linear-src-channel in dsp.scm):

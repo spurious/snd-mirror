@@ -2654,8 +2654,6 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 
 ;;; -------- scan-sound
 
-;;; TODO: doc/test scan-sound
-
 (define* (scan-sound func :optional (beg 0) dur snd)
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
@@ -2663,7 +2661,9 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	  (if (= chns 1)
 	      (scan-channel (lambda (y) (func y 0)) beg dur index 0)
 	      (let* ((len (frames index))
-		     (end (if dur (min len (+ beg dur)) len)))
+		     (end (if dur 
+			      (min len (+ beg dur))
+			      len)))
 		(let ((readers (make-vector chns)))
 		  (do ((chn 0 (1+ chn)))
 		      ((= chn chns))

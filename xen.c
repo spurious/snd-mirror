@@ -651,7 +651,9 @@ static XEN xen_rb_rep(XEN ig)
 {
   XEN val;
   char *str;
-  /* TODO: if ruby was built without readline, we need to make sure we're consistent here */
+  /* TODO: if ruby was built without readline, we need to make sure we're consistent here
+   *   defined? readline -> method, but otherwise I can't see any way to query ruby about this
+   */
 #if HAVE_READLINE
   char *line_read = NULL;
   line_read = readline(rb_prompt);

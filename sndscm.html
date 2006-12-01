@@ -4214,6 +4214,29 @@ remove-clicks looks for obvious clicks and uses smooth-sound to remove them.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- scan-sound -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="scansound">scan-sound</a> <code>func :optional (beg 0) dur snd</code>
+</td></tr><tr><td></td><td>
+scan-sound applies 'func' to all channels of the sound 'snd' in parallel, returning #t and a 
+sample number if all channels evaluate 'func' to #t on the same sample. 'func' takes two
+arguments, the current sample value, and the current channel number:
+<pre>
+   (scan-sound (lambda (y c) (&gt; y .03)))
+</pre>
+returns the first sample it finds at which all channels are greater than .03 (or #f if none is found).
+Similarly, the following looks for simultaneous zero crossings:
+<pre>
+(let ((last-vals (make-vct (chans (or (selected-sound) (car (sounds)))))))
+  (scan-sound
+   (lambda (y c)
+     (let ((last-y (vct-ref last-vals c)))
+       (vct-set! last-vals c y)
+       (&lt; (* y last-y) 0.0))))) ; signs differ so we must have crossed 0
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- shell -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>shell</em> <code>cmd</code>

@@ -1539,13 +1539,19 @@ static XEN g_mus_error_type_to_string(XEN err)
   return(C_TO_XEN_STRING((char *)mus_error_type_to_string(XEN_TO_C_INT(err))));
 }
 
-/* PERHAPS: vct<->file sound-data<->file sound-data<->channel(s?) -- could be incorporated in samples function (insert|change-samples)
+/* PERHAPS: vct<->file sound-data<->file sound-data<->channel(s?)|sound -- could be incorporated in samples function (insert|change-samples)
  *              file->vct examp.scm
- *              mix-sound-data  (region|transform|sound->sound-data)
- *              sound-data->sound-file|string  mix|track->sound-data
- *  actually, almost anywhere a vct now represents samples, we could allow sound-data:
- *    dot-product?? array<->file??  sound-data*|+ <->vector graph-data|graph
- *    rtn obj in map??
+ * PERHAPS: mix-sound-data  (region|transform|sound->sound-data)
+ * PERHAPS: sound-data->sound-file|string  mix|track->sound-data
+ *              better perhaps: vct<->sound-data[chan] as fast wrapper or memcpy
+ *
+ * PERHAPS: for frame extensions, see frame.scm -- to C? similar exts for sound-data?
+ *
+ * SOMEDAY: there's file->vct but vct->sound-file? why the difference?
+ *
+ * or a frame/frames pair (current sample/samples) settable with frame|sound-data
+ *   "frame" is undefined, but currently "frames" = length of sound [selection|region|track|transform-frame --why not selection-samples?]
+ *   mix|region|selection|track|transform-frames exist (as a length)
  */
 
 static XEN g_array_to_file(XEN filename, XEN data, XEN len, XEN srate, XEN channels)

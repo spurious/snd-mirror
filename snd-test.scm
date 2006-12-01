@@ -40616,8 +40616,50 @@ EDITS: 1
 	(scale-by .99 ind1 0)
 	(let ((dist (channel-distance ind1 0 ind2 0)))
 	  (if (fneq dist .1346) (snd-display ";channel-distance: ~A" dist)))
+
+	(revert-sound ind1)
+	(revert-sound ind2)
+
+	(let ((vals (scan-sound (lambda (y c) (> y .1)) 0 #f ind2)))
+	  (if (not (equal? vals (list #t 4423)))
+	      (snd-display ";scan-sound oboe: ~A" vals)))
+	
 	(close-sound ind1)
 	(close-sound ind2))
+
+      (let ((ind1 (open-sound "2.snd"))
+	    (ind2 (open-sound "4.aiff")))
+	(let ((vals (scan-sound (lambda (y c) (> y .1)) 0 #f ind1)))
+	  (if vals (snd-display ";scan-sound 2 #f: ~A" vals))
+	  (set! vals (scan-sound (lambda (y c) (> y .03)) 0 #f ind1))
+	  (if (not (equal? vals (list #t 12)))
+	      (snd-display ";scan-sound 2 #t: ~A (~A ~A)" vals (sample 12 ind1 0) (sample 12 ind1 1)))
+	  (set! (selected-sound) ind1)
+	  (let* ((last-vals (make-vct (chans (or (selected-sound) (car (sounds))))))
+		 (result (scan-sound
+			  (lambda (y c)
+			    (let ((last-y (vct-ref last-vals c)))
+			      (vct-set! last-vals c y)
+			      (< (* y last-y) 0.0)))))) ; signs differ so we must have crossed 0
+	    (if (not (equal? result (list #t 6)))
+		(snd-display ";scan-sound 2 zero cross: ~A (~A -> ~A, ~A -> ~A)" 
+			     result (sample 5 ind1 0) (sample 6 ind1 0) (sample 5 ind1 1) (sample 6 ind1 1))))
+	  (set! vals (scan-sound (lambda (y c) (> y .05)) 0 #f ind2))
+	  (if (not (equal? vals (list #t 21372)))
+	      (snd-display ";scan-sound 4 .05: ~A" vals))
+	  (set! vals (scan-sound (lambda (y c) (or (not (= c 3)) (> y .05))) 0 #f ind2))
+	  (if (not (equal? vals (list #t 12999)))
+	      (snd-display ";scan-sound 4 .05 3: ~A" vals))
+	  (close-sound ind1)
+	  (let* ((last-vals (make-vct (chans (or (selected-sound) (car (sounds))))))
+		 (result (scan-sound
+			  (lambda (y c)
+			    (let ((last-y (vct-ref last-vals c)))
+			      (vct-set! last-vals c y)
+			      (< (* y last-y) 0.0))))))
+	    (if (not (equal? result (list #t 1287)))
+		(snd-display ";scan-sound 4 zero cross: ~A" result)))
+	  (close-sound ind2)))
 
       (copy-file (string-append (getcwd) "/oboe.snd") (string-append (getcwd) "/test.snd"))
       (let* ((ind (open-sound "test.snd"))
