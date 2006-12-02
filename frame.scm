@@ -2,8 +2,80 @@
 ;;;
 ;;; I might move these into C 
 
-;;; TODO: doc test frame.scm funcs
+
+;;; frame-reverse frame-copy (from mixer.scm)
+;;; sound->frame frame->sound 
+;;; region->frame
+;;; make-frame-reader frame-reader? frame-reader-at-end frame-reader-position frame-reader-home free-frame-reader copy-frame-reader
+;;;   next-frame previous-frame read-frame
+;;;   make-region-frame-reader
+;;; scan-sound-frames map-sound-frames
+;;;
+;;; sound->sound-data sound-data->sound
+;;; file->vct vct->file
+
+
+
+;;; TODO: doc test frame.scm funcs [move old mixer.scm refs]
 ;;;            if sound-data cases, = block of frames essentially
+;;; TODO: region->sound-data
+;;; TODO: mix-sound-data mix-frame
+;;; TODO: insert-sound-data insert-frame [insert-vct?]
+;;; TODO: track->sound-data (mix->vct exists somewhere)
+;;; TODO: file->sound-data sound-data->file
+;;; TODO: track->frame ?  make-track-frame-reader?
+
+
+
+(provide 'snd-frame.scm)
+
+
+(define (frame-reverse fr)
+  (let ((len (mus-length fr)))
+    (do ((i 0 (1+ i))
+	 (j (1- len) (1- j)))
+	((>= i (/ len 2)))
+      (let ((temp (frame-ref fr i)))
+	(frame-set! fr i (frame-ref fr j))
+	(frame-set! fr j temp)))
+    fr))
+
+(define (frame-copy fr)
+  (let* ((len (mus-length fr))
+	 (nfr (make-frame len)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (frame-set! nfr i (frame-ref fr i)))
+    fr))
+
+#|
+(define (frame-cross m1 m2)
+  (if (or (not (= (mus-length m1) 3))
+	  (not (= (mus-length m2) 3)))
+      (snd-print "cross product only in 3 dimensions")
+      (make-frame 3 
+		  (- (* (frame-ref m1 1) (frame-ref m2 2)) 
+		     (* (frame-ref m1 2) (frame-ref m2 1)))
+		  (- (* (frame-ref m1 2) (frame-ref m2 0)) 
+		     (* (frame-ref m1 0) (frame-ref m2 2)))
+		  (- (* (frame-ref m1 0) (frame-ref m2 1)) 
+		     (* (frame-ref m1 1) (frame-ref m2 0))))))
+
+;;; (frame-cross (make-frame 3 0 0 1) (make-frame 3 0 -1 0))
+;;; <frame[3]: [1.000 0.000 0.000]>
+
+(define (frame-normalize f)
+  (let ((mag (sqrt (dot-product (mus-data f) (mus-data f)))))
+    (if (> mag 0.0)
+	(frame* f (/ 1.0 mag))
+	f)))
+
+;;; (frame-normalize (make-frame 3 4 3 0))
+;;; <frame[3]: [0.800 0.600 0.000]>
+|#
+
+
+
 
 (define* (sound->frame pos :optional snd)
   (let ((index (or snd (selected-sound) (car (sounds)))))
@@ -23,6 +95,7 @@
 	    ((= i (chans index))
 	     fr)
 	  (set! (sample pos index i) (frame-ref fr i))))))
+
 	
 (define (region->frame pos reg) ; arg order is like region-sample
   (if (not (region? reg))
@@ -34,7 +107,26 @@
 	  (frame-set! fr i (region-sample pos reg i))))))
 
 
-;;; track->frame ?
+
+(define* (sound->sound-data beg dur :optional snd)
+  (let ((index (or snd (selected-sound) (car (sounds)))))
+    (if (not (sound? index))
+	(throw 'no-such-sound (list "sound->sound-data" snd))
+	(let* ((chns (chans index))
+	       (sd (make-sound-data chns dur)))
+	  (do ((i 0 (1+ i)))
+	      ((= i chns) sd)
+	    (vct->sound-data (channel->vct beg dur snd i) sd i))))))
+
+(define* (sound-data->sound sd beg :optional dur snd)
+  (let ((index (or snd (selected-sound) (car (sounds)))))
+    (if (not (sound? index))
+	(throw 'no-such-sound (list "sound->sound-data" snd))
+	(do ((i 0 (1+ i)))
+	    ((= i (chans index)))
+	  (vct->channel (sound-data->vct sd i) beg dur snd i)))))
+
+
 
 
 (define +frame-reader-tag+ 0)
@@ -124,10 +216,6 @@
     vals))
 
 
-
-;;; make-track-frame-reader?
-
-
 (define* (make-region-frame-reader beg reg :optional dir)
   (if (not (region? reg))
       (throw 'no-such-region (list "make-region-frame-reader" reg))
@@ -179,3 +267,22 @@
 	      ((= i (chans index)))
 	    (set! (samples beg loc index i #f "map-sound" i #f #t) filename))) ; edpos = #f, auto-delete = #t
 	(throw 'no-such-sound (list "map-sound-frames" snd)))))
+
+
+;;; TODO: (open-sound-file): snd-xref+index [mix.rb snd-test.rb mix.fs]
+
+(define (file->vct file)
+  "(file->vct file) returns a vct with file's data (channel 0)"
+  (let* ((len (mus-sound-frames file))
+	 (reader (make-sample-reader 0 file))
+	 (data (make-vct len)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (vct-set! data i (next-sample reader)))
+    (free-sample-reader reader)
+    data))
+
+(define* (vct->file v file :optional (chans 1) (srate 22050) (comment ""))
+  (let ((fd (mus-sound-open-output file srate chans mus-lfloat mus-riff comment)))
+    (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
+    (mus-sound-close-output fd (* 4 (vct-length v)))))

@@ -337,8 +337,7 @@
 
 	    ;; Create a temporary file.
 	    (set! tempfilename (snd-tempnam))
-	    (set! new-file (open-sound-file tempfilename chans :srate (srate snd)))
-
+	    (set! new-file (mus-sound-open-output tempfilename (srate snd) chans #f #f)) ; Bill S 2-Dec-06
 
 	    ;; Start the hour-glass
 	    (start-progress-report)
@@ -392,7 +391,7 @@
 	   
 
 	    ;; Close temporary file.
-	    (close-sound-file new-file (* chans (* 4 length)))
+	    (mus-sound-close-output new-file (* chans (* 4 length)))
 
 
 	    ;; Let snd know about the new file.

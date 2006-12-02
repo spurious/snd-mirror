@@ -31,3 +31,20 @@
    (or obj (make-sound-data 1 (or num (frames snd chn))))
    sd-chan))
 
+
+
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+
+(def-optkey-fun (open-sound-file file channels srate comment header-type)
+  (mus-sound-open-output (or file (if (little-endian?) "test.wav" "test.snd"))
+			 (or srate 22050)
+			 (or channels 1)
+			 (if (little-endian?) mus-lfloat mus-bfloat) 
+			 (or header-type (if (little-endian?) mus-riff mus-next))
+			 (or comment "")))
+
+(define close-sound-file mus-sound-close-output)
+
+(define (vct->sound-file fd v samps)
+  (mus-sound-write fd 0 (1- samps) 1 (vct->sound-data v)))
+

@@ -1,5 +1,7 @@
 Snd change log
 
+  4-Dec:     frame.scm.
+             moved open-sound-file, close-sound-file, and vct->sound-file to snd8.scm.
   1-Dec:     scan-sound in examp.scm.
   29-Nov:    Snd 8.6.
   21-Nov:    sound-data-scale! and sound-data-fill! with vct/sound-data with-sound output.

@@ -951,17 +951,20 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(data_format), data_format, XEN_ARG_4, S_mus_sound_open_output, "an integer (data-format id) or " PROC_FALSE);
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(header_type), header_type, XEN_ARG_5, S_mus_sound_open_output, "an integer (header-type id) or " PROC_FALSE);
   XEN_ASSERT_TYPE((XEN_STRING_P(comment) || (XEN_NOT_BOUND_P(comment))), comment, XEN_ARG_6, S_mus_sound_open_output, "a string");
-  if (XEN_INTEGER_P(data_format))
-    df = XEN_TO_C_INT(data_format);
-  else df = MUS_OUT_FORMAT;
+
+  df = XEN_TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
   if (MUS_DATA_FORMAT_OK(df))
     {
       int ht;
-      ht = XEN_TO_C_INT_OR_ELSE(header_type, 0);
+#if MUS_LITTLE_ENDIAN
+      ht = XEN_TO_C_INT_OR_ELSE(header_type, MUS_RIFF);
+#else
+      ht = XEN_TO_C_INT_OR_ELSE(header_type, MUS_NEXT);
+#endif
       if (MUS_HEADER_TYPE_OK(ht))
 	{
 	  int chns;
-	  chns = XEN_TO_C_INT_OR_ELSE(chans, 0);
+	  chns = XEN_TO_C_INT_OR_ELSE(chans, 1);
 	  if (chns > 0)
 	    {
 	      char *com = NULL;
@@ -996,11 +999,15 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
   if (MUS_DATA_FORMAT_OK(df))
     {
       int ht;
-      ht = XEN_TO_C_INT_OR_ELSE(header_type, 0);
+#if MUS_LITTLE_ENDIAN
+      ht = XEN_TO_C_INT_OR_ELSE(header_type, MUS_RIFF);
+#else
+      ht = XEN_TO_C_INT_OR_ELSE(header_type, MUS_NEXT);
+#endif
       if (MUS_HEADER_TYPE_OK(ht))
 	{
 	  int chns;
-	  chns = XEN_TO_C_INT_OR_ELSE(chans, 0);
+	  chns = XEN_TO_C_INT_OR_ELSE(chans, 1);
 	  if (chns > 0)
 	    {
 	      fd = mus_sound_reopen_output(local_mus_expand_filename(XEN_TO_C_STRING(file)),
@@ -1538,21 +1545,6 @@ static XEN g_mus_error_type_to_string(XEN err)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(err), err, XEN_ONLY_ARG, S_mus_error_type_to_string, "an integer");
   return(C_TO_XEN_STRING((char *)mus_error_type_to_string(XEN_TO_C_INT(err))));
 }
-
-/* PERHAPS: vct<->file sound-data<->file sound-data<->channel(s?)|sound -- could be incorporated in samples function (insert|change-samples)
- *              file->vct examp.scm
- * PERHAPS: mix-sound-data  (region|transform|sound->sound-data)
- * PERHAPS: sound-data->sound-file|string  mix|track->sound-data
- *              better perhaps: vct<->sound-data[chan] as fast wrapper or memcpy
- *
- * PERHAPS: for frame extensions, see frame.scm -- to C? similar exts for sound-data?
- *
- * SOMEDAY: there's file->vct but vct->sound-file? why the difference?
- *
- * or a frame/frames pair (current sample/samples) settable with frame|sound-data
- *   "frame" is undefined, but currently "frames" = length of sound [selection|region|track|transform-frame --why not selection-samples?]
- *   mix|region|selection|track|transform-frames exist (as a length)
- */
 
 static XEN g_array_to_file(XEN filename, XEN data, XEN len, XEN srate, XEN channels)
 {

@@ -3087,12 +3087,6 @@ This changes (edits) the channel, so <i>origin</i> provides a way to name the ed
 <tr><td></td><td>place vct <i>v</i> data in sound-data <i>sd</i>, returning sd</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
-<!-- vct->sound-file -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vct2soundfile">vct-&gt;sound-file</a> (fd v vals)</code></td></tr>
-<tr><td></td>
-<td>write <i>vals</i> floats from <i>v</i> to <i>fd</i>.  This is intended for use with <a href="#opensoundfile">open-sound-file</a></td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
 <!-- vct->string -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vct2string">vct-&gt;string</a> (v)</code></td></tr>
 <tr><td></td>
@@ -3165,18 +3159,6 @@ function to get the values to assign into the vct.  For example</p>
 </pre>
 <p>in the cnvtest function in <a href="sndscm.html#exampdoc">examp.scm</a> is calling the convolve generator and
 assigning the result to each successive member of the out-data vct.
-</p>
-<p>
-We can use vcts to write new sound files:</p>
-<pre>
-  <a href="#opensoundfile">open-sound-file</a> (name chans srate comment)   ; returns fd
-  <a href="#vct2soundfile">vct-&gt;sound-file</a> (fd vct vals)                ; writes vals floats to fd
-  <a href="#closesoundfile">close-sound-file</a> (fd size)
-</pre>
-<p>After opening the file, loop through the data calling channel-&gt;vct, deal with the
-vct data as desired, write the samples to the file via vct-&gt;sound-file, then
-when finished, close-sound-file.  If the new data is to replace the old,
-call (set! (samples...) data) with the new sound file's name; otherwise call insert-samples.
 </p>
 
 <p>In some cases (Gauche, Ruby, Guile 1.4.1 or later) it's possible to access a vct's
@@ -7128,8 +7110,7 @@ closes a file opened by open-sound.  There are a variety of hooks that are invok
 other ways to get at sound file data: <a class=quiet href="#makesamplereader">make-sample-reader</a> can be given a filename,
 rather than a sound index; file-&gt;vct in examp.scm; 
 <a class=quiet href="#mussoundopeninput">mus-sound-open-input</a> and
-<a class=quiet href="#opensoundfile">open-sound-file</a> are low-level sndlib functions;
-and there are a variety of CLM-based functions such as
+there are a variety of CLM-based functions such as
 <a class=quiet href="clm.html#file-&gt;sample">file-&gt;sample</a> and
 <a class=quiet href="clm.html#file-&gt;array">file-&gt;array</a>.
 </td></tr>
@@ -12074,18 +12055,6 @@ See edit123.scm, snd_conffile.scm, and snd_frg.scm for many more examples of bin
 <tr><td colspan=2 height=16></td></tr>
 
 
-<!-- close-sound-file -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="closesoundfile">close-sound-file</a> (fd bytes)</code></td></tr>
-<tr><td></td><td>
-This closes the file <i>fd</i> opened by <a href="#opensoundfile">open-sound-file</a>, updating its
-header to report that it has <i>bytes</i> bytes of data.  close-sound-file refers to data files
-handled directly, not to sounds displayed in Snd (the latter are handled by <a href="#opensound">open-sound</a> and <a href="#closesound">close-sound</a>).
-See save-track in mix.scm, and <a href="#opensoundfile">open-sound-file</a>.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
 <!-- c-g? -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="cgp">c-g?</a> ()</code></td></tr>
@@ -12253,25 +12222,6 @@ is preceded by C-x.
 <code><a class=def name="littleendianp">little-endian?</a> () </code></td></tr>
 <tr><td></td><td>
 This returns #t if underlying machine is little endian.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- open-sound-file -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="opensoundfile">open-sound-file</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :channels :srate :comment :header-type)</code></td></tr>
-<tr><td></td><td>
-This opens (creates) a sound file <i>file</i>; the file name defaults to "test.snd" or "test.wav".
-It is assumed that the data will be floats in the native format (written by 
-the caller interleaving channels), and that the file will be closed by 
-<a href="#closesoundfile">close-sound-file</a>. One simple way to write the data is to call 
-<a href="#vct2soundfile">vct-&gt;sound-file</a>.  open-sound-file opens an output file external to Snd, whereas open-sound
-loads a file into Snd for editing.
-<pre>
-  (let ((fd (<em class=red>open-sound-file</em> "hiho.snd" 1 :srate 22050 :comment "hiho is from snd-test")))
-    (<em class=red>vct-&gt;sound-file</em> fd v2 10) ; v2 has 10 samples of sound data, presumably
-    (<em class=red>close-sound-file</em> fd 10))
-</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 

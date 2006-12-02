@@ -2007,7 +2007,7 @@
 			 'channel-properties 'channel-style 'channel-widgets 'channels 'channels-combined
 			 'channels-separate 'channels-superimposed 'chans 'clear-array 'clear-listener
 			 'clear-minibuffer 'clear-sincs 'clipping 'clm-channel 'clm-print
-			 'clm-table-size 'close-hook 'close-sound 'close-sound-file 'color->list
+			 'clm-table-size 'close-hook 'close-sound 'color->list
 			 'color-cutoff 'color-dialog 'color-hook 'color-inverted 'color-scale
 			 'color? 'colormap 'colormap-name 'colormap-ref 'colormap-size
 			 'colormap? 'comb 'comb? 'comment 'connes-window
@@ -2140,7 +2140,7 @@
 			 'next-sample 'normalize-by-channel 'normalize-by-sound 'normalize-channel 'normalize-globally
 			 'notch 'notch? 'one-pole 'one-pole? 'one-zero
 			 'one-zero? 'open-file-dialog 'open-hook 'open-raw-sound 'open-raw-sound-hook
-			 'open-sound 'open-sound-file 'optimization 'optimization-hook 'orientation-dialog
+			 'open-sound 'optimization 'optimization-hook 'orientation-dialog
 			 'orientation-hook 'oscil 'oscil? 'out-any 'outa
 			 'outb 'outc 'outd 'output-comment-hook 'output-name-hook
 			 'override-samples-with-origin 'pad-channel 'partials->polynomial 'partials->wave 'partials->waveshape
@@ -2217,7 +2217,7 @@
 			 'unbind-key  'undo 'undo-hook 'update-hook 'update-lisp-graph
 			 'update-sound 'update-time-graph 'update-transform-graph 'variable-graph? 'vct
 			 'vct* 'vct+ 'vct->channel 'vct->list 'vct->sound-data
-			 'vct->sound-file 'vct->string 'vct->vector 'vct-add! 'vct-copy
+			 'vct->string 'vct->vector 'vct-add! 'vct-copy
 			 'vct-fill! 'vct-length 'vct-map! 'vct-move!
 			 'vct-multiply! 'vct-offset! 'vct-peak 'vct-ref 'vct-reverse!
 			 'vct-scale! 'vct-set! 'vct-subseq 'vct-subtract! 'vct?
@@ -12344,48 +12344,8 @@ EDITS: 5
 	    (vct-map! v0 (lambda () 1.0))
 	    (do ((i 0 (1+ i)))
 		((= i 10))
-	      (if (fneq (vct-ref v0 i) 1.0) (snd-display ";map v0[~D] = ~F?" i (vct-ref v0 i))))
-	    (let ((fd (open-sound-file)))
-	      (close-sound-file fd 0)
-	      (let ((name (if (little-endian?) "test.wav" "test.snd"))
-		    (frm (if (little-endian?) mus-lfloat mus-bfloat)))
-		(if (not (= (mus-sound-frames name) 0))
-		    (snd-display ";open-sound-file no out frames: ~A" (mus-sound-frames name)))
-		(if (not (= (mus-sound-data-format name) frm))
-		    (snd-display ";open-sound-file format: ~A" (mus-data-format-name (mus-sound-data-format name))))))
-	    (if (file-exists? "hiho.snd") (delete-file "hiho.snd"))
-	    (mus-sound-forget "hiho.snd")
-	    (let* ((typ (if (little-endian?) mus-riff mus-aifc))
-		   (fd (open-sound-file "hiho.snd" 2 44100 #f typ)))
-	      (vct->sound-file fd (vct .1 .2 .01 .02) 4)
-	      (close-sound-file fd (* 4 4))
-	      (if (not (= (mus-sound-chans "hiho.snd") 2)) (snd-display ";open-sound-file 2 chans: ~A" (mus-sound-chans "hiho.snd")))
-	      (if (not (= (mus-sound-srate "hiho.snd") 44100)) (snd-display ";open-sound-file srate: ~A" (mus-sound-srate "hiho.snd")))
-	      (if (not (= (mus-sound-header-type "hiho.snd") typ)) (snd-display ";open-sound-file type: ~A" (mus-sound-header-type "hiho.snd")))
-	      (let ((ind (open-sound "hiho.snd")))
-		(if (or (fneq (maxamp ind 0) .1)
-			(fneq (maxamp ind 1) .2))
-		    (snd-display ";vct->sound-file vals: ~A ~A" (channel->vct 0 2 ind 0) (channel->vct 0 2 ind 1)))
-		(if (not (= (frames ind) 2)) (snd-display ";vct->channel frames: ~A" (frames ind)))
-		(close-sound ind)))
-	    (if (file-exists? "hiho.snd") (delete-file "hiho.snd"))
-	    (mus-sound-forget "hiho.snd")
-	    (let* ((typ (if (little-endian?) mus-riff mus-aifc))
-		   (fd (open-sound-file :channels 4 :file "hiho.snd" :header-type typ :srate 8192)))
-	      (close-sound-file fd 0)
-	      (if (not (= (mus-sound-chans "hiho.snd") 4)) (snd-display ";open-sound-file 4 chans: ~A" (mus-sound-chans "hiho.snd")))
-	      (if (not (= (mus-sound-srate "hiho.snd") 8192)) (snd-display ";open-sound-file low srate: ~A" (mus-sound-srate "hiho.snd")))
-	      (if (not (= (mus-sound-header-type "hiho.snd") typ)) (snd-display ";open-sound-file (2nd) type: ~A" (mus-sound-header-type "hiho.snd"))))
-	    (let ((fd (open-sound-file "hiho.snd" 1 :srate 22050 :comment "hiho is from snd-test")))
-	      (vct->sound-file fd v2 10)
-	      (close-sound-file fd 10)
-	      (let ((var (catch #t (lambda () (vct->sound-file -1 v2 1)) (lambda args args))))
-		(if (not (eq? (car var) 'out-of-range))
-		    (snd-display ";vct->sound-file bad fd: ~A" var)))
-	      (let ((v3 (make-vct 40)))
-		(file->array "hiho.snd" 0 0 10 v3)
-		(if (fneq (vct-ref v3 5) (vct-ref v2 5))
-		    (snd-display ";vct->sound-file: ~A ~A?" v2 v3)))))
+	      (if (fneq (vct-ref v0 i) 1.0) (snd-display ";map v0[~D] = ~F?" i (vct-ref v0 i)))))
+
 	  (if (fneq ((vct 1.0 2.0 3.0) 1) 2.0)
 	      (snd-display ";(vct...) = ~A?" ((vct 1.0 2.0 3.0) 1)))
 	  (let ((v1 (vct 1 2 3 4)))
@@ -12996,6 +12956,7 @@ EDITS: 5
 
 (if (not (provided? 'snd-moog.scm)) (load "moog.scm"))
 (if (not (provided? 'snd-mixer.scm)) (load "mixer.scm"))
+(if (not (provided? 'snd-frame.scm)) (load "frame.scm"))
 (if (not (provided? 'snd-poly.scm)) (load "poly.scm"))
 (if (not (provided? 'snd-analog-filter.scm)) (if (defined? 'gsl-roots) (load "analog-filter.scm")))
 
@@ -39873,8 +39834,8 @@ EDITS: 1
 
 (if (not (defined? 'load-font))
     (define (load-font name) #f))
+
 (define apropos-cs "(guile-user): close-sound	#<primitive-procedure close-sound>
-(guile-user): close-sound-file	#<primitive-procedure close-sound-file>
 ")
 
 (define show-hiho
@@ -52092,7 +52053,7 @@ EDITS: 1
 					      (XmStringUnparse str #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
 					    (cadr help-data))))
 		      (XmListSelectPos lst 1 #t)
-		      (if (not (equal? help-names (list "open-file-dialog" "open-hook" "open-raw-sound" "open-raw-sound-hook" "open-sound" "open-sound-file")))
+		      (if (not (equal? help-names (list "open-file-dialog" "open-hook" "open-raw-sound" "open-raw-sound-hook" "open-sound")))
 			  (snd-display ";help-dialog data: ~A" help-names)))
 		    (click-button quit) (force-event)
 		    (if (XtIsManaged helpd)
@@ -61486,7 +61447,7 @@ EDITS: 1
 		     as-one-edit ask-before-overwrite audio-input-device audio-output-device ; add-player
 		     auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
 		     basic-color bind-key bomb c-g? apply-controls change-samples-with-origin channel-style
-		     channel-widgets channels chans peaks-font bold-peaks-font close-sound ;close-sound-file 
+		     channel-widgets channels chans peaks-font bold-peaks-font close-sound
 		     color-cutoff color-dialog colormap-ref add-colormap delete-colormap colormap-size colormap-name
 		     color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
 		     contrast-control? convolve-selection-with convolve-with channel-properties 
@@ -61553,7 +61514,7 @@ EDITS: 1
 		     text-focus-color tiny-font track-sample-reader?  region-sample-reader? transform-dialog transform-sample
 		     transform->vct transform-frames transform-type trap-segfault with-file-monitor optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound run-safety clm-table-size
-		     vct->sound-file with-verbose-cursor view-sound vu-size vu-in-dB wavelet-type
+		     with-verbose-cursor view-sound vu-size vu-in-dB wavelet-type
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style beats-per-measure
 		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-data-format->string
@@ -62556,7 +62517,6 @@ EDITS: 1
 	      (check-error-tag 'no-such-file (lambda () (set! (temp-dir) "/hiho")))
 	      (check-error-tag 'no-such-file (lambda () (set! (save-dir) "/hiho")))
 	      (check-error-tag 'out-of-range (lambda () (snd-transform 20 (make-vct 4))))
-	      (check-error-tag 'no-such-file (lambda () (close-sound-file 23213 3))) ; not 23!!
 	      (check-error-tag 'bad-header (lambda () (mus-sound-maxamp (string-append sf-dir "bad_chans.snd"))))
 	      (check-error-tag 'bad-header (lambda () (set! (mus-sound-maxamp (string-append sf-dir "bad_chans.snd")) '(0.0 0.0))))
 	      (check-error-tag 'mus-error (lambda () (play (string-append sf-dir "midi60.mid"))))
@@ -62652,9 +62612,6 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (set! (expand-control-bounds) (list 0.0 2.0))))
 		(check-error-tag 'out-of-range (lambda () (set! (speed-control-bounds) (list 2.0 0.0))))
 		(check-error-tag 'out-of-range (lambda () (set! (expand-control-bounds) (list 2.0 0.0))))
-		(check-error-tag 'out-of-range (lambda () (vct->sound-file 123 vct-3 4)))
-		(check-error-tag 'out-of-range (lambda () (vct->sound-file 123 vct-3 -4)))
-		(check-error-tag 'IO-error (lambda () (vct->sound-file 123 vct-3 2)))
 		(check-error-tag 'bad-header (lambda () (insert-sound (string-append sf-dir "bad_chans.snd"))))
 		(check-error-tag 'IO-error (lambda () (convolve-with (string-append sf-dir "bad_chans.snd"))))
 		(check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind -12)))
@@ -62810,8 +62767,6 @@ EDITS: 1
 	      (check-error-tag 'no-such-menu (lambda () (add-to-menu 1234 "hi" (lambda () #f))))
 	      (check-error-tag 'bad-arity (lambda () (add-to-main-menu "hi" (lambda (a b) #f))))
 	      (check-error-tag 'bad-arity (lambda () (add-to-menu 1 "hi" (lambda (a b) #f))))
-	      (check-error-tag 'IO-error (lambda () (open-sound-file "/bad/baddy.snd")))
-	      (check-error-tag 'out-of-range (lambda () (close-sound-file 0 0)))
 	      (check-error-tag 'out-of-range (lambda () (set! (transform-type) -1)))
 	      (check-error-tag 'out-of-range (lambda () (set! (transform-type) 123)))
 	      (check-error-tag 'wrong-type-arg (lambda () (help-dialog (list 0 1) "hiho")))
@@ -62870,8 +62825,6 @@ EDITS: 1
 	      (check-error-tag 'mus-error (lambda () (let ((hi (make-frame 2 .1 .2))) (frame-ref hi 3))))
 	      (check-error-tag 'out-of-range (lambda () (make-scalar-mixer 0 .1)))
 	      (check-error-tag 'mus-error (lambda () (let ((m (make-mixer 2))) (mixer-ref m 3 4))))
-	      (check-error-tag 'out-of-range (lambda () (open-sound-file "test.snd" :channels -1)))
-	      (check-error-tag 'out-of-range (lambda () (open-sound-file "test.snd" :srate -1)))
 	      (check-error-tag 'bad-arity (lambda () (add-colormap "baddy" (lambda () #f))))
 	      (check-error-tag 'bad-arity (lambda () (add-colormap "baddy" (lambda (a b c) #f))))
 	      (check-error-tag 'out-of-range (lambda () (make-phase-vocoder :fft-size (expt 2 30))))

@@ -4833,241 +4833,6 @@ update an on-going 'progress report' (an animated hour-glass icon) in snd using 
 }
 
 
-/* ---------------- temp sound file output ---------------- */
-
-static file_info **temp_sound_headers = NULL;
-static int *temp_sound_fds = NULL;
-static int temp_sound_size = 0;
-
-static void set_temp_fd(int fd, file_info *hdr)
-{
-  int pos;
-  if (temp_sound_size == 0)
-    {
-      temp_sound_size = 4;
-      temp_sound_fds = (int *)CALLOC(temp_sound_size, sizeof(int));
-      temp_sound_headers = (file_info **)CALLOC(temp_sound_size, sizeof(file_info *));
-      pos = 0;
-    }
-  else
-    {
-      int i;
-      pos = -1;
-      for (i = 0; i < temp_sound_size; i++)
-	if (temp_sound_headers[i] == NULL) {pos = i; break;}
-      if (pos == -1)
-	{
-	  pos = temp_sound_size;
-	  temp_sound_size += 4;
-	  temp_sound_fds = (int *)REALLOC(temp_sound_fds, temp_sound_size * sizeof(int));
-	  temp_sound_headers = (file_info **)REALLOC(temp_sound_headers, temp_sound_size * sizeof(file_info *));
-	  for (i = pos; i < temp_sound_size; i++) temp_sound_headers[i] = NULL;
-	}
-    }
-  temp_sound_fds[pos] = fd;
-  temp_sound_headers[pos] = hdr;
-}
-
-static file_info *get_temp_header(int fd)
-{
-  int i;
-  for (i = 0; i < temp_sound_size; i++)
-    if (fd == temp_sound_fds[i]) 
-      return(temp_sound_headers[i]);
-  return(NULL);
-}
-
-static void unset_temp_fd(int fd)
-{
-  int i;
-  for (i = 0; i < temp_sound_size; i++)
-    if (fd == temp_sound_fds[i])
-      {
-	temp_sound_fds[i] = 0;
-	temp_sound_headers[i] = NULL;
-      }
-}
-
-static XEN g_open_sound_file(XEN arglist)
-{
-  #define H_open_sound_file "(" S_open_sound_file " (:file \"test.snd\") (:channels 1) :srate :comment :header-type): \
-create a new sound file 'file' (writing float data), return the file descriptor for " S_vct_to_sound_file " and " S_close_sound_file "."
-  
-  char *filename = NULL, *comment = NULL, *file = NULL;
-  file_info *hdr;
-  int chans = 1, srate, result;
-#if MUS_LITTLE_ENDIAN
-  int type = MUS_RIFF;
-  int format = MUS_LFLOAT; /* assume user temp files are writing floats in native format */
-#else
-  int type = MUS_NEXT;
-  int format = MUS_BFLOAT;
-#endif
-  io_error_t io_err = IO_NO_ERROR;
-  XEN args[10]; 
-  XEN keys[5];
-  int orig_arg[5] = {0, 0, 0, 0, 0};
-  int vals, i, arglist_len;
-  keys[0] = kw_file;
-  keys[1] = kw_channels;
-  keys[2] = kw_srate;
-  keys[3] = kw_comment;
-  keys[4] = kw_header_type;
-  for (i = 0; i < 10; i++) args[i] = XEN_UNDEFINED;
-  arglist_len = XEN_LIST_LENGTH(arglist);
-  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = mus_optkey_unscramble(S_open_sound_file, 5, keys, args, orig_arg);
-  srate = default_output_srate(ss);
-
-  if (vals > 0)
-    {
-      file = mus_optkey_to_string(keys[0], S_open_sound_file, orig_arg[0], NULL);
-      chans = mus_optkey_to_int(keys[1], S_open_sound_file, orig_arg[1], chans);
-      srate = mus_optkey_to_int(keys[2], S_open_sound_file, orig_arg[2], srate);
-      comment = mus_optkey_to_string(keys[3], S_open_sound_file, orig_arg[3], comment);
-      type = mus_optkey_to_int(keys[4], S_save_sound_as, orig_arg[4], type);
-    }
-  if (chans <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_open_sound_file, orig_arg[1], keys[1], "channels ~A <= 0?");
-  if (srate <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_open_sound_file, orig_arg[2], keys[2], "srate ~A <= 0?");
-  if (!mus_header_writable(type, format))
-    XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_4(C_TO_XEN_STRING(S_open_sound_file),
-			 C_TO_XEN_STRING(_("can't write this combination of header type and data format:")),
-			 C_TO_XEN_STRING(mus_header_type_name(type)),
-			 C_TO_XEN_STRING(mus_data_format_name(format))));
-  if (file)
-    filename = mus_expand_filename(file);
-  else 
-#if MUS_LITTLE_ENDIAN
-    filename = copy_string("test.wav");
-#else
-    filename = copy_string("test.snd");
-#endif
-  hdr = (file_info *)CALLOC(1, sizeof(file_info));
-  hdr->name = copy_string(filename);
-  hdr->samples = 0;
-  hdr->data_location = 28;
-  hdr->srate = srate;
-  hdr->chans = chans;
-  hdr->format = format;
-  hdr->type = type;
-  if (comment)
-    hdr->comment = copy_string(comment);
-  result = open_temp_file(filename, chans, hdr, &io_err);
-  if (result == -1) 
-    {
-      char *msg;
-      XEN errmsg;
-      msg = mus_format("%s %s: %s",
-		       (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
-		       filename,
-		       snd_open_strerror());
-      errmsg = C_TO_XEN_STRING(msg);
-      FREE(msg);
-      free_file_info(hdr);
-      /* this happens if the header writer hit an error -- need to delete the bogus output file */
-      if (mus_file_probe(filename)) snd_remove(filename, REMOVE_FROM_CACHE);
-      FREE(filename);
-      filename = NULL;
-      XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		XEN_LIST_2(C_TO_XEN_STRING(S_open_sound_file),
-			   errmsg));
-    }
-  mus_file_set_clipping(result, clipping(ss));
-  set_temp_fd(result, hdr);
-  if (filename) FREE(filename);
-  return(C_TO_XEN_INT(result));
-}
-
-static void close_sound_file_warning_handler(const char *msg, void *data)
-{
-  /* no need for the warning from snd_close here -- we're returning an error indication */
-}
-
-static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
-{
-  #define H_close_sound_file "(" S_close_sound_file " fd bytes): close file fd, updating its header to report 'bytes' bytes of data"
-  file_info *hdr;
-  int fd;
-  io_error_t io_err = IO_NO_ERROR;
-  off_t bytes;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(g_fd), g_fd, XEN_ARG_1, S_close_sound_file, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(g_bytes), g_bytes, XEN_ARG_2, S_close_sound_file, "a number");
-  fd = XEN_TO_C_INT(g_fd);
-  if ((fd < 0) || (fd == fileno(stdin)) || (fd == fileno(stdout)) || (fd == fileno(stderr)))
-    XEN_OUT_OF_RANGE_ERROR(S_close_sound_file, 1, g_fd, "~A: invalid file number");
-  bytes = XEN_TO_C_OFF_T_OR_ELSE(g_bytes, 0);
-  hdr = get_temp_header(fd);
-  if (hdr == NULL) 
-    {
-      redirect_snd_warning_to(close_sound_file_warning_handler, (void *)S_close_sound_file); /* squelch unnecessary warning */
-      snd_close(fd, "sound file");
-      redirect_snd_warning_to(NULL, NULL);
-      return(snd_no_such_file_error(S_close_sound_file, g_fd));
-    }
-  io_err = close_temp_file(hdr->name, fd, hdr->type, bytes);
-  unset_temp_fd(fd);
-  free_file_info(hdr);
-  if (io_err != IO_NO_ERROR)
-    {
-      char *msg;
-      XEN errmsg;
-      msg = mus_format("%s file: %s",
-		       io_error_name(io_err),
-		       snd_io_strerror());
-      errmsg = C_TO_XEN_STRING(msg);
-      FREE(msg);
-      return(errmsg);
-    }
-  return(XEN_FALSE);
-}
-
-static XEN g_vct_to_sound_file(XEN g_fd, XEN obj, XEN g_nums)
-{
-  #define H_vct_to_sound_file "(" S_vct_to_sound_file " fd vct-obj samps): write samps samples from vct-obj to the sound file fd"
-  int fd, nums, i;
-  off_t err;
-  vct *v = NULL;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(g_fd), g_fd, XEN_ARG_1, S_vct_to_sound_file, "an integer");
-  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_2, S_vct_to_sound_file, "a vct");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(g_nums), g_nums, XEN_ARG_3, S_vct_to_sound_file, "a number");
-  fd = XEN_TO_C_INT(g_fd);
-  if ((fd < 0) || (fd == fileno(stdin)) || (fd == fileno(stdout)) || (fd == fileno(stderr)))
-    XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_file, 1, g_fd, "~A: invalid file number");
-  nums = XEN_TO_C_INT_OR_ELSE(g_nums, 0);
-  if (nums == 0) return(XEN_FALSE);
-  v = XEN_TO_VCT(obj);
-  if (v == NULL)
-    XEN_ERROR(NO_DATA,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_vct_to_sound_file), 
-			 C_TO_XEN_STRING("no data?"), 
-			 obj));
-  if ((nums < 0) || (nums > v->length))
-    XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_file, 3, g_nums, "len ~A < 0 or > vct length");
-  err = lseek(fd, 0L, SEEK_END);
-  if (err == -1)
-    {
-      XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		XEN_LIST_2(C_TO_XEN_STRING(S_vct_to_sound_file),
-			   C_TO_XEN_STRING(snd_io_strerror())));
-    }
-  if (sizeof(Float) == 4) /* Float can be either float or double */
-    nums = write(fd, (char *)(v->data), nums * 4);
-  else
-    {
-      float *vals;
-      /* v->data has doubles, but we're assuming elsewhere that these are floats in the file */
-      vals = (float *)MALLOC(nums * sizeof(float));
-      for (i = 0; i < nums; i++)
-	vals[i] = (float)(v->data[i]);
-      if (write(fd, (char *)vals, nums * sizeof(float)) == 0) fprintf(stderr, "%s: write error", S_vct_to_sound_file);
-      FREE(vals);
-    }
-  return(xen_return_first(C_TO_XEN_INT(nums >> 2), obj));
-}
-
 static XEN g_equalize_panes(XEN snd) 
 {
   #define H_equalize_panes "(" S_equalize_panes " (snd " PROC_FALSE ")): try to give all channels about the same screen space (Motif version only)"
@@ -5226,9 +4991,6 @@ XEN_ARGIFY_5(g_channel_amp_envs_w, g_channel_amp_envs);
 XEN_ARGIFY_1(g_start_progress_report_w, g_start_progress_report)
 XEN_ARGIFY_1(g_finish_progress_report_w, g_finish_progress_report)
 XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
-XEN_VARGIFY(g_open_sound_file_w, g_open_sound_file)
-XEN_NARGIFY_2(g_close_sound_file_w, g_close_sound_file)
-XEN_NARGIFY_3(g_vct_to_sound_file_w, g_vct_to_sound_file)
 XEN_ARGIFY_1(g_equalize_panes_w, g_equalize_panes)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
 #else
@@ -5351,9 +5113,6 @@ XEN_NARGIFY_0(g_sounds_w, g_sounds)
 #define g_start_progress_report_w g_start_progress_report
 #define g_finish_progress_report_w g_finish_progress_report
 #define g_progress_report_w g_progress_report
-#define g_open_sound_file_w g_open_sound_file
-#define g_close_sound_file_w g_close_sound_file
-#define g_vct_to_sound_file_w g_vct_to_sound_file
 #define g_equalize_panes_w g_equalize_panes
 #define g_sounds_w g_sounds
 #endif
@@ -5558,9 +5317,6 @@ If it returns " PROC_TRUE ", the usual informative minibuffer babbling is squelc
   XEN_DEFINE_PROCEDURE(S_write_peak_env_info_file, g_write_peak_env_info_file_w, 3, 0, 0, H_write_peak_env_info_file);
   XEN_DEFINE_PROCEDURE(S_read_peak_env_info_file,  g_read_peak_env_info_file_w,  3, 0, 0, H_read_peak_env_info_file);
   XEN_DEFINE_PROCEDURE(S_channel_amp_envs,         g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
-  XEN_DEFINE_PROCEDURE(S_open_sound_file,          g_open_sound_file_w,          0, 0, 1, H_open_sound_file);
-  XEN_DEFINE_PROCEDURE(S_close_sound_file,         g_close_sound_file_w,         2, 0, 0, H_close_sound_file);
-  XEN_DEFINE_PROCEDURE(S_vct_to_sound_file,        g_vct_to_sound_file_w,        3, 0, 0, H_vct_to_sound_file);
   XEN_DEFINE_PROCEDURE(S_equalize_panes,           g_equalize_panes_w,           0, 1, 0, H_equalize_panes);
 
   XEN_DEFINE_PROCEDURE(S_sounds,                   g_sounds_w,                   0, 0, 0, H_sounds);

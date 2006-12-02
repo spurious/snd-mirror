@@ -2022,16 +2022,17 @@ In most cases, this will be slightly offset from the true beginning of the note"
 
 ;;; -------- file->vct and a sort of cue-list, I think
 
-(define (file->vct file)
-  "(file->vct file) returns a vct with file's data"
-  (let* ((len (mus-sound-frames file))
-	 (reader (make-sample-reader 0 file))
-	 (data (make-vct len)))
-    (do ((i 0 (1+ i)))
-	((= i len))
-      (vct-set! data i (next-sample reader)))
-    (free-sample-reader reader)
-    data))
+(if (not (defined? 'file->vct))
+    (define (file->vct file)
+      "(file->vct file) returns a vct with file's data"
+      (let* ((len (mus-sound-frames file))
+	     (reader (make-sample-reader 0 file))
+	     (data (make-vct len)))
+	(do ((i 0 (1+ i)))
+	    ((= i len))
+	  (vct-set! data i (next-sample reader)))
+	(free-sample-reader reader)
+	data)))
 
 (define* (add-notes notes :optional snd chn)
   "(add-notes notes) adds (mixes) 'notes' which is a list of lists of the form: file :optional (offset 0.0) (amp 1.0) 

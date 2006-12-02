@@ -202,9 +202,9 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
   "(pan-mix-vct v (start 0) (envelope 1.0) snd (chn 0)) mixes the vct data into the sound 'snd' 
 starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1)."
   (let* ((temp-file (snd-tempnam))
-	 (fd (open-sound-file temp-file 1 (srate snd) "")))
-    (vct->sound-file fd v (vct-length v))
-    (close-sound-file fd (* 4 (vct-length v)))
+	 (fd (mus-sound-open-output temp-file (srate snd) 1 #f #f "")))
+    (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
+    (mus-sound-close-output fd (* 4 (vct-length v)))
     (pan-mix temp-file beg envelope snd chn #t)))
 
 (define (mix->vct id)
@@ -223,9 +223,9 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
 (define (save-mix id filename)
   "(save-mix id filename) saves mix data (as floats) in file filename"
   (let ((v (mix->vct id))
-	(fd (open-sound-file filename 1 (srate) "")))
-    (vct->sound-file fd v (vct-length v))
-    (close-sound-file fd (* 4 (vct-length v)))))
+	(fd (mus-sound-open-output filename (srate) 1 #f #f "")))
+    (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
+    (mus-sound-close-output fd (* 4 (vct-length v)))))
 
 (define (mix-maxamp id)
   "(mix-maxamp id) returns the max amp in the given mix"
@@ -385,12 +385,13 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
 		     (< chan chans)))
 	    (let* ((current-chan (if (eq? chan #t) 0 chan))
 		   (v (track->vct trk current-chan))
-		   (fd (open-sound-file filename 1 (srate) "written by save-track")))
-	      (vct->sound-file fd v (vct-length v))
-	      (close-sound-file fd (* 4 (vct-length v))))
+		   (fd (mus-sound-open-output filename (srate) 1 #f #f "written by save-track")))
+	      (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
+    	      (mus-sound-close-output fd (* 4 (vct-length v))))
 	    (if (and (eq? chan #t)
 		     (> chans 0))
-		(let* ((fd (open-sound-file filename chans (srate) "written by save-track"))
+		;;; TODO: use sound-data here!
+		(let* ((fd (mus-sound-open-output filename (srate) chans #f #f "written by save-track"))
 		       (len (track-frames trk))
 		       (pos (track-position trk))
 		       (v (make-vct (* chans len))))
@@ -402,8 +403,8 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
 		      (do ((j 0 (1+ j)))
 			  ((= j chan-len))
 			(vct-set! v (+ i (* chans (+ chan-pos j))) (read-track-sample reader)))))
-		  (vct->sound-file fd v (vct-length v))
-		  (close-sound-file fd (* 4 (vct-length v))))
+		  (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
+		  (mus-sound-close-output fd (* 4 (vct-length v))))
 		(throw 'no-such-channel (list "save-track" chan)))))
       (throw 'no-such-track (list "save-track" trk))))
 	  
