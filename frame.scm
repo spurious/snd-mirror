@@ -13,18 +13,24 @@
 ;;;
 ;;; sound->sound-data sound-data->sound
 ;;; file->vct vct->file
-
+;;; frame->sound-data, sound-data->frame
+;;; file->sound-data sound-data->file
+;;;   region->sound-data
 
 
 ;;; TODO: doc test frame.scm funcs [move old mixer.scm refs]
 ;;;            if sound-data cases, = block of frames essentially
-;;; TODO: region->sound-data
 ;;; TODO: mix-sound-data mix-frame
 ;;; TODO: insert-sound-data insert-frame [insert-vct?]
-;;; TODO: track->sound-data (mix->vct exists somewhere)
-;;; TODO: file->sound-data sound-data->file
+;;; TODO: track->sound-data (mix->vct exists somewhere, and mix-vct I think)
 ;;; TODO: track->frame ?  make-track-frame-reader?
+;;; frame->vct vct->frame ??
 
+
+;;; DOC: sound-data as frame array (all chans together) or as vct array (chans separate)
+
+
+;;; TODO: check all other code for frame-reader et al possibilities
 
 
 (provide 'snd-frame.scm)
@@ -75,6 +81,33 @@
 |#
 
 
+(define (frame->sound-data fr sd pos)
+  (if (not (frame? fr))
+      (throw 'wrong-type-arg (list "frame->sound-data" fr))
+      (if (not (sound-data? sd))
+	  (throw 'wrong-type-arg (list "frame->sound-data" sd))
+	  (if (>= pos (sound-data-length sd))
+	      (throw 'out-of-range (list "frame->sound-data" pos))
+	      (let ((len (min (mus-length fr) 
+			      (sound-data-chans sd))))
+		(do ((i 0 (1+ i)))
+		    ((= i len))
+		  (sound-data-set! sd i pos (frame-ref fr i)))
+		sd)))))
+
+(define (sound-data->frame sd pos fr)
+  (if (not (frame? fr))
+      (throw 'wrong-type-arg (list "sound-data->frame" fr))
+      (if (not (sound-data? sd))
+	  (throw 'wrong-type-arg (list "sound-data->frame" sd))
+	  (if (>= pos (sound-data-length sd))
+	      (throw 'out-of-range (list "sound-data->frame" pos))
+	      (let ((len (min (mus-length fr) 
+			      (sound-data-chans sd))))
+		(do ((i 0 (1+ i)))
+		    ((= i len))
+		  (frame-set! fr i (sound-data-ref i pos)))
+		fr)))))
 
 
 (define* (sound->frame pos :optional snd)
@@ -137,9 +170,10 @@
 
 (define* (make-frame-reader :optional (beg 0) snd dir edpos)
   (let ((index (or snd (selected-sound) (car (sounds)))))
-    (if (not (sound? index))
+    (if (and (not (sound? index))
+	     (not (string? index))) ; filename is a possibility here
 	(throw 'no-such-sound (list "make-frame-reader" snd))
-	(let* ((chns (chans index))
+	(let* ((chns (if (sound? index) (chans index) (mus-sound-chans index)))
 	       (fr (make-vector (+ chns +frame-reader0+))))
 	  (vector-set! fr +frame-reader-tag+ 'frame-reader)
 	  (vector-set! fr +frame-reader-snd+ snd)
@@ -282,7 +316,38 @@
     (free-sample-reader reader)
     data))
 
-(define* (vct->file v file :optional (chans 1) (srate 22050) (comment ""))
-  (let ((fd (mus-sound-open-output file srate chans mus-lfloat mus-riff comment)))
+(define* (vct->file v file :optional (srate 22050) (comment ""))
+  (let ((fd (mus-sound-open-output file srate 1 mus-lfloat mus-riff comment)))
     (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
-    (mus-sound-close-output fd (* 4 (vct-length v)))))
+    (mus-sound-close-output fd (* 4 (vct-length v)))
+    file))
+
+
+(define (file->sound-data file)
+  (let* ((len (mus-sound-frames file))
+	 (chns (mus-sound-chans file))
+	 (reader (make-frame-reader 0 file))
+	 (data (make-sound-data chns len)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (frame->sound-data data i (read-frame reader)))
+    (free-frame-reader reader)
+    data))
+
+(define* (sound-data->file sd file :optional (srate 22050) (comment ""))
+  (let ((fd (mus-sound-open-output file srate (sound-data-chans sd) mus-lfloat mus-riff comment)))
+    (mus-sound-write fd 0 (1- (sound-data-length sd)) (sound-data-chans sd) sd)
+    (mus-sound-close-output fd (* 4 (sound-data-length sd) (sound-data-chans sd)))
+    file))
+
+
+(define (region->sound-data reg)
+  (let* ((reader (make-region-frame-reader 0 reg))
+	 (len (region-length reg))
+	 (chns (region-chans reg))
+	 (data (make-sound-data chns len)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (frame->sound-data data i (read-frame reader)))
+    (free-frame-reader reader)
+    data))
