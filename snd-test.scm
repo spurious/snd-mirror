@@ -18092,7 +18092,7 @@ EDITS: 5
 	(let ((old-clip (clipping)))
 	  (set! (clipping) #t)
 	  (save-sound-as "tst.snd")
-	  (let ((fvals (file->vct "tst.snd")) ; in examp.scm
+	  (let ((fvals (file->vct "tst.snd")) ; in frame.scm
 		(vals (channel->vct)))
 	    (if (not (vequal vals fvals))
 		(snd-display ";file->vct: ~A ~A" vals fvals)))
@@ -40808,6 +40808,62 @@ EDITS: 1
 	  (let ((files (directory->list "tools/")))
 	    (if (not (member "makegl.scm" files))
 		(snd-display ";directory->list: ~A" files))))
+
+
+      ;; frame.scm functions
+      
+      (let ((tag (catch #t (lambda () (frame-reverse 32)) (lambda args (car args)))))
+	(if (not (eq? tag 'wrong-type-arg)) (snd-display ";frame-reverse bad arg: ~A" tag)))
+      (let ((tag (catch #t (lambda () (frame-copy 32)) (lambda args (car args)))))
+	(if (not (eq? tag 'wrong-type-arg)) (snd-display ";frame-copy bad arg: ~A" tag)))
+      
+      (let ((fr1 (make-frame 3 .1 .2 .3)))
+	(let ((val (frame-copy fr1)))
+	  (if (or (fneq (frame-ref val 0) 0.1)
+		  (fneq (frame-ref val 1) 0.2)
+		  (fneq (frame-ref val 2) 0.3))
+	      (snd-display ";frame-copy: ~A" val))
+	  (if (not (equal? val fr1)) (snd-display ";frames not equal after copy?"))
+	  (frame-set! val 0 0.0)
+	  (if (or (fneq (frame-ref val 0) 0.0)
+		  (fneq (frame-ref fr1 0) 0.1))
+	      (snd-display ";set of copied frame: ~A ~A" fr1 val))
+	  (frame-reverse val)
+	  (if (or (fneq (frame-ref val 0) 0.3)
+		  (fneq (frame-ref val 1) 0.2)
+		  (fneq (frame-ref val 2) 0.0))
+	      (snd-display ";frame-reverse: ~A" val))
+	  (if (equal? fr1 val) (snd-display ";these frames are equal??: ~A ~A" fr1 val))))
+      
+      
+      (let ((tag (catch #t (lambda () (vct->frame 32)) (lambda args (car args)))))
+	(if (not (eq? tag 'wrong-type-arg)) (snd-display ";vct->frame bad arg: ~A" tag)))
+      (let ((tag (catch #t (lambda () (frame->vct 32)) (lambda args (car args)))))
+	(if (not (eq? tag 'wrong-type-arg)) (snd-display ";frame->vct bad arg: ~A" tag)))
+      
+      (let ((fr1 (make-frame 4 .1 .2 .3 .4))
+	    (vc1 (vct .1 .2 .3 .4)))
+	(let ((fr2 (vct->frame vc1))
+	      (vc2 (frame->vct fr1)))
+	  (if (not (equal? vc1 vc2)) (snd-display ";frame->vct: ~A ~A" vc1 vc2))
+	  (if (not (equal? fr1 fr2)) (snd-display ";vct->frame: ~A ~A" fr1 fr2))
+	  (vct-set! vc2 0 0.0)
+	  (frame-set! fr2 0 0.0)
+	  (if (equal? vc1 vc2) (snd-display ";frame->vct + change: ~A ~A" vc1 vc2))
+	  (if (equal? fr1 fr2) (snd-display ";vct->frame + change: ~A ~A" fr1 fr2))
+	  (let ((vc3 (make-vct 10))
+		(fr3 (make-frame 10)))
+	    (let ((vc4 (frame->vct fr1 vc3))
+		  (fr4 (vct->frame vc1 fr3)))
+	      (if (not (equal? vc3 vc4)) (snd-display ";frame->vct + v: ~A ~A" vc3 vc4))
+	      (if (not (equal? fr3 fr4)) (snd-display ";vct->frame + fr: ~A ~A" fr3 fr4))
+	      (if (not (vequal vc3 (vct .1 .2 .3 .4 0 0 0 0 0 0))) 
+		  (snd-display ";frame->vct results: ~A -> ~A" fr1 vc3))
+	      (if (not (equal? fr3 (make-frame 10 .1 .2 .3 .4 0 0 0 0 0 0)))
+		  (snd-display ";vct->frame results: ~A -> ~A" vc1 fr3))))))
+	
+
+
       
       (run-hook after-test-hook 21)
       ))

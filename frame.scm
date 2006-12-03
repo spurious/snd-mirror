@@ -5,31 +5,29 @@
 
 ;;; frame-reverse frame-copy (from mixer.scm)
 ;;; sound->frame frame->sound 
-;;; region->frame
+;;;   region->frame
+;;;
 ;;; make-frame-reader frame-reader? frame-reader-at-end frame-reader-position frame-reader-home free-frame-reader copy-frame-reader
 ;;;   next-frame previous-frame read-frame
 ;;;   make-region-frame-reader
+;;;
 ;;; scan-sound-frames map-sound-frames
 ;;;
-;;; sound->sound-data sound-data->sound
-;;; file->vct vct->file
 ;;; frame->sound-data, sound-data->frame
+;;; sound->sound-data sound-data->sound
+;;;   region->sound-data track->sound-data
+;;; file->vct vct->file
+;;; frame->vct vct->frame
 ;;; file->sound-data sound-data->file
-;;;   region->sound-data
+;;;
+;;; insert-sound-data insert-frame insert-vct
 
 
-;;; TODO: doc test frame.scm funcs [move old mixer.scm refs]
-;;;            if sound-data cases, = block of frames essentially
-;;; TODO: mix-sound-data mix-frame
-;;; TODO: insert-sound-data insert-frame [insert-vct?]
-;;; TODO: track->sound-data (mix->vct exists somewhere, and mix-vct I think)
+;;; TODO: doc test frame.scm funcs [move old mixer.scm refs] + xrefs in extsnd+quick
+;;; TODO: mix-sound-data mix-frame [consistency with mix-vct?]
 ;;; TODO: track->frame ?  make-track-frame-reader?
-;;; frame->vct vct->frame ??
-
-
+;;; TODO: (open-sound-file): snd-xref+index [mix.rb snd-test.rb mix.fs]
 ;;; DOC: sound-data as frame array (all chans together) or as vct array (chans separate)
-
-
 ;;; TODO: check all other code for frame-reader et al possibilities
 
 
@@ -37,22 +35,26 @@
 
 
 (define (frame-reverse fr)
-  (let ((len (mus-length fr)))
-    (do ((i 0 (1+ i))
-	 (j (1- len) (1- j)))
-	((>= i (/ len 2)))
-      (let ((temp (frame-ref fr i)))
-	(frame-set! fr i (frame-ref fr j))
-	(frame-set! fr j temp)))
-    fr))
+  (if (not (frame? fr))
+      (throw 'wrong-type-arg (list "frame-reverse" fr))
+      (let ((len (mus-length fr)))
+	(do ((i 0 (1+ i))
+	     (j (1- len) (1- j)))
+	    ((>= i (/ len 2)))
+	  (let ((temp (frame-ref fr i)))
+	    (frame-set! fr i (frame-ref fr j))
+	    (frame-set! fr j temp)))
+	fr)))
 
 (define (frame-copy fr)
-  (let* ((len (mus-length fr))
-	 (nfr (make-frame len)))
-    (do ((i 0 (1+ i)))
-	((= i len))
-      (frame-set! nfr i (frame-ref fr i)))
-    fr))
+  (if (not (frame? fr))
+      (throw 'wrong-type-arg (list "frame-copy" fr))
+      (let* ((len (mus-length fr))
+	     (nfr (make-frame len)))
+	(do ((i 0 (1+ i)))
+	    ((= i len))
+	  (frame-set! nfr i (frame-ref fr i)))
+	nfr)))
 
 #|
 (define (frame-cross m1 m2)
@@ -80,6 +82,32 @@
 ;;; <frame[3]: [0.800 0.600 0.000]>
 |#
 
+(define* (frame->vct fr :optional v)
+  (if (not (frame? fr))
+      (throw 'wrong-type-arg (list "frame->vct" fr))
+      (let* ((flen (mus-length fr))
+	     (nv (or (and (vct? v) v)
+		     (make-vct flen)))
+	     (len (min flen (vct-length nv))))
+	(do ((i 0 (1+ i)))
+	    ((= i len))
+	  (vct-set! nv i (frame-ref fr i)))
+	nv)))
+
+(define* (vct->frame v :optional fr)
+  (if (not (vct? v))
+      (throw 'wrong-type-arg (list "vct->frame" v))
+      (let* ((vlen (vct-length v))
+	     (nfr (or (and (frame? fr) fr)
+		      (make-frame vlen)))
+	     (len (min vlen (mus-length nfr))))
+	(do ((i 0 (1+ i)))
+	    ((= i len))
+	  (frame-set! nfr i (vct-ref v i)))
+	nfr)))
+
+
+;;; doc-test stopped here
 
 (define (frame->sound-data fr sd pos)
   (if (not (frame? fr))
@@ -303,7 +331,6 @@
 	(throw 'no-such-sound (list "map-sound-frames" snd)))))
 
 
-;;; TODO: (open-sound-file): snd-xref+index [mix.rb snd-test.rb mix.fs]
 
 (define (file->vct file)
   "(file->vct file) returns a vct with file's data (channel 0)"
@@ -351,3 +378,48 @@
       (frame->sound-data data i (read-frame reader)))
     (free-frame-reader reader)
     data))
+
+(define (track->sound-data trk)
+  (if (not (track? trk))
+      (throw 'wrong-type-arg (list "track->sound-data" trk))
+      (let* ((chns (track-chans trk))
+	     (len (track-frames trk))
+	     (sd (make-sound-data chns len)))
+	(do ((chn 0 (1+ chn)))
+	    ((= chn chns))
+	  (let ((reader (make-track-sample-reader trk chn 0)))
+	    (do ((i 0 (1+ i)))
+		((= i len))
+	      (sound-data-set! sd chn i (next-sample reader)))
+	    (free-sample-reader reader)))
+	sd)))
+
+
+(define* (insert-vct v :optional beg dur snd chn edpos)
+  (if (not (vct? v))
+      (throw 'wrong-type-arg (list "insert-vct" v))
+      (insert-samples beg dur v snd chn edpos)))
+
+(define* (insert-frame fr :optional beg snd edpos)
+  (if (not (frame? fr))
+      (throw 'wrong-type-arg (list "insert-frame" fr))
+      (let ((index (or snd (selected-sound) (car (sounds)))))
+	(if (not (sound? index))
+	    (throw 'no-such-sound (list "insert-frame" snd))
+	    (let ((chns (min (mus-length fr) (chans index))))
+	      (do ((chn 0 (1+ chn)))
+		  ((= chn chns))
+		(insert-sample beg (frame-ref fr chn) index chn edpos)))))))
+
+(define* (insert-sound-data sd :optional beg dur snd edpos)
+  ;; this should be built-into insert-samples
+  (if (not (sound-data? sd))
+      (throw 'wrong-type-arg (list "insert-sound-data" sd))
+      (let ((index (or snd (selected-sound) (car (sounds)))))
+	(if (not (sound? index))
+	    (throw 'no-such-sound (list "insert-sound-data" snd))
+	    (let ((chns (min (sound-data-chans sd) (chans index))))
+	      (do ((chn 0 (1+ chn)))
+		  ((= chn chns))
+		(insert-samples beg dur (sound-data->vct sd chn) index chn edpos #f "insert-sound-data")))))))
+
