@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Apr 09 23:55:07 CEST 2005
-# Changed: Tue Oct 17 21:32:15 CEST 2006
+# Changed: Sat Dec 02 00:21:59 CET 2006
 
 # Commentary: (see poly.scm)
 #
@@ -61,8 +61,10 @@ require "mix"
 
 class Complex
   attr_writer :real, :image
-  def to_f
-    self.real.to_f
+  with_silence do
+    def to_f
+      self.real.to_f
+    end
   end
 
   def to_f_or_c
@@ -289,7 +291,7 @@ class Poly < Vec
                         self[deg / 3].nonzero? and
                         self[(deg * 2) / 3].nonzero?
                       n = deg / 3
-                      poly(self[0], self[deg / 3], self[(deg *2) / 3], self[deg]).roots.each do |qr|
+                      poly(self[0],self[deg / 3],self[(deg * 2) / 3],self[deg]).roots.each do |qr|
                         rts.push(*nth_root(1.0, -qr, n.to_f))
                       end
                       rts

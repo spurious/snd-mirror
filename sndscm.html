@@ -4845,12 +4845,44 @@ frame-reverse reverses the entries in the given frame.
 </td></tr><tr><td colspan=2></td></tr>
 
 
+<!-- frame->sound -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="frametosound">frame-&gt;sound</a> <code>fr pos :optional snd</code>
+</td></tr><tr><td></td><td>
+frame-&gt;sound places the contents of frame fr into sound snd at position pos.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- frame->sound-data -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="frametosounddata">frame-&gt;sound-data</a> <code>fr sd pos:optional sd</code>
+</td></tr><tr><td></td><td>
+frame-&gt;sound-data places the contents of its frame argument in its sound-data argument at position pos.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- frame->vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="frametovct">frame-&gt;vct</a> <code>frame :optional vct</code>
 </td></tr><tr><td></td><td>
 frame-&gt;vct places the contents of its frame argument in its vct argument, or in a newly created vct
 if the vct argument is omitted.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- sound-data->frame -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="sounddatatoframe">sound-data-&gt;frame</a> <code>sd pos fr</code>
+</td></tr><tr><td></td><td>
+sound-data-&gt;frame places the contents of its sound-data argument at position pos into its frame argument.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- sound->frame -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="soundtoframe">sound-&gt;frame</a> <code>pos :optional snd</code>
+</td></tr><tr><td></td><td>
+sound-&gt;frame returns a frame containing the contents of the sound snd at position pos.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

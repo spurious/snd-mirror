@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Mon Nov 27 04:45:38 CET 2006
+# Changed: Sun Dec 03 15:50:08 CET 2006
 
 # Commentary:
 #
@@ -10,7 +10,7 @@
 # 
 # provided?(feature)
 # provide(feature)
-# features(all = nil)
+# features(all)
 # 
 # array?(obj)   alias list?(obj)
 # hash?(obj)
@@ -124,6 +124,7 @@
 #
 # class Vct
 #  Vct[]
+#  name
 #  to_sound_data(sd, chn)
 #  to_vct
 #  to_vector
@@ -146,6 +147,7 @@
 # sound_data2string(sd)   produces a string which can be evaled and reread with SoundData
 #
 # class SoundData
+#  name
 #  to_vct(chn)
 #  to_a
 #  length
@@ -169,7 +171,7 @@
 # set_mus_b2(gen, val)
 #
 # class Mus
-#  run(arg1 = 0.0, arg2 = 0.0)
+#  run(arg1, arg2)
 #  apply(*rest)
 #  inspect
 #  close
@@ -185,7 +187,7 @@
 #  initialize
 #  inspect
 #  to_s
-#  run(val1 = 0.0, val2 = 0.0)
+#  run(val1, val2)
 #  apply(*rest)
 #  eql?(other)
 #  reset
@@ -305,10 +307,10 @@
 #
 # module Examp (examp.scm)
 #  selection_rms
-#  region_rms(n = 0)
-#  window_samples(snd = false, chn = false)
-#  display_energy(snd = false, chn = false)
-#  display_db(snd = false, chn = false)
+#  region_rms(n)
+#  window_samples(snd, chn)
+#  display_energy(snd, chn)
+#  display_db(snd, chn)
 #  window_rms
 #  fft_peak(snd, chn, scale)
 #  finfo(file)
@@ -333,27 +335,27 @@
 #  first_mark_in_window_at_left
 #  flash_selected_data(interval)
 #  mark_loops
-#  do_all_chans(origin, &func)
+#  do_all_chans(origin) do |y| ... end
 #  update_graphs
-#  do_chans(*origin, &func)
-#  do_sound_chans(*origin, &func)
-#  every_sample?(&func)
+#  do_chans(*origin) do |y| ... end
+#  do_sound_chans(*origin) do |y| ... end
+#  every_sample? do |y| ... end
 #  sort_samples(nbins)
 #  place_sound(mono_snd, stereo_snd, pan_env)
 #
-#  fft_edit(bottom, top, snd = false, chn = false)
-#  fft_squelch(squelch, snd = false, chn = false)
-#  fft_cancel(lo_freq, hi_freq, snd = false, chn = false)
+#  fft_edit(bottom, top, snd, chn)
+#  fft_squelch(squelch, snd, chn)
+#  fft_cancel(lo_freq, hi_freq, snd, chn)
 #  ramp(gen, up)
-#  make_ramp(size = 128)
-#  squelch_vowels(snd = false, chn = false)
-#  fft_env_data(fft_env, snd = false, chn = false)
-#  fft_env_edit(fft_env, snd = false, chn = false)
-#  fft_env_interp(env1, env2, interp, snd = false, chn = false)
-#  fft_smoother(cutoff, start, samps, snd = false, chn = false)
+#  make_ramp(size)
+#  squelch_vowels(snd, chn)
+#  fft_env_data(fft_env, snd, chn)
+#  fft_env_edit(fft_env, snd, chn)
+#  fft_env_interp(env1, env2, interp, snd, chn)
+#  fft_smoother(cutoff, start, samps, snd, chn)
 #
 #  comb_filter(scaler, size)
-#  comb_chord(scaler, size, amp, interval_one = 0.75, interval_two = 1.2)
+#  comb_chord(scaler, size, amp, interval_one, interval_two)
 #  zcomb(scaler, size, pm)
 #  notch_filter(scaler, size)
 #  formant_filter(radius, freq)
@@ -366,25 +368,25 @@
 #  ring_mod(freq, gliss_env)
 #  am(freq)
 #  vibro(speed, depth)
-#  hello_dentist(freq, amp, snd = false, chn = false)
-#  fp(sr, osamp, osfreq, snd = false, chn = false)
-#  compand(doc = false)
-#  compand_channel(beg = 0, dur = false, snd = false, chn = false, edpos = false)
-#  expsrc(rate, snd = false, chn = false)
-#  expsnd(gr_env, snd = false, chn = false)
+#  hello_dentist(freq, amp, snd, chn)
+#  fp(sr, osamp, osfreq, snd, chn)
+#  compand(doc)
+#  compand_channel(beg, dur, snd, chn, edpos)
+#  expsrc(rate, snd, chn)
+#  expsnd(gr_env, snd, chn)
 #  cross_synthesis(cross_snd, amp, fftsize, r)
-#  voiced2unvoiced(amp, fftsize, r, temp, snd = false, chn = false)
+#  voiced2unvoiced(amp, fftsize, r, temp, snd, chn)
 #  pulse_voice(cosin, freq, amp, fftsize, r, snd, chn)
 #  cnvtest(snd0, snd1, amp)
 #
 #  swap_selection_channels
-#  make_sound_interp(start, snd = false, chn = false)
+#  make_sound_interp(start, snd, chn)
 #  sound_interp(func, loc)
 #  sound_via_sound(snd1, snd2)
-#  env_sound_interp(envelope, time_scale = 1.0, snd = false, chn = false)
+#  env_sound_interp(envelope, time_scale, snd, chn)
 #  granulated_sound_interp(envelope, time_scale, grain_length, grain_envelope, output_hop, snd, chn)
 #  title_with_date
-#  filtered_env(en, snd = false, chn = false)
+#  filtered_env(en, snd, chn)
 #
 #  class Mouse
 #   initialize
@@ -406,7 +408,7 @@
 #  next_peak
 #  find_pitch(pitch)
 #  file2vct(file)
-#  add_notes(notes, snd = false, chn = false)
+#  add_notes(notes, snd, chn)
 #  region_play_list(data)
 #  region_play_sequence(data)
 #  replace_with_selection
@@ -427,10 +429,10 @@
 #   set_current_cursor(val, snd, chn)
 #   original_cursor(snd, chn)
 #   set_original_cursor(val, snd, chn)
-#  if_cursor_follows_play_it_stays_where_play_stopped(enable = true)
+#  if_cursor_follows_play_it_stays_where_play_stopped(enable)
 #
-#  smooth_channel_via_ptree(beg = 0, dur = false, snd = false, chn = false, edpos = false)
-#  ring_modulate_channel(freq, beg = 0, dur = false, snd = false, chn = false, edpos = false)
+#  smooth_channel_via_ptree(beg, dur, snd, chn, edpos)
+#  ring_modulate_channel(freq, beg, dur, snd, chn, edpos)
 #  scramble_channels(*new_order)
 #  scramble_channel(silence)
 #
@@ -438,6 +440,7 @@
 #  reverse_within_blocks(block_len, snd, chn)
 #  sound2segment_data(main_dir, output_file)
 #  channel_clipped?(snd, chn)
+#  scan_sound(func, beg, dur, snd)      or scan_sound_rb(beg, dur, snd) do |y, chn| ... end
 #  
 # class Moog_filter < Musgen (moog.scm)
 #   initialize(freq, q)
@@ -445,8 +448,8 @@
 #   filter(insig)
 #
 # module Moog
-#  make_moog_filter(freq = 440.0, q = 0)
-#  moog_filter(moog, insig = 0.0)
+#  make_moog_filter(freq, q)
+#  moog_filter(moog, insig)
 #  moog(freq, q)
 # 
 # Code:
@@ -618,6 +621,21 @@ if provided? :snd
     len = (num or frames(snd, chn))
     gen = (obj or make_sound_data(1, len))
     vct2sound_data(channel2vct(beg, len, snd, chn, pos), gen, sd_chan)
+  end
+
+  def open_sound_file(*args)
+    mus_sound_open_output(get_args(*args, :file, (little_endian ? "test.wav" : "test.snd")),
+                          get_args(*args, :srate, 22050),
+                          get_args(*args, :channels, 1),
+                          (little_endian ? Mus_lfloat : Mus_bfloat),
+                          get_args(*args, :header_type, (little_endian ? Mus_riff : Mus_next)),
+                          get_args(*args, :comment, ""))
+  end
+
+  alias close_sound_file mus_sound_close_output
+
+  def vct2sound_file(fd, v, samps)
+    mus_sound_write(fd, 0, samps - 1, 1, vct2sound_data(v))
   end
 end
 
@@ -1311,6 +1329,10 @@ class Vct
   def self.[](*ary)
     self.new(ary.length) do |i| ary[i] end
   end
+
+  def name
+    self.class.to_s.downcase
+  end
   
   def to_sound_data(sd = nil, chn = 0)
     if sound_data?(sd)
@@ -1320,7 +1342,7 @@ class Vct
     end
   end
 
-  def to_vct
+  def to_vct(chn = 0)           # CHN for compatibility with sound-data
     self
   end
 
@@ -1493,6 +1515,10 @@ def sound_data2string(sd)
 end
 
 class SoundData
+  def name
+    "sound-data"
+  end
+  
   def to_vct(chn = 0)
     sound_data2vct(self, chn)
   end
@@ -3538,7 +3564,7 @@ bind_key(?m, 0, lambda do | | first_mark_in_window_at_left end)")
   # various channel collections)
 
   add_help(:do_all_chans,
-           "do_all_chans(edhist, &func) \
+           "do_all_chans(edhist) do |y| ... end  \
 applies func to all active channels, using edhist as the edit history indication:
 do_all_chans(\"double all samples\", do |val| 2.0 * val end)")
   def do_all_chans(origin, &func)
@@ -3559,7 +3585,7 @@ do_all_chans(\"double all samples\", do |val| 2.0 * val end)")
   end
 
   add_help(:do_chans,
-           "do_chans(edhist, &func) \
+           "do_chans(edhist) do |y| ... end  \
 applies func to all sync'd channels using edhist as the edit history indication")
   def do_chans(*origin, &func)
     snc = sync
@@ -3577,7 +3603,7 @@ applies func to all sync'd channels using edhist as the edit history indication"
   end
 
   add_help(:do_sound_chans,
-           "do_sound_chans(edhist, &func) \
+           "do_sound_chans(edhist) do |y| ... end  \
 applies func to all selected channels using edhist as the edit history indication")
   def do_sound_chans(*origin, &func)
     if snd = selected_sound
@@ -3590,7 +3616,7 @@ applies func to all selected channels using edhist as the edit history indicatio
   end
 
   add_help(:every_sample?,
-           "every_sample?(&func) \
+           "every_sample? do |y| ... end  \
 -> true if func is not false for all samples in the current channel, \
 otherwise it moves the cursor to the first offending sample")
   def every_sample?(&func)
@@ -5353,8 +5379,39 @@ returns true and a sample number if it finds clipping.")
                    result = (y.abs >= 0.9999 and last_y.abs >= 0.9999)
                    last_y = y
                    result
-                 end,
-                 0, false, snd, chn)
+                 end, 0, false, snd, chn)
+  end
+
+  # scan-sound
+  
+  def scan_sound(func, beg = 0, dur = false, snd = false)
+    if sound?(index = Snd.snd(snd))
+      if (chns = channels(index)) == 1
+        scan_channel(lambda do |y| func.call(y, 0) end, beg, dur, index, 0)
+      else
+        len = frames(index)
+        fin = (dur ? [len, beg + dur].min : len)
+        readers = make_array(chns) do |chn| make_sample_reader(beg, index, chn) end
+        result = false
+        beg.upto(fin) do |i|
+          local_result = true
+          readers.each_with_index do |rd, chn|
+            local_result = (func.call(rd.call, chn) and local_result)
+          end
+          if local_result
+            result = [true, i]
+            break
+          end
+        end
+        result
+      end
+    else
+      Snd.raise(:no_such_sound, get_func_name, snd)
+    end
+  end
+
+  def scan_sound_rb(beg = 0, dur = false, snd = false, &func)
+    scan_sound(func, beg, dur, snd)
   end
 end
 

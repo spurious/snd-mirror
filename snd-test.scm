@@ -40862,6 +40862,26 @@ EDITS: 1
 	      (if (not (equal? fr3 (make-frame 10 .1 .2 .3 .4 0 0 0 0 0 0)))
 		  (snd-display ";vct->frame results: ~A -> ~A" vc1 fr3))))))
 	
+      (let ((fr1 (make-frame 2 .1 .2))
+	    (sd1 (make-sound-data 2 5)))
+	(frame->sound-data fr1 sd1 3)
+	(let ((vc1 (sound-data->vct sd1 0))
+	      (vc2 (sound-data->vct sd1 1)))
+	  (if (or (not (vequal vc1 (vct 0 0 0 .1 0)))
+		  (not (vequal vc2 (vct 0 0 0 .2 0))))
+	      (snd-display ";frame->sound-data: ~A ~A ~A)" sd1 vc1 vc2)))
+	(let ((fr2 (make-frame 2)))
+	  (sound-data->frame sd1 3 fr2)
+	  (if (not (equal? fr1 fr2)) (snd-display ";sound-data->frame: ~A ~A" fr1 fr2))
+	  
+	  (let ((tag (catch #t (lambda () (sound-data->frame sd1 0 32)) (lambda args (car args)))))
+	    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";sound-data->frame bad frame arg: ~A" tag)))
+	  (let ((tag (catch #t (lambda () (sound-data->frame 32 0 fr1)) (lambda args (car args)))))
+	    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";sound-data->frame bad sound-data arg: ~A" tag)))
+	  (let ((tag (catch #t (lambda () (frame->sound-data fr1 32 0)) (lambda args (car args)))))
+	    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";frame->sound-data bad sound-data arg: ~A" tag)))
+	  (let ((tag (catch #t (lambda () (frame->sound-data 32 sd1 0)) (lambda args (car args)))))
+	    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";frame->sound-data bad frame arg: ~A" tag)))))
 
 
       

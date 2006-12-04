@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Sep 16 01:27:09 CEST 2003
-# Changed: Mon Nov 27 23:43:39 CET 2006
+# Changed: Sat Dec 02 00:08:42 CET 2006
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
@@ -1843,6 +1843,7 @@ def scratch(start, file, src_ratio, turntable)
     last_val2, last_val = last_val, val
     val
   end
+  mus_close(f)
 end
 # with_sound() do scratch(0, "now.snd", 1.5, [0.0, 0.5, 0.25, 1.0]) end
 
@@ -2083,6 +2084,7 @@ def pins(start, dur, file, amp, *args)
       amp * sum
     end
   end
+  mus_close(fil)
 end
 # with_sound() do pins(0, 1, "now.snd", 1, :time_scaler, 2) end
 
@@ -2190,7 +2192,8 @@ def exp_snd(file, start, dur, amp,
   max_in_hop = max_out_hop / min_exp_amt.to_f
   max_len = (@srate * ([max_out_hop, max_in_hop].max + max_seg_len)).ceil
   ampe = make_env(:envelope, (ampenv or [0, 0, 0.5, 1, 1, 0]), :scaler, amp, :duration, dur)
-  ex_a = make_granulate(:expansion, initial_exp_amt,
+  ex_a = make_granulate(:input, lambda do |dir| ws_readin(f0) end,
+                        :expansion, initial_exp_amt,
                         :max_size, max_len,
                         :ramp, initial_ramp_time,
                         :hop, initial_out_hop,
@@ -2198,8 +2201,8 @@ def exp_snd(file, start, dur, amp,
                         :scaler, scaler_amp)
   ex_samp = next_samp = 0.0
   vol = env(ampe)
-  val_a0 = vol * granulate(ex_a, lambda do |dir| ws_readin(f0) end)
-  val_a1 = vol * granulate(ex_a, lambda do |dir| ws_readin(f0) end)
+  val_a0 = vol * granulate(ex_a)
+  val_a1 = vol * granulate(ex_a)
   if min_envelope(rampdata) <= 0.0 or max_envelope(rampdata) >= 0.5
     error("ramp argument to expand must always be between 0.0 and 0.5: %1.3f", ramp)
   else
@@ -2222,7 +2225,7 @@ def exp_snd(file, start, dur, amp,
       next_samp += resa
       if next_samp > (ex_samp + 1)
         (next_samp - ex_samp).floor.times do
-          val_a0, val_a1 = val_a1, vol * granulate(ex_a, lambda do |dir| ws_readin(f0) end)
+          val_a0, val_a1 = val_a1, vol * granulate(ex_a)
           ex_samp += 1
         end
       end
@@ -2232,7 +2235,7 @@ def exp_snd(file, start, dur, amp,
         val_a0 + (next_samp - ex_samp) * (val_a1 - val_a0)
       end
     end
-    close_ws_reader(file, f0)
+    close_ws_reader(f0)
   end
 end
 =begin
@@ -2395,7 +2398,7 @@ def graph_eq(file, *args)
          [:a1, 0.99],
          :stats)
   durata = (dur.zero? ? ws_duration(file) : dur)
-  beg, len = times2samples(start, durata)
+  len = seconds2samples(durata)
   or_start = (or_beg * ws_srate(file)).round
   rd_a = make_ws_reader(file, :start, or_start)
   half_list = gain_freq_list.length / 2
@@ -2436,7 +2439,7 @@ def graph_eq(file, *args)
     end
     env(ampenv) * outval
   end
-  close_ws_reader(file, rd_a)
+  close_ws_reader(rd_a)
 end
 # with_sound() do graph_eq("oboe.snd") end
 
@@ -2583,11 +2586,9 @@ def fullmix(in_file,
   end
   start = Float(start)
   # to satisfy with_sound-option :info and :notehook
-  with_sound_info(name = get_func_name, start, dur)
-  # normally run_instrument stores debugging informations
-  @clm_instruments.store(binding, [name, start, dur])
+  with_sound_info(get_func_name, start, dur)
   run_fullmix(start, dur, in_chans, srate, inloc, file, mx, rev_mx, revframe, envs)
-  array?(file) and file.each do |rd| close_ws_reader(in_file, rd) end
+  array?(file) and file.each do |rd| close_ws_reader(rd) end
 end
 
 class Snd_Instrument
@@ -3051,7 +3052,7 @@ def grani(start, dur, amp, file, *args)
       0.0
     end
   end
-  close_ws_reader(file, rd)
+  close_ws_reader(rd)
 end
 
 =begin

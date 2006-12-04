@@ -85,7 +85,17 @@ def key_to_int(key)
   end
 end
 
-unbind_key(key_to_int(?c), 4, true)
+unbind_key(key_to_int(?c), 4, true) # C-c for interrupt key
+trap("SIGINT") do |sig|
+  puts
+  snd_info("Interrupt received.  Finish snd-test.rb.")
+  snd_info
+  set_mus_audio_playback_amp($orig_audio_amp)
+  $timings.last.last.stop
+  finish_snd_test
+  exit(2) if $with_exit
+end
+
 if provided? :snd_nogui then set_with_mix_tags(true) end
 
 $audio_amp_zero = 0.0
@@ -581,7 +591,7 @@ def finish_snd_test
    "test2.snd",
    "test3.snd",
    "tmp.snd",
-	 "with-mix.rb",
+   "with-mix.rbm",
    "with-mix.snd"].each do |file| delete_file(file) end
   ["bad_data_format.snd.snd",
    "ce-c3.w02.snd",
@@ -2589,10 +2599,10 @@ def test054
    Mus_bdouble,
    Mus_ldouble].each do |type|
     ind = find_sound(with_sound(:data_format, type) do
-                       fm_violin_1(0, 0.1, 440, 0.1)
-                       fm_violin_1(10, 0.1, 440, 0.1)
-                       fm_violin_1(100, 0.1, 440, 0.1)
-                       fm_violin_1(1000, 0.1, 440, 0.1)
+                       fm_violin_rb(0, 0.1, 440, 0.1)
+                       fm_violin_rb(10, 0.1, 440, 0.1)
+                       fm_violin_rb(100, 0.1, 440, 0.1)
+                       fm_violin_rb(1000, 0.1, 440, 0.1)
                      end.output)
     if ffneq(res = maxamp(ind), 0.1)
       snd_display("max: %s, format: %s?", res, mus_data_format2string(type))
@@ -10106,7 +10116,12 @@ end
 
 # ---------------- test 06: vcts ----------------
 
-def test006
+def test06
+  unless $test06 then return end
+  $before_test_hook.call(6)
+  # setting print_length (12) and vct_print_length (10) to the same size
+  set_print_length(print_length)
+  # 
   v0 = make_vct(10)
   v1 = Vct.new(10)
   vlst = make_vct(3)
@@ -10355,71 +10370,11 @@ def test006
   end
   vct_map!(v0, lambda do | | 1.0 end)
   v0.each_with_index do |x, i| snd_display("map v0[%d] = %s?", i, x) if fneq(x, 1.0) end
-end
-
-def test016
-  fd = open_sound_file
-  close_sound_file(fd, 0)
-  name = little_endian? ? "test.wav" : "test.snd"
-  frm = little_endian? ? Mus_lfloat : Mus_bfloat
-  if (res = mus_sound_frames(name)).nonzero?
-    snd_display("open_sound_file no out frames: %s?", res)
-  end
-  if (res = mus_sound_data_format(name)) != frm
-    snd_display("open_sound_file format: %s", mus_data_format_name(res))
-  end
-  delete_file("hiho.snd")
-  mus_sound_forget("hiho.snd")
-  typ = little_endian? ? Mus_riff : Mus_aifc
-  fd = open_sound_file("hiho.snd", 2, 44100, false, typ)
-  vct2sound_file(fd, vct(0.1, 0.2, 0.01, 0.02), 4)
-  close_sound_file(fd, 4 * 4)
-  if (res = mus_sound_chans("hiho.snd")) != 2
-    snd_display("open_sound_file 2 chans: %s?", res)
-  end
-  if (res = mus_sound_srate("hiho.snd")) != 44100
-    snd_display("open_sound_file srate: %s?", res)
-  end
-  if (res = mus_sound_header_type("hiho.snd")) != typ
-    snd_display("open_sound_file type: %s?", res)
-  end
-  ind = open_sound("hiho.snd")
-  if fneq(maxamp(ind, 0), 0.1) or fneq(maxamp(ind, 1), 0.2)
-    snd_display("vct2sound_file vals: %s %s?", channel2vct(0, 2, ind, 0), channel2vct(0, 2, ind, 1))
-  end
-  if (res = frames(ind)) != 2
-    snd_display("vct2channel frames: %d?", res)
-  end
-  close_sound(ind)
-  delete_file("hiho.snd")
-  mus_sound_forget("hiho.snd")
-  fd = open_sound_file(:channels, 4, :file, "hiho.snd", :header_type, typ, :srate, 8192)
-  close_sound_file(fd, 0)
-  if (res = mus_sound_chans("hiho.snd")) != 4
-    snd_display("open_sound_file 4 chans: %s?", res)
-  end
-  if (res = mus_sound_srate("hiho.snd")) != 8192
-    snd_display("open_sound_file low srate: %s?", res)
-  end
-  if (res = mus_sound_header_type("hiho.snd")) != typ
-    snd_display("open_sound_file (2nd) type: %s?", res)
-  end
-  v2 = make_vct(10, 2.5)
-  fd = open_sound_file("hiho.snd", 1, :srate, 22050, :comment, "hiho is from snd-test")
-  vct2sound_file(fd, v2, 10)
-  close_sound_file(fd, 10)
-  if (res = Snd.catch do vct2sound_file(-1, v2, 1) end).first != :out_of_range
-    snd_display("vct2sound_file bad fd: %s?", res)
-  end
-  v3 = Vct.new(40)
-  file2array("hiho.snd", 0, 0, 10, v3)
-  snd_display("vct2sound_file: %s %s?", v2, v3) if fneq(v3[5], v2[5])
+  # 
   snd_display("vct(...) = %s?", vct(1.0, 2.0, 3.0)[1]) if fneq(vct(1.0, 2.0, 3.0)[1], 2.0)
   v1 = [1, 2, 3, 4].to_vct
   snd_display("v1[1] = %s?", v1[1]) if fneq(v1[1], 2.0)
-end
-
-def test026
+  # 
   ind = open_sound("oboe.snd")
   set_speed_control(0.5, ind)
   play_and_wait
@@ -10440,10 +10395,11 @@ def test026
     snd_display("apply_controls with srate -1.0: %s: %s",
                 edits(ind), edit_tree(ind))
   end
-  if (res0 = frames(ind, 0) - res1 = frames(ind, 0, 0)).abs > 2
+  if ((res0 = frames(ind, 0)) - (res1 = frames(ind, 0, 0))).abs > 2
     snd_display("apply_controls srate -1.0 lengths: %s %s", res0, res1)
   end
-  if fneq(res0 = maxamp, 0.147) or (res1 = sample(9327)).abs < 0.01
+  res1 = sample(9327)
+  if fneq(res0 = maxamp, 0.147) or res1.abs < 0.01
     snd_display("apply_controls srate -1.0 samples: %s %s?", res0, res1)
   end
   if fneq(res = speed_control(ind), 1.0)
@@ -10516,9 +10472,7 @@ def test026
   if (res = Snd.catch do vct_subseq(hi, 1, 0) end).first != :out_of_range
     snd_display("vct_subseq 1 0: %s", res.inspect)
   end
-  if (res = Snd.catch do vct end).first != :wrong_type_arg
-    snd_display("vct -> %s?", res.inspect)
-  end
+  if vct() then snd_display("vct -> %s?", vct().inspect) end
   if (res = Snd.catch do make_vct(0) end).first != :out_of_range
     snd_display("make_vct(0) -> %s?", res.inspect)
   end
@@ -10528,9 +10482,6 @@ def test026
   v1 = make_vct(6, 0.2)
   v0.add!(v1, 2)
   snd_display("v.add! + offset: %s?", v0) unless vequal(v0, [0.1, 0.1, 0.3, 0.3, 0.3].to_vct)
-end
-
-def test036
   # 
   # vct methods
   # 
@@ -10669,19 +10620,8 @@ def test036
   end
   close_sound(ind)
   delete_file("fmv.snd")
-end
-
-def test06
-  if $test06
-    $before_test_hook.call(6)
-    # setting print_length (12) and vct_print_length (10) to the same size
-    set_print_length(print_length)
-    test006
-    test016
-    test026
-    test036
-    $after_test_hook.call(6)
-  end
+  # 
+  $after_test_hook.call(6)
 end
 
 # ---------------- test 07: colors ----------------
@@ -12015,7 +11955,7 @@ def fm_violin_1(start, dur, freq, amp, *args)
            [:fm3_index, false],
            [:base, 1.0],
            [:reverb_amount, 0.01],
-           [:degree, false],
+           [:degree, random(90)],
            [:distance, 1.0])
   frq_scl = hz2radians(freq)
   modulate = fm_index.nonzero?
@@ -12081,12 +12021,11 @@ def fm_violin_1(start, dur, freq, amp, *args)
   end
   beg = seconds2samples(start)
   loc = make_locsig(:channels, channels(false),
-                    :degree, (degree or random(90.0)),
+                    :degree, degree,
                     :reverb, reverb_amount,
                     :distance, distance)
   channels(false).times do |chn|
-    mix_vct(vct_scale!(vct_copy(out_data), locsig_ref(loc, chn)),
-            beg, false, chn, false, get_func_name)
+    mix_vct(vct_scale!(vct_copy(out_data), locsig_ref(loc, chn)), beg, false, chn, false)
   end
 end
 
@@ -18159,7 +18098,7 @@ def test148
     end
   end
   if start != 64 then snd_display("move_sound vct output start: %s?", start) end
-  if fneq(vo.peak, 0.484) then snd_display("move_sound vct output: %s?", vo.pieak) end
+  if fneq(vo.peak, 0.484) then snd_display("move_sound vct output: %s?", vo.peak) end
   # 
   vo = SoundData.new(1, 1000)
   gen1 = make_move_sound([0, 1000, 1, 0,
@@ -36812,10 +36751,10 @@ def test0221
     # snd_apropos returns an array of all found matches if option is a
     # string or a regexp, or an empty array.  If option is a symbol,
     # the result of snd_help is returned.
-    help = snd_apropos("close_sound").first
-    help1 = snd_apropos(:close_sound)
-    if !string?(help) or !string?(help1)
-      snd_display("snd_apropos:\n# %s\n# %s", help, help1)
+    help = snd_apropos("close_sound") #=> [:close_sound_file, :close_sound_extend, :close_sound]
+    help1 = snd_apropos(:close_sound) #=> "(close-sound (snd false)): close snd"
+    if !symbol?(help.car) or !string?(help1)
+      snd_display("snd_apropos:\n#\t%s\n#\t%s", help.inspect, help1.inspect)
     end
   end
   #
@@ -36940,7 +36879,49 @@ def test0221
   if fneq(res = channel_distance(ind1, 0, ind2, 0), 0.1346)
     snd_display("channel_distance: %s?", res)
   end
+  [ind1, ind2].apply(:revert_sound)
+  vals = scan_sound_rb(0, false, ind2) do |y, c| y > 0.1 end
+  if vals != [true, 4423] and vals != [true, 4477]
+    snd_display("scan_sound oboe: %s?", vals)
+  end
   [ind1, ind2].apply(:close_sound)
+  #
+  ind1 = open_sound("2.snd")
+  ind2 = open_sound("4.aiff")
+  vals = scan_sound_rb(0, false, ind1) do |y, c| y > 0.1 end
+  if vals then snd_display("scan_sound 2 false: %s?", vals) end
+  vals = scan_sound_rb(0, false, ind1) do |y, c| y > 0.03 end
+  if vals != [true, 12] and vals != [true, 5881]
+    s = (vals.cadr == 12) ? 12 : 5881
+    snd_display("scan_sound 2 true: %s (%s %s)?", vals, sample(s, ind1, 0), sample(s, ind1, 1))
+  end
+  set_selected_sound(ind1)
+  last_vals = Vct.new(channels(Snd.snd))
+  result = scan_sound_rb() do |y, c|
+    last_y = last_vals[c]
+    last_vals[c] = y
+    (y * last_y) < 0.0
+  end
+  if result != [true, 6] and result != [true, 1847]
+    s = (result.cadr == 6) ? 6 : 1847
+    snd_display("scan_sound 2 zero cross: %s (%s -> %s, %s -> %s)?",
+                result,
+                sample(s, ind1, 0), sample(s + 1, ind1, 0),
+                sample(s, ind1, 1), sample(s + 1, ind1, 1))
+  end
+  vals = scan_sound_rb(0, false, ind2) do |y, c| y > 0.05 end
+  if vals != [true, 21372] then snd_display("scan_sound 4 0.05: %s?", vals) end
+  vals = scan_sound_rb(0, false, ind2) do |y, c| (not c == 3 ) or y > 0.05 end
+  if vals != [true, 12999] then snd_display("scan_sound 4 0.05 3: %s?", vals) end
+  close_sound(ind1)
+  last_vals = Vct.new(channels(ind2))
+  result = scan_sound_rb() do |y, c|
+    last_y = last_vals[c]
+    last_vals[c] = y
+    (y * last_y) < 0.0
+  end
+  if result != [true, 1287] then snd_display("scan_sound 4 zero cross: %s?", result) end
+  close_sound(ind2)
   #
   file_copy("oboe.snd", "test.snd")
   ind = open_sound("test.snd")
@@ -37115,8 +37096,8 @@ end
 def test21
   if $test21
     $before_test_hook.call(21)
-    test0021
-    test0121 if $all_args
+    #test0021
+    #test0121 if $all_args
     test0221
     $after_test_hook.call(21)
   end
@@ -37134,19 +37115,44 @@ class Instrument
   alias nrev nrev_rb
 end
 
+def bigbird_2(start, dur, freq, freqskew, amp, freq_envelope, amp_envelope, partials)
+  gls_env = make_env(:envelope, freq_envelope, :scaler, hz2radians(freqskew), :duration, dur)
+  os = make_oscil(:frequency, freq)
+  amp_env = make_env(:envelope, amp_envelope, :scaler, amp, :duration, dur)
+  coeffs = partials2polynomial(normalize_partials(partials))
+  run_instrument(start, dur) do
+    env(amp_env) * polynomial(coeffs, oscil(os, env(gls_env)))
+  end
+end
+
+def bird_2(start, dur, freq, freqskew, amp, freq_envelope, amp_envelope)
+  gls_env = make_env(:envelope, freq_envelope, :scaler, hz2radians(freqskew), :duration, dur)
+  os = make_oscil(:frequency, freq)
+  amp_env = make_env(:envelope, amp_envelope, :scaler, amp, :duration, dur)
+  run_instrument(start, dur) do
+    env(amp_env) * oscil(os, env(gls_env))
+  end
+end
+
 # scissor-tailed flycatcher
 # 
 # mix a scissor-tailed flycatcher call into the current sound
 # see bird.rb for lots more birds
 
-def scissor(start)
-  scissorf = [0, 0, 40, 1, 60, 1, 100, 0]
-  $out_data = Vct.new(seconds2samples(0.05))
-  bigbird(start, 0.05, 1800, 1800, 0.2,
-          scissorf,
-          [0, 0, 25, 1, 75, 1, 100, 0],
-          [1, 0.5, 2, 1, 3, 0.5, 4, 0.1, 5, 0.01])
-  mix_vct($out_data, seconds2samples(start), @out_snd, 0, false)
+def scissor_2(start)
+  bigbird_2(start, 0.05, 1800, 1800, 0.2,
+            [0, 0, 40, 1, 60, 1, 100, 0], # scissor function
+            [0, 0, 25, 1, 75, 1, 100, 0],
+            [1, 0.5, 2, 1, 3, 0.5, 4, 0.1, 5, 0.01])
+end
+
+def bobwhite_2(beg)
+  main_amp = [0.00, 0.00, 0.25, 1.00, 0.60, 0.70, 0.75, 1.00, 1.00, 0.0]
+  bobup1 = [0.00, 0.00, 0.40, 1.00, 1.00, 1.0]
+  bobup2 = [0.00, 0.00, 0.65, 0.50, 1.00, 1.0]
+
+  bigbird_2(0.4, 0.2, 1800, 200, 0.1, bobup1, main_amp, [1, 1, 2, 0.02])
+  bigbird_2(1, 0.20, 1800, 1200, 0.2, bobup2, main_amp, [1, 1, 2, 0.02])
 end
 
 class Sinc_train
@@ -37296,6 +37302,203 @@ def optkey_4(*args)
   [a, b, c, d]
 end
 
+def test23_a
+  set_mus_srate(22050)
+  set_default_output_srate(22050)
+  with_sound(:reverb, :nrev) do
+    fmt1 = [0, 1200, 100, 1000]
+    fmt2 = [0, 2250, 100, 1800]
+    fmt3 = [0, 4500, 100, 4500]
+    fmt4 = [0, 6750, 100, 8100]
+    amp1 = [0, 0.67, 100, 0.7]
+    amp2 = [0, 0.95, 100, 0.95]
+    amp3 = [0, 0.28, 100, 0.33]
+    amp4 = [0, 0.14, 100, 0.15]
+    ind1 = [0, 0.75, 100, 0.65]
+    ind2 = [0, 0.75, 100, 0.75]
+    ind3 = [0, 1, 100, 1]
+    ind4 = [0, 1, 100, 1]
+    skwf = [0, 0, 100, 0]
+    ampf = [0, 0, 25, 1, 75, 1, 100, 0]
+    ranf = [0, 0.5, 100, 0.5]
+    index = [0, 1, 100, 1]
+    solid = [0, 0, 5, 1, 95, 1, 100, 0]
+    bassdr2 = [0.5, 0.06, 1, 0.62, 1.5, 0.07, 2, 0.6, 2.5, 0.08, 3, 0.56, 4, 0.24, 5, 0.98, 6, 0.53,
+      7, 0.16, 8, 0.33, 9, 0.62, 10, 0.12, 12, 0.14, 14, 0.86, 16, 0.12, 23, 0.14, 24, 0.17]
+    tenordr = [0.3, 0.04, 1, 0.81, 2, 0.27, 3, 0.2, 4, 0.21, 5, 0.18, 6, 0.35, 7, 0.03,
+      8, 0.07, 9, 0.02, 10, 0.025, 11, 0.035]
+  
+    drone(0, 4, 115, 0.125, solid, bassdr2, 0.1, 0.5, 0.03, 45, 1, 0.01, 10)
+    drone(0, 4, 229, 0.125, solid, tenordr, 0.1, 0.5, 0.03, 45, 1, 0.01, 11)
+    drone(0, 4, 229.5, 0.125, solid, tenordr, 0.1, 0.5, 0.03, 45, 1, 0.01, 9)
+    canter(0.000, 2.100, 918.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.05, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(2.100, 0.300, 688.500, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(2.400, 0.040, 826.200, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(2.440, 0.560, 459.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(3.000, 0.040, 408.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(3.040, 0.040, 619.650, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(3.080, 0.040, 408.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(3.120, 0.040, 688.500, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(3.160, 0.290, 459.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(3.450, 0.150, 516.375, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(3.600, 0.040, 826.200, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(3.640, 0.040, 573.750, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(3.680, 0.040, 619.650, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(3.720, 0.180, 573.750, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(3.900, 0.040, 688.500, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+    canter(3.940, 0.260, 459.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  end
+  if sound?(ind = find_sound("test.snd"))
+    play_and_wait(0, ind)
+    close_sound(ind)
+  else
+    snd_display("missing test.snd (%s)", get_func_name)
+  end
+end
+
+def test23_b
+  set_mus_srate(22050)
+  set_default_output_srate(22050)
+  with_sound(:srate, 22050) do
+    fm_violin(0, 0.01, 440, 0.1, :noise_amount, 0.0)
+    pluck(0.05, 0.01, 330, 0.1, 0.95, 0.95)
+    maraca(0.1, 0.1)
+    big_maraca(0.2, 0.5, 0.25, 0.95, 0.9985, 0.0312, [2300, 5600, 8100], [0.96, 0.995, 0.995], 0.01)
+    fm_bell(0.3, 1.0, 220, 0.5,
+            [0, 0, 0.1, 1, 10, 0.6, 25, 0.3, 50, 0.15, 90, 0.1, 100, 0],
+            [0, 1, 2, 1.1, 25, 0.75, 75, 0.5, 100, 0.2],
+            1.0)
+    singer(0.4, 0.1, [[0.4, Ehh_shp, Test_glt, 523.0, 0.8, 0.0, 0.01],
+                      [0.6, Oo_shp, Test_glt, 523.0, 0.7, 0.1, 0.01]])
+    stereo_flute(0.6, 0.2, 440, 0.55, :flow_envelope, [0, 0, 1, 1, 2, 1, 3, 0])
+    fofins(1, 0.3, 270, 0.4, 0.001, 730, 0.6, 1090, 0.3, 2440, 0.1)
+    bow(1.2, 0.3, 400, 0.5, :vb, 0.15, :fb, 0.1, :inharm, 0.25)
+    pqw_vox(1.5, 1, 300, 300, 0.1,
+            [0, 0, 50, 1, 100, 0],
+            [0, 0, 100, 0],
+            0,
+            [0, :L, 100, :L],
+            [0.33, 0.33, 0.33],
+            [[1, 1, 2, 0.5],
+              [1, 0.5, 2, 0.5, 3, 1],
+              [1, 1, 4, 0.5]])
+    fm_noise(2, 0.5, 500, 0.25,
+             [0, 0, 25, 1, 75, 1, 100, 0], 0.1, 0.1, 1000,
+             [0, 0, 100, 1], 0.1, 0.1, 10, 1000,
+             [0, 0, 100, 1], 0, 0, 100, 500,
+             [0, 0, 100, 1], 0, 0)
+    bes_fm(2.5, 0.5, 440, 5.0, 1.0, 8.0)
+    chain_dsps(3, 0.5, [0, 0, 1, 0.1, 2, 0], make_oscil(440))
+    chain_dsps(3.5, 1.0, [0, 0, 1, 1, 2, 0], make_one_zero(0.5), make_readin("oboe.snd"))
+    vox(4, 2, 170, 0.4,
+        [0, 0, 25, 1, 75, 1, 100, 0],
+        [0, 0, 5, 0.5, 10, 0, 100, 1],
+        0.1,
+        [0, :E, 25, :AE, 35, :ER, 65, :ER, 75, :I, 100, :UH],
+        0.05, 0.1)
+    p(5.0, :duration, 0.5, :keyNum, 36, :strike_velocity, 0.5, :amp, 0.4,
+      :dryPedalResonanceFactor, 0.25)
+    bobwhite_2(5.5)
+    scissor_2(2.0)
+    plucky(3.25, 0.3, 440, 0.2, 1.0)
+    bowstr(3.75, 0.3, 220, 0.2, 1.0)
+    brass(4.2, 0.3, 440, 0.2, 1.0)
+    clarinet(5.75, 0.3, 440, 0.2, 1.0)
+    flute(6, 0.3, 440, 0.2, 1.0)
+    fm_trumpet(6.5, 0.25)
+    touch_tone(6.75, [7, 2, 3, 4, 9, 7, 1])
+    pins(7.0, 1.0, "now.snd", 1.0, :time_scaler, 2.0)
+    # 
+    locust = [0, 0, 40, 1, 95, 1, 100, 0.5]
+    bug_hi = [0, 1, 25, 0.7, 75, 0.78, 100, 1]
+    amp = [0, 0, 25, 1, 75, 0.7, 100, 0]
+    fm_insect(7.000, 1.699, 4142.627, 0.015, amp, 60, -16.707, locust, 500.866, bug_hi, 0.346, 0.5)
+    fm_insect(7.195, 0.233, 4126.284, 0.030, amp, 60, -12.142, locust, 649.490, bug_hi, 0.407, 0.5)
+    fm_insect(7.217, 2.057, 3930.258, 0.045, amp, 60,  -3.011, locust, 562.087, bug_hi, 0.591, 0.5)
+    fm_insect(9.100, 1.500,  900.627, 0.060, amp, 40, -16.707, locust, 300.866, bug_hi, 0.346, 0.5)
+    fm_insect(10.00, 1.500,  900.627, 0.060, amp, 40, -16.707, locust, 300.866, bug_hi, 0.046, 0.5)
+    fm_insect(10.45, 1.500,  900.627, 0.090, amp, 40, -16.707, locust, 300.866, bug_hi, 0.006, 0.5)
+    fm_insect(10.95, 1.500,  900.627, 0.120, amp, 40, -10.707, locust, 300.866, bug_hi, 0.346, 0.5)
+    fm_insect(11.30, 1.500,  900.627, 0.090, amp, 40, -20.707, locust, 300.866, bug_hi, 0.246, 0.5)
+    # 
+    fm_drum(7.5, 1.5, 55, 0.3, 5, false)
+    fm_drum(8, 1.5, 66, 0.3, 4, true)
+    gong(9, 3, 261.61, 0.6)
+    attract(10, 0.25, 0.5, 2.0)
+    pqw(11, 0.5, 200, 1000, 0.2, [0, 0, 25, 1, 100, 0], [0, 1, 100, 0], [2, 0.1, 3, 0.3, 6, 0.5])
+    #
+    zn(10, 1, 100, 0.1, 20, 100, 0.995)
+    zn(11.5, 1, 100, 0.1, 100, 20, 0.995)
+    zc(11, 1, 100, 0.1, 20, 100, 0.95)
+    zc(12.5, 1, 100, 0.1, 100, 20, 0.95)
+    za(13, 1, 100, 0.1, 20, 100, 0.95, 0.95)
+    za(14.5, 1, 100, 0.1, 100, 20, 0.95, 0.95)
+    #
+    tubebell(12, 2, 440, 0.2)
+    wurley(12.5, 0.25, 440, 0.2)
+    rhodey(12.75, 0.25, 440, 0.2)
+    hammondoid(13, 0.25, 440, 0.2)
+    metal(13.5, 0.25, 440, 0.2)
+    reson(14.0, 1.0, 440, 0.1, 2, [0, 0, 100, 1], [0, 0, 100, 1],
+          0.1, 0.1, 0.1, 5, 0.01, 5, 0.01, 0, 1.0, 0.01,
+          [[[0, 0, 100, 1], 1200, 0.5, 0.1, 0.1, 0, 1.0, 0.1, 0.1],
+            [[0, 1, 100, 0], 2400, 0.5, 0.1, 0.1, 0, 1.0, 0.1, 0.1]])
+    cellon(14.5, 1, 220, 0.1,
+           [0, 0, 25, 1, 75, 1, 100, 0],
+           [0, 0, 25, 1, 75, 1, 100, 0], 0.75, 1.0, 0, 0, 0, 0, 1, 0, 0, 220,
+           [0, 0, 25, 1, 75, 1, 100, 0], 0, 0, 0, 0,
+           [0, 0, 100, 0], 0, 0, 0, 0, [0, 0, 100, 0])
+    scratch(15.0, "now.snd", 1.5, [0.0, 0.5, 0.25, 1.0])
+    two_tab(15, 1, 440, 0.1)
+    exp_snd("fyow.snd", 15, 3, 1, [0, 1, 1, 3], 0.4, 0.15, [0, 2, 1, 0.5], 0.05)
+    exp_snd("oboe.snd", 16, 3, 1, [0, 1, 1, 3], 0.4, 0.15, [0, 2, 1, 0.5], 0.2)
+    gran_synth(15.5, 1, 300, 0.0189, 0.03, 0.4)
+    spectra(16, 1, 440, 0.1,
+            [1, 0.4, 2, 0.2, 3, 0.2, 4, 0.1, 6, 0.1],
+            [0, 0, 1, 1, 5, 0.9, 12, 0.5, 25, 0.25, 100, 0])
+    lbj_piano(16.5, 1, 440, 0.2)
+    resflt(17, 1, 0, 0, 0, false, 0.1, 200, 230, 10,
+           [0, 0, 50, 1, 100, 0],
+           [0, 0, 100, 1],
+           500, 0.995, 0.1, 1000, 0.995, 0.1, 2000, 0.995, 0.1)
+    resflt(17.5, 1, 1, 10000, 0.01, [0, 0, 50, 1, 100, 0], 0, 0, 0, 0,
+           false, false,
+           500, 0.995, 0.1, 1000, 0.995, 0.1, 2000, 0.995, 0.1)
+    bes_fm(18, 1, 440, 10.0, 1.0, 4.0)
+    graph_eq("oboe.snd")
+  end
+  if sound?(ind = find_sound("test.snd"))
+    res1 = channel2vct(45, 10, ind, 0)
+    res2 = channel2vct(210, 10, ind, 0)
+    if (not vfffequal(res1,
+                      vct(-0.068,-0.059,-0.045,-0.028,-0.011, 0.005, 0.018, 0.028, 0.035,0.039))) or
+        (not vfffequal(res2,
+                       vct(0.015, 0.014, 0.013, 0.011, 0.009, 0.007, 0.005, 0.003, 0.001, 0.000)))
+      snd_display("fm_violin with_sound:\n#\t%s\n#\t%s", res1, res2)
+    end
+    play_and_wait(0, ind)
+    close_sound(ind)
+  else
+    snd_display("missing test.snd (%s)", get_func_name)
+  end
+end
+
 def test0023
   set_mus_srate(22050)
   set_default_output_srate(22050)
@@ -37316,7 +37519,7 @@ def test0023
     with_sound(:srate, 22050) do fm_violin(0, 0.1, 110.0 * (1.0 + i), 0.1) end
     ind = find_sound("test.snd")
     unless ind then snd_display("with_sound: %s?", Snd.sounds.map do |s| file_name(s) end) end
-    if fneq(res = maxamp, 0.1) then snd_display("with_sound max: %s?", res) end
+    if fneq(res = maxamp, 0.1) then snd_display("with_sound max (%d): %s?", i, res) end
     if srate(ind) != 22050
       snd_display("with_sound srate: %s (%s %s)?",
                   srate(ind), mus_srate, mus_sound_srate("test.snd"))
@@ -37384,8 +37587,7 @@ def test0023
   close_sound(ind)
   delete_file("test1.snd")
   # 
-  with_sound(:srate, 8000, :channels, 3,
-             :header_type, Mus_next, :output, "test1.snd") do
+  with_sound(:srate, 8000, :channels, 3, :header_type, Mus_next, :output, "test1.snd") do
     fm_violin(0, 0.1, 440, 0.1)
   end
   ind = find_sound("test1.snd")
@@ -37398,14 +37600,13 @@ def test0023
   if (res = header_type(ind)) != Mus_next
     snd_display("with_sound type (%s, s): %s?", Mus_next, res)
   end
-  if (res = chans(ind)) != 3
+  if (res = channels(ind)) != 3
     snd_display("with_sound chans (3, s): %s?", res)
   end
   close_sound(ind)
   delete_file("test1.snd")
   # 
-  with_sound(:srate, 96000, :channels, 4,
-             :header_type, Mus_aifc, :output, "test1.snd") do
+  with_sound(:srate, 96000, :channels, 4, :header_type, Mus_aifc, :output, "test1.snd") do
     fm_violin(0, 0.1, 440, 0.1)
   end
   ind = find_sound("test1.snd")
@@ -37418,14 +37619,12 @@ def test0023
   if (res = header_type(ind)) != Mus_aifc
     snd_display("with_sound type (%s, t): %s?", Mus_aifc, res)
   end
-  if (res = chans(ind)) != 4
+  if (res = channels(ind)) != 4
     snd_display("with_sound chans (4, t): %s?", res)
   end
   close_sound(ind)
   delete_file("test1.snd")
-  # 
-  with_sound(:srate, 22050, :channels, 1,
-             :header_type, Mus_raw, :output, "test1.snd") do
+  with_sound(:srate, 22050, :channels, 1, :header_type, Mus_raw, :output, "test1.snd") do
     fm_violin(0, 0.1, 440, 0.1)
   end
   ind = find_sound("test1.snd")
@@ -37438,7 +37637,7 @@ def test0023
   if (res = header_type(ind)) != Mus_raw
     snd_display("with_sound type (%s, u): %s?", Mus_raw, res)
   end
-  if (res = chans(ind)) != 1
+  if (res = channels(ind)) != 1
     snd_display("with_sound chans (1, u): %s?", res)
   end
   close_sound(ind)
@@ -37514,7 +37713,7 @@ def test0023
   end
   close_sound(ind)
   # 
-  with_sound(:srate, 44100, :statistics, true) do ws_sine(1000) end
+  with_sound(:srate, 44100) do ws_sine(1000) end
   ind = find_sound("test.snd")
   i = -1
   scan_channel(lambda { |y|
@@ -37572,192 +37771,7 @@ end
 def test0123
   set_mus_srate(22050)
   set_default_output_srate(22050)
-  with_sound(:reverb, :nrev) do
-    fmt1 = [0, 1200, 100, 1000]
-    fmt2 = [0, 2250, 100, 1800]
-    fmt3 = [0, 4500, 100, 4500]
-    fmt4 = [0, 6750, 100, 8100]
-    amp1 = [0, 0.67, 100, 0.7]
-    amp2 = [0, 0.95, 100, 0.95]
-    amp3 = [0, 0.28, 100, 0.33]
-    amp4 = [0, 0.14, 100, 0.15]
-    ind1 = [0, 0.75, 100, 0.65]
-    ind2 = [0, 0.75, 100, 0.75]
-    ind3 = [0, 1, 100, 1]
-    ind4 = [0, 1, 100, 1]
-    skwf = [0, 0, 100, 0]
-    ampf = [0, 0, 25, 1, 75, 1, 100, 0]
-    ranf = [0, 0.5, 100, 0.5]
-    index = [0, 1, 100, 1]
-    solid = [0, 0, 5, 1, 95, 1, 100, 0]
-    bassdr2 = [0.5, 0.06, 1, 0.62, 1.5, 0.07, 2, 0.6, 2.5, 0.08, 3, 0.56, 4, 0.24, 5, 0.98, 6, 0.53,
-      7, 0.16, 8, 0.33, 9, 0.62, 10, 0.12, 12, 0.14, 14, 0.86, 16, 0.12, 23, 0.14, 24, 0.17]
-    tenordr = [0.3, 0.04, 1, 0.81, 2, 0.27, 3, 0.2, 4, 0.21, 5, 0.18, 6, 0.35, 7, 0.03,
-      8, 0.07, 9, 0.02, 10, 0.025, 11, 0.035]
-  
-    drone(0, 4, 115, 0.125, solid, bassdr2, 0.1, 0.5, 0.03, 45, 1, 0.01, 10)
-    drone(0, 4, 229, 0.125, solid, tenordr, 0.1, 0.5, 0.03, 45, 1, 0.01, 11)
-    drone(0, 4, 229.5, 0.125, solid, tenordr, 0.1, 0.5, 0.03, 45, 1, 0.01, 9)
-    canter(0.000, 2.100, 918.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.05, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(2.100, 0.300, 688.500, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(2.400, 0.040, 826.200, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(2.440, 0.560, 459.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(3.000, 0.040, 408.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(3.040, 0.040, 619.650, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(3.080, 0.040, 408.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(3.120, 0.040, 688.500, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(3.160, 0.290, 459.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(3.450, 0.150, 516.375, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(3.600, 0.040, 826.200, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(3.640, 0.040, 573.750, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(3.680, 0.040, 619.650, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(3.720, 0.180, 573.750, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(3.900, 0.040, 688.500, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-    canter(3.940, 0.260, 459.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
-           0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
-  end
-  ind = find_sound("test.snd")
-  play_and_wait(0, ind)
-  close_sound(ind)
-  # 
-  with_sound(:srate, 22050, :clm, false) do
-    fm_violin(0, 0.01, 440, 0.1, :noise_amount, 0.0)
-    pluck(0.05, 0.01, 330, 0.1, 0.95, 0.95)
-    maraca(0.1, 0.1)
-    big_maraca(0.2, 0.5, 0.25, 0.95, 0.9985, 0.0312, [2300, 5600, 8100], [0.96, 0.995, 0.995], 0.01)
-    fm_bell(0.3, 1.0, 220, 0.5,
-            [0, 0, 0.1, 1, 10, 0.6, 25, 0.3, 50, 0.15, 90, 0.1, 100, 0],
-            [0, 1, 2, 1.1, 25, 0.75, 75, 0.5, 100, 0.2],
-            1.0)
-    singer(0.4, 0.1, [[0.4, Ehh_shp, Test_glt, 523.0, 0.8, 0.0, 0.01],
-                      [0.6, Oo_shp, Test_glt, 523.0, 0.7, 0.1, 0.01]])
-    stereo_flute(0.6, 0.2, 440, 0.55, :flow_envelope, [0, 0, 1, 1, 2, 1, 3, 0])
-    fofins(1, 0.3, 270, 0.4, 0.001, 730, 0.6, 1090, 0.3, 2440, 0.1)
-    bow(1.2, 0.3, 400, 0.5, :vb, 0.15, :fb, 0.1, :inharm, 0.25)
-    pqw_vox(1.5, 1, 300, 300, 0.1,
-            [0, 0, 50, 1, 100, 0],
-            [0, 0, 100, 0],
-            0,
-            [0, :L, 100, :L],
-            [0.33, 0.33, 0.33],
-            [[1, 1, 2, 0.5],
-              [1, 0.5, 2, 0.5, 3, 1],
-              [1, 1, 4, 0.5]])
-    fm_noise(2, 0.5, 500, 0.25,
-             [0, 0, 25, 1, 75, 1, 100, 0], 0.1, 0.1, 1000,
-             [0, 0, 100, 1], 0.1, 0.1, 10, 1000,
-             [0, 0, 100, 1], 0, 0, 100, 500,
-             [0, 0, 100, 1], 0, 0)
-    bes_fm(2.5, 0.5, 440, 5.0, 1.0, 8.0)
-    chain_dsps(3, 0.5, [0, 0, 1, 0.1, 2, 0], make_oscil(440))
-    chain_dsps(3.5, 1.0, [0, 0, 1, 1, 2, 0], make_one_zero(0.5), make_readin("oboe.snd"))
-    vox(4, 2, 170, 0.4,
-        [0, 0, 25, 1, 75, 1, 100, 0],
-        [0, 0, 5, 0.5, 10, 0, 100, 1],
-        0.1,
-        [0, :E, 25, :AE, 35, :ER, 65, :ER, 75, :I, 100, :UH],
-        0.05, 0.1)
-    p(5.0, :duration, 0.5, :keyNum, 36, :strike_velocity, 0.5, :amp, 0.4,
-      :dryPedalResonanceFactor, 0.25)
-    $out_file = @out_snd
-    bobwhite(5.5)
-    scissor(2.0)
-    plucky(3.25, 0.3, 440, 0.2, 1.0)
-    bowstr(3.75, 0.3, 220, 0.2, 1.0)
-    brass(4.2, 0.3, 440, 0.2, 1.0)
-    clarinet(5.75, 0.3, 440, 0.2, 1.0)
-    flute(6, 0.3, 440, 0.2, 1.0)
-    fm_trumpet(6.5, 0.25)
-    touch_tone(6.75, [7, 2, 3, 4, 9, 7, 1])
-    pins(7.0, 1.0, "now.snd", 1.0, :time_scaler, 2.0)
-    # 
-    locust = [0, 0, 40, 1, 95, 1, 100, 0.5]
-    bug_hi = [0, 1, 25, 0.7, 75, 0.78, 100, 1]
-    amp = [0, 0, 25, 1, 75, 0.7, 100, 0]
-    fm_insect(7.000, 1.699, 4142.627, 0.015, amp, 60, -16.707, locust, 500.866, bug_hi, 0.346, 0.5)
-    fm_insect(7.195, 0.233, 4126.284, 0.030, amp, 60, -12.142, locust, 649.490, bug_hi, 0.407, 0.5)
-    fm_insect(7.217, 2.057, 3930.258, 0.045, amp, 60,  -3.011, locust, 562.087, bug_hi, 0.591, 0.5)
-    fm_insect(9.100, 1.500,  900.627, 0.060, amp, 40, -16.707, locust, 300.866, bug_hi, 0.346, 0.5)
-    fm_insect(10.00, 1.500,  900.627, 0.060, amp, 40, -16.707, locust, 300.866, bug_hi, 0.046, 0.5)
-    fm_insect(10.45, 1.500,  900.627, 0.090, amp, 40, -16.707, locust, 300.866, bug_hi, 0.006, 0.5)
-    fm_insect(10.95, 1.500,  900.627, 0.120, amp, 40, -10.707, locust, 300.866, bug_hi, 0.346, 0.5)
-    fm_insect(11.30, 1.500,  900.627, 0.090, amp, 40, -20.707, locust, 300.866, bug_hi, 0.246, 0.5)
-    # 
-    fm_drum(7.5, 1.5, 55, 0.3, 5, false)
-    fm_drum(8, 1.5, 66, 0.3, 4, true)
-    gong(9, 3, 261.61, 0.6)
-    attract(10, 0.25, 0.5, 2.0)
-    pqw(11, 0.5, 200, 1000, 0.2, [0, 0, 25, 1, 100, 0], [0, 1, 100, 0], [2, 0.1, 3, 0.3, 6, 0.5])
-    #
-    zn(10, 1, 100, 0.1, 20, 100, 0.995)
-    zn(11.5, 1, 100, 0.1, 100, 20, 0.995)
-    zc(11, 1, 100, 0.1, 20, 100, 0.95)
-    zc(12.5, 1, 100, 0.1, 100, 20, 0.95)
-    za(13, 1, 100, 0.1, 20, 100, 0.95, 0.95)
-    za(14.5, 1, 100, 0.1, 100, 20, 0.95, 0.95)
-    #
-    tubebell(12, 2, 440, 0.2)
-    wurley(12.5, 0.25, 440, 0.2)
-    rhodey(12.75, 0.25, 440, 0.2)
-    hammondoid(13, 0.25, 440, 0.2)
-    metal(13.5, 0.25, 440, 0.2)
-    reson(14.0, 1.0, 440, 0.1, 2, [0, 0, 100, 1], [0, 0, 100, 1],
-          0.1, 0.1, 0.1, 5, 0.01, 5, 0.01, 0, 1.0, 0.01,
-          [[[0, 0, 100, 1], 1200, 0.5, 0.1, 0.1, 0, 1.0, 0.1, 0.1],
-            [[0, 1, 100, 0], 2400, 0.5, 0.1, 0.1, 0, 1.0, 0.1, 0.1]])
-    cellon(14.5, 1, 220, 0.1,
-           [0, 0, 25, 1, 75, 1, 100, 0],
-           [0, 0, 25, 1, 75, 1, 100, 0], 0.75, 1.0, 0, 0, 0, 0, 1, 0, 0, 220,
-           [0, 0, 25, 1, 75, 1, 100, 0], 0, 0, 0, 0,
-           [0, 0, 100, 0], 0, 0, 0, 0, [0, 0, 100, 0])
-    scratch(15.0, "now.snd", 1.5, [0.0, 0.5, 0.25, 1.0])
-    if sound?(ind = find_sound("now.snd")) then close_sound(ind) end
-    two_tab(15, 1, 440, 0.1)
-    exp_snd("fyow.snd", 15, 3, 1, [0, 1, 1, 3], 0.4, 0.15, [0, 2, 1, 0.5], 0.05)
-    exp_snd("oboe.snd", 15, 3, 1, [0, 1, 1, 3], 0.4, 0.15, [0, 2, 1, 0.5], 0.2)
-    gran_synth(15.5, 1, 300, 0.0189, 0.03, 0.4)
-    spectra(16, 1, 440, 0.1,
-            [1, 0.4, 2, 0.2, 3, 0.2, 4, 0.1, 6, 0.1],
-            [0, 0, 1, 1, 5, 0.9, 12, 0.5, 25, 0.25, 100, 0])
-    lbj_piano(16.5, 1, 440, 0.2)
-    resflt(17, 1, 0, 0, 0, false, 0.1, 200, 230, 10,
-           [0, 0, 50, 1, 100, 0],
-           [0, 0, 100, 1],
-           500, 0.995, 0.1, 1000, 0.995, 0.1, 2000, 0.995, 0.1)
-    resflt(17.5, 1, 1, 10000, 0.01, [0, 0, 50, 1, 100, 0], 0, 0, 0, 0,
-           false, false,
-           500, 0.995, 0.1, 1000, 0.995, 0.1, 2000, 0.995, 0.1)
-    bes_fm(18, 1, 440, 10.0, 1.0, 4.0)
-    graph_eq("oboe.snd")
-  end
-  ind = find_sound("test.snd")
-  res1 = channel2vct(45, 10)
-  res2 = channel2vct(210, 10)
-  if (not vequal(res1,
-                 vct(-0.068, -0.059, -0.045, -0.028, -0.011, 0.005, 0.018, 0.028, 0.035, 0.039))) or
-      (not vequal(res2,
-                  vct(0.015, 0.014, 0.013, 0.011, 0.009, 0.007, 0.005, 0.003, 0.001, 0.000)))
-    snd_display("fm_violin with_sound:\n# %s\n# %s", res1, res2)
-  end
-  play_and_wait(ind)
-  close_sound(ind)
-  # 
-  with_sound(:channels, 2, :statistics, true) do
+  with_sound(:channels, 2) do
     fullmix("pistol.snd")
     fullmix("oboe.snd", 1, 2, 0, [[0.1, make_env([0, 0, 1, 1], :duration, 2, :scaler, 0.5)]])
   end
@@ -37935,20 +37949,18 @@ def test0223
     fm_violin(0, 0.1, 440, 0.1)
     with_mix("with-mix", 0, "fm_violin(0, 0.1, 550, 0.3)")
   end
-  old_date = check_with_mix(6, 0.1, 1.1, 0.398, "[]", "fm_violin(0, 0.1, 550, 0.3)", false,false)
+  old_date = check_with_mix(6, 0.1, 1.1, 0.398, "[]", "fm_violin(0, 0.1, 550, 0.3)", false, false)
   with_sound(:reverb, :jc_reverb) do
     fm_violin(0, 0.1, 440, 0.1)
     with_mix("with-mix", 0, "fm_violin(0, 0.1, 550, 0.3)")
   end
   check_with_mix(6, 0.1, 1.1, 0.398, "[]", "fm_violin(0, 0.1, 550, 0.3)", old_date, false)
   # 
-  with_sound(:srate, 44100, :play, false, :clm, false) do
-    $out_data = Vct.new(seconds2samples(2.0))
-    bigbird(0, 2.0, 60, 0, 0.5,
-            [0, 0, 1, 1],
-            [0, 0, 1, 1, 2, 1, 3, 0],
-            [1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1, 10, 1])
-    mix_vct($out_data, 0, @out_snd, 0, false)
+  with_sound(:srate, 44100, :play, false) do
+    bigbird_2(0, 2.0, 60, 0, 0.5,
+              [0, 0, 1, 1],
+              [0, 0, 1, 1, 2, 1, 3, 0],
+              [1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1, 10, 1])
   end
   ind = (find_sound("test.snd") or open_sound("test.snd"))
   mx = maxamp
@@ -37973,13 +37985,11 @@ def test0223
   notch_selection(freqs, false)
   play_sound do |data| data.map!(0) do |val| val * 2.0 end end
   close_sound(ind)
-  with_sound(:srate, 44100, :play, false, :clm, false) do
-    $out_data = Vct.new(seconds2samples(60.0))
-    bigbird(0, 60.0, 60, 0, 0.5,
-            [0, 0, 1, 1],
-            [0, 0, 1, 1, 2, 1, 3, 0],
-            [1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1, 10, 1])
-    mix_vct($out_data, 0, @out_snd, 0, false)
+  with_sound(:srate, 44100, :play, false) do
+    bigbird_2(0, 60.0, 60, 0, 0.5,
+              [0, 0, 1, 1],
+              [0, 0, 1, 1, 2, 1, 3, 0],
+              [1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1, 10, 1])
   end
   ind = find_sound("test.snd")
   freqs = []
@@ -38011,7 +38021,7 @@ def test0223
   mix("test4.snd", 0, 0, ind, 0, false, true)
   if File.exists?("test3.snd") then snd_display("auto-delete insert_samples?") end
   undo_edit(1, ind)
-  delete_sample(100)
+  delete_sample(100, ind, 0)
   if File.exists?("test4.snd") then snd_display("auto-delete mix?") end
   with_sound(:output, "test5.snd") do fm_violin(0, 0.1, 440, 0.1) end
   mix("test5.snd", 0, 0, ind, 0, true, true)
@@ -38101,7 +38111,9 @@ def test0223
   $clm_delete_reverb = true
   $clm_reverb = :jc_reverb
   $clm_reverb_data = [:low_pass, true, :volume, 2.0, :amp_env, [0, 1, 3, 1, 4, 0]]
-  with_sound() do fm_violin(0, 1, 440, 0.1, :reverb_amount, 0.1) end
+  with_sound(:comment, "fm_violin(:reverb_amount, 0.1)") do 
+    fm_violin(0, 1, 440, 0.1, :reverb_amount, 0.1)
+  end
   unless sound?(ind = find_sound("test.wav"))
     snd_display("default output in ws: %s?", file_name(true))
   else
@@ -38128,11 +38140,13 @@ def test0223
   #
   val = 0
   $clm_notehook = lambda do |*args| val = 1 end
-  with_sound() do fm_violin(0, 0.1, 440, 0.1) end
+  with_sound(:comment, "$clm_notehook") do fm_violin(0, 0.1, 440, 0.1) end
   if val != 1 then snd_display("$clm_notehook (1): %s %s?", val, $clm_notehook.inspect) end
-  with_sound(:notehook, lambda do |*args| val=2 end) do fm_violin(0, 0.1, 440, 0.1) end
+  with_sound(:notehook, lambda do |*args| val=2 end, :comment, ":notehook") do
+    fm_violin(0, 0.1, 440, 0.1) 
+  end
   if val != 2 then snd_display(":notehook: %s?", val) end
-  with_sound() do fm_violin(0, 0.1, 440, 0.1) end
+  with_sound(:comment, "$clm_notehook (2)") do fm_violin(0, 0.1, 440, 0.1) end
   if val != 1 then snd_display("$clm_notehook (2): %s %s?", val, $clm_notehook.inspect) end
   $clm_notehook = nil
   # 
@@ -38179,19 +38193,18 @@ def test0223
   close_sound(ind)
   # 
   make_birds
+  if provided?(:snd_nogui) then puts end
   Snd.sounds.apply(:close_sound)
   # 
   # clm23.scm tests skipped
   #
-  file = with_sound(:clipped, true,
-                    :data_format, Mus_bfloat, :header_type, Mus_next) do
+  file = with_sound(:clipped, false, :data_format, Mus_bfloat, :header_type, Mus_next) do
     fm_violin(0, 0.1, 440, 3.14159)
   end.output
   ind = find_sound(file)
   if fneq(res = maxamp(ind), 3.14159) then snd_display("clipped false: %s?", res) end
   close_sound(ind)
-  file = with_sound(:clipped, true,
-                    :data_format, Mus_bfloat, :header_type, Mus_next) do
+  file = with_sound(:clipped, true, :data_format, Mus_bfloat, :header_type, Mus_next) do
     fm_violin(0, 0.1, 440, 3.14159)
   end.output
   ind = find_sound(file)
@@ -38240,14 +38253,15 @@ def test0223
   $clm_array_print_length = old_arrp
   close_sound(ind)
   # 
-  file = with_sound() do fm_violin(0, 3, 440, 0.1) end.output
+  file = with_sound(:clm, false) do fm_violin(0, 3, 440, 0.1) end.output
   ind = find_sound(file)
   set_amp_control(0.5, ind)
   set_x_bounds([1.0, 2.0], ind, 0)
-  file = with_sound() do fm_violin(0, 4, 440, 0.1) end.output
+  file = with_sound(:clm, false) do fm_violin(0, 4, 440, 0.1) end.output
   ind = find_sound(file)
   if fneq(res = amp_control(ind), 0.5) then snd_display("update ws amp: %s?", res) end
-  if fneq(x_bounds(ind, 0)[0], 1.0) or fneq(x_bounds(ind, 0)[1], 2.0)
+	# INFO: x-bounds here [1.333, 2,667]
+  if fneq(x_bounds(ind, 0).car, 1.0) or fneq(x_bounds(ind, 0).cadr, 2.0)
     snd_display("update ws bounds: %s?", x_bounds(ind, 0))
   end
   close_sound(ind)
@@ -38297,6 +38311,8 @@ require "zip"
 def test23
   if $test23
     $before_test_hook.call(23)
+    test23_a
+    test23_b
     test0023
     test0123
     test0223
@@ -40718,11 +40734,11 @@ def test0224
     end
   end
   move_scale(alpha, 62)
-  if fneq(res = fft_window_alpha(0.62))
+  if fneq(res = fft_window_alpha, 0.62)
     snd_display("moved fft-alpha: %s %s?", res, RXmScaleGetValue(beta))
   end
   move_scale(beta, 32)
-  if fneq(res = fft_window_beta(0.32))
+  if fneq(res = fft_window_beta, 0.32)
     snd_display("moved fft-beta: %s %s?", res, RXmScaleGetValue(beta))
   end
   # click all the lists
@@ -41560,7 +41576,7 @@ def test0324
   end
   RXmListSelectPos(lst, 1, true)
   # INFO: Ruby doesn't return $open_hook and $open_raw_sound_hook
-  if help_names != ["open_file_dialog", "open_raw_sound", "open_sound", "open_sound_file"]
+  if help_names != ["open_file_dialog", "open_raw_sound", "open_sound"]
     snd_display("help_dialog data: %s?", help_names)
   end
   click_button(quit)
@@ -42208,7 +42224,7 @@ Procs =
    :tiny_font, :track_sample_reader?, :region_sample_reader?, :transform_dialog,
    :transform_sample, :transform2vct, :transform_frames, :transform_type, :trap_segfault,
    :with_file_monitor, :optimization, :unbind_key, :update_transform_graph, :update_time_graph,
-   :update_lisp_graph, :update_sound, :run_safety, :clm_table_size, :vct2sound_file,
+   :update_lisp_graph, :update_sound, :run_safety, :clm_table_size,
    :with_verbose_cursor, :view_sound, :vu_size, :wavelet_type,
    :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :window_height, :window_width,
    :window_x, :window_y, :with_mix_tags, :with_relative_panes, :with_gl, :write_peak_env_info_file,
@@ -42986,7 +43002,6 @@ def test0228
   check_error_tag(:no_such_file) do set_temp_dir("/hiho") end
   check_error_tag(:no_such_file) do set_save_dir("/hiho") end
   check_error_tag(:out_of_range) do snd_transform(20, make_vct(4)) end
-  check_error_tag(:no_such_file) do close_sound_file(23213, 3) end
   check_error_tag(:bad_header) do mus_sound_maxamp($sf_dir + "bad_chans.snd") end
   check_error_tag(:bad_header) do set_mus_sound_maxamp($sf_dir + "bad_chans.snd", [0.0, 0.0]) end
   check_error_tag(:mus_error) do play($sf_dir + "midi60.mid") end
@@ -43044,7 +43059,8 @@ def test0228
   check_error_tag(:wrong_type_arg) do set_tempo_control_bounds([0.0]) end
   check_error_tag(:wrong_type_arg) do set_tempo_control_bounds([0.0, "hiho"]) end
   check_error_tag(:wrong_type_arg) do make_variable_graph(false) end
-  check_error_tag(:arg_error) do make_variable_graph(main_widgets.cadr) end
+  # INFO: returns 1, 2, etc.
+  # check_error_tag(:arg_error) do make_variable_graph(main_widgets.cadr) end
   check_error_tag(:cannot_print) do graph2ps end
   ind = open_sound("oboe.snd")
   set_selection_creates_region(true)
@@ -43083,9 +43099,6 @@ def test0228
   check_error_tag(:out_of_range) do set_expand_control_bounds([0.0, 2.0]) end
   check_error_tag(:out_of_range) do set_speed_control_bounds([2.0, 0.0]) end
   check_error_tag(:out_of_range) do set_expand_control_bounds([2.0, 0.0]) end
-  check_error_tag(:out_of_range) do vct2sound_file(123, $vct_3, 4) end  
-  check_error_tag(:out_of_range) do vct2sound_file(123, $vct_3, -4) end  
-  check_error_tag(:io_error) do vct2sound_file(123, $vct_3, 2) end
   check_error_tag(:bad_header) do insert_sound($sf_dir + "bad_chans.snd") end
   check_error_tag(:io_error) do convolve_with($sf_dir + "bad_chans.snd") end
   check_error_tag(:cannot_save) do save_sound_as("hiho.snd", ind, -12) end
@@ -43243,8 +43256,6 @@ def test0228
   check_error_tag(:no_such_menu) do add_to_menu(1234, "hi", lambda do | | false end) end
   check_error_tag(:bad_arity) do add_to_main_menu("hi", lambda do |a, b| false end) end
   check_error_tag(:bad_arity) do add_to_menu(1, "hi", lambda do |a, b| false end) end
-  check_error_tag(:io_error) do open_sound_file("/bad/baddy.snd") end
-  check_error_tag(:out_of_range) do close_sound_file(0, 0) end
   check_error_tag(:out_of_range) do set_transform_type(-1) end
   check_error_tag(:out_of_range) do set_transform_type(123) end
   check_error_tag(:wrong_type_arg) do help_dialog([0, 1], "hiho") end
@@ -43340,8 +43351,6 @@ def test0228
     m = make_mixer(2)
     mixer_ref(m, 3, 4)
   end
-  check_error_tag(:out_of_range) do open_sound_file("test.snd", :channels, -1) end
-  check_error_tag(:out_of_range) do open_sound_file("test.snd", :srate, -1) end
   check_error_tag(:bad_arity) do add_colormap("baddy", lambda do | | false end) end
   check_error_tag(:bad_arity) do add_colormap("baddy", lambda do |a, b, c| false end) end
   check_error_tag(:out_of_range) do make_phase_vocoder(:fft_size, 2 ** 30) end

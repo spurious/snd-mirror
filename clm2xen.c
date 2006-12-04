@@ -5,8 +5,6 @@
  *    perhaps a mus module, giving mus:sound-srate in xen, mus:sound-srate in clm, mus_sound_srate in C?
  */
 
-/* PERHAPS: vct|sound-data<->frame */
-
 #include <mus-config.h>
 
 #if USE_SND

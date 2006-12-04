@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Changed: Fri Nov 03 22:29:23 CET 2006
+# Changed: Sun Dec 03 17:09:30 CET 2006
 
 # Commentary:
 #
@@ -223,9 +223,9 @@ mixes the vct data into the sound 'snd' starting at 'start' (in samples) \
 using 'envelope' to pan (0: all chan 0, 1: all chan 1).")
   def pan_mix_vct(v, beg = 0, envelope = 1.0, snd = false, chn = 0)
     temp_file = snd_tempnam
-    fd = open_sound_file(temp_file, 1, srate(snd), "")
-    vct2sound_file(fd, v, v.length)
-    close_sound_file(fd, 4 * v.length)
+    fd = mus_sound_open_output(temp_file, srate(snd), 1, false, false, "")
+    mus_sound_write(fd, 0, v.length - 1, 1, vct2sound_data(v))
+    mus_sound_close_output(fd, 4 * v.length)
     pan_mix(temp_file, beg, envelope, snd, chn, true)
   end
 
@@ -244,9 +244,9 @@ using 'envelope' to pan (0: all chan 0, 1: all chan 1).")
   def save_mix(id, filename)
     Snd.raise(:no_such_mix, id) unless mix?(id)
     v = mix2vct(id)
-    fd = open_sound_file(filename, 1, srate, "")
-    vct2sound_file(fd, v, v.length)
-    close_sound_file(fd, 4 * v.length)
+    fd = mus_sound_open_output(filename, srate(), 1, false, false, "")
+    mus_sound_write(fd, 0, v.length - 1, 1, vct2sound_data(v))
+    mus_sound_close_output(fd, 4 * v.length)
   end
 
   add_help(:mix_maxamp, "mix_maxamp(id) returns the max amp in the given mix")
@@ -429,12 +429,12 @@ reverses the order of its mixes (it changes various mix begin times)")
     chans = track_chans(trk)
     if chn == true and chans == 1 or number?(chn) and chn < chans
       v = track2vct(trk, (chn == true ? 0 : chn))
-      fd = open_sound_file(filename, 1, srate, format("written by %s", get_func_name))
-      vct2sound_file(fd, v, v.length)
-      close_sound_file(fd, 4 * v.length)
+      fd = mus_sound_open_output(filename, srate(), 1, false, false, "written by save-track")
+      mus_sound_write(fd, 0, v.length - 1, 1, vct2sound_data(v))
+      mus_sound_close_output(fd, 4 * v.length)
     else
       if chn == true and chans > 0
-        fd = open_sound_file(filename, chans, srate, format("written by %s", get_func_name))
+        fd = mus_sound_open_output(filename, srate(), chans, false, false, "written by save-track")
         len = track_frames(trk)
         pos = track_position(trk)
         v = make_vct(chans * len)
@@ -445,8 +445,8 @@ reverses the order of its mixes (it changes various mix begin times)")
           chan_len.times do |j| v[i + chans * (chan_pos + j)] = read_track_sample(rd) end
           free_sample_reader(rd)
         end
-        vct2sound_file(fd, v, v.length)
-        close_sound_file(fd, 4 * v.length)
+        mus_sound_write(fd, 0, v.length - 1, 1, vct2sound_data(v))
+        mus_sound_close_output(fd, 4 * v.length)
       else
         Snd.raise(:no_such_channel, chn)
       end

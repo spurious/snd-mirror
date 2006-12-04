@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Tue Nov 07 00:07:35 CET 2006
+# Changed: Wed Nov 29 22:13:52 CET 2006
 
 # Commentary:
 #
@@ -1297,19 +1297,18 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
   def make_notch_frequency_response(cur_srate, freqs, notch_width = 2)
     cur_srate = cur_srate.to_f
     notch_width = notch_width.to_f
-    freq_response = [1.0, 0.0]
+    freq_response = [0.0, 1.0]
     freqs.each do |f|
-      freq_response.unshift((2.0 * (f - notch_width)) / cur_srate) # left upper y hz
-      freq_response.unshift(1.0)                     # left upper y resp
-      freq_response.unshift((2.0 * (f - notch_width / 2.0)) / cur_srate) # left bottom y hz
-      freq_response.unshift(0.0)                     # left bottom y resp
-      freq_response.unshift((2.0 * (f + notch_width / 2.0)) / cur_srate) # right bottom y hz
-      freq_response.unshift(0.0)                     # right bottom y resp
-      freq_response.unshift((2.0 * (f + notch_width)) / cur_srate) # right upper y hz
-      freq_response.unshift(1.0)                     # right upper y resp
+      freq_response.push((2.0 * (f - notch_width)) / cur_srate) # left upper y hz
+      freq_response.push(1.0)                     # left upper y resp
+      freq_response.push((2.0 * (f - notch_width / 2.0)) / cur_srate) # left bottom y hz
+      freq_response.push(0.0)                     # left bottom y resp
+      freq_response.push((2.0 * (f + notch_width / 2.0)) / cur_srate) # right bottom y hz
+      freq_response.push(0.0)                     # right bottom y resp
+      freq_response.push((2.0 * (f + notch_width)) / cur_srate) # right upper y hz
+      freq_response.push(1.0)                     # right upper y resp
     end
-    freq_response.unshift(1.0, 1.0) 
-    freq_response.reverse
+    freq_response.push(1.0, 1.0) 
   end
 
   add_help(:notch_channel,
@@ -1326,8 +1325,7 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
                     truncate = true,
                     notch_width = 2)
     filter_channel(make_notch_frequency_response(srate(snd).to_f, freqs, notch_width),
-                   (filter_order or
-                      (2 ** (log(srate(snd).to_f / notch_width) / log(2.0)).ceil).to_i),
+                   (filter_order or (2 ** (log(srate(snd).to_f / notch_width) / log(2.0)).ceil)),
                    beg, dur, snd, chn, edpos, truncate,
                    format("%s(%s, %s, %s, %s",
                           get_func_name, freqs.inspect, filter_order, beg, dur))
@@ -1338,10 +1336,9 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
 -> notch filter removing freqs")
   def notch_sound(freqs, filter_order = false, snd = false, chn = false, notch_width = 2)
     filter_sound(make_notch_frequency_response(srate(snd).to_f, freqs, notch_width),
-                 (filter_order or
-                    (2 ** (log(srate(snd).to_f / notch_width) / log(2.0)).ceil).to_i),
+                 (filter_order or (2 ** (log(srate(snd).to_f / notch_width) / log(2.0)).ceil)),
                  snd, chn, false,
-                 format("%s(%s, %s", get_func_name, freqs.inspect, filter_order))
+                 format("%s(%s, %s, 0, false", get_func_name, freqs.inspect, filter_order))
   end
 
   add_help(:notch_selection,
@@ -1351,7 +1348,7 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
     if selection?
       filter_selection(make_notch_frequency_response(selection_srate.to_f, freqs, notch_width),
                        (filter_order or
-                          (2 ** (log(selection_srate.to_f / notch_width) / log(2.0)).ceil).to_i))
+                        (2 ** (log(selection_srate.to_f / notch_width) / log(2.0)).ceil)))
     end
   end
 
