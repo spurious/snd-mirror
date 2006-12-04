@@ -4811,7 +4811,8 @@ and a suitably noisy original, strange pitches emerge and submerge.  <i>fsize</i
 
 <A NAME="framedoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>frame</h2></td></tr></table>
 
-<p>This file implements a bunch of functions using frames, vcts, and sound-data objects.  I may
+<p>This file implements a bunch of functions using frames, vcts, and sound-data objects: primarily multichannel sound operations
+where we want to handle all channels in parallel.  I may
 move some of these into C.
 </p>
 
@@ -4870,11 +4871,36 @@ if the vct argument is omitted.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- region->frame -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="regiontoframe">region-&gt;frame</a> <code>pos reg</code>
+</td></tr><tr><td></td><td>
+region-&gt;frame returns a frame containing the contents of the region ref at position pos.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- sound-data->frame -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="sounddatatoframe">sound-data-&gt;frame</a> <code>sd pos fr</code>
 </td></tr><tr><td></td><td>
 sound-data-&gt;frame places the contents of its sound-data argument at position pos into its frame argument.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- sound-data->sound -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="sounddatatosound">sound-data-&gt;sound</a> <code>sd beg :optional dur snd</code>
+</td></tr><tr><td></td><td>
+sound-data-&gt;sound places the contents of its sound-data argument sd into the sound snd starting at beg and going for dur frames.
+dur defaults to the sound-data object's length.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- sound->sound-data -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="soundtosounddata">sound-&gt;sound-data</a> <code>beg dur :optional snd</code>
+</td></tr><tr><td></td><td>
+sound-&gt;sound-data returns a sound-data object containing the contents of the sound snd starting from beg for dur frames.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4897,6 +4923,96 @@ if the frame argument is omitted.
 
 
 
+</table>
+
+
+
+<p>To read sound data as an array of frames, there is a set of functions that are parallel
+to the sample-reader functions, but which deal in frames.  I will probably move these to C
+once the dust settles.
+</p>
+
+<table border=0 cellspacing=0 hspace=20>
+
+<!-- copy-frame-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="copyframereader">copy-frame-reader</a> <code>obj</code></td></tr>
+<tr><td width=60><br></td>
+<td>return a copy of <i>obj</i>, a frame-reader. 
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+<!-- free-frame-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="freeframereader">free-frame-reader</a> <code>obj</code></td></tr>
+<tr><td></td><td>release frame-reader <i>obj</i>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+<!-- make-region-frame-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="makeregionframereader">make-region-frame-reader</a> <code>start reg <i>dir</i></code></td></tr>
+<tr><td></td>
+<td>create a frame-reader reading region <i>reg</i>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+<!-- make-frame-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="makeframereader">make-frame-reader</a> <code><i>start snd dir pos</i></code></td></tr>
+<tr><td></td>
+<td>
+create a frame-reader reading <i>snd</i>
+starting at frame <i>start</i> with initial read direction <i>dir</i> 
+(1=forward, -1=backward).  <i>pos</i> is the edit history position to read 
+(it defaults to current position).
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+<!-- next-frame -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="nextframe">next-frame</a> <code>obj</code></td></tr>
+<tr><td></td><td>return next frame (reading forward) read by frame-reader <i>obj</i>.</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+<!-- previous-frame -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="previousframe">previous-frame</a> <code>obj</code></td></tr>
+<tr><td></td><td>return previous frame in stream read by frame-reader <i>obj</i>.</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+<!-- read-frame -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="readframe">read-frame</a> <code>obj</code></td></tr>
+<tr><td></td><td>return next frame (reading in the direction set by <a class=quiet href="#makeframereader">make-frame-reader</a>) from frame-reader <i>obj</i>.</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+<!-- frame-reader-at-end? -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="framereaderatendQ">frame-reader-at-end?</a> <code>obj</code></td></tr>
+<tr><td></td><td>#t if frame-reader <i>obj</i> is at the end of the sound.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+<!-- frame-reader-home -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="framereaderhome">frame-reader-home</a> <code>obj</code></td></tr>
+<tr><td></td><td>return the sound index with frame-reader <i>obj</i>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+<!-- frame-reader-position -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="framereaderposition">frame-reader-position</a> <code>obj</code></td></tr>
+<tr><td></td><td>current (frame-wise) location of frame-reader <i>obj</i>.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+<!-- frame-reader? -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="framereaderQ">frame-reader?</a> <code>obj</code></td></tr>
+<tr><td></td><td>#t if <i>obj</i> is a frame-reader.</td></tr>
+<tr><td colspan=2 height=16></td></tr>
 </table>
 
 

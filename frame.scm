@@ -23,7 +23,7 @@
 ;;; scan-sound-frames map-sound-frames
 
 
-;;; TODO: doc test frame.scm funcs + xrefs in extsnd+quick
+;;; TODO: doc test frame.scm funcs + xrefs in extsnd+quick [examples]
 ;;; TODO: make-track-frame-reader?
 ;;; TODO: (open-sound-file): snd-xref+index [mix.rb snd-test.rb mix.fs]
 ;;; DOC: sound-data as frame array (all chans together) or as vct array (chans separate)
@@ -143,8 +143,6 @@
 		fr)))))
 
 
-;;; doc-test stopped here
-
 (define* (sound->frame pos :optional snd)
   "(sound->frame pos :optional snd) returns a frame containing the contents of the sound snd at position pos"
   (let ((index (or snd (selected-sound) (car (sounds)))))
@@ -178,7 +176,6 @@
 	  (frame-set! fr i (region-sample pos reg i))))))
 
 
-
 (define* (sound->sound-data beg dur :optional snd)
   "(sound->sound-data beg dur :optional snd) returns a sound-data object containing the samples in sound snd starting at position beg for dur frames"
   (let ((index (or snd (selected-sound) (car (sounds)))))
@@ -187,25 +184,32 @@
 	(let* ((chns (chans index))
 	       (sd (make-sound-data chns dur)))
 	  (do ((i 0 (1+ i)))
-	      ((= i chns) sd)
+	      ((= i chns) 
+	       sd)
 	    (vct->sound-data (channel->vct beg dur snd i) sd i))))))
 
 (define* (sound-data->sound sd beg :optional dur snd)
   "(sound-data->sound sd beg :optional dur snd) places the contents of sound-data sd into sound snd starting at position beg for dur frames"
-  (let ((index (or snd (selected-sound) (car (sounds)))))
-    (if (not (sound? index))
-	(throw 'no-such-sound (list "sound->sound-data" snd))
-	(do ((i 0 (1+ i)))
-	    ((= i (chans index)))
-	  (vct->channel (sound-data->vct sd i) beg dur snd i)))))
+  (if (not (sound-data? sd))
+      (throw 'wrong-type-arg (list "sound-data->sound" sd))
+      (let ((index (or snd (selected-sound) (car (sounds)))))
+	(if (not (sound? index))
+	    (throw 'no-such-sound (list "sound->sound-data" snd))
+	    (let ((ndur (or dur (sound-data-length sd))))
+	      (do ((i 0 (1+ i)))
+		  ((= i (chans index)) 
+		   sd)
+		(vct->channel (sound-data->vct sd i) beg ndur snd i)))))))
 
 
 
+
+;;; doc-test stopped here
 
 (define +frame-reader-tag+ 0)
-(define +frame-snd+ 1)
-(define +frame-channels+ 2)
-(define +frame-frame+ 3)
+(define +frame-reader-snd+ 1)
+(define +frame-reader-channels+ 2)
+(define +frame-reader-frame+ 3)
 (define +frame-reader0+ 4)
 
 (define* (make-frame-reader :optional (beg 0) snd dir edpos)
@@ -217,9 +221,9 @@
 	(let* ((chns (if (sound? index) (chans index) (mus-sound-chans index)))
 	       (fr (make-vector (+ chns +frame-reader0+))))
 	  (vector-set! fr +frame-reader-tag+ 'frame-reader)
-	  (vector-set! fr +frame-reader-snd+ snd)
+	  (vector-set! fr +frame-reader-snd+ index)
 	  (vector-set! fr +frame-reader-channels+ chns)
-	  (vector-set! fr +frame-frame+ (make-frame chns))
+	  (vector-set! fr +frame-reader-frame+ (make-frame chns))
 	  (do ((i 0 (1+ i)))
 	      ((= i chns))
 	    (vector-set! fr (+ i +frame-reader0+) (make-sample-reader beg snd i dir edpos)))
@@ -230,15 +234,15 @@
   (and (vector? obj)
        (eq? (vector-ref obj +frame-reader-tag+) 'frame-reader)))
 
-(define (frame-reader-at-end fr)
-  "(frame-reader-at-end fr) -> #t if the sample-readers in frame-reader fr have reached the end of their respective channels"
+(define (frame-reader-at-end? fr)
+  "(frame-reader-at-end? fr) -> #t if the sample-readers in frame-reader fr have reached the end of their respective channels"
   (if (frame-reader? fr)
       (let ((at-end #t))
 	(do ((i 0 (1+ i)))
 	    ((or (not at-end) 
 		 (= i (vector-ref fr +frame-reader-channels+)))
 	     at-end)
-	  (set! at-end (sample-reader-at-end (vector-ref fr (+ i +frame-reader0+))))))
+	  (set! at-end (sample-reader-at-end? (vector-ref fr (+ i +frame-reader0+))))))
       (throw 'wrong-type-arg (list "frame-reader-at-end" fr))))
 
 (define (frame-reader-position fr)
@@ -277,25 +281,25 @@
 
 (define (next-frame fr)
   "(next-frame fr) returns the next frame as read by frame-reader fr"
-  (let ((vals (vector-ref fr +frame-frame+)))
+  (let ((vals (vector-ref fr +frame-reader-frame+)))
     (do ((i 0 (1+ i)))
-	((= i (vector-ref fr +frame-channels+)))
+	((= i (vector-ref fr +frame-reader-channels+)))
       (frame-set! vals i (next-sample (vector-ref fr (+ i +frame-reader0+)))))
     vals))
 
 (define (previous-frame fr)
   "(previous-frame fr) returns the previous frame as read by frame-reader fr"
-  (let ((vals (vector-ref fr +frame-frame+)))
+  (let ((vals (vector-ref fr +frame-reader-frame+)))
     (do ((i 0 (1+ i)))
-	((= i (vector-ref fr +frame-channels+)))
+	((= i (vector-ref fr +frame-reader-channels+)))
       (frame-set! vals i (previous-sample (vector-ref fr (+ i +frame-reader0+)))))
     vals))
 
 (define (read-frame fr)
   "(read-frame fr) returns the next frame read by frame-reader fr taking its current read direction into account"
-  (let ((vals (vector-ref fr +frame-frame+)))
+  (let ((vals (vector-ref fr +frame-reader-frame+)))
     (do ((i 0 (1+ i)))
-	((= i (vector-ref fr +frame-channels+)))
+	((= i (vector-ref fr +frame-reader-channels+)))
       (frame-set! vals i (read-sample (vector-ref fr (+ i +frame-reader0+)))))
     vals))
 
@@ -307,9 +311,9 @@
       (let* ((chns (region-chans index))
 	     (fr (make-vector (+ chns +frame-reader0+))))
 	(vector-set! fr +frame-reader-tag+ 'frame-reader)
-	(vector-set! fr +frame-reader-snd+ snd)
+	(vector-set! fr +frame-reader-snd+ reg)
 	(vector-set! fr +frame-reader-channels+ chns)
-	(vector-set! fr +frame-frame+ (make-frame chns))
+	(vector-set! fr +frame-reader-frame+ (make-frame chns))
 	(do ((i 0 (1+ i)))
 	    ((= i chns))
 	  (vector-set! fr (+ i +frame-reader0+) (make-region-sample-reader beg reg i dir)))

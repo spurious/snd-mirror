@@ -7,31 +7,31 @@
 ;;;  test 4: sndlib                             [2249]
 ;;;  test 5: simple overall checks              [4665]
 ;;;  test 6: vcts                               [12174]
-;;;  test 7: colors                             [12489]
-;;;  test 8: clm                                [12995]
-;;;  test 9: mix                                [22378]
-;;;  test 10: marks                             [26026]
-;;;  test 11: dialogs                           [26914]
-;;;  test 12: extensions                        [27208]
-;;;  test 13: menus, edit lists, hooks, etc     [27662]
-;;;  test 14: all together now                  [29211]
-;;;  test 15: chan-local vars                   [30286]
-;;;  test 16: regularized funcs                 [31616]
-;;;  test 17: dialogs and graphics              [36032]
-;;;  test 18: enved                             [36121]
-;;;  test 19: save and restore                  [36141]
-;;;  test 20: transforms                        [37978]
-;;;  test 21: new stuff                         [39811]
-;;;  test 22: run                               [40813]
-;;;  test 23: with-sound                        [46395]
-;;;  test 24: user-interface                    [48873]
-;;;  test 25: X/Xt/Xm                           [52489]
-;;;  test 26: Gtk                               [57077]
-;;;  test 27: GL                                [61194]
-;;;  test 28: errors                            [61318]
-;;;  test 29: Common Music                      [63430]
-;;;  test all done                              [63480]
-;;;  test the end                               [63673]
+;;;  test 7: colors                             [12449]
+;;;  test 8: clm                                [12955]
+;;;  test 9: mix                                [22339]
+;;;  test 10: marks                             [25987]
+;;;  test 11: dialogs                           [26875]
+;;;  test 12: extensions                        [27169]
+;;;  test 13: menus, edit lists, hooks, etc     [27623]
+;;;  test 14: all together now                  [29172]
+;;;  test 15: chan-local vars                   [30247]
+;;;  test 16: regularized funcs                 [31577]
+;;;  test 17: dialogs and graphics              [35993]
+;;;  test 18: enved                             [36082]
+;;;  test 19: save and restore                  [36102]
+;;;  test 20: transforms                        [37939]
+;;;  test 21: new stuff                         [39772]
+;;;  test 22: run                               [40982]
+;;;  test 23: with-sound                        [46564]
+;;;  test 24: user-interface                    [49042]
+;;;  test 25: X/Xt/Xm                           [52658]
+;;;  test 26: Gtk                               [57248]
+;;;  test 27: GL                                [61365]
+;;;  test 28: errors                            [61489]
+;;;  test 29: Common Music                      [63593]
+;;;  test all done                              [63643]
+;;;  test the end                               [63836]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -40883,7 +40883,117 @@ EDITS: 1
 	  (let ((tag (catch #t (lambda () (frame->sound-data 32 sd1 0)) (lambda args (car args)))))
 	    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";frame->sound-data bad frame arg: ~A" tag)))))
 
+      (let ((index (new-sound "test.snd" mus-next mus-bfloat 22050 2 "frame->sound test" 100)))
+	(set! (sample 4 index 0) 0.5)
+	(set! (sample 4 index 1) 0.25)
+	(set! (sample 6 index 1) 1.0)
+	(let ((fr1 (sound->frame 1))
+	      (fr4 (sound->frame 4 index))
+	      (fr6 (sound->frame 6 index)))
+	  (if (not (equal? fr1 (make-frame 2 0.0 0.0))) (snd-display ";sound->frame 1: ~A" fr1))
+	  (if (not (equal? fr4 (make-frame 2 0.5 0.25))) (snd-display ";sound->frame 4: ~A" fr4))
+	  (if (not (equal? fr6 (make-frame 2 0.0 1.0))) (snd-display ";sound->frame 6: ~A" fr6))
+	  (frame->sound fr4 8 index)
+	  (frame->sound fr1 4)
+	  (frame->sound fr6 0 index)
+	  (let ((fr0 (sound->frame 0))
+		(fr41 (sound->frame 4 index))
+		(fr8 (sound->frame 8 index)))
+	    (if (not (equal? fr0 fr6)) (snd-display ";sound->frame 0: ~A" fr0))
+	    (if (not (equal? fr41 fr1)) (snd-display ";sound->frame 41: ~A" fr41))
+	    (if (not (equal? fr8 fr4)) (snd-display ";sound->frame 8: ~A" fr8))))
+	(set! (sample 40 index 0) 0.5)
+	(set! (sample 40 index 1) 0.3)
+	(set! (sample 41 index 0) 0.7)
+	(let ((reg (make-region 40 50 index #t)))
+	  (let ((fr0 (region->frame 0 reg))
+		(fr1 (region->frame 1 reg))
+		(fr4 (region->frame 4 reg)))
+	    (if (not (equal? fr0 (make-frame 2 0.5 0.3))) (snd-display ";region->frame 0: ~A" fr0))
+	    (if (not (equal? fr1 (make-frame 2 0.7 0.0))) (snd-display ";region->frame 1: ~A" fr1))
+	    (if (not (equal? fr4 (make-frame 2 0.0 0.0))) (snd-display ";region->frame 4: ~A" fr4))))      
+	(close-sound index))
+      
+      (let ((index (new-sound "test.snd" mus-next mus-bfloat 22050 1 "frame->sound test" 100)))
+	(set! (sample 4 index 0) 0.5)
+	(let ((fr1 (sound->frame 1))
+	      (fr4 (sound->frame 4 index)))
+	  (if (not (equal? fr1 (make-frame 1 0.0))) (snd-display ";sound->frame 1 1: ~A" fr1))
+	  (if (not (equal? fr4 (make-frame 1 0.5))) (snd-display ";sound->frame 1 4: ~A" fr4))
+	  (frame->sound (make-frame 4 .1 .2 .3 .4) 8 index)
+	  (let ((fr8 (sound->frame 8 index)))
+	    (if (not (equal? fr8 (make-frame 1 .1))) (snd-display ";sound->frame 1 8: ~A" fr8))))
+	(close-sound index))
 
+      (let ((index (new-sound "test.snd" mus-next mus-bfloat 22050 1 "frame->sound test" 10)))
+	(set! (sample 4 index 0) 0.5)
+	(let ((sd1 (sound->sound-data 0 10 index))
+	      (sd2 (sound->sound-data 10 2)))
+	  (if (not (equal? sd2 (make-sound-data 1 2))) (snd-display ";sound->sound-data 2: ~A" sd2))
+	  (if (not (vequal (sound-data->vct sd1 0) (vct 0 0 0 0 0.5 0 0 0 0 0)))
+	      (snd-display ";sound->sound-data 10: ~A" sd1))
+	  (sound-data-set! sd1 0 0 0.7)
+	  (sound-data->sound sd1 0 10 index)
+	  (if (not (vequal (channel->vct 0 10 index 0) (vct 0.7 0 0 0 0.5 0 0 0 0 0)))
+	      (snd-display ";sound-data->sound 1: ~A" sd1))
+	  (let ((tag (catch #t (lambda () (sound-data->sound 32 0)) (lambda args (car args)))))
+	    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";sound-data->sound bad sound-data arg: ~A" tag)))
+	  (let ((tag (catch #t (lambda () (sound-data->sound sd1 0 10 -1)) (lambda args (car args)))))
+	    (if (not (eq? tag 'no-such-sound)) (snd-display ";sound-data->sound bad sound arg: ~A" tag)))
+	  (close-sound index)))
+      
+      (let ((index (new-sound "test.snd" mus-next mus-bfloat 22050 4 "frame->sound test" 10)))
+	(set! (sample 4 index 0) 0.5)
+	(set! (sample 4 index 1) 0.4)
+	(set! (sample 4 index 2) 0.3)
+	(set! (sample 4 index 3) 0.2)
+	(let ((sd1 (sound->sound-data 0 10 index))
+	      (sd2 (sound->sound-data 10 2)))
+	  (if (not (equal? sd2 (make-sound-data 4 2))) (snd-display ";sound->sound-data 4 2: ~A" sd2))
+	  (if (not (vequal (sound-data->vct sd1 0) (vct 0 0 0 0 0.5 0 0 0 0 0)))
+	      (snd-display ";sound->sound-data 4a 10: ~A" (sound-data->vct sd1 0)))
+	  (if (not (vequal (sound-data->vct sd1 1) (vct 0 0 0 0 0.4 0 0 0 0 0)))
+	      (snd-display ";sound->sound-data 4b 10: ~A" (sound-data->vct sd1 1)))
+	  (if (not (vequal (sound-data->vct sd1 2) (vct 0 0 0 0 0.3 0 0 0 0 0)))
+	      (snd-display ";sound->sound-data 4c 10: ~A" (sound-data->vct sd1 2)))
+	  (if (not (vequal (sound-data->vct sd1 3) (vct 0 0 0 0 0.2 0 0 0 0 0)))
+	      (snd-display ";sound->sound-data 4d 10: ~A" (sound-data->vct sd1 3)))
+	  (sound-data-set! sd1 0 0 0.7)
+	  (sound-data-set! sd1 1 0 0.8)
+	  (sound-data-set! sd1 2 0 0.9)
+	  (sound-data-set! sd1 3 0 0.6)
+	  (sound-data->sound sd1 0)
+	  (if (not (vequal (channel->vct 0 10 index 0) (vct 0.7 0 0 0 0.5 0 0 0 0 0)))
+	      (snd-display ";sound-data->sound 1 4a: ~A" (sound-data->vct sd1 0)))
+	  (if (not (vequal (channel->vct 0 10 index 1) (vct 0.8 0 0 0 0.4 0 0 0 0 0)))
+	      (snd-display ";sound-data->sound 1 4b: ~A" (sound-data->vct sd1 1)))
+	  (if (not (vequal (channel->vct 0 10 index 2) (vct 0.9 0 0 0 0.3 0 0 0 0 0)))
+	      (snd-display ";sound-data->sound 1 4c: ~A" (sound-data->vct sd1 2)))
+	  (if (not (vequal (channel->vct 0 10 index 3) (vct 0.6 0 0 0 0.2 0 0 0 0 0)))
+	      (snd-display ";sound-data->sound 1 4d: ~A" (sound-data->vct sd1 3)))
+	  (close-sound index)))
+      
+      (let ((index (open-sound "oboe.snd")))
+	(let ((fd (make-frame-reader 10000)))
+	  (if (not (frame-reader? fd)) (snd-display ";frame-reader?: ~A" fd))
+	  (if (frame-reader-at-end? fd) (snd-display ";frame-reader-at-end?: ~A" fd))
+	  (if (not (= (frame-reader-position fd) 10000)) 
+	      (snd-display ";frame-reader: position: ~A ~A" fd (frame-reader-position fd)))
+	  (if (not (= (frame-reader-home fd) index)) 
+	      (snd-display ";frame-reader: home: ~A ~A ~A" fd (frame-reader-home fd) index))
+	  (let ((fr0 (frame-copy (read-frame fd)))
+		(fr1 (frame-copy (next-frame fd)))
+		(fr2 (frame-copy (previous-frame fd))))
+	    (if (not (equal? fr0 (sound->frame 10000 index)))
+		(snd-display ";frame reader 10000: ~A ~A" fr0 (sound->frame 10000 index)))
+	    (if (not (equal? fr1 (sound->frame 10001 index)))
+		(snd-display ";frame reader 10001: ~A ~A" fr1 (sound->frame 10001 index)))
+	    (if (not (equal? fr2 (sound->frame 10001 index)))
+		(snd-display ";frame reader 10001 prev: ~A ~A" fr0 (sound->frame 10001 index))))
+	  (free-frame-reader fd))
+	(close-sound index))
+
+      
       
       (run-hook after-test-hook 21)
       ))
