@@ -21,14 +21,14 @@
 ;;; insert-sound-data insert-frame insert-vct
 ;;; mix-sound-data mix-frame
 ;;; scan-sound-frames map-sound-frames
+;;;
+;;; sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ sound-data-copy sound-data-reverse
 
 
-;;; TODO: test frame.scm funcs [doc examples]
+;;; TODO: test frame.scm funcs [doc examples, doc sound-data stuff?]
 ;;; PERHAPS: make-track-frame-reader?
 ;;; DOC: sound-data as frame array (all chans together) or as vct array (chans separate)
 ;;; TODO: check all other code for frame-reader et al possibilities
-
-;;; PERHAPS: rest of sound-data funcs like vct: multiply add offset subtract move subseq to/from vector|list reverse to-string [copy?] *+
 
 (provide 'snd-frame.scm)
 
@@ -182,11 +182,12 @@
     (if (not (sound? index))
 	(throw 'no-such-sound (list "sound->sound-data" snd))
 	(let* ((chns (chans index))
-	       (sd (make-sound-data chns dur)))
+	       (len (or dur (max 1 (- (frames index) beg))))
+	       (sd (make-sound-data chns len)))
 	  (do ((i 0 (1+ i)))
 	      ((= i chns) 
 	       sd)
-	    (vct->sound-data (channel->vct beg dur snd i) sd i))))))
+	    (vct->sound-data (channel->vct beg len snd i) sd i))))))
 
 (define* (sound-data->sound sd beg :optional dur snd)
   "(sound-data->sound sd beg :optional dur snd) places the contents of sound-data sd into sound snd starting at position beg for dur frames"
@@ -317,8 +318,6 @@
 	fr)))
 
 
-;;; test stopped here
-
 (define (file->vct file)
   "(file->vct file) returns a vct with file's data (channel 0)"
   (let* ((len (mus-sound-frames file))
@@ -332,10 +331,12 @@
 
 (define* (vct->file v file :optional (srate 22050) (comment ""))
   "(vct->file v file :optional srate comment) writes the data in vct v to the specified sound file"
-  (let ((fd (mus-sound-open-output file srate 1 mus-lfloat mus-riff comment)))
-    (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
-    (mus-sound-close-output fd (* 4 (vct-length v)))
-    file))
+  (if (vct? v)
+      (let ((fd (mus-sound-open-output file srate 1 mus-lfloat mus-riff comment)))
+	(mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
+	(mus-sound-close-output fd (* 4 (vct-length v)))
+	file)
+      (throw 'wrong-type-arg (list "file->vct" v))))
 
 
 (define (file->sound-data file)
@@ -346,34 +347,40 @@
 	 (data (make-sound-data chns len)))
     (do ((i 0 (1+ i)))
 	((= i len))
-      (frame->sound-data data i (read-frame reader)))
+      (frame->sound-data (read-frame reader) data i))
     (free-frame-reader reader)
     data))
 
 (define* (sound-data->file sd file :optional (srate 22050) (comment ""))
   "(sound-data->file sd file :optional srate comment) writes the contents of sound-data sd to file"
-  (let ((fd (mus-sound-open-output file srate (sound-data-chans sd) mus-lfloat mus-riff comment)))
-    (mus-sound-write fd 0 (1- (sound-data-length sd)) (sound-data-chans sd) sd)
-    (mus-sound-close-output fd (* 4 (sound-data-length sd) (sound-data-chans sd)))
-    file))
+  (if (sound-data? sd)
+      (let ((fd (mus-sound-open-output file srate (sound-data-chans sd) mus-lfloat mus-riff comment)))
+	(mus-sound-write fd 0 (1- (sound-data-length sd)) (sound-data-chans sd) sd)
+	(mus-sound-close-output fd (* 4 (sound-data-length sd) (sound-data-chans sd)))
+	file)
+      (throw 'wrong-type-arg (list "sound-data->file" sd))))
 
+
+;;; test stopped here
 
 (define (region->sound-data reg)
   "(region->sound-data reg) returns a sound-data object with the contents of region reg"
-  (let* ((reader (make-region-frame-reader 0 reg))
-	 (len (region-length reg))
-	 (chns (region-chans reg))
-	 (data (make-sound-data chns len)))
-    (do ((i 0 (1+ i)))
-	((= i len))
-      (frame->sound-data data i (read-frame reader)))
-    (free-frame-reader reader)
-    data))
+  (if (region? reg)
+      (let* ((reader (make-region-frame-reader 0 reg))
+	     (len (region-length reg))
+	     (chns (region-chans reg))
+	     (data (make-sound-data chns len)))
+	(do ((i 0 (1+ i)))
+	    ((= i len))
+	  (frame->sound-data data i (read-frame reader)))
+	(free-frame-reader reader)
+	data)
+      (throw 'no-such-region (list "region->sound-data" reg))))
 
 (define (track->sound-data trk)
   "(track->sound-data trk) returns a sound-data object with the contents of track trk"
   (if (not (track? trk))
-      (throw 'wrong-type-arg (list "track->sound-data" trk))
+      (throw 'no-such-track (list "track->sound-data" trk))
       (let* ((chns (track-chans trk))
 	     (len (track-frames trk))
 	     (sd (make-sound-data chns len)))
@@ -488,4 +495,80 @@
 	(throw 'no-such-sound (list "map-sound-frames" snd)))))
 
 
+
+;;; PERHAPS: sound-data funcs to sndlib2xen
+
+(define (sound-data-copy sd)
+  (let* ((chns (sound-data-chans sd))
+	 (len (sound-data-length sd))
+	 (nsd (make-sound-data chns len)))
+    (do ((chn 0 (1+ chn)))
+	((= chn chns))
+      (do ((i 0 (1+ i)))
+	  ((= i len))
+	(sound-data-set! nsd chn i (sound-data-ref sd chn i))))
+    nsd))
+
+(define (sound-data-add! sd1 sd2)
+  (let* ((chns (min (sound-data-chans sd1) (sound-data-chans sd2)))
+	 (len (min (sound-data-length sd1) (sound-data-length sd2))))
+    (do ((chn 0 (1+ chn)))
+	((= chn chns))
+      (do ((i 0 (1+ i)))
+	  ((= i len))
+	(sound-data-set! sd1 chn i (+ (sound-data-ref sd1 chn i) (sound-data-ref sd2 chn i)))))
+    sd1))
+
+(define (sound-data-offset! sd off)
+  (if (not (= off 0.0))
+      (let* ((chns (sound-data-chans sd))
+	     (len (sound-data-length sd)))
+	(do ((chn 0 (1+ chn)))
+	    ((= chn chns))
+	  (do ((i 0 (1+ i)))
+	      ((= i len))
+	    (sound-data-set! sd chn i (+ (sound-data-ref sd chn i) off))))))
+  sd)
+
+(define (sound-data-multiply! sd1 sd2)
+  (let* ((chns (min (sound-data-chans sd1) (sound-data-chans sd2)))
+	 (len (min (sound-data-length sd1) (sound-data-length sd2))))
+    (do ((chn 0 (1+ chn)))
+	((= chn chns))
+      (do ((i 0 (1+ i)))
+	  ((= i len))
+	(sound-data-set! sd1 chn i (* (sound-data-ref sd1 chn i) (sound-data-ref sd2 chn i)))))
+    sd1))
+
+(define (sound-data* val1 val2)
+  (if (sound-data? val1)
+      (if (sound-data? val2)
+	  (sound-data-multiply! val1 val2)
+	  (sound-data-scale! val1 val2))
+      (if (sound-data? val2)
+	  (sound-data-scale! val2 val1)
+	  (* val1 val2))))
+
+(define (sound-data+ val1 val2)
+  (if (sound-data? val1)
+      (if (sound-data? val2)
+	  (sound-data-add! val1 val2)
+	  (sound-data-offset! val1 val2))
+      (if (sound-data? val2)
+	  (sound-data-offset! val2 val1)
+	  (+ val1 val2))))
+
+(define (sound-data-reverse sd)
+  (let* ((chns (sound-data-chans sd))
+	 (len (sound-data-length sd))
+	 (nsd (make-sound-data chns len)))
+    (do ((chn 0 (1+ chn)))
+	((= chn chns))
+      (do ((i 0 (1+ i))
+	   (j (1- len) (1- j)))
+	  ((i >= j))
+	(let ((temp (sound-data-ref sd i)))
+	  (sound-data-set! nsd chn i (sound-data-ref sd chn j))
+	  (sound-data-set! nsd chn j temp))))
+    nsd))
 

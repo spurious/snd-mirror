@@ -22,16 +22,16 @@
 ;;;  test 19: save and restore                  [36102]
 ;;;  test 20: transforms                        [37939]
 ;;;  test 21: new stuff                         [39772]
-;;;  test 22: run                               [40982]
-;;;  test 23: with-sound                        [46564]
-;;;  test 24: user-interface                    [49042]
-;;;  test 25: X/Xt/Xm                           [52658]
-;;;  test 26: Gtk                               [57248]
-;;;  test 27: GL                                [61365]
-;;;  test 28: errors                            [61489]
-;;;  test 29: Common Music                      [63593]
-;;;  test all done                              [63643]
-;;;  test the end                               [63836]
+;;;  test 22: run                               [41074]
+;;;  test 23: with-sound                        [46656]
+;;;  test 24: user-interface                    [49134]
+;;;  test 25: X/Xt/Xm                           [52750]
+;;;  test 26: Gtk                               [57340]
+;;;  test 27: GL                                [61457]
+;;;  test 28: errors                            [61581]
+;;;  test 29: Common Music                      [63685]
+;;;  test all done                              [63735]
+;;;  test the end                               [63928]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -41066,6 +41066,56 @@ EDITS: 1
 	 (list "oboe.snd" "4.aiff" "2.snd" "2a.snd")) ; 2a=eof
 	(set! (selection-creates-region) old-create))
 
+      (let ((ind1 (open-sound "1a.snd"))
+	    (data1 (file->vct "1a.snd"))
+	    (ind2 (open-sound "2a.snd"))
+	    (data2 (file->vct "2a.snd")))
+	(if (not (equal? data1 (channel->vct 0 #f ind1 0)))
+	    (snd-display ";file->vct 1a.snd"))
+	(if (not (equal? data2 (channel->vct 0 #f ind2 0)))
+	    (snd-display ";file->vct 2a.snd"))
+	(vct->file data1 "tmp.snd")
+	(let ((ind3 (open-sound "tmp.snd")))
+	  (if (not (equal? data1 (channel->vct 0 #f ind3 0)))
+	      (snd-display ";vct->file 1a"))
+	  (close-sound ind3))
+	(mus-sound-forget "tmp.snd")
+	(vct->file data2 "tmp.snd" 44100 "this is a comment")
+	(let ((ind3 (open-sound "tmp.snd")))
+	  (if (not (string=? (comment ind3) "this is a comment"))
+	      (snd-display ";vct->file comment: ~A" (comment ind3)))
+	  (if (not (= (srate ind3) 44100))
+	      (snd-display ";vct->file srate: ~A" (srate ind3)))
+	  (close-sound ind3))
+	(mus-sound-forget "tmp.snd")
+	(let ((tag (catch #t (lambda () (vct->file 32 "tmp.snd")) (lambda args (car args)))))
+	  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";vct->file bad arg: ~A" tag)))
+	
+	(let ((sdata1 (file->sound-data "1a.snd"))
+	      (sdata2 (file->sound-data "2a.snd")))
+	  (if (not (equal? sdata1 (sound->sound-data 0 #f ind1)))
+	      (snd-display ";sfile->sound-data 1a.snd"))
+	  (if (not (equal? sdata2 (sound->sound-data 0 #f ind2)))
+	      (snd-display ";file->sound-data 2a.snd"))
+	  (sound-data->file sdata1 "tmp.snd")
+	  (let ((ind3 (open-sound "tmp.snd")))
+	    (if (not (equal? sdata1 (sound->sound-data 0 #f ind3)))
+		(snd-display ";sound-data->file 1a"))
+	    (close-sound ind3))
+	  (mus-sound-forget "tmp.snd")
+	  (sound-data->file sdata2 "tmp.snd" 44100 "another comment")
+	  (let ((ind3 (open-sound "tmp.snd")))
+	    (if (not (string=? (comment ind3) "another comment"))
+		(snd-display ";sound-data->file comment: ~A" (comment ind3)))
+	    (if (not (= (srate ind3) 44100))
+		(snd-display ";sound-data->file srate: ~A" (srate ind3)))
+	    (close-sound ind3))
+	  (mus-sound-forget "tmp.snd")
+	  (let ((tag (catch #t (lambda () (sound-data->file 32 "tmp.snd")) (lambda args (car args)))))
+	    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";sound-data->file bad arg: ~A" tag))))
+	(close-sound ind1)
+	(close-sound ind2))
+      
       
       (run-hook after-test-hook 21)
       ))
