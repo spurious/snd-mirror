@@ -1187,7 +1187,7 @@ variable *clm-locsig-type*.
 			       (<a class=quiet href="extsnd.html#nextsample">next-sample</a> sf)
 			       (<a class=quiet href="extsnd.html#previoussample">previous-sample</a> sf))))))
       (<a class=quiet href="extsnd.html#freesamplereader">free-sample-reader</a> sf)
-      (<a class=quiet href="extsnd.html#vct_to_channel">vct-&gt;channel</a> out-data 0 len))))
+      (<a class=quiet href="extsnd.html#vcttochannel">vct-&gt;channel</a> out-data 0 len))))
 
 ; (fp 1.0 .3 20)
 
@@ -1203,7 +1203,7 @@ variable *clm-locsig-type*.
 	   (sr (<a class=quiet href="clm.html#make-src">make-src</a> :srate rate))
 	   (vsize 1024)
 	   (vbeg 0)
-	   (v (<a class=quiet href="extsnd.html#channel_to_vct">channel-&gt;vct</a> 0 vsize))
+	   (v (<a class=quiet href="extsnd.html#channeltovct">channel-&gt;vct</a> 0 vsize))
 	   (inctr 0))
       (lambda (inval)
         (<a class=quiet href="clm.html#src">src</a> sr 0.0
@@ -1216,7 +1216,7 @@ variable *clm-locsig-type*.
 		      (begin
 			(set! vbeg (+ vbeg inctr))
 			(set! inctr 0)
-			(<a class=quiet href="extsnd.html#channel_to_vct">channel-&gt;vct</a> vbeg vsize 0 0 v)))
+			(<a class=quiet href="extsnd.html#channeltovct">channel-&gt;vct</a> vbeg vsize 0 0 v)))
 		  val)))))))))
 
 </pre>
@@ -2259,9 +2259,9 @@ data directly to the DAC:
      (ladspa-activate descriptor handle)
      (do ((i 0 (+ i block-size)))
 	 ((&gt;= i len))
-       (<a class=quiet href="extsnd.html#vctsubseq">vct-subseq</a> (<a class=quiet href="extsnd.html#channel_to_vct">channel-&gt;vct</a> i block-size) 0 block-size in-block)
+       (<a class=quiet href="extsnd.html#vctsubseq">vct-subseq</a> (<a class=quiet href="extsnd.html#channeltovct">channel-&gt;vct</a> i block-size) 0 block-size in-block)
        (ladspa-run descriptor handle block-size)
-       (<a class=quiet href="extsnd.html#vct2sounddata">vct-&gt;sound-data</a> out-block data 0)
+       (<a class=quiet href="extsnd.html#vcttosounddata">vct-&gt;sound-data</a> out-block data 0)
        (<a class=quiet href="extsnd.html#musaudiowrite">mus-audio-write</a> audio-port data block-size)))
    (lambda ()
      (ladspa-deactivate descriptor handle)
@@ -2426,7 +2426,7 @@ program:
 </pre></td></tr></table>
 <br>
 <p>See snd-gl.scm.  To turn these graphs into Postscript files, include the --with-gl2ps switch
-at configuration time, and use the <a href="extsnd.html#gl_graph_to_ps">gl-graph-&gt;ps</a> function.
+at configuration time, and use the <a href="extsnd.html#glgraphtops">gl-graph-&gt;ps</a> function.
 </p>
 <br>
 <table border hspace=20>

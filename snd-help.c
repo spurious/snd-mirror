@@ -2851,18 +2851,18 @@ void find_dialog_help(void)
   #if HAVE_FORTH
     #define find_example "lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc"
     #define zero_plus "zero+"
-    #define closure_example "<TODO: Forth closure example>"
+    #define closure_example ": zero+ ( -- prc; n self -- val )\n  lambda-create 0.0 ( lastn ) , latestxt 1 make-proc\n does> { n self -- val }\n  self @ ( lastn ) f0<  n f0>= &&  -1 && { rtn }\n  n self ! ( lastn = n )\n  rtn\n;" 
   #endif
 
   snd_help_with_xrefs("Global Find",
 
 #if HAVE_EXTENSION_LANGUAGE
 "This search travels through all the current channels in parallel until a match is found.  The find \
-expression is a function of one argument,  the current sample value.  It is evaluated on each sample, and should return " PROC_TRUE " when the \
-search is satisified.  For example, \n\n  " find_example "\n\nlooks for the next sample that is greater than .1. \
+expression is a function of one argument, the current sample value.  It is evaluated on each sample, and should return " PROC_TRUE " when the \
+search is satisfied.  For example, \n\n  " find_example "\n\nlooks for the next sample that is greater than .1. \
 If you need to compare the current sample with a previous one, use a 'closure' as in " zero_plus " in \
 examp." XEN_FILE_EXTENSION ": \n\n" closure_example "\n\nThere are several other \
-seach function examples in that file that search for peaks, clicks, or a particular pitch.",
+search function examples in that file that search for peaks, clicks, or a particular pitch.",
 #else
 "This search mechanism is built on the extension language, which isn't available in this version of Snd.",
 #endif

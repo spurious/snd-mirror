@@ -23,8 +23,6 @@
    (lambda (val) 1.0)))
 
 
-;;; TODO: sample->sound-data rb/fs changes
-
 (define* (samples->sound-data :optional (beg 0) (num #f) (snd #f) (chn #f) (obj #f) (pos #f) (sd-chan 0))
   (vct->sound-data 
    (channel->vct beg num snd chn pos) 

@@ -6840,6 +6840,8 @@ off_t current_location(snd_fd *sf)
   return(READER_GLOBAL_POSITION(sf) - READER_LOCAL_POSITION(sf) + sf->loc);
 }
 
+enum {SAMPLE_READER, REGION_READER};
+
 static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read_direction_t direction, int edit_position, int bufsize)
 {
   snd_fd *sf;
@@ -6879,6 +6881,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   sf->protect2 = NOT_A_GC_LOC;
   sf->protect3 = NOT_A_GC_LOC;
   sf->region = INVALID_REGION;
+  sf->type = SAMPLE_READER;
   sf->initial_samp = samp;
   sf->cp = cp;
   sf->fscaler = MUS_FIX_TO_FLOAT;
@@ -7837,7 +7840,7 @@ char *sf_to_string(snd_fd *fd)
 	{
 	  if ((cp) && (cp->sound) && (cp->active) && (!(fd->at_eof)))
 	    {
-	      if (fd->region == INVALID_REGION)
+	      if (fd->type == SAMPLE_READER)
 		{
 		  name = cp->sound->short_filename;
 		  if (name == NULL)
@@ -7990,9 +7993,10 @@ static XEN g_sample_reader_position(XEN obj)
     {
       snd_fd *fd = NULL;
       fd = TO_SAMPLE_READER(obj);
+      if (fd->at_eof) return(XEN_ZERO); /* -1? frames? */
       if ((fd->cp) && (fd->cp->active) && (fd->cp->sound))
 	{
-	  if (fd->region == INVALID_REGION)
+	  if (fd->type == SAMPLE_READER)
 	    return(C_TO_XEN_OFF_T(current_location(fd)));
 	  return(C_TO_XEN_OFF_T(region_current_location(fd)));
 	}
@@ -8015,7 +8019,7 @@ if 'obj' is a mix-sample-reader, the id of underlying mix, or if a track-sample-
       fd = TO_SAMPLE_READER(obj);
       if ((fd->cp) && (fd->cp->active) && (fd->cp->sound))
 	{
-	  if (fd->region == INVALID_REGION)
+	  if (fd->type == SAMPLE_READER)
 	    return(XEN_LIST_2(C_TO_XEN_INT(fd->cp->sound->index),
 			      C_TO_XEN_INT(fd->cp->chan)));
 	  return(XEN_LIST_2(C_TO_XEN_INT(fd->region),
@@ -8131,6 +8135,7 @@ return a reader ready to access region's channel chn data starting at start-samp
       fd->edit_ctr = -2 - reg_n; /* can't use fd->cp because deferred case is pointer to original (not copied) data */
                                  /* has to be less than -1 because that is the "delete all readers" sign on chan close */
       fd->region = reg_n;
+      fd->type = REGION_READER;
       list_reader(fd);
       XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
     }
@@ -8144,7 +8149,7 @@ static XEN g_sample_reader_p(XEN obj)
     {
       snd_fd *fd;
       fd = TO_SAMPLE_READER(obj);
-      return(C_TO_XEN_BOOLEAN(fd->region == INVALID_REGION));
+      return(C_TO_XEN_BOOLEAN(fd->type == SAMPLE_READER));
     }
   return(XEN_FALSE);
 }
@@ -8156,7 +8161,7 @@ static XEN g_region_sample_reader_p(XEN obj)
     {
       snd_fd *fd;
       fd = TO_SAMPLE_READER(obj);
-      return(C_TO_XEN_BOOLEAN(fd->region != INVALID_REGION));
+      return(C_TO_XEN_BOOLEAN(fd->type == REGION_READER));
     }
   return(XEN_FALSE);
 }
@@ -8171,7 +8176,7 @@ static XEN g_copy_sample_reader(XEN obj)
       fd = TO_SAMPLE_READER(obj);
       if ((fd->cp) && (fd->cp->active) && (fd->cp->sound))
 	{
-	  if (fd->region == INVALID_REGION)
+	  if (fd->type == SAMPLE_READER)
 	    return(g_make_sample_reader(C_TO_XEN_OFF_T(current_location(fd)),
 					C_TO_XEN_INT(fd->cp->sound->index),
 					C_TO_XEN_INT(fd->cp->chan),

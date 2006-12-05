@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Wed Nov 15 04:21:07 CET 2006
+\ Changed: Sun Dec 03 02:46:03 CET 2006
 
 \ Commentary:
 \
@@ -199,9 +199,9 @@ starting at START (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan
 : pan-mix-vct ( v beg envelope snd chn -- mx )
   { v beg envelope snd chn }
   snd-tempnam { temp-file }
-  :file temp-file :channels 1 :srate snd srate open-sound-file { fd }
-  fd v v vct-length vct->sound-file drop
-  fd v vct-length 4 * close-sound-file drop
+  temp-file snd srate 1 mus-sound-open-output { fd }
+  fd 0 v vct-length 1- 1 v vct->sound-data mus-sound-write drop
+  fd v vct-length 4 * mus-sound-close-output drop
   temp-file beg envelope snd chn #t pan-mix
 ;
 
@@ -219,9 +219,9 @@ starting at START (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan
 : save-mix { id fname -- }
   doc" ( id filename -- )  Saves mix data (as floats) in FILENAME."
   id mix->vct { v }
-  :file fname :srate #f srate open-sound-file { fd }
-  fd v v vct-length vct->sound-file drop
-  fd v vct-length 4 * close-sound-file drop
+  fname #f srate mus-sound-open-output { fd }
+  fd 0 v vct-length 1- 1 v vct->sound-data mus-sound-write drop
+  fd v vct-length 4 * mus-sound-close-output drop
 ;
 
 : mix-maxamp ( id -- max-amp )
@@ -393,12 +393,10 @@ previous
     chn integer? chn chans < && || if
       chn #t = if 0 else chn then { current-chan }
       trk current-chan track->vct to v
-      :file fname :channels 1 :srate #f srate
-      :comment $" written by save-track" _ open-sound-file to fd
+      fname #f srate 1 #f #f $" written by save-track" _ mus-sound-open-output to fd
     else
       chn #t = chans 0> && if
-	:file fname :channels chans :srate #f srate
-	:comment $" written by save-track" _ open-sound-file to fd
+	fname #f srate chans #f #f $" written by save-track" _ mus-sound-open-output to fd
 	trk track-position { pos }
 	trk track-frames chans * 0 make-vct to v
 	chans 0 ?do
@@ -413,8 +411,8 @@ previous
 	'no-such-channel '( get-func-name chn ) fth-throw
       then
     then
-    fd v v length vct->sound-file drop
-    fd v length 4 * close-sound-file drop
+    fd 0 v vct-length 1- 1 v vct->sound-data mus-sound-write drop
+    fd v vct-length 4 * mus-sound-close-output drop
   else
     'no-such-track '( get-func-name trk ) fth-throw
   then

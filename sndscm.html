@@ -425,9 +425,9 @@ If you get "command not found", you need to edit the path to guile in the source
    ;; bess opens the DAC, continuously sends the following:
    (* amp 
       (<a class=quiet href="clm.html#oscil">oscil</a> carosc 
-        (+ (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> frequency)
+        (+ (<a class=quiet href="clm.html#hztoradians">hz-&gt;radians</a> frequency)
            (* index (<a class=quiet href="clm.html#oscil">oscil</a> modosc 
-                      (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> (* ratio frequency)))))))
+                      (<a class=quiet href="clm.html#hztoradians">hz-&gt;radians</a> (* ratio frequency)))))))
 </pre>
 </td></tr></table>
 <br>
@@ -471,7 +471,7 @@ The lines
 </p>
 <pre>
    ...
-   (coeffs (<a class=quiet href="clm.html#partials-&gt;polynomial">partials-&gt;polynomial</a> (normalize-partials partials)))
+   (coeffs (<a class=quiet href="clm.html#partialstopolynomial">partials-&gt;polynomial</a> (normalize-partials partials)))
    ...
 	     (<a class=quiet href="clm.html#polynomial">polynomial</a> coeffs
 			 (<a class=quiet href="clm.html#oscil">oscil</a> os (<a class=quiet href="clm.html#env">env</a> gls-env))))))
@@ -489,9 +489,9 @@ be turned into sonograms and transcribed as envelopes.
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (<a class=quiet href="clm.html#definstrument">definstrument</a> bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope 
 	             &amp;optional (lpfilt 1.0) (degree 0) (reverb-amount 0))
-  (multiple-value-bind (beg end) (<a class=quiet href="clm.html#times-&gt;samples">times-&gt;samples</a> startime dur)
+  (multiple-value-bind (beg end) (<a class=quiet href="clm.html#timestosamples">times-&gt;samples</a> startime dur)
     (let* ((amp-env (<a class=quiet href="clm.html#make-env">make-env</a> amp-envelope amplitude dur))
-	   (gls-env (<a class=quiet href="clm.html#make-env">make-env</a> freq-envelope (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> freq-skew) dur))
+	   (gls-env (<a class=quiet href="clm.html#make-env">make-env</a> freq-envelope (<a class=quiet href="clm.html#hztoradians">hz-&gt;radians</a> freq-skew) dur))
 	   (loc (<a class=quiet href="clm.html#make-locsig">make-locsig</a> :degree degree :distance 1.0 :reverb reverb-amount))
 	   (fil (<a class=quiet href="clm.html#make-one-pole">make-one-pole</a> lpfilt (- 1.0 lpfilt)))
 	   (s (<a class=quiet href="clm.html#make-oscil">make-oscil</a> :frequency frequency)))
@@ -2090,7 +2090,7 @@ the edge frequencies in terms of srate = 2 * pi.
 <a class=def name="makehilberttransform">make-hilbert-transform</a> <code>:optional length</code><br>
 <a class=def name="hilberttransform">hilbert-transform</a> <code>f in</code><br>
 <em class=emdef>hilbert-transform-via-fft</em> <code>:optional snd chn</code><br>
-<a class=def name="sound_to_amp_env">sound-&gt;amp-env</a> <code>:optional snd chn</code>
+<a class=def name="soundtoamp_env">sound-&gt;amp-env</a> <code>:optional snd chn</code>
 </td></tr><tr><td></td><td>
 These functions perform the hilbert transform using either an FIR filter (the first two) or an FFT.
 One example of its use is sound-&gt;amp-env (from R Lyons).  Another is the <a href="clm.html#ssb-am">ssb-am</a> generator in CLM.
@@ -2163,7 +2163,7 @@ also lose more of the original signal.
 
 <!-- spectrum->coeffs and fltit -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="spectrum_to_coeffs">spectrum-&gt;coeffs</a> <code>order spectrum</code><br>
+<a class=def name="spectrumtocoeffs">spectrum-&gt;coeffs</a> <code>order spectrum</code><br>
 <em class=emdef>fltit-1</em> <code>order spectr</code>
 </td></tr><tr><td></td><td>
 spectrum-&gt;coeffs is a
@@ -2208,7 +2208,7 @@ to return a biquad filter section.
 
 <!-- cascade->canonical -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="cascade_to_canonical">cascade-&gt;canonical</a> <code>coeffs</code>
+<a class=def name="cascadetocanonical">cascade-&gt;canonical</a> <code>coeffs</code>
 </td></tr><tr><td></td><td>
 cascade-&gt;canonical 
 converts cascade coefficients to canonical form (the form used by CLM's <a href="clm.html#filter">filter</a> generator).
@@ -3227,7 +3227,7 @@ actually represents.  You can, of course, turn off the normalization:
 fft-smoother uses fft filtering to
 smooth a portion of a sound, returning a vct with the smoothed data.  <i>cutoff</i> sets where we starting zeroing out high frequencies.
 <pre>
-    Scheme: (<a class=quiet href="extsnd.html#vct_to_channel">vct->channel</a> (fft-smoother .1 (<a class=quiet href="extsnd.html#cursor">cursor</a>) 400 0 0) (<a class=quiet href="extsnd.html#cursor">cursor</a>) 400)
+    Scheme: (<a class=quiet href="extsnd.html#vcttochannel">vct->channel</a> (fft-smoother .1 (<a class=quiet href="extsnd.html#cursor">cursor</a>) 400 0 0) (<a class=quiet href="extsnd.html#cursor">cursor</a>) 400)
     Ruby:   vct2channel(fft_smoother(0.1, cursor, 400, 0, 0), cursor, 400)
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -3443,7 +3443,7 @@ then "pistol.snd" at 1.0 (second) scaled by 2.0.
 These functions perform amplitude modulation and ring-modulation. <i>freq</i> is the modulation frequency.
 <pre>
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (am 440))
-    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (ring-mod 10 (list 0 0 1 (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> 100))))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (ring-mod 10 (list 0 0 1 (<a class=quiet href="clm.html#hztoradians">hz-&gt;radians</a> 100))))
     (ring-modulate-channel 100.0)
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (vibro 440 0.5))
 </pre>
@@ -3989,7 +3989,7 @@ we can get the sound and channel values from these lists.
 
 <!-- channel-clipped? -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="channelclipped">channel-clipped?</A> <code>:optional snd chn</code>
+<em class=emdef>channel-clipped?</em> <code>:optional snd chn</code>
 </td></tr><tr><td></td><td>
 channel-clipped? returns #t and a sample number if it finds clipping in the given channel.
 examp.scm also has commented out code that places a mark at the start of each clipped
@@ -4099,7 +4099,7 @@ zero+ finds the next
 positive-going zero crossing (if searching forwards).
 next-peak finds
 the next maximum or minimum in the waveform.
-seach-for-click looks for a click.
+search-for-click looks for a click.
 find-pitch finds the next
 place where <i>pitch</i> (in Hz) is predominate.
 For example, type C-s (in the graph), then in the minibuffer:
@@ -4314,7 +4314,7 @@ window-rms returns the rms of the data in currently selected graph window.
 </td></tr><tr><td></td><td>
 window-samples returns (in a vct) the samples
 displayed in the current window for <i>snd</i>'s channel <i>chn</i>.
-This is just a trivial wrapper for <a href="extsnd.html#channel_to_vct">channel-&gt;vct</a>.
+This is just a trivial wrapper for <a href="extsnd.html#channeltovct">channel-&gt;vct</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4641,7 +4641,7 @@ start point in the file, and (optionally) the channel of the file to mix:
 <!-- mono->stereo -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="monotostereo">mono-&gt;stereo</a> <code>new-name snd1 chn1 snd2 chn2</code><br>
-<a class=def name="stereo_to_mono">stereo-&gt;mono</a> <code>orig-snd chan1-name chan2-name</code><br>
+<a class=def name="stereotomono">stereo-&gt;mono</a> <code>orig-snd chan1-name chan2-name</code><br>
 <em class=emdef>mono-files-&gt;stereo</em> <code>new-name chan1-file chan2-file</code>
 </td></tr><tr><td></td><td>
 mono-&gt;stereo combines two mono sounds (currently open in Snd) into one (new) stereo file. 
@@ -4776,7 +4776,7 @@ the ramp.
 </p>
 <pre>
     (with-sound () (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
-    (<a class=quiet href="extsnd.html#vct_to_channel">vct-&gt;channel</a> (cross-fade 0 1.5 1.0 0 1 0.5 .5 0 1.0 256 2))
+    (<a class=quiet href="extsnd.html#vcttochannel">vct-&gt;channel</a> (cross-fade 0 1.5 1.0 0 1 0.5 .5 0 1.0 256 2))
 </pre>
 <p>
 These fades seem more successful to me when done relatively quickly (the opposite of the dissolve-fade below
@@ -4795,7 +4795,7 @@ and a suitably noisy original, strange pitches emerge and submerge.  <i>fsize</i
 </p>
 <pre>
     (with-sound () (dissolve-fade 0 1 1.0 "oboe.snd" "trumpet.snd" 256 2 0 128))
-    (<a class=quiet href="extsnd.html#vct_to_channel">vct-&gt;channel</a> (dissolve-fade 0 2 1 0 1 1024 2 2 #f))
+    (<a class=quiet href="extsnd.html#vcttochannel">vct-&gt;channel</a> (dissolve-fade 0 2 1 0 1 1024 2 2 #f))
 </pre>
 
 <table bgcolor="aliceblue" border=0><tr>
@@ -4818,11 +4818,19 @@ move some of these into C.
 
 <table border=0 cellspacing=0 hspace=20>
 
-<!-- file-&gt;vct -->
+<!-- file->sound-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="file_to_vct">file-&gt;vct</a> <code>file</code>
+<a class=def name="filetosounddata">file-&gt;sound-data</a> <code>file</code>
 </td></tr><tr><td width=60></td><td>
-file-&gt;vct returns <i>file</i>'s data in a vct.
+file-&gt;sound-data returns <i>file</i>'s data in a sound-data object.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- file->vct -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="filetovct">file-&gt;vct</a> <code>file</code>
+</td></tr><tr><td width=60></td><td>
+file-&gt;vct returns <i>file</i>'s data (channel 0 anyway) in a vct.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4858,6 +4866,7 @@ frame-&gt;sound places the contents of frame fr into sound snd at position pos.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="frametosounddata">frame-&gt;sound-data</a> <code>fr sd pos:optional sd</code>
 </td></tr><tr><td></td><td>
+
 frame-&gt;sound-data places the contents of its frame argument in its sound-data argument at position pos.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4871,11 +4880,84 @@ if the vct argument is omitted.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- insert-frame -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="insertframe">insert-frame</a> <code>fr :optional beg snd edpos</code>
+</td></tr><tr><td></td><td>
+insert-frame inserts the frame of samples into sound snd (one sample in each channel) at beg.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- insert-sound-data -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="insertsounddata">insert-sound-data</a> <code>sd :optional beg dur snd edpos</code>
+</td></tr><tr><td></td><td>
+insert-sound-data inserts the sound-data (sd) contents into sound snd at beg.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- insert-vct -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="insertvct">insert-vct</a> <codev :optional beg dur snd chn edpos</code>
+</td></tr><tr><td></td><td>
+insert-vct inserts the vct data into sound snd at beg.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- map-sound-frames -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="mapsoundframes">map-sound-frames</a> <code>func :optional beg dur snd</code>
+</td></tr><tr><td></td><td>
+map-sound-frames is a version of <a href="extsnd.html#mapchannel">map-channel</a> that passes func a frame on each call, rather than a sample.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mix-frame -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="mixframe">mix-frame</a> <code>fr :optional beg snd</code>
+</td></tr><tr><td></td><td>
+mix-frame mixes the frame (fr) of samples into sound snd (one sample in each channel) at beg.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mix-sound-data -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="mixsounddata">mix-sound-data</a> <code>sd :optional beg dur snd tagged trk</code>
+</td></tr><tr><td></td><td>
+mix-sound-data mixes the contents of sound-data sd into sound snd at beg.  tagged determines whether
+the resulting mixes have tags, and trk is the track they are placed in (0 = none).
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- region->frame -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="regiontoframe">region-&gt;frame</a> <code>pos reg</code>
 </td></tr><tr><td></td><td>
 region-&gt;frame returns a frame containing the contents of the region ref at position pos.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- region->sound-data -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="regiontosounddata">region-&gt;sound-data</a> <code>reg</code>
+</td></tr><tr><td></td><td>
+region-&gt;sound-data returns a sound-data object containing the contents of the region <i>reg</i>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- scan-sound-frames -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="scansoundframes">scan-sound-frames</a> <code>func :optional beg dur snd</code>
+</td></tr><tr><td></td><td>
+scan-sound-frames is a version of <a href="extsnd.html#scanchannel">scan-channel</a> that passes func a frame on each call, rather than a sample.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- sound-data->file -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="sounddatatofile">sound-data-&gt;file</a> <code>sd file :optional (srate 22050) (comment "")</code>
+</td></tr><tr><td></td><td>
+sound-data-&gt;file places the contents of its sound-data argument <i>sd</i> in the newly created sound file <i>file</i>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4912,6 +4994,22 @@ sound-&gt;frame returns a frame containing the contents of the sound snd at posi
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- track->sound-data -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="tracktosounddata">track-&gt;sound-data</a> <code>trk</code>
+</td></tr><tr><td></td><td>
+track-&gt;sound-data returns a sound-data object containing the contents of the track <i>trk</i>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- vct->file -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="vcttofile">vct-&gt;file</a> <code>vct file :optional (srate 22050) (comment "")</code>
+</td></tr><tr><td></td><td>
+vct-&gt;file places the contents of its vct argument in the newly created (mono) sound file <i>file</i>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- vct->frame -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="vcttoframe">vct-&gt;frame</a> <code>vct :optional frame</code>
@@ -4919,8 +5017,6 @@ sound-&gt;frame returns a frame containing the contents of the sound snd at posi
 vct-&gt;frame places the contents of its vct argument in its frame argument, or in a newly created frame
 if the frame argument is omitted.
 </td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 
 
 </table>
@@ -5564,9 +5660,9 @@ an ordinary editing function:
     (<a class=quiet href="extsnd.html#undo">undo</a> 1 snd)
     (dynamic-wind
       (lambda ()
-        (set! *output* (<a class=quiet href="clm.html#continue-sample-&gt;file">continue-sample-&gt;file</a> output))
+        (set! *output* (<a class=quiet href="clm.html#continue-sampletofile">continue-sample-&gt;file</a> output))
         (set! (<a class=quiet href="clm.html#mussrate">mus-srate</a>) (<a class=quiet href="extsnd.html#srate">srate</a> snd))
-        (set! *reverb* (<a class=quiet href="clm.html#make-file-&gt;sample">make-file-&gt;sample</a> revout)))
+        (set! *reverb* (<a class=quiet href="clm.html#make-filetosample">make-file-&gt;sample</a> revout)))
       (lambda ()
         (apply reverb reverb-data))
       (lambda ()
@@ -5580,7 +5676,7 @@ an ordinary editing function:
 (clm-reverb-sound .1 jc-reverb)
 </pre></td></tr></table>
 
-<p>Another approach to this problem would be to use <a href="extsnd.html#snd_to_sample">snd-&gt;sample</a> to
+<p>Another approach to this problem would be to use <a href="extsnd.html#sndtosample">snd-&gt;sample</a> to
 redirect the *reverb* input (without any change to the reverberator),
 getting its data from the current sound (probably after scaling it
 by the reverb amount). 
@@ -6236,7 +6332,7 @@ mix-maxamp returns the maxamp in the given mix.
 
 <!-- mix-name->id -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="mixname_to_id">mix-name-&gt;id</a> <code>name</code>
+<a class=def name="mixnametoid">mix-name-&gt;id</a> <code>name</code>
 </td></tr><tr><td></td><td>
 mix-name-&gt;id returns the if of the mix with the given name, or 'no-such-mix if none can be found.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6266,7 +6362,7 @@ mix-sound mixes <i>file</i> (all chans) into the currently selected sound at <i>
 
 <!-- mix->vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="mix2vct">mix-&gt;vct</a> <code>id</code>
+<a class=def name="mixtovct">mix-&gt;vct</a> <code>id</code>
 </td></tr><tr><td></td><td>
 mix-&gt;vct returns in a vct the current samples
 of mix <i>id</i>.
@@ -6420,7 +6516,7 @@ track-maxamp returns the maxamp in the given track.
 
 <!-- track-name->id -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="trackname_to_id">track-name-&gt;id</a> <code>name</code>
+<a class=def name="tracknametoid">track-name-&gt;id</a> <code>name</code>
 </td></tr><tr><td></td><td>
 track-name-&gt;id returns the if of the track with the given name, or 'no-such-track if none can be found.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6444,7 +6540,7 @@ transpose-track transposes each mix in <i>track</i> by <i>semitones</i>.
 
 <!-- track-&gt;vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="track2vct">track-&gt;vct</a> <code>track (chan 0)</code>
+<a class=def name="tracktovct">track-&gt;vct</a> <code>track (chan 0)</code>
 </td></tr><tr><td></td><td>
 track-&gt;vct places all the track samples (the samples of all the constituent mixes)
 into a vct.  
@@ -7063,7 +7159,7 @@ just for fun.
 convolution the infinitely slow way is poly*:
 </p>
 <pre>
-    (<a class=quiet href="extsnd.html#vct_to_channel">vct-&gt;channel</a> (poly* (<a class=quiet href="extsnd.html#channel_to_vct">channel-&gt;vct</a> 0 (<a class=quiet href="extsnd.html#frames">frames</a>)) (<a class=quiet href="extsnd.html#vct">vct</a> 2.0))) ; no, this is not serious
+    (<a class=quiet href="extsnd.html#vcttochannel">vct-&gt;channel</a> (poly* (<a class=quiet href="extsnd.html#channeltovct">channel-&gt;vct</a> 0 (<a class=quiet href="extsnd.html#frames">frames</a>)) (<a class=quiet href="extsnd.html#vct">vct</a> 2.0))) ; no, this is not serious
 </pre>
 
 <table bgcolor="aliceblue" border=0><tr><td>
@@ -7516,7 +7612,7 @@ move the selected channel forward (down or right) <i>count</i> graphs (C-x C-o),
 <em class=emdef>samples-&gt;sound-data</em> (<i>samp samps snd chn sdobj edpos sdchan</i>)
 </td></tr>
 <tr><td></td><td>
-This is similar to <a href="extsnd.html#channel_to_vct">channel-&gt;vct</a>, but it fills a <a href="extsnd.html#sndsounddata">sound-data</a> object.
+This is similar to <a href="extsnd.html#channeltovct">channel-&gt;vct</a>, but it fills a <a href="extsnd.html#sndsounddata">sound-data</a> object.
 (snd8.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -7528,7 +7624,7 @@ This is similar to <a href="extsnd.html#channel_to_vct">channel-&gt;vct</a>, but
 </td></tr>
 <tr><td></td><td>
 return vct struct with the data specified.
-Use <a href="extsnd.html#channel_to_vct">channel-&gt;vct</a> instead. (snd7.scm)
+Use <a href="extsnd.html#channeltovct">channel-&gt;vct</a> instead. (snd7.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -7563,7 +7659,7 @@ normalizes the samples in the given channel between beg and beg + num to norm.  
 <tr><td colspan=2 bgcolor="#f6f8ff"><em class=emdef>vct-&gt;samples</em> (samp samps data <i>snd chn</i>)
 </td></tr>
 <tr><td></td><td>A synonym for <a href="extsnd.html#setsamples">set-samples</a>, but you can also pass just a vct as the first argument, or a start
-sample and a vct as the second argument.  Use <a href="extsnd.html#vct_to_channel">vct-&gt;channel</a> instead.
+sample and a vct as the second argument.  Use <a href="extsnd.html#vcttochannel">vct-&gt;channel</a> instead.
 (snd7.scm)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -7872,7 +7968,7 @@ load-font loads a font and returns a handle for it.
           (rs (<a class=quiet href="extsnd.html#rightsample">right-sample</a> snd chn)))
       (if (and (&lt; ls 1000)
                (&gt; rs 1000))
-	  (let ((pos (<a class=quiet href="extsnd.html#x_to_position">x-&gt;position</a> (/ 1000.0 (<a class=quiet href="extsnd.html#srate">srate</a>))))
+	  (let ((pos (<a class=quiet href="extsnd.html#xtoposition">x-&gt;position</a> (/ 1000.0 (<a class=quiet href="extsnd.html#srate">srate</a>))))
 		(old-color (<a class=quiet href="extsnd.html#foregroundcolor">foreground-color</a>)))
 	    (set! (<a class=quiet href="extsnd.html#foregroundcolor">foreground-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> .75 .75 .75))
             (<a class=quiet href="extsnd.html#fillrectangle">fill-rectangle</a> pos 10 50 20)
@@ -8518,7 +8614,7 @@ in fmv.scm, the simpler one being:
 					  :scaler amp 
 					  :end dur)))
 			 (lambda () (<a class=quiet href="clm.html#env">env</a> e)))))
-	  (data (<a class=quiet href="extsnd.html#channel_to_vct">channel-&gt;vct</a> beg dur)))
+	  (data (<a class=quiet href="extsnd.html#channeltovct">channel-&gt;vct</a> beg dur)))
       (do ((i 0 (1+ i)))
 	  ((= i dur))
 	(<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (+ (<a class=quiet href="extsnd.html#vctref">vct-ref</a> data i)
@@ -8780,7 +8876,7 @@ taken from SAMBOX.BIL, November 1984):
 <table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
 (<a class=quiet href="clm.html#definstrument">definstrument</a> simp (start-time duration frequency amplitude
                      &amp;optional (amp-env '(0 0 50 1 100 0)))
-  (multiple-value-bind (beg end) (<a class=quiet href="clm.html#times-&gt;samples">times-&gt;samples</a> start-time duration)
+  (multiple-value-bind (beg end) (<a class=quiet href="clm.html#timestosamples">times-&gt;samples</a> start-time duration)
     (let ((s (<a class=quiet href="clm.html#make-oscil">make-oscil</a> frequency))
           (amp (<a class=quiet href="clm.html#make-env">make-env</a> amp-env :scaler amplitude :duration duration)))
       (run
@@ -8875,7 +8971,7 @@ In CLM, the fm-violin became (fm.html, 1989):
       (setf frequency (clm-cerror "440.0?" 440.0 #'numberp "frequency = ~A?" frequency)))
   (let* ((beg (floor (* startime *srate*)))
 	 (end (+ beg (floor (* dur *srate*))))
-	 (frq-scl (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> frequency))
+	 (frq-scl (<a class=quiet href="clm.html#hztoradians">hz-&gt;radians</a> frequency))
 	 (modulate (not (zerop fm-index)))
 	 (maxdev (* frq-scl fm-index))
 	 (vln (not (eq index-type :cello)))
@@ -9450,7 +9546,7 @@ by calling the oscils and whatnot directly in the with-sound body:
 		 (set! sum (+ sum (* (let ((y (- 4.0 (* 8.0 loc))))
 				       (exp (* -0.5 y y)))  ; Gaussian normal curve as amplitude envelope
 				     (<a class=quiet href="clm.html#oscil">oscil</a> (vector-ref oscs i) 
-					    (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> (expt 2.0 (+ 2 (* loc 12.0)))))))))) ; (- 1.0 loc) to go down
+					    (<a class=quiet href="clm.html#hztoradians">hz-&gt;radians</a> (expt 2.0 (+ 2 (* loc 12.0)))))))))) ; (- 1.0 loc) to go down
 	     (set! x (+ x incr))
 	     (<a class=quiet href="clm.html#outa">outa</a> samp (* .1 sum) *output*))))))))
 </pre></td></tr></table>
@@ -9632,11 +9728,11 @@ an upward ramp and a downward ramp, then zips them together:
     (<a class=quiet href="extsnd.html#newsound">new-sound</a> "new-0.snd")
     (do ((i 0 (1+ i))) ((= i 10000)) 
       (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (* i .0001)))
-    (<a class=quiet href="extsnd.html#vct_to_channel">vct-&gt;channel</a> data 0 10000 0)
+    (<a class=quiet href="extsnd.html#vcttochannel">vct-&gt;channel</a> data 0 10000 0)
     (<a class=quiet href="extsnd.html#newsound">new-sound</a> "new-1.snd")
     (do ((i 0 (1+ i))) ((= i 10000)) 
       (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (- 1.0 (* i .0001))))
-    (<a class=quiet href="extsnd.html#vct_to_channel">vct-&gt;channel</a> data 0 10000 1)
+    (<a class=quiet href="extsnd.html#vcttochannel">vct-&gt;channel</a> data 0 10000 1)
     (let* ((dur (<a class=quiet href="extsnd.html#frames">frames</a>))
 	   (zp (<em class=red>make-zipper</em> (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 1 1) :end dur)
 			    0.05
@@ -10076,7 +10172,7 @@ end points.  (This is also "just-good-enough" software).
 (define (fix-clip clip-beg-1 clip-end-1)
   (if (&gt; clip-end-1 clip-beg-1)
       (let* ((dur (1+ (- clip-end-1 clip-beg-1)))
-	     (samps (<a class=quiet href="extsnd.html#channel_to_vct">channel-&gt;vct</a> (- clip-beg-1 4) (+ dur 9)))
+	     (samps (<a class=quiet href="extsnd.html#channeltovct">channel-&gt;vct</a> (- clip-beg-1 4) (+ dur 9)))
 	     (clip-beg 3)
 	     (clip-end (+ dur 4)))
 	(let ((samp0 (<a class=quiet href="extsnd.html#vctref">vct-ref</a> samps clip-beg))
@@ -10117,7 +10213,7 @@ end points.  (This is also "just-good-enough" software).
 		     (angle incr (+ angle incr)))
 		    ((= i clip-end))
 		  (<a class=quiet href="extsnd.html#vctset">vct-set!</a> samps i (- -1.0 (* amp (sin angle))))))
-	    (<a class=quiet href="extsnd.html#vct_to_channel">vct-&gt;channel</a> samps (- clip-beg-1 4))))
+	    (<a class=quiet href="extsnd.html#vcttochannel">vct-&gt;channel</a> samps (- clip-beg-1 4))))
 	#t) ; return values so I can tell when I hit a 1-sample section during testing
       #f))
 

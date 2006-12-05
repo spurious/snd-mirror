@@ -23,12 +23,12 @@
 ;;; scan-sound-frames map-sound-frames
 
 
-;;; TODO: doc test frame.scm funcs + xrefs in extsnd+quick [examples]
-;;; TODO: make-track-frame-reader?
-;;; TODO: (open-sound-file): snd-xref+index [mix.rb snd-test.rb mix.fs]
+;;; TODO: test frame.scm funcs [doc examples]
+;;; PERHAPS: make-track-frame-reader?
 ;;; DOC: sound-data as frame array (all chans together) or as vct array (chans separate)
 ;;; TODO: check all other code for frame-reader et al possibilities
 
+;;; PERHAPS: rest of sound-data funcs like vct: multiply add offset subtract move subseq to/from vector|list reverse to-string [copy?] *+
 
 (provide 'snd-frame.scm)
 
@@ -203,9 +203,6 @@
 
 
 
-
-;;; doc-test stopped here
-
 (define +frame-reader-tag+ 0)
 (define +frame-reader-snd+ 1)
 (define +frame-reader-channels+ 2)
@@ -308,7 +305,7 @@
   "(make-region-frame-reader beg reg :optional dir) returns a frame-reader reading the contents of region reg"
   (if (not (region? reg))
       (throw 'no-such-region (list "make-region-frame-reader" reg))
-      (let* ((chns (region-chans index))
+      (let* ((chns (region-chans reg))
 	     (fr (make-vector (+ chns +frame-reader0+))))
 	(vector-set! fr +frame-reader-tag+ 'frame-reader)
 	(vector-set! fr +frame-reader-snd+ reg)
@@ -320,46 +317,7 @@
 	fr)))
 
 
-
-(define* (scan-sound-frames func :optional (beg 0) dur snd)
-  "(scan-sound-frames func :optional beg dur snd) is a version of scan-channel that passes func a frame on each call, rather than a sample"
-  (let ((index (or snd (selected-sound) (car (sounds)))))
-    (if (sound? index)
-	(let ((reader (make-frame-reader beg index))
-	      (result #f)
-	      (len (frames index))
-	      (end (if dur (min len (+ beg dur)) len)))
-	  (do ((i beg (1+ i)))
-	      ((or result (= i end)) 
-	       result)
-	    (set! result (func (read-frame reader)))))
-	(throw 'no-such-sound (list "scan-sound-frames" snd)))))
-
-(define* (map-sound-frames func beg dur snd)
-  "(map-sound-frames func :optional beg dur snd) is a version of map-channel that passes func a frame on each call, rather than a sample"
-  (let ((index (or snd (selected-sound) (car (sounds)))))
-    (if (sound? index)
-	(let* ((reader (make-frame-reader beg index))
-	       (filename (snd-tempnam))
-	       (writer (make-frame->file filename))
-	       (len (frames index))
-	       (end (if dur (min len (+ beg dur)) len))
-	       (loc 0))
-	  (do ((i beg (1+ i))) 
-	      ((= i end))
-	    (let ((result (func (reader))))
-	      (if result 
-		  (begin
-		    (frame->file writer loc result)
-		    (set! loc (1+ loc))))))
-	  (mus-close writer)
-	  (free-frame-reader reader)
-	  (do ((i 0 (1+ i)))
-	      ((= i (chans index)))
-	    (set! (samples beg loc index i #f "map-sound" i #f #t) filename))) ; edpos = #f, auto-delete = #t
-	(throw 'no-such-sound (list "map-sound-frames" snd)))))
-
-
+;;; test stopped here
 
 (define (file->vct file)
   "(file->vct file) returns a vct with file's data (channel 0)"
@@ -429,6 +387,7 @@
 	sd)))
 
 
+
 (define* (insert-vct v :optional beg dur snd chn edpos)
   "(insert-vct v :optional beg dur snd chn edpos) inserts vct v's data into sound snd at beg"
   (if (not (vct? v))
@@ -490,3 +449,43 @@
 		(mix-vct (sound-data->vct sd chn v) beg snd chn tagged "mix-sound-data" trk)))))))
 
   
+(define* (scan-sound-frames func :optional (beg 0) dur snd)
+  "(scan-sound-frames func :optional beg dur snd) is a version of scan-channel that passes func a frame on each call, rather than a sample"
+  (let ((index (or snd (selected-sound) (car (sounds)))))
+    (if (sound? index)
+	(let ((reader (make-frame-reader beg index))
+	      (result #f)
+	      (len (frames index))
+	      (end (if dur (min len (+ beg dur)) len)))
+	  (do ((i beg (1+ i)))
+	      ((or result (= i end)) 
+	       result)
+	    (set! result (func (read-frame reader)))))
+	(throw 'no-such-sound (list "scan-sound-frames" snd)))))
+
+(define* (map-sound-frames func beg dur snd)
+  "(map-sound-frames func :optional beg dur snd) is a version of map-channel that passes func a frame on each call, rather than a sample"
+  (let ((index (or snd (selected-sound) (car (sounds)))))
+    (if (sound? index)
+	(let* ((reader (make-frame-reader beg index))
+	       (filename (snd-tempnam))
+	       (writer (make-frame->file filename))
+	       (len (frames index))
+	       (end (if dur (min len (+ beg dur)) len))
+	       (loc 0))
+	  (do ((i beg (1+ i))) 
+	      ((= i end))
+	    (let ((result (func (reader))))
+	      (if result 
+		  (begin
+		    (frame->file writer loc result)
+		    (set! loc (1+ loc))))))
+	  (mus-close writer)
+	  (free-frame-reader reader)
+	  (do ((i 0 (1+ i)))
+	      ((= i (chans index)))
+	    (set! (samples beg loc index i #f "map-sound" i #f #t) filename))) ; edpos = #f, auto-delete = #t
+	(throw 'no-such-sound (list "map-sound-frames" snd)))))
+
+
+

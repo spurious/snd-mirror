@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Tue Nov 28 20:05:04 CET 2006
+\ Changed: Sat Dec 02 05:31:22 CET 2006
 
 \ Commentary:
 \
@@ -2297,6 +2297,545 @@ event: lbj-piano-test ( keyword-args -- )
   :dur 1.0 get-args { dur }
   start dur 440 0.5 lbj-piano
   dur step
+;event
+
+\ RESFLT
+\ clm/resflt.ins
+instrument: resflt ( start dur keyword-args -- )
+  doc" ( start dur keyword-args -- )\n\
+\\ keywords and default values\n\
+\\ :driver       #f (#f -- sum of cosines, #t -- white noise)\n\
+\\ :ranfreq      10000.0\n\
+\\ :noiamp       0.01\n\
+\\ :noifun       '( 0 0 50 1 100 0 )\n\
+\\ :cosamp       0.1\n\
+\\ :cosfreq1     200.0\n\
+\\ :cosfreq0     230.0\n\
+\\ :cosnum       10\n\
+\\ :ampcosfun    '( 0 0 50 1 100 0 )\n\
+\\ :freqcosfun   '( 0 0 100 1 )\n\
+\\ :freq1        550.0\n\
+\\ :r1           0.995.0\n\
+\\ :g1           0.1\n\
+\\ :freq2        1000.0\n\
+\\ :r2           0.995\n\
+\\ :g2           0.1\n\
+\\ :freq3        2000.0\n\
+\\ :r3           0.995\n\
+\\ :g3           0.1\n\
+\\ :degree       90.0 random (locsig-degree)\n\
+\\ :distance     1.0 (locsig-distance)\n\
+0 1 ' resflt with-sound"
+  :driver     #f        	  get-args { driver }
+  :ranfreq    10000.0     	  get-args { ranfreq }
+  :noiamp     0.01      	  get-args { noiamp }
+  :noifun     '( 0 0 50 1 100 0 ) get-args { noif }
+  :cosamp     0.1       	  get-args { cosamp }
+  :cosfreq1   200.0       	  get-args { cosfreq1 }
+  :cosfreq0   230.0       	  get-args { cosfreq0 }
+  :cosnum     10        	  get-args { cosnum }
+  :ampcosfun  '( 0 0 50 1 100 0 ) get-args { ampcosf }
+  :freqcosfun '( 0 0 100 1 )      get-args { freqcosf }
+  :freq1      550.0       	  get-args { freq1 }
+  :r1         0.995     	  get-args { r1 }
+  :g1         0.1       	  get-args { g1 }
+  :freq2      1000.0      	  get-args { freq2 }
+  :r2         0.995     	  get-args { r2 }
+  :g2         0.1       	  get-args { g2 }
+  :freq3      2000.0      	  get-args { freq3 }
+  :r3         0.995     	  get-args { r3 }
+  :g3         0.1       	  get-args { g3 }
+  :degree     90.0 random 	  get-args { loc-degr }
+  :distance   1.0        	  get-args { loc-dist }
+  { start dur }
+  :radius r1 :frequency freq1 make-two-pole { f1 }
+  :radius r2 :frequency freq2 make-two-pole { f2 }
+  :radius r3 :frequency freq3 make-two-pole { f3 }
+  nil nil nil { frqf ampf gen }
+  driver if
+    :envelope noif :scaler noiamp :duration dur                                make-env to ampf
+    :frequency ranfreq                                                        make-rand to gen
+  else
+    :envelope freqcosf  :scaler cosfreq1 cosfreq0 f- hz->radians :duration dur make-env to frqf
+    :envelope ampcosf   :scaler cosamp :duration dur                           make-env to ampf
+    :frequency cosfreq0 :cosines cosnum                             make-sum-of-cosines to gen
+  then
+  start dur #{ :degree loc-degr :distance loc-dist } run-instrument
+    gen driver if 0.0 ( rand ) else frqf env ( sum-of-cosines ) then 0.0 mus-run ampf env f*
+    { input }
+    f1 input g1 f* two-pole
+    f2 input g2 f* two-pole f+
+    f3 input g3 f* two-pole f+
+  end-run
+;instrument
+
+event: resflt-test ( keyword-args -- )
+  :beg 0 get-args { start }
+  :dur 1 get-args { dur }
+  start        dur :driver #f resflt
+  start 0.5 f+ dur :driver #t resflt
+  dur 0.5 f+ step
+;event
+
+hide
+: scratch-input-cb ( rd samp -- proc ; dir self -- r )
+  lambda-create ( samp ) , ( rd ) , latestxt 1 make-proc
+ does> { dir self -- r }
+  self @ { samp }
+  self cell+ @ { rd }
+  rd samp 0 file->sample		\ (file->sample rd samp 0)
+  samp dir + self !			\ samp += dir
+;
+set-current
+
+\ SCRATCH-INS
+instrument: scratch-ins ( start file src-ratio turntable -- )
+  { start file src-ratio turntable }
+  file find-file to file
+  file if
+    file mus-sound-duration { dur }
+  else
+    :file-not-found $" cannot find %S" '( file ) fth-raise
+  then
+  file make-readin { f }
+  turntable 0 object-ref seconds->samples { cur-samp }
+  turntable 1 object-ref seconds->samples { turn-samp }
+  :input f cur-samp scratch-input-cb :srate src-ratio make-src { rd }
+  src-ratio f0> { forwards }
+  forwards turn-samp cur-samp < and if rd src-ratio fnegate set-mus-increment drop then
+  1 { turn-i }
+  0 { turning }
+  0.0 0.0 { last-val1 last-val2 }
+  start dur #{ :degree 90.0 random } run-instrument
+    turn-i turntable length >= if leave then
+    rd 0.0 src { val }
+    turning unless
+      forwards cur-samp turn-samp >= and if
+	1
+      else
+	forwards 0= cur-samp turn-samp <= and
+	if
+	  -1
+	else
+	  turning
+	then
+      then to turning
+    else
+      last-val2 last-val1 f<= last-val1 val f>= and
+      last-val2 last-val1 f>= last-val1 val f<= and or if
+	turn-i 1+ to turn-i
+	turn-i turntable length < if
+	  turntable turn-i object-ref seconds->samples to turn-samp
+	  forwards negate to forwards
+	  rd  rd mus-increment fnegate  set-mus-increment drop
+	then
+	0 to turning
+      then
+    then
+    last-val1 to last-val2
+    val to last-val1
+    val
+  end-run
+  f mus-close drop
+;instrument
+previous
+
+event: scratch-test ( keyword-args -- )
+  :beg 0.0 get-args { start }
+  :dur 1.0 get-args { dur }
+  start $" fyow.snd" 1.5 '( 0 0.5 0.25 1 ) scratch-ins
+  $" fyow.snd" find-file mus-sound-duration step
+;event
+
+\ PINS
+\
+\ spectral modeling (SMS)
+instrument: pins ( file start dur keyword-args -- )
+  doc" ( file start dur keyword-args -- )\n\
+\\ keywords and default values\n\
+\\ :amplitude     -- 0.5\n\
+\\ :transposition -- 1.0\n\
+\\ :time-scaler   -- 1.0\n\
+\\ :fftsize       -- 256\n\
+\\ :highest-bin   -- 128\n\
+\\ :max-peaks     -- 16\n\
+\\ :attack        -- #f\n\
+\"fyow.snd\" start dur :amplitude 1.0 :time-scaler 2.0 pins"
+  :amplitude     0.5 get-args { amp }
+  :transposition 1.0 get-args { transposition }
+  :time-scaler   1.0 get-args { time-scaler }
+  :fftsize       256 get-args { fftsize }
+  :highest-bin   128 get-args { highest-bin }
+  :max-peaks     16  get-args { max-peaks }
+  :attack        #f  get-args { attack }
+  { file start dur }
+  file find-file to file
+  file if
+    file mus-sound-duration { fdur }
+  else
+    :file-not-found $" cannot find %S" '( file ) fth-raise
+  then
+  dur time-scaler f/      { sdur }
+  sdur fdur f> if
+    'forth-error
+    $" %s is %.3f seconds long, but we'll need %.3f seconds of data for this note"
+    '( file fdur sdur ) fth-raise
+  then
+  file make-readin                                { fil }
+  fftsize make-vct                                { fdr }
+  fftsize make-vct                                { fdi }
+  blackman2-window fftsize 0 make-fft-window      { win }
+  fftsize make-vct                                { fftamps }
+  max-peaks 2*                                    { max-oscils }
+  max-oscils make-vct                             { current-peak-freqs }
+  max-oscils make-vct                             { last-peak-freqs }
+  max-oscils make-vct                             { current-peak-amps }
+  max-oscils make-vct                             { last-peak-amps }
+  max-peaks  make-vct                             { peak-amps }
+  max-peaks  make-vct                             { peak-freqs }
+  max-oscils make-array map! :frequency 0.0 make-oscil end-map { resynth-oscils }
+  max-oscils make-vct                             { ampls }
+  max-oscils make-vct                             { rates }
+  max-oscils make-vct                             { freqs }
+  max-oscils make-vct                             { sweeps }
+  fftsize 4.0 f/ floor f>s                        { hop }
+  time-scaler hop f* floor f>s                    { outhop }
+  outhop 1/f                                      { ifreq }
+  ifreq hz->radians                               { ihifreq }
+  mus-srate fftsize f/                            { fft-mag }
+  max-oscils                                      { cur-oscils }
+  attack if attack else 0 then                    { ramped }
+  attack                                          { splice-attack }
+  attack if attack else 1 then                    { attack-size }
+  0.0                                             { ramp-ind }
+  attack-size make-vct                            { ramped-attack }
+  outhop                                          { trigger }
+  win fftsize 0.42323 f* 1/f vct-scale! drop
+  0 { filptr }
+  start dur #{ :degree 90.0 random } run-instrument
+    splice-attack if
+      attack-size 1/f { ramp }
+      fil filptr 0 file->sample amp f* ( outval )
+      filptr 1+ to filptr
+      filptr attack-size > if
+	1 { mult }
+	ramped-attack map!
+	  fil filptr i + 0 file->sample mult f*
+	  mult ramp f- to mult
+	end-map drop
+	#f to splice-attack
+      then
+      ( outval )
+    else
+      trigger outhop >= if
+	0 { peaks }
+	0 to trigger
+	fdr map! fil filptr i + 0 file->sample win i vct-ref f* end-map drop
+	filptr fdr vct-length + to filptr
+	fdi 0.0 vct-fill! drop
+	filptr fftsize hop - - to filptr
+	fdr fdi fftsize 1 mus-fft drop
+	highest-bin 0 ?do
+	  fftamps i  fdr i vct-ref dup f* fdi i vct-ref dup f* f+ fsqrt f2*  vct-set! drop
+	loop
+	current-peak-freqs each { fv }
+	  current-peak-amps i vct-ref { av }
+	  last-peak-freqs i fv vct-set! drop
+	  last-peak-amps  i av vct-set! drop
+	  current-peak-amps i 0.0 vct-set! drop
+	end-each
+	peak-amps 0.0 vct-fill! drop
+	fftamps 0 vct-ref { ra }
+	0.0 0.0 { la ca }
+	highest-bin 0 ?do
+	  ca to la
+	  ra to ca
+	  fftamps i vct-ref to ra
+	  ca 0.001 f>
+	  ca ra f> and
+	  ca la f> and if
+	    la flog ra flog f- f2/ la flog -2.0 ca flog f* f+ ra flog f+ f/ { offset }
+	    10.0 ca flog 0.25 la flog ra flog f- f* offset f* f- f** { amp-1 }
+	    fft-mag i offset 1.0 f- f+ f* { freq }
+	    peaks max-peaks = if
+	      0 { minp }
+	      peak-amps 0 vct-ref { minpeak }
+	      max-peaks 1 ?do
+		peak-amps i vct-ref minpeak f< if
+		  i to minp
+		  peak-amps i vct-ref to minpeak
+		then
+	      loop
+	      amp-1 minpeak f> if
+		peak-freqs minp freq vct-set! drop
+		peak-amps minp amp-1 vct-set! drop
+	      then
+	    else
+	      peak-freqs peaks freq vct-set! drop
+	      peak-amps peaks amp-1 vct-set! drop
+	      peaks 1+ to peaks
+	    then
+	  then
+	loop
+	peaks 0 ?do
+	  0 { maxp }
+	  peak-amps 0 vct-ref ( maxpk )
+	  max-peaks 1 ?do
+	    peak-amps i vct-ref over f> if
+	      i to maxp
+	      drop ( maxpk )
+	      peak-amps i vct-ref ( maxpk )
+	    then
+	  loop
+	  ( maxpk ) f0> if
+	    -1 { closestp }
+	    10 { closestamp }
+	    peak-freqs maxp vct-ref { cur-freq }
+	    cur-freq 1/f { icf }
+	    max-peaks 0 ?do
+	      last-peak-amps i vct-ref f0> if
+		icf last-peak-freqs i vct-ref cur-freq f- fabs f* { closeness }
+		closeness closestamp f< if
+		  closeness to closestamp
+		  i to closestp
+		then
+	      then
+	    loop
+	    closestamp 0.1 f< if
+	      current-peak-amps closestp  peak-amps maxp vct-ref  vct-set! drop
+	      peak-amps maxp 0.0 vct-set! drop
+	      current-peak-freqs closestp cur-freq vct-set! drop
+	    then
+	  then
+	loop
+	max-peaks 0 ?do
+	  peak-amps i vct-ref f0> if
+	    -1 { new-place }
+	    max-oscils 0 ?do
+	      last-peak-amps i vct-ref f0= current-peak-amps i vct-ref f0= and if
+		i to new-place
+		leave
+	      then
+	    loop
+	    current-peak-amps new-place   peak-amps  i vct-ref  vct-set! drop
+	    peak-amps i 0.0 vct-set! drop
+	    current-peak-freqs new-place  peak-freqs i vct-ref  vct-set! drop
+	    last-peak-freqs new-place     peak-freqs i vct-ref  vct-set! drop
+	    resynth-oscils new-place array-ref ( gen )
+	    transposition peak-freqs i vct-ref f* ( val )
+	    set-mus-frequency drop
+	  then
+	loop
+	0 to cur-oscils
+	max-oscils 0 ?do
+	  rates i  current-peak-amps i vct-ref last-peak-amps i vct-ref f- ifreq f*  vct-set! drop
+	  current-peak-amps i vct-ref f0<> last-peak-amps i vct-ref f0<> or if
+	    i to cur-oscils
+	  then
+	  sweeps i
+	  current-peak-freqs i vct-ref last-peak-freqs i vct-ref f- transposition f* ihifreq f*
+	  vct-set! drop
+	loop
+	cur-oscils 1+ to cur-oscils
+      then
+      trigger 1+ to trigger
+      ramped 0= if
+	0.0 ( sum )
+      else
+	ramped-attack ramp-ind vct-ref ( sum )
+	ramp-ind 1+ to ramp-ind
+	ramp-ind ramped = if 0 to ramp-ind then
+      then ( sum )
+      cur-oscils 0 ?do
+	ampls i vct-ref f0<> rates i vct-ref f0<> or if
+	  resynth-oscils i array-ref  freqs i vct-ref  0.0 oscil
+	  ampls i vct-ref f* f+ ( sum += ... )
+	  ampls i  rates  i vct-ref  object-set+!
+	  freqs i  sweeps i vct-ref  object-set+!
+	then
+      loop
+      amp ( sum ) f*
+    then
+  end-run
+;instrument
+
+event: pins-test ( keyword-args -- )
+  :beg 0.0 get-args { start }
+  :dur 1.0 get-args { dur }
+  $" fyow.snd" start dur :amplitude 1.0 :time-scaler 2.0 pins
+  dur step
+;event
+
+\ ZC
+instrument: zc ( start dur freq amp len1 len2 feedback -- )
+  { start dur freq amp len1 len2 feedback }
+  :frequency freq make-pulse-train { s }
+  :size len1 :scaler feedback :max-size len1 len2 max 1+ make-comb { d0 }
+  :envelope '( 0 0 1 1 ) :scaler len2 len1 f-  :duration dur make-env { zenv }
+  start dur #{ :degree 90.0 random } run-instrument
+    d0  s 0.0 pulse-train amp f*  zenv env  comb
+  end-run
+;instrument
+
+event: zc-test ( keyword-args -- )
+  :beg 0.0 get-args { start }
+  :dur 1.0 get-args { dur }
+  start               dur 100 0.4 20 100 0.95 zc
+  start dur 0.5 f+ f+ dur 100 0.4 100 20 0.95 zc
+  dur f2* 0.5 f+ step
+;event
+
+\ ZN
+\
+\ notches are spaced at srate/len, feedforward sets depth thereof so
+\ sweep of len from 20 to 100 sweeps the notches down from 1000 Hz to
+\ ca 200 Hz so we hear our downward glissando beneath the pulses.
+instrument: zn ( start dur freq amp len1 len2 feedforward -- )
+  { start dur freq amp len1 len2 feedforward }
+  :frequency freq make-pulse-train { s }
+  :size len1 :scaler feedforward :max-size len1 len2 max 1+ make-notch { d0 }
+  :envelope '( 0 0 1 1 ) :scaler len2 len1 f- :duration dur make-env { zenv }
+  start dur #{ :degree 90.0 random } run-instrument
+    d0  s 0.0 pulse-train amp f*  zenv env  notch
+  end-run
+;instrument
+
+event: zn-test ( keyword-args -- )
+  :beg 0.0 get-args { start }
+  :dur 1.0 get-args { dur }
+  start               dur 100 0.5 20 100 0.95 zn
+  start dur 0.5 f+ f+ dur 100 0.5 100 20 0.95 zn
+  dur f2* 0.5 f+ step
+;event
+
+\ ZA
+instrument: za ( start dur freq amp len1 len2 fb ffw -- )
+  { start dur freq amp len1 len2 fb ffw }
+  :frequency freq make-pulse-train { s }
+  :size len1 :feedback fb :feedforward ffw :max-size len1 len2 max 1+ make-all-pass { d0 }
+  :envelope '( 0 0 1 1 ) :scaler len2 len1 f- :duration dur make-env { zenv }
+  start dur #{ :degree 90.0 random } run-instrument
+    d0  s 0.0 pulse-train amp f*  zenv env  all-pass
+  end-run
+;instrument
+
+event: za-test ( keyword-args -- )
+  :beg 0.0 get-args { start }
+  :dur 1.0 get-args { dur }
+  start               dur 100 0.3 20 100 0.95 0.95 za
+  start dur 0.5 f+ f+ dur 100 0.3 100 20 0.95 0.95 za
+  dur f2* 0.5 f+ step
+;event
+
+hide
+: readin-cb ( gen -- proc; dir self -- r )
+  lambda-create , latestxt 1 make-proc
+ does> ( dir self -- r )
+  nip @ readin
+;
+set-current
+
+\ EXP-SND
+\
+\ granulate with envelopes on the expansion amount, segment envelope
+\ shape, segment length, hop length, and input file resampling rate
+instrument: exp-snd ( file start dur amp keyword-args -- )
+  doc" ( file start dur amp keyword-args -- )\n\
+\\ keywords and default values\n\
+\\ :exp-amp   1.0\n\
+\\ :ramp      0.4\n\
+\\ :seglen    0.15\n\
+\\ :sr        1.0\n\
+\\ :hop       0.05\n\
+\\ :ampenv    #f\n\  
+\"fyow.snd\" 0 3 1 :exp-amt '( 0 1 1 3 ) :sr '( 0 2 1 0.5 ) ' exp-snd with-sound"
+  :exp-amt  1.0  get-args { exp-amt }
+  :ramp     0.4  get-args { ramp }
+  :seglen   0.15 get-args { seglen }
+  :sr       1.0  get-args { sr }
+  :hop      0.05 get-args { hop }
+  :ampenv   #f   get-args { ampenv }
+  { file start dur amp }
+  file find-file to file
+  file if
+    file make-readin { f0 }
+  else
+    :file-not-found $" cannot find %S" '( file ) fth-raise
+  then
+  :envelope exp-amt list? if exp-amt '( 0 1 1 1 ) || else '( 0 exp-amt 1 exp-amt ) then
+  :duration dur make-env { expenv }
+  :envelope seglen list? if seglen '( 0 0.15 1 0.15 ) || else '( 0 seglen 1 seglen ) then
+  :duration dur make-env { lenenv }
+  seglen if seglen list? if seglen max-envelope else seglen then else 0.15 then { max-seg-len }
+  seglen if seglen list? if seglen cadr else seglen then else 0.15 then { initial-seg-len }
+  max-seg-len 0.15 f> if 0.6 0.15 f* max-seg-len f/ else 0.6 then { scaler-amp }
+  :envelope sr list? if sr '( 0 1 1 1 ) || else '( 0 sr 1 sr ) then
+  :duration dur make-env { srenv }
+  ramp list? if ramp '( 0 0.4 1 0.4 ) || else '( 0 ramp 1 ramp ) then { rampdata }
+  :envelope rampdata :duration dur make-env { rampenv }
+  ramp if ramp list? if ramp cadr else ramp then else 0.4 then { initial-ramp-time }
+  :envelope hop list? if hop '( 0 0.05 1 0.05 ) || else '( 0 hop 1 hop ) then
+  :duration dur make-env { hopenv }
+  hop if hop list? if hop max-envelope else hop then else 0.05 then { max-out-hop }
+  hop if hop list? if hop cadr else hop then else 0.05 then { initial-out-hop }
+  exp-amt if exp-amt list? if exp-amt min-envelope else exp-amt then else 1.0 then { min-exp-amt }
+  exp-amt if exp-amt list? if exp-amt  cadr else exp-amt then else 1.0 then { initial-exp-amt }
+  max-out-hop min-exp-amt f/ { max-in-hop }
+  :envelope ampenv '( 0 0 0.5 1 1 0 ) || :scaler amp :duration dur make-env { ampe }
+  :input f0 readin-cb
+  :expansion initial-exp-amt
+  :max-size max-out-hop max-in-hop fmax max-seg-len f+ mus-srate f* fceil f>s
+  :ramp initial-ramp-time
+  :hop initial-out-hop
+  :length initial-seg-len
+  :scaler scaler-amp make-granulate { ex-a }
+  0.0 0.0 { ex-samp next-samp }
+  ampe env { vol }
+  ex-a granulate vol f* { val-a0 }
+  ex-a granulate vol f* { val-a1 }
+  rampdata min-envelope f0<= rampdata max-envelope 0.5 f>= or if
+    'forth-error
+    $" ramp argument to expand must always be between 0.0 and 0.5, %.3f -- %.3f"
+    '( rampdata min-envelope rampdata max-envelope ) fth-raise
+  then
+  start dur #{ :degree 90.0 random } run-instrument
+    expenv  env { expa }
+    lenenv  env { segl }
+    srenv   env { resa }
+    rampenv env { rmpl }
+    hopenv  env { hp }
+    segl mus-srate f* floor f>s { sl }
+    rmpl sl f* floor f>s        { rl }
+    ampe env to vol
+    ex-a sl   set-mus-length drop
+    ex-a rl   set-mus-ramp drop
+    ex-a hp   set-mus-frequency drop
+    ex-a expa set-mus-increment drop
+    next-samp resa f+ to next-samp
+    next-samp ex-samp 1.0 f+ f> if
+      next-samp ex-samp f- floor f>s 0 ?do
+	val-a1 to val-a0
+	ex-a granulate vol f* to val-a1
+	ex-samp 1.0 f+ to ex-samp
+      loop
+    then
+    next-samp ex-samp f= if
+      val-a0
+    else
+      next-samp ex-samp f- val-a1 val-a0 f- f* val-a0 f+
+    then
+  end-run
+;instrument
+previous
+
+event: exp-snd-test ( keyword-args -- )
+  :beg 0.0 get-args { start }
+  :dur 1.0 get-args { dur }
+
+  $" fyow.snd" start dur 1 :exp-amt '( 0 1 1 3 ) :sr '( 0 2 1 0.5 )             exp-snd
+  start dur 0.2 f+ f+ to start
+  $" oboe.snd" start dur 1 :exp-amt '( 0 1 1 3 ) :sr '( 0 2 1 0.5 ) :ampenv 0.2 exp-snd
+  dur f2* 0.2 f+ step
 ;event
 
 \ clm-ins.fs ends here

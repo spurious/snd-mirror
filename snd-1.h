@@ -188,7 +188,7 @@ typedef struct snd_fd {
   int protect1, protect2, protect3;
   double incr1, curval1, incr2, curval2, incr3, curval3, incr4, curval4;
   bool zero, xramp2;
-  int edit_ctr, dangling_loc, region;
+  int edit_ctr, dangling_loc, region, type;
   mus_sample_t (*rev_run)(struct snd_fd *sf);
   Float (*rev_runf)(struct snd_fd *sf);
   Float (*rampf)(struct snd_fd *sf);

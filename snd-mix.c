@@ -4886,6 +4886,7 @@ XEN g_mix_sample_reader_position(XEN obj)
 {
   mix_fd *mf;
   mf = TO_MIX_SAMPLE_READER(obj);
+  if (mix_sample_reader_at_end_p(mf)) return(XEN_ZERO);
   return(C_TO_XEN_OFF_T(current_location(mf->sfs[mf->base])));
 }
 
