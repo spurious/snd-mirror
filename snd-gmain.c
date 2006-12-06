@@ -703,7 +703,7 @@ void snd_doit(int argc, char **argv)
 # This is the same as Snd.gtkrc\n\
 style \"default\"\n\
 {\n\
-  font_name = \"Serif 11\"\n\
+#  font_name = \"Serif 11\"\n\
 \n\
   fg[NORMAL]      = { 0.0,  0.00, 0.0 }\n\
   text[NORMAL]    = { 0.0,  0.0,  0.0 }\n\
@@ -800,7 +800,7 @@ widget \"*.panel_button\" style \"zoom_slider\"\n\
 \n\
 style \"listener\" = \"default\"\n\
 {\n\
-  font_name = \"Monospace 10\"\n\
+#  font_name = \"Monospace 10\"\n\
 \n\
   base[NORMAL] = { 0.94, 0.97, 1.0 }\n\
   text[NORMAL] = { 0.0, 0.0, 0.0 }\n\

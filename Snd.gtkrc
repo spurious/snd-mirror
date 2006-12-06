@@ -1,6 +1,6 @@
 style "default"
 {
-  font_name = "Serif 11"
+#  font_name = "Serif 11"
 
   fg[NORMAL]      = { 0.0,  0.00, 0.0 }
   text[NORMAL]    = { 0.0,  0.0,  0.0 }
@@ -99,7 +99,7 @@ widget "*.panel_button" style "zoom_slider"
 
 style "listener" = "default"
 {
-  font_name = "Monospace 10"
+#  font_name = "Monospace 10"
 
   base[NORMAL] = { 0.94, 0.97, 1.0 }
   text[NORMAL] = { 0.0, 0.0, 0.0 }

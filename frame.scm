@@ -361,18 +361,16 @@
       (throw 'wrong-type-arg (list "sound-data->file" sd))))
 
 
-;;; test stopped here
-
 (define (region->sound-data reg)
   "(region->sound-data reg) returns a sound-data object with the contents of region reg"
   (if (region? reg)
       (let* ((reader (make-region-frame-reader 0 reg))
-	     (len (region-length reg))
+	     (len (region-frames reg))
 	     (chns (region-chans reg))
 	     (data (make-sound-data chns len)))
 	(do ((i 0 (1+ i)))
 	    ((= i len))
-	  (frame->sound-data data i (read-frame reader)))
+	  (frame->sound-data (read-frame reader) data i))
 	(free-frame-reader reader)
 	data)
       (throw 'no-such-region (list "region->sound-data" reg))))
@@ -389,11 +387,13 @@
 	  (let ((reader (make-track-sample-reader trk chn 0)))
 	    (do ((i 0 (1+ i)))
 		((= i len))
-	      (sound-data-set! sd chn i (next-sample reader)))
+	      (sound-data-set! sd chn i (read-track-sample reader)))
 	    (free-sample-reader reader)))
 	sd)))
 
 
+
+;;; test stopped here
 
 (define* (insert-vct v :optional beg dur snd chn edpos)
   "(insert-vct v :optional beg dur snd chn edpos) inserts vct v's data into sound snd at beg"
