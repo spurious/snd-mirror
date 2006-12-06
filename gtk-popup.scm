@@ -703,8 +703,8 @@
     (if (not (null? wids))
 	(for-each
 	 (lambda (w)
-	   (gtk_widget_hide w)))
-	 wids)
+	   (gtk_widget_hide w))
+	 wids))
     (gtk_menu_popup (GTK_MENU parent) #f #f #f #f 3 edhist-time)
     #f))
 

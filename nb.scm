@@ -96,8 +96,7 @@ It causes a description of the file to popup when the mouse crosses the filename
 			  ""))
 		    ""))))
 
-  (let ((alert-color (make-color 1.0 1.0 .94))
-	(region-viewer 2))
+  (let ((region-viewer 2))
     (set! nb-mouse-response-time (get-internal-real-time))
     (if (not (= type region-viewer))
 	(let ((info-exists (list-ref (dialog-widgets) 20)))

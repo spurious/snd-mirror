@@ -596,41 +596,39 @@ returning you to the true top-level."
 	(start (if statistics (get-internal-real-time)))
 	(output-to-file (string? output))
 	(reverb-to-file (and reverb (string? revfile))))
+    (if output-to-file
+	(if continue-old-file
+	    (begin
+	      (set! *output* (continue-sample->file output))
+	      (set! (mus-srate) (mus-sound-srate output))
+	      (let ((ind (find-sound output)))
+		(if (sound? ind)
+		    (close-sound ind))))
+	    (begin
+	      (if (file-exists? output) 
+		  (delete-file output))
+	      (set! *output* (make-sample->file output channels data-format header-type comment))))
+	(begin
+	  (if (not continue-old-file)
+	      (if (vct? output)
+		  (vct-fill! output 0.0)
+		  (sound-data-fill! output 0.0)))
+	  (set! *output* output)))
 
-
-       (if output-to-file
-	   (if continue-old-file
-	       (begin
-		 (set! *output* (continue-sample->file output))
-		 (set! (mus-srate) (mus-sound-srate output))
-		 (let ((ind (find-sound output)))
-		   (if (sound? ind)
-		       (close-sound ind))))
-	       (begin
-		 (if (file-exists? output) 
-		     (delete-file output))
-		 (set! *output* (make-sample->file output channels data-format header-type comment))))
-	   (begin
-	     (if (not continue-old-file)
-		 (if (vct? output)
-		     (vct-fill! output 0.0)
-		     (sound-data-fill! output 0.0)))
-	     (set! *output* output)))
-
-       (if reverb
-	   (if reverb-to-file
-	       (if continue-old-file
-		   (set! *reverb* (continue-sample->file revfile))
-		   (begin
-		     (if (file-exists? revfile) 
-			 (delete-file revfile))
-		     (set! *reverb* (make-sample->file revfile reverb-channels data-format header-type))))
-	       (begin
-		 (if (not continue-old-file)
-		     (if (vct? revfile)
-			 (vct-fill! revfile 0.0)
-			 (sound-data-fill! revfile 0.0)))
-		 (set! *reverb* revfile))))
+    (if reverb
+	(if reverb-to-file
+	    (if continue-old-file
+		(set! *reverb* (continue-sample->file revfile))
+		(begin
+		  (if (file-exists? revfile) 
+		      (delete-file revfile))
+		  (set! *reverb* (make-sample->file revfile reverb-channels data-format header-type))))
+	    (begin
+	      (if (not continue-old-file)
+		  (if (vct? revfile)
+		      (vct-fill! revfile 0.0)
+		      (sound-data-fill! revfile 0.0)))
+	      (set! *reverb* revfile))))
 
     (list 'with-sound-data
 	  output
@@ -642,7 +640,8 @@ returning you to the true top-level."
 	  scaled-to
 	  scaled-by
 	  play
-	  reverb-data)))
+	  reverb-data
+	  start)))
 
 (define (finish-with-sound wsd)
   (if (eq? (car wsd) 'with-sound-data)
@@ -656,7 +655,8 @@ returning you to the true top-level."
 	    (scaled-to (list-ref wsd 7))
 	    (scaled-by (list-ref wsd 8))
 	    (play (list-ref wsd 9))
-	    (reverb-data (list-ref wsd 10)))
+	    (reverb-data (list-ref wsd 10))
+	    (start (list-ref wsd 11)))
 
 	(if reverb
 	    (begin
@@ -795,8 +795,7 @@ returning you to the true top-level."
 	 #f))))
 
 (define (with-mix-file-extension file default)
-  (let ((pos #f)
-	(len (string-length file)))
+  (let ((len (string-length file)))
     (call-with-current-continuation
      (lambda (ok)
        (do ((i (1- len) (1- i)))

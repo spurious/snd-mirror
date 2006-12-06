@@ -153,7 +153,7 @@
 	   (f-a (make-readin file :channel 0))
            (f-b (if stereo-i (make-readin file :channel 1) #f)) ; explicit #f needed here for optimizer
 	   (fsr (mus-sound-srate file))
-	   (fsize (mus-sound-frames file))
+	   ;; (fsize (mus-sound-frames file))
 	   (fdur (mus-sound-duration file))
 	   (rev-val rev)
 	   (loc-env (clmsw-envelope-or-number loc))

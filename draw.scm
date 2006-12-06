@@ -151,7 +151,7 @@ whenever they're in the current view."
 		(graph-data (list new-low-data new-high-data) snd chn copy-context left-bin right-bin)
 		(set! (foreground-color snd chn) old-color)))))))
 
-(define* (display-samples-in-color snd chn)
+(define (display-samples-in-color snd chn)
   ;; intended as after-graph-hook member 
   ;; run through 'colored-samples lists passing each to display-colored-samples
   (let ((colors (channel-property 'colored-samples snd chn)))
@@ -230,7 +230,6 @@ whenever they're in the current view."
   (let* ((left (left-sample snd chn))
 	 (right (right-sample snd chn))
 	 (old-color (foreground-color snd chn))
-	 (samps (- right left))
 	 (data (make-graph-data snd chn)))
     (if (vct? data) ; could also be a list which we'll ignore since this is just a demo
 	(let* ((x0 (x->position (/ left (srate snd))))
@@ -392,8 +391,7 @@ whenever they're in the current view."
 	       (x-offset (inexact->exact (- grf-width width)))
 	       (grf-height (- (list-ref axinf 11) (list-ref axinf 13)))
 	       (height (inexact->exact (round (* inset-height grf-height))))
-	       (chan-offset (- (list-ref axinf 13) 10))
-	       (y-offset (+ chan-offset (inexact->exact (round (/ height 2))))))
+	       (chan-offset (- (list-ref axinf 13) 10)))
 	  (if (and (> width 0)
 		   (>= x x-offset)
 		   (<= x grf-width)
@@ -436,11 +434,9 @@ whenever they're in the current view."
   "smart-line-cursor is a cursor-style function that tries not to overwrite the thumbnail graph in the upper right corner"
   (let* ((point (cursor-position))
          (x (car point))
-         (y (cadr point))
 	 (ax (axis-info snd chn time-graph))
 	 (y0 (list-ref ax 11))
 	 (y1 (list-ref ax 13))
-	 (x0 (list-ref ax 10))
 	 (x1 (list-ref ax 12))
 	 (inset-x0 (* x1 (- 1.0 inset-width )))
 	 (inset-y0 (+ (- y1 10) (* inset-height (- y0 y1)))))

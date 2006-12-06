@@ -249,7 +249,7 @@
 	   (sr (srate))
 	   (N fftsize)          ; fft size
 	   (N2 (inexact->exact (floor (/ N 2))))
-	   (Nw fftsize) ;; window size -- currently restricted to the fftsize
+	   ;; (Nw fftsize) ;; window size -- currently restricted to the fftsize
 	   (D (inexact->exact (floor (/ fftsize overlap)))) ; decimation factor (how often do we take an fft)
 	   (interp (* (inexact->exact (floor (/ fftsize overlap))) time)) ; interpolation factor how often do we synthesize
 	   ;; take a resynthesis gate specificed in dB, convert to linear amplitude
@@ -267,7 +267,7 @@
 	   (fundamental (/ pi2 N))
 	   (output interp)      ; count of samples that have been output
 	   (resynth-oscils (make-vector N2))  ; synthesis oscillators
-	   (nextpct 10.0)       ; how often to print out the percentage complete message
+	   ;; (nextpct 10.0)       ; how often to print out the percentage complete message
 	   (outlen (inexact->exact (floor (* time len))))
 	   (out-data (make-vct (max len outlen)))
 	   (in-data (channel->vct 0 (* N 2) snd chn))

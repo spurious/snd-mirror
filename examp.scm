@@ -137,7 +137,6 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	 (rs (right-sample snd chn))
 	 (datal (make-graph-data snd chn))
 	 (data (if (vct? datal) datal (cadr datal)))
-	 (len (vct-length data))
 	 (sr (srate snd))
 	 (y-max (y-zoom-slider snd chn)))
     (if (and data ls rs)
@@ -426,15 +425,16 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	(snd-print (format #f "~S is not an MPEG file (first 11 bytes: #b~B #b~B)" mpgfile b0 (logand b1 #b11100000)))
 	(let ((id (ash (logand b1 #b11000) -3))
 	      (layer (ash (logand b1 #b110) -1))
-	      (protection (logand b1 1))
-	      (bitrate-index (ash (logand b2 #b11110000) -4))
+	      ;; (protection (logand b1 1))
+	      ;; (bitrate-index (ash (logand b2 #b11110000) -4))
 	      (srate-index (ash (logand b2 #b1100) -2))
-	      (padding (ash (logand b2 #b10) -1))
+	      ;; (padding (ash (logand b2 #b10) -1))
 	      (channel-mode (ash (logand b3 #b11000000) -6))
-	      (mode-extension (ash (logand b3 #b110000) -4))
-	      (copyright (ash (logand b3 #b1000) -3))
-	      (original (ash (logand b3 #b100) -2))
-	      (emphasis (logand b3 #b11)))
+	      ;; (mode-extension (ash (logand b3 #b110000) -4))
+	      ;; (copyright (ash (logand b3 #b1000) -3))
+	      ;; (original (ash (logand b3 #b100) -2))
+	      ;; (emphasis (logand b3 #b11))
+	      )
 	  (if (= id 1)
 	      (snd-print (format #f "odd: ~S is using a reserved Version ID" mpgfile)))
 	  (if (= layer 0)
@@ -510,7 +510,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; -------- read and write FLAC files
 
 (define (read-flac filename)
-  (system (format #f "flac -d ~A ~A" filename)))
+  (system (format #f "flac -d ~A" filename)))
 
 (define (write-flac snd)
   ;; write snd data in FLAC format
@@ -777,8 +777,7 @@ then inverse ffts."
 
 (define* (fft-squelch squelch :optional snd chn)
   "(fft-squelch squelch) ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts"
-  (let* ((sr (srate snd))
-	 (len (frames snd chn))
+  (let* ((len (frames snd chn))
 	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
@@ -815,9 +814,7 @@ then inverse ffts."
 	 (len (frames snd chn))
 	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
 	 (rdata (channel->vct 0 fsize snd chn))
-	 (idata (make-vct fsize))
-	 (fsize2 (/ fsize 2))
-	 (scaler 1.0))
+	 (idata (make-vct fsize)))
     (fft rdata idata 1)
     (let* ((hz-bin (/ sr fsize))
 	   (lo-bin (inexact->exact (round (/ lo-freq hz-bin))))
@@ -893,8 +890,7 @@ then inverse ffts."
 
 (define* (fft-env-data fft-env :optional snd chn)
   "(fft-env-data fft-env) applies fft-env as spectral env to current sound, returning vct of new data"
-  (let* ((sr (srate snd))
-	 (len (frames snd chn))
+  (let* ((len (frames snd chn))
 	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
@@ -917,7 +913,7 @@ then inverse ffts."
 
 (define* (fft-env-edit fft-env :optional snd chn)
   "(fft-env-edit fft-env) edits (filters) current chan using fft-env"
-  (vct->channel (fft-env-data fft-env snd chn) 0 (1- (frames)) snd chn #f (format "fft-env-edit '~A" fft-env)))
+  (vct->channel (fft-env-data fft-env snd chn) 0 (1- (frames)) snd chn #f (format #f "fft-env-edit '~A" fft-env)))
 
 (define* (fft-env-interp env1 env2 interp :optional snd chn)
   "(fft-env-interp env1 env2 interp) interpolates between two fft-filtered versions (env1 and env2 are the 
@@ -940,8 +936,7 @@ spectral envelopes) following interp (an env between 0 and 1)"
   "(filter-fft flt normalize snd chn) gets the spectrum of all the data in the given channel, \
 applies the function 'flt' to it, then inverse ffts.  'flt' should take one argument, the \
 current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is like fft-squelch."
-  (let* ((sr (srate snd))
-	 (len (frames snd chn))
+  (let* ((len (frames snd chn))
 	 (mx (maxamp snd chn))
 	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
 	 (fsize2 (/ fsize 2))
@@ -1203,7 +1198,6 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
   "(hello-dentist frq amp) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"
   (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
 	 (i 0)
-	 (j 0)
 	 (len (frames))
 	 (in-data (channel->vct 0 len snd chn))
 	 (out-len (inexact->exact (round (* len (+ 1.0 (* 2 amp))))))
@@ -1343,18 +1337,17 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 	((= i freq-inc))
       (vector-set! formants i (make-formant radius (* i bin))))
     (lambda (inval)
-      (let ((outval 0.0))
-	(if (= ctr freq-inc)
-	    (begin
-	      (set! fdr (channel->vct inctr fftsize cross-snd 0))
-	      (set! inctr (+ inctr freq-inc))
-	      (spectrum fdr fdi #f 2)
-	      (vct-subtract! fdr spectr)
-	      (vct-scale! fdr (/ 1.0 freq-inc))
-	      (set! ctr 0)))
-	(set! ctr (+ ctr 1))
-	(vct-add! spectr fdr)
-	(* amp (formant-bank spectr formants inval))))))
+      (if (= ctr freq-inc)
+	  (begin
+	    (set! fdr (channel->vct inctr fftsize cross-snd 0))
+	    (set! inctr (+ inctr freq-inc))
+	    (spectrum fdr fdi #f 2)
+	    (vct-subtract! fdr spectr)
+	    (vct-scale! fdr (/ 1.0 freq-inc))
+	    (set! ctr 0)))
+      (set! ctr (+ ctr 1))
+      (vct-add! spectr fdr)
+      (* amp (formant-bank spectr formants inval)))))
 
 ;;; similar ideas can be used for spectral cross-fades, etc -- for example:
 
@@ -2207,11 +2200,11 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
   ;;          the envs are present as break-point lists
   ;;          the calls are ordered out->in (or last first)
   ;; this should use definstrument, not define*, but it's defined in ws.scm which I don't want to require here
-  (let* ((dsp-chain (apply vector (reverse (map (lambda (gen)
-						 (if (list? gen)
-						     (make-env gen :duration dur)
-						     gen))
-					       dsps))))
+  (let* ((dsp-chain (list->vector (reverse (map (lambda (gen)
+						  (if (list? gen)
+						      (make-env gen :duration dur)
+						      gen))
+						dsps))))
 	 (start (inexact->exact (floor (* (mus-srate) beg))))
 	 (samps (inexact->exact (floor (* (mus-srate) dur))))
 	 (end (+ start samps))
@@ -2253,7 +2246,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 (define* (if-cursor-follows-play-it-stays-where-play-stopped :optional (enable #t))
   ;; call with #t or no args to enable this, with #f to disable
 
-  (let ((dummy #f))
+  (let ()
     (define current-cursor
       (make-procedure-with-setter
        (lambda (snd chn) (channel-property 'cursor snd chn))
@@ -2527,8 +2520,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
       mx))
 
   (define (segment-sound name high low)
-    (let* ((beg 0)
-	   (end (mus-sound-frames name))
+    (let* ((end (mus-sound-frames name))
 	   (reader (make-sample-reader 0 name))    ; no need to open the sound and display it
 	   (avg (make-moving-average :size 128))
 	   (lavg (make-moving-average :size 2048)) ; to distinguish between slow pulse train (low horn) and actual silence

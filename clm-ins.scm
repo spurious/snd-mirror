@@ -63,7 +63,6 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	   ;; get initial waveform in "tab" -- here we can introduce 0's to simulate different pick
 	   ;; positions, and so on -- see the CMJ article for numerous extensions.  The normal case
 	   ;; is to load it with white noise (between -1 and 1).
-	   (val 0.0)
 	   (allp (make-one-zero (* lf (- 1.0 wt)) (* lf wt)))
 	   (feedb (make-one-zero c 1.0)) ;or (feedb (make-one-zero 1.0 c))
 	   (ctr 0))
