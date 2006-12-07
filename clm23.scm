@@ -1387,8 +1387,6 @@
 (define (sample-pvoc5 beg dur amp size file freq)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
-	 (k 0)
-	 (N2 (/ size 2))
 	 (fil (make-readin file))
 	 (sr (make-phase-vocoder :fft-size size))
 	 (os (make-oscil freq)))
@@ -1497,7 +1495,7 @@
 	    )
 |#
 
-(define* (pvoc-a beg dur amp size file)
+(define (pvoc-a beg dur amp size file)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (sr (make-phase-vocoder :input (make-readin file) :fft-size size :interp (/ size 4) :overlap 4)))
@@ -1506,7 +1504,7 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (phase-vocoder sr)) 0 *output*))))))
 
-(define* (pvoc-b beg dur amp size file)
+(define (pvoc-b beg dur amp size file)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -1523,7 +1521,7 @@
       (snd-display ";pvoc a-b: ~A" mx)))
 |#
 
-(define* (pvoc-c beg dur amp size file)
+(define (pvoc-c beg dur amp size file)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -1560,7 +1558,7 @@
 |#
 
 
-(define* (pvoc-d beg dur amp size file)
+(define (pvoc-d beg dur amp size file)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -1614,7 +1612,7 @@
       (snd-display ";pvoc a-d: ~A" mx)))
 |#
 
-(define* (pvoc-e beg dur amp size file)
+(define (pvoc-e beg dur amp size file)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (rd (make-readin file))
@@ -1639,8 +1637,7 @@
 
 		(lambda (closure input)
 		  (declare (closure clm))
-		  (let ((N size)
-			(buf (modulo filptr size)))
+		  (let ((buf (modulo filptr size)))
 		    (clear-array (phase-vocoder-freqs sr))
 		    (if (= filptr 0)
 			(do ((k 0 (1+ k)))

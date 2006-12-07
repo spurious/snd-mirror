@@ -2653,10 +2653,10 @@ you can use <b>mus-close</b>, but it's also called automatically during garbage 
   <a class=def name="filetoframe?">file-&gt;frame?</a> obj                      ;t if obj reads a sound file returning a frame
    
   <a class=def name="make-filetosample">make-file-&gt;sample</a> name buffer-size    ;return gen that reads samples from sound file name
-  <a class=def name="make-sampletofile">make-sample-&gt;file</a> name chans &amp;optional format type comment
+  <a class=def name="make-sampletofile">make-sample-&gt;file</a> name &amp;optional chans format type comment
                                         ;return gen that writes samples to sound file name
   <a class=def name="make-filetoframe">make-file-&gt;frame</a> name buffer-size     ;return gen that reads frames from sound file name
-  <a class=def name="make-frametofile">make-frame-&gt;file</a> name chans &amp;optional format type comment
+  <a class=def name="make-frametofile">make-frame-&gt;file</a> name &amp;optional chans format type comment
                                         ;return gen that writes frames to sound file name
 
   <a class=def name="filetosample">file-&gt;sample</a> obj samp &amp;optional chan  ;return sample at samp in channel chan

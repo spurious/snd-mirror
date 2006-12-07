@@ -5,33 +5,33 @@
 ;;;  test 2: headers                            [1287]
 ;;;  test 3: variables                          [1593]
 ;;;  test 4: sndlib                             [2249]
-;;;  test 5: simple overall checks              [4665]
-;;;  test 6: vcts                               [12174]
-;;;  test 7: colors                             [12449]
-;;;  test 8: clm                                [12955]
-;;;  test 9: mix                                [22339]
-;;;  test 10: marks                             [25987]
-;;;  test 11: dialogs                           [26875]
-;;;  test 12: extensions                        [27169]
-;;;  test 13: menus, edit lists, hooks, etc     [27623]
-;;;  test 14: all together now                  [29172]
-;;;  test 15: chan-local vars                   [30247]
-;;;  test 16: regularized funcs                 [31577]
-;;;  test 17: dialogs and graphics              [35993]
-;;;  test 18: enved                             [36082]
-;;;  test 19: save and restore                  [36102]
-;;;  test 20: transforms                        [37939]
-;;;  test 21: new stuff                         [39772]
-;;;  test 22: run                               [41330]
-;;;  test 23: with-sound                        [46912]
-;;;  test 24: user-interface                    [49390]
-;;;  test 25: X/Xt/Xm                           [53006]
-;;;  test 26: Gtk                               [57596]
-;;;  test 27: GL                                [61713]
-;;;  test 28: errors                            [61837]
-;;;  test 29: Common Music                      [63941]
-;;;  test all done                              [63991]
-;;;  test the end                               [64184]
+;;;  test 5: simple overall checks              [4666]
+;;;  test 6: vcts                               [12173]
+;;;  test 7: colors                             [12448]
+;;;  test 8: clm                                [12938]
+;;;  test 9: mix                                [22318]
+;;;  test 10: marks                             [25967]
+;;;  test 11: dialogs                           [26856]
+;;;  test 12: extensions                        [27150]
+;;;  test 13: menus, edit lists, hooks, etc     [27604]
+;;;  test 14: all together now                  [29152]
+;;;  test 15: chan-local vars                   [30227]
+;;;  test 16: regularized funcs                 [31557]
+;;;  test 17: dialogs and graphics              [35972]
+;;;  test 18: enved                             [36061]
+;;;  test 19: save and restore                  [36081]
+;;;  test 20: transforms                        [37915]
+;;;  test 21: new stuff                         [39748]
+;;;  test 22: run                               [41563]
+;;;  test 23: with-sound                        [47145]
+;;;  test 24: user-interface                    [49623]
+;;;  test 25: X/Xt/Xm                           [53239]
+;;;  test 26: Gtk                               [57829]
+;;;  test 27: GL                                [61946]
+;;;  test 28: errors                            [62070]
+;;;  test 29: Common Music                      [64174]
+;;;  test all done                              [64224]
+;;;  test the end                               [64417]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -3152,7 +3152,8 @@
 	    (do ((i 0 (1+ i)))
 		((= i 100))
 	      (sound-data-set! sdata 0 i (* i .01)))
-	    (if (not (string-=? "#<sound-data: 1 chan, 100 frames>" (format #f "~A" sdata)))
+	    (if (not (string-=? "#<sound-data[chans=1, length=100]:\n    (0.000 0.010 0.020 0.030 0.040 0.050 0.060 0.070 0.080 0.090 0.100 0.110 ...)>"
+				(format #f "~A" sdata)))
 		(snd-display ";print sound-data: ~A?" (format #f "~A" sdata)))
 	    (let ((edat sdata)
 		  (edat1 (make-sound-data 1 100))
@@ -12469,8 +12470,8 @@ EDITS: 5
 			  (snd-display ";set-~A /= beige (~A)?" name (getfnc)))
 		      (setfnc initval)
 		      (test-color (cdr lst)))))))
-      (run-hook before-test-hook 7)
       (if (not (provided? 'snd-rgb.scm)) (catch 'no-such-color (lambda () (load "rgb.scm")) (lambda args args)))
+      (run-hook before-test-hook 7)
       (let* ((c1 (catch 'no-such-color
 			(lambda () (make-color 0 0 1))
 			(lambda args #f)))
@@ -13940,10 +13941,10 @@ EDITS: 5
 
 
 ;;; from dsp.scm (commented out)
-(define* (repitch-sound old-freq new-freq)
+(define (repitch-sound old-freq new-freq)
   (ssb-bank old-freq new-freq 10))
 
-(define* (retime-sound new-time)
+(define (retime-sound new-time)
   (let* ((old-time (/ (frames) (srate)))
 	 (factor (/ new-time old-time)))
     (ssb-bank 557 (* 557 factor) 10)
@@ -22790,7 +22791,7 @@ EDITS: 5
 	  (let ((mix-id (mix "oboe.snd" 100)))
 	    (set! (mix-waveform-height) 40)
 	    (set! (mix-property :hiho mix-id) 123)
-	    (if (not (= (mix-property :hiho mix-id) 123)) (snd-display ";mix-property: ~A" (mix-property mix-id)))
+	    (if (not (= (mix-property :hiho mix-id) 123)) (snd-display ";mix-property: ~A" (mix-property :hiho mix-id)))
 	    (if (mix-property :not-there mix-id) (snd-display ";mix-not-property: ~A" (mix-property :not-there mix-id)))
 	    (update-time-graph)
 	    (set! (mix-waveform-height) 20))
@@ -24267,7 +24268,7 @@ EDITS: 5
 
 	    ;; track properties
 	    (set! (track-property :hiho trk) 123)
-	    (if (not (= (track-property :hiho trk) 123)) (snd-display ";track-property: ~A" (track-property trk)))
+	    (if (not (= (track-property :hiho trk) 123)) (snd-display ";track-property: ~A" (track-property :hiho trk)))
 	    (if (track-property :not-there trk) (snd-display ";track-not-property: ~A" (track-property :not-there trk)))
 	    (set! (track-property :hi trk) "hi")
 	    (if (not (string=? (track-property :hi trk) "hi")) (snd-display ";track(1)-property: ~A" (track-property :hi trk)))
@@ -26167,7 +26168,7 @@ EDITS: 5
 	    (if (not (mark? m1)) (snd-display ";mark?"))
 	    (if (not (= (mark-sample m1) 123)) (snd-display ";add-mark: ~A? " (mark-sample m1)))
 	    (set! (mark-property :hiho m1) 123)
-	    (if (not (= (mark-property :hiho m1) 123)) (snd-display ";mark-property: ~A" (mark-property m1)))
+	    (if (not (= (mark-property :hiho m1) 123)) (snd-display ";mark-property: ~A" (mark-property :hiho m1)))
 	    (if (mark-property :not-there m1) (snd-display ";mark-not-property: ~A" (mark-property :not-there m1)))
 	    (if (not (eq? (without-errors (mark-sample 12345678)) 'no-such-mark)) 
 		(snd-display ";mark-sample err: ~A?" (without-errors (mark-sample 12345678))))
@@ -28404,8 +28405,7 @@ EDITS: 5
 	(let ((spl #f)
 	      (stl #f)
 	      (ph #f)
-	      (ph1 #f)
-	      (pc #f))
+	      (ph1 #f))
 	  (add-hook! start-playing-hook
 		     (lambda (snd)
 		       (if (not (= snd ind))
@@ -28469,8 +28469,7 @@ EDITS: 5
 	  (play "4.aiff")
 	  (reset-hook! start-playing-hook)
 	  
-	  (let ((sr -1)
-		(ss #f)
+	  (let ((ss #f)
 		(old-reg (selection-creates-region)))
 	    (set! (selection-creates-region) #t)
 	    (add-hook! stop-playing-selection-hook (lambda () (set! ss #t)))
@@ -28478,7 +28477,8 @@ EDITS: 5
 	      (play-selection #t)
 	      (play-region reg #t)
 	      (if (not ss) (snd-display ";stop-playing-selection-hook: ~A" ss)))
-	    (reset-hook! stop-playing-selection-hook))
+	    (reset-hook! stop-playing-selection-hook)
+	    (set! (selection-creates-region) old-reg))
 	  
 	  (let ((ctr 0))
 	    (add-hook! dac-hook
@@ -32017,8 +32017,7 @@ EDITS: 5
     data))
 
 (define (zigzag-check name snd chn)
-  (let* ((len (frames snd chn))
-	 (data (channel->vct))
+  (let* ((data (channel->vct))
 	 (sf (make-sample-reader 3 snd chn)))
     (do ((i 3 (1+ i)))
 	((= i 8))
@@ -40959,7 +40958,7 @@ EDITS: 1
 		 (begin
 		   (if (frame-reader-at-end? fd) (snd-display ";~A: frame-reader-at-end?: ~A" file fd))
 		   (if (not (= (frame-reader-position fd) 10000)) 
-		       (snd-display ";~A: frame-reader: position: ~A ~A" fd (frame-reader-position file fd))))
+		       (snd-display ";~A: frame-reader: position: ~A ~A" fd (frame-reader-position fd) file)))
 		 (begin
 		   (if (not (frame-reader-at-end? fd)) (snd-display ";~A: not frame-reader-at-end?: ~A" file fd))
 		   (if (= (frame-reader-position fd) 10000)
@@ -41022,7 +41021,7 @@ EDITS: 1
 		   (begin
 		     (if (frame-reader-at-end? fd) (snd-display ";~A: region frame-reader-at-end?: ~A" file fd))
 		     (if (not (= (frame-reader-position fd) 10000)) 
-			 (snd-display ";~A: region frame-reader: position: ~A ~A" fd (frame-reader-position file fd))))
+			 (snd-display ";~A: region frame-reader: position: ~A ~A" fd (frame-reader-position fd) file)))
 		   (begin
 		     (if (not (frame-reader-at-end? fd)) (snd-display ";~A: not region frame-reader-at-end?: ~A" file fd))
 		     (if (= (frame-reader-position fd) 10000)
@@ -41299,6 +41298,263 @@ EDITS: 1
 		  (snd-display ";4chn ~A insert-sound-data vals: ~A" chn vals)))))
 	(close-sound ind))
 
+      (let* ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "mix-frame tests" 5)))
+	(map-channel (lambda (y) 1.0) 0 5 ind 0)
+	
+	(let ((tag (catch #t (lambda () (mix-frame 32)) (lambda args (car args)))))
+	  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";mix-frame bad arg: ~A" tag)))
+	
+	(mix-frame (make-frame 1 .3))
+	(if (not (= (frames ind) 5)) (snd-display ";mix-frame len: ~A" (frames ind)))
+	(let ((vals (channel->vct 0 #f ind 0)))
+	  (if (not (vequal vals (vct 1.3 1 1 1 1)))
+	      (snd-display ";mix-frame vals: ~A" vals)))
+	
+	(mix-frame (make-frame 1 .4) 8 ind)
+	(if (not (= (frames ind) 9)) (snd-display ";mix-frame 1 len: ~A" (frames ind)))
+	(let ((vals (channel->vct 0 #f ind 0)))
+	  (if (not (vequal vals (vct 1.3 1 1 1 1 0 0 0 .4)))
+	      (snd-display ";mix-frame 1 vals: ~A" vals)))
+	
+	(let ((tag (catch #t (lambda () (mix-sound-data 32)) (lambda args (car args)))))
+	  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";mix-sound-data bad arg: ~A" tag)))
+	
+	(let ((sd (make-sound-data 1 3)))
+	  (sound-data-set! sd 0 0 .23)
+	  (sound-data-set! sd 0 1 .24)
+	  (sound-data-set! sd 0 2 .25)
+	  (mix-sound-data sd)
+	  (if (not (= (frames ind) 9)) (snd-display ";mix-sound-data len: ~A" (frames ind)))
+	  (let ((vals (channel->vct 0 #f ind 0)))
+	    (if (not (vequal vals (vct 1.53 1.24 1.25 1 1 0 0 0 .4)))
+		(snd-display ";mix-sound-data vals: ~A" vals)))
+	  
+	  (mix-sound-data sd 7 3)
+	  (if (not (= (frames ind) 10)) (snd-display ";mix-sound-data 1 len: ~A" (frames ind)))
+	  (let ((vals (channel->vct 0 #f ind 0)))
+	    (if (not (vequal vals (vct 1.53 1.24 1.25 1 1 0 0 .23 .64 .25)))
+		(snd-display ";mix-sound-data 1 vals: ~A" vals)))
+	  
+	  (let ((mix-id (mix-sound-data sd 0 #f ind #t)))
+	    (if (not (= (frames ind) 10)) (snd-display ";mix-sound-data 2 len: ~A" (frames ind)))
+	    (let ((vals (channel->vct 0 #f ind 0)))
+	      (if (not (vequal vals (vct (+ .23 1.53) (+ .24 1.24) (+ .25 1.25) 1 1 0 0 .23 .64 .25)))
+		  (snd-display ";mix-sound-data 2 vals: ~A" vals)))
+	    (if (not (mix? mix-id)) (snd-display ";mix-sound-data tagged: ~A" mix-id)))
+	  
+	  (let* ((trk (make-track))
+		 (mix-id (mix-sound-data sd 0 1 ind #t trk)))
+	    (if (not (= (frames ind) 10)) (snd-display ";mix-sound-data 3 len: ~A" (frames ind)))
+	    (let ((vals (channel->vct 0 #f ind 0)))
+	      (if (not (vequal vals (vct (+ .23 .23 1.53) (+ .24 1.24) (+ .25 1.25) 1 1 0 0 .23 .64 .25)))
+		  (snd-display ";mix-sound-data 1 vals: ~A" vals)))
+	    (if (not (mix? mix-id)) (snd-display ";mix-sound-data tagged 1: ~A" mix-id))
+	    (if (not (= trk (mix-track mix-id))) (snd-display ";mix-sound-data track: ~A ~A" trk (mix-track mix-id)))))
+	
+	(close-sound ind))
+      
+      (let* ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 4 "mix-* tests" 5)))
+	(map-channel (lambda (y) 0.4) 0 5 ind 0)
+	(map-channel (lambda (y) 0.5) 0 5 ind 1)
+	(map-channel (lambda (y) 0.6) 0 5 ind 2)
+	(map-channel (lambda (y) 0.7) 0 5 ind 3)
+	
+	(mix-frame (make-frame 4 1 2 3 4))
+	(if (not (vequal (channel->vct 0 #f ind 0) (vct 1.4 .4 .4 .4 .4)))
+	    (snd-display ";4chn mix-frame 0: ~A" (channel->vct 0 #f ind 0)))
+	(if (not (vequal (channel->vct 0 #f ind 1) (vct 2.5 .5 .5 .5 .5)))
+	    (snd-display ";4chn mix-frame 1: ~A" (channel->vct 0 #f ind 1)))
+	(if (not (vequal (channel->vct 0 #f ind 2) (vct 3.6 .6 .6 .6 .6)))
+	    (snd-display ";4chn mix-frame 2: ~A" (channel->vct 0 #f ind 2)))
+	(if (not (vequal (channel->vct 0 #f ind 3) (vct 4.7 .7 .7 .7 .7)))
+	    (snd-display ";4chn mix-frame 3: ~A" (channel->vct 0 #f ind 3)))
+	
+	(mix-frame (make-frame 4 1 2 3 4) 8)
+	
+	(if (not (vequal (channel->vct 0 #f ind 0) (vct 1.4 .4 .4 .4 .4 0 0 0 1)))
+	    (snd-display ";4chn mix-frame 0 0: ~A" (channel->vct 0 #f ind 0)))
+	(if (not (vequal (channel->vct 0 #f ind 1) (vct 2.5 .5 .5 .5 .5 0 0 0 2)))
+	    (snd-display ";4chn mix-frame 0 1: ~A" (channel->vct 0 #f ind 1)))
+	(if (not (vequal (channel->vct 0 #f ind 2) (vct 3.6 .6 .6 .6 .6 0 0 0 3)))
+	    (snd-display ";4chn mix-frame 0 2: ~A" (channel->vct 0 #f ind 2)))
+	(if (not (vequal (channel->vct 0 #f ind 3) (vct 4.7 .7 .7 .7 .7 0 0 0 4)))
+	    (snd-display ";4chn mix-frame 0 3: ~A" (channel->vct 0 #f ind 3)))
+	
+	(revert-sound ind)
+	(map-channel (lambda (y) 0.4) 0 5 ind 0)
+	(map-channel (lambda (y) 0.5) 0 5 ind 1)
+	(map-channel (lambda (y) 0.6) 0 5 ind 2)
+	(map-channel (lambda (y) 0.7) 0 5 ind 3)
+	
+	(let ((sd (make-sound-data 4 10)))
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn 4))
+	    (do ((i 0 (1+ i)))
+		((= i 10))
+	      (sound-data-set! sd chn i (+ i (* chn 10)))))
+	  (mix-sound-data sd 1 2)
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn 4))
+	    (let ((vals (channel->vct 0 #f ind chn))
+		  (base-val (list-ref (list .4 .5 .6 .7) chn)))
+	      (if (not (vequal vals (vct base-val 
+					 (+ base-val (* chn 10)) (+ 1 base-val (* chn 10))
+					 base-val base-val)))
+		  (snd-display ";4chn ~A mix-sound-data vals: ~A" chn vals))))
+	  
+	  (let ((mix-id (mix-sound-data sd 8 2 ind #t)))
+	    (if (not (mix? mix-id)) (snd-display ";4chn mix-sound-data 2nd mix: ~A" mix-id))
+	    (if (not (mix? (1+ mix-id))) (snd-display ";4chn mix-sound-data 2nd mix 1: ~A" mix-id))
+	    (do ((chn 0 (1+ chn)))
+		((= chn 4))
+	      (let ((vals (channel->vct 0 #f ind chn))
+		    (base-val (list-ref (list .4 .5 .6 .7) chn)))
+		(if (not (vequal vals (vct base-val 
+					   (+ base-val (* chn 10)) (+ 1 base-val (* chn 10))
+					   base-val base-val 0 0 0
+					   (+ 0 (* chn 10)) (+ 1 (* chn 10)))))
+		    (snd-display ";4chn ~A mix-sound-data 8 vals: ~A" chn vals))))))
+	
+	(close-sound ind))
+
+      (mus-sound-forget "oboe.snd")
+      (let ((ind (open-sound "oboe.snd"))
+	    (len 0))
+	(let ((val (scan-sound-frames 
+		    (lambda (fr)
+		      (set! len (mus-length fr))
+		      (> (frame-ref fr 0) .1)))))
+	  (if (not (equal? val (list #t 4423)))
+	      (snd-display ";scan-sound-frames oboe: ~A" val))
+	  (if (not (= len 1)) (snd-display ";scan-sound-frames frame len: ~A" len)))
+	
+	(set! len 0)
+	(let ((mx (maxamp)))
+	  (map-sound-frames
+	   (lambda (fr)
+	     (set! len (mus-length fr))
+	     (frame* fr 2.0)))
+	  (if (fneq (maxamp) (* 2 mx)) (snd-display ";map-sound-frames max: ~A ~A" mx (maxamp)))
+	  (if (not (= (edit-position ind 0) 1)) (snd-display ";map-sound-frames edpos: ~A" (edit-position ind 0)))
+	  (if (not (= len 1)) (snd-display ";map-sound-frames frame len: ~A" len)))
+	(close-sound ind))
+
+      (mus-sound-forget "4.aiff")
+      (let ((ind (open-sound "4.aiff"))
+	    (len 0))
+	(if (not (= (chans ind) 4)) (snd-display ";chans 4.aiff: ~A" (chans ind)))
+	(let ((val (scan-sound-frames 
+		    (lambda (fr)
+		      (set! len (mus-length fr))
+		      (> (frame-ref fr 3) .1)))))
+	  (if (not (equal? val (list #t 21244)))
+	      (snd-display ";4 scan-sound-frames: ~A" val))
+	  (if (not (= len 4)) (snd-display ";4 scan-sound-frames frame len: ~A" len)))
+	
+	(set! len 0)
+	(let ((mx (maxamp ind #t)))
+	  (map-sound-frames
+	   (lambda (fr)
+	     (set! len (mus-length fr))
+	     (frame* fr 2.0))
+	   800000 #f ind)
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn 4))
+	    (if (fneq (maxamp ind chn) (* 2 (list-ref mx chn)))
+		(snd-display ";4:~D map-sound-frames max: ~A ~A" chn mx (maxamp ind chn)))
+	    (if (not (= (edit-position ind chn) 1)) 
+		(snd-display ";4:~D map-sound-frames edpos: ~A" chn (edit-position ind chn))))
+	  (if (not (= len 4)) (snd-display ";4 map-sound-frames frame len: ~A" len)))
+	(close-sound ind))
+
+      (let ((sd (make-sound-data 4 10)))
+	(do ((chn 0 (1+ chn)))
+	    ((= chn 4))
+	  (do ((i 0 (1+ i)))
+	      ((= i 10))
+	    (sound-data-set! sd chn i (+ i (* chn 10)))))
+	(let ((sd1 (sound-data-copy sd)))
+	  (if (not (equal? sd sd1))
+	      (snd-display ";sound-data-copy not equal? ~A ~A" sd sd1))
+	  (sound-data-scale! sd1 2.0)
+	  (let ((sd2 (make-sound-data 4 10)))
+	    (do ((chn 0 (1+ chn)))
+		((= chn 4))
+	      (do ((i 0 (1+ i)))
+		  ((= i 10))
+		(sound-data-set! sd2 chn i (* 2 (+ i (* chn 10))))))
+	    (if (not (equal? sd2 sd1)) (snd-display ";sound-data-scale! not equal? ~%    ~A~%    ~A" sd1 sd2))
+	    (if (equal? sd2 sd) (snd-display ";sound-data-scale! crosstalk??")))
+	  (sound-data-multiply! sd sd)
+	  (let ((sd2 (make-sound-data 4 10)))
+	    (do ((chn 0 (1+ chn)))
+		((= chn 4))
+	      (do ((i 0 (1+ i)))
+		  ((= i 10))
+		(sound-data-set! sd2 chn i (* (+ i (* chn 10)) (+ i (* chn 10))))))
+	    (if (not (equal? sd2 sd)) (snd-display ";sound-data-multiply! not equal? ~%    ~A~%     ~A" sd sd2)))
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn 4))
+	    (do ((i 0 (1+ i)))
+		((= i 10))
+	      (sound-data-set! sd chn i (+ i (* chn 10)))))
+	  (sound-data-offset! sd 1.0)
+	  (let ((sd2 (make-sound-data 4 10)))
+	    (do ((chn 0 (1+ chn)))
+		((= chn 4))
+	      (do ((i 0 (1+ i)))
+		  ((= i 10))
+		(sound-data-set! sd2 chn i (+ 1 i (* chn 10)))))
+	    (if (not (equal? sd2 sd)) (snd-display ";sound-data-offset! not equal? ~%    ~A~%     ~A" sd sd2)))
+	  (let ((sd3 (sound-data-reverse sd)))
+	    (let ((sd2 (make-sound-data 4 10)))
+	      (do ((chn 0 (1+ chn)))
+		  ((= chn 4))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (sound-data-set! sd2 chn i (+ 1 (- 9 i) (* chn 10)))))
+	      (if (not (equal? sd2 sd3)) (snd-display ";sound-data-reverse not equal? ~%    ~A~%     ~A" sd3 sd2)))
+	    (sound-data-add! sd sd3)
+	    (do ((chn 0 (1+ chn)))
+		((= chn 4))
+	      (do ((i 0 (1+ i)))
+		  ((= i 10))
+		(sound-data-set! sd1 chn i (+ 1 10 (* chn 20)))))
+	    (if (not (equal? sd1 sd)) (snd-display ";sound-data-add! not equal? ~%    ~A~%     ~A" sd sd1)))
+	  
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn 4))
+	    (do ((i 0 (1+ i)))
+		((= i 10))
+	      (sound-data-set! sd chn i (+ i (* chn 10)))
+	      (sound-data-set! sd1 chn i 1)))
+	  (let ((sd2 (sound-data-copy sd)))
+	    (sound-data+ sd 1)
+	    (sound-data-add! sd2 sd1)
+	    (if (not (equal? sd sd2)) (snd-display ";sound-data+ sd 1: ~%    ~A~%    ~A" sd sd2))
+	    (sound-data+ 1 sd)
+	    (sound-data-add! sd2 sd1)
+	    (if (not (equal? sd sd2)) (snd-display ";sound-data+ 1 sd: ~%    ~A~%    ~A" sd sd2))
+	    (sound-data+ sd sd1)
+	    (sound-data-add! sd2 sd1)
+	    (if (not (equal? sd sd2)) (snd-display ";sound-data+ sd sd: ~%    ~A~%    ~A" sd sd2)))
+	  
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn 4))
+	    (do ((i 0 (1+ i)))
+		((= i 10))
+	      (sound-data-set! sd chn i (+ i (* chn 10)))
+	      (sound-data-set! sd1 chn i 2)))
+	  (let ((sd2 (sound-data-copy sd)))
+	    (sound-data* sd 2)
+	    (sound-data-multiply! sd2 sd1)
+	    (if (not (equal? sd sd2)) (snd-display ";sound-data* sd 1: ~%    ~A~%    ~A" sd sd2))
+	    (sound-data* 2 sd)
+	    (sound-data-multiply! sd2 sd1)
+	    (if (not (equal? sd sd2)) (snd-display ";sound-data* 1 sd: ~%    ~A~%    ~A" sd sd2))
+	    (sound-data* sd sd1)
+	    (sound-data-add! sd2 sd2)
+	    (if (not (equal? sd sd2)) (snd-display ";sound-data* sd sd: ~%    ~A~%    ~A" sd sd2)))))
       
       (run-hook after-test-hook 21)
       ))
@@ -46057,7 +46313,7 @@ EDITS: 1
 	      (let ((val (run (lambda () (format #f "~A ~A" (string-append "a" "b") (number? "c"))))))
 		(if (not (string=? val "ab #f")) (snd-display ";run format ab #f l: ~A" val)))
 	      (let ((val (run (lambda () (format #f "~A ~A" (make-sound-data 1 1) (make-oscil))))))
-		(if (not (string=? val "#<sound-data: 1 chan, 1 frame> #<oscil freq: 440.000Hz, phase: 0.000>"))
+		(if (not (string=? val "#<sound-data[chans=1, length=1]:\n    (0.000)> #<oscil freq: 440.000Hz, phase: 0.000>"))
 		    (snd-display ";run format sd osc: ~A" val)))
 	      (let ((val (run (lambda () (format #f "~A ~A" (+ 1 2) (* 3 4))))))
 		(if (not (string=? val "3 12")) (snd-display ";run format 3 12 l: ~A" val)))
@@ -46097,16 +46353,16 @@ EDITS: 1
 	      (if (not (string=? val "hi")) (snd-display ";run opt-if-not 123: ~A" val)))
 	    (let ((sd (make-sound-data 1 1))) 
 	      (let ((val (run (lambda () (format #f "~A" sd)))))
-		(if (not (string=? val "#<sound-data: 1 chan, 1 frame>"))
+		(if (not (string=? val "#<sound-data[chans=1, length=1]:\n    (0.000)>"))
 		    (snd-display ";run format sound-data 0: ~A" val))))
 	    (let ((val (run-eval '(format #f "~A" (make-sound-data 1 1)))))
-	      (if (not (string=? val "#<sound-data: 1 chan, 1 frame>"))
+	      (if (not (string=? val "#<sound-data[chans=1, length=1]:\n    (0.000)>"))
 		  (snd-display ";run format sound-data 1: ~A" val)))
 	    (let ((val (run-eval '(lambda (arg) 
 				    (declare (arg sound-data)) 
 				    (format #f "~A" arg)) 
 				 (make-sound-data 1 1))))
-	      (if (not (string=? val "#<sound-data: 1 chan, 1 frame>"))
+	      (if (not (string=? val "#<sound-data[chans=1, length=1]:\n    (0.000)>"))
 		  (snd-display ";run format sound-data 2: ~A" val)))
 	    
 	    (let ((val (run-eval '(format #f "~A" (make-oscil)))))
@@ -63998,7 +64254,7 @@ EDITS: 1
 (display (format #f "~%;all done!~%~A" original-prompt))
 
 (set! (print-length) 64)
-(display (format "~%;times: ~A~%;total: ~A~%" timings (inexact->exact (round (- (real-time) overall-start-time)))))
+(display (format #f "~%;times: ~A~%;total: ~A~%" timings (inexact->exact (round (- (real-time) overall-start-time)))))
 
 ;2-Nov-06:  (17 16 34 28 982 5742 530 66 9670 1847 366 419 387 712 381 1111 2607 127 115 2692 960 573 4088 6166 3712 846 183 0 3975 0) 492
 ;4-Nov-06:  (17 16 35 28 973 45681 55948 73 81440 1941 483 1132 560 946 954 1185 13741 247 230 2714 1221 851 6188 6163 3885 4413 278 0 539195 0) 7717
@@ -64125,19 +64381,19 @@ EDITS: 1
 
 (if (file-exists? "../peaks/_home_bil_cl_storm.snd-peaks-0")
     (begin
-      (system (string-append "rm ../peaks/_home_bil_snd-8*"))
-      (system (string-append "rm ../peaks/_home_bil_cl_fmv*"))
-      (system (string-append "rm ../peaks/_home_bil_cl_test*"))
-      (system (string-append "rm ../peaks/_home_bil_cl_tmp*"))
-      (system (string-append "rm ../peaks/_home_bil_cl_hiho*"))
-      (system (string-append "rm ../peaks/_home_bil_test_*"))
-      (system (string-append "rm ../peaks/_home_bil_sf1_*"))
-      (system (string-append "rm ../peaks/_home_bil_clm_*"))
-      (system (string-append "rm ../peaks/_home_bil_gauche-snd_*"))
-      (system (string-append "rm ../peaks/_home_bil_forth-snd_*"))
-      (system (string-append "rm ../peaks/_home_bil_ruby-snd_*"))
-      (system (string-append "rm ../peaks/_home_bil_gtk-snd_*"))
-      (system (string-append "rm ../peaks/_home_bil_cl_new*"))))
+      (system "rm ../peaks/_home_bil_snd-8*")
+      (system "rm ../peaks/_home_bil_cl_fmv*")
+      (system "rm ../peaks/_home_bil_cl_test*")
+      (system "rm ../peaks/_home_bil_cl_tmp*")
+      (system "rm ../peaks/_home_bil_cl_hiho*")
+      (system "rm ../peaks/_home_bil_test_*")
+      (system "rm ../peaks/_home_bil_sf1_*")
+      (system "rm ../peaks/_home_bil_clm_*")
+      (system "rm ../peaks/_home_bil_gauche-snd_*")
+      (system "rm ../peaks/_home_bil_forth-snd_*")
+      (system "rm ../peaks/_home_bil_ruby-snd_*")
+      (system "rm ../peaks/_home_bil_gtk-snd_*")
+      (system "rm ../peaks/_home_bil_cl_new*")))
 
 (mus-sound-prune)
 (if (dialog-widgets)

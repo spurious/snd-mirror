@@ -312,7 +312,7 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
 
 ;;; play-sine and play-sines
 
-(define* (play-sine freq amp)
+(define (play-sine freq amp)
   "(play-sine freq amp) plays a 1 second sinewave at freq and amp"
   (let* ((audio-info (open-play-output 1 22050 #f 256))
 	 (audio-fd (car audio-info))
@@ -332,7 +332,7 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
 	  (mus-audio-close audio-fd))
 	#f)))
 
-(define* (play-sines freqs-and-amps)
+(define (play-sines freqs-and-amps)
   "(play-sines freqs-and-amps) produces a tone given its spectrum: (play-sines '((440 .4) (660 .3)))"
   (let* ((audio-info (open-play-output 1 22050 #f 256))
 	 (audio-fd (car audio-info))

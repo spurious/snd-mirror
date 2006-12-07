@@ -25,7 +25,6 @@
 ;;; sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ sound-data-copy sound-data-reverse
 
 
-;;; TODO: test frame.scm funcs [doc examples, doc sound-data stuff?]
 ;;; PERHAPS: make-track-frame-reader?
 ;;; DOC: sound-data as frame array (all chans together) or as vct array (chans separate)
 ;;; TODO: check all other code for frame-reader et al possibilities
@@ -187,7 +186,7 @@
 	  (do ((i 0 (1+ i)))
 	      ((= i chns) 
 	       sd)
-	    (vct->sound-data (channel->vct beg len snd i) sd i))))))
+	    (vct->sound-data (channel->vct beg len index i) sd i))))))
 
 (define* (sound-data->sound sd beg :optional dur snd)
   "(sound-data->sound sd beg :optional dur snd) places the contents of sound-data sd into sound snd starting at position beg for dur frames"
@@ -200,7 +199,7 @@
 	      (do ((i 0 (1+ i)))
 		  ((= i (chans index)) 
 		   sd)
-		(vct->channel (sound-data->vct sd i) beg ndur snd i)))))))
+		(vct->channel (sound-data->vct sd i) beg ndur index i)))))))
 
 
 
@@ -224,7 +223,7 @@
 	  (vector-set! fr +frame-reader-frame+ (make-frame chns))
 	  (do ((i 0 (1+ i)))
 	      ((= i chns))
-	    (vector-set! fr (+ i +frame-reader0+) (make-sample-reader beg snd i dir edpos)))
+	    (vector-set! fr (+ i +frame-reader0+) (make-sample-reader beg index i dir edpos)))
 	  fr))))
 
 (define (frame-reader? obj)
@@ -427,8 +426,6 @@
 		(insert-samples beg len (sound-data->vct sd chn v) index chn edpos #f "insert-sound-data")))))))
 
 
-;;; test stopped here
-
 (define* (mix-frame fr :optional (beg 0) snd)
   "(mix-frame fr :optional beg snd) mixes frame fr's data into sound snd (one sample in each channel) at beg"
   (if (not (frame? fr))
@@ -439,9 +436,9 @@
 	    (let ((chns (min (mus-length fr) (chans index))))
 	      (do ((chn 0 (1+ chn)))
 		  ((= chn chns))
-		(set! (sample beg snd chn) (+ (frame-ref fr chn) (sample beg snd chn)))))))))
+		(set! (sample beg index chn) (+ (frame-ref fr chn) (sample beg index chn)))))))))
 
-(define* (mix-sound-data sd :optional (beg 0) dur snd tagged trk)
+(define* (mix-sound-data sd :optional (beg 0) dur snd tagged (trk 0))
   "(mix-sound-data sd :optional beg dur snd tagged trk) mixes the contents of sound-data sd into sound snd at beg"
   (if (not (sound-data? sd))
       (throw 'wrong-type-arg (list "mix-sound-data" sd))
@@ -450,39 +447,44 @@
 	    (throw 'no-such-sound (list "mix-sound-data" snd))
 	    (let* ((chns (min (sound-data-chans sd) (chans index)))
 		   (len (or dur (sound-data-length sd)))
-		   (v (make-vct len)))
+		   (v (make-vct len))
+		   (mix-id #f))
 	      (do ((chn 0 (1+ chn)))
 		  ((= chn chns))
-		(mix-vct (sound-data->vct sd chn v) beg snd chn tagged "mix-sound-data" trk)))))))
+		(let ((id (mix-vct (sound-data->vct sd chn v) beg index chn tagged "mix-sound-data" (or trk 0))))
+		  (if (not mix-id) (set! mix-id id))))
+	      mix-id)))))
 
   
 (define* (scan-sound-frames func :optional (beg 0) dur snd)
   "(scan-sound-frames func :optional beg dur snd) is a version of scan-channel that passes func a frame on each call, rather than a sample"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let ((reader (make-frame-reader beg index))
-	      (result #f)
-	      (len (frames index))
-	      (end (if dur (min len (+ beg dur)) len)))
+	(let* ((reader (make-frame-reader beg index))
+	       (result #f)
+	       (len (frames index))
+	       (end (if dur (min len (+ beg dur)) len)))
 	  (do ((i beg (1+ i)))
-	      ((or result (= i end)) 
-	       result)
+	      ((or result (= i end))
+	       (and result
+		    (list result (1- i))))
 	    (set! result (func (read-frame reader)))))
 	(throw 'no-such-sound (list "scan-sound-frames" snd)))))
 
-(define* (map-sound-frames func :optional beg dur snd)
+(define* (map-sound-frames func :optional (beg 0) dur snd)
   "(map-sound-frames func :optional beg dur snd) is a version of map-channel that passes func a frame on each call, rather than a sample"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let* ((reader (make-frame-reader beg index))
+	(let* ((out-chans (chans index))
+	       (reader (make-frame-reader beg index))
 	       (filename (snd-tempnam))
-	       (writer (make-frame->file filename))
+	       (writer (make-frame->file filename out-chans))
 	       (len (frames index))
 	       (end (if dur (min len (+ beg dur)) len))
 	       (loc 0))
 	  (do ((i beg (1+ i))) 
 	      ((= i end))
-	    (let ((result (func (reader))))
+	    (let ((result (func (next-frame reader))))
 	      (if result 
 		  (begin
 		    (frame->file writer loc result)
@@ -491,7 +493,7 @@
 	  (free-frame-reader reader)
 	  (do ((i 0 (1+ i)))
 	      ((= i (chans index)))
-	    (set! (samples beg loc index i #f "map-sound" i #f #t) filename))) ; edpos = #f, auto-delete = #t
+	    (set! (samples beg loc index i #f "map-sound" i #f (= i 0)) filename))) ; edpos = #f, auto-delete = chan=0
 	(throw 'no-such-sound (list "map-sound-frames" snd)))))
 
 
@@ -566,8 +568,8 @@
 	((= chn chns))
       (do ((i 0 (1+ i))
 	   (j (1- len) (1- j)))
-	  ((i >= j))
-	(let ((temp (sound-data-ref sd i)))
+	  ((>= i j))
+	(let ((temp (sound-data-ref sd chn i)))
 	  (sound-data-set! nsd chn i (sound-data-ref sd chn j))
 	  (sound-data-set! nsd chn j temp))))
     nsd))

@@ -553,13 +553,35 @@ void sound_data_free(sound_data *v)
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(sound_data, free_sound_data, sound_data_free)
 
-char *sound_data_to_string(sound_data *v)
+char *sound_data_to_string(sound_data *sd)
 {
   char *buf;
-  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(buf, PRINT_BUFFER_SIZE, "#<sound-data: %d chan%s, %d frame%s>",
-	       v->chans, (v->chans == 1) ? "" : "s",
-	       v->length, (v->length == 1) ? "" : "s");
+  int len, chans;
+  char flt[24];
+  if (sd == NULL) return(NULL);
+  len = mus_vct_print_length();
+  if (len > sd->length) len = sd->length;
+  chans = sd->chans;
+  buf = (char *)CALLOC(64 + len * 24 * chans, sizeof(char));
+  sprintf(buf, "#<sound-data[chans=%d, length=%d]:", sd->chans, sd->length);
+  if (len > 0)
+    {
+      int i, chn;
+      for (chn = 0; chn < chans; chn++)
+	{
+	  mus_snprintf(flt, 24, "\n    (%.3f", sd->data[chn][0]);
+	  strcat(buf, flt);
+	  for (i = 1; i < len; i++)
+	    {
+	      mus_snprintf(flt, 24, " %.3f", sd->data[chn][i]);
+	      strcat(buf, flt);
+	    }
+	  if (sd->length > mus_vct_print_length())
+	    strcat(buf, " ...");
+	  strcat(buf, ")");
+	}
+    }
+  strcat(buf, ">");
   return(buf);
 }
 

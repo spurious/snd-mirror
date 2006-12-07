@@ -4299,18 +4299,18 @@ should be sndlib identifiers:\n  " make_sample_to_file_example
 
   int df;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_sample_to_file, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_2, S_make_sample_to_file, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(out_format), out_format, XEN_ARG_3, S_make_sample_to_file, "an integer (data format id)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(out_type), out_type, XEN_ARG_4, S_make_sample_to_file, "an integer (header type id)");
-  df = XEN_TO_C_INT(out_format);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, XEN_ARG_2, S_make_sample_to_file, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_format), out_format, XEN_ARG_3, S_make_sample_to_file, "an integer (data format id)");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_type), out_type, XEN_ARG_4, S_make_sample_to_file, "an integer (header type id)");
+  df = XEN_TO_C_INT_OR_ELSE(out_format, MUS_OUT_FORMAT);
   if (MUS_DATA_FORMAT_OK(df))
     {
       int ht;
-      ht = XEN_TO_C_INT(out_type);
+      ht = XEN_TO_C_INT_OR_ELSE(out_type, MUS_NEXT);
       if (MUS_HEADER_TYPE_OK(ht))
 	{
 	  int chns;
-	  chns = XEN_TO_C_INT(chans);
+	  chns = XEN_TO_C_INT_OR_ELSE(chans, 1);
 	  if (chns > 0)
 	    {
 	      mus_any *rgen;
@@ -4414,13 +4414,13 @@ should be sndlib identifiers:\n  " make_frame_to_file_example
 
   mus_any *fgen = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_frame_to_file, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_2, S_make_frame_to_file, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(out_format), out_format, XEN_ARG_3, S_make_frame_to_file, "an integer (data format id)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(out_type), out_type, XEN_ARG_4, S_make_frame_to_file, "an integer (header-type id)");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, XEN_ARG_2, S_make_frame_to_file, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_format), out_format, XEN_ARG_3, S_make_frame_to_file, "an integer (data format id)");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_type), out_type, XEN_ARG_4, S_make_frame_to_file, "an integer (header-type id)");
   fgen = mus_make_frame_to_file_with_comment(XEN_TO_C_STRING(name),
-					     XEN_TO_C_INT(chans),
-					     XEN_TO_C_INT(out_format),
-					     XEN_TO_C_INT(out_type),
+					     XEN_TO_C_INT_OR_ELSE(chans, 1),
+					     XEN_TO_C_INT_OR_ELSE(out_format, MUS_OUT_FORMAT),
+					     XEN_TO_C_INT_OR_ELSE(out_type, MUS_NEXT),
 					     (XEN_STRING_P(comment)) ? XEN_TO_C_STRING(comment) : NULL);
   if (fgen) return(xen_return_first(mus_xen_to_object(mus_any_to_mus_xen(fgen)), name));
   return(XEN_FALSE);
@@ -6967,13 +6967,13 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_make_file_to_frame,      g_make_file_to_frame_w,      1, 1, 0, H_make_file_to_frame);
   XEN_DEFINE_PROCEDURE(S_file_to_frame,           g_file_to_frame_w,           2, 1, 0, H_file_to_frame);
   XEN_DEFINE_PROCEDURE(S_sample_to_file_p,        g_sample_to_file_p_w,        1, 0, 0, H_sample_to_file_p);
-  XEN_DEFINE_PROCEDURE(S_make_sample_to_file,     g_make_sample_to_file_w,     4, 1, 0, H_make_sample_to_file);
+  XEN_DEFINE_PROCEDURE(S_make_sample_to_file,     g_make_sample_to_file_w,     1, 4, 0, H_make_sample_to_file);
   XEN_DEFINE_PROCEDURE(S_continue_sample_to_file, g_continue_sample_to_file_w, 1, 0, 0, H_continue_sample_to_file);
   XEN_DEFINE_PROCEDURE(S_continue_frame_to_file,  g_continue_frame_to_file_w,  1, 0, 0, H_continue_frame_to_file);
   XEN_DEFINE_PROCEDURE(S_sample_to_file,          g_sample_to_file_w,          4, 0, 0, H_sample_to_file);
   XEN_DEFINE_PROCEDURE(S_frame_to_file_p,         g_frame_to_file_p_w,         1, 0, 0, H_frame_to_file_p);
   XEN_DEFINE_PROCEDURE(S_frame_to_file,           g_frame_to_file_w,           3, 0, 0, H_frame_to_file);
-  XEN_DEFINE_PROCEDURE(S_make_frame_to_file,      g_make_frame_to_file_w,      4, 1, 0, H_make_frame_to_file);
+  XEN_DEFINE_PROCEDURE(S_make_frame_to_file,      g_make_frame_to_file_w,      1, 4, 0, H_make_frame_to_file);
   XEN_DEFINE_PROCEDURE(S_mus_input_p,             g_input_p_w,                 1, 0, 0, H_mus_input_p);
   XEN_DEFINE_PROCEDURE(S_mus_output_p,            g_output_p_w,                1, 0, 0, H_mus_output_p);
   XEN_DEFINE_PROCEDURE(S_in_any,                  g_in_any_w,                  3, 0, 0, H_in_any);

@@ -4866,7 +4866,6 @@ frame-&gt;sound places the contents of frame fr into sound snd at position pos.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="frametosounddata">frame-&gt;sound-data</a> <code>fr sd pos:optional sd</code>
 </td></tr><tr><td></td><td>
-
 frame-&gt;sound-data places the contents of its frame argument in its sound-data argument at position pos.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4894,7 +4893,7 @@ insert-frame inserts the frame of samples into sound snd (one sample in each cha
 </td></tr><tr><td></td><td>
 insert-sound-data inserts the sound-data (sd) contents into sound snd at beg.
 </td></tr><tr><td colspan=2 height=16></td></tr>
-
+<!-- TODO: insert multichan with-sound example -->
 
 <!-- insert-vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -4902,6 +4901,7 @@ insert-sound-data inserts the sound-data (sd) contents into sound snd at beg.
 </td></tr><tr><td></td><td>
 insert-vct inserts the vct data into sound snd at beg.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+<!-- TODO: mention insert-samples -->
 
 
 <!-- map-sound-frames -->
@@ -4910,6 +4910,7 @@ insert-vct inserts the vct data into sound snd at beg.
 </td></tr><tr><td></td><td>
 map-sound-frames is a version of <a href="extsnd.html#mapchannel">map-channel</a> that passes func a frame on each call, rather than a sample.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+<!-- TODO: ins output to frame + map example? -->
 
 
 <!-- mix-frame -->
@@ -4927,6 +4928,7 @@ mix-frame mixes the frame (fr) of samples into sound snd (one sample in each cha
 mix-sound-data mixes the contents of sound-data sd into sound snd at beg.  tagged determines whether
 the resulting mixes have tags, and trk is the track they are placed in (0 = none).
 </td></tr><tr><td colspan=2 height=16></td></tr>
+<!-- TODO: mix multichan with-sound example -->
 
 
 <!-- region->frame -->
@@ -4951,6 +4953,7 @@ region-&gt;sound-data returns a sound-data object containing the contents of the
 </td></tr><tr><td></td><td>
 scan-sound-frames is a version of <a href="extsnd.html#scanchannel">scan-channel</a> that passes func a frame on each call, rather than a sample.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+<!-- TODO: scan multichan (silence or note start) example -->
 
 
 <!-- sound-data->file -->
@@ -4959,6 +4962,7 @@ scan-sound-frames is a version of <a href="extsnd.html#scanchannel">scan-channel
 </td></tr><tr><td></td><td>
 sound-data-&gt;file places the contents of its sound-data argument <i>sd</i> in the newly created sound file <i>file</i>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+<!-- TODO: sound-data->file as selection-save-as example -->
 
 
 <!-- sound-data->frame -->
@@ -4976,6 +4980,7 @@ sound-data-&gt;frame places the contents of its sound-data argument at position 
 sound-data-&gt;sound places the contents of its sound-data argument sd into the sound snd starting at beg and going for dur frames.
 dur defaults to the sound-data object's length.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+<!-- TODO: set multichan with-sound example? -->
 
 
 <!-- sound->sound-data -->
@@ -4984,7 +4989,7 @@ dur defaults to the sound-data object's length.
 </td></tr><tr><td></td><td>
 sound-&gt;sound-data returns a sound-data object containing the contents of the sound snd starting from beg for dur frames.
 </td></tr><tr><td colspan=2 height=16></td></tr>
-
+<!-- TODO: selection->sound-data? -->
 
 <!-- sound->frame -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
