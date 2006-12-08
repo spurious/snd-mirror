@@ -4891,17 +4891,27 @@ insert-frame inserts the frame of samples into sound snd (one sample in each cha
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="insertsounddata">insert-sound-data</a> <code>sd :optional beg dur snd edpos</code>
 </td></tr><tr><td></td><td>
-insert-sound-data inserts the sound-data (sd) contents into sound snd at beg.
+insert-sound-data inserts the sound-data (sd) contents into sound snd at beg.  This provides a sound
+insertion function that automatically handles multichannel possibilities (unlike <a href="extsnd.html#insertsamples">insert-samples</a>).
+<pre>
+(insert-sound-data 
+ (<a href="clm.html#withtempsound">with-temp-sound</a> (:output (<a href="extsnd.html#makesounddata">make-sound-data</a> 2 (* 44100 2.0))
+		   :srate 44100
+		   :channels 2)
+   (do ((i 0 (1+ i)))    ; 20 fm-violin notes moving from channel 0 to channel 1
+       ((= i 20))
+     (<a href="sndscm.html#vdoc">fm-violin</a> (* i .1) .1 440 .1 :degree (* i (/ 90 20))))))
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
-<!-- TODO: insert multichan with-sound example -->
+
 
 <!-- insert-vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="insertvct">insert-vct</a> <codev :optional beg dur snd chn edpos</code>
 </td></tr><tr><td></td><td>
-insert-vct inserts the vct data into sound snd at beg.
+insert-vct inserts the vct data into sound snd at beg.  It is just a wrapper
+for <a href="extsnd.html#insertsamples">insert-samples</a> that puts the vct argument first.
 </td></tr><tr><td colspan=2 height=16></td></tr>
-<!-- TODO: mention insert-samples -->
 
 
 <!-- map-sound-frames -->
@@ -4909,8 +4919,11 @@ insert-vct inserts the vct data into sound snd at beg.
 <a class=def name="mapsoundframes">map-sound-frames</a> <code>func :optional beg dur snd</code>
 </td></tr><tr><td></td><td>
 map-sound-frames is a version of <a href="extsnd.html#mapchannel">map-channel</a> that passes func a frame on each call, rather than a sample.
+<pre>
+    (map-sound-frames (lambda (fr) (frame* fr 2.0)))
+</pre>
+is another way to scale a sound by 2.0.
 </td></tr><tr><td colspan=2 height=16></td></tr>
-<!-- TODO: ins output to frame + map example? -->
 
 
 <!-- mix-frame -->
@@ -4927,8 +4940,8 @@ mix-frame mixes the frame (fr) of samples into sound snd (one sample in each cha
 </td></tr><tr><td></td><td>
 mix-sound-data mixes the contents of sound-data sd into sound snd at beg.  tagged determines whether
 the resulting mixes have tags, and trk is the track they are placed in (0 = none).
+See <a href="#insertsounddata">insert-sound-data</a> for an example that could easily be changed to use mixing instead.
 </td></tr><tr><td colspan=2 height=16></td></tr>
-<!-- TODO: mix multichan with-sound example -->
 
 
 <!-- region->frame -->
@@ -4953,7 +4966,6 @@ region-&gt;sound-data returns a sound-data object containing the contents of the
 </td></tr><tr><td></td><td>
 scan-sound-frames is a version of <a href="extsnd.html#scanchannel">scan-channel</a> that passes func a frame on each call, rather than a sample.
 </td></tr><tr><td colspan=2 height=16></td></tr>
-<!-- TODO: scan multichan (silence or note start) example -->
 
 
 <!-- sound-data->file -->
@@ -4961,8 +4973,11 @@ scan-sound-frames is a version of <a href="extsnd.html#scanchannel">scan-channel
 <a class=def name="sounddatatofile">sound-data-&gt;file</a> <code>sd file :optional (srate 22050) (comment "")</code>
 </td></tr><tr><td></td><td>
 sound-data-&gt;file places the contents of its sound-data argument <i>sd</i> in the newly created sound file <i>file</i>.
+<pre>
+  (sound-data-&gt;file (sound-&gt;sound-data 44100 44100) "test.snd" 44100)
+</pre>
+writes the sound data in the currently selected sound between seconds 1 and 2 to "test.snd".
 </td></tr><tr><td colspan=2 height=16></td></tr>
-<!-- TODO: sound-data->file as selection-save-as example -->
 
 
 <!-- sound-data->frame -->
@@ -4979,8 +4994,9 @@ sound-data-&gt;frame places the contents of its sound-data argument at position 
 </td></tr><tr><td></td><td>
 sound-data-&gt;sound places the contents of its sound-data argument sd into the sound snd starting at beg and going for dur frames.
 dur defaults to the sound-data object's length.
+See <a href="#insertsounddata">insert-sound-data</a> for an example that could easily be changed to use this 
+function (and replacement, of course, rather than insertion).
 </td></tr><tr><td colspan=2 height=16></td></tr>
-<!-- TODO: set multichan with-sound example? -->
 
 
 <!-- sound->sound-data -->
@@ -4988,8 +5004,12 @@ dur defaults to the sound-data object's length.
 <a class=def name="soundtosounddata">sound-&gt;sound-data</a> <code>beg dur :optional snd</code>
 </td></tr><tr><td></td><td>
 sound-&gt;sound-data returns a sound-data object containing the contents of the sound snd starting from beg for dur frames.
+<pre>
+  (sound-data-&gt;sound (sound-data* (sound-&gt;sound-data) 2.0))
+</pre>
+is yet another way to scale a sound by 2.0.
 </td></tr><tr><td colspan=2 height=16></td></tr>
-<!-- TODO: selection->sound-data? -->
+
 
 <!-- sound->frame -->
 <tr><td colspan=2 bgcolor="#f6f8ff">

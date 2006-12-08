@@ -28,6 +28,7 @@
 ;;; PERHAPS: make-track-frame-reader?
 ;;; DOC: sound-data as frame array (all chans together) or as vct array (chans separate)
 ;;; TODO: check all other code for frame-reader et al possibilities
+;;; TODO: need snd-run support for frame-readers (and map-frame frame return?)
 
 (provide 'snd-frame.scm)
 
@@ -111,7 +112,7 @@
 	nfr)))
 
 
-(define (frame->sound-data fr sd pos)
+(define* (frame->sound-data fr sd :optional (pos 0))
   "(frame->sound-data fr sd pos) copies the contents of frame fr into the sound-data sd at position pos"
   (if (not (frame? fr))
       (throw 'wrong-type-arg (list "frame->sound-data" fr))
@@ -142,7 +143,7 @@
 		fr)))))
 
 
-(define* (sound->frame pos :optional snd)
+(define* (sound->frame :optional (pos 0) snd)
   "(sound->frame pos :optional snd) returns a frame containing the contents of the sound snd at position pos"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
@@ -153,7 +154,7 @@
 	       fr)
 	    (frame-set! fr i (sample pos index i)))))))
 
-(define* (frame->sound fr pos :optional snd)
+(define* (frame->sound fr :optional (pos 0) snd)
   "(frame->sound fr pos :optional snd) places the contents of frame fr into sound snd at position pos"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
@@ -175,7 +176,7 @@
 	  (frame-set! fr i (region-sample pos reg i))))))
 
 
-(define* (sound->sound-data beg dur :optional snd)
+(define* (sound->sound-data :optional (beg 0) dur snd)
   "(sound->sound-data beg dur :optional snd) returns a sound-data object containing the samples in sound snd starting at position beg for dur frames"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
@@ -188,7 +189,7 @@
 	       sd)
 	    (vct->sound-data (channel->vct beg len index i) sd i))))))
 
-(define* (sound-data->sound sd beg :optional dur snd)
+(define* (sound-data->sound sd :optional (beg 0) dur snd)
   "(sound-data->sound sd beg :optional dur snd) places the contents of sound-data sd into sound snd starting at position beg for dur frames"
   (if (not (sound-data? sd))
       (throw 'wrong-type-arg (list "sound-data->sound" sd))
@@ -438,7 +439,7 @@
 		  ((= chn chns))
 		(set! (sample beg index chn) (+ (frame-ref fr chn) (sample beg index chn)))))))))
 
-(define* (mix-sound-data sd :optional (beg 0) dur snd tagged (trk 0))
+(define* (mix-sound-data sd :optional (beg 0) dur snd tagged trk)
   "(mix-sound-data sd :optional beg dur snd tagged trk) mixes the contents of sound-data sd into sound snd at beg"
   (if (not (sound-data? sd))
       (throw 'wrong-type-arg (list "mix-sound-data" sd))
@@ -451,7 +452,7 @@
 		   (mix-id #f))
 	      (do ((chn 0 (1+ chn)))
 		  ((= chn chns))
-		(let ((id (mix-vct (sound-data->vct sd chn v) beg index chn tagged "mix-sound-data" (or trk 0))))
+		(let ((id (mix-vct (sound-data->vct sd chn v) beg index chn tagged "mix-sound-data" trk)))
 		  (if (not mix-id) (set! mix-id id))))
 	      mix-id)))))
 

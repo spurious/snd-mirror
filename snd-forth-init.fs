@@ -254,7 +254,7 @@ $" wave"          	       	 add-sound-file-extension drop
   enved-hook lambda: ( en pt x y reason -- en'|#f )
     { en pt x y reason }
     reason enved-move-point = if
-      x en car f> x en -2 list-ref f< and if
+      x en car f> x en -2 list-ref f< && if
 	en en pt 2* list-ref x #f #f stretch-envelope { new-en }
 	new-en pt 2* 1+ y list-set!
 	new-en

@@ -6977,6 +6977,7 @@ Float chn_sample(off_t samp, chan_info *cp, int pos)
 { 
   snd_fd *sf;
   Float val = 0.0;
+  /* pos is assumed to be right here, not AT_CURRENT_EDIT_POSITION for example */
   if ((!(cp->active)) || (samp < 0) || (pos < 0) || (pos >= cp->edit_size) || (samp >= cp->samples[pos])) return(0.0);
   /* try the quick case */
   if (pos == 0)

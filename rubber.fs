@@ -2,7 +2,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Jan 06 05:32:57 CET 2006
-\ Changed: Tue Nov 28 23:23:20 CET 2006
+\ Changed: Wed Dec 06 14:52:22 CET 2006
 
 \ Commentary:
 \
@@ -59,9 +59,9 @@ hide
   snd chn #f frames 0 ?do
     sr0 next-sample { samp1 }
     samp0 f0<=
-    samp1 f0>          and
-    i last-cross - 4 > and
-    sum silence f>     and if
+    samp1 f0>          &&
+    i last-cross - 4 > &&
+    sum silence f>     && if
       crosses 1+ to crosses
       i to last-cross
       0.0 to sum
@@ -107,9 +107,9 @@ hide
   snd chn #f frames 0 ?do
     sr0 next-sample { samp1 }
     samp0 f0<=
-    samp1 f0>           and
-    i last-cross - 40 > and
-    sum silence f>      and if
+    samp1 f0>           &&
+    i last-cross - 40 > &&
+    sum silence f>      && if
       i to last-cross
       0.0 to sum
       cross-samples i cycle-set!
@@ -128,7 +128,7 @@ hide
     data autocorrelate drop
     len4 1 ?do
       data i    vct-ref data i 1+  vct-ref f<
-      data i 1+ vct-ref data i 2 + vct-ref f> and if
+      data i 1+ vct-ref data i 2 + vct-ref f> && if
 	i 2* to autolen
 	leave
       then
@@ -207,11 +207,11 @@ hide
     cur to best-mark
     cross-periods best-mark array-ref handled + to handled
     handled needed-samps <
-    handled needed-samps - needed-samps old-handled - < or if
+    handled needed-samps - needed-samps old-handled - < || if
       edits best-mark array-push drop
     then
     cross-weights best-mark 1000.0 array-set!
-    edits length crosses = handled needed-samps >= or
+    edits length crosses = handled needed-samps >= ||
   until
   edits length crosses >= if needed-samps handled f/ fceil f>s else 1 then { mult }
   0 { changed-len }

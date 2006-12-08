@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Wed Sep 13 03:42:31 CEST 2006
+\ Changed: Thu Dec 07 05:18:56 CET 2006
 
 \ Commentary:
 
@@ -48,6 +48,7 @@
 
 require clm
 require env
+require rgb
 
 \ #( '( snd0 chn0 ) '( snd0 chn1 ) ... )
 : all-chans ( -- array-of-lists )
@@ -60,28 +61,31 @@ require env
   ary
 ;
 
-\ 5 == notebook widget
-: close-sound-extend ( snd -- )
-  { snd }
-  main-widgets 5 list-ref false? unless
-    0 { idx }
-    sounds empty? unless sounds snd list-index to idx then
-    snd close-sound drop
-    sounds empty? unless
-      sounds length 1 = if
-	sounds car
-      else 
-	idx sounds length < if
-	  sounds idx list-ref
-	else
-	  sounds last-pair car
-	then
-      then set-selected-sound drop
+\ Also defined in clm.fs.
+[undefined] close-sound-extend [if]
+  \ 5 == notebook widget
+  : close-sound-extend ( snd -- )
+    { snd }
+    main-widgets 5 list-ref false? unless
+      0 { idx }
+      sounds empty? unless sounds snd list-index to idx then
+      snd close-sound drop
+      sounds empty? unless
+	sounds length 1 = if
+	  sounds car
+	else 
+	  idx sounds length < if
+	    sounds idx list-ref
+	  else
+	    sounds last-pair car
+	  then
+	then set-selected-sound drop
+      then
+    else
+      snd close-sound drop
     then
-  else
-    snd close-sound drop
-  then
-;
+  ;
+[then]
 
 : snd-snd ( snd|#f -- snd )
   { snd }
@@ -112,22 +116,6 @@ require env
 \
 \ Snd-7 compatibility stuff
 \ 
-
-00 constant color-map-black-and-white
-01 constant color-map-gray
-02 constant color-map-hot
-03 constant color-map-cool
-04 constant color-map-bone
-05 constant color-map-copper
-06 constant color-map-pink
-07 constant color-map-jet
-08 constant color-map-prism
-09 constant color-map-autumn
-10 constant color-map-winter
-11 constant color-map-spring
-12 constant color-map-summer
-13 constant color-map-rainbow
-14 constant color-map-flag
 
 : mus-a0 ( gen -- val ) 0 mus-xcoeff ;
 : set-mus-a0 ( gen val -- val ) 0 swap set-mus-xcoeff ;
@@ -445,9 +433,9 @@ vct( 0.999969 0.990082 0.980347 0.970764 0.961304 0.951996 0.94281 0.933777 0.92
    0.293488 0.291931 0.290375 0.288818 0.287262 0.285736 0.284241 0.282715 0.28125 0.279755
    0.27829 0.276825 0.275391 0.273956 0.272552 0.271118 0.269745 0.268341 0.266968 0.265594
    0.264252 0.262909 0.261566 0.260223 0.258911 0.257599 0.256317
-   0.255035 0.25375 ) value moog-gaintable
+   0.255035 0.25375 ) constant moog-gaintable
 
-array( 0.0    -1.0
+#( 0.0        -1.0
    0.03311111 -0.9
    0.06457143 -0.8
    0.0960272  -0.7
@@ -469,7 +457,7 @@ array( 0.0    -1.0
    0.8096009   0.9
    0.87913835  0.95
    0.9933787   1.0
-   1.0         1.0 ) value moog-freqtable
+   1.0         1.0 ) constant moog-freqtable
 
 struct
   cell% field moog-freq
@@ -504,15 +492,15 @@ FREQ is the cutoff in Hz, Q sets the resonance: 0 = no resonance, 1: oscillates 
   0.25 sig gen moog-y @ f- f* { A }
   gen moog-s @ each { st }
     gen moog-fc @ A st f- f* A f+ -0.95 fmax 0.95 fmin to A
-    gen moog-s @ i A vct-set! drop
+    gen moog-s  @ i A vct-set! drop
     A st f+ -0.95 fmax 0.95 fmin to A
   end-each
   gen moog-fc @ 99.0 f* { ix }
   ix floor f>s { ixint }
   ix ixint f- { ixfrac }
   A gen moog-Q @ f*
-  1.0 ixfrac f- moog-gaintable ixint 99 + vct-ref f*
-  ixfrac moog-gaintable ixint 100 + vct-ref f* f+ f* gen moog-y !
+  1.0 ixfrac f- moog-gaintable ixint  99 + vct-ref f*
+      ixfrac    moog-gaintable ixint 100 + vct-ref f* f+ f* gen moog-y !
   A
 ;
 previous

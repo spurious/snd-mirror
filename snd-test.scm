@@ -377,6 +377,8 @@
 (if (not (defined? 'after-test-hook)) (define after-test-hook (make-hook 1)))
 (add-hook! before-test-hook (lambda (n)
 			      (dismiss-all-dialogs)
+			      (set! (clipping) #f)
+			      (set! (mus-clipping) #f) ; this cost me a morning of confusion!
 			      (set! test-number n)
 			      (vector-set! timings n (real-time))
 			      (snd-display ";test ~D" n)

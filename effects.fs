@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Wed Nov 15 04:25:11 CET 2006
+\ Changed: Wed Dec 06 14:50:42 CET 2006
 
 \ Commentary:
 \
@@ -4313,8 +4313,8 @@ hide
     samps samp0 cycle-set!
     samps vct-peak 0.1 fmax { local-max }
     samp0 samp1 f- fabs local-max f>
-    samp1 samp2 f- fabs local-max f> and
-    samp0 samp2 f- fabs local-max f2/ f< and if drop ( flag ) i leave then
+    samp1 samp2 f- fabs local-max f> &&
+    samp0 samp2 f- fabs local-max f2/ f< && if drop ( flag ) i leave then
   loop
 ;
 : remove-click ( loc snd chn -- )

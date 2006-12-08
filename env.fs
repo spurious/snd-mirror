@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Thu Oct 27 04:51:42 CEST 2005
-\ Changed: Sun Aug 20 00:59:12 CEST 2006
+\ Changed: Wed Dec 06 14:42:06 CET 2006
 
 \ Commentary:
 \
@@ -32,10 +32,7 @@ require clm
 : envelope? { obj -- f }
   doc" ( obj -- f )  \
 Returns #t if OBJ is a list, a vct or an array with even length and length >= 2."
-  obj list?
-  obj array? ||
-  obj vct?   ||
-  obj length dup 2 mod 0= swap 2 >= && &&
+  obj length dup 2 mod 0= swap 2 >= &&
 ;
 
 : envelope-copy { en1 -- en2 }

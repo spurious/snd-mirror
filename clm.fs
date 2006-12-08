@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Tue Dec 05 01:19:00 CET 2006
+\ Changed: Thu Dec 07 05:19:19 CET 2006
 
 \ Commentary:
 \
@@ -27,7 +27,7 @@
 \ normalize-partials   ( parts -- parts' )
 \ run                  ( start dur -- )
 \ run-instrument       ( start dur args -- )
-\ end-run              ( value -- )
+\ end-run              ( sample -- )
 \ reverb-info          ( caller in-chans out-chans -- )
 \ instrument:          ( ?? -- )
 \ ;instrument          ( -- )
@@ -72,12 +72,16 @@
 dl-load sndlib Init_sndlib
 
 'snd provided? [unless]
+  ' noop alias main-widgets
+  ' noop alias sounds
+  ' noop alias set-selected-sound
   ' noop alias sound?
   ' noop alias open-sound
   ' noop alias find-sound
   ' noop alias update-sound
   ' noop alias save-sound
   ' noop alias close-sound
+  ' noop alias close-sound-extend
   ' noop alias channels
   ' noop alias play
   ' noop alias play-and-wait
@@ -86,6 +90,32 @@ dl-load sndlib Init_sndlib
   ' noop alias scale-channel
   ' noop alias snd-tempnam
   ' noop alias snd-version
+[then]
+
+\ Also defined in examp.fs.
+[undefined] close-sound-extend [if]
+  \ 5 == notebook widget
+  : close-sound-extend ( snd -- )
+    { snd }
+    main-widgets 5 list-ref false? unless
+      0 { idx }
+      sounds empty? unless sounds snd list-index to idx then
+      snd close-sound drop
+      sounds empty? unless
+	sounds length 1 = if
+	  sounds car
+	else 
+	  idx sounds length < if
+	    sounds idx list-ref
+	  else
+	    sounds last-pair car
+	  then
+	then set-selected-sound drop
+      then
+  else
+    snd close-sound drop
+  then
+;
 [then]
 
 hide
@@ -324,13 +354,11 @@ default-output-srate       value *clm-srate*
 ;
 
 \ === With-Sound Run-Instrument ===
-: run ( start dur -- ) postpone times->samples postpone ?do ; immediate
-
 hide
-: (make-locsig) ( start dur args -- )
-  { start dur args }
-  args hash? unless #{} to args then
+: (make-locsig) ( args -- )
+  { args }
   save-stack { s }
+  args hash? unless #{} to args then
   :degree    args :degree   hash-ref            0.0 ||
   :distance  args :distance hash-ref            1.0 ||
   :reverb    args :reverb   hash-ref           0.05 ||
@@ -338,7 +366,6 @@ hide
   :output    args :output   hash-ref       *output* ||
   :revout    args :revout   hash-ref       *reverb* ||
   :type      args :type     hash-ref  *locsig-type* || make-locsig to *locsig*
-  s restore-stack
   \ we set channel 3/4 if any to 0.5 * channel 1/2
   *output* mus-output? if
     *output* mus-channels 2 > if
@@ -356,21 +383,27 @@ hide
       then
     then
   then
-  start dur times->samples
+  s restore-stack
 ;
+: (set-locsig) ( value index -- ) *locsig* -rot swap locsig drop ;
 set-current
-: run-instrument ( start dur locsig-args -- )
-  \ postpone (make-locsig) postpone times->samples postpone ?do
-  postpone (make-locsig) postpone ?do
-; immediate
-: end-run ( value -- )
-  postpone *locsig* postpone r@ postpone rot postpone locsig postpone drop postpone loop
-; immediate
+\ RUN/LOOP is only a simple replacement of
+\ start dur TIMES->SAMPLES ?DO ... LOOP
+\
+\ RUN-INSTRUMENT/END-RUN requires at least an opened *output*
+\ generator (file->sample), optional an opened *reverb* generator.  It
+\ uses LOCSIG to set samples in output file.  The loop must leave on
+\ top of stack a sample value (next before END-RUN)!
+\ 
+\ 0.0 1.0                   RUN            ... LOOP
+\ 0.0 1.0 #{ :degree 45.0 } RUN-INSTRUMENT ... END-RUN
+: run            ( start dur      -- ) postpone times->samples           postpone ?do  ; immediate
+: run-instrument ( start dur args -- ) postpone (make-locsig)            postpone run  ; immediate
+: end-run        ( sample         -- ) postpone r@ postpone (set-locsig) postpone loop ; immediate
 previous
 
 : reverb-info ( caller in-chans out-chans -- )
-  { caller in-chans out-chans }
-  $" %s on %d in and %d out channels" _ '( caller in-chans out-chans ) clm-message
+  3 >list $" %s on %d in and %d out channels" _  swap clm-message
 ;
 
 \ === Helper functions for instruments ===
@@ -455,12 +488,12 @@ set-current
 : snd-info ( output revfile chans sr frms scl? tm -- )
   { output revfile chans sr frms scl? tm }
   output mus-sound-duration { dur }
-  $" filename: %S"                '( output )       clm-message
-  $"    chans: %d, srate: %d"     '( chans sr f>s ) clm-message
+  $" filename: %S"                    '( output )        clm-message
+  $"    chans: %d, srate: %d"         '( chans sr f>s )  clm-message
   $"   format: %s [%s]"
   '( output mus-sound-data-format mus-data-format-name
      output mus-sound-header-type mus-header-type-name ) clm-message
-  $"   length: %.3f  (%d frames)" '( dur frms )     clm-message
+  $"   length: %.3f  (%d frames)"     '( dur frms )      clm-message
   tm timer? if
     tm .timer
     sr frms tm .timer-ratio
@@ -468,14 +501,14 @@ set-current
   output $" maxamp" sr scl? .maxamps
   revfile ?dup-if $" revamp" sr scl? .maxamps then
   output mus-sound-comment { comm }
-  comm empty? unless $"  comment: %s" '( comm ) clm-message then
+  comm empty? unless $"  comment: %s" '( comm )          clm-message then
 ;
 previous
 
 \ === Playing and Recording one or two Channel Sounds ===
 : play-sound ( file -- )
   find-file { fname }
-  fname unless 'no-such-file '( get-func-name fname ) fth-throw then
+  fname false? if 'no-such-file '( get-func-name fname ) fth-throw then
   fname mus-sound-frames { frms }
   fname mus-sound-srate { sr }
   fname mus-sound-chans { chans }
@@ -505,25 +538,24 @@ previous
 
 : record-sound ( fname dur -- )
   { fname dur }
-  dur seconds->samples { frms }
-  *clm-output-device* { device }
-  *clm-rt-bufsize* frms min { bufsize }
-  *clm-channels* 2 min { chans }
-  *clm-srate* { sr }
-  mus-srate { old-srate }
-  sr set-mus-srate drop
-  *clm-audio-format* { afmt }
-  *clm-data-format* { dfmt }
-  *clm-header-type* { htype }
+  dur seconds->samples      	{ frms }
+  *clm-output-device*       	{ device }
+  *clm-rt-bufsize* frms min 	{ bufsize }
+  *clm-channels* 2 min      	{ chans }
+  mus-srate                 	{ old-srate }
+  *clm-srate* set-mus-srate 	{ sr }
+  *clm-audio-format*        	{ afmt }
+  *clm-data-format*         	{ dfmt }
+  *clm-header-type*         	{ htype }
   chans bufsize make-sound-data { data }
-  chans 0.25 make-vct { vals }
+  chans 0.25 make-vct           { vals }
   vals each drop mus-audio-mixer mus-audio-reclev i vals mus-audio-mixer-write drop end-each
   vals 0.75 vct-fill! drop
   vals each drop device  mus-audio-amp i vals mus-audio-mixer-write drop end-each
   $" written %s by %s" _ '( date get-func-name ) string-format { descr }
-  fname sr chans dfmt htype descr mus-sound-open-output { snd-fd }
+  fname sr chans dfmt htype descr mus-sound-open-output        { snd-fd }
   snd-fd 0< if 'forth-error '( get-func-name $" cannot open %s" _ fname ) fth-throw then
-  device sr chans 2 min afmt bufsize mus-audio-open-input { dac-fd }
+  device sr chans 2 min afmt bufsize mus-audio-open-input      { dac-fd }
   dac-fd 0< if 'forth-error '( get-func-name $" cannot open dac" _ ) fth-throw then
   *clm-verbose* if
     $" filename: %s"                '( fname )                     clm-message
@@ -567,9 +599,9 @@ $" with-sound error" create-exception with-sound-error
   then
   frames infile mus-sound-frames || to frames
   outgen if *output* mus-close drop then
-  chans 0>
-  scaler f0<> and
-  scaler 1.0 f<> and if
+  chans       0>
+  scaler     f0<> &&
+  scaler 1.0 f<>  && if
     save-stack { s }
     chans  chans dup * 0 ?do scaler loop make-mixer to mx
     s restore-stack
@@ -587,18 +619,19 @@ $" with-sound error" create-exception with-sound-error
 hide
 : ws-get-snd ( ws -- snd )
   { ws }
+  #f { snd }
   'snd provided? if
     ws :output hash-ref find-file { fname }
-    fname 0 find-sound { snd }
-    snd sound? 'snd-nogui provided? not && if
-      snd update-sound channels 0 ?do drop loop
+    fname 0 find-sound dup sound? if to snd
+      save-stack { s }
+      snd update-sound
+      stack-reset			\ Unknown number of return values from update-sound!
+      s restore-stack
     else
-      snd update-sound drop
+      drop
     then
-    snd
-  else
-    #f
   then
+  snd
 ;
 : ws-scaled-to ( ws -- )
   { ws }
@@ -609,7 +642,7 @@ hide
     mx f0<> if
       scale mx f/ { scl }
       snd #f #f frames { len }
-      *channels* 0 ?do scl 0 len snd i ( chn ) #f scale-channel drop loop
+      ws :channels hash-ref 0 ?do scl 0 len snd i ( chn ) #f scale-channel drop loop
     then
     snd save-sound drop
   else
@@ -626,7 +659,7 @@ hide
   'snd provided? if
     ws ws-get-snd { snd }
     snd #f #f frames { len }
-    *channels* 0 ?do scale 0 len snd i ( chn ) #f scale-channel drop loop
+    ws :channels hash-ref 0 ?do scale 0 len snd i ( chn ) #f scale-channel drop loop
     snd save-sound drop
   else
     :filename ws :output hash-ref :scaler scale clm-mix
@@ -634,28 +667,33 @@ hide
 ;
 : ws-before-output ( ws -- )
   { ws }
-  ws :continue-old-file hash-ref if
-    ws :output hash-ref continue-sample->file
+  ws :output            hash-ref { output }
+  ws :reverb-file-name  hash-ref { revput }
+  ws :continue-old-file hash-ref { cont? }
+  cont? if
+    output continue-sample->file
   else
-    ws :comment     hash-ref unless ws :comment make-default-comment hash-set! then
-    ws :output      hash-ref
+    output file-delete
+    output
     ws :channels    hash-ref
     ws :data-format hash-ref
     ws :header-type hash-ref
-    ws :comment     hash-ref  make-sample->file
-  then to *output*
+    ws :comment hash-ref dup empty? if drop make-default-comment then
+    make-sample->file
+ then to *output*
   *output* sample->file? unless
     'with-sound-error '( get-func-name $" cannot open sample->file" _ ) fth-throw
   then
-  ws :continue-old-file hash-ref if
-    ws :output hash-ref mus-sound-srate set-mus-srate drop
-    'snd provided? if ws :output hash-ref 0 find-sound dup sound? if close-sound then drop then
+  cont? if
+    output mus-sound-srate set-mus-srate drop
+    'snd provided? if output 0 find-sound dup sound? if close-sound-extend else drop then then
   then
-  ws :reverb-file-name hash-ref if
-    ws :continue-old-file hash-ref if
-      ws :reverb-file-name hash-ref continue-sample->file
+  revput if
+    cont? if
+      revput continue-sample->file
     else
-      ws :reverb-file-name hash-ref
+      revput file-delete
+      revput
       ws :reverb-channels  hash-ref
       ws :data-format      hash-ref
       ws :header-type      hash-ref
@@ -672,8 +710,6 @@ hide
 ;
 : ws-after-output ( ws -- ws )
   { ws }
-  *output* mus-output? if *output* mus-close drop then
-  *reverb* mus-output? *reverb* mus-input? || if *reverb* mus-close drop then
   ws :old-*output*    hash-ref to *output*
   ws :old-*reverb*    hash-ref to *reverb*
   ws :old-verbose     hash-ref to *verbose*
@@ -683,6 +719,17 @@ hide
   ws :old-notehook    hash-ref to *notehook*
   ws :old-decay-time  hash-ref to *clm-decay-time*
   *ws-args* array-pop
+;
+: ws-statistics ( ws -- )
+  { ws }
+  ws :output            hash-ref
+  ws :reverb-file-name  hash-ref
+  ws :channels 		hash-ref
+  ws :srate    		hash-ref
+  ws :output   		hash-ref mus-sound-frames
+  ws :scaled-to hash-ref ws :scaled-by hash-ref ||
+  ws :timer             hash-ref
+  snd-info
 ;
 \ player can be one of proc, string, or #f.
 \ 
@@ -711,12 +758,11 @@ hide
     then
   then
 ;
-set-current
-
 : set-args ( key def ws -- )
   { key def ws }
   key def get-args ws key rot hash-set!
 ;
+set-current
 : with-sound-default-args ( keyword-args -- ws )
   make-hash { ws }
   *ws-args* ws array-push drop
@@ -774,6 +820,8 @@ set-current
 
 : with-sound-main ( body-xt ws -- ws )
   { body-xt ws }
+  body-xt xt? body-xt 1 running-word $" an xt"  assert-type
+  ws    hash? ws      2 running-word $" a hash" assert-type
   ws :old-*output*    *output*         hash-set!
   ws :old-*reverb*    *reverb*         hash-set!
   ws :old-verbose     *verbose*        hash-set! 
@@ -786,18 +834,26 @@ set-current
   ws :locsig-type                      hash-ref  to *locsig-type*
   ws :old-notehook    *notehook*       hash-set!
   ws :notehook                         hash-ref  to *notehook*
-  ws :reverb hash-ref unless ws :reverb-file-name #f hash-set! then
   ws :old-decay-time  *clm-decay-time* hash-set!
   ws :decay-time                       hash-ref  to *clm-decay-time*
+  ws :reverb hash-ref if
+    #t
+  else
+    ws :reverb-file-name #f hash-set!
+    #f
+  then { rev? }
   ws ws-before-output
-  make-timer { tm }
-  tm start-timer
+  ws :timer make-timer hash-set!
+  ws :timer hash-ref start-timer
   \ compute ws body
   body-xt #t nil fth-catch if
-    ws ws-after-output ( ws )
+    stack-reset
+    *output* mus-close drop
+    *reverb* if *reverb* mus-close drop then
+    ws ws-after-output drop
     #f #f #f fth-raise			\ re-raises last (catched) exception again
   then
-  ws :reverb-file-name hash-ref if
+  rev? if
     *reverb* mus-close drop
     ws :reverb-file-name hash-ref undef make-file->sample to *reverb*
     *reverb* file->sample? unless
@@ -806,26 +862,22 @@ set-current
     \ compute ws reverb
     ws :reverb-data hash-ref each end-each ( push reverb arguments on stack )
     ws :reverb hash-ref #t nil fth-catch if
-      ws ws-after-output ( ws )
+      stack-reset
+      *output* mus-close drop
+      *reverb* mus-close drop
+      ws ws-after-output drop
       #f #f #f fth-raise		\ re-raises last (catched) exception again
     then
+    *reverb* mus-close drop
   then
-  tm stop-timer
-  ws :statistics hash-ref if
-    ws :output   hash-ref
-    ws :reverb-file-name  hash-ref
-    ws :channels hash-ref
-    ws :srate    hash-ref
-    ws :output   hash-ref mus-sound-frames
-    ws :scaled-to hash-ref ws :scaled-by hash-ref ||
-    tm snd-info then
-  ws :delete-reverb hash-ref ws :reverb-file-name hash-ref && if
-    ws :reverb-file-name hash-ref file-delete
-  then
+  *output* mus-close drop
+  ws :timer hash-ref stop-timer
   ws ws-get-snd drop
-  ws :scaled-to hash-ref if ws ws-scaled-to then
-  ws :scaled-by hash-ref if ws ws-scaled-by then
-  ws :play      hash-ref if ws ws-play-it   then
+  ws :statistics    hash-ref         if ws ws-statistics then
+  ws :delete-reverb hash-ref rev? && if ws :reverb-file-name hash-ref file-delete then
+  ws :scaled-to     hash-ref   	     if ws ws-scaled-to  then
+  ws :scaled-by     hash-ref   	     if ws ws-scaled-by  then
+  ws :play          hash-ref   	     if ws ws-play-it    then
   ws ws-after-output ( ws )
 ;
 previous
@@ -859,7 +911,7 @@ previous
 :decay-time        *clm-decay-time*       1.0\n\
 ' resflt-test with-sound .g cr\n\
 ' resflt-test :play #t :channels 2 :srate 44100 with-sound drop"
-  *ws-args* length 0= if
+  *ws-args* empty? if
     with-sound-default-args
   else
     with-sound-args
@@ -902,8 +954,8 @@ previous
 : with-mix ( body-str args fname start -- )
   doc" ( body-str args fname start -- )  \
 BODY-STR is a string with with-sound commands, \
-ARGS are with-sound arguments, \
-FNAME is the temporary mix file name \
+ARGS is a list of with-sound arguments, \
+FNAME is the temporary mix file name without extension, \
 and START is the begin time for mix in.\n\
 lambda: ( -- )\n\
   0.0 0.1 440 0.1 fm-violin\n\
@@ -918,6 +970,10 @@ lambda: ( -- )\n\
   2.0 0.1 220 0.1 fm-violin\n\
   ; with-sound drop"
   { body-str args fname start }
+  body-str string? body-str 1 running-word $" a string" assert-type
+  args     list?   args     2 running-word $" a list"   assert-type
+  fname    string? fname    3 running-word $" a string" assert-type
+  start    number? start    4 running-word $" a number" assert-type
   fname $" .snd" $+ { snd-file }
   fname $" .fsm" $+ { mix-file }
   snd-file file-exists? if
@@ -958,6 +1014,8 @@ lambda: { tmp1 tmp2 }\n\
   :filename tmp1 clm-mix\n\
 ; ( body-xt ) ' sound-let with-sound drop"
   { ws-xt-lst body-xt }
+  ws-xt-lst list? ws-xt-lst 1 running-word $" a list" assert-type
+  body-xt   xt?   body-xt   2 running-word $" an xt"  assert-type
   #() { outfiles }
   ws-xt-lst each { arg }
     fth-tempnam { oname }
