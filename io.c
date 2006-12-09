@@ -1153,6 +1153,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
 		else
 		  if (buffer[cliploc] < MUS_SAMPLE_MIN)
 		    buffer[cliploc] = MUS_SAMPLE_MIN;
+	      /* PERHAPS: here a clipping hook could be added */
 	    }
 	  loclim = loc + lim;
 	  jchar = (unsigned char *)charbuf; /* if to_buffer we should add the loop offset here, or never loop */

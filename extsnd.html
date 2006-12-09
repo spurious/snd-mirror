@@ -3190,8 +3190,10 @@ additional methods: map, each, &lt;=&gt;, etc.  See vct.c and the Ruby documenta
 
 <table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounddata">Sound-data</a></h3></td></tr></table>
 
-<p>Another sound data object is the sound-data array used in Sndlib.  It is essentially an array of vcts, each
-vct representing one channel's data.  
+<p>Another sound data object is the sound-data object; it can be viewed either as an array of vcts, 
+each vct representing one channel's data, or as an array of frames, each frame holding a sample from
+each channel at that position in the sound.  <a href="sndscm.html#framedoc">frame.scm</a> has a number of useful functions that use
+sound-data objects.
 As with vcts, sound-data objects partake in the Enumerable and Comparable
 classes in Ruby.
 </p>
@@ -8164,8 +8166,8 @@ scales (changes the amplitude) of a sound by <i>scl</i>.
 There are approximately a bazillion ways to scale samples in Snd; here's a potpourri of increasingly silly choices:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(<a class=quiet href="#scaleby">scale-by</a> 2.0)
 (scale-channel 2.0)
+(<a class=quiet href="#scaleby" onmouseover="return escape('multichannel, follows sync')">scale-by</a> 2.0)
 (<a class=quiet href="#mapchannel">map-channel</a> (lambda (val) (* val 2.0)))
 (set! (<a class=quiet href="#maxamp">maxamp</a>) (* 2 (<a class=quiet href="#maxamp">maxamp</a>)))
 (<a class=quiet href="#envsound">env-sound</a> '(0 2 1 2))
@@ -8173,6 +8175,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (<a class=quiet href="#clmchannel">clm-channel</a> (<a class=quiet href="clm.html#make-one-zero">make-one-zero</a> :a0 2.0 :a1 0.0))
 (<a class=quiet href="#filterchannel">filter-channel</a> (vct 2.0) 1)
 (<a class=quiet href="#vcttochannel">vct-&gt;channel</a> (<a class=quiet href="#vctscale">vct-scale!</a> (<a class=quiet href="#channeltovct">channel-&gt;vct</a>) 2.0) 0)
+(<a class=quiet href="sndscm.html#sounddatatosound">sound-data-&gt;sound</a> (<a class=quiet href="sndscm.html#sounddata*">sound-data*</a> (<a class=quiet href="sndscm.html#soundtosounddata">sound-&gt;sound-data</a>) 2.0))
 (begin (<a class=quiet href="#selectall">select-all</a>) (<a class=quiet href="#mixselection">mix-selection</a> 0))
 (begin (<a class=quiet href="#selectall">select-all</a>) (<a class=quiet href="#scaleselectionby">scale-selection-by</a> 2.0))
 (begin (<a class=quiet href="#savesoundas">save-sound-as</a> "temp.snd") (<a class=quiet href="#mix">mix</a> "temp.snd" 0) (delete-file "temp.snd"))

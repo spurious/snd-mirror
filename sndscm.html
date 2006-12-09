@@ -4895,19 +4895,19 @@ insert-sound-data inserts the sound-data (sd) contents into sound snd at beg.  T
 insertion function that automatically handles multichannel possibilities (unlike <a href="extsnd.html#insertsamples">insert-samples</a>).
 <pre>
 (insert-sound-data 
- (<a href="clm.html#withtempsound">with-temp-sound</a> (:output (<a href="extsnd.html#makesounddata">make-sound-data</a> 2 (* 44100 2.0))
+ (<a class=quiet href="#withtempsound">with-temp-sound</a> (:output (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> 2 (* 44100 2.0))
 		   :srate 44100
 		   :channels 2)
    (do ((i 0 (1+ i)))    ; 20 fm-violin notes moving from channel 0 to channel 1
        ((= i 20))
-     (<a href="sndscm.html#vdoc">fm-violin</a> (* i .1) .1 440 .1 :degree (* i (/ 90 20))))))
+     (<a class=quiet href="sndscm.html#vdoc">fm-violin</a> (* i .1) .1 440 .1 :degree (* i (/ 90 20))))))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- insert-vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="insertvct">insert-vct</a> <codev :optional beg dur snd chn edpos</code>
+<a class=def name="insertvct">insert-vct</a> <code>v :optional beg dur snd chn edpos</code>
 </td></tr><tr><td></td><td>
 insert-vct inserts the vct data into sound snd at beg.  It is just a wrapper
 for <a href="extsnd.html#insertsamples">insert-samples</a> that puts the vct argument first.
@@ -4920,7 +4920,7 @@ for <a href="extsnd.html#insertsamples">insert-samples</a> that puts the vct arg
 </td></tr><tr><td></td><td>
 map-sound-frames is a version of <a href="extsnd.html#mapchannel">map-channel</a> that passes func a frame on each call, rather than a sample.
 <pre>
-    (map-sound-frames (lambda (fr) (frame* fr 2.0)))
+    (map-sound-frames (lambda (fr) (<a class=quiet href="clm.html#frame*">frame*</a> fr 2.0)))
 </pre>
 is another way to scale a sound by 2.0.
 </td></tr><tr><td colspan=2 height=16></td></tr>

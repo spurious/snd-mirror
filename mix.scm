@@ -408,6 +408,7 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
 		(throw 'no-such-channel (list "save-track" chan)))))
       (throw 'no-such-track (list "save-track" trk))))
 	  
+;;; TODO: if chan #t, use track-frame reader
 (define (track-maxamp id chan)
   "(track-maxamp id chan) returns the max amp in the given track"
   (if (track? id)

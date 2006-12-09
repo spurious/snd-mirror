@@ -31489,8 +31489,8 @@ EDITS: 5
 						  1.0 1.0 1.0 1.0 1.0 0.5 0.5 0.5 0.5 0.5
 						  1.0 1.0 1.0 1.0 1.0)))
 	    (snd-display ";insert-selection: ~A" (channel->vct 0 25)))
-	(mix-selection 1 ind 0)
-	(if (not (vequal (channel->vct 0 10 ind 0) (vct 1.000 1.000 1.000 1.000 1.000 1.000 0.500 0.500 0.500 0.500)))
+	(mix-selection 1 ind 0) ; this is being confused by clipping settings
+	(if (not (vequal (channel->vct 0 10 ind 0) (vct 1.000 1.500 1.500 1.500 1.500 1.000 0.500 0.500 0.500 0.500)))
 	    (snd-display ";mix-selection vals: ~A" (channel->vct 0 10 ind 0)))
 	(close-sound ind))
       

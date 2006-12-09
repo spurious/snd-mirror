@@ -957,6 +957,8 @@ return file descriptor (an integer)"
   return(C_TO_XEN_INT(fd));
 }
 
+/* TODO: IF_BOUND_P added here and elsewhere */
+
 static XEN g_mus_sound_open_output(XEN file, XEN srate, XEN chans, XEN data_format, XEN header_type, XEN comment)
 {
 

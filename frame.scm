@@ -25,13 +25,7 @@
 ;;; sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ sound-data-copy sound-data-reverse
 
 
-;;; PERHAPS: make-track-frame-reader?
-;;; DOC: sound-data as frame array (all chans together) or as vct array (chans separate)
-;;; TODO: check all other code for frame-reader et al possibilities
-;;; TODO: need snd-run support for frame-readers (and map-frame frame return?)
-
 (provide 'snd-frame.scm)
-
 
 (define (frame-reverse fr)
   "(frame-reverse fr) reverses the contents of frame fr"
@@ -598,3 +592,33 @@
 	nsd)
       (throw 'wrong-type-arg (list "sound-data-reverse" sd))))
 
+
+
+;;; PERHAPS: these channel-specific funcs might want a "channels" version:
+;;;     any-env-channel  clm-channel  compand-channel  contrast-channel dither-channel  env-channel
+;;;     env-channel-with-base  env-expt-channel  extract-channel  filter-channel  find-channel  insert-channel
+;;;     linear-src-channel  map-channel  mix-channel  mus-channel  normalize-channel  notch-channel  offset-channel
+;;;     pad-channel  play-channel  ptree-channel  ramp-channel  redo-channel  reverse-channel rotate-channel
+;;;     scale-channel  scan-channel  sine-env-channel  smooth-channel  src-channel  undo-channel  xramp-channel
+
+
+;;; PERHAPS: make-sync-frame-reader (follow sync chain), or selection-frame-reader
+;;;     can the existing code for this be folded into a reader?
+;;; PERHAPS: sync-all
+
+;;; PERHAPS: clip-hook -> called when a sample is clipped or clipping is detected somewhere (io.c) -- needs clip_handler as in sound.c
+;;; PERHAPS: formalize fix-clip -- check restoration against hand-made cases
+
+;;; PERHAPS: reader? etc replacing sample-reader? but rtn type is lost -- mus-input?
+;;;     requires that we add to the mus-input method or use mus_any* struct to describe readers
+;;;     make-sample|frame-writer?
+;;;     mus-describe|length|free|data=current value?|channels|file_name|location|reset?|read-sample or read_frame added?
+;;;     frame->file uses a loop through chans
+
+;;; channel slicer: grn but output locs permuted, reversed etc
+
+;;; PERHAPS: make-track-frame-reader?
+;;; TODO: need snd-run support for frame-readers (and map-frame frame return?)
+
+;;; TODO: write doc that describes all these sample accessors: sample-at-a-time, readers, chunked versions (->vct), top level (menu, save-sound-as)
+;;; TODO: why doesn't onmouseover work in firefox?
