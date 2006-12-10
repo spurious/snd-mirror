@@ -365,7 +365,7 @@ returning you to the true top-level."
 		       (set! revmax (cadr (mus-sound-maxamp reverb-1)))
 		       (if (vct? reverb-1)
 			   (set! revmax (vct-peak reverb-1))
-			   (set! revmax (apply max (sound-data-maxamp reverb-1))))))
+			   (set! revmax (sound-data-peak reverb-1)))))
 	       (if reverb-to-file
 		   (set! *reverb* (make-file->sample reverb-1)))
 	       (apply reverb reverb-data)
@@ -429,7 +429,7 @@ returning you to the true top-level."
 			   (vct-scale! output-1 (/ scaled-to (vct-peak output-1)))
 			   (vct-scale! output-1 scaled-by))
 		       (if scaled-to
-			   (sound-data-scale! output-1 (/ scaled-to (apply max (sound-data-maxamp output-1))))
+			   (sound-data-scale! output-1 (/ scaled-to (sound-data-peak output-1)))
 			   (sound-data-scale! output-1 scaled-by)))))
 
 	   (if (and play output-to-file)

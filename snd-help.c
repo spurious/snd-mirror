@@ -506,9 +506,10 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+11-Dec:  sound-data-multiply! sound-data-add! sound-data-offset! sound-data*\n\
+         sound-data+ sound-data-copy sound-data-reverse! sound-data-peak.\n\
 4-Dec:   frame.scm.\n\
          moved open-sound-file, close-sound-file, and vct->sound-file to snd8.scm.\n\
-1-Dec:   scan-sound in examp.scm\n\
 29-Nov:  Snd 8.6.\n\
 21-Nov:  sound-data-scale! and sound-data-fill! with vct/sound-data with-sound output.\n\
          mus-float-equal-fudge-factor\n\

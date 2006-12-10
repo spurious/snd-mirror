@@ -3202,57 +3202,136 @@ classes in Ruby.
 
 <table border=0 cellspacing=0 hspace=10>
 
+<!-- make-sound-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makesounddata">make-sound-data</a> (chans frames)</code></td></tr>
-<tr><td width=60><br>
-</td><td>return a sound-data object with <i>chans</i> arrays, each of length <i>frames</i></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td width=60><br></td><td>
+make-sound-data returns a new sound-data object with 'chans' arrays, each with 'frames' elements.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddataref">sound-data-ref</a> (obj chan frame)</code></td></tr>
-<tr><td></td><td>return (as a float) the sample in channel <i>chan</i> at location <i>frame</i></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<!-- sound-data-add! -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="sounddataadd">sound-data-add!</a> (sd1 sd2)</code></td></tr>
+<tr><td><br></td><td>
+sound-data-add! adds the contents of sd2 into sd1 and returns sd1.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddataset">sound-data-set!</a> (obj chan frame val)</code></td></tr>
-<tr><td></td><td>set <i>obj</i>'s sample at <i>frame</i> in <i>chan</i> to <i>val</i></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<!-- sound-data-chans -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatachans">sound-data-chans</a> (sd)</code></td></tr>
+<tr><td></td><td>
+sound-data-chans returns the number of channels in sd.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
+<!-- sound-data-copy -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="sounddatacopy">sound-data-copy</a> (sd)</code></td></tr>
+<tr><td></td><td>
+sound-data-copy returns a copy of the sound-data object sd.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-data-fill! -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatafill">sound-data-fill!</a> (sd value)</code></td></tr>
+<tr><td></td><td>
+sound-data-fill! sets each element of sound-data object sd to 'value'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-data-length -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatalength">sound-data-length</a> (sd)</code></td></tr>
+<tr><td></td><td>
+sound-data-length returns the length (in samples) of each channel in the sound-data-object sd.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-data-maxamp -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatamaxamp">sound-data-maxamp</a> (sd)</code></td></tr>
+<tr><td></td><td>
+sound-data-maxamp returns a list of maxamps (one for each channel) of the data in sd.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-data-multiply! -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="sounddatamultiply">sound-data-multiply!</a> (sd1 sd2)</code></td></tr>
+<tr><td></td><td>
+sound-data-multiply! multiplies each element of sd2 by the corresponding element of sd2 and returns sd1.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-data-offset! -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="sounddataoffset">sound-data-offset!</a> (sd off)</code></td></tr>
+<tr><td></td><td>
+sound-data-offset! adds the number <i>off</i> to each element of sd and returns sd.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-data-peak -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="sounddatapeak">sound-data-peak</a> (sd)</code></td></tr>
+<tr><td></td><td>
+sound-data-peak returns the overall maximum element in sd.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-data-ref -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddataref">sound-data-ref</a> (sd chan frame)</code></td></tr>
+<tr><td></td><td>
+sound-data-ref returns (as a float) the sample in channel chan at location frame.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-data-reverse! -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="sounddatareverse">sound-data-reverse!</a> (sd)</code></td></tr>
+<tr><td></td><td>
+sound-data-reverse! reverses the elements of each channel of sd and returns sd.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-data-scale! -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatascale">sound-data-scale!</a> (sd scaler)</code></td></tr>
+<tr><td></td><td>
+sound-data-scale! multiplies each sample in sd by scaler.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-data-set! -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddataset">sound-data-set!</a> (sd chan frame val)</code></td></tr>
+<tr><td></td><td>
+sound-data-set! sets sd's sample at 'frame' in channel 'chan' to val.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-data+ -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="sounddata+">sound-data+</a> (val1 val2)</code></td></tr>
+<tr><td></td><td>
+sound-data+ adds val1 to val2 (either or both can be sound-data objects).
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-data* -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="sounddata*">sound-data*</a> (val1 val2)</code></td></tr>
+<tr><td></td><td>
+sound-data* multiplies val1 by val2 (either or both can be sound-data objects).
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-data? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddata?">sound-data?</a> (obj)</code></td></tr>
-<tr><td></td><td>#t if <i>obj</i> is of type sound-data</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+sound-data? returns #t if obj is a sound-data object.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatalength">sound-data-length</a> (obj)</code></td></tr>
-<tr><td></td><td>length (in samples) of each channel of data in <i>obj</i></td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatamaxamp">sound-data-maxamp</a> (obj)</code></td></tr>
-<tr><td></td><td>list of maxamps (one for each channel) of data in <i>obj</i></td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatachans">sound-data-chans</a> (obj)</code></td></tr>
-<tr><td></td><td>number of channels of data in <i>obj</i></td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatafill">sound-data-fill!</a> (obj value)</code></td></tr>
-<tr><td></td><td>set each sample in <i>obj</i> to <i>value</i></td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatascale">sound-data-scale!</a> (obj scaler)</code></td></tr>
-<tr><td></td><td>scale (multiply each sample in) <i>obj</i> by <i>scaler</i></td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
+<!-- sound-data->sound-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatatosounddata">sound-data-&gt;sound-data</a> (sd-in sd-out beg dur cycle)</code></td></tr>
 <tr><td></td><td>
-copy sound-data <i>sd-in</i>'s
-data from 0 for <i>dur</i> frames into <i>sd-out</i> starting at <i>beg</i>, wrapping around if sd-out's end is reached.
+sound-data-&gt;sound-data copies sound-data sd-in's
+data from 0 for dur frames into sound-data sd-out starting at beg, wrapping around if sd-out's end is reached.
 This is an experimental function currently used in the oscilloscope (oscope.scm).
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- sound-data->vct -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatatovct">sound-data-&gt;vct</a> (sd chan v)</code></td></tr>
+<tr><td></td><td>
+sound-data-&gt;vct copies sound-data sd's channel 'chan' data into vct v.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- vct->sound-data -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttosounddata">vct-&gt;sound-data</a> (v sd chan)</code></td></tr>
+<tr><td></td><td>
+vct-&gt;sound-data copies vct v's data into sound-data sd's channel chan.
 </td></tr>
-<tr><td colspan=2 height=16></td></tr>
 
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatatovct">sound-data-&gt;vct</a> (sdobj chan vobj)</code></td></tr>
-<tr><td></td><td>copy sound-data channel data into vct </td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttosounddata">vct-&gt;sound-data</a> (vobj sdobj chan)</code></td></tr>
-<tr><td></td><td>copy vct data into sound-data</td></tr>
 </table>
 
 <br>
@@ -3663,7 +3742,7 @@ in the sound cache; if it isn't, a call on mus-sound-maxamp has to open and read
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-open-output -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundopenoutput">mus-sound-open-output</a> (filename srate chans data-format header-type comment)</code></td></tr>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundopenoutput">mus-sound-open-output</a> (filename :optional (srate 22050) (chans 1) data-format header-type comment)</code></td></tr>
 <tr><td></td>
 <td>create a new sound file with the indicated attributes, return an integer (for use with mus-sound-write and mus-sound-close-output)</td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -3683,7 +3762,7 @@ accommodate the read.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-reopen-output -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundreopenoutput">mus-sound-reopen-output</a> (filename chans data-format header-type data-location)</code></td></tr>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundreopenoutput">mus-sound-reopen-output</a> (filename :optional (chans 1) data-format header-type data-location)</code></td></tr>
 <tr><td></td>
 <td>reopen filename, ready to continue output.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -6422,7 +6501,7 @@ find silence: <a href="#mapsilence">map-silence</a>, scramble-channel in examp.s
 find zero crossing: <a href="#newcp">find-zero</a><br>
 find any difference between two chans: <a href="sndscm.html#channelsequal">channels-equal</a><br>
 see also <a href="#countmatches">count-matches</a> and <a href="#scanchannel">scan-channel</a><br>
-search a multichannel sound: <a href="sndscm.html#scansound">scan-sound</a>, <a href="sndscm.html#scansoundframes">scan-sound-frames</a><br>
+search a multichannel sound: <a href="sndscm.html#scansound">scan-sound</a><br>
 find a widget: find-child in snd-motif.scm<br>
 add C-s and C-r to the listener key bindings: add-find-to-listener in snd-motif.scm<br>
 Scheme find: find-if<br>
@@ -8175,7 +8254,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (<a class=quiet href="#clmchannel">clm-channel</a> (<a class=quiet href="clm.html#make-one-zero">make-one-zero</a> :a0 2.0 :a1 0.0))
 (<a class=quiet href="#filterchannel">filter-channel</a> (vct 2.0) 1)
 (<a class=quiet href="#vcttochannel">vct-&gt;channel</a> (<a class=quiet href="#vctscale">vct-scale!</a> (<a class=quiet href="#channeltovct">channel-&gt;vct</a>) 2.0) 0)
-(<a class=quiet href="sndscm.html#sounddatatosound">sound-data-&gt;sound</a> (<a class=quiet href="sndscm.html#sounddata*">sound-data*</a> (<a class=quiet href="sndscm.html#soundtosounddata">sound-&gt;sound-data</a>) 2.0))
+(<a class=quiet href="sndscm.html#sounddatatosound">sound-data-&gt;sound</a> (<a class=quiet href="#sounddata*">sound-data*</a> (<a class=quiet href="sndscm.html#soundtosounddata">sound-&gt;sound-data</a>) 2.0))
 (begin (<a class=quiet href="#selectall">select-all</a>) (<a class=quiet href="#mixselection">mix-selection</a> 0))
 (begin (<a class=quiet href="#selectall">select-all</a>) (<a class=quiet href="#scaleselectionby">scale-selection-by</a> 2.0))
 (begin (<a class=quiet href="#savesoundas">save-sound-as</a> "temp.snd") (<a class=quiet href="#mix">mix</a> "temp.snd" 0) (delete-file "temp.snd"))

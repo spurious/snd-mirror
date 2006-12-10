@@ -4209,29 +4209,6 @@ remove-clicks looks for obvious clicks and uses smooth-sound to remove them.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- scan-sound -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="scansound">scan-sound</a> <code>func :optional (beg 0) dur snd</code>
-</td></tr><tr><td></td><td>
-scan-sound applies 'func' to all channels of the sound 'snd' in parallel, returning #t and a 
-sample number if all channels evaluate 'func' to #t on the same sample. 'func' takes two
-arguments, the current sample value, and the current channel number:
-<pre>
-   (scan-sound (lambda (y c) (&gt; y .03)))
-</pre>
-returns the first sample it finds at which all channels are greater than .03 (or #f if none is found).
-Similarly, the following looks for simultaneous zero crossings:
-<pre>
-(let ((last-vals (make-vct (chans (or (selected-sound) (car (sounds)))))))
-  (scan-sound
-   (lambda (y c)
-     (let ((last-y (vct-ref last-vals c)))
-       (vct-set! last-vals c y)
-       (&lt; (* y last-y) 0.0))))) ; signs differ so we must have crossed 0
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- shell -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>shell</em> <code>cmd</code>
@@ -4842,11 +4819,11 @@ frame-copy returns a copy of its argument.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- frame-reverse -->
+<!-- frame-reverse! -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="framereverse">frame-reverse</a> <code>frame</code>
+<a class=def name="framereverse">frame-reverse!</a> <code>frame</code>
 </td></tr><tr><td></td><td>
-frame-reverse reverses the entries in the given frame.
+frame-reverse! reverses the entries in the given frame.
 <pre>
     :<em class=typing>(frame-reverse (make-frame 2 .1 .2))</em>
     <em class=listener>#&lt;frame[2]: [0.200 0.100]&gt;</em>
@@ -4914,13 +4891,13 @@ for <a href="extsnd.html#insertsamples">insert-samples</a> that puts the vct arg
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- map-sound-frames -->
+<!-- map-sound -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="mapsoundframes">map-sound-frames</a> <code>func :optional beg dur snd</code>
+<a class=def name="mapsound">map-sound</a> <code>func :optional beg dur snd</code>
 </td></tr><tr><td></td><td>
-map-sound-frames is a version of <a href="extsnd.html#mapchannel">map-channel</a> that passes func a frame on each call, rather than a sample.
+map-sound is a version of <a href="extsnd.html#mapchannel">map-channel</a> that passes func a frame on each call, rather than a sample.
 <pre>
-    (map-sound-frames (lambda (fr) (<a class=quiet href="clm.html#frame*">frame*</a> fr 2.0)))
+    (map-sound (lambda (fr) (<a class=quiet href="clm.html#frame*">frame*</a> fr 2.0)))
 </pre>
 is another way to scale a sound by 2.0.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -4960,11 +4937,11 @@ region-&gt;sound-data returns a sound-data object containing the contents of the
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- scan-sound-frames -->
+<!-- scan-sound -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="scansoundframes">scan-sound-frames</a> <code>func :optional beg dur snd</code>
+<a class=def name="scansound">scan-sound</a> <code>func :optional beg dur snd</code>
 </td></tr><tr><td></td><td>
-scan-sound-frames is a version of <a href="extsnd.html#scanchannel">scan-channel</a> that passes func a frame on each call, rather than a sample.
+scan-sound is a version of <a href="extsnd.html#scanchannel">scan-channel</a> that passes func a frame on each call, rather than a sample.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5137,65 +5114,6 @@ frame-reader? returns #t if <i>obj</i> is a frame-reader.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 </table>
-
-
-<p>Also included in this file are some sound-data functions that will probably be moved to
-C eventually:
-</p>
-
-<table border=0 cellspacing=0 hspace=20>
-
-<!-- sound-data-add! -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>sound-data-add!</em> <code>sd1 sd2</code></td></tr>
-<tr><td width=60><br></td><td>
-sound-data-add! adds the contents of sd2 into sd1 and returns sd1.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-<!-- sound-data-copy -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>sound-data-copy</em> <code>sd</code></td></tr>
-<tr><td></td><td>
-sound-data-copy returns a copy of the sound-data object sd.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-<!-- sound-data-multiply! -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>sound-data-multiply!</em> <code>sd1 sd2</code></td></tr>
-<tr><td></td><td>
-sound-data-multiply! multiplies each element of sd2 by the corresponding element of sd2 and returns sd1.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-<!-- sound-data-offset! -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>sound-data-offset!</em> <code>sd off</code></td></tr>
-<tr><td></td><td>
-sound-data-offset! adds the number <i>off</i> to each element of sd and returns sd.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-<!-- sound-data-reverse -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>sound-data-reverse</em> <code>sd</code></td></tr>
-<tr><td></td><td>
-sound-data-reverse! reverses the elements of each channel of sd and returns sd.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-<!-- sound-data+ -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>sound-data+</em> <code>val1 val2</code></td></tr>
-<tr><td></td><td>
-sound-data+ adds val1 to val2 (either or both can be sound-data objects).
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-<!-- sound-data* -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>sound-data*</em> <code>val1 val2</code></td></tr>
-<tr><td></td><td>
-sound-data* multiplies val1 by val2 (either or both can be sound-data objects).
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-</table>
-
 
 <br>
 

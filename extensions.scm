@@ -898,7 +898,7 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- channels-equal
 
-;;; TODO: use sound->sound-data or scan-sound-frames here
+;;; TODO: use sound->sound-data or scan-sound here
 (define* (channels=? snd1 chn1 snd2 chn2 :optional (allowable-difference 0.0))
   "(channels=? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff) modulo trailing 0's"
   (if (and (= snd1 snd2)

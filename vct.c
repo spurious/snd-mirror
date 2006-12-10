@@ -294,7 +294,7 @@ initial-element: \n  " vct_make_example
   return(xen_make_vct(size, (Float *)CALLOC(size, sizeof(Float))));
 }
 
-static XEN g_copy_vct(XEN obj)
+static XEN g_vct_copy(XEN obj)
 {
   #define H_vct_copy "(" S_vct_copy " v): returns a copy of vct v"
   vct *v;
@@ -725,7 +725,7 @@ static XEN g_vct_plus(XEN obj1, XEN obj2)
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_make_vct_w, g_make_vct)
-XEN_NARGIFY_1(g_copy_vct_w, g_copy_vct)
+XEN_NARGIFY_1(g_vct_copy_w, g_vct_copy)
 XEN_NARGIFY_1(g_vct_p_w, g_vct_p)
 XEN_NARGIFY_1(g_list_to_vct_w, xen_list_to_vct)
 XEN_NARGIFY_1(g_vct_to_list_w, g_vct_to_list)
@@ -754,7 +754,7 @@ XEN_NARGIFY_2(equalp_vct_w, equalp_vct)
 #endif
 #else
 #define g_make_vct_w g_make_vct
-#define g_copy_vct_w g_copy_vct
+#define g_vct_copy_w g_vct_copy
 #define g_vct_p_w g_vct_p
 #define g_list_to_vct_w xen_list_to_vct
 #define g_vct_to_list_w g_vct_to_list
@@ -873,34 +873,34 @@ static XEN rb_vct_add_cp(int argc, XEN *argv, XEN obj1)
 {
   XEN obj2, offs;
   rb_scan_args(argc, argv, "11", &obj2, &offs);
-  return g_vct_add(g_copy_vct(obj1), obj2, (argc == 2) ? offs : XEN_UNDEFINED);
+  return g_vct_add(g_vct_copy(obj1), obj2, (argc == 2) ? offs : XEN_UNDEFINED);
 }
 
 /* v1.subtract(v2) returns new vct */
 static XEN rb_vct_subtract_cp(XEN obj1, XEN obj2)
 {
-  return g_vct_subtract(g_copy_vct(obj1), obj2);
+  return g_vct_subtract(g_vct_copy(obj1), obj2);
 }
 
 static XEN rb_vct_offset_cp(XEN obj, XEN scl)
 {
-  return g_vct_offset(g_copy_vct(obj), scl);
+  return g_vct_offset(g_vct_copy(obj), scl);
 }
 
 static XEN rb_vct_multiply_cp(XEN obj1, XEN obj2)
 {
-  return g_vct_multiply(g_copy_vct(obj1), obj2);
+  return g_vct_multiply(g_vct_copy(obj1), obj2);
 }
 
 static XEN rb_vct_scale_cp(XEN obj, XEN scl)
 {
-  return g_vct_scale(g_copy_vct(obj), scl);
+  return g_vct_scale(g_vct_copy(obj), scl);
 }
 
 #if 0
 static XEN rb_vct_fill_cp(XEN obj, XEN scl)
 {
-  return g_vct_fill(g_copy_vct(obj), scl);
+  return g_vct_fill(g_vct_copy(obj), scl);
 }
 #endif
 
@@ -917,7 +917,7 @@ static XEN rb_vct_move_cp(int argc, XEN *argv, XEN obj)
 {
   XEN vnew, old, backward;
   rb_scan_args(argc, argv, "21", &vnew, &old, &backward);
-  return g_vct_move(g_copy_vct(obj), vnew, old, (argc == 3) ? backward : XEN_UNDEFINED);
+  return g_vct_move(g_vct_copy(obj), vnew, old, (argc == 3) ? backward : XEN_UNDEFINED);
 }
 
 static XEN rb_vct_subseq(int argc, XEN *argv, XEN obj)
@@ -940,7 +940,7 @@ static XEN rb_vct_reverse_cp(int argc, XEN *argv, XEN obj)
 {
   XEN len;
   rb_scan_args(argc, argv, "01", &len);
-  return g_vct_reverse(g_copy_vct(obj), (argc > 0) ? len : XEN_UNDEFINED);
+  return g_vct_reverse(g_vct_copy(obj), (argc > 0) ? len : XEN_UNDEFINED);
 }
 
 static XEN rb_vct_first(XEN obj)
@@ -1047,7 +1047,7 @@ void mus_vct_init(void)
   fth_set_object_inspect(vct_tag,   print_vct);
   fth_set_object_dump(vct_tag,      g_vct_to_readable_string);
   fth_set_object_to_array(vct_tag,  g_vct_to_vector);
-  fth_set_object_copy(vct_tag,      g_copy_vct);
+  fth_set_object_copy(vct_tag,      g_vct_copy);
   fth_set_object_value_ref(vct_tag, g_vct_ref);
   fth_set_object_value_set(vct_tag, g_vct_set);
   fth_set_object_equal(vct_tag,     equalp_vct);
@@ -1077,7 +1077,7 @@ void mus_vct_init(void)
   rb_define_method(rb_cArray, "to_vct", XEN_PROCEDURE_CAST g_vector_to_vct, 0);
 
   rb_define_method(vct_tag, "to_str",    XEN_PROCEDURE_CAST g_vct_to_readable_string, 0);
-  rb_define_method(vct_tag, "dup",       XEN_PROCEDURE_CAST g_copy_vct, 0);
+  rb_define_method(vct_tag, "dup",       XEN_PROCEDURE_CAST g_vct_copy, 0);
   rb_define_method(vct_tag, "peak",      XEN_PROCEDURE_CAST g_vct_peak, 0);
   rb_define_method(vct_tag, "add",       XEN_PROCEDURE_CAST rb_vct_add_cp, -1);
   rb_define_method(vct_tag, "add!",      XEN_PROCEDURE_CAST rb_vct_add, -1);
@@ -1102,7 +1102,7 @@ void mus_vct_init(void)
 #endif
 
   XEN_DEFINE_PROCEDURE(S_make_vct,      g_make_vct_w,      1, 1, 0, H_make_vct);
-  XEN_DEFINE_PROCEDURE(S_vct_copy,      g_copy_vct_w,      1, 0, 0, H_vct_copy);
+  XEN_DEFINE_PROCEDURE(S_vct_copy,      g_vct_copy_w,      1, 0, 0, H_vct_copy);
   XEN_DEFINE_PROCEDURE(S_vct_p,         g_vct_p_w,         1, 0, 0, H_vct_p);
   XEN_DEFINE_PROCEDURE(S_list_to_vct,   g_list_to_vct_w,   1, 0, 0, H_list_to_vct);
   XEN_DEFINE_PROCEDURE(S_vct_to_list,   g_vct_to_list_w,   1, 0, 0, H_vct_to_list);

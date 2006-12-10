@@ -2193,8 +2193,9 @@
 			 'snd-error 'snd-error-hook 'snd-gcs 'snd-help 'snd-font 'snd-color
 			 'snd-print 'snd-simulate-keystroke 'snd-spectrum 'snd-tempnam 'snd-url
 			 'snd-urls 'snd-version 'snd-warning 'snd-warning-hook 'sound-data->sound-data
-			 'sound-data->vct 'sound-data-chans 'sound-data-length 'sound-data-maxamp 'sound-data-ref
+			 'sound-data->vct 'sound-data-chans 'sound-data-length 'sound-data-maxamp 'sound-data-ref 'sound-data-peak
 			 'sound-data-set! 'sound-data-scale! 'sound-data-fill! 'sound-data? 
+			 'sound-data-multiply! 'sound-data-add! 'sound-data-offset! 'sound-data* 'sound-data+ 'sound-data-copy 'sound-data-reverse!
 			 'sound-file-extensions 'sound-file? 'sound-files-in-directory
 			 'sound-loop-info 'sound-properties 'sound-widgets 'sound? 'soundfont-info
 			 'sounds 'spectro-cutoff 'spectro-hop 'spectro-start 'spectro-x-angle
@@ -3083,8 +3084,9 @@
 		 (mx (sound-data-maxamp sd)))
 	    (if (not (= (sound-data-length sd) 50828)) (snd-display ";oboe->sd: len ~A?" (sound-data-length sd)))
 	    (if (fneq (sound-data-ref sd 0 1000) .0328369) (snd-display ";oboe->sd[1000]: ~A?" (sound-data-ref sd 0 1000)))
-	    (if (not (= (length mx) 1)) (snd-display ";sound-data-maxamp oboe.snd: ~A?" (sound-data-maxamp sd)))
-	    (if (not (= (maxamp ob 0) (car mx))) (snd-display ";sound-data-maxamp oboe.snd: ~A ~A?" (sound-data-maxamp sd) (maxamp ob 0)))
+	    (if (not (= (length mx) 1)) (snd-display ";sound-data-maxamp oboe.snd: ~A?" mx))
+	    (if (not (= (maxamp ob 0) (car mx))) (snd-display ";sound-data-maxamp oboe.snd: ~A ~A?" mx (maxamp ob 0)))
+	    (if (fneq (sound-data-peak sd) (car mx)) (snd-display "sound-data-peak oboe.snd: ~A ~A" (sound-data-peak sd) mx))
 	    
 	    (let ((var (catch #t (lambda () (set! (selected-channel) 1)) (lambda args args))))
 	      (if (not (eq? (car var) 'no-such-channel))
@@ -17619,12 +17621,12 @@ EDITS: 5
 	    (if (not (mixer-equal? mmx (make-scalar-mixer k 1.0)))
 		(snd-display ";mixer-inverse r~D: ~A * ~A -> ~A" k mx imx mmx))))
 	
-	(let ((fr (frame-reverse (make-frame 2 .5 2.0))))
+	(let ((fr (frame-reverse! (make-frame 2 .5 2.0))))
 	  (if (not (frame-equal? fr (make-frame 2 2.0 0.5)))
-	      (snd-display ";frame-reverse 2: ~A" fr)))
-	(let ((fr (frame-reverse (make-frame 3 .5 1.0 2.0))))
+	      (snd-display ";frame-reverse! 2: ~A" fr)))
+	(let ((fr (frame-reverse! (make-frame 3 .5 1.0 2.0))))
 	  (if (not (frame-equal? fr (make-frame 3 2.0 1.0 0.5)))
-	      (snd-display ";frame-reverse 3: ~A" fr)))
+	      (snd-display ";frame-reverse! 3: ~A" fr)))
 	
 	(let ((hi (make-mixer 3 10 5 1 1 20 5 1 3 7))
 	      (ho (make-mixer 3 10 5 2 1 3 2 1 3 2)))
@@ -20219,6 +20221,8 @@ EDITS: 5
 	      (set! start i)))
 	(if (not (= start 64))
 	    (snd-display ";move-sound sd output start: ~A" start))
+	(if (fneq (sound-data-peak vo) 0.484)
+	    (snd-display ";move-sound sd peak output: ~A" (sound-data-peak vo)))
 	(if (fneq (apply max (sound-data-maxamp vo)) 0.484)
 	    (snd-display ";move-sound sd output: ~A" (sound-data-maxamp vo))))
       
@@ -40556,49 +40560,8 @@ EDITS: 1
 	(let ((dist (channel-distance ind1 0 ind2 0)))
 	  (if (fneq dist .1346) (snd-display ";channel-distance: ~A" dist)))
 
-	(revert-sound ind1)
-	(revert-sound ind2)
-
-	(let ((vals (scan-sound (lambda (y c) (> y .1)) 0 #f ind2)))
-	  (if (not (equal? vals (list #t 4423)))
-	      (snd-display ";scan-sound oboe: ~A" vals)))
-	
 	(close-sound ind1)
 	(close-sound ind2))
-
-      (let ((ind1 (open-sound "2.snd"))
-	    (ind2 (open-sound "4.aiff")))
-	(let ((vals (scan-sound (lambda (y c) (> y .1)) 0 #f ind1)))
-	  (if vals (snd-display ";scan-sound 2 #f: ~A" vals))
-	  (set! vals (scan-sound (lambda (y c) (> y .03)) 0 #f ind1))
-	  (if (not (equal? vals (list #t 12)))
-	      (snd-display ";scan-sound 2 #t: ~A (~A ~A)" vals (sample 12 ind1 0) (sample 12 ind1 1)))
-	  (set! (selected-sound) ind1)
-	  (let* ((last-vals (make-vct (chans (or (selected-sound) (car (sounds))))))
-		 (result (scan-sound
-			  (lambda (y c)
-			    (let ((last-y (vct-ref last-vals c)))
-			      (vct-set! last-vals c y)
-			      (< (* y last-y) 0.0)))))) ; signs differ so we must have crossed 0
-	    (if (not (equal? result (list #t 6)))
-		(snd-display ";scan-sound 2 zero cross: ~A (~A -> ~A, ~A -> ~A)" 
-			     result (sample 5 ind1 0) (sample 6 ind1 0) (sample 5 ind1 1) (sample 6 ind1 1))))
-	  (set! vals (scan-sound (lambda (y c) (> y .05)) 0 #f ind2))
-	  (if (not (equal? vals (list #t 21372)))
-	      (snd-display ";scan-sound 4 .05: ~A" vals))
-	  (set! vals (scan-sound (lambda (y c) (or (not (= c 3)) (> y .05))) 0 #f ind2))
-	  (if (not (equal? vals (list #t 12999)))
-	      (snd-display ";scan-sound 4 .05 3: ~A" vals))
-	  (close-sound ind1)
-	  (let* ((last-vals (make-vct (chans (or (selected-sound) (car (sounds))))))
-		 (result (scan-sound
-			  (lambda (y c)
-			    (let ((last-y (vct-ref last-vals c)))
-			      (vct-set! last-vals c y)
-			      (< (* y last-y) 0.0))))))
-	    (if (not (equal? result (list #t 1287)))
-		(snd-display ";scan-sound 4 zero cross: ~A" result)))
-	  (close-sound ind2)))
 
       (copy-file (string-append (getcwd) "/oboe.snd") (string-append (getcwd) "/test.snd"))
       (let* ((ind (open-sound "test.snd"))
@@ -40790,8 +40753,8 @@ EDITS: 1
 
       ;; frame.scm functions
       
-      (let ((tag (catch #t (lambda () (frame-reverse 32)) (lambda args (car args)))))
-	(if (not (eq? tag 'wrong-type-arg)) (snd-display ";frame-reverse bad arg: ~A" tag)))
+      (let ((tag (catch #t (lambda () (frame-reverse! 32)) (lambda args (car args)))))
+	(if (not (eq? tag 'wrong-type-arg)) (snd-display ";frame-reverse! bad arg: ~A" tag)))
       (let ((tag (catch #t (lambda () (frame-copy 32)) (lambda args (car args)))))
 	(if (not (eq? tag 'wrong-type-arg)) (snd-display ";frame-copy bad arg: ~A" tag)))
       
@@ -40806,7 +40769,7 @@ EDITS: 1
 	  (if (or (fneq (frame-ref val 0) 0.0)
 		  (fneq (frame-ref fr1 0) 0.1))
 	      (snd-display ";set of copied frame: ~A ~A" fr1 val))
-	  (frame-reverse val)
+	  (frame-reverse! val)
 	  (if (or (fneq (frame-ref val 0) 0.3)
 		  (fneq (frame-ref val 1) 0.2)
 		  (fneq (frame-ref val 2) 0.0))
@@ -41422,40 +41385,40 @@ EDITS: 1
       (mus-sound-forget "oboe.snd")
       (let ((ind (open-sound "oboe.snd"))
 	    (len 0))
-	(let ((val (scan-sound-frames 
+	(let ((val (scan-sound 
 		    (lambda (fr)
 		      (set! len (mus-length fr))
 		      (> (frame-ref fr 0) .1)))))
 	  (if (not (equal? val (list #t 4423)))
-	      (snd-display ";scan-sound-frames oboe: ~A" val))
-	  (if (not (= len 1)) (snd-display ";scan-sound-frames frame len: ~A" len)))
+	      (snd-display ";scan-sound oboe: ~A" val))
+	  (if (not (= len 1)) (snd-display ";scan-sound frame len: ~A" len)))
 	
 	(set! len 0)
 	(let ((mx (maxamp)))
-	  (map-sound-frames
+	  (map-sound
 	   (lambda (fr)
 	     (set! len (mus-length fr))
 	     (frame* fr 2.0)))
-	  (if (fneq (maxamp) (* 2 mx)) (snd-display ";map-sound-frames max: ~A ~A" mx (maxamp)))
-	  (if (not (= (edit-position ind 0) 1)) (snd-display ";map-sound-frames edpos: ~A" (edit-position ind 0)))
-	  (if (not (= len 1)) (snd-display ";map-sound-frames frame len: ~A" len)))
+	  (if (fneq (maxamp) (* 2 mx)) (snd-display ";map-sound max: ~A ~A" mx (maxamp)))
+	  (if (not (= (edit-position ind 0) 1)) (snd-display ";map-sound edpos: ~A" (edit-position ind 0)))
+	  (if (not (= len 1)) (snd-display ";map-sound frame len: ~A" len)))
 	(close-sound ind))
 
       (mus-sound-forget "4.aiff")
       (let ((ind (open-sound "4.aiff"))
 	    (len 0))
 	(if (not (= (chans ind) 4)) (snd-display ";chans 4.aiff: ~A" (chans ind)))
-	(let ((val (scan-sound-frames 
+	(let ((val (scan-sound 
 		    (lambda (fr)
 		      (set! len (mus-length fr))
 		      (> (frame-ref fr 3) .1)))))
 	  (if (not (equal? val (list #t 21244)))
-	      (snd-display ";4 scan-sound-frames: ~A" val))
-	  (if (not (= len 4)) (snd-display ";4 scan-sound-frames frame len: ~A" len)))
+	      (snd-display ";4 scan-sound: ~A" val))
+	  (if (not (= len 4)) (snd-display ";4 scan-sound frame len: ~A" len)))
 	
 	(set! len 0)
 	(let ((mx (maxamp ind #t)))
-	  (map-sound-frames
+	  (map-sound
 	   (lambda (fr)
 	     (set! len (mus-length fr))
 	     (frame* fr 2.0))
@@ -41463,10 +41426,10 @@ EDITS: 1
 	  (do ((chn 0 (1+ chn)))
 	      ((= chn 4))
 	    (if (fneq (maxamp ind chn) (* 2 (list-ref mx chn)))
-		(snd-display ";4:~D map-sound-frames max: ~A ~A" chn mx (maxamp ind chn)))
+		(snd-display ";4:~D map-sound max: ~A ~A" chn mx (maxamp ind chn)))
 	    (if (not (= (edit-position ind chn) 1)) 
-		(snd-display ";4:~D map-sound-frames edpos: ~A" chn (edit-position ind chn))))
-	  (if (not (= len 4)) (snd-display ";4 map-sound-frames frame len: ~A" len)))
+		(snd-display ";4:~D map-sound edpos: ~A" chn (edit-position ind chn))))
+	  (if (not (= len 4)) (snd-display ";4 map-sound frame len: ~A" len)))
 	(close-sound ind))
 
       (let ((sd (make-sound-data 4 10)))
@@ -41508,14 +41471,14 @@ EDITS: 1
 		  ((= i 10))
 		(sound-data-set! sd2 chn i (+ 1 i (* chn 10)))))
 	    (if (not (equal? sd2 sd)) (snd-display ";sound-data-offset! not equal? ~%    ~A~%     ~A" sd sd2)))
-	  (let ((sd3 (sound-data-reverse sd)))
+	  (let ((sd3 (sound-data-reverse! (sound-data-copy sd))))
 	    (let ((sd2 (make-sound-data 4 10)))
 	      (do ((chn 0 (1+ chn)))
 		  ((= chn 4))
 		(do ((i 0 (1+ i)))
 		    ((= i 10))
 		  (sound-data-set! sd2 chn i (+ 1 (- 9 i) (* chn 10)))))
-	      (if (not (equal? sd2 sd3)) (snd-display ";sound-data-reverse not equal? ~%    ~A~%     ~A" sd3 sd2)))
+	      (if (not (equal? sd2 sd3)) (snd-display ";sound-data-reverse! not equal? ~%    ~A~%     ~A" sd3 sd2)))
 	    (sound-data-add! sd sd3)
 	    (do ((chn 0 (1+ chn)))
 		((= chn 4))
@@ -49327,7 +49290,8 @@ EDITS: 1
 			      (fm-violin 0 .1 440 .3 :degree 180 :random-vibrato-amplitude 0.0)
 			      (fm-violin 0 .1 440 .4 :degree 270 :random-vibrato-amplitude 0.0))))
 	  (if (and (not (string=? stats-string "sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.000\n"))
-		   (not (string=? stats-string "sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.010\n")))
+		   (not (string=? stats-string "sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.010\n"))
+		   (not (string=? stats-string "sound-data:\n  maxamp: 0.1000 0.2000 0.3000 0.4000\n  compute time: 0.020\n")))
 	      (snd-display ";with-sound to sound-data stats 4: [~A]" stats-string)))
 	)
       
@@ -62283,7 +62247,9 @@ EDITS: 1
 		     moving-average moving-average? make-moving-average
 		     mus-expand-filename 
 		     make-sound-data sound-data-ref sound-data-set! sound-data-scale! sound-data-fill! sound-data? sound-data-length
-		     sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate
+		     sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ sound-data-copy sound-data-reverse!
+		     sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data sound-data-peak
+		     all-pass all-pass? amplitude-modulate
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm? sound-data->sound-data
 		     clear-array comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
 		     delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample

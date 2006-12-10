@@ -139,15 +139,28 @@
 #define S_mus_unsupported               "mus-unsupported"
 #define S_mus_voc                       "mus-voc"
 #define S_new_sound_hook                "new-sound-hook"
-#define S_sound_data_to_vct             "sound-data->vct"
+#define S_sound_data_addB               "sound-data-add!"
 #define S_sound_data_chans              "sound-data-chans"
+#define S_sound_data_copy               "sound-data-copy"
 #define S_sound_data_fillB              "sound-data-fill!"
 #define S_sound_data_length             "sound-data-length"
 #define S_sound_data_maxamp             "sound-data-maxamp"
+#define S_sound_data_multiplyB          "sound-data-multiply!"
+#define S_sound_data_offsetB            "sound-data-offset!"
 #define S_sound_data_p                  "sound-data?"
+#define S_sound_data_peak               "sound-data-peak"
 #define S_sound_data_ref                "sound-data-ref"
+#define S_sound_data_reverseB           "sound-data-reverse!"
 #define S_sound_data_scaleB             "sound-data-scale!"
 #define S_sound_data_setB               "sound-data-set!"
+#define S_sound_data_to_string          "sound-data->string"
+#define S_sound_data_to_vct             "sound-data->vct"
 #define S_vct_to_sound_data             "vct->sound-data"
-
+#if HAVE_RUBY
+  #define S_sound_data_multiply         "sound_data_multiply"
+  #define S_sound_data_add              "sound_data_add"
+#else
+  #define S_sound_data_multiply         "sound-data*"
+  #define S_sound_data_add              "sound-data+"
+#endif
 #endif

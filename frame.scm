@@ -3,7 +3,7 @@
 ;;; I might move these into C 
 
 
-;;; frame-reverse frame-copy (from mixer.scm)
+;;; frame-reverse! frame-copy (from mixer.scm)
 ;;; sound->frame frame->sound 
 ;;;   region->frame
 ;;;
@@ -20,14 +20,14 @@
 ;;;
 ;;; insert-sound-data insert-frame insert-vct
 ;;; mix-sound-data mix-frame
-;;; scan-sound-frames map-sound-frames
+;;; scan-sound map-sound
 ;;;
-;;; sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ sound-data-copy sound-data-reverse
+;;; sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ sound-data-reverse!
 
 
 (provide 'snd-frame.scm)
 
-(define (frame-reverse fr)
+(define (frame-reverse! fr)
   "(frame-reverse fr) reverses the contents of frame fr"
   (if (not (frame? fr))
       (throw 'wrong-type-arg (list "frame-reverse" fr))
@@ -312,6 +312,37 @@
 	fr)))
 
 
+;;; TODO: doc/test make-sync-frame-reader
+(define* (make-sync-frame-reader :optional (beg 0) snd (chn 0) dir edpos)
+  "(make-sync-frame-reader :optional beg snd dir edpos) returns a frame reader that reads all syncd channels on each call"
+  (let* ((index (or snd (selected-sound) (car (sounds)))))
+    (if (not (sound? index))
+	(throw 'no-such-sound (list "make-sync-frame-reader" snd))
+	(let ((snc (sync index))
+	      (chns 0))
+	  (for-each
+	   (lambda (s)
+	     (if (= (sync s) snd)
+		 (set! chns (+ chns (chans s)))))
+	   (sounds))
+	  (let ((fr (make-vector (+ chns +frame-reader0+))))
+	    (vector-set! fr +frame-reader-tag+ 'frame-reader)
+	    (vector-set! fr +frame-reader-snd+ index)
+	    (vector-set! fr +frame-reader-channels+ chns)
+	    (vector-set! fr +frame-reader-frame+ (make-frame chns))
+	    (let ((ctr 0))
+	      (for-each 
+	       (lambda (s)
+		 (if (= snd (sync s))
+		     (begin
+		       (do ((i 0 (1+ i)))
+			   ((= i (chans s)))
+			 (vector-set! fr (+ (+ i ctr) +frame-reader0+) (make-sample-reader beg s i dir edpos)))
+		       (set! ctr (+ ctr (chans s))))))
+	       (sounds)))
+	    fr)))))
+
+
 (define (file->vct file)
   "(file->vct file) returns a vct with file's data (channel 0)"
   (let* ((len (mus-sound-frames file))
@@ -451,8 +482,8 @@
 	      mix-id)))))
 
   
-(define* (scan-sound-frames func :optional (beg 0) dur snd)
-  "(scan-sound-frames func :optional beg dur snd) is a version of scan-channel that passes func a frame on each call, rather than a sample"
+(define* (scan-sound func :optional (beg 0) dur snd)
+  "(scan-sound func :optional beg dur snd) is a version of scan-channel that passes func a frame on each call, rather than a sample"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
 	(let* ((reader (make-frame-reader beg index))
@@ -464,10 +495,10 @@
 	       (and result
 		    (list result (1- i))))
 	    (set! result (func (read-frame reader)))))
-	(throw 'no-such-sound (list "scan-sound-frames" snd)))))
+	(throw 'no-such-sound (list "scan-sound" snd)))))
 
-(define* (map-sound-frames func :optional (beg 0) dur snd)
-  "(map-sound-frames func :optional beg dur snd) is a version of map-channel that passes func a frame on each call, rather than a sample"
+(define* (map-sound func :optional (beg 0) dur snd)
+  "(map-sound func :optional beg dur snd) is a version of map-channel that passes func a frame on each call, rather than a sample"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
 	(let* ((out-chans (chans index))
@@ -489,108 +520,7 @@
 	  (do ((i 0 (1+ i)))
 	      ((= i (chans index)))
 	    (set! (samples beg loc index i #f "map-sound" i #f (= i 0)) filename))) ; edpos = #f, auto-delete = chan=0
-	(throw 'no-such-sound (list "map-sound-frames" snd)))))
-
-
-
-;;; PERHAPS: sound-data funcs to sndlib2xen
-
-(define (sound-data-copy sd)
-  "(sound-data-copy sd) returns a copy of the sound-data object sd"
-  (if (sound-data? sd)
-      (let* ((chns (sound-data-chans sd))
-	     (len (sound-data-length sd))
-	     (nsd (make-sound-data chns len)))
-	(do ((chn 0 (1+ chn)))
-	    ((= chn chns))
-	  (do ((i 0 (1+ i)))
-	      ((= i len))
-	    (sound-data-set! nsd chn i (sound-data-ref sd chn i))))
-	nsd)
-      (throw 'wrong-type-arg (list "sound-data-copy" sd))))
-
-(define (sound-data-add! sd1 sd2)
-  "(sound-data-add! sd1 sd2) adds the contents of sd2 into sd1 and returns sd1"
-  (if (sound-data? sd1)
-      (if (sound-data? sd2)
-	  (let* ((chns (min (sound-data-chans sd1) (sound-data-chans sd2)))
-		 (len (min (sound-data-length sd1) (sound-data-length sd2))))
-	    (do ((chn 0 (1+ chn)))
-		((= chn chns))
-	      (do ((i 0 (1+ i)))
-		  ((= i len))
-		(sound-data-set! sd1 chn i (+ (sound-data-ref sd1 chn i) (sound-data-ref sd2 chn i)))))
-	    sd1)
-	  (throw 'wrong-type-arg (list "sound-data-add!" sd2)))
-      (throw 'wrong-type-arg (list "sound-data-add!" sd1))))
-
-(define (sound-data-offset! sd off)
-  "(sound-data-offset! sd1 off) adds off to each element of sd and returns sd"
-  (if (sound-data? sd)
-      (if (number? off)
-	  (let* ((chns (sound-data-chans sd))
-		 (len (sound-data-length sd)))
-	    (if (not (= off 0.0))
-		(do ((chn 0 (1+ chn)))
-		    ((= chn chns))
-		  (do ((i 0 (1+ i)))
-		      ((= i len))
-		    (sound-data-set! sd chn i (+ (sound-data-ref sd chn i) off)))))
-	    sd)
-	  (throw 'wrong-type-arg (list "sound-data-offset!" off)))
-      (throw 'wrong-type-arg (list "sound-data-offset!" sd))))
-
-(define (sound-data-multiply! sd1 sd2)
-  "(sound-data-multiply! sd1 sd2) multiplies each element of sd2 by the corresponding element of sd2 and returns sd1"
-  (if (sound-data? sd1)
-      (if (sound-data? sd2)
-	  (let* ((chns (min (sound-data-chans sd1) (sound-data-chans sd2)))
-		 (len (min (sound-data-length sd1) (sound-data-length sd2))))
-	    (do ((chn 0 (1+ chn)))
-		((= chn chns))
-	      (do ((i 0 (1+ i)))
-		  ((= i len))
-		(sound-data-set! sd1 chn i (* (sound-data-ref sd1 chn i) (sound-data-ref sd2 chn i)))))
-	    sd1)
-	  (throw 'wrong-type-arg (list "sound-data-multiply!" sd2)))
-      (throw 'wrong-type-arg (list "sound-data-multiply!" sd1))))
-
-(define (sound-data* val1 val2)
-  "(sound-data* val1 val2) multiplies val1 by val2 (either or both can be sound-data objects)"
-  (if (sound-data? val1)
-      (if (sound-data? val2)
-	  (sound-data-multiply! val1 val2)
-	  (sound-data-scale! val1 val2))
-      (if (sound-data? val2)
-	  (sound-data-scale! val2 val1)
-	  (* val1 val2))))
-
-(define (sound-data+ val1 val2)
-  "(sound-data+ val1 val2) adds val1 to val2 (either or both can be sound-data objects)"
-  (if (sound-data? val1)
-      (if (sound-data? val2)
-	  (sound-data-add! val1 val2)
-	  (sound-data-offset! val1 val2))
-      (if (sound-data? val2)
-	  (sound-data-offset! val2 val1)
-	  (+ val1 val2))))
-
-(define (sound-data-reverse sd)
-  "(sound-data-reverse! sd) reverses contents of each channel of sd and returns sd"
-  (if (sound-data? sd)
-      (let* ((chns (sound-data-chans sd))
-	     (len (sound-data-length sd))
-	     (nsd (make-sound-data chns len)))
-	(do ((chn 0 (1+ chn)))
-	    ((= chn chns))
-	  (do ((i 0 (1+ i))
-	       (j (1- len) (1- j)))
-	      ((>= i j))
-	    (let ((temp (sound-data-ref sd chn i)))
-	      (sound-data-set! nsd chn i (sound-data-ref sd chn j))
-	      (sound-data-set! nsd chn j temp))))
-	nsd)
-      (throw 'wrong-type-arg (list "sound-data-reverse" sd))))
+	(throw 'no-such-sound (list "map-sound" snd)))))
 
 
 
@@ -600,10 +530,22 @@
 ;;;     linear-src-channel  map-channel  mix-channel  mus-channel  normalize-channel  notch-channel  offset-channel
 ;;;     pad-channel  play-channel  ptree-channel  ramp-channel  redo-channel  reverse-channel rotate-channel
 ;;;     scale-channel  scan-channel  sine-env-channel  smooth-channel  src-channel  undo-channel  xramp-channel
+;;;
+;;; essentially:
+#|
+(define (env-channels e)
+  (let ((e (make-env e)))
+    (map-sound-frames (lambda (fr)
+			(frame* fr (env e))))))
+|#
+;;; but currently that's a lot slower than a do loop (no opts)
+;;; map-sound-frames-with-sync
 
+;;; what about map-frames scan-frames | with-sync?  or map-sound map-syncd-sound
+;;; map|scan-sound are not currently in use
 
-;;; PERHAPS: make-sync-frame-reader (follow sync chain), or selection-frame-reader
-;;;     can the existing code for this be folded into a reader?
+;;; PERHAPS: selection-frame-reader
+;;;     can the existing code for this (and sync reader) be folded into a reader?
 ;;; PERHAPS: sync-all
 
 ;;; PERHAPS: clip-hook -> called when a sample is clipped or clipping is detected somewhere (io.c) -- needs clip_handler as in sound.c
@@ -619,6 +561,21 @@
 
 ;;; PERHAPS: make-track-frame-reader?
 ;;; TODO: need snd-run support for frame-readers (and map-frame frame return?)
+;;; TODO: sound-data-* snd-run opts+tests sound-data-peak tests [ruby methods]
 
 ;;; TODO: write doc that describes all these sample accessors: sample-at-a-time, readers, chunked versions (->vct), top level (menu, save-sound-as)
 ;;; TODO: why doesn't onmouseover work in firefox?
+
+;;; TODO: snd8 old scan-sound zero-crossing case:
+#|
+(define* (simultaneous-zero-crossing :optional (beg 0) dur snd)
+  (let ((last-fr (make-frame (chans snd))))
+    (scan-sound (lambda (fr)
+		  (let ((result #t))
+		    (do ((chn 0 (1+ chn)))
+			((= chn (mus-length fr)))
+		      (set! result (and result (< (* (frame-ref fr chn) (frame-ref last-fr chn)) 0.0)))
+		      (frame-set! last-fr chn (frame-ref fr chn)))
+		    result))
+		beg dur snd)))
+|#

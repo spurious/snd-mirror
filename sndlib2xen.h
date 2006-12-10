@@ -27,4 +27,10 @@ void mus_sndlib_xen_initialize (void);
 XEN wrap_sound_data(int chans, int frames, Float **data);
 sound_data *sound_data_scale(sound_data *sd, Float scaler);
 sound_data *sound_data_fill(sound_data *sd, Float scaler);
+Float sound_data_peak(sound_data *sd);
+sound_data *sound_data_copy(sound_data *sd);
+sound_data *sound_data_reverse(sound_data *sd);
+sound_data *sound_data_add(sound_data *sd1, sound_data *sd2);
+sound_data *sound_data_multiply(sound_data *sd1, sound_data *sd2);
+sound_data *sound_data_offset(sound_data *sd, Float off);
 #endif
