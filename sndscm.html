@@ -4947,9 +4947,31 @@ region-&gt;sound-data returns a sound-data object containing the contents of the
 
 <!-- scan-sound -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="scansound">scan-sound</a> <code>func :optional beg dur snd</code>
+<a class=def name="scansound">scan-sound</a> <code>func :optional beg dur snd with-sync</code>
 </td></tr><tr><td></td><td>
 scan-sound is a version of <a href="extsnd.html#scanchannel">scan-channel</a> that passes func a frame on each call, rather than a sample.
+If 'with-sync' is #t, the frame read includes all channels currently sync'd to 'snd'.
+<pre>
+(define* (simultaneous-zero-crossing :optional (beg 0) dur snd)
+  (let ((last-fr (<a class=quiet href="clm.html#make-frame">make-frame</a> (<a class=quiet href="extsnd.html#chans">chans</a> snd))))
+    (<em class=red>scan-sound</em> (lambda (fr)
+		  (let ((result #t))
+		    (do ((chn 0 (1+ chn)))
+			((= chn (<a class=quiet href="clm.html#framemuschannels">mus-length</a> fr)))
+		      (set! result (and result 
+                                        (&lt; (* (<a class=quiet href="clm.html#frame-ref">frame-ref</a> fr chn) (<a class=quiet href="clm.html#frame-ref">frame-ref</a> last-fr chn)) 0.0)))
+		      (<a class=quiet href="clm.html#frame-set!">frame-set!</a> last-fr chn (<a class=quiet href="clm.html#frame-ref">frame-ref</a> fr chn)))
+		    result))
+		beg dur snd)))
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- selection->sound-data -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="selectiontosounddata">selection-&gt;sound-data</a>
+</td></tr><tr><td></td><td>
+selection-&gt;sound-data returns a sound-data object containing the contents of the current selection.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5047,52 +5069,6 @@ once the dust settles.
 copy-frame-reader returns a copy of the frame-reader <i>obj</i>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
-<!-- free-frame-reader -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="freeframereader">free-frame-reader</a> <code>obj</code></td></tr>
-<tr><td></td><td>
-free-frame-reader releases the frame-reader <i>obj</i>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-<!-- make-region-frame-reader -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="makeregionframereader">make-region-frame-reader</a> <code>start reg <i>dir</i></code></td></tr>
-<tr><td></td><td>
-make-region-frame-reader creates a frame-reader reading region <i>reg</i>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-<!-- make-frame-reader -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="makeframereader">make-frame-reader</a> <code><i>start snd dir pos</i></code></td></tr>
-<tr><td></td><td>
-make-frame-reader creates a frame-reader reading <i>snd</i>
-starting at frame <i>start</i> with initial read direction <i>dir</i> 
-(1=forward, -1=backward).  <i>pos</i> is the edit history position to read 
-(it defaults to current position).
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-<!-- next-frame -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="nextframe">next-frame</a> <code>obj</code></td></tr>
-<tr><td></td><td>
-next-frame returns the next frame (reading forward) read by the frame-reader <i>obj</i>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-<!-- previous-frame -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="previousframe">previous-frame</a> <code>obj</code></td></tr>
-<tr><td></td><td>
-previous-frame returns the previous frame in the stream read by the frame-reader <i>obj</i>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-<!-- read-frame -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="readframe">read-frame</a> <code>obj</code></td></tr>
-<tr><td></td><td>
-read-frame returns the next frame (reading in the direction set by <a class=quiet href="#makeframereader">make-frame-reader</a>) 
-from the frame-reader <i>obj</i>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
 <!-- frame-reader-at-end? -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="framereaderatendQ">frame-reader-at-end?</a> <code>obj</code></td></tr>
@@ -5126,6 +5102,80 @@ frame-reader-position returns the current (frame-wise) location of the frame-rea
 <a class=def name="framereaderQ">frame-reader?</a> <code>obj</code></td></tr>
 <tr><td></td><td>
 frame-reader? returns #t if <i>obj</i> is a frame-reader.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- free-frame-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="freeframereader">free-frame-reader</a> <code>obj</code></td></tr>
+<tr><td></td><td>
+free-frame-reader releases the frame-reader <i>obj</i>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- make-frame-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="makeframereader">make-frame-reader</a> <code><i>start snd dir pos</i></code></td></tr>
+<tr><td></td><td>
+make-frame-reader creates a frame-reader reading <i>snd</i>
+starting at frame <i>start</i> with initial read direction <i>dir</i> 
+(1=forward, -1=backward).  <i>pos</i> is the edit history position to read 
+(it defaults to current position).
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- make-region-frame-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="makeregionframereader">make-region-frame-reader</a> <code>start reg <i>dir</i></code></td></tr>
+<tr><td></td><td>
+make-region-frame-reader creates a frame-reader reading region <i>reg</i>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- make-selection-frame-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="makeselectionframereader">make-selection-frame-reader</a> <code>start</code></td></tr>
+<tr><td></td><td>
+make-selection-frame-reader returns a frame reader that reads all channels of the current selection.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- make-sync-frame-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="makesyncframereader">make-sync-frame-reader</a> <code>start snd dir edpos</code></td></tr>
+<tr><td></td><td>
+make-sync-frame-reader returns a frame reader that reads all channels sync'd to 'snd'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- make-track-frame-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="maketrackframereader">make-track-frame-reader</a> <code>start</code></td></tr>
+<tr><td></td><td>
+make-track-frame-reader returns a frame reader that reads all channels of the track 'trk'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- next-frame -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="nextframe">next-frame</a> <code>obj</code></td></tr>
+<tr><td></td><td>
+next-frame returns the next frame (reading forward) read by the frame-reader <i>obj</i>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- previous-frame -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="previousframe">previous-frame</a> <code>obj</code></td></tr>
+<tr><td></td><td>
+previous-frame returns the previous frame in the stream read by the frame-reader <i>obj</i>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- read-frame -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="readframe">read-frame</a> <code>obj</code></td></tr>
+<tr><td></td><td>
+read-frame returns the next frame (reading in the direction set by <a class=quiet href="#makeframereader">make-frame-reader</a>) 
+from the frame-reader <i>obj</i>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- read-track-frame -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="readtrackframe">read-track-frame</a> <code>obj</code></td></tr>
+<tr><td></td><td>
+read-track-frame returns the next frame read by the track-frame-reader 'obj'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 </table>

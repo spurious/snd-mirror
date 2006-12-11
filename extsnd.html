@@ -9102,7 +9102,7 @@ This is the maximum <a href="#sync">sync</a> setting seen so far -- it provides 
 is guaranteed to be unique. To sync all currently open sounds:
 <pre>
     (let ((new-sync (1+ (<em class=red>sync-max</em>))))
-      (for-each (lambda (snd) (set! (sync snd) new-sync)) (sounds)))
+      (for-each (lambda (snd) (set! (<a class=quiet href="#sync">sync</a> snd) new-sync)) (<a class=quiet href="#sounds">sounds</a>)))
 </pre>
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>

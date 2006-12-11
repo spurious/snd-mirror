@@ -21,8 +21,6 @@
 ;;; insert-sound-data insert-frame insert-vct
 ;;; mix-sound-data mix-frame
 ;;; scan-sound map-sound
-;;;
-;;; sync-all
 
 (provide 'snd-frame.scm)
 
@@ -317,10 +315,8 @@
 	  (vector-set! fr (+ i +frame-reader0+) (make-region-sample-reader beg reg i dir)))
 	fr)))
 
-
-;;; TODO: doc/test make-sync-frame-reader [also dir edpos args are not tested in make-frame-reader]
-(define* (make-sync-frame-reader :optional (beg 0) snd (chn 0) dir edpos)
-  "(make-sync-frame-reader :optional beg snd dir edpos) returns a frame reader that reads all syncd channels on each call"
+(define* (make-sync-frame-reader :optional (beg 0) snd dir edpos)
+  "(make-sync-frame-reader :optional beg snd dir edpos) returns a frame reader that reads all channels sync'd to 'snd'"
   (let* ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
 	(throw 'no-such-sound (list "make-sync-frame-reader" snd))
@@ -348,7 +344,6 @@
 	       (sounds)))
 	    fr)))))
 
-;;; TODO: doc/test make-selection-frame-reader
 (define* (make-selection-frame-reader :optional (beg 0))
   "(make-selection-frame-reader :optional (beg 0)) returns a frame reader that reads all channels of the current selection"
   (if (not (selection?))
@@ -371,8 +366,8 @@
 	   (sounds)))
 	fr)))
 
-;;; TODO: doc/test make-track-frame-reader
 (define (make-track-frame-reader beg trk) ; following region reader in arg order
+  "(make-track-frame-reader beg trk) returns a frame reader that reads all the channels in the track trk"
   (if (not (track? trk))
       (throw 'no-such-track (list "make-track-frame-reader" trk))
       (let* ((chns (track-chans trk))
@@ -387,6 +382,7 @@
 	fr)))
 
 (define (read-track-frame fr)
+  "(read-track-frame fr) returns the next frame read by the track-frame-reader 'fr'"
   (let ((vals (vector-ref fr +frame-reader-frame+)))
     (do ((i 0 (1+ i)))
 	((= i (vector-ref fr +frame-reader-channels+)))
@@ -451,7 +447,6 @@
 	data)
       (throw 'no-such-region (list "region->sound-data" reg))))
 
-;;; TODO: doc/test selection->sound-data
 (define (selection->sound-data reg)
   "(selection->sound-data) returns a sound-data object with the contents of current selection"
   (if (selection?)
@@ -546,7 +541,6 @@
 	      mix-id)))))
 
   
-;;; TODO doc/test with-sync
 (define* (scan-sound func :optional (beg 0) dur snd with-sync)
   "(scan-sound func :optional beg dur snd with-sync) is a version of scan-channel that passes func a frame on each call, rather than a sample"
   (let ((index (or snd (selected-sound) (car (sounds)))))
@@ -593,37 +587,27 @@
 
 
 ;;; PERHAPS: these channel-specific funcs might want a "channels" version:
-;;;     any-env-channel  clm-channel  compand-channel  contrast-channel dither-channel  env-channel
-;;;     env-channel-with-base  env-expt-channel  extract-channel  filter-channel  find-channel  insert-channel
-;;;     linear-src-channel  map-channel  mix-channel  mus-channel  normalize-channel  notch-channel  offset-channel
-;;;     pad-channel  play-channel  ptree-channel  ramp-channel  redo-channel  reverse-channel rotate-channel
-;;;     scale-channel  scan-channel  sine-env-channel  smooth-channel  src-channel  undo-channel  xramp-channel
-;;;
-;;; essentially:
+;;;     any-env-channel  compand-channel  contrast-channel dither-channel
+;;;     env-channel-with-base  env-expt-channel  filter-channel  find-channel  
+;;;     linear-src-channel  normalize-channel  notch-channel
+;;;     pad-channel  play-channel  ramp-channel  redo-channel  reverse-channel rotate-channel
+;;;     smooth-channel  src-channel  undo-channel  xramp-channel
 #|
-(define (env-channels e)
-  (let ((e (make-env e)))
-    (map-sound 
-     (lambda (fr)
-       (frame* fr (env e))))))
+(define (env-sound e) (let ((e (make-env e))) (map-sound (lambda (fr) (frame* fr (env e))))))
+(define (scale-sound scl) (map-sound (lambda (fr) (frame* fr scl))))
+(define (offset-sound off) (map-sound (lambda (fr) (frame+ fr off))))
 |#
 
-;;; TODO: test sync-all
+;;; TODO: test sync-all, with-sync in scan-sound, selection->sound-data, make-track-frame-reader, make-selection-frame-reader, read-track-frame
+;;; TODO: make-sync-frame-reader [also dir edpos args are not tested in make-frame-reader]
 
 ;;; PERHAPS: clip-hook -> called when a sample is clipped or clipping is detected somewhere (io.c) -- needs clip_handler as in sound.c
 ;;; PERHAPS: formalize fix-clip -- check restoration against hand-made cases
 
-;;; PERHAPS: reader? etc replacing sample-reader? but rtn type is lost -- mus-input?
-;;;     requires that we add to the mus-input method or use mus_any* struct to describe readers
-;;;     make-sample|frame-writer?
-;;;     mus-describe|length|free|data=current value?|channels|file_name|location|reset?|read-sample or read_frame added?
-;;;     frame->file uses a loop through chans
-
-;;; channel slicer: grn but output locs permuted, reversed etc
+;;; SOMEDAY: channel slicer: grn but output locs permuted, reversed etc
 
 ;;; TODO: need snd-run support for frame-readers (and map-frame frame return?)
 ;;; TODO: write doc that describes all these sample accessors: sample-at-a-time, readers, chunked versions (->vct), top level (menu, save-sound-as)
-;;; TODO: why doesn't onmouseover work in firefox?
 
 ;;; TODO: snd8 old scan-sound zero-crossing case:
 #|
