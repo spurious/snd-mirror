@@ -1622,12 +1622,11 @@ static XEN g_sound_data_fillB(XEN sdobj, XEN scl)
 
 sound_data *sound_data_copy(sound_data *sd)
 {
-  int i, j;
+  int i;
   sound_data *sdnew;
   sdnew = c_make_sound_data(sd->chans, sd->length);
   for (i = 0; i < sd->chans; i++)
-    for (j = 0; j < sd->length; j++)
-      sdnew->data[i][j] = sd->data[i][j];
+    memcpy((void *)(sdnew->data[i]), (void *)(sd->data[i]), sd->length * sizeof(Float));
   return(sdnew);
 }
 
@@ -2230,47 +2229,51 @@ void mus_sndlib_xen_initialize(void)
   rb_define_method(sound_data_tag, "fill",   XEN_PROCEDURE_CAST g_rb_sound_data_fill, 1);
   rb_define_method(sound_data_tag, "dup",    XEN_PROCEDURE_CAST g_sound_data_copy,    0);
   rb_define_method(sound_data_tag, "chans",  XEN_PROCEDURE_CAST sound_data_chans,     0);
+  rb_define_method(sound_data_tag, "peak",   XEN_PROCEDURE_CAST g_sound_data_peak,    0);
+  rb_define_method(sound_data_tag, "offset!", XEN_PROCEDURE_CAST g_sound_data_offsetB, 1);
+  rb_define_method(sound_data_tag, "multiply!", XEN_PROCEDURE_CAST g_sound_data_multiplyB, 1);
+  /* SOMEDAY: other such methods */
   rb_define_singleton_method(sound_data_tag, "new", XEN_PROCEDURE_CAST g_rb_make_sound_data, 2);
 #endif
 
-  XEN_DEFINE_CONSTANT(S_mus_out_format,  MUS_OUT_FORMAT,  "sample format for fastest IO");
-  XEN_DEFINE_CONSTANT(S_mus_unsupported, MUS_UNSUPPORTED, "unsupported header id");
-  XEN_DEFINE_CONSTANT(S_mus_next,        MUS_NEXT,        "NeXT (Sun) sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_aifc,        MUS_AIFC,        "AIFC sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_rf64,        MUS_RF64,        "RF64 sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_riff,        MUS_RIFF,        "RIFF (MS wave) sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_nist,        MUS_NIST,        "NIST (Sphere) sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_raw,         MUS_RAW,         "raw (headerless) sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_ircam,       MUS_IRCAM,       "IRCAM sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_aiff,        MUS_AIFF,        "AIFF (old-style) sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_bicsf,       MUS_BICSF,       "BICSF header id");
-  XEN_DEFINE_CONSTANT(S_mus_voc,         MUS_VOC,         "VOC header id");
-  XEN_DEFINE_CONSTANT(S_mus_svx,         MUS_SVX,         "SVX (IFF) header id");
-  XEN_DEFINE_CONSTANT(S_mus_soundfont,   MUS_SOUNDFONT,   "soundfont header id");
+  XEN_DEFINE_CONSTANT(S_mus_out_format,           MUS_OUT_FORMAT,           "sample format for fastest IO");
+  XEN_DEFINE_CONSTANT(S_mus_unsupported,          MUS_UNSUPPORTED,          "unsupported header id");
+  XEN_DEFINE_CONSTANT(S_mus_next,                 MUS_NEXT,                 "NeXT (Sun) sound header id");
+  XEN_DEFINE_CONSTANT(S_mus_aifc,                 MUS_AIFC,                 "AIFC sound header id");
+  XEN_DEFINE_CONSTANT(S_mus_rf64,                 MUS_RF64,                 "RF64 sound header id");
+  XEN_DEFINE_CONSTANT(S_mus_riff,                 MUS_RIFF,                 "RIFF (MS wave) sound header id");
+  XEN_DEFINE_CONSTANT(S_mus_nist,                 MUS_NIST,                 "NIST (Sphere) sound header id");
+  XEN_DEFINE_CONSTANT(S_mus_raw,                  MUS_RAW,                  "raw (headerless) sound header id");
+  XEN_DEFINE_CONSTANT(S_mus_ircam,                MUS_IRCAM,                "IRCAM sound header id");
+  XEN_DEFINE_CONSTANT(S_mus_aiff,                 MUS_AIFF,                 "AIFF (old-style) sound header id");
+  XEN_DEFINE_CONSTANT(S_mus_bicsf,                MUS_BICSF,                "BICSF header id");
+  XEN_DEFINE_CONSTANT(S_mus_voc,                  MUS_VOC,                  "VOC header id");
+  XEN_DEFINE_CONSTANT(S_mus_svx,                  MUS_SVX,                  "SVX (IFF) header id");
+  XEN_DEFINE_CONSTANT(S_mus_soundfont,            MUS_SOUNDFONT,            "soundfont header id");
 
-  XEN_DEFINE_CONSTANT(S_mus_unknown,          MUS_UNKNOWN,          "unknown data format");
-  XEN_DEFINE_CONSTANT(S_mus_bshort,           MUS_BSHORT,           "big-endian short data format id");
-  XEN_DEFINE_CONSTANT(S_mus_lshort,           MUS_LSHORT,           "little-endian short data format id");
-  XEN_DEFINE_CONSTANT(S_mus_mulaw,            MUS_MULAW,            "mulaw (8-bit) data format id");
-  XEN_DEFINE_CONSTANT(S_mus_alaw,             MUS_ALAW,             "alaw (8-bit) data format id");
-  XEN_DEFINE_CONSTANT(S_mus_byte,             MUS_BYTE,             "signed byte data format id");
-  XEN_DEFINE_CONSTANT(S_mus_ubyte,            MUS_UBYTE,            "unsigned byte data format id");
-  XEN_DEFINE_CONSTANT(S_mus_bfloat,           MUS_BFLOAT,           "big-endian float data format id");
-  XEN_DEFINE_CONSTANT(S_mus_lfloat,           MUS_LFLOAT,           "little-endian float data format id");
-  XEN_DEFINE_CONSTANT(S_mus_bint,             MUS_BINT,             "big-endian int data format id");
-  XEN_DEFINE_CONSTANT(S_mus_lint,             MUS_LINT,             "little-endian int data format id");
-  XEN_DEFINE_CONSTANT(S_mus_bintn,            MUS_BINTN,            "normalized big-endian int data format id");
-  XEN_DEFINE_CONSTANT(S_mus_lintn,            MUS_LINTN,            "normalized little-endian int data format id");
-  XEN_DEFINE_CONSTANT(S_mus_b24int,           MUS_B24INT,           "big-endian 24-bit data format id");
-  XEN_DEFINE_CONSTANT(S_mus_l24int,           MUS_L24INT,           "little-endian 24-bit data format id");
-  XEN_DEFINE_CONSTANT(S_mus_bdouble,          MUS_BDOUBLE,          "big-endian double data format id");
-  XEN_DEFINE_CONSTANT(S_mus_ldouble,          MUS_LDOUBLE,          "little-endian double data format id");
-  XEN_DEFINE_CONSTANT(S_mus_ubshort,          MUS_UBSHORT,          "unsigned big-endian short data format id");
-  XEN_DEFINE_CONSTANT(S_mus_ulshort,          MUS_ULSHORT,          "unsigned little-endian short data format id");
-  XEN_DEFINE_CONSTANT(S_mus_bdouble_unscaled, MUS_BDOUBLE_UNSCALED, "unscaled big-endian double data format id");
-  XEN_DEFINE_CONSTANT(S_mus_ldouble_unscaled, MUS_LDOUBLE_UNSCALED, "unscaled little-endian double data format id");
-  XEN_DEFINE_CONSTANT(S_mus_bfloat_unscaled,  MUS_BFLOAT_UNSCALED,  "unscaled big-endian float data format id");
-  XEN_DEFINE_CONSTANT(S_mus_lfloat_unscaled,  MUS_LFLOAT_UNSCALED,  "unscaled little-endian float data format id");
+  XEN_DEFINE_CONSTANT(S_mus_unknown,              MUS_UNKNOWN,              "unknown data format");
+  XEN_DEFINE_CONSTANT(S_mus_bshort,               MUS_BSHORT,               "big-endian short data format id");
+  XEN_DEFINE_CONSTANT(S_mus_lshort,               MUS_LSHORT,               "little-endian short data format id");
+  XEN_DEFINE_CONSTANT(S_mus_mulaw,                MUS_MULAW,                "mulaw (8-bit) data format id");
+  XEN_DEFINE_CONSTANT(S_mus_alaw,                 MUS_ALAW,                 "alaw (8-bit) data format id");
+  XEN_DEFINE_CONSTANT(S_mus_byte,                 MUS_BYTE,                 "signed byte data format id");
+  XEN_DEFINE_CONSTANT(S_mus_ubyte,                MUS_UBYTE,                "unsigned byte data format id");
+  XEN_DEFINE_CONSTANT(S_mus_bfloat,               MUS_BFLOAT,               "big-endian float data format id");
+  XEN_DEFINE_CONSTANT(S_mus_lfloat,               MUS_LFLOAT,               "little-endian float data format id");
+  XEN_DEFINE_CONSTANT(S_mus_bint,                 MUS_BINT,                 "big-endian int data format id");
+  XEN_DEFINE_CONSTANT(S_mus_lint,                 MUS_LINT,                 "little-endian int data format id");
+  XEN_DEFINE_CONSTANT(S_mus_bintn,                MUS_BINTN,                "normalized big-endian int data format id");
+  XEN_DEFINE_CONSTANT(S_mus_lintn,                MUS_LINTN,                "normalized little-endian int data format id");
+  XEN_DEFINE_CONSTANT(S_mus_b24int,               MUS_B24INT,               "big-endian 24-bit data format id");
+  XEN_DEFINE_CONSTANT(S_mus_l24int,               MUS_L24INT,               "little-endian 24-bit data format id");
+  XEN_DEFINE_CONSTANT(S_mus_bdouble,              MUS_BDOUBLE,              "big-endian double data format id");
+  XEN_DEFINE_CONSTANT(S_mus_ldouble,              MUS_LDOUBLE,              "little-endian double data format id");
+  XEN_DEFINE_CONSTANT(S_mus_ubshort,              MUS_UBSHORT,              "unsigned big-endian short data format id");
+  XEN_DEFINE_CONSTANT(S_mus_ulshort,              MUS_ULSHORT,              "unsigned little-endian short data format id");
+  XEN_DEFINE_CONSTANT(S_mus_bdouble_unscaled,     MUS_BDOUBLE_UNSCALED,     "unscaled big-endian double data format id");
+  XEN_DEFINE_CONSTANT(S_mus_ldouble_unscaled,     MUS_LDOUBLE_UNSCALED,     "unscaled little-endian double data format id");
+  XEN_DEFINE_CONSTANT(S_mus_bfloat_unscaled,      MUS_BFLOAT_UNSCALED,      "unscaled big-endian float data format id");
+  XEN_DEFINE_CONSTANT(S_mus_lfloat_unscaled,      MUS_LFLOAT_UNSCALED,      "unscaled little-endian float data format id");
 
   XEN_DEFINE_CONSTANT(S_mus_audio_default,        MUS_AUDIO_DEFAULT,        "default audio device");
   XEN_DEFINE_CONSTANT(S_mus_audio_duplex_default, MUS_AUDIO_DUPLEX_DEFAULT, "default duplex device");
@@ -2298,21 +2301,21 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_CONSTANT(S_mus_audio_direction,      MUS_AUDIO_DIRECTION,      "audio sample flow direction (" S_mus_audio_read ")");
   XEN_DEFINE_CONSTANT(S_mus_audio_samples_per_channel, MUS_AUDIO_SAMPLES_PER_CHANNEL, "samples per channel (" S_mus_audio_read ")");
 
-  XEN_DEFINE_CONSTANT(S_mus_audio_amp,     MUS_AUDIO_AMP,     "mixer amp field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_srate,   MUS_AUDIO_SRATE,   "mixer srate field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_channel, MUS_AUDIO_CHANNEL, "mixer channel field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_format,  MUS_AUDIO_FORMAT,  "mixer data format field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_port,    MUS_AUDIO_PORT,    "mixer port");
-  XEN_DEFINE_CONSTANT(S_mus_audio_imix,    MUS_AUDIO_IMIX,    "mixer 'imix' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_igain,   MUS_AUDIO_IGAIN,   "mixer 'igain' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_reclev,  MUS_AUDIO_RECLEV,  "mixer 'reclev' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_pcm,     MUS_AUDIO_PCM,     "mixer 'pcm' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_pcm2,    MUS_AUDIO_PCM2,    "mixer 'pcm2' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_ogain,   MUS_AUDIO_OGAIN,   "mixer 'ogain' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_line,    MUS_AUDIO_LINE,    "mixer 'line' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_synth,   MUS_AUDIO_SYNTH,   "mixer 'synth' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_bass,    MUS_AUDIO_BASS,    "mixer 'bass' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_treble,  MUS_AUDIO_TREBLE,  "mixer 'treble' field id");
+  XEN_DEFINE_CONSTANT(S_mus_audio_amp,            MUS_AUDIO_AMP,            "mixer amp field id");
+  XEN_DEFINE_CONSTANT(S_mus_audio_srate,          MUS_AUDIO_SRATE,          "mixer srate field id");
+  XEN_DEFINE_CONSTANT(S_mus_audio_channel,        MUS_AUDIO_CHANNEL, "       mixer channel field id");
+  XEN_DEFINE_CONSTANT(S_mus_audio_format,         MUS_AUDIO_FORMAT,         "mixer data format field id");
+  XEN_DEFINE_CONSTANT(S_mus_audio_port,           MUS_AUDIO_PORT,           "mixer port");
+  XEN_DEFINE_CONSTANT(S_mus_audio_imix,           MUS_AUDIO_IMIX,           "mixer 'imix' field id");
+  XEN_DEFINE_CONSTANT(S_mus_audio_igain,          MUS_AUDIO_IGAIN,          "mixer 'igain' field id");
+  XEN_DEFINE_CONSTANT(S_mus_audio_reclev,         MUS_AUDIO_RECLEV,         "mixer 'reclev' field id");
+  XEN_DEFINE_CONSTANT(S_mus_audio_pcm,            MUS_AUDIO_PCM,            "mixer 'pcm' field id");
+  XEN_DEFINE_CONSTANT(S_mus_audio_pcm2,           MUS_AUDIO_PCM2,           "mixer 'pcm2' field id");
+  XEN_DEFINE_CONSTANT(S_mus_audio_ogain,          MUS_AUDIO_OGAIN,          "mixer 'ogain' field id");
+  XEN_DEFINE_CONSTANT(S_mus_audio_line,           MUS_AUDIO_LINE,           "mixer 'line' field id");
+  XEN_DEFINE_CONSTANT(S_mus_audio_synth,          MUS_AUDIO_SYNTH,          "mixer 'synth' field id");
+  XEN_DEFINE_CONSTANT(S_mus_audio_bass,           MUS_AUDIO_BASS,           "mixer 'bass' field id");
+  XEN_DEFINE_CONSTANT(S_mus_audio_treble,         MUS_AUDIO_TREBLE,         "mixer 'treble' field id");
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_samples, g_mus_sound_samples_w, H_mus_sound_samples, 
 				   S_setB S_mus_sound_samples, g_mus_sound_set_samples_w, 1, 0, 2, 0);

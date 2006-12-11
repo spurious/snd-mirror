@@ -56,6 +56,7 @@
 ;;; scramble-channel -- randomly reorder segments within a sound
 ;;; reverse-by-blocks and reverse-within-blocks -- reorder or reverse blocks within a channel
 ;;; sound segmentation
+;;; sync-all
 
 (use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs) (ice-9 common-list))
 (if (provided? 'snd-gauche) (use srfi-13)) ; string-downcase
@@ -2643,3 +2644,14 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 
 (add-to-menu 2 "Show Clipping" (lambda () (mark-clipping)))
 |#
+
+
+;;; -------- sync-all
+
+(define (sync-all)
+  "(sync-all) sets the sync fields of all currently open sounds to the same, unique value"
+  (let ((new-sync (1+ (sync-max))))
+    (for-each
+     (lambda (snd)
+       (set! (sync snd) new-sync))
+     (sounds))))

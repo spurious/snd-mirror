@@ -1,37 +1,37 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [505]
-;;;  test 1: defaults                           [1083]
-;;;  test 2: headers                            [1287]
-;;;  test 3: variables                          [1593]
-;;;  test 4: sndlib                             [2249]
-;;;  test 5: simple overall checks              [4666]
-;;;  test 6: vcts                               [12173]
-;;;  test 7: colors                             [12448]
-;;;  test 8: clm                                [12938]
-;;;  test 9: mix                                [22318]
-;;;  test 10: marks                             [25967]
-;;;  test 11: dialogs                           [26856]
-;;;  test 12: extensions                        [27150]
-;;;  test 13: menus, edit lists, hooks, etc     [27604]
-;;;  test 14: all together now                  [29152]
-;;;  test 15: chan-local vars                   [30227]
-;;;  test 16: regularized funcs                 [31557]
-;;;  test 17: dialogs and graphics              [35972]
-;;;  test 18: enved                             [36061]
-;;;  test 19: save and restore                  [36081]
-;;;  test 20: transforms                        [37915]
-;;;  test 21: new stuff                         [39748]
-;;;  test 22: run                               [41563]
-;;;  test 23: with-sound                        [47145]
-;;;  test 24: user-interface                    [49623]
-;;;  test 25: X/Xt/Xm                           [53239]
-;;;  test 26: Gtk                               [57829]
-;;;  test 27: GL                                [61946]
-;;;  test 28: errors                            [62070]
-;;;  test 29: Common Music                      [64174]
-;;;  test all done                              [64224]
-;;;  test the end                               [64417]
+;;;  test 0: constants                          [507]
+;;;  test 1: defaults                           [1085]
+;;;  test 2: headers                            [1289]
+;;;  test 3: variables                          [1595]
+;;;  test 4: sndlib                             [2252]
+;;;  test 5: simple overall checks              [4670]
+;;;  test 6: vcts                               [12177]
+;;;  test 7: colors                             [12452]
+;;;  test 8: clm                                [12942]
+;;;  test 9: mix                                [22324]
+;;;  test 10: marks                             [25973]
+;;;  test 11: dialogs                           [26862]
+;;;  test 12: extensions                        [27156]
+;;;  test 13: menus, edit lists, hooks, etc     [27610]
+;;;  test 14: all together now                  [29158]
+;;;  test 15: chan-local vars                   [30233]
+;;;  test 16: regularized funcs                 [31563]
+;;;  test 17: dialogs and graphics              [35978]
+;;;  test 18: enved                             [36067]
+;;;  test 19: save and restore                  [36087]
+;;;  test 20: transforms                        [37921]
+;;;  test 21: new stuff                         [39754]
+;;;  test 22: run                               [41530]
+;;;  test 23: with-sound                        [47211]
+;;;  test 24: user-interface                    [49690]
+;;;  test 25: X/Xt/Xm                           [53306]
+;;;  test 26: Gtk                               [57896]
+;;;  test 27: GL                                [62013]
+;;;  test 28: errors                            [62137]
+;;;  test 29: Common Music                      [64243]
+;;;  test all done                              [64293]
+;;;  test the end                               [64486]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -40930,6 +40930,8 @@ EDITS: 1
 		       (snd-display ";~A: frame-reader: position but frames: ~A ~A ~A" file fd (frame-reader-position fd) (frames index)))))
 	     (if (not (= (frame-reader-home fd) index)) 
 		 (snd-display ";~A: frame-reader: home: ~A ~A ~A" file fd (frame-reader-home fd) index))
+	     (if (not (= (frame-reader-chans fd) (chans index))) 
+		 (snd-display ";frame-reader-chans: ~A ~A" (frame-reader-chans fd) (chans index)))
 	     (let ((fr0 (frame-copy (read-frame fd)))
 		   (fr1 (frame-copy (next-frame fd)))
 		   (fr2 (frame-copy (previous-frame fd))))
@@ -40993,6 +40995,8 @@ EDITS: 1
 			 (snd-display ";~A: region frame-reader: position but frames: ~A ~A ~A" file fd (frame-reader-position fd) (frames index)))))
 	       (if (not (= (frame-reader-home fd) reg)) 
 		   (snd-display ";~A: region frame-reader: home: ~A ~A ~A" file fd (frame-reader-home fd) reg))
+	       (if (not (= (frame-reader-chans fd) (region-chans reg)))
+		   (snd-display ";region frame-reader-chans: ~A ~A" (frame-reader-chans fd) (region-chans reg)))
 	       (let ((fr0 (frame-copy (read-frame fd)))
 		     (fr1 (frame-copy (next-frame fd)))
 		     (fr2 (frame-copy (previous-frame fd))))
@@ -41511,6 +41515,8 @@ EDITS: 1
 	      (sound-data-set! sd chn i (+ i (* chn 10)))
 	      (sound-data-set! sd1 chn i 2)))
 	  (let ((sd2 (sound-data-copy sd)))
+	    (if (fneq (sound-data-peak sd) (apply max (sound-data-maxamp sd)))
+		(snd-display ";sound-data-peak: ~A ~A" (sound-data-peak sd) (apply max (sound-data-maxamp sd))))
 	    (sound-data* sd 2)
 	    (sound-data-multiply! sd2 sd1)
 	    (if (not (equal? sd sd2)) (snd-display ";sound-data* sd 1: ~%    ~A~%    ~A" sd sd2))
@@ -47101,6 +47107,105 @@ EDITS: 1
 	      (filtered-comb o (random 1.0)))
 	    
 	    )); with-guile
+
+      (let ((sd (make-sound-data 4 10)))
+	(run (lambda ()
+	       (do ((chn 0 (1+ chn)))
+		   ((= chn 4))
+		 (do ((i 0 (1+ i)))
+		     ((= i 10))
+		   (sound-data-set! sd chn i (+ i (* chn 10)))))))
+	(let ((sd1 (run (lambda () (sound-data-copy sd)))))
+	  (if (not (equal? sd sd1))
+	      (snd-display ";sound-data-copy not equal? ~A ~A" sd sd1))
+	  (run (lambda () (sound-data-scale! sd1 2.0)))
+	  (let ((sd2 (make-sound-data 4 10)))
+	    (do ((chn 0 (1+ chn)))
+		((= chn 4))
+	      (do ((i 0 (1+ i)))
+		  ((= i 10))
+		(sound-data-set! sd2 chn i (* 2 (+ i (* chn 10))))))
+	    (if (not (equal? sd2 sd1)) (snd-display ";sound-data-scale! not equal? ~%    ~A~%    ~A" sd1 sd2))
+	    (if (equal? sd2 sd) (snd-display ";sound-data-scale! crosstalk??")))
+	  (run (lambda () (sound-data-multiply! sd sd)))
+	  (let ((sd2 (make-sound-data 4 10)))
+	    (do ((chn 0 (1+ chn)))
+		((= chn 4))
+	      (do ((i 0 (1+ i)))
+		  ((= i 10))
+		(sound-data-set! sd2 chn i (* (+ i (* chn 10)) (+ i (* chn 10))))))
+	    (if (not (equal? sd2 sd)) (snd-display ";sound-data-multiply! not equal? ~%    ~A~%     ~A" sd sd2)))
+	  (run (lambda ()
+		 (do ((chn 0 (1+ chn)))
+		     ((= chn 4))
+		   (do ((i 0 (1+ i)))
+		       ((= i 10))
+		     (sound-data-set! sd chn i (+ i (* chn 10)))))
+		 (sound-data-offset! sd 1.0)))
+	  (let ((sd2 (make-sound-data 4 10)))
+	    (do ((chn 0 (1+ chn)))
+		((= chn 4))
+	      (do ((i 0 (1+ i)))
+		  ((= i 10))
+		(sound-data-set! sd2 chn i (+ 1 i (* chn 10)))))
+	    (if (not (equal? sd2 sd)) (snd-display ";sound-data-offset! not equal? ~%    ~A~%     ~A" sd sd2)))
+	  (let ((sd3 (run (lambda () (sound-data-reverse! (sound-data-copy sd))))))
+	    (let ((sd2 (make-sound-data 4 10)))
+	      (do ((chn 0 (1+ chn)))
+		  ((= chn 4))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (sound-data-set! sd2 chn i (+ 1 (- 9 i) (* chn 10)))))
+	      (if (not (equal? sd2 sd3)) (snd-display ";sound-data-reverse! not equal? ~%    ~A~%     ~A" sd3 sd2)))
+	    (run (lambda () (sound-data-add! sd sd3)))
+	    (do ((chn 0 (1+ chn)))
+		((= chn 4))
+	      (do ((i 0 (1+ i)))
+		  ((= i 10))
+		(sound-data-set! sd1 chn i (+ 1 10 (* chn 20)))))
+	    (if (not (equal? sd1 sd)) (snd-display ";sound-data-add! not equal? ~%    ~A~%     ~A" sd sd1)))
+	  
+	  (run (lambda ()
+		 (do ((chn 0 (1+ chn)))
+		     ((= chn 4))
+		   (do ((i 0 (1+ i)))
+		       ((= i 10))
+		     (sound-data-set! sd chn i (+ i (* chn 10)))
+		     (sound-data-set! sd1 chn i 1)))))
+	  (let ((sd2 (sound-data-copy sd)))
+	    (run (lambda ()
+		   (sound-data+ sd 1)
+		   (sound-data-add! sd2 sd1)))
+	    (if (not (equal? sd sd2)) (snd-display ";sound-data+ sd 1: ~%    ~A~%    ~A" sd sd2))
+	    (run (lambda ()
+		   (sound-data+ 1 sd)
+		   (sound-data-add! sd2 sd1)))
+	    (if (not (equal? sd sd2)) (snd-display ";sound-data+ 1 sd: ~%    ~A~%    ~A" sd sd2))
+	    (run (lambda ()
+		   (sound-data+ sd sd1)
+		   (sound-data-add! sd2 sd1)))
+	    (if (not (equal? sd sd2)) (snd-display ";sound-data+ sd sd: ~%    ~A~%    ~A" sd sd2)))
+	  
+	  (run (lambda ()
+		 (do ((chn 0 (1+ chn)))
+		     ((= chn 4))
+		   (do ((i 0 (1+ i)))
+		       ((= i 10))
+		     (sound-data-set! sd chn i (+ i (* chn 10)))
+		     (sound-data-set! sd1 chn i 2)))))
+	  (let ((sd2 (sound-data-copy sd)))
+	    (run (lambda ()
+		   (sound-data* sd 2)
+		   (sound-data-multiply! sd2 sd1)))
+	    (if (not (equal? sd sd2)) (snd-display ";sound-data* sd 1: ~%    ~A~%    ~A" sd sd2))
+	    (run (lambda ()
+		   (sound-data* 2 sd)
+		   (sound-data-multiply! sd2 sd1)))
+	    (if (not (equal? sd sd2)) (snd-display ";sound-data* 1 sd: ~%    ~A~%    ~A" sd sd2))
+	    (run (lambda ()
+		   (sound-data* sd sd1)
+		   (sound-data-add! sd2 sd2)))
+	    (if (not (equal? sd sd2)) (snd-display ";sound-data* sd sd: ~%    ~A~%    ~A" sd sd2)))))
       
       (run-hook after-test-hook 22)
       ))

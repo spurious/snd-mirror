@@ -9099,7 +9099,11 @@ move together when you drag an x-axis slider and so on.
 </td></tr>
 <tr><td></td><td>
 This is the maximum <a href="#sync">sync</a> setting seen so far -- it provides a painless way to get a sync value that
-is guaranteed to be unique.
+is guaranteed to be unique. To sync all currently open sounds:
+<pre>
+    (let ((new-sync (1+ (<em class=red>sync-max</em>))))
+      (for-each (lambda (snd) (set! (sync snd) new-sync)) (sounds)))
+</pre>
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 

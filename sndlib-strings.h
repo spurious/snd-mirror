@@ -153,7 +153,6 @@
 #define S_sound_data_reverseB           "sound-data-reverse!"
 #define S_sound_data_scaleB             "sound-data-scale!"
 #define S_sound_data_setB               "sound-data-set!"
-#define S_sound_data_to_string          "sound-data->string"
 #define S_sound_data_to_vct             "sound-data->vct"
 #define S_vct_to_sound_data             "vct->sound-data"
 #if HAVE_RUBY

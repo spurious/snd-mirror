@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 30
-#define MUS_DATE "27-Nov-06"
+#define MUS_REVISION 31
+#define MUS_DATE "12-Dec-06"
 
 /*
+ * 12-Dec:     removed mus_make_frame|mixer_with_data.
  * 27-Nov:     move-sound array access parallel to locsig.
  * 22-Nov:     had to add non-backwards-compatible reverb chans arg to mus_make_locsig.
  * 21-Nov:     mus_float_equal_fudge_factor, mus_arrays_are_equal.
@@ -526,7 +527,6 @@ int mus_env_breakpoints(mus_any *gen); /* for Snd */
 bool mus_frame_p(mus_any *ptr);
 mus_any *mus_make_empty_frame(int chans);
 mus_any *mus_make_frame(int chans, ...);
-mus_any *mus_make_frame_with_data(int chans, Float *data);
 mus_any *mus_frame_add(mus_any *f1, mus_any *f2, mus_any *res);
 mus_any *mus_frame_multiply(mus_any *f1, mus_any *f2, mus_any *res);
 mus_any *mus_frame_scale(mus_any *uf1, Float scl, mus_any *ures);
@@ -538,7 +538,6 @@ bool mus_mixer_p(mus_any *ptr);
 mus_any *mus_make_empty_mixer(int chans);
 mus_any *mus_make_identity_mixer(int chans);
 mus_any *mus_make_mixer(int chans, ...);
-mus_any *mus_make_mixer_with_data(int chans, Float *data);
 Float mus_mixer_ref(mus_any *f, int in, int out);
 Float mus_mixer_set(mus_any *f, int in, int out, Float val);
 mus_any *mus_frame_to_frame(mus_any *f, mus_any *in, mus_any *out);
@@ -556,8 +555,8 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, int buff
 Float mus_file_to_sample(mus_any *ptr, off_t samp, int chan);
 
 Float mus_readin(mus_any *rd);
-mus_any *mus_make_readin(const char *filename, int chan, off_t start, int direction);
 mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, off_t start, int direction, int buffer_size);
+#define mus_make_readin(Filename, Chan, Start, Direction) mus_make_readin_with_buffer_size(Filename, Chan, Start, Direction, mus_file_buffer_size())
 bool mus_readin_p(mus_any *ptr);
 Float mus_increment(mus_any *rd);
 Float mus_set_increment(mus_any *rd, Float dir);
@@ -575,17 +574,17 @@ mus_any *mus_file_to_frame(mus_any *ptr, off_t samp, mus_any *f);
 mus_any *mus_make_file_to_frame_with_buffer_size(const char *filename, int buffer_size);
 
 bool mus_sample_to_file_p(mus_any *ptr);
-mus_any *mus_make_sample_to_file(const char *filename, int chans, int out_format, int out_type);
 mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, int out_format, int out_type, const char *comment);
+#define mus_make_sample_to_file(Filename, Chans, OutFormat, OutType) mus_make_sample_to_file_with_comment(Filename, Chans, OutFormat, OutType, NULL)
 Float mus_sample_to_file(mus_any *ptr, off_t samp, int chan, Float val);
 mus_any *mus_continue_sample_to_file(const char *filename);
 int mus_close_file(mus_any *ptr);
 
 Float mus_out_any(off_t frame, Float val, int chan, mus_any *IO);
-mus_any *mus_make_frame_to_file(const char *filename, int chans, int out_format, int out_type);
 bool mus_frame_to_file_p(mus_any *ptr);
 mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *data);
 mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment);
+#define mus_make_frame_to_file(Filename, Chans, OutFormat, OutType) mus_make_frame_to_file_with_comment(Filename, Chans, OutFormat, OutType, NULL)
 mus_any *mus_continue_frame_to_file(const char *filename);
 
 Float mus_locsig(mus_any *ptr, off_t loc, Float val);

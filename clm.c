@@ -4752,6 +4752,7 @@ mus_any *mus_make_empty_frame(int chans)
   return((mus_any *)nf);
 }
 
+#if 0
 mus_any *mus_make_frame_with_data(int chans, Float *data)
 {
   mus_frame *nf;
@@ -4763,6 +4764,7 @@ mus_any *mus_make_frame_with_data(int chans, Float *data)
   nf->data_allocated = false;
   return((mus_any *)nf);
 }
+#endif
 
 mus_any *mus_make_frame(int chans, ...)
 {
@@ -4986,6 +4988,7 @@ static mus_any_class MIXER_CLASS = {
   0
 };
 
+#if 0
 mus_any *mus_make_mixer_with_data(int chans, Float *data)
 {
   mus_mixer *nf;
@@ -5000,6 +5003,7 @@ mus_any *mus_make_mixer_with_data(int chans, Float *data)
   nf->data_allocated = false;
   return((mus_any *)nf);
 }
+#endif
 
 mus_any *mus_make_empty_mixer(int chans)
 {
@@ -5636,11 +5640,6 @@ mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, off_t 
   return(NULL);
 }
 
-mus_any *mus_make_readin(const char *filename, int chan, off_t start, int direction)
-{
-  return(mus_make_readin_with_buffer_size(filename, chan, start, direction, clm_file_buffer_size));
-}
-
 Float mus_readin(mus_any *ptr)
 {
   Float res;
@@ -6026,11 +6025,6 @@ mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chan
   return(mus_make_sample_to_file_with_comment_1(filename, out_chans, out_format, out_type, comment, false));
 }
 
-mus_any *mus_make_sample_to_file(const char *filename, int out_chans, int out_format, int out_type)
-{
-  return(mus_make_sample_to_file_with_comment_1(filename, out_chans, out_format, out_type, NULL, false));
-}
-
 /* the unchecked version of this would be sample_file(ptr, samp, chan, val) */
 
 Float mus_sample_to_file(mus_any *ptr, off_t samp, int chan, Float val)
@@ -6095,14 +6089,6 @@ static mus_any_class FRAME_TO_FILE_CLASS = {
   &no_reset,
   0
 };
-
-mus_any *mus_make_frame_to_file(const char *filename, int chans, int out_format, int out_type)
-{
-  rdout *gen = NULL;
-  gen = (rdout *)mus_make_sample_to_file(filename, chans, out_format, out_type);
-  if (gen) gen->core = &FRAME_TO_FILE_CLASS;
-  return((mus_any *)gen);
-}
 
 mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment)
 {
