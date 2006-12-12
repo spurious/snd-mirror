@@ -18,7 +18,7 @@
 	bad-header-hook save-state-hook new-sound-hook color-hook orientation-hook listener-click-hook mix-click-hook after-save-state-hook
 	mouse-enter-text-hook mouse-leave-text-hook optimization-hook mix-drag-hook mark-drag-triangle-hook
 	start-playing-selection-hook recorder-file-hook after-save-as-hook before-save-as-hook
-	before-exit-hook before-close-hook))
+	before-exit-hook before-close-hook clip-hook))
 
 (define (reset-all-hooks)
   "(reset-all-hooks) removes all Snd hook functions"

@@ -22,16 +22,16 @@
 ;;;  test 19: save and restore                  [36087]
 ;;;  test 20: transforms                        [37921]
 ;;;  test 21: new stuff                         [39754]
-;;;  test 22: run                               [41530]
-;;;  test 23: with-sound                        [47211]
-;;;  test 24: user-interface                    [49690]
-;;;  test 25: X/Xt/Xm                           [53306]
-;;;  test 26: Gtk                               [57896]
-;;;  test 27: GL                                [62013]
-;;;  test 28: errors                            [62137]
-;;;  test 29: Common Music                      [64243]
-;;;  test all done                              [64293]
-;;;  test the end                               [64486]
+;;;  test 22: run                               [41713]
+;;;  test 23: with-sound                        [47394]
+;;;  test 24: user-interface                    [49873]
+;;;  test 25: X/Xt/Xm                           [53489]
+;;;  test 26: Gtk                               [58079]
+;;;  test 27: GL                                [62196]
+;;;  test 28: errors                            [62320]
+;;;  test 29: Common Music                      [64426]
+;;;  test all done                              [64476]
+;;;  test the end                               [64669]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -2008,7 +2008,7 @@
 			 'cepstrum 'change-samples-with-origin 'channel->vct 'channel-amp-envs 'channel-data
 			 'channel-properties 'channel-style 'channel-widgets 'channels 'channels-combined
 			 'channels-separate 'channels-superimposed 'chans 'clear-array 'clear-listener
-			 'clear-minibuffer 'clear-sincs 'clipping 'clm-channel 'clm-print
+			 'clear-minibuffer 'clear-sincs 'clip-hook 'clipping 'clm-channel 'clm-print
 			 'clm-table-size 'close-hook 'close-sound 'color->list
 			 'color-cutoff 'color-dialog 'color-hook 'color-inverted 'color-scale
 			 'color? 'colormap 'colormap-name 'colormap-ref 'colormap-size
@@ -27538,6 +27538,7 @@ EDITS: 5
   (add-hook! update-hook arg1) (carg1 update-hook)
   (add-hook! close-hook arg1) (carg1 close-hook)
   (add-hook! before-close-hook arg1) (carg1 before-close-hook)
+  (add-hook! clip-hook arg1) (carg1 clip-hook)
   (add-hook! draw-mark-hook arg1) (carg1 draw-mark-hook)
   (add-hook! drop-hook arg1) (carg1 drop-hook)
   (add-hook! mark-click-hook arg1) (carg1 mark-click-hook)
@@ -40940,7 +40941,7 @@ EDITS: 1
 	       (if (not (equal? fr1 (sound->frame 10001 index)))
 		   (snd-display ";~A: frame reader 10001: ~A ~A" file fr1 (sound->frame 10001 index)))
 	       (if (not (equal? fr2 (sound->frame 10001 index)))
-		   (snd-display ";~A: frame reader 10001 prev: ~A ~A" file fr0 (sound->frame 10001 index))))
+		   (snd-display ";~A: frame reader 10001 prev: ~A ~A" file fr2 (sound->frame 10001 index))))
 	     (free-frame-reader fd))
 	   (close-sound index)))
        (list "oboe.snd" "4.aiff" "2.snd" "2a.snd")) ; 2a=eof
@@ -40969,7 +40970,7 @@ EDITS: 1
 	       (if (fneq fr1 (sample 10001 index))
 		   (snd-display ";~A: sample reader 10001: ~A ~A" file fr1 (sample 10001 index)))
 	       (if (fneq fr2 (sample 10001 index))
-		   (snd-display ";~A: sample reader 10001 prev: ~A ~A" file fr0 (sample 10001 index))))
+		   (snd-display ";~A: sample reader 10001 prev: ~A ~A" file fr2 (sample 10001 index))))
 	     (free-sample-reader fd))
 	   (close-sound index)))
        (list "oboe.snd" "4.aiff" "2.snd" "2a.snd" "z.snd")) ; 2a=eof
@@ -41005,7 +41006,7 @@ EDITS: 1
 		 (if (not (equal? fr1 (sound->frame 10001 index)))
 		     (snd-display ";~A: region frame reader 10001: ~A ~A" file fr1 (sound->frame 10001 index)))
 		 (if (not (equal? fr2 (sound->frame 10001 index)))
-		     (snd-display ";~A: region frame reader 10001 prev: ~A ~A" file fr0 (sound->frame 10001 index))))
+		     (snd-display ";~A: region frame reader 10001 prev: ~A ~A" file fr2 (sound->frame 10001 index))))
 	       (free-frame-reader fd))
 	     (close-sound index)))
 	 (list "oboe.snd" "4.aiff" "2.snd" "2a.snd")) ; 2a=eof
@@ -41086,6 +41087,185 @@ EDITS: 1
 	     (close-sound index)))
 	 (list "oboe.snd" "1a.snd" "2a.snd"))
 	(set! (selection-creates-region) old-create))
+      
+      (let ((total-chans 0)
+	    (previous-syncs '()))
+	(for-each
+	 (lambda (file)
+	   (let ((index (open-sound file)))
+	     (set! (selected-sound) index)
+	     (if (not (= (sync index) 0)) (snd-display ";~A sync before sync-all: ~A" file (sync index)))
+	     (sync-all)
+	     (for-each
+	      (lambda (snd)
+		(if (not (sync snd))
+		    (snd-display ";sync-all did not set ~A's sync" file)
+		    (if (member (sync index) previous-syncs)
+			(snd-display ";sync-all not new? ~A ~A" (sync index) previous-syncs))))
+	      (sounds))
+	     (let ((current-syncs (map sync (sounds))))
+	       (if (not (apply = current-syncs))
+		   (snd-display ";sync-all not the same? ~A" current-syncs))
+	       (set! previous-syncs (cons (sync index) previous-syncs)))
+	     (set! total-chans (+ total-chans (chans index)))
+	     (let* ((fd (make-sync-frame-reader 10000)))
+	       (if (not (frame-reader? fd)) (snd-display ";~A: sync frame-reader?: ~A" file fd))
+	       (if (frame-reader-at-end? fd) (snd-display ";~A: sync frame-reader-at-end?: ~A" file fd))
+	       (if (not (= (frame-reader-position fd) 10000)) 
+		   (snd-display ";~A: sync frame-reader: position: ~A ~A" fd (frame-reader-position fd) file))
+	       (if (not (= (frame-reader-home fd) index))
+		   (snd-display ";~A: sync frame-reader: home: ~A ~A ~A" file fd (frame-reader-home fd) index))
+	       (if (not (= (frame-reader-chans fd) total-chans))
+		   (snd-display ";sync frame-reader-chans: ~A ~A" (frame-reader-chans fd) total-chans))
+	       (let ((fr0 (frame-copy (read-frame fd)))
+		     (fr1 (frame-copy (next-frame fd)))
+		     (fr2 (frame-copy (previous-frame fd))))
+		 (for-each
+		  (lambda (snd)
+		    (do ((i 0 (1+ i)))
+			((= i (chans snd)))
+		      (let ((val0 (sample 10000 snd i))
+			    (val1 (sample 10001 snd i))
+			    (got0 #f)
+			    (got1 #f)
+			    (got2 #f))
+			(do ((j 0 (1+ j)))
+			    ((or got0
+				 (= j (mus-length fr0))))
+			  (if (< (abs (- (frame-ref fr0 j) val0)) .001)
+			      (begin
+				(frame-set! fr0 j -100.0)
+				(set! got0 #t))))
+			(if (not got0) (snd-display ";sync fr0 missed for ~A (~A) ~A" snd (short-file-name snd) i))
+			(do ((j 0 (1+ j)))
+			    ((or got1
+				 (= j (mus-length fr1))))
+			  (if (< (abs (- (frame-ref fr1 j) val1)) .001)
+			      (begin
+				(frame-set! fr1 j -100.0)
+				(set! got1 #t))))
+			(if (not got1) (snd-display ";sync fr1 missed for ~A (~A) ~A" snd (short-file-name snd) i))
+			(do ((j 0 (1+ j)))
+			    ((or got2
+				 (= j (mus-length fr2))))
+			  (if (< (abs (- (frame-ref fr2 j) val1)) .001)
+			      (begin
+				(frame-set! fr2 j -100.0)
+				(set! got2 #t))))
+			(if (not got2) (snd-display ";sync fr2 missed for ~A (~A) ~A" snd (short-file-name snd) i)))))
+		  (sounds)))
+	       (free-frame-reader fd))
+	     (select-all)
+	     (let* ((fd (make-selection-frame-reader 10000)))
+	       (if (not (frame-reader? fd)) (snd-display ";~A: selection frame-reader?: ~A" file fd))
+	       (if (frame-reader-at-end? fd) (snd-display ";~A: selection frame-reader-at-end?: ~A" file fd))
+	       (if (not (= (frame-reader-position fd) 10000)) 
+		   (snd-display ";~A: selection frame-reader: position: ~A ~A" fd (frame-reader-position fd) file))
+	       (if (not (= (frame-reader-home fd) -1))
+		   (snd-display ";~A: selection frame-reader: home: ~A ~A ~A" file fd (frame-reader-home fd) index))
+	       (if (not (= (frame-reader-chans fd) total-chans))
+		   (snd-display ";selection frame-reader-chans: ~A ~A" (frame-reader-chans fd) total-chans))
+	       (let ((fr0 (frame-copy (read-frame fd)))
+		     (fr1 (frame-copy (next-frame fd)))
+		     (fr2 (frame-copy (previous-frame fd))))
+		 (for-each
+		  (lambda (snd)
+		    (do ((i 0 (1+ i)))
+			((= i (chans snd)))
+		      (let ((val0 (sample 10000 snd i))
+			    (val1 (sample 10001 snd i))
+			    (got0 #f)
+			    (got1 #f)
+			    (got2 #f))
+			(do ((j 0 (1+ j)))
+			    ((or got0
+				 (= j (mus-length fr0))))
+			  (if (< (abs (- (frame-ref fr0 j) val0)) .001)
+			      (begin
+				(frame-set! fr0 j -100.0)
+				(set! got0 #t))))
+			(if (not got0) (snd-display ";selection fr0 missed for ~A (~A) ~A" snd (short-file-name snd) i))
+			(do ((j 0 (1+ j)))
+			    ((or got1
+				 (= j (mus-length fr1))))
+			  (if (< (abs (- (frame-ref fr1 j) val1)) .001)
+			      (begin
+				(frame-set! fr1 j -100.0)
+				(set! got1 #t))))
+			(if (not got1) (snd-display ";selection fr1 missed for ~A (~A) ~A" snd (short-file-name snd) i))
+			(do ((j 0 (1+ j)))
+			    ((or got2
+				 (= j (mus-length fr2))))
+			  (if (< (abs (- (frame-ref fr2 j) val1)) .001)
+			      (begin
+				(frame-set! fr2 j -100.0)
+				(set! got2 #t))))
+			(if (not got2) (snd-display ";selection fr2 missed for ~A (~A) ~A" snd (short-file-name snd) i)))))
+		  (sounds)))
+	       (free-frame-reader fd))))
+	 (list "oboe.snd" "4.aiff" "2.snd"))
+	(map close-sound (sounds)))
+
+      (let ((index0 (open-sound "oboe.snd"))
+	    (index1 (open-sound "2.snd")))
+	(sync-all)
+	(make-selection 10000 (+ 10000 9))
+	(if (not (selection?))
+	    (snd-display ";make-selection failed?")
+	    (begin
+	      (if (not (= (selection-frames) 10)) 
+		  (snd-display ";sync-all + make-selection length: ~A" (selection-frames)))
+	      (if (not (= (selection-chans) 3))
+		  (snd-display ";sync-all + make-selection chans: ~A" (selection-chans)))
+	      (let ((val0 (selection->sound-data)))
+		(if (not (sound-data? val0))
+		    (snd-display ";selection->sound-data 0 result: ~A" val0)
+		    (begin
+		      (if (not (= (sound-data-chans val0) 3)) 
+			  (snd-display ";selection->sound-data 0 chans: ~A" (sound-data-chans val0)))
+		      (if (not (= (sound-data-length val0) 10))
+			  (snd-display ";selection->sound-data 0 length: ~A" (sound-data-length val0)))
+		      (let ((o0 (channel->vct 10000 10 index0))
+			    (t0 (channel->vct 10000 10 index1 0))
+			    (t1 (channel->vct 10000 10 index1 1))
+			    (s0 (sound-data->vct val0 0))
+			    (s1 (sound-data->vct val0 1))
+			    (s2 (sound-data->vct val0 2)))
+			(if (and (not (vequal o0 s0)) (not (vequal o0 s1)) (not (vequal o0 s2)))
+			    (snd-display ";selection->sound-data lost oboe: ~A ~A" o0 val0))
+			(if (and (not (vequal t0 s0)) (not (vequal t0 s1)) (not (vequal t0 s2)))
+			    (snd-display ";selection->sound-data lost 2 0: ~A ~A" t0 val0))
+			(if (and (not (vequal t1 s0)) (not (vequal t1 s1)) (not (vequal t1 s2)))
+			    (snd-display ";selection->sound-data lost 2 1: ~A ~A" t1 val0))))))
+	      (let ((val1 (selection->sound-data 5)))
+		(if (not (sound-data? val1))
+		    (snd-display ";selection->sound-data 1 result: ~A" val1)
+		    (begin
+		      (if (not (= (sound-data-chans val1) 3)) 
+			  (snd-display ";selection->sound-data 1 chans: ~A" (sound-data-chans val1)))
+		      (if (not (= (sound-data-length val1) 5))
+			  (snd-display ";selection->sound-data 1 length: ~A" (sound-data-length val1)))
+		      (let ((o0 (channel->vct 10005 5 index0))
+			    (t0 (channel->vct 10005 5 index1 0))
+			    (t1 (channel->vct 10005 5 index1 1))
+			    (s0 (sound-data->vct val1 0))
+			    (s1 (sound-data->vct val1 1))
+			    (s2 (sound-data->vct val1 2)))
+			(if (and (not (vequal o0 s0)) (not (vequal o0 s1)) (not (vequal o0 s2)))
+			    (snd-display ";selection->sound-data 1 lost oboe: ~A ~A" o0 val1))
+			(if (and (not (vequal t0 s0)) (not (vequal t0 s1)) (not (vequal t0 s2)))
+			    (snd-display ";selection->sound-data 1 lost 2 0: ~A ~A" t0 val1))
+			(if (and (not (vequal t1 s0)) (not (vequal t1 s1)) (not (vequal t1 s2)))
+			    (snd-display ";selection->sound-data 1 lost 2 1: ~A ~A" t1 val1))))))))
+	(let ((val (scan-sound
+		    (lambda (fr)
+		      (if (not (= (mus-length fr) 3)) (snd-display ";with-sync scan-sound chans: ~A" (mus-length fr)))
+		      (and (> (frame-ref fr 0) .01) (> (frame-ref fr 1) .01) (> (frame-ref fr 2) .01)))
+		    0 #f #f #t)))
+	  (if (not (equal? val (list #t 960)))
+	      (snd-display ";scan-sound with-sync; ~A" val)))
+	(close-sound index0)
+	(close-sound index1))
       
       (let* ((ind (open-sound "oboe.snd"))
 	     (reg (make-region 1000 2000 ind 0))

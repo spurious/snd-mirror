@@ -65,6 +65,7 @@
 #define S_chans                         "chans"
 #define S_clear_listener                "clear-listener"
 #define S_clear_minibuffer              "clear-minibuffer"
+#define S_clip_hook                     "clip-hook"
 #define S_clipping                      "clipping"
 #define S_clm_channel                   "clm-channel"
 #define S_close_hook                    "close-hook"

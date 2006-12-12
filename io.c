@@ -1078,6 +1078,18 @@ static int checked_write(int tfd, char *buf, int chars)
   return(MUS_NO_ERROR);
 }
 
+
+static mus_clip_handler_t *mus_clip_handler = NULL;
+
+mus_clip_handler_t *mus_clip_set_handler(mus_clip_handler_t *new_clip_handler) 
+{
+  mus_clip_handler_t *old_handler;
+  old_handler = mus_clip_handler;
+  mus_clip_handler = new_clip_handler;
+  return(old_handler);
+}
+
+
 static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs, char *inbuf, bool clipped)
 {
   int loclim, c3;
@@ -1149,11 +1161,18 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
 	      cliploc = oldloc;
 	      for (j = 0; j < lim; j++, cliploc++)
 		if (buffer[cliploc] > MUS_SAMPLE_MAX)
-		  buffer[cliploc] = MUS_SAMPLE_MAX;
+		  {
+		    if (mus_clip_handler)
+		      buffer[cliploc] = (*mus_clip_handler)(buffer[cliploc]);
+		    else buffer[cliploc] = MUS_SAMPLE_MAX;
+		  }
 		else
 		  if (buffer[cliploc] < MUS_SAMPLE_MIN)
-		    buffer[cliploc] = MUS_SAMPLE_MIN;
-	      /* PERHAPS: here a clipping hook could be added */
+		    {
+		      if (mus_clip_handler)
+			buffer[cliploc] = (*mus_clip_handler)(buffer[cliploc]);
+		      buffer[cliploc] = MUS_SAMPLE_MIN;
+		    }
 	    }
 	  loclim = loc + lim;
 	  jchar = (unsigned char *)charbuf; /* if to_buffer we should add the loop offset here, or never loop */
@@ -1301,6 +1320,7 @@ void mus_reset_io_c(void)
   io_fds = NULL;
   clipping_default = false;
   prescaler_default = 1.0;
+  mus_clip_set_handler(NULL);
 }
 
 

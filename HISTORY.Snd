@@ -1,5 +1,6 @@
 Snd change log
 
+  12-Dec:    clip-hook.
   11-Dec:    sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ sound-data-copy sound-data-reverse! sound-data-peak.
   4-Dec:     frame.scm.
              moved open-sound-file, close-sound-file, and vct->sound-file to snd8.scm.

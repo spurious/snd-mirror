@@ -29,6 +29,7 @@ require examp
      before-save-as-hook
      before-save-state-hook
      before-transform-hook
+     clip-hook
      close-hook
      color-hook
      dac-hook

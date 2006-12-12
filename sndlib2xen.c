@@ -1258,8 +1258,6 @@ at frame 'start' and reading 'samples' samples altogether."
 }
 
 
-
-
 static XEN new_sound_hook;
 static void g_new_sound_hook(const char *filename)
 {

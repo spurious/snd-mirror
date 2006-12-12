@@ -764,6 +764,7 @@ mark play triangle.  (Some audio choices, ALSA in particular, may ignore dac-siz
 <tr><td></td><td colspan=2>If #t, output values are clipped to fit the current sndlib sample
 representation's notion of -1.0 to just less than 1.0.  The default
 causes wrap-around which makes the out-of-range values very obvious.
+To control this action more closely, use <a href="#cliphook">clip-hook</a>.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
@@ -1286,6 +1287,7 @@ some of these sequences.
         <a class=quiet href="#beforesaveashook">before-save-as-hook</a> -- can cancel the request or set its output parameters
         <a class=quiet href="#savehook">save-hook</a>
             sound saved
+              if any sample is clipped during save, <a class=quiet href="#cliphook">clip-hook</a>
         <a class=quiet href="#aftersaveashook">after-save-as-hook</a>
 
 
@@ -1608,6 +1610,16 @@ of a moving mark:
                             (<a class=quiet href="#updatetransformgraph" onmouseover="return escape('force the fft graph to be displayed again')">update-transform-graph</a>)))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3 height=16></td></tr>
+
+
+<!-- clip-hook -->
+<tr><td colspan=3 bgcolor="#f6f8ff">
+<code><a class=def name="cliphook">clip-hook</a> (clipping-value) </code> [<b>progn</b>]
+</td></tr>
+
+<tr><td></td><td colspan=2>
+called whenever a sample is about to be clipped while writing out a sound file. Can return the new value.
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- close-hook -->
@@ -3516,6 +3528,7 @@ The default is #f which makes clipping very obvious (it will cause wrap-around).
 If you're using the standard Snd file accessors, you probably want to use <a href="#clipping">clipping</a>, not this function.
 This function refers to <a href="#mussoundopenoutput">mus-sound-open-output</a> and friends; the file-local version
 is <a href="#musfileclipping">mus-file-clipping</a> -- surely we could make this more confusing!
+See also <a href="#cliphook">clip-hook</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3564,6 +3577,7 @@ and whatever else seems appropriate.
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musfileclipping">mus-file-clipping</a> (fd)</code></td></tr>
 <tr><td></td><td>The clipping choice for the file <i>fd</i>.
 The default is #f which makes clipping very obvious (it will cause wrap-around).
+See also <a href="#cliphook">clip-hook</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 

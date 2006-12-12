@@ -309,12 +309,15 @@ extern "C" {
 #endif
 
 typedef void mus_error_handler_t(int type, char *msg);
-mus_error_handler_t *mus_error_set_handler (mus_error_handler_t *new_error_handler);
+mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handler);
 int mus_make_error(char *error_name);
 const char *mus_error_type_to_string(int err);
 
 typedef void mus_print_handler_t(char *msg);
-mus_print_handler_t *mus_print_set_handler (mus_print_handler_t *new_print_handler);
+mus_print_handler_t *mus_print_set_handler(mus_print_handler_t *new_print_handler);
+
+typedef mus_sample_t mus_clip_handler_t(mus_sample_t val);
+mus_clip_handler_t *mus_clip_set_handler(mus_clip_handler_t *new_clip_handler);
 
 off_t mus_sound_samples(const char *arg);
 off_t mus_sound_frames(const char *arg);

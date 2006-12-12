@@ -182,6 +182,7 @@ static void default_mus_error(int ignore, char *msg)
   fprintf(stderr, msg);
 }
 
+
 static time_t local_file_write_date(const char *filename)
 {
   struct stat statbuf;
@@ -1021,7 +1022,7 @@ char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, in
 				  28, channels, MUS_NEXT);
   if (err != MUS_ERROR)
     {
-      err = mus_header_write_next_header(fd, srate, channels, 28, len /* out chans = 1?? */, MUS_OUT_FORMAT, NULL, 0);
+      err = mus_header_write_next_header(fd, srate, channels, 28, len * channels * mus_bytes_per_sample(MUS_OUT_FORMAT), MUS_OUT_FORMAT, NULL, 0);
       if (err != MUS_ERROR)
 	{
 	  bufs[0] = ddata;

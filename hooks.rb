@@ -204,6 +204,7 @@ need a String or Symbol, not %s"
   $start_playing_selection_hook = Hook.new("$start_playing_selection_hook", 0)
   $before_exit_hook             = Hook.new("$before_exit_hook", 0)
   $before_close_hook            = Hook.new("$before_close_hook", 1)
+  $clip_hook                    = Hook.new("$clip_hook", 1)
   $after_save_as_hook           = Hook.new("$after_save_as_hook", 3)
   $before_save_as_hook          = Hook.new("$before_save_as_hook", 7)
   # unless --with-no-gui

@@ -320,29 +320,31 @@
   (let* ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
 	(throw 'no-such-sound (list "make-sync-frame-reader" snd))
-	(let ((snc (sync index))
-	      (chns 0))
-	  (for-each
-	   (lambda (s)
-	     (if (= (sync s) snd)
-		 (set! chns (+ chns (chans s)))))
-	   (sounds))
-	  (let ((fr (make-vector (+ chns +frame-reader0+))))
-	    (vector-set! fr +frame-reader-tag+ 'frame-reader)
-	    (vector-set! fr +frame-reader-snd+ index)
-	    (vector-set! fr +frame-reader-channels+ chns)
-	    (vector-set! fr +frame-reader-frame+ (make-frame chns))
-	    (let ((ctr 0))
-	      (for-each 
-	       (lambda (s)
-		 (if (= snd (sync s))
-		     (begin
-		       (do ((i 0 (1+ i)))
-			   ((= i (chans s)))
-			 (vector-set! fr (+ (+ i ctr) +frame-reader0+) (make-sample-reader beg s i dir edpos)))
-		       (set! ctr (+ ctr (chans s))))))
-	       (sounds)))
-	    fr)))))
+	(let ((snc (sync index)))
+	  (if (= snc 0)
+	      (make-frame-reader beg snd dir edpos)
+	      (let ((chns 0))
+		(for-each
+		 (lambda (s)
+		   (if (= (sync s) snc) ; sync field is always an int (0 = none)
+		       (set! chns (+ chns (chans s)))))
+		 (sounds))
+		(let ((fr (make-vector (+ chns +frame-reader0+))))
+		  (vector-set! fr +frame-reader-tag+ 'frame-reader)
+		  (vector-set! fr +frame-reader-snd+ index)
+		  (vector-set! fr +frame-reader-channels+ chns)
+		  (vector-set! fr +frame-reader-frame+ (make-frame chns))
+		  (let ((ctr 0))
+		    (for-each 
+		     (lambda (s)
+		       (if (= (sync s) snc)
+			   (begin
+			     (do ((i 0 (1+ i)))
+				 ((= i (chans s)))
+			       (vector-set! fr (+ (+ i ctr) +frame-reader0+) (make-sample-reader beg s i dir edpos)))
+			     (set! ctr (+ ctr (chans s))))))
+		     (sounds)))
+		  fr)))))))
 
 (define* (make-selection-frame-reader :optional (beg 0))
   "(make-selection-frame-reader :optional (beg 0)) returns a frame reader that reads all channels of the current selection"
@@ -447,11 +449,11 @@
 	data)
       (throw 'no-such-region (list "region->sound-data" reg))))
 
-(define (selection->sound-data reg)
-  "(selection->sound-data) returns a sound-data object with the contents of current selection"
+(define* (selection->sound-data :optional (beg 0))
+  "(selection->sound-data :optional beg) returns a sound-data object with the contents of current selection"
   (if (selection?)
-      (let* ((reader (make-selection-frame-reader 0))
-	     (len (selection-frames))
+      (let* ((reader (make-selection-frame-reader beg))
+	     (len (- (selection-frames) beg))
 	     (chns (selection-chans))
 	     (sd (make-sound-data chns len)))
 	(do ((i 0 (1+ i)))
@@ -598,10 +600,9 @@
 (define (offset-sound off) (map-sound (lambda (fr) (frame+ fr off))))
 |#
 
-;;; TODO: test sync-all, with-sync in scan-sound, selection->sound-data, make-track-frame-reader, make-selection-frame-reader, read-track-frame
-;;; TODO: make-sync-frame-reader [also dir edpos args are not tested in make-frame-reader]
+;;; TODO: test [directly] make-track-frame-reader, read-track-frame, dir edpos args in make-frame-reader
 
-;;; PERHAPS: clip-hook -> called when a sample is clipped or clipping is detected somewhere (io.c) -- needs clip_handler as in sound.c
+;;; TODO: test clip-hook
 ;;; PERHAPS: formalize fix-clip -- check restoration against hand-made cases
 
 ;;; SOMEDAY: channel slicer: grn but output locs permuted, reversed etc

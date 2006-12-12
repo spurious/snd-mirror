@@ -506,6 +506,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+12-Dec:  clip-hook.\n\
 11-Dec:  sound-data-multiply! sound-data-add! sound-data-offset! sound-data*\n\
          sound-data+ sound-data-copy sound-data-reverse! sound-data-peak.\n\
 4-Dec:   frame.scm.\n\
@@ -516,9 +517,6 @@ void about_snd_help(void)
          fade.scm instruments changed to use outa rather than vct-map!\n\
 20-Nov:  generic out-any, in-any, locsig, move-sound.\n\
 13-Nov:  RF64 headers.\n\
-3-Nov:   mix-name->id, track-name->id (mix.scm, mix.rb).\n\
-1-Nov:   ->frequency, ->samples (ws.scm), track-name, mix-name, track-tag-y.\n\
-24-Oct:  filter-fft in examp.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

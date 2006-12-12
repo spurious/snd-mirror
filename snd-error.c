@@ -229,6 +229,24 @@ static XEN g_snd_warning(XEN msg)
   snd_warning(XEN_TO_C_STRING(msg));
   return(msg);
 }
+
+
+static XEN clip_hook;
+
+static mus_sample_t run_clip_hook(mus_sample_t val)
+{
+  if (XEN_HOOKED(clip_hook))
+    {
+      XEN result;
+      result = run_progn_hook(clip_hook,
+			      XEN_LIST_1(C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(val))),
+			      S_clip_hook);
+      if (XEN_NUMBER_P(result))
+	return(MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(result)));
+    }
+  return(val);
+}
+
  
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_snd_error_w, g_snd_error)
@@ -283,5 +301,14 @@ If it returns " PROC_TRUE ", Snd flushes the warning (it assumes you've reported
 
   snd_error_hook = XEN_DEFINE_HOOK(S_snd_error_hook, 1, H_snd_error_hook);       /* arg = error-message */
   snd_warning_hook = XEN_DEFINE_HOOK(S_snd_warning_hook, 1, H_snd_warning_hook); /* arg = error-message */
+
+
+  #define H_clip_hook S_clip_hook " (clipping-value) is called each time a sample is about to \
+be clipped upon being written to a sound file.  The hook function can return the new vallue to \
+be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'clipping-value')."
+
+  clip_hook = XEN_DEFINE_HOOK(S_clip_hook, 1, H_clip_hook); /* arg = clipping val as double */
+
+  mus_clip_set_handler(run_clip_hook);
 }
 
