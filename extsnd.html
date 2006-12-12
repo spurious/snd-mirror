@@ -1480,7 +1480,6 @@ program.  See ws-save-state in ws.scm or remember-sound-state in extensions.scm.
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="aftertransformhook">after-transform-hook</a> (snd chn scaler)</code>
 </td></tr>
-
 <tr><td></td><td colspan=2>
 called just after an FFT (or spectrum) is calculated.
 
@@ -1616,7 +1615,6 @@ of a moving mark:
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="cliphook">clip-hook</a> (clipping-value) </code> [<b>progn</b>]
 </td></tr>
-
 <tr><td></td><td colspan=2>
 called whenever a sample is about to be clipped while writing out a sound file. Can return the new value.
 </td></tr><tr><td colspan=3 height=16></td></tr>
@@ -1644,7 +1642,6 @@ called when a file is closed (before the actual close, so the index <i>snd</i> i
 end
 </pre></td></tr></table>
 </td></tr></table>
-
 close-hook is used in autosave.scm, examp.scm, extensions.scm, and peak-env.scm; see, for example,
 remember-sound-state in extensions.scm.
 </td></tr>
@@ -1655,7 +1652,6 @@ remember-sound-state in extensions.scm.
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="colorhook">color-hook</a> () </code> [<b>progn</b>]
 </td></tr>
-
 <tr><td></td><td colspan=2>
 called whenever one of the variables associated with the color dialog changes.  See start-waterfall in snd-gl.scm.
 </td></tr><tr><td colspan=3 height=16></td></tr>
@@ -1665,7 +1661,6 @@ called whenever one of the variables associated with the color dialog changes.  
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="dachook">dac-hook</a> (data) </code> [<b>progn</b>]
 </td></tr>
-
 <tr><td></td><td colspan=2>
 called just before data is sent to DAC; <i>data</i> is a <a href="#sndsounddata">sound-data</a> object. See with-level-meters in snd-motif.scm.
 </td></tr><tr><td colspan=3 height=16></td></tr>
@@ -1686,7 +1681,6 @@ in snd-motif.scm (for Gtk+, snd-gtk.scm) uses this hook to draw sync'd marks in 
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="drophook">drop-hook</a> (filename) </code> [<b>or</b>]
 </td></tr>
-
 <tr><td></td><td colspan=2>
 called each time Snd receives a drag-and-drop event, passing the hook the dropped filename.
 If the hook returns #t, the file is not opened by Snd.  Normally if you drag a file icon to the menubar, 
@@ -1705,7 +1699,6 @@ change an existing callback (to pass the sound index and channel number to the d
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="duringopenhook">during-open-hook</a> (fd name reason)</code>
 </td></tr>
-
 <tr><td></td><td colspan=2>
 called after file is opened, but before data has been read.
 This provides an opportunity to set sndlib prescaling values:
@@ -1738,7 +1731,6 @@ Or even better, fix the blasted original!
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="envedhook">enved-hook</a> (env pt new-x new-y reason)</code> [<b>cascade</b>]
 </td></tr>
-
 <tr><td></td><td colspan=2>
 Each time a breakpoint is changed in the envelope editor, this hook 
 is called; if it returns a list, that list defines the new envelope, 
@@ -1791,7 +1783,6 @@ Guile's exit-hook is shadowed by this variable.
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="graphhook">graph-hook</a> (snd chn y0 y1) </code> [<b>or</b>]
 </td></tr>
-
 <tr><td></td><td colspan=2>
 called each time a graph is updated or redisplayed.
 If it returns #t, the display is not updated.
@@ -1833,7 +1824,6 @@ If there is more than one hook function, each function's result is passed as inp
 <tr><td colspan=3 bgcolor="#f6f8ff">
 <code><a class=def name="initialgraphhook">initial-graph-hook</a> (snd chn dur) </code> [<b>or</b>]
 </td></tr>
-
 <tr><td></td><td colspan=2>
 called the first time a given channel is displayed.
 If it returns a list, the list's contents are interpreted as:

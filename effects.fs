@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Wed Dec 06 14:50:42 CET 2006
+\ Changed: Tue Dec 12 01:45:09 CET 2006
 
 \ Commentary:
 \
@@ -12,25 +12,25 @@
 \ make-main-menu                 ( name -- widget )
 \ add-to-effects-menu            ( name xt -- )
 \
-\ effects-squelch-channel        ( amount gate-size snd chn -- )
+\ effects-squelch-channel        ( amount gate-size :optional snd chn -- )
 \ make-gain-dialog               ( name -- xt1 xt2; child self -- xt; self -- )
 \ make-normalize-dialog          ( name -- xt1 xt2; child self -- xt; self -- )
 \ make-gate-dialog               ( name -- xt1 xt2; child self -- xt; self -- )
 \ 
-\ effects-echo                   ( input-samps delay-time echo-amount beg dur snd chn -- )
-\ effects-flecho                 ( scaler secs input-samps beg dur snd chn -- )
-\ effects-zecho                  ( scaler secs freq amp input-samps beg dur snd chn -- )
+\ effects-echo                   ( input-samps delay-time echo-amount :optional beg dur snd chn -- )
+\ effects-flecho                 ( scaler secs input-samps :optional beg dur snd chn -- )
+\ effects-zecho                  ( scaler secs freq amp input-samps :optional beg dur snd chn -- )
 \ make-echo-dialog               ( name -- xt1 xt2; child self -- xt; self -- )
 \ make-flecho-dialog             ( name -- xt1 xt2; child self -- xt; self -- )
 \ make-zecho-dialog              ( name -- xt1 xt2; child self -- xt; self -- )
 \
-\ effects-bbp                    ( freq bw beg dur snd chn -- res )
-\ effects-bbr                    ( freq bw beg dur snd chn -- res )
-\ effects-bhp                    ( freq beg dur snd chn -- res )
-\ effects-blp                    ( freq beg dur snd chn -- res )
-\ effects-comb-filter            ( scaler size beg dur snd chn -- res )
-\ effects-comb-chord             ( scaler size amp interval-1 interval-2 beg dur snd chn -- res )
-\ effects-moog                   ( freq Q beg dur snd chn -- res )
+\ effects-bbp                    ( freq bw :optional beg dur snd chn -- res )
+\ effects-bbr                    ( freq bw :optional beg dur snd chn -- res )
+\ effects-bhp                    ( freq :optional beg dur snd chn -- res )
+\ effects-blp                    ( freq :optional beg dur snd chn -- res )
+\ effects-comb-filter            ( scaler size :optional beg dur snd chn -- res )
+\ effects-comb-chord             ( scaler size amp :optional beg dur snd chn -- res )
+\ effects-moog                   ( freq Q :optional beg dur snd chn -- res )
 \ moog                           ( freq Q -- proc; inval self -- res )
 \ make-band-pass-dialog          ( name -- xt1 xt2; child self -- xt; self -- )
 \ make-notch-dialog              ( name -- xt1 xt2; child self -- xt; self -- )
@@ -45,25 +45,25 @@
 \ make-expsrc-dialog             ( name -- xt1 xt2; child self -- xt; self -- )
 \ make-src-timevar-dialog        ( name -- xt1 xt2; child self -- xt; self -- )
 \
-\ effects-am 			 ( freq en beg dur snd chn -- res )
-\ effects-rm 			 ( freq en beg dur snd chn -- res )
+\ effects-am 			 ( freq en :optional beg dur snd chn -- res )
+\ effects-rm 			 ( freq en :optional beg dur snd chn -- res )
 \ make-am-effect-dialog          ( name -- xt1 xt2; child self -- xt; self -- )
 \ make-rm-effect-dialog          ( name -- xt1 xt2; child self -- xt; self -- )
 \
 \ effects-jc-reverb              ( samps volume -- proc; inval self -- res )
-\ effects-jc-reverb-1            ( volume beg dur snd chn -- res )
+\ effects-jc-reverb-1            ( volume :optional beg dur snd chn -- res )
 \ effects-cnv                    ( snd0 amp snd chn -- res )
 \ make-reverb-dialog             ( name -- xt1 xt2; child self -- xt; self -- )
 \ make-jc-reverb-dialog          ( name -- xt1 xt2; child self -- xt; self -- )
 \ make-convolve-dialog           ( name -- xt1 xt2; child self -- xt; self -- )
 \
-\ effects-position-sound         ( mono-snd pos snd chn -- res )
+\ effects-position-sound         ( mono-snd pos :optional snd chn -- res )
 \ place-sound                    ( mono-snd stereo-snd pan-env -- res )
-\ effects-flange                 ( amount speed time beg dur snd chn -- res )
+\ effects-flange                 ( amount speed time :optional beg dur snd chn -- res )
 \ effects-cross-synthesis        ( snd amp fftsize r -- proc; inval self -- res )
-\ effects-cross-synthesis-1      ( cross-snd amp fftsize r beg dur snd chn -- res )
-\ effects-fp                     ( srf amp freq beg dur snd chn -- vct )
-\ effects-hello-dentist          ( freq amp beg dur snd chn -- res )
+\ effects-cross-synthesis-1      ( cross-snd amp fftsize r :optional beg dur snd chn -- res )
+\ effects-fp                     ( srf amp freq :optional beg dur snd chn -- vct )
+\ effects-hello-dentist          ( freq amp :optional beg dur snd chn -- res )
 \ make-place-sound-dialog        ( name -- xt1 xt2; child self -- xt; self -- )
 \ make-silence-dialog            ( name -- xt1 xt2; child self -- xt; self -- )
 \ make-contrast-dialog     	 ( name -- xt1 xt2; child self -- xt; self -- )
@@ -76,11 +76,9 @@
 \
 \ make-effects-menu              ( -- widget )
 \
-\ effects-remove-clicks          ( snd chn -- res )
-\ effects-remove-dc              ( snd chn -- res )
-\ effects-compand                ( snd chn -- res )
-
-\ Code:
+\ effects-remove-clicks          ( :optional snd chn -- res )
+\ effects-remove-dc              ( :optional snd chn -- res )
+\ effects-compand                ( :optional snd chn -- res )
 
 require clm
 require examp
@@ -197,17 +195,17 @@ hide
 
 : scale-log->linear ( lo val hi -- lin )
   { lo val hi }
-  2.0 fln { log2 }
-  lo 1.0 fmax fln log2 f/ { log-lo }
-  hi fln          log2 f/ { log-hi }
-  val fln log2 f/   log-lo f-  log-hi log-lo f-  f/ log-scale-ticks f* floor f>s
+  2.0 flog { log2 }
+  lo 1.0 fmax flog log2 f/ { log-lo }
+  hi flog          log2 f/ { log-hi }
+  val flog log2 f/   log-lo f-  log-hi log-lo f-  f/ log-scale-ticks f* floor f>s
 ;
 
 : scale-linear->log ( lo val hi -- log )
   { lo val hi }
-  2.0 fln { log2 }
-  lo 1.0 fmax fln log2 f/ { log-lo }
-  hi fln          log2 f/ { log-hi }
+  2.0 flog { log2 }
+  lo 1.0 fmax flog log2 f/ { log-lo }
+  hi flog          log2 f/ { log-hi }
   2.0  log-lo val log-scale-ticks f/ log-hi log-lo f- f* f+  f**
 ;
 
@@ -253,7 +251,7 @@ hide
 ;
 
 : ratio->semitones ( ratio -- n )
-  12.0 swap fln 2.0 fln f/ f* fround f>s
+  12.0 swap flog 2.0 flog f/ f* fround f>s
 ;
 
 : scale-semi-cb ( w c i -- )
@@ -637,8 +635,8 @@ hide
   f1  f0 y y f* moving-average amp f< if 0.0 else 1.0 then  moving-average y f*
 ;
 set-current
-: effects-squelch-channel ( amount gate-size snd chn -- val )
-  { amount gate-size snd chn }
+: effects-squelch-channel ( amount gate-size :optional snd chn -- val )
+  <{ amount gate-size :optional snd #f chn #f }>
   :size gate-size make-moving-average { f0 }
   :size gate-size :initial-element 1.0 make-moving-average { f1 }
   $" %.4f %s %s" '( amount gate-size get-func-name ) string-format { origin }
@@ -970,8 +968,8 @@ hide
 ;
 set-current
 
-: effects-echo ( input-samps delay-time echo-amount beg dur snd chn -- res )
-  { input-samps del-time amp beg dur snd chn }
+: effects-echo ( input-samps delay-time echo-amount :optional beg dur snd chn -- res )
+  <{ input-samps del-time amp :optional beg 0 dur #f snd #f chn #f }>
   del-time snd srate f* fround f>s make-delay { del }
   input-samps number? if
     input-samps
@@ -1003,8 +1001,8 @@ set-current
   amp samps flt del effects-flecho-cb beg dur snd chn #f origin map-channel
 ;
 
-: effects-zecho ( scaler secs freq amp input-samps beg dur snd chn -- res )
-  { scaler secs freq amp input-samps beg dur snd chn }
+: effects-zecho ( scaler secs freq amp input-samps :optional beg dur snd chn -- res )
+  <{ scaler secs freq amp input-samps :optional beg 0 dur #f snd #f chn #f }>
   freq make-oscil { os }
   secs snd srate f* fround f>s { len }
   :size len :max-size len amp f>s 1 + + make-delay { del }
@@ -1350,41 +1348,40 @@ previous
 
 \ === FILTER EFFECTS ===
 
-: effects-bbp ( freq bw beg dur snd chn -- res )
-  { freq bw beg dur snd chn }
+: effects-bbp ( freq bw :optional beg dur snd chn -- res )
+  <{ freq bw :optional beg 0 dur #f snd #f chn #f }>
   $" %s %s %s %s %s" '( freq bw beg dur get-func-name ) string-format { origin }
   freq bw make-butter-band-pass beg dur snd chn #f #f origin clm-channel
 ;
 
-: effects-bbr ( freq bw beg dur snd chn -- res )
-  { freq bw beg dur snd chn }
+: effects-bbr ( freq bw :optional beg dur snd chn -- res )
+  <{ freq bw :optional beg 0 dur #f snd #f chn #f }>
   $" %s %s %s %s %s" '( freq bw beg dur get-func-name ) string-format { origin }
   freq bw make-butter-band-reject beg dur snd chn #f #f origin clm-channel
 ;
 
-: effects-bhp ( freq beg dur snd chn -- res )
-  { freq beg dur snd chn }
+: effects-bhp ( freq :optional beg dur snd chn -- res )
+  <{ freq :optional beg 0 dur #f snd #f chn #f }>
   $" %s %s %s %s" '( freq beg dur get-func-name ) string-format { origin }
   freq make-butter-high-pass beg dur snd chn #f #f origin clm-channel
 ;
 
-: effects-blp ( freq beg dur snd chn -- res )
-  { freq beg dur snd chn }
+: effects-blp ( freq :optional beg dur snd chn -- res )
+  <{ freq :optional beg 0 dur #f snd #f chn #f }>
   $" %s %s %s %s" '( freq beg dur get-func-name ) string-format { origin }
   freq make-butter-low-pass beg dur snd chn #f #f origin clm-channel
 ;
 
-: effects-comb-filter ( scaler size beg dur snd chn -- res )
-  { scaler size beg dur snd chn }
+: effects-comb-filter ( scaler size :optional beg dur snd chn -- res )
+  <{ scaler size :optional beg 0 dur #f snd #f chn #f }>
   $" %s %s %s %s %s" '( scaler size beg dur get-func-name ) string-format { origin }
   scaler size comb-filter beg dur snd chn #f origin map-channel
 ;
 
-: effects-comb-chord ( scaler size amp interval-one interval-two beg dur snd chn -- res )
-  { scaler size amp interval-one interval-two beg dur snd chn }
-  $" %s %s %s %s %s %s %s %s"
-  '( scaler size amp interval-one interval-two beg dur get-func-name ) string-format { origin }
-  scaler size amp interval-one interval-two comb-chord-1 beg dur snd chn #f origin map-channel
+: effects-comb-chord ( scaler size amp :optional beg dur snd chn -- res )
+  <{ scaler size amp :optional beg 0 dur #f snd #f chn #f }>
+  $" %s %s %s %s %s %s" '( scaler size amp beg dur get-func-name ) string-format { origin }
+  scaler size amp comb-chord beg dur snd chn #f origin map-channel
 ;
 
 hide
@@ -1395,8 +1392,8 @@ hide
   self @ ( gen ) inval moog-filter
 ;
 set-current
-: effects-moog ( freq Q beg dur snd chn -- res )
-  { freq Q beg dur snd chn }
+: effects-moog ( freq Q :optional beg dur snd chn -- res )
+  <{ freq Q :optional beg 0 dur #f snd #f chn #f }>
   $" %s %s %s %s %s" '( freq Q beg dur get-func-name ) string-format { origin }
   freq Q make-moog-filter moog-cb beg dur snd chn #f origin map-channel
 ;
@@ -1841,22 +1838,12 @@ previous
 \ === Comb-chord filter ===
 
 hide
-effects-base%
-  cell% field cc-interval-one
-  cell% field cc-interval-two
-end-struct comb-chord%
-
-: cc-interval-one@ ( gen -- val ) cc-interval-one @ ;
-: cc-interval-one! ( val gen -- ) cc-interval-one ! ;
-: cc-interval-two@ ( gen -- val ) cc-interval-two @ ;
-: cc-interval-two! ( val gen -- ) cc-interval-two ! ;
-
 : cc-func-cb ( gen -- xt; samps self -- proc )
   lambda-create , latestxt
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
-  gen scaler@ gen size@ gen amplitude@ gen cc-interval-one@ gen cc-interval-two@ comb-chord-1
+  gen scaler@ gen size@ gen amplitude@ comb-chord
 ;
 : cc-origin-cb ( gen -- xt; target input-samps self -- name origin )
   lambda-create , latestxt
@@ -1864,8 +1851,7 @@ end-struct comb-chord%
   { target samps self }
   self @ { gen }
   $" effects-comb-chord"
-  $" %s %s %s %s %s"
-  '( gen scaler@ gen size@ gen amplitude@ gen cc-interval-one@ gen cc-interval-two@ ) string-format
+  $" %s %s %s" '( gen scaler@ gen size@ gen amplitude@ ) string-format
 ;
 : cc-ok-cb ( gen -- xt; w c i self -- )
   lambda-create , latestxt
@@ -1877,21 +1863,17 @@ end-struct comb-chord%
 : cc-reset-cb ( gen -- xt; w c i self -- )
   { gen }
   lambda-create
-  gen , gen cc-interval-one@ , gen cc-interval-two@ , gen amplitude@ , gen size@ , gen scaler@ ,
+  gen , gen amplitude@ , gen size@ , gen scaler@ ,
   latestxt
  does> ( w c i self -- )
   { w c info self }
-  self @ { gen }
-  self 1 cells + @ ( init-2 )      gen cc-interval-two!
-  self 2 cells + @ ( init-1 )      gen cc-interval-one!
-  self 3 cells + @ ( init-amp )    gen amplitude!
-  self 4 cells + @ ( init-size )   gen size!
-  self 5 cells + @ ( init-scaler ) gen scaler!
+  self           @ { gen }
+  self 1 cells + @ ( init-amp )    gen amplitude!
+  self 2 cells + @ ( init-size )   gen size!
+  self 3 cells + @ ( init-scaler ) gen scaler!
   gen sliders@ 0 array-ref '( FXmNvalue gen scaler@          100.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 1 array-ref '( FXmNvalue gen size@                         ) FXtVaSetValues drop
   gen sliders@ 2 array-ref '( FXmNvalue gen amplitude@       100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 3 array-ref '( FXmNvalue gen cc-interval-one@ 100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 4 array-ref '( FXmNvalue gen cc-interval-two@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : cc-scaler-cb ( gen -- xt; w c i self -- )
   lambda-create , latestxt
@@ -1911,18 +1893,6 @@ end-struct comb-chord%
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) amplitude!
 ;
-: cc-1-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
- does> ( w c i self -- )
-  { w c info self }
-  info Fvalue 100.0 f/ self @ ( gen ) cc-interval-one!
-;
-: cc-2-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
- does> ( w c i self -- )
-  { w c info self }
-  info Fvalue 100.0 f/ self @ ( gen ) cc-interval-two!
-;
 : post-cc-dialog ( gen -- xt; w c i self -- )
   lambda-create , latestxt
  does> ( w c i self -- )
@@ -1937,9 +1907,7 @@ Move the sliders to set the comb chord parameters." _ help-cb
     gen dialog@
     #( #( $" chord scaler" _ 0.0 gen scaler@          1.0 gen cc-scaler-cb    100 )
        #( $" chord size"   _   0 gen size@            100 gen cc-size-cb        1 )
-       #( $" amplitude"    _ 0.0 gen amplitude@       1.0 gen cc-amplitude-cb 100 )
-       #( $" interval one" _ 0.0 gen cc-interval-one@ 2.0 gen cc-1-cb         100 )
-       #( $" interval two" _ 0.0 gen cc-interval-two@ 2.0 gen cc-2-cb         100 ) )
+       #( $" amplitude"    _ 0.0 gen amplitude@       1.0 gen cc-amplitude-cb 100 ) )
     add-sliders gen sliders!
     gen sliders@ 0 array-ref FXtParent gen target-cb #f add-target drop
   then
@@ -1948,12 +1916,10 @@ Move the sliders to set the comb chord parameters." _ help-cb
 set-current
 
 : make-comb-chord-dialog ( name -- xt1 xt2; child self -- xt; self -- )
-  ( name ) comb-chord% %alloc make-base-effects { gen }
+  ( name ) effects-base% %alloc make-base-effects { gen }
   0.95 gen scaler!
   60   gen size!
   0.3  gen amplitude!
-  0.75 gen cc-interval-one!
-  1.2  gen cc-interval-two!
   gen post-cc-dialog ( xt1 )
   lambda-create gen ,
   latestxt           ( xt2 )
@@ -1964,8 +1930,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %d %.2f %.2f %.2f)"
-  '( gen label@ gen scaler@ gen size@ gen amplitude@ gen cc-interval-one@ gen cc-interval-two@ )
+  $" %s (%.2f %d %.2f)" '( gen label@ gen scaler@ gen size@ gen amplitude@ )
   string-format change-label
 ;
 previous
@@ -2522,16 +2487,16 @@ hide
   1.0 inval os 0.0 0.0 oscil amplitude-modulate
 ;
 set-current
-: effects-am ( freq en beg dur snd chn -- res )
-  { freq en beg dur snd chn }
+: effects-am ( freq en :optional beg dur snd chn -- res )
+  <{ freq en :optional beg 0 dur #f snd #f chn #f }>
   freq make-oscil { os }
   en list? if :envelope en :end dur 1- make-env else #f then { e }
   $" %s %s %s %s %s" '( freq en beg dur get-func-name ) string-format { origin }
   e if os e effects-am-env-cb else os effects-am-cb then beg dur snd chn #f origin map-channel
 ;
 
-: effects-rm ( freq en beg dur snd chn -- res )
-  { freq en beg dur snd chn }
+: effects-rm ( freq en :optional beg dur snd chn -- res )
+  <{ freq en :optional beg 0 dur #f snd #f chn #f }>
   freq make-oscil { os }
   en list? if :envelope en :end dur 1- make-env else #f then { e }
   $" %s %s %s %s %s" '( freq en beg dur get-func-name ) string-format { origin }
@@ -2812,8 +2777,8 @@ previous
   outdel comb-sum 0.0 delay volume f* inval f+
 ;
 
-: effects-jc-reverb-1 ( volume beg dur snd chn -- res )
-  { vol beg dur snd chn }
+: effects-jc-reverb-1 ( volume :optional beg dur snd chn -- res )
+  <{ vol :optional beg 0 dur #f snd #f  chn #f }>
   dur if dur else snd chn #f frames then { samps }
   $" %s %s %s %s" '( vol beg dur get-func-name ) string-format { origin }
   samps vol effects-jc-reverb beg dur snd chn #f origin map-channel
@@ -2836,8 +2801,8 @@ hide
   cnv func convolve
 ;
 set-current
-: effects-cnv ( snd0 amp snd chn -- res )
-  { snd0 amp snd chn }
+: effects-cnv ( snd0 amp :optional snd chn -- res )
+  <{ snd0 amp :optional snd #f chn #f }>
   snd0 sound? unless sounds car to snd0 then
   snd0 #f #f frames { flt-len }
   snd chn #f frames flt-len + { total-len }
@@ -3200,8 +3165,8 @@ hide
   self cell+ @ ( rd ) read-sample  1.0 self @ ( en ) env f-  f* y f+
 ;
 set-current
-: effects-position-sound ( mono-snd pos snd chn -- res )
-  { mono pos snd chn }
+: effects-position-sound ( mono-snd pos :optional snd chn -- res )
+  <{ mono pos :optional snd #f chn #f }>
   mono #f #f frames { len }
   0 mono #f 1 #f make-sample-reader { rd }
   $" %s %s %s" '( mono pos get-func-name ) string-format { origin }
@@ -3242,8 +3207,8 @@ hide
   self @ ( del ) inval  self cell+ @ ( ri ) 0.0 rand-interp  delay inval f+ 0.75 f*
 ;
 set-current
-: effects-flange ( amount speed time beg dur snd chn -- res )
-  { amnt speed time beg dur snd chn }
+: effects-flange ( amount speed time :optional beg dur snd chn -- res )
+  <{ amnt speed time :optional beg 0 dur #f snd #f  chn #f }>
   :frequency speed :amplitude amnt make-rand-interp { ri }
   time snd srate f* fround f>s { len }
   :size len :max-size amnt f>s len 1 + + make-delay { del }
@@ -3292,7 +3257,8 @@ previous
   spectr formants inval formant-bank amp f*
 ;
 
-: effects-cross-synthesis-1 ( cross-snd amp fftsize r beg dur snd chn -- res )
+: effects-cross-synthesis-1 ( cross-snd amp fftsize r :optional beg dur snd chn -- res )
+  <{ csnd amp fftsize r :optional beg 0 dur #f snd #f  chn #f }>
   { csnd amp fftsize r beg dur snd chn }
   $" %s %s %s %s %s %s %s" '( csnd amp fftsize r beg dur get-func-name ) string-format { origin }
   csnd sound? unless sounds car to csnd then
@@ -3317,8 +3283,8 @@ hide
   self 3 cells + @ ( src-cb ) src
 ;
 set-current
-: effects-fp ( srf amp freq beg dur snd chn -- vct )
-  { srf amp freq beg dur snd chn }
+: effects-fp ( srf amp freq :optional beg dur snd chn -- vct )
+  <{ srf amp freq :optional beg 0 dur #f snd #f  chn #f }>
   freq make-oscil { os }
   :srate srf make-src { sr }
   beg snd chn 1 #f make-sample-reader { sf }
@@ -3341,8 +3307,8 @@ hide
   idx dir + self ! ( idx )
 ;
 set-current
-: effects-hello-dentist ( freq amp beg dur snd chn -- res )
-  { freq amp beg dur snd chn }
+: effects-hello-dentist ( freq amp :optional beg dur snd chn -- res )
+  <{ freq amp :optional beg 0 dur #f snd #f  chn #f }>
   :frequency freq :amplitude amp make-rand-interp { rn }
   0 { idx }
   dur if dur else snd chn #f frames then { len }
@@ -4247,10 +4213,6 @@ set-current
 ;
 previous
 
-lambda: ( -- ) 2 #f #f down-oct drop ; 0 make-proc value effects-octave-down-cb
-lambda: ( -- )
-; 0 make-proc value effects-remove-clicks-cb
-
 $" Effects" _ value effects-menu-label
 
 : make-effects-menu ( -- widget )
@@ -4298,8 +4260,8 @@ $" Effects" _ value effects-menu-label
 ;
 
 hide
-: find-click ( loc snd chn -- pos|#f )
-  { loc snd chn }
+: find-click ( loc :optional snd chn -- pos|#f )
+  <{ loc :optional snd #f chn #f }>
   loc snd chn 1 #f make-sample-reader { rd }
   0.0 0.0 0.0 { samp0 samp1 samp2 }
   10 0.0 make-vct { samps }
@@ -4317,8 +4279,8 @@ hide
     samp0 samp2 f- fabs local-max f2/ f< && if drop ( flag ) i leave then
   loop
 ;
-: remove-click ( loc snd chn -- )
-  { loc snd chn }
+: remove-click ( loc :optional snd chn -- )
+  <{ loc :optional snd #f chn #f }>
   loc snd chn find-click { click }
   click c-g? not && if
     click 2 - 4 snd chn smooth-sound drop
@@ -4343,13 +4305,15 @@ hide
   tbl inval 8.0 f* 8.0 f+ tbl length array-interp
 ;
 set-current
-: effects-remove-clicks ( snd chn -- res ) 0 -rot remove-click #f ;
-: effects-remove-dc ( snd chn -- res )
-  { snd chn }
+: effects-remove-clicks ( :optional snd chn -- res )
+  <{ :optional snd #f chn #f }>
+  0 -rot remove-click #f ;
+: effects-remove-dc ( :optional snd chn -- res )
+  <{ :optional snd #f chn #f }>
   effects-remove-dc-cb 0 #f snd chn #f get-func-name map-channel
 ;
-: effects-compand ( snd chn -- res )
-  { snd chn }
+: effects-compand ( :optional snd chn -- res )
+  <{ :optional snd #f chn #f }>
   vct( -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
   0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000 ) { tbl }
   tbl effects-compand-cb 0 #f snd chn #f get-func-name map-channel

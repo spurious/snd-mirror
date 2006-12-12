@@ -2,7 +2,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Jan 06 05:32:57 CET 2006
-\ Changed: Wed Dec 06 14:52:22 CET 2006
+\ Changed: Mon Dec 11 14:58:54 CET 2006
 
 \ Commentary:
 \
@@ -34,7 +34,7 @@ hide
   { snd chn }
   snd chn #f frames { old-len }
   '( 0.0 0.0  16.0 f2* snd srate f/ 0.0  20.0 f2* snd srate f/ 1.0  1.0 1.0 ) ( flt-lst )
-  2.0  old-len snd srate min fln 2.0 fln f/ fceil ( pow2 )  f**  f>s ( fftlen )
+  2.0  old-len snd srate min flog 2.0 flog f/ fceil ( pow2 )  f**  f>s ( fftlen )
   snd chn #f undef filter-sound drop
   old-len snd chn set-frames drop
 ;
@@ -121,7 +121,7 @@ hide
   crosses 1- 0 ?do
     cross-samples i array-ref { start }
     0 { autolen }
-    2.0  extension snd srate 40.0 f/ f* fln 2.0 fln f/ fceil ( pow2 )  f** f>s { fftlen }
+    2.0  extension snd srate 40.0 f/ f* flog 2.0 flog f/ fceil ( pow2 )  f** f>s { fftlen }
     fftlen 4 / { len4 }
     start snd chn 1 #f make-sample-reader { rd }
     fftlen 0.0 make-vct map! rd next-sample end-map { data }

@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Thu Dec 07 05:03:41 CET 2006
+\ Changed: Mon Dec 11 14:58:05 CET 2006
 
 \ Commentary:
 \
@@ -46,16 +46,25 @@
 \ zc 	       ( start dur freq amp len1 len2 feedback -- )
 \ zn 	       ( start dur freq amp len1 len2 feedforward -- )
 \ za 	       ( start dur freq amp len1 len2 fb ffw -- )
+\ clm-expsrc   ( start dur in-file exp-ratio src-ratio amp -- )
 \ exp-snd      ( file start dur amp keyword-args -- )
 \ expfil       ( start dur hopsecs rampsecs steadysecs file1 file2 -- )
 \ graph-eq     ( file start dur keyword-args -- )
 \ anoi         ( fname start dur fftsize amp-scaler R -- )
 \ fullmix      ( in-file start dur keyword-args -- )
+\ bes-fm       ( start dur freq amp ratio index -- )
 \
 \ Code:
 
 require clm
 require env
+
+\ General input function for src, granulate etc.
+: readin-cb ( gen -- proc; dir self -- r )
+  lambda-create , latestxt 1 make-proc
+ does> ( dir self -- r )
+  nip @ ( gen ) readin
+;
 
 : reverb-dur ( rev -- dur ) mus-length samples->seconds *clm-decay-time* f+ ;
 
@@ -74,14 +83,15 @@ instrument: jc-reverb-fs ( keyword-args -- )
 0 1 440 0.2 ' fm-violin :reverb ' jc-reverb with-sound\n\
 0 1 440 0.2 ' fm-violin\n\
   :reverb-data '( :low-pass #t ) :reverb ' jc-reverb :channels 2 with-sound"
-  :volume   1.0   get-args { volume }
-  :delay1   0.013 get-args { delay1 }
-  :delay2   0.011 get-args { delay2 }
-  :delay3   0.015 get-args { delay3 }
-  :delay4   0.017 get-args { delay4 }
-  :low-pass #f    get-args { low-pass }
-  :doubled  #f    get-args { doubled }
-  :amp-env  #f    get-args { amp-env }
+  <{ :key
+     volume 1.0
+     delay1 0.013
+     delay2 0.011
+     delay3 0.015
+     delay4 0.017
+     low-pass #f
+     doubled #f
+     amp-env #f }>
   *output* mus-channels { chans }
   *reverb* mus-channels { rev-chans }
   *reverb* reverb-dur { dur }
@@ -145,17 +155,17 @@ instrument: violin ( start dur freq amp keyword-args -- )
 \\ :distance        1.0 (locsig-distance)\n\
 \\ :reverb-amount   0.01 (locsig-reverb-amount)\n\
 0 3 440 0.5 :fm-index 0.5 ' violin with-sound"
-  :fm-index      1.0                          get-args { fm-index }
-  :amp-env       '( 0 0 25 1 75 1 100 0 )     get-args { amp-env }
-  :index-env     '( 0 1 25 0.4 75 0.6 100 0 ) get-args { index-env }
-  :degree        90.0 random 		      get-args { degree }
-  :distance      1.0         		      get-args { distance }
-  :reverb-amount 0.01        		      get-args { reverb-amount }
+  :fm-index      1.0                          get-optkey { fm-index }
+  :amp-env       '( 0 0 25 1 75 1 100 0 )     get-optkey { amp-env }
+  :index-env     '( 0 1 25 0.4 75 0.6 100 0 ) get-optkey { index-env }
+  :degree        90.0 random 		      get-optkey { degree }
+  :distance      1.0         		      get-optkey { distance }
+  :reverb-amount 0.01        		      get-optkey { reverb-amount }
   { start dur freq amp }
   freq hz->radians { frq-scl }
   frq-scl fm-index f* { maxdev }
-  5.0 freq fln f/ maxdev f* { index1 }
-  8.5 freq fln f- 3.0 freq 1000.0 f/ f+ f/ maxdev 3.0 f* f* { index2 }
+  5.0 freq flog f/ maxdev f* { index1 }
+  8.5 freq flog f- 3.0 freq 1000.0 f/ f+ f/ maxdev 3.0 f* f* { index2 }
   4.0 freq fsqrt f/ maxdev f* { index3 }
   :frequency freq 	 make-oscil { carrier }
   :frequency freq 	 make-oscil { fmosc1 }
@@ -178,12 +188,11 @@ instrument: violin ( start dur freq amp keyword-args -- )
   end-run
 ;instrument
 
-event: violin-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
-  start dur 440 0.5 violin
-  dur step
-;event
+: violin-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 440 0.5 violin
+  dur 0.2 f+ step
+;
 
 \ === FM-Violin (clm/v.ins, snd/v.scm|rb) ===
 instrument: fm-violin-fs ( start dur freq amp keyword-args -- )
@@ -218,52 +227,52 @@ instrument: fm-violin-fs ( start dur freq amp keyword-args -- )
 \\ :reverb-amount         	 0.01\n\
 \\ :index-type            	 'violin ('cello or 'violin)\n\
 0 3 440 0.5 :fm-index 0.5 ' fm-violin-fs with-sound"
-  :fm-index                   1.0                          get-args { fm-index }
-  :amp-env                    '( 0 0 25 1 75 1 100 0 )     get-args { amp-env }
-  :periodic-vibrato-rate      5.0         		   get-args { pvrate }
-  :periodic-vibrato-amplitude 0.0025      		   get-args { pvamp }
-  :random-vibrato-rate        16.0        		   get-args { rvrate }
-  :random-vibrato-amplitude   0.005       		   get-args { rvamp }
-  :noise-freq                 1000.0      		   get-args { noise-freq }
-  :noise-amount               0.0         		   get-args { noise-amount }
-  :ind-noise-freq             10.0        		   get-args { ind-noise-freq }
-  :ind-noise-amount           0.0         		   get-args { ind-noise-amount }
-  :amp-noise-freq             20.0        		   get-args { amp-noise-freq }
-  :amp-noise-amount           0.0         		   get-args { amp-noise-amount }
-  :gliss-env                  '( 0 0 100 0 )               get-args { gliss-env }
-  :glissando-amount           0.0                          get-args { gliss-amount }
-  :fm1-env                    '( 0 1 25 0.4 75 0.6 100 0 ) get-args { fm1-env }
-  :fm2-env                    '( 0 1 25 0.4 75 0.6 100 0 ) get-args { fm2-env }
-  :fm3-env                    '( 0 1 25 0.4 75 0.6 100 0 ) get-args { fm3-env }
-  :fm1-rat                    1.0         		   get-args { fm1-rat }
-  :fm2-rat                    3.0         		   get-args { fm2-rat }
-  :fm3-rat                    4.0         		   get-args { fm3-rat }
-  :fm1-index                  #f         		   get-args { fm1-index }
-  :fm2-index                  #f         		   get-args { fm2-index }
-  :fm3-index                  #f         		   get-args { fm3-index }
-  :base                       1.0         		   get-args { base }
-  :degree                     90.0 random 		   get-args { degree }
-  :distance                   1.0         		   get-args { distance }
-  :reverb-amount              0.01        		   get-args { reverb-amount }
-  :index-type                 'violin     		   get-args { index-type }
+  :fm-index                   1.0                          get-optkey { fm-index }
+  :amp-env                    '( 0 0 25 1 75 1 100 0 )     get-optkey { amp-env }
+  :periodic-vibrato-rate      5.0         		   get-optkey { pvrate }
+  :periodic-vibrato-amplitude 0.0025      		   get-optkey { pvamp }
+  :random-vibrato-rate        16.0        		   get-optkey { rvrate }
+  :random-vibrato-amplitude   0.005       		   get-optkey { rvamp }
+  :noise-freq                 1000.0      		   get-optkey { noise-freq }
+  :noise-amount               0.0         		   get-optkey { noise-amount }
+  :ind-noise-freq             10.0        		   get-optkey { ind-noise-freq }
+  :ind-noise-amount           0.0         		   get-optkey { ind-noise-amount }
+  :amp-noise-freq             20.0        		   get-optkey { amp-noise-freq }
+  :amp-noise-amount           0.0         		   get-optkey { amp-noise-amount }
+  :gliss-env                  '( 0 0 100 0 )               get-optkey { gliss-env }
+  :glissando-amount           0.0                          get-optkey { gliss-amount }
+  :fm1-env                    '( 0 1 25 0.4 75 0.6 100 0 ) get-optkey { fm1-env }
+  :fm2-env                    '( 0 1 25 0.4 75 0.6 100 0 ) get-optkey { fm2-env }
+  :fm3-env                    '( 0 1 25 0.4 75 0.6 100 0 ) get-optkey { fm3-env }
+  :fm1-rat                    1.0         		   get-optkey { fm1-rat }
+  :fm2-rat                    3.0         		   get-optkey { fm2-rat }
+  :fm3-rat                    4.0         		   get-optkey { fm3-rat }
+  :fm1-index                  #f         		   get-optkey { fm1-index }
+  :fm2-index                  #f         		   get-optkey { fm2-index }
+  :fm3-index                  #f         		   get-optkey { fm3-index }
+  :base                       1.0         		   get-optkey { base }
+  :degree                     90.0 random 		   get-optkey { degree }
+  :distance                   1.0         		   get-optkey { distance }
+  :reverb-amount              0.01        		   get-optkey { reverb-amount }
+  :index-type                 'violin     		   get-optkey { index-type }
   { start dur freq amp }
   freq fabs 1.0 f<= if
     $" freq = %s? reset to 440.0" _ '( freq ) string-format warning
     440.0 to freq
   then
-  freq hz->radians { frq-scl }
-  fm-index f0<> { modulate }
-  frq-scl fm-index f* { maxdev }
-  index-type 'cello <> { vln }
-  freq fln { logfreq }
-  freq fsqrt { sqrtfreq }
+  freq hz->radians          { frq-scl }
+  fm-index f0<>             { modulate }
+  frq-scl fm-index f*       { maxdev }
+  index-type 'violin equal? { vln }
+  freq flog                  { logfreq }
+  freq fsqrt                { sqrtfreq }
   fm1-index unless maxdev vln if 5.0 else 7.5 then logfreq f/ f* pi fmin to fm1-index then
   fm2-index unless
     maxdev 3.0 f* vln if 8.5 logfreq f- 3.0 freq 0.001 f* f+ f/ else 15.0 sqrtfreq f/ then
     f* pi fmin to fm2-index
   then
   fm3-index unless maxdev vln if 4.0 else 8.0 then sqrtfreq f/ f* pi fmin to fm3-index then
-  noise-amount f0=
+  noise-amount             f0=
   fm1-env fm2-env       equal? &&
   fm1-env fm3-env       equal? &&
   fm1-rat fm1-rat floor f- f0= &&
@@ -343,12 +352,11 @@ instrument: fm-violin-fs ( start dur freq amp keyword-args -- )
 
 [undefined] fm-violin [if] ' fm-violin-fs alias fm-violin [then]
 
-event: fm-violin-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
-  start dur 440 0.5 fm-violin-fs
-  dur step
-;event
+: fm-violin-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 440 0.5 fm-violin-fs
+  dur 0.2 f+ step
+;
 
 \ === CLM-INS.(RB|SCM) ===
 \ (with original comments from clm-ins.scm)
@@ -378,8 +386,17 @@ set-current
 \ Smith -- see Jaffe and Smith, "Extensions of the Karplus-Strong
 \ Plucked-String Algorithm" CMJ vol 7 no 2 Summer 1983, reprinted in
 \ "The Music Machine".  translated from CLM's pluck.ins
-instrument: pluck ( start dur freq amp weighting lossfact -- )
-  { start dur freq amp weighting lossfact }
+instrument: pluck ( start dur freq amp :optional weighting=0.5 lossfact=0.9 -- )
+  doc" ( start dur freq amp :optional weighting=0.5 lossfact0.9 -- )  \
+Implements the Jaffe-Smith plucked string physical model.  \
+WEIGHTING is the ratio of the once-delayed to the twice-delayed samples.  \
+It defaults to 0.5 = shortest decay.  \
+Anything other than 0.5 = longer decay.  \
+Must be between 0 and less than 1.0.  \
+LOSSFACT can be used to shorten decays.  \
+Most useful values are between 0.8 and 1.0.\n\
+  0 1 330 0.3 0.95 0.95 ' pluck with-sound"
+  <{ start dur freq amp :optional weighting 0.5 lossfact 0.9 }>
   freq weighting tune-it { wt0 c dlen }
   lossfact f0= if 1.0 else 1.0 lossfact fmin then { lf }
   wt0 f0= if 0.5 else 1.0 wt0 fmin then { wt }
@@ -394,12 +411,11 @@ instrument: pluck ( start dur freq amp weighting lossfact -- )
 ;instrument
 previous
 
-event: pluck-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 0.1 get-args { dur }
-  start 0.1 330 0.1 0.95 0.95 pluck
-  dur step
-;event
+: pluck-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 330 0.3 0.95 0.95 pluck
+  dur 0.2 f+ step
+;
 
 $" I00"  constant :I:   $" E12"   constant :E:   $" AE24" constant :AE:
 $" UH01" constant :UH:  $" A13"   constant :A:   $" OW25" constant :OW:
@@ -457,8 +473,8 @@ $" ZH11" constant :ZH:  $" ZZ23"  constant :ZZ:  $" VV35" constant :VV:
 \ translation from MUS10 of Marc LeBrun's waveshaping voice instrument
 \ (using FM here) this version translated (and simplified slightly)
 \ from CLM's mlbvoi.ins
-instrument: vox ( start dur freq amp ampfun freqfun freqscl voxfun index vibscl -- )
-  { start dur freq amp ampfun freqfun freqscl voxfun index vibscl }
+instrument: vox ( start dur freq amp ampfun freqfun freqscl voxfun index :optional vibscl=0.1 -- )
+  <{ start dur freq amp ampfun freqfun freqscl voxfun index :optional vibscl 0.1 }>
   voxfun length { size }
   size 0 make-array { f1 }
   size 0 make-array { f2 }
@@ -544,59 +560,32 @@ instrument: vox ( start dur freq amp ampfun freqfun freqscl voxfun index vibscl 
   end-run
 ;instrument
 
-event: vox-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
+: vox-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
   '( 0 0 25 1 75 1 100 0 ) { amp-env }
   '( 0 0 5 0.5 10 0 100 1 ) { frq-env }
   #( 0 :E: 25 :AE: 35 :ER: 65 :ER: 75 :I: 100 :UH: ) { examp1 }
   #( 0 :I: 5 :OW: 10 :I: 50 :AE: 100 :OO: ) { examp2 }
 
-  start dur 170 0.4 amp-env frq-env 0.1 examp1 0.05 0.1 vox
-  start dur 0.2 f+ f+ to start
-  start dur 300 0.4 amp-env frq-env 0.1 examp2 0.02 0.1 vox
-  start dur 0.2 f+ f+ to start
-  start 5 600 0.4 amp-env frq-env 0.1 examp2 0.01 0.1 vox
-  dur f2* 0.4 f+ 5 f+ step
-;event
+  now@ dur 170 0.4 amp-env frq-env 0.1 examp1 0.05 0.1 vox
+  dur 0.2 f+ step
+  now@ dur 300 0.4 amp-env frq-env 0.1 examp2 0.02 0.1 vox
+  dur 0.2 f+ step
+  now@ 5.0 600 0.4 amp-env frq-env 0.1 examp2 0.01 0.1 vox
+  5.0 0.2 f+ step
+;
 
 \ FOF example
 \
 \ snd/clm.html, section wave-train
-instrument: fofins ( start dur keyword-args -- )
-  doc" ( start dur keyword-args -- )\n\
-\\ keywords and default values\n\
-\\ :frequency   270\n\
-\\ :amplitude   0.2\n\
-\\ :vibrato     0.001\n\
-\\ :f0          730\n\
-\\ :a0          0.6\n\
-\\ :f1          1090\n\
-\\ :a1          0.3\n\
-\\ :f2          2440\n\
-\\ :a2          0.1\n\
-\\ :vib-env     '( 0 1 100 1 )\n\
-\\ :amp-env     '( 0 0 25 1 75 1 100 0 )\n\
-\\ :degree      90.0 random (locsig-degree)\n\
-\\ :distance    1.0 (locsig-distance)\n\
-0 1 ' fofins with-sound\n\n\
-'( 0 0 40 0 75 0.2 100 1 ) value ve\n\
-'( 0 0 0.5 1 3 0.5 10 0.2 20 0.1 50 0.1 60 0.2 85 1 100 0 ) value ae\n\
-1.2 4 :vibrato 0.005 :vib-env ve :amp-env ae ' fofins with-sound"
-  :frequency 270       		get-args { freq }
-  :amplitude 0.2       		get-args { amp }
-  :vibrato   0.001     		get-args { vib }
-  :f0        730       		get-args { f0 }
-  :a0        0.6       		get-args { a0 }
-  :f1        1090      		get-args { f1 }
-  :a1        0.3       		get-args { a1 }
-  :f2        2440      		get-args { f2 }
-  :a2        0.1       		get-args { a2 }
-  :vib-env   '( 0 1 100 1 )           get-args { ve }
-  :amp-env   '( 0 0 25 1 75 1 100 0 ) get-args { ae }
-  :degree    90.0 random              get-args { loc-degr }
-  :distance  1.0                      get-args { loc-dist }
-  { start dur }
+instrument: fofins ( start dur freq amp vib f0 a0 f1 a1 f2 a2 )
+  ( :optional ae=<0 0 25 1 75 1 100 0>  ve-<0 1 100 1> -- )
+  doc" ( start dur freq amp vib f0 a0 f1 a1 f2 a2  \
+:optional ampenv='( 0 0 25 1 75 1 100 0 ) vibenv='( 0 1 100 1 ) -- )  \
+produces FOF synthesis.\n\
+0 1 270 0.2 0.001 730 0.6 1090 0.3 2440 0.1 ' fofins with-sound"
+  '( '( 0 0 25 1 75 1 100 0 ) '( 0 1 100 1 ) ) 11 get-optargs
+  { start dur freq amp vib f0 a0 f1 a1 f2 a2 ae ve }
   :envelope ae :scaler amp :duration dur make-env { ampf }
   :frequency 6.0 make-oscil { vibr }
   :envelope ve :scaler vib :duration dur make-env { vibenv }
@@ -612,28 +601,16 @@ instrument: fofins ( start dur keyword-args -- )
     1.0 i win-freq f* fcos f- f*
   end-map { foftab }
   :frequency freq :wave foftab make-wave-train { wt0 }
-  start dur #{ :degree loc-degr :distance loc-dist } run-instrument
+  start dur #{ :degree 90.0 random } run-instrument
     ampf env  wt0  vibenv env vibr 0.0 0.0 oscil f*  wave-train  f*
   end-run
 ;instrument
 
-event: fofins-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-
-  start dur fofins
-
-  '( 0 0 40 0 75 0.2 100 1 ) { ve }
-  '( 0 0 0.5 1 3 0.5 10 0.2 20 0.1 50 0.1 60 0.2 85 1 100 0 ) { ae }
-  start dur 0.2 f+ f+ 4 :vibrato 0.005 :vib-env ve :amp-env ae fofins
-
-  '( 0 0 0.5 0.5 3 0.25 6 0.1 10 0.1 50 0.1 60 0.2 85 1 100 0 ) to ae
-  start dur 0.2 f+ f+ 4 :frequency 6/5 540 f* :vibrato 0.005 :vib-env ve :amp-env ae fofins
-
-  '( 0 0 1 3 3 1 6 0.2 10 0.1 50 0.1 60 0.2 85 1 100 0 ) to ae
-  start dur 0.2 f+ f+ 4 :frequency 135 :vibrato 0.005 :vib-env ve :amp-env ae fofins
-  dur 0.2 f+ 4 f+ step
-;event
+: fofins-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 270 0.2 0.001 730 0.6 1090 0.3 2440 0.1 fofins
+  dur 0.2 f+ step
+;
 
 \ FM TRUMPET
 \
@@ -668,32 +645,32 @@ instrument: fm-trumpet ( start dur keyword-args -- )
 \\ :indenv1    '( 0 0 25 1 75 0.9 100 0 )\n\
 \\ :indenv2    '( 0 0 25 1 75 0.9 100 0 )\n\
 0 2 ' fm-trumpet with-sound"
-  :frq1     250    		       get-args { frq1 }
-  :frq2     1500   		       get-args { frq2 }
-  :amp1     0.5    		       get-args { amp1 }
-  :amp2     0.1    		       get-args { amp2 }
-  :ampatt1  0.03   		       get-args { ampatt1 }
-  :ampdec1  0.35   		       get-args { ampdec1 }
-  :ampatt2  0.03   		       get-args { ampatt2 }
-  :ampdec2  0.3    		       get-args { ampdec2 }
-  :modfrq1  250    		       get-args { modfrq1 }
-  :modind11 0      		       get-args { modind11 }
-  :modind12 2.66   		       get-args { modind12 }
-  :modfrq2  250    		       get-args { modfrq2 }
-  :modind21 0      		       get-args { modind21 }
-  :modind22 1.8    		       get-args { modind22 }
-  :rvibamp  0.007  		       get-args { rvibamp }
-  :rvibfrq  125    		       get-args { rvibfrq }
-  :vibamp   0.007  		       get-args { vibamp }
-  :vibfrq   7      		       get-args { vibfrq }
-  :vibatt   0.6    		       get-args { vibatt }
-  :vibdec   0.2    		       get-args { vibdec }
-  :frqskw   0.03   		       get-args { frqskw }
-  :frqatt   0.06   		       get-args { frqatt }
-  :ampenv1  '( 0 0 25 1 75 0.9 100 0 ) get-args { ampenv1 }
-  :ampenv2  '( 0 0 25 1 75 0.9 100 0 ) get-args { ampenv2 }
-  :indenv1  '( 0 0 25 1 75 0.9 100 0 ) get-args { indenv1 }
-  :indenv2  '( 0 0 25 1 75 0.9 100 0 ) get-args { indenv2 }
+  :frq1     250    		       get-optkey { frq1 }
+  :frq2     1500   		       get-optkey { frq2 }
+  :amp1     0.5    		       get-optkey { amp1 }
+  :amp2     0.1    		       get-optkey { amp2 }
+  :ampatt1  0.03   		       get-optkey { ampatt1 }
+  :ampdec1  0.35   		       get-optkey { ampdec1 }
+  :ampatt2  0.03   		       get-optkey { ampatt2 }
+  :ampdec2  0.3    		       get-optkey { ampdec2 }
+  :modfrq1  250    		       get-optkey { modfrq1 }
+  :modind11 0      		       get-optkey { modind11 }
+  :modind12 2.66   		       get-optkey { modind12 }
+  :modfrq2  250    		       get-optkey { modfrq2 }
+  :modind21 0      		       get-optkey { modind21 }
+  :modind22 1.8    		       get-optkey { modind22 }
+  :rvibamp  0.007  		       get-optkey { rvibamp }
+  :rvibfrq  125    		       get-optkey { rvibfrq }
+  :vibamp   0.007  		       get-optkey { vibamp }
+  :vibfrq   7      		       get-optkey { vibfrq }
+  :vibatt   0.6    		       get-optkey { vibatt }
+  :vibdec   0.2    		       get-optkey { vibdec }
+  :frqskw   0.03   		       get-optkey { frqskw }
+  :frqatt   0.06   		       get-optkey { frqatt }
+  :ampenv1  '( 0 0 25 1 75 0.9 100 0 ) get-optkey { ampenv1 }
+  :ampenv2  '( 0 0 25 1 75 0.9 100 0 ) get-optkey { ampenv2 }
+  :indenv1  '( 0 0 25 1 75 0.9 100 0 ) get-optkey { indenv1 }
+  :indenv2  '( 0 0 25 1 75 0.9 100 0 ) get-optkey { indenv2 }
   { start dur }
   :envelope
   '( 0 1  25 0.1  75 0  100 0 )
@@ -701,31 +678,31 @@ instrument: fm-trumpet ( start dur keyword-args -- )
   100 vibatt dur f/ f* 45.0 fmin
   75
   100 1 vibdec dur f/ f- f* 55.0 fmax stretch-envelope
-  :scaler vibamp :duration dur make-env { per-vib-f }
-  :frequency rvibfrq :amplitude rvibamp make-rand-interp { ran-vib }
-  :frequency vibfrq make-oscil { per-vib }
+  :scaler vibamp :duration dur                          make-env { per-vib-f }
+  :frequency rvibfrq :amplitude rvibamp                 make-rand-interp { ran-vib }
+  :frequency vibfrq                                     make-oscil { per-vib }
   75 100 1 0.01 dur f/ f- f* fmax { dec-01 }
   :envelope
   '( 0 0  25 1  75 1  100 0 )
   25 25 100 frqatt dur f/ f* fmin
   75 dec-01 stretch-envelope
-  :scaler frqskw :duration dur make-env { frq-f }
+  :scaler frqskw :duration dur                          make-env { frq-f }
   25 100 ampatt1 dur f/ f* fmin { ampattpt1 }
   75 100 1 ampdec1 dur f/ f- f* fmax { ampdecpt1 }
   25 100 ampatt2 dur f/ f* fmin { ampattpt2 }
   75 100 1 ampdec2 dur f/ f- f* fmax { ampdecpt2 }
   :envelope indenv1 25 ampattpt1 75 dec-01 stretch-envelope
   :scaler modfrq1 modind12 modind11 f- f* :duration dur make-env { mod1-f }
-  :frequency 0.0 make-oscil { mod1 }
-  :frequency 0.0 make-oscil { car1 }
+  :frequency 0.0                                        make-oscil { mod1 }
+  :frequency 0.0                                        make-oscil { car1 }
   :envelope ampenv1 25 ampattpt1 75 ampdecpt1 stretch-envelope
   :scaler amp1 :duration dur make-env { car1-f }
   :envelope indenv2 25 ampattpt2 75 dec-01 stretch-envelope
   :scaler modfrq2 modind22 modind21 f- f* :duration dur make-env { mod2-f }
-  :frequency 0.0 make-oscil { mod2 }
-  :frequency 0.0 make-oscil { car2 }
+  :frequency 0.0                                        make-oscil { mod2 }
+  :frequency 0.0                                        make-oscil { car2 }
   :envelope ampenv2 25 ampattpt2 75 ampdecpt2 stretch-envelope
-  :scaler amp2 :duration dur make-env { car2-f }
+  :scaler amp2 :duration dur                            make-env { car2-f }
   start dur #{ :degree 90.0 random } run-instrument
     ran-vib 0.0 rand-interp 1.0 f+
     1.0 per-vib-f env per-vib 0.0 0.0 oscil f* f+ f*
@@ -737,12 +714,11 @@ instrument: fm-trumpet ( start dur keyword-args -- )
   end-run
 ;instrument
 
-event: fm-trumpet-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
-  start dur fm-trumpet
-  dur step
-;event
+: fm-trumpet-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur fm-trumpet
+  dur 0.2 f+ step
+;
 
 struct
   cell% field sin-evens
@@ -832,9 +808,8 @@ instrument: pqw-vox ( start dur freq spacing-freq amp ampfun freqfun freqscl pho
   pv if pv free throw then
 ;instrument
 
-event: pqw-vox-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
+: pqw-vox-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
   '( 0 0 50 1 100 0 ) { ampfun }
   '( 0 0 100 0 ) { freqfun }
   '( 0 0 100 1 ) { freqramp }
@@ -842,19 +817,19 @@ event: pqw-vox-test ( keyword-args -- )
   #( '( 1 1 2 0.5 ) '( 1 1 2 0.5 3 0.2 4 0.1 ) '( 1 1 3 0.1 4 0.5 ) ) { shapes2 }
   #( '( 1 1 2 0.5 ) '( 1 1 4 0.1 ) '( 1 1 2 0.1 4 0.05 ) ) { shapes3 }
   #( '( 1 1 2 0.5 3 0.1 4 0.01 ) '( 1 1 4 0.1 ) '( 1 1 2 0.1 4 0.05 ) ) { shapes4 }
+   '( 0.8 0.15 0.05 ) { amps }
 
-  start dur 300 300 0.5 ampfun freqfun 0 #( 0 :L: 100 :L: ) '( 0.33 0.33 0.33 ) shapes1 pqw-vox
-  start dur 0.2 f+ f+ to start
-  start dur 200 200 0.5 ampfun freqramp 0.1 #( 0 :UH: 100 :ER: ) '( 0.8 0.15 0.05 ) shapes2 pqw-vox
-  start dur 0.2 f+ f+ to start
-  start dur 100 314 0.5 ampfun freqramp 0.1 #( 0 :UH: 100 :ER: ) '( 0.8 0.15 0.05 ) shapes2 pqw-vox
-  start dur 0.2 f+ f+ to start
-  start dur 200 314 0.5 ampfun freqramp 0.01 #( 0 :UH: 100 :ER: ) '( 0.8 0.15 0.05 ) shapes3 pqw-vox
-  start dur 0.2 f+ f+ to start
-  start dur 100 414 0.5 ampfun freqramp 0.01 #( 0 :OW: 50 :E: 100 :ER: ) '( 0.8 0.15 0.05 ) shapes4
-  pqw-vox
-  dur 5 f* step
-;event
+  now@ dur 300 300 0.5 ampfun freqfun  0.00 #( 0 :L:  100 :L: ) '( 0.33 0.33 0.33 ) shapes1 pqw-vox
+  dur 0.2 f+ step
+  now@ dur 200 200 0.5 ampfun freqramp 0.10 #( 0 :UH: 100 :ER: ) amps shapes2 pqw-vox
+  dur 0.2 f+ step
+  now@ dur 100 314 0.5 ampfun freqramp 0.10 #( 0 :UH: 100 :ER: ) amps shapes2 pqw-vox
+  dur 0.2 f+ step
+  now@ dur 200 314 0.5 ampfun freqramp 0.01 #( 0 :UH: 100 :ER: ) amps shapes3 pqw-vox
+  dur 0.2 f+ step
+  now@ dur 100 414 0.5 ampfun freqramp 0.01 #( 0 :OW: 50  :E: 100 :ER: ) amps shapes4 pqw-vox
+  dur 0.2 f+ step
+;
 
 \ STEREO-FLUTE
 instrument: stereo-flute ( start dur freq flow keyword-args -- )
@@ -874,19 +849,19 @@ instrument: stereo-flute ( start dur freq flow keyword-args -- )
 \\ :ran-rate          5.0\n\
 \\ :ran-amount        0.03\n\
 0 1 440 0.55 :flow-envelope '( 0 0 1 1 2 1 3 0 ) ' stereo-flute with-sound"
-  :flow-envelope   '( 0 1 100 1 ) get-args { flow-env }
-  :decay           0.01           get-args { decay } \ additional time for instrument to decay
-  :noise           0.0356         get-args { noise }
-  :embouchure-size 0.5            get-args { emb-size } \ mouthpiece
-  :fbk-scl1   	   0.5            get-args { fbk-scl1 } \ these two are crucial for good results
-  :fbk-scl2   	   0.55           get-args { fbk-scl2 }
-  :out-scl    	   1.0            get-args { out-scl }
-  :a0         	   0.7            get-args { a0 } \ filter coefficients
-  :b1         	   -0.3           get-args { b1 }
-  :vib-rate   	   5.0            get-args { vib-rate }
-  :vib-amount 	   0.03           get-args { vib-amount }
-  :ran-rate   	   5.0            get-args { ran-rate }
-  :ran-amount 	   0.03           get-args { ran-amount }
+  :flow-envelope   '( 0 1 100 1 ) get-optkey { flow-env }
+  :decay           0.01           get-optkey { decay } \ additional time for instrument to decay
+  :noise           0.0356         get-optkey { noise }
+  :embouchure-size 0.5            get-optkey { emb-size } \ mouthpiece
+  :fbk-scl1   	   0.5            get-optkey { fbk-scl1 } \ these two are crucial for good results
+  :fbk-scl2   	   0.55           get-optkey { fbk-scl2 }
+  :out-scl    	   1.0            get-optkey { out-scl }
+  :a0         	   0.7            get-optkey { a0 } \ filter coefficients
+  :b1         	   -0.3           get-optkey { b1 }
+  :vib-rate   	   5.0            get-optkey { vib-rate }
+  :vib-amount 	   0.03           get-optkey { vib-amount }
+  :ran-rate   	   5.0            get-optkey { ran-rate }
+  :ran-amount 	   0.03           get-optkey { ran-amount }
   { start dur freq flow }
   :envelope flow-env :scaler flow :duration dur decay f- make-env { flowf }
   :frequency vib-rate                            make-oscil       { p-vib }
@@ -916,44 +891,32 @@ instrument: stereo-flute ( start dur freq flow keyword-args -- )
   end-run
 ;instrument
 
-event: flute-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
-  start dur 440 0.55 :flow-envelope '( 0 0 1 1 2 1 3 0 ) stereo-flute
-  dur step
-;event
+: flute-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 440 0.55 :flow-envelope '( 0 0 1 1 2 1 3 0 ) stereo-flute
+  dur 0.2 f+ step
+;
 
 \ FM-BELL
-instrument: fm-bell ( start dur keyword-args -- )
-  doc" ( start dur keyword-args -- )\n\
-\\ keywords and default values\n\
-\\ :frequency   440\n\
-\\ :amplitude   0.5\n\
-\\ :fm-index    1\n\
-\\ :amp-env     '( 0 0 0.1 1 10 0.6 25 0.3 50 0.15 90 0.1 100 0 )\n\
-\\ :index-env   '( 0 1 2 1.1 25 0.75 75 0.5 100 0.2 )\n\
-0 1 :freqency 220 ' fm-bell with-sound"
-  :frequency 440       					       get-args { freq }
-  :amplitude 0.5       					       get-args { amp }
-  :fm-index  1         					       get-args { fm-index }
-  :amp-env   '( 0 0 0.1 1 10 0.6 25 0.3 50 0.15 90 0.1 100 0 ) get-args { amp-env }
-  :index-env '( 0 1 2 1.1 25 0.75 75 0.5 100 0.2 )             get-args { index-env }
-  { start dur }
-  freq 32.0 f* hz->radians { fm-ind1 }
-  8.0 freq 50.0 f/ f- 4.0 f* hz->radians { fm-ind2 }
+instrument: fm-bell ( start dur freq amp :optional amp-env index-env index=1.0 -- )
+  '( '( 0 0 0.1 1 10 0.6 25 0.3 50 0.15 90 0.1 100 0 )  '( 0 1 2 1.1 25 0.75 75 0.5 100 0.2 ) 1.0 )
+  4 get-optargs { start dur freq amp amp-env index-env index }
+  freq 32.0 f* hz->radians                 { fm-ind1 }
+  8.0 freq 50.0 f/ f- 4.0 f* hz->radians   { fm-ind2 }
   1.4 freq 250.0 f/ f- 0.705 f* fm-ind2 f* { fm-ind3 }
   20.0 freq 20.0 f/ f- 32.0 f* hz->radians { fm-ind4 }
-  :frequency freq f2*     			     make-oscil { mod1 }
-  :frequency freq 1.41 f* 			     make-oscil { mod2 }
-  :frequency freq 2.82 f* 			     make-oscil { mod3 }
-  :frequency freq 2.4 f*  			     make-oscil { mod4 }
-  :frequency freq         			     make-oscil { car1 }
-  :frequency freq         			     make-oscil { car2 }
-  :frequency freq 2.4 f*  			     make-oscil { car3 }
-  :envelope amp-env :scaler amp :duration dur        make-env { ampf }
-  :envelope index-env :scaler fm-index :duration dur make-env { indf }
+  :frequency freq f2*     			  make-oscil { mod1 }
+  :frequency freq 1.41 f* 			  make-oscil { mod2 }
+  :frequency freq 2.82 f* 			  make-oscil { mod3 }
+  :frequency freq 2.4 f*  			  make-oscil { mod4 }
+  :frequency freq         			  make-oscil { car1 }
+  :frequency freq         			  make-oscil { car2 }
+  :frequency freq 2.4 f*  			  make-oscil { car3 }
+  :envelope amp-env   :scaler amp   :duration dur make-env   { ampf }
+  :envelope index-env :scaler index :duration dur make-env   { indf }
+  0.0 { fmenv }
   start dur #{ :degree 90.0 random } run-instrument
-    indf env { fmenv }
+    indf env to fmenv
     car1  fmenv fm-ind1 f* mod1 0.0 0.0 oscil f*  0.0 oscil
     car2  fmenv fm-ind2 mod2 0.0 0.0 oscil f*
                 fm-ind3 mod3 0.0 0.0 oscil f* f+ f*  0.0 oscil 0.15 f* f+
@@ -962,12 +925,11 @@ instrument: fm-bell ( start dur keyword-args -- )
   end-run
 ;instrument
 
-event: fm-bell-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
-  start dur fm-bell
-  dur step
-;event
+: fm-bell-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 440.0 0.5 fm-bell
+  dur 0.2 f+ step
+;
 
 \ FM-INSECT
 \ clm/insect.ins
@@ -987,80 +949,74 @@ instrument: fm-insect ( start dur freq amp amp-env mod-freq mod-skew mod-freq-en
   end-run
 ;instrument    
 
-event: fm-insect-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
+: fm-insect-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
   '( 0 0 40 1 95 1 100 0.5 )    { locust }
   '( 0 1 25 0.7 75 0.78 100 1 ) { bug-hi }
   '( 0 0 25 1 75 0.7 100 0 )    { amp }
 
-  start 0.000 f+ 1.699 4142.627 0.015 amp 60 -16.707 locust 500.866 bug-hi 0.346 0.5 fm-insect
-  start 0.195 f+ 0.233 4126.284 0.030 amp 60 -12.142 locust 649.490 bug-hi 0.407 0.5 fm-insect
-  start 0.217 f+ 2.057 3930.258 0.045 amp 60  -3.011 locust 562.087 bug-hi 0.591 0.5 fm-insect
-  start 2.100 f+ 1.500  900.627 0.060 amp 40 -16.707 locust 300.866 bug-hi 0.346 0.5 fm-insect
-  start 3.000 f+ 1.500  900.627 0.060 amp 40 -16.707 locust 300.866 bug-hi 0.046 0.5 fm-insect
-  start 3.450 f+ 1.500  900.627 0.090 amp 40 -16.707 locust 300.866 bug-hi 0.006 0.5 fm-insect
-  start 3.950 f+ 1.500  900.627 0.120 amp 40 -10.707 locust 300.866 bug-hi 0.346 0.5 fm-insect
-  start 4.300 f+ 1.500  900.627 0.090 amp 40 -20.707 locust 300.866 bug-hi 0.246 0.5 fm-insect
-  5.8 step
-;event
+  now@ 0.000 f+ 1.699 4142.627 0.015 amp 60 -16.707 locust 500.866 bug-hi 0.346 0.5 fm-insect
+  now@ 0.195 f+ 0.233 4126.284 0.030 amp 60 -12.142 locust 649.490 bug-hi 0.407 0.5 fm-insect
+  now@ 0.217 f+ 2.057 3930.258 0.045 amp 60  -3.011 locust 562.087 bug-hi 0.591 0.5 fm-insect
+  now@ 2.100 f+ 1.500  900.627 0.060 amp 40 -16.707 locust 300.866 bug-hi 0.346 0.5 fm-insect
+  now@ 3.000 f+ 1.500  900.627 0.060 amp 40 -16.707 locust 300.866 bug-hi 0.046 0.5 fm-insect
+  now@ 3.450 f+ 1.500  900.627 0.090 amp 40 -16.707 locust 300.866 bug-hi 0.006 0.5 fm-insect
+  now@ 3.950 f+ 1.500  900.627 0.120 amp 40 -10.707 locust 300.866 bug-hi 0.346 0.5 fm-insect
+  now@ 4.300 f+ 1.500  900.627 0.090 amp 40 -20.707 locust 300.866 bug-hi 0.246 0.5 fm-insect
+  6.0 step
+;
 
 \ FM-DRUM
 \
 \ Jan Mattox's fm drum:
-instrument: fm-drum ( start dur freq amp index high -- )
-  { start dur freq amp index high }
+instrument: fm-drum ( start dur freq amp index :optional high=#f degr=0.0 dist=1.0 rev-amt=0.01 -- )
+  <{ start dur freq amp index :optional high #f degr 0.0 dist 1.0 rev-amt 0.01 }>
   high if 3.414 8.525 else 1.414 3.515 then { casrat fmrat }
   :envelope '( 0 0 25 0 75 1 100 1 )
-  :scaler   high if 66.0 hz->radians else 0 then
-  :duration dur make-env { glsf }
+  :scaler   high if 66.0 hz->radians else 0 then :duration dur make-env { glsf }
   '( 0 0 3 0.05 5 0.2 7 0.8 8 0.95 10 1.0 12 0.95 20 0.3 30 0.1 100 0 ) { ampfun }
   100 high if 0.01 else 0.015 then f* dur f/ { atdrpt }
   :envelope ampfun 10 atdrpt 15 atdrpt 1 f+ 100 100 dur 0.2 f- dur f/ f* f- fmax stretch-envelope
-  :scaler   amp
-  :duration dur make-env { ampf }
+  :scaler   amp :duration dur                                  make-env { ampf }
   '( 0 0 5 0.014 10 0.033 15 0.061 20 0.099
      25 0.153 30 0.228 35 0.332 40 0.477 45 0.681
      50 0.964 55 0.681 60 0.478 65 0.332 70 0.228
      75 0.153 80 0.099 85 0.061 90 0.033 95 0.0141 100 0 ) { indxfun }
   100 100 dur 0.1 f- dur f/ f* f- { indxpt }
   indxfun 50 atdrpt 65 indxpt stretch-envelope { divindxf }
-  :envelope divindxf
-  :duration dur
-  :scaler   index fmrat freq f* f* hz->radians pi fmin make-env { indxf }
-  :envelope divindxf
-  :duration dur
-  :scaler   index casrat freq f* f* hz->radians pi fmin make-env { mindxf }
+  :envelope divindxf :duration dur
+  :scaler   index fmrat freq f* f* hz->radians pi fmin         make-env { indxf }
+  :envelope divindxf :duration dur
+  :scaler   index casrat freq f* f* hz->radians pi fmin        make-env { mindxf }
   :envelope ampfun 10 atdrpt 90 atdrpt 1 f+ 100 100 dur 0.05 f- dur f/ f* f- fmax stretch-envelope
   :duration dur
-  :scaler   7000 hz->radians pi fmin make-env { devf }
-  :frequency 7000 :amplitude 1 make-rand { rn }
+  :scaler   7000 hz->radians pi fmin                           make-env { devf }
+  :frequency 7000 :amplitude 1                                 make-rand { rn }
   :frequency freq make-oscil { car }
-  :frequency freq fmrat f* make-oscil { fmosc }
-  :frequency freq casrat f* make-oscil { cc }
-  start dur #{ :degree 90.0 random } run-instrument
-    glsf env { gls }
-    cc  devf env rn 0.0 rand f* gls casrat f* f+  0.0 oscil
-    mindxf env f* gls fmrat f* f+ fmosc swap 0.0 oscil
-    indxf env f* gls f+ car swap 0.0 oscil ampf env f*
+  :frequency freq fmrat  f*                                    make-oscil { fmosc }
+  :frequency freq casrat f*                                    make-oscil { cc }
+  0.0 { gls }
+  start dur #{ :degree degr :distance dist :reverb-amount rev-amt } run-instrument
+    glsf env to gls
+    cc  devf env  rn 0.0 rand f*  gls casrat f* f+  0.0 oscil
+    mindxf env f*  gls fmrat f* f+       fmosc swap 0.0 oscil
+    indxf env f* gls f+                  car swap   0.0 oscil ampf env f*
   end-run
 ;instrument
 
-event: fm-drum-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
-
-  start dur 55 0.3 5 #f fm-drum
-  start dur 0.2 f+ f+ to start
-  start dur 66 0.3 4 #t fm-drum
-  dur f2* 0.4 f+ step
-;event
+: fm-drum-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 55 0.3 5    fm-drum
+  dur 0.2 f+ step
+  now@ dur 66 0.3 4 #t fm-drum
+  dur 0.2 f+ step
+;
 
 \ FM-GONG
 \
 \ Paul Weineke's gong.
-instrument: gong ( start dur freq amp -- )
-  { start dur freq amp }
+instrument: gong ( start dur freq amp :key degree=0.0 distance=1.0 reverb-amount=0.005 -- )
+  <{ start dur freq amp :key degree 0.0 distance 1.0 reverb-amount 0.005 }>
   0.01 1.160 freq f* f* hz->radians { indx01 }
   0.30 1.160 freq f* f* hz->radians { indx11 }
   0.01 3.140 freq f* f* hz->radians { indx02 }
@@ -1081,7 +1037,7 @@ instrument: gong ( start dur freq amp -- )
   :frequency freq 1.160 f* make-oscil { mod1 }
   :frequency freq 3.140 f* make-oscil { mod2 }
   :frequency freq 1.005 f* make-oscil { mod3 }
-  start dur #{ :degree 90.0 random } run-instrument
+  start dur #{ :degree degree :distance distance :reverb-amount reverb-amount } run-instrument
     car
     mod3 0.0 0.0 oscil indxfun3 env f*
     mod2 0.0 0.0 oscil indxfun2 env f* f+
@@ -1090,12 +1046,11 @@ instrument: gong ( start dur freq amp -- )
   end-run
 ;instrument
 
-event: gong-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
-  start dur 261.61 0.6 gong
-  dur step
-;event
+: gong-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 261.61 0.6 gong
+  dur 0.2 f+ step
+;
 
 \ ATTRACT
 \
@@ -1116,12 +1071,11 @@ instrument: attract ( start dur amp c -- )
   end-run
 ;instrument
 
-event: attract-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-  start dur 0.5 2.0 attract
-  dur step
-;event
+: attract-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 0.5 2.0 attract
+  dur 0.2 f+ step
+;
 
 \ PQW
 \
@@ -1130,8 +1084,9 @@ event: attract-test ( keyword-args -- )
 \ - cos x cos y = cos (x + y)
 \ 
 \ clm/pqw.ins
-instrument: pqw ( start dur sfreq cfreq amp ampfun indexfun parts -- )
-  { start dur sfreq cfreq amp ampfun indexfun parts }
+instrument: pqw ( start dur sfreq cfreq amp ampfun indexfun parts :key degree=0.0 :distance=1.0 reverb-amount=0.005 -- )
+  <{ start dur sfreq cfreq amp ampfun indexfun parts
+     :key degree 0.0 distance 1.0 reverb-amount 0.005 }>
   parts normalize-partials { nparts }
   :frequency sfreq :initial-phase half-pi make-oscil { sp-cos }
   :frequency sfreq make-oscil { sp-sin }
@@ -1145,7 +1100,7 @@ instrument: pqw ( start dur sfreq cfreq amp ampfun indexfun parts -- )
   cfreq sfreq f/ { r }
   :frequency 5.0  :amplitude 0.005 sfreq f* hz->radians make-triangle-wave { tr }
   :frequency 12.0 :amplitude 0.005 sfreq f* hz->radians make-rand-interp { rn }
-  start dur #{ :degree 90.0 random } run-instrument
+  start dur #{ :degree degree :distance distance :reverb-amount reverb-amount  } run-instrument
     tr 0.0 triangle-wave rn 0.0 rand-interp f+ to vib
     1.0 ind-env env fmin  sp-cos vib 0.0 oscil f* to ax
     cos-coeffs ax polynomial to fax
@@ -1155,12 +1110,11 @@ instrument: pqw ( start dur sfreq cfreq amp ampfun indexfun parts -- )
   end-run
 ;instrument
 
-event: pqw-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
-  start 5 200 1000 0.2 '( 0 0 25 1 100 0 ) '( 0 1 100 0 ) '( 2 0.1 3 0.3 6 0.5 ) pqw
-  5.0 step
-;event
+: pqw-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ 5.0 200 1000 0.2 '( 0 0 25 1 100 0 ) '( 0 1 100 0 ) '( 2 0.1 3 0.3 6 0.5 ) pqw
+  5.2 step
+;
 
 \ taken from Perry Cook's stkv1.tar.Z (Synthesis Toolkit), but I was
 \ in a bit of a hurry and may not have made slavishly accurate
@@ -1168,14 +1122,14 @@ event: pqw-test ( keyword-args -- )
 \ serious (non-envelope) errors.
 \
 \ from Perry Cook's TubeBell.cpp
-instrument: tubebell ( start dur freq amp base --)
-  { start dur freq amp base }
+instrument: tubebell ( start dur freq amp :optional base=32.0 --)
+  <{ start dur freq amp :optional base 32.0 }>
   :frequency freq 0.995 f*          make-oscil { osc0 }
   :frequency freq 0.995 1.414 f* f* make-oscil { osc1 }
   :frequency freq 1.005 f*          make-oscil { osc2 }
   :frequency freq 1.414 f*          make-oscil { osc3 }
-  :envelope '( 0 0 0.005 1 dur 0 ) :base base     :duration dur make-env { ampenv1 }
-  :envelope '( 0 0 0.001 1 dur 0 ) :base base f2* :duration dur make-env { ampenv2 }
+  :envelope '( 0 0 0.005 1 dur 0.006 fmax 0 ) :base base     :duration dur make-env { ampenv1 }
+  :envelope '( 0 0 0.001 1 dur 0.002 fmax 0 ) :base base f2* :duration dur make-env { ampenv2 }
   :frequency 2.0 make-oscil { ampmod }
   amp f2/ { g0 }
   g0 0.707 f* { g1 }
@@ -1186,12 +1140,11 @@ instrument: tubebell ( start dur freq amp base --)
   end-run
 ;instrument
 
-event: tubebell-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
-  start dur 440 0.2 32 tubebell
-  dur step
-;event
+: tubebell-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 440 0.2 32 tubebell
+  dur 0.2 f+ step
+;
 
 \ from Perry Cook's Wurley.cpp
 instrument: wurley ( start dur freq amp -- )
@@ -1202,8 +1155,8 @@ instrument: wurley ( start dur freq amp -- )
   :frequency 510       make-oscil { osc3 }
   :frequency 8         make-oscil { ampmod }
   :envelope '( 0 0 1 1 9 1 10 0 )         :duration dur make-env { ampenv }
-  :envelope '( 0 0 0.001 1 0.15 0 dur 0 ) :duration dur make-env { indenv }
-  :envelope '( 0 0 0.001 1 0.25 0 dur 0 ) :duration dur make-env { resenv }
+  :envelope '( 0 0 0.001 1 0.15 0 dur 0.16 fmax 0 ) :duration dur make-env { indenv }
+  :envelope '( 0 0 0.001 1 0.25 0 dur 0.26 fmax 0 ) :duration dur make-env { resenv }
   amp f2/ { g0 }
   g0 0.307 f* { g1 }
   start dur #{ :degree 90.0 random } run-instrument
@@ -1214,22 +1167,21 @@ instrument: wurley ( start dur freq amp -- )
   end-run
 ;instrument
 
-event: wurley-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
-  start dur 440 0.2 wurley
-  dur step
-;event
+: wurley-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 440 0.2 wurley
+  dur 0.2 f+ step
+;
 
 \ from Perry Cook's Rhodey.cpp
-instrument: rhodey ( start dur freq amp base -- )
-  { start dur freq amp base }
+instrument: rhodey ( start dur freq amp :optional base=0.5 -- )
+  <{ start dur freq amp :optional base 0.5 }>
   :frequency freq make-oscil { osc0 }
   :frequency freq make-oscil { osc1 }
   :frequency freq make-oscil { osc2 }
   :frequency freq make-oscil { osc3 }
-  :envelope '( 0 0 0.005 1 dur 0 )  :base base        :duration dur make-env { ampenv1 }
-  :envelope '( 0 0 0.001 1 dur 0 )  :base base 1.5 f* :duration dur make-env { ampenv2 }
+  :envelope '( 0 0 0.005 1 dur 0.006 fmax 0 )  :base base        :duration dur make-env { ampenv1 }
+  :envelope '( 0 0 0.001 1 dur 0.002 fmax 0 )  :base base 1.5 f* :duration dur make-env { ampenv2 }
   :envelope '( 0 0 0.001 1 0.25 0 ) :base base 4 f*   :duration dur make-env { ampenv3 }
   amp f2/ { g0 }
   start dur #{ :degree 90.0 random } run-instrument
@@ -1238,12 +1190,11 @@ instrument: rhodey ( start dur freq amp base -- )
   end-run
 ;instrument
 
-event: rhodey-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
-  start dur 440 0.2 0.5 rhodey
-  dur step
-;event
+: rhodey-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 440 0.2 0.5 rhodey
+  dur 0.2 f+ step
+;
 
 \ from Perry Cook's BeeThree.cpp
 instrument: hammondoid ( start dur freq amp -- )
@@ -1252,8 +1203,8 @@ instrument: hammondoid ( start dur freq amp -- )
   :frequency freq 1.997 f* make-oscil { osc1 }
   :frequency freq 3.006 f* make-oscil { osc2 }
   :frequency freq 6.009 f* make-oscil { osc3 }
-  :envelope '( 0 0 0.005 1 dur 0.008 f- 1 dur 0 ) :duration dur make-env { ampenv1 }
-  :envelope '( 0 0 0.005 1 dur 0 )                :duration dur make-env { ampenv2 }
+  :envelope '( 0 0 0.005 1 dur 0.006 fmax 0.008 f- 1 dur 0 ) :duration dur make-env { ampenv1 }
+  :envelope '( 0 0 0.005 1 dur 0.006 fmax 0 )                :duration dur make-env { ampenv2 }
   amp f2/ { g0 }
   start dur #{ :degree 90.0 random } run-instrument
     osc0 0.0 0.0 oscil 0.1875 amp f* f*
@@ -1263,12 +1214,11 @@ instrument: hammondoid ( start dur freq amp -- )
   end-run
 ;instrument
 
-event: hammondoid-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
-  start dur 440 0.2 hammondoid
-  dur step
-;event
+: hammondoid-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 440 0.2 hammondoid
+  dur 0.2 f+ step
+;
 
 \ from Perry Cook's HeavyMtl.cpp
 instrument: metal ( start dur freq amp -- )
@@ -1277,10 +1227,10 @@ instrument: metal ( start dur freq amp -- )
   :frequency freq 4 f* 0.999 f*   make-oscil { osc1 }
   :frequency freq 3 f* 1.001 f*   make-oscil { osc2 }
   :frequency freq 0.5 f* 1.002 f* make-oscil { osc3 }
-  :envelope '( 0 0 0.001 1 dur 0.002 f- 1 dur 0 ) :duration dur make-env { ampenv0 }
-  :envelope '( 0 0 0.001 1 dur 0.011 f- 1 dur 0 ) :duration dur make-env { ampenv1 }
-  :envelope '( 0 0 0.010 1 dur 0.015 f- 1 dur 0 ) :duration dur make-env { ampenv2 }
-  :envelope '( 0 0 0.030 1 dur 0.040 f- 1 dur 0 ) :duration dur make-env { ampenv3 }
+  :envelope '( 0 0 0.001 1 dur 0.002 fmax 0.002 f- 1 dur 0 ) :duration dur make-env { ampenv0 }
+  :envelope '( 0 0 0.001 1 dur 0.002 fmax 0.011 f- 1 dur 0 ) :duration dur make-env { ampenv1 }
+  :envelope '( 0 0 0.010 1 dur 0.020 fmax 0.015 f- 1 dur 0 ) :duration dur make-env { ampenv2 }
+  :envelope '( 0 0 0.030 1 dur 0.040 fmax 0.040 f- 1 dur 0 ) :duration dur make-env { ampenv3 }
   start dur #{ :degree 90.0 random } run-instrument
     osc0
     osc1  osc2 0.0 0.0 oscil ampenv2 env f* 0.574 f*  0.0 oscil ampenv1 env f* 0.202 f*
@@ -1288,12 +1238,11 @@ instrument: metal ( start dur freq amp -- )
   end-run
 ;instrument
 
-event: metal-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
-  start dur 440 0.2 metal
-  dur step
-;event
+: metal-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 440 0.2 metal
+  dur 0.2 f+ step
+;
 
 \ DRONE
 instrument: drone ( start dur freq amp ampfun synth ampat ampdc rvibamt rvibfreq -- )
@@ -1311,7 +1260,7 @@ instrument: drone ( start dur freq amp ampfun synth ampat ampdc rvibamt rvibfreq
 \ CANTER
 instrument: canter ( start dur pitch amp ampfun ranfun skewfun skewpc ranpc ranfreq indexfun atdr dcdr ampfun1 indfun1 fmtfun1 ampfun2 indfun2 fmtfun2 ampfun3 indfun3 fmtfun3 ampfun4 indfun4 fmtfun4 -- )
   { start dur pitch amp ampfun ranfun skewfun skewpc ranpc ranfreq indexfun atdr dcdr ampfun1 indfun1 fmtfun1 ampfun2 indfun2 fmtfun2 ampfun3 indfun3 fmtfun3 ampfun4 indfun4 fmtfun4 }
-  pitch 400.0 f/ fln 910.0 400.0 f/ fln f/ 100.0 f* floor { k }
+  pitch 400.0 f/ flog 910.0 400.0 f/ flog f/ 100.0 f* floor { k }
   100.0 atdr dur f/ f*                               { atpt }
   100.0 100.0 dcdr dur f/ f* f-                      { dcpt }
   k fmtfun1 1.0 envelope-interp                      { lfmt1 }
@@ -1361,9 +1310,8 @@ instrument: canter ( start dur pitch amp ampfun ranfun skewfun skewpc ranpc ranf
   end-run
 ;instrument
 
-event: drone/canter-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
+: drone/canter-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
   '( 0 1200 100 1000 )     { fmt1 }
   '( 0 2250 100 1800 )	   { fmt2 }
   '( 0 4500 100 4500 )	   { fmt3 }
@@ -1386,43 +1334,43 @@ event: drone/canter-test ( keyword-args -- )
   '( 0.3 0.04 1 0.81 2 0.27 3 0.2 4 0.21 5 0.18 6 0.35 7 0.03
      8 0.07 9 0.02 10 0.025 11 0.035 ) { tenordr }
 
-  start 4 115.0 0.125 solid bassdr2 0.1 0.5 0.01 10 drone
-  start 4 229.0 0.125 solid tenordr 0.1 0.5 0.01 11 drone
-  start 4 229.5 0.125 solid tenordr 0.1 0.5 0.01 09 drone
-  start 2.100 918.000 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 4 115.0 0.125 solid bassdr2 0.1 0.5 0.01 10 drone
+  now@ 4 229.0 0.125 solid tenordr 0.1 0.5 0.01 11 drone
+  now@ 4 229.5 0.125 solid tenordr 0.1 0.5 0.01 09 drone
+  now@ 2.100 918.000 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 2.100 f+ 0.300 688.500 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 2.100 f+ 0.300 688.500 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 2.400 f+ 0.040 826.200 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 2.400 f+ 0.040 826.200 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 2.440 f+ 0.560 459.000 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 2.440 f+ 0.560 459.000 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 3.000 f+ 0.040 408.000 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 3.000 f+ 0.040 408.000 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 3.040 f+ 0.040 619.650 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 3.040 f+ 0.040 619.650 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 3.080 f+ 0.040 408.000 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 3.080 f+ 0.040 408.000 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 3.120 f+ 0.040 688.500 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 3.120 f+ 0.040 688.500 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 3.160 f+ 0.290 459.000 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 3.160 f+ 0.290 459.000 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 3.450 f+ 0.150 516.375 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 3.450 f+ 0.150 516.375 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 3.600 f+ 0.040 826.200 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 3.600 f+ 0.040 826.200 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 3.640 f+ 0.040 573.750 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 3.640 f+ 0.040 573.750 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 3.680 f+ 0.040 619.650 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 3.680 f+ 0.040 619.650 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 3.720 f+ 0.180 573.750 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 3.720 f+ 0.180 573.750 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 3.900 f+ 0.040 688.500 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 3.900 f+ 0.040 688.500 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  start 3.940 f+ 0.260 459.000 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
+  now@ 3.940 f+ 0.260 459.000 0.175 ampf ranf skwf 0.050 0.01 10 index 0.005 0.005
   amp1 ind1 fmt1 amp2 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4 canter
-  5 step
-;event
+  4.4 step
+;
 
 \ NREV (the most popular Samson box reverb)
 \
@@ -1442,12 +1390,12 @@ instrument: nrev-fs ( keyword-args -- )
 \\ :volume          1.0\n\
 \\ :amp-env         '( 0 1 1 1 )\n\
 ' fm-violin-test :reverb ' nrev with-sound"
-  :reverb-factor 1.09 	      get-args { rev-factor }
-  :lp-coeff      0.7  	      get-args { lp-coeff }
-  :lp-out-coeff  0.85 	      get-args { lp-out-coeff }
-  :output-scale  1.0  	      get-args { output-scale }
-  :volume        1.0  	      get-args { volume }
-  :amp-env       '( 0 1 1 1 ) get-args { amp-env }
+  :reverb-factor 1.09 	      get-optkey { reverb-factor }
+  :lp-coeff      0.7  	      get-optkey { lp-coeff }
+  :lp-out-coeff  0.85 	      get-optkey { lp-out-coeff }
+  :output-scale  1.0  	      get-optkey { output-scale }
+  :volume        1.0  	      get-optkey { volume }
+  :amp-env       '( 0 1 1 1 ) get-optkey { amp-env }
   *output* mus-channels { chans }
   *reverb* mus-channels { rev-chans }
   *reverb* reverb-dur { dur }
@@ -1457,16 +1405,16 @@ instrument: nrev-fs ( keyword-args -- )
     sr *key* f* f>s dup 2 mod unless 1+ then ( val )
     begin ( val ) dup prime? false? while 2 + repeat ( val )
   end-map { dly-len }
-  :scaler 0.822 rev-factor f* :size dly-len 0 array-ref make-comb { comb0 }
-  :scaler 0.802 rev-factor f* :size dly-len 1 array-ref make-comb { comb1 }
-  :scaler 0.773 rev-factor f* :size dly-len 2 array-ref make-comb { comb2 }
-  :scaler 0.753 rev-factor f* :size dly-len 3 array-ref make-comb { comb3 }
-  :scaler 0.753 rev-factor f* :size dly-len 4 array-ref make-comb { comb4 }
-  :scaler 0.733 rev-factor f* :size dly-len 5 array-ref make-comb { comb5 }
-  :feedback -0.7 :feedforward 0.7 :size dly-len 6  array-ref make-all-pass { allp0 }
-  :feedback -0.7 :feedforward 0.7 :size dly-len 7  array-ref make-all-pass { allp1 }
-  :feedback -0.7 :feedforward 0.7 :size dly-len 8  array-ref make-all-pass { allp2 }
-  :feedback -0.7 :feedforward 0.7 :size dly-len 9  array-ref make-all-pass { allp3 }
+  :scaler 0.822 reverb-factor f*  :size dly-len  0 array-ref make-comb { comb0 }
+  :scaler 0.802 reverb-factor f*  :size dly-len  1 array-ref make-comb { comb1 }
+  :scaler 0.773 reverb-factor f*  :size dly-len  2 array-ref make-comb { comb2 }
+  :scaler 0.753 reverb-factor f*  :size dly-len  3 array-ref make-comb { comb3 }
+  :scaler 0.753 reverb-factor f*  :size dly-len  4 array-ref make-comb { comb4 }
+  :scaler 0.733 reverb-factor f*  :size dly-len  5 array-ref make-comb { comb5 }
+  :feedback -0.7 :feedforward 0.7 :size dly-len  6 array-ref make-all-pass { allp0 }
+  :feedback -0.7 :feedforward 0.7 :size dly-len  7 array-ref make-all-pass { allp1 }
+  :feedback -0.7 :feedforward 0.7 :size dly-len  8 array-ref make-all-pass { allp2 }
+  :feedback -0.7 :feedforward 0.7 :size dly-len  9 array-ref make-all-pass { allp3 }
   :feedback -0.7 :feedforward 0.7 :size dly-len 10 array-ref make-all-pass { allp4 }
   :feedback -0.7 :feedforward 0.7 :size dly-len 11 array-ref make-all-pass { allp5 }
   :feedback -0.7 :feedforward 0.7 :size dly-len 12 array-ref make-all-pass { allp6 }
@@ -1571,15 +1519,14 @@ instrument: reson ( start dur pitch amp indxfun skewfun pcskew skewat skewdc vib
   values each ( rs ) free throw end-each
 ;instrument
 
-event: reson-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
+: reson-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
   '( '( '( 0 0 100 1 ) 1200 0.5 0.1 0.1 0 1.0 0.1 0.1 )
      '( '( 0 1 100 0 ) 2400 0.5 0.1 0.1 0 1.0 0.1 0.1 ) ) { data }
 
-  start dur 440 0.5 '( 0 0 100 1 ) '( 0 0 100 1 ) 0.1 0.1 0.1 5 0.01 5 0.01 data reson
-  dur step
-;event
+  now@ dur 440 0.5 '( 0 0 100 1 ) '( 0 0 100 1 ) 0.1 0.1 0.1 5 0.01 5 0.01 data reson
+  dur 0.2 f+ step
+;
 
 \ STK's feedback-fm instrument named CelloN in Sambox-land
 instrument: cellon ( start dur pitch0 amp ampfun betafun beta0 beta1 betaat betadc ampat ampdc pitch1 glissfun glissat glissdc pvibfreq pvibpc pvibfun pvibat pvibdc rvibfreq rvibpc rvibfun -- )
@@ -1624,15 +1571,14 @@ instrument: cellon ( start dur pitch0 amp ampfun betafun beta0 beta1 betaat beta
   end-run
 ;instrument
 
-event: cellon-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
+: cellon-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
   '( 0 0 25 1 75 1 100 0 ) { env1 }
   '( 0 0 100 0 ) { env2 }
   
-  start dur 220 0.5 env1 env1 0.75 1 0 0 0 0 220 env1 0 0 0 0 env2 0 0 0 0 env2 cellon
-  dur step
-;event
+  now@ dur 220 0.5 env1 env1 0.75 1 0 0 0 0 220 env1 0 0 0 0 env2 0 0 0 0 env2 cellon
+  dur 0.2 f+ step
+;
 
 \ JL-REVERB
 instrument: jl-reverb ( keyword-args -- )
@@ -1680,12 +1626,11 @@ instrument: gran-synth ( start dur freq grain-dur interval amp -- )
   end-run
 ;instrument
 
-event: gran-synth-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-  start dur 100 0.0189 0.02 0.4 gran-synth
-  dur step
-;event
+: gran-synth-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 100 0.0189 0.02 0.4 gran-synth
+  dur 0.2 f+ step
+;
 
 \ TOUCH-TONE
 \ 
@@ -1693,10 +1638,10 @@ event: gran-synth-test ( keyword-args -- )
 instrument: touch-tone ( numbers keyword-args -- )
   doc" touch-tone ( numbers keyword-arg -- ) (see clm/ugex.ins)\n\
 \\ keyword and default value\n\
-\\ :beg   0.0\n\
+\\ :start   0.0\n\
 \\ NUMBERS is an array with phone numbers\n\
 #( 8 5 7 7 5 8 ) ' touch-tone with-sound"
-  :beg 0.0 get-args { start }
+  :start 0.0 get-optkey { start }
   { numbers }
   #( 0  697  697  697  770  770  770  852  852  852  941  941  941 ) { tt1 }
   #( 0 1209 1336 1477 1209 1336 1477 1209 1336 1477 1209 1336 1477 ) { tt2 }
@@ -1709,43 +1654,46 @@ instrument: touch-tone ( numbers keyword-args -- )
   end-each
 ;instrument
 
-event: touch-tone-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-  #( 8 5 7 7 5 8 ) :beg start touch-tone
-  dur step
-;event
+: touch-tone-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  #( 8 5 7 7 5 8 ) :start now@ touch-tone
+  dur 6 ( numbers ) f* 0.2 f+ step
+;
 
 \ SPECTRA
-instrument: spectra ( start dur freq amp parts ampenv vibamp vibfrq -- )
-  { start dur freq amp parts ampenv vibamp vibfrq }
+instrument: spectra ( start dur freq amp :optional parts ampenv vibamp vibfrq degr dist rev-amt -- )
+  '( '( 1 1 2 0.5 ) '( 0 0 50 1 100 0 ) 0.005 5.0 0.0 1.0 0.005 )
+  4 get-optargs { start dur freq amp parts ampenv vibamp vibfrq degr dist rev-amt }
   :frequency freq :wave parts #f #f partials->wave  make-table-lookup { s }
   :envelope ampenv :scaler amp :duration dur        make-env { ampf }
   freq hz->radians vibamp f* { vamp }
   :frequency vibfrq :amplitude vamp                 make-triangle-wave { pervib }
   :frequency vibfrq 1.0 f+ :amplitude vamp           make-rand-interp { ranvib }
-  start dur #{ :degree 90.0 random } run-instrument
+  start dur #{ :degree degr :distance dist :reverb-amount rev-amt } run-instrument
     s  pervib 0.0 triangle-wave ranvib 0.0 rand-interp f+  table-lookup  ampf env  f*
   end-run
 ;instrument
 
-event: spectra-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-  '( 0 0 1 1 5 0.9 12 0.5 25 0.25 100 0 ) { ampenv }
+: spectra-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
   '( 1.00 0.1132 2.00 0.0252 3.00 0.0292 4.01 0.0136 5.03 0.0045
      6.06 0.0022 7.11 0.0101 8.17 0.0004 9.23 0.0010 10.33 0.0012
      11.44 0.0013 12.58 0.0011 13.75 0.0002 14.93 0.0005 16.14 0.0002 ) { p-a4 }
-  start dur 440 2.0 p-a4 ampenv 0.005 5.0 spectra
-  dur step
-;event
+  now@ dur 440 2.0 p-a4 '( 0 0 1 1 5 0.9 12 0.5 25 0.25 100 0 ) spectra
+  dur 0.2 f+ step
+;
 
 \ TWO-TAB
 \
 \ interpolate between two waveforms (this could be extended to
 \ implement all the various wavetable-based synthesis techniques).
-instrument: two-tab ( start dur freq amp part1 part2 ampenv interpenv vibamp vibfrq -- )
-  { start dur freq amp part1 part2 ampenv interpenv vibamp vibfrq }
+instrument: two-tab ( start dur freq amp :optional par1 par2 aenv ienv vamp vfrq degr dist rev -- )
+  '( '( 1.0 1.0 2.0 0.5 )
+     '( 1.0 0.0 3.0 1.0 )
+     '( 0 0 50 1 100 0 )
+     '( 0 1 100 0 )
+     0.005 5.0 0.0 1.0 0.005 )
+  4 get-optargs { start dur freq amp part1 part2 ampenv interpenv vibamp vibfrq degr dist rev-amt }
   :frequency freq :wave part1 #f #f partials->wave make-table-lookup { s1 }
   :frequency freq :wave part2 #f #f partials->wave make-table-lookup { s2 }
   :envelope ampenv :scaler amp :duration dur       make-env { ampf }
@@ -1753,20 +1701,18 @@ instrument: two-tab ( start dur freq amp part1 part2 ampenv interpenv vibamp vib
   freq hz->radians vibamp f* { vamp }
   :frequency vibfrq :amplitude vamp                make-triangle-wave { pervib }
   :frequency vibfrq 1.0 f+ :amplitude vamp         make-rand-interp { ranvib }
-  start dur #{ :degree 90.0 random } run-instrument
+  start dur #{ :degree degr :distance dist :reverb-amount rev-amt } run-instrument
     pervib 0.0 triangle-wave  ranvib 0.0 rand-interp  f+ { vib }
     interpf env { intrp }
     s1 vib table-lookup intrp f* s2 vib table-lookup 1.0 intrp f- f* f+ ampf env f*
   end-run
 ;instrument
 
-event: two-tab-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-  start dur 440 0.5 '( 1 1 2 0.5 ) '( 1 0 3 1 ) '( 0 0 50 1 100 0 )
-  '( 0 1 100 0 ) 0.005 5 two-tab
-  dur step
-;event
+: two-tab-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 440 0.5 two-tab
+  dur 0.2 f+ step
+;
 
 \ LBJ-PIANO
 #( #( 1.97 0.0326 2.99 0.0086 3.95 0.0163 4.97 0.0178 5.98 0.0177
@@ -2263,9 +2209,9 @@ event: two-tab-test ( keyword-args -- )
 \ there's no nyquist detection; a high freq with a low pfreq, will
 \ give you fold over (hmmm...maybe I can get those high notes to
 \ sparkle after all).
-instrument: lbj-piano ( start dur freq amp -- )
-  { start dur freq amp }
-  piano-spectra  12.0 freq 32.703 f/ fln 2.0 fln f/ f* f>s  array-ref normalize-partials { parts }
+instrument: lbj-piano ( start dur freq amp :key degree=45 distance=1.0 reverb-amount=0.0 -- )
+  <{ start dur freq amp :key degree 45.0 distance 1.0 reverb-amount 0.0 }>
+  piano-spectra  12.0 freq 32.703 f/ flog 2.0 flog f/ f* f>s  array-ref normalize-partials { parts }
   dur *clm-piano-attack-duration* *clm-piano-realease-duration* f+ f+ to dur
   dur *clm-piano-realease-duration* f- { env1dur }
   env1dur mus-srate f* floor f>s { env1samples }
@@ -2287,18 +2233,17 @@ instrument: lbj-piano ( start dur freq amp -- )
     alist i  parts i 2* 1+ array-ref  vct-set! drop
     :frequency  parts i 2* array-ref  freq f* make-oscil
   end-map { oscils }
-  start dur #{ :degree 90.0 random } run-instrument
+  start dur #{ :degree degree :distance distance :reverb-amount reverb-amount } run-instrument
     0.0 oscils each ( os ) 0.0 0.0 oscil alist i vct-ref f* f+ end-each
     i env1samples > if ampenv2 else ampenv1 then env f*
   end-run
 ;instrument
 
-event: lbj-piano-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-  start dur 440 0.5 lbj-piano
-  dur step
-;event
+: lbj-piano-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 440 0.5 lbj-piano
+  dur 0.24 f+ 0.2 f+ step
+;
 
 \ RESFLT
 \ clm/resflt.ins
@@ -2327,27 +2272,27 @@ instrument: resflt ( start dur keyword-args -- )
 \\ :degree       90.0 random (locsig-degree)\n\
 \\ :distance     1.0 (locsig-distance)\n\
 0 1 ' resflt with-sound"
-  :driver     #f        	  get-args { driver }
-  :ranfreq    10000.0     	  get-args { ranfreq }
-  :noiamp     0.01      	  get-args { noiamp }
-  :noifun     '( 0 0 50 1 100 0 ) get-args { noif }
-  :cosamp     0.1       	  get-args { cosamp }
-  :cosfreq1   200.0       	  get-args { cosfreq1 }
-  :cosfreq0   230.0       	  get-args { cosfreq0 }
-  :cosnum     10        	  get-args { cosnum }
-  :ampcosfun  '( 0 0 50 1 100 0 ) get-args { ampcosf }
-  :freqcosfun '( 0 0 100 1 )      get-args { freqcosf }
-  :freq1      550.0       	  get-args { freq1 }
-  :r1         0.995     	  get-args { r1 }
-  :g1         0.1       	  get-args { g1 }
-  :freq2      1000.0      	  get-args { freq2 }
-  :r2         0.995     	  get-args { r2 }
-  :g2         0.1       	  get-args { g2 }
-  :freq3      2000.0      	  get-args { freq3 }
-  :r3         0.995     	  get-args { r3 }
-  :g3         0.1       	  get-args { g3 }
-  :degree     90.0 random 	  get-args { loc-degr }
-  :distance   1.0        	  get-args { loc-dist }
+  :driver     #f        	  get-optkey { driver }
+  :ranfreq    10000.0     	  get-optkey { ranfreq }
+  :noiamp     0.01      	  get-optkey { noiamp }
+  :noifun     '( 0 0 50 1 100 0 ) get-optkey { noif }
+  :cosamp     0.1       	  get-optkey { cosamp }
+  :cosfreq1   200.0       	  get-optkey { cosfreq1 }
+  :cosfreq0   230.0       	  get-optkey { cosfreq0 }
+  :cosnum     10        	  get-optkey { cosnum }
+  :ampcosfun  '( 0 0 50 1 100 0 ) get-optkey { ampcosf }
+  :freqcosfun '( 0 0 100 1 )      get-optkey { freqcosf }
+  :freq1      550.0       	  get-optkey { freq1 }
+  :r1         0.995     	  get-optkey { r1 }
+  :g1         0.1       	  get-optkey { g1 }
+  :freq2      1000.0      	  get-optkey { freq2 }
+  :r2         0.995     	  get-optkey { r2 }
+  :g2         0.1       	  get-optkey { g2 }
+  :freq3      2000.0      	  get-optkey { freq3 }
+  :r3         0.995     	  get-optkey { r3 }
+  :g3         0.1       	  get-optkey { g3 }
+  :degree     90.0 random 	  get-optkey { loc-degr }
+  :distance   1.0        	  get-optkey { loc-dist }
   { start dur }
   :radius r1 :frequency freq1 make-two-pole { f1 }
   :radius r2 :frequency freq2 make-two-pole { f2 }
@@ -2370,13 +2315,13 @@ instrument: resflt ( start dur keyword-args -- )
   end-run
 ;instrument
 
-event: resflt-test ( keyword-args -- )
-  :beg 0 get-args { start }
-  :dur 1 get-args { dur }
-  start        dur :driver #f resflt
-  start 0.5 f+ dur :driver #t resflt
-  dur 0.5 f+ step
-;event
+: resflt-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur :driver #f resflt
+  dur 0.2 f+ step
+  now@ dur :driver #t resflt
+  dur 0.2 f+ step
+;
 
 hide
 : scratch-input-cb ( rd samp -- proc ; dir self -- r )
@@ -2438,35 +2383,27 @@ instrument: scratch-ins ( start file src-ratio turntable -- )
 ;instrument
 previous
 
-event: scratch-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-  start $" fyow.snd" 1.5 '( 0 0.5 0.25 1 ) scratch-ins
-  $" fyow.snd" find-file mus-sound-duration step
-;event
+: scratch-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  :dur   1.0 get-optkey drop
+  $" fyow.snd" find-file mus-sound-duration 0.2 f+ step
+;
 
 \ PINS
 \
 \ spectral modeling (SMS)
-instrument: pins ( file start dur keyword-args -- )
-  doc" ( file start dur keyword-args -- )\n\
+instrument: pins ( start dur file amp keyword-args -- )
+  doc" ( start dur file amp keyword-args -- )\n\
 \\ keywords and default values\n\
-\\ :amplitude     -- 0.5\n\
-\\ :transposition -- 1.0\n\
-\\ :time-scaler   -- 1.0\n\
-\\ :fftsize       -- 256\n\
-\\ :highest-bin   -- 128\n\
-\\ :max-peaks     -- 16\n\
-\\ :attack        -- #f\n\
-\"fyow.snd\" start dur :amplitude 1.0 :time-scaler 2.0 pins"
-  :amplitude     0.5 get-args { amp }
-  :transposition 1.0 get-args { transposition }
-  :time-scaler   1.0 get-args { time-scaler }
-  :fftsize       256 get-args { fftsize }
-  :highest-bin   128 get-args { highest-bin }
-  :max-peaks     16  get-args { max-peaks }
-  :attack        #f  get-args { attack }
-  { file start dur }
+\\ :transposition   1.0\n\
+\\ :time-scaler     1.0\n\
+\\ :fftsize         256\n\
+\\ :highest-bin     128\n\
+\\ :max-peaks       16\n\
+\\ :attack          #f\n\
+start dur \"fyow.snd\" 1.0 :time-scaler 2.0 pins"
+  <{ start dur file amp
+     :key transposition 1.0 time-scaler 1.0 fftsize 256 highest-bin 128 max-peaks 16 attack #f }>
   file find-file to file
   file false? if 'file-not-found $" cannot find %S" '( file ) fth-raise then
   file mus-sound-duration { fdur }
@@ -2549,8 +2486,8 @@ instrument: pins ( file start dur keyword-args -- )
 	  ca 0.001 f>
 	  ca ra f> &&
 	  ca la f> && if
-	    la flog ra flog f- f2/  la flog -2.0 ca flog f* f+  ra flog f+  f/ { offset }
-	    10.0  ca flog  0.25  la flog ra flog f-  f* offset f*  f-  f** { amp-1 }
+	    la flog10 ra flog10 f- f2/  la flog10 -2.0 ca flog10 f* f+  ra flog10 f+  f/ { offset }
+	    10.0  ca flog10  0.25  la flog10 ra flog10 f-  f* offset f*  f-  f** { amp-1 }
 	    fft-mag  i offset -1.0 f+ f+  f* { freq }
 	    peaks max-peaks = if
 	      0 { minp }
@@ -2654,12 +2591,11 @@ instrument: pins ( file start dur keyword-args -- )
   end-run
 ;instrument
 
-event: pins-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-  $" fyow.snd" start dur :amplitude 1.0 :time-scaler 2.0 pins
-  dur step
-;event
+: pins-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur $" fyow.snd" 1.0 :time-scaler 2.0 pins
+  dur 0.2 f+ step
+;
 
 \ ZC
 instrument: zc ( start dur freq amp len1 len2 feedback -- )
@@ -2672,13 +2608,13 @@ instrument: zc ( start dur freq amp len1 len2 feedback -- )
   end-run
 ;instrument
 
-event: zc-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-  start               dur 100 0.4 20 100 0.95 zc
-  start dur 0.5 f+ f+ dur 100 0.4 100 20 0.95 zc
-  dur f2* 0.5 f+ step
-;event
+: zc-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 100 0.4 20 100 0.95 zc
+  dur 0.2 f+ step
+  now@ dur 100 0.4 100 20 0.95 zc
+  dur 0.2 f+ step
+;
 
 \ ZN
 \
@@ -2695,13 +2631,13 @@ instrument: zn ( start dur freq amp len1 len2 feedforward -- )
   end-run
 ;instrument
 
-event: zn-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-  start               dur 100 0.5 20 100 0.95 zn
-  start dur 0.5 f+ f+ dur 100 0.5 100 20 0.95 zn
-  dur f2* 0.5 f+ step
-;event
+: zn-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 100 0.5 20 100 0.95 zn
+  dur 0.2 f+ step
+  now@ dur 100 0.5 100 20 0.95 zn
+  dur 0.2 f+ step
+;
 
 \ ZA
 instrument: za ( start dur freq amp len1 len2 fb ffw -- )
@@ -2714,40 +2650,59 @@ instrument: za ( start dur freq amp len1 len2 fb ffw -- )
   end-run
 ;instrument
 
-event: za-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-  start               dur 100 0.3 20 100 0.95 0.95 za
-  start dur 0.5 f+ f+ dur 100 0.3 100 20 0.95 0.95 za
-  dur f2* 0.5 f+ step
-;event
+: za-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 100 0.3 20 100 0.95 0.95 za
+  dur 0.2 f+ step
+  now@ dur 100 0.3 100 20 0.95 0.95 za
+  dur 0.2 f+ step
+;
 
 hide
-: readin-cb ( gen -- proc; dir self -- r )
+: clm-src-cb ( gen -- proc; dir self -- r )
   lambda-create , latestxt 1 make-proc
  does> ( dir self -- r )
-  nip @ readin
+  nip @ ( gen ) #f #f granulate
 ;
 set-current
 
+\ CLM-EXPSRC
+instrument: clm-expsrc ( start dur in-file exp-ratio src-ratio amp :optional rev start-in-file -- )
+  <{ start dur in-file exp-ratio src-ratio amp :optional rev #f start-in-file 0 }>
+  in-file find-file to in-file
+  in-file false? if 'file-not-found $" cannot find %S" '( in-file ) fth-raise then
+  start-in-file in-file mus-sound-srate f* floor f>s { stf }
+  :file in-file :channel 0 :start stf make-readin { fdA }
+  :input fdA readin-cb :expansion exp-ratio make-granulate { exA }
+  in-file mus-sound-chans 2 = *output* mus-channels 2 = && { two-chans }
+  two-chans if :file in-file :channel 1 :start stf make-readin else #f then { fdB }
+  :input fdB readin-cb :expansion exp-ratio make-granulate { exB }
+  :input exA clm-src-cb :srate src-ratio make-src { srcA }
+  two-chans if :input exB clm-src-cb :srate src-ratio make-src else #f then { srcB }
+  *reverb* rev && { revit }
+  revit if two-chans if rev f2/ else rev then else 0.0 then { rev-amp }
+  start dur run
+    srcA 0.0 src  amp f* { valA }
+    two-chans if srcB 0.0 src  amp f* else 0.0 then { valB }
+    i valA 0 *output* out-any drop
+    two-chans if i valB 1 *output* out-any drop then
+    revit if i valA valB f+ rev-amp f* 0 *reverb* out-any drop then
+  loop
+;instrument
+previous
+
+: clm-expsrc-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur $" oboe.snd" 2.0 1.0 1.0 clm-expsrc
+  dur 0.2 f+ step
+;
+
 \ EXP-SND
-instrument: exp-snd ( file start dur amp keyword-args -- )
-  doc" ( file start dur amp keyword-args -- )\n\
-\\ keywords and default values\n\
-\\ :exp-amp   1.0\n\
-\\ :ramp      0.4\n\
-\\ :seglen    0.15\n\
-\\ :sr        1.0\n\
-\\ :hop       0.05\n\
-\\ :ampenv    #f\n\  
-\"fyow.snd\" 0 3 1 :exp-amt '( 0 1 1 3 ) :sr '( 0 2 1 0.5 ) ' exp-snd with-sound"
-  :exp-amt  1.0  get-args { exp-amt }
-  :ramp     0.4  get-args { ramp }
-  :seglen   0.15 get-args { seglen }
-  :sr       1.0  get-args { sr }
-  :hop      0.05 get-args { hop }
-  :ampenv   #f   get-args { ampenv }
-  { file start dur amp }
+instrument: exp-snd ( file start dur amp :optional exp-amt=1.0 ramp=0.4 seglen=0.15 sr=1.0 hop=0.05 ampenv -- )
+  doc" ( file start dur amp :optional exp-amt=1.0 ramp=0.4 seglen=0.15 sr=1.0 hop=0.05 ampenv--)\n\
+\"fyow.snd\" 0 3 1 '( 0 1 1 3 ) 0.4 0.15 '( 0 2 1 0.5 ) 0.05 ' exp-snd with-sound\n\
+\"oboe.snd\" 0 3 1 '( 0 1 1 3 ) 0.4 0.15 '( 0 2 1 0.5 ) 0.2  ' exp-snd with-sound"
+  <{ file start dur amp :optional exp-amt 1.0 ramp 0.4 seglen 0.15 sr 1.0 hop 0.05 ampenv #f }>
   file find-file to file
   file false? if 'file-not-found $" cannot find %S" '( file ) fth-raise then
   file 0 make-readin { f0 }
@@ -2817,17 +2772,14 @@ instrument: exp-snd ( file start dur amp keyword-args -- )
     then
   end-run
 ;instrument
-previous
 
-event: exp-snd-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-
-  $" fyow.snd" start dur 1 :exp-amt '( 0 1 1 3 ) :sr '( 0 2 1 0.5 )          exp-snd
-  dur 0.2 f+ +to start
-  $" oboe.snd" start dur 1 :exp-amt '( 0 1 1 3 ) :sr '( 0 2 1 0.5 ) :hop 0.2 exp-snd
-  dur f2* 0.2 f+ step
-;event
+: exp-snd-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  $" fyow.snd" now@ dur 1.0 '( 0 1 1 3 ) 0.4 0.15 '( 0 2 1 0.5 ) 0.05 exp-snd
+  dur 0.2 f+ step
+  $" oboe.snd" now@ dur 1.0 '( 0 1 1 3 ) 0.4 0.15 '( 0 2 1 0.5 ) 0.2  exp-snd
+  dur 0.2 f+ step
+;
 
 struct
   cell% field exp-rampval
@@ -2945,12 +2897,11 @@ instrument: expfil ( start dur hopsecs rampsecs steadysecs file1 file2 -- )
   grn2 free throw
 ;instrument
 
-event: expfil-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-  start dur 0.2 0.01 0.1 $" oboe.snd" $" fyow.snd" expfil
-  dur step
-;event
+: expfil-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  now@ dur 0.2 0.01 0.1 $" oboe.snd" $" fyow.snd" expfil
+  dur 0.2 f+ step
+;
 
 \ GRAPH-EQ
 \
@@ -2998,14 +2949,14 @@ instrument: graph-eq ( file start dur keyword-args -- )
 \\ :filt-gain-base    1.0\n\
 \\ :a1                0.99\n\
 \"oboe.snd\" 0 2 graph-eq"
-  :file-start  	   0.0                                    get-args { or-beg }
-  :amplitude   	   1.0                                    get-args { amp }
-  :amp-env     	   '( 0 1 0.8 1 1 0 )                     get-args { amp-env }
-  :base        	   1.0                                    get-args { base }
-  :gain-freq-list  #( '( 0 1 1 0 ) 440 '( 0 0 1 1 ) 660 ) get-args { gain-freq-list }
-  :filt-gain-scale 1.0                                    get-args { filt-gain-scale }
-  :filt-gain-base  1.0                                    get-args { filt-gain-base }
-  :a1              0.99                                   get-args { a1 }
+  :file-start  	   0.0                                    get-optkey { or-beg }
+  :amplitude   	   1.0                                    get-optkey { amp }
+  :amp-env     	   '( 0 1 0.8 1 1 0 )                     get-optkey { amp-env }
+  :base        	   1.0                                    get-optkey { base }
+  :gain-freq-list  #( '( 0 1 1 0 ) 440 '( 0 0 1 1 ) 660 ) get-optkey { gain-freq-list }
+  :filt-gain-scale 1.0                                    get-optkey { filt-gain-scale }
+  :filt-gain-base  1.0                                    get-optkey { filt-gain-base }
+  :a1              0.99                                   get-optkey { a1 }
   { file start dur }
   file find-file to file
   file false? if 'file-not-found $" cannot find %S" '( file ) fth-raise then
@@ -3039,12 +2990,11 @@ instrument: graph-eq ( file start dur keyword-args -- )
   rd mus-close drop
 ;instrument
 
-event: graph-eq-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-  $" oboe.snd" start dur :amplitude 50.0 graph-eq
-  dur step
-;event
+: graph-eq-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  $" oboe.snd" now@ dur :amplitude 50.0 graph-eq
+  dur 0.2 f+ step
+;
 
 \ ANOI
 \ 
@@ -3054,8 +3004,8 @@ event: graph-eq-test ( keyword-args -- )
 \ this is based on Perry Cook's Scrubber.m
 \ 
 \ clm/anoi.ins
-instrument: anoi ( fname start dur fftsize amp-scaler R -- )
-  { fname start dur fftsize amp-scaler R }
+instrument: anoi ( fname start dur :optional fftsize=128 amp-scaler=1.0 R=two-pi -- )
+  <{ fname start dur :optional fftsize 128 amp-scaler 1.0 R two-pi }>
   fftsize 2/ { freq-inc }
   fftsize  0.0 make-vct { fdr }
   fftsize  0.0 make-vct { fdi }
@@ -3101,12 +3051,11 @@ instrument: anoi ( fname start dur fftsize amp-scaler R -- )
   fil mus-close drop
 ;instrument
 
-event: anoi-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
-  $" fyow.snd" start dur 128 2.0 two-pi anoi
-  dur step
-;event
+: anoi-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
+  $" fyow.snd" now@ dur 128 2.0 anoi
+  dur 0.2 f+ step
+;
 
 \ Date: Fri, 25 Sep 1998 09:56:41 +0300
 \ From: Matti Koskinen <mjkoskin@sci.fi>
@@ -3130,31 +3079,15 @@ event: anoi-test ( keyword-args -- )
 \ mjkoskin@sci.fi
 
 \ FULLMIX
-hide
-: fullmix-input-cb ( gen -- proc; dir self -- val )
-  lambda-create , latestxt 1 make-proc
- does> ( dir self -- val )
-  nip @ readin
-;
-set-current
-instrument: fullmix ( in-file start dur keyword-args -- )
-  doc" ( in-file start dur keyword-args -- )\n\
-\\ keywords and default values\n\
-\\ :inbeg           0.0\n\
-\\ :matrix          #f\n\
-\\ :srate           #f\n\
-\\ :reverb-amount   #f\n\
+instrument: fullmix ( in-file :optional start=0.0 dur=#f inbeg=0.0 matrix=#f srate=#f reverb-amount=#f -- )
+  doc" ( in-file :optional start=0.0 dur=#f inbeg=0.0 matrix=#f srate=#f reverb-amount=#f -- )\n\
 \"pistol.snd\" 0 1 fullmix\n\
-#( #( 0.8\n\
-      :envelope '( 0 0 1 1 ) :duration dur :scaler 0.5 make-env ) ) value mx\n\
-\"oboe.snd\" 0 2 :matrix mx :srate 2 fullmix"
-  :inbeg         0.0 get-args { inbeg }
-  :matrix        #f  get-args { matrix }
-  :srate         #f  get-args { sr }
-  :reverb-amount #f  get-args { rev-amount }
-  { in-file start dur }
+:envelope '( 0 0 1 1 ) :duration dur :scaler 0.5 make-env value en
+\"oboe.snd\" 0 2 0 '( '( 0.8 en ) ) 2.0 ' fullmix with-sound"
+  <{ in-file :optional start 0.0 dur #f inbeg 0.0 matrix #f sr #f rev-amount #f }>
   in-file find-file to in-file
   in-file false? if 'file-not-found $" cannot find %S" '( in-file ) fth-raise then
+  dur unless in-file mus-sound-duration inbeg f- sr if sr fabs else 1.0 then f/ to dur then
   in-file mus-sound-chans { in-chans }
   inbeg in-file mus-sound-srate f* floor f>s { inloc }
   *output* mus-channels { out-chans }
@@ -3209,7 +3142,7 @@ instrument: fullmix ( in-file start dur keyword-args -- )
     out-chans make-frame { outframe }
     in-chans nil make-array map!
       :file in-file :channel i :start inloc make-readin { rd }
-      :input rd fullmix-input-cb :srate sr make-src
+      :input rd readin-cb :srate sr make-src
     end-map { srcs }
     envs if
       start dur run
@@ -3229,17 +3162,204 @@ instrument: fullmix ( in-file start dur keyword-args -- )
     then
   then
 ;instrument
-previous
 
-event: fullmix-test ( keyword-args -- )
-  :beg 0.0 get-args { start }
-  :dur 1.0 get-args { dur }
+: fullmix-test ( :optional start=0.0 dur=1.0 -- )
+  '( 0.0 1.0 ) 0 get-optargs { dur } now!
   :envelope '( 0 0 1 1 ) :duration dur :scaler 0.5 make-env { en }  
+  $" pistol.snd" now@ dur fullmix
+  dur 0.2 f+ step
+  $" oboe.snd"   now@ dur 0 #( #( 0.1 en ) ) fullmix
+  dur 0.2 f+ step
+;
 
-  $" pistol.snd" start dur fullmix
-  dur 0.2 f+ +to start
-  $" oboe.snd" start dur :matrix #( #( 0.1 en ) ) fullmix
-  dur f2* 0.2 f+ step
-;event
+'snd provided? [if]
+  \ ;;; bes-fm -- can also use bes-j0 here as in earlier versions
+  instrument: bes-fm ( start dur freq amp ratio index -- )
+    { start dur freq amp ratio index }
+    0.0 0.0 { car-ph mod-ph }
+    freq hz->radians { car-incr }
+    ratio car-incr f* { mod-incr }
+    :envelope '( 0 0 25 1 75 1 100 0 ) :scaler amp :duration dur make-env { ampenv }
+    start dur #{ :degree 90.0 random } run-instrument
+      ampenv env car-ph bes-j1 f* ( result )
+      mod-ph bes-j1 index f* car-incr f+ +to car-ph
+      mod-incr +to mod-ph
+    end-run
+  ;instrument
+
+  : bes-fm-test ( :optional start=0.0 dur=1.0 -- )
+    '( 0.0 1.0 ) 0 get-optargs { dur } now!
+    now@ dur 440.0 10.0 1.0 4.0 bes-fm
+    dur 0.2 f+ step
+  ;
+
+  include dsp
+[else]
+  : bes-fm-test ( :optional start=0.0 dur=1.0 -- )
+    :start 0.0 get-optkey drop
+    :dur   1.0 get-optkey drop
+  ;
+
+  \ --- Hilbert transform
+
+  : make-hilbert-transform ( len -- gen )
+    doc" ( len -- gen )  Makes a Hilbert transform filter."
+    { len }
+    len 2* 1+ { arrlen }
+    arrlen 0.0 make-vct { arr }
+    len even? if len else len 1+ then { lim }
+    lim len negate ?do
+      i len + { kk }
+      i pi f* { denom }
+      1.0  denom fcos  f- { num }
+      num f0<> i 0<> || if
+	arr kk  num denom f/  denom len f/ fcos 0.46 f* 0.54 f+  f*  vct-set! drop
+      then
+    loop
+    arrlen arr make-fir-filter
+  ;
+  ' fir-filter alias hilbert-transform
+[then]
+
+\ SSB-FM
+\ ;;; this might be better named "quasi-ssb-fm" -- cancellations are not perfect
+struct
+  cell% field sbfm-am0
+  cell% field sbfm-am1
+  cell% field sbfm-car0
+  cell% field sbfm-car1
+  cell% field sbfm-mod0
+  cell% field sbfm-mod1
+end-struct sbfm%
+
+: make-ssb-fm ( freq -- ssb )
+  { freq }
+  sbfm% %alloc { sbfm }
+  freq 0.0     make-oscil   sbfm sbfm-am0 !
+  freq half-pi make-oscil   sbfm sbfm-am1 !
+  0.0 0.0      make-oscil   sbfm sbfm-car0 !
+  0.0 half-pi  make-oscil   sbfm sbfm-car1 !
+  40 make-hilbert-transform sbfm sbfm-mod0 !
+  40 make-delay             sbfm sbfm-mod1 !
+  sbfm
+;
+: ssb-fm ( gen modsig -- val )
+  { gen modsig }
+  gen sbfm-am0  @ 0.0 0.0 oscil
+  gen sbfm-car0 @ gen sbfm-mod0 @ modsig hilbert-transform 0.0 oscil f*
+  gen sbfm-am1  @ 0.0 0.0 oscil
+  gen sbfm-car1 @ gen sbfm-mod1 @ modsig 0.0 delay 0.0 oscil f* f+
+;
+
+\ ;;; if all we want are asymmetric fm-generated spectra, we can just
+\ ;;; add 2 fm oscil pairs:
+
+struct
+  cell% field fm2-os1
+  cell% field fm2-os2
+  cell% field fm2-os3
+  cell% field fm2-os4
+end-struct fm2%
+
+: make-fm2 ( f1 f2 f3 f4 p1 p2 p3 p4 -- )
+  { f1 f2 f3 f4 p1 p2 p3 p4 }
+  fm2% %alloc { fm2 }
+  f1 p1 make-oscil fm2 fm2-os1 !
+  f2 p2 make-oscil fm2 fm2-os2 !
+  f3 p3 make-oscil fm2 fm2-os3 !
+  f4 p4 make-oscil fm2 fm2-os4 !
+  fm2
+;
+: fm2 ( gen index -- val )
+  { gen index }
+  gen fm2-os1 @  gen fm2-os2 @ 0.0 0.0 oscil index f*  0.0 oscil
+  gen fm2-os3 @  gen fm2-os4 @ 0.0 0.0 oscil index f*  0.0 oscil  f+ 0.25 f*
+;
+
+\ ;;; rms gain balance
+\ ;;; This is a translation of the rmsgain code provided by Fabio Furlanete.
+
+: make-rmsgain ( :optional hp -- gen )
+  '( 10.0 ) 0 get-optargs { hp }
+  2.0 two-pi mus-srate f/ hp f* fcos  f- { b }
+  b  b b f* 1.0 f- fsqrt  f- { c2 }
+  1.0 c2 f- { c1 }
+  make-hash { rmsg }
+  rmsg :rmsg-c1    c1  hash-set!
+  rmsg :rmsg-c2    c2  hash-set!
+  rmsg :rmsg-q     0.0 hash-set!
+  rmsg :rmsg-r     0.0 hash-set!
+  rmsg :rmsg-avg   0.0 hash-set!
+  rmsg :rmsg-avgc  0   hash-set!
+  rmsg
+;
+: rmsgain-rms ( gen sig -- val )
+  { gen sig }
+  gen :rmsg-c1 hash-ref    sig f*  sig f*
+  gen :rmsg-c2 hash-ref  gen :rmsg-q hash-ref  f* f+ dup gen :rmsg-q rot hash-set! ( rmsg-q ) fsqrt
+;
+: rmsgain-gain ( gen sig rmsval -- val )
+  { gen sig rmsval }
+  gen :rmsg-c1 hash-ref    sig f*  sig f*
+  gen :rmsg-c2 hash-ref  gen :rmsg-r hash-ref  f*  f+  gen :rmsg-r rot hash-set!
+  gen :rmsg-r  hash-ref f0= if rmsval else rmsval  gen :rmsg-r hash-ref fsqrt  f/ then { this-gain }
+  this-gain gen :rmsg-avg hash-ref f+ gen :rmsg-avg  rot hash-set!
+  gen :rmsg-avgc hash-ref 1+          gen :rmsg-avgc rot hash-set!
+  sig this-gain f*
+;
+: rmsgain-balance ( gen sig comp -- val )
+  { gen sig comp }
+  gen sig  gen comp rmsgain-rms  rmsgain-gain
+;
+: rmsgain-gain-avg ( gen -- val )
+  { gen }
+  gen :rmsg-avg hash-ref  gen :rmsg-avgc hash-ref f/
+;
+: rmsgain-balance-avg ( gen -- val ) :rmsg-avg hash-ref ;
+
+: clm-ins-test ( -- )
+  <{ :optional start 0.0 dur 1.0 }>
+  start now!
+  now@ dur       violin-test
+  now@ dur    fm-violin-test
+  now@ dur        pluck-test
+  now@ dur          vox-test
+  now@ dur       fofins-test
+  now@ dur   fm-trumpet-test
+  now@ dur      pqw-vox-test
+  now@ dur        flute-test
+  now@ dur      fm-bell-test
+  now@ dur    fm-insect-test
+  now@ dur      fm-drum-test
+  now@ dur         gong-test
+  now@ dur      attract-test
+  now@ dur          pqw-test
+  now@ dur     tubebell-test
+  now@ dur       wurley-test
+  now@ dur       rhodey-test
+  now@ dur   hammondoid-test
+  now@ dur        metal-test
+  now@ dur drone/canter-test
+  now@ dur        reson-test
+  now@ dur       cellon-test
+  now@ dur   gran-synth-test
+  now@ dur   touch-tone-test
+  now@ dur      spectra-test
+  now@ dur      two-tab-test
+  now@ dur    lbj-piano-test
+  now@ dur       resflt-test
+  now@ dur      scratch-test
+  now@ dur         pins-test
+  now@ dur           zc-test
+  now@ dur           zn-test
+  now@ dur           za-test
+  now@ dur   clm-expsrc-test
+  now@ dur      exp-snd-test
+  now@ dur       expfil-test
+  now@ dur     graph-eq-test
+  now@ dur         anoi-test
+  now@ dur      fullmix-test
+  now@ dur       bes-fm-test
+;
 
 \ clm-ins.fs ends here

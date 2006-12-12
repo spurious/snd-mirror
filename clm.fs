@@ -1,8 +1,8 @@
-\ clm.fs -- clm related base words -*- snd-forth -*-
+\ clm.fs -- clm related base words, with-sound and friends -*- snd-forth -*-
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Thu Dec 07 05:19:19 CET 2006
+\ Changed: Mon Dec 11 16:06:44 CET 2006
 
 \ Commentary:
 \
@@ -13,6 +13,7 @@
 \ 
 \ now@   	       ( -- secs )
 \ now!   	       ( secs -- )
+\ step                 ( secs -- )
 \ tempo@ 	       ( -- secs )
 \ tempo! 	       ( secs -- )
 \
@@ -34,7 +35,6 @@
 \ event:               ( ?? -- )
 \ ;event               ( -- )
 \
-\ get-args             ( key val1 -- val2 )
 \ find-file            ( file -- fname|#f )
 \ snd-info             ( fname revname chans srate frames scl? tm -- )
 \ play-sound           ( file -- )
@@ -67,6 +67,12 @@
       /^xterm/ $" TERM" getenv 1 >string re= || if msg .stdout then
     ;
   [then]
+[then]
+
+[undefined] flog10 [if]
+  ' flog  alias flog10
+  ' fln   alias flog
+  ' flnp1 alias flogp1
 [then]
 
 dl-load sndlib Init_sndlib
@@ -276,7 +282,7 @@ previous
 16.0 1/f 32.0 1/f f+ notelength |S.
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-$" fth 5-Dec-2006"  value *clm-version*
+$" fth 11-Dec-2006"  value *clm-version*
 #f 		    value *output*
 #f 		    value *reverb*
 #f 		    value *locsig*
@@ -354,9 +360,21 @@ default-output-srate       value *clm-srate*
 ;
 
 \ === With-Sound Run-Instrument ===
+
+#f value *clm-current-instrument*
+
 hide
-: (make-locsig) ( args -- )
-  { args }
+: ws-info ( start dur -- )
+  { start dur }
+  *notehook* xt? if *clm-current-instrument* start dur *notehook* execute then
+;
+: (run) ( start dur -- limit begin )
+  { start dur }
+  start dur ws-info
+  start dur times->samples
+;
+: (run-instrument) ( start dur args -- limit begin )
+  { start dur args }
   save-stack { s }
   args hash? unless #{} to args then
   :degree    args :degree   hash-ref            0.0 ||
@@ -384,8 +402,9 @@ hide
     then
   then
   s restore-stack
+  start dur (run)
 ;
-: (set-locsig) ( value index -- ) *locsig* -rot swap locsig drop ;
+: (end-run) ( value index -- ) *locsig* -rot swap locsig drop ;
 set-current
 \ RUN/LOOP is only a simple replacement of
 \ start dur TIMES->SAMPLES ?DO ... LOOP
@@ -397,9 +416,9 @@ set-current
 \ 
 \ 0.0 1.0                   RUN            ... LOOP
 \ 0.0 1.0 #{ :degree 45.0 } RUN-INSTRUMENT ... END-RUN
-: run            ( start dur      -- ) postpone times->samples           postpone ?do  ; immediate
-: run-instrument ( start dur args -- ) postpone (make-locsig)            postpone run  ; immediate
-: end-run        ( sample         -- ) postpone r@ postpone (set-locsig) postpone loop ; immediate
+: run            ( start dur      -- ) postpone (run)                 postpone ?do  ; immediate
+: run-instrument ( start dur args -- ) postpone (run-instrument)      postpone ?do  ; immediate
+: end-run        ( sample         -- ) postpone r@ postpone (end-run) postpone loop ; immediate
 previous
 
 : reverb-info ( caller in-chans out-chans -- )
@@ -408,7 +427,7 @@ previous
 
 \ === Helper functions for instruments ===
 hide
-: ins-info ( ins-name -- ) *notehook* if *notehook* execute else drop then ;
+: ins-info ( ins-name -- ) to *clm-current-instrument* ;
 : event-info ( ev-name -- )
   { ev-name }
   *verbose* if $" \tevent: %s" '( ev-name ) clm-message then
@@ -425,21 +444,6 @@ set-current
 ;
 : ;event ( -- ) postpone ; ; immediate
 previous
-
-\ === Argument Scanning ===
-: get-args ( key def -- val2 )
-  swap { key }
-  depth 0 ?do
-    i 1+ pick keyword? if
-      i 1+ pick key = if
-	i roll drop		\ drop keyword
-	i 1- roll		\ value on top of stack
-	nip			\ drop default value
-	leave
-      then
-    then
-  loop
-;
 
 \ === Playing and Recording Sound Files ===
 : find-file ( file -- fname|#f )
@@ -580,23 +584,25 @@ $" with-sound error" create-exception with-sound-error
 #() value *ws-args*
 
 : clm-mix ( keyword-args -- )
-  :output      #f get-args { outfile }
-  :filename    #f get-args { infile }
-  :output-frame 0 get-args { outloc }
-  :frames      #f get-args { frames }
-  :input-frame  0 get-args { inloc }
-  :scaler     1.0 get-args { scaler }
+  doc" ( infile :key output #f output-frame 0 frames #f input-frame 0 scaler 1.0 -- )  \
+Mixes files in with-sound's *output* generator.\n\
+\"oboe.snd\" clm-mix\n\
+Mixes oboe.snd in *output* at *output*'s location 0 from oboe.snd's location 0 on.  \
+The whole oboe.snd file will be mixed in because :frames was not specified."
+  <{ infile :key output #f output-frame 0 frames #f input-frame 0 scaler 1.0 }>
   0  { chans }
   #f { mx }
   *output* mus-output? { outgen }
-  outfile false? if
+  output unless
     outgen if
       *output* mus-channels  to chans
-      *output* mus-file-name to outfile
+      *output* mus-file-name to output
     else
-      'with-sound-error '( get-func-name $" *output* gen or :output required" ) fth-throw
+      'with-sound-error $" %s: *output* gen or :output required" '( get-func-name ) fth-raise
     then
   then
+  infile find-file to infile
+  infile false? if 'file-not-found $" cannot find %S" '( infile ) fth-raise then
   frames infile mus-sound-frames || to frames
   outgen if *output* mus-close drop then
   chans       0>
@@ -606,14 +612,14 @@ $" with-sound error" create-exception with-sound-error
     chans  chans dup * 0 ?do scaler loop make-mixer to mx
     s restore-stack
   then
-  outfile ( outfile )
-  infile  ( infile )
-  outloc  ( outloc )
-  frames  ( frames )
-  inloc   ( inloc )
-  mx      ( mixer )
-  #f      ( envs )    mus-mix drop
-  outgen if outfile continue-sample->file to *output* then
+  output        ( outfile )
+  infile        ( infile )
+  output-frame  ( outloc )
+  frames        ( frames )
+  input-frame   ( inloc )
+  mx            ( mixer )
+  #f            ( envs )    mus-mix drop
+  outgen if output continue-sample->file to *output* then
 ;
 
 hide
@@ -629,6 +635,7 @@ hide
       s restore-stack
     else
       drop
+      fname open-sound to snd
     then
   then
   snd
@@ -649,7 +656,7 @@ hide
     ws :output hash-ref mus-sound-maxamp { smax }
     0.0 smax length 1 ?do smax i list-ref fabs fmax 2 +loop { mx }
     mx f0<> if
-      :filename ws :output hash-ref :scaler scale mx f/ clm-mix
+      ws :output hash-ref :scaler scale mx f/ clm-mix
     then
   then
 ;
@@ -662,7 +669,7 @@ hide
     ws :channels hash-ref 0 ?do scale 0 len snd i ( chn ) #f scale-channel drop loop
     snd save-sound drop
   else
-    :filename ws :output hash-ref :scaler scale clm-mix
+    ws :output hash-ref :scaler scale clm-mix
   then
 ;
 : ws-before-output ( ws -- )
@@ -760,7 +767,7 @@ hide
 ;
 : set-args ( key def ws -- )
   { key def ws }
-  key def get-args ws key rot hash-set!
+  key def get-optkey ws key rot hash-set!
 ;
 set-current
 : with-sound-default-args ( keyword-args -- ws )
@@ -846,13 +853,14 @@ set-current
   ws :timer make-timer hash-set!
   ws :timer hash-ref start-timer
   \ compute ws body
-  body-xt #t nil fth-catch if
-    stack-reset
-    *output* mus-close drop
-    *reverb* if *reverb* mus-close drop then
-    ws ws-after-output drop
-    #f #f #f fth-raise			\ re-raises last (catched) exception again
-  then
+  body-xt execute
+  \ body-xt #t nil fth-catch if
+  \   stack-reset
+  \   *output* mus-close drop
+  \   *reverb* if *reverb* mus-close drop then
+  \   ws ws-after-output drop
+  \   #f #f #f fth-raise			\ re-raises last (catched) exception again
+  \ then
   rev? if
     *reverb* mus-close drop
     ws :reverb-file-name hash-ref undef make-file->sample to *reverb*
@@ -861,13 +869,14 @@ set-current
     then
     \ compute ws reverb
     ws :reverb-data hash-ref each end-each ( push reverb arguments on stack )
-    ws :reverb hash-ref #t nil fth-catch if
-      stack-reset
-      *output* mus-close drop
-      *reverb* mus-close drop
-      ws ws-after-output drop
-      #f #f #f fth-raise		\ re-raises last (catched) exception again
-    then
+    ws :reverb hash-ref execute
+    \ ws :reverb hash-ref #t nil fth-catch if
+    \   stack-reset
+    \   *output* mus-close drop
+    \   *reverb* mus-close drop
+    \   ws ws-after-output drop
+    \   #f #f #f fth-raise		\ re-raises last (catched) exception again
+    \ then
     *reverb* mus-close drop
   then
   *output* mus-close drop
@@ -925,7 +934,7 @@ See with-sound for a full keyword list.\n\
 :play #t :player \"sndplay\" \"test.fsm\" clm-load drop"
   { output }
   output file-exists? if
-    :verbose *clm-verbose* get-args { verbose }
+    :verbose *clm-verbose* get-optkey { verbose }
     verbose if $" loading %S" _ '( output ) clm-message then
     output ['] file-eval :verbose verbose with-sound ( ws )
   else
@@ -935,15 +944,16 @@ See with-sound for a full keyword list.\n\
 
 hide
 : with-current-sound ( body-xt keyword-args -- )
-  :output     fth-tempnam get-args { infile }
-  :offset     0.0         get-args { offset }
-  :scaled-to  #f          get-args { scl-to }
-  :scaled-by  #f          get-args { scl-by }
-  :output    infile
-  :scaled-to scl-to
-  :scaled-by scl-by with-sound drop
-  :filename infile :output-frame offset seconds->samples clm-mix
-  infile file-delete
+  <{ :key
+     output fth-tempnam
+     offset 0.0
+     scaled-to #f
+     scaled-by #f }>
+  :output    output
+  :scaled-to scaled-to
+  :scaled-by scaled-by with-sound drop
+  output :output-frame offset seconds->samples clm-mix
+  output file-delete
 ;
 set-current
 : scaled-to   ( body-xt keyword-args scl  -- ) { scl }  :scaled-to scl with-current-sound ;
@@ -997,7 +1007,7 @@ lambda: ( -- )\n\
   snd-time mix-time b< || if
     mix-file ['] file-eval args each end-each :output snd-file with-sound drop
   then
-  :filename snd-file :output-frame start seconds->samples clm-mix
+  snd-file :output-frame start seconds->samples clm-mix
 ;
 
 : sound-let ( ws-xt-lst body-xt -- )
@@ -1010,8 +1020,8 @@ These temporary files will be deleted after execution of BODY-XT.\n\
 '( '( '( :reverb ' jc-reverb ) 0.0 1 220 0.2 ' fm-violin )\n\
    '( '()                      0.5 1 440 0.3 ' fm-violin ) ) ( ws-xt-lst )\n\
 lambda: { tmp1 tmp2 }\n\
-  :output tmp1 :filename tmp2 clm-mix\n\
-  :filename tmp1 clm-mix\n\
+  tmp1 :output tmp2 clm-mix\n\
+  tmp1 clm-mix\n\
 ; ( body-xt ) ' sound-let with-sound drop"
   { ws-xt-lst body-xt }
   ws-xt-lst list? ws-xt-lst 1 running-word $" a list" assert-type

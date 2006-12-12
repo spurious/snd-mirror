@@ -3,10 +3,26 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Sun Aug 20 00:59:54 CEST 2006
+\ Changed: Mon Dec 11 23:07:15 CET 2006
 
 \ Commentary:
-
+\ 
+\ Snd-7 compatibility
+\ 
+\ color-map constants
+\ mus-a0, set-mus-a0, etc
+\ back-or-forth-graph 			 ( count -- lst )
+\ forward-graph       			 ( count -- lst )
+\ backward-graph      			 ( count -- lst )
+\ back-or-forth-mix   			 ( count snd chn -- mx )
+\ forward-mix         			 ( count snd chn -- mx )
+\ backward-mix        			 ( count snd chn -- mx )
+\ back-or-forth-mark  			 ( count snd chn -- mk )
+\ forward-mark        			 ( count snd chn -- mk )
+\ backward-mark       			 ( count snd chn -- mk )
+\ mus-bank            			 ( gens amps in1 in2 -- val )
+\ oscil-bank          			 ( amps gens in1 in2 -- val )
+\
 \ sound-property       		  	 ( key snd -- value|#f )
 \ set-sound-property   		  	 ( key val snd -- )
 \ set-sound-property-save-state-ignore   ( key snd -- )
@@ -31,6 +47,172 @@
 
 require clm
 require examp
+
+\ === Snd-7 compatibility stuff ===
+: mus-a0     ( gen     -- val ) 0 mus-xcoeff ;
+: set-mus-a0 ( gen val -- val ) 0 swap set-mus-xcoeff ;
+: mus-a1     ( gen     -- val ) 1 mus-xcoeff ;
+: set-mus-a1 ( gen val -- val ) 1 swap set-mus-xcoeff ;
+: mus-a2     ( gen     -- val ) 2 mus-xcoeff ;
+: set-mus-a2 ( gen val -- val ) 2 swap set-mus-xcoeff ;
+: mus-b1     ( gen     -- val ) 1 mus-ycoeff ;
+: set-mus-b1 ( gen val -- val ) 1 swap set-mus-ycoeff ;
+: mus-b2     ( gen     -- val ) 2 mus-ycoeff ;
+: set-mus-b2 ( gen val -- val ) 2 swap set-mus-ycoeff ;
+
+: back-or-forth-graph ( count -- lst )
+  { count }
+  sounds if
+    #f snd-snd { cursnd }
+    #f snd-chn { curchn }
+    0 { curpos }
+    0 { pos }
+    #() { sndlst }
+    sounds each { snd }
+      snd channels 0 ?do
+	cursnd snd =
+	curchn i = && if pos to curpos then
+	pos 1+ to pos
+	sndlst '( snd i ) array-push drop
+      loop
+    end-each
+    curpos count + sndlst object-length mod { newpos }
+    sndlst newpos array-ref { vals }
+    vals car     set-selected-sound   drop
+    vals cadr #f set-selected-channel drop
+    '( selected-sound #f selected-channel )
+  else
+    nil
+  then
+;
+: forward-graph  ( count -- lst )        back-or-forth-graph ;
+: backward-graph ( count -- lst ) negate back-or-forth-graph ;
+
+hide
+: sort-mix-pos ( a b -- n )
+  { a b }
+  a mix-position { am }
+  b mix-position { bm }
+  am bm < if
+    1
+  else am bm > if
+      -1
+    else
+      0
+    then
+  then
+;
+set-current
+: back-or-forth-mix ( count snd chn -- mx|#f )
+  { count snd chn }
+  snd chn mixes { mx }
+  count 0<> mx null? not && if
+    mx length 1 = if
+      mx car mix-position snd chn #f set-cursor	drop
+      mx car				\ retval
+    else
+      mx ['] sort-mix-pos object-sort array->list { sorted-mx }
+      snd chn #f cursor { pos }
+      count 0> if -1 else 0 then { curpos }
+      pos sorted-mx car mix-position >= if
+	sorted-mx each { m }
+	  count 0>
+	  pos m mix-position < &&
+	  count 0<
+	  pos m mix-position <= && || if
+	    leave
+	  else
+	    curpos 1+ to curpos
+	  then
+	end-each
+      then
+      curpos count + mx length mod to curpos
+      sorted-mx curpos object-ref { val }
+      val mix-position snd chn #f set-cursor drop
+      val				\ retval
+    then
+  else
+    #f
+  then
+;
+previous
+: forward-mix ( count snd chn -- mx|#f )
+  { count snd chn }
+  count snd snd-snd chn snd-chn back-or-forth-mix
+;
+: backward-mix ( count snd chn -- mx|#f )
+  { count snd chn }
+  count negate snd snd-snd chn snd-chn back-or-forth-mix
+;
+
+hide
+: sort-mark-sample ( a b -- n )
+  { a b }
+  a #f mark-sample { am }
+  b #f mark-sample { bm }
+  am bm < if
+    1
+  else am bm > if
+      -1
+    else
+      0
+    then
+  then
+;
+set-current
+: back-or-forth-mark ( count snd chn -- mk|#f )
+  { count snd chn }
+  snd chn #f marks { mk }
+  count 0<>
+  mk empty? not && if
+    mk length 1 = if
+      mk car #f mark-sample snd chn #f set-cursor drop
+      mk car				\ retval
+    else
+      mk ['] sort-mark-sample object-sort array->list { sorted-mk }
+      snd chn #f cursor { pos }
+      count 0> if -1 else 0 then { curpos }
+      pos sorted-mk car #f mark-sample >= if
+	sorted-mk each { m }
+	  count 0>
+	  pos m #f mark-sample < &&
+	  count 0<
+	  pos m #f mark-sample <= && || if
+	    leave
+	  else
+	    curpos 1+ to curpos
+	  then
+	end-each
+      then
+      curpos count + mk length mod to curpos
+      sorted-mk curpos object-ref { val }
+      val mark-sample snd chn #f set-cursor
+      val				\ retval
+    then
+  else
+    #f
+  then
+;
+previous
+: forward-mark ( count snd chn -- mk|#f )
+  { count snd chn }
+  count snd snd-snd chn snd-chn back-or-forth-mark
+;
+: backward-mark ( count snd chn -- mk|#f )
+  { count snd chn }
+  count negate snd snd-snd chn snd-chn back-or-forth-mark
+;
+
+: mus-bank ( gens amps in1 in2 -- sum )
+  { gens amps in1 in2 }
+  0.0					\ sum
+  gens each ( gen ) in1 i object-ref in2 i object-ref mus-run amps i vct-ref f* ( sum ) f+ end-each
+;
+: oscil-bank ( amps gens in1 in2 -- sum )
+  { amps gens in1 in2 }
+  0.0					\ sum
+  gens each ( gen ) in1 i object-ref in2 i object-ref oscil amps i vct-ref f* ( sum ) f+ end-each
+;
 
 \ === PROPERTIES ===
 

@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Thu Dec 07 05:18:56 CET 2006
+\ Changed: Tue Dec 12 01:03:22 CET 2006
 
 \ Commentary:
 
@@ -11,33 +11,26 @@
 \ close-sound-extend  ( snd -- )
 \ snd-snd             ( snd|#f -- snd )
 \ snd-chn             ( chn|#f -- chn )
-
-\ Snd-7 compatibility
-\ color-map constants
-\ mus-a0, set-mus-a0, etc
-\ back-or-forth-graph ( count -- lst )
-\ forward-graph       ( count -- lst )
-\ backward-graph      ( count -- lst )
-\ back-or-forth-mix   ( count snd chn -- mx )
-\ forward-mix         ( count snd chn -- mx )
-\ backward-mix        ( count snd chn -- mx )
-\ back-or-forth-mark  ( count snd chn -- mk )
-\ forward-mark        ( count snd chn -- mk )
-\ backward-mark       ( count snd chn -- mk )
-\ mus-bank            ( gens amps in1 in2 -- val )
-\ oscil-bank          ( amps gens in1 in2 -- val )
 \
 \ examp.(scm|rb)
+\ 
 \ selection-rms       ( -- val )
-\ region-rms          ( n -- val )
-\ window-samples      ( snd chn -- vct )
+\ region-rms          ( :optional n -- val )
+\ window-samples      ( :optional snd chn -- vct )
 \ display-energy      ( -- proc; snd chn self -- val )
 \ display-db          ( -- proc; snd chn self -- val )
-\
-\ comb-filter-1       ( scaler size -- proc; x self -- res )
+\ fft-peak            ( snd chn -- pk )
 \ comb-filter         ( scaler size -- proc; x self -- res )
 \ comb-chord          ( scaler size amp -- proc; x self -- res )
-\ comb-chord-1        ( scaler size amp interval-one interval-two -- proc; x self -- res )
+\ zcomb               ( scaler size pm -- proc; x self -- val )
+\ notch-filter        ( scaler size -- proc; x self -- val )
+\ formant-filter      ( radius frequency -- proc; x self -- val )
+\ formants            ( r1 f1 r2 f2 r3 f3 -- proc; x self -- val )
+\ moving-formant      ( radius move -- proc; x self -- val )
+\ osc-formant         ( radius bases amounts freqs -- proc; x self -- val )
+\
+\ zero+               ( -- proc; n self -- val )
+\ next-peak           ( -- proc; n self -- val )
 \
 \ make-moog-filter    ( freq Q -- gen )
 \ moog-frequecy@      ( gen -- frq )
@@ -48,7 +41,6 @@
 
 require clm
 require env
-require rgb
 
 \ #( '( snd0 chn0 ) '( snd0 chn1 ) ... )
 : all-chans ( -- array-of-lists )
@@ -113,173 +105,6 @@ require rgb
   then
 ;
 
-\
-\ Snd-7 compatibility stuff
-\ 
-
-: mus-a0 ( gen -- val ) 0 mus-xcoeff ;
-: set-mus-a0 ( gen val -- val ) 0 swap set-mus-xcoeff ;
-: mus-a1 ( gen -- val ) 1 mus-xcoeff ;
-: set-mus-a1 ( gen val -- val ) 1 swap set-mus-xcoeff ;
-: mus-a2 ( gen -- val ) 2 mus-xcoeff ;
-: set-mus-a2 ( gen val -- val ) 2 swap set-mus-xcoeff ;
-: mus-b1 ( gen -- val ) 1 mus-ycoeff ;
-: set-mus-b1 ( gen val -- val ) 1 swap set-mus-ycoeff ;
-: mus-b2 ( gen -- val ) 2 mus-ycoeff ;
-: set-mus-b2 ( gen val -- val ) 2 swap set-mus-ycoeff ;
-
-: back-or-forth-graph ( count -- lst )
-  { count }
-  sounds if
-    #f snd-snd { cursnd }
-    #f snd-chn { curchn }
-    0 { curpos }
-    0 { pos }
-    #() { sndlst }
-    sounds each { snd }
-      snd channels 0 ?do
-	cursnd snd =
-	curchn i = && if pos to curpos then
-	pos 1+ to pos
-	sndlst '( snd i ) array-push drop
-      loop
-    end-each
-    curpos count + sndlst object-length mod { newpos }
-    sndlst newpos array-ref { vals }
-    vals car     set-selected-sound   drop
-    vals cadr #f set-selected-channel drop
-    '( selected-sound #f selected-channel )
-  else
-    nil
-  then
-;
-: forward-graph  ( count -- lst )        back-or-forth-graph ;
-: backward-graph ( count -- lst ) negate back-or-forth-graph ;
-
-hide
-: sort-mix-pos ( a b -- n )
-  { a b }
-  a mix-position { am }
-  b mix-position { bm }
-  am bm < if
-    1
-  else am bm > if
-      -1
-    else
-      0
-    then
-  then
-;
-set-current
-: back-or-forth-mix ( count snd chn -- mx|#f )
-  { count snd chn }
-  snd chn mixes { mx }
-  count 0<> mx null? not && if
-    mx length 1 = if
-      mx car mix-position snd chn #f set-cursor	drop
-      mx car				\ retval
-    else
-      mx ['] sort-mix-pos object-sort array->list { sorted-mx }
-      snd chn #f cursor { pos }
-      count 0> if -1 else 0 then { curpos }
-      pos sorted-mx car mix-position >= if
-	sorted-mx each { m }
-	  count 0>
-	  pos m mix-position < &&
-	  count 0<
-	  pos m mix-position <= && || if
-	    leave
-	  else
-	    curpos 1+ to curpos
-	  then
-	end-each
-      then
-      curpos count + mx length mod to curpos
-      sorted-mx curpos object-ref { val }
-      val mix-position snd chn #f set-cursor drop
-      val				\ retval
-    then
-  else
-    #f
-  then
-;
-previous
-: forward-mix ( count snd chn -- mx|#f )
-  { count snd chn }
-  count snd snd-snd chn snd-chn back-or-forth-mix
-;
-: backward-mix ( count snd chn -- mx|#f )
-  { count snd chn }
-  count negate snd snd-snd chn snd-chn back-or-forth-mix
-;
-
-hide
-: sort-mark-sample ( a b -- n )
-  { a b }
-  a #f mark-sample { am }
-  b #f mark-sample { bm }
-  am bm < if
-    1
-  else am bm > if
-      -1
-    else
-      0
-    then
-  then
-;
-set-current
-: back-or-forth-mark ( count snd chn -- mk|#f )
-  { count snd chn }
-  snd chn #f marks { mk }
-  count 0<>
-  mk empty? not && if
-    mk length 1 = if
-      mk car #f mark-sample snd chn #f set-cursor drop
-      mk car				\ retval
-    else
-      mk ['] sort-mark-sample object-sort array->list { sorted-mk }
-      snd chn #f cursor { pos }
-      count 0> if -1 else 0 then { curpos }
-      pos sorted-mk car #f mark-sample >= if
-	sorted-mk each { m }
-	  count 0>
-	  pos m #f mark-sample < &&
-	  count 0<
-	  pos m #f mark-sample <= && || if
-	    leave
-	  else
-	    curpos 1+ to curpos
-	  then
-	end-each
-      then
-      curpos count + mk length mod to curpos
-      sorted-mk curpos object-ref { val }
-      val mark-sample snd chn #f set-cursor
-      val				\ retval
-    then
-  else
-    #f
-  then
-;
-previous
-: forward-mark ( count snd chn -- mk|#f )
-  { count snd chn }
-  count snd snd-snd chn snd-chn back-or-forth-mark
-;
-: backward-mark ( count snd chn -- mk|#f )
-  { count snd chn }
-  count negate snd snd-snd chn snd-chn back-or-forth-mark
-;
-
-: mus-bank { gens amps in1 in2 - sum }
-  0.0					\ sum
-  gens each ( gen ) in1 i object-ref in2 i object-ref mus-run amps i vct-ref f* ( sum ) f+ end-each
-;
-: oscil-bank { amps gens in1 in2 -- sum }
-  0.0					\ sum
-  gens each ( gen ) in1 i object-ref in2 i object-ref oscil amps i vct-ref f* ( sum ) f+ end-each
-;
-
 \ === examp.scm|rb
 \ 
 \ this mainly involves keeping track of the current sound/channel
@@ -295,8 +120,9 @@ previous
   then
 ;
 
-: region-rms { reg -- val }
-  doc" ( n -- val )  Returns rms of region N's data (chan 0)."
+: region-rms ( :optional n=0 -- val )
+  doc" ( :optional n=0 -- val )  Returns rms of region N's data (chan 0)."
+  <{ :optional reg 0 }>
   reg region? if
     0 0 reg region->vct { data }
     data dup dot-product data length f/ fsqrt
@@ -305,17 +131,19 @@ previous
   then
 ;
 
-: window-samples { snd chn -- v }
-  doc" ( snd chn -- vct )  Samples in SND channel CHN in current graph window."
+: window-samples ( :optional snd chn -- v )
+  doc" ( :optional snd chn -- vct )  Samples in SND channel CHN in current graph window."
+  <{ :optional snd #f chn #f }>
   snd chn left-sample { wl }
   snd chn right-sample { wr }
-  wl  wr wl - 1+  snd chn undef channel->vct
+  wl  wr wl - 1+  snd chn #f channel->vct
 ;
 
-: display-energy { snd chn -- v }
+: display-energy ( snd chn -- v )
   doc" ( snd chn -- val )  \
 A lisp-graph-hook function to display the time domain data as energy (squared).\n\
 list-graph-hook ' display-energy 2 make-proc add-hook!"
+  { snd chn }
   snd chn undef undef undef make-graph-data dup list? if cadr then { data }
   data if
     snd chn left-sample { ls }
@@ -329,11 +157,12 @@ list-graph-hook ' display-energy 2 make-proc add-hook!"
 ;
 
 hide
-: db-calc { val -- r } val 0.001 f< if -60.0 else 20.0 val flog f* then ;
+: db-calc ( val -- r ) { val } val 0.001 f< if -60.0 else 20.0 val flog10 f* then ;
 set-current
-: display-db { snd chn -- v }
+: display-db ( snd chn -- v )
   doc" ( snd chn -- val )  A lisp-graph-hook function to display the time domain data in dB.\n\
 list-graph-hook ' display-db 2 make-proc add-hook!"
+  { snd chn }
   snd chn undef undef undef make-graph-data dup list? if cadr then { data }
   data if
     snd chn left-sample { ls }
@@ -348,27 +177,26 @@ list-graph-hook ' display-db 2 make-proc add-hook!"
 ;
 previous
 
+: fft-peak ( snd chn scaler -- pk )
+  doc" ( snd chn dummy -- pk )  returns the peak spectral magnitude"
+  { snd chn scaler }
+  snd chn transform-graph?
+  snd chn transform-graph-type graph-once = && if
+    snd chn #f transform->vct vct-peak f2* snd chn transform-size f/
+    object->string snd #f report-in-minibuffer
+  else
+    #f
+  then
+;
+\ after-transform-hook ' fft-peak 3 make-proc add-hook!
+
 \ --- comb-filter ---
 
-: comb-filter-1 { scaler size -- proc }
+: comb-filter ( scaler size -- proc; x self -- res )
   doc" ( scaler size -- proc; x self -- res )  \
-Returns a comb-filter ready for map-channel etc: 0.8 32 comb-filter-1 map-channel"
-  lambda-create size 0.0 make-vct , scaler , latestxt 1 make-proc
- does> ( x self -- res )
-  { x self }
-  self @ { delay-line }
-  self cell+ @ { scaler }
-  delay-line dup cycle-start@ vct-ref { res }
-  delay-line scaler res f* x f+ cycle-set!
-  res
-;
-
-\ the same thing using the CLM module is:
-
-: comb-filter { scaler size -- proc }
-  doc" ( scaler size -- proc; x self -- res )  \
-Returns a comb-filter ready for map-channel etc: 0.8 32 comb-filter-1 map-channel.  \
+Returns a comb-filter ready for map-channel etc: 0.8 32 comb-filter map-channel.  \
 If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
+  { scaler size }
   lambda-create scaler size make-comb , latestxt 1 make-proc
  does> ( x self -- res )
   { x self }
@@ -377,9 +205,10 @@ If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
 
 \ by using filters at harmonically related sizes, we can get chords:
 
-: comb-chord { scaler size amp -- proc }
+: comb-chord ( scaler size amp -- proc; x self -- res )
   doc" ( scaler size amp -- proc; x self -- res )  \
 Returns a set of harmonically-related comb filters: 0.95 100 0.3 comb-chord map-channel"
+  { scaler size amp }
   scaler size make-comb { c1 }
   scaler size 0.75 f* f>s make-comb { c2 }
   scaler size 1.2  f* f>s make-comb { c3 }
@@ -393,21 +222,113 @@ Returns a set of harmonically-related comb filters: 0.95 100 0.3 comb-chord map-
   c1 x 0.0 comb c2 x 0.0 comb c3 x 0.0 comb f+ f+ amp f*
 ;
 
-: comb-chord-1 { scaler size amp interval-one interval-two -- proc }
-  doc" ( scaler size amp interval-one interval-two -- proc; x self -- res )  \
-Returns a set of harmonically-related comb filters:\n\
-0.95 100 0.3 0.75 1.2 comb-chord-1 map-channel"
-  scaler size make-comb { c1 }
-  scaler size interval-one f* f>s make-comb { c2 }
-  scaler size interval-two f* f>s make-comb { c3 }
-  lambda-create amp , c1 , c2 , c3 , latestxt 1 make-proc
- does> ( x self -- res )
-  { x self }
-  self @ { amp }
-  self 1 cells + @ { c1 }
-  self 2 cells + @ { c2 }
-  self 3 cells + @ { c3 }
-  c1 x 0.0 comb c2 x 0.0 comb c3 x 0.0 comb f+ f+ amp f*
+\ ;;; or change the comb length via an envelope:
+
+: zcomb ( scaler size pm -- proc; x self -- val )
+  doc" ( scaler size pm -- proc; x self -- val )  \
+returns a comb filter whose length varies according to an envelope:\n\
+0.8 32 '( 0 0 1 10 ) zcomb map-channel "
+  { scaler size pm }
+  :size size :max-size pm 0.0 max-envelope 1.0 f+ size f+ floor f>s make-comb { cmb }
+  :envelope pm :end #f #f #f frames make-env { penv }
+  lambda-create cmb , penv , latestxt 1 make-proc
+ does> { x self -- val }
+  self @ ( cmb ) x self cell+ @ ( penv ) env comb
+;
+
+: notch-filter ( scaler size -- proc; x self -- val )
+  doc" ( scaler size -- proc; x self -- val )  \
+returns a notch-filter: 0.8 32 notch-filter map-channel"
+  make-notch lambda-create , latestxt 1 make-proc
+ does> { x self -- val }
+  self @ ( cmd ) x 0.0 notch
+;
+
+: formant-filter ( radius frequency -- proc; x self -- val )
+  doc" ( radius frequency -- proc; x self -- val )  \
+returns a formant generator: 0.99 2400 formant-filter map-channel.  \
+Faster is:  0.99 2400 make-formant filter-sound"
+  make-formant lambda-create , latestxt 1 make-proc
+ does> { x self -- val }
+  self @ ( frm ) x formant
+;
+
+: formants ( r1 f1 r2 f2 r3 f3 -- proc; x self -- val )
+  doc" ( r1 f1 r2 f2 r3 f3 -- proc; x self -- val )  \
+returns 3 formant filters in parallel: 0.99 900 0.98 1800 0.99 2700 formants map-channel"
+  { r1 f1 r2 f2 r3 f3 }
+  r1 f1 make-formant { fr1 }
+  r2 f2 make-formant { fr2 }
+  r3 f3 make-formant { fr3 }
+  lambda-create fr1 , fr2 , fr3 , latestxt 1 make-proc
+ does> { x self -- val }
+  self           @ x formant
+  self 1 cells + @ x formant f+
+  self 2 cells + @ x formant f+
+;
+
+: moving-formant ( radius move -- proc; x self -- val )
+  doc" ( radius move -- proc; x self -- val )  \
+returns a time-varying (in frequency) formant filter:\n\
+0.99 '( 0 1200 1 2400 ) moving-formant map-channel"
+  { radius move }
+  radius move cadr make-formant { frm }
+  :envelope move :end #f #f #f frames make-env { menv }
+  lambda-create frm , menv , latestxt 1 make-proc
+ does> { x self -- val }
+  self @ ( frm ) x formant ( ret )
+  self @ ( frm ) self cell+ @ ( menv ) env set-mus-frequency drop
+  ( ret )
+;
+
+: osc-formant ( radius bases amounts freqs -- proc; x self -- val )
+  doc" ( radius move -- proc; x self -- val )  \
+returns a time-varying (in frequency) formant filter:\n\
+0.99 '( 0 1200 1 2400 ) moving-formant map-channel"
+  { radius bases amounts freqs }
+  bases vct-length { len }
+  len make-array map! radius bases i vct-ref make-formant end-map { frms }
+  len make-array map!        freqs i vct-ref make-oscil   end-map { oscs }
+  lambda-create frms , amounts , oscs , bases , latestxt 1 make-proc
+ does> { x self -- val }
+  self           @ { frms }
+  self 1 cells + @ { amounts }
+  self 2 cells + @ { oscs }
+  self 3 cells + @ { bases }
+  0.0 ( val )
+  frms each { frm }
+    frm x formant f+ ( val += ... )
+    frm bases i vct-ref
+    amounts i vct-ref  oscs i array-ref 0.0 0.0 oscil  f*  f+
+    set-mus-frequency drop
+  end-each
+  ( val )
+;
+
+: zero+ ( -- proc; n self -- val )
+  doc" ( -- proc; n self -- val )  \
+finds the next positive-going zero crossing (if searching forward) (for use with C-s)"
+  lambda-create 0.0 ( lastn ) , latestxt 1 make-proc
+ does> { n self -- val }
+  self @ ( lastn ) f0<  n f0>= && -1 && ( rtn )
+  n self ! ( lastn = n )
+  ( rtn )
+;
+
+: next-peak ( -- proc; n self -- val )
+  doc" ( -- proc; n self -- val )  \
+finds the next max or min point in the time-domain waveform (for use with C-s)"
+  lambda-create ( last0 ) #f , ( last1 ) #f , latestxt 1 make-proc
+ does> { n self -- val }
+  self       @ { last0 }
+  self cell+ @ { last1 }
+  last0 number?
+  last0 last1 f< last1 n f> &&
+  last0 last1 f> last1 n f< && || &&
+  -1 && ( rtn )
+  last1 self !   ( last0 = last1 )
+  n self cell+ ! ( last1 = n )
+  ( rtn )
 ;
 
 \ === Moog Filter ===
@@ -475,9 +396,10 @@ set-current
   frq mus-srate f2/ f/ moog-freqtable 1.0 envelope-interp gen moog-fc !
 ;
 
-: make-moog-filter { freq Q -- gen }
+: make-moog-filter ( freq Q -- gen )
   doc" ( freq Q -- gen )  Makes a new moog-filter generator.  \
 FREQ is the cutoff in Hz, Q sets the resonance: 0 = no resonance, 1: oscillates at FREQUENCY."
+  { freq Q }
   moog-filter% %alloc { gen }
   freq           gen moog-freq !
   Q              gen moog-Q !
@@ -506,7 +428,7 @@ FREQ is the cutoff in Hz, Q sets the resonance: 0 = no resonance, 1: oscillates 
 previous
 
 \ 500.0 0.1 make-moog-filter value gen
-\ lambda: ( y -- val ) gen swap moog-filter ; 1 make-proc map-channel
+\ 1 lambda: ( y -- val ) gen swap moog-filter ;proc map-channel
 \ gen 1.0 moog-filter
 
 \ examp.fs ends here

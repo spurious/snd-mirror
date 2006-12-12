@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Wed Oct 11 23:07:37 CEST 2006
+\ Changed: Mon Dec 11 22:43:11 CET 2006
 
 \ Commentary:
 \
@@ -200,13 +200,11 @@ mark-click-hook ' mark-click-info 1 make-proc add-hook!"
 ;
 
 0 [if]
-  output-comment-hook lambda: { str }
-    selected-sound marks->string
-  ; 1 make-proc add-hook!
-  after-open-hook lambda: { snd }
+  output-comment-hook 1 lambda: { str } selected-sound marks->string ;proc add-hook!
+  after-open-hook 1 lambda: { snd }
     snd comment { str }
     str ['] string-eval #t nil fth-catch if drop ( str ) then
-  ; 1 make-proc add-hook!
+  ;proc add-hook!
 [then]
 
 \ marks.fs ends here

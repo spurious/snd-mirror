@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Wed Dec 21 17:37:13 CET 2005
-\ Changed: Wed Oct 11 23:07:56 CEST 2006
+\ Changed: Mon Dec 11 22:43:35 CET 2006
 
 \ Commentary:
 \ 
@@ -99,7 +99,7 @@ make-hash value saved-peak-info
 set-current
 
 close-hook ' save-peak-env-info 1 make-proc add-hook!
-exit-hook lambda: ( -- ) sounds each save-peak-env-info end-each ; 0 make-proc add-hook!
+exit-hook 0 lambda: ( -- ) sounds each save-peak-env-info end-each ;proc add-hook!
 
 previous
 

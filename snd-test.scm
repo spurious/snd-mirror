@@ -13,25 +13,25 @@
 ;;;  test 10: marks                             [25973]
 ;;;  test 11: dialogs                           [26862]
 ;;;  test 12: extensions                        [27156]
-;;;  test 13: menus, edit lists, hooks, etc     [27610]
-;;;  test 14: all together now                  [29158]
-;;;  test 15: chan-local vars                   [30233]
-;;;  test 16: regularized funcs                 [31563]
-;;;  test 17: dialogs and graphics              [35978]
-;;;  test 18: enved                             [36067]
-;;;  test 19: save and restore                  [36087]
-;;;  test 20: transforms                        [37921]
-;;;  test 21: new stuff                         [39754]
-;;;  test 22: run                               [41713]
-;;;  test 23: with-sound                        [47394]
-;;;  test 24: user-interface                    [49873]
-;;;  test 25: X/Xt/Xm                           [53489]
-;;;  test 26: Gtk                               [58079]
-;;;  test 27: GL                                [62196]
-;;;  test 28: errors                            [62320]
-;;;  test 29: Common Music                      [64426]
-;;;  test all done                              [64476]
-;;;  test the end                               [64669]
+;;;  test 13: menus, edit lists, hooks, etc     [27611]
+;;;  test 14: all together now                  [29195]
+;;;  test 15: chan-local vars                   [30270]
+;;;  test 16: regularized funcs                 [31600]
+;;;  test 17: dialogs and graphics              [36015]
+;;;  test 18: enved                             [36104]
+;;;  test 19: save and restore                  [36124]
+;;;  test 20: transforms                        [37958]
+;;;  test 21: new stuff                         [39791]
+;;;  test 22: run                               [41750]
+;;;  test 23: with-sound                        [47431]
+;;;  test 24: user-interface                    [49910]
+;;;  test 25: X/Xt/Xm                           [53526]
+;;;  test 26: Gtk                               [58116]
+;;;  test 27: GL                                [62233]
+;;;  test 28: errors                            [62357]
+;;;  test 29: Common Music                      [64463]
+;;;  test all done                              [64513]
+;;;  test the end                               [64706]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -29078,6 +29078,42 @@ EDITS: 5
 	    (close-sound ind)
 	    (if sound-changed
 		(snd-display ";deleted watcher runs anyway?")))))
+      
+      (let ((old-clip (clipping))
+	    (old-mus-clip (mus-clipping)))
+	(set! (clipping) #t)
+	(set! (mus-clipping) #t)
+	(reset-hook! clip-hook)
+	(let ((index (new-sound "test.snd" mus-next mus-bshort 22050 1 "clip-hook test" 10)))
+	  (map-channel (lambda (y) (mus-random 0.999))) ; -amp to amp
+	  (set! (sample 2) 1.0001)
+	  (set! (sample 4) -1.0)
+	  (set! (sample 6) 1.5)
+	  (set! (sample 8) -1.5)
+	  (let ((hook-called 0)
+		(vals (channel->vct 0 10 index)))
+	    (add-hook! clip-hook (lambda (val)
+				   (if (and (fneq val 1.0)
+					    (fneq val 1.5)
+					    (fneq val -1.5))
+				       (snd-display ";clip-hook called upon: ~A" val))
+				   (set! hook-called (1+ hook-called))
+				   0.0))
+	    (save-sound index)
+	    (reset-hook! clip-hook)
+	    (if (not (= hook-called 3)) (snd-display ";clip-hook called ~A times" hook-called))
+	    (close-sound index)
+	    (set! index (open-sound "test.snd"))
+	    (let ((new-vals (channel->vct 0 10 index))
+		  (fixed-vals (vct-copy vals)))
+	      (vct-set! fixed-vals 2 0.0)
+	      (vct-set! fixed-vals 6 0.0)
+	      (vct-set! fixed-vals 8 0.0)
+	      (if (not (vequal fixed-vals new-vals))
+		  (snd-display ";clip-hook results:~%    ~A~%    ~A~%    ~A" new-vals fixed-vals vals)))
+	    (close-sound index)))
+	(set! (clipping) old-clip)
+	(set! (mus-clipping) old-mus-clip))
       
       (run-hook after-test-hook 13)
       ))

@@ -1171,7 +1171,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
 		    {
 		      if (mus_clip_handler)
 			buffer[cliploc] = (*mus_clip_handler)(buffer[cliploc]);
-		      buffer[cliploc] = MUS_SAMPLE_MIN;
+		      else buffer[cliploc] = MUS_SAMPLE_MIN;
 		    }
 	    }
 	  loclim = loc + lim;
