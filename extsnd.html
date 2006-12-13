@@ -713,6 +713,17 @@ since in that case the check happens instantly.
 <tr><td colspan=3 height=16></td></tr>
 
 
+<!-- clipping -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="clipping">clipping</a></code></td>
+<td bgcolor="#f6f8ff"><code>#f</code></td></tr>
+<tr><td></td><td colspan=2>If #t, output values are clipped to fit the current sndlib sample
+representation's notion of -1.0 to just less than 1.0.  The default
+causes wrap-around which makes the out-of-range values very obvious.
+To control this action more closely, use <a href="#cliphook">clip-hook</a>.
+</td></tr>
+<tr><td colspan=3 height=16></td></tr>
+
+
 <!-- cursor-location-offset -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="cursorlocationoffset">cursor-location-offset</a></code></td>
 <td bgcolor="#f6f8ff"><code>0.05</code></td></tr>
@@ -758,17 +769,6 @@ mark play triangle.  (Some audio choices, ALSA in particular, may ignore dac-siz
 <tr><td colspan=3 height=16></td></tr>
 
 
-<!-- clipping -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="clipping">clipping</a></code></td>
-<td bgcolor="#f6f8ff"><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>If #t, output values are clipped to fit the current sndlib sample
-representation's notion of -1.0 to just less than 1.0.  The default
-causes wrap-around which makes the out-of-range values very obvious.
-To control this action more closely, use <a href="#cliphook">clip-hook</a>.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
-
-
 <!-- default-output-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="defaultoutputchans">default-output-chans</a></code></td>
 <td bgcolor="#f6f8ff"><code>1</code></td></tr>
@@ -794,24 +794,24 @@ The available output data formats are (b=big-endian, l=little, u=unsigned, short
 <tr><td colspan=3 height=16></td></tr>
 
 
-<!-- default-output-srate -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="defaultoutputsrate">default-output-srate</a></code></td>
-<td bgcolor="#f6f8ff"><code>22050</code></td></tr>
-<tr><td></td><td colspan=2>The default srate when a new or temporary file is created, 
-or a save dialog is opened.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
-
-
 <!-- default-output-header-type -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="defaultoutputheadertype">default-output-header-type</a></code></td>
 <td bgcolor="#f6f8ff"><code>mus-next</code></td></tr>
 <tr><td></td><td colspan=2>The default header type when a new file is created, 
 or a save dialog is opened. (<code>mus-next</code> stands for the NeXT/Sun sound file header).
 The available output header-types are:
-<pre onmouseover="return escape('mus-riff is our name for Microsoft wav, mus-rf64 is EBU's 64-bit RIFF-replacement header, mus-nist refers to NIST-SPHERE files, mus-next and mus-sun are the same, mus-aiff is the obsolete predecessor to mus-aifc, mus-bicsf and mus-ircam are extensions of mus-next headers, mus-raw means &quot;headerless&quot;, mus-soundfont refers to Emu\'s extension of mus-riff files, mus-voc refers to Creative Voice File, and mus-svx refers to 8SVX headers.  Many other headers are supported read-only.')">
+<pre onmouseover="return escape('mus-riff is our name for Microsoft wav, mus-rf64 is the EBU 64-bit RIFF-replacement header, mus-nist refers to NIST-SPHERE files, mus-next and mus-sun are the same, mus-aiff is the obsolete predecessor to mus-aifc, mus-bicsf and mus-ircam are extensions of mus-next headers, mus-raw means &quot;headerless&quot;, mus-soundfont refers to Emu\'s extension of mus-riff files, mus-voc refers to Creative Voice File, and mus-svx refers to 8SVX headers.  Many other headers are supported read-only.')">
     mus-next mus-aifc mus-riff mus-rf64 mus-nist mus-raw mus-ircam mus-aiff mus-soundfont mus-bicsf mus-voc mus-svx
 </pre>
+</td></tr>
+<tr><td colspan=3 height=16></td></tr>
+
+
+<!-- default-output-srate -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="defaultoutputsrate">default-output-srate</a></code></td>
+<td bgcolor="#f6f8ff"><code>22050</code></td></tr>
+<tr><td></td><td colspan=2>The default srate when a new or temporary file is created, 
+or a save dialog is opened.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
@@ -2913,39 +2913,51 @@ Forth: variable hi
 
 <!-- make-vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makevct">make-vct</a> (len (initial-element 0.0))</code></td></tr>
-<tr><td></td><td>create vct of size <i>len</i>.
+<tr><td></td><td>
+make-vct creates a vct of size <i>len</i>.
 <pre>
     :<em class=typing>(make-vct 3 0.1)</em>
     <em class=listener>#&lt;vct[len=3]: 0.100 0.100 0.100&gt;</em>
 </pre>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- sound-date->vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef>sound-data-&gt;vct</em> (sdobj (chan 0) (v #f))</code></td></tr>
-<tr><td></td><td>place sound-data data in vct, returning <i>v</i> or the new vct.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+sound-data-&gt;vct places the sound-data data in a vct, returning 'v' (if given) or a new vct.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vct">vct</a> args...</code></td></tr>
-<tr><td></td><td>list-&gt;vct with args as the list: <code>(vct 1 2 3)</code> = <code>(<a class=quiet href="#listtovct">list-&gt;vct</a> '(1 2 3))</code></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct is equivalent to list-&gt;vct with 'args' as the list: <code>(vct 1 2 3)</code> is the same as <code>(<a class=quiet href="#listtovct">list-&gt;vct</a> '(1 2 3))</code>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctp">vct?</a> (v)</code></td></tr>
-<tr><td></td><td>#t if <i>v</i> is a vct.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct? returns #t if 'v' is a vct.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-add! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctadd">vct-add!</a> (v1 v2 (off 0))</code></td></tr>
-<tr><td></td><td>element-wise add: <code>v1[i + off] += v2[i]</code>, returns <i>v1</i>.  To protect the
+<tr><td></td><td>
+vct-add! performs element-wise add: <code>v1[i + off] += v2[i]</code>, returning 'v1'.  To protect the
 original vct, use vct-copy: <code>(vct-add! (vct-vopy v1) v2)</code>.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<pre>
+:<em class=typing>(define v1 (vct .1 .2 .3))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+:<em class=typing>(vct-add! v1 (vct .3 .2 .1))</em>
+<em class=listener>#&lt;vct[len=3]: 0.400 0.400 0.400&gt;</em>
+:<em class=typing>v1</em>
+<em class=listener>#&lt;vct[len=3]: 0.400 0.400 0.400&gt;</em>
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-copy -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctcopy">vct-copy</a> (v)</code></td></tr>
-<tr><td></td><td>return a copy of <i>v</i>.
+<tr><td></td><td>
+vct-copy returns a copy of the vct 'v'.
 
 <!-- INDEX copying:Copying -->
 <A NAME="copying"></a>
@@ -2971,133 +2983,163 @@ copy random state: Guile: copy-random-state, or use <a href="clm.html#mus-set-ra
 <br>
 </small></blockquote>
 </td></tr></TABLE>
-
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-fill! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctfill">vct-fill!</a> (v val)</code></td></tr>
-<tr><td></td><td>set each element of <i>v</i> to <i>val</i>, <code>v[i] = val</code>, returns <i>v</i>.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct-fill! sets each element of 'v' to 'val': <code>v[i] = val</code>.  It returns 'v'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-length -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctlength">vct-length</a> (v)</code></td></tr>
-<tr><td></td><td>return length of <i>v</i>.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct-length returns the length of 'v'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-map! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctmap">vct-map!</a> (v proc)</code></td></tr>
-<tr><td></td><td>set each element of <i>v</i> to the value returned by (<i>proc</i>); <code>(vct-map! v (lambda () 3.0))</code>
+<tr><td></td><td>
+vct-map! sets each element of 'v' to the value returned by the thunk 'proc': <code>(vct-map! v (lambda () 3.0))</code>
 is the same as <code>(<a class=quiet href="#vctfill">vct-fill!</a> v 3.0)</code>.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-move! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctmove">vct-move!</a> (v new old (backwards #f))</code></td></tr>
-<tr><td></td><td><code>v[new++] = v[old++]</code>, returns v (if <i>backwards</i> is #t, <code>v[new--] = v[old--]</code>)</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct-move moves a block of values within a vct:  <code>v[new++] = v[old++]</code>, or
+if 'backwards' is #t: <code>v[new--] = v[old--]</code>.  It returns 'v'.
+<pre>
+:<em class=typing>(define v1 (vct 1 2 3 4 5 6 7 8 9 10))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+:<em class=typing>(vct-move! v1 0 5)</em>
+<em class=listener>#&lt;vct[len=10]: 6.000 7.000 8.000 9.000 10.000 6.000 7.000 8.000 9.000 10.000&gt;</em>
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-multiply! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctmultiply">vct-multiply!</a> (v1 v2)</code></td></tr>
-<tr><td></td><td>element-wise multiply: <code>v1[i] *= v2[i]</code>, returns v1.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct-multiply! performs element-wise multiply of two vcts: <code>v1[i] *= v2[i]</code>.  It returns 'v1'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-offset! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctoffset">vct-offset!</a> (v val)</code></td></tr>
-<tr><td></td><td>add <i>val</i> to each element of <i>v</i>:  <code>v[i] += val</code>, returns v.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct-offset! adds 'val' to each element of 'v':  <code>v[i] += val</code>.  It returns 'v'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-peak -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctpeak">vct-peak</a> (v)</code></td></tr>
-<tr><td></td><td>maximum of absolute value of all elements of <i>v</i></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct-peak returns the maximum absolute value of the elements of 'v'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-ref -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctref">vct-ref</a> (v pos)</code></td></tr>
-<tr><td></td><td>element <i>pos</i> in <i>v</i>: <code>v[pos]</code>.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct-ref returns the element 'pos' in 'v': <code>v[pos]</code>.
+<pre>
+:<em class=typing>(vct-ref (vct .1 .2 .3) 1)</em>
+<em class=listener>0.200000002980232</a>
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-reverse! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctreverse">vct-reverse!</a> (v (size #f))</code></td></tr>
-<tr><td></td><td>reverse contents of v (in-place), return v.  Reverse around <i>size</i> if given.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct-reverse! reverses the elements of 'v' (in-place), returning 'v'.  
+If 'size' is given, the reversal centers around it.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-scale! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctscale">vct-scale!</a> (v scl)</code></td></tr>
-<tr><td></td><td>multiply each element of <i>v</i> by <i>scl</i>: <code>v[i] *= scl</code>, returns v.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct-scale! multiplies each element of 'v' by 'scl': <code>v[i] *= scl</code>.  It returns 'v'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-set! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctset">vct-set!</a> (v pos val)</code></td></tr>
-<tr><td></td><td>set element <i>pos</i> of <i>v</i> to <i>val</i>: <code>v[pos] = val</code>. same as <code>(set! (<a class=quiet href="#vctref">vct-ref</a> v pos) val)</code>.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct-set! sets the vct 'v' element at 'pos' to 'val': <code>v[pos] = val</code>. 
+In Scheme, this is the same as <code>(set! (<a class=quiet href="#vctref">vct-ref</a> v pos) val)</code>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-subtract! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctsubtract">vct-subtract!</a> (v1 v2)</code></td></tr>
-<tr><td></td><td>element-wise subtract: <code>v1[i] -= v2[i]</code>, returns v1.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct-subtract! performs an element-wise subtract: <code>v1[i] -= v2[i]</code>.  It returns 'v1'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-subseq -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctsubseq">vct-subseq</a> (v start (end len) (nv #f))</code></td></tr>
-<tr><td></td><td>return a new vct (or <i>nv</i> if given) with the elements of <i>v</i> between <i>start</i> and <i>end</i> inclusive.  <i>end</i> defaults
-to the end of <i>v</i>.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct-subseq returns a new vct (or 'nv' if given) with the elements of 'v' between 'start' and 'end' inclusive.  'end' defaults
+to the end of 'v'.
+<pre>
+:<em class=typing>(define v1 (vct 1 2 3 4 5 6 7 8 9 10))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+:<em class=typing>(vct-subseq v1 3 6)</em>
+<em class=listener>#&lt;vct[len=4]: 4.000 5.000 6.000 7.000&gt;</em>
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct+ -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctplus">vct+</a> (obj1 obj2)</code></td></tr>
 <tr><td></td><td>
-combines <a class=quiet href="#vctadd">vct-add!</a> and <a class=quiet href="#vctoffset">vct-offset!</a>, depending on the type of its arguments.
+vct+ combines <a class=quiet href="#vctadd">vct-add!</a> and <a class=quiet href="#vctoffset">vct-offset!</a>, 
+depending on the type of its arguments.
 <code>(vct+ v 1.0)</code> or <code>(vct+ 1.0 v)</code> is the same as 
 <code>(vct-offset! v 1.0)</code>, and <code>(vct+ v1 v2)</code> is the same as <code>(vct-add! v1 v2)</code>.
 In Gauche this could be a specialization of "+" -- much nicer!
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct* -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttimes">vct*</a> (obj1 obj2)</code></td></tr>
 <tr><td></td><td>
-combines <a class=quiet href="#vctmultiply">vct-multiply!</a> and <a class=quiet href="#vctscale">vct-scale!</a>, depending on the type of its arguments.
+vct* combines <a class=quiet href="#vctmultiply">vct-multiply!</a> and <a class=quiet href="#vctscale">vct-scale!</a>, 
+depending on the type of its arguments.
 <code>(vct* v 2.0)</code> or <code>(vct* 2.0 v)</code> is the same as <code>(vct-scale! v 2.0)</code>, and 
 <code>(vct* v1 v2)</code> is the same as <code>(vct-multiply! v1 v2)</code>.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct->channel -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttochannel">vct-&gt;channel</a> (v (beg 0) (dur len) (snd #f) (chn #f) (edpos #f) (origin #f))</code></td></tr>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttochannel">vct-&gt;channel</a> (v (beg 0) dur snd chn edpos origin)</code></td></tr>
 <tr><td></td><td>
-set the samples from <i>beg</i> to <i>beg+dur</i> from the values in <i>v</i>.
-This changes (edits) the channel, so <i>origin</i> provides a way to name the edit (for the edit history list and whatnot).
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+vct-&gt;channel sets the samples from 'beg' to 'beg' + 'dur' from the values in 'v'.
+This changes (edits) the channel, so 'origin' provides a way to name the edit (for the edit history list and whatnot).
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct->list -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttolist">vct-&gt;list</a> (v)</code></td></tr>
-<tr><td></td><td>return list with elements of <i>v</i>
+<tr><td></td><td>
+vct-&gt;list returns a list with elements of 'v'.
 <pre>
     ;; Scheme:
     :<em class=typing>(vct-&gt;list (list-&gt;vct (list 0.1 0.2 0.3)))</em>
     <em class=listener>(0.100000001490116 0.200000002980232 0.300000011920929)</em> ; (sigh...)
 
     ;; Ruby:
-    :<em class=typing>vcttolist(list2vct([0.1, 0.2, 0.3]))</em>
+    :<em class=typing>vct2list(list2vct([0.1, 0.2, 0.3]))</em>
     <em class=listener>[0.100000001490116, 0.200000002980232, 0.300000011920929]</em>
 
     ;; Forth:
     <em class=listener>snd&gt;</em> <em class=typing>'( 0.1 0.2 0.3 ) list-&gt;vct vct-&gt;list</em>
     <em class=listener>'( 0.1 0.2 0.3 )</em>
 </pre>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct->sound-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef>vct-&gt;sound-data</em> (v sd (chan 0))</code></td></tr>
-<tr><td></td><td>place vct <i>v</i> data in sound-data <i>sd</i>, returning sd</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct-&gt;sound-data places the data in vct 'v' in the sound-data object 'sd', returning sd.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct->string -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttostring">vct-&gt;string</a> (v)</code></td></tr>
 <tr><td></td>
-<td>return a Scheme-readable string describing <i>v</i>.  The standard way of displaying a vct
+<td>
+vct-&gt;string returns a Scheme-readable string describing 'v'.  The standard way of displaying a vct
 uses "#&lt;vct...&gt;" which is not useful if you want to read the string later as a piece of Scheme code.
 <pre>
     :<em class=typing>(define v1 (make-vct 3 0.1))</em>
@@ -3105,19 +3147,22 @@ uses "#&lt;vct...&gt;" which is not useful if you want to read the string later 
     :<em class=typing>(vct-&gt;string v1)</em>
     <em class=listener>"(vct 0.100 0.100 0.100)"</em>
 </pre>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct-&gt;vector -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttovector">vct-&gt;vector</a> (v)</code></td></tr>
-<tr><td></td><td>return vector with elements of <i>v</i></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+vct-&gt;vector returns a vector with the elements of 'v'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vector-&gt;vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vectortovct">vector-&gt;vct</a> (vect)</code></td></tr>
-<tr><td></td><td>return vct with elements of vector <i>vect</i></td></tr>
+<tr><td></td><td>
+vector-&gt;vct returns a vct with elements of vector 'vect'.
+</td></tr>
 
 </table>
+<br>
 
 <p>Many of the functions described below can take a vct as an argument; 
 there are also several functions that create and fill vcts with data:</p>
@@ -3201,6 +3246,8 @@ classes in Ruby.
 </p>
 
 <!-- -------------------------------- SOUND-DATA TABLE -------------------------------- -->
+
+<!-- TODO: brief examples for sound-data table -->
 
 <table border=0 cellspacing=0 hspace=10>
 
@@ -3347,75 +3394,64 @@ For many eamples, see play.scm and rtio.scm. The most important Sndlib functions
 
 <!-- -------------------------------- SNDLIB TABLE -------------------------------- -->
 
+<!-- TODO: englishify the sndlib table entries -->
+
 <table border=0 cellspacing=0 hspace=10>
 <!-- mus-alsa-buffers -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsabuffers">mus-alsa-buffers</a> ()</code></td></tr>
-<tr><td width=60><br>
-</td><td>
-Number of buffers ("periods") used in ALSA. A settable variable; the same as the environment variable MUS_ALSA_BUFFERS.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td width=60><br></td><td>
+mus-alsa-buffers is the number of buffers ("periods") used in ALSA; you can also use the environment variable MUS_ALSA_BUFFERS.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-alsa-buffer-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsabuffersize">mus-alsa-buffer-size</a> ()</code></td></tr>
-<tr><td><br>
-</td><td>
-Buffer size used in ALSA. A settable variable; the same as the environment variable MUS_ALSA_BUFFER_SIZE.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td><br></td><td>
+mus-alsa-buffer-size is the buffer size used in ALSA. You can also use the environment variable MUS_ALSA_BUFFER_SIZE.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-alsa-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsadevice">mus-alsa-device</a> ()</code></td></tr>
-<tr><td><br>
-</td><td>
+<tr><td><br></td><td>
 ALSA audio device. A settable variable; environment variable name is MUS_ALSA_DEVICE.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-alsa-capture-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsacapturedevice">mus-alsa-capture-device</a> ()</code></td></tr>
-<tr><td><br>
-</td><td>
+<tr><td><br></td><td>
 ALSA audio capture (recording) device. A settable variable; MUS_ALSA_CAPTURE_DEVICE.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-alsa-playback-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsaplaybackdevice">mus-alsa-playback-device</a> ()</code></td></tr>
-<tr><td><br>
-</td><td>
+<tr><td><br></td><td>
 ALSA audio playback-device. A settable variable; MUS_ALSA_PLAYBACK_DEVICE.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-alsa-squelch-warning -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsasquelchwarning">mus-alsa-squelch-warning</a> ()</code></td></tr>
-<tr><td><br>
-</td><td>
+<tr><td><br></td><td>
 Whether to squelch warnings from ALSA about srate mismatches. (A settable variable).
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mus-audio-close -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudioclose">mus-audio-close</a> (line)</code></td></tr>
-<tr><td><br>
-</td><td>close audio port <i>line</i>.  The port <i>line</i> comes from either <a href="#musaudioopeninput">mus-audio-open-input</a>
+<tr><td><br></td><td>
+close audio port <i>line</i>.  The port <i>line</i> comes from either <a href="#musaudioopeninput">mus-audio-open-input</a>
 or <a href="#musaudioopenoutput">mus-audio-open-output</a>, and refers to the sound card's IO channels.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-audio-describe -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiodescribe">mus-audio-describe</a> ()</code></td></tr>
-<tr><td></td><td>describe audio hardware state (in the help dialog)</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+describe audio hardware state (in the help dialog)
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-audio-mixer-read -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiomixerread">mus-audio-mixer-read</a> (device field channel vals)</code></td></tr>
-<tr><td></td>
-<td>read current state of <i>device</i>'s <i>field</i> (device names are listed below under <a href="#musaudioopeninput">mus-audio-open-input</a>):
-</td></tr>
 <tr><td></td><td>
+read current state of <i>device</i>'s <i>field</i> (device names are listed below under <a href="#musaudioopeninput">mus-audio-open-input</a>):
+</td></tr><tr><td></td><td>
 <pre>
 
   mus-audio-amp         mus-audio-srate    mus-audio-channel mus-audio-format
@@ -3428,13 +3464,12 @@ or <a href="#musaudioopenoutput">mus-audio-open-output</a>, and refers to the so
 These fields originally referred to OSS soundcard settings; many years have passed, and the whole notion is now
 obsolete, but if you think there's some easy way to reflect the same idea in modern hardware, check out ALSA or
 the new Mac audio system.  I can't face this mess!
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-audio-mixer-write -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiomixerwrite">mus-audio-mixer-write</a> (device field channel vals)</code></td></tr>
-<tr><td></td>
-<td>set state of <i>device</i>'s <i>field</i>.
+<tr><td></td><td>
+set state of <i>device</i>'s <i>field</i>.
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 ;;; here we get the microphone volume, then set it to .5
@@ -3449,15 +3484,13 @@ the new Mac audio system.  I can't face this mess!
 (<em class=red>mus-audio-mixer-write</em> mus-audio-mixer mus-audio-igain 2 vals)
 </pre>
 </td></tr></table></td></tr>
-
 <tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-audio-open-input -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudioopeninput">mus-audio-open-input</a> (device srate chans format bufsize)</code></td></tr>
-<tr><td></td>
-<td>open audio port <i>device</i> ready for input. Return -1 if the open failed.  <i>device</i> is one of:
-</td></tr>
 <tr><td></td><td>
+open audio port <i>device</i> ready for input. Return -1 if the open failed.  <i>device</i> is one of:
+</td></tr><tr><td></td><td>
 <pre>
 
   mus-audio-default      mus-audio-duplex-default   mus-audio-line-out
@@ -3469,36 +3502,36 @@ the new Mac audio system.  I can't face this mess!
   mus-audio-adat-out     mus-audio-line1            mus-audio-cd 
   mus-audio-spdif-in     mus-audio-spdif-out
 </pre>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-audio-open-output -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudioopenoutput">mus-audio-open-output</a> (device srate chans format bufsize)</code></td></tr>
-<tr><td></td>
-<td>open audio port <i>device</i> ready for output.  Return -1 if the open failed. </td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+open audio port <i>device</i> ready for output.  Return -1 if the open failed.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-audio-read -->
 <tr><td colspan=2><code><a class=def name="musaudioread">mus-audio-read</a> (line sdata frames)</code></td></tr>
-<tr><td></td><td>read <i>frames</i> of data into sound-data object <i>sdata</i> from port <i>line</i>.  The in-coming data format
+<tr><td></td><td>
+read <i>frames</i> of data into sound-data object <i>sdata</i> from port <i>line</i>.  The in-coming data format
 is set by the corresponding mus-audio-open-input call and is translated to the sound-data format (internally known as
-mus_sample_t) by mus-audio-read.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+mus_sample_t) by mus-audio-read.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-audio-report -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudioreport">mus-audio-report</a> ()</code></td></tr>
 <tr><td></td><td>
 return a string describing the current audio hardware state. <a href="#musaudiodescribe">mus-audio-describe</a>
 prints out the same string.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-audio-write -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiowrite">mus-audio-write</a> (line sdata frames)</code></td></tr>
-<tr><td></td><td>write <i>frames</i> of data from sound-data <i>sdata</i> to audio port <i>line</i>.  As with mus-audio-read,
+<tr><td></td><td>
+write <i>frames</i> of data from sound-data <i>sdata</i> to audio port <i>line</i>.  As with mus-audio-read,
 the out-going data format is set by mus-audio-open-output, and the sound-data's data is translated to that
-format by mus-audio-write.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+format by mus-audio-write.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-bytes-per-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musbytespersample">mus-bytes-per-sample</a> (data-format)</code></td></tr>
@@ -3508,23 +3541,23 @@ number of bytes in each sample of <i>data-format</i>.
     :<em class=typing>(mus-bytes-per-sample mus-bdouble)</em>
     <em class=listener>8</em>
 </pre>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-clipping -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musclipping">mus-clipping</a> ()</code></td></tr>
-<tr><td></td><td>The default low-level clipping choice while accessing sound data.
+<tr><td></td><td>
+The default low-level clipping choice while accessing sound data.
 The default is #f which makes clipping very obvious (it will cause wrap-around).
 If you're using the standard Snd file accessors, you probably want to use <a href="#clipping">clipping</a>, not this function.
 This function refers to <a href="#mussoundopenoutput">mus-sound-open-output</a> and friends; the file-local version
 is <a href="#musfileclipping">mus-file-clipping</a> -- surely we could make this more confusing!
 See also <a href="#cliphook">clip-hook</a>.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-data-format-name -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musdataformatname">mus-data-format-name</a> (format)</code></td></tr>
-<tr><td></td><td>convert <i>format</i> from an integer to an explanatory string, e.g. "16-bit big endian linear".  The sndlib data formats are:</td></tr>
+<tr><td></td><td>
+convert <i>format</i> from an integer to an explanatory string, e.g. "16-bit big endian linear".  The sndlib data formats are:</td></tr>
 <tr><td></td><td>
 <pre>
 
@@ -3532,48 +3565,47 @@ See also <a href="#cliphook">clip-hook</a>.
     mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
     mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
     mus-ldouble  mus-unknown
-</pre></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</pre></td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-data-format->string -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musdataformattostring">mus-data-format-&gt;string</a> (format)</code></td></tr>
-<tr><td></td><td>convert <i>format</i> from an integer to a string, e.g. "mus-mulaw".
+<tr><td></td><td>
+convert <i>format</i> from an integer to a string, e.g. "mus-mulaw".
 <pre>
     :<em class=typing>(mus-data-format-&gt;string mus-bdouble)</em>
     <em class=listener>"mus-bdouble"</em>
 </pre>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-error-type->string -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="muserrortypetostring">mus-error-type-&gt;string</a> (error)</code></td></tr>
 <tr><td></td><td>
 return a brief string description of <i>error</i> (a mus-error return type; useful only in <a href="#muserrorhook">mus-error-hook</a>).
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-expand-filename -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musexpandfilename">mus-expand-filename</a> (name)</code></td></tr>
-<tr><td></td><td>expand <i>name</i> into its 'absolute' pathname; that is, replace '~' with the current home directory,
+<tr><td></td><td>
+expand <i>name</i> into its 'absolute' pathname; that is, replace '~' with the current home directory,
 and whatever else seems appropriate.
 <pre>
     :<em class=typing>(mus-expand-filename "oboe.snd")</em>
     <em class=listener>"/home/bil/cl/oboe.snd"</em>
 </pre>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-file-clipping -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musfileclipping">mus-file-clipping</a> (fd)</code></td></tr>
-<tr><td></td><td>The clipping choice for the file <i>fd</i>.
+<tr><td></td><td>
+The clipping choice for the file <i>fd</i>.
 The default is #f which makes clipping very obvious (it will cause wrap-around).
 See also <a href="#cliphook">clip-hook</a>.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-file-prescaler -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musfileprescaler">mus-file-prescaler</a> (fd)</code></td></tr>
-<tr><td></td><td>The prescaling value for reading data from the sndlib file descriptor <i>fd</i>.
+<tr><td></td><td>
+The prescaling value for reading data from the sndlib file descriptor <i>fd</i>.
 If you're reading float data that is extremely soft (i.e. max amp
 below .001), the transfer to integer form in sndlib (if you're using integer internal sample format) can cause bits
 to be lost, resulting in hiss.  In this case set the prescaler for
@@ -3581,54 +3613,55 @@ the file to 1000.0 or so to get the data into a more normal
 range.  Since the set of mus-file-prescaler should come just after opening
 the sound file, but before trying to read any data, you need to use it in the context of <a href="#duringopenhook">during-open-hook</a>.
 The default prescaler value is <a href="#musprescaler">mus-prescaler</a>, normally 1.0.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-header-raw-defaults -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musheaderrawdefaults">mus-header-raw-defaults</a> ()</code></td></tr>
-<tr><td></td><td>returns a list: '(srate chans data-format) of the current raw header defaults.  These can be
+<tr><td></td><td>
+returns a list: '(srate chans data-format) of the current raw header defaults.  These can be
 set: 
 <pre>
     (set! (mus-header-raw-defaults) (list 22050 4 mus-lint))
 </pre>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-header-type-name -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musheadertypename">mus-header-type-name</a> (type)</code></td></tr>
-<tr><td></td><td>convert <i>type</i>, an integer, to a string, e.g. "AIFF".  Some of the sndlib header types are:</td></tr>
+<tr><td></td><td>
+convert <i>type</i>, an integer, to a string, e.g. "AIFF".  Some of the sndlib header types are:</td></tr>
 <tr><td></td><td><pre>
 
     mus-next  mus-aifc  mus-riff  mus-rf64 mus-nist  mus-raw  mus-ircam  mus-aiff 
     mus-bicsf mus-soundfont mus-voc mus-svx mus-unsupported
-</pre></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</pre></td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-header-type->string -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musheadertypetostring">mus-header-type-&gt;string</a> (type)</code></td></tr>
-<tr><td></td><td>convert <i>type</i>, an integer, to a string, e.g. "mus-aifc".
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+convert <i>type</i>, an integer, to a string, e.g. "mus-aifc".
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-oss-set-buffers -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musosssetbuffers">mus-oss-set-buffers</a> (num size)</code></td></tr>
-<tr><td></td><td>in Linux (OSS), this sets the number and size of the OSS fragments.
+<tr><td></td><td>
+in Linux (OSS), this sets the number and size of the OSS fragments.
 The default (as of 21-May-01) is to accept whatever OSS chooses: I believe this is normally
 equivalent to <code>(mus-oss-set-buffers 16 12)</code>.  This default makes the control panel controls very sluggish.  
 Snd used to call <code>(mus-oss-set-buffers 4 12)</code> as its default, 
 but this seems to cause trouble for a variety of new sound cards.
-My initialization file includes <code>(mus-oss-set-buffers 2 12)</code>.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+My initialization file includes <code>(mus-oss-set-buffers 2 12)</code>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-prescaler -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musprescaler">mus-prescaler</a> ()</code></td></tr>
-<tr><td></td><td>The global default prescaling value for reading data from a file (see <a href="#musfileprescaler">mus-file-prescaler</a>).
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+The global default prescaling value for reading data from a file (see <a href="#musfileprescaler">mus-file-prescaler</a>).
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundchans">mus-sound-chans</a> (filename)</code></td></tr>
-<tr><td></td><td>number of channels in <i>filename</i>.  This value can be set (as can the others like it mentioned below);
+<tr><td></td><td>
+number of channels in <i>filename</i>.  This value can be set (as can the others like it mentioned below);
 the assignment refers to the table of sound file data maintained by sndlib.  The file itself is not touched, but any
 subsequent reference to it in Snd will assume the new value.  In the mus-sound-chans case, say we have a sound file
 whose header claims it has 43 channels, but we know it only has 2:
@@ -3636,12 +3669,12 @@ whose header claims it has 43 channels, but we know it only has 2:
     (set! (mus-sound-chans "43chans.snd") 2)
 </pre>
 tells Snd that it has 2 channels no matter what the header says.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-close-input -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundcloseinput">mus-sound-close-input</a> (fd)</code></td></tr>
-<tr><td></td><td>close sound file. <i>fd</i> is an integer returned by <a href="#mussoundopeninput">mus-sound-open-input</a>.
+<tr><td></td><td>
+close sound file. <i>fd</i> is an integer returned by <a href="#mussoundopeninput">mus-sound-open-input</a>.
 These mus-sound-* file functions refer to a direct path to read and write sound files.  Any such operation is beneath the
 notice, so to speak, of Snd.  
 This function reads the first 32 samples of a file, returning the 30th in channel 0:
@@ -3657,76 +3690,85 @@ This function reads the first 32 samples of a file, returning the 30th in channe
 	(<em class=red>mus-sound-close-input</em> fd)
 	val))))
 </pre></td></tr></table>
-
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-close-output -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundcloseoutput">mus-sound-close-output</a> (fd bytes)</code></td></tr>
-<tr><td></td><td>close sound file and update its length indication, if any</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+close sound file and update its length indication, if any
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-comment -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundcomment">mus-sound-comment</a> (filename)</code></td></tr>
-<tr><td></td><td>header comment, if any</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+header comment, if any
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-data-format -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussounddataformat">mus-sound-data-format</a> (filename)</code></td></tr>
-<tr><td></td><td>data format (e.g. <code>mus-bshort</code>) (settable, see mus-sound-chans above)</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+data format (e.g. <code>mus-bshort</code>) (settable, see mus-sound-chans above)
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-data-location -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussounddatalocation">mus-sound-data-location</a> (filename)</code></td></tr>
-<tr><td></td><td>location of first sample (bytes) (settable, see mus-sound-chans)</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+location of first sample (bytes) (settable, see mus-sound-chans)
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-datum-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussounddatumsize">mus-sound-datum-size</a> (filename)</code></td></tr>
-<tr><td></td><td>size in bytes of each sample in <i>filename</i>.  Equivalent to <code>(mus-bytes-per-sample (mus-sound-data-format filename))</code>.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+size in bytes of each sample in <i>filename</i>.  Equivalent to <code>(mus-bytes-per-sample (mus-sound-data-format filename))</code>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-duration -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundduration">mus-sound-duration</a> (filename)</code></td></tr>
-<tr><td></td><td>duration of sound in seconds</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+duration of sound in seconds
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-forget -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundforget">mus-sound-forget</a> (filename)</code></td></tr>
-<tr><td></td><td>remove <i>filename</i> from the sound cache (presumably the file has been deleted or something).</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+remove <i>filename</i> from the sound cache (presumably the file has been deleted or something).
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-frames -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundframes">mus-sound-frames</a> (filename)</code></td></tr>
-<tr><td></td><td>frames of sound according to header (can be incorrect)</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+frames of sound according to header (can be incorrect in NeXT headers)
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-header-type -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundheadertype">mus-sound-header-type</a> (filename)</code></td></tr>
-<tr><td></td><td>header type (e.g. <code>mus-aifc</code>) (settable, see mus-sound-chans)</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+header type (e.g. <code>mus-aifc</code>) (settable, see mus-sound-chans)
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-length -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundlength">mus-sound-length</a> (filename)</code></td></tr>
-<tr><td></td><td>true file length (bytes)</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+true file length (bytes)
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-loop-info -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundloopinfo">mus-sound-loop-info</a> (filename)</code></td></tr>
-<tr><td></td><td>loop info.  <a href="sndscm.html#exmarkloops">mark-loops</a> in examp.scm uses this to place a mark at each loop point.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+loop info.  <a href="sndscm.html#exmarkloops">mark-loops</a> in examp.scm uses this to place a mark at each loop point.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-maxamp -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundmaxamp">mus-sound-maxamp</a> (filename)</code></td></tr>
-<tr><td></td><td>a list of max amps and locations thereof.  The corresponding set! 
-affects only the sndlib table of sound file info, not the sound file itself, as in all such cases -- see mus-sound-chans.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+a list of max amps and locations thereof.  The corresponding set! 
+affects only the sndlib table of sound file info, not the sound file itself, as in all such cases -- see mus-sound-chans.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-maxamp-exists? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundmaxampexists">mus-sound-maxamp-exists?</a> (filename)</code></td></tr>
-<tr><td></td><td>#t if the sound's maxamp data is available
+<tr><td></td><td>
+#t if the sound's maxamp data is available
 in the sound cache; if it isn't, a call on mus-sound-maxamp has to open and read the data to get the maxamp.
 <pre>
     :<em class=typing>(mus-sound-maxamp-exists? "/home/bil/test/sound/away.snd")</em>
@@ -3736,86 +3778,90 @@ in the sound cache; if it isn't, a call on mus-sound-maxamp has to open and read
     :<em class=typing>(mus-sound-maxamp-exists? "/home/bil/test/sound/away.snd")</em>
     <em class=listener>#t</em>
 </pre>
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-open-input -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundopeninput">mus-sound-open-input</a> (filename)</code></td></tr>
-<tr><td></td><td>open filename (a sound file) return an integer (for use with mus-sound-read and mus-sound-close-input).
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+open filename (a sound file) return an integer (for use with mus-sound-read and mus-sound-close-input).
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-open-output -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundopenoutput">mus-sound-open-output</a> (filename :optional (srate 22050) (chans 1) data-format header-type comment)</code></td></tr>
-<tr><td></td>
-<td>create a new sound file with the indicated attributes, return an integer (for use with mus-sound-write and mus-sound-close-output)</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+create a new sound file with the indicated attributes, return an integer (for use with mus-sound-write and mus-sound-close-output)
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-prune -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundprune">mus-sound-prune</a> ()</code></td></tr>
-<tr><td></td><td>remove all defunct (non-existent) files from the sound cache.  This is primarily aimed at internal testing.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+remove all defunct (non-existent) files from the sound cache.  This is primarily aimed at internal testing.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-read -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundread">mus-sound-read</a> (fd beg end chans sdata)</code></td></tr>
-<tr><td></td>
-<td>read data from sound file <i>fd</i> loading the data array from beg
+<tr><td></td><td>
+read data from sound file <i>fd</i> loading the data array from beg
 to end. <i>sdata</i> is a sound-data object that should be able to
-accommodate the read.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+accommodate the read.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-reopen-output -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundreopenoutput">mus-sound-reopen-output</a> (filename :optional (chans 1) data-format header-type data-location)</code></td></tr>
-<tr><td></td>
-<td>reopen filename, ready to continue output.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+reopen filename, ready to continue output.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-report-cache -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundreportcache">mus-sound-report-cache</a> (file)</code></td></tr>
-<tr><td></td><td>print the current sound header data table to the file given or stdout if none is specified.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+print the current sound header data table to the file given or stdout if none is specified.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-samples -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundsamples">mus-sound-samples</a> (filename)</code></td></tr>
-<tr><td></td><td>number of samples in sound according to header (can be incorrect), (settable, see mus-sound-chans)</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+number of samples in sound according to header (can be incorrect), (settable, see mus-sound-chans)
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-seek-frame -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundseekframe">mus-sound-seek-frame</a> (fd frame)</code></td></tr>
-<tr><td></td><td>move to <i>frame</i> in sound file <i>fd</i></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+move to <i>frame</i> in sound file <i>fd</i>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-srate -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundsrate">mus-sound-srate</a> (filename)</code></td></tr>
-<tr><td></td><td>sampling rate (settable, see mus-sound-chans)</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+sampling rate (settable, see mus-sound-chans)
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-type-specifier -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundtypespecifier">mus-sound-type-specifier</a> (filename)</code></td></tr>
-<tr><td></td><td>original type indication of <i>filename</i>.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+original type indication of <i>filename</i>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-write -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundwrite">mus-sound-write</a> (fd beg end chans sdata)</code></td></tr>
-<tr><td></td>
-<td>write data to sound file <i>fd</i></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td></td><td>
+write data to sound file <i>fd</i>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sound-write-date -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundwritedate">mus-sound-write-date</a> (filename)</code></td></tr>
-<tr><td></td><td>sound's write date:
+<tr><td></td><td>
+sound's write date:
 </td></tr><tr><td></td><td>
 <pre>
     :<em class=typing>(strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))</em>
     <em class=listener>"18-Oct 06:56 PDT"</em>
-</pre></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-sun-set-outputs -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussunsetoutputs">mus-sun-set-outputs</a> (speakers headphones line-out)</code></td></tr>
-<tr><td></td>
-<td>
+<tr><td></td><td>
 set the current Sun audio outputs.
 Each entry should be either 0 (turn off the device) or 1 (turn it on).
 On NetBSD, use <a class=def name="musnetbsdsetoutputs">mus-netbsd-set-outputs</a>.
@@ -6968,7 +7014,7 @@ then check to see how close our reconstruction is to the original:
 </pre>
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (<A NAME="cosinechannel">cosine-channel</a> #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (<A NAME="cosinechannel">cosine-channel</a> :optional (beg 0) dur snd chn edpos)
   (<em class=red>map-channel</em>
    (let* ((samps (or dur (<a class=quiet href="#frames">frames</a> snd chn)))
 	  (incr (/ pi samps))
@@ -7633,7 +7679,7 @@ it can take awhile for the ptree-channel results to be displayed.
 Here is a simple example that adds a constant to each sample in a file. It needs the
 inner "let" because the define* arguments are hidden from the optimizer.
 <pre>
-    (define* (offset-channel amount #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+    (define* (offset-channel amount #:optional (beg 0) dur snd chn edpos)
       (let ((dc amount))
         (<em class=red>ptree-channel</em> (lambda (y) (+ y dc)) beg dur snd chn edpos <em class=red>#t</em>)))
 </pre>
@@ -7665,7 +7711,7 @@ and the read direction.
 Here is an example that mixes a sine wave into the current channel:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (sine-channel freq amp #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (sine-channel freq amp :optional (beg 0) dur snd chn edpos)
   (<em class=red>ptree-channel</em>
    (lambda (y data forward)
      (declare (y real) (data vct) (forward boolean))
@@ -7707,7 +7753,7 @@ version of cosine-channel given under
 <a href="#mapchannel">map-channel</a> that can handle peak-envs:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (<A NAME="cosinechannelviaptree">cosine-channel-via-ptree</a> #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (<A NAME="cosinechannelviaptree">cosine-channel-via-ptree</a> :optional (beg 0) dur snd chn edpos)
   ;; vct: angle increment
   (<em class=red>ptree-channel</em>
    (lambda (y data forward)
@@ -7811,7 +7857,7 @@ could in this case be:
 Here are a couple more examples:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (ptree-scale scl #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (ptree-scale scl :optional (beg 0) dur snd chn edpos)
   "ptree-channel version of scale-channel"
   (let ((local-scl scl)) ; needed by the run macro -- it can't find define* args
     (<em class=red>ptree-channel</em>
@@ -7819,7 +7865,7 @@ Here are a couple more examples:
         (* local-scl y)) 
       beg dur snd chn edpos #t)))
 
-(define* (ptree-xramp r0 r1 ubase #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (ptree-xramp r0 r1 ubase :optional (beg 0) dur snd chn edpos)
   "exponential version of ramp-channel"
   ;; this is essentially what CLM's exponential envelope generator is doing
   ;;   to accommodate C, it uses (exp (* power (log base))) prescaling power by (log base)
@@ -10629,7 +10675,7 @@ the size of the vcts passed to it, whereas CLM's takes the size as an argument.
 
 <!-- snd-spectrum -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="sndspectrum">snd-spectrum</a> (data window length <i>(linear #t) (beta 0.0) (in-place #f) (normalized #t)</i>)</code>
+<code><a class=def name="sndspectrum">snd-spectrum</a> (data window length <i>(linear #t) (beta 0.0) in-place (normalized #t)</i>)</code>
 </td></tr>
 <tr><td></td><td>
 This returns the spectrum (as a vct) of <i>data</i> (also a vct) using the fft window <i>win</i>.
@@ -10658,7 +10704,7 @@ This returns #t if <i>type</i> refers to an active transform type.
 </table>
 
 <p>Other related variables and functions:</p>
-<table cellpadding=0 celspacing=10 border=0 hspace=20>
+<table cellpadding=0 cellspacing=10 border=0 hspace=20>
 <tr><td width=200><a href="#transformgraphp"><small>transform-graph?</small></a></td><td width=200><a href="#showtransformpeaks"><small>show-transform-peaks</small></a></td><td><a href="#transformsample"><small>transform-sample</small></a></td></tr>
 <tr><td><a href="#fftbeta"><small>fft-window-beta</small></a></td><td><a href="#showselectiontransform"><small>show-selection-transform</small></a></td><td><a href="#transformtovct"><small>transform-&gt;vct</small></a></td></tr>
 <tr><td><a href="#aftertransformhook"><small>after-transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformframes"><small>transform-frames</small></a></td></tr>

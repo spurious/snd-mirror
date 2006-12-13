@@ -1742,7 +1742,7 @@ A simple instrument that uses dlocsig is:
        (lambda ()
 	 (do ((i beg (1+ i)))
 	     ((= i end))
-	   (<em class=red>dlocsig</em> dloc i (* (<a class=quiet href="clm.html#env">env</a> aenv) (<a class=quiet href="clm.html#oscil"oscil</a> osc)))))))))
+	   (<em class=red>dlocsig</em> dloc i (* (<a class=quiet href="clm.html#env">env</a> aenv) (<a class=quiet href="clm.html#oscil">oscil</a> osc)))))))))
 
 (with-sound (:channels 2) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
 </pre></td></tr></table>
@@ -2720,6 +2720,7 @@ edit123.scm is by Tom Roth, snd_conffile.scm is by Kjetil S. Matheussen, and
 snd_frg.scm is by Olivier Doare.
 There are other examples in <a href="grfsnd.html#sndinitfile">Snd init file</a>.
 Olivier Doare describes snd_frg.scm:
+</p>
 <blockquote>
 <pre>
 [It] tries to emulate the workflow i had with Sound Forge: 
@@ -2735,7 +2736,7 @@ Main features are:
 - many other shortcuts
 </pre>
 </blockquote>
-</p>
+
 <br>
 
 
@@ -2955,7 +2956,7 @@ normalize-envelope returns a version of <i>env</i> scaled so that its maximum y 
 
 <!-- repeat-envelope -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>repeat-envelope</em> <code>env repeats :optional (reflected #f) (normalized #f)</code>
+<em class=emdef>repeat-envelope</em> <code>env repeats :optional reflected normalized</code>
 </td></tr>
 <tr><td></td><td>
 repeat-envelope repeats an envelope (concatenates copies of itself).
@@ -2994,7 +2995,7 @@ reverse-envelope reverses an envelope.
 
 <!-- rms-envelope -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="rmsenvelope">rms-envelope</a> <code>file :key (beg 0.0) (dur #f) (rfreq 30.0) (db #f)</code>
+<a class=def name="rmsenvelope">rms-envelope</a> <code>file :key (beg 0.0) dur (rfreq 30.0) db</code>
 </td></tr>
 <tr><td></td><td>
 rms-envelope returns an rms envelope of a file; it is based on rmsenv.ins in the CLM package.
@@ -5698,7 +5699,7 @@ jcrev.scm version assumes it is being called within with-sound:
 <p>jc-reverb has three parameters:
 </p>
 <pre>
-    <a class=def name="jcreverb">jc-reverb</a> :optional (low-pass #f) (volume 1.0) (amp-env #f)
+    <a class=def name="jcreverb">jc-reverb</a> :optional low-pass (volume 1.0) amp-env
 </pre>
 
 <p>
@@ -10311,7 +10312,7 @@ telephone recordings, I assumed anything under 40 Hz or above
 
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define* (<a name="notchoutrumbleandhiss">notch-out-rumble-and-hiss</a> :optional (snd #f) (chn #f))
+(define* (<a name="notchoutrumbleandhiss">notch-out-rumble-and-hiss</a> :optional snd chn)
   (let* ((cur-srate (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate">srate</a> snd))))
     (<a class=quiet href="extsnd.html#filtersound">filter-sound</a>
      (list 0.0 0.0                    ; get rid of DC
@@ -10430,21 +10431,21 @@ and see what is left:
     (set! freq-response (cons 1.0 freq-response)) 
     (reverse freq-response)))
 
-(define* (notch-channel freqs :optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
+(define* (notch-channel freqs :optional filter-order snd chn (notch-width 2))
   (<a class=quiet href="extsnd.html#filtersound">filter-sound</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate">srate</a> snd)) freqs notch-width)
 		(or filter-order 
                     (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#srate">srate</a> snd) notch-width))
                                                         (log 2.0))))))
 		snd chn))
 
-(define* (notch-sound freqs :optional (filter-order #f) (snd #f) (notch-width 2))
+(define* (notch-sound freqs :optional filter-order snd (notch-width 2))
   (<a class=quiet href="extsnd.html#filtersound">filter-sound</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate">srate</a> snd)) freqs notch-width)
 		(or filter-order 
                     (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#srate">srate</a> snd) notch-width)) 
                                                         (log 2.0))))))
 		snd))
 
-(define* (notch-selection freqs :optional (filter-order #f) (notch-width 2))
+(define* (notch-selection freqs :optional filter-order (notch-width 2))
   (<a class=quiet href="extsnd.html#filterselection">filter-selection</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#selectionsrate">selection-srate</a>)) freqs notch-width)
 		    (or filter-order 
                         (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#selectionsrate">selection-srate</a>) notch-width)) 

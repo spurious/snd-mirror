@@ -560,13 +560,15 @@
 	    (set! result (func (read-frame reader)))))
 	(throw 'no-such-sound (list "scan-sound" snd)))))
 
-(define* (map-sound func :optional (beg 0) dur snd)
-  "(map-sound func :optional beg dur snd) is a version of map-channel that passes func a frame on each call, rather than a sample"
+(define +read-forward+ 1)
+
+(define* (map-sound func :optional (beg 0) dur snd edpos)
+  "(map-sound func :optional beg dur snd edpos) is a version of map-channel that passes func a frame on each call, rather than a sample"
   ;; not sure map-sound with sync is a good idea -- even scale-by following sync seems bad
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
 	(let* ((out-chans (chans index))
-	       (reader (make-frame-reader beg index))
+	       (reader (make-frame-reader beg index +read-forward+ edpos))
 	       (filename (snd-tempnam))
 	       (writer (make-frame->file filename out-chans))
 	       (len (frames index))
@@ -587,27 +589,64 @@
 	(throw 'no-such-sound (list "map-sound" snd)))))
 
 
+(define* (offset-sound off :optional beg dur snd)
+  "(offset-sound off :optional beg dur snd) adds 'off' to every sample in 'snd'"
+  (map-sound (lambda (fr) (frame+ fr off)) beg dur snd))
 
-;;; PERHAPS: these channel-specific funcs might want a "channels" version:
-;;;     any-env-channel  compand-channel  contrast-channel dither-channel
-;;;     env-channel-with-base  env-expt-channel  filter-channel  find-channel  
-;;;     linear-src-channel  normalize-channel  notch-channel
-;;;     pad-channel  play-channel  ramp-channel  redo-channel  reverse-channel rotate-channel
-;;;     smooth-channel  src-channel  undo-channel  xramp-channel
-#|
-(define (env-sound e) (let ((e (make-env e))) (map-sound (lambda (fr) (frame* fr (env e))))))
-(define (scale-sound scl) (map-sound (lambda (fr) (frame* fr scl))))
-(define (offset-sound off) (map-sound (lambda (fr) (frame+ fr off))))
-|#
+(define* (scale-sound scl :optional beg dur snd)
+  "(scale-sound scl :optional beg dur snd) multiplies every sample in 'snd' by 'scl'"
+  (map-sound (lambda (fr) (frame* fr scl)) beg dur snd))
 
+(define* (do-sound func beg dur :optional snd)
+  (let ((index (or snd (selected-sound) (car (sounds)))))
+    (if (not (sound? index))
+	(throw 'no-such-sound (list (procedure-name func) snd))
+	(let ((chns (chans index)))
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn chns))
+	    (func beg dur index chn))))))
+
+(define* (pad-sound beg dur :optional snd) 
+  "(pad-sound beg dur :optional snd) places a block of 'dur' zeros in every channel of 'snd' starting at 'beg'"
+  (do-sound pad-channel beg dur snd))
+
+(define* (compand-sound :optional beg dur snd)
+  "(compand-sound :optional beg dur snd) applied companding to every channel of 'snd'"
+  (do-sound compand-channel beg dur snd))
+
+(define* (normalize-sound amp :optional beg dur snd)
+  "(normalize-sound amp :optional beg dur snd) scales 'snd' to peak amplitude 'amp'"
+  (let ((mx (apply max (maxamp snd #t))))
+    (do-sound
+     (lambda (beg dur snd chn) 
+       (scale-channel (/ amp mx) beg dur snd chn))
+     beg dur snd)))
+
+(define* (contrast-sound index :optional beg dur snd)
+  "(contrast-sound index :optional beg dur snd) applies contrast-enhancement to every channel of 'snd'"
+  (do-sound 
+   (lambda (beg dur snd chn) 
+     (contrast-channel index beg dur snd chn))
+   beg dur snd))
+
+(define* (dither-sound :optional (amount .00006) beg dur snd)
+  "(dither-sound :optional (amount .00006) beg dur snd) adds dithering to every channel of 'snd'"
+  (do-sound 
+   (lambda (beg dur snd chn) 
+     (dither-channel amount beg dur snd chn))
+   beg dur snd))
+
+
+;;; TODO: doc/xref/index/test *-sound funcs
 ;;; TODO: test [directly] make-track-frame-reader, read-track-frame, dir edpos args in make-frame-reader
 ;;; PERHAPS: formalize fix-clip -- check restoration against hand-made cases
 ;;; SOMEDAY: channel slicer: grn but output locs permuted, reversed etc
 ;;; TODO: need snd-run support for frame-readers (and map-frame frame return?)
 ;;; TODO: write doc that describes all these sample accessors: sample-at-a-time, readers, chunked versions (->vct), top level (menu, save-sound-as)
-;;; TODO: snd8 old scan-sound zero-crossing case:
-#|
+;;; TODO: doc/(xref?)/test simultaneous-zero-crossing:
+
 (define* (simultaneous-zero-crossing :optional (beg 0) dur snd)
+  "(simultaneous-zero-crossing :option beg dur snd) looks through all channels of 'snd' for a simultaneous zero crossing."
   (let ((last-fr (make-frame (chans snd))))
     (scan-sound (lambda (fr)
 		  (let ((result #t))
@@ -617,5 +656,5 @@
 		      (frame-set! last-fr chn (frame-ref fr chn)))
 		    result))
 		beg dur snd)))
-|#
+
 
