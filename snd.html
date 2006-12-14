@@ -725,7 +725,7 @@ The <a href="#insertfile">Insert</a> option inserts a file at the cursor.
 <A NAME="exitfile"></a><p>Finally, to exit Snd cleanly (that is, removing any
 temporary files, and cleaning up some system stuff),
 use the Exit option.  Unsaved edits are silently
-flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#exunsavededits">extensions.scm</a>).</p>
+flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#unsavededits">extensions.scm</a>).</p>
         <!-- I(close file):K(C-x k)(cxk) --><!-- I(close file):A(closefile) --><!-- I(save file):A(savefile) --><!-- I(exit Snd):A(exitfile) -->
         <!-- I(save file):K(C-x C-s)(cxcs) --><!-- I(save selection):K(C-x w)(cxw) --><!-- I(save channel):K(C-x C-w)(cxcw) -->
 	<!-- I(extract channel):K(C-x C-w)(cxcw) --><!-- I(extract channel):A(cxcw) -->
@@ -1521,7 +1521,7 @@ the next positive-going zero crossing, placing the cursor just before it:</p>
 </pre></td></tr></table>
 
 <p>Now C-s (zero+) followed by C-s's moves to successive zero crossings.
-There are more examples in <a href="sndscm.html#exzeroplus">sndscm.html</a>.
+There are more examples in <a href="sndscm.html#zeroplus">sndscm.html</a>.
 See also the functions <a href="extsnd.html#findchannel">find-channel</a> and <a href="extsnd.html#countmatches">count-matches</a>.
 </p>
 <br>
@@ -2364,7 +2364,7 @@ For information on initialization, configuration, and connections to other progr
 
   <tr><td><a href="#kgc">abort command</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#cgp"><small>c-g?</small></a></td><td><small>mouse click</small></td></tr>
   <tr><td><a href="#ampenvs">amp env</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><a href="#cxca"><small>Cx Ca, Cx a</small></a></td><td><a href="extsnd.html#envsound"><small>env-sound</small></a></td><td><a href="extsnd.html#scaleto"><small>scale-to, scale-by</small></a></td></tr>
-  <tr><td><a href="sndscm.html#exautosave">auto save</a></td><td><br></td><td><br></td><td><a href="sndscm.html#exautosave"><small>auto-save</small></a></td><td><small>autosave.scm</small></td></tr>
+  <tr><td><a href="sndscm.html#autosave">auto save</a></td><td><br></td><td><br></td><td><a href="sndscm.html#autosave"><small>auto-save</small></a></td><td><small>autosave.scm</small></td></tr>
   <tr><td><a href="#autocorrelation">autocorrelation</a></td><td><small>Options: <a href="#viewfft">Transform</a></small></td><td><br></td><td><a href="extsnd.html#autocorrelate"><small>autocorrelate</small></a></td><td><br></td></tr>
   <tr><td><a href="#cxcb">axis bounds</a></td><td><br></td><td><a href="#cxcb"><small>Cx Cb, Cx Cp</small></a></td><td><a href="extsnd.html#xbounds"><small>[xy]-bounds</small></a></td><td><a href="extsnd.html#axisinfo"><small>axis-info</small></a></td></tr>
   <tr><td><a href="#contrast">brighten file</a></td><td><br></td><td><br></td><td><br></td><td><a href="#contrast"><small>see 'contrast' control</small></a></td></tr>

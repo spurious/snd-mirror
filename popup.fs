@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Wed Nov 15 04:29:27 CET 2006
+\ Changed: Thu Dec 14 03:47:59 CET 2006
 
 \ Commentary:
 
@@ -44,7 +44,6 @@ all saved edit lists." _
 ;
 
 hide
-
 \ --- make-simple-popdown-menu for fft-popup-menu ---
 : popup-cascade-cb ( children xt -- proc; w c i self -- )
   lambda-create , , latestxt 3 make-proc
@@ -628,6 +627,17 @@ let: ( -- menu )
   #f reset-controls drop
 ;
 
+: print-props ( props -- str )
+  "" { str }
+  object-print-length { old-len }
+  3 set-object-print-length
+  ( props ) each { prop }		\ ( key . val )
+    str  $"   %s:  %s\n" '( prop car prop cdr ) string-format << to str
+  end-each
+  old-len set-object-print-length
+  str
+;
+
 : pinfo-cb ( -- proc; w c i self -- )
   lambda-create latestxt 3 make-proc
  does> ( w c i self -- )
@@ -637,11 +647,13 @@ let: ( -- menu )
   snd chn #f frames { frms }
   snd srate { sr }
   $"    chans: %d, srate: %d\n"     '( snd channels sr ) string-format { str }
-  $"   length: %.3f  (%d frames)\n" '( frms sr f/ frms ) string-format str swap << to str
   $"   format: %s [%s]\n"
   '( snd data-format mus-data-format-name snd header-type mus-header-type-name )
   string-format str swap << to str
-  $"   maxamp: %s\n"       '( snd #t #f maxamp )   string-format str swap << to str
+  $"   length: %.3f  (%d frames)\n" '( frms sr f/ frms ) string-format str swap << to str
+  snd #t #f maxamp each { mx }
+    $" %6s %c: %.3f\n" '( "maxamp" [char] A i + mx ) string-format str swap << to str
+  end-each
   snd comment empty? unless
     $"  comment: %S\n" '( snd comment )            string-format str swap << to str
   then
@@ -654,12 +666,17 @@ let: ( -- menu )
   then
   snd sound-properties { props }
   props null? unless
-    $" properties: %s\n"   '( props )              string-format str swap << to str
+    str "properties:\n" << to str
+    str props print-props << to str
   then
   snd chn channel-properties to props
   props null? unless
     snd channels 0 ?do
-      $"  chan %d properties: %s\n" '( i snd i channel-properties ) string-format str swap << to str
+      snd i channel-properties to props
+      props null? unless
+	$" chan %d properties:\n" '( i ) string-format str swap << to str
+	str props print-props << to str
+      then
     loop
   then
   snd file-name $"  info" $+ str info-dialog drop
@@ -1090,7 +1107,6 @@ previous
 1 $" edhist-save-edits calls it with PROC as its only argument." create-hook edhist-save-hook
 
 hide
-
 '() value edhist-funcs
 '() value edhist-widgets
 #f  value edhist-snd
@@ -1317,7 +1333,6 @@ let: ( -- menu )
     then
   loop
 ;
-
 set-current
 
 : add-popups ( -- )
@@ -1325,7 +1340,6 @@ set-current
   after-open-hook ['] add-popup 1 make-proc add-hook!
   sounds each add-popup end-each
 ;
-
 previous
 
 hide
@@ -1385,7 +1399,6 @@ Changes the fft popup menu's color: '(0.5 0.5 0.5) change-fft-popup-color"
 Changes the time-domain popup menu's color: basic-color change-graph-popup-color"
   edit-history-menu swap change-menu-color
 ;
-
 previous
 
 \ install all popups
@@ -1394,9 +1407,7 @@ add-popups
 \ --- listener popup ---
 
 hide
-
 lambda: ( -- ) noop ; value identity-xt
-
 lambda: ( snds -- lst )
   { snds }
   snds each { snd }
@@ -1406,14 +1417,11 @@ lambda: ( snds -- lst )
   end-each
   snds
 ; value edited-xt
-
 lambda: ( snds -- lst ) { snds } snds length 1 > if snds else '() then ; value focused-xt
-
 lambda: ( snd -- )
   { snd }
   0 snd undef undef undef undef undef undef play drop
 ; value list-play-cb
-
 lambda: ( us -- )
   { us }
   \ 5 == notebook-outer-pane
@@ -1517,14 +1525,12 @@ let: ( -- )
   parent FXmNpopupHandlerCallback menu listener-popup-cb undef FXtAddCallback drop
   menu
 ;let value listener-popup-menu
-
 set-current
 
 : change-listener-popup-color ( new-color -- )
   doc" ( new-color -- )  Changes the listener popup menu's color."
   listener-popup-menu swap change-menu-color
 ;
-
 previous
 
 \ popup.fs ends here

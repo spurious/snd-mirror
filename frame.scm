@@ -611,7 +611,7 @@
   (do-sound pad-channel beg dur snd))
 
 (define* (compand-sound :optional (beg 0) dur snd)
-  "(compand-sound :optional beg dur snd) applied companding to every channel of 'snd'"
+  "(compand-sound :optional beg dur snd) applies companding to every channel of 'snd'"
   (do-sound compand-channel beg dur snd))
 
 (define* (normalize-sound amp :optional (beg 0) dur snd)
@@ -637,7 +637,6 @@
    beg dur snd))
 
 
-;;; TODO: doc *-sound funcs
 ;;; TODO: test [directly] make-track-frame-reader, read-track-frame, dir edpos args in make-frame-reader
 ;;; PERHAPS: formalize fix-clip -- check restoration against hand-made cases
 ;;; SOMEDAY: channel slicer: grn but output locs permuted, reversed etc

@@ -657,6 +657,8 @@ function. </p>
 
 <!-- -------------------------------- GLOBAL VARIABLE TABLE -------------------------------- -->
 
+<!-- TODO clean up and englishify global var table -->
+
 <table border=0 cellspacing=0>
 
 <tr><td width=60></td><td></td><td></td></tr>
@@ -1377,8 +1379,11 @@ If the argument list is followed by some
 indication such as "[or]", that means the various hook function values are or-d together.
 </p>
 
-<table border=0 cellspacing=0>
 
+<!-- TODO clean up and englishify hook table -->
+
+
+<table border=0 cellspacing=0>
 
 <!-- after-apply-controls-hook -->
 <tr><td colspan=3 bgcolor="#f6f8ff">
@@ -2353,7 +2358,7 @@ If it returns a string (a filename), that file is opened instead of the original
 	    #f)
 	#f)))
 </pre></td></tr></table>
-See also <a href="sndscm.html#exopenbuffer">open-buffer</a> in examp.scm.
+See also <a href="sndscm.html#openbuffer">open-buffer</a> in examp.scm.
 </td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
@@ -2911,6 +2916,7 @@ Forth: variable hi
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- make-vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makevct">make-vct</a> (len (initial-element 0.0))</code></td></tr>
 <tr><td></td><td>
@@ -2921,11 +2927,13 @@ make-vct creates a vct of size <i>len</i>.
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sound-date->vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef>sound-data-&gt;vct</em> (sdobj (chan 0) (v #f))</code></td></tr>
 <tr><td></td><td>
 sound-data-&gt;vct places the sound-data data in a vct, returning 'v' (if given) or a new vct.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vct">vct</a> args...</code></td></tr>
@@ -2933,11 +2941,13 @@ sound-data-&gt;vct places the sound-data data in a vct, returning 'v' (if given)
 vct is equivalent to list-&gt;vct with 'args' as the list: <code>(vct 1 2 3)</code> is the same as <code>(<a class=quiet href="#listtovct">list-&gt;vct</a> '(1 2 3))</code>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- vct? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctp">vct?</a> (v)</code></td></tr>
 <tr><td></td><td>
 vct? returns #t if 'v' is a vct.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vct-add! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctadd">vct-add!</a> (v1 v2 (off 0))</code></td></tr>
@@ -2953,6 +2963,7 @@ original vct, use vct-copy: <code>(vct-add! (vct-vopy v1) v2)</code>.
 <em class=listener>#&lt;vct[len=3]: 0.400 0.400 0.400&gt;</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vct-copy -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctcopy">vct-copy</a> (v)</code></td></tr>
@@ -2985,11 +2996,13 @@ copy random state: Guile: copy-random-state, or use <a href="clm.html#mus-set-ra
 </td></tr></TABLE>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- vct-fill! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctfill">vct-fill!</a> (v val)</code></td></tr>
 <tr><td></td><td>
 vct-fill! sets each element of 'v' to 'val': <code>v[i] = val</code>.  It returns 'v'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vct-length -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctlength">vct-length</a> (v)</code></td></tr>
@@ -2997,12 +3010,14 @@ vct-fill! sets each element of 'v' to 'val': <code>v[i] = val</code>.  It return
 vct-length returns the length of 'v'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- vct-map! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctmap">vct-map!</a> (v proc)</code></td></tr>
 <tr><td></td><td>
 vct-map! sets each element of 'v' to the value returned by the thunk 'proc': <code>(vct-map! v (lambda () 3.0))</code>
 is the same as <code>(<a class=quiet href="#vctfill">vct-fill!</a> v 3.0)</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vct-move! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctmove">vct-move!</a> (v new old (backwards #f))</code></td></tr>
@@ -3017,11 +3032,13 @@ if 'backwards' is #t: <code>v[new--] = v[old--]</code>.  It returns 'v'.
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- vct-multiply! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctmultiply">vct-multiply!</a> (v1 v2)</code></td></tr>
 <tr><td></td><td>
 vct-multiply! performs element-wise multiply of two vcts: <code>v1[i] *= v2[i]</code>.  It returns 'v1'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vct-offset! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctoffset">vct-offset!</a> (v val)</code></td></tr>
@@ -3029,11 +3046,13 @@ vct-multiply! performs element-wise multiply of two vcts: <code>v1[i] *= v2[i]</
 vct-offset! adds 'val' to each element of 'v':  <code>v[i] += val</code>.  It returns 'v'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- vct-peak -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctpeak">vct-peak</a> (v)</code></td></tr>
 <tr><td></td><td>
 vct-peak returns the maximum absolute value of the elements of 'v'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vct-ref -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctref">vct-ref</a> (v pos)</code></td></tr>
@@ -3045,6 +3064,7 @@ vct-ref returns the element 'pos' in 'v': <code>v[pos]</code>.
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- vct-reverse! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctreverse">vct-reverse!</a> (v (size #f))</code></td></tr>
 <tr><td></td><td>
@@ -3052,11 +3072,13 @@ vct-reverse! reverses the elements of 'v' (in-place), returning 'v'.
 If 'size' is given, the reversal centers around it.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- vct-scale! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctscale">vct-scale!</a> (v scl)</code></td></tr>
 <tr><td></td><td>
 vct-scale! multiplies each element of 'v' by 'scl': <code>v[i] *= scl</code>.  It returns 'v'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vct-set! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctset">vct-set!</a> (v pos val)</code></td></tr>
@@ -3065,11 +3087,13 @@ vct-set! sets the vct 'v' element at 'pos' to 'val': <code>v[pos] = val</code>.
 In Scheme, this is the same as <code>(set! (<a class=quiet href="#vctref">vct-ref</a> v pos) val)</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- vct-subtract! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctsubtract">vct-subtract!</a> (v1 v2)</code></td></tr>
 <tr><td></td><td>
 vct-subtract! performs an element-wise subtract: <code>v1[i] -= v2[i]</code>.  It returns 'v1'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vct-subseq -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctsubseq">vct-subseq</a> (v start (end len) (nv #f))</code></td></tr>
@@ -3084,6 +3108,7 @@ to the end of 'v'.
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- vct+ -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctplus">vct+</a> (obj1 obj2)</code></td></tr>
 <tr><td></td><td>
@@ -3094,6 +3119,7 @@ depending on the type of its arguments.
 In Gauche this could be a specialization of "+" -- much nicer!
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- vct* -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttimes">vct*</a> (obj1 obj2)</code></td></tr>
 <tr><td></td><td>
@@ -3103,12 +3129,14 @@ depending on the type of its arguments.
 <code>(vct* v1 v2)</code> is the same as <code>(vct-multiply! v1 v2)</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- vct->channel -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttochannel">vct-&gt;channel</a> (v (beg 0) dur snd chn edpos origin)</code></td></tr>
 <tr><td></td><td>
 vct-&gt;channel sets the samples from 'beg' to 'beg' + 'dur' from the values in 'v'.
 This changes (edits) the channel, so 'origin' provides a way to name the edit (for the edit history list and whatnot).
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vct->list -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttolist">vct-&gt;list</a> (v)</code></td></tr>
@@ -3129,11 +3157,13 @@ vct-&gt;list returns a list with elements of 'v'.
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- vct->sound-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef>vct-&gt;sound-data</em> (v sd (chan 0))</code></td></tr>
 <tr><td></td><td>
 vct-&gt;sound-data places the data in vct 'v' in the sound-data object 'sd', returning sd.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vct->string -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttostring">vct-&gt;string</a> (v)</code></td></tr>
@@ -3149,11 +3179,13 @@ uses "#&lt;vct...&gt;" which is not useful if you want to read the string later 
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- vct-&gt;vector -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttovector">vct-&gt;vector</a> (v)</code></td></tr>
 <tr><td></td><td>
 vct-&gt;vector returns a vector with the elements of 'v'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vector-&gt;vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vectortovct">vector-&gt;vct</a> (vect)</code></td></tr>
@@ -3261,6 +3293,7 @@ make-sound-data returns a new sound-data object with 'chans' arrays, each with '
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sound-data-add! -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sounddataadd">sound-data-add!</a> (sd1 sd2)</code></td></tr>
@@ -3284,11 +3317,13 @@ sound-data-add! adds the contents of sd2 into sd1 and returns sd1.
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sound-data-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatachans">sound-data-chans</a> (sd)</code></td></tr>
 <tr><td></td><td>
 sound-data-chans returns the number of channels in sd.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- sound-data-copy -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -3297,17 +3332,20 @@ sound-data-chans returns the number of channels in sd.
 sound-data-copy returns a copy of the sound-data object sd.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sound-data-fill! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatafill">sound-data-fill!</a> (sd value)</code></td></tr>
 <tr><td></td><td>
 sound-data-fill! sets each element of sound-data object sd to 'value'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sound-data-length -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatalength">sound-data-length</a> (sd)</code></td></tr>
 <tr><td></td><td>
 sound-data-length returns the length (in samples) of each channel in the sound-data-object sd.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- sound-data-maxamp -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatamaxamp">sound-data-maxamp</a> (sd)</code></td></tr>
@@ -3325,12 +3363,14 @@ sound-data-maxamp returns a list of maxamps (one for each channel) of the data i
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sound-data-multiply! -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sounddatamultiply">sound-data-multiply!</a> (sd1 sd2)</code></td></tr>
 <tr><td></td><td>
 sound-data-multiply! multiplies each element of sd2 by the corresponding element of sd2 and returns sd1.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- sound-data-offset! -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -3339,6 +3379,7 @@ sound-data-multiply! multiplies each element of sd2 by the corresponding element
 sound-data-offset! adds the number <i>off</i> to each element of sd and returns sd.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sound-data-peak -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sounddatapeak">sound-data-peak</a> (sd)</code></td></tr>
@@ -3346,11 +3387,13 @@ sound-data-offset! adds the number <i>off</i> to each element of sd and returns 
 sound-data-peak returns the overall maximum element in sd.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sound-data-ref -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddataref">sound-data-ref</a> (sd chan frame)</code></td></tr>
 <tr><td></td><td>
 sound-data-ref returns (as a float) the sample in channel chan at location frame.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- sound-data-reverse! -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -3369,17 +3412,20 @@ sound-data-reverse! reverses the elements of each channel of sd and returns sd.
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sound-data-scale! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatascale">sound-data-scale!</a> (sd scaler)</code></td></tr>
 <tr><td></td><td>
 sound-data-scale! multiplies each sample in sd by scaler.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sound-data-set! -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddataset">sound-data-set!</a> (sd chan frame val)</code></td></tr>
 <tr><td></td><td>
 sound-data-set! sets sd's sample at 'frame' in channel 'chan' to val.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- sound-data+ -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
@@ -3388,6 +3434,7 @@ sound-data-set! sets sd's sample at 'frame' in channel 'chan' to val.
 sound-data+ adds val1 to val2 (either or both can be sound-data objects).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sound-data* -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="sounddata*">sound-data*</a> (val1 val2)</code></td></tr>
@@ -3395,11 +3442,13 @@ sound-data+ adds val1 to val2 (either or both can be sound-data objects).
 sound-data* multiplies val1 by val2 (either or both can be sound-data objects).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sound-data? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddata?">sound-data?</a> (obj)</code></td></tr>
 <tr><td></td><td>
 sound-data? returns #t if obj is a sound-data object.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- sound-data->sound-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatatosounddata">sound-data-&gt;sound-data</a> (sd-in sd-out beg dur cycle)</code></td></tr>
@@ -3408,6 +3457,7 @@ sound-data-&gt;sound-data copies sound-data sd-in's
 data from 0 for dur frames into sound-data sd-out starting at beg, wrapping around if sd-out's end is reached.
 This is an experimental function currently used in the oscilloscope (oscope.scm).
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- sound-data->vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatatovct">sound-data-&gt;vct</a> (sd chan v)</code></td></tr>
@@ -3422,6 +3472,7 @@ sound-data-&gt;vct copies sound-data sd's channel 'chan' data into vct v.
 <em class=listener>#&lt;vct[len=5]: 9.000 8.000 7.000 6.000 5.000&gt;</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- vct->sound-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttosounddata">vct-&gt;sound-data</a> (v sd chan)</code></td></tr>
@@ -3443,6 +3494,7 @@ For many eamples, see play.scm and rtio.scm. The most important Sndlib functions
 <!-- -------------------------------- SNDLIB TABLE -------------------------------- -->
 
 <table border=0 cellspacing=0 hspace=10>
+
 <!-- mus-alsa-buffers -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsabuffers">mus-alsa-buffers</a> ()</code></td></tr>
 <tr><td width=60><br></td><td>
@@ -3451,12 +3503,14 @@ The default setting is 3.
 These ALSA variables only matter if you built Snd with the configure switch --with-alsa.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mus-alsa-buffer-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsabuffersize">mus-alsa-buffer-size</a> ()</code></td></tr>
 <tr><td><br></td><td>
 mus-alsa-buffer-size is the buffer size used in ALSA. You can also use the environment variable MUS_ALSA_BUFFER_SIZE.
 The defaut setting is 1024.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-alsa-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsadevice">mus-alsa-device</a> ()</code></td></tr>
@@ -3468,17 +3522,20 @@ sound card is worse than useless, I have an EMI 2|6 connected to a USB port.  It
 on a good day.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mus-alsa-capture-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsacapturedevice">mus-alsa-capture-device</a> ()</code></td></tr>
 <tr><td><br></td><td>
 This is the ALSA capture (audio recording) device. The matching environment variable is MUS_ALSA_CAPTURE_DEVICE.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mus-alsa-playback-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsaplaybackdevice">mus-alsa-playback-device</a> ()</code></td></tr>
 <tr><td><br></td><td>
 This is the ALSA audio playback device. The matching environment variable is MUS_ALSA_PLAYBACK_DEVICE.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-alsa-squelch-warning -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsasquelchwarning">mus-alsa-squelch-warning</a> ()</code></td></tr>
@@ -3511,15 +3568,17 @@ shows how these low-level DAC functions fit together:
 </pre>
 </td></tr></table>
 
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-audio-describe -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiodescribe">mus-audio-describe</a> ()</code></td></tr>
 <tr><td></td><td>
-mus-audio-describe returns a string purporting to describe the audio hardware state.  This function
+mus-audio-describe displays a string purporting to describe the audio hardware state.  This function
 works best in OSS.  If you're not getting any sound during playback, the first thing to do is to
 examine this function's output.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-audio-mixer-read -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiomixerread">mus-audio-mixer-read</a> (device field channel vals)</code></td></tr>
@@ -3543,6 +3602,7 @@ obsolete, but if you think there's some easy way to reflect the same idea in mod
 the new Mac audio system.  I can't face this mess!
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mus-audio-mixer-write -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiomixerwrite">mus-audio-mixer-write</a> (device field channel vals)</code></td></tr>
 <tr><td></td><td>
@@ -3561,14 +3621,13 @@ mus-audio-mixer-write sets the state of the field 'field' of audio device 'devic
 (<em class=red>mus-audio-mixer-write</em> mus-audio-mixer mus-audio-igain 2 vals)
 </pre>
 </td></tr></table></td></tr>
-<tr><td colspan=2 height=16></td></tr>
+<tr><td colspan=2></td></tr>
 
-<!-- TODO: continue englishification -->
 
 <!-- mus-audio-open-input -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudioopeninput">mus-audio-open-input</a> (device srate chans format bufsize)</code></td></tr>
 <tr><td></td><td>
-open audio port <i>device</i> ready for input. Return -1 if the open failed.  <i>device</i> is one of:
+mus-audio-open-input opens the audio input (recording) port 'device'.  It returns -1 if the open failed.  'device' is one of:
 </td></tr><tr><td></td><td>
 <pre>
 
@@ -3581,62 +3640,66 @@ open audio port <i>device</i> ready for input. Return -1 if the open failed.  <i
   mus-audio-adat-out     mus-audio-line1            mus-audio-cd 
   mus-audio-spdif-in     mus-audio-spdif-out
 </pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-audio-open-output -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudioopenoutput">mus-audio-open-output</a> (device srate chans format bufsize)</code></td></tr>
 <tr><td></td><td>
-open audio port <i>device</i> ready for output.  Return -1 if the open failed.
+mus-audio-open-output opens the audio output (playback) port 'device'.  It returns -1 if the open failed.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mus-audio-read -->
-<tr><td colspan=2><code><a class=def name="musaudioread">mus-audio-read</a> (line sdata frames)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="musaudioread">mus-audio-read</a> (line sd frames)</code></td></tr>
 <tr><td></td><td>
-read <i>frames</i> of data into sound-data object <i>sdata</i> from port <i>line</i>.  The in-coming data format
-is set by the corresponding mus-audio-open-input call and is translated to the sound-data format (internally known as
-mus_sample_t) by mus-audio-read.
+mus-audio-read reads 'frames' frames of data into the sound-data object 'sd' from the audio input port 'line'.  
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-audio-report -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudioreport">mus-audio-report</a> ()</code></td></tr>
 <tr><td></td><td>
-return a string describing the current audio hardware state. <a href="#musaudiodescribe">mus-audio-describe</a>
+mus-audio-report returns a string describing the current audio hardware state. <a href="#musaudiodescribe">mus-audio-describe</a>
 prints out the same string.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mus-audio-write -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiowrite">mus-audio-write</a> (line sdata frames)</code></td></tr>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiowrite">mus-audio-write</a> (line sd frames)</code></td></tr>
 <tr><td></td><td>
-write <i>frames</i> of data from sound-data <i>sdata</i> to audio port <i>line</i>.  As with mus-audio-read,
-the out-going data format is set by mus-audio-open-output, and the sound-data's data is translated to that
-format by mus-audio-write.
+mus-audio-write writes 'frames' frames of data from the sound-data object 'sd' to the audio output port 'line'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-bytes-per-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musbytespersample">mus-bytes-per-sample</a> (data-format)</code></td></tr>
 <tr><td></td><td>
-number of bytes in each sample of <i>data-format</i>.
+mus-bytes-per-sample returns the number of bytes that 'data-format' uses to encode one sample of sound.
 <pre>
     :<em class=typing>(mus-bytes-per-sample mus-bdouble)</em>
     <em class=listener>8</em>
 </pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-clipping -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musclipping">mus-clipping</a> ()</code></td></tr>
 <tr><td></td><td>
-The default low-level clipping choice while accessing sound data.
-The default is #f which makes clipping very obvious (it will cause wrap-around).
+mus-clipping is the default low-level clipping choice while accessing sound data.
+Its default is #f which makes clipping very obvious (it will cause wrap-around).
 If you're using the standard Snd file accessors, you probably want to use <a href="#clipping">clipping</a>, not this function.
 This function refers to <a href="#mussoundopenoutput">mus-sound-open-output</a> and friends; the file-local version
 is <a href="#musfileclipping">mus-file-clipping</a> -- surely we could make this more confusing!
 See also <a href="#cliphook">clip-hook</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mus-data-format-name -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musdataformatname">mus-data-format-name</a> (format)</code></td></tr>
 <tr><td></td><td>
-convert <i>format</i> from an integer to an explanatory string, e.g. "16-bit big endian linear".  The sndlib data formats are:</td></tr>
+mus-data-format-name converts 'format' from an integer to an explanatory string, e.g. "16-bit big endian linear".  
+The sndlib data formats are:</td></tr>
 <tr><td></td><td>
 <pre>
 
@@ -3644,86 +3707,100 @@ convert <i>format</i> from an integer to an explanatory string, e.g. "16-bit big
     mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
     mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
     mus-ldouble  mus-unknown
-</pre></td></tr><tr><td colspan=2 height=16></td></tr>
+</pre>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-data-format->string -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musdataformattostring">mus-data-format-&gt;string</a> (format)</code></td></tr>
 <tr><td></td><td>
-convert <i>format</i> from an integer to a string, e.g. "mus-mulaw".
+mus-data-format-&gt;string converts 'format' from an integer to a string, e.g. "mus-mulaw".
 <pre>
     :<em class=typing>(mus-data-format-&gt;string mus-bdouble)</em>
     <em class=listener>"mus-bdouble"</em>
 </pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-error-type->string -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="muserrortypetostring">mus-error-type-&gt;string</a> (error)</code></td></tr>
 <tr><td></td><td>
-return a brief string description of <i>error</i> (a mus-error return type; useful only in <a href="#muserrorhook">mus-error-hook</a>).
+mus-error-type-&gt;string returns a brief string description of 'error'
+(a mus-error return type).  This is only useful in <a href="#muserrorhook">mus-error-hook</a>, and it's not very useful even there.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-expand-filename -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musexpandfilename">mus-expand-filename</a> (name)</code></td></tr>
 <tr><td></td><td>
-expand <i>name</i> into its 'absolute' pathname; that is, replace '~' with the current home directory,
+mus-expand-filename fills out the filename 'name' to include its 'absolute' pathname; 
+that is, it replaces '~' with the current home directory,
 and whatever else seems appropriate.
 <pre>
     :<em class=typing>(mus-expand-filename "oboe.snd")</em>
     <em class=listener>"/home/bil/cl/oboe.snd"</em>
 </pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-file-clipping -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musfileclipping">mus-file-clipping</a> (fd)</code></td></tr>
 <tr><td></td><td>
-The clipping choice for the file <i>fd</i>.
+This is the clipping choice for the file referred to by 'fd' 
+(a file identifier as returned by <a href="#mussoundopeninput">mus-sound-open-input</a>).
 The default is #f which makes clipping very obvious (it will cause wrap-around).
 See also <a href="#cliphook">clip-hook</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mus-file-prescaler -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musfileprescaler">mus-file-prescaler</a> (fd)</code></td></tr>
 <tr><td></td><td>
-The prescaling value for reading data from the sndlib file descriptor <i>fd</i>.
-If you're reading float data that is extremely soft (i.e. max amp
+This is the prescaling value for reading data from the sndlib file descriptor 'fd'.
+If you're reading float data that is extremely soft (i.e. peak amplitude
 below .001), the transfer to integer form in sndlib (if you're using integer internal sample format) can cause bits
 to be lost, resulting in hiss.  In this case set the prescaler for
 the file to 1000.0 or so to get the data into a more normal
-range.  Since the set of mus-file-prescaler should come just after opening
+range.  Since mus-file-prescaler must be set after opening
 the sound file, but before trying to read any data, you need to use it in the context of <a href="#duringopenhook">during-open-hook</a>.
 The default prescaler value is <a href="#musprescaler">mus-prescaler</a>, normally 1.0.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mus-header-raw-defaults -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musheaderrawdefaults">mus-header-raw-defaults</a> ()</code></td></tr>
 <tr><td></td><td>
-returns a list: '(srate chans data-format) of the current raw header defaults.  These can be
+mus-header-raw-defaults returns a list: '(srate chans data-format), the current raw header defaults.  These can be
 set: 
 <pre>
     (set! (mus-header-raw-defaults) (list 22050 4 mus-lint))
 </pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-header-type-name -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musheadertypename">mus-header-type-name</a> (type)</code></td></tr>
 <tr><td></td><td>
-convert <i>type</i>, an integer, to a string, e.g. "AIFF".  Some of the sndlib header types are:</td></tr>
+mus-header-type-name converts 'type', an integer, to a string, e.g. "AIFF".  Some of the sndlib header types are:
+</td></tr>
 <tr><td></td><td><pre>
 
     mus-next  mus-aifc  mus-riff  mus-rf64 mus-nist  mus-raw  mus-ircam  mus-aiff 
     mus-bicsf mus-soundfont mus-voc mus-svx mus-unsupported
-</pre></td></tr><tr><td colspan=2 height=16></td></tr>
+</pre></td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-header-type->string -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musheadertypetostring">mus-header-type-&gt;string</a> (type)</code></td></tr>
 <tr><td></td><td>
-convert <i>type</i>, an integer, to a string, e.g. "mus-aifc".
+mus-header-type-&gt;string converts 'type', an integer, to a string, e.g. "mus-aifc".
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-oss-set-buffers -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musosssetbuffers">mus-oss-set-buffers</a> (num size)</code></td></tr>
 <tr><td></td><td>
-in Linux (OSS), this sets the number and size of the OSS fragments.
+In Linux (OSS), this sets the number and size of the OSS fragments.
 The default (as of 21-May-01) is to accept whatever OSS chooses: I believe this is normally
 equivalent to <code>(mus-oss-set-buffers 16 12)</code>.  This default makes the control panel controls very sluggish.  
 Snd used to call <code>(mus-oss-set-buffers 4 12)</code> as its default, 
@@ -3731,16 +3808,18 @@ but this seems to cause trouble for a variety of new sound cards.
 My initialization file includes <code>(mus-oss-set-buffers 2 12)</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mus-prescaler -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musprescaler">mus-prescaler</a> ()</code></td></tr>
 <tr><td></td><td>
-The global default prescaling value for reading data from a file (see <a href="#musfileprescaler">mus-file-prescaler</a>).
+mus-prescaler is the global default prescaling value for reading data from a file (see <a href="#musfileprescaler">mus-file-prescaler</a>).
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundchans">mus-sound-chans</a> (filename)</code></td></tr>
 <tr><td></td><td>
-number of channels in <i>filename</i>.  This value can be set (as can the others like it mentioned below);
+This is the number of channels in 'filename'.  This value can be set (as can the others like it mentioned below);
 the assignment refers to the table of sound file data maintained by sndlib.  The file itself is not touched, but any
 subsequent reference to it in Snd will assume the new value.  In the mus-sound-chans case, say we have a sound file
 whose header claims it has 43 channels, but we know it only has 2:
@@ -3748,12 +3827,13 @@ whose header claims it has 43 channels, but we know it only has 2:
     (set! (mus-sound-chans "43chans.snd") 2)
 </pre>
 tells Snd that it has 2 channels no matter what the header says.
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-sound-close-input -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundcloseinput">mus-sound-close-input</a> (fd)</code></td></tr>
 <tr><td></td><td>
-close sound file. <i>fd</i> is an integer returned by <a href="#mussoundopeninput">mus-sound-open-input</a>.
+This closes the sound file referred to by 'fd'; 'fd' is an integer returned by <a href="#mussoundopeninput">mus-sound-open-input</a>.
 These mus-sound-* file functions refer to a direct path to read and write sound files.  Any such operation is beneath the
 notice, so to speak, of Snd.  
 This function reads the first 32 samples of a file, returning the 30th in channel 0:
@@ -3769,85 +3849,135 @@ This function reads the first 32 samples of a file, returning the 30th in channe
 	(<em class=red>mus-sound-close-input</em> fd)
 	val))))
 </pre></td></tr></table>
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-sound-close-output -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundcloseoutput">mus-sound-close-output</a> (fd bytes)</code></td></tr>
 <tr><td></td><td>
-close sound file and update its length indication, if any
+This function closes the sound file 'fd', and updates its length indication, if any to be 'bytes' bytes.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-comment -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundcomment">mus-sound-comment</a> (filename)</code></td></tr>
 <tr><td></td><td>
-header comment, if any
-</td></tr><tr><td colspan=2 height=16></td></tr>
+mus-sound-comment returns the comment in the header of the file 'filename'.
+<pre>
+    :<em class=typing>(with-sound (:comment "this is a comment") (fm-violin 0 1 440 .1))</em>
+    <em class=listener>"test.snd"</em>
+    :<em class=typing>(mus-sound-comment "test.snd")</em>
+    <em class=listener>"this is a comment"</em>
+</pre>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-sound-data-format -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussounddataformat">mus-sound-data-format</a> (filename)</code></td></tr>
 <tr><td></td><td>
-data format (e.g. <code>mus-bshort</code>) (settable, see mus-sound-chans above)
-</td></tr><tr><td colspan=2 height=16></td></tr>
+mus-sound-data-format returns the data format (e.g. <code>mus-bshort</code>) of the file 'filename'.
+<pre>
+    :<em class=typing>(mus-data-format-&gt;string (mus-sound-data-format "oboe.snd"))</em>
+    <em class=listener>"mus-bshort"</em>
+</pre>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-sound-data-location -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussounddatalocation">mus-sound-data-location</a> (filename)</code></td></tr>
 <tr><td></td><td>
-location of first sample (bytes) (settable, see mus-sound-chans)
+This is the location in bytes of the first sample in the file 'filename'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-datum-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussounddatumsize">mus-sound-datum-size</a> (filename)</code></td></tr>
 <tr><td></td><td>
-size in bytes of each sample in <i>filename</i>.  Equivalent to <code>(mus-bytes-per-sample (mus-sound-data-format filename))</code>.
+This returns the size in bytes of each sample in <i>filename</i>.  
+It is equivalent to <code>(mus-bytes-per-sample (mus-sound-data-format filename))</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-duration -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundduration">mus-sound-duration</a> (filename)</code></td></tr>
 <tr><td></td><td>
-duration of sound in seconds
-</td></tr><tr><td colspan=2 height=16></td></tr>
+This returns the duration in seconds of the sound data in the file 'filename'.
+<pre>
+    :<em class=typing>(mus-sound-duration "oboe.snd")</em>
+    <em class=listener>2.30512475967407</em>
+</pre>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-sound-forget -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundforget">mus-sound-forget</a> (filename)</code></td></tr>
 <tr><td></td><td>
-remove <i>filename</i> from the sound cache (presumably the file has been deleted or something).
+mus-sound-forget removes the file 'filename' from the sndlib sound cache.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-frames -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundframes">mus-sound-frames</a> (filename)</code></td></tr>
 <tr><td></td><td>
-frames of sound according to header (can be incorrect in NeXT headers)
+mus-sound-frames returns the number of frames of sound data in the file 'filename' according to its header
+(this number is occasionally incorrect in mus-next headers).
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-header-type -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundheadertype">mus-sound-header-type</a> (filename)</code></td></tr>
 <tr><td></td><td>
-header type (e.g. <code>mus-aifc</code>) (settable, see mus-sound-chans)
-</td></tr><tr><td colspan=2 height=16></td></tr>
+This returns the header type (e.g. <code>mus-aifc</code>) of the file 'filename'.
+<pre>
+    :<em class=typing>(mus-header-type-&gt;string (mus-sound-header-type "oboe.snd"))</em>
+    <em class=listener>"mus-next"</em>
+</pre>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-sound-length -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundlength">mus-sound-length</a> (filename)</code></td></tr>
 <tr><td></td><td>
-true file length (bytes)
+mus-sound-length returns the number of bytes of sound data in the file 'filename'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-loop-info -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundloopinfo">mus-sound-loop-info</a> (filename)</code></td></tr>
 <tr><td></td><td>
-loop info.  <a href="sndscm.html#exmarkloops">mark-loops</a> in examp.scm uses this to place a mark at each loop point.
-</td></tr><tr><td colspan=2 height=16></td></tr>
+This function refers to the "loop" info that is sometimes found in some headers (aifc, wav etc).
+<a href="sndscm.html#markloops">mark-loops</a> in examp.scm uses mus-sound-loop-info to place a mark at each loop point.
+<pre>
+    :<em class=typing>(mus-sound-loop-info "~/sf1/forest.aiff")</em>
+    <em class=listener>(24981 144332 0 0 60 0 1 0)</em>
+</pre>
+The loop info is a list of
+up to 4 points, the first two (start, end = 24981 144332 above) refer to the sustain loop,
+and the second two (0 0 above) refer to the release.  
+The 5th and 6th list entries are the base note and detune values (60 0 above).
+For historical reasons, the 7th and 8th entries are the sustain and release modes (1 0 above).
+See also <a href="#soundloopinfo">sound-loop-info</a>.
+</td></tr><tr><td colspan=2 height-16></td></tr>
+
 
 <!-- mus-sound-maxamp -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundmaxamp">mus-sound-maxamp</a> (filename)</code></td></tr>
 <tr><td></td><td>
-a list of max amps and locations thereof.  The corresponding set! 
-affects only the sndlib table of sound file info, not the sound file itself, as in all such cases -- see mus-sound-chans.
-</td></tr><tr><td colspan=2 height=16></td></tr>
+mus-sound-maxamp returns a list of max amps and locations thereof.  The corresponding set! 
+affects only the sndlib table of sound file info, not the sound file itself, as in all such cases.
+<pre>
+    :<em class=typing>(mus-sound-maxamp "oboe.snd")</em>
+    <em class=listener>(24971 0.147247314453125)</em>                  ;oboe's maxamp is .147 first encountered at sample 24971
+    :<em class=typing>(mus-sound-maxamp "2a.snd")</em>
+    <em class=listener>(933 0.0999755859375 2827 0.0999755859375)</em> ;2a's maxamps are 0.1 in each channel at sample 933 in chan 0, 2827 in chan 1
+</pre>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-sound-maxamp-exists? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundmaxampexists">mus-sound-maxamp-exists?</a> (filename)</code></td></tr>
 <tr><td></td><td>
-#t if the sound's maxamp data is available
+This function returns #t if the sound's maxamp data is available
 in the sound cache; if it isn't, a call on mus-sound-maxamp has to open and read the data to get the maxamp.
 <pre>
     :<em class=typing>(mus-sound-maxamp-exists? "/home/bil/test/sound/away.snd")</em>
@@ -3857,63 +3987,78 @@ in the sound cache; if it isn't, a call on mus-sound-maxamp has to open and read
     :<em class=typing>(mus-sound-maxamp-exists? "/home/bil/test/sound/away.snd")</em>
     <em class=listener>#t</em>
 </pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-sound-open-input -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundopeninput">mus-sound-open-input</a> (filename)</code></td></tr>
 <tr><td></td><td>
-open filename (a sound file) return an integer (for use with mus-sound-read and mus-sound-close-input).
+mus-sound-open-input opens the sound file 'filename' and returns an integer for use with 
+<a href="#mussoundread">mus-sound-read</a> and <a href="#mussoundcloseinput">mus-sound-close-input</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-open-output -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundopenoutput">mus-sound-open-output</a> (filename :optional (srate 22050) (chans 1) data-format header-type comment)</code></td></tr>
 <tr><td></td><td>
-create a new sound file with the indicated attributes, return an integer (for use with mus-sound-write and mus-sound-close-output)
+mus-sound-open-output creates a new sound file with the indicated attributes, and returns an integer 
+for use with <a href="#mussoundwrite">mus-sound-write</a> and <a href="#mussoundcloseoutput">mus-sound-close-output</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-prune -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundprune">mus-sound-prune</a> ()</code></td></tr>
 <tr><td></td><td>
-remove all defunct (non-existent) files from the sound cache.  This is primarily aimed at internal testing.
+mus-sound-prune removes all defunct (non-existent) files from the sound cache.  This is primarily intended for internal testing (snd-test.scm).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mus-sound-read -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundread">mus-sound-read</a> (fd beg end chans sdata)</code></td></tr>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundread">mus-sound-read</a> (fd beg end chans sd)</code></td></tr>
 <tr><td></td><td>
-read data from sound file <i>fd</i> loading the data array from beg
-to end. <i>sdata</i> is a sound-data object that should be able to
-accommodate the read.
+mus-sound-read reads data from the sound file 'fd', loading the sound-data object 'sd' from 'beg'
+to 'end'. 
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-reopen-output -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundreopenoutput">mus-sound-reopen-output</a> (filename :optional (chans 1) data-format header-type data-location)</code></td></tr>
 <tr><td></td><td>
-reopen filename, ready to continue output.
+mus-sound-reopen-output reopens the sound file 'filename', ready to continue writing output.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-report-cache -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundreportcache">mus-sound-report-cache</a> (file)</code></td></tr>
 <tr><td></td><td>
-print the current sound header data table to the file given or stdout if none is specified.
+This function prints the current sound header data table to the file given or stdout if none is specified.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-samples -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundsamples">mus-sound-samples</a> (filename)</code></td></tr>
 <tr><td></td><td>
-number of samples in sound according to header (can be incorrect), (settable, see mus-sound-chans)
-</td></tr><tr><td colspan=2 height=16></td></tr>
+mus-sound-samples returns the number of samples in the sound file 'filename' according to its header.
+<pre>
+    :<em class=typing>(mus-sound-samples "oboe.snd")</em>
+    <em class=listener>50828</em>
+</pre>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-sound-seek-frame -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundseekframe">mus-sound-seek-frame</a> (fd frame)</code></td></tr>
 <tr><td></td><td>
-move to <i>frame</i> in sound file <i>fd</i>
+mus-sound-seek-frame moves the input or output reading point to 'frame' in the sound file 'fd'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-srate -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundsrate">mus-sound-srate</a> (filename)</code></td></tr>
 <tr><td></td><td>
-sampling rate (settable, see mus-sound-chans)
+mus-sound-srate returns the sampling rate of 'filename'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-type-specifier -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundtypespecifier">mus-sound-type-specifier</a> (filename)</code></td></tr>
@@ -3921,27 +4066,30 @@ sampling rate (settable, see mus-sound-chans)
 original type indication of <i>filename</i>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mus-sound-write -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundwrite">mus-sound-write</a> (fd beg end chans sdata)</code></td></tr>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundwrite">mus-sound-write</a> (fd beg end chans sd)</code></td></tr>
 <tr><td></td><td>
-write data to sound file <i>fd</i>
+mus-sound-write writes data from the sound-data object 'sd' to the sound file 'fd'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mus-sound-write-date -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundwritedate">mus-sound-write-date</a> (filename)</code></td></tr>
 <tr><td></td><td>
-sound's write date:
+This returns the sound's write date:
 </td></tr><tr><td></td><td>
 <pre>
     :<em class=typing>(strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))</em>
     <em class=listener>"18-Oct 06:56 PDT"</em>
 </pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
+
 
 <!-- mus-sun-set-outputs -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussunsetoutputs">mus-sun-set-outputs</a> (speakers headphones line-out)</code></td></tr>
 <tr><td></td><td>
-set the current Sun audio outputs.
+This sets the current Sun audio outputs.
 Each entry should be either 0 (turn off the device) or 1 (turn it on).
 On NetBSD, use <a class=def name="musnetbsdsetoutputs">mus-netbsd-set-outputs</a>.
 </td></tr>
@@ -4009,6 +4157,8 @@ and <a class=quiet href="#readtracksample">read-track-sample</a>.
 
 <!-- -------------------------------- SAMPLE-READER TABLE -------------------------------- -->
 
+<!-- TODO clean up and englishify sample reader table -->
+
 <table border=0 cellspacing=0 hspace=10>
 
 <!-- copy-sample-reader -->
@@ -4017,6 +4167,7 @@ and <a class=quiet href="#readtracksample">read-track-sample</a>.
 <td>return a copy of <i>obj</i> (any kind of sample-reader). 
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- free-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="freesamplereader">free-sample-reader</a> (obj)</code></td></tr>
@@ -4028,6 +4179,7 @@ demands on memory.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- make-mix-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makemixsamplereader">make-mix-sample-reader</a> (mix <i>beg</i>)</code></td></tr>
 <tr><td></td>
@@ -4036,6 +4188,7 @@ See mix-&gt;vct in mix.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- make-region-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makeregionsamplereader">make-region-sample-reader</a> (<i>start reg chn dir</i>)</code></td></tr>
 <tr><td></td>
@@ -4043,6 +4196,7 @@ See mix-&gt;vct in mix.scm.
 It is not safe to assume this reader will return zeros beyond the region boundaries.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- make-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makesamplereader">make-sample-reader</a> (<i>start snd chn dir pos</i>)</code></td></tr>
@@ -4078,6 +4232,7 @@ can read external sounds without going to the trouble of loading them into Snd.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- make-track-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="maketracksamplereader">make-track-sample-reader</a> (<a class=quiet href="#track">track</a> <i>chn beg</i>)</code></td></tr>
 <tr><td></td>
@@ -4085,25 +4240,30 @@ can read external sounds without going to the trouble of loading them into Snd.
 </td></tr> 
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mix-sample-reader? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixsamplereaderQ">mix-sample-reader?</a> (obj)</code></td></tr>
 <tr><td></td><td>#t if <i>obj</i> is a mix-sample-reader.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- next-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="nextsample">next-sample</a> (obj)</code></td></tr>
 <tr><td></td><td>return next sample (reading forward) read by sample-reader <i>obj</i>.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- previous-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="previoussample">previous-sample</a> (obj)</code></td></tr>
 <tr><td></td><td>return previous sample in stream read by sample-reader <i>obj</i>.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- read-mix-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readmixsample">read-mix-sample</a> (obj)</code></td></tr>
 <tr><td></td><td>return next sample read by mix-sample-reader <i>obj</i>.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- read-region-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readregionsample">read-region-sample</a> (obj)</code></td></tr>
@@ -4126,20 +4286,24 @@ can read external sounds without going to the trouble of loading them into Snd.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- read-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readsample">read-sample</a> (obj)</code></td></tr>
 <tr><td></td><td>return next sample (reading in the direction set by <a class=quiet href="#makesamplereader">make-sample-reader</a>) from sample-reader <i>obj</i>.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- read-track-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readtracksample">read-track-sample</a> (obj)</code></td></tr>
 <tr><td></td><td>return next sample read by track-sample-reader <i>obj</i>.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- region-sample-reader? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regionsamplereaderQ">region-sample-reader?</a> (obj)</code></td></tr>
 <tr><td></td><td>#t if <i>obj</i> is a region sample-reader.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- sample-reader-at-end? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderatendQ">sample-reader-at-end?</a> (obj)</code></td></tr>
@@ -4149,6 +4313,7 @@ See <a href="#scanagain">scan-again</a> and <a href="#newcp">find-zero</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sample-reader-home -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderhome">sample-reader-home</a> (obj)</code></td></tr>
 <tr><td></td><td>if <i>obj</i> is a sound sample reader, return a list with the sound index and channel number associated with <i>obj</i>.
@@ -4156,16 +4321,19 @@ If it is a mix reader, return the mix's id.  If it is a track reader, return a l
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sample-reader-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderposition">sample-reader-position</a> (obj)</code></td></tr>
 <tr><td></td><td>current (sample-wise) location of sample-reader <i>obj</i> (any kind of reader).  See <a href="#scanagain">scan-again</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- sample-reader? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderQ">sample-reader?</a> (obj)</code></td></tr>
 <tr><td></td><td>#t if <i>obj</i> is a sample-reader.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- track-sample-reader? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracksamplereaderQ">track-sample-reader?</a> (obj)</code></td></tr>
@@ -4192,6 +4360,7 @@ to Snd data, snd-&gt;sample.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- snd->sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sndtosample">snd-&gt;sample</a> (gen frame <i>chan</i>)</code></td></tr>
 <tr><td><br></td>
@@ -4200,6 +4369,7 @@ If *reverb* is a snd-&gt;sample generator, for example,
 <a class=quiet href="clm.html#ina">ina</a> and <a class=quiet href="clm.html#filetosample">file-&gt;sample</a> actually call snd-&gt;sample.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- snd->sample? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sndtosamplep">snd-&gt;sample?</a> (obj)</code></td></tr>
@@ -4225,6 +4395,9 @@ for an overview and key bindings associated with marks.
 
 <!-- -------------------------------- MARKS TABLE -------------------------------- -->
 
+
+<!-- TODO clean up and englishify mark table -->
+
 <table border=0 cellspacing=0 hspace=10>
 
 <!-- add-mark -->
@@ -4234,11 +4407,13 @@ add mark at <i>sample</i>, returning mark id.  If <i>sample</i> is out-of-range,
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- delete-mark -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="deletemark">delete-mark</a> (<i>id</i>)</code></td></tr>
 <tr><td></td><td>delete mark <i>id</i> (- C-m).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- delete-marks -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="deletemarks">delete-marks</a> (<i>snd chn</i>)</code></td></tr>
@@ -4250,6 +4425,7 @@ add mark at <i>sample</i>, returning mark id.  If <i>sample</i> is out-of-range,
 <tr><td></td><td>called before a mark is drawn (discussed in the Hooks section).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- find-mark -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="findmark">find-mark</a> (samp <i>snd chn edpos</i>)</code></td></tr>
@@ -4276,6 +4452,7 @@ looks for a mark of that name.  mark-name-&gt;id in marks.scm finds a named mark
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mark-home -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="markhome">mark-home</a> (<i>id</i>)</code></td></tr>
 <tr><td></td><td>a list with the sound index and channel that hold mark <i>id</i>.
@@ -4288,6 +4465,7 @@ channel; the inverse function is marks.
 <tr><td></td><td>called when a mark is added, deleted, moved (discussed in the Hooks section).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mark-name -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="markname">mark-name</a> (<i>id</i>)</code></td></tr>
@@ -4302,6 +4480,7 @@ channel; the inverse function is marks.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mark-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="marksample">mark-sample</a> (<i>id pos</i>)</code></td></tr>
 <tr><td></td><td>sample (number) marked by mark <i>id</i> at edit history position <i>pos</i>; also <code>(set! (mark-sample id) samp)</code>.
@@ -4315,6 +4494,7 @@ continues to point to its original sample.
 <br>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mark-sync -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="marksync">mark-sync</a> (<i>id</i>)</code></td></tr>
@@ -4344,11 +4524,13 @@ the respective marks (which need not be in separate channels).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mark-sync-max -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="marksyncmax">mark-sync-max</a> ()</code></td></tr>
 <tr><td></td><td>max mark sync value seen so far (intended as a way to get a unique sync value).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mark-tag-height -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="marktagheight">mark-tag-height</a> ()</code></td></tr>
@@ -4356,11 +4538,13 @@ the respective marks (which need not be in separate channels).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mark-tag-width -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="marktagwidth">mark-tag-width</a> ()</code></td></tr>
 <tr><td></td><td>mark tag width in pixels (default: 10)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- marks -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="emarks">marks</a> (<i>snd chn pos</i>)</code></td></tr>
@@ -4389,11 +4573,13 @@ the list of ids reflects the mark list at that time in the edit history.  See de
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mark? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="markp">mark?</a> (<i>id</i>)</code></td></tr>
 <tr><td></td><td>#t if mark <i>id</i> is active (that is, present in an active channel).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- save-marks -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="savemarks">save-marks</a> (<i>snd filename</i>)</code></td></tr>
@@ -4406,6 +4592,7 @@ the list of ids reflects the mark list at that time in the edit history.  See de
 <tr><td></td><td>#t if marks are being (or to be) displayed.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- syncd-marks -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="syncdmarks">syncd-marks</a> (sync)</code></td></tr>
@@ -4438,12 +4625,12 @@ squeeze selection between marks: <a href="sndscm.html#fitselectionbetweenmarks">
 insert silence before marks: <a href="sndscm.html#padmarks">pad-marks</a><br>
 move syncd marks: <a href="sndscm.html#movesyncdmarks">move-syncd-marks</a><br>
 play starting from syncd marks: <a href="sndscm.html#playsyncdmarks">play-syncd-marks</a><br>
-evaluate function between marks: <a href="sndscm.html#exevalbetweenmarks">eval-between-marks</a><br>
-place marks at selection start and end: <a href="sndscm.html#exsnapmarks">snap-marks</a><br>
-define selection via marks: <a href="sndscm.html#exdefineselectionviamarks">define-selection-via-marks</a><br>
-force dragged mark to land on a beat: <a href="sndscm.html#exsnapmarktobeat">snap-mark-to-beat</a><br>
-loop continuously between the two specified marks: <a href="sndscm.html#exloopbetweenmarks">loop-between-marks</a><br>
-split sound into separate files based on mark placement: <a href="sndscm.html#exmarkexplode">mark-explode</a><br>
+evaluate function between marks: <a href="sndscm.html#evalbetweenmarks">eval-between-marks</a><br>
+place marks at selection start and end: <a href="sndscm.html#snapmarks">snap-marks</a><br>
+define selection via marks: <a href="sndscm.html#defineselectionviamarks">define-selection-via-marks</a><br>
+force dragged mark to land on a beat: <a href="sndscm.html#snapmarktobeat">snap-mark-to-beat</a><br>
+loop continuously between the two specified marks: <a href="sndscm.html#loopbetweenmarks">loop-between-marks</a><br>
+split sound into separate files based on mark placement: <a href="sndscm.html#markexplode">mark-explode</a><br>
 mark property lists: <a href="sndscm.html#markproperty">mark-property</a><br>
 save mark properties in saved state file: <a href="sndscm.html#savemarkproperties">save-mark-properties</a><br>
 show mark properties upon click: <a href="sndscm.html#markclickinfo">mark-click-info</a><br>
@@ -4489,6 +4676,8 @@ sound.
 
 <!-- -------------------------------- MIX FUNCTION TABLE -------------------------------- -->
 
+<!-- TODO clean up and englishify mix and track table -->
+
 <table border=0 cellspacing=0 hspace=10>
 
 <!-- copy-mix -->
@@ -4496,6 +4685,7 @@ sound.
 <tr><td width=60></td><td>copy <i>mix</i>, placing the copy at <i>beg</i> which defaults to the copied mix's position.  The new mix's track is set to 0.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- delete-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="deletemix">delete-mix</a> (mix)</code></td></tr>
@@ -4561,6 +4751,7 @@ We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix 
 </td></tr>
 <tr><td colspan=2></td></tr>
 
+
 <!-- mixes -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixes">mixes</a> (<i>snd chn pos</i>)</code></td></tr>
 <tr><td></td><td>a list of currently active mixes (their id numbers) in <i>snd</i>'s channel <i>chn</i> at history <i>pos</i>.
@@ -4587,11 +4778,13 @@ in the 2nd channel of the 2nd (a stereo sound):
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mix-amp -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixamp">mix-amp</a> (mix <i>chan</i>)</code></td></tr>
 <tr><td></td><td>amplitude of <i>mix</i>'s channel <i>chan</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mix-amp-env -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixampenv">mix-amp-env</a> (mix <i>chan</i>)</code></td></tr>
@@ -4603,11 +4796,13 @@ sets mix 0's 0-chan envelope to a ramp.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mix-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixchans">mix-chans</a> (<i>mix</i>)</code></td></tr>
 <tr><td></td><td>input chans in <i>mix</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mix-color -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixcolor">mix-color</a> ()</code></td></tr>
@@ -4619,11 +4814,13 @@ red; but <code>(set! (mix-color 3) red)</code> sets only mix 3's waveform to red
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mix-frames -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixframes">mix-frames</a> (mix)</code></td></tr>
 <tr><td></td><td>mix's length in samples (not settable).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mix-home-->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixhome">mix-home</a> (mix)</code></td></tr>
@@ -4631,11 +4828,13 @@ red; but <code>(set! (mix-color 3) red)</code> sets only mix 3's waveform to red
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mix-inverted? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixinvertedp">mix-inverted?</a> (mix)</code></td></tr>
 <tr><td></td><td>#t if <i>mix</i> should invert track amp-env values (for panning).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mix-locked? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixlockedp">mix-locked?</a> (mix)</code></td></tr>
@@ -4644,6 +4843,7 @@ affects some portion of the data that the mix also affects.  For example, if you
 that has actively mixed data, the associated mix tag goes away until you undo that deletion. 
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mix-name -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixname">mix-name</a> (mix)</code></td></tr>
@@ -4747,6 +4947,7 @@ to use multiple output files, collecting related notes in one file, then mixing 
 </td></tr>
 <tr><td colspan=2 height=32></td></tr>
 
+
 <!-- mix-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixposition">mix-position</a> (mix)</code></td></tr>
 <tr><td></td><td>position (a sample number) of <i>mix</i>.
@@ -4762,6 +4963,7 @@ See also <a href="sndscm.html#panmixregion">pan-mix-region</a> in mix.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mix-selection -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef>mix-selection</em> (<i>beg snd chn</i>)</code></td></tr>
 <tr><td></td><td>
@@ -4770,11 +4972,13 @@ See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mix-speed -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixspeed">mix-speed</a> (mix)</code></td></tr>
 <tr><td></td><td>speed (resampling ratio) of <i>mix</i>; 1.0 (default) means no resampling; 2.0 reads the mix data twice as fast.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mix-speed-style -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixspeedstyle">mix-speed-style</a> (mix)</code></td></tr>
@@ -4782,11 +4986,13 @@ See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mix-tag-height -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagheight">mix-tag-height</a> ()</code></td></tr>
 <tr><td></td><td>mix tag height in pixels (default: 14)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mix-tag-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagposition">mix-tag-position</a> (mix)</code></td></tr>
@@ -4794,17 +5000,20 @@ See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mix-tag-width -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagwidth">mix-tag-width</a> ()</code></td></tr>
 <tr><td></td><td>mix tag width in pixels (default: 6)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mix-tag-y -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagy">mix-tag-y</a> (mix)</code></td></tr>
 <tr><td></td><td>tag y offset in graph of <i>mix</i> (default 0).  The x offset of the tag is determined by <a href="#mixtagposition">mix-tag-position</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mix-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtrack">mix-track</a> (mix)</code></td></tr>
@@ -4824,17 +5033,20 @@ See also <a href="sndscm.html#panmixvct">pan-mix-vct</a> in mix.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mix-waveform-height -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixwaveformheight">mix-waveform-height</a> ()</code></td></tr>
 <tr><td></td><td>Max height (pixels) of mix waveforms; default is 20 (see <a href="#showmixwaveforms">show-mix-waveforms</a>).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- mix? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixp">mix?</a> (id)</code></td></tr>
 <tr><td></td><td>#t if <i>id</i> is an active mix.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- play-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="playmix">play-mix</a> (mix <i>beg</i>)</code></td></tr>
@@ -4843,6 +5055,7 @@ This function does not return until the play is complete or interrupted (it is s
 rather than <a href="#play">play</a>).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- with-mix-tags -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="withmixtags">with-mix-tags</a> ()</code></td></tr>
@@ -4864,7 +5077,7 @@ mix selection: <a href="#mixselection">mix-selection</a><br>
 mix vct: <a href="#mixvct">mix-vct</a><br>
 mix sound-data: <a href="sndscm.html#mixsounddata">mix-sound-data</a><br>
 mix a frame: <a href="sndscm.html#mixframe">mix-frame</a><br>
-enveloped mix: see <a href="sndscm.html#exenvelopedmix">enveloped-mix</a> in extensions.scm<br>
+enveloped mix: see <a href="sndscm.html#envelopedmix">enveloped-mix</a> in extensions.scm<br>
 read mix samples: <a href="#makemixsamplereader">make-mix-sample-reader</a><br>
 mix data maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
 mix data to vct: <a href="sndscm.html#mixtovct">mix-&gt;vct</a><br>
@@ -4923,11 +5136,13 @@ change the second (blue) track's tempo to be twice as slow, and move the first (
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- delete-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="deletetrack">delete-track</a> (track-id)</code></td></tr>
 <tr><td></td><td>Delete track <i>track-id</i> (set its amp to 0.0).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- free-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="freetrack">free-track</a> (track-id)</code></td></tr>
@@ -4936,12 +5151,14 @@ To free all tracks: <code>(for-each <em class=red>free-track</em> (<a class=quie
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- lock-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="locktrack">lock-track</a> (track-id)</code></td></tr>
 <tr><td></td><td>Lock track <i>id</i> (lock all its associated mixes).  One reason to lock a track would be
 to preserve its overall amp-env despite some subsequent editing that changes the nominal track length.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- make-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="maketrack">make-track</a> (<i>mix-ids...</i>)</code></td></tr>
@@ -4952,6 +5169,7 @@ If the previous track had an amplitude envelope, this can cause its remaining mi
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- play-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="playtrack">play-track</a> (track-id <i>chn beg</i>)</code></td></tr>
 <tr><td></td><td>play track <i>track</i>. If chn is #t, play all associated mixes, even if in different sounds.
@@ -4961,11 +5179,13 @@ rather than <a href="#play">play</a>).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="track">track</a> (track-id <i>chn</i>)</code></td></tr>
 <tr><td width=60><br></td><td>Return a list of the mixes currently in track <i>track-id</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- tracks -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracks">tracks</a> (track-id)</code></td></tr>
@@ -4974,17 +5194,20 @@ not currently garbage collected; to free one, use <a href="#freetrack">free-trac
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- track? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackp">track?</a> (track-id)</code></td></tr>
 <tr><td width=60><br></td><td>Return #t if track-id refers to an active (not deleted) track.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- track-amp -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackamp">track-amp</a> (track-id)</code></td></tr>
 <tr><td width=60><br></td><td>Track amp.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- track-amp-env -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackampenv">track-amp-env</a> (track-id)</code></td></tr>
@@ -5001,12 +5224,14 @@ track envelope as a panning control.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- track-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackchans">track-chans</a> (track-id)</code></td></tr>
 <tr><td width=60><br></td><td>chans associated with track <i>track-id</i>. Each such channel
 has at least one active mix.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- track-color -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackcolor">track-color</a> (track-id)</code></td></tr>
@@ -5021,11 +5246,13 @@ of the tag).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- track-frames -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackframes">track-frames</a> (track-id <i>chn</i>)</code></td></tr>
 <tr><td width=60><br></td><td>Track frames (length in samples).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- track-name -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackname">track-name</a> (track-id)</code></td></tr>
@@ -5034,6 +5261,7 @@ track's name.  See also <a href="sndscm.html#tracknametoid">track-name-&gt;id</a
 under <a href="sndscm.html#mixnametoid">mix-name-&gt;id</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- track-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackposition">track-position</a> (track-id <i>chn</i>)</code></td></tr>
@@ -5059,6 +5287,7 @@ track are moved.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- track-speed -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackspeed">track-speed</a> (track-id)</code></td></tr>
 <tr><td width=60><br></td><td>Track speed.  This affects the resampling of each mix, not the speed at
@@ -5066,11 +5295,13 @@ which the mixes occur (the latter is controlled by <a href="#tracktempo">track-t
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- track-speed-style -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackspeedstyle">track-speed-style</a> (track-id)</code></td></tr>
 <tr><td></td><td>speed-style choice of <i>track-id</i>; default follows <a href="#speedstyle">speed-control-style</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- track-tag-y -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracktagy">track-tag-y</a> (track-id)</code></td></tr>
@@ -5079,12 +5310,14 @@ track waveform position in pixels from the top of the graph.  This overrides <a 
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- track-tempo -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracktempo">track-tempo</a> (track-id)</code></td></tr>
 <tr><td width=60><br></td><td>Track tempo. This affects the spacing between mixes; a higher track-tempo corresponds to
 tighter spacing between mixes.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- track-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracktrack">track-track</a> (track-id)</code></td></tr>
@@ -5162,6 +5395,8 @@ Most of the region arguments default to the current region (the top of the regio
 
 <!-- -------------------------------- REGION TABLE -------------------------------- -->
 
+<!-- TODO clean up and englishify region and selection table -->
+
 <A NAME="regionstuff"></a>
 <table border=0 cellspacing=0 hspace=10>
 
@@ -5172,6 +5407,7 @@ Most of the region arguments default to the current region (the top of the regio
 <small>I called this forget-region because delete-region seemed ambiguous, especially given delete-selection.</small>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- insert-region -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="insertregion">insert-region</a> (<i>beg reg snd chn</i>)</code></td></tr>
@@ -5193,6 +5429,7 @@ function uses insert-region (and other region functions) to rotate the samples i
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- make-region -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makeregion">make-region</a> (<i>beg end snd chn</i>)</code></td></tr>
 <tr><td></td><td>
@@ -5202,12 +5439,14 @@ current selection is used. If <i>chn</i> is #t, all chans are included, taking t
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- make-region-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a href="#makeregionsamplereader">make-region-sample-reader</a> (<i>start reg chn dir</i>)</code></td></tr>
 <tr><td></td><td>
 create a <a href="#samplereaders">sample-reader</a> reading region <i>reg</i>'s channel <i>chn</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mix-region -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef>mix-region</em> (<i>samp reg snd chn track</i>)</code></td></tr>
@@ -5219,12 +5458,14 @@ See also <a href="sndscm.html#panmixregion">pan-mix-region</a> in mix.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- play-region -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="playregion">play-region</a> (<i>reg wait stop-func</i>)</code></td></tr>
 <tr><td></td><td>
 play region <i>reg</i>; if wait is #t, play to the end before returning. (See play.scm).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- region-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regionchans">region-chans</a> (<i>reg</i>)</code></td></tr>
@@ -5233,12 +5474,14 @@ number of channels in region <i>reg</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- region-frames -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regionframes">region-frames</a> (<i>reg chan</i>)</code></td></tr>
 <tr><td></td><td>
 number of samples (per channel) in region <i>reg</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- region-graph-style -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regiongraphstyle">region-graph-style</a> (style)</code></td></tr>
@@ -5247,12 +5490,14 @@ graph drawing choice for the region dialog's graph.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- region-maxamp -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regionmaxamp">region-maxamp</a> (<i>reg</i>)</code></td></tr>
 <tr><td></td><td>
 maximum amplitude of region <i>reg</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- region-maxamp-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regionmaxampposition">region-maxamp-position</a> (<i>reg</i>)</code></td></tr>
@@ -5261,6 +5506,7 @@ location (sample number) of maximum amplitude of region <i>reg</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- region-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regionposition">region-position</a> (<i>reg chan</i>)</code></td></tr>
 <tr><td></td><td>
@@ -5268,12 +5514,14 @@ Begin time of region <i>reg</i>'s channel <i>chan</i> in the original sound.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- region-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regionsample">region-sample</a> (<i>samp reg chn</i>)</code></td></tr>
 <tr><td></td><td>
 value of sample <i>samp</i> in region <i>reg</i> in channel <i>chn</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- region->vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regiontovct">region-&gt;vct</a> (<i>samp samps reg chn v</i>)</code></td></tr>
@@ -5291,12 +5539,14 @@ rather than creating a new vct.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- region-srate -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regionsrate">region-srate</a> (<i>reg</i>)</code></td></tr>
 <tr><td></td><td>
 original (nominal) sampling rate of region <i>reg</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- regions -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="eregions">regions</a> ()</code></td></tr>
@@ -5306,6 +5556,7 @@ list of ids of regions currently active.  The most recently created region is <c
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- region? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regionok">region?</a> (<i>reg</i>)</code></td></tr>
 <tr><td></td><td>
@@ -5314,6 +5565,7 @@ keep track of (<a href="#maxregions">max-regions</a>); when necessary, the least
 deleted.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- save-region -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="saveregion">save-region</a> (reg <a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :header-type :data-format :comment) </code></td></tr>
@@ -5337,11 +5589,11 @@ args (that is, they are normal keyword arguments, but the keywords are optional)
 <small><blockquote>
 Max length of region list: <a href="#maxregions">max-regions</a><br>
 Whether selection creates a region: <a href="#selectioncreatesregion">selection-creates-region</a><br>
-To play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a><br>
+To play region repeatedly: <a href="sndscm.html#playregionforever">play-region-forever</a><br>
 Start region browser from Scheme: <a href="#viewregionsdialog">view-regions-dialog</a><br>
 All about regions: <a href="snd.html#regions">regions</a><br>
 The region dialog: <a href="snd.html#regionbrowser">region browser</a><br>
-Region rms amp: <a href="sndscm.html#exregionrms">region-rms</a><br>
+Region rms amp: <a href="sndscm.html#regionrms">region-rms</a><br>
 region-play-list and region-play-sequence in examp.scm<br>
 <a href="sndscm.html#regiontoframe">region-&gt;frame</a><br>
 <a href="sndscm.html#regiontosounddata">region-&gt;sound-data</a><br>
@@ -5365,12 +5617,14 @@ convolve the selection with <i>file</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- delete-selection -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="deleteselection">delete-selection</a> ()</code></td></tr>
 <tr><td></td><td>
 delete the selection.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- env-selection -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envsoundselection">env-selection</a> (envelope <i>env-base</i>)</code></td></tr>
@@ -5380,6 +5634,7 @@ apply <i>envelope</i> to the selection.
 is ignored).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- filter-selection -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="filterselection">filter-selection</a> (env <i>order truncate</i>)</code></td></tr>
@@ -5393,12 +5648,14 @@ end.  If #f, the extra output (<i>order</i> samples worth) is mixed into the stu
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- insert-selection -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="insertselection">insert-selection</a> (<i>beg snd chn</i>)</code></td></tr>
 <tr><td></td><td>
 insert selection starting at beg in snd's channel chn.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- mix-selection -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixselection">mix-selection</a> (<i>beg snd chn</i>)</code></td></tr>
@@ -5407,6 +5664,7 @@ mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
 See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- play-selection -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="playselection">play-selection</a> (<i>wait pos stop-proc</i>)</code></td></tr>
@@ -5417,12 +5675,14 @@ The argument provides the reason the play is stopping; it will be 0 if the play 
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- reverse-selection -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="reverseselection">reverse-selection</a> ()</code></td></tr>
 <tr><td></td><td>
 reverse the selection.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- save-selection -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="saveselection">save-selection</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file (:header-type mus-next) :data-format :srate :comment :channel)</code></td></tr>
@@ -5441,7 +5701,7 @@ saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"
     (do ((i 0 (+ i hop))
 	 (j 0 (1+ j)))
 	((&gt;= i len))
-      (<a class=quiet href="sndscm.html#exmakeselection">make-selection</a> i (+ i hop)) ; in extensions.scm
+      (<a class=quiet href="sndscm.html#makeselection">make-selection</a> i (+ i hop)) ; in extensions.scm
       (<em class=red>save-selection</em> (string-append base "." (number-&gt;string j))))
     (set! (<a class=quiet href="#sync">sync</a>) old-sync)))
 </pre></td></tr></table>
@@ -5463,6 +5723,7 @@ saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- scale-selection-by -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="scaleselectionby">scale-selection-by</a> (scalers)</code></td></tr>
 <tr><td></td><td>
@@ -5474,6 +5735,7 @@ all channels by 2.0.  Normally the order of channels follows the order of the so
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- scale-selection-to -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="scaleselectionto">scale-selection-to</a> (<i>norms</i>)</code></td></tr>
 <tr><td></td><td>
@@ -5481,6 +5743,7 @@ normalize the selection to <i>norms</i> which can be either a float,
 a list of floats, or a vct.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- select-all -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="selectall">select-all</a> (<i>snd chn</i>)</code></td></tr>
@@ -5490,12 +5753,14 @@ If a region is created, return the region's id.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- selection-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="selectionchans">selection-chans</a> ()</code></td></tr>
 <tr><td></td><td>
 selection channels.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- selection-frames -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="selectionframes">selection-frames</a> (<i>snd chn</i>)</code></td></tr>
@@ -5504,12 +5769,14 @@ selection length in samples.  You can set this to move the selection end point.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- selection-maxamp -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="selectionmaxamp">selection-maxamp</a> (<i>snd chn</i>)</code></td></tr>
 <tr><td></td><td>
 maximum amplitude of selection in the given channel.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- selection-maxamp-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="selectionmaxampposition">selection-maxamp-position</a> (<i>snd chn</i>)</code></td></tr>
@@ -5518,6 +5785,7 @@ location (sample number) of maximum amplitude of selection in the given channel.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- selection-member? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="selectionmember">selection-member?</a> (<i>snd chn</i>)</code></td></tr>
 <tr><td></td><td>
@@ -5525,6 +5793,7 @@ location (sample number) of maximum amplitude of selection in the given channel.
 If <i>snd</i> is #t and the new value is #f, the entire selection is deactivated.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- selection-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="selectionposition">selection-position</a> (<i>snd chn</i>)</code></td></tr>
@@ -5536,12 +5805,14 @@ See make-selection in extensions.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- selection-srate -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="selectionsrate">selection-srate</a> ()</code></td></tr>
 <tr><td></td><td>
 selection srate.  There's some arbitrariness in this if the sounds that make up the selection have different sampling rates.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- selection? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="selectionok">selection?</a> ()</code></td></tr>
@@ -5550,12 +5821,14 @@ selection srate.  There's some arbitrariness in this if the sounds that make up 
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <!-- smooth-selection -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="smoothselection">smooth-selection</a> ()</code></td></tr>
 <tr><td></td><td>
 apply a smoothing function to the selection.  This produces a sinusoid between
 the end points.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
 
 <!-- src-selection -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="srcsoundselection">src-selection</a> (num-or-env <i>base</i>) </code></td></tr>
@@ -5574,15 +5847,15 @@ color of selected portion: <a href="#selectioncolor">selection-color</a><br>
 set whether creating a selection creates a region: <a href="#selectioncreatesregion">selection-creates-region</a><br>
 fft graph refers to the selection: <a href="#showselectiontransform">show-selection-transform</a><br>
 hook called when selection stops playing: <a href="#stopplayingselectionhook">stop-playing-selection-hook</a><br>
-swap chans in selected portion: <a href="sndscm.html#exswapselectionchannels">swap-selection-channels</a><br>
-replace portion with selection: <a href="sndscm.html#exreplacewithselection">replace-with-selection</a><br>
-select portion via function: <a href="sndscm.html#exmakeselection">make-selection</a><br>
-evaluate func on each sample of selection: <a href="sndscm.html#exevaloverselection">eval-over-selection</a> (map-selection in effect)<br>
-selection members as list of lists of sound indices and channels: <a href="sndscm.html#exselectionmembers">selection-members</a><br>
-rms of selection data: <a href="sndscm.html#exselectionrms">selection-rms</a><br>
-delete selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
-select portion between two marks: <a href="sndscm.html#exdefineselectionviamarks">define-selection-via-marks</a><br>
-place marks at selection start and end: <a href="sndscm.html#exsnapmarks">snap-marks</a><br>
+swap chans in selected portion: <a href="sndscm.html#swapselectionchannels">swap-selection-channels</a><br>
+replace portion with selection: <a href="sndscm.html#replacewithselection">replace-with-selection</a><br>
+select portion via function: <a href="sndscm.html#makeselection">make-selection</a><br>
+evaluate func on each sample of selection: <a href="sndscm.html#evaloverselection">eval-over-selection</a> (map-selection in effect)<br>
+selection members as list of lists of sound indices and channels: <a href="sndscm.html#selectionmembers">selection-members</a><br>
+rms of selection data: <a href="sndscm.html#selectionrms">selection-rms</a><br>
+delete selection and smooth the splice: <a href="sndscm.html#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
+select portion between two marks: <a href="sndscm.html#defineselectionviamarks">define-selection-via-marks</a><br>
+place marks at selection start and end: <a href="sndscm.html#snapmarks">snap-marks</a><br>
 squeeze selection between marks: <a href="sndscm.html#fitselectionbetweenmarks">fit-selection-between-marks</a><br>
 add context-sensitive popup menu specific to selection: <a href="sndscm.html#popupdoc">add-selection-popup</a><br>
 delete selection and write it to a file: <a href="sndscm.html#menusdoc">cut-selection-&gt;new</a><br>
@@ -5855,7 +6128,7 @@ the configure argument --without-float-samples).  See make-variable-display in s
 <tr><td></td><td>
 channel-properties is a property list associated with a channel.  It is set to '() at the time a sound is opened, so
 it provides a relatively simple way to save data about a channel which will automatically be erased when the channel is closed.
-<a href="sndscm.html#exchannelproperty">channel-property</a> (in extensions.scm) reads and writes this list.  
+<a href="sndscm.html#channelproperty">channel-property</a> (in extensions.scm) reads and writes this list.  
 <br><br>
 Traditionally in Lisp, a property list has been treated as an association list. This is a list
 of pairs (made by cons), each inner pair having a key as its first element, and the associated value as the second element.
@@ -6214,7 +6487,7 @@ or (an alternative that sets the underlying database entry, rather than the curr
 </pre></td></tr></table>
 
 If you set any of these fields, the sound's index may change (there can be an embedded <a class=quiet href="#updatesound">update-sound</a>).
-To deal with MPEG, OGG, Flac, or Speex files, see examp.scm (<a class=quiet href="sndscm.html#exmpg">mpg</a>) or misc.scm (mpg123 and ogg123).
+To deal with MPEG, OGG, Flac, or Speex files, see examp.scm (<a class=quiet href="sndscm.html#mpg">mpg</a>) or misc.scm (mpg123 and ogg123).
 Octave/WaveLab ASCII files can be translated by read-ascii (examp.scm).
 <br><br>
 To turn a data-format number into a string, use <a href="#musdataformatname">mus-data-format-name</a>. To get
@@ -6268,7 +6541,7 @@ This deletes sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 delete a file: use the Scheme function delete-file, Ruby's File.delete, or Forth's file-delete<br>
 delete a region: <a href="#forgetregion">forget-region</a><br>
 delete the currently selected samples: <a href="#deleteselection">delete-selection</a><br>
-delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
+delete the selection and smooth the splice: <a href="sndscm.html#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
 delete a mix or all mixes: <a href="#deletemix">delete-mix</a><br>
 delete a track or all tracks: <a href="#deletetrack">delete-track</a><br>
 delete a mark or all marks: <a href="#deletemark">delete-mark</a><br>
@@ -6336,10 +6609,10 @@ Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
 Peak env files: <a href="sndscm.html#peakenvdoc">peak-env.scm</a><br>
 The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
 Panning: place-sound in examp.scm, <a href="snd.html#mixdialog">Mix Dialog</a>, play-panned in enved.scm, <a href="sndscm.html#panmix">pan-mix</a><br>
-Envelope over mix: <a href="sndscm.html#exenvelopedmix">enveloped-mix</a><br>
+Envelope over mix: <a href="sndscm.html#envelopedmix">enveloped-mix</a><br>
 Envelope over track (a set of mixes): <a href="#trackampenv">track-amp-env</a><br>
 Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.scm<br>
-Read sound indexed through envelope: <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a><br>
+Read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
 Cosine as envelope: <a href="#cosinechannel">cosine-channel</a>, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="clm.html#bellcurve">bell-curve</a><br>
 envelope with sinusoidal connections between points: <a href="sndscm.html#sineenvchannel">sine-env-channel</a><br>
 envelope with separate base for each segment: <a href="#powenvchannel">powenv-channel</a><br>
@@ -6622,7 +6895,7 @@ In the find dialog and in C-s or C-r searches, if the value returned is an integ
 find a mark: <a href="#findmark">find-mark</a><br>
 find a mix: <a href="sndscm.html#findmix">find-mix</a><br>
 find a sound: <a href="#findsound">find-sound</a><br>
-Example find procedures: <a href="sndscm.html#exsearchforclick">search-for-click, zero+, next-peak, find-pitch</a><br>
+Example find procedures: <a href="sndscm.html#searchforclick">search-for-click, zero+, next-peak, find-pitch</a><br>
 Search via continuation: <a href="#scanagain">scan-again</a><br>
 Explicit access to search procedures: <a href="#searchprocedure">search-procedure</a><br>
 The Find dialog: <a href="snd.html#editoperations">Find</a> or <a href="#finddialog">find-dialog</a><br>
@@ -6909,7 +7182,7 @@ waveform for <i>snd</i>'s channel <i>chn</i>.
 To get the data currently displayed in the time domain window:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define (<a class=quiet href="sndscm.html#exwindowsamples">window-samples</a>)
+(define (<a class=quiet href="sndscm.html#windowsamples">window-samples</a>)
   (let ((wl (<em class=red>left-sample</em>))
 	(wr (<a href="#rightsample">right-sample</a>)))
    (<a href="#samples">samples</a> wl (+ 1 (- wr wl)))))
@@ -7163,7 +7436,7 @@ safest to write a temp file with the new data, then pass that to set-samples
 with the <i>trunc</i> argument set to #t.  This way you don't assume the new sound
 will fit in memory (as in using <a class=quiet href="#vcttochannel">vct-&gt;channel</a> for example).
 Use <a href="#sndtempnam">snd-tempnam</a> to get a temporary filename that reflects the current
-temp-dir setting.  The env-sound-interp function in <a href="sndscm.html#exenvsoundinterp">examp.scm</a>
+temp-dir setting.  The env-sound-interp function in <a href="sndscm.html#envsoundinterp">examp.scm</a>
 is an example of this. 
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
@@ -7296,7 +7569,7 @@ To be informed whenever a new sound is created, use <a href="#newsoundhook">new-
 normalize-channel
 scales (changes the amplitude) of a sound so that its new peak amplitude is <i>norm</i>.  This
 is the "regularized" form of <a href="#scaleto">scale-to</a>.
-The multichannel version is <a href="#normalizesound">normalize-sound</a> in frame.scm.
+The multichannel version is <a href="sndscm.html#normalizesound">normalize-sound</a> in frame.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7314,7 +7587,7 @@ giving the correct values in the call to open-raw-sound.
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define mpg
   (lambda (mpgfile rawfile chans)
-    "(<a class=quiet href="sndscm.html#exmpg">mpg</a> file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
+    "(<a class=quiet href="sndscm.html#mpg">mpg</a> file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
     (system (format #f "mpg123 -s ~A &gt; ~A" mpgfile rawfile))
     (<em class=red>open-raw-sound</em> rawfile 1 44100 (if (little-endian?) mus-lshort <a class=quiet href="#dataformat">mus-bshort</a>))))
 </pre></td></tr></table>
@@ -7365,7 +7638,7 @@ To insert a block of arbitrary-valued samples:
 We could also use map-channel here (rather than ptree-channel), but this version
 uses only virtual edits, so no matter how big the block of samples we insert,
 no disk space or memory is needed.
-The multichannel version is <a href="#padsound">pad-sound</a> in frame.scm.
+The multichannel version is <a href="sndscm.html#padsound">pad-sound</a> in frame.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7451,7 +7724,7 @@ If <i>chn</i> is not given, or is a boolean, play plays all channels together.
 If <i>pos</i> is given, it plays at that edit position.
 If <i>stop-proc</i> is a procedure of one argument, it is called when the play process stops.
 The argument passed to <i>stop-proc</i> provides the reason the play is stopping; it will be 0 if the play completed normally.
-<i>stop-proc</i> is intended mainly for looping plays, as in <a href="sndscm.html#explayoften">play-often</a>.
+<i>stop-proc</i> is intended mainly for looping plays, as in <a href="sndscm.html#playoften">play-often</a>.
 <pre>
     (play 0 #f #f #f #f #f 
       (lambda (reason)                             ; if interrupted, say so in the listener
@@ -7503,19 +7776,19 @@ play a region: <a href="#playregion">play-region</a>, <a href="snd.html#cxp">C-x
 play a mix: <a href="#playmix">play-mix</a>, play button in Mix dialog<br>
 play a track: <a href="#playtrack">play-track</a><br>
 play from mark: click or drag triangle (control-click for all chans)<br>
-play continuously between two marks: <a href="sndscm.html#exloopbetweenmarks">loop-it</a><br>
+play continuously between two marks: <a href="sndscm.html#loopbetweenmarks">loop-it</a><br>
 stop playing: C-g, C-t, <a href="#stopplaying">stop-playing</a>, set <a href="#playing">playing</a> to #f<br>
 pause or resume playback: space, set <a href="#pausing">pausing</a><br>
-play repeatedly: <a href="sndscm.html#explayoften">play-often</a><br>
-play repeatedly until C-g: <a href="sndscm.html#explayuntilcg">play-until-c-g</a><br>
-play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a><br>
+play repeatedly: <a href="sndscm.html#playoften">play-often</a><br>
+play repeatedly until C-g: <a href="sndscm.html#playuntilcg">play-until-c-g</a><br>
+play region repeatedly: <a href="sndscm.html#playregionforever">play-region-forever</a><br>
 play a file upon a keystroke: <a href="#extendedpiano">bind-key</a><br>
 play using an external program: (shell "sndplay wood16.wav")<br>
 play a sine-wave or spectrum: <a href="sndscm.html#playsine">play-sine</a> and <a href="sndscm.html#playsines">play-sines</a><br>
 play arbitrary mixtures of things: <a href="#makeplayer">make-player</a> and related functions, <a href="sndscm.html#playsyncdmarks">play-syncd-marks</a><br>
-send arbitrary data to the DAC: <a href="#musaudiowrite">mus-audio-write</a>, <a href="sndscm.html#exstartdac">start-dac</a><br>
-play after sending the data through some function: <a href="sndscm.html#explaysound">play-sound</a><br>
-play with applied amplitude envelope: <a href="sndscm.html#explaywithenvs">play-with-envs</a>, <a href="sndscm.html#explaypanned">play-panned</a><br>
+send arbitrary data to the DAC: <a href="#musaudiowrite">mus-audio-write</a>, <a href="sndscm.html#startdac">start-dac</a><br>
+play after sending the data through some function: <a href="sndscm.html#playsound">play-sound</a><br>
+play with applied amplitude envelope: <a href="sndscm.html#playwithenvs">play-with-envs</a>, <a href="sndscm.html#playpanned">play-panned</a><br>
 play an external file: (play "file")<br>
 <br>
 </blockquote></small>
@@ -8019,7 +8292,7 @@ result appear to be one operation in the edit history list.
 <br>
 more ptree-channel examples:<br>
 smoothing: smooth-channel-via-ptree (examp.scm)<br>
-compander: <a href="sndscm.html#excompandchannel">compand-channel</a> (examp.scm)<br>
+compander: <a href="sndscm.html#compandchannel">compand-channel</a> (examp.scm)<br>
 insert a block of arbitrary-valued samples: <a href="#blockchannel">block-channel</a> (extsnd.html)<br>
 sinusoidal ramp: <a href="sndscm.html#sineramp">sine-ramp</a> (extensions.scm)<br>
 sinusoidal envelope: <a href="sndscm.html#sineenvchannel">sine-env-channel</a> (extensions.scm)<br>
@@ -8293,8 +8566,8 @@ save a sound under a different name: <a href="#savesoundas">save-sound-as</a><br
 extract one channel from a sound: <a href="#extractchannel">extract-channel</a><br>
 extract a set of channels from a sound: <a href="#extractchannels">extract-channels</a><br>
 save a sound in a different format or header: <a href="#savesoundas">save-sound-as</a><br>
-backup edits automatically: <a href="sndscm.html#exautosave">autosave</a><br>
-check first for unsaved edits: <a href="sndscm.html#exunsavededits">check-for-unsaved-edits</a><br>
+backup edits automatically: <a href="sndscm.html#autosave">autosave</a><br>
+check first for unsaved edits: <a href="sndscm.html#unsavededits">check-for-unsaved-edits</a><br>
 save Snd's complete state (unsaved edits and all): <a href="#savestate">save-state</a>, <a href="#savedir">save-dir</a>, <a href="#savestatehook">save-state-hook</a>, <a href="#savestatefile">save-state-file</a><br>
 save the selection: <a href="#saveselection">save-selection</a><br>
 save a region: <a href="#saveregion">save-region</a><br>
@@ -8312,7 +8585,7 @@ save marks: <a href="#savemarks">save-marks</a><br>
 save just the edit history: <a href="#saveedithistory">save-edit-history</a><br>
 save the peak-env data: <a href="sndscm.html#peakenvdoc">save-peak-env-info</a><br>
 take some action upon a window manager save-yourself signal: <a href="sndscm.html#uponsaveyourself">upon-save-yourself</a><br>
-save the current sound setup for a later reopen: <a href="sndscm.html#exremembersoundstate">remember-sound-state</a><br>
+save the current sound setup for a later reopen: <a href="sndscm.html#remembersoundstate">remember-sound-state</a><br>
 save the current fft peak info: <a href="#peaks">peaks</a><br>
 </blockquote></small>
 </td></tr></TABLE>
@@ -8372,7 +8645,7 @@ is scaled (it defaults to the currently selected channel).  <code>(scale-by 2.0)
 <tr><td></td><td>
 scale-channel 
 scales (changes the amplitude) of a sound by <i>scl</i>.
-The multichannel version is <a href="#scalesound">scale-sound</a> in frame.scm.
+The multichannel version is <a href="sndscm.html#scalesound">scale-sound</a> in frame.scm.
 <a href="sndscm.html#channelpolynomial">channel-polynomial</a> is a generalization of the idea.
 There are approximately a bazillion ways to scale samples in Snd; here's a potpourri of increasingly silly choices:
 
@@ -8758,9 +9031,9 @@ smooth-channel-via-ptree in examp.scm is the virtual form.
 <small><blockquote>
 smooth all channels: <a href="#smoothsound">smooth-sound</a><br>
 smooth selection: <a href="#smoothselection">smooth-selection</a><br>
-delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
+delete the selection and smooth the splice: <a href="sndscm.html#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
 smoothing as virtual op: smooth-channel-via-ptree in examp.scm<br>
-smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a><br>
+smoothing via fft: <a href="sndscm.html#fftsmoother">fft-smoother</a><br>
 smooth via low-pass <a href="#filtersinsnd">filter</a><br>
 smooth over click: <a href="sndscm.html#removeclicks">remove-clicks</a> in examp.scm<br>
 </blockquote></small>
@@ -8863,7 +9136,7 @@ This is similar to <a href="#mussoundloopinfo">mus-sound-loop-info</a> (but it's
 </td></tr>
 <tr><td></td><td>
 This is a property list associated with the given sound.  It is set to '() at the time a sound is opened.  The accessor
-<a href="sndscm.html#exsoundproperty">sound-property</a> is provided in extensions.scm.  There are several
+<a href="sndscm.html#soundproperty">sound-property</a> is provided in extensions.scm.  There are several
 examples of using it in snd-motif.scm and autosave.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
@@ -9054,13 +9327,13 @@ resample mix: speed control in <a href="snd.html#mixdialog">Mix dialog</a> (also
 resample via drawn envelope: srate in <a href="snd.html#editenvelope">Envelope editor</a><br>
 resample via CLM gen: <a href="clm.html#src">src</a><br>
 resample with independent time control (ssb-am): <a href="sndscm.html#ssbbank">ssb-bank</a> in dsp.scm<br>
-resample with independent time control (granulate): expand in <a href="#customcontrols">control panel</a>, <a href="sndscm.html#exexpsrc">expsrc</a> and <a href="sndscm.html#exexpsnd">expsnd</a><br>
+resample with independent time control (granulate): expand in <a href="#customcontrols">control panel</a>, <a href="sndscm.html#expsrc">expsrc</a> and <a href="sndscm.html#expsnd">expsnd</a><br>
 resample with independent time control (vocoder): <a href="clm.html#phase-vocoder">phase-vocoder</a> (this never works)<br>
 another time stretcher (autocorrelation):<a href="sndscm.html#rubbersound">rubber-sound</a> (this takes forever and rarely works)<br>
-resampling-based sound effects: <a href="sndscm.html#exhellodentist">hello-dentist</a>, <a href="sndscm.html#exfp">fp</a> ("Forbidden Planet"), flange and chorus in dsp.scm and new-effects.scm<br>
+resampling-based sound effects: <a href="sndscm.html#hellodentist">hello-dentist</a>, <a href="sndscm.html#fp">fp</a> ("Forbidden Planet"), flange and chorus in dsp.scm and new-effects.scm<br>
 the digital zipper: <a href="sndscm.html#zipdoc">zipper</a><br>
-resample via FFT: <a href="sndscm.html#exdownoct">down-oct</a><br>
-resample through env: <a href="sndscm.html#exsoundinterp">sound-interp</a> and <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a><br>
+resample via FFT: <a href="sndscm.html#downoct">down-oct</a><br>
+resample through env: <a href="sndscm.html#soundinterp">sound-interp</a> and <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
 resample through list: <a href="sndscm.html#scratch">scratch</a><br>
 resample step-size through a function: <a href="#setsamples">step-src</a><br>
 predict duration of resampled sound: <a href="sndscm.html#srcduration">src-duration</a><br>
@@ -10808,27 +11081,27 @@ This returns #t if <i>type</i> refers to an active transform type.
 CLM fft function: <a href="clm.html#fft">mus-fft</a><br>
 CLM spectrum: <a href="clm.html#spectrum">spectrum</a><br>
 Snd spectrum: <a href="#sndspectrum">snd-spectrum</a><br>
-Cross Correlation: <a href="sndscm.html#excorrelate">correlate</a><br>
+Cross Correlation: <a href="sndscm.html#correlate">correlate</a><br>
 FFT window: <a href="clm.html#make-fft-window">make-fft-window</a><br>
-Dolph-Chebyshev window in Scheme: <a href="sndscm.html#exdolph">dolph</a><br>
-Hartley transform in Scheme: <a href="sndscm.html#exdht">dht</a><br>
+Dolph-Chebyshev window in Scheme: <a href="sndscm.html#dolph">dolph</a><br>
+Hartley transform in Scheme: <a href="sndscm.html#dht">dht</a><br>
 Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a><br>
 <br>
-fft-based filter: <a href="sndscm.html#exfftedit">fft-edit</a>, <a href="sndscm.html#exfftenvedit">fft-env-edit</a>, <a href="sndscm.html#exfftenvinterp">fft-env-interp</a>, <a href="sndscm.html#exfftsquelch">fft-squelch</a>, <a href="sndscm.html#exfftcancel">fft-cancel</a><br>
+fft-based filter: <a href="sndscm.html#fftedit">fft-edit</a>, <a href="sndscm.html#fftenvedit">fft-env-edit</a>, <a href="sndscm.html#fftenvinterp">fft-env-interp</a>, <a href="sndscm.html#fftsquelch">fft-squelch</a>, <a href="sndscm.html#fftcancel">fft-cancel</a><br>
 phase-vocoder: <a href="clm.html#phase-vocoder">phase-vocoder</a>. <a href="sndscm.html#pvocdoc">pvoc</a><br>
-transposition via fft: <a href="sndscm.html#exdownoct">down-oct</a><br>
+transposition via fft: <a href="sndscm.html#downoct">down-oct</a><br>
 phase rotation via fft: <a href="sndscm.html#zerophase">zero-phase, rotate-phase</a><br>
 duration change via autocorrelation: <a href="sndscm.html#rubberdoc">rubber-sound</a><br>
-smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a><br>
-cross-synthesis: <a href="sndscm.html#excrosssynthesis">cross-synthesis</a><br>
-voiced-&gt;unvoiced effect: <a href="sndscm.html#exvoiced2unvoiced">voiced-&gt;unvoiced</a><br>
+smoothing via fft: <a href="sndscm.html#fftsmoother">fft-smoother</a><br>
+cross-synthesis: <a href="sndscm.html#crosssynthesis">cross-synthesis</a><br>
+voiced-&gt;unvoiced effect: <a href="sndscm.html#voicedtounvoiced">voiced-&gt;unvoiced</a><br>
 noise reduction: <a href="sndscm.html#noisystory">Noise Reduction</a>, <a href="sndscm.html#notchchannel">notch-channel</a>, <a href="sndscm.html#clminsdoc">anoi</a><br>
 spectral modeling: <a href="sndscm.html#clminsdoc">pins</a><br>
 polynomial approach to spectral multiplies (convolution): <a href="sndscm.html#spectralpolynomial">spectral-polynomial</a><br>
 <br>
-Superimpose ffts: <a href="sndscm.html#exsuperimposeffts">superimpose-ffts</a><br>
+Superimpose ffts: <a href="sndscm.html#superimposeffts">superimpose-ffts</a><br>
 Waterfall real-time spectrograph: <a href="sndscm.html#startwaterfall">start-waterfall</a><br>
-Simple rt spectrum: <a href="sndscm.html#exshowinputfft">show-input-fft</a>, <a href="sndscm.html#exshowdraggableinputfft">show-draggable-input-fft</a><br>
+Simple rt spectrum: <a href="sndscm.html#showinputfft">show-input-fft</a>, <a href="sndscm.html#showdraggableinputfft">show-draggable-input-fft</a><br>
 More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fourier-transform</a>, <a href="sndscm.html#ztransform">z-transform</a> in dsp.scm<br>
 3D (single) fft display: <a href="sndscm.html#complexify">complexify</a><br>
 bark, mel, erb scale display: <a href="sndscm.html#displaybarkfft">display-bark-fft</a><br>
@@ -10940,7 +11213,7 @@ To add "ogg" as a recognized extension:
      (add-sound-file-extension "ogg")
 </pre>
 The list itself is <a href="#soundfileextensions">sound-file-extensions</a>.
-See also <a href="sndscm.html#exmatchsoundfiles">add-sound-file-extension-1</a>.
+See also <a href="sndscm.html#matchsoundfiles">add-sound-file-extension-1</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11774,7 +12047,7 @@ prints the names of all the stereo AIFC files it finds:
 </pre></td></tr></table>
 
 See also map-sound-files in <a href="sndscm.html#snd4doc">snd4.scm</a>, and 
-<a href="sndscm.html#exmapsoundfiles">map-sound-files</a> in extensions.scm.
+<a href="sndscm.html#mapsoundfiles">map-sound-files</a> in extensions.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -12611,7 +12884,7 @@ refer to it directly, not as a procedure call.  Say we have a sound file "now.sn
 and we want it to use the grid-graph whenever it is viewed.  We make "now.snd.scm"
 and put in it: <code>(set! (show-grid *snd-opened-sound*) #t)</code>.  When "now.snd" is
 opened, "now.snd.scm" is loaded automatically with *snd-opened-sound* holding the index of "now.snd".
-There are other fancier ways to do this (e.g. <a href="sndscm.html#exremembersoundstate">remember-sound-state</a>).
+There are other fancier ways to do this (e.g. <a href="sndscm.html#remembersoundstate">remember-sound-state</a>).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -12910,7 +13183,7 @@ code is loaded,
   (use-modules (ice-9 debug))
 </pre>
 <p>
-Now when an error occurs, you can call (<a class=quiet href="sndscm.html#exsnddebug">snd-debug</a>) 
+Now when an error occurs, you can call (<a class=quiet href="sndscm.html#snddebug">snd-debug</a>) 
 and fall into the debugger.  
 To get backtraces,
 </p>
@@ -13443,13 +13716,13 @@ currently in the time-domain graph:
 (define* (<a name="addcomment">add-comment</a> sample comment #:optional snd1 chn1)
   (let* ((snd (or snd1 (<a class=quiet href="#selectedsound">selected-sound</a>)))
 	 (chn (or chn1 (<a class=quiet href="#selectedchannel">selected-channel</a>)))
-	 (old-comments (or (<a class=quiet href="sndscm.html#exchannelproperty">channel-property</a> 'comments snd chn) '())))
-    (set! (<a class=quiet href="sndscm.html#exchannelproperty">channel-property</a> 'comments snd chn)
+	 (old-comments (or (<a class=quiet href="sndscm.html#channelproperty">channel-property</a> 'comments snd chn) '())))
+    (set! (<a class=quiet href="sndscm.html#channelproperty">channel-property</a> 'comments snd chn)
 	  (cons (list sample comment)
 		old-comments))))
 	  
 (define (show-comments snd chn)
-  (let ((comments (or (<a class=quiet href="sndscm.html#exchannelproperty">channel-property</a> 'comments snd chn) '())))
+  (let ((comments (or (<a class=quiet href="sndscm.html#channelproperty">channel-property</a> 'comments snd chn) '())))
     (for-each
      (lambda (<a class=quiet href="#comment">comment</a>)
        (let* ((samp (car comment))

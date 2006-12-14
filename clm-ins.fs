@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Tue Dec 12 17:49:31 CET 2006
+\ Changed: Wed Dec 13 16:10:29 CET 2006
 
 \ Commentary:
 \
@@ -3078,7 +3078,7 @@ instrument: anoi ( fname start dur :optional fftsize=128 amp-scaler=1.0 R=two-pi
 \ mjkoskin@sci.fi
 
 \ FULLMIX
-instrument: fullmix ( in-file :optional start=0.0 dur=#f inbeg=0.0 matrix=#f srate=#f reverb-amount=#f -- )
+instrument: fullmix ( in-file :optional start dur inbeg matrix srate reverb-amount -- )
   doc" ( in-file :optional start=0.0 dur=#f inbeg=0.0 matrix=#f srate=#f reverb-amount=#f -- )\n\
 \"pistol.snd\" 0 1 fullmix\n\
 :envelope '( 0 0 1 1 ) :duration dur :scaler 0.5 make-env value en
@@ -3132,6 +3132,7 @@ instrument: fullmix ( in-file :optional start=0.0 dur=#f inbeg=0.0 matrix=#f sra
     then
   then
   sr unless
+    start dur ws-info
     start seconds->samples { st }
     dur seconds->samples { samps }
     *output*  in-file undef make-file->frame  st samps inloc mx envs mus-mix drop

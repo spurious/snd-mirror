@@ -1548,7 +1548,7 @@ match-sound-files from extensions.scm):
 		(list XmNfileSearchProc                             ; set dialog file search procedure
 		       (lambda (widget info)
 			 (let* ((dir (XmString-&gt;string (dir info))) ; directory string
-				(files (<a class=quiet href="sndscm.html#exmatchsoundfiles">match-sound-files</a> proc dir)) ; list of matching files
+				(files (<a class=quiet href="sndscm.html#matchsoundfiles">match-sound-files</a> proc dir)) ; list of matching files
 				(fileTable (list-&gt;XmStringTable      ; XmStringTable for XmNfileListItems
                                              (map (lambda (n)        ; every file needs prepended dir
                                                     (string-append dir n)) 

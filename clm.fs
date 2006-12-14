@@ -2,32 +2,31 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Wed Dec 13 04:13:09 CET 2006
+\ Changed: Thu Dec 14 03:47:30 CET 2006
 
 \ Commentary:
 \
 \ clm-print            ( fmt args -- )
 \ clm-message          ( fmt args -- )
 \ 
-\ tempnam              ( -- name )
-\ 
 \ now@   	       ( -- secs )
 \ now!   	       ( secs -- )
 \ step                 ( secs -- )
 \ tempo@ 	       ( -- secs )
 \ tempo! 	       ( secs -- )
-\
 \ interval->hertz      ( n -- r )
 \ keynum->hertz        ( n -- r )
 \ hertz->keynum        ( n -- r )
 \ bpm->seconds         ( bpm -- secs )
 \ rhythm->seconds      ( rhy -- secs )
-\
+\ 
+\ tempnam              ( -- name )
+\ fth-tempnam          ( -- name )
 \ make-default-comment ( -- str )
 \ times->samples       ( start dur -- len beg )
 \ normalize-partials   ( parts1 -- parts2 )
-\
 \ ws-interrupt?        ( -- )
+\ ws-info              ( start dur -- )
 \ run                  ( start dur -- )
 \ run-instrument       ( start dur args -- )
 \ end-run              ( sample -- )
@@ -36,12 +35,10 @@
 \ ;instrument          ( -- )
 \ event:               ( -- )
 \ ;event               ( -- )
-\
 \ find-file            ( file -- fname|#f )
-\ snd-info             ( fname revname chans srate frames scl? tm -- )
-\ play-sound           ( file -- )
-\ record-sound         ( file dur -- )
-\
+\ snd-info             ( output :key reverb-file-name scaled? timer -- )
+\ play-sound           ( input :key verbose dac-size audio-format -- )
+\ record-sound         ( output keyword-args -- )
 \ clm-mix              ( infile :key output output-frame frames input-frame scaler -- )
 \ with-sound           ( body-xt keyword-args -- ws )
 \ clm-load             ( keyword-args fname -- ws )
@@ -127,39 +124,6 @@ dl-load sndlib Init_sndlib
   then
 ;
 [then]
-
-hide
-user *fth-file-number*
-set-current
-: tempnam ( -- name )
-  doc" ( -- name )  Looks for environment variables TMP, TEMP, or TMPDIR, otherwise \
-uses /tmp as temporary path and produces something like:\n\
-/tmp/fth-12345-1.snd\n\
-/tmp/fth-12345-2.snd\n\
-/tmp/fth-12345-3.snd\n\
-[...]"
-  1 *fth-file-number* +!
-  $" %s/fth-%d-%d.snd"
-  $" TMP" getenv dup unless
-    drop
-    $" TEMP" getenv dup unless
-      drop
-      $" TMPDIR" getenv dup unless
-	drop
-	$" /tmp"
-      then
-    then
-  then ( tmp ) getpid *fth-file-number* @  3 >list string-format
-;
-previous
-
-: fth-tempnam ( -- fname )
-  'snd provided? if
-    snd-tempnam
-  else
-    tempnam
-  then
-;
 
 \ === Notelist ===
 hide
@@ -286,7 +250,7 @@ previous
 16.0 1/f 32.0 1/f f+ notelength |S.
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-$" fth 13-Dec-2006" value *clm-version*
+$" fth 14-Dec-2006" value *clm-version*
 #f 		    value *output*
 #f 		    value *reverb*
 #f 		    value *locsig*
@@ -338,6 +302,39 @@ mus-array-print-length     value *clm-array-print-length*
 *clm-verbose*       value *verbose*
 *clm-notehook*      value *notehook*
 
+hide
+user *fth-file-number*
+set-current
+: tempnam ( -- name )
+  doc" ( -- name )  Looks for environment variables TMP, TEMP, or TMPDIR, otherwise \
+uses /tmp as temporary path and produces something like:\n\
+/tmp/fth-12345-1.snd\n\
+/tmp/fth-12345-2.snd\n\
+/tmp/fth-12345-3.snd\n\
+[...]"
+  1 *fth-file-number* +!
+  $" %s/fth-%d-%d.snd"
+  $" TMP" getenv dup unless
+    drop
+    $" TEMP" getenv dup unless
+      drop
+      $" TMPDIR" getenv dup unless
+	drop
+	$" /tmp"
+      then
+    then
+  then ( tmp ) getpid *fth-file-number* @  3 >list string-format
+;
+previous
+
+: fth-tempnam ( -- fname )
+  'snd provided? if
+    snd-tempnam
+  else
+    tempnam
+  then
+;
+
 : make-default-comment ( -- str )
   $" Written %s by %s at %s using clm (%s)" _
   '( $" %a %d-%b-%y %H:%M %Z" current-time strftime
@@ -373,15 +370,15 @@ $" with-sound interrupt" create-exception with-sound-interrupt
 #f value *clm-current-instrument*	\ current instrument set in INSTRUMENT:
 
 : ws-interrupt? ( -- ) c-g? if 'with-sound-interrupt '() fth-throw then ;
-
-hide
 : ws-info ( start dur -- )
   { start dur }
   *notehook* xt? if *clm-current-instrument* start dur *notehook* execute then
+  ws-interrupt?
 ;
+
+hide
 : (run) ( start dur -- limit begin )
   { start dur }
-  ws-interrupt?
   start dur ws-info
   start dur times->samples
 ;
@@ -416,21 +413,30 @@ hide
   s restore-stack
   start dur (run)
 ;
-: (end-run) ( value index -- ) *locsig* -rot swap locsig drop ;
+: (end-run) ( value index -- ) *locsig* swap rot locsig drop ;
 set-current
 \ RUN/LOOP is only a simple replacement of
 \ start dur TIMES->SAMPLES ?DO ... LOOP
 \
 \ RUN-INSTRUMENT/END-RUN requires at least an opened *output*
 \ generator (file->sample), optional an opened *reverb* generator.  It
-\ uses LOCSIG to set samples in output file.  The loop must leave on
-\ top of stack a sample value (next before END-RUN)!
+\ uses LOCSIG to set samples in output file.  At the end of the loop a
+\ sample value must pushed on top of stack (next before END-RUN)!
+\
+\ instrument: foo
+\   0 0.1 #{} run-instrument 0.2 end-run
+\ ;instrument
+\ ' foo with-sound
+\
+\ writes a sound file of length 0.1 seconds containing 2205 samples
+\ with value 0.2.
+
 \ 
 \ 0.0 1.0                   RUN            ... LOOP
 \ 0.0 1.0 #{ :degree 45.0 } RUN-INSTRUMENT ... END-RUN
-: run            ( start dur      -- ) postpone (run)                 postpone ?do  ; immediate
-: run-instrument ( start dur args -- ) postpone (run-instrument)      postpone ?do  ; immediate
-: end-run        ( sample         -- ) postpone r@ postpone (end-run) postpone loop ; immediate
+: run            ( start dur -- )             postpone (run)            postpone ?do  ; immediate
+: run-instrument ( start dur locsig-args -- ) postpone (run-instrument) postpone ?do  ; immediate
+: end-run        ( sample -- )    postpone r@ postpone (end-run)        postpone loop ; immediate
 previous
 
 : reverb-info ( caller in-chans out-chans -- )
@@ -443,15 +449,17 @@ hide
 : event-info ( ev-name -- )  *verbose* if '() clm-message else drop then ;
 set-current
 : instrument: ( -- )
-  >in @ parse-word $>string { ins-name } >in ! :
+  >in @ parse-word $>string { ins-name } >in !
+  :
   ins-name postpone literal ['] ins-info   compile,
 ;
 : event: ( -- )
-  >in @ parse-word $>string { ev-name }  >in ! :
+  >in @ parse-word $>string { ev-name }  >in !
+  :
   ev-name  postpone literal ['] event-info compile,
 ;
 : ;instrument ( -- ) postpone ; ; immediate
-: ;event      ( -- ) postpone ; ; immediate
+' ;instrument alias ;event immediate
 previous
 
 \ === Playing and Recording Sound Files ===
@@ -473,11 +481,11 @@ hide
   { fname name sr scl? }
   fname mus-sound-maxamp { vals }
   vals length 0 ?do
-    $" %*s %c: %.3f (near %.3f secs)%s"
-    '( 6 name
+    $" %6s %c: %.3f (near %.3f secs)%s"
+    '( name
        [char] A i 2/ +
        vals i 1+ list-ref
-       vals i list-ref sr f/
+       vals i    list-ref sr f/
        scl? if $"  (before scaling)" else "" then ) clm-message
   2 +loop
 ;
@@ -497,101 +505,135 @@ hide
   then
 ;
 set-current
-
-: snd-info ( output revfile chans sr frms scl? tm -- )
-  { output revfile chans sr frms scl? tm }
+: snd-info ( output :key reverb-file-name scaled? timer -- )
+  <{ output :key reverb-file-name #f scaled? #f timer #f }>
   output mus-sound-duration { dur }
+  output mus-sound-frames   { frames }
+  output mus-sound-chans    { channels }
+  output mus-sound-srate    { srate }
   $" filename: %S"                    '( output )        clm-message
-  $"    chans: %d, srate: %d"         '( chans sr f>s )  clm-message
+  $"    chans: %d, srate: %d"         '( channels srate f>s )  clm-message
   $"   format: %s [%s]"
   '( output mus-sound-data-format mus-data-format-name
      output mus-sound-header-type mus-header-type-name ) clm-message
-  $"   length: %.3f  (%d frames)"     '( dur frms )      clm-message
-  tm timer? if
-    tm .timer
-    sr frms tm .timer-ratio
+  $"   length: %.3f  (%d frames)"     '( dur frames )      clm-message
+  timer timer? if
+    timer .timer
+    srate frames timer .timer-ratio
   then
-  output $" maxamp" sr scl? .maxamps
-  revfile ?dup-if $" revamp" sr scl? .maxamps then
+  output $" maxamp" srate scaled? .maxamps
+  reverb-file-name ?dup-if $" revamp" srate #f .maxamps then
   output mus-sound-comment { comm }
-  comm empty? unless $"  comment: %s" '( comm )          clm-message then
+  comm empty? unless $"  comment: %S" '( comm )          clm-message then
 ;
 previous
 
 \ === Playing and Recording one or two Channel Sounds ===
-: play-sound ( file -- )
-  find-file { fname }
-  fname false? if 'no-such-file '( get-func-name fname ) fth-throw then
-  fname mus-sound-frames { frms }
-  fname mus-sound-srate { sr }
-  fname mus-sound-chans { chans }
+: play-sound ( input :key verbose dac-size audio-format -- )
+  doc"  ( input :key verbose dac-size audio-format -- )  \
+Plays sound file INPUT.\n\
+\\ keyword args and default values\n\
+\\ :verbose        *clm-verbose*       (#f)\n\
+\\ :dac-size       *clm-rt-bufsize*    (512)\n\
+\\ :audio-format   *clm-audio-format*  (mus-lshort)\n\
+\"bell.snd\" :verbose #t play-sound"
+  <{ input :key verbose *clm-verbose* dac-size *clm-rt-bufsize* audio-format *clm-audio-format* }>
+  input find-file to input
+  input false? if 'no-such-file '( get-func-name input ) fth-throw then
+  input mus-sound-frames { frames }
+  input mus-sound-srate  { srate }
+  input mus-sound-chans  { chans }
   chans 2 > if
     $" %s: we can only handle 2 chans, not %d" _ '( get-func-name chans ) string-format warning
     2 to chans
   then
-  *clm-verbose* if fname #f chans sr frms #f #f snd-info then
-  *clm-rt-bufsize* frms min { bufsize }
+  verbose if input snd-info then
+  dac-size frames min { bufsize }
   bufsize 0> if
     chans bufsize make-sound-data { data }
-    fname mus-sound-open-input { snd-fd }
-    snd-fd 0< if 'forth-error '( get-func-name $" cannot open %s" _ fname ) fth-throw then
-    mus-audio-default sr chans 2 min *clm-audio-format* bufsize mus-audio-open-output { dac-fd }
+    input mus-sound-open-input { snd-fd }
+    snd-fd 0< if 'forth-error '( get-func-name $" cannot open %s" _ input ) fth-throw then
+    mus-audio-default srate chans 2 min audio-format bufsize mus-audio-open-output { dac-fd }
     dac-fd 0< if 'forth-error '( get-func-name $" cannot open dac" _ ) fth-throw then
-    frms 0 ?do
-      i bufsize + frms > if frms i - to bufsize then
+    frames 0 ?do
+      i bufsize + frames > if frames i - to bufsize then
       snd-fd 0 bufsize 1- chans data mus-sound-read drop
       dac-fd data bufsize mus-audio-write drop
     bufsize +loop
     snd-fd mus-sound-close-input drop
     dac-fd mus-audio-close drop
   else
-    $" nothing to play for %S (%d frames)" '( fname bufsize ) string-format warning
+    $" nothing to play for %S (%d frames)" '( input bufsize ) string-format warning
   then
 ;
-
-: record-sound ( fname dur -- )
-  { fname dur }
-  dur seconds->samples      	{ frms }
-  *clm-output-device*       	{ device }
-  *clm-rt-bufsize* frms min 	{ bufsize }
-  *clm-channels* 2 min      	{ chans }
-  mus-srate                 	{ old-srate }
-  *clm-srate* set-mus-srate 	{ sr }
-  *clm-audio-format*        	{ afmt }
-  *clm-data-format*         	{ dfmt }
-  *clm-header-type*         	{ htype }
+: record-sound ( output keyword-args -- )
+  doc"  ( output keyword-args -- )  \
+Records from dac output device to the specified OUTPUT file.\n\
+\\ keyword args and default values\n\
+\\ :duration        10.0\n\
+\\ :verbose         *clm-verbose*       (#f)\n\
+\\ :output-device   *clm-output-device* (mus-audio-default)\n\
+\\ :dac-size        *clm-rt-bufsize*    (512)\n\
+\\ :srate           *clm-srate*         (22050)\n\
+\\ :channels        *clm-channels*      (1)\n\
+\\ :audio-format    *clm-audio-format*  (mus-lshort)\n\
+\\ :data-format     *clm-data-format*   (mus-lfloat)\n\
+\\ :header-type     *clm-header-type*   (mus-next)\n\
+\\ :comment         *clm-comment*       (#f)"
+  <{ output :key
+     duration      10.0
+     verbose       *clm-verbose*
+     output-device *clm-output-device*
+     dac-size      *clm-rt-bufsize*
+     srate         *clm-srate*
+     channels      *clm-channels*
+     audio-format  *clm-audio-format*
+     data-format   *clm-data-format*
+     header-type   *clm-header-type*
+     comment       *clm-comment* }>
+  duration seconds->samples   	{ frames }
+  dac-size frames min 	        { bufsize }
+  channels 2 min      	        { chans }
+  mus-srate                	{ old-srate }
+  srate set-mus-srate drop
+  comment empty? if $" written %s by %s" _ '( date get-func-name ) string-format to comment then
   chans bufsize make-sound-data { data }
   chans 0.25 make-vct           { vals }
   vals each drop mus-audio-mixer mus-audio-reclev i vals mus-audio-mixer-write drop end-each
   vals 0.75 vct-fill! drop
-  vals each drop device  mus-audio-amp i vals mus-audio-mixer-write drop end-each
-  $" written %s by %s" _ '( date get-func-name ) string-format { descr }
-  fname sr chans dfmt htype descr mus-sound-open-output        { snd-fd }
-  snd-fd 0< if 'forth-error '( get-func-name $" cannot open %s" _ fname ) fth-throw then
-  device sr chans 2 min afmt bufsize mus-audio-open-input      { dac-fd }
+  vals each drop output-device  mus-audio-amp i vals mus-audio-mixer-write drop end-each
+  output srate chans data-format header-type comment mus-sound-open-output { snd-fd }
+  snd-fd 0< if 'forth-error '( get-func-name $" cannot open %S" _ output ) fth-throw then
+  output-device srate chans audio-format bufsize mus-audio-open-input      { dac-fd }
   dac-fd 0< if 'forth-error '( get-func-name $" cannot open dac" _ ) fth-throw then
-  *clm-verbose* if
-    $" filename: %s"                '( fname )                     clm-message
-    $"   device: %d"                '( device )                    clm-message
-    $"    chans: %d, srate: %d"     '( chans sr )                  clm-message
-    $" r format: %s"                '( afmt mus-data-format-name ) clm-message
-    $" w format: %s [%s]" '( dfmt mus-data-format-name htype mus-header-type-name ) clm-message
-    $"   length: %.3f  (%d frames)" '( dur frms )                  clm-message
-    $"  comment: %s"                '( descr )                     clm-message
+  verbose if
+    $" filename: %s"                '( output )          clm-message
+    $"   device: %d"                '( output-device )   clm-message
+    $"    chans: %d, srate: %d"     '( chans srate )     clm-message
+    $" r format: %s [Dac]" '( audio-format mus-data-format-name ) clm-message
+    $" w format: %s [%s]"
+    '( data-format mus-data-format-name header-type mus-header-type-name ) clm-message
+    $"   length: %.3f  (%d frames)" '( duration frames ) clm-message
+    $"  comment: %S"                '( comment )         clm-message
   then
-  frms 0 ?do
-    i bufsize + frms > if frms i - to bufsize then
+  frames 0 ?do
+    i bufsize + frames > if frames i - to bufsize then
     dac-fd data bufsize mus-audio-read drop
     snd-fd 0 bufsize 1- chans data mus-sound-write drop
   bufsize +loop
   dac-fd mus-audio-close drop
-  snd-fd frms chans * dfmt mus-bytes-per-sample * mus-sound-close-output drop
+  snd-fd frames chans * data-format mus-bytes-per-sample * mus-sound-close-output drop
   old-srate set-mus-srate drop
 ;
-
-: clm-mix ( infile :key output #f output-frame 0 frames #f input-frame 0 scaler 1.0  -- )
+: clm-mix ( infile :key output output-frame frames input-frame scaler -- )
   doc" ( infile :key output #f output-frame 0 frames #f input-frame 0 scaler 1.0 -- )  \
 Mixes files in with-sound's *output* generator.\n\
+\\ keyword args and default values\n\
+\\ output         #f (*output*)\n\
+\\ output-frame   0\n\
+\\ frames         #f (infile mus-sound-frames)\n\
+\\ input-frame    0\n\
+\\ scaler         1.0\n\
 \"oboe.snd\" clm-mix\n\
 Mixes oboe.snd in *output* at *output*'s location 0 from oboe.snd's location 0 on.  \
 The whole oboe.snd file will be mixed in because :frames was not specified."
@@ -680,42 +722,6 @@ hide
 ;
 : ws-before-output ( ws -- )
   { ws }
-  ws :output            hash-ref { output }
-  ws :reverb-file-name  hash-ref { revput }
-  ws :continue-old-file hash-ref { cont? }
-  cont? if
-    output continue-sample->file
-  else
-    output file-delete
-    output
-    ws :channels    hash-ref
-    ws :data-format hash-ref
-    ws :header-type hash-ref
-    ws :comment hash-ref dup empty? if drop make-default-comment then
-    make-sample->file
- then to *output*
-  *output* sample->file? unless
-    'with-sound-error '( get-func-name $" cannot open sample->file" _ ) fth-throw
-  then
-  cont? if
-    output mus-sound-srate set-mus-srate drop
-    'snd provided? if output 0 find-sound dup sound? if close-sound-extend else drop then then
-  then
-  revput if
-    cont? if
-      revput continue-sample->file
-    else
-      revput file-delete
-      revput
-      ws :reverb-channels hash-ref
-      ws :data-format     hash-ref
-      ws :header-type     hash-ref
-      $" with-sound temporary reverb file" make-sample->file
-    then to *reverb*
-    *reverb* sample->file? unless
-      'with-sound-error '( get-func-name $" cannot open reverb sample->file" _ ) fth-throw
-    then
-  then
   *clm-table-size*         set-clm-table-size         drop
   *clm-file-buffer-size*   set-mus-file-buffer-size   drop
   *clm-array-print-length* set-mus-array-print-length drop
@@ -735,13 +741,10 @@ hide
 ;
 : ws-statistics ( ws -- )
   { ws }
-  ws :output            hash-ref
-  ws :reverb-file-name  hash-ref
-  ws :channels 		hash-ref
-  ws :srate    		hash-ref
-  ws :output   		hash-ref mus-sound-frames
-  ws :scaled-to hash-ref ws :scaled-by hash-ref ||
-  ws :timer             hash-ref
+  ws :output hash-ref
+  :reverb-file-name ws :reverb-file-name  hash-ref
+  :scaled?          ws :scaled-to hash-ref ws :scaled-by hash-ref ||
+  :timer            ws :timer             hash-ref
   snd-info
 ;
 \ player can be one of proc, string, or #f.
@@ -750,6 +753,14 @@ hide
 \   string: "player output" system
 \ else snd: output play-and-wait
 \      clm: output play-sound
+\ 
+\ A player may look like this:
+\
+\ : play-3-times ( output -- )
+\   { output }
+\   3 0 ?do output play-and-wait drop loop
+\ ;
+\ ' play-3-times to *clm-player*
 : ws-play-it ( ws -- )
   { ws }
   ws :output hash-ref { output }
@@ -763,10 +774,7 @@ hide
       'snd provided? if
 	output find-file play-and-wait drop
       else
-	*clm-verbose* { old-verbose }
-	#f to *clm-verbose*
-	output play-sound
-	old-verbose to *clm-verbose*
+	output :verbose #f play-sound
       then
     then
   then
@@ -853,6 +861,42 @@ set-current
     ws :reverb-file-name #f hash-set!
     #f
   then { rev? }
+  ws :output            hash-ref { output }
+  ws :reverb-file-name  hash-ref { revput }
+  ws :continue-old-file hash-ref { cont? }
+  cont? if
+    output continue-sample->file
+  else
+    output file-delete
+    output
+    ws :channels    hash-ref
+    ws :data-format hash-ref
+    ws :header-type hash-ref
+    ws :comment hash-ref dup empty? if drop make-default-comment then
+    make-sample->file
+  then to *output*
+  *output* sample->file? unless
+    'with-sound-error '( get-func-name $" cannot open sample->file" _ ) fth-throw
+  then
+  cont? if
+    output mus-sound-srate set-mus-srate drop
+    'snd provided? if output 0 find-sound dup sound? if close-sound-extend else drop then then
+  then
+  revput if
+    cont? if
+      revput continue-sample->file
+    else
+      revput file-delete
+      revput
+      ws :reverb-channels hash-ref
+      ws :data-format     hash-ref
+      ws :header-type     hash-ref
+      $" with-sound temporary reverb file" make-sample->file
+    then to *reverb*
+    *reverb* sample->file? unless
+      'with-sound-error '( get-func-name $" cannot open reverb sample->file" _ ) fth-throw
+    then
+  then
   ws ws-before-output
   ws :timer make-timer hash-set!
   ws :timer hash-ref start-timer
@@ -901,27 +945,27 @@ previous
 : with-sound ( body-xt keyword-args -- ws )
   doc" ( body-xt keyword-args -- )  Evals CLM instruments.\n\
 \\ keywords and default values:\n\
-:play              *clm-play*             #f\n\
-:statistics        *clm-statistics*       #f\n\
-:verbose           *clm-verbose*          #f\n\
-:continue-old-file                        #f\n\
-:output            *clm-file-name*        \"test.snd\"\n\
-:channels          *clm-channels*         1\n\
-:srate             *clm-srate*            22050\n\
-:locsig-type       *clm-locsig-type*      mus-interp-linear\n\
-:header-type       *clm-header-type*      mus-next\n\
-:data-format       *clm-data-format*      mus-lfloat\n\
-:comment           *clm-comment*          #f\n\
-:notehook          *clm-notehook*         #f\n\
-:scaled-to                                #f\n\  
-:scaled-by                                #f\n\  
-:delete-reverb     *clm-delete-reverb*    #f\n\
-:reverb            *clm-reverb*           #f\n\
-:reverb-data       *clm-reverb-data*      '()\n\
-:reverb-channels   *clm-reverb-channels*  1\n\
-:reverb-file-name  *clm-reverb-file-name* \"test.reverb\"\n\
-:player            *clm-player*           #f\n\
-:decay-time        *clm-decay-time*       1.0\n\
+:play              *clm-play*             (#f)\n\
+:statistics        *clm-statistics*       (#f)\n\
+:verbose           *clm-verbose*          (#f)\n\
+:continue-old-file                        (#f)\n\
+:output            *clm-file-name*        (\"test.snd\")\n\
+:channels          *clm-channels*         (1)\n\
+:srate             *clm-srate*            (22050)\n\
+:locsig-type       *clm-locsig-type*      (mus-interp-linear)\n\
+:header-type       *clm-header-type*      (mus-next)\n\
+:data-format       *clm-data-format*      (mus-lfloat)\n\
+:comment           *clm-comment*          (#f)\n\
+:notehook          *clm-notehook*         (#f)\n\
+:scaled-to                                (#f)\n\  
+:scaled-by                                (#f)\n\  
+:delete-reverb     *clm-delete-reverb*    (#f)\n\
+:reverb            *clm-reverb*           (#f)\n\
+:reverb-data       *clm-reverb-data*      ('())\n\
+:reverb-channels   *clm-reverb-channels*  (1)\n\
+:reverb-file-name  *clm-reverb-file-name* (\"test.reverb\")\n\
+:player            *clm-player*           (#f)\n\
+:decay-time        *clm-decay-time*       (1.0)\n\
 ' resflt-test with-sound .g cr\n\
 ' resflt-test :play #t :channels 2 :srate 44100 with-sound drop"
   *ws-args* empty? if

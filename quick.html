@@ -185,7 +185,7 @@ tracking cursor updating: <a href="extsnd.html#cursorupdateinterval">cursor-upda
 delete a file: use the Guile function delete-file or Ruby's File.delete<br>
 delete a region: <a href="extsnd.html#forgetregion">forget-region</a><br>
 delete the currently selected samples: <a href="extsnd.html#deleteselection">delete-selection</a><br>
-delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
+delete the selection and smooth the splice: <a href="sndscm.html#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
 delete a mix or all mixes: <a href="extsnd.html#deletemix">delete-mix</a><br>
 delete a track or all tracks: <a href="extsnd.html#deletetrack">delete-track</a><br>
 delete a mark or all marks: <a href="extsnd.html#deletemark">delete-mark</a><br>
@@ -211,10 +211,10 @@ Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
 Peak env files: <a href="sndscm.html#peakenvdoc">peak-env.scm</a><br>
 The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
 Panning: place-sound in examp.scm, <a href="snd.html#mixdialog">Mix Dialog</a>, play-panned in enved.scm, <a href="sndscm.html#panmix">pan-mix</a><br>
-Envelope over mix: <a href="sndscm.html#exenvelopedmix">enveloped-mix</a><br>
+Envelope over mix: <a href="sndscm.html#envelopedmix">enveloped-mix</a><br>
 Envelope over track (a set of mixes): <a href="extsnd.html#trackampenv">track-amp-env</a><br>
 Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.scm<br>
-Read sound indexed through envelope: <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a><br>
+Read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
 Cosine as envelope: <a href="extsnd.html#cosinechannel">cosine-channel</a>, <a href="extsnd.html#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="clm.html#bellcurve">bell-curve</a><br>
 envelope with sinusoidal connections between points: <a href="sndscm.html#sineenvchannel">sine-env-channel</a><br>
 envelope with separate base for each segment: <a href="extsnd.html#powenvchannel">powenv-channel</a><br>
@@ -235,27 +235,27 @@ Snd fft function: <a href="extsnd.html#fft">fft</a><br>
 CLM fft function: <a href="clm.html#fft">mus-fft</a><br>
 CLM spectrum: <a href="clm.html#spectrum">spectrum</a><br>
 Snd spectrum: <a href="extsnd.html#sndspectrum">snd-spectrum</a><br>
-Cross Correlation: <a href="sndscm.html#excorrelate">correlate</a><br>
+Cross Correlation: <a href="sndscm.html#correlate">correlate</a><br>
 FFT window: <a href="clm.html#make-fft-window">make-fft-window</a><br>
-Dolph-Chebyshev window in Scheme: <a href="sndscm.html#exdolph">dolph</a><br>
-Hartley transform in Scheme: <a href="sndscm.html#exdht">dht</a><br>
+Dolph-Chebyshev window in Scheme: <a href="sndscm.html#dolph">dolph</a><br>
+Hartley transform in Scheme: <a href="sndscm.html#dht">dht</a><br>
 Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a><br>
 <br>
-fft-based filter: <a href="sndscm.html#exfftedit">fft-edit</a>, <a href="sndscm.html#exfftenvedit">fft-env-edit</a>, <a href="sndscm.html#exfftenvinterp">fft-env-interp</a>, <a href="sndscm.html#exfftsquelch">fft-squelch</a>, <a href="sndscm.html#exfftcancel">fft-cancel</a><br>
+fft-based filter: <a href="sndscm.html#fftedit">fft-edit</a>, <a href="sndscm.html#fftenvedit">fft-env-edit</a>, <a href="sndscm.html#fftenvinterp">fft-env-interp</a>, <a href="sndscm.html#fftsquelch">fft-squelch</a>, <a href="sndscm.html#fftcancel">fft-cancel</a><br>
 phase-vocoder: <a href="clm.html#phase-vocoder">phase-vocoder</a>. <a href="sndscm.html#pvocdoc">pvoc</a><br>
-transposition via fft: <a href="sndscm.html#exdownoct">down-oct</a><br>
+transposition via fft: <a href="sndscm.html#downoct">down-oct</a><br>
 phase rotation via fft: <a href="sndscm.html#zerophase">zero-phase, rotate-phase</a><br>
 duration change via autocorrelation: <a href="sndscm.html#rubberdoc">rubber-sound</a><br>
-smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a><br>
-cross-synthesis: <a href="sndscm.html#excrosssynthesis">cross-synthesis</a><br>
-voiced-&gt;unvoiced effect: <a href="sndscm.html#exvoiced2unvoiced">voiced-&gt;unvoiced</a><br>
+smoothing via fft: <a href="sndscm.html#fftsmoother">fft-smoother</a><br>
+cross-synthesis: <a href="sndscm.html#crosssynthesis">cross-synthesis</a><br>
+voiced-&gt;unvoiced effect: <a href="sndscm.html#voicedtounvoiced">voiced-&gt;unvoiced</a><br>
 noise reduction: <a href="sndscm.html#noisystory">Noise Reduction</a>, <a href="sndscm.html#notchchannel">notch-channel</a>, <a href="sndscm.html#clminsdoc">anoi</a><br>
 spectral modeling: <a href="sndscm.html#clminsdoc">pins</a><br>
 polynomial approach to spectral multiplies (convolution): <a href="sndscm.html#spectralpolynomial">spectral-polynomial</a><br>
 <br>
-Superimpose ffts: <a href="sndscm.html#exsuperimposeffts">superimpose-ffts</a><br>
+Superimpose ffts: <a href="sndscm.html#superimposeffts">superimpose-ffts</a><br>
 Waterfall real-time spectrograph: <a href="sndscm.html#startwaterfall">start-waterfall</a><br>
-Simple rt spectrum: <a href="sndscm.html#exshowinputfft">show-input-fft</a>, <a href="sndscm.html#exshowdraggableinputfft">show-draggable-input-fft</a><br>
+Simple rt spectrum: <a href="sndscm.html#showinputfft">show-input-fft</a>, <a href="sndscm.html#showdraggableinputfft">show-draggable-input-fft</a><br>
 More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fourier-transform</a>, <a href="sndscm.html#ztransform">z-transform</a> in dsp.scm<br>
 3D (single) fft display: <a href="sndscm.html#complexify">complexify</a><br>
 bark, mel, erb scale display: <a href="sndscm.html#displaybarkfft">display-bark-fft</a><br>
@@ -330,12 +330,12 @@ squeeze selection between marks: <a href="sndscm.html#fitselectionbetweenmarks">
 insert silence before marks: <a href="sndscm.html#padmarks">pad-marks</a><br>
 move syncd marks: <a href="sndscm.html#movesyncdmarks">move-syncd-marks</a><br>
 play starting from syncd marks: <a href="sndscm.html#playsyncdmarks">play-syncd-marks</a><br>
-evaluate function between marks: <a href="sndscm.html#exevalbetweenmarks">eval-between-marks</a><br>
-place marks at selection start and end: <a href="sndscm.html#exsnapmarks">snap-marks</a><br>
-define selection via marks: <a href="sndscm.html#exdefineselectionviamarks">define-selection-via-marks</a><br>
-force dragged mark to land on a beat: <a href="sndscm.html#exsnapmarktobeat">snap-mark-to-beat</a><br>
-loop continuously between the two specified marks: <a href="sndscm.html#exloopbetweenmarks">loop-between-marks</a><br>
-split sound into separate files based on mark placement: <a href="sndscm.html#exmarkexplode">mark-explode</a><br>
+evaluate function between marks: <a href="sndscm.html#evalbetweenmarks">eval-between-marks</a><br>
+place marks at selection start and end: <a href="sndscm.html#snapmarks">snap-marks</a><br>
+define selection via marks: <a href="sndscm.html#defineselectionviamarks">define-selection-via-marks</a><br>
+force dragged mark to land on a beat: <a href="sndscm.html#snapmarktobeat">snap-mark-to-beat</a><br>
+loop continuously between the two specified marks: <a href="sndscm.html#loopbetweenmarks">loop-between-marks</a><br>
+split sound into separate files based on mark placement: <a href="sndscm.html#markexplode">mark-explode</a><br>
 mark property lists: <a href="sndscm.html#markproperty">mark-property</a><br>
 save mark properties in saved state file: <a href="sndscm.html#savemarkproperties">save-mark-properties</a><br>
 show mark properties upon click: <a href="sndscm.html#markclickinfo">mark-click-info</a><br>
@@ -374,7 +374,7 @@ mix selection: <a href="extsnd.html#mixselection">mix-selection</a><br>
 mix vct: <a href="extsnd.html#mixvct">mix-vct</a><br>
 mix sound-data: <a href="sndscm.html#mixsounddata">mix-sound-data</a><br>
 mix a frame: <a href="sndscm.html#mixframe">mix-frame</a><br>
-enveloped mix: see <a href="sndscm.html#exenvelopedmix">enveloped-mix</a> in extensions.scm<br>
+enveloped mix: see <a href="sndscm.html#envelopedmix">enveloped-mix</a> in extensions.scm<br>
 read mix samples: <a href="extsnd.html#makemixsamplereader">make-mix-sample-reader</a><br>
 mix data maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
 mix data to vct: <a href="sndscm.html#mixtovct">mix-&gt;vct</a><br>
@@ -409,19 +409,19 @@ play a region: <a href="extsnd.html#playregion">play-region</a>, <a href="snd.ht
 play a mix: <a href="extsnd.html#playmix">play-mix</a>, play button in Mix dialog<br>
 play a track: <a href="extsnd.html#playtrack">play-track</a><br>
 play from mark: click or drag triangle (control-click for all chans)<br>
-play continuously between two marks: <a href="sndscm.html#exloopbetweenmarks">loop-it</a><br>
+play continuously between two marks: <a href="sndscm.html#loopbetweenmarks">loop-it</a><br>
 stop playing: C-g, C-t, <a href="extsnd.html#stopplaying">stop-playing</a>, set <a href="extsnd.html#playing">playing</a> to #f<br>
 pause or resume playback: space, set <a href="extsnd.html#pausing">pausing</a><br>
-play repeatedly: <a href="sndscm.html#explayoften">play-often</a><br>
-play repeatedly until C-g: <a href="sndscm.html#explayuntilcg">play-until-c-g</a><br>
-play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a><br>
+play repeatedly: <a href="sndscm.html#playoften">play-often</a><br>
+play repeatedly until C-g: <a href="sndscm.html#playuntilcg">play-until-c-g</a><br>
+play region repeatedly: <a href="sndscm.html#playregionforever">play-region-forever</a><br>
 play a file upon a keystroke: <a href="extsnd.html#extendedpiano">bind-key</a><br>
 play using an external program: (shell "sndplay wood16.wav")<br>
 play a sine-wave or spectrum: <a href="sndscm.html#playsine">play-sine</a> and <a href="sndscm.html#playsines">play-sines</a><br>
 play arbitrary mixtures of things: <a href="extsnd.html#makeplayer">make-player</a> and related functions, <a href="sndscm.html#playsyncdmarks">play-syncd-marks</a><br>
-send arbitrary data to the DAC: <a href="extsnd.html#musaudiowrite">mus-audio-write</a>, <a href="sndscm.html#exstartdac">start-dac</a><br>
-play after sending the data through some function: <a href="sndscm.html#explaysound">play-sound</a><br>
-play with applied amplitude envelope: <a href="sndscm.html#explaywithenvs">play-with-envs</a>, <a href="sndscm.html#explaypanned">play-panned</a><br>
+send arbitrary data to the DAC: <a href="extsnd.html#musaudiowrite">mus-audio-write</a>, <a href="sndscm.html#startdac">start-dac</a><br>
+play after sending the data through some function: <a href="sndscm.html#playsound">play-sound</a><br>
+play with applied amplitude envelope: <a href="sndscm.html#playwithenvs">play-with-envs</a>, <a href="sndscm.html#playpanned">play-panned</a><br>
 play an external file: (play "file")<br>
 <br>
 </blockquote></small>
@@ -457,11 +457,11 @@ bounded brownian noise: <a href="sndscm.html#greendoc">green.scm</a><br>
 <small><blockquote>
 Max length of region list: <a href="extsnd.html#maxregions">max-regions</a><br>
 Whether selection creates a region: <a href="extsnd.html#selectioncreatesregion">selection-creates-region</a><br>
-To play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a><br>
+To play region repeatedly: <a href="sndscm.html#playregionforever">play-region-forever</a><br>
 Start region browser from Scheme: <a href="extsnd.html#viewregionsdialog">view-regions-dialog</a><br>
 All about regions: <a href="snd.html#regions">regions</a><br>
 The region dialog: <a href="snd.html#regionbrowser">region browser</a><br>
-Region rms amp: <a href="sndscm.html#exregionrms">region-rms</a><br>
+Region rms amp: <a href="sndscm.html#regionrms">region-rms</a><br>
 region-play-list and region-play-sequence in examp.scm<br>
 <a href="sndscm.html#regiontoframe">region-&gt;frame</a><br>
 <a href="sndscm.html#regiontosounddata">region-&gt;sound-data</a><br>
@@ -481,13 +481,13 @@ resample mix: speed control in <a href="snd.html#mixdialog">Mix dialog</a> (also
 resample via drawn envelope: srate in <a href="snd.html#editenvelope">Envelope editor</a><br>
 resample via CLM gen: <a href="clm.html#src">src</a><br>
 resample with independent time control (ssb-am): <a href="sndscm.html#ssbbank">ssb-bank</a> in dsp.scm<br>
-resample with independent time control (granulate): expand in <a href="extsnd.html#customcontrols">control panel</a>, <a href="sndscm.html#exexpsrc">expsrc</a> and <a href="sndscm.html#exexpsnd">expsnd</a><br>
+resample with independent time control (granulate): expand in <a href="extsnd.html#customcontrols">control panel</a>, <a href="sndscm.html#expsrc">expsrc</a> and <a href="sndscm.html#expsnd">expsnd</a><br>
 resample with independent time control (vocoder): <a href="clm.html#phase-vocoder">phase-vocoder</a> (this never works)<br>
 another time stretcher (autocorrelation):<a href="sndscm.html#rubbersound">rubber-sound</a> (this takes forever and rarely works)<br>
-resampling-based sound effects: <a href="sndscm.html#exhellodentist">hello-dentist</a>, <a href="sndscm.html#exfp">fp</a>, flange and chorus in dsp.scm and new-effects.scm<br>
+resampling-based sound effects: <a href="sndscm.html#hellodentist">hello-dentist</a>, <a href="sndscm.html#fp">fp</a>, flange and chorus in dsp.scm and new-effects.scm<br>
 the digital zipper: <a href="sndscm.html#zipdoc">zipper</a><br>
-resample via FFT: <a href="sndscm.html#exdownoct">down-oct</a><br>
-resample through env: <a href="sndscm.html#exsoundinterp">sound-interp</a> and <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a><br>
+resample via FFT: <a href="sndscm.html#downoct">down-oct</a><br>
+resample through env: <a href="sndscm.html#soundinterp">sound-interp</a> and <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
 resample through list: <a href="sndscm.html#scratch">scratch</a><br>
 resample step-size through a function: <a href="extsnd.html#setsamples">step-src</a><br>
 predict duration of resampled sound: <a href="sndscm.html#srcduration">src-duration</a><br>
@@ -547,8 +547,8 @@ save a sound under a different name: <a href="extsnd.html#savesoundas">save-soun
 extract one channel from a sound: <a href="extsnd.html#extractchannel">extract-channel</a><br>
 extract a set of channels from a sound: <a href="extsnd.html#extractchannels">extract-channels</a><br>
 save a sound in a different format or header: <a href="extsnd.html#savesoundas">save-sound-as</a><br>
-backup edits automatically: <a href="sndscm.html#exautosave">autosave</a><br>
-check first for unsaved edits: <a href="sndscm.html#exunsavededits">check-for-unsaved-edits</a><br>
+backup edits automatically: <a href="sndscm.html#autosave">autosave</a><br>
+check first for unsaved edits: <a href="sndscm.html#unsavededits">check-for-unsaved-edits</a><br>
 save Snd's complete state (unsaved edits and all): <a href="extsnd.html#savestate">save-state</a>, <a href="extsnd.html#savedir">save-dir</a>, <a href="extsnd.html#savestatehook">save-state-hook</a>, <a href="extsnd.html#savestatefile">save-state-file</a><br>
 save the selection: <a href="extsnd.html#saveselection">save-selection</a><br>
 save a region: <a href="extsnd.html#saveregion">save-region</a><br>
@@ -565,7 +565,7 @@ save marks: <a href="extsnd.html#savemarks">save-marks</a><br>
 save just the edit history: <a href="extsnd.html#saveedithistory">save-edit-history</a><br>
 save the peak-env data: <a href="sndscm.html#peakenvdoc">save-peak-env-info</a><br>
 take some action upon a window manager save-yourself signal: <a href="sndscm.html#uponsaveyourself">upon-save-yourself</a><br>
-save the current sound setup for a later reopen: <a href="sndscm.html#exremembersoundstate">remember-sound-state</a><br>
+save the current sound setup for a later reopen: <a href="sndscm.html#remembersoundstate">remember-sound-state</a><br>
 save the current fft peak info: <a href="extsnd.html#peaks">peaks</a><br>
 </blockquote></small>
 </td></tr></table>
@@ -578,7 +578,7 @@ save the current fft peak info: <a href="extsnd.html#peaks">peaks</a><br>
 find a mark: <a href="extsnd.html#findmark">find-mark</a><br>
 find a mix: <a href="sndscm.html#findmix">find-mix</a><br>
 find a sound: <a href="extsnd.html#findsound">find-sound</a><br>
-Example find procedures: <a href="sndscm.html#exsearchforclick">search-for-click, zero+, next-peak, find-pitch</a><br>
+Example find procedures: <a href="sndscm.html#searchforclick">search-for-click, zero+, next-peak, find-pitch</a><br>
 Search via continuation: <a href="extsnd.html#scanagain">scan-again</a><br>
 Explicit access to search procedures: <a href="extsnd.html#searchprocedure">search-procedure</a><br>
 The Find dialog: <a href="snd.html#editoperations">Find</a> or <a href="extsnd.html#finddialog">find-dialog</a><br>
@@ -603,15 +603,15 @@ color of selected portion: <a href="extsnd.html#selectioncolor">selection-color<
 set whether creating a selection creates a region: <a href="extsnd.html#selectioncreatesregion">selection-creates-region</a><br>
 fft graph refers to the selection: <a href="extsnd.html#showselectiontransform">show-selection-transform</a><br>
 hook called when selection stops playing: <a href="extsnd.html#stopplayingselectionhook">stop-playing-selection-hook</a><br>
-swap chans in selected portion: <a href="sndscm.html#exswapselectionchannels">swap-selection-channels</a><br>
-replace portion with selection: <a href="sndscm.html#exreplacewithselection">replace-with-selection</a><br>
-select portion via function: <a href="sndscm.html#exmakeselection">make-selection</a><br>
-evaluate func on each sample of selection: <a href="sndscm.html#exevaloverselection">eval-over-selection</a> (map-selection in effect)<br>
-selection members as list of lists of sound indices and channels: <a href="sndscm.html#exselectionmembers">selection-members</a><br>
-rms of selection data: <a href="sndscm.html#exselectionrms">selection-rms</a><br>
-delete selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
-select portion between two marks: <a href="sndscm.html#exdefineselectionviamarks">define-selection-via-marks</a><br>
-place marks at selection start and end: <a href="sndscm.html#exsnapmarks">snap-marks</a><br>
+swap chans in selected portion: <a href="sndscm.html#swapselectionchannels">swap-selection-channels</a><br>
+replace portion with selection: <a href="sndscm.html#replacewithselection">replace-with-selection</a><br>
+select portion via function: <a href="sndscm.html#makeselection">make-selection</a><br>
+evaluate func on each sample of selection: <a href="sndscm.html#evaloverselection">eval-over-selection</a> (map-selection in effect)<br>
+selection members as list of lists of sound indices and channels: <a href="sndscm.html#selectionmembers">selection-members</a><br>
+rms of selection data: <a href="sndscm.html#selectionrms">selection-rms</a><br>
+delete selection and smooth the splice: <a href="sndscm.html#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
+select portion between two marks: <a href="sndscm.html#defineselectionviamarks">define-selection-via-marks</a><br>
+place marks at selection start and end: <a href="sndscm.html#snapmarks">snap-marks</a><br>
 squeeze selection between marks: <a href="sndscm.html#fitselectionbetweenmarks">fit-selection-between-marks</a><br>
 add context-sensitive popup menu specific to selection: <a href="sndscm.html#popupdoc">add-selection-popup</a><br>
 delete selection and write it to a file: <a href="sndscm.html#menusdoc">cut-selection-&gt;new</a><br>
@@ -630,9 +630,9 @@ undo select-all.: <a href="sndscm.html#menusdoc">deselect-all</a><br>
 smooth channel: <a href="extsnd.html#smoothchannel">smooth-channel</a><br>
 smooth all channels: <a href="extsnd.html#smoothsound">smooth-sound</a><br>
 smooth selection: <a href="extsnd.html#smoothselection">smooth-selection</a><br>
-delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
+delete the selection and smooth the splice: <a href="sndscm.html#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
 smoothing as virtual op: smooth-channel-via-ptree in examp.scm<br>
-smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a><br>
+smoothing via fft: <a href="sndscm.html#fftsmoother">fft-smoother</a><br>
 smooth via low-pass <a href="extsnd.html#filtersinsnd">filter</a><br>
 smooth over click: <a href="sndscm.html#removeclicks">remove-clicks</a> in examp.scm<br>
 </blockquote></small>
