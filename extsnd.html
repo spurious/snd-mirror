@@ -3041,7 +3041,7 @@ vct-peak returns the maximum absolute value of the elements of 'v'.
 vct-ref returns the element 'pos' in 'v': <code>v[pos]</code>.
 <pre>
 :<em class=typing>(vct-ref (vct .1 .2 .3) 1)</em>
-<em class=listener>0.200000002980232</a>
+<em class=listener>0.200000002980232</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3247,14 +3247,18 @@ classes in Ruby.
 
 <!-- -------------------------------- SOUND-DATA TABLE -------------------------------- -->
 
-<!-- TODO: brief examples for sound-data table -->
-
 <table border=0 cellspacing=0 hspace=10>
 
 <!-- make-sound-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makesounddata">make-sound-data</a> (chans frames)</code></td></tr>
 <tr><td width=60><br></td><td>
 make-sound-data returns a new sound-data object with 'chans' arrays, each with 'frames' elements.
+<pre>
+:<em class=typing>(make-sound-data 2 5)</em>
+<em class=listener>#&lt;sound-data[chans=2, length=5]:
+    (0.000 0.000 0.000 0.000 0.000)
+    (0.000 0.000 0.000 0.000 0.000)&gt;</em>
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- sound-data-add! -->
@@ -3262,6 +3266,22 @@ make-sound-data returns a new sound-data object with 'chans' arrays, each with '
 <code><a class=def name="sounddataadd">sound-data-add!</a> (sd1 sd2)</code></td></tr>
 <tr><td><br></td><td>
 sound-data-add! adds the contents of sd2 into sd1 and returns sd1.
+<pre>
+:<em class=typing>(define sd1 (make-sound-data 2 5))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+:<em class=typing>(do ((chn 0 (1+ chn))) ((= chn 2)) 
+   (do ((i 0 (1+ i))) ((= i 5)) 
+     (sound-data-set! sd1 chn i (+ i (* 5 chn)))))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+:<em class=typing>sd1</em>
+<em class=listener>#&lt;sound-data[chans=2, length=5]:
+    (0.000 1.000 2.000 3.000 4.000)
+    (5.000 6.000 7.000 8.000 9.000)&gt;</em>
+:<em class=typing>(sound-data-add! (sound-data-fill! (make-sound-data 2 5) .25) sd1)</em>
+<em class=listener>#&lt;sound-data[chans=2, length=5]:
+    (0.250 1.250 2.250 3.250 4.250)
+    (5.250 6.250 7.250 8.250 9.250)&gt;</em>
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- sound-data-chans -->
@@ -3293,6 +3313,16 @@ sound-data-length returns the length (in samples) of each channel in the sound-d
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatamaxamp">sound-data-maxamp</a> (sd)</code></td></tr>
 <tr><td></td><td>
 sound-data-maxamp returns a list of maxamps (one for each channel) of the data in sd.
+<pre>
+:<em class=typing>sd1</em>
+<em class=listener>#&lt;sound-data[chans=2, length=5]:
+    (0.000 1.000 2.000 3.000 4.000)
+    (5.000 6.000 7.000 8.000 9.000)&gt;</em>
+:<em class=typing>(sound-data-maxamp sd1)</em>
+<em class=listener>(4.0 9.0)</em>
+:<em class=typing>(sound-data-peak sd1)</em>
+<em class=listener>9.0</em>
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- sound-data-multiply! -->
@@ -3327,6 +3357,16 @@ sound-data-ref returns (as a float) the sample in channel chan at location frame
 <code><a class=def name="sounddatareverse">sound-data-reverse!</a> (sd)</code></td></tr>
 <tr><td></td><td>
 sound-data-reverse! reverses the elements of each channel of sd and returns sd.
+<pre>
+:<em class=typing>sd1</em>
+<em class=listener>#&lt;sound-data[chans=2, length=5]:
+    (0.000 1.000 2.000 3.000 4.000)
+    (5.000 6.000 7.000 8.000 9.000)&gt;</em>
+:<em class=typing>(sound-data-reverse! sd1)</em>
+<em class=listener>#&lt;sound-data[chans=2, length=5]:
+    (4.000 3.000 2.000 1.000 0.000)
+    (9.000 8.000 7.000 6.000 5.000)&gt;</em>
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- sound-data-scale! -->
@@ -3373,6 +3413,14 @@ This is an experimental function currently used in the oscilloscope (oscope.scm)
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sounddatatovct">sound-data-&gt;vct</a> (sd chan v)</code></td></tr>
 <tr><td></td><td>
 sound-data-&gt;vct copies sound-data sd's channel 'chan' data into vct v.
+<pre>
+:<em class=typing>sd1</em>
+<em class=listener>#&lt;sound-data[chans=2, length=5]:
+    (4.000 3.000 2.000 1.000 0.000)
+    (9.000 8.000 7.000 6.000 5.000)&gt;</em>
+:<em class=typing>(sound-data-&gt;vct sd1 1)</em>
+<em class=listener>#&lt;vct[len=5]: 9.000 8.000 7.000 6.000 5.000&gt;</em>
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- vct->sound-data -->
@@ -3394,63 +3442,93 @@ For many eamples, see play.scm and rtio.scm. The most important Sndlib functions
 
 <!-- -------------------------------- SNDLIB TABLE -------------------------------- -->
 
-<!-- TODO: englishify the sndlib table entries -->
-
 <table border=0 cellspacing=0 hspace=10>
 <!-- mus-alsa-buffers -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsabuffers">mus-alsa-buffers</a> ()</code></td></tr>
 <tr><td width=60><br></td><td>
 mus-alsa-buffers is the number of buffers ("periods") used in ALSA; you can also use the environment variable MUS_ALSA_BUFFERS.
+The default setting is 3.
+These ALSA variables only matter if you built Snd with the configure switch --with-alsa.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-alsa-buffer-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsabuffersize">mus-alsa-buffer-size</a> ()</code></td></tr>
 <tr><td><br></td><td>
 mus-alsa-buffer-size is the buffer size used in ALSA. You can also use the environment variable MUS_ALSA_BUFFER_SIZE.
+The defaut setting is 1024.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-alsa-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsadevice">mus-alsa-device</a> ()</code></td></tr>
 <tr><td><br></td><td>
-ALSA audio device. A settable variable; environment variable name is MUS_ALSA_DEVICE.
+This is the ALSA audio device; it defaults to "default". 
+The matching environment variable is MUS_ALSA_DEVICE.  If the ALSA "default" device can't be found, we also look
+for "plughw:0" and "hw:0".  The "0" is apparently a card number or something.  On my machine where the internal
+sound card is worse than useless, I have an EMI 2|6 connected to a USB port.  Its ALSA name seems to be "hw:1"
+on a good day.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-alsa-capture-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsacapturedevice">mus-alsa-capture-device</a> ()</code></td></tr>
 <tr><td><br></td><td>
-ALSA audio capture (recording) device. A settable variable; MUS_ALSA_CAPTURE_DEVICE.
+This is the ALSA capture (audio recording) device. The matching environment variable is MUS_ALSA_CAPTURE_DEVICE.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-alsa-playback-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsaplaybackdevice">mus-alsa-playback-device</a> ()</code></td></tr>
 <tr><td><br></td><td>
-ALSA audio playback-device. A settable variable; MUS_ALSA_PLAYBACK_DEVICE.
+This is the ALSA audio playback device. The matching environment variable is MUS_ALSA_PLAYBACK_DEVICE.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-alsa-squelch-warning -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musalsasquelchwarning">mus-alsa-squelch-warning</a> ()</code></td></tr>
 <tr><td><br></td><td>
-Whether to squelch warnings from ALSA about srate mismatches. (A settable variable).
+Set mus-alsa-squelch-warning to #t to squelch warnings from ALSA about srate mismatches.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mus-audio-close -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudioclose">mus-audio-close</a> (line)</code></td></tr>
 <tr><td><br></td><td>
-close audio port <i>line</i>.  The port <i>line</i> comes from either <a href="#musaudioopeninput">mus-audio-open-input</a>
-or <a href="#musaudioopenoutput">mus-audio-open-output</a>, and refers to the sound card's IO channels.
+mus-audio-close closes the audio port 'line' ('line' comes from either <a href="#musaudioopeninput">mus-audio-open-input</a>
+or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
+Here is a simplification of <a href="sndscm.html#playsine">play-sine</a> in play.scm that 
+shows how these low-level DAC functions fit together:
+
+<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa">
+<pre>
+(let* ((audio-fd (<a class=quiet href="#musaudioopenoutput">mus-audio-open-output</a> mus-audio-default 22050 1 mus-lshort 1024))
+                                                      ; open DAC at srate 22050, 1 channel, 1024 bytes per buffer
+       (osc (<a class=quiet href="clm.html#make-oscil">make-oscil</a> 440.0))                       ; make a sine wave at 440 Hz
+       (data (<a class=quiet href="#makesounddata">make-sound-data</a> 1 512)))                ; output buffer (1 chan, 512 samples)
+  (do ((beg 0 (+ beg 512)))                           ; fill a buffer at a time
+      ((&gt; beg 22050))                                 ;   stop playing after 1 second
+    (do ((i 0 (1+ i)))                                ; write each sample of the sinusoid
+	((= i 512))                                   ;   until this buffer is full
+      (<a class=quiet href="#sounddataset">sound-data-set!</a> data 0 i (* .1 (<a class=quiet href="clm.html#oscil">oscil</a> osc))))  ;   .1 amp
+    (<a class=quiet href="#musaudiowrite">mus-audio-write</a> audio-fd data 512))              ; send a buffer to the DAC
+  (<em class=red>mus-audio-close</em> audio-fd))                         ; close the DAC
+</pre>
+</td></tr></table>
+
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-audio-describe -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiodescribe">mus-audio-describe</a> ()</code></td></tr>
 <tr><td></td><td>
-describe audio hardware state (in the help dialog)
+mus-audio-describe returns a string purporting to describe the audio hardware state.  This function
+works best in OSS.  If you're not getting any sound during playback, the first thing to do is to
+examine this function's output.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- mus-audio-mixer-read -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiomixerread">mus-audio-mixer-read</a> (device field channel vals)</code></td></tr>
 <tr><td></td><td>
-read current state of <i>device</i>'s <i>field</i> (device names are listed below under <a href="#musaudioopeninput">mus-audio-open-input</a>):
+mus-audio-mixer-read reads the current state of the field 'field' of audio device 'device'.
+'vals' should be a vct big enough to handle the returned data (32 is a good first guess).
+The 'channel' argument is often treated as the size of the vct 'vals'.
+Device names are listed below under <a href="#musaudioopeninput">mus-audio-open-input</a>.
+The fields are:
 </td></tr><tr><td></td><td>
 <pre>
 
@@ -3460,7 +3538,6 @@ read current state of <i>device</i>'s <i>field</i> (device names are listed belo
   mus-audio-direction   mus-audio-port     mus-audio-pcm2    mus-audio-treble
   mus-audio-samples-per-channel
 </pre>
-<i>vals</i> should be a vct big enough to handle the returned data (the <i>channel</i> argument normally is the size).
 These fields originally referred to OSS soundcard settings; many years have passed, and the whole notion is now
 obsolete, but if you think there's some easy way to reflect the same idea in modern hardware, check out ALSA or
 the new Mac audio system.  I can't face this mess!
@@ -3469,7 +3546,7 @@ the new Mac audio system.  I can't face this mess!
 <!-- mus-audio-mixer-write -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudiomixerwrite">mus-audio-mixer-write</a> (device field channel vals)</code></td></tr>
 <tr><td></td><td>
-set state of <i>device</i>'s <i>field</i>.
+mus-audio-mixer-write sets the state of the field 'field' of audio device 'device'.
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 ;;; here we get the microphone volume, then set it to .5
@@ -3485,6 +3562,8 @@ set state of <i>device</i>'s <i>field</i>.
 </pre>
 </td></tr></table></td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
+<!-- TODO: continue englishification -->
 
 <!-- mus-audio-open-input -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="musaudioopeninput">mus-audio-open-input</a> (device srate chans format bufsize)</code></td></tr>
@@ -6757,7 +6836,7 @@ This inserts sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <
 <TABLE border=3 bordercolor="tan" hspace=20 vspace=10><tr><td>
 <small><blockquote>
 insert some portion of a channel: <a href="sndscm.html#insertchannel">insert-channel</a><br>
-insert a silence: <a href="#padchannel">pad-channel</a>, <a href="#insertsilence">insert-silence</a><br>
+insert a silence: <a href="#padchannel">pad-channel</a>, <a href="#insertsilence">insert-silence</a>, <a href="sndscm.html#padsound">pad-sound</a><br>
 insert a region: <a href="#insertregion">insert-region</a><br>
 insert the selection: <a href="#insertselection">insert-selection</a><br>
 insert a vct of samples: <a href="extsnd.html#insertsamples">insert-samples</a>, <a href="sndscm.html#insertvct">insert-vct</a><br>
@@ -7217,6 +7296,7 @@ To be informed whenever a new sound is created, use <a href="#newsoundhook">new-
 normalize-channel
 scales (changes the amplitude) of a sound so that its new peak amplitude is <i>norm</i>.  This
 is the "regularized" form of <a href="#scaleto">scale-to</a>.
+The multichannel version is <a href="#normalizesound">normalize-sound</a> in frame.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -7285,6 +7365,7 @@ To insert a block of arbitrary-valued samples:
 We could also use map-channel here (rather than ptree-channel), but this version
 uses only virtual edits, so no matter how big the block of samples we insert,
 no disk space or memory is needed.
+The multichannel version is <a href="#padsound">pad-sound</a> in frame.scm.
 </td></tr>
 <tr><td colspan=2 height=18></td></tr>
 
@@ -8291,6 +8372,7 @@ is scaled (it defaults to the currently selected channel).  <code>(scale-by 2.0)
 <tr><td></td><td>
 scale-channel 
 scales (changes the amplitude) of a sound by <i>scl</i>.
+The multichannel version is <a href="#scalesound">scale-sound</a> in frame.scm.
 <a href="sndscm.html#channelpolynomial">channel-polynomial</a> is a generalization of the idea.
 There are approximately a bazillion ways to scale samples in Snd; here's a potpourri of increasingly silly choices:
 

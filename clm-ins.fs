@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Mon Dec 11 14:58:05 CET 2006
+\ Changed: Tue Dec 12 17:49:31 CET 2006
 
 \ Commentary:
 \
@@ -12,21 +12,21 @@
 \ 
 \ clm-ins.scm|rb instruments
 \ 
-\ pluck        ( start dur freq amp weighting lossfact -- )
-\ vox          ( start dur freq amp ampfun freqfun freqscl voxfun index vibscl -- )
-\ fofins       ( start dur keyword-args -- )
+\ pluck        ( start dur freq amp :optional weighting lossfact -- )
+\ vox          ( start dur freq amp ampfun freqfun freqscl voxfun index :optional vibscl -- )
+\ fofins       ( start dur freq amp vib f0 a0 f1 a1 f2 a2 :optional ae ve -- )
 \ fm-trumpet   ( start dur keyword-args -- )
 \ pqw-vox      ( start dur freq spacing-freq amp ampfun freqfun freqscl ... -- )
 \ stereo-flute ( start dur freq flow keyword-args -- )
-\ fm-bell      ( start dur keyword-args -- )
+\ fm-bell      ( start dur freq amp :optional amp-env index-env index -- )
 \ fm-insect    ( start dur freq amp amp-env ... -- )
-\ fm-drum      ( start dur freq amp index high -- )
+\ fm-drum      ( start dur freq amp index :optional high degr dist rev-amt -- )
 \ gong         ( start dur freq amp -- )
 \ attract      ( start dur amp c -- )
 \ pqw          ( start dur sfreq cfreq amp ampfun indexfun parts -- )
-\ tubebell     ( start dur freq amp base --)
+\ tubebell     ( start dur freq amp :optional base --)
 \ wurley       ( start dur freq amp -- )
-\ rhodey       ( start dur freq amp base -- )
+\ rhodey       ( start dur freq amp :optional base -- )
 \ hammondoid   ( start dur freq amp -- )
 \ metal        ( start dur freq amp -- )
 \ drone        ( start dur freq amp ampfun synth ampat ampdc rvibamt rvibfreq -- )
@@ -37,8 +37,8 @@
 \ jl-reverb    ( keyword-args -- )
 \ gran-synth   ( start dur freq grain-dur interval amp -- )
 \ touch-tone   ( numbers keyword-args -- )
-\ spectra      ( start dur freq amp parts ampenv vibamp vibfrq -- )
-\ two-tab      ( start dur freq amp part1 part2 ampenv interpenv vibamp vibfrq -- )
+\ spectra      ( start dur freq amp :optional parts ampenv vibamp vibfrq degr dist rev-amt -- )
+\ two-tab      ( start dur freq amp :optional par1 par2 aenv ienv vamp vfrq degr dist rev -- )
 \ lbj-piano    ( start dur freq amp -- )
 \ resflt       ( start dur keyword-args -- )
 \ scratch-ins  ( start file src-ratio turntable -- )
@@ -46,12 +46,12 @@
 \ zc 	       ( start dur freq amp len1 len2 feedback -- )
 \ zn 	       ( start dur freq amp len1 len2 feedforward -- )
 \ za 	       ( start dur freq amp len1 len2 fb ffw -- )
-\ clm-expsrc   ( start dur in-file exp-ratio src-ratio amp -- )
-\ exp-snd      ( file start dur amp keyword-args -- )
+\ clm-expsrc   ( start dur in-file exp-ratio src-ratio amp :optional rev start-in-file -- )
+\ exp-snd      ( file start dur amp :optional exp-amt ramp seglen sr hop ampenv -- )
 \ expfil       ( start dur hopsecs rampsecs steadysecs file1 file2 -- )
 \ graph-eq     ( file start dur keyword-args -- )
-\ anoi         ( fname start dur fftsize amp-scaler R -- )
-\ fullmix      ( in-file start dur keyword-args -- )
+\ anoi         ( fname start dur :optional fftsize amp-scaler R -- )
+\ fullmix      ( in-file :optional start dur inbeg matrix srate reverb-amount -- )
 \ bes-fm       ( start dur freq amp ratio index -- )
 \
 \ Code:
@@ -578,8 +578,7 @@ instrument: vox ( start dur freq amp ampfun freqfun freqscl voxfun index :option
 \ FOF example
 \
 \ snd/clm.html, section wave-train
-instrument: fofins ( start dur freq amp vib f0 a0 f1 a1 f2 a2 )
-  ( :optional ae=<0 0 25 1 75 1 100 0>  ve-<0 1 100 1> -- )
+instrument: fofins ( start dur freq amp vib f0 a0 f1 a1 f2 a2 :optional ae ve -- )
   doc" ( start dur freq amp vib f0 a0 f1 a1 f2 a2  \
 :optional ampenv='( 0 0 25 1 75 1 100 0 ) vibenv='( 0 1 100 1 ) -- )  \
 produces FOF synthesis.\n\
@@ -2698,7 +2697,7 @@ previous
 ;
 
 \ EXP-SND
-instrument: exp-snd ( file start dur amp :optional exp-amt=1.0 ramp=0.4 seglen=0.15 sr=1.0 hop=0.05 ampenv -- )
+instrument: exp-snd ( file start dur amp :optional exp-amt ramp seglen sr hop ampenv -- )
   doc" ( file start dur amp :optional exp-amt=1.0 ramp=0.4 seglen=0.15 sr=1.0 hop=0.05 ampenv--)\n\
 \"fyow.snd\" 0 3 1 '( 0 1 1 3 ) 0.4 0.15 '( 0 2 1 0.5 ) 0.05 ' exp-snd with-sound\n\
 \"oboe.snd\" 0 3 1 '( 0 1 1 3 ) 0.4 0.15 '( 0 2 1 0.5 ) 0.2  ' exp-snd with-sound"

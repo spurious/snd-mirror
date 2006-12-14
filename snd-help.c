@@ -506,6 +506,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+14-Dec:  bird.fsm (Mike Scholz).\n\
 12-Dec:  clip-hook.\n\
 11-Dec:  sound-data-multiply! sound-data-add! sound-data-offset! sound-data*\n\
          sound-data+ sound-data-copy sound-data-reverse! sound-data-peak.\n\

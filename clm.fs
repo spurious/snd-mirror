@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Mon Dec 11 16:06:44 CET 2006
+\ Changed: Wed Dec 13 04:13:09 CET 2006
 
 \ Commentary:
 \
@@ -25,14 +25,16 @@
 \
 \ make-default-comment ( -- str )
 \ times->samples       ( start dur -- len beg )
-\ normalize-partials   ( parts -- parts' )
+\ normalize-partials   ( parts1 -- parts2 )
+\
+\ ws-interrupt?        ( -- )
 \ run                  ( start dur -- )
 \ run-instrument       ( start dur args -- )
 \ end-run              ( sample -- )
 \ reverb-info          ( caller in-chans out-chans -- )
-\ instrument:          ( ?? -- )
+\ instrument:          ( -- )
 \ ;instrument          ( -- )
-\ event:               ( ?? -- )
+\ event:               ( -- )
 \ ;event               ( -- )
 \
 \ find-file            ( file -- fname|#f )
@@ -40,6 +42,7 @@
 \ play-sound           ( file -- )
 \ record-sound         ( file dur -- )
 \
+\ clm-mix              ( infile :key output output-frame frames input-frame scaler -- )
 \ with-sound           ( body-xt keyword-args -- ws )
 \ clm-load             ( keyword-args fname -- ws )
 \ scaled-to            ( body-xt keyword-args scl -- )
@@ -96,6 +99,7 @@ dl-load sndlib Init_sndlib
   ' noop alias scale-channel
   ' noop alias snd-tempnam
   ' noop alias snd-version
+  : c-g? ( -- f ) #f ;
 [then]
 
 \ Also defined in examp.fs.
@@ -282,17 +286,14 @@ previous
 16.0 1/f 32.0 1/f f+ notelength |S.
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-$" fth 11-Dec-2006"  value *clm-version*
+$" fth 13-Dec-2006" value *clm-version*
 #f 		    value *output*
 #f 		    value *reverb*
 #f 		    value *locsig*
-8                   value *clm-array-print-length*
 mus-lshort          value *clm-audio-format*
-#f                  value *clm-clipped*
 #f                  value *clm-comment*
 1.0                 value *clm-decay-time*
 #f  		    value *clm-delete-reverb*
-1024 64 *           value *clm-file-buffer-size*
 $" test.snd"        value *clm-file-name*
 #f 		    value *clm-notehook*
 #f  		    value *clm-play*
@@ -302,27 +303,34 @@ $" test.snd"        value *clm-file-name*
 '()                 value *clm-reverb-data*
 $" test.reverb"     value *clm-reverb-file-name*
 #f  		    value *clm-statistics*
-512   		    value *clm-table-size*
 #f  		    value *clm-verbose*
 #()                 value *clm-search-list* \ array of sound directories
 
 'snd provided? [unless]
   1                 constant default-output-chans
-  mus-lfloat        constant default-output-data-format
-  mus-next          constant default-output-header-type
+  22050             constant default-output-srate
   mus-interp-linear constant locsig-type
+  mus-next          constant default-output-header-type
+  mus-lfloat        constant default-output-data-format
   mus-audio-default constant audio-output-device
   512               constant dac-size
-  22050             constant default-output-srate
+  1024 64 *         constant mus-file-buffer-size
+  #f                constant mus-clipping
+  512               constant clm-table-size
+  8                 constant mus-array-print-lengt
 [then]
 
 default-output-chans       value *clm-channels*
-default-output-data-format value *clm-data-format*
-default-output-header-type value *clm-header-type*
+default-output-srate       value *clm-srate*
 locsig-type                value *clm-locsig-type*
+default-output-header-type value *clm-header-type*
+default-output-data-format value *clm-data-format*
 audio-output-device        value *clm-output-device*
 dac-size                   value *clm-rt-bufsize*
-default-output-srate       value *clm-srate*
+mus-file-buffer-size       value *clm-file-buffer-size*
+mus-clipping               value *clm-clipped*
+clm-table-size             value *clm-table-size*
+mus-array-print-length     value *clm-array-print-length*
 
 \ internal global variables
 *clm-channels*      value *channels*
@@ -345,23 +353,26 @@ default-output-srate       value *clm-srate*
   beg len b+ beg
 ;
 
-: normalize-partials ( parts -- parts' )
-  { parts }
-  0.0
-  parts length 1 ?do parts i object-ref fabs f+ 2 +loop
+: normalize-partials ( parts1 -- parts2 )
+  { parts1 }
+  0.0 ( sum ) parts1 object-length 1 ?do parts1 i object-ref fabs f+ 2 +loop
   dup f0= if
-    $" all parts have 0.0 amplitude: %s" '( parts ) string-format warning
-    drop
+    $" all parts have 0.0 amplitude: %s" '( parts1 ) string-format warning
+    ( sum ) drop parts1
   else
-    1/f { scl }
-    parts length 1 ?do parts i scl object-set*! 2 +loop
+    ( sum ) 1/f { scl }
+    parts1 map i 2 mod if *key* scl f* else *key* then end-map ( parts2 )
   then
-  parts
 ;
 
 \ === With-Sound Run-Instrument ===
 
-#f value *clm-current-instrument*
+$" with-sound error"     create-exception with-sound-error
+$" with-sound interrupt" create-exception with-sound-interrupt
+#() value *ws-args*			\ array for recursive with-sound calls 
+#f value *clm-current-instrument*	\ current instrument set in INSTRUMENT:
+
+: ws-interrupt? ( -- ) c-g? if 'with-sound-interrupt '() fth-throw then ;
 
 hide
 : ws-info ( start dur -- )
@@ -370,6 +381,7 @@ hide
 ;
 : (run) ( start dur -- limit begin )
   { start dur }
+  ws-interrupt?
   start dur ws-info
   start dur times->samples
 ;
@@ -427,22 +439,19 @@ previous
 
 \ === Helper functions for instruments ===
 hide
-: ins-info ( ins-name -- ) to *clm-current-instrument* ;
-: event-info ( ev-name -- )
-  { ev-name }
-  *verbose* if $" \tevent: %s" '( ev-name ) clm-message then
-;
+: ins-info   ( ins-name -- ) to *clm-current-instrument* ;
+: event-info ( ev-name -- )  *verbose* if '() clm-message else drop then ;
 set-current
-: instrument: ( ?? -- )
+: instrument: ( -- )
   >in @ parse-word $>string { ins-name } >in ! :
-  ins-name postpone literal ['] ins-info compile,
+  ins-name postpone literal ['] ins-info   compile,
+;
+: event: ( -- )
+  >in @ parse-word $>string { ev-name }  >in ! :
+  ev-name  postpone literal ['] event-info compile,
 ;
 : ;instrument ( -- ) postpone ; ; immediate
-: event: ( ?? -- )
-  >in @ parse-word $>string { ev-name } >in ! :
-  ev-name postpone literal ['] event-info compile,
-;
-: ;event ( -- ) postpone ; ; immediate
+: ;event      ( -- ) postpone ; ; immediate
 previous
 
 \ === Playing and Recording Sound Files ===
@@ -580,10 +589,7 @@ previous
   old-srate set-mus-srate drop
 ;
 
-$" with-sound error" create-exception with-sound-error
-#() value *ws-args*
-
-: clm-mix ( keyword-args -- )
+: clm-mix ( infile :key output #f output-frame 0 frames #f input-frame 0 scaler 1.0  -- )
   doc" ( infile :key output #f output-frame 0 frames #f input-frame 0 scaler 1.0 -- )  \
 Mixes files in with-sound's *output* generator.\n\
 \"oboe.snd\" clm-mix\n\
@@ -701,9 +707,9 @@ hide
     else
       revput file-delete
       revput
-      ws :reverb-channels  hash-ref
-      ws :data-format      hash-ref
-      ws :header-type      hash-ref
+      ws :reverb-channels hash-ref
+      ws :data-format     hash-ref
+      ws :header-type     hash-ref
       $" with-sound temporary reverb file" make-sample->file
     then to *reverb*
     *reverb* sample->file? unless
@@ -796,7 +802,6 @@ set-current
   :decay-time        *clm-decay-time*       ws set-args
   ws
 ;  
-
 : with-sound-args ( keyword-args -- ws )
   make-hash { ws }
   *ws-args* -1 array-ref { ws1 }
@@ -824,7 +829,6 @@ set-current
   :decay-time        ws1 :decay-time  hash-ref ws set-args
   ws
 ;
-
 : with-sound-main ( body-xt ws -- ws )
   { body-xt ws }
   body-xt xt? body-xt 1 running-word $" an xt"  assert-type
@@ -853,14 +857,14 @@ set-current
   ws :timer make-timer hash-set!
   ws :timer hash-ref start-timer
   \ compute ws body
-  body-xt execute
-  \ body-xt #t nil fth-catch if
-  \   stack-reset
-  \   *output* mus-close drop
-  \   *reverb* if *reverb* mus-close drop then
-  \   ws ws-after-output drop
-  \   #f #f #f fth-raise			\ re-raises last (catched) exception again
-  \ then
+  body-xt 'with-sound-interrupt '() fth-catch if
+    stack-reset
+    *output* mus-close drop
+    *reverb* if *reverb* mus-close drop then
+    ws ws-after-output drop
+    $" body-xt interrupted by C-g" '() clm-message
+    exit
+  then
   rev? if
     *reverb* mus-close drop
     ws :reverb-file-name hash-ref undef make-file->sample to *reverb*
@@ -869,14 +873,14 @@ set-current
     then
     \ compute ws reverb
     ws :reverb-data hash-ref each end-each ( push reverb arguments on stack )
-    ws :reverb hash-ref execute
-    \ ws :reverb hash-ref #t nil fth-catch if
-    \   stack-reset
-    \   *output* mus-close drop
-    \   *reverb* mus-close drop
-    \   ws ws-after-output drop
-    \   #f #f #f fth-raise		\ re-raises last (catched) exception again
-    \ then
+    ws :reverb hash-ref 'with-sound-interrupt '() fth-catch if
+      stack-reset
+      *output* mus-close drop
+      *reverb* mus-close drop
+      ws ws-after-output drop
+      $" reverb-xt interrupted by C-g" '() clm-message
+      exit
+    then
     *reverb* mus-close drop
   then
   *output* mus-close drop

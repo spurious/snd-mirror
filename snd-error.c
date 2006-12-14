@@ -244,7 +244,10 @@ static mus_sample_t run_clip_hook(mus_sample_t val)
       if (XEN_NUMBER_P(result))
 	return(MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(result)));
     }
-  return(val);
+  /* otherwise mimic the built-in default in io.c */
+  if (val >= MUS_SAMPLE_MAX)
+    return(MUS_SAMPLE_MAX);
+  return(MUS_SAMPLE_MIN);
 }
 
  

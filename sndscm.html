@@ -2465,7 +2465,7 @@ In Ruby:
 <br>
 Random Numbers in Snd/CLM:<br>
 generators, arbitrary distributions, fractals, 1/f: <a href="clm.html#randomnumbers">rand and rand-interp</a><br>
-dithering: <a href="sndscm.html#ditherchannel">dither-channel</a><br>
+dithering: <a href="sndscm.html#ditherchannel">dither-channel</a>, <a href="sndscm.html#dithersound">dither-sound</a><br>
 noise-making instrument: <a href="#noisedoc">noise.scm, noise.rb</a><br>
 physical modeling of noisy instruments: <a href="#maracadoc">maraca.scm, maraca.rb</a><br>
 arbitrary distribution via rejection method: <a href="#anyrandom">any-random</a><br>
@@ -3509,6 +3509,7 @@ taken from Steiglitz "A DSP Primer".
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (compand))
     (compand-channel)
 </pre>
+The multichannel version is <a href="#compandsound">compand-sound</a> in frame.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4408,6 +4409,7 @@ those hooks.  Normally Snd just closes such a sound, or exits silently, flushing
 </td></tr><tr><td></td><td>
 contrast-channel applies the CLM <a href="clm.html#contrast-enhancement">contrast-enhancement</a> function to a channel;
 this is largely equivalent to the control panel Contrast slider.
+The multichannel version is <a href="#contrastsound">contrast-sound</a> in frame.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4425,6 +4427,7 @@ delete-selection-and-smooth deletes the current selection and smooths the splice
 </td></tr><tr><td></td><td>
 dither-channel adds "dithering" (noise) to a channel; some experts insist this makes everything copacetic.
 The noise consists of two white noise generators adding together.
+The multichannel version is <a href="#dithersound">dither-sound</a> in frame.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4652,7 +4655,7 @@ original data.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="offsetchannel">offset-channel</a> <code>amount :optional beg dur snd chn edpos</code>	
 </td></tr><tr><td></td><td>
-offset-channel adds a constant (DC offset) to a channel.
+offset-channel adds a constant (DC offset) to a channel.  The multichannel version is <a href="#offsetsound">offset-sound</a> in frame.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

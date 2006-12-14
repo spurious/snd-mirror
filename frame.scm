@@ -589,11 +589,11 @@
 	(throw 'no-such-sound (list "map-sound" snd)))))
 
 
-(define* (offset-sound off :optional beg dur snd)
+(define* (offset-sound off :optional (beg 0) dur snd)
   "(offset-sound off :optional beg dur snd) adds 'off' to every sample in 'snd'"
   (map-sound (lambda (fr) (frame+ fr off)) beg dur snd))
 
-(define* (scale-sound scl :optional beg dur snd)
+(define* (scale-sound scl :optional (beg 0) dur snd)
   "(scale-sound scl :optional beg dur snd) multiplies every sample in 'snd' by 'scl'"
   (map-sound (lambda (fr) (frame* fr scl)) beg dur snd))
 
@@ -610,11 +610,11 @@
   "(pad-sound beg dur :optional snd) places a block of 'dur' zeros in every channel of 'snd' starting at 'beg'"
   (do-sound pad-channel beg dur snd))
 
-(define* (compand-sound :optional beg dur snd)
+(define* (compand-sound :optional (beg 0) dur snd)
   "(compand-sound :optional beg dur snd) applied companding to every channel of 'snd'"
   (do-sound compand-channel beg dur snd))
 
-(define* (normalize-sound amp :optional beg dur snd)
+(define* (normalize-sound amp :optional (beg 0) dur snd)
   "(normalize-sound amp :optional beg dur snd) scales 'snd' to peak amplitude 'amp'"
   (let ((mx (apply max (maxamp snd #t))))
     (do-sound
@@ -622,14 +622,14 @@
        (scale-channel (/ amp mx) beg dur snd chn))
      beg dur snd)))
 
-(define* (contrast-sound index :optional beg dur snd)
+(define* (contrast-sound index :optional (beg 0) dur snd)
   "(contrast-sound index :optional beg dur snd) applies contrast-enhancement to every channel of 'snd'"
   (do-sound 
    (lambda (beg dur snd chn) 
      (contrast-channel index beg dur snd chn))
    beg dur snd))
 
-(define* (dither-sound :optional (amount .00006) beg dur snd)
+(define* (dither-sound :optional (amount .00006) (beg 0) dur snd)
   "(dither-sound :optional (amount .00006) beg dur snd) adds dithering to every channel of 'snd'"
   (do-sound 
    (lambda (beg dur snd chn) 
@@ -637,7 +637,7 @@
    beg dur snd))
 
 
-;;; TODO: doc/xref/index/test *-sound funcs
+;;; TODO: doc *-sound funcs
 ;;; TODO: test [directly] make-track-frame-reader, read-track-frame, dir edpos args in make-frame-reader
 ;;; PERHAPS: formalize fix-clip -- check restoration against hand-made cases
 ;;; SOMEDAY: channel slicer: grn but output locs permuted, reversed etc
