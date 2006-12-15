@@ -666,124 +666,126 @@ function. </p>
 <!-- ask-before-overwrite -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="askbeforeoverwrite">ask-before-overwrite</a></code></td>
 <td bgcolor="#f6f8ff" onmouseover="return escape('in this table, the default value of the given variable is listed after the variable name, so ask-before-overwrite defaults to false')"><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>should Snd ask before overwriting an existing file. <code>(set! (ask-before-overwrite) #t)</code></td></tr>
+<tr><td></td><td colspan=2>
+should Snd ask before overwriting an existing file. <code>(set! (ask-before-overwrite) #t)</code></td></tr>
 <tr><td colspan=3 height=16></td></tr>
 
 
 <!-- audio-input-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="audioinputdevice">audio-input-device</a></code></td>
 <td bgcolor="#f6f8ff"><code>mus-audio-default</code></td></tr>
-<tr><td></td><td colspan=2>Recorder's input device: <code>(set! (audio-input-device) mus-audio-microphone)</code>
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+<tr><td></td><td colspan=2>
+Recorder's input device: <code>(set! (audio-input-device) mus-audio-microphone)</code>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- audio-output-device -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="audiooutputdevice">audio-output-device</a></code></td>
 <td bgcolor="#f6f8ff"><code>mus-audio-default</code></td></tr>
-<tr><td></td><td colspan=2>Audio output device (for the play button).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+<tr><td></td><td colspan=2>
+Audio output device (for the play button).
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- auto-resize -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="autoresize">auto-resize</a></code></td>
 <td bgcolor="#f6f8ff"><code>#t</code></td></tr>
-<tr><td></td><td colspan=2>should Snd window resize when a sound is opened or closed (see discussion above; also the X resource <a href="grfsnd.html#xautoresize">AutoResize</a>).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+<tr><td></td><td colspan=2>
+should Snd window resize when a sound is opened or closed (see discussion above; also the X resource <a href="grfsnd.html#xautoresize">AutoResize</a>).
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- auto-update -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="autoupdate">auto-update</a></code></td>
 <td bgcolor="#f6f8ff"><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>should Snd <a href="snd.html#updatefile">update</a> a file automatically if it (the file) changes on disk due to some other process.
+<tr><td></td><td colspan=2>
+should Snd <a href="snd.html#updatefile">update</a> a file automatically if it (the file) changes on disk due to some other process.
 If Snd's view of a sound doesn't match the on-disk version of the sound, a bomb icon warns you that there are two conflicting versions of the sound.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- auto-update-interval -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="autoupdateinterval">auto-update-interval</a></code></td>
 <td bgcolor="#f6f8ff"><code>60</code></td></tr>
-<tr><td></td><td colspan=2>Time (in seconds) between background checks for a changed file on 
+<tr><td></td><td colspan=2>
+Time (in seconds) between background checks for a changed file on 
 disk (see <a href="#autoupdate">auto-update</a>). If 0.0, the auto-update background process 
 is turned off.
 If the file alternation monitor is running (the default if you have libfam or libgamin), auto-update-interval is ignored
 since in that case the check happens instantly.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- clipping -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="clipping">clipping</a></code></td>
 <td bgcolor="#f6f8ff"><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>If #t, output values are clipped to fit the current sndlib sample
+<tr><td></td><td colspan=2>
+If #t, output values are clipped to fit the current sndlib sample
 representation's notion of -1.0 to just less than 1.0.  The default
 causes wrap-around which makes the out-of-range values very obvious.
 To control this action more closely, use <a href="#cliphook">clip-hook</a>.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- cursor-location-offset -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="cursorlocationoffset">cursor-location-offset</a></code></td>
 <td bgcolor="#f6f8ff"><code>0.05</code></td></tr>
-<tr><td></td><td colspan=2>Offset (in samples) between Snd's notion of the location of the tracking cursor
+<tr><td></td><td colspan=2>
+Offset (in samples) between Snd's notion of the location of the tracking cursor
 (with-tracking-cursor in Snd jargon) and the actual (DAC-relative) location.
 Since, in general, Snd can't tell how many samples of buffering there are between itself
 and the speakers (audio cards have varying amounts), its notion of where to place the
 tracking cursor can be wrong by an almost arbitrary amount.  If you have some idea
 of the buffering amount, you can correct this error via cursor-location-offset.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- cursor-update-interval -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="cursorupdateinterval">cursor-update-interval</a></code></td>
 <td bgcolor="#f6f8ff"><code>0.05</code></td></tr>
-<tr><td></td><td colspan=2>Time (in seconds) between 
+<tr><td></td><td colspan=2>
+Time (in seconds) between 
 cursor redisplays if <a href="#withtrackingcursor">with-tracking-cursor</a>.  If this number is too small, you may clicks during playback.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- dac-combines-channels -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="dacfolding">dac-combines-channels</a></code></td>
 <td bgcolor="#f6f8ff"><code>#t</code></td></tr>
-<tr><td></td><td colspan=2>if #t, and the current sound has more channels than are
+<tr><td></td><td colspan=2>
+if #t, and the current sound has more channels than are
 supported by the available audio hardware, mix the extra channels into the available channels during audio output.
 This provides a way to hear 4-channel sounds when you only have a stereo audio card.
 If dac-combines-channels is #f, extra channels are not played.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- dac-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="dacsize">dac-size</a></code></td>
 <td bgcolor="#f6f8ff"><code>256</code></td></tr>
-<tr><td></td><td colspan=2>Audio output buffer size (not always meaningful).  See play-with-envs in enved.scm or
+<tr><td></td><td colspan=2>
+Audio output buffer size (not always meaningful).  See play-with-envs in enved.scm or
 play-sound in play.scm.  When you change the control panel settings during playback, the snappiness of the
 response is set, to some extent, by the dac-size.  The default of 256 gives a stair-case effect in many
 cases, whereas 2048 is smoother.  This also affects the resampling smoothness of playback while dragging the
 mark play triangle.  (Some audio choices, ALSA in particular, may ignore dac-size).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- default-output-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="defaultoutputchans">default-output-chans</a></code></td>
 <td bgcolor="#f6f8ff"><code>1</code></td></tr>
-<tr><td></td><td colspan=2>The default number of channels when a new or temporary file is created, 
+<tr><td></td><td colspan=2>
+The default number of channels when a new or temporary file is created, 
 or a save dialog is opened.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- default-output-data-format -->
 <tr><td colspan=2 bgcolor="#f6f8ff" onmouseover="return escape('I originally intended the names to be &quot;header-format&quot; and &quot;data-type&quot; but somehow things got bollixed up and I didn\'t notice the confusion until years later')"><code><a class=def name="defaultoutputdataformat">default-output-data-format</a></code></td>
 <td bgcolor="#f6f8ff"><code>mus-bshort</code></td></tr>
-<tr><td></td><td colspan=2>The default data format when a new or temporary file is created, 
+<tr><td></td><td colspan=2>
+The default data format when a new or temporary file is created, 
 or a save dialog is opened. (mus-bshort is from sndlib, standing for 16-bit big-endian data).  
 Use <a href="#musoutformat">mus-out-format</a> for fastest IO.
 The available output data formats are (b=big-endian, l=little, u=unsigned, short=16 bits, byte=8 bits, int = 32 bits):
@@ -792,36 +794,36 @@ The available output data formats are (b=big-endian, l=little, u=unsigned, short
     mus-lfloat  mus-bint   mus-lint   mus-b24int mus-l24int mus-bdouble mus-ldouble
     mus-ubshort mus-ulshort
 </pre>
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- default-output-header-type -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="defaultoutputheadertype">default-output-header-type</a></code></td>
 <td bgcolor="#f6f8ff"><code>mus-next</code></td></tr>
-<tr><td></td><td colspan=2>The default header type when a new file is created, 
+<tr><td></td><td colspan=2>
+The default header type when a new file is created, 
 or a save dialog is opened. (<code>mus-next</code> stands for the NeXT/Sun sound file header).
 The available output header-types are:
 <pre onmouseover="return escape('mus-riff is our name for Microsoft wav, mus-rf64 is the EBU 64-bit RIFF-replacement header, mus-nist refers to NIST-SPHERE files, mus-next and mus-sun are the same, mus-aiff is the obsolete predecessor to mus-aifc, mus-bicsf and mus-ircam are extensions of mus-next headers, mus-raw means &quot;headerless&quot;, mus-soundfont refers to Emu\'s extension of mus-riff files, mus-voc refers to Creative Voice File, and mus-svx refers to 8SVX headers.  Many other headers are supported read-only.')">
     mus-next mus-aifc mus-riff mus-rf64 mus-nist mus-raw mus-ircam mus-aiff mus-soundfont mus-bicsf mus-voc mus-svx
 </pre>
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- default-output-srate -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="defaultoutputsrate">default-output-srate</a></code></td>
 <td bgcolor="#f6f8ff"><code>22050</code></td></tr>
-<tr><td></td><td colspan=2>The default srate when a new or temporary file is created, 
+<tr><td></td><td colspan=2>
+The default srate when a new or temporary file is created, 
 or a save dialog is opened.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- eps-bottom-margin -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="epsbottommargin">eps-bottom-margin</a></code></td>
 <td bgcolor="#f6f8ff"><code>0.0</code></td></tr>
-<tr><td></td><td colspan=2>bottom margin used in snd.eps, created by the File:Print dialog, or the <a href="#graphtops">graph-&gt;ps</a> function.
+<tr><td></td><td colspan=2>
+bottom margin used in snd.eps, created by the File:Print dialog, or the <a href="#graphtops">graph-&gt;ps</a> function.
 PostScript units are 1/72 of an inch (a "point" in printer jargon); 
 an inch is 2.54 cm:
 
@@ -866,39 +868,39 @@ In the resulting .eps file, you'll find a concat statement near the
 top of the file; the first and fourth numbers are scale factors on 
 the entire graph, the fifth is the left margin, and the sixth is the 
 bottom margin.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- eps-file -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="epsfile">eps-file</a></code></td>
 <td bgcolor="#f6f8ff"><code>"snd.eps"</code></td></tr>
-<tr><td></td><td colspan=2>Name of the Postscript file produced by the File:Print dialog, or the <a href="#graphtops">graph-&gt;ps</a> function.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+<tr><td></td><td colspan=2>
+Name of the Postscript file produced by the File:Print dialog, or the <a href="#graphtops">graph-&gt;ps</a> function.
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- eps-left-margin -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="epsleftmargin">eps-left-margin</a></code></td>
 <td bgcolor="#f6f8ff"><code>0.0</code></td></tr>
-<tr><td></td><td colspan=2>left margin used in snd.eps, created by the File:Print dialog, or the <a href="#graphtops">graph-&gt;ps</a> function.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+<tr><td></td><td colspan=2>
+left margin used in snd.eps, created by the File:Print dialog, or the <a href="#graphtops">graph-&gt;ps</a> function.
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- eps-size -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="epssize">eps-size</a></code></td>
 <td bgcolor="#f6f8ff"><code>1.0</code></td></tr>
-<tr><td></td><td colspan=2>scaler used to set the overall picture size in snd.eps, 
+<tr><td></td><td colspan=2>
+scaler used to set the overall picture size in snd.eps, 
 created by the File:Print dialog, or the <a href="#graphtops">graph-&gt;ps</a> function,
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- graph-cursor -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="graphcursor">graph-cursor</a></code></td>
 <td bgcolor="#f6f8ff"><code>XC_crosshair (34)</code></td></tr>
-<tr><td></td><td colspan=2>The kind of cursor displayed following the mouse in the data graph.
+<tr><td></td><td colspan=2>
+The kind of cursor displayed following the mouse in the data graph.
 graph-cursor is an integer: <code>(set! (graph-cursor) 22)</code>; and must be one
 of the cursor choices provided by either X or Gtk+.
 The X/Motif cursors are declared in /usr/include/X11/cursorfont.h or some such file;
@@ -919,53 +921,53 @@ gtk versions are in gdkcursor.h.  Some useful choices are:
 </table>
 </td></tr></table>
 
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- html-dir -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="htmldir">html-dir</a></code></td>
 <td bgcolor="#f6f8ff"><code>"."</code></td></tr>
-<tr><td></td><td colspan=2>The directory to search for documentation if an HTML reader is in use.
+<tr><td></td><td colspan=2>
+The directory to search for documentation if an HTML reader is in use.
 See the function html in index.scm.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- html-program -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="htmlprogram">html-program</a></code></td>
 <td bgcolor="#f6f8ff"><code>"mozilla"</code></td></tr>
-<tr><td></td><td colspan=2>The program to use to read HTML files.
+<tr><td></td><td colspan=2>
+The program to use to read HTML files.
 On the Mac, you need to give the full path to the executable image: "/Applications/Safari.app/Contents/MacOS/Safari".
 See the function html in index.scm.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- just-sounds -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="justsounds">just-sounds</a></code></td>
 <td bgcolor="#f6f8ff"><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>In Motif and in Gtk versions 2.3 or later,
+<tr><td></td><td colspan=2>
+In Motif and in Gtk versions 2.3 or later,
 if just-sounds is #t,
 the file lists displayed by the file selection dialogs are filtered to show just
 sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a>).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- ladspa-dir -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="ladspadir">ladspa-dir</a></code></td>
 <td bgcolor="#f6f8ff"><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>Name of directory for LADSPA plugin libraries (can override or replace LADSPA_PATH).
+<tr><td></td><td colspan=2>
+Name of directory for LADSPA plugin libraries (can override or replace LADSPA_PATH).
 See <a href="grfsnd.html#sndandladspa">Snd and LADSPA</a>.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- log-freq-start -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="logfreqstart">log-freq-start</a></code></td>
 <td bgcolor="#f6f8ff"><code>32.0</code></td></tr>
-<tr><td></td><td colspan=2>start freq used in log freq display (ffts).  Since the log display emphasizes the lower
+<tr><td></td><td colspan=2>
+start freq used in log freq display (ffts).  Since the log display emphasizes the lower
 frequencies, but the lowest are all inaudible, it seemed more informative to squash the lowest 30Hz or so
 into a single point (0 Hz) on the log freq graphs; otherwise the audible data starts about 1/4 of the way 
 down the x axis, wasting valuable screen space!  But it also seemed a bother to have to set/reset the
@@ -973,30 +975,30 @@ down the x axis, wasting valuable screen space!  But it also seemed a bother to 
 displays.  log-freq-start to the rescue?  (In earlier versions of Snd I tried to kludge around this
 by pre-multiplying the frequencies by some big number, thereby shifting everything up in log space,
 but I decided that was a worse kludge than log-freq-start).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- max-regions -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="maxregions">max-regions</a></code></td>
 <td bgcolor="#f6f8ff"><code>16</code></td></tr>
-<tr><td></td><td colspan=2>Maximum size of the region list; the number of regions that are accessible.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+<tr><td></td><td colspan=2>
+Maximum size of the region list; the number of regions that are accessible.
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- minibuffer-history-length -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="minibufferhistorylength">minibuffer-history-length</a></code></td>
 <td bgcolor="#f6f8ff"><code>8</code></td></tr>
-<tr><td></td><td colspan=2>Maximum length of minibuffer and listener M-p/M-n history lists.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+<tr><td></td><td colspan=2>
+Maximum length of minibuffer and listener M-p/M-n history lists.
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- optimization -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="optimization">optimization</a></code></td>
 <td bgcolor="#f6f8ff"><code>0</code></td></tr>
-<tr><td></td><td colspan=2>If non-zero, try to optimize simple lambda forms passed to the searches and so forth.
+<tr><td></td><td colspan=2>
+If non-zero, try to optimize simple lambda forms passed to the searches and so forth.
 This depends partly on the optargs module (not available in the correct form before Guile 1.5),
 only applies to Guile and Gauche (not Ruby or Forth), and is still experimental.
 The actual values of the optimization switch are:
@@ -1015,15 +1017,15 @@ Currently, the optimizer is able to speed up Scheme code by factors between
 If you set the optimization-hook to print out whatever its argument is, you can
 find out what the optimizer found confusing.  
 
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- print-length -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="printlength">print-length</a></code></td>
 <td bgcolor="#f6f8ff"><code>12</code></td></tr>
-<tr><td></td><td colspan=2>number of elements of lists and vectors that are printed.</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+<tr><td></td><td colspan=2>
+number of elements of lists and vectors that are printed.
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- run-safety -->
@@ -1032,14 +1034,14 @@ find out what the optimizer found confusing.
 <tr><td></td><td colspan=2>
 If run-safety is not 0, code is added by the run macro to perform various
 error checks, much as in CLM with *clm-safety*.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- save-dir -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="savedir">save-dir</a></code></td>
 <td bgcolor="#f6f8ff"><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>Name of directory for saved-state files.  
+<tr><td></td><td colspan=2>
+Name of directory for saved-state files.  
 <br><br>
 These files are written when you call <a href="#savestate">save-state</a> or
 choose the Options:Save session menu item.  If any of the current sounds has
@@ -1048,65 +1050,64 @@ that file is reloaded automatically when you restart the saved session.  To keep
 files safe, or at least separate from others, you can set up separate
 directory for them.
 <span onmouseover="return escape('<pre>Ruby: set_save_dir(&quot;/tmp&quot;), Forth: &quot;/tmp&quot; set-save-dir</pre>')"><code>(set! (<a class=quiet href="#savedir">save-dir</a>) "/tmp")</code></span>.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- save-state-file -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="savestatefile">save-state-file</a></code></td>
 <td bgcolor="#f6f8ff"><code>"saved-snd.scm"</code></td></tr>
-<tr><td></td><td colspan=2>The <a href="snd.html#savedstate">saved state</a> file name.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+<tr><td></td><td colspan=2>
+The <a href="snd.html#savedstate">saved state</a> file name.
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- selection-creates-region -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="selectioncreatesregion">selection-creates-region</a></code></td>
 <td bgcolor="#f6f8ff"><code>#t</code></td></tr>
-<tr><td></td><td colspan=2>If #t, a region is created whenever a selection is made.  If you're editing very large sounds
+<tr><td></td><td colspan=2>
+If #t, a region is created whenever a selection is made.  If you're editing very large sounds
 and using selections, the region temp files can use up a lot of disk space (and the time to write
 them); if you're not using regions anyway, this switch can turn them off.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- show-backtrace -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="showbacktrace">show-backtrace</a></code></td>
 <td bgcolor="#f6f8ff"><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>If #t, show backtrace automatically upon error.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+<tr><td></td><td colspan=2>
+If #t, show backtrace automatically upon error.
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- show-indices -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="showindices">show-indices</a></code></td>
 <td bgcolor="#f6f8ff"><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>If #t, each sound's name is preceded by its index (in the sound pane).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+<tr><td></td><td colspan=2>
+If #t, each sound's name is preceded by its index (in the sound pane).
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- show-selection-transform -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="showselectiontransform">show-selection-transform</a></code></td>
 <td bgcolor="#f6f8ff"><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>If #t, display the transform of the current active selection, if any.
+<tr><td></td><td colspan=2>
+If #t, display the transform of the current active selection, if any.
 (The sonogram and spectrogram displays ignore this flag because they assume their time axis
 matches that of the time domain graph).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- sinc-width -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sincwidth">sinc-width</a></code></td>
 <td bgcolor="#f6f8ff"><code>10</code></td></tr>
-<tr><td></td><td colspan=2>Width (in samples) of the sampling rate conversion sinc interpolation.
+<tr><td></td><td colspan=2>
+Width (in samples) of the sampling rate conversion sinc interpolation.
 <br><br>
 The higher this number, the better the src low-pass filter, but the slower
 src runs.  If you use too low a setting, you can sometimes hear high 
 frequency whistles leaking through. To hear these on purpose, make 
 a sine wave at (say) 55 Hz, then <code>(<a class=quiet href="#srcsound">src-sound</a> '(0 3 1 1))</code> with sinc-width at 4.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- snd-version -->
@@ -1114,32 +1115,32 @@ a sine wave at (say) 55 Hz, then <code>(<a class=quiet href="#srcsound">src-soun
 <td bgcolor="#f6f8ff"><code>"1-Jun-06" etc</code></td></tr>
 <tr><td></td><td colspan=2>
 Snd version: a string, normally a date. <b>version</b> is a Guile function.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- temp-dir -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tempdir">temp-dir</a></code></td>
 <td bgcolor="#f6f8ff"><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>directory for temporary files;  #f uses whatever the system default is, usually "/tmp" or "/var/tmp".  
+<tr><td></td><td colspan=2>
+directory for temporary files;  #f uses whatever the system default is, usually "/tmp" or "/var/tmp".  
 See <a href="#sndtempnam">snd-tempnam</a>, and autosave.scm.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- trap-segfault -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trapsegfault">trap-segfault</a></code></td>
 <td bgcolor="#f6f8ff"><code>#t</code></td></tr>
-<tr><td></td><td colspan=2>If #t, try to catch segfaults and continue anyway.  This normally gives you
+<tr><td></td><td colspan=2>
+If #t, try to catch segfaults and continue anyway.  This normally gives you
 a chance to save your current work, but please also send bil@ccrma.stanford.edu a bug report!
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- window-height -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="windowheight">window-height</a></code></td>
 <td bgcolor="#f6f8ff"><code>0</code></td></tr>
-<tr><td></td><td colspan=2>The current Snd window height in pixels.
+<tr><td></td><td colspan=2>
+The current Snd window height in pixels.
 This is the same as <br>
 <pre>
   Scheme: (cadr (<a class=quiet href="#widgetsize">widget-size</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))))
@@ -1152,54 +1153,53 @@ except at startup when the window-height function and friends defer the assignme
 have been created.  If Snd becomes confused about screen size, it can make its main window so large that
 you can't get at any of the decorations for resizing the window; in this emergency you can
 <code>(set! (window-height) 300)</code> or some such number.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- window-width -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="windowwidth">window-width</a></code></td>
 <td bgcolor="#f6f8ff"><code>0</code></td></tr>
-<tr><td></td><td colspan=2>The current Snd window width in pixels.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+<tr><td></td><td colspan=2>
+The current Snd window width in pixels.
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- window-x -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="windowx">window-x</a></code></td>
 <td bgcolor="#f6f8ff"><code>-1</code></td></tr>
-<tr><td></td><td colspan=2>The current Snd window left side in pixels (-1 means unset).
+<tr><td></td><td colspan=2>
+The current Snd window left side in pixels (-1 means unset).
 This is (usually) the same as
 <pre>
     (car (<a class=quiet href="#widgetposition">widget-position</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))))
 </pre>
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- window-y -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="windowy">window-y</a></code></td>
 <td bgcolor="#f6f8ff"><code>-1</code></td></tr>
-<tr><td></td><td colspan=2>The current Snd window upper side in pixels (X numbering starts at 0 at the top, -1 means unset).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+<tr><td></td><td colspan=2>
+The current Snd window upper side in pixels (X numbering starts at 0 at the top, -1 means unset).
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- with-background-processes -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="withbackgroundprocesses">with-background-processes</a></code></td>
 <td bgcolor="#f6f8ff"><code>#t</code></td></tr>
-<tr><td></td><td colspan=2>Determines whether Snd should use background (idle time) processes for ffts and so forth. (Intended primarily for auto-testing).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+<tr><td></td><td colspan=2>
+Determines whether Snd should use background (idle time) processes for ffts and so forth. (Intended primarily for auto-testing).
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- with-file-monitor -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="withfilemonitor">with-file-monitor</a></code></td>
 <td bgcolor="#f6f8ff"><code>#t</code></td></tr>
-<tr><td></td><td colspan=2>If #t (the default), the file alteration monitor is active.  There are still bugs
+<tr><td></td><td colspan=2>
+If #t (the default), the file alteration monitor is active.  There are still bugs
 in this library that can cause Snd to hang -- I haven't tracked down what the problem is yet; in the meantime,
 set this switch to #f to disable the monitor.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- with-relative-panes -->
@@ -1210,14 +1210,14 @@ If this flag is set in the Motif
 version of Snd, a multichannel sound tries to retain the relative channel graph sizes
 when the outer sash (the overall sound size sash) changes.
 Mono sounds and the listener are not affected (perhaps they should be?).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- zoom-focus-style -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="zoomfocusstyle">zoom-focus-style</a></code></td>
 <td bgcolor="#f6f8ff"><code>zoom-focus-active</code></td></tr>
-<tr><td></td><td colspan=2>This determines what a zoom action focuses (centers) on. The choices are 
+<tr><td></td><td colspan=2>
+This determines what a zoom action focuses (centers) on. The choices are 
 <code>zoom-focus-left</code>, <code>zoom-focus-right</code>, <code>zoom-focus-active</code>, <code>zoom-focus-middle</code>,
 or a function of 6 arguments.  The function should return the new window left edge as a float.
 Its arguments are the current sound index, channel number, zoom slider value (0.0 to 1.0), time domain window left and right
@@ -1392,8 +1392,7 @@ indication such as "[or]", that means the various hook function values are or-d 
 <tr><td width=60></td><td colspan=2>
 called when <a href="#applycontrols">apply-controls</a> finishes.  add-amp-controls in snd-motif.scm uses this hook to
 reset any added amplitude sliders to 1.0.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- after-graph-hook -->
@@ -1405,8 +1404,7 @@ called after a graph is updated or redisplayed; see <a href="#displaysampsinred"
 draw-smpte-label in snd-motif.scm, or <a href="#addcomment">add-comment</a>.
 This is the hook to use when adding your own finishing touches to the display; if added earlier they risk
 being erased by Snd as it redraws graphs.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- after-lisp-graph-hook -->
@@ -1419,8 +1417,7 @@ are called before the actual graph is displayed, so if you want to add to a grap
 use after-lisp-graph-hook.
 <a href="sndscm.html#displaybarkfft">display-bark-fft</a> in dsp.scm uses it to draw the x axis labels and
 ticks for various frequency scales.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- after-open-hook -->
@@ -1447,8 +1444,7 @@ and filled graphs (not line segments or dots, etc):
 
 See also C-x b support in examp.scm, remember-sound-state in extensions.scm, enved.scm, and various
 examples in snd-motif.scm.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- after-save-as-hook -->
@@ -1458,8 +1454,7 @@ examples in snd-motif.scm.
 <tr><td></td><td colspan=2>
 called after File:Save as.  See emacs-style-save-as in snd7.scm -- it closes the current sound and
 opens the newly created one, to mimic Emacs.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- after-save-state-hook -->
@@ -1477,8 +1472,7 @@ program.  See ws-save-state in ws.scm or remember-sound-state in extensions.scm.
     ...
     (close fd)))
 </pre>
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- after-transform-hook -->
@@ -1510,8 +1504,7 @@ called if a file has a bogus-looking header (a header with what appear to be bad
     (add-hook! bad-header-hook (lambda (n) #t))
 </pre>
 If no header is found, <a href="#openrawsoundhook">open-raw-sound-hook</a> is invoked instead ("raw" = "headerless").
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- before-close-hook -->
@@ -1521,8 +1514,7 @@ If no header is found, <a href="#openrawsoundhook">open-raw-sound-hook</a> is in
 <tr><td></td><td colspan=2>
 called when a file is about to be closed.  If it returns #t, the file is not closed (see
 check-for-unsaved-edits in extensions.scm).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- before-exit-hook -->
@@ -1533,8 +1525,7 @@ check-for-unsaved-edits in extensions.scm).
 called upon a request to exit Snd.
 If it returns #t, Snd does not exit.  This can be used to check 
 for unsaved edits (see above or extensions.scm: <a href="#unsavededitsp">unsaved-edits?</a>).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- before-save-as-hook -->
@@ -1678,8 +1669,7 @@ called just before data is sent to DAC; <i>data</i> is a <a href="#sndsounddata"
 <tr><td></td><td colspan=2>
 called before a mark is drawn (in XOR mode). If the hook returns #t, the mark is not drawn.  mark-sync-color
 in snd-motif.scm (for Gtk+, snd-gtk.scm) uses this hook to draw sync'd marks in some other color than the current mark-color.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- drop-hook -->
@@ -1728,8 +1718,7 @@ The prescaling affects only sound data made up of floats or doubles.  <i>reason<
 So, to restrict the hook action to the normal case where Snd is opening a file for the first time,
 check that <i>reason</i> is 1, or perhaps 1, 3, or 6 (these read the external form of the data).
 Or even better, fix the blasted original!
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- enved-hook -->
@@ -1764,8 +1753,7 @@ result of the preceding function (if a function returns #f, the envelope
 is not changed).  A math-type would call this a "function composition"
 method combination; a filter-type would say "cascade"; 
 I like the latter.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- exit-hook -->
@@ -1780,8 +1768,7 @@ to perform cleanup activities; in peak-env.scm, for example, we save peak-env in
 </pre>
 For more examples, see extensions.scm and autosave.scm.
 Guile's exit-hook is shadowed by this variable.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- graph-hook -->
@@ -1821,8 +1808,7 @@ procedure 'html' called any time snd-help is called (from C-? for example):
     (add-hook! help-hook (lambda (subject help) (html subject) #f))
 </pre>
 If there is more than one hook function, each function's result is passed as input to the next function.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- initial-graph-hook -->
@@ -1881,8 +1867,7 @@ If it returns #t, the key press is not passed to the main handler.
 <i>state</i> refers to the control, meta, and shift keys.
 start-enveloping in enved.scm uses this hook to add C-g and C-. support to the
 channel-specific envelope editors.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- lisp-graph-hook -->
@@ -1914,8 +1899,7 @@ If it returns a function (of no arguments), that function is called rather than 
 <tr><td></td><td colspan=2>
 called when a click occurs in the listener; the argument is the position in the text where the click occurred.
 See click-for-listener-help in draw.scm.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mark-click-hook -->
@@ -2077,8 +2061,7 @@ called when a mix is dragged.
 called after a mix has been dragged by the mouse to a new position (id = mix id, 
 samps = total samples moved during the drag).  If it returns #t, the actual remix is the 
 hook's responsibility.  See snap-mix-to-beat in mix.scm.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mouse-click-hook -->
@@ -2135,8 +2118,7 @@ turning the wheel zooms the graph in or out:
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse is dragged within the lisp graph (see enved.scm or rtio.scm).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mouse-enter-graph-hook -->
@@ -2172,8 +2154,8 @@ to popup file info as follows:
         (<a class=quiet href="#infodialog">info-dialog</a> name (finfo name)))))
 </pre></td></tr></table>
 
-See also files-popup-buffer in examp.scm</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+See also files-popup-buffer in examp.scm.
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mouse-enter-listener-hook -->
@@ -2197,8 +2179,7 @@ hook procedures:
 </pre></td></tr></table>
 
 I much prefer this style of operation.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mouse-enter-text-hook -->
@@ -2222,8 +2203,7 @@ called when the mouse enters a text widget (this is the third of the pointer-foc
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse leaves a channel's drawing area (graph pane). 
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mouse-leave-label-hook -->
@@ -2232,8 +2212,7 @@ called when the mouse leaves a channel's drawing area (graph pane).
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse exits one of the labels covered by mouse-enter-label-hook. (See nb.scm)
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mouse-leave-listener-hook -->
@@ -2242,8 +2221,7 @@ called when the mouse exits one of the labels covered by mouse-enter-label-hook.
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse leaves the listener pane.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mouse-leave-text-hook -->
@@ -2252,8 +2230,7 @@ called when the mouse leaves the listener pane.
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse leaves a text widget.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mouse-press-hook -->
@@ -2264,8 +2241,7 @@ called when the mouse leaves a text widget.
 called upon a mouse button press within the lisp graph (see enved.scm).  The x and y values are 
 relative to the lisp graph axis (as if the raw mouse pixel position was passed through
 <a href="#positiontox">position-&gt;x</a> and <a href="#positiontoy">position-&gt;y</a>).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- mus-error-hook -->
@@ -2287,8 +2263,7 @@ You can redirect mus_print output from stderr (the default) to stdout via:
 </pre></td></tr></table>
 
 To decode the <i>typ</i> argument, see <a href="#muserrortypetostring">mus-error-type-&gt;string</a>.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- name-click-hook -->
@@ -2315,8 +2290,7 @@ If it returns #t, the usual highly informative minibuffer babbling is squelched.
 <tr><td></td><td colspan=2>
 called whenever a new sound file is being created.  <a href="clm.html#sound-let">sound-let</a> in ws.scm uses
 this hook to keep track of newly created temporary sounds so that it can delete them once they are no longer needed.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- new-widget-hook -->
@@ -2326,8 +2300,7 @@ this hook to keep track of newly created temporary sounds so that it can delete 
 <tr><td></td><td colspan=2>
 called each time a dialog or a new set of channel or sound widgets is created.  This is used in snd-motif.scm (paint-all) to
 make sure all newly created widgets have the same background pixmaps.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- open-hook -->
@@ -2359,8 +2332,7 @@ If it returns a string (a filename), that file is opened instead of the original
 	#f)))
 </pre></td></tr></table>
 See also <a href="sndscm.html#openbuffer">open-buffer</a> in examp.scm.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- open-raw-sound-hook -->
@@ -2381,8 +2353,7 @@ Return '() to accept all the current raw header defaults; return #f to fallback 
 The raw header defaults are stereo, 44100 Hz, big endian short data; these values can be changed in the
 Raw File Dialog, by calling open-raw-sound with explicit arguments, or via <a href="#musheaderrawdefaults">mus-header-raw-defaults</a>.
 If the hook returns #t, the open-sound returns without opening.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- optimization-hook -->
@@ -2396,8 +2367,7 @@ called each time the optimizer hits something it can't handle; <i>message</i> tr
 </pre>
 Normally, if the optimizer fails for some reason, it falls back silently on the Scheme evaluator, so
 the code simply runs slower.  This hook gives you a way to find out why the optimizer gave up.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- orientation-hook -->
@@ -2456,8 +2426,7 @@ making it slightly easier to set default output names.
 <tr><td></td><td colspan=2>
 called each time a buffer (size: <i>samps</i>) is about to be 
 filled for the DAC (see <a href="sndscm.html#enveddoc">enved.scm</a> and <a href="sndscm.html#marksdoc">marks.scm</a>).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- print-hook -->
@@ -2538,8 +2507,7 @@ If it returns a string, that becomes the output filename.
 				extension))))
 	  (string-append "test" extension)))))
 </pre></td></tr></table>
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- save-hook -->
@@ -2550,8 +2518,7 @@ If it returns a string, that becomes the output filename.
 called each time a file is about to be saved.
 If it returns #t, the file is not saved.  <i>name</i> is #f unless 
 the file is being saved under a new name (as in <a href="#savesoundas">save-sound-as</a>).  (See the auto-save code in autosave.scm).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- save-state-hook -->
@@ -2567,8 +2534,7 @@ a way to specify the name of that file.
 the hook returns a different one (as a string).  This hook provides a way to
 keep track of which files are used in a given saved state batch, so
 that later cleanup is easier to manage.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- select-channel-hook -->
@@ -2577,8 +2543,7 @@ that later cleanup is easier to manage.
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a channel is selected (after the sound has been selected). The arguments are the sound's index and the channel number.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- select-sound-hook -->
@@ -2587,8 +2552,7 @@ called when a channel is selected (after the sound has been selected). The argum
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a sound is selected. The argument is the about-to-be-selected sound's index.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- snd-error-hook -->
@@ -2606,8 +2570,7 @@ dealt with it via the hook).
     (<a class=quiet href="#play">play</a> "bong.snd") ; or if xm is loaded, (XBell (XtDisplay (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))) 10)
     #f))
 </pre></td></tr></table>
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- snd-warning-hook -->
@@ -2659,8 +2622,7 @@ found (this code has to be in the ~/.snd init file):
 <tr><td></td><td colspan=2>
 called when a sound is about to be played.
 If it returns #t, Snd does not play (see report-mark-names in marks.scm).
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- start-playing-selection-hook -->
@@ -2670,8 +2632,7 @@ If it returns #t, Snd does not play (see report-mark-names in marks.scm).
 <tr><td></td><td colspan=2>
 called when the selection is about to be played.
 If it returns #t, Snd does not play the selection.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- stop-dac-hook -->
@@ -2733,8 +2694,7 @@ the returned procedure to make sure the mark pane is reactivated right away when
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time a file is selected in a View Files dialog's files list.
-</td></tr>
-<tr><td colspan=3 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- window-property-changed-hook -->
@@ -4163,15 +4123,16 @@ and <a class=quiet href="#readtracksample">read-track-sample</a>.
 
 <!-- copy-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="copysamplereader">copy-sample-reader</a> (obj)</code></td></tr>
-<tr><td width=60><br></td>
-<td>return a copy of <i>obj</i> (any kind of sample-reader). 
+<tr><td width=60><br></td><td>
+return a copy of <i>obj</i> (any kind of sample-reader). 
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- free-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="freesamplereader">free-sample-reader</a> (obj)</code></td></tr>
-<tr><td></td><td>release sample-reader <i>obj</i> (any kind of reader).  In most cases, you don't need to call this
+<tr><td></td><td>
+release sample-reader <i>obj</i> (any kind of reader).  In most cases, you don't need to call this
 function because the garbage collector handles the sample-reader object, but it doesn't hurt anything (but don't try to use a sample-reader
 after you've freed it!).  If you're using zillions of sample-readers in an optimized (run-based) loop that
 doesn't trigger garbage collection, freeing the sample readers explicitly (with this function) will reduce
@@ -4182,8 +4143,8 @@ demands on memory.
 
 <!-- make-mix-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makemixsamplereader">make-mix-sample-reader</a> (mix <i>beg</i>)</code></td></tr>
-<tr><td></td>
-<td>create a mix-sample-reader reading <i>mix</i> starting (in the mix input) at <i>beg</i> which defaults to 0.
+<tr><td></td><td>
+create a mix-sample-reader reading <i>mix</i> starting (in the mix input) at <i>beg</i> which defaults to 0.
 See mix-&gt;vct in mix.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -4191,8 +4152,8 @@ See mix-&gt;vct in mix.scm.
 
 <!-- make-region-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makeregionsamplereader">make-region-sample-reader</a> (<i>start reg chn dir</i>)</code></td></tr>
-<tr><td></td>
-<td>create a sample-reader reading region <i>reg</i>'s channel <i>chn</i>.
+<tr><td></td><td>
+create a sample-reader reading region <i>reg</i>'s channel <i>chn</i>.
 It is not safe to assume this reader will return zeros beyond the region boundaries.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -4200,8 +4161,7 @@ It is not safe to assume this reader will return zeros beyond the region boundar
 
 <!-- make-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makesamplereader">make-sample-reader</a> (<i>start snd chn dir pos</i>)</code></td></tr>
-<tr><td></td>
-<td>
+<tr><td></td><td>
 create a sample-reader reading <i>snd</i>'s channel <i>chn</i>
 starting at sample <i>start</i> with initial read direction <i>dir</i> 
 (1=forward, -1=backward).  <i>pos</i> is the edit history position to read 
@@ -4235,39 +4195,44 @@ can read external sounds without going to the trouble of loading them into Snd.
 
 <!-- make-track-sample-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="maketracksamplereader">make-track-sample-reader</a> (<a class=quiet href="#track">track</a> <i>chn beg</i>)</code></td></tr>
-<tr><td></td>
-<td>create a track-sample-reader reading <i>track</i>.  <i>beg</i> is the starting point of the reader within the track.
+<tr><td></td><td>
+create a track-sample-reader reading <i>track</i>.  <i>beg</i> is the starting point of the reader within the track.
 </td></tr> 
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-sample-reader? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixsamplereaderQ">mix-sample-reader?</a> (obj)</code></td></tr>
-<tr><td></td><td>#t if <i>obj</i> is a mix-sample-reader.</td></tr>
+<tr><td></td><td>
+#t if <i>obj</i> is a mix-sample-reader.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- next-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="nextsample">next-sample</a> (obj)</code></td></tr>
-<tr><td></td><td>return next sample (reading forward) read by sample-reader <i>obj</i>.</td></tr>
+<tr><td></td><td>
+return next sample (reading forward) read by sample-reader <i>obj</i>.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- previous-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="previoussample">previous-sample</a> (obj)</code></td></tr>
-<tr><td></td><td>return previous sample in stream read by sample-reader <i>obj</i>.</td></tr>
+<tr><td></td><td>
+return previous sample in stream read by sample-reader <i>obj</i>.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- read-mix-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readmixsample">read-mix-sample</a> (obj)</code></td></tr>
-<tr><td></td><td>return next sample read by mix-sample-reader <i>obj</i>.</td></tr>
+<tr><td></td><td>
+return next sample read by mix-sample-reader <i>obj</i>.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- read-region-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readregionsample">read-region-sample</a> (obj)</code></td></tr>
-<tr><td></td><td>return next sample read by region-sample-reader <i>obj</i>.
+<tr><td></td><td>
+return next sample read by region-sample-reader <i>obj</i>.
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define* (region-&gt;vct reg #:optional (chn 0))
@@ -4289,25 +4254,29 @@ can read external sounds without going to the trouble of loading them into Snd.
 
 <!-- read-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readsample">read-sample</a> (obj)</code></td></tr>
-<tr><td></td><td>return next sample (reading in the direction set by <a class=quiet href="#makesamplereader">make-sample-reader</a>) from sample-reader <i>obj</i>.</td></tr>
+<tr><td></td><td>
+return next sample (reading in the direction set by <a class=quiet href="#makesamplereader">make-sample-reader</a>) from sample-reader <i>obj</i>.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- read-track-sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readtracksample">read-track-sample</a> (obj)</code></td></tr>
-<tr><td></td><td>return next sample read by track-sample-reader <i>obj</i>.</td></tr>
+<tr><td></td><td>
+return next sample read by track-sample-reader <i>obj</i>.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- region-sample-reader? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regionsamplereaderQ">region-sample-reader?</a> (obj)</code></td></tr>
-<tr><td></td><td>#t if <i>obj</i> is a region sample-reader.</td></tr>
+<tr><td></td><td>
+#t if <i>obj</i> is a region sample-reader.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- sample-reader-at-end? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderatendQ">sample-reader-at-end?</a> (obj)</code></td></tr>
-<tr><td></td><td>#t if sample-reader <i>obj</i> (any kind of reader) is at the end of the sound (or whatever it is reading),
+<tr><td></td><td>
+#t if sample-reader <i>obj</i> (any kind of reader) is at the end of the sound (or whatever it is reading),
 and hence is returning 0.0 each time it is called.
 See <a href="#scanagain">scan-again</a> and <a href="#newcp">find-zero</a>.
 </td></tr>
@@ -4316,7 +4285,8 @@ See <a href="#scanagain">scan-again</a> and <a href="#newcp">find-zero</a>.
 
 <!-- sample-reader-home -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderhome">sample-reader-home</a> (obj)</code></td></tr>
-<tr><td></td><td>if <i>obj</i> is a sound sample reader, return a list with the sound index and channel number associated with <i>obj</i>.
+<tr><td></td><td>
+if <i>obj</i> is a sound sample reader, return a list with the sound index and channel number associated with <i>obj</i>.
 If it is a mix reader, return the mix's id.  If it is a track reader, return a list with the track id and channel number.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -4324,20 +4294,23 @@ If it is a mix reader, return the mix's id.  If it is a track reader, return a l
 
 <!-- sample-reader-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderposition">sample-reader-position</a> (obj)</code></td></tr>
-<tr><td></td><td>current (sample-wise) location of sample-reader <i>obj</i> (any kind of reader).  See <a href="#scanagain">scan-again</a>.
+<tr><td></td><td>
+current (sample-wise) location of sample-reader <i>obj</i> (any kind of reader).  See <a href="#scanagain">scan-again</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- sample-reader? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderQ">sample-reader?</a> (obj)</code></td></tr>
-<tr><td></td><td>#t if <i>obj</i> is a sample-reader.</td></tr>
+<tr><td></td><td>
+#t if <i>obj</i> is a sample-reader.</td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- track-sample-reader? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracksamplereaderQ">track-sample-reader?</a> (obj)</code></td></tr>
-<tr><td></td><td>#t if <i>obj</i> is a track-sample-reader.</td></tr>
+<tr><td></td><td>
+#t if <i>obj</i> is a track-sample-reader.</td></tr>
 
 </table>
 
@@ -4355,16 +4328,16 @@ to Snd data, snd-&gt;sample.
 
 <!-- make-snd->sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makesndtosample">make-snd-&gt;sample</a> (<i>snd</i>)</code></td></tr>
-<tr><td width=60><br></td>
-<td>create a Snd data reader for CLM's in-any, file-&gt;sample, etc.
+<tr><td width=60><br></td><td>
+create a Snd data reader for CLM's in-any, file-&gt;sample, etc.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- snd->sample -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sndtosample">snd-&gt;sample</a> (gen frame <i>chan</i>)</code></td></tr>
-<tr><td><br></td>
-<td>get the next sample from the data accessed by <i>gen</i>, similar to file-&gt;sample.
+<tr><td><br></td><td>
+get the next sample from the data accessed by <i>gen</i>, similar to file-&gt;sample.
 If *reverb* is a snd-&gt;sample generator, for example,
 <a class=quiet href="clm.html#ina">ina</a> and <a class=quiet href="clm.html#filetosample">file-&gt;sample</a> actually call snd-&gt;sample.
 </td></tr>
@@ -4373,8 +4346,8 @@ If *reverb* is a snd-&gt;sample generator, for example,
 
 <!-- snd->sample? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sndtosamplep">snd-&gt;sample?</a> (obj)</code></td></tr>
-<tr><td><br></td>
-<td>#t if <i>obj</i> is a snd-&gt;sample generator.
+<tr><td><br></td><td>
+#t if <i>obj</i> is a snd-&gt;sample generator.
 </td></tr>
 
 </table>
@@ -4391,103 +4364,138 @@ name (<a class=quiet href="#markname">mark-name</a>), sync value (<a class=quiet
 a globally unique id number (returned by <a class=quiet href="#findmark">find-mark</a> or <a class=quiet href="#addmark">add-mark</a>).  
 See <a href="snd.html#marks">Marks</a> in snd.html
 for an overview and key bindings associated with marks.
+See also the <a href="#sndhooks">hooks</a> section above for various mark-related hooks.
 </p>
 
 <!-- -------------------------------- MARKS TABLE -------------------------------- -->
 
 
-<!-- TODO clean up and englishify mark table -->
+<!-- TODO: remember to change italics to :optional throughout -->
 
 <table border=0 cellspacing=0 hspace=10>
 
 <!-- add-mark -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="addmark">add-mark</a> (sample <i>snd chn name sync</i>)</code></td></tr>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="addmark">add-mark</a> (sample :optional snd chn name sync)</code></td></tr>
 <tr><td width=60><br></td><td>
-add mark at <i>sample</i>, returning mark id.  If <i>sample</i> is out-of-range, add-mark throws 'no-such-sample.
+add-mark adds a mark at the position 'sample', returning the new mark' identifier (an integer).
+Since marks
+can move around during editing, a unique tag is needed to refer to a 
+particular mark; we call this thing its 'id' throughout this section.
+The identifier is used to specify the mark in all the mark-related functions such as <a href="#marksample">mark-sample</a>:
+<pre>
+:<em class=typing>(define m1 (add-mark 1234))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+:<em class=typing>(mark-sample m1)</em>
+<em class=listener>1234</em>
+</pre>
+The mark-name can be set via 'name', and the mark-sync field via 'sync'.
+If 'sample' is beyond the end of the data, add-mark throws 'no-such-sample.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- delete-mark -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="deletemark">delete-mark</a> (<i>id</i>)</code></td></tr>
-<tr><td></td><td>delete mark <i>id</i> (- C-m).
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="deletemark">delete-mark</a> (id)</code></td></tr>
+<tr><td></td><td>
+delete-mark deletes the mark identified with 'id'.  Mark additions and deletions follow the
+edit list, so if the deleted mark was present in an earlier edit, and you undo to that point,
+the mark comes back to life.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- delete-marks -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="deletemarks">delete-marks</a> (<i>snd chn</i>)</code></td></tr>
-<tr><td></td><td>delete all marks in <i>snd</i>'s channel <i>chn</i>.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef><a href="#drawmarkhook">draw-mark-hook</a></em> (id)</code></td></tr>
-<tr><td></td><td>called before a mark is drawn (discussed in the Hooks section).
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="deletemarks">delete-marks</a> (:optional snd chn)</code></td></tr>
+<tr><td></td><td>
+This function deletes all marks in the given channel.  It could be defined in Scheme as:
+<pre>
+    (for-each 
+      (lambda (m) 
+        (delete-mark m)) 
+      (<a class=quiet href="#marks">marks</a> (or snd (selected-sound)) (or chn 0)))
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- find-mark -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="findmark">find-mark</a> (samp <i>snd chn edpos</i>)</code></td></tr>
-<tr><td></td><td>return identifier of the mark at sample <i>samp</i> or #f if none.
-This identifier is used in calls such as <a href="#marksample">mark-sample</a>.  Since marks
-can move around during editing, a unique 'tag' is needed to refer to a 
-particular mark. <i>samp</i> can also be a string; in this case find-mark 
-looks for a mark of that name.  mark-name-&gt;id in marks.scm finds a named mark in any channel (a global version of find-mark).
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="findmark">find-mark</a> (samp :optional snd chn edpos)</code></td></tr>
+<tr><td></td><td>
+find-mark returns the id of the mark at sample 'samp' or #f if none is found.
+If 'samp' is a string, rather than an integer, find-mark
+looks for a mark of that name.  <a href="sndscm.html#marknametoid">mark-name-&gt;id</a>
+in marks.scm finds a named mark in any channel (a global version of find-mark).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef><a href="#markclickhook">mark-click-hook</a></em> (id)</code></td></tr>
-<tr><td></td><td>called when a mark is clicked (discussed in the Hooks section).
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
 
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef><a href="#markcolor">mark-color</a></em></code></td></tr>
-<tr><td></td><td>color of mark indicator (default: red).
+<tr><td></td><td>
+This sets the color of mark indicator; the default is red.
+<a href="sndscm.html#marksynccolor">mark-sync-color</a> uses mark-color to
+display all sync'd marks with some distinctive color.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef><a href="#markcontext">mark-context</a></em></code></td></tr>
-<tr><td></td><td>graphics context to use to draw a mark (XOR mode).
+<tr><td></td><td>
+This is the graphics context to use to draw a mark (XOR mode).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mark-home -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="markhome">mark-home</a> (<i>id</i>)</code></td></tr>
-<tr><td></td><td>a list with the sound index and channel that hold mark <i>id</i>.
-mark-home provides a way to go from a mark to its sound and
-channel; the inverse function is marks.  
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef><a href="#markhook">mark-hook</a></em> (id snd chn reason)</code></td></tr>
-<tr><td></td><td>called when a mark is added, deleted, moved (discussed in the Hooks section).
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="markhome">mark-home</a> (id)</code></td></tr>
+<tr><td></td><td>
+mark-home is a list with the sound index and channel that hold the mark identified by 'id'.
+This provides a way to go from a mark id to its sound and
+channel.
+<pre>
+:<em class=typing>(marks 0 0)</em>   ; what marks are in snd 0, chn 0?
+<em class=listener>(0)</em>            ; just one with id 0
+:<em class=typing>(mark-home 0)</em> ; what is mark 0's snd/chn?
+<em class=listener>(0 0)</em>
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mark-name -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="markname">mark-name</a> (<i>id</i>)</code></td></tr>
-<tr><td></td><td>name of mark <i>id</i>.
-
-<table border=0 cellpadding=5><tr><td bgcolor="#fafafa"><pre>
-(define* (add-named-mark samp name #:optional snd chn)
-  (let ((m (<a class=quiet href="#addmark">add-mark</a> samp snd chn)))
-    (set! (<em class=red>mark-name</em> m) name)
-    m))
-</pre></td></tr></table>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="markname">mark-name</a> (id)</code></td></tr>
+<tr><td></td><td>
+This is the name of the mark identified by 'id'.
+<pre>
+:<em class=typing>(define m1 (add-mark 1234 0 0 "a name"))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+:<em class=typing>(mark-name m1)</em>
+<em class=listener>"a name"</em>
+:<em class=typing>(set! (mark-name m1) "a new name")</em>
+<em class=listener>"a new name"</em>
+:<em class=typing>(mark-name m1)</em>
+<em class=listener>"a new name"</em>
+</pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mark-sample -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="marksample">mark-sample</a> (<i>id pos</i>)</code></td></tr>
-<tr><td></td><td>sample (number) marked by mark <i>id</i> at edit history position <i>pos</i>; also <code>(set! (mark-sample id) samp)</code>.
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="marksample">mark-sample</a> (id :optional edpos)</code></td></tr>
+<tr><td></td><td>
+mark-sample is the sample number (a location) marked by the mark 'id' at edit history position 'edpos'.
+<pre>
+:<em class=typing>(mark-sample m1)</em>
+<em class=listener>1234</em>
+:<em class=typing>(set! (mark-sample m1) 4321)</em>
+<em class=listener>4321</em>
+:<em class=typing>(mark-sample m1)</em>
+<em class=listener>4321</em>
+</pre>
 It might be more consistent with other Snd names to call this mark-position, but I wanted to emphasize
 that a mark follows its sample around as a sound is edited; that is, it marks a sample, not a position in the sound.
-Here we have three named marks, then delete the initial word ("now"); each mark backs up with the deletion so that it
-continues to point to its original sample.
+Say we have three named marks in a speech excerpt (see below), then delete the initial spoken word ("now"); 
+each mark backs up with the deletion so that it
+continues to point to its original sample:
 <br>
 <img src="mark1.png" align=left vspace=10 hspace=20 alt="marks" onmouseover="return escape('This is a recording of a man saying &quot;now the same piece is played&quot;. The three marks are set at the start of three of the words.  I have no idea why gimp colored the title bar that way.')">
 <img src="mark2.png" vspace=10 hspace=20 alt="marks" onmouseover="return escape('The cursor also moves to maintain its relative position. The red triangles on the x axis can be clicked or dragged to play the sound from that point.')">
@@ -4497,18 +4505,20 @@ continues to point to its original sample.
 
 
 <!-- mark-sync -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="marksync">mark-sync</a> (<i>id</i>)</code></td></tr>
-<tr><td></td><td>mark <i>id</i>'s sync value (default is 0).
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="marksync">mark-sync</a> (id)</code></td></tr>
+<tr><td></td><td>
+This is the 
+mark's sync field (the default is 0).
 The sync value is very similar to
 the mix track number or the sound sync field; it provides a way to group marks for simultaneous
 changes.  Marks that share the same sync value (if not 0), move together when any one of them is
 dragged, play together if clicked, etc.  To find which marks share a given
-sync value, use syncd-marks; to find an unused sync value use mark-sync-max.
+sync value, use <a href="#syncdmarks">syncd-marks</a>; to find an unused sync value use <a href="#marksyncmax">mark-sync-max</a>.
 <br><br>
 Marks that are syncd together can be used for insertions, and deletions, and can
 set arbitrary groups of play points.  But it's a bit tedious to type (set! (mark-sync ...)...)
-for each of the marks you want in the group.  The following uses the mark-clicked-hook
-instead; you type (start-sync), then click the set of marks to sync, then (stop-sync).
+for each of the marks you want in the group.  The following code example uses the <a href="#markclickedhook">mark-clicked-hook</a>
+instead; you type (start-sync), then click each of the marks that you want grouped together, then (stop-sync).
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define mark-sync-number 0)
@@ -4518,39 +4528,47 @@ instead; you type (start-sync), then click the set of marks to sync, then (stop-
 (add-hook! <a class=quiet href="#markclickhook">mark-click-hook</a> click-to-sync)
 </pre></td></tr></table>
 
-Now control-click and drag one of them, and all move together deleting data, or
-inserting zeros; or click the "play" triangle, and all play together starting from
-the respective marks (which need not be in separate channels). 
+Now control-click and drag one of them, and all of them move together deleting data, or
+inserting zeros; or click the "play" triangle, and all of them play together starting from
+their respective samples.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mark-sync-max -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="marksyncmax">mark-sync-max</a> ()</code></td></tr>
-<tr><td></td><td>max mark sync value seen so far (intended as a way to get a unique sync value).
+<tr><td></td><td>
+This is the maximum mark sync value seen so far.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mark-tag-height -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="marktagheight">mark-tag-height</a> ()</code></td></tr>
-<tr><td></td><td>mark tag height in pixels (default: 4)
+<tr><td></td><td>
+When a mark is drawn, it has a horizontal rectangle at the top, then a vertical line, then a triangle.
+The line marks the marked sample, the triangle can be clicked to play from the mark, and the
+rectangle can be clicked or dragged.  The mark-tag-height refers to the vertical thickness of that tag
+in pixels; its default is 4.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mark-tag-width -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="marktagwidth">mark-tag-width</a> ()</code></td></tr>
-<tr><td></td><td>mark tag width in pixels (default: 10)
+<tr><td></td><td>
+This is the 
+mark tag width in pixels; it defaults to 10.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- marks -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="emarks">marks</a> (<i>snd chn pos</i>)</code></td></tr>
-<tr><td></td><td>list of mark ids in <i>snd</i>'s channel <i>chn</i> at edit history position <i>pos</i>.
-If <i>chn</i> and <i>pos</i> are omitted, a list of lists is returned, 
-each inner list representing a channel of <i>snd</i>.  If <i>snd</i> is 
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="emarks">marks</a> (:optional snd chn edpos)</code></td></tr>
+<tr><td></td><td>
+This function returns a list of mark ids in the given channel at the edit history position 'edpos'.
+If 'chn' and 'edpos' are omitted, a list of lists is returned, 
+each inner list representing a channel of 'snd'.  If 'snd' is 
 also omitted, a list of lists of lists is returned, representing
 each sound and its channels.
 
@@ -4569,34 +4587,39 @@ marks
 without any argument, or with just a sound index returns a list of lists; each inner list is the list
 of current marks (ids) active in that channel, ordered by sample number.  If the channel argument is
 specified, marks returns just the list of mark ids.  If the edit history position is given,
-the list of ids reflects the mark list at that time in the edit history.  See describe-marks in marks.scm.
+the list of ids reflects the mark list at that time in the edit history.  See <a href="#describemarks">describe-marks</a> in marks.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mark? -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="markp">mark?</a> (<i>id</i>)</code></td></tr>
-<tr><td></td><td>#t if mark <i>id</i> is active (that is, present in an active channel).
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="markp">mark?</a> (id)</code></td></tr>
+<tr><td></td><td>
+mark? returns #t if mark 'id' is active (that is, if it is present in a currently open channel).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- save-marks -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="savemarks">save-marks</a> (<i>snd filename</i>)</code></td></tr>
-<tr><td></td><td>save <i>snd</i>'s marks, writing a Scheme, Ruby, or Forth source file named either <i>filename</i> or
-&lt;snd's file-name&gt;.marks;  return the file name or #f if no marks.
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="savemarks">save-marks</a> (:optional snd filename)</code></td></tr>
+<tr><td></td><td>
+save-marks saves the given sound's marks, writing a Scheme, Ruby, or Forth source file named either 'filename' or
+&lt;sound's file-name&gt;.marks.  It returns the file name or #f if there are no marks to save.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
+
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef><a href="#showmarks">show-marks</a></em></code></td></tr>
-<tr><td></td><td>#t if marks are being (or to be) displayed.
+<tr><td></td><td>
+show-marks is #t if marks are being displayed.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- syncd-marks -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="syncdmarks">syncd-marks</a> (sync)</code></td></tr>
-<tr><td></td><td>a list of marks (the mark id's) that share the mark-sync value <i>sync</i>.
+<tr><td></td><td>
+syncd-marks is a list of marks (the mark id's) that share the mark-sync value 'sync'.
 
 <table border=0 cellpadding=5><tr><td bgcolor="#fafafa"><pre>
 (define (move-syncd-marks sync diff)
@@ -4618,7 +4641,7 @@ more examples including:
 <TABLE border=3 bordercolor="tan" hspace=20><tr><td width=500>
 <blockquote><small>
 <br>
-global find-mark: <a href="sndscm.html#markname2id">mark-name-&gt;id</a><br>
+global find-mark: <a href="sndscm.html#marknametoid">mark-name-&gt;id</a><br>
 mark history: <a href="sndscm.html#describemark">describe-mark</a><br>
 synchronize marks by inserting silences: <a href="sndscm.html#syncup">syncup</a><br>
 squeeze selection between marks: <a href="sndscm.html#fitselectionbetweenmarks">fit-selection-between-marks</a><br>
@@ -4682,14 +4705,16 @@ sound.
 
 <!-- copy-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="copymix">copy-mix</a> (mix <i>beg</i>)</code></td></tr>
-<tr><td width=60></td><td>copy <i>mix</i>, placing the copy at <i>beg</i> which defaults to the copied mix's position.  The new mix's track is set to 0.
+<tr><td width=60></td><td>
+copy <i>mix</i>, placing the copy at <i>beg</i> which defaults to the copied mix's position.  The new mix's track is set to 0.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- delete-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="deletemix">delete-mix</a> (mix)</code></td></tr>
-<tr><td></td><td>delete mix (set amps to 0.0).
+<tr><td></td><td>
+delete mix (set amps to 0.0).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -4754,7 +4779,8 @@ We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix 
 
 <!-- mixes -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixes">mixes</a> (<i>snd chn pos</i>)</code></td></tr>
-<tr><td></td><td>a list of currently active mixes (their id numbers) in <i>snd</i>'s channel <i>chn</i> at history <i>pos</i>.
+<tr><td></td><td>
+a list of currently active mixes (their id numbers) in <i>snd</i>'s channel <i>chn</i> at history <i>pos</i>.
 If the channel argument is omitted, you get a list of lists, each inner list referring to a single channel of that sound.
 If the sound index is also omitted, you get a list of lists of lists, the outer list referring to each sound, each
 inner list to that sound's channels.  Say we have two sounds open, 2 mixes in the first (a mono sound), and 1 mix
@@ -4781,14 +4807,16 @@ in the 2nd channel of the 2nd (a stereo sound):
 
 <!-- mix-amp -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixamp">mix-amp</a> (mix <i>chan</i>)</code></td></tr>
-<tr><td></td><td>amplitude of <i>mix</i>'s channel <i>chan</i>.
+<tr><td></td><td>
+amplitude of <i>mix</i>'s channel <i>chan</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-amp-env -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixampenv">mix-amp-env</a> (mix <i>chan</i>)</code></td></tr>
-<tr><td></td><td>amplitude envelope of <i>mix</i>'s channel <i>chan</i> (a list of breakpoints).  To reset this to its default (null) state, use #f.
+<tr><td></td><td>
+amplitude envelope of <i>mix</i>'s channel <i>chan</i> (a list of breakpoints).  To reset this to its default (null) state, use #f.
 <pre>
     (set! (mix-amp-env 0 0) '(0 0 1 1))
 </pre> 
@@ -4799,14 +4827,16 @@ sets mix 0's 0-chan envelope to a ramp.
 
 <!-- mix-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixchans">mix-chans</a> (<i>mix</i>)</code></td></tr>
-<tr><td></td><td>input chans in <i>mix</i>.
+<tr><td></td><td>
+input chans in <i>mix</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-color -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixcolor">mix-color</a> ()</code></td></tr>
-<tr><td></td><td>color of mix waveforms (defaults to dark-gray).
+<tr><td></td><td>
+color of mix waveforms (defaults to dark-gray).
 The set form, <code>(set! (mix-color) ...)</code>, has an optional second argument; if you
 want to set just a particular mix's color, give the id of the mix
 as that argument: <code>(set! (mix-color) red)</code> sets all mix waveforms to
@@ -4817,28 +4847,32 @@ red; but <code>(set! (mix-color 3) red)</code> sets only mix 3's waveform to red
 
 <!-- mix-frames -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixframes">mix-frames</a> (mix)</code></td></tr>
-<tr><td></td><td>mix's length in samples (not settable).
+<tr><td></td><td>
+mix's length in samples (not settable).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-home-->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixhome">mix-home</a> (mix)</code></td></tr>
-<tr><td></td><td>a list of the sound index and channel number affected by <i>mix</i>.
+<tr><td></td><td>
+a list of the sound index and channel number affected by <i>mix</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-inverted? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixinvertedp">mix-inverted?</a> (mix)</code></td></tr>
-<tr><td></td><td>#t if <i>mix</i> should invert track amp-env values (for panning).
+<tr><td></td><td>
+#t if <i>mix</i> should invert track amp-env values (for panning).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-locked? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixlockedp">mix-locked?</a> (mix)</code></td></tr>
-<tr><td></td><td>#t if <i>mix</i> is locked.  A mix is automatically locked (i.e. made immovable) if an edit operation
+<tr><td></td><td>
+#t if <i>mix</i> is locked.  A mix is automatically locked (i.e. made immovable) if an edit operation
 affects some portion of the data that the mix also affects.  For example, if you delete a portion of a sound
 that has actively mixed data, the associated mix tag goes away until you undo that deletion. 
 </td></tr>
@@ -4950,7 +4984,8 @@ to use multiple output files, collecting related notes in one file, then mixing 
 
 <!-- mix-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixposition">mix-position</a> (mix)</code></td></tr>
-<tr><td></td><td>position (a sample number) of <i>mix</i>.
+<tr><td></td><td>
+position (a sample number) of <i>mix</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -4975,49 +5010,56 @@ See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 
 <!-- mix-speed -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixspeed">mix-speed</a> (mix)</code></td></tr>
-<tr><td></td><td>speed (resampling ratio) of <i>mix</i>; 1.0 (default) means no resampling; 2.0 reads the mix data twice as fast.
+<tr><td></td><td>
+speed (resampling ratio) of <i>mix</i>; 1.0 (default) means no resampling; 2.0 reads the mix data twice as fast.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-speed-style -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixspeedstyle">mix-speed-style</a> (mix)</code></td></tr>
-<tr><td></td><td>speed-style choice of <i>mix</i>; default follows <a href="#speedstyle">speed-control-style</a>.
+<tr><td></td><td>
+speed-style choice of <i>mix</i>; default follows <a href="#speedstyle">speed-control-style</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-tag-height -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagheight">mix-tag-height</a> ()</code></td></tr>
-<tr><td></td><td>mix tag height in pixels (default: 14)
+<tr><td></td><td>
+mix tag height in pixels (default: 14)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-tag-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagposition">mix-tag-position</a> (mix)</code></td></tr>
-<tr><td></td><td>tag position (within the mix) of <i>mix</i>; a sample number (default: 0).
+<tr><td></td><td>
+tag position (within the mix) of <i>mix</i>; a sample number (default: 0).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-tag-width -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagwidth">mix-tag-width</a> ()</code></td></tr>
-<tr><td></td><td>mix tag width in pixels (default: 6)
+<tr><td></td><td>
+mix tag width in pixels (default: 6)
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-tag-y -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagy">mix-tag-y</a> (mix)</code></td></tr>
-<tr><td></td><td>tag y offset in graph of <i>mix</i> (default 0).  The x offset of the tag is determined by <a href="#mixtagposition">mix-tag-position</a>.
+<tr><td></td><td>
+tag y offset in graph of <i>mix</i> (default 0).  The x offset of the tag is determined by <a href="#mixtagposition">mix-tag-position</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtrack">mix-track</a> (mix)</code></td></tr>
-<tr><td></td><td>mix track (0 = none).
+<tr><td></td><td>
+mix track (0 = none).
 A "track" is a list of associated mixes.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -5036,21 +5078,24 @@ See also <a href="sndscm.html#panmixvct">pan-mix-vct</a> in mix.scm.
 
 <!-- mix-waveform-height -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixwaveformheight">mix-waveform-height</a> ()</code></td></tr>
-<tr><td></td><td>Max height (pixels) of mix waveforms; default is 20 (see <a href="#showmixwaveforms">show-mix-waveforms</a>).
+<tr><td></td><td>
+Max height (pixels) of mix waveforms; default is 20 (see <a href="#showmixwaveforms">show-mix-waveforms</a>).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixp">mix?</a> (id)</code></td></tr>
-<tr><td></td><td>#t if <i>id</i> is an active mix.
+<tr><td></td><td>
+#t if <i>id</i> is an active mix.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- play-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="playmix">play-mix</a> (mix <i>beg</i>)</code></td></tr>
-<tr><td></td><td>play mix <i>mix</i>.  <i>beg</i> is where to start playing within the mix.
+<tr><td></td><td>
+play mix <i>mix</i>.  <i>beg</i> is where to start playing within the mix.
 This function does not return until the play is complete or interrupted (it is similar to <a href="#playandwait">play-and-wait</a>,
 rather than <a href="#play">play</a>).
 </td></tr>
@@ -5059,7 +5104,8 @@ rather than <a href="#play">play</a>).
 
 <!-- with-mix-tags -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="withmixtags">with-mix-tags</a> ()</code></td></tr>
-<tr><td></td><td>If #f (default #t), automatically lock each new mix; the default is to place a tag above each
+<tr><td></td><td>
+If #f (default #t), automatically lock each new mix; the default is to place a tag above each
 mix so that it can be easily moved around.
 </td></tr>
 
@@ -5132,21 +5178,24 @@ change the second (blue) track's tempo to be twice as slow, and move the first (
 
 <!-- copy-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="copytrack">copy-track</a> (track <i>beg</i>)</code></td></tr>
-<tr><td width=60></td><td>copy <i>track</i>, placing the copy at <i>beg</i> which defaults to the copied track's position.  The new track's track is set to 0.
+<tr><td width=60></td><td>
+copy <i>track</i>, placing the copy at <i>beg</i> which defaults to the copied track's position.  The new track's track is set to 0.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- delete-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="deletetrack">delete-track</a> (track-id)</code></td></tr>
-<tr><td></td><td>Delete track <i>track-id</i> (set its amp to 0.0).
+<tr><td></td><td>
+Delete track <i>track-id</i> (set its amp to 0.0).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- free-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="freetrack">free-track</a> (track-id)</code></td></tr>
-<tr><td></td><td>Free track <i>track-id</i>; this frees the memory associated with the track and is not undoable.
+<tr><td></td><td>
+Free track <i>track-id</i>; this frees the memory associated with the track and is not undoable.
 To free all tracks: <code>(for-each <em class=red>free-track</em> (<a class=quiet href="#tracks">tracks</a>))</code>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -5154,7 +5203,8 @@ To free all tracks: <code>(for-each <em class=red>free-track</em> (<a class=quie
 
 <!-- lock-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="locktrack">lock-track</a> (track-id)</code></td></tr>
-<tr><td></td><td>Lock track <i>id</i> (lock all its associated mixes).  One reason to lock a track would be
+<tr><td></td><td>
+Lock track <i>id</i> (lock all its associated mixes).  One reason to lock a track would be
 to preserve its overall amp-env despite some subsequent editing that changes the nominal track length.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -5162,7 +5212,8 @@ to preserve its overall amp-env despite some subsequent editing that changes the
 
 <!-- make-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="maketrack">make-track</a> (<i>mix-ids...</i>)</code></td></tr>
-<tr><td width=60><br></td><td>Create a new track, returning its id.  You can add a mix to the track subsequently by setting mix-track.
+<tr><td width=60><br></td><td>
+Create a new track, returning its id.  You can add a mix to the track subsequently by setting mix-track.
 <code>(make-track 1 3)</code> creates a new track with mixes 1 and 3.  A mix can be a member (directly) of only one track, so
 if its track field is already set, and it is included as an argument to make-track, the previous setting is cancelled.
 If the previous track had an amplitude envelope, this can cause its remaining mixes to be re-enveloped.
@@ -5172,7 +5223,8 @@ If the previous track had an amplitude envelope, this can cause its remaining mi
 
 <!-- play-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="playtrack">play-track</a> (track-id <i>chn beg</i>)</code></td></tr>
-<tr><td></td><td>play track <i>track</i>. If chn is #t, play all associated mixes, even if in different sounds.
+<tr><td></td><td>
+play track <i>track</i>. If chn is #t, play all associated mixes, even if in different sounds.
 <i>beg</i> is where to start playing within the track.
 This function does not return until the play is complete or interrupted (it is similar to <a href="#playandwait">play-and-wait</a>,
 rather than <a href="#play">play</a>).
@@ -5182,14 +5234,16 @@ rather than <a href="#play">play</a>).
 
 <!-- track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="track">track</a> (track-id <i>chn</i>)</code></td></tr>
-<tr><td width=60><br></td><td>Return a list of the mixes currently in track <i>track-id</i>.
+<tr><td width=60><br></td><td>
+Return a list of the mixes currently in track <i>track-id</i>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- tracks -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracks">tracks</a> (track-id)</code></td></tr>
-<tr><td width=60><br></td><td>Return a list of the current tracks that have active mixes.  Old, empty tracks are
+<tr><td width=60><br></td><td>
+Return a list of the current tracks that have active mixes.  Old, empty tracks are
 not currently garbage collected; to free one, use <a href="#freetrack">free-track</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -5197,21 +5251,24 @@ not currently garbage collected; to free one, use <a href="#freetrack">free-trac
 
 <!-- track? -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackp">track?</a> (track-id)</code></td></tr>
-<tr><td width=60><br></td><td>Return #t if track-id refers to an active (not deleted) track.
+<tr><td width=60><br></td><td>
+Return #t if track-id refers to an active (not deleted) track.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- track-amp -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackamp">track-amp</a> (track-id)</code></td></tr>
-<tr><td width=60><br></td><td>Track amp.
+<tr><td width=60><br></td><td>
+Track amp.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
 
 <!-- track-amp-env -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackampenv">track-amp-env</a> (track-id)</code></td></tr>
-<tr><td width=60><br></td><td>Track amp env; this is a list of breakpoint pairs, not a CLM env generator.
+<tr><td width=60><br></td><td>
+Track amp env; this is a list of breakpoint pairs, not a CLM env generator.
 The amplitude envelope is applied over the entire track;
 each mix's resultant amp env is the result of multiplying its env (if any) by
 the portion of the track env that happens to fall over it.  Use #f to reset it to the default (null) envelope.
@@ -5227,7 +5284,8 @@ track envelope as a panning control.
 
 <!-- track-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackchans">track-chans</a> (track-id)</code></td></tr>
-<tr><td width=60><br></td><td>chans associated with track <i>track-id</i>. Each such channel
+<tr><td width=60><br></td><td>
+chans associated with track <i>track-id</i>. Each such channel
 has at least one active mix.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -5249,7 +5307,8 @@ of the tag).
 
 <!-- track-frames -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackframes">track-frames</a> (track-id <i>chn</i>)</code></td></tr>
-<tr><td width=60><br></td><td>Track frames (length in samples).
+<tr><td width=60><br></td><td>
+Track frames (length in samples).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -5265,7 +5324,8 @@ under <a href="sndscm.html#mixnametoid">mix-name-&gt;id</a>.
 
 <!-- track-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackposition">track-position</a> (track-id <i>chn</i>)</code></td></tr>
-<tr><td width=60><br></td><td>Track position (minimum member mix position).  If you set track-position, all
+<tr><td width=60><br></td><td>
+Track position (minimum member mix position).  If you set track-position, all
 its mixes are moved by the same amount to make the minimum mix position coincide with the new track-position.
 If you include the channel number when setting the track-position, only the mixes that are members of that channel of the
 track are moved.
@@ -5290,7 +5350,8 @@ track are moved.
 
 <!-- track-speed -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackspeed">track-speed</a> (track-id)</code></td></tr>
-<tr><td width=60><br></td><td>Track speed.  This affects the resampling of each mix, not the speed at
+<tr><td width=60><br></td><td>
+Track speed.  This affects the resampling of each mix, not the speed at
 which the mixes occur (the latter is controlled by <a href="#tracktempo">track-tempo</a>).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -5298,7 +5359,8 @@ which the mixes occur (the latter is controlled by <a href="#tracktempo">track-t
 
 <!-- track-speed-style -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackspeedstyle">track-speed-style</a> (track-id)</code></td></tr>
-<tr><td></td><td>speed-style choice of <i>track-id</i>; default follows <a href="#speedstyle">speed-control-style</a>.
+<tr><td></td><td>
+speed-style choice of <i>track-id</i>; default follows <a href="#speedstyle">speed-control-style</a>.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -5313,7 +5375,8 @@ track waveform position in pixels from the top of the graph.  This overrides <a 
 
 <!-- track-tempo -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracktempo">track-tempo</a> (track-id)</code></td></tr>
-<tr><td width=60><br></td><td>Track tempo. This affects the spacing between mixes; a higher track-tempo corresponds to
+<tr><td width=60><br></td><td>
+Track tempo. This affects the spacing between mixes; a higher track-tempo corresponds to
 tighter spacing between mixes.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -5321,7 +5384,8 @@ tighter spacing between mixes.
 
 <!-- track-track -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracktrack">track-track</a> (track-id)</code></td></tr>
-<tr><td width=60><br></td><td>Track track.  Tracks can be grouped within other tracks and so on.
+<tr><td width=60><br></td><td>
+Track track.  Tracks can be grouped within other tracks and so on.
 </td></tr>
 
 </table>

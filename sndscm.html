@@ -3228,7 +3228,7 @@ actually represents.  You can, of course, turn off the normalization:
 fft-smoother uses fft filtering to
 smooth a portion of a sound, returning a vct with the smoothed data.  <i>cutoff</i> sets where we starting zeroing out high frequencies.
 <pre>
-    Scheme: (<a class=quiet href="extsnd.html#vcttochannel">vct->channel</a> (fft-smoother .1 (<a class=quiet href="extsnd.html#cursor">cursor</a>) 400 0 0) (<a class=quiet href="extsnd.html#cursor">cursor</a>) 400)
+    Scheme: (<a class=quiet href="extsnd.html#vcttochannel">vct-&gt;channel</a> (fft-smoother .1 (<a class=quiet href="extsnd.html#cursor">cursor</a>) 400 0 0) (<a class=quiet href="extsnd.html#cursor">cursor</a>) 400)
     Ruby:   vct2channel(fft_smoother(0.1, cursor, 400, 0, 0), cursor, 400)
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6012,7 +6012,7 @@ first sample of a separate sound.
 
 <!-- mark-name-&gt;id -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="markname2id">mark-name-&gt;id</a> <code>name</code>
+<a class=def name="marknametoid">mark-name-&gt;id</a> <code>name</code>
 </td></tr>
 <tr><td></td><td>
 mark-name-&gt;id is like <a href="extsnd.html#findmark">find-mark</a>, but searches all currently accessible channels.
@@ -8307,7 +8307,7 @@ To clear display state, there's also variable-display-reset.
 
 <!-- mark-sync-color -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>mark-sync-color</em> <code>new-color</code>
+<A class=def NAME="marksynccolor">mark-sync-color</A> <code>new-color</code>
 </td></tr><tr><td></td><td>
 mark-sync-color uses the <a href="extsnd.html#drawmarkhook">draw-mark-hook</a> to set the color of sync'd marks.
 </td></tr><tr><td colspan=2 height=16></td></tr>

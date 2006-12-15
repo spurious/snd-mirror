@@ -2053,8 +2053,8 @@ static XEN g_delete_mark(XEN id_n)
   chan_info *cp[1];
   mark *m;
   int id;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(id_n), id_n, XEN_ONLY_ARG, S_delete_mark, "an integer");
-  id = XEN_TO_C_INT_OR_ELSE(id_n, 0);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(id_n), id_n, XEN_ONLY_ARG, S_delete_mark, "an integer");
+  id = XEN_TO_C_INT(id_n);
   m = find_mark_from_id(id, cp, AT_CURRENT_EDIT_POSITION);
   if (m == NULL) 
     return(snd_no_such_mark_error(S_delete_mark, id_n));
@@ -2460,7 +2460,7 @@ XEN_NARGIFY_0(g_mark_sync_max_w, g_mark_sync_max)
 XEN_ARGIFY_1(g_mark_home_w, g_mark_home)
 XEN_ARGIFY_3(g_marks_w, g_marks)
 XEN_ARGIFY_5(g_add_mark_w, g_add_mark)
-XEN_ARGIFY_1(g_delete_mark_w, g_delete_mark)
+XEN_NARGIFY_1(g_delete_mark_w, g_delete_mark)
 XEN_ARGIFY_2(g_delete_marks_w, g_delete_marks)
 XEN_NARGIFY_1(g_syncd_marks_w, g_syncd_marks)
 XEN_NARGIFY_0(g_mark_tag_width_w, g_mark_tag_width)
@@ -2522,7 +2522,7 @@ void g_init_marks(void)
   XEN_DEFINE_PROCEDURE(S_mark_home,     g_mark_home_w,     0, 1, 0, H_mark_home);
   XEN_DEFINE_PROCEDURE(S_marks,         g_marks_w,         0, 3, 0, H_marks);
   XEN_DEFINE_PROCEDURE(S_add_mark,      g_add_mark_w,      0, 5, 0, H_add_mark);
-  XEN_DEFINE_PROCEDURE(S_delete_mark,   g_delete_mark_w,   0, 1, 0, H_delete_mark);
+  XEN_DEFINE_PROCEDURE(S_delete_mark,   g_delete_mark_w,   1, 0, 0, H_delete_mark);
   XEN_DEFINE_PROCEDURE(S_delete_marks,  g_delete_marks_w,  0, 2, 0, H_delete_marks);
   XEN_DEFINE_PROCEDURE(S_syncd_marks,   g_syncd_marks_w,   1, 0, 0, H_syncd_marks);
   XEN_DEFINE_PROCEDURE(S_find_mark,     g_find_mark_w,     1, 3, 0, H_find_mark);
