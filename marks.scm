@@ -257,7 +257,8 @@
 		   (remove-local-hook! stop-playing-hook report-mark-names-stop-playing-hook))
 		 
 		 (add-hook! stop-playing-hook report-mark-names-stop-playing-hook)
-		 (add-hook! play-hook report-mark-names-play-hook)))))
+		 (add-hook! play-hook report-mark-names-play-hook)
+		 #f))))
 
 
 ;;; -------- eval-between-marks

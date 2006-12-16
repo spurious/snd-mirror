@@ -3225,7 +3225,7 @@ static char *help_urls[HELP_NAMES_SIZE] = {
   "extsnd.html#markhook",
   "sndscm.html#markloops",
   "extsnd.html#markname",
-  "sndscm.html#markname2id",
+  "sndscm.html#marknametoid",
   "sndscm.html#markproperty",
   "extsnd.html#marksample",
   "extsnd.html#marksync",
@@ -4053,7 +4053,7 @@ static char *Marking_xrefs[] = {
   NULL};
 
 static char *Marking_urls[] = {
-  "sndscm.html#markname2id",
+  "sndscm.html#marknametoid",
   "sndscm.html#describemark",
   "sndscm.html#syncup",
   "sndscm.html#fitselectionbetweenmarks",

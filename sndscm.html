@@ -1761,7 +1761,7 @@ A simple instrument that uses dlocsig is:
 
 <!-- click-for-listener-help -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>click-for-listener-help</em> <code>pos</code>
+<A class=def NAME="clickforlistenerhelp">click-for-listener-help</A> <code>pos</code>
 </td></tr>
 <tr><td width=60></td><td>
 click-for-listener-help is intended as a <a href="extsnd.html#listenerclickhook">listener-click-hook</a> function.  It posts help about
@@ -3019,7 +3019,7 @@ scale-envelope scales the y values of an envelope by <i>scl</i>, and optionally 
 
 <!-- stretch-envelope -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>stretch-envelope</em> <code>env old-attack new-attack (old-decay #f) (new-decay #f)</code>
+<a class=def name="stretchenvelope">stretch-envelope</a> <code>env old-attack new-attack (old-decay #f) (new-decay #f)</code>
 </td></tr>
 <tr><td></td><td>
 stretch-envelope applies attack and optionally decay times
@@ -4088,7 +4088,7 @@ To disable this choice, call it again with #f as the <i>enable</i> argument.
 <!-- locate-zero -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>find-pitch</em> <code>pitch</code><br>
-<em class=emdef>locate-zero</em> <code>limit</code><br>
+<A class=def NAME="locatezero">locate-zero</A> <code>limit</code><br>
 <em class=emdef>next-peak</em><br>
 <A class=def NAME="searchforclick">search-for-click</a>
 <A class=def NAME="zeroplus">zero+</a>
@@ -4307,7 +4307,7 @@ This is just a trivial wrapper for <a href="extsnd.html#channeltovct">channel-&g
 
 <!-- xb-open -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>xb-open</em> <code>snd</code><br>
+<A class=def NAME="xbopen">xb-open</A> <code>snd</code><br>
 <em class=emdef>xb-close</em> <code>snd</code><br>
 <em class=emdef>switch-to-buf</em>
 </td></tr><tr><td></td><td>
@@ -4394,7 +4394,7 @@ not used anywhere).
 
 <!-- check-for-unsaved-edits -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="unsavededits">check-for-unsaved-edits</a> <code>:optional (check #t)</code>
+<a class=def name="checkforunsavededits">check-for-unsaved-edits</a> <code>:optional (check #t)</code>
 </td></tr><tr><td></td><td>
 check-for-unsaved-edits adds functions to the <a href="extsnd.html#beforeexithook">before-exit-hook</a>
 and the <a href="extsnd.html#beforeclosehook">before-close-hook</a> to check
@@ -5536,7 +5536,7 @@ we want to close all currently open sounds without invoking the peak-env stuff:
 
 <A NAME="indexdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>index</h2></td></tr></table>
 <pre>
-  <em class=emdef>html</em> obj
+  <A class=def NAME="html">html</A> obj
   <em class=emdef>?</em> obj
 </pre>
 <p>index.scm provides a connection between mozilla or netscape
@@ -5994,7 +5994,7 @@ using the granulate generator to fix up the selection duration (it currently doe
 </td></tr>
 <tr><td></td><td>
 mark-click-info is a <a href="extsnd.html#markclickhook">mark-click-hook</a> function that describes a mark and its properties.  It
-is used by with-marked-sound in ws.scm.
+is used by <a href="#withmarkedsound">with-marked-sound</a> in ws.scm.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -6082,7 +6082,7 @@ playing from all the marks sharing its <i>sync</i> argument (see <a href="extsnd
 
 <!-- report-mark-names -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>report-mark-names</em>
+<A class=def NAME="reportmarknames">report-mark-names</A>
 </td></tr>
 <tr><td></td><td>
 report-mark-names causes a named mark to display its name in the minibuffer when 
@@ -8162,7 +8162,7 @@ the lowpass filter coefficient in the reverberator.
 <!-- make-level-meter -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="makelevelmeter">make-level-meter</A> <code>parent width height args :optional (resizable #t)</code><br>
-<em class=emdef>with-level-meters</em> <code>n</code>
+<A class=def NAME="withlevelmeters">with-level-meters</A> <code>n</code>
 <em class=emdef>display-level</em> <code>meter-data</code>
 </td></tr><tr><td></td><td>
 make-level-meter creates a VU meter of any width and height, returning
@@ -9807,7 +9807,7 @@ The <b>ws-go</b> 'returned-value' is the value to return from the original call 
 See clm.html for documentation. 
 </p>
 
-<p>Toward the end of ws.scm is an example, <b>with-marked-sound</b>, that is just
+<p>Toward the end of ws.scm is an example, <A NAME="withmarkedsound">with-marked-sound</A>, that is just
 like with-sound except that it adds a mark at the start of each note in the output
 sound; the corresponding code in your instrument sets the mark's :ws property
 to contain any info you might find amusing.  You then click the mark to see
@@ -9816,7 +9816,7 @@ that info.
 
 <p>Also defined in ws.scm are the CLM functions <b>seconds-&gt;samples</b> and <b>time-&gt;samples</b>.
 The *clm-* variables are saved in the save-state
-file by <b>ws-save-state</b>, which may not be a good idea -- feedback welcome!
+file by <A NAME="wssavestate">ws-save-state</A>, which may not be a good idea -- feedback welcome!
 Two more convenience functions are <b>-&gt;frequency</b> and <b>-&gt;sample</b>.
 <b>-&gt;frequency</b> takes either a number or a common-music pitch symbol ('c4 is middle C),
 and returns either the number or the frequency associated with that pitch:
