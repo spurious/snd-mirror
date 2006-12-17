@@ -455,6 +455,7 @@
 #define S_region_chans                  "region-chans"
 #define S_region_frames                 "region-frames"
 #define S_region_graph_style            "region-graph-style"
+#define S_region_home                   "region-home"
 #define S_region_maxamp                 "region-maxamp"
 #define S_region_maxamp_position        "region-maxamp-position"
 #define S_region_p                      "region?"

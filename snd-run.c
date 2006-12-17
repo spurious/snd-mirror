@@ -2583,7 +2583,7 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
       return(add_triple_to_ptree(pt, va_make_triple(store_g, descr_store_g, 2, var, init_val)));
       break;
 #endif
-      /* case R_SOUND_DATA: free_sound_data in sndlib2xen.c and sound_data_dup in the RUBY section */
+      /* case R_SOUND_DATA: sound_data_free in sndlib2xen.c and sound_data_dup in the RUBY section */
       /* case R_READER: case R_MIX_READER: case R_TRACK_READER: free for each + copy_reader? */
       /* case R_FLOAT_VECTOR: case R_INT_VECTOR: case R_VCT_VECTOR: case R_CLM_STRUCT_VECTOR: case R_CLM_VECTOR: need free/copy */
     }
@@ -7699,7 +7699,10 @@ static char *descr_sound_data_copy_f(int *args, ptree *pt)
 static xen_value *sound_data_copy_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, sound_data_check_1, descr_sound_data_check_1, args, 1);
-  return(package(prog, R_SOUND_DATA, sound_data_copy_f, descr_sound_data_copy_f, args, 1));
+  args[0] = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, NULL), R_VARIABLE);
+  add_obj_to_gcs(prog, R_SOUND_DATA, args[0]->addr);
+  add_triple_to_ptree(prog, va_make_triple(sound_data_copy_f, descr_sound_data_copy_f, 2, args[0], args[1]));
+  return(args[0]);
 }
 
 

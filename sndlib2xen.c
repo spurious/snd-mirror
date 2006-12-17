@@ -1304,19 +1304,19 @@ static XEN g_sound_data_p(XEN obj)
   return(C_TO_XEN_BOOLEAN(sound_data_p(obj)));
 }
 
-void sound_data_free(sound_data *v)
+void sound_data_free(sound_data *sd)
 {
-  if (v)
+  if (sd)
     {
-      if ((v->data) && (!(v->wrapped)))
+      if ((sd->data) && (!(sd->wrapped)))
 	{
 	  int i;
-	  for (i = 0; i < v->chans; i++) if (v->data[i]) FREE(v->data[i]);
-	  FREE(v->data);
+	  for (i = 0; i < sd->chans; i++) if (sd->data[i]) FREE(sd->data[i]);
+	  FREE(sd->data);
 	}
-      v->data = NULL;
-      v->chans = 0;
-      FREE(v);
+      sd->data = NULL;
+      sd->chans = 0;
+      FREE(sd);
     }
 }
 
@@ -1630,11 +1630,11 @@ sound_data *sound_data_copy(sound_data *sd)
 
 static XEN g_sound_data_copy(XEN obj)
 {
+  sound_data *sdnew;
   #define H_sound_data_copy "(" S_sound_data_copy " sd) returns a copy of the sound-data object sd"
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ONLY_ARG, S_sound_data_copy, "a sound-data object");
-  XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag,
-			     sound_data_copy((sound_data *)XEN_OBJECT_REF(obj)),
-			     0, free_sound_data);
+  sdnew = sound_data_copy((sound_data *)XEN_OBJECT_REF(obj));
+  XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, sdnew, 0, free_sound_data);
 }
 
 sound_data *sound_data_reverse(sound_data *sd)

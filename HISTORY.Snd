@@ -1,5 +1,6 @@
 Snd change log
 
+  17-Dec:    region-home.
   14-Dec:    bird.fsm (Mike Scholz).
   12-Dec:    clip-hook.
   11-Dec:    sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ sound-data-copy sound-data-reverse! sound-data-peak.

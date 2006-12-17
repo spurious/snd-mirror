@@ -2163,7 +2163,7 @@
 			 'recorder-in-amp 'recorder-in-chans 'recorder-in-data-format 'recorder-in-device 'recorder-max-duration
 			 'recorder-out-amp 'recorder-out-chans 'recorder-out-data-format 'recorder-out-header-type 'recorder-srate
 			 'recorder-trigger 'rectangular->polar 'rectangular-window 'redo 'redo-edit
-			 'region->vct 'region-chans 'region-frames 'region-graph-style 'region-maxamp
+			 'region->vct 'region-chans 'region-home 'region-frames 'region-graph-style 'region-maxamp
 			 'region-maxamp-position 'region-position 'region-sample 'region-sample-reader? 'region-srate
 			 'region? 'regions 'remove-from-menu 'report-in-minibuffer 'reset-button-color
 			 'reset-controls 'reset-listener-cursor 'restore-controls 'restore-region
@@ -8543,6 +8543,7 @@ EDITS: 5
 	  (if (not (selection-member? index)) (snd-display ";selection-member?: ~A" (selection-member? index)))
 	  (if (not (= (region-srate r0) 22050)) (snd-display ";region-srate: ~A?" (region-srate r0)))
 	  (if (not (= (region-chans r0) 1)) (snd-display ";region-chans: ~A?" (region-chans r0)))
+	  (if (not (equal? (region-home r0) (list "oboe.snd" 0 50827))) (snd-display ";region-home: ~A" (region-home r0)))
 	  (if (not (= (region-frames r0) 50828)) (snd-display ";region-frames: ~A?" (region-frames r0)))
 	  (if (not (= (selection-frames) 50828)) (snd-display ";selection-frames: ~A?" (selection-frames 0)))
 	  (if (not (= (selection-position) 0)) (snd-display ";selection-position: ~A?" (selection-position)))
@@ -9614,6 +9615,8 @@ EDITS: 5
 	  (close-sound ind1))
 	(let* ((ind (open-sound "2.snd"))
 	       (reg (make-region 0 100 ind #t)))
+	  (if (not (equal? (region-home reg) (list "2.snd" 0 100))) 
+	      (snd-display ";make + region-home: ~A" (region-home reg)))
 	  (if (not (= (region-chans reg) 2))
 	      (snd-display ";make-region chan #t: ~A" (region-chans reg)))
 	  (close-sound ind))
@@ -47485,6 +47488,14 @@ EDITS: 1
 	    (contrast-sound 2.0)
 	    (close-sound index))
 
+	  (let ((ind (open-sound "2.snd")))
+	    (let ((val (simultaneous-zero-crossing)))
+	      (if (not (equal? val (list #t 6))) (snd-display ";simultaneous-zero-crossing 0: ~A" val))
+	      (set! val (simultaneous-zero-crossing 9))
+	      (if (not (equal? val (list #t 17))) (snd-display ";simultaneous-zero-crossing 2: ~A" val)))
+	    (close-sound ind))
+
+
       (run-hook after-test-hook 22)
       ))
 
@@ -62586,7 +62597,8 @@ EDITS: 1
 		     print-length progress-report prompt-in-minibuffer pushed-button-color read-only
 		     recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
 		     recorder-file recorder-gain recorder-in-amp recorder-in-data-format recorder-max-duration recorder-out-amp
-		     recorder-out-chans recorder-out-data-format recorder-out-header-type recorder-srate recorder-trigger redo region-chans view-regions-dialog
+		     recorder-out-chans recorder-out-data-format recorder-out-header-type recorder-srate recorder-trigger redo 
+		     region-chans view-regions-dialog region-home 
 		     region-graph-style region-frames region-position region-maxamp region-maxamp-position 
 		     selection-maxamp selection-maxamp-position region-sample region->vct clear-minibuffer
 		     region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
@@ -63458,7 +63470,8 @@ EDITS: 1
 				    (if (not (eq? tag 'wrong-type-arg))
 					(snd-display ";~D: region procs ~A: ~A ~A" ctr n tag arg))
 				    (set! ctr (+ ctr 1))))
-				(list play-region region-chans region-frames region-position region-maxamp region-maxamp-position region-sample 
+				(list play-region region-chans region-home region-frames 
+				      region-position region-maxamp region-maxamp-position region-sample 
 				      region->vct region-srate forget-region))))
 		  (list vct-5 '#(0 1) (sqrt -1.0) "hiho" (list 0 1)))
 	
@@ -63472,7 +63485,8 @@ EDITS: 1
 			(if (not (eq? tag 'no-such-region))
 			    (snd-display ";~D: (no) region procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list play-region region-chans region-frames region-position region-maxamp region-maxamp-position region-srate forget-region))) 
+		    (list play-region region-chans region-home region-frames region-position 
+			  region-maxamp region-maxamp-position region-srate forget-region))) 
 	
 	(let ((ctr 0))
 	  (for-each (lambda (n)

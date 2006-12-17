@@ -1351,7 +1351,7 @@ static XEN g_region_position(XEN n, XEN chan)
   return(C_TO_XEN_OFF_T(r->begs[chn]));
 }
 
-typedef enum {REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_PLAY, REGION_MAXAMP_POSITION} region_field_t;
+typedef enum {REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_PLAY, REGION_MAXAMP_POSITION, REGION_HOME} region_field_t;
 
 static XEN region_get(region_field_t field, XEN n, const char *caller)
 {
@@ -1366,6 +1366,16 @@ static XEN region_get(region_field_t field, XEN n, const char *caller)
     case REGION_MAXAMP: return(C_TO_XEN_DOUBLE(region_maxamp(rg))); break;
     case REGION_MAXAMP_POSITION: return(C_TO_XEN_OFF_T(region_maxamp_position(rg))); break;
     case REGION_FORGET: delete_region_and_update_browser(region_id_to_list_position(rg)); return(n); break;
+    case REGION_HOME:
+      {
+	region *r;
+	r = id_to_region(rg);
+	if (r)
+	  return(XEN_LIST_3(C_TO_XEN_STRING(r->name), 
+			    C_TO_XEN_OFF_T(r->begs[0]), 
+			    C_TO_XEN_OFF_T(r->lens[0]))); 
+      }
+      break;
     default: break;
     }
   return(XEN_FALSE);
@@ -1383,6 +1393,13 @@ static XEN g_region_chans(XEN n)
   #define H_region_chans "(" S_region_chans " (reg 0): region channels"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_chans, "a region id");
   return(region_get(REGION_CHANS, n, S_region_chans));
+}
+
+static XEN g_region_home(XEN n) 
+{
+  #define H_region_home "(" S_region_home " (reg 0): a list with the region source sound name and position info"
+  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_home, "a region id");
+  return(region_get(REGION_HOME, n, S_region_home));
 }
 
 static XEN g_region_maxamp(XEN n) 
@@ -1708,6 +1725,7 @@ XEN_ARGIFY_2(g_region_frames_w, g_region_frames)
 XEN_ARGIFY_2(g_region_position_w, g_region_position)
 XEN_ARGIFY_1(g_region_srate_w, g_region_srate)
 XEN_ARGIFY_1(g_region_chans_w, g_region_chans)
+XEN_ARGIFY_1(g_region_home_w, g_region_home)
 XEN_ARGIFY_1(g_region_maxamp_w, g_region_maxamp)
 XEN_ARGIFY_1(g_region_maxamp_position_w, g_region_maxamp_position)
 XEN_ARGIFY_9(g_save_region_w, g_save_region)
@@ -1730,6 +1748,7 @@ XEN_NARGIFY_1(g_set_region_graph_style_w, g_set_region_graph_style)
 #define g_region_position_w g_region_position
 #define g_region_srate_w g_region_srate
 #define g_region_chans_w g_region_chans
+#define g_region_home_w g_region_home
 #define g_region_maxamp_w g_region_maxamp
 #define g_region_maxamp_position_w g_region_maxamp_position
 #define g_save_region_w g_save_region
@@ -1757,6 +1776,7 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_region_position,        g_region_position_w,        0, 2, 0, H_region_position);
   XEN_DEFINE_PROCEDURE(S_region_srate,           g_region_srate_w,           0, 1, 0, H_region_srate);
   XEN_DEFINE_PROCEDURE(S_region_chans,           g_region_chans_w,           0, 1, 0, H_region_chans);
+  XEN_DEFINE_PROCEDURE(S_region_home,            g_region_home_w,            0, 1, 0, H_region_home);
   XEN_DEFINE_PROCEDURE(S_region_maxamp,          g_region_maxamp_w,          0, 1, 0, H_region_maxamp);
   XEN_DEFINE_PROCEDURE(S_region_maxamp_position, g_region_maxamp_position_w, 0, 1, 0, H_region_maxamp_position);
   XEN_DEFINE_PROCEDURE(S_save_region,            g_save_region_w,            2, 7, 0, H_save_region);
