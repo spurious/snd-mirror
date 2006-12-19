@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Mon Dec 11 22:39:12 CET 2006
+\ Changed: Sun Dec 17 03:46:40 CET 2006
 
 \ Commentary:
 
@@ -39,24 +39,32 @@
 \ brighten-slightly-1      ( coeffs :optional snd chn -- )
 \ spectrum->coeffs         ( order spectr -- vct )
 \ fltit-1                  ( order spectr -- proc;  y self -- val )
-\ make-hilbert-transform   ( :optional len -- gen )
-\ hilbert-transform        ( gen input -- val )
 \ 
+\ make-hilbert-transform   ( :optional len -- gen )
+\ make-highpass            ( fc :optional len -- gen )
+\ make-lowpass             ( fc :optional len -- gen )
+\ make-bandpass            ( flo fhi :optional len -- gen )
+\ make-bandstop            ( flo fhi :optional len -- gen )
+\ make-differentiator      ( :optional len -- gen )
 \ make-butter-high-pass    ( freq -- flt )
 \ make-butter-low-pass     ( freq -- flt )
 \ make-butter-band-pass    ( freq band -- flt )
 \ make-butter-band-reject  ( freq band -- flt )
-\ butter                   ( gen sig -- res )
-
+\ make-biquad              ( a0 a1 a2 b1 b2 -- gen )
+\ make-iir-low-pass-2      ( fc :optional d -- gen )
+\ make-iir-high-pass-2     ( fc :optional d -- gen )
+\ make-iir-band-pass-2     ( f1 f2 -- gen )
+\ make-iir-band-stop-2     ( f1 f2 -- gen )
+\ make-eliminate-hum       ( :optional hum-freq hum-harmonics bandwith  -- )
+\ 
 \ Code:
 
 require clm
 
-\ --- src-duration (see src-channel in extsnd.html) ---
-
+\ ;;; -------- src-duration (see src-channel in extsnd.html)
 : src-duration ( en -- dur )
-  doc" ( envelope -- dur )  \
-Returns the new duration of a sound after using ENVELOPE for time-varying sampling-rate conversion."
+  doc" Returns the new duration of a sound after using ENVELOPE \
+for time-varying sampling-rate conversion."
   { en }
   en  0 object-ref { ex0 }
   en -2 object-ref { ex1 }
@@ -78,14 +86,12 @@ Returns the new duration of a sound after using ENVELOPE for time-varying sampli
   ( dur )
 ;
 
-\ --- Dolph-Chebyshev window ---
-
-\ formula taken from Richard Lyons, "Understanding DSP"
-\ see clm.c for C version (using either GSL's or GCC's complex trig functions)
-
+\ ;;; -------- Dolph-Chebyshev window
+\ ;;; 
+\ ;;; formula taken from Richard Lyons, "Understanding DSP"
+\ ;;; see clm.c for C version (using either GSL's or GCC's complex trig functions)
 : dolph ( n gamma -- im )
-  doc" ( n gamma -- im )  \
-Produces a Dolph-Chebyshev FFT data window of N points using GAMMA as the window parameter."
+  doc" Produces a Dolph-Chebyshev FFT data window of N points using GAMMA as the window parameter."
   { n gamma }
   10.0 gamma f** cacosh n c/ ccosh { alpha }
   alpha cacosh n c* ccosh 1/c { den }
@@ -104,10 +110,8 @@ Produces a Dolph-Chebyshev FFT data window of N points using GAMMA as the window
   im
 ;
 
-\ this version taken from Julius Smith's "Spectral Audio..." with
-\ three changes it does the DFT by hand, and is independent of
-\ anything from Snd (fft, vcts etc)
-
+\ ;;; this version taken from Julius Smith's "Spectral Audio..." with three changes
+\ ;;;   it does the DFT by hand, and is independent of anything from Snd (fft, vcts etc)
 : dolph-1 ( n gamma -- im )
   { n gamma }
   10.0 gamma f** cacosh n c/ ccosh { alpha }
@@ -129,11 +133,9 @@ Produces a Dolph-Chebyshev FFT data window of N points using GAMMA as the window
   end-map ( w ) map! *key* pk f/ end-map ( w )
 ;
 
-\ --- move sound down by n (a power of 2) ---
-
-: down-oct ( n :optional snd chn -- v )
-  doc" ( n :optional snd chn -- vct )  Moves a sound down by power of 2 n."
-  <{ n :optional snd #f chn #f }>
+\ ;;; ------- move sound down by n (a power of 2) ---
+: down-oct <{ n :optional snd #f chn #f -- vct }>
+  doc" Moves a sound down by power of 2 n."
   snd chn #f frames { len }
   2.0  len flog 2.0 flog f/ fceil ( pow2 )  f** f>s { fftlen }
   fftlen 1/f { fftscale }
@@ -157,9 +159,7 @@ Produces a Dolph-Chebyshev FFT data window of N points using GAMMA as the window
   rl2 im2 -1 fft
   rl2 0 n len * snd chn #f $" %s %s" '( n get-func-name ) string-format vct->channel
 ;
-
-: stretch-sound-via-dft ( factor :optional snd chn -- )
-  <{ factor :optional snd #f chn #f }>
+: stretch-sound-via-dft <{ factor :optional snd #f chn #f -- }>
   snd chn #f frames { n }
   n f2/ floor f>s { n2 }
   n factor f* fround f>s { out-n }
@@ -184,7 +184,6 @@ Produces a Dolph-Chebyshev FFT data window of N points using GAMMA as the window
 \ ;;; To watch the wave, open some sound (so Snd has some place to put the graph), turn off
 \ ;;; the time domain display (to give our graph all the window -- to do this in a much more
 \ ;;; elegant manner, see snd-motif.scm under scanned-synthesis).
-
 : compute-uniform-circular-string ( size x0 x1 x2 mass xspring damp -- )
   { size x0 x1 x2 mass xspring damp }
   damp mass f/ { dm }
@@ -203,7 +202,6 @@ Produces a Dolph-Chebyshev FFT data window of N points using GAMMA as the window
   x1 0.0 vct-fill! drop
   x1 x2  vct-add!  drop
 ;
-
 : testunif ( mass xspring damp -- )
   { mass xspring damp }
   128 { size }
@@ -221,7 +219,6 @@ Produces a Dolph-Chebyshev FFT data window of N points using GAMMA as the window
     x0 "string" 0 1.0 -10.0 10.0 graph drop
   loop
 ;
-
 : test-scanned-synthesis ( amp dur scanned-synthesis -- )
   { amp dur mass xspring damp }
   256 { size }
@@ -278,7 +275,6 @@ Produces a Dolph-Chebyshev FFT data window of N points using GAMMA as the window
 ;
 
 \ ;;; -------- "frequency division" -- an effect from sed_sed@my-dejanews.com
-
 hide
 : freqdiv-cb ( div n curval -- proc; y self -- val )
   lambda-create , , , latestxt 1 make-proc
@@ -293,17 +289,14 @@ hide
   curval
 ;
 set-current
-: freqdiv ( n :optional snd chn -- )
-  doc" ( n :optional snd chn -- )  \
-Repeats each nth sample N times (clobbering the intermediate samples): 8 freqdiv"
-  <{ n :optional snd #f chn #f }>
+: freqdiv   <{ n :optional snd #f chn #f -- }>
+  doc" Repeats each nth sample N times (clobbering the intermediate samples): 8 freqdiv"
   0 0.0 { div curval }
   div n curval freqdiv-cb 0 #f snd chn #f $" %s %s" '( n get-func-name ) format map-channel drop
 ;
 previous
 
-\ --- "adaptive saturation" -- an effect from sed_sed@my-dejanews.com ---
-
+\ ;;; -------- "adaptive saturation" -- an effect from sed_sed@my-dejanews.com ---
 hide
 : adsat-cb ( mn mx n vals -- proc; inval self -- res )
   lambda-create , , , , latestxt 1 make-proc
@@ -330,16 +323,14 @@ hide
   then
 ;
 set-current
-: adsat ( size :optional beg dur snd chn -- )
-  doc" ( size :optional beg dur snd chn -- )  An 'adaptive saturation' sound effect."
-  <{ size :optional beg 0 dur #f snd #f chn #f }>
+: adsat <{ size :optional beg 0 dur #f snd #f chn #f -- }>
+  doc" An 'adaptive saturation' sound effect."
   $" %s %s %s %s" '( size beg dur get-func-name ) string-format { origin }
   0.0 0.0 0 size 0.0 make-vct adsat-cb beg dur snd chn #f origin map-channel drop
 ;
 previous
 
-\ --- spike ---
-
+\ ;;; -------- spike ---
 hide
 : spike-cb ( snd chn -- proc; x0 self -- res )
   { snd chn }
@@ -356,18 +347,14 @@ hide
   res
 ;
 set-current
-: spike ( :optional snd chn -- )
-  doc" ( :optional snd chn -- )  \
-Multiplies successive samples together to make a sound more spikey."
-  <{ :optional snd #f chn #f }>
+: spike <{ :optional snd #f chn #f -- }>
+  doc" Multiplies successive samples together to make a sound more spikey."
   snd chn spike-cb 0 #f snd chn #f get-func-name map-channel drop
 ;
 previous
 
 \ ;;; -------- easily-fooled autocorrelation-based pitch tracker
-
-: spot-freq ( samp :optional snd chn -- )
-  <{ samp :optional snd #f chn #f }>
+: spot-freq <{ samp :optional snd #f chn #f -- }>
   snd srate s>f { sr }
   2.0   sr 20.0 f/ flog  2.0 flog  f/  fceil  f** f>s { fftlen }
   samp fftlen snd chn #f channel->vct autocorrelate { data }
@@ -410,7 +397,6 @@ previous
 \ ;proc add-hook!
 
 \ ;;; -------- chorus (doesn't always work and needs speedup)
-
 5    value chorus-size
 0.05 value chorus-time
 20.0 value chorus-amount
@@ -429,7 +415,7 @@ hide
 ;
 set-current
 : chorus ( -- proc; inval self -- val )
-  doc" ( -- proc; inval self -- val )  Tries to produce the chorus sound effect."
+  doc" Tries to produce the chorus sound effect."
   chorus-size nil make-array map! make-flanger end-map { dlys }
   lambda-create dlys , latestxt 1 make-proc
  does> ( inval self -- val )
@@ -440,14 +426,12 @@ set-current
 previous
 
 \ ;;; -------- chordalize (comb filters to make a chord using chordalize-amount and chordalize-base)
-
 0.95           value chordalize-amount
 100            value chordalize-base
 '( 1 3/4 5/4 ) value chordalize-chord
 
 : chordalize ( -- proc; x self -- val )
-  doc" ( -- proc; x self -- val )  \
-Uses harmonically-related comb-filters to bring out a chord in a sound.  \
+  doc" Uses harmonically-related comb-filters to bring out a chord in a sound.  \
 Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 3/2 )."
   chordalize-chord map
     :scaler chordalize-amount :size chordalize-base *key* r* r>s make-comb
@@ -463,10 +447,8 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
 
 \ --- zero-phase, rotate-phase ---
 \ fft games (from the "phazor" package of Scott McNab)
-
-: zero-phase ( :optional snd chn -- v )
-  doc" ( :optional snd chn -- vct )  Calls fft, sets all phases to 0, and un-ffts."
-  <{ :optional snd #f chn #f }>
+: zero-phase <{ :optional snd #f chn #f -- vct }>
+  doc" Calls fft, sets all phases to 0, and un-ffts."
   snd chn #f frames { len }
   2.0  len flog 2.0 flog f/ fceil ( pow2 )  f** fround f>s { fftlen }
   fftlen 1/f { fftscale }
@@ -481,10 +463,8 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
   rl vct-peak { pk }
   rl old-pk pk f/ vct-scale! 0 len snd chn #f get-func-name vct->channel
 ;
-
-: rotate-phase ( func :optional snd chn -- v )
-  doc" ( func :optional snd chn -- vct )  Calls fft, applies FUNC to each phase, then un-ffts."
-  <{ func :optional snd #f chn #f }>
+: rotate-phase <{ func :optional snd #f chn #f -- vct }>
+  doc" Calls fft, applies FUNC to each phase, then un-ffts."
   func proc? func 1 running-word $" a proc" _ assert-type
   snd chn #f frames { len }
   2.0  len flog 2.0 flog f/ fceil ( pow2 )  f** fround f>s { fftlen }
@@ -515,9 +495,7 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
 \ 1 lambda: { x } x 12.0 f* ;proc rotate-phase \ "bruise blood" effect
 
 \ ;;; -------- asymmetric FM (bes-i0 case)
-
-: make-asyfm ( :key frequency 440.0 initial-phase 0.0 ratio 1.0 r 1.0 index 1.0 -- gen )
-  <{ :key frequency 440.0 initial-phase 0.0 ratio 1.0 r 1.0 index 1.0 }>
+: make-asyfm <{ :key frequency 440.0 initial-phase 0.0 ratio 1.0 r 1.0 index 1.0 -- gen }>
   #{ :freq  frequency hz->radians
      :phase initial-phase
      :ratio ratio
@@ -535,8 +513,7 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
 : asyfm-index-ref  ( gen -- val ) :index hash-ref ; 
 : asyfm-index-set! ( gen val -- ) :index swap hash-set! ;
 : asyfm-J ( gen input -- val )
-  doc" ( gen input -- val )  \
-;; this is the same as the CLM asymmetric-fm generator, \
+  doc" ;; this is the same as the CLM asymmetric-fm generator, \
 set r != 1.0 to get the asymmetric spectra.\n\
 :frequency 2000 :ratio 0.1 make-asyfm value gen\n\
 1 lambda: { n } gen 0.0 asyfm-J ;proc map-channel."
@@ -570,7 +547,6 @@ set r != 1.0 to get the asymmetric spectra.\n\
 \ ;;; -------- cosine-summation (a simpler version of sine-summation)
 \ ;;;
 \ ;;; from Andrews, Askey, Roy "Special Functions" 5.1.16
-
 : cosine-summation ( gen r -- val )
   { gen r }
   1.0  r r f*  f-
@@ -592,7 +568,6 @@ set r != 1.0 to get the asymmetric spectra.\n\
 \ ;;;   the "index" (in FM nomenclature) -- higher k = more cosines; the actual amount
 \ ;;;   of the nth cos involves hypergeometric series (looks like r^n/n!
 \ ;;;   (~=e^n?) with a million other terms).
-
 : kosine-summation ( gen r k -- val )
   { gen r k }
   1.0 r r f* f+  r f2* gen 0.0 0.0 oscil f*  f-  k fnegate  f**
@@ -603,7 +578,6 @@ set r != 1.0 to get the asymmetric spectra.\n\
 \ 1 lambda: { y } gen 0.5 5.0 kosine-summation 0.2 f* ;proc map-channel
 
 \ ;;; -------- legendre, fejer
-
 : fejer-sum ( angle n -- val )
   \ ;; from "Trigonometric Series" Zygmund p88
   { angle n }
@@ -630,7 +604,6 @@ set r != 1.0 to get the asymmetric spectra.\n\
 
 \ ;;; -------- variations on sum-of-cosines
 \ ;;; from "Trigonometric Delights" by Eli Maor
-
 : sum-of-n-sines ( angle n -- val )
   { angle n }
   angle f2/ { a2 }
@@ -646,13 +619,11 @@ set r != 1.0 to get the asymmetric spectra.\n\
   angle n f* fsin dup { na2 }
   den f0= if 0.0 else na2 den f/ then
 ;
-
 : sum-of-n-odd-cosines ( angle n -- val )
   { angle n }
   angle fsin f2* { den }
   den f0= if n else angle n f* f2*  den f/ then
 ;
-
 : band-limited-sawtooth ( x a N fi -- val )
   { x a N fi }
   a dup f*  x fcos a f* -2.0 f*  f+ 1.0 f+ { s4 }
@@ -673,7 +644,6 @@ set r != 1.0 to get the asymmetric spectra.\n\
 \ 1 lambda: { y } angle 10.0 band-limited-square-wave  0.2 +to angle ;proc map-channel
 
 \ ;;; -------- brighten-slightly
-
 hide
 : brighten-slightly-cb ( brt mx -- proc; y self -- val )
   lambda-create , , latestxt 1 make-proc
@@ -683,10 +653,8 @@ hide
   brt y f* fsin mx f*
 ;
 set-current
-: brighten-slightly ( amount :optional snd chn -- )
-  <{ amount :optional snd #f chn #f }>
-  doc" ( amount :optional snd chn -- )  \
-is a form of contrast-enhancement (AMOUNT between ca 0.1 and 1)."
+: brighten-slightly <{ amount :optional snd #f chn #f -- }>
+  doc" It's a form of contrast-enhancement (AMOUNT between ca 0.1 and 1)."
   snd chn #f maxamp { mx }
   two-pi amount f*  mx f/ { brt }
   brt mx brighten-slightly-cb 0 #f snd chn #f
@@ -703,10 +671,8 @@ hide
   pcoeffs y mx f/ polynomial mx f*
 ;
 set-current
-: brighten-slightly-1 ( coeffs :optional snd chn -- )
-  doc" ( coeffs :optional snd chn -- )  \
-is a form of contrast-enhancement (AMOUNT between ca 0.1 and 1)."
-  <{ coeffs :optional snd #f chn #f }>
+: brighten-slightly-1 <{ coeffs :optional snd #f chn #f -- }>
+  doc" It's a form of contrast-enhancement (AMOUNT between ca 0.1 and 1)."
   snd chn #f maxamp { mx }
   coeffs mus-chebyshev-first-kind partials->polynomial { pcoeffs }
   pcoeffs mx brighten-slightly-1-cb 0 #f snd chn #f
@@ -718,10 +684,8 @@ previous
 \ ;;; -------- FIR filters
 
 \ ;;; Snd's (very simple) spectrum->coefficients procedure is:
-
 : spectrum->coeffs ( order spectr -- vct )
-  doc" ( order spectr -- vct )  \
-returns FIR filter coefficients given the filter order and desired spectral envelope"
+  doc" Returns FIR filter coefficients given the filter order and desired spectral envelope"
   { order spectr }
   order 0.0 make-vct { coeffs }
   order { n }
@@ -739,10 +703,8 @@ returns FIR filter coefficients given the filter order and desired spectral enve
   loop
   coeffs
 ;
-
 : fltit-1 ( order spectr -- proc;  y self -- val )
-  doc" ( order spectr -- )  \
-creates an FIR filter from spectrum and order and returns a closure that calls it:\n\
+  doc" Creates an FIR filter from spectrum and order and returns a closure that calls it:\n\
 10 vct( 0 1.0 0 0 0 0 0 0 1.0 0 ) fltit-1 map-channel"
   { order spectr }
   :order order :xcoeffs order spectr spectrum->coeffs make-fir-filter
@@ -752,11 +714,9 @@ creates an FIR filter from spectrum and order and returns a closure that calls i
 ;
 \ 10 vct( 0 1.0 0 0 0 0 0 0 1.0 0 ) fltit-1 map-channel
 
-\ --- Hilbert transform
-
-: make-hilbert-transform ( :optional len=30 -- gen )
-  doc" ( :optional len=30 -- gen )  Makes a Hilbert transform filter."
-  <{ :optional len 30 }>
+\ ;;; -------- Hilbert transform
+: make-hilbert-transform <{ :optional len 30 -- gen }>
+  doc" Makes a Hilbert transform filter."
   len 2* 1+ { arrlen }
   arrlen 0.0 make-vct { arr }
   len even? if len else len 1+ then { lim }
@@ -771,18 +731,128 @@ creates an FIR filter from spectrum and order and returns a closure that calls i
   arrlen arr make-fir-filter
 ;
 ' fir-filter alias hilbert-transform
+\ 15 make-hilbert-transform value h
+\ 1 lambda: { y } h y hilbert-transform ;proc map-channel
 
-\ --- Butterworth filters (see also further below -- make-butter-lp et al) ---
-\ 
-\  translated from CLM butterworth.cl:
-\ 
-\    Sam Heisz, January 1998
-\    inspired by some unit generators written for Csound by Paris Smaragdis
-\    who based his work on formulas from 
-\    Charles Dodge, Computer music: synthesis, composition, and performance.
+\ ;;; -------- highpass filter 
+: make-highpass <{ fc :optional len 30 -- gen }>
+  doc" Makes an FIR highpass filter."
+  len 2* 1+ { arrlen }
+  arrlen 0.0 make-vct { arr }
+  len len negate ?do
+    pi i f* { denom }
+    fc i f* fsin fnegate { num }
+    arr i len +
+    i 0= if
+      1.0 fc pi f/ f-
+    else
+      num denom f/
+      pi i f* len f/ fcos 0.46 f* 0.54 f+  f*
+    then vct-set! drop
+  loop
+  arrlen arr make-fir-filter
+;
+' fir-filter alias highpass
+\ pi 0.1 f* make-highpass value hp
+\ 1 lambda: { y } hp y highpass ;proc map-channel
+
+\ ;;; -------- lowpass filter 
+: make-lowpass <{ fc :optional len 30 -- gen }>
+  doc" Makes an FIR lowpass filter."
+  len 2* 1+ { arrlen }
+  arrlen 0.0 make-vct { arr }
+  len len negate ?do
+    pi i f* { denom }
+    fc i f* fsin { num }
+    arr i len +
+    i 0= if
+      fc pi f/
+    else
+      num denom f/
+      pi i f* len f/ fcos 0.46 f* 0.54 f+  f*
+    then vct-set! drop
+  loop
+  arrlen arr make-fir-filter
+;
+' fir-filter alias lowpass
+\ pi 0.2 f* make-lowpass value lp
+\ 1 lambda: { y } lp y lowpass ;proc map-channel
+
+\ ;;; -------- bandpass filter 
+: make-bandpass <{ flo fhi :optional len 30 -- gen }>
+  doc" Makes an FIR bandpass filter."
+  len 2* 1+ { arrlen }
+  arrlen 0.0 make-vct { arr }
+  len len negate ?do
+    pi i f* { denom }
+    fhi i f* fsin flo i f* fsin f- { num }
+    arr i len +
+    i 0= if
+      fhi flo f- pi f/
+    else
+      num denom f/
+      pi i f* len f/ fcos 0.46 f* 0.54 f+  f*
+    then vct-set! drop
+  loop
+  arrlen arr make-fir-filter
+;
+' fir-filter alias bandpass
+\ pi 0.1 f* pi 0.2 f* make-bandpass value bp
+\ 1 lambda: { y } bp y bandpass ;proc map-channel
+
+\ ;;; -------- bandstop filter 
+: make-bandstop <{ flo fhi :optional len 30 -- gen }>
+  doc" Makes an FIR bandstop (notch) filter."
+  len 2* 1+ { arrlen }
+  arrlen 0.0 make-vct { arr }
+  len len negate ?do
+    pi i f* { denom }
+    fhi i f* fsin flo i f* fsin f- { num }
+    arr i len +
+    i 0= if
+      1.0  fhi flo f- pi f/  f-
+    else
+      num denom f/
+      pi i f* len f/ fcos 0.46 f* 0.54 f+  f*
+    then vct-set! drop
+  loop
+  arrlen arr make-fir-filter
+;
+' fir-filter alias bandstop
+\ pi 0.1 f* pi 0.3 f* make-bandstop value bs
+\ 1 lambda: { y } bs y bandstop ;proc map-channel
+
+\ ;;; -------- differentiator
+: make-differentiator <{ :optional len 30 -- gen }>
+  doc" Makes an FIR differentiator (highpass) filter."
+  len 2* 1+ { arrlen }
+  arrlen 0.0 make-vct { arr }
+  len len negate ?do
+    i 0<> if
+      pi i f* { pi*i }
+      arr i len +
+      pi*i fcos i f/  pi*i fsin  pi*i i f* f/  f-
+      pi*i len f/ fcos 0.46 f* 0.54 f+  f*
+      vct-set! drop
+    then
+  loop
+  arrlen arr make-fir-filter
+;
+' fir-filter alias differentiator
+\ make-differentiator value dt
+\ 1 lambda: { y } dt y differentiator ;proc map-channel
+
+\ ;;; -------- Butterworth filters (see also further below -- make-butter-lp et al)
+\ ;;;
+\ ;; translated from CLM butterworth.cl:
+\ ;;
+\ ;;   Sam Heisz, January 1998
+\ ;;   inspired by some unit generators written for Csound by Paris Smaragdis
+\ ;;   who based his work on formulas from 
+\ ;;   Charles Dodge, Computer music: synthesis, composition, and performance.
 
 : make-butter-high-pass ( freq -- flt )
-  doc" ( freq -- flt )  Makes a Butterworth filter with high pass cutoff at FREQ."
+  doc" Makes a Butterworth filter with high pass cutoff at FREQ."
   { freq }
   pi freq f* #f srate f/ ftan { r }
   r r f* { r2 }
@@ -793,9 +863,8 @@ creates an FIR filter from spectrum and order and returns a closure that calls i
   1.0 2.0 fsqrt r f* f- r2 f+ c1 f* { c5 }
   3 vct( c1 c2 c3 ) vct( 0.0 c4 c5 ) make-filter
 ;
-
 : make-butter-low-pass ( freq -- flt )
-  doc" ( freq -- flt )  Makes a Butterworth filter with low pass cutoff at FREQ.  \
+  doc" Makes a Butterworth filter with low pass cutoff at FREQ.  \
 The result can be used directly: 500.0 make-butter-low-pass filter-sound, \
 or via the 'butter' generator."
   { freq }
@@ -808,10 +877,8 @@ or via the 'butter' generator."
   1.0 2.0 fsqrt r f* f- r2 f+ c1 f* { c5 }
   3 vct( c1 c2 c3 ) vct( 0.0 c4 c5 ) make-filter
 ;
-
 : make-butter-band-pass ( freq bw -- flt )
-  doc" ( freq band -- flt )  \
-Makes a bandpass Butterworth filter with low edge at FREQ and width BAND."
+  doc" Makes a bandpass Butterworth filter with low edge at FREQ and width BAND."
   { freq bw }
   #f srate { sr }
   2.0 pi freq f* f* sr f/ fcos f2* { d }
@@ -823,10 +890,8 @@ Makes a bandpass Butterworth filter with low edge at FREQ and width BAND."
   c 1.0 f- c1 f* { c5 }
   3 vct( c1 c2 c3 ) vct( 0.0 c4 c5 ) make-filter
 ;
-
 : make-butter-band-reject ( freq bw -- flt )
-  doc" ( freq band -- flt )  \
-Makes a band-reject Butterworth filter with low edge at FREQ and width BAND."
+  doc" Makes a band-reject Butterworth filter with low edge at FREQ and width BAND."
   { freq bw }
   #f srate { sr }
   2.0 pi freq f* f* sr f/ fcos f2* { d }
@@ -838,8 +903,69 @@ Makes a band-reject Butterworth filter with low edge at FREQ and width BAND."
   1.0 c f- c1 f* { c5 }
   3 vct( c1 c2 c3 ) vct( 0.0 c4 c5 ) make-filter
 ;
-
 ' filter alias butter
 ' butter $" ( b sig -- res )  The generator side for the various make-butter procedures." help-set!
+\ 500.0 make-butter-low-pass filter-sound
+
+\ ;;; from "DSP Filter Cookbook" by Lane et al, Prompt Pubs, 2001
+\ ;;; 
+\ ;;; use with the filter generator
+\ ;;;   1000 make-iir-high-pass-2 value gen
+\ ;;;   gen 1.0 filter
+\ ;;;   etc
+:  make-biquad ( a0 a1 a2 b1 b2 -- gen )
+  { a0 a1 a2 b1 b2 }
+  3 vct( a0 a1 a2 ) vct( 0.0 b1 b2 ) make-filter
+;
+: make-iir-low-pass-2 ( fc :optional d -- gen )
+  '( 2.0 fsqrt ) 1 get-optargs { fc d }
+  two-pi fc f* mus-srate f/ { theta }
+  1.0 d f2/ theta fsin f* f-  1.0 d f2/ theta fsin f* f+  f/ f2/ { beta }
+  beta 0.5 f+ theta fcos f* { gamma }
+  beta 0.5 f+ gamma fnegate f+ f2/ { alpha }
+  3 vct( alpha  alpha f2*  alpha ) vct( 0.0  gamma -2.0 f*  beta f2* ) make-filter
+;
+: make-iir-high-pass-2 ( fc :optional d -- gen )
+  '( 2.0 fsqrt ) 1 get-optargs { fc d }
+  two-pi fc f* mus-srate f/ { theta }
+  1.0 d f2/ theta fsin f* f-  1.0 d f2/ theta fsin f* f+  f/ f2/ { beta }
+  beta 0.5 f+ theta fcos f* { gamma }
+  beta 0.5 f+ gamma f+ f2/ { alpha }
+  3 vct( alpha  alpha -2.0 f*  alpha ) vct( 0.0  gamma -2.0 f*  beta f2* ) make-filter
+;
+: make-iir-band-pass-2 ( f1 f2 -- gen )
+  { f1 f2 }
+  two-pi f1 f2 f* fsqrt mus-srate f/ { theta }
+  f1 f2 f* fsqrt f2 f1 f- f/ { Q }
+  theta Q f2* f/ ftan { t2 }
+  1.0 t2 f-  1.0 t2 f+  f/ f2/ { beta }
+  beta 0.5 f+ theta fcos f* { gamma }
+  0.5 beta f- { alpha }
+  3 vct( alpha  0.0  alpha fnegate ) vct( 0.0  gamma -2.0 f*  beta f2* ) make-filter
+;
+: make-iir-band-stop-2 ( f1 f2 -- gen )
+  { f1 f2 }
+  two-pi f1 f2 f* fsqrt mus-srate f/ { theta }
+  f1 f2 f* fsqrt f2 f1 f- f/ { Q }
+  theta Q f2* f/ ftan { t2 }
+  1.0 t2 f-  1.0 t2 f+  f/ f2/ { beta }
+  beta 0.5 f+ theta fcos f* { gamma }
+  0.5 beta f+ { alpha }
+  3 vct( alpha  gamma -2.0 f*  alpha fnegate ) vct( 0.0  gamma -2.0 f*  beta f2* ) make-filter
+;
+: make-eliminate-hum <{ :optional hum-freq 60.0 hum-harmonics 5 bandwith 10 -- }>
+  hum-harmonics nil make-array map!
+    hum-freq i 1.0 f+ f* { center }
+    bandwith f2/ { b2 }
+    center b2 f- center b2 f+ make-iir-band-stop-2
+  end-map ( gen )
+;
+: eliminate-hum ( gens x0 -- val )
+  { gens x0 }
+  gens each ( gen ) x0 filter to x0 end-each
+  x0
+;
+\ make-eliminate-hum value hummer
+\ 1 lambda: { x } hummer x eliminate-hum ;proc map-channel
 
 \ dsp.fs ends here

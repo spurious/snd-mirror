@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 23:36:09 CET 2005
-\ Changed: Wed Oct 11 23:07:27 CEST 2006
+\ Changed: Sat Dec 16 03:03:27 CET 2006
 
 \ Commentary:
 
@@ -217,7 +217,7 @@ hide
 set-current
 
 : make-current-window-display ( -- )
-  doc" ( -- )  Displays in upper right corner the overall current sound \
+  doc" Displays in upper right corner the overall current sound \
 and where the current window fits in it."
   current-window-display-is-running unless
     #t to current-window-display-is-running

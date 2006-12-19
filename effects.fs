@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Tue Dec 12 01:45:09 CET 2006
+\ Changed: Sat Dec 16 03:04:13 CET 2006
 
 \ Commentary:
 \
@@ -3183,12 +3183,12 @@ set-current
 ;
 previous
 
-: place-sound { mono stereo pan -- res }
-  doc" ( mono-snd stereo-snd pan-env -- res )  \
-Mixes a mono sound into a stereo sound, \
+: place-sound ( mono stereo pan -- res )
+  doc" Mixes a mono sound into a stereo sound, \
 splitting it into two copies whose amplitudes depend on the envelope PAN-ENV.  \
 If PAN-ENV is a number, the sound is split such that 0 is all in channel 0 \
-and 90 is all in channel 1."
+  and 90 is all in channel 1."
+  { mono stereo pan }
   pan number? if
     pan 90.0 f/ { pos }
     mono pos        stereo 1 effects-position-sound

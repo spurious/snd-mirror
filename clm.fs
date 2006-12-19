@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Thu Dec 14 03:47:30 CET 2006
+\ Changed: Sat Dec 16 03:00:48 CET 2006
 
 \ Commentary:
 \
@@ -250,7 +250,7 @@ previous
 16.0 1/f 32.0 1/f f+ notelength |S.
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-$" fth 14-Dec-2006" value *clm-version*
+$" fth 16-Dec-2006" value *clm-version*
 #f 		    value *output*
 #f 		    value *reverb*
 #f 		    value *locsig*
@@ -278,10 +278,6 @@ $" test.reverb"     value *clm-reverb-file-name*
   mus-lfloat        constant default-output-data-format
   mus-audio-default constant audio-output-device
   512               constant dac-size
-  1024 64 *         constant mus-file-buffer-size
-  #f                constant mus-clipping
-  512               constant clm-table-size
-  8                 constant mus-array-print-lengt
 [then]
 
 default-output-chans       value *clm-channels*
@@ -293,8 +289,8 @@ audio-output-device        value *clm-output-device*
 dac-size                   value *clm-rt-bufsize*
 mus-file-buffer-size       value *clm-file-buffer-size*
 mus-clipping               value *clm-clipped*
-clm-table-size             value *clm-table-size*
 mus-array-print-length     value *clm-array-print-length*
+clm-table-size             value *clm-table-size*
 
 \ internal global variables
 *clm-channels*      value *channels*
@@ -306,7 +302,7 @@ hide
 user *fth-file-number*
 set-current
 : tempnam ( -- name )
-  doc" ( -- name )  Looks for environment variables TMP, TEMP, or TMPDIR, otherwise \
+  doc" Looks for environment variables TMP, TEMP, or TMPDIR, otherwise \
 uses /tmp as temporary path and produces something like:\n\
 /tmp/fth-12345-1.snd\n\
 /tmp/fth-12345-2.snd\n\
@@ -505,8 +501,7 @@ hide
   then
 ;
 set-current
-: snd-info ( output :key reverb-file-name scaled? timer -- )
-  <{ output :key reverb-file-name #f scaled? #f timer #f }>
+: snd-info <{ output :key reverb-file-name #f scaled? #f timer #f -- }>
   output mus-sound-duration { dur }
   output mus-sound-frames   { frames }
   output mus-sound-chans    { channels }
@@ -529,15 +524,13 @@ set-current
 previous
 
 \ === Playing and Recording one or two Channel Sounds ===
-: play-sound ( input :key verbose dac-size audio-format -- )
-  doc"  ( input :key verbose dac-size audio-format -- )  \
-Plays sound file INPUT.\n\
-\\ keyword args and default values\n\
-\\ :verbose        *clm-verbose*       (#f)\n\
-\\ :dac-size       *clm-rt-bufsize*    (512)\n\
-\\ :audio-format   *clm-audio-format*  (mus-lshort)\n\
+: play-sound <{ input
+     :key
+     verbose      *clm-verbose*
+     dac-size     *clm-rt-bufsize*
+     audio-format *clm-audio-format* -- }>
+  doc" Plays sound file INPUT.\n\
 \"bell.snd\" :verbose #t play-sound"
-  <{ input :key verbose *clm-verbose* dac-size *clm-rt-bufsize* audio-format *clm-audio-format* }>
   input find-file to input
   input false? if 'no-such-file '( get-func-name input ) fth-throw then
   input mus-sound-frames { frames }
@@ -567,19 +560,6 @@ Plays sound file INPUT.\n\
   then
 ;
 : record-sound ( output keyword-args -- )
-  doc"  ( output keyword-args -- )  \
-Records from dac output device to the specified OUTPUT file.\n\
-\\ keyword args and default values\n\
-\\ :duration        10.0\n\
-\\ :verbose         *clm-verbose*       (#f)\n\
-\\ :output-device   *clm-output-device* (mus-audio-default)\n\
-\\ :dac-size        *clm-rt-bufsize*    (512)\n\
-\\ :srate           *clm-srate*         (22050)\n\
-\\ :channels        *clm-channels*      (1)\n\
-\\ :audio-format    *clm-audio-format*  (mus-lshort)\n\
-\\ :data-format     *clm-data-format*   (mus-lfloat)\n\
-\\ :header-type     *clm-header-type*   (mus-next)\n\
-\\ :comment         *clm-comment*       (#f)"
   <{ output :key
      duration      10.0
      verbose       *clm-verbose*
@@ -590,7 +570,8 @@ Records from dac output device to the specified OUTPUT file.\n\
      audio-format  *clm-audio-format*
      data-format   *clm-data-format*
      header-type   *clm-header-type*
-     comment       *clm-comment* }>
+     comment       *clm-comment*     -- }>
+  doc" Records from dac output device to the specified OUTPUT file."
   duration seconds->samples   	{ frames }
   dac-size frames min 	        { bufsize }
   channels 2 min      	        { chans }
@@ -625,19 +606,11 @@ Records from dac output device to the specified OUTPUT file.\n\
   snd-fd frames chans * data-format mus-bytes-per-sample * mus-sound-close-output drop
   old-srate set-mus-srate drop
 ;
-: clm-mix ( infile :key output output-frame frames input-frame scaler -- )
-  doc" ( infile :key output #f output-frame 0 frames #f input-frame 0 scaler 1.0 -- )  \
-Mixes files in with-sound's *output* generator.\n\
-\\ keyword args and default values\n\
-\\ output         #f (*output*)\n\
-\\ output-frame   0\n\
-\\ frames         #f (infile mus-sound-frames)\n\
-\\ input-frame    0\n\
-\\ scaler         1.0\n\
+: clm-mix <{ infile :key output #f output-frame 0 frames #f input-frame 0 scaler 1.0 -- }>
+  doc" Mixes files in with-sound's *output* generator.\n\
 \"oboe.snd\" clm-mix\n\
 Mixes oboe.snd in *output* at *output*'s location 0 from oboe.snd's location 0 on.  \
-The whole oboe.snd file will be mixed in because :frames was not specified."
-  <{ infile :key output #f output-frame 0 frames #f input-frame 0 scaler 1.0 }>
+The whole oboe.snd file will be mixed in because :frames is not specified."
   0  { chans }
   #f { mx }
   *output* mus-output? { outgen }
@@ -878,6 +851,7 @@ set-current
   *output* sample->file? unless
     'with-sound-error '( get-func-name $" cannot open sample->file" _ ) fth-throw
   then
+  *output* gc-protect drop
   cont? if
     output mus-sound-srate set-mus-srate drop
     'snd provided? if output 0 find-sound dup sound? if close-sound-extend else drop then then
@@ -896,6 +870,7 @@ set-current
     *reverb* sample->file? unless
       'with-sound-error '( get-func-name $" cannot open reverb sample->file" _ ) fth-throw
     then
+    *reverb* gc-protect drop
   then
   ws ws-before-output
   ws :timer make-timer hash-set!
@@ -943,7 +918,7 @@ previous
 \        ' resflt-test :play #f :channels 2 with-sound .g
 \        lambda: resflt-test ; :output "resflt.snd" with-sound drop
 : with-sound ( body-xt keyword-args -- ws )
-  doc" ( body-xt keyword-args -- )  Evals CLM instruments.\n\
+  doc" Evals CLM instruments.\n\
 \\ keywords and default values:\n\
 :play              *clm-play*             (#f)\n\
 :statistics        *clm-statistics*       (#f)\n\
@@ -977,7 +952,7 @@ previous
 ;
 
 : clm-load ( keyword-args output -- ws )
-  doc" ( keyword-args output -- )  Loads and evals CLM files.  \
+  doc" Loads and evals CLM files.  \
 See with-sound for a full keyword list.\n\
 :play #t :player \"sndplay\" \"test.fsm\" clm-load drop"
   { output }
@@ -996,7 +971,7 @@ hide
      output fth-tempnam
      offset 0.0
      scaled-to #f
-     scaled-by #f }>
+     scaled-by #f -- }>
   :output    output
   :scaled-to scaled-to
   :scaled-by scaled-by with-sound drop
@@ -1010,8 +985,7 @@ set-current
 previous
 
 : with-mix ( body-str args fname start -- )
-  doc" ( body-str args fname start -- )  \
-BODY-STR is a string with with-sound commands, \
+  doc" BODY-STR is a string with with-sound commands, \
 ARGS is a list of with-sound arguments, \
 FNAME is the temporary mix file name without extension, \
 and START is the begin time for mix in.\n\
@@ -1059,8 +1033,7 @@ lambda: ( -- )\n\
 ;
 
 : sound-let ( ws-xt-lst body-xt -- )
-  doc" ( ws-xt-lst body-xt -- )  \ 
-Requires a list of lists WS-XT-LST with with-sound args and xts, and a BODY-XT.  \
+  doc" Requires a list of lists WS-XT-LST with with-sound args and xts, and a BODY-XT.  \
 The BODY-XT must take WS-XT-LST length arguments which are tempfile names.  \
 with-sound will be feed with ws-args und ws-xts from WS-XT-LST.  \
 :output is set to tempnam which will be on stack before executing BODY-XT.  \

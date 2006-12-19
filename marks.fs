@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Mon Dec 11 22:43:11 CET 2006
+\ Changed: Sat Dec 16 04:01:44 CET 2006
 
 \ Commentary:
 \
@@ -34,8 +34,9 @@ require examp
 
 \ mark-name->id is a global version of find-mark
 
-: mark-name->id { name -- m }
-  doc" ( name -- m )  Like find-mark but searches all currently accessible channels."
+: mark-name->id ( name -- m )
+  doc" Like find-mark but searches all currently accessible channels."
+  { name }
   #f					\ flag
   sounds each { snd }
     snd channels 0 ?do
@@ -49,14 +50,15 @@ require examp
   end-each
 ;
 
-: move-syncd-marks { syn diff }
-  doc" ( sync diff -- )  Moves all marks sharing SYNC by DIFF samples."
+: move-syncd-marks ( sync diff )
+  doc" Moves all marks sharing SYNC by DIFF samples."
+  { syn diff }
   syn syncd-marks each ( m ) dup undef mark-sample diff + set-mark-sample drop end-each
 ;
 
-: describe-mark { id -- ary }
-  doc" ( id -- ary )  \
-Returns a description of the movements of mark ID over the channel's edit history."
+: describe-mark ( id -- ary )
+  doc" Returns a description of the movements of mark ID over the channel's edit history."
+  { id }
   id ['] mark-home 'no-such-mark nil fth-catch if
     sounds each { snd }
       snd channels 0 ?do
@@ -96,9 +98,9 @@ Returns a description of the movements of mark ID over the channel's edit histor
 : set-mark-properties ( id val -- )   swap object-id 'mark-property rot property-set! ;
 
 
-: mark-property { id key -- val }
-  doc" ( id key -- val )  \
-Returns the value associated with KEY in the given mark's property list, or #f."
+: mark-property ( id key -- val )
+  doc" Returns the value associated with KEY in the given mark's property list, or #f."
+  { id key }
   id mark? if
     id mark-properties dup hash? if key hash-ref else drop #f then
   else
@@ -106,8 +108,9 @@ Returns the value associated with KEY in the given mark's property list, or #f."
   then
 ;
 
-: set-mark-property { id key val -- }
-  doc" ( id key val -- )  Sets the value VAL to KEY in the given mark's property list."
+: set-mark-property ( id key val -- )
+  doc" Sets the value VAL to KEY in the given mark's property list."
+  { id key val }
   id mark? if
     id mark-properties { props }
     props hash? if
@@ -152,14 +155,15 @@ hide
 ;
 set-current
 : save-mark-properties ( -- )
-  doc" ( -- )  Sets up an after-save-state-hook function to save any mark-properties."
+  doc" Sets up an after-save-state-hook function to save any mark-properties."
   after-save-state-hook ['] save-mark-properties-cb 1 make-proc add-hook!
 ;
 previous
 
-: mark-click-info { id -- #t }
-  doc" ( id -- #t )  A mark-click-hook function that describes a mark and its properties.\n\
+: mark-click-info ( id -- #t )
+  doc" A mark-click-hook function that describes a mark and its properties.\n\
 mark-click-hook ' mark-click-info 1 make-proc add-hook!"
+  { id }
   id mark-name empty? if "" else $"  (%S)" '( id mark-name ) string-format then { mname }
   $"     mark id: %d%s\n"   '( id mname )     string-format { info-string }
   $"      sample: %d (%.3f secs)\n"
@@ -201,9 +205,8 @@ mark-click-hook ' mark-click-info 1 make-proc add-hook!"
 
 0 [if]
   output-comment-hook 1 lambda: { str } selected-sound marks->string ;proc add-hook!
-  after-open-hook 1 lambda: { snd }
-    snd comment { str }
-    str ['] string-eval #t nil fth-catch if drop ( str ) then
+  after-open-hook 1 lambda: ( snd -- )
+    ( snd ) comment ( str ) ['] string-eval #t nil fth-catch drop ( str or eval-status )
   ;proc add-hook!
 [then]
 

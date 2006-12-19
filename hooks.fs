@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Aug 08 23:27:50 CEST 2006
-\ Changed: Wed Dec 13 03:08:29 CET 2006
+\ Changed: Sat Dec 16 03:58:44 CET 2006
 
 \ Commentary:
 
@@ -96,7 +96,7 @@ require examp
 [then] constant snd-hooks
 
 : reset-all-hooks ( -- )
-  doc" ( -- )  Removes all Snd hook functions."
+  doc" Removes all Snd hook functions."
   snd-hooks each ( hook ) dup hook? if reset-hook! else drop then end-each
   all-chans each { lst }
     lst  car { snd }
@@ -108,8 +108,7 @@ require examp
 ;
 
 : with-local-hook ( hook local-hook-procs thunk -- result )
-  doc" ( hook local-hook-procs thunk -- result )  \
-Evaluates THUNK (an xt) with HOOK set to LOCAL-HOOK-PROCS (a list of procs), \
+  doc" Evaluates THUNK (an xt) with HOOK set to LOCAL-HOOK-PROCS (a list of procs), \
 then restores HOOK to its previous state."
   { hook local-hook-procs thunk }
   hook hook->list { old-procs }

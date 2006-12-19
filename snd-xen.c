@@ -1293,6 +1293,8 @@ void snd_load_file(char *filename)
     {
       /* try tacking on extension */
       str1 = mus_format("%s.%s", str, XEN_FILE_EXTENSION);
+      /* PERHAPS: add_source_file_extension */
+
       if (!mus_file_probe(str1))
 	{
 	  FREE(str);

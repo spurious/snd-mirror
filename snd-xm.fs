@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Sun Aug 20 01:01:40 CEST 2006
+\ Changed: Sat Dec 16 04:34:32 CET 2006
 
 \ Commentary:
 \
@@ -61,7 +61,7 @@ require examp
 ;
 
 : current-screen ( -- scr )
-  doc" ( -- scr )  Returns the current X screen number of the current display."
+  doc" Returns the current X screen number of the current display."
   main-dpy FDefaultScreenOfDisplay
 ;
 : white-pixel  ( -- pix ) current-screen FWhitePixelOfScreen ;
@@ -70,8 +70,9 @@ require examp
 
 \ --- apply func to every widget belonging to w ---
 
-: for-each-child { wid xt -- }
-  doc" ( widget xt -- )  Applies XT to WIDGET and each of its children."
+: for-each-child ( wid xt -- )
+  doc" Applies XT to WIDGET and each of its children."
+  { wid xt }
   wid xt execute
   wid FXtIsComposite if
     wid '( FXmNchildren 0 ) FXtVaGetValues cadr each ( w ) xt recurse end-each
@@ -92,9 +93,9 @@ set-current
 ;
 previous
   
-: find-child { widget name -- wid }
-  doc" ( widget name -- wid )  \
-Returns a widget named NAME, if one can be found in the widget hierarchy beneath WIDGET."
+: find-child ( widget name -- wid )
+  doc" Returns a widget named NAME, if one can be found in the widget hierarchy beneath WIDGET."
+  { widget name }
   #f
   widget children->array each { w }
     w FXtName name string= if
@@ -124,7 +125,7 @@ hide
 ;
 set-current
 : display-widget-tree ( widget -- )
-  doc" ( widget -- )  Displays the hierarchy of widgets beneath WIDGET."
+  doc" Displays the hierarchy of widgets beneath WIDGET."
   ( widget ) 0 ['] display-widget execute
 ;
 previous
@@ -142,13 +143,13 @@ hide
 ;
 set-current
 : set-main-color-of-widget ( widget -- )
-  doc" ( widget -- ) Sets the background color of WIDGET."
+  doc" Sets the background color of WIDGET."
   ['] change-color-xt for-each-child
 ;
 previous
 
 : host-name ( -- host )
-  doc" ( -- host )  Returns name of current machine."
+  doc" Returns name of current machine."
   main-widgets cadr { wid }
   wid FXtWindow { win }
   main-dpy win main-dpy $" WM_CLIENT_MACHINE" #f FXInternAtom 0 32 #f FXA_STRING
@@ -394,8 +395,7 @@ hide
 ;
 set-current
 : show-smpte-label ( on-or-off -- )
-  doc" ( on-or-off -- )  \
-Turns on/off a label in the time-domain graph showing \
+  doc" Turns on/off a label in the time-domain graph showing \
 the current smpte frame of the leftmost sample."
   ( on-or-off ) if
     after-graph-hook ['] draw-smpte-label hook-member? unless
@@ -419,8 +419,9 @@ the current smpte frame of the leftmost sample."
 : smpte-is-on ( -- flag ) after-graph-hook ['] draw-smpte-label hook-member? ;
 previous
 
-: change-label { wid new-label -- }
-  doc" ( widget new-label -- )  Changes WIDGET's label to be NEW-LABEL."
+: change-label ( wid new-label -- )
+  doc" Changes WIDGET's label to be NEW-LABEL."
+  { wid new-label }
   new-label FXmStringCreateLocalized { str }
   wid '( FXmNlabelString str ) FXtVaSetValues drop
   str FXmStringFree drop
@@ -462,9 +463,10 @@ set-current
 
 #f value showing-disk-space		\ for prefs
 
-: show-disk-space { snd -- }
-  doc" ( snd -- )  Adds a label to the minibuffer area showing the current free space \
+: show-disk-space ( snd -- )
+  doc" Adds a label to the minibuffer area showing the current free space \
 (for use with after-open-hook)."
+  { snd }
   #f labelled-snds each { n } n car snd = if drop n leave then end-each { previous-label }
   previous-label unless
     snd sound? if
@@ -500,9 +502,9 @@ set-current
 \ after-open-hook ' show-disk-space 1 make-proc add-hook!
 previous
 
-: current-label { wid -- label }
-  doc" ( widget -- label )  Returns WIDGET's label."
-  wid '( FXmNlabelString 0 ) FXtVaGetValues cadr FXmFONTLIST_DEFAULT_TAG FXmStringGetLtoR cadr
+: current-label ( widget -- label )
+  doc" Returns WIDGET's label."
+  ( wid ) '( FXmNlabelString 0 ) FXtVaGetValues cadr FXmFONTLIST_DEFAULT_TAG FXmStringGetLtoR cadr
 ;
 
 \ snd-xm.fs ends here

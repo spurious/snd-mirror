@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Tue Dec 12 01:03:22 CET 2006
+\ Changed: Sat Dec 16 03:37:07 CET 2006
 
 \ Commentary:
 
@@ -109,7 +109,7 @@ require env
 \ 
 \ this mainly involves keeping track of the current sound/channel
 : selection-rms ( -- val )
-  doc" ( -- val )  Returns rms of selection data using sample readers."
+  doc" Returns rms of selection data using sample readers."
   selection? if
     selection-position #f #f 1 #f make-sample-reader { rd }
     selection-frames { len }
@@ -120,9 +120,8 @@ require env
   then
 ;
 
-: region-rms ( :optional n=0 -- val )
-  doc" ( :optional n=0 -- val )  Returns rms of region N's data (chan 0)."
-  <{ :optional reg 0 }>
+: region-rms <{ :optional reg 0 -- val }>
+  doc" Returns rms of region N's data (chan 0)."
   reg region? if
     0 0 reg region->vct { data }
     data dup dot-product data length f/ fsqrt
@@ -131,17 +130,16 @@ require env
   then
 ;
 
-: window-samples ( :optional snd chn -- v )
-  doc" ( :optional snd chn -- vct )  Samples in SND channel CHN in current graph window."
-  <{ :optional snd #f chn #f }>
+: window-samples <{ :optional snd #f chn #f -- vct }>
+  doc" Samples in SND channel CHN in current graph window."
+
   snd chn left-sample { wl }
   snd chn right-sample { wr }
   wl  wr wl - 1+  snd chn #f channel->vct
 ;
 
 : display-energy ( snd chn -- v )
-  doc" ( snd chn -- val )  \
-A lisp-graph-hook function to display the time domain data as energy (squared).\n\
+  doc" A lisp-graph-hook function to display the time domain data as energy (squared).\n\
 list-graph-hook ' display-energy 2 make-proc add-hook!"
   { snd chn }
   snd chn undef undef undef make-graph-data dup list? if cadr then { data }
@@ -160,7 +158,7 @@ hide
 : db-calc ( val -- r ) { val } val 0.001 f< if -60.0 else 20.0 val flog10 f* then ;
 set-current
 : display-db ( snd chn -- v )
-  doc" ( snd chn -- val )  A lisp-graph-hook function to display the time domain data in dB.\n\
+  doc" A lisp-graph-hook function to display the time domain data in dB.\n\
 list-graph-hook ' display-db 2 make-proc add-hook!"
   { snd chn }
   snd chn undef undef undef make-graph-data dup list? if cadr then { data }
@@ -178,7 +176,7 @@ list-graph-hook ' display-db 2 make-proc add-hook!"
 previous
 
 : fft-peak ( snd chn scaler -- pk )
-  doc" ( snd chn dummy -- pk )  returns the peak spectral magnitude"
+  doc" Returns the peak spectral magnitude"
   { snd chn scaler }
   snd chn transform-graph?
   snd chn transform-graph-type graph-once = && if
@@ -193,8 +191,7 @@ previous
 \ --- comb-filter ---
 
 : comb-filter ( scaler size -- proc; x self -- res )
-  doc" ( scaler size -- proc; x self -- res )  \
-Returns a comb-filter ready for map-channel etc: 0.8 32 comb-filter map-channel.  \
+  doc" Returns a comb-filter ready for map-channel etc: 0.8 32 comb-filter map-channel.  \
 If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
   { scaler size }
   lambda-create scaler size make-comb , latestxt 1 make-proc
@@ -206,8 +203,7 @@ If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
 \ by using filters at harmonically related sizes, we can get chords:
 
 : comb-chord ( scaler size amp -- proc; x self -- res )
-  doc" ( scaler size amp -- proc; x self -- res )  \
-Returns a set of harmonically-related comb filters: 0.95 100 0.3 comb-chord map-channel"
+  doc" Returns a set of harmonically-related comb filters: 0.95 100 0.3 comb-chord map-channel"
   { scaler size amp }
   scaler size make-comb { c1 }
   scaler size 0.75 f* f>s make-comb { c2 }
@@ -225,8 +221,7 @@ Returns a set of harmonically-related comb filters: 0.95 100 0.3 comb-chord map-
 \ ;;; or change the comb length via an envelope:
 
 : zcomb ( scaler size pm -- proc; x self -- val )
-  doc" ( scaler size pm -- proc; x self -- val )  \
-returns a comb filter whose length varies according to an envelope:\n\
+  doc" Returns a comb filter whose length varies according to an envelope:\n\
 0.8 32 '( 0 0 1 10 ) zcomb map-channel "
   { scaler size pm }
   :size size :max-size pm 0.0 max-envelope 1.0 f+ size f+ floor f>s make-comb { cmb }
@@ -237,16 +232,14 @@ returns a comb filter whose length varies according to an envelope:\n\
 ;
 
 : notch-filter ( scaler size -- proc; x self -- val )
-  doc" ( scaler size -- proc; x self -- val )  \
-returns a notch-filter: 0.8 32 notch-filter map-channel"
+  doc" Returns a notch-filter: 0.8 32 notch-filter map-channel"
   make-notch lambda-create , latestxt 1 make-proc
  does> { x self -- val }
   self @ ( cmd ) x 0.0 notch
 ;
 
 : formant-filter ( radius frequency -- proc; x self -- val )
-  doc" ( radius frequency -- proc; x self -- val )  \
-returns a formant generator: 0.99 2400 formant-filter map-channel.  \
+  doc" Returns a formant generator: 0.99 2400 formant-filter map-channel.  \
 Faster is:  0.99 2400 make-formant filter-sound"
   make-formant lambda-create , latestxt 1 make-proc
  does> { x self -- val }
@@ -254,8 +247,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
 ;
 
 : formants ( r1 f1 r2 f2 r3 f3 -- proc; x self -- val )
-  doc" ( r1 f1 r2 f2 r3 f3 -- proc; x self -- val )  \
-returns 3 formant filters in parallel: 0.99 900 0.98 1800 0.99 2700 formants map-channel"
+  doc" Returns 3 formant filters in parallel: 0.99 900 0.98 1800 0.99 2700 formants map-channel"
   { r1 f1 r2 f2 r3 f3 }
   r1 f1 make-formant { fr1 }
   r2 f2 make-formant { fr2 }
@@ -268,8 +260,7 @@ returns 3 formant filters in parallel: 0.99 900 0.98 1800 0.99 2700 formants map
 ;
 
 : moving-formant ( radius move -- proc; x self -- val )
-  doc" ( radius move -- proc; x self -- val )  \
-returns a time-varying (in frequency) formant filter:\n\
+  doc" Returns a time-varying (in frequency) formant filter:\n\
 0.99 '( 0 1200 1 2400 ) moving-formant map-channel"
   { radius move }
   radius move cadr make-formant { frm }
@@ -282,8 +273,7 @@ returns a time-varying (in frequency) formant filter:\n\
 ;
 
 : osc-formant ( radius bases amounts freqs -- proc; x self -- val )
-  doc" ( radius move -- proc; x self -- val )  \
-returns a time-varying (in frequency) formant filter:\n\
+  doc" Returns a time-varying (in frequency) formant filter:\n\
 0.99 '( 0 1200 1 2400 ) moving-formant map-channel"
   { radius bases amounts freqs }
   bases vct-length { len }
@@ -306,8 +296,7 @@ returns a time-varying (in frequency) formant filter:\n\
 ;
 
 : zero+ ( -- proc; n self -- val )
-  doc" ( -- proc; n self -- val )  \
-finds the next positive-going zero crossing (if searching forward) (for use with C-s)"
+  doc" Finds the next positive-going zero crossing (if searching forward) (for use with C-s)"
   lambda-create 0.0 ( lastn ) , latestxt 1 make-proc
  does> { n self -- val }
   self @ ( lastn ) f0<  n f0>= && -1 && ( rtn )
@@ -316,8 +305,7 @@ finds the next positive-going zero crossing (if searching forward) (for use with
 ;
 
 : next-peak ( -- proc; n self -- val )
-  doc" ( -- proc; n self -- val )  \
-finds the next max or min point in the time-domain waveform (for use with C-s)"
+  doc" Finds the next max or min point in the time-domain waveform (for use with C-s)"
   lambda-create ( last0 ) #f , ( last1 ) #f , latestxt 1 make-proc
  does> { n self -- val }
   self       @ { last0 }
@@ -397,7 +385,7 @@ set-current
 ;
 
 : make-moog-filter ( freq Q -- gen )
-  doc" ( freq Q -- gen )  Makes a new moog-filter generator.  \
+  doc" Makes a new moog-filter generator.  \
 FREQ is the cutoff in Hz, Q sets the resonance: 0 = no resonance, 1: oscillates at FREQUENCY."
   { freq Q }
   moog-filter% %alloc { gen }

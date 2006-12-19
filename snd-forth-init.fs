@@ -155,9 +155,7 @@ output-comment-hook 1 lambda: ( str1 -- str2 )
 ;proc add-hook!
 0 [if]
   after-open-hook 1 lambda: ( snd -- )
-    { snd }
-    snd comment { str }
-    str ['] string-eval #t nil fth-catch if drop ( str ) then
+    ( snd ) comment ( str ) ['] string-eval #t nil fth-catch drop ( str or eval-status )
   ;proc add-hook!
 [then]
 

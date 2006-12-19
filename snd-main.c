@@ -1412,18 +1412,20 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		}
 	      else
 		{
-		  /* TODO: if (say) ruby, look first for *.rb etc */
 		  if ((strcmp("-l", argname) == 0) ||
 		      (strcmp("-load", argname) == 0) ||
 		      (strcmp("-b", argname) == 0) ||
 		      (strcmp("-batch", argname) == 0) ||
 		      ((file_extension(argname)) && 
-		       ((strcmp(file_extension(argname), "scm") == 0) ||
+		       ((strcmp(file_extension(argname), XEN_FILE_EXTENSION) == 0) || /* scm rb fs */
+#if HAVE_SCHEME
 			(strcmp(file_extension(argname), "cl") == 0) ||
 			(strcmp(file_extension(argname), "lisp") == 0) ||
-			(strcmp(file_extension(argname), "rb") == 0) ||
-			(strcmp(file_extension(argname), "fs") == 0) ||
+#endif
+#if HAVE_FORTH
  			(strcmp(file_extension(argname), "fth") == 0) ||
+ 			(strcmp(file_extension(argname), "fsm") == 0) ||
+#endif
  			(strcmp(file_extension(argname), "marks") == 0)))) /* from save-marks */
 		    {
 		      if ((strcmp("-l", argname) == 0) || 

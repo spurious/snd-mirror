@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Sun Dec 03 02:46:03 CET 2006
+\ Changed: Sat Dec 16 04:20:49 CET 2006
 
 \ Commentary:
 \
@@ -48,8 +48,9 @@
 require clm
 require examp
 
-: tree-for-each { xt tree -- ?? }
-  doc" ( xt tree -- ?? )  Applies XT to every leaf of TREE."
+: tree-for-each ( xt tree -- ?? )
+  doc" Applies XT to every leaf of TREE."
+  { xt tree }
   tree null? unless
     tree pair? if
       xt tree car recurse
@@ -62,8 +63,8 @@ require examp
 
 \ === Mixes ===
 
-: mix-sound { file start -- id }
-  doc" ( file start -- mix-id )  Mixes FILE (all chans) at START in the currently selected sound."
+: mix-sound <{ file :optional start 0 -- id }>
+  doc" Mixes FILE (all chans) at START in the currently selected sound."
   file start #t undef undef undef undef undef mix
 ;
 
@@ -72,13 +73,13 @@ hide
 : delete-all-mixes-cb ( -- ) ['] delete-mix-xt undef undef mixes tree-for-each ;
 set-current
 : delete-all-mixes ( -- )
-  doc" ( -- )  Removes all mixes (sets all amps to 0)"
+  doc" Removes all mixes (sets all amps to 0)"
   ['] delete-all-mixes-cb 0 make-proc undef as-one-edit drop
 ;
 previous
 
-: find-mix { samp snd chn -- mx }
-  doc" ( sample snd chn -- mx )  Returns the id of the mix at the given SAMPLE, or #f."
+: find-mix <{ samp :optional snd #f chn #f -- mx }>
+  doc" Returns the id of the mix at the given SAMPLE, or #f."
   #f					\ flag
   snd snd-snd chn snd-chn mixes each { id }
     id mix-position samp = if
@@ -114,21 +115,18 @@ hide
   mix0
 ;
 set-current
-: pan-mix { name beg envelope snd chn auto-delete -- mx }
-  doc" ( name beg envelope snd chn auto-delete -- mx )  Mixes FILE into the sound SND \
-starting at BEG (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan 1).  \
-So, \"oboe.snd\" 0.1 '( 0 0 1 1 ) #f 0 #f pan-mix goes from all chan 0 to all chan 1.  \
+: pan-mix <{ name :optional beg 0 envelope 1.0 snd #f chn 0 auto-delete #f -- mx }>
+  doc" Mixes FILE into the sound SND starting at BEG \
+(in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan 1).  \
+So, \"oboe.snd\" 0.1 '( 0 0 1 1 ) pan-mix goes from all chan 0 to all chan 1.  \
 If the variable with-tags is #t, the resultant mixes are placed in their own track, \
 and the track envelope controls the panning.  \
 If ENVELOPE is a scaler, it is turned into an evelope at that value.  \
 AUTO-DELETE determines whether the in-coming file should be treated as a temporary file \
 and deleted when the mix is no longer accessible."
-  name file-exists? unless
-    'no-such-file '( get-func-name name ) fth-throw
-  then
-  snd snd-snd dup sound? unless
-    'no-such-sound '( get-func-name snd ) fth-throw
-  then { idx }
+  name find-file to name
+  name false? if 'no-such-file '( get-func-name name ) fth-throw then
+  snd snd-snd dup sound? unless 'no-such-sound '( get-func-name snd ) fth-throw then { idx }
   with-mix-tags { old-with-mix-tag }
   #t set-with-mix-tags drop
   name mus-sound-chans { incoming-chans }
@@ -176,8 +174,8 @@ and deleted when the mix is no longer accessible."
 ;
 previous
 
-: pan-mix-selection { beg envelope snd chn -- mx }
-  doc" ( beg envelope snd chn -- mx )  Mixes the current selection into the sound SND \
+: pan-mix-selection <{ :optional beg 0 envelope 1.0 snd #f chn 0 -- mx }>
+  doc" Mixes the current selection into the sound SND \
 starting at START (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan 1)."
   selection? if
     snd-tempnam save-selection beg envelope snd chn #t pan-mix
@@ -186,8 +184,8 @@ starting at START (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan
   then
 ;
 
-: pan-mix-region { reg beg envelope snd chn -- mx }
-  doc" ( reg beg envelope snd chn -- mx )  Mixes the given region into the sound SND \
+: pan-mix-region <{ reg :optional beg 0 envelope 1.0 snd #f chn 0 -- mx }>
+  doc" Mixes the given region into the sound SND \
 starting at START (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan 1)."
   reg region? if
     reg snd-tempnam save-region beg envelope snd chn #t pan-mix
@@ -196,8 +194,7 @@ starting at START (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan
   then
 ;
 
-: pan-mix-vct ( v beg envelope snd chn -- mx )
-  { v beg envelope snd chn }
+: pan-mix-vct <{ v :optional beg 0 envelope 1.0 snd #f chn 0 -- mx }>
   snd-tempnam { temp-file }
   temp-file snd srate 1 mus-sound-open-output { fd }
   fd 0 v vct-length 1- 1 v vct->sound-data mus-sound-write drop
@@ -205,8 +202,9 @@ starting at START (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan
   temp-file beg envelope snd chn #t pan-mix
 ;
 
-: mix->vct { id -- v }
-  doc" ( id -- vct )  Returns mix's data in vct."
+: mix->vct ( id -- v )
+  doc" Returns mix's data in vct."
+  { id }
   id mix? if
     id 0 make-mix-sample-reader { reader }
     id mix-frames 0.0 make-vct map! reader read-mix-sample end-map
@@ -216,8 +214,9 @@ starting at START (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan
   then
 ;
 
-: save-mix { id fname -- }
-  doc" ( id filename -- )  Saves mix data (as floats) in FILENAME."
+: save-mix ( id fname -- )
+  doc" Saves mix data (as floats) in FILENAME."
+  { id fname }
   id mix->vct { v }
   fname #f srate mus-sound-open-output { fd }
   fd 0 v vct-length 1- 1 v vct->sound-data mus-sound-write drop
@@ -225,7 +224,7 @@ starting at START (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan
 ;
 
 : mix-maxamp ( id -- max-amp )
-  doc" ( id -- max-amp )  Returns the max amp in the given mix."
+  doc" Returns the max amp in the given mix."
   mix->vct vct-peak
 ;
 
@@ -252,10 +251,10 @@ hide
   #t
 ;
 set-current
-: snap-mix-to-beat { pos? -- }
-  doc" ( at-tag-position -- )  Forces a dragged mix to end up on a beat (see beats-per-minute).  \
+: snap-mix-to-beat <{ :optional at-tag-position? #f -- }>
+  doc" Forces a dragged mix to end up on a beat (see beats-per-minute).  \
 Resets mix-release-hook to cancel."
-  mix-release-hook pos? snap-mix-to-beat-cb add-hook!
+  mix-release-hook at-tag-position? snap-mix-to-beat-cb add-hook!
 ;
 previous
 
@@ -264,9 +263,9 @@ previous
 : mix-properties     ( id -- props ) object-id 'mix-property property-ref ;
 : set-mix-properties ( id val -- )   swap object-id 'mix-property rot property-set! ;
 
-: mix-property { id key -- val }
-  doc" ( id key -- val )  \
-Returns the value associated with KEY in the given mix's property list, or #f."
+: mix-property ( id key -- val )
+  doc" Returns the value associated with KEY in the given mix's property list, or #f."
+  { id key }
   id mix? if
     id mix-properties dup hash? if key hash-ref else drop #f then
   else
@@ -274,8 +273,9 @@ Returns the value associated with KEY in the given mix's property list, or #f."
   then
 ;
 
-: set-mix-property { id key val -- }
-  doc" ( id key val -- )  Sets the value VAL to KEY in the given mix's property list."
+: set-mix-property ( id key val -- )
+  doc" Sets the value VAL to KEY in the given mix's property list."
+  { id key val }
   id mix? if
     id mix-properties { props }
     props hash? if
@@ -327,7 +327,7 @@ hide
 : delete-all-tracks-cb ( -- ) ['] delete-track-mix-xt undef undef mixes tree-for-each ;
 set-current
 : delete-all-tracks ( -- )
-  doc" ( -- )  Removes all mixes that have an associated track (sets all amps to 0)."
+  doc" Removes all mixes that have an associated track (sets all amps to 0)."
   ['] delete-all-tracks-cb 0 make-proc undef as-one-edit drop
 ;
 previous
@@ -359,8 +359,9 @@ hide
   then
 ;
 set-current
-: reverse-track { trk -- }
-  doc" ( trk -- )  Reverses the order of its mixes (it changes various mix begin times)."
+: reverse-track ( trk -- )
+  doc" Reverses the order of its mixes (it changes various mix begin times)."
+  { trk }
   #f trk 0 track each mix? if not ( toggle flag ) leave then end-each if
     trk reverse-track-cb undef as-one-edit drop
   else
@@ -369,8 +370,8 @@ set-current
 ;
 previous
 
-: track->vct { trk chn -- v }
-  doc" ( trk chan -- v )  Places track data in vct."
+: track->vct <{ trk :optional chn 0 -- v }>
+  doc" Places track data in vct."
   trk track? if
     trk track-chans chn > if
       trk chn 0 make-track-sample-reader { rd }
@@ -383,8 +384,8 @@ previous
   then
 ;
 
-: save-track { trk fname chn -- }
-  doc" ( trk filename chan -- )  Saves track data (as floats) in file FILENAME."
+: save-track <{ trk fname :optional chn #t -- }>
+  doc" Saves track data (as floats) in file FILENAME."
   trk track? if
     trk track-chans { chans }
     nil nil { fd v }
@@ -418,20 +419,21 @@ previous
   then
 ;
 
-: track-maxamp { id chan -- amp }
-  doc" ( id chan -- max-amp )  Returns the max amp in the given track"
-  id chan track->vct vct-peak
+: track-maxamp ( id chan -- amp )
+  doc" Returns the max amp in the given track"
+  ( id chan ) track->vct vct-peak
 ;
 
-: transpose-track { trk semitones -- }
-  doc" ( trk semitones -- )  Transposes each mix in track by semitones."
+: transpose-track ( trk semitones -- )
+  doc" Transposes each mix in track by semitones."
+  { trk semitones }
   trk  2.0 semitones 12.0 f/ f**  trk track-speed f*  set-track-speed drop
 ;
 
 \ 1 2.0 retempo-track
-: retempo-track { trk tempo -- }
-  doc" ( trk tempo -- )  \
-Changes the inter-mix begin times of mixes in track by TEMPO (> 1.0 is faster)."
+: retempo-track ( trk tempo -- )
+  doc" Changes the inter-mix begin times of mixes in track by TEMPO (> 1.0 is faster)."
+  { trk tempo }
   trk dup track-tempo tempo f* set-track-tempo drop
 ;
 
@@ -446,9 +448,10 @@ hide
   flt val fir-filter y f+ val f-
 ;
 set-current
-: filter-track { trk fir-filter-coeffs -- }
-  doc" ( track-id fir-filter-coeffs -- )  Filter track data using FIR filter coeffs:\n\
+: filter-track ( trk fir-filter-coeffs -- )
+  doc" Filter track data using FIR filter coeffs:\n\
 track-id '( 0.1 0.2 0.3 0.3 0.2 0.1 ) filter-track"
+  { trk fir-filter-coeffs }
   trk track? if
     fir-filter-coeffs length { order }
     fir-filter-coeffs list->vct { fir-vct }
@@ -470,9 +473,9 @@ previous
 : track-properties     ( id -- props ) object-id 'track-property property-ref ;
 : set-track-properties ( id val -- )   swap object-id 'track-property rot property-set! ;
 
-: track-property { id key -- val }
-  doc" ( id key -- val )  \
-Returns the value associated with KEY in the given track's property list, or #f."
+: track-property ( id key -- val )
+  doc" Returns the value associated with KEY in the given track's property list, or #f."
+  { id key }
   id track? if
     id track-properties dup hash? if key hash-ref else drop #f then
   else
@@ -480,8 +483,9 @@ Returns the value associated with KEY in the given track's property list, or #f.
   then
 ;
 
-: set-track-property { id key val -- }
-  doc" ( id key val -- )  Sets the value VAL to KEY in the given track's property list."
+: set-track-property ( id key val -- )
+  doc" Sets the value VAL to KEY in the given track's property list."
+  { id key val }
   id track? if
     id track-properties { props }
     props hash? if
@@ -498,9 +502,10 @@ Returns the value associated with KEY in the given track's property list, or #f.
 
 \ mix-click-info
 
-: mix-click-info { id -- #t }
-  doc" ( id -- #t )  A mix-click-hook function that describes a mix and its properties.\n\
+: mix-click-info ( id -- #t )
+  doc" A mix-click-hook function that describes a mix and its properties.\n\
 mix-click-hook ' mix-click-info 1 make-proc add-hook!"
+  { id }
   id mix-home car { mid }
   id mix-name if $"  (%S)"  '( id mix-name ) string-format else "" then { mname }
   $"        mix id: %d%s\n" '( id mname )    string-format { info-string }

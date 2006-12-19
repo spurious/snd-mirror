@@ -2437,3 +2437,4 @@ and replaces it with the spectrum given in coeffs"
 		      (sounds)))))))
 
 (define (undisplay-bark-fft) (display-bark-fft #t))
+

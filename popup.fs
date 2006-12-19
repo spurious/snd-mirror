@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Thu Dec 14 03:47:59 CET 2006
+\ Changed: Sat Dec 16 04:31:58 CET 2006
 
 \ Commentary:
 
@@ -837,9 +837,9 @@ let: ( -- menu )
   then
 ;
 
-: edit-graph-popup-menu { snd chn -- }
-  doc" ( snd chn -- )  \
-Hides otiose entries, relabel others to reflect current state of SND and CHN."
+: edit-graph-popup-menu ( snd chn -- )
+  doc" Hides otiose entries, relabel others to reflect current state of SND and CHN."
+  { snd chn }
   graph-popup-menu snd chn graph-popup-xt for-each-child
 ;
 
@@ -1093,8 +1093,9 @@ let: ( -- menu )
   then
 ;
 
-: edit-fft-popup-menu { snd chn -- wid }
-  doc" ( snd chn -- wid )  Changes the fft-related popup menu to reflect the state of SND and CHN."
+: edit-fft-popup-menu ( snd chn -- wid )
+  doc" Changes the fft-related popup menu to reflect the state of SND and CHN."
+  { snd chn }
   save-stack { stack }
   fft-popup-menu snd chn fft-popup-xt for-each-child
   stack restore-stack
@@ -1336,7 +1337,7 @@ let: ( -- menu )
 set-current
 
 : add-popups ( -- )
-  doc" ( -- )  Adds context-sensitive popup menus to various parts of the interface."
+  doc" Adds context-sensitive popup menus to various parts of the interface."
   after-open-hook ['] add-popup 1 make-proc add-hook!
   sounds each add-popup end-each
 ;
@@ -1351,10 +1352,11 @@ hide
 ;
 set-current
 
-: change-menu-color { menu new-color -- }
-  doc" ( menu new-color -- )  Changes the color of MENU to NEW-COLOR.  \
+: change-menu-color ( menu new-color -- )
+  doc" Changes the color of MENU to NEW-COLOR.  \
 NEW-COLOR can be the color name, an xm Pixel, a snd color, or a list of rgb values \
 (as in Snd's make-color)."
+  { menu new-color }
   new-color string? if			\ assuming X11 color names here
     main-widgets cadr { shell }
     shell FXtDisplay { dpy }
@@ -1377,26 +1379,22 @@ NEW-COLOR can be the color name, an xm Pixel, a snd color, or a list of rgb valu
 ;
 
 : change-selection-popup-color ( new-color -- )
-  doc" ( new-color -- )  \
-Changes the selection popup menu's color: \"red\" change-selection-popup-color"
+  doc" Changes the selection popup menu's color: \"red\" change-selection-popup-color"
   selection-popup-menu swap change-menu-color
 ;
 
 : change-graph-popup-color ( new-color -- )
-  doc" ( new-color -- )  \
-Changes the time-domain popup menu's color: basic-color change-graph-popup-color"
+  doc" Changes the time-domain popup menu's color: basic-color change-graph-popup-color"
   selection-popup-menu swap change-menu-color
 ;
 
 : change-fft-popup-color ( new-color -- )
-  doc" ( new-color -- )  \
-Changes the fft popup menu's color: '(0.5 0.5 0.5) change-fft-popup-color"
+  doc" Changes the fft popup menu's color: '(0.5 0.5 0.5) change-fft-popup-color"
   fft-popup-menu swap change-menu-color
 ;
 
 : change-edhist-popup-color ( new-color -- )
-  doc" ( new-color -- )  \
-Changes the time-domain popup menu's color: basic-color change-graph-popup-color"
+  doc" Changes the time-domain popup menu's color: basic-color change-graph-popup-color"
   edit-history-menu swap change-menu-color
 ;
 previous
@@ -1528,7 +1526,7 @@ let: ( -- )
 set-current
 
 : change-listener-popup-color ( new-color -- )
-  doc" ( new-color -- )  Changes the listener popup menu's color."
+  doc" Changes the listener popup menu's color."
   listener-popup-menu swap change-menu-color
 ;
 previous

@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Mon Dec 11 23:07:15 CET 2006
+\ Changed: Sat Dec 16 05:34:12 CET 2006
 
 \ Commentary:
 \ 
@@ -49,15 +49,15 @@ require clm
 require examp
 
 \ === Snd-7 compatibility stuff ===
-: mus-a0     ( gen     -- val ) 0 mus-xcoeff ;
+: mus-a0     ( gen     -- val ) 0          mus-xcoeff ;
 : set-mus-a0 ( gen val -- val ) 0 swap set-mus-xcoeff ;
-: mus-a1     ( gen     -- val ) 1 mus-xcoeff ;
+: mus-a1     ( gen     -- val ) 1          mus-xcoeff ;
 : set-mus-a1 ( gen val -- val ) 1 swap set-mus-xcoeff ;
-: mus-a2     ( gen     -- val ) 2 mus-xcoeff ;
+: mus-a2     ( gen     -- val ) 2          mus-xcoeff ;
 : set-mus-a2 ( gen val -- val ) 2 swap set-mus-xcoeff ;
-: mus-b1     ( gen     -- val ) 1 mus-ycoeff ;
+: mus-b1     ( gen     -- val ) 1          mus-ycoeff ;
 : set-mus-b1 ( gen val -- val ) 1 swap set-mus-ycoeff ;
-: mus-b2     ( gen     -- val ) 2 mus-ycoeff ;
+: mus-b2     ( gen     -- val ) 2          mus-ycoeff ;
 : set-mus-b2 ( gen val -- val ) 2 swap set-mus-ycoeff ;
 
 : back-or-forth-graph ( count -- lst )
@@ -103,8 +103,7 @@ hide
   then
 ;
 set-current
-: back-or-forth-mix ( count snd chn -- mx|#f )
-  { count snd chn }
+: back-or-forth-mix <{ count :optional snd #f chn #f -- mx|#f }>
   snd chn mixes { mx }
   count 0<> mx null? not && if
     mx length 1 = if
@@ -136,12 +135,10 @@ set-current
   then
 ;
 previous
-: forward-mix ( count snd chn -- mx|#f )
-  { count snd chn }
-  count snd snd-snd chn snd-chn back-or-forth-mix
+: forward-mix  <{ count :optional snd #f chn #f -- mx|#f }>
+  count        snd snd-snd chn snd-chn back-or-forth-mix
 ;
-: backward-mix ( count snd chn -- mx|#f )
-  { count snd chn }
+: backward-mix <{ count :optional snd #f chn #f -- mx|#f }>
   count negate snd snd-snd chn snd-chn back-or-forth-mix
 ;
 
@@ -160,8 +157,7 @@ hide
   then
 ;
 set-current
-: back-or-forth-mark ( count snd chn -- mk|#f )
-  { count snd chn }
+: back-or-forth-mark <{ count :optional snd #f chn #f -- mk|#f }>
   snd chn #f marks { mk }
   count 0<>
   mk empty? not && if
@@ -194,12 +190,10 @@ set-current
   then
 ;
 previous
-: forward-mark ( count snd chn -- mk|#f )
-  { count snd chn }
-  count snd snd-snd chn snd-chn back-or-forth-mark
+: forward-mark  <{ count :optional snd #f chn #f -- mk|#f }>
+  count        snd snd-snd chn snd-chn back-or-forth-mark
 ;
-: backward-mark ( count snd chn -- mk|#f )
-  { count snd chn }
+: backward-mark <{ count :optional snd #f chn #f -- mk|#f }>
   count negate snd snd-snd chn snd-chn back-or-forth-mark
 ;
 
@@ -216,20 +210,18 @@ previous
 
 \ === PROPERTIES ===
 
-: sound-property { key snd -- val }
-  doc" ( key snd -- value|#f )  \
-Returns the value associated with KEY in the given sound's property list, or #f."
+: sound-property <{ key :optional snd #f -- val }>
+  doc" Returns the value associated with KEY in the given sound's property list, or #f."
   snd sound-properties key list-assoc-ref
 ;
 
-: set-sound-property { key val snd -- alist }
-  doc" ( key val snd -- alist )  Sets key-value pair in the given sound's property list.  \
+: set-sound-property <{ key val :optional snd #f -- alist }>
+  doc" Sets key-value pair in the given sound's property list.  \
 If KEY exists, VAL overwrites the old value."
   snd sound-properties key val list-assoc-set! snd set-sound-properties
 ;
 
-: set-sound-property-save-state-ignore ( key snd -- alist )
-  { key snd }
+: set-sound-property-save-state-ignore <{ key :optional snd #f -- alist }>
   'save-state-ignore
   key
   'save-state-ignore snd sound-property dup false? if
@@ -239,20 +231,18 @@ If KEY exists, VAL overwrites the old value."
   snd set-sound-property
 ;
 
-: channel-property { key snd chn -- val }
-  doc" ( key snd chn -- value|#f )  \
-Returns the value associated with KEY in the given channel's property list, or #f."
+: channel-property <{ key :optional snd #f chn #f -- val }>
+  doc" Returns the value associated with KEY in the given channel's property list, or #f."
   snd chn channel-properties key list-assoc-ref
 ;
 
-: set-channel-property { key val snd chn -- alist }
-  doc" ( key val snd chn -- alist )  Sets key-value pair in the given channel's property list.  \
+: set-channel-property <{ key val :optional snd #f chn #f -- alist }>
+  doc" Sets key-value pair in the given channel's property list.  \
 If KEY exists, VAL overwrites the old value."
   snd chn channel-properties key val list-assoc-set! snd chn set-channel-properties
 ;
 
-: set-channel-property-save-state-ignore ( key snd chn -- alist )
-  { key snd chn }
+: set-channel-property-save-state-ignore <{ key :optional snd #f chn #f -- alist }>
   'save-state-ignore
   key
   'save-state-ignore snd chn channel-property dup false? if
@@ -263,7 +253,7 @@ If KEY exists, VAL overwrites the old value."
 ;
 
 : selection-members ( -- array-of-lists )
-  doc" ( -- array-of-lists )  Array of lists of '( snd chn ) indicating the channels \
+  doc" Array of lists of '( snd chn ) indicating the channels \
 participating in the current selection."
   #() { sndlist }
   selection? if
@@ -336,18 +326,16 @@ set-current
 
 #f value checking-for-unsaved-edits
 
-: check-for-unsaved-edits { check -- }
-  doc" ( check -- )  \
-Sets up hooks to check for and ask about unsaved edits when a sound is closed.  \
+: check-for-unsaved-edits ( check -- )
+  doc" Sets up hooks to check for and ask about unsaved edits when a sound is closed.  \
 If CHECK is #f, the hooks are removed."
-  check if
+  ( check ) dup to checking-for-unsaved-edits if
     before-close-hook ['] unsaved-edits-at-close 1 make-proc add-hook!
     before-exit-hook  ['] unsaved-edits-at-exit  0 make-proc add-hook!
   else
     before-close-hook ['] unsaved-edits-at-close remove-hook! drop
     before-exit-hook  ['] unsaved-edits-at-exit  remove-hook! drop
   then
-  check to checking-for-unsaved-edits
 ;
 previous
 
@@ -492,9 +480,10 @@ set-current
 
 0 value remembering-sound-state
 
-: remember-sound-state { choice -- }
-  doc" ( choice -- )  Remembers the state of a sound when it is closed, \
+: remember-sound-state ( choice -- )
+  doc" Remembers the state of a sound when it is closed, \
 and if it is subsquently re-opened, restores that state."
+  { choice }
   choice 0=				\ no remembering
   choice 1 = ||	if			\ just within-run remembering
     choice 0= if
