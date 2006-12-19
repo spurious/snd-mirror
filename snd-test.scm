@@ -26483,6 +26483,15 @@ EDITS: 5
 	    (revert-sound ind)
 	    (src-sound '(0 .5 1 1.75665))
 	    ;; trying to hit previous dur on the nose "by accident..."
+
+	    ;; try to hit mark_size segfault
+	    (as-one-edit
+	     (lambda ()
+	       (add-mark 10)
+	       (mix "oboe.snd")
+	       (do ((i 0 (1+ i))) ((= i 20)) (scale-channel 1.2) (add-mark (* i 2)))))
+	    (scale-channel .5)
+
 	    (close-sound ind)
 	    )
 	  

@@ -894,6 +894,22 @@ void set_printable(int val)
   printable[last_loc] = val;
 }
 
+void check_pointer(void *ptr)
+{
+  int loc;
+  char *p3 = (char *)ptr;
+  void *rtp;
+
+  if (ptr == NULL) return;
+  if (ptr == (void *)FREED_POINTER) {fprintf(stderr," pointer has been freed"); abort();}
+
+  loc = (*((int *)(p3 - 4)));
+  if ((loc < 0) || (loc > mem_size)) {fprintf(stderr, "loc clobbered: %p %d (%d)\n", ptr, loc, mem_size); abort();}
+
+  rtp = true_pointers[loc];
+  check_padding(ptr, rtp, sizes[loc], false);
+}
+
 static int *freed = NULL;
 static int freed_out = 0, freed_in = 0;
 

@@ -709,12 +709,18 @@ void backup_mark_list(chan_info *cp, int cur)
 {
   if (cp->marks)
     {
-      release_pending_marks(cp, cur - 1);
+      release_pending_marks(cp, cur - 1); /* frees mark list at cur - 1, but not the top pointer */
       if (cp->marks[cur - 1]) FREE(cp->marks[cur - 1]); /* not freed by release_pending_marks */
       cp->marks[cur - 1] = cp->marks[cur];
       cp->marks[cur] = NULL;
       cp->mark_ctr[cur - 1] = cp->mark_ctr[cur];
       cp->mark_ctr[cur] = -1;
+      cp->mark_size[cur - 1] = cp->mark_size[cur]; /* oops!! this was omitted until 19-Dec-06 */
+      cp->mark_size[cur] = 0;
+      /* if mark size is not reset, a large as-one-edit backup involving more than 16 marks can ripple
+       *   to a state where the current marks entry thinks ctr > size!  This causes a subsequent ripple_marks
+       *   or free_mark_list to run off the end of the marks array freeing random pointers!
+       */
     }
 }
 
@@ -943,6 +949,7 @@ void ripple_marks(chan_info *cp, off_t beg, off_t change)
   /* if change = 0, just set ptr, else copy and fixup with deletions */
   /* this is called after the tree has been pushed forward, so edit_ctr is ahead of us */
   /* but we don't do anything if no marks */
+
   if ((cp) && (cp->marks))
     {
       int old_m, new_m, i;
@@ -966,7 +973,8 @@ void ripple_marks(chan_info *cp, off_t beg, off_t change)
 	      cp->marks[i] = NULL;
 	    }
 	}
-      cp->mark_ctr[new_m] = cp->mark_ctr[old_m];
+
+      /* release current */
       if (cp->marks[new_m])
 	{
 	  mps = cp->marks[new_m];
@@ -979,7 +987,11 @@ void ripple_marks(chan_info *cp, off_t beg, off_t change)
 	  FREE(mps);
 	  cp->marks[new_m] = NULL;
 	}
+
+      /* copy old with position change */
+      cp->mark_ctr[new_m] = cp->mark_ctr[old_m];
       cp->mark_size[new_m] = cp->mark_size[old_m];
+
       if (cp->mark_size[new_m] > 0)
 	{
 	  cp->marks[new_m] = (mark **)CALLOC(cp->mark_size[new_m], sizeof(mark *));

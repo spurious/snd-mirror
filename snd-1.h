@@ -1500,6 +1500,7 @@ char *fam_event_name(int code);
 
 #if MUS_DEBUGGING
 void set_printable(int val);
+void check_pointer(void *ptr);
 #endif
 
 #if MUS_DEBUGGING && HAVE_CLOCK
