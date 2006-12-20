@@ -4,7 +4,7 @@
 (provide 'snd-maraca.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
-(define two-pi (* 2 3.14159))
+(define two-pi (* 2 pi))
 
 (definstrument (maraca beg dur :optional (amp .1) 
 		 (sound-decay 0.95) 

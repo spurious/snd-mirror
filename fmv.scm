@@ -12,8 +12,6 @@
 (use-modules (ice-9 optargs))
 (provide 'snd-fmv.scm)
 
-(define pi 3.141592653589793)
-
 (define make-fm-violin 
   (lambda* (frequency amplitude :key
 	    (fm-index 1.0)

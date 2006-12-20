@@ -12,8 +12,6 @@
 
 (provide 'snd-gtk-effects.scm)
 
-(define pi 3.141592653589793)
-
 (if (not (provided? 'snd-gtk-effects-utils.scm)) (load-from-path "gtk-effects-utils.scm"))
 (if (not (provided? 'snd-xm-enved.scm)) (load-from-path "xm-enved.scm"))
 (if (not (provided? 'snd-moog.scm)) (load-from-path "moog.scm"))

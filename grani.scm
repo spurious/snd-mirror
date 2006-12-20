@@ -28,7 +28,6 @@
 
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 (if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
-(if (not (defined? 'pi)) (define pi 3.141592653589793))
 
 (define* (exp-envelope env :key
 		       (base (expt 2 (/ 12)))

@@ -618,8 +618,7 @@ Reverb-feedback sets the scaler on the feedback.
 	(XmStringFree xdismiss)
 	(XmStringFree titlestr)
 	
-	(let* ((pi 3.141592653589793)
-	       (frequency 440.0)
+	(let* ((frequency 440.0)
 	       (amplitude 0.1)
 	       (fm-index 1.0)
 	       (periodic-vibrato-rate 5.0) 

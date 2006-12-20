@@ -191,7 +191,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 (definstrument (fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional (ae '(0 0 25 1 75 1 100 0)) ve)
   "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional (ampenv '(0 0 25 1 75 1 100 0)) vibenv) produces FOF 
 synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
-    (let* ((two-pi (* 2 3.141592653589793))
+    (let* ((two-pi (* 2 pi))
 	   (start (inexact->exact (floor (* beg (mus-srate)))))
 	   (len (inexact->exact (floor (* dur (mus-srate)))))
 	   (end (+ start len))
@@ -2534,7 +2534,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	   (outa i (* (env ampenv) outval) *output*)))))))
 
 
-(definstrument (anoi infile start dur :optional (fftsize 128) (amp-scaler 1.0) (r (* 2.0 3.14159)))
+(definstrument (anoi infile start dur :optional (fftsize 128) (amp-scaler 1.0) (r (* 2.0 pi)))
   ;; a kind of noise reduction -- on-going average spectrum is squelched to some extent
   ;; obviously aimed at intermittent signal in background noise
   ;; this is based on Perry Cook's Scrubber.m

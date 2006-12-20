@@ -209,9 +209,6 @@
 
 
 
-(if (not (defined? 'pi))
-    (define pi 3.141592653589793))
-
 (define poly-roots-epsilon 1.0e-7)
 
 (define (simplify-complex a)

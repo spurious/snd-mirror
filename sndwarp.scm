@@ -125,7 +125,7 @@
 (define (clmsw-envelope-or-number in)
   (if (number? in) (list 0 in 1 in) in))
 
-(define clmsw-2pi (* 2 3.141592653589793))
+(define clmsw-2pi (* 2 pi))
 
 ;;; SNDWARP
 

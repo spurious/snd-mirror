@@ -157,7 +157,6 @@
 
 (define debugging-device-channels 2)
 
-(define pi 3.141592653589793)
 (define max-optimization 6)
 
 ;; start-playing-hook is only called when an indexed sound is played, not if play-mix etc -- need a way to hit all possible playback
@@ -502,6 +501,11 @@
 
 (define default-file-buffer-size 65536)
 (set! (mus-file-buffer-size) default-file-buffer-size)
+
+(if (not (defined? 'pi)) 
+    (snd-display ";pi is not defined!")
+    (if (fneq pi 3.14159)
+	(snd-display ";pi is ~A" pi)))
 
 
 ;;; ---------------- test 0: constants ----------------
@@ -12888,7 +12892,7 @@ EDITS: 5
 				      (let ((r (make-vct size))
 					    (g (make-vct size))
 					    (b (make-vct size))
-					    (incr (exact->inexact (/ (* 2 3.14159) size))))
+					    (incr (exact->inexact (/ (* 2 pi) size))))
 					(do ((i 0 (1+ i))
 					     (x 0.0 (+ x incr)))
 					    ((= i size))
@@ -12901,7 +12905,7 @@ EDITS: 5
 					      (let ((r (make-vct size))
 						    (g (make-vct size))
 						    (b (make-vct size))
-						    (incr (exact->inexact (/ (* 2 3.14159) size))))
+						    (incr (exact->inexact (/ (* 2 pi) size))))
 						(do ((i 0 (1+ i))
 						     (x 0.0 (+ x incr)))
 						    ((= i size))
@@ -13925,7 +13929,7 @@ EDITS: 5
   (set! (mus-phase gen) 0.0)
   (gen -2.0)
   (if (and (fneq (mus-phase gen) -2.0)
-	   (fneq (mus-phase gen) (- (* 2 3.14159265) 2.0)))
+	   (fneq (mus-phase gen) (- (* 2 pi) 2.0)))
       (snd-display ";phase: ~A freq: ~A" (mus-phase gen))))
 
 ;;; from mixer.scm (commented out)
@@ -14397,7 +14401,6 @@ EDITS: 5
 	    (snd-display ";polynomial empty coeffs: ~A" var)))
       
       (let ((err 0.0)
-	    (pi 3.141592653589793)
 	    (coeffs (vct 1.0 0.0 -.4999999963 0.0 .0416666418 0.0 -.0013888397 0.0 .0000247609 0.0 -.0000002605))
 	    (pi2 (* pi 0.5)))
 	(letrec ((new-cos
@@ -14584,7 +14587,7 @@ EDITS: 5
 	  (if (fneq val 1.5) (snd-display ";mus-interpolate bezier: ~A" val))
 	  (set! val (mus-interpolate mus-interp-lagrange 1.5 v0))
 	  (if (fneq val 1.5) (snd-display ";mus-interpolate lagrange: ~A" val))
-	  (do ((i 0 (1+ i))) ((= i 10)) (vct-set! v0 i (sin (* 3.14159 (/ i 5)))))
+	  (do ((i 0 (1+ i))) ((= i 10)) (vct-set! v0 i (sin (* pi (/ i 5)))))
 	  (set! val (mus-interpolate mus-interp-linear 1.5 v0))
 	  (if (fneq val 0.7694) (snd-display ";mus-interpolate linear sin: ~A" val))
 	  (set! val (mus-interpolate mus-interp-all-pass 1.5 v0))
@@ -18163,28 +18166,28 @@ EDITS: 5
       (let ((vals (phase-partials->wave (list 1 1 0) (make-vct 16) #f)))
 	(do ((i 0 (1+ i)))
 	    ((= i 16))
-	  (if (fneq (vct-ref vals i) (sin (/ (* 2 3.14159 i) 16)))
-	      (snd-display ";phase-partials->wave 1 1 0 at ~D: ~A ~A" i (vct-ref vals i) (sin (/ (* 2 3.14159 i) 16))))))
+	  (if (fneq (vct-ref vals i) (sin (/ (* 2 pi i) 16)))
+	      (snd-display ";phase-partials->wave 1 1 0 at ~D: ~A ~A" i (vct-ref vals i) (sin (/ (* 2 pi i) 16))))))
 
-      (let ((vals (phase-partials->wave (list 1 1 (* .25 3.14159)) (make-vct 16) #f)))
+      (let ((vals (phase-partials->wave (list 1 1 (* .25 pi)) (make-vct 16) #f)))
 	(do ((i 0 (1+ i)))
 	    ((= i 16))
-	  (if (fneq (vct-ref vals i) (sin (+ (* .25 3.14159) (/ (* 2 3.14159 i) 16))))
-	      (snd-display ";phase-partials->wave 1 1 .25 at ~D: ~A ~A" i (vct-ref vals i) (sin (+ (* .25 3.14159) (/ (* 2 3.14159 i) 16)))))))
+	  (if (fneq (vct-ref vals i) (sin (+ (* .25 pi) (/ (* 2 pi i) 16))))
+	      (snd-display ";phase-partials->wave 1 1 .25 at ~D: ~A ~A" i (vct-ref vals i) (sin (+ (* .25 pi) (/ (* 2 pi i) 16)))))))
 
       (let ((vals (phase-partials->wave (list 1 1 0 2 1 0) (make-vct 16) #f)))
 	(do ((i 0 (1+ i)))
 	    ((= i 16))
-	  (if (fneq (vct-ref vals i) (+ (sin (/ (* 2 3.14159 i) 16)) (sin (/ (* 4 3.14159 i) 16))))
+	  (if (fneq (vct-ref vals i) (+ (sin (/ (* 2 pi i) 16)) (sin (/ (* 4 pi i) 16))))
 	      (snd-display ";phase-partials->wave 1 1 0 2 1 0 at ~D: ~A ~A" i (vct-ref vals i) 
-			   (+ (sin (/ (* 2 3.14159 i) 16)) (sin (/ (* 4 3.14159 i) 16)))))))
+			   (+ (sin (/ (* 2 pi i) 16)) (sin (/ (* 4 pi i) 16)))))))
 
-      (let ((vals (phase-partials->wave (list 1 1 0 2 1 (* .5 3.14159)) (make-vct 16) #f)))
+      (let ((vals (phase-partials->wave (list 1 1 0 2 1 (* .5 pi)) (make-vct 16) #f)))
 	(do ((i 0 (1+ i)))
 	    ((= i 16))
-	  (if (fneq (vct-ref vals i) (+ (sin (/ (* 2 3.14159 i) 16)) (sin (+ (* .5 3.14159) (/ (* 4 3.14159 i) 16)))))
+	  (if (fneq (vct-ref vals i) (+ (sin (/ (* 2 pi i) 16)) (sin (+ (* .5 pi) (/ (* 4 pi i) 16)))))
 	      (snd-display ";phase-partials->wave 1 1 0 2 1 .5 at ~D: ~A ~A" i (vct-ref vals i) 
-			   (+ (sin (/ (* 2 3.14159 i) 16)) (sin (+ (* .5 3.14159) (/ (* 4 3.14159 i) 16))))))))
+			   (+ (sin (/ (* 2 pi i) 16)) (sin (+ (* .5 pi) (/ (* 4 pi i) 16))))))))
 
       (test-gen-equal (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
 		      (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
@@ -18624,7 +18627,7 @@ EDITS: 5
 	  (undo))
 	
 	(let* ((table (make-vct 10 .1))
-	       (gen (make-wave-train 1000.0 :initial-phase 3.14159 :wave table))) ; initial-phase is confusing in this context!
+	       (gen (make-wave-train 1000.0 :initial-phase pi :wave table))) ; initial-phase is confusing in this context!
 	  (map-channel (lambda (y) (wave-train gen)))
 	  (let ((mx (maxamp)))
 	    (if (fneq mx 0.1) (snd-display ";wt 1 max: ~A" mx)))
@@ -30691,9 +30694,9 @@ EDITS: 5
 	      (snd-display ";channel-property 'hiho (123): ~A?" (channel-property 'hiho id 0)))
 	  (if (channel-property 'hi id 0)
 	      (snd-display ";channel-property 'hi: ~A?" (channel-property 'hi id 0)))
-	  (set! (channel-property 'hi id 0) 3.1415)
-	  (if (fneq (channel-property 'hi id 0) 3.1415)
-	      (snd-display ";channel-property 'hi (3.1415): ~A?" (channel-property 'hi id 0)))
+	  (set! (channel-property 'hi id 0) pi)
+	  (if (fneq (channel-property 'hi id 0) pi)
+	      (snd-display ";channel-property 'hi (pi): ~A?" (channel-property 'hi id 0)))
 	  (if (not (= (channel-property 'hiho id 0) 123))
 	      (snd-display ";channel-property '2nd hiho (123): ~A?" (channel-property 'hiho id 0)))
 	  (if (not (= (length (channel-properties id 0)) (+ len 2)))
@@ -30707,9 +30710,9 @@ EDITS: 5
 	      (snd-display ";sound-property 'hiho (123): ~A?" (sound-property 'hiho id)))
 	  (if (sound-property 'hi id)
 	      (snd-display ";sound-property 'hi: ~A?" (sound-property 'hi id)))
-	  (set! (sound-property 'hi id) 3.1415)
-	  (if (fneq (sound-property 'hi id) 3.1415)
-	      (snd-display ";sound-property 'hi (3.1415): ~A?" (sound-property 'hi id)))
+	  (set! (sound-property 'hi id) pi)
+	  (if (fneq (sound-property 'hi id) pi)
+	      (snd-display ";sound-property 'hi (pi): ~A?" (sound-property 'hi id)))
 	  (if (not (= (sound-property 'hiho id) 123))
 	      (snd-display ";sound-property '2nd hiho (123): ~A?" (sound-property 'hiho id)))
 	  (if (not (= (length (sound-properties id)) (+ len 2)))
@@ -37648,7 +37651,7 @@ EDITS: 1
 	      (lambda () (adsat 8))
 	      (lambda () (spike))
 	      (lambda () (zero-phase))
-	      (lambda () (rotate-phase (lambda (x) (random 3.1415))))
+	      (lambda () (rotate-phase (lambda (x) (random pi))))
 	      (lambda () (brighten-slightly .5))
 	      (lambda () (shift-channel-pitch 100))
 	      (lambda () (channel-polynomial (vct 0.0 0.5)))
@@ -37720,7 +37723,7 @@ EDITS: 1
 	      "(lambda (snd chn) (adsat 8 #f #f snd chn))"
 	      "(lambda (snd chn) (spike snd chn))"
 	      "(lambda (snd chn) (zero-phase snd chn))"
-	      "(lambda (snd chn) (rotate-phase (lambda (x) (random 3.1415)) snd chn))"
+	      "(lambda (snd chn) (rotate-phase (lambda (x) (random pi)) snd chn))"
 	      "(lambda (snd chn) (brighten-slightly 0.5 snd chn))"
 	      "(lambda (snd chn) (shift-channel-pitch 100 40 0 #f snd chn))"
 	      "(lambda (snd chn) (channel-polynomial (vct 0.0 0.5) snd chn))"
@@ -48825,27 +48828,27 @@ EDITS: 1
 		(snd-display ";pvoc a-e: ~A" mx))))
 
       (let* ((file (with-sound (:clipped #f :data-format mus-bfloat :header-type mus-next)
-			       (fm-violin 0 .1 440 3.14159)))
+			       (fm-violin 0 .1 440 pi)))
 	     (ind (find-sound file))
 	     (mx (maxamp ind)))
-	(if (fneq mx 3.14159) (snd-display ";clipped #f: ~A" mx))
+	(if (fneq mx pi) (snd-display ";clipped #f: ~A" mx))
 	(close-sound ind)
 	(set! file (with-sound (:clipped #t :data-format mus-bfloat :header-type mus-next)
-			       (fm-violin 0 .1 440 3.14159)))
+			       (fm-violin 0 .1 440 pi)))
 	(set! ind (find-sound file))
 	(set! mx (maxamp ind))
 	(if (fneq mx 1.0) (snd-display ";clipped #t: ~A" mx))
 	
 	(close-sound ind)
 	(set! file (with-sound (:data-format mus-bfloat :header-type mus-next :scaled-by .1 :clipped #f)
-			       (fm-violin 0 .1 440 3.14159)))
+			       (fm-violin 0 .1 440 pi)))
 	(set! ind (find-sound file))
 	(set! mx (maxamp ind))
 	(if (fneq mx .314159) (snd-display ";scaled-by ~A" mx))
 	
 	(close-sound ind)
 	(set! file (with-sound (:data-format mus-bfloat :header-type mus-next :scaled-to .1 :clipped #f)
-			       (fm-violin 0 .1 440 3.14159)))
+			       (fm-violin 0 .1 440 pi)))
 	(set! ind (find-sound file))
 	(set! mx (maxamp ind))
 	(if (fneq mx .1) (snd-display ";scaled-to ~A" mx))

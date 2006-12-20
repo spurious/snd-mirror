@@ -74,8 +74,7 @@
   (define (pvoc-edit pv) (list-ref pv 14))
   (define (pvoc-synthesize pv) (list-ref pv 15))
 
-  (let* ((pi 3.141592653589793)
-	 (pi2 (* 2 pi)))
+  (let* ((pi2 (* 2 pi)))
 
     (if (>= (pvoc-output pv) (pvoc-interp pv))
 	;; get next block of amp/phase info
@@ -242,8 +241,7 @@
   'gate' specifies a resynthesis gate in dB (partials with amplitudes lower than
   the gate value will not be synthesized), 'hoffset is a pitch offset in Hz."
 
-    (let* ((pi 3.141592653589793)
-	   (len (frames))
+    (let* ((len (frames))
 	   (filptr 0)           ; index into the file
 	   (pi2 (* 2 pi))       ; handy constant
 	   (sr (srate))

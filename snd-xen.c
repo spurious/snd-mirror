@@ -2391,6 +2391,13 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
     FREE(pwd);
   }
 
+#if HAVE_GUILE || HAVE_GAUCHE
+  #if(!defined(M_PI))
+    #define M_PI 3.14159265358979323846264338327
+  #endif
+  XEN_DEFINE("pi", C_TO_XEN_DOUBLE(M_PI)); /* not XEN_DEFINE_CONSTANT which assumes int */
+#endif
+
 #if HAVE_GUILE
   {
     /* Gauche and CL use '#| |#' for block comments, so implement them in Guile */

@@ -5,8 +5,6 @@
 (provide 'snd-prc95.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
-(define pi 3.141592653589793)
-
 
 (define* (make-reed :key (offset 0.6) (slope -0.8))
   (vct offset slope))

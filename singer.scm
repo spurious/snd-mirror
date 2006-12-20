@@ -116,7 +116,7 @@
 	   (noselength-1 (- noselength 1))
 	   (noselength-2 (- noselength 2))
 	   (nose-ring-time 1000)	; naso pharynx response decay time
-	   (two-pi (* 2 3.14159))
+	   (two-pi (* 2 pi))
 	   (one-over-two-pi  0.159154943)
 	   (two-pi-over-table-size (/ two-pi table-size))
 	   (table-size-over-sampling-rate (/ table-size (mus-srate)))

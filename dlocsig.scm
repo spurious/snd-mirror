@@ -153,8 +153,6 @@
 
 (define (cis a) (exp (* 0.0+1.0i a)))
 
-(if (not (defined? 'pi)) (define pi 3.14159625))
-
 (defmacro when (test . forms)
   `(if ,test (begin ,@forms)))
 

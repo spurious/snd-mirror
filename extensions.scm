@@ -694,8 +694,6 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- sine-ramp sine-env-channel 
 
-(if (not (defined? 'pi)) (define pi 3.141592653589793))
-
 (define* (sine-ramp rmp0 rmp1 :optional (beg 0) dur snd chn edpos)
   "(sine-ramp rmp0 rmp1 :optional (beg 0) dur snd chn edpos) produces a sinsusoidal connection from rmp0 to rmp1"
   ;; vct: angle incr off scl

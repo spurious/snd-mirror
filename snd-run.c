@@ -3003,9 +3003,19 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
   if (has_false)
     {
       false_result = walk(prog, XEN_CADDDR(form), need_result);                     /* walk false branch */
+      /* if false_result is null, that is an error even if need_result is DONT_NEED_RESULT (since the false branch does exist) */
+      if (false_result == NULL)
+	{
+	  run_warn("if: can't handle false branch %s", XEN_AS_STRING(XEN_CADDDR(form)));
+	  if (result) FREE(result);
+	  if (jump_to_end) FREE(jump_to_end);
+	  if (true_result) FREE(true_result);
+	  return(NULL);
+	}
+
       if (need_result != DONT_NEED_RESULT)
 	{
-	  if ((false_result) && (false_result->type != true_result->type))
+	  if (false_result->type != true_result->type)
 	    {
 	      /* #f is ok as null pointer so fixup if needed */
 	      if ((false_result->type == R_BOOL) &&
@@ -3022,20 +3032,19 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 		     (false_result->type == R_TRACK_READER)))
 		  true_result->type = false_result->type;
 	    }
-	  if ((false_result == NULL) ||
-	      (false_result->type != true_result->type))
+
+	  if (false_result->type != true_result->type)
 	    {
-	      if (false_result == NULL)
-		run_warn("if: can't handle false branch %s", XEN_AS_STRING(XEN_CADDDR(form)));
-	      else run_warn("if branch types differ incompatibly: %s and %s", type_name(true_result->type), type_name(false_result->type));
+	      run_warn("if branch types differ incompatibly: %s and %s", type_name(true_result->type), type_name(false_result->type));
 	      if (result) FREE(result);
 	      if (false_result) FREE(false_result);
 	      if (jump_to_end) FREE(jump_to_end);
 	      if (true_result) FREE(true_result);
 	      return(NULL);
 	    }
-	  set_var_no_opt(prog, result, false_result);
+	  if (result) set_var_no_opt(prog, result, false_result);
 	}
+
       prog->ints[jump_to_end->addr] = prog->triple_ctr - false_pc - 1;              /* fixup jump-past-false addr */
       FREE(jump_to_end);
     }

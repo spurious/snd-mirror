@@ -46,9 +46,7 @@
 (define (double a) a)	
 (define (open-input file) (make-file->sample file))
 
-(define pi 3.141592653589793)
 (define two-pi (* 2 pi))
-
 
 (define (simple-out beg dur freq amp)
   (let* ((os (make-oscil freq))
@@ -1565,7 +1563,6 @@
 	 (sr (make-phase-vocoder :fft-size size :interp (/ size 4) :overlap 4))
 	 (N2 (inexact->exact (/ size 2)))
 	 (lastphases (make-vct N2 0.0))
-	 (pi 3.141592653589793)
 	 (two-pi (* 2 pi)))
     (run
      (lambda ()
@@ -1620,7 +1617,6 @@
 	 (N2 (inexact->exact (/ size 2)))
 	 (lastphases (make-vct N2 0.0))
 	 (in-data (make-vct size 0.0))
-	 (pi 3.141592653589793)
 	 (two-pi (* 2 pi))
 	 (filptr 0)
 	 (window (make-fft-window hamming-window size 0.0))

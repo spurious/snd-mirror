@@ -459,7 +459,7 @@
 		    (format #f "rotate-phase ~A" (procedure-source func))))))
 
 ;(rotate-phase (lambda (x) 0.0)) is the same as (zero-phase)
-;(rotate-phase (lambda (x) (random 3.1415))) randomizes phases
+;(rotate-phase (lambda (x) (random pi))) randomizes phases
 ;(rotate-phase (lambda (x) x)) returns original
 ;(rotate-phase (lambda (x) (- x))) reverses original (might want to write fftlen samps here)
 ;(rotate-phase (lambda (x) (* x 2))) reverb-effect (best with voice)
@@ -627,7 +627,7 @@
 ;;; (Gradshteyn and Ryzhik 1.342)
 
 ;;; or take advantage of 1/(1-x):
-;;; (map-channel (lambda (y) (set! i (1+ i)) (/ 0.001 (- 1.0 (* .99 (cos (/ (* i 2.0 3.14159) 100.0)))))))
+;;; (map-channel (lambda (y) (set! i (1+ i)) (/ 0.001 (- 1.0 (* .99 (cos (/ (* i 2.0 pi) 100.0)))))))
 ;;;   here the .99 controls the number of cosines, like an "index", and it can be matched at
 ;;;   run time to keep the amplitude constant via the 0.001 (set above to get a maxamp of .1),
 ;;;   and the frequency can be swept without problems.
@@ -688,7 +688,7 @@
 	 (n order)
 	 (m (inexact->exact (floor (/ (+ n 1) 2))))
 	 (am (* 0.5 (+ n 1)))
-	 (q (/ (* 3.14159 2.0) n)))
+	 (q (/ (* pi 2.0) n)))
     (do ((j 0 (1+ j))
 	 (jj (- n 1) (1- jj)))
 	((= j m) coeffs)
@@ -1312,7 +1312,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define (z-transform f n z)
   ;; using vector to allow complex sums (z=e^2*pi*i/n -> fourier transform)
-  ;;   (z-transform data n (exp (make-rectangular 0.0 (* (/ 2.0 n) 3.14159265))))
+  ;;   (z-transform data n (exp (make-rectangular 0.0 (* (/ 2.0 n) pi))))
   "(z-transform data n z) performs a Z transform on data; if z=e^2*pi*j/n you get a Fourier transform; complex results in returned vector"
   (let ((res (make-vector n)))
     (do ((w 0 (1+ w)))
@@ -1367,7 +1367,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (y2 0.0)
 	 (y1 0.0)
 	 (y0 0.0)
-	 (rfreq (/ (* 2.0 3.14159 freq) sr))
+	 (rfreq (/ (* 2.0 pi freq) sr))
 	 (cs (* 2.0 (cos rfreq))))
     (scan-channel (lambda (y)
 		   (set! y2 y1)

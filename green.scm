@@ -5,7 +5,6 @@
 
 (provide 'snd-green.scm)
 
-(if (not (defined? 'pi)) (define pi 3.14159265))
 (if (not (defined? 'two-pi)) (define two-pi (* 2 pi)))
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 

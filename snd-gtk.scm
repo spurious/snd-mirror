@@ -132,8 +132,7 @@
   
   (set! (mus-srate) 22050.0)
   
-  (let* ((pi 3.141592653589793) ; just for now?
-	 (mass 1.0)
+  (let* ((mass 1.0)
 	 (xspring 0.1)
 	 (damp 0.0)
 	 (bounds '())
