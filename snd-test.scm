@@ -12955,6 +12955,55 @@ EDITS: 5
 (if (not (provided? 'snd-poly.scm)) (load "poly.scm"))
 (if (not (provided? 'snd-analog-filter.scm)) (if (defined? 'gsl-roots) (load "analog-filter.scm")))
 
+(define (test-lpc)
+  (define (make-sine n) 
+    (let ((data (make-vct n 0.0))) 
+      (do ((i 0 (1+ i))) 
+	  ((= i n) data) 
+	(vct-set! data i (sin (* 2 pi (/ i n)))))))
+  (define (make-sines n) 
+    (let ((data (make-vct n 0.0))) 
+      (do ((i 0 (1+ i))) 
+	  ((= i n) data) 
+	(vct-set! data i (+ (sin (* 2 pi (/ i n)))
+			    (* .25 (sin (* 4 pi (/ i n))))
+			    (* .125 (sin (* 8 pi (/ i n)))))))))
+
+  (let ((vals (lpc-predict (vct 0 1 2 3 4 5 6 7) 8 (lpc-coeffs (vct 0 1 2 3 4 5 6 7) 8 4) 4 2)))
+    (if (not (vequal vals (vct 7.906 8.557)))
+	(snd-display ";predict ramp: ~A" vals)))
+  (let ((vals (lpc-predict (vct 0 1 2 3 4 5 6 7) 8 (lpc-coeffs (vct 0 1 2 3 4 5 6 7) 8 7) 7 2)))
+    (if (not (vequal vals (vct 7.971 8.816))) 
+	(snd-display ";predict ramp 1: ~A" vals)))
+  (let ((vals (lpc-predict (vct 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14) 15 
+		       (lpc-coeffs (vct 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14) 15 7) 7 5)))
+    (if (not (vequal vals (vct 14.999 15.995 16.980 17.940 18.851)))
+	(snd-display ";predict ramp 2: ~A" vals)))
+  (let ((vals (lpc-predict (vct 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14) 15 
+		       (lpc-coeffs (vct 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14) 15 14) 14 5)))
+    (if (not (vequal vals (vct 15.000 16.000 16.998 17.991 18.971)))
+	(snd-display ";predict ramp 3: ~A" vals)))
+  (let ((vals (lpc-predict (make-sine 16) 16 (lpc-coeffs (make-sine 16) 16 8) 8 2)))
+    (if (not (vequal vals (vct 0.000 0.383)))
+	(snd-display ";predict sine: ~A" vals)))
+  (let ((vals (lpc-predict (make-sine 16) 16 (lpc-coeffs (make-sine 16) 16 8) 8 8)))
+    (if (not (vequal vals (vct 0.000 0.383 0.707 0.924 1.000 0.924 0.707 0.383)))
+	(snd-display ";predict sine 1: ~A" vals)))
+  (let ((vals (lpc-predict (make-sines 32) 32 (lpc-coeffs (make-sines 32) 32 8) 8 8)))
+    (if (not (vequal vals (vct 0.000 0.379 0.686 0.880 0.970 1.001 1.022 1.053)))
+	(snd-display ";predict sines: ~A" vals)))
+  (let ((vals (lpc-predict (make-sines 32) 32 (lpc-coeffs (make-sines 32) 32 16) 16 8)))
+    (if (and (not (vequal vals (vct 0.000 0.379 0.684 0.876 0.961 0.987 1.006 1.046)))
+	     (not (vequal vals (vct 0.000 0.379 0.685 0.876 0.961 0.985 0.998 1.029)))) ; if --with-doubles
+	(snd-display ";predict sines 1: ~A" vals)))
+  (let ((vals (lpc-predict (make-sines 32) 32 (lpc-coeffs (make-sines 32) 32 30) 30 4)))
+    (if (and (not (vequal vals (vct 0.000 0.379 0.685 0.878)))
+	     (not (vequal vals (vct 0.000 0.379 0.684 0.875)))) ; double vcts
+	(snd-display ";predict sines 2: ~A" vals)))
+  (let ((vals (lpc-predict (make-sines 64) 64 (lpc-coeffs (make-sines 64) 64 32) 32 8)))
+    (if (not (vequal vals (vct 0.000 0.195 0.379 0.545 0.684 0.795 0.875 0.927)))
+	(snd-display ";predict sines 3: ~A" vals))))
+
 (define (analog-filter-tests)
 
   (define (sweep->bins flt bins)
@@ -16499,6 +16548,7 @@ EDITS: 5
 	  (undo))
 
 	(if (defined? 'gsl-roots) (analog-filter-tests))
+	(test-lpc)
 	
 	(let ((v (spectrum->coeffs 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))
 	      (v1 (make-fir-coeffs 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0))))

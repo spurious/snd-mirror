@@ -721,7 +721,7 @@ void backup_mark_list(chan_info *cp, int cur)
        *   to a state where the current marks entry thinks ctr > size!  This causes a subsequent ripple_marks
        *   or free_mark_list to run off the end of the marks array freeing random pointers!
        */
-#if DEBUGGING
+#if MUS_DEBUGGING
       if (cp->mark_size[cur - 1] < cp->mark_ctr[cur - 1]) 
 	fprintf(stderr, "mark array size: %d, ctr: %d\n", cp->mark_size[cur - 1], cp->mark_ctr[cur - 1]);
 #endif

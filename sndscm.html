@@ -2465,6 +2465,28 @@ produced by each harmonic.  <i>pairs</i> controls how many bands are used to spl
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- lpc-coeffs -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="lpccoeffs">lpc-coeffs</a> <code>data n m</code>
+</td></tr><tr><td></td><td>
+lpc-coeffs returns 'm' LPC coeffients (in a vector) given 'n' data points in the vct 'data'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- lpc-predict -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="lpcpredict">lpc-predict</a> <code>data n coeffs m nf :optional clipped</code>
+</td></tr><tr><td></td><td>
+lpc-predict takes the output of lpc-coeffs ('coeffs') and the length thereof ('m'),
+'n' data points 'data', and produces 'nf' new data points (in a vct) as its prediction.
+If 'clipped' is #t, the new data is assumed to be outside -1.0 to 1.0.
+<pre>
+    :<em class=typing>(lpc-predict (vct 0 1 2 3 4 5 6 7) 8 (lpc-coeffs (vct 0 1 2 3 4 5 6 7) 8 4) 4 2)</em>
+    <em class=listener>#&lt;vct[len=2]: 7.906 8.557&gt;</em>
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- spike -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>spike</em> <code>:optional snd chn</code>
