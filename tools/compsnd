@@ -2,7 +2,6 @@
 
 cp ~/dist/snd/snd.tar .
 tar xf snd.tar
-make clean
 
 # words I constantly missppelll
 fgrep decrip *.html

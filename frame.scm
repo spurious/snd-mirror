@@ -640,7 +640,6 @@
 
 
 ;;; TODO: test [directly] make-track-frame-reader, read-track-frame, dir edpos args in make-frame-reader
-;;; PERHAPS: formalize fix-clip -- check restoration against hand-made cases
 ;;; SOMEDAY: channel slicer: grn but output locs permuted, reversed etc
 ;;; TODO: need snd-run support for frame-readers (and map-frame frame return?)
 ;;; TODO: write doc that describes all these sample accessors: sample-at-a-time, readers, chunked versions (->vct), top level (menu, save-sound-as)

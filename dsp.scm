@@ -2511,14 +2511,12 @@ and replaces it with the spectrum given in coeffs"
 
 
 ;;; -------- unclip-channel
-;;;
-;;; work in progress... (use LPC to reconstruct clipped portions)
-#|
 
-(define* (unclip-channel :optional snd chn with-marks)
+(define* (unclip-channel :optional snd chn)
   (let* ((clip-size 256)                        ; current clip-data size
 	 (clip-data (make-vector clip-size 0))  ; clipped portion begins and end points
-	 (clips 0))                             ; number of clipped portions * 2
+	 (clips 0)                              ; number of clipped portions * 2
+	 (unclipped-max 0.0))
 
     ;; find clipped portions
     (let ((clip-beg 0)
@@ -2527,34 +2525,35 @@ and replaces it with the spectrum given in coeffs"
 	  (samp 0))
       (scan-channel
        (lambda (y)
-	 (if (or (> y .9999)                    ; this sample is clipped
-		 (< y -.9999))
-	     (if (not in-clip)
-		 (begin                         ;   start a new clipped portion
-		   (set! in-clip #t)
-		   (set! clip-beg samp)))
-	     (if in-clip                        ; else if we were in a clipped portion
-		 (begin                         ;   save the bounds in clip-data
-		   (set! in-clip #f)
-		   (vector-set! clip-data clips clip-beg)
-		   (vector-set! clip-data (1+ clips) (1- samp))
-		   (set! clips (+ clips 2))
-		   (if (>= clips clip-size)     ; clip-data full -- make more room
-		       (let* ((old-size clip-size)
-			      (old-data clip-data))
-			 (set! clip-size (* 2 clip-size))
-			 (set! clip-data (make-vector clip-size 0))
-			 (do ((i 0 (1+ i)))
-			     ((= i old-size))
-			   (vector-set! clip-data i (vector-ref old-data i))))))))
-	 (set! samp (1+ samp))
-	 #f)
+	 (let ((absy (abs y)))
+	   (if (> absy .9999)                    ; this sample is clipped
+	       (if (not in-clip)
+		   (begin                        ;   start a new clipped portion
+		     (set! in-clip #t)
+		     (set! clip-beg samp)))
+	       (begin                            ; not clipped
+		 (set! unclipped-max (max unclipped-max absy))
+		 (if in-clip                     ; if we were in a clipped portion
+		     (begin                      ;   save the bounds in clip-data
+		       (set! in-clip #f)
+		       (vector-set! clip-data clips clip-beg)
+		       (vector-set! clip-data (1+ clips) (1- samp))
+		       (set! clips (+ clips 2))
+		       (if (>= clips clip-size)    ; clip-data full -- make more room
+			   (let* ((old-size clip-size)
+				  (old-data clip-data))
+			     (set! clip-size (* 2 clip-size))
+			     (set! clip-data (make-vector clip-size 0))
+			     (do ((i 0 (1+ i)))
+				 ((= i old-size))
+			       (vector-set! clip-data i (vector-ref old-data i)))))))))
+	   (set! samp (1+ samp))
+	   #f))
        0 (frames snd chn) snd chn))
 
     ;; try to restore clipped portions
     (if (> clips 0)                             ; we did find clipped portions
 	(let ((min-data-len 32)
-	      (half-min-data-len 16)
 	      (max-diff 0.0)
 	      (max-len 0))
 	  (as-one-edit
@@ -2569,60 +2568,74 @@ and replaces it with the spectrum given in coeffs"
 		 (if (> clip-len max-len) 
 		     (set! max-len clip-len))
 
-		 (if (and (> clip 1)
-			  (< (- clip-beg data-len) (vector-ref clip-data (1- clip)))) ; current beg - data collides with previous
-		     (snd-display ";[~A] collision at ~A -> [~A : ~A]" clip (vector-ref clip-data (1- clip)) clip-beg clip-end)
-		     (if (and (< clip (- clips 3))
-			      (> (+ clip-end data-len) (vector-ref clip-data (+ clip 2)))) ; current end + data collides with next
-			 (snd-display ";[~A] collision at [~A : ~A] -> ~A" clip clip-beg clip-end (vector-ref clip-data (+ clip 2)))))
+		 (let ((forward-data-len data-len)
+		       (backward-data-len data-len)
+		       (previous-end (if (= clip 0) 0 (vector-ref clip-data (1- clip))))
+		       (next-beg (if (< clip (- clips 3)) (vector-ref clip-data (+ clip 2)) (frames snd chn))))
 
-		 ;; use LPC to reconstruct going both forwards and backwards
-		 (let* ((data (channel->vct (- clip-beg data-len) data-len snd chn))
-			(future (lpc-predict data data-len 
-					 (lpc-coeffs data data-len (max half-min-data-len clip-len))
-					 (max half-min-data-len clip-len) clip-len #f))
-			(rdata (vct-reverse! (channel->vct (1+ clip-end) data-len snd chn)))
-			(past (lpc-predict rdata data-len 
-					(lpc-coeffs rdata data-len (max half-min-data-len clip-len)) 
-					(max half-min-data-len clip-len) clip-len #f))
-			(new-data (make-vct clip-len 0.0)))
+		   (if (< (- clip-beg data-len) previous-end)  ; current beg - data collides with previous
+		       (begin
+			 ;; (snd-display ";[~A] collision at ~A -> [~A : ~A]" clip previous-end clip-beg clip-end)
+			 (set! forward-data-len (max 4 (- clip-beg previous-end)))))
 
-		   ;(snd-display ";future: ~A (~A), past: ~A (~A)" future data past rdata)
+		   (if (> (+ clip-end data-len) next-beg)    ; current end + data collides with next
+		       (begin
+			 ;; (snd-display ";[~A] collision at [~A : ~A] -> ~A" clip clip-beg clip-end next-beg)
+			 (set! backward-data-len (max 4 (- next-beg clip-end)))))
 
-		   ;; besides back-and-forth prediction, use filtering to smooth the reconstruction,
-		   ;;   make sure the new values are actually clippable (not within -1 to 1 which is
-		   ;;   obviously a mistake), and try to anchor the new values to the real data as
-		   ;;   much as possible.  Weight known values and earliest predicted values most heavily.
+		   (let ((forward-predict-len (max clip-len (inexact->exact (floor (/ forward-data-len 2)))))
+			 (backward-predict-len (max clip-len (inexact->exact (floor (/ backward-data-len 2))))))
 
-		   (if (> clip-len 1)
-		       (do ((i 0 (1+ i))
-			    (j (1- clip-len) (1- j)))
-			   ((= i clip-len))
-			 (let* ((sn (* 0.5 (+ 1.0 (cos (* pi (/ i (1- clip-len))))))))
-			   (vct-set! new-data i (+ (* sn (vct-ref future i))
-						   (* (- 1.0 sn) (vct-ref past j))))))
+		     ;; use LPC to reconstruct going both forwards and backwards
 
-		       ;; todo perhaps special case for 2 samps (what if both 1.0 for example?)
+		     (let* ((data (channel->vct (- clip-beg forward-data-len) forward-data-len snd chn))
+			    (future (lpc-predict 
+				     data forward-data-len 
+				     (lpc-coeffs data forward-data-len forward-predict-len)
+				     forward-predict-len
+				     clip-len #f))
 
-		       (vct-set! new-data 0 (if (> (vct-ref future 0) 0.0)
-						(max (vct-ref future 0) (vct-ref past 0))
-						(min (vct-ref future 0) (vct-ref past 0)))))
+			    (rdata (vct-reverse! (channel->vct (1+ clip-end) backward-data-len snd chn)))
+			    (past (lpc-predict 
+				   rdata backward-data-len 
+				   (lpc-coeffs rdata backward-data-len backward-predict-len)
+				   backward-predict-len
+				   clip-len #f))
 
-		   (if with-marks
-		       (let* ((diff (vct-subtract! (vct-copy new-data) (channel->vct clip-beg clip-len)))
-			      (pk (vct-peak diff)))
-			 (if (> pk max-diff) (set! max-diff pk))
-			 (add-mark clip-beg snd chn (format #f "[~{~1,3F ~}]" (vct->list diff)))
-			 (if (not (= clip-end clip-beg))
-			     (add-mark clip-end snd chn))))
+			    (new-data (make-vct clip-len 0.0)))
 
-		   ;; write reconstruction
-		   (vct->channel new-data clip-beg clip-len snd chn))))
-	     )) ; end as-one-edit
+		       (if (> clip-len 1)
+			   (do ((i 0 (1+ i))
+				(j (1- clip-len) (1- j)))
+			       ((= i clip-len))
+			     (let* ((sn (* 0.5 (+ 1.0 (cos (* pi (/ i (1- clip-len))))))))
+			       (vct-set! new-data i (+ (* sn 
+							  (vct-ref future i))
+						       (* (- 1.0 sn) 
+							  (vct-ref past j))))))
 
-	  ;; scale new version to 1.0
-	  (scale-channel (/ .999 (maxamp snd chn)) 0 (frames snd chn) snd chn)
-	  (list 'clips (/ clips 2) 'max-len max-len 'max-diff max-diff))
+			   ;; todo perhaps move this mix dependent on data-lens?
+			   ;; todo perhaps special case for 2 samps (what if both 1.0 for example?)
+
+			   (vct-set! new-data 0 (if (> (vct-ref future 0) 0.0)
+						    (max (vct-ref future 0) (vct-ref past 0))
+						    (min (vct-ref future 0) (vct-ref past 0)))))
+
+		       ;; write reconstruction
+		       (vct->channel new-data clip-beg clip-len snd chn))))))))
+
+	  (if (> unclipped-max .95) (set! unclipped-max .999))
+	  (scale-channel (/ unclipped-max (maxamp snd chn)) 0 (frames snd chn) snd chn)
+	  (list 'max unclipped-max 'clips (/ clips 2) 'max-len max-len))
 
     'no-clips)))
-|#
+
+(define* (unclip-sound :optional snd)
+  (let ((index (or snd (selected-sound) (car (sounds)))))
+    (if (not (sound? index))
+	(throw 'no-such-sound (list "unclip-sound" snd))
+	(let ((chns (chans index)))
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn chns))
+	    (unclip-channel index chn))))))
+

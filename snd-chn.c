@@ -10,6 +10,8 @@
  * TODO: audio mixer settings dialog (needed especially in alsa!)
  * SOMEDAY: describe_fft_point doesn't work in spectrograms
  *             is time:x freq:z val:y in rotation matrix? would need inverted-matrix * vector, then current graph-once code
+ * TODO: if 2chans, as-one-edit backup, edhist can be confused about which channel got the edit, and the
+ *             thumbnail graph looks suspicious
  */
 
 
@@ -895,34 +897,23 @@ void apply_x_axis_change(axis_info *ap, chan_info *cp)
     }
 }
 
-static off_t visible_syncd_cursor(chan_info *cp)
+#define NO_ZOOM_FOCUS_LOCATION -1
+
+static off_t zoom_focus_location(chan_info *cp)
 {
-  snd_info *sp;
-  int sync;
-  sp = cp->sound;
-  sync = sp->sync;
-  if (sync != 0)
-    {
-      int i, j;
-      chan_info *ncp;
-      for (i = 0; i < sp->nchans; i++)
-	{
-	  ncp = sp->chans[i];
-	  if (ncp->cursor_visible) return(CURSOR(ncp));
-	}
-      /* geez, maybe it's in a separate syncd sound */
-      for (j = 0; j < ss->max_sounds; j++)
-	{
-	  sp = ss->sounds[j];
-	  if ((sp) && (sp->inuse == SOUND_NORMAL) && (sp->sync == sync) && (sp != cp->sound))
-	    for (i = 0; i < sp->nchans; i++)
-	      {
-		ncp = sp->chans[i];
-		if (ncp->cursor_visible) return(CURSOR(ncp));
-	      }
-	}
-    }
-  return(-1);
+  if (cp->cursor_visible)
+    return(CURSOR(cp));
+
+  if (selection_is_visible_in_channel(cp)) 
+    return(selection_beg(cp));
+
+  if (active_mix_p(cp))
+    return(mix_beg(cp));
+
+  if (active_mark(cp))
+    return(mark_beg(cp));
+
+  return(NO_ZOOM_FOCUS_LOCATION);
 }
 
 void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
@@ -966,26 +957,37 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
 	case ZOOM_FOCUS_ACTIVE:
 	  ncp = virtual_selected_channel(cp);
 	  /* axes should be the same, since all move together in this mode */
-	  if (ncp->cursor_visible)
-	    newf = CURSOR(ncp);
-	  else
+	  newf = zoom_focus_location(ncp);
+	  if (newf == NO_ZOOM_FOCUS_LOCATION)
 	    {
-	      /* perhaps user has syncd chans (sounds), has cursor in only one, is zooming using some other channel's (sound's) slider */
-	      newf = visible_syncd_cursor(cp);
-	      if (newf == -1)
+	      snd_info *sp;
+	      int sync;
+	      sp = cp->sound;
+	      sync = sp->sync;
+	      if (sync != 0)
 		{
-		  if (selection_is_visible_in_channel(ncp)) 
-		    newf = selection_beg(ncp);
-		  else
-		    if (active_mix_p(ncp))
-		      newf = mix_beg(ncp);
-		    else
-		      if (active_mark(ncp))
-			newf = mark_beg(ncp);
-		      else newf = -1;
-		}
-	    }
-	  if (newf != -1)
+		  int i, j;
+		  for (i = 0; i < sp->nchans; i++)
+		    if (i != ncp->chan)
+		      {
+			newf = zoom_focus_location(sp->chans[i]);
+			if (newf != NO_ZOOM_FOCUS_LOCATION)
+			  break;
+		      }
+		  if (newf == NO_ZOOM_FOCUS_LOCATION)
+		    {
+		      /* geez, maybe it's in a separate syncd sound */
+		      for (j = 0; j < ss->max_sounds; j++)
+			{
+			  sp = ss->sounds[j];
+			  if ((sp) && (sp->inuse == SOUND_NORMAL) && (sp->sync == sync) && (sp != cp->sound))
+			    for (i = 0; i < sp->nchans; i++)
+			      {
+				newf = zoom_focus_location(sp->chans[i]);
+				if (newf != NO_ZOOM_FOCUS_LOCATION)
+				  break;
+			      }}}}}
+	  if (newf != NO_ZOOM_FOCUS_LOCATION)
 	    {
 	      double loc, pos;
 	      loc = (double)newf / (double)SND_SRATE(ncp->sound);
@@ -999,6 +1001,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
 		}
 	      else ap->x0 = loc - 0.5 * ap->zx * ap->x_ambit;
 	    }
+	  else ap->x0 = 0.5 * ((ap->x1 + ap->x0) - ap->zx * ap->x_ambit); 
 	  break;
 	}
 #if HAVE_DECL_ISNAN

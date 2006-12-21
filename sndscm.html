@@ -1430,11 +1430,17 @@ For more than you really want to know about other such sounds, see
 </td></tr><tr><td></td><td>
 Perry Cook's tubular bell:
 <pre>
-    (with-sound () (tubebell 0 2 440 .1 32.0) (tubebell 2 2 220 .1 64.0) (tubebell 4 2 660 .1 .032))
+    (with-sound () 
+      (tubebell 0 2 440 .1 32.0) 
+      (tubebell 2 2 220 .1 64.0) 
+      (tubebell 4 2 660 .1 .032))
 </pre>
 <i>base</i> is the envelope base:
 <pre>
-    (with-sound () (tubebell 0 2 440 .1 32.0) (tubebell 2 2 220 .1 2048.0) (tubebell 4 3 660 .1 .032))
+    (with-sound () 
+      (tubebell 0 2 440 .1 32.0) 
+      (tubebell 2 2 220 .1 2048.0) 
+      (tubebell 4 3 660 .1 .032))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -1495,9 +1501,12 @@ I used vox in the 5th movement of "Colony" and in "The New Music Liberation Army
 (with-sound ()
   (let ((amp-env '(0 0 25 1 75 1 100 0))
         (frq-env '(0 0 5 .5 10 0 100 1)))
-  (vox 0 2 170 .4 amp-env frq-env .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) '(.8 .15 .05) '(.005 .0125 .025) .05 .1)
-  (vox 2 2 110 .4 amp-env frq-env .5 '(0 UH 25 UH 35 ER 65 ER 75 UH 100 UH) '(.8 .15 .05) '(.005 .0125 .025))
-  (vox 4 2 300 .4 amp-env frq-env .1 '(0 I 5 OW 10 I 50 AE 100 OO) '(.8 .15 .05) '(.05 .0125 .025) .02 .1)))
+  (vox 0 2 170 .4 amp-env frq-env .1 
+    '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) '(.8 .15 .05) '(.005 .0125 .025) .05 .1)
+  (vox 2 2 110 .4 amp-env frq-env .5 
+    '(0 UH 25 UH 35 ER 65 ER 75 UH 100 UH) '(.8 .15 .05) '(.005 .0125 .025))
+  (vox 4 2 300 .4 amp-env frq-env .1 
+    '(0 I 5 OW 10 I 50 AE 100 OO) '(.8 .15 .05) '(.05 .0125 .025) .02 .1)))
 </pre>
 
 Or in Ruby:
@@ -1505,9 +1514,12 @@ Or in Ruby:
 with_sound() do
   amp_env = [0, 0, 25, 1, 75, 1, 100, 0]
   frq_env = [0, 0, 5, 0.5, 10, 0, 100, 1]
-  vox(0, 2, 170, 0.4, amp_env, frq_env, 0.1, [0, :E, 25, :AE, 35, :ER, 65, :ER, 75, :I, 100, :UH], 0.05, 0.1)
-  vox(2, 2, 300, 0.4, amp_env, frq_env, 0.1, [0, :I, 5, :OW, 10, :I, 50, :AE, 100, :OO], 0.02, 0.1)
-  vox(4, 5, 600, 0.4, amp_env, frq_env, 0.1, [0, :I, 5, :OW, 10, :I, 50, :AE, 100, :OO], 0.01, 0.1)
+  vox(0, 2, 170, 0.4, amp_env, frq_env, 0.1, 
+       [0, :E, 25, :AE, 35, :ER, 65, :ER, 75, :I, 100, :UH], 0.05, 0.1)
+  vox(2, 2, 300, 0.4, amp_env, frq_env, 0.1, 
+       [0, :I, 5, :OW, 10, :I, 50, :AE, 100, :OO], 0.02, 0.1)
+  vox(4, 5, 600, 0.4, amp_env, frq_env, 0.1, 
+       [0, :I, 5, :OW, 10, :I, 50, :AE, 100, :OO], 0.01, 0.1)
 end
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -1580,13 +1592,13 @@ While in the break context (while the listener prompt says "break"),
 these functions are available:
 </p>
 <pre>
-  <em class=emdef>break-go</em> (returned-value #f)       ; continue execution from breakpoint, return <i>returned-value</i>
-  <em class=emdef>break-locals</em> (stack-location 0)    ; display local variables 
-  <em class=emdef>break-local</em> local-var (stack-location 0) ; print a local's value (<i>local-var</i> is a symbol or string)
-  <em class=emdef>break-backtrace</em> (all #f)           ; display stack at breakpoint (5 levels by default, <i>all</i> = #t: all levels)
-  <em class=emdef>break-help</em>                         ; display some help
-  <em class=emdef>break-quit</em>                         ; exit current break level
-  <em class=emdef>break-quit!</em>                        ; exit all break levels, return to top level
+  <em class=emdef>break-go</em> (returned-value #f)    ; continue execution from breakpoint, return <i>returned-value</i>
+  <em class=emdef>break-locals</em> (stack-location 0) ; display local variables 
+  <em class=emdef>break-local</em> local-var (stack-location 0) ; print a local's value ('local-var' is a symbol or string)
+  <em class=emdef>break-backtrace</em> (all #f)        ; display stack at breakpoint (5 levels by default, 'all' = #t: all levels)
+  <em class=emdef>break-help</em>                      ; display some help
+  <em class=emdef>break-quit</em>                      ; exit current break level
+  <em class=emdef>break-quit!</em>                     ; exit all break levels, return to top level
 </pre>
 <p>
 Here is a brief session in Snd's listener:
@@ -1926,14 +1938,14 @@ These are fft phase manipulators taken from the phazor package of Scott McNab.
 zero-phase takes ffts, sets all phases to 0.0, then unffts.  rotate-phase
 is similar, but applies <i>func</i> to the phases.
 <pre>
-    (rotate-phase (lambda (x) 0.0))                ; same as (zero-phase)
-    (rotate-phase (lambda (x) (random 3.1415)))    ; randomizes phases
-    (rotate-phase (lambda (x) x))                  ; returns original
-    (rotate-phase (lambda (x) (- x)))              ; reverses original (might want to write fftlen samps here)
+    (rotate-phase (lambda (x) 0.0))             ; same as (zero-phase)
+    (rotate-phase (lambda (x) (random 3.1415))) ; randomizes phases
+    (rotate-phase (lambda (x) x))               ; returns original
+    (rotate-phase (lambda (x) (- x)))           ; reverses original
 </pre>
 or in Ruby:
 <pre>
-    rotate_phase(lambda {|x| random(PI) })          # randomizes phases
+    rotate_phase(lambda {|x| random(PI) })      # randomizes phases
 </pre>
 and Forth:
 <pre>
@@ -1958,7 +1970,7 @@ z-transform performs a z-transform returning a vector (to accommodate complex re
     <em class=listener>1.0</em>
     :<em class=typing>(z-transform d0 8 (exp (make-rectangular 0.0 (* .25 pi))))</em>
     ;; Ruby: z_transform(d0, 8, exp(Complex(0.0, (2.0 / 8) * PI)))
-    <em class=listener>#(1.0  0.0+1.0i  -1.0  0.0-1.0i  1.0  0.0+1.0i  -1.0  0.0-1.0i)</em> ; I cleaned up this printout by hand
+    <em class=listener>#(1.0  0.0+1.0i  -1.0  0.0-1.0i  1.0  0.0+1.0i  -1.0  0.0-1.0i)</em>
     :<em class=typing>(mus-fft d1 d2 8)</em>
     <em class=listener>#&lt;vct[len=8]: 1.000 0.000 -1.000 -0.000 1.000 0.000 -1.000 -0.000&gt;</em>
     :<em class=typing>d2</em>
@@ -2497,7 +2509,26 @@ The more successive samples we include in the product, the more we
 limit the output to pulses placed at (just after) wave peaks.
 In spike's case, just three samples are multiplied.
 See also the <a href="#volterrafilter">volterra filter</a>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- unclip-channel -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="unclipchannel">unclip-channel</a> <code>:optional snd chn</code>
+</td></tr><tr><td></td><td>
+unclip-channel tries to reconstruct clipped portions of a sound by using LPC to predict (backwards and forwards)
+the lost samples. 
+This works much better than the sinusoidal reconstruction used in the appendix on <a href="sndscm.html#noisystory">Noise Reduction</a>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- unclip-sound -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<em class=emdef>unclip-sound</a> <code>:optional snd</code>
+</td></tr><tr><td></td><td>
+unclip-sound calls unclip-channel on each channel in the sound 'snd'.
 </td></tr><tr><td colspan=2 height=32></td></tr>
+
 
 
 <!-- ---------------------------------------- dsp src ---------------------------------------- -->
@@ -3529,7 +3560,8 @@ CLM's <a href="clm.html#locsig">locsig</a> generator; it mixes a mono sound into
 it into two copies whose amplitudes depend on the desired location.
 0 degrees: all in channel 0, 90: all in channel 1.
 <pre>
-    (place-sound 0 1 45.0) ; 0=sound 0 (mono), 1=sound 1 (stereo), 45 deg, so outa * 0.5 and outb * 0.5
+    (place-sound 0 1 45.0) 
+    ;; 0=sound 0 (mono), 1=sound 1 (stereo), 45 deg, so outa * 0.5 and outb * 0.5
 </pre>
 If <i>panning-envelope-or-degree</i> is an envelope,
 the split depends on the panning envelope (0 = all in chan 0, etc).
@@ -5194,7 +5226,8 @@ is the overall gain multiplier for the output streams.
 sets the output mixing matrix directly (rather than through <i>global</i>).
 </p>
 <pre>
-    (with-sound (:reverb freeverb :reverb-data '(:output-gain 3.0)) (fm-violin 0 .1 440 .1 :reverb-amount .1))
+    (with-sound (:reverb freeverb :reverb-data '(:output-gain 3.0)) 
+      (fm-violin 0 .1 440 .1 :reverb-amount .1))
 </pre>
 
 <table bgcolor="aliceblue" border=0><tr>
@@ -5226,7 +5259,7 @@ or something.
       (amp-envelope '(0 0 0.3 1 0.7 1 1 0))   ; overall amplitude envelope for note
       (grain-envelope '(0 0 0.3 1 0.7 1 1 0)) ; env for each individual grain
       (grain-envelope-end #f)                 ; if not #f, a 2nd grain env
-      (grain-envelope-transition '(0 0 1 1))  ; interpolation such that 0: use grain-envelope, 1: use grain-envelope-end
+      (grain-envelope-transition '(0 0 1 1))  ; interp 0: use grain-envelope, 1: use grain-envelope-end
       (grain-envelope-array-size 512)         ; make-table-lookup table size
       (grain-duration 0.1)                    ; number or envelope setting grain duration (in seconds)
       (grain-duration-spread 0.0)             ; random spread around <i>grain-duration</i>
@@ -5414,7 +5447,7 @@ we want to close all currently open sounds without invoking the peak-env stuff:
          <em class=typing>(for-each (lambda (snd) (close-sound snd)) (sounds))))</em>
     <em class=listener>;closing "oboe.snd"
     #&lt;unspecified&gt;</em>
-    :<em class=typing>(hook-&gt;list close-hook)</em>          ; upon return from with-local-hook, old close-hook list is restored
+    :<em class=typing>(hook-&gt;list close-hook)</em>  ; upon return from with-local-hook, old close-hook list is restored
     <em class=listener>(#&lt;procedure save-peak-env-info ((snd) ...)&gt; ...)</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5444,7 +5477,8 @@ The function that actually passes the url to the reader is <a href="extsnd.html#
     :<em class=typing>(html "open-sound")</em>  ; mozilla starts (if necessary), and goes to the open-sound documentation
     <em class=listener>#t</em>
     :<em class=typing>(? "open-sound")</em>
-    <em class=listener>(open-sound filename): open filename (as if opened from File:Open menu option), and return the new sound's index</em>
+    <em class=listener>(open-sound filename): open filename (as if opened from File:Open menu option), 
+    and return the new sound's index</em>
 
 </pre>
 
@@ -5789,7 +5823,8 @@ an alphabetical set of submenus.  Some of the functions assume you have a sound 
 
     sleighbells: 
         (with-sound () 
-          (big-maraca 0 2 .15 0.97 0.9994 0.03125 '(2500 5300 6500 8300 9800) '(0.999 0.999 0.999 0.999 0.999)))
+          (big-maraca 0 2 .15 0.97 0.9994 0.03125 '(2500 5300 6500 8300 9800) 
+            '(0.999 0.999 0.999 0.999 0.999)))
 
     sekere: 
         (with-sound ()
@@ -8460,7 +8495,8 @@ These spectra can be used directly in the instrument <a href="#spectra">spectra<
                (xstep 1)      ; quantization of freedom in time dimension, in samples, minimum: 1
                (ywig 0)       ; amplitude applied to random walk function in amplitude dimension, as %amp
                (xfb 0)        ; FIR filter
-               (init-array '((10 0) (10 1) (10 0) (10 -.7) (10 0) (10 .5) (10 0) (10 -.3) (10 0) (10 .2) (10 0) (10 -.1)))
+               (init-array '((10 0) (10 1) (10 0) (10 -.7) (10 0) (10 .5) 
+                             (10 0) (10 -.3) (10 0) (10 .2) (10 0) (10 -.1)))
                               ; initial x and y breakpoints for wave,
                               ;    x values must be integers &gt;= 1, y values between -1.0 and 1.0
 </pre>
@@ -8554,11 +8590,15 @@ be rewritten in the same form.
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
   <em class=emdef>make-fm-violin</em>
-    frequency amplitude :key (fm-index 1.0) (amp-env #f) (periodic-vibrato-rate 5.0) (random-vibrato-rate 16.0)
-    (periodic-vibrato-amplitude 0.0025) (random-vibrato-amplitude 0.005) (noise-amount 0.0) (noise-freq 1000.0)
-    (ind-noise-freq 10.0) (ind-noise-amount 0.0) (amp-noise-freq 20.0) (amp-noise-amount 0.0) (gliss-env #f)
-    (fm1-env #f) (fm2-env #f) (fm3-env #f) (fm1-rat 1.0) (fm2-rat 3.0) (fm3-rat 4.0) (fm1-index #f) (fm2-index #f) 
-    (fm3-index #f) (base 1.0)
+    frequency amplitude :key (fm-index 1.0) (amp-env #f) 
+    (periodic-vibrato-rate 5.0) (random-vibrato-rate 16.0)
+    (periodic-vibrato-amplitude 0.0025) (random-vibrato-amplitude 0.005) 
+    (noise-amount 0.0) (noise-freq 1000.0)
+    (ind-noise-freq 10.0) (ind-noise-amount 0.0) 
+    (amp-noise-freq 20.0) (amp-noise-amount 0.0) (gliss-env #f)
+    (fm1-env #f) (fm2-env #f) (fm3-env #f) 
+    (fm1-rat 1.0) (fm2-rat 3.0) (fm3-rat 4.0) 
+    (fm1-index #f) (fm2-index #f) (fm3-index #f) (base 1.0)
 
   <em class=emdef>fm-violin</em> gen
   <em class=emdef>fm-violin-ins</em> [same args as original violin in v.scm]
@@ -8887,8 +8927,8 @@ In CLM, the fm-violin became (fm.html, 1989):
 </small></p>
 
 <table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
-(defun bit20 (x)			;Samson box modifier got 2's complement 20 bit interpreted as fraction 
-  (if (&gt;= x (expt 2 19))                ;(this needed to keep fm-violin backwards compatible with old note lists)
+(defun bit20 (x)			;Samson box modifier got 20 bit int interpreted as fraction 
+  (if (&gt;= x (expt 2 19))                ;(keep fm-violin compatible with old note lists)
       (float (/ (- x (expt 2 20)) (expt 2 19)))
     (float (/ x (expt 2 19)))))
 
@@ -8995,7 +9035,8 @@ In CLM, the fm-violin became (fm.html, 1989):
 				:base 0	:scaler (* two-pi noise-amount))))
 	 (vib 0.0) 
 	 (modulation 0.0)
-	 (loc (<a class=quiet href="clm.html#make-locsig">make-locsig</a> :degree (or degree degrees (random 90.0)) :reverb reverb-amount :distance distance))
+	 (loc (<a class=quiet href="clm.html#make-locsig">make-locsig</a> :degree (or degree degrees (random 90.0)) 
+                :reverb reverb-amount :distance distance))
 	 (fuzz 0.0)
 	 (ind-fuzz 1.0)
 	 (amp-fuzz 1.0))
@@ -9361,7 +9402,7 @@ See the <a href="#clminsdoc">clm instrument</a> documentation for more examples.
 	  (reverb-data *clm-reverb-data*)        ; arguments passed to the reverb
 	  (reverb-channels *clm-reverb-channels*); chans in the reverb intermediate file
 	  (continue-old-file #f)                 ; if #t, continue a previous computation
-	  (statistics *clm-statistics*)          ; if #t, print various stats at end of with-sound (compile time, maxamps)
+	  (statistics *clm-statistics*)          ; if #t, print info at end of with-sound (compile time, maxamps)
 	  (scaled-by #f)                         ; is a number, scale output by that amp
 	  (scaled-to #f)                         ; if a number, scale the output to peak at that amp
 	  (play *clm-play*)                      ; if #t, play the sound automatically
@@ -10385,6 +10426,9 @@ I hadn't previously thought about noise reduction (so nothing was
 already written), and once this stuff is written, no one else has
 to do anything but load it.  Most of the functions mentioned
 here are now in play.scm or dsp.scm.
+(Note added much later: <a href="sndscm.html#unclipchannel">unclip-channel</a>
+does a much better job at reconstruction than the code described here; it uses
+LPC to predict what the lost samples were; see dsp.scm).
 </p>
 
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
