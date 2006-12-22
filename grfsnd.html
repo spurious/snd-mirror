@@ -683,7 +683,7 @@ with the fonts and colors.
 The <A class=def NAME="xautoresize">autoResize</a> resource determines how Snd acts when files
 are added to or removed from its overall display.  The default (1)
 causes Snd to expand or contract the main window's size to accommodate
-the sounds; many people find this distracting.  If <i>autoResize</i> is 0, the outer window size remains the
+the sounds; many people find this distracting.  If 'autoResize' is 0, the outer window size remains the
 same, and the sounds try to fit as best they can (to some extent the window manager controls this stuff).  See also
 the variable <a href="extsnd.html#autoresize">auto-resize</a>.
 The <A class=def NAME="horizontalpanes">horizontalPanes</a> resource
@@ -960,11 +960,11 @@ saw.c included with Snd.
   void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn)
 </pre>
 
-<p>starts up the Snd editor in the widget <i>parent</i>, passing the outer Snd
-form widget the arguments <i>caller_args</i> and <i>caller_argn</i>.  The
-enclosing application context is <i>app</i>.  <i>parent</i> needs to
+<p>starts up the Snd editor in the widget 'parent', passing the outer Snd
+form widget the arguments 'caller_args' and 'caller_argn'.  The
+enclosing application context is 'app'.  'parent' needs to
 be realized at the time of the call, since Snd uses it to set up graphics
-contexts and so on.  <i>argc</i> and <i>argv</i> can be passed to
+contexts and so on.  'argc' and 'argv' can be passed to
 simulate a shell invocation of Snd.  Remember that in this case, the
 first string argument is expected to be the application name, and is
 ignored by Snd.
@@ -1021,15 +1021,15 @@ to edit sounds.  Say we want an echo effect:</p>
 </pre></td></tr></table>
 
 <p>
-Here <i>scaler</i> sets
-how loud subsequent echos are, and <i>secs</i> sets how far apart they
-are in seconds.  <i>echo</i> uses the <i>secs</i> argument to create
-a delay line (<i>make-delay</i>) using the current sound's
-sampling rate to turn the <i>secs</i> parameter into samples.
-<i>echo</i> then returns a closure, that is, a function with
-associated variables (in this case <i>del</i> and <i>scaler</i>);
-the returned function (the second <i>lambda</i>) takes
-one argument (<i>inval</i>) and returns the result of passing
+Here 'scaler' sets
+how loud subsequent echos are, and 'secs' sets how far apart they
+are in seconds.  'echo' uses the 'secs' argument to create
+a delay line (<a href="clm.html#make-delay">make-delay</a>) using the current sound's
+sampling rate to turn the 'secs' parameter into samples.
+echo then returns a closure, that is, a function with
+associated variables (in this case 'del' and 'scaler');
+the returned function (the second lambda) takes
+one argument ('inval') and returns the result of passing
 that value to the delay with scaling.  The upshot of all this is that
 we can use:</p>
 <pre>
@@ -1037,9 +1037,9 @@ we can use:</p>
 </pre>
 <p>to take the current active channel and 
 return 44100 samples of echos, each echo half the amplitude
-of the previous, and spaced by .75 seconds.  <i>map-channel</i>'s
+of the previous, and spaced by .75 seconds.  map-channel's
 first argument is a function of one argument, the current sample;
-when we pass it <i>(echo ...)</i>, it evaluates the echo call,
+when we pass it <code>(echo ...)</code>, it evaluates the echo call,
 which returns the function that actually runs the delay line,
 producing the echo. 
 </p> 
@@ -1366,37 +1366,37 @@ Here are brief descriptions of the functions:
 </p>
 <pre>
 (<b>pd-inlet</b> inlet-num type func)
-    <i>func</i> is a function that is called when the object receives a message to the inlet <i>inlet-num</i> of type 
-      <i>type</i>. Normal values for <i>type</i> are 'float, 'list, 'bang, etc. 
+    'func' is a function that is called when the object receives a message to the inlet 'inlet-num' of type 
+      'type'. Normal values for 'type' are 'float, 'list, 'bang, etc. 
     add.scm, inout.scm 
     Local function. 
 
 (<b>pd-outlet</b> outlet-num arg0 arg1 ...) 
-    Sends one or more values to outlet <i>outlet-num</i>. The arguments can be of any kind. 
+    Sends one or more values to outlet 'outlet-num'. The arguments can be of any kind. 
     add.scm, inout.scm 
     Local function. 
 
 (<b>pd-bind</b> symbol func) 
-    Pd messages sent to <i>symbol</i> arrive at the <i>func</i> function. 
+    Pd messages sent to 'symbol' arrive at the 'func' function. 
     send_receive.scm 
     Both local and global 
 
 (<b>pd-unbind</b> symbol) 
-    Stop receiving messages sent to <i>symbol</i>. 
+    Stop receiving messages sent to 'symbol'. 
     Both local and global. For the local version, all bindings are automatically unbound when the object is destroyed or reloaded. 
 
 (<b>pd-send</b> symbol arg0 arg1 ...) 
-    Sends one or more values to receivers for <i>symbol</i>. <i>symbol</i> can either be a scheme or a pd symbol. 
+    Sends one or more values to receivers for 'symbol'. 'symbol' can either be a scheme or a pd symbol. 
     send_receive.scm 
     Global function. 
 
 (<b>pd-get-symbol</b> symbol) 
-    Returns the pd symbol for the scheme symbol <i>symbol</i>. pd-send works faster when a pd symbol is used instead of a scheme symbol. 
+    Returns the pd symbol for the scheme symbol 'symbol'. pd-send works faster when a pd symbol is used instead of a scheme symbol. 
     send_receive.scm 
     Global function. 
 
 (<b>pd-set-destroy-func</b> thunk) 
-    <i>thunk</i> is called before the object is destroyed or reloaded. 
+    'thunk' is called before the object is destroyed or reloaded. 
     Local function.
 </pre>
 <br>
@@ -2354,19 +2354,19 @@ and the latter is the communication path for other programs.  Any time
 such a program changes the SND_COMMAND property, Snd notices and evaluates
 the new value (as a string, as if typed in the Snd listener).  To get
 a response from Snd, use <code>(set! (window-property consat name) command)</code> where
-<i>consat</i> is the property name Snd should search for (to find the sending window), 
-<i>name</i> is the property to change (the X window property that Snd will change), and 
-<i>command</i> is the string
+'consat' is the property name Snd should search for (to find the sending window), 
+'name' is the property to change (the X window property that Snd will change), and 
+'command' is the string
 that replaces the current property value (which Snd will evaluate).
 CLM's communication
 with Snd function sends Snd this string:</p>
 <pre>
     "(set! (<a class=quiet href="extsnd.html#windowproperty">window-property</a> \"CLM_VERSION\" \"CLM_COMMAND\") " str ")"
 </pre>
-<p>where <i>str</i> is the form to be evaluated within Snd.  It then waits
+<p>where 'str' is the form to be evaluated within Snd.  It then waits
 for a change to the CLM_COMMAND property, returning its value to the
 user. The send-snd function itself, similarly, looks for SND_VERSION and
-sets SND_COMMAND to <i>str</i>, which Snd subsequently notices.
+sets SND_COMMAND to 'str', which Snd subsequently notices.
 </p>
 <br>
 

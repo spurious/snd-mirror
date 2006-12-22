@@ -71,7 +71,6 @@
 	      (do ((beg 0 (+ beg pframes)))
 		  ((or (c-g?)                   ; C-g to stop in mid-stream
 		       (> beg len)))
-		;; TODO: sound->sound-data here?
 		(if (and (> outchans 1) (> filechans 1))
 		    (do ((k 0 (1+ k)))
 			((= k (min outchans filechans)))

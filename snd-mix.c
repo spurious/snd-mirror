@@ -103,6 +103,7 @@ static bool found_track_amp_env(int trk);
 static int track_members(int track_id);
 static int make_track(int *mixes, int len);
 
+#define ALL_TRACK_CHANS -1
 
 static XEN mix_release_hook;
 static XEN mix_drag_hook;
@@ -2826,7 +2827,7 @@ off_t mix_beg(chan_info *cp)
       cs = md->active_mix_state;
       if (cs) return(cs->orig + md->tag_position);
     }
-  return(-1);
+  return(INVALID_MIX_ID);
 }
 
 static mix_state *backup_mix_state(chan_info *cp, mix_info *md)
@@ -3402,7 +3403,7 @@ off_t mix_frames(int n)
   cs = cs_from_id(n); 
   if (cs) 
     return(cs->len); 
-  return(-1);
+  return(INVALID_MIX_ID);
 }
 
 static bool mix_slider_dragged = false;
@@ -3556,8 +3557,8 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
 	      (track_members(cs->track) > 1))
 	    {
 	      off_t trk_beg, trk_len, trk_end, new_len, new_end, old_len, new_trk_end;
-	      trk_beg = track_position(cs->track, -1);
-	      trk_len = track_frames(cs->track, -1);
+	      trk_beg = track_position(cs->track, ALL_TRACK_CHANS);
+	      trk_len = track_frames(cs->track, ALL_TRACK_CHANS);
 	      trk_end = trk_beg + trk_len;
 	      new_len = (off_t)(ceil(md->in_samps / new_final_speed));
 	      new_end = cs->beg + new_len;
@@ -3568,7 +3569,7 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
 		  /* gad -- track end might be less */
 		  old_len = cs->len;
 		  cs->len = (off_t)(ceil(md->in_samps / new_final_speed));
-		  new_trk_end = trk_beg + track_frames(cs->track, -1);
+		  new_trk_end = trk_beg + track_frames(cs->track, ALL_TRACK_CHANS);
 		  cs->len = old_len;
 		}
 	      if (new_trk_end != trk_end)
@@ -3724,14 +3725,14 @@ int set_mix_position(int mix_id, off_t val)
 	      (track_members(cs->track) > 1))
 	    {
 	      off_t trk_beg, trk_len, trk_end, new_trk_beg, new_trk_end, new_trk_len, old_beg;
-	      trk_beg = track_position(cs->track, -1);
-	      trk_len = track_frames(cs->track, -1);
+	      trk_beg = track_position(cs->track, ALL_TRACK_CHANS);
+	      trk_len = track_frames(cs->track, ALL_TRACK_CHANS);
 	      trk_end = trk_beg + trk_len;
 	      /* see if the new pos changes track bounds */
 	      old_beg = cs->beg;
 	      cs->beg = val;
-	      new_trk_beg = track_position(cs->track, -1);
-	      new_trk_len = track_frames(cs->track, -1);
+	      new_trk_beg = track_position(cs->track, ALL_TRACK_CHANS);
+	      new_trk_len = track_frames(cs->track, ALL_TRACK_CHANS);
 	      new_trk_end = new_trk_beg + new_trk_len;
 	      cs->beg = old_beg;
 	      if ((new_trk_beg != trk_beg) || (new_trk_end != trk_end))
@@ -3960,7 +3961,7 @@ void mix_at_x_y(int data, const char *filename, int x, int y)
 
 #if WITH_RUN
 off_t r_mix_position(int n);
-off_t r_mix_position(int n) {mix_state *cs; cs = cs_from_id(n); if (cs) return(cs->beg); return(-1);}
+off_t r_mix_position(int n) {mix_state *cs; cs = cs_from_id(n); if (cs) return(cs->beg); return(INVALID_MIX_ID);}
 int r_mix_chans(int n);
 int r_mix_chans(int n) {mix_state *cs; cs = cs_from_id(n); if (cs) return(cs->chans); return(0);}
 off_t r_mix_frames(int n);
@@ -4032,7 +4033,7 @@ static XEN g_mix_frames(XEN n)
   off_t len;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_mix_frames, "an integer");
   len = mix_frames(XEN_TO_C_INT(n));
-  if (len == -1) 
+  if (len == INVALID_MIX_ID) 
     return(snd_no_such_mix_error(S_mix_frames, n));
   return(C_TO_XEN_OFF_T(len));
 }
@@ -5392,8 +5393,8 @@ static env *gather_track_amp_env(mix_state *cs)
     {
       env *temp;
       off_t track_beg, track_dur;
-      track_beg = track_position(id, -1);
-      track_dur = track_frames(id, -1);
+      track_beg = track_position(id, ALL_TRACK_CHANS);
+      track_dur = track_frames(id, ALL_TRACK_CHANS);
       if (active_track_amp_env(id))
 	{
 	  /* track amps can be left until later (gather track amp) */
@@ -5844,10 +5845,10 @@ off_t track_position(int id, int chan)
 {
   track_pos_t *pt;
   off_t result;
-  if ((chan == -1) && (tracks[id]->beg)) return(tracks[id]->beg[0]);
+  if ((chan == ALL_TRACK_CHANS) && (tracks[id]->beg)) return(tracks[id]->beg[0]);
   pt = (track_pos_t *)CALLOC(1, sizeof(track_pos_t));
   pt->pos = UNLIKELY_POSITION;
-  if (chan == -1)
+  if (chan == ALL_TRACK_CHANS)
     map_over_track_mixes(id, gather_track_position, (void *)pt);
   else 
     {
@@ -5886,12 +5887,12 @@ off_t track_frames(int id, int chan)
 {
   track_pos_t *pt;
   off_t curend, curpos;
-  if ((chan == -1) && (tracks[id]->dur)) return(tracks[id]->dur[0]);
+  if ((chan == ALL_TRACK_CHANS) && (tracks[id]->dur)) return(tracks[id]->dur[0]);
   curpos = track_position(id, chan);
   if (curpos == -1) return(0);
   pt = (track_pos_t *)CALLOC(1, sizeof(track_pos_t));
   pt->pos = -1;
-  if (chan == -1)
+  if (chan == ALL_TRACK_CHANS)
     map_over_track_mixes(id, gather_track_end, (void *)pt);
   else 
     {
@@ -5995,7 +5996,7 @@ static void reset_bounds(mix_info *md, void *val)
 void set_track_position(int id, off_t pos)
 {
   off_t curpos;
-  curpos = track_position(id, -1);
+  curpos = track_position(id, ALL_TRACK_CHANS);
   if ((track_p(id)) && (curpos != pos))
     {
       track_position_t *val;
@@ -6012,7 +6013,7 @@ void set_track_position(int id, off_t pos)
 	  (track_members(id) > 1))
 	{
 	  off_t cur_frames;
-	  cur_frames = track_frames(id, -1);
+	  cur_frames = track_frames(id, ALL_TRACK_CHANS);
 	  remix_track_with_preset_times(id, pos, cur_frames, reset_bounds, 1.0, set_track_position_1, (void *)val);
 	}
       else
@@ -6083,8 +6084,8 @@ static void set_track_channel_position(int id, int chan, off_t pos)
 	{
 	  off_t old_trk_beg, old_trk_len, old_trk_end, chn_len;
 	  track_channel_bounds_t *tcb;
-	  old_trk_len = track_frames(id, -1);
-	  old_trk_beg = track_position(id, -1);
+	  old_trk_len = track_frames(id, ALL_TRACK_CHANS);
+	  old_trk_beg = track_position(id, ALL_TRACK_CHANS);
 	  old_trk_end = old_trk_beg + old_trk_len;
 	  chn_len = track_frames(id, chan);
 	  tcb = (track_channel_bounds_t *)CALLOC(1, sizeof(track_channel_bounds_t));
@@ -6135,16 +6136,16 @@ static void set_mix_track(mix_info *md, int trk, bool redisplay)
 	  (found_track_amp_env(old_track)) && 
 	  (track_members(old_track) > 1))
 	{
-	  old_beg = track_position(old_track, -1);
-	  old_len = track_frames(old_track, -1);
+	  old_beg = track_position(old_track, ALL_TRACK_CHANS);
+	  old_len = track_frames(old_track, ALL_TRACK_CHANS);
 	  check_old = true;
 	}
       if ((track_p(trk)) && 
 	  (found_track_amp_env(trk)) && 
 	  (track_members(trk) > 0))
 	{
-	  new_beg = track_position(trk, -1);
-	  new_len = track_frames(trk, -1);
+	  new_beg = track_position(trk, ALL_TRACK_CHANS);
+	  new_len = track_frames(trk, ALL_TRACK_CHANS);
 	  check_new = true;
 	}
       md->active_mix_state->track = trk;
@@ -6158,10 +6159,12 @@ static void set_mix_track(mix_info *md, int trk, bool redisplay)
       if ((track_p(trk)) && (active_track_color_set(trk)))
 	color_one_mix_from_id(md->id, active_track_color(trk));
       if ((check_old) && 
-	  ((track_position(old_track, -1) != old_beg) || (track_frames(old_track, -1) != old_len)))
+	  ((track_position(old_track, ALL_TRACK_CHANS) != old_beg) || 
+	   (track_frames(old_track, ALL_TRACK_CHANS) != old_len)))
 	remix_track(old_track, set_mix_track_1, (void *)origin);
       if ((check_new) && 
-	  ((track_position(trk, -1) != new_beg) || (track_frames(trk, -1) != new_len)))
+	  ((track_position(trk, ALL_TRACK_CHANS) != new_beg) || 
+	   (track_frames(trk, ALL_TRACK_CHANS) != new_len)))
 	remix_track(trk, set_mix_track_1, (void *)origin);
       else remix_file(md, origin, redisplay); 
       FREE(origin);
@@ -6274,13 +6277,13 @@ static void set_track_speed(int id, Float speed)
 	  off_t beg, dur;
 	  Float change;
 	  track_reset_bounds_t *tr;
-	  beg = track_position(id, -1);
+	  beg = track_position(id, ALL_TRACK_CHANS);
 	  change = active_track_speed(id) / speed;
 	  tr = (track_reset_bounds_t *)CALLOC(1, sizeof(track_reset_bounds_t));
 	  tr->id = INVALID_TRACK_ID;
 	  tr->speed = change;
 	  tr->beg = beg;
-	  tr->end = beg + track_frames(id, -1);
+	  tr->end = beg + track_frames(id, ALL_TRACK_CHANS);
 	  tr->trk = id;
 	  map_over_track_mixes(id, speed_reset_frames, (void *)tr);
 	  dur = tr->end - tr->beg;
@@ -6384,7 +6387,7 @@ static void set_track_tempo(int id, Float tempo)
 	      Float change;
 	      track_reset_bounds_t *tr;
 	      Float cur_tempo;
-	      beg = track_position(id, -1);
+	      beg = track_position(id, ALL_TRACK_CHANS);
 	      change = active_track_tempo(id) / tempo;
 	      tr = (track_reset_bounds_t *)CALLOC(1, sizeof(track_reset_bounds_t));
 	      tr->id = INVALID_TRACK_ID;
@@ -6406,7 +6409,7 @@ static void set_track_tempo(int id, Float tempo)
 	  else
 	    {
 	      Float cur_tempo;
-	      tt.beg = track_position(id, -1);
+	      tt.beg = track_position(id, ALL_TRACK_CHANS);
 	      tt.caller = origin;
 	      cur_tempo = active_track_tempo(id);
 	      tt.tempo_mult = cur_tempo / tempo; /* we'll be multiplying for the new diff */
@@ -6599,7 +6602,7 @@ static track_graph_t *track_save_graph(mix_info *orig_md, int track_id)
       off_t track_orig;
       char *origin;
       mix_state **old_cs;
-      track_orig = track_position(track_id, -1);
+      track_orig = track_position(track_id, ALL_TRACK_CHANS);
       old_cs = (mix_state **)CALLOC(trk->lst_ctr, sizeof(mix_state *));
       tg = (track_graph_t *)CALLOC(1, sizeof(track_graph_t));
       tg->xs = (int *)CALLOC(trk->lst_ctr, sizeof(int));
@@ -6779,8 +6782,8 @@ void display_track_waveform(int track_id, axis_info *ap)
       x1 = ap->x1;
       y0 = ap->y0;
       y1 = ap->y1;
-      t_beg = track_position(track_id, -1);
-      t_dur = track_frames(track_id, -1);
+      t_beg = track_position(track_id, ALL_TRACK_CHANS);
+      t_dur = track_frames(track_id, ALL_TRACK_CHANS);
       ap->losamp = t_beg;
       ap->hisamp = t_beg + t_dur;
       ap->x0 = (double)(ap->losamp) / cur_srate;
@@ -7009,7 +7012,7 @@ void track_dialog_set_tempo(int track_id, Float val, bool dragging)
     {
       track_tempo_t tt;
       Float cur_tempo;
-      tt.beg = track_position(track_id, -1);
+      tt.beg = track_position(track_id, ALL_TRACK_CHANS);
       cur_tempo = active_track_tempo(track_id);
       tt.tempo_mult = cur_tempo / val; /* we'll be multiplying for the new diff */
       map_over_track_mixes(track_id, temporary_track_tempo, (void *)(&tt));
@@ -7253,8 +7256,8 @@ int make_track(int *mixes, int len)
 		  old_tracks_got_env[old_tracks_ctr] = ((found_track_amp_env(cs->track)) && (track_members(cs->track) > 1));
 		  if (old_tracks_got_env[old_tracks_ctr])
 		    {
-		      old_tracks_beg[old_tracks_ctr] = track_position(cs->track, -1);
-		      old_tracks_len[old_tracks_ctr] = track_frames(cs->track, -1);
+		      old_tracks_beg[old_tracks_ctr] = track_position(cs->track, ALL_TRACK_CHANS);
+		      old_tracks_len[old_tracks_ctr] = track_frames(cs->track, ALL_TRACK_CHANS);
 
 		    }
 		  old_tracks_ctr++;
@@ -7283,8 +7286,8 @@ int make_track(int *mixes, int len)
 	      if (old_tracks_got_env[k])
 		{
 		  off_t new_track_beg, new_track_len;
-		  new_track_beg = track_position(old_tracks[k], -1);
-		  new_track_len = track_frames(old_tracks[k], -1);
+		  new_track_beg = track_position(old_tracks[k], ALL_TRACK_CHANS);
+		  new_track_len = track_frames(old_tracks[k], ALL_TRACK_CHANS);
 		  if ((new_track_beg != old_tracks_beg[k]) ||
 		      (new_track_len != old_tracks_len[k]))
 		    {
@@ -7690,7 +7693,7 @@ static XEN g_track_position(XEN id, XEN chn)
   int track_id;
   track_id = xen_to_c_track(id, S_track_position);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_2, S_track_position, "integer");
-  return(C_TO_XEN_OFF_T(track_position(track_id, XEN_TO_C_INT_OR_ELSE(chn, -1))));
+  return(C_TO_XEN_OFF_T(track_position(track_id, XEN_TO_C_INT_OR_ELSE(chn, ALL_TRACK_CHANS))));
 }
 
 static XEN g_set_track_position(XEN id, XEN pos, XEN chn)
@@ -7720,7 +7723,7 @@ static XEN g_track_frames(XEN id, XEN chn)
   int track_id;
   track_id = xen_to_c_track(id, S_track_frames);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_2, S_track_frames, "int");
-  return(C_TO_XEN_OFF_T(track_frames(track_id, (XEN_INTEGER_P(chn)) ? XEN_TO_C_INT(chn) : -1)));
+  return(C_TO_XEN_OFF_T(track_frames(track_id, (XEN_INTEGER_P(chn)) ? XEN_TO_C_INT(chn) : ALL_TRACK_CHANS)));
 }
 
 static XEN g_track_chans(XEN id)
@@ -7774,8 +7777,8 @@ static XEN g_lock_track(XEN id)
   int track_id;
   off_t track_beg, track_dur;
   track_id = xen_to_c_track(id, S_lock_track);
-  track_beg = track_position(track_id, -1);
-  track_dur = track_frames(track_id, -1);
+  track_beg = track_position(track_id, ALL_TRACK_CHANS);
+  track_dur = track_frames(track_id, ALL_TRACK_CHANS);
   if (found_track_amp_env(track_id))
     remix_track_with_preset_times(track_id, track_beg, track_dur, NULL, 0.0, lock_track_1, NULL);
   else remix_track(track_id, lock_track_1, NULL);
@@ -7881,7 +7884,7 @@ static int copy_track(int id, off_t beg)
       edpos = (int *)CALLOC(trk->cps_ctr, sizeof(int));
       for (i = 0; i < trk->cps_ctr; i++)
 	edpos[i] = trk->cps[i]->edit_ctr + 1; /* prepare global as_one_edit */
-      old_beg = track_position(id, -1);
+      old_beg = track_position(id, ALL_TRACK_CHANS);
       change = beg - old_beg;
       new_mixes = (int *)CALLOC(trk->lst_ctr, sizeof(int));
       trk_size = 4;
@@ -8023,7 +8026,7 @@ the copy at 'beg' which defaults to the copied track's position."
     XEN_ERROR(NO_SUCH_TRACK,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_copy_track),
 			 id));
-  old_pos = track_position(old_id, -1);
+  old_pos = track_position(old_id, ALL_TRACK_CHANS);
   pos = XEN_TO_C_OFF_T_OR_ELSE(beg, old_pos);
   new_id = copy_track(old_id, pos);
   return(C_TO_XEN_INT(new_id));

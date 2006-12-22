@@ -2616,6 +2616,8 @@ and replaces it with the spectrum given in coeffs"
 
 			   ;; todo perhaps move this mix dependent on data-lens?
 			   ;; todo perhaps special case for 2 samps (what if both 1.0 for example?)
+			   ;; todo perhaps if multichannel and channels are correlated and one is not clipped -- use
+			   ;;   its data to help reconstruct clipped case?
 
 			   (vct-set! new-data 0 (if (> (vct-ref future 0) 0.0)
 						    (max (vct-ref future 0) (vct-ref past 0))

@@ -2862,7 +2862,7 @@ is the same as <code>(<a class=quiet href="#vctfill">vct-fill!</a> v 3.0)</code>
 
 
 <!-- vct-move! -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctmove">vct-move!</a> (v new old (backwards #f))</code>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctmove">vct-move!</a> (v new old :optional backwards)</code>
 </td></tr><tr><td></td><td>
 vct-move moves a block of values within a vct:  <code>v[new++] = v[old++]</code>, or
 if 'backwards' is #t: <code>v[new--] = v[old--]</code>.  It returns 'v'.
@@ -2908,7 +2908,7 @@ vct-ref returns the element 'pos' in 'v': <code>v[pos]</code>.
 
 
 <!-- vct-reverse! -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctreverse">vct-reverse!</a> (v (size #f))</code>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctreverse">vct-reverse!</a> (v :optional size)</code>
 </td></tr><tr><td></td><td>
 vct-reverse! reverses the elements of 'v' (in-place), returning 'v'.  
 If 'size' is given, the reversal centers around it.
@@ -2938,7 +2938,7 @@ vct-subtract! performs an element-wise subtract: <code>v1[i] -= v2[i]</code>.  I
 
 
 <!-- vct-subseq -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctsubseq">vct-subseq</a> (v start (end len) (nv #f))</code>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vctsubseq">vct-subseq</a> (v start :optional (end len) nv)</code>
 </td></tr><tr><td></td><td>
 vct-subseq returns a new vct (or 'nv' if given) with the elements of 'v' between 'start' and 'end' inclusive.  'end' defaults
 to the end of 'v'.
@@ -2973,7 +2973,7 @@ depending on the type of its arguments.
 
 
 <!-- vct->channel -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttochannel">vct-&gt;channel</a> (v (beg 0) dur snd chn edpos origin)</code>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="vcttochannel">vct-&gt;channel</a> (v :optional (beg 0) dur snd chn edpos origin)</code>
 </td></tr><tr><td></td><td>
 vct-&gt;channel sets the samples from 'beg' to 'beg' + 'dur' from the values in 'v'.
 This changes (edits) the channel, so 'origin' provides a way to name the edit (for the edit history list and whatnot).
@@ -3001,7 +3001,7 @@ vct-&gt;list returns a list with elements of 'v'.
 
 
 <!-- vct->sound-data -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef>vct-&gt;sound-data</em> (v sd (chan 0))</code>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><em class=emdef>vct-&gt;sound-data</em> (v sd :optional (chan 0))</code>
 </td></tr><tr><td></td><td>
 vct-&gt;sound-data places the data in vct 'v' in the sound-data object 'sd', returning sd.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5197,7 +5197,7 @@ under <a href="sndscm.html#mixnametoid">mix-name-&gt;id</a>.
 <!-- track-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="trackposition">track-position</a> (track-id :optional chn)</code>
 </td></tr><tr><td width=60><br></td><td>
-This is the track position, the minimum <a href="#mixposition">mix-position</a> of the mixes in the track's mix list.
+track-position is the minimum <a href="#mixposition">mix-position</a> of the mixes in the track's mix list.
 If you set track-position, all
 its mixes are moved by the same amount to make the minimum mix position coincide with the new track-position.
 If you include the channel number when setting the track-position, only the mixes that are members of that channel of the

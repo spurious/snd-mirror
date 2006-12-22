@@ -375,14 +375,20 @@
   (if (not (track? trk))
       (throw 'no-such-track (list "make-track-frame-reader" trk))
       (let* ((chns (track-chans trk))
-	     (fr (make-vector (+ chns +frame-reader0+))))
+	     (fr (make-vector (+ chns +frame-reader0+)))
+	     (pos (track-position trk)))
 	(vector-set! fr +frame-reader-tag+ 'frame-reader)
 	(vector-set! fr +frame-reader-snd+ trk)
 	(vector-set! fr +frame-reader-channels+ chns)
 	(vector-set! fr +frame-reader-frame+ (make-frame chns))
 	(do ((i 0 (1+ i)))
 	    ((= i chns))
-	  (vector-set! fr (+ i +frame-reader0+) (make-track-sample-reader trk i (or beg 0))))
+	  (let* ((chan-pos (- (track-position trk i) pos))
+		 (chan-beg (- (or beg 0) chan-pos))) ; track chans can start at different places, but track-sample-reader is chan-specific
+	    (vector-set! fr (+ i +frame-reader0+) 
+			 (if (>= chan-beg 0)
+			     (make-track-sample-reader trk i chan-beg)
+			     chan-beg))))
 	fr)))
 
 (define (read-track-frame fr)
@@ -390,7 +396,16 @@
   (let ((vals (vector-ref fr +frame-reader-frame+)))
     (do ((i 0 (1+ i)))
 	((= i (vector-ref fr +frame-reader-channels+)))
-      (frame-set! vals i (read-track-sample (vector-ref fr (+ i +frame-reader0+)))))
+      (let ((rd (vector-ref fr (+ i +frame-reader0+))))
+	(if (number? rd)
+	    (begin
+	      (frame-set! vals i 0.0)
+	      (if (>= rd -1)
+		  (begin
+		    (set! rd (make-track-sample-reader (vector-ref fr +frame-reader-snd+) i 0))
+		    (vector-set! fr (+ i +frame-reader0+) rd))
+		  (vector-set! fr (+ i +frame-reader0+) (1+ rd))))
+	    (frame-set! vals i (read-track-sample rd)))))
     vals))
 
 
@@ -465,19 +480,21 @@
 	sd)
       (throw 'no-active-selection (list "selection->sound-data"))))
 
-(define (track->sound-data trk)
+(define* (track->sound-data trk :optional (beg 0))
   "(track->sound-data trk) returns a sound-data object with the contents of track trk"
   (if (not (track? trk))
       (throw 'no-such-track (list "track->sound-data" trk))
       (let* ((chns (track-chans trk))
 	     (len (track-frames trk))
 	     (sd (make-sound-data chns len))
-	     (reader (make-track-frame-reader 0 trk)))
+	     (reader (make-track-frame-reader beg trk)))
 	(do ((i 0 (1+ i)))
 	    ((= i len))
 	  (frame->sound-data (read-track-frame reader) sd i))
 	(free-frame-reader reader)
 	sd)))
+
+;;; TODO: test chan offsets in track reader (intrachan)
 
 
 (define* (insert-vct v :optional (beg 0) dur snd chn edpos)

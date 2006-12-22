@@ -573,7 +573,7 @@ to squelch that, obviously aimed at reducing background noise in an intermittent
 </td></tr><tr><td></td><td>
 attract is a translation to CLM of an instrument developed by James McCartney (CMJ vol 21 no 3 p 6),
 based on a "chaotic" equation.
-<i>c</i> should be between 1 and 10 or thereabouts.
+'c' should be between 1 and 10 or thereabouts.
 <pre>
     (with-sound () (attract 0 1 .1 1) (attract 1 1 .1 5))
 </pre>
@@ -604,7 +604,7 @@ The Bessel functions I0, Jn, and Yn are built-in; Kn and In are implemented in S
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="bagpipe">canter</A> <code>(beg dur freq amp ...)</code>
 </td></tr><tr><td></td><td>
-canter is half of a bagpipe instrument developed by Peter Commons (the other portion is <i>drone</i> below).
+canter is half of a bagpipe instrument developed by Peter Commons (the other portion is <a href="#drone">drone</a> below).
 The (required) trailing parameters are:
 <pre>
   deg dis pcrev ampfun ranfun skewfun skewpc ranpc ranfreq indexfun atdr dcdr
@@ -705,13 +705,13 @@ this is really ancient stuff.
 <A class=def NAME="clmexpsrc">clm-expsrc</A> <code>(beg dur input-file exp-ratio src-ratio amp :optional rev start-in-file)</code>
 </td></tr><tr><td></td><td>
 clm-expsrc can stretch or compress a sound (using granular synthesis) while optionally changing its sampling rate.
-<i>exp-ratio</i> sets the expansion amount (greater than 1.0 makes the sound longer), and
-<i>src-ratio</i> sets the sampling rate change (greater than 1.0 makes it higher in pitch).
+'exp-ratio' sets the expansion amount (greater than 1.0 makes the sound longer), and
+'src-ratio' sets the sampling rate change (greater than 1.0 makes it higher in pitch).
 So to make a sound twice as long, but keep the pitch the same:
 <pre>
     (with-sound () (clm-expsrc 0 4 "oboe.snd" 2.0 1.0 1.0))
 </pre>
-<i>start-in-file</i> sets where we start reading the input file (in seconds); it defaults to 0.0.
+'start-in-file' sets where we start reading the input file (in seconds); it defaults to 0.0.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -720,7 +720,7 @@ So to make a sound twice as long, but keep the pitch the same:
 <em class=emdef>drone</em> <code>(beg dur freq amp ampfun synth ampat ampdc amtrev deg dis rvibamt rvibfreq)</code>
 </td></tr><tr><td></td><td>
 This is the other half of Peter Common's bagpipe -- see canter above.
-<i>synth</i> is a list of partials loaded into a table and read via <a href="clm.html#table-lookup">table-lookup</a>.
+'synth' is a list of partials loaded into a table and read via <a href="clm.html#table-lookup">table-lookup</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -743,9 +743,9 @@ of their file, one after the other).
 <em class=emdef>exp-snd</em> <code>(file beg dur amp :optional (exp-amt 1.0) (ramp .4) (seglen .15) (sr 1.0) (hop .05) ampenv)</code>
 </td></tr><tr><td></td><td>
 exp-snd is a granular synthesis instrument with envelopes on
-the expansion amount (<i>exp-amt</i> as a list), segment ramp steepness (<i>ramp</i> as a list), 
-segment length (<i>seglen</i> as a list), hop length (<i>hop</i> as a list), amplitude (<i>ampenv</i>),
-and resampling rate (<i>sr</i> as a list).
+the expansion amount ('exp-amt' as a list), segment ramp steepness ('ramp' as a list), 
+segment length ('seglen' as a list), hop length ('hop' as a list), amplitude ('ampenv'),
+and resampling rate ('sr' as a list).
 In the next example, the expansion amount in both calls goes from 1 to 3 over the course of the note,
 the ramp time and segment lengths stay the same, the sampling rate changes from 2 to 0.5, and the hop
 stays the same (.05 in the first, and .2 in the second).
@@ -842,7 +842,7 @@ As with many instruments from that era, it has a million parameters:
     (indenv1 '(0 0  25 1  75 .9  100 0)) (indenv2 '(0 0  25 1  75 .9  100 0))
     (degree 0.0) (distance 1.0) (reverb-amount 0.005)
 </pre>
-The pitch depends on the <i>modfrq1</i> and <i>modfrq2</i> parameters, as well as <i>frq1</i> and <i>frq2</i>:
+The pitch depends on the 'modfrq1' and 'modfrq2' parameters, as well as 'frq1' and 'frq2':
 <pre>
     (with-sound () (fm-trumpet 0 1 :frq1 400 :frq2 1600 :modfrq1 400 :modfrq2 400))
 </pre>
@@ -888,28 +888,28 @@ of replacement in other versions of CLM.
 fullmix provides a mixer that can handle any number
 of channels of data in and out with scalers and envelopes on any path, sampling rate conversion,
 reverb -- you name it! 
-<i>infile</i> is the file to be mixed:
+'infile' is the file to be mixed:
 <pre>
     (with-sound () (fullmix "pistol.snd")) ; this places pistol.snd at time 0
 </pre>
-<i>beg</i> is the start time of the mix in the output sound; 
-<i>outdur</i> is the duration of the mixed-in portion in the output;
-<i>inbeg</i> is where to start the mix in the input file:
+'beg' is the start time of the mix in the output sound; 
+'outdur' is the duration of the mixed-in portion in the output;
+'inbeg' is where to start the mix in the input file:
 <pre>
     (with-sound () (fullmix "pistol.snd" 1.0 2.0 0.25)) 
     ;; start at 0.25 in pistol.snd, include next 2 secs, put at time 1.0 in output
 </pre>
-<i>srate</i> is the amount of sampling rate conversion to apply, and
-<i>reverb</i> is the amount of the signal to send to the reverberator:
+'srate' is the amount of sampling rate conversion to apply, and
+'reverb' is the amount of the signal to send to the reverberator:
 <pre>
     (with-sound (:reverb nrev) (fullmix "pistol.snd" 1.0 2.0 0.25 #f 2.0 0.1)) ; up an octave, lots of reverb!
 </pre>
-The <i>matrix</i> parameter is much harder to describe.  It is either a number or a list of lists.
+The 'matrix' parameter is much harder to describe.  It is either a number or a list of lists.
 In the first case, that number is the amplitude scaler on the output:
 <pre>
     (with-sound (:reverb nrev) (fullmix "pistol.snd" 1.0 2.0 0.25 0.2 2.0 0.1)) ; same but much softer (0.2 amp)
 </pre>
-If <i>matrix</i> is a list of lists, each element of the inner lists can be either a number or list a breakpoints (an envelope).
+If 'matrix' is a list of lists, each element of the inner lists can be either a number or list a breakpoints (an envelope).
 If a number, it is treated as an amplitude scaler for that input and output channel combination.  Each inner list
 represents an input channel, so if we have a stereo input file going to a stereo output file and we want
 the channels to be mixed straight, but channel 0 at .5 amp and channel 1 at .75:
@@ -967,9 +967,9 @@ gong is an FM instrument developed by Paul Weineke.
 <em class=emdef>gran-synth</em> <code>(beg dur freq grain-dur grain-hop amp)</code>
 </td></tr><tr><td></td><td>
 gran-synth sets up a <a href="clm.html#wave-train">wave-train</a> playing an enveloped
-sinusoid (the "grain" in this case).  <i>grain-dur</i> sets the grain's length (in seconds),
-<i>grain-hop</i> sets the frequency of the wave-train generator (how quickly the grain is
-repeated), and <i>freq</i> sets the grain sinusoid's frequency.
+sinusoid (the "grain" in this case).  'grain-dur' sets the grain's length (in seconds),
+'grain-hop' sets the frequency of the wave-train generator (how quickly the grain is
+repeated), and 'freq' sets the grain sinusoid's frequency.
 <pre>
     (with-sound () (gran-synth 0 1 300 .0189 .03 .4)) ; grain freq 300Hz, repetition rate 33Hz
 </pre>
@@ -992,13 +992,13 @@ Its trailing parameters are:
     (a1 .99)
     (stats #t)
 </pre>
-<i>a1</i> is the formant radius.
-<i>gain-freq-list</i> is a list of gains and frequencies to
+'a1' is the formant radius.
+'gain-freq-list' is a list of gains and frequencies to
 filter
 The gains can be either numbers or envelopes (one or the other, not a mixture).
-<i>offset-gain</i> is an offset (addition) to all the gains.
-<i>filt-gain-scale</i> and <i>filt-gain-base</i> are similar, but apply to the envelopes, if any.
-<i>stats</i> prints encouraging numbers if #t.
+'offset-gain' is an offset (addition) to all the gains.
+'filt-gain-scale' and 'filt-gain-base' are similar, but apply to the envelopes, if any.
+'stats' prints encouraging numbers if #t.
 <pre>
     (with-sound () (graphEq "oboe.snd")) ; accept all the defaults (Scheme is case sensitive)
 </pre>
@@ -1028,7 +1028,7 @@ jl-reverb is a cavernous version of John Chowning's ancient reverberator.  You c
 <pre>
     (with-sound (:reverb jl-reverb) (fm-violin 0 .1 440 .1 :reverb-amount .1))
 </pre>
-<i>decay</i> is the reverb decay time tacked onto the end of the output sound.
+'decay' is the reverb decay time tacked onto the end of the output sound.
 To pass parameters to a reverberator, use the with-sound parameter :reverb-data.  So, if we want
 5 seconds of decay:
 <pre>
@@ -1049,7 +1049,7 @@ additive synthesis to mimic a piano.
 </pre>
 Doug says, "The high notes sound pretty rotten" and thinks perhaps
 one major problem is the lack of mechanical noise.
-<i>pfreq</i> sets which spectrum to use; it defaults to whatever matches <i>freq</i>.
+'pfreq' sets which spectrum to use; it defaults to whatever matches 'freq'.
 <pre>
     (with-sound () (lbj-piano 0 2 110.0 .2 :pfreq 550))
 </pre>
@@ -1077,9 +1077,9 @@ It is much cleaner than jc-reverb.
 <pre>
     (with-sound (:reverb nrev) (fm-violin 0 .1 440 .1 :reverb-amount .1))
 </pre>
-<i>reverb-factor</i> controls the length of the decay -- it should not exceed 1.21 or so.
-<i>lp-coeff</i> controls the strength of the low pass filter inserted in the feedback loop.
-<i>volume-1</i> can be used to boost the reverb output.
+'reverb-factor' controls the length of the decay -- it should not exceed 1.21 or so.
+'lp-coeff' controls the strength of the low pass filter inserted in the feedback loop.
+'volume-1' can be used to boost the reverb output.
 <pre>
     (with-sound (:reverb nrev :reverb-data '(:lp-coeff 0.9 :volume-1 2.0)) 
       (fm-violin 0 .1 440 .1 :reverb-amount .1))
@@ -1102,14 +1102,14 @@ The trailing parameters are:
   :key (transposition 1.0) (time-scaler 1.0) (fft-size 256) 
        (highest-bin 128) (max-peaks 16) printit attack
 </pre>
-<i>transposition</i> can be used to transpose a sound;
-<i>time-scaler</i> changes the sound's duration;
-<i>fft-size</i> may need to be larger if your sampling rate is 44100, or the input sound's
+'transposition' can be used to transpose a sound;
+'time-scaler' changes the sound's duration;
+'fft-size' may need to be larger if your sampling rate is 44100, or the input sound's
 fundamental is below 300 Hz;
-<i>highest-bin</i> sets how many fft bins we search for spectral peaks;
-<i>max-peaks</i> sets how many peaks we track (at a maximum) through the sound;
-<i>printit</i>, if set to #t, causes the peak envelopes to be printied;
-<i>attack</i> is an optional vct containing the attack portion of the new sound.
+'highest-bin' sets how many fft bins we search for spectral peaks;
+'max-peaks' sets how many peaks we track (at a maximum) through the sound;
+'printit', if set to #t, causes the peak envelopes to be printied;
+'attack' is an optional vct containing the attack portion of the new sound.
 <pre>
     Scheme:  (with-sound () (pins 0.0 1.0 "now.snd" 1.0 :time-scaler 2.0))
     Ruby:    with_sound() do pins(0, 1, "now.snd", 1, :time_scaler, 2) end
@@ -1134,9 +1134,9 @@ The basic idea is to fill an array with noise, then filter the array values as i
 giving a sharp attack and a ringing decay, much like plucking a guitar.  The CMJ article
 gives many variations, changing pick position and so on.  Jaffe's "Silicon Valley Breakdown"
 makes great use of this instrument.
-<i>weighting</i> is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5 which gives a short decay;
+'weighting' is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5 which gives a short decay;
 anything other than .5 produces a longer decay.  It should be between 0.0 and 1.0. 
-<i>lossfact</i> can be used to shorten decays.  The most useful values are between .8 and 1.0. 
+'lossfact' can be used to shorten decays.  The most useful values are between .8 and 1.0. 
 <pre>
 (with-sound () 
   (pluck 0 1 330 .3 .95 .95) 
@@ -1208,15 +1208,15 @@ The trailing parameters are:
      frq1 r1 g1 frq2 r2 g2 frq3 r3 g3
      :key (degree 0.0) (distance 1.0)(reverb-amount 0.005)
 </pre>
-Set <i>driver</i> to 0 to get the pulse train, or to 1 to get white noise.
-In the latter case, <i>ranfreq</i> is the random number generator frequency, <i>noiamp</i> is its amplitude,
-and <i>noifun</i> is an amplitude envelope on its output (filter input)
-In the pulse case, <i>cosamp</i> is the pulse train amplitude, <i>ampcosfun</i> the amplitude envelope,
-<i>cosfreq0</i> and <i>cosfreq1</i> set the frequency limits of <i>freqcosfun</i>,
-and <i>cosnum</i> sets the number of cosines in the pulse.
-The three resonators are centered at <i>frq1</i>, <i>frq2</i>, <i>frq3</i>,
-with pole-radius <i>r1</i>, <i>r2</i>, and <i>r3</i> respectively, and
-with gains of <i>g1</i>, <i>g2</i>, and <i>g3</i>.
+Set 'driver' to 0 to get the pulse train, or to 1 to get white noise.
+In the latter case, 'ranfreq' is the random number generator frequency, 'noiamp' is its amplitude,
+and 'noifun' is an amplitude envelope on its output (filter input)
+In the pulse case, 'cosamp' is the pulse train amplitude, 'ampcosfun' the amplitude envelope,
+'cosfreq0' and 'cosfreq1' set the frequency limits of 'freqcosfun',
+and 'cosnum' sets the number of cosines in the pulse.
+The three resonators are centered at 'frq1', 'frq2', 'frq3',
+with pole-radius 'r1', 'r2', and 'r3' respectively, and
+with gains of 'g1', 'g2', and 'g3'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -1230,7 +1230,7 @@ reson is a vocal simulator developed by John Chowning.  Its trailing parameters 
     numformants indxfun skewfun pcskew skewat skewdc vibfreq vibpc ranvibfreq ranvibpc 
     degree distance reverb-amount data
 
-    <i>data</i> is a list of lists of form 
+    'data' is a list of lists of form 
       '(ampf resonfrq resonamp ampat ampdc dev0 dev1 indxat indxdc)
 </pre>
 Needless to say, no one has ever written out these parameters by hand, so here's an all-time first:
@@ -1258,7 +1258,7 @@ rhodey is another of Perry Cook's instruments (an electric piano), based on a pa
 <pre>
     (with-sound () (rhodey 0 1 440 .2))
 </pre>
-One of the oscillators is set to a frequency 15 times the requested <i>freq</i>, so for higher notes, you'll need to set the srate higher:
+One of the oscillators is set to a frequency 15 times the requested 'freq', so for higher notes, you'll need to set the srate higher:
 <pre>
     (with-sound (:srate 44100) (rhodey 0 1 880 .2))
 </pre>
@@ -1282,7 +1282,7 @@ that information to scale some other signal.  rms returns the RMS value;
 gain takes a signal and an RMS value and modifies the signal to track the RMS
 value; balance packages gain and rms into one function call.
 make-rmsgain returns the generator used by rms, gain, and balance.
-The <i>hp</i> parameter sets the speed with which the balance process
+The 'hp' parameter sets the speed with which the balance process
 tracks the RMS signal.  An example is worth a zillion words:
 
 <table border=0 cellpadding=5 hspace=10 vspace=10><tr><td bgcolor="#fafafa"><pre>
@@ -1435,7 +1435,7 @@ Perry Cook's tubular bell:
       (tubebell 2 2 220 .1 64.0) 
       (tubebell 4 2 660 .1 .032))
 </pre>
-<i>base</i> is the envelope base:
+'base' is the envelope base:
 <pre>
     (with-sound () 
       (tubebell 0 2 440 .1 32.0) 
@@ -1467,7 +1467,7 @@ The trailing parameters are:
           (distance 1.0)
           (reverb-amount 0.005)
 </pre>
-<i>interp-func</i> determines how we interpolate between the two spectra.  When
+'interp-func' determines how we interpolate between the two spectra.  When
 it is at 1.0, we get only the first, at 0.0 only the second.
 <pre>
     (with-sound () (two-tab 0 2 440 .1 '(1.0 1.0) '(3.0 1.0) '(0 0 1 1 2 0) '(0 0 1 1)))
@@ -1592,7 +1592,7 @@ While in the break context (while the listener prompt says "break"),
 these functions are available:
 </p>
 <pre>
-  <em class=emdef>break-go</em> (returned-value #f)    ; continue execution from breakpoint, return <i>returned-value</i>
+  <em class=emdef>break-go</em> (returned-value #f)    ; continue execution from breakpoint, return 'returned-value'
   <em class=emdef>break-locals</em> (stack-location 0) ; display local variables 
   <em class=emdef>break-local</em> local-var (stack-location 0) ; print a local's value ('local-var' is a symbol or string)
   <em class=emdef>break-backtrace</em> (all #f)        ; display stack at breakpoint (5 levels by default, 'all' = #t: all levels)
@@ -1617,16 +1617,16 @@ Here is a brief session in Snd's listener:
     <em class=listener>:</em><em class=typing>hi</em>
     <em class=listener>33</em>
 </pre>
-<p>We put a breakpoint in the midst of an expression in the <i>test-break</i> function,
+<p>We put a breakpoint in the midst of an expression in the 'test-break' function,
 asking it to type "hiho" and drop into the debugger if it is executed.  Then we call
-<i>test-break</i> in an expression that sets the variable <i>hi</i>.  The breakpoint is hit, "hiho"
+'test-break' in an expression that sets the variable 'hi'.  The breakpoint is hit, "hiho"
 gets reported, and we're placed in the debugger.  The debugger is
 just the Snd listener, but with some extra context to implement the break support.
 After poking around, we call break-go with an argument of 32.  This causes the original
 set! to continue with 32 plugged in where the snd-break call was, setting hi to 33.
 </p>
 <p>
-snd-debug sets up some information needed by the <i>bt</i> and <i>lv</i> commands:
+snd-debug sets up some information needed by the 'bt' and 'lv' commands:
 </p>
 <pre>
   <em class=emdef>bt</em>                 ; show backtrace
@@ -1711,7 +1711,7 @@ the listener?
 <em class=emdef>color-samples</em> <code>color :optional beg dur snd chn</code><br>
 <em class=emdef>uncolor-samples</em> <code>:optional snd chn</code>
 </td></tr><tr><td width=60></td><td>
-color-samples displays the samples from sample <i>beg</i> for <i>dur</i> samples in <i>color</i>
+color-samples displays the samples from sample 'beg' for 'dur' samples in 'color'
 whenever they're in the current time domain view. uncolor-samples cancels this action.
 <a href="extsnd.html#displaysampsinred">Here</a> is a representative picture.
 To activate this, add it to <a href="extsnd.html#aftergraphhook">after-graph-hook</a>.
@@ -1873,7 +1873,7 @@ extremely slow.
 <a class=def name="goertzel">goertzel</a> <code>freq :optional beg dur</code><br>
 <em class=emdef>find-sine</em> <code>freq beg dur</code>
 </td></tr><tr><td></td><td>
-goertzel and find-sine find the amplitude of a single component of a spectrum (<i>freq</i>).
+goertzel and find-sine find the amplitude of a single component of a spectrum ('freq').
 <pre>
     :<em class=typing>(find-sine 550.0 0.0 (frames))</em>
     <em class=listener>(0.00116420908413177 0.834196665512423)</em>   ; car is amplitude, cadr is phase in radians
@@ -1887,7 +1887,7 @@ goertzel and find-sine find the amplitude of a single component of a spectrum (<
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>periodogram</em> <code>N</code>
 </td></tr><tr><td></td><td>
-periodogram (the "Bartlett" version, I think) runs over an entire file, piling up <i>N</i> sized junks of data,
+periodogram (the "Bartlett" version, I think) runs over an entire file, piling up 'N' sized junks of data,
 then displays the results in the "lisp graph" area; this needs a lot of work to be useful!
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -1901,9 +1901,9 @@ To paraphrase Brett:
 scentroid returns (in a vct) the continuous spectral centroid envelope of a sound.
 The spectral centroid is the "center of gravity" of the spectrum, and it
 has a rough correlation to our sense of "brightness" of a sound. 
-<i>db-floor</i> sets a lower limit on which frames are included in the analysis.
-<i>rfreq</i> sets the number of  measurements per second.
-<i>fftsize</i> sets the fft window size (a power of 2).
+'db-floor' sets a lower limit on which frames are included in the analysis.
+'rfreq' sets the number of  measurements per second.
+'fftsize' sets the fft window size (a power of 2).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -1936,7 +1936,7 @@ so that each time we click somewhere in the graph, the pitch at that point is re
 </td></tr><tr><td></td><td>
 These are fft phase manipulators taken from the phazor package of Scott McNab.
 zero-phase takes ffts, sets all phases to 0.0, then unffts.  rotate-phase
-is similar, but applies <i>func</i> to the phases.
+is similar, but applies 'func' to the phases.
 <pre>
     (rotate-phase (lambda (x) 0.0))             ; same as (zero-phase)
     (rotate-phase (lambda (x) (random 3.1415))) ; randomizes phases
@@ -1976,9 +1976,9 @@ z-transform performs a z-transform returning a vector (to accommodate complex re
     :<em class=typing>d2</em>
     <em class=listener>#&lt;vct[len=8]: 0.000 1.000 0.000 -1.000 0.000 1.000 0.000 -1.000&gt;</em>
 </pre>
-which is a complicated way of showing that if <i>z</i> is e^2*pi*/n, you get a fourier transform.
+which is a complicated way of showing that if 'z' is e^2*pi*/n, you get a fourier transform.
 fractional-fourier-transform is the slow (DFT) version
-of the fractional Fourier Transform. If <i>angle</i> is 1.0, you get a fourier transform.
+of the fractional Fourier Transform. If 'angle' is 1.0, you get a fourier transform.
 </td></tr><tr><td colspan=2 height=32></td></tr>
 
 
@@ -1994,7 +1994,7 @@ of the fractional Fourier Transform. If <i>angle</i> is 1.0, you get a fourier t
 <a class=def name="makedifferentiator">make-differentiator</a> <code>:optional length</code>, <em class=emdef>differentiator</em> <code>f in</code><br>
 </td></tr><tr><td></td><td>
 make-lowpass and lowpass provide FIR low pass filtering, and similarly for the other four choices.
-The order chosen is twice the <i>length</i>; <i>fc</i>, <i>flo</i>, and <i>fhi</i> are
+The order chosen is twice the 'length'; 'fc', 'flo', and 'fhi' are
 the edge frequencies in terms of srate = 2 * pi.
 <pre>
     (let ((hp (make-bandpass (* .1 pi) (* .2 pi))))
@@ -2054,8 +2054,8 @@ This returns a CLM fir-filter generator with the standard "Spencer Filter" coeff
 notch-channel, notch-selection, and notch-sound are aimed at noise reduction.
 Each takes a list of frequencies (in Hz), and an optional filter order, and
 notches out each frequency.  The sharpness of the notch is settable
-explicitly via the <i>width</i> argument, and implicitly via the
-filter <i>order</i>.  A common application cancels 60 Hz hum:
+explicitly via the 'width' argument, and implicitly via the
+filter 'order'.  A common application cancels 60 Hz hum:
 <pre>
     (notch-channel (let ((freqs '())) 
                      (do ((i 60 (+ i 60))) 
@@ -2087,7 +2087,7 @@ also lose more of the original signal.
 </td></tr><tr><td></td><td>
 spectrum-&gt;coeffs is a
 version of Snd's very simple spectrum-&gt;coefficients procedure ("frequency sampling").
-It returns the FIR filter coefficients given the filter <i>order</i> and desired <i>spectrum</i> (a vct).
+It returns the FIR filter coefficients given the filter 'order' and desired 'spectrum' (a vct).
 An example of its use is fltit-1.
 <pre>
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (fltit-1 10 (<a class=quiet href="extsnd.html#vct">vct</a> 0 1.0 0 0 0 0 0 0 1.0 0)))
@@ -2105,7 +2105,7 @@ make-volterra-filter implement one form
 of a common non-linear FIR filter.
 This version is taken from Monson Hayes "Statistical DSP and Modeling";
 it is a slight specialization of the form mentioned by J O Smith and others.
-The <i>acoeffs</i> apply to the linear terms, and the <i>bcoeffs</i> to the quadratic.
+The 'acoeffs' apply to the linear terms, and the 'bcoeffs' to the quadratic.
 <pre>
    (let ((flt (make-volterra-filter (vct .5 .1) (vct .3 .2 .1))))
      (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (x) (volterra-filter flt x))))
@@ -2131,7 +2131,7 @@ to return a biquad filter section.
 </td></tr><tr><td></td><td>
 cascade-&gt;canonical 
 converts cascade coefficients to canonical form (the form used by CLM's <a href="clm.html#filter">filter</a> generator).
-<i>coeffs</i> is a list of filter coefficients; the function returns a vct, ready for
+'coeffs' is a list of filter coefficients; the function returns a vct, ready for
 <a href="clm.html#make-filter">make-filter</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -2147,7 +2147,7 @@ These functions produce Butterworth filters, returning a CLM <a href="clm.html#f
 The first named ones (make-butter-high-pass et al) are taken from Sam Heisz's CLM version
 of Paris Smaragdis's Csound version of Charles Dodge's code from "Computer Music: synthesis, composition, and performance".
 The second set (make-butter-lp et al) provide arbitrary order Butterworths.
-<i>M</i> * 2 is the filter order, <i>f1</i> and <i>f2</i> are the band edges in Hz.
+'M' * 2 is the filter order, 'f1' and 'f2' are the band edges in Hz.
 <pre>
     (<a class=quiet href="extsnd.html#clmchannel">clm-channel</a> (make-butter-bp 3 1000 2000))
     (<a class=quiet href="extsnd.html#filtersound">filter-sound</a> (make-butter-low-pass 500.0))
@@ -2177,7 +2177,7 @@ and returns a sample):
     (let ((peaker (make-peaking-2 500 1000 1.0)))
       (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> peaker))
 </pre>
-In this case <i>m</i> is the gain in the pass band.
+In this case 'm' is the gain in the pass band.
 Use the functions in <a href="#analogfilterdoc">analog-filter.scm</a>, rather than this group.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -2232,7 +2232,7 @@ sine-summation, applied within the sum-of-cosines output).
 <br><br>
 kosine-summation
 is a variation on cosine-summation; it includes
-a sort of "FM index" parameter (<i>k</i>, hence the generator name) to vary the harmonic content at run-time.
+a sort of "FM index" parameter ('k', hence the generator name) to vary the harmonic content at run-time.
 There is also a <a href="clm.html#sinc-train">sinc-train</a> generator in clm.html. 
 In both cases, the associated "make" function is actually just <a href="clm.html#make-oscil">make-oscil</a>
 suitably renamed (make-cosine-summation, etc).
@@ -2283,12 +2283,12 @@ These three functions produce various spectra, similar to the cosine-summation f
 <a class=def name="bandlimitedsawtooth">band-limited-sawtooth</a> <code>x a N fi</code><br>
 <a class=def name="bandlimitedsquarewave">band-limited-square-wave</a> <code>theta n</code>
 </td></tr><tr><td></td><td>
-band-limited-square-wave uses the formula tanh(<i>n</i> * sin(<i>theta</i>)) (<i>n</i> here is a float).
-As <i>n</i> increases, you get closer to a square-wave.
+band-limited-square-wave uses the formula tanh(n * sin(theta)) ('n' here is a float).
+As 'n' increases, you get closer to a square-wave.
 band-limited-sawtooth is apparently originally from Tim Stilson and Julius Smith (I got it via Alexander Kritov);
 it had the name "discrete summation formula" which conveys nothing to me.  The parameter
-<i>a</i> is more or less the amplitude, <i>N</i> should be between 1 and 10, <i>fi</i> is the
-phase increment, <i>x</i> the current phase.
+'a' is more or less the amplitude, 'N' should be between 1 and 10, 'fi' is the
+phase increment, 'x' the current phase.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -2301,8 +2301,8 @@ phase increment, <i>x</i> the current phase.
 These functions are    
 versions of the CLM <a href="clm.html#asymmetric-fm">asymmetric-fm</a> generator.
 asyfm-I is the Modifier Bessel version of this generator.  In both
-cases, the <i>r</i> parameter is accessible, so it's easy to experiment with 
-the moving formant idea mentioned in the original article (<i>r</i> should be greater than 0.0).
+cases, the 'r' parameter is accessible, so it's easy to experiment with 
+the moving formant idea mentioned in the original article ('r' should be greater than 0.0).
 <pre>
      (let ((gen (make-asyfm :frequency 2000 :ratio .1))
            (e (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0.5 1 1.5) :end (frames))))
@@ -2323,7 +2323,7 @@ The
 ssb-bank functions provide single-sideband amplitude modulation, and pitch/time changes
 based on the ssb-am generator.  
 If you run ssb-am on some input signal, the signal is shifted in pitch by
-the <i>freq</i> amount.  The higher the <i>order</i>, the better the sideband cancellation
+the 'freq' amount.  The higher the 'order', the better the sideband cancellation
 (amplitude modulation creates symmetrical sidebands, one of which is cancelled by the ssb-am
 generator).  ssb-bank uses a bank of ssb-am generators, each with its own bandpass filter to
 shift a sound's pitch without changing its duration;
@@ -2346,7 +2346,7 @@ ssb-bank-env is the same as ssb-bank, but includes a frequency envelope:
 <code>(ssb-bank-env 557 880 '(0 0 1 100.0) 7)</code>.
 shift-channel-pitch applies an <a href="clm.html#ssb-am">ssb-am</a> generator to a sound's channel (this
 is a variant of amplitude modulation).
-<i>freq</i> and <i>order</i> are the corresponding arguments to <a href="clm.html#make-ssb-am">make-ssb-am</a>.
+'freq' and 'order' are the corresponding arguments to <a href="clm.html#make-ssb-am">make-ssb-am</a>.
 There is a dialog that runs ssb-bank in snd-motif.scm: create-ssb-dialog.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -2416,7 +2416,7 @@ bounded brownian noise: <a href="sndscm.html#greendoc">green.scm</a><br>
 </td></tr><tr><td></td><td>
 These two functions come from a package of effects developed by sed_sed@my-dejanews.com.
 adsat is "adaptive saturation", and freqdiv is "frequency division".
-<code>(freqdiv n)</code> repeats each nth sample <i>n</i> times, clobbering the intermediate samples: <code>(freqdiv 8)</code>.
+<code>(freqdiv n)</code> repeats each nth sample 'n' times, clobbering the intermediate samples: <code>(freqdiv 8)</code>.
 It turns your sound into a bunch of square waves.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -2471,9 +2471,9 @@ The result can be a brighter or richer sound.
 <pre>
     (harmonicizer 550.0 (list 1 .5 2 .3 3 .2) 10)
 </pre>
-<i>coeffs</i> is a list of harmonic-number and amplitude pairs, describing the spectrum
-produced by each harmonic.  <i>pairs</i> controls how many bands are used to split the original sound.
-<i>order</i> is the bandpass filter's order in each such pair, and <i>bw</i> controls its bandwidth.
+'coeffs' is a list of harmonic-number and amplitude pairs, describing the spectrum
+produced by each harmonic.  'pairs' controls how many bands are used to split the original sound.
+'order' is the bandpass filter's order in each such pair, and 'bw' controls its bandwidth.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -2583,7 +2583,7 @@ which means that if the original sound was 2 seconds long, and we apply the enve
 These functions are taken from (or at least inspired by) Julius Smith's "Mathematics of the
 DFT".  Many are standard ways of describing a signal in statistics; others treat a signal
 as a vector (channel-distance, for example, returns the Euclidean distance between two
-sounds).  The <i>s1</i> and <i>s2</i> parameters refer to sound indices, and the <i>c1</i> and <i>c2</i>
+sounds).  The 's1' and 's2' parameters refer to sound indices, and the 'c1' and 'c2'
 parameters refer to channel numbers.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -2623,9 +2623,9 @@ See also <a href="#polydoc">poly.scm</a>.
 <a class=def name="movinglength">moving-length</a> <code>gen y</code>
 </td></tr><tr><td></td><td>
 moving-max is a specialization
-of the <a href="clm.html#delay">delay</a> generator; it produces an envelope that tracks the peak amplitude of the last <i>size</i> samples.
+of the <a href="clm.html#delay">delay</a> generator; it produces an envelope that tracks the peak amplitude of the last 'size' samples.
 <code>(make-moving-max 256)</code> returns the generator (this one's window size is 256),
-and <code>(moving-max gen y)</code> then returns the envelope traced out by the signal <i>y</i>.
+and <code>(moving-max gen y)</code> then returns the envelope traced out by the signal 'y'.
 The harmonicizer (above) uses this generator to normalize an in-coming signal to 1.0
 so that the Chebyshev polynomials it is driving will produce a full spectrum at all times.
 Here is a similar, but simpler, example; we use the moving-max generator to track the
@@ -2757,10 +2757,10 @@ envelope-exp interpolates segments into envelope to approximate exponential curv
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="envelopeinterp">envelope-interp</A> <code>x env (base 1.0)</code>
 </td></tr><tr><td></td><td>
-<code>(envelope-interp x env base)</code> returns value of <i>env</i> at <i>x</i>.
-If <i>base</i> is 0, <i>env</i> is treated as a step function; if <i>base</i> is 1.0 (the
-default), <i>env</i>'s breakpoints are connected by a straight line, and
-any other <i>base</i> connects the breakpoints with a kind of exponential
+<code>(envelope-interp x env base)</code> returns value of 'env' at 'x'.
+If 'base' is 0, 'env' is treated as a step function; if 'base' is 1.0 (the
+default), The breakpoints of 'env' are connected by a straight line, and
+any other 'base' connects the breakpoints with a kind of exponential
 curve:
 <pre>
     :<em class=typing>(envelope-interp .1 '(0 0 1 1))</em>
@@ -2771,7 +2771,7 @@ curve:
     <em class=listener>0.361774730775292</em>
 </pre>
 The corresponding function for a CLM env generator is <a href="clm.html#env-interp">env-interp</a>.
-If you'd rather think in terms of e^-kt, set the <i>base</i> to (exp k).  
+If you'd rather think in terms of e^-kt, set the 'base' to (exp k).  
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -2832,7 +2832,7 @@ than a power-env structure:
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>map-envelopes</em> <code>func env1 env2</code>
 </td></tr><tr><td></td><td>
-map-envelopes applies <i>func</i> to the breakpoints in the two
+map-envelopes applies 'func' to the breakpoints in the two
 envelope arguments, returning a new envelope.
 <pre>
     :<em class=typing>(map-envelopes + '(0 0 1 1 2 0) '(0 1 2 0))</em>
@@ -2846,7 +2846,7 @@ envelope arguments, returning a new envelope.
 <em class=emdef>min-envelope</em> <code>env</code><br>
 <a class=def name="maxenvelope">max-envelope</a> <code>env</code>
 </td></tr><tr><td></td><td>
-max-envelope returns the maximum y value in <i>env</i>, and min-envelope returns the minimum y value:
+max-envelope returns the maximum y value in 'env', and min-envelope returns the minimum y value:
 <pre>
     :<em class=typing>(max-envelope '(0 0 1 1 2 3 4 0))</em>
     <em class=listener>3.0</em>
@@ -2883,7 +2883,7 @@ point in the other envelope is interpolated, if necessary.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="normalizeenvelope">normalize-envelope</a> <code>env :optional (new-max 1.0)</code>
 </td></tr><tr><td></td><td>
-normalize-envelope returns a version of <i>env</i> scaled so that its maximum y value is <i>new-max</i>.
+normalize-envelope returns a version of 'env' scaled so that its maximum y value is 'new-max'.
 <pre>
     :<em class=typing>(normalize-envelope '(0 0 1 1 2 3 4 0) .5)</em>
     <em class=listener>(0 0.0 1 0.167 2 0.5 4 0.0)</em>
@@ -2909,8 +2909,8 @@ It's usually easier to use <a href="clm.html#mus-reset">mus-reset</a> to restart
 </td></tr></table>
 
 If the final y value is different from the first y value (as above), a quick ramp is
-inserted between repeats. <i>normalized</i> causes the new envelope's x axis
-to have the same extent as the original's. <i>reflected</i> causes every other
+inserted between repeats. 'normalized' causes the new envelope's x axis
+to have the same extent as the original's. 'reflected' causes every other
 repetition to be in reverse.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -2943,7 +2943,7 @@ rms-envelope returns an rms envelope of a file; it is based on rmsenv.ins in the
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="scaleenvelope">scale-envelope</a> <code>env scl (offset 0.0)</code>
 </td></tr><tr><td></td><td>
-scale-envelope scales the y values of an envelope by <i>scl</i>, and optionally adds <i>offset</i>.
+scale-envelope scales the y values of an envelope by 'scl', and optionally adds 'offset'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -2967,7 +2967,7 @@ to an envelope, much like divseg in clm-1.
 <em class=emdef>window-envelope</em> <code>beg end env</code>
 </td></tr><tr><td></td><td>
 window-envelope returns (as an envelope) the portion of its envelope argument that lies
-between the x axis values <i>beg</i> and <i>end</i>.  This is useful when you're treating an
+between the x axis values 'beg' and 'end'.  This is useful when you're treating an
 envelope as a phrase-level control, applying successive portions of it to many underlying
 notes.
 <pre>
@@ -2998,7 +2998,7 @@ notes.
 <pre>
   <em class=emdef>start-enveloping</em>          ; start including envelope editor windows
   <em class=emdef>stop-enveloping</em>           ; stop including them
-  <a class=def name="channelenvelope">channel-envelope</a> <i>snd chn</i>  ; current envelope in a given channel's envelope editor
+  <a class=def name="channelenvelope">channel-envelope</a> snd chn  ; current envelope in a given channel's envelope editor
   <A class=def NAME="playwithenvs">play-with-envs</A> snd        ; apply envelope as sound plays
   <A class=def NAME="playpanned">play-panned</A> snd           ; treat envelope as panning control during playback
 </pre>
@@ -3021,13 +3021,13 @@ Closely related to this is xm-enved.scm which implements a separate envelope edi
 </p>
 <pre>
   <em class=emdef>xe-create-enved</em> name parent args axis   ; make a new editor
-  <em class=emdef>xe-envelope</em> xe-editor                   ; current envelope in <i>xe-editor</i>
+  <em class=emdef>xe-envelope</em> xe-editor                   ; current envelope in 'xe-editor'
 </pre>
 <p>
-xe-create-enved returns a new envelope editor whose x axis label is <i>name</i>, the x and y axis bounds
-are in the list <i>axis</i>, the editor's parent widget is <i>parent</i>,  and the Xt-style
-resource argument list is <i>args</i>.  The editor's current envelope is accessible
-(read and write) as <i>xe-envelope</i>:
+xe-create-enved returns a new envelope editor whose x axis label is 'name', the x and y axis bounds
+are in the list 'axis', the editor's parent widget is 'parent',  and the Xt-style
+resource argument list is 'args'.  The editor's current envelope is accessible
+(read and write) as 'xe-envelope':
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
@@ -3078,7 +3078,7 @@ appended new stuff as it came to mind.  In this documentation, I'll divide the f
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="correlate">correlate</a> <code>snd chn y0 y1</code>
 </td></tr><tr><td width=60></td><td>
-correlate graphs the correlation of <i>snd</i>'s 2 channels.
+correlate graphs the correlation of the 2 channels of the sound 'snd'.
 To make this happen automatically as you move the time domain position
 slider: <code>(add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a> correlate)</code>.
 The last three parameters are unused; they are just for compatibility with graph-hook.
@@ -3089,7 +3089,7 @@ The last three parameters are unused; they are just for compatibility with graph
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="fftcancel">fft-cancel</a> <code>lo-freq hi-freq :optional snd chn</code>
 </td></tr><tr><td></td><td>
-fft-cancel ffts an entire channel, zeroes the bins between <i>lo-freq</i> and <i>hi-freq</i> (in Hz), then inverse ffts,
+fft-cancel ffts an entire channel, zeroes the bins between 'lo-freq' and 'hi-freq' (in Hz), then inverse ffts,
 giving a good notch filter.
 <pre>
     (fft-cancel 500 1000)  ; squelch frequencies between 500 and 1000 Hz
@@ -3101,7 +3101,7 @@ giving a good notch filter.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="fftedit">fft-edit</a> <code>low-freq high-freq :optional snd chn</code>
 </td></tr><tr><td></td><td>
-fft-edit takes an fft of the entire sound, removes all energy below <i>low-freq</i> and above <i>high-freq</i> (in Hz),
+fft-edit takes an fft of the entire sound, removes all energy below 'low-freq' and above 'high-freq' (in Hz),
 then inverse fft's.  This is the complement of fft-cancel.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3121,8 +3121,8 @@ fft-env-edit is similar to fft-edit, but applies an envelope to the spectral mag
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="fftenvinterp">fft-env-interp</a> <code>env1 env2 interp :optional snd chn</code>
 </td></tr><tr><td></td><td>
-fft-env-interp performs fft-env-edit twice (using <i>env1</i> and <i>env2</i>), then mixes the two results following the interpolation
-envelope <i>interp</i>.
+fft-env-interp performs fft-env-edit twice (using 'env1' and 'env2'), then mixes the two results following the interpolation
+envelope 'interp'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -3152,7 +3152,7 @@ actually represents.  You can, of course, turn off the normalization:
 <a class=def name="fftsmoother">fft-smoother</a> <code>cutoff start samps :optional snd chn</code>
 </td></tr><tr><td></td><td>
 fft-smoother uses fft filtering to
-smooth a portion of a sound, returning a vct with the smoothed data.  <i>cutoff</i> sets where we starting zeroing out high frequencies.
+smooth a portion of a sound, returning a vct with the smoothed data.  'cutoff' sets where we starting zeroing out high frequencies.
 <pre>
     Scheme: (<a class=quiet href="extsnd.html#vcttochannel">vct-&gt;channel</a> (fft-smoother .1 (<a class=quiet href="extsnd.html#cursor">cursor</a>) 400 0 0) (<a class=quiet href="extsnd.html#cursor">cursor</a>) 400)
     Ruby:   vct2channel(fft_smoother(0.1, cursor, 400, 0, 0), cursor, 400)
@@ -3164,7 +3164,7 @@ smooth a portion of a sound, returning a vct with the smoothed data.  <i>cutoff<
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="fftsquelch">fft-squelch</a> <code>squelch :optional snd chn</code>
 </td></tr><tr><td></td><td>
-fft-squelch is similar to fft-edit; any fft bin whose (normalized) magnitude is below <i>squelch</i> is set to 0.0.
+fft-squelch is similar to fft-edit; any fft bin whose (normalized) magnitude is below 'squelch' is set to 0.0.
 This is sometimes useful for noise-reduction.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3238,7 +3238,7 @@ it would be faster to use the comb filter directly:
     (<a class=quiet href="extsnd.html#clmchannel">clm-channel</a> (<a class=quiet href="clm.html#make-comb">make-comb</a> .8 32))
 </pre>
 zcomb is a time-varying comb
-filter using the envelope <i>pm</i> (the envelope is applied to the comb filter delay length).
+filter using the envelope 'pm' (the envelope is applied to the comb filter delay length).
 <pre>
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (zcomb .8 32 '(0 0 1 10)))
 </pre>
@@ -3251,7 +3251,7 @@ filter using the envelope <i>pm</i> (the envelope is applied to the comb filter 
 </td></tr><tr><td></td><td>
 comb-chord uses comb filters at harmonically
 related sizes to create a chord (see also <a href="#chordalize">chordalize</a> in dsp.scm).
-<i>amp</i> is an overall amplitude scaler.
+'amp' is an overall amplitude scaler.
 <pre>
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-chord .95 100 .3))
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-chord .95 60 .3))
@@ -3263,10 +3263,10 @@ related sizes to create a chord (see also <a href="#chordalize">chordalize</a> i
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>filtered-env</em> <code>e :optional snd chn</code>
 </td></tr><tr><td></td><td>
-filtered-env takes an amplitude envelope <i>e</i> and creates a one-pole
+filtered-env takes an amplitude envelope 'e' and creates a one-pole
 filter, and moves them in parallel over a sound; 
 as the sound gets softer, the low-pass filter's cutoff frequency
-gets lower, a sort of poor-man's distance effect.  When <i>e</i>
+gets lower, a sort of poor-man's distance effect.  When 'e'
 is at 1.0, no filtering takes place.
 <pre>
     (filtered-env '(0 1 1 0)) ; fade out
@@ -3331,8 +3331,8 @@ osc-formants sets up any number of independently oscillating formants, then call
     Scheme: (osc-formants .99 (vct 400.0 800.0 1200.0) (vct 80.0 80.0 120.0) (vct 4.0 2.0 3.0))
     Ruby:   osc_formants(0.99, vct(400, 800, 1200), vct(80, 80, 120), vct(4, 2, 3))
 </pre>
-<i>bases</i> are the formant center frequencies; <i>freqs</i> are the oscillator frequencies;
-<i>amounts</i> are "deviations" -- they scale the oscillator outputs which set the runtime
+'bases' are the formant center frequencies; 'freqs' are the oscillator frequencies;
+'amounts' are "deviations" -- they scale the oscillator outputs which set the runtime
 formant frequencies (thereby setting the width of the warbling).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -3346,8 +3346,8 @@ formant frequencies (thereby setting the width of the warbling).
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>add-notes</em> <code>notes :optional snd chn</code>
 </td></tr><tr><td></td><td>
-add-notes adds (mixes) <i>notes</i> starting at the cursor in the currently selected channel.
-<i>notes</i> is a list of lists of the form: <code>(list file :optional offset amp)</code>.
+add-notes adds (mixes) 'notes' starting at the cursor in the currently selected channel.
+'notes' is a list of lists of the form: <code>(list file :optional offset amp)</code>.
 <pre>
     Scheme: (add-notes '(("oboe.snd") 
                          ("pistol.snd" 1.0 2.0)))
@@ -3367,7 +3367,7 @@ then "pistol.snd" at 1.0 (second) scaled by 2.0.
 <em class=emdef>ring-modulate-channel</em> <code>freq :optional beg dur snd chn edpos</code><br>
 <em class=emdef>vibro</em> <code>speed depth</code>
 </td></tr><tr><td></td><td>
-These functions perform amplitude modulation and ring-modulation. <i>freq</i> is the modulation frequency.
+These functions perform amplitude modulation and ring-modulation. 'freq' is the modulation frequency.
 <pre>
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (am 440))
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (ring-mod 10 (list 0 0 1 (<a class=quiet href="clm.html#hztoradians">hz-&gt;radians</a> 100))))
@@ -3376,7 +3376,7 @@ These functions perform amplitude modulation and ring-modulation. <i>freq</i> is
 </pre>
 am uses the CLM <a href="clm.html#amplitude-modulate">amplitude-modulate</a> generator;
 the others are little more than <a href="clm.html#oscil">oscil</a> and a multiply.
-<i>gliss-env</i> in ring-mod controls the frequency of the modulation.
+'gliss-env' in ring-mod controls the frequency of the modulation.
 ring-modulate-channel uses <a href="extsnd.html#ptreechannel">ptree-channel</a> for maximum speed and efficiency.
 See also <a href="clm.html#ssb-am">ssb-am</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -3397,7 +3397,7 @@ Someone wanted to set up generator patches in a note list:
 				              (lambda (val) (+ (osc1 val) 
 						               (osc2 (* 2 val)))))))
 </pre>
-The <i>dsps</i> is a sequence of breakpoint lists and generators; the breakpoint lists
+The 'dsps' is a sequence of breakpoint lists and generators; the breakpoint lists
 are treated as envelopes, and the generators are connected (previous) output to (current) input in the reverse of the order
 received.  <a href="clm.html#readin">readin</a> is an exception; since its input comes
 from a file, it is added to the current output.
@@ -3444,8 +3444,8 @@ The multichannel version is <a href="#compandsound">compand-sound</a> in frame.s
 <em class=emdef>cnvtest</em> <code>snd0 snd1 amp</code>
 </td></tr><tr><td></td><td>
 This is a simple example of using convolution.
-It convolves <i>snd0</i> and <i>snd1</i> (using the CLM <a href="clm.html#convolve">convolve</a> generator), 
-then scales by <i>amp</i>. It returns the new maximum amplitude.
+It convolves 'snd0' and 'snd1' (using the CLM <a href="clm.html#convolve">convolve</a> generator), 
+then scales by 'amp'. It returns the new maximum amplitude.
 <pre>
     (cnvtest 0 1 .1)
 </pre>
@@ -3456,9 +3456,9 @@ then scales by <i>amp</i>. It returns the new maximum amplitude.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="crosssynthesis">cross-synthesis</a> <code>cross-snd amp fftsize radius</code>
 </td></tr><tr><td></td><td>
-cross-synthesis performs cross-synthesis between <i>cross-snd</i> (a sound index) and the currently 
+cross-synthesis performs cross-synthesis between 'cross-snd' (a sound index) and the currently 
 selected sound.
-<i>cross-snd</i> is the sound that controls the spectra.
+'cross-snd' is the sound that controls the spectra.
 <pre>
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (cross-synthesis 1 .5 128 6.0))
 </pre>
@@ -3472,7 +3472,7 @@ selected sound.
 <em class=emdef>zecho</em> <code>scaler secs frq amp</code>
 </td></tr><tr><td></td><td>
 These are simple delay-based sound effects. 
-echo returns an echo maker (<i>secs</i> is the delay in seconds between echos, <i>scaler</i> is
+echo returns an echo maker ('secs' is the delay in seconds between echos, 'scaler' is
 the amplitude ratio between successive echoes).
 zecho is similar, but also modulates the echoes.
 flecho is a low-pass filtered echo maker.
@@ -3526,7 +3526,7 @@ expsnd needs dsp.scm (but doesn't check that it is loaded).
 <A class=def NAME="fp">fp</a> <code>sr osamp osfrq :optional snd chn</code>
 </td></tr><tr><td></td><td>
 fp drives an <a href="clm.html#src">src</a> generator with an oscillator, modulating
-a sound.  <i>sr</i> is the base sampling rate; <i>osamp</i> is the modulation depth; <i>osfrq</i> is
+a sound.  'sr' is the base sampling rate; 'osamp' is the modulation depth; 'osfrq' is
 the modulation frequency.  hello-dentist below is a randomized version of this.  The name "fp"
 refers to "Forbidden Planet" which used this kind of sound effect a lot.
 <pre>
@@ -3544,7 +3544,7 @@ generator, producing a random quavering effect, hence the name.
 <pre>
     (hello-dentist 40.0 .1)
 </pre>
-<i>frq</i> is the random number frequency; <i>amp</i> sets the depth of the modulation.
+'frq' is the random number frequency; 'amp' sets the depth of the modulation.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -3552,9 +3552,9 @@ generator, producing a random quavering effect, hence the name.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="placesound">place-sound</a> <code>mono-snd stereo-snd panning-envelope-or-degree</code>
 </td></tr><tr><td></td><td>
-place-sound mixes a mono sound (<i>mono-snd</i>, an index) into a stereo sound (<i>stereo-snd</i>) 
-with panning determined by <i>panning-envelope-or-degree</i>.
-If <i>panning-envelope-or-degree</i> is a number (in degrees),
+place-sound mixes a mono sound ('mono-snd', an index) into a stereo sound ('stereo-snd') 
+with panning determined by 'panning-envelope-or-degree'.
+If 'panning-envelope-or-degree' is a number (in degrees),
 the place-sound function has the same effect as using
 CLM's <a href="clm.html#locsig">locsig</a> generator; it mixes a mono sound into a stereo sound, splitting 
 it into two copies whose amplitudes depend on the desired location.
@@ -3563,7 +3563,7 @@ it into two copies whose amplitudes depend on the desired location.
     (place-sound 0 1 45.0) 
     ;; 0=sound 0 (mono), 1=sound 1 (stereo), 45 deg, so outa * 0.5 and outb * 0.5
 </pre>
-If <i>panning-envelope-or-degree</i> is an envelope,
+If 'panning-envelope-or-degree' is an envelope,
 the split depends on the panning envelope (0 = all in chan 0, etc).
 <pre>
     (place-sound 0 1 '(0 0 1 1)) ; mix goes from all in outa to all in outb
@@ -3593,9 +3593,9 @@ Cross fade in frequency domain: <a href="#fadedoc">fade.scm</a><br>
 <em class=emdef>pulse-voice</em> <code>cosines :optional (freq 440.0) (amp 1.0) (fftsize 256) (r 2.0) snd chn</code>
 </td></tr><tr><td></td><td>
 This function is a form of cross-synthesis which drives the resynthesis with a <a href="clm.html#sum-of-cosines">sum-of-cosines</a> pulse train.
-<i>freq</i> is the sum-of-cosines frequency; <i>amp</i> is an overall amplitude scaler;
-<i>cosines</i> is the number of cosines in the pulse (the more the spikier);
-<i>fftsize</i> and <i>r</i> (radius) control the <a href="clm.html#formant">formant</a> bank
+'freq' is the sum-of-cosines frequency; 'amp' is an overall amplitude scaler;
+'cosines' is the number of cosines in the pulse (the more the spikier);
+'fftsize' and 'r' (radius) control the <a href="clm.html#formant">formant</a> bank
 used to get the current spectrum.
 <pre>
     (pulse-voice 80 20.0 1.0 1024 0.01)
@@ -3612,11 +3612,11 @@ See also voice-&gt;unvoiced below.
 <em class=emdef>ramp</em> <code>gen up</code><br>
 <em class=emdef>make-ramp</em> <code>:optional (size 128)</code>
 </td></tr><tr><td></td><td>
-ramp is a generator that produces a ramp of a given length, then sticks at 0.0 or 1.0 until the <i>up</i> argument changes.
+ramp is a generator that produces a ramp of a given length, then sticks at 0.0 or 1.0 until the 'up' argument changes.
 The idea here is that we want to ramp in or out a portion of a sound based on some
-factor of the sound data; the ramp generator produces a ramp up when <i>up</i> is #t, sticking
-at 1.0, and a ramp down when <i>up</i> is #f, sticking at 0.0.
-<i>size</i> sets the steepness of the ramp.
+factor of the sound data; the ramp generator produces a ramp up when 'up' is #t, sticking
+at 1.0, and a ramp down when 'up' is #f, sticking at 0.0.
+'size' sets the steepness of the ramp.
 A similar, less bumpy effect uses the <a href="clm.html#moving-average">moving-average</a> generator.
 The following produces a very jittery, wandering amplitude envelope (brownian motion):
 <pre>
@@ -3635,7 +3635,7 @@ The following produces a very jittery, wandering amplitude envelope (brownian mo
 reverse-by-blocks and reverse-within-blocks work best with
 speech. reverse-by-blocks divides a sound into blocks, then recombines those blocks in reverse order.
 reverse-within-blocks divides a sound into blocks, then recombines them in order, but with each block internally reversed.
-<i>block-len</i> is the block length in seconds.
+'block-len' is the block length in seconds.
 <pre>
    (reverse-by-blocks .1)
    (reverse-within-blocks .1) ; .5 is also good
@@ -3650,14 +3650,14 @@ reverse-within-blocks divides a sound into blocks, then recombines them in order
 </td></tr><tr><td></td><td>
 scramble-channels uses <a href="extsnd.html#swapchannels">swap-channels</a>
 to arbitrarily reorder the current sound's channels.  The new channel order
-is <i>new-order</i> so
+is 'new-order' so
 <pre>
     (scramble-channels 3 2 0 1)
 </pre>
 replaces chan0 with chan3, chan1 with chan2 and so on.
 scramble-channel searches for silences, sets up a list of segments based on
 those silences, and randomly re-orders the segments.
-<i>silence</i> determines the background level that is treated as silence.
+'silence' determines the background level that is treated as silence.
 <pre>
     (scramble-channel .01)
 </pre>
@@ -3681,7 +3681,7 @@ This function is a "virtual edit" (<a href="extsnd.html#ptreechannel">ptree-chan
 <a class=def name="envsoundinterp">env-sound-interp</a> <code>envelope :optional (time-scale 1.0) snd chn</code><br>
 <table border=0><tr><td colspan=2><a class=def name="granulatedsoundinterp">granulated-sound-interp</a> <code>envelope :optional (time-scale 1.0) (grain-length 0.10)</code></td></tr><tr><td width=180></td><td><code>(grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05)  snd chn</code></td></tr></table>
 </td></tr><tr><td></td><td>
-make-sound-interp returns an interpolating reader for <i>snd</i>'s channel <i>chn</i>.
+make-sound-interp returns an interpolating reader for the given channel.
 The interpolating reader reads a channel at an arbitary location,
 interpolating between samples if necessary.  The corresponding generator is sound-interp.
 Here we use a sine wave to lookup the current sound:
@@ -3692,8 +3692,8 @@ Here we use a sine wave to lookup the current sound:
       (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (val) 
 		     (sound-interp reader (* len (+ 0.5 (* 0.5 (<a class=quiet href="clm.html#oscil">oscil</a> osc))))))))
 </pre>
-env-sound-interp reads <i>snd</i>'s channel <i>chn</i> (via a sound-interp generator)
-according to <i>envelope</i> and <i>time-scale</i>,
+env-sound-interp reads the given channel (via a sound-interp generator)
+according to 'envelope' and 'time-scale',
 returning a new version of the data in the specified channel
 that follows that envelope; that is, when the envelope is 0.0 we get sample 0, when the
 envelope is 1.0 we get the last sample, when it is 0.5 we get the middle sample of the 
@@ -3734,7 +3734,7 @@ This function is a form of cross-synthesis which drives the resynthesis with whi
 <pre>
      (voiced-&gt;unvoiced 1.0 256 2.0 2.0) ; whispered, twice as fast as original
 </pre>
-<i>tempo</i> is the speed of the resynthesis.
+'tempo' is the speed of the resynthesis.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3783,8 +3783,8 @@ a sound as a key is held down.
 <a class=def name="regionplaylist">region-play-list</a> <code>data</code><br>
 <em class=emdef>region-play-sequence</em> <code>data</code>
 </td></tr><tr><td></td><td>
-region-play-list plays a list of regions.  <i>data</i> is list of lists:
-<code>(list (list time reg)...)</code>; region <i>reg</i> is played at time <i>time</i> (in seconds).
+region-play-list plays a list of regions.  'data' is list of lists:
+<code>(list (list time reg)...)</code>; region 'reg' is played at time 'time' (in seconds).
 <pre>
     (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0 2) (list 1.0 0)))
 </pre>
@@ -3798,9 +3798,9 @@ Similarly, region-play-sequence plays a sequence of regions, one after the other
 
 <!-- region-rms -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<A class=def NAME="regionrms">region-rms</a> <code>:optional (region 0)</code>
+<A class=def NAME="regionrms">region-rms</a> <code>:optional reg</code>
 </td></tr><tr><td></td><td>
-region-rms returns the rms value of <i>region</i>'s data (in chan 0).
+region-rms returns the rms value of the region's data (in chan 0).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -3872,7 +3872,7 @@ display-energy is a <a href="extsnd.html#lispgraphhook">lisp-graph-hook</a> func
 <em class=emdef>flash-selected-data</em> <code>time-interval</code>
 </td></tr><tr><td></td><td>
 flash-selected-data causes the selected channel's graph to
-flash red and green.  <i>time-interval</i> is in milliseconds:
+flash red and green.  'time-interval' is in milliseconds:
 <pre>
     (flash-selected-data 100)
 </pre>
@@ -3895,7 +3895,7 @@ It's possible to use the same escape sequences in a normal shell script, of cour
 <A class=def NAME="titlewithdate">title-with-date</a>
 </td></tr><tr><td></td><td>
 title-with-date adds a clock to the Snd window's title bar.
-Set the variable <i>retitle-time</i> to 0 to turn this off.
+Set the variable 'retitle-time' to 0 to turn this off.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3943,9 +3943,9 @@ To pick up where you interrupted it, type <code>(do-go-on)</code>.
 <em class=emdef>do-all-chans</em> <code>func :optional origin</code><br>
 <em class=emdef>do-sound-chans</em> <code>func :optional origin</code>
 </td></tr><tr><td></td><td>
-do-chans applies <i>func</i> to all the sync'd channels using <i>origin</i> as the edit history indication.
-do-all-chans is the same but applies <i>func</i> to all channels of all sounds.
-do-sound-chans applies <i>func</i> to all channels in the currently selected sound.
+do-chans applies 'func' to all the sync'd channels using 'origin' as the edit history indication.
+do-all-chans is the same but applies 'func' to all channels of all sounds.
+do-sound-chans applies 'func' to all channels in the currently selected sound.
 <pre>
     (do-all-chans (lambda (val) (* 2.0 val))) ; double all samples
 </pre>
@@ -3956,8 +3956,8 @@ do-sound-chans applies <i>func</i> to all channels in the currently selected sou
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="everysample">every-sample?</a> <code>func</code>
 </td></tr><tr><td></td><td>
-every-sample? applies <i>func</i> to each sample in the current channel and returns
-#t if <i>func</i> is not #f for all samples; otherwise it moves the cursor to the first offending sample.
+every-sample? applies 'func' to each sample in the current channel and returns
+#t if 'func' is not #f for all samples; otherwise it moves the cursor to the first offending sample.
 <pre>
     :<em class=typing>(every-sample? (lambda (y) (&lt; (abs y) .1)))</em>
     <em class=listener>#f</em>
@@ -3985,7 +3985,7 @@ and unnamed marks at the various loop points.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>find-click</em> <code>loc</code>
 </td></tr><tr><td></td><td>
-find-click finds the next click, starting its search at <i>loc</i>.
+find-click finds the next click, starting its search at 'loc'.
 It returns #f if it can't find a click.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3994,7 +3994,7 @@ It returns #f if it can't find a click.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="finfo">finfo</A> <code>filename</code>
 </td></tr><tr><td></td><td>
-finfo returns a description of the file <i>filename</i>.
+finfo returns a description of the file 'filename'.
 <pre>
     :<em class=typing>(finfo "oboe.snd")</em>
     <em class=listener>"oboe.snd: chans: 1, srate: 22050, Sun/Next, big endian short (16 bits), len: 2.305"</em>
@@ -4008,7 +4008,7 @@ finfo returns a description of the file <i>filename</i>.
 </td></tr><tr><td></td><td>
 If you want the cursor to travel along in the waveform while playing, then stay wherever you stop the
 playback, call this function after setting <a href="extsnd.html#withtrackingcursor">with-tracking-cursor</a> to #t.
-To disable this choice, call it again with #f as the <i>enable</i> argument.
+To disable this choice, call it again with #f as the 'enable' argument.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4020,7 +4020,7 @@ To disable this choice, call it again with #f as the <i>enable</i> argument.
 <A class=def NAME="searchforclick">search-for-click</a>
 <A class=def NAME="zeroplus">zero+</a>
 </td></tr><tr><td></td><td>
-locate-zero looks for the next sample where adjacent samples together are less than <i>limit</i>
+locate-zero looks for the next sample where adjacent samples together are less than 'limit'
 and moves the cursor to that sample. It can be interrupted by C-g.
 The others are
 examples of searching procedures (to be used with C-s and so on):
@@ -4030,7 +4030,7 @@ next-peak finds
 the next maximum or minimum in the waveform.
 search-for-click looks for a click.
 find-pitch finds the next
-place where <i>pitch</i> (in Hz) is predominate.
+place where 'pitch' (in Hz) is predominate.
 For example, type C-s (in the graph), then in the minibuffer:
 <code>(find-pitch 600)</code>, and if the function finds some place in the sound
 where 600 Hz seems to be the basic pitch, it moves the cursor there and
@@ -4144,7 +4144,7 @@ remove-clicks looks for obvious clicks and uses smooth-sound to remove them.
 <em class=emdef>shell</em> <code>cmd</code>
 </td></tr><tr><td></td><td>
 shell is similar
-to Guile's <i>system</i> function, but output is sent to Snd's listener, rather than stdout.
+to Guile's 'system' function, but output is sent to Snd's listener, rather than stdout.
 <pre>
     :<em class=typing>(shell "ls -la oboe.snd")</em>
     <em class=listener>"-rw-r--r-- 1 bil bil 101684 Jul 10  2005 oboe.snd"</em>
@@ -4157,7 +4157,7 @@ to Guile's <i>system</i> function, but output is sent to Snd's listener, rather 
 <em class=emdef>snd-out</em>
 </td></tr><tr><td></td><td>
 A minor irritation in the current Guile system is that Scheme's "display" function
-writes to <i>current-output-port</i>, but there's no simple way to redirect that
+writes to 'current-output-port', but there's no simple way to redirect that
 elsewhere.  So, if your code calls display, the result may be invisible.
 One way around this is to reset the current-output-port to be a soft port
 that actually calls <a href="extsnd.html#sndprint">snd-print</a> instead:
@@ -4190,7 +4190,7 @@ It was written to find the note boundaries in the Iowa musical instrument sound 
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>sort-samples</em> <code>bins</code>
 </td></tr><tr><td></td><td>
-sort-samples provides a histogram of the samples (by amplitude) in <i>bins</i> bins.
+sort-samples provides a histogram of the samples (by amplitude) in 'bins' bins.
 <pre>
     :<em class=typing>(sort-samples 20)</em>  ; bins go by 0.05
     <em class=listener>:#(129017 90569 915 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)</em>
@@ -4228,7 +4228,7 @@ window-rms returns the rms of the data in currently selected graph window.
 <a class=def name="windowsamples">window-samples</a> <code>:optional snd chn</code>
 </td></tr><tr><td></td><td>
 window-samples returns (in a vct) the samples
-displayed in the current window for <i>snd</i>'s channel <i>chn</i>.
+displayed in the current window for the given channel.
 This is just a trivial wrapper for <a href="extsnd.html#channeltovct">channel-&gt;vct</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4272,8 +4272,8 @@ convenient if they were in one file.
 <a class=def name="channels=">channels=?</a> <code>snd1 chn1 snd2 chn2 allowable-difference</code>
 </td></tr><tr><td width=60></td><td>
 channels=? returns #t if the two specified channels are the same within the
-given <i>allowable-difference</i>.
-The <i>allowable-difference</i> is checked on each sample, so any sample-wise difference
+given 'allowable-difference'.
+The 'allowable-difference' is checked on each sample, so any sample-wise difference
 larger than that causes the comparison to return #f.
 channels-equal? returns #t if channels=?
 and the channels are the same length.  In channels=? one the other hand, the trailing (extra) samples
@@ -4285,7 +4285,7 @@ in one channel are compared with 0.0 (that is, the shorter channel is padded out
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="channelproperty">channel-property</a> <code>key snd chn</code>
 </td></tr><tr><td></td><td>
-channel-property returns the value associated with <i>key</i> in the given channel's
+channel-property returns the value associated with 'key' in the given channel's
 <a href="extsnd.html#channelproperties">property list</a>.  To add or change a property, use set! with this procedure. 
 <pre>
     Scheme:
@@ -4326,7 +4326,7 @@ not used anywhere).
 </td></tr><tr><td></td><td>
 check-for-unsaved-edits adds functions to the <a href="extsnd.html#beforeexithook">before-exit-hook</a>
 and the <a href="extsnd.html#beforeclosehook">before-close-hook</a> to check
-for unsaved edits before exiting Snd or closing a file.  If its argument <i>check</i> is #f, it removes
+for unsaved edits before exiting Snd or closing a file.  If its argument 'check' is #f, it removes
 those hooks.  Normally Snd just closes such a sound, or exits silently, flushing any unsaved edits.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4397,7 +4397,7 @@ applies the given envelope to the current channel,
 connecting the points with a sinusoidal curve.
 Similarly, blackman4-env-channel connects the dots with
 a sum of cosines, and env-squared-channel connects the dots with an x^2 curve.  To get any other positive exponent,
-use env-expt-channel.  The <i>symmetric</i> argument determines whether the
+use env-expt-channel.  The 'symmetric' argument determines whether the
 up and down moving ramps look symmetrical around a break point.
 
 <table border=0>
@@ -4424,7 +4424,7 @@ up and down moving ramps look symmetrical around a break point.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="evaloverselection">eval-over-selection</a> <code>func :optional snd</code>
 </td></tr><tr><td></td><td>
-eval-over-selection evaluates <i>func</i> on each sample in the current selection. A better
+eval-over-selection evaluates 'func' on each sample in the current selection. A better
 name might be map-selection.
 The code:
 
@@ -4460,10 +4460,10 @@ focus-follows-mouse sets up various hook functions to activate whatever widget i
 <a class=def name="matchsoundfiles">match-sound-files</a> <code>func :optional dir</code>
 </td></tr><tr><td></td><td>
 for-each-sound-file and 
-map-sound-files apply <i>func</i> to each sound file in <i>dir</i>.
-The <i>func</i> is passed one argument, the sound file name.
-map-sound-files returns a list of the results, if any, returned from <i>func</i>.
-match-sound-files applies <i>func</i> to each sound file in <i>dir</i> and returns a list of files for which func does not return #f.
+map-sound-files apply 'func' to each sound file in 'dir'.
+The 'func' is passed one argument, the sound file name.
+map-sound-files returns a list of the results, if any, returned from 'func'.
+match-sound-files applies 'func' to each sound file in 'dir' and returns a list of files for which func does not return #f.
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (for-each-sound-file
@@ -4524,8 +4524,8 @@ In fact, we could replace the built-in procedures <a href="extsnd.html#addsoundf
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="insertchannel">insert-channel</a> <code>filedat :optional beg dur snd chn edpos</code>
 </td></tr><tr><td></td><td>
-insert-channel inserts the specified data (<i>filedat</i>) in the given channel at the given location.
-See mix-channel below for a description of <i>filedat</i>.
+insert-channel inserts the specified data ('filedat') in the given channel at the given location.
+See mix-channel below for a description of 'filedat'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4534,7 +4534,7 @@ See mix-channel below for a description of <i>filedat</i>.
 <a class=def name="makeselection">make-selection</a> <code>beg end snd chn</code>
 </td></tr><tr><td></td><td>
 make-selection makes a selection, like <a href="extsnd.html#makeregion">make-region</a> but without creating
-a region.  It selects the <i>dur</i> samples starting at <i>beg</i> in the given channel.
+a region.  It selects the 'dur' samples starting at 'beg' in the given channel.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4617,8 +4617,8 @@ It is the selection-oriented version of <a href="#allchans">all-chans</a>.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="setglobalsync">set-global-sync</a> <code>choice</code>
 </td></tr><tr><td></td><td>
-set-global-sync sets up a hook function that syncs all of a sound's channels (<i>choice</i> == 2),
-or all channels (across all sounds) (<i>choice</i> == 1).  <i>choice</i> == 0 turns off the syncing.
+set-global-sync sets up a hook function that syncs all of a sound's channels ('choice' == 2),
+or all channels (across all sounds) ('choice' == 1).  'choice' == 0 turns off the syncing.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4682,12 +4682,12 @@ there are some interesting possibilities ("sound evaporation", etc).
     <em class=emdef>cross-fade</em> beg dur amp file1 file2 ramp-beg ramp-dur ramp-type bank-dur fs fwidth
 </pre>
 <p>
-cross-fade stitches <i>file1</i> to <i>file2</i> using filtering to provide the
-join (rather than amplitude ramps).  <i>ramp-type</i> can be 0: sweep up,
+cross-fade stitches 'file1' to 'file2' using filtering to provide the
+join (rather than amplitude ramps).  'ramp-type' can be 0: sweep up,
 1: sweep down, 2: sweep split from the middle; "sweep up" means that the
-low frequencies are filtered out first, etc.  <i>fs</i> is how many formants to
-set up; <i>fwidth</i> is the formant resonance width control; <i>ramp-beg</i> and
-<i>ramp-dur</i> set the start point and length of the sweep; <i>bank-dur</i>
+low frequencies are filtered out first, etc.  'fs' is how many formants to
+set up; 'fwidth' is the formant resonance width control; 'ramp-beg' and
+'ramp-dur' set the start point and length of the sweep; 'bank-dur'
 controls how much time is spent in the formant bank before starting or after ending
 the ramp.
 </p>
@@ -4706,9 +4706,9 @@ A similar idea is behind dissolve-fade:
 <p>It ramps in and out frequency bands chosen at random.  The original hope was to get something like a graphical dissolve,
 but it turns out to be better to let the random changes float along with no overall
 direction.  If the current band amplitude is 1.0, we send it toward 0.0 and vice versa.  Given patience
-and a suitably noisy original, strange pitches emerge and submerge.  <i>fsize</i> is the formant bank size;
-<i>r</i> is the same as <i>fwidth</i> in cross-fade (resonance width) modulo a factor of 2 (sigh...).
-<i>lo</i> and <i>hi</i> set the portion of the formant bank that is active during the dissolve.
+and a suitably noisy original, strange pitches emerge and submerge.  'fsize' is the formant bank size;
+'r' is the same as 'fwidth' in cross-fade (resonance width) modulo a factor of 2 (sigh...).
+'lo' and 'hi' set the portion of the formant bank that is active during the dissolve.
 </p>
 <pre>
     (with-sound () (dissolve-fade 0 1 1.0 "oboe.snd" "trumpet.snd" 256 2 0 128))
@@ -4739,7 +4739,7 @@ move some of these into C.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="compandsound">compand-sound</a> <code>:optional (beg 0) dur snd</code>
 </td></tr><tr><td width=60></td><td>
-compand-sound applies companding to every channel of 'snd'.
+compand-sound applies companding to every channel of the sound 'snd'.
 It is the multichannel version of <a href="#compandchannel">compand-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4748,7 +4748,7 @@ It is the multichannel version of <a href="#compandchannel">compand-channel</a>.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="contrastsound">contrast-sound</a> <code>index :optional (beg 0) dur snd</code>
 </td></tr><tr><td width=60></td><td>
-contrast-sound applies contrast-enhancement to every channel of 'snd'.
+contrast-sound applies contrast-enhancement to every channel of the sound 'snd'.
 It is the multichannel version of <a href="#contrastchannel">contrast-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4757,7 +4757,7 @@ It is the multichannel version of <a href="#contrastchannel">contrast-channel</a
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="dithersound">dither-sound</a> <code>:optional (amount .00006) (beg 0) dur snd</code>
 </td></tr><tr><td width=60></td><td>
-dither-sound adds dithering to every channel of 'snd'.
+dither-sound adds dithering to every channel of the sound 'snd'.
 It is the multichannel version of <a href="#ditherchannel">dither-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4766,7 +4766,7 @@ It is the multichannel version of <a href="#ditherchannel">dither-channel</a>.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="filetosounddata">file-&gt;sound-data</a> <code>file</code>
 </td></tr><tr><td width=60></td><td>
-file-&gt;sound-data returns <i>file</i>'s data in a sound-data object.
+file-&gt;sound-data returns the data of the file 'file' in a sound-data object.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4774,7 +4774,7 @@ file-&gt;sound-data returns <i>file</i>'s data in a sound-data object.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="filetovct">file-&gt;vct</a> <code>file</code>
 </td></tr><tr><td width=60></td><td>
-file-&gt;vct returns <i>file</i>'s data (channel 0 anyway) in a vct.
+file-&gt;vct returns the data of the file 'file' (channel 0 anyway) in a vct.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4892,7 +4892,7 @@ See <a href="#insertsounddata">insert-sound-data</a> for an example that could e
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="normalizesound">normalize-sound</a> <code>amp :optional (beg 0) dur snd</code>
 </td></tr><tr><td width=60></td><td>
-normalize-sound scales 'snd' to peak amplitude 'amp'.
+normalize-sound scales the sound 'snd' to peak amplitude 'amp'.
 It is the multichannel version of <a href="extsnd.html#normalizechannel">normalize-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4901,7 +4901,7 @@ It is the multichannel version of <a href="extsnd.html#normalizechannel">normali
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="offsetsound">offset-sound</a> <code>off :optional (beg 0) dur snd</code>
 </td></tr><tr><td width=60></td><td>
-offset-sound adds 'off' to every sample in 'snd'.  
+offset-sound adds 'off' to every sample in the sound 'snd'.  
 It is the multichannel version of <a href="#offsetchannel">offset-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4910,7 +4910,7 @@ It is the multichannel version of <a href="#offsetchannel">offset-channel</a>.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="padsound">pad-sound</a> <code>beg dur :optional snd</code>
 </td></tr><tr><td width=60></td><td>
-pad-sound places a block of 'dur' zeros in every channel of 'snd' starting at 'beg'.
+pad-sound places a block of 'dur' zeros in every channel of the sound 'snd' starting at 'beg'.
 It is the multichannel version of <a href="extsnd.html#padchannel">pad-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4927,7 +4927,7 @@ region-&gt;frame returns a frame containing the contents of the region ref at po
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="regiontosounddata">region-&gt;sound-data</a> <code>reg</code>
 </td></tr><tr><td></td><td>
-region-&gt;sound-data returns a sound-data object containing the contents of the region <i>reg</i>.
+region-&gt;sound-data returns a sound-data object containing the contents of the region 'reg'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4935,7 +4935,7 @@ region-&gt;sound-data returns a sound-data object containing the contents of the
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="scalesound">scale-sound</a> <code>scl :optional (beg 0) dur snd</code>
 </td></tr><tr><td width=60></td><td>
-scale-sound multiplies every sample in 'snd' by 'scl'.
+scale-sound multiplies every sample in the sound 'snd' by 'scl'.
 It is the multichannel version of <a href="extsnd.html#scalechannel">scale-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4945,7 +4945,7 @@ It is the multichannel version of <a href="extsnd.html#scalechannel">scale-chann
 <a class=def name="scansound">scan-sound</a> <code>func :optional beg dur snd with-sync</code>
 </td></tr><tr><td></td><td>
 scan-sound is a version of <a href="extsnd.html#scanchannel">scan-channel</a> that passes func a frame on each call, rather than a sample.
-If 'with-sync' is #t, the frame read includes all channels currently sync'd to 'snd'.
+If 'with-sync' is #t, the frame read includes all channels currently sync'd to the sound 'snd'.
 <pre>
 (define* (simultaneous-zero-crossing :optional (beg 0) dur snd)
   (let ((last-fr (<a class=quiet href="clm.html#make-frame">make-frame</a> (<a class=quiet href="extsnd.html#chans">chans</a> snd))))
@@ -4974,7 +4974,7 @@ selection-&gt;sound-data returns a sound-data object containing the contents of 
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="simultaneouszerocrossing">simultaneous-zero-crossing</A> <code>:optional (beg 0) dur snd</code>
 </td></tr><tr><td></td><td>
-simultaneous-zero-crossing looks through all channels of 'snd' for a zero crossing that happens on the
+simultaneous-zero-crossing looks through all channels of the sound 'snd' for a zero crossing that happens on the
 same sample in all channels.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4983,7 +4983,7 @@ same sample in all channels.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="sounddatatofile">sound-data-&gt;file</a> <code>sd file :optional (srate 22050) (comment "")</code>
 </td></tr><tr><td></td><td>
-sound-data-&gt;file places the contents of its sound-data argument <i>sd</i> in the newly created sound file <i>file</i>.
+sound-data-&gt;file places the contents of its sound-data argument 'sd' in the newly created sound file 'file'.
 <pre>
   (sound-data-&gt;file (sound-&gt;sound-data 44100 44100) "test.snd" 44100)
 </pre>
@@ -5032,9 +5032,9 @@ sound-&gt;frame returns a frame containing the contents of the sound snd at posi
 
 <!-- track->sound-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="tracktosounddata">track-&gt;sound-data</a> <code>trk</code>
+<a class=def name="tracktosounddata">track-&gt;sound-data</a> <code>trk :optional (beg 0)</code>
 </td></tr><tr><td></td><td>
-track-&gt;sound-data returns a sound-data object containing the contents of the track <i>trk</i>.
+track-&gt;sound-data returns a sound-data object containing the contents of the track 'trk'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5042,7 +5042,7 @@ track-&gt;sound-data returns a sound-data object containing the contents of the 
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="vcttofile">vct-&gt;file</a> <code>vct file :optional (srate 22050) (comment "")</code>
 </td></tr><tr><td></td><td>
-vct-&gt;file places the contents of its vct argument in the newly created (mono) sound file <i>file</i>.
+vct-&gt;file places the contents of its vct argument in the newly created (mono) sound file 'file'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5070,66 +5070,66 @@ once the dust settles.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="copyframereader">copy-frame-reader</a> <code>obj</code></td></tr>
 <tr><td width=60><br></td><td>
-copy-frame-reader returns a copy of the frame-reader <i>obj</i>.
+copy-frame-reader returns a copy of the frame-reader 'obj'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- frame-reader-at-end? -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="framereaderatendQ">frame-reader-at-end?</a> <code>obj</code></td></tr>
 <tr><td></td><td>
-frame-reader-at-end? returns #t if the frame-reader <i>obj</i> is at the end of the sound.
+frame-reader-at-end? returns #t if the frame-reader 'obj' is at the end of the sound.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- frame-reader-chans -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="framereaderchans">frame-reader-chans</a> <code>obj</code></td></tr>
 <tr><td></td><td>
-frame-reader-chans returns the number of channels read by the frame-reader <i>obj</i>.
+frame-reader-chans returns the number of channels read by the frame-reader 'obj'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- frame-reader-home -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="framereaderhome">frame-reader-home</a> <code>obj</code></td></tr>
 <tr><td></td><td>
-frame-reader-home returns the sound index associated with the frame-reader <i>obj</i>.
+frame-reader-home returns the sound index associated with the frame-reader 'obj'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- frame-reader-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="framereaderposition">frame-reader-position</a> <code>obj</code></td></tr>
 <tr><td></td><td>
-frame-reader-position returns the current (frame-wise) location of the frame-reader <i>obj</i>.
+frame-reader-position returns the current (frame-wise) location of the frame-reader 'obj'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- frame-reader? -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="framereaderQ">frame-reader?</a> <code>obj</code></td></tr>
 <tr><td></td><td>
-frame-reader? returns #t if <i>obj</i> is a frame-reader.
+frame-reader? returns #t if 'obj' is a frame-reader.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- free-frame-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="freeframereader">free-frame-reader</a> <code>obj</code></td></tr>
 <tr><td></td><td>
-free-frame-reader releases the frame-reader <i>obj</i>.
+free-frame-reader releases the frame-reader 'obj'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- make-frame-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="makeframereader">make-frame-reader</a> <code><i>start snd dir pos</i></code></td></tr>
+<a class=def name="makeframereader">make-frame-reader</a> <code>'start snd dir pos'</code></td></tr>
 <tr><td></td><td>
-make-frame-reader creates a frame-reader reading <i>snd</i>
-starting at frame <i>start</i> with initial read direction <i>dir</i> 
-(1=forward, -1=backward).  <i>pos</i> is the edit history position to read 
+make-frame-reader creates a frame-reader reading the sound 'snd'
+starting at frame 'start' with initial read direction 'dir' 
+(1=forward, -1=backward).  'pos' is the edit history position to read 
 (it defaults to current position).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- make-region-frame-reader -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="makeregionframereader">make-region-frame-reader</a> <code>start reg <i>dir</i></code></td></tr>
+<a class=def name="makeregionframereader">make-region-frame-reader</a> <code>start reg 'dir'</code></td></tr>
 <tr><td></td><td>
-make-region-frame-reader creates a frame-reader reading region <i>reg</i>.
+make-region-frame-reader creates a frame-reader reading region 'reg'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- make-selection-frame-reader -->
@@ -5143,7 +5143,7 @@ make-selection-frame-reader returns a frame reader that reads all channels of th
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="makesyncframereader">make-sync-frame-reader</a> <code>start snd dir edpos</code></td></tr>
 <tr><td></td><td>
-make-sync-frame-reader returns a frame reader that reads all channels sync'd to 'snd'.
+make-sync-frame-reader returns a frame reader that reads all channels sync'd to the sound 'snd'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- make-track-frame-reader -->
@@ -5157,14 +5157,14 @@ make-track-frame-reader returns a frame reader that reads all channels of the tr
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="nextframe">next-frame</a> <code>obj</code></td></tr>
 <tr><td></td><td>
-next-frame returns the next frame (reading forward) read by the frame-reader <i>obj</i>.
+next-frame returns the next frame (reading forward) read by the frame-reader 'obj'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- previous-frame -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="previousframe">previous-frame</a> <code>obj</code></td></tr>
 <tr><td></td><td>
-previous-frame returns the previous frame in the stream read by the frame-reader <i>obj</i>.
+previous-frame returns the previous frame in the stream read by the frame-reader 'obj'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- read-frame -->
@@ -5172,7 +5172,7 @@ previous-frame returns the previous frame in the stream read by the frame-reader
 <a class=def name="readframe">read-frame</a> <code>obj</code></td></tr>
 <tr><td></td><td>
 read-frame returns the next frame (reading in the direction set by <a class=quiet href="#makeframereader">make-frame-reader</a>) 
-from the frame-reader <i>obj</i>.
+from the frame-reader 'obj'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- read-track-frame -->
@@ -5213,17 +5213,17 @@ in freeverb.html in the CLM tarball.
 </pre>
 
 <p>Here is a paraphrase of some of Fernando's documentation.
-<i>room-decay</i>
+'room-decay'
 determines the decay time of the reverberation.
-<i>damping</i> set the high frequency damping; this parameter can be a number, or an array or a list (with same number of elements as output channels). It is possible to control the damping for each output channel.
-<i>global</i>
-controls how the outputs of all reverbs (one per channel) are mixed into the output stream. Specifying "0" will connect each reverberator directly to each output channel, "1" will mix all reverberated channels equally into all output channels. Intermediate values will allow for an arbitrary balance between local and global reverberation. The overall gain of the mixing matrix is kept constant. <i>output-mixer</i> overrides this parameter.
-<i>predelay</i> 
+'damping' set the high frequency damping; this parameter can be a number, or an array or a list (with same number of elements as output channels). It is possible to control the damping for each output channel.
+'global'
+controls how the outputs of all reverbs (one per channel) are mixed into the output stream. Specifying "0" will connect each reverberator directly to each output channel, "1" will mix all reverberated channels equally into all output channels. Intermediate values will allow for an arbitrary balance between local and global reverberation. The overall gain of the mixing matrix is kept constant. 'output-mixer' overrides this parameter.
+'predelay' 
 sets the predelay that is applied to the input streams. An array or list lets you specify the individual predelays for all chanenels.
-<i>output-gain</i>
+'output-gain'
 is the overall gain multiplier for the output streams.
-<i>output-mixer</i>
-sets the output mixing matrix directly (rather than through <i>global</i>).
+'output-mixer'
+sets the output mixing matrix directly (rather than through 'global').
 </p>
 <pre>
     (with-sound (:reverb freeverb :reverb-data '(:output-gain 3.0)) 
@@ -5262,24 +5262,24 @@ or something.
       (grain-envelope-transition '(0 0 1 1))  ; interp 0: use grain-envelope, 1: use grain-envelope-end
       (grain-envelope-array-size 512)         ; make-table-lookup table size
       (grain-duration 0.1)                    ; number or envelope setting grain duration (in seconds)
-      (grain-duration-spread 0.0)             ; random spread around <i>grain-duration</i>
+      (grain-duration-spread 0.0)             ; random spread around 'grain-duration'
       (grain-duration-limit 0.002)            ; minimum grain duration (in seconds)
       (srate 0.0)                             ; number or envelope setting sampling rate conversion
-      (srate-spread 0.0)                      ; random spread of src around <i>srate</i>
+      (srate-spread 0.0)                      ; random spread of src around 'srate'
       (srate-linear #f)                       ; if #f, srate (envelope) is exponential
       (srate-base (expt 2 (/ 12)))            ; srate env base if exponential
       (srate-error 0.01)                      ; error bound for exponential conversion
       (grain-start '(0 0 1 1))                ; env that sets input file read point of current grain
-      (grain-start-spread 0.0)                ; random spread around <i>grain-start</i>
-      (grain-start-in-seconds #f)             ; if #f, treat <i>grain-start</i> as a percentage
+      (grain-start-spread 0.0)                ; random spread around 'grain-start'
+      (grain-start-in-seconds #f)             ; if #f, treat 'grain-start' as a percentage
       (grain-density 10.0)                    ; env on number of grains / second in output
-      (grain-density-spread 0.0)              ; random spread around <i>grain-density</i>
+      (grain-density-spread 0.0)              ; random spread around 'grain-density'
       (reverb-amount 0.01)
       (reverse #f)                            ; if #t, input is read backwards
       (where-to 0)                            ; locsig stuff -- see the full documentation
       (where-bins '())
       (grain-distance 1.0)                    ; distance of sound source (<a href="clm.html#locsig">locsig</a>)
-      (grain-distance-spread 0.0)             ; random spread around <i>grain-distance</i>
+      (grain-distance-spread 0.0)             ; random spread around 'grain-distance'
       (grain-degree 45.0)
       (grain-degree-spread 0.0)
       (verbose #t)
@@ -5316,8 +5316,8 @@ every now and then.
 
     brownian-noise r
 </pre>
-<p><i>amplitude</i> controls how large individual steps can be; <i>high</i> and <i>low</i> set
-the overall bounds; <i>frequency</i> controls how often a new random number is chosen.
+<p>'amplitude' controls how large individual steps can be; 'high' and 'low' set
+the overall bounds; 'frequency' controls how often a new random number is chosen.
 Here's an instrument that fuzzes up its amplitude envelope a bit using green noise:
 </p>
 
@@ -5392,7 +5392,7 @@ describe-hook tries to decipher the functions on the hook list; this is almost i
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="hookmember">hook-member</a> <code>(func hook)</code>
 </td></tr><tr><td></td><td>
-hook-member returns #t if <i>func</i> is already on the hook list.
+hook-member returns #t if 'func' is already on the hook list.
 It is simply <code>(member value (hook-&gt;list hook))</code>
 <pre>
     :<em class=typing>(hook-member save-peak-env-info <a class=quiet href="extsnd.html#closehook">close-hook</a>)</em>
@@ -5432,8 +5432,8 @@ snd-hooks returns a list of all Snd built-in non-channel hooks.
 <a class=def name="withlocalhook">with-local-hook</a> <code>(hook local-hook-procs thunk)</code>
 </td></tr><tr><td></td><td>
 with-local-hook is a kind of "let" for hooks; 
-it evaluates <i>thunk</i> with <i>hook</i> set to <i>local-hook-procs</i> (a list which can be nil), then restores <i>hook</i> to its previous state upon exit.
-The result returned by <i>thunk</i> is returned by with-local-hook.
+it evaluates 'thunk' with 'hook' set to 'local-hook-procs' (a list which can be nil), then restores 'hook' to its previous state upon exit.
+The result returned by 'thunk' is returned by with-local-hook.
 In the following example, <a href="extsnd.html#closehook">close-hook</a> has several functions, mainly related to <a href="#peakenvdoc">peak-env</a> files;
 we want to close all currently open sounds without invoking the peak-env stuff:
 <pre>
@@ -5468,9 +5468,9 @@ we want to close all currently open sounds without invoking the peak-env stuff:
 <p>index.scm provides a connection between mozilla or netscape
 and the Snd documentation.  The index itself is
 built by index.cl, then accessed through the functions html and ?.
-<code>(html arg)</code>, where <i>arg</i> can be a string, a symbol, or a procedure sends mozilla to the corresponding url
+<code>(html arg)</code>, where 'arg' can be a string, a symbol, or a procedure sends mozilla to the corresponding url
 in the Snd documents.
-<code>(? obj)</code> prints out any help it can find for <i>obj</i>, and tries to find <i>obj</i> in the documentation.
+<code>(? obj)</code> prints out any help it can find for 'obj', and tries to find 'obj' in the documentation.
 The function that actually passes the url to the reader is <a href="extsnd.html#sendmozilla">send-mozilla</a>.
 </p>
 <pre>
@@ -5696,9 +5696,9 @@ jcrev.scm version assumes it is being called within with-sound:
 </pre>
 
 <p>
-if <i>low-pass</i> if #t, a low pass filter is inserted before the output;
-<i>volume</i> can be used to boost the output;
-<i>amp-env</i> is an amplitude envelope that can be used to squelch the reverb ringing at the end of a piece.
+if 'low-pass' if #t, a low pass filter is inserted before the output;
+'volume' can be used to boost the output;
+'amp-env' is an amplitude envelope that can be used to squelch the reverb ringing at the end of a piece.
 </p>
 <pre>
     (with-sound (:reverb jc-reverb :reverb-data '(#t 1.5 (0 0 1 1 2 1 3 0))) (fm-violin 0 .1 440 .1))
@@ -5868,7 +5868,7 @@ The marks defining the selection bounds must be in the same channel.
 <tr><td colspan=2 bgcolor="#f6f8ff">
   <a class=def name="describemark">describe-mark</a> <code>id</code>
 </td></tr><tr><td></td><td>
-describe-mark returns a description of the movements of mark <i>id</i> over the channel's edit history:
+describe-mark returns a description of the movements of mark 'id' over the channel's edit history:
 <pre>
     :<em class=typing>(describe-mark 0)</em>
     <em class=listener>((mark 0 sound 0 "oboe.snd" channel 0) 654 478)</em>
@@ -5882,9 +5882,9 @@ before it, causing it to move to sample 478.
 <tr><td colspan=2 bgcolor="#f6f8ff">
   <a class=def name="evalbetweenmarks">eval-between-marks</a> <code>func</code>
 </td></tr><tr><td></td><td>
-eval-between-marks evaluates <i>func</i>
+eval-between-marks evaluates 'func'
 between the leftmost marks in the currently selected channel.
-<i>func</i> should take one argument, a sample, and return the new sample value.
+'func' should take one argument, a sample, and return the new sample value.
 <pre>
     (eval-between-marks (lambda (y) (* y 2)))
 </pre>
@@ -5953,8 +5953,8 @@ mark-property associates a property list with a mark.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="movesyncdmarks">move-syncd-marks</a> <code>sync samples-to-move</code>
 </td></tr><tr><td></td><td>
-move-syncd-marks moves any marks sharing the <a href="extsnd.html#marksync">mark-sync</a> value <i>sync</i> by
-<i>samples-to-move</i> samples.  
+move-syncd-marks moves any marks sharing the <a href="extsnd.html#marksync">mark-sync</a> value 'sync' by
+'samples-to-move' samples.  
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5962,7 +5962,7 @@ move-syncd-marks moves any marks sharing the <a href="extsnd.html#marksync">mark
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="padmarks">pad-marks</a> <code>ids secs</code>
 </td></tr><tr><td></td><td>
-pad-marks inserts <i>secs</i> seconds of silence before each in a list of marks (<i>ids</i>).
+pad-marks inserts 'secs' seconds of silence before each in a list of marks ('ids').
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5971,7 +5971,7 @@ pad-marks inserts <i>secs</i> seconds of silence before each in a list of marks 
 <a class=def name="playbetweenmarks">play-between-marks</a> <code>:optional snd m1 m2</code>
 </td></tr><tr><td></td><td>
 play-between-marks
-plays the portion in <i>snd</i> between the given marks.
+plays the portion in the sound 'snd' between the given marks.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5980,7 +5980,7 @@ plays the portion in <i>snd</i> between the given marks.
 <a class=def name="playsyncdmarks">play-syncd-marks</a> <code>sync</code>
 </td></tr><tr><td></td><td>
 play-syncd-marks starts
-playing from all the marks sharing its <i>sync</i> argument (see <a href="extsnd.html#marksync">mark-sync</a>).
+playing from all the marks sharing its 'sync' argument (see <a href="extsnd.html#marksync">mark-sync</a>).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6326,8 +6326,8 @@ This removes all mixes (sets all mix amplitudes to 0.0).
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="findmix">find-mix</a> <code>sample snd chn</code>
 </td></tr><tr><td></td><td>
-find-mix returns the identifier of the mix at sample <i>sample</i> (or anywhere in the given channel if 
-<i>sample</i> is not specified), or #f if no mix is found.
+find-mix returns the identifier of the mix at sample 'sample' (or anywhere in the given channel if 
+'sample' is not specified), or #f if no mix is found.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6385,7 +6385,7 @@ mix-property associates a property list with each mix.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="mixsound">mix-sound</a> <code>file start</code>
 </td></tr><tr><td></td><td>
-mix-sound mixes <i>file</i> (all chans) into the currently selected sound at <i>start</i>.
+mix-sound mixes 'file' (all chans) into the currently selected sound at 'start'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6394,7 +6394,7 @@ mix-sound mixes <i>file</i> (all chans) into the currently selected sound at <i>
 <a class=def name="mixtovct">mix-&gt;vct</a> <code>id</code>
 </td></tr><tr><td></td><td>
 mix-&gt;vct returns in a vct the current samples
-of mix <i>id</i>.
+of mix 'id'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6403,13 +6403,13 @@ of mix <i>id</i>.
 <a class=def name="panmix">pan-mix</a> <code>file (frame 0) (env 1.0) snd (chn 0) auto-delete</code>
 </td></tr><tr><td></td><td>
 pan-mix
-mixes <i>file</i> into the current sound starting at <i>frame</i> using the envelope <i>env</i>
+mixes 'file' into the current sound starting at 'frame' using the envelope 'env'
 to pan the mixed samples (0: all chan 1, 1: all chan 0).
 
 So, <code>(pan-mix \"oboe.snd\" .1 '(0 0 1 1))</code> goes from all chan 0 to all chan 1.  If
 the variable <a href="extsnd.html#withmixtags">with-mix-tags</a> is #t, the resultant mixes are placed in their own track, and 
 the track envelope controls the panning. 
-If <i>envelope</i> is a scaler, it is turned into an evelope at that value. <i>auto-delete</i> determines
+If 'envelope' is a scaler, it is turned into an evelope at that value. 'auto-delete' determines
 whether the in-coming file should be treated as a temporary file and deleted when the mix
 is no longer accessible.
 To tie this into C-x C-q, in place of the default "mix" function,
@@ -6467,7 +6467,7 @@ save-mix saves a given mix's data in a file.
 <a class=def name="snapmixtobeat">snap-mix-to-beat</a> <code>(at-tag-position)</code>
 </td></tr><tr><td></td><td>
 snap-mix-to-beat forces a dragged mix to end up on a beat (see <a href="extsnd.html#xaxisstyle">x-axis-in-beats</a>).
-If <i>at-tag-position</i> is #t, the tagged point, rather than the mix beginning falls on the beat.
+If 'at-tag-position' is #t, the tagged point, rather than the mix beginning falls on the beat.
 Reset <a href="extsnd.html#mixreleasehook">mix-release-hook</a> to cancel this action.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -6492,7 +6492,7 @@ delete-all-tracks removes all mixes (by setting their amplitudes to 0.0) that ha
 </td></tr><tr><td></td><td>
 filter-track applies an FIR filter to each mix sound at the pre-mix point (that is, the
 mixed in sound is filtered, then the mix takes place).
-<i>fir-coeffs</i> are the filter coefficients:
+'fir-coeffs' are the filter coefficients:
 <pre>
     (filter-track track-id '(.1 .2 .3 .3 .2 .1)) ; a low-pass filter
 </pre>
@@ -6503,7 +6503,7 @@ mixed in sound is filtered, then the mix takes place).
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="retempotrack">retempo-track</a> <code>track tempo</code>
 </td></tr><tr><td></td><td>
-retempo-track affects the time between the successive mix begin points (<i>tempo</i> &gt; 1.0 makes the
+retempo-track affects the time between the successive mix begin points ('tempo' &gt; 1.0 makes the
 mixes happen more quickly):
 <pre>
     :<em class=typing>(retempo-track (track 1) 2.0)</em>
@@ -6530,8 +6530,8 @@ reverse-track reverses the order in which a track's member mixes occur.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="savetrack">save-track</a> <code>track filename (chan #t)</code>
 </td></tr><tr><td></td><td>
-save-track places the track's samples into the file <i>filename</i>.
-If the <i>chan</i> arg is #t, all channels are saved.
+save-track places the track's samples into the file 'filename'.
+If the 'chan' arg is #t, all channels are saved.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6563,7 +6563,7 @@ track-property associates a property list with each track.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="transposetrack">transpose-track</a> <code>track semitones</code>
 </td></tr><tr><td></td><td>
-transpose-track transposes each mix in <i>track</i> by <i>semitones</i>.
+transpose-track transposes each mix in 'track' by 'semitones'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6681,9 +6681,9 @@ itself a translation of Tim Stilson's original C code.  The functions provide
 a kind of CLM generator view of the filter.  Fernando describes it as a
 "Moog style four pole lowpass (24db/Oct) filter clm unit generator,
 variable resonance, warm, analog sound ;-)". <!-- ( -->
-In make-moog-filter, <i>frequency</i> is the cutoff frequency
-in Hz (more or less) and <i>Q</i> controls the resonance: 0.0 = no resonance, whereas
-1.0 causes the filter to oscillate at <i>frequency</i>. 
+In make-moog-filter, 'frequency' is the cutoff frequency
+in Hz (more or less) and 'Q' controls the resonance: 0.0 = no resonance, whereas
+1.0 causes the filter to oscillate at 'frequency'. 
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
@@ -6710,7 +6710,7 @@ thereby defining most of the standard music notation symbols.  Each of the origi
 functions (e.g. draw-bass-clef) becomes a Snd/Scheme procedure of the form
 <code>(name :optional x y size style snd chn context)</code>. 
 <code>(draw-bass-clef 100 100 50)</code> draws a bass clef in the current graph
-at position (100 100) of size 50; since the <i>style</i> argument defaults to
+at position (100 100) of size 50; since the 'style' argument defaults to
 #f, the clef is displayed as a filled polygon; use #t to get an outline of
 the clef instead.
 </p>
@@ -6765,7 +6765,7 @@ is posted along with the header info:
 </pre>
 <p>
 nb.scm works fine without guile-gdbm; to load
-guile-gdbm, set the variable <i>use-gdbm</i> to #t.
+guile-gdbm, set the variable 'use-gdbm' to #t.
 The Ruby version of nb (written by Mike Scholz) has several other features -- see nb.rb
 for details.
 </p>
@@ -6789,18 +6789,18 @@ those all-important whooshing sounds.
 </pre>
 
 <p>
-This is an old instrument, so one must make allowances.  <i>ampat</i> and <i>ampdc</i>
-are the amplitude envelope (<i>ampfun</i>) attack and decay times, and similarly for
-the frequency envelope <i>glissfun</i>, the random number frequency envelope <i>rfreqfun</i>
-and the index envelope <i>devfun</i> (dev = "deviation", and old radio-style name for the
+This is an old instrument, so one must make allowances.  'ampat' and 'ampdc'
+are the amplitude envelope ('ampfun') attack and decay times, and similarly for
+the frequency envelope 'glissfun', the random number frequency envelope 'rfreqfun'
+and the index envelope 'devfun' (dev = "deviation", and old radio-style name for the
 FM index).  Each envelope must go on the x axis from 0 to 100; the attack portion ends
 at 25, the decay portion starts at 75 (once upon a time there was
 a generator named LINEN; his full name was Line-Segment Envelope, but everyone
 just called him LINEN; they had to shout because he was a bit deaf).
-<i>rfreq</i> is the frequency of the random number generator;
+'rfreq' is the frequency of the random number generator;
 if it is below about 25 Hz, you get automatic composition; above that
 you start to get noise.  Well, you get a different kind of noise.
-<i>dev</i> is the bandwidth of the noise; very narrow <i>dev</i> gives a
+'dev' is the bandwidth of the noise; very narrow 'dev' gives a
 whistle, very broad more of a whoosh.  This is simple FM 
 where the modulating signal is white noise.
 </p>
@@ -6859,7 +6859,7 @@ waveform immediately.  For very large sounds, this can save as much as
 a minute during which Snd is running the amplitude envelope builders
 in the background and displaying whatever it can.  That is, it makes
 opening a large sound much faster after the initial read and save.
-The variable <i>save-peak-env-info</i> 
+The variable 'save-peak-env-info' 
 determines whether these envelopes are being saved (its default is #t).  The procedure
 </p>
 
@@ -6905,7 +6905,7 @@ In Ruby, this functionality is in env.rb.  It can be activated via:
 <p>These files are translations of CLM's piano.ins, a <A HREF="http://ccrma.stanford.edu/overview/pastmodeling.html#SECTION000922600000000000000">piano physical model</A> by Scott van Duyne.  There is also a paper:
 Julius O. Smith and Scott A. Van Duyne, "Commuted piano synthesis," in Proc. Int. Computer Music Conf., Banff, Canada, September 1995, pp. 335--342.
 To paraphrase these sources, the model includes multiple coupled strings, a nonlinear hammer, and an arbitrarily large soundboard and enclosure.
-The actual instrument name is <i>p</i>:
+The actual instrument name is 'p':
 </p>
 <pre>
     (with-sound ()
@@ -7037,9 +7037,12 @@ situations).
 
 <!-- play-with-amps -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>play-with-amps</em> <code>sound :rest amps</code>
+<em class=emdef>play-with-amps</em> <code>snd :rest amps</code>
 </td></tr><tr><td></td><td>
-<!-- TODO: doc play-with-amps -->
+play-with-amps plays the sound 'snd' with each channel scaled by the corresponding 
+amp: <code>(play-with-amps 0 1.0 0.5)</code> plays sound 0's
+channel 1 at full amplitude, and
+channel 2 at half amplitude.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -7049,9 +7052,9 @@ situations).
 <A class=def NAME="playuntilcg">play-until-c-g</A><br>
 <A class=def NAME="playregionforever">play-region-forever</a> <code>reg</code>
 </td></tr><tr><td></td><td>
-play-often plays the selected sound <i>n</i> times.
+play-often plays the selected sound 'n' times.
 play-until-c-g plays the selected sound until you interrupt it via C-g.
-Similarly, play-region-forever plays region <i>reg</i> until you interrupt it with C-g.
+Similarly, play-region-forever plays region 'reg' until you interrupt it with C-g.
 
 <table border=0 cellpadding=5><tr><td bgcolor="#fafafa"><pre>
     (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\p 0 
@@ -7085,7 +7088,7 @@ play-sines produces a spectrum given a list of lists of frequency and amplitude:
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="playsound">play-sound</A> <code>:optional func</code>
 </td></tr><tr><td></td><td>
-play-sound plays the current sound, calling <code>(func data)</code> on each buffer if <i>func</i> is passed.
+play-sound plays the current sound, calling <code>(func data)</code> on each buffer if 'func' is passed.
 The following doubles each sample in channel 0 during playback:
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
@@ -7114,10 +7117,10 @@ start-dac opens the DAC ready for sound output, and stop-dac closes it.
 </td></tr><tr><td></td><td>
 vector-synthesis cycles through a collection of incoming audio streams, playing whatever
 happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
-It uses <i>driver</i>, a 
+It uses 'driver', a 
 function of two arguments (the number of files, and the number of samples between calls) to decide which file to play.  If 
-<i>read-even-when-not-playing</i> is #t (the default is #f), the input files are constantly 
-read, even if not playing.  <i>files</i> is a list of files to be played.
+'read-even-when-not-playing' is #t (the default is #f), the input files are constantly 
+read, even if not playing.  'files' is a list of files to be played.
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (vector-synthesis 
@@ -7287,8 +7290,8 @@ is in mus.lisp, and the C version is in clm.c.
   <em class=emdef>pvocoder</em> gen input
   <em class=emdef>pvoc</em> :key (fftsize 512) (overlap 4) (time 1.0) (pitch 1.0) (gate 0.0) (hoffset 0.0) (snd 0) (chn 0)
 </pre>
-<p>The <i>analyze</i>, <i>edit</i>, and <i>synthesize</i> arguments to make-pvocoder are
-functions that are applied as needed during pvocoder processing; similarly, the <i>input</i>
+<p>The 'analyze', 'edit', and 'synthesize' arguments to make-pvocoder are
+functions that are applied as needed during pvocoder processing; similarly, the 'input'
 argument to pvocoder can be a function.
 </p>
 <pre>
@@ -7327,10 +7330,10 @@ In this case, the input function is reading the currently selected channel.
 <p>
 pvoc is yet another (unoptimized) phase-vocoder;
 it applies the phase-vocoder
-to the current sound; <i>pitch</i> specifies the pitch transposition ratio, 
-<i>time</i> specifies the time dilation ratio,
-<i>gate</i> specifies a resynthesis gate in dB (partials with amplitudes lower than
-the gate value will not be synthesized), <i>hoffset</i> is a pitch offset in Hz.
+to the current sound; 'pitch' specifies the pitch transposition ratio, 
+'time' specifies the time dilation ratio,
+'gate' specifies a resynthesis gate in dB (partials with amplitudes lower than
+the gate value will not be synthesized), 'hoffset' is a pitch offset in Hz.
 </p>
 <pre>
     (pvoc :time 2.0)
@@ -7399,7 +7402,7 @@ See rt.tex for complete details.
 </pre>
 <p>These functions show how to read incoming data (from the adc),
 write data (to the dac), and interpose a function while reading and
-writing data.  There are several example functions (for the <i>func</i> argument) that filter the data or
+writing data.  There are several example functions (for the 'func' argument) that filter the data or
 change its amplitude. show-input-fft displays the input data's
 spectrum.  show-draggable-input-fft is the same, but the X axis
 (the frequency axis in this case) is draggable, as in Snd's FFT display.
@@ -7491,9 +7494,9 @@ The singer instrument looks deceptively simple:
     <em class=emdef>singer</em> beg amp data
 </pre>
 <p>
-but all the complexity is hidden in the <i>data</i> parameter.  
-<i>data</i> is a list of lists; each imbedded list has the form: <code>'(dur shape glot pitch glotamp noiseamps vibramt)</code>.
-The <i>shape</i> and <i>glot</i> entries are themselves lists; I think the <i>glot</i>
+but all the complexity is hidden in the 'data' parameter.  
+'data' is a list of lists; each imbedded list has the form: <code>'(dur shape glot pitch glotamp noiseamps vibramt)</code>.
+The 'shape' and 'glot' entries are themselves lists; I think the 'glot'
 list describes the glottal pulse.  I wish I could fully explain all these lists, but 
 I translated this code a very long time ago, and can't remember any details.  You'll
 have to read the code, or perhaps find something in Perry's publications.
@@ -7555,34 +7558,34 @@ that were removed from or renamed in earlier versions of Snd (in Ruby, look in e
 
 <!-- append-to-minibuffer -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>append-to-minibuffer</em> (msg <i>snd</i>)
+<em class=emdef>append-to-minibuffer</em> msg :optional snd
 </td></tr><tr><td></td><td>
-appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer. (snd6.scm)
+appends 'msg' to whatever is in the sound's minibuffer. (snd6.scm)
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- backward-graph -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>backward-graph</em> (<i>count snd chn</i>)
+<em class=emdef>backward-graph</em> :optional count snd chn
 </td></tr><tr><td></td><td>
-move the selected channel back (up or left) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
+move the selected channel back (up or left) 'count' graphs (C-x C-o), returning a list of the new sound index and channel number.
 (snd7.scm)
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- backward-mark -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>backward-mark</em> (<i>count snd chn</i>)
+<em class=emdef>backward-mark</em> :optional count snd chn
 </td></tr><tr><td></td><td>
-move the cursor back <i>count</i> marks (C-j), returning mark id, or #f if none. (snd7.scm)
+move the cursor back 'count' marks (C-j), returning mark id, or #f if none. (snd7.scm)
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- backward-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>backward-mix</em> (<i>count snd chn</i>)
+<em class=emdef>backward-mix</em> :optional count snd chn
 </td></tr><tr><td width=50><br></td><td>
-move the cursor back <i>count</i> mix tags (C-x C-j), returning the mix id. (snd7.scm)
+move the cursor back 'count' mix tags (C-x C-j), returning the mix id. (snd7.scm)
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -7604,32 +7607,32 @@ After File:Save-as dialog option, should Snd remain with the current file (#f) o
 
 <!-- forward-graph -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>forward-graph</em> (<i>count snd chn</i>)
+<em class=emdef>forward-graph</em> :optional count snd chn
 </td></tr><tr><td></td><td>
-move the selected channel forward (down or right) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
+move the selected channel forward (down or right) 'count' graphs (C-x C-o), returning a list of the new sound index and channel number.
 (snd7.scm)
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- forward-mark -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>forward-mark</em> (<i>count snd chn</i>)
+<em class=emdef>forward-mark</em> :optional count snd chn
 </td></tr><tr><td></td><td>
-move the cursor forward <i>count</i> marks (C-j), returning mark id, or #f if none. (snd7.scm)
+move the cursor forward 'count' marks (C-j), returning mark id, or #f if none. (snd7.scm)
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- forward-mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>forward-mix</em> (<i>count snd chn</i>)
+<em class=emdef>forward-mix</em> :optional count snd chn
 </td></tr><tr><td></td><td>
-move the cursor forward <i>count</i> mix tags (C-x C-j), returning the mix id. (snd7.scm)
+move the cursor forward 'count' mix tags (C-x C-j), returning the mix id. (snd7.scm)
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- samples->sound-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>samples-&gt;sound-data</em> (<i>samp samps snd chn sdobj edpos sdchan</i>)
+<em class=emdef>samples-&gt;sound-data</em> :optional samp samps snd chn sdobj edpos sdchan
 </td></tr><tr><td></td><td>
 This is similar to <a href="extsnd.html#channeltovct">channel-&gt;vct</a>, but it fills a <a href="extsnd.html#sndsounddata">sound-data</a> object.
 (snd8.scm)
@@ -7638,7 +7641,7 @@ This is similar to <a href="extsnd.html#channeltovct">channel-&gt;vct</a>, but i
 
 <!-- samples->vct -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>samples-&gt;vct</em> (samp samps <i>snd chn v edpos</i>)
+<em class=emdef>samples-&gt;vct</em> samp samps :optional snd chn v edpos
 </td></tr><tr><td></td><td>
 return vct struct with the data specified.
 Use <a href="extsnd.html#channeltovct">channel-&gt;vct</a> instead. (snd7.scm)
@@ -7647,28 +7650,28 @@ Use <a href="extsnd.html#channeltovct">channel-&gt;vct</a> instead. (snd7.scm)
 
 <!-- scale-sound-by -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>scale-sound-by</em> (scaler <i>beg num snd chn edpos</i>)
+<em class=emdef>scale-sound-by</em> scaler :optional beg num snd chn edpos
 </td></tr><tr><td></td><td>
 scales the samples in the given channel between beg and beg + num by scaler.  If the channel argument is omitted,
-<b>scale-sound-by</b> scales the entire sound.  <i>beg</i> defaults to 0; <i>num</i> defaults to the length of the channel.
-<i>snd</i> defaults to the selected sound, and <i>chn</i> to the selected channel.  Unlike scale-by, this ignores the <a class=quiet href="extsnd.html#sync">sync</a> setting.
+<b>scale-sound-by</b> scales the entire sound.  'beg' defaults to 0; 'num' defaults to the length of the channel.
+'snd' defaults to the selected sound, and 'chn' to the selected channel.  Unlike scale-by, this ignores the <a class=quiet href="extsnd.html#sync">sync</a> setting.
 (snd7.scm)
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- scale-sound-to -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>scale-sound-to</em> (norm <i>beg num snd chn</i>)
+<em class=emdef>scale-sound-to</em> norm :optional beg num snd chn
 </td></tr><tr><td></td><td>
 normalizes the samples in the given channel between beg and beg + num to norm.  If the channel argument is omitted,
-<b>scale-sound-to</b> normalizes the entire sound.  <i>beg</i> defaults to 0; <i>num</i> defaults to the length of the channel.
-<i>snd</i> defaults to the selected sound, and <i>chn</i> to the selected channel.  Unlike scale-to, this ignores the <a class=quiet href="extsnd.html#sync">sync</a> setting.
+<b>scale-sound-to</b> normalizes the entire sound.  'beg' defaults to 0; 'num' defaults to the length of the channel.
+'snd' defaults to the selected sound, and 'chn' to the selected channel.  Unlike scale-to, this ignores the <a class=quiet href="extsnd.html#sync">sync</a> setting.
 (snd7.scm)
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- vct->samples -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><em class=emdef>vct-&gt;samples</em> (samp samps data <i>snd chn</i>)
+<tr><td colspan=2 bgcolor="#f6f8ff"><em class=emdef>vct-&gt;samples</em> samp samps data :optional snd chn
 </td></tr><tr><td></td><td>
 A synonym for <a href="extsnd.html#setsamples">set-samples</a>, but you can also pass just a vct as the first argument, or a start
 sample and a vct as the second argument.  Use <a href="extsnd.html#vcttochannel">vct-&gt;channel</a> instead.
@@ -7738,7 +7741,7 @@ gl-info prints out information about the current GL system setup.
 </td></tr><tr><td></td><td>
 start-waterfall starts a
 waterfall spectrum display of the incoming audio data. 
-<i>pc-spectrum</i> determines how much of the spectrum is displayed (very often the high portions are not interesting; we'd
+'pc-spectrum' determines how much of the spectrum is displayed (very often the high portions are not interesting; we'd
 rather zoom in on the stuff we can hear).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -7911,7 +7914,7 @@ The synthesis code is also in <a href="#dspdocscanned">dsp.scm</a>.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>display-widget-tree</em> <code>widget</code>
 </td></tr><tr><td></td><td>
-display-widget-tree displays the hierarchy of widgets beneath <i>widget</i>.
+display-widget-tree displays the hierarchy of widgets beneath 'widget'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -7920,9 +7923,9 @@ display-widget-tree displays the hierarchy of widgets beneath <i>widget</i>.
 <a class=def name="foreachchild">for-each-child</a> <code>w func</code><br>
 <em class=emdef>find-child</em> <code>w name</code>
 </td></tr><tr><td></td><td>
-for-each-child applies <i>func</i> the widget <i>w</i> and to each widget in the hierarchy of widgets below it.
-<i>func</i> takes one argument, the child widget.  for-each-child is used by find-child which searches
-for a widget named <i>name</i> belonging to <i>w</i>.
+for-each-child applies 'func' the widget 'w' and to each widget in the hierarchy of widgets below it.
+'func' takes one argument, the child widget.  for-each-child is used by find-child which searches
+for a widget named 'name' belonging to 'w'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -7988,7 +7991,7 @@ load-font loads a font and returns a handle for it.
 <em class=emdef>set-channel-drop</em> <code>drop snd chn</code>
 </td></tr><tr><td></td><td>
 make-channel-drop-site shows how to add a drop site panel to a channel.  
-set-channel-drop changes the channel's graph's drop function to <i>drop</i>, a 
+set-channel-drop changes the channel's graph's drop function to 'drop', a 
 function of 3 arguments, the dropped filename (a string) and the current sound index and
 channel number.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -8017,10 +8020,10 @@ color variables don't actually work.
 make-hidden-controls-dialog adds a menu "Hidden controls" to the Option
 menu.  If you activate it, it
 creates a dialog that controls all the otherwise hidden control-panel variables.
-The <i>expand-hop</i> control sets the hop size (per grain), <i>expand-length</i>
-sets the grain length, <i>expand-ramp</i> sets the slope of the grain amplitude envelope,
-<i>contrast-amp</i> sets the prescaler for the contrast effect, <i>reverb-feedback</i> sets the feedback
-amount in the reverberator (affecting all the comb filter scalers), and <i>reverb-lowpass</i> sets
+The 'expand-hop' control sets the hop size (per grain), 'expand-length'
+sets the grain length, 'expand-ramp' sets the slope of the grain amplitude envelope,
+'contrast-amp' sets the prescaler for the contrast effect, 'reverb-feedback' sets the feedback
+amount in the reverberator (affecting all the comb filter scalers), and 'reverb-lowpass' sets
 the lowpass filter coefficient in the reverberator. 
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -8035,7 +8038,7 @@ make-level-meter creates a VU meter of any width and height, returning
 a list of information associated with that meter.  Pass that list to 
 display-level to move the needle and the red bubble.  This meter
 assumes you'll call it periodically so that the momentum of the needle and the viscosity of
-the bubble will appear to behave naturally.  with-level-meters adds <i>n</i>
+the bubble will appear to behave naturally.  with-level-meters adds 'n'
 of these meters to the topmost pane in the Snd main window,
 then adds various <a href="extsnd.html#dachook">dac-hook</a> functions to display the current playback volume
 in the respective meter.  
@@ -8073,7 +8076,7 @@ pixmap itself using those characters.  The following defines a 16 X 12 arrow usi
     "-------X----------"))
 </pre>
 <code>(make-pixmap (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>)) arrow-strs)</code> then creates the actual pixmap.
-The <i>widget</i> argument is needed to give us access to the current colormap and so on.
+The 'widget' argument is needed to give us access to the current colormap and so on.
 <code>(cadr (main-widgets))</code> is just Snd's outer shell, which will do the trick in most cases.
 See new-backgrounds.scm for many examples.  The following example paints all of Snd's widgets using the
 same background:
@@ -8118,7 +8121,7 @@ widget:
   (variable-display (* (variable-display i wid1) 2) wid))
 </pre></td></tr></table>
 
-The <i>type</i> argument to make-variable-display can be one of <code>'text</code>
+The 'type' argument to make-variable-display can be one of <code>'text</code>
 <code>'scale</code>, <code>'graph</code>, <code>'spectrum</code>, or <code>'meter</code>.
 It determines the kind of widget(s) used to display that variable.
 The <code>'graph</code> and <code>'spectrum</code> cases create Snd channel displays,
@@ -8136,9 +8139,9 @@ kludge), whereas all the others are ordered vertically in a single pane.
 The <code>'scale</code> choice has an additional argument that gives the range of the
 scale as a list (low high):
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define wid2 (make-variable-display "do-loop" "i*2" 'scale '(-1.0 1.0)))
-</pre></td></tr></table>
+<pre>
+    (define wid2 (make-variable-display "do-loop" "i*2" 'scale '(-1.0 1.0)))
+</pre>
 
 You can watch a generator's state on a sample-by-sample basis by
 putting it in a text display:
@@ -8190,9 +8193,9 @@ This is actually a bad idea since the menu names can change without warning.
 
 <!-- select-file -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>select-file</em> func <i>title dir filter help</i>
+<em class=emdef>select-file</em> func 'title dir filter help'
 </td></tr><tr><td></td><td>
-select-file starts a file selection dialog, running <i>func</i> if a file is selected:
+select-file starts a file selection dialog, running 'func' if a file is selected:
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
  (<a class=quiet href="extsnd.html#addtomenu">add-to-menu</a> 0 "Insert File" 
    (lambda () 
@@ -8253,14 +8256,14 @@ show-widget-font uses show-font-name to show what fonts are associated with a wi
 make-sound-box makes a container of sound file icons, each icon
 containing a little sketch of the waveform, the length of the
 file, and the filename.  What happens when an icon is selected
-is up to <i>select-func</i>.  However, if you drag (via 
+is up to 'select-func'.  However, if you drag (via 
 button 2) the icon to the menubar, that sound is opened,
 and if you drag it to a channel graph, it is mixed at the
 mouse location in that channel.
-<i>select-func</i> called when sound icon is selected; it is passed the sound file's name.
-<i>peak-func</i> (if any) tells the soundbox code where to find any associated <a href="#peakenvdoc">peak env</a> files.
-<i>sounds</i> is list of sound file names.
-<i>args</i> is list of resource settings for each icon.
+'select-func' called when sound icon is selected; it is passed the sound file's name.
+'peak-func' (if any) tells the soundbox code where to find any associated <a href="#peakenvdoc">peak env</a> files.
+'sounds' is list of sound file names.
+'args' is list of resource settings for each icon.
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (<em class=red>make-sound-box</em> "sounds"
@@ -8303,7 +8306,7 @@ snd-clock-icon replaces Snd's hourglass with a (very primitive) clock.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <A class=def NAME="uponsaveyourself">upon-save-yourself</a> <code>thunk</code>
 </td></tr><tr><td></td><td>
-upon-save-yourself causes <i>thunk</i> (a function of no arguments) to be called if the window
+upon-save-yourself causes 'thunk' (a function of no arguments) to be called if the window
 manager sends a SAVE_YOURSELF message.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -8312,7 +8315,7 @@ manager sends a SAVE_YOURSELF message.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>upon-take-focus</em> <code>thunk</code>
 </td></tr><tr><td></td><td>
-upon-take-focus causes <i>thunk</i> (a function of no arguments) to be called
+upon-take-focus causes 'thunk' (a function of no arguments) to be called
 whenever Snd receives focus from the window manager.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -8415,22 +8418,22 @@ It is similar to <a href="#expsrc">expsrc</a>.
 <p>
 Many of the parameters can also be envelopes.  The source has commentary
 which I'll slightly paraphrase here for convenience.
-<i>time-ptr</i> is a flag that determines whether stretching or time-pointer mode
-is to be used in interpreting the <i>stretch</i> parameter.
-In stretch mode, the value of <i>stretch</i> scales the time 
+'time-ptr' is a flag that determines whether stretching or time-pointer mode
+is to be used in interpreting the 'stretch' parameter.
+In stretch mode, the value of 'stretch' scales the time 
 of the sound. For example, a value of 2 will stretch the sound 
-In time-ptr mode, the value(s) of <i>stretch</i> are <a href="clm.html#readin">readin</a> pointers
+In time-ptr mode, the value(s) of 'stretch' are <a href="clm.html#readin">readin</a> pointers
 into the soundfile. For example, to read through a file
 backwards from 2 seconds at half speed, use a 
 stretch envelope such as '(0 2 1 0) with a 4 second note duration.
-<i>scale-time-ptr</i> is a 
+'scale-time-ptr' is a 
 flag that determines whether the time-ptr envelope is
 interpreted in absolute seconds or rescaled to fit the 
 duration of the input sound file.
-<i>zero-start-time-ptr</i> is a flag that determines (in time-ptr mode) whether
+'zero-start-time-ptr' is a flag that determines (in time-ptr mode) whether
 the first section of the windows start at 
 time-ptr = 0.
-<i>window-offset</i> is a flag that determines how the windows are offset
+'window-offset' is a flag that determines how the windows are offset
 in time. 
 </p>
 <pre>
@@ -8629,7 +8632,7 @@ in fmv.scm, the simpler one being:
 </pre></td></tr></table>
 
 <p>Here we are setting up an fm-violin generator (via make-fm-violin), then
-calling it <i>dur</i> times, mixing its output into the current data (this could
+calling it 'dur' times, mixing its output into the current data (this could
 also use mix-vct and so on).  The generator is called via <code>(v)</code>.
 As can be seen here, each envelope is treated as a function called on each sample
 very much like the "as-needed" input in src or granulate; the envelopes could actually be any
@@ -9452,10 +9455,10 @@ See the <a href="#clminsdoc">clm instrument</a> documentation for more examples.
 </pre>
 
 <p>
-<b>with-sound</b> opens its output file (<i>output</i> above)
+<b>with-sound</b> opens its output file ('output' above)
 via make-sample-&gt;file, setting the global variable *output*.  This
 is equivalent to CLM's *output* variable, and can be used the same
-way in <a class=quiet href="clm.html#outa">outa</a> or <a class=quiet href="clm.html#locsig">locsig</a>.  If <i>reverb</i> is specified, *reverb* is also
+way in <a class=quiet href="clm.html#outa">outa</a> or <a class=quiet href="clm.html#locsig">locsig</a>.  If 'reverb' is specified, *reverb* is also
 opened (corresponding to CLM's *reverb*).  So the cooperating instrument code is:
 </p>
 
@@ -9523,7 +9526,7 @@ mus-mix with *output*:
   (fm-violin .1 .1 660 .1))
 </pre></td></tr></table>
 
-<p>To continue adding notes to an existing file, set <i>continue-old-file</i>:
+<p>To continue adding notes to an existing file, set 'continue-old-file':
 </p>
 <pre>
     (with-sound (:continue-old-file #t) (fm-violin 0 1 440 .1))
@@ -9655,7 +9658,7 @@ there are several additional functions to help with debugging:
 <pre>
   <em class=emdef>ws-go</em> (returned-value #f)             ; continue with-sound from interrupt point
   <em class=emdef>ws-locals</em> (stack-location 0)          ; display current instrument's local variables
-  <em class=emdef>ws-local</em> local-var (stack-location 0) ; display one local variable (<i>local-var</i>, a symbol or string)
+  <em class=emdef>ws-local</em> local-var (stack-location 0) ; display one local variable ('local-var', a symbol or string)
   <em class=emdef>ws-backtrace</em> (all #f)                 ; show backtrace at point of interrupt
   <em class=emdef>ws-help</em>                               ; print debugger help
   <em class=emdef>ws-quit</em>                               ; exit with-sound, omitting reverb, if any
@@ -9720,10 +9723,10 @@ the default equal temperment.
 <p>The zipper generator performs a kind of cross fade, but not one that
 tries to be smooth!  It marches through the two sounds taking equal short
 portions of each, then abutting them while resampling so that as one
-takes less overall frame space, the other takes more.  The <i>frame-size</i>
-argument is the maximum length of each twosome in seconds (for initial array allocation), the <i>frame-env</i>
+takes less overall frame space, the other takes more.  The 'frame-size'
+argument is the maximum length of each twosome in seconds (for initial array allocation), the 'frame-env'
 argument determines the current such length as new frames are needed, and the
-<i>ramp-env</i> argument determines which of the files gets more space
+'ramp-env' argument determines which of the files gets more space
 in the frame (0: all first, 1: all second).
 The following function sets up two sounds,
 an upward ramp and a downward ramp, then zips them together:
