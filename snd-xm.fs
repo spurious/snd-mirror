@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Sat Dec 16 04:34:32 CET 2006
+\ Changed: Thu Dec 21 18:26:18 CET 2006
 
 \ Commentary:
 \
@@ -463,10 +463,9 @@ set-current
 
 #f value showing-disk-space		\ for prefs
 
-: show-disk-space ( snd -- )
+: show-disk-space <{ snd -- }>
   doc" Adds a label to the minibuffer area showing the current free space \
 (for use with after-open-hook)."
-  { snd }
   #f labelled-snds each { n } n car snd = if drop n leave then end-each { previous-label }
   previous-label unless
     snd sound? if
@@ -499,7 +498,7 @@ set-current
     then
   then
 ;
-\ after-open-hook ' show-disk-space 1 make-proc add-hook!
+\ after-open-hook ' show-disk-space add-hook!
 previous
 
 : current-label ( widget -- label )

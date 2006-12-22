@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Sat Dec 16 04:31:58 CET 2006
+\ Changed: Thu Dec 21 18:38:31 CET 2006
 
 \ Commentary:
 
@@ -1182,8 +1182,7 @@ lambda: ( lst -- ) drop
   wids each FXtUnmanageChild drop end-each
 ; value edhist-apply-edits
 
-: edhist-close-hook-cb ( snd -- )
-  { snd }
+: edhist-close-hook-cb <{ snd -- }>
   snd channels 0 ?do
     edhist-funcs '( snd i ) list-assoc { old-val }
     old-val cons? if
@@ -1193,7 +1192,7 @@ lambda: ( lst -- ) drop
 ;
 
 let: ( -- menu )
-  close-hook ['] edhist-close-hook-cb 1 make-proc add-hook!
+  close-hook ['] edhist-close-hook-cb add-hook!
   $" edhist-popup" main-widgets caddr
   #( #( $" Edits"   _ 'label     #f      	            #f )
      #( $" sep"       'separator #f      	            #f )
@@ -1322,8 +1321,7 @@ let: ( -- menu )
 
 #() value popups
 
-: add-popup ( snd -- )
-  { snd }
+: add-popup <{ snd -- }>
   snd channels 0 ?do
     popups '( snd i ) array-member? unless
       popups '( snd i ) array-push drop
@@ -1338,7 +1336,7 @@ set-current
 
 : add-popups ( -- )
   doc" Adds context-sensitive popup menus to various parts of the interface."
-  after-open-hook ['] add-popup 1 make-proc add-hook!
+  after-open-hook ['] add-popup add-hook!
   sounds each add-popup end-each
 ;
 previous

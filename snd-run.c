@@ -7939,7 +7939,64 @@ static xen_value *sound_data_plus_1(ptree *prog, xen_value **args, int num_args)
   return(sound_data_offset_1(prog, args, num_args));
 }
 
-/* SOMEDAY: vct->sound-data sound-data->vct */
+
+static void sound_data_to_vct_v(int *args, ptree *pt)
+{
+  vct *v;
+  sound_data *sd;
+  int chan, len;
+  v = VCT_ARG_3;
+  sd = SOUND_DATA_ARG_1;
+  chan = INT_ARG_2;
+  if (sd->length < v->length) 
+    len = sd->length; 
+  else len = v->length;
+  memcpy((void *)(v->data), (void *)(sd->data[chan]), len * sizeof(Float));
+  VCT_RESULT = v;
+}
+
+static char *descr_sound_data_to_vct_v(int *args, ptree *pt) 
+{
+  return(mus_format( VCT_PT " = " S_sound_data_to_vct "(" SD_PT ", " INT_PT ", " VCT_PT ")", 
+		     args[0], DESC_VCT_RESULT, args[1], SOUND_DATA_ARG_1, args[2], INT_ARG_2, args[3], VCT_ARG_3));
+}
+
+static xen_value *sound_data_to_vct_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (run_safety == RUN_SAFE) 
+    temp_package(prog, R_BOOL, sound_data_check_1, descr_sound_data_check_1, args, 1);
+  return(package(prog, R_VCT, sound_data_to_vct_v, descr_sound_data_to_vct_v, args, 3));
+}
+
+static void vct_to_sound_data_v(int *args, ptree *pt)
+{
+  vct *v;
+  sound_data *sd;
+  int chan, len;
+  v = VCT_ARG_1;
+  sd = SOUND_DATA_ARG_2;
+  chan = INT_ARG_3;
+  if (sd->length < v->length) 
+    len = sd->length; 
+  else len = v->length;
+  memcpy((void *)(sd->data[chan]), (void *)(v->data), len * sizeof(Float));
+  SOUND_DATA_RESULT = sd;
+}
+
+static char *descr_vct_to_sound_data_v(int *args, ptree *pt) 
+{
+  return(mus_format( SD_PT " = " S_vct_to_sound_data "(" VCT_PT ", " SD_PT ", " INT_PT ")", 
+		     args[0], DESC_SOUND_DATA_RESULT, args[1], VCT_ARG_1, args[2], SOUND_DATA_ARG_2, args[3], INT_ARG_3));
+}
+
+static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (run_safety == RUN_SAFE) 
+    temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
+  return(package(prog, R_SOUND_DATA, vct_to_sound_data_v, descr_vct_to_sound_data_v, args, 3));
+}
+
+
 
 
 
@@ -12343,6 +12400,8 @@ static void init_walkers(void)
   INIT_WALKER(S_sound_data_multiplyB, make_walker(sound_data_multiply_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_SOUND_DATA, R_SOUND_DATA));
   INIT_WALKER(S_sound_data_multiply, make_walker(sound_data_times_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_NUMBER_SOUND_DATA, R_NUMBER_SOUND_DATA));
   INIT_WALKER(S_sound_data_add, make_walker(sound_data_plus_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_NUMBER_SOUND_DATA, R_NUMBER_SOUND_DATA));
+  INIT_WALKER(S_sound_data_to_vct, make_walker(sound_data_to_vct_1, NULL, NULL, 3, 3, R_VCT, false, 3, R_SOUND_DATA, R_INT, R_VCT));
+  INIT_WALKER(S_vct_to_sound_data, make_walker(vct_to_sound_data_1, NULL, NULL, 3, 3, R_SOUND_DATA, false, 3, R_VCT, R_SOUND_DATA, R_INT));
 
   /* -------- snd funcs */
   INIT_WALKER(S_next_sample, make_walker(next_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));

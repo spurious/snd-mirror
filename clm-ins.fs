@@ -2,13 +2,13 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Sat Dec 16 04:37:20 CET 2006
+\ Changed: Tue Dec 19 00:59:40 CET 2006
 
 \ Commentary:
 \
-\ jc-reverb-fs ( keyword-args -- )
+\ jc-reverb    ( keyword-args -- )
 \ violin       ( start dur freq amp keyword-args -- )
-\ fm-violin-fs ( start dur freq amp keyword-args -- )
+\ fm-violin    ( start dur freq amp keyword-args -- )
 \ 
 \ clm-ins.scm|rb instruments
 \ 
@@ -31,7 +31,7 @@
 \ metal        ( start dur freq amp -- )
 \ drone        ( start dur freq amp ampfun synth ampat ampdc rvibamt rvibfreq -- )
 \ canter       ( start dur pitch amp ampfun ranfun skewfun ... -- )
-\ nrev-fs      ( keyword-args -- )
+\ nrev         ( keyword-args -- )
 \ reson        ( start dur pitch amp indxfun skewfun ... -- )
 \ cellon       ( start dur pitch0 amp ampfun betafun ... -- )
 \ jl-reverb    ( keyword-args -- )
@@ -57,6 +57,12 @@
 require clm
 require env
 
+\ Prevent name clash with possibly loaded sndins.so.
+\ sndins.so instruments can be called with fm-violin-ins etc.
+[defined] fm-violin [if] ' fm-violin alias fm-violin-ins [then]
+[defined] jc-reverb [if] ' jc-reverb alias jc-reverb-ins [then]
+[defined] nref      [if] ' nrev      alias nrev-ins      [then]
+
 \ General input function for src, granulate etc.
 : readin-cb ( gen -- proc; dir self -- r )
   lambda-create , latestxt 1 make-proc
@@ -67,7 +73,7 @@ require env
 : reverb-dur ( rev -- dur ) mus-length samples->seconds *clm-decay-time* f+ ;
 
 \ clm/jcrev.ins
-instrument: jc-reverb-fs <{ :key
+instrument: jc-reverb <{ :key
      volume 1.0
      delay1 0.013
      delay2 0.011
@@ -130,8 +136,6 @@ instrument: jc-reverb-fs <{ :key
   loop
 ;instrument
 
-[undefined] jc-reverb [if] ' jc-reverb-fs alias jc-reverb [then]
-
 \ snd/fm.html
 instrument: violin <{ start dur freq amp
      :key
@@ -158,7 +162,7 @@ instrument: violin <{ start dur freq amp
   :envelope index-env :scaler index3 :duration dur make-env { indf3 }
   :frequency  5.0 :amplitude 0.0025 frq-scl f* make-triangle-wave { pervib }
   :frequency 16.0 :amplitude 0.005  frq-scl f* make-rand-interp   { ranvib }
-  start dur #{ :degree degree :distance distance :reverb reverb-amount } run-instrument
+  start dur #{ :degree degree :distance distance :reverb-amount reverb-amount } run-instrument
     pervib 0.0 triangle-wave ranvib 0.0 rand-interp f+ { vib }
     carrier
     vib
@@ -176,7 +180,7 @@ instrument: violin <{ start dur freq amp
 ;
 
 \ === FM-Violin (clm/v.ins, snd/v.scm|rb) ===
-instrument: fm-violin-fs <{ start dur freq amp
+instrument: fm-violin <{ start dur freq amp
      :key
      fm-index                   1.0
      amp-env                    '( 0 0 25 1 75 1 100 0 )
@@ -207,7 +211,7 @@ instrument: fm-violin-fs <{ start dur freq amp
      reverb-amount              0.01
      index-type                 'violin -- }>
   doc" FM-Violin from clm/v.ins|snd/v.scm|rb.\n\
-0 3 440 0.5 :fm-index 0.5 ' fm-violin-fs with-sound"
+0 3 440 0.5 :fm-index 0.5 ' fm-violin with-sound"
   freq fabs 1.0 f<= if
     $" freq = %s? reset to 440.0" _ '( freq ) string-format warning
     440.0 to freq
@@ -273,7 +277,7 @@ instrument: fm-violin-fs <{ start dur freq amp
   0.0 0.0 1.0 1.0 { vib fuzz ind-fuzz amp-fuzz }
   modulate if
     easy-case if
-      start dur #{ :degree degree :distance distance :reverb reverb-amount } run-instrument
+      start dur #{ :degree degree :distance distance :reverb-amount reverb-amount } run-instrument
 	fm-noi if fm-noi 0.0 rand to fuzz then
 	frqf env  pervib 0.0 triangle-wave f+  ranvib 0.0 rand-interp f+ to vib
 	ind-noi if ind-noi 0.0 rand-interp 1.0 f+ to ind-fuzz then
@@ -281,7 +285,7 @@ instrument: fm-violin-fs <{ start dur freq amp
 	carrier  fmosc1 1.0 vib polyshape  ind-fuzz f* vib f+  0.0  oscil ampf env f*  amp-fuzz f*
       end-run
     else
-      start dur #{ :degree degree :distance distance :reverb reverb-amount } run-instrument
+      start dur #{ :degree degree :distance distance :reverb-amount reverb-amount } run-instrument
 	fm-noi if fm-noi 0.0 rand to fuzz then
 	frqf env  pervib 0.0 triangle-wave f+  ranvib 0.0 rand-interp f+ to vib
 	ind-noi if ind-noi 0.0 rand-interp 1.0 f+ to ind-fuzz then
@@ -294,7 +298,7 @@ instrument: fm-violin-fs <{ start dur freq amp
       end-run
     then
   else
-    start dur #{ :degree degree :distance distance :reverb reverb-amount } run-instrument
+    start dur #{ :degree degree :distance distance :reverb-amount reverb-amount } run-instrument
       fm-noi if fm-noi 0.0 rand to fuzz then
       frqf env  pervib 0.0 triangle-wave f+  ranvib 0.0 rand-interp f+ to vib
       ind-noi if ind-noi 0.0 rand-interp 1.0 f+ to ind-fuzz then
@@ -304,11 +308,9 @@ instrument: fm-violin-fs <{ start dur freq amp
   then
 ;
 
-[undefined] fm-violin [if] ' fm-violin-fs alias fm-violin [then]
-
 : fm-violin-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
-  now@ dur 440 0.5 fm-violin-fs
+  now@ dur 440 0.5 fm-violin
   dur 0.2 f+ step
 ;
 
@@ -372,19 +374,6 @@ previous
   dur 0.2 f+ step
 ;
 
-$" I00"  constant :I:   $" E12"   constant :E:   $" AE24" constant :AE:
-$" UH01" constant :UH:  $" A13"   constant :A:   $" OW25" constant :OW:
-$" U02"  constant :U:   $" OO14"  constant :OO:  $" ER26" constant :ER:
-$" W03"  constant :W:   $" LL15"  constant :LL:  $" R27"  constant :R:
-$" Y04"  constant :Y:   $" EE16"  constant :EE:  $" LH28" constant :LH:
-$" L05"  constant :L:   $" I217"  constant :I2:  $" B29"  constant :B:
-$" D06"  constant :D:   $" G18"   constant :G:   $" M30"  constant :M:
-$" N07"  constant :N:   $" NG19"  constant :NG:  $" P31"  constant :P:
-$" T08"  constant :T:   $" K20"   constant :K:   $" F32"  constant :F:
-$" TH09" constant :TH:  $" S21"   constant :S:   $" SH33" constant :SH:
-$" V10"  constant :V:   $" THE22" constant :THE: $" Z34"  constant :Z:
-$" ZH11" constant :ZH:  $" ZZ23"  constant :ZZ:  $" VV35" constant :VV:
-
 \ formant center frequencies for a male speaker (vox and pqw-vox)
 #{ :I:   #( 390.0 1990.0 2550.0 )
    :UH:  #( 520.0 1190.0 2390.0 )
@@ -438,25 +427,22 @@ instrument: vox <{ start dur freq amp ampfun freqfun freqscl voxfun index
   size 1- 0 ?do
     clm-ins-formants voxfun i 1+ object-ref hash-ref { phon }
     voxfun i object-ref { n }
-    f1 i n object-set!
-    phon 0 object-ref f1 i 1+ rot object-set!
-    f2 i n object-set!
-    phon 1 object-ref f2 i 1+ rot object-set!
-    f3 i n object-set!
-    phon 2 object-ref f3 i 1+ rot object-set!
+    f1 i n array-set!
+    phon 0 array-ref f1 i 1+ rot array-set!
+    f2 i n array-set!
+    phon 1 array-ref f2 i 1+ rot array-set!
+    f3 i n array-set!
+    phon 2 array-ref f3 i 1+ rot array-set!
   2 +loop
-  f1 array->list to f1
-  f2 array->list to f2
-  f3 array->list to f3
   :frequency 0.0 make-oscil { car-os }
   6 make-array map :frequency 0.0 make-oscil end-map { ofs }
   :envelope ampfun :scaler amp :duration dur make-env { ampf }
-  :envelope f1 :duration dur make-env { frmf1 }
-  :envelope f2 :duration dur make-env { frmf2 }
-  :envelope f3 :duration dur make-env { frmf3 }
+  :envelope f1 array->list :duration dur make-env { frmf1 }
+  :envelope f2 array->list :duration dur make-env { frmf2 }
+  :envelope f3 array->list :duration dur make-env { frmf3 }
   :envelope freqfun :duration dur :scaler freqscl freq f* :offset freq make-env { freqf }
-  :frequency 6.0 :amplitude freq vibscl f* make-triangle-wave { per-vib }
-  :frequency 20.0 :amplitude freq 0.01 f* make-rand-interp { ran-vib }
+  :frequency  6.0 :amplitude freq vibscl f* make-triangle-wave { per-vib }
+  :frequency 20.0 :amplitude freq   0.01 f* make-rand-interp   { ran-vib }
   6 0.0 make-vct { freqs }
   6 0.0 make-vct { amps }
   start dur #{ :degree 90.0 random } run-instrument
@@ -465,63 +451,63 @@ instrument: vox <{ start dur freq amp ampfun freqfun freqscl voxfun index
     frm frq f/   { frm0 }
     frm0 floor dup f>s { frm-fint frm-int }
     frm-int 2 mod unless
-      freqs 0 frm-fint frq f* hz->radians        object-set!
-      freqs 1 frm-fint 1.0 f+ frq f* hz->radians object-set!
-      amps  1 frm0 frm-fint f-                   object-set!
-      amps  0 1.0 amps 1 object-ref f-           object-set!
+      freqs 0 frm-fint frq f* hz->radians        vct-set! drop
+      freqs 1 frm-fint 1.0 f+ frq f* hz->radians vct-set! drop
+      amps  1 frm0 frm-fint f-                   vct-set! drop
+      amps  0 1.0 amps 1 vct-ref f-              vct-set! drop
     else
-      freqs 1 frm-fint frq f* hz->radians        object-set!
-      freqs 0 frm-fint 1.0 f+ frq f* hz->radians object-set!
-      amps  0 frm0 frm-fint f-                   object-set!
-      amps  1 1.0 amps 0 object-ref f-           object-set!
+      freqs 1 frm-fint frq f* hz->radians        vct-set! drop
+      freqs 0 frm-fint 1.0 f+ frq f* hz->radians vct-set! drop
+      amps  0 frm0 frm-fint f-                   vct-set! drop
+      amps  1 1.0 amps 0 vct-ref f-              vct-set! drop
     then
     frmf2 env    to frm
     frm frq f/   to frm0
     frm0 floor   to frm-fint
     frm-fint f>s to frm-int
     frm-int 2 mod unless
-      freqs 2 frm-fint frq f* hz->radians        object-set!
-      freqs 3 frm-fint 1.0 f+ frq f* hz->radians object-set!
-      amps  3 frm0 frm-fint f-                   object-set!
-      amps  2 1.0 amps 3 object-ref f-           object-set!
+      freqs 2 frm-fint frq f* hz->radians        vct-set! drop
+      freqs 3 frm-fint 1.0 f+ frq f* hz->radians vct-set! drop
+      amps  3 frm0 frm-fint f-                   vct-set! drop
+      amps  2 1.0 amps 3 vct-ref f-              vct-set! drop
     else
-      freqs 3 frm-fint frq f* hz->radians        object-set!
-      freqs 2 frm-fint 1.0 f+ frq f* hz->radians object-set!
-      amps  2 frm0 frm-fint f-                   object-set!
-      amps  3 1.0 amps 2 object-ref f-           object-set!
+      freqs 3 frm-fint frq f* hz->radians        vct-set! drop
+      freqs 2 frm-fint 1.0 f+ frq f* hz->radians vct-set! drop
+      amps  2 frm0 frm-fint f-                   vct-set! drop
+      amps  3 1.0 amps 2 vct-ref f-              vct-set! drop
     then
     frmf3 env    to frm
     frm frq f/   to frm0
     frm0 floor   to frm-fint
     frm-fint f>s to frm-int
     frm-int 2 mod unless
-      freqs 4 frm-fint frq f* hz->radians        object-set!
-      freqs 5 frm-fint 1.0 f+ frq f* hz->radians object-set!
-      amps  5 frm0 frm-fint f-                   object-set!
-      amps  4 1.0 amps 5 object-ref f-           object-set!
+      freqs 4 frm-fint frq f* hz->radians        vct-set! drop
+      freqs 5 frm-fint 1.0 f+ frq f* hz->radians vct-set! drop
+      amps  5 frm0 frm-fint f-                   vct-set! drop
+      amps  4 1.0 amps 5 vct-ref f-              vct-set! drop
     else
-      freqs 5 frm-fint frq f* hz->radians        object-set!
-      freqs 4 frm-fint 1.0 f+ frq f* hz->radians object-set!
-      amps  4 frm0 frm-fint f-                   object-set!
-      amps  5 1.0 amps 4 object-ref f-           object-set!
+      freqs 5 frm-fint frq f* hz->radians        vct-set! drop
+      freqs 4 frm-fint 1.0 f+ frq f* hz->radians vct-set! drop
+      amps  4 frm0 frm-fint f-                   vct-set! drop
+      amps  5 1.0 amps 4 vct-ref f-              vct-set! drop
     then
     car-os frq hz->radians 0.0 oscil index f* { caros }
-    ofs 0 object-ref caros 0.2 f* freqs 0 object-ref f+ 0.0 oscil amps 0 object-ref f*
-    ofs 1 object-ref caros 0.2 f* freqs 1 object-ref f+ 0.0 oscil amps 1 object-ref f* f+ 0.80 f*
-    ofs 2 object-ref caros 0.5 f* freqs 2 object-ref f+ 0.0 oscil amps 2 object-ref f*
-    ofs 3 object-ref caros 0.5 f* freqs 3 object-ref f+ 0.0 oscil amps 3 object-ref f* f+ 0.15 f* f+
-    ofs 4 object-ref caros        freqs 4 object-ref f+ 0.0 oscil amps 4 object-ref f*
-    ofs 5 object-ref caros        freqs 5 object-ref f+ 0.0 oscil amps 5 object-ref f* f+ 0.05 f* f+
+    ofs 0 array-ref caros 0.2 f* freqs 0 vct-ref f+ 0.0 oscil amps 0 vct-ref f*
+    ofs 1 array-ref caros 0.2 f* freqs 1 vct-ref f+ 0.0 oscil amps 1 vct-ref f* f+ 0.80 f*
+    ofs 2 array-ref caros 0.5 f* freqs 2 vct-ref f+ 0.0 oscil amps 2 vct-ref f*
+    ofs 3 array-ref caros 0.5 f* freqs 3 vct-ref f+ 0.0 oscil amps 3 vct-ref f* f+ 0.15 f* f+
+    ofs 4 array-ref caros        freqs 4 vct-ref f+ 0.0 oscil amps 4 vct-ref f*
+    ofs 5 array-ref caros        freqs 5 vct-ref f+ 0.0 oscil amps 5 vct-ref f* f+ 0.05 f* f+
     ampf env f*
   end-run
 ;instrument
 
 : vox-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
-  '( 0 0 25 1 75 1 100 0 ) { amp-env }
+  '( 0 0 25 1 75 1 100 0 )  { amp-env }
   '( 0 0 5 0.5 10 0 100 1 ) { frq-env }
   #( 0 :E: 25 :AE: 35 :ER: 65 :ER: 75 :I: 100 :UH: ) { examp1 }
-  #( 0 :I: 5 :OW: 10 :I: 50 :AE: 100 :OO: ) { examp2 }
+  #( 0 :I: 5 :OW: 10 :I: 50 :AE: 100 :OO: )          { examp2 }
 
   now@ dur 170 0.4 amp-env frq-env 0.1 examp1 0.05 0.1 vox
   dur 0.2 f+ step
@@ -698,8 +684,8 @@ instrument: pqw-vox <{ start dur
     :frequency 0.0 :initial-phase half-pi make-oscil pv cos-evens !
     :frequency 0.0 :initial-phase half-pi make-oscil pv cos-odds !
     formant-shapes i object-ref normalize-partials { shape }
-    shape 1 partials->polynomial pv cos-coeffs !
-    shape 0 partials->polynomial pv sin-coeffs !
+    shape mus-chebyshev-first-kind  partials->polynomial pv cos-coeffs !
+    shape mus-chebyshev-second-kind partials->polynomial pv sin-coeffs !
     :envelope phones i array-ref :duration dur make-env pv frmfs !
     formant-amps i object-ref pv amps !
     pv
@@ -1021,8 +1007,8 @@ instrument: pqw <{ start dur sfreq cfreq amp ampfun indexfun parts
   :frequency sfreq make-oscil { sp-sin }
   :frequency cfreq :initial-phase half-pi make-oscil { c-cos }
   :frequency cfreq make-oscil { c-sin }
-  nparts 0 partials->polynomial { sin-coeffs }
-  nparts 1 partials->polynomial { cos-coeffs }
+  nparts mus-chebyshev-second-kind partials->polynomial { sin-coeffs }
+  nparts mus-chebyshev-first-kind  partials->polynomial { cos-coeffs }
   :envelope ampfun :scaler amp :duration dur make-env { amp-env }
   :envelope indexfun :duration dur make-env { ind-env }
   0.0 0.0 0.0 0.0 { vib ax fax yfax }
@@ -1307,7 +1293,7 @@ instrument: canter <{ start dur pitch amp
 \ reverb output.
 \
 \ clm/nrev.ins
-instrument: nrev-fs <{ :key
+instrument: nrev <{ :key
      reverb-factor 1.09
      lp-coeff      0.7
      lp-out-coeff  0.85
@@ -1378,8 +1364,6 @@ instrument: nrev-fs <{ :key
     then
   loop
 ;instrument
-
-[undefined] nrev [if] ' nrev-fs alias nrev [then]
 
 struct
   cell% field carriers

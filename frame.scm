@@ -494,8 +494,6 @@
 	(free-frame-reader reader)
 	sd)))
 
-;;; TODO: test chan offsets in track reader (intrachan)
-
 
 (define* (insert-vct v :optional (beg 0) dur snd chn edpos)
   "(insert-vct v :optional beg dur snd chn edpos) inserts vct v's data into sound snd at beg"

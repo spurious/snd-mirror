@@ -28,11 +28,11 @@
 #t to *fth-verbose*
 #f to *fth-debug*
 
-$" HOME" getenv                           value *home*
-*home* $" /.snd.d" $+                     value *snd-home*
+"HOME" getenv                             value *home*
+*home* "/.snd.d" $+                       value *snd-home*
 hostname                                  value *hostname*
 *hostname* /\\./ string-split 0 array-ref value *short-hostname*
-$" snd"                                   value *program-name*
+"snd"                                     value *program-name*
 
 #f value __simple-nogui-prompt__
 #f value __lisp-graph__
@@ -43,26 +43,25 @@ $" snd"                                   value *program-name*
 
 'snd-nogui provided? [if]
   \ Prints to stdout through snd-print.
-  : clm-message ( fmt args -- ) $" \\ " rot ( fmt ) $+ $" \n" $+ swap ( args ) clm-print ;
+  : clm-message ( fmt args -- ) "\\ " rot ( fmt ) $+ "\n" $+ swap ( args ) clm-print ;
 [else]
   \ Prints to Snd's listener (snd-print) and to stdout if $EMACS is
   \ set or $TERM matches /^xterm/.
   : clm-message ( fmt args -- )
     $" \n\\ " rot ( fmt ) $+ swap ( args ) string-format { msg }
     msg snd-print drop
-    $" EMACS" getenv
-    /^xterm/ $" TERM" getenv 1 >string re= || if msg .stdout then
+    "EMACS" getenv
+    /^xterm/ "TERM" getenv 1 >string re= || if msg .stdout then
   ;
 [then]
 
 *fth-verbose* [if] $" loading %S" '( *filename* ) clm-message [then]
 
 before-load-hook reset-hook!
-before-load-hook 1 lambda: ( fname -- f )
-  { fname }
+before-load-hook lambda: <{ fname -- f }>
   *fth-verbose* if $" loading %S" '( fname ) clm-message then
   #t
-;proc add-hook!
+; add-hook!
 
 \ Set them before loading clm.fs.
 22050    	  set-default-output-srate       drop
@@ -93,16 +92,18 @@ require dsp
 require rgb
 
 *clm-search-list*
-$" SFDIR" getenv dup [if] array-push [else] drop [then]
-*snd-home* $" /sound"       $+ array-push
-*home* $" /Project/Sndtest" $+ array-push to *clm-search-list*
-#t                                        to *clm-play*
-#t                                        to *clm-statistics*
-#t                                        to *clm-verbose*
-*snd-home* $" /sound/fth-test.snd"    $+  to *clm-file-name*
-lambda: ( inst start dur -- ) 3 >list $" %14s: %5.2f %5.2f" swap clm-message ; to *clm-notehook*
-#t                                        to *clm-delete-reverb*
-*snd-home* $" /sound/fth-test.reverb" $+  to *clm-reverb-file-name*
+"SFDIR" getenv dup [if] array-push [else] drop [then]
+*snd-home* "/sound"       $+ array-push
+*home* "/Project/Sndtest" $+ array-push to *clm-search-list*
+#t                                      to *clm-play*
+#t                                      to *clm-statistics*
+#t                                      to *clm-verbose*
+*snd-home* "/sound/fth-test.snd" $+     to *clm-file-name*
+lambda: <{ inst start dur -- }>
+  $" %14s: %5.2f %5.2f" '( inst start dur ) clm-message
+; to *clm-notehook*
+#t                                      to *clm-delete-reverb*
+*snd-home* "/sound/fth-test.reverb" $+  to *clm-reverb-file-name*
 
 'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
 'snd-gtk   provided? 'xg provided? not && [if] dl-load libxg Init_libxg [then]
@@ -110,88 +111,83 @@ lambda: ( inst start dur -- ) 3 >list $" %14s: %5.2f %5.2f" swap clm-message ; t
 #f check-for-unsaved-edits
 3 remember-sound-state
 *snd-home* add-load-path
-*snd-home* $" /snd-remember-sound.fs" $+ to remember-sound-filename
-*snd-home* $" /peaks" $+ to save-peak-env-info-directory
+*snd-home* "/snd-remember-sound.fs" $+ to remember-sound-filename
+*snd-home* "/peaks" $+                 to save-peak-env-info-directory
 
-$" SFDIR" getenv dup [if] add-directory-to-view-files-list [then] drop
-*snd-home* $" /sound" $+ add-directory-to-view-files-list drop
+"SFDIR" getenv dup [if] add-directory-to-view-files-list [then] drop
+*snd-home* "/sound" $+  add-directory-to-view-files-list drop
 
 [ifundef] enved
-  $" enved"    '( 0.0 0.0 25.0 1.0 75.0 1.0 100.0 0.0 )           1.0  define-envelope drop
-  $" brass"    '( 0.0 0.0 20.0 1.0 40.0 0.6 90.0 0.5 100.0 0.0 )  1.0  define-envelope drop
-  $" bassoon"  '( 0.0 0.0 10.0 1.0 90.0 1.0 100.0 0.0 )           1.0  define-envelope drop
-  $" clarinet" '( 0.0 0.0 25.0 1.0 75.0 1.0 100.0 0.0 )          32.0  define-envelope drop
-  $" woodwind" '( 0.0 0.0 10.0 1.0 90.0 1.0 100.0 0.0 )           0.32 define-envelope drop
+  "enved"    '( 0.0 0.0 25.0 1.0 75.0 1.0 100.0 0.0 )           1.0  define-envelope drop
+  "brass"    '( 0.0 0.0 20.0 1.0 40.0 0.6 90.0 0.5 100.0 0.0 )  1.0  define-envelope drop
+  "bassoon"  '( 0.0 0.0 10.0 1.0 90.0 1.0 100.0 0.0 )           1.0  define-envelope drop
+  "clarinet" '( 0.0 0.0 25.0 1.0 75.0 1.0 100.0 0.0 )          32.0  define-envelope drop
+  "woodwind" '( 0.0 0.0 10.0 1.0 90.0 1.0 100.0 0.0 )           0.32 define-envelope drop
 [then]
 
 \ Snd hooks
-exit-hook 0 lambda: ( -- f )
+exit-hook lambda: <{ -- f }>
   save-state-file save-state drop
   #t
-;proc add-hook! 
+; add-hook! 
 
-after-save-as-hook 3 lambda: ( snd fname from-dialog -- f )
-  { snd fname from-dialog }
+after-save-as-hook lambda: <{ snd fname from-dialog -- f }>
   snd revert-sound drop
   snd close-sound drop
   fname open-sound drop
   #f
-;proc add-hook!
+; add-hook!
 
-before-save-state-hook 1 lambda: ( fname -- f )
-  { fname }
+before-save-state-hook lambda: <{ fname -- f }>
   fname io-open-write dup $" \\ -*- snd-forth -*-\n" io-write io-close
   #t
-;proc add-hook!
+; add-hook!
 
-window-property-changed-hook 1 lambda: ( cmd -- )
-  { cmd }
+window-property-changed-hook lambda: <{ cmd -- }>
   $" remote command received: %S" '( cmd ) clm-message
-;proc add-hook!
+; add-hook!
 
-output-comment-hook 1 lambda: ( str1 -- str2 )
-  { str }
+output-comment-hook lambda: <{ str1 -- str2 }>
   selected-sound marks->string
-;proc add-hook!
+; add-hook!
 0 [if]
-  after-open-hook 1 lambda: ( snd -- )
-    ( snd ) comment ( str ) ['] string-eval #t nil fth-catch drop ( str or eval-status )
-  ;proc add-hook!
+  after-open-hook lambda: <{ snd -- }>
+    snd comment ( str ) ['] string-eval #t nil fth-catch if ( str ) drop then
+  ; add-hook!
 [then]
 
-*snd-home* $" /snd-saved.fs" $+  set-save-state-file            drop
-*snd-home* $" /zap" $+           set-temp-dir                   drop
-*snd-home* $" /zap" $+           set-save-dir                   drop
-$" /usr/gnu/cvs/snd"           	 set-html-dir                   drop
-22050             	       	 set-recorder-srate             drop
-2                 	       	 set-recorder-out-chans         drop
-mus-next          	       	 set-recorder-out-header-type   drop
-mus-lfloat        	       	 set-recorder-out-data-format   drop
-mus-audio-dac-out 	       	 set-recorder-in-device         drop
-2                 	       	 set-recorder-in-chans          drop
-#t                	       	 set-recorder-autoload          drop
-*snd-home* $" /sound/rec.snd" $+ set-recorder-file              drop
-#t                	       	 set-trap-segfault              drop
-#t                	       	 set-show-indices               drop
-0.0               	       	 set-auto-update-interval 	drop
-$" rev"           	       	 add-sound-file-extension 	drop
-$" reverb"        	       	 add-sound-file-extension 	drop
-$" wave"          	       	 add-sound-file-extension 	drop
+*snd-home* "/snd-saved.fs" $+  set-save-state-file          drop
+*snd-home* "/zap" $+           set-temp-dir                 drop
+*snd-home* "/zap" $+           set-save-dir                 drop
+"/usr/gnu/cvs/snd"             set-html-dir                 drop
+22050             	       set-recorder-srate           drop
+2                 	       set-recorder-out-chans       drop
+mus-next          	       set-recorder-out-header-type drop
+mus-lfloat        	       set-recorder-out-data-format drop
+mus-audio-dac-out 	       set-recorder-in-device       drop
+2                 	       set-recorder-in-chans        drop
+#t                	       set-recorder-autoload        drop
+*snd-home* "/sound/rec.snd" $+ set-recorder-file            drop
+#t                	       set-trap-segfault            drop
+#t                	       set-show-indices             drop
+0.0               	       set-auto-update-interval     drop
+"rev"           	       add-sound-file-extension     drop
+"reverb"        	       add-sound-file-extension     drop
+"wave"          	       add-sound-file-extension     drop
 
 'snd-nogui provided? [if]
   #f set-verbose-cursor drop
   \ Fth repl and prompt hooks
   before-repl-hook reset-hook!
-  before-repl-hook 0 lambda: ( -- )
+  before-repl-hook lambda: <{ -- }>
     *fth-verbose* if
       "" '() clm-message
-      $" Starting session on %s!" '( $" %v %r" current-time strftime ) clm-message
+      $" Starting session on %v %r!" '( current-time strftime ) clm-message
       "" '() clm-message
     then
-  ;proc add-hook!
+  ; add-hook!
 
-  after-repl-hook 1 lambda: ( history -- )
-    { history }
+  after-repl-hook lambda: <{ history -- }>
     history readlines array-reverse! array-uniq! array-reverse! { ary }
     history ary writelines
     *fth-verbose* if
@@ -200,84 +196,76 @@ $" wave"          	       	 add-sound-file-extension 	drop
       "" '() clm-message
     then
     1 sleep
-  ;proc add-hook!
+  ; add-hook!
 
   __simple-nogui-prompt__ [if]
     \ A simple prompt for snd-nogui.
-    before-prompt-hook 2 lambda: ( prompt pos --  new-prompt )
-      { prompt pos }
+    before-prompt-hook lambda: <{ prompt pos --  new-prompt }>
       $" snd (%d)> " '( pos ) string-format
-    ;proc
+    ;
   [else]
     \ A more elaborated prompt for snd-nogui.
-    before-prompt-hook 2 lambda: ( prompt pos -- new-prompt )
-      { prompt pos }
-      $" %I:%M%p" current-time strftime string-downcase! { tm }
+    before-prompt-hook lambda: <{ prompt pos -- new-prompt }>
+      "%I:%M%p" current-time strftime string-downcase! { tm }
       file-pwd { path }
       path *home* string-member? if
 	path *home* string-split { ary }
 	ary length 1 > if
-	  ary -1 array-ref $" ~" string-unshift to path
+	  ary -1 array-ref "~" string-unshift to path
 	else
-	  $" ~" to path
+	  "~" to path
 	then
       then
       $" (%s:%s)\n[%s %s] (%d)> " '( *short-hostname* path *program-name* tm pos ) string-format
-    ;proc
+    ;
   [then] add-hook!
 [else]					\ not snd-nogui
   require draw
   'snd-motif provided? [if]
     require effects
     require popup
-    edhist-save-hook 1 lambda: { prc -- } $" %S" '( prc ) clm-message ;proc add-hook!
+    edhist-save-hook lambda: <{ prc -- }> "%S" '( prc ) clm-message ; add-hook!
   [then]
 
   \ C-x C-c
-  char c 4 0 lambda: ( -- f ) 0 snd-exit #f ;proc #t $" terminate Snd [ms]" dup bind-key drop
+  char c 4 lambda: <{ -- f }> 0 snd-exit #f ; #t $" terminate Snd [ms]" dup bind-key drop
   \ C-x k
-  char k 0 0 lambda: ( -- f )
+  char k 0 lambda: <{ -- f }>
     selected-sound close-sound-extend #f
-  ;proc  #t $" close sound and jump to next open [ms]" dup bind-key drop
+  ; #t $" close sound and jump to next open [ms]" dup bind-key drop
 
-  graph-hook 4 lambda: ( snd chn y0 y1 -- )
-    { snd chn y0 y1 }
+  graph-hook lambda: <{ snd chn y0 y1 -- }>
     $" freq: %.3f" '( snd chn left-sample  snd chn spot-freq ) string-format
     snd #f report-in-minibuffer drop
     #f
-  ;proc add-hook!
+  ; add-hook!
 
-  mouse-click-hook 7 lambda: ( snd chn button state x y axis -- )
-    { snd chn button state x y axis }
+  mouse-click-hook lambda: <{ snd chn button state x y axis -- }>
     axis time-graph = if
       $" freq: %.3f" '( snd chn #f cursor  snd chn spot-freq ) string-format
       snd #f report-in-minibuffer
     else
       #f
     then
-  ;proc add-hook!
+  ; add-hook!
 
-  after-open-hook 1 lambda: ( snd -- val )
-    { snd }
+  after-open-hook lambda: <{ snd -- val }>
     snd channels 0 ?do snd short-file-name snd i time-graph set-x-axis-label drop loop
     #t snd set-cursor-follows-play drop
     channels-combined snd set-channel-style
-  ;proc add-hook!
+  ; add-hook!
 
-  start-playing-hook 1 lambda: ( snd -- f )
-    { snd }
+  start-playing-hook lambda: <{ snd -- f }>
     #f
     snd sound? if snd cursor-follows-play if drop cursor-line snd #t set-cursor-style then then
-  ;proc add-hook!
+  ; add-hook!
 
-  stop-playing-hook 1 lambda: ( snd -- f )
-    { snd }
+  stop-playing-hook lambda: <{ snd -- f }>
     #f
     snd sound? if drop cursor-cross snd #t set-cursor-style then
-  ;proc add-hook!
+  ; add-hook!
 
-  enved-hook 5 lambda: ( en pt x y reason -- en'|#f )
-    { en pt x y reason }
+  enved-hook lambda: <{ en pt x y reason -- en'|#f }>
     reason enved-move-point = if
       x en car f> x en -2 list-ref f< && if
 	en en pt 2* list-ref x #f #f stretch-envelope { new-en }
@@ -289,7 +277,7 @@ $" wave"          	       	 add-sound-file-extension 	drop
     else
       #f
     then
-  ;proc add-hook!
+  ; add-hook!
 
   \ from ~/.snd_prefs_forth
   with-buffers-menu
@@ -321,28 +309,28 @@ $" wave"          	       	 add-sound-file-extension 	drop
   #t                                  set-show-transform-peaks drop
   samaraki-window                     set-fft-window drop
   fourier-transform                   set-transform-type drop
-  after-transform-hook ' fft-peak     3 make-proc add-hook!
+  after-transform-hook ' fft-peak     add-hook!
   __lisp-graph__ [if]
-    lisp-graph-hook ' display-db      2 make-proc add-hook!
-    lisp-graph-hook ' display-energy  2 make-proc add-hook!
+    lisp-graph-hook ' display-db      add-hook!
+    lisp-graph-hook ' display-energy  add-hook!
   [then]
-  mix-click-hook  ' mix-click-info    1 make-proc add-hook!
-  mark-click-hook ' mark-click-info   1 make-proc add-hook!
+  mix-click-hook  ' mix-click-info    add-hook!
+  mark-click-hook ' mark-click-info   add-hook!
   defined? show-disk-space [if]
-    after-open-hook ' show-disk-space 1 make-proc add-hook!
+    after-open-hook ' show-disk-space add-hook!
   [then]
-  lightsteelblue2 	 set-help-button-color drop
-  lightsalmon2    	 set-reset-button-color drop
-  light-salmon    	 set-quit-button-color drop
-  wheat           	 set-doit-button-color drop
-  burlywood       	 set-doit-again-button-color drop
-  lightsteelblue1 	 set-pushed-button-color drop
-  $" snd> "              set-listener-prompt drop
-  #f  			 set-show-controls drop
-  160 			 set-window-x drop
-  0 			 set-window-y drop
-  800 			 set-window-width drop
-  600 			 set-window-height drop
+  lightsteelblue2 set-help-button-color drop
+  lightsalmon2    set-reset-button-color drop
+  light-salmon    set-quit-button-color drop
+  wheat           set-doit-button-color drop
+  burlywood       set-doit-again-button-color drop
+  lightsteelblue1 set-pushed-button-color drop
+  $" snd> "       set-listener-prompt drop
+  #f  		  set-show-controls drop
+  160 		  set-window-x drop
+  0 		  set-window-y drop
+  800 		  set-window-width drop
+  600 		  set-window-height drop
   speed-control-as-ratio set-speed-control-style drop
 [then]					\ not snd-nogui
 

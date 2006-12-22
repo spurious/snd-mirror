@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Wed Dec 21 17:37:13 CET 2005
-\ Changed: Mon Dec 11 22:43:35 CET 2006
+\ Changed: Thu Dec 21 18:37:28 CET 2006
 
 \ Commentary:
 \ 
@@ -40,8 +40,7 @@ make-hash value saved-peak-info
 ;
 
 \ intended as an initial-graph-hook-function
-: restore-peak-env-info-upon-open ( snd chn dur -- #f )
-  { snd chn dur }
+: restore-peak-env-info-upon-open <{ snd chn dur -- #f }>
   saved-peak-info snd file-name hash-ref { peak-info }
   peak-info if
     peak-info 'data-format hash-ref snd data-format =
@@ -63,18 +62,16 @@ make-hash value saved-peak-info
   #f
 ;
 
-: peak-env-info-update-cb ( snd -- )
-  { snd }
+: peak-env-info-update-cb <{ snd -- }>
   save-peak-env-info? if
     snd channels 0 ?do snd i peak-env-info-file-name mus-expand-filename file-delete loop
   then
 ;
 
 \ intended as a close-hook function
-: save-peak-env-info ( snd -- )
-  { snd }
-  initial-graph-hook ['] restore-peak-env-info-upon-open 3 make-proc add-hook!
-  update-hook        ['] peak-env-info-update-cb         1 make-proc add-hook!
+: save-peak-env-info <{ snd -- }>
+  initial-graph-hook ['] restore-peak-env-info-upon-open add-hook!
+  update-hook        ['] peak-env-info-update-cb         add-hook!
   save-peak-env-info?
   snd 0 0 peak-env-info length 0> && if
     #f { saved }
@@ -98,8 +95,8 @@ make-hash value saved-peak-info
 
 set-current
 
-close-hook ' save-peak-env-info 1 make-proc add-hook!
-exit-hook 0 lambda: ( -- ) sounds each save-peak-env-info end-each ;proc add-hook!
+close-hook ' save-peak-env-info add-hook!
+exit-hook lambda: <{ -- }> sounds each save-peak-env-info end-each ; add-hook!
 
 previous
 

@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sat Dec 16 03:37:07 CET 2006
+\ Changed: Thu Dec 21 18:22:48 CET 2006
 
 \ Commentary:
 
@@ -138,10 +138,9 @@ require env
   wl  wr wl - 1+  snd chn #f channel->vct
 ;
 
-: display-energy ( snd chn -- v )
+: display-energy <{ snd chn -- v }>
   doc" A lisp-graph-hook function to display the time domain data as energy (squared).\n\
-list-graph-hook ' display-energy 2 make-proc add-hook!"
-  { snd chn }
+list-graph-hook ' display-energy add-hook!"
   snd chn undef undef undef make-graph-data dup list? if cadr then { data }
   data if
     snd chn left-sample { ls }
@@ -157,10 +156,9 @@ list-graph-hook ' display-energy 2 make-proc add-hook!"
 hide
 : db-calc ( val -- r ) { val } val 0.001 f< if -60.0 else 20.0 val flog10 f* then ;
 set-current
-: display-db ( snd chn -- v )
+: display-db <{ snd chn -- v }>
   doc" A lisp-graph-hook function to display the time domain data in dB.\n\
-list-graph-hook ' display-db 2 make-proc add-hook!"
-  { snd chn }
+list-graph-hook ' display-db add-hook!"
   snd chn undef undef undef make-graph-data dup list? if cadr then { data }
   data if
     snd chn left-sample { ls }
@@ -175,9 +173,8 @@ list-graph-hook ' display-db 2 make-proc add-hook!"
 ;
 previous
 
-: fft-peak ( snd chn scaler -- pk )
+: fft-peak <{ snd chn scaler -- pk }>
   doc" Returns the peak spectral magnitude"
-  { snd chn scaler }
   snd chn transform-graph?
   snd chn transform-graph-type graph-once = && if
     snd chn #f transform->vct vct-peak f2* snd chn transform-size f/
@@ -186,7 +183,7 @@ previous
     #f
   then
 ;
-\ after-transform-hook ' fft-peak 3 make-proc add-hook!
+\ after-transform-hook ' fft-peak add-hook!
 
 \ --- comb-filter ---
 
@@ -416,7 +413,7 @@ FREQ is the cutoff in Hz, Q sets the resonance: 0 = no resonance, 1: oscillates 
 previous
 
 \ 500.0 0.1 make-moog-filter value gen
-\ 1 lambda: ( y -- val ) gen swap moog-filter ;proc map-channel
+\ lambda: <{ y }> gen swap moog-filter ; map-channel
 \ gen 1.0 moog-filter
 
 \ examp.fs ends here

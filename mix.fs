@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Sat Dec 16 04:20:49 CET 2006
+\ Changed: Thu Dec 21 18:36:48 CET 2006
 
 \ Commentary:
 \
@@ -41,7 +41,7 @@
 \ set-track-properties ( id val -- )
 \ track-property       ( id key -- val )
 \ set-track-property   ( id key val -- )
-\ mix-click-info       ( -- proc; id self -- #t )
+\ mix-click-info       ( id -- #t )
 
 \ Code:
 
@@ -304,8 +304,7 @@ set-current
 previous
 
 hide
-: mix-click-sets-amp-cb ( id -- #t )
-  { id }
+: mix-click-sets-amp-cb <{ id -- #t }>
   id :zero mix-property not if
     id mix-chans 1- 0.0 make-array map! id i mix-amp end-map :amps swap id -rot set-mix-property
     id mix-chans 0 ?do id i 0.0 set-mix-amp drop loop
@@ -317,7 +316,7 @@ hide
   #t
 ;
 set-current
-: mix-click-sets-amp ( -- ) mix-click-hook ['] mix-click-sets-amp-cb 1 make-proc add-hook! ;
+: mix-click-sets-amp ( -- ) mix-click-hook ['] mix-click-sets-amp-cb add-hook! ;
 previous
 
 \ === Tracks ===
@@ -502,10 +501,9 @@ previous
 
 \ mix-click-info
 
-: mix-click-info ( id -- #t )
+: mix-click-info <{ id -- #t }>
   doc" A mix-click-hook function that describes a mix and its properties.\n\
-mix-click-hook ' mix-click-info 1 make-proc add-hook!"
-  { id }
+mix-click-hook ' mix-click-info add-hook!"
   id mix-home car { mid }
   id mix-name if $"  (%S)"  '( id mix-name ) string-format else "" then { mname }
   $"        mix id: %d%s\n" '( id mname )    string-format { info-string }
@@ -542,5 +540,6 @@ mix-click-hook ' mix-click-info 1 make-proc add-hook!"
   $" Mix info" info-string  info-dialog drop
   #t
 ;
+\ mix-click-hook ' mix-click-info add-hook!
 
 \ mix.fs ends here

@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 23:36:09 CET 2005
-\ Changed: Sat Dec 16 03:03:27 CET 2006
+\ Changed: Thu Dec 21 18:28:28 CET 2006
 
 \ Commentary:
 
@@ -23,8 +23,7 @@ hide
 0.20 constant inset-width
 0.25 constant inset-height
 
-: update-current-window-location ( snd -- #f )
-  { snd }
+: update-current-window-location <{ snd -- #f }>
   current-window-display-is-running if
     snd channels 0 ?do
       'inset-envelope snd i channel-property { vals }
@@ -35,8 +34,7 @@ hide
   #f
 ;
 
-: display-current-window-location ( snd chn -- )
-  { snd chn }
+: display-current-window-location <{ snd chn -- }>
   current-window-display-is-running
   snd chn time-graph? && if
     snd chn undef axis-info { axinf }
@@ -163,8 +161,7 @@ hide
   then
 ;
 
-: click-current-window-location ( snd chn button state x y axis -- f )
-  { snd chn button state x y axis }
+: click-current-window-location <{ snd chn button state x y axis -- f }>
   current-window-display-is-running
   axis time-graph = && if
     snd chn undef axis-info { axinf }
@@ -206,8 +203,7 @@ hide
   vals if vals 'edit-position -2 hash-set! then
 ;
 
-: install-current-window-location ( snd -- )
-  { snd }
+: install-current-window-location <{ snd -- }>
   snd channels 0 ?do
     'inset-envelope snd i set-channel-property-save-state-ignore drop
     snd i undo-hook snd i undo-cb add-hook!
@@ -221,10 +217,10 @@ set-current
 and where the current window fits in it."
   current-window-display-is-running unless
     #t to current-window-display-is-running
-    after-open-hook  ['] install-current-window-location 1 make-proc add-hook!
-    after-graph-hook ['] display-current-window-location 2 make-proc add-hook!
-    mouse-click-hook ['] click-current-window-location   7 make-proc add-hook!
-    update-hook      ['] update-current-window-location  1 make-proc add-hook!
+    after-open-hook  ['] install-current-window-location add-hook!
+    after-graph-hook ['] display-current-window-location add-hook!
+    mouse-click-hook ['] click-current-window-location   add-hook!
+    update-hook      ['] update-current-window-location  add-hook!
   then
 ;
 

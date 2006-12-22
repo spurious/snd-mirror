@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Sun Dec 17 03:46:40 CET 2006
+\ Changed: Thu Dec 21 18:10:09 CET 2006
 
 \ Commentary:
 
@@ -377,24 +377,22 @@ previous
 \
 \ Left sample:
 \
-\ graph-hook 4 lambda: ( snd chn y0 y1 -- )
-\   { snd chn y0 y1 }
+\ graph-hook lambda: <{ snd chn y0 y1 -- }>
 \   $" freq: %.3f" '( snd chn LEFT-SAMPLE  snd chn spot-freq ) string-format
 \   snd #f report-in-minibuffer drop
 \   #f
-\ ;proc add-hook!
+\ ; add-hook!
 \
 \ At cursor position:
 \
-\ mouse-click-hook 7 lambda: ( snd chn button state x y axis -- )
-\   { snd chn button state x y axis }
+\ mouse-click-hook lambda: <{ snd chn button state x y axis -- }>
 \   axis time-graph = if
 \     $" freq: %.3f" '( snd chn #f CURSOR  snd chn spot-freq ) string-format
 \     snd #f report-in-minibuffer
 \   else
 \     #f
 \   then
-\ ;proc add-hook!
+\ ; add-hook!
 
 \ ;;; -------- chorus (doesn't always work and needs speedup)
 5    value chorus-size
@@ -487,12 +485,12 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
   rl old-pk pk f/ vct-scale! 0 len snd chn #f origin vct->channel
 ;
 
-\ 1 lambda: { x } 0.0       ;proc rotate-phase \ is the same as zero-phase
-\ 1 lambda: { x } pi random ;proc rotate-phase \ randomizes phases
-\ 1 lambda: { x } x         ;proc rotate-phase \ returns original
-\ 1 lambda: { x } x fnegate ;proc rotate-phase \ reverses original
-\ 1 lambda: { x } x f2*     ;proc rotate-phase \ reverb-effect (best with voice)
-\ 1 lambda: { x } x 12.0 f* ;proc rotate-phase \ "bruise blood" effect
+\ lambda: <{ x }> 0.0       ; rotate-phase \ is the same as zero-phase
+\ lambda: <{ x }> pi random ; rotate-phase \ randomizes phases
+\ lambda: <{ x }> x         ; rotate-phase \ returns original
+\ lambda: <{ x }> x fnegate ; rotate-phase \ reverses original
+\ lambda: <{ x }> x f2*     ; rotate-phase \ reverb-effect (best with voice)
+\ lambda: <{ x }> x 12.0 f* ; rotate-phase \ "bruise blood" effect
 
 \ ;;; -------- asymmetric FM (bes-i0 case)
 : make-asyfm <{ :key frequency 440.0 initial-phase 0.0 ratio 1.0 r 1.0 index 1.0 -- gen }>
@@ -516,7 +514,7 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
   doc" ;; this is the same as the CLM asymmetric-fm generator, \
 set r != 1.0 to get the asymmetric spectra.\n\
 :frequency 2000 :ratio 0.1 make-asyfm value gen\n\
-1 lambda: { n } gen 0.0 asyfm-J ;proc map-channel."
+lambda: <{ n }> gen 0.0 asyfm-J ; map-channel."
   { gen input }
   gen :freq  hash-ref { freq }
   gen :phase hash-ref { phase }
@@ -556,7 +554,7 @@ set r != 1.0 to get the asymmetric spectra.\n\
 ;
 ' make-oscil alias make-cosine-summation 
 \ 100.0 make-cosine-summation value gen
-\ 1 lambda: { y } gen 0.5 cosine-summation 0.2 f* ;proc map-channel
+\ lambda: <{ y }> gen 0.5 cosine-summation 0.2 f* ; map-channel
 
 \ ;;; -------- kosine-summation
 \ ;;;
@@ -575,7 +573,7 @@ set r != 1.0 to get the asymmetric spectra.\n\
 ;
 ' make-oscil alias make-kosine-summation 
 \ 100.0 make-kosine-summation value gen
-\ 1 lambda: { y } gen 0.5 5.0 kosine-summation 0.2 f* ;proc map-channel
+\ lambda: <{ y }> gen 0.5 5.0 kosine-summation 0.2 f* ; map-channel
 
 \ ;;; -------- legendre, fejer
 : fejer-sum ( angle n -- val )
@@ -588,7 +586,7 @@ set r != 1.0 to get the asymmetric spectra.\n\
   then
 ;
 \ 0.0 value angle
-\ 1 lambda: { y } angle 3.0 fejer-sum 0.1 f* ( val ) 0.1 +to angle ;proc map-channel
+\ lambda: <{ y }> angle 3.0 fejer-sum 0.1 f* ( val ) 0.1 +to angle ; map-channel
 
 : legendre-sum ( angle n -- val )
   \ ;; from Andrews, Askey, Roy "Special Functions" p 314
@@ -600,7 +598,7 @@ set r != 1.0 to get the asymmetric spectra.\n\
   then
 ;
 \ 0.0 value angle
-\ 1 lambda: { y } angle 3.0 legendre-sum 0.1 f* ( val ) 0.1 +to angle ;proc map-channel
+\ lambda: <{ y }> angle 3.0 legendre-sum 0.1 f* ( val ) 0.1 +to angle ; map-channel
 
 \ ;;; -------- variations on sum-of-cosines
 \ ;;; from "Trigonometric Delights" by Eli Maor
@@ -611,7 +609,7 @@ set r != 1.0 to get the asymmetric spectra.\n\
   den f0= if 0.0 else n a2 f* fsin  n 1.0 f+ a2 f* fsin f* den f/ then
 ;
 \ 0.0 value angle
-\ 1 lambda: { y } angle 3.0 sum-of-n-sines 0.1 f*  0.1 +to angle ;proc map-channel
+\ lambda: <{ y }> angle 3.0 sum-of-n-sines 0.1 f*  0.1 +to angle ; map-channel
 
 : sum-of-n-odd-sines ( angle n -- val )
   { angle n }
@@ -637,11 +635,11 @@ set r != 1.0 to get the asymmetric spectra.\n\
   then
 ;
 \ 0.0 value angle
-\ 1 lambda: { y } angle 0.5 8.0 0.2 band-limited-sawtooth  0.2 +to angle ;proc map-channel
+\ lambda: <{ y }> angle 0.5 8.0 0.2 band-limited-sawtooth  0.2 +to angle ; map-channel
 
 : band-limited-square-wave ( theta n -- val ) swap fsin f* ftanh ;
 \ 0.0 value angle
-\ 1 lambda: { y } angle 10.0 band-limited-square-wave  0.2 +to angle ;proc map-channel
+\ lambda: <{ y }> angle 10.0 band-limited-square-wave  0.2 +to angle ; map-channel
 
 \ ;;; -------- brighten-slightly
 hide
@@ -732,7 +730,7 @@ previous
 ;
 ' fir-filter alias hilbert-transform
 \ 15 make-hilbert-transform value h
-\ 1 lambda: { y } h y hilbert-transform ;proc map-channel
+\ lambda: <{ y }> h y hilbert-transform ; map-channel
 
 \ ;;; -------- highpass filter 
 : make-highpass <{ fc :optional len 30 -- gen }>
@@ -754,7 +752,7 @@ previous
 ;
 ' fir-filter alias highpass
 \ pi 0.1 f* make-highpass value hp
-\ 1 lambda: { y } hp y highpass ;proc map-channel
+\ lambda: <{ y }> hp y highpass ; map-channel
 
 \ ;;; -------- lowpass filter 
 : make-lowpass <{ fc :optional len 30 -- gen }>
@@ -776,7 +774,7 @@ previous
 ;
 ' fir-filter alias lowpass
 \ pi 0.2 f* make-lowpass value lp
-\ 1 lambda: { y } lp y lowpass ;proc map-channel
+\ lambda: <{ y }> lp y lowpass ; map-channel
 
 \ ;;; -------- bandpass filter 
 : make-bandpass <{ flo fhi :optional len 30 -- gen }>
@@ -798,7 +796,7 @@ previous
 ;
 ' fir-filter alias bandpass
 \ pi 0.1 f* pi 0.2 f* make-bandpass value bp
-\ 1 lambda: { y } bp y bandpass ;proc map-channel
+\ lambda: <{ y }> bp y bandpass ; map-channel
 
 \ ;;; -------- bandstop filter 
 : make-bandstop <{ flo fhi :optional len 30 -- gen }>
@@ -820,7 +818,7 @@ previous
 ;
 ' fir-filter alias bandstop
 \ pi 0.1 f* pi 0.3 f* make-bandstop value bs
-\ 1 lambda: { y } bs y bandstop ;proc map-channel
+\ lambda: <{ y }> bs y bandstop ; map-channel
 
 \ ;;; -------- differentiator
 : make-differentiator <{ :optional len 30 -- gen }>
@@ -840,7 +838,7 @@ previous
 ;
 ' fir-filter alias differentiator
 \ make-differentiator value dt
-\ 1 lambda: { y } dt y differentiator ;proc map-channel
+\ lambda: <{ y }> dt y differentiator ; map-channel
 
 \ ;;; -------- Butterworth filters (see also further below -- make-butter-lp et al)
 \ ;;;
@@ -966,6 +964,6 @@ or via the 'butter' generator."
   x0
 ;
 \ make-eliminate-hum value hummer
-\ 1 lambda: { x } hummer x eliminate-hum ;proc map-channel
+\ lambda: <{ x }> hummer x eliminate-hum ; map-channel
 
 \ dsp.fs ends here

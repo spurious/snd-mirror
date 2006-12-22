@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Sat Dec 16 03:00:48 CET 2006
+\ Changed: Wed Dec 20 05:50:22 CET 2006
 
 \ Commentary:
 \
@@ -48,7 +48,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-\ Code:
+$" fth 20-Dec-2006" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [undefined] clm-print [if] ' fth-print alias clm-print [then]
@@ -56,15 +56,15 @@
 [undefined] clm-message [if]
   'snd provided? not 'snd-nogui provided? || [if]
     \ Prints to stdout through snd-print.
-    : clm-message ( fmt args -- ) $" \\ " rot ( fmt ) $+ $" \n" $+ swap ( args ) clm-print ;
+    : clm-message ( fmt args -- ) "\\ " rot ( fmt ) $+ "\n" $+ swap ( args ) clm-print ;
   [else]
     \ Prints to Snd's listener (snd-print) and to stdout if $EMACS is
     \ set or $TERM matches /^xterm/.
     : clm-message ( fmt args -- )
       $" \n\\ " rot ( fmt ) $+ swap ( args ) string-format { msg }
-      msg '() clm-print
-      $" EMACS" getenv
-      /^xterm/ $" TERM" getenv 1 >string re= || if msg .stdout then
+      msg snd-print drop
+      "EMACS" getenv
+      /^xterm/ "TERM" getenv 1 >string re= || if msg .stdout then
     ;
   [then]
 [then]
@@ -124,6 +124,26 @@ dl-load sndlib Init_sndlib
   then
 ;
 [then]
+
+hide
+: (show-stack) ( ?? lineno -- ?? )
+  { lineno }
+  save-stack { s }
+  $" #<stack depth: %d at line %d>" '( s length lineno ) clm-message
+  s each { obj } $" #<stack [%d]: %S>" '( i obj ) clm-message end-each
+  s restore-stack
+;
+: (.stack) ( lineno -- )
+  { lineno }
+  depth 0> if
+    "" '() clm-message
+    lineno (show-stack)
+    "" '() clm-message
+  then
+;
+set-current
+: .stack ( --; -- ) postpone *lineno* postpone (.stack) ; immediate
+previous
 
 \ === Notelist ===
 hide
@@ -250,30 +270,29 @@ previous
 16.0 1/f 32.0 1/f f+ notelength |S.
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-$" fth 16-Dec-2006" value *clm-version*
-#f 		    value *output*
-#f 		    value *reverb*
-#f 		    value *locsig*
-mus-lshort          value *clm-audio-format*
-#f                  value *clm-comment*
-1.0                 value *clm-decay-time*
-#f  		    value *clm-delete-reverb*
-$" test.snd"        value *clm-file-name*
-#f 		    value *clm-notehook*
-#f  		    value *clm-play*
-#f                  value *clm-player*           
-#f 		    value *clm-reverb*
-1     		    value *clm-reverb-channels*
-'()                 value *clm-reverb-data*
-$" test.reverb"     value *clm-reverb-file-name*
-#f  		    value *clm-statistics*
-#f  		    value *clm-verbose*
-#()                 value *clm-search-list* \ array of sound directories
+#f 	        value *output*
+#f 	        value *reverb*
+#f 	        value *locsig*
+mus-lshort      value *clm-audio-format*
+#f              value *clm-comment*
+1.0             value *clm-decay-time*
+#f  	        value *clm-delete-reverb*
+$" test.snd"    value *clm-file-name*
+#f 	        value *clm-notehook*
+#f  	        value *clm-play*
+#f              value *clm-player*           
+#f 	        value *clm-reverb*
+1     	        value *clm-reverb-channels*
+'()             value *clm-reverb-data*
+$" test.reverb" value *clm-reverb-file-name*
+#f  	        value *clm-statistics*
+#f	        value *clm-verbose*
+#f              value *clm-debug*
+#()             value *clm-search-list* \ array of sound directories
 
 'snd provided? [unless]
   1                 constant default-output-chans
   22050             constant default-output-srate
-  mus-interp-linear constant locsig-type
   mus-next          constant default-output-header-type
   mus-lfloat        constant default-output-data-format
   mus-audio-default constant audio-output-device
@@ -293,10 +312,9 @@ mus-array-print-length     value *clm-array-print-length*
 clm-table-size             value *clm-table-size*
 
 \ internal global variables
-*clm-channels*      value *channels*
-*clm-locsig-type*   value *locsig-type*
-*clm-verbose*       value *verbose*
-*clm-notehook*      value *notehook*
+*clm-channels* value *channels*
+*clm-verbose*  value *verbose*
+*clm-notehook* value *notehook*
 
 hide
 user *fth-file-number*
@@ -339,10 +357,10 @@ previous
      *clm-version* ) string-format
 ;
 
-: times->samples ( start dur -- len beg )
+: times->samples ( start dur -- limit start )
   { start dur }
   start seconds->samples { beg }
-  dur seconds->samples { len }
+  dur   seconds->samples { len }
   beg len b+ beg
 ;
 
@@ -388,7 +406,7 @@ hide
   :channels  args :channels hash-ref     *channels* ||
   :output    args :output   hash-ref       *output* ||
   :revout    args :revout   hash-ref       *reverb* ||
-  :type      args :type     hash-ref  *locsig-type* || make-locsig to *locsig*
+  :type      args :type     hash-ref    locsig-type || make-locsig to *locsig*
   \ we set channel 3/4 if any to 0.5 * channel 1/2
   *output* mus-output? if
     *output* mus-channels 2 > if
@@ -506,12 +524,12 @@ set-current
   output mus-sound-frames   { frames }
   output mus-sound-chans    { channels }
   output mus-sound-srate    { srate }
-  $" filename: %S"                    '( output )        clm-message
-  $"    chans: %d, srate: %d"         '( channels srate f>s )  clm-message
+  $" filename: %S"            '( output )             clm-message
+  $"    chans: %d, srate: %d" '( channels srate f>s ) clm-message
   $"   format: %s [%s]"
   '( output mus-sound-data-format mus-data-format-name
      output mus-sound-header-type mus-header-type-name ) clm-message
-  $"   length: %.3f  (%d frames)"     '( dur frames )      clm-message
+  $"   length: %.3f  (%d frames)" '( dur frames ) clm-message
   timer timer? if
     timer .timer
     srate frames timer .timer-ratio
@@ -519,7 +537,7 @@ set-current
   output $" maxamp" srate scaled? .maxamps
   reverb-file-name ?dup-if $" revamp" srate #f .maxamps then
   output mus-sound-comment { comm }
-  comm empty? unless $"  comment: %S" '( comm )          clm-message then
+  comm empty? unless $"  comment: %S" '( comm ) clm-message then
 ;
 previous
 
@@ -705,9 +723,10 @@ hide
   ws :old-*output*    hash-ref to *output*
   ws :old-*reverb*    hash-ref to *reverb*
   ws :old-verbose     hash-ref to *verbose*
+  ws :old-debug       hash-ref to *clm-debug*
   ws :old-channels    hash-ref to *channels*
   ws :old-srate       hash-ref set-mus-srate drop
-  ws :old-locsig-type hash-ref to *locsig-type*
+  ws :old-locsig-type hash-ref set-locsig-type drop
   ws :old-notehook    hash-ref to *notehook*
   ws :old-decay-time  hash-ref to *clm-decay-time*
   *ws-args* array-pop
@@ -763,6 +782,7 @@ set-current
   :play              *clm-play*             ws set-args
   :statistics        *clm-statistics*       ws set-args
   :verbose           *clm-verbose*          ws set-args
+  :debug             *clm-debug*            ws set-args
   :continue-old-file #f                     ws set-args
   :output            *clm-file-name*        ws set-args
   :channels          *clm-channels*         ws set-args
@@ -790,6 +810,7 @@ set-current
   :play              #f                        ws set-args
   :statistics        #f                        ws set-args
   :verbose           ws1 :verbose     hash-ref ws set-args
+  :debug             ws1 :debug       hash-ref ws set-args
   :continue-old-file #f                        ws set-args
   :output            ws1 :output      hash-ref ws set-args
   :channels          ws1 :channels    hash-ref ws set-args
@@ -818,12 +839,14 @@ set-current
   ws :old-*reverb*    *reverb*         hash-set!
   ws :old-verbose     *verbose*        hash-set! 
   ws :verbose                          hash-ref  to *verbose*
+  ws :old-debug       *clm-debug*      hash-set!
+  ws :debug                            hash-ref  to *clm-debug*
   ws :old-channels    *channels*       hash-set!
   ws :channels                         hash-ref  to *channels*
   ws :old-srate       mus-srate        hash-set!
   ws :srate                            hash-ref  set-mus-srate drop
-  ws :old-locsig-type *locsig-type*    hash-set!
-  ws :locsig-type                      hash-ref  to *locsig-type*
+  ws :old-locsig-type locsig-type      hash-set!
+  ws :locsig-type                      hash-ref  set-locsig-type drop
   ws :old-notehook    *notehook*       hash-set!
   ws :notehook                         hash-ref  to *notehook*
   ws :old-decay-time  *clm-decay-time* hash-set!
@@ -876,13 +899,17 @@ set-current
   ws :timer make-timer hash-set!
   ws :timer hash-ref start-timer
   \ compute ws body
-  body-xt 'with-sound-interrupt '() fth-catch if
-    stack-reset
-    *output* mus-close drop
-    *reverb* if *reverb* mus-close drop then
-    ws ws-after-output drop
-    $" body-xt interrupted by C-g" '() clm-message
-    exit
+  *clm-debug* if
+    body-xt execute			\ provides a better backtrace
+  else
+    body-xt 'with-sound-interrupt '() fth-catch if
+      stack-reset
+      *output* mus-close drop
+      *reverb* if *reverb* mus-close drop then
+      ws ws-after-output drop
+      $" body-xt interrupted by C-g" '() clm-message
+      exit
+    then
   then
   rev? if
     *reverb* mus-close drop
@@ -892,13 +919,17 @@ set-current
     then
     \ compute ws reverb
     ws :reverb-data hash-ref each end-each ( push reverb arguments on stack )
-    ws :reverb hash-ref 'with-sound-interrupt '() fth-catch if
-      stack-reset
-      *output* mus-close drop
-      *reverb* mus-close drop
-      ws ws-after-output drop
-      $" reverb-xt interrupted by C-g" '() clm-message
-      exit
+    *clm-debug* if
+      ws :reverb hash-ref execute	\ provides a better backtrace
+    else
+      ws :reverb hash-ref 'with-sound-interrupt '() fth-catch if
+	stack-reset
+	*output* mus-close drop
+	*reverb* mus-close drop
+	ws ws-after-output drop
+	$" reverb-xt interrupted by C-g" '() clm-message
+	exit
+      then
     then
     *reverb* mus-close drop
   then
@@ -923,6 +954,7 @@ previous
 :play              *clm-play*             (#f)\n\
 :statistics        *clm-statistics*       (#f)\n\
 :verbose           *clm-verbose*          (#f)\n\
+:debug             *clm-debug*            (#f)\n\
 :continue-old-file                        (#f)\n\
 :output            *clm-file-name*        (\"test.snd\")\n\
 :channels          *clm-channels*         (1)\n\

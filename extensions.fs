@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Sat Dec 16 05:34:12 CET 2006
+\ Changed: Thu Dec 21 18:35:26 CET 2006
 
 \ Commentary:
 \ 
@@ -318,8 +318,8 @@ lambda: ( snd -- val ) drop #f ; value no-xt
   loop
 ;
 
-: unsaved-edits-at-close ( snd -- f ) #f ignore-unsaved-edits-at-close? not ;
-: unsaved-edits-at-exit ( -- f )
+: unsaved-edits-at-close <{ snd -- f }> snd #f ignore-unsaved-edits-at-close? not ;
+: unsaved-edits-at-exit <{ -- f }>
   #f sounds each #t ignore-unsaved-edits-at-close? unless not leave then end-each
 ;
 set-current
@@ -330,8 +330,8 @@ set-current
   doc" Sets up hooks to check for and ask about unsaved edits when a sound is closed.  \
 If CHECK is #f, the hooks are removed."
   ( check ) dup to checking-for-unsaved-edits if
-    before-close-hook ['] unsaved-edits-at-close 1 make-proc add-hook!
-    before-exit-hook  ['] unsaved-edits-at-exit  0 make-proc add-hook!
+    before-close-hook ['] unsaved-edits-at-close add-hook!
+    before-exit-hook  ['] unsaved-edits-at-exit  add-hook!
   else
     before-close-hook ['] unsaved-edits-at-close remove-hook! drop
     before-exit-hook  ['] unsaved-edits-at-exit  remove-hook! drop
@@ -393,8 +393,7 @@ hide
   then
 ;
 
-: remember-sound-at-close ( snd -- #f )
-  { snd }
+: remember-sound-at-close <{ snd -- #f }>
   4 nil make-array { new-state }
   new-state 0 snd file-name array-set!
   new-state 1 snd file-name file-write-date array-set!
@@ -412,8 +411,7 @@ hide
   #f
 ;
 
-: remember-sound-at-open ( snd -- #f )
-  { snd }
+: remember-sound-at-open <{ snd -- #f }>
   snd saved-state { state }
   remember-choice 2 <>
   state length && if
@@ -446,8 +444,7 @@ hide
   #f
 ;
 
-: remember-sound-at-start ( filename -- #f )
-  { filename }
+: remember-sound-at-start <{ filename -- #f }>
   remember-states empty?
   remember-sound-filename file-exists? && if
     remember-sound-filename file-eval
@@ -456,7 +453,7 @@ hide
   #f
 ;
 
-: remember-sound-at-exit ( -- #f )
+: remember-sound-at-exit <{ -- #f }>
   \ The local variable IO must be defined here, not in the else
   \ branch.  ficlVmExecuteXT()/ficlVmInnerLoop() try to kill a local
   \ stack but no local stack exists if remember-states is empty and IO
@@ -495,11 +492,11 @@ and if it is subsquently re-opened, restores that state."
     remember-sound-filename file-delete
   then
   choice 0<> if
-    close-hook      ['] remember-sound-at-close 1 make-proc add-hook!
-    after-open-hook ['] remember-sound-at-open  1 make-proc add-hook!
+    close-hook      ['] remember-sound-at-close add-hook!
+    after-open-hook ['] remember-sound-at-open  add-hook!
     choice 1 <> if
-      open-hook        ['] remember-sound-at-start 1 make-proc add-hook!
-      before-exit-hook ['] remember-sound-at-exit  0 make-proc add-hook!
+      open-hook        ['] remember-sound-at-start add-hook!
+      before-exit-hook ['] remember-sound-at-exit  add-hook!
     then
   then
   choice to remember-choice
@@ -520,8 +517,7 @@ hide
   self cell+ @ ( chn ) channel-widgets
 ;
 
-: graph-hook-cb ( snd chn -- val )
-  { snd chn }
+: graph-hook-cb <{ snd chn -- val }>
   snd sound? if
     snd chn channel-xt 'no-such-channel nil fth-catch false? if car focus-widget then
   else
@@ -534,9 +530,9 @@ set-current
 
 : focus-follows-mouse ( -- )
   focus-is-following-mouse unless
-    mouse-enter-graph-hook    ['] graph-hook-cb 2 make-proc add-hook!
-    mouse-enter-listener-hook ['] focus-widget  1 make-proc add-hook!
-    mouse-enter-text-hook     ['] focus-widget  1 make-proc add-hook!
+    mouse-enter-graph-hook    ['] graph-hook-cb add-hook!
+    mouse-enter-listener-hook ['] focus-widget  add-hook!
+    mouse-enter-text-hook     ['] focus-widget  add-hook!
     #t to focus-is-following-mouse
   then
 ;
@@ -549,8 +545,7 @@ previous
 0.1 value prefs-initial-dur
 
 hide
-: bounds-cb ( snd chn dur -- lst )
-  { snd chn dur }
+: bounds-cb <{ snd chn dur -- lst }>
   '( prefs-initial-beg prefs-show-full-duration if dur else prefs-initial-dur dur fmin then )
 ;
 set-current
@@ -559,7 +554,7 @@ set-current
   beg to prefs-initial-beg
   dur to prefs-initial-dur
   full to prefs-show-full-duration
-  initial-graph-hook ['] bounds-cb 3 make-proc add-hook!
+  initial-graph-hook ['] bounds-cb add-hook!
 ;
 
 : prefs-deactivate-initial-bounds ( -- )
@@ -588,8 +583,7 @@ $" empty" _ value reopen-empty
   long-name file-exists? if long-name open-sound drop then
 ;
 
-: add-to-reopen-menu ( snd -- #f )
-  { snd }
+: add-to-reopen-menu <{ snd -- #f }>
   snd short-file-name { brief-name }
   snd file-name { long-name }
   reopen-names brief-name array-member? unless
@@ -606,8 +600,7 @@ $" empty" _ value reopen-empty
   #f
 ;
 
-: check-reopen-menu ( file -- )
-  { file }
+: check-reopen-menu <{ file -- }>
   file #f file-basename { brief-name }
   reopen-names brief-name array-member? if
     reopen-menu brief-name remove-from-menu drop
@@ -629,8 +622,8 @@ set-current
     reopen-menu reopen-empty ['] noop 0 make-proc 0 add-to-menu drop
     reopen-names reopen-empty array-push drop
     #t to including-reopen-menu
-    close-hook ['] add-to-reopen-menu 1 make-proc add-hook!
-    open-hook  ['] check-reopen-menu  1 make-proc add-hook!
+    close-hook ['] add-to-reopen-menu add-hook!
+    open-hook  ['] check-reopen-menu  add-hook!
   then
 ;
 previous
@@ -649,8 +642,7 @@ $" empty" _ value buffer-empty
   self @ ( file ) 0 find-sound dup sound? if select-sound then drop
 ;
 
-: open-buffer ( file -- )
-  { file }
+: open-buffer <{ file -- }>
   buffer-names buffer-empty array-member? if
     buffer-menu buffer-empty remove-from-menu drop
     #() to buffer-names
@@ -659,8 +651,7 @@ $" empty" _ value buffer-empty
   buffer-names file array-push drop
 ;
 
-: close-buffer ( snd -- #f )
-  { snd }
+: close-buffer <{ snd -- #f }>
   buffer-menu snd file-name remove-from-menu drop
   buffer-names   buffer-names snd file-name array-index   array-delete! drop
   buffer-names empty? if
@@ -680,8 +671,8 @@ set-current
     buffer-menu buffer-empty ['] noop 0 make-proc 0 add-to-menu drop
     buffer-names buffer-empty array-push drop
     #t to including-buffers-menu
-    open-hook  ['] open-buffer  1 make-proc add-hook!
-    close-hook ['] close-buffer 1 make-proc add-hook!
+    open-hook  ['] open-buffer  add-hook!
+    close-hook ['] close-buffer add-hook!
   then
 ;
 previous
@@ -689,8 +680,7 @@ previous
 \ --- global sync (for prefs dialog) ---
 0 value global-sync-choice		\ global var so that we can reflect
 					\ the current setting in prefs dialog
-: global-sync-cb ( snd -- val )
-  { snd }
+: global-sync-cb <{ snd -- val }>
   global-sync-choice 1 = if
     1 snd set-sync
   else
@@ -707,7 +697,7 @@ previous
   choice to global-sync-choice
   choice 0<> if
     after-open-hook ['] global-sync-cb hook-member? unless
-      after-open-hook ['] global-sync-cb 1 make-proc add-hook!
+      after-open-hook ['] global-sync-cb add-hook!
     then
   then
 ;

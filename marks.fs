@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Sat Dec 16 04:01:44 CET 2006
+\ Changed: Thu Dec 21 18:36:22 CET 2006
 
 \ Commentary:
 \
@@ -126,8 +126,7 @@ require examp
 ;
 
 hide
-: save-mark-properties-cb ( filename -- )
-  { filename }
+: save-mark-properties-cb <{ filename -- }>
   filename w/a io-open { io }
   io $" \n\\ from save-mark-properties in %s\n\n" _ '( *filename* ) io-write-format
   io $" require marks\n\n" io-write
@@ -156,14 +155,13 @@ hide
 set-current
 : save-mark-properties ( -- )
   doc" Sets up an after-save-state-hook function to save any mark-properties."
-  after-save-state-hook ['] save-mark-properties-cb 1 make-proc add-hook!
+  after-save-state-hook ['] save-mark-properties-cb add-hook!
 ;
 previous
 
-: mark-click-info ( id -- #t )
+: mark-click-info <{ id -- #t }>
   doc" A mark-click-hook function that describes a mark and its properties.\n\
-mark-click-hook ' mark-click-info 1 make-proc add-hook!"
-  { id }
+mark-click-hook ' mark-click-info add-hook!"
   id mark-name empty? if "" else $"  (%S)" '( id mark-name ) string-format then { mname }
   $"     mark id: %d%s\n"   '( id mname )     string-format { info-string }
   $"      sample: %d (%.3f secs)\n"
@@ -177,6 +175,7 @@ mark-click-hook ' mark-click-info 1 make-proc add-hook!"
   $" Mark Info" info-string info-dialog drop
   #t
 ;
+\ mark-click-hook ' mark-click-info add-hook!
 
 \ This code saves mark info in the sound file header, and reads it
 \ back in when the sound is later reopened.
@@ -204,10 +203,10 @@ mark-click-hook ' mark-click-info 1 make-proc add-hook!"
 ;
 
 0 [if]
-  output-comment-hook 1 lambda: { str } selected-sound marks->string ;proc add-hook!
-  after-open-hook 1 lambda: ( snd -- )
-    ( snd ) comment ( str ) ['] string-eval #t nil fth-catch drop ( str or eval-status )
-  ;proc add-hook!
+  output-comment-hook lambda: <{ str }> selected-sound marks->string ; add-hook!
+  after-open-hook lambda: <{ snd -- }>
+    snd comment ( str ) ['] string-eval #t nil fth-catch if ( str ) drop then
+  ; add-hook!
 [then]
 
 \ marks.fs ends here
