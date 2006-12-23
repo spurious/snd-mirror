@@ -3339,7 +3339,7 @@ mus_any *mus_make_rand(Float freq, Float base)
   gen->freq = mus_hz_to_radians(freq);
   gen->base = base;
   gen->incr = 0.0;
-  gen->output = 0.0;
+  gen->output = random_any(gen); /* this was always starting at 0.0 (changed 23-Dec-06) */
   return((mus_any *)gen);
 }
 
@@ -3350,8 +3350,8 @@ mus_any *mus_make_rand_interp(Float freq, Float base)
   gen->core = &RAND_INTERP_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = base;
-  gen->output = 0.0;
   gen->incr =  mus_random(base) * freq / sampling_rate;
+  gen->output = 0.0;
   return((mus_any *)gen);
 }
 
@@ -3361,6 +3361,7 @@ mus_any *mus_make_rand_with_distribution(Float freq, Float base, Float *distribu
   gen = (noi *)mus_make_rand(freq, base);
   gen->distribution = distribution;
   gen->distribution_size = distribution_size;
+  gen->output = random_any(gen);
   return((mus_any *)gen);
 }
 

@@ -59,10 +59,10 @@
     </ul>
   <li><a href="#sndobjects">Snd's objects</a>
     <ul>
+    <li><a href="#samplereaders" onmouseover="this.T_WIDTH=200; return escape('sound data iterators')">Sample-readers</a>
     <li><a href="#Vcts" onmouseover="this.T_WIDTH=100; return escape('real arrays')">Vcts</a>
     <li><a href="#sndsounddata" onmouseover="return escape('arrays of vcts for multichannel data')">Sound-data</a>
     <li><a href="#extsndlib" onmouseover="return escape('the underlying library that handles sound data and files')">Sndlib</a>
-    <li><a href="#samplereaders" onmouseover="this.T_WIDTH=200; return escape('sound data iterators')">Sample-readers</a>
     <li><a href="#sndmarks" onmouseover="return escape('location markers in sound data')">Marks</a>
     <li><a href="#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes and Tracks</a>
     <li><a href="#sndregions" onmouseover="return escape('selected or saved portions of sound data')">Regions and Selections</a>
@@ -2652,8 +2652,13 @@ See also autosave.scm.  <small>It is possible for after-edit-hook to be called m
 of sounds, each with a list of channels, each with lists of edits,
 marks, and mixes.  The sound data itself is accessed through
 a variety of structures and functions, each aimed at a particular
-kind of use.  One of the most commonly used is the vct.
-But before launching into vcts, I need to explain a few things
+kind of use.  The accessors from lowest level up are:
+sample-readers (one sample at a time iterators) and frame-readers (a "frame" is a multichannel sample),
+channel-at-a-time blocks (vcts, map-channel, etc), multichannel blocks (sound-data objects, map-sound, etc),
+a few historical leftovers that follow the "sync" field (scale-to, etc), and finally
+the top-level operations such as save-sound-as (these are used in the File menu, etc).
+In the following sections, I'll start with the lowest level and work upwards, more or less.
+But before launching into sample-readers, I need to explain a few things
 about the following documentation.
 </p>
 
@@ -2695,8 +2700,308 @@ all the region-related functions can return 'no-such-region; all selection-orien
 can return 'no-active-selection. To reduce clutter, I'll omit mention
 of these below.  
 </p>
+<br>
+
+
+<!-- ---------------------------------------- SAMPLE-READERS ---------------------------------------- -->
+
+<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="samplereaders">Sample-readers</a></h3></td></tr></table>
+<p>
+The simplest data access function is <a href="#sample">sample</a> which returns the sample at
+a given position in a sound's channel.  This simplicity, however, comes at
+a price in computation:  if the desired sample is not in Snd's
+in-core (already loaded) view of the data, it has to go get the sample,
+which can sometimes require that it open, read, and close a sound file.
+The result is that sample can bring your code
+to a grinding halt.  There are two alternatives, leaving aside the scanning
+and mapping functions mentioned below.  One involves keeping the buffer of
+data around explicitly (<a class=quiet href="#channeltovct">channel-&gt;vct</a>), and the other involves the
+use of a special object known as a sample-reader.  The sample-reader
+returns the next sample in its sound each time it is called; this kind
+of access is sometimes called an "enumerator" (Ruby) or perhaps "iterator" (Gtk+).
+The buffer approach (<a class=quiet href="#channeltovct">channel-&gt;vct</a> in <a href="grfsnd.html#expsrc">expsrc</a>)
+is better if you're jumping around in the data, the sample-by-sample approach if you're treating
+the data as a sequence of samples.
+To get a sample reader,
+you create a reader (via <a class=quiet href="#makesamplereader">make-sample-reader</a>) giving it the start position, the sound and channel
+to read, and the initial read direction, then get data via <a class=quiet href="#readsample">read-sample</a> (which remembers the
+read direction passed to <a class=quiet href="#makesamplereader">make-sample-reader</a>), 
+or <a class=quiet href="#nextsample">next-sample</a> (read forward) and
+<a class=quiet href="#previoussample">previous-sample</a> (read backward); 
+when done, you can close the reader with <a class=quiet href="#freesamplereader">free-sample-reader</a>, 
+but it's usually not necessary; the
+garbage collector will take care of it if you forget (but, sigh, the GC can be dilatory at times).
+</p>
+
+<p>There is a similar set of functions giving access to the mix data.
+<a class=quiet href="#makemixsamplereader">make-mix-sample-reader</a> returns a mix reader for the desired mix,
+<a class=quiet href="#mixsamplereaderQ">mix-sample-reader?</a> returns #t if its argument in a mix sample reader,
+and <a class=quiet href="#readmixsample">read-mix-sample</a> returns the next sample (before it is mixed into
+the output).
+Mixes can be collected into tracks, so there are also <a class=quiet href="#maketracksamplereader">make-track-sample-reader</a>, 
+<a class=quiet href="#tracksamplereaderQ">track-sample-reader?</a>,
+and <a class=quiet href="#readtracksample">read-track-sample</a>.
+</p>
+
+<p>Multichannel iterations can be handled via <a href="sndscm.html#framereaders">frame-readers</a>.  These are currently
+implemented in frame.scm.
+</p>
+
+
+<!-- -------------------------------- SAMPLE-READER TABLE -------------------------------- -->
+
+<table border=0 cellspacing=0 hspace=10>
+
+<!-- copy-sample-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="copysamplereader">copy-sample-reader</a> (obj)</code>
+</td></tr><tr><td width=60><br></td><td>
+copy-sample-reader returns a copy of 'obj' which can be any kind of sample-reader.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- free-sample-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="freesamplereader">free-sample-reader</a> (obj)</code>
+</td></tr><tr><td></td><td>
+free-sample-reader
+releases the sample-reader 'obj'.  In most cases, you don't need to call this
+function because the garbage collector handles the sample-reader object, but it doesn't hurt anything (but don't try to use a sample-reader
+after you've freed it!).  If you're using zillions of sample-readers in an optimized (run-based) loop that
+doesn't trigger garbage collection, freeing the sample readers explicitly can reduce
+demands on memory.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- make-mix-sample-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makemixsamplereader">make-mix-sample-reader</a> (mix :optional (beg 0))</code>
+</td></tr><tr><td></td><td>
+make-mix-sample-reader creates a mix-sample-reader reading 'mix' starting (in the mix input) at 'beg'.
+See <a href="sndscm.html#mixtovct">mix-&gt;vct</a> in mix.scm.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- make-region-sample-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makeregionsamplereader">make-region-sample-reader</a> (:optional start reg chn (dir 1))</code>
+</td></tr><tr><td></td><td>
+make-region-sample-reader creates a sample-reader reading channel 'chn' of the region 'reg' starting
+at sample 'start', and reading forward if 'dir' is 1, backwards if 'dir' is -1.
+It is not safe to assume that this reader will return zeros beyond the region boundaries.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- make-sample-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makesamplereader">make-sample-reader</a> (:optional start snd chn dir edpos)</code>
+</td></tr><tr><td></td><td>
+make-sample-reader creates a sample-reader reading the given channel
+starting at sample 'start' with initial read direction 'dir' 
+(1=forward, -1=backward).  'edpos' is the edit history position to read;
+it defaults to the current edit. 
+<pre>
+    :<em class=typing>(open-sound "oboe.snd")</em>
+    <em class=listener>0</em>
+    :<em class=typing>(define reader (make-sample-reader 1000))</em>
+    <em class=listener>#&lt;unspecified&gt;</em>
+    :<em class=typing>reader</em>
+    <em class=listener>#&lt;sample-reader: oboe.snd[0: 0] from 1000, at 1000&gt;</em>
+    :<em class=typing>(read-sample reader)</em>
+    <em class=listener>0.0328369140625</em>
+    :<em class=typing>(sample 1000)</em>
+    <em class=listener>0.0328369140625</em>
+    :<em class=typing>(next-sample reader)</em>
+    <em class=listener>0.0347900390625</em>
+    :<em class=typing>(sample 1001)</em>
+    <em class=listener>0.0347900390625</em>
+    :<em class=typing>(sample-reader-home reader)</em>
+    <em class=listener>(0 0)</em>
+    :<em class=typing>(sample-reader-position reader)</em>
+    <em class=listener>1002</em>
+</pre>
+One use of 'edpos' is to get the difference 
+between two edits:
+
+<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
+(define snd-diff
+  (lambda () ;assume mono, get diff between current state and previous
+    (let* ((index (<a class=quiet href="#selectedsound">selected-sound</a>))
+           (edit-pos (<a class=quiet href="#editposition">edit-position</a> index))
+           (previous-edit (<em class=red>make-sample-reader</em> 0 0 index 1 (1- edit-pos))))
+      (lambda (x)
+        (- x (<a class=quiet href="#readsample">read-sample</a> previous-edit)) #f))))
+
+(<a class=quiet href="#mapchannel">map-channel</a> (snd-diff))
+</pre></td></tr></table>
+
+Once the reader has been set up to read at a given edit position, subsequent
+edits won't affect it. One sequence that takes advantage of this is: make-sample-reader, scale-by 0,
+then run an overlap-add process on the data from before the scaling.
+<br><br>
+'snd' can also be a filename (a string); in this way a sample-reader
+can read external sounds without going to the trouble of loading them into Snd.
+<pre>
+    (define reader (make-sample-reader 100 "oboe.snd"))
+</pre>
+make-sample-reader is probably the most useful function in Snd; there are lots of examples
+in the Scheme, Ruby, and Forth files.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- make-track-sample-reader -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="maketracksamplereader">make-track-sample-reader</a> (track :optional chn beg)</code>
+</td></tr><tr><td></td><td>
+make-track-sample-reader creates a track-sample-reader reading 'track'.  'beg' is the starting point of the reader within the track.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mix-sample-reader? -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixsamplereaderQ">mix-sample-reader?</a> (obj)</code>
+</td></tr><tr><td></td><td>
+mix-sample-reader? returns #t if 'obj' is a mix-sample-reader.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- next-sample -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="nextsample">next-sample</a> (obj)</code>
+</td></tr><tr><td></td><td>
+next-sample returns the next sample (reading forward) read by the sample-reader 'obj'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- previous-sample -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="previoussample">previous-sample</a> (obj)</code>
+</td></tr><tr><td></td><td>
+previous-sample returns the previous sample in the stream read by the sample-reader 'obj'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- read-mix-sample -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readmixsample">read-mix-sample</a> (obj)</code>
+</td></tr><tr><td></td><td>
+read-mix-sample returns the next sample read by the mix-sample-reader 'obj'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- read-region-sample -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readregionsample">read-region-sample</a> (obj)</code>
+</td></tr><tr><td></td><td>
+read-region-sample returns the next sample read by the region-sample-reader 'obj'.
+
+<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
+(define* (region-&gt;vct reg #:optional (chn 0))
+  (if (<a class=quiet href="#regionok">region?</a> reg)
+      (if (&lt; chn (<a class=quiet href="#regionchans">region-chans</a> reg))
+	  (let* ((reader (<em class=red>make-region-sample-reader</em> 0 reg chn))
+		 (len (<a class=quiet href="#regionframes">region-frames</a> reg))
+		 (data (<a class=quiet href="#makevct">make-vct</a> len)))
+	    (do ((i 0 (1+ i)))
+		((= i len) data)
+	      (<a class=quiet href="#vctset">vct-set!</a> data i (<em class=red>reader</em>))))
+	  (throw 'no-such-channel (list "region-&gt;vct" reg chn)))
+      (throw 'no-such-region (list "region-&gt;vct" reg))))
+</pre></td></tr></table>
+
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- read-sample -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readsample">read-sample</a> (obj)</code>
+</td></tr><tr><td></td><td>
+read-sample returns the next sample read by the sample-reader 'obj', 
+reading in the direction set by <a class=quiet href="#makesamplereader">make-sample-reader</a>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- read-track-sample -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readtracksample">read-track-sample</a> (obj)</code>
+</td></tr><tr><td></td><td>
+read-track-sample returns the next sample read by the track-sample-reader 'obj'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- region-sample-reader? -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regionsamplereaderQ">region-sample-reader?</a> (obj)</code>
+</td></tr><tr><td></td><td>
+region-sample-reader? returns #t if 'obj' is a region sample-reader.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- sample-reader-at-end? -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderatendQ">sample-reader-at-end?</a> (obj)</code>
+</td></tr><tr><td></td><td>
+sample-reader-at-end? returns #t if the sample-reader 'obj' (any kind of reader) is at the end of the sound (or whatever it is reading),
+and hence is returning 0.0 each time it is called.
+See <a href="sndscm.html#locatezero">locate-zero</a> in examp.scm, or <a href="sndscm.html#linearsrcchannel">linear-src-channel</a> in dsp.scm.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- sample-reader-home -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderhome">sample-reader-home</a> (obj)</code>
+</td></tr><tr><td></td><td>
+sample-reader-home returns information describing the source of the data the sample-reader 'obj' is reading.
+if 'obj' is a sound sample reader, it returns a list with the sound index and channel number associated with 'obj'.
+If 'obj' is a mix reader, it returns the mix's id.  If 'obj' is a track reader, it returns a list with the track id and channel number.
+Finally, if 'obj' is a region reader, it returns a list with the region id.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- sample-reader-position -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderposition">sample-reader-position</a> (obj)</code>
+</td></tr><tr><td></td><td>
+sample-reader-position returns the
+current (sample-wise) location of the sample-reader 'obj' (any kind of reader).
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- sample-reader? -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderQ">sample-reader?</a> (obj)</code>
+</td></tr><tr><td></td><td>
+sample-reader? returns #t if 'obj' is a sample-reader.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- track-sample-reader? -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracksamplereaderQ">track-sample-reader?</a> (obj)</code>
+</td></tr><tr><td></td><td>
+track-sample-reader? returns #t if 'obj' is a track-sample-reader.
+</td></tr>
+</table>
+
+<p>If your extension language supports it, the read-sample functions can be omitted: <code>(reader)</code> is the same as <code>(<a class=quiet href="#readsample">read-sample</a> reader)</code>.
+</p>
 
 <br>
+<table width="35%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Snd-&gt;sample</h4></td></tr></table>
+
+<p>There is a Snd-specific CLM-style generator that redirects CLM instrument input (via in-any, ina, etc)
+to Snd data, snd-&gt;sample. 
+</p>
+
+<table border=0 cellspacing=0 hspace=10>
+
+<!-- make-snd->sample -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makesndtosample">make-snd-&gt;sample</a> (:optional snd)</code>
+</td></tr><tr><td width=60><br></td><td>
+make-snd-&gt;sample creates a Snd data reader for use with CLM's in-any, file-&gt;sample, etc.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
+<!-- snd->sample -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sndtosample">snd-&gt;sample</a> (gen frame :optional chan)</code>
+</td></tr><tr><td><br></td><td>
+snd-&gt;sample gets the next sample from the data accessed by 'gen', similar to file-&gt;sample.
+If *reverb* is a snd-&gt;sample generator, for example,
+<a class=quiet href="clm.html#ina">ina</a> and <a class=quiet href="clm.html#filetosample">file-&gt;sample</a> actually call snd-&gt;sample.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- snd->sample? -->
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sndtosamplep">snd-&gt;sample?</a> (obj)</code>
+</td></tr><tr><td><br></td><td>
+snd-&gt;sample? returns #t if 'obj' is a snd-&gt;sample generator.
+</td></tr>
+
+</table>
+<br>
+
 
 <!-- INDEX Vcts:Vcts -->
 <table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="Vcts">Vcts</a></h3></td></tr></table>
@@ -3957,300 +4262,7 @@ throw 'mus-error upon encountering an error, rather than returning -1 like the u
                    (* (<a class=quiet href="#mussoundchans">mus-sound-chans</a> file) (<a class=quiet href="#mussoundsrate">mus-sound-srate</a> file)))))))
 </pre></td></tr></table>
 <br>
-
 <br>
-<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="samplereaders">Sample-readers</a></h3></td></tr></table>
-<p>
-The simplest data access function is <a href="#sample">sample</a> which returns the sample at
-a given position in a sound's channel.  This simplicity, however, comes at
-a price in computation:  if the desired sample is not in Snd's
-in-core (already loaded) view of the data, it has to go get the sample,
-which can sometimes require that it open, read, and close a sound file.
-The result is that sample can bring your code
-to a grinding halt.  There are two alternatives, leaving aside the scanning
-and mapping functions mentioned below.  One involves keeping the buffer of
-data around explicitly (<a class=quiet href="#channeltovct">channel-&gt;vct</a>), and the other involves the
-use of a special object known as a sample-reader.  The sample-reader
-returns the next sample in its sound each time it is called; this kind
-of access is sometimes called an "enumerator" (Ruby) or perhaps "iterator" (Gtk+).
-The buffer approach (<a class=quiet href="#channeltovct">channel-&gt;vct</a> in <a href="grfsnd.html#expsrc">expsrc</a>)
-is better if you're jumping around in the data, the sample-by-sample approach if you're treating
-the data as a sequence of samples.
-To get a sample reader,
-you create a reader (via <a class=quiet href="#makesamplereader">make-sample-reader</a>) giving it the start position, the sound and channel
-to read, and the initial read direction, then get data via <a class=quiet href="#readsample">read-sample</a> (which remembers the
-read direction passed to <a class=quiet href="#makesamplereader">make-sample-reader</a>), 
-or <a class=quiet href="#nextsample">next-sample</a> (read forward) and
-<a class=quiet href="#previoussample">previous-sample</a> (read backward); 
-when done, you can close the reader with <a class=quiet href="#freesamplereader">free-sample-reader</a>, 
-but it's usually not necessary; the
-garbage collector will take care of it if you forget (but, sigh, the GC can be dilatory at times).
-</p>
-
-<p>There is a similar set of functions giving access to the mix data.
-<a class=quiet href="#makemixsamplereader">make-mix-sample-reader</a> returns a mix reader for the desired mix,
-<a class=quiet href="#mixsamplereaderQ">mix-sample-reader?</a> returns #t if its argument in a mix sample reader,
-and <a class=quiet href="#readmixsample">read-mix-sample</a> returns the next sample (before it is mixed into
-the output).
-Mixes can be collected into tracks, so there are also <a class=quiet href="#maketracksamplereader">make-track-sample-reader</a>, 
-<a class=quiet href="#tracksamplereaderQ">track-sample-reader?</a>,
-and <a class=quiet href="#readtracksample">read-track-sample</a>.
-</p>
-
-<!-- -------------------------------- SAMPLE-READER TABLE -------------------------------- -->
-
-<table border=0 cellspacing=0 hspace=10>
-
-<!-- copy-sample-reader -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="copysamplereader">copy-sample-reader</a> (obj)</code>
-</td></tr><tr><td width=60><br></td><td>
-copy-sample-reader returns a copy of 'obj' which can be any kind of sample-reader.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- free-sample-reader -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="freesamplereader">free-sample-reader</a> (obj)</code>
-</td></tr><tr><td></td><td>
-free-sample-reader
-releases the sample-reader 'obj'.  In most cases, you don't need to call this
-function because the garbage collector handles the sample-reader object, but it doesn't hurt anything (but don't try to use a sample-reader
-after you've freed it!).  If you're using zillions of sample-readers in an optimized (run-based) loop that
-doesn't trigger garbage collection, freeing the sample readers explicitly can reduce
-demands on memory.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- make-mix-sample-reader -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makemixsamplereader">make-mix-sample-reader</a> (mix :optional (beg 0))</code>
-</td></tr><tr><td></td><td>
-make-mix-sample-reader creates a mix-sample-reader reading 'mix' starting (in the mix input) at 'beg'.
-See <a href="sndscm.html#mixtovct">mix-&gt;vct</a> in mix.scm.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- make-region-sample-reader -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makeregionsamplereader">make-region-sample-reader</a> (:optional start reg chn (dir 1))</code>
-</td></tr><tr><td></td><td>
-make-region-sample-reader creates a sample-reader reading channel 'chn' of the region 'reg' starting
-at sample 'start', and reading forward if 'dir' is 1, backwards if 'dir' is -1.
-It is not safe to assume that this reader will return zeros beyond the region boundaries.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- make-sample-reader -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makesamplereader">make-sample-reader</a> (:optional start snd chn dir edpos)</code>
-</td></tr><tr><td></td><td>
-make-sample-reader creates a sample-reader reading the given channel
-starting at sample 'start' with initial read direction 'dir' 
-(1=forward, -1=backward).  'edpos' is the edit history position to read;
-it defaults to the current edit. 
-<pre>
-    :<em class=typing>(open-sound "oboe.snd")</em>
-    <em class=listener>0</em>
-    :<em class=typing>(define reader (make-sample-reader 1000))</em>
-    <em class=listener>#&lt;unspecified&gt;</em>
-    :<em class=typing>reader</em>
-    <em class=listener>#&lt;sample-reader: oboe.snd[0: 0] from 1000, at 1000&gt;</em>
-    :<em class=typing>(read-sample reader)</em>
-    <em class=listener>0.0328369140625</em>
-    :<em class=typing>(sample 1000)</em>
-    <em class=listener>0.0328369140625</em>
-    :<em class=typing>(next-sample reader)</em>
-    <em class=listener>0.0347900390625</em>
-    :<em class=typing>(sample 1001)</em>
-    <em class=listener>0.0347900390625</em>
-    :<em class=typing>(sample-reader-home reader)</em>
-    <em class=listener>(0 0)</em>
-    :<em class=typing>(sample-reader-position reader)</em>
-    <em class=listener>1002</em>
-</pre>
-One use of 'edpos' is to get the difference 
-between two edits:
-
-<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define snd-diff
-  (lambda () ;assume mono, get diff between current state and previous
-    (let* ((index (<a class=quiet href="#selectedsound">selected-sound</a>))
-           (edit-pos (<a class=quiet href="#editposition">edit-position</a> index))
-           (previous-edit (<em class=red>make-sample-reader</em> 0 0 index 1 (1- edit-pos))))
-      (lambda (x)
-        (- x (<a class=quiet href="#readsample">read-sample</a> previous-edit)) #f))))
-
-(<a class=quiet href="#mapchannel">map-channel</a> (snd-diff))
-</pre></td></tr></table>
-
-Once the reader has been set up to read at a given edit position, subsequent
-edits won't affect it. One sequence that takes advantage of this is: make-sample-reader, scale-by 0,
-then run an overlap-add process on the data from before the scaling.
-<br><br>
-'snd' can also be a filename (a string); in this way a sample-reader
-can read external sounds without going to the trouble of loading them into Snd.
-<pre>
-    (define reader (make-sample-reader 100 "oboe.snd"))
-</pre>
-make-sample-reader is probably the most useful function in Snd; there are lots of examples
-in the Scheme, Ruby, and Forth files.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- make-track-sample-reader -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="maketracksamplereader">make-track-sample-reader</a> (track :optional chn beg)</code>
-</td></tr><tr><td></td><td>
-make-track-sample-reader creates a track-sample-reader reading 'track'.  'beg' is the starting point of the reader within the track.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- mix-sample-reader? -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixsamplereaderQ">mix-sample-reader?</a> (obj)</code>
-</td></tr><tr><td></td><td>
-mix-sample-reader? returns #t if 'obj' is a mix-sample-reader.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- next-sample -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="nextsample">next-sample</a> (obj)</code>
-</td></tr><tr><td></td><td>
-next-sample returns the next sample (reading forward) read by the sample-reader 'obj'.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- previous-sample -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="previoussample">previous-sample</a> (obj)</code>
-</td></tr><tr><td></td><td>
-previous-sample returns the previous sample in the stream read by the sample-reader 'obj'.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- read-mix-sample -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readmixsample">read-mix-sample</a> (obj)</code>
-</td></tr><tr><td></td><td>
-read-mix-sample returns the next sample read by the mix-sample-reader 'obj'.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- read-region-sample -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readregionsample">read-region-sample</a> (obj)</code>
-</td></tr><tr><td></td><td>
-read-region-sample returns the next sample read by the region-sample-reader 'obj'.
-
-<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define* (region-&gt;vct reg #:optional (chn 0))
-  (if (<a class=quiet href="#regionok">region?</a> reg)
-      (if (&lt; chn (<a class=quiet href="#regionchans">region-chans</a> reg))
-	  (let* ((reader (<em class=red>make-region-sample-reader</em> 0 reg chn))
-		 (len (<a class=quiet href="#regionframes">region-frames</a> reg))
-		 (data (<a class=quiet href="#makevct">make-vct</a> len)))
-	    (do ((i 0 (1+ i)))
-		((= i len) data)
-	      (<a class=quiet href="#vctset">vct-set!</a> data i (<em class=red>reader</em>))))
-	  (throw 'no-such-channel (list "region-&gt;vct" reg chn)))
-      (throw 'no-such-region (list "region-&gt;vct" reg))))
-</pre></td></tr></table>
-
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- read-sample -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readsample">read-sample</a> (obj)</code>
-</td></tr><tr><td></td><td>
-read-sample returns the next sample read by the sample-reader 'obj', 
-reading in the direction set by <a class=quiet href="#makesamplereader">make-sample-reader</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- read-track-sample -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="readtracksample">read-track-sample</a> (obj)</code>
-</td></tr><tr><td></td><td>
-read-track-sample returns the next sample read by the track-sample-reader 'obj'.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- region-sample-reader? -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="regionsamplereaderQ">region-sample-reader?</a> (obj)</code>
-</td></tr><tr><td></td><td>
-region-sample-reader? returns #t if 'obj' is a region sample-reader.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- sample-reader-at-end? -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderatendQ">sample-reader-at-end?</a> (obj)</code>
-</td></tr><tr><td></td><td>
-sample-reader-at-end? returns #t if the sample-reader 'obj' (any kind of reader) is at the end of the sound (or whatever it is reading),
-and hence is returning 0.0 each time it is called.
-See <a href="sndscm.html#locatezero">locate-zero</a> in examp.scm, or <a href="sndscm.html#linearsrcchannel">linear-src-channel</a> in dsp.scm.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- sample-reader-home -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderhome">sample-reader-home</a> (obj)</code>
-</td></tr><tr><td></td><td>
-sample-reader-home returns information describing the source of the data the sample-reader 'obj' is reading.
-if 'obj' is a sound sample reader, it returns a list with the sound index and channel number associated with 'obj'.
-If 'obj' is a mix reader, it returns the mix's id.  If 'obj' is a track reader, it returns a list with the track id and channel number.
-Finally, if 'obj' is a region reader, it returns a list with the region id.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- sample-reader-position -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderposition">sample-reader-position</a> (obj)</code>
-</td></tr><tr><td></td><td>
-sample-reader-position returns the
-current (sample-wise) location of the sample-reader 'obj' (any kind of reader).
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- sample-reader? -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="samplereaderQ">sample-reader?</a> (obj)</code>
-</td></tr><tr><td></td><td>
-sample-reader? returns #t if 'obj' is a sample-reader.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- track-sample-reader? -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="tracksamplereaderQ">track-sample-reader?</a> (obj)</code>
-</td></tr><tr><td></td><td>
-track-sample-reader? returns #t if 'obj' is a track-sample-reader.
-</td></tr>
-</table>
-
-<p>If your extension language supports it, the read-sample functions can be omitted: <code>(reader)</code> is the same as <code>(<a class=quiet href="#readsample">read-sample</a> reader)</code>.
-</p>
-
-<br>
-<table width="35%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Snd-&gt;sample</h4></td></tr></table>
-
-<p>There is a Snd-specific CLM-style generator that redirects CLM instrument input (via in-any, ina, etc)
-to Snd data, snd-&gt;sample. 
-</p>
-
-<table border=0 cellspacing=0 hspace=10>
-
-<!-- make-snd->sample -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="makesndtosample">make-snd-&gt;sample</a> (:optional snd)</code>
-</td></tr><tr><td width=60><br></td><td>
-make-snd-&gt;sample creates a Snd data reader for use with CLM's in-any, file-&gt;sample, etc.
-</td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
-<!-- snd->sample -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sndtosample">snd-&gt;sample</a> (gen frame :optional chan)</code>
-</td></tr><tr><td><br></td><td>
-snd-&gt;sample gets the next sample from the data accessed by 'gen', similar to file-&gt;sample.
-If *reverb* is a snd-&gt;sample generator, for example,
-<a class=quiet href="clm.html#ina">ina</a> and <a class=quiet href="clm.html#filetosample">file-&gt;sample</a> actually call snd-&gt;sample.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- snd->sample? -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sndtosamplep">snd-&gt;sample?</a> (obj)</code>
-</td></tr><tr><td><br></td><td>
-snd-&gt;sample? returns #t if 'obj' is a snd-&gt;sample generator.
-</td></tr>
-
-</table>
-
-
 <br>
 <table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmarks">Marks</a></h3></td></tr></table>
 
@@ -4471,6 +4483,25 @@ without any argument, or with just a sound index returns a list of lists; each i
 of current marks (ids) active in that channel, ordered by sample number.  If the channel argument is
 specified, marks returns just the list of mark ids.  If the edit history position is given,
 the list of ids reflects the mark list at that time in the edit history.  See <a href="sndscm.html#describemark">describe-mark</a> in marks.scm.
+<br><br>
+Say we have two sounds open, 2 marks in the first (a mono sound), and one
+in the 2nd channel of the 2nd (a stereo sound):
+<pre>
+    :<em class=typing>(marks 0 0)</em>
+    <em class=listener>(0 1)</em>     ; these are mark id's, as returned by the add-mark function for example
+    :<em class=typing>(marks 1)</em>
+    <em class=listener>(() (2))</em>  ; no mark in channel 0, one in channel 1
+    :<em class=typing>(marks)</em>
+    <em class=listener>(((0 1)) (() (2)))</em>
+
+    Ruby:
+    :<em class=typing>marks()</em>
+    <em class=listener>[[[0, 1]], [nil, [2]]]</em>
+
+    Forth:
+    <em class=listener>snd&gt;</em> <em class=typing>marks</em>
+    <em class=listener>'( '( '( 0 1 ) ) '( nil '( 2 ) ) )</em>
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

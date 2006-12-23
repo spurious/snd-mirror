@@ -608,7 +608,6 @@
 
 ;;; SOMEDAY: channel slicer: grn but output locs permuted, reversed etc
 ;;; TODO: need snd-run support for frame-readers (and map-frame frame return?)
-;;; TODO: write doc that describes all these sample accessors: sample-at-a-time, readers, chunked versions (->vct), top level (menu, save-sound-as)
 
 (define* (simultaneous-zero-crossing :optional (beg 0) dur snd)
   "(simultaneous-zero-crossing :option beg dur snd) looks through all channels of 'snd' for a simultaneous zero crossing."

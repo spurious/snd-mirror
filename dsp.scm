@@ -2514,7 +2514,7 @@ and replaces it with the spectrum given in coeffs"
 
 (define* (unclip-channel :optional snd chn)
   (let* ((clip-size 256)                        ; current clip-data size
-	 (clip-data (make-vector clip-size 0))  ; clipped portion begins and end points
+	 (clip-data (make-vector clip-size 0))  ; clipped portion begin and end points
 	 (clips 0)                              ; number of clipped portions * 2
 	 (unclipped-max 0.0))
 

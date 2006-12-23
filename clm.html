@@ -1328,7 +1328,8 @@ set it to .0001 for example to get most of the random values close to 0.0.
 The central-limit theorem says that you can get closer and closer to gaussian
 noise simply by adding rand's together.  Orfanidis in 
 "Introduction to Signal Processing" says 12 calls on rand will
-do perfectly well.  We could define our own generator:
+do perfectly well. 
+We could define our own generator:
 </p><pre>
 (defmacro gaussian-noise (r)
   ;; r=a rand generator allocated via make-rand
@@ -1336,7 +1337,37 @@ do perfectly well.  We could define our own generator:
      (dotimes (i 12) (incf val (<em class=red>rand</em> ,r)))
      val))
 </pre>
-<p>For a discussion of the central limit theorem, see
+<p>In Snd, you can watch this (or any other distribution) in action via:
+</p>
+<pre>
+(define (add-rands n)
+  (let ((bins (make-vector 201 0))
+	(rands (make-vector n #f)))
+    (do ((i 0 (1+ i)))
+	((= i n))
+      (vector-set! rands i (make-rand :frequency (mus-srate) :amplitude (/ 100 n)))
+      (rand (vector-ref rands i)))
+    (do ((i 0 (1+ i)))
+	((= i 100000))
+      (let ((sum 0.0))
+	(do ((k 0 (1+ k)))
+	    ((= k n))
+	  (set! sum (+ sum (rand (vector-ref rands k)))))
+	(let ((bin (inexact-&gt;exact (+ 100 (round sum)))))
+	  (vector-set! bins bin (+ (vector-ref bins bin) 1)))))
+    bins))
+
+(let ((ind (new-sound "test.snd")))
+  (do ((n 1 (+ n 1)))
+      ((or (c-g?) (= n 12)))
+    (let* ((bins (vector-&gt;vct (add-rands n)))
+	   (pk (vct-peak bins)))
+      (vct-&gt;channel (vct-scale! bins (/ 1.0 pk)))
+      (set! (x-axis-label) (format #f "n: ~D" n))
+      (update-time-graph))))
+</pre>
+<p>
+For a discussion of the central limit theorem, see
 Korner "Fourier Analysis" and Miller Puckette's dissertation:
 http://www-crca.ucsd.edu/~msp/Publications/thesis.ps.
 Another method is the "rejection method" in which we generate random number
