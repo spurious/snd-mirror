@@ -589,10 +589,10 @@ void find_help(void)
     #define search_procedure_example "    >set_search_procedure(lambda do |y| y > 0.1 end)"
   #endif
   #if HAVE_FORTH
-    #define basic_example "lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc"
-    #define find_channel_example "    >lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc find-channel\n    '( #t 4423 )"
-    #define count_matches_example "     >lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc count-matches\n     2851"
-    #define search_procedure_example "   >lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc set-search-procedure"
+    #define basic_example "lambda: <{ y }> y 0.1 f> ;"
+    #define find_channel_example "    >lambda: <{ y }> 0.1 y f< ; find-channel\n    '( #t 4423 )"
+    #define count_matches_example "     >lambda: <{ y }> 0.1 y f< ; count-matches\n     2851"
+    #define search_procedure_example "   >lambda: <{ y }> 0.1 y f< ; set-search-procedure"
   #endif
 
   snd_help_with_xrefs("Find", 
@@ -2852,7 +2852,7 @@ void find_dialog_help(void)
     #define closure_example "def zero_plus\n  lastn = 0.0\n  lambda do |n|\n    rtn = lastn < 0.0 and n >= 0.0 and -1\n    lastn = n\n    rtn\n  end\nend"
   #endif
   #if HAVE_FORTH
-    #define find_example "lambda: { y } 0.1 y f< if #t else #f then ; 1 make-proc"
+    #define find_example "lambda: <{ y }> 0.1 y f< ;"
     #define zero_plus "zero+"
     #define closure_example ": zero+ ( -- prc; n self -- val )\n  lambda-create 0.0 ( lastn ) , latestxt 1 make-proc\n does> { n self -- val }\n  self @ ( lastn ) f0<  n f0>= &&  -1 && { rtn }\n  n self ! ( lastn = n )\n  rtn\n;" 
   #endif

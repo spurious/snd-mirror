@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Thu Dec 21 18:26:18 CET 2006
+\ Changed: Sat Dec 23 05:20:02 CET 2006
 
 \ Commentary:
 \
@@ -70,10 +70,15 @@ require examp
 
 \ --- apply func to every widget belonging to w ---
 
-: for-each-child ( wid xt -- )
+: for-each-child { wid xt -- }
   doc" Applies XT to WIDGET and each of its children."
-  { wid xt }
-  wid xt execute
+  xt xt? if
+    wid xt execute
+  else
+    xt proc? if
+      xt '( wid ) run-proc drop
+    then
+  then
   wid FXtIsComposite if
     wid '( FXmNchildren 0 ) FXtVaGetValues cadr each ( w ) xt recurse end-each
   then
@@ -81,7 +86,7 @@ require examp
 
 hide
 : children->array-xt ( ary -- xt; child self -- )
-  lambda-create , latestxt
+  1 proc-create swap ,
  does> ( child self -- )
   ( self ) @ swap ( child ) array-push drop
 ;
@@ -103,16 +108,17 @@ previous
       w swap
       leave
     then
-  end-each unless 'no-such-widget '( get-func-name name ) fth-throw then
+  end-each
+  unless 'no-such-widget '( get-func-name name ) fth-throw then
 ;
 
 : widget-exists? { widget name -- f }
-  #f widget children->array each ( w ) FXtName name string= if not leave then end-each
+  #f ( flag ) widget children->array each ( w ) FXtName name string= if not leave then end-each
 ;
 : main-widget-exists? ( name -- f ) main-widgets cadr swap widget-exists? ;
 
 hide
-: display-widget { widget n -- }
+: display-widget <{ widget n -- }>
   widget FXtName empty? if
     $" <unnamed>"
   else
@@ -124,15 +130,14 @@ hide
   then
 ;
 set-current
-: display-widget-tree ( widget -- )
+: display-widget-tree { widget -- }
   doc" Displays the hierarchy of widgets beneath WIDGET."
-  ( widget ) 0 ['] display-widget execute
+  ['] display-widget '( widget 0 ) run-proc drop
 ;
 previous
 
 hide
-: change-color-xt ( w -- )
-  { w }
+: change-color-xt <{ w -- }>
   w FXtIsWidget if
     w FXmIsScrollBar if
       w position-color FXmChangeColor drop
@@ -187,7 +192,7 @@ previous
   '( FXmNleftAttachment  FXmATTACH_FORM
      FXmNrightAttachment FXmATTACH_FORM
      FXmNtopAttachment   FXmATTACH_FORM ) 2 list-append to args
-  name typ listener-form args FXtCreateManagedWidget { top-widget }
+  name typ listener-form args undef FXtCreateManagedWidget { top-widget }
   listener-scroll
   '( FXmNtopAttachment FXmATTACH_WIDGET FXmNtopWidget top-widget ) FXtVaSetValues drop
   listener-scroll FXtManageChild drop
@@ -252,17 +257,17 @@ hide
     snd chn mark-list '( FXmNchildren 0 ) FXtVaGetValues cadr each FXtUnmanageChild drop end-each
   then
 ;
-: marks-focus-cb        ( w c i -- ) 2drop '( FXmNbackground white-pixel ) FXtVaSetValues drop ;
-: marks-losing-focus-cb ( w c i -- ) 2drop '( FXmNbackground basic-color ) FXtVaSetValues drop ;
-: marks-activate-cb { w c info -- }
+: marks-focus-cb        <{ w c i -- }> w '( FXmNbackground white-pixel ) FXtVaSetValues drop ;
+: marks-losing-focus-cb <{ w c i -- }> w '( FXmNbackground basic-color ) FXtVaSetValues drop ;
+: marks-activate-cb <{ w c info -- }>
   w '( FXmNuserData 0 ) FXtVaGetValues cadr { id }
   w '( FXmNvalue 0 )    FXtVaGetValues cadr { txt }
   txt string? txt length 0> && if txt string->number else #f then { samp }
   samp if id samp set-mark-sample else id delete-mark then drop
   w '( FXmNbackground basic-color ) FXtVaSetValues drop
 ;
-: marks-enter-cb { w c i f -- } mouse-enter-text-hook '( w ) run-hook drop ;
-: marks-leave-cb { w c i f -- } mouse-leave-text-hook '( w ) run-hook drop ;
+: marks-enter-cb <{ w c i f -- }> mouse-enter-text-hook '( w ) run-hook drop ;
+: marks-leave-cb <{ w c i f -- }> mouse-leave-text-hook '( w ) run-hook drop ;
 : make-mark-list { snd chn -- }
   snd chn mark-list-length { cur-len }
   snd chn deactivate-channel
@@ -302,11 +307,11 @@ hide
     new-marks length cur-len ?do
       $" field" FxmTextFieldWidgetClass lst
       '( FXmNbackground basic-color ) undef FXtCreateWidget { tf }
-      tf FXmNfocusCallback       ['] marks-focus-cb        3 make-proc undef FXtAddCallback drop
-      tf FXmNlosingFocusCallback ['] marks-losing-focus-cb 3 make-proc undef FXtAddCallback drop
-      tf FXmNactivateCallback    ['] marks-activate-cb     3 make-proc undef FXtAddCallback drop
-      tf FEnterWindowMask #f     ['] marks-enter-cb        4 make-proc undef FXtAddEventHandler drop
-      tf FLeaveWindowMask #f     ['] marks-leave-cb        4 make-proc undef FXtAddEventHandler drop
+      tf FXmNfocusCallback       ['] marks-focus-cb        undef FXtAddCallback drop
+      tf FXmNlosingFocusCallback ['] marks-losing-focus-cb undef FXtAddCallback drop
+      tf FXmNactivateCallback    ['] marks-activate-cb     undef FXtAddCallback drop
+      tf FEnterWindowMask #f     ['] marks-enter-cb        undef FXtAddEventHandler drop
+      tf FLeaveWindowMask #f     ['] marks-leave-cb        undef FXtAddEventHandler drop
     loop
   then
   snd chn new-marks length set-mark-list-length
@@ -322,31 +327,31 @@ hide
   end-each
   #f
 ;
-: remark { id snd chn reason -- } snd chn make-mark-list ;
-: unremark { snd -- } snd channels 0 ?do snd i deactivate-channel loop ;
-: marks-edit-cb ( snd chn -- proc; self -- )
-  lambda-create , , latestxt 0 make-proc
+: remark <{ id snd chn reason -- }> snd chn make-mark-list ;
+: unremark <{ snd -- }> snd channels 0 ?do snd i deactivate-channel loop ;
+: marks-edit-cb { snd chn -- proc; self -- }
+  0 proc-create chn , snd ,
  does> ( self -- )
   { self }
   self @ { chn }
   self cell+ @ { snd }
   snd chn mark-list FWidget? if snd chn make-mark-list then
 ;
-: open-remarks { snd -- }
+: open-remarks <{ snd -- }>
   snd channels 0 ?do
     snd i after-edit-hook snd i marks-edit-cb add-hook!
     snd i undo-hook       snd i marks-edit-cb add-hook!
   loop
 ;
-: marks-update-proc { snd -- } snd channels 0 ?do snd i make-mark-list loop ;
-: marks-update-cb ( snd -- proc ) ['] marks-update-proc 1 make-proc ;
+: marks-update-proc <{ snd -- }> snd channels 0 ?do snd i make-mark-list loop ;
+: marks-update-cb <{ snd -- proc }> snd ['] marks-update-proc ;
 set-current
 : add-mark-pane ( -- )
   #t to including-mark-pane
-  mark-hook       ['] remark          4 make-proc add-hook!
-  close-hook      ['] unremark        1 make-proc add-hook!
-  after-open-hook ['] open-remarks    1 make-proc add-hook!
-  update-hook     ['] marks-update-cb 1 make-proc add-hook!
+  mark-hook       ['] remark          add-hook!
+  close-hook      ['] unremark        add-hook!
+  after-open-hook ['] open-remarks    add-hook!
+  update-hook     ['] marks-update-cb add-hook!
 ;
 previous
 
@@ -368,7 +373,7 @@ hide
 ;
 
 : draw-smpte-label ( vars -- proc; snd chn self -- )
-  lambda-create , latestxt 2 make-proc
+  2 proc-create swap ,
  does> ( snd chn self -- )
   { snd chn self }
   self @ { vars }
@@ -450,13 +455,13 @@ hide
   then
 ;
 
-: show-label { data id -- }
+: show-label <{ data id -- }>
   data car nil? unless
     data car   { snd }
     data cadr  { wid }
     data caddr { app }
     snd sound? if wid  snd file-name disk-kspace kmg change-label then
-    app 10000 running-word ( recurse doesn't work here ) 2 make-proc data FXtAppAddTimeOut drop
+    app 10000 running-word data FXtAppAddTimeOut drop
   then
 ;
 set-current
@@ -492,7 +497,7 @@ set-current
       str FXmStringFree drop
       '( snd new-label app ) to previous-label
       labelled-snds previous-label array-push drop
-      app 10000 ['] show-label 2 make-proc previous-label FXtAppAddTimeOut drop
+      app 10000 ['] show-label previous-label FXtAppAddTimeOut drop
     else
       $" no sound found for disk space label" _ snd-error drop
     then

@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Wed Dec 20 05:50:22 CET 2006
+\ Changed: Sat Dec 23 05:06:02 CET 2006
 
 \ Commentary:
 \
@@ -48,7 +48,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 20-Dec-2006" value *clm-version*
+$" fth 23-Dec-2006" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [undefined] clm-print [if] ' fth-print alias clm-print [then]
@@ -386,7 +386,12 @@ $" with-sound interrupt" create-exception with-sound-interrupt
 : ws-interrupt? ( -- ) c-g? if 'with-sound-interrupt '() fth-throw then ;
 : ws-info ( start dur -- )
   { start dur }
-  *notehook* xt? if *clm-current-instrument* start dur *notehook* execute then
+  *notehook* xt? if *clm-current-instrument* start dur *notehook* execute
+  else
+    *notehook* proc? if
+      *notehook* '( *clm-current-instrument* start dur ) run-proc drop
+    then
+  then
   ws-interrupt?
 ;
 
@@ -398,7 +403,6 @@ hide
 ;
 : (run-instrument) ( start dur args -- limit begin )
   { start dur args }
-  save-stack { s }
   args hash? unless #{} to args then
   :degree    args :degree   hash-ref            0.0 ||
   :distance  args :distance hash-ref            1.0 ||
@@ -424,7 +428,6 @@ hide
       then
     then
   then
-  s restore-stack
   start dur (run)
 ;
 : (end-run) ( value index -- ) *locsig* swap rot locsig drop ;
@@ -435,7 +438,7 @@ set-current
 \ RUN-INSTRUMENT/END-RUN requires at least an opened *output*
 \ generator (file->sample), optional an opened *reverb* generator.  It
 \ uses LOCSIG to set samples in output file.  At the end of the loop a
-\ sample value must pushed on top of stack (next before END-RUN)!
+\ sample value must remain on top of stack!
 \
 \ instrument: foo
 \   0 0.1 #{} run-instrument 0.2 end-run
@@ -454,13 +457,14 @@ set-current
 previous
 
 : reverb-info ( caller in-chans out-chans -- )
-  3 >list $" %s on %d in and %d out channels" _  swap clm-message
+  { caller in-chans out-chans }
+  $" %s on %d in and %d out channels" '( caller in-chans out-chans ) clm-message
 ;
 
 \ === Helper functions for instruments ===
 hide
 : ins-info   ( ins-name -- ) to *clm-current-instrument* ;
-: event-info ( ev-name -- )  *verbose* if '() clm-message else drop then ;
+: event-info ( ev-name -- )  *clm-verbose* if '() clm-message else drop then ;
 set-current
 : instrument: ( -- )
   >in @ parse-word $>string { ins-name } >in !
@@ -833,8 +837,8 @@ set-current
 ;
 : with-sound-main ( body-xt ws -- ws )
   { body-xt ws }
-  body-xt xt? body-xt 1 running-word $" an xt"  assert-type
-  ws    hash? ws      2 running-word $" a hash" assert-type
+  body-xt xt? body-xt proc? || body-xt 1 running-word $" a proc or xt" assert-type
+  ws hash?                     ws      2 running-word $" a hash"       assert-type
   ws :old-*output*    *output*         hash-set!
   ws :old-*reverb*    *reverb*         hash-set!
   ws :old-verbose     *verbose*        hash-set! 
@@ -851,7 +855,9 @@ set-current
   ws :notehook                         hash-ref  to *notehook*
   ws :old-decay-time  *clm-decay-time* hash-set!
   ws :decay-time                       hash-ref  to *clm-decay-time*
-  ws :reverb hash-ref if
+  ws :reverb hash-ref { reverb-xt }
+  reverb-xt if
+    reverb-xt xt? reverb-xt proc? || reverb-xt 3 running-word $" a proc or xt" assert-type
     #t
   else
     ws :reverb-file-name #f hash-set!
@@ -900,7 +906,11 @@ set-current
   ws :timer hash-ref start-timer
   \ compute ws body
   *clm-debug* if
-    body-xt execute			\ provides a better backtrace
+    body-xt xt? if
+      body-xt execute			\ provides a better backtrace
+    else
+      body-xt '() run-proc drop
+    then
   else
     body-xt 'with-sound-interrupt '() fth-catch if
       stack-reset
@@ -911,18 +921,22 @@ set-current
       exit
     then
   then
-  rev? if
+  reverb-xt if
     *reverb* mus-close drop
     ws :reverb-file-name hash-ref undef make-file->sample to *reverb*
     *reverb* file->sample? unless
       'with-sound-error '( get-func-name $" cannot open file->sample" _ ) fth-throw
     then
     \ compute ws reverb
-    ws :reverb-data hash-ref each end-each ( push reverb arguments on stack )
     *clm-debug* if
-      ws :reverb hash-ref execute	\ provides a better backtrace
+      reverb-xt xt? if
+	\ push reverb arguments on stack
+	ws :reverb-data hash-ref each end-each reverb-xt execute
+      else
+	reverb-xt ws :reverb-data hash-ref run-proc drop
+      then
     else
-      ws :reverb hash-ref 'with-sound-interrupt '() fth-catch if
+      reverb-xt 'with-sound-interrupt '() fth-catch if
 	stack-reset
 	*output* mus-close drop
 	*reverb* mus-close drop
@@ -936,11 +950,11 @@ set-current
   *output* mus-close drop
   ws :timer hash-ref stop-timer
   ws ws-get-snd drop
-  ws :statistics    hash-ref         if ws ws-statistics then
-  ws :delete-reverb hash-ref rev? && if ws :reverb-file-name hash-ref file-delete then
-  ws :scaled-to     hash-ref   	     if ws ws-scaled-to  then
-  ws :scaled-by     hash-ref   	     if ws ws-scaled-by  then
-  ws :play          hash-ref   	     if ws ws-play-it    then
+  ws :statistics    hash-ref              if ws ws-statistics then
+  ws :delete-reverb hash-ref reverb-xt && if ws :reverb-file-name hash-ref file-delete then
+  ws :scaled-to     hash-ref   	     	  if ws ws-scaled-to  then
+  ws :scaled-by     hash-ref   	     	  if ws ws-scaled-by  then
+  ws :play          hash-ref   	     	  if ws ws-play-it    then
   ws ws-after-output ( ws )
 ;
 previous
@@ -1077,16 +1091,20 @@ lambda: { tmp1 tmp2 }\n\
   tmp1 clm-mix\n\
 ; ( body-xt ) ' sound-let with-sound drop"
   { ws-xt-lst body-xt }
-  ws-xt-lst list? ws-xt-lst 1 running-word $" a list" assert-type
-  body-xt   xt?   body-xt   2 running-word $" an xt"  assert-type
-  #() { outfiles }
+  ws-xt-lst list?              ws-xt-lst 1 running-word $" a list"       assert-type
+  body-xt xt? body-xt proc? ||   body-xt 1 running-word $" a proc or xt" assert-type
+  ws-xt-lst length nil make-list { outfiles } \ run-proc requires a list, not an array
   ws-xt-lst each { arg }
     fth-tempnam { oname }
     arg cdr     ( ws-xts )  each end-each
     arg car     ( ws-args ) each end-each :output oname with-sound drop
-    outfiles oname array-push drop
+    outfiles i oname list-set!
   end-each
-  outfiles each end-each body-xt execute
+  body-xt xt? if
+    outfiles each end-each body-xt execute
+  else
+    body-xt outfiles run-proc drop
+  then
   outfiles each file-delete end-each
 ;
 
@@ -1104,7 +1122,7 @@ instrument: simp ( start dur freq amp -- )
 : run-test ( -- ) 0.0 1.0 330.0 0.5 simp ;
 
 : input-fn ( gen -- proc; dir self -- r )
-  lambda-create , latestxt 1 make-proc
+  1 proc-create swap ,
  does> ( dir self -- r )
   nip @ readin
 ;

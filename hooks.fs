@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Aug 08 23:27:50 CEST 2006
-\ Changed: Sat Dec 16 03:58:44 CET 2006
+\ Changed: Sat Dec 23 04:26:23 CET 2006
 
 \ Commentary:
 
@@ -114,7 +114,15 @@ then restores HOOK to its previous state."
   hook hook->list { old-procs }
   hook reset-hook!
   local-hook-procs each ( proc ) hook swap add-hook! end-each
-  thunk execute ( result )
+  thunk xt? if
+    thunk execute
+  else
+    thunk proc? if
+      thunk '() run-proc
+    else
+      #f
+    then
+  then ( result )
   hook reset-hook!
   old-procs each ( proc ) hook swap add-hook! end-each
 ;

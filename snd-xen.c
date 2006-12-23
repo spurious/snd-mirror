@@ -2032,9 +2032,7 @@ returns its id (an integer, used by " S_delete_watcher "). "
   return(C_TO_XEN_INT(floc));
 }
 
-/* TODO: watcher fs / rb
- * TODO: current-window-display in fs loses last portion of graph? (int div problem)
- */
+/* TODO: watcher fs / rb  */
 
 
 /* -------- source file extensions list -------- */

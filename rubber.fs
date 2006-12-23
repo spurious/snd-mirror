@@ -2,7 +2,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Jan 06 05:32:57 CET 2006
-\ Changed: Mon Dec 11 14:58:54 CET 2006
+\ Changed: Sat Dec 23 00:11:14 CET 2006
 
 \ Commentary:
 \
@@ -84,8 +84,8 @@ hide
     x xinc f+ to x
   end-map ( data )
 ;
-: rubber-cb ( stretch snd chn -- proc; self -- )
-  lambda-create , , , latestxt 0 make-proc
+: rubber-cb { stretch snd chn -- proc; self -- }
+  0 proc-create chn , snd , stretch ,
  does> ( self -- )
   { self }
   self @ { chn }

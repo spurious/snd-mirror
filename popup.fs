@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Thu Dec 21 18:38:31 CET 2006
+\ Changed: Sat Dec 23 00:53:15 CET 2006
 
 \ Commentary:
 
@@ -29,7 +29,7 @@ require snd-xm
 
 \ for prefs
 : edhist-help-edits ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   $" Edit History Functions" _
@@ -45,8 +45,8 @@ all saved edit lists." _
 
 hide
 \ --- make-simple-popdown-menu for fft-popup-menu ---
-: popup-cascade-cb ( children xt -- proc; w c i self -- )
-  lambda-create , , latestxt 3 make-proc
+: popup-cascade-cb { children xt -- proc; w c i self -- }
+  3 proc-create xt , children ,
  does> ( w c i self -- )
   { w c info self }
   self cell+ @ ( children ) self @ ( xt ) execute
@@ -77,8 +77,8 @@ hide
 
 \ --- make-popdown-entry for listener-popup-menu ---
 #() value listener-values
-: collector-cb ( func collector -- proc; w c i self -- )
-  lambda-create , , latestxt 3 make-proc
+: collector-cb { func collector -- proc; w c i self -- }
+  3 proc-create collector , func ,
  does> ( w c i self -- )
   { w c info self }
   self @ { collector }
@@ -86,16 +86,15 @@ hide
   sounds collector execute car func execute
 ;
 : cas-cb ( func -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { func }
   w current-label 0 find-sound func execute
 ;
-: popdown-cascade-cb ( func collector menu children -- proc; w c i self -- )
-  lambda-create , , , , latestxt 3 make-proc
- does> ( w c i self -- )
-  { w c info self }
+: popdown-cascade-cb { func collector menu children -- proc; w c i self -- }
+  3 proc-create children , menu , collector , func ,
+ does> { w c i self -- }
   self @ { children }
   self cell+ @ { menu }
   self 2 cells + @ { collector }
@@ -195,7 +194,7 @@ hide
 \ --- selection popup ---
 
 : sel-stop-play-cb ( vars -- proc; self -- )
-  lambda-create , latestxt 0 make-proc
+  0 proc-create swap ,
  does> ( self -- )
   @ { vars }
   vars 'stopping hash-ref if
@@ -207,7 +206,7 @@ hide
 ;
 
 : sel-play-cb ( vars -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self -- }
   self @ { vars }
@@ -236,8 +235,8 @@ hide
     vars 'stop-widget hash-ref $" Play" _ change-label
   then
 ;
-: play-selection-again ( w vars -- proc; reason self -- )
-  lambda-create , , latestxt 1 make-proc
+: play-selection-again { w vars -- proc; reason self -- }
+  1 proc-create vars , w ,
  does> ( reason self -- )
   { reason self }
   self @ { vars }
@@ -251,7 +250,7 @@ hide
   then
 ;
 : sel-loop-cb ( vars -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self -- }
   self @ { vars }
@@ -267,21 +266,21 @@ hide
 ;
 
 : sel-del ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   delete-selection drop
 ;
 
 : sel-zero ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   0.0 scale-selection-by drop
 ;
 
 : as-one-edit-thunk ( selection -- proc; self -- )
-  lambda-create , latestxt 0 make-proc
+  0 proc-create swap ,
  does> ( self -- )
   @ { selection }
   selection car  { snd }
@@ -292,7 +291,7 @@ hide
   len snd chn #f frames < if len 1+ snd chn #f frames len - snd chn delete-samples drop then
 ;
 : sel-crop ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   selection-members each { selection }
@@ -301,14 +300,14 @@ hide
 ;
 
 : sel-save-as ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   save-selection-dialog drop
 ;
 
 : sel-copy ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   snd-tempnam { new-file-name }
@@ -317,7 +316,7 @@ hide
 ;
 
 : sel-cut ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   snd-tempnam { new-file-name }
@@ -327,7 +326,7 @@ hide
 ;
 
 : sel-marks ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   selection-members each { select }
@@ -341,7 +340,7 @@ hide
 ;
 
 : sel-info ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   #f #f selection-position { beg }
@@ -356,42 +355,42 @@ hide
 
 \ choice 2 == selection
 : sel-appcnt ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   #f 2 0 undef apply-controls drop
 ;
 
 : sel-rescnt ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   #f reset-controls drop
 ;
 
 : sel-unsel ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   #f #t set-selection-member? drop
 ;
 
 : sel-rev ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   reverse-selection drop
 ;
 
 : sel-mix ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   #f #f #f cursor mix-selection drop
 ;
 
 : sel-invert ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   -1.0 scale-selection-by drop
@@ -427,7 +426,7 @@ let: ( -- menu )
 #f value graph-popup-chn
 
 : stop-playing-cb ( vars -- proc; snd self -- )
-  lambda-create , latestxt 1 make-proc
+  1 proc-create swap ,
  does> ( snd self -- )
   { snd self }
   self @ { vars }
@@ -438,7 +437,7 @@ let: ( -- menu )
 ;
 
 : play-cb ( vars -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { vars }
@@ -460,7 +459,7 @@ let: ( -- menu )
 ;
 
 : pchan-cb ( vars -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { vars }
@@ -470,7 +469,7 @@ let: ( -- menu )
 ;
 
 : pcur-cb ( vars -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { vars }
@@ -481,7 +480,7 @@ let: ( -- menu )
 ;
 
 : pprev-cb ( vars -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { vars }
@@ -493,7 +492,7 @@ let: ( -- menu )
 ;
 
 : porig-cb ( vars -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { vars }
@@ -503,42 +502,42 @@ let: ( -- menu )
 ;
 
 : pundo-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   1 graph-popup-snd graph-popup-chn undo drop
 ;
 
 : predo-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   1 graph-popup-snd graph-popup-chn redo drop
 ;
 
 : prev-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd revert-sound drop
 ;
 
 : popen-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   #t open-file-dialog drop
 ;
 
 : psave-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd save-sound drop
 ;
 
 : psaveas-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd select-sound drop
@@ -546,35 +545,35 @@ let: ( -- menu )
 ;
 
 : pupdate-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd update-sound drop
 ;
 
 : pclose-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd close-sound-extend
 ;
 
 : pmixsel-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd graph-popup-chn #f cursor graph-popup-snd graph-popup-chn mix-selection drop
 ;
 
 : pinssel-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd graph-popup-chn #f cursor graph-popup-snd graph-popup-chn insert-selection drop
 ;
 
 : prepsel-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd { snd }
@@ -593,35 +592,35 @@ let: ( -- menu )
 ;
 
 : pselall-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd graph-popup-chn select-all drop
 ;
 
 : punsel-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   #f #t set-selection-member? drop
 ;
 
 : peqpan-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   equalize-panes drop
 ;
 
 : papcnt-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   #f 0 0 undef apply-controls drop
 ;
 
 : precnt-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   #f reset-controls drop
@@ -639,7 +638,7 @@ let: ( -- menu )
 ;
 
 : pinfo-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd { snd }
@@ -683,14 +682,14 @@ let: ( -- menu )
 ;
 
 : paddmrk-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd graph-popup-chn #f cursor graph-popup-snd graph-popup-chn add-mark drop
 ;
 
 : pdelmrk-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd graph-popup-chn #f marks { ms }
@@ -714,21 +713,21 @@ let: ( -- menu )
 ;
 
 : pdelamrk-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd graph-popup-chn delete-marks drop
 ;
 
 : pnextmrk-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   [char] j 4 graph-popup-snd graph-popup-chn key drop \ C-j
 ;
 
 : plastmrk-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   [char] - 4 graph-popup-snd graph-popup-chn key drop \ C--
@@ -736,7 +735,7 @@ let: ( -- menu )
 ;
 
 : exit-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   0 snd-exit drop
@@ -850,7 +849,7 @@ let: ( -- menu )
 ;
 
 : fft-peaks-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd graph-popup-chn show-transform-peaks not
@@ -858,7 +857,7 @@ let: ( -- menu )
 ;
 
 : fft-db-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd graph-popup-chn fft-log-magnitude not
@@ -866,7 +865,7 @@ let: ( -- menu )
 ;
 
 : fft-frq-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd graph-popup-chn fft-log-frequency not
@@ -874,7 +873,7 @@ let: ( -- menu )
 ;
 
 : fft-norm-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   graph-popup-snd graph-popup-chn transform-normalization dont-normalize = if
@@ -885,7 +884,7 @@ let: ( -- menu )
 ;
 
 : grp-lst-cb ( val -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ ( val ) graph-popup-snd choose-chan set-transform-graph-type drop
@@ -903,7 +902,7 @@ lambda: ( lst -- )
 
 #( 16 32 64 128 256 512 1024 2048 4096 8192 16384 65536 262144 1048576 ) value fft-siz-sizes
 : siz-lst-cb ( val -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ ( val ) graph-popup-snd choose-chan set-transform-size drop
@@ -944,7 +943,7 @@ lambda: ( lst -- )
    hann-poisson-window
    connes-window ) value fft-win-windows
 : win-lst-cb ( val -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ ( val ) graph-popup-snd choose-chan set-fft-window drop
@@ -983,7 +982,7 @@ lambda: ( lst -- )
 #( fourier-transform wavelet-transform autocorrelation cepstrum walsh-transform haar-transform )
 value fft-trn-transform
 : trn-lst-cb ( val -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ ( val ) graph-popup-snd choose-chan set-transform-type drop
@@ -1006,7 +1005,7 @@ lambda: ( lst -- )
 ; value trn-set
 
 : typ-lst-cb ( val -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ ( val ) graph-popup-snd choose-chan set-wavelet-type drop
@@ -1043,14 +1042,14 @@ lambda: ( lst -- )
 ; value typ-set
 
 : fft-color ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   color-dialog drop
 ;
 
 : fft-orient ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   #t orientation-dialog drop
@@ -1114,7 +1113,7 @@ hide
 #f  value edhist-chn
 
 : edhist-clear-edits ( -- proc; w c i self -- #f )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- #f )
   2drop 2drop
   '() to edhist-funcs
@@ -1122,7 +1121,7 @@ hide
 ;
 
 : edhist-save-edits ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- #f )
   2drop 2drop
   edhist-funcs '( edhist-snd edhist-chn ) list-assoc-ref { old-proc }
@@ -1137,20 +1136,19 @@ hide
 ;
 
 : edhist-reapply-edits ( -- proc; w c i self -- val )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- val )
   2drop 2drop
   edhist-funcs '( edhist-snd edhist-chn ) list-assoc-ref '( edhist-snd edhist-chn ) run-proc
 ;
 
 : edhist-set-wid ( -- proc; widget self -- )
-  lambda-create latestxt 1 make-proc
+  1 proc-create
  does> ( widget self -- )
   { w self }
   w nil cons to edhist-widgets
 ;
-: edhist-apply ( w c i -- )
-  { w c i }
+: edhist-apply <{ w c i -- }>
   edhist-funcs c range? if
     edhist-funcs c list-ref cdr ( proc ) '( edhist-snd edhist-chn ) run-proc
   then
@@ -1164,7 +1162,7 @@ lambda: ( lst -- ) drop
       $" wid" FxmPushButtonWidgetClass parent
       '( FXmNbackground highlight-color ) undef FXtCreateManagedWidget to button
       edhist-widgets '( button ) 2 list-append to edhist-widgets
-      button FXmNactivateCallback ['] edhist-apply 3 make-proc i FXtAddCallback drop
+      button FXmNactivateCallback ['] edhist-apply i FXtAddCallback drop
     else
       wids car to button
       wids cdr to wids
@@ -1233,8 +1231,8 @@ let: ( -- menu )
 
 \  --- activate the above menus ---
 
-: edhist-popup-handler-cb ( snd chn -- proc; w c i self -- )
-  lambda-create , , latestxt 3 make-proc
+: edhist-popup-handler-cb { snd chn -- proc; w c i self -- }
+  3 proc-create chn , snd ,
  does> ( w c i self -- )
   { w c info self }
   self @ { chn }
@@ -1248,8 +1246,8 @@ let: ( -- menu )
   then
 ;  
 
-: popup-handler-cb ( snd chn -- proc; w c i self -- )
-  lambda-create , , latestxt 3 make-proc
+: popup-handler-cb { snd chn -- proc; w c i self -- }
+  3 proc-create chn , snd ,
  does> ( w c i self -- )
   { w c info self }
   self @ { chn }
@@ -1433,7 +1431,7 @@ lambda: ( us -- )
 ; value list-focus-cb
 
 : list-help-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   listener-selection { selected }
@@ -1446,7 +1444,7 @@ lambda: ( us -- )
 ;
 
 : list-clear-cb ( -- proc; w c i self -- )
-  lambda-create latestxt 3 make-proc
+  3 proc-create
  does> ( w c i self -- )
   2drop 2drop
   clear-listener drop
@@ -1471,7 +1469,7 @@ lambda: ( us -- )
 ;
 
 : listener-popup-cb ( menu -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { menu }

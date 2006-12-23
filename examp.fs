@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Thu Dec 21 18:22:48 CET 2006
+\ Changed: Sat Dec 23 00:04:05 CET 2006
 
 \ Commentary:
 
@@ -191,7 +191,8 @@ previous
   doc" Returns a comb-filter ready for map-channel etc: 0.8 32 comb-filter map-channel.  \
 If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
   { scaler size }
-  lambda-create scaler size make-comb , latestxt 1 make-proc
+  scaler size make-comb { gen }
+  1 proc-create gen ,
  does> ( x self -- res )
   { x self }
   self @ ( cmb ) x 0.0 comb
@@ -205,7 +206,7 @@ If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
   scaler size make-comb { c1 }
   scaler size 0.75 f* f>s make-comb { c2 }
   scaler size 1.2  f* f>s make-comb { c3 }
-  lambda-create amp , c1 , c2 , c3 , latestxt 1 make-proc
+  1 proc-create amp , c1 , c2 , c3 ,
  does> ( x self -- res )
   { x self }
   self @ { amp }
@@ -223,14 +224,15 @@ If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
   { scaler size pm }
   :size size :max-size pm 0.0 max-envelope 1.0 f+ size f+ floor f>s make-comb { cmb }
   :envelope pm :end #f #f #f frames make-env { penv }
-  lambda-create cmb , penv , latestxt 1 make-proc
+  1 proc-create cmb , penv ,
  does> { x self -- val }
   self @ ( cmb ) x self cell+ @ ( penv ) env comb
 ;
 
 : notch-filter ( scaler size -- proc; x self -- val )
   doc" Returns a notch-filter: 0.8 32 notch-filter map-channel"
-  make-notch lambda-create , latestxt 1 make-proc
+  make-notch { gen }
+  1 proc-create gen ,
  does> { x self -- val }
   self @ ( cmd ) x 0.0 notch
 ;
@@ -238,7 +240,8 @@ If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
 : formant-filter ( radius frequency -- proc; x self -- val )
   doc" Returns a formant generator: 0.99 2400 formant-filter map-channel.  \
 Faster is:  0.99 2400 make-formant filter-sound"
-  make-formant lambda-create , latestxt 1 make-proc
+  make-formant { gen }
+  1 proc-create gen ,
  does> { x self -- val }
   self @ ( frm ) x formant
 ;
@@ -249,7 +252,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
   r1 f1 make-formant { fr1 }
   r2 f2 make-formant { fr2 }
   r3 f3 make-formant { fr3 }
-  lambda-create fr1 , fr2 , fr3 , latestxt 1 make-proc
+  1 proc-create fr1 , fr2 , fr3 ,
  does> { x self -- val }
   self           @ x formant
   self 1 cells + @ x formant f+
@@ -262,7 +265,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
   { radius move }
   radius move cadr make-formant { frm }
   :envelope move :end #f #f #f frames make-env { menv }
-  lambda-create frm , menv , latestxt 1 make-proc
+  1 proc-create frm , menv ,
  does> { x self -- val }
   self @ ( frm ) x formant ( ret )
   self @ ( frm ) self cell+ @ ( menv ) env set-mus-frequency drop
@@ -276,7 +279,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
   bases vct-length { len }
   len make-array map! radius bases i vct-ref make-formant end-map { frms }
   len make-array map!        freqs i vct-ref make-oscil   end-map { oscs }
-  lambda-create frms , amounts , oscs , bases , latestxt 1 make-proc
+  1 proc-create frms , amounts , oscs , bases ,
  does> { x self -- val }
   self           @ { frms }
   self 1 cells + @ { amounts }
@@ -294,7 +297,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
 
 : zero+ ( -- proc; n self -- val )
   doc" Finds the next positive-going zero crossing (if searching forward) (for use with C-s)"
-  lambda-create 0.0 ( lastn ) , latestxt 1 make-proc
+  1 proc-create 0.0 ( lastn ) ,
  does> { n self -- val }
   self @ ( lastn ) f0<  n f0>= && -1 && ( rtn )
   n self ! ( lastn = n )
@@ -303,7 +306,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
 
 : next-peak ( -- proc; n self -- val )
   doc" Finds the next max or min point in the time-domain waveform (for use with C-s)"
-  lambda-create ( last0 ) #f , ( last1 ) #f , latestxt 1 make-proc
+  1 proc-create ( last0 ) #f , ( last1 ) #f ,
  does> { n self -- val }
   self       @ { last0 }
   self cell+ @ { last1 }

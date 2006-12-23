@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Tue Dec 19 00:59:40 CET 2006
+\ Changed: Fri Dec 22 23:41:57 CET 2006
 
 \ Commentary:
 \
@@ -65,7 +65,7 @@ require env
 
 \ General input function for src, granulate etc.
 : readin-cb ( gen -- proc; dir self -- r )
-  lambda-create , latestxt 1 make-proc
+  1 proc-create swap ,
  does> ( dir self -- r )
   nip @ ( gen ) readin
 ;
@@ -2217,13 +2217,13 @@ instrument: resflt <{ start dur
 ;
 
 hide
-: scratch-input-cb ( rd samp -- proc ; dir self -- r )
-  lambda-create ( samp ) , ( rd ) , latestxt 1 make-proc
+: scratch-input-cb { rd samp -- proc ; dir self -- r }
+  1 proc-create samp , rd ,
  does> { dir self -- r }
   self @ { samp }
   self cell+ @ { rd }
   rd samp 0 file->sample		\ (file->sample rd samp 0)
-  samp dir + self !			\ samp += dir
+  dir self +!				\ samp += dir
 ;
 set-current
 
@@ -2278,7 +2278,8 @@ previous
 : scratch-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
   :dur   1.0 get-optkey drop
-  $" fyow.snd" find-file mus-sound-duration 0.2 f+ step
+  0.0 "fyow.snd" 1.5 '( 0 0.5 0.25 1 ) scratch-ins
+  "fyow.snd" find-file mus-sound-duration 0.2 f+ step
 ;
 
 \ PINS
@@ -2545,8 +2546,8 @@ instrument: za <{ start dur freq amp len1 len2 fb ffw -- }>
 ;
 
 hide
-: clm-src-cb ( gen -- proc; dir self -- r )
-  lambda-create , latestxt 1 make-proc
+: clm-src-cb { gen -- proc; dir self -- r }
+  1 proc-create gen ,
  does> ( dir self -- r )
   nip @ ( gen ) #f #f granulate
 ;

@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Thu Dec 21 18:36:48 CET 2006
+\ Changed: Sat Dec 23 04:29:59 CET 2006
 
 \ Commentary:
 \
@@ -48,15 +48,23 @@
 require clm
 require examp
 
-: tree-for-each ( xt tree -- ?? )
-  doc" Applies XT to every leaf of TREE."
-  { xt tree }
+: tree-for-each ( proc-or-xt tree -- ?? )
+  doc" Applies PROC-OR-XT to every leaf of TREE."
+  { proc-or-xt tree }
   tree null? unless
     tree pair? if
-      xt tree car recurse
-      xt tree cdr recurse
+      proc-or-xt tree car recurse
+      proc-or-xt tree cdr recurse
     else
-      tree xt execute
+      proc-or-xt xt? if
+	tree proc-or-xt execute
+      else
+	proc-or-xt proc? if
+	  proc-or-xt tree run-proc
+	else
+	  #f
+	then
+      then
     then
   then
 ;
@@ -69,12 +77,12 @@ require examp
 ;
 
 hide
-: delete-mix-xt       ( id -- ) delete-mix drop ;
-: delete-all-mixes-cb ( -- ) ['] delete-mix-xt undef undef mixes tree-for-each ;
+: delete-mix-xt       <{ id -- }> delete-mix drop ;
+: delete-all-mixes-cb <{ -- }> ['] delete-mix-xt undef undef mixes tree-for-each ;
 set-current
 : delete-all-mixes ( -- )
   doc" Removes all mixes (sets all amps to 0)"
-  ['] delete-all-mixes-cb 0 make-proc undef as-one-edit drop
+  ['] delete-all-mixes-cb undef as-one-edit drop
 ;
 previous
 
@@ -95,8 +103,7 @@ previous
 hide
 : pan-mix-cb ( name beg idx inchan chan0 chan1 auto-delete track-func -- prc ; self -- mx )
   { name beg idx inchan chan0 chan1 auto-delete track-func }
-  lambda-create name , beg , idx , inchan , chan0 , chan1 , auto-delete , track-func ,
-  latestxt 0 make-proc
+  0 proc-create name , beg , idx , inchan , chan0 , chan1 , auto-delete , track-func ,
  does> ( self -- mx )
   { self }
   self @ { name }
@@ -230,7 +237,7 @@ starting at START (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan
 
 hide
 : snap-mix-to-beat-cb ( at-tag-position -- proc; id samps self -- #t )
-  lambda-create , latestxt 2 make-proc
+  2 proc-create swap ,
  does> ( id samps self -- #t )
   { id samps self }
   self @ ( at-tag-position ) if id mix-tag-position else 0 then { offset }
@@ -292,7 +299,7 @@ previous
 
 hide
 : mix-name->id-xt ( name --; id self -- nothing or id )
-  lambda-create , latestxt
+  1 proc-create swap ,
  does> ( id self -- nothing or id )
   { id self }
   self @ ( name ) id mix-name string= if id then
@@ -322,12 +329,12 @@ previous
 \ === Tracks ===
 
 hide
-: delete-track-mix-xt  ( id -- ) dup mix-track 0<> if delete-mix then drop ;
-: delete-all-tracks-cb ( -- ) ['] delete-track-mix-xt undef undef mixes tree-for-each ;
+: delete-track-mix-xt  <{ id -- }> dup mix-track 0<> if delete-mix then drop ;
+: delete-all-tracks-cb <{ -- }> ['] delete-track-mix-xt undef undef mixes tree-for-each ;
 set-current
 : delete-all-tracks ( -- )
   doc" Removes all mixes that have an associated track (sets all amps to 0)."
-  ['] delete-all-tracks-cb 0 make-proc undef as-one-edit drop
+  ['] delete-all-tracks-cb undef as-one-edit drop
 ;
 previous
 
@@ -346,7 +353,7 @@ hide
 ;
 : reverse-track-cb ( trk -- proc; self -- )
   ( trk ) 0 track ['] track-sort-xt sort 
-  lambda-create , latestxt 0 make-proc
+  0 proc-create swap ,
  does> ( self -- )
   @ { ids-in-order }
   ids-in-order length 1 > if
@@ -437,8 +444,8 @@ previous
 ;
 
 hide
-: filter-track-cb ( flt reader -- proc; y self -- r )
-  lambda-create , , latestxt 1 make-proc
+: filter-track-cb { flt reader -- proc; y self -- r }
+  1 proc-create reader , flt ,
  does> ( y self -- r )
   { y self }
   self @ { reader }

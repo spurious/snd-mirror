@@ -4023,6 +4023,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	  return(XEN_FALSE);
 	}
     }
+
 #if HAVE_GUILE_DYNAMIC_WIND
   /* package up context and try to protect against errors/throws in the user's code */
   {
@@ -4097,7 +4098,7 @@ static XEN g_scan_chan(XEN proc, XEN beg, XEN end, XEN snd, XEN chn, XEN edpos)
     #define scan_chan_example "scan_chan(lambda do |y| y > 0.1 end)"
   #endif
   #if HAVE_FORTH
-    #define scan_chan_example "lambda: { y } y 0.1 f> if #t else #f then ; 1 make-proc scan-chan"
+    #define scan_chan_example "lambda: <{ y }> y 0.1 f> ; scan-chan"
   #endif
 
   #define H_scan_chan "(" S_scan_chan " func (start 0) (end len) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): \
@@ -4118,7 +4119,7 @@ static XEN g_scan_channel(XEN proc, XEN beg, XEN dur, XEN snd, XEN chn, XEN edpo
     #define scan_channel_example "scan_channel(lambda do |y| y > 0.1 end)"
   #endif
   #if HAVE_FORTH
-    #define scan_channel_example "lambda: { y } y 0.1 f> if #t else #f then ; 1 make-proc scan-channel"
+    #define scan_channel_example "lambda: <{ y }> y 0.1 f> ; scan-channel"
   #endif
 
   #define H_scan_channel "(" S_scan_channel " func (start 0) (dur len) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): \
@@ -4139,7 +4140,7 @@ static XEN g_map_chan(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn,
     #define map_chan_example "map_chan(lambda do |y| y * 2.0 end)"
   #endif
   #if HAVE_FORTH
-    #define map_chan_example "lambda: { y } y 2.0 f* ; 1 make-proc map-chan"
+    #define map_chan_example "lambda: <{ y }> y 2.0 f* ; map-chan"
   #endif
 
   #define H_map_chan "(" S_map_chan " func (start 0) (end len) (edname " PROC_FALSE ") (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): \
@@ -4157,7 +4158,7 @@ static XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN e
     #define map_channel_example "map_channel(lambda do |y| y * 2.0 end)"
   #endif
   #if HAVE_FORTH
-    #define map_channel_example "lambda: { y } y 2.0 f* ; 1 make-proc map-channel"
+    #define map_channel_example "lambda: <{ y }> y 2.0 f* ; map-channel"
   #endif
 
   #define H_map_channel "(" S_map_channel " func (start 0) (dur len) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ") (edname " PROC_FALSE ")): \
@@ -4175,7 +4176,7 @@ static XEN g_find_channel(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos)
     #define find_channel_example "find_channel(lambda do |y| y > 0.1 end)"
   #endif
   #if HAVE_FORTH
-    #define find_channel_example "lambda: { y } y 0.1 f> if #t else #f then ; 1 make-proc find-channel"
+    #define find_channel_example "lambda: <{ y }> y 0.1 f> ; find-channel"
   #endif
 
   #define H_find_channel "(" S_find_channel " func (start-samp 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): apply func, a function of one argument, \
@@ -4195,7 +4196,7 @@ static XEN g_count_matches(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos
     #define count_matches_example "count_matches(lambda do |y| y > 0.1 end)"
   #endif
   #if HAVE_FORTH
-    #define count_matches_example "lambda: { y } y 0.1 f> if #t else #f then ; 1 make-proc count-matches"
+    #define count_matches_example "lambda: <{ y }> y 0.1 f> ; count-matches"
   #endif
 
   #define H_count_matches "(" S_count_matches " func (start-samp 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): return how many \

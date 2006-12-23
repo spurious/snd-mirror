@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Sun Aug 20 01:01:59 CEST 2006
+\ Changed: Sat Dec 23 04:06:33 CET 2006
 
 \ Commentary:
 
@@ -177,8 +177,7 @@ If one of the hook procedures in the hook list returns #f, xenved changes the br
 otherwise the last hook procedure is responsible for manipulating GEN's envelope itself." _
 create-hook before-enved-hook
 
-before-enved-hook lambda: ( gen pos x y reason -- f )
-  { gen pos x y reason }
+before-enved-hook lambda: <{ gen pos x y reason -- f }>
   enved-hook hook-empty? if
     #f
   else
@@ -200,7 +199,7 @@ before-enved-hook lambda: ( gen pos x y reason -- f )
     then
     res #f <> if #t else #f then
   then
-; 5 make-proc add-hook!
+; add-hook!
 
 : run-before-enved-hook ( gen x y reason -- f )
   { gen x y reason }
@@ -298,7 +297,7 @@ before-enved-hook lambda: ( gen pos x y reason -- f )
   then
 ;
 : draw-axes-cb ( gen -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> { w c i self -- }
   self @ { gen }
   gen xe-drawer@ { drawer }
@@ -324,7 +323,7 @@ before-enved-hook lambda: ( gen pos x y reason -- f )
   mpos gen xe-mouse-pos!
 ;
 : mouse-press-cb ( gen -- proc; w c e f self -- )
-  lambda-create , latestxt 4 make-proc
+  4 proc-create swap ,
  does> { w c ev f self -- }
   self @ { gen }
   ev Fx gen ungrfx 1.0 fmin 0.0 fmax { x }
@@ -346,7 +345,7 @@ before-enved-hook lambda: ( gen pos x y reason -- f )
   then
 ;
 : mouse-release-cb ( gen -- proc; w c e f self -- )
-  lambda-create , latestxt 4 make-proc
+  4 proc-create swap ,
  does> { w c ev f self -- }
   self @ { gen }
   gen xe-mouse-pos@ { mpos }
@@ -367,7 +366,7 @@ before-enved-hook lambda: ( gen pos x y reason -- f )
   #f gen xe-mouse-new!
 ;
 : mouse-drag-cb ( gen -- proc; w c e f self -- )
-  lambda-create , latestxt 4 make-proc
+  4 proc-create swap ,
  does> { w c ev f self -- }
   self @ { gen }
   ev Fx gen ungrfx { x }
@@ -388,18 +387,17 @@ before-enved-hook lambda: ( gen pos x y reason -- f )
   gen xe-redraw
 ;
 : define-cursor-cb ( cursor -- proc; w c e f self -- )
-  lambda-create , latestxt 4 make-proc
+  4 proc-create swap ,
  does> { wid c e f self -- }
   wid FXtDisplay wid FXtWindow self @ ( new-cursor ) FXDefineCursor drop
 ;
 : undefine-cursor-cb ( -- proc; w c e f self -- )
-  lambda-create latestxt 4 make-proc
+  4 proc-create
  does> { wid c e f self -- }
   wid FXtDisplay wid FXtWindow FXUndefineCursor drop
 ;
-: axis-bounds? ( obj -- f ) { obj } obj object-length 4 = obj list? && ;
-: make-xenved ( name parent envelope axis-bounds args -- xenved )
-  { name parent envelope axis-bounds args }
+: axis-bounds? { obj -- f } obj object-length 4 = obj list? && ;
+: make-xenved <{ name parent envelope axis-bounds args -- xenved }>
   parent      FWidget?     parent      2 running-word $" a widget"              _ assert-type
   axis-bounds axis-bounds? axis-bounds 4 running-word $" a list of axis bounds" _ assert-type
   xenved% %alloc { xe }
@@ -415,7 +413,7 @@ before-enved-hook lambda: ( gen pos x y reason -- f )
   args FXmNforeground list-member? unless
     args '( FXmNforeground data-color ) 2 list-append to args
   then
-  name FxmDrawingAreaWidgetClass parent args FXtCreateManagedWidget { drawer }
+  name FxmDrawingAreaWidgetClass parent args undef FXtCreateManagedWidget { drawer }
   drawer xe xe-drawer !
   drawer FXtDisplay FXC_crosshair FXCreateFontCursor { arrow-cursor }
   '( snd-gcs car  snd-gcs 7 list-ref ) xe xe-gcs !

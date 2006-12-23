@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Thu Dec 21 18:10:09 CET 2006
+\ Changed: Sat Dec 23 00:34:52 CET 2006
 
 \ Commentary:
 
@@ -276,17 +276,16 @@ for time-varying sampling-rate conversion."
 
 \ ;;; -------- "frequency division" -- an effect from sed_sed@my-dejanews.com
 hide
-: freqdiv-cb ( div n curval -- proc; y self -- val )
-  lambda-create , , , latestxt 1 make-proc
+: freqdiv-cb { div n curval -- proc; y self -- val }
+  1 proc-create div , n , curval ,
  does> ( y self -- val )
   { y self }
-  self           @ { curval }
+  self           @ { div }
   self   cell+   @ { n }
-  self 2 cells + @ { div }
-  div f0= if y self ! ( curval ) then
-  1 self 2 cells + ! ( div++ )
-  div n = if 0 self 2 cells + ! then
-  curval
+  div 0= if y self 2 cells + ! ( curval ) then
+  1 self +! ( div++ )
+  div n = if 0 self ! then
+  self 2 cells + @ ( curval )
 ;
 set-current
 : freqdiv   <{ n :optional snd #f chn #f -- }>
@@ -298,14 +297,14 @@ previous
 
 \ ;;; -------- "adaptive saturation" -- an effect from sed_sed@my-dejanews.com ---
 hide
-: adsat-cb ( mn mx n vals -- proc; inval self -- res )
-  lambda-create , , , , latestxt 1 make-proc
+: adsat-cb { mn mx n vals -- proc; inval self -- res }
+  1 proc-create vals , n , mx , mn ,
  does> ( inval self -- res )
   { val self }
-  self @ { vals }
-  self 1 cells + @ { n }
-  self 2 cells + @ { mx }
-  self 3 cells + @ { mn }
+  self           @ { mn }
+  self 1 cells + @ { mx }
+  self 2 cells + @ { n }
+  self 3 cells + @ { vals }
   vals length n = if
     vals each { x }
       vals i  x f0>= if mx else mn then  vct-set! drop
@@ -335,7 +334,7 @@ hide
 : spike-cb ( snd chn -- proc; x0 self -- res )
   { snd chn }
   snd chn #f maxamp { amp }
-  lambda-create 0.0 ( x1 ) , 0.0 ( x2 ) , amp , latestxt 1 make-proc
+  1 proc-create 0.0 ( x1 ) , 0.0 ( x2 ) , amp ,
  does> ( x0 self -- res )
   { x0 self }
   self @ { x1 }
@@ -415,7 +414,7 @@ set-current
 : chorus ( -- proc; inval self -- val )
   doc" Tries to produce the chorus sound effect."
   chorus-size nil make-array map! make-flanger end-map { dlys }
-  lambda-create dlys , latestxt 1 make-proc
+  1 proc-create dlys ,
  does> ( inval self -- val )
   { inval self }
   self @ { dlys }
@@ -435,7 +434,7 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
     :scaler chordalize-amount :size chordalize-base *key* r* r>s make-comb
   end-map { combs }
   chordalize-chord length 0.5 f/ { scaler }
-  lambda-create combs , scaler , latestxt 1 make-proc
+  1 proc-create combs , scaler ,
  does> ( x self -- val )
   { x self }
   self       @ { combs }
@@ -643,8 +642,8 @@ lambda: <{ n }> gen 0.0 asyfm-J ; map-channel."
 
 \ ;;; -------- brighten-slightly
 hide
-: brighten-slightly-cb ( brt mx -- proc; y self -- val )
-  lambda-create , , latestxt 1 make-proc
+: brighten-slightly-cb { brt mx -- proc; y self -- val }
+  1 proc-create mx , brt ,
  does> { y self -- val }
   self       @ { mx }
   self cell+ @ { brt }
@@ -661,8 +660,8 @@ set-current
 previous
 
 hide
-: brighten-slightly-1-cb ( pcoeffs mx -- proc; y self -- val )
-  lambda-create , , latestxt 1 make-proc
+: brighten-slightly-1-cb { pcoeffs mx -- proc; y self -- val }
+  1 proc-create mx , pcoeffs ,
  does> { y self -- val }
   self       @ { mx }
   self cell+ @ { pcoeffs }
@@ -706,7 +705,7 @@ previous
 10 vct( 0 1.0 0 0 0 0 0 0 1.0 0 ) fltit-1 map-channel"
   { order spectr }
   :order order :xcoeffs order spectr spectrum->coeffs make-fir-filter
-  lambda-create , latestxt 1 make-proc
+  1 proc-create swap ,
  does> ( y self -- val )
   @ swap fir-filter
 ;

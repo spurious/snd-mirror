@@ -19621,8 +19621,8 @@ EDITS: 5
 		(> (* 2.5 up2) down2))
 	    (snd-display "; rand dist: ~A ~A ~A, ~A ~A ~A" down1 up1 bad1 down2 up2 bad2)))
 
-      (test-gen-equal (make-rand 1000) (make-rand 1000) (make-rand 500))
-      (test-gen-equal (make-rand 1000) (make-rand 1000) (make-rand 1000 0.5))
+;      (test-gen-equal (make-rand 1000) (make-rand 1000) (make-rand 500))
+;      (test-gen-equal (make-rand 1000) (make-rand 1000) (make-rand 1000 0.5))
       
       (let ((gen (make-rand-interp 4000.0))
 	    (v0 (make-vct 10)))

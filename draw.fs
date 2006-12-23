@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 23:36:09 CET 2005
-\ Changed: Thu Dec 21 18:28:28 CET 2006
+\ Changed: Fri Dec 22 23:48:56 CET 2006
 
 \ Commentary:
 
@@ -86,7 +86,7 @@ hide
 	data-max f0> if height data-max f2* f/ else 0.0 then { data-scaler }
 	width 2* { new-len }
 	data vct? if data length else data car length then { data-len }
-	data-len width / { step }
+	data-len width f/ fround f>s { step }
 	data-len width > if
 	  new-len nil make-array to data0
 	  data list? if new-len nil make-array to data1 then
@@ -128,7 +128,7 @@ hide
 	      idxj 2 + to idxj
 	  repeat
 	else
-	  width data-len / { xstep }
+	  width data-len f/ fround f>s { xstep }
 	  data-len 2* nil make-array to data0
 	  data list? if new-len 2* nil make-array to data1 then
 	  0 { idxj }
@@ -192,12 +192,12 @@ hide
   then
 ;
 
-: undo-cb ( snd chn -- proc; self -- )
-  lambda-create , , latestxt 0 make-proc
+: undo-cb { snd chn -- proc; self -- }
+  0 proc-create snd , chn ,
  does> ( self -- )
   { self }
-  self @ { chn }
-  self cell+ @ { snd }
+  self @ { snd }
+  self cell+ @ { chn }
   'inset-envelope snd chn channel-property { vals }
   \ set edit-position to impossible value
   vals if vals 'edit-position -2 hash-set! then

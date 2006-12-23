@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Thu Dec 21 18:35:26 CET 2006
+\ Changed: Sat Dec 23 04:25:00 CET 2006
 
 \ Commentary:
 \ 
@@ -269,18 +269,17 @@ participating in the current selection."
 \ --- check-for-unsaved-edits ---
 
 hide
-: response-cb ( snd action-if-yes action-if-no -- proc; response self -- val )
-  lambda-create , , , latestxt 1 make-proc
- does> ( response self -- val )
-  { response self }
+: response-cb { snd action-if-yes action-if-no -- proc; response self -- val }
+  1 proc-create action-if-no , action-if-yes , snd ,
+ does> { response self -- val }
   self @ { action-if-no }
   self cell+ @ { action-if-yes }
   self 2 cells + @ { snd }
   snd clear-minibuffer drop
   response 0 string-ref [char] y = if
-    snd action-if-yes execute
+    action-if-yes snd run-proc
   else
-    snd action-if-no execute
+    action-if-no snd run-proc
   then
 ;
 set-current
@@ -296,15 +295,14 @@ set-current
 previous
 
 hide
-: yes-xt ( exiting -- xt; snd self -- val )
-  lambda-create , latestxt
- does> ( snd self -- val )
-  { snd self }
+: yes-cb ( exiting -- prc; snd self -- val )
+  1 proc-create swap ,
+ does> { snd self -- val }
   snd revert-sound drop
   self @ ( exiting ) if 0 snd-exit then
   #t
 ;
-lambda: ( snd -- val ) drop #f ; value no-xt
+lambda: <{ snd -- val }> #f ; value no-cb
 
 : ignore-unsaved-edits-at-close? ( snd exiting -- f )
   { snd exiting }
@@ -312,7 +310,7 @@ lambda: ( snd -- val ) drop #f ; value no-xt
   snd channels 0 ?do
     snd i edits car 0> if
       $" %s[%d] has unsaved edits.  Close (y/n)? " _ '( snd short-file-name i ) string-format
-      exiting yes-xt no-xt snd yes-or-no?
+      exiting yes-cb no-cb snd yes-or-no?
       not
     then
   loop
@@ -341,7 +339,7 @@ previous
 
 \ --- remember-sound-state ---
 
-$" .snd-remember-sound" value remember-sound-filename
+".snd-remember-sound" value remember-sound-filename
 #() value -saved-remember-sound-states-states-
 
 hide
@@ -400,7 +398,7 @@ hide
   new-state 2 sound-funcs map snd *key* execute end-map array-set!
   new-state 3 snd channels nil make-array map!
     channel-funcs map *key* { fnc }
-      fnc xt->name $" cursor" string= if
+      fnc xt->name "cursor" string= if
 	snd j ( chn ) undef ( edpos ) cursor \ three arguments!
       else
 	snd j ( chn ) fnc execute
@@ -419,7 +417,7 @@ hide
     snd channels state 3 array-ref length = && if
       state 2 array-ref each { val }
 	sound-funcs i array-ref { fnc }
-	fnc xt->name $" selected-channel" string= if
+	fnc xt->name "selected-channel" string= if
 	  snd val set-selected-channel drop \ arguments swaped!
 	else
 	  val snd fnc set-execute drop
@@ -429,7 +427,7 @@ hide
 	#t snd i ( chn ) set-squelch-update drop
 	state 3 array-ref i ( chn) array-ref each { val } \ channel-funcs values
 	  channel-funcs i array-ref { fnc }
-	  fnc xt->name $" cursor" string= if
+	  fnc xt->name "cursor" string= if
 	    val snd j ( chn ) undef ( edpos ) set-cursor drop \ four arguments!
 	  else
 	    val snd j ( chn ) fnc set-execute drop
@@ -568,13 +566,14 @@ previous
 \ --- reopen menu ---
 
 hide
-$" empty" _ value reopen-empty
+"empty" _ value reopen-empty
 #() value reopen-names
 #f  value reopen-menu
 16  value reopen-max-length
+' noop 0 make-proc constant extensions-noop
 
-: reopen-select-cb ( brief-name long-name -- proc; self -- )
-  lambda-create , , latestxt 0 make-proc
+: reopen-select-cb { brief-name long-name -- proc; self -- }
+  0 proc-create long-name , brief-name ,
  does> ( self -- )
   { self }
   self @ { long-name }
@@ -607,7 +606,7 @@ $" empty" _ value reopen-empty
     reopen-names   reopen-names brief-name array-index   array-delete! drop
   then
   reopen-names empty? if
-    reopen-menu reopen-empty ['] noop 0 make-proc 0 add-to-menu drop
+    reopen-menu reopen-empty extensions-noop undef add-to-menu drop
     reopen-names reopen-empty array-push drop
   then
 ;
@@ -618,8 +617,8 @@ set-current
 : with-reopen-menu ( -- )
   including-reopen-menu unless
     #() to reopen-names
-    reopen-menu false? if $" Reopen" _ ['] noop 0 make-proc add-to-main-menu to reopen-menu then
-    reopen-menu reopen-empty ['] noop 0 make-proc 0 add-to-menu drop
+    reopen-menu false? if "Reopen" _ extensions-noop add-to-main-menu to reopen-menu then
+    reopen-menu reopen-empty extensions-noop 0 add-to-menu drop
     reopen-names reopen-empty array-push drop
     #t to including-reopen-menu
     close-hook ['] add-to-reopen-menu add-hook!
@@ -631,12 +630,12 @@ previous
 \ --- buffers menu ---
 
 hide
-$" empty" _ value buffer-empty
+"empty" _ value buffer-empty
 #() value buffer-names
 #f  value buffer-menu
 
 : buffer-select-cb ( file -- proc ; self -- )
-  lambda-create , latestxt 0 make-proc
+  0 proc-create swap ,
  does> ( self -- )
   { self }
   self @ ( file ) 0 find-sound dup sound? if select-sound then drop
@@ -655,7 +654,7 @@ $" empty" _ value buffer-empty
   buffer-menu snd file-name remove-from-menu drop
   buffer-names   buffer-names snd file-name array-index   array-delete! drop
   buffer-names empty? if
-    buffer-menu buffer-empty ['] noop 0 make-proc 0 add-to-menu drop
+    buffer-menu buffer-empty extensions-noop 0 add-to-menu drop
     buffer-names buffer-empty array-push drop
   then
   #f
@@ -667,8 +666,8 @@ set-current
 : with-buffers-menu ( -- )
   including-buffers-menu unless
     #() to buffer-names
-    buffer-menu false? if $" Buffers" _ ['] noop 0 make-proc add-to-main-menu to buffer-menu then
-    buffer-menu buffer-empty ['] noop 0 make-proc 0 add-to-menu drop
+    buffer-menu false? if "Buffers" _ extensions-noop add-to-main-menu to buffer-menu then
+    buffer-menu buffer-empty extensions-noop 0 add-to-menu drop
     buffer-names buffer-empty array-push drop
     #t to including-buffers-menu
     open-hook  ['] open-buffer  add-hook!

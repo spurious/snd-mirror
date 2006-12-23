@@ -3,26 +3,26 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Sat Dec 16 03:04:13 CET 2006
+\ Changed: Sat Dec 23 05:28:24 CET 2006
 
 \ Commentary:
 \
 \ make-menu                      ( name parent args -- gen )
-\ menu-entry                     ( gen xt disp-xt -- )
+\ menu-entry                     ( gen prc disp-prc -- )
 \ make-main-menu                 ( name -- widget )
-\ add-to-effects-menu            ( name xt -- )
+\ add-to-effects-menu            ( name prc -- )
 \
 \ effects-squelch-channel        ( amount gate-size :optional snd chn -- )
-\ make-gain-dialog               ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-normalize-dialog          ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-gate-dialog               ( name -- xt1 xt2; child self -- xt; self -- )
+\ make-gain-dialog               ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-normalize-dialog          ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-gate-dialog               ( name -- prc1 prc2; child self -- prc; self -- )
 \ 
 \ effects-echo                   ( input-samps delay-time echo-amount :optional beg dur snd chn -- )
 \ effects-flecho                 ( scaler secs input-samps :optional beg dur snd chn -- )
 \ effects-zecho                  ( scaler secs freq amp input-samps :optional beg dur snd chn -- )
-\ make-echo-dialog               ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-flecho-dialog             ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-zecho-dialog              ( name -- xt1 xt2; child self -- xt; self -- )
+\ make-echo-dialog               ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-flecho-dialog             ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-zecho-dialog              ( name -- prc1 prc2; child self -- prc; self -- )
 \
 \ effects-bbp                    ( freq bw :optional beg dur snd chn -- res )
 \ effects-bbr                    ( freq bw :optional beg dur snd chn -- res )
@@ -32,30 +32,30 @@
 \ effects-comb-chord             ( scaler size amp :optional beg dur snd chn -- res )
 \ effects-moog                   ( freq Q :optional beg dur snd chn -- res )
 \ moog                           ( freq Q -- proc; inval self -- res )
-\ make-band-pass-dialog          ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-notch-dialog              ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-high-pass-dialog          ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-low-pass-dialog           ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-comb-dialog               ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-comb-chord-dialog         ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-moog-dialog               ( name -- xt1 xt2; child self -- xt; self -- )
+\ make-band-pass-dialog          ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-notch-dialog              ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-high-pass-dialog          ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-low-pass-dialog           ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-comb-dialog               ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-comb-chord-dialog         ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-moog-dialog               ( name -- prc1 prc2; child self -- prc; self -- )
 \
-\ make-adsat-dialog              ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-src-dialog                ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-expsrc-dialog             ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-src-timevar-dialog        ( name -- xt1 xt2; child self -- xt; self -- )
+\ make-adsat-dialog              ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-src-dialog                ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-expsrc-dialog             ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-src-timevar-dialog        ( name -- prc1 prc2; child self -- prc; self -- )
 \
 \ effects-am 			 ( freq en :optional beg dur snd chn -- res )
 \ effects-rm 			 ( freq en :optional beg dur snd chn -- res )
-\ make-am-effect-dialog          ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-rm-effect-dialog          ( name -- xt1 xt2; child self -- xt; self -- )
+\ make-am-effect-dialog          ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-rm-effect-dialog          ( name -- prc1 prc2; child self -- prc; self -- )
 \
 \ effects-jc-reverb              ( samps volume -- proc; inval self -- res )
 \ effects-jc-reverb-1            ( volume :optional beg dur snd chn -- res )
 \ effects-cnv                    ( snd0 amp snd chn -- res )
-\ make-reverb-dialog             ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-jc-reverb-dialog          ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-convolve-dialog           ( name -- xt1 xt2; child self -- xt; self -- )
+\ make-reverb-dialog             ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-jc-reverb-dialog          ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-convolve-dialog           ( name -- prc1 prc2; child self -- prc; self -- )
 \
 \ effects-position-sound         ( mono-snd pos :optional snd chn -- res )
 \ place-sound                    ( mono-snd stereo-snd pan-env -- res )
@@ -64,15 +64,15 @@
 \ effects-cross-synthesis-1      ( cross-snd amp fftsize r :optional beg dur snd chn -- res )
 \ effects-fp                     ( srf amp freq :optional beg dur snd chn -- vct )
 \ effects-hello-dentist          ( freq amp :optional beg dur snd chn -- res )
-\ make-place-sound-dialog        ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-silence-dialog            ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-contrast-dialog     	 ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-cross-synth-dialog  	 ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-flange-dialog       	 ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-random-phase-dialog 	 ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-robotize-dialog     	 ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-rubber-dialog 		 ( name -- xt1 xt2; child self -- xt; self -- )
-\ make-wobble-dialog 		 ( name -- xt1 xt2; child self -- xt; self -- )
+\ make-place-sound-dialog        ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-silence-dialog            ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-contrast-dialog     	 ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-cross-synth-dialog  	 ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-flange-dialog       	 ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-random-phase-dialog 	 ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-robotize-dialog     	 ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-rubber-dialog 		 ( name -- prc1 prc2; child self -- prc; self -- )
+\ make-wobble-dialog 		 ( name -- prc1 prc2; child self -- prc; self -- )
 \
 \ make-effects-menu              ( -- widget )
 \
@@ -94,7 +94,7 @@ require rubber
 #f value use-combo-box-for-fft-size
 
 hide
-: cascade-cb ( w c i -- ) drop nip ( c ) each execute end-each ;
+: cascade-cb <{ w c i -- }> c each '() run-proc drop end-each ;
 
 struct
   cell% field menu-parent
@@ -110,7 +110,7 @@ end-struct snd-menu%
 : menu-menu@   	 ( gen -- wid  ) menu-menu @ ;
 : menu-args@   	 ( gen -- args ) menu-args @ ;
 : menu-children@ ( gen -- ary  ) menu-children @ ;
-: menu-display   ( gen -- )      menu-display-cb @ execute ;
+: menu-display   ( gen -- )      menu-display-cb @ '() run-proc drop ;
 set-current
 
 : make-menu ( name parent args -- gen )
@@ -120,7 +120,7 @@ set-current
   #() { lst }
   name FxmCascadeButtonWidgetClass parent
   '( FXmNsubMenuId  menu FXmNbackground basic-color ) undef FXtCreateManagedWidget ( cascade )
-  FXmNcascadingCallback ['] cascade-cb 3 make-proc lst FXtAddCallback drop
+  FXmNcascadingCallback ['] cascade-cb lst FXtAddCallback drop
   parent mn menu-parent !
   name   mn menu-name !
   menu   mn menu-menu !
@@ -129,33 +129,27 @@ set-current
   mn
 ;
 
-: menu-entry ( gen xt disp-xt -- )
-  { gen xt disp-xt }
+' noop 0 make-proc constant effects-noop
+
+: menu-entry ( gen prc disp-prc -- )
+  { gen prc disp-prc }
   gen menu-name@ FxmPushButtonWidgetClass gen menu-menu@
   gen menu-args@ undef FXtCreateManagedWidget { child }
-  child FXmNactivateCallback xt 3 make-proc undef FXtAddCallback drop
-  gen menu-children@  child disp-xt execute  array-push drop
+  child FXmNactivateCallback prc undef FXtAddCallback drop
+  gen menu-children@  disp-prc '( child ) run-proc  array-push drop
 ;
-
-: make-main-menu ( name -- widget )
-  ['] noop 0 make-proc add-to-main-menu to effects-menu
-  effects-menu main-menu
-;
-: add-to-effects-menu ( name xt -- )
-  { name xt }
-  effects-menu name xt dup if 0 make-proc then undef add-to-menu drop
-;
+: make-main-menu ( name -- widget ) effects-noop add-to-main-menu dup to effects-menu main-menu ;
+: add-to-effects-menu ( name prc -- ) effects-menu -rot undef add-to-menu drop ;
 previous
 
 hide
-: unmanage-cb ( w c i -- ) drop nip ( c ) FXtUnmanageChild drop ;
+: unmanage-cb <{ w c i -- }> c FXtUnmanageChild drop ;
 
-: make-effect-dialog ( label ok-xt help-xt reset-xt -- dialog )
-  { label ok-xt help-xt reset-xt }
-  $" Dismiss" _ FXmFONTLIST_DEFAULT_TAG FXmStringCreate { xdismiss }
-  $" Help"    _ FXmFONTLIST_DEFAULT_TAG FXmStringCreate { xhelp }
-  $" DoIt"    _ FXmFONTLIST_DEFAULT_TAG FXmStringCreate { xok }
-  label       _ FXmFONTLIST_DEFAULT_TAG FXmStringCreate { titlestr }
+: make-effect-dialog { label ok-prc help-prc reset-prc -- dialog }
+  "Dismiss" _ FXmFONTLIST_DEFAULT_TAG FXmStringCreate { xdismiss }
+  "Help"    _ FXmFONTLIST_DEFAULT_TAG FXmStringCreate { xhelp }
+  "DoIt"    _ FXmFONTLIST_DEFAULT_TAG FXmStringCreate { xok }
+  label     _ FXmFONTLIST_DEFAULT_TAG FXmStringCreate { titlestr }
   main-widgets cadr label
   '( FXmNcancelLabelString xdismiss
      FXmNhelpLabelString   xhelp
@@ -172,15 +166,15 @@ hide
     new-dialog lst car ( button ) FXmMessageBoxGetChild ( widget )
     '( FXmNarmColor pushed-button-color FXmNbackground lst cadr ) FXtVaSetValues drop
   end-each
-  new-dialog FXmNcancelCallback ['] unmanage-cb 3 make-proc new-dialog FXtAddCallback drop
-  new-dialog FXmNhelpCallback   help-xt         3 make-proc undef      FXtAddCallback drop
-  new-dialog FXmNokCallback     ok-xt           3 make-proc undef      FXtAddCallback drop
-  reset-xt if
-    $" Reset" _ FxmPushButtonWidgetClass new-dialog
+  new-dialog FXmNcancelCallback ['] unmanage-cb new-dialog FXtAddCallback drop
+  new-dialog FXmNhelpCallback   help-prc        undef      FXtAddCallback drop
+  new-dialog FXmNokCallback     ok-prc          undef      FXtAddCallback drop
+  reset-prc if
+    "Reset" _ FxmPushButtonWidgetClass new-dialog
     '( FXmNbackground      reset-button-color
        FXmNforeground      black-pixel
        FXmNarmColor        pushed-button-color ) undef FXtCreateManagedWidget ( reset-button )
-    FXmNactivateCallback reset-xt 3 make-proc undef FXtAddCallback drop
+    FXmNactivateCallback reset-prc undef FXtAddCallback drop
   then
   xhelp    FXmStringFree drop
   xok      FXmStringFree drop
@@ -209,21 +203,19 @@ hide
   2.0  log-lo val log-scale-ticks f/ log-hi log-lo f- f* f+  f**
 ;
 
-: scale-log-label ( lo val hi -- str ) scale-linear->log $" %.2f" swap 1 >list string-format ;
+: scale-log-label ( lo val hi -- str ) scale-linear->log "%.2f" swap 1 >list string-format ;
 
-: scale-log-cb ( w c i -- )
-  { w c info }
+: scale-log-cb <{ w c info -- }>
   c car   { label }
   c cadr  { low }
   c caddr { high }
   label  low info Fvalue high scale-log-label  change-label
 ;
 
-: create-log-scale-widget ( parent title low init high cb -- scale-label-list )
-  { parent title low init high cb }
-  $" %.2f" '( init ) string-format FxmLabelWidgetClass parent
+: create-log-scale-widget { parent title low init high cb -- scale-label-list }
+  "%.2f" '( init ) string-format FxmLabelWidgetClass parent
   '( FXmNbackground    basic-color ) undef FXtCreateManagedWidget { label }
-  $" scale" FxmScaleWidgetClass parent
+  "scale" FxmScaleWidgetClass parent
   '( FXmNorientation   FXmHORIZONTAL
      FXmNshowValue     #f
      FXmNminimum       0
@@ -233,10 +225,10 @@ hide
      FXmNtitleString   title
      FXmNbackground    basic-color ) undef FXtCreateManagedWidget { scale }
   '( label low high ) { data }
-  scale FXmNvalueChangedCallback ['] scale-log-cb 3 make-proc data  FXtAddCallback drop
-  scale FXmNvalueChangedCallback cb               3 make-proc undef FXtAddCallback drop
-  scale FXmNdragCallback         ['] scale-log-cb 3 make-proc data  FXtAddCallback drop
-  scale FXmNdragCallback         cb               3 make-proc undef FXtAddCallback drop
+  scale FXmNvalueChangedCallback ['] scale-log-cb data  FXtAddCallback drop
+  scale FXmNvalueChangedCallback cb               undef FXtAddCallback drop
+  scale FXmNdragCallback         ['] scale-log-cb data  FXtAddCallback drop
+  scale FXmNdragCallback         cb               undef FXtAddCallback drop
   '( scale label )
 ;
 
@@ -253,18 +245,13 @@ hide
 : ratio->semitones ( ratio -- n )
   12.0 swap flog 2.0 flog f/ f* fround f>s
 ;
+: scale-semi-cb <{ w c info -- }> c  info Fvalue semi-scale-label  change-label ;
 
-: scale-semi-cb ( w c i -- )
-  { w c info }
-  c  info Fvalue semi-scale-label  change-label
-;
-
-: create-semi-scale-widget ( parent title init cb -- scale-label-list )
-  { parent title init cb }
+: create-semi-scale-widget { parent title init cb -- scale-label-list }
   $" semitones: %s" _ '( init ratio->semitones ) string-format { str }
   str FxmLabelWidgetClass parent
   '( FXmNbackground  basic-color ) undef FXtCreateManagedWidget { label }
-  $" scale" FxmScaleWidgetClass parent
+  "scale" FxmScaleWidgetClass parent
   '( FXmNorientation   FXmHORIZONTAL
      FXmNshowValue     #f
      FXmNminimum       0
@@ -273,16 +260,15 @@ hide
      FXmNdecimalPoints 0
      FXmNtitleString   title
      FXmNbackground    basic-color ) undef FXtCreateManagedWidget { scale }
-  scale FXmNvalueChangedCallback ['] scale-semi-cb 3 make-proc label FXtAddCallback drop
-  scale FXmNvalueChangedCallback cb                3 make-proc undef FXtAddCallback drop
-  scale FXmNdragCallback         ['] scale-semi-cb 3 make-proc label FXtAddCallback drop
-  scale FXmNdragCallback         cb                3 make-proc undef FXtAddCallback drop
+  scale FXmNvalueChangedCallback ['] scale-semi-cb label FXtAddCallback drop
+  scale FXmNvalueChangedCallback cb                undef FXtAddCallback drop
+  scale FXmNdragCallback         ['] scale-semi-cb label FXtAddCallback drop
+  scale FXmNdragCallback         cb                undef FXtAddCallback drop
   '( scale label )
 ;
 
-: add-sliders ( dialog sliders -- sliders-array )
-  { dialog sliders }
-  $" formd" FxmFormWidgetClass dialog
+: add-sliders { dialog sliders -- sliders-array }
+  "formd" FxmFormWidgetClass dialog
   '( FXmNleftAttachment   FXmATTACH_FORM
      FXmNrightAttachment  FXmATTACH_FORM
      FXmNtopAttachment    FXmATTACH_FORM
@@ -293,7 +279,7 @@ hide
      else
        drop
      then ) undef FXtCreateManagedWidget { mainfrm }
-  $" rcd" FxmRowColumnWidgetClass mainfrm
+  "rcd" FxmRowColumnWidgetClass mainfrm
   '( FXmNleftAttachment   FXmATTACH_FORM
      FXmNrightAttachment  FXmATTACH_FORM
      FXmNbackground       highlight-color
@@ -340,10 +326,10 @@ hide
 	 FXmNleftAttachment  FXmATTACH_FORM
 	 FXmNrightAttachment FXmATTACH_FORM
 	 FXmNbackground      basic-color ) undef FXtCreateManagedWidget { new-slider }
-      title FXmStringFree drop
-      new-slider FXmNvalueChangedCallback func 3 make-proc undef FXtAddCallback drop
+      new-slider FXmNvalueChangedCallback func undef FXtAddCallback drop
       new-slider
     then
+    title FXmStringFree drop
   end-map
 ;
 
@@ -366,20 +352,20 @@ hide
   self @
 ;
 
-$" yellow" color->pixel yellow-pixel
+"yellow" color->pixel yellow-pixel
 
-: target-arm-cb ( w c i -- )      { w c info } c cadr ( type ) c car ( func ) execute ;
-: target-truncate-cb ( w c i -- ) { w c info } info Fset c execute ;
+\ c == '( prc type )
+: target-arm-cb      <{ w c info -- }> c car ( prc ) c cdr ( type ) run-proc drop ;
+: target-truncate-cb <{ w c info -- }> c     ( prc ) info Fset      run-proc drop ;
 
 #() value selection-buttons
 
-: add-target ( mainform target-xt truncate-xt -- rc-wid )
-  { mainform target-xt truncate-xt }
-  $" sep" FxmSeparatorWidgetClass mainform
+: add-target { mainform target-prc truncate-prc -- rc-wid }
+  "sep" FxmSeparatorWidgetClass mainform
   '( FXmNorientation      FXmHORIZONTAL
      FXmNseparatorType    FXmSHADOW_ETCHED_OUT
      FXmNbackground       basic-color ) undef FXtCreateManagedWidget drop
-  $" rc" FxmRowColumnWidgetClass mainform
+  "rc" FxmRowColumnWidgetClass mainform
   '( FXmNorientation      FXmHORIZONTAL
      FXmNbackground       basic-color
      FXmNradioBehavior    #t
@@ -397,7 +383,7 @@ $" yellow" color->pixel yellow-pixel
     '( FXmNbackground     basic-color
        FXmNselectColor    yellow-pixel
        FXmNindicatorType  FXmONE_OF_MANY_ROUND
-       FXmNarmCallback    '( ['] target-arm-cb 3 make-proc '( target-xt typ ) ) )
+       FXmNarmCallback    '( ['] target-arm-cb '( target-prc typ ) ) )
     undef FXtCreateManagedWidget { wid }
     typ 'sound equal? if wid #t #t FXmToggleButtonSetState drop then
     typ 'selection equal? if
@@ -405,20 +391,20 @@ $" yellow" color->pixel yellow-pixel
       selection? unless wid #f FXtSetSensitive drop then
     then
   end-each
-  truncate-xt if
-    $" trsep" FxmSeparatorWidgetClass mainform
+  truncate-prc if
+    "trsep" FxmSeparatorWidgetClass mainform
     '( FXmNorientation FXmHORIZONTAL ) undef FXtCreateManagedWidget drop
     $" truncate at end" _ FxmToggleButtonWidgetClass mainform
     '( FXmNbackground  basic-color
        FXmNset         #t
        FXmNselectColor yellow-pixel ) undef FXtCreateManagedWidget ( trbutton )
-    FXmNvalueChangedCallback ['] target-truncate-cb 3 make-proc truncate-xt FXtAddCallback drop
+    FXmNvalueChangedCallback ['] target-truncate-cb truncate-prc FXtAddCallback drop
   then
   rc
 ;
 
-: help-cb ( label message -- xt; w c i self -- )
-  lambda-create , , latestxt
+: help-cb { label message -- prc; w c i self -- }
+  3 proc-create message , label ,
  does> ( w c i self -- )
   { w c info self }
   self cell+ @ ( label ) self @ ( message ) help-dialog drop
@@ -492,8 +478,7 @@ $" yellow" color->pixel yellow-pixel
   then
 ;
 
-: map-chan-over-target-with-sync ( func target origin-func decay -- )
-  { func target origin-func decay }
+: map-chan-over-target-with-sync { func target origin-func decay -- }
   target 'selection equal? selection? not && if
     $" no selection" _ snd-warning drop
   else
@@ -541,11 +526,11 @@ $" yellow" color->pixel yellow-pixel
 	  then { end }
 	  end beg - { dur }
 	  snd sync snc = if
-	    target dur origin-func execute { name orig }
+	    origin-func '( target dur ) run-proc { name orig }
 	    $" %s %s %s %s" '( orig beg
 	       target 'sound equal? if #f else dur 1+ then
 	       name ) string-format { origin }
-	    dur func execute beg end overlap + 1+ snd chn #f origin map-channel drop
+	    func dur run-proc beg end overlap + 1+ snd chn #f origin map-channel drop
 	  then
 	end-each
       then
@@ -608,14 +593,13 @@ set-current
   #()    gen sliders!
   gen
 ;
-: target-cb ( gen -- xt; target self -- )
-  lambda-create , latestxt
- does> ( target self -- )
-  { tar self }
-  tar self @ ( gen ) target!
+: target-cb ( gen -- prc; target self -- )
+  1 proc-create swap ,
+ does> { target self }
+  target self @ ( gen ) target!
 ;
-: truncate-cb ( gen -- xt; trunc self -- )
-  lambda-create , latestxt
+: truncate-cb ( gen -- prc; trunc self -- )
+  1 proc-create swap ,
  does> ( trunc self -- )
   { trunc self }
   trunc self @ ( gen ) truncate!
@@ -625,8 +609,8 @@ previous
 \ === AMPLITUDE EFFECTS ===
 
 hide
-: squelch-cb ( f0 f1 amount -- proc; y self -- val )
-  lambda-create , , , latestxt 1 make-proc
+: squelch-cb { f0 f1 amount -- proc; y self -- val }
+  1 proc-create amount , f1 , f0 ,
  does> ( y self -- val )
   { y self }
   self @ { amp }
@@ -635,8 +619,7 @@ hide
   f1  f0 y y f* moving-average amp f< if 0.0 else 1.0 then  moving-average y f*
 ;
 set-current
-: effects-squelch-channel ( amount gate-size :optional snd chn -- val )
-  <{ amount gate-size :optional snd #f chn #f }>
+: effects-squelch-channel <{ amount gate-size :optional snd #f chn #f -- val }>
   :size gate-size make-moving-average { f0 }
   :size gate-size :initial-element 1.0 make-moving-average { f1 }
   $" %.4f %s %s" '( amount gate-size get-func-name ) string-format { origin }
@@ -647,8 +630,8 @@ previous
 \ === Gain (gain set by gain-amount) ===
 
 hide
-: gain-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: gain-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -688,9 +671,9 @@ hide
     then
   then
 ;
-: gain-reset-cb ( gen -- xt; w c i self -- )
+: gain-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen amount@ , latestxt
+  3 proc-create gen , gen amount@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -698,25 +681,24 @@ hide
   gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: gain-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: gain-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) amount!
 ;
-: post-gain-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
- does> ( w c i self -- )
-  { w c info self }
+: post-gain-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
+ does> { w c info self -- }
   self @ { gen }
   gen dialog@ FWidget? unless
     gen label@
     gen gain-ok-cb
     gen label@ $" Move the slider to change the gain scaling amount." _ help-cb
     gen gain-reset-cb make-effect-dialog gen dialog!
-    gen dialog@ #( #( $" gain" _ 0.0 gen amount@ 5.0 gen gain-slider-cb 100 ) )
+    gen dialog@ #( #( "gain" _ 0.0 gen amount@ 5.0 gen gain-slider-cb 100 ) )
     add-sliders gen sliders!
-    $" fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
+    "fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
     '( FXmNheight          200
        FXmNleftAttachment  FXmATTACH_FORM
        FXmNrightAttachment FXmATTACH_FORM
@@ -731,24 +713,22 @@ hide
     '( 0.0 1.0 1.0 1.0 ) ( envelope )
     '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
     '( FXmNheight 200 ) make-xenved gen envel!
-    fr
-    '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
+    fr '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
     gen dialog@ activate-dialog
   then
 ;
 set-current
 
-: make-gain-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-gain-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   1.0 gen amount!
   #f  gen envel!
-  gen post-gain-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt             ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-gain-dialog ( prc1 )
+  1 proc-create gen ,  ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -759,8 +739,8 @@ previous
 \ === Normalize ===
 
 hide
-: normalize-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: normalize-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -783,23 +763,23 @@ hide
     then
   then
 ;
-: normalize-reset-cb ( gen -- xt; w c i self -- )
+: normalize-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen amount@ , latestxt
+  3 proc-create gen , gen amount@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
   self cell+ @ ( init ) gen amount!
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: normalize-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: normalize-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) amount!
 ;
-: post-normalize-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-normalize-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -809,7 +789,7 @@ hide
     gen label@ $" Normalize scales amplitude to the normalize amount.  \
 Move the slider to change the scaling amount." _ help-cb
     gen normalize-reset-cb make-effect-dialog gen dialog!
-    gen dialog@ #( #( $" normalize" _ 0.0 gen amount@ 1.0 gen normalize-slider-cb 100 ) )
+    gen dialog@ #( #( "normalize" _ 0.0 gen amount@ 1.0 gen normalize-slider-cb 100 ) )
     add-sliders gen sliders!
     gen sliders@ 0 array-ref FXtParent gen target-cb #f add-target drop
   then
@@ -817,15 +797,14 @@ Move the slider to change the scaling amount." _ help-cb
 ;
 set-current
 
-: make-normalize-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-normalize-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   1.0 gen amount!
-  gen post-normalize-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt             ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-normalize-dialog ( prc1 )
+  1 proc-create gen ,       ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -843,8 +822,8 @@ end-struct gate%
 : omit-silence@ ( gen -- f )   omit-silence @ ;
 : omit-silence! ( f gen -- )   omit-silence ! ;
 
-: gate-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: gate-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -861,27 +840,24 @@ end-struct gate%
     gen amount@ dup f* gen size@ #f #f effects-squelch-channel drop
   then
 ;
-: gate-reset-cb ( gen -- xt; w c i self -- )
+: gate-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen amount@ , latestxt
+  3 proc-create gen , gen amount@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
   self cell+ @ ( init ) gen amount!
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 1000.0 f* f>s ) FXtVaSetValues drop
 ;
-: gate-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: gate-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 1000.0 f/ self @ ( gen ) amount!
 ;
-: gate-omit-cb ( w c i -- )
-  { w gen info }
-  info Fset gen omit-silence!
-;
-: post-gate-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: gate-omit-cb <{ w gen info -- }> info Fset gen omit-silence! ;
+: post-gate-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -892,7 +868,7 @@ end-struct gate%
     $" Move the slider to change the gate intensity. Higher values gate more of the sound." _
     help-cb
     gen gate-reset-cb make-effect-dialog gen dialog!
-    gen dialog@ #( #( $" gate" _ 0.0 gen amount@ 0.1 gen gate-slider-cb 1000 ) )
+    gen dialog@ #( #( "gate" _ 0.0 gen amount@ 0.1 gen gate-slider-cb 1000 ) )
     add-sliders gen sliders!
     $" Omit silence" _ FXmStringCreateLocalized { s1 }
     $" Omit silence" _ FxmToggleButtonWidgetClass gen sliders@ 0 array-ref FXtParent
@@ -900,24 +876,23 @@ end-struct gate%
        FXmNbackground  basic-color
        FXmNvalue       gen omit-silence@ if 1 else 0 then
        FXmNlabelString s1 ) undef FXtCreateManagedWidget ( toggle )
-    FXmNvalueChangedCallback ['] gate-omit-cb 3 make-proc gen FXtAddCallback drop
+    FXmNvalueChangedCallback ['] gate-omit-cb gen FXtAddCallback drop
     s1 FXmStringFree drop
   then
   gen dialog@ activate-dialog
 ;
 set-current
 
-: make-gate-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-gate-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) gate% %alloc make-base-effects { gen }
   0.01 gen amount!
   128  gen size!
   #f   gen omit-silence!
-  gen post-gate-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt             ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-gate-dialog ( prc1 )
+  1 proc-create gen ,  ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -928,8 +903,8 @@ previous
 \ === DELAY EFFECTS ===
 
 hide
-: effects-echo-cb ( samps amp del -- proc; inval self -- r )
-  lambda-create 0 , , , , latestxt 1 make-proc
+: effects-echo-cb { samps amp del -- proc; inval self -- r }
+  1 proc-create 0 , del , amp , samps ,
  does> ( inval self -- r )
   { inval self }
   self @ 1+ dup self ! { samp }
@@ -940,7 +915,7 @@ hide
 ;
 : effects-flecho-cb ( amp samps flt del -- proc; inval self -- r )
   { amp samps flt del }
-  lambda-create 0 , samps , flt , del , amp , latestxt 1 make-proc
+  1 proc-create 0 , samps , flt , del , amp ,
  does> ( inval self -- r )
   { inval self }
   self @ 1+ dup self ! { samp }
@@ -952,7 +927,7 @@ hide
 ;
 : effects-zecho-cb ( scaler amp samps os del -- proc; inval self -- r )
   { scaler amp samps os del }
-  lambda-create 0 , samps , os , del , scaler , amp , latestxt 1 make-proc
+  1 proc-create 0 , samps , os , del , scaler , amp ,
  does> ( inval self -- r )
   { inval self }
   self @ 1+ dup self ! { samp }
@@ -968,8 +943,7 @@ hide
 ;
 set-current
 
-: effects-echo ( input-samps delay-time echo-amount :optional beg dur snd chn -- res )
-  <{ input-samps del-time amp :optional beg 0 dur #f snd #f chn #f }>
+: effects-echo <{ input-samps del-time amp :optional beg 0 dur #f snd #f chn #f -- res }>
   del-time snd srate f* fround f>s make-delay { del }
   input-samps number? if
     input-samps
@@ -1001,8 +975,7 @@ set-current
   amp samps flt del effects-flecho-cb beg dur snd chn #f origin map-channel
 ;
 
-: effects-zecho ( scaler secs freq amp input-samps :optional beg dur snd chn -- res )
-  <{ scaler secs freq amp input-samps :optional beg 0 dur #f snd #f chn #f }>
+: effects-zecho <{ scaler secs freq amp input-samps :optional beg 0 dur #f snd #f chn #f -- res }>
   freq make-oscil { os }
   secs snd srate f* fround f>s { len }
   :size len :max-size len amp f>s 1 + + make-delay { del }
@@ -1024,13 +997,13 @@ previous
 \ === Echo (controlled by delay-time and echo-amount) ===
 
 hide
-: echo-func-cb ( gen -- xt; samps self -- proc; inval self -- r )
-  lambda-create , latestxt
+: echo-func-cb ( gen -- prc; samps self -- proc; inval self -- r )
+  3 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   gen delay-time@ #f srate f* f>s make-delay { del }
-  lambda-create 0 , samps , del , gen , latestxt 1 make-proc
+  1 proc-create 0 , samps , del , gen ,
  does> ( inval self -- r )
   { inval self }
   self @ 1+ dup self ! { samp }
@@ -1039,12 +1012,12 @@ hide
   self 3 cells + @ { gen }
   del dup 0.0 tap samp samps <= if inval f+ then gen amount@ f* 0.0 delay inval f+
 ;
-: echo-origin-cb ( gen -- xt; target input-samps self -- name origin )
-  lambda-create , latestxt
+: echo-origin-cb ( gen -- prc; target input-samps self -- name origin )
+  3 proc-create swap ,
  does> ( target samps self -- name origin )
   { target samps self }
   self @ { gen }
-  $" effects-echo"
+  "effects-echo"
   $" %s %s %s"
   '( gen target@ 'sound equal? if
        #f
@@ -1052,8 +1025,8 @@ hide
        samps
      then gen delay-time@ gen amount@ ) string-format
 ;
-: echo-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: echo-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1062,9 +1035,9 @@ hide
   gen echo-origin-cb
   gen truncate@ if #f else 4.0 gen delay-time@ f* then map-chan-over-target-with-sync
 ;
-: echo-reset-cb ( gen -- xt; w c i self -- )
+: echo-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen amount@ , gen delay-time@ , latestxt
+  3 proc-create gen , gen amount@ , gen delay-time@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1073,20 +1046,20 @@ hide
   gen sliders@ 0 array-ref '( FXmNvalue gen delay-time@ 100.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 1 array-ref '( FXmNvalue gen amount@     100.0 f* f>s ) FXtVaSetValues drop
 ;
-: echo-delay-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: echo-delay-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) delay-time!
 ;
-: echo-amount-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: echo-amount-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) amount!
 ;
-: post-echo-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-echo-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1105,16 +1078,15 @@ hide
 ;
 set-current
 
-: make-echo-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-echo-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   0.5 gen delay-time!
   0.2 gen amount!
-  gen post-echo-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt             ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-echo-dialog ( prc1 )
+  1 proc-create gen ,  ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -1126,14 +1098,14 @@ previous
 \ === Filtered Echo ===
 
 hide
-: flecho-func-cb ( gen -- xt; samps self -- proc; inval self -- r )
-  lambda-create , latestxt
+: flecho-func-cb ( gen -- prc; samps self -- proc; inval self -- r )
+  3 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   :order 4 :xcoeffs vct( 0.125 0.25 0.25 0.125 ) make-fir-filter { flt }
   gen delay-time@ #f srate f* fround f>s make-delay { del }
-  lambda-create 0 , samps , flt , del , gen amount@ , latestxt 1 make-proc
+  1 proc-create 0 , samps , flt , del , gen amount@ ,
  does> ( inval self -- r )
   { inval self }
   self @ 1+ dup self ! { samp }
@@ -1143,8 +1115,8 @@ hide
   self 4 cells + @ { scl }
   del flt del 0.0 tap samp samps <= if inval f+ then scl f* fir-filter delay inval f+
 ;
-: flecho-origin-cb ( gen -- xt; target input-samps self -- name origin )
-  lambda-create , latestxt
+: flecho-origin-cb ( gen -- prc; target input-samps self -- name origin )
+  3 proc-create swap ,
  does> ( target samps self -- name origin )
   { target samps self }
   self @ { gen }
@@ -1152,8 +1124,8 @@ hide
   $" %s %s %s"
   '( gen amount@ gen delay-time@ gen target@ 'sound equal? if #f else samps then ) string-format
 ;
-: flecho-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: flecho-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1162,9 +1134,9 @@ hide
   gen flecho-origin-cb
   gen truncate@ if #f else 4.0 gen delay-time@ f* then map-chan-over-target-with-sync
 ;
-: flecho-reset-cb ( gen -- xt; w c i self -- )
+: flecho-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen delay-time@ , gen amount@ , latestxt
+  3 proc-create gen , gen delay-time@ , gen amount@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1173,8 +1145,8 @@ hide
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@     100.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 1 array-ref '( FXmNvalue gen delay-time@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: post-flecho-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-flecho-dialog ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1194,16 +1166,15 @@ hide
 ;
 set-current
 
-: make-flecho-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-flecho-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   0.9 gen delay-time!
   0.5 gen amount!
-  gen post-flecho-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt             ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-flecho-dialog ( prc1 )
+  1 proc-create gen ,    ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -1215,15 +1186,15 @@ previous
 \ === Modulated Echo ===
 
 hide
-: zecho-func-cb ( gen -- xt; samps self -- proc; inval self -- r )
-  lambda-create , latestxt
+: zecho-func-cb ( gen -- prc; samps self -- proc; inval self -- r )
+  3 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   gen frequency@ make-oscil { os }
   gen delay-time@ #f srate f* fround f>s { len }
   :size len :max-size len gen amplitude@ f>s 1+ + make-delay { del }
-  lambda-create 0 , samps , os , del , gen scaler@ , gen amplitude@ , latestxt 1 make-proc
+  1 proc-create 0 , samps , os , del , gen scaler@ , gen amplitude@ ,
  does> ( inval self -- r )
   { inval self }
   self @ { samp }
@@ -1238,8 +1209,8 @@ hide
   os 0.0 0.0 oscil amp f*                             ( pm )
   delay inval f+
 ;
-: zecho-origin-cb ( gen -- xt; target input-samps self -- name origin )
-  lambda-create , latestxt
+: zecho-origin-cb ( gen -- prc; target input-samps self -- name origin )
+  3 proc-create swap ,
  does> ( target samps self -- name origin )
   { target samps self }
   self @ { gen }
@@ -1251,8 +1222,8 @@ hide
     samps
   then ) string-format
 ;
-: zecho-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: zecho-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1261,10 +1232,9 @@ hide
   gen zecho-origin-cb
   gen truncate@ if #f else 4.0 gen delay-time@ f* then map-chan-over-target-with-sync
 ;
-: zecho-reset-cb ( gen -- xt; w c i self -- )
+: zecho-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen amplitude@ , gen frequency@ , gen delay-time@ , gen scaler@ ,
-  latestxt
+  3 proc-create gen , gen amplitude@ , gen frequency@ , gen delay-time@ , gen scaler@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1277,32 +1247,32 @@ hide
   gen sliders@ 2 array-ref '( FXmNvalue gen frequency@  100.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 3 array-ref '( FXmNvalue gen amplitude@  100.0 f* f>s ) FXtVaSetValues drop
 ;
-: zecho-scl-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: zecho-scl-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) scaler!
 ;
-: zecho-del-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: zecho-del-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) delay-time!
 ;
-: zecho-frq-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: zecho-frq-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) frequency!
 ;
-: zecho-amp-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: zecho-amp-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) amplitude!
 ;
-: post-zecho-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-zecho-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1324,18 +1294,17 @@ the delay time in seconds, the modulation frequency, and the echo amplitude." _ 
 ;
 set-current
 
-: make-zecho-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-zecho-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   0.50 gen scaler!
   0.75 gen delay-time!
   6.00 gen frequency!
   10.0 gen amplitude!
-  gen post-zecho-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt             ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-zecho-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -1348,59 +1317,53 @@ previous
 
 \ === FILTER EFFECTS ===
 
-: effects-bbp ( freq bw :optional beg dur snd chn -- res )
-  <{ freq bw :optional beg 0 dur #f snd #f chn #f }>
+: effects-bbp <{ freq bw :optional beg 0 dur #f snd #f chn #f -- res }>
   $" %s %s %s %s %s" '( freq bw beg dur get-func-name ) string-format { origin }
   freq bw make-butter-band-pass beg dur snd chn #f #f origin clm-channel
 ;
 
-: effects-bbr ( freq bw :optional beg dur snd chn -- res )
-  <{ freq bw :optional beg 0 dur #f snd #f chn #f }>
+: effects-bbr <{ freq bw :optional beg 0 dur #f snd #f chn #f -- res }>
   $" %s %s %s %s %s" '( freq bw beg dur get-func-name ) string-format { origin }
   freq bw make-butter-band-reject beg dur snd chn #f #f origin clm-channel
 ;
 
-: effects-bhp ( freq :optional beg dur snd chn -- res )
-  <{ freq :optional beg 0 dur #f snd #f chn #f }>
+: effects-bhp <{ freq :optional beg 0 dur #f snd #f chn #f -- res }>
   $" %s %s %s %s" '( freq beg dur get-func-name ) string-format { origin }
   freq make-butter-high-pass beg dur snd chn #f #f origin clm-channel
 ;
 
-: effects-blp ( freq :optional beg dur snd chn -- res )
-  <{ freq :optional beg 0 dur #f snd #f chn #f }>
+: effects-blp <{ freq :optional beg 0 dur #f snd #f chn #f -- res }>
   $" %s %s %s %s" '( freq beg dur get-func-name ) string-format { origin }
   freq make-butter-low-pass beg dur snd chn #f #f origin clm-channel
 ;
 
-: effects-comb-filter ( scaler size :optional beg dur snd chn -- res )
-  <{ scaler size :optional beg 0 dur #f snd #f chn #f }>
+: effects-comb-filter <{ scaler size :optional beg 0 dur #f snd #f chn #f -- res }>
   $" %s %s %s %s %s" '( scaler size beg dur get-func-name ) string-format { origin }
   scaler size comb-filter beg dur snd chn #f origin map-channel
 ;
 
-: effects-comb-chord ( scaler size amp :optional beg dur snd chn -- res )
-  <{ scaler size amp :optional beg 0 dur #f snd #f chn #f }>
+: effects-comb-chord <{ scaler size amp :optional beg 0 dur #f snd #f chn #f -- res }>
   $" %s %s %s %s %s %s" '( scaler size amp beg dur get-func-name ) string-format { origin }
   scaler size amp comb-chord beg dur snd chn #f origin map-channel
 ;
 
 hide
 : moog-cb ( gen -- proc; inval self -- res )
-  lambda-create , latestxt 1 make-proc
+  1 proc-create swap ,
  does> ( inval self -- res )
   { inval self }
   self @ ( gen ) inval moog-filter
 ;
 set-current
-: effects-moog ( freq Q :optional beg dur snd chn -- res )
-  <{ freq Q :optional beg 0 dur #f snd #f chn #f }>
+: effects-moog <{ freq Q :optional beg 0 dur #f snd #f chn #f -- res }>
   $" %s %s %s %s %s" '( freq Q beg dur get-func-name ) string-format { origin }
   freq Q make-moog-filter moog-cb beg dur snd chn #f origin map-channel
 ;
 previous
 
 : moog ( freq Q -- proc; inval self -- res )
-  lambda-create make-moog-filter , latestxt 1 make-proc
+  make-moog-filter { gen }
+  1 proc-create gen ,
  does> ( inval self -- res )
   { inval self }
   self @ ( gen ) inval moog-filter
@@ -1416,8 +1379,8 @@ end-struct bp-filter%
 : band-pass-bw@   ( gen -- bw )  band-pass-bw @ ;
 : band-pass-bw!   ( bw gen -- )  band-pass-bw ! ;
 
-: bp-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: bp-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1438,9 +1401,9 @@ end-struct bp-filter%
     then
   then
 ;
-: bp-reset-cb ( gen -- xt; w c i self -- )
+: bp-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen band-pass-bw@ , gen frequency@ , latestxt
+  3 proc-create gen , gen band-pass-bw@ , gen frequency@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1451,20 +1414,20 @@ end-struct bp-filter%
   gen sliders@ 0 array-ref cadr gen frequency@ number->string change-label
   gen sliders@ 1 array-ref '( FXmNvalue gen band-pass-bw@ ) FXtVaSetValues drop
 ;
-: bp-freq-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: bp-freq-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   20.0 info Fvalue 22050.0 scale-linear->log self @ ( gen ) frequency!
 ;
-: bp-bw-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: bp-bw-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue self @ ( gen ) band-pass-bw!
 ;
-: post-band-pass-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-band-pass-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1484,16 +1447,15 @@ Move the sliders to change the center frequency and bandwidth." _ help-cb
 ;
 set-current
 
-: make-band-pass-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-band-pass-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name) bp-filter% %alloc make-base-effects { gen }
   1000.0 gen frequency!
   100 gen band-pass-bw!
-  gen post-band-pass-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt           ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-band-pass-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -1512,8 +1474,8 @@ end-struct notch%
 : notch-bw@   ( gen -- bw )  notch-bw @ ;
 : notch-bw!   ( bw gen -- )  notch-bw ! ;
 
-: br-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: br-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1533,9 +1495,9 @@ end-struct notch%
     then
   then
 ;
-: br-reset-cb ( gen -- xt; w c i self -- )
+: br-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen notch-bw@ , gen frequency@ , latestxt
+  3 proc-create gen , gen notch-bw@ , gen frequency@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1546,20 +1508,20 @@ end-struct notch%
   gen sliders@ 0 array-ref cadr gen frequency@ number->string change-label
   gen sliders@ 1 array-ref '( FXmNvalue gen notch-bw@ ) FXtVaSetValues drop
 ;
-: br-freq-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: br-freq-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   20.0 info Fvalue 22050.0 scale-linear->log self @ ( gen ) frequency!
 ;
-: br-bw-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: br-bw-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue self @ ( gen ) notch-bw!
 ;
-: post-notch-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-notch-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1579,16 +1541,15 @@ Move the sliders to change the center frequency and bandwidth." _ help-cb
 ;
 set-current
 
-: make-notch-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-notch-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) notch% %alloc make-base-effects { gen }
   100.0 gen frequency!
   100   gen notch-bw!
-  gen post-notch-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt              ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-notch-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -1600,8 +1561,8 @@ previous
 \ === Butterworth high-pass filter ===
 
 hide
-: hp-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: hp-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1621,9 +1582,9 @@ hide
     then
   then
 ;
-: hp-reset-cb ( gen -- xt; w c i self -- )
+: hp-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen frequency@ , latestxt
+  3 proc-create gen , gen frequency@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen  }
@@ -1632,14 +1593,14 @@ hide
   '( FXmNvalue 20.0 gen frequency@ 22050.0 scale-log->linear ) FXtVaSetValues drop
   gen sliders@ 0 array-ref cadr gen frequency@ number->string change-label
 ;
-: hp-freq-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: hp-freq-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   20.0 info Fvalue 22050.0 scale-linear->log self @ ( gen ) frequency!
 ;
-: post-high-pass-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-high-pass-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1658,15 +1619,14 @@ Move the slider to change the high-pass cutoff frequency." _ help-cb
 ;
 set-current
 
-: make-high-pass-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-high-pass-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   100.0 gen frequency!
-  gen post-high-pass-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt              ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-high-pass-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -1677,8 +1637,8 @@ previous
 \ === Butterworth low-pass filter ===
 
 hide
-: lp-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: lp-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1698,9 +1658,9 @@ hide
     then
   then
 ;
-: lp-reset-cb ( gen -- xt; w c i self -- )
+: lp-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen frequency@ , latestxt
+  3 proc-create gen , gen frequency@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1709,14 +1669,14 @@ hide
   '( FXmNvalue 20.0 gen frequency@ 22050.0 scale-log->linear ) FXtVaSetValues drop
   gen sliders@ 0 array-ref cadr gen frequency@ number->string change-label
 ;
-: lp-freq-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: lp-freq-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   20.0 info Fvalue 22050.0 scale-linear->log self @ ( gen ) frequency!
 ;
-: post-low-pass-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-low-pass-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1735,15 +1695,14 @@ Move the slider to change the low-pass cutoff frequency." _ help-cb
 ;
 set-current
 
-: make-low-pass-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-low-pass-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   1000.0 gen frequency!
-  gen post-low-pass-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt              ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-low-pass-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -1754,30 +1713,30 @@ previous
 
 \ === Comb filter ===
 hide
-: comb-func-cb ( gen -- xt; samps self -- proc )
-  lambda-create , latestxt
+: comb-func-cb ( gen -- prc; samps self -- proc )
+  3 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   gen scaler@ gen size@ comb-filter
 ;
-: comb-origin-cb ( gen -- xt; target input-samps self -- name origin )
-  lambda-create , latestxt
+: comb-origin-cb ( gen -- prc; target input-samps self -- name origin )
+  3 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
   $" effects-comb-filter" $" %s %s" '( gen scaler@ gen size@ ) string-format
 ;
-: comb-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: comb-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
   gen comb-func-cb gen target@ gen comb-origin-cb #f map-chan-over-target-with-sync
 ;
-: comb-reset-cb ( gen -- xt; w c i self -- )
+: comb-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen size@ , gen scaler@ , latestxt
+  3 proc-create gen , gen size@ , gen scaler@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1786,20 +1745,20 @@ hide
   gen sliders@ 0 array-ref '( FXmNvalue gen scaler@ 100.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 1 array-ref '( FXmNvalue gen size@                ) FXtVaSetValues drop
 ;
-: scaler-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: scaler-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) scaler!
 ;
-: size-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: size-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue self @ ( gen ) size!
 ;
-: post-comb-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-comb-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1809,24 +1768,23 @@ hide
     gen label@ $" Move the slider to change the comb scaler and size." _ help-cb
     gen comb-reset-cb make-effect-dialog gen dialog!
     gen dialog@
-    #( #( $" scaler" _ 0.0 gen scaler@ 1.0 gen scaler-slider-cb 100 )
-       #( $" size"   _   0 gen size@   100 gen size-slider-cb     1 ) ) add-sliders gen sliders!
+    #( #( "scaler" _ 0.0 gen scaler@ 1.0 gen scaler-slider-cb 100 )
+       #( "size"   _   0 gen size@   100 gen size-slider-cb     1 ) ) add-sliders gen sliders!
     gen sliders@ 0 array-ref FXtParent gen target-cb #f add-target drop
   then
   gen dialog@ activate-dialog
 ;
 set-current
 
-: make-comb-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-comb-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   0.1 gen scaler!
   50  gen size!
-  gen post-comb-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt           ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-comb-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -1838,33 +1796,31 @@ previous
 \ === Comb-chord filter ===
 
 hide
-: cc-func-cb ( gen -- xt; samps self -- proc )
-  lambda-create , latestxt
+: cc-func-cb ( gen -- prc; samps self -- proc )
+  3 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   gen scaler@ gen size@ gen amplitude@ comb-chord
 ;
-: cc-origin-cb ( gen -- xt; target input-samps self -- name origin )
-  lambda-create , latestxt
+: cc-origin-cb ( gen -- prc; target input-samps self -- name origin )
+  3 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
   $" effects-comb-chord"
   $" %s %s %s" '( gen scaler@ gen size@ gen amplitude@ ) string-format
 ;
-: cc-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: cc-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
   gen cc-func-cb gen target@ gen cc-origin-cb #f map-chan-over-target-with-sync
 ;
-: cc-reset-cb ( gen -- xt; w c i self -- )
+: cc-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create
-  gen , gen amplitude@ , gen size@ , gen scaler@ ,
-  latestxt
+  3 proc-create gen , gen amplitude@ , gen size@ , gen scaler@ ,
  does> ( w c i self -- )
   { w c info self }
   self           @ { gen }
@@ -1875,26 +1831,26 @@ hide
   gen sliders@ 1 array-ref '( FXmNvalue gen size@                         ) FXtVaSetValues drop
   gen sliders@ 2 array-ref '( FXmNvalue gen amplitude@       100.0 f* f>s ) FXtVaSetValues drop
 ;
-: cc-scaler-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: cc-scaler-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) scaler!
 ;
-: cc-size-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: cc-size-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue self ( gen ) size!
 ;
-: cc-amplitude-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: cc-amplitude-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) amplitude!
 ;
-: post-cc-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-cc-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1915,17 +1871,16 @@ Move the sliders to set the comb chord parameters." _ help-cb
 ;
 set-current
 
-: make-comb-chord-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-comb-chord-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   0.95 gen scaler!
   60   gen size!
   0.3  gen amplitude!
-  gen post-cc-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt           ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-cc-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -1945,23 +1900,23 @@ end-struct moog%
 : moog-resonance@ ( gen -- res ) moog-resonance @ ;
 : moog-resonance! ( res gen -- ) moog-resonance ! ;
 
-: moog-func-cb ( gen -- xt; samps self -- proc )
-  lambda-create , latestxt
+: moog-func-cb ( gen -- prc; samps self -- proc )
+  3 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   gen frequency@ gen moog-resonance@ moog
 ;
-: moog-origin-cb ( gen -- xt; target input-samps self -- name origin )
-  lambda-create , latestxt
+: moog-origin-cb ( gen -- prc; target input-samps self -- name origin )
+  3 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
-  $" effects-moog"
+  "effects-moog"
   $" %s %s" '( gen frequency@ gen moog-resonance@ ) string-format
 ;
-: moog-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: moog-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1971,9 +1926,9 @@ end-struct moog%
   #f
   map-chan-over-target-with-sync
 ;
-: moog-reset-cb ( gen -- xt; w c i self -- )
+: moog-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen frequency@ , gen moog-resonance@ , latestxt
+  3 proc-create gen , gen frequency@ , gen moog-resonance@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -1984,20 +1939,20 @@ end-struct moog%
   gen sliders@ 0 array-ref cadr gen frequency@ number->string change-label
   gen sliders@ 1 array-ref '( FXmNvalue gen moog-resonance@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: moog-freq-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: moog-freq-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   20.0 info Fvalue 22050.0 scale-linear->log self @ ( gen ) frequency!
 ;
-: moog-res-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: moog-res-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) moog-resonance!
 ;
-: post-moog-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-moog-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2017,16 +1972,15 @@ Move the sliders to set the filter cutoff frequency and resonance." _ help-cb
 ;
 set-current
 
-: make-moog-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-moog-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) moog% %alloc make-base-effects { gen }
   10000.0 gen frequency!
   0.5     gen moog-resonance!
-  gen post-moog-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt             ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-moog-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -2040,12 +1994,12 @@ previous
 \ === Adaptive saturation ===
 
 hide
-: adsat-func-cb ( gen -- xt; samps self -- proc; val self -- res )
-  lambda-create , latestxt
+: adsat-func-cb ( gen -- prc; samps self -- proc; val self -- res )
+  3 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
-  lambda-create gen , gen size@ 0.0 make-vct , 0.0 , 0.0 , 0 , latestxt 1 make-proc
+  1 proc-create gen , gen size@ 0.0 make-vct , 0.0 , 0.0 , 0 ,
  does> ( val self -- res )
   { val self }
   self @ { gen }
@@ -2069,16 +2023,16 @@ hide
     #f
   then
 ;
-: adsat-origin-cb ( gen -- xt; target input-samps self -- name origin )
-  lambda-create , latestxt
+: adsat-origin-cb ( gen -- prc; target input-samps self -- name origin )
+  3 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
-  $" adsat"
+  "adsat"
   gen size@ number->string
 ;
-: adsat-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: adsat-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2088,23 +2042,23 @@ hide
   #f
   map-chan-over-target-with-sync
 ;
-: adsat-reset-cb ( gen -- xt; w c i self -- )
+: adsat-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen size@ , latestxt
+  3 proc-create gen , gen size@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
   self cell+ @ ( init-size ) gen size!
   gen sliders@ 0 array-ref '( FXmNvalue gen size@ ) FXtVaSetValues drop
 ;
-: adsat-size-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: adsat-size-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue self @ ( gen ) size!
 ;
-: post-adsat-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-adsat-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2121,15 +2075,14 @@ hide
 ;
 set-current
 
-: make-adsat-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-adsat-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   4 gen size!
-  gen post-adsat-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt              ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-adsat-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -2140,8 +2093,8 @@ previous
 \ === Sample rate conversion (resample) ===
 
 hide
-: src-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: src-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2159,23 +2112,23 @@ hide
     then
   then
 ;
-: src-reset-cb ( gen -- xt; w c i self -- )
+: src-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen amount@ , latestxt
+  3 proc-create gen , gen amount@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
   self cell+ @ ( init-amount ) gen amount!
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: src-amount-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: src-amount-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) amount!
 ;
-: post-src-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-src-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2193,15 +2146,14 @@ Values greater than 1.0 speed up file play, negative values reverse it." _ help-
 ;
 set-current
 
-: make-src-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-src-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   0.0 gen amount!
-  gen post-src-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt            ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-src-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -2228,8 +2180,8 @@ end-struct expsrc%
 : segment-length@ ( gen -- len ) segment-length @ ;
 : segment-length! ( len gen -- ) segment-length ! ;
 
-: expsrc-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: expsrc-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2257,14 +2209,15 @@ end-struct expsrc%
   then
   snd restore-controls drop
 ;
-: expsrc-reset-cb ( gen -- xt; w c i self -- )
+: expsrc-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen ,
+  3 proc-create
+  gen ,
   gen time-scale@ ,
   gen size@ ,
   gen segment-length@ ,
   gen ramp-scale@ ,
-  gen pitch-scale@ , latestxt
+  gen pitch-scale@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2279,38 +2232,38 @@ end-struct expsrc%
   gen sliders@ 3 array-ref '( FXmNvalue gen ramp-scale@     100.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 4 array-ref '( FXmNvalue gen pitch-scale@    100.0 f* f>s ) FXtVaSetValues drop
 ;
-: expsrc-ts-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: expsrc-ts-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) time-scale!
 ;
-: expsrc-hs-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: expsrc-hs-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) size!
 ;
-: expsrc-sl-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: expsrc-sl-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) segment-length!
 ;
-: expsrc-rs-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: expsrc-rs-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) ramp-scale!
 ;
-: expsrc-ps-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: expsrc-ps-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) pitch-scale!
 ;
-: post-expsrc-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-expsrc-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2332,19 +2285,18 @@ end-struct expsrc%
 ;
 set-current
 
-: make-expsrc-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-expsrc-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) expsrc% %alloc make-base-effects { gen }
   1.00 gen time-scale!
   0.05 gen size!
   0.15 gen segment-length!
   0.50 gen ramp-scale!
   1.00 gen pitch-scale!
-  gen post-expsrc-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt            ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-expsrc-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -2357,8 +2309,8 @@ previous
 \ (KSM)
 
 hide
-: src-timevar-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: src-timevar-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2385,9 +2337,9 @@ hide
     then
   then
 ;
-: src-timevar-reset-cb ( gen -- xt; w c i self -- )
+: src-timevar-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen scaler@ , latestxt
+  3 proc-create gen , gen scaler@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2395,14 +2347,14 @@ hide
   gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
   gen sliders@ 0 array-ref '( FXmNvalue gen scaler@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: src-timevar-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: src-timevar-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) scaler!
 ;
-: post-src-timevar-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-src-timevar-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2413,7 +2365,7 @@ hide
     gen src-timevar-reset-cb make-effect-dialog gen dialog!
     gen dialog@ #( #( $" Resample factor" _ 0.0 gen scaler@ 10.0 gen src-timevar-slider-cb 100 ) )
     add-sliders gen sliders!
-    $" fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
+    "fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
     '( FXmNheight          200
        FXmNleftAttachment  FXmATTACH_FORM
        FXmNrightAttachment FXmATTACH_FORM
@@ -2428,24 +2380,22 @@ hide
     '( 0.0 1.0 1.0 1.0 ) ( envelope )
     '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
     '( FXmNheight 200 ) make-xenved gen envel!
-    fr
-    '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
+    fr '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
     gen dialog@ activate-dialog
   then
 ;
 set-current
 
-: make-src-timevar-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-src-timevar-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   1.0 gen scaler!
   #f  gen envel!
-  gen post-src-timevar-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt             ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-src-timevar-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -2456,8 +2406,8 @@ previous
 \ === MODULATION EFFECTS ===
 
 hide
-: effects-am-env-cb ( os e -- proc; x self -- res )
-  lambda-create , , latestxt 1 make-proc
+: effects-am-env-cb { os e -- proc; x self -- res }
+  1 proc-create e , os ,
  does> ( x self -- res )
   { inval self }
   self @ { e }
@@ -2465,14 +2415,14 @@ hide
   1.0 inval e env os 0.0 0.0 oscil f* amplitude-modulate
 ;
 : effects-am-cb ( os -- proc; x self -- res )
-  lambda-create , latestxt 1 make-proc
+  1 proc-create swap ,
  does> ( x self -- res )
   { inval self }
   self @ { os }
   os 0.0 0.0 oscil inval f*
 ;
-: effects-rm-env-cb ( os e -- proc; x self -- res )
-  lambda-create , , latestxt 1 make-proc
+: effects-rm-env-cb { os e -- proc; x self -- res }
+  1 proc-create e , os ,
  does> ( x self -- res )
   { inval self }
   self @ { e }
@@ -2480,23 +2430,21 @@ hide
   os 0.0 0.0 oscil e env f* inval f*
 ;
 : effects-rm-cb ( os -- proc; x self -- res )
-  lambda-create , latestxt 1 make-proc
+  1 proc-create swap ,
  does> ( x self -- res )
   { inval self }
   self @ { os }
   1.0 inval os 0.0 0.0 oscil amplitude-modulate
 ;
 set-current
-: effects-am ( freq en :optional beg dur snd chn -- res )
-  <{ freq en :optional beg 0 dur #f snd #f chn #f }>
+: effects-am <{ freq en :optional beg 0 dur #f snd #f chn #f -- res }>
   freq make-oscil { os }
   en list? if :envelope en :end dur 1- make-env else #f then { e }
   $" %s %s %s %s %s" '( freq en beg dur get-func-name ) string-format { origin }
   e if os e effects-am-env-cb else os effects-am-cb then beg dur snd chn #f origin map-channel
 ;
 
-: effects-rm ( freq en :optional beg dur snd chn -- res )
-  <{ freq en :optional beg 0 dur #f snd #f chn #f }>
+: effects-rm <{ freq en :optional beg 0 dur #f snd #f chn #f -- res }>
   freq make-oscil { os }
   en list? if :envelope en :end dur 1- make-env else #f then { e }
   $" %s %s %s %s %s" '( freq en beg dur get-func-name ) string-format { origin }
@@ -2507,8 +2455,8 @@ previous
 \ === Amplitude modulation ===
 
 hide
-: am-func-cb ( gen -- xt; samps self -- proc )
-  lambda-create , latestxt
+: am-func-cb ( gen -- prc; samps self -- proc )
+  3 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
@@ -2520,18 +2468,18 @@ hide
   then { e }
   e if os e effects-am-env-cb else os effects-am-cb then
 ;
-: am-origin-cb ( gen -- xt; target input-samps self -- name origin )
-  lambda-create , latestxt
+: am-origin-cb ( gen -- prc; target input-samps self -- name origin )
+  3 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
-  $" effects-am"
+  "effects-am"
   $" %s %s" '( gen amount@
   gen envel@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if #f else gen envel@ xe-envelope then )
   string-format
 ;
-: am-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: am-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2541,9 +2489,9 @@ hide
   #f
   map-chan-over-target-with-sync
 ;
-: am-reset-cb ( gen -- xt; w c i self -- )
+: am-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen amount@ , latestxt
+  3 proc-create gen , gen amount@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2551,14 +2499,14 @@ hide
   gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@ f>s ) FXtVaSetValues drop
 ;
-: am-slider-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: am-slider-cb ( gen -- proc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue self @ ( gen ) amount!
 ;
-: post-am-effect-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-am-effect-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2569,7 +2517,7 @@ hide
     gen am-reset-cb make-effect-dialog gen dialog!
     gen dialog@ #( #( $" amplitude modulation" _ 0.0 gen amount@ 1000.0 gen am-slider-cb 1 ) )
     add-sliders gen sliders!
-    $" fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
+    "fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
     '( FXmNheight          200
        FXmNleftAttachment  FXmATTACH_FORM
        FXmNrightAttachment FXmATTACH_FORM
@@ -2584,24 +2532,22 @@ hide
     '( 0.0 1.0 1.0 1.0 ) ( envelope )
     '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
     '( FXmNheight 200 ) make-xenved gen envel!
-    fr
-    '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
+    fr '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
     gen dialog@ activate-dialog
   then
 ;
 set-current
 
-: make-am-effect-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-am-effect-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   100.0 gen amount!
   #f  gen envel!
-  gen post-am-effect-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt             ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-am-effect-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -2612,8 +2558,8 @@ previous
 \ === Ring modulation ===
 
 hide
-: rm-func-cb ( gen -- xt; samps self -- proc )
-  lambda-create , latestxt
+: rm-func-cb ( gen -- prc; samps self -- proc )
+  3 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
@@ -2625,18 +2571,18 @@ hide
   then { e }
   e if os e effects-rm-env-cb else os effects-rm-cb then
 ;
-: rm-origin-cb ( gen -- xt; target input-samps self -- name origin )
-  lambda-create , latestxt
+: rm-origin-cb ( gen -- prc; target input-samps self -- name origin )
+  3 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
-  $" effects-rm"
+  "effects-rm"
   $" %s %s" '( gen frequency@
   gen envel@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if #f else gen envel@ xe-envelope then )
   string-format
 ;
-: rm-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: rm-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2646,9 +2592,9 @@ hide
   #f
   map-chan-over-target-with-sync
 ;
-: rm-reset-cb ( gen -- xt; w c i self -- )
+: rm-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen frequency@ , gen scaler@ , latestxt
+  3 proc-create gen , gen frequency@ , gen scaler@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2658,20 +2604,20 @@ hide
   gen sliders@ 0 array-ref '( FXmNvalue gen frequency@ f>s ) FXtVaSetValues drop
   gen sliders@ 1 array-ref '( FXmNvalue gen scaler@    f>s ) FXtVaSetValues drop
 ;
-: rm-freq-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: rm-freq-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue self @ ( gen ) frequency!
 ;
-: rm-radians-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: rm-radians-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue self @ ( gen ) scaler!
 ;
-: post-rm-effect-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-rm-effect-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2684,7 +2630,7 @@ hide
     #( #( $" modulation frequency" _ 0 gen frequency@ 1000 gen rm-freq-cb    1 )
        #( $" modulation radians"   _ 0 gen scaler@     360 gen rm-radians-cb 1 ) )
     add-sliders gen sliders!
-    $" fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
+    "fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
     '( FXmNheight          200
        FXmNleftAttachment  FXmATTACH_FORM
        FXmNrightAttachment FXmATTACH_FORM
@@ -2699,25 +2645,23 @@ hide
     '( 0.0 1.0 1.0 1.0 ) ( envelope )
     '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
     '( FXmNheight 200 ) make-xenved gen envel!
-    fr
-    '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
+    fr '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
     gen dialog@ activate-dialog
   then
 ;
 set-current
 
-: make-rm-effect-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-rm-effect-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   100.0 gen frequency!
   100.0 gen scaler!
   #f    gen envel!
-  gen post-rm-effect-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt             ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-rm-effect-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -2738,7 +2682,7 @@ previous
   0.715 5399 make-comb { c3 }
   0.697 5801 make-comb { c4 }
   #f srate 0.013 f* fround f>s make-delay { outdel }
-  lambda-create
+  1 proc-create
   0 ( samp ),
   samps ,
   vol ,
@@ -2748,7 +2692,6 @@ previous
   all1 , all2 , all3 ,
   c1 , c2 , c3 , c4 ,
   outdel ,
-  latestxt 1 make-proc
  does> ( inval self -- res )
   { inval self }
   self @ ( samp++ ) 1+ self !
@@ -2777,8 +2720,7 @@ previous
   outdel comb-sum 0.0 delay volume f* inval f+
 ;
 
-: effects-jc-reverb-1 ( volume :optional beg dur snd chn -- res )
-  <{ vol :optional beg 0 dur #f snd #f  chn #f }>
+: effects-jc-reverb-1 <{ vol :optional beg 0 dur #f snd #f  chn #f -- res }>
   dur if dur else snd chn #f frames then { samps }
   $" %s %s %s %s" '( vol beg dur get-func-name ) string-format { origin }
   samps vol effects-jc-reverb beg dur snd chn #f origin map-channel
@@ -2786,14 +2728,14 @@ previous
 
 hide
 : cnv-cb ( sf -- proc; dir self -- res )
-  lambda-create , latestxt 1 make-proc
+  1 proc-create swap ,
  does> ( dir self -- res )
   { dir self }
   self @ ( sf ) next-sample
 ;
-: cnv-vct-cb ( cnv sf -- proc; self -- res )
-  ( sf ) cnv-cb ( func )
-  lambda-create ( func ) , ( cnv ) , latestxt 0 make-proc
+: cnv-vct-cb { cnv sf -- proc; self -- res }
+  sf cnv-cb { func }
+  0 proc-create func , cnv ,
  does> ( self -- res )
   { self }
   self @ { func }
@@ -2801,8 +2743,7 @@ hide
   cnv func convolve
 ;
 set-current
-: effects-cnv ( snd0 amp :optional snd chn -- res )
-  <{ snd0 amp :optional snd #f chn #f }>
+: effects-cnv <{ snd0 amp :optional snd #f chn #f -- res }>
   snd0 sound? unless sounds car to snd0 then
   snd0 #f #f frames { flt-len }
   snd chn #f frames flt-len + { total-len }
@@ -2834,8 +2775,8 @@ end-struct nrev-reverb%
 : reverb-feedback@ ( gen -- val ) reverb-feedback @ ;
 : reverb-feedback! ( val gen -- ) reverb-feedback ! ;
 
-: nrev-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: nrev-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2858,9 +2799,9 @@ end-struct nrev-reverb%
   then
   snd restore-controls drop
 ;
-: nrev-reset-cb ( gen -- xt; w c i self -- )
+: nrev-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen amount@ , gen reverb-filter@ , gen reverb-feedback@ , latestxt
+  3 proc-create gen , gen amount@ , gen reverb-filter@ , gen reverb-feedback@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2871,26 +2812,26 @@ end-struct nrev-reverb%
   gen sliders@ 1 array-ref '( FXmNvalue gen reverb-filter@   100.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 2 array-ref '( FXmNvalue gen reverb-feedback@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: nrev-amount-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: nrev-amount-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) amount!
 ;
-: nrev-filter-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: nrev-filter-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) reverb-filter!
 ;
-: nrev-feedback-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: nrev-feedback-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) reverb-feedback!
 ;
-: post-reverb-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-reverb-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2912,17 +2853,16 @@ Move the sliders to change the reverb parameters." _ help-cb
 ;
 set-current
 
-: make-reverb-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-reverb-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) nrev-reverb% %alloc make-base-effects { gen }
   0.10 gen amount!
   0.50 gen reverb-filter!
   1.09 gen reverb-feedback!
-  gen post-reverb-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt             ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-reverb-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -2945,23 +2885,23 @@ end-struct jc-reverb%
 : jc-reverb-volume@ ( gen -- val ) jc-reverb-volume @ ;
 : jc-reverb-volume! ( val gen -- ) jc-reverb-volume ! ;
 
-: jc-func-cb ( gen -- xt; samps self -- proc )
-  lambda-create , latestxt
+: jc-func-cb ( gen -- prc; samps self -- proc )
+  3 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   samps gen jc-reverb-volume@ effects-jc-reverb
 ;
-: jc-origin-cb ( gen -- xt; target input-samps self -- name origin )
-  lambda-create , latestxt
+: jc-origin-cb ( gen -- prc; target input-samps self -- name origin )
+  3 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
-  $" effects-jc-reverb-1"
+  "effects-jc-reverb-1"
   gen jc-reverb-volume@ number->string
 ;
-: jc-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: jc-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2970,9 +2910,9 @@ end-struct jc-reverb%
   gen jc-origin-cb
   gen truncate@ if #f else gen jc-reverb-decay@ then map-chan-over-target-with-sync
 ;
-: jc-reset-cb ( gen -- xt; w c i self -- )
+: jc-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen jc-reverb-decay@ , gen jc-reverb-volume@ , latestxt
+  3 proc-create gen , gen jc-reverb-decay@ , gen jc-reverb-volume@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -2981,20 +2921,20 @@ end-struct jc-reverb%
   gen sliders@ 0 array-ref '( FXmNvalue gen jc-reverb-decay@  100.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 1 array-ref '( FXmNvalue gen jc-reverb-volume@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: jc-decay-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: jc-decay-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) jc-reverb-decay!
 ;
-: jc-volume-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: jc-volume-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) jc-reverb-volume!
 ;
-: post-jc-reverb-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-jc-reverb-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3014,16 +2954,15 @@ Move the sliders to set the reverb parameters." _ help-cb
 ;
 set-current
 
-: make-jc-reverb-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-jc-reverb-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) jc-reverb% %alloc make-base-effects { gen }
   2.0 gen jc-reverb-decay!
   0.1 gen jc-reverb-volume!
-  gen post-jc-reverb-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt                  ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-jc-reverb-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -3046,8 +2985,8 @@ end-struct effects-convolve%
 : convolve-two@ ( gen -- val ) convolve-two @ ;
 : convolve-two! ( val gen -- ) convolve-two ! ;
 
-: cnv-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: cnv-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3063,9 +3002,9 @@ end-struct effects-convolve%
     $" no such sound one: %S" '( snd1 ) string-format snd-warning drop
   then
 ;
-: cnv-reset-cb ( gen -- xt; w c i self -- )
+: cnv-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen convolve-one@ , gen convolve-two@ , gen amplitude@ , latestxt
+  3 proc-create gen , gen convolve-one@ , gen convolve-two@ , gen amplitude@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3076,26 +3015,26 @@ end-struct effects-convolve%
   gen sliders@ 1 array-ref '( FXmNvalue gen convolve-two@           ) FXtVaSetValues drop
   gen sliders@ 2 array-ref '( FXmNvalue gen amplitude@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: cnv-one-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: cnv-one-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue self @ ( gen ) convolve-one!
 ;
-: cnv-two-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: cnv-two-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue self @ ( gen ) convolve-two!
 ;
-: cnv-amp-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: cnv-amp-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) amplitude!
 ;
-: post-convolve-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-convolve-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3123,17 +3062,16 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data." _
 ;
 set-current
 
-: make-convolve-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-convolve-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-convolve% %alloc make-base-effects { gen }
   0    gen convolve-one!
   1    gen convolve-two!
   0.01 gen amplitude!
-  gen post-convolve-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt                  ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-convolve-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -3146,27 +3084,26 @@ previous
 \ === VARIOUS AND MISCELLANEOUS ===
 
 hide
-: numb-cb ( rd pos -- proc; y self -- res )
-  lambda-create , , latestxt 1 make-proc
+: numb-cb { rd pos -- proc; y self -- res }
+  1 proc-create pos , rd ,
  does> ( y self -- res )
   { y self }
   self cell+ @ ( rd ) read-sample self @ ( pos ) f* y f+
 ;
-: env-numb-cb ( rd en -- proc; y self -- res )
-  lambda-create , , latestxt 1 make-proc
+: env-numb-cb { rd en -- proc; y self -- res }
+  1 proc-create en , rd ,
  does> ( y self -- res )
   { y self }
   self cell+ @ ( rd ) read-sample self @ ( en ) env f* y f+
 ;
-: env-cb ( rd en -- proc; y self -- res )
-  lambda-create , , latestxt 1 make-proc
+: env-cb { rd en -- proc; y self -- res }
+  1 proc-create en , rd ,
  does> ( y self -- res )
   { y self }
   self cell+ @ ( rd ) read-sample  1.0 self @ ( en ) env f-  f* y f+
 ;
 set-current
-: effects-position-sound ( mono-snd pos :optional snd chn -- res )
-  <{ mono pos :optional snd #f chn #f }>
+: effects-position-sound <{ mono pos :optional snd #f chn #f -- res }>
   mono #f #f frames { len }
   0 mono #f 1 #f make-sample-reader { rd }
   $" %s %s %s" '( mono pos get-func-name ) string-format { origin }
@@ -3200,15 +3137,14 @@ If PAN-ENV is a number, the sound is split such that 0 is all in channel 0 \
 ;
 
 hide
-: flange-cb ( ri del -- proc; inval self -- res )
-  lambda-create , , latestxt 1 make-proc
+: flange-cb { ri del -- proc; inval self -- res }
+  1 proc-create del , ri ,
  does> ( inval self -- res )
   { inval self }
   self @ ( del ) inval  self cell+ @ ( ri ) 0.0 rand-interp  delay inval f+ 0.75 f*
 ;
 set-current
-: effects-flange ( amount speed time :optional beg dur snd chn -- res )
-  <{ amnt speed time :optional beg 0 dur #f snd #f  chn #f }>
+: effects-flange <{ amnt speed time :optional beg 0 dur #f snd #f  chn #f  -- res}>
   :frequency speed :amplitude amnt make-rand-interp { ri }
   time snd srate f* fround f>s { len }
   :size len :max-size amnt f>s len 1 + + make-delay { del }
@@ -3229,8 +3165,7 @@ previous
   1.0 r fftsize f/ f- { radius }
   #f srate fftsize / { bin }
   freq-inc nil make-array map! :radius radius :frequency bin i * make-formant end-map { formants }
-  lambda-create ( inctr ) 0 , ( ctr ) freq-inc , fdr , fdi , spectr , formants , snd , amp ,
-  latestxt 1 make-proc
+  1 proc-create ( inctr ) 0 , ( ctr ) freq-inc , fdr , fdi , spectr , formants , snd , amp ,
  does> ( inval self -- res )
   { inval self }
   self @ { inctr }
@@ -3257,8 +3192,7 @@ previous
   spectr formants inval formant-bank amp f*
 ;
 
-: effects-cross-synthesis-1 ( cross-snd amp fftsize r :optional beg dur snd chn -- res )
-  <{ csnd amp fftsize r :optional beg 0 dur #f snd #f  chn #f }>
+: effects-cross-synthesis-1 <{ csnd amp fftsize r :optional beg 0 dur #f snd #f  chn #f -- res }>
   { csnd amp fftsize r beg dur snd chn }
   $" %s %s %s %s %s %s %s" '( csnd amp fftsize r beg dur get-func-name ) string-format { origin }
   csnd sound? unless sounds car to csnd then
@@ -3267,7 +3201,7 @@ previous
 
 hide
 : src-fp-read-cb ( sf -- proc; dir self -- samp )
-  lambda-create , latestxt 1 make-proc
+  0 proc-create swap ,
  does> ( dir self -- samp )
   { dir self }
   self @ ( sf ) dir 0> if next-sample else previous-sample then
@@ -3275,7 +3209,7 @@ hide
 : vct-fp-cb ( os sr sf amp -- proc; self -- res )
   { os sr sf amp }
   sf src-fp-read-cb { src-cb }
-  lambda-create os , sr , amp , src-cb , latestxt 0 make-proc
+  0 proc-create os , sr , amp , src-cb ,
  does> ( self -- res )
   { self }
   self cell+ @ ( sr )
@@ -3283,8 +3217,7 @@ hide
   self 3 cells + @ ( src-cb ) src
 ;
 set-current
-: effects-fp ( srf amp freq :optional beg dur snd chn -- vct )
-  <{ srf amp freq :optional beg 0 dur #f snd #f  chn #f }>
+: effects-fp <{ srf amp freq :optional beg 0 dur #f snd #f  chn #f -- vct }>
   freq make-oscil { os }
   :srate srf make-src { sr }
   beg snd chn 1 #f make-sample-reader { sf }
@@ -3297,8 +3230,8 @@ set-current
 previous
 
 hide
-: hello-src-cb ( in-data idx -- proc; dir self -- samp )
-  lambda-create , , latestxt 1 make-proc
+: hello-src-cb { in-data idx -- proc; dir self -- samp }
+  1 proc-create in-data , idx ,
  does> ( dir self -- samp )
   { dir self }
   self @ { idx }
@@ -3307,8 +3240,7 @@ hide
   idx dir + self ! ( idx )
 ;
 set-current
-: effects-hello-dentist ( freq amp :optional beg dur snd chn -- res )
-  <{ freq amp :optional beg 0 dur #f snd #f  chn #f }>
+: effects-hello-dentist <{ freq amp :optional beg 0 dur #f snd #f  chn #f -- res }>
   :frequency freq :amplitude amp make-rand-interp { rn }
   0 { idx }
   dur if dur else snd chn #f frames then { len }
@@ -3340,8 +3272,8 @@ end-struct effects-place-sound%
 : pan-pos@    ( gen -- pos ) pan-pos @ ;
 : pan-pos!    ( pos gen -- ) pan-pos ! ;
 
-: ps-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: ps-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3352,9 +3284,9 @@ end-struct effects-place-sound%
     gen mono-snd@ gen stereo-snd@ e            place-sound drop
   then
 ;
-: ps-reset-cb ( gen -- xt; w c i self -- )
+: ps-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen mono-snd@ , gen stereo-snd@ , gen pan-pos@ , latestxt
+  3 proc-create gen , gen mono-snd@ , gen stereo-snd@ , gen pan-pos@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3366,28 +3298,27 @@ end-struct effects-place-sound%
   gen sliders@ 1 array-ref '( FXmNvalue gen stereo-snd@ ) FXtVaSetValues drop
   gen sliders@ 2 array-ref '( FXmNvalue gen pan-pos@    ) FXtVaSetValues drop
 ;
-: ps-mono-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: ps-mono-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue self @ ( gen ) mono-snd!
 ;
-: ps-stereo-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: ps-stereo-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue self @ ( gen ) stereo-snd!
 ;
-: ps-pos-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: ps-pos-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue self @ ( gen ) pan-pos!
 ;
-: post-place-sound-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
- does> ( w c i self -- )
-  { w c info self }
+: post-place-sound-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
+ does> { w c info self -- }
   self @ { gen }
   gen dialog@ FWidget? unless
     gen label@
@@ -3398,7 +3329,7 @@ end-struct effects-place-sound%
     #( #( $" mono sound"   _ 0 gen mono-snd@   50 gen ps-mono-cb   1 )
        #( $" stereo sound" _ 0 gen stereo-snd@ 50 gen ps-stereo-cb 1 )
        #( $" pan position" _ 0 gen pan-pos@    90 gen ps-pos-cb    1 ) ) add-sliders gen sliders!
-    $" fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
+    "fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
     '( FXmNheight          200
        FXmNleftAttachment  FXmATTACH_FORM
        FXmNrightAttachment FXmATTACH_FORM
@@ -3407,7 +3338,7 @@ end-struct effects-place-sound%
        FXmNshadowThickness 4
        FXmNshadowType      FXmSHADOW_ETCHED_OUT ) undef FXtCreateManagedWidget { fr }
     gen dialog@ activate-dialog
-    $" panning" fr
+    "panning" fr
     '( 0.0 1.0 1.0 1.0 ) ( envelope )
     '( 0.0 1.0 0.0 1.0 ) ( axis-bounds )
     '( FXmNheight 200 ) make-xenved gen envel!
@@ -3417,17 +3348,16 @@ end-struct effects-place-sound%
 ;
 set-current
 
-: make-place-sound-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-place-sound-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-place-sound% %alloc make-base-effects { gen }
   0  gen mono-snd!
   1  gen stereo-snd!
   45 gen pan-pos!
-  gen post-place-sound-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt             ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-place-sound-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -3440,30 +3370,30 @@ previous
 \ === Insert silence (at cursor, silence-amount in secs) ===
 
 hide
-: silence-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: silence-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
   #f #f #f cursor #f srate gen amount@ f* f>s #f #f insert-silence drop
 ;
-: silence-reset-cb ( gen -- xt; w c i self -- )
+: silence-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen amount@ , latestxt
+  3 proc-create gen , gen amount@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
   self 1 cells + @ ( init ) gen amount!
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: silence-amount-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: silence-amount-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) amount!
 ;
-: post-silence-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-silence-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3474,22 +3404,21 @@ hide
     $" Move the slider to change the number of seconds of silence added at the cursor position." _
     help-cb
     gen silence-reset-cb make-effect-dialog gen dialog!
-    gen dialog@ #( #( $" silence" _ 0.0 gen amount@ 5.0 gen silence-amount-cb 100 ) )
+    gen dialog@ #( #( "silence" _ 0.0 gen amount@ 5.0 gen silence-amount-cb 100 ) )
     add-sliders gen sliders!
   then
   gen dialog@ activate-dialog
 ;
 set-current
 
-: make-silence-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-silence-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   1.0 gen amount!
-  gen post-silence-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt             ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-silence-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -3500,8 +3429,8 @@ previous
 \ === Contrast (brightness control) ===
 
 hide
-: contrast-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: contrast-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3525,23 +3454,23 @@ hide
   then
   snd restore-controls drop
 ;
-: contrast-reset-cb ( gen -- xt; w c i self -- )
+: contrast-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen amount@ , latestxt
+  3 proc-create gen , gen amount@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
   self 1 cells + @ ( init )  gen amount!
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: contrast-amount-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: contrast-amount-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) amount!
 ;
-: post-contrast-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-contrast-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3558,15 +3487,14 @@ hide
 ;
 set-current
 
-: make-contrast-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-contrast-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   1.0 gen amount!
-  gen post-contrast-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt            ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-contrast-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -3590,23 +3518,23 @@ end-struct effects-cross%
 : cs-fft-widget@ ( gen -- wid ) cross-synth-fft-widget @ ;
 : cs-fft-widget! ( wid gen -- ) cross-synth-fft-widget ! ;
 
-: cs-func-cb ( gen -- xt; samps self -- proc )
-  lambda-create , latestxt
+: cs-func-cb ( gen -- prc; samps self -- proc )
+  3 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   gen cs-sound@ gen amplitude@ gen size@ gen cs-radius@ effects-cross-synthesis
 ;
-: cs-origin-cb ( gen -- xt; target input-samps self -- name origin )
-  lambda-create , latestxt
+: cs-origin-cb ( gen -- prc; target input-samps self -- name origin )
+  3 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
-  $" effects-cross-synthesis-1"
+  "effects-cross-synthesis-1"
   $" %s %s %s %s" '( gen cs-sound@ gen amplitude@ gen size@ gen cs-radius@ ) string-format
 ;
-: cs-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: cs-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3616,9 +3544,9 @@ end-struct effects-cross%
   #f
   map-chan-over-target-with-sync
 ;
-: cs-reset-cb ( gen -- xt; w c i self -- )
+: cs-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen cs-sound@ , gen amplitude@ , gen size@ , gen cs-radius@ , latestxt
+  3 proc-create gen , gen cs-sound@ , gen amplitude@ , gen size@ , gen cs-radius@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3636,39 +3564,39 @@ end-struct effects-cross%
   then drop
   gen sliders@ 2 array-ref '( FXmNvalue gen cs-radius@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: cs-snd-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: cs-snd-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue self @ ( gen ) cs-sound!
 ;
-: cs-amp-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: cs-amp-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) amplitude!
 ;
-: cs-rad-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: cs-rad-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) cs-radius!
 ;
 : cs-sel-cb ( gen -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fitem_or_text ( selected ) FXmFONTLIST_DEFAULT_TAG FXmStringGetLtoR \ size-as-list '(#t n)
   cadr self @ ( gen ) size!
 ;
 : cs-sel-changed-cb ( gen -- proc; w c i self -- )
-  lambda-create , latestxt 3 make-proc
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w size info self }
   info Fset if size self @ ( gen ) size! then
 ;
-: post-cross-synth-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-cross-synth-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3684,11 +3612,11 @@ the synthesis amplitude, the FFT size, and the radius value." _ help-cb
        #( $" radius"      _ 0.0 gen cs-radius@ 360.0 gen cs-rad-cb 100 ) ) add-sliders gen sliders!
     '( 64 128 256 512 1024 4096 ) { sizes }
     $" FFT size" _ FXmStringCreateLocalized { s1 }
-    $" frame" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent
+    "frame" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent
     '( FXmNborderWidth   1
        FXmNshadowType    FXmSHADOW_ETCHED_IN
        FXmNpositionIndex 2 ) undef FXtCreateManagedWidget { frame }
-    $" frm" FxmFormWidgetClass frame
+    "frm" FxmFormWidgetClass frame
     '( FXmNleftAttachment   FXmATTACH_FORM
        FXmNrightAttachment  FXmATTACH_FORM
        FXmNtopAttachment    FXmATTACH_FORM
@@ -3703,7 +3631,7 @@ the synthesis amplitude, the FFT size, and the radius value." _ help-cb
 	 FXmNlabelString      s1
 	 FXmNbackground       basic-color ) undef FXtCreateManagedWidget { lab }
       sizes map! *key* number->string FXmStringCreateLocalized end-map { fft-labels }
-      $" fftsize" FxmComboBoxWidgetClass frm
+      "fftsize" FxmComboBoxWidgetClass frm
       '( FXmNleftAttachment   FXmATTACH_WIDGET
 	 FXmNleftWidget       lab
 	 FXmNrightAttachment  FXmATTACH_FORM
@@ -3718,7 +3646,7 @@ the synthesis amplitude, the FFT size, and the radius value." _ help-cb
       combo '( FXmNselectedPosition 1 ) FXtVaSetValues drop
       combo FXmNselectionCallback gen cs-sel-cb undef FXtAddCallback drop
     else
-      $" rc" FxmRowColumnWidgetClass frm
+      "rc" FxmRowColumnWidgetClass frm
       '( FXmNorientation      FXmHORIZONTAL
 	 FXmNradioBehavior    #t
 	 FXmNradioAlwaysOne   #t
@@ -3753,19 +3681,18 @@ the synthesis amplitude, the FFT size, and the radius value." _ help-cb
 ;
 set-current
 
-: make-cross-synth-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-cross-synth-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-cross% %alloc make-base-effects { gen }
   1   gen cs-sound!
   0.5 gen amplitude!
   128 gen size!
   6.0 gen cs-radius!
   #f  gen cs-fft-widget!
-  gen post-cross-synth-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt            ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-cross-synth-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -3788,29 +3715,29 @@ end-struct effects-flange%
 : flange-time@  ( gen -- val ) flange-time @ ;
 : flange-time!  ( val gen -- ) flange-time ! ;
 
-: flange-func-cb ( gen -- xt; samps self -- proc )
-  lambda-create , latestxt
+: flange-func-cb ( gen -- prc; samps self -- proc )
+  3 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   :frequency gen flange-speed@ :amplitude gen amount@ make-rand-interp { ri }
   gen flange-time@ #f srate f* fround f>s { len }
   :size len :max-size gen amount@ 1.0 len f+ f+ f>s make-delay { del }
-  lambda-create del , ri , latestxt 1 make-proc
+  1 proc-create del , ri ,
  does> ( inval self -- res )
   { inval self }
   self @ ( del ) inval self cell+ @ ( ri ) 0.0 rand-interp delay inval f+ 0.75 f*
 ;
-: flange-origin-cb ( gen -- xt; target input-samps self -- name origin )
-  lambda-create , latestxt
+: flange-origin-cb ( gen -- prc; target input-samps self -- name origin )
+  3 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
-  $" effects-flange"
+  "effects-flange"
   $" %s %s %s" '( gen amount@ gen flange-speed@ gen flange-time@ ) string-format
 ;
-: flange-ok-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: flange-ok-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3820,9 +3747,9 @@ end-struct effects-flange%
   #f
   map-chan-over-target-with-sync
 ;
-: flange-reset-cb ( gen -- xt; w c i self -- )
+: flange-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen flange-speed@ , gen amount@ , gen flange-time@ , latestxt
+  3 proc-create gen , gen flange-speed@ , gen amount@ , gen flange-time@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3833,26 +3760,26 @@ end-struct effects-flange%
   gen sliders@ 1 array-ref '( FXmNvalue gen amount@       10.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 2 array-ref '( FXmNvalue gen flange-time@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: flange-speed-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: flange-speed-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 10.0 f/ self @ ( gen ) flange-speed!
 ;
-: flange-amount-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: flange-amount-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 10.0 f/ self @ ( gen ) amount!
 ;
-: flange-time-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: flange-time-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) flange-time!
 ;
-: post-flange-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-flange-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3872,17 +3799,16 @@ end-struct effects-flange%
 ;
 set-current
 
-: make-flange-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-flange-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-flange% %alloc make-base-effects { gen }
   2.000 gen flange-speed!
   5.000 gen amount!
   0.001 gen flange-time!
-  gen post-flange-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt            ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-flange-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -3894,15 +3820,15 @@ set-current
 \ === Randomize phase ===
 
 : random-phase-cb ( scl -- proc; x self -- res )
-  lambda-create , latestxt 1 make-proc
+  1 proc-create swap ,
  does> ( x self -- res )
   { x self }
   self @ ( scl ) random
 ;
 
 hide
-: rp-ok-cb ( gen -- xt; w c i self --; x self -- res)
-  lambda-create , latestxt
+: rp-ok-cb ( gen -- prc; w c i self --; x self -- res)
+  3 proc-create swap ,
  does> ( w c i self --; x self -- res )
   { w c info self }
   self @ { gen }
@@ -3911,23 +3837,23 @@ hide
   prc $" %s random-phase-cb" gen scaler@ string-format proc-source-set!
   prc #f #f rotate-phase
 ;
-: rp-reset-cb ( gen -- xt; w c i self -- )
+: rp-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen scaler@ , latestxt
+  3 proc-create gen , gen scaler@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
   self 1 cells + @ ( init ) gen scaler!
   gen sliders@ 0 array-ref '( FXmNvalue gen scaler@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: rp-scl-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: rp-scl-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) scaler!
 ;
-: post-random-phase-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-random-phase-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -3943,15 +3869,14 @@ hide
 ;
 set-current
 
-: make-random-phase-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-random-phase-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   3.14 gen scaler!
-  gen post-random-phase-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt            ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-random-phase-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -3968,8 +3893,8 @@ end-struct effects-robotize%
 : samp-rate@ ( gen -- sr ) robotize-samp-rate @ ;
 : samp-rate! ( sr gen -- ) robotize-samp-rate ! ;
 
-: robotize-ok-cb ( gen -- xt; w c i self --; x self -- res)
-  lambda-create , latestxt
+: robotize-ok-cb ( gen -- prc; w c i self --; x self -- res)
+  3 proc-create swap ,
  does> ( w c i self --; x self -- res )
   { w c info self }
   self @ { gen }
@@ -3989,9 +3914,9 @@ end-struct effects-robotize%
     then
   then #f #f effects-fp
 ;
-: robotize-reset-cb ( gen -- xt; w c i self -- )
+: robotize-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen samp-rate@ , gen amplitude@ , gen frequency@ , latestxt
+  3 proc-create gen , gen samp-rate@ , gen amplitude@ , gen frequency@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -4002,26 +3927,26 @@ end-struct effects-robotize%
   gen sliders@ 1 array-ref '( FXmNvalue gen amplitude@ 100.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 2 array-ref '( FXmNvalue gen frequency@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: robotize-sam-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: robotize-sam-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) samp-rate!
 ;
-: robotize-amp-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: robotize-amp-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) amplitude!
 ;
-: robotize-frq-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: robotize-frq-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) frequency!
 ;
-: post-robotize-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-robotize-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -4043,17 +3968,16 @@ end-struct effects-robotize%
 ;
 set-current
 
-: make-robotize-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-robotize-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-robotize% %alloc make-base-effects { gen }
   1.0  gen samp-rate!
   0.3  gen amplitude!
   20.0 gen frequency!
-  gen post-robotize-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt            ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-robotize-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -4072,29 +3996,29 @@ end-struct effects-rubber%
 : factor@ ( gen -- val ) rubber-factor @ ;
 : factor! ( val gen -- ) rubber-factor ! ;
 
-: rubber-ok-cb ( gen -- xt; w c i self --; x self -- res)
-  lambda-create , latestxt
+: rubber-ok-cb ( gen -- prc; w c i self --; x self -- res)
+  3 proc-create swap ,
  does> ( w c i self --; x self -- res )
   { w c info self }
   self @ ( gen ) factor@ #f #f rubber-sound
 ;
-: rubber-reset-cb ( gen -- xt; w c i self -- )
+: rubber-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen factor@ , latestxt
+  3 proc-create gen , gen factor@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
   self 1 cells + @ ( init ) gen factor!
   gen sliders@ 0 array-ref '( FXmNvalue gen factor@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: rubber-factor-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: rubber-factor-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) factor!
 ;
-: post-rubber-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-rubber-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -4113,15 +4037,14 @@ Move the slider to change the stretch factor." _ help-cb
 ;
 set-current
 
-: make-rubber-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-rubber-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-rubber% %alloc make-base-effects { gen }
   1.0 gen factor!
-  gen post-rubber-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt            ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-rubber-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -4131,8 +4054,8 @@ set-current
 \ === Wobble ===
 
 hide
-: wobble-ok-cb ( gen -- xt; w c i self --; x self -- res)
-  lambda-create , latestxt
+: wobble-ok-cb ( gen -- prc; w c i self --; x self -- res)
+  3 proc-create swap ,
  does> ( w c i self --; x self -- res )
   { w c info self }
   self @ { gen }
@@ -4152,9 +4075,9 @@ hide
     then
   then #f #f effects-hello-dentist
 ;
-: wobble-reset-cb ( gen -- xt; w c i self -- )
+: wobble-reset-cb ( gen -- prc; w c i self -- )
   { gen }
-  lambda-create gen , gen frequency@ , gen amplitude@ , latestxt
+  3 proc-create gen , gen frequency@ , gen amplitude@ ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -4163,20 +4086,20 @@ hide
   gen sliders@ 0 array-ref '( FXmNvalue gen frequency@ 100.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 1 array-ref '( FXmNvalue gen amplitude@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: wobble-frq-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: wobble-frq-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) frequency!
 ;
-: wobble-amp-cb ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: wobble-amp-cb ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) amplitude!
 ;
-: post-wobble-dialog ( gen -- xt; w c i self -- )
-  lambda-create , latestxt
+: post-wobble-dialog ( gen -- prc; w c i self -- )
+  3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
@@ -4195,16 +4118,15 @@ hide
 ;
 set-current
 
-: make-wobble-dialog ( name -- xt1 xt2; child self -- xt; self -- )
+: make-wobble-dialog ( name -- prc1 prc2; child self -- prc; self -- )
   ( name ) effects-base% %alloc make-base-effects { gen }
   50.0 gen frequency!
   0.5  gen amplitude!
-  gen post-wobble-dialog ( xt1 )
-  lambda-create gen ,
-  latestxt            ( xt2 )
- does> ( child self -- xt; self -- )
+  gen post-wobble-dialog ( prc1 )
+  1 proc-create gen ,   ( prc2 )
+ does> ( child self -- prc; self -- )
   { child self }
-  lambda-create self @ ( gen ) , child , latestxt
+  0 proc-create self @ ( gen ) , child ,
  does> ( self -- )
   { self }
   self @ { gen }
@@ -4260,8 +4182,7 @@ $" Effects" _ value effects-menu-label
 ;
 
 hide
-: find-click ( loc :optional snd chn -- pos|#f )
-  <{ loc :optional snd #f chn #f }>
+: find-click <{ loc :optional snd #f chn #f -- pos|#f }>
   loc snd chn 1 #f make-sample-reader { rd }
   0.0 0.0 0.0 { samp0 samp1 samp2 }
   10 0.0 make-vct { samps }
@@ -4279,8 +4200,7 @@ hide
     samp0 samp2 f- fabs local-max f2/ f< && if drop ( flag ) i leave then
   loop
 ;
-: remove-click ( loc :optional snd chn -- )
-  <{ loc :optional snd #f chn #f }>
+: remove-click <{ loc :optional snd #f chn #f -- }>
   loc snd chn find-click { click }
   click c-g? not && if
     click 2 - 4 snd chn smooth-sound drop
@@ -4288,7 +4208,7 @@ hide
   then
 ;
 : effects-remove-dc-cb ( -- proc; inval self -- res )
-  lambda-create 0.0 ( lastx ) , 0.0 ( lasty ) , latestxt 1 make-proc
+  1 proc-create 0.0 ( lastx ) , 0.0 ( lasty ) ,
  does> ( inval self -- res )
   { inval self }
   self @ { lastx }
@@ -4298,22 +4218,19 @@ hide
   self cell+ @ ( lasty )
 ;
 : effects-compand-cb ( tbl -- proc; inval self -- res )
-  lambda-create , latestxt 1 make-proc
+  1 proc-create swap ,
  does> ( inval self -- res )
   { inval self }
   self @ { tbl }
   tbl inval 8.0 f* 8.0 f+ tbl length array-interp
 ;
 set-current
-: effects-remove-clicks ( :optional snd chn -- res )
-  <{ :optional snd #f chn #f }>
+: effects-remove-clicks <{ :optional snd #f chn #f -- res }>
   0 -rot remove-click #f ;
-: effects-remove-dc ( :optional snd chn -- res )
-  <{ :optional snd #f chn #f }>
+: effects-remove-dc <{ :optional snd #f chn #f -- res }>
   effects-remove-dc-cb 0 #f snd chn #f get-func-name map-channel
 ;
-: effects-compand ( :optional snd chn -- res )
-  <{ :optional snd #f chn #f }>
+: effects-compand <{ :optional snd #f chn #f -- res }>
   vct( -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
   0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000 ) { tbl }
   tbl effects-compand-cb 0 #f snd chn #f get-func-name map-channel
@@ -4322,14 +4239,14 @@ previous
 
 effects-menu-label main-widget-exists? [unless] make-effects-menu drop [then]
 
-#f #f add-to-effects-menu		\ separator
-$" Octave-down"   _ lambda: 2 #f #f down-oct drop ;            add-to-effects-menu
-$" Remove clicks" _ lambda: #f #f effects-remove-clicks drop ; add-to-effects-menu
-$" Remove DC"     _ lambda: #f #f effects-remove-dc drop ;     add-to-effects-menu
-$" Spiker"        _ lambda: #f #f spike drop ;                 add-to-effects-menu
-$" Compand"       _ lambda: #f #f effects-compand drop ;       add-to-effects-menu
-$" Invert"        _ lambda: -1 #f #f scale-by drop ;           add-to-effects-menu
-$" Reverse"       _ lambda: #f #f #f reverse-sound drop ;      add-to-effects-menu
-$" Null phase"    _ lambda: #f #f zero-phase drop ;            add-to-effects-menu
+#f effects-noop  add-to-effects-menu	\ separator
+$" Octave-down"   _ lambda: <{ -- }> 2 #f #f down-oct ;            add-to-effects-menu
+$" Remove clicks" _ lambda: <{ -- }> #f #f effects-remove-clicks ; add-to-effects-menu
+$" Remove DC"     _ lambda: <{ -- }> #f #f effects-remove-dc ;     add-to-effects-menu
+$" Spiker"        _ lambda: <{ -- }> #f #f spike ;                 add-to-effects-menu
+$" Compand"       _ lambda: <{ -- }> #f #f effects-compand ;       add-to-effects-menu
+$" Invert"        _ lambda: <{ -- }> -1 #f #f scale-by ;           add-to-effects-menu
+$" Reverse"       _ lambda: <{ -- }> #f #f #f reverse-sound ;      add-to-effects-menu
+$" Null phase"    _ lambda: <{ -- }> #f #f zero-phase ;            add-to-effects-menu
 
 \ effects.fs ends here
