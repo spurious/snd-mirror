@@ -1424,6 +1424,9 @@ char *mus_expand_filename(const char *filename)
       if ((tok[0] == '~') && (home = getenv("HOME")))
 	{
 	  file_name_buf = (char *)CALLOC(len + sndlib_strlen(home) + 8, sizeof(char));
+#if MUS_DEBUGGING && USE_SND
+	  set_printable(PRINT_CHAR);
+#endif
 	  strcpy(file_name_buf, home);
 	  strcat(file_name_buf, ++tok);
 	}
@@ -1432,6 +1435,9 @@ char *mus_expand_filename(const char *filename)
 	  char *pwd;
 	  pwd = mus_getcwd();
 	  file_name_buf = (char *)CALLOC(len + sndlib_strlen(pwd) + 8, sizeof(char));
+#if MUS_DEBUGGING && USE_SND
+	  set_printable(PRINT_CHAR);
+#endif
 	  strcpy(file_name_buf, pwd);
 	  FREE(pwd);
 	  strcat(file_name_buf, "/");
@@ -1442,6 +1448,9 @@ char *mus_expand_filename(const char *filename)
   else 
     {
       file_name_buf = (char *)CALLOC(len + 8, sizeof(char));
+#if MUS_DEBUGGING && USE_SND
+      set_printable(PRINT_CHAR);
+#endif
       strcpy(file_name_buf, tok);
     }
   /* get rid of "/../" and "/./" also "/." at end */

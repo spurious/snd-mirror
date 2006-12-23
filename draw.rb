@@ -224,7 +224,7 @@ displays time domain graph using current colormap (just an example of colormap-r
           data_scaler = ((data_max > 0.0) ? (height / (2.0 * data_max)) : 0.0)
           new_len = width * 2
           data_len = (vct?(data) ? data.length : data.car.length)
-          step = (data_len / width.to_f).to_i
+          step = data_len / width.to_f
           if data_len > width
             data0 = make_array(new_len)
             data1 = ((not vct?(data)) and make_array(new_len))
@@ -266,7 +266,7 @@ displays time domain graph using current colormap (just an example of colormap-r
               j += 2
             end
           else
-            xstep = (width.to_f / data_len).to_i
+            xstep = width.to_f / data_len
             data0 = make_array(data_len * 2)
             data1 = ((not vct?(data)) and make_array(data_len * 2))
             j = 0

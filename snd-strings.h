@@ -10,6 +10,7 @@
 #define S_add_mark                      "add-mark"
 #define S_add_player                    "add-player"
 #define S_add_sound_file_extension      "add-sound-file-extension"
+#define S_add_source_file_extension     "add-source-file-extension"
 #define S_add_to_main_menu              "add-to-main-menu"
 #define S_add_to_menu                   "add-to-menu"
 #define S_add_transform                 "add-transform"

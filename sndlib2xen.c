@@ -1385,52 +1385,55 @@ static XEN equalp_sound_data(XEN obj1, XEN obj2)
 static XEN g_sound_data_length(XEN obj)
 {
   #define H_sound_data_length "(" S_sound_data_length " sd): length (in samples) of each channel of sound-data sd"
-  sound_data *v;
+  sound_data *sd;
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ONLY_ARG, S_sound_data_length, "a sound-data object");
-  v = (sound_data *)XEN_OBJECT_REF(obj);
-  return(C_TO_XEN_INT(v->length));
+  sd = (sound_data *)XEN_OBJECT_REF(obj);
+  return(C_TO_XEN_INT(sd->length));
 }
 
 static XEN g_sound_data_chans(XEN obj)
 {
   #define H_sound_data_chans "(" S_sound_data_chans " sd): number of channels in sound-data sd"
-  sound_data *v;
+  sound_data *sd;
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ONLY_ARG, S_sound_data_chans, "a sound-data object");
-  v = (sound_data *)XEN_OBJECT_REF(obj);
-  return(C_TO_XEN_INT(v->chans));
+  sd = (sound_data *)XEN_OBJECT_REF(obj);
+  return(C_TO_XEN_INT(sd->chans));
 }
 
 sound_data *c_make_sound_data(int chans, int frames)
 {
   int i;
-  sound_data *new_sound_data;
-  new_sound_data = (sound_data *)MALLOC(sizeof(sound_data));
-  new_sound_data->length = frames;
-  new_sound_data->chans = chans;
-  new_sound_data->wrapped = false;
-  new_sound_data->data = (Float **)CALLOC(chans, sizeof(Float *));
+  sound_data *sd;
+  sd = (sound_data *)MALLOC(sizeof(sound_data));
+#if MUS_DEBUGGING && USE_SND
+  set_printable(PRINT_SOUND_DATA);
+#endif
+  sd->length = frames;
+  sd->chans = chans;
+  sd->wrapped = false;
+  sd->data = (Float **)CALLOC(chans, sizeof(Float *));
   for (i = 0; i < chans; i++)
-    new_sound_data->data[i] = (Float *)CALLOC(frames, sizeof(Float));
-  return(new_sound_data);
+    sd->data[i] = (Float *)CALLOC(frames, sizeof(Float));
+  return(sd);
 }
 
 XEN make_sound_data(int chans, int frames)
 {
   #define H_make_sound_data "(" S_make_sound_data " chans frames): return a new sound-data object with 'chans' channels, each having 'frames' samples"
-  sound_data *new_sound_data;
-  new_sound_data = c_make_sound_data(chans, frames);
-  XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, new_sound_data, 0, free_sound_data);
+  sound_data *sd;
+  sd = c_make_sound_data(chans, frames);
+  XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, sd, 0, free_sound_data);
 }
 
 XEN wrap_sound_data(int chans, int frames, Float **data)
 {
-  sound_data *new_sound_data;
-  new_sound_data = (sound_data *)MALLOC(sizeof(sound_data));
-  new_sound_data->length = frames;
-  new_sound_data->chans = chans;
-  new_sound_data->wrapped = true;
-  new_sound_data->data = data;
-  XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, new_sound_data, 0, free_sound_data);
+  sound_data *sd;
+  sd = (sound_data *)MALLOC(sizeof(sound_data));
+  sd->length = frames;
+  sd->chans = chans;
+  sd->wrapped = true;
+  sd->data = data;
+  XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, sd, 0, free_sound_data);
 }
 
 static XEN g_make_sound_data(XEN chans, XEN frames)
@@ -1455,29 +1458,29 @@ static XEN g_make_sound_data(XEN chans, XEN frames)
 static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
 {
   #define H_sound_data_ref "(" S_sound_data_ref " sd chan i): sample in channel chan at location i of sound-data sd: sd[chan][i]"
-  sound_data *v;
+  sound_data *sd;
   int loc, chn;
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ARG_1, S_sound_data_ref, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_sound_data_ref, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(frame_num), frame_num, XEN_ARG_3, S_sound_data_ref, "an integer");
-  v = (sound_data *)XEN_OBJECT_REF(obj);
+  sd = (sound_data *)XEN_OBJECT_REF(obj);
   chn = XEN_TO_C_INT(chan);
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 2, chan, "~A: invalid channel");
-  if (chn >= v->chans)
+  if (chn >= sd->chans)
     XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_ref),
 			 C_TO_XEN_STRING("chan: ~A >= sound-data chans: ~A"),
-			 XEN_LIST_2(chan, C_TO_XEN_INT(v->chans))));
+			 XEN_LIST_2(chan, C_TO_XEN_INT(sd->chans))));
   loc = XEN_TO_C_INT(frame_num);
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 3, frame_num, "~A: invalid frame");
-  if (loc >= v->length)
+  if (loc >= sd->length)
     XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_ref),
 			 C_TO_XEN_STRING("frame: ~A >= sound-data length: ~A"),
-			 XEN_LIST_2(frame_num, C_TO_XEN_INT(v->length))));
-  return(C_TO_XEN_DOUBLE(v->data[chn][loc]));
+			 XEN_LIST_2(frame_num, C_TO_XEN_INT(sd->length))));
+  return(C_TO_XEN_DOUBLE(sd->data[chn][loc]));
 }
 
 static XEN g_sound_data_maxamp(XEN obj)
@@ -1538,30 +1541,30 @@ static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
 static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
 {
   #define H_sound_data_setB "(" S_sound_data_setB " sd chan i val): set sound-data sd's i-th element in channel chan to val: sd[chan][i] = val"
-  sound_data *v;
+  sound_data *sd;
   int loc, chn;
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ARG_1, S_sound_data_setB, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_sound_data_setB, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(frame_num), frame_num, XEN_ARG_3, S_sound_data_setB, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_4, S_sound_data_setB, "a number");
-  v = (sound_data *)XEN_OBJECT_REF(obj);
+  sd = (sound_data *)XEN_OBJECT_REF(obj);
   chn = XEN_TO_C_INT(chan);
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 2, chan, "~A: invalid channel");
-  if (chn >= v->chans)
+  if (chn >= sd->chans)
     XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_setB),
 			 C_TO_XEN_STRING("chan: ~A >= sound-data chans: ~A"),
-			 XEN_LIST_2(chan, C_TO_XEN_INT(v->chans))));
+			 XEN_LIST_2(chan, C_TO_XEN_INT(sd->chans))));
   loc = XEN_TO_C_INT(frame_num);
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 3, frame_num, "~A: invalid frame");
-  if (loc >= v->length)
+  if (loc >= sd->length)
     XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_setB),
 			 C_TO_XEN_STRING("frame: ~A >= sound-data length: ~A"),
-			 XEN_LIST_2(frame_num, C_TO_XEN_INT(v->length))));
-  v->data[chn][loc] = XEN_TO_C_DOUBLE(val);
+			 XEN_LIST_2(frame_num, C_TO_XEN_INT(sd->length))));
+  sd->data[chn][loc] = XEN_TO_C_DOUBLE(val);
   return(val);
 }
 
@@ -1898,11 +1901,11 @@ returns a vector of length sd->chans containing all channels of sound-data sd as
 static XEN sound_data_each(XEN obj)
 {
   int i, j;
-  sound_data *v;
-  v = (sound_data *)XEN_OBJECT_REF(obj);
-  for (j = 0; j < v->chans; j++)
-    for (i = 0; i < v->length; i++)
-      rb_yield(C_TO_XEN_DOUBLE(v->data[j][i]));
+  sound_data *sd;
+  sd = (sound_data *)XEN_OBJECT_REF(obj);
+  for (j = 0; j < sd->chans; j++)
+    for (i = 0; i < sd->length; i++)
+      rb_yield(C_TO_XEN_DOUBLE(sd->data[j][i]));
   return(obj);
 }
 

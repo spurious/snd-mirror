@@ -506,6 +506,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+27-Dec:  add-source-file-extension.\n\
 21-Dec:  unclip-channel.\n\
 17-Dec:  region-home.\n\
 14-Dec:  bird.fsm (Mike Scholz).\n\

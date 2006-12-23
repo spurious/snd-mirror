@@ -839,6 +839,32 @@ If 'check' is #f, the hooks are removed."
     (ptree-channel (lambda (y) (+ y dc)) beg dur snd chn edpos #t #f
 		   (format #f "offset-channel ~A ~A ~A" amount beg dur))))
 
+(define* (offset-sound off :optional (beg 0) dur snd)
+  "(offset-sound off :optional beg dur snd) adds 'off' to every sample in 'snd'"
+  ;; the pretty but slow way:
+  ;; (map-sound (lambda (fr) (frame+ fr off)) beg dur snd)
+  ;;
+  (let ((index (or snd (selected-sound) (car (sounds)))))
+    (if (sound? index)
+	(let* ((out-chans (chans index)))
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn out-chans))
+	    (offset-channel off beg dur index chn)))
+	(throw 'no-such-sound (list "offset-sound" snd)))))
+
+
+;;; -------- pad-sound
+
+(define* (pad-sound beg dur :optional snd) 
+  "(pad-sound beg dur :optional snd) places a block of 'dur' zeros in every channel of 'snd' starting at 'beg'"
+  (let ((index (or snd (selected-sound) (car (sounds)))))
+    (if (sound? index)
+	(let* ((out-chans (chans index)))
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn out-chans))
+	    (pad-channel beg dur index chn)))
+	(throw 'no-such-sound (list "pad-sound" snd)))))
+
 
 ;;; -------- dither-channel
 
@@ -847,6 +873,16 @@ If 'check' is #f, the hooks are removed."
   (let ((dither (* .5 amount)))
     (ptree-channel (lambda (y) (+ y (mus-random dither) (mus-random dither))) beg dur snd chn edpos #t #f
 		   (format #f "dither-channel ~,8F ~A ~A" amount beg dur))))
+
+(define* (dither-sound :optional (amount .00006) (beg 0) dur snd)
+  "(dither-sound :optional (amount .00006) beg dur snd) adds dithering to every channel of 'snd'"
+  (let ((index (or snd (selected-sound) (car (sounds)))))
+    (if (sound? index)
+	(let* ((out-chans (chans index)))
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn out-chans))
+	    (dither-channel amount beg dur index chn)))
+	(throw 'no-such-sound (list "dither-sound" snd)))))
 
 
 ;;; -------- contrast-channel
@@ -859,6 +895,47 @@ If 'check' is #f, the hooks are removed."
        (sin (+ (* y 0.5 pi) (* ind (sin (* y 2.0 pi))))))
      beg dur snd chn edpos #f #f
      (format #f "contrast-channel ~A ~A ~A" index beg dur))))
+
+(define* (contrast-sound index :optional (beg 0) dur snd)
+  "(contrast-sound index :optional beg dur snd) applies contrast-enhancement to every channel of 'snd'"
+  (let ((index (or snd (selected-sound) (car (sounds)))))
+    (if (sound? index)
+	(let* ((out-chans (chans index)))
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn out-chans))
+	    (contrast-channel index beg dur index chn)))
+	(throw 'no-such-sound (list "contrast-sound" snd)))))
+
+
+;;; -------- scale-sound
+
+(define* (scale-sound scl :optional (beg 0) dur snd)
+  "(scale-sound scl :optional beg dur snd) multiplies every sample in 'snd' by 'scl'"
+  ;; the slow way:
+  ;; (map-sound (lambda (fr) (frame* fr scl)) beg dur snd))
+  (let ((index (or snd (selected-sound) (car (sounds)))))
+    (if (sound? index)
+	(let* ((out-chans (chans index)))
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn out-chans))
+	    (scale-channel scl beg dur index chn)))
+	(throw 'no-such-sound (list "scale-sound" snd)))))
+
+
+;;; -------- normalize-sound
+
+(define* (normalize-sound amp :optional (beg 0) dur snd)
+  "(normalize-sound amp :optional beg dur snd) scales 'snd' to peak amplitude 'amp'"
+  (let ((index (or snd (selected-sound) (car (sounds)))))
+    (if (sound? index)
+	(let* ((out-chans (chans index))
+	       (mx (apply max (maxamp index #t))))
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn out-chans))
+	    (scale-channel (/ amp mx) beg dur index chn)))
+	(throw 'no-such-sound (list "normalize-sound" snd)))))
+
+
 
 #|
 ;;; -------- delay-channel 
@@ -896,7 +973,6 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- channels-equal
 
-;;; TODO: use sound->sound-data or scan-sound here
 (define* (channels=? snd1 chn1 snd2 chn2 :optional (allowable-difference 0.0))
   "(channels=? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff) modulo trailing 0's"
   (if (and (= snd1 snd2)
@@ -1104,3 +1180,6 @@ If 'check' is #f, the hooks are removed."
 	       ((= i (chans snd)))
 	     (set! (x-bounds snd i) (list beg end))))
 	 (sounds)))))
+
+
+

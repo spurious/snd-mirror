@@ -1263,6 +1263,16 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 		 beg dur snd chn edpos #t #f
 		 (format #f "compand-channel ~A ~A" beg dur)))
 
+(define* (compand-sound :optional (beg 0) dur snd)
+  "(compand-sound :optional beg dur snd) applies companding to every channel of 'snd'"
+  (let ((index (or snd (selected-sound) (car (sounds)))))
+    (if (sound? index)
+	(let* ((out-chans (chans index)))
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn out-chans))
+	    (compand-channel beg dur index chn)))
+	(throw 'no-such-sound (list "compand-sound" snd)))))
+
 
 
 ;;; -------- shift pitch keeping duration constant

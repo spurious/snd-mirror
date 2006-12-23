@@ -606,55 +606,6 @@
 	(throw 'no-such-sound (list "map-sound" snd)))))
 
 
-(define* (offset-sound off :optional (beg 0) dur snd)
-  "(offset-sound off :optional beg dur snd) adds 'off' to every sample in 'snd'"
-  (map-sound (lambda (fr) (frame+ fr off)) beg dur snd))
-
-(define* (scale-sound scl :optional (beg 0) dur snd)
-  "(scale-sound scl :optional beg dur snd) multiplies every sample in 'snd' by 'scl'"
-  (map-sound (lambda (fr) (frame* fr scl)) beg dur snd))
-
-(define* (do-sound func beg dur :optional snd)
-  (let ((index (or snd (selected-sound) (car (sounds)))))
-    (if (not (sound? index))
-	(throw 'no-such-sound (list (procedure-name func) snd))
-	(let ((chns (chans index)))
-	  (do ((chn 0 (1+ chn)))
-	      ((= chn chns))
-	    (func beg dur index chn))))))
-
-(define* (pad-sound beg dur :optional snd) 
-  "(pad-sound beg dur :optional snd) places a block of 'dur' zeros in every channel of 'snd' starting at 'beg'"
-  (do-sound pad-channel beg dur snd))
-
-(define* (compand-sound :optional (beg 0) dur snd)
-  "(compand-sound :optional beg dur snd) applies companding to every channel of 'snd'"
-  (do-sound compand-channel beg dur snd))
-
-(define* (normalize-sound amp :optional (beg 0) dur snd)
-  "(normalize-sound amp :optional beg dur snd) scales 'snd' to peak amplitude 'amp'"
-  (let ((mx (apply max (maxamp snd #t))))
-    (do-sound
-     (lambda (beg dur snd chn) 
-       (scale-channel (/ amp mx) beg dur snd chn))
-     beg dur snd)))
-
-(define* (contrast-sound index :optional (beg 0) dur snd)
-  "(contrast-sound index :optional beg dur snd) applies contrast-enhancement to every channel of 'snd'"
-  (do-sound 
-   (lambda (beg dur snd chn) 
-     (contrast-channel index beg dur snd chn))
-   beg dur snd))
-
-(define* (dither-sound :optional (amount .00006) (beg 0) dur snd)
-  "(dither-sound :optional (amount .00006) beg dur snd) adds dithering to every channel of 'snd'"
-  (do-sound 
-   (lambda (beg dur snd chn) 
-     (dither-channel amount beg dur snd chn))
-   beg dur snd))
-
-
-;;; TODO: test [directly] make-track-frame-reader, read-track-frame, dir edpos args in make-frame-reader
 ;;; SOMEDAY: channel slicer: grn but output locs permuted, reversed etc
 ;;; TODO: need snd-run support for frame-readers (and map-frame frame return?)
 ;;; TODO: write doc that describes all these sample accessors: sample-at-a-time, readers, chunked versions (->vct), top level (menu, save-sound-as)

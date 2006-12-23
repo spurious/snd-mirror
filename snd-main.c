@@ -524,6 +524,7 @@ static void save_options(FILE *fd)
 #endif
 
   save_added_sound_file_extensions(fd);
+  save_added_source_file_extensions(fd);
 
   if (save_state_file(ss))
     pss_sq(fd, S_save_state_file, save_state_file(ss));
@@ -1416,17 +1417,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		      (strcmp("-load", argname) == 0) ||
 		      (strcmp("-b", argname) == 0) ||
 		      (strcmp("-batch", argname) == 0) ||
-		      ((file_extension(argname)) && 
-		       ((strcmp(file_extension(argname), XEN_FILE_EXTENSION) == 0) || /* scm rb fs */
-#if HAVE_SCHEME
-			(strcmp(file_extension(argname), "cl") == 0) ||
-			(strcmp(file_extension(argname), "lisp") == 0) ||
-#endif
-#if HAVE_FORTH
- 			(strcmp(file_extension(argname), "fth") == 0) ||
- 			(strcmp(file_extension(argname), "fsm") == 0) ||
-#endif
- 			(strcmp(file_extension(argname), "marks") == 0)))) /* from save-marks */
+		      (source_file_p(argname)))
 		    {
 		      if ((strcmp("-l", argname) == 0) || 
 			  (strcmp("-load", argname) == 0) ||

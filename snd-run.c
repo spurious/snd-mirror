@@ -11911,6 +11911,8 @@ static XEN eval_ptree_to_xen(ptree *pt)
 	    sd = sound_data_copy(ursd);
 	    result = wrap_sound_data(sd->chans, sd->length, sd->data);
 	    FREE(sd);
+	    sd = (sound_data *)XEN_OBJECT_REF(result);
+	    sd->wrapped = false;
 	  }
       }
       break;

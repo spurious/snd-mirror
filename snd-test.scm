@@ -1,37 +1,37 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [507]
-;;;  test 1: defaults                           [1085]
-;;;  test 2: headers                            [1289]
-;;;  test 3: variables                          [1595]
-;;;  test 4: sndlib                             [2252]
-;;;  test 5: simple overall checks              [4670]
-;;;  test 6: vcts                               [12177]
-;;;  test 7: colors                             [12452]
-;;;  test 8: clm                                [12942]
-;;;  test 9: mix                                [22324]
-;;;  test 10: marks                             [25973]
-;;;  test 11: dialogs                           [26862]
-;;;  test 12: extensions                        [27156]
-;;;  test 13: menus, edit lists, hooks, etc     [27611]
-;;;  test 14: all together now                  [29195]
-;;;  test 15: chan-local vars                   [30270]
-;;;  test 16: regularized funcs                 [31600]
-;;;  test 17: dialogs and graphics              [36015]
-;;;  test 18: enved                             [36104]
-;;;  test 19: save and restore                  [36124]
-;;;  test 20: transforms                        [37958]
-;;;  test 21: new stuff                         [39791]
-;;;  test 22: run                               [41750]
-;;;  test 23: with-sound                        [47431]
-;;;  test 24: user-interface                    [49910]
-;;;  test 25: X/Xt/Xm                           [53526]
-;;;  test 26: Gtk                               [58116]
-;;;  test 27: GL                                [62233]
-;;;  test 28: errors                            [62357]
-;;;  test 29: Common Music                      [64463]
-;;;  test all done                              [64513]
-;;;  test the end                               [64706]
+;;;  test 0: constants                          [511]
+;;;  test 1: defaults                           [1089]
+;;;  test 2: headers                            [1293]
+;;;  test 3: variables                          [1599]
+;;;  test 4: sndlib                             [2256]
+;;;  test 5: simple overall checks              [4675]
+;;;  test 6: vcts                               [12185]
+;;;  test 7: colors                             [12460]
+;;;  test 8: clm                                [12950]
+;;;  test 9: mix                                [22637]
+;;;  test 10: marks                             [26286]
+;;;  test 11: dialogs                           [27184]
+;;;  test 12: extensions                        [27478]
+;;;  test 13: menus, edit lists, hooks, etc     [27933]
+;;;  test 14: all together now                  [29517]
+;;;  test 15: chan-local vars                   [30592]
+;;;  test 16: regularized funcs                 [31922]
+;;;  test 17: dialogs and graphics              [36337]
+;;;  test 18: enved                             [36426]
+;;;  test 19: save and restore                  [36446]
+;;;  test 20: transforms                        [38281]
+;;;  test 21: new stuff                         [40114]
+;;;  test 22: run                               [42138]
+;;;  test 23: with-sound                        [47902]
+;;;  test 24: user-interface                    [50381]
+;;;  test 25: X/Xt/Xm                           [53997]
+;;;  test 26: Gtk                               [58587]
+;;;  test 27: GL                                [62704]
+;;;  test 28: errors                            [62828]
+;;;  test 29: Common Music                      [64938]
+;;;  test all done                              [64988]
+;;;  test the end                               [65181]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -1997,7 +1997,7 @@
       (let ((undef '())
 	    (names (list '*snd-opened-sound* 'abort 'add-clm-field 'add-clm-type 'add-colormap 
 			 'add-directory-to-view-files-list 'add-file-filter 'add-file-sorter 'add-file-to-view-files-list 'add-mark
-			 'add-player 'add-sound-file-extension 'add-to-main-menu 'add-to-menu
+			 'add-player 'add-sound-file-extension 'add-source-file-extension 'add-to-main-menu 'add-to-menu
 			 'add-transform 'add-watcher 'after-apply-controls-hook 'after-edit-hook 'after-graph-hook 'after-lisp-graph-hook
 			 'after-open-hook 'after-save-as-hook 'after-save-state-hook 'after-transform-hook 'all-pass
 			 'all-pass? 'amp-control 'amp-control-bounds 'amplitude-modulate 'analyse-ladspa
@@ -36661,6 +36661,7 @@ EDITS: 1
       (add-sound-file-extension "w03")
       (add-sound-file-extension "w04")
       (add-sound-file-extension "w05")
+      (add-source-file-extension "gad")
 
       (let ((ind (new-sound "fmv.snd")))
 	(set! (sample 10) .1)
@@ -42071,6 +42072,12 @@ EDITS: 1
 	     (mix2 (mix-vct (make-vct 10 .25) 20 ind 1 #t "snd-test" trk))
 	     (mix3 (mix-vct (make-vct 10 .3) 30 ind 2 #t "snd-test" trk))
 	     (mix4 (mix-vct (make-vct 10 .1) 40 ind 1 #t "snd-test" trk)))
+
+	(if (fneq (track-maxamp trk 0) 0.5) (snd-display ";track-maxamp chn 0: ~A" (track-maxamp trk 0)))
+	(if (fneq (track-maxamp trk 1) 0.25) (snd-display ";track-maxamp chn 1: ~A" (track-maxamp trk 1)))
+	(if (fneq (track-maxamp trk 2) 0.3) (snd-display ";track-maxamp chn 2: ~A" (track-maxamp trk 2)))
+	(if (not (feql (track-maxamp trk #t) (list 0.5 0.25 0.3))) (snd-display ";track-maxamp chn #t: ~A" (track-maxamp trk #t)))
+
 	(set! (sample 24 ind 0) 2.0)
 	(set! (sample 5 ind 0) 2.0)
 	(set! (sample 14 ind 1) 2.0)
@@ -62941,7 +62948,8 @@ EDITS: 1
 	 (or full-test (= snd-test 28) (and keep-going (<= snd-test 28))))
     (begin
       (define procs (list 
-		     add-mark add-sound-file-extension sound-file-extensions sound-file? add-to-main-menu add-to-menu add-transform amp-control
+		     add-mark add-sound-file-extension add-source-file-extension sound-file-extensions sound-file? 
+		     add-to-main-menu add-to-menu add-transform amp-control
 		     as-one-edit ask-before-overwrite audio-input-device audio-output-device ; add-player
 		     auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
 		     basic-color bind-key bomb c-g? apply-controls change-samples-with-origin channel-style

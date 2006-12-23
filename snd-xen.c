@@ -41,7 +41,7 @@
  * rscheme:     (Scheme) serious name-space problems
  * s-lang:      (C)      probably doable -- would need to wrap everything in my own struct, and 7 args max is too few.
  * squirrel:    ()       c++, like lua in call sequence
- * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers (checked 0.80)
+ * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers (checked 0.82)
  */
 
 /* TODO: (gauche)   stacktrace and errors->listener (current-load-history)
@@ -1281,39 +1281,27 @@ void snd_load_init_file(bool no_global, bool no_init)
 #endif
 }
 
+static char *find_source_file(char *orig);
+
 void snd_load_file(char *filename)
 {
-  char *str = NULL, *str1 = NULL, *str2 = NULL;
+  char *str = NULL, *str2 = NULL;
   XEN result = XEN_TRUE;
-  str = mus_expand_filename(filename);
-#if (!HAVE_RUBY && !HAVE_FORTH)
-  str2 = mus_format("(load \"%s\")", filename);
-#endif
-  if (!mus_file_probe(str))
-    {
-      /* try tacking on extension */
-      str1 = mus_format("%s.%s", str, XEN_FILE_EXTENSION);
-      /* PERHAPS: add_source_file_extension */
 
-      if (!mus_file_probe(str1))
-	{
-	  FREE(str);
-	  str = NULL;
-	  FREE(str1);
-	  str1 = NULL;
-#if (!HAVE_RUBY && !HAVE_FORTH)
-	  FREE(str2);
-	  str2 = NULL;
-#endif
-	  snd_error(_("can't load %s: %s"), filename, snd_open_strerror());
-	}
-      /* snd_error ok here because all uses of this are user-interface generated (autoload, memo-file, etc) */
-      else result = snd_catch_any(eval_file_wrapper, (void *)str1, str2);
-      if (str1) FREE(str1);
+  str = mus_expand_filename(filename);
+  if (!(mus_file_probe(str)))
+    str = find_source_file(str); /* this frees original str, returns either NULL or a new (needs-to-be-freed) filename */
+  if (!str)
+    {
+      snd_error(_("can't load %s: %s"), filename, snd_open_strerror());
+      return;
     }
-  else result = snd_catch_any(eval_file_wrapper, (void *)str, str2);
+
+  str2 = mus_format("(load \"%s\")", filename);   /* currently unused in Forth and Ruby */
+  result = snd_catch_any(eval_file_wrapper, (void *)str, str2);
   if (str) FREE(str);
   if (str2) FREE(str2);
+
 #if HAVE_RUBY || HAVE_FORTH
   if (!(XEN_TRUE_P(result)))
     {
@@ -2045,8 +2033,101 @@ returns its id (an integer, used by " S_delete_watcher "). "
 }
 
 /* TODO: watcher fs / rb
- * TODO: current-window-display in fs loses last portion of graph?
+ * TODO: current-window-display in fs loses last portion of graph? (int div problem)
  */
+
+
+/* -------- source file extensions list -------- */
+
+static char **source_file_extensions = NULL;
+static int source_file_extensions_size = 0;
+static int source_file_extensions_end = 0;
+static int default_source_file_extensions = 0;
+
+static void add_source_file_extension(const char *ext)
+{
+  int i;
+  for (i = 0; i < source_file_extensions_end; i++)
+    if (strcmp(ext, source_file_extensions[i]) == 0)
+      return;
+  if (source_file_extensions_end == source_file_extensions_size)
+    {
+      source_file_extensions_size += 8;
+      if (source_file_extensions == NULL)
+	source_file_extensions = (char **)CALLOC(source_file_extensions_size, sizeof(char *));
+      else source_file_extensions = (char **)REALLOC(source_file_extensions, source_file_extensions_size * sizeof(char *));
+    }
+  source_file_extensions[source_file_extensions_end] = copy_string(ext);
+  source_file_extensions_end++;
+}
+
+bool source_file_p(const char *name)
+{
+  int i, dot_loc = -1, len;
+  if (!name) return(false);
+  if (source_file_extensions)
+    {
+      len = strlen(name);
+      for (i = 0; i < len; i++)
+	if (name[i] == '.')
+	  dot_loc = i;
+      /* dot_loc is last dot in the name */
+      if ((dot_loc > 0) &&
+	  (dot_loc < len - 1))
+	{
+	  const char *ext;
+	  ext = (const char *)(name + dot_loc + 1);
+	  for (i = 0; i < source_file_extensions_end; i++)
+	    if (strcmp(ext, source_file_extensions[i]) == 0)
+	      return(true);
+	}
+    }
+  return(false);
+}
+
+void save_added_source_file_extensions(FILE *fd)
+{
+  int i;
+  if (source_file_extensions_end > default_source_file_extensions)
+    for (i = default_source_file_extensions; i < source_file_extensions_end; i++)
+      {
+#if HAVE_SCHEME
+	fprintf(fd, "(%s \"%s\")\n", S_add_source_file_extension, source_file_extensions[i]);
+#endif
+#if HAVE_RUBY
+	fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_source_file_extension), source_file_extensions[i]);
+#endif
+#if HAVE_FORTH
+	fprintf(fd, "$\" %s\" %s drop\n", source_file_extensions[i], S_add_source_file_extension);
+#endif
+      }
+}
+
+static XEN g_add_source_file_extension(XEN ext)
+{
+  #define H_add_source_file_extension "(" S_add_source_file_extension " ext):  add the file extension 'ext' to the list of source file extensions"
+  XEN_ASSERT_TYPE(XEN_STRING_P(ext), ext, XEN_ONLY_ARG, S_add_source_file_extension, "a string");
+  add_source_file_extension(XEN_TO_C_STRING(ext));
+  return(ext);
+}
+
+static char *find_source_file(char *orig)
+{
+  int i;
+  char *str;
+  /* orig is a full filename that should be freed before returning */
+  for (i = 0; i < source_file_extensions_end; i++)
+    {
+      str = mus_format("%s.%s", orig, source_file_extensions[i]);
+      if (mus_file_probe(str))
+	{
+	  if (orig) FREE(orig);
+	  return(str);
+	}
+    }
+  if (orig) FREE(orig);
+  return(NULL);
+}
 
 
 
@@ -2064,6 +2145,7 @@ XEN_NARGIFY_1(g_snd_print_w, g_snd_print)
 XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
 XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
+XEN_NARGIFY_1(g_add_source_file_extension_w, g_add_source_file_extension)
 
 #if MUS_DEBUGGING
   XEN_NARGIFY_1(g_snd_sound_pointer_w, g_snd_sound_pointer)
@@ -2123,6 +2205,7 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
 #define g_little_endian_w g_little_endian
 #define g_snd_global_state_w g_snd_global_state
 #define g_mus_audio_describe_w g_mus_audio_describe
+#define g_add_source_file_extension_w g_add_source_file_extension
 #if MUS_DEBUGGING
   #define g_snd_sound_pointer_w g_snd_sound_pointer
 #endif
@@ -2204,8 +2287,21 @@ XEN_NARGIFY_1(g_ftell_w, g_ftell)
 
 void g_xen_initialize(void)
 {
+  add_source_file_extension(XEN_FILE_EXTENSION);
+#if HAVE_SCHEME
+  add_source_file_extension("cl");
+  add_source_file_extension("lisp");
+#endif
+#if HAVE_FORTH
+  add_source_file_extension("fth");
+  add_source_file_extension("fsm");
+#endif
+  add_source_file_extension("marks"); /* from save-marks */
+  default_source_file_extensions = source_file_extensions_end;
+
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe, g_mus_audio_describe_w, 0, 0, 0, H_mus_audio_describe);
   XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE(S_add_source_file_extension, g_add_source_file_extension_w, 1, 0, 0, H_add_source_file_extension);
 
 #if MUS_DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");

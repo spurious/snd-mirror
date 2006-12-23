@@ -717,7 +717,7 @@ So to make a sound twice as long, but keep the pitch the same:
 
 <!-- drone -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>drone</em> <code>(beg dur freq amp ampfun synth ampat ampdc amtrev deg dis rvibamt rvibfreq)</code>
+<A class=def NAME="drone">drone</A> <code>(beg dur freq amp ampfun synth ampat ampdc amtrev deg dis rvibamt rvibfreq)</code>
 </td></tr><tr><td></td><td>
 This is the other half of Peter Common's bagpipe -- see canter above.
 'synth' is a list of partials loaded into a table and read via <a href="clm.html#table-lookup">table-lookup</a>.
@@ -2524,7 +2524,7 @@ This works much better than the sinusoidal reconstruction used in the appendix o
 
 <!-- unclip-sound -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>unclip-sound</a> <code>:optional snd</code>
+<em class=emdef>unclip-sound</em> <code>:optional snd</code>
 </td></tr><tr><td></td><td>
 unclip-sound calls unclip-channel on each channel in the sound 'snd'.
 </td></tr><tr><td colspan=2 height=32></td></tr>
@@ -3435,7 +3435,15 @@ taken from Steiglitz "A DSP Primer".
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (compand))
     (compand-channel)
 </pre>
-The multichannel version is <a href="#compandsound">compand-sound</a> in frame.scm.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- compand-sound -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="compandsound">compand-sound</a> <code>:optional (beg 0) dur snd</code>
+</td></tr><tr><td width=60></td><td>
+compand-sound applies companding to every channel of the sound 'snd'.
+It is the multichannel version of <a href="#compandchannel">compand-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4337,7 +4345,15 @@ those hooks.  Normally Snd just closes such a sound, or exits silently, flushing
 </td></tr><tr><td></td><td>
 contrast-channel applies the CLM <a href="clm.html#contrast-enhancement">contrast-enhancement</a> function to a channel;
 this is largely equivalent to the control panel Contrast slider.
-The multichannel version is <a href="#contrastsound">contrast-sound</a> in frame.scm.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- contrast-sound -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="contrastsound">contrast-sound</a> <code>index :optional (beg 0) dur snd</code>
+</td></tr><tr><td width=60></td><td>
+contrast-sound applies contrast-enhancement to every channel of the sound 'snd'.
+It is the multichannel version of <a href="#contrastchannel">contrast-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4355,7 +4371,15 @@ delete-selection-and-smooth deletes the current selection and smooths the splice
 </td></tr><tr><td></td><td>
 dither-channel adds "dithering" (noise) to a channel; some experts insist this makes everything copacetic.
 The noise consists of two white noise generators adding together.
-The multichannel version is <a href="#dithersound">dither-sound</a> in frame.scm.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- dither-sound -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="dithersound">dither-sound</a> <code>:optional (amount .00006) (beg 0) dur snd</code>
+</td></tr><tr><td width=60></td><td>
+dither-sound adds dithering to every channel of the sound 'snd'.
+It is the multichannel version of <a href="#ditherchannel">dither-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4579,11 +4603,38 @@ original data.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- normalize-sound -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="normalizesound">normalize-sound</a> <code>amp :optional (beg 0) dur snd</code>
+</td></tr><tr><td width=60></td><td>
+normalize-sound scales the sound 'snd' to peak amplitude 'amp'.
+It is the multichannel version of <a href="extsnd.html#normalizechannel">normalize-channel</a>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- offset-channel -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="offsetchannel">offset-channel</a> <code>amount :optional beg dur snd chn edpos</code>	
 </td></tr><tr><td></td><td>
-offset-channel adds a constant (DC offset) to a channel.  The multichannel version is <a href="#offsetsound">offset-sound</a> in frame.scm.
+offset-channel adds a constant (DC offset) to a channel.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- offset-sound -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="offsetsound">offset-sound</a> <code>off :optional (beg 0) dur snd</code>
+</td></tr><tr><td width=60></td><td>
+offset-sound adds 'off' to every sample in the sound 'snd'.  
+It is the multichannel version of <a href="#offsetchannel">offset-channel</a>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- pad-sound -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="padsound">pad-sound</a> <code>beg dur :optional snd</code>
+</td></tr><tr><td width=60></td><td>
+pad-sound places a block of 'dur' zeros in every channel of the sound 'snd' starting at 'beg'.
+It is the multichannel version of <a href="extsnd.html#padchannel">pad-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4601,6 +4652,15 @@ redo-channel is a "regularized" version of <a href="extsnd.html#redo">redo</a>.
 </td></tr><tr><td></td><td>
 remember-sound-state saves most of a sound's display state when it is closed,
 and if that same sound is later re-opened, restores the previous state.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- scale-sound -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="scalesound">scale-sound</a> <code>scl :optional (beg 0) dur snd</code>
+</td></tr><tr><td width=60></td><td>
+scale-sound multiplies every sample in the sound 'snd' by 'scl'.
+It is the multichannel version of <a href="extsnd.html#scalechannel">scale-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4735,33 +4795,6 @@ move some of these into C.
 
 <table border=0 cellspacing=0 hspace=20>
 
-<!-- compand-sound -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="compandsound">compand-sound</a> <code>:optional (beg 0) dur snd</code>
-</td></tr><tr><td width=60></td><td>
-compand-sound applies companding to every channel of the sound 'snd'.
-It is the multichannel version of <a href="#compandchannel">compand-channel</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- contrast-sound -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="contrastsound">contrast-sound</a> <code>index :optional (beg 0) dur snd</code>
-</td></tr><tr><td width=60></td><td>
-contrast-sound applies contrast-enhancement to every channel of the sound 'snd'.
-It is the multichannel version of <a href="#contrastchannel">contrast-channel</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- dither-sound -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="dithersound">dither-sound</a> <code>:optional (amount .00006) (beg 0) dur snd</code>
-</td></tr><tr><td width=60></td><td>
-dither-sound adds dithering to every channel of the sound 'snd'.
-It is the multichannel version of <a href="#ditherchannel">dither-channel</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- file->sound-data -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="filetosounddata">file-&gt;sound-data</a> <code>file</code>
@@ -4888,33 +4921,6 @@ See <a href="#insertsounddata">insert-sound-data</a> for an example that could e
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- normalize-sound -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="normalizesound">normalize-sound</a> <code>amp :optional (beg 0) dur snd</code>
-</td></tr><tr><td width=60></td><td>
-normalize-sound scales the sound 'snd' to peak amplitude 'amp'.
-It is the multichannel version of <a href="extsnd.html#normalizechannel">normalize-channel</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- offset-sound -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="offsetsound">offset-sound</a> <code>off :optional (beg 0) dur snd</code>
-</td></tr><tr><td width=60></td><td>
-offset-sound adds 'off' to every sample in the sound 'snd'.  
-It is the multichannel version of <a href="#offsetchannel">offset-channel</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- pad-sound -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="padsound">pad-sound</a> <code>beg dur :optional snd</code>
-</td></tr><tr><td width=60></td><td>
-pad-sound places a block of 'dur' zeros in every channel of the sound 'snd' starting at 'beg'.
-It is the multichannel version of <a href="extsnd.html#padchannel">pad-channel</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- region->frame -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="regiontoframe">region-&gt;frame</a> <code>pos reg</code>
@@ -4928,15 +4934,6 @@ region-&gt;frame returns a frame containing the contents of the region ref at po
 <a class=def name="regiontosounddata">region-&gt;sound-data</a> <code>reg</code>
 </td></tr><tr><td></td><td>
 region-&gt;sound-data returns a sound-data object containing the contents of the region 'reg'.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- scale-sound -->
-<tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="scalesound">scale-sound</a> <code>scl :optional (beg 0) dur snd</code>
-</td></tr><tr><td width=60></td><td>
-scale-sound multiplies every sample in the sound 'snd' by 'scl'.
-It is the multichannel version of <a href="extsnd.html#scalechannel">scale-channel</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6537,9 +6534,10 @@ If the 'chan' arg is #t, all channels are saved.
 
 <!-- track-maxamp -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="trackmaxamp">track-maxamp</a> <code>id chan</code>
+<a class=def name="trackmaxamp">track-maxamp</a> <code>id :optional chan</code>
 </td></tr><tr><td></td><td>
-track-maxamp returns the maxamp in the given track.
+track-maxamp returns the maxamp in the given track channel.  If 'chan' is #t,
+track-maxamp returns a list of all channel maxamps (much like <a href="extsnd.html#maxamp">maxamp</a>).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

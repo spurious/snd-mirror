@@ -1,11 +1,24 @@
 Snd change log
 
+  27-Dec:    add-source-file-extension.
+             pi is now defined by default in Scheme.
   21-Dec:    unclip-channel.
   17-Dec:    region-home.
   14-Dec:    bird.fsm (Mike Scholz).
   12-Dec:    clip-hook.
   11-Dec:    sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ sound-data-copy sound-data-reverse! sound-data-peak.
-  4-Dec:     frame.scm.
+  4-Dec:     frame.scm:
+               sound->frame frame->sound region->frame  
+               make-frame-reader frame-reader? frame-reader-at-end frame-reader-position 
+                 frame-reader-home free-frame-reader copy-frame-reader frame-reader-chans
+                 next-frame previous-frame read-frame make-region-frame-reader make-selection-frame-reader 
+                 make-track-frame-reader read-track-frame make-sync-frame-reader
+               frame->sound-data, sound-data->frame sound->sound-data sound-data->sound
+                 region->sound-data track->sound-data selection->sound-data
+               file->vct vct->file frame->vct vct->frame file->sound-data sound-data->file
+               insert-sound-data insert-frame insert-vct  mix-sound-data mix-frame
+               scan-sound map-sound simultaneous-zero-crossing compand-sound sync-all
+               pad-sound contrast-sound dither-sound scale-sound offset-sound normalize-sound 
              moved open-sound-file, close-sound-file, and vct->sound-file to snd8.scm.
   29-Nov:    Snd 8.6.
   21-Nov:    sound-data-scale! and sound-data-fill! with vct/sound-data with-sound output.

@@ -11736,10 +11736,21 @@ use <a href="#cgp">C-g</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- add-source-file-extension -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<code><a class=def name="addsourcefileextension">add-source-file-extension</a> (ext)</code>
+</td></tr><tr><td><br></td><td>
+add-source-file-extension adds 'ext' to the list of source file extensions. 
+<pre>
+    (add-source-file-extension "rbs")
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- add-watcher -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="addwatcher">add-watcher</a> (func)</code>
-</td></tr><tr><td width=60><br></td><td>
+</td></tr><tr><td><br></td><td>
 add-watcher adds 'func' (a function of no arguments) to the watcher list, and 
 returns its id (an integer, used by <a href="#deletewatcher">delete-watcher</a>).  Each watcher function is called whenever the current selection
 changes, a sound is opened or closed or set read-only, a sound is selected, or a mark is changed.  

@@ -1205,6 +1205,12 @@ void mem_report(void)
 			    fprintf(Fp, "[%p, %s, rp: %p, data: %p]\n  ", fp, fp->filename, fp->rp, fp->data);
 			  }
 			  break;
+			case PRINT_SOUND_DATA:
+			  {
+			    sound_data *sd = (sound_data *)(pointers[orig_i]);
+			    fprintf(Fp, "[%p: %d %d]\n  ", sd, sd->chans, sd->length);
+			  }
+			  break;
 			}
 		      /* other printable cases that would be nice: snd_info chn_info io_fd env_state ladspa sound_data mix|track */
 		    }
