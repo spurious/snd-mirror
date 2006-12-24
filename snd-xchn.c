@@ -639,6 +639,7 @@ void reflect_edit_history_change(chan_info *cp)
   /* new edit so it is added, and any trailing lines removed */
   snd_info *sp;
   Widget lst;
+
   if (cp->squelch_update) return;
   if ((cp->in_as_one_edit) || (cp->cgx == NULL)) return;
   sp = cp->sound;
@@ -1460,9 +1461,9 @@ leaves the drawing area (graph pane) of the given channel."
 #if HAVE_FORTH
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
 enters the drawing area (graph pane) of the given channel.\n\
-" S_mouse_enter_graph_hook " lambda: { snd chn }\n\
+" S_mouse_enter_graph_hook " lambda: <{ snd chn }>\n\
   snd chn " S_channel_widgets " car " S_focus_widget "\n\
-; 2 make-proc add-hook!"
+; add-hook!"
   #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): is called when the mouse \
 leaves the drawing area (graph pane) of the given channel."
 #endif

@@ -293,10 +293,10 @@ If it returns true, Snd flushes the warning (it assumes you've reported it via t
 #if HAVE_FORTH
   #define H_snd_error_hook S_snd_error_hook " (error-message): called upon snd_error. \
 If it returns " PROC_TRUE ", Snd flushes the error (it assumes you've reported it via the hook:\n\
-" S_snd_error_hook " lambda: { msg }\n\
+" S_snd_error_hook " lambda: <{ msg }>\n\
   \"bong.snd\" " S_play "\n\
   #f\n\
-; 1 make-proc add-hook!"
+; add-hook!"
 
   #define H_snd_warning_hook S_snd_warning_hook " (warning-message): called upon snd_warning. \
 If it returns " PROC_TRUE ", Snd flushes the warning (it assumes you've reported it via the hook)"

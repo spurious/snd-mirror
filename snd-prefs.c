@@ -4930,7 +4930,7 @@ static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
 		    (cx) ? "true" : "false"));
 #endif
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: { } #f set-pausing drop cursor play drop ; 0 make-proc %s bind-key drop\n",
+  return(mus_format("%s %d lambda: <{ }> #f set-pausing drop cursor play drop ; %s bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -4990,7 +4990,7 @@ static char *make_show_all_binding(char *key, bool ctrl, bool meta, bool cx)
 		    (cx) ? "true" : "false"));
 #endif
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: { } #f sync sync-max 1+ #f set-sync drop '( 0.0 #f #f #f frames #f srate f/ ) #f #f set-x-bounds drop #f set-sync ; 0 make-proc %s bind-key drop\n",
+  return(mus_format("%s %d lambda: <{ }> #f sync sync-max 1+ #f set-sync drop '( 0.0 #f #f #f frames #f srate f/ ) #f #f set-x-bounds drop #f set-sync ; %s bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -5050,7 +5050,7 @@ static char *make_select_all_binding(char *key, bool ctrl, bool meta, bool cx)
 		    (cx) ? "true" : "false"));
 #endif
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: { } #f sync sync-max 1+ #f set-sync drop #f #f select-all drop #f set-sync ; 0 make-proc %s bind-key drop\n",
+  return(mus_format("%s %d lambda: <{ }> #f sync sync-max 1+ #f set-sync drop #f #f select-all drop #f set-sync ; %s bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -5100,7 +5100,7 @@ static char *make_revert_binding(char *key, bool ctrl, bool meta, bool cx)
 		    (cx) ? "true" : "false"));
 #endif
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: { } revert-sound ; 0 make-proc %s bind-key drop\n",
+  return(mus_format("%s %d lambda: <{ }> revert-sound ; %s bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -5150,7 +5150,7 @@ static char *make_exit_binding(char *key, bool ctrl, bool meta, bool cx)
 		    (cx) ? "true" : "false"));
 #endif
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: { } snd-exit ; 0 make-proc %s bind-key drop\n",
+  return(mus_format("%s %d lambda: <{ }> snd-exit ; %s bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -5200,7 +5200,7 @@ static char *make_goto_maxamp_binding(char *key, bool ctrl, bool meta, bool cx)
 		    (cx) ? "true" : "false"));
 #endif
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: { } #f #f #f maxamp-position #f #f #f set-cursor ; 0 make-proc %s bind-key drop\n",
+  return(mus_format("%s %d lambda: <{ }> #f #f #f maxamp-position #f #f #f set-cursor ; %s bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));

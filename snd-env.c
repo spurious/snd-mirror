@@ -1898,13 +1898,13 @@ is 'reason' which can be " S_enved_move_point ", " S_enved_delete_point ", \
 or " S_enved_add_point ".  This hook makes it possible to define attack \
 and decay portions in the envelope editor, or use functions such as \
 stretch-envelope from env.fth: \n\
-" S_enved_hook " lambda: { en pt x y reason }\n\
+" S_enved_hook " lambda: <{ en pt x y reason }>\n\
   reason " S_enved_move_point " = if\n\
     en old-x  en pt 2* list@  x stretch-envelope  pt 2* 1+ y list!\n\
   else\n\
     #f\n\
   then\n\
-; 5 make-proc add-hook!"
+; add-hook!"
 #endif
 
   enved_hook = XEN_DEFINE_HOOK(S_enved_hook, 5, H_enved_hook);

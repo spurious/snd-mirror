@@ -667,7 +667,7 @@ void set_listener_prompt(const char *new_prompt)
 #if HAVE_FORTH
     char *str;
     XEN_EVAL_C_STRING("before-prompt-hook reset-hook!\n");
-    str = mus_format("before-prompt-hook lambda: { prompt pos } \"%s\" ; 2 make-proc add-hook!", listener_prompt(ss));
+    str = mus_format("before-prompt-hook lambda: <{ prompt pos }> \"%s\" ; add-hook!", listener_prompt(ss));
     XEN_EVAL_C_STRING(str);
     FREE(str);
 #endif

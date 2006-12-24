@@ -1137,9 +1137,9 @@ leaves the drawing area (graph pane) of the given channel."
 #if HAVE_FORTH
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
 enters the drawing area (graph pane) of the given channel.\n\
-" S_mouse_enter_graph_hook " lambda: { snd chn }\n\
+" S_mouse_enter_graph_hook " lambda: <{ snd chn }>\n\
   snd chn " S_channel_widgets " car " S_focus_widget "\n\
-; 2 make-proc add-hook!"
+; add-hook!"
 
   #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): called when the mouse \
 leaves the drawing area (graph pane) of the given channel."

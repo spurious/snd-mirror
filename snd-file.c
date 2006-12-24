@@ -5131,22 +5131,22 @@ This provides a way to set various sound-specific defaults. \n\
 #if HAVE_FORTH
   #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \
 but before data has been read. \n\
-" S_during_open_hook " lambda: { fd name reason }\n\
+" S_during_open_hook " lambda: <{ fd name reason }>\n\
   name " S_mus_sound_header_type " " S_mus_raw " = if\n\
     500.0 fd set-" S_mus_file_prescaler "\n\
   else\n\
     #f\n\
   then\n\
-; 3 make-proc add-hook!"
+; add-hook!"
   #define H_after_open_hook S_after_open_hook " (snd): called just before the new file's window is displayed. \
 This provides a way to set various sound-specific defaults. \n\
-" S_after_open_hook " lambda: { snd }\n\
+" S_after_open_hook " lambda: <{ snd }>\n\
   snd " S_channels " 1 > if\n\
     " S_channels_combined " snd set-" S_channel_style "\n\
   else\n\
     #f\n\
   then\n\
-; 1 make-proc add-hook!"
+; add-hook!"
 #endif
 
   #define H_output_name_hook S_output_name_hook " (current-name): called from the File:New dialog.  If it returns a filename, \

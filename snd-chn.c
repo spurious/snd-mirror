@@ -5544,7 +5544,7 @@ static XEN g_edit_hook(XEN snd_n, XEN chn_n)
     #define edit_hook_example "edit_hook(snd, chn).add_hook!(\"hook-test\") do | | snd_print(\"about to edit\"); false end"
   #endif
   #if HAVE_FORTH
-    #define edit_hook_example "snd chn edit-hook lambda: { } \"about to edit\" snd-print #f ; 0 make-proc add-hook!"
+    #define edit_hook_example "snd chn edit-hook lambda: <{ }> \"about to edit\" snd-print #f ; add-hook!"
   #endif
 
   #define H_edit_hook "(" S_edit_hook " (snd " PROC_FALSE ") (chn " PROC_FALSE ")): snd's channel chn's " S_edit_hook ". \
@@ -5564,7 +5564,7 @@ static XEN g_after_edit_hook(XEN snd_n, XEN chn_n)
     #define after_edit_hook_example "after_edit_hook(snd, chn).add_hook!(\"hook-test\") do | | snd_print(\"just edited\") end"
   #endif
   #if HAVE_FORTH
-    #define after_edit_hook_example "snd chn after-edit-hook lambda: { } \"just edited\" snd-print ; 0 make-proc add-hook!"
+    #define after_edit_hook_example "snd chn after-edit-hook lambda: <{ }> \"just edited\" snd-print ; add-hook!"
   #endif
 
   #define H_after_edit_hook "(" S_after_edit_hook " (snd " PROC_FALSE ") (chn " PROC_FALSE ")): snd's channel chn's " S_after_edit_hook ". \

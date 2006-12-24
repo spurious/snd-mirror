@@ -2410,9 +2410,9 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
 #if HAVE_FORTH
   #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
 If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
-" S_print_hook " lambda: { msg }\n\
+" S_print_hook " lambda: <{ msg }>\n\
   \"%s\n[%s]\n%s\" msg date " S_listener_prompt " format " S_snd_print "\n\
-; 1 make-proc add-hook!"
+; add-hook!"
 #endif
 
   print_hook = XEN_DEFINE_HOOK(S_print_hook, 1, H_print_hook);          /* arg = text */

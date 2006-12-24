@@ -2289,7 +2289,7 @@ static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd_n, XEN raw)
     #define prompt_example "prompt_in_minibuffer(\"what?\", lambda do | response | snd_print(response) end)"
   #endif
   #if HAVE_FORTH
-    #define prompt_example "\"what?\" lambda: { response } response snd-print ; 1 make-proc prompt-in-minibuffer"
+    #define prompt_example "\"what?\" lambda: <{ response }> response snd-print ; prompt-in-minibuffer"
   #endif
 
   #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg (callback " PROC_FALSE ") (snd " PROC_FALSE ") (raw " PROC_FALSE ")): post msg in snd's minibuffer \

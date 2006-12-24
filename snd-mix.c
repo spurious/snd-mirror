@@ -11,8 +11,9 @@
  * SOMEDAY: currently, if track, drag mix does not move axes
  * PERHAPS: add user funcs/envs to mix/track dialogs
  * PERHAPS: multiple mix/track dialogs
- * PERHAPS: mix pane sort of like current mark pane? (the mixes function has identical output to marks)
- *          mark pane is only defined in snd-motif currently
+ * perhaps: mix pane sort of like current mark pane? (the mixes function has identical output to marks)
+ *            this needs a hook for mix-creation and deletion (current mark-pane code uses mark-hook
+ *            which is called at add/delete/reposition causing the lists to be rebuilt).  See tmp177.scm.
  * PERHAPS: quick access + edit of underlying mix data, ripple and update if saved (like region edit)
  *          also double click in edit history => go to that temp file?
  * PERHAPS: some way to tie multichannel mixes together without the track appearing in the track dialog

@@ -6,6 +6,8 @@
  *       also the ALSA env vars, mus_audio_report etc
  *       also in special unsupported cases, like x86 solaris
  *       perhaps put bad vals in red? 
+ *
+ * PERHAPS: a lot of the help string func arg decls are missing ':optional'
  */
 
 
@@ -4243,9 +4245,9 @@ If more than one hook function, each function gets the previous function's outpu
 #if HAVE_FORTH
   #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \
 If more than one hook function, each function gets the previous function's output as its input.\n\
-" S_output_comment_hook " lambda: { str }\n\
+" S_output_comment_hook " lambda: <{ str }>\n\
   \"%s: written %s\" str date format\n\
-; 1 make-proc add-hook!"
+; add-hook!"
 #endif
 
   output_comment_hook = XEN_DEFINE_HOOK(S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */

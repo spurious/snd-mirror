@@ -3154,6 +3154,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 widget_t make_sound_save_as_dialog(bool managed)
 {
   /* TODO: shouldn't the save-as dialog, at least in the file case, reflect the current file attributes/comment? */
+  /*          or should we have a save-as-hook that can set up the dialog fields? */
 
   snd_info *sp = NULL;
   char *com = NULL;

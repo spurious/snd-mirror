@@ -5299,13 +5299,13 @@ is the scrolled list position of the label. The label itself is 'label'."
 The 'type' is 1 for view-files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
 to popup file info as follows: \n\
-" S_mouse_enter_label_hook " lambda: { type position name }\n\
+" S_mouse_enter_label_hook " lambda: <{ type position name }>\n\
   type 2 <> if\n\
     name name finfo info-dialog\n\
   else\n\
     #f\n\
   then\n\
-; 3 make-proc add-hook!"
+; add-hook!"
 #endif
 
   #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label): called when the mouse leaves a file viewer or region label"

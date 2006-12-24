@@ -1415,7 +1415,7 @@ enters the lisp listener pane:\n\
 #if HAVE_FORTH
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener): called when the mouse \
 enters the lisp listener pane:\n\
-" S_mouse_enter_listener_hook " lambda: { wid } wid " S_focus_widget " ; 1 make-proc add-hook!"
+" S_mouse_enter_listener_hook " lambda: <{ wid }> wid " S_focus_widget " ; add-hook!"
 #endif
 
   #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (listener): called when the mouse \
@@ -1440,7 +1440,7 @@ $mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
 
 #if HAVE_FORTH
   #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
-" S_mouse_enter_text_hook " lambda: { wid } wid " S_focus_widget " ; 1 make-proc add-hook!"
+" S_mouse_enter_text_hook " lambda: <{ wid }> wid " S_focus_widget " ; add-hook!"
 #endif
 
   #define H_mouse_leave_text_hook S_mouse_leave_text_hook " (widget): called when the mouse leaves a text widget"

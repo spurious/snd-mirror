@@ -277,7 +277,7 @@ are in <em class=listener>this color</em>):
 </pre></td><td></td>
 
 <td bgcolor="#EefdEe"><pre>
-&gt;<em class=typing>lambda: { y } y 2.0 f* ; 1 make-proc map-channel</em>
+&gt;<em class=typing>lambda: &lt;{ y }&gt; y 2.0 f* ; map-channel</em>
 <em class=listener>-0.00158691</em>
 </pre></td>
 </tr>
@@ -1210,7 +1210,7 @@ name-click-hook.  We can cause that action to print "hi":</p>
 
   Ruby:   $name_click_hook.add_hook!("print") do |snd| snd_print("hi"); true end
 
-  Forth:  name-click-hook lambda: "hi" snd-print drop #t ; 1 make-proc add-hook!
+  Forth:  name-click-hook lambda: &lt;{ snd }&gt; "hi" snd-print drop #t ; add-hook!
 </pre>
 
 <p>
@@ -2031,6 +2031,19 @@ turning the wheel zooms the graph in or out:
 	  (set! (x-bounds) (list (max 0.0 (- midpoint range))
 				 (min dur (+ midpoint range))))))
     #f))
+</pre></td></tr></table>
+
+Here is a Forth example:
+
+<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
+mouse-click-hook lambda: &lt;{ snd chn button state x y axis -- }&gt; 
+ axis time-graph = if 
+   $" freq: %.3f" '( snd chn #f cursor  snd chn spot-freq ) string-format 
+   snd #f report-in-minibuffer 
+ else 
+   #f 
+ then 
+; add-hook! 
 </pre></td></tr></table></td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -2607,7 +2620,7 @@ the edit is cancelled. So,
 <pre>
              Scheme: (add-hook! (edit-hook snd chn) (lambda () #t))
              Ruby:   edit_hook(snd, chn).add_hook!(\"stop-edit\") do | | true end
-             Forth:  snd chn edit-hook lambda: { } #t ; 0 make-proc add-hook!
+             Forth:  snd chn edit-hook lambda: &lt;{ }&gt; #t ; add-hook!
 </pre>
 <table border=0><tr><td width=60><br></td><td>
 halts any attempt to edit the data; this is even more restrictive than setting the read-only
@@ -6296,7 +6309,7 @@ determines where to start the search.
 
     Ruby:   count_matches(lambda do |y| y &gt; 0.1 end)
 
-    Forth:  lambda: { y } y 0.1 f- f0&lt; if #f else #t then ; 1 make-proc count-matches
+    Forth:  lambda: &lt;{ y }&gt; y 0.1 f- f0&lt; ; count-matches
 </pre>
 
 count-matches is modelled after Emacs. It could be defined along these lines:
@@ -6827,7 +6840,7 @@ In the find dialog and in C-s or C-r searches, if the value returned is an integ
 &gt;<em class=typing>(find-channel (lambda (y) (and (&gt; y .1) 'a-big-sample)))</em>
 <em class=listener>(a-big-sample 4423)</em> ; if optimization is on, this will be (#t 4423)
 
-&gt;<em class=typing>lambda: { y } 0.1 y f&lt; if #t else #f then ; 1 make-proc find-channel</em>
+&gt;<em class=typing>lambda: &lt;{ y }&gt; 0.1 y f&lt; ; find-channel</em>
 <em class=listener>'( #t 4423 )</em>
 </pre>
 
@@ -7249,7 +7262,7 @@ Ruby:
     <em class=listener>-0.0015869140625</em>
 
 Forth:
-    &gt;<em class=typing>lambda: { y } y 0.2 f+ ; 1 make-proc map-channel</em>
+    &gt;<em class=typing>lambda: &lt;{ y }&gt; y 0.2 f+ ; map-channel</em>
     <em class=listener>-0.00158691</em>
 </pre>
 
@@ -10797,8 +10810,8 @@ called each time the menu is displayed.
 
     Forth:
     "New Menu" add-to-main-menu constant new-menu drop
-    new-menu "First Item" lambda: { } "item1" snd-print ; 0 make-proc undef add-to-menu drop
-    new-menu "Second Item" lambda: { } "item2" snd-print ; 0 make-proc undef add-to-menu drop
+    new-menu "First Item" lambda: &lt;{ }&gt; "item1" snd-print ; undef add-to-menu drop
+    new-menu "Second Item" lambda: &lt;{ }&gt; "item2" snd-print ; undef add-to-menu drop
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
