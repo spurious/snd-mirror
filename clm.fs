@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Sat Dec 23 05:06:02 CET 2006
+\ Changed: Sun Dec 24 02:56:04 CET 2006
 
 \ Commentary:
 \
@@ -48,7 +48,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 23-Dec-2006" value *clm-version*
+$" fth 24-Dec-2006" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [undefined] clm-print [if] ' fth-print alias clm-print [then]
@@ -102,8 +102,7 @@ dl-load sndlib Init_sndlib
 \ Also defined in examp.fs.
 [undefined] close-sound-extend [if]
   \ 5 == notebook widget
-  : close-sound-extend ( snd -- )
-    { snd }
+  : close-sound-extend <{ snd -- }>
     main-widgets 5 list-ref false? unless
       0 { idx }
       sounds empty? unless sounds snd list-index to idx then

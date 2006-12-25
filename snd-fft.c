@@ -1774,7 +1774,7 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
 
 static XEN g_transform_frames(XEN snd, XEN chn)
 {
-  #define H_transform_frames "(" S_transform_frames " (snd " PROC_FALSE ") (chn " PROC_FALSE ")): \
+  #define H_transform_frames "(" S_transform_frames " :optional snd chn): \
 return a description of transform graph data in snd's channel chn, based on " S_transform_graph_type ".\
 If there is no transform graph, return 0; if " S_graph_once ", return " S_transform_size ",\
 and otherwise return a list (total-size active-bins active-slices)"
@@ -1797,7 +1797,7 @@ and otherwise return a list (total-size active-bins active-slices)"
 
 static XEN g_transform_sample(XEN bin, XEN slice, XEN snd_n, XEN chn_n)
 {
-  #define H_transform_sample "(" S_transform_sample " (bin 0) (slice 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ")): \
+  #define H_transform_sample "(" S_transform_sample " :optional (bin 0) (slice 0) snd chn): \
 return the current transform sample at bin and slice in snd channel chn (assuming sonogram or spectrogram)"
 
   chan_info *cp;
@@ -1855,7 +1855,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 
 static XEN g_transform_to_vct(XEN snd_n, XEN chn_n, XEN v)
 {
-  #define H_transform_to_vct "(" S_transform_to_vct " (snd " PROC_FALSE ") (chn " PROC_FALSE ") (obj " PROC_FALSE ")): \
+  #define H_transform_to_vct "(" S_transform_to_vct " :optional snd chn obj): \
 return a vct (obj if it's passed), with the current transform data from snd's channel chn"
 
   chan_info *cp;

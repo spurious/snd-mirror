@@ -4051,7 +4051,7 @@ static XEN g_view_files_dialog(XEN managed, XEN make_new)
 {
   widget_t w;
   bool new_dialog = false;
-  #define H_view_files_dialog "(" S_view_files_dialog " managed): start the View Files dialog"
+  #define H_view_files_dialog "(" S_view_files_dialog " :optional managed): start the View Files dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ARG_1, S_view_files_dialog, "a boolean");
   new_dialog = (XEN_TRUE_P(make_new));
   w = start_view_files_dialog(XEN_TO_C_BOOLEAN(managed), new_dialog);
@@ -4060,7 +4060,7 @@ static XEN g_view_files_dialog(XEN managed, XEN make_new)
 
 static XEN g_add_directory_to_view_files_list(XEN directory, XEN dialog) 
 {
-  #define H_add_directory_to_view_files_list "(" S_add_directory_to_view_files_list " dir w): adds any sound files in 'dir' to the View:Files dialog"
+  #define H_add_directory_to_view_files_list "(" S_add_directory_to_view_files_list " dir :optional w): adds any sound files in 'dir' to the View:Files dialog"
   XEN_ASSERT_TYPE(XEN_STRING_P(directory), directory, XEN_ARG_1, S_add_directory_to_view_files_list, "a string");
   if (XEN_NOT_BOUND_P(dialog))
     view_files_add_directory(NULL_WIDGET, XEN_TO_C_STRING(directory));
@@ -4074,7 +4074,7 @@ static XEN g_add_directory_to_view_files_list(XEN directory, XEN dialog)
 
 static XEN g_add_file_to_view_files_list(XEN file, XEN dialog) 
 {
-  #define H_add_file_to_view_files_list "(" S_add_file_to_view_files_list " file w): adds file to the View:Files dialog's list"
+  #define H_add_file_to_view_files_list "(" S_add_file_to_view_files_list " file :optional w): adds file to the View:Files dialog's list"
   char *name = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_add_file_to_view_files_list, "a string");
   name = mus_expand_filename(XEN_TO_C_STRING(file));
@@ -4356,7 +4356,7 @@ current-time:\n(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (" S_file_write_dat
 
 static XEN g_sound_loop_info(XEN snd)
 {
-  #define H_sound_loop_info "(" S_sound_loop_info " (snd " PROC_FALSE ")): return the sound's loop points as a \
+  #define H_sound_loop_info "(" S_sound_loop_info " :optional snd): return the sound's loop points as a \
 list: (sustain-start sustain-end release-start release-end baseNote detune)"
   int *res;
   snd_info *sp;
@@ -4512,7 +4512,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 static XEN g_soundfont_info(XEN snd)
 {
   /* return all soundfont descriptors as list of lists: ((name start loopstart loopend)) */
-  #define H_soundfont_info "(" S_soundfont_info " (snd " PROC_FALSE ")): list of lists describing snd as a soundfont. \
+  #define H_soundfont_info "(" S_soundfont_info " :optional snd): list of lists describing snd as a soundfont. \
 each inner list has the form: (name start loopstart loopend)"
 
   XEN inlist = XEN_EMPTY_LIST, outlist = XEN_EMPTY_LIST;
@@ -4541,7 +4541,7 @@ each inner list has the form: (name start loopstart loopend)"
 
 static XEN g_sound_files_in_directory(XEN dirname)
 {
-  #define H_sound_files_in_directory "(" S_sound_files_in_directory " (directory \".\")): return a list of the sound files in 'directory'"
+  #define H_sound_files_in_directory "(" S_sound_files_in_directory " :optional (directory \".\")): return a list of the sound files in 'directory'"
   char *name = NULL;
   XEN res = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(dirname), dirname, XEN_ONLY_ARG, S_sound_files_in_directory, "a string");
@@ -4575,7 +4575,7 @@ static XEN g_disk_kspace(XEN name)
 static XEN g_open_file_dialog(XEN managed)
 {
   widget_t w;
-  #define H_open_file_dialog "(" S_open_file_dialog " (managed " PROC_TRUE ")): create the file dialog if needed and display it if 'managed'"
+  #define H_open_file_dialog "(" S_open_file_dialog " :optional (managed " PROC_TRUE ")): create the file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_open_file_dialog, "a boolean");
   w = make_open_file_dialog(false, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
   return(XEN_WRAP_WIDGET(w));
@@ -4584,7 +4584,7 @@ static XEN g_open_file_dialog(XEN managed)
 static XEN g_mix_file_dialog(XEN managed)
 {
   widget_t w;
-  #define H_mix_file_dialog "(" S_mix_file_dialog " (managed " PROC_TRUE ")): create the mix file dialog if needed and display it if 'managed'"
+  #define H_mix_file_dialog "(" S_mix_file_dialog " :optional (managed " PROC_TRUE ")): create the mix file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_mix_file_dialog, "a boolean");
   w = make_mix_file_dialog((XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
   return(XEN_WRAP_WIDGET(w));
@@ -4593,7 +4593,7 @@ static XEN g_mix_file_dialog(XEN managed)
 static XEN g_insert_file_dialog(XEN managed)
 {
   widget_t w;
-  #define H_insert_file_dialog "(" S_insert_file_dialog " (managed " PROC_TRUE ")): create the insert file dialog if needed and display it if 'managed'"
+  #define H_insert_file_dialog "(" S_insert_file_dialog " :optional (managed " PROC_TRUE ")): create the insert file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_insert_file_dialog, "a boolean");
   w = make_insert_file_dialog((XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
   return(XEN_WRAP_WIDGET(w));
@@ -4602,7 +4602,7 @@ static XEN g_insert_file_dialog(XEN managed)
 static XEN g_edit_header_dialog(XEN snd_n) 
 {
   widget_t w;
-  #define H_edit_header_dialog "(" S_edit_header_dialog " snd): start the Edit Header dialog on sound snd"
+  #define H_edit_header_dialog "(" S_edit_header_dialog " :optional snd): start the Edit Header dialog on sound snd"
   snd_info *sp; 
   sp = get_sp(snd_n, NO_PLAYERS);
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
@@ -4614,7 +4614,7 @@ static XEN g_edit_header_dialog(XEN snd_n)
 static XEN g_save_selection_dialog(XEN managed)
 {
   widget_t w;
-  #define H_save_selection_dialog "(" S_save_selection_dialog "): start the Selection Save-as dialog"
+#define H_save_selection_dialog "(" S_save_selection_dialog " :optional managed): start the Selection Save-as dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_selection_dialog, "a boolean");
   w = make_selection_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
@@ -4623,7 +4623,7 @@ static XEN g_save_selection_dialog(XEN managed)
 static XEN g_save_region_dialog(XEN managed)
 {
   widget_t w;
-  #define H_save_region_dialog "(" S_save_region_dialog "): start the Region Save-as dialog"
+  #define H_save_region_dialog "(" S_save_region_dialog " :optional managed): start the Region Save-as dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_region_dialog, "a boolean");
   w = make_region_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
@@ -4632,7 +4632,7 @@ static XEN g_save_region_dialog(XEN managed)
 static XEN g_save_sound_dialog(XEN managed)
 {
   widget_t w;
-  #define H_save_sound_dialog "(" S_save_sound_dialog "): start the File Save-as dialog"
+  #define H_save_sound_dialog "(" S_save_sound_dialog " :optional managed): start the File Save-as dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_sound_dialog, "a boolean");
   w = make_sound_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
@@ -4651,7 +4651,7 @@ static XEN g_info_dialog(XEN subject, XEN msg)
 static XEN g_new_sound_dialog(XEN managed)
 {
   widget_t w;
-#define H_new_sound_dialog "(" S_new_sound_dialog "): start the File New sound dialog"
+#define H_new_sound_dialog "(" S_new_sound_dialog " :optional managed): start the File New sound dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_new_sound_dialog, "a boolean");
   w = make_new_file_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));

@@ -169,7 +169,6 @@
     (let* ((dm (/ damp mass))
 	   (km (/ xspring mass))
 	   (denom (+ 1.0 dm))
-
 	   (p1 (/ (+ 2.0 (- dm (* 2.0 km))) denom))
 	   (p2 (/ km denom))
 	   (p3 (/ -1.0 denom)))
@@ -2464,7 +2463,8 @@ and replaces it with the spectrum given in coeffs"
 	    ((= j (- n k 1)))
 	  (set! num (+ num (* (vector-ref wk1 j) (vector-ref wk2 j))))
 	  (set! denom (+ denom (sqr (vector-ref wk1 j)) (sqr (vector-ref wk2 j)))))
-	(vector-set! d k (/ (* 2.0 num) denom))
+	(if (not (= denom 0.0))
+	    (vector-set! d k (/ (* 2.0 num) denom)))
 	(do ((i 0 (1+ i)))
 	    ((= i k)) ; 1st time is skipped presumably
 	  (vector-set! d i (- (vector-ref wkm i) (* (vector-ref d k) (vector-ref wkm (- k i 1))))))

@@ -279,7 +279,7 @@ static XEN g_make_vct(XEN len, XEN filler)
     #define vct_make_example "32 1.0 make-vct value v"
   #endif
 
-  #define H_make_vct "(" S_make_vct " len (initial-element 0)): returns a new vct of length len filled with \
+  #define H_make_vct "(" S_make_vct " len :optional (initial-element 0)): returns a new vct of length len filled with \
 initial-element: \n  " vct_make_example
 
   int size;
@@ -310,7 +310,7 @@ static XEN g_vct_copy(XEN obj)
 
 static XEN g_vct_move(XEN obj, XEN newi, XEN oldi, XEN backwards)
 {
-  #define H_vct_moveB "(" S_vct_moveB " obj new old (backwards " PROC_FALSE ")): moves vct obj data from old to new: v[new++] = v[old++], or \
+  #define H_vct_moveB "(" S_vct_moveB " obj new old :optional backwards): moves vct obj data from old to new: v[new++] = v[old++], or \
 v[new--] = v[old--] if backwards is " PROC_FALSE "."
   vct *v;
   int i, j, ni, nj;
@@ -402,7 +402,7 @@ static XEN g_vct_multiply(XEN obj1, XEN obj2)
 
 static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
 {
-  #define H_vct_addB "(" S_vct_addB " v1 v2 (offset 0)): element-wise add of vcts v1 and v2: v1[i + offset] += v2[i], returns v1"
+  #define H_vct_addB "(" S_vct_addB " v1 v2 :optional (offset 0)): element-wise add of vcts v1 and v2: v1[i + offset] += v2[i], returns v1"
   int i, lim, j;
   vct *v1, *v2;
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_addB, "a vct");
@@ -559,7 +559,7 @@ static XEN g_vct_peak(XEN obj)
 
 static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
 {
-  #define H_vct_subseq "(" S_vct_subseq " v start (end len) (vnew " PROC_FALSE ")): v[start..end], placed in vnew if given or new vct"
+  #define H_vct_subseq "(" S_vct_subseq " v start :optional end len vnew): v[start..end], placed in vnew if given or new vct"
   vct *vold, *vnew;
   XEN res;
   int i, old_len, new_len, j, istart, iend;

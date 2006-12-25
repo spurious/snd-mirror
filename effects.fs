@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Sat Dec 23 05:28:24 CET 2006
+\ Changed: Sat Dec 23 22:31:30 CET 2006
 
 \ Commentary:
 \
@@ -31,7 +31,7 @@
 \ effects-comb-filter            ( scaler size :optional beg dur snd chn -- res )
 \ effects-comb-chord             ( scaler size amp :optional beg dur snd chn -- res )
 \ effects-moog                   ( freq Q :optional beg dur snd chn -- res )
-\ moog                           ( freq Q -- proc; inval self -- res )
+\ moog                           ( freq Q -- prc; inval self -- res )
 \ make-band-pass-dialog          ( name -- prc1 prc2; child self -- prc; self -- )
 \ make-notch-dialog              ( name -- prc1 prc2; child self -- prc; self -- )
 \ make-high-pass-dialog          ( name -- prc1 prc2; child self -- prc; self -- )
@@ -50,7 +50,7 @@
 \ make-am-effect-dialog          ( name -- prc1 prc2; child self -- prc; self -- )
 \ make-rm-effect-dialog          ( name -- prc1 prc2; child self -- prc; self -- )
 \
-\ effects-jc-reverb              ( samps volume -- proc; inval self -- res )
+\ effects-jc-reverb              ( samps volume -- prc; inval self -- res )
 \ effects-jc-reverb-1            ( volume :optional beg dur snd chn -- res )
 \ effects-cnv                    ( snd0 amp snd chn -- res )
 \ make-reverb-dialog             ( name -- prc1 prc2; child self -- prc; self -- )
@@ -60,7 +60,7 @@
 \ effects-position-sound         ( mono-snd pos :optional snd chn -- res )
 \ place-sound                    ( mono-snd stereo-snd pan-env -- res )
 \ effects-flange                 ( amount speed time :optional beg dur snd chn -- res )
-\ effects-cross-synthesis        ( snd amp fftsize r -- proc; inval self -- res )
+\ effects-cross-synthesis        ( snd amp fftsize r -- prc; inval self -- res )
 \ effects-cross-synthesis-1      ( cross-snd amp fftsize r :optional beg dur snd chn -- res )
 \ effects-fp                     ( srf amp freq :optional beg dur snd chn -- vct )
 \ effects-hello-dentist          ( freq amp :optional beg dur snd chn -- res )
@@ -243,7 +243,7 @@ hide
 ;
 
 : ratio->semitones ( ratio -- n )
-  12.0 swap flog 2.0 flog f/ f* fround f>s
+  12.0 swap flog 2.0 flog f/ f* fround->s
 ;
 : scale-semi-cb <{ w c info -- }> c  info Fvalue semi-scale-label  change-label ;
 
@@ -301,9 +301,9 @@ hide
       *key* 0 array-ref FxmScaleWidgetClass mainform
       '( FXmNorientation  	FXmHORIZONTAL
 	 FXmNshowValue    	#t
-	 FXmNminimum      	low  scale f* fround f>s
-	 FXmNmaximum      	high scale f* fround f>s
-	 FXmNvalue        	init scale f* fround f>s
+	 FXmNminimum      	low  scale f* fround->s
+	 FXmNmaximum      	high scale f* fround->s
+	 FXmNvalue        	init scale f* fround->s
 	 FXmNdecimalPoints
 	 scale 10000 = if
 	   4
@@ -504,7 +504,7 @@ hide
 	  then
 	then { beg }
 	decay number? if
-	  #f srate decay f* fround f>s
+	  #f srate decay f* fround->s
 	else
 	  0
 	then { overlap }
@@ -609,7 +609,7 @@ previous
 \ === AMPLITUDE EFFECTS ===
 
 hide
-: squelch-cb { f0 f1 amount -- proc; y self -- val }
+: squelch-cb { f0 f1 amount -- prc; y self -- val }
   1 proc-create amount , f1 , f0 ,
  does> ( y self -- val )
   { y self }
@@ -681,7 +681,7 @@ hide
   gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: gain-slider-cb ( gen -- proc; w c i self -- )
+: gain-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
@@ -772,7 +772,7 @@ hide
   self cell+ @ ( init ) gen amount!
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: normalize-slider-cb ( gen -- proc; w c i self -- )
+: normalize-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self )
   { w c info self }
@@ -849,7 +849,7 @@ end-struct gate%
   self cell+ @ ( init ) gen amount!
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 1000.0 f* f>s ) FXtVaSetValues drop
 ;
-: gate-slider-cb ( gen -- proc; w c i self -- )
+: gate-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
@@ -903,7 +903,7 @@ previous
 \ === DELAY EFFECTS ===
 
 hide
-: effects-echo-cb { samps amp del -- proc; inval self -- r }
+: effects-echo-cb { samps amp del -- prc; inval self -- r }
   1 proc-create 0 , del , amp , samps ,
  does> ( inval self -- r )
   { inval self }
@@ -913,7 +913,7 @@ hide
   self 3 cells + @ { samps }
   del dup 0.0 tap samp samps <= if inval f+ then amp f* 0.0 delay inval f+
 ;
-: effects-flecho-cb ( amp samps flt del -- proc; inval self -- r )
+: effects-flecho-cb ( amp samps flt del -- prc; inval self -- r )
   { amp samps flt del }
   1 proc-create 0 , samps , flt , del , amp ,
  does> ( inval self -- r )
@@ -925,7 +925,7 @@ hide
   self 4 cells + @ { scl }
   del flt del 0.0 tap samp samps <= if inval f+ then scl f* fir-filter delay inval f+
 ;
-: effects-zecho-cb ( scaler amp samps os del -- proc; inval self -- r )
+: effects-zecho-cb ( scaler amp samps os del -- prc; inval self -- r )
   { scaler amp samps os del }
   1 proc-create 0 , samps , os , del , scaler , amp ,
  does> ( inval self -- r )
@@ -944,7 +944,7 @@ hide
 set-current
 
 : effects-echo <{ input-samps del-time amp :optional beg 0 dur #f snd #f chn #f -- res }>
-  del-time snd srate f* fround f>s make-delay { del }
+  del-time snd srate f* fround->s make-delay { del }
   input-samps number? if
     input-samps
   else
@@ -961,7 +961,7 @@ set-current
 : effects-flecho ( scaler secs input-samps beg dur snd chn -- res )
   { amp secs input-samps beg dur snd chn }
   :order 4 :xcoeffs vct( 0.125 0.25 0.25 0.125 ) make-fir-filter { flt }
-  secs snd srate f* fround f>s make-delay { del }
+  secs snd srate f* fround->s make-delay { del }
   input-samps number? if
     input-samps
   else
@@ -977,7 +977,7 @@ set-current
 
 : effects-zecho <{ scaler secs freq amp input-samps :optional beg 0 dur #f snd #f chn #f -- res }>
   freq make-oscil { os }
-  secs snd srate f* fround f>s { len }
+  secs snd srate f* fround->s { len }
   :size len :max-size len amp f>s 1 + + make-delay { del }
   input-samps number? if
     input-samps
@@ -997,8 +997,8 @@ previous
 \ === Echo (controlled by delay-time and echo-amount) ===
 
 hide
-: echo-func-cb ( gen -- prc; samps self -- proc; inval self -- r )
-  3 proc-create swap ,
+: echo-func-cb ( gen -- prc; samps self -- prc; inval self -- r )
+  1 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
@@ -1013,7 +1013,7 @@ hide
   del dup 0.0 tap samp samps <= if inval f+ then gen amount@ f* 0.0 delay inval f+
 ;
 : echo-origin-cb ( gen -- prc; target input-samps self -- name origin )
-  3 proc-create swap ,
+  2 proc-create swap ,
  does> ( target samps self -- name origin )
   { target samps self }
   self @ { gen }
@@ -1046,13 +1046,13 @@ hide
   gen sliders@ 0 array-ref '( FXmNvalue gen delay-time@ 100.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 1 array-ref '( FXmNvalue gen amount@     100.0 f* f>s ) FXtVaSetValues drop
 ;
-: echo-delay-slider-cb ( gen -- proc; w c i self -- )
+: echo-delay-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) delay-time!
 ;
-: echo-amount-slider-cb ( gen -- proc; w c i self -- )
+: echo-amount-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
@@ -1098,13 +1098,13 @@ previous
 \ === Filtered Echo ===
 
 hide
-: flecho-func-cb ( gen -- prc; samps self -- proc; inval self -- r )
-  3 proc-create swap ,
+: flecho-func-cb ( gen -- prc; samps self -- prc; inval self -- r )
+  1 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   :order 4 :xcoeffs vct( 0.125 0.25 0.25 0.125 ) make-fir-filter { flt }
-  gen delay-time@ #f srate f* fround f>s make-delay { del }
+  gen delay-time@ #f srate f* fround->s make-delay { del }
   1 proc-create 0 , samps , flt , del , gen amount@ ,
  does> ( inval self -- r )
   { inval self }
@@ -1116,7 +1116,7 @@ hide
   del flt del 0.0 tap samp samps <= if inval f+ then scl f* fir-filter delay inval f+
 ;
 : flecho-origin-cb ( gen -- prc; target input-samps self -- name origin )
-  3 proc-create swap ,
+  2 proc-create swap ,
  does> ( target samps self -- name origin )
   { target samps self }
   self @ { gen }
@@ -1145,7 +1145,7 @@ hide
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@     100.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 1 array-ref '( FXmNvalue gen delay-time@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: post-flecho-dialog ( gen -- proc; w c i self -- )
+: post-flecho-dialog ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
@@ -1186,13 +1186,13 @@ previous
 \ === Modulated Echo ===
 
 hide
-: zecho-func-cb ( gen -- prc; samps self -- proc; inval self -- r )
-  3 proc-create swap ,
+: zecho-func-cb ( gen -- prc; samps self -- prc; inval self -- r )
+  1 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   gen frequency@ make-oscil { os }
-  gen delay-time@ #f srate f* fround f>s { len }
+  gen delay-time@ #f srate f* fround->s { len }
   :size len :max-size len gen amplitude@ f>s 1+ + make-delay { del }
   1 proc-create 0 , samps , os , del , gen scaler@ , gen amplitude@ ,
  does> ( inval self -- r )
@@ -1210,7 +1210,7 @@ hide
   delay inval f+
 ;
 : zecho-origin-cb ( gen -- prc; target input-samps self -- name origin )
-  3 proc-create swap ,
+  2 proc-create swap ,
  does> ( target samps self -- name origin )
   { target samps self }
   self @ { gen }
@@ -1247,25 +1247,25 @@ hide
   gen sliders@ 2 array-ref '( FXmNvalue gen frequency@  100.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 3 array-ref '( FXmNvalue gen amplitude@  100.0 f* f>s ) FXtVaSetValues drop
 ;
-: zecho-scl-slider-cb ( gen -- proc; w c i self -- )
+: zecho-scl-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) scaler!
 ;
-: zecho-del-slider-cb ( gen -- proc; w c i self -- )
+: zecho-del-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) delay-time!
 ;
-: zecho-frq-slider-cb ( gen -- proc; w c i self -- )
+: zecho-frq-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) frequency!
 ;
-: zecho-amp-slider-cb ( gen -- proc; w c i self -- )
+: zecho-amp-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
@@ -1348,7 +1348,7 @@ previous
 ;
 
 hide
-: moog-cb ( gen -- proc; inval self -- res )
+: moog-cb ( gen -- prc; inval self -- res )
   1 proc-create swap ,
  does> ( inval self -- res )
   { inval self }
@@ -1361,7 +1361,7 @@ set-current
 ;
 previous
 
-: moog ( freq Q -- proc; inval self -- res )
+: moog ( freq Q -- prc; inval self -- res )
   make-moog-filter { gen }
   1 proc-create gen ,
  does> ( inval self -- res )
@@ -1414,13 +1414,13 @@ end-struct bp-filter%
   gen sliders@ 0 array-ref cadr gen frequency@ number->string change-label
   gen sliders@ 1 array-ref '( FXmNvalue gen band-pass-bw@ ) FXtVaSetValues drop
 ;
-: bp-freq-slider-cb ( gen -- proc; w c i self -- )
+: bp-freq-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   20.0 info Fvalue 22050.0 scale-linear->log self @ ( gen ) frequency!
 ;
-: bp-bw-slider-cb ( gen -- proc; w c i self -- )
+: bp-bw-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
@@ -1508,13 +1508,13 @@ end-struct notch%
   gen sliders@ 0 array-ref cadr gen frequency@ number->string change-label
   gen sliders@ 1 array-ref '( FXmNvalue gen notch-bw@ ) FXtVaSetValues drop
 ;
-: br-freq-slider-cb ( gen -- proc; w c i self -- )
+: br-freq-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   20.0 info Fvalue 22050.0 scale-linear->log self @ ( gen ) frequency!
 ;
-: br-bw-slider-cb ( gen -- proc; w c i self -- )
+: br-bw-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
@@ -1593,7 +1593,7 @@ hide
   '( FXmNvalue 20.0 gen frequency@ 22050.0 scale-log->linear ) FXtVaSetValues drop
   gen sliders@ 0 array-ref cadr gen frequency@ number->string change-label
 ;
-: hp-freq-slider-cb ( gen -- proc; w c i self -- )
+: hp-freq-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
@@ -1669,7 +1669,7 @@ hide
   '( FXmNvalue 20.0 gen frequency@ 22050.0 scale-log->linear ) FXtVaSetValues drop
   gen sliders@ 0 array-ref cadr gen frequency@ number->string change-label
 ;
-: lp-freq-slider-cb ( gen -- proc; w c i self -- )
+: lp-freq-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
@@ -1714,14 +1714,14 @@ previous
 \ === Comb filter ===
 hide
 : comb-func-cb ( gen -- prc; samps self -- proc )
-  3 proc-create swap ,
+  1 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   gen scaler@ gen size@ comb-filter
 ;
 : comb-origin-cb ( gen -- prc; target input-samps self -- name origin )
-  3 proc-create swap ,
+  2 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
@@ -1745,13 +1745,13 @@ hide
   gen sliders@ 0 array-ref '( FXmNvalue gen scaler@ 100.0 f* f>s ) FXtVaSetValues drop
   gen sliders@ 1 array-ref '( FXmNvalue gen size@                ) FXtVaSetValues drop
 ;
-: scaler-slider-cb ( gen -- proc; w c i self -- )
+: scaler-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) scaler!
 ;
-: size-slider-cb ( gen -- proc; w c i self -- )
+: size-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
@@ -1797,14 +1797,14 @@ previous
 
 hide
 : cc-func-cb ( gen -- prc; samps self -- proc )
-  3 proc-create swap ,
+  1 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   gen scaler@ gen size@ gen amplitude@ comb-chord
 ;
 : cc-origin-cb ( gen -- prc; target input-samps self -- name origin )
-  3 proc-create swap ,
+  2 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
@@ -1901,14 +1901,14 @@ end-struct moog%
 : moog-resonance! ( res gen -- ) moog-resonance ! ;
 
 : moog-func-cb ( gen -- prc; samps self -- proc )
-  3 proc-create swap ,
+  1 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   gen frequency@ gen moog-resonance@ moog
 ;
 : moog-origin-cb ( gen -- prc; target input-samps self -- name origin )
-  3 proc-create swap ,
+  2 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
@@ -1994,8 +1994,8 @@ previous
 \ === Adaptive saturation ===
 
 hide
-: adsat-func-cb ( gen -- prc; samps self -- proc; val self -- res )
-  3 proc-create swap ,
+: adsat-func-cb ( gen -- prc; samps self -- prc; val self -- res )
+  1 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
@@ -2024,7 +2024,7 @@ hide
   then
 ;
 : adsat-origin-cb ( gen -- prc; target input-samps self -- name origin )
-  3 proc-create swap ,
+  2 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
@@ -2347,7 +2347,7 @@ hide
   gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
   gen sliders@ 0 array-ref '( FXmNvalue gen scaler@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
-: src-timevar-slider-cb ( gen -- proc; w c i self -- )
+: src-timevar-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
@@ -2406,7 +2406,7 @@ previous
 \ === MODULATION EFFECTS ===
 
 hide
-: effects-am-env-cb { os e -- proc; x self -- res }
+: effects-am-env-cb { os e -- prc; x self -- res }
   1 proc-create e , os ,
  does> ( x self -- res )
   { inval self }
@@ -2414,14 +2414,14 @@ hide
   self cell+ @ { os }
   1.0 inval e env os 0.0 0.0 oscil f* amplitude-modulate
 ;
-: effects-am-cb ( os -- proc; x self -- res )
+: effects-am-cb ( os -- prc; x self -- res )
   1 proc-create swap ,
  does> ( x self -- res )
   { inval self }
   self @ { os }
   os 0.0 0.0 oscil inval f*
 ;
-: effects-rm-env-cb { os e -- proc; x self -- res }
+: effects-rm-env-cb { os e -- prc; x self -- res }
   1 proc-create e , os ,
  does> ( x self -- res )
   { inval self }
@@ -2429,7 +2429,7 @@ hide
   self cell+ @ { os }
   os 0.0 0.0 oscil e env f* inval f*
 ;
-: effects-rm-cb ( os -- proc; x self -- res )
+: effects-rm-cb ( os -- prc; x self -- res )
   1 proc-create swap ,
  does> ( x self -- res )
   { inval self }
@@ -2456,7 +2456,7 @@ previous
 
 hide
 : am-func-cb ( gen -- prc; samps self -- proc )
-  3 proc-create swap ,
+  1 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
@@ -2469,7 +2469,7 @@ hide
   e if os e effects-am-env-cb else os effects-am-cb then
 ;
 : am-origin-cb ( gen -- prc; target input-samps self -- name origin )
-  3 proc-create swap ,
+  2 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
@@ -2499,7 +2499,7 @@ hide
   gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
   gen sliders@ 0 array-ref '( FXmNvalue gen amount@ f>s ) FXtVaSetValues drop
 ;
-: am-slider-cb ( gen -- proc; w c i self -- )
+: am-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
@@ -2559,7 +2559,7 @@ previous
 
 hide
 : rm-func-cb ( gen -- prc; samps self -- proc )
-  3 proc-create swap ,
+  1 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
@@ -2572,7 +2572,7 @@ hide
   e if os e effects-rm-env-cb else os effects-rm-cb then
 ;
 : rm-origin-cb ( gen -- prc; target input-samps self -- name origin )
-  3 proc-create swap ,
+  2 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
@@ -2672,7 +2672,7 @@ previous
 
 \ === REVERBS ===
 
-: effects-jc-reverb ( samps volume -- proc; inval self -- res )
+: effects-jc-reverb ( samps volume -- prc; inval self -- res )
   { samps vol }
   -0.7 0.7 1051 make-all-pass { all1 }
   -0.7 0.7  337 make-all-pass { all2 }
@@ -2681,7 +2681,7 @@ previous
   0.733 4999 make-comb { c2 }
   0.715 5399 make-comb { c3 }
   0.697 5801 make-comb { c4 }
-  #f srate 0.013 f* fround f>s make-delay { outdel }
+  #f srate 0.013 f* fround->s make-delay { outdel }
   1 proc-create
   0 ( samp ),
   samps ,
@@ -2727,13 +2727,13 @@ previous
 ;
 
 hide
-: cnv-cb ( sf -- proc; dir self -- res )
+: cnv-cb ( sf -- prc; dir self -- res )
   1 proc-create swap ,
  does> ( dir self -- res )
   { dir self }
   self @ ( sf ) next-sample
 ;
-: cnv-vct-cb { cnv sf -- proc; self -- res }
+: cnv-vct-cb { cnv sf -- prc; self -- res }
   sf cnv-cb { func }
   0 proc-create func , cnv ,
  does> ( self -- res )
@@ -2886,14 +2886,14 @@ end-struct jc-reverb%
 : jc-reverb-volume! ( val gen -- ) jc-reverb-volume ! ;
 
 : jc-func-cb ( gen -- prc; samps self -- proc )
-  3 proc-create swap ,
+  1 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   samps gen jc-reverb-volume@ effects-jc-reverb
 ;
 : jc-origin-cb ( gen -- prc; target input-samps self -- name origin )
-  3 proc-create swap ,
+  2 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
@@ -3084,19 +3084,19 @@ previous
 \ === VARIOUS AND MISCELLANEOUS ===
 
 hide
-: numb-cb { rd pos -- proc; y self -- res }
+: numb-cb { rd pos -- prc; y self -- res }
   1 proc-create pos , rd ,
  does> ( y self -- res )
   { y self }
   self cell+ @ ( rd ) read-sample self @ ( pos ) f* y f+
 ;
-: env-numb-cb { rd en -- proc; y self -- res }
+: env-numb-cb { rd en -- prc; y self -- res }
   1 proc-create en , rd ,
  does> ( y self -- res )
   { y self }
   self cell+ @ ( rd ) read-sample self @ ( en ) env f* y f+
 ;
-: env-cb { rd en -- proc; y self -- res }
+: env-cb { rd en -- prc; y self -- res }
   1 proc-create en , rd ,
  does> ( y self -- res )
   { y self }
@@ -3137,7 +3137,7 @@ If PAN-ENV is a number, the sound is split such that 0 is all in channel 0 \
 ;
 
 hide
-: flange-cb { ri del -- proc; inval self -- res }
+: flange-cb { ri del -- prc; inval self -- res }
   1 proc-create del , ri ,
  does> ( inval self -- res )
   { inval self }
@@ -3146,7 +3146,7 @@ hide
 set-current
 : effects-flange <{ amnt speed time :optional beg 0 dur #f snd #f  chn #f  -- res}>
   :frequency speed :amplitude amnt make-rand-interp { ri }
-  time snd srate f* fround f>s { len }
+  time snd srate f* fround->s { len }
   :size len :max-size amnt f>s len 1 + + make-delay { del }
   $" %s %s %s %s %s %s"
   '( amnt speed time beg
@@ -3156,7 +3156,7 @@ set-current
 ;
 previous
 
-: effects-cross-synthesis ( snd amp fftsize r -- proc; inval self -- res )
+: effects-cross-synthesis ( snd amp fftsize r -- prc; inval self -- res )
   { snd amp fftsize r }
   fftsize 2/ { freq-inc }
   fftsize 0.0 make-vct { fdr }
@@ -3200,13 +3200,13 @@ previous
 ;
 
 hide
-: src-fp-read-cb ( sf -- proc; dir self -- samp )
-  0 proc-create swap ,
+: src-fp-read-cb ( sf -- prc; dir self -- samp )
+  1 proc-create swap ,
  does> ( dir self -- samp )
   { dir self }
   self @ ( sf ) dir 0> if next-sample else previous-sample then
 ;
-: vct-fp-cb ( os sr sf amp -- proc; self -- res )
+: vct-fp-cb ( os sr sf amp -- prc; self -- res )
   { os sr sf amp }
   sf src-fp-read-cb { src-cb }
   0 proc-create os , sr , amp , src-cb ,
@@ -3230,7 +3230,7 @@ set-current
 previous
 
 hide
-: hello-src-cb { in-data idx -- proc; dir self -- samp }
+: hello-src-cb { in-data idx -- prc; dir self -- samp }
   1 proc-create in-data , idx ,
  does> ( dir self -- samp )
   { dir self }
@@ -3245,7 +3245,7 @@ set-current
   0 { idx }
   dur if dur else snd chn #f frames then { len }
   beg len snd chn #f channel->vct { in-data }
-  amp f2* 1.0 f+ len f* fround f>s ( out-len ) 0.0 make-vct { out-data }
+  amp f2* 1.0 f+ len f* fround->s ( out-len ) 0.0 make-vct { out-data }
   :srate 1.0 :input in-data idx hello-src-cb make-src { rd }
   out-data map!
     idx len = ?leave
@@ -3519,14 +3519,14 @@ end-struct effects-cross%
 : cs-fft-widget! ( wid gen -- ) cross-synth-fft-widget ! ;
 
 : cs-func-cb ( gen -- prc; samps self -- proc )
-  3 proc-create swap ,
+  1 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   gen cs-sound@ gen amplitude@ gen size@ gen cs-radius@ effects-cross-synthesis
 ;
 : cs-origin-cb ( gen -- prc; target input-samps self -- name origin )
-  3 proc-create swap ,
+  2 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
@@ -3582,14 +3582,14 @@ end-struct effects-cross%
   { w c info self }
   info Fvalue 100.0 f/ self @ ( gen ) cs-radius!
 ;
-: cs-sel-cb ( gen -- proc; w c i self -- )
+: cs-sel-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
   info Fitem_or_text ( selected ) FXmFONTLIST_DEFAULT_TAG FXmStringGetLtoR \ size-as-list '(#t n)
   cadr self @ ( gen ) size!
 ;
-: cs-sel-changed-cb ( gen -- proc; w c i self -- )
+: cs-sel-changed-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self -- )
   { w size info self }
@@ -3715,13 +3715,13 @@ end-struct effects-flange%
 : flange-time@  ( gen -- val ) flange-time @ ;
 : flange-time!  ( val gen -- ) flange-time ! ;
 
-: flange-func-cb ( gen -- prc; samps self -- proc )
-  3 proc-create swap ,
+: flange-func-cb ( gen -- prc; samps self -- prc; self -- )
+  1 proc-create swap ,
  does> ( samps self -- proc )
   { samps self }
   self @ { gen }
   :frequency gen flange-speed@ :amplitude gen amount@ make-rand-interp { ri }
-  gen flange-time@ #f srate f* fround f>s { len }
+  gen flange-time@ #f srate f* fround->s { len }
   :size len :max-size gen amount@ 1.0 len f+ f+ f>s make-delay { del }
   1 proc-create del , ri ,
  does> ( inval self -- res )
@@ -3729,7 +3729,7 @@ end-struct effects-flange%
   self @ ( del ) inval self cell+ @ ( ri ) 0.0 rand-interp delay inval f+ 0.75 f*
 ;
 : flange-origin-cb ( gen -- prc; target input-samps self -- name origin )
-  3 proc-create swap ,
+  2 proc-create swap ,
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
@@ -3819,7 +3819,7 @@ set-current
 
 \ === Randomize phase ===
 
-: random-phase-cb ( scl -- proc; x self -- res )
+: random-phase-cb ( scl -- prc; x self -- res )
   1 proc-create swap ,
  does> ( x self -- res )
   { x self }
@@ -3827,7 +3827,7 @@ set-current
 ;
 
 hide
-: rp-ok-cb ( gen -- prc; w c i self --; x self -- res)
+: rp-ok-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
  does> ( w c i self --; x self -- res )
   { w c info self }
@@ -3893,9 +3893,9 @@ end-struct effects-robotize%
 : samp-rate@ ( gen -- sr ) robotize-samp-rate @ ;
 : samp-rate! ( sr gen -- ) robotize-samp-rate ! ;
 
-: robotize-ok-cb ( gen -- prc; w c i self --; x self -- res)
+: robotize-ok-cb ( gen -- prc; w c i self -- res )
   3 proc-create swap ,
- does> ( w c i self --; x self -- res )
+ does> ( w c i self -- res )
   { w c info self }
   self @ { gen }
   gen samp-rate@ gen amplitude@ gen frequency@ \ beg dur follows
@@ -3996,9 +3996,9 @@ end-struct effects-rubber%
 : factor@ ( gen -- val ) rubber-factor @ ;
 : factor! ( val gen -- ) rubber-factor ! ;
 
-: rubber-ok-cb ( gen -- prc; w c i self --; x self -- res)
+: rubber-ok-cb ( gen -- prc; w c i self -- res )
   3 proc-create swap ,
- does> ( w c i self --; x self -- res )
+ does> ( w c i self -- res )
   { w c info self }
   self @ ( gen ) factor@ #f #f rubber-sound
 ;
@@ -4054,9 +4054,9 @@ set-current
 \ === Wobble ===
 
 hide
-: wobble-ok-cb ( gen -- prc; w c i self --; x self -- res)
+: wobble-ok-cb ( gen -- prc; w c i self -- res )
   3 proc-create swap ,
- does> ( w c i self --; x self -- res )
+ does> ( w c i self -- res )
   { w c info self }
   self @ { gen }
   gen frequency@ gen amplitude@		\ beg dur follows
@@ -4207,7 +4207,7 @@ hide
     click 2 + snd chn recurse
   then
 ;
-: effects-remove-dc-cb ( -- proc; inval self -- res )
+: effects-remove-dc-cb ( -- prc; inval self -- res )
   1 proc-create 0.0 ( lastx ) , 0.0 ( lasty ) ,
  does> ( inval self -- res )
   { inval self }
@@ -4217,7 +4217,7 @@ hide
   inval self ! ( lastx )
   self cell+ @ ( lasty )
 ;
-: effects-compand-cb ( tbl -- proc; inval self -- res )
+: effects-compand-cb ( tbl -- prc; inval self -- res )
   1 proc-create swap ,
  does> ( inval self -- res )
   { inval self }

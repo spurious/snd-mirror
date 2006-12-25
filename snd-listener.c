@@ -635,7 +635,7 @@ static XEN g_clear_listener(void)
 
 static XEN g_show_listener(XEN val) 
 {
-  #define H_show_listener "(" S_show_listener " (open " PROC_TRUE ")): if 'open' opens the lisp listener; returns whether the listener is visible."
+  #define H_show_listener "(" S_show_listener " :optional (open " PROC_TRUE ")): if 'open' opens the lisp listener; returns whether the listener is visible."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_show_listener, "a boolean");
   if ((XEN_NOT_BOUND_P(val)) || (!(XEN_FALSE_P(val)))) /* explicit #f arg turns off listener creation/display */
     handle_listener(true); 

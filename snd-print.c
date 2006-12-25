@@ -556,7 +556,7 @@ void print_enved(const char *output, int y0)
 
 static XEN g_graph_to_ps(XEN filename)
 {
-  #define H_graph_to_ps "(" S_graph_to_ps " (filename eps-file)): write the current Snd displays to an EPS file"
+  #define H_graph_to_ps "(" S_graph_to_ps " :optional (filename eps-file)): write the current Snd displays to an EPS file"
   char *error, *file;
 
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ONLY_ARG, S_graph_to_ps, "a string (filename)");
@@ -591,7 +591,7 @@ static int gl2ps_types[NUM_GL2PS_TYPES] = {GL2PS_EPS, GL2PS_PS, GL2PS_PDF, GL2PS
 
 static XEN g_gl_graph_to_ps(XEN filename, XEN output_type, XEN snd, XEN chn)
 {
-  #define H_gl_graph_to_ps "(" S_gl_graph_to_ps " filename (type 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ")) produces a postscript output file from \
+  #define H_gl_graph_to_ps "(" S_gl_graph_to_ps " :optional filename (type 0) snd chn) produces a postscript output file from \
 OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
 
   char *file;

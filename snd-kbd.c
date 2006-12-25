@@ -2165,7 +2165,7 @@ static XEN check_for_key_error(int k, int s, const char *caller)
 
 static XEN g_key_binding(XEN key, XEN state, XEN cx_extended)
 {
-  #define H_key_binding "(" S_key_binding " key (state 0) (extended " PROC_FALSE ")): function bound to this key and associated \
+  #define H_key_binding "(" S_key_binding " key :optional (state 0) extended): function bound to this key and associated \
 modifiers.  As in " S_bind_key ", state is the logical 'or' of ctrl=4, meta=8, and 'extended' is " PROC_TRUE " if the key is \
 prefixed with C-x. 'key' can be a character, a key name such as 'Home', or an integer."
   int i, k, s;
@@ -2220,7 +2220,7 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
 
 static XEN g_bind_key(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin, XEN prefs_info)
 {
-  #define H_bind_key "(" S_bind_key " key modifiers func (extended " PROC_FALSE ") origin prefs-info: \
+  #define H_bind_key "(" S_bind_key " key modifiers func :optional extended origin prefs-info: \
 causes 'key' (an integer, character, or string) \
 when typed with 'modifiers' (0:none, 4:control, 8:meta) (and C-x if extended) to invoke 'func', a function of \
 zero or one arguments. If the function takes one argument, it is passed the preceding C-u number, if any. \
@@ -2234,13 +2234,13 @@ or \"?a\" in Ruby."
 
 static XEN g_unbind_key(XEN key, XEN state, XEN cx_extended)
 {
-  #define H_unbind_key "(" S_unbind_key " key state (extended " PROC_FALSE ")): undo the effect of a prior " S_bind_key " call."
+  #define H_unbind_key "(" S_unbind_key " key state :optional extended): undo the effect of a prior " S_bind_key " call."
   return(g_bind_key_1(key, state, XEN_FALSE, cx_extended, XEN_UNDEFINED, XEN_UNDEFINED, S_unbind_key));
 }
 
 static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
 {
-  #define H_key "(" S_key " key modifiers (snd " PROC_FALSE ") (chn " PROC_FALSE ")): simulate typing 'key' with 'modifiers' in snd's channel chn"
+  #define H_key "(" S_key " key modifiers :optional snd chn): simulate typing 'key' with 'modifiers' in snd's channel chn"
   chan_info *cp;
   int k, s;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(kbd) || XEN_CHAR_P(kbd) || XEN_STRING_P(kbd), kbd, XEN_ARG_1, S_key, "an integer, character, or string");
@@ -2257,7 +2257,7 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
 
 static XEN g_save_macros(XEN file)
 {
-  #define H_save_macros "(" S_save_macros " (file \"~/.snd\")): save keyboard macros file"
+  #define H_save_macros "(" S_save_macros " :optional (file \"~/.snd\")): save keyboard macros file"
   FILE *fd = NULL;
   char *name;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_save_macros, "a string");
@@ -2292,7 +2292,7 @@ static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd_n, XEN raw)
     #define prompt_example "\"what?\" lambda: <{ response }> response snd-print ; prompt-in-minibuffer"
   #endif
 
-  #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg (callback " PROC_FALSE ") (snd " PROC_FALSE ") (raw " PROC_FALSE ")): post msg in snd's minibuffer \
+  #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg :optional callback snd raw): post msg in snd's minibuffer \
 then when the user eventually responds, invoke the function callback, if any, with the response.  If 'raw' is " PROC_TRUE ", the response is \
 passed as a string to the prompt callback function; otherwise it is evaluated first as Scheme code.\n  " prompt_example
 
@@ -2339,7 +2339,7 @@ passed as a string to the prompt callback function; otherwise it is evaluated fi
 
 static XEN g_report_in_minibuffer(XEN msg, XEN snd_n, XEN as_error)
 {
-  #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg (snd " PROC_FALSE ") (as-error " PROC_FALSE ")): display msg in snd's minibuffer. \
+  #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg :optional snd as-error): display msg in snd's minibuffer. \
 If 'as-error' is " PROC_TRUE ", place the message in the minibuffer's error label."
   snd_info *sp;
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_report_in_minibuffer, "a string");
@@ -2356,7 +2356,7 @@ If 'as-error' is " PROC_TRUE ", place the message in the minibuffer's error labe
 
 static XEN g_clear_minibuffer(XEN snd)
 {
-  #define H_clear_minibuffer "(" S_clear_minibuffer " snd) clears snd's minibuffer (erasing any \
+  #define H_clear_minibuffer "(" S_clear_minibuffer " :optional snd) clears snd's minibuffer (erasing any \
 error message as well)."
   snd_info *sp;
   ASSERT_SOUND(S_clear_minibuffer, snd, 1);

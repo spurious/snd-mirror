@@ -236,7 +236,7 @@ void save_find_dialog_state(FILE *fd)
 
 static XEN g_find_dialog(XEN managed, XEN text)
 {
-  #define H_find_dialog "(" S_find_dialog "): create and activate the Edit:Find dialog, return the dialog widget"
+  #define H_find_dialog "(" S_find_dialog " :optional managed text): create and activate the Edit:Find dialog, return the dialog widget"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ARG_1, S_find_dialog, "a boolean");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(text), text, XEN_ARG_2, S_find_dialog, "a string");
   make_edit_find_dialog(XEN_TO_C_BOOLEAN(managed));

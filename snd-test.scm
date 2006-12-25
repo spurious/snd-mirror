@@ -19708,8 +19708,8 @@ EDITS: 5
 	(if (or (not (= bad1 0))
 		(not (= bad2 0))
 		(> (* 2.5 down1) up1)
-		(> (* 2.5 up2) down2))
-	    (snd-display "; rand dist 2: ~A ~A ~A, ~A ~A ~A" down1 up1 bad1 down2 up2 bad2)))
+		(> (* 2.0 up2) down2))
+	    (snd-display "; rand dist 2: ~A ~A ~A, ~A ~A ~A" down1 up1 bad1 down2 up2 bad2))) ; 234 766 0, 705 295 0
 
       (let ((ind (new-sound :size 100)))
 	(select-sound ind)

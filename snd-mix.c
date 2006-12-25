@@ -14,6 +14,9 @@
  * perhaps: mix pane sort of like current mark pane? (the mixes function has identical output to marks)
  *            this needs a hook for mix-creation and deletion (current mark-pane code uses mark-hook
  *            which is called at add/delete/reposition causing the lists to be rebuilt).  See tmp177.scm.
+ *            But mark-hook is actually redundant -- we could use a watcher instead.
+ *            This would mean adding run_watchers() to add_mix, perhaps finish_moving_mix, set_mix_position,
+ *            perhaps delete_mix, and then doc/test etc
  * PERHAPS: quick access + edit of underlying mix data, ripple and update if saved (like region edit)
  *          also double click in edit history => go to that temp file?
  * PERHAPS: some way to tie multichannel mixes together without the track appearing in the track dialog
@@ -4280,7 +4283,7 @@ static XEN g_set_mix_speed(XEN n, XEN uval)
 
 static XEN g_mixes(XEN snd, XEN chn)
 {
-  #define H_mixes "(" S_mixes " (snd) (chn)): list of mixes (ids) associated with snd and chn"
+  #define H_mixes "(" S_mixes " :optional snd chn): list of mixes (ids) associated with snd and chn"
   snd_info *sp;
   chan_info *cp;
   int i, j;
@@ -4386,7 +4389,7 @@ static XEN g_set_mix_speed_style(XEN n, XEN speed)
 
 static XEN g_mix_amp(XEN n, XEN uchan) 
 {
-  #define H_mix_amp "(" S_mix_amp " id (chan 0)): amp of mix's channel chan"
+  #define H_mix_amp "(" S_mix_amp " id :optional (chan 0)): amp of mix's channel chan"
   mix_state *cs; 
   int chan;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_mix_amp, "an integer");
@@ -4429,7 +4432,7 @@ static XEN g_set_mix_amp(XEN n, XEN uchan_1, XEN uval_1)
 
 static XEN g_mix_amp_env(XEN n, XEN chan) 
 {
-  #define H_mix_amp_env "(" S_mix_amp_env " id (chan 0)): amplitude envelope applied to mix's channel chan"
+  #define H_mix_amp_env "(" S_mix_amp_env " id :optional (chan 0)): amplitude envelope applied to mix's channel chan"
   env *e;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_mix_amp_env, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_mix_amp_env, "an integer");
@@ -4571,7 +4574,7 @@ static XEN g_set_mix_tag_height(XEN val)
 
 static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN tag, XEN auto_delete, XEN track_id)
 {
-  #define H_mix "(" S_mix " file (chn-start 0) (file-chan 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (with-tag " S_with_mix_tags ") (auto-delete " PROC_FALSE ") (track-id 0)): \
+  #define H_mix "(" S_mix " file :optional (chn-start 0) (file-chan 0) snd chn (with-tag " S_with_mix_tags ") auto-delete (track-id 0)): \
 mix file channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chn-start \
 is omitted), returning the new mix's id.  if with-tag is " PROC_FALSE ", the data is mixed (no draggable tag is created). \
 If file_chn is omitted or " PROC_TRUE ", file's channels are mixed until snd runs out of channels. \
@@ -4825,7 +4828,7 @@ static void release_dangling_mix_readers(mix_info *md)
 
 static XEN g_make_mix_sample_reader(XEN mix_id, XEN ubeg)
 {
-  #define H_make_mix_sample_reader "(" S_make_mix_sample_reader " id (beg 0)): return a reader ready to access mix id"
+  #define H_make_mix_sample_reader "(" S_make_mix_sample_reader " id :optional (beg 0)): return a reader ready to access mix id"
   mix_info *md = NULL;
   mix_fd *mf = NULL;
   off_t beg;
@@ -4904,7 +4907,7 @@ XEN g_free_mix_sample_reader(XEN obj)
 
 static XEN g_play_mix(XEN num, XEN beg)
 {
-  #define H_play_mix "(" S_play_mix " id (beg 0)): play mix.  'beg' is where to start playing."
+  #define H_play_mix "(" S_play_mix " id :optional (beg 0)): play mix.  'beg' is where to start playing."
   mix_info *md;
   off_t samp;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ONLY_ARG, S_play_mix, "an integer");
@@ -4919,7 +4922,7 @@ static XEN g_play_mix(XEN num, XEN beg)
 
 static XEN g_mix_vct(XEN obj, XEN beg, XEN snd, XEN chn, XEN with_tag, XEN origin, XEN track_id)
 {
-  #define H_mix_vct "(" S_mix_vct " data (beg 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (with-tag " S_with_mix_tags ") (origin " PROC_FALSE ") (track-id 0)): \
+  #define H_mix_vct "(" S_mix_vct " data :optional (beg 0) snd chn (with-tag " S_with_mix_tags ") origin (track-id 0)): \
 mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
 
   vct *v;
@@ -7113,7 +7116,7 @@ static XEN g_tracks(void)
 static XEN g_track(XEN id, XEN chn)
 {
   /* given track id, return list of constituent mixes */
-  #define H_track "(" S_track " track-id (chn 0)) returns a list of the mixes contained in the given track (and channel if specified)"
+  #define H_track "(" S_track " track-id :optional (chn 0)) returns a list of the mixes contained in the given track (and channel if specified)"
   int i, track_id;
   XEN result = XEN_EMPTY_LIST;
   track_mix_list_t *trk;
@@ -7691,7 +7694,7 @@ static XEN g_set_track_track(XEN id, XEN trk)
 
 static XEN g_track_position(XEN id, XEN chn)
 {
-  #define H_track_position "(" S_track_position " id (chn 0)) -> track's position (location of first mixed sample)"
+  #define H_track_position "(" S_track_position " id :optional (chn 0)) -> track's position (location of first mixed sample)"
   int track_id;
   track_id = xen_to_c_track(id, S_track_position);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_2, S_track_position, "integer");
@@ -7721,7 +7724,7 @@ static XEN g_set_track_position(XEN id, XEN pos, XEN chn)
 
 static XEN g_track_frames(XEN id, XEN chn)
 {
-  #define H_track_frames "(" S_track_frames " id (chn 0)) -> id's length (samples)"
+  #define H_track_frames "(" S_track_frames " id :optional (chn 0)) -> id's length (samples)"
   int track_id;
   track_id = xen_to_c_track(id, S_track_frames);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_2, S_track_frames, "int");
@@ -7997,7 +8000,7 @@ static int copy_track(int id, off_t beg)
 
 static XEN g_copy_mix(XEN id, XEN beg)
 {
-  #define H_copy_mix "(" S_copy_mix " mix-id (beg mix-beg)) copies the given mix, placing \
+  #define H_copy_mix "(" S_copy_mix " mix-id :optional (beg mix-beg)) copies the given mix, placing \
 the copy at 'beg' which defaults to the copied mix's position."
 
   int new_id, old_id;
@@ -8016,7 +8019,7 @@ the copy at 'beg' which defaults to the copied mix's position."
 
 static XEN g_copy_track(XEN id, XEN beg)
 {
-  #define H_copy_track "(" S_copy_track " track-id (beg track-beg)) copies the given track, placing \
+  #define H_copy_track "(" S_copy_track " track-id :optional (beg track-beg)) copies the given track, placing \
 the copy at 'beg' which defaults to the copied track's position."
 
   int new_id, old_id;
@@ -8307,7 +8310,7 @@ void track_dialog_play(int track_id)
 
 static XEN g_play_track(XEN id, XEN chn, XEN beg)
 {
-  #define H_play_track "(" S_play_track " track (chn " PROC_FALSE ") (beg 0)): play track. If 'chn' is " PROC_TRUE ", \
+  #define H_play_track "(" S_play_track " track :optional chn (beg 0)): play track. If 'chn' is " PROC_TRUE ", \
 play all the mixes in the track, even if in different channels.  'beg' is where to start playing within the track."
   int track_id;
   off_t samp;
@@ -8408,7 +8411,7 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(track_fd, free_tf, tf_free)
 
 static XEN g_make_track_sample_reader(XEN id, XEN chn, XEN beg)
 {
-  #define H_make_track_sample_reader "(" S_make_track_sample_reader " track (chn " PROC_FALSE ") (beg 0)): \
+  #define H_make_track_sample_reader "(" S_make_track_sample_reader " track :optional chn (beg 0)): \
 return a reader ready to access track's data associated with track's channel chn, starting in the track from beg"
 
   track_fd *tf = NULL;

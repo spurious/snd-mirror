@@ -1,7 +1,4 @@
 ;;; various frame-related extensions
-;;;
-;;; I might move these into C 
-
 
 ;;; frame-reverse! frame-copy (from mixer.scm)
 ;;; sound->frame frame->sound 

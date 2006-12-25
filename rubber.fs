@@ -2,7 +2,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Jan 06 05:32:57 CET 2006
-\ Changed: Sat Dec 23 00:11:14 CET 2006
+\ Changed: Sat Dec 23 18:00:09 CET 2006
 
 \ Commentary:
 \
@@ -156,7 +156,7 @@ hide
       samp1 samp0 f- fabs diffsum f+ to diffsum
     loop
     diffsum f0= if 0.0 else diffsum ampsum f/ then to current-min
-    current-min f2/ fround f>s to min-samps
+    current-min f2/ fround->s to min-samps
     current-mark zeros-checked i + min crosses 1- min { top }
     top i 1+ ?do
       0.0 { wgt }

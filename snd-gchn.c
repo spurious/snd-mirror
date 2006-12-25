@@ -1073,7 +1073,7 @@ bool fixup_cp_cgx_ax_wn(chan_info *cp)
 
 static XEN g_channel_widgets(XEN snd, XEN chn)
 {
-  #define H_channel_widgets "(" S_channel_widgets " (snd " PROC_FALSE ") (chn " PROC_FALSE ")): a list of widgets: ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)\
+  #define H_channel_widgets "(" S_channel_widgets " :optional snd chn): a list of widgets: ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)\
 edhist (8)gsy (9)gzy (10)main (11)sx_adj (12)sy_adj (13)zx_adj (14)zy_adj (15)gsy_adj (16)gzy_adj"
 
   #define XEN_WRAP_ADJ(Value) ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkAdjustment_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)

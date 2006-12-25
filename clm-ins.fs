@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Fri Dec 22 23:41:57 CET 2006
+\ Changed: Sat Dec 23 17:59:31 CET 2006
 
 \ Commentary:
 \
@@ -1397,7 +1397,7 @@ instrument: reson <{ start dur pitch amp
     frmdat 6 object-ref freq f* hz->radians { dev1 }
     frmdat 7 object-ref dur f/ 100.0 f* { indxat }
     100.0  frmdat 8 object-ref dur f/ 100.0 f*  f- { indxdc }
-    freq pitch f/ fround f>s { harm }
+    freq pitch f/ fround->s { harm }
     1.0  harm freq pitch f/ f- fabs  f- { rsamp }
     pitch harm f* { cfq }
     ampat f0= if 25.0 to ampat then
@@ -2845,7 +2845,7 @@ instrument: graph-eq <{ file start dur
   doc" \"oboe.snd\" 0 2 graph-eq"
   file find-file to file
   file false? if 'file-not-found $" cannot find %S" '( file ) fth-raise then
-  :file file :start file mus-sound-srate file-start f* fround f>s make-readin { rd }
+  :file file :start file mus-sound-srate file-start f* fround->s make-readin { rd }
   :envelope amp-env :scaler amplitude :duration dur :base base make-env { ampf }
   gain-freq-list length 2/ { len }
   len make-array { gainl }

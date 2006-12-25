@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Sat Dec 23 00:53:15 CET 2006
+\ Changed: Sun Dec 24 02:52:59 CET 2006
 
 \ Commentary:
 
@@ -28,10 +28,7 @@ require extensions
 require snd-xm
 
 \ for prefs
-: edhist-help-edits ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+: edhist-help-edits <{ w c info  -- }>
   $" Edit History Functions" _
   $" This popup menu gives access to the edit-list function handlers in Snd.  \
 At any time you can backup in the edit list, 'save' the current trailing edits, make some \
@@ -45,15 +42,13 @@ all saved edit lists." _
 
 hide
 \ --- make-simple-popdown-menu for fft-popup-menu ---
-: popup-cascade-cb { children xt -- proc; w c i self -- }
-  3 proc-create xt , children ,
- does> ( w c i self -- )
-  { w c info self }
-  self cell+ @ ( children ) self @ ( xt ) execute
+: popup-cascade-cb { children cb -- prc; w c i self -- }
+  3 proc-create cb , children ,
+ does> { w c info self -- }
+  self @ ( cb ) self cell+ @ ( children ) run-proc drop
 ;
 
-: make-simple-popdown-menu ( label popdown-labels parent cascade-xt -- )
-  { label popdown-labels parent cascade-xt }
+: make-simple-popdown-menu { label popdown-labels parent cascade-cb -- }
   parent label '( FXmNbackground highlight-color ) undef FXmCreatePulldownMenu { top }
   label FxmCascadeButtonWidgetClass parent
   '( FXmNbackground highlight-color FXmNsubMenuId top ) undef FXtCreateManagedWidget { top-cascade }
@@ -70,37 +65,34 @@ hide
       children child array-push drop
     end-each
   then
-  cascade-xt if
-    top-cascade FXmNcascadingCallback children cascade-xt popup-cascade-cb undef FXtAddCallback drop
+  cascade-cb if
+    top-cascade FXmNcascadingCallback children cascade-cb popup-cascade-cb undef FXtAddCallback drop
   then
 ;
 
 \ --- make-popdown-entry for listener-popup-menu ---
 #() value listener-values
-: collector-cb { func collector -- proc; w c i self -- }
-  3 proc-create collector , func ,
- does> ( w c i self -- )
-  { w c info self }
-  self @ { collector }
-  self cell+ @ { func }
-  sounds collector execute car func execute
+: collector-cb { func collector -- prc; w c i self -- val }
+  3 proc-create func , collector ,
+ does> { w c info self -- val }
+  self       @ { func }
+  self cell+ @ { collector }
+  collector '( sounds ) run-proc ( lst ) car 1 >list func swap run-proc
 ;
-: cas-cb ( func -- proc; w c i self -- )
+: cas-cb ( func -- prc; w c i self -- val )
   3 proc-create swap ,
- does> ( w c i self -- )
-  { w c info self }
-  self @ { func }
-  w current-label 0 find-sound func execute
+ does> { w c info self -- val }
+  self @ ( func ) '( w current-label 0 find-sound ) run-proc
 ;
-: popdown-cascade-cb { func collector menu children -- proc; w c i self -- }
-  3 proc-create children , menu , collector , func ,
- does> { w c i self -- }
-  self @ { children }
-  self cell+ @ { menu }
-  self 2 cells + @ { collector }
-  self 3 cells + @ { func }
+: popdown-cascade-cb { func collector menu children -- prc; w c i self -- }
+  3 proc-create func , collector , menu , children ,
+ does> { w c info self -- }
+  self           @ { func }
+  self   cell+   @ { collector }
+  self 2 cells + @ { menu }
+  self 3 cells + @ { children }
   children each FXtUnmanageChild drop end-each
-  sounds collector execute { snds }
+  collector '( sounds ) run-proc { snds }
   children length { clen }
   snds length { slen }
   clen slen < if
@@ -120,8 +112,7 @@ hide
   then
 ;
 
-: make-popdown-entry ( label parent func collector with-one -- values )
-  { label parent func collector with-one }
+: make-popdown-entry { label parent func collector with-one -- values }
   #f { widget }
   #() { children }
   with-one if
@@ -147,7 +138,6 @@ hide
 \
 \ special popdown (listener)
 \ entries: #( #( name type func collector with-one ) ... )
-
 : make-popup-menu ( name parent entries -- menu )
   { name parent entries }
   parent name
@@ -171,7 +161,7 @@ hide
 	label
 	entry 2 array-ref ( labels )
 	menu
-	entry 3 array-ref ( xt ) make-simple-popdown-menu
+	entry 3 array-ref ( prc ) make-simple-popdown-menu
       else				\ listener menu
 	label menu
 	entry 2 array-ref ( func )
@@ -183,8 +173,8 @@ hide
       entry 2 array-ref if		\ cb: proc of 3 args or #f
 	wid FXmNactivateCallback entry 2 array-ref undef FXtAddCallback drop
       then
-      entry 3 array-ref if		\ func: xt of 1 arg or #f
-	wid entry 3 array-ref execute
+      entry 3 array-ref if		\ func: proc of 1 arg or #f
+	entry 3 array-ref '( wid ) run-proc drop
       then
     then
   end-each
@@ -192,97 +182,79 @@ hide
 ;
 
 \ --- selection popup ---
-
-: sel-stop-play-cb ( vars -- proc; self -- )
+: sel-stop-play-cb ( vars -- prc; self -- )
   0 proc-create swap ,
- does> ( self -- )
-  @ { vars }
-  vars 'stopping hash-ref if
-    vars 'stopping #f hash-set!
-    vars 'stop-widget hash-ref FWidget? if
-      vars 'stop-widget hash-ref $" Play" _ change-label
+ does> { self -- }
+  self @ { vars }
+  vars :stopping hash-ref if
+    vars :stopping #f hash-set!
+    vars :stop-widget hash-ref FWidget? if
+      vars :stop-widget hash-ref "Play" _ change-label
     then
   then
 ;
-
-: sel-play-cb ( vars -- proc; w c i self -- )
+: sel-play-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
- does> ( w c i self -- )
-  { w c info self -- }
+ does> { w c info self -- }
   self @ { vars }
-  vars 'stopping hash-ref if
-    vars 'stopping #f hash-set!
-    w $" Play" _ change-label
-    vars 'stopping1 hash-ref if
-      vars 'stopping1 #f hash-set!
-      vars 'stop-widget1 hash-ref $" Loop play" _ change-label
+  vars :stopping hash-ref if
+    vars :stopping #f hash-set!
+    w "Play" _ change-label
+    vars :stopping1 hash-ref if
+      vars :stopping1 #f hash-set!
+      vars :stop-widget1 hash-ref $" Loop play" _ change-label
     then
     undef stop-playing drop
   else
-    w $" Stop" _ change-label
-    vars 'stop-widget w hash-set!
-    vars 'stopping #t hash-set!
+    w "Stop" _ change-label
+    vars :stop-widget w hash-set!
+    vars :stopping #t hash-set!
     #f undef play-selection drop
   then
 ;
-
-: stop-playing-selection ( w vars -- )
-  { w vars }
-  vars 'stopping1 #f hash-set!
+: stop-playing-selection { w vars -- }
+  vars :stopping1 #f hash-set!
   w $" Loop play" _ change-label
-  vars 'stopping hash-ref if
-    vars 'stopping #f hash-set!
-    vars 'stop-widget hash-ref $" Play" _ change-label
+  vars :stopping hash-ref if
+    vars :stopping #f hash-set!
+    vars :stop-widget hash-ref "Play" _ change-label
   then
 ;
-: play-selection-again { w vars -- proc; reason self -- }
-  1 proc-create vars , w ,
- does> ( reason self -- )
-  { reason self }
-  self @ { vars }
-  self cell+ @ { w }
-  c-g? not
-  reason 0= &&
-  vars 'stopping1 hash-ref && if
-    #f w vars recurse play-selection drop
+: play-selection-again { w vars -- prc; reason self -- }
+  1 proc-create w , vars ,
+ does> { reason self -- }
+  self       @ { w }
+  self cell+ @ { vars }
+  vars hash? if
+    c-g?                 not
+    reason                0= &&
+    vars :stopping1 hash-ref && if
+      #f  w vars recurse  play-selection drop
+    else
+      w vars stop-playing-selection
+    then
   else
-    w vars stop-playing-selection
+    $" %s: hash required, got %s" '( get-func-name vars ) string-format snd-warning drop
   then
 ;
-: sel-loop-cb ( vars -- proc; w c i self -- )
+: sel-loop-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
- does> ( w c i self -- )
-  { w c info self -- }
+ does> { w c info self -- }
   self @ { vars }
-  vars 'stopping1 hash-ref if
+  vars :stopping1 hash-ref if
     w vars stop-playing-selection
     undef stop-playing drop
   else
-    w $" Stop!" _ change-label
-    vars 'stop-widget1 w hash-set!
-    vars 'stopping1 #t hash-set!
-    #f w vars play-selection-again play-selection drop
+    w "Stop!" _ change-label
+    vars :stop-widget1 w  hash-set!
+    vars :stopping1    #t hash-set!
+    #f  w vars play-selection-again  play-selection drop
   then
 ;
-
-: sel-del ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  delete-selection drop
-;
-
-: sel-zero ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  0.0 scale-selection-by drop
-;
-
-: as-one-edit-thunk ( selection -- proc; self -- )
+: as-one-edit-thunk ( selection -- prc; self -- )
   0 proc-create swap ,
- does> ( self -- )
-  @ { selection }
+ does> { self -- }
+  self @ { selection }
   selection car  { snd }
   selection cadr { chn }
   snd chn selection-position { beg }
@@ -290,45 +262,27 @@ hide
   beg 0> if 0 beg snd chn delete-samples drop then
   len snd chn #f frames < if len 1+ snd chn #f frames len - snd chn delete-samples drop then
 ;
-: sel-crop ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+
+: sel-del  <{ w c info -- val }> delete-selection ;
+: sel-zero <{ w c info -- val }> 0.0 scale-selection-by ;
+: sel-crop <{ w c info -- }>
   selection-members each { selection }
     selection as-one-edit-thunk "" as-one-edit drop
   end-each
 ;
-
-: sel-save-as ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  save-selection-dialog drop
-;
-
-: sel-copy ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+: sel-save-as <{ w c info -- val }> save-selection-dialog ;
+: sel-copy <{ w c info -- }>
   snd-tempnam { new-file-name }
   new-file-name save-selection drop
   new-file-name open-sound drop
 ;
-
-: sel-cut ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+: sel-cut <{ w c info -- val }>
   snd-tempnam { new-file-name }
   new-file-name save-selection drop
   delete-selection drop
-  new-file-name open-sound drop
+  new-file-name open-sound
 ;
-
-: sel-marks ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+: sel-marks <{ w c info -- }>
   selection-members each { select }
     select car  { snd }
     select cadr { chn }
@@ -338,11 +292,7 @@ hide
     pos len + snd chn add-mark drop
   end-each
 ;
-
-: sel-info ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+: sel-info <{ w c info -- val }>
   #f #f selection-position { beg }
   #f #f selection-frames   { len }
   $"     start: %d, %.3f\n" '( beg beg #f srate f/ ) string-format { str }
@@ -352,230 +302,123 @@ hide
   $"    maxamp: %.3f\n" #f #f selection-maxamp string-format str swap << to str
   $" Selection Info" _ str info-dialog drop
 ;
-
 \ choice 2 == selection
-: sel-appcnt ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  #f 2 0 undef apply-controls drop
-;
-
-: sel-rescnt ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  #f reset-controls drop
-;
-
-: sel-unsel ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  #f #t set-selection-member? drop
-;
-
-: sel-rev ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  reverse-selection drop
-;
-
-: sel-mix ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  #f #f #f cursor mix-selection drop
-;
-
-: sel-invert ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  -1.0 scale-selection-by drop
-;
+: sel-appcnt <{ w c info -- val }> #f 2 0 undef apply-controls ;
+: sel-rescnt <{ w c info -- val }> #f           reset-controls ;
+: sel-unsel  <{ w c info -- val }> #f #t set-selection-member? ;
+: sel-rev    <{ w c info -- val }> reverse-selection ;
+: sel-mix    <{ w c info -- val }> #f #f #f cursor mix-selection ;
+: sel-invert <{ w c info -- val }> -1.0 scale-selection-by ;
 
 let: ( -- menu )
-  #{ 'stopping #f 'stopping1 #f 'stop-widget #f 'stop-widget1 #f } { vars }
+  #{ :stopping #f :stopping1 #f :stop-widget #f :stop-widget1 #f } { vars }
   stop-playing-selection-hook vars sel-stop-play-cb add-hook!
-  $" selection-popup" main-widgets caddr
+  "selection-popup" main-widgets caddr
   #( #( $" Selection"        _ 'label     #f               #f )
      #( $" sep"              _ 'separator #f               #f )
      #( $" Play"             _ #f         vars sel-play-cb #f )
      #( $" Loop play"        _ #f         vars sel-loop-cb #f )
-     #( $" Delete"           _ #f         sel-del          #f )
-     #( $" Zero"             _ #f         sel-zero         #f )
-     #( $" Crop"             _ #f         sel-crop         #f )
-     #( $" Save as"          _ #f         sel-save-as      #f )
-     #( $" Copy->New"        _ #f         sel-copy         #f )
-     #( $" Cut->New"         _ #f         sel-cut          #f )
-     #( $" Snap marks"       _ #f         sel-marks        #f )
-     #( $" Selection Info"   _ #f         sel-info         #f )
-     #( $" Apply controls"   _ #f         sel-appcnt       #f )
-     #( $" Reset controls"   _ #f         sel-rescnt       #f )
-     #( $" Unselect"         _ #f         sel-unsel        #f )
-     #( $" Reverse"          _ #f         sel-rev          #f )
-     #( $" Mix"              _ #f         sel-mix          #f )
-     #( $" Invert"           _ #f         sel-invert       #f ) ) make-popup-menu
-;let value selection-popup-menu
+     #( $" Delete"           _ #f         ['] sel-del      #f )
+     #( $" Zero"             _ #f         ['] sel-zero     #f )
+     #( $" Crop"             _ #f         ['] sel-crop     #f )
+     #( $" Save as"          _ #f         ['] sel-save-as  #f )
+     #( $" Copy->New"        _ #f         ['] sel-copy     #f )
+     #( $" Cut->New"         _ #f         ['] sel-cut      #f )
+     #( $" Snap marks"       _ #f         ['] sel-marks    #f )
+     #( $" Selection Info"   _ #f         ['] sel-info     #f )
+     #( $" Apply controls"   _ #f         ['] sel-appcnt   #f )
+     #( $" Reset controls"   _ #f         ['] sel-rescnt   #f )
+     #( $" Unselect"         _ #f         ['] sel-unsel    #f )
+     #( $" Reverse"          _ #f         ['] sel-rev      #f )
+     #( $" Mix"              _ #f         ['] sel-mix      #f )
+     #( $" Invert"           _ #f         ['] sel-invert   #f ) ) make-popup-menu
+;let constant selection-popup-menu
 
 \ --- time domain popup ---
-
 #f value graph-popup-snd
 #f value graph-popup-chn
 
-: stop-playing-cb ( vars -- proc; snd self -- )
+: stop-playing-cb ( vars -- prc; snd self -- )
   1 proc-create swap ,
- does> ( snd self -- )
-  { snd self }
+ does> { snd self -- }
   self @ { vars }
-  vars 'stopping hash-ref if
-    vars 'stopping #f hash-set!
-    vars 'stop-widget hash-ref dup if $" Play" _ change-label else drop then
+  vars :stopping hash-ref if
+    vars :stopping #f hash-set!
+    vars :stop-widget hash-ref dup if "Play" _ change-label else drop then
   then
 ;
-
-: play-cb ( vars -- proc; w c i self -- )
+: play-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
- does> ( w c i self -- )
-  { w c info self }
+ does> { w c info self -- }
   self @ { vars }
-  vars 'stopping hash-ref if
-    vars 'stopping #f hash-set!
-    w $" Play" _ change-label
+  vars :stopping hash-ref if
+    vars :stopping #f hash-set!
+    w "Play" _ change-label
     undef stop-playing drop
   else
-    w $" Stop" _ change-label
-    vars 'stopping #t hash-set!
+    w "Stop" _ change-label
+    vars :stopping #t hash-set!
     0 graph-popup-snd undef undef undef undef undef undef play drop
   then
 ;
-: stop-xt ( vars -- xt; widget self -- )
-  lambda-create , latestxt
- does> ( widget self -- )
-  { w self }
-  self @ ( vars ) 'stop-widget w hash-set!
+: stop-cb ( vars -- prc; widget self -- )
+  1 proc-create swap ,
+ does> { w self -- }
+  self @ ( vars ) :stop-widget w hash-set!
 ;
-
-: pchan-cb ( vars -- proc; w c i self -- )
+: pchan-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
- does> ( w c i self -- )
-  { w c info self }
+ does> { w c info self -- }
   self @ { vars }
-  vars 'stopping #t hash-set!
-  vars 'stop-widget hash-ref $" Stop" _ change-label
+  vars :stopping #t hash-set!
+  vars :stop-widget hash-ref "Stop" _ change-label
   0 graph-popup-snd graph-popup-chn undef undef undef undef undef play drop
 ;
-
-: pcur-cb ( vars -- proc; w c i self -- )
+: pcur-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
- does> ( w c i self -- )
-  { w c info self }
+ does> { w c info self -- }
   self @ { vars }
-  vars 'stopping #t hash-set!
-  vars 'stop-widget hash-ref $" Stop" _ change-label
+  vars :stopping #t hash-set!
+  vars :stop-widget hash-ref "Stop" _ change-label
   graph-popup-snd graph-popup-chn #f cursor
   graph-popup-snd undef undef undef undef undef undef play drop
 ;
-
-: pprev-cb ( vars -- proc; w c i self -- )
+: pprev-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
- does> ( w c i self -- )
-  { w c info self }
+ does> { w c info self -- }
   self @ { vars }
-  vars 'stopping #t hash-set!
-  vars 'stop-widget hash-ref $" Stop" _ change-label
+  vars :stopping #t hash-set!
+  vars :stop-widget hash-ref "Stop" _ change-label
   0 graph-popup-snd graph-popup-chn #f #f
   graph-popup-snd graph-popup-chn edit-position 1-
   undef undef play drop
 ;
-
-: porig-cb ( vars -- proc; w c i self -- )
+: porig-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
- does> ( w c i self -- )
-  { w c info self }
+ does> { w c info self -- }
   self @ { vars }
-  vars 'stopping #t hash-set!
-  vars 'stop-widget hash-ref $" Stop" _ change-label
+  vars :stopping #t hash-set!
+  vars :stop-widget hash-ref "Stop" _ change-label
   0 graph-popup-snd graph-popup-chn #f #f 0 undef undef play drop
 ;
 
-: pundo-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  1 graph-popup-snd graph-popup-chn undo drop
+: pundo-cb   <{ w c info -- val }> 1 graph-popup-snd graph-popup-chn undo ;
+: predo-cb   <{ w c info -- val }> 1 graph-popup-snd graph-popup-chn redo ;
+: prev-cb    <{ w c info -- val }> graph-popup-snd revert-sound ;
+: popen-cb   <{ w c info -- val }> #t open-file-dialog ;
+: psave-cb   <{ w c info -- val }> graph-popup-snd save-sound ;
+: psaveas-cb <{ w c info -- val }> graph-popup-snd select-sound drop save-sound-dialog ;
+: pupdate-cb <{ w c info -- val }> graph-popup-snd update-sound ;
+: pclose-cb  <{ w c info -- val }> graph-popup-snd close-sound-extend #f ;
+: pmixsel-cb <{ w c info -- val }>
+  graph-popup-snd graph-popup-chn #f cursor
+  graph-popup-snd graph-popup-chn mix-selection
 ;
-
-: predo-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  1 graph-popup-snd graph-popup-chn redo drop
+: pinssel-cb <{ w c info -- val }>
+  graph-popup-snd graph-popup-chn #f cursor
+  graph-popup-snd graph-popup-chn insert-selection
 ;
-
-: prev-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  graph-popup-snd revert-sound drop
-;
-
-: popen-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  #t open-file-dialog drop
-;
-
-: psave-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  graph-popup-snd save-sound drop
-;
-
-: psaveas-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  graph-popup-snd select-sound drop
-  save-sound-dialog drop
-;
-
-: pupdate-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  graph-popup-snd update-sound drop
-;
-
-: pclose-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  graph-popup-snd close-sound-extend
-;
-
-: pmixsel-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  graph-popup-snd graph-popup-chn #f cursor graph-popup-snd graph-popup-chn mix-selection drop
-;
-
-: pinssel-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  graph-popup-snd graph-popup-chn #f cursor graph-popup-snd graph-popup-chn insert-selection drop
-;
-
-: prepsel-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+: prepsel-cb <{ w c info -- val }>
   graph-popup-snd { snd }
   graph-popup-chn { chn }
   snd chn #f cursor { beg }
@@ -585,62 +428,30 @@ let: ( -- menu )
   beg len + sbeg < ||
   beg sbeg len + > || if
     beg len snd chn #f delete-samples drop
-    beg snd chn insert-selection drop
+    beg snd chn insert-selection
   else
-    beg sbeg < if beg sbeg beg - snd chn #f delete-samples drop then
+    beg sbeg < if beg sbeg beg - snd chn #f delete-samples then
   then
 ;
-
-: pselall-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  graph-popup-snd graph-popup-chn select-all drop
-;
-
-: punsel-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  #f #t set-selection-member? drop
-;
-
-: peqpan-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  equalize-panes drop
-;
-
-: papcnt-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  #f 0 0 undef apply-controls drop
-;
-
-: precnt-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  #f reset-controls drop
-;
-
-: print-props ( props -- str )
+: pselall-cb <{ w c info -- val }> graph-popup-snd graph-popup-chn select-all ;
+: punsel-cb  <{ w c info -- val }> #f #t set-selection-member? ;
+: peqpan-cb  <{ w c info -- val }> equalize-panes ;
+: papcnt-cb  <{ w c info -- val }> #f 0 0 undef apply-controls ;
+: precnt-cb  <{ w c info -- val }> #f reset-controls ;
+: print-props { props -- str }
   "" { str }
   object-print-length { old-len }
+  print-length        { old-vct-len }
   3 set-object-print-length
-  ( props ) each { prop }		\ ( key . val )
+  3 set-print-length drop
+  props each { prop }			\ ( key . val )
     str  $"   %s:  %s\n" '( prop car prop cdr ) string-format << to str
   end-each
-  old-len set-object-print-length
+  old-len       set-object-print-length
+  old-vct-len   set-print-length drop
   str
 ;
-
-: pinfo-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+: pinfo-cb <{ w c info -- val }>
   graph-popup-snd { snd }
   graph-popup-chn { chn }
   snd chn #f frames { frms }
@@ -668,32 +479,24 @@ let: ( -- menu )
     str "properties:\n" << to str
     str props print-props << to str
   then
-  snd chn channel-properties to props
-  props null? unless
-    snd channels 0 ?do
-      snd i channel-properties to props
-      props null? unless
-	$" chan %d properties:\n" '( i ) string-format str swap << to str
-	str props print-props << to str
-      then
-    loop
-  then
-  snd file-name $"  info" $+ str info-dialog drop
+  snd channels 0 ?do
+    snd i channel-properties to props
+    props null? unless
+      $" chan %d properties:\n" '( i ) string-format str swap << to str
+      str props print-props << to str
+    then
+  loop
+  snd file-name $"  info" $+ str info-dialog
 ;
-
-: paddmrk-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  graph-popup-snd graph-popup-chn #f cursor graph-popup-snd graph-popup-chn add-mark drop
+: paddmrk-cb <{ w c info -- val }>
+  graph-popup-snd graph-popup-chn #f cursor
+  graph-popup-snd graph-popup-chn add-mark
 ;
-
-: pdelmrk-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+: pdelmrk-cb <{ w c info -- val }>
   graph-popup-snd graph-popup-chn #f marks { ms }
-  ms null? unless
+  ms null? if
+    #f
+  else
     ms length 1 = if
       ms car delete-mark drop
     else
@@ -707,81 +510,58 @@ let: ( -- menu )
 	  m to id
 	then
       end-each
-      id delete-mark drop
+      id delete-mark
     then
   then
 ;
-
-: pdelamrk-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  graph-popup-snd graph-popup-chn delete-marks drop
-;
-
-: pnextmrk-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  [char] j 4 graph-popup-snd graph-popup-chn key drop \ C-j
-;
-
-: plastmrk-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+: pdelamrk-cb <{ w c info -- val }> graph-popup-snd graph-popup-chn delete-marks ;
+: pnextmrk-cb <{ w c info -- val }> [char] j 4 graph-popup-snd graph-popup-chn key ; \ C-j
+: plastmrk-cb <{ w c info -- val }>
   [char] - 4 graph-popup-snd graph-popup-chn key drop \ C--
-  [char] j 4 graph-popup-snd graph-popup-chn key drop \ C-j
+  [char] j 4 graph-popup-snd graph-popup-chn key \ C-j
 ;
-
-: exit-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  0 snd-exit drop
-;
+: exit-cb <{ w c info -- val }> 0 snd-exit ;
 
 let: ( -- menu )
-  #{ 'stopping #f 'stop-widget #f } { vars }
+  #{ :stopping #f :stop-widget #f } { vars }
   stop-playing-hook vars stop-playing-cb add-hook!
-  $" graph-popup" main-widgets caddr
-  #( #( $" Snd"              'label     #f            #f )
-     #( $" sep"              'separator #f            #f )
-     #( $" Play"             _ #f         vars play-cb  vars stop-xt )
-     #( $" Play channel"     _ #f         vars pchan-cb #f )
-     #( $" Play from cursor" _ #f         vars pcur-cb  #f )
-     #( $" Play previous"    _ #f         vars pprev-cb #f )
-     #( $" Play original"    _ #f         vars porig-cb #f )
-     #( $" Undo"             _ #f         pundo-cb      #f )
-     #( $" Redo"             _ #f         predo-cb      #f )
-     #( $" Revert"           _ #f         prev-cb       #f )
-     #( $" Open"             _ #f         popen-cb      #f )
-     #( $" Save"             _ #f         psave-cb      #f )
-     #( $" Save as"          _ #f         psaveas-cb    #f )
-     #( $" Update"           _ #f         pupdate-cb    #f )
-     #( $" Close"            _ #f         pclose-cb     #f )
-     #( $" Mix selection"    _ #f         pmixsel-cb    #f )
-     #( $" Insert selection" _ #f         pinssel-cb    #f )
-     #( $" Replace with selection" _ #f   prepsel-cb    #f )
-     #( $" Select all"       _ #f         pselall-cb    #f )
-     #( $" Unselect"         _ #f         punsel-cb     #f )
-     #( $" Equalize panes"   _ #f         peqpan-cb     #f )
-     #( $" Apply controls"   _ #f         papcnt-cb     #f )
-     #( $" Reset controls"   _ #f         precnt-cb     #f )
-     #( $" Info"             _ #f         pinfo-cb      #f )
-     #( $" Add mark"         _ #f         paddmrk-cb    #f )
-     #( $" Delete mark"      _ #f         pdelmrk-cb    #f )
-     #( $" Delete all marks" _ #f         pdelamrk-cb   #f )
-     #( $" To next mark"     _ #f         pnextmrk-cb   #f )
-     #( $" To last mark"     _ #f         plastmrk-cb   #f )
-     #( $" sep"                'separator #f            #f )
-     #( $" Exit"             _ #f         exit-cb       #f ) ) make-popup-menu
-;let value graph-popup-menu
+  "graph-popup" main-widgets caddr
+  #( #( $" Snd"              'label       #f              #f )
+     #( $" sep"              'separator   #f              #f )
+     #( $" Play"             _ #f         vars play-cb    vars stop-cb )
+     #( $" Play channel"     _ #f         vars pchan-cb   #f )
+     #( $" Play from cursor" _ #f         vars pcur-cb    #f )
+     #( $" Play previous"    _ #f         vars pprev-cb   #f )
+     #( $" Play original"    _ #f         vars porig-cb   #f )
+     #( $" Undo"             _ #f         ['] pundo-cb    #f )
+     #( $" Redo"             _ #f         ['] predo-cb    #f )
+     #( $" Revert"           _ #f         ['] prev-cb     #f )
+     #( $" Open"             _ #f         ['] popen-cb    #f )
+     #( $" Save"             _ #f         ['] psave-cb    #f )
+     #( $" Save as"          _ #f         ['] psaveas-cb  #f )
+     #( $" Update"           _ #f         ['] pupdate-cb  #f )
+     #( $" Close"            _ #f         ['] pclose-cb   #f )
+     #( $" Mix selection"    _ #f         ['] pmixsel-cb  #f )
+     #( $" Insert selection" _ #f         ['] pinssel-cb  #f )
+     #( $" Replace with selection" _ #f   ['] prepsel-cb  #f )
+     #( $" Select all"       _ #f         ['] pselall-cb  #f )
+     #( $" Unselect"         _ #f         ['] punsel-cb   #f )
+     #( $" Equalize panes"   _ #f         ['] peqpan-cb   #f )
+     #( $" Apply controls"   _ #f         ['] papcnt-cb   #f )
+     #( $" Reset controls"   _ #f         ['] precnt-cb   #f )
+     #( $" Info"             _ #f         ['] pinfo-cb    #f )
+     #( $" Add mark"         _ #f         ['] paddmrk-cb  #f )
+     #( $" Delete mark"      _ #f         ['] pdelmrk-cb  #f )
+     #( $" Delete all marks" _ #f         ['] pdelamrk-cb #f )
+     #( $" To next mark"     _ #f         ['] pnextmrk-cb #f )
+     #( $" To last mark"     _ #f         ['] plastmrk-cb #f )
+     #( $" sep"                'separator #f              #f )
+     #( $" Exit"             _ #f         ['] exit-cb     #f ) ) make-popup-menu
+;let constant graph-popup-menu
 
-: graph-popup-xt ( snd chn -- xt; widget self -- )
-  lambda-create , , latestxt
- does> ( widget self -- )
-  { w self }
+: graph-popup-cb { snd chn -- prc; widget self -- }
+  1 proc-create chn , snd ,
+ does> { w self -- }
   self @ { chn }
   self cell+ @ { snd }
   snd chn edits { eds }
@@ -835,76 +615,54 @@ let: ( -- menu )
     then
   then
 ;
-
 : edit-graph-popup-menu ( snd chn -- )
   doc" Hides otiose entries, relabel others to reflect current state of SND and CHN."
   { snd chn }
-  graph-popup-menu snd chn graph-popup-xt for-each-child
+  graph-popup-menu snd chn graph-popup-cb for-each-child
 ;
 
 \ --- fft popup ---
-
 : choose-chan ( -- chn )
   graph-popup-snd channel-style channels-separate = if graph-popup-chn else #t then
 ;
-
-: fft-peaks-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+: fft-peaks-cb <{ w c info -- val }>
   graph-popup-snd graph-popup-chn show-transform-peaks not
-  graph-popup-snd choose-chan set-show-transform-peaks drop
+  graph-popup-snd choose-chan set-show-transform-peaks
 ;
-
-: fft-db-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+: fft-db-cb <{ w c info -- val }>
   graph-popup-snd graph-popup-chn fft-log-magnitude not
-  graph-popup-snd choose-chan set-fft-log-magnitude drop
+  graph-popup-snd choose-chan set-fft-log-magnitude
 ;
-
-: fft-frq-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+: fft-frq-cb <{ w c info -- val }>
   graph-popup-snd graph-popup-chn fft-log-frequency not
-  graph-popup-snd choose-chan set-fft-log-frequency drop
+  graph-popup-snd choose-chan set-fft-log-frequency
 ;
-
-: fft-norm-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+: fft-norm-cb <{ w c info -- val }>
   graph-popup-snd graph-popup-chn transform-normalization dont-normalize = if
-    normalize-by-channel graph-popup-snd choose-chan set-transform-normalization drop
+    normalize-by-channel graph-popup-snd choose-chan set-transform-normalization
   else
-    dont-normalize       graph-popup-snd choose-chan set-transform-normalization drop
+    dont-normalize       graph-popup-snd choose-chan set-transform-normalization
   then
 ;
-
-: grp-lst-cb ( val -- proc; w c i self -- )
+: grp-lst-cb ( val -- prc; w c i self -- )
   3 proc-create swap ,
- does> ( w c i self -- )
-  { w c info self }
+ does> { w c info self -- }
   self @ ( val ) graph-popup-snd choose-chan set-transform-graph-type drop
 ;
 : grp-labs ( -- ary )
-  #( '( $" once"        _ graph-once           grp-lst-cb )
-     '( $" sonogram"    _ graph-as-sonogram    grp-lst-cb )
-     '( $" spectrogram" _ graph-as-spectrogram grp-lst-cb ) )
+  #( '( "once"        _ graph-once           grp-lst-cb )
+     '( "sonogram"    _ graph-as-sonogram    grp-lst-cb )
+     '( "spectrogram" _ graph-as-spectrogram grp-lst-cb ) )
 ;
-lambda: ( lst -- )
-  each ( child )
+: grp-set <{ lst -- }>
+  lst each ( child )
     graph-popup-snd graph-popup-chn transform-graph-type i = if #f else #t then FXtSetSensitive drop
   end-each
-; value grp-set
-
-#( 16 32 64 128 256 512 1024 2048 4096 8192 16384 65536 262144 1048576 ) value fft-siz-sizes
-: siz-lst-cb ( val -- proc; w c i self -- )
+;
+#( 16 32 64 128 256 512 1024 2048 4096 8192 16384 65536 262144 1048576 ) constant fft-siz-sizes
+: siz-lst-cb ( val -- prc; w c i self -- )
   3 proc-create swap ,
- does> ( w c i self -- )
-  { w c info self }
+ does> { w c info self -- }
   self @ ( val ) graph-popup-snd choose-chan set-transform-size drop
 ;
 : siz-labs ( -- ary )
@@ -913,16 +671,14 @@ lambda: ( lst -- )
   stack restore-stack
   ary
 ;
-lambda: ( lst -- )
-  { lst }
+: siz-set <{ lst -- }>
   save-stack { stack }
   lst each ( child )
     fft-siz-sizes i array-ref { siz }
     graph-popup-snd graph-popup-chn transform-size siz <> if #t else #f then FXtSetSensitive drop
   end-each
   stack restore-stack
-; value siz-set
-
+;
 #( rectangular-window
    hann-window
    welch-window
@@ -941,141 +697,120 @@ lambda: ( lst -- )
    tukey-window
    dolph-chebyshev-window
    hann-poisson-window
-   connes-window ) value fft-win-windows
-: win-lst-cb ( val -- proc; w c i self -- )
+   connes-window ) constant fft-win-windows
+: win-lst-cb ( val -- prc; w c i self -- )
   3 proc-create swap ,
- does> ( w c i self -- )
-  { w c info self }
+ does> { w c info self -- }
   self @ ( val ) graph-popup-snd choose-chan set-fft-window drop
 ;
 : win-labs ( -- ary )
-  #( $" Rectangular"
-     $" Hann"
-     $" Welch"
-     $" Parzen"
-     $" Bartlett"
-     $" Hamming"
-     $" Blackman2"
-     $" Blackman3"
-     $" Blackman4"
-     $" Exponential"
-     $" Riemann"
-     $" Kaiser"
-     $" Cauchy"
-     $" Poisson"
-     $" Gaussian"
-     $" Tukey"
-     $" Dolph-Chebyshev"
-     $" Hann-Poisson"
-     $" Connes" ) map '( *key* fft-win-windows i array-ref win-lst-cb ) end-map
+  #( "Rectangular"
+     "Hann"
+     "Welch"
+     "Parzen"
+     "Bartlett"
+     "Hamming"
+     "Blackman2"
+     "Blackman3"
+     "Blackman4"
+     "Exponential"
+     "Riemann"
+     "Kaiser"
+     "Cauchy"
+     "Poisson"
+     "Gaussian"
+     "Tukey"
+     "Dolph-Chebyshev"
+     "Hann-Poisson"
+     "Connes" ) map '( *key* fft-win-windows i array-ref win-lst-cb ) end-map
 ;
-lambda: ( lst -- )
-  { lst }
+: win-set <{ lst -- }>
   save-stack { stack }
   lst each ( child )
     fft-win-windows i array-ref { win }
     graph-popup-snd graph-popup-chn fft-window win <> if #t else #f then FXtSetSensitive drop
   end-each
   stack restore-stack
-; value win-set
-
+;
 #( fourier-transform wavelet-transform autocorrelation cepstrum walsh-transform haar-transform )
 value fft-trn-transform
-: trn-lst-cb ( val -- proc; w c i self -- )
+: trn-lst-cb ( val -- prc; w c i self -- )
   3 proc-create swap ,
- does> ( w c i self -- )
-  { w c info self }
+ does> { w c info self -- }
   self @ ( val ) graph-popup-snd choose-chan set-transform-type drop
 ;
 : trn-labs ( -- ary )
   save-stack { stack }
-  #( $" Fourier" $" Wavelet" $" Autocorrealte" $" Cepstrum" $" Walsh" $" Haar" ) { names }
+  #( "Fourier" "Wavelet" "Autocorrealte" "Cepstrum" "Walsh" "Haar" ) { names }
   names map '( *key* fft-trn-transform i array-ref trn-lst-cb ) end-map { ary }
   stack restore-stack
   ary
 ;
-lambda: ( lst -- )
-  { lst }
+: trn-set <{ lst -- }>
   save-stack { stack }
   lst each ( child )
     fft-trn-transform i array-ref { trn }
     graph-popup-snd graph-popup-chn transform-type trn <> if #t else #f then FXtSetSensitive drop
   end-each
   stack restore-stack
-; value trn-set
-
-: typ-lst-cb ( val -- proc; w c i self -- )
+;
+: typ-lst-cb ( val -- prc; w c i self -- )
   3 proc-create swap ,
- does> ( w c i self -- )
-  { w c info self }
+ does> { w c info self -- }
   self @ ( val ) graph-popup-snd choose-chan set-wavelet-type drop
 ;
 : typ-labs ( -- ary )
-  #( $" doub4"
-     $" doub6"
-     $" doub8"
-     $" doub10"
-     $" doub12"
-     $" doub14"
-     $" doub16"
-     $" doub18"
-     $" doub20"
-     $" battle_lemarie"
-     $" burt_adelson"
-     $" beylkin"
-     $" coif2"
-     $" coif4"
-     $" coif6"
-     $" sym2"
-     $" sym3"
-     $" sym4"
-     $" sym5"
-     $" sym6" ) map '( *key* i typ-lst-cb ) end-map
+  #( "doub4"
+     "doub6"
+     "doub8"
+     "doub10"
+     "doub12"
+     "doub14"
+     "doub16"
+     "doub18"
+     "doub20"
+     "battle_lemarie"
+     "burt_adelson"
+     "beylkin"
+     "coif2"
+     "coif4"
+     "coif6"
+     "sym2"
+     "sym3"
+     "sym4"
+     "sym5"
+     "sym6" ) map '( *key* i typ-lst-cb ) end-map
 ;
-lambda: ( lst -- )
-  { lst }
+: typ-set <{ lst -- }>
   save-stack { stack }
   lst each ( child )
     graph-popup-snd graph-popup-chn wavelet-type i <> if #t else #f then FXtSetSensitive drop
   end-each
   stack restore-stack
-; value typ-set
-
-: fft-color ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  color-dialog drop
 ;
-
-: fft-orient ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  #t orientation-dialog drop
-;
+: fft-color <{ w c info -- val }> color-dialog ;
+: fft-orient <{ w c info -- val }> #t orientation-dialog ;
 
 let: ( -- menu )
   $" fft-popup" main-widgets caddr
-  #( #( $" Transform"        _ 'label     #f            #f )
-     #( $" sep"                'separator #f            #f )
-     #( $" Peaks"            _ #f         fft-peaks-cb  #f )
-     #( $" dB"               _ #f         fft-db-cb     #f )
-     #( $" Log freq"         _ #f         fft-frq-cb    #f )
-     #( $" Normalize"        _ #f         fft-norm-cb   #f )
-     #( $" Graph type"       _ 'cascade   grp-labs      grp-set )
-     #( $" Size"             _ 'cascade   siz-labs      siz-set )
-     #( $" Window"           _ 'cascade   win-labs      win-set )
-     #( $" Transform type"   _ 'cascade   trn-labs      trn-set )
-     #( $" Wavelet type"     _ 'cascade   typ-labs      typ-set )
-     #( $" Color"            _ #f         fft-color     #f )
-     #( $" Orientation"      _ #f         fft-orient    #f ) ) make-popup-menu
-;let value fft-popup-menu
+  #( #( $" Transform"        _ 'label     #f               #f )
+     #( $" sep"                'separator #f               #f )
+     #( $" Peaks"            _ #f         ['] fft-peaks-cb #f )
+     #( $" dB"               _ #f         ['] fft-db-cb    #f )
+     #( $" Log freq"         _ #f         ['] fft-frq-cb   #f )
+     #( $" Normalize"        _ #f         ['] fft-norm-cb  #f )
+     #( $" Graph type"       _ 'cascade   grp-labs         ['] grp-set )
+     #( $" Size"             _ 'cascade   siz-labs         ['] siz-set )
+     #( $" Window"           _ 'cascade   win-labs         ['] win-set )
+     #( $" Transform type"   _ 'cascade   trn-labs         ['] trn-set )
+     #( $" Wavelet type"     _ 'cascade   typ-labs         ['] typ-set )
+     #( $" Color"            _ #f         ['] fft-color    #f )
+     #( $" Orientation"      _ #f         ['] fft-orient   #f ) ) make-popup-menu
+;let constant fft-popup-menu
 
-: fft-popup-xt ( snd chn -- xt; widget self -- )
-  lambda-create , , latestxt
- does> ( widget self -- )
-  { w self }
+: fft-popup-cb { snd chn -- cb; widget self -- }
+  1 proc-create chn , snd ,
+ does> { w self -- }
   self @ { chn }
   self cell+ @ { snd }
   w FXtName { name }
@@ -1096,14 +831,13 @@ let: ( -- menu )
   doc" Changes the fft-related popup menu to reflect the state of SND and CHN."
   { snd chn }
   save-stack { stack }
-  fft-popup-menu snd chn fft-popup-xt for-each-child
+  fft-popup-menu snd chn fft-popup-cb for-each-child
   stack restore-stack
 ;
 set-current
 previous
 
 \ --- edit history popup ---
-
 1 $" edhist-save-edits calls it with PROC as its only argument." create-hook edhist-save-hook
 
 hide
@@ -1112,18 +846,8 @@ hide
 #f  value edhist-snd
 #f  value edhist-chn
 
-: edhist-clear-edits ( -- proc; w c i self -- #f )
-  3 proc-create
- does> ( w c i self -- #f )
-  2drop 2drop
-  '() to edhist-funcs
-  #f
-;
-
-: edhist-save-edits ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- #f )
-  2drop 2drop
+: edhist-clear-edits <{ w c info -- #f }> '() to edhist-funcs #f ;
+: edhist-save-edits <{ w c info -- val }>
   edhist-funcs '( edhist-snd edhist-chn ) list-assoc-ref { old-proc }
   edhist-snd edhist-chn edits { cur-edits }
   edhist-snd edhist-chn cur-edits car 1+ 0 cur-edits each + end-each edit-list->function { proc }
@@ -1134,26 +858,16 @@ hide
     '( edhist-snd edhist-chn ) proc edhist-funcs acons
   then to edhist-funcs
 ;
-
-: edhist-reapply-edits ( -- proc; w c i self -- val )
-  3 proc-create
- does> ( w c i self -- val )
-  2drop 2drop
+: edhist-reapply-edits <{ w c info -- val }>
   edhist-funcs '( edhist-snd edhist-chn ) list-assoc-ref '( edhist-snd edhist-chn ) run-proc
 ;
-
-: edhist-set-wid ( -- proc; widget self -- )
-  1 proc-create
- does> ( widget self -- )
-  { w self }
-  w nil cons to edhist-widgets
-;
-: edhist-apply <{ w c i -- }>
+: edhist-set-wid <{ widget -- }> widget nil cons to edhist-widgets ;
+: edhist-apply <{ w c info -- }>
   edhist-funcs c range? if
-    edhist-funcs c list-ref cdr ( proc ) '( edhist-snd edhist-chn ) run-proc
+    edhist-funcs c list-ref cadr ( proc ) '( edhist-snd edhist-chn ) run-proc drop
   then
 ;
-lambda: ( lst -- ) drop
+: edhist-apply-edits <{ lst -- }>
   edhist-widgets car { parent }
   edhist-widgets cdr { wids }
   edhist-funcs each car { label }
@@ -1178,8 +892,7 @@ lambda: ( lst -- ) drop
     button '( FXmNuserData i ) FXtVaSetValues drop
   end-each
   wids each FXtUnmanageChild drop end-each
-; value edhist-apply-edits
-
+;
 : edhist-close-hook-cb <{ snd -- }>
   snd channels 0 ?do
     edhist-funcs '( snd i ) list-assoc { old-val }
@@ -1191,50 +904,46 @@ lambda: ( lst -- ) drop
 
 let: ( -- menu )
   close-hook ['] edhist-close-hook-cb add-hook!
-  $" edhist-popup" main-widgets caddr
-  #( #( $" Edits"   _ 'label     #f      	            #f )
-     #( $" sep"       'separator #f      	            #f )
-     #( $" Save"    _ #f         edhist-save-edits    #f )
-     #( $" Reapply" _ #f         edhist-reapply-edits #f )
-     #( $" Apply"   _ 'cascade   edhist-set-wid       edhist-apply-edits  )
-     #( $" Clear"   _ #f         edhist-clear-edits   #f )
-     #( $" sep"       'separator #f                   #f )
-     #( $" Help"    _ #f         edhist-help-edits    #f ) ) make-popup-menu
-;let value edit-history-menu
+  "edhist-popup" main-widgets caddr
+  #( #( "Edits"   _ 'label     #f      	                #f )
+     #( "sep"       'separator #f      	                #f )
+     #( "Save"    _ #f         ['] edhist-save-edits    #f )
+     #( "Reapply" _ #f         ['] edhist-reapply-edits #f )
+     #( "Apply"   _ 'cascade   ['] edhist-set-wid       ['] edhist-apply-edits  )
+     #( "Clear"   _ #f         ['] edhist-clear-edits   #f )
+     #( "sep"       'separator #f                       #f )
+     #( "Help"    _ #f         ['] edhist-help-edits    #f ) ) make-popup-menu
+;let constant edit-history-menu
 
-: edhist-popup-xt ( snd chn -- xt; widget self -- )
-  lambda-create , , latestxt
- does> ( widget self -- )
-  { w self }
+: edhist-popup-cb { snd chn -- cb; widget self -- }
+  1 proc-create chn , snd ,
+ does> { w self -- }
   self @ { chn }
   self cell+ @ { snd }
   w FXtName { name }
-  name $" Clear" _ string= name $" Apply" _ string= || if
+  name "Clear" _ string= name "Apply" _ string= || if
     w edhist-funcs empty? if #f else #t then FXtSetSensitive drop
   else
-    name $" Save" _ string= if
+    name "Save" _ string= if
       w 0 snd chn edits each + end-each 0> if #t else #f then FXtSetSensitive drop
     else
-      name $" Reapply" _ string= if
+      name "Reapply" _ string= if
 	w edhist-funcs '( snd chn ) list-assoc-ref if #t else #f then FXtSetSensitive drop
       then
     then
   then
 ;
-
 : edit-edhist-popup-menu ( snd chn -- wid )
   { snd chn }
   save-stack { stack }
-  edit-history-menu snd chn edhist-popup-xt for-each-child
+  edit-history-menu snd chn edhist-popup-cb for-each-child
   stack restore-stack
 ;
 
 \  --- activate the above menus ---
-
-: edhist-popup-handler-cb { snd chn -- proc; w c i self -- }
+: edhist-popup-handler-cb { snd chn -- prc; w c i self -- }
   3 proc-create chn , snd ,
- does> ( w c i self -- )
-  { w c info self }
+ does> { w c info self -- }
   self @ { chn }
   self cell+ @ { snd }
   info Fevent { ev }
@@ -1245,11 +954,9 @@ let: ( -- menu )
     info edit-history-menu Fset_menuToPost drop
   then
 ;  
-
-: popup-handler-cb { snd chn -- proc; w c i self -- }
+: popup-handler-cb { snd chn -- prc; w c i self -- }
   3 proc-create chn , snd ,
- does> ( w c i self -- )
-  { w c info self }
+ does> { w c info self -- }
   self @ { chn }
   self cell+ @ { snd }
   info Fevent { ev }
@@ -1317,7 +1024,7 @@ let: ( -- menu )
   then
 ;
 
-#() value popups
+#() constant popups
 
 : add-popup <{ snd -- }>
   snd channels 0 ?do
@@ -1340,10 +1047,9 @@ set-current
 previous
 
 hide
-: change-color-col-xt ( col -- xt; w self -- )
-  lambda-create , latestxt
- does> ( w self -- )
-  { w self }
+: change-color-col-cb ( col -- prc; w self -- )
+  1 proc-create swap , 
+ does> { w self -- }
   w self @ FXmChangeColor drop
 ;
 set-current
@@ -1370,25 +1076,20 @@ NEW-COLOR can be the color name, an xm Pixel, a snd color, or a list of rgb valu
     else
       new-color each end-each make-color
     then
-  then ( color-pixel )
-  menu swap change-color-col-xt for-each-child
+  then ( color-pixel ) menu swap change-color-col-cb for-each-child
 ;
-
 : change-selection-popup-color ( new-color -- )
   doc" Changes the selection popup menu's color: \"red\" change-selection-popup-color"
   selection-popup-menu swap change-menu-color
 ;
-
 : change-graph-popup-color ( new-color -- )
   doc" Changes the time-domain popup menu's color: basic-color change-graph-popup-color"
   selection-popup-menu swap change-menu-color
 ;
-
 : change-fft-popup-color ( new-color -- )
   doc" Changes the fft popup menu's color: '(0.5 0.5 0.5) change-fft-popup-color"
   fft-popup-menu swap change-menu-color
 ;
-
 : change-edhist-popup-color ( new-color -- )
   doc" Changes the time-domain popup menu's color: basic-color change-graph-popup-color"
   edit-history-menu swap change-menu-color
@@ -1401,62 +1102,45 @@ add-popups
 \ --- listener popup ---
 
 hide
-lambda: ( -- ) noop ; value identity-xt
-lambda: ( snds -- lst )
-  { snds }
+: identity-cb <{ snds -- lst }> snds ;
+: edited-cb <{ snds -- lst }>
   snds each { snd }
     snd channels 0 ?do
       snd i edits car 0= if snds snd list-delete to snds then
     loop
   end-each
   snds
-; value edited-xt
-lambda: ( snds -- lst ) { snds } snds length 1 > if snds else '() then ; value focused-xt
-lambda: ( snd -- )
-  { snd }
-  0 snd undef undef undef undef undef undef play drop
-; value list-play-cb
-lambda: ( us -- )
-  { us }
+;
+: focused-cb    <{ snds -- lst }> snds length 1 > if snds else '() then ;
+: list-play-cb  <{ snd -- val }>  0 snd undef undef undef undef undef undef play ;
+: list-focus-cb <{ us -- val }>
   \ 5 == notebook-outer-pane
   main-widgets 5 list-ref FWidget? if
-    us set-selected-sound drop
+    us set-selected-sound
   else
     us sound-widgets car { pane }
     main-widgets cadr '( FXmNallowShellResize #f ) FXtVaSetValues drop
     sounds each ( them ) sound-widgets car FXtUnmanageChild drop end-each
     pane FXtManageChild drop
-    main-widgets cadr '( FXmNallowShellResize auto-resize ) FXtVaSetValues drop
+    main-widgets cadr '( FXmNallowShellResize auto-resize ) FXtVaSetValues
   then
-; value list-focus-cb
-
-: list-help-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
+;
+: list-help-cb <{ w c info -- val }>
   listener-selection { selected }
   selected if
     selected undef snd-help { help }
     help if
-      selected help undef undef help-dialog drop
+      selected help undef undef help-dialog
     then
   then
 ;
-
-: list-clear-cb ( -- proc; w c i self -- )
-  3 proc-create
- does> ( w c i self -- )
-  2drop 2drop
-  clear-listener drop
-;
-
-: listener-edit ( widget -- )
-  { w }
+: list-clear-cb <{ w c info -- val }> clear-listener ;
+: listener-edit <{ w -- }>
   w FXtName { name }
   name $" Equalize panes" _ string= if
     w sounds length 1 > if FXtManageChild else FXtUnmanageChild then drop
   else
-    name $" Help" _ string= if
+    name "Help" _ string= if
       listener-selection { subject }
       subject if
 	w $" Help on %S" _ '( subject ) string-format change-label
@@ -1467,11 +1151,9 @@ lambda: ( us -- )
     then
   then
 ;
-
-: listener-popup-cb ( menu -- proc; w c i self -- )
+: listener-popup-cb ( menu -- prc; w c i self -- )
   3 proc-create swap ,
- does> ( w c i self -- )
-  { w c info self }
+ does> { w c info self -- }
   self @ { menu }
   FButtonPress info Fevent Ftype = if
     listener-values each { vals }
@@ -1479,7 +1161,7 @@ lambda: ( us -- )
 	vals 0 array-ref { top-one }
 	vals 1 array-ref { top-two }
 	vals 2 array-ref { top-two-cascade }
-	sounds vals 3 array-ref execute length { len }
+	vals 3 array-ref '( sounds ) run-proc length { len }
 	top-two FXtUnmanageChild drop
 	top-two-cascade FXtUnmanageChild drop
 	top-one if top-one FXtUnmanageChild drop then
@@ -1502,23 +1184,23 @@ let: ( -- )
     #f set-show-listener drop
     main-widgets 4 list-ref
   then { parent }
-  $" listener-popup" parent
+  "listener-popup" parent
   #( #( $" Listener" 	   _ 'label     #f           	       #f )
      #( $" sep"      	     'separator #f           	       #f )
-     #( $" Play"     	   _ 'cascade   list-play-cb           identity-xt #t )
-     #( $" Help"           _ #f         list-help-cb           #f )
-     #( $" Open"     	   _ #f         popen-cb               #f )
-     #( $" Clear listener" _ #f         list-clear-cb          #f )
-     #( $" Close"    	   _ 'cascade   ['] close-sound-extend identity-xt #t )
-     #( $" Save"     	   _ 'cascade   ['] save-sound         edited-xt   #t )
-     #( $" Revert"   	   _ 'cascade   ['] revert-sound       edited-xt   #t )
-     #( $" Equalize panes" _ #f         peqpan-cb              #f )
-     #( $" Focus"          _ 'cascade   list-focus-cb          focused-xt  #f )
+     #( $" Play"     	   _ 'cascade   ['] list-play-cb       ['] identity-cb #t )
+     #( $" Help"           _ #f         ['] list-help-cb       #f )
+     #( $" Open"     	   _ #f         ['] popen-cb           #f )
+     #( $" Clear listener" _ #f         ['] list-clear-cb      #f )
+     #( $" Close"    	   _ 'cascade   ['] close-sound-extend ['] identity-cb #t )
+     #( $" Save"     	   _ 'cascade   ['] save-sound         ['] edited-cb   #t )
+     #( $" Revert"   	   _ 'cascade   ['] revert-sound       ['] edited-cb   #t )
+     #( $" Equalize panes" _ #f         ['] peqpan-cb          #f )
+     #( $" Focus"          _ 'cascade   ['] list-focus-cb      ['] focused-cb  #f )
      #( $" sep"              'separator #f                     #f )
-     #( $" Exit"           _ #f         exit-cb                #f ) ) make-popup-menu { menu }
+     #( $" Exit"           _ #f         ['] exit-cb            #f ) ) make-popup-menu { menu }
   parent FXmNpopupHandlerCallback menu listener-popup-cb undef FXtAddCallback drop
   menu
-;let value listener-popup-menu
+;let constant listener-popup-menu
 set-current
 
 : change-listener-popup-color ( new-color -- )

@@ -1488,7 +1488,7 @@ static XEN g_define_envelope(XEN name, XEN data, XEN base)
 {
   env *e;
   char *ename;
-  #define H_define_envelope "(" S_define_envelope " name data base): load 'name' with associated 'data', a list of breakpoints \
+  #define H_define_envelope "(" S_define_envelope " name data :optional base): load 'name' with associated 'data', a list of breakpoints \
 into the envelope editor."
   XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ARG_1, S_define_envelope, "a string or symbol");
   XEN_ASSERT_TYPE(XEN_LIST_P(data), data, XEN_ARG_2, S_define_envelope, "a list of breakpoints");
@@ -1589,7 +1589,7 @@ env *get_env(XEN e, const char *origin) /* list in e */
 
 static XEN g_save_envelopes(XEN filename)
 {
-  #define H_save_envelopes "(" S_save_envelopes " filename): save the envelopes known to the envelope editor in filename"
+  #define H_save_envelopes "(" S_save_envelopes " :optional filename): save the envelopes known to the envelope editor in filename"
   char *name = NULL;
   FILE *fd;
   XEN_ASSERT_TYPE((XEN_STRING_P(filename) || (XEN_FALSE_P(filename)) || (XEN_NOT_BOUND_P(filename))), 

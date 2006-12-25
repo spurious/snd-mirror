@@ -741,7 +741,7 @@ static XEN g_mus_midi_write(XEN line, XEN buffer)
 static XEN g_mus_midi_device_name(XEN dev)
 {
   /* sndlib style sys|dev packing, dev optional */
-  #define H_mus_midi_device_name "(" S_mus_midi_device_name " (sys-dev 0)): returns a name suitable for " S_mus_midi_open_read " and write"
+  #define H_mus_midi_device_name "(" S_mus_midi_device_name " :optional (sys-dev 0)): returns a name suitable for " S_mus_midi_open_read " and write"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(dev), dev, XEN_ONLY_ARG, S_mus_midi_device_name, "and integer");
   return(C_TO_XEN_STRING(mus_midi_device_name(XEN_TO_C_INT_OR_ELSE(dev, 0))));
 }

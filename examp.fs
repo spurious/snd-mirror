@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sat Dec 23 00:04:05 CET 2006
+\ Changed: Sun Dec 24 01:58:42 CET 2006
 
 \ Commentary:
 
@@ -56,8 +56,7 @@ require env
 \ Also defined in clm.fs.
 [undefined] close-sound-extend [if]
   \ 5 == notebook widget
-  : close-sound-extend ( snd -- )
-    { snd }
+  : close-sound-extend <{ snd -- }>
     main-widgets 5 list-ref false? unless
       0 { idx }
       sounds empty? unless sounds snd list-index to idx then

@@ -1263,7 +1263,7 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
 
 static XEN g_insert_region(XEN samp_n, XEN reg_n, XEN snd_n, XEN chn_n) /* opt reg_n */
 {
-  #define H_insert_region "("  S_insert_region " (start-samp 0) (region-id 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ")): \
+  #define H_insert_region "("  S_insert_region " :optional (start-samp 0) (region-id 0) snd chn): \
 insert region data into snd's channel chn starting at start-samp"
 
   chan_info *cp;
@@ -1319,7 +1319,7 @@ static XEN g_region_frames(XEN n, XEN chan)
 {
   region *r;
   int rg, chn;
-  #define H_region_frames "(" S_region_frames " (reg 0) (chan 0)): region length in frames"
+  #define H_region_frames "(" S_region_frames " :optional (reg 0) (chan 0)): region length in frames"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_region_frames, "a region id");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_region_frames, "an integer");
   rg = XEN_REGION_TO_C_INT(n);
@@ -1338,7 +1338,7 @@ static XEN g_region_position(XEN n, XEN chan)
 {
   region *r;
   int rg, chn;
-  #define H_region_position "(" S_region_position " (reg 0) (chan 0)): region chan's original position"
+  #define H_region_position "(" S_region_position " :optional (reg 0) (chan 0)): region chan's original position"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_region_position, "a region id");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_region_position, "an integer");
   rg = XEN_REGION_TO_C_INT(n);
@@ -1383,49 +1383,49 @@ static XEN region_get(region_field_t field, XEN n, const char *caller)
 
 static XEN g_region_srate(XEN n) 
 {
-  #define H_region_srate "(" S_region_srate " (reg 0)): region (nominal) srate"
+  #define H_region_srate "(" S_region_srate " :optional (reg 0)): region (nominal) srate"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_srate, "a region id");
   return(region_get(REGION_SRATE, n, S_region_srate));
 }
 
 static XEN g_region_chans(XEN n) 
 {
-  #define H_region_chans "(" S_region_chans " (reg 0): region channels"
+  #define H_region_chans "(" S_region_chans " :optional (reg 0): region channels"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_chans, "a region id");
   return(region_get(REGION_CHANS, n, S_region_chans));
 }
 
 static XEN g_region_home(XEN n) 
 {
-  #define H_region_home "(" S_region_home " (reg 0): a list with the region source sound name and position info"
+  #define H_region_home "(" S_region_home " :optional (reg 0): a list with the region source sound name and position info"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_home, "a region id");
   return(region_get(REGION_HOME, n, S_region_home));
 }
 
 static XEN g_region_maxamp(XEN n) 
 {
-  #define H_region_maxamp "(" S_region_maxamp " (reg 0)): region maxamp"
+  #define H_region_maxamp "(" S_region_maxamp " :optional (reg 0)): region maxamp"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_maxamp, "a region id");
   return(region_get(REGION_MAXAMP, n, S_region_maxamp));
 }
 
 static XEN g_region_maxamp_position(XEN n) 
 {
-  #define H_region_maxamp_position "(" S_region_maxamp_position " (reg 0)): first sample where region maxamp occurs"
+  #define H_region_maxamp_position "(" S_region_maxamp_position " :optional (reg 0)): first sample where region maxamp occurs"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_maxamp_position, "a region id");
   return(region_get(REGION_MAXAMP_POSITION, n, S_region_maxamp_position));
 }
 
 static XEN g_forget_region(XEN n) 
 {
-  #define H_forget_region "(" S_forget_region " (reg 0)): remove region reg from the region list"
+  #define H_forget_region "(" S_forget_region " :optional (reg 0)): remove region reg from the region list"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_forget_region, "a region id");
   return(region_get(REGION_FORGET, n, S_forget_region));
 }
 
 static XEN g_play_region(XEN n, XEN wait, XEN stop_proc) 
 {
-  #define H_play_region "(" S_play_region " (reg 0) (wait " PROC_FALSE ") stop-proc): play region reg; if wait is " PROC_TRUE ", play to end before returning"
+  #define H_play_region "(" S_play_region " :optional (reg 0) wait stop-proc): play region reg; if wait is " PROC_TRUE ", play to end before returning"
   int rg;
   bool wt = false;
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_play_region, "a region id");
@@ -1457,7 +1457,7 @@ static XEN g_regions(void)
 
 static XEN g_make_region(XEN beg, XEN end, XEN snd_n, XEN chn_n)
 {
-  #define H_make_region "(" S_make_region " (beg) (end) (snd " PROC_FALSE ") (chn " PROC_FALSE ")): make a new region between beg and end in snd, returning its id. \
+  #define H_make_region "(" S_make_region " :optional beg end snd chn): make a new region between beg and end in snd, returning its id. \
 If chn is " PROC_TRUE ", all chans are included, taking the snd sync field into account if it's not 0.  If no args are passed, the current \
 selection is used."
   int id = INVALID_REGION, old_sync, i;
@@ -1597,7 +1597,7 @@ using data format (default depends on machine byte order), header type (" S_mus_
 
 static XEN g_mix_region(XEN chn_samp_n, XEN reg_n, XEN snd_n, XEN chn_n, XEN tid)
 {
-  #define H_mix_region "(" S_mix_region " (chn-samp 0) (region 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (track 0)): \
+  #define H_mix_region "(" S_mix_region " :optional (chn-samp 0) (region 0) snd chn (track 0)): \
 mix region into snd's channel chn starting at chn-samp; return new mix id."
 
   chan_info *cp;
@@ -1632,7 +1632,7 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
 
 static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
 {
-  #define H_region_sample "(" S_region_sample " (samp 0) (region 0) (chan 0)): region's sample at samp in chan"
+  #define H_region_sample "(" S_region_sample " :optional (samp 0) (region 0) (chan 0)): region's sample at samp in chan"
 
   int rg, chan;
   off_t samp;
@@ -1651,7 +1651,7 @@ static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
 
 static XEN g_region_to_vct(XEN beg_n, XEN num, XEN reg_n, XEN chn_n, XEN v)
 {
-  #define H_region_to_vct "(" S_region_to_vct " (beg 0) (samps reglen) (region 0) (chan 0) (v " PROC_FALSE ")): \
+  #define H_region_to_vct "(" S_region_to_vct " :optional (beg 0) (samps reglen) (region 0) (chan 0) v): \
 write region's samples starting at beg for samps in channel chan to vct v; return v (or create a new one)"
 
   Float *data;

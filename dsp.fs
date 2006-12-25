@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Sat Dec 23 00:34:52 CET 2006
+\ Changed: Sat Dec 23 17:59:43 CET 2006
 
 \ Commentary:
 
@@ -162,7 +162,7 @@ for time-varying sampling-rate conversion."
 : stretch-sound-via-dft <{ factor :optional snd #f chn #f -- }>
   snd chn #f frames { n }
   n f2/ floor f>s { n2 }
-  n factor f* fround f>s { out-n }
+  n factor f* fround->s { out-n }
   0 n snd chn #f channel->vct { in-data }
   out-n 0.0 make-array { fr }
   two-pi n f/ { freq }
@@ -447,7 +447,7 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
 : zero-phase <{ :optional snd #f chn #f -- vct }>
   doc" Calls fft, sets all phases to 0, and un-ffts."
   snd chn #f frames { len }
-  2.0  len flog 2.0 flog f/ fceil ( pow2 )  f** fround f>s { fftlen }
+  2.0  len flog 2.0 flog f/ fceil ( pow2 )  f** fround->s { fftlen }
   fftlen 1/f { fftscale }
   0 fftlen snd chn #f channel->vct { rl }
   rl vct-peak { old-pk }
@@ -464,7 +464,7 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
   doc" Calls fft, applies FUNC to each phase, then un-ffts."
   func proc? func 1 running-word $" a proc" _ assert-type
   snd chn #f frames { len }
-  2.0  len flog 2.0 flog f/ fceil ( pow2 )  f** fround f>s { fftlen }
+  2.0  len flog 2.0 flog f/ fceil ( pow2 )  f** fround->s { fftlen }
   fftlen 2/ { fftlen2 }
   fftlen 1/f { fftscale }
   0 fftlen snd chn #f channel->vct { rl }

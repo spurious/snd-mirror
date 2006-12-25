@@ -339,7 +339,7 @@ void unprotect_callback(int slot)
 
 static XEN gl_add_to_main_menu(XEN label, XEN callback)
 {
-  #define H_add_to_main_menu "(" S_add_to_main_menu " label (callback " PROC_FALSE ")): adds label to the main (top-level) menu, returning its index"
+  #define H_add_to_main_menu "(" S_add_to_main_menu " label :optional callback): adds label to the main (top-level) menu, returning its index"
   int slot = -1;
   XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_1, S_add_to_main_menu, "a string");
   slot = make_callback_slot();
@@ -363,7 +363,7 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
 
 static XEN gl_add_to_menu(XEN menu, XEN label, XEN callback, XEN gpos)
 {
-  #define H_add_to_menu "(" S_add_to_menu " menu label func (position " PROC_FALSE "): adds label to menu (a main menu index), invokes \
+  #define H_add_to_menu "(" S_add_to_menu " menu label func :optional position): adds label to menu (a main menu index), invokes \
 func (a function of no args) when the new menu is activated. Returns the new menu label widget."
 
   widget_t result;

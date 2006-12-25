@@ -6,8 +6,6 @@
  *       also the ALSA env vars, mus_audio_report etc
  *       also in special unsupported cases, like x86 solaris
  *       perhaps put bad vals in red? 
- *
- * PERHAPS: a lot of the help string func arg decls are missing ':optional'
  */
 
 
@@ -3845,7 +3843,7 @@ XEN g_snd_help(XEN text, int widget_wid)
     #define snd_help_arg_type "is a string"
   #endif
 
-  #define H_snd_help "(" S_snd_help " (arg 'snd-help) (formatted " PROC_TRUE ")): return the documentation \
+  #define H_snd_help "(" S_snd_help " :optional (arg 'snd-help) (formatted " PROC_TRUE ")): return the documentation \
 associated with its argument. " snd_help_example " for example, prints out a brief description of make-vct. \
 The argument " snd_help_arg_type ". \
 In the help descriptions, optional arguments are in parens with the default value (if any) as the 2nd entry. \

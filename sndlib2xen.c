@@ -536,7 +536,7 @@ return file descriptor (an integer)"
 static XEN g_mus_sound_open_output(XEN file, XEN srate, XEN chans, XEN data_format, XEN header_type, XEN comment)
 {
 
-  #define H_mus_sound_open_output "(" S_mus_sound_open_output " filename (srate 22050) (chans 1) data-format header-type (comment \"\")): \
+  #define H_mus_sound_open_output "(" S_mus_sound_open_output " filename :optional (srate 22050) (chans 1) data-format header-type (comment \"\")): \
 open filename for (low-level) sound output with the given srate and so on; return the file descriptor (an integer). \
 The file size is normally set later via " S_mus_sound_close_output ". srate is an integer, comment is a string, \
 data-format is a sndlib format indicator such as " S_mus_bshort ", if " PROC_FALSE " if defaults to a format compatible with sndlib, \
@@ -582,7 +582,7 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 static XEN g_mus_sound_reopen_output(XEN file, XEN chans, XEN data_format, XEN header_type, XEN data_loc)
 {
 
-  #define H_mus_sound_reopen_output "(" S_mus_sound_reopen_output " filename (chans 1) data-format header-type data-location): \
+  #define H_mus_sound_reopen_output "(" S_mus_sound_reopen_output " filename :optional (chans 1) data-format header-type data-location): \
 reopen (without alteration) filename for output \
 data-format and header-type are sndlib indicators such as " S_mus_bshort " or " S_mus_aiff ". \
 data-location should be retrieved from a previous call to " S_mus_sound_data_location "."
@@ -1830,8 +1830,8 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
 #define S_sound_data_to_sound_data "sound-data->sound-data"
 static XEN g_sound_data_to_sound_data(XEN sd_in, XEN sd_out, XEN start, XEN frames, XEN cycle_length, XEN chan_offset)
 {
-  #define H_sound_data_to_sound_data "(" S_sound_data_to_sound_data " sd-in sd-out start frames): copies sound-data sd-in's \
-data from 0 for 'frames' frames into 'sd-out' starting at 'start', wrapping around if sd-out's end is reached."
+  #define H_sound_data_to_sound_data "(" S_sound_data_to_sound_data " sd-in sd-out start frames cycle-length :optional chan-offset): \
+copies sound-data sd-in's data from 0 for 'frames' frames into 'sd-out' starting at 'start', wrapping around if sd-out's end is reached."
   sound_data *sdi, *sdo;
   int len, beg, i, j = 0, ilen, olen, cycle, chans, offset = 0;
   XEN_ASSERT_TYPE(SOUND_DATA_P(sd_in), sd_in, XEN_ARG_1, S_sound_data_to_sound_data, "a sound-data object");
@@ -2231,9 +2231,13 @@ void mus_sndlib_xen_initialize(void)
   rb_define_method(sound_data_tag, "dup",    XEN_PROCEDURE_CAST g_sound_data_copy,    0);
   rb_define_method(sound_data_tag, "chans",  XEN_PROCEDURE_CAST sound_data_chans,     0);
   rb_define_method(sound_data_tag, "peak",   XEN_PROCEDURE_CAST g_sound_data_peak,    0);
-  rb_define_method(sound_data_tag, "offset!", XEN_PROCEDURE_CAST g_sound_data_offsetB, 1);
+  rb_define_method(sound_data_tag, "offset!",   XEN_PROCEDURE_CAST g_sound_data_offsetB,   1);
   rb_define_method(sound_data_tag, "multiply!", XEN_PROCEDURE_CAST g_sound_data_multiplyB, 1);
-  /* SOMEDAY: other such methods */
+
+  rb_define_method(sound_data_tag, "add!",      XEN_PROCEDURE_CAST g_sound_data_addB,      1);
+  rb_define_method(sound_data_tag, "scale!",    XEN_PROCEDURE_CAST g_sound_data_scaleB,    1);
+  rb_define_method(sound_data_tag, "reverse!",  XEN_PROCEDURE_CAST g_sound_data_reverseB,  0);
+
   rb_define_singleton_method(sound_data_tag, "new", XEN_PROCEDURE_CAST g_rb_make_sound_data, 2);
 #endif
 

@@ -7697,7 +7697,7 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 
 static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
 {
-  #define H_display_edits "(" S_display_edits " (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ") (with-source " PROC_TRUE ")): current edit tree"
+  #define H_display_edits "(" S_display_edits " :optional snd chn edpos (with-source " PROC_TRUE ")): current edit tree"
   FILE *tmp = NULL;
   char *buf, *name;
   chan_info *cp;
@@ -7749,7 +7749,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
 
 static XEN g_edit_fragment(XEN uctr, XEN snd, XEN chn)
 {
-  #define H_edit_fragment "(" S_edit_fragment " (ctr " S_current_edit_position ") (snd " PROC_FALSE ") (chn " PROC_FALSE ")): edit history entry at ctr \
+  #define H_edit_fragment "(" S_edit_fragment " :optional (ctr " S_current_edit_position ") snd chn): edit history entry at ctr \
 associated with snd's channel chn; the returned value is a list (origin type start-sample samps)"
 
   chan_info *cp;
@@ -7778,7 +7778,7 @@ associated with snd's channel chn; the returned value is a list (origin type sta
 
 static XEN g_edit_tree(XEN snd, XEN chn, XEN upos)
 {
-  #define H_edit_tree "(" S_edit_tree " (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): \
+  #define H_edit_tree "(" S_edit_tree " :optional snd chn edpos): \
 the edit lists '((global-pos data-num local-pos local-end scaler rmp0 rmp1 type)...)"
   /* internal debugging (auto-test) aid -- return complete ed list at pos */
   int i, len, pos;
@@ -8041,7 +8041,7 @@ XEN g_c_make_sample_reader(snd_fd *fd)
 
 static XEN g_make_sample_reader(XEN samp_n, XEN snd, XEN chn, XEN dir1, XEN pos) /* "dir" confuses Mac OS-X Objective-C! */
 {
-  #define H_make_sample_reader "(" S_make_sample_reader " (start-samp 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (dir 1) (edpos " PROC_FALSE ")): \
+  #define H_make_sample_reader "(" S_make_sample_reader " :optional (start-samp 0) snd chn (dir 1) edpos): \
 return a reader ready to access snd's channel chn's data starting at start-samp, going in direction dir (1 = \
 forward, -1 = backward), reading the version of the data indicated by edpos which defaults to the current version. \
 snd can be a filename, or a sound index number."
@@ -8100,7 +8100,7 @@ snd can be a filename, or a sound index number."
 
 static XEN g_make_region_sample_reader(XEN samp_n, XEN reg, XEN chn, XEN dir1)
 {
-  #define H_make_region_sample_reader "(" S_make_region_sample_reader " (start-samp 0) (region 0) (chn 0) (dir 1)): \
+  #define H_make_region_sample_reader "(" S_make_region_sample_reader " :optional (start-samp 0) (region 0) (chn 0) (dir 1)): \
 return a reader ready to access region's channel chn data starting at start-samp going in direction dir"
 
   snd_fd *fd = NULL;
@@ -8258,7 +8258,7 @@ static XEN g_free_sample_reader(XEN obj)
 
 static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 {
-  #define H_save_edit_history "(" S_save_edit_history " filename (snd " PROC_FALSE ") (chn " PROC_FALSE ")): save snd channel's chn edit history in filename"
+  #define H_save_edit_history "(" S_save_edit_history " filename :optional snd chn): save snd channel's chn edit history in filename"
   FILE *fd;
   char *name;
   char *mcf = NULL;
@@ -8314,7 +8314,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 
 static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 {
-  #define H_undo "(" S_undo " (count 1) (snd " PROC_FALSE ") (chn " PROC_FALSE ")): undo 'count' edits in snd's channel chn"
+  #define H_undo "(" S_undo " :optional (count 1) snd chn): undo 'count' edits in snd's channel chn"
   chan_info *cp;
   int num;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, XEN_ARG_1, S_undo, "an integer");
@@ -8338,7 +8338,7 @@ static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 
 static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 {
-  #define H_redo "(" S_redo " (count 1) (snd " PROC_FALSE ") (chn " PROC_FALSE ")): redo 'count' edits in snd's channel chn"
+  #define H_redo "(" S_redo " :optional (count 1) snd chn): redo 'count' edits in snd's channel chn"
   chan_info *cp;
   int num;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, XEN_ARG_1, S_redo, "an integer");
@@ -8442,7 +8442,7 @@ static void after_as_one_edit(void *context)
 
 static XEN g_as_one_edit(XEN proc, XEN origin)
 {
-  #define H_as_one_edit "(" S_as_one_edit " thunk (origin " PROC_FALSE ")): evaluate thunk, collecting all edits into one from the edit historys' point of view"
+  #define H_as_one_edit "(" S_as_one_edit " thunk :optional origin): evaluate thunk, collecting all edits into one from the edit historys' point of view"
   int chans;
   XEN result = XEN_FALSE;
   char *errmsg;
@@ -8495,7 +8495,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 
 static XEN g_scale_channel(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
 {
-  #define H_scale_channel "(" S_scale_channel " scaler (beg 0) (dur len) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): \
+  #define H_scale_channel "(" S_scale_channel " scaler :optional (beg 0) (dur len) snd chn edpos): \
 scale samples in the given sound/channel between beg and beg + num by scaler."
 
   Float scaler;
@@ -8517,7 +8517,7 @@ scale samples in the given sound/channel between beg and beg + num by scaler."
 
 static XEN g_normalize_channel(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
 {
-  #define H_normalize_channel "(" S_normalize_channel " norm (beg 0) (dur len) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): \
+  #define H_normalize_channel "(" S_normalize_channel " norm :optional (beg 0) (dur len) snd chn edpos): \
 scale samples in the given sound/channel between beg and beg + num to norm."
 
   Float norm, cur_max;
@@ -8662,7 +8662,7 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
 
 static XEN g_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN pos_n)
 {
-  #define H_sample "(" S_sample " samp (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): \
+  #define H_sample "(" S_sample " samp :optional snd chn edpos): \
 return sample samp in snd's channel chn (this is a slow access -- use sample-readers for speed)"
   chan_info *cp;
   off_t beg;
@@ -8771,7 +8771,7 @@ static XEN g_set_sample_reversed(XEN *argv, int argc, void *self)
 static XEN g_set_samples_with_origin(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN truncate, 
 				     char *edname, XEN infile_chan, XEN edpos, XEN auto_delete)
 {
-  #define H_set_samples "(set-" S_samples " start-samp samps data (snd " PROC_FALSE ") (chn " PROC_FALSE ") (truncate " PROC_FALSE ") (edname " PROC_FALSE ") (infile-chan 0) (edpos " PROC_FALSE ") (auto-delete " PROC_FALSE ")): \
+  #define H_set_samples "(set-" S_samples " start-samp samps data :optional snd chn truncate edname (infile-chan 0) edpos auto-delete): \
 set snd's channel chn's samples starting at start-samp for samps from data (a vct, vector, or string (filename)); \
 start-samp can be beyond current data end; if truncate is " PROC_TRUE " and start-samp is 0, the end of the file is set to match \
 the new data's end."
@@ -8890,7 +8890,7 @@ static XEN g_override_samples_with_origin(XEN filename, XEN samps, XEN snd_n, XE
 
 static XEN g_vct_to_channel(XEN v, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN origin)
 {
-  #define H_vct_to_channel "(" S_vct_to_channel " vct (beg 0) (dur len) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ") (origin " PROC_FALSE ")): \
+  #define H_vct_to_channel "(" S_vct_to_channel " vct :optional (beg 0) (dur len) snd chn edpos origin): \
 set snd's channel chn's samples starting at beg for dur samps from vct data"
   char *caller;
   XEN_ASSERT_TYPE(MUS_VCT_P(v), v, XEN_ARG_1, S_vct_to_channel, "a vct");
@@ -8940,7 +8940,7 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edp
 
 static XEN g_channel_to_vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
 {
-  #define H_channel_to_vct "(" S_channel_to_vct " (beg 0) (dur len) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): \
+  #define H_channel_to_vct "(" S_channel_to_vct " :optional (beg 0) (dur len) snd chn edpos): \
 return a vct containing snd channel chn's data starting at beg for dur samps"
 
   return(samples_to_vct_1(samp_0, samps, snd_n, chn_n, edpos, S_channel_to_vct));
@@ -8948,7 +8948,7 @@ return a vct containing snd channel chn's data starting at beg for dur samps"
 
 static XEN g_samples(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
 {
-  #define H_samples "(" S_samples " (start-samp 0) (samps len) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): \
+  #define H_samples "(" S_samples " :optional (start-samp 0) (samps len) snd chn edpos): \
 return a vct containing snd channel chn's samples starting a start-samp for samps samples; edpos is the edit \
 history position to read (defaults to current position)."
 
@@ -9086,7 +9086,7 @@ static XEN g_insert_sound(XEN file, XEN ubeg, XEN file_chn, XEN snd_n, XEN chn_n
     #define insert_sound_example "\"oboe.snd\" 1000 insert-sound"
   #endif
 
-  #define H_insert_sound "(" S_insert_sound " file (beg 0) (file-chan 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ") (auto-delete " PROC_FALSE ")): \
+  #define H_insert_sound "(" S_insert_sound " file :optional (beg 0) (file-chan 0) snd chn edpos auto-delete): \
 insert channel file-chan of file (or all chans if file-chan is not given) into snd's channel chn at beg or at the cursor \
 position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sample 1000."
 
@@ -9168,7 +9168,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
 
 static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
 {
-  #define H_delete_sample "(" S_delete_sample " samp (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): delete sample 'samp' from snd's channel chn"
+  #define H_delete_sample "(" S_delete_sample " samp :optional snd chn edpos): delete sample 'samp' from snd's channel chn"
   chan_info *cp;
   off_t samp;
   int pos;
@@ -9190,7 +9190,7 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
 
 static XEN g_delete_samples(XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
 {
-  #define H_delete_samples "(" S_delete_samples " start-samp samps (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): \
+  #define H_delete_samples "(" S_delete_samples " start-samp samps :optional snd chn edpos): \
 delete 'samps' samples from snd's channel chn starting at 'start-samp'"
 
   chan_info *cp;
@@ -9212,7 +9212,7 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp'"
 
 static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
 {
-  #define H_insert_sample "(" S_insert_sample " sample value (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): insert 'value' at 'sample' in snd's channel chn"
+  #define H_insert_sample "(" S_insert_sample " sample value :optional snd chn edpos): insert 'value' at 'sample' in snd's channel chn"
   chan_info *cp;
   char *origin;
   int pos;
@@ -9241,7 +9241,7 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
 
 static XEN g_insert_samples(XEN samp, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN edpos, XEN auto_delete, XEN caller)
 {
-  #define H_insert_samples "(" S_insert_samples " start-samp samps data (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ") (auto-delete " PROC_FALSE ") (origin " PROC_FALSE ")): \
+  #define H_insert_samples "(" S_insert_samples " start-samp samps data :optional snd chn edpos auto-delete origin): \
 insert data (either a vct, a list of samples, or a filename) into snd's channel chn starting at 'start-samp' for 'samps' samples"
 
   chan_info *cp;
@@ -9524,7 +9524,7 @@ static XEN g_make_snd_to_sample(XEN snd)
 
 static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 {
-  #define H_edit_list_to_function "(" S_edit_list_to_function " snd chn start end) -> function encapsulating edits"
+  #define H_edit_list_to_function "(" S_edit_list_to_function " :optional snd chn start end) -> function encapsulating edits"
   chan_info *cp;
   char *funcstr = NULL;
   XEN func;

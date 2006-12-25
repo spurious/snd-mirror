@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Sat Dec 23 04:06:33 CET 2006
+\ Changed: Sat Dec 23 18:00:17 CET 2006
 
 \ Commentary:
 
@@ -231,7 +231,7 @@ before-enved-hook lambda: <{ gen pos x y reason -- f }>
     gen xe-px1@ { px1 }
     gen xe-x0@  { x0 }
     gen xe-x1@  { x1 }
-    px1 px0  px0  px1 px0 - x x0 f- x1 x0 f- f/ f* fround f>s + max min
+    px1 px0  px0  px1 px0 - x x0 f- x1 x0 f- f/ f* fround->s + max min
   then
 ;
 : grfy ( y gen -- val )
@@ -243,7 +243,7 @@ before-enved-hook lambda: <{ gen pos x y reason -- f }>
     gen xe-py1@ { py1 }
     gen xe-y0@  { y0 }
     gen xe-y1@  { y1 }
-    py0 py1  py1  py0 py1 - y y1 f- y0 y1 f- f/ f* fround f>s + max min
+    py0 py1  py1  py0 py1 - y y1 f- y0 y1 f- f/ f* fround->s + max min
   then
 ;
 : ungrfx ( x gen -- val )

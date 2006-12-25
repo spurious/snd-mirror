@@ -507,7 +507,7 @@ static XEN g_contrast_enhancement(XEN val1, XEN val2)
 
 static XEN g_dot_product(XEN val1, XEN val2, XEN size) 
 {
-  #define H_dot_product "(" S_dot_product " v1 v2 (size)): sum of (vcts) v1[i] * v2[i] (also named scalar product)"
+  #define H_dot_product "(" S_dot_product " v1 v2 :optional size): sum of (vcts) v1[i] * v2[i] (also named scalar product)"
   vct *v1, *v2;
   int len;  
   XEN_ASSERT_TYPE(MUS_VCT_P(val1), val1, XEN_ARG_1, S_dot_product, "a vct");
@@ -573,7 +573,7 @@ static XEN g_edot_product(XEN val1, XEN val2)
 
 static XEN g_sine_bank(XEN amps, XEN phases, XEN size)
 {
-  #define H_sine_bank "(" S_sine_bank " amps phases (size)): sum of amps[i] * sin(phases[i])"
+  #define H_sine_bank "(" S_sine_bank " amps phases :optional size): sum of amps[i] * sin(phases[i])"
   vct *v1, *v2;
   int len;
   XEN_ASSERT_TYPE(MUS_VCT_P(amps), amps, XEN_ARG_1, S_sine_bank, "a vct");
@@ -628,7 +628,7 @@ static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, co
 
 static XEN g_multiply_arrays(XEN val1, XEN val2, XEN len) 
 {
-  #define H_multiply_arrays "(" S_multiply_arrays " v1 v2 (len)): vct element-wise multiply: v1[i] *= v2[i]"
+  #define H_multiply_arrays "(" S_multiply_arrays " v1 v2 :optional len): vct element-wise multiply: v1[i] *= v2[i]"
   return(g_fft_window_1(G_MULTIPLY_ARRAYS, val1, val2, len, S_multiply_arrays));
 }
 
@@ -650,7 +650,7 @@ data in vcts rl and im from polar (spectrum) to rectangular (fft)"
 
 static XEN g_mus_fft(XEN url, XEN uim, XEN len, XEN usign)
 {
-  #define H_mus_fft "(" S_mus_fft " rl im (len) (dir 1)): return the fft of vcts rl and im which contain \
+  #define H_mus_fft "(" S_mus_fft " rl im :optional len (dir 1)): return the fft of vcts rl and im which contain \
 the real and imaginary parts of the data; len should be a power of 2, dir = 1 for fft, -1 for inverse-fft"
 
   int sign, n, np;
@@ -696,7 +696,7 @@ static XEN g_make_fft_window(XEN type, XEN size, XEN ubeta, XEN ualpha)
     #define make_window_example "hamming-window 256 make-fft-window"
   #endif
 
-  #define H_make_fft_window "(" S_make_fft_window " type size (beta 0.0) (alpha 0.0)): -> fft data window (a vct). \
+  #define H_make_fft_window "(" S_make_fft_window " type size :optional (beta 0.0) (alpha 0.0)): -> fft data window (a vct). \
 type is one of the sndlib fft window identifiers such as " S_kaiser_window ", beta \
 is the window family parameter, if any:\n  " make_window_example
 
@@ -723,7 +723,7 @@ is the window family parameter, if any:\n  " make_window_example
 
 static XEN g_spectrum(XEN url, XEN uim, XEN uwin, XEN utype)
 {
-  #define H_mus_spectrum "(" S_spectrum " rl im window (type 1)): \
+  #define H_mus_spectrum "(" S_spectrum " rl im window :optional (type 1)): \
 real and imaginary data in vcts rl and im, returns (in rl) the spectrum thereof; \
 window is the fft data window (a vct as returned by " S_make_fft_window "), \
 and type determines how the spectral data is scaled:\n\
@@ -761,7 +761,7 @@ and type determines how the spectral data is scaled:\n\
 
 static XEN g_convolution(XEN url1, XEN url2, XEN un)
 {
-  #define H_mus_convolution "(" S_convolution " v1 v2 (len)): convolution \
+  #define H_mus_convolution "(" S_convolution " v1 v2 :optional len): convolution \
 of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
 
   int n;
@@ -818,7 +818,7 @@ of degree, so coeff[0] is the constant term."
 
 static XEN g_array_interp(XEN obj, XEN phase, XEN size) /* opt size */
 {
-  #define H_array_interp "(" S_array_interp " v phase (size)): v[phase] \
+  #define H_array_interp "(" S_array_interp " v phase :optional size): v[phase] \
 taking into account wrap-around (size is size of data), with linear interpolation if phase is not an integer."
 
   int len;
@@ -840,7 +840,7 @@ taking into account wrap-around (size is size of data), with linear interpolatio
 
 static XEN g_mus_interpolate(XEN type, XEN x, XEN obj, XEN size, XEN yn1)
 {
-  #define H_mus_interpolate "(" S_mus_interpolate " type x v (size) (yn1)) -> interpolate in \
+  #define H_mus_interpolate "(" S_mus_interpolate " type x v :optional size yn1) -> interpolate in \
 data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear "."
 
   int len;
@@ -1141,7 +1141,7 @@ static XEN g_mus_set_frequency(XEN gen, XEN val)
 
 static XEN g_mus_run(XEN gen, XEN arg1, XEN arg2) 
 {
-  #define H_mus_run "(" S_mus_run " gen (arg1 0.0) (arg2 0.0)): apply gen to arg1 and arg2"
+  #define H_mus_run "(" S_mus_run " gen :optional (arg1 0.0) (arg2 0.0)): apply gen to arg1 and arg2"
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_run, "a generator");
   return(C_TO_XEN_DOUBLE(mus_run(XEN_TO_MUS_ANY(gen),
 				 (XEN_NUMBER_P(arg1)) ? XEN_TO_C_DOUBLE(arg1) : 0.0,
@@ -1326,7 +1326,7 @@ static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN g_oscil(XEN os, XEN fm, XEN pm)
 {
-  #define H_oscil "(" S_oscil " gen (fm 0.0) (pm 0.0)): next sample from " S_oscil " gen: val = sin(phase + pm); phase += (freq + fm)"
+  #define H_oscil "(" S_oscil " gen :optional (fm 0.0) (pm 0.0)): next sample from " S_oscil " gen: val = sin(phase + pm); phase += (freq + fm)"
   Float fm1 = 0.0, pm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(os)) && (mus_oscil_p(XEN_TO_MUS_ANY(os))), os, XEN_ARG_1, S_oscil, "an oscil");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_oscil, "a number");
@@ -1648,7 +1648,7 @@ return a new moving_average generator. initial-contents can be either a list or 
 
 static XEN g_delay(XEN obj, XEN input, XEN pm)
 {
-  #define H_delay "(" S_delay " gen (val 0.0) (pm 0.0)): \
+  #define H_delay "(" S_delay " gen :optional (val 0.0) (pm 0.0)): \
 delay val according to the delay line's length and pm ('phase-modulation'). \
 If pm is greater than 0.0, the max-size argument used to create gen should have accommodated its maximum value. (The \
 Scheme function delay is available as %delay)"
@@ -1662,7 +1662,7 @@ Scheme function delay is available as %delay)"
 
 static XEN g_delay_tick(XEN obj, XEN input)
 {
-  #define H_delay_tick "(" S_delay_tick " gen (val 0.0)): \
+  #define H_delay_tick "(" S_delay_tick " gen :optional (val 0.0)): \
 delay val according to the delay line's length. This merely 'ticks' the delay line forward.\
 The argument 'val' is returned."
 
@@ -1674,7 +1674,7 @@ The argument 'val' is returned."
 
 static XEN g_notch(XEN obj, XEN input, XEN pm)
 {
-  #define H_notch "(" S_notch " gen (val 0.0) (pm 0.0)): notch filter val, pm changes the delay length."
+  #define H_notch "(" S_notch " gen :optional (val 0.0) (pm 0.0)): notch filter val, pm changes the delay length."
   Float in1 = 0.0, pm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_notch_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_notch, "a notch filter");
   if (XEN_NUMBER_P(input)) in1 = XEN_TO_C_DOUBLE(input); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_notch, "a number");
@@ -1684,7 +1684,7 @@ static XEN g_notch(XEN obj, XEN input, XEN pm)
 
 static XEN g_comb(XEN obj, XEN input, XEN pm)
 {
-  #define H_comb "(" S_comb " gen (val 0.0) (pm 0.0)): comb filter val, pm changes the delay length."
+  #define H_comb "(" S_comb " gen :optional (val 0.0) (pm 0.0)): comb filter val, pm changes the delay length."
   Float in1 = 0.0, pm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_comb_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_comb, "a comb filter");
   if (XEN_NUMBER_P(input)) in1 = XEN_TO_C_DOUBLE(input); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_comb, "a number");
@@ -1694,7 +1694,7 @@ static XEN g_comb(XEN obj, XEN input, XEN pm)
 
 static XEN g_filtered_comb(XEN obj, XEN input, XEN pm)
 {
-  #define H_filtered_comb "(" S_filtered_comb " gen (val 0.0) (pm 0.0)): filtered comb filter val, pm changes the delay length."
+  #define H_filtered_comb "(" S_filtered_comb " gen :optional (val 0.0) (pm 0.0)): filtered comb filter val, pm changes the delay length."
   Float in1 = 0.0, pm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_filtered_comb_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_filtered_comb, "a filtered-comb filter");
   if (XEN_NUMBER_P(input)) in1 = XEN_TO_C_DOUBLE(input); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_filtered_comb, "a number");
@@ -1704,7 +1704,7 @@ static XEN g_filtered_comb(XEN obj, XEN input, XEN pm)
 
 static XEN g_all_pass(XEN obj, XEN input, XEN pm)
 {
-  #define H_all_pass "(" S_all_pass " gen (val 0.0) (pm 0.0)): all-pass filter val, pm changes the delay length."
+  #define H_all_pass "(" S_all_pass " gen :optional (val 0.0) (pm 0.0)): all-pass filter val, pm changes the delay length."
   Float in1 = 0.0, pm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_all_pass_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_all_pass, "an all-pass filter");
   if (XEN_NUMBER_P(input)) in1 = XEN_TO_C_DOUBLE(input); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_all_pass, "a number");
@@ -1714,7 +1714,7 @@ static XEN g_all_pass(XEN obj, XEN input, XEN pm)
 
 static XEN g_moving_average(XEN obj, XEN input)
 {
-  #define H_moving_average "(" S_moving_average " gen (val 0.0)): moving window moving_average."
+  #define H_moving_average "(" S_moving_average " gen :optional (val 0.0)): moving window moving_average."
   Float in1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_moving_average_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_moving_average, "a moving-average generator");
   if (XEN_NUMBER_P(input)) in1 = XEN_TO_C_DOUBLE(input); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_moving_average, "a number");
@@ -1723,7 +1723,7 @@ static XEN g_moving_average(XEN obj, XEN input)
 
 static XEN g_tap(XEN obj, XEN loc)
 {
-  #define H_tap "(" S_tap " gen (pm 0.0)): tap the " S_delay " generator offset by pm"
+  #define H_tap "(" S_tap " gen :optional (pm 0.0)): tap the " S_delay " generator offset by pm"
   Float dloc = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_delay_line_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_tap, "a delay line tap");
   if (XEN_NUMBER_P(loc)) dloc = XEN_TO_C_DOUBLE(loc); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(loc), loc, XEN_ARG_3, S_tap, "a number");
@@ -1813,7 +1813,7 @@ return a new " S_sum_of_cosines " generator, producing a band-limited pulse trai
 
 static XEN g_sum_of_cosines(XEN obj, XEN fm)
 {
-  #define H_sum_of_cosines "(" S_sum_of_cosines " gen (fm 0.0)): \
+  #define H_sum_of_cosines "(" S_sum_of_cosines " gen :optional (fm 0.0)): \
 get the next sample from the band-limited pulse-train produced by gen"
 
   Float fm1 = 0.0;
@@ -1867,7 +1867,7 @@ return a new " S_sum_of_sines " generator."
 
 static XEN g_sum_of_sines(XEN obj, XEN fm)
 {
-  #define H_sum_of_sines "(" S_sum_of_sines " gen (fm 0.0)): get the next sample from " S_sum_of_sines " gen"
+  #define H_sum_of_sines "(" S_sum_of_sines " gen :optional (fm 0.0)): get the next sample from " S_sum_of_sines " gen"
 
   Float fm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_sum_of_sines_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_sum_of_sines, "a " S_sum_of_sines " gen");
@@ -2060,7 +2060,7 @@ frequency is the rate at which new numbers are chosen."
 
 static XEN g_rand(XEN obj, XEN fm)
 {
-  #define H_rand "(" S_rand " gen (fm 0.0)): gen's current random number. \
+  #define H_rand "(" S_rand " gen :optional (fm 0.0)): gen's current random number. \
 fm modulates the rate at which the current number is changed."
 
   Float fm1 = 0.0;
@@ -2077,7 +2077,7 @@ static XEN g_rand_p(XEN obj)
 
 static XEN g_rand_interp(XEN obj, XEN fm)
 {
-  #define H_rand_interp "(" S_rand_interp " gen (fm 0.0)): gen's current (interpolating) random number. \
+  #define H_rand_interp "(" S_rand_interp " gen :optional (fm 0.0)): gen's current (interpolating) random number. \
 fm modulates the rate at which new segment end-points are chosen."
 
   Float fm1 = 0.0;
@@ -2145,7 +2145,7 @@ static XEN g_table_lookup_p(XEN obj)
 
 static XEN g_partials_to_wave(XEN partials, XEN utable, XEN normalize)
 {
-  #define H_partials_to_wave "(" S_partials_to_wave " partials (wave " PROC_FALSE ") (normalize " PROC_FALSE ")): \
+  #define H_partials_to_wave "(" S_partials_to_wave " partials :optional wave (normalize " PROC_FALSE ")): \
 take a list of partials (harmonic number and associated amplitude) and produce \
 a waveform for use in " S_table_lookup ".  If wave (a vct) is not given, \
 a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goes between -1.0 and 1.0.\n\
@@ -2208,7 +2208,7 @@ static XEN g_phase_partials_to_wave(XEN partials, XEN utable, XEN normalize)
     #define pp2w_example "440.0 0.0 '( 1.0 0.75 0.0 2.0 0.25 3.14159 0.5 f* ) #f #f phase-partials->wave make-table-lookup"
   #endif
 
-  #define H_phase_partials_to_wave "(" S_phase_partials_to_wave " partials (wave " PROC_FALSE ") (normalize " PROC_FALSE ")): \
+  #define H_phase_partials_to_wave "(" S_phase_partials_to_wave " partials :optional wave (normalize " PROC_FALSE ")): \
 take a list of partials (harmonic number, amplitude, initial phase) and produce \
 a waveform for use in " S_table_lookup ".  If wave (a vct) is not given, \
 a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goes between -1.0 and 1.0.\n  " pp2w_example
@@ -2318,7 +2318,7 @@ is the same in effect as " S_make_oscil "."
 
 static XEN g_table_lookup(XEN obj, XEN fm) 
 {
-  #define H_table_lookup "(" S_table_lookup " gen (fm 0.0)): interpolated table-lookup \
+  #define H_table_lookup "(" S_table_lookup " gen :optional (fm 0.0)): interpolated table-lookup \
 with 'wrap-around' when gen's phase marches off either end of its table."
 
   Float fm1 = 0.0;
@@ -2409,7 +2409,7 @@ return a new " S_pulse_train " generator.  This produces a sequence of impulses.
 
 static XEN g_sawtooth_wave(XEN obj, XEN fm) 
 {
-  #define H_sawtooth_wave "(" S_sawtooth_wave " gen (fm 0.0)): next sawtooth sample from gen"
+  #define H_sawtooth_wave "(" S_sawtooth_wave " gen :optional (fm 0.0)): next sawtooth sample from gen"
   Float fm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_sawtooth_wave_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_sawtooth_wave, "a " S_sawtooth_wave " gen");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_sawtooth_wave, "a number");
@@ -2418,7 +2418,7 @@ static XEN g_sawtooth_wave(XEN obj, XEN fm)
 
 static XEN g_square_wave(XEN obj, XEN fm) 
 {
-  #define H_square_wave "(" S_square_wave " gen (fm 0.0)): next square wave sample from gen"
+  #define H_square_wave "(" S_square_wave " gen :optional (fm 0.0)): next square wave sample from gen"
   Float fm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_square_wave_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_square_wave, "a " S_square_wave " gen");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_square_wave, "a number");
@@ -2427,7 +2427,7 @@ static XEN g_square_wave(XEN obj, XEN fm)
 
 static XEN g_triangle_wave(XEN obj, XEN fm) 
 {
-  #define H_triangle_wave "(" S_triangle_wave " gen (fm 0.0)): next triangle wave sample from gen"
+  #define H_triangle_wave "(" S_triangle_wave " gen :optional (fm 0.0)): next triangle wave sample from gen"
   Float fm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_triangle_wave_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_triangle_wave, "a " S_triangle_wave " gen");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_triangle_wave, "a number");
@@ -2436,7 +2436,7 @@ static XEN g_triangle_wave(XEN obj, XEN fm)
 
 static XEN g_pulse_train(XEN obj, XEN fm) 
 {
-  #define H_pulse_train "(" S_pulse_train " gen (fm 0.0)): next pulse train sample from gen"
+  #define H_pulse_train "(" S_pulse_train " gen :optional (fm 0.0)): next pulse train sample from gen"
   Float fm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_pulse_train_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_pulse_train, "a " S_pulse_train " gen");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_pulse_train, "a number");
@@ -2507,7 +2507,7 @@ return a new " S_asymmetric_fm " generator."
 
 static XEN g_asymmetric_fm(XEN obj, XEN index, XEN fm)
 {
-  #define H_asymmetric_fm "(" S_asymmetric_fm " gen (index 0.0) (fm 0.0)): next sample from asymmetric fm gen"
+  #define H_asymmetric_fm "(" S_asymmetric_fm " gen :optional (index 0.0) (fm 0.0)): next sample from asymmetric fm gen"
   Float fm1 = 0.0, index1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_asymmetric_fm_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_asymmetric_fm, "an " S_asymmetric_fm " gen");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_asymmetric_fm, "a number");
@@ -2665,7 +2665,7 @@ a0*x(n) - b1*y(n-1) - b2*y(n-2)"
 
 static XEN g_one_zero(XEN obj, XEN fm)
 {
-  #define H_one_zero "(" S_one_zero " gen (input 0.0)): one zero filter of input"
+  #define H_one_zero "(" S_one_zero " gen :optional (input 0.0)): one zero filter of input"
   Float fm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_one_zero_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_one_zero, "a " S_one_zero " filter");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_one_zero, "a number");
@@ -2674,7 +2674,7 @@ static XEN g_one_zero(XEN obj, XEN fm)
 
 static XEN g_one_pole(XEN obj, XEN fm)
 {
-  #define H_one_pole "(" S_one_pole " gen (input 0.0)): one pole filter of input"
+  #define H_one_pole "(" S_one_pole " gen :optional (input 0.0)): one pole filter of input"
   Float fm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_one_pole_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_one_pole, "a " S_one_pole " filter");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_one_pole, "a number");
@@ -2683,7 +2683,7 @@ static XEN g_one_pole(XEN obj, XEN fm)
 
 static XEN g_two_zero(XEN obj, XEN fm)
 {
-  #define H_two_zero "(" S_two_zero " gen (input 0.0)): two zero filter of input"
+  #define H_two_zero "(" S_two_zero " gen :optional (input 0.0)): two zero filter of input"
   Float fm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_two_zero_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_two_zero, "a " S_two_zero " filter");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_two_zero, "a number");
@@ -2692,7 +2692,7 @@ static XEN g_two_zero(XEN obj, XEN fm)
 
 static XEN g_two_pole(XEN obj, XEN fm)
 {
-  #define H_two_pole "(" S_two_pole " gen (input 0.0)): two pole filter of input"
+  #define H_two_pole "(" S_two_pole " gen :optional (input 0.0)): two pole filter of input"
   Float fm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_two_pole_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_two_pole, "a " S_two_pole " filter");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_two_pole, "a number");
@@ -2761,7 +2761,7 @@ control."
 
 static XEN g_formant(XEN gen, XEN input)
 {
-  #define H_formant "(" S_formant " gen (input 0.0)): next sample from resonator gen"
+  #define H_formant "(" S_formant " gen :optional (input 0.0)): next sample from resonator gen"
   Float in1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(gen) && (mus_formant_p(XEN_TO_MUS_ANY(gen)))), gen, XEN_ARG_1, S_formant, "a formant gen");
   if (XEN_NUMBER_P(input)) in1 = XEN_TO_C_DOUBLE(input); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_formant, "a number");
@@ -2890,7 +2890,7 @@ static XEN g_frame_p(XEN obj)
 
 static XEN g_frame_add(XEN uf1, XEN uf2, XEN ures) /* optional res */
 {
-  #define H_frame_add "(" S_frame_add " f1 f2 (outf " PROC_FALSE ")): add f1 and f2 returning outf; \
+  #define H_frame_add "(" S_frame_add " f1 f2 :optional outf): add f1 and f2 returning outf; \
 if outf is not given, a new frame is created. outf[i] = f1[i] + f2[i].  Either f1 or f2 can be a float."
 
   mus_any *res = NULL, *nf = NULL;
@@ -2925,7 +2925,7 @@ if outf is not given, a new frame is created. outf[i] = f1[i] + f2[i].  Either f
 
 static XEN g_frame_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
 {
-  #define H_frame_multiply "(" S_frame_multiply " f1 f2 (outf " PROC_FALSE ")): multiply f1 and f2 (elementwise) returning outf; \
+  #define H_frame_multiply "(" S_frame_multiply " f1 f2 :optional outf): multiply f1 and f2 (elementwise) returning outf; \
 if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
 
   mus_any *res = NULL, *nf = NULL;
@@ -3057,7 +3057,7 @@ returning the mixer outm, or creating a new mixer if outm is not given.  Either 
 
 static XEN g_mixer_add(XEN uf1, XEN uf2, XEN ures) /* optional res */
 {
-  #define H_mixer_add "(" S_mixer_add " m1 m2 (outm " PROC_FALSE ")): add mixers m1 and m2 \
+  #define H_mixer_add "(" S_mixer_add " m1 m2 :optional outm): add mixers m1 and m2 \
 returning the mixer outm, or creating a new mixer if outm is not given. \
 Either m1 or m2 can be a float, rather than a mixer."
 
@@ -3093,7 +3093,7 @@ Either m1 or m2 can be a float, rather than a mixer."
 
 static XEN g_frame_to_frame(XEN mx, XEN infr, XEN outfr) /* optional outfr */
 {
-  #define H_frame_to_frame "(" S_frame_to_frame " m f (outf " PROC_FALSE ")): pass frame f through mixer m \
+  #define H_frame_to_frame "(" S_frame_to_frame " m f :optional outf): pass frame f through mixer m \
 returning frame outf (or creating a new frame if necessary); this is a matrix multiply of m and f"
 
   mus_any *res = NULL, *arg1, *arg2, *nm = NULL;
@@ -3140,7 +3140,7 @@ static XEN g_frame_to_sample(XEN mx, XEN fr)
 
 static XEN g_sample_to_frame(XEN mx, XEN insp, XEN outfr) /* optional outfr */
 {
-  #define H_sample_to_frame "(" S_sample_to_frame " m val (outf " PROC_FALSE ")): pass the sample val through mixer m \
+  #define H_sample_to_frame "(" S_sample_to_frame " m val :optional outf): pass the sample val through mixer m \
 returning frame outf (creating it if necessary)"
 
   mus_any *res = NULL, *nf = NULL;
@@ -3317,7 +3317,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
 
 static XEN g_wave_train(XEN obj, XEN fm)
 {
-  #define H_wave_train "(" S_wave_train " gen (fm 0.0)): next sample of " S_wave_train
+  #define H_wave_train "(" S_wave_train " gen :optional (fm 0.0)): next sample of " S_wave_train
   Float fm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_wave_train_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_wave_train, "a " S_wave_train " gen");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_wave_train, "a number");
@@ -3447,7 +3447,7 @@ is the same in effect as " S_make_oscil
 
 static XEN g_waveshape(XEN obj, XEN index, XEN fm)
 {
-  #define H_waveshape "(" S_waveshape " gen (index 1.0) (fm 0.0)): next sample of waveshaper"
+  #define H_waveshape "(" S_waveshape " gen :optional (index 1.0) (fm 0.0)): next sample of waveshaper"
   Float fm1 = 0.0, index1 = 1.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_waveshape_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_waveshape, "a waveshape gen");
   if (XEN_NUMBER_P(index)) index1 = XEN_TO_C_DOUBLE(index); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(index), index, XEN_ARG_2, S_waveshape, "a number");
@@ -3473,7 +3473,7 @@ static XEN g_partials_to_waveshape(XEN amps, XEN s_size)
     #define p2w_example "'( 2 1.0 3 0.5 ) partials->waveshape"
   #endif
 
-  #define H_partials_to_waveshape "(" S_partials_to_waveshape " partials (resultant-table-size 512)): \
+  #define H_partials_to_waveshape "(" S_partials_to_waveshape " partials :optional (resultant-table-size 512)): \
 produce a waveshaping lookup table (suitable for the " S_waveshape " generator) \
 that will produce the harmonic spectrum given by the partials argument. " p2w_example " returns \
 partial 2 twice as loud as 3."
@@ -3519,7 +3519,7 @@ static XEN g_partials_to_polynomial(XEN amps, XEN ukind)
     #define p2p_example "'( 1 1.0 2 1.0 ) partials->polynomial value v0\n  make-oscil value os\n  v0 os 0.0 0.0 oscil polynomial"
   #endif
 
-  #define H_partials_to_polynomial "(" S_partials_to_polynomial " partials (kind " S_mus_chebyshev_first_kind ")): \
+  #define H_partials_to_polynomial "(" S_partials_to_polynomial " partials :optional (kind " S_mus_chebyshev_first_kind ")): \
 produce a Chebyshev polynomial suitable for use with the " S_polynomial " generator \
 to create (via waveshaping) the harmonic spectrum described by the partials argument:\n  " p2p_example
 
@@ -3558,7 +3558,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
 
 static XEN g_polyshape(XEN obj, XEN index, XEN fm)
 {
-  #define H_polyshape "(" S_polyshape " gen (index 1.0) (fm 0.0)): next sample of polynomial-based waveshaper"
+  #define H_polyshape "(" S_polyshape " gen :optional (index 1.0) (fm 0.0)): next sample of polynomial-based waveshaper"
   Float fm1 = 0.0, index1 = 1.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_polyshape_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_polyshape, "a polyshape gen");
   if (XEN_NUMBER_P(index)) index1 = XEN_TO_C_DOUBLE(index); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(index), index, XEN_ARG_2, S_polyshape, "a number");
@@ -3666,7 +3666,7 @@ static XEN g_sine_summation_p(XEN obj)
 
 static XEN g_sine_summation(XEN obj, XEN fm)
 {
-  #define H_sine_summation "(" S_sine_summation " gen (fm 0.0)): next sample of sine summation generator"
+  #define H_sine_summation "(" S_sine_summation " gen :optional (fm 0.0)): next sample of sine summation generator"
   Float fm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_sine_summation_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_sine_summation, "a " S_sine_summation " gen");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_sine_summation, "a number");
@@ -3762,7 +3762,7 @@ static XEN g_iir_filter_p(XEN obj)
 
 static XEN g_filter(XEN obj, XEN input)
 {
-  #define H_filter "(" S_filter " gen (input 0.0)): next sample from filter"
+  #define H_filter "(" S_filter " gen :optional (input 0.0)): next sample from filter"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_filter_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_filter, " a filter");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(input), input, XEN_ARG_2, S_filter, "a number");
   return(C_TO_XEN_DOUBLE(mus_filter(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(input))));
@@ -3770,7 +3770,7 @@ static XEN g_filter(XEN obj, XEN input)
 
 static XEN g_fir_filter(XEN obj, XEN input)
 {
-  #define H_fir_filter "(" S_fir_filter " gen (input 0.0)): next sample from FIR filter"
+  #define H_fir_filter "(" S_fir_filter " gen :optional (input 0.0)): next sample from FIR filter"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_fir_filter_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_fir_filter, "an FIR filter");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(input), input, XEN_ARG_2, S_fir_filter, "a number");
   return(C_TO_XEN_DOUBLE(mus_fir_filter(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(input))));
@@ -3778,7 +3778,7 @@ static XEN g_fir_filter(XEN obj, XEN input)
 
 static XEN g_iir_filter(XEN obj, XEN input)
 {
-  #define H_iir_filter "(" S_iir_filter " gen (input 0.0)): next sample from IIR filter"
+  #define H_iir_filter "(" S_iir_filter " gen :optional (input 0.0)): next sample from IIR filter"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_iir_filter_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_iir_filter, "an IIR filter");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(input), input, XEN_ARG_2, S_iir_filter, "a number");
   return(C_TO_XEN_DOUBLE(mus_iir_filter(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(input))));
@@ -4136,19 +4136,19 @@ static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
 
 static XEN g_in_any(XEN frame, XEN chan, XEN inp) 
 {
-  #define H_in_any "(" S_in_any " frame chan (stream " PROC_FALSE ")): input stream sample at frame in channel chan"
+  #define H_in_any "(" S_in_any " frame chan :optional stream): input stream sample at frame in channel chan"
   return(g_in_any_1(S_in_any, frame, chan, inp));
 }
 
 static XEN g_ina(XEN frame, XEN inp) 
 {
-  #define H_ina "(" S_ina " frame (stream " PROC_FALSE ")): input stream sample in channel 0 at frame"
+  #define H_ina "(" S_ina " frame :optional stream): input stream sample in channel 0 at frame"
   return(g_in_any_1(S_ina, frame, C_TO_XEN_INT(0), inp));
 }
 
 static XEN g_inb(XEN frame, XEN inp) 
 {
-  #define H_inb "(" S_inb " frame (stream " PROC_FALSE ")): input stream sample in channel 1 at frame"
+  #define H_inb "(" S_inb " frame :optional stream): input stream sample in channel 1 at frame"
   return(g_in_any_1(S_inb, frame, C_TO_XEN_INT(1), inp));
 }
 
@@ -4202,31 +4202,31 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
 
 static XEN g_out_any(XEN frame, XEN val, XEN chan, XEN outp)
 {
-  #define H_out_any "(" S_out_any " frame val chan (stream " PROC_FALSE ")): add val to output stream at frame in channel chan"
+  #define H_out_any "(" S_out_any " frame val chan :optional stream): add val to output stream at frame in channel chan"
   return(g_out_any_1(S_out_any, frame, chan, val, outp));
 }
 
 static XEN g_outa(XEN frame, XEN val, XEN outp)
 {
-  #define H_outa "(" S_outa " frame val (stream " PROC_FALSE ")): add val to output stream at frame in channel 0"
+  #define H_outa "(" S_outa " frame val :optional stream): add val to output stream at frame in channel 0"
   return(g_out_any_1(S_outa, frame, C_TO_XEN_INT(0), val, outp));
 }
 
 static XEN g_outb(XEN frame, XEN val, XEN outp)
 {
-  #define H_outb "(" S_outb " frame val (stream " PROC_FALSE ")): add val to output stream at frame in channel 1"
+  #define H_outb "(" S_outb " frame val :optional stream): add val to output stream at frame in channel 1"
   return(g_out_any_1(S_outb, frame, C_TO_XEN_INT(1), val, outp));
 }
 
 static XEN g_outc(XEN frame, XEN val, XEN outp)
 {
-  #define H_outc "(" S_outc " frame val (stream " PROC_FALSE ")): add val to output stream at frame in channel 2"
+  #define H_outc "(" S_outc " frame val :optional stream): add val to output stream at frame in channel 2"
   return(g_out_any_1(S_outc, frame, C_TO_XEN_INT(2), val, outp));
 }
 
 static XEN g_outd(XEN frame, XEN val, XEN outp)
 {
-  #define H_outd "(" S_outd " frame val (stream " PROC_FALSE ")): add val to output stream at frame in channel 3"
+  #define H_outd "(" S_outd " frame val :optional stream): add val to output stream at frame in channel 3"
   return(g_out_any_1(S_outd, frame, C_TO_XEN_INT(3), val, outp));
 }
 
@@ -4241,7 +4241,7 @@ static XEN g_mus_close(XEN ptr)
 
 static XEN g_make_file_to_sample(XEN name, XEN buffer_size)
 {
-  #define H_make_file_to_sample "(" S_make_file_to_sample " filename buffer-size): return an input generator reading 'filename' (a sound file)"
+  #define H_make_file_to_sample "(" S_make_file_to_sample " filename :optional buffer-size): return an input generator reading 'filename' (a sound file)"
 
   mus_any *ge;
   int size;
@@ -4292,7 +4292,7 @@ static XEN g_make_sample_to_file(XEN name, XEN chans, XEN out_format, XEN out_ty
     #define make_sample_to_file_example "\"test.snd\" 2 mus-lshort mus-riff make-sample->file"
   #endif
 
-  #define H_make_sample_to_file "(" S_make_sample_to_file " filename chans data-format header-type comment): \
+  #define H_make_sample_to_file "(" S_make_sample_to_file " filename :optional chans data-format header-type comment): \
 return an output generator writing the sound file 'filename' which is set up to have \
 'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter \
 should be sndlib identifiers:\n  " make_sample_to_file_example
@@ -4356,7 +4356,7 @@ handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
 
 static XEN g_make_file_to_frame(XEN name, XEN buffer_size)
 {
-  #define H_make_file_to_frame "(" S_make_file_to_frame " filename buffer-size): return an input generator reading 'filename' (a sound file)"
+  #define H_make_file_to_frame "(" S_make_file_to_frame " filename :optional buffer-size): return an input generator reading 'filename' (a sound file)"
 
   mus_any *ge;
   int size;
@@ -4381,7 +4381,7 @@ static XEN g_make_file_to_frame(XEN name, XEN buffer_size)
 
 static XEN g_file_to_frame(XEN obj, XEN samp, XEN outfr)
 {
-  #define H_file_to_frame "(" S_file_to_frame " obj samp outf): frame of samples at frame 'samp' in sound file read by 'obj'"
+  #define H_file_to_frame "(" S_file_to_frame " obj samp :optional outf): frame of samples at frame 'samp' in sound file read by 'obj'"
   mus_any *res = NULL, *nf = NULL;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_input_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_file_to_frame, "an input gen");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_file_to_frame, "a number");
@@ -4407,7 +4407,7 @@ static XEN g_make_frame_to_file(XEN name, XEN chans, XEN out_format, XEN out_typ
     #define make_frame_to_file_example "\"test.snd\" 2 mus-lshort mus-riff make-frame->file"
   #endif
 
-  #define H_make_frame_to_file "(" S_make_frame_to_file " filename chans data-format header-type comment): \
+  #define H_make_frame_to_file "(" S_make_frame_to_file " filename :optional chans data-format header-type comment): \
 return an output generator writing the sound file 'filename' which is set up to have \
 'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter \
 should be sndlib identifiers:\n  " make_frame_to_file_example
@@ -5120,7 +5120,7 @@ static XEN g_src_p(XEN obj)
 
 static XEN g_src(XEN obj, XEN pm, XEN func) 
 {
-  #define H_src "(" S_src " gen (:pm 0.0) :input-function): next sampling rate conversion sample. \
+  #define H_src "(" S_src " gen :optional (pm 0.0) input-function): next sampling rate conversion sample. \
 'pm' can be used to change the sampling rate on a sample-by-sample basis.  'input-function' \
 is a function of one argument (the current input direction, normally ignored) that is called \
 internally whenever a new sample of input data is needed.  If the associated " S_make_src " \
@@ -5217,7 +5217,7 @@ static int grnedit(void *ptr)
 
 static XEN g_granulate(XEN obj, XEN func, XEN edit_func) 
 {
-  #define H_granulate "(" S_granulate " gen (input-func " PROC_FALSE ") (edit-func " PROC_FALSE ")): next sample from granular synthesis generator"
+  #define H_granulate "(" S_granulate " gen :optional input-func edit-func): next sample from granular synthesis generator"
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_granulate_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_granulate, "a granulate gen");
   gn = XEN_TO_MUS_XEN(obj);
@@ -5365,7 +5365,7 @@ static XEN g_convolve_p(XEN obj)
 
 static XEN g_convolve(XEN obj, XEN func) 
 {
-  #define H_convolve_gen "(" S_convolve " gen (input-func)): next sample from convolution generator"
+  #define H_convolve_gen "(" S_convolve " gen :optional input-func): next sample from convolution generator"
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_convolve_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_convolve, "a convolve gen");
   gn = XEN_TO_MUS_XEN(obj);
@@ -5444,7 +5444,7 @@ return a new convolution generator which convolves its input with the impulse re
 
 static XEN g_convolve_files(XEN file1, XEN file2, XEN maxamp, XEN outfile)
 {
-  #define H_convolve_files "(" S_convolve_files " file1 file2 maxamp output-file): convolve \
+  #define H_convolve_files "(" S_convolve_files " file1 file2 :optional maxamp output-file): convolve \
 file1 and file2 writing outfile after scaling the convolution result to maxamp."
 
   char *f1, *f2, *f3;
@@ -5765,7 +5765,7 @@ static XEN g_mus_set_hop(XEN obj, XEN val)
 
 static XEN g_mus_mix(XEN out, XEN in, XEN ost, XEN olen, XEN ist, XEN mx, XEN envs)
 {
-  #define H_mus_mix "(" S_mus_mix " outfile infile (outloc 0) (frames) (inloc 0) (mixer " PROC_FALSE ") (envs " PROC_FALSE ")): \
+  #define H_mus_mix "(" S_mus_mix " outfile infile :optional (outloc 0) (frames) (inloc 0) mixer envs): \
 mix infile into outfile starting at outloc in outfile and inloc in infile \
 mixing 'frames' frames into 'outfile'.  frames defaults to the length of infile. If mixer, \
 use it to scale the various channels; if envs (an array of envelope generators), use \
@@ -5975,7 +5975,7 @@ return a new " S_ssb_am " generator."
 
 static XEN g_ssb_am(XEN obj, XEN insig, XEN fm)
 {
-  #define H_ssb_am "(" S_ssb_am " gen (insig 0.0) (fm 0.0)): get the next sample from " S_ssb_am " gen"
+  #define H_ssb_am "(" S_ssb_am " gen :optional (insig 0.0) (fm 0.0)): get the next sample from " S_ssb_am " gen"
 
   Float insig1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_ssb_am_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_ssb_am, "an ssb_am gen");

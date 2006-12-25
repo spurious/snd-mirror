@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 23:36:09 CET 2005
-\ Changed: Fri Dec 22 23:48:56 CET 2006
+\ Changed: Sat Dec 23 17:59:03 CET 2006
 
 \ Commentary:
 
@@ -37,17 +37,17 @@ hide
 : display-current-window-location <{ snd chn -- }>
   current-window-display-is-running
   snd chn time-graph? && if
-    snd chn undef axis-info { axinf }
-    axinf 12 list-ref { grf-width }
-    inset-width grf-width f* fround f>s { width }
-    grf-width width - { x-offset }
+    snd chn undef axis-info               { axinf }
+    axinf 12 list-ref                     { grf-width }
+    inset-width grf-width f* fround->s    { width }
+    grf-width width -                     { x-offset }
     axinf 11 list-ref axinf 13 list-ref - { grf-height }
-    inset-height grf-height f* fround f>s { height }
-    axinf 13 list-ref 10 - { chan-offset }
-    chan-offset height 2/ + { y-offset }
+    inset-height grf-height f* fround->s  { height }
+    axinf 13 list-ref 10 -                { chan-offset }
+    chan-offset height 2/ +               { y-offset }
     snd channel-style channels-separate = if chn else 0 then { grf-chn }
-    axinf 19 list-ref { new-peaks }
-    snd chn #f frames { frms }
+    axinf 19 list-ref                     { new-peaks }
+    snd chn #f frames                     { frms }
     #f { data0 }
     #f { data1 }
     width  10 >
@@ -56,8 +56,8 @@ hide
     chn 0= snd channel-style channels-superimposed <> || && if
       x-offset chan-offset height + width 2      snd grf-chn undef fill-rectangle drop
       x-offset chan-offset          2     height snd grf-chn undef fill-rectangle drop
-      snd chn right-sample frms f/ width f* fround f>s { rx }
-      snd chn left-sample  frms f/ width f* fround f>s { lx }
+      snd chn right-sample frms f/ width f* fround->s { rx }
+      snd chn left-sample  frms f/ width f* fround->s { lx }
       x-offset lx + chan-offset rx lx - 1 max height snd grf-chn selection-context fill-rectangle
       drop
       'inset-envelope snd chn channel-property { old-env }
@@ -86,7 +86,7 @@ hide
 	data-max f0> if height data-max f2* f/ else 0.0 then { data-scaler }
 	width 2* { new-len }
 	data vct? if data length else data car length then { data-len }
-	data-len width f/ fround f>s { step }
+	data-len width f/ fround->s { step }
 	data-len width > if
 	  new-len nil make-array to data0
 	  data list? if new-len nil make-array to data1 then
@@ -105,11 +105,11 @@ hide
 	      stepper 1+ to stepper
 	      stepper step >= if
 		data0 idxj    x-offset array-set!
-		data0 idxj 1+ y-offset max-y data-scaler f* f- fround f>s array-set!
+		data0 idxj 1+ y-offset max-y data-scaler f* f- fround->s array-set!
 		data-max fnegate to max-y
 		data1 if
 		  data1 idxj    x-offset array-set!
-		  data1 idxj 1+ y-offset min-y data-scaler f* f- fround f>s array-set!
+		  data1 idxj 1+ y-offset min-y data-scaler f* f- fround->s array-set!
 		  data-max to min-y
 		then
 		x-offset 1+ to x-offset
@@ -128,7 +128,7 @@ hide
 	      idxj 2 + to idxj
 	  repeat
 	else
-	  width data-len f/ fround f>s { xstep }
+	  width data-len f/ fround->s { xstep }
 	  data-len 2* nil make-array to data0
 	  data list? if new-len 2* nil make-array to data1 then
 	  0 { idxj }
@@ -136,11 +136,11 @@ hide
 	  data-len 0 ?do
 	    data0 idxj xj array-set!
 	    data1 if
-	      data0 idxj 1+ y-offset data cadr i vct-ref data-scaler f* f- fround f>s array-set!
+	      data0 idxj 1+ y-offset data cadr i vct-ref data-scaler f* f- fround->s array-set!
 	      data1 idxj    xj array-set!
-	      data1 idxj 1+ y-offset data car  i vct-ref data-scaler f* f- fround f>s array-set!
+	      data1 idxj 1+ y-offset data car  i vct-ref data-scaler f* f- fround->s array-set!
 	    else
-	      data0 idxj 1+ y-offset data i vct-ref data-scaler f* f- fround f>s array-set!
+	      data0 idxj 1+ y-offset data i vct-ref data-scaler f* f- fround->s array-set!
 	    then
 	    idxj 2 + to idxj
 	    xj xstep + to xj
@@ -166,16 +166,16 @@ hide
   axis time-graph = && if
     snd chn undef axis-info { axinf }
     axinf 12 list-ref { grf-width }
-    inset-width grf-width f* fround f>s { width }
+    inset-width grf-width f* fround->s { width }
     grf-width width - { x-offset }
-    axinf 11 list-ref axinf 13 list-ref - inset-height f* fround f>s { height }
+    axinf 11 list-ref axinf 13 list-ref - inset-height f* fround->s { height }
     axinf 13 list-ref 10 - { chan-offset }
     width         0>
     x x-offset    >= &&
     x grf-width   <= &&
     y chan-offset >= &&
     y chan-offset height + <= && if
-      snd chn #f frames x x-offset f- width f/ f* fround f>s { samp }
+      snd chn #f frames x x-offset f- width f/ f* fround->s { samp }
       snd chn left-sample { ls }
       snd chn right-sample { rs }
       samp snd chn #f set-cursor drop

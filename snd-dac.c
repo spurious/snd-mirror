@@ -2401,7 +2401,7 @@ static XEN g_play(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN ed
     #define play_example "\"oboe.snd\" play"
   #endif
 
-  #define H_play "(" S_play " (start 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (sync " PROC_FALSE ") (end " PROC_FALSE ") (pos -1) stop-proc out-chan): play snd or snd's channel chn starting at start. \
+  #define H_play "(" S_play " :optional (start 0) snd chn sync end (pos -1) stop-proc out-chan): play snd or snd's channel chn starting at start. \
 'start' can also be a filename: " play_example ".  If 'sync' is true, all sounds syncd to snd are played. \
 If 'end' is not given, " S_play " plays to the end of the sound.  If 'pos' is -1 or not given, the current edit position is \
 played."
@@ -2411,7 +2411,7 @@ played."
 
 static XEN g_play_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN stop_proc, XEN out_chan) 
 {
-  #define H_play_channel "(" S_play_channel " (beg 0) (dur len) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (pos -1) stop-proc out-chan): \
+  #define H_play_channel "(" S_play_channel " :optional (beg 0) (dur len) snd chn (pos -1) stop-proc out-chan): \
 play snd or snd's channel chn starting at beg for dur samps."
   XEN end = XEN_FALSE;
   if (XEN_INTEGER_P(dur))
@@ -2426,7 +2426,7 @@ play snd or snd's channel chn starting at beg for dur samps."
 
 static XEN g_play_selection(XEN wait, XEN stop_proc) 
 {
-  #define H_play_selection "(" S_play_selection " (wait " PROC_FALSE ") stop-proc): play the selection. \
+  #define H_play_selection "(" S_play_selection " :optional wait stop-proc): play the selection. \
 'wait', if " PROC_TRUE ", causes " S_play_selection " to wait until the playing is finished \
 before returning."
   bool back;
@@ -2456,7 +2456,7 @@ static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_
     #define play_and_wait_example "\"oboe.snd\" play-and-wait"
   #endif
 
-  #define H_play_and_wait "(" S_play_and_wait " (start 0) (snd " PROC_FALSE ") (chn " PROC_FALSE ") (syncd " PROC_FALSE ") (end " PROC_FALSE ") (pos -1) stop-proc out-chan): \
+  #define H_play_and_wait "(" S_play_and_wait " (start 0) snd chn syncd end (pos -1) stop-proc out-chan): \
 play snd or snd's channel chn starting at start \
 and waiting for the play to complete before returning.  'start' can also be a filename:\n  " play_and_wait_example
 
@@ -2465,7 +2465,7 @@ and waiting for the play to complete before returning.  'start' can also be a fi
 
 static XEN g_stop_playing(XEN snd_n)
 {
-  #define H_stop_playing "(" S_stop_playing " (snd " PROC_FALSE ")): stop play (DAC output) in progress"
+  #define H_stop_playing "(" S_stop_playing " :optional snd): stop play (DAC output) in progress"
   snd_info *sp = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(snd_n), snd_n, XEN_ONLY_ARG, S_stop_playing, "an integer");
   if (XEN_INTEGER_P(snd_n)) sp = get_sp(snd_n, PLAYERS_OK);
@@ -2583,7 +2583,7 @@ static XEN snd_no_such_player_error(const char *caller, XEN index)
 
 static XEN g_make_player(XEN snd, XEN chn)
 {
-  #define H_make_player "(" S_make_player " (snd " PROC_FALSE ") (chn " PROC_FALSE ")): \
+  #define H_make_player "(" S_make_player " :optional snd chn): \
 make a new player associated with snd's channel chn. \
 A player is a sort of wrapper for a channel of a sound that supports \
 all the control panel functions.  Once created, you can set these \
@@ -2630,7 +2630,7 @@ static XEN g_player_home(XEN snd_chn)
 
 static XEN g_add_player(XEN snd_chn, XEN start, XEN end, XEN edpos, XEN stop_proc, XEN out_chan)
 {
-  #define H_add_player "(" S_add_player " player (start 0) (end len) (pos -1) stop-proc (out-chan player-chan)): \
+  #define H_add_player "(" S_add_player " player :optional (start 0) (end len) (pos -1) stop-proc (out-chan player-chan)): \
 add a player to the play list; the play begins when " S_start_playing " is called. \
 The start, end, and edit-position of the portion played can be specified.  'out-chan' is \
 the audio hardware output channel to use to play this channel.  It defaults to the \
@@ -2682,7 +2682,7 @@ channel number in the sound that contains the channel being played."
 
 static XEN g_start_playing(XEN Chans, XEN Srate, XEN In_Background)
 {
-  #define H_start_playing "(" S_start_playing " (chans 1) (srate 44100) (in-background " PROC_TRUE ")): \
+  #define H_start_playing "(" S_start_playing " :optional (chans 1) (srate 44100) (in-background " PROC_TRUE ")): \
 If a play-list is waiting, start it."
 
   int chans, srate;

@@ -1930,7 +1930,7 @@ char *r_mark_name(int n)
 
 static XEN g_mark_sample(XEN mark_n, XEN pos_n) 
 {
-  #define H_mark_sample "(" S_mark_sample " (id " PROC_FALSE ") (pos " PROC_FALSE ")): mark's location (sample number) at edit history pos"
+  #define H_mark_sample "(" S_mark_sample " :optional id pos): mark's location (sample number) at edit history pos"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, S_mark_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pos_n), pos_n, XEN_ARG_2, S_mark_sample, "an integer");
   return(mark_get(mark_n, MARK_SAMPLE, pos_n, S_mark_sample));
@@ -1945,7 +1945,7 @@ static XEN g_set_mark_sample(XEN mark_n, XEN samp_n)
 
 static XEN g_mark_sync(XEN mark_n) 
 {
-  #define H_mark_sync "(" S_mark_sync " id): mark's sync value (default: 0)"
+  #define H_mark_sync "(" S_mark_sync " :optional id): mark's sync value (default: 0)"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_sync, "an integer");
   return(mark_get(mark_n, MARK_SYNC, XEN_UNDEFINED, S_mark_sync));
 }
@@ -1959,7 +1959,7 @@ static XEN g_set_mark_sync(XEN mark_n, XEN sync_n)
 
 static XEN g_mark_name(XEN mark_n) 
 {
-  #define H_mark_name "(" S_mark_name " id (snd " PROC_FALSE ") (chn " PROC_FALSE ")): mark's name"
+  #define H_mark_name "(" S_mark_name " :optional id snd chn): mark's name"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_name, "an integer");
   return(mark_get(mark_n, MARK_NAME, XEN_UNDEFINED, S_mark_name));
 }
@@ -1979,14 +1979,14 @@ static XEN g_mark_sync_max(void)
 
 static XEN g_mark_home(XEN mark_n)
 {
-  #define H_mark_home "(" S_mark_home " id): the sound (index) and channel that hold mark id"
+  #define H_mark_home "(" S_mark_home " :optional id): the sound (index) and channel that hold mark id"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_home, "an integer");
   return(mark_get(mark_n, MARK_HOME, XEN_UNDEFINED, S_mark_home));
 }
 
 static XEN g_find_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos) 
 {
-  #define H_find_mark "(" S_find_mark " samp-or-name (snd " PROC_FALSE ") (chn " PROC_FALSE ") (edpos " PROC_FALSE ")): \
+  #define H_find_mark "(" S_find_mark " samp-or-name :optional snd chn edpos): \
 find the mark in snd's channel chn at samp (if a number) or with the given name (if a string); return the mark id or " PROC_FALSE " if no mark found."
 
   mark **mps;
@@ -2029,7 +2029,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
 
 static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync) 
 {
-  #define H_add_mark "(" S_add_mark " samp (snd " PROC_FALSE ") (chn " PROC_FALSE ") name (sync 0)): add a mark at sample samp returning the mark id."
+  #define H_add_mark "(" S_add_mark " samp :optional snd chn name (sync 0)): add a mark at sample samp returning the mark id."
   mark *m = NULL;
   chan_info *cp;
   off_t loc;
@@ -2082,7 +2082,7 @@ static XEN g_delete_mark(XEN id_n)
 
 static XEN g_delete_marks(XEN snd_n, XEN chn_n) 
 {
-  #define H_delete_marks "(" S_delete_marks " (snd " PROC_FALSE ") (chn " PROC_FALSE ")): delete all marks in snd's channel chn"
+  #define H_delete_marks "(" S_delete_marks " :optional snd chn): delete all marks in snd's channel chn"
   chan_info *cp;
   ASSERT_CHANNEL(S_delete_marks, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_delete_marks);
@@ -2175,7 +2175,7 @@ static int *channel_marks(chan_info *cp, int pos)
 
 static XEN g_marks(XEN snd_n, XEN chn_n, XEN pos_n) 
 {
-  #define H_marks "(" S_marks " (snd) (chn) (edpos " PROC_FALSE ")): list of marks (ids) in snd/chn at edit history position pos. \
+  #define H_marks "(" S_marks " :optional snd chn edpos): list of marks (ids) in snd/chn at edit history position pos. \
 mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neither given: (((id ...) ...) ...)."
   chan_info *cp;
   snd_info *sp;
@@ -2398,7 +2398,7 @@ void save_mark_list(FILE *fd, chan_info *cp, bool all_chans)
 
 static XEN g_save_marks(XEN snd_n, XEN filename)
 {
-  #define H_save_marks "(" S_save_marks " (snd " PROC_FALSE ") (filename \"<snd-file-name>.marks\")): save snd's marks in filename. \
+  #define H_save_marks "(" S_save_marks " :optional snd (filename \"<snd-file-name>.marks\")): save snd's marks in filename. \
 The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that file."
   snd_info *sp;
   XEN res = XEN_FALSE;
