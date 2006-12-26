@@ -25,6 +25,7 @@
 				       59.000 0.130 60.000 0.128 61.000 0.128 62.000 0.129 66.128 0.129
 				       69.000 0.128 72.000 0.128 73.000 0.128 79.000 0.128 80.000 0.128
 				       96.000 0.128 99.000 0.128))
+
 (define default-detuning2-table '(22.017 -0.090 23.744 -0.090 36.000 -0.080 48.055 -0.113 60.000 -0.135
 				  67.264 -0.160 72.000 -0.200 84.054 -0.301 96.148 -0.383 108 -0.383))
 (define default-detuning3-table '(21.435 0.027 23.317 0.043 36.000 0.030 48.000 0.030 60.000 0.030 72.000
@@ -32,6 +33,7 @@
 (define default-stiffnessCoefficient-table '(21.000 -0.920 24.000 -0.900 36.000 -0.700 48.000 -0.250 60.000
 					     -0.100 75.179 -0.040 82.986 -0.040 92.240 -0.040 96.000 -0.040
 					     99.000 .2 108.000 .5))
+
 (define default-singleStringDecayRate-table '(21.678 -2.895 24.000 -3.000 36.000 -4.641 41.953 -5.867 48.173
 					      -7.113 53.818 -8.016 59.693 -8.875 66.605 -9.434 73.056 -10.035
 					      78.931 -10.293 84.000 -12.185))
@@ -40,6 +42,7 @@
 (define default-singleStringPole-table '(21.000 0 24.466 0 28.763 0 36.000 0 108 0))
 (define default-releaseLoopGain-table '(21.643 0.739 24.000 0.800 36.000 0.880 48.000 0.910 60.000 0.940
 					72.000 0.965 84.000 0.987 88.99 .987 89.0 1.0 108 1.0))
+
 (define default-DryTapFiltCoeft60-table '(36 .35 60 .25 108 .15))
 (define default-DryTapFiltCoefTarget-table '(36 -.8 60 -.5 84 -.4 108 -.1))
 (define default-DryTapFiltCoefCurrent-table '(0 0 200 0))
@@ -153,70 +156,70 @@
 		 wT)))
     (apfloor len wT)))
 
-(definstrument (p start
-   :key (duration 1.0)
-   (keyNum 60.0) ;;middleC=60: can use fractional part to detune
-   (strike-velocity 0.5) ;;corresponding normalized velocities (range: 0.0--1.0)
-   (pedal-down #f) ;;set to t for sustain pedal down...pedal-down-times not yet impl.
-   (release-time-margin 0.75) ;;extra compute time allowed beyond duration
-   (amp .5) ;;amp scale of noise inputs...
+(definstrument (p start  :key (duration 1.0)
+		  (keyNum 60.0)                    ; middleC=60: can use fractional part to detune
+		  (strike-velocity 0.5)            ; corresponding normalized velocities (range: 0.0--1.0)
+		  (pedal-down #f)                  ; set to t for sustain pedal down...pedal-down-times not yet impl.
+		  (release-time-margin 0.75)       ; extra compute time allowed beyond duration
+		  (amp .5)                         ; amp scale of noise inputs...
    
-   ;;slider controls
-   (detuningFactor 1.0)
-   (detuningFactor-table '())
-   (stiffnessFactor 1.0)
-   (stiffnessFactor-table '())
-   (pedalPresenceFactor .3)
-   (longitudinalMode 10.5)
-   (StrikePositionInvFac -0.9)
-   (singleStringDecayRateFactor 1.0)
+		  ;;slider controls
+		  (detuningFactor 1.0)
+		  (detuningFactor-table '())
+		  (stiffnessFactor 1.0)
+		  (stiffnessFactor-table '())
+		  (pedalPresenceFactor .3)
+		  (longitudinalMode 10.5)
+		  (StrikePositionInvFac -0.9)
+		  (singleStringDecayRateFactor 1.0)
    
-   ;; parameter tables indexed by keyNum
-   ;; NB: you can override the loudPole-table by directly setting :loudPole to a value
-   loudPole
-   (loudPole-table default-loudPole-table)
-   softPole
-   (softPole-table default-softPole-table)
-   loudGain
-   (loudGain-table default-loudGain-table)
-   softGain
-   (softGain-table default-softGain-table)
-   strikePosition (strikePosition-table default-strikePosition-table)
-   detuning2
-   (detuning2-table default-detuning2-table)
-   detuning3
-   (detuning3-table default-detuning3-table)
-   stiffnessCoefficient
-   (stiffnessCoefficient-table default-stiffnessCoefficient-table)
-   singleStringDecayRate
-   (singleStringDecayRate-table default-singleStringDecayRate-table)
-   singleStringZero
-   (singleStringZero-table default-singleStringZero-table)
-   singleStringPole
-   (singleStringPole-table default-singleStringPole-table)
-   releaseLoopGain
-   (releaseLoopGain-table default-releaseLoopGain-table)
-   DryTapFiltCoeft60
-   (DryTapFiltCoeft60-table default-DryTapFiltCoeft60-table)
-   DryTapFiltCoefTarget
-   (DryTapFiltCoefTarget-table default-DryTapFiltCoefTarget-table)
-   DryTapFiltCoefCurrent
-   (DryTapFiltCoefCurrent-table default-DryTapFiltCoefCurrent-table)
-   DryTapAmpt60
-   (DryTapAmpt60-table default-DryTapAmpt60-table)
-   sustainPedalLevel
-   (sustainPedalLevel-table default-sustainPedalLevel-table)
-   pedalResonancePole
-   (pedalResonancePole-table default-pedalResonancePole-table)
-   pedalEnvelopet60
-   (pedalEnvelopet60-table default-pedalEnvelopet60-table)
-   soundboardCutofft60
-   (soundboardCutofft60-table default-soundboardCutofft60-table)
-   DryPedalResonanceFactor
-   (DryPedalResonanceFactor-table default-DryPedalResonanceFactor-table)
-   unaCordaGain
-   (unaCordaGain-table default-unaCordaGain-table)
-   )
+		  ;; parameter tables indexed by keyNum
+		  ;;   you can override the loudPole-table by directly setting :loudPole to a value
+		  loudPole
+		  (loudPole-table default-loudPole-table)
+		  softPole
+		  (softPole-table default-softPole-table)
+		  loudGain
+		  (loudGain-table default-loudGain-table)
+		  softGain
+		  (softGain-table default-softGain-table)
+
+		  strikePosition (strikePosition-table default-strikePosition-table)
+		  detuning2
+		  (detuning2-table default-detuning2-table)
+		  detuning3
+		  (detuning3-table default-detuning3-table)
+		  stiffnessCoefficient
+		  (stiffnessCoefficient-table default-stiffnessCoefficient-table)
+		  singleStringDecayRate
+		  (singleStringDecayRate-table default-singleStringDecayRate-table)
+		  singleStringZero
+		  (singleStringZero-table default-singleStringZero-table)
+		  singleStringPole
+		  (singleStringPole-table default-singleStringPole-table)
+
+		  releaseLoopGain
+		  (releaseLoopGain-table default-releaseLoopGain-table)
+		  DryTapFiltCoeft60
+		  (DryTapFiltCoeft60-table default-DryTapFiltCoeft60-table)
+		  DryTapFiltCoefTarget
+		  (DryTapFiltCoefTarget-table default-DryTapFiltCoefTarget-table)
+		  DryTapFiltCoefCurrent
+		  (DryTapFiltCoefCurrent-table default-DryTapFiltCoefCurrent-table)
+		  DryTapAmpt60
+		  (DryTapAmpt60-table default-DryTapAmpt60-table)
+		  sustainPedalLevel
+		  (sustainPedalLevel-table default-sustainPedalLevel-table)
+		  pedalResonancePole
+		  (pedalResonancePole-table default-pedalResonancePole-table)
+		  pedalEnvelopet60
+		  (pedalEnvelopet60-table default-pedalEnvelopet60-table)
+		  soundboardCutofft60
+		  (soundboardCutofft60-table default-soundboardCutofft60-table)
+		  DryPedalResonanceFactor
+		  (DryPedalResonanceFactor-table default-DryPedalResonanceFactor-table)
+		  unaCordaGain
+		  (unaCordaGain-table default-unaCordaGain-table))
     
   (let*	((beg (inexact->exact (floor (* start (mus-srate)))))
 	 (end (+ beg (inexact->exact (floor (* (+ duration release-time-margin) (mus-srate))))))
@@ -229,6 +232,7 @@
 	 (softPole (or softPole (envelope-interp keyNum softPole-table)))
 	 (loudGain (or loudGain (envelope-interp keyNum loudGain-table)))
 	 (softGain (or softGain (envelope-interp keyNum softGain-table)))
+
 	 (strikePosition (or strikePosition (envelope-interp keyNum strikePosition-table)))
 	 (detuning2 (or detuning2 (envelope-interp keyNum detuning2-table)))
 	 (detuning3 (or detuning3 (envelope-interp keyNum detuning3-table)))
@@ -237,6 +241,7 @@
 	 (singleStringDecayRate (* singleStringDecayRateFactor singleStringDecayRate))
 	 (singleStringZero (or singleStringZero (envelope-interp keyNum singleStringZero-table)))
 	 (singleStringPole (or singleStringPole (envelope-interp keyNum singleStringPole-table)))
+
 	 (releaseLoopGain (or releaseLoopGain (envelope-interp keyNum releaseLoopGain-table)))
 	 (DryTapFiltCoeft60 (or DryTapFiltCoeft60 (envelope-interp keyNum DryTapFiltCoeft60-table)))
 	 (DryTapFiltCoefTarget (or DryTapFiltCoefTarget (envelope-interp keyNum DryTapFiltCoefTarget-table)))
@@ -297,7 +302,7 @@
 	     (agraffe-tuning-ap1 (make-one-pole-allpass apcoef1))
 	     
 	     ;;compute coefficients for and initialize the coupling filter
-	     ;;taking L=g(1 - bz^-1)/(1-b), and computing Hb = -(1-L)/(2-L)
+	     ;;  taking L=g(1 - bz^-1)/(1-b), and computing Hb = -(1-L)/(2-L)
 	     (attenuationPerPeriod (expt 10.0 (/ singleStringDecayRate freq 20.0)))
 	     (g attenuationPerPeriod)  ;;DC gain
 	     (b singleStringZero)
@@ -328,6 +333,7 @@
 	     (stiffnessCoefficientL (if (<= keyNum longitudinal-mode-cutoff-keynum)
 					longitudinal-mode-stiffness-coefficient
 				      stiffnessCoefficient))
+
 	     ;;initialize the coupled-string elements
 	     (vals1 (tune-piano freq1 stiffnessCoefficientL number-of-stiffness-allpasses cfb0 cfb1 cfa1))
 	     (delayLength1 (car vals1))
@@ -338,6 +344,7 @@
 	     (vals3 (tune-piano freq3 stiffnessCoefficient number-of-stiffness-allpasses cfb0 cfb1 cfa1))
 	     (delayLength3 (car vals3))
 	     (tuningCoefficient3 (cadr vals3))
+
 	     (string1-delay (make-delay0 (1- delayLength1)))
 	     (string1-tuning-ap (make-one-pole-allpass tuningCoefficient1))
 	     (string1-stiffness-ap (make-vector 8))
@@ -347,6 +354,7 @@
 	     (string3-delay (make-delay0 (1- delayLength3)))
 	     (string3-tuning-ap (make-one-pole-allpass tuningCoefficient3))
 	     (string3-stiffness-ap (make-vector 8))
+
 	     ;;initialize loop-gain envelope
 	     (loop-gain-expseg (make-expseg :currentValue loop-gain-default :targetValue releaseLoopGain))
 	     (looprate (In-t60 loop-gain-env-t60))
@@ -365,12 +373,14 @@
 	     (couplingFilter-output 0.0)
 	     (sampCount 0)
 	     (noi (make-noise)))
+
 	(do ((i 0 (1+ i))) ((= i 8))
 	  (vector-set! string1-stiffness-ap i (make-one-pole-allpass stiffnessCoefficientL)))
 	(do ((i 0 (1+ i))) ((= i 8))
 	  (vector-set! string2-stiffness-ap i (make-one-pole-allpass stiffnessCoefficient)))
 	(do ((i 0 (1+ i))) ((= i 8))
 	  (vector-set! string3-stiffness-ap i (make-one-pole-allpass stiffnessCoefficient)))
+
 	(run
 	 (lambda ()
 	   (do ((i beg (1+ i)))
@@ -391,27 +401,35 @@
 				   (one-pole-one-zero wetTap0 wetTap1 (noi amp)) ;(- (random (* 2 amp)) amp))
 				   (wetTap-coef-expseg wetcoefrate))))
 	     (set! totalTap (+ dryTap openStrings))
+
 	     (set! adelIn totalTap)
-	     (do ((i 0 (1+ i))) ((= i 4))
+	     (do ((i 0 (1+ i))) 
+		 ((= i 4))
 	       (set! adelIn (one-pole (vector-ref hammer-one-pole i) adelIn)))
+
 	     (set! combedExcitationSignal (* hammerGain (+ adelOut (* adelIn StrikePositionInvFac))))
 	     (set! adelOut (agraffe-tuning-ap1 (delay0 agraffe-delay1 adelIn)))
 	     (set! string1-junction-input (+ couplingFilter-output string1-junction-input))
-	     (do ((i 0 (1+ i))) ((= i 8))
+	     (do ((i 0 (1+ i))) 
+		 ((= i 8))
 	       (set! string1-junction-input ((vector-ref string1-stiffness-ap i) string1-junction-input)))
+
 	     (set! string1-junction-input (+ (* unaCordaGain combedExcitationSignal)
 					     (* loop-gain
 						(delay0 string1-delay
 							(string1-tuning-ap string1-junction-input)))))
 	     (set! string2-junction-input (+ couplingFilter-output string2-junction-input))
-	     (do ((i 0 (1+ i))) ((= i 8))
+	     (do ((i 0 (1+ i))) 
+		 ((= i 8))
 	       (set! string2-junction-input ((vector-ref string2-stiffness-ap i) string2-junction-input)))
 	     (set! string2-junction-input (+ combedExcitationSignal
 					     (* loop-gain (delay0 string2-delay
 								  (string2-tuning-ap string2-junction-input)))))
 	     (set! string3-junction-input (+ couplingFilter-output string3-junction-input))
-	     (do ((i 0 (1+ i))) ((= i 8))
+	     (do ((i 0 (1+ i))) 
+		 ((= i 8))
 	       (set! string3-junction-input ((vector-ref string3-stiffness-ap i) string3-junction-input)))
+
 	     (set! string3-junction-input (+ combedExcitationSignal
 					     (* loop-gain
 						(delay0 string3-delay

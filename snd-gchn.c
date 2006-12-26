@@ -843,9 +843,18 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
   return(0);
 }
 
-void set_tiny_numbers_font(chan_info *cp) {cp->cgx->ax->current_font = TINY_FONT(ss);}
-void set_peak_numbers_font(chan_info *cp) {cp->cgx->ax->current_font = PEAKS_FONT(ss);}
-void set_bold_peak_numbers_font(chan_info *cp) {cp->cgx->ax->current_font = BOLD_PEAKS_FONT(ss);}
+static void set_graph_font(chan_info *cp, PangoFontDescription *fnt)
+{
+  chan_context *cx;
+  cx = cp->tcgx;
+  if (!cx) cx = cp->cgx;
+  cx->ax->current_font = fnt;
+}
+
+void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, PEAKS_FONT(ss));}
+void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, TINY_FONT(ss));}
+void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, BOLD_PEAKS_FONT(ss));}
+
 
 color_t get_foreground_color(axis_context *ax)
 {

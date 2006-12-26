@@ -1,14 +1,9 @@
 #include "snd.h"
 
 /* TODO: notebook style access to other tracks (next and previous by number are not very intuitive) -- pulldown menu of names?
- * TODO: put mix tag in mix-color (draw_mix_tag) (set track color maps onto mix color md->wg->color)
- *         set for mix waveform via set_mix_waveform_context:   set_foreground_color(ax, md->wg->color)
- *         this is complicated by the use of xor/selected graph bg color -- why not use direct graphics here?
  * PERHAPS: undo&apply for track / mix env?, multiple mix/track dialogs, tempo curves in dialog?
- * PERHAPS: mix-hover-hook mark-hover-hook cursor-hover-hook selection-hover-hook
- *            or graph-hover-hook + index to say what the cursor is pointing at
  * PERHAPS: "forget" button -> free_track (forget all?)
- * SOMEDAY: currently, if track, drag mix does not move axes
+ * SOMEDAY: currently, if track, drag mix does not move axes (and waveform doesn't follow the tag)
  * PERHAPS: add user funcs/envs to mix/track dialogs
  * PERHAPS: multiple mix/track dialogs
  * perhaps: mix pane sort of like current mark pane? (the mixes function has identical output to marks)
@@ -21,9 +16,6 @@
  *          also double click in edit history => go to that temp file?
  * PERHAPS: some way to tie multichannel mixes together without the track appearing in the track dialog
  *          mix-sync field?  or a button: ignore local tracks
- *
- * oops: I just noticed that make-mix-sample-reader is reversed if compared with make-sample-reader
- *         (make-mix-sample-reader id beg) but (make-sample-reader beg id)
  */
 
 typedef struct {
@@ -2261,12 +2253,6 @@ static int prepare_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, 
   return(j);
 }
 
-#if USE_MOTIF
-  #define STRING_Y_OFFSET 3
-#else
-  #define STRING_Y_OFFSET -6
-#endif
-
 static void draw_mix_tag(mix_info *md)
 {
   chan_info *cp;
@@ -2274,16 +2260,28 @@ static void draw_mix_tag(mix_info *md)
   axis_context *ax;
   char* lab = NULL;
 
+#if USE_MOTIF
+  #define STRING_Y_OFFSET 3
+  #define STRING_HEIGHT 12
+#else
+  #define STRING_Y_OFFSET -8
+  #define STRING_HEIGHT 12
+#endif
+
   if ((md->x == md->tagx) && (md->y == md->tagy)) return; 
   cp = md->cp;
 
   /* draw the mix tag */
   width = mix_tag_width(ss);
   height = mix_tag_height(ss);
-  ax = mark_context(cp); /* mark_gc snd-gmain 247 XOR, in gtk xor does not work for text */
   if (md->tagx > 0)
-    fill_rectangle(ax, md->tagx - width, md->tagy - height / 2, width, height); /* erase old */
-  fill_rectangle(ax, md->x - width, md->y - height / 2, width, height);         /* draw new */
+    {
+      ax = erase_context(cp);
+      fill_rectangle(ax, md->tagx - width - 1, md->tagy - height / 2 - 1, width + 2, height + STRING_HEIGHT);
+    }
+
+  ax = set_mix_waveform_context(cp, md);
+  fill_rectangle(ax, md->x - width, md->y - height / 2, width, height);
 
   /* redraw the mix id underneath the tag */
   set_tiny_numbers_font(cp);
@@ -2296,27 +2294,16 @@ static void draw_mix_tag(mix_info *md)
       lab = (char *)CALLOC(16, sizeof(char));
       mus_snprintf(lab, 16, "%d", md->id);
     }
-  if (md->tagx > 0)
-    {
-#if USE_GTK
-      ax = erase_context(cp);
-      fill_rectangle(ax, md->tagx - width, md->tagy + height + STRING_Y_OFFSET, width, height);
-#else
-      draw_string(ax, md->tagx - width, md->tagy + height + STRING_Y_OFFSET, lab, strlen(lab));
-#endif
-    }
-#if USE_GTK
   ax = copy_context(cp);
-#endif
   draw_string(ax, md->x - width, md->y + height + STRING_Y_OFFSET, lab, strlen(lab));
   if (cp->printing) ps_draw_string(cp->axis, md->x - width, md->y + height + STRING_Y_OFFSET, lab);
-  if (lab) {FREE(lab); lab = NULL;}
 
+  if (lab) {FREE(lab); lab = NULL;}
   md->tagx = md->x;
   md->tagy = md->y;
 }
 
-static int prepare_mix_waveform(mix_info *md, mix_state *cs, axis_info *ap, Float scl, int yoff, double cur_srate, bool peak_env_ok, bool *two_sided)
+static int prepare_mix_waveform(mix_info *md, mix_state *cs, axis_info *ap, Float scl, int yoff, double cur_srate, bool *two_sided)
 {
   off_t i, newbeg, newend, endi;
   int j = 0;
@@ -2377,7 +2364,7 @@ static int prepare_mix_waveform(mix_info *md, mix_state *cs, axis_info *ap, Floa
   else
     {
       (*two_sided) = true;
-      if ((peak_env_ok) && (mix_input_amp_env_usable(md, samples_per_pixel)))
+      if (mix_input_amp_env_usable(md, samples_per_pixel))
 	j = prepare_mix_amp_env(md, scl, yoff, newbeg, newend, (double)cur_srate, ap);
       else
 	{
@@ -2456,7 +2443,7 @@ int prepare_mix_id_waveform(int mix_id, axis_info *ap, bool *two_sided)
   ap->y0 = -1.0;
   ap->y1 = 1.0;
   init_axis_scales(ap);
-  pts = prepare_mix_waveform(md, cs, ap, scl * .5, (int)(scl * .5), cur_srate, true, two_sided);
+  pts = prepare_mix_waveform(md, cs, ap, scl * .5, (int)(scl * .5), cur_srate, two_sided);
   ap->x0 = x0;
   ap->x1 = x1;
   ap->y0 = y0;
@@ -2474,16 +2461,14 @@ static void display_mix_waveform(chan_info *cp, mix_info *md, bool draw)
   int j = 0;
   mix_state *cs;
   axis_info *ap;
-  snd_info *sp;
+  axis_context *ax;
   double cur_srate;
   bool two_sided = false;
-  sp = cp->sound;
+  if (!(cp->sound)) return;
   ap = cp->axis;
   cs = md->active_mix_state;
-  if (sp)
-    cur_srate = (double)SND_SRATE(sp);
-  else cur_srate = (double)SND_SRATE(md->cp->sound);
-  j = prepare_mix_waveform(md, cs, ap, md->height, md->y, cur_srate, (bool)sp, &two_sided);
+  cur_srate = (double)SND_SRATE(cp->sound);
+  j = prepare_mix_waveform(md, cs, ap, md->height, md->y, cur_srate, &two_sided);
   if (j == 0) return;
   if ((draw) && (!(watch_mix_proc)))
     {
@@ -2492,23 +2477,13 @@ static void display_mix_waveform(chan_info *cp, mix_info *md, bool draw)
       md->x = xx;
       draw_mix_tag(md);
     }
-  if (sp) 
-    {
-      set_mix_waveform_context(cp, md);
-      if (two_sided)
-	{
-	  if (draw)
-	    draw_both_grf_points(cp->dot_size, set_mix_waveform_context(cp, md), j, cp->time_graph_style);
-	  else draw_both_grf_points(cp->dot_size, erase_context(cp), j, cp->time_graph_style);
-	}
-      else
-	{
-	  if (draw)
-	    draw_grf_points(cp->dot_size, set_mix_waveform_context(cp, md), j, ap, ungrf_y(ap, md->y), cp->time_graph_style);
-	  else draw_grf_points(cp->dot_size, erase_context(cp), j, ap, ungrf_y(ap, md->y), cp->time_graph_style);
-	}
-      copy_context(cp);
-    }
+  if (draw)
+    ax = set_mix_waveform_context(cp, md);
+  else ax = erase_context(cp);
+  if (two_sided)
+    draw_both_grf_points(cp->dot_size, ax, j, cp->time_graph_style);
+  else draw_grf_points(cp->dot_size, ax, j, ap, ungrf_y(ap, md->y), cp->time_graph_style);
+  copy_context(cp);
 }
 
 
@@ -6801,7 +6776,7 @@ void display_track_waveform(int track_id, axis_info *ap)
 	  int pts;
 	  bool two_sided;
 	  md = md_from_id(trk->lst[i]);
-	  pts = prepare_mix_waveform(md, md->active_mix_state, ap, scl * .5, (int)(scl * .5), cur_srate, true, &two_sided);
+	  pts = prepare_mix_waveform(md, md->active_mix_state, ap, scl * .5, (int)(scl * .5), cur_srate, &two_sided);
 	  if (pts > 0)
 	    show_track_background_wave(pts, two_sided);
 	}

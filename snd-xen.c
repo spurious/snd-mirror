@@ -2339,11 +2339,11 @@ void g_xen_initialize(void)
 
   gc_protection = XEN_FALSE;
 
-  XEN_DEFINE_PROCEDURE(S_snd_print,             g_snd_print_w,             1, 0, 0, H_snd_print);
-  XEN_DEFINE_PROCEDURE("little-endian?",        g_little_endian_w,         0, 0, 0, "return " PROC_TRUE " if host is little endian");
+  XEN_DEFINE_PROCEDURE(S_snd_print,      g_snd_print_w,     1, 0, 0, H_snd_print);
+  XEN_DEFINE_PROCEDURE("little-endian?", g_little_endian_w, 0, 0, 0, "return " PROC_TRUE " if host is little endian");
 
 #if (!HAVE_GAUCHE)
-  XEN_DEFINE_PROCEDURE("fmod",                  g_fmod_w,                  2, 0, 0, "C's fmod");
+  XEN_DEFINE_PROCEDURE("fmod",   g_fmod_w,   2, 0, 0, "C's fmod");
 #endif
 
 #if HAVE_SPECIAL_FUNCTIONS
@@ -2375,11 +2375,11 @@ void g_xen_initialize(void)
 #endif
 
 #if HAVE_GAUCHE
-  XEN_DEFINE_PROCEDURE("random", g_random_w, 1, 0, 0, "(random arg) -> random number between 0 and arg ");
-  XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
   XEN_DEFINE_CONSTANT("internal-time-units-per-second", 100, "clock speed");
-  XEN_DEFINE_PROCEDURE("ftell", g_ftell_w, 1, 0, 0, "(ftell fd) -> lseek");
-  XEN_DEFINE_PROCEDURE("eval-string", g_eval_string_w, 1, 0, 0, "eval a string");
+  XEN_DEFINE_PROCEDURE("random",                 g_random_w,                 1, 0, 0, "(random arg) -> random number between 0 and arg ");
+  XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
+  XEN_DEFINE_PROCEDURE("ftell",                  g_ftell_w,                  1, 0, 0, "(ftell fd) -> lseek");
+  XEN_DEFINE_PROCEDURE("eval-string",            g_eval_string_w,            1, 0, 0, "eval a string");
 #endif
 
   XEN_DEFINE_PROCEDURE(S_delete_watcher, g_delete_watcher_w, 1, 0, 0, H_delete_watcher);
@@ -2468,10 +2468,10 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if HAVE_SCHEME && HAVE_DLFCN_H
-  XEN_DEFINE_PROCEDURE("dlopen", g_dlopen_w, 1, 0 ,0, "");
+  XEN_DEFINE_PROCEDURE("dlopen",  g_dlopen_w,  1, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlerror", g_dlerror_w, 0, 0 ,0, "");
-  XEN_DEFINE_PROCEDURE("dlinit", g_dlinit_w, 2, 0 ,0, "");
+  XEN_DEFINE_PROCEDURE("dlinit",  g_dlinit_w,  2, 0 ,0, "");
 #endif
 
 #if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE && HAVE_DLFCN_H && HAVE_DIRENT_H

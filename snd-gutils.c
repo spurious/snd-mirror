@@ -189,17 +189,55 @@ static int sg_font_height(PangoFontDescription *font)
   hgt = (int)((dpi / 72.0) * PANGO_PIXELS(pango_font_metrics_get_ascent(m)));
   pango_font_metrics_unref(m);
   g_object_unref(ctx);
+      
   return(hgt);
 }
 
+static PangoFontDescription *last_tiny_font = NULL, *last_numbers_font = NULL, *last_label_font = NULL;
+static int last_numbers_height = 14, last_tiny_height = 10, last_label_height = 14;
+
 int number_height(bool use_tiny_font)
 {
-  return(sg_font_height((use_tiny_font) ? TINY_FONT(ss) : AXIS_NUMBERS_FONT(ss)));
+  int hgt = 14;
+  if (use_tiny_font)
+    {
+      if (last_tiny_font == TINY_FONT(ss))
+	return(last_tiny_height);
+      hgt = sg_font_height(TINY_FONT(ss));
+      last_tiny_font = TINY_FONT(ss);
+      last_tiny_height = hgt;
+    }
+  else
+    {
+      if (last_numbers_font == AXIS_NUMBERS_FONT(ss))
+	return(last_numbers_height);
+      hgt = sg_font_height(AXIS_NUMBERS_FONT(ss));
+      last_numbers_font = AXIS_NUMBERS_FONT(ss);
+      last_numbers_height = hgt;
+    }
+  return(hgt);
 }
 
 int label_height(bool use_tiny_font)
 {
-  return(sg_font_height((use_tiny_font) ? TINY_FONT(ss) : AXIS_LABEL_FONT(ss)));
+  int hgt = 14;
+  if (use_tiny_font)
+    {
+      if (last_tiny_font == TINY_FONT(ss))
+	return(last_tiny_height);
+      hgt = sg_font_height(TINY_FONT(ss));
+      last_tiny_font = TINY_FONT(ss);
+      last_tiny_height = hgt;
+    }
+  else
+    {
+      if (last_label_font == AXIS_LABEL_FONT(ss))
+	return(last_label_height);
+      hgt = sg_font_height(AXIS_LABEL_FONT(ss));
+      last_label_font = AXIS_LABEL_FONT(ss);
+      last_label_height = hgt;
+    }
+  return(hgt);
 }
 
 void clear_window(axis_context *ax)
