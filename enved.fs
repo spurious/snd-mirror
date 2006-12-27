@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Nov 13 13:59:42 CET 2005
-\ Changed: Sun Aug 20 00:59:25 CEST 2006
+\ Changed: Tue Dec 26 19:39:16 CET 2006
 
 \ Commentary:
 
@@ -45,7 +45,7 @@ fth-enved make-?obj enved?
 
 : make-enved ( envelope -- enved )
   { envelope }
-  envelope list? envelope 1 running-word $" a list" _ assert-type
+  envelope list? envelope 1 $" a list" _ assert-type
   enved% %alloc { enved }
   enved unless 'system-error '( get-func-name $" cannot create enved" _ ) fth-throw then
   envelope enved enved-envelope !
@@ -64,7 +64,7 @@ previous
 : enved-copy ( obj1 -- obj2 ) envelope@ list-copy make-enved ;
 : enved-ref ( obj index -- point )
   { obj index }
-  obj enved? obj 1 running-word $" an enved object" _ assert-type
+  obj enved? obj 1 $" an enved object" _ assert-type
   index 0< if index obj enved-length + to index then
   obj index range? if
     index 2* to index
@@ -77,7 +77,7 @@ previous
 ;
 : enved-set! ( obj index point -- )
   { obj index point }
-  obj enved? obj 1 running-word $" an enved object" _ assert-type
+  obj enved? obj 1 $" an enved object" _ assert-type
   index 0< if index obj enved-length + to index then
   obj index range? if
     index 2* to index
@@ -117,13 +117,13 @@ previous
 \ ENVED-INDEX, ENVED-INSERT!, ENVED-DELETE!
 : enved-index ( obj x -- index|-1 )
   { obj x }
-  obj enved? obj 1 running-word $" an enved object" _ assert-type
+  obj enved? obj 1 $" an enved object" _ assert-type
   -1 obj each car x f= if drop i leave then end-each
 ;
 : enved-insert! ( obj index point -- )
   { obj index point }
-  obj enved? obj 1 running-word $" an enved object" _ assert-type
-  point list? point object-length 2 = &&  point 3 running-word $" a point list '(x y)" _ assert-type
+  obj enved? obj 1 $" an enved object" _ assert-type
+  point list? point object-length 2 = &&  point 3 $" a point list '(x y)" _ assert-type
   index 0< if index obj enved-length + to index then
   obj index range? if
     index 2* to index
@@ -136,7 +136,7 @@ previous
 ;
 : enved-delete! ( obj index -- )
   { obj index }
-  obj enved? obj 1 running-word $" an enved object" _ assert-type
+  obj enved? obj 1 $" an enved object" _ assert-type
   index 0< if index obj enved-length + to index then
   obj index range? if
     index 2* to index

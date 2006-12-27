@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Sat Dec 23 18:00:17 CET 2006
+\ Changed: Tue Dec 26 19:39:50 CET 2006
 
 \ Commentary:
 
@@ -398,8 +398,8 @@ before-enved-hook lambda: <{ gen pos x y reason -- f }>
 ;
 : axis-bounds? { obj -- f } obj object-length 4 = obj list? && ;
 : make-xenved <{ name parent envelope axis-bounds args -- xenved }>
-  parent      FWidget?     parent      2 running-word $" a widget"              _ assert-type
-  axis-bounds axis-bounds? axis-bounds 4 running-word $" a list of axis bounds" _ assert-type
+  parent      FWidget?     parent      2 $" a widget"              _ assert-type
+  axis-bounds axis-bounds? axis-bounds 4 $" a list of axis bounds" _ assert-type
   xenved% %alloc { xe }
   xe unless 'system-error '( get-func-name $" cannot create xenved" _ ) fth-throw then
   envelope make-enved xe xe-enved !
@@ -454,7 +454,7 @@ before-enved-hook lambda: <{ gen pos x y reason -- f }>
 
 : xe-envelope ( gen -- lst )
   { gen }
-  gen xenved? gen 1 running-word $" an xenved object" _ assert-type
+  gen xenved? gen 1 $" an xenved object" _ assert-type
   gen xe-envelope@ dup list? unless
     drop
     gen xe-bounds@ { bnds }
@@ -463,8 +463,8 @@ before-enved-hook lambda: <{ gen pos x y reason -- f }>
 ;
 : set-xe-envelope ( gen lst -- )
   { gen lst }
-  gen xenved? gen 1 running-word $" an xenved object" _ assert-type
-  lst list?   lst 2 running-word $" a list"           _ assert-type
+  gen xenved? gen 1 $" an xenved object" _ assert-type
+  lst list?   lst 2 $" a list"           _ assert-type
   lst gen xe-envelope!
   gen xe-redraw
 ;

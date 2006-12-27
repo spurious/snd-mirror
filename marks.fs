@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Thu Dec 21 18:36:22 CET 2006
+\ Changed: Wed Dec 27 03:11:02 CET 2006
 
 \ Commentary:
 \
@@ -13,7 +13,7 @@
 \ describe-mark        ( id -- ary )
 \
 \ mark-properties      ( id -- props )
-\ set-mark-properties  ( id val -- )
+\ set-mark-properties  ( id props -- )
 \ mark-property        ( id key -- val )
 \ set-mark-property    ( id key val -- )
 \ save-mark-properties ( -- )
@@ -92,36 +92,32 @@ require examp
   then
 ;
 
-\ --- mark property lists ---
-
-: mark-properties     ( id -- props ) object-id 'mark-property property-ref ;
-: set-mark-properties ( id val -- )   swap object-id 'mark-property rot property-set! ;
-
-
+\ --- Mark Properties ---
+: mark-properties ( id -- props )
+  doc" Returns mark ID's entire property hash."
+  { id }
+  id mark? unless 'no-such-mark '( get-func-name id ) fth-throw then
+  :mark-property id object-id property-ref
+;
+: set-mark-properties ( id props -- )
+  { id props }
+  id mark? unless 'no-such-mark '( get-func-name id ) fth-throw then
+  :mark-property id object-id props property-set!
+;
 : mark-property ( id key -- val )
   doc" Returns the value associated with KEY in the given mark's property list, or #f."
   { id key }
-  id mark? if
-    id mark-properties dup hash? if key hash-ref else drop #f then
-  else
-    'no-such-mark '( get-func-name id ) fth-throw
-  then
+  id mark? unless 'no-such-mark '( get-func-name id ) fth-throw then
+  id mark-properties ?dup-if key hash-ref else #f then
 ;
-
 : set-mark-property ( id key val -- )
-  doc" Sets the value VAL to KEY in the given mark's property list."
+  doc" Sets VAL to KEY in the given mark's property list."
   { id key val }
-  id mark? if
-    id mark-properties { props }
-    props hash? if
-      props key val hash-set!
-    else
-      make-hash to props
-      props key val hash-set!
-      id props set-mark-properties
-    then
+  id mark? unless 'no-such-mark '( get-func-name id ) fth-throw then
+  id mark-properties ?dup-if
+    key val hash-set!
   else
-    'no-such-mark '( get-func-name id ) fth-throw
+    id #{ key val } set-mark-properties
   then
 ;
 
@@ -188,14 +184,14 @@ mark-click-hook ' mark-click-info add-hook!"
     $" \n  \\ channel %d\n" '( i ) string-format str swap $+ to str
     each { m }
       m nil? ?leave
-      $"   %s #f %d %S %d add-mark to mr\n"
+      $"   %s #f %d %S %d add-mark to mk\n"
       '( m undef mark-sample
 	 j ( chn )
 	 m mark-name length 0= if #f else m mark-name then
 	 m mark-sync ) string-format str swap $+ to str
       m mark-properties { props }
       props if
-	$"   mr %m set-mark-properties\n" '( props ) string-format str swap $+ to str
+	$"   mk %m set-mark-properties\n" '( props ) string-format str swap $+ to str
       then
     end-each
   end-each

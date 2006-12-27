@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Sun Dec 24 02:56:04 CET 2006
+\ Changed: Tue Dec 26 19:38:19 CET 2006
 
 \ Commentary:
 \
@@ -25,6 +25,8 @@
 \ make-default-comment ( -- str )
 \ times->samples       ( start dur -- len beg )
 \ normalize-partials   ( parts1 -- parts2 )
+\ 
+\ ws-local-variables   ( -- )
 \ ws-interrupt?        ( -- )
 \ ws-info              ( start dur -- )
 \ run                  ( start dur -- )
@@ -48,7 +50,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 24-Dec-2006" value *clm-version*
+$" fth 26-Dec-2006" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [undefined] clm-print [if] ' fth-print alias clm-print [then]
@@ -56,12 +58,16 @@ $" fth 24-Dec-2006" value *clm-version*
 [undefined] clm-message [if]
   'snd provided? not 'snd-nogui provided? || [if]
     \ Prints to stdout through snd-print.
-    : clm-message ( fmt args -- ) "\\ " rot ( fmt ) $+ "\n" $+ swap ( args ) clm-print ;
+    : clm-message ( fmt args -- )
+      { fmt args }
+      "\\ " fmt $+ "\n" $+ args clm-print
+    ;
   [else]
     \ Prints to Snd's listener (snd-print) and to stdout if $EMACS is
     \ set or $TERM matches /^xterm/.
     : clm-message ( fmt args -- )
-      $" \n\\ " rot ( fmt ) $+ swap ( args ) string-format { msg }
+      { fmt args }
+      "\n\\ " fmt $+ args string-format { msg }
       msg snd-print drop
       "EMACS" getenv
       /^xterm/ "TERM" getenv 1 >string re= || if msg .stdout then
@@ -288,6 +294,7 @@ $" test.reverb" value *clm-reverb-file-name*
 #f	        value *clm-verbose*
 #f              value *clm-debug*
 #()             value *clm-search-list* \ array of sound directories
+#()             value *clm-instruments*	\ array of lists '( ins-name start dur local-vars )
 
 'snd provided? [unless]
   1                 constant default-output-chans
@@ -382,9 +389,23 @@ $" with-sound interrupt" create-exception with-sound-interrupt
 #() value *ws-args*			\ array for recursive with-sound calls 
 #f value *clm-current-instrument*	\ current instrument set in INSTRUMENT:
 
+: ws-local-variables ( -- )
+  *clm-instruments* empty? if
+    $" *clm-instruments* is empty" '() clm-message
+  else
+    nil { vals }
+    "" '() clm-message
+    *clm-instruments* each to vals	\ Don't create local vars here!
+      $" === %s [%.3f-%.3f] ===" vals 3 list-head clm-message
+      vals cadddr each ( var ) $" %s = %s" swap clm-message end-each
+      "" '() clm-message
+    end-each
+  then
+;
 : ws-interrupt? ( -- ) c-g? if 'with-sound-interrupt '() fth-throw then ;
-: ws-info ( start dur -- )
-  { start dur }
+: ws-info ( start dur vars -- start dur )
+  { start dur vars }
+  *clm-instruments* '( *clm-current-instrument* start dur vars ) array-push to *clm-instruments*
   *notehook* xt? if *clm-current-instrument* start dur *notehook* execute
   else
     *notehook* proc? if
@@ -392,24 +413,21 @@ $" with-sound interrupt" create-exception with-sound-interrupt
     then
   then
   ws-interrupt?
+  start dur
 ;
 
 hide
-: (run) ( start dur -- limit begin )
-  { start dur }
-  start dur ws-info
-  start dur times->samples
-;
-: (run-instrument) ( start dur args -- limit begin )
-  { start dur args }
+: (run)            ( start dur vars      -- limit begin ) ws-info times->samples ;
+: (run-instrument) ( start dur args vars -- limit begin )
+  { start dur args vars }
   args hash? unless #{} to args then
-  :degree    args :degree   hash-ref            0.0 ||
-  :distance  args :distance hash-ref            1.0 ||
-  :reverb    args :reverb   hash-ref           0.05 ||
-  :channels  args :channels hash-ref     *channels* ||
-  :output    args :output   hash-ref       *output* ||
-  :revout    args :revout   hash-ref       *reverb* ||
-  :type      args :type     hash-ref    locsig-type || make-locsig to *locsig*
+  :degree    args :degree   hash-ref         0.0 ||
+  :distance  args :distance hash-ref         1.0 ||
+  :reverb    args :reverb   hash-ref        0.05 ||
+  :channels  args :channels hash-ref  *channels* ||
+  :output    args :output   hash-ref    *output* ||
+  :revout    args :revout   hash-ref    *reverb* ||
+  :type      args :type     hash-ref locsig-type || make-locsig to *locsig*
   \ we set channel 3/4 if any to 0.5 * channel 1/2
   *output* mus-output? if
     *output* mus-channels 2 > if
@@ -427,7 +445,7 @@ hide
       then
     then
   then
-  start dur (run)
+  start dur vars (run)
 ;
 : (end-run) ( value index -- ) *locsig* swap rot locsig drop ;
 set-current
@@ -450,9 +468,15 @@ set-current
 \ 
 \ 0.0 1.0                   RUN            ... LOOP
 \ 0.0 1.0 #{ :degree 45.0 } RUN-INSTRUMENT ... END-RUN
-: run            ( start dur -- )             postpone (run)            postpone ?do  ; immediate
-: run-instrument ( start dur locsig-args -- ) postpone (run-instrument) postpone ?do  ; immediate
-: end-run        ( sample -- )    postpone r@ postpone (end-run)        postpone loop ; immediate
+: run            ( start dur -- )
+  postpone local-variables postpone (run)            postpone ?do
+; immediate
+: run-instrument ( start dur locsig-args -- )
+  postpone local-variables postpone (run-instrument) postpone ?do
+; immediate
+: end-run        ( sample -- )
+  postpone r@ postpone (end-run) postpone loop
+; immediate
 previous
 
 : reverb-info ( caller in-chans out-chans -- )
@@ -485,11 +509,13 @@ previous
   file file-exists? if
     file
   else
-    #f					\ flag
-    *clm-search-list* each { dir }
-      dir $" /" $+ file $+ { fname }
-      fname file-exists? if drop ( flag ) fname leave then
-    end-each
+    #f { fname }
+    file string? if
+      *clm-search-list* each ( dir )
+	"/" $+ file $+ dup file-exists? if to fname leave else drop then
+      end-each
+    then
+    fname
   then
 ;
 
@@ -780,8 +806,9 @@ hide
 ;
 set-current
 : with-sound-default-args ( keyword-args -- ws )
+  #() to *clm-instruments*
   make-hash { ws }
-  *ws-args* ws array-push drop
+  *ws-args* ws array-push to *ws-args*
   :play              *clm-play*             ws set-args
   :statistics        *clm-statistics*       ws set-args
   :verbose           *clm-verbose*          ws set-args
@@ -809,7 +836,7 @@ set-current
 : with-sound-args ( keyword-args -- ws )
   make-hash { ws }
   *ws-args* -1 array-ref { ws1 }
-  *ws-args* ws array-push drop
+  *ws-args* ws array-push to *ws-args*
   :play              #f                        ws set-args
   :statistics        #f                        ws set-args
   :verbose           ws1 :verbose     hash-ref ws set-args
@@ -836,8 +863,8 @@ set-current
 ;
 : with-sound-main ( body-xt ws -- ws )
   { body-xt ws }
-  body-xt xt? body-xt proc? || body-xt 1 running-word $" a proc or xt" assert-type
-  ws hash?                     ws      2 running-word $" a hash"       assert-type
+  body-xt xt? body-xt proc? || body-xt 1 $" a proc or xt" assert-type
+  ws hash?                     ws      2 $" a hash"       assert-type
   ws :old-*output*    *output*         hash-set!
   ws :old-*reverb*    *reverb*         hash-set!
   ws :old-verbose     *verbose*        hash-set! 
@@ -856,7 +883,7 @@ set-current
   ws :decay-time                       hash-ref  to *clm-decay-time*
   ws :reverb hash-ref { reverb-xt }
   reverb-xt if
-    reverb-xt xt? reverb-xt proc? || reverb-xt 3 running-word $" a proc or xt" assert-type
+    reverb-xt xt? reverb-xt proc? || reverb-xt 3 $" a proc or xt" assert-type
     #t
   else
     ws :reverb-file-name #f hash-set!
@@ -1047,10 +1074,10 @@ lambda: ( -- )\n\
   2.0 0.1 220 0.1 fm-violin\n\
   ; with-sound drop"
   { body-str args fname start }
-  body-str string? body-str 1 running-word $" a string" assert-type
-  args     list?   args     2 running-word $" a list"   assert-type
-  fname    string? fname    3 running-word $" a string" assert-type
-  start    number? start    4 running-word $" a number" assert-type
+  body-str string? body-str 1 $" a string" assert-type
+  args     list?   args     2 $" a list"   assert-type
+  fname    string? fname    3 $" a string" assert-type
+  start    number? start    4 $" a number" assert-type
   fname $" .snd" $+ { snd-file }
   fname $" .fsm" $+ { mix-file }
   snd-file file-exists? if
@@ -1090,8 +1117,8 @@ lambda: { tmp1 tmp2 }\n\
   tmp1 clm-mix\n\
 ; ( body-xt ) ' sound-let with-sound drop"
   { ws-xt-lst body-xt }
-  ws-xt-lst list?              ws-xt-lst 1 running-word $" a list"       assert-type
-  body-xt xt? body-xt proc? ||   body-xt 1 running-word $" a proc or xt" assert-type
+  ws-xt-lst list?              ws-xt-lst 1 $" a list"       assert-type
+  body-xt xt? body-xt proc? ||   body-xt 1 $" a proc or xt" assert-type
   ws-xt-lst length nil make-list { outfiles } \ run-proc requires a list, not an array
   ws-xt-lst each { arg }
     fth-tempnam { oname }

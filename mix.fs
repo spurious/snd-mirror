@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Sat Dec 23 04:29:59 CET 2006
+\ Changed: Wed Dec 27 03:10:48 CET 2006
 
 \ Commentary:
 \
@@ -22,7 +22,7 @@
 \ snap-mix-to-beat     ( at-tag-position -- )
 \
 \ mix-properties       ( id -- props )
-\ set-mix-properties   ( id val -- )
+\ set-mix-properties   ( id props -- )
 \ mix-property         ( id key -- val )
 \ set-mix-property     ( id key val -- )
 \ mix-name->id         ( name -- id )
@@ -38,7 +38,7 @@
 \ filter-track         ( trk fir-filter-coeffs -- )
 \
 \ track-properties     ( id -- props )
-\ set-track-properties ( id val -- )
+\ set-track-properties ( id props -- )
 \ track-property       ( id key -- val )
 \ set-track-property   ( id key val -- )
 \ mix-click-info       ( id -- #t )
@@ -204,7 +204,7 @@ starting at START (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan
 : pan-mix-vct <{ v :optional beg 0 envelope 1.0 snd #f chn 0 -- mx }>
   snd-tempnam { temp-file }
   temp-file snd srate 1 mus-sound-open-output { fd }
-  fd 0 v vct-length 1- 1 v vct->sound-data mus-sound-write drop
+  fd 0 v vct-length 1- 1 v undef undef vct->sound-data mus-sound-write drop
   fd v vct-length 4 * mus-sound-close-output drop
   temp-file beg envelope snd chn #t pan-mix
 ;
@@ -226,7 +226,7 @@ starting at START (in samples) using ENVELOPE to pan (0: all chan 0, 1: all chan
   { id fname }
   id mix->vct { v }
   fname #f srate mus-sound-open-output { fd }
-  fd 0 v vct-length 1- 1 v vct->sound-data mus-sound-write drop
+  fd 0 v vct-length 1- 1 v undef undef vct->sound-data mus-sound-write drop
   fd v vct-length 4 * mus-sound-close-output drop
 ;
 
@@ -266,34 +266,31 @@ Resets mix-release-hook to cancel."
 previous
 
 \ --- Mix Properties ---
-
-: mix-properties     ( id -- props ) object-id 'mix-property property-ref ;
-: set-mix-properties ( id val -- )   swap object-id 'mix-property rot property-set! ;
-
+: mix-properties ( id -- props )
+  doc" Returns mix ID's entire property hash."
+  { id }
+  id mix? unless 'no-such-mix '( get-func-name id ) fth-throw then
+  :mix-property id object-id property-ref
+;
+: set-mix-properties ( id props -- )
+  { id props }
+  id mix? unless 'no-such-mix '( get-func-name id ) fth-throw then
+  :mix-property id object-id props property-set!
+;
 : mix-property ( id key -- val )
   doc" Returns the value associated with KEY in the given mix's property list, or #f."
   { id key }
-  id mix? if
-    id mix-properties dup hash? if key hash-ref else drop #f then
-  else
-    'no-such-mix '( get-func-name id ) fth-throw
-  then
+  id mix? unless 'no-such-mix '( get-func-name id ) fth-throw then
+  id mix-properties ?dup-if key hash-ref else #f then
 ;
-
 : set-mix-property ( id key val -- )
-  doc" Sets the value VAL to KEY in the given mix's property list."
+  doc" Sets VAL to KEY in the given mix's property list."
   { id key val }
-  id mix? if
-    id mix-properties { props }
-    props hash? if
-      props key val hash-set!
-    else
-      make-hash to props
-      props key val hash-set!
-      id props set-mix-properties
-    then
+  id mix? unless 'no-such-mix '( get-func-name id ) fth-throw then
+  id mix-properties ?dup-if
+    key val hash-set!
   else
-    'no-such-mix '( get-func-name id ) fth-throw
+    id #{ key val } set-mix-properties
   then
 ;
 
@@ -418,7 +415,7 @@ previous
 	'no-such-channel '( get-func-name chn ) fth-throw
       then
     then
-    fd 0 v vct-length 1- 1 v vct->sound-data mus-sound-write drop
+    fd 0 v vct-length 1- 1 v undef undef vct->sound-data mus-sound-write drop
     fd v vct-length 4 * mus-sound-close-output drop
   else
     'no-such-track '( get-func-name trk ) fth-throw
@@ -475,34 +472,31 @@ track-id '( 0.1 0.2 0.3 0.3 0.2 0.1 ) filter-track"
 previous
 
 \ --- Track Properties ---
-
-: track-properties     ( id -- props ) object-id 'track-property property-ref ;
-: set-track-properties ( id val -- )   swap object-id 'track-property rot property-set! ;
-
+: track-properties ( id -- props )
+  doc" Returns track ID's entire property hash."
+  { id }
+  id track? unless 'no-such-track '( get-func-name id ) fth-throw then
+  :track-property id object-id property-ref
+;
+: set-track-properties ( id props -- )
+  { id props }
+  id track? unless 'no-such-track '( get-func-name id ) fth-throw then
+  :track-property id object-id props property-set!
+;
 : track-property ( id key -- val )
   doc" Returns the value associated with KEY in the given track's property list, or #f."
   { id key }
-  id track? if
-    id track-properties dup hash? if key hash-ref else drop #f then
-  else
-    'no-such-track '( get-func-name id ) fth-throw
-  then
+  id track? unless 'no-such-track '( get-func-name id ) fth-throw then
+  id track-properties ?dup-if key hash-ref else #f then
 ;
-
 : set-track-property ( id key val -- )
-  doc" Sets the value VAL to KEY in the given track's property list."
+  doc" Sets VAL to KEY in the given track's property list."
   { id key val }
-  id track? if
-    id track-properties { props }
-    props hash? if
-      props key val hash-set!
-    else
-      make-hash to props
-      props key val hash-set!
-      id props set-track-properties
-    then
+  id track? unless 'no-such-track '( get-func-name id ) fth-throw then
+  id track-properties ?dup-if
+    key val hash-set!
   else
-    'no-such-track '( get-func-name id ) fth-throw
+    id #{ key val } set-track-properties
   then
 ;
 

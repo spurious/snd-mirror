@@ -4774,11 +4774,11 @@
 	    incr)))))
 
 (define* (cosine-channel :optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
-  (let ((old-opt (optimization)))
+  (let ((old-opt (optimization))
+	(samps (or dur (frames snd chn))))
     (set! (optimization) 0)
     (map-channel
-     (let* ((samps (or dur (frames snd chn)))
-	    (incr (/ pi samps))
+     (let* ((incr (/ pi samps))
 	    (angle (* -0.5 pi)))
        (lambda (y)
 	 (let ((val (* y (cos angle))))
@@ -28072,7 +28072,7 @@ EDITS: 5
 	(add-hook! help-hook (lambda (a b) 
 			       (if (not (string=? a "cursor-position"))
 				   (snd-display ";help-hook subject: ~A" a))
-			       (if (not (string=? b "(cursor-position (snd #f) (chn #f)): current cursor position (x y in pixels) in snd's channel chn"))
+			       (if (not (string=? b "(cursor-position :optional snd chn): current cursor position (x y in pixels) in snd's channel chn"))
 				   (snd-display ";help-hook text: ~A" b))
 			       (string-append "hiho:" b)))
 	(let ((ho (snd-help 'cursor-position)))

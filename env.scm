@@ -364,10 +364,9 @@ repetition to be in reverse."
 
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
-(def-clm-struct penv envs total-envs current-env current-pass)
+(def-clm-struct penv (envs #f :type clm-vector) (total-envs 0 :type int) (current-env 0 :type int) (current-pass 0 :type int))
 
 (define (power-env pe)
-  ;; this doesn't yet work within the Snd run macro
   (let* ((val (env (vector-ref (penv-envs pe) (penv-current-env pe)))))
     (set! (penv-current-pass pe) (1- (penv-current-pass pe)))
     (if (= (penv-current-pass pe) 0)

@@ -283,12 +283,13 @@
 ;;; a more extreme effect is "saturation":
 ;;;   (map-channel (lambda (val) (if (< (abs val) .1) val (if (>= val 0.0) 0.25 -0.25))))
 
-(define* (adsat size :optional beg dur snd chn)
+(define* (adsat usize :optional beg dur snd chn)
   "(adsat size) is an 'adaptive saturation' sound effect"
-  (let ((mn 0.0)
-	(mx 0.0)
-	(n 0)
-	(vals (make-vct size)))
+  (let* ((mn 0.0)
+	 (mx 0.0)
+	 (n 0)
+	 (size usize) ; for run
+	 (vals (make-vct size)))
     (map-channel (lambda (val)
 		   (if (= n size)
 		       (begin

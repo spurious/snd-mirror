@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Sat Dec 23 17:59:31 CET 2006
+\ Changed: Wed Dec 27 03:28:27 CET 2006
 
 \ Commentary:
 \
@@ -246,8 +246,8 @@ instrument: fm-violin <{ start dur freq amp
       :frequency freq fm1-rat f*
       :coeffs
       '( fm1-rat f>s                  fm1-index
-	 fm2-rat fm1-rat f/ floor f>s fm2-index
-	 fm3-rat fm1-rat f/ floor f>s fm3-index ) 1 partials->polynomial make-polyshape
+	 fm2-rat fm1-rat f/ fround->s fm2-index
+	 fm3-rat fm1-rat f/ fround->s fm3-index ) 1 partials->polynomial make-polyshape
     else
       :frequency freq fm1-rat f* make-oscil
     then to fmosc1
@@ -769,8 +769,8 @@ instrument: stereo-flute <{ start dur freq flow
   :frequency vib-rate                            make-oscil       { p-vib }
   :frequency ran-rate                          	 make-rand-interp { ran-vib }
   :frequency mus-srate f2/ :amplitude 1.0      	 make-rand        { breath }
-  mus-srate freq f/ floor f>s { periodic-samples }
-  embouchure-size periodic-samples f* floor f>s         make-delay       { emb }
+  mus-srate freq f/ fround->s { periodic-samples }
+  embouchure-size periodic-samples f* fround->s         make-delay       { emb }
   periodic-samples                  	         make-delay       { bore }
   a0 b1                                        	 make-one-pole    { rlf }
   0.0 0.0 0.0 0.0     { emb-sig delay-sig out-sig prev-out-sig }
@@ -2130,7 +2130,7 @@ instrument: lbj-piano <{ start dur freq amp
   piano-spectra  12.0 freq 32.703 f/ flog 2.0 flog f/ f* f>s  array-ref normalize-partials { parts }
   dur *clm-piano-attack-duration* *clm-piano-realease-duration* f+ f+ to dur
   dur *clm-piano-realease-duration* f- { env1dur }
-  env1dur mus-srate f* floor f>s { env1samples }
+  env1dur mus-srate f* fround->s { env1samples }
   '( 0.0
      0.0
      *clm-piano-attack-duration* 100.0 f* env1dur f/ 4.0 f/
@@ -2278,7 +2278,7 @@ previous
 : scratch-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
   :dur   1.0 get-optkey drop
-  0.0 "fyow.snd" 1.5 '( 0 0.5 0.25 1 ) scratch-ins
+  start "fyow.snd" 1.5 '( 0 0.5 0.25 1 ) scratch-ins
   "fyow.snd" find-file mus-sound-duration 0.2 f+ step
 ;
 
@@ -2320,8 +2320,8 @@ instrument: pins <{ start dur file amp
   max-oscils make-vct                              { rates }
   max-oscils make-vct                              { freqs }
   max-oscils make-vct                              { sweeps }
-  fftsize 4.0 f/ floor f>s                         { hop }
-  time-scaler hop f* floor f>s                     { outhop }
+  fftsize 4.0 f/ fround->s                         { hop }
+  time-scaler hop f* fround->s                     { outhop }
   outhop 1/f                                       { ifreq }
   ifreq hz->radians                                { ihifreq }
   mus-srate fftsize f/                             { fft-mag }
@@ -2483,7 +2483,7 @@ instrument: pins <{ start dur file amp
 
 : pins-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
-  now@ dur $" fyow.snd" 1.0 :time-scaler 2.0 pins
+  now@ dur "fyow.snd" 1.0 :time-scaler 2.0 pins
   dur 0.2 f+ step
 ;
 
@@ -2560,7 +2560,7 @@ instrument: clm-expsrc <{ start dur in-file exp-ratio src-ratio amp
      start-in-file 0 -- }>
   in-file find-file to in-file
   in-file false? if 'file-not-found $" cannot find %S" '( in-file ) fth-raise then
-  start-in-file in-file mus-sound-srate f* floor f>s { stf }
+  start-in-file in-file mus-sound-srate f* fround->s { stf }
   :file in-file :channel 0 :start stf make-readin { fdA }
   :input fdA readin-cb :expansion exp-ratio make-granulate { exA }
   in-file mus-sound-chans 2 = *output* mus-channels 2 = && { two-chans }
@@ -2582,7 +2582,7 @@ previous
 
 : clm-expsrc-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
-  now@ dur $" oboe.snd" 2.0 1.0 1.0 clm-expsrc
+  now@ dur "oboe.snd" 2.0 1.0 1.0 clm-expsrc
   dur 0.2 f+ step
 ;
 
@@ -2655,7 +2655,7 @@ instrument: exp-snd <{ file start dur amp
     ex-a expa set-mus-increment drop
     resa +to next-samp
     next-samp ex-samp 1.0 f+ f> if
-      next-samp ex-samp f- floor f>s 0 ?do
+      next-samp ex-samp f- fround->s 0 ?do
 	val-a1                to val-a0
 	ex-a granulate vol f* to val-a1
 	1.0                  +to ex-samp
@@ -2671,9 +2671,9 @@ instrument: exp-snd <{ file start dur amp
 
 : exp-snd-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
-  $" fyow.snd" now@ dur 1.0 '( 0 1 1 3 ) 0.4 0.15 '( 0 2 1 0.5 ) 0.05 exp-snd
+  "fyow.snd" now@ dur 1.0 '( 0 1 1 3 ) 0.4 0.15 '( 0 2 1 0.5 ) 0.05 exp-snd
   dur 0.2 f+ step
-  $" oboe.snd" now@ dur 1.0 '( 0 1 1 3 ) 0.4 0.15 '( 0 2 1 0.5 ) 0.2  exp-snd
+  "oboe.snd" now@ dur 1.0 '( 0 1 1 3 ) 0.4 0.15 '( 0 2 1 0.5 ) 0.2  exp-snd
   dur 0.2 f+ step
 ;
 
@@ -2794,7 +2794,7 @@ instrument: expfil <{ start dur hopsecs rampsecs steadysecs file1 file2 -- }>
 
 : expfil-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
-  now@ dur 0.2 0.01 0.1 $" oboe.snd" $" fyow.snd" expfil
+  now@ dur 0.2 0.01 0.1 "oboe.snd" "fyow.snd" expfil
   dur 0.2 f+ step
 ;
 
@@ -2877,7 +2877,7 @@ instrument: graph-eq <{ file start dur
 
 : graph-eq-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
-  $" oboe.snd" now@ dur :amplitude 50.0 graph-eq
+  "oboe.snd" now@ dur :amplitude 50.0 graph-eq
   dur 0.2 f+ step
 ;
 
@@ -2937,7 +2937,7 @@ instrument: anoi <{ fname start dur :optional fftsize 128 amp-scaler 1.0 R two-p
 
 : anoi-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
-  $" fyow.snd" now@ dur 128 2.0 anoi
+  "fyow.snd" now@ dur 128 2.0 anoi
   dur 0.2 f+ step
 ;
 
@@ -2978,7 +2978,7 @@ instrument: fullmix <{ in-file
   in-file false? if 'file-not-found $" cannot find %S" '( in-file ) fth-raise then
   dur unless in-file mus-sound-duration inbeg f- sr if sr fabs else 1.0 then f/ to dur then
   in-file mus-sound-chans { in-chans }
-  inbeg in-file mus-sound-srate f* floor f>s { inloc }
+  inbeg in-file mus-sound-srate f* fround->s { inloc }
   *output* mus-channels { out-chans }
   matrix if
     in-chans out-chans max make-mixer
@@ -3022,13 +3022,18 @@ instrument: fullmix <{ in-file
     then
   then
   sr unless
-    start dur ws-info
-    start seconds->samples { st }
-    dur seconds->samples { samps }
-    *output*  in-file undef make-file->frame  st samps inloc mx envs mus-mix drop
-    rev-mx if *reverb*  1 make-frame  st samps inloc rev-mx #f mus-mix drop then
+    \ ws-info ( start dur local-vars -- start dur )
+    \ 
+    \ This is normally done in RUN or RUN-INSTRUMENT, but here
+    \ we haven't one of them.
+    \ 
+    start dur local-variables ws-info ( start dur )
+    ( start ) seconds->samples { st }
+    ( dur ) seconds->samples { samps }
+    *output* in-file undef make-file->frame st samps inloc mx envs mus-mix drop
+    rev-mx if *reverb* 1 make-frame st samps inloc rev-mx #f mus-mix drop then
   else
-    in-chans  make-frame { inframe }
+    in-chans make-frame { inframe }
     out-chans make-frame { outframe }
     in-chans nil make-array map!
       :file in-file :channel i :start inloc make-readin { rd }
@@ -3039,26 +3044,27 @@ instrument: fullmix <{ in-file
 	envs each
 	  each { en } env? if mx j ( inp ) i ( outp ) en env mixer-set! drop then end-each
 	end-each
-	in-chans 0 ?do inframe i  srcs i array-ref  0.0 src  frame-set! drop loop
-	*output* i  inframe mx outframe frame->frame  frame->file drop
-	rev-mx if *reverb* i  inframe rev-mx outframe frame->frame  frame->file drop then
+	in-chans 0 ?do inframe i srcs i array-ref 0.0 src frame-set! drop loop
+	*output* i inframe mx outframe frame->frame frame->file drop
+	rev-mx if *reverb* i inframe rev-mx outframe frame->frame frame->file drop then
       loop
     else
       start dur run
-	in-chans 0 ?do inframe i  srcs i array-ref  0.0 src  frame-set! drop loop
-	*output* i  inframe mx outframe frame->frame  frame->file drop
-	rev-mx if *reverb* i  inframe rev-mx outframe frame->frame  frame->file drop then
+	in-chans 0 ?do inframe i srcs i array-ref 0.0 src frame-set! drop loop
+	*output* i inframe mx outframe frame->frame frame->file drop
+	rev-mx if *reverb* i inframe rev-mx outframe frame->frame frame->file drop then
       loop
     then
   then
 ;instrument
 
 : fullmix-test <{ :optional start 0.0 dur 1.0 -- }>
+  .stack
   start now!
   :envelope '( 0 0 1 1 ) :duration dur :scaler 0.5 make-env { en }  
-  $" pistol.snd" now@ dur fullmix
+  "pistol.snd" now@ dur fullmix
   dur 0.2 f+ step
-  $" oboe.snd"   now@ dur 0 #( #( 0.1 en ) ) fullmix
+  "oboe.snd"   now@ dur 0 #( #( 0.1 en ) ) fullmix
   dur 0.2 f+ step
 ;
 

@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Sat Dec 23 17:59:43 CET 2006
+\ Changed: Tue Dec 26 19:38:38 CET 2006
 
 \ Commentary:
 
@@ -462,7 +462,7 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
 ;
 : rotate-phase <{ func :optional snd #f chn #f -- vct }>
   doc" Calls fft, applies FUNC to each phase, then un-ffts."
-  func proc? func 1 running-word $" a proc" _ assert-type
+  func proc? func 1 $" a proc" _ assert-type
   snd chn #f frames { len }
   2.0  len flog 2.0 flog f/ fceil ( pow2 )  f** fround->s { fftlen }
   fftlen 2/ { fftlen2 }
