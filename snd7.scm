@@ -361,9 +361,10 @@
 (if (not (defined? 'recorder-out-type)) (define recorder-out-type recorder-out-header-type))
 
 (define (snd-apropos val)
-  (with-output-to-string
-    (lambda ()
-      (apropos (if (string? val) val (object->string val))))))
+  (if (defined? 'apropos)
+      (with-output-to-string
+	(lambda ()
+	  (apropos (if (string? val) val (object->string val)))))))
 
 (define (make-iir-low-pass-1 fc)
   (let* ((theta (/ (* 2 pi fc) (mus-srate)))

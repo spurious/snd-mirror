@@ -644,12 +644,12 @@ off_t mus_file_seek_frame(int tfd, off_t frame)
   io_fd *fd;
   if (io_fds == NULL) 
     return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frame: no file descriptors!"));
-  if (tfd < 0)
-    return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frame: file descriptor = %d?", tfd));
-  if ((tfd >= io_fd_size) || 
-      (io_fds[tfd] == NULL))
+  if (tfd >= io_fd_size)
     return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
 		     "mus_file_seek_frame: file descriptors not realloc'd? (tfd: %d, io_fd_size: %d)", tfd, io_fd_size));
+  if ((tfd < 0) || 
+      (io_fds[tfd] == NULL))
+    return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frame: file descriptor = %d?", tfd));
   fd = io_fds[tfd];
   if (fd->data_format == MUS_UNKNOWN) 
     return(mus_error(MUS_NOT_A_SOUND_FILE, "mus_file_seek_frame: invalid data format for %s", fd->name));

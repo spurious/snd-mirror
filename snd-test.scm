@@ -20758,7 +20758,7 @@ EDITS: 5
 						      ((= i len) len)       ; grain length unchanged in this case
 						    (vct-set! grain i (* 2 (vct-ref grain i))))
 						  0)))))
-	  (if (or (< (/ (maxamp) mx) 1.5) (> (/ mx (maxamp)) 2.5))
+	  (if (or (< (/ (maxamp) mx) 1.4) (> (/ mx (maxamp)) 2.5))
 	      (snd-display ";gran edit 2* (2): ~A ~A" mx (maxamp)))
           (undo)
 	  (let ((grn (make-granulate :expansion 2.0))
@@ -41463,7 +41463,8 @@ EDITS: 1
 			(snd-display ";sync-all not new? ~A ~A" (sync index) previous-syncs))))
 	      (sounds))
 	     (let ((current-syncs (map sync (sounds))))
-	       (if (not (apply = current-syncs))
+	       (if (or (<= (length current-syncs) 1) ; Gauche thinks (= 1) is an error, whereas Guile returns #t
+		       (not (apply = current-syncs)))
 		   (snd-display ";sync-all not the same? ~A" current-syncs))
 	       (set! previous-syncs (cons (sync index) previous-syncs)))
 	     (set! total-chans (+ total-chans (chans index)))
@@ -63374,7 +63375,7 @@ EDITS: 1
 							   (eq? tag 'wrong-number-of-args)
 							   (eq? tag 'mus-error)))
 						  (snd-display ";vct 1 wrong-whatever ~A: ~A ~A ~A" n tag arg1 arg2))))
-					  (list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill! vct-map!)))
+					  (list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill!)))
 			      (list vct-5 "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1))))
 		  (list (make-vector 1) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
 	
@@ -63387,7 +63388,7 @@ EDITS: 1
 					      (lambda args (car args)))))
 				  (if (not (eq? tag 'wrong-type-arg))
 				      (snd-display ";vct 2 wrong-type-arg ~A: ~A" n tag))))
-			      (list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill! vct-map!)))
+			      (list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill!)))
 		  (list (make-vector 1) "hiho" (sqrt -1.0) (list 1 0) '#(0 1)))
 	
 	(let ((tag
@@ -64933,6 +64934,9 @@ EDITS: 1
 
 (set! (mus-srate) 22050)
 (set! *clm-srate* 22050)
+(set! (print-length) 12)
+(set! (mus-array-print-length) 12)
+
 
 
 ;;; ---------------- test 29: Common Music ----------------
