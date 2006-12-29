@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Tue Dec 26 19:38:19 CET 2006
+\ Changed: Fri Dec 29 05:44:33 CET 2006
 
 \ Commentary:
 \
@@ -43,10 +43,11 @@
 \ record-sound         ( output keyword-args -- )
 \ clm-mix              ( infile :key output output-frame frames input-frame scaler -- )
 \ with-sound           ( body-xt keyword-args -- ws )
-\ clm-load             ( keyword-args fname -- ws )
-\ scaled-to            ( body-xt keyword-args scl -- )
-\ scaled-by            ( body-xt keyword-args scl -- )
-\ with-offset          ( body-xt keyword-args secs -- )
+\ clm-load             ( fname keyword-args -- ws )
+\ with-current-sound   ( :key output offset scaled-to scaled-by -- )
+\ scaled-to            ( body-xt scl -- )
+\ scaled-by            ( body-xt scl -- )
+\ with-offset          ( body-xt secs -- )
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
@@ -129,26 +130,6 @@ dl-load sndlib Init_sndlib
   then
 ;
 [then]
-
-hide
-: (show-stack) ( ?? lineno -- ?? )
-  { lineno }
-  save-stack { s }
-  $" #<stack depth: %d at line %d>" '( s length lineno ) clm-message
-  s each { obj } $" #<stack [%d]: %S>" '( i obj ) clm-message end-each
-  s restore-stack
-;
-: (.stack) ( lineno -- )
-  { lineno }
-  depth 0> if
-    "" '() clm-message
-    lineno (show-stack)
-    "" '() clm-message
-  then
-;
-set-current
-: .stack ( --; -- ) postpone *lineno* postpone (.stack) ; immediate
-previous
 
 \ === Notelist ===
 hide
@@ -275,26 +256,26 @@ previous
 16.0 1/f 32.0 1/f f+ notelength |S.
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-#f 	        value *output*
-#f 	        value *reverb*
-#f 	        value *locsig*
-mus-lshort      value *clm-audio-format*
-#f              value *clm-comment*
-1.0             value *clm-decay-time*
-#f  	        value *clm-delete-reverb*
-$" test.snd"    value *clm-file-name*
-#f 	        value *clm-notehook*
-#f  	        value *clm-play*
-#f              value *clm-player*           
-#f 	        value *clm-reverb*
-1     	        value *clm-reverb-channels*
-'()             value *clm-reverb-data*
-$" test.reverb" value *clm-reverb-file-name*
-#f  	        value *clm-statistics*
-#f	        value *clm-verbose*
-#f              value *clm-debug*
-#()             value *clm-search-list* \ array of sound directories
-#()             value *clm-instruments*	\ array of lists '( ins-name start dur local-vars )
+#f 	      value *output*
+#f 	      value *reverb*
+#f 	      value *locsig*
+mus-lshort    value *clm-audio-format*
+#f            value *clm-comment*
+1.0           value *clm-decay-time*
+#f  	      value *clm-delete-reverb*
+"test.snd"    value *clm-file-name*
+#f 	      value *clm-notehook*
+#f  	      value *clm-play*
+#f            value *clm-player*           
+#f 	      value *clm-reverb*
+1     	      value *clm-reverb-channels*
+'()           value *clm-reverb-data*
+"test.reverb" value *clm-reverb-file-name*
+#f  	      value *clm-statistics*
+#f	      value *clm-verbose*
+#f            value *clm-debug*
+#()           value *clm-search-list* \ array of sound directories
+#()           value *clm-instruments*	\ array of lists '( ins-name start dur local-vars )
 
 'snd provided? [unless]
   1                 constant default-output-chans
@@ -333,14 +314,17 @@ uses /tmp as temporary path and produces something like:\n\
 /tmp/fth-12345-3.snd\n\
 [...]"
   1 *fth-file-number* +!
-  $" %s/fth-%d-%d.snd"
-  $" TMP" getenv dup unless
-    drop
-    $" TEMP" getenv dup unless
-      drop
-      $" TMPDIR" getenv dup unless
-	drop
-	$" /tmp"
+  "%s/fth-%d-%d.snd"
+  environ "TMP" hash-find ?dup-if
+    cadr
+  else
+    environ "TEMP" hash-find ?dup-if
+      cadr
+    else
+      environ "TMPDIR" hash-find ?dup-if
+	cadr
+      else
+	"/tmp"
       then
     then
   then ( tmp ) getpid *fth-file-number* @  3 >list string-format
@@ -363,7 +347,7 @@ previous
      *clm-version* ) string-format
 ;
 
-: times->samples ( start dur -- limit start )
+: times->samples ( start dur -- limit begin )
   { start dur }
   start seconds->samples { beg }
   dur   seconds->samples { len }
@@ -462,21 +446,20 @@ set-current
 \ ;instrument
 \ ' foo with-sound
 \
-\ writes a sound file of length 0.1 seconds containing 2205 samples
-\ with value 0.2.
-
+\ fills a sound file of length 0.1 seconds with 2205 samples (srate
+\ 22050) with 0.2.
 \ 
 \ 0.0 1.0                   RUN            ... LOOP
 \ 0.0 1.0 #{ :degree 45.0 } RUN-INSTRUMENT ... END-RUN
 : run            ( start dur -- )
   postpone local-variables postpone (run)            postpone ?do
-; immediate
+; immediate compile-only
 : run-instrument ( start dur locsig-args -- )
   postpone local-variables postpone (run-instrument) postpone ?do
-; immediate
+; immediate compile-only
 : end-run        ( sample -- )
   postpone r@ postpone (end-run) postpone loop
-; immediate
+; immediate compile-only
 previous
 
 : reverb-info ( caller in-chans out-chans -- )
@@ -505,6 +488,8 @@ previous
 
 \ === Playing and Recording Sound Files ===
 : find-file ( file -- fname|#f )
+  doc" Returns the possibly full path name of FILE if FILE exists or \
+if FILE was found in *CLM-SEARCH-LIST*, otherwise returns #f."
   { file }
   file file-exists? if
     file
@@ -670,8 +655,8 @@ The whole oboe.snd file will be mixed in because :frames is not specified."
     then
   then
   infile find-file to infile
-  infile false? if 'file-not-found $" cannot find %S" '( infile ) fth-raise then
-  frames infile mus-sound-frames || to frames
+  infile false? if 'file-not-found $" %s: cannot find %S" '( get-func-name infile ) fth-raise then
+  frames infile mus-sound-frames || dup unless drop undef then to frames
   outgen if *output* mus-close drop then
   chans       0>
   scaler     f0<> &&
@@ -710,14 +695,14 @@ hide
 ;
 : ws-scaled-to ( ws -- )
   { ws }
-  ws :scale-to hash-ref { scale }
+  ws :scaled-to hash-ref { scale }
   'snd provided? if
     ws ws-get-snd { snd }
     0.0  snd #t #f maxamp each fmax end-each { mx }
     mx f0<> if
-      scale mx f/ { scl }
+      scale mx f/ to scale
       snd #f #f frames { len }
-      ws :channels hash-ref 0 ?do scl 0 len snd i ( chn ) #f scale-channel drop loop
+      ws :channels hash-ref 0 ?do scale 0 len snd i ( chn ) #f scale-channel drop loop
     then
     snd save-sound drop
   else
@@ -730,7 +715,7 @@ hide
 ;
 : ws-scaled-by ( ws -- )
   { ws }
-  ws :scale-to hash-ref { scale }
+  ws :scaled-by hash-ref { scale }
   'snd provided? if
     ws ws-get-snd { snd }
     snd #f #f frames { len }
@@ -768,8 +753,9 @@ hide
   :timer            ws :timer             hash-ref
   snd-info
 ;
-\ player can be one of proc, string, or #f.
-\ 
+\ player can be one of xt, proc, string, or #f.
+\
+\       xt: output player execute
 \     proc: player '( output ) run-proc
 \   string: "player output" system
 \ else snd: output play-and-wait
@@ -837,28 +823,28 @@ set-current
   make-hash { ws }
   *ws-args* -1 array-ref { ws1 }
   *ws-args* ws array-push to *ws-args*
-  :play              #f                        ws set-args
-  :statistics        #f                        ws set-args
-  :verbose           ws1 :verbose     hash-ref ws set-args
-  :debug             ws1 :debug       hash-ref ws set-args
-  :continue-old-file #f                        ws set-args
-  :output            ws1 :output      hash-ref ws set-args
-  :channels          ws1 :channels    hash-ref ws set-args
-  :srate             ws1 :srate       hash-ref ws set-args
-  :locsig-type       ws1 :locsig-type hash-ref ws set-args
-  :header-type       ws1 :header-type hash-ref ws set-args
-  :data-format       ws1 :data-format hash-ref ws set-args
+  :play              #f                        	    ws set-args
+  :player            #f                        	    ws set-args
+  :statistics        #f                        	    ws set-args
+  :continue-old-file #f               	            ws set-args
+  :verbose           ws1 :verbose     	   hash-ref ws set-args
+  :debug             ws1 :debug       	   hash-ref ws set-args
+  :output            ws1 :output      	   hash-ref ws set-args
+  :channels          ws1 :channels    	   hash-ref ws set-args
+  :srate             ws1 :srate       	   hash-ref ws set-args
+  :locsig-type       ws1 :locsig-type 	   hash-ref ws set-args
+  :header-type       ws1 :header-type 	   hash-ref ws set-args
+  :data-format       ws1 :data-format 	   hash-ref ws set-args
   :comment $" with-sound level %d" '( *ws-args* length ) string-format ws set-args
-  :notehook          ws1 :notehook    hash-ref ws set-args
-  :scaled-to         #f                        ws set-args
-  :scaled-by         #f                        ws set-args
-  :delete-reverb     #f                        ws set-args
-  :reverb            #f                        ws set-args
-  :reverb-data       #f                        ws set-args
-  :reverb-channels   0                         ws set-args
-  :reverb-file-name  #f                        ws set-args
-  :player            #f                        ws set-args
-  :decay-time        ws1 :decay-time  hash-ref ws set-args
+  :notehook          ws1 :notehook         hash-ref ws set-args
+  :scaled-to         ws1 :scaled-to        hash-ref ws set-args
+  :scaled-by         ws1 :scaled-by        hash-ref ws set-args
+  :delete-reverb     ws1 :delete-reverb    hash-ref ws set-args
+  :reverb            ws1 :reverb           hash-ref ws set-args
+  :reverb-data       ws1 :reverb-data      hash-ref ws set-args
+  :reverb-channels   ws1 :reverb-channels  hash-ref ws set-args
+  :reverb-file-name  ws1 :reverb-file-name hash-ref ws set-args
+  :decay-time        ws1 :decay-time       hash-ref ws set-args
   ws
 ;
 : with-sound-main ( body-xt ws -- ws )
@@ -886,7 +872,6 @@ set-current
     reverb-xt xt? reverb-xt proc? || reverb-xt 3 $" a proc or xt" assert-type
     #t
   else
-    ws :reverb-file-name #f hash-set!
     #f
   then { rev? }
   ws :output            hash-ref { output }
@@ -906,12 +891,11 @@ set-current
   *output* sample->file? unless
     'with-sound-error '( get-func-name $" cannot open sample->file" _ ) fth-throw
   then
-  *output* gc-protect drop
   cont? if
     output mus-sound-srate set-mus-srate drop
     'snd provided? if output 0 find-sound dup sound? if close-sound-extend else drop then then
   then
-  revput if
+  rev? if
     cont? if
       revput continue-sample->file
     else
@@ -925,7 +909,6 @@ set-current
     *reverb* sample->file? unless
       'with-sound-error '( get-func-name $" cannot open reverb sample->file" _ ) fth-throw
     then
-    *reverb* gc-protect drop
   then
   ws ws-before-output
   ws :timer make-timer hash-set!
@@ -989,8 +972,7 @@ previous
 \        ' resflt-test :play #f :channels 2 with-sound .g
 \        lambda: resflt-test ; :output "resflt.snd" with-sound drop
 : with-sound ( body-xt keyword-args -- ws )
-  doc" Evals CLM instruments.\n\
-\\ keywords and default values:\n\
+  doc" \\ keywords and default values:\n\
 :play              *clm-play*             (#f)\n\
 :statistics        *clm-statistics*       (#f)\n\
 :verbose           *clm-verbose*          (#f)\n\
@@ -1013,6 +995,7 @@ previous
 :reverb-file-name  *clm-reverb-file-name* (\"test.reverb\")\n\
 :player            *clm-player*           (#f)\n\
 :decay-time        *clm-decay-time*       (1.0)\n\
+Executes BODY-XT, a proc object or an xt, and returns a hash with with-sound arguments.\n\
 ' resflt-test with-sound .g cr\n\
 ' resflt-test :play #t :channels 2 :srate 44100 with-sound drop"
   *ws-args* empty? if
@@ -1022,64 +1005,92 @@ previous
   then ( ws )
   with-sound-main ( ws )
 ;
-
-: clm-load ( keyword-args output -- ws )
-  doc" Loads and evals CLM files.  \
+: clm-load ( fname keyword-args -- ws )
+  doc" Loads and evals the CLM instrument call file FNAME.  \
 See with-sound for a full keyword list.\n\
-:play #t :player \"sndplay\" \"test.fsm\" clm-load drop"
-  { output }
-  output file-exists? if
-    :verbose *clm-verbose* get-optkey { verbose }
-    verbose if $" loading %S" _ '( output ) clm-message then
-    output ['] file-eval :verbose verbose with-sound ( ws )
+\"test.fsm\" :play #t :player \"sndplay\" clm-load drop"
+  *ws-args* empty? if
+    with-sound-default-args
   else
-    'no-such-file '( get-func-name output ) fth-throw
+    with-sound-args
+  then
+  { fname ws }
+  fname file-exists? if
+    ws :verbose hash-ref if $" loading %S" _ '( fname ) clm-message then
+    fname ['] file-eval ws with-sound-main ( ws )
+  else
+    'no-such-file $" %s: %S not found" '( get-func-name fname ) fth-raise
   then
 ;
 
-hide
-: with-current-sound ( body-xt keyword-args -- )
-  <{ :key
-     output fth-tempnam
-     offset 0.0
-     scaled-to #f
-     scaled-by #f -- }>
-  :output    output
-  :scaled-to scaled-to
-  :scaled-by scaled-by with-sound drop
+: with-current-sound <{ body-xt :key output fth-tempnam offset 0.0 scaled-to #f scaled-by #f -- }>
+  doc" Must be called within with-sound body.  \
+Takes all arguments from current with-sound except :output, :scaled-to, :scaled-by and :comment."
+  *output* mus-output? false? if
+    'with-sound-error $" %s can only be called within with-sound" '( get-func-name ) fth-raise
+  then
+  with-sound-args { ws }
+  ws :output    output    hash-set!
+  ws :scaled-to scaled-to hash-set!
+  ws :scaled-by scaled-by hash-set!
+  body-xt ws with-sound-main :output hash-ref to output
   output :output-frame offset seconds->samples clm-mix
   output file-delete
 ;
-set-current
-: scaled-to   ( body-xt keyword-args scl  -- ) { scl }  :scaled-to scl with-current-sound ;
-: scaled-by   ( body-xt keyword-args scl  -- ) { scl }  :scaled-by scl with-current-sound ;
-: with-offset ( body-xt keyword-args secs -- ) { secs } :offset   secs with-current-sound ;
-previous
+: scaled-to <{ body-xt scl -- }>
+  doc" Must be called within with-sound body.  \
+Scales BODY-XT's resulting sound file to SCL.\n\
+lambda: ( -- )\n\
+  0.0 0.1 660.0 0.5 fm-violin\n\
+  0.5 0.1 550.0 0.1 ['] fm-violin 0.8 scaled-to ( scaled to 0.8 )\n\
+; with-sound"
+  body-xt :scaled-to scl with-current-sound
+;
+: scaled-by <{ body-xt scl -- }>
+  doc" Must be called within with-sound body.  \
+Scales BODY-XT's resulting sound file by SCL.\n\
+lambda: ( -- )\n\
+  0.0 0.1 660.0 0.5 fm-violin\n\
+  0.5 0.1 550.0 0.1 ['] fm-violin 2.0 scaled-by ( scaled to 0.2 )\n\
+; with-sound"
+  body-xt :scaled-by scl with-current-sound
+;
+: with-offset <{ body-xt sec -- }>
+  doc" Must be called within with-sound body.  \
+Mixes BODY-XT's resulting sound file into main sound file at SEC seconds.\n\
+lambda: ( -- )\n\
+  0.0 0.1 660.0 0.5 fm-violin\n\
+  0.5 0.1 550.0 0.1 ['] fm-violin 1.0 with-offset ( its actual begin time is 1.5 )\n\
+; with-sound"
+  body-xt :offset sec with-current-sound
+;
 
-: with-mix ( body-str args fname start -- )
+: with-mix <{ body-str args fname start -- }>
   doc" BODY-STR is a string with with-sound commands, \
 ARGS is a list of with-sound arguments, \
 FNAME is the temporary mix file name without extension, \
 and START is the begin time for mix in.\n\
 lambda: ( -- )\n\
   0.0 0.1 440 0.1 fm-violin\n\
-  $\"\n\
+  \"\n\
   0.0 0.1 550 0.1 fm-violin\n\
   0.1 0.1 660 0.1 fm-violin\n\
-  \" '() $\" sec1\" 0.5 with-mix\n\
-  $\"\n\
+  \" '() \"sec1\" 0.5 with-mix\n\
+  \"\n\
   0.0 0.1  880 0.1 :reverb-amount 0.2 fm-violin\n\
   0.1 0.1 1320 0.1 :reverb-amount 0.2 fm-violin\n\
-  \" '( :reverb ['] jc-reverb ) $\" sec2\" 1.0 with-mix\n\
+  \" '( :reverb ['] jc-reverb ) \"sec2\" 1.0 with-mix\n\
   2.0 0.1 220 0.1 fm-violin\n\
   ; with-sound drop"
-  { body-str args fname start }
   body-str string? body-str 1 $" a string" assert-type
   args     list?   args     2 $" a list"   assert-type
   fname    string? fname    3 $" a string" assert-type
   start    number? start    4 $" a number" assert-type
-  fname $" .snd" $+ { snd-file }
-  fname $" .fsm" $+ { mix-file }
+  *output* mus-output? false? if
+    'with-sound-error $" %s can only be called within with-sound" '( get-func-name ) fth-raise
+  then
+  fname ".snd" $+ { snd-file }
+  fname ".fsm" $+ { mix-file }
   snd-file file-exists? if
     snd-file file-mtime
   else
@@ -1089,8 +1100,7 @@ lambda: ( -- )\n\
     mix-file readlines "" array-join
   else
     ""
-  then { old-body }
-  old-body body-str string= if
+  then ( old-body ) body-str string= if
     mix-file file-mtime
   else
     mix-file #( body-str ) writelines
@@ -1099,7 +1109,7 @@ lambda: ( -- )\n\
   snd-time false?
   mix-time false? ||
   snd-time mix-time b< || if
-    mix-file ['] file-eval args each end-each :output snd-file with-sound drop
+    mix-file args each end-each :output snd-file clm-load drop
   then
   snd-file :output-frame start seconds->samples clm-mix
 ;
@@ -1111,21 +1121,25 @@ with-sound will be feed with ws-args und ws-xts from WS-XT-LST.  \
 :output is set to tempnam which will be on stack before executing BODY-XT.  \
 These temporary files will be deleted after execution of BODY-XT.\n\
 '( '( '( :reverb ' jc-reverb ) 0.0 1 220 0.2 ' fm-violin )\n\
-   '( '()                      0.5 1 440 0.3 ' fm-violin ) ) ( ws-xt-lst )\n\
+   '( '()                      0.5 1 440 0.3 ' fm-violin ) ) ( the ws-xt-lst )\n\
 lambda: { tmp1 tmp2 }\n\
   tmp1 :output tmp2 clm-mix\n\
   tmp1 clm-mix\n\
-; ( body-xt ) ' sound-let with-sound drop"
+; ( the body-xt ) ' sound-let with-sound drop"
   { ws-xt-lst body-xt }
   ws-xt-lst list?              ws-xt-lst 1 $" a list"       assert-type
-  body-xt xt? body-xt proc? ||   body-xt 1 $" a proc or xt" assert-type
-  ws-xt-lst length nil make-list { outfiles } \ run-proc requires a list, not an array
+  body-xt xt? body-xt proc? ||   body-xt 2 $" a proc or xt" assert-type
+  *output* mus-output? false? if
+    'with-sound-error $" %s can only be called within with-sound" '( get-func-name ) fth-raise
+  then
+  nil { outfiles }
   ws-xt-lst each { arg }
-    fth-tempnam { oname }
-    arg cdr     ( ws-xts )  each end-each
-    arg car     ( ws-args ) each end-each :output oname with-sound drop
-    outfiles i oname list-set!
+    arg car ( args ) each end-each with-sound-args { ws }
+    ws :output fth-tempnam hash-set!
+    arg cdr ( xt ) each end-each ws with-sound-main ( ws )
+    :output hash-ref outfiles cons to outfiles
   end-each
+  outfiles list-reverse to outfiles
   body-xt xt? if
     outfiles each end-each body-xt execute
   else

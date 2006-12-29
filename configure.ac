@@ -2067,10 +2067,11 @@ if test "$enable_snd_debug" = yes ; then
     fi
   fi
 else
-  CFLAGS="-I. $CFLAGS"
+  CFLAGS="-O2 -I. $CFLAGS"
 fi
 
 # -ffast-math appears to make exp about twice as fast, but slows down filtering by the same amount -- kinda strange
+#   timing tests using -O3 -ffast-math indicate an overall speedup of maybe 4-5%
 
 if test "$with_profiling" = yes; then
   CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities -pg"

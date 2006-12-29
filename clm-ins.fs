@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Wed Dec 27 03:28:27 CET 2006
+\ Changed: Fri Dec 29 05:23:15 CET 2006
 
 \ Commentary:
 \
@@ -61,7 +61,7 @@ require env
 \ sndins.so instruments can be called with fm-violin-ins etc.
 [defined] fm-violin [if] ' fm-violin alias fm-violin-ins [then]
 [defined] jc-reverb [if] ' jc-reverb alias jc-reverb-ins [then]
-[defined] nref      [if] ' nrev      alias nrev-ins      [then]
+[defined] nrev      [if] ' nrev      alias nrev-ins      [then]
 
 \ General input function for src, granulate etc.
 : readin-cb ( gen -- proc; dir self -- r )
@@ -1490,7 +1490,7 @@ instrument: cellon <{ start dur pitch0
 ;
 
 \ JL-REVERB
-instrument: jl-reverb ( keyword-args -- )
+instrument: jl-reverb <{ :key -- }>
   *output* mus-channels { chans }
   *reverb* mus-channels { rev-chans }
   *reverb* reverb-dur { dur }
@@ -2230,7 +2230,7 @@ set-current
 \ SCRATCH-INS
 instrument: scratch-ins <{ start file src-ratio turntable -- }>
   file find-file to file
-  file false? if 'file-not-found $" cannot find %S" '( file ) fth-raise then
+  file false? if 'file-not-found $" %s: cannot find %S" '( get-func-name file ) fth-raise then
   file mus-sound-duration { dur }
   file make-readin { f }
   turntable 0 object-ref seconds->samples { cur-samp }
@@ -2295,7 +2295,7 @@ instrument: pins <{ start dur file amp
      attack        #f -- }>
   doc" start dur \"fyow.snd\" 1.0 :time-scaler 2.0 pins"
   file find-file to file
-  file false? if 'file-not-found $" cannot find %S" '( file ) fth-raise then
+  file false? if 'file-not-found $" %s: cannot find %S" '( get-func-name file ) fth-raise then
   file mus-sound-duration { fdur }
   dur time-scaler f/      { sdur }
   sdur fdur f> if
@@ -2559,7 +2559,7 @@ instrument: clm-expsrc <{ start dur in-file exp-ratio src-ratio amp
      rev           #f
      start-in-file 0 -- }>
   in-file find-file to in-file
-  in-file false? if 'file-not-found $" cannot find %S" '( in-file ) fth-raise then
+  in-file false? if 'file-not-found $" %s: cannot find %S" '( get-func-name in-file ) fth-raise then
   start-in-file in-file mus-sound-srate f* fround->s { stf }
   :file in-file :channel 0 :start stf make-readin { fdA }
   :input fdA readin-cb :expansion exp-ratio make-granulate { exA }
@@ -2600,7 +2600,7 @@ instrument: exp-snd <{ file start dur amp
 \"fyow.snd\" 0 3 1 '( 0 1 1 3 ) 0.4 0.15 '( 0 2 1 0.5 ) 0.05 ' exp-snd with-sound\n\
 \"oboe.snd\" 0 3 1 '( 0 1 1 3 ) 0.4 0.15 '( 0 2 1 0.5 ) 0.2  ' exp-snd with-sound"
   file find-file to file
-  file false? if 'file-not-found $" cannot find %S" '( file ) fth-raise then
+  file false? if 'file-not-found $" %s: cannot find %S" '( get-func-name file ) fth-raise then
   file 0 make-readin { f0 }
   :envelope exp-amt list? if exp-amt '( 0 1 1 1 ) || else '( 0 exp-amt 1 exp-amt ) then
   :duration dur make-env { expenv }
@@ -2705,10 +2705,10 @@ instrument: expfil <{ start dur hopsecs rampsecs steadysecs file1 file2 -- }>
   start seconds->samples   { out1 }
   hop out1 +               { out2 }
   file1 find-file to file1
-  file1 false? if 'file-not-found $" cannot find %S" '( file1 ) fth-raise then
+  file1 false? if 'file-not-found $" %s: cannot find %S" '( get-func-name file1 ) fth-raise then
   file1 0 make-readin { fil1 }
   file2 find-file to file2
-  file2 false? if 'file-not-found $" cannot find %S" '( file2 ) fth-raise then
+  file2 false? if 'file-not-found $" %s: cannot find %S" '( get-func-name file2 ) fth-raise then
   file2 0 make-readin { fil2 }
   0.0 { inval }
   start dur #{ :degree 90.0 random } run-instrument
@@ -2844,7 +2844,7 @@ instrument: graph-eq <{ file start dur
      a1              0.99 -- }>
   doc" \"oboe.snd\" 0 2 graph-eq"
   file find-file to file
-  file false? if 'file-not-found $" cannot find %S" '( file ) fth-raise then
+  file false? if 'file-not-found $" %s: cannot find %S" '( get-func-name file ) fth-raise then
   :file file :start file mus-sound-srate file-start f* fround->s make-readin { rd }
   :envelope amp-env :scaler amplitude :duration dur :base base make-env { ampf }
   gain-freq-list length 2/ { len }
@@ -2900,7 +2900,7 @@ instrument: anoi <{ fname start dur :optional fftsize 128 amp-scaler 1.0 R two-p
   0.0 { amp }
   amp-scaler 4.0 f* mus-srate f/ { incr }
   fname find-file to fname
-  fname false? if 'file-not-found $" cannot find %S" '( fname ) fth-raise then
+  fname false? if 'file-not-found $" %s: cannot find %S" '( get-func-name fname ) fth-raise then
   fname make-file->sample { fil }
   1.0 R fftsize f/ f- { radius }
   mus-srate fftsize f/ { bin }
@@ -2975,7 +2975,7 @@ instrument: fullmix <{ in-file
 :envelope '( 0 0 1 1 ) :duration dur :scaler 0.5 make-env value en
 \"oboe.snd\" 0 2 0 '( '( 0.8 en ) ) 2.0 ' fullmix with-sound"
   in-file find-file to in-file
-  in-file false? if 'file-not-found $" cannot find %S" '( in-file ) fth-raise then
+  in-file false? if 'file-not-found $" %s: cannot find %S" '( get-func-name in-file ) fth-raise then
   dur unless in-file mus-sound-duration inbeg f- sr if sr fabs else 1.0 then f/ to dur then
   in-file mus-sound-chans { in-chans }
   inbeg in-file mus-sound-srate f* fround->s { inloc }

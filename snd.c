@@ -313,7 +313,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   #if HAVE_GUILE
     static void snd_main(void *closure, int argc, char **argv)
   #else
-    int main (int argc, char **argv)
+    int main(int argc, char **argv)
   #endif
 #endif
 {

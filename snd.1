@@ -6,12 +6,9 @@ snd \- a sound editor
 .B snd 
 .I [\-l FILE] [\-p DIR] [\-v] [\-h] [\-notebook] [\-separate] [\-noglob] [\-noinit] [\-\-help] [\-\-version]
 .SH DESCRIPTION
-Snd is a sound editor modelled loosely after Emacs and an old, sorely-missed
-PDP-10 sound editor named Dpysnd. It can accommodate any number of sounds
-each with any number of channels, and can be customized and extended
-using Guile or Ruby.
+Snd is a sound editor.
 .PP
-.B snd
+.B Snd
 is free software.
 It's available as source, prebuilt images, and rpm packages
 at http://ccrma.stanford.edu/ and ftp://ccrma-ftp.stanford.edu/pub/Lisp/.
@@ -30,6 +27,8 @@ Preload sound files found in directory dir.
 Don't load any global configuration files.
 .IP \-noinit
 Don't load any initialization file (~/.snd)
+.IP \-nogtkrc
+Don't look for any gtkrc stuff.
 .IP \-\-help
 Give some help.
 .IP \-\-version

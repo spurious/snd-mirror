@@ -1321,7 +1321,7 @@ char *save_options_in_prefs(void)
 #endif
 }
 
-
+#if 0
 static char *file_extension(char *arg)
 {
   char *dot = NULL, *sp;
@@ -1331,6 +1331,7 @@ static char *file_extension(char *arg)
 	dot = (++sp);
   return(dot);
 }
+#endif
 
 void set_init_filename(const char *filename)
 {
@@ -1393,7 +1394,8 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 	  (strcmp("-separate", argname) == 0) ||
 	  (strcmp("-nostdin", argname) == 0) ||
 	  (strcmp("-noglob", argname) == 0) ||
-	  (strcmp("-noinit", argname) == 0))
+	  (strcmp("-noinit", argname) == 0) ||
+	  (strcmp("-nogtkrc", argname) == 0))
 	return(auto_open_ctr + 1);
       else
 	{

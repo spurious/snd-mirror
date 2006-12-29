@@ -139,6 +139,7 @@ the usual Xt/X-related flags like -xrm).</p>
 <tr><td bgcolor="#f6f8ff"><code>-b -batch &lt;file&gt;</code></td>  <td bgcolor="#f6f8ff">load Scheme, Ruby, or Forth code in &lt;file&gt; as a batch (no GUI) job</td></tr>
 <tr><td><code>-I &lt;dir&gt;</code></td>          <td>add &lt;dir&gt; to the load search list</td></tr>
 <tr><td bgcolor="#f6f8ff"><code>-init &lt;file&gt;</code></td>      <td bgcolor="#f6f8ff">use &lt;file&gt; as the init file, rather than ~/.snd</td></tr>
+<tr><td><code>-nogtkrc</code></td>                 <td>don't read ~/Snd.gtkrc or any of its friends (Gtk only)</td></tr>
 </table>
 
 <img src="note.png" alt="notebook" hspace=20 vspace=10>
@@ -695,7 +696,7 @@ widget holding the sounds.
 <table width="50%" border=0 vspace=20><tr><td bgcolor="lightgreen" valign="middle"><h4>Gtk</h4></td></tr></table>
 
 <p>In Gtk, the various default colors and fonts are set via the "gtkrc"
-file.  If you are using some global "theme", you probably have ~/.gtkrc-2.0.
+file(s).  If you are using some global "theme", you probably have ~/.gtkrc-2.0.
 Snd looks for this file first.  If it isn't found, Snd looks on the
 current directory for Snd.gtkrc.  If that isn't found, it looks for
 ~/Snd.gtkrc. If that isn't found, it uses a built-in default equivalent
@@ -734,6 +735,9 @@ Frank Barknecht made a more elaborate example using the Xfce-b5 theme:</p>
 <br>
 <img src="snd-ls.png" alt="snd-ls">
 
+<p>To get the default theme (set by Gnome or whatever), use the -nogtkrc startup switch.
+This is especially useful if you're using an inverse video theme.
+</p>
 <br>
 <br><br>
 

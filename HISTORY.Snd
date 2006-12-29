@@ -3,6 +3,7 @@ Snd change log
 
 2007 ----------------------------------------------------------------
 
+  29-Dec:    -nogtkrc startup switch.
   27-Dec:    add-source-file-extension.
              pi is now defined by default in Scheme.
   21-Dec:    unclip-channel.

@@ -175,7 +175,7 @@ RETSIGTYPE top_level_catch(int ignore)
 
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
-static bool noglob = false, noinit = false, batch = false, nostdin = false;
+static bool noglob = false, noinit = false, batch = false, nostdin = false, nogtkrc = false;
 
 #if HAVE_EXTENSION_LANGUAGE
 static gint stdin_id = 0;
@@ -582,15 +582,18 @@ void snd_doit(int argc, char **argv)
 		if (strcmp(argv[i], "-nostdin") == 0)
 		  nostdin = true;
 		else
-		  if ((strcmp(argv[i], "-b") == 0) || 
-		      (strcmp(argv[i], "-batch") == 0))
-		    batch = true;
+		  if (strcmp(argv[i], "-nogtkrc") == 0)
+		    nogtkrc = true;
 		  else
-		    if (strcmp(argv[i], "-init") == 0)
-		      set_init_filename(argv[++i]);
-                    else
-		      if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
-			check_features_list(argv[i + 1]);
+		    if ((strcmp(argv[i], "-b") == 0) || 
+			(strcmp(argv[i], "-batch") == 0))
+		      batch = true;
+		    else
+		      if (strcmp(argv[i], "-init") == 0)
+			set_init_filename(argv[++i]);
+		      else
+			if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
+			  check_features_list(argv[i + 1]);
 
   ss->batch_mode = batch;
   set_auto_resize(AUTO_RESIZE_DEFAULT);
@@ -682,274 +685,277 @@ void snd_doit(int argc, char **argv)
   ss->orig_listener_font = copy_string(listener_font(ss));
   ss->orig_tiny_font = copy_string(tiny_font(ss));
 
-  str = mus_expand_filename("~/.gtkrc-2.0");
-  if (mus_file_probe(str))
-    gtk_rc_parse(str);
-  else
+  if (!nogtkrc)
     {
-      if (mus_file_probe("Snd.gtkrc"))
-	gtk_rc_parse("Snd.gtkrc");
+      str = mus_expand_filename("~/.gtkrc-2.0");
+      if (mus_file_probe(str))
+	gtk_rc_parse(str);
       else
 	{
-	  if (str) FREE(str);
-	  str = mus_expand_filename("~/Snd.gtkrc");
-	  if (mus_file_probe(str))
-	    gtk_rc_parse(str);
-#if WITH_BUILTIN_GTKRC
-	  else 
+	  if (mus_file_probe("Snd.gtkrc"))
+	    gtk_rc_parse("Snd.gtkrc");
+	  else
 	    {
-	      gtk_rc_parse_string("\n\
-\n\
-# This is the same as Snd.gtkrc\n\
-style \"default\"\n\
-{\n\
-#  font_name = \"Serif 11\"\n\
-\n\
-  fg[NORMAL]      = { 0.0,  0.00, 0.0 }\n\
-  text[NORMAL]    = { 0.0,  0.0,  0.0 }\n\
-  bg[NORMAL]      = { 0.93, 0.93, 0.87 }\n\
-  bg[ACTIVE]      = { 0.80, 0.80, 0.75 }\n\
-  bg[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n\
-  base[NORMAL]    = { 1.00, 1.00, 1.00 }\n\
-  bg[PRELIGHT]    = { 0.70, 0.70, 0.64 }\n\
-  fg[PRELIGHT]    = { 1.0,  0.0,  0.0}\n\
-\n\
-  GtkPaned::handle_size = 6\n\
-  xthickness = 1\n\
-  ythickness = 1\n\
-}\n\
-\n\
-style \"default_button\" = \"default\"\n\
-{\n\
-  GtkButton::default_border = { 1, 0, 1, 0 }\n\
-  GtkButton::default_outside_border = { 1, 0, 1, 0 }\n\
-  GtkButton::inner_border = { 1, 0, 1, 0 }\n\
-  GtkButton::focus_line_width = 0\n\
-  GtkButton::focus_padding = 0\n\
-}\n\
-\n\
-style \"default_menu\" = \"default\"\n\
-{\n\
-  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
-}\n\
-\n\
-style \"default_pane\" = \"default\"\n\
-{\n\
-  bg[NORMAL] = { 0.56, 0.93, 0.56 }\n\
-  bg[PRELIGHT] = { 0.26, 0.8, 0.26}\n\
-}\n\
-\n\
-style \"default_entry\" = \"default\"\n\
-{\n\
-  base[ACTIVE]      = { 0.93, 0.93, 0.87 }\n\
-  base[SELECTED]    = { 0.80, 0.80, 0.75 }\n\
-  base[PRELIGHT]    = { 1.0, 1.0, 1.0}\n\
-  base[NORMAL]      = { 0.93, 0.93, 0.87 }\n\
-  base[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n\
-  bg[ACTIVE]        = { 1.0, 1.0, 1.0 }\n\
-  bg[SELECTED]      = { 1.0, 1.0, 1.0 }\n\
-  bg[PRELIGHT]      = { 1.0, 1.0, 1.0 }\n\
-  text[ACTIVE]      = { 0.0, 0.0, 0.0 }\n\
-  text[SELECTED]    = { 0.0, 0.0, 0.0 }\n\
-  text[PRELIGHT]    = { 0.0, 0.0, 0.0 }\n\
-}\n\
-\n\
-style \"default_text\" = \"default_entry\"\n\
-{\n\
-  base[NORMAL] = { 1.0, 1.0, 1.0 }\n\
-}\n\
-\n\
-style \"default_slider\" = \"default\"\n\
-{\n\
-  bg[NORMAL] = { 0.90, 0.90, 0.85 }\n\
-  bg[ACTIVE] = { 0.80, 0.80, 0.75 }\n\
-  bg[PRELIGHT] = { 0.70, 0.70, 0.64 }\n\
-\n\
-  GtkRange::slider_width = 13\n\
-  GtkRange::stepper_size = 10\n\
-}\n\
-style \"default_frame\" = \"default\"\n\
-{\n\
-  xthickness = 4\n\
-  ythickness = 4\n\
-}\n\
-class \"GtkWidget\" style \"default\"\n\
-class \"GtkButton\" style \"default_button\"\n\
-class \"GtkMenu\" style \"default_menu\"\n\
-class \"GtkMenuBar\" style \"default_menu\"\n\
-class \"GtkEntry\" style \"default_entry\"\n\
-class \"GtkTextView\" style \"default_text\"\n\
-class \"GtkPaned\" style \"default_pane\"\n\
-class \"GtkRange\" style \"default_slider\"\n\
-class \"GtkFrame\" style \"default_frame\"\n\
-\n\
-style \"zoom_slider\" = \"default_slider\"\n\
-{\n\
-  bg[NORMAL] = { 0.70, 0.70, 0.64 }\n\
-  bg[ACTIVE] = { 0.54, 0.54, 0.51 }\n\
-  bg[PRELIGHT] = { 0.44, 0.44, 0.36 }\n\
-\n\
-  GtkRange::slider_width = 12\n\
-  GtkRange::stepper_size = 12\n\
-}\n\
-\n\
-widget \"*.zx_slider\" style \"zoom_slider\"\n\
-widget \"*.zy_slider\" style \"zoom_slider\"\n\
-widget \"*.gzy_slider\" style \"zoom_slider\"\n\
-widget \"*.panel_button\" style \"zoom_slider\"\n\
-\n\
-style \"listener\" = \"default\"\n\
-{\n\
-#  font_name = \"Monospace 10\"\n\
-\n\
-  base[NORMAL] = { 0.94, 0.97, 1.0 }\n\
-  text[NORMAL] = { 0.0, 0.0, 0.0 }\n\
-}\n\
-\n\
-widget \"*.listener_text\" style \"listener\"\n\
-\n\
-style \"help\" = \"default_button\"\n\
-{\n\
-  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
-  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n\
-}\n\
-\n\
-widget \"*.help_button\" style \"help\"\n\
-\n\
-style \"quit\" = \"default_button\"\n\
-{\n\
-  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
-  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n\
-}\n\
-\n\
-widget \"*.quit_button\" style \"quit\"\n\
-\n\
-style \"doit\" = \"default_button\"\n\
-{\n\
-  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
-  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n\
-}\n\
-\n\
-widget \"*.doit_button\" style \"doit\"\n\
-\n\
-style \"doit_again\" = \"default_button\"\n\
-{\n\
-  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
-  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n\
-}\n\
-\n\
-widget \"*.doit_again_button\" style \"doit_again\"\n\
-\n\
-style \"reset\" = \"default_button\"\n\
-{\n\
-  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
-  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n\
-}\n\
-\n\
-widget \"*.reset_button\" style \"reset\"\n\
-widget \"*.the_unpane\" style \"default\"\n\
-style \"recorder\" = \"default\"\n\
-{\n\
-  xthickness = 8\n\
-  ythickness = 8\n\
-}\n\
-widget \"*.record_frame\" style \"recorder\"\n\
-style \"white_button\" = \"default_button\"\n\
-{\n\
-  bg[NORMAL] = { 1.0, 1.0, 1.0 }\n\
-  bg[PRELIGHT] = { 0.94, 0.97, 1.0 }\n\
-  fg[PRELIGHT] = { 0.0,  0.0,  0.0}\n\
-  GtkButton::default_border = { 0, 0, 0, 0 }\n\
-  GtkButton::default_outside_border = { 0, 0, 0, 0 }\n\
-  GtkButton::inner_border = { 0, 0, 0, 0 }\n\
-  GtkButton::focus_line_width = 0\n\
-  GtkButton::focus_padding = 0\n\
-  xthickness = 0\n\
-  ythickness = 0\n\
-}\n\
-\n\
-widget \"*.white_button\" style \"white_button\"\n\
-style \"env_button\" = \"default_button\"\n\
-{\n\
-  bg[NORMAL] = { 0.94, 0.97, 1.0 }\n\
-  bg[INSENSITIVE] = { 0.94, 0.97, 1.0 }\n\
-  GtkButton::default_border = { 0, 0, 0, 0 }\n\
-  GtkButton::default_outside_border = { 0, 0, 0, 0 }\n\
-  GtkButton::inner_border = { 0, 0, 0, 0 }\n\
-  GtkButton::focus_line_width = 0\n\
-  GtkButton::focus_padding = 0\n\
-  xthickness = 0\n\
-  ythickness = 0\n\
-}\n\
-\n\
-widget \"*.env_button\" style \"env_button\"\n\
-style \"label_button\" = \"default_button\"\n\
-{\n\
-  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
-  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n\
-  fg[PRELIGHT] = { 0.0,  0.0,  0.0}\n\
-\n\
-  GtkButton::default_border = { 0, 0, 0, 0 }\n\
-  GtkButton::default_outside_border = { 0, 0, 0, 0 }\n\
-  GtkButton::inner_border = { 0, 0, 0, 0 }\n\
-  GtkButton::focus_line_width = 0\n\
-  GtkButton::focus_padding = 0\n\
-  xthickness = 0\n\
-  ythickness = 0\n\
-}\n\
-widget \"*.label_button\" style \"label_button\"\n\
-binding \"gtk-emacs-text-entry\"\n\
-{\n\
-  bind \"<ctrl>b\" { \"move-cursor\" (logical-positions, -1, 0) }\n\
-  bind \"<shift><ctrl>b\" { \"move-cursor\" (logical-positions, -1, 1) }\n\
-  bind \"<ctrl>f\" { \"move-cursor\" (logical-positions, 1, 0) }\n\
-  bind \"<shift><ctrl>f\" { \"move-cursor\" (logical-positions, 1, 1) }\n\
-  bind \"<alt>b\" { \"move-cursor\" (words, -1, 0) }\n\
-  bind \"<shift><alt>b\" { \"move-cursor\" (words, -1, 1) }\n\
-  bind \"<alt>f\" { \"move-cursor\" (words, 1, 0) }\n\
-  bind \"<shift><alt>f\" { \"move-cursor\" (words, 1, 1) }\n\
-  bind \"<ctrl>a\" { \"move-cursor\" (paragraph-ends, -1, 0) }\n\
-  bind \"<shift><ctrl>a\" { \"move-cursor\" (paragraph-ends, -1, 1) }\n\
-  bind \"<ctrl>e\" { \"move-cursor\" (paragraph-ends, 1, 0) }\n\
-  bind \"<shift><ctrl>e\" { \"move-cursor\" (paragraph-ends, 1, 1) }\n\
-  bind \"<ctrl>w\" { \"cut-clipboard\" () }\n\
-  bind \"<ctrl>y\" { \"paste-clipboard\" () }\n\
-  bind \"<ctrl>d\" { \"delete-from-cursor\" (chars, 1) }\n\
-  bind \"<alt>d\" { \"delete-from-cursor\" (word-ends, 1) }\n\
-  bind \"<ctrl>k\" { \"delete-from-cursor\" (paragraph-ends, 1) }\n\
-  bind \"<alt>backslash\" { \"delete-from-cursor\" (whitespace, 1) }\n\
-  bind \"<alt>space\" { \"delete-from-cursor\" (whitespace, 1)\n\
-                      \"insert-at-cursor\" (\" \") }\n\
-  bind \"<alt>KP_Space\" { \"delete-from-cursor\" (whitespace, 1)\n\
-                         \"insert-at-cursor\" (\" \")  }\n\
-  bind \"<ctrl>u\" {\n\
-     \"move-cursor\" (paragraph-ends, -1, 0)\n\
-     \"delete-from-cursor\" (paragraph-ends, 1)\n\
-  }\n\
-  bind \"<ctrl>h\" { \"delete-from-cursor\" (chars, -1) }\n\
-  bind \"<ctrl>w\" { \"delete-from-cursor\" (word-ends, -1) }\n\
-}\n\
-binding \"gtk-emacs-text-view\"\n\
-{\n\
-  bind \"<ctrl>p\" { \"move-cursor\" (display-lines, -1, 0) }\n\
-  bind \"<shift><ctrl>p\" { \"move-cursor\" (display-lines, -1, 1) }\n\
-  bind \"<ctrl>n\" { \"move-cursor\" (display-lines, 1, 0) }\n\
-  bind \"<shift><ctrl>n\" { \"move-cursor\" (display-lines, 1, 1) }\n\
-  bind \"<ctrl>space\" { \"set-anchor\" () }\n\
-  bind \"<ctrl>KP_Space\" { \"set-anchor\" () }\n\
-}\n\
-class \"GtkEntry\" binding \"gtk-emacs-text-entry\"\n\
-class \"GtkTextView\" binding \"gtk-emacs-text-entry\"\n\
-class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n\
+	      if (str) FREE(str);
+	      str = mus_expand_filename("~/Snd.gtkrc");
+	      if (mus_file_probe(str))
+		gtk_rc_parse(str);
+#if WITH_BUILTIN_GTKRC
+	      else 
+		{
+		  gtk_rc_parse_string("\n\
+\n					 \
+# This is the same as Snd.gtkrc\n	 \
+style \"default\"\n			 \
+{\n					 \
+#  font_name = \"Serif 11\"\n		 \
+\n						\
+  fg[NORMAL]      = { 0.0,  0.00, 0.0 }\n	\
+  text[NORMAL]    = { 0.0,  0.0,  0.0 }\n	\
+  bg[NORMAL]      = { 0.93, 0.93, 0.87 }\n	\
+  bg[ACTIVE]      = { 0.80, 0.80, 0.75 }\n	\
+  bg[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n	\
+  base[NORMAL]    = { 1.00, 1.00, 1.00 }\n	\
+  bg[PRELIGHT]    = { 0.70, 0.70, 0.64 }\n	\
+  fg[PRELIGHT]    = { 1.0,  0.0,  0.0}\n	\
+\n						\
+  GtkPaned::handle_size = 6\n			\
+  xthickness = 1\n				\
+  ythickness = 1\n				\
+}\n						\
+\n						\
+style \"default_button\" = \"default\"\n	\
+{\n						\
+  GtkButton::default_border = { 1, 0, 1, 0 }\n		\
+  GtkButton::default_outside_border = { 1, 0, 1, 0 }\n	\
+  GtkButton::inner_border = { 1, 0, 1, 0 }\n		\
+  GtkButton::focus_line_width = 0\n			\
+  GtkButton::focus_padding = 0\n			\
+}\n							\
+\n							\
+style \"default_menu\" = \"default\"\n			\
+{\n							\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n			\
+}\n							\
+\n							\
+style \"default_pane\" = \"default\"\n			\
+{\n							\
+  bg[NORMAL] = { 0.56, 0.93, 0.56 }\n			\
+  bg[PRELIGHT] = { 0.26, 0.8, 0.26}\n			\
+}\n							\
+\n							\
+style \"default_entry\" = \"default\"\n			\
+{\n							\
+  base[ACTIVE]      = { 0.93, 0.93, 0.87 }\n		\
+  base[SELECTED]    = { 0.80, 0.80, 0.75 }\n		\
+  base[PRELIGHT]    = { 1.0, 1.0, 1.0}\n		\
+  base[NORMAL]      = { 0.93, 0.93, 0.87 }\n		\
+  base[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n		\
+  bg[ACTIVE]        = { 1.0, 1.0, 1.0 }\n		\
+  bg[SELECTED]      = { 1.0, 1.0, 1.0 }\n		\
+  bg[PRELIGHT]      = { 1.0, 1.0, 1.0 }\n		\
+  text[ACTIVE]      = { 0.0, 0.0, 0.0 }\n		\
+  text[SELECTED]    = { 0.0, 0.0, 0.0 }\n		\
+  text[PRELIGHT]    = { 0.0, 0.0, 0.0 }\n		\
+}\n							\
+\n							\
+style \"default_text\" = \"default_entry\"\n		\
+{\n							\
+  base[NORMAL] = { 1.0, 1.0, 1.0 }\n			\
+}\n							\
+\n							\
+style \"default_slider\" = \"default\"\n		\
+{\n							\
+  bg[NORMAL] = { 0.90, 0.90, 0.85 }\n			\
+  bg[ACTIVE] = { 0.80, 0.80, 0.75 }\n			\
+  bg[PRELIGHT] = { 0.70, 0.70, 0.64 }\n			\
+\n							\
+  GtkRange::slider_width = 13\n				\
+  GtkRange::stepper_size = 10\n				\
+}\n							\
+style \"default_frame\" = \"default\"\n			\
+{\n							\
+  xthickness = 4\n					\
+  ythickness = 4\n					\
+}\n							\
+class \"GtkWidget\" style \"default\"\n			\
+class \"GtkButton\" style \"default_button\"\n		\
+class \"GtkMenu\" style \"default_menu\"\n		\
+class \"GtkMenuBar\" style \"default_menu\"\n		\
+class \"GtkEntry\" style \"default_entry\"\n		\
+class \"GtkTextView\" style \"default_text\"\n		\
+class \"GtkPaned\" style \"default_pane\"\n		\
+class \"GtkRange\" style \"default_slider\"\n		\
+class \"GtkFrame\" style \"default_frame\"\n		\
+\n							\
+style \"zoom_slider\" = \"default_slider\"\n		\
+{\n							\
+  bg[NORMAL] = { 0.70, 0.70, 0.64 }\n			\
+  bg[ACTIVE] = { 0.54, 0.54, 0.51 }\n			\
+  bg[PRELIGHT] = { 0.44, 0.44, 0.36 }\n			\
+\n							\
+  GtkRange::slider_width = 12\n				\
+  GtkRange::stepper_size = 12\n				\
+}\n							\
+\n							\
+widget \"*.zx_slider\" style \"zoom_slider\"\n		\
+widget \"*.zy_slider\" style \"zoom_slider\"\n		\
+widget \"*.gzy_slider\" style \"zoom_slider\"\n		\
+widget \"*.panel_button\" style \"zoom_slider\"\n	\
+\n							\
+style \"listener\" = \"default\"\n			\
+{\n							\
+#  font_name = \"Monospace 10\"\n			\
+\n							\
+  base[NORMAL] = { 0.94, 0.97, 1.0 }\n			\
+  text[NORMAL] = { 0.0, 0.0, 0.0 }\n			\
+}\n							\
+\n							\
+widget \"*.listener_text\" style \"listener\"\n		\
+\n							\
+style \"help\" = \"default_button\"\n			\
+{\n							\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n			\
+  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n			\
+}\n							\
+\n							\
+widget \"*.help_button\" style \"help\"\n		\
+\n							\
+style \"quit\" = \"default_button\"\n			\
+{\n							\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n			\
+  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n			\
+}\n							\
+\n							\
+widget \"*.quit_button\" style \"quit\"\n		\
+\n							\
+style \"doit\" = \"default_button\"\n			\
+{\n							\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n			\
+  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n			\
+}\n							\
+\n							\
+widget \"*.doit_button\" style \"doit\"\n		\
+\n							\
+style \"doit_again\" = \"default_button\"\n		\
+{\n							\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n			\
+  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n			\
+}\n							\
+\n							\
+widget \"*.doit_again_button\" style \"doit_again\"\n	\
+\n							\
+style \"reset\" = \"default_button\"\n			\
+{\n							\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n			\
+  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n			\
+}\n							\
+\n							\
+widget \"*.reset_button\" style \"reset\"\n		\
+widget \"*.the_unpane\" style \"default\"\n		\
+style \"recorder\" = \"default\"\n			\
+{\n							\
+  xthickness = 8\n					\
+  ythickness = 8\n					\
+}\n							\
+widget \"*.record_frame\" style \"recorder\"\n		\
+style \"white_button\" = \"default_button\"\n		\
+{\n							\
+  bg[NORMAL] = { 1.0, 1.0, 1.0 }\n			\
+  bg[PRELIGHT] = { 0.94, 0.97, 1.0 }\n			\
+  fg[PRELIGHT] = { 0.0,  0.0,  0.0}\n			\
+  GtkButton::default_border = { 0, 0, 0, 0 }\n		\
+  GtkButton::default_outside_border = { 0, 0, 0, 0 }\n	\
+  GtkButton::inner_border = { 0, 0, 0, 0 }\n		\
+  GtkButton::focus_line_width = 0\n			\
+  GtkButton::focus_padding = 0\n			\
+  xthickness = 0\n					\
+  ythickness = 0\n					\
+}\n							\
+\n							\
+widget \"*.white_button\" style \"white_button\"\n	\
+style \"env_button\" = \"default_button\"\n		\
+{\n							\
+  bg[NORMAL] = { 0.94, 0.97, 1.0 }\n			\
+  bg[INSENSITIVE] = { 0.94, 0.97, 1.0 }\n		\
+  GtkButton::default_border = { 0, 0, 0, 0 }\n		\
+  GtkButton::default_outside_border = { 0, 0, 0, 0 }\n	\
+  GtkButton::inner_border = { 0, 0, 0, 0 }\n		\
+  GtkButton::focus_line_width = 0\n			\
+  GtkButton::focus_padding = 0\n			\
+  xthickness = 0\n					\
+  ythickness = 0\n					\
+}\n							\
+\n							\
+widget \"*.env_button\" style \"env_button\"\n		\
+style \"label_button\" = \"default_button\"\n		\
+{\n							\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n			\
+  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n			\
+  fg[PRELIGHT] = { 0.0,  0.0,  0.0}\n			\
+\n							\
+  GtkButton::default_border = { 0, 0, 0, 0 }\n		\
+  GtkButton::default_outside_border = { 0, 0, 0, 0 }\n	\
+  GtkButton::inner_border = { 0, 0, 0, 0 }\n		\
+  GtkButton::focus_line_width = 0\n			\
+  GtkButton::focus_padding = 0\n			\
+  xthickness = 0\n					\
+  ythickness = 0\n					\
+}\n							\
+widget \"*.label_button\" style \"label_button\"\n	\
+binding \"gtk-emacs-text-entry\"\n			\
+{\n									\
+  bind \"<ctrl>b\" { \"move-cursor\" (logical-positions, -1, 0) }\n	\
+  bind \"<shift><ctrl>b\" { \"move-cursor\" (logical-positions, -1, 1) }\n \
+  bind \"<ctrl>f\" { \"move-cursor\" (logical-positions, 1, 0) }\n	\
+  bind \"<shift><ctrl>f\" { \"move-cursor\" (logical-positions, 1, 1) }\n \
+  bind \"<alt>b\" { \"move-cursor\" (words, -1, 0) }\n			\
+  bind \"<shift><alt>b\" { \"move-cursor\" (words, -1, 1) }\n		\
+  bind \"<alt>f\" { \"move-cursor\" (words, 1, 0) }\n			\
+  bind \"<shift><alt>f\" { \"move-cursor\" (words, 1, 1) }\n		\
+  bind \"<ctrl>a\" { \"move-cursor\" (paragraph-ends, -1, 0) }\n	\
+  bind \"<shift><ctrl>a\" { \"move-cursor\" (paragraph-ends, -1, 1) }\n	\
+  bind \"<ctrl>e\" { \"move-cursor\" (paragraph-ends, 1, 0) }\n		\
+  bind \"<shift><ctrl>e\" { \"move-cursor\" (paragraph-ends, 1, 1) }\n	\
+  bind \"<ctrl>w\" { \"cut-clipboard\" () }\n				\
+  bind \"<ctrl>y\" { \"paste-clipboard\" () }\n				\
+  bind \"<ctrl>d\" { \"delete-from-cursor\" (chars, 1) }\n		\
+  bind \"<alt>d\" { \"delete-from-cursor\" (word-ends, 1) }\n		\
+  bind \"<ctrl>k\" { \"delete-from-cursor\" (paragraph-ends, 1) }\n	\
+  bind \"<alt>backslash\" { \"delete-from-cursor\" (whitespace, 1) }\n	\
+  bind \"<alt>space\" { \"delete-from-cursor\" (whitespace, 1)\n	\
+                      \"insert-at-cursor\" (\" \") }\n			\
+  bind \"<alt>KP_Space\" { \"delete-from-cursor\" (whitespace, 1)\n	\
+                         \"insert-at-cursor\" (\" \")  }\n		\
+  bind \"<ctrl>u\" {\n							\
+     \"move-cursor\" (paragraph-ends, -1, 0)\n				\
+     \"delete-from-cursor\" (paragraph-ends, 1)\n			\
+  }\n									\
+  bind \"<ctrl>h\" { \"delete-from-cursor\" (chars, -1) }\n		\
+  bind \"<ctrl>w\" { \"delete-from-cursor\" (word-ends, -1) }\n		\
+}\n									\
+binding \"gtk-emacs-text-view\"\n					\
+{\n									\
+  bind \"<ctrl>p\" { \"move-cursor\" (display-lines, -1, 0) }\n		\
+  bind \"<shift><ctrl>p\" { \"move-cursor\" (display-lines, -1, 1) }\n	\
+  bind \"<ctrl>n\" { \"move-cursor\" (display-lines, 1, 0) }\n		\
+  bind \"<shift><ctrl>n\" { \"move-cursor\" (display-lines, 1, 1) }\n	\
+  bind \"<ctrl>space\" { \"set-anchor\" () }\n				\
+  bind \"<ctrl>KP_Space\" { \"set-anchor\" () }\n			\
+}\n									\
+class \"GtkEntry\" binding \"gtk-emacs-text-entry\"\n			\
+class \"GtkTextView\" binding \"gtk-emacs-text-entry\"\n		\
+class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n			\
 ");
-      }
+		}
 #endif
-    }
-  }
-  if (str) FREE(str);
-
+	    }
+	}
+      if (str) FREE(str);
+    } /* not nogtkrc */
+  
   MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
-
+  
 #ifdef SND_AS_WIDGET
   MAIN_SHELL(ss) = parent;
   shell = MAIN_PANE(ss);
@@ -981,19 +987,19 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n\
     }
   gtk_widget_show(MAIN_PANE(ss));
   gtk_widget_show(MAIN_SHELL(ss));
-
+  
 #ifndef SND_AS_WIDGET
   MAIN_WINDOW(ss) = MAIN_SHELL(ss)->window;
 #else
   MAIN_WINDOW(ss) = gtk_widget_get_parent_window(MAIN_SHELL(ss));
 #endif
-
+  
   setup_gcs();
   make_icons_transparent(BASIC_COLOR);
-
+  
   if (batch) gtk_widget_hide(MAIN_SHELL(ss));
   BACKGROUND_ADD(startup_funcs, NULL);
-
+  
 #if HAVE_SETJMP_H
 #if MUS_TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop, 1))
@@ -1014,7 +1020,7 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n\
       else ss->jump_ok = false;
     }
 #endif
-
+  
 #ifndef SND_AS_WIDGET
   set_up_icon();
   gtk_main();
@@ -1022,11 +1028,11 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n\
   return(shell);
 #endif
 }
-
-void g_init_gxmain(void)
-{
+ 
+ void g_init_gxmain(void)
+ {
 #if HAVE_EXTENSION_LANGUAGE
-  #define H_window_property_changed_hook S_window_property_changed_hook "(command): called upon receipt of a change in SND_COMMAND (an X window property)"
+#define H_window_property_changed_hook S_window_property_changed_hook "(command): called upon receipt of a change in SND_COMMAND (an X window property)"
   window_property_changed_hook = XEN_DEFINE_HOOK(S_window_property_changed_hook, 1, H_window_property_changed_hook);
 #endif
 }
