@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Fri Dec 29 05:44:33 CET 2006
+\ Changed: Sat Dec 30 03:07:39 CET 2006
 
 \ Commentary:
 \
@@ -37,21 +37,23 @@
 \ ;instrument          ( -- )
 \ event:               ( -- )
 \ ;event               ( -- )
+\
 \ find-file            ( file -- fname|#f )
 \ snd-info             ( output :key reverb-file-name scaled? timer -- )
 \ play-sound           ( input :key verbose dac-size audio-format -- )
 \ record-sound         ( output keyword-args -- )
+\
 \ clm-mix              ( infile :key output output-frame frames input-frame scaler -- )
 \ with-sound           ( body-xt keyword-args -- ws )
 \ clm-load             ( fname keyword-args -- ws )
-\ with-current-sound   ( :key output offset scaled-to scaled-by -- )
+\ with-current-sound   ( :key offset scaled-to scaled-by -- )
 \ scaled-to            ( body-xt scl -- )
 \ scaled-by            ( body-xt scl -- )
 \ with-offset          ( body-xt secs -- )
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 26-Dec-2006" value *clm-version*
+$" fth 30-Dec-2006" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [undefined] clm-print [if] ' fth-print alias clm-print [then]
@@ -507,15 +509,17 @@ if FILE was found in *CLM-SEARCH-LIST*, otherwise returns #f."
 hide
 : .maxamps ( fname name sr scl? -- )
   { fname name sr scl? }
-  fname mus-sound-maxamp { vals }
-  vals length 0 ?do
-    $" %6s %c: %.3f (near %.3f secs)%s"
-    '( name
-       [char] A i 2/ +
-       vals i 1+ list-ref
-       vals i    list-ref sr f/
-       scl? if $"  (before scaling)" else "" then ) clm-message
-  2 +loop
+  fname file-exists? if
+    fname mus-sound-maxamp { vals }
+    vals length 0 ?do
+      $" %6s %c: %.3f (near %.3f secs)%s"
+      '( name
+	 [char] A i 2/ +
+	 vals i 1+ list-ref
+	 vals i    list-ref sr f/
+	 scl? if $"  (before scaling)" else "" then ) clm-message
+    2 +loop
+  then
 ;
 : .timer ( obj -- )
   { obj }
@@ -1023,17 +1027,18 @@ See with-sound for a full keyword list.\n\
   then
 ;
 
-: with-current-sound <{ body-xt :key output fth-tempnam offset 0.0 scaled-to #f scaled-by #f -- }>
+: with-current-sound <{ body-xt :key offset 0.0 scaled-to #f scaled-by #f -- }>
   doc" Must be called within with-sound body.  \
 Takes all arguments from current with-sound except :output, :scaled-to, :scaled-by and :comment."
   *output* mus-output? false? if
     'with-sound-error $" %s can only be called within with-sound" '( get-func-name ) fth-raise
   then
   with-sound-args { ws }
+  fth-tempnam { output }
   ws :output    output    hash-set!
   ws :scaled-to scaled-to hash-set!
   ws :scaled-by scaled-by hash-set!
-  body-xt ws with-sound-main :output hash-ref to output
+  body-xt ws with-sound-main drop
   output :output-frame offset seconds->samples clm-mix
   output file-delete
 ;
@@ -1132,14 +1137,11 @@ lambda: { tmp1 tmp2 }\n\
   *output* mus-output? false? if
     'with-sound-error $" %s can only be called within with-sound" '( get-func-name ) fth-raise
   then
-  nil { outfiles }
-  ws-xt-lst each { arg }
-    arg car ( args ) each end-each with-sound-args { ws }
+  ws-xt-lst map
+    *key* car ( args ) each end-each with-sound-args { ws }
     ws :output fth-tempnam hash-set!
-    arg cdr ( xt ) each end-each ws with-sound-main ( ws )
-    :output hash-ref outfiles cons to outfiles
-  end-each
-  outfiles list-reverse to outfiles
+    *key* cdr ( xt ) each end-each ws with-sound-main :output hash-ref ( outfile )
+  end-map { outfiles }
   body-xt xt? if
     outfiles each end-each body-xt execute
   else

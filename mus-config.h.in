@@ -138,6 +138,7 @@
 #undef SND_AS_WIDGET
 #undef SND_AS_PD_EXTERNAL
 #undef Float
+#undef WITH_DOUBLES
 #undef SNDLIB_USE_FLOATS
 #undef MUS_DEBUGGING
 #undef HAVE_LADSPA

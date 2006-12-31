@@ -143,6 +143,7 @@ fi
 
 if test "$with_doubles" = yes ; then
   AC_DEFINE(Float,double)
+  AC_DEFINE(WITH_DOUBLES)
 else
   AC_DEFINE(Float,float)
 fi

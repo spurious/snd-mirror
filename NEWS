@@ -1,42 +1,78 @@
-Snd 8.6
+Snd 8.7
 
-many improvements from Mike.
-
-mix/track mechanism sped up by about a factor of 100, so its possible
-  to have thousands of each (but the screeen gets very cluttered).
-
-  added mix-name, track-name, track-tag-y, mix-name->id, and track-name->id
-  to help navigate in these situations.
+a huge number of *.fs and *.rb improvements from Mike, including the
+  new file bird.fsm.
 
 
-out-any, in-any, locsig, move-sound, and friends can now handle vct and sound-data objects
-  as the "stream" argument.  In with-sound, this is the *output* variable or :output 
-  argument which then applies to all notes. So, with-sound can be used in a zillion new ways:
+added frame.scm with:
 
-     (vct-scale! (with-temp-sound (:output (make-vct 2210)) (fm-violin 0 .1 440 .1)) 2.0)
+    frame-reverse! frame-copy (from mixer.scm)
+    sound->frame frame->sound 
+      region->frame
+   
+    make-frame-reader frame-reader? frame-reader-at-end frame-reader-position 
+      frame-reader-home free-frame-reader copy-frame-reader frame-reader-chans
+      next-frame previous-frame read-frame
+      make-region-frame-reader make-selection-frame-reader 
+      make-track-frame-reader read-track-frame make-sync-frame-reader
+   
+    frame->sound-data sound-data->frame
+    sound->sound-data sound-data->sound
+      region->sound-data track->sound-data selection->sound-data
+    file->vct vct->file
+    frame->vct vct->frame
+    file->sound-data sound-data->file
 
-  This extension caused changes in sound-data object handling:
-    sound-data-scale! (for with-sound writing to a sound-data object and with the
-      :scaled-to or :scaled-by arguments)
-    sound-data-fill! (also for with-sound if not :continue-old-file)
+    insert-sound-data insert-frame insert-vct
+    mix-sound-data mix-frame
+    scan-sound map-sound (this replaces 8.6's scan-sound)
 
-  fade.scm instruments changed to use outa rather than vct-map!
-  moved samples->sound-data to snd8.scm.
-  Mike provided sndins support for this change.
+    simultaneous-zero-crossing
+
+added to extensions.scm:
+    pad-sound contrast-sound dither-sound scale-sound offset-sound normalize-sound 
+
+added to examp.scm:
+    compand-sound sync-all
+
+sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ 
+    sound-data-copy sound-data-reverse! sound-data-peak
+
+region-home
+add-source-file-extension
+
+clip-hook: called whenever we're about to clip while writing a sound file
+  unclip-channel (dsp.scm) based on LPC (reconstruction via forward and backward prediction)
+  lpc-coeffs and lpc-predict in dsp.scm
+  io.c:  mus_clip_set_handler
+
+finally decided to build in the definition of pi in Guile and Gauche.
+  In the context of Snd, it is absurd to have to make sure "pi" is defined all the time.
+  It's already defined in Forth, and in Ruby it's PI in the math module.
+
+clm.c: removed (unused) mus_make_frame|mixer_with_data
+
+removed the default font settings in Snd.gtkrc -- presumably Snd
+  will now pick up your theme's default font.
+
+added a -nogtkrc startup switch.  This turns off the search for a gtkrc file,
+  or its built-in equivalent -- you get whatever your current theme wants.
+
+removed open-sound-file, vct->sound-file, and close-sound-file.  
+  These were optimizations that make little sense anymore -- use
+  mus-sound-open-output and friends instead.  See snd8.scm for
+  backwards compatible replacements.
+
+mix tags use the mix-color now
 
 
-rf64 headers and mutable riff for very large output files.
+Checked: sbcl 1.0, 
+         lesstif 0.95 (it still doesn't work with Snd -- segfaults, 
+           comatose listener, etc), 
+         cmucl 19d (dies trying to compile cmn's transpose.lisp, 
+           so that file is commented out for this version of cmucl),
+         pango 1.15.1|2, fontconfig 2.4.2, cairo 1.2.6, glib 2.12.5|6, stklos 0.82,
+         gamin 1.8.0 (this version fixes at least one of the problems
+           that would sometimes cause Snd to hang)
 
-mus-float-equal-fudge-factor (mainly for reasonable generator equal? checks)
-
-->frequency, ->samples (ws.scm) for things like (violin 0 .1 'e4).
-
-channel-clipped? in examp.scm
-
-filter-fft in examp.scm.
-
-checked: Fedora Core 6, sbcl 0.9.18, fth 1.0.0, Gauche 0.8.8, autoconf 2.61
-
-Thanks: Jacek M. Holeczek, Rick Taube, Mike Scholz, Kjetil Matheussen, Julius Smith,
-    Joseph Anderson, SamButcha
-
+Thanks: Fernando Lopez-Lezcano, Mike Scholz, Kjetil Matheussen, Forest Bond

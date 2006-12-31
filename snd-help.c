@@ -506,6 +506,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+2-Jan:   Snd 8.7.\n\
 29-Dec:  -nogtkrc startup switch.\n\
 27-Dec:  add-source-file-extension.\n\
 21-Dec:  unclip-channel.\n\

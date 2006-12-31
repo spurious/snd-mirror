@@ -12449,7 +12449,8 @@ EDITS: 5
 		(snd-display ";vct-add + offset: ~A" v0)))
 	  ))
 
-      (if (and all-args
+      (if (and (not (provided? 'snd-gauche))
+	       all-args
 	       (file-exists? "/home/bil/test/iowa/sounds/Cello/Cello.pizz.pp.sulC.C2B2.aiff"))
 	  (sounds->segment-data "/home/bil/test/iowa/sounds/" "iowa-test.data"))
 
@@ -54067,7 +54068,8 @@ EDITS: 1
 		  (not (string=? (host-name) "sun2")))))
     (begin
       (run-hook before-test-hook 25)
-      (if (and (provided? 'snd-motif) 
+      (if (and #f 
+	       (provided? 'snd-motif) 
 	       (provided? 'xm)) 
 	  (begin
 

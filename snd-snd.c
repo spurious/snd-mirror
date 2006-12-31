@@ -3530,9 +3530,22 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
     sr = hdr->srate;
   if (df == -1) 
     {
+      /* try to find some writable data_format */
       df = hdr->format;
       if (!mus_header_writable(ht, df)) 
 	df = MUS_OUT_FORMAT;
+      if (!mus_header_writable(ht, df))
+	df = ((MUS_OUT_FORMAT == MUS_BFLOAT) ? MUS_LFLOAT : MUS_BFLOAT);
+      if (!mus_header_writable(ht, df))
+	{
+	  int i;
+	  for (i = 1; i < MUS_NUM_DATA_FORMATS; i++) /* MUS_UNSUPPORTED is 0 */
+	    {
+	      df = i;
+	      if (mus_header_writable(ht, df))
+		break;
+	    }
+	}
     }
   if (!mus_header_writable(ht, df))
     XEN_ERROR(CANNOT_SAVE,
