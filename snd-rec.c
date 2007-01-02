@@ -455,7 +455,7 @@ void save_recorder_state(FILE *fd)
 	    S_recorder_in_data_format);
   if (in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "%d set-%s drop\n", in_device, S_recorder_in_device);
   if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "%d set-%s drop\n", rp->srate, S_recorder_srate);
-  if (rp->output_file != NULL) fprintf(fd, "$\" %s\" set-%s drop\n", rp->output_file, S_recorder_file);
+  if (rp->output_file != NULL) fprintf(fd, "\"%s\" set-%s drop\n", rp->output_file, S_recorder_file);
   if (fneq(rp->trigger, DEFAULT_RECORDER_TRIGGER)) fprintf(fd, "%.4f set-%s drop\n", rp->trigger, S_recorder_trigger);
   if (fneq(rp->max_duration, DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd, "%.4f set-%s drop\n", rp->max_duration, S_recorder_max_duration);
 #endif

@@ -50,7 +50,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 	  errstr = C_TO_XEN_STRING(errmsg);
 	  FREE(errmsg);
 	  snd_bad_arity_error(caller, errstr, edpos);
-	  return(AT_CURRENT_EDIT_POSITION);
+	  return(cp->edit_ctr);
 	}
       pos = XEN_TO_C_INT_OR_ELSE(XEN_CALL_2(edpos, 
 					    C_TO_XEN_INT(cp->sound->index), 
@@ -267,7 +267,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
   si = sc->si;
 
 #if HAVE_FORTH
-  origin = mus_format("$\" %s\" %.3f %s", 
+  origin = mus_format("\"%s\" %.3f %s", 
 		      filename, amp,  (cp == NULL) ? S_convolve_selection_with : S_convolve_with);
 #else
   origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP "%.3f", 

@@ -588,10 +588,10 @@ char *mus_midi_describe(void);
 
 #if MUS_DEBUGGING
   /* snd-utils.c (only used in conjunction with Snd's memory tracking functions) */
-  void *mem_calloc(int len, int size, const char *func, const char *file, int line);
-  void *mem_malloc(int len, const char *func, const char *file, int line);
+  void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line);
+  void *mem_malloc(size_t len, const char *func, const char *file, int line);
   void *mem_free(void *ptr, const char *func, const char *file, int line);
-  void *mem_realloc(void *ptr, int size, const char *func, const char *file, int line);
+  void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line);
 #endif
 
 #if (!HAVE_STRDUP)

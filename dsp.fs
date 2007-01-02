@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Tue Dec 26 19:38:38 CET 2006
+\ Changed: Mon Jan 01 03:55:10 CET 2007
 
 \ Commentary:
 
@@ -290,42 +290,41 @@ hide
 set-current
 : freqdiv   <{ n :optional snd #f chn #f -- }>
   doc" Repeats each nth sample N times (clobbering the intermediate samples): 8 freqdiv"
-  0 0.0 { div curval }
-  div n curval freqdiv-cb 0 #f snd chn #f $" %s %s" '( n get-func-name ) format map-channel drop
+  0 n 0.0 freqdiv-cb 0 #f snd chn #f $" %s %s" '( n get-func-name ) format map-channel drop
 ;
 previous
 
 \ ;;; -------- "adaptive saturation" -- an effect from sed_sed@my-dejanews.com ---
 hide
 : adsat-cb { mn mx n vals -- proc; inval self -- res }
-  1 proc-create vals , n , mx , mn ,
+  1 proc-create { prc } vals , n , mx , mn , prc
  does> ( inval self -- res )
-  { val self }
-  self           @ { mn }
-  self 1 cells + @ { mx }
-  self 2 cells + @ { n }
-  self 3 cells + @ { vals }
+  { inval self }
+  self           @ { vals }
+  self 1 cells + @ { n }
+  self 2 cells + @ { mx }
+  self 3 cells + @ { mn }
   vals length n = if
     vals each { x }
       vals i  x f0>= if mx else mn then  vct-set! drop
     end-each
     0   self 1 cells + ! ( n )
     0.0 self 2 cells + ! ( mx )
-    0.0 self 2 cells + ! ( mn )
+    0.0 self 3 cells + ! ( mn )
     vals
   else
-    vals n val vct-set! drop
-    val mx f> if val self 2 cells + ! ( mx ) then
-    val mn f< if val self 3 cells + ! ( mn ) then
-    n 1+ self 1 cells + ! ( n++ )
+    vals n inval vct-set! drop
+    1 self 1 cells + +! ( n++ )
+    inval mx fmax self 2 cells + ! ( mx )
+    inval mn fmin self 3 cells + ! ( mn )
     #f
   then
 ;
 set-current
-: adsat <{ size :optional beg 0 dur #f snd #f chn #f -- }>
+: adsat <{ size :optional beg 0 dur #f snd #f chn #f -- val }>
   doc" An 'adaptive saturation' sound effect."
   $" %s %s %s %s" '( size beg dur get-func-name ) string-format { origin }
-  0.0 0.0 0 size 0.0 make-vct adsat-cb beg dur snd chn #f origin map-channel drop
+  0.0 0.0 0 size 0.0 make-vct adsat-cb beg dur snd chn #f origin map-channel
 ;
 previous
 
@@ -346,9 +345,9 @@ hide
   res
 ;
 set-current
-: spike <{ :optional snd #f chn #f -- }>
+: spike <{ :optional snd #f chn #f -- val }>
   doc" Multiplies successive samples together to make a sound more spikey."
-  snd chn spike-cb 0 #f snd chn #f get-func-name map-channel drop
+  snd chn spike-cb 0 #f snd chn #f get-func-name map-channel
 ;
 previous
 
@@ -460,9 +459,13 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
   rl vct-peak { pk }
   rl old-pk pk f/ vct-scale! 0 len snd chn #f get-func-name vct->channel
 ;
+
+\ If you need the origin for reuse, take a colon definition for FUNC
+\ instead of a lambda defintion.  Its name can be uses inside
+\ rotate-phase.
 : rotate-phase <{ func :optional snd #f chn #f -- vct }>
-  doc" Calls fft, applies FUNC to each phase, then un-ffts."
-  func proc? func 1 $" a proc" _ assert-type
+  doc" Calls fft, applies FUNC, a proc or xt, to each phase, then un-ffts."
+  func proc? func xt? || func 1 $" a proc or xt" _ assert-type
   snd chn #f frames { len }
   2.0  len flog 2.0 flog f/ fceil ( pow2 )  f** fround->s { fftlen }
   fftlen 2/ { fftlen2 }
@@ -474,16 +477,17 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
   rl im rectangular->polar drop
   rl fftscale vct-scale! drop
   im 0 0.0 vct-set! drop
+  func xt? if func 1 make-proc to func then
   fftlen2 1 ?do
     im i  func  '( im i  object-ref )  run-proc  object-set!
     im i negate im i negate object-ref fnegate   object-set!	\ handles negative index
   loop
   rl im -1 fft drop
   rl vct-peak { pk }
-  $" %s %s" '( func proc-source-ref get-func-name ) string-format { origin }
+  $" ['] %s %s" '( func proc-name get-func-name ) string-format { origin }
   rl old-pk pk f/ vct-scale! 0 len snd chn #f origin vct->channel
 ;
-
+\ See note above for a good origin for reuse.
 \ lambda: <{ x }> 0.0       ; rotate-phase \ is the same as zero-phase
 \ lambda: <{ x }> pi random ; rotate-phase \ randomizes phases
 \ lambda: <{ x }> x         ; rotate-phase \ returns original

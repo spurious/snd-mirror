@@ -341,7 +341,7 @@ static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan)
 
 #if HAVE_FORTH
 static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%s set-%s drop\n", val, name);}
-static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "$\" %s\" set-%s drop\n", val, name);}
+static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "\"%s\" set-%s drop\n", val, name);}
 static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%d set-%s drop\n", val, name);}
 static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "%.4f set-%s drop\n", val, name);}
 static void pss_sl(FILE *fd, const char *name, Float val1, Float val2) 
@@ -915,7 +915,7 @@ void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth)
 	  sp->filename);
 #endif
 #if HAVE_FORTH
-  fprintf(fd, "$\" %s\" %d %s to sfile\nsfile false? [if] $\" %s\" %s to sfile [then]\n",
+  fprintf(fd, "\"%s\" %d %s to sfile\nsfile false? [if] \"%s\" %s to sfile [then]\n",
 	  sp->short_filename,
 	  (with_nth) ? find_sound_nth(sp) : 0,
 	  S_find_sound,

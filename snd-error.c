@@ -295,7 +295,6 @@ If it returns true, Snd flushes the warning (it assumes you've reported it via t
 If it returns " PROC_TRUE ", Snd flushes the error (it assumes you've reported it via the hook:\n\
 " S_snd_error_hook " lambda: <{ msg }>\n\
   \"bong.snd\" " S_play "\n\
-  #f\n\
 ; add-hook!"
 
   #define H_snd_warning_hook S_snd_warning_hook " (warning-message): called upon snd_warning. \

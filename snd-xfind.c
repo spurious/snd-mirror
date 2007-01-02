@@ -269,7 +269,7 @@ void save_find_dialog_state(FILE *fd)
 	  fprintf(fd, "%s(true, \"%s\")\n", TO_PROC_NAME(S_find_dialog), text);
 #endif
 #if HAVE_FORTH
-	  fprintf(fd, "#t $\" %s\" %s drop\n", text, S_find_dialog);
+	  fprintf(fd, "#t \"%s\" %s drop\n", text, S_find_dialog);
 #endif
 	  XtFree(text);
 	}
@@ -287,7 +287,7 @@ void save_find_dialog_state(FILE *fd)
 #endif
 #if HAVE_FORTH
 	  if (ss->search_expr)
-	    fprintf(fd, "#t $\" %s\" %s drop\n", ss->search_expr, S_find_dialog);
+	    fprintf(fd, "#t \"%s\" %s drop\n", ss->search_expr, S_find_dialog);
 	  else fprintf(fd, "#t %s drop\n", S_find_dialog);
 #endif
 	}

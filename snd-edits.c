@@ -4528,11 +4528,7 @@ static void fprintf_with_possible_embedded_string(FILE *fd, const char *str)
 {
   int i, len;
   len = snd_strlen(str);
-#if HAVE_FORTH
-  fputs("$\" ", fd);
-#else
   fputc('"', fd);
-#endif
   for (i = 0; i < len; i++)
     {
       if (str[i] == '"')
@@ -4658,7 +4654,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		      mus_sound_length(nfile));
 #endif
 #if HAVE_FORTH
-	      fprintf(fd, "      $\" %s\" " OFF_TD " sfile %d ", nfile, len, cp->chan);
+	      fprintf(fd, "      \"%s\" " OFF_TD " sfile %d ", nfile, len, cp->chan);
 	      if (ed->origin) 
 		fprintf_with_possible_embedded_string(fd, ed->origin);
 	      else fprintf(fd, "\"\"");
@@ -4689,9 +4685,9 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 			  ed->len);
 		  if (ed->origin)
 		    fprintf_with_possible_embedded_string(fd, ed->origin);
-		  else fprintf(fd, "$\" %s\"", S_insert_samples);
+		  else fprintf(fd, "\"%s\"", S_insert_samples);
 		  nfile = edit_list_data_to_temp_file(cp, ed, DONT_DELETE_ME, with_save_state_hook);
-		  fprintf(fd, " $\" %s\" sfile %d", nfile, cp->chan);
+		  fprintf(fd, " \"%s\" sfile %d", nfile, cp->chan);
 		  break;
 		case DELETION_EDIT:
 		  /* samp samps snd chn */
@@ -4710,7 +4706,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		    fprintf_with_possible_embedded_string(fd, ed->origin);
 		  else fprintf(fd, "\"\"");
 		  nfile = edit_list_data_to_temp_file(cp, ed, DONT_DELETE_ME, with_save_state_hook);
-		  fprintf(fd, " $\" %s\" sfile %d", nfile, cp->chan);
+		  fprintf(fd, " \"%s\" sfile %d", nfile, cp->chan);
 		  break;
 		case EXTEND_EDIT:
 		  /* not currently savable (this is a dummy edit fragment for zero-mix-drag position change) */
@@ -5155,7 +5151,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
     edits++;
   if ((end_pos > 0) && (end_pos < edits)) edits = end_pos;
   if (start_pos > edits)
-    return(copy_string("lambda: { snd chn } #f ; 2 make-proc"));
+    return(copy_string("lambda: <{ snd chn -- val }> #f ;"));
   if (cp->have_mixes)
     {
       char *mix_list;
@@ -5163,12 +5159,12 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
       if (mix_list)
 	{
 	  close_mix_let = true;
-	  function = mus_format("lambda: { snd chn } %s", mix_list);
+	  function = mus_format("lambda: <{ snd chn -- val }> %s", mix_list);
 	  FREE(mix_list);
 	}
-      else function = copy_string("lambda: { snd chn }");
+      else function = copy_string("lambda: <{ snd chn -- val }>");
     }
-  else function = copy_string("lambda: { snd chn }");
+  else function = copy_string("lambda: <{ snd chn -- val }>");
   for (i = start_pos; i <= edits; i++)
     {
       ed = cp->edits[i];
@@ -5249,7 +5245,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
       first = false;
     }
   old_function = function;
-  function = mus_format("%s ; 2 make-proc", function);
+  function = mus_format("%s ;", function);
   FREE(old_function);
   return(function);
 #endif
@@ -5852,7 +5848,7 @@ bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg, file_de
 	    {
 	      ncp = sp->chans[i];
 #if HAVE_FORTH
-	      origin = mus_format("$\" %s\" " OFF_TD " %d %s drop", 
+	      origin = mus_format("\"%s\" " OFF_TD " %d %s drop", 
 				  filename, chan_beg, j, S_insert_sound);
 #else
 	      origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", 
@@ -7706,15 +7702,19 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   off_t len;
   XEN res;
   size_t bytes;
+
   ASSERT_CHANNEL(S_display_edits, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(with_source), with_source, XEN_ARG_4, S_display_edits, "boolean");
   cp = get_cp(snd, chn, S_display_edits);
   if (!cp) return(XEN_FALSE);
+
   if (XEN_BOOLEAN_P(with_source)) include_source = XEN_TO_C_BOOLEAN(with_source);
   if (XEN_INTEGER_P(edpos)) 
     {
       pos = XEN_TO_C_INT(edpos);
-      if ((pos >= cp->edit_size) || (!(cp->edits[pos])))
+      if (pos == AT_CURRENT_EDIT_POSITION)
+	pos = cp->edit_ctr;
+      if ((pos < 0) || (pos >= cp->edit_size) || (!(cp->edits[pos])))
 	XEN_ERROR(NO_SUCH_EDIT,
 		  XEN_LIST_2(C_TO_XEN_STRING(S_display_edits),
 			     edpos));
@@ -9129,7 +9129,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
       if (fchn < nc)
 	{
 #if HAVE_FORTH
-	  origin = mus_format("$\" %s\" " OFF_TD " %d %s drop", filename, beg, fchn, S_insert_sound);
+	  origin = mus_format("\"%s\" " OFF_TD " %d %s drop", filename, beg, fchn, S_insert_sound);
 #else
 	  origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_insert_sound), filename, beg, fchn);
 #endif
@@ -9149,7 +9149,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
       for (i = 0; i < nc; i++)
 	{
 #if HAVE_FORTH
-	  origin = mus_format("$\" %s\" " OFF_TD " %d %s drop", filename, beg, i, S_insert_sound);
+	  origin = mus_format("\"%s\" " OFF_TD " %d %s drop", filename, beg, i, S_insert_sound);
 #else
 	  origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_insert_sound), filename, beg, i);
 #endif
@@ -9274,7 +9274,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
 	}
       if (mus_sound_frames(filename) <= 0) return(C_TO_XEN_INT(0));
 #if HAVE_FORTH
-      if (!origin) origin = mus_format(OFF_TD PROC_SEP OFF_TD " $\" %s\" %s drop", beg, len, filename, S_insert_samples);
+      if (!origin) origin = mus_format(OFF_TD PROC_SEP OFF_TD " \"%s\" %s drop", beg, len, filename, S_insert_samples);
 #else
       if (!origin) origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP "\"%s\"", TO_PROC_NAME(S_insert_samples), beg, len, filename);
 #endif

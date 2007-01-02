@@ -1303,7 +1303,7 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, 
 	  edpos = cp->edit_ctr + 1;
 	  if (!origin)
 #if HAVE_FORTH
-	    new_origin = mus_format("$\" %s\" " OFF_TD " %d %s", 
+	    new_origin = mus_format("\"%s\" " OFF_TD " %d %s", 
 				    mixinfile, beg, i, S_mix);
 #else
 	    new_origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", 
@@ -1327,7 +1327,7 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, 
     {
       if (!origin)
 #if HAVE_FORTH
-	new_origin = mus_format("$\" %s\" " OFF_TD " 0 %s", 
+	new_origin = mus_format("\"%s\" " OFF_TD " 0 %s", 
 				mixinfile, beg, S_mix);
 #else
 	new_origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "0", 
@@ -4636,7 +4636,7 @@ track-id is the track value for each newly created mix."
 	{
 	  char *origin;
 #if HAVE_FORTH
-	  origin = mus_format("$\" %s\" " OFF_TD " %d %s", 
+	  origin = mus_format("\"%s\" " OFF_TD " %d %s", 
 			      name, beg, file_channel, S_mix);
 #else
 	  origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", 

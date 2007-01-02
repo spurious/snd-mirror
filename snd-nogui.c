@@ -691,7 +691,6 @@ void snd_doit(int argc, char **argv)
   set_axis_label_font(FALLBACK_FONT);
   set_axis_numbers_font(FALLBACK_FONT);
   set_listener_font(FALLBACK_FONT);
-  set_html_dir(copy_string(DEFAULT_HTML_DIR));
   ss->startup_title = copy_string("snd");
 
   for (i = 1; i < argc; i++)

@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Sat Dec 23 04:25:00 CET 2006
+\ Changed: Mon Jan 01 20:47:42 CET 2007
 
 \ Commentary:
 \ 
@@ -42,6 +42,7 @@
 \ with-reopen-menu     		  	 ( -- )
 \ with-buffers-menu    		  	 ( -- )
 \ set-global-sync                 	 ( choice -- )
+\ show-selection                         ( -- )
 
 \ Code:
 
@@ -698,6 +699,29 @@ previous
     after-open-hook ['] global-sync-cb hook-member? unless
       after-open-hook ['] global-sync-cb add-hook!
     then
+  then
+;
+
+\ ;;; -------- show-selection
+
+: show-selection <{ -- }>
+  selection? if
+    #f #f { beg end }
+    sounds each { snd }
+      snd channels 0 ?do
+	snd i ( chn ) selection-member? if
+	  snd i selection-position snd srate f/ { pos }
+	  snd i selection-frames   snd srate f/ { len }
+	  beg not  pos        beg f< || if pos        to beg then
+	  end not  pos len f+ end f> || if pos len f+ to end then
+	then
+      loop
+    end-each
+    sounds each { snd }
+      snd channels 0 ?do
+	'( beg end ) snd i set-x-bounds drop
+      loop
+    end-each
   then
 ;
 

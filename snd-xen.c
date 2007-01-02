@@ -2096,7 +2096,7 @@ void save_added_source_file_extensions(FILE *fd)
 	fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_source_file_extension), source_file_extensions[i]);
 #endif
 #if HAVE_FORTH
-	fprintf(fd, "$\" %s\" %s drop\n", source_file_extensions[i], S_add_source_file_extension);
+	fprintf(fd, "\"%s\" %s drop\n", source_file_extensions[i], S_add_source_file_extension);
 #endif
       }
 }
@@ -2411,7 +2411,7 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
   #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
 If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
 " S_print_hook " lambda: <{ msg }>\n\
-  \"%s\n[%s]\n%s\" msg date " S_listener_prompt " format " S_snd_print "\n\
+  \"%s\n[%s]\n%s\" '( msg date " S_listener_prompt " ) format " S_snd_print "\n\
 ; add-hook!"
 #endif
 

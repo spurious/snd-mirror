@@ -223,7 +223,7 @@ then .snd.  If you're always using just one version of Snd, it's simplest to sti
     /etc/snd.conf               
     ~/.snd_prefs_guile|ruby|forth|gauche     (the rest canceled by -noinit)
     ~/.snd_guile|ruby|forth|gauche
-    ~/.snd                                   (changed by initFile resource, -init arg, SND_INIT_FILE_ENVRIONMENT_NAME, etc)
+    ~/.snd                                   (changed by -init arg, SND_INIT_FILE_ENVRIONMENT_NAME, etc)
 </pre>
 
 <p> 
@@ -540,40 +540,42 @@ gauche-format.scm:
 a built-in default value, so you can ignore this entirely, and use the extension language initialization file to choose new values.
 I may remove all this stuff eventually (it was always a bad idea).
 </p>
+<br>
 
-<table cellspacing=0 cellpadding=0 hspace=20>
+<table cellspacing=0 cellpadding=1 hspace=20>
 <tr><th align=left bgcolor="beige">Resource Name</th><th align=left bgcolor="beige">Default Value</th><th align=left bgcolor="beige">Purpose</th><th align=left bgcolor="beige">Scheme Name</th></tr>
-<tr><td width=160>initFile</td><td width=130>"~/.snd"</td><td width=300>initialization file name</td><td></td></tr>
 
-<tr><td bgcolor="#f6f8ff">autoResize</td><td bgcolor="#f6f8ff">1</td><td bgcolor="#f6f8ff">should Snd window resize automatically</td><td bgcolor="#f6f8ff"><a href="extsnd.html#autoresize">auto-resize</a></td></tr>
+<tr><td><br></td><td><br></td><td></td><td></td></tr>
 
-<tr><td>horizontalPanes</td><td>0</td><td>basic paned window layout</td><td></td></tr>
+<tr><td>autoResize</td><td>1</td><td>should Snd window resize automatically</td><td><code><a href="extsnd.html#autoresize">auto-resize</a></code></td></tr>
 
-<tr><td bgcolor="#f6f8ff"><br></td><td bgcolor="#f6f8ff"><br></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff"></td></tr>
+<tr><td bgcolor="#f6f8ff">horizontalPanes</td><td bgcolor="#f6f8ff">0</td><td bgcolor="#f6f8ff">basic paned window layout</td><td bgcolor="#f6f8ff"></td></tr>
 
-
-
-<tr><td>peaksFont</td><td>times 14</td><td>fft peaks font</td><td><a href="extsnd.html#peaksfont">peaks-font</a></td></tr>
-
-<tr><td bgcolor="#f6f8ff">boldpeaksFont</td><td bgcolor="#f6f8ff">times bold 14</td><td bgcolor="#f6f8ff">main fft peaks font</td><td bgcolor="#f6f8ff"><a href="extsnd.html#boldpeaksfont">bold-peaks-font</a></td></tr>
-
-<tr><td>axisLabelFont</td><td>times 20</td><td>axis label ("Time")</td><td><a href="extsnd.html#axislabelfont">axis-label-font</a></td></tr>
-
-<tr><td bgcolor="#f6f8ff">axisNumbersFont</td><td bgcolor="#f6f8ff">courier 14</td><td bgcolor="#f6f8ff">axis tick numbers</td><td bgcolor="#f6f8ff"><a href="extsnd.html#axisnumbersfont">aixs-numbers-font</a></td></tr>
-
-<tr><td>listenerFont</td><td>fixed 7x13</td><td>listener text</td><td><a href="extsnd.html#listenerfont">listener-font</a></td></tr>
-
-<tr><td bgcolor="#f6f8ff"><br></td><td bgcolor="#f6f8ff"><br></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff"></td></tr>
+<tr><td><br></td><td><br></td><td></td><td></td></tr>
 
 
 
-<tr><td>basiccolor</td><td>ivory2</td><td>default background color everywhere</td><td><code><a href="extsnd.html#basiccolor">basic-color</a></code></td></tr>
+<tr><td bgcolor="#f6f8ff">peaksFont</td><td bgcolor="#f6f8ff">times 14</td><td bgcolor="#f6f8ff">fft peaks font</td><td bgcolor="#f6f8ff"><code><a href="extsnd.html#peaksfont">peaks-font</a></code></td></tr>
 
-<tr><td bgcolor="#f6f8ff">cursorcolor</td><td bgcolor="#f6f8ff">red</td>         <td bgcolor="#f6f8ff">color of the cursor</td>                   <td bgcolor="#f6f8ff"><code><a href="extsnd.html#cursorcolor">cursor-color</a></code></td></tr>
+<tr><td>boldpeaksFont</td><td>times bold 14</td><td>main fft peaks font</td><td><code><a href="extsnd.html#boldpeaksfont">bold-peaks-font</a></code></td></tr>
 
-<tr><td>datacolor</td><td>black</td><td>unselected data color</td>                 <td><code><a href="extsnd.html#datacolor">data-color</a></code></td></tr>
+<tr><td bgcolor="#f6f8ff">axisLabelFont</td><td bgcolor="#f6f8ff">times 20</td><td bgcolor="#f6f8ff">axis label ("Time")</td><td bgcolor="#f6f8ff"><code><a href="extsnd.html#axislabelfont">axis-label-font</a></code></td></tr>
 
-<tr><td bgcolor="#f6f8ff">graphcolor</td><td bgcolor="#f6f8ff">white</td>          <td bgcolor="#f6f8ff">unselected channels' graph background</td> <td bgcolor="#f6f8ff"><code><a href="extsnd.html#graphcolor">graph-color</a></code></td></tr>
+<tr><td>axisNumbersFont</td><td>courier 14</td><td>axis tick numbers</td><td><code><a href="extsnd.html#axisnumbersfont">axis-numbers-font</a></code></td></tr>
+
+<tr><td bgcolor="#f6f8ff">listenerFont</td><td bgcolor="#f6f8ff">fixed 7x13</td><td bgcolor="#f6f8ff">listener text</td><td bgcolor="#f6f8ff"><code><a href="extsnd.html#listenerfont">listener-font</a></code></td></tr>
+
+<tr><td><br></td><td><br></td><td></td><td></td></tr>
+
+
+
+<tr><td bgcolor="#f6f8ff">basiccolor</td><td bgcolor="#f6f8ff">ivory2</td><td bgcolor="#f6f8ff">default background color everywhere</td><td bgcolor="#f6f8ff"><code><a href="extsnd.html#basiccolor">basic-color</a></code></td></tr>
+
+<tr><td>cursorcolor</td><td>red</td>         <td>color of the cursor</td>                   <td><code><a href="extsnd.html#cursorcolor">cursor-color</a></code></td></tr>
+
+<tr><td bgcolor="#f6f8ff">datacolor</td><td bgcolor="#f6f8ff">black</td><td bgcolor="#f6f8ff">unselected data color</td>                 <td bgcolor="#f6f8ff"><code><a href="extsnd.html#datacolor">data-color</a></code></td></tr>
+
+<tr><td>graphcolor</td><td>white</td>          <td>unselected channels' graph background</td> <td><code><a href="extsnd.html#graphcolor">graph-color</a></code></td></tr>
 
 <tr><td bgcolor="#f6f8ff">highlightcolor</td><td bgcolor="#f6f8ff">ivory1</td>      <td bgcolor="#f6f8ff">highlighting here and there</td>           <td bgcolor="#f6f8ff"><code><a href="extsnd.html#highlightcolor">highlight-color</a></code></td></tr>
 
@@ -602,6 +604,7 @@ I may remove all this stuff eventually (it was always a bad idea).
 <tr><td bgcolor="#f6f8ff">zoomcolor</td><td bgcolor="#f6f8ff">ivory4</td>           <td bgcolor="#f6f8ff">color of zoom sliders</td>                 <td bgcolor="#f6f8ff"><code><a href="extsnd.html#zoomcolor">zoom-color</a></code></td></tr>
 
 </table>
+<br>
 
 <p><A NAME="aboutcolors"></a>
 In the extension language,

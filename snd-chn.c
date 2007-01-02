@@ -4657,6 +4657,10 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_FFT_LOG_MAGNITUDE:       return(C_TO_XEN_BOOLEAN(cp->fft_log_magnitude));                  break;
 	    case CP_SPECTRO_HOP:             return(C_TO_XEN_INT(cp->spectro_hop));                            break;
 	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_OFF_T(cp->transform_size));                       break;
+	      /* these are ints throughout currently, but should be off_t eventually.  The change to off_t or mus_fft_size_t
+	       *   is much more effort than might appear -- clm needs to change, and most of snd-fft (and this file).
+	       *   but most problematic -- fftw uses "int" for the fft size.
+	       */
 	    case CP_TRANSFORM_GRAPH_TYPE:    return(C_TO_XEN_INT((int)(cp->transform_graph_type)));            break;
 	    case CP_FFT_WINDOW:              return(C_TO_XEN_INT((int)(cp->fft_window)));                      break;
 	    case CP_TRANSFORM_TYPE:          return(C_TO_XEN_INT(cp->transform_type));                         break;
@@ -5554,7 +5558,7 @@ static XEN g_edit_hook(XEN snd_n, XEN chn_n)
     #define edit_hook_example "edit_hook(snd, chn).add_hook!(\"hook-test\") do | | snd_print(\"about to edit\"); false end"
   #endif
   #if HAVE_FORTH
-    #define edit_hook_example "snd chn edit-hook lambda: <{ }> \"about to edit\" snd-print #f ; add-hook!"
+    #define edit_hook_example "snd chn edit-hook lambda: <{ }> \"about to edit\" snd-print drop #f ; add-hook!"
   #endif
 
   #define H_edit_hook "(" S_edit_hook " :optional snd chn): snd's channel chn's " S_edit_hook ". \
@@ -5574,7 +5578,7 @@ static XEN g_after_edit_hook(XEN snd_n, XEN chn_n)
     #define after_edit_hook_example "after_edit_hook(snd, chn).add_hook!(\"hook-test\") do | | snd_print(\"just edited\") end"
   #endif
   #if HAVE_FORTH
-    #define after_edit_hook_example "snd chn after-edit-hook lambda: <{ }> \"just edited\" snd-print ; add-hook!"
+    #define after_edit_hook_example "snd chn after-edit-hook lambda: <{ }> \"just edited\" snd-print drop ; add-hook!"
   #endif
 
   #define H_after_edit_hook "(" S_after_edit_hook " :optional snd chn): snd's channel chn's " S_after_edit_hook ". \

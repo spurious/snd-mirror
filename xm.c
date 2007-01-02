@@ -29932,7 +29932,7 @@ void Init_libxm(void)
 #if HAVE_FORTH
       XEN_EVAL_C_STRING("\
 : wm-protocols-intern-atom ( wid -- atom )\n\
-  FXtDisplay $\" WM_PROTOCOLS\" #f FXInternAtom\n\
+  FXtDisplay \"WM_PROTOCOLS\" #f FXInternAtom\n\
 ;\n\
 : FXmAddWMProtocols ( s p n -- x ) { s p n }\n\
   s dup wm-protocols-intern-atom p n FXmAddProtocols\n\

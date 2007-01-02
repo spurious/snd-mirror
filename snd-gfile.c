@@ -3952,7 +3952,7 @@ void save_edit_header_dialog_state(FILE *fd)
 	    fprintf(fd, "%s(%s(\"%s\"))\n", TO_PROC_NAME(S_edit_header_dialog), TO_PROC_NAME(S_find_sound), ep->sp->short_filename);
 #endif
 #if HAVE_FORTH
-	    fprintf(fd, "$\" %s\" %s %s drop\n", ep->sp->short_filename, S_find_sound, S_edit_header_dialog);
+	    fprintf(fd, "\"%s\" %s %s drop\n", ep->sp->short_filename, S_find_sound, S_edit_header_dialog);
 #endif
 	  }
       }
@@ -4026,7 +4026,7 @@ void save_post_it_dialog_state(FILE *fd)
       fprintf(fd, "%s(\"%s\", \"%s\")\n", TO_PROC_NAME(S_info_dialog), subject, text);
 #endif
 #if HAVE_FORTH
-      fprintf(fd, "$\" %s\" $\" %s\" %s drop\n", subject, text, S_info_dialog);
+      fprintf(fd, "\"%s\" \"%s\" %s drop\n", subject, text, S_info_dialog);
 #endif
       if (text) g_free(text);
     }

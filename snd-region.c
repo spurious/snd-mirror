@@ -1012,9 +1012,9 @@ void save_regions(FILE *fd)
 		      mus_sound_length(newname));
 #endif
 #if HAVE_FORTH
-	  fprintf(fd, "%d %d " OFF_TD " %d %.4f $\" %s\" $\" %s\" $\" %s\"",
+	  fprintf(fd, "%d %d " OFF_TD " %d %.4f \"%s\" \"%s\" \"%s\"",
 	          i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
- 	  fprintf(fd, " $\" %s\" '( %d " OFF_TD " ) %s drop\n",
+ 	  fprintf(fd, " \"%s\" '( %d " OFF_TD " ) %s drop\n",
  		  newname,
  		  (int)mus_sound_write_date(newname),
  		  mus_sound_length(newname),

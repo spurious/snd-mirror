@@ -101,7 +101,7 @@ typedef struct {
   char *bold_peaks_font;
   char *axis_label_font;
   char *axis_numbers_font;
-  char *init_file_name;
+  char *init_file_name; /* SOMEDAY: remove initFile resource */
   int auto_resize;
   int horizontal_panes;
   int zoom_slider_width;
@@ -111,7 +111,6 @@ typedef struct {
   int channel_sash_size;
   int sash_size;
   int sash_indent;
-  char *html_dir;
   char *help_button_color;
   char *quit_button_color;
   char *reset_button_color;
@@ -161,7 +160,6 @@ static XtResource resources[] = {
   {"channelSashSize", "ChannelSashSize", XmRInt, sizeof(int), XtOffset(sndres *, channel_sash_size), XmRImmediate, (XtPointer)CHANNEL_SASH_SIZE},
   {"sashSize", "SashSize", XmRInt, sizeof(int), XtOffset(sndres *, sash_size), XmRImmediate, (XtPointer)SASH_SIZE},
   {"sashIndent", "SashIndent", XmRInt, sizeof(int), XtOffset(sndres *, sash_indent), XmRImmediate, (XtPointer)SASH_INDENT},
-  {"htmldir", "HtmlDir", XmRString, sizeof(char *), XtOffset(sndres *, html_dir), XmRString, (XtPointer)DEFAULT_HTML_DIR},
   {"helpbuttoncolor", "Helpbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, help_button_color), XmRString, (XtPointer)HELP_BUTTON_COLOR},
   {"quitbuttoncolor", "Quitbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, quit_button_color), XmRString, (XtPointer)QUIT_BUTTON_COLOR},
   {"resetbuttoncolor", "Resetbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, reset_button_color), XmRString, (XtPointer)RESET_BUTTON_COLOR},
@@ -529,7 +527,7 @@ static void SetupIcon(Widget shell)
 #ifndef SND_AS_WIDGET
 static void muffle_warning(char *name, char *type, char *klass, char *defaultp, char **params, unsigned int *num_params)
 {
-#if MUS_DEBUGGING
+#if 0
   int i;
   fprintf(stderr, "Xt warning: %s, %s: %s", type, name, defaultp);
   if (num_params) /* can be null! */
@@ -818,7 +816,6 @@ void snd_doit(int argc, char **argv)
 
   ss->batch_mode = batch;
   if (batch) XtSetMappedWhenManaged(shell, 0);
-  set_html_dir(copy_string(snd_rs.html_dir));
   set_auto_resize(snd_rs.auto_resize);
   ss->zoom_slider_width = snd_rs.zoom_slider_width;
   ss->position_slider_width = snd_rs.position_slider_width;

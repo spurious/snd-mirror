@@ -52,54 +52,9 @@ int snd_int_log2(int n)
   return(0);
 }
 
-/* PERHAPS: off_t power-of-2 stuff for huge fft's etc: convolution_filter in snd-sig.c, make_fft_state in snd-fft.c 
- *   perhaps set the stage via fft_size_t == int for now?
+/* removed off_t power-of-2 stuff for huge fft's etc: convolution_filter in snd-sig.c, make_fft_state in snd-fft.c 
+ *   see note in snd-chn -- this involves a lot of work, and either changes in fftw or fallbacks for it
  */
-#if 0
-/* can't use this table currently because gcc complains about "integer constant is too large for 'long' type" 
- *    would it work to do the *2 loading at init time?
- */
-#define O_POW2_SIZE 63
-/* i.e. ends at 2^62 */
-static off_t opow2s[O_POW2_SIZE] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 
-				    512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 
-				    131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 
-				    33554432, 67108864, 134217728, 268435456, 536870912, 1073741824,
-				    2147483648, 4294967296, 8589934592, 17179869184, 34359738368,
-				    68719476736, 137438953472, 274877906944, 549755813888, 1099511627776,
-				    2199023255552, 4398046511104, 8796093022208, 17592186044416,
-				    35184372088832, 70368744177664, 140737488355328, 281474976710656,
-				    562949953421312, 1125899906842624, 2251799813685248, 4503599627370496,
-				    9007199254740992, 18014398509481984, 36028797018963968, 72057594037927936,
-				    144115188075855872, 288230376151711744, 576460752303423488, 1152921504606846976,
-				    2305843009213693952, 4611686018427387904};
-
-off_t snd_off_t_pow2(int n)
-{
-  return(opow2s[n]);
-}
-
-off_t snd_to_off_t_pow2(off_t n)
-{
-  /* round up to next power of 2 */
-  int i;
-  for (i = 0; i < O_POW2_SIZE; i++)
-    if (opow2s[i] >= n)
-      return(opow2s[i]);
-  return(0);
-}
-
-int snd_off_t_log2(off_t n)
-{
-  /* round down */
-  int i;
-  for (i = 1; i < O_POW2_SIZE; i++)
-    if (opow2s[i] > n)
-      return(i - 1);
-  return(0);
-}
-#endif
-
 
 #define MAX_FLOAT_DIFF_FOR_EQUAL 0.0000001
 bool snd_feq(Float val1, Float val2)
@@ -742,7 +697,7 @@ fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp)
  * MALLOC, REALLOC, and FREE.
  */
 
-static char *kmg(int num)
+static char *kmg(size_t num)
 {
   /* return number 0..1024, then in terms of K, M, G */
   char *str;
@@ -763,7 +718,8 @@ static char *kmg(int num)
 
 #define MEM_PAD_SIZE 32
 static int mem_size = 0, max_mem_size = 0;
-static int *sizes = NULL, *locations = NULL;
+static size_t *sizes = NULL;
+static int *locations = NULL;
 static void **pointers = NULL, **true_pointers = NULL;
 static char **functions = NULL, **files = NULL;
 static int *printable = NULL;
@@ -832,7 +788,7 @@ static void fdescribe_pointer(FILE *fp, void *p)
   int loc;
   char *p3 = (char *)p;
   loc = (*((int *)(p3 - 4)));
-  fprintf(fp, "%s[%d]:%s, len:%d", files[loc], lines[loc], functions[loc], sizes[loc]);
+  fprintf(fp, "%s[%d]:%s, len:%lu", files[loc], lines[loc], functions[loc], (unsigned long)(sizes[loc]));
   if (printable[loc] == PRINT_CHAR)
     fprintf(fp, ": %s", p3);
 }
@@ -843,7 +799,7 @@ static void describe_pointer(void *p)
 }
 
 static char pad[MEM_PAD_SIZE] = {'W','I','L','L','I','A','M',' ','G','A','R','D','N','E','R',' ','S','C','H','O','T','T','S','T','A','E','D','T',' ','D','M','A'};
-static void set_padding(void *p1, void *p2, int len, int loc)
+static void set_padding(void *p1, void *p2, size_t len, int loc)
 {
   char *p3 = (char *)p1;
   char *ip2;
@@ -854,7 +810,7 @@ static void set_padding(void *p1, void *p2, int len, int loc)
   (*((int *)(p3 - 4))) = loc;
 }
 
-static void check_padding(void *p1, void *p2, int len, bool refill)
+static void check_padding(void *p1, void *p2, size_t len, bool refill)
 {
   int i, j;
   char *ip2;
@@ -946,7 +902,7 @@ static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *f
       mem_size = 65536 * 128;
       pointers = (void **)calloc(mem_size, sizeof(void *));
       true_pointers = (void **)calloc(mem_size, sizeof(void *));
-      sizes = (int *)calloc(mem_size, sizeof(int));
+      sizes = (size_t *)calloc(mem_size, sizeof(size_t));
       locations = (int *)calloc(mem_size, sizeof(int));
       freed = (int *)calloc(mem_size, sizeof(int));
       for (i = 0; i < mem_size; i++) freed[i] = i;
@@ -961,28 +917,28 @@ static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *f
 
   pointers[loc] = ptr;
   true_pointers[loc] = true_ptr;
-  set_padding(ptr, true_ptr, (int)len, loc);
-  sizes[loc] = (int)len;
+  set_padding(ptr, true_ptr, len, loc);
+  sizes[loc] = len;
   locations[loc] = find_mem_location(func, file, line);
   last_loc = locations[loc];
   return(loc);
 }
 
-#define MAX_MALLOC (1 << 28)
+#define MAX_MALLOC (1 << 30)
 
-void *mem_calloc(int len, int size, const char *func, const char *file, int line)
+void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line)
 {
   char *ptr, *true_ptr;
-  if ((len <= 0) || ((len * size) > MAX_MALLOC) || (size <= 0))
+  if ((len == 0) || ((len * size) > MAX_MALLOC) || (size == 0))
     {
-      fprintf(stderr, "%s:%s[%d] attempt to calloc %d bytes", func, file, line, len * size);
+      fprintf(stderr, "%s:%s[%d] attempt to calloc %lu bytes", func, file, line, (unsigned long)(len * size));
       mem_report(); 
       abort();
     }
   true_ptr = (char *)malloc(len * size + 2 * MEM_PAD_SIZE);
   if (!true_ptr)
     {
-      fprintf(stderr, "can't calloc %d bytes!!", len * size + 2 * MEM_PAD_SIZE);
+      fprintf(stderr, "can't calloc %lu bytes!!", (unsigned long)(len * size + 2 * MEM_PAD_SIZE));
       mem_report();
       abort();
     }
@@ -993,18 +949,18 @@ void *mem_calloc(int len, int size, const char *func, const char *file, int line
   return((void *)ptr);
 }
 
-void *mem_malloc(int len, const char *func, const char *file, int line)
+void *mem_malloc(size_t len, const char *func, const char *file, int line)
 {
   char *ptr, *true_ptr;
-  if ((len <= 0) || (len > MAX_MALLOC))
+  if ((len == 0) || (len > MAX_MALLOC))
     {
-      fprintf(stderr, "%s:%s[%d] attempt to malloc %d bytes", func, file, line, len);
+      fprintf(stderr, "%s:%s[%d] attempt to malloc %lu bytes", func, file, line, (unsigned long)len);
       mem_report(); abort();
     }
   true_ptr = (char *)malloc(len + 2 * MEM_PAD_SIZE);
   if (!true_ptr)
     {
-      fprintf(stderr, "can't malloc %d bytes!!", len + 2 * MEM_PAD_SIZE);
+      fprintf(stderr, "can't malloc %lu bytes!!", (unsigned long)(len + 2 * MEM_PAD_SIZE));
       mem_report();
       abort();
     }
@@ -1023,12 +979,12 @@ void *mem_free(void *ptr, const char *func, const char *file, int line)
   return((void *)FREED_POINTER);
 }
 
-void *mem_realloc(void *ptr, int size, const char *func, const char *file, int line)
+void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line)
 {
   char *new_ptr, *true_ptr, *new_true_ptr;
-  if ((size <= 0) || (size > MAX_MALLOC))
+  if ((size == 0) || (size > MAX_MALLOC))
     {
-      fprintf(stderr, "%s:%s[%d] attempt to realloc %d bytes", func, file, line, size);
+      fprintf(stderr, "%s:%s[%d] attempt to realloc %lu bytes", func, file, line, (unsigned long)size);
       mem_report(); abort();
     }
   true_ptr = (char *)forget_pointer(ptr, func, file, line, false);
@@ -1041,7 +997,8 @@ void *mem_realloc(void *ptr, int size, const char *func, const char *file, int l
 
 static char *mem_stats(int ub)
 {
-  int i, k, ptrs = 0, sum = 0, snds = 0, chns = 0, trees = 0;
+  int i, k, ptrs = 0, snds = 0, chns = 0, trees = 0;
+  size_t sum = 0;
   snd_info *sp;
   char *result, *ksum = NULL, *kptrs = NULL, *kpers = NULL;
   for (i = 0; i < mem_size; i++)

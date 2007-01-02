@@ -204,7 +204,7 @@ static void add_local_load_path(FILE *fd, char *path)
 #endif
 #if HAVE_FORTH
   /* this already checks */
-  fprintf(fd, "$\" %s\" add-load-path\n", path); /* no drop here */
+  fprintf(fd, "\"%s\" add-load-path\n", path); /* no drop here */
 #endif
 #if HAVE_GAUCHE
   fprintf(fd, "(add-to-load-path \"%s\")\n", path); /* see snd-xen.c */
@@ -310,18 +310,10 @@ static char *possibly_quote(char *key)
     if (!(isspace(key[i])))
       {
 	if ((j == 0) && (isalpha(key[i])))
-#if HAVE_FORTH
-	  { key_buf[j++] = '$'; key_buf[j++] = '\"'; key_buf[j++] = ' '; }
-#else
 	  key_buf[j++] = '\"';
-#endif
 	key_buf[j++] = key[i];
       }
-#if HAVE_FORTH
-  if ((key_buf[0] == '$') && (key_buf[j - 1] != '\"'))
-#else
   if ((key_buf[0] == '\"') && (key_buf[j - 1] != '\"'))
-#endif
     key_buf[j++] = '\"';
   key_buf[j++] = '\0';
 #if 0
@@ -1417,7 +1409,7 @@ static void save_view_files_directory(prefs_info *prf, FILE *fd)
       fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_directory_to_view_files_list), rts_vf_directory);
 #endif
 #if HAVE_FORTH
-      fprintf(fd, "$\" %s\" %s drop\n", rts_vf_directory, S_add_directory_to_view_files_list);
+      fprintf(fd, "\"%s\" %s drop\n", rts_vf_directory, S_add_directory_to_view_files_list);
 #endif
     }
 }
@@ -3425,7 +3417,7 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
 #if HAVE_FORTH
       fprintf(fd, "require clm\n");
       if (rts_clm_file_name)
-	fprintf(fd, "$\" %s\" to *clm-file-name*\n", rts_clm_file_name);
+	fprintf(fd, "\"%s\" to *clm-file-name*\n", rts_clm_file_name);
       if (rts_clm_file_buffer_size != 65536)
 	fprintf(fd, "%d to *clm-file-buffer-size*\n", rts_clm_file_buffer_size);
       if (rts_clm_table_size != 512)
@@ -4507,7 +4499,7 @@ static void save_peak_envs(prefs_info *prf, FILE *fd)
 #if HAVE_FORTH
       fprintf(fd, "require peak-env\n");
       if (include_peak_env_directory)
-	fprintf(fd, "$\" %s\" to save-peak-env-info-directory\n", include_peak_env_directory);
+	fprintf(fd, "\"%s\" to save-peak-env-info-directory\n", include_peak_env_directory);
 #endif
     }
 }
@@ -4919,7 +4911,7 @@ static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
 		    (cx) ? "true" : "false"));
 #endif
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: <{ }> #f set-pausing drop cursor play drop ; %s bind-key drop\n",
+  return(mus_format("%s %d lambda: <{ }> #f set-pausing drop  #f #f #f cursor play drop ; %s \"play sound from cursor\" \"play-from-cursor\" bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -4979,7 +4971,7 @@ static char *make_show_all_binding(char *key, bool ctrl, bool meta, bool cx)
 		    (cx) ? "true" : "false"));
 #endif
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: <{ }> #f sync sync-max 1+ #f set-sync drop '( 0.0 #f #f #f frames #f srate f/ ) #f #f set-x-bounds drop #f set-sync ; %s bind-key drop\n",
+  return(mus_format("%s %d lambda: <{ }> #f sync sync-max 1+ #f set-sync drop '( 0.0 #f #f #f frames #f srate f/ ) #f #f set-x-bounds drop #f set-sync ; %s \"show entire sound\" \"show-all\" bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -5039,7 +5031,7 @@ static char *make_select_all_binding(char *key, bool ctrl, bool meta, bool cx)
 		    (cx) ? "true" : "false"));
 #endif
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: <{ }> #f sync sync-max 1+ #f set-sync drop #f #f select-all drop #f set-sync ; %s bind-key drop\n",
+  return(mus_format("%s %d lambda: <{ }> #f sync sync-max 1+ #f set-sync drop #f #f select-all drop #f set-sync ; %s \"select entire sound\" \"select-all\" bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -5089,7 +5081,7 @@ static char *make_revert_binding(char *key, bool ctrl, bool meta, bool cx)
 		    (cx) ? "true" : "false"));
 #endif
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: <{ }> revert-sound ; %s bind-key drop\n",
+  return(mus_format("%s %d lambda: <{ }> #f revert-sound ; %s \"undo all edits\" \"revert-sound\" bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -5139,7 +5131,7 @@ static char *make_exit_binding(char *key, bool ctrl, bool meta, bool cx)
 		    (cx) ? "true" : "false"));
 #endif
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: <{ }> snd-exit ; %s bind-key drop\n",
+  return(mus_format("%s %d lambda: <{ }> 0 snd-exit ; %s \"exit\" \"exit\" bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -5189,7 +5181,7 @@ static char *make_goto_maxamp_binding(char *key, bool ctrl, bool meta, bool cx)
 		    (cx) ? "true" : "false"));
 #endif
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: <{ }> #f #f #f maxamp-position #f #f #f set-cursor ; %s bind-key drop\n",
+  return(mus_format("%s %d lambda: <{ }> #f #f #f maxamp-position #f #f #f set-cursor ; %s \"goto maxamp\" \"goto-maxamp\" bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
@@ -5238,9 +5230,12 @@ static char *make_show_selection_binding(char *key, bool ctrl, bool meta, bool c
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
-  /* TODO: Forth show selection key-bind */
-  /*       sounds each { s } s sync new-sync > if s sync 1+ to new-sync then end-each
-   */
+#if HAVE_FORTH
+  return(mus_format("require extensions\n%s %d ' show-selection %s \"show selection\" \"show-selection\" bind-key drop\n",
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
   return(NULL);
 }
 

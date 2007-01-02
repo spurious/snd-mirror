@@ -607,7 +607,6 @@ void snd_doit(int argc, char **argv)
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
   sx = ss->sgx;
   sx->graph_is_active = false;
-  set_html_dir(copy_string(DEFAULT_HTML_DIR));
 
   /* the gray shades are an attempt to get around Netscape which hogs all the colors */
   sx->white =                 get_color(WHITE_COLOR,           NULL, NULL, true);

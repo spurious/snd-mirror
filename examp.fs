@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sun Dec 24 01:58:42 CET 2006
+\ Changed: Mon Jan 01 20:55:09 CET 2007
 
 \ Commentary:
 
@@ -20,6 +20,7 @@
 \ display-energy      ( -- proc; snd chn self -- val )
 \ display-db          ( -- proc; snd chn self -- val )
 \ fft-peak            ( snd chn -- pk )
+\
 \ comb-filter         ( scaler size -- proc; x self -- res )
 \ comb-chord          ( scaler size amp -- proc; x self -- res )
 \ zcomb               ( scaler size pm -- proc; x self -- val )
@@ -27,7 +28,7 @@
 \ formant-filter      ( radius frequency -- proc; x self -- val )
 \ formants            ( r1 f1 r2 f2 r3 f3 -- proc; x self -- val )
 \ moving-formant      ( radius move -- proc; x self -- val )
-\ osc-formant         ( radius bases amounts freqs -- proc; x self -- val )
+\ osc-formants         ( radius bases amounts freqs -- proc; x self -- val )
 \
 \ zero+               ( -- proc; n self -- val )
 \ next-peak           ( -- proc; n self -- val )
@@ -271,7 +272,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
   ( ret )
 ;
 
-: osc-formant ( radius bases amounts freqs -- proc; x self -- val )
+: osc-formants ( radius bases amounts freqs -- proc; x self -- val )
   doc" Returns a time-varying (in frequency) formant filter:\n\
 0.99 '( 0 1200 1 2400 ) moving-formant map-channel"
   { radius bases amounts freqs }

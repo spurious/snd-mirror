@@ -62945,6 +62945,7 @@ EDITS: 1
 (define cadr-main (if with-gui (cadr (main-widgets)) #f))
 (define sound-data-23 (make-sound-data 2 3))
 (define a-hook (make-hook 2))
+(define a-sound #f)
 (set! (with-background-processes) #t)
 
 (if (and with-gui
@@ -64419,6 +64420,8 @@ EDITS: 1
 	       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
 	
 	(gc)(gc)
+
+;;	(set! a-sound (new-sound "test.snd" mus-next mus-bshort 22050 1 "set-samples test" 100))
 	
 	;; ---------------- 0 Args
 	(for-each 
@@ -64446,7 +64449,7 @@ EDITS: 1
 	    procs1))
 	 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 	       (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-	       '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
+	       '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 	       12345678901234567890 (log0) (nan)))
 	(gc)(gc)
 	
@@ -64466,17 +64469,17 @@ EDITS: 1
 	    (if all-args
 		(list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 		      (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-		      '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
+		      '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 		      12345678901234567890 (log0) (nan))
 		(list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-		      (sqrt -1.0) delay-32 :feedback -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
+		      (sqrt -1.0) delay-32 :feedback -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
 	 (if all-args
 	     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 		   (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-		   '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
+		   '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 		   12345678901234567890 (log0) (nan))
 	     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-		   (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+		   (sqrt -1.0) delay-32 :frequency -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 	(gc)(gc)
 	
 	;; ---------------- set! no Args
@@ -64493,10 +64496,10 @@ EDITS: 1
 	 (if all-args
 	     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 		   (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-		   '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
+		   '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 		   12345678901234567890 (log0) (nan))
 	     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
-		   (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+		   (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 64 -64 a-hook #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 	(gc)(gc)
 	
 	;; ---------------- set! 1 Arg
@@ -64515,17 +64518,17 @@ EDITS: 1
 	    (if all-args
 		(list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 		      (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-		      '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
+		      '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 		      12345678901234567890 (log0) (nan))
 		(list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-		      (sqrt -1.0) delay-32 :feedback -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
+		      (sqrt -1.0) delay-32 :feedback -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
 	 (if all-args
 	     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 		   (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-		   '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
+		   '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 		   12345678901234567890 (log0) (nan))
 	     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-		   (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+		   (sqrt -1.0) delay-32 :frequency -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 	(gc)(gc)
 	
 	;; ---------------- set! 2 Args
@@ -64546,24 +64549,24 @@ EDITS: 1
 	       (if all-args
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 			 (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-			 '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
+			 '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 			 12345678901234567890 (log0) (nan))
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-			 (sqrt -1.0) delay-32 :feedback -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
+			 (sqrt -1.0) delay-32 :feedback -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
 	    (if all-args
 		(list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 		      (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-		      '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
+		      '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 		      12345678901234567890 (log0) (nan))
 		(list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-		      (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
+		      (sqrt -1.0) delay-32 :frequency -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
 	 (if all-args
 	     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 		   (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-		   '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
+		   '() '3 4 2 8 16 32 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 		   12345678901234567890 (log0) (nan))
 	     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-		   (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+		   (sqrt -1.0) delay-32 :frequency -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 	(gc)(gc)
 	
 	(if all-args
@@ -64587,11 +64590,11 @@ EDITS: 1
 				  (snd-display ";procs3: ~A ~A" err (procedure-property n 'documentation)))))
 			  procs3))
 		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 '#(0 1) (sqrt -1.0) delay-32 3/4 -1.0
-			     :start -1 0 3 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+			     :start -1 0 3 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 		    (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 '#(0 1) (sqrt -1.0) delay-32 3/4 -1.0
-			  :channels -1 0 3 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
+			  :channels -1 0 3 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
 	       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 '#(0 1) (sqrt -1.0) delay-32 3/4 -1.0
-		     -1 0 3 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
+		     -1 0 3 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
 	      (gc)(gc)
 	      
 	      ;; ---------------- set! 3 Args
@@ -64612,13 +64615,13 @@ EDITS: 1
 				   (snd-display ";set-procs3: ~A ~A" err (procedure-property n 'documentation)))))
 			   set-procs3))
 			(list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			      :wave -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+			      :wave -1 0 3 16 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 		     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			   :initial-contents -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+			   :initial-contents -1 0 3 16 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 		  (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			:input -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+			:input -1 0 3 16 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 	       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-		     -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
+		     -1 0 3 16 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
 	      (gc)(gc)
 	      
 	      ;; ---------------- 4 Args
@@ -64639,13 +64642,13 @@ EDITS: 1
 				   (snd-display ";procs4: ~A ~A ~A" err n (procedure-property n 'documentation)))))
 			   procs4))
 			(list 1.5 "/hiho" (list 0 1) 1234 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			      :wave -1 0 #f #t '() 12345678901234567890 (log0) (nan))))
+			      :wave -1 0 1 64 -64 #f #t '() 12345678901234567890 (log0) (nan))))
 		     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) 3/4 '#(0 1) -1.0
-			   :initial-contents -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+			   :initial-contents -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 		  (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) 3/4 '#(0 1) -1.0
-			-1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+			-1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 	       (list 1.5 "/hiho" (list 0 1) 1234 vct-5 (sqrt -1.0) 3/4 '#(0 1) -1.0
-		     -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
+		     -1 0 1 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
 	      (gc)(gc)
 	      
 	      ;; ---------------- set! 4 Args
@@ -64668,15 +64671,15 @@ EDITS: 1
 				      (snd-display ";set-procs4: ~A ~A" err (procedure-property n 'documentation)))))
 			      set-procs4))
 			   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-				 :wave -1 0 3 16 #f #t '() 12345678901234567890 (log0) (nan))))
+				 :wave -1 0 3 16 -64 #f #t '() 12345678901234567890 (log0) (nan))))
 			(list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			      :initial-contents -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+			      :initial-contents -1 0 3 16 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 		     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			   :srate -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+			   :srate -1 0 3 16 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 		  (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			:input -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+			:input -1 0 3 16 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 	       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-		     -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
+		     -1 0 3 16 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
 	      (gc)(gc)
 	      
 	      (clear-sincs)
@@ -64701,11 +64704,11 @@ EDITS: 1
 				  (if (eq? err 'wrong-number-of-args)
 				      (snd-display ";procs5: ~A ~A ~A" err n (procedure-property n 'documentation)))))
 			      procs5))
-			   (list 1.5 "/hiho" 1234 :wave vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
-			(list 1.5 "/hiho" 1234 :size vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
-		     (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
-		  (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
-	       (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log0) (nan)))
+			   (list 1.5 "/hiho" 1234 :wave vct-3 vct-5 (sqrt -1.0) -1 0 -64 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
+			(list 1.5 "/hiho" 1234 :size vct-3 vct-5 (sqrt -1.0) -1 0 -64 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
+		     (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 -64 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
+		  (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 -64 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
+	       (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 -64 #f #t '() 3/4 12345678901234567890 (log0) (nan)))
 	      (gc)(gc)
 	      
 	      (clear-sincs)
@@ -64734,9 +64737,9 @@ EDITS: 1
 			      (list 1.5 "/hiho" -1234 -1 0 #f #t '() vct-3 (log0))))
 			   (list 1.5 "/hiho" -1234 0 vct-5 #f #t)))
 			(list 1.5 "/hiho" -1234 vct-3 #f #t)))
-		     (list 1.5 "/hiho" 1234 vct-3 -1 #f #t)))
-		  (list 1.5 vct-3 vct-5 -1 0 #f #t vct-5)))
-	       (list 1.5 "/hiho" 1234 #f #t vct-5))
+		     (list 1.5 "/hiho" -1234 vct-3 -1 #f #t)))
+		  (list 1.5 -1234 vct-3 vct-5 -1 0 #f #t)))
+	       (list 1.5 "/hiho" -1234 #f #t vct-5))
 	      (gc)(gc)
 	      
 	      ;; ---------------- 8 Args
@@ -64764,14 +64767,14 @@ EDITS: 1
 					   (if (eq? err 'wrong-number-of-args)
 					       (snd-display ";procs8: ~A ~A" err (procedure-property n 'documentation)))))
 				       procs8))
-				    (list 1.5 -1 #f (log0))))
-				 (list "/hiho" -1 1234 vct-5)))
-			      (list #t #f -1 vct-3)))
-			   (list (sqrt -1.0) 0 1)))
-			(list 1.5 -1 #f vct-3 '())))
-		     (list 2 #f #t 1234 vct-5)))
-		  (list #f #t -1)))
-	       (list 1.5 -1 '() "/hiho"))
+				    (list 1.5 -1 1234 #f '() (log0))))
+				 (list "/hiho" -1 1234 '() vct-5)))
+			      (list #t #f -1 1234 '() vct-3)))
+			   (list (sqrt -1.0) 1234 0 -1 '())))
+			(list 1.5 -1 #f 1234 vct-3 '())))
+		     (list 2 #f #t 1234 vct-5 -1)))
+		  (list #f #t -1 1234 vct-3)))
+	       (list 1.5 -1 '() 1234 "/hiho"))
 	      (gc)(gc)
 	      
 	      (clear-sincs)
@@ -64805,15 +64808,15 @@ EDITS: 1
 						 (if (eq? err 'wrong-number-of-args)
 						     (snd-display ";procs10: ~A ~A" err (procedure-property n 'documentation)))))
 					     procs10))
-					  (list 1.5 -1 #f)))
+					  (list 1.5 -1 #f 1234)))
 				       (list "/hiho" -1 1234)))
-				    (list #t #f vct-3)))
-				 (list (sqrt -1.0) #f 1 vct-5)))
-			      (list 1.5 #f -1 '())))
+				    (list #t #f vct-3 1234)))
+				 (list (sqrt -1.0) #f -1 vct-5)))
+			      (list 1.5 #f -1 1234 '())))
 			   (list -2 #f 1234 vct-3)))
-			(list #f #t '() vct-5)))
-		     (list 1.5 -1 "/hiho")))
-		  (list 1.5 -1)))
+			(list #f #t '() 1234 vct-5)))
+		     (list 1.5 -1 "/hiho" '())))
+		  (list 1.5 -1 '())))
 	       (list #f -1 1234))
 	      (gc)(gc)
 	      

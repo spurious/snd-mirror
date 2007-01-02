@@ -4364,11 +4364,12 @@ the envelopes are complete (they are the result of a background process), and th
   if ((!cgx) || (!(cp->amp_envs))) 
     return(XEN_EMPTY_LIST);
   edpos = XEN_TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
-  if ((edpos < -1) || (edpos >= cp->edit_size) || (cp->edits[edpos] == NULL))
+  if (edpos == AT_CURRENT_EDIT_POSITION)
+	edpos = cp->edit_ctr;
+  if ((edpos < 0) || (edpos >= cp->edit_size) || (cp->edits[edpos] == NULL))
     XEN_ERROR(NO_SUCH_EDIT,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_peak_env_info),
 			 pos));
-  if (edpos == AT_CURRENT_EDIT_POSITION) edpos = cp->edit_ctr;
   ep = cp->amp_envs[edpos];
   if (ep)
     return(XEN_LIST_3(C_TO_XEN_BOOLEAN(ep->completed),

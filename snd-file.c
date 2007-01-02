@@ -583,7 +583,7 @@ void save_added_sound_file_extensions(FILE *fd)
 	fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_sound_file_extension), sound_file_extensions[i]);
 #endif
 #if HAVE_FORTH
-	fprintf(fd, "$\" %s\" %s drop\n", sound_file_extensions[i], S_add_sound_file_extension);
+	fprintf(fd, "\"%s\" %s drop\n", sound_file_extensions[i], S_add_sound_file_extension);
 #endif
       }
 }
@@ -3894,13 +3894,13 @@ void save_view_files_dialogs(FILE *fd)
 	  {
 	    fprintf(fd, "  vf '(");
 	    for (k = 0; k <= vdat->end; k++)
-	      fprintf(fd, " $\" %s\"", vdat->full_names[k]);
+	      fprintf(fd, " \"%s\"", vdat->full_names[k]);
 	    fprintf(fd, " ) set-view-files-files drop\n");
 	    if (vdat->currently_selected_files > 0)
 	      {
 		fprintf(fd, "  vf '(");
 		for (k = 0; k <= vdat->currently_selected_files; k++)
-		  fprintf(fd, " $\" %s\"", vdat->full_names[vdat->selected_files[k]]);
+		  fprintf(fd, " \"%s\"", vdat->full_names[vdat->selected_files[k]]);
 		fprintf(fd, " ) set-view-files-selected-files drop\n");
 	      }
 	  }

@@ -12,7 +12,7 @@ typedef struct {
 static cmap **cmaps = NULL;
 static int cmaps_size = 0;
 
-#define NO_SUCH_COLORMAP     XEN_ERROR_TYPE("no-such-colormap")
+#define NO_SUCH_COLORMAP XEN_ERROR_TYPE("no-such-colormap")
 
 bool is_colormap(int n)
 {
@@ -648,26 +648,27 @@ void g_init_gxcolormaps(void)
   cmaps = (cmap **)CALLOC(cmaps_size, sizeof(cmap *));
   /* these are just place-holders */
   cmaps[BLACK_AND_WHITE_COLORMAP] = make_builtin_cmap(1, _("black-and-white"), make_black_and_white_colormap); 
-  cmaps[GRAY_COLORMAP] = make_builtin_cmap(1, _("gray"), make_gray_colormap); 
-  cmaps[AUTUMN_COLORMAP] = make_builtin_cmap(1, _("autumn"), make_autumn_colormap); 
-  cmaps[SPRING_COLORMAP] = make_builtin_cmap(1, _("spring"), make_spring_colormap); 
-  cmaps[WINTER_COLORMAP] = make_builtin_cmap(1, _("winter"), make_winter_colormap); 
-  cmaps[SUMMER_COLORMAP] = make_builtin_cmap(1, _("summer"), make_summer_colormap); 
-  cmaps[COOL_COLORMAP] = make_builtin_cmap(1, _("cool"), make_cool_colormap); 
-  cmaps[COPPER_COLORMAP] = make_builtin_cmap(1, _("copper"), make_copper_colormap); 
-  cmaps[FLAG_COLORMAP] = make_builtin_cmap(1, _("flag"), make_flag_colormap); 
-  cmaps[PRISM_COLORMAP] = make_builtin_cmap(1, _("prism"), make_prism_colormap); 
-  cmaps[BONE_COLORMAP] = make_builtin_cmap(1, _("bone"), make_bone_colormap); 
-  cmaps[HOT_COLORMAP] = make_builtin_cmap(1, _("hot"), make_hot_colormap); 
-  cmaps[JET_COLORMAP] = make_builtin_cmap(1, _("jet"), make_jet_colormap); 
-  cmaps[PINK_COLORMAP] = make_builtin_cmap(1, _("pink"), make_pink_colormap); 
+  cmaps[GRAY_COLORMAP] =    make_builtin_cmap(1, _("gray"), make_gray_colormap); 
+  cmaps[AUTUMN_COLORMAP] =  make_builtin_cmap(1, _("autumn"), make_autumn_colormap); 
+  cmaps[SPRING_COLORMAP] =  make_builtin_cmap(1, _("spring"), make_spring_colormap); 
+  cmaps[WINTER_COLORMAP] =  make_builtin_cmap(1, _("winter"), make_winter_colormap); 
+  cmaps[SUMMER_COLORMAP] =  make_builtin_cmap(1, _("summer"), make_summer_colormap); 
+  cmaps[COOL_COLORMAP] =    make_builtin_cmap(1, _("cool"), make_cool_colormap); 
+  cmaps[COPPER_COLORMAP] =  make_builtin_cmap(1, _("copper"), make_copper_colormap); 
+  cmaps[FLAG_COLORMAP] =    make_builtin_cmap(1, _("flag"), make_flag_colormap); 
+  cmaps[PRISM_COLORMAP] =   make_builtin_cmap(1, _("prism"), make_prism_colormap); 
+  cmaps[BONE_COLORMAP] =    make_builtin_cmap(1, _("bone"), make_bone_colormap); 
+  cmaps[HOT_COLORMAP] =     make_builtin_cmap(1, _("hot"), make_hot_colormap); 
+  cmaps[JET_COLORMAP] =     make_builtin_cmap(1, _("jet"), make_jet_colormap); 
+  cmaps[PINK_COLORMAP] =    make_builtin_cmap(1, _("pink"), make_pink_colormap); 
   cmaps[RAINBOW_COLORMAP] = make_builtin_cmap(1, _("rainbow"), make_rainbow_colormap); 
 
-  XEN_DEFINE_PROCEDURE(S_colormap_p, g_colormap_p_w, 1, 0, 0, H_colormap_p);
-  XEN_DEFINE_PROCEDURE(S_colormap_ref, g_colormap_ref_w, 2, 0, 0, H_colormap_ref);
-  XEN_DEFINE_PROCEDURE(S_add_colormap, g_add_colormap_w, 2, 0, 0, H_add_colormap);
-  XEN_DEFINE_PROCEDURE(S_colormap_name, g_colormap_name_w, 1, 0, 0, H_colormap_name);
+  XEN_DEFINE_PROCEDURE(S_colormap_p, g_colormap_p_w,           1, 0, 0, H_colormap_p);
+  XEN_DEFINE_PROCEDURE(S_colormap_ref, g_colormap_ref_w,       2, 0, 0, H_colormap_ref);
+  XEN_DEFINE_PROCEDURE(S_add_colormap, g_add_colormap_w,       2, 0, 0, H_add_colormap);
+  XEN_DEFINE_PROCEDURE(S_colormap_name, g_colormap_name_w,     1, 0, 0, H_colormap_name);
   XEN_DEFINE_PROCEDURE(S_delete_colormap, g_delete_colormap_w, 1, 0, 0, H_delete_colormap);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_colormap, g_colormap_w, H_colormap, S_setB S_colormap, g_set_colormap_w, 0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_colormap,      g_colormap_w,      H_colormap,      S_setB S_colormap,      g_set_colormap_w,      0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_colormap_size, g_colormap_size_w, H_colormap_size, S_setB S_colormap_size, g_set_colormap_size_w, 0, 0, 1, 0);
 }

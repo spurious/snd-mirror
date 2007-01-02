@@ -3715,7 +3715,7 @@ shows how these low-level DAC functions fit together:
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa">
 <pre>
 (let* ((audio-fd (<a class=quiet href="#musaudioopenoutput">mus-audio-open-output</a> mus-audio-default 22050 1 mus-lshort 1024))
-                                                      ; open DAC at srate 22050, 1 channel, 1024 bytes per buffer
+       ;; open DAC at srate 22050, 1 channel, 1024 bytes per buffer
        (osc (<a class=quiet href="clm.html#make-oscil">make-oscil</a> 440.0))                       ; make a sine wave at 440 Hz
        (data (<a class=quiet href="#makesounddata">make-sound-data</a> 1 512)))                ; output buffer (1 chan, 512 samples)
   (do ((beg 0 (+ beg 512)))                           ; fill a buffer at a time
@@ -3726,9 +3726,7 @@ shows how these low-level DAC functions fit together:
     (<a class=quiet href="#musaudiowrite">mus-audio-write</a> audio-fd data 512))              ; send a buffer to the DAC
   (<em class=red>mus-audio-close</em> audio-fd))                         ; close the DAC
 </pre>
-</td></tr></table>
-
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr></table></td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mus-audio-describe -->
@@ -4127,9 +4125,11 @@ mus-sound-maxamp returns a list of max amps and locations thereof.  The correspo
 affects only the sndlib table of sound file info, not the sound file itself, as in all such cases.
 <pre>
     :<em class=typing>(mus-sound-maxamp "oboe.snd")</em>
-    <em class=listener>(24971 0.147247314453125)</em>                  ;oboe's maxamp is .147 first encountered at sample 24971
+    <em class=listener>(24971 0.147247314453125)</em>                  
+    ;; oboe's maxamp is .147 first encountered at sample 24971
     :<em class=typing>(mus-sound-maxamp "2a.snd")</em>
-    <em class=listener>(933 0.0999755859375 2827 0.0999755859375)</em> ;2a's maxamps are 0.1 in each channel at sample 933 in chan 0, 2827 in chan 1
+    <em class=listener>(933 0.0999755859375 2827 0.0999755859375)</em> 
+    ;; 2a's maxamps are 0.1 in each channel at sample 933 in chan 0, 2827 in chan 1
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -7597,7 +7597,7 @@ dac-buffer boundaries (normally around 256 samples).
 <pre>
     (play)                                         ; play current sound, all chans from start to end
     (play (<a class=quiet href="#cursor">cursor</a>))                                ; play starting from the cursor
-    (play (round (* 3.0 (<a class=quiet href="#srate">srate</a>))) 1 3)             ; play snd 1, chan 3 (4th channel), starting at 3.0 secs
+    (play (round (* 3.0 (<a class=quiet href="#srate">srate</a>))) 1 3)             ; play snd 1, chan 3 (4th chan), start at 3.0 secs
     (play 0 #f #f #t)                              ; play sync'd sounds
     (play 0 #f #f #f (round (* 3.0 (<a class=quiet href="#srate">srate</a>))))      ; play from start for 3.0 secs
     (play 0 #f #f #f #f 2)                         ; play the version at edit history position 2
@@ -8024,7 +8024,6 @@ is accessed is not foolish:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define* (dither-channel #:optional (amount .00006) beg dur snd chn edpos)
-  "(dither-channel #:optional (amount .00006) beg dur snd chn edpos) adds 'amount' dither to each sample"
   (let ((dither (* .5 amount)))
     (<em class=red>ptree-channel</em> 
       (lambda (y) 
@@ -8135,7 +8134,8 @@ result appear to be one operation in the edit history list.
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 <A NAME="powenvchannel"></a>(define* (powenv-channel envelope #:optional (beg 0) dur snd chn edpos)
-  ;; envelope with a separate base for each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))
+  ;; envelope with a separate base for each segment: 
+  ;;    (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))
   (let* ((curbeg beg)
 	 (fulldur (or dur (<a class=quiet href="#frames">frames</a> snd chn edpos)))
 	 (len (length envelope))
@@ -8891,7 +8891,7 @@ This returns a list of lists describing 'snd' as a soundfont.  Each inner list
 consists of the sound name, start point, loop start, and loop end.
 <pre>
     :<em class=typing>(soundfont-info)</em>
-    <em class=listener>(("BrSteel_E4" 0 65390 65458) ("BrSteel_B2" 65490 131458 131637) ("BrSteel_E1" 131669 197296 197830) ...)</em>
+    <em class=listener>(("BrSteel_E4" 0 65390 65458) ("BrSteel_B2" 65490 131458 131637) ...)</em>
 </pre>
 To set a named mark at the start of each sound with un-named marks 
 at the loop points:
@@ -9383,7 +9383,8 @@ This is the fft size (the default size is 512).  It should be a power of 2.
 If your version of Snd was built with FFTW, and you set transform-size
 too large (on my machine, with 2 GBytes of memory,
 <code>(expt 2 26)</code> is apparently too large), FFTW simply exits Snd!  There is currently
-no way to trap the error.
+no way to trap the error.  Also, FFTW assumes the fft size is a (signed) int -- 2^30 is probably
+the transform-size limit.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -11803,7 +11804,9 @@ effects-utils.scm (and the gtk version in gtk-effects-utils.scm) use this to mak
 is:
 <pre>
     Motif: (add-watcher (lambda () 
-                          (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (not (null? (sounds))))))
+                          (XtSetSensitive 
+                            (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) 
+                            (not (null? (sounds))))))
     Gtk:   (add-watcher (lambda () 
                           (gtk_widget_set_sensitive ok-button (not (null? (sounds))))))
 </pre>
@@ -11946,7 +11949,8 @@ A similar set rebinds the arrow keys to give much more precise window position a
 	    (begin
 	      (set! (<a class=quiet href="#leftsample">left-sample</a>) (+ lo samps-per-pixel))
 	      (set! (<a class=quiet href="#xzoomslider">x-zoom-slider</a>) 
-                (exact-&gt;inexact (round (/ (max samps-per-pixel (- hi lo (* 2 samps-per-pixel))) len))))))
+                (exact-&gt;inexact 
+                  (round (/ (max samps-per-pixel (- hi lo (* 2 samps-per-pixel))) len))))))
 	(begin
 	  (set! (<a class=quiet href="#leftsample">left-sample</a>) (max 0 (- lo samps-per-pixel)))
 	  (set! (<a class=quiet href="#xzoomslider">x-zoom-slider</a>) 
@@ -12704,9 +12708,13 @@ backtrace information doesn't include a file name or line number, you can watch 
 load process by setting <b>%load-verbosely</b> to #t.
 </p>
 
-
-<table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4>Ruby debugging</h4></td></tr></table>
+<br>
 <table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4>Forth debugging</h4></td></tr></table>
+<p>See the debugging section in the fth documentation.
+</p>
+
+<br>
+<table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4>Ruby debugging</h4></td></tr></table>
 <table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4>Gauche debugging</h4></td></tr></table>
 
 <!-- TODO: debugging in Ruby, Gauche, and Forth -->

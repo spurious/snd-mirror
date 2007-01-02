@@ -706,6 +706,7 @@ is the window family parameter, if any:\n  " make_window_example
   Float *data;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, S_make_fft_window, "an integer (window type)");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_2, S_make_fft_window, "an integer");
+
   if (XEN_NUMBER_P(ubeta)) beta = XEN_TO_C_DOUBLE(ubeta);
   if (XEN_NUMBER_P(ualpha)) alpha = XEN_TO_C_DOUBLE(ualpha);
   n = XEN_TO_C_INT(size);
@@ -716,6 +717,7 @@ is the window family parameter, if any:\n  " make_window_example
   t = (mus_fft_window_t)XEN_TO_C_INT(type);
   if (!(MUS_FFT_WINDOW_OK(t)))
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 1, type, "~A: unknown fft window");
+
   data = (Float *)CALLOC(n, sizeof(Float));
   mus_make_fft_window_with_window(t, n, beta, alpha, data);
   return(xen_make_vct(n, data));
@@ -5578,8 +5580,11 @@ static XEN g_make_phase_vocoder(XEN arglist)
         lambda do | v | snd_print(\"resynthesizing\"); 0.0 end)"
   #endif
   #if HAVE_FORTH
-    #define pv_example "#f 512 4 256 1.0 #f #f #f make-phase-vocoder"
-    #define pv_edit_example "#f 512 4 256 1.0 lambda: { y infunc } \"analyzing\" snd-print true ; 2 make-proc lambda: { v } \"editing\" snd-print true ; 1 make-proc lambda: { v } \"resynthesizing\" snd-print 0.0 ; 1 make-proc make-phase-vocoder"
+    #define pv_example "#f 512 4 256 1.0 #f #f #f " S_make_phase_vocoder
+    #define pv_edit_example "#f 512 4 256 1.0\n\
+    lambda: <{ v infunc -- f }> \"analyzing\" snd-print drop #t ;\n\
+    lambda: <{ v -- n }> \"editing\" snd-print drop #t ;\n\
+    lambda: <{ v -- r }> \"resynthesizing\" snd-print drop 0.0 ; " S_make_phase_vocoder
   #endif
 
   #define H_make_phase_vocoder "(" S_make_phase_vocoder " :input :fft-size :overlap :interp :pitch :analyze :edit :synthesize): \

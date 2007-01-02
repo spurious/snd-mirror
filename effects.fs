@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Sat Dec 23 22:31:30 CET 2006
+\ Changed: Mon Jan 01 03:57:53 CET 2007
 
 \ Commentary:
 \
@@ -958,8 +958,7 @@ set-current
   samps amp del effects-echo-cb beg dur snd chn #f origin map-channel
 ;
 
-: effects-flecho ( scaler secs input-samps beg dur snd chn -- res )
-  { amp secs input-samps beg dur snd chn }
+: effects-flecho <{ amp secs input-samps :optional beg 0 dur #f snd #f chn #f -- res }>
   :order 4 :xcoeffs vct( 0.125 0.25 0.25 0.125 ) make-fir-filter { flt }
   secs snd srate f* fround->s make-delay { del }
   input-samps number? if
@@ -3231,7 +3230,7 @@ previous
 
 hide
 : hello-src-cb { in-data idx -- prc; dir self -- samp }
-  1 proc-create in-data , idx ,
+  1 proc-create idx , in-data ,
  does> ( dir self -- samp )
   { dir self }
   self @ { idx }
@@ -3249,7 +3248,7 @@ set-current
   :srate 1.0 :input in-data idx hello-src-cb make-src { rd }
   out-data map!
     idx len = ?leave
-    rd  rn  0.0 rand-interp  src
+    rd  rn  0.0 rand-interp  #f src
   end-map to out-data
   $" %s %s %s %s %s" '( freq amp beg dur get-func-name ) string-format { origin }
   out-data beg out-data vct-length snd chn #f origin vct->channel

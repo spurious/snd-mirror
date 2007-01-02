@@ -2,8 +2,6 @@
 !   so this file is redundant unless something is changed.
 !   Actually, since I forget this file even exists, it's best not to use it.
 !   The .Xdefaults form would prefix each of these with "snd":
-!      snd*initFile: hiho
-!
 !
 ! ---- possible font names for a big screen running Linux ----
 ! *axisLabelFont:      -adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*
@@ -43,7 +41,6 @@
 *doitagainbuttoncolor: ivory1
 *axisLabelFont:        -*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1
 *axisNumbersFont:      -*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1
-*initFile:             ~/.snd
 *autoResize:           1
 *horizontalPanes:      0
 *zoomSliderWidth:      10

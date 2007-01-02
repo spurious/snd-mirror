@@ -502,7 +502,7 @@ static XEN g_vct_mapB(XEN obj, XEN proc)
     #define vct_fill_example "vct_fill!(v, 3.0)"
   #endif
   #if HAVE_FORTH
-    #define vct_map_example "v lambda: ( -- val ) 3.0 ; 0 make-proc vct-map!"
+    #define vct_map_example "v lambda: <{ -- val }> 3.0 ; vct-map!"
     #define vct_fill_example "v 3.0 vct-fill!"
   #endif
 

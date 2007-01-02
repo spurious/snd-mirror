@@ -251,7 +251,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Cursor_Location_Offset = DEFAULT_CURSOR_LOCATION_OFFSET;
   ss->Max_Regions = DEFAULT_MAX_REGIONS;
   ss->Max_Transform_Peaks = DEFAULT_MAX_TRANSFORM_PEAKS;
-  ss->HTML_Dir = NULL;
+  ss->HTML_Dir = copy_string(DEFAULT_HTML_DIR);
   ss->HTML_Program = copy_string(DEFAULT_HTML_PROGRAM);
   ss->Log_Freq_Start = DEFAULT_LOG_FREQ_START;
   ss->Min_dB = DEFAULT_MIN_DB;

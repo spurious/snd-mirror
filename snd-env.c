@@ -1338,7 +1338,7 @@ void save_envelope_editor_state(FILE *fd)
 	  fprintf(fd, "%s(\"%s\", %s, %.4f)\n", xen_scheme_procedure_to_ruby(S_define_envelope), all_names[i], estr, all_envs[i]->base);
 #endif
 #if HAVE_FORTH
-	  fprintf(fd, "$\" %s\" %s %.4f %s drop\n", all_names[i], estr, all_envs[i]->base, S_define_envelope);
+	  fprintf(fd, "\"%s\" %s %.4f %s drop\n", all_names[i], estr, all_envs[i]->base, S_define_envelope);
 #endif
 	  FREE(estr);
 	}

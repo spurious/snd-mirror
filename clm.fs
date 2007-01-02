@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Sat Dec 30 03:07:39 CET 2006
+\ Changed: Mon Jan 01 04:06:54 CET 2007
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 30-Dec-2006" value *clm-version*
+$" fth 1-Jan-2007" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [undefined] clm-print [if] ' fth-print alias clm-print [then]

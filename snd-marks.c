@@ -2191,12 +2191,13 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 	    if (!cp) return(XEN_FALSE);
 	    if (XEN_INTEGER_P(pos_n)) 
 	      {
-		pos = XEN_TO_C_INT(pos_n); 
-		if ((pos < AT_CURRENT_EDIT_POSITION) || (pos >= cp->edit_size) || (cp->edits[pos] == NULL))
+		pos = XEN_TO_C_INT(pos_n);
+		if (pos == AT_CURRENT_EDIT_POSITION)
+		  pos = cp->edit_ctr;
+		if ((pos < 0) || (pos >= cp->edit_size) || (cp->edits[pos] == NULL))
 		  XEN_ERROR(NO_SUCH_EDIT,
 			    XEN_LIST_2(C_TO_XEN_STRING(S_marks),
 				       pos_n));
-		if (pos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr;
 	      }
 	    else pos = cp->edit_ctr;
 	    ids = channel_marks(cp, pos);
@@ -2346,7 +2347,7 @@ static mark *save_mark(chan_info *cp, mark *m, void *info)
 
 #if HAVE_FORTH
   if (m->name)
-    fprintf(sv->fd, OFF_TD " sfile %d $\" %s\" %s add-mark drop\n", m->samp, cp->chan, m->name, mapped_sync);
+    fprintf(sv->fd, OFF_TD " sfile %d \"%s\" %s add-mark drop\n", m->samp, cp->chan, m->name, mapped_sync);
   else fprintf(sv->fd, OFF_TD " sfile %d #f %s add-mark drop\n", m->samp, cp->chan, mapped_sync);
 #endif
 
