@@ -882,19 +882,6 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
   return(NULL);
 }
 
-bool procedure_ok_with_error(XEN proc, int req_args, const char *caller, const char *arg_name, int argn)
-{
-  char *errmsg;
-  errmsg = procedure_ok(proc, req_args, caller, arg_name, argn);
-  if (errmsg)
-    {
-      snd_error_without_format(errmsg);
-      FREE(errmsg);
-      return(false);
-    }
-  return(true);
-}
-
 XEN snd_no_such_file_error(const char *caller, XEN filename)
 {
   XEN_ERROR(NO_SUCH_FILE,
@@ -1255,6 +1242,13 @@ void snd_load_init_file(bool no_global, bool no_init)
   #define SND_INIT "~/.snd_forth"
 #endif
 
+#define SND_INIT_FILE_ENVIRONMENT_NAME "SND_INIT_FILE"
+#ifndef MUS_WINDOZE
+  #define INIT_FILE_NAME "~/.snd"
+#else
+  #define INIT_FILE_NAME "snd-init"
+#endif
+
   #define SND_CONF "/etc/snd.conf"
   redirect_snd_print_to(string_to_stdout, NULL);
   redirect_errors_to(string_to_stderr_and_listener, NULL);
@@ -1269,12 +1263,13 @@ void snd_load_init_file(bool no_global, bool no_init)
   /* now load local init file(s) */
   if (!no_init)
     {
-      /* check for possible prefs dialog output */
-      snd_load_init_file_1(SND_PREFS);
-
+      char *temp;
+      snd_load_init_file_1(SND_PREFS);  /* check for possible prefs dialog output */
       snd_load_init_file_1(SND_INIT);
-      if (ss->init_file)
-	snd_load_init_file_1(ss->init_file);
+      temp = getenv(SND_INIT_FILE_ENVIRONMENT_NAME);
+      if (temp)
+	snd_load_init_file_1(temp);
+      else snd_load_init_file_1(INIT_FILE_NAME);
     }
 
   redirect_everything_to(NULL, NULL);

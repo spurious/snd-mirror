@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Thu Oct 27 04:51:42 CEST 2005
-\ Changed: Sat Dec 16 04:28:01 CET 2006
+\ Changed: Tue Jan 02 10:49:39 CET 2007
 
 \ Commentary:
 \
@@ -18,6 +18,7 @@
 \ multiply-envelopes 	  ( env1 env2 -- env3 )      alias envelopes*
 \ max-envelope       	  ( env -- r )
 \ min-envelope       	  ( env -- r )
+\ integrate-envelope      ( en -- r )
 \ envelope-length    	  ( env -- n )
 \ envelope-last-x    	  ( env -- r )
 \ stretch-envelope   	  ( env old-attack new-attack old-decay new-decay -- new-env )
@@ -150,6 +151,16 @@ ENV may be a list, a vct, or an array:\n\
   doc" Returns min y value in EN."
   { en }
   en 1 object-ref en length 1 ?do en i object-ref fmin 2 +loop
+;
+
+: integrate-envelope ( en -- r )
+  doc" Area under env."
+  { en }
+  0.0 ( sum ) en length 3 - 0 ?do
+    en i 1+ object-ref en i 3 + object-ref f+ 0.5 f*
+    en i 2+ object-ref en i     object-ref f- f*  f+ ( sum+=... )
+  2 +loop
+  ( sum )
 ;
 
 : envelope-length ( en -- n )

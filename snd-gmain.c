@@ -552,8 +552,6 @@ void snd_doit(int argc, char **argv)
   sg_make_resizable(shell);
 #endif
 
-  set_init_filename(INIT_FILE_NAME);
-
   auto_open_files = argc-1;
   if (argc > 1) auto_open_file_names = (char **)(argv + 1);
   ss->startup_title = copy_string("snd");
@@ -589,11 +587,8 @@ void snd_doit(int argc, char **argv)
 			(strcmp(argv[i], "-batch") == 0))
 		      batch = true;
 		    else
-		      if (strcmp(argv[i], "-init") == 0)
-			set_init_filename(argv[++i]);
-		      else
-			if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
-			  check_features_list(argv[i + 1]);
+		      if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
+			check_features_list(argv[i + 1]);
 
   ss->batch_mode = batch;
   set_auto_resize(AUTO_RESIZE_DEFAULT);

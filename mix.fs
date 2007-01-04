@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Wed Dec 27 03:10:48 CET 2006
+\ Changed: Tue Jan 02 23:27:17 CET 2007
 
 \ Commentary:
 \
@@ -77,7 +77,7 @@ require examp
 ;
 
 hide
-: delete-mix-xt       <{ id -- }> delete-mix drop ;
+: delete-mix-xt       <{ id -- }> id delete-mix drop ;
 : delete-all-mixes-cb <{ -- }> ['] delete-mix-xt undef undef mixes tree-for-each ;
 set-current
 : delete-all-mixes ( -- )

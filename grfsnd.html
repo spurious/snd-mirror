@@ -138,8 +138,7 @@ the usual Xt/X-related flags like -xrm).</p>
 <tr><td><code>-e -eval expr</code></td>           <td>evaluate expr</td></tr>
 <tr><td bgcolor="#f6f8ff"><code>-b -batch &lt;file&gt;</code></td>  <td bgcolor="#f6f8ff">load Scheme, Ruby, or Forth code in &lt;file&gt; as a batch (no GUI) job</td></tr>
 <tr><td><code>-I &lt;dir&gt;</code></td>          <td>add &lt;dir&gt; to the load search list</td></tr>
-<tr><td bgcolor="#f6f8ff"><code>-init &lt;file&gt;</code></td>      <td bgcolor="#f6f8ff">use &lt;file&gt; as the init file, rather than ~/.snd</td></tr>
-<tr><td><code>-nogtkrc</code></td>                 <td>don't read ~/Snd.gtkrc or any of its friends (Gtk only)</td></tr>
+<tr><td bgcolor="#f6f8ff"><code>-nogtkrc</code></td>                 <td bgcolor="#f6f8ff">don't read ~/Snd.gtkrc or any of its friends (Gtk only)</td></tr>
 </table>
 
 <img src="note.png" alt="notebook" hspace=20 vspace=10>
@@ -170,8 +169,8 @@ View:Files dialog's list:
 <!-- INDEX sndinitfile:Initialization file -->
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndinitfile">The initialization file</a></h3></td></tr></table>
 <p>
-When Snd starts, it looks for an initialization file, normally named "~/.snd" (its name can be set
-via the X resource mechanism, or through the environment variable SND_INIT_FILE).  This optional file is
+When Snd starts, it looks for an initialization file, normally named "~/.snd".
+This optional file is
 supposed to be similar to Emacs' .emacs file, containing any customizations or
 extensions that you want loaded whenever Snd starts.  Say we
 want the Snd window to start out 800x500, want to predefine an envelope named
@@ -223,7 +222,7 @@ then .snd.  If you're always using just one version of Snd, it's simplest to sti
     /etc/snd.conf               
     ~/.snd_prefs_guile|ruby|forth|gauche     (the rest canceled by -noinit)
     ~/.snd_guile|ruby|forth|gauche
-    ~/.snd                                   (changed by -init arg, SND_INIT_FILE_ENVRIONMENT_NAME, etc)
+    ~/.snd                                   (also SND_INIT_FILE_ENVRIONMENT_NAME)
 </pre>
 
 <p> 

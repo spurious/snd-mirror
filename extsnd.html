@@ -4428,9 +4428,9 @@ dragged, play together if clicked, etc.  To find which marks share a given
 sync value, use <a href="#syncdmarks">syncd-marks</a>; to find an unused sync value use <a href="#marksyncmax">mark-sync-max</a>.
 <br><br>
 Marks that are syncd together can be used for insertions, and deletions, and can
-set arbitrary groups of play points.  But it's a bit tedious to type (set! (mark-sync ...)...)
+set arbitrary groups of play points.  But it's a bit tedious to type <code>(set! (mark-sync ...)...)</code>
 for each of the marks you want in the group.  The following code example uses the <a href="#markclickhook">mark-click-hook</a>
-instead; you type (start-sync), then click each of the marks that you want grouped together, then (stop-sync).
+instead; you type <code>(start-sync)</code>, then click each of the marks that you want grouped together, then <code>(stop-sync)</code>.
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define mark-sync-number 0)
@@ -13428,8 +13428,8 @@ This is the graphics context to use to draw a mark (XOR mode).
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="selectioncontext">selection-context</a></code>
 </td></tr><tr><td></td><td>
-This is the graphics context for XOR drawing in the selection color.</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+This is the graphics context for XOR drawing in the selection color.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- snd-color -->
@@ -13520,8 +13520,9 @@ in snd-motif.xm's SMPTE time display, we make sure the font color reflects wheth
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="withgl">with-gl</a></code>
 </td></tr><tr><td></td><td>
-If with-gl is #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></tr>
-<tr><td colspan=2 height=16></td></tr>
+If with-gl is #t and GL is loaded, use GL where possible (the default is #t if HAVE_GL).
+You can find out at run-time whether GL is loaded via <code>(provided? 'gl)</code>.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 </table>
 

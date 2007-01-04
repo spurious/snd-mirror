@@ -1,12 +1,7 @@
 ! Snd app-defaults -- these defaults are already taken care of in Snd,
 !   so this file is redundant unless something is changed.
 !   Actually, since I forget this file even exists, it's best not to use it.
-!   The .Xdefaults form would prefix each of these with "snd":
-!
-! ---- possible font names for a big screen running Linux ----
-! *axisLabelFont:      -adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*
-! *axisNumbersFont:    9x15
-! *fontList:           9x15
+!   The .Xdefaults form would prefix each of these with "snd".
 
 *highlightcolor:       ivory1
 *basiccolor:           ivory2
@@ -39,8 +34,9 @@
 *resetbuttoncolor:     ivory1
 *doitbuttoncolor:      ivory1
 *doitagainbuttoncolor: ivory1
-*axisLabelFont:        -*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1
-*axisNumbersFont:      -*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1
+*axisLabelFont:        -*-times-medium-r-*-*-18-*-*-*-*-*-iso8859-1
+*axisNumbersFont:      9x15
+*fontList:             9x15
 *autoResize:           1
 *horizontalPanes:      0
 *zoomSliderWidth:      10

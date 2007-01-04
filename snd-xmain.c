@@ -101,7 +101,6 @@ typedef struct {
   char *bold_peaks_font;
   char *axis_label_font;
   char *axis_numbers_font;
-  char *init_file_name; /* SOMEDAY: remove initFile resource */
   int auto_resize;
   int horizontal_panes;
   int zoom_slider_width;
@@ -150,7 +149,6 @@ static XtResource resources[] = {
   {"boldpeaksFont", "BoldPeaksFont", XmRString, sizeof(char *), XtOffset(sndres *, bold_peaks_font), XmRString, (XtPointer)DEFAULT_BOLD_PEAKS_FONT},
   {"axisLabelFont", "AxisLabelFont", XmRString, sizeof(char *), XtOffset(sndres *, axis_label_font), XmRString, (XtPointer)DEFAULT_AXIS_LABEL_FONT},
   {"axisNumbersFont", "AxisNumbersFont", XmRString, sizeof(char *), XtOffset(sndres *, axis_numbers_font), XmRString, (XtPointer)DEFAULT_AXIS_NUMBERS_FONT},
-  {"initFile", "InitFile", XmRString, sizeof(char *), XtOffset(sndres *, init_file_name), XmRString, (XtPointer)INIT_FILE_NAME},
   {"autoResize", "AutoResize", XmRInt, sizeof(int), XtOffset(sndres *, auto_resize), XmRImmediate, (XtPointer)AUTO_RESIZE_DEFAULT},
   {"horizontalPanes", "HorizontalPanes", XmRInt, sizeof(int), XtOffset(sndres *, horizontal_panes), XmRImmediate, (XtPointer)SOUNDS_VERTICAL},
   {"zoomSliderWidth", "ZoomSliderWidth", XmRInt, sizeof(int), XtOffset(sndres *, zoom_slider_width), XmRImmediate, (XtPointer)ZOOM_SLIDER_WIDTH},
@@ -673,30 +671,30 @@ void save_colors(FILE *Fp)
   cmap = DefaultColormap(dpy, scr);
   XtGetApplicationResources(ss->sgx->mainshell, &snd_rs, resources, XtNumber(resources), NULL, 0);
 
-  save_a_color(Fp, dpy, cmap, snd_rs.basic_color, BASIC_COLOR, ss->sgx->basic_color, S_basic_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.cursor_color, CURSOR_COLOR, ss->sgx->cursor_color, S_cursor_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.data_color, DATA_COLOR, ss->sgx->data_color, S_data_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.selected_data_color, SELECTED_DATA_COLOR, ss->sgx->selected_data_color, S_selected_data_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.highlight_color, HIGHLIGHT_COLOR, ss->sgx->highlight_color, S_highlight_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.position_color, POSITION_COLOR, ss->sgx->position_color, S_position_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.zoom_color, ZOOM_COLOR, ss->sgx->zoom_color, S_zoom_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.selection_color, SELECTION_COLOR, ss->sgx->selection_color, S_selection_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.mix_color, MIX_COLOR, ss->sgx->mix_color, S_mix_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.enved_waveform_color, ENVED_WAVEFORM_COLOR, ss->sgx->enved_waveform_color, S_enved_waveform_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.filter_control_waveform_color, FILTER_CONTROL_WAVEFORM_COLOR, ss->sgx->filter_control_waveform_color, S_filter_control_waveform_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.listener_color, LISTENER_COLOR, ss->sgx->listener_color, S_listener_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.listener_text_color, LISTENER_TEXT_COLOR, ss->sgx->listener_text_color, S_listener_text_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.graph_color, GRAPH_COLOR, ss->sgx->graph_color, S_graph_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.selected_graph_color, SELECTED_GRAPH_COLOR, ss->sgx->selected_graph_color, S_selected_graph_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.mark_color, MARK_COLOR, ss->sgx->mark_color, S_mark_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.sash_color, SASH_COLOR, ss->sgx->sash_color, S_sash_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.pushed_button_color, PUSHED_BUTTON_COLOR, ss->sgx->pushed_button_color, S_pushed_button_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.text_focus_color, TEXT_FOCUS_COLOR, ss->sgx->text_focus_color, S_text_focus_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.doit_button_color, DOIT_BUTTON_COLOR, ss->sgx->doit_button_color, S_doit_button_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.basic_color,             BASIC_COLOR,             ss->sgx->basic_color,             S_basic_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.cursor_color,            CURSOR_COLOR,            ss->sgx->cursor_color,            S_cursor_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.data_color,              DATA_COLOR,              ss->sgx->data_color,              S_data_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.selected_data_color,     SELECTED_DATA_COLOR,     ss->sgx->selected_data_color,     S_selected_data_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.highlight_color,         HIGHLIGHT_COLOR,         ss->sgx->highlight_color,         S_highlight_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.position_color,          POSITION_COLOR,          ss->sgx->position_color,          S_position_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.zoom_color,              ZOOM_COLOR,              ss->sgx->zoom_color,              S_zoom_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.selection_color,         SELECTION_COLOR,         ss->sgx->selection_color,         S_selection_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.mix_color,               MIX_COLOR,               ss->sgx->mix_color,               S_mix_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.enved_waveform_color,    ENVED_WAVEFORM_COLOR,    ss->sgx->enved_waveform_color,    S_enved_waveform_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.listener_color,          LISTENER_COLOR,          ss->sgx->listener_color,          S_listener_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.listener_text_color,     LISTENER_TEXT_COLOR,     ss->sgx->listener_text_color,     S_listener_text_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.graph_color,             GRAPH_COLOR,             ss->sgx->graph_color,             S_graph_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.selected_graph_color,    SELECTED_GRAPH_COLOR,    ss->sgx->selected_graph_color,    S_selected_graph_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.mark_color,              MARK_COLOR,              ss->sgx->mark_color,              S_mark_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.sash_color,              SASH_COLOR,              ss->sgx->sash_color,              S_sash_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.pushed_button_color,     PUSHED_BUTTON_COLOR,     ss->sgx->pushed_button_color,     S_pushed_button_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.text_focus_color,        TEXT_FOCUS_COLOR,        ss->sgx->text_focus_color,        S_text_focus_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.doit_button_color,       DOIT_BUTTON_COLOR,       ss->sgx->doit_button_color,       S_doit_button_color);
   save_a_color(Fp, dpy, cmap, snd_rs.doit_again_button_color, DOIT_AGAIN_BUTTON_COLOR, ss->sgx->doit_again_button_color, S_doit_again_button_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.help_button_color, HELP_BUTTON_COLOR, ss->sgx->help_button_color, S_help_button_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.quit_button_color, QUIT_BUTTON_COLOR, ss->sgx->quit_button_color, S_quit_button_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.reset_button_color, RESET_BUTTON_COLOR, ss->sgx->reset_button_color, S_reset_button_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.help_button_color,       HELP_BUTTON_COLOR,       ss->sgx->help_button_color,       S_help_button_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.quit_button_color,       QUIT_BUTTON_COLOR,       ss->sgx->quit_button_color,       S_quit_button_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.reset_button_color,      RESET_BUTTON_COLOR,      ss->sgx->reset_button_color,      S_reset_button_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.filter_control_waveform_color, FILTER_CONTROL_WAVEFORM_COLOR, ss->sgx->filter_control_waveform_color, S_filter_control_waveform_color);
 }
 
 #ifdef SND_AS_WIDGET
@@ -775,8 +773,6 @@ void snd_doit(int argc, char **argv)
       (snd_rs.horizontal_panes <= (int)SOUNDS_IN_SEPARATE_WINDOWS))
     set_sound_style((sound_style_t)snd_rs.horizontal_panes);
 
-  set_init_filename(snd_rs.init_file_name); 
-
   for (i = 1; i < argc; i++)
     if ((strcmp(argv[i], "-h") == 0) || 
 	(strcmp(argv[i], "-horizontal") == 0))
@@ -808,11 +804,8 @@ void snd_doit(int argc, char **argv)
 		      (strcmp(argv[i], "-batch") == 0))
 		    batch = true;
 		  else
-		    if (strcmp(argv[i], "-init") == 0)
-		      set_init_filename(argv[++i]);
-                    else
-		      if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
-			check_features_list(argv[i + 1]);
+		    if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
+		      check_features_list(argv[i + 1]);
 
   ss->batch_mode = batch;
   if (batch) XtSetMappedWhenManaged(shell, 0);

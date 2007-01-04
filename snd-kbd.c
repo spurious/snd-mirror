@@ -662,12 +662,21 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      sp->search_expr = copy_string(str);
 	      redirect_errors_to(errors_to_minibuffer, (void *)sp);
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
-	      if ((XEN_PROCEDURE_P(proc)) && /* redundant but avoids unwanted error message via snd_error */
-		  (procedure_ok_with_error(proc, 1, _("find"), _("find"), 1)))
+	      if (XEN_PROCEDURE_P(proc)) /* redundant but avoids unwanted error message via snd_error */
 		{
-		  sp->search_proc = proc;
-		  sp->search_proc_loc = snd_protect(proc);
- 		}
+		  char *errmsg;
+		  errmsg = procedure_ok(proc, 1, _("find"), _("find"), 1);
+		  if (errmsg)
+		    {
+		      snd_error_without_format(errmsg);
+		      FREE(errmsg);
+		    }
+		  else
+		    {
+		      sp->search_proc = proc;
+		      sp->search_proc_loc = snd_protect(proc);
+		    }
+		}
 	      else active_chan = NULL; /* don't try to search! */
 	      redirect_errors_to(NULL, NULL);
 	      if (active_chan) active_chan->last_search_result = SEARCH_OK;

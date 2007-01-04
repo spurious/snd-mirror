@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Mon Jan 01 03:57:53 CET 2007
+\ Changed: Mon Jan 01 23:00:49 CET 2007
 
 \ Commentary:
 \
@@ -622,7 +622,7 @@ set-current
 : effects-squelch-channel <{ amount gate-size :optional snd #f chn #f -- val }>
   :size gate-size make-moving-average { f0 }
   :size gate-size :initial-element 1.0 make-moving-average { f1 }
-  $" %.4f %s %s" '( amount gate-size get-func-name ) string-format { origin }
+  $" %s %s %s" '( amount gate-size get-func-name ) string-format { origin }
   f0 f1 amount squelch-cb 0 #f snd chn #f origin map-channel
 ;
 previous

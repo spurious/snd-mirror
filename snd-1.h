@@ -471,7 +471,6 @@ typedef struct snd_state {
   int catch_exists, search_proc_loc, local_errno, local_open_errno;
   state_context *sgx;
   int position_slider_width, zoom_slider_width, toggle_size, channel_sash_indent, sash_size, channel_sash_size, sash_indent;
-  char *init_file;
   int max_sounds, sound_sync_max;
   char *translated_filename;
   print_choice_t print_choice;
@@ -709,7 +708,6 @@ void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth);
 void close_save_sound_block(FILE *fd, bool need_f);
 bool snd_exit_cleanly(bool force_exit);
 void sound_not_current(snd_info *sp, void *ignore);
-void set_init_filename(const char *filename);
 void save_state(const char *save_state_name);
 void global_control_panel_state(void);
 void global_fft_state(void);
@@ -1020,7 +1018,6 @@ XEN g_c_make_sample_reader(snd_fd *fd);
   XEN g_call_any(XEN proc, XEN arglist, const char *caller);
 #endif
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn);
-bool procedure_ok_with_error(XEN proc, int req_args, const char *caller, const char *arg_name, int argn);
 bool procedure_arity_ok(XEN proc, int args);
 #if MUS_DEBUGGING
   int snd_protect_1(XEN obj, const char *caller);
