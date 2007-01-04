@@ -169,12 +169,18 @@ static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, off_t beg, bool
     }
   if (si == NULL) 
     {
-      si = make_simple_sync(cp, beg);
-      sfs = (snd_fd **)MALLOC(sizeof(snd_fd *));
+      snd_fd *sf = NULL;
       pos = to_c_edit_position(cp, edpos, caller, arg_pos);
       if (forwards == READ_FORWARD)
-	sfs[0] = init_sample_read_any(beg, cp, READ_FORWARD, pos);
-      else sfs[0] = init_sample_read_any(cp->samples[pos] - 1, cp, READ_BACKWARD, pos);
+	sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
+      else sf = init_sample_read_any(cp->samples[pos] - 1, cp, READ_BACKWARD, pos);
+      if (sf)
+	{
+	  si = make_simple_sync(cp, beg);
+	  sfs = (snd_fd **)MALLOC(sizeof(snd_fd *));
+	  sfs[0] = sf;
+	}
+      else return(NULL);
     }
   sc = (sync_state *)CALLOC(1, sizeof(sync_state));
   sc->dur = dur;
@@ -1111,6 +1117,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
   int i;
   off_t scdur;
   int stop_point = 0;
+  char *errmsg = NULL;
 
   if ((!just_num) && (e == NULL) && (gen == NULL)) return;
   if ((just_num) && (ratio == 0.0)) return;
@@ -1133,7 +1140,6 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 	{
 	  off_t dur;
 	  mus_any *egen = NULL;
-	  char *errmsg = NULL;
 	  bool clm_err = false;
 	  cp = si->cps[i];
 	  if (scdur == 0) 
@@ -1158,11 +1164,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 		mus_free(egen);
 	      else mus_reset(gen);
 	    }
-	  if (errmsg)
-	    {
-	      snd_error_without_format(errmsg);
-	      break;
-	    }
+	  if (errmsg) break;
 	  if (ss->stopped_explicitly) 
 	    {
 	      stop_point = i;
@@ -1183,6 +1185,8 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
   for (i = 0; i < si->chans; i++) 
     free_snd_fd(sfs[i]);
   free_sync_state(sc);
+  if (errmsg)
+    snd_error_without_format(errmsg);
 }
 
 

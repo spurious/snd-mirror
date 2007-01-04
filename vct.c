@@ -171,17 +171,17 @@ char *mus_vct_to_readable_string(vct *v)
 #endif
   for (i = 0; i < len; i++)
     {
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
       mus_snprintf(flt, 16, " %.3f", v->data[i]);
 #endif
 #if HAVE_RUBY
       mus_snprintf(flt, 16, "%.3f%s", v->data[i], i + 1 < len ? ", " : "");
 #endif
-#if HAVE_FORTH
-      mus_snprintf(flt, 16, "%.3f%s", v->data[i], i + 1 < len ? " " : "");
-#endif
       strcat(buf, flt);
     }
+#if HAVE_FORTH
+  strcat(buf, " ");
+#endif
   strcat(buf, ")");
   return(buf);
 }
