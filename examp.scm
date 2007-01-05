@@ -1254,8 +1254,8 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 (define compand-table (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
 			   0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000))
 
-(define* (compand-channel :optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
-  "(compand-channel :optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f)) applies a standard compander to sound"
+(define* (compand-channel :optional (beg 0) dur snd chn edpos)
+  "(compand-channel :optional (beg 0) dur snd chn edpos) applies a standard compander to sound"
   ;; this is the "regularized version of the compander using ptree-channel
   (ptree-channel (lambda (inval)
 		   (let ((index (+ 8.0 (* 8.0 inval))))
@@ -2299,7 +2299,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 
 ;;; -------- smooth-channel as virtual op
 
-(define* (smooth-channel-via-ptree :optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (smooth-channel-via-ptree :optional (beg 0) dur snd chn edpos)
   (let* ((y0 (sample beg snd chn edpos))
 	 (y1 (sample (+ beg (or dur (1- (frames)))) snd chn edpos))
 	 (init-angle (if (> y1 y0) pi 0.0)) 
@@ -2329,7 +2329,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 
 ;;; -------- ring-modulate-channel (ring-mod as virtual op)
 
-(define* (ring-modulate-channel freq :optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (ring-modulate-channel freq :optional (beg 0) dur snd chn edpos)
   (ptree-channel
    (lambda (y data forward)
      (declare (y real) (data vct) (forward boolean))

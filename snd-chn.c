@@ -5,15 +5,7 @@
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
- *
- * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
- * TODO: audio mixer settings dialog (needed especially in alsa!)
- * SOMEDAY: describe_fft_point doesn't work in spectrograms
- *             is time:x freq:z val:y in rotation matrix? would need inverted-matrix * vector, then current graph-once code
- * TODO: if 2chans, as-one-edit backup, edhist can be confused about which channel got the edit, and the
- *             thumbnail graph looks suspicious
  */
-
 
 chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
 {
@@ -2185,7 +2177,7 @@ void reset_spectro(void)
   #include <GL/glu.h>
 #endif
 
-static GLdouble unproject2x(int x, int y)
+static GLdouble unproject_to_x(int x, int y)
 {
 #if HAVE_GLU
   /* taken from GL doc p152 */
@@ -2204,7 +2196,7 @@ static GLdouble unproject2x(int x, int y)
 #endif
 }
 
-static GLdouble unproject2y(int x, int y)
+static GLdouble unproject_to_y(int x, int y)
 {
 #if HAVE_GLU
   /* taken from GL doc p152 */
@@ -3766,7 +3758,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
       if ((cp->transform_graph_type == GRAPH_AS_SPECTROGRAM) && (ap->used_gl))
 	{
 	  GLdouble xx;
-	  xx = unproject2x(x, y);
+	  xx = unproject_to_x(x, y);
 	  if ((xx > -0.7) && (xx < -0.49))
 	    return(CLICK_FFT_AXIS);
 	}
@@ -4070,7 +4062,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 	{
 #if HAVE_GL
 	  if ((with_gl(ss)) && (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM))
-	    fft_faxis_start = unproject2y(x, y);
+	    fft_faxis_start = unproject_to_y(x, y);
 #endif
 	  fft_axis_start = x;
 	}
@@ -4391,7 +4383,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
 		  if ((with_gl(ss)) && (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM))
 		    {
 		      Float ny;
-		      ny = unproject2y(x, y);
+		      ny = unproject_to_y(x, y);
 		      set_spectro_cutoff(cp->spectro_cutoff + (fft_faxis_start - ny));
 		      fft_faxis_start = ny;
 		    }

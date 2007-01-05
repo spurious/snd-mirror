@@ -1259,22 +1259,22 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (set! freq-response (cons 1.0 freq-response)) 
     (reverse freq-response)))
 
-(define* (notch-channel freqs :optional (filter-order #f) beg dur (snd #f) (chn #f) edpos (truncate #t) (notch-width 2))
-  "(notch-channel freqs :optional (filter-order #f) beg dur (snd #f) (chn #f) edpos (truncate #t) (notch-width 2)) -> notch filter removing freqs"
+(define* (notch-channel freqs :optional (filter-order #f) beg dur snd chn edpos (truncate #t) (notch-width 2))
+  "(notch-channel freqs :optional (filter-order #f) beg dur snd chn edpos (truncate #t) (notch-width 2)) -> notch filter removing freqs"
   (filter-channel (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
 		  (or filter-order (expt 2 (inexact->exact (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
 		  beg dur snd chn edpos truncate
 		  (format #f "notch-channel '~A ~A ~A ~A" freqs filter-order beg dur)))
 
-(define* (notch-sound freqs :optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
-  "(notch-sound freqs :optional (filter-order #f) (snd #f) (chn #f) (notch-width 2)) -> notch filter removing freqs"
+(define* (notch-sound freqs :optional filter-order snd chn (notch-width 2))
+  "(notch-sound freqs :optional filter-order snd chn (notch-width 2)) -> notch filter removing freqs"
   (filter-sound (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
 		(or filter-order (expt 2 (inexact->exact (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
 		snd chn #f
 		(format #f "notch-channel '~A ~A 0 #f" freqs filter-order)))
 
-(define* (notch-selection freqs :optional (filter-order #f) (notch-width 2))
-  "(notch-selection freqs :optional (filter-order #f) (notch-width 2)) -> notch filter removing freqs"
+(define* (notch-selection freqs :optional filter-order (notch-width 2))
+  "(notch-selection freqs :optional filter-order (notch-width 2)) -> notch filter removing freqs"
   (if (selection?)
       (filter-selection (make-notch-frequency-response (exact->inexact (selection-srate)) freqs notch-width)
 			(or filter-order (expt 2 (inexact->exact (ceiling (/ (log (/ (selection-srate) notch-width)) (log 2.0)))))))))
@@ -2065,7 +2065,7 @@ and replaces it with the spectrum given in coeffs"
 ;;; linear sampling rate conversion
 
 (define* (linear-src-channel srinc :optional snd chn)
-  "(linear-src-channel sr (snd #f) (chn #f) performs sampling rate conversion using linear interpolation."
+  "(linear-src-channel sr snd chn performs sampling rate conversion using linear interpolation."
   (let* ((rd (make-sample-reader 0 snd chn))
 	 (last (rd))
 	 (next (rd))
@@ -2514,6 +2514,7 @@ and replaces it with the spectrum given in coeffs"
 ;;; -------- unclip-channel
 
 (define* (unclip-channel :optional snd chn)
+  "(unclip-channel :optional snd chn) looks for clipped portions and tries to reconstruct the original using LPC"
   (let* ((clip-size 256)                        ; current clip-data size
 	 (clip-data (make-vector clip-size 0))  ; clipped portion begin and end points
 	 (clips 0)                              ; number of clipped portions * 2
@@ -2634,6 +2635,7 @@ and replaces it with the spectrum given in coeffs"
     'no-clips)))
 
 (define* (unclip-sound :optional snd)
+  "(unclip-sound :optional snd) applies unclip-channel to each channel of 'snd'."
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
 	(throw 'no-such-sound (list "unclip-sound" snd))

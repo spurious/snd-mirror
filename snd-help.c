@@ -3361,40 +3361,59 @@ char *snd_url(const char *name)
   return(NULL);
 }
 
+static char *call_grep(const char *defstr, const char *name, const char *endstr, char *path, char *tempfile)
+{
+  int err;
+  char *command;
+#if (!MUS_SUN)
+  /* Gnu fgrep: -s switch to fgrep = "silent", I guess (--no-messages) [OSX uses Gnu fgrep] */
+  /* configure script looks for grep -F or fgrep, setting FGREP_PROG (fgrep is supposedly obsolete) */
+  command = mus_format(FGREP_PROG " -s \"%s%s%s\" %s/*." XEN_FILE_EXTENSION " --line-number > %s", defstr, name, endstr, path, tempfile);
+#else
+  /* Sun fgrep: here -s means -q and --line-number prints an error message */
+  command = mus_format(FGREP_PROG " \"%s%s%s\" %s/*." XEN_FILE_EXTENSION " > %s", defstr, name, endstr, path, tempfile);
+#endif
+  err = system(command);
+  FREE(command);
+  if (err != -1)                      /* no error, so I guess tempfile exists, but might be empty */
+    return(file_to_string(tempfile)); /* NULL if nothing found */
+  return(NULL);
+}
+
 static char *snd_finder(const char *name, bool got_help)
 {
   /* desperation -- search *.scm/rb then even *.html? for 'name' */
-  char *url = NULL, *fgrep = NULL, *tempnam = NULL, *command = NULL;
+  char *url = NULL, *fgrep = NULL, *tempfile = NULL, *command = NULL;
   bool is_defined = false;
   int a_def = 0, dir_len = 0, i;
   XEN dirs = XEN_EMPTY_LIST;
 
 #if HAVE_GUILE || (!HAVE_EXTENSION_LANGUAGE)
-  #define NUM_DEFINES 5
+  #define NUM_DEFINES 6
   #define TRAILER " "
-  char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(defmacro ", "(defmacro* "};
+  const char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(defmacro ", "(defmacro* ", "(definstrument ("};
 #endif
 #if HAVE_GAUCHE
-  #define NUM_DEFINES 5
+  #define NUM_DEFINES 6
   #define TRAILER " "
-  char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(defmacro ", "(defmacro* "};
+  const char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(defmacro ", "(defmacro* ", "(definstrument ("};
 #endif
 #if HAVE_RUBY
   #define NUM_DEFINES 2
   #define TRAILER ""
-  char *defines[NUM_DEFINES] = {"def ", "class "};
+  const char *defines[NUM_DEFINES] = {"def ", "class "};
 #endif
 #if HAVE_FORTH
   #define NUM_DEFINES 3
   #define TRAILER ""
-  char *defines[NUM_DEFINES] = {": ", "instrument: ", "event: "};
+  const char *defines[NUM_DEFINES] = {": ", "instrument: ", "event: "};
 #endif
 
   if (snd_strlen(FGREP_PROG) == 0) return(NULL); /* configure didn't find a plausible fgrep */
 
   is_defined = XEN_DEFINED_P(name);
   url = snd_url(name);
-  tempnam = snd_tempnam();
+  tempfile = snd_tempnam(); /* this will have a .snd extension */
   dirs = XEN_LOAD_PATH;
   dir_len = XEN_LIST_LENGTH(dirs);
 
@@ -3405,28 +3424,16 @@ static char *snd_finder(const char *name, bool got_help)
       if (!path) continue;
 
       for (a_def = 0; (!fgrep) && (a_def < NUM_DEFINES); a_def++)
-	{
-	  int err;
-#if (!MUS_SUN)
-	  /* Gnu fgrep: -s switch to fgrep = "silent", I guess (--no-messages) [OSX uses Gnu fgrep] */
-	  /* configure script looks for grep -F or fgrep, setting FGREP_PROG (fgrep is supposedly obsolete) */
-	  command = mus_format(FGREP_PROG " -s \"%s%s" TRAILER "\" %s/*." XEN_FILE_EXTENSION " --line-number > %s", 
-#else
-          /* Sun fgrep: here -s means -q and --line-number prints an error message */
-	  command = mus_format(FGREP_PROG " \"%s%s" TRAILER "\" %s/*." XEN_FILE_EXTENSION " > %s", 
+	fgrep = call_grep(defines[a_def], name, TRAILER, path, tempfile);
+#if HAVE_SCHEME
+      if (!fgrep)
+	fgrep = call_grep("(define (", name, ")", path, tempfile);
+      if (!fgrep)
+	fgrep = call_grep("(define ", name, "\n", path, tempfile);
 #endif
-			       defines[a_def], 
-			       name,
-			       path,
-			       tempnam);
-	  err = system(command);
-	  FREE(command);
-          if (err != -1)
-	    fgrep = file_to_string(tempnam);
-	}
     }
-  snd_remove(tempnam, IGNORE_CACHE);
-  FREE(tempnam);
+  snd_remove(tempfile, IGNORE_CACHE);
+  FREE(tempfile);
 
   if (url)
     {

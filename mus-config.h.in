@@ -95,6 +95,7 @@
 #undef HAVE_ALSA
 #undef HAVE_NEW_ALSA
 #undef HAVE_JACK
+#undef MUS_JACK
 #undef HAVE_SAM_9407
 #undef MUS_MAC_OSX
 #undef MUS_ESD

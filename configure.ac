@@ -1527,6 +1527,33 @@ if test "$with_alsa" = yes && test "$with_oss" = yes ; then
   AC_MSG_WARN([You asked for both ALSA and OSS -- OSS will be used])
 fi
 
+if test "$with_jack" = yes ; then 
+            AC_CHECK_LIB(jack,main,[ 
+	      AC_CHECK_HEADER(jack/jack.h,
+                  ,
+   	          [with_jack=no
+                   AC_MSG_WARN(can't find the JACK header files)])],
+              [with_jack=no
+	       AC_MSG_WARN(can't find the JACK library)])
+            AC_CHECK_LIB(samplerate,main,[ 
+	      AC_CHECK_HEADER(samplerate.h,  ,
+   	          [with_jack=no
+                   AC_MSG_WARN(can't find the samplerate header files. JACK will not be used.)])],
+              [with_jack=no
+	       AC_MSG_WARN(can't find the samplerate library. JACK will not be used.)])
+            if test $with_jack = yes ; then
+               AUDIO_SYSTEM=JACK
+	       AC_DEFINE(MUS_JACK)
+	       if test x$PKG_CONFIG != xno ; then
+                   jack_version="`$PKG_CONFIG jack --modversion`"
+                   AC_DEFINE_UNQUOTED(MUS_JACK_VERSION,"${jack_version}")
+          	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
+          	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
+               fi
+            fi
+fi
+
+
 case "$host" in
     *-*-linux*) 
 	AC_DEFINE(MUS_LINUX)
@@ -1549,31 +1576,10 @@ case "$host" in
 	fi
 
 	if test "$with_jack" = yes ; then 
-            AC_CHECK_LIB(jack,main,[ 
-	      AC_CHECK_HEADER(jack/jack.h,
-                  ,
-   	          [with_jack=no
-                   AC_MSG_WARN(can't find the JACK header files)])],
-              [with_jack=no
-	       AC_MSG_WARN(can't find the JACK library)])
-            AC_CHECK_LIB(samplerate,main,[ 
-	      AC_CHECK_HEADER(samplerate.h,  ,
-   	          [with_jack=no
-                   AC_MSG_WARN(can't find the samplerate header files. JACK will not be used.)])],
-              [with_jack=no
-	       AC_MSG_WARN(can't find the samplerate library. JACK will not be used.)])
-            if test $with_jack = yes ; then
 	       if test "$with_alsa" != yes ; then
                  AUDIO_SYSTEM=JACK
                fi
-	       if test x$PKG_CONFIG != xno ; then
-                   jack_version="`$PKG_CONFIG jack --modversion`"
-                   AC_DEFINE_UNQUOTED(MUS_JACK_VERSION,"${jack_version}")
-          	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
-          	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
-               fi
-            fi
-        fi
+	fi
 
 	case $AUDIO_SYSTEM in
 	    ALSA)
@@ -1721,34 +1727,38 @@ case "$host" in
         fi
         ;;
     *-*-cygwin*)
-	AC_DEFINE(MUS_WINDOZE)
-	AUDIO_SYSTEM=Windoze
+	if test "$with_jack" != yes ; then 
+	    AC_DEFINE(MUS_WINDOZE)
+	    AUDIO_SYSTEM=Windoze
+	fi
 	;;
     *-apple-*)
-	AC_DEFINE(MUS_MAC_OSX)
-	AUDIO_SYSTEM=MacOSX
-	AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
-	AC_SUBST(AUDIO_LIB)
-	AC_MSG_CHECKING([for kAudioDevicePropertyDeviceManufacturer])
-	AC_COMPILE_IFELSE(
-          [AC_LANG_PROGRAM([#include <CoreServices/CoreServices.h>
-                            #include <CoreAudio/CoreAudio.h>],
-			   [AudioDeviceID deviceID; 
-			    UInt32 trans_size = 0, trans;
-      			    trans_size = sizeof(UInt32);
-     			    AudioDeviceGetProperty(deviceID, 0, true, kAudioDevicePropertyTransportType, &trans_size, &trans)
-			   ])],
-	  [AC_DEFINE(HAVE_KAUDIODEVICEPROPERTYTRANSPORTTYPE)
-	   AC_MSG_RESULT(yes)],
-	  [AC_MSG_RESULT(no)])
-	AC_MSG_CHECKING([for kLinearPCMFormatFlagIsNonInterleaved])
-	AC_COMPILE_IFELSE(
-          [AC_LANG_PROGRAM([#include <CoreServices/CoreServices.h>
-                            #include <CoreAudio/CoreAudio.h>],
-			   [int i; i = kLinearPCMFormatFlagIsNonInterleaved])],
-	  [AC_DEFINE(HAVE_KLINEARPCMFORMATFLAGISNONINTERLEAVED)
-	   AC_MSG_RESULT(yes)],
-	  [AC_MSG_RESULT(no)])
+	if test "$with_jack" != yes ; then 
+	    AC_DEFINE(MUS_MAC_OSX)
+	    AUDIO_SYSTEM=MacOSX
+	    AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
+	    AC_SUBST(AUDIO_LIB)
+	    AC_MSG_CHECKING([for kAudioDevicePropertyDeviceManufacturer])
+	    AC_COMPILE_IFELSE(
+              [AC_LANG_PROGRAM([#include <CoreServices/CoreServices.h>
+                                #include <CoreAudio/CoreAudio.h>],
+			       [AudioDeviceID deviceID; 
+			        UInt32 trans_size = 0, trans;
+      			        trans_size = sizeof(UInt32);
+     			        AudioDeviceGetProperty(deviceID, 0, true, kAudioDevicePropertyTransportType, &trans_size, &trans)
+			       ])],
+	      [AC_DEFINE(HAVE_KAUDIODEVICEPROPERTYTRANSPORTTYPE)
+	       AC_MSG_RESULT(yes)],
+	      [AC_MSG_RESULT(no)])
+	    AC_MSG_CHECKING([for kLinearPCMFormatFlagIsNonInterleaved])
+	    AC_COMPILE_IFELSE(
+              [AC_LANG_PROGRAM([#include <CoreServices/CoreServices.h>
+                                #include <CoreAudio/CoreAudio.h>],
+			       [int i; i = kLinearPCMFormatFlagIsNonInterleaved])],
+	      [AC_DEFINE(HAVE_KLINEARPCMFORMATFLAGISNONINTERLEAVED)
+	       AC_MSG_RESULT(yes)],
+	      [AC_MSG_RESULT(no)])
+	fi
 	;;
 esac
 AC_MSG_CHECKING([for audio system])

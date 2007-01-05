@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Wed Dec 27 03:11:02 CET 2006
+\ Changed: Wed Jan 03 23:32:13 CET 2007
 
 \ Commentary:
 \
@@ -138,7 +138,7 @@ hide
 	  io $"   snd sound? if\n" io-write
 	  io $"     %d snd %d find-mark { mk }\n" '( msamp mhome cadr ) io-write-format
 	  io $"     mk mark? if\n" io-write
-	  io $"       mk %m set-mark-properties\n" '( mp ) io-write-format
+	  io $"       mk %S set-mark-properties\n" '( mp ) io-write-format
 	  io $"     then\n" io-write
 	  io $"   then\n" io-write
 	  io $" ;let\n" io-write
@@ -191,7 +191,7 @@ mark-click-hook ' mark-click-info add-hook!"
 	 m mark-sync ) string-format str swap $+ to str
       m mark-properties { props }
       props if
-	$"   mk %m set-mark-properties\n" '( props ) string-format str swap $+ to str
+	$"   mk %S set-mark-properties\n" '( props ) string-format str swap $+ to str
       then
     end-each
   end-each

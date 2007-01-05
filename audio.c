@@ -7980,7 +7980,7 @@ void describe_audio_state_1(void)
 /* Kjetil S. Matheussen. k.s.matheussen@notam02.no */
 /* Based on code from ceres. */
  
-#if HAVE_JACK
+#if MUS_JACK
 #define AUDIO_OK
 #include <jack/jack.h>
 #include <samplerate.h>
@@ -8429,6 +8429,53 @@ static int   jack_mus_audio_close(int id);
 static int   jack_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val);
 static int   jack_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val);
 static void  jack_describe_audio_state_1(void);
+
+#if !(defined(HAVE_JACK)) // Ie. Not using Linux.
+int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size) 
+{
+  return(jack_mus_audio_open_output(ur_dev, srate, chans, format, size));
+}
+
+int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size) 
+{
+  return(jack_mus_audio_open_input(ur_dev, srate, chans, format, requested_size));
+}
+
+int mus_audio_write(int id, char *buf, int bytes) 
+{
+  return(jack_mus_audio_write(id, buf, bytes));
+}
+
+int mus_audio_read(int id, char *buf, int bytes) 
+{
+  return(jack_mus_audio_read(id, buf, bytes));
+}
+
+int mus_audio_close(int id) 
+{
+  return(jack_mus_audio_close(id));
+}
+
+int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val) 
+{
+  return(jack_mus_audio_mixer_read(ur_dev, field, chan, val));
+}
+
+int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val) 
+{
+  return(jack_mus_audio_mixer_write(ur_dev, field, chan, val));
+}
+
+static void describe_audio_state_1(void) 
+{
+  jack_describe_audio_state_1();
+}
+
+static int mus_audio_initialize(void){
+  return jack_mus_audio_initialize();
+}
+
+#endif
 
 
 static int jack_mus_audio_initialize(void) {

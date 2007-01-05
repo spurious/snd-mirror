@@ -25,6 +25,7 @@
 (define *ws-top-level-prompt* (listener-prompt))
 
 (define (ws-prompt)
+  "(ws-prompt) returns the current with-sound debugger prompt, set partially by the variable *ws-top-level-prompt*"
   (let ((stack-len (length *ws-stacks*)))
     (if (> stack-len 1)
 	(format #f "ws(~D)~A" (1- stack-len) *ws-top-level-prompt*)
@@ -222,6 +223,8 @@ returning you to the true top-level."
 
 (defmacro definstrument+ (args . body)
   `(definstrument ,args ,@(cdr body)))
+
+;;; TODO: definstrument help string is currently lost
 
 ;;; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
 
@@ -960,6 +963,8 @@ returning you to the true top-level."
 	(last-octave 0)                             ; octave number can be omitted
 	(ratios (vector 1.0 256/243 9/8 32/27 81/64 4/3 1024/729 3/2 128/81 27/16 16/9 243/128 2.0)))
     (lambda* (pitch :optional pythagorean)          ; pitch can be pitch name or actual frequency
+      "(->frequency pitch :optional pythagorean) returns the frequency (Hz) of the 'pitch', a CLM/CM style note name as a \
+symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small-integer ratios, rather than equal-tempered tuning."
       (if (symbol? pitch)
 	  (let* ((name (string-downcase (symbol->string pitch)))
 		 (base-char (string-ref name 0))

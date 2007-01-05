@@ -2604,6 +2604,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(defmacro declare args #f)");     /* for optimizer */
   XEN_EVAL_C_STRING("(define procedure-source procedure-info)");
   XEN_EVAL_C_STRING("(define procedure-with-setter? has-setter?)");
+  XEN_EVAL_C_STRING("(define (set-procedure-property! . args) #f)");
 
   /* Gauche doesn't handle documentation strings correctly */
   XEN_EVAL_C_STRING("(defmacro define+ (args . body) `(define ,args ,@(cdr body)))"); /* strip out documentation string if embedded defines */

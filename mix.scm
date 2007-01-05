@@ -85,8 +85,8 @@
         (mixes)))))
 
 
-(define* (find-mix sample :optional (snd #f) (chn #f))
-  "(find-mix sample snd chn) returns the id of the mix at the given sample, or #f"
+(define* (find-mix sample :optional snd chn)
+  "(find-mix sample :optional snd chn) returns the id of the mix at the given sample, or #f"
   (let ((mix-list (mixes (or snd (selected-sound) (car (sounds))) (or chn (selected-channel snd) 0))))
     (call-with-current-continuation
      (lambda (found-it)
@@ -100,7 +100,7 @@
 
 ;;; -------- pan-mix --------
 
-(define* (pan-mix name :optional (beg 0) (envelope 1.0) snd (chn 0) (auto-delete #f))
+(define* (pan-mix name :optional (beg 0) (envelope 1.0) snd (chn 0) auto-delete)
   "(pan-mix file (start 0) (envelope 1.0) snd (chn 0) (auto-delete #f)) mixes 'file' into the sound 'snd'
 starting at start (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1).
 So, (pan-mix \"oboe.snd\" .1 '(0 0 1 1)) goes from all chan 0 to all chan 1.  If

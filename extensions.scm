@@ -160,18 +160,13 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;;
 ;;;   (map-sound-files (lambda (n) (if (> (mus-sound-duration n) 10.0) (snd-print n))))
 
-(define map-sound-files
-  (lambda args
-    "(map-sound-files func :optional dir) applies func to each sound file in dir"
-    (map (car args) 
-	 (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))))
+(define* (map-sound-files func :optional dir)
+  "(map-sound-files func :optional dir) applies func to each sound file in dir"
+  (map func (sound-files-in-directory (or dir "."))))
 
-(define for-each-sound-file
-  (lambda args
-    "(for-each-sound-file func :optional dir) applies func to each sound file in dir"
-    (for-each 
-     (car args) 
-     (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))))
+(define* (for-each-sound-file func :optional dir)
+  "(for-each-sound-file func :optional dir) applies func to each sound file in dir"
+  (for-each func (sound-files-in-directory (or dir "."))))
 
 #|
  (for-each-sound-file
@@ -184,17 +179,15 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   "/home/bil/sf")
 |#
 
-(define match-sound-files
-  (lambda args
-    "(match-sound-files func :optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
-    (let* ((func (car args))
-	   (matches '()))
-      (for-each
-       (lambda (file)
-	 (if (func file)
-	     (set! matches (cons file matches))))
-       (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
-      matches)))
+(define* (match-sound-files func :optional dir)
+  "(match-sound-files func :optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
+  (let* ((matches '()))
+    (for-each
+     (lambda (file)
+       (if (func file)
+	   (set! matches (cons file matches))))
+     (sound-files-in-directory (or dir ".")))
+    matches))
   
 ;;; we can use Guile's regexp support here to search for all .snd and .wav files:
 #|
@@ -239,15 +232,9 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 ;(sort (grep "^[^.]" (directory->list ".")) string<?)
 
-
-(define sound-file-extensions (list "snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve"))
-
-(define (add-sound-file-extension-1 ext) 
-  (set! sound-file-extensions (cons ext sound-file-extensions)))
-
 (define* (sound-files-in-directory-1 :optional (dir "."))
   (sort (grep
-	 (format #f "\\.(~{~A~^|~})$" sound-file-extensions)
+	 (format #f "\\.(~{~A~^|~})$" (sound-file-extensions))
 	 (directory->list dir))
 	string<?))
 |#
@@ -662,7 +649,8 @@ If 'check' is #f, the hooks are removed."
 ;;; -------- any-env-channel
 
 (define* (any-env-channel env func :optional (beg 0) dur snd chn edpos origin)
-  ;; take breakpoints in env, connect with func, apply as envelope to channel
+  "(any-env-channel env func :optional (beg 0) dur snd chn edpos origin) takes breakpoints in 'env', \
+connects them with 'func', and applies the result as an amplitude envelope to the given channel"
   ;; handled as a sequence of funcs and scales
   (if (not (null? env))
       (let ((pts (/ (length env) 2)))
@@ -1009,6 +997,7 @@ If 'check' is #f, the hooks are removed."
 ;;; -------- mono->stereo, mono-files->stereo
 
 (define (mono->stereo new-name snd1 chn1 snd2 chn2)
+  "(mono->stereo new-name snd1 chn1 snd2 chn2) takes the two channels and combines them into a stereo sound 'new-name'"
   ;; (mono->stereo "test.snd" 0 0 1 0)
   (let ((old-ed1 (edit-position snd1 chn1))
 	(old-ed2 (edit-position snd2 chn2))
@@ -1020,6 +1009,7 @@ If 'check' is #f, the hooks are removed."
     ind))
 
 (define (mono-files->stereo new-name chan1-name chan2-name)
+  "(mono-files->stereo new-name file1 file2) combines two mono files into the stereo file 'new-name'"
   ;; (mono-files->stereo "test.snd" "oboe.snd" "pistol.snd")
   (let* ((ind1 (open-sound chan1-name))
 	 (ind2 (open-sound chan2-name))
@@ -1029,6 +1019,7 @@ If 'check' is #f, the hooks are removed."
     ind3))
 
 (define (stereo->mono orig-snd chan1-name chan2-name)
+  "(stereo->mono stereo-sound new-chan1 new-chan2) splits a stereo sound into two mono sounds named 'new-chan1' and 'new-chan2'"
   ;; (stereo->mono 0 "hi1.snd" "hi2.snd")
   (let ((old-ed0 (edit-position orig-snd 0))
 	(old-ed1 (edit-position orig-snd 1))

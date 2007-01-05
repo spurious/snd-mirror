@@ -359,7 +359,7 @@
 	 (lambda () (make-color c1 c2 c3))
 	 (lambda args safe-color)))
 
-(define* (safe-display-edits :optional (snd #f) (chn #f) (edpos #f) (with-source #t))
+(define* (safe-display-edits :optional snd chn edpos (with-source #t))
   (catch #t
 	 (lambda () (display-edits snd chn edpos with-source))
 	 (lambda args (snd-display ";display-edits error: ~A" args))))
@@ -4755,7 +4755,7 @@
     (vct-add! (mus-xcoeffs f1) (mus-xcoeffs f2))
     f1))
 
-(define* (cosine-channel-via-ptree :optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (cosine-channel-via-ptree :optional (beg 0) dur snd chn edpos)
   ;; vct: angle increment
   (ptree-channel
    (lambda (y data forward)
@@ -4773,7 +4773,7 @@
        (vct (+ (* -0.5 pi) (* frag-beg incr))
 	    incr)))))
 
-(define* (cosine-channel :optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (cosine-channel :optional (beg 0) dur snd chn edpos)
   (let ((old-opt (optimization))
 	(samps (or dur (frames snd chn))))
     (set! (optimization) 0)
@@ -41464,7 +41464,7 @@ EDITS: 1
 			(snd-display ";sync-all not new? ~A ~A" (sync index) previous-syncs))))
 	      (sounds))
 	     (let ((current-syncs (map sync (sounds))))
-	       (if (or (<= (length current-syncs) 1) ; Gauche thinks (= 1) is an error, whereas Guile returns #t
+	       (if (and (> (length current-syncs) 1) ; Gauche thinks (= 1) is an error, whereas Guile returns #t
 		       (not (apply = current-syncs)))
 		   (snd-display ";sync-all not the same? ~A" current-syncs))
 	       (set! previous-syncs (cons (sync index) previous-syncs)))
@@ -62862,7 +62862,7 @@ EDITS: 1
 	   chans)
 	  (save-selection "test.snd")))))
 
-(define* (notch-out-rumble-and-hiss :optional (snd #f) (chn #f))
+(define* (notch-out-rumble-and-hiss :optional snd chn)
   "(notch-out-rumble-and-hiss s c) applies a bandpass filter with cutoffs at 40 Hz and 3500 Hz"
   (let* ((cur-srate (exact->inexact (srate snd))))
     (filter-sound
@@ -65184,6 +65184,17 @@ EDITS: 1
     (mem-report))
 (if all-args 
     (system "cp memlog memlog.full"))
+
+(if (and #f
+	 (provided? 'snd-guile))
+    (module-for-each 
+     (lambda (sym var) 
+       (if (and (variable-bound? var) 
+		(procedure? (variable-ref var)) 
+		(not (procedure-documentation (variable-ref var)))
+		(not (procedure-property (variable-ref var) 'documentation)))
+	   (display (format #f "-------- ~A --------~%~A~%~%" sym (snd-help sym)))))
+     (current-module)))
 
 (if with-exit (exit))
 

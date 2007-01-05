@@ -1,5 +1,7 @@
 ;;; bird songs -- (load "bird.scm") then (make-birds)
 ;;;   writes "test.snd" unless you give it a file name as in (make-birds "hiho.snd")
+;;;
+;;; some of the bird names date this work to 1980 using a bird guide published in 1966
 
 (use-modules (ice-9 optargs) (ice-9 format))
 (provide 'snd-bird.scm)
@@ -61,6 +63,7 @@
 (define bird-amp '(.00 .00 .25 1.00 .75 1.00 1.00 .0))
 
 (define (orchard-oriole beg)
+  "(orchard-oriole beg) produces an orchard oriole call at time 'beg'"
   (let ((oriup '(.00 .00 1.00 1.0))
 	(oridwn '(.00 1.00 1.00 .0))
 	(oriupdwna '(.00 .00 .60 1.00 1.00 .60 ))
@@ -89,6 +92,7 @@
 
 
 (define (cassins-kingbird beg)
+  "(cassins-kingbird beg) produces a cassins kingbird call at time 'beg'"
   (let ((kingfirst '(.00 .30 .45 1.00 .90 .10 1.00 .0))
 	(kingsecond '(.00 .00 .02 .50 .04 .00 .06 .55 .08 .05 .10 .60 .12 .05 .14 .65 .16 .10 .18 .70 .20 .10 .22 .75 .24 .15 .26 .80 .28 .20 .30 .85 .32 .25 .34 .90 .36 .30 .38 .95 .40 .40 .42 1.00 .44 .50 .46 1.00 .48 .45 .50 1.00 .52 .50 .54 1.00 .56 .40 .58 .95 .60 .40 .62 .90 .64 .40 .66 .85 .68 .35 .70 .80 .72 .30 .74 .75 .76 .25 .78 .70 .80 .20 .82 .65 .84 .10 .86 .60 .88 .00 .90 .55 .92 .00 .94 .50 .96 .00 1.00 .40 )))
     (set! beg (- beg .03))
@@ -97,6 +101,7 @@
 
 
 (define (chipping-sparrow beg)
+  "(chipping-sparrow beg) produces a chipping sparrow call at time 'beg'"
   (let ((chip-up '(.00 .80 .15 1.00 .75 .30 1.00 .0)))
     (bird (+ beg 0) .05 4000 2400 .2 chip-up main-amp)
     (bird (+ beg .06) .05 4000 2400 .2 chip-up main-amp)
@@ -118,6 +123,7 @@
 
 
 (define (bobwhite beg)
+  "(bobwhite beg) produces a bobwhite call at time 'beg'"
   (let ((bobup1 '(.00 .00 .40 1.00 1.00 1.0))
 	(bobup2 '(.00 .00 .65 .50 1.00 1.0)))
     (set! beg (- beg .4))
@@ -126,6 +132,7 @@
 
 
 (define (western-meadowlark beg)
+  "(western-meadowlark beg) produces a western meadowlark call at time 'beg'"
   (let ((no-skw '(.00 .00 1.00 .0))
 	(down-skw '(.00 1.00 .40 .40 1.00 .0))
 	(fas-down '(.00 1.00 1.00 .0)))
@@ -141,11 +148,13 @@
 
 
 (define (scissor-tailed-flycatcher beg)
+  "(scissor-tailed-flycatcher beg) produces a scissor-tailed flycatcher call at time 'beg'"
   (let ((scissor '(.00 .00 .40 1.00 .60 1.00 1.00 .0)))
     (bigbird (+ beg 0) .05 1800 1800 .2 scissor main-amp '(1 .5 2 1 3 .5 4 .1 5 .01))))
 
 
 (define (great-horned-owl beg)
+  "(great-horned-owl beg) produces a great horned owl call at time 'beg'"
   (let ((owlup '(.00 .00 .30 1.00 1.00 1.0))
 	(owldown '(.00 1.00 1.00 .0)))
     (set! beg (- beg .3))
@@ -156,6 +165,7 @@
 
 
 (define (black-throated-gray-warbler beg)
+  "(black-throated-gray-warbler beg) produces a black throated gray warbler call at time 'beg'"
   (let ((grayone '(.00 .50 .02 .60 .04 .45 .06 .62 .08 .40 .10 .65 .12 .35 .14 .70 .18 .30 .20 .70 .22 .30 .24 .70 .25 .20 .30 .80 .35 .10 .40 .90 .45 .00 .50 1.00 .55 .00 .60 1.00 .65 .00 .70 1.00 .75 .00 .80 1.00 .85 .00 .90 1.00 .95 .00 1.00 .50 ))
 	(graytwo '(.00 .00 .01 .40 .02 .00 .03 .40 .04 .00 .05 .40 .06 .00 .07 .40 .08 .00 .09 .40 .10 .00 .25 .80 .40 .30 .55 1.00 .70 .00 .85 .80 1.00 .40 ))
 	(graythree '(.00 1.00 .01 .60 .02 1.00 .03 .60 .04 1.00 .05 .60 .06 1.00 .07 .60 .08 1.00 .09 .60 .10 1.00 .11 .60 .12 1.00 .13 .60 .14 1.00 .15 .60 .16 1.00 .17 .60 .18 1.00 .19 .60 .20 1.00 .21 .55 .22 1.00 .23 .50 .24 1.00 .25 .50 .26 1.00 .27 .50 .28 1.00 .29 .50 .30 1.00 .31 .50 .32 1.00 .33 .50 .34 1.00 .35 .50 .36 1.00 .37 .50 .38 1.00 .39 .50 .40 1.00 .41 .50 .42 1.00 .43 .50 .44 1.00 .45 .50 .46 1.00 .47 .50 .48 1.00 .49 .50 .50 1.00 .51 .50 .52 1.00 .53 .50 .54 1.00 .55 .50 .56 1.00 .57 .50 .58 1.00 .59 .50 .60 1.00 1.00 .0))
@@ -174,6 +184,7 @@
 
 
 (define (yellow-warbler beg)
+  "(yellow-warbler beg) produces a yellow warbler call at time 'beg'"
   (let ((yellow-up '(.00 .00 .60 1.00 1.00 .50 ))
 	(yellow-swirl '(.00 1.00 .05 1.00 .60 .00 .80 .30 1.00 .10 ))
 	(yellow-down '(.00 1.00 1.00 .0))
@@ -191,6 +202,7 @@
 
 
 (define (black-necked-stilt beg)
+  "(black-necked-stilt beg) produces a black necked stilt call at time 'beg'"
   (let (
 	;;	have to guess about upper partials (cut off by spectrograph)
 	;;	"birds" book has piping sound coming back down whereas "songs
@@ -204,6 +216,7 @@
 
 
 (define (chestnut-sided-warbler beg)
+  "(chestnut-sided-warbler beg) produces a chestnut sided warbler call at time 'beg'"
   (let ((ycurve '(.00 1.00 .30 .50 .60 1.00 .80 .20 1.00 .0))
 	(vcurve '(.00 .20 .50 1.00 1.00 .0))
 	(wcurve '(.00 .50 .15 .00 .45 .10 .60 1.00 .70 .90 1.00 .90 ))
@@ -228,6 +241,7 @@
 
 
 (define (grasshopper-sparrow beg)
+  "(grasshopper-sparrow beg) produces a grasshopper sparrow call at time 'beg'"
   (let ((grassone '(.00 .50 .02 .80 .04 .30 .06 .80 .07 .10 .08 .90 .10 .00 .11 .90 .12 .00 .13 .90 .14 .10 .15 1.00 .16 .10 .17 1.00 .18 .10 .19 1.00 .20 .10 .21 1.00 .22 .10 .23 1.00 .24 .10 .25 1.00 .26 .10 .27 1.00 .28 .10 .29 1.00 .30 .10 .31 1.00 .32 .10 .33 1.00 .34 .10 .35 1.00 .36 .10 .37 1.00 .38 .10 .39 1.00 .40 .10 .41 1.00 .42 .10 .43 1.00 .44 .10 .45 1.00 .46 .10 .47 1.00 .48 .10 .49 1.00 .50 .10 .51 1.00 .52 .10 .53 1.00 .54 .10 .55 1.00 .56 .10 .57 1.00 .58 .10 .59 1.00 .60 .10 .61 1.00 .62 .10 .63 1.00 .64 .10 .65 1.00 .66 .10 .67 1.00 .68 .10 .69 1.00 .70 .10 .71 1.00 .72 .10 .73 1.00 .74 .10 .75 1.00 .76 .10 .77 1.00 .78 .10 .79 1.00 .80 .10 .81 1.00 .82 .10 .83 1.00 .84 .10 .85 1.00 .86 .10 .87 1.00 .88 .10 .89 1.00 .90 .10 .91 1.00 .92 .10 .93 1.00 .94 .10 .95 1.00 .96 .10 .97 1.00 .98 .10 1.00 1.0))
 	(grasstwo '(.00 .00 .10 1.00 .20 .00 .30 1.00 .40 .00 .50 1.00 .60 .00 .70 1.00 .80 .00 .90 1.00 1.00 .0)))
     (set! beg (- beg .49))
@@ -237,7 +251,8 @@
     (bird (+ beg 1.00) 1.4 6000 2500 .2 grassone main-amp)))
 
 
-(define (swamp-sparrow  beg)
+(define (swamp-sparrow beg)
+  "(swamp-sparrow  beg) produces a swamp sparrow call at time 'beg'"
   (let ((swamp-up '(.00 .00 .60 .70 1.00 1.0))
 	(swamp-down '(.00 1.00 .50 .50 .60 .60 1.00 .0)))
     (bird (+ beg 0) .02 3900 200 .3 swamp-up main-amp)
@@ -282,6 +297,7 @@
 
 
 (define (golden-crowned-sparrow beg)
+  "(golden-crowned-sparrow beg) produces a golden crowned sparrow call at time 'beg'"
   (let (
 	;;	these have as different song around here.
 	(goldone '(.00 1.00 .25 .20 1.00 .0))
@@ -295,6 +311,7 @@
 
 
 (define (indigo-bunting beg)
+  "(indigo-bunting beg) produces a indigo bunting call at time 'beg'"
   (let ((buntdwn '(.00 1.00 1.00 .0))
 	(buntv '(.00 .00 .50 1.00 1.00 .0))
 	(bunty '(.00 1.00 .50 .00 1.00 .90 ))
@@ -324,6 +341,7 @@
 
 
 (define (hooded-warbler beg)
+  "(hooded-warbler beg) produces a hooded warbler call at time 'beg'"
   (let ((hoodup '(.00 .00 1.00 1.0))
 	(hooddown '(.00 1.00 1.00 .0)))
     (set! beg (- beg .6))
@@ -357,6 +375,7 @@
 
 
 (define (american-widgeon beg)
+  "(american-widgeon beg) produces an american widgeon call at time 'beg'"
   (let ((widgeon '(.00 .00 .50 1.00 1.00 .0)))
     (set! beg (- beg .3))
     (bigbird (+ beg .3) .07 1900 300 .15 widgeon widgeon '(1 1 2 .02))
@@ -365,6 +384,7 @@
 
 
 (define (louisiana-waterthrush beg)
+  "(louisiana-waterthrush beg) produces a louisiana waterthrush call at time 'beg'"
   (let ((water-one '(.00 .80 .35 .40 .45 .90 .50 1.00 .75 1.00 1.00 .10 ))
 	(water-two '(.00 1.00 .40 .00 .60 .10 1.00 .80 ))
 	(water-three '(.00 1.00 .95 .00 1.00 .0))
@@ -384,6 +404,7 @@
 
 
 (define (robin beg)
+  "(robin beg) produces a robin call at time 'beg'"
   (let ((r-one '(.00 .10 .08 .70 .30 .00 .35 1.00 .40 .30 1.00 .30 ))
 	(r-two '(.00 .00 .10 1.00 .20 .70 .35 .70 .65 .30 .70 .50 .80 .00 .90 .20 1.00 .0))
 	(r-three '(.00 .20 .25 1.00 .60 .70 .90 .00 1.00 .10 ))
@@ -400,11 +421,13 @@
 
 
 (define (solitary-vireo beg)
+  "(solitary-vireo beg) produces a solitary vireo call at time 'beg'"
   (let ((bigskew '(.00 .20 .03 .30 .06 .10 .10 .50 .13 .40 .16 .80 .19 .50 .22 .90 .25 .60 .28 1.00 .31 .60 .34 1.00 .37 .50 .41 .90 .45 .40 .49 .80 .51 .40 .54 .75 .57 .35 .60 .70 .63 .30 .66 .60 .69 .25 .72 .50 .75 .20 .78 .30 .82 .10 .85 .30 .88 .05 .91 .30 .94 .00 .95 .30 .99 .00 1.00 .10 )))
     (bird (+ beg 0) .4 1800 1200 .2 bigskew main-amp)))
 
 
 (define (pigeon-hawk beg)
+  "(pigeon-hawk beg) produces a pigeon hawk (merlin) call at time 'beg'"
   (let ((hupdown '(.00 .00 .30 1.00 .70 1.00 1.00 .0)))
     (bigbird (+ beg 0) .1 1900 200 .2 hupdown main-amp '(1 .7 2 1))
     (bigbird (+ beg .12) .01 2050 0 .1 main-amp main-amp '(1 .5 2 1))
@@ -438,6 +461,7 @@
 
 
 (define (cerulean-warbler beg)
+  "(cerulean-warbler beg) produces a cerulean warbler call at time 'beg'"
   (let ((w-down '(.00 1.00 1.00 .0))
 	(trill '(.00 .80 .10 1.00 .25 .50 .40 1.00 .55 .50 .70 1.00 1.00 .0))
 	(w-up '(.00 .00 1.00 1.0)))
@@ -486,6 +510,7 @@
 
 
 (define (nashville-warbler beg)
+  "(nashville-warbler beg) produces a nashville warbler call at time 'beg'"
   (let ((nash-blip '(.00 .60 .35 1.00 1.00 .0))
 	(nash-down '(.00 .90 .05 1.00 .10 .90 .65 .50 1.00 .0))
 	(nash-up '(.00 .00 .15 .20 .25 .05 .90 .95 1.00 1.0))
@@ -507,6 +532,7 @@
 
 
 (define (eastern-phoebe beg)
+  "(eastern-phoebe beg) produces an eastern-phoebe call at time 'beg'"
   (let ((phoebe-one '(.00 .00 .30 .30 .35 .50 .55 .40 .70 .80 .75 .70 .80 1.00 .95 .90 1.00 .0))
 	(phoebe-two '(.00 .00 .50 1.00 1.00 .0))
 	(phoebe-three '(.00 .00 .10 .40 .80 1.00 1.00 .10 ))
@@ -519,6 +545,7 @@
 
 
 (define (painted-bunting beg)
+  "(painted-bunting beg) produces a painted bunting call at time 'beg'"
   (let ((b-one '(.00 .00 1.00 1.0))
 	(b-two '(.00 .00 .90 1.00 1.00 .0))
 	(b-three '(.00 1.00 1.00 .0))
@@ -551,6 +578,7 @@
 
 
 (define (western-flycatcher beg)
+  "(western-flycatcher beg) produces a western flycatcher call at time 'beg'"
   (let ((f-one '(.00 .00 .10 1.00 .20 .40 .95 .10 1.00 .0))
 	(a-one '(.00 .00 .10 .20 .20 .10 .30 1.00 .90 1.00 1.00 .0))
 	(f-two '(.00 .50 .25 1.00 .50 .00 .60 .00 .95 .30 1.00 .60 ))
@@ -560,6 +588,7 @@
 
 
 (define (bachmans-sparrow beg)
+  "(bachmans-sparrow beg) produces a bachmans sparrow call at time 'beg'"
   (let ((sopening '(.00 1.00 .10 .50 .90 .50 1.00 .0))
 	(sup '(.00 .10 .35 .00 1.00 1.0))
 	(sdwn '(.00 1.00 .40 .50 1.00 .0))
@@ -609,12 +638,14 @@
 
 
 (define (cedar-waxwing beg)
+  "(cedar-waxwing beg) produces a cedar waxwing call at time 'beg'"
   (let ((cedar '(.00 .00 .25 .70 .70 1.00 .90 1.00 1.00 .20 ))
 	(cedamp '(.00 .00 .20 1.00 .40 1.00 1.00 .0)))
     (bird (+ beg 0) .50 6000 800 .2 cedar cedamp)))
 
 
 (define (bairds-sparrow beg)
+  "(bairds-sparrow beg) produces a bairds sparrow call at time 'beg'"
   (let ((bairdend '(.00 .00 .25 1.00 .50 .00 .75 1.00 1.00 .0))
 	(bairdstart '(.00 .50 .05 1.00 .10 .00 .15 1.00 .20 .00 .25 1.00 .30 .00 .35 1.00 .40 .00 .45 1.00 .50 .00 .55 1.00 .60 .00 .65 1.00 .70 .00 .75 1.00 .80 .00 .85 1.00 .90 .00 .95 1.00 1.00 .0)))
     (bird (+ beg 0) .09 6500 1500 .2 bairdstart main-amp)
@@ -659,6 +690,7 @@
 
 
 (define (kentucky-warbler beg)
+  "(kentucky-warbler beg) produces a kentucky warbler call at time 'beg'"
   (let ((kenstart '(.00 .30 .50 1.00 1.00 .0))
 	(kendwn '(.00 .90 .10 1.00 1.00 .0))
 	(kenup '(.00 .00 1.00 1.0))
@@ -698,6 +730,7 @@
 
 
 (define (rufous-sided-towhee beg)
+  "(rufous-sided-towhee beg) produces a rufous sided towhee call at time 'beg'"
   (let ((towhee-one '(.00 .10 .02 .05 .04 .15 .06 .05 .08 .20 .10 .04 .12 .25 .14 .03 .16 .30 .18 .02 .20 .35 .22 .01 .24 .40 .26 .00 .28 .45 .30 .00 .32 .50 .34 .00 .36 .50 .80 1.00 1.00 .0))
 	(towhee-two '(.00 .00 1.00 1.0))
 	(towhee-three '(.00 1.00 1.00 .0)))
@@ -759,6 +792,7 @@
 
 
 (define (prothonotary-warbler beg)
+  "(prothonotary-warbler beg) produces a prothonotary warbler call at time 'beg'"
   (let ((pro-one '(.00 .10 .20 .00 1.00 1.0))
 	(pro-two '(.00 .00 1.00 1.0))
 	(pro-amp '(.00 .00 .20 1.00 .40 .50 1.00 .0)))
@@ -785,7 +819,8 @@
     (bird (+ beg 2.39) .05 4000 2500 .06 pro-two bird-amp)))
 
 
-(define (audubons-warbler  beg)
+(define (audubons-warbler beg)
+  "(audubons-warbler  beg) produces an audubons warbler (yellow-rumped warbler) call at time 'beg'"
   (let (
 	;;	(yellow-rumped say the revisionists))
 	(w-up '(.00 .00 1.00 1.0))
@@ -816,6 +851,7 @@
 
 
 (define (lark-bunting beg)
+  "(lark-bunting beg) produces a lark bunting call at time 'beg'"
   (let ((b-down '(.00 1.00 1.00 .0))
 	(b-up '(.00 .00 1.00 1.0))
 	(b-trill-one '(.00 .00 .06 .80 .12 .00 .18 .85 .24 .05 .36 .90 .42 .10 .48 .95 .54 .20 .60 1.00 .66 .20 .72 1.00 .78 .20 .84 1.00 .90 .20 1.00 1.0))
@@ -857,6 +893,7 @@
 
 
 (define (eastern-bluebird beg)
+  "(eastern-bluebird beg) produces an eastern bluebird call at time 'beg'"
   (let ((blue-one '(.00 .00 1.00 1.0))
 	(blue-two '(.00 1.00 1.00 .0))
 	(blue-three '(.00 .60 .10 1.00 .20 .00 .25 1.00 .30 .00 .35 1.00 .40 .00 .45 1.00 .50 .00 .75 1.00 1.00 .0))
@@ -874,6 +911,7 @@
 
 
 (define (chuck-wills-widow beg)
+  "(chuck-wills-widow beg) produces a chuck wills widow call at time 'beg'"
   (let ((wid-down '(.00 1.00 1.00 .0))
 	(wid-one '(.00 .00 .10 .10 .25 1.00 .50 .30 .80 .70 1.00 .0))
 	(wid-two '(.00 .20 .30 1.00 .50 .30 .60 .70 .90 .10 1.00 .0)))
@@ -883,7 +921,8 @@
     (bird (+ beg .56) .29 900 1100 .2 wid-two bird-amp)))
 
 
-(define (blue-gray-gnatcatcher beg)	
+(define (blue-gray-gnatcatcher beg)
+  "(blue-gray-gnatcatcher beg) produces a blue gray gnatcatcher call at time 'beg'"
   (let ((gskw1 '(.00 .00 .15 1.00 .75 .80 .90 1.00 1.00 .70 ))
 	(gskw2 '(.00 .00 .25 1.00 .75 .70 1.00 .0)))
     (set! beg (- beg .5))
@@ -897,6 +936,7 @@
 
 
 (define (black-throated-sparrow beg)
+  "(black-throated-sparrow beg) produces a black throated sparrow call at time 'beg'"
   (let ((black-up '(.00 .00 1.00 1.0))
 	(black-down '(.00 1.00 1.00 .0))
 	(black-down-amp '(.00 .00 .75 1.00 1.00 .0))
@@ -945,6 +985,7 @@
 
 
 (define (black-chinned-sparrow beg)
+  "(black-chinned-sparrow beg) produces a black chinned sparrow call at time 'beg'"
   (let ((chin-up '(.00 .00 1.00 1.0))
 	(chin-up2 '(.00 .00 .30 .20 1.00 1.0)))
     (set! beg (- beg .6))
@@ -967,6 +1008,7 @@
 
 
 (define (various-gull-cries-from-end-of-colony-5 beg)
+  "(various-gull-cries-from-end-of-colony-5 beg) produces a various gull cries at time 'beg'"
   (let ((gullstart '(0 0 10 1 20 .5000 40 .6000 60 .5000 100 0 ))
 	(gullmiddle '(0 0 10 1 30 .5000 80 .5000 100 0 ))
 	(gullend '(0 0 5 1 10 .5000 90 .4000 100 0 )))
