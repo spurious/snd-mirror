@@ -415,7 +415,7 @@ def exec_cmd(cmd, *args)
 end
 
 def file_copy(f1, f2)
-  if File.exists?(f1)
+  if File.exist?(f1)
     fin = File.open(f1, "r")
     fout = File.open(f2, "w")
     fout.write(fin.read) until fin.eof?
@@ -433,7 +433,7 @@ def delete_files(*files)
 end
 
 def with_file(file, verbose = true, &body)
-  if File.exists?(full_name = $sf_dir + file)
+  if File.exist?(full_name = $sf_dir + file)
     body.call(full_name)
   else
     if verbose
@@ -541,7 +541,7 @@ def finish_snd_test
   show_listener
   fs = 0
   [$original_save_dir, $original_temp_dir, "/tmp"].each do |path|
-    if File.exists?(path)
+    if File.exist?(path)
       fs += Dir[path + "/snd_*"].length
       Dir[path + "/snd_*"].each do |f| delete_file(f) end
     end
@@ -618,6 +618,8 @@ $timings = Array.new(0)
 
 make_hook("$before_test_hook", 1, "snd-test") do |n|
   dismiss_all_dialogs
+  set_clipping(false)
+  set_mus_clipping(false)
   $timings.push([n, Snd_test_time.new])
   snd_info("test %d", n)
   set_show_backtrace(false)
@@ -1847,7 +1849,7 @@ def test02
       if mus_expand_filename(in_name) != real_name
         snd_display("mus_expand_filename %s => %s?", in_name, mus_expand_filename(in_name))
       end
-      if File.exists?("/home/bil/./sf1/o2.voc")
+      if File.exist?("/home/bil/./sf1/o2.voc")
         if sound?(ind = open_sound(in_name))
           if file_name(ind) != real_name
             snd_display("expand file name %s: %s?", in_name, file_name(ind))
@@ -2473,7 +2475,7 @@ def test044
   vct2channel(Vct.new(10, 0.3), 0, 10, nd, 1)
   save_sound_as("fmv1.snd", nd)
   close_sound(nd)
-  unless File.exists?("fmv1.snd") then snd_display("fmv1.snd not saved?") end
+  unless File.exist?("fmv1.snd") then snd_display("fmv1.snd not saved?") end
   set_samples(0, 10, "fmv1.snd", ind, 0, false, "another name 6", 1)
   unless vequal(res = channel2vct(0, 20, ind, 0),
                 vct(0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3,
@@ -2835,6 +2837,9 @@ def test064(fields, devices)
   if (res = maxamp(ob, 0)) != mx[0]
     snd_display("sound_data_maxamp oboe.snd: %s != %s?", sound_data_maxamp(sd)[0], res)
   end
+  if fneq(res = sound_data_peak(sd), mx.car)
+    snd_display("sound_data_peak oboe.snd: %s %s?", res, mx)
+  end
   if (res = Snd.catch do set_selected_channel(1) end).first != :no_such_channel
     snd_display("set_selected_channel bad chan: %s?", res)
   end
@@ -2883,10 +2888,12 @@ end
 def test074
   fmv5_snd = "fmv5.snd"
   delete_file(fmv5_snd)
+  set_print_length(12)
   fd = mus_sound_open_output(fmv5_snd, 22050, 1, Mus_bshort, Mus_aiff, "no comment")
   sdata = SoundData.new(1, 100)
   100.times do |i| sdata[0, i] = i * 0.01 end
-  if sdata.to_s != "#<sound-data: 1 chan, 100 frames>"
+  if sdata.to_s != "#<sound-data[chans=1, length=100]:
+    (0.000 0.010 0.020 0.030 0.040 0.050 0.060 0.070 0.080 0.090 0.100 0.110 ...)>"
     snd_display("print sound_data: %s?", sdata.to_s)
   end
   edat = sdata
@@ -3719,7 +3726,7 @@ end
 # end
 
 def test114
-  if File.exists?($bigger_snd)
+  if File.exist?($bigger_snd)
     if (res = mus_sound_samples($bigger_snd)) != 3175160310
       snd_display("bigger samples: %d?", res)
     end
@@ -6945,7 +6952,7 @@ def test105
       delete_file(psf)
       set_graph_style(i)
       graph2ps
-      if File.exists?(psf)
+      if File.exist?(psf)
         File.unlink(psf)
       else
         snd_display("graph2ps: %s?", psf)
@@ -7069,6 +7076,18 @@ def test105
   unless (res = selection_member?(ind))
     snd_display("selection_member?: %s?", res)
   end
+  if (res = region_srate(r0)) != 22050
+    snd_display("region_srate: %d?", res)
+  end
+  if (res = region_chans(r0)) != 1
+    snd_display("region_chans: %d?", res)
+  end
+  if (res = region_home(r0)) != ["oboe.snd", 0, 50827]
+    snd_display("region_home: %s?", res)
+  end
+  if (res = region_frames(r0)) != 50828
+    snd_display("region_frames: %d?", res)
+  end
   if (res = selection_frames) != 50828
     snd_display("selection_frames: %d?", res)
   end
@@ -7078,8 +7097,11 @@ def test105
   if (res = region_position(r0, 0)).nonzero?
     snd_display("region_position: %d?", res)
   end
+  if fneq(res = region_maxamp(r0), maxamp(ind))
+    snd_display("region_maxamp: %s?", res)
+  end
   if fneq(res = selection_maxamp(ind, 0), maxamp(ind))
-    snd_display("selection_maxamp: %s?")
+    snd_display("selection_maxamp: %s?", res)
   end
   [[:region_srate, 22050],
     [:region_chans, 1],
@@ -8333,6 +8355,9 @@ end
 def test175
   ind = open_sound("2.snd")
   reg = make_region(0, 100, ind, true)
+  if (res = region_home(reg)) != ["2.snd", 0, 100]
+    snd_display("make + region_home: %s?", res)
+  end
   if (res = region_chans(reg)) != 2
     snd_display("make_region chan true: %d", res)
   end
@@ -8734,7 +8759,7 @@ def test215
 #!/usr/bin/env ruby
 require "sndlib" unless $".member?("sndlib") # "
 ARGV.each do |name|
-  if File.exists?(name)
+  if File.exist?(name)
     print name, ": ", mus_sound_comment(name), "\\n"
   else
     print name, " doesn't exists\\n"
@@ -9227,8 +9252,6 @@ def test235
   snd_display("channel edits: %s?", edits(index)) if edits(index) != [276, 0]
   old_max = maxamp(index, true)
   regdata = (regions or []).map do |n| region2vct(0, 10, n) end
-  old_pos0 = edit_position(index, 0)
-  old_pos1 = edit_position(index, 1)
   old_reglen = (regions or []).map do |n| region_frames(n) end
   s61_files = []
   $save_state_hook.add_hook!("snd-test") do |file|
@@ -14149,8 +14172,6 @@ def test048
     r = 1.0
     ratio = 0.1
     index = 2.0
-    freq = hz2radians(40.0)
-    phase = a
     cr = 0.5 * (r - 1.0 / r)
     sr = 0.5 * (r + 1.0 / r)
     th = a
@@ -16532,17 +16553,20 @@ def test108
   undo_edit
   #
   table = make_vct(10, 0.1)
-  gen = make_wave_train(1000.0, :initial_phase, 3.14159, :wave, table)
+  gen = make_wave_train(1000.0, :initial_phase, PI, :wave, table)
   map_channel(lambda do |y| wave_train(gen) end)
   if fneq(res = maxamp, 0.1)
     snd_display("wave_train 1 max: %s?", res)
   end
   unless vequal(res = channel2vct(0, 30),
-                vct(0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.000, 0.000,
+                vct(0.100, 0.100, 0.100, 0.100, 0.100, 0.000, 0.000, 0.000,
                     0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
-                    0.000, 0.000, 0.000, 0.100, 0.100, 0.100, 0.100, 0.100,
-                    0.100, 0.100, 0.100, 0.100, 0.100, 0.000))
+                    0.000, 0.000, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.000, 0.000))
+    op = print_length
+    set_print_length(32)
     snd_display("wave_train 1 data: %s?", res)
+    set_print_length(op)
   end
   undo_edit
   #
@@ -17274,8 +17298,6 @@ def test128
   if bad1.nonzero? or bad2.nonzero? or 2.5 * down1 > up1 or 2.5 * up2 > down2
     snd_display("rand dist: %s %s %s,  %s %s %s", down1, up1, bad1, down2, up2, bad2)
   end
-  test_gen_equal(make_rand(1000), make_rand(1000), make_rand(500))
-  test_gen_equal(make_rand(1000), make_rand(1000), make_rand(1000, 0.5))
   # 
   gen = make_rand_interp(4000.0)
   print_and_check(gen, "rand-interp", gen.to_s)
@@ -17346,7 +17368,7 @@ def test128
       end
     end
   end
-  if bad1.nonzero? or bad2.nonzero? or 2.5 * down1 > up1 or 2.5 * up2 > down2
+  if bad1.nonzero? or bad2.nonzero? or 2.5 * down1 > up1 or 2.0 * up2 > down2
     snd_display("rand dist 2: %s %s %s,  %s %s %s", down1, up1, bad1, down2, up2, bad2)
   end
   #
@@ -18117,7 +18139,7 @@ def test148
     end
   end
   if start != 64 then snd_display("move_sound sd output start: %s?", start) end
-  if fneq(vo.peak, 0.484) then snd_display("move_sound sd output: %s?", vo.peak) end
+  if fneq(vo.peak, 0.484) then snd_display("move_sound sd peak output: %s?", vo.peak) end
 end
 
 def test158
@@ -18282,7 +18304,7 @@ def test158
                             0
                           end)
                 end)
-  if maxamp / mx < 1.5 or mx / maxamp > 2.5
+  if maxamp / mx < 1.4 or mx / maxamp > 2.5
     snd_display("granulate edit 2* (2): %s %s?", mx, maxamp)
   end
   undo_edit
@@ -24593,7 +24615,9 @@ def test0110
   snd_display("mark?") unless mark?(m1)
   snd_display("add_mark: %s?", mark_sample(m1)) if mark_sample(m1) != 123
   set_mark_property(m1, :hiho, 123)
-  snd_display("mark_property: %s?", mark_properties(m1)) if mark_property(m1, :hiho) != 123
+  if (res = mark_property(m1, :hiho)) != 123
+    snd_display("mark_property: %s?", res)
+  end
   if (res = mark_property(m1, :not_there))
     snd_display("mark_not_property: %s?", res)
   end
@@ -24900,6 +24924,17 @@ def test0210
   end
   revert_sound(ind)
   src_sound([0, 0.5, 1, 1.75665])
+  # trying to hit previous dur on the nose "by accident..."
+  # try to hit mark_size segfault
+  as_one_edit(lambda do | |
+                add_mark(10)
+                mix("oboe.snd")
+                20.times do |i|
+                  scale_channel(1.2)
+                  add_mark(i * 2)
+                end
+              end)
+  scale_channel(0.5)
   close_sound(ind)
   #
   ind = open_sound("oboe.snd")
@@ -25328,7 +25363,7 @@ def test0210
   add_mark(20)
   add_mark(30)
   mark_explode
-  if File.exists?("mark-0.snd")
+  if File.exist?("mark-0.snd")
     ind1 = open_sound("mark-0.snd")
     if frames(ind1, 0) != 10 then snd_display("mark-0 frames: %s?", frames(ind1, 0)) end
     unless vequal(res = channel2vct, Vct.new(10, 0.1)) then snd_display("mark-0 vals: %s?", res) end
@@ -25337,7 +25372,7 @@ def test0210
   else
     snd_display("mark_explode did not write mark-0.snd?")
   end
-  if File.exists?("mark-1.snd")
+  if File.exist?("mark-1.snd")
     ind1 = open_sound("mark-1.snd")
     if frames(ind1, 0) != 10 then snd_display("mark-1 frames: %s?", frames(ind1, 0)) end
     unless vequal(res = channel2vct, Vct.new(10, 0.4)) then snd_display("mark-1 vals: %s?", res) end
@@ -25346,7 +25381,7 @@ def test0210
   else
     snd_display("mark_explode did not write mark-1.snd?")
   end
-  if File.exists?("mark-2.snd")
+  if File.exist?("mark-2.snd")
     ind1 = open_sound("mark-2.snd")
     if frames(ind1, 0) != 10 then snd_display("mark-2 frames: %s?", frames(ind1, 0)) end
     unless vequal(res = channel2vct, Vct.new(10, 0.8)) then snd_display("mark-2 vals: %s?", res) end
@@ -25355,7 +25390,7 @@ def test0210
   else
     snd_display("mark_explode did not write mark-2.snd?")
   end
-  if File.exists?("mark-3.snd")
+  if File.exist?("mark-3.snd")
     snd_display("mark_explode wrote too many files?")
     delete_file("mark-3.snd")
   end
@@ -25936,7 +25971,7 @@ def test12
         end
       end
     end
-    if File.exists?("s24.snd") and
+    if File.exist?("s24.snd") and
         (ffiles != [$sf_dir + "s24.snd"] or
          sfiles != [$sf_dir + "s24.snd"])
       snd_display("map|for_each_sound_file(s): %s %s?", ffiles, sfiles)
@@ -26184,7 +26219,7 @@ def test0013
     if a != "cursor_position"
       snd_display("$help_hook subject: %s?", a)
     end
-    if b != "(cursor-position (snd false) (chn false)): current cursor position (x y in pixels) in snd's channel chn"
+    if b != "(cursor-position :optional snd chn): current cursor position (x y in pixels) in snd's channel chn"
       snd_display("$help_hook text: %s?", b)
     end
     "hiho:" + b
@@ -26654,7 +26689,7 @@ def test0113
   $select_sound_hook.reset_hook!
   $select_channel_hook.reset_hook!
   #
-  spl = stl = ph = ph1 = pc = false
+  spl = stl = ph = ph1 = false
   $start_playing_hook.add_hook!("snd-test") do |snd|
     snd_display("$start_playing_hook: %s not %s?", snd, ind) if snd != ind
     spl = true
@@ -26718,7 +26753,8 @@ def test0113
   play_selection(true)
   play_region(reg, true)
   snd_display("$stop_playing_selection_hook not called?") unless ss
-  $start_playing_selection_hook.reset_hook!
+  $stop_playing_selection_hook.reset_hook!
+  set_selection_creates_region(old_reg)
   ctr = 0
   $dac_hook.add_hook!("snd-test") do |n|
     ctr += 1
@@ -26819,7 +26855,7 @@ def test0113
   end
   save_sound_as("baddy.snd", ind)
   snd_display("$save_hook not called?") unless sh
-  if File.exists?("baddy.snd")
+  if File.exist?("baddy.snd")
     snd_display("$save_hook didn\'t cancel save?")
     delete_file("baddy.snd")
   end
@@ -27256,6 +27292,45 @@ def test0213
   delete_watcher(w1)
   close_sound(ind)
   if sound_changed then snd_display("deleted watcher runs anyway?") end
+  #
+  old_clip = clipping
+  old_mus_clip = mus_clipping
+  set_clipping(true)
+  set_mus_clipping(true)
+  $clip_hook.reset_hook!
+  index = new_sound("test.snd", Mus_next, Mus_bshort, 22050, 1, "clip-hook test", 10)
+  map_channel(lambda do |y| mus_random(0.999) end)
+  set_sample(2,  1.0001)
+  set_sample(4, -1.0)
+  set_sample(6,  1.5)
+  set_sample(8, -1.5)
+  hook_called = 0
+  vals = channel2vct(0, 10, index)
+  $clip_hook.add_hook!("test-13-clip") do |val|
+    if fneq(val, 1.0) and
+        fneq(val, 1.5)
+      fneq(val, -1.5)
+      snd_display("$clip_hook called upon: %s?", val)
+    end
+    hook_called += 1
+    0.0
+  end
+  save_sound(index)
+  $clip_hook.reset_hook!
+  if hook_called != 3 then snd_display("$clip_hook called %d times?", hook_called) end
+  close_sound(index)
+  index = open_sound("test.snd")
+  new_vals = channel2vct(0, 10, index)
+  fixed_vals = vct_copy(vals)
+  fixed_vals[2] = 0.0
+  fixed_vals[6] = 0.0
+  fixed_vals[8] = 0.0
+  unless vequal(fixed_vals, new_vals)
+    snd_display("$clip_hook results:\n%s\n%s\n%s?", new_vals, fixed_vals, vals)
+  end
+  close_sound(index)
+  set_clipping(old_clip)
+  set_mus_clipping(old_mus_clip)
 end
 
 def test13
@@ -27847,7 +27922,7 @@ def test14
     if (res = edit_position(zz)).nonzero?
       snd_display("revert_sound edit_position: %s?", res)
     end
-    s8_snd = (File.exists?("s8.snd") ? "s8.snd" : "oboe.snd")
+    s8_snd = (File.exist?("s8.snd") ? "s8.snd" : "oboe.snd")
     as_one_edit_rb do
       mix(s8_snd, 24000)
       select_all
@@ -28838,9 +28913,9 @@ def test0115
   if res = channel_property(:hi, id, 0)
     snd_display("channel_property :hi: %s?", res)
   end
-  set_channel_property(:hi, 3.1415, id, 0)
-  if (res = channel_property(:hi, id, 0)) != 3.1415
-    snd_display("channel_property :hi (3.1415): %s?", res)
+  set_channel_property(:hi, PI, id, 0)
+  if (res = channel_property(:hi, id, 0)) != PI
+    snd_display("channel_property :hi (PI): %s?", res)
   end
   if (res = channel_property(:hiho, id, 0)) != 123
     snd_display("channel_property 2nd :hiho (123): %s?", res)
@@ -28860,9 +28935,9 @@ def test0115
   if res = sound_property(:hi, id)
     snd_display("sound_property :hi: %s?", res)
   end
-  set_sound_property(:hi, 3.1415, id)
-  if (res = sound_property(:hi, id)) != 3.1415
-    snd_display("sound_property :hi (3.1415): %s?", res)
+  set_sound_property(:hi, PI, id)
+  if (res = sound_property(:hi, id)) != PI
+    snd_display("sound_property :hi (PI): %s?", res)
   end
   if (res = sound_property(:hiho, id)) != 123
     snd_display("sound_property 2nd :hiho (123): %s?", res)
@@ -29570,7 +29645,7 @@ def test0315
   revert_sound(ind)
   close_sound(ind)
   #
-  if File.exists?("storm.snd")
+  if File.exist?("storm.snd")
     ind = open_sound("storm.snd")
     set_sinc_width(10)
     with_time("src_sound(1.3)") do src_sound(1.3) end
@@ -29590,7 +29665,7 @@ def test0315
     ramp_channel(0.0, 1.0)
     close_sound(ind)
   end
-  if File.exists?("1a.snd") and $all_args
+  if File.exist?("1a.snd") and $all_args
     ind = open_sound("1a.snd")
     with_time("rubber_sound(1.25)") do rubber_sound(1.25) end
     close_sound(ind)
@@ -29783,7 +29858,7 @@ def test0415
   end
   mix_selection(1, ind, 0)
   unless vequal(res = channel2vct(0, 10, ind, 0),
-                vct(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 0.5))
+                vct(1.0, 1.5, 1.5, 1.5, 1.5, 1.0, 0.5, 0.5, 0.5, 0.5))
     snd_display("mix_selection vals: %s?", res)
   end
   close_sound(ind)
@@ -31852,7 +31927,7 @@ def test0416
   end
   #
   data = ["1a.snd", "oboe.snd", "storm.snd"].map do |sound|
-    if File.exists?(sound)
+    if File.exist?(sound)
       ind = view_sound(sound)
       set_squelch_update(true, ind)
       tms = [lambda { scale_channel(2.0) },
@@ -32573,7 +32648,7 @@ def test0019
   $save_state_hook.add_hook!("snd-test") do |fname| "savehook.snd" end
   save_state("s61.rb")
   close_sound(ind)
-  if File.exists?("savehook.snd")
+  if File.exist?("savehook.snd")
     load("s61.rb")
     ind = find_sound("oboe.snd")
     if sound?(ind)
@@ -32592,12 +32667,12 @@ def test0019
         "edit-list-to-function-saved.snd"
       end
       func = edit_list2function(ind, 0)
-      if File.exists?("edit-list-to-function-saved.snd")
+      if File.exist?("edit-list-to-function-saved.snd")
         snd_display("edit_list2function called $save_state_hook")
         delete_file("edit-list-to-function-saved.snd")
       end
       save_edit_history("save-edit-history-saved.rb", ind, 0)
-      if File.exists?("edit-list-to-function-saved.snd")
+      if File.exist?("edit-list-to-function-saved.snd")
         snd_display("save_edit_history called $save_state_hook")
         delete_file("edit-list-to-function-saved.snd")
       end
@@ -32633,6 +32708,7 @@ def test0019
   add_sound_file_extension("w03")
   add_sound_file_extension("w04")
   add_sound_file_extension("w05")
+  add_source_file_extension("gad")
   # 
   ind = new_sound("fmv.snd")
   set_sample(10, 0.1)
@@ -36618,7 +36694,7 @@ def test0021
     if (not (leq_func.call(old_vals, [old_1, old_2]) or leq_func.call(old_vals, [old_2, old_1])))
       snd_display("%s sound_func true: %s, sep: %s?", func, old_vals, [old_1, old_2])
     end
-
+    # 
     set_snd_func(func, new_val)
     unless eq_func.call(res = snd_func(func), new_val)
       snd_display("set_%s global no arg: %s %s?", func, res, new_val)
@@ -36783,55 +36859,55 @@ def test0221
     snd_display("env_chan 1.0: %s?", res)
   end
   undo_edit
-	env_channel_with_base([0, 0, 1, 1, 2, 1, 3, 0], 0.0)
-	unless vequal(res = channel2vct(0, 20),
-								vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 
-								1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
-		snd_display("env_chan 0.0: %s?", res)
-	end
-	undo_edit
-	env_channel_with_base([0, 0, 1, 1], 100.0)
-	unless vequal(res = channel2vct(0, 20),
-								vct(0.0, 0.003, 0.006, 0.010, 0.015, 0.022, 0.030, 0.041, 0.054, 0.070, 
-								0.091, 0.117, 0.150, 0.191, 0.244, 0.309, 0.392, 0.496, 0.627, 0.792))
-		snd_display("env_chan 100.0: %s?", res)
-	end
-	undo_edit
-	env_channel_with_base([0, 0, 1, 1], 0.01)
-	unless vequal(res = channel2vct(0, 20),
-								vct(0.0, 0.208, 0.373, 0.504, 0.608, 0.691, 0.756, 0.809, 0.850, 0.883,
-								0.909, 0.930, 0.946, 0.959, 0.970, 0.978, 0.985, 0.990, 0.994, 0.997))
-		snd_display("env_chan 0.01: %s?", res)
-	end
-	undo_edit
-	env_channel_with_base([0, 0, 1, 1], 1.0, 5, 10)
-	unless vequal(res = channel2vct(0, 20),
-								vct(1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.111, 0.222, 0.333, 0.444,
-								0.556, 0.667, 0.778, 0.889, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
-		snd_display("env_chan 1.0 seg: %s?", res)
-	end
-	undo_edit
-	env_channel_with_base([0, 0, 1, 1, 2, 1, 3, 0], 0.0, 5, 10)
-	unless vequal(res = channel2vct(0, 20),
-								vct(1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-								1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
-		snd_display("env_chan 0.0 seg: %s?", res)
-	end
-	undo_edit
-	env_channel_with_base([0, 0, 1, 1], 100.0, 5, 10)
-	unless vequal(res = channel2vct(0, 20),
-								vct(1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.007, 0.018, 0.037, 0.068, 
-								0.120, 0.208, 0.353, 0.595, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
-		snd_display("env_chan 100.0 seg: %s?", res)
-	end
-	undo_edit
-	env_channel_with_base([0, 0, 1, 1], 0.01, 5, 10)
-	unless vequal(res = channel2vct(0, 20),
-								vct(1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.405, 0.647, 0.792, 0.880, 
-								0.932, 0.963, 0.982, 0.993, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
-		snd_display("env_chan 0.01 seg: %s?", res)
-	end
-	undo_edit
+  env_channel_with_base([0, 0, 1, 1, 2, 1, 3, 0], 0.0)
+  unless vequal(res = channel2vct(0, 20),
+                vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 
+                    1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
+    snd_display("env_chan 0.0: %s?", res)
+  end
+  undo_edit
+  env_channel_with_base([0, 0, 1, 1], 100.0)
+  unless vequal(res = channel2vct(0, 20),
+                vct(0.0, 0.003, 0.006, 0.010, 0.015, 0.022, 0.030, 0.041, 0.054, 0.070, 
+                    0.091, 0.117, 0.150, 0.191, 0.244, 0.309, 0.392, 0.496, 0.627, 0.792))
+    snd_display("env_chan 100.0: %s?", res)
+  end
+  undo_edit
+  env_channel_with_base([0, 0, 1, 1], 0.01)
+  unless vequal(res = channel2vct(0, 20),
+                vct(0.0, 0.208, 0.373, 0.504, 0.608, 0.691, 0.756, 0.809, 0.850, 0.883,
+                    0.909, 0.930, 0.946, 0.959, 0.970, 0.978, 0.985, 0.990, 0.994, 0.997))
+    snd_display("env_chan 0.01: %s?", res)
+  end
+  undo_edit
+  env_channel_with_base([0, 0, 1, 1], 1.0, 5, 10)
+  unless vequal(res = channel2vct(0, 20),
+                vct(1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.111, 0.222, 0.333, 0.444,
+                    0.556, 0.667, 0.778, 0.889, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
+    snd_display("env_chan 1.0 seg: %s?", res)
+  end
+  undo_edit
+  env_channel_with_base([0, 0, 1, 1, 2, 1, 3, 0], 0.0, 5, 10)
+  unless vequal(res = channel2vct(0, 20),
+                vct(1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+                    1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
+    snd_display("env_chan 0.0 seg: %s?", res)
+  end
+  undo_edit
+  env_channel_with_base([0, 0, 1, 1], 100.0, 5, 10)
+  unless vequal(res = channel2vct(0, 20),
+                vct(1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.007, 0.018, 0.037, 0.068, 
+                    0.120, 0.208, 0.353, 0.595, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
+    snd_display("env_chan 100.0 seg: %s?", res)
+  end
+  undo_edit
+  env_channel_with_base([0, 0, 1, 1], 0.01, 5, 10)
+  unless vequal(res = channel2vct(0, 20),
+                vct(1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.405, 0.647, 0.792, 0.880, 
+                    0.932, 0.963, 0.982, 0.993, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
+    snd_display("env_chan 0.01 seg: %s?", res)
+  end
+  undo_edit
   #
   ind1 = open_sound("now.snd")
   ind2 = open_sound("oboe.snd")
@@ -36879,49 +36955,7 @@ def test0221
   if fneq(res = channel_distance(ind1, 0, ind2, 0), 0.1346)
     snd_display("channel_distance: %s?", res)
   end
-  [ind1, ind2].apply(:revert_sound)
-  vals = scan_sound_rb(0, false, ind2) do |y, c| y > 0.1 end
-  if vals != [true, 4423] and vals != [true, 4477]
-    snd_display("scan_sound oboe: %s?", vals)
-  end
   [ind1, ind2].apply(:close_sound)
-  #
-  ind1 = open_sound("2.snd")
-  ind2 = open_sound("4.aiff")
-  vals = scan_sound_rb(0, false, ind1) do |y, c| y > 0.1 end
-  if vals then snd_display("scan_sound 2 false: %s?", vals) end
-  vals = scan_sound_rb(0, false, ind1) do |y, c| y > 0.03 end
-  if vals != [true, 12] and vals != [true, 5881]
-    s = (vals.cadr == 12) ? 12 : 5881
-    snd_display("scan_sound 2 true: %s (%s %s)?", vals, sample(s, ind1, 0), sample(s, ind1, 1))
-  end
-  set_selected_sound(ind1)
-  last_vals = Vct.new(channels(Snd.snd))
-  result = scan_sound_rb() do |y, c|
-    last_y = last_vals[c]
-    last_vals[c] = y
-    (y * last_y) < 0.0
-  end
-  if result != [true, 6] and result != [true, 1847]
-    s = (result.cadr == 6) ? 6 : 1847
-    snd_display("scan_sound 2 zero cross: %s (%s -> %s, %s -> %s)?",
-                result,
-                sample(s, ind1, 0), sample(s + 1, ind1, 0),
-                sample(s, ind1, 1), sample(s + 1, ind1, 1))
-  end
-  vals = scan_sound_rb(0, false, ind2) do |y, c| y > 0.05 end
-  if vals != [true, 21372] then snd_display("scan_sound 4 0.05: %s?", vals) end
-  vals = scan_sound_rb(0, false, ind2) do |y, c| (not c == 3 ) or y > 0.05 end
-  if vals != [true, 12999] then snd_display("scan_sound 4 0.05 3: %s?", vals) end
-  close_sound(ind1)
-  last_vals = Vct.new(channels(ind2))
-  result = scan_sound_rb() do |y, c|
-    last_y = last_vals[c]
-    last_vals[c] = y
-    (y * last_y) < 0.0
-  end
-  if result != [true, 1287] then snd_display("scan_sound 4 zero cross: %s?", result) end
-  close_sound(ind2)
   #
   file_copy("oboe.snd", "test.snd")
   ind = open_sound("test.snd")
@@ -37012,7 +37046,7 @@ def test0221
     rdin.close
     file_copy("test.snd", "fmv.snd")
     delete_file("test.snd")
-    ["test.snd","fmv.snd"].apply(:mus_sound_forget)
+    ["test.snd", "fmv.snd"].apply(:mus_sound_forget)
   end
   diff = 0.0
   ctr = 0
@@ -37041,47 +37075,47 @@ def test0221
    [:scale_selection_by, lambda { select_all; scale_selection_by(2.0) }],
    [:mix, lambda { save_sound_as("temp.snd"); mix("temp.snd", 0); delete_file("temp.snd") }],
    [:sound_data, lambda {
-        sd = samples2sound_data
-        frames.times do |i| sd[0, i] *= 2.0 end
-        set_samples(0, frames, sd.to_vct)
-      }],
+      sd = samples2sound_data
+      frames.times do |i| sd[0, i] *= 2.0 end
+      set_samples(0, frames, sd.to_vct)
+    }],
    [:convolve, lambda {
-        flt = Vct.new(8)
-        flt[0] = 2.0
-        cnv = make_convolve(:filter, flt)
-        sf = make_sample_reader(0)
-        map_channel(lambda { |y| convolve(cnv, lambda { |dir| read_sample(sf) }) })
-      }],
+      flt = Vct.new(8)
+      flt[0] = 2.0
+      cnv = make_convolve(:filter, flt)
+      sf = make_sample_reader(0)
+      map_channel(lambda { |y| convolve(cnv, lambda { |dir| read_sample(sf) }) })
+    }],
    [:fft, lambda {
-        len = frames
-        fsize = 2 ** (log(len) / log(2)).ceil
-        rl = channel2vct(0, fsize)
-        im = Vct.new(fsize)
-        mus_fft(rl, im, fsize)
-        mus_fft(rl, im, fsize)
-        mus_fft(rl, im, fsize)
-        mus_fft(rl, im, fsize)
-        vct2channel(rl.scale(2.0 / (fsize * fsize)), 0, len)
-      }],
+      len = frames
+      fsize = 2 ** (log(len) / log(2)).ceil
+      rl = channel2vct(0, fsize)
+      im = Vct.new(fsize)
+      mus_fft(rl, im, fsize)
+      mus_fft(rl, im, fsize)
+      mus_fft(rl, im, fsize)
+      mus_fft(rl, im, fsize)
+      vct2channel(rl.scale(2.0 / (fsize * fsize)), 0, len)
+    }],
    [:set_samples, lambda {
-        set_squelch_update(true)
-        100.times do |i| set_sample(i, 2.0 * sample(i)) end
-        set_squelch_update(false)
-      }],
+      set_squelch_update(true)
+      100.times do |i| set_sample(i, 2.0 * sample(i)) end
+      set_squelch_update(false)
+    }],
    [:coroutines, lambda {
-        set_squelch_update(true)
-        make_scaler = lambda do |start, dur|
-          ctr = start
-          us = lambda do |them|
-            set_sample(ctr, 2.0 * sample(ctr))
-            ctr += 2
-            if ctr <= dur then them.call(us) end
-          end
-          us
+      set_squelch_update(true)
+      make_scaler = lambda do |start, dur|
+        ctr = start
+        us = lambda do |them|
+          set_sample(ctr, 2.0 * sample(ctr))
+          ctr += 2
+          if ctr <= dur then them.call(us) end
         end
-        make_scaler.call(0, 100).call(make_scaler.call(1, 100))
-        set_squelch_update(false)
-      }]].each do |name, func|
+        us
+      end
+      make_scaler.call(0, 100).call(make_scaler.call(1, 100))
+      set_squelch_update(false)
+    }]].each do |name, func|
     func.call
     if fneq(maxamp / mx, 2.0)
       if name != :set_samples and name != :coroutines
@@ -37096,8 +37130,8 @@ end
 def test21
   if $test21
     $before_test_hook.call(21)
-    #test0021
-    #test0121 if $all_args
+    test0021
+    test0121 if $all_args
     test0221
     $after_test_hook.call(21)
   end
@@ -37233,7 +37267,7 @@ def check_with_mix(num, dur, total_dur, amp, opts, calls, old_date, chkmx)
   if chkmx and fneq(res = maxamp(ind), amp)
     snd_display("with_mix (%d) maxamp: %s (%s)?", num, res, amp)
   end
-  unless File.exists?("with-mix.snd")
+  unless File.exist?("with-mix.snd")
     snd_display("with_mix (%d) output doesn\'t exist?", num)
   end
   mx = mus_sound_maxamp("with-mix.snd")
@@ -37327,7 +37361,7 @@ def test23_a
       7, 0.16, 8, 0.33, 9, 0.62, 10, 0.12, 12, 0.14, 14, 0.86, 16, 0.12, 23, 0.14, 24, 0.17]
     tenordr = [0.3, 0.04, 1, 0.81, 2, 0.27, 3, 0.2, 4, 0.21, 5, 0.18, 6, 0.35, 7, 0.03,
       8, 0.07, 9, 0.02, 10, 0.025, 11, 0.035]
-  
+    # 
     drone(0, 4, 115, 0.125, solid, bassdr2, 0.1, 0.5, 0.03, 45, 1, 0.01, 10)
     drone(0, 4, 229, 0.125, solid, tenordr, 0.1, 0.5, 0.03, 45, 1, 0.01, 11)
     drone(0, 4, 229.5, 0.125, solid, tenordr, 0.1, 0.5, 0.03, 45, 1, 0.01, 9)
@@ -37727,7 +37761,7 @@ def test0023
                })
   close_sound(ind)
   # 
-  if File.exists?("ii.rb")
+  if File.exist?("ii.rb")
     with_time("load(\"ii.rb\")") do load("ii.rb") end
     Snd.sounds.apply(:close_sound)
     delete_files("test.snd", "rest.reverb")
@@ -37764,7 +37798,7 @@ def test0023
   if (not sound?(ind)) or frames(ind) != (res = 100 + (mus_srate * 0.1).floor)
     snd_display("sound_let (2): %s %s?", frames(ind), res)
   end
-  if File.exists?("temp.snd") then snd_display("sound_let explicit output exists?") end
+  if File.exist?("temp.snd") then snd_display("sound_let explicit output exists?") end
   close_sound(ind)
 end
 
@@ -38007,27 +38041,27 @@ def test0223
   ind = open_sound("oboe.snd")
   with_sound(:output, "test1.snd") do fm_violin(0, 0.1, 440, 0.1) end
   set_samples(0, 2205, "test1.snd", ind, 0, false, "set_samples auto-delete test", 0, false, true)
-  unless File.exists?("test1.snd") then snd_display("oops: auto-delete test1.snd?") end
+  unless File.exist?("test1.snd") then snd_display("oops: auto-delete test1.snd?") end
   undo_edit(1, ind)
   with_sound(:output, "test2.snd") do fm_violin(0, 0.1, 440, 0.1) end
   insert_sound("test2.snd", 0, 0, ind, 0, false, true)
-  if File.exists?("test1.snd") then snd_display("auto-delete set_samples?") end
+  if File.exist?("test1.snd") then snd_display("auto-delete set_samples?") end
   undo_edit(1, ind)
   with_sound(:output, "test3.snd") do fm_violin(0, 0.1, 440, 0.1) end
   insert_samples(0, 2205, "test3.snd", ind, 0, false, true)
-  if File.exists?("test2.snd") then snd_display("auto-delete insert_sound?") end
+  if File.exist?("test2.snd") then snd_display("auto-delete insert_sound?") end
   undo_edit(1, ind)
   with_sound(:output, "test4.snd") do fm_violin(0, 0.1, 440, 0.1) end
   mix("test4.snd", 0, 0, ind, 0, false, true)
-  if File.exists?("test3.snd") then snd_display("auto-delete insert_samples?") end
+  if File.exist?("test3.snd") then snd_display("auto-delete insert_samples?") end
   undo_edit(1, ind)
   delete_sample(100, ind, 0)
-  if File.exists?("test4.snd") then snd_display("auto-delete mix?") end
+  if File.exist?("test4.snd") then snd_display("auto-delete mix?") end
   with_sound(:output, "test5.snd") do fm_violin(0, 0.1, 440, 0.1) end
   mix("test5.snd", 0, 0, ind, 0, true, true)
   revert_sound(ind)
   close_sound(ind)
-  if File.exists?("test5.snd") then snd_display("auto-delete mix (with-tag)?") end
+  if File.exist?("test5.snd") then snd_display("auto-delete mix (with-tag)?") end
   Snd.sounds.apply(:close_sound)
   # 
   if (res = optkey_1(1))     != 1   then snd_display("optkey_1: %s?", res) end
@@ -38132,7 +38166,7 @@ def test0223
     if (res = frames(ind)) != 88200
       snd_display("reverb+1 sec out in ws: %s?", res)
     end
-    if File.exists?("test.reverb")
+    if File.exist?("test.reverb")
       snd_display("perhaps reverb not deleted in ws?")
     end
     close_sound(ind)
@@ -38199,13 +38233,13 @@ def test0223
   # clm23.scm tests skipped
   #
   file = with_sound(:clipped, false, :data_format, Mus_bfloat, :header_type, Mus_next) do
-    fm_violin(0, 0.1, 440, 3.14159)
+    fm_violin(0, 0.1, 440, PI)
   end.output
   ind = find_sound(file)
-  if fneq(res = maxamp(ind), 3.14159) then snd_display("clipped false: %s?", res) end
+  if fneq(res = maxamp(ind), PI) then snd_display("clipped false: %s?", res) end
   close_sound(ind)
   file = with_sound(:clipped, true, :data_format, Mus_bfloat, :header_type, Mus_next) do
-    fm_violin(0, 0.1, 440, 3.14159)
+    fm_violin(0, 0.1, 440, PI)
   end.output
   ind = find_sound(file)
   if fneq(res = maxamp(ind), 1.0) then snd_display("clipped true: %s?", res) end
@@ -38214,7 +38248,7 @@ def test0223
                     :header_type, Mus_next,
                     :scaled_by, 0.1,
                     :clipped, false) do
-    fm_violin(0, 0.1, 440, 3.14159)
+    fm_violin(0, 0.1, 440, PI)
   end.output
   ind = find_sound(file)
   if fneq(res = maxamp(ind), 0.314159) then snd_display("scaled_by: %s?", res) end
@@ -38223,7 +38257,7 @@ def test0223
                     :header_type, Mus_next,
                     :scaled_to, 0.1,
                     :clipped, false) do
-    fm_violin(0, 0.1, 440, 3.14159)
+    fm_violin(0, 0.1, 440, PI)
   end.output
   ind = find_sound(file)
   if fneq(res = maxamp(ind), 0.1) then snd_display("scaled_to: %s?", res) end
@@ -39569,7 +39603,7 @@ def test0024
   key_event(minibuffer, Snd_return_key, 0)
   force_event
   save_macros("test-macros.rb")
-  unless File.exists?("test-macros.rb")
+  unless File.exist?("test-macros.rb")
     snd_display("save_macros didn\'t write file?")
   end
   if defined? test_save_macros and function?(:test_save_macros)
@@ -39629,7 +39663,7 @@ def test0024
   widget_string(minibuffer, "hiho.eps")
   key_event(minibuffer, Snd_return_key, 0)
   force_event
-  if File.exists?("hiho.eps")
+  if File.exist?("hiho.eps")
     delete_file("hiho.eps")
   else
     snd_display("C-x C-d no output?")
@@ -40252,7 +40286,7 @@ def test0124
     revert_sound(ind)
   end
   file_copy("oboe.snd", "fmv1.snd")
-  if File.exists?("fmv1.snd")
+  if File.exist?("fmv1.snd")
     if (res = mus_sound_frames("fmv1.snd")) != 50828
       snd_display("C-xw wrote wrong number of samples: %s?", res)
     end
@@ -40340,7 +40374,7 @@ def test0124
     end
   end
   close_sound(ind2)
-  if File.exists?("fmv1.snd")
+  if File.exist?("fmv1.snd")
     delete_file("fmv1.snd")
     mus_sound_forget("fmv1.snd")
   end
@@ -41059,9 +41093,9 @@ def test0224
   RXmTextSetString(filetext, "test.snd")
   click_button(ok)
   force_event
-  unless File.exists?("test.snd") then snd_display("file test.snd not saved?") end
+  unless File.exist?("test.snd") then snd_display("file test.snd not saved?") end
   if RXtIsManaged(saved) then snd_display("after save, file dialog still active?") end
-  if File.exists?("test.snd")
+  if File.exist?("test.snd")
     ind1 = open_sound("test.snd")
     if (res = header_type(ind1)) != header_type(ind)
       snd_display("save-as changed header type: %s?", mus_header_type_name(res))
@@ -41109,9 +41143,9 @@ def test0224
   RXmTextSetString(comtxt, "This is a test of the file save-as dialog")
   click_button(ok)
   force_event
-  unless File.exists?("test.snd") then snd_display("file (2) test.snd not saved?") end
+  unless File.exist?("test.snd") then snd_display("file (2) test.snd not saved?") end
   if RXtIsManaged(saved) then snd_display("after save (2), file dialog still active?") end
-  if File.exists?("test.snd")
+  if File.exist?("test.snd")
     ind1 = open_sound("test.snd")
     if (res = header_type(ind1)) != Mus_aifc
       snd_display("save-as Mus_aifc header type: %s?", mus_header_type_name(res))
@@ -41151,7 +41185,7 @@ def test0224
   click_button(cancel)
   force_event
   if RXtIsManaged(saved) then snd_display("after cancel, file dialog still active?") end
-  if File.exists?("test.snd") then snd_display("cancelled save-as wrote a file?") end
+  if File.exist?("test.snd") then snd_display("cancelled save-as wrote a file?") end
   close_sound(ind)
 end
 
@@ -41174,7 +41208,7 @@ def test0324
   RXmTextSetString(filetext, "test.snd")
   click_button(ok)
   force_event
-  unless File.exists?("test.snd") then snd_display("file test.snd not new?") end
+  unless File.exist?("test.snd") then snd_display("file test.snd not new?") end
   if RXtIsManaged(newdlog) then snd_display("after new, file dialog still active?") end
   ind = find_sound("test.snd")
   if sound?(ind)
@@ -41204,9 +41238,9 @@ def test0324
   RXmTextSetString(comtxt, "This is a test of the file new dialog")
   click_button(ok)
   force_event
-  unless File.exists?("test.snd") then snd_display("file 2 test.snd not newdlog?") end
+  unless File.exist?("test.snd") then snd_display("file 2 test.snd not newdlog?") end
   if RXtIsManaged(newdlog) then snd_display("after save, file dialog still active?") end
-  if File.exists?("test.snd")
+  if File.exist?("test.snd")
     ind1 = find_sound("test.snd")
     if (res = header_type(ind1)) != Mus_aifc then snd_display("new aifc header type: %s?", res) end
     if (res = data_format(ind1)) != Mus_mulaw then snd_display("new mulaw format: %s?", res) end
@@ -41224,7 +41258,7 @@ def test0324
   click_button(cancel)
   force_event
   if RXtIsManaged(newdlog) then snd_display("after cancel, file dialog still active?") end
-  if File.exists?("test.snd") then snd_display("cancelled new wrote a file?") end
+  if File.exist?("test.snd") then snd_display("cancelled new wrote a file?") end
   #
   # edit save-as dialog
   #
@@ -41246,9 +41280,9 @@ def test0324
   RXmTextSetString(filetext, "test.snd")
   click_button(ok)
   force_event
-  unless File.exists?("test.snd") then snd_display("edit test.snd not saved?") end
+  unless File.exist?("test.snd") then snd_display("edit test.snd not saved?") end
   if RXtIsManaged(saved) then snd_display("after save, edit dialog still active?") end
-  if File.exists?("test.snd")
+  if File.exist?("test.snd")
     ind1 = open_sound("test.snd")
     r1 = make_sample_reader(2000, ind, 0)
     ok = scan_channel(lambda do |x|
@@ -41271,7 +41305,7 @@ def test0324
     click_button(cancel)
     force_event
     if RXtIsManaged(saved) then snd_display("after cancel, edit save-as dialog still active?") end
-    if File.exists?("test.snd") then snd_display("cancelled edit save-as wrote a file?") end
+    if File.exist?("test.snd") then snd_display("cancelled edit save-as wrote a file?") end
   else
     snd_display("save_selection_dialog -> dialog_widgets[7]: %s", dialog_widgets[7])
   end
@@ -41820,7 +41854,7 @@ def test0324
   txt = find_child(printd, "text")
   RXmTextSetString(txt, "test.eps")
   click_button(RXmMessageBoxGetChild(printd, RXmDIALOG_OK_BUTTON))
-  if File.exists?("test.eps")
+  if File.exist?("test.eps")
     delete_file("test.eps")
   else
     snd_display("print -> test.eps?")
@@ -41897,14 +41931,14 @@ def test0324
   unbind_key(key_to_int(?1), 12, false)
   RXtCallCallbacks(save_button, RXmNactivateCallback, false)
   RXtUnmanageChild(prefs)
-  if File.exists?($home_dir + "/.snd_prefs_ruby")
+  if File.exist?($home_dir + "/.snd_prefs_ruby")
     load($home_dir + "/.snd_prefs_ruby")
   else
     snd_display("prefs not saved?")
   end
   preferences_dialog
   RXtCallCallbacks(reset_button, RXmNactivateCallback, false)
-  if File.exists?($home_dir + "/.snd_prefs_ruby")
+  if File.exist?($home_dir + "/.snd_prefs_ruby")
     snd_display("prefs not deleted?")
   end
   RXtCallCallbacks(help_button, RXmNactivateCallback, false)
@@ -42000,7 +42034,7 @@ def test0324
   RXmTextSetString(filetext, "test.snd")
   click_button(ok)
   force_event
-  unless File.exists?("test.nsd") then snd_display("region test.snd not saved?") end
+  unless File.exist?("test.nsd") then snd_display("region test.snd not saved?") end
   if RXtIsManaged(saved)
     snd_display("after save, region dialog still active?")
     RXtUnmanageChild(saved)
@@ -42135,7 +42169,8 @@ def check_error_tag(expected_tag, &thunk)
 end
 
 Procs =
-  [:add_mark, :add_sound_file_extension, :sound_file?, :add_to_main_menu, :add_to_menu,
+  [:add_mark, :add_sound_file_extension, :add_source_file_extension, :sound_file_extensions,
+   :sound_file?, :add_to_main_menu, :add_to_menu,
    :add_transform, :amp_control, :as_one_edit, :ask_before_overwrite, :audio_input_device,
    :audio_output_device, :auto_resize, :auto_update, :autocorrelate, :axis_info,
    :axis_label_font, :axis_numbers_font, :basic_color, :bind_key, :bomb, :c_g?, :apply_controls,
@@ -42197,7 +42232,8 @@ Procs =
    :recorder_autoload, :recorder_buffer_size, :recorder_dialog, :recorder_file, :recorder_gain,
    :recorder_in_amp, :recorder_in_data_format, :recorder_max_duration, :recorder_out_amp,
    :recorder_out_chans, :recorder_out_data_format, :recorder_out_header_type, :recorder_srate,
-   :recorder_trigger, :region_chans, :view_regions_dialog, :region_graph_style,
+   :recorder_trigger, :redo_edit, :region_chans, :view_regions_dialog, :region_home,
+   :region_graph_style,
    :region_frames, :region_position, :region_maxamp, :region_maxamp_position, :selection_maxamp,
    :selection_maxamp_position, :region_sample, :region2vct, :region_srate, :regions, :region?,
    :remove_from_menu, :report_in_minibuffer, :reset_controls, :restore_controls,
@@ -42241,8 +42277,10 @@ Procs =
    :mus_clipping, :mus_file_clipping, :mus_header_raw_defaults,
    :moving_average, :moving_average?, :make_moving_average, :mus_expand_filename,
    :make_sound_data, :sound_data_ref, :sound_data_set!, :sound_data_cale!, :sound_data_fill!,
-   :sound_data?, :sound_data_length, :sound_data_maxamp, :sound_data_chans,
-   :sound_data2vct, :vct2sound_data, :all_pass, :all_pass?, :amplitude_modulate, :array2file,
+   :sound_data?, :sound_data_length, :sound_data_multiply!, :sound_data_add!, :sound_data_offset!,
+   :sound_data_copy, :sound_data_reverse!, :sound_data_maxamp, :sound_data_chans,
+   :sound_data2vct, :vct2sound_data, :sound_data_peak, :all_pass, :all_pass?, :amplitude_modulate,
+   :array2file,
    :array_interp, :mus_interpolate, :asymmetric_fm, :asymmetric_fm?, :sound_data2sound_data,
    :clear_array, :comb, :comb?, :filtered_comb, :filtered_comb?, :contrast_enhancement,
    :convolution, :convolve, :convolve?,
@@ -42440,6 +42478,7 @@ else
 end
 $sound_data_23 = make_sound_data(2, 3)
 $a_hook = make_hook("test", 2)
+$a_sound = false
 
 def test0028
   procs1 = [:amp_control, :bomb, :apply_controls, :channels, :chans, :close_sound, :comment,
@@ -42525,8 +42564,7 @@ def test0028
   end
   [Array.new(1), "hiho", sqrt(-1.0), 1.5, [1, 0], [0, 1]].each do |arg1|
     [$vct_5, "hiho", sqrt(-1.0), 1.5, [1, 0], [0, 1]].each do |arg2|
-      [:vct_add!, :vct_subtract!, :vct_multiply!, :vct_ref,
-        :vct_scale!, :vct_fill!, :vct_map!].each do |n|
+      [:vct_add!, :vct_subtract!, :vct_multiply!, :vct_ref, :vct_scale!, :vct_fill!].each do |n|
         case tag = (res = Snd.catch do snd_func(n, arg1, arg2) end).first
         when :wrong_type_arg, :wrong_number_of_args, :mus_error
           nil
@@ -42537,8 +42575,7 @@ def test0028
     end
   end
   [Array.new(1), "hiho", sqrt(-1.0), [1, 0], [0, 1]].each do |arg|
-    [:vct_add!, :vct_subtract!, :vct_multiply!, :vct_ref,
-      :vct_scale!, :vct_fill!, :vct_map!].each do |n|
+    [:vct_add!, :vct_subtract!, :vct_multiply!, :vct_ref, :vct_scale!, :vct_fill!].each do |n|
       if (tag = Snd.catch do snd_func(n, $vct_3, arg) end).first != :wrong_type_arg
         snd_display("vct 2 :wrong_type_arg %s: %s %s", n, tag, arg)
       end
@@ -42886,19 +42923,19 @@ def test0128
   end
   close_sound(index)
   [$vct_5, [0, 1], sqrt(-1.0), "hiho", [0, 1]].each do |arg|
-    [:play_region, :region_chans, :region_frames, :region_position,
-      :region_maxamp, :region_maxamp_position, :region_sample, :region2vct,
-      :region_srate, :forget_region].each_with_index do |n, i|
+    [:play_region, :region_chans, :region_home, :region_frames, :region_position,
+     :region_maxamp, :region_maxamp_position, :region_sample, :region2vct,
+     :region_srate, :forget_region].each_with_index do |n, i|
       if (tag = Snd.catch do snd_func(n, arg) end).first != :wrong_type_arg
         snd_display("%d: region (1) procs %s: %s %s", i, n, tag, arg)
       end
     end
   end
-  [:play_region, :region_chans, :region_frames, :region_position,
-    :region_maxamp, :region_maxamp_position, :region_srate,
-    :forget_region].each_with_index do |n, i|
+  [:play_region, :region_chans, :region_home, :region_frames, :region_position,
+   :region_maxamp, :region_maxamp_position, :region_srate,
+   :forget_region].each_with_index do |n, i|
     if (tag = Snd.catch do snd_func(n, 1234) end).first != :no_such_region
-      snd_display("%d: region (2) procs %s: %s", i, n, tag)
+      snd_display("%d: (no) region (2) procs %s: %s", i, n, tag)
     end
   end
   [:enved_filter_order, :enved_filter, :filter_control_waveform_color,
@@ -43453,7 +43490,7 @@ def test0328
   #
   [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
     lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
-    ?c, 0.0, 1.0, -1.0, [], 4, 2, 8, 16, 32, 64, $vector_0, 2.0 ** 21.5, 2.0 ** -18.0,
+    ?c, 0.0, 1.0, -1.0, [], 4, 2, 8, 16, 32, 64, -64, $vector_0, 2.0 ** 21.5, 2.0 ** -18.0,
     $car_main, $cadr_main, 12345678901234567890, log0].each do |arg|
     Procs1.each do |n|
       if (tag = Snd.catch do snd_func(n, arg) end).first == :wrong_number_of_args
@@ -43468,11 +43505,11 @@ def test0328
   if $all_args
     args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
       lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true, ?c,
-      0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, $vector_0, 2.0 ** 21.5, 2.0 ** -18.0,
+      0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0, 2.0 ** 21.5, 2.0 ** -18.0,
       $car_main, $cadr_main, 12345678901234567890, log0]
   else
     args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, sqrt(-1.0), $delay_32, :feedback,
-      0, false, true, [], $vector_0, 12345678901234567890, log0]
+      0, 1, 64, -64, false, true, [], $vector_0, 12345678901234567890, log0]
   end
   args.each do |arg1|
     args.each do |arg2|
@@ -43489,13 +43526,13 @@ def test0328
   #
   if $all_args
     args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
-      ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, $vector_0, 2.0 ** 21.5, 2.0 ** -18.0,
-      $car_main, $cadr_main, 12345678901234567890, log0]
+            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+            ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0,
+            2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890, log0]
   else
     args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
-      [], $vector_0, 12345678901234567890, log0]
+            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
+            false, true, [], $vector_0, 12345678901234567890, log0]
   end
   args.each do |val|
     Set_procs0.each do |n|
@@ -43512,13 +43549,13 @@ def test0328
   #
   if $all_args
     args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
-      ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, $vector_0, 2.0 ** 21.5, 2.0 ** -18.0,
-      $car_main, $cadr_main, 12345678901234567890, log0]
+            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+            ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0,
+            2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890, log0]
   else
     args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
-      [], $vector_0, 12345678901234567890, log0]
+            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
+            false, true, [], $vector_0, 12345678901234567890, log0]
   end
   args.each do |arg1|
     args.each do |arg2|
@@ -43535,13 +43572,13 @@ def test0328
   #
   if $all_args
     args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
-      ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, $vector_0, 2.0 ** 21.5, 2.0 ** -18.0,
-      $car_main, $cadr_main, 12345678901234567890, log0]
+            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook,
+            false, true, ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0,
+            2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890, log0]
   else
     args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
-      [], $vector_0, 12345678901234567890, log0]
+            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
+            false, true, [], $vector_0, 12345678901234567890, log0]
   end
   args.each do |arg1|
     args.each do |arg2|
@@ -43562,8 +43599,8 @@ def test0328
     # 3 Args
     #
     args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
-      [], $vector_0, 12345678901234567890, log0]
+            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
+            false, true, [], $vector_0, 12345678901234567890, log0]
     args.each do |arg1|
       args.each do |arg2|
         args.each do |arg3|
@@ -43582,8 +43619,8 @@ def test0328
     # set 3 Args
     #
     args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
-      [], $vector_0, 12345678901234567890, log0]
+            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
+            false, true, [], $vector_0, 12345678901234567890, log0]
     args.each do |arg1|
       args.each do |arg2|
         args.each do |arg3|
@@ -43604,8 +43641,8 @@ def test0328
     # 4 Args
     #
     args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
-      [], $vector_0, 12345678901234567890, log0]
+            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
+            false, true, [], $vector_0, 12345678901234567890, log0]
     args.each do |arg1|
       args.each do |arg2|
         args.each do |arg3|
@@ -43626,8 +43663,8 @@ def test0328
     # set 4 Args
     #
     args = [1.5, "hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
-      [], $vector_0, 12345678901234567890, log0]
+            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
+            false, true, [], $vector_0, 12345678901234567890, log0]
     args.each do |arg1|
       args.each do |arg2|
         args.each do |arg3|
@@ -43651,7 +43688,8 @@ def test0328
     #
     # 5 Args
     #
-    args = [1.5, "hiho", 1234, $vct_3, sqrt(-1.0), 1, -1, false, true, 12345678901234567890, log0]
+    args = [1.5, "hiho", 1234, $vct_3, sqrt(-1.0), 1, -1, 64, -64,
+            false, true, 12345678901234567890, log0]
     args.each do |arg1|
       args.each do |arg2|
         args.each do |arg3|
@@ -43764,7 +43802,7 @@ def test0428
   set_window_y(10)
   dismiss_all_dialogs
   #
-  File.exists?("test.snd") and File.chmod(0644, "test.snd") and File.unlink("test.snd")
+  File.exist?("test.snd") and File.chmod(0644, "test.snd") and File.unlink("test.snd")
   file_copy("oboe.snd", "test.snd")
   ind = open_sound("test.snd")
   delete_file("test.snd")

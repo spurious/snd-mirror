@@ -59,6 +59,7 @@
 (if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))
 
 (define (load-font name)
+  "(load-font name) loads the font 'name', returning the font id"
   (let ((fs (XLoadQueryFont (XtDisplay (cadr (main-widgets))) name)))
     (and (XFontStruct? fs) (.fid fs))))
 
@@ -67,12 +68,20 @@
   (DefaultScreenOfDisplay 
     (XtDisplay (cadr (main-widgets)))))
 
-(define (white-pixel)  (WhitePixelOfScreen (current-screen)))
-(define (black-pixel)  (BlackPixelOfScreen (current-screen)))
-(define (screen-depth) (DefaultDepthOfScreen (current-screen)))
+(define (white-pixel)
+  "(white-pixel) returns a white pixel"
+  (WhitePixelOfScreen (current-screen)))
+
+(define (black-pixel)
+  "(black-pixel) returns a black pixel"
+  (BlackPixelOfScreen (current-screen)))
+
+(define (screen-depth)
+  "(screen-depth) returns the current screen depth"
+  (DefaultDepthOfScreen (current-screen)))
 
 (define (clean-string str)
-  ;; for peak env file names
+  "(clean-string str) changes slash to underbar in the filename 'str' (for the peak env file)"
   ;; full file name should be unique, so I think we need only fix it up to look like a flat name
   (let* ((len (string-length str))
 	 (new-str (make-string len #\.)))
@@ -88,7 +97,7 @@
 ;;; -------- apply func to every widget belonging to w (and w) --------
 
 (define+ (for-each-child w func)
-  "(for-each-child w func) applies func to w and each of its children"
+  "(for-each-child w func) applies func to w and its descendents"
   (func w)
   (if (XtIsComposite w)
       (for-each 
@@ -274,6 +283,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 ;;; change File:Open (or File:Mix) so that clicking "ok" does not "unmanage" the dialog
 
 (define (keep-file-dialog-open-upon-ok)
+  "(keep-file-dialog-open-upon-ok) changes the File:Open menu so that clicking 'ok' does not close the dialog"
   (let ((dialog (open-file-dialog #f)))
     (XtRemoveAllCallbacks dialog XmNokCallback) ; remove built-in version
     (XtAddCallback dialog XmNokCallback
@@ -289,7 +299,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
     'ok)) ; prettier in listener than printing out a callback procedure
 
 (define (use-pan-mix-in-mix-menu)
-  ;; use pan-mix rather than mix in the File:Mix menu
+  "(use-pan-mix-in-mix-menu) causes the File:Mix menu to use pan-mix rather than mix"
   (let ((dialog (mix-file-dialog #f)))
     (XtRemoveAllCallbacks dialog XmNokCallback) ; remove built-in version
     (XtAddCallback dialog XmNokCallback
@@ -372,21 +382,28 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 ;;; -------- add our own pane to the channel section --------
 
 (define* (add-channel-pane snd chn name type :optional (args '()))
+  "(add-channel-pane snd chn name type :optional (args '())) adds a pane to the channel section"
   (XtCreateManagedWidget name type (XtParent (XtParent (list-ref (channel-widgets snd chn) 7))) args))
+
 
 ;;; -------- add our own pane to the sound section (underneath the controls in this case) --------
 
 (define* (add-sound-pane snd name type :optional (args '()))
+  "(add-sound-pane snd name type :optional (args '())) adds a pane to the sound section (underneath the control panel)"
   (XtCreateManagedWidget name type (car (sound-widgets snd)) args))
+
 
 ;;; -------- add our own pane to the overall Snd window (underneath the listener in this case) --------
 
 (define* (add-main-pane name type :optional (args '()))
+  "(add-main-pane name type :optional (args '())) adds a pane to Snd (underneath the listener)"
   (XtCreateManagedWidget name type (or (list-ref (main-widgets) 5) (list-ref (main-widgets) 3)) args))
+
 
 ;;; -------- add a widget at the top of the listener
 
 (define (add-listener-pane name type args)
+  "(add-listener-pane name type args) adds a widget at the top of the listener"
   (let* ((listener (find-child (cadr (main-widgets)) "lisp-listener"))
 	 ;; this is the listener text widget, hopefully
 	 ;;   its parent is the scrolled window, its parent is the form widget filling the listener pane
@@ -413,6 +430,8 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 ;			XmNforeground (data-color)))
 
 (define (remove-menu-bar-menu which)
+  "(remove-menu-bar-menu which) removes a top-level menu; 'which' can be 0: top-level-menu-bar, 1: file-menu, \
+2: edit-menu, 3: view-menu, 4: options-menu, 5: help-menu, 6: default popup menu"
   (XtUnmanageChild (list-ref (menu-widgets) which)))
 
 #|
@@ -449,6 +468,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 ;;; -------- disable control panel --------
 
 (define (disable-control-panel snd)
+  "(disable-control-panel snd) disables the control panel for the sound 'snd'"
   (let ((swc (caddr (sound-widgets snd))))
     (for-each-child 
      swc 
@@ -467,6 +487,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 
 (if (not (defined? 'raise-dialog))
     (define (raise-dialog w)
+      "(raise-dialog w) tries to bring 'w' to the top of the widget heirarchy"
       (if (and (Widget? w) 
 	       (XtIsManaged w))
 	  (let ((parent (XtParent w)))
@@ -492,6 +513,7 @@ Reverb-feedback sets the scaler on the feedback.
 ")
 
 (define (make-hidden-controls-dialog)
+  
   (define (reset-all-sliders)
     (for-each
      (lambda (ctl)
@@ -499,6 +521,7 @@ Reverb-feedback sets the scaler on the feedback.
        (XtSetValues (car ctl) 
 		    (list XmNvalue (inexact->exact (floor (* (cadr ctl) 100))))))
      hidden-controls))
+
   (if (not (Widget? hidden-controls-dialog))
       (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
 	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
@@ -593,6 +616,7 @@ Reverb-feedback sets the scaler on the feedback.
 (define fmv-dialog #f)
 
 (define (create-fmv-dialog)
+  "(create-fmv-dialog) makes a dialog that runs the fm-violin instrument with various controls"
   (if (not (Widget? fmv-dialog))
       (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
 	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
@@ -786,6 +810,7 @@ Reverb-feedback sets the scaler on the feedback.
 "-------X----------"))
 
 (define (make-pixmap widget strs) ; strs is list of strings as in arrow-strs above
+  "(make-pixmap w strs) creates a pixmap using the X/Xpm string-based pixmap description"
   (if (defined? 'XpmAttributes)
       (let* ((attr (XpmAttributes))
 	     (symb (XpmColorSymbol "basiccolor" #f (basic-color)))
@@ -2571,7 +2596,7 @@ Reverb-feedback sets the scaler on the feedback.
 ;;; -------- add a function to be called when the window manager sends us a "save yourself" or "take focus" message
 
 (define (upon-save-yourself thunk)
-  ;; cause thunk to be called if a "save yourself" message is received
+  "(upon-save-yourself thunk) causes 'thunk' to be called if a 'save yourself' message is received"
   (XmAddWMProtocolCallback 
    (cadr (main-widgets))
    (XmInternAtom (XtDisplay (cadr (main-widgets))) "WM_SAVE_YOURSELF" #f)
@@ -2582,7 +2607,7 @@ Reverb-feedback sets the scaler on the feedback.
 ;;; similarly for "take focus"
 
 (define (upon-take-focus thunk)
-  ;; cause thunk to be called if a "take focus" message is received
+  "(upon-take-focus thunk) causes 'thunk' to be called if a 'take focus' message is received"
   (XmAddWMProtocolCallback 
    (cadr (main-widgets))
    (XmInternAtom (XtDisplay (cadr (main-widgets))) "WM_TAKE_FOCUS" #f)
@@ -2594,6 +2619,7 @@ Reverb-feedback sets the scaler on the feedback.
 ;;; -------- add text widget to notebook "status" area --------
 
 (define (add-text-to-status-area)
+  "(add-text-to-status-area) adds a text widget to the notebook status area"
   ;; it might be a better use of this space to put dlp's icon row in it
   (let ((notebook (list-ref (main-widgets) 3)))
     (if (XmIsNotebook notebook)

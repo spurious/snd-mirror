@@ -12956,6 +12956,40 @@ EDITS: 5
 (if (not (provided? 'snd-poly.scm)) (load "poly.scm"))
 (if (not (provided? 'snd-analog-filter.scm)) (if (defined? 'gsl-roots) (load "analog-filter.scm")))
 
+(define test-scanned-synthesis
+  ;; check out scanned-synthesis
+  (lambda (amp dur mass xspring damp)
+    (let* ((size 256)
+	   (x0 (make-vct size))	   
+	   (x1 (make-vct size))	   
+	   (x2 (make-vct size)))
+      (do ((i 0 (1+ i)))
+	  ((= i 12))
+	(let ((val (sin (/ (* 2 pi i) 12.0))))
+	  (vct-set! x1 (+ i (- (/ size 4) 6)) val)))
+      (let* ((gen1 (make-table-lookup 440.0 :wave x1))
+	     (gen2 (make-table-lookup 440.0 :wave x2))
+	     (recompute-samps 30) ;just a quick guess
+	     (data (make-vct dur)))
+	(do ((i 0 (1+ i))
+	     (k 0.0)
+	     (kincr (/ 1.0 recompute-samps)))
+	    ((or (c-g?) 
+		 (= i dur)))
+	  (if (>= k 1.0)
+	      (begin
+		(set! k 0.0)
+		(compute-uniform-circular-string size x0 x1 x2 mass xspring damp))
+	      (set! k (+ k kincr)))
+	  (let ((g1 (table-lookup gen1))
+		(g2 (table-lookup gen2)))
+	    (vct-set! data i (+ g2 (* k (- g1 g2))))))
+	(let ((curamp (vct-peak data)))
+	  (vct-scale! data (/ amp curamp)))
+	(vct->channel data 0 dur)))))
+
+;;; (test-scanned-synthesis .1 10000 1.0 0.1 0.0)
+
 (define (test-lpc)
   (define (make-sine n) 
     (let ((data (make-vct n 0.0))) 
@@ -65185,17 +65219,44 @@ EDITS: 1
 (if all-args 
     (system "cp memlog memlog.full"))
 
-(if (and #f
+(if (and #t
 	 (provided? 'snd-guile))
-    (module-for-each 
-     (lambda (sym var) 
-       (if (and (variable-bound? var) 
-		(procedure? (variable-ref var)) 
-		(not (procedure-documentation (variable-ref var)))
-		(not (procedure-property (variable-ref var) 'documentation)))
-	   (display (format #f "-------- ~A --------~%~A~%~%" sym (snd-help sym)))))
-     (current-module)))
+    (let ((total 0)
+	  (no-help 0)
+	  (help 0)
+	  (outside-help 0)
+	  (snd-test-help 0)
+	  (symbols '()))
+      (module-for-each 
+       (lambda (sym var) 
+	 (if (and (variable-bound? var) 
+		  (procedure? (variable-ref var)))
+	     (begin
+	       (set! total (1+ total))
+	       (if (and (not (procedure-documentation (variable-ref var)))
+			(not (procedure-property (variable-ref var) 'documentation)))
+		   (let ((its-help (snd-help sym)))
+		     (if its-help
+			 (set! outside-help (1+ outside-help))
+			 (set! no-help (1+ no-help)))
+		     (if (or (not its-help)
+			     (and (not (string-contains its-help "snd-test.scm"))
+				  (not (string-contains its-help "definstrument"))))
+			 (set! symbols (cons (list sym its-help) symbols))
+			 (set! snd-test-help (1+ snd-test-help))))
+		   (set! help (1+ help))))))
+       (current-module))
+      (snd-display (format #f "total: ~D, help: ~D, no-help: ~D, found help: ~D (~D in snd-test, ~D instruments)" 
+			   total help no-help outside-help 242 (- snd-test-help 242)))
+      (for-each
+       (lambda (lst)
+	 (snd-display "-------- ~A --------~%~A~%" (car lst) (cadr lst)))
+       (sort symbols (lambda (a b)
+		       (string< (symbol->string (car a)) 
+				(symbol->string (car b))))))))
 
 (if with-exit (exit))
 
 ;;; ---------------- test the end
+
+

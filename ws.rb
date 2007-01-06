@@ -397,7 +397,7 @@ require "hooks"
 def clm_player(s)
   if provided?(:snd) and sound?(s)
     play_and_wait(0, s)
-  elsif string?(s) and File.exists?(s)
+  elsif string?(s) and File.exist?(s)
     system("sndplay #{s}")
   else
     Snd.raise(:no_such_sound, s, "need a sound index or a file name")
@@ -571,7 +571,7 @@ with_reverb(:jl_reverb, 0.2)")
   
   add_help(:clm_load, "clm_load(rbm_file, *with_sound_args)\n" + ws_doc)
   def clm_load(rbm_file, *args)
-    assert_type(File.exists?(rbm_file), rbm_file, 1, "an existing file")
+    assert_type(File.exist?(rbm_file), rbm_file, 1, "an existing file")
     with_sound(*args) do
       if @verbose then Snd.message("Loading %s", rbm_file.inspect) end
       eval(File.open(rbm_file).read, nil, format("(clm_load %s)", rbm_file), 1)
@@ -871,12 +871,12 @@ installs the @with_sound_note_hook and prints the line
     assert_type(string?(fname), fname, 0, "a string (filename)")
     out_file = fname + ".snd"
     rbm_file = fname + ".rbm"
-    snd_time = if File.exists?(out_file)
+    snd_time = if File.exist?(out_file)
                  File.mtime(out_file)
                else
                  :load
                end
-    old_body = if File.exists?(rbm_file)
+    old_body = if File.exist?(rbm_file)
                  File.open(rbm_file).read
                else
                  ""

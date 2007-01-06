@@ -67,6 +67,7 @@
 ;;;   it does the DFT by hand, and is independent of anything from Snd (fft, vcts etc)
 
 (define (dolph-1 N gamma)
+  "(dolph-1 n gamma) produces a Dolph-Chebyshev FFT data window of 'n' points using 'gamma' as the window parameter."
   (let* ((alpha (cosh (/ (acosh (expt 10.0 gamma)) N)))
 	 (den (/ 1.0 (cosh (* N (acosh alpha)))))
 	 (freq (/ pi N))
@@ -127,6 +128,8 @@
       (vct->channel rl2 0 (* n len) snd chn #f (format #f "down-oct ~A" n)))))
 
 (define* (stretch-sound-via-dft factor :optional snd chn)
+  "(stretch-sound-via-dft factor :optional snd chn) makes the given channel longer ('factor' should be > 1.0) by \
+squeezing in the frequency domain, then using the inverse DFT to get the time domain result."
   ;; this is very slow! factor>1.0
   (let* ((n (frames snd chn))
 	 (n2 (inexact->exact (floor (/ n 2.0))))
@@ -140,7 +143,7 @@
       ;; DFT + split
       (if (< i n2)
 	  (vector-set! fr i (edot-product (* freq 0.0-1.0i i) in-data))
-	  (vector-set! fr (+ i (- out-n n 1))  (edot-product (* freq 0.0-1.0i i) in-data))))
+	  (vector-set! fr (+ i (- out-n n 1)) (edot-product (* freq 0.0-1.0i i) in-data))))
     (set! freq (/ (* 2 pi) out-n))
     (do ((i 0 (1+ i)))
 	((or (c-g?) (= i out-n)))
@@ -181,55 +184,6 @@
       (vct-add! x2 x1)
       (vct-fill! x1 0.0)
       (vct-add! x1 x0))))
-
-(define testunif
-  (lambda (mass xspring damp)
-    (let* ((size 128)
-	   (x0 (make-vct size))	   
-	   (x1 (make-vct size))	   
-	   (x2 (make-vct size)))
-      (do ((i 0 (1+ i)))
-	  ((= i 12))
-	(let ((val (sin (/ (* 2 pi i) 12.0))))
-	  (vct-set! x1 (+ i (- (/ size 4) 6)) val)))
-      (do ((i 0 (1+ i)))
-	  ((or (c-g?) (= i 1024)))
-	(compute-uniform-circular-string size x0 x1 x2 mass xspring damp)
-	(graph x0 "string" 0 1.0 -10.0 10.0)))))
-
-(define test-scanned-synthesis
-  ;; check out scanned-synthesis
-  (lambda (amp dur mass xspring damp)
-    (let* ((size 256)
-	   (x0 (make-vct size))	   
-	   (x1 (make-vct size))	   
-	   (x2 (make-vct size)))
-      (do ((i 0 (1+ i)))
-	  ((= i 12))
-	(let ((val (sin (/ (* 2 pi i) 12.0))))
-	  (vct-set! x1 (+ i (- (/ size 4) 6)) val)))
-      (let* ((gen1 (make-table-lookup 440.0 :wave x1))
-	     (gen2 (make-table-lookup 440.0 :wave x2))
-	     (recompute-samps 30) ;just a quick guess
-	     (data (make-vct dur)))
-	(do ((i 0 (1+ i))
-	     (k 0.0)
-	     (kincr (/ 1.0 recompute-samps)))
-	    ((or (c-g?) 
-		 (= i dur)))
-	  (if (>= k 1.0)
-	      (begin
-		(set! k 0.0)
-		(compute-uniform-circular-string size x0 x1 x2 mass xspring damp))
-	      (set! k (+ k kincr)))
-	  (let ((g1 (table-lookup gen1))
-		(g2 (table-lookup gen2)))
-	    (vct-set! data i (+ g2 (* k (- g1 g2))))))
-	(let ((curamp (vct-peak data)))
-	  (vct-scale! data (/ amp curamp)))
-	(vct->channel data 0 dur)))))
-
-;;; (test-scanned-synthesis .1 10000 1.0 0.1 0.0)
 
 (define compute-string
   ;; this is the more general form
@@ -535,6 +489,7 @@
 ;;; from Andrews, Askey, Roy "Special Functions" 5.1.16
 
 (define (cosine-summation gen r)
+  "(cosine-summation gen r) is a variant of the CLM sine-summation generator; 'r' controls successive sinusoid amplitudes"
   ;; this could obviously be radically optimized
   (* (- (/ (- 1.0 (* r r))
 	   (- (+ 1.0 (* r r))
@@ -557,6 +512,7 @@
 ;;;   of the nth cos involves hypergeometric series (looks like r^n/n! (~=e^n?) with a million other terms).
 
 (define (kosine-summation gen r k)
+  "(kosine-summation gen r k) is a variant of sum-of-cosines; 'r' controls successive sinusoid amplitude; 'k' controls how many sinusoids are produced"
   (* (expt (- (+ 1.0 (* r r))
 	      (* 2 r (oscil gen)))
 	   (- k))
@@ -572,6 +528,7 @@
 ;;; -------- legendre, fejer
 
 (define (fejer-sum angle n)
+  "(fejer-sum angle n) produces a band-limited pulse train"
   ;; from "Trigonometric Series" Zygmund p88
   (if (= angle 0.0)
       1.0
@@ -582,6 +539,7 @@
 
 
 (define (legendre-sum angle n)
+  "(legendre-sum angle n) produces a band-limited pulse train"
   ;; from Andrews, Askey, Roy "Special Functions" p 314
   (if (= angle 0.0)
       1.0                ; 0.0 / 0.0 ?
@@ -595,6 +553,7 @@
 ;;; from "Trigonometric Delights" by Eli Maor
 
 (define (sum-of-n-sines angle n)
+  "(sum-of-n-sines angle n) produces the sum of 'n' sines"
   (let* ((a2 (* angle 0.5))
 	 (den (sin a2)))
     (if (= den 0.0)
@@ -612,6 +571,7 @@
 ;(let ((angle 0.0)) (map-channel (lambda (y) (let ((val (sum-of-n-sines angle 3))) (set! angle (+ angle .1)) (* .1 val)))))
 
 (define (sum-of-n-odd-sines angle n)
+  "(sum-of-n-odd-sines angle n) produces the sum of 'n' odd-numbered sines"
   (let ((den (sin angle))
 	(na (sin (* n angle))))
     (if (= den 0.0)
@@ -619,6 +579,7 @@
 	(/ (* na na) den))))
 
 (define (sum-of-n-odd-cosines angle n)
+  "(sum-of-n-odd-cosines angle n) produces the sum of 'n' odd-numbered cosines"
   (let ((den (* 2 (sin angle))))
     (if (= den 0.0)
 	(exact->inexact n) ; just guessing -- floatification is for the run macro
@@ -635,7 +596,8 @@
 
 ;;; and another...
 (define (band-limited-sawtooth x a N fi)
-  ;; x = current phase, a = amp (more or less), N = 1..10 or thereabouts, fi = phase increment
+  "(band-limited-sawtooth x a N fi) produces a band-limited sawtooth; 'x' is the current phase, 'a' is \
+the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase increment"
   ;;   Alexander Kritov suggests time-varying "a" is good (this is a translation of his code)
   ;;   from Stilson/Smith apparently -- was named "Discrete Summation Formula" which doesn't convey anything to me
   (let ((s4 (+ 1.0 (* -2.0 a (cos x)) (* a a))))
@@ -651,7 +613,8 @@
 
 ;;; square-wave in the same mold
 
-(define (band-limited-square-wave theta n) ; n sets how squared-off it is, theta is instantaneous phase
+(define (band-limited-square-wave theta n)
+  "(band-limited-square-wave theta n) produces a square-wave; 'n' sets how squared-off it is, 'theta' is instantaneous phase"
   (tanh (* n (sin theta))))
 
 ;;; (let ((angle 0.0)) (map-channel (lambda (y) (let ((val (band-limited-square-wave angle 10))) (set! angle (+ angle .2)) val))))
@@ -669,7 +632,7 @@
 		 0 #f snd chn #f (format #f "brighten-slightly ~A" amount))))
 
 (define (brighten-slightly-1 coeffs)
-  ;; another version: (brighten-slightly-1 '(1 .5 3 1))
+  "(brighten-slightly-1 coeffs) is a form of contrast-enhancement: (brighten-slightly-1 '(1 .5 3 1))"
   (let ((pcoeffs (partials->polynomial coeffs))
 	(mx (maxamp)))
     (map-channel
@@ -738,6 +701,7 @@
     (make-fir-filter arrlen arr)))
 
 (define (hilbert-transform f in)
+  "(hilbert-transform f in) is the generator corresponding to make-hilbert-transform"
   (fir-filter f in))
 
 #|
@@ -801,6 +765,7 @@
     (make-fir-filter arrlen arr)))
 
 (define (highpass f in)
+  "(highpass f in) is the generator corresponding to make-highpass"
   (fir-filter f in))
 
 #|
@@ -828,6 +793,7 @@
     (make-fir-filter arrlen arr)))
 
 (define (lowpass f in)
+  "(lowpass f in) is the generator corresponding to make-lowpass"
   (fir-filter f in))
 
 #|
@@ -854,6 +820,7 @@
     (make-fir-filter arrlen arr)))
 
 (define (bandpass f in)
+  "(bandpass f in) is the generator corresponding to make-bandpass"
   (fir-filter f in))
 
 #|
@@ -895,6 +862,7 @@
     (make-fir-filter arrlen arr)))
 
 (define (bandstop f in)
+  "(bandstop f in) is the generator corresponding to make-bandstop"
   (fir-filter f in))
 
 #|
@@ -919,6 +887,7 @@
     (make-fir-filter arrlen arr)))
 
 (define (differentiator f in)
+  "(differentiator f in) is the generator corresponding to make-differentiator"
   (fir-filter f in))
 
 #|
@@ -1475,12 +1444,14 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; these are from "Mathematics of the DFT", W3K Pubs
 
 (define* (channel-mean :optional snd chn)
+  "(channel-mean :optional snd chn) returns the average of the samples in the given channel"
   (let ((sum 0.0)
 	(N (frames snd chn)))
     (scan-channel (lambda (y) (set! sum (+ sum y)) #f) 0 N snd chn)
     (/ sum N)))
 
 (define* (channel-total-energy :optional snd chn)
+  "(channel-total-energy :optional snd chn) returns the sum of the squares of all the samples in the given channel"
   (let ((sum 0.0))
     (scan-channel (lambda (y) (set! sum (+ sum (* y y))) #f) 0 (frames snd chn) snd chn)
     sum))

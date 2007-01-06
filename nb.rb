@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Dec 10 22:08:15 CET 2002
-# Changed: Tue Aug 08 00:12:07 CEST 2006
+# Changed: Mon Dec 11 05:02:23 CET 2006
 
 # Commentary:
 #
@@ -120,7 +120,7 @@ class NB
   end
   
   def name=(filename)
-    if filename and File.exists?(File.expand_path(filename))
+    if filename and File.exist?(File.expand_path(filename))
       @name = filename
       show_popup_info
     else
@@ -164,7 +164,7 @@ class NB
   end
   
   def unb
-    if @name and File.exists?(File.expand_path(@name))
+    if @name and File.exist?(File.expand_path(@name))
       with_dbm do |db|
         db.delete(@name)
       end
@@ -183,7 +183,7 @@ class NB
   end
 
   def nb
-    if @name and File.exists?(File.expand_path(@name))
+    if @name and File.exist?(File.expand_path(@name))
       with_dbm do |db|
         db[@name] = @notes
       end
@@ -224,7 +224,7 @@ class NB
     h_type = mus_header_type_name(mus_sound_header_type(@name))
     frms = mus_sound_frames(@name)
     max_amp = ""
-    if mus_sound_maxamp_exists?(@name)
+    if mus_sound_maxamp_exist?(@name)
       str = ""
       mus_sound_maxamp(@name).each_pair do |s, v|
         str << format("%1.3f (%1.3fs), ", v, s / sr.to_f)
@@ -335,7 +335,7 @@ the $nb_database entries of SND will be returned.")
   protected
   def post_edit
     if !@name and RWidget?(@message_widget)
-      @name = if File.exists?(file = current_label(@message_widget).split[0])
+      @name = if File.exist?(file = current_label(@message_widget).split[0])
                 file
               else
                 format("no such file: %s", file.inspect)
@@ -390,7 +390,7 @@ o Submit:    submits info from edit widget
 
   def post_popup?
     $mouse_enter_label_hook.member?(@db_hook_name) and
-      File.exists?(current_label(@message_widget).split[0])
+      File.exist?(current_label(@message_widget).split[0])
   end
 
   private

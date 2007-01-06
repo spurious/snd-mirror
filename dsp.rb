@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Wed Nov 29 22:13:52 CET 2006
+# Changed: Mon Dec 11 04:59:58 CET 2006
 
 # Commentary:
 #
@@ -1818,7 +1818,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
            [:db_floor, -40.0],
            [:rfreq, 100.0],
            [:fftsize, 4096])
-    assert_type(File.exists?(file), file, 0, "an existing file")
+    assert_type(File.exist?(file), file, 0, "an existing file")
     fsr = mus_sound_srate(file)
     incrsamps = (fsr / rfreq).floor
     start = (beg * fsr).floor

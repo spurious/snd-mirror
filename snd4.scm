@@ -195,6 +195,7 @@
     data))
 
 (define (syncd-sounds val)
+  "(syncd-sounds val) returns how many sounds share the sync value 'val'"
   (let ((ctr 0))
     (for-each 
      (lambda (n)

@@ -2661,7 +2661,22 @@ These functions implement
 scanned synthesis of Bill Verplank and Max Mathews.
 To watch the wave, open some sound (so Snd has some place to put the graph), turn off
 the time domain display (to give our graph all the window)
-then <code>(testunif 1.0 0.1 0.0)</code>.  There's also a dialog to experiment with this:
+then
+<pre>
+    (let* ((size 128)
+	   (x0 (make-vct size))	   
+	   (x1 (make-vct size))	   
+	   (x2 (make-vct size)))
+      (do ((i 0 (1+ i)))
+	  ((= i 12))
+	(let ((val (sin (/ (* 2 pi i) 12.0))))
+	  (vct-set! x1 (+ i (- (/ size 4) 6)) val)))
+      (do ((i 0 (1+ i)))
+	  ((or (c-g?) (= i 1024)))
+	(<em class=red>compute-uniform-circular-string</em> size x0 x1 x2 1.0 0.1 0.0)
+	(graph x0 "string" 0 1.0 -10.0 10.0)))
+</pre>
+There's also a dialog to experiment with this:
 <a href="#displayscannedsynthesis">display-scanned-synthesis</a> in snd-motif.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 

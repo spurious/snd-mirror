@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Changed: Sun Dec 03 17:09:30 CET 2006
+# Changed: Mon Dec 11 05:02:03 CET 2006
 
 # Commentary:
 #
@@ -110,7 +110,7 @@ and deleted when the mix is no longer accessible.")
     index = Snd.snd(snd)
     old_with_mix_tags = with_mix_tags
     Snd.raise(:no_such_sound, snd) unless sound?(index)
-    Snd.raise(:no_such_file, name) unless File.exists?(name)
+    Snd.raise(:no_such_file, name) unless File.exist?(name)
     new_mix = nil
     begin
       set_with_mix_tags(true)

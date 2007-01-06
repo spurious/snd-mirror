@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Sep 16 01:27:09 CEST 2003
-# Changed: Sat Dec 02 00:08:42 CET 2006
+# Changed: Mon Dec 11 04:59:30 CET 2006
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
@@ -1801,7 +1801,7 @@ end
 
 # SCRATCH
 def scratch(start, file, src_ratio, turntable)
-  assert_type(File.exists?(file), file, 1, "an existing file")
+  assert_type(File.exist?(file), file, 1, "an existing file")
   f = make_file2sample(file)
   turn_i = 1
   turns = turntable.length
@@ -1851,7 +1851,7 @@ end
 #
 # spectral modeling (SMS)
 def pins(start, dur, file, amp, *args)
-  assert_type(File.exists?(file), file, 2, "an existing file")
+  assert_type(File.exist?(file), file, 2, "an existing file")
   transposition, time_scaler, fftsize, highest_bin, max_peaks, attack = nil
   optkey(args, binding,
          [:transposition, 1.0], # this can be used to transpose the sound
@@ -2142,7 +2142,7 @@ end
 # shape, segment length, hop length, and input file resampling rate
 def exp_snd(file, start, dur, amp,
             exp_amt = 1.0, ramp = 0.4, seglen = 0.15, sr = 1.0, hop = 0.05, ampenv = nil)
-  assert_type(File.exists?(file), file, 0, "an existing file")
+  assert_type(File.exist?(file), file, 0, "an existing file")
   f0 = make_ws_reader(file, :start, 0)
   expenv = make_env(:envelope, (exp_amt.kind_of?(Array) ? exp_amt : [0, exp_amt, 1, exp_amt]),
                     :duration, dur)
@@ -2251,8 +2251,8 @@ Grn = Struct.new("Grn",
                  :loc, :segctr, :whichseg, :ramplen, :steadylen, :trigger)
 
 def expfil(start, dur, hopsecs, rampsecs, steadysecs, file1, file2)
-  assert_type(File.exists?(file1), file1, 5, "an existing file")
-  assert_type(File.exists?(file2), file2, 6, "an existing file")
+  assert_type(File.exist?(file1), file1, 5, "an existing file")
+  assert_type(File.exist?(file2), file2, 6, "an existing file")
   fil1 = make_file2sample(file1)
   fil2 = make_file2sample(file2)
   hop = seconds2samples(hopsecs)
@@ -2381,7 +2381,7 @@ nil doesnt print anything, which will speed up a bit the process.
 =end
 #
 def graph_eq(file, *args)
-  assert_type(File.exists?(file), file, 0, "an existing file")
+  assert_type(File.exist?(file), file, 0, "an existing file")
   start, dur, or_beg, amp, amp_env, amp_base, offset_gain = nil
   gain_freq_list, filt_gain_scale, filt_gain_base, a1, stats = nil
   optkey(args, binding,
@@ -2450,7 +2450,7 @@ end
 # noise
 # this is based on Perry Cook's Scrubber.m
 def anoi(infile, start, dur, fftsize = 128, amp_scaler = 1.0, r = TWO_PI)
-  assert_type(File.exists?(infile), infile, 0, "an existing file")
+  assert_type(File.exist?(infile), infile, 0, "an existing file")
   freq_inc = (fftsize / 2).floor
   fdi = make_vct(fftsize)
   fdr = make_vct(fftsize)
@@ -2531,7 +2531,7 @@ def fullmix(in_file,
             matrix = nil,
             srate = nil,
             reverb_amount = 0.05)
-  assert_type(File.exists?(in_file), in_file, 0, "an existing file")
+  assert_type(File.exist?(in_file), in_file, 0, "an existing file")
   dur = Float((outdur or (ws_duration(in_file) / Float((srate or 1.0)).abs)))
   in_chans = ws_channels(in_file)
   inloc = (Float(inbeg) * ws_srate(in_file)).round
@@ -2817,7 +2817,7 @@ Grani_to_grain_random      = 4
 Grani_to_grain_allchans    = 5
 
 def grani(start, dur, amp, file, *args)
-  assert_type(File.exists?(file), file, 3, "an existing file")
+  assert_type(File.exist?(file), file, 3, "an existing file")
   input_channel, grain_degree_spread = nil
   grains, amp_envelope, grain_envelope, grain_envelope_end, grain_envelope_transition = nil
   grain_envelope_array_size, grain_duration, grain_duration_spread, grain_duration_limit = nil

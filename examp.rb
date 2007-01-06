@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Sun Dec 03 15:50:08 CET 2006
+# Changed: Sun Dec 31 00:39:24 CET 2006
 
 # Commentary:
 #
@@ -157,7 +157,6 @@
 #  each_with_index(chn)
 #  map(chn)
 #  map!(chn)
-#  peak
 #
 # mus_a0(gen)
 # set_mus_a0(gen, val)
@@ -1533,10 +1532,6 @@ class SoundData
     self.size / self.chans
   end
 
-  def scale!(scl)
-    sound_data_scale!(self, scl)
-  end
-
   def fill!(val)
     sound_data_fill!(self, val)
   end
@@ -1583,10 +1578,6 @@ class SoundData
       end
     end
     self
-  end
-
-  def peak
-    sound_data_maxamp(self).to_vct.peak
   end
 end
 
@@ -1940,7 +1931,7 @@ lambda do |x| p x end.to_method(\"bar\"); bar(\"text2\") ==> \"text2\"")
         warning("%s#%s: no file found for procedure %s", self.class, get_func_name, self.inspect)
       end
       body = ""
-    elsif (not File.exists?(file))
+    elsif (not File.exist?(file))
       if $VERBOSE
         warning("%s#%s: Sorry, you need a higher ruby version to use Proc#to_str.
 It works only with newer ruby versions (I assume >= 1.8.x).
@@ -2491,13 +2482,13 @@ class Snd
     end
 
     def fullname(fname)
-      if File.exists?(fname)
+      if File.exist?(fname)
         fname
       else
         f = File.basename(fname)
         callcc do |brk|
           Snd_path.each do |path|
-            File.exists?(path + "/" + f) and brk.call(path + "/" + f)
+            File.exist?(path + "/" + f) and brk.call(path + "/" + f)
           end
           Snd.raise(:no_such_file, fname)
         end
@@ -3044,9 +3035,9 @@ add_help(:load_init_file,
 Returns false if file doesn't exist, otherwise loads it. \
 File may reside in current working dir or in $HOME dir.")
 def load_init_file(file)
-  if File.exists?(file)
+  if File.exist?(file)
     Snd.catch do load(file) end
-  elsif File.exists?(f = ENV["HOME"] + "/" + file)
+  elsif File.exist?(f = ENV["HOME"] + "/" + file)
     Snd.catch do load(f) end
   else
     false
@@ -3380,7 +3371,7 @@ end")
     end
     if flag
       aufile = filename + ".au"
-      File.unlink(aufile) if File.exists?(aufile)
+      File.unlink(aufile) if File.exist?(aufile)
       system(format("ogg123 -d au -f %s %s", aufile, filename))
       aufile
     else
@@ -3403,7 +3394,7 @@ end")
 
   def read_speex(filename)
     wavfile = filename + ".wav"
-    File.unlink(wavfile) if File.exists?(wavfile)
+    File.unlink(wavfile) if File.exist?(wavfile)
     system(format("speexdec %s %s", filename, wavfile))
     wavfile
   end

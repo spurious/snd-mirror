@@ -20,9 +20,12 @@
 (define filter-control-env filter-control-envelope)
 (define filter-waveform-color filter-control-waveform-color)
 
-(define (change-window-property w a v) (set! (window-property w a) v))
+(define (change-window-property w a v)
+  "obsolete way to set a window-property"
+  (set! (window-property w a) v))
 
 (define (recolor-widget w col)
+  "(recolor-widget w color) tries to redraw the widget 'w' in the given color"
   (if (and (provided? 'xm)
 	   (provided? 'snd-motif))
       (XmChangeColor w col)
@@ -40,6 +43,7 @@
 
 
 (define (back-or-forth-graph count)
+  "(back-or-forth-graph count) moves up or down in the channel list by 'count'"
   (let ((curpos 0)
 	(cursnd (or (selected-sound) (car (sounds))))
 	(curchn (or (selected-channel) 0)))
@@ -68,13 +72,16 @@
 	(list (selected-sound) (selected-channel))))))
 
 (define* (forward-graph :optional (count 1))
+  "(forward-graph :optional (count 1) moves forward 'count' channel graphs"
   (back-or-forth-graph count))
 
 (define* (backward-graph :optional (count 1))
+  "(backward-graph :optional (count 1) moves backward 'count' channel graphs"
   (back-or-forth-graph (- count)))
 
 
 (define (back-or-forth-mix count snd chn)
+  "(back-or-forth-mix count snd chn) moves the cursor 'count' mixes"
   (if (not (= count 0))
       (let ((mx (mixes snd chn)))
 	(if (not (null? mx))
@@ -105,13 +112,16 @@
       #f))
 		
 (define* (forward-mix :optional (count 1) snd chn)
+  "(forward-mix :optional (count 1) snd chn) moves the cursor forward 'count' mixes in the given channel"
   (back-or-forth-mix count (or snd (selected-sound) (car (sounds))) (or chn (selected-channel) 0)))
 
 (define* (backward-mix :optional (count 1) snd chn)
+  "(backward-mix :optional (count 1) snd chn) moves the cursor backward 'count' mixes in the given channel"
   (back-or-forth-mix (- count) (or snd (selected-sound) (car (sounds))) (or chn (selected-channel) 0)))
 
 
 (define (back-or-forth-mark count snd chn)
+  "(back-or-forth-mark count snd chn) moves the cursor 'count' marks"
   (if (not (= count 0))
       (let ((mx (marks snd chn)))
 	(if (not (null? mx))
@@ -142,9 +152,11 @@
       #f))
 		
 (define* (forward-mark :optional (count 1) snd chn)
+  "(forward-mark :optional (count 1) snd chn) moves the cursor forward 'count' marks in the given channel"
   (back-or-forth-mark count (or snd (selected-sound) (car (sounds))) (or chn (selected-channel) 0)))
 
 (define* (backward-mark :optional (count 1) snd chn)
+  "(backward-mark :optional (count 1) snd chn) moves the cursor backward 'count' marks in the given channel"
   (back-or-forth-mark (- count) (or snd (selected-sound) (car (sounds))) (or chn (selected-channel) 0)))
 
 (define mus-data-format-bytes-per-sample mus-bytes-per-sample)
@@ -231,6 +243,7 @@
 
 
 (define (vct-convolve! r1 r2)
+  "(vct-convolve! r1 r2) is a wrapper for convolution"
   (convolution r1 r2 (vct-length r1)))
 
 (define* (old-map-chan func :optional start end edname snd chn edpos)
@@ -244,6 +257,7 @@
 	    start end edname snd chn edpos))
 
 (define* (old-map-channel func :optional beg dur snd chn edpos edname)
+  "(old-map-channel func :optional beg dur snd chn edpos edname) is a wrapper for map-channel that accepts vector return values"
   (map-channel (lambda (y)
 		 (let ((val (func y)))
 		   (if (vector? val)
@@ -254,6 +268,7 @@
 	       beg dur snd chn edpos edname))
 
 (define* (mus-bank gens amps1 :optional in1 in2)
+  "(mus-bank gens amps1 :optional in1 in2) sums a vector of CLM generators ('gens') multiplied by 'amps' (a vct)"
   (let ((len (vector-length gens))
 	(sum 0.0)
 	(amps (if (vector? amps1) (vector->vct amps1) amps1))
@@ -268,6 +283,7 @@
     sum))
 
 (define* (oscil-bank amps1 gens :optional in1 in2)
+  "(oscil-bank amps1 gens :optional in1 in2) sums a vector of oscils"
   (let ((len (vector-length gens))
 	(sum 0.0)
 	(amps (if (vector? amps1) (vector->vct amps1) amps1))
@@ -282,12 +298,15 @@
     sum))
 
 (define* (old-formant-bank amps gens :optional (in1 0.0))
+  "(old-formant-bank amps gens :optional (in1 0.0)) is a wrapper for formant-bank that accepts a vector of amps"
   (formant-bank (if (vector? amps) (vector->vct amps) amps) gens in1))
 
 (define* (vct->samples samp samps data :optional snd chn) 
+  "(vct->samples samp samps data :optional snd chn) is an old form of vct->channel"
   (vct->channel data samp samps snd chn))
 
 (define* (samples->vct samp samps :optional snd chn v pos)
+  "(samples->vct samp samps :optional snd chn v pos) is an old form of channel->vct"
   (if (not v)
       (channel->vct samp samps snd chn pos)
       (vct-subseq (channel->vct samp samps snd chn pos) 0 samps v)))
@@ -297,6 +316,7 @@
 (define region-samples->vct region->vct)
 
 (define* (scale-sound-by scl :optional beg dur snd chn edpos)
+  "(scale-sound-by scl :optional beg dur snd chn edpos) is an old form of scale-sound"
   (if (integer? chn)
       (scale-channel scl beg dur snd chn edpos)
       (do ((i 0 (1+ i)))
@@ -304,6 +324,7 @@
 	(scale-channel scl beg dur snd i))))
 
 (define* (scale-sound-to norm :optional beg dur snd chn)
+  "(scale-sound-to norm :optional beg dur snd chn) is an old form of normalize-sound"
   (if (integer? chn)
       (let ((mx (maxamp snd chn)))
 	(if (and (not (= mx 0.0))
@@ -361,12 +382,14 @@
 (if (not (defined? 'recorder-out-type)) (define recorder-out-type recorder-out-header-type))
 
 (define (snd-apropos val)
+  "(snd-apropos val) is a wrapper for Scheme's apropos"
   (if (defined? 'apropos)
       (with-output-to-string
 	(lambda ()
 	  (apropos (if (string? val) val (object->string val)))))))
 
 (define (make-iir-low-pass-1 fc)
+  "(make-iir-low-pass-1 fc) makes an IIR low pass filter"
   (let* ((theta (/ (* 2 pi fc) (mus-srate)))
 	 (gamma (/ (cos theta) (+ 1.0 (sin theta))))
 	 (xc (/ (- 1.0 gamma) 2.0)))
@@ -375,6 +398,7 @@
 		 (vct 0.0 (- gamma)))))
 
 (define (make-iir-high-pass-1 fc)
+  "(make-iir-high-pass-1 fc) makes an IIR high pass filter"
   (let* ((theta (/ (* 2 pi fc) (mus-srate)))
 	 (gamma (/ (cos theta) (+ 1.0 (sin theta))))
 	 (xc (/ (+ 1.0 gamma) 2.0)))

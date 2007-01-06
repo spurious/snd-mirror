@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Sep 20 23:24:17 CEST 2003
-# Changed: Thu Oct 26 02:59:09 CEST 2006
+# Changed: Mon Dec 11 05:01:18 CET 2006
 
 # Commentary:
 #
@@ -710,7 +710,7 @@ class Peak_env
       saved = false
       channels(snd).times do |chn|
         peak_file = mus_expand_filename(info_file_name(snd, chn))
-        if (not File.exists?(peak_file)) or
+        if (not File.exist?(peak_file)) or
             file_write_date(peak_file) < file_write_date(file_name(snd))
           unless saved
             @saved_peak_info[file_name(snd)] =
@@ -729,7 +729,7 @@ class Peak_env
     if (not (peak_info = @saved_peak_info[file_name(snd)])) or
         (data_format(snd) == peak_info[:data_format] and channels(snd) == peak_info[:channels])
       peak_file = mus_expand_filename(info_file_name(snd, chn))
-      if File.exists?(peak_file) and
+      if File.exist?(peak_file) and
           file_write_date(peak_file) > file_write_date(file_name(snd))
         @saved_peak_info[file_name(snd)] =
           {:data_format, data_format(snd),
@@ -748,7 +748,7 @@ def install_save_peak_env
     if $save_peak_env_info_p
       channels(snd).times do |chn|
         peak_file = mus_expand_filename(peak_env.info_file_name(snd, chn))
-        File.exists?(peak_file) and File.unlink(peak_file)
+        File.exist?(peak_file) and File.unlink(peak_file)
       end
     end
   end

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Sun Nov 26 16:43:53 CET 2006
+# Changed: Mon Dec 11 05:00:27 CET 2006
 
 # Commentary:
 # 
@@ -401,13 +401,13 @@ writes sound data as mono files (for external program)")
     case filenames
     when String
       (data or []).each do |temp_file|
-        if File.exists?(temp_file) and temp_file != filenames
+        if File.exist?(temp_file) and temp_file != filenames
           File.unlink(temp_file)
         end
       end
     when Array
       (data or []).each_with_index do |temp_file, i|
-        if File.exists?(temp_file) and temp_file != filenames[i]
+        if File.exist?(temp_file) and temp_file != filenames[i]
           File.unlink(temp_file)
         end
       end
@@ -1237,7 +1237,7 @@ applies body to each sound file in dir")
   def each_sound_file(*args, &func)
     if args.empty? then args.push(Dir.pwd) end
     args.map do |dir|
-      if File.exists?(dir)
+      if File.exist?(dir)
         sound_files_in_directory(dir).each do |f| func.call(dir + "/" + f) end
       end
     end
@@ -1938,7 +1938,7 @@ applies contrast enhancement to the sound" )
                     brief_name,
                     lambda do | |
                       remove_from_menu(@reopen_menu, brief_name)
-                      if File.exists?(long_name) then open_sound(long_name) end
+                      if File.exist?(long_name) then open_sound(long_name) end
                     end,
                     0)
         @reopen_names.push(brief_name)

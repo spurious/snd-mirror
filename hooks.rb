@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Changed: Mon Nov 27 15:36:01 CET 2006
+# Changed: Wed Dec 13 03:11:28 CET 2006
 
 # Commentary:
 #
@@ -333,6 +333,7 @@ if defined? $after_graph_hook
                $after_save_as_hook,
                $before_save_as_hook,
                $before_exit_hook,
+               $clip_hook,
                $before_close_hook]
 
   unless provided? :snd_nogui
