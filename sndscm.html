@@ -1808,6 +1808,8 @@ be out of print (this was about 25 years ago, I think); a great book on complex 
 Complex Analysis"; Poole's "Linear Algebra" is a very straightforward
 introduction; also Halmos, "Linear Algebra Problem Book"; the most enjoyable
 Fourier Analysis book is by K&ouml;rner, but you don't want to start with it.
+For the ambitious, there is the encyclopedic set of books by Julius Smith.
+His "Mathematics of the DFT" is a very clear introduction.
 </blockquote></small></p>
 <br>
 
@@ -2040,8 +2042,7 @@ filter returned by spectrum-&gt;coeffs will be problematic.
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>make-spencer-filter</em>
 </td></tr><tr><td></td><td>
-This returns a CLM fir-filter generator with the standard "Spencer Filter" coefficients
-(this is our nod toward the ubiquitous factorial -- almost useless, easy to do...).
+This returns a CLM fir-filter generator with the standard "Spencer Filter" coefficients.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -2566,19 +2567,22 @@ which means that if the original sound was 2 seconds long, and we apply the enve
 
 <!-- JOS -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>channel-variance</em> <code>:optional snd chn</code><br>
-<em class=emdef>channel-mean</em> <code>:optional snd chn</code><br>
-<em class=emdef>channel-total-energy</em> <code>:optional snd chn</code><br>
-<em class=emdef>channel-average-power</em> <code>:optional snd chn</code><br>
-<a class=def name="channelrms">channel-rms</a> <code>:optional snd chn</code><br>
-<em class=emdef>channel-norm</em> <code>:optional snd chn</code><br>
-<em class=emdef>channel-lp</em> u-p <code>:optional snd chn</code><br>
-<em class=emdef>channel-lp-inf</em> <code>:optional snd chn</code><br>
-<em class=emdef>channel2-inner-product</em> <code>s1 c1 s2 c2</code><br>
-<em class=emdef>channel2-angle</em> <code>s1 c1 s2 c2</code><br>
-<em class=emdef>channel2-orthogonal?</em> <code>s1 c1 s2 c2</code><br>
-<em class=emdef>channel2-coefficient-of-projection</em> <code>s1 c1 s2 c2</code><br>
-<em class=emdef>channel-distance</em> <code>s1 c1 s2 c2</code>
+<br>
+<table border=0 cellpadding=0 cellspacing=0>
+<tr><td><em class=emdef>channel-mean</em> <code>:optional snd chn</code></td>                <td><code>; &lt;f, 1&gt; / n</code></td></tr>
+<tr><td><em class=emdef>channel-total-energy</em> <code>:optional snd chn</code></td>        <td><code>; &lt;f, f&gt;</code></td></tr>
+<tr><td><em class=emdef>channel-average-power</em> <code>:optional snd chn</code></td>       <td><code>; &lt;f, f&gt; / n</code></td></tr>
+<tr><td><em class=emdef>channel-norm</em> <code>:optional snd chn</code></td>                <td><code>; sqrt(&lt;f, f&gt;)</code></td></tr>
+<tr><td><a class=def name="channelrms">channel-rms</a> <code>:optional snd chn</code></td>   <td><code>; sqrt(&lt;f, f&gt; / n)</code></td></tr>
+<tr><td><em class=emdef>channel-variance</em> <code>:optional snd chn</code></td>            <td><code>; &lt;f, f&gt; - ((&lt;f, 1&gt; / n) ^ 2) with quibbles</code></td></tr>
+<tr><td><em class=emdef>channel-lp</em> u-p <code>:optional snd chn</code></td>              <td></td></tr>
+<tr><td><em class=emdef>channel-lp-inf</em> <code>:optional snd chn</code></td>              <td><code>; max abs f</code></td></tr>
+<tr><td><em class=emdef>channel2-inner-product</em> <code>s1 c1 s2 c2</code></td>            <td><code>; &lt;f, g&gt;</code></td></tr>
+<tr><td><em class=emdef>channel2-orthogonal?</em> <code>s1 c1 s2 c2</code></td>              <td><code>; &lt;f, g&gt; == 0</code></td></tr>
+<tr><td><em class=emdef>channel2-angle</em> <code>s1 c1 s2 c2</code></td>                    <td><code>; acos(&lt;f, g&gt; / (sqrt(&lt;f, f&gt;) * sqrt(&lt;g, g&gt;)))</code></td></tr>
+<tr><td><em class=emdef>channel2-coefficient-of-projection</em> <code>s1 c1 s2 c2</code></td><td><code>; &lt;f, g&gt; / &lt;f, f&gt;</code></td></tr>
+<tr><td><em class=emdef>channel-distance</em> <code>s1 c1 s2 c2</code></td>                  <td><code>; sqrt(&lt;f - g, f - g&gt;)</code></td></tr>
+</table>
 </td></tr><tr><td></td><td>
 These functions are taken from (or at least inspired by) Julius Smith's "Mathematics of the
 DFT".  Many are standard ways of describing a signal in statistics; others treat a signal

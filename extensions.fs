@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Mon Jan 01 20:47:42 CET 2007
+\ Changed: Thu Jan 04 18:54:24 CET 2007
 
 \ Commentary:
 \ 
@@ -11,38 +11,58 @@
 \ 
 \ color-map constants
 \ mus-a0, set-mus-a0, etc
-\ back-or-forth-graph 			 ( count -- lst )
-\ forward-graph       			 ( count -- lst )
-\ backward-graph      			 ( count -- lst )
-\ back-or-forth-mix   			 ( count snd chn -- mx )
-\ forward-mix         			 ( count snd chn -- mx )
-\ backward-mix        			 ( count snd chn -- mx )
-\ back-or-forth-mark  			 ( count snd chn -- mk )
-\ forward-mark        			 ( count snd chn -- mk )
-\ backward-mark       			 ( count snd chn -- mk )
-\ mus-bank            			 ( gens amps in1 in2 -- val )
-\ oscil-bank          			 ( amps gens in1 in2 -- val )
+\ back-or-forth-graph 		  ( count -- lst )
+\ forward-graph       		  ( count -- lst )
+\ backward-graph      		  ( count -- lst )
+\ back-or-forth-mix   		  ( count snd chn -- mx )
+\ forward-mix         		  ( count snd chn -- mx )
+\ backward-mix        		  ( count snd chn -- mx )
+\ back-or-forth-mark  		  ( count snd chn -- mk )
+\ forward-mark        		  ( count snd chn -- mk )
+\ backward-mark       		  ( count snd chn -- mk )
+\ mus-bank            		  ( gens amps in1 in2 -- val )
+\ oscil-bank          		  ( amps gens in1 in2 -- val )
 \
-\ sound-property       		  	 ( key snd -- value|#f )
-\ set-sound-property   		  	 ( key val snd -- )
+\ sound-property       		  ( key snd -- value|#f )
+\ set-sound-property   		  ( key val snd -- )
 \ set-sound-property-save-state-ignore   ( key snd -- )
-\ channel-property     		  	 ( key snd chn -- value|#f )
-\ set-channel-property 		  	 ( key val snd chn -- )
+\ channel-property     		  ( key snd chn -- value|#f )
+\ set-channel-property 		  ( key val snd chn -- )
 \ set-channel-property-save-state-ignore ( key snd chn -- )
 \
-\ selection-members                      ( -- array of lists )
+\ selection-members               ( -- array of lists )
 \
-\ yes-or-no?                      	 ( question action-if-yes action-if-no snd -- )
-\ check-for-unsaved-edits         	 ( check -- )
-\ remember-sound-state            	 ( choice -- )
+\ yes-or-no?                      ( question action-if-yes action-if-no snd -- )
+\ check-for-unsaved-edits         ( check -- )
+\ remember-sound-state            ( choice -- )
 \
-\ focus-follows-mouse                    ( -- )
-\ prefs-activate-initial-bounds   	 ( beg dur full -- )
-\ prefs-deactivate-initial-bounds 	 ( -- )
-\ with-reopen-menu     		  	 ( -- )
-\ with-buffers-menu    		  	 ( -- )
-\ set-global-sync                 	 ( choice -- )
-\ show-selection                         ( -- )
+\ mix-channel                     ( file-data :optional beg dur snd chn edpos -- val )
+\ insert-channel                  ( file-data :optional beg 0 dur snd chn edpos -- val )
+\ any-env-channel                 ( en func :optional beg dur snd chn edpos origin -- val )
+\ sine-ramp                       ( rmp0 rmp1 :optional beg dur snd chn edpos -- val )
+\ sine-env-channel                ( en :optional beg dur snd chn edpos -- val )
+\ blackman4-ramp                  ( rmp0 rmp1 :optional beg dur snd chn edpos -- val )
+\ blackman4-env-channel           ( en :optional beg dur snd chn edpos -- val )
+\ ramp-squared                    ( rmp0 rmp1 :optional symmetric beg dur snd chn edpos -- val )
+\ env-squared-channel             ( en :optional symmetric beg dur snd chn edpos -- val )
+\ ramp-expt                       ( rmp0 rmp1 exponent
+\                                   :optional symmetric beg dur snd chn edpos -- val )
+\ env-expt-channel                ( en exponent
+\                                   :optional symmetric beg dur snd chn edpos -- val )
+\ offset-channel                  ( amount :optional beg dur snd chn edpos -- val )
+\ offset-sound                    ( offset :optional beg dur snd -- )
+\ dither-channel                  ( :optional amount beg dur snd chn edpos -- val )
+\ dither-sound                    ( :optional amount beg dur snd -- )
+\ contrast-channel                ( index :optional beg dur snd chn edpos -- val )
+\ contrast-sound                  ( index :optional beg dur snd -- )
+\
+\ focus-follows-mouse             ( -- )
+\ prefs-activate-initial-bounds   ( beg dur full -- )
+\ prefs-deactivate-initial-bounds ( -- )
+\ with-reopen-menu     		  ( -- )
+\ with-buffers-menu    		  ( -- )
+\ set-global-sync                 ( choice -- )
+\ show-selection                  ( -- )
 
 \ Code:
 
@@ -502,6 +522,358 @@ and if it is subsquently re-opened, restores that state."
   choice to remembering-sound-state
 ;
 previous
+
+\ ;;; -------- mix-channel, insert-channel, c-channel
+
+hide
+: mc-cb { rd -- prc; y self -- val }
+  1 proc-create rd , ( prc )
+ does> { y self -- val }
+  self @ ( rd ) next-sample y f+
+;
+set-current
+: mix-channel <{ file-data :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  doc" Mixes in FILE-DATA.  \
+FILE-DATA can be the file name or a list '( file-name [beg [channel]] )"
+  file-data string? if file-data else file-data car then { file-name }
+  file-name find-file to file-name
+  file-name false? if 'no-such-file '( get-func-name file-name ) fth-throw then
+  file-data string? file-data length 2 < || if 0 else file-data cadr  then { file-beg }
+  file-data string? file-data length 3 < || if 0 else file-data caddr then { file-channel }
+  dur file-name mus-sound-frames file-beg - || { len }
+  beg 0< if 'no-such-sample '( get-func-name beg ) fth-throw then
+  len 0> if
+    file-beg file-name file-channel 1 #f make-sample-reader { reader }
+    $" %S %s %s %s" '( file-data beg dur get-func-name ) string-format { origin }
+    reader mc-cb beg len snd chn edpos origin map-channel
+  else
+    #f
+  then
+;
+previous
+
+: insert-channel <{ file-data :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  doc" Inserts the FILE-DATA.  \
+FILE-DATA can be the file name or a list '( file-name [beg [channel]] )"
+  file-data string? if file-data else file-data car then { file-name }
+  file-name find-file to file-name
+  file-name false? if 'no-such-file '( get-func-name file-name ) fth-throw then
+  file-data string? file-data length 2 < || if 0 else file-data cadr  then { file-beg }
+  file-data string? file-data length 3 < || if 0 else file-data caddr then { file-channel }
+  dur file-name mus-sound-frames file-beg - || { len }
+  beg 0< if 'no-such-sample '( get-func-name beg ) fth-throw then
+  len 0> if
+    file-beg file-name file-channel 1 #f make-sample-reader { reader }
+    len 0.0 make-vct map! reader next-sample end-map { data }
+    reader free-sample-reader drop
+    $" %S %s %s %s" '( file-data beg dur get-func-name ) string-format { origin }
+    beg len data snd chn edpos #f origin insert-samples
+  else
+    #f
+  then
+;
+
+\ ;;; -------- any-env-channel
+
+hide
+: aec-cb { en func beg dur snd chn edpos -- prc; self -- val }
+  0 proc-create en , func , beg , dur , snd , chn , edpos , ( prc )
+ does> { self -- val }
+  self           @ { en }
+  self   cell+   @ { func }
+  self 2 cells + @ { beg }
+  self 3 cells + @ { dur }
+  self 4 cells + @ { snd }
+  self 5 cells + @ { chn }
+  self 6 cells + @ { edpos }
+  0.0 0.0 { x0 y0 }
+  en car  { x1 }
+  en cadr { y1 }
+  en envelope-last-x en car f- { xrange }
+  beg { ramp-beg }
+  0 { ramp-dur }
+  en length 1- 2 ?do
+    x1 to x0
+    y1 to y0
+    en i    list-ref to x1
+    en i 1+ list-ref to y1
+    x1 x0 f- xrange f/ dur f* fround->s to ramp-dur
+    y0 y1 f= if
+      y0 ramp-beg ramp-dur snd chn edpos scale-channel
+    else
+      func '( y0 y1 ramp-beg ramp-dur snd chn edpos ) run-proc
+    then
+    ramp-dur +to ramp-beg
+  2 +loop
+;
+set-current
+: any-env-channel <{ en func :optional beg 0 dur #f snd #f chn #f edpos #f origin #f -- val }>
+  en null? if
+    #f
+  else
+    en envelope-length ( pts ) 1 = if
+      en car beg dur snd chn edpos scale-channel
+    else
+      dur integer? unless snd chn #f frames to dur then
+      en func beg dur snd chn edpos aec-cb origin as-one-edit
+    then
+  then
+;
+previous
+
+\ ;;; -------- sine-ramp sine-env-channel 
+
+hide
+: sr3-cb <{ y data forward -- val }>
+  data 0 vct-ref { angle }
+  data 1 vct-ref { incr }
+  angle fcos f2/ 0.5 f+ data 3 vct-ref f* data 2 vct-ref f+ y f* ( val )
+  data 0  forward angle incr if f+ else f- then  vct-set! drop
+  ( val )
+;
+: sr2-cb { rmp0 rmp1 -- prc; frag-beg frag-dur self -- vct }
+  2 proc-create rmp0 , rmp1 ,
+ does> { frag-beg frag-dur self -- vct }
+  self @ { rmp0 }
+  self cell+ @ { rmp1 }
+  pi frag-dur f/ { incr }
+  vct( pi fnegate frag-beg incr f* f+
+     incr
+     rmp0
+     rmp1 rmp0 f- )
+;
+set-current
+: sine-ramp <{ rmp0 rmp1 :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  doc" Produces a sinsusoidal connection from RMP0 to RMP1."
+  \ ;; vct: angle incr off scl
+  $" %s %s %s %s %s" '( rmp0 rmp1 beg dur get-func-name ) string-format { origin }
+  ['] sr3-cb beg dur snd chn edpos #t  rmp0 rmp1 sr2-cb  origin ptree-channel
+;
+previous
+
+: sine-env-channel <{ en :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  doc" Connects ENV's dots with sinusoids."
+  $" %s %s %s %s" '( en beg dur get-func-name ) string-format { origin }
+  en ['] sine-ramp beg dur snd chn edpos origin any-env-channel
+;
+\ '( 0 0 1 1 2 -0.5 3 1 ) sine-env-channel
+
+\ ;;; an obvious extension of this idea is to use the blackman fft window formulas
+\ ;;;   to get sharper sinusoids (i.e. use the sum of n cosines, rather than just 1)
+\ 
+\ ;;; -------- blackman4-ramp, blackman4-env-channel
+
+hide
+: b4r3-cb <{ y data forward -- val }>
+  data 0 vct-ref { angle }
+  data 1 vct-ref { incr }
+  angle fcos { cx }
+  cx 0.041194 f* -0.20762 f+ cx f* 0.375696 f+ cx f* -0.29145 f+ cx f* 0.084037 f+
+  data 3 vct-ref f* data 2 vct-ref f+ y f* ( val )
+  data 0  forward angle incr if f+ else f- then  vct-set! drop
+  ( val )
+;
+: b4r2-cb { rmp0 rmp1 -- prc; frag-beg frag-dur self -- vct }
+  2 proc-create rmp0 , rmp1 , ( prc )
+ does> { frag-beg frag-dur self -- vct }
+  self       @ { rmp0 }
+  self cell+ @ { rmp1 }
+  pi frag-dur f/ { incr }
+  vct( frag-beg incr f*
+     incr
+     rmp0
+     rmp1 rmp0 f- )
+;
+set-current
+: blackman4-ramp <{ rmp0 rmp1 :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  $" %s %s %s %s %s" '( rmp0 rmp1 beg dur get-func-name ) string-format { origin }
+  ['] b4r3-cb beg dur snd chn edpos #f rmp0 rmp1 b4r2-cb origin ptree-channel
+;
+previous
+
+: blackman4-env-channel <{ en :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  $" %s %s %s %s" '( en beg dur get-func-name ) string-format { origin }
+  en ['] blackman4-ramp beg dur snd chn edpos origin any-env-channel
+;
+
+\ ;;; any curve can be used as the connecting line between envelope breakpoints in the
+\ ;;;   same manner -- set up each ramp to take the current position and increment,
+\ ;;;   then return the value in ptree-channel.  A simple one would have a table of
+\ ;;;   values and use array-interp.
+\ 
+\ ;;; -------- ramp-squared, env-squared-channel
+
+hide
+: rsq3-cb <{ y data forward -- val }>
+  data 0 vct-ref { angle }
+  data 1 vct-ref { incr }
+  angle dup f* data 3 vct-ref f* data 2 vct-ref f+ y f* ( val )
+  data 0  forward angle incr if f+ else f- then  vct-set! drop
+  ( val )
+;
+: rsq2-cb { rmp0 rmp1 symmetric -- prc; frag-beg frag-dur self -- vct }
+  2 proc-create rmp0 , rmp1 , symmetric , ( prc )
+ does> { frag-beg frag-dur self -- vct }
+  self           @ { rmp0 }
+  self cell+     @ { rmp1 }
+  self 2 cells + @ { symmetric }
+  frag-dur 1/f { incr }
+  symmetric rmp1 rmp0 f< && if
+    vct( frag-dur frag-beg f- incr f*  incr fnegate  rmp1  rmp0 rmp1 f- )
+  else
+    vct( frag-beg incr f*  incr  rmp0  rmp1 rmp0 f- )
+  then
+;
+set-current
+: ramp-squared <{ rmp0 rmp1 :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  doc" Connects RMP0 and RMP1 with an x^2 curve."
+  $" %s %s %s %s %s %s" '( rmp0 rmp1 symmetric beg dur get-func-name ) string-format { origin }
+  ['] rsq3-cb beg dur snd chn edpos #t  rmp0 rmp1 symmetric rsq2-cb  origin ptree-channel
+;
+previous
+
+hide
+: esqc-cb { symmetric -- prc; r0 r1 b d s c e self -- val }
+  7 proc-create symmetric , ( prc )
+ does> { r0 r1 b d s c e self -- val }
+  r0 r1 self @ ( symmetric ) b d s c e ramp-squared
+;
+set-current
+: env-squared-channel <{ en :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  doc" Connects ENV's dots with x^2 curves."
+  $" %s %s %s %s %s" '( en symmetric beg dur get-func-name ) string-format { origin }
+  en  symmetric esqc-cb beg dur snd chn edpos origin any-env-channel
+;
+previous
+\ '( 0 0 1 1 2 -0.5 3 1 ) env-squared-channel
+
+\ ;;; -------- ramp-expt, env-expt-channel
+
+
+hide
+: rex3-cb <{ y data forward -- val }>
+  data 0 vct-ref { angle }
+  data 1 vct-ref { incr }
+  data 4 vct-ref angle flog f* fexp data 3 vct-ref f* data 2 vct-ref f+ y f* ( val )
+  data 0  forward angle incr if f+ else f- then  vct-set! drop
+  ( val )
+;
+: rex2-cb { rmp0 rmp1 symmetric exponent -- prc; frag-beg frag-dur self -- vct }
+  2 proc-create rmp0 , rmp1 , symmetric , exponent , ( prc )
+ does> { frag-beg frag-dur self -- vct }
+  self           @ { rmp0 }
+  self cell+     @ { rmp1 }
+  self 2 cells + @ { symmetric }
+  self 3 cells + @ { exponent }
+  frag-dur 1/f { incr }
+  symmetric rmp1 rmp0 f< && if
+    vct( frag-dur frag-beg f- incr f*  incr fnegate  rmp1  rmp0 rmp1 f-  exponent )
+  else
+    vct( frag-beg incr f*  incr  rmp0  rmp1 rmp0 f-  exponent )
+  then
+;
+set-current
+: ramp-expt <{ rmp0 rmp1 exponent
+     :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  doc" Connects RMP0 and RMP1 with an x^exponent curve."
+  \ ;; vct: start incr off scl exponent
+  \ ;; a^x = exp(x * log(a))
+  $" %s %s %s %s %s %s %s"
+  '( rmp0 rmp1 exponent symmetric beg dur get-func-name ) string-format { origin }
+  ['] rex3-cb beg dur snd chn edpos #t  rmp0 rmp1 symmetric exponent rex2-cb origin ptree-channel
+;
+previous
+
+hide
+: expc-cb { symmetric exponent -- prc; r0 r1 b d s c e self -- val }
+  7 proc-create symmetric , exponent , ( prc )
+ does> { r0 r1 b d s c e self -- val }
+  r0 r1 self cell+ @ ( exponent ) self @ ( symmetric ) b d s c e ramp-expt
+;
+set-current
+: env-expt-channel <{ en exponent
+     :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  doc" Connects ENV's dots with x^exponent curves."
+  $" %s %s %s %s %s %s" '( en exponent symmetric beg dur get-func-name ) string-format { origin }
+  en  symmetric exponent expc-cb beg dur snd chn edpos origin any-env-channel
+;
+previous
+
+\ ;;; -------- offset-channel
+
+hide
+: offc-cb { dc -- prc; y self -- val }
+  1 proc-create dc , ( prc )
+ does> { y self -- val }
+  self @ ( dc ) y f+
+;
+set-current
+: offset-channel <{ amount :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  doc" Adds AMOUNT to each sample."
+  $" %s %s %s %s" '( amount beg dur get-func-name ) string-format { origin }
+  amount offc-cb beg dur snd chn edpos #t #f origin ptree-channel
+;
+previous
+
+: offset-sound <{ offset :optional beg 0 dur #f snd #f -- }>
+  doc" Adds OFFSET to every sample in SND."
+  snd snd-snd to snd
+  snd sound? if
+    snd channels 0 ?do offset beg dur snd i ( chn ) #f offset-channel drop loop
+  else
+    'no-such-sound '( get-func-name snd ) fth-throw
+  then
+;
+
+\ ;;; -------- dither-channel
+
+hide
+: dith-cb { dither -- prc; y self -- val }
+  1 proc-create dither , ( prc )
+ does> { y self -- val }
+  self @ ( dither ) dup mus-random swap mus-random f+ y f+
+;
+set-current
+: dither-channel <{ :optional amount 0.00006 beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  doc" Adds AMOUNT dither to each sample."
+  $" %s %s %s %s" '( amount beg dur get-func-name ) string-format { origin }
+  amount f2/ dith-cb beg dur snd chn edpos #t #f origin ptree-channel
+;
+
+: dither-sound <{ :optional amount 0.00006 beg 0 dur #f snd #f -- }>
+  doc" Adds dithering to every sample of SND."
+  snd snd-snd to snd
+  snd sound? if
+    snd channels 0 ?do amount beg dur snd i ( chn ) #f dither-channel drop loop
+  else
+    'no-such-sound '( get-func-name snd ) fth-throw
+  then
+;
+
+\ ;;; -------- contrast-channel
+
+hide
+: cntr-cb { index -- prc; y self -- val }
+  1 proc-create index , ( prc )
+ does> { y self -- val }
+  y two-pi f* fsin self @ ( index ) f*  y half-pi f*  f+ fsin
+;
+set-current
+: contrast-channel <{ index :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  doc" Applies contrast enhancement to the sound."
+  $" %s %s %s %s" '( index beg dur get-func-name ) string-format { origin }
+  index cntr-cb beg dur snd chn edpos #f #f origin ptree-channel
+;
+
+: contrast-sound <{ index :optional beg 0 dur #f snd #f -- }>
+  doc" Applies contrast-enhancement to every channel of SND."
+  snd snd-snd to snd
+  snd sound? if
+    snd channels 0 ?do index beg dur snd i ( chn ) #f contrast-channel drop loop
+  else
+    'no-such-sound '( get-func-name snd ) fth-throw
+  then
+;
 
 \ === PREFERENCES DIALOG ===
 

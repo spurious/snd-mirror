@@ -6,7 +6,9 @@
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 (if (not (defined? 'log10))
-    (define (log10 a) (/ (log a) (log 10))))
+    (define (log10 a) 
+      "(log10 a) returns the log base 10 of 'a'"
+      (/ (log a) (log 10))))
 
 ;;; src-duration (see src-channel in extsnd.html)
 
@@ -1065,7 +1067,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 
 (define (cascade->canonical A)
-  ;; convert a list of cascade coeffs [vcts with 3 entries] to canonical form
+  "(cascade->canonical A) converts a list of cascade coeffs (vcts with 3 entries) to canonical form"
   ;; from Orfanidis "Introduction to Signal Processing"
 
   (define (conv M h L x y)
@@ -1091,7 +1093,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 
 (define (make-butter-lp M fc)
-  ;; order is M*2, fc is cutoff freq (Hz)
+  "(make-butter-lp M fc) returns a butterworth low-pass filter; its order is 'M' * 2, 'fc' is the cutoff frequency in Hz"
   (let* ((xcoeffs '())
 	 (ycoeffs '())
 	 (theta (/ (* 2 pi fc) (mus-srate)))
@@ -1111,7 +1113,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		 (cascade->canonical ycoeffs))))
 	 
 (define (make-butter-hp M fc)
-  ;; order is M*2, fc is cutoff freq (Hz)
+  "(make-butter-hp M fc) returns a butterworth high-pass filter; its order is 'M' * 2, 'fc' is the cutoff frequency in Hz"
   (let* ((xcoeffs '())
 	 (ycoeffs '())
 	 (theta (/ (* 2 pi fc) (mus-srate)))
@@ -1131,7 +1133,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		 (cascade->canonical ycoeffs))))
 	 
 (define (make-butter-bp M f1 f2)
-  ;; order is M*2, f1 and f2 are band edge freqs (Hz)
+  "(make-butter-bp M f1 f2) returns a butterworth band-pass filter; its order is 'M' * 2, 'f1' and 'f2' are the band edge frequencies in Hz"
   (let* ((xcoeffs '())
 	 (ycoeffs '())
 	 (f0 (sqrt (* f1 f2)))
@@ -1170,7 +1172,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		 (cascade->canonical ycoeffs))))
 	 
 (define (make-butter-bs M f1 f2)
-  ;; order is M*2, f1 and f2 are band edge freqs (Hz)
+  "(make-butter-bs M f1 f2) returns a butterworth band-stop filter; its order is 'M' * 2, 'f1' and 'f2' are the band edge frequencies in Hz"
   (let* ((xcoeffs '())
 	 (ycoeffs '())
 	 (f0 (sqrt (* f1 f2)))
@@ -1316,7 +1318,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     arr))
 
 (define (find-sine freq beg dur)
-  "(find-sine freq beg dur) returns the amplitude and initial-phase (for sin) at freq between beg and dur"
+  "(find-sine freq beg dur) returns the amplitude and initial-phase (for sin) at freq"
   (let ((incr (hz->radians freq))
 	(sw 0.0)
 	(cw 0.0)
@@ -1331,7 +1333,9 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; this is a faster version of find-sine using the "Goertzel algorithm" taken from R Lyons "Understanding DSP" p 529
 ;;; it returns the same result as find-sine above if you take (* 2 (/ (goertzel...) dur)) -- see snd-test.scm examples
+
 (define* (goertzel freq :optional beg dur)
+  "(goertzel freq :optional beg dur) returns the amplitude of the 'freq' spectral component"
   (let* ((sr (srate))
 	 (y2 0.0)
 	 (y1 0.0)
@@ -1348,6 +1352,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 
 (define (make-spencer-filter)
+  "(make-spencer-filter) is a version of make-fir-filter; it returns one of the standard smoothing filters from \
+the era when computers were human beings"
   (make-fir-filter 15 (apply vct (map (lambda (n) (/ n 320.0)) (list -3 -6 -5 3 21 46 67 74 67 46 21 3 -5 -6 -3)))))
 
 
@@ -1443,35 +1449,40 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;;
 ;;; these are from "Mathematics of the DFT", W3K Pubs
 
-(define* (channel-mean :optional snd chn)
-  "(channel-mean :optional snd chn) returns the average of the samples in the given channel"
+(define* (channel-mean :optional snd chn)            ; <f, 1> / n
+  "(channel-mean :optional snd chn) returns the average of the samples in the given channel: <f,1>/n"
   (let ((sum 0.0)
 	(N (frames snd chn)))
     (scan-channel (lambda (y) (set! sum (+ sum y)) #f) 0 N snd chn)
     (/ sum N)))
 
-(define* (channel-total-energy :optional snd chn)
-  "(channel-total-energy :optional snd chn) returns the sum of the squares of all the samples in the given channel"
+(define* (channel-total-energy :optional snd chn)    ; <f, f>
+  "(channel-total-energy :optional snd chn) returns the sum of the squares of all the samples in the given channel: <f,f>"
   (let ((sum 0.0))
     (scan-channel (lambda (y) (set! sum (+ sum (* y y))) #f) 0 (frames snd chn) snd chn)
     sum))
 
-(define* (channel-average-power :optional snd chn)
+(define* (channel-average-power :optional snd chn)   ; <f, f> / n
+  "(channel-average-power :optional snd chn) returns the average power in the given channel: <f,f>/n"
   (/ (channel-total-energy snd chn) (frames snd chn)))
 
-(define* (channel-rms :optional snd chn)
+(define* (channel-rms :optional snd chn)             ; sqrt(<f, f> / n)
+  "(channel-rms :optional snd chn) returns the RMS value of the samples in the given channel: sqrt(<f,f>/n)"
   (sqrt (channel-average-power snd chn)))
 
-(define* (channel-variance :optional snd chn) ; "sample-variance" might be better
+(define* (channel-variance :optional snd chn) ; "sample-variance" might be better, <f, f> - (<f, 1> / n) ^ 2 with quibbles
+  "(channel-variance :optional snd chn) returns the sample variance in the given channel: <f,f>-((<f,1>/ n)^2"
   (let* ((N (frames snd chn))
 	 (mu (* (/ N (- N 1)) (channel-mean snd chn))) ; avoid bias sez JOS
 	 (P (channel-total-energy snd chn)))
     (- P (* mu mu))))
 
-(define* (channel-norm :optional snd chn)
+(define* (channel-norm :optional snd chn)            ; sqrt(<f, f>)
+  "(channel-norm :optional snd chn) returns the norm of the samples in the given channel: sqrt(<f,f>)"
   (sqrt (channel-total-energy snd chn)))
 
 (define* (channel-lp u-p :optional snd chn)
+  "(channel-lp p :optional snd chn) returns the Lp norm of the samples in the given channel"
   (let ((sum 0.0)
 	(p u-p) ; for the optimizer's benefit -- it can't find define* args
 	(N (frames snd chn)))
@@ -1479,12 +1490,14 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (expt sum (/ 1.0 p))))
 
 (define* (channel-lp-inf :optional snd chn)
+  "(channel-lp-inf :optional snd chn) returns the maxamp in the given channel (the name is just math jargon for maxamp)"
   (let ((mx 0.0)
 	(N (frames snd chn)))
     (scan-channel (lambda (y) (set! mx (max mx (abs y))) #f) 0 N snd chn)
     mx))
 
-(define (channel2-inner-product s1 c1 s2 c2)
+(define (channel2-inner-product s1 c1 s2 c2)         ; <f, g>
+  "(channel2-inner-product s1 c1 s2 c2) returns the inner-product of the two channels: <f,g>"
   (let ((N (frames s1 c1))
 	(sum 0.0)
 	(r1 (make-sample-reader 0 s1 c1))
@@ -1494,24 +1507,27 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
       (set! sum (+ sum (* (r1) (r2)))))
     sum))
 
-(define (channel2-angle s1 c1 s2 c2)
+(define (channel2-angle s1 c1 s2 c2)                 ; acos(<f, g> / (sqrt(<f, f>) * sqrt(<g, g>)))
+  "(channel2-angle s1 c1 s2 c2) treats the two channels as vectors, returning the 'angle' between them: acos(<f,g>/(sqrt(<f,f>)*sqrt(<g,g>)))"
   (let ((inprod (channel2-inner-product s1 c1 s2 c2))
 	(norm1 (channel-norm s1 c1))
 	(norm2 (channel-norm s2 c2)))
     (acos (/ inprod (* norm1 norm2)))))
 
-(define (channel2-orthogonal? s1 c1 s2 c2)
+(define (channel2-orthogonal? s1 c1 s2 c2)           ; <f, g> == 0
+  "(channel2-orthogonal? s1 c1 s2 c2) returns #t if the two channels' inner-product is 0: <f,g>==0"
   (= (channel2-inner-product s1 c1 s2 c2) 0.0))
 
-(define (channel2-coefficient-of-projection s1 c1 s2 c2) ; s1,c1 = x, s2,c2 = y
-  (let ((inprod (channel2-inner-product s1 c1 s2 c2))
-	(norm1 (channel-norm s1 c1)))
-    (/ inprod (* norm1 norm1))))
+(define (channel2-coefficient-of-projection s1 c1 s2 c2) ; s1,c1 = x, s2,c2 = y, <f, g> / <f, f>
+  "(channel2-coefficient-of-projection s1 c1 s2 c2) returns <f,g>/<f,f>"
+  (/ (channel2-inner-product s1 c1 s2 c2)
+     (channel-total-energy s1 c1)))
 
 ;;; -------- end of JOS stuff --------
 
 
-(define (channel-distance s1 c1 s2 c2)
+(define (channel-distance s1 c1 s2 c2)               ; sqrt(<f - g, f - g>)
+  "(channel-distance s1 c1 s2 c2) returns the euclidean distance between the two channels: sqrt(<f-g,f-g>)"
   (let* ((r1 (make-sample-reader 0 s1 c1))
 	 (r2 (make-sample-reader 0 s2 c2))
 	 (sum 0.0)
@@ -1524,7 +1540,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 
 (define (periodogram N)
-  ;; the "Bartlett" version, apparently
+  "(periodogram N) returns a N point Bartlett periodogram of the samples in the current channel"
   (let* ((len (frames))
 	 (average-data (make-vct N))
 	 (rd (make-sample-reader 0))
@@ -1550,6 +1566,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; -------- ssb-am friends
 
 (define* (shift-channel-pitch freq :optional (order 40) (beg 0) dur snd chn edpos)
+  "(shift-channel-pitch freq :optional (order 40) (beg 0) dur snd chn edpos) uses the ssb-am CLM generator to \
+shift the given channel in pitch without changing its length.  The higher 'order', the better usually."
   ;; higher order = better cancellation
   (let* ((gen (make-ssb-am freq order)))
     (map-channel (lambda (y) 
@@ -1557,7 +1575,9 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		 beg dur snd chn edpos 
 		 (format #f "shift-channel-pitch ~A ~A ~A ~A" freq order beg dur))))
 
-(define (hz->2pi freq) (/ (* 2 pi freq) (srate))) ; hz->radians follows mus-srate unfortunately
+(define (hz->2pi freq)
+  "(hz->2pi freq) is like hz->radians but uses the current sound's srate, not mus-srate"
+  (/ (* 2 pi freq) (srate))) 
 
 (define* (ssb-bank old-freq new-freq pairs-1 :optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
   (let* ((pairs pairs-1) ; for run's benefit
@@ -1790,6 +1810,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; FFTSIZE -- FFT window size. Must be a power of 2. 4096 is recommended.
 
 (define* (scentroid file :key (beg 0.0) dur (db-floor -40.0) (rfreq 100.0) (fftsize 4096))
+  "(scentroid file :key (beg 0.0) dur (db-floor -40.0) (rfreq 100.0) (fftsize 4096)) returns the spectral centroid envelope of a sound; 'rfreq' is \
+the rendering frequency, the number of measurements per second; 'db-floor' is the level below which data will be ignored"
   (let* ((fsr (mus-sound-srate file))
 	 (incrsamps (inexact->exact (floor (/ fsr rfreq))))
 	 (start (inexact->exact (floor (* beg fsr))))
@@ -1869,11 +1891,13 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;;   it is a slight specialization of the form mentioned by J O Smith and others
 
 (define (make-volterra-filter acoeffs bcoeffs)
+  "(make-volterra-filter acoeffs bcoeffs) returns a list for use with volterra-filter, producing one of the standard non-linear filters"
   (list acoeffs 
 	bcoeffs 
 	(make-vct (max (vct-length acoeffs) (vct-length bcoeffs)))))
 
 (define (volterra-filter flt x)
+  "(volterra-filter flt x) takes 'flt', a list returned by make-volterra-filter, and an input 'x', and returns the (non-linear filtered) result"
   (let* ((as (car flt))
 	 (bs (cadr flt))
 	 (xs (caddr flt))
@@ -2416,43 +2440,51 @@ and replaces it with the spectrum given in coeffs"
 (define (lpc-coeffs data n m)
   ;; translated and changed to use 0-based arrays from memcof of NRinC
   ;; not vcts except incoming data here because we need double precision
-  (define (sqr x) (* x x))
-  (let ((d (make-vector m 0.0))
-	(wk1 (make-vector n 0.0))
-	(wk2 (make-vector n 0.0))
-	(wkm (make-vector n 0.0)))
-    (vector-set! wk1 0 (vct-ref data 0))
-    (vector-set! wk2 (- n 2) (vct-ref data (1- n)))
-    (do ((j 1 (1+ j)))
-	((= j (1- n)))
-      (vector-set! wk1 j (vct-ref data j))
-      (vector-set! wk2 (1- j) (vct-ref data j)))
-    (do ((k 0 (1+ k)))
-	((= k m) d)
-      (let ((num 0.0)
-	    (denom 0.0))
-	(do ((j 0 (1+ j)))
-	    ((= j (- n k 1)))
-	  (set! num (+ num (* (vector-ref wk1 j) (vector-ref wk2 j))))
-	  (set! denom (+ denom (sqr (vector-ref wk1 j)) (sqr (vector-ref wk2 j)))))
-	(if (not (= denom 0.0))
-	    (vector-set! d k (/ (* 2.0 num) denom)))
-	(do ((i 0 (1+ i)))
-	    ((= i k)) ; 1st time is skipped presumably
-	  (vector-set! d i (- (vector-ref wkm i) (* (vector-ref d k) (vector-ref wkm (- k i 1))))))
-	(if (< k (1- m))
-	    (begin
-	      (do ((i 0 (1+ i)))
-		  ((= i (1+ k)))
-		(vector-set! wkm i (vector-ref d i)))
-	      (do ((j 0 (1+ j)))
-		  ((= j (- n k 2)))
-		(vector-set! wk1 j (- (vector-ref wk1 j) (* (vector-ref wkm k) (vector-ref wk2 j))))
-		(vector-set! wk2 j (- (vector-ref wk2 (1+ j)) (* (vector-ref wkm k) (vector-ref wk1 (1+ j))))))))))))
-    
+
+  "(lpc-coeffs data n m) returns 'm' LPC coeffients (in a vector) given 'n' data points in the vct 'data'"
+
+  (letrec ((sqr (lambda (x) (* x x))))
+    (let ((d (make-vector m 0.0))
+	  (wk1 (make-vector n 0.0))
+	  (wk2 (make-vector n 0.0))
+	  (wkm (make-vector n 0.0)))
+      (vector-set! wk1 0 (vct-ref data 0))
+      (vector-set! wk2 (- n 2) (vct-ref data (1- n)))
+      (do ((j 1 (1+ j)))
+	  ((= j (1- n)))
+	(vector-set! wk1 j (vct-ref data j))
+	(vector-set! wk2 (1- j) (vct-ref data j)))
+      (do ((k 0 (1+ k)))
+	  ((= k m) d)
+	(let ((num 0.0)
+	      (denom 0.0))
+	  (do ((j 0 (1+ j)))
+	      ((= j (- n k 1)))
+	    (set! num (+ num (* (vector-ref wk1 j) (vector-ref wk2 j))))
+	    (set! denom (+ denom (sqr (vector-ref wk1 j)) (sqr (vector-ref wk2 j)))))
+	  (if (not (= denom 0.0))
+	      (vector-set! d k (/ (* 2.0 num) denom)))
+	  (do ((i 0 (1+ i)))
+	      ((= i k)) ; 1st time is skipped presumably
+	    (vector-set! d i (- (vector-ref wkm i) (* (vector-ref d k) (vector-ref wkm (- k i 1))))))
+	  (if (< k (1- m))
+	      (begin
+		(do ((i 0 (1+ i)))
+		    ((= i (1+ k)))
+		  (vector-set! wkm i (vector-ref d i)))
+		(do ((j 0 (1+ j)))
+		    ((= j (- n k 2)))
+		  (vector-set! wk1 j (- (vector-ref wk1 j) (* (vector-ref wkm k) (vector-ref wk2 j))))
+		  (vector-set! wk2 j (- (vector-ref wk2 (1+ j)) (* (vector-ref wkm k) (vector-ref wk1 (1+ j)))))))))))))
+  
 (define* (lpc-predict data n coeffs m nf :optional clipped)
   ;; translated and changed to use 0-based arrays from predic of NRinC
   ;; incoming coeffs are assumed to be in a vector (from lpc-coeffs)
+
+  "(lpc-predict data n coeffs m nf :optional clipped) takes the output of lpc-coeffs ('coeffs', a vector) and the length thereof ('m'), \
+'n' data points of 'data' (a vct), and produces 'nf' new data points (in a vct) as its prediction. If 'clipped' is #t, the new data \
+is assumed to be outside -1.0 to 1.0."
+
   (let ((future (make-vct nf 0.0))
 	(reg (make-vct m 0.0)))
     (do ((i 0 (1+ i))

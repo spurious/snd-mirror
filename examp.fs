@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Thu Jan 04 02:52:49 CET 2007
+\ Changed: Sat Jan 06 05:56:58 CET 2007
 
 \ Commentary:
 \
@@ -11,21 +11,38 @@
 \
 \ all-chans           	    ( -- array-of-lists )
 \ close-sound-extend  	    ( snd -- )
-\ snd-snd             	    ( snd|#f -- snd )
-\ snd-chn             	    ( chn|#f -- chn )
+\ snd-snd             	    ( :optional snd -- snd )
+\ snd-chn             	    ( :optional chn -- chn )
 \
 \ from frame.scm
 \ insert-vct                ( v :optional beg dur snd chn edpos -- samps )
 \
 \ examp.(scm|rb)
-\ 
 \ selection-rms       	    ( -- val )
 \ region-rms          	    ( :optional n -- val )
 \ window-samples      	    ( :optional snd chn -- vct )
 \ display-energy      	    ( snd chn -- val )
 \ display-db          	    ( snd chn -- val )
+\ window-rms                ( -- val )
 \ fft-peak            	    ( snd chn scaler -- pk )
-\ 
+\ finfo                     ( file -- str )
+\ correlate                 ( snd chn y0 y1 -- val )
+\ zoom-spectrum             ( snd chn y0 y1 -- val )
+\ superimpose-ffts          ( snd chn y0 y1 -- val )
+\ locate-zero               ( limit -- samp )
+\ mpg                       ( mpgfile rawfile -- )
+\ auto-dot                  ( snd chn y0 y1 -- val )
+\ first-mark-in-window-at-left ( -- )
+\ flash-selected-data       ( millisecs -- )
+\ mark-loops                ( -- )
+\
+\ do-all-chans              ( func :optional origin -- )
+\ update-graphs             ( -- )
+\ do-chans                  ( func :optional origin -- )
+\ do-sound-chans            ( func :optional origin -- )
+\ every-sample?             ( func -- f )
+\ sort-samples              ( nbins -- ary )
+\ place-sound               ( mono stereo pan -- res )
 \ fft-edit            	    ( bottom top :optional snd chn -- vct )
 \ fft-squelch         	    ( squelch :optional snd chn -- scl )
 \ fft-cancel          	    ( lo-freq hi-freq :optional snd chn -- vct )
@@ -35,7 +52,8 @@
 \ fft-env-data        	    ( fft-env :optional snd chn -- vct )
 \ fft-env-edit        	    ( fft-env :optional snd chn -- vct )
 \ fft-env-interp      	    ( env1 env2 interp :optional snd chn -- vct )
-\
+\ filter-fft                ( flt :optional normalize snd chn -- val )
+\ fft-smoother              ( cutoff start samps :optional snd chn -- val )
 \ comb-filter         	    ( scaler size -- proc; x self -- res )
 \ comb-chord          	    ( scaler size amp -- proc; x self -- res )
 \ zcomb               	    ( scaler size pm -- proc; x self -- val )
@@ -75,6 +93,7 @@
 
 require clm
 require env
+require rgb
 
 \ #( '( snd0 chn0 ) '( snd0 chn1 ) ... )
 : all-chans ( -- array-of-lists )
@@ -112,8 +131,7 @@ require env
   ;
 [then]
 
-: snd-snd ( snd|#f -- snd )
-  { snd }
+: snd-snd <{ :optional snd #f -- snd }>
   snd integer? if
     snd
   else
@@ -124,9 +142,7 @@ require env
     then
   then
 ;
-
-: snd-chn ( chn|#f -- chn )
-  { chn }
+: snd-chn <{ :optional chn #f -- chn }>
   chn integer? if
     chn
   else
@@ -194,6 +210,7 @@ list-graph-hook ' display-energy add-hook!"
     #f
   then
 ;
+\ lisp-graph-hook ' display-energy add-hook!
 
 hide
 : db-calc ( val -- r ) { val } val 0.001 f< if -60.0 else 20.0 val flog10 f* then ;
@@ -214,6 +231,16 @@ list-graph-hook ' display-db add-hook!"
   then
 ;
 previous
+\ lisp-graph-hook ' display-db add-hook!
+
+: window-rms ( -- val )
+  doc" Returns rms of data in currently selected graph window."
+  #f #f left-sample  { ls }
+  #f #f right-sample { rs }
+  ls rs ls - 1+ #f #f #f channel->vct { data }
+  data vct-length { len }
+  data data len dot-product len f/ fsqrt
+;
 
 : fft-peak <{ snd chn scaler -- pk }>
   doc" Returns the peak spectral magnitude"
@@ -226,6 +253,413 @@ previous
   then
 ;
 \ after-transform-hook ' fft-peak add-hook!
+
+\ ;;; -------- 'info' from extsnd.html using format --------
+
+: finfo ( file -- str )
+  doc" Returns description (as a string) of file."
+  find-file { file }
+  file false? if 'no-such-file '( get-func-name file ) fth-throw then
+  $" %s: chans: %d, srate: %d, %s, %s, len: %1.3f"
+  '( file
+     file mus-sound-chans
+     file mus-sound-srate
+     file mus-sound-header-type mus-header-type-name
+     file mus-sound-data-format mus-data-format-name
+     file mus-sound-samples file mus-sound-chans file mus-sound-srate f* f/ ) string-format
+;
+
+\ ;;; -------- Correlation --------
+\ ;;;
+\ ;;; correlation of channels in a stereo sound
+
+: correlate <{ snd chn y0 y1 -- val }>
+  doc" Returns the correlation of SND's 2 channels (intended for use with graph-hook).  \
+y0 and y1 are ignored."
+  snd channels 2 = if
+    snd 0 #f frames 1 >
+    snd 1 #f frames 1 > && if
+      snd chn left-sample  { ls }
+      snd chn right-sample { rs }
+      rs ls - 1+ { ilen }
+      ilen flog 2.0 flog f/ fround->s { pow2 }
+      2.0 pow2 f** fround->s { fftlen }
+      fftlen 2/ { fftlen2 }
+      fftlen 1/f { fftscale }
+      ls fftlen snd 0 #f channel->vct { rl1 }
+      ls fftlen snd 1 #f channel->vct { rl2 }
+      fftlen 0.0 make-vct { im1 }
+      fftlen 0.0 make-vct { im2 }
+      rl1 im1 1 fft drop
+      rl2 im2 1 fft drop
+      rl1 vct-copy { tmprl }
+      im1 vct-copy { tmpim }
+      fftlen2 0.0 make-vct { data3 }
+      tmprl rl2 vct-multiply! drop
+      tmpim im2 vct-multiply! drop
+      im2   rl1 vct-multiply! drop
+      rl2   im1 vct-multiply! drop
+      tmprl tmpim vct-add! drop
+      im2 rl2 vct-subtract! drop
+      tmprl im2 -1 fft drop
+      data3 tmprl vct-add! drop
+      data3 fftscale vct-scale! drop
+      data3 $" lag time" 0 fftlen2 undef undef snd chn undef undef graph
+    then
+  else
+    $" %s wants stereo input" '( get-func-name ) string-format snd #f report-in-minibuffer
+  then
+;
+\ graph-hook ' correlate add-hook!
+
+\ ;;; -------- set transform-size based on current time domain window size
+\ ;;;
+\ ;;; also zoom spectrum based on y-axis zoom slider
+
+: zoom-spectrum <{ snd chn y0 y1 -- val }>
+  doc" Sets the transform size to correspond to the time-domain window size (use with graph-hook)."
+  snd chn transform-graph?
+  snd chn transform-graph-type graph-once = && if
+    2.0 snd chn right-sample snd chn left-sample f- flog 2.0 flog f/ fceil f** fround->s
+    snd chn set-transform-size drop
+    snd chn y-zoom-slider snd chn set-spectro-cutoff drop
+  then
+  #f
+;
+\ graph-hook ' zoom-spectrum add-hook!
+
+\ ;;; -------- superimpose spectra of sycn'd sounds
+
+: superimpose-ffts <{ snd chn y0 y1 -- val }>
+  doc" Superimposes ffts of multiple (syncd) sounds (use with graph-hook)."
+  0 sounds each ( snd ) sync max end-each { maxsync }
+  0 sounds each { n } n sync snd sync = if n else maxsync 1+ then min end-each { sndsync }
+  snd sync 0> snd sndsync = && if
+    snd chn left-sample  { ls }
+    snd chn right-sample { rs }
+    rs ls f- flog 2.0 flog f/ fround->s { pow2 }
+    2.0 pow2 f** fround->s { fftlen }
+    pow2 2 > if
+      nil { ffts }
+      sounds each { n }
+	n sync snd sync = n channels chn > && if
+	  ls fftlen n chn #f channel->vct { fdr }
+	  fftlen 0.0 make-vct { fdi }
+	  fftlen 2/ 0.0 make-vct { spectr }
+	  ffts '( spectr  fdr fdi #f 2 spectrum  0 vct-add! ) 2 list-append to ffts
+	then
+      end-each
+      ffts "spectra" 0.0 0.5 undef undef snd chn undef undef graph drop
+    then
+  then
+  #f
+;
+\ graph-hook ' superimpose-ffts add-hook!
+
+\ ;;; -------- c-g? example (Anders Vinjar)
+
+: locate-zero ( limit -- samp )
+  doc" Looks for successive samples that sum to less than LIMIT, moving the cursor if successful."
+  { limit }
+  #f #f #f cursor { start }
+  start #f #f 1 #f make-sample-reader { sf }
+  sf next-sample fabs { val0 }
+  sf next-sample fabs { val1 }
+  begin
+    sf sample-reader-at-end?
+    c-g?                     ||
+    val0 val1 f+ limit f<    || not
+  while
+      start 1+ to start
+      val1 to val0
+      sf next-sample fabs to val1
+  repeat
+  sf free-sample-reader drop
+  start #f #f #f set-cursor
+;
+
+\ ;;; -------- translate mpeg input to 16-bit linear and read into Snd
+\ ;;;
+\ ;;; mpg123 with the -s switch sends the 16-bit (mono or stereo) representation of
+\ ;;;   an mpeg file to stdout.  There's also apparently a switch to write 'wave' output.
+
+: mpg ( mpgfile rawfile -- )
+  doc" Converts file from MPEG to raw 16-bit samples using mpg123."
+  { mpgfile rawfile }
+  mpgfile io-open-read { io }
+  io io-getc { b0 }
+  io io-getc { b1 }
+  io io-getc { b2 }
+  io io-getc { b3 }
+  io io-close
+  b0 255 <>
+  b1 0b11100000 and 0b11100000 <> || if
+    $" %s is not an MPEG file (first 11 bytes: %b %b)" '( mpgfile b0 b1 0b11100000 and ) clm-message
+  else
+    b1 0b11000    and 3 rshift { id }
+    b1 0b110      and 1 rshift { layer }
+    b2 0b1100     and 2 rshift { srate-index }
+    b3 0b11000000 and 6 rshift { channel-mode }
+    id 1 = if
+      $" odd: %s is using a reserved Version ID" '( mpgfile ) clm-message
+    then
+    layer 0= if
+      $" odd: %s is using a reserved layer description" '( mpgfile ) clm-message
+    then
+    channel-mode 3 = if 1 else 2 then { chans }
+    id 0= if 4 else id 2 = if 2 else 1 then then { mpegnum }
+    layer 3 = if 1 else layer 2 = if 2 else 3 then then { mpeg-layer }
+    #( 44100 48000 32000 0 ) srate-index array-ref mpegnum / { srate }
+    $" %s: %s Hz, %s, MPEG-%s"
+    '( mpgfile srate chans 1 = if "mono" else "stereo" then mpeg-layer ) clm-message
+    $" mpg123 -s %s > %s" '( mpgfile rawfile ) string-format file-system { stat }
+    stat if
+      rawfile chans srate little-endian? if mus-lshort else mus-bshort then open-raw-sound drop
+    else
+      $" system in %s: %s" '( get-func-name stat ) clm-message
+    then
+  then
+;
+\ "mpeg.mpg" "mpeg.raw" mpg
+
+\ ;;; -------- make dot size dependent on number of samples being displayed
+\ ;;; 
+\ ;;; this could be extended to set time-graph-style to graph-lines
+\ ;;; if many samples are displayed, etc
+
+: auto-dot <{ snd chn y0 y1 -- val }>
+  doc" Sets the dot size depending on the number of samples being displayed (use with graph-hook)."
+  snd chn right-sample snd chn left-sample - { dots }
+  dots 100 > if
+    1 snd chn set-dot-size drop
+  else
+    dots 50 > if
+      2 snd chn set-dot-size drop
+    else
+      dots 25 > if
+	3 snd chn set-dot-size drop
+      else
+	5 snd chn set-dot-size drop
+      then
+    then
+  then
+  #f
+;
+\ graph-hook ' auto-dot add-hook!
+
+\ ;;; -------- move window left edge to mark upon 'm'
+\ ;;;
+\ ;;; in large sounds, it can be pain to get the left edge of the window
+\ ;;; aligned with a specific spot in the sound.  In this code, we assume
+\ ;;; the desired left edge has a mark, and the 'm' key (without control)
+\ ;;; will move the window left edge to that mark.
+
+: first-mark-in-window-at-left ( -- )
+  doc" Moves the graph so that the leftmost visible mark is at the left edge."
+  #f snd-snd { keysnd }
+  #f snd-chn { keychn }
+  keysnd keychn left-sample { current-left-sample }
+  keysnd keychn #f marks { chan-marks }
+  chan-marks length 0= if
+    $" no marks" keysnd #f report-in-minibuffer drop
+  else
+    #f ( flag ) chan-marks map *key* undef mark-sample end-map each { samp }
+      samp current-left-sample > if drop ( #f ) samp leave then
+    end-each { leftmost }
+    leftmost if
+      leftmost keysnd keychn set-left-sample drop
+      keyboard-no-action
+    else
+      $" no mark in window" keysnd #f report-in-minibuffer drop
+    then
+  then
+;
+\ "m" 0 lambda: <{ -- val }> first-mark-in-window-at-left ;
+\ #f "align window left edge with mark" "align window left edge with mark" bind-key drop
+
+\ ;;; -------- flash selected data red and green
+
+defer flash-selected-data ( millisecs -- )
+hide
+: fsd-cb { millisecs -- prc; self -- val }
+  0 proc-create millisecs , ( prc )
+ does> { self -- val }
+  self @ ( millisecs ) flash-selected-data
+  #f
+;
+user data-red?
+#t data-red? !
+set-current
+lambda: ( millisecs -- )
+  doc" Causes the selected data to flash red and green."
+  { millisecs }
+  selected-sound sound? if
+    data-red? @ if green else red then set-selected-data-color drop
+    data-red? @ not data-red? !
+    millisecs dup fsd-cb in drop
+  then
+; is flash-selected-data
+previous
+
+\ ;;; --------  use loop info (if any) to set marks at loop points
+
+: mark-loops ( -- )
+  doc" Places marks at loop points found in the selected sound's header."
+  #f snd-snd { snd }
+  #f snd-chn { chn }
+  snd sound-loop-info
+  snd file-name mus-sound-loop-info || { loops }
+  loops null? if
+    $" %s has no loop info" '( snd short-file-name ) clm-message
+  else
+    loops car 0<> loops cadr 0<> || if
+      loops car  snd chn undef undef add-mark drop
+      loops cadr snd chn undef undef add-mark drop
+      loops caddr 0<> loops cadddr 0<> || if
+	loops caddr  snd chn undef undef add-mark drop
+	loops cadddr snd chn undef undef add-mark drop
+      then
+    then
+  then
+;
+
+\ ;;; -------- mapping extensions
+\ ;;; (map arbitrary single-channel function over various channel collections)
+
+: do-all-chans <{ func :optional origin #f -- }>
+  doc" Applies FUNC to all active channels, using ORIGIN as the edit history indication:\n\
+lambda: <{ val -- val*2 }> val f2* ; \"double all samples\" do-all-chans"
+  all-chans each { lst }
+    lst car  { snd }
+    lst cadr { chn }
+    func 0 #f snd chn #f origin map-channel drop
+  end-each
+;
+
+: update-graphs ( -- )
+  doc" Updates (redraws) all graphs."
+  all-chans each { lst }
+    lst car  { snd }
+    lst cadr { chn }
+    snd chn update-time-graph drop
+  end-each
+;
+
+: do-chans <{ func :optional origin #f -- }>
+  doc" Applies FUNC to all sync'd channels using ORIGIN as the edit history indication."
+  #f snd-snd sync { snc }
+  snc 0> if
+    all-chans each { lst }
+      lst car  { snd }
+      lst cadr { chn }
+      snd sync snc = if func 0 #f snd chn #f origin map-channel drop then
+    end-each
+  else
+    $" sync not set" snd-warning drop
+  then
+;
+
+: do-sound-chans <{ func :optional origin #f -- }>
+  doc" applies FUNC to all selected channels using ORIGIN as the edit history indication."
+  selected-sound { snd }
+  snd sound? if
+    snd channels 0 ?do func 0 #f snd i ( chn ) #f origin map-channel drop loop
+  else
+    $" no selected sound" snd-warning drop
+  then
+;
+
+hide
+: everys-cb { func -- prc; y self -- f }
+  1 proc-create func , ( prc )
+ does> { y self -- f }
+  self @ ( func ) '( y ) run-proc not
+;
+set-current
+: every-sample? ( func -- f )
+  doc" Returns #t if FUNC is not #f for all samples in the current channel, \
+  otherwise it moves the cursor to the first offending sample."
+  { func }
+  func everys-cb 0 #f #f #f #f scan-channel { baddy }
+  baddy if baddy cadr #f #f #f set-cursor drop then
+  baddy not
+;
+previous
+
+hide
+: sorts-cb { bins -- prc; y self -- f }
+  1 proc-create bins , ( prc )
+ does> { y self -- f }
+  self @ { bins }
+  y fabs  bins length f* fround->s { bin }
+  bins bin 1 object-set+!
+  #f
+;
+set-current
+: sort-samples ( nbins -- ary )
+  doc" Provides a histogram in BINS bins."
+  { nbins }
+  nbins 0 make-array { bins }
+  bins sorts-cb 0 #f #f #f #f scan-channel drop
+  bins
+;
+previous
+
+\ ;;; -------- mix mono sound into stereo sound panning according to env
+
+hide
+: places1-cb { rd pos -- prc; y self -- val }
+  1 proc-create rd , pos , ( prc )
+ does> { y self -- val }
+  self @ { rd }
+  self cell+ @ { pos }
+  rd read-sample pos f* y f+
+;
+: places0-cb { rd pos -- prc; y self -- val }
+  1 proc-create rd , pos ,  ( prc )
+ does> { y self -- val }
+  self @ { rd }
+  self cell+ @ { pos }
+  rd read-sample 1.0 pos f- f* y f+
+;
+: places3-cb { rd en -- prc; y self -- val }
+  1 proc-create rd , en ,  ( prc )
+ does> { y self -- val }
+  self @ { rd }
+  self cell+ @ { en }
+  rd read-sample en env f* y f+
+;
+: places2-cb { rd en -- prc; y self -- val }
+  1 proc-create rd , en ,  ( prc )
+ does> { y self -- val }
+  self @ { rd }
+  self cell+ @ { en }
+  rd read-sample 1.0 en env f- f* y f+
+;
+set-current
+: place-sound ( mono stereo pan -- res )
+  doc" Mixes a mono sound into a stereo sound, \
+splitting it into two copies whose amplitudes depend on the envelope PAN-ENV.  \
+If PAN-ENV is a number, the sound is split such that 0 is all in channel 0 \
+and 90 is all in channel 1."
+  { mono stereo pan }
+  mono #f #f #f frames { len }
+  pan number? if
+    pan 90.0 f/ { pos }
+    0 mono #f 1 #f make-sample-reader { reader0 }
+    0 mono #f 1 #f make-sample-reader { reader1 }
+    reader1 pos places1-cb 0 len stereo 1 #f #f map-channel drop
+    reader0 pos places0-cb 0 len stereo 0 #f #f map-channel drop
+  else
+    :envelope pan :end len 1- make-env { e0 }
+    :envelope pan :end len 1- make-env { e1 }
+    0 mono #f 1 #f make-sample-reader { reader0 }
+    0 mono #f 1 #f make-sample-reader { reader1 }
+    reader1 e1 places3-cb 0 len stereo 1 #f #f map-channel drop
+    reader0 e0 places2-cb 0 len stereo 0 #f #f map-channel drop
+  then
+;
+previous
 
 \ ;;; -------- FFT-based editing
 
@@ -422,7 +856,94 @@ following interp (an env between 0 and 1)."
   data2 gc-unprotect drop
 ;
 
-\ --- comb-filter ---
+: filter-fft <{ flt :optional normalize #t snd #f chn #f -- val }>
+  doc" Gets the spectrum of all the data in the given channel, \
+applies the function FLT to it, then inverse ffts.  \
+FLT should take one argument, the current spectrum value.\n\
+lambda: <{ y -- val }> y 0.01 f< if 0.0 else y then ; filter-fft\n\
+is like fft-squelch."
+  snd chn #f frames { len }
+  snd chn #f maxamp { mx }
+  2.0  len flog 2.0 flog f/ fceil  f** fround->s { fsize }
+  fsize 2/ { fsize2 }
+  0 fsize snd chn #f channel->vct { rdata }
+  fsize 0.0 make-vct { idata }
+  rdata rectangular-window fsize #t 1.0 #f ( in-place == #f ) normalize snd-spectrum { spect }
+  rdata idata 1 fft drop
+  flt '( spect 0 vct-ref ) run-proc drop
+  fsize 1- { jj }
+  fsize2 1 ?do
+    spect i vct-ref { orig }
+    flt '( orig ) run-proc { cur }
+    orig fabs 0.000001 f> if
+      cur orig f/ { scl }
+      rdata i  scl object-set*!
+      idata i  scl object-set*!
+      rdata jj scl object-set*!
+      idata jj scl object-set*!
+    else
+      cur fabs 0.000001 f> if
+	cur 2.0 fsqrt f/ { scl }
+	rdata i  scl vct-set! drop
+	idata i  scl vct-set! drop
+	rdata jj scl vct-set! drop
+	idata jj scl fnegate vct-set! drop
+      then
+    then
+    jj 1- to jj
+  loop
+  rdata idata -1 fft drop
+  $" %S %s" '( flt get-func-name ) string-format { origin }
+  mx f0<> if
+    rdata vct-peak { pk }
+    rdata mx pk f/ vct-scale!
+  else
+    rdata
+  then 0 len 1- snd chn #f origin vct->channel
+;
+\ 0.5  0.5  make-one-zero filter-fft
+\ 0.05 0.05 make-one-pole filter-fft
+\ lambda: <{ y -- val }> y 0.1 f< if 0.0 else y then ; filter-fft
+\ 0 0 0 1 0 make-sample-reader filter-fft
+\ ' contrast-enhancement filter-fft
+\ lambda: <{ y -- val }> y y f* y f* ; filter-fft
+
+: fft-smoother <{ cutoff start samps :optional snd #f chn #f -- val }>
+  doc" Uses fft-filtering to smooth a section:\n\
+#f #f #f cursor value curs
+0.1 curs 400 #f #f fft-smoother  curs 400 #f #f #f undef vct->channel"
+  2.0  samps 1+ flog 2.0 flog f/ fceil  f** fround->s { fftpts }
+  start fftpts snd chn #f channel->vct { rl }
+  fftpts 0.0 make-vct { im }
+  fftpts cutoff f* fround->s { top }
+  rl 0 vct-ref { old0 }
+  rl samps 1- vct-ref { old1 }
+  rl vct-peak { oldmax }
+  rl im 1 fft drop
+  fftpts top ?do
+    rl i 0.0 vct-set! drop
+    im i 0.0 vct-set! drop
+  loop
+  rl im -1 fft drop
+  rl fftpts 1/f vct-scale! drop
+  rl vct-peak { newmax }
+  newmax f0<> if
+    oldmax newmax f/ 1.5 f> if rl oldmax newmax f/ vct-scale! drop then
+    rl 0 vct-ref { new0 }
+    rl samps 1- vct-ref { new1 }
+    old0 new0 f- { offset0 }
+    old1 new1 f- { offset1 }
+    offset1 offset0 f= if 0.0 else offset1 offset0 f- samps f/ then { incr }
+    offset0 { trend }
+    samps 0 ?do
+      rl i trend object-set+!
+      trend incr f+ to trend
+    loop
+  then
+  rl
+;
+
+\ ;;; -------- comb-filter
 
 : comb-filter ( scaler size -- proc; x self -- res )
   doc" Returns a comb-filter ready for map-channel etc: 0.8 32 comb-filter map-channel.  \

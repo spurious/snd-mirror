@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Mon Jan 01 03:55:10 CET 2007
+\ Changed: Sat Jan 06 05:57:20 CET 2007
 
 \ Commentary:
 
@@ -484,7 +484,7 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
   loop
   rl im -1 fft drop
   rl vct-peak { pk }
-  $" ['] %s %s" '( func proc-name get-func-name ) string-format { origin }
+  $" %S %s" '( func proc-name get-func-name ) string-format { origin }
   rl old-pk pk f/ vct-scale! 0 len snd chn #f origin vct->channel
 ;
 \ See note above for a good origin for reuse.
@@ -646,7 +646,7 @@ lambda: <{ n }> gen 0.0 asyfm-J ; map-channel."
 
 \ ;;; -------- brighten-slightly
 hide
-: brighten-slightly-cb { brt mx -- proc; y self -- val }
+: bs-cb { brt mx -- proc; y self -- val }
   1 proc-create mx , brt ,
  does> { y self -- val }
   self       @ { mx }
@@ -654,12 +654,11 @@ hide
   brt y f* fsin mx f*
 ;
 set-current
-: brighten-slightly <{ amount :optional snd #f chn #f -- }>
+: brighten-slightly <{ amount :optional snd #f chn #f -- val }>
   doc" It's a form of contrast-enhancement (AMOUNT between ca 0.1 and 1)."
   snd chn #f maxamp { mx }
   two-pi amount f*  mx f/ { brt }
-  brt mx brighten-slightly-cb 0 #f snd chn #f
-  $" %.3f %s" '( amount get-func-name ) string-format map-channel drop
+  brt mx bs-cb 0 #f snd chn #f $" %s %s" '( amount get-func-name ) string-format map-channel
 ;
 previous
 
@@ -729,7 +728,7 @@ previous
       arr kk  num denom f/  denom len f/ fcos 0.46 f* 0.54 f+  f*  vct-set! drop
     then
   loop
-  arrlen arr make-fir-filter
+  :order arrlen :xcoeffs arr make-fir-filter
 ;
 ' fir-filter alias hilbert-transform
 \ 15 make-hilbert-transform value h
@@ -751,7 +750,7 @@ previous
       pi i f* len f/ fcos 0.46 f* 0.54 f+  f*
     then vct-set! drop
   loop
-  arrlen arr make-fir-filter
+  :order arrlen :xcoeffs arr make-fir-filter
 ;
 ' fir-filter alias highpass
 \ pi 0.1 f* make-highpass value hp
@@ -773,7 +772,7 @@ previous
       pi i f* len f/ fcos 0.46 f* 0.54 f+  f*
     then vct-set! drop
   loop
-  arrlen arr make-fir-filter
+  :order arrlen :xcoeffs arr make-fir-filter
 ;
 ' fir-filter alias lowpass
 \ pi 0.2 f* make-lowpass value lp
@@ -795,7 +794,7 @@ previous
       pi i f* len f/ fcos 0.46 f* 0.54 f+  f*
     then vct-set! drop
   loop
-  arrlen arr make-fir-filter
+  :order arrlen :xcoeffs arr make-fir-filter
 ;
 ' fir-filter alias bandpass
 \ pi 0.1 f* pi 0.2 f* make-bandpass value bp
@@ -817,7 +816,7 @@ previous
       pi i f* len f/ fcos 0.46 f* 0.54 f+  f*
     then vct-set! drop
   loop
-  arrlen arr make-fir-filter
+  :order arrlen :xcoeffs arr make-fir-filter
 ;
 ' fir-filter alias bandstop
 \ pi 0.1 f* pi 0.3 f* make-bandstop value bs
@@ -837,7 +836,7 @@ previous
       vct-set! drop
     then
   loop
-  arrlen arr make-fir-filter
+  :order arrlen :xcoeffs arr make-fir-filter
 ;
 ' fir-filter alias differentiator
 \ make-differentiator value dt
@@ -968,5 +967,221 @@ or via the 'butter' generator."
 ;
 \ make-eliminate-hum value hummer
 \ lambda: <{ x }> hummer x eliminate-hum ; map-channel
+
+\ ;;; -------- notch filters
+
+: make-notch-frequency-response <{ cur-srate freqs :optional notch-width 2 -- fresp }>
+  '( 1.0 0.0 ) { freq-response }
+  freqs each { f }
+    f notch-width f- f2* cur-srate f/ freq-response cons to freq-response \ ; left upper y hz
+    1.0 freq-response cons to freq-response \ ; left upper y resp
+    f notch-width f2/ f- f2* cur-srate f/ freq-response cons to freq-response \ ; left bottom y hz
+    0.0 freq-response cons to freq-response \ ; left bottom y resp
+    f notch-width f2/ f+ f2* cur-srate f/ freq-response cons to freq-response \ ; right bottom y hz
+    0.0 freq-response cons to freq-response \ ; right bottom y resp
+    f notch-width f+ f2* cur-srate f/ freq-response cons to freq-response \ ; right upper y hz
+    1.0 freq-response cons to freq-response \ ; right upper y resp
+  end-each
+  1.0 1.0 freq-response cons cons list-reverse
+;
+
+: notch-channel <{ freqs
+     :optional filter-order #f beg 0 dur #f snd #f chn #f edpos #f truncate #t notch-width 2 -- f }>
+  doc" Returns a notch filter removing freqs."
+  snd srate s>f freqs notch-width make-notch-frequency-response { nf }
+  filter-order 2.0 snd srate notch-width f/ flog 2.0 flog f/ fceil f** fround->s || { order }
+  $" %s %s %s %s %s" '( freqs filter-order beg dur get-func-name ) string-format { origin }
+  nf order beg dur snd chn edpos truncate origin filter-channel
+;
+
+: notch-sound <{ freqs :optional filter-order #f snd #f chn #f notch-width 2 -- f }>
+  doc" Returns a notch filter removing freqs."
+  snd srate s>f freqs notch-width make-notch-frequency-response { nf }
+  filter-order 2.0 snd srate notch-width f/ flog 2.0 flog f/ fceil f** fround->s || { order }
+  $" %s %s 0 #f notch-channel " '( freqs filter-order ) string-format { origin }
+  nf order snd chn #f origin filter-sound
+;
+
+: notch-selection <{ freqs :optional filter-order #f notch-width 2 -- f }>
+  doc" Returns a notch filter removing freqs."
+  selection? if
+    selection-srate s>f freqs notch-width make-notch-frequency-response ( nf )
+    filter-order
+    2.0 selection-srate notch-width f/ flog 2.0 flog f/ fceil f** fround->s || ( order )
+    #t ( truncate ) filter-selection
+  then
+;
+
+\ ;;; -------- ssb-am friends
+
+hide
+: scp-cb { gen -- prc; y self -- val }
+  1 proc-create gen , ( prc )
+ does> { y self -- val }
+  self @ y 0.0 ssb-am
+;
+set-current
+: shift-channel-pitch <{ freq :optional order 40 beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  :frequency freq :order order make-ssb-am { gen }
+  $" %s %s %s %s %s" '( freq order beg dur get-func-name ) string-format { origin }
+  gen scp-cb beg dur snd chn edpos origin map-channel
+;
+previous
+
+: hz->2pi ( freq -- r ) two-pi f*  #f srate f/ ;
+
+hide
+: ssbmc-cb { nmx ssbs bands -- prc; y self -- val }
+  1 proc-create nmx , ssbs , bands ,
+ does> { y self -- val }
+  self           @ { nmx }
+  self 1 cells + @ { ssbs }
+  self 2 cells + @ { bands }
+  0.0 ssbs each ( gen )  bands i array-ref y bandpass  0.0 ssb-am f+ ( sum+=... ) end-each
+  ( sum ) dup fabs nmx fmax self ! ( to nmx )
+;
+: ssbaoe-cb { mx ssbs bands beg dur snd chn edpos -- prc; self -- val }
+  0.0 { nmx }
+  nmx ssbs bands ssbmc-cb { proc }
+  0 proc-create proc , mx , nmx , beg , snd , chn , edpos , ( prc )
+ does> { self -- val }
+  self           @ { proc }
+  self 1 cells + @ { mx }
+  self 2 cells + @ { nmx }
+  self 3 cells + @ { beg }
+  self 4 cells + @ { dur }
+  self 5 cells + @ { snd }
+  self 6 cells + @ { chn }
+  self 7 cells + @ { edpos }
+  proc beg dur snd chn edpos #f map-channel drop
+  mx nmx f/ beg dur snd chn #f scale-channel
+;
+set-current
+: ssb-bank <{ old-freq new-freq pairs
+     :optional order 40 bw 50.0 beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  pairs nil make-array { ssbs }
+  pairs nil make-array { bands }
+  new-freq old-freq f- old-freq f/ { factor }
+  snd chn #f maxamp { mx }
+  pairs 0 ?do
+    i 1.0 f+ { idx }
+    old-freq idx f* { aff }
+    idx pairs f2* f/ 1.0 f+ bw f* { bwf }
+    ssbs  i  :frequency idx factor f* old-freq f* :order 40 make-ssb-am   array-set!
+    bands i  aff bwf f- hz->2pi  aff bwf f+ hz->2pi  order make-bandpass  array-set!
+  loop
+  $" %s %s %s %s %s %s %s %s"
+  '( old-freq new-freq pairs order bw beg dur get-func-name ) string-format { origin }
+  mx ssbs bands beg dur snd chn edpos ssbaoe-cb  origin  as-one-edit
+;
+previous
+
+hide
+: ssbemc-cb { nmx ssbs bands frenvs -- prc; y self -- val }
+  1 proc-create nmx , ssbs , bands , frenvs ,
+ does> { y self -- val }
+  self           @ { nmx }
+  self 1 cells + @ { ssbs }
+  self 2 cells + @ { bands }
+  self 3 cells + @ { frenvs }
+  0.0 ssbs each ( gen )
+    bands i array-ref y bandpass  frenvs i array-ref env  ssb-am f+ ( sum+=... )
+  end-each
+  ( sum ) dup fabs nmx fmax self ! ( to nmx )
+;
+: ssbeaoe-cb { mx ssbs bands frenvs beg dur snd chn edpos -- prc; self -- val }
+  0.0 { nmx }
+  nmx ssbs bands frenvs ssbemc-cb { proc }
+  0 proc-create proc , mx , nmx , beg , snd , chn , edpos , ( prc )
+ does> { self -- val }
+  self           @ { proc }
+  self 1 cells + @ { mx }
+  self 2 cells + @ { nmx }
+  self 3 cells + @ { beg }
+  self 4 cells + @ { dur }
+  self 5 cells + @ { snd }
+  self 6 cells + @ { chn }
+  self 7 cells + @ { edpos }
+  proc beg dur snd chn edpos #f map-channel drop
+  mx nmx f/ beg dur snd chn #f scale-channel
+;
+set-current
+: ssb-bank-env <{ old-freq new-freq freq-env pairs
+     :optional order 40 bw 50.0 beg 0 dur #f snd #f chn #f edpos #f -- val }>
+  pairs nil make-array { ssbs }
+  pairs nil make-array { bands }
+  pairs nil make-array { frenvs }
+  new-freq old-freq f- old-freq f/ { factor }
+  snd chn #f maxamp { mx }
+  snd chn #f frames 1- { len }
+  pairs 0 ?do
+    i 1.0 f+ { idx }
+    old-freq idx f* { aff }
+    idx pairs f2* f/ 1.0 f+ bw f* { bwf }
+    ssbs  i  :frequency idx factor f* old-freq f* :order 40 make-ssb-am   array-set!
+    bands i  aff bwf f- hz->2pi  aff bwf f+ hz->2pi  order make-bandpass  array-set!
+    :envelope freq-env :scaler idx hz->radians :end len make-env
+    frenvs i  rot array-set!
+  loop
+  $" %s %s %s %s %s %s %s %s %s"
+  '( old-freq new-freq freq-env pairs order bw beg dur get-func-name ) string-format { origin }
+  mx ssbs bands frenvs beg dur snd chn edpos ssbeaoe-cb  origin  as-one-edit
+;
+previous
+
+\ ;;; vct|channel|spectral-polynomial
+
+: vct-polynomial ( v coeffs -- vct )
+  { v coeffs }
+  v vct-length coeffs last-ref make-vct { new-v }
+  coeffs vct-length 2- 0 ?do
+    new-v v vct-multiply! coeffs i vct-ref vct-offset! drop
+  -1 +loop
+  new-v
+;
+: channel-polynomial <{ coeffs :optional snd #f chn #f -- vct }>
+  snd chn #f frames { len }
+  $" %S %s" '( coeffs get-func-name ) string-format { origin }
+  0 len snd chn #f channel->vct coeffs vct-polynomial 0 len snd chn #f origin vct->channel
+;
+\ vct( 0.0 0.5 )         channel-polynomial == x*0.5
+\ vct( 0.0 1.0 1.0 1.0 ) channel-polynomial == x*x*x + x*x + x
+
+\ ;;; convolution -> * in freq
+
+: spectral-polynomial <{ coeffs :optional snd #f chn #f -- vct }>
+  snd chn #f frames { len }
+  0 len snd chn #f channel->vct { sound }
+  coeffs vct-length { num-coeffs }
+  num-coeffs 2 < if
+    len
+  else
+    2.0  num-coeffs 1.0 f- len f* flog 2.0 flog f/ fceil  f** fround->s
+  then { fft-len }
+  fft-len 0.0 make-vct { rl1 }
+  fft-len 0.0 make-vct { rl2 }
+  fft-len 0.0 make-vct { new-sound }
+  coeffs 0 vct-ref f0> if
+    coeffs 0 vct-ref { dither }
+    new-sound map! dither mus-random end-map drop
+  then
+  num-coeffs 1 > if
+    new-sound  sound vct-copy coeffs 1 vct-ref vct-scale!  vct-add! drop
+    num-coeffs 2 > if
+      snd chn #f maxamp { peak }
+      rl1 0.0 vct-scale! sound vct-add! drop
+      0.0 { pk }
+      num-coeffs 2 ?do
+	rl1  rl2 0.0 vct-scale! sound vct-add!  fft-len  convolution drop
+	rl1 vct-peak to pk
+	new-sound  rl1 vct-copy coeffs i vct-ref peak f* pk f/  vct-scale!  vct-add! drop
+      loop
+      new-sound vct-peak to pk
+      new-sound peak pk f/ vct-scale! drop
+    then
+  then
+  $" %S %s" '( coeffs get-func-name ) string-format { origin }
+  new-sound 0  num-coeffs 1- len * len max  snd chn #f origin vct->channel
+;
 
 \ dsp.fs ends here

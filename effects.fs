@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Mon Jan 01 23:00:49 CET 2007
+\ Changed: Sat Jan 06 04:41:09 CET 2007
 
 \ Commentary:
 \
@@ -58,7 +58,7 @@
 \ make-convolve-dialog           ( name -- prc1 prc2; child self -- prc; self -- )
 \
 \ effects-position-sound         ( mono-snd pos :optional snd chn -- res )
-\ place-sound                    ( mono-snd stereo-snd pan-env -- res )
+\ effects-place-sound            ( mono-snd stereo-snd pan-env -- res )
 \ effects-flange                 ( amount speed time :optional beg dur snd chn -- res )
 \ effects-cross-synthesis        ( snd amp fftsize r -- prc; inval self -- res )
 \ effects-cross-synthesis-1      ( cross-snd amp fftsize r :optional beg dur snd chn -- res )
@@ -3119,11 +3119,11 @@ set-current
 ;
 previous
 
-: place-sound ( mono stereo pan -- res )
+: effects-place-sound ( mono stereo pan -- res )
   doc" Mixes a mono sound into a stereo sound, \
 splitting it into two copies whose amplitudes depend on the envelope PAN-ENV.  \
 If PAN-ENV is a number, the sound is split such that 0 is all in channel 0 \
-  and 90 is all in channel 1."
+and 90 is all in channel 1."
   { mono stereo pan }
   pan number? if
     pan 90.0 f/ { pos }
@@ -3278,9 +3278,9 @@ end-struct effects-place-sound%
   self @ { gen }
   gen envel@ xe-envelope { e }
   e '( 0.0 1.0 1.0 1.0 ) equal? if
-    gen mono-snd@ gen stereo-snd@ gen pan-pos@ place-sound drop
+    gen mono-snd@ gen stereo-snd@ gen pan-pos@ effects-place-sound drop
   else
-    gen mono-snd@ gen stereo-snd@ e            place-sound drop
+    gen mono-snd@ gen stereo-snd@ e            effects-place-sound drop
   then
 ;
 : ps-reset-cb ( gen -- prc; w c i self -- )

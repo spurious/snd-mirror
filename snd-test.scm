@@ -7,31 +7,31 @@
 ;;;  test 4: sndlib                             [2256]
 ;;;  test 5: simple overall checks              [4675]
 ;;;  test 6: vcts                               [12185]
-;;;  test 7: colors                             [12460]
-;;;  test 8: clm                                [12950]
-;;;  test 9: mix                                [22637]
-;;;  test 10: marks                             [26286]
-;;;  test 11: dialogs                           [27184]
-;;;  test 12: extensions                        [27478]
-;;;  test 13: menus, edit lists, hooks, etc     [27933]
-;;;  test 14: all together now                  [29517]
-;;;  test 15: chan-local vars                   [30592]
-;;;  test 16: regularized funcs                 [31922]
-;;;  test 17: dialogs and graphics              [36337]
-;;;  test 18: enved                             [36426]
-;;;  test 19: save and restore                  [36446]
-;;;  test 20: transforms                        [38281]
-;;;  test 21: new stuff                         [40114]
-;;;  test 22: run                               [42138]
-;;;  test 23: with-sound                        [47902]
-;;;  test 24: user-interface                    [50381]
-;;;  test 25: X/Xt/Xm                           [53997]
-;;;  test 26: Gtk                               [58587]
-;;;  test 27: GL                                [62704]
-;;;  test 28: errors                            [62828]
-;;;  test 29: Common Music                      [64938]
-;;;  test all done                              [64988]
-;;;  test the end                               [65181]
+;;;  test 7: colors                             [12461]
+;;;  test 8: clm                                [12951]
+;;;  test 9: mix                                [22672]
+;;;  test 10: marks                             [26321]
+;;;  test 11: dialogs                           [27219]
+;;;  test 12: extensions                        [27513]
+;;;  test 13: menus, edit lists, hooks, etc     [27968]
+;;;  test 14: all together now                  [29552]
+;;;  test 15: chan-local vars                   [30627]
+;;;  test 16: regularized funcs                 [31957]
+;;;  test 17: dialogs and graphics              [36372]
+;;;  test 18: enved                             [36461]
+;;;  test 19: save and restore                  [36481]
+;;;  test 20: transforms                        [38316]
+;;;  test 21: new stuff                         [40149]
+;;;  test 22: run                               [42174]
+;;;  test 23: with-sound                        [47938]
+;;;  test 24: user-interface                    [50417]
+;;;  test 25: X/Xt/Xm                           [54033]
+;;;  test 26: Gtk                               [58624]
+;;;  test 27: GL                                [62741]
+;;;  test 28: errors                            [62865]
+;;;  test 29: Common Music                      [64981]
+;;;  test all done                              [65031]
+;;;  test the end                               [65260]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -65219,7 +65219,7 @@ EDITS: 1
 (if all-args 
     (system "cp memlog memlog.full"))
 
-(if (and #t
+(if (and #f
 	 (provided? 'snd-guile))
     (let ((total 0)
 	  (no-help 0)

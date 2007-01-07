@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Mon Jan 01 04:06:54 CET 2007
+\ Changed: Sat Jan 06 02:53:52 CET 2007
 
 \ Commentary:
 \
@@ -68,12 +68,13 @@ $" fth 1-Jan-2007" value *clm-version*
   [else]
     \ Prints to Snd's listener (snd-print) and to stdout if $EMACS is
     \ set or $TERM matches /^xterm/.
+    "TERM" getenv dup [if] 0 4 string-substring "xterm" string= [then] value *xterm?*
     : clm-message ( fmt args -- )
       { fmt args }
-      "\n\\ " fmt $+ args string-format { msg }
-      msg snd-print drop
-      "EMACS" getenv
-      /^xterm/ "TERM" getenv 1 >string re= || if msg .stdout then
+      "\n\\ " fmt $+ args string-format snd-print drop
+      "EMACS" getenv *xterm?* || if
+	"\\ " fmt $+ "\n" $+ args string-format .stdout
+      then
     ;
   [then]
 [then]
